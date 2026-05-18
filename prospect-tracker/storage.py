@@ -418,8 +418,57 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     from stats import compute_age_decimal
     from age_level import score_age_vs_level
     from eta import estimate_eta
+    from trades import canonical_org
 
     PITCHER_POS_SET = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP"}
+
+    def _is_real_trade(t: dict) -> bool:
+        """
+        True for actual inter-org trades; False for MiLB affiliate
+        assignments (FCL Tigers → Lakeland Flying Tigers etc.) which the
+        MLB transactions API returns alongside genuine trades.
+
+        Two paths qualify:
+          - source='inferred': we only infer when a prospect's canonical
+            org changes across snapshots, so all inferred rows are real.
+          - source='mlb_api': accept when the description text mentions
+            "traded" (the API's free-text marker for trade transactions —
+            assignments use "assigned"), OR when both from_org and to_org
+            resolve to known 3-letter MLB codes that differ. The
+            description check catches multi-prospect trades where the
+            from/to fields are affiliate names; the canonical-org check
+            catches recent trades whose descriptions haven't propagated.
+        """
+        desc = (t.get("description") or "").lower()
+        if t.get("source") == "inferred":
+            cf = canonical_org(t.get("from_org"))
+            ct = canonical_org(t.get("to_org"))
+            return bool(cf and ct and cf != ct and len(cf) == 3 and len(ct) == 3)
+        if "traded" in desc:
+            return True
+        cf = canonical_org(t.get("from_org"))
+        ct = canonical_org(t.get("to_org"))
+        return bool(cf and ct and cf != ct and len(cf) == 3 and len(ct) == 3)
+
+    def _filter_real_trades(trades: list[dict]) -> list[dict]:
+        seen: set[tuple] = set()
+        out: list[dict] = []
+        for t in trades:
+            if not _is_real_trade(t):
+                continue
+            # Dedup duplicates that come from snapshot-date repeats — the
+            # inferred path can register the same trade on consecutive
+            # snapshot rows. Key on (date, canonical from, canonical to).
+            key = (
+                t.get("trade_date"),
+                canonical_org(t.get("from_org")),
+                canonical_org(t.get("to_org")),
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(t)
+        return out
 
     def _serialize(p: PlayerTimeseries) -> dict:
         bd = birth_dates.get(p.player_key)
@@ -454,7 +503,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "statline": sl,
             "pitch_arsenal": pa,
             "statcast": sc,
-            "trades": trades_by_player.get(p.player_key, []),
+            "trades": _filter_real_trades(trades_by_player.get(p.player_key, [])),
             "eta": {
                 "year": eta.eta_year,
                 "confidence": eta.confidence,

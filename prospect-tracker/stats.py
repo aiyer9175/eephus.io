@@ -975,45 +975,47 @@ def _fetch_splits_for_season(mlbam_id: int, season: int,
                              is_pitcher: bool) -> list[dict]:
     """Fetch every split (MLB + every MiLB level) the player has in `season`.
 
-    Two calls when needed: leagueListId=milb_full first (covers all MiLB
-    levels); if the response is empty we retry without the filter to catch
-    players whose only activity that year was at the MLB level.
+    Always issues BOTH calls and merges the results:
+      - leagueListId=milb_full → every MiLB level (filter excludes MLB)
+      - no filter              → MLB-only line for prospects who've debuted
+
+    A previous version called these sequentially with a short-circuit
+    ("MiLB first; only hit MLB if MiLB was empty"). That short-circuit
+    silently dropped MLB splits for prospects with stints at BOTH levels,
+    so `_highest_level` never saw an MLB record and auto-graduation by
+    `level == "MLB"` was skipped — leaving freshly-debuted prospects on
+    their org's farm summary indefinitely.
     """
     group = "pitching" if is_pitcher else "hitting"
-    # IMPORTANT: leagueListId=milb_full is required to get MiLB splits.
-    # Without it, the API silently returns MLB-only stats.
-    url = (
-        f"{MLB_STATS_API}/people/{mlbam_id}/stats"
-        f"?stats=season&group={group}&season={season}"
-        f"&leagueListId=milb_full"
-    )
-    time.sleep(RATE_LIMIT_SECONDS)
+    base = f"{MLB_STATS_API}/people/{mlbam_id}/stats?stats=season&group={group}&season={season}"
+    urls = [
+        f"{base}&leagueListId=milb_full",   # MiLB splits across all levels
+        base,                                # MLB-only line
+    ]
+
     splits: list[dict] = []
-    try:
-        resp = requests.get(url, timeout=15)
-        resp.raise_for_status()
-        for block in resp.json().get("stats", []):
-            splits.extend(block.get("splits", []))
-    except Exception as e:
-        log.debug("MiLB fetch failed for %s season=%s: %s", mlbam_id, season, e)
-
-    if splits:
-        return splits
-
-    # MLB fallback: player may have only MLB activity this season.
-    mlb_url = (
-        f"{MLB_STATS_API}/people/{mlbam_id}/stats"
-        f"?stats=season&group={group}&season={season}"
-    )
-    time.sleep(RATE_LIMIT_SECONDS)
-    try:
-        resp = requests.get(mlb_url, timeout=15)
-        resp.raise_for_status()
-        for block in resp.json().get("stats", []):
-            splits.extend(block.get("splits", []))
-    except Exception as e:
-        log.debug("MLB fallback fetch failed for %s season=%s: %s",
-                  mlbam_id, season, e)
+    seen_keys: set[tuple] = set()
+    for url in urls:
+        time.sleep(RATE_LIMIT_SECONDS)
+        try:
+            resp = requests.get(url, timeout=15)
+            resp.raise_for_status()
+            for block in resp.json().get("stats", []):
+                for s in block.get("splits", []):
+                    # Dedup on (season, sport-or-league-name) so the
+                    # MiLB-and-MLB calls don't double-count an A+ split that
+                    # appears in both responses (rare but happens).
+                    league = s.get("league") or {}
+                    level_name = (league.get("sport") or {}).get("name") \
+                                 or league.get("name", "")
+                    key = (s.get("season"), level_name)
+                    if key in seen_keys:
+                        continue
+                    seen_keys.add(key)
+                    splits.append(s)
+        except Exception as e:
+            log.debug("stats fetch failed for %s season=%s url=%s: %s",
+                      mlbam_id, season, url, e)
     return splits
 
 

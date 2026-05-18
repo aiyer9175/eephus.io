@@ -576,6 +576,7 @@
 <template id="main-template">
   <div class="section-tabs" id="section-tabs">
     <button class="section-tab active" data-section="active">Active</button>
+    <button class="section-tab" data-section="traded">Recently Traded</button>
     <button class="section-tab" data-section="graduates">Graduates</button>
     <button class="section-tab" data-section="farm">Farm Systems</button>
     <span class="section-count" id="section-count"></span>
@@ -612,6 +613,10 @@
 
   <div id="active-section">
     <div id="rows"></div>
+  </div>
+
+  <div id="traded-section" style="display: none;">
+    <div id="traded-rows"></div>
   </div>
 
   <div id="graduates-section" style="display: none;">
@@ -703,14 +708,27 @@ const stockHTML = s => {
 // =============================================================================
 // SVG CHARTS
 // =============================================================================
-const FV_MIN = 45, FV_MAX = 72;
+// Y-axis is anchored to the full 20-80 FV scale across both line charts and
+// candles so a 50 FV always sits in the same vertical position regardless of
+// prospect. The X-axis is per-prospect: starts at the player's first recorded
+// FV grade and ends at graduation_date (for graduates) or the last snapshot
+// (for active / inactive prospects).
+const FV_MIN = 20, FV_MAX = 80;
 
-function makeLineChart(points, fvOpen, fvClose, allDates) {
+function makeLineChart(points, fvOpen, fvClose, gradDate, trades) {
+  if (!points || points.length === 0) return "";
   const W = 200, H = 56, PAD = 4, LABEL_H = 9;
   // Chart area: y from PAD to H-LABEL_H-PAD. Bottom LABEL_H px reserved for year labels.
   const CHART_BOTTOM = H - LABEL_H - PAD;
-  const minT = new Date(allDates[0]).getTime();
-  const maxT = new Date(allDates[allDates.length - 1]).getTime();
+  // Per-prospect time domain: first recorded FV → graduation_date (if graduated)
+  // or last recorded FV (otherwise). Falls back to the points' own range if no
+  // graduation date is supplied.
+  const firstDate = points[0].snapshot_date;
+  const lastDate  = points[points.length - 1].snapshot_date;
+  const endDate   = (gradDate && new Date(gradDate).getTime() > new Date(lastDate).getTime())
+                      ? gradDate : lastDate;
+  const minT = new Date(firstDate).getTime();
+  const maxT = new Date(endDate).getTime();
   const timeSpan = maxT - minT || 1;
   const xScale = d => PAD + ((new Date(d).getTime() - minT) / timeSpan) * (W - 2 * PAD);
   const yScale = fv => CHART_BOTTOM - ((fv - FV_MIN) / (FV_MAX - FV_MIN)) * (CHART_BOTTOM - PAD);
@@ -737,9 +755,25 @@ function makeLineChart(points, fvOpen, fvClose, allDates) {
     );
   }
 
+  // Trade markers — solid violet verticals at each trade_date that falls
+  // inside the chart window. A small triangle "T" sits at the top so the
+  // marker is visible even when the line passes through it.
+  const tradeSvg = [];
+  for (const tr of (trades || [])) {
+    const trT = new Date(tr.trade_date).getTime();
+    if (isNaN(trT) || trT < minT || trT > maxT) continue;
+    const x = (PAD + ((trT - minT) / timeSpan) * (W - 2 * PAD)).toFixed(1);
+    const label = `${tr.trade_date} · ${tr.from_org ?? "?"} → ${tr.to_org ?? "?"}`;
+    tradeSvg.push(
+      `<line x1="${x}" y1="${PAD}" x2="${x}" y2="${CHART_BOTTOM}" stroke="var(--grad)" stroke-width="0.9" stroke-dasharray="2,1.5" opacity="0.85"><title>${label}</title></line>`,
+      `<polygon points="${x - 2.5},${PAD - 0.5} ${parseFloat(x) + 2.5},${PAD - 0.5} ${x},${PAD + 3}" fill="var(--grad)"><title>${label}</title></polygon>`
+    );
+  }
+
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" role="img" aria-label="FV trajectory">
     ${yearSvg.join("")}
     <line x1="${PAD}" y1="${y60.toFixed(1)}" x2="${W - PAD}" y2="${y60.toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,2" />
+    ${tradeSvg.join("")}
     <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
     ${circles}
   </svg>`;
@@ -963,7 +997,6 @@ function getFilteredGrads() {
 
 function renderActives() {
   const filtered = getFilteredActives();
-  const allDates = [...new Set(DATA.players.flatMap(p => p.points.map(pt => pt.snapshot_date)))].sort();
 
   const header = `<div class="col-header">
     <span style="text-align:center;">#</span>
@@ -989,7 +1022,7 @@ function renderActives() {
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
-        <div class="line-chart-cell">${makeLineChart(p.points, p.fv_open, p.fv_close, allDates)}</div>
+        <div class="line-chart-cell">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades)}</div>
         <div class="candle-cell">${makeCandle(p)}</div>
         ${makeMilbCell(p)}
         ${makeEtaCell(p)}
@@ -1009,10 +1042,96 @@ function renderActives() {
   });
 }
 
+// Latest trade date for a prospect (or null if they were never traded).
+// Used to sort the "Recently Traded" section.
+function lastTradeDate(p) {
+  const trades = p.trades || [];
+  if (!trades.length) return null;
+  // Trades arrive sorted ascending by date from the back-end; take the last.
+  return trades[trades.length - 1].trade_date;
+}
+
+function getFilteredTraded() {
+  // Active prospects only (graduates have their own section).
+  let pool = DATA.players.filter(p => (p.trades || []).length > 0);
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    pool = pool.filter(p => p.player_name.toLowerCase().includes(q));
+  }
+  if (state.orgFilter !== "all") {
+    pool = pool.filter(p => p.org === state.orgFilter);
+  }
+  // Sort by most recent trade first; tiebreak by consensus FV desc so a
+  // 50-FV prospect who was traded on the same date as a 35-FV org filler
+  // appears above the filler.
+  pool.sort((a, b) => {
+    const da = lastTradeDate(a) || "";
+    const db = lastTradeDate(b) || "";
+    if (da !== db) return db.localeCompare(da);
+    const fa = a.points.length ? a.points[a.points.length - 1].consensus_fv_raw : 0;
+    const fb = b.points.length ? b.points[b.points.length - 1].consensus_fv_raw : 0;
+    return fb - fa;
+  });
+  return pool;
+}
+
+function renderRecentlyTraded() {
+  const filtered = getFilteredTraded();
+
+  // 8-column grid:  # | Player | Trade date | From → To | FV | FV history (with markers) | Candle | Stock
+  const TCOLS = "32px 1.3fr 0.7fr 1fr 0.45fr 1.1fr 0.6fr 0.6fr";
+  const header = `<div class="col-header" style="grid-template-columns:${TCOLS};">
+    <span style="text-align:center;">#</span>
+    <span>Player · pos · org · age</span>
+    <span>Trade date</span>
+    <span>From → To</span>
+    <span style="text-align:center;">FV</span>
+    <span class="desktop-only" style="text-align:center;">FV history</span>
+    <span class="desktop-only" style="text-align:center;">Candle</span>
+    <span style="text-align:right;">Stock</span>
+  </div>`;
+
+  const rows = filtered.map((p, i) => {
+    const latest = p.points[p.points.length - 1];
+    const idx = DATA.players.indexOf(p);
+    const lastTrade = p.trades[p.trades.length - 1];
+    const tradeFlow = `<span style="color:var(--text-tertiary);">${escapeHtml(lastTrade.from_org ?? "?")}</span> <span style="color:var(--neon-violet);">→</span> <span style="color:var(--text-primary);">${escapeHtml(lastTrade.to_org ?? "?")}</span>`;
+    const multiTrade = p.trades.length > 1
+      ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">+${p.trades.length - 1} earlier</span>`
+      : "";
+    return `
+      <div class="player-row" data-idx="${idx}" style="grid-template-columns:${TCOLS};">
+        <div class="rank-num">${i + 1}</div>
+        <div>
+          <div class="player-name">${escapeHtml(p.player_name)}</div>
+          <div class="player-meta">${escapeHtml(p.position ?? "—")} · ${escapeHtml(p.org ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}</div>
+        </div>
+        <div>
+          <span class="grad-pill" style="background:var(--bg-tertiary);color:var(--neon-violet);border:1px solid var(--border);">${lastTrade.trade_date}</span>
+          ${multiTrade}
+        </div>
+        <div style="font-size:12px;">${tradeFlow}</div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span>${fvTrendHTML(p)}</div>
+        <div class="line-chart-cell desktop-only">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades)}</div>
+        <div class="candle-cell desktop-only">${makeCandle(p)}</div>
+        <div class="stock-cell">${stockHTML(p.stock)}</div>
+      </div>
+      <div class="detail-panel" id="traded-detail-${idx}">${detailTable(p)}</div>
+    `;
+  }).join("");
+
+  document.getElementById("traded-rows").innerHTML = filtered.length
+    ? header + rows
+    : `<div class="state-message">No traded prospects match these filters.</div>`;
+  document.querySelectorAll("#traded-section .player-row").forEach(row => {
+    row.addEventListener("click", () => {
+      document.getElementById(`traded-detail-${row.dataset.idx}`).classList.toggle("open");
+    });
+  });
+}
+
 function renderGraduates() {
   const filtered = getFilteredGrads();
-  // Shared time axis across all grad sparklines
-  const gradAllDates = [...new Set(DATA.graduates.flatMap(g => g.points.map(pt => pt.snapshot_date)))].sort();
 
   // Group by date so the most-recent class can be visually flagged
   const byDate = {};
@@ -1038,8 +1157,8 @@ function renderGraduates() {
     const isMostRecent = date === sortedDates[0];
     for (const g of byDate[date]) {
       const pillClass = isMostRecent ? "grad-pill most-recent" : "grad-pill";
-      const chartHtml = (g.points && g.points.length >= 2 && gradAllDates.length >= 2)
-        ? makeLineChart(g.points, g.fv_open, g.fv_close, gradAllDates)
+      const chartHtml = (g.points && g.points.length >= 2)
+        ? makeLineChart(g.points, g.fv_open, g.fv_close, g.graduation_date, g.trades)
         : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
       const fvLabel = g.fv_close != null ? Math.round(g.fv_close) : "—";
       body += `
@@ -1150,8 +1269,10 @@ function updateMeta() {
     `<span class="dot">·</span>${DATA.active_count} active` +
     `<span class="dot">·</span>${DATA.inactive_count ?? (DATA.inactive || []).length} inactive` +
     `<span class="dot">·</span>${DATA.graduate_count} graduates`;
+  const tradedCount = DATA.players.filter(p => (p.trades || []).length > 0).length;
   const countMap = {
     active:    `${getFilteredActives().length} of ${DATA.active_count}`,
+    traded:    `${getFilteredTraded().length} of ${tradedCount}`,
     inactive:  `${getFilteredInactives().length} of ${DATA.inactive_count ?? (DATA.inactive || []).length}`,
     graduates: `${getFilteredGrads().length} of ${DATA.graduate_count}`,
     farm:      `${(DATA.org_summary || []).length} organizations`,
@@ -1336,14 +1457,12 @@ function renderInactive() {
     <span>FV history</span>
   </div>`;
 
-  const allDates = [...new Set((DATA.inactive || []).flatMap(p => p.points.map(pt => pt.snapshot_date)))].sort();
-
   const rows = filtered.map((p, i) => {
     const latest = p.points.length ? p.points[p.points.length - 1] : null;
     const fvLabel = latest ? latest.consensus_fv_label : "—";
     const lastSeen = latest ? latest.snapshot_date : "—";
-    const chartHtml = (p.points.length >= 2 && allDates.length >= 2)
-      ? makeLineChart(p.points, p.fv_open, p.fv_close, allDates)
+    const chartHtml = (p.points.length >= 2)
+      ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades)
       : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
     return `
       <div class="grad-row" style="grid-template-columns: 32px 1.4fr 1fr 0.5fr 1fr;">
@@ -1366,15 +1485,27 @@ function renderInactive() {
 }
 
 function render() {
-  const sections = { active: "active-section", inactive: "inactive-section", graduates: "graduates-section", farm: "farm-section" };
+  const sections = {
+    active:    "active-section",
+    traded:    "traded-section",
+    inactive:  "inactive-section",
+    graduates: "graduates-section",
+    farm:      "farm-section",
+  };
   for (const [name, id] of Object.entries(sections)) {
     const el = document.getElementById(id);
     if (el) el.style.display = state.section === name ? "block" : "none";
   }
-  // Hide the stock/org/sort filter bar when on farm or graduates tabs
+  // Show the stock/org/sort filter bar only on tabs that actually use it.
+  // The traded tab uses the search + org filter (but not stock or sort), so
+  // we still surface the bar there.
   const filterBar = document.getElementById("filter-bar");
-  if (filterBar) filterBar.style.display = (state.section === "active") ? "" : "none";
-  if (state.section === "active")    renderActives();
+  if (filterBar) {
+    const usesFilters = state.section === "active" || state.section === "traded";
+    filterBar.style.display = usesFilters ? "" : "none";
+  }
+  if (state.section === "active")         renderActives();
+  else if (state.section === "traded")    renderRecentlyTraded();
   else if (state.section === "inactive")  renderInactive();
   else if (state.section === "graduates") renderGraduates();
   else if (state.section === "farm")      renderFarmSystems();
