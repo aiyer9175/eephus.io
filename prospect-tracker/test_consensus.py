@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import pytest
 from scrapers import Snapshot, _parse_fv
 from consensus import (
-    WHOLE_FV_GRADES, PLUS_GRADES, snap_to_grade,
+    snap_to_grade,
     implied_fv_from_rank, compute_consensus_point, build_timeseries,
     stock_movement, SourceWeight, DEFAULT_WEIGHTS,
 )
@@ -62,14 +62,11 @@ class TestSnapToGrade:
             fv, label = snap_to_grade(float(g))
             assert label == str(g)
 
-    def test_plus_grade_emitted(self):
-        fv, label = snap_to_grade(57.5)
-        assert label == "55+"
-
-    def test_75_never_emitted(self):
-        for raw in [73.0, 74.0, 75.0, 76.0, 77.0]:
-            fv, label = snap_to_grade(raw)
-            assert label != "75"
+    def test_rounds_to_nearest_int(self):
+        assert snap_to_grade(57.5)[1] == "58"
+        assert snap_to_grade(57.4)[1] == "57"
+        assert snap_to_grade(46.25)[1] == "46"
+        assert snap_to_grade(63.3)[1] == "63"
 
     def test_clamps(self):
         assert snap_to_grade(15.0)[0] == 20.0
@@ -100,7 +97,7 @@ class TestSevenSourceConsensus:
             _snap("the_athletic",     "X", rank=2),
         ]
         pt = compute_consensus_point(snaps)
-        assert pt.consensus_fv_label == "60+"
+        assert pt.consensus_fv_label == "63"
         assert pt.avg_fv == 65.0
         assert pt.avg_rank == 2.0
         # All seven sources contributed
@@ -122,7 +119,7 @@ class TestSevenSourceConsensus:
             _snap("the_athletic",     "X", rank=3),
         ]
         pt = compute_consensus_point(snaps)
-        assert pt.consensus_fv_label in ("60", "60+")
+        assert pt.consensus_fv_label == "61"
         assert pt.avg_fv > 60.0  # 4-grader mean is 61.25
 
     def test_rank_only_sources(self):
@@ -146,9 +143,8 @@ class TestSevenSourceConsensus:
         pt = compute_consensus_point(snaps)
         assert pt is not None
         # FG 45 weight 3.0, BA rank 85 -> implied 50, weight 1.0
-        # raw = (45*3 + 50*1) / 4 = 46.25
-        # 46.25 is within 1.25 of 47.5 (the 45+ midpoint) -> snaps to "45+"
-        assert pt.consensus_fv_label == "45+"
+        # raw = (45*3 + 50*1) / 4 = 46.25 -> rounds to 46
+        assert pt.consensus_fv_label == "46"
 
 
 # ---------------------------------------------------------------------------

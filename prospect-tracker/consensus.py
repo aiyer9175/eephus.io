@@ -64,24 +64,10 @@ PLUS_GRADES = {
 
 
 def snap_to_grade(raw_fv: float) -> tuple[float, str]:
-    """Snap a raw averaged FV to the nearest published grade.
-
-    Rules:
-      - If raw_fv is within 1.25 points of a '+' midpoint (e.g. 57.5 -> '55+'),
-        prefer the '+' label and return its midpoint value (e.g. 57.5).
-      - Otherwise snap to the nearest whole published grade from WHOLE_FV_GRADES.
-      - Never return the unused '75' grade.
-    """
+    """Round a raw averaged FV to the nearest whole number on the 20-80 scale."""
     raw_fv = max(20.0, min(80.0, raw_fv))
-
-    # Prefer '+' grades when close to their midpoint
-    for label, midpoint in PLUS_GRADES.items():
-        if abs(raw_fv - midpoint) <= 1.25:
-            return float(midpoint), label
-
-    # Otherwise snap to nearest whole published grade
-    best = min(WHOLE_FV_GRADES, key=lambda g: abs(raw_fv - g))
-    return float(best), str(best)
+    rounded = int(round(raw_fv))
+    return float(rounded), str(rounded)
 
 
 # ---------------------------------------------------------------------------

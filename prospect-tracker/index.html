@@ -619,11 +619,15 @@
       <button class="chip" data-farm-sort="tier_60">60+ prospects</button>
       <button class="chip" data-farm-sort="avg_age">Youngest system</button>
       <button class="chip" data-farm-sort="stock_up">Rising prospects</button>
-      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+      <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <span style="font-size:11px;color:var(--text-tertiary);">Tier bar:</span>
-        <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-60-bg);color:var(--fv-60-fg);">60+</span>
+        <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-70-bg);color:var(--fv-70-fg);">70</span>
+        <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-65-bg);color:var(--fv-65-fg);">65</span>
+        <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-60-bg);color:var(--fv-60-fg);">60</span>
         <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-55-bg);color:var(--fv-55-fg);">55</span>
         <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-50-bg);color:var(--fv-50-fg);">50</span>
+        <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-45-bg);color:var(--fv-45-fg);">45</span>
+        <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-40-bg);color:var(--fv-40-fg);">40</span>
       </div>
     </div>
     <div id="farm-rows"></div>
@@ -1139,24 +1143,39 @@ function updateMeta() {
 // FARM SYSTEMS
 // =============================================================================
 
-function makeTierBar(t60, t55, t50, total) {
+// Tiers descending; matches the fvClass thresholds used for badge colors.
+const TIER_BUCKETS = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
+
+function makeTierBar(prospects) {
+  const total = (prospects || []).length;
   if (!total) return '<span style="color:var(--text-tertiary);font-size:11px;">—</span>';
+
+  const counts = Object.fromEntries(TIER_BUCKETS.map(t => [t, 0]));
+  prospects.forEach(p => {
+    const n = parseInt(p.fv_label, 10);
+    const tier = TIER_BUCKETS.find(t => n >= t) ?? 20;
+    counts[tier]++;
+  });
+
   const W = 110;
-  const w60 = ((t60 / total) * W).toFixed(1);
-  const w55 = ((t55 / total) * W).toFixed(1);
-  const w50 = ((t50 / total) * W).toFixed(1);
-  const x55 = (t60 / total * W).toFixed(1);
-  const x50 = ((t60 + t55) / total * W).toFixed(1);
-  const labels = [
-    t60 ? `<span style="color:var(--fv-60-fg);font-size:10px;">${t60}×60+</span>` : '',
-    t55 ? `<span style="color:var(--fv-55-fg);font-size:10px;">${t55}×55</span>`  : '',
-    t50 ? `<span style="color:var(--text-tertiary);font-size:10px;">${t50}×50</span>` : '',
-  ].filter(Boolean).join(' ');
+  let x = 0;
+  const segments = TIER_BUCKETS.filter(t => counts[t] > 0).map(t => {
+    const w = (counts[t] / total) * W;
+    const rect = `<rect x="${x.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="10" fill="var(--fv-${t}-fg)" opacity="0.9"><title>${counts[t]} × FV ${t}${t === 60 ? '+' : ''}</title></rect>`;
+    x += w;
+    return rect;
+  }).join('');
+
+  // Labels: show counts for the meaningful tiers (≥40), capped to 4.
+  const labels = TIER_BUCKETS
+    .filter(t => t >= 40 && counts[t] > 0)
+    .slice(0, 4)
+    .map(t => `<span style="color:var(--fv-${t}-fg);font-size:10px;">${counts[t]}×${t}</span>`)
+    .join(' ');
+
   return `<div class="tier-bar">
     <svg width="${W}" height="10" style="border-radius:2px;overflow:hidden;flex-shrink:0">
-      <rect x="0"    y="0" width="${w60}" height="10" fill="var(--fv-60-fg)" opacity="0.85"/>
-      <rect x="${x55}" y="0" width="${w55}" height="10" fill="var(--fv-55-fg)" opacity="0.85"/>
-      <rect x="${x50}" y="0" width="${w50}" height="10" fill="var(--border)"/>
+      ${segments}
     </svg>
     <span>${labels}</span>
   </div>`;
@@ -1259,7 +1278,7 @@ function renderFarmSystems() {
       <div class="farm-row" onclick="document.getElementById('${id}').classList.toggle('open'); this.querySelector('.farm-toggle').textContent = document.getElementById('${id}').classList.contains('open') ? '▲' : '▼';">
         <div class="farm-rank">${org.farm_rank}</div>
         <div class="farm-org">${escapeHtml(org.org)}</div>
-        <div>${makeTierBar(org.tier_60_plus, org.tier_55, org.tier_50, org.count)}</div>
+        <div>${makeTierBar(org.prospects)}</div>
         <div style="font-size:12px;">
           ${tp ? `<span style="font-weight:500;">${escapeHtml(tp.name)}</span>
           <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:10px;padding:1px 5px;margin-left:4px;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
