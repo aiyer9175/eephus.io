@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Embed Example — Prospect Tracker</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1F1E1B; }
+    code { background: #F0EFE6; padding: 1px 6px; border-radius: 4px; font-size: 0.9em; }
+    pre { background: #F0EFE6; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+    iframe { border: 1px solid #DDD9C8; border-radius: 6px; width: 100%; }
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.1rem; margin-top: 2rem; }
+    .note { background: #FAEEDA; padding: 0.75rem 1rem; border-radius: 6px; font-size: 13px; margin: 1rem 0; }
+  </style>
+</head>
+<body>
+
+<h1>How to embed the Prospect Tracker</h1>
+<p>Three ways to get the tracker onto your site, ordered from simplest to most flexible.</p>
+
+<h2>Option 1: Iframe (zero setup)</h2>
+<p>Host <code>index.html</code> and <code>data/timeseries.json</code> anywhere static (Netlify, GitHub Pages, S3, your own server), then embed via iframe. The tracker is fully self-contained.</p>
+
+<pre>&lt;iframe
+  src="https://your-host.example.com/prospect-tracker/index.html"
+  width="100%"
+  height="900"
+  style="border: none;"
+  title="MLB Prospect Stock Tracker"&gt;
+&lt;/iframe&gt;</pre>
+
+<p>Live preview (loads the tracker from this directory):</p>
+<iframe src="index.html" height="900" title="Prospect Tracker preview"></iframe>
+
+<h2>Option 2: Same-domain include</h2>
+<p>If you want the tracker on your existing site without an iframe (e.g., to share fonts, header, footer), copy the <code>web/</code> directory to your site and link to <code>index.html</code> like any normal page. The styles are scoped enough not to bleed into your site's CSS, but you may want to wrap the <code>&lt;style&gt;</code> block contents in a parent selector if you do see conflicts.</p>
+
+<h2>Option 3: Custom JSON host</h2>
+<p>If you want to host <code>timeseries.json</code> separately from the HTML (e.g., put the JSON on a CDN while the HTML stays on your main site), edit the <code>DATA_URL</code> constant near the bottom of <code>index.html</code>:</p>
+
+<pre>// Change this line near the bottom of index.html:
+const DATA_URL = "https://cdn.your-host.example.com/timeseries.json";</pre>
+
+<div class="note">
+<strong>CORS note:</strong> if <code>timeseries.json</code> is hosted on a different origin than the HTML, the JSON host must send <code>Access-Control-Allow-Origin: *</code> (or your specific domain). Most static hosts let you configure this; GitHub Pages and Netlify enable it by default for cross-origin reads of public files.
+</div>
+
+<h2>Refreshing the data</h2>
+<p>Every month, run <code>python run_monthly.py</code> on the source machine (or schedule it via cron / GitHub Actions). The resulting <code>data/timeseries.json</code> is what the page reads. As long as you re-upload that file, the embedded tracker updates with no other changes needed.</p>
+
+<p>See <code>web/README.md</code> for full deployment recipes (Netlify, GitHub Pages, S3, plain Nginx).</p>
+
+</body>
+</html>

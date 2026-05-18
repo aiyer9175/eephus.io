@@ -1,0 +1,32 @@
+# --- Generated artifacts ------------------------------------------------
+# Source of truth is manual_rankings.csv + the scrapers. Everything below
+# can be rebuilt by running `py -3 run_monthly.py`.
+.cache/
+prospects.db
+prospects.db-journal
+prospects.db-wal
+prospects.db-shm
+data/timeseries.json
+
+# --- Python -------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.venv/
+venv/
+env/
+
+# --- Editors / OS -------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Misc ---------------------------------------------------------------
+*.log

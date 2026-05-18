@@ -11,6 +11,8 @@ env/
 *.parquet
 *.sqlite
 *.db
+# prospect-tracker carve-outs: manual_rankings.csv is the source of truth
+!prospect-tracker/manual_rankings.csv
 
 # generated outputs
 bat_plus_outputs/
