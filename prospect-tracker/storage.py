@@ -90,6 +90,12 @@ CREATE TABLE IF NOT EXISTS statcast_metrics (
     fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS career_stats (
+    player_key   TEXT PRIMARY KEY,
+    payload_json TEXT NOT NULL,       -- list of per-season stat rows (most recent first)
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS trades (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
     player_key       TEXT NOT NULL,
@@ -365,6 +371,37 @@ def load_statcast_metrics() -> dict[str, dict]:
     return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
 
 
+def upsert_career_stats(career_by_player: dict[str, list[dict]]) -> int:
+    """Upsert year-by-year career stats. One row per player."""
+    n = 0
+    with connect() as con:
+        for key, rows in career_by_player.items():
+            if not rows:
+                continue
+            con.execute(
+                """INSERT INTO career_stats (player_key, payload_json, fetched_at)
+                   VALUES (?, ?, datetime('now'))
+                   ON CONFLICT(player_key) DO UPDATE SET
+                     payload_json=excluded.payload_json,
+                     fetched_at=excluded.fetched_at""",
+                (key, json.dumps(rows)),
+            )
+            n += 1
+    return n
+
+
+def load_career_stats() -> dict[str, list[dict]]:
+    """Return {player_key: [season_rows]} for every stored career history."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, payload_json FROM career_stats"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
+
+
 def start_run() -> int:
     with connect() as con:
         cur = con.execute(
@@ -399,6 +436,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           pitch_arsenals: dict[str, dict] | None = None,
                           statcast_metrics: dict[str, dict] | None = None,
                           trades_by_player: dict[str, list[dict]] | None = None,
+                          career_stats: dict[str, list[dict]] | None = None,
                           top_n_active: int | None = None):
     """
     Serialize for the front-end widget.
@@ -408,29 +446,57 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
       - pitch_arsenal : pitch mix and velo for pitchers (may be None)
       - statcast      : exit velo, hard-hit %, launch angle, barrel % (may be None)
       - trades        : list of trade events
+      - career_stats  : year-by-year stats (most recent first), capped at
+                        CAREER_SEASONS_KEPT and collapsed to highest level
+                        per season. Drives the prospect detail page.
       - birth_date + age + age_vs_level
     """
     statlines = statlines or {}
     pitch_arsenals = pitch_arsenals or {}
     statcast_metrics = statcast_metrics or {}
     trades_by_player = trades_by_player or {}
+    career_stats = career_stats or {}
     birth_dates = load_birth_dates()
     from stats import compute_age_decimal
     from age_level import score_age_vs_level
     from eta import estimate_eta
     from trades import canonical_org
+    from level_norms import (
+        compute_level_norms,
+        age_baselines_from_norms,
+        ops_norms_from_norms,
+        era_norms_from_norms,
+    )
+
+    # Empirical level baselines computed from the career_stats payload we
+    # already have. age_baselines / ops_norms / era_norms feed into the
+    # per-player ETA + age-vs-level calls below.
+    level_norms = compute_level_norms(career_stats, birth_dates)
+    age_baselines = age_baselines_from_norms(level_norms)
+    ops_norms = ops_norms_from_norms(level_norms)
+    era_norms = era_norms_from_norms(level_norms)
 
     PITCHER_POS_SET = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP"}
+
+    # Org rebrand pairs that look like cross-org trades but aren't —
+    # the Athletics dropped their "Oakland" prefix mid-2024, which made
+    # every prospect's snapshots flip OAK↔ATH and the inferred path
+    # registered a fake trade for each.
+    _REBRAND_PAIRS = {
+        ("OAK", "ATH"),
+        ("ATH", "OAK"),
+    }
 
     def _is_real_trade(t: dict) -> bool:
         """
         True for actual inter-org trades; False for MiLB affiliate
-        assignments (FCL Tigers → Lakeland Flying Tigers etc.) which the
-        MLB transactions API returns alongside genuine trades.
+        assignments (FCL Tigers → Lakeland Flying Tigers etc.) and the
+        Athletics rebrand (OAK ↔ ATH).
 
         Two paths qualify:
           - source='inferred': we only infer when a prospect's canonical
-            org changes across snapshots, so all inferred rows are real.
+            org changes across snapshots, so all inferred rows are real
+            EXCEPT the OAK↔ATH rebrand.
           - source='mlb_api': accept when the description text mentions
             "traded" (the API's free-text marker for trade transactions —
             assignments use "assigned"), OR when both from_org and to_org
@@ -439,48 +505,147 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             from/to fields are affiliate names; the canonical-org check
             catches recent trades whose descriptions haven't propagated.
         """
+        cf = canonical_org(t.get("from_org"))
+        ct = canonical_org(t.get("to_org"))
+        if (cf, ct) in _REBRAND_PAIRS:
+            return False
         desc = (t.get("description") or "").lower()
         if t.get("source") == "inferred":
-            cf = canonical_org(t.get("from_org"))
-            ct = canonical_org(t.get("to_org"))
             return bool(cf and ct and cf != ct and len(cf) == 3 and len(ct) == 3)
         if "traded" in desc:
             return True
-        cf = canonical_org(t.get("from_org"))
-        ct = canonical_org(t.get("to_org"))
         return bool(cf and ct and cf != ct and len(cf) == 3 and len(ct) == 3)
 
+    def _trade_pref_score(t: dict) -> int:
+        """Higher = preferred when collapsing duplicates. Prefer mlb_api
+        rows with a description (richest record), then any mlb_api,
+        then inferred."""
+        if t.get("source") == "mlb_api":
+            return 2 if (t.get("description") or "") else 1
+        return 0
+
     def _filter_real_trades(trades: list[dict]) -> list[dict]:
-        seen: set[tuple] = set()
-        out: list[dict] = []
+        """
+        Collapse duplicate trade records to one entry per real trade event.
+
+        Rule 1: When an API trade exists for a (canonical_from,
+                canonical_to) pair, it supersedes any inferred trade with
+                the same pair. API records carry the precise transaction
+                date plus a description; the inferred path is a fallback
+                that can produce stale entries from older snapshot
+                evolutions and shouldn't compete once the real record
+                arrives. (A genuine re-trade between the same orgs within
+                the same season is extremely rare for prospects.)
+
+        Rule 2: API records with identical (date, canonical_from,
+                canonical_to) collapse to the richest entry — the one
+                with a description, falling back to the earliest date.
+
+        Rule 3: Inferred-only events within a (canonical_from, canonical_to)
+                pair collapse on date-range overlap (the snapshot path
+                often re-fires across pipeline runs as the snapshot
+                history grows). Pick the EARLIEST trade_date in each
+                cluster so the marker sits close to when the trade
+                actually happened.
+        """
+        from datetime import date as _date
+        from collections import defaultdict
+
+        # Step 1: parse + filter to real trades.
+        candidates: list[dict] = []
         for t in trades:
             if not _is_real_trade(t):
                 continue
-            # Dedup duplicates that come from snapshot-date repeats — the
-            # inferred path can register the same trade on consecutive
-            # snapshot rows. Key on (date, canonical from, canonical to).
-            key = (
-                t.get("trade_date"),
-                canonical_org(t.get("from_org")),
-                canonical_org(t.get("to_org")),
-            )
-            if key in seen:
+            try:
+                td = _date.fromisoformat(t.get("trade_date", ""))
+            except (TypeError, ValueError):
                 continue
-            seen.add(key)
-            out.append(t)
-        return out
+            try:
+                rs = _date.fromisoformat(t.get("date_range_start") or "")
+            except (TypeError, ValueError):
+                rs = td
+            try:
+                re_ = _date.fromisoformat(t.get("date_range_end") or "")
+            except (TypeError, ValueError):
+                re_ = td
+            candidates.append({
+                "_t": t, "td": td, "rs": rs, "re": re_,
+                "cf": canonical_org(t.get("from_org")),
+                "ct": canonical_org(t.get("to_org")),
+            })
+
+        # Step 2: separate API and inferred per (cf, ct).
+        api_by_pair: dict[tuple, list[dict]] = defaultdict(list)
+        inferred_by_pair: dict[tuple, list[dict]] = defaultdict(list)
+        for c in candidates:
+            pair = (c["cf"], c["ct"])
+            if c["_t"].get("source") == "mlb_api":
+                api_by_pair[pair].append(c)
+            else:
+                inferred_by_pair[pair].append(c)
+
+        chosen: list[dict] = []
+
+        # Rule 1+2: per pair, if there are any API records, keep the best
+        # one PER trade-date (API trade-dates are accurate, so distinct
+        # dates within the same pair are distinct events).
+        for pair, api_list in api_by_pair.items():
+            by_date: dict[_date, dict] = {}
+            for c in api_list:
+                existing = by_date.get(c["td"])
+                if existing is None:
+                    by_date[c["td"]] = c
+                else:
+                    if _trade_pref_score(c["_t"]) > _trade_pref_score(existing["_t"]):
+                        by_date[c["td"]] = c
+            chosen.extend(by_date.values())
+
+        # Rule 3: inferred-only events. Skip any (cf, ct) pair that
+        # already has an API record (the API record wins outright).
+        for pair, inf_list in inferred_by_pair.items():
+            if pair in api_by_pair:
+                continue
+            # Interval-merge clusters on date_range overlap.
+            inf_list.sort(key=lambda x: x["rs"])
+            current: list[dict] = []
+            current_end: _date | None = None
+            clusters: list[list[dict]] = []
+            for c in inf_list:
+                if current and c["rs"] <= current_end:
+                    current.append(c)
+                    if c["re"] > current_end:
+                        current_end = c["re"]
+                else:
+                    if current:
+                        clusters.append(current)
+                    current = [c]
+                    current_end = c["re"]
+            if current:
+                clusters.append(current)
+            for cluster in clusters:
+                # Earliest trade_date wins.
+                cluster.sort(key=lambda x: x["td"])
+                chosen.append(cluster[0])
+
+        chosen.sort(key=lambda x: x["td"])
+        return [c["_t"] for c in chosen]
 
     def _serialize(p: PlayerTimeseries) -> dict:
         bd = birth_dates.get(p.player_key)
         age = compute_age_decimal(bd)
         sl = statlines.get(p.player_key)
         level = sl.get("level") if sl else None
-        avl = score_age_vs_level(age, level)
+        avl = score_age_vs_level(age, level, baselines=age_baselines)
         pa = pitch_arsenals.get(p.player_key)
         sc = statcast_metrics.get(p.player_key)
         is_pitcher = bool(p.position and p.position.split("/")[0] in PITCHER_POS_SET)
         latest_fv = p.points[-1].consensus_fv_raw if p.points else None
-        eta = estimate_eta(level, age, is_pitcher, latest_fv, sl)
+        eta = estimate_eta(
+            level, age, is_pitcher, latest_fv, sl,
+            expected_ages=age_baselines,
+            ops_norm=ops_norms,
+            era_norm=era_norms,
+        )
         return {
             "player_key": p.player_key,
             "player_name": p.player_name,
@@ -504,6 +669,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "pitch_arsenal": pa,
             "statcast": sc,
             "trades": _filter_real_trades(trades_by_player.get(p.player_key, [])),
+            "career_stats": career_stats.get(p.player_key, []),
             "eta": {
                 "year": eta.eta_year,
                 "confidence": eta.confidence,
@@ -599,7 +765,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         stock_dir = p.points[-1].consensus_fv_raw - p.points[0].consensus_fv_raw if len(p.points) > 1 else 0.0
         sl = statlines.get(p.player_key)
         level = sl.get("level") if sl else None
-        avl = score_age_vs_level(age, level)
+        avl = score_age_vs_level(age, level, baselines=age_baselines)
         pos_grp = _pos_group(p.position)
 
         if org not in org_map:
@@ -675,6 +841,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "inactive":   [_serialize(p) for p in inactives],
         "graduates":  [_serialize(p) for p in grads],
         "org_summary": org_summary,
+        "level_norms": level_norms,
     }
     out_path.write_text(json.dumps(payload, indent=2))
     return out_path

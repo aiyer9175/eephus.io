@@ -321,6 +321,11 @@ class PlayerIndex:
                         "firstName": p.get("firstName", ""),
                         "lastName": p.get("lastName", ""),
                         "birthDate": p.get("birthDate") or "",
+                        # MLB debut date when available — sport=1 returns it
+                        # consistently, MiLB endpoints sometimes don't.
+                        # We use it as the graduation_date when the bulk
+                        # graduation scanner promotes a player.
+                        "mlbDebutDate": p.get("mlbDebutDate") or "",
                         "position": (p.get("primaryPosition") or {}).get("abbreviation") or "",
                         "active": bool(p.get("active")),
                         "sport_id": sport_id,
@@ -338,11 +343,20 @@ class PlayerIndex:
         self.players = records
         self.by_name = {}
         self.by_last = {}
+        self.by_id: dict[int, dict] = {}
         for r in records:
             self.by_name.setdefault(_norm_key(r["fullName"]), []).append(r)
             last = r.get("lastName") or ""
             if last:
                 self.by_last.setdefault(_norm_key(last), []).append(r)
+            self.by_id[r["id"]] = r
+
+    def get_debut_date(self, mlbam_id: int) -> str | None:
+        """Return the player's mlbDebutDate (ISO string), or None if unknown."""
+        rec = self.by_id.get(mlbam_id)
+        if rec and rec.get("mlbDebutDate"):
+            return rec["mlbDebutDate"]
+        return None
 
     # -- Lookup ------------------------------------------------------------
 
@@ -1129,6 +1143,126 @@ def date_today_iso() -> str:
 
 
 # ---------------------------------------------------------------------------
+# Career year-by-year fetch
+# ---------------------------------------------------------------------------
+
+# How many recent seasons to keep when building the prospect-page career
+# table. The yearByYear endpoint returns every season the player has on
+# record (incl. amateur lookalikes for some players); we cap to the most
+# recent N so the table stays scannable.
+CAREER_SEASONS_KEPT = 5
+
+
+def fetch_career_stats(player_key: str, mlbam_id: int,
+                       is_pitcher: bool = False) -> list[dict] | None:
+    """
+    Pull year-by-year MiLB + MLB splits for one player in a single call.
+
+    Returns a list of {season, level, level_label, games, ip / pa, ...}
+    one row per (season, highest level reached that year). Returns None
+    if the API gave us nothing.
+
+    The yearByYear endpoint returns one split per (season, league/level),
+    so a player with stints at A+/AA in 2025 produces two rows. We
+    collapse to the HIGHEST level per season since that's what scouts
+    react to — the per-level breakdown rarely matters on the profile
+    page and would clutter the table.
+    """
+    group = "pitching" if is_pitcher else "hitting"
+    base = f"{MLB_STATS_API}/people/{mlbam_id}/stats?stats=yearByYear&group={group}"
+    urls = [
+        f"{base}&leagueListId=milb_full",   # every MiLB level
+        base,                                # MLB-only line
+    ]
+    raw_splits: list[dict] = []
+    for url in urls:
+        time.sleep(RATE_LIMIT_SECONDS)
+        try:
+            resp = requests.get(url, timeout=15)
+            resp.raise_for_status()
+            for block in resp.json().get("stats", []):
+                raw_splits.extend(block.get("splits", []))
+        except Exception as e:
+            log.debug("career fetch failed for %s url=%s: %s", mlbam_id, url, e)
+
+    if not raw_splits:
+        return None
+
+    # Group by season and pick the highest level per year.
+    by_season: dict[str, dict] = {}
+    for s in raw_splits:
+        season = str(s.get("season") or "")
+        if not season:
+            continue
+        league = s.get("league") or {}
+        level_name = (league.get("sport") or {}).get("name") \
+                     or league.get("name", "")
+        # Map to short label using same logic as _highest_level
+        label = None
+        best_len = 0
+        for key, lbl in LEVEL_LABELS.items():
+            if key.lower() in level_name.lower() and len(key) > best_len:
+                label = lbl
+                best_len = len(key)
+        if label is None or label not in LEVEL_ORDER:
+            continue
+        existing = by_season.get(season)
+        if existing is None or LEVEL_ORDER.index(label) < LEVEL_ORDER.index(existing["_level"]):
+            s["_level"] = label
+            s["_level_label"] = level_name
+            by_season[season] = s
+
+    if not by_season:
+        return None
+
+    out: list[dict] = []
+    for season in sorted(by_season, reverse=True):
+        s = by_season[season]
+        stat = s.get("stat", {})
+        row = {
+            "season": int(season),
+            "level": s["_level"],
+            "level_label": s["_level_label"],
+            "games": int(stat.get("gamesPlayed", 0) or 0),
+        }
+        if is_pitcher:
+            row.update({
+                "era": str(stat.get("era") or "—"),
+                "ip": float(stat.get("inningsPitched") or 0)
+                       if stat.get("inningsPitched") else None,
+                "k_per_9": _safe_float(stat.get("strikeoutsPer9Inn")),
+                "bb_per_9": _safe_float(stat.get("walksPer9Inn")),
+                "whip": _safe_float(stat.get("whip")),
+                "wins": int(stat.get("wins", 0) or 0),
+                "losses": int(stat.get("losses", 0) or 0),
+                "is_pitcher": True,
+            })
+        else:
+            pa = stat.get("plateAppearances", 0) or 0
+            bb = stat.get("baseOnBalls", 0) or 0
+            so = stat.get("strikeOuts", 0) or 0
+            row.update({
+                "avg": str(stat.get("avg") or "—"),
+                "obp": str(stat.get("obp") or "—"),
+                "slg": str(stat.get("slg") or "—"),
+                "ops": str(stat.get("ops") or "—"),
+                "hr":  int(stat.get("homeRuns", 0) or 0),
+                "sb":  int(stat.get("stolenBases", 0) or 0),
+                "rbi": int(stat.get("rbi", 0) or 0),
+                # Raw at-bats — kept for the bulk graduation pass so we can
+                # sum MLB-level rows against the 130-AB rookie threshold
+                # without making a separate `/people/{id}/stats?stats=career`
+                # call per prospect.
+                "ab":  int(stat.get("atBats", 0) or 0),
+                "bb_pct": round(100 * bb / pa, 1) if pa else None,
+                "k_pct":  round(100 * so / pa, 1) if pa else None,
+                "is_pitcher": False,
+            })
+        out.append(row)
+    return out[:CAREER_SEASONS_KEPT]
+
+
+# ---------------------------------------------------------------------------
 # Pitch arsenal fetch
 # ---------------------------------------------------------------------------
 
@@ -1430,6 +1564,92 @@ def check_rookie_threshold(mlbam_id: int, is_pitcher: bool) -> tuple[bool, str |
                 if ab >= ROOKIE_AB_THRESHOLD:
                     return True, None
     return False, None
+
+
+def detect_graduations_from_career(
+    career_stats: dict[str, list[dict]],
+    active_players: list[tuple[str, str, bool]],
+    player_index: "PlayerIndex | None" = None,
+    id_cache: dict[str, int | None] | None = None,
+) -> dict[str, str | None]:
+    """
+    Identify graduated prospects by summing their MLB-level career stats.
+
+    Replaces the per-prospect career-stats API call inside
+    `bulk_detect_graduations`. We already fetch yearByYear career stats for
+    every prospect in the pipeline, so summing the MLB-level rows is a
+    pure-compute operation — no network I/O. With ~3,000 prospects and
+    1-2 matched graduates per run, the old path cost 1-30 sequential
+    `/people/{id}/stats?stats=career` calls (~0.3-10s); the new one is
+    near-instant.
+
+    A player is treated as graduated when:
+        - position-players: career MLB at-bats >= ROOKIE_AB_THRESHOLD (130)
+        - pitchers       : career MLB innings pitched >= ROOKIE_IP_THRESHOLD (50)
+
+    Args:
+        career_stats : {player_key: [season_row, ...]} from `load_career_stats`.
+                       Each season_row should include `level`, `is_pitcher`,
+                       and either `ab` (hitters) or `ip` (pitchers).
+        active_players: (player_key, player_name, is_pitcher_hint). The hint
+                       fills in if a career_stats row has no `is_pitcher` flag.
+        player_index : optional `PlayerIndex` used to look up an accurate
+                       `mlbDebutDate` for the graduation_date. Falls back to
+                       "{earliest-MLB-season}-07-01" when the index has no
+                       debut date for this player.
+        id_cache     : optional MLBAM ID cache so we can find the prospect's
+                       record in `player_index`. Defaults to disk cache.
+
+    Returns:
+        {player_key: debut_date_or_None}
+    """
+    if id_cache is None:
+        id_cache = _load_id_cache()
+    pitcher_by_key = {key: bool(pit) for key, _, pit in active_players}
+    active_keys = set(pitcher_by_key)
+
+    graduates: dict[str, str | None] = {}
+    for player_key, rows in career_stats.items():
+        # Only consider prospects we currently track as non-graduated.
+        if player_key not in active_keys or not rows:
+            continue
+        # Per-row is_pitcher is set by fetch_career_stats based on whether
+        # we hit the hitting or pitching endpoint; fall back to the hint.
+        is_pitcher = bool(rows[0].get("is_pitcher", pitcher_by_key[player_key]))
+        mlb_rows = [r for r in rows if r.get("level") == "MLB"]
+        if not mlb_rows:
+            continue
+
+        if is_pitcher:
+            try:
+                total_ip = sum(float(r.get("ip") or 0) for r in mlb_rows)
+            except (TypeError, ValueError):
+                continue
+            exceeded = total_ip >= ROOKIE_IP_THRESHOLD
+        else:
+            try:
+                total_ab = sum(int(r.get("ab") or 0) for r in mlb_rows)
+            except (TypeError, ValueError):
+                continue
+            exceeded = total_ab >= ROOKIE_AB_THRESHOLD
+
+        if not exceeded:
+            continue
+
+        # Source the graduation_date: PlayerIndex.mlbDebutDate is the most
+        # accurate, then July 1 of the earliest MLB season as a fallback.
+        debut: str | None = None
+        if player_index is not None:
+            mid = id_cache.get(player_key)
+            if mid is not None:
+                debut = player_index.get_debut_date(mid)
+        if not debut:
+            earliest_season = min(r["season"] for r in mlb_rows)
+            debut = f"{earliest_season}-07-01"
+        graduates[player_key] = debut
+        log.info("GRADUATED (career-stats): %s  debut=%s", player_key, debut)
+
+    return graduates
 
 
 def bulk_detect_graduations(

@@ -36,13 +36,17 @@ from storage import (
     auto_graduate_player,
     upsert_pitch_arsenals, load_pitch_arsenals,
     upsert_statcast_metrics, load_statcast_metrics,
+    upsert_career_stats, load_career_stats,
     export_timeseries_json,
 )
 from consensus import build_timeseries
 from stats import (fetch_statlines_for, resolve_mlbam_id, fetch_birth_date,
                    fetch_birth_date_by_name,
                    fetch_pitch_arsenal, fetch_statcast_metrics,
-                   bulk_detect_graduations, bulk_resolve_ids)
+                   fetch_career_stats,
+                   bulk_resolve_ids,
+                   detect_graduations_from_career,
+                   PlayerIndex)
 from trades import detect_trades
 
 
@@ -130,42 +134,78 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         if bds_from_index:
             log.info("upserted %d birth dates from PlayerIndex", len(bds_from_index))
 
-        # --- 3a. Bulk graduation detection (always runs, fast) -----------
-        # One bulk call to the MLB roster API (~1 100 players) + a few
-        # targeted career-stats checks to confirm the 130 AB / 50 IP
-        # threshold. The MLBAM ID cache is now fully populated by the bulk
-        # resolve above, so this only does the graduation-threshold work.
+        # --- 3a. Fetch career year-by-year stats EARLY so they can drive
+        #         the bulk graduation pass below — no per-prospect career
+        #         API calls needed. Replaces 1-30 sequential
+        #         /people/{id}/stats?stats=career calls from the previous
+        #         bulk_detect_graduations implementation with one parallel
+        #         pre-fetch we'd be doing anyway.
+        career_cache = load_career_stats()
+        statlines = load_statlines()
+        if not skip_stats:
+            all_players = [
+                (p.player_key, p.player_name, _is_pitcher(p.position))
+                for p in timeseries
+            ]
+            log.info("fetching career year-by-year stats for %d players",
+                     len(all_players))
+            new_career: dict = {}
+            cs_tasks: list[tuple[str, int, bool]] = []
+            for key, name, is_p in all_players:
+                mlbam = resolve_mlbam_id(key, name)
+                if mlbam is None:
+                    continue
+                cs_tasks.append((key, mlbam, is_p))
+            if cs_tasks:
+                if workers is not None:
+                    max_workers = max(1, min(workers, len(cs_tasks)))
+                else:
+                    max_workers = min(16, max(1, len(cs_tasks)))
+                with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
+                    future_to_key = {
+                        ex.submit(fetch_career_stats, key, mlbam, is_pitcher=is_p): key
+                        for key, mlbam, is_p in cs_tasks
+                    }
+                    for fut in concurrent.futures.as_completed(future_to_key):
+                        key = future_to_key[fut]
+                        try:
+                            rows = fut.result()
+                            if rows:
+                                new_career[key] = rows
+                        except Exception as e:
+                            log.debug("career stats fetch failed for %s: %s", key, e)
+            if new_career:
+                upsert_career_stats(new_career)
+                career_cache.update(new_career)
+            log.info("fetched career stats for %d players", len(new_career))
+
+        # --- 3b. Bulk graduation detection from career_stats (no API I/O) -
+        # Sums MLB-level rows from career_stats we just fetched. Identifies
+        # any prospect who has crossed the 130-AB / 50-IP rookie threshold.
+        # Replaces the per-prospect /people/{id}/stats?stats=career calls
+        # the old bulk_detect_graduations made.
         active_for_grad = [
             (p.player_key, p.player_name, _is_pitcher(p.position))
             for p in timeseries if p.status != "graduated"
         ]
-        log.info("bulk graduation check: %d non-graduated prospects vs MLB roster",
+        log.info("bulk graduation check: %d non-graduated prospects",
                  len(active_for_grad))
-        graduates_found, bd_from_mlb = bulk_detect_graduations(
-            active_for_grad, season
+        player_index = PlayerIndex.load_or_build(season)
+        graduates_found = detect_graduations_from_career(
+            career_cache, active_for_grad, player_index=player_index,
         )
-        for key, bd in bd_from_mlb.items():
-            upsert_birth_date(key, bd)
-        if bd_from_mlb:
-            log.info("upserted %d birth dates from MLB roster bulk fetch",
-                     len(bd_from_mlb))
         if graduates_found:
             for pkey, debut_date in graduates_found.items():
                 auto_graduate_player(pkey, grad_date=debut_date)
-            log.info("auto-graduated %d players from bulk detection",
+            log.info("auto-graduated %d players from career-stats sum",
                      len(graduates_found))
             # Rebuild timeseries so subsequent steps see correct status
             all_snaps = load_all_snapshots()
             timeseries = build_timeseries(all_snaps)
 
-        # --- 3. Fetch stat lines (birth dates already collected above) ---
-        statlines = load_statlines()
+        # --- 3c. Fetch stat lines (current-season top-level digest) ------
         if not skip_stats:
-            # Single unified pass: fetch all players (active + graduated).
-            # fetch_statline now uses no sportIds filter, so it returns
-            # splits across all levels including MLB. _highest_level picks
-            # the top level. If an active prospect shows up at MLB, their
-            # stat line comes back with level="MLB" and we auto-graduate them.
+            # Rebuild after graduation rebuild above
             all_players = [
                 (p.player_key, p.player_name, _is_pitcher(p.position))
                 for p in timeseries
@@ -288,6 +328,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                         statcast[k] = asdict(sc)
                 log.info("fetched Statcast metrics for %d players", len(new_statcast))
 
+                # Career stats already fetched up in step 3a; nothing more
+                # to do here.
+
         else:
             arsenals = load_pitch_arsenals()
             statcast = load_statcast_metrics()
@@ -314,7 +357,8 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                statlines=statlines,
                                pitch_arsenals=arsenals,
                                statcast_metrics=statcast,
-                               trades_by_player=trades_by_player)
+                               trades_by_player=trades_by_player,
+                               career_stats=load_career_stats())
         log.info("wrote %s", out_path)
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,

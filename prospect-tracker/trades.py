@@ -68,38 +68,51 @@ class Trade:
 # Signal 1 — authoritative MLB transactions API
 # ---------------------------------------------------------------------------
 
-def fetch_trades_in_window(start_date: str, end_date: str) -> list[dict]:
+def fetch_trades_in_window(start_date: str, end_date: str,
+                            max_workers: int = 8) -> list[dict]:
     """
     Return every trade-type transaction in the [start, end] window.
 
     The transactions endpoint has a per-request range limit of about 30
-    days, so we chunk longer windows. Returns the raw API records;
-    matching to our tracked players happens downstream.
+    days, so we chunk longer windows. Chunks are fetched in parallel —
+    historical data is read-only (older chunks never change) and the API
+    handles concurrent reads happily, so a 7-year backfill that used to
+    take ~30s of sequential requests now finishes in ~4s.
+
+    Returns the raw API records; matching to our tracked players happens
+    downstream.
     """
+    import concurrent.futures
+
     start = date.fromisoformat(start_date)
     end = date.fromisoformat(end_date)
     if start > end:
         return []
 
-    all_records: list[dict] = []
+    # Build the chunk list up-front so order is preserved and we can
+    # parallelize the fetches.
+    chunks: list[tuple[date, date]] = []
     cursor = start
     while cursor <= end:
         chunk_end = min(cursor + timedelta(days=29), end)
+        chunks.append((cursor, chunk_end))
+        cursor = chunk_end + timedelta(days=1)
+
+    def _fetch(chunk: tuple[date, date]) -> list[dict]:
+        c_start, c_end = chunk
         url = (
             f"{MLB_STATS_API}/transactions"
-            f"?startDate={cursor.isoformat()}&endDate={chunk_end.isoformat()}"
+            f"?startDate={c_start.isoformat()}&endDate={c_end.isoformat()}"
         )
-        time.sleep(RATE_LIMIT_SECONDS)
         try:
             resp = requests.get(url, timeout=20)
             resp.raise_for_status()
             data = resp.json()
         except Exception as e:
             log.warning("transactions API %s -> %s failed: %s",
-                        cursor.isoformat(), chunk_end.isoformat(), e)
-            cursor = chunk_end + timedelta(days=1)
-            continue
-
+                        c_start.isoformat(), c_end.isoformat(), e)
+            return []
+        out: list[dict] = []
         for tx in data.get("transactions", []):
             # The API uses typeCode "TR" for trades. Some prospect-only
             # deals come through as "ASN" (assignment) or similar — we
@@ -109,12 +122,18 @@ def fetch_trades_in_window(start_date: str, end_date: str) -> list[dict]:
             from_team = (tx.get("fromTeam") or {}).get("name")
             to_team   = (tx.get("toTeam")   or {}).get("name")
             if type_code == "TR" or (from_team and to_team and from_team != to_team):
-                all_records.append(tx)
+                out.append(tx)
+        return out
 
-        cursor = chunk_end + timedelta(days=1)
+    all_records: list[dict] = []
+    worker_count = max(1, min(max_workers, len(chunks)))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as ex:
+        for chunk_records in ex.map(_fetch, chunks):
+            all_records.extend(chunk_records)
 
-    log.info("MLB transactions API: %d trade records in [%s..%s]",
-             len(all_records), start_date, end_date)
+    log.info("MLB transactions API: %d trade records in [%s..%s] "
+             "(%d chunks, %d workers)",
+             len(all_records), start_date, end_date, len(chunks), worker_count)
     return all_records
 
 
@@ -179,7 +198,11 @@ ORG_ALIASES = {
     "detroit": "DET", "tigers": "DET",
     "seattle": "SEA", "mariners": "SEA",
     "colorado": "COL", "rockies": "COL",
-    "washington": "WSH", "nationals": "WSH",
+    # Sources disagree on Washington: snapshots use "WSN", the MLB API
+    # uses "Washington Nationals". Canonicalize both to "WSN" so the
+    # dedup path treats inferred (WSN) and API (Washington Nationals)
+    # records as the same canonical destination.
+    "washington": "WSN", "nationals": "WSN", "wsh": "WSN",
     "tampa bay": "TBR", "rays": "TBR", "tb": "TBR",
     "cleveland": "CLE", "guardians": "CLE",
     "toronto": "TOR", "blue jays": "TOR",
@@ -204,14 +227,44 @@ ORG_ALIASES = {
 }
 
 
+# 3-letter codes that sources alias to a different canonical form.
+# Sources disagree on Washington: snapshots use "WSN", others use "WSH".
+# Athletics dropped their "Oakland" prefix mid-2024 — treat OAK as ATH.
+_CODE_REMAP = {
+    "WSH": "WSN",
+    "OAK": "ATH",
+}
+
+
 def canonical_org(raw: str | None) -> str | None:
-    """Normalize any org string to a 3-letter code. Pass-through if already short."""
+    """Normalize any org string to a 3-letter code. Pass-through if already short.
+
+    Handles:
+      - codes already in 3-4 char uppercase form ("BOS", "CHW")
+      - 3-letter aliases (WSH→WSN, OAK→ATH) so the source disagreement
+        doesn't fragment the same canonical destination across dedup
+      - exact-match keys in ORG_ALIASES (e.g. "boston", "red sox")
+      - full team names like "Boston Red Sox" — token-search using
+        word boundaries so the longest matching alias wins WITHOUT
+        catching substrings inside other words. ("Comets" must not
+        match the "mets" alias, which previously mapped a Dodgers
+        AAA affiliate name to NYM.)
+    """
     if not raw:
         return None
     s = raw.strip()
     if len(s) <= 4 and s.isupper():
-        return s  # already a code
-    return ORG_ALIASES.get(s.lower(), s)
+        return _CODE_REMAP.get(s, s)
+    low = s.lower()
+    if low in ORG_ALIASES:
+        return ORG_ALIASES[low]
+    # Token-search fallback with word boundaries. Try longer keys first so
+    # "chicago white sox" beats "chicago" for the White Sox.
+    import re as _re_local
+    for key in sorted(ORG_ALIASES, key=len, reverse=True):
+        if _re_local.search(rf"\b{_re_local.escape(key)}\b", low):
+            return ORG_ALIASES[key]
+    return s
 
 
 def infer_trades_from_snapshots(snapshots: list[Snapshot]) -> list[Trade]:

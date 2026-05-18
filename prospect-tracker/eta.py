@@ -11,11 +11,18 @@ using four signals we already have in the DB:
   4. FV grade       — scouts' overall assessment; high-grade prospects get
                       more organisational urgency behind their development
 
-These are intentionally coarse ±0.25/0.5 yr nudges on top of the base
-travel time, then rounded to the nearest calendar year.  The result is a
-heuristic, not a model trained on historical debut timelines — prospects are
-too individually variable for high-precision point estimates.  We surface a
-confidence tier ("high" / "medium" / "low") so the UI can communicate that.
+The "level-typical" age and performance baselines are EMPIRICAL — computed
+at export time by `level_norms.compute_level_norms` over the most recent
+two seasons of `career_stats`. This sharpens the "young for level" signal
+considerably: empirical AAA median age is ~25.8, not the 24.0 the old
+hardcoded baseline assumed, so a 22-year-old at AAA gets a stronger
+fast-track bonus than before. Static fallbacks below are used only when
+the caller didn't pass empirical norms or when a level has too few
+samples.
+
+These adjustments are intentionally coarse ±0.25/0.5 yr nudges on top of
+the base travel time, then rounded to the nearest calendar year. The
+result is a heuristic, not a model trained on historical debut timelines.
 
 Confidence levels:
   high   — current level + performance stats + age available
@@ -43,7 +50,8 @@ BASE_YEARS: dict[str, float] = {
     "DSL": 5.5,
 }
 
-# ── Expected age at each level (FanGraphs / BA convention) ─────────────────
+# ── Static fallback expected ages — only used when the caller does not
+# supply empirical numbers from level_norms (e.g. unit tests).
 EXPECTED_AGES: dict[str, float] = {
     "A":   21.0,
     "A+":  22.0,
@@ -53,8 +61,6 @@ EXPECTED_AGES: dict[str, float] = {
     "CPX": 18.5,
 }
 
-# ── Level-typical performance benchmarks ───────────────────────────────────
-# OPS and ERA norms at each level — rough MiLB averages.
 LEVEL_OPS_NORM: dict[str, float] = {
     "Rk":  .750, "CPX": .740, "A": .730, "A+": .720, "AA": .710, "AAA": .730,
 }
@@ -79,6 +85,9 @@ def estimate_eta(
     is_pitcher: bool,
     fv: float | None,
     stats: dict | None,
+    expected_ages: dict[str, float] | None = None,
+    ops_norm: dict[str, float] | None = None,
+    era_norm: dict[str, float] | None = None,
 ) -> ETAResult:
     """
     Return an ETAResult for the given prospect attributes.
@@ -98,6 +107,12 @@ def estimate_eta(
         Statline dict with keys like "ops", "era", "k_pct", "bb_pct".
     """
     today_year = date.today().year
+
+    # Use empirical norms when supplied; otherwise fall back to the static
+    # tables for callers (tests, ad-hoc scripts) that don't compute them.
+    age_norm = expected_ages if expected_ages is not None else EXPECTED_AGES
+    ops_n    = ops_norm     if ops_norm     is not None else LEVEL_OPS_NORM
+    era_n    = era_norm     if era_norm     is not None else LEVEL_ERA_NORM
 
     # ── Already in the majors ───────────────────────────────────────────────
     if current_level == "MLB":
@@ -128,7 +143,7 @@ def estimate_eta(
             if era_str is not None:
                 try:
                     era = float(era_str)
-                    norm = LEVEL_ERA_NORM.get(current_level, 4.00)
+                    norm = era_n.get(current_level, 4.00)
                     delta = era - norm          # positive = worse than average
                     if delta < -1.50:
                         perf_adj = -0.75       # completely dominating
@@ -150,7 +165,7 @@ def estimate_eta(
             if ops_str is not None:
                 try:
                     ops = float(ops_str)
-                    norm = LEVEL_OPS_NORM.get(current_level, .720)
+                    norm = ops_n.get(current_level, .720)
                     delta = ops - norm         # positive = above average
                     if delta > .180:
                         perf_adj = -0.75       # completely dominating
@@ -169,18 +184,27 @@ def estimate_eta(
                     pass
 
     # ── Age-for-level adjustment ────────────────────────────────────────────
-    if age is not None and current_level in EXPECTED_AGES:
-        expected = EXPECTED_AGES[current_level]
-        diff = age - expected               # positive = old for level
-        if diff >= 3.0:
-            age_adj = -0.75
-        elif diff >= 2.0:
-            age_adj = -0.50
-        elif diff >= 1.0:
-            age_adj = -0.25
+    # Direction follows scouting convention: a prospect who is meaningfully
+    # YOUNGER than the empirical level median is being aggressively
+    # developed and likely to reach MLB faster (negative adj = earlier ETA).
+    # A prospect OLDER than the median has likely been passed over and will
+    # take longer if they make it at all (positive adj = later ETA).
+    #
+    # `diff = age - level_median`; positive = old for level.
+    if age is not None and current_level in age_norm:
+        expected = age_norm[current_level]
+        diff = age - expected
+        if diff <= -3.0:
+            age_adj = -0.75   # 3+ years young-for-level: elite fast-track
         elif diff <= -2.0:
-            age_adj = +0.50                 # very young for level
+            age_adj = -0.50
         elif diff <= -1.0:
+            age_adj = -0.25
+        elif diff >= 3.0:
+            age_adj = +0.75   # 3+ years old-for-level: organizational filler
+        elif diff >= 2.0:
+            age_adj = +0.50
+        elif diff >= 1.0:
             age_adj = +0.25
         signals += 1
 

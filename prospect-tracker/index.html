@@ -650,6 +650,14 @@
     <div id="farm-rows"></div>
   </div>
 
+  <div id="player-detail-section" style="display: none;">
+    <div id="player-detail-body"></div>
+  </div>
+
+  <div id="farm-detail-section" style="display: none;">
+    <div id="farm-detail-body"></div>
+  </div>
+
 </template>
 
 <script>
@@ -822,8 +830,12 @@ function fvTrendHTML(p) {
 }
 
 // Encode current filter state into the URL hash so the view is shareable.
+// Detail pages get a dedicated `player=KEY` or `farm=ORG` hash param;
+// when set they take precedence over the list-page filters at render time.
 function syncToURL() {
   const p = new URLSearchParams();
+  if (state.view && state.view.type === "player") p.set("player", state.view.key);
+  else if (state.view && state.view.type === "farm") p.set("farm-org", state.view.org);
   if (state.section     !== "active")     p.set("tab",   state.section);
   if (state.orgFilter   !== "all")        p.set("org",   state.orgFilter);
   if (state.sort        !== "fv")         p.set("sort",  state.sort);
@@ -834,17 +846,60 @@ function syncToURL() {
   history.replaceState(null, "", hash ? "#" + hash : window.location.pathname + window.location.search);
 }
 
-// Read the URL hash and update state (called once on boot before first render).
+// Read the URL hash and update state (called once on boot, and again on
+// hashchange so back/forward navigation works).
 function syncFromURL() {
   const hash = window.location.hash.slice(1);
+  // Reset view first so navigating back from a detail page clears state.view.
+  state.view = null;
   if (!hash) return;
   const p = new URLSearchParams(hash);
+  if (p.has("player"))   state.view = { type: "player", key: p.get("player") };
+  else if (p.has("farm-org")) state.view = { type: "farm", org: p.get("farm-org") };
   if (p.has("tab"))   state.section     = p.get("tab");
   if (p.has("org"))   state.orgFilter   = p.get("org");
   if (p.has("sort"))  state.sort        = p.get("sort");
   if (p.has("stock")) state.stockFilter = p.get("stock");
   if (p.has("q"))     state.search      = p.get("q");
   if (p.has("farm"))  state.farmSort    = p.get("farm");
+}
+
+// Navigation helpers. We rewrite location.hash with pushState so back /
+// forward work; the hashchange listener picks up the new state and
+// re-renders. `_navigating` is a guard so we don't double-render between
+// our own pushState and the hashchange event.
+let _navigating = false;
+function _pushHash(params) {
+  const url = new URL(window.location.href);
+  url.hash = params.toString();
+  _navigating = true;
+  history.pushState(null, "", url);
+  _navigating = false;
+  syncFromURL();
+  restoreUIFromState();
+  render();
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+function goToPlayer(key) {
+  const p = new URLSearchParams();
+  p.set("player", key);
+  _pushHash(p);
+}
+function goToFarm(org) {
+  const p = new URLSearchParams();
+  p.set("farm-org", org);
+  _pushHash(p);
+}
+function goHome() {
+  // Preserve list-view filters when going home.
+  const p = new URLSearchParams();
+  if (state.section !== "active") p.set("tab", state.section);
+  if (state.orgFilter !== "all")  p.set("org", state.orgFilter);
+  if (state.sort !== "fv")        p.set("sort", state.sort);
+  if (state.stockFilter !== "all") p.set("stock", state.stockFilter);
+  if (state.search)               p.set("q", state.search);
+  if (state.farmSort !== "farm_rank") p.set("farm", state.farmSort);
+  _pushHash(p);
 }
 
 // Reflect state back into DOM controls after restoring from a URL.
@@ -936,7 +991,10 @@ function makeGradMilbCell(p) {
 // =============================================================================
 // RENDER
 // =============================================================================
-const state = { section: "active", stockFilter: "all", orgFilter: "all", sort: "fv", inactiveOrg: "all", farmSort: "farm_rank" };
+// `view` is null for the normal list pages; set to {type:"player", key}
+// or {type:"farm", org} when routed to a detail page. Detail pages take
+// over the main content area and hide the section tabs / filter bar.
+const state = { section: "active", stockFilter: "all", orgFilter: "all", sort: "fv", inactiveOrg: "all", farmSort: "farm_rank", view: null };
 let DATA = null;
 
 function getAllOrgs() {
@@ -1012,9 +1070,8 @@ function renderActives() {
 
   const rows = filtered.map((p, i) => {
     const latest = p.points[p.points.length - 1];
-    const idx = DATA.players.indexOf(p);
     return `
-      <div class="player-row" data-idx="${idx}">
+      <div class="player-row" data-key="${escapeHtml(p.player_key)}" style="cursor:pointer;">
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
@@ -1028,17 +1085,14 @@ function renderActives() {
         ${makeEtaCell(p)}
         <div class="stock-cell">${stockHTML(p.stock)}</div>
       </div>
-      <div class="detail-panel" id="detail-${idx}">${detailTable(p)}</div>
     `;
   }).join("");
 
   document.getElementById("rows").innerHTML = filtered.length
     ? header + rows
     : `<div class="state-message">No active prospects match these filters.</div>`;
-  document.querySelectorAll(".player-row").forEach(row => {
-    row.addEventListener("click", () => {
-      document.getElementById(`detail-${row.dataset.idx}`).classList.toggle("open");
-    });
+  document.querySelectorAll("#active-section .player-row").forEach(row => {
+    row.addEventListener("click", () => goToPlayer(row.dataset.key));
   });
 }
 
@@ -1100,7 +1154,7 @@ function renderRecentlyTraded() {
       ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">+${p.trades.length - 1} earlier</span>`
       : "";
     return `
-      <div class="player-row" data-idx="${idx}" style="grid-template-columns:${TCOLS};">
+      <div class="player-row" data-key="${escapeHtml(p.player_key)}" style="grid-template-columns:${TCOLS};cursor:pointer;">
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
@@ -1116,7 +1170,6 @@ function renderRecentlyTraded() {
         <div class="candle-cell desktop-only">${makeCandle(p)}</div>
         <div class="stock-cell">${stockHTML(p.stock)}</div>
       </div>
-      <div class="detail-panel" id="traded-detail-${idx}">${detailTable(p)}</div>
     `;
   }).join("");
 
@@ -1124,9 +1177,7 @@ function renderRecentlyTraded() {
     ? header + rows
     : `<div class="state-message">No traded prospects match these filters.</div>`;
   document.querySelectorAll("#traded-section .player-row").forEach(row => {
-    row.addEventListener("click", () => {
-      document.getElementById(`traded-detail-${row.dataset.idx}`).classList.toggle("open");
-    });
+    row.addEventListener("click", () => goToPlayer(row.dataset.key));
   });
 }
 
@@ -1162,7 +1213,7 @@ function renderGraduates() {
         : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
       const fvLabel = g.fv_close != null ? Math.round(g.fv_close) : "—";
       body += `
-        <div class="grad-row" style="grid-template-columns:${GCOLS};">
+        <div class="grad-row" data-key="${escapeHtml(g.player_key)}" style="grid-template-columns:${GCOLS};cursor:pointer;">
           <div class="rank-num">${rank++}</div>
           <div>
             <div class="player-name">${escapeHtml(g.player_name)}</div>
@@ -1183,6 +1234,9 @@ function renderGraduates() {
   document.getElementById("grad-rows").innerHTML = filtered.length
     ? body
     : `<div class="state-message">No graduates match these filters.</div>`;
+  document.querySelectorAll("#graduates-section .grad-row").forEach(row => {
+    row.addEventListener("click", () => goToPlayer(row.dataset.key));
+  });
 }
 
 const SOURCE_LABELS = {
@@ -1365,58 +1419,12 @@ function renderFarmSystems() {
 
   const rows = orgs.map((org, i) => {
     const tp = org.top_prospect;
-    const id = `farm-detail-${escapeHtml(org.org)}`;
-
     const stockHtml = (org.stock_up || org.stock_down)
       ? `${org.stock_up  ? `<span class="stock-up">▲${org.stock_up}</span> ` : ''}${org.stock_down ? `<span class="stock-down">▼${org.stock_down}</span>` : ''}`
       : `<span class="stock-flat">—</span>`;
 
-    // Detail panel: full roster + metrics + highlights
-    const rosterRows = (org.prospects || []).map(p => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border-light);">
-        <span style="font-size:12px;">
-          <span style="font-size:10px;color:var(--text-tertiary);margin-right:6px;">#${p.rank}</span>
-          ${escapeHtml(p.name)}
-          <span style="font-size:10px;color:var(--text-tertiary);margin-left:5px;">${escapeHtml(p.pos || '')}</span>
-        </span>
-        <span class="fv-badge ${fvClass(p.fv_label)}" style="font-size:10px;padding:1px 6px;">${p.fv_label}</span>
-      </div>`).join('');
-
-    const metrics = [
-      ["Farm rank",          `#${org.farm_rank} of 30`],
-      ["Prospects tracked",  org.count],
-      ["Total FV",           org.total_fv != null ? org.total_fv.toFixed(1) : "—"],
-      ["60+ prospects",      org.tier_60_plus],
-      ["55 prospects",       org.tier_55],
-      ["50 prospects",       org.tier_50],
-      ["Avg age",            org.avg_age != null ? org.avg_age.toFixed(1) : "—"],
-      ["Very young for lvl", org.very_young_count],
-      ["Rising / Falling",   `${org.stock_up} ▲ / ${org.stock_down} ▼`],
-    ].map(([k, v]) => `
-      <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border-light);">
-        <span style="color:var(--text-tertiary);">${k}</span>
-        <span style="color:var(--text-primary);font-variant-numeric:tabular-nums;">${v}</span>
-      </div>`).join('');
-
-    const youngest = org.youngest;
-    const highlights = `
-      <div style="margin-bottom:14px;">
-        <div class="detail-title">Top Prospect</div>
-        ${tp ? `<div style="font-size:13px;font-weight:500;">${escapeHtml(tp.name)} <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:10px;padding:1px 6px;">${tp.fv_label}</span></div>
-        <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(tp.pos||'')} · age ${tp.age != null ? tp.age.toFixed(1) : "—"}</div>` : '—'}
-      </div>
-      <div style="margin-bottom:14px;">
-        <div class="detail-title">Youngest Prospect</div>
-        ${youngest ? `<div style="font-size:13px;font-weight:500;">${escapeHtml(youngest.name)}</div>
-        <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(youngest.pos||'')} · age ${youngest.age != null ? youngest.age.toFixed(1) : "—"} · FV ${youngest.fv_label}</div>` : '—'}
-      </div>
-      <div>
-        <div class="detail-title">Position mix</div>
-        <div style="margin-top:4px;">${makePosBreakdown(org.pos_groups)}</div>
-      </div>`;
-
     return `
-      <div class="farm-row" onclick="document.getElementById('${id}').classList.toggle('open'); this.querySelector('.farm-toggle').textContent = document.getElementById('${id}').classList.contains('open') ? '▲' : '▼';">
+      <div class="farm-row" data-org="${escapeHtml(org.org)}" style="cursor:pointer;">
         <div class="farm-rank">${org.farm_rank}</div>
         <div class="farm-org">${escapeHtml(org.org)}</div>
         <div>${makeTierBar(org.prospects)}</div>
@@ -1427,22 +1435,14 @@ function renderFarmSystems() {
         <div>${makePosBreakdown(org.pos_groups)}</div>
         <div style="font-size:12px;color:var(--text-secondary);font-variant-numeric:tabular-nums;">${org.avg_age != null ? org.avg_age.toFixed(1) : "—"}</div>
         <div class="stock-cell" style="font-size:12px;">${stockHtml}</div>
-        <div style="text-align:right;font-size:10px;color:var(--text-tertiary);" class="farm-toggle">▼</div>
-      </div>
-      <div class="farm-detail" id="${id}">
-        <div>
-          <div class="detail-title">Full roster (${(org.prospects||[]).length})</div>
-          ${rosterRows || '<span style="color:var(--text-tertiary);">No tracked prospects</span>'}
-        </div>
-        <div>
-          <div class="detail-title">System metrics</div>
-          ${metrics}
-        </div>
-        <div>${highlights}</div>
+        <div style="text-align:right;font-size:11px;color:var(--neon-cyan);">→</div>
       </div>`;
   }).join('');
 
   document.getElementById("farm-rows").innerHTML = header + rows;
+  document.querySelectorAll("#farm-section .farm-row").forEach(row => {
+    row.addEventListener("click", () => goToFarm(row.dataset.org));
+  });
 }
 
 function renderInactive() {
@@ -1465,7 +1465,7 @@ function renderInactive() {
       ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades)
       : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
     return `
-      <div class="grad-row" style="grid-template-columns: 32px 1.4fr 1fr 0.5fr 1fr;">
+      <div class="grad-row" data-key="${escapeHtml(p.player_key)}" style="grid-template-columns: 32px 1.4fr 1fr 0.5fr 1fr;cursor:pointer;">
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
@@ -1482,6 +1482,488 @@ function renderInactive() {
   document.getElementById("inactive-rows").innerHTML = filtered.length
     ? header + rows
     : `<div class="state-message">No inactive prospects${state.inactiveOrg !== "all" ? " for this org" : ""}.</div>`;
+  document.querySelectorAll("#inactive-section .grad-row").forEach(row => {
+    row.addEventListener("click", () => goToPlayer(row.dataset.key));
+  });
+}
+
+// =============================================================================
+// DETAIL PAGES
+// =============================================================================
+
+// Find a player (active, graduate, or inactive) by key.
+function findPlayer(key) {
+  return (DATA.players || []).find(p => p.player_key === key)
+      || (DATA.graduates || []).find(g => g.player_key === key)
+      || (DATA.inactive || []).find(p => p.player_key === key)
+      || null;
+}
+
+function findOrg(org) {
+  return (DATA.org_summary || []).find(o => o.org === org) || null;
+}
+
+// Bigger version of the line chart used on prospect detail pages — same
+// 20-80 Y-axis as the inline sparkline, but rendered at ~2x size with
+// gridlines at every 5-FV tick and date labels along the bottom.
+function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades) {
+  if (!points || points.length === 0) return "";
+  const W = 720, H = 260, PAD_L = 28, PAD_R = 14, PAD_T = 14, PAD_B = 28;
+  const innerW = W - PAD_L - PAD_R;
+  const innerH = H - PAD_T - PAD_B;
+
+  const firstDate = points[0].snapshot_date;
+  const lastDate  = points[points.length - 1].snapshot_date;
+  const endDate   = (gradDate && new Date(gradDate).getTime() > new Date(lastDate).getTime())
+                      ? gradDate : lastDate;
+  const minT = new Date(firstDate).getTime();
+  const maxT = new Date(endDate).getTime();
+  const timeSpan = maxT - minT || 1;
+  const xScale = d => PAD_L + ((new Date(d).getTime() - minT) / timeSpan) * innerW;
+  const yScale = fv => PAD_T + innerH - ((fv - FV_MIN) / (FV_MAX - FV_MIN)) * innerH;
+
+  const isUp = fvClose > fvOpen, isDown = fvClose < fvOpen;
+  const stroke = isUp ? "var(--up)" : isDown ? "var(--down)" : "var(--text-tertiary)";
+
+  // Y-axis ticks every 5 FV
+  const yTicks = [];
+  for (let fv = 20; fv <= 80; fv += 5) {
+    const y = yScale(fv).toFixed(1);
+    yTicks.push(
+      `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="var(--border-light)" stroke-width="0.4" stroke-dasharray="2,3"/>`,
+      `<text x="${PAD_L - 4}" y="${y}" dy="3" font-size="9" fill="var(--text-tertiary)" text-anchor="end">${fv}</text>`,
+    );
+  }
+  // 60-FV emphasis
+  yTicks.push(`<line x1="${PAD_L}" y1="${yScale(60).toFixed(1)}" x2="${W - PAD_R}" y2="${yScale(60).toFixed(1)}" stroke="var(--neon-amber)" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.5"/>`);
+
+  // Year boundaries
+  const yearSvg = [];
+  const startYear = new Date(minT).getFullYear();
+  const endYear   = new Date(maxT).getFullYear();
+  for (let yr = startYear; yr <= endYear + 1; yr++) {
+    const yrT = Date.UTC(yr, 0, 1);
+    if (yrT <= minT || yrT >= maxT) continue;
+    const x = xScale(new Date(yrT).toISOString().slice(0, 10)).toFixed(1);
+    yearSvg.push(
+      `<line x1="${x}" y1="${PAD_T}" x2="${x}" y2="${H - PAD_B}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3,3"/>`,
+      `<text x="${x}" y="${H - PAD_B + 14}" font-size="10" fill="var(--text-tertiary)" text-anchor="middle">${yr}</text>`,
+    );
+  }
+  // Start + end date labels along the X axis
+  const x0 = xScale(firstDate).toFixed(1);
+  const x1 = xScale(endDate).toFixed(1);
+  yearSvg.push(
+    `<text x="${x0}" y="${H - 4}" font-size="9" fill="var(--text-tertiary)" text-anchor="start">${firstDate}</text>`,
+    `<text x="${x1}" y="${H - 4}" font-size="9" fill="var(--text-tertiary)" text-anchor="end">${endDate}</text>`,
+  );
+
+  // Trade markers
+  const tradeSvg = [];
+  for (const tr of (trades || [])) {
+    const trT = new Date(tr.trade_date).getTime();
+    if (isNaN(trT) || trT < minT || trT > maxT) continue;
+    const x = xScale(tr.trade_date).toFixed(1);
+    const label = `${tr.trade_date} · ${tr.from_org ?? "?"} → ${tr.to_org ?? "?"}`;
+    tradeSvg.push(
+      `<line x1="${x}" y1="${PAD_T}" x2="${x}" y2="${H - PAD_B}" stroke="var(--grad)" stroke-width="1.2" stroke-dasharray="3,2" opacity="0.85"><title>${label}</title></line>`,
+      `<polygon points="${x - 4},${PAD_T - 1} ${parseFloat(x) + 4},${PAD_T - 1} ${x},${PAD_T + 5}" fill="var(--grad)"><title>${label}</title></polygon>`,
+    );
+  }
+
+  const pts = points.map(pt => `${xScale(pt.snapshot_date).toFixed(1)},${yScale(pt.consensus_fv_raw).toFixed(1)}`).join(" ");
+  const circles = points.map(pt =>
+    `<circle cx="${xScale(pt.snapshot_date).toFixed(1)}" cy="${yScale(pt.consensus_fv_raw).toFixed(1)}" r="3" fill="${stroke}"><title>${pt.snapshot_date} · ${pt.interval_label} · FV ${pt.consensus_fv_label}</title></circle>`
+  ).join("");
+
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="FV trajectory">
+    ${yTicks.join("")}
+    ${yearSvg.join("")}
+    ${tradeSvg.join("")}
+    <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${circles}
+  </svg>`;
+}
+
+// Year-by-year stat table for the prospect page.
+function makeCareerTable(career) {
+  if (!career || !career.length) {
+    return `<div style="color:var(--text-tertiary);font-size:12px;">No multi-season stats available.</div>`;
+  }
+  const isP = career[0].is_pitcher;
+  const head = isP
+    ? `<tr><th>Season</th><th>Level</th><th>G</th><th>IP</th><th>ERA</th><th>WHIP</th><th>K/9</th><th>BB/9</th><th>W-L</th></tr>`
+    : `<tr><th>Season</th><th>Level</th><th>G</th><th>AVG</th><th>OBP</th><th>SLG</th><th>OPS</th><th>HR</th><th>SB</th><th>BB%</th><th>K%</th></tr>`;
+  const rows = career.map(s => isP
+    ? `<tr><td>${s.season}</td><td><span class="level-pill level-neutral">${s.level}</span></td><td>${s.games}</td><td>${s.ip ?? "—"}</td><td>${s.era ?? "—"}</td><td>${s.whip ?? "—"}</td><td>${s.k_per_9 ?? "—"}</td><td>${s.bb_per_9 ?? "—"}</td><td>${s.wins}-${s.losses}</td></tr>`
+    : `<tr><td>${s.season}</td><td><span class="level-pill level-neutral">${s.level}</span></td><td>${s.games}</td><td>${s.avg}</td><td>${s.obp}</td><td>${s.slg}</td><td>${s.ops}</td><td>${s.hr}</td><td>${s.sb}</td><td>${s.bb_pct != null ? s.bb_pct.toFixed(1) : "—"}</td><td>${s.k_pct != null ? s.k_pct.toFixed(1) : "—"}</td></tr>`
+  ).join("");
+  return `<table class="detail-table"><thead>${head}</thead><tbody>${rows}</tbody></table>`;
+}
+
+// Statcast block — exit velo / hard hit / launch angle / barrel %.
+function makeStatcastBlock(sc) {
+  if (!sc) return `<div style="color:var(--text-tertiary);font-size:12px;">No Statcast data on file.</div>`;
+  const tiles = [
+    ["Exit velo",   sc.exit_velo != null ? `${sc.exit_velo} mph` : "—"],
+    ["Hard hit %",  sc.hard_hit_pct != null ? `${sc.hard_hit_pct}%` : "—"],
+    ["Launch angle",sc.launch_angle != null ? `${sc.launch_angle}°` : "—"],
+    ["Barrel %",    sc.barrel_pct != null ? `${sc.barrel_pct}%` : "—"],
+  ];
+  return `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">${tiles.map(([k, v]) => `
+    <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 10px;border-radius:2px;">
+      <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;">${k}</div>
+      <div style="font-size:18px;color:var(--neon-green);font-variant-numeric:tabular-nums;">${v}</div>
+    </div>`).join("")}</div>`;
+}
+
+// Pitch arsenal block — pitch type × usage % × avg velo.
+function makeArsenalBlock(pa) {
+  if (!pa || !(pa.pitches || []).length) {
+    return `<div style="color:var(--text-tertiary);font-size:12px;">No pitch arsenal data on file.</div>`;
+  }
+  const rows = pa.pitches.map(p => `<tr>
+    <td><span class="src-tag">${escapeHtml(p.pitch_type)}</span> ${escapeHtml(p.pitch_name)}</td>
+    <td style="text-align:right;font-variant-numeric:tabular-nums;">${p.avg_speed != null ? p.avg_speed.toFixed(1) + " mph" : "—"}</td>
+    <td style="text-align:right;font-variant-numeric:tabular-nums;">${p.usage_pct != null ? (p.usage_pct * 100).toFixed(1) + "%" : "—"}</td>
+  </tr>`).join("");
+  const fb = pa.fb_velo != null ? `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;">Primary fastball: <span style="color:var(--neon-green);">${pa.fb_velo} mph</span></div>` : "";
+  return fb + `<table class="detail-table"><thead><tr><th>Pitch</th><th style="text-align:right;">Velo</th><th style="text-align:right;">Usage</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// Trade history block on the prospect page — every real trade, oldest first.
+function makeTradeHistoryBlock(trades) {
+  if (!trades || !trades.length) {
+    return `<div style="color:var(--text-tertiary);font-size:12px;">No trades on record.</div>`;
+  }
+  const rows = trades.map(t => `<tr>
+    <td>${t.trade_date}</td>
+    <td>${escapeHtml(t.from_org ?? "?")} <span style="color:var(--neon-violet);">→</span> ${escapeHtml(t.to_org ?? "?")}</td>
+    <td style="color:var(--text-tertiary);font-size:11px;">${escapeHtml((t.description || "").slice(0, 120))}</td>
+  </tr>`).join("");
+  return `<table class="detail-table"><thead><tr><th>Date</th><th>Move</th><th>Description</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// Per-source FV history — shows the full breakdown of how each ranking
+// source has graded the player over time.
+function makePerSourceHistory(points) {
+  // Collect every source that ever appeared, plus the most recent FV they
+  // assigned at each snapshot date.
+  const sources = new Set();
+  for (const pt of points) {
+    for (const src of Object.keys(pt.per_source || {})) sources.add(src);
+  }
+  if (!sources.size) {
+    return `<div style="color:var(--text-tertiary);font-size:12px;">No per-source breakdown available.</div>`;
+  }
+  const sortedSources = [...sources].sort();
+  const head = `<tr><th>Date</th><th>Update</th>${sortedSources.map(s => `<th>${escapeHtml(SOURCE_LABELS[s] || s)}</th>`).join("")}<th>Consensus</th></tr>`;
+  const body = points.map(pt => {
+    const perSrc = pt.per_source || {};
+    return `<tr>
+      <td>${pt.snapshot_date}</td>
+      <td><span class="src-tag">${escapeHtml(pt.interval_label)}</span></td>
+      ${sortedSources.map(s => {
+        const d = perSrc[s];
+        if (!d) return `<td style="color:var(--text-tertiary);">—</td>`;
+        const fv = d.fv_published != null
+          ? `<span class="fv-badge ${fvClass(String(d.fv_published))}" style="font-size:10px;padding:1px 6px;">${d.fv_published}</span>`
+          : "—";
+        const rank = d.rank != null ? `<span style="font-size:10px;color:var(--text-tertiary);"> #${d.rank}</span>` : "";
+        return `<td>${fv}${rank}</td>`;
+      }).join("")}
+      <td><span class="fv-badge ${fvClass(pt.consensus_fv_label)}" style="font-size:10px;padding:1px 6px;">${pt.consensus_fv_label}</span></td>
+    </tr>`;
+  }).join("");
+  return `<table class="detail-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+function renderPlayerDetail(key) {
+  const p = findPlayer(key);
+  const root = document.getElementById("player-detail-body");
+  if (!p) {
+    root.innerHTML = `<div class="state-message">Unknown prospect: ${escapeHtml(key)}. <a href="#" onclick="goHome();return false;">Back to list</a>.</div>`;
+    return;
+  }
+  const latest = p.points && p.points.length ? p.points[p.points.length - 1] : null;
+  const orgLink = p.org
+    ? `<a href="#farm-org=${escapeHtml(p.org)}" onclick="event.preventDefault();goToFarm('${escapeHtml(p.org)}');" style="color:var(--neon-cyan);text-decoration:none;">${escapeHtml(p.org)}</a>`
+    : "—";
+  const statusPill = p.status === "graduated"
+    ? `<span class="grad-pill" style="background:var(--bg-tertiary);color:var(--grad);">Graduated ${p.graduation_date || ""}</span>`
+    : p.status === "injured_list"
+      ? `<span class="grad-pill" style="background:var(--bg-tertiary);color:var(--neon-amber);">IL</span>`
+      : "";
+
+  const avl = p.age_vs_level || {};
+  const fvLabel = latest ? latest.consensus_fv_label : "—";
+  const fvBadge = latest ? `<span class="fv-badge ${fvClass(fvLabel)}" style="font-size:18px;padding:3px 10px;">${fvLabel}</span>` : "";
+
+  const header = `
+    <div style="margin-bottom:14px;">
+      <a href="#" onclick="event.preventDefault();goHome();" style="color:var(--neon-cyan);text-decoration:none;font-size:12px;">← Back to list</a>
+    </div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:14px;">
+      <div>
+        <div style="font-size:24px;font-weight:600;letter-spacing:0.02em;color:var(--text-primary);">${escapeHtml(p.player_name)}</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">
+          ${escapeHtml(p.position ?? "—")} · ${orgLink}${p.age != null ? ` · age ${p.age.toFixed(1)}` : ""}${p.birth_date ? ` · born ${p.birth_date}` : ""}
+          ${statusPill ? " · " + statusPill : ""}
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;">Current FV</div>
+        ${fvBadge}
+        ${latest && latest.avg_rank != null ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">Avg rank #${latest.avg_rank.toFixed(1)}</div>` : ""}
+      </div>
+    </div>`;
+
+  // Highlight tiles: FV high/low/open/close, age vs level, ETA. The
+  // age-vs-level subline cites the empirical median age at the prospect's
+  // current level so users can see what we're comparing against.
+  const eta = p.eta || {};
+  const sl = p.statline || {};
+  const levelNorm = (DATA.level_norms || {})[sl.level] || {};
+  const ageNorm = levelNorm.age || {};
+  const perfNorm = levelNorm.perf || {};
+  const ageSub = (avl.tier && avl.tier !== "unknown" && ageNorm.median_age != null)
+    ? `${sl.level} median ${ageNorm.median_age.toFixed(1)}y`
+    : "";
+  const tiles = [
+    ["FV high", p.fv_high_label || p.fv_high || "—", `${p.fv_high_date || ""}`],
+    ["FV low",  p.fv_low_label  || p.fv_low  || "—", `${p.fv_low_date || ""}`],
+    ["FV open", p.fv_open ?? "—", ""],
+    ["FV close",p.fv_close ?? "—", ""],
+    ["Age vs. level", avl.tier && avl.tier !== "unknown"
+        ? avl.tier.replace(/-/g, " ") + (avl.diff != null ? ` (${avl.diff > 0 ? "+" : ""}${avl.diff.toFixed(1)}y)` : "")
+        : "—", ageSub],
+    ["ETA", eta.year != null ? eta.year : "—", eta.confidence ? `${eta.confidence} conf` : ""],
+  ];
+  const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px;">${tiles.map(([k, v, sub]) => `
+    <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 10px;border-radius:2px;">
+      <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;">${k}</div>
+      <div style="font-size:16px;color:var(--text-primary);font-variant-numeric:tabular-nums;">${v}</div>
+      ${sub ? `<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;">${sub}</div>` : ""}
+    </div>`).join("")}</div>`;
+
+  // Level benchmark block — shows the empirical age/OPS/ERA medians
+  // at every level the player has touched in their career_stats, plus
+  // the player's own ages/ops at each one so you can read off
+  // "young for level" vs "above-average performance" at a glance.
+  const levelBenchmarkSection = (() => {
+    const career = p.career_stats || [];
+    if (!career.length) return "";
+    const isP = career[0].is_pitcher;
+    const rows = career.map(c => {
+      const norm = (DATA.level_norms || {})[c.level] || {};
+      const a = norm.age || {};
+      const perf = norm.perf || {};
+      const seasonMid = new Date(`${c.season}-07-01`).getTime();
+      let ageAtSeason = null;
+      if (p.birth_date) {
+        const birthT = new Date(p.birth_date).getTime();
+        ageAtSeason = ((seasonMid - birthT) / (365.25 * 86400000));
+      }
+      const ageDiff = (ageAtSeason != null && a.median_age != null)
+        ? (ageAtSeason - a.median_age) : null;
+      const ageDiffHtml = ageDiff != null
+        ? `<span style="color:${ageDiff <= -1 ? "var(--up)" : ageDiff >= 1 ? "var(--down)" : "var(--text-tertiary)"};">${ageDiff > 0 ? "+" : ""}${ageDiff.toFixed(1)}y</span>`
+        : "—";
+      const perfCol = isP
+        ? (c.era != null && perf.avg_era != null
+            ? `${c.era} vs ${perf.avg_era.toFixed(2)} <span style="color:${parseFloat(c.era) < perf.avg_era ? "var(--up)" : "var(--down)"};">(${(parseFloat(c.era) - perf.avg_era).toFixed(2)})</span>`
+            : "—")
+        : (c.ops != null && perf.avg_ops != null
+            ? `${c.ops} vs ${perf.avg_ops.toFixed(3)} <span style="color:${parseFloat(c.ops) > perf.avg_ops ? "var(--up)" : "var(--down)"};">(${(parseFloat(c.ops) - perf.avg_ops > 0 ? "+" : "")}${(parseFloat(c.ops) - perf.avg_ops).toFixed(3)})</span>`
+            : "—");
+      return `<tr>
+        <td>${c.season}</td>
+        <td><span class="level-pill level-neutral">${c.level}</span></td>
+        <td style="font-variant-numeric:tabular-nums;">${ageAtSeason != null ? ageAtSeason.toFixed(1) : "—"} vs ${a.median_age != null ? a.median_age.toFixed(1) : "—"} ${ageDiffHtml}</td>
+        <td style="font-variant-numeric:tabular-nums;">${perfCol}</td>
+      </tr>`;
+    }).join("");
+    const perfHeader = isP ? "ERA vs level median" : "OPS vs level median";
+    return `<div class="detail-title" style="margin-top:18px;">Age-relative performance</div>
+      <table class="detail-table"><thead><tr><th>Season</th><th>Level</th><th>Age vs level median</th><th>${perfHeader}</th></tr></thead><tbody>${rows}</tbody></table>`;
+  })();
+
+  const isPitcher = p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position);
+
+  const chartSection = (p.points && p.points.length >= 2)
+    ? `<div class="detail-title">FV history</div>${makeBigLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades)}`
+    : `<div style="color:var(--text-tertiary);font-size:12px;">Not enough FV updates yet for a chart.</div>`;
+
+  const careerSection = `<div class="detail-title" style="margin-top:18px;">Stats by season</div>${makeCareerTable(p.career_stats)}`;
+
+  const sourceSection = `<div class="detail-title" style="margin-top:18px;">Source-by-source FV history</div>${makePerSourceHistory(p.points || [])}`;
+
+  const statcastSection = `<div class="detail-title">Statcast</div>${makeStatcastBlock(p.statcast)}`;
+
+  const arsenalSection = isPitcher
+    ? `<div class="detail-title" style="margin-top:18px;">Pitch arsenal</div>${makeArsenalBlock(p.pitch_arsenal)}`
+    : "";
+
+  const tradesSection = `<div class="detail-title" style="margin-top:18px;">Trade history</div>${makeTradeHistoryBlock(p.trades)}`;
+
+  const etaRows = (() => {
+    if (!eta || eta.year == null) return "";
+    const r = [
+      ["Level baseline", eta.base_years != null ? `${eta.base_years.toFixed(1)} yrs` : "—"],
+      ["Performance",    eta.perf_adj > 0 ? `+${eta.perf_adj}` : eta.perf_adj < 0 ? `${eta.perf_adj}` : "±0"],
+      ["Age vs. level",  eta.age_adj  > 0 ? `+${eta.age_adj}`  : eta.age_adj  < 0 ? `${eta.age_adj}`  : "±0"],
+      ["FV grade",       eta.fv_adj   > 0 ? `+${eta.fv_adj}`   : eta.fv_adj   < 0 ? `${eta.fv_adj}`   : "±0"],
+    ];
+    return `<div class="detail-title" style="margin-top:18px;">ETA breakdown · ${eta.year} (${eta.confidence || "?"} confidence)</div>
+      <table class="detail-table"><tbody>${r.map(([k, v]) => `<tr><td>${k}</td><td style="text-align:right;">${v}</td></tr>`).join("")}</tbody></table>`;
+  })();
+
+  // Two-column layout: chart + career on the left, secondary blocks on the right.
+  root.innerHTML = header + tilesHtml + `
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
+      <div>${chartSection}${careerSection}${levelBenchmarkSection}${sourceSection}</div>
+      <div>${statcastSection}${arsenalSection}${tradesSection}${etaRows}</div>
+    </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// FARM SYSTEM DETAIL PAGE
+// ---------------------------------------------------------------------------
+
+function renderFarmDetail(orgCode) {
+  const org = findOrg(orgCode);
+  const root = document.getElementById("farm-detail-body");
+  if (!org) {
+    root.innerHTML = `<div class="state-message">Unknown organization: ${escapeHtml(orgCode)}. <a href="#" onclick="goHome();return false;">Back to list</a>.</div>`;
+    return;
+  }
+
+  // Resolve full player objects so we can render each roster line with its
+  // FV trajectory chart inline.
+  const rosterPlayers = (DATA.players || []).filter(p => p.org === orgCode);
+  rosterPlayers.sort((a, b) => {
+    const fa = a.points.length ? a.points[a.points.length - 1].consensus_fv_raw : 0;
+    const fb = b.points.length ? b.points[b.points.length - 1].consensus_fv_raw : 0;
+    return fb - fa;
+  });
+
+  const graduates = (DATA.graduates || []).filter(g => g.org === orgCode);
+
+  // Recent trades involving this org — pulled from every player's trades.
+  const allTradesForOrg = [];
+  for (const p of [...rosterPlayers, ...graduates]) {
+    for (const t of (p.trades || [])) {
+      if (t.from_org === orgCode || t.to_org === orgCode
+          || (t.from_org || "").includes(orgCode) || (t.to_org || "").includes(orgCode)) {
+        allTradesForOrg.push({ player: p, trade: t });
+      }
+    }
+  }
+  allTradesForOrg.sort((a, b) => b.trade.trade_date.localeCompare(a.trade.trade_date));
+
+  const header = `
+    <div style="margin-bottom:14px;">
+      <a href="#" onclick="event.preventDefault();goHome();" style="color:var(--neon-cyan);text-decoration:none;font-size:12px;">← Back to list</a>
+    </div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:14px;">
+      <div>
+        <div style="font-size:28px;font-weight:600;letter-spacing:0.04em;color:var(--text-primary);">${escapeHtml(org.org)}</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">
+          #${org.farm_rank} of 30 · ${org.count} prospects tracked · Total FV ${org.total_fv != null ? org.total_fv.toFixed(1) : "—"}
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">${makeTierBar(org.prospects)}</div>
+    </div>`;
+
+  // Tiles: tier counts, avg age, stock, very-young
+  const tileRows = [
+    ["60+ FV",     org.tier_60_plus],
+    ["55 FV",      org.tier_55],
+    ["50 FV",      org.tier_50],
+    ["Avg age",    org.avg_age != null ? org.avg_age.toFixed(1) : "—"],
+    ["Stock ▲",    org.stock_up],
+    ["Stock ▼",    org.stock_down],
+    ["Young-for-level", org.very_young_count],
+    ["Pos. mix",   ""],
+  ];
+  const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;">${tileRows.slice(0, 7).map(([k, v]) => `
+    <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 10px;border-radius:2px;">
+      <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;">${k}</div>
+      <div style="font-size:18px;color:var(--text-primary);font-variant-numeric:tabular-nums;">${v}</div>
+    </div>`).join("")}
+    <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 10px;border-radius:2px;">
+      <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;">Position mix</div>
+      <div>${makePosBreakdown(org.pos_groups)}</div>
+    </div>
+  </div>`;
+
+  // Full roster with mini FV charts
+  const rosterRows = rosterPlayers.map((p, i) => {
+    const latest = p.points[p.points.length - 1];
+    const chart = p.points.length >= 2
+      ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades)
+      : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
+    return `
+      <div class="player-row" style="grid-template-columns:32px 1.3fr 0.45fr 0.45fr 1.1fr 0.6fr;cursor:pointer;" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
+        <div class="rank-num">${i + 1}</div>
+        <div>
+          <div class="player-name">${escapeHtml(p.player_name)}</div>
+          <div class="player-meta">${escapeHtml(p.position ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}</div>
+        </div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span></div>
+        <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
+        <div class="line-chart-cell">${chart}</div>
+        <div class="candle-cell">${makeCandle(p)}</div>
+      </div>`;
+  }).join("");
+
+  const rosterHeader = `<div class="col-header" style="grid-template-columns:32px 1.3fr 0.45fr 0.45fr 1.1fr 0.6fr;">
+    <span style="text-align:center;">#</span>
+    <span>Player</span>
+    <span style="text-align:center;">FV</span>
+    <span style="text-align:center;">Rank</span>
+    <span style="text-align:center;">FV history</span>
+    <span style="text-align:center;">Candle</span>
+  </div>`;
+
+  // Highlights side panel
+  const tp = org.top_prospect;
+  const yp = org.youngest;
+  const highlights = `
+    <div style="margin-bottom:14px;">
+      <div class="detail-title">Top prospect</div>
+      ${tp ? `<div style="font-size:14px;font-weight:500;cursor:pointer;color:var(--neon-cyan);" onclick="goToPlayer('${escapeHtml((rosterPlayers[0] || {}).player_key || '')}');">${escapeHtml(tp.name)} <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:11px;padding:1px 6px;">${tp.fv_label}</span></div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(tp.pos||'')} · age ${tp.age != null ? tp.age.toFixed(1) : "—"}</div>` : '—'}
+    </div>
+    <div style="margin-bottom:14px;">
+      <div class="detail-title">Youngest prospect</div>
+      ${yp ? `<div style="font-size:14px;font-weight:500;">${escapeHtml(yp.name)}</div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(yp.pos||'')} · age ${yp.age != null ? yp.age.toFixed(1) : "—"} · FV ${yp.fv_label}</div>` : '—'}
+    </div>
+    <div class="detail-title">Recent graduates (${graduates.length})</div>
+    ${graduates.slice(0, 8).map(g => `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:12px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(g.player_key)}');">
+        <span style="color:var(--text-primary);">${escapeHtml(g.player_name)}</span>
+        <span style="color:var(--text-tertiary);">${g.graduation_date || "—"}</span>
+      </div>`).join("") || '<span style="color:var(--text-tertiary);font-size:12px;">None</span>'}`;
+
+  const tradesHtml = allTradesForOrg.length ? `<table class="detail-table"><thead><tr>
+    <th>Date</th><th>Player</th><th>Move</th>
+    </tr></thead><tbody>${allTradesForOrg.slice(0, 20).map(({ player, trade }) => `<tr>
+      <td>${trade.trade_date}</td>
+      <td style="cursor:pointer;color:var(--neon-cyan);" onclick="goToPlayer('${escapeHtml(player.player_key)}');">${escapeHtml(player.player_name)}</td>
+      <td>${escapeHtml(trade.from_org || "?")} <span style="color:var(--neon-violet);">→</span> ${escapeHtml(trade.to_org || "?")}</td>
+    </tr>`).join("")}</tbody></table>` : `<div style="color:var(--text-tertiary);font-size:12px;">No trades on record involving this org.</div>`;
+
+  root.innerHTML = header + tilesHtml + `
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
+      <div>
+        <div class="detail-title">Full roster (${rosterPlayers.length})</div>
+        ${rosterHeader}${rosterRows}
+        <div class="detail-title" style="margin-top:18px;">Recent trades involving ${escapeHtml(orgCode)}</div>
+        ${tradesHtml}
+      </div>
+      <div>${highlights}</div>
+    </div>`;
 }
 
 function render() {
@@ -1491,24 +1973,43 @@ function render() {
     inactive:  "inactive-section",
     graduates: "graduates-section",
     farm:      "farm-section",
+    player:    "player-detail-section",
+    farmDetail:"farm-detail-section",
   };
-  for (const [name, id] of Object.entries(sections)) {
-    const el = document.getElementById(id);
-    if (el) el.style.display = state.section === name ? "block" : "none";
-  }
-  // Show the stock/org/sort filter bar only on tabs that actually use it.
-  // The traded tab uses the search + org filter (but not stock or sort), so
-  // we still surface the bar there.
+
+  // Detail view takes over: hide tabs, filter bar, search; show one section.
+  const isDetail = !!state.view;
+  const sectionTabs = document.getElementById("section-tabs");
+  if (sectionTabs) sectionTabs.style.display = isDetail ? "none" : "";
+  const searchBar = document.querySelector(".search-bar");
+  if (searchBar) searchBar.style.display = isDetail ? "none" : "";
   const filterBar = document.getElementById("filter-bar");
   if (filterBar) {
-    const usesFilters = state.section === "active" || state.section === "traded";
-    filterBar.style.display = usesFilters ? "" : "none";
+    if (isDetail) {
+      filterBar.style.display = "none";
+    } else {
+      const usesFilters = state.section === "active" || state.section === "traded";
+      filterBar.style.display = usesFilters ? "" : "none";
+    }
   }
-  if (state.section === "active")         renderActives();
-  else if (state.section === "traded")    renderRecentlyTraded();
-  else if (state.section === "inactive")  renderInactive();
-  else if (state.section === "graduates") renderGraduates();
-  else if (state.section === "farm")      renderFarmSystems();
+
+  let active;
+  if (state.view && state.view.type === "player") active = "player";
+  else if (state.view && state.view.type === "farm") active = "farmDetail";
+  else active = state.section;
+
+  for (const [name, id] of Object.entries(sections)) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = name === active ? "block" : "none";
+  }
+
+  if (active === "player")       renderPlayerDetail(state.view.key);
+  else if (active === "farmDetail") renderFarmDetail(state.view.org);
+  else if (active === "active")     renderActives();
+  else if (active === "traded")     renderRecentlyTraded();
+  else if (active === "inactive")   renderInactive();
+  else if (active === "graduates")  renderGraduates();
+  else if (active === "farm")       renderFarmSystems();
   updateMeta();
   syncToURL();
 }
@@ -1519,8 +2020,18 @@ function attachHandlers() {
       document.querySelectorAll(".section-tab").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       state.section = btn.dataset.section;
+      // Tab switch always returns to the list — drop any detail view.
+      state.view = null;
       render();
     });
+  });
+
+  // Back/forward navigation: re-read the hash and re-render whenever the
+  // user uses browser-history controls (or anything else mutates the hash).
+  window.addEventListener("hashchange", () => {
+    syncFromURL();
+    restoreUIFromState();
+    render();
   });
 
   document.querySelectorAll("[data-filter-stock]").forEach(btn => {
