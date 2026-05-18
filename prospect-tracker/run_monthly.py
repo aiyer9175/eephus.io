@@ -42,7 +42,7 @@ from consensus import build_timeseries
 from stats import (fetch_statlines_for, resolve_mlbam_id, fetch_birth_date,
                    fetch_birth_date_by_name,
                    fetch_pitch_arsenal, fetch_statcast_metrics,
-                   bulk_detect_graduations)
+                   bulk_detect_graduations, bulk_resolve_ids)
 from trades import detect_trades
 
 
@@ -103,13 +103,38 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         timeseries = build_timeseries(all_snaps)
         log.info("built timeseries for %d players", len(timeseries))
 
+        # --- 2a. Bulk resolve IDs + birth dates for every prospect -----
+        # Single bulk pass that:
+        #   1. Builds the PlayerIndex once (disk-cached, ~0.4s cold / ~50ms warm)
+        #   2. Resolves every uncached prospect using position-aware scoring
+        #   3. Collects birth dates for free from the same index payload
+        # Replaces ~300ms-per-prospect sequential people-search calls and the
+        # per-prospect birth-date fetch loop with one parallel pass.
+        season = date.today().year
+        all_prospects_for_resolve = [
+            (p.player_key, p.player_name, p.position)
+            for p in timeseries
+        ]
+        log.info("bulk resolving IDs + birth dates for %d prospects",
+                 len(all_prospects_for_resolve))
+        _ids_resolved, bds_from_index = bulk_resolve_ids(
+            all_prospects_for_resolve,
+            season=season,
+            force_rebuild_index=force_refetch,
+        )
+        # overwrite=True because these dates are tied to a freshly-resolved
+        # MLBAM ID; any pre-existing date in the DB may correspond to a
+        # previously-cached wrong ID and is now stale.
+        for key, bd in bds_from_index.items():
+            upsert_birth_date(key, bd, overwrite=True)
+        if bds_from_index:
+            log.info("upserted %d birth dates from PlayerIndex", len(bds_from_index))
+
         # --- 3a. Bulk graduation detection (always runs, fast) -----------
         # One bulk call to the MLB roster API (~1 100 players) + a few
         # targeted career-stats checks to confirm the 130 AB / 50 IP
-        # threshold. This is much faster than the per-player stat fetch and
-        # does NOT require --skip-stats to be absent. It also populates
-        # birth dates for free from the same bulk payload.
-        season = date.today().year
+        # threshold. The MLBAM ID cache is now fully populated by the bulk
+        # resolve above, so this only does the graduation-threshold work.
         active_for_grad = [
             (p.player_key, p.player_name, _is_pitcher(p.position))
             for p in timeseries if p.status != "graduated"
@@ -119,7 +144,6 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         graduates_found, bd_from_mlb = bulk_detect_graduations(
             active_for_grad, season
         )
-        # Persist birth dates collected for free from the bulk roster
         for key, bd in bd_from_mlb.items():
             upsert_birth_date(key, bd)
         if bd_from_mlb:
@@ -134,12 +158,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             all_snaps = load_all_snapshots()
             timeseries = build_timeseries(all_snaps)
 
-        # --- 3. Fetch stat lines + birth dates ------------------------
+        # --- 3. Fetch stat lines (birth dates already collected above) ---
         statlines = load_statlines()
         if not skip_stats:
-            season = date.today().year
-            known_bds = load_birth_dates()
-
             # Single unified pass: fetch all players (active + graduated).
             # fetch_statline now uses no sportIds filter, so it returns
             # splits across all levels including MLB. _highest_level picks
@@ -184,29 +205,6 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 # Rebuild timeseries so the export reflects the new statuses
                 all_snaps = load_all_snapshots()
                 timeseries = build_timeseries(all_snaps)
-
-            # Birth-date fetch: only for players we don't already have.
-            # Three-path resolution:
-            #   1. Normal path: MLBAM ID from cache → /people/{id}
-            #   2. Fallback: MLB people search returns birth date inline
-            #   3. If ID is found but /people/{id} has no birth date, skip
-            bd_fetched = 0
-            for key, name, _ in all_players:
-                if key in known_bds:
-                    continue
-                mlbam = resolve_mlbam_id(key, name)
-                if mlbam is not None:
-                    bd = fetch_birth_date(mlbam)
-                    if bd:
-                        upsert_birth_date(key, bd)
-                        bd_fetched += 1
-                        continue
-                # Fallback: people-search may return birthDate inline
-                api_id, bd = fetch_birth_date_by_name(name)
-                if bd:
-                    upsert_birth_date(key, bd)
-                    bd_fetched += 1
-            log.info("fetched %d new birth dates from MLB Stats API", bd_fetched)
 
             # 3b. Pitch arsenals (pitchers only) + Statcast metrics (all)
             # Both are best-effort: many MiLB players won't have data,

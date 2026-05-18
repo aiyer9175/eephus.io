@@ -199,19 +199,32 @@ def auto_graduate_player(player_key: str, grad_date: str | None = None) -> None:
         )
 
 
-def upsert_birth_date(player_key: str, birth_date: str) -> None:
+def upsert_birth_date(player_key: str, birth_date: str,
+                      overwrite: bool = False) -> None:
     """
-    Set a player's birth_date. Idempotent — only writes if currently NULL,
-    so a one-time fetch wins and we never re-fetch unnecessarily.
+    Set a player's birth_date.
+
+    By default this is idempotent (only writes when currently NULL) so a
+    one-time fetch wins and we never re-fetch unnecessarily. Pass
+    overwrite=True when the caller has authoritative new data (e.g. the
+    PlayerIndex just resolved a different MLBAM ID, making any existing
+    birth date potentially stale).
     """
     if not birth_date:
         return
     with connect() as con:
-        con.execute(
-            """UPDATE players SET birth_date = ?, updated_at = datetime('now')
-               WHERE player_key = ? AND (birth_date IS NULL OR birth_date = '')""",
-            (birth_date, player_key),
-        )
+        if overwrite:
+            con.execute(
+                """UPDATE players SET birth_date = ?, updated_at = datetime('now')
+                   WHERE player_key = ?""",
+                (birth_date, player_key),
+            )
+        else:
+            con.execute(
+                """UPDATE players SET birth_date = ?, updated_at = datetime('now')
+                   WHERE player_key = ? AND (birth_date IS NULL OR birth_date = '')""",
+                (birth_date, player_key),
+            )
 
 
 def load_birth_dates() -> dict[str, str]:

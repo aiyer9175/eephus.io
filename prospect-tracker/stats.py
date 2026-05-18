@@ -51,7 +51,9 @@ from __future__ import annotations
 
 import json
 import logging
+import re as _re
 import time
+import unicodedata as _uc
 from dataclasses import dataclass, asdict
 from datetime import date
 from pathlib import Path
@@ -152,6 +154,8 @@ log = logging.getLogger(__name__)
 CACHE_DIR = Path(__file__).parent / ".cache"
 CACHE_DIR.mkdir(exist_ok=True)
 ID_CACHE_FILE = CACHE_DIR / "mlbam_ids.json"
+PLAYER_INDEX_CACHE_FILE = CACHE_DIR / "player_index.json"
+PLAYER_INDEX_TTL_SECONDS = 24 * 3600
 
 MLB_STATS_API = "https://statsapi.mlb.com/api/v1"
 RATE_LIMIT_SECONDS = 0.1
@@ -180,62 +184,277 @@ _NAME_ALIASES: dict[str, str] = {
 }
 
 
-def _build_full_player_index(season: int) -> dict[str, tuple[int, str]]:
+_PITCHER_POS_TOKENS = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP", "P"}
+_INFIELD_POS_TOKENS = {"1B", "2B", "3B", "SS", "IF", "INF"}
+_OUTFIELD_POS_TOKENS = {"OF", "CF", "LF", "RF"}
+
+
+def _position_classes(pos: str | None) -> set[str]:
+    """Map an MLB/MiLB position abbreviation to a coarse class for matching."""
+    if not pos:
+        return set()
+    p = pos.upper().split("/")[0].strip()
+    if p in _PITCHER_POS_TOKENS:
+        return {"pitcher"}
+    if p == "C":
+        return {"catcher"}
+    if p in _INFIELD_POS_TOKENS:
+        return {"infield"}
+    if p in _OUTFIELD_POS_TOKENS:
+        return {"outfield"}
+    if p == "DH":
+        return {"infield", "outfield"}
+    return {p}
+
+
+def _position_matches(prospect_pos: str | None, api_pos: str | None) -> bool:
+    """Loose match — pitcher vs hitter, infield vs outfield."""
+    a = _position_classes(prospect_pos)
+    b = _position_classes(api_pos)
+    if not a or not b:
+        return False
+    return bool(a & b)
+
+
+def _first_name_compatible(a: str, b: str) -> bool:
+    """True if two normalized first names plausibly refer to the same person."""
+    if a == b:
+        return True
+    short, long_ = (a, b) if len(a) <= len(b) else (b, a)
+    if long_.startswith(short) and len(short) >= 2:
+        return True
+    return len(a) >= 3 and len(b) >= 3 and a[:3] == b[:3]
+
+
+# Targets the bulk player-index fetch hits. Sport IDs:
+# 1=MLB, 11=AAA, 12=AA, 13=A+, 14=A, 16=Rookie complex.
+_PLAYER_INDEX_SPORT_IDS = (1, 11, 12, 13, 14, 16)
+
+
+class PlayerIndex:
     """
-    Fetch all active affiliated-baseball players across every level for the
-    season: MLB (sportId=1) plus AAA/AA/A+/A/Rk (11-16).
+    In-memory + disk-cached index of every MLB/MiLB player from the
+    /sports/{id}/players endpoints across the current + prior season.
 
-    Returns {normalized_name_key: (mlbam_id, birth_date)}.
+    Holds full per-player metadata (id, fullName, birthDate, position,
+    active, sport_id) and offers score-based candidate selection so that
+    same-name collisions are resolved by birth-year, active flag, and
+    position class — instead of "whoever the API search returns first."
 
-    We search from lowest to highest level so that if the same player
-    appears in multiple lists the MLB entry takes precedence (last write
-    wins, and we iterate lowest→highest).
-
-    Also walks back one season — early in the year the current-season MiLB
-    rosters aren't fully published, and some prospects (Charlee Soto,
-    Travis Sykora, Noble Meyer in May 2026) only appear in the prior-season
-    rosters. Current-season entries overwrite prior-season ones.
-
-    Called once per process; result is module-level cached.
+    Bulk-fetched in parallel (12 concurrent calls completes in ~1.5s) and
+    pickled to disk so subsequent process runs reuse it for ~50ms.
     """
-    global _FULL_PLAYER_INDEX
-    if _FULL_PLAYER_INDEX is not None:
-        return _FULL_PLAYER_INDEX
 
-    index: dict[str, tuple[int, str]] = {}
-    # Walk prior season first so current-season entries (newer affiliations)
-    # win when both have the same player; lowest→highest per season so the
-    # MLB record beats the MiLB record for the same player.
-    for idx_season in (season - 1, season):
-        for sport_id in (16, 14, 13, 12, 11, 1):
-            url = f"{MLB_STATS_API}/sports/{sport_id}/players?season={idx_season}"
+    def __init__(self, season: int):
+        self.season = season
+        self.players: list[dict] = []
+        self.by_name: dict[str, list[dict]] = {}
+        self.by_last: dict[str, list[dict]] = {}
+
+    # -- Loading ----------------------------------------------------------
+
+    @classmethod
+    def load_or_build(cls, season: int, force_rebuild: bool = False) -> "PlayerIndex":
+        idx = cls(season)
+        if not force_rebuild and PLAYER_INDEX_CACHE_FILE.exists():
+            try:
+                age = time.time() - PLAYER_INDEX_CACHE_FILE.stat().st_mtime
+                if age <= PLAYER_INDEX_TTL_SECONDS:
+                    data = json.loads(PLAYER_INDEX_CACHE_FILE.read_text(encoding="utf-8"))
+                    if data.get("season") == season and data.get("players"):
+                        idx._build_lookups(data["players"])
+                        log.info("loaded player index from disk: %d players (%.1f min old)",
+                                 len(idx.players), age / 60)
+                        return idx
+            except Exception as e:
+                log.debug("could not load cached player index: %s", e)
+        idx._fetch_parallel()
+        try:
+            PLAYER_INDEX_CACHE_FILE.write_text(
+                json.dumps({"season": season, "players": idx.players}),
+                encoding="utf-8",
+            )
+        except Exception as e:
+            log.debug("could not persist player index: %s", e)
+        return idx
+
+    def _fetch_parallel(self) -> None:
+        """Fetch every (season, sport_id) combination concurrently."""
+        targets: list[tuple[int, int]] = []
+        # Walk prior season first so current-season records overwrite when
+        # the same player appears in both.
+        for s in (self.season - 1, self.season):
+            for sport_id in _PLAYER_INDEX_SPORT_IDS:
+                targets.append((s, sport_id))
+
+        def fetch_one(t: tuple[int, int]) -> tuple[tuple[int, int], list[dict]]:
+            season_, sport_id = t
+            url = f"{MLB_STATS_API}/sports/{sport_id}/players?season={season_}"
             try:
                 resp = requests.get(url, timeout=30)
                 resp.raise_for_status()
-                people = resp.json().get("people", [])
+                return t, resp.json().get("people", [])
             except Exception as e:
-                log.debug("player index fetch failed (sportId=%s, season=%s): %s",
-                          sport_id, idx_season, e)
-                time.sleep(RATE_LIMIT_SECONDS)
-                continue
-            for p in people:
-                name = p.get("fullName", "")
-                if not name:
-                    continue
-                # Skip placeholder API entries that have only a last name
-                # (no firstName). These are stub records — matching them
-                # caused false-positive ID resolutions like "JoJo Parker"
-                # -> id=817866 ("Parker" with no first name).
-                if not p.get("firstName"):
-                    continue
-                key = _norm_key(name)
-                index[key] = (int(p["id"]), p.get("birthDate") or "")
-            time.sleep(RATE_LIMIT_SECONDS)
+                log.debug("player index fetch failed (sport=%s season=%s): %s",
+                          sport_id, season_, e)
+                return t, []
 
-    _FULL_PLAYER_INDEX = index
-    log.info("full player index: %d players across all levels (seasons=%d,%d)",
-             len(index), season - 1, season)
-    return index
+        # Collapse to one record per id, preferring the highest level
+        # (MLB > AAA > AA > ...) and most recent season.
+        by_id: dict[int, dict] = {}
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(8, len(targets))) as ex:
+            futures = [ex.submit(fetch_one, t) for t in targets]
+            for fut in concurrent.futures.as_completed(futures):
+                (season_, sport_id), people = fut.result()
+                for p in people:
+                    if not p.get("id") or not p.get("fullName"):
+                        continue
+                    # Skip placeholder entries (no firstName) — these caused
+                    # bogus matches like "JoJo Parker" → id 817866 ("Parker").
+                    if not p.get("firstName"):
+                        continue
+                    pid = int(p["id"])
+                    rec = {
+                        "id": pid,
+                        "fullName": p["fullName"],
+                        "firstName": p.get("firstName", ""),
+                        "lastName": p.get("lastName", ""),
+                        "birthDate": p.get("birthDate") or "",
+                        "position": (p.get("primaryPosition") or {}).get("abbreviation") or "",
+                        "active": bool(p.get("active")),
+                        "sport_id": sport_id,
+                        "season": season_,
+                    }
+                    existing = by_id.get(pid)
+                    if existing is None or _is_better_record(rec, existing):
+                        by_id[pid] = rec
+
+        self._build_lookups(list(by_id.values()))
+        log.info("built player index: %d unique players (seasons=%d,%d)",
+                 len(self.players), self.season - 1, self.season)
+
+    def _build_lookups(self, records: list[dict]) -> None:
+        self.players = records
+        self.by_name = {}
+        self.by_last = {}
+        for r in records:
+            self.by_name.setdefault(_norm_key(r["fullName"]), []).append(r)
+            last = r.get("lastName") or ""
+            if last:
+                self.by_last.setdefault(_norm_key(last), []).append(r)
+
+    # -- Lookup ------------------------------------------------------------
+
+    def candidates_for(self, name: str) -> list[dict]:
+        """Return every record that plausibly matches `name`."""
+        norm = _norm_key(name)
+        if norm in self.by_name:
+            return list(self.by_name[norm])
+        # Strip Jr./Sr./II-V suffixes
+        stripped = _re.sub(r"\s+(jr\.?|sr\.?|ii|iii|iv|v)$",
+                           "", name, flags=_re.IGNORECASE).strip()
+        if stripped != name:
+            stripped_key = _norm_key(stripped)
+            if stripped_key in self.by_name:
+                return list(self.by_name[stripped_key])
+        # Last-name lookup with first-name prefix compatibility check
+        # (handles "Dom Keegan" ↔ "Dominic Keegan").
+        parts = stripped.split()
+        if len(parts) >= 2:
+            first_norm = _norm_key(parts[0])
+            last_norm = _norm_key(parts[-1])
+            same_last = self.by_last.get(last_norm, [])
+            return [r for r in same_last
+                    if _first_name_compatible(first_norm, _norm_key(r.get("firstName", "")))]
+        return []
+
+    def best_match(self, name: str, position: str | None = None,
+                   player_key: str | None = None) -> dict | None:
+        """
+        Resolve a (name, position, player_key) tuple to the best candidate.
+
+        Honors `_NAME_ALIASES` first. Then scores candidates by birth-year
+        plausibility, position class match, and active flag.
+        """
+        if player_key:
+            alias = _NAME_ALIASES.get(player_key)
+            if alias:
+                aliased = self.candidates_for(alias)
+                if aliased:
+                    return self._pick_best(aliased, position)
+        candidates = self.candidates_for(name)
+        if not candidates:
+            return None
+        return self._pick_best(candidates, position)
+
+    @staticmethod
+    def _pick_best(candidates: list[dict], position: str | None) -> dict | None:
+        best_score = None
+        best_rec = None
+        for r in candidates:
+            score = _score_candidate(r, position)
+            if score is None:
+                continue
+            if best_score is None or score > best_score:
+                best_score = score
+                best_rec = r
+        return best_rec
+
+
+def _is_better_record(new: dict, existing: dict) -> bool:
+    """When the same MLBAM id appears in multiple (season, sport) lists,
+    keep the most-recent + highest-level record."""
+    if new["season"] != existing["season"]:
+        return new["season"] > existing["season"]
+    # sport_id ascending = MLB(1) < AAA(11) < AA(12) < ...; lower wins.
+    return new["sport_id"] < existing["sport_id"]
+
+
+def _score_candidate(r: dict, position: str | None) -> int | None:
+    """
+    Score a candidate record for prospect-resolution; None means reject.
+
+    Rejection rules:
+      - Birth year < 1994 (no current prospect is 32+).
+
+    Otherwise: more positive = better match. Position class match is the
+    strongest signal (15), then prospect-era birth year (10), active (5).
+    MLB-level records win slim margins so graduates resolve to their MLB id.
+    """
+    bd = r.get("birthDate") or ""
+    try:
+        by = int(bd[:4]) if len(bd) >= 4 else None
+    except ValueError:
+        by = None
+    if by is not None and by < 1994:
+        return None
+    score = 0
+    if bd:
+        score += 20  # real player with known birth date
+    if by is not None and by >= 1994:
+        score += 10  # prospect-era
+    if r.get("active"):
+        score += 5
+    if position and r.get("position") and _position_matches(position, r["position"]):
+        score += 15
+    if r.get("sport_id") == 1:
+        score += 1   # MLB record beats MiLB on otherwise-tied scores
+    return score
+
+
+# Legacy alias for code that still expects a {name_key: (id, birth)} dict.
+def _build_full_player_index(season: int) -> dict[str, tuple[int, str]]:
+    """Compatibility shim around the new `PlayerIndex` class."""
+    global _FULL_PLAYER_INDEX
+    if _FULL_PLAYER_INDEX is not None:
+        return _FULL_PLAYER_INDEX
+    idx = PlayerIndex.load_or_build(season)
+    flat: dict[str, tuple[int, str]] = {}
+    for r in idx.players:
+        flat[_norm_key(r["fullName"])] = (r["id"], r["birthDate"])
+    _FULL_PLAYER_INDEX = flat
+    return flat
 
 
 def compute_age_decimal(birth_date: str | None,
@@ -497,19 +716,21 @@ def _search_mlbam_via_api(player_name: str) -> tuple[int | None, str | None]:
     return None, None
 
 
-def resolve_mlbam_id(player_key: str, player_name: str) -> int | None:
+def resolve_mlbam_id(player_key: str, player_name: str,
+                     position: str | None = None) -> int | None:
     """
     Resolve 'konnor_griffin' / 'Konnor Griffin' -> MLBAM ID (e.g. 700000).
 
     Resolution order:
       1. Disk cache (instant, permanent once resolved)
-      2. MLB Stats API people search (most up-to-date for current prospects;
-         scores candidates so the prospect-era birth year wins same-name
-         collisions like Wilmer Flores 1991 vs 2001)
-      3. pybaseball Chadwick Bureau lookup (historical-player coverage as
-         a fallback when API search returns nothing)
-      4. Full MLB+MiLB sports/{id}/players index (last resort for prospects
-         not in either of the above)
+      2. PlayerIndex (in-memory, bulk-prefetched at pipeline start). Disk-
+         cached for 24h so subsequent process runs reuse it.
+      3. MLB Stats API people search (for prospects not in any 2024-2026
+         roster — pulls in just-signed J2s and similar edge cases).
+      4. Chadwick Bureau (last-resort historical coverage).
+
+    `position` (e.g. 'SS', 'RHP') is used to disambiguate same-name hits
+    like Wilmer Flores (1B) vs Wilmer Flores (P) in step 2.
     """
     cache = _load_id_cache()
     if player_key in cache:
@@ -517,22 +738,32 @@ def resolve_mlbam_id(player_key: str, player_name: str) -> int | None:
 
     mlbam_id = None
 
-    # --- Path 1: MLB Stats API people search ---
-    # Tried first because the API has better same-name disambiguation than
-    # Chadwick (it knows birth years for current prospects; Chadwick often
-    # only has the historical version of a shared name).
-    api_id, _ = _search_mlbam_via_api(player_name)
-    if api_id is not None:
-        log.info("resolved %s via MLB people search (id=%s)", player_name, api_id)
-        mlbam_id = api_id
+    # --- Path 1: PlayerIndex (bulk-fetched, in-memory) ---
+    # The vast majority of resolutions land here. The index covers every
+    # affiliated player in current + prior season and scores candidates by
+    # birth year + position to avoid same-name collisions.
+    try:
+        idx = PlayerIndex.load_or_build(date.today().year)
+        rec = idx.best_match(player_name, position=position, player_key=player_key)
+        if rec is not None:
+            mlbam_id = rec["id"]
+            log.info("resolved %s via PlayerIndex (id=%s)", player_name, mlbam_id)
+    except Exception as e:
+        log.debug("PlayerIndex lookup failed for %s: %s", player_name, e)
 
-    # --- Path 2: pybaseball Chadwick Bureau (exact match only) ---
-    # NOTE: fuzzy=True is intentionally disabled here. The Chadwick fuzzy
-    # matcher routinely returns wrong players (e.g. "Bryce Rainer" → Bryce
-    # Miller, "Arjun Nimmala" → Aaron Nola).
-    #
-    # Filter out same-name historical players (mlb_played_last < 2018) so we
-    # don't cache "Jamie Arnold" → 150374 (a 1974-born pitcher).
+    # --- Path 2: MLB Stats API people search ---
+    # Catches prospects not on any 2024-2026 roster (J2 signings before
+    # rosters are published, recent international amateur additions).
+    if mlbam_id is None:
+        api_id, _ = _search_mlbam_via_api(player_name)
+        if api_id is not None:
+            log.info("resolved %s via MLB people search (id=%s)", player_name, api_id)
+            mlbam_id = api_id
+
+    # --- Path 3: pybaseball Chadwick Bureau (exact match only) ---
+    # Last-resort historical coverage. Filter out same-name retired players
+    # (mlb_played_last < 2018) so "Jamie Arnold" → 150374 (a 1974-born
+    # pitcher) doesn't sneak into the cache.
     if mlbam_id is None:
         try:
             from pybaseball import playerid_lookup
@@ -556,35 +787,6 @@ def resolve_mlbam_id(player_key: str, player_name: str) -> int | None:
         except ImportError:
             log.debug("pybaseball not installed; skipping Chadwick lookup")
 
-    # --- Path 3: Full MLB+MiLB player index (all sport levels) ---
-    # Covers prospects not on 40-man rosters who don't appear in the people
-    # search endpoint (e.g. A+/AA players like Bryce Rainer, Liam Doyle).
-    if mlbam_id is None:
-        season = date.today().year
-        full_idx = _build_full_player_index(season)
-        entry = full_idx.get(_norm_key(player_name))
-        if entry is None:
-            # Try stripping Jr./Sr./II suffixes
-            import re as _re2
-            stripped = _re2.sub(r"\s+(jr\.?|sr\.?|ii|iii|iv)$",
-                                "", player_name, flags=_re2.IGNORECASE).strip()
-            if stripped != player_name:
-                entry = full_idx.get(_norm_key(stripped))
-        if entry is None:
-            # Try explicit name alias (e.g. "Leodalis De Vries" -> "Leo De Vries")
-            alias = _NAME_ALIASES.get(player_key)
-            if alias:
-                entry = full_idx.get(_norm_key(alias))
-        if entry is not None:
-            cand_id, cand_bd = entry
-            try:
-                by = int(cand_bd[:4]) if len(cand_bd) >= 4 else None
-            except ValueError:
-                by = None
-            if by is None or by >= 1994:
-                log.info("resolved %s via full player index (id=%s)", player_name, cand_id)
-                mlbam_id = cand_id
-
     if mlbam_id is None:
         log.warning(
             "could not resolve MLBAM ID for %s — caching null; "
@@ -598,6 +800,104 @@ def resolve_mlbam_id(player_key: str, player_name: str) -> int | None:
     cache[player_key] = mlbam_id
     _save_id_cache(cache)
     return mlbam_id
+
+
+def bulk_resolve_ids(
+    players: Iterable[tuple[str, str, str | None]],
+    season: int | None = None,
+    force_rebuild_index: bool = False,
+    fallback_workers: int = 8,
+) -> tuple[dict[str, int], dict[str, str]]:
+    """
+    Resolve MLBAM IDs + birth dates for a batch of prospects in one pass.
+
+    Args:
+        players: iterable of (player_key, player_name, position).
+                 `position` may be None; when provided it disambiguates
+                 same-name hits in the player index.
+        season: defaults to today's calendar year.
+        force_rebuild_index: ignore the disk-cached PlayerIndex and refetch.
+        fallback_workers: thread pool size for the MLB people-search fallback.
+
+    Returns:
+        (ids_by_key, birth_dates_by_key)
+
+        ids_by_key contains every successfully-resolved prospect (both new
+        and previously-cached). birth_dates_by_key only contains dates we
+        just collected from the index — callers can upsert them directly.
+
+    Performance: ~1.5s one-time index fetch (or ~50ms on a warm cache),
+    plus parallel /people/search fallbacks for prospects not in any roster.
+    Replaces ~300ms-per-prospect of sequential API search calls.
+    """
+    if season is None:
+        season = date.today().year
+
+    triples = [(k, n, p) for k, n, p in players]
+    cache = _load_id_cache()
+
+    ids_out: dict[str, int] = {}
+    bds_out: dict[str, str] = {}
+    fallback_triples: list[tuple[str, str, str | None]] = []
+
+    # Build / load the player index once for everyone
+    idx = PlayerIndex.load_or_build(season, force_rebuild=force_rebuild_index)
+
+    # Build a {id: birthDate} lookup so we can refresh birth dates even
+    # for prospects whose MLBAM ID is already cached. This catches the
+    # stale-DOB case where an earlier bad ID seeded the wrong birth date.
+    bd_by_id: dict[int, str] = {r["id"]: r.get("birthDate") or ""
+                                for r in idx.players if r.get("birthDate")}
+
+    new_cache_entries = 0
+    for key, name, position in triples:
+        if key in cache:
+            cid = cache[key]
+            if cid is not None:
+                ids_out[key] = cid
+                # Refresh birth date from the index when available — covers
+                # prospects whose DB birth_date is stale from a prior bad ID.
+                idx_bd = bd_by_id.get(cid)
+                if idx_bd:
+                    bds_out[key] = idx_bd
+            continue
+        rec = idx.best_match(name, position=position, player_key=key)
+        if rec is None:
+            fallback_triples.append((key, name, position))
+            continue
+        ids_out[key] = rec["id"]
+        cache[key] = rec["id"]
+        new_cache_entries += 1
+        if rec.get("birthDate"):
+            bds_out[key] = rec["birthDate"]
+
+    # Parallelize the MLB people-search fallback for prospects missing
+    # from every roster.
+    if fallback_triples:
+        def _search(triple: tuple[str, str, str | None]):
+            key, name, _ = triple
+            return key, _search_mlbam_via_api(name)
+
+        worker_count = max(1, min(fallback_workers, len(fallback_triples)))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as ex:
+            for key, (api_id, bd) in ex.map(_search, fallback_triples):
+                if api_id is not None:
+                    ids_out[key] = api_id
+                    cache[key] = api_id
+                    new_cache_entries += 1
+                    if bd:
+                        bds_out[key] = bd
+                else:
+                    cache[key] = None  # remember "unresolvable"
+
+    if new_cache_entries:
+        _save_id_cache(cache)
+
+    log.info(
+        "bulk_resolve_ids: %d resolved, %d new, %d via people-search fallback",
+        len(ids_out), new_cache_entries, len(fallback_triples),
+    )
+    return ids_out, bds_out
 
 
 # ---------------------------------------------------------------------------
@@ -1037,9 +1337,6 @@ def statline_to_dict(sl: StatLine | None) -> dict | None:
 # ---------------------------------------------------------------------------
 # Bulk graduation detection
 # ---------------------------------------------------------------------------
-
-import re as _re
-import unicodedata as _uc
 
 
 def _norm_key(name: str) -> str:
