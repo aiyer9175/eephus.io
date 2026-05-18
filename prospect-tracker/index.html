@@ -362,6 +362,18 @@
     .level-too-old    { background: var(--level-too-old-bg);    color: var(--level-too-old-fg); }
     .level-mlb        { background: var(--level-mlb-bg);        color: var(--level-mlb-fg); }
     .age-vs-level { font-size: 10px; color: var(--text-tertiary); }
+    .prior-season-tag {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 5px;
+      margin-right: 5px;
+      border: 1px dashed var(--text-tertiary);
+      border-radius: 2px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.04em;
+      font-variant-numeric: tabular-nums;
+      cursor: help;
+    }
 
     /* === Search bar ================================================ */
     .search-bar {
@@ -857,8 +869,13 @@ function makeMilbCell(p) {
   const detail = isPitcher
     ? `K/9 ${sl.k_per_9 ?? "—"} · BB/9 ${sl.bb_per_9 ?? "—"}`
     : `${sl.hr ?? 0} HR · ${sl.sb ?? 0} SB`;
+  // When stats are from a previous season (no current-year data yet),
+  // tag the line with the source year so users don't read stale data as fresh.
+  const seasonTag = sl.is_prior_season && sl.season
+    ? `<span class="prior-season-tag" title="No ${new Date().getFullYear()} stats yet — showing ${sl.season}">${sl.season}</span>`
+    : "";
   return `<div class="milb-cell milb-cell-wrap">
-    <span class="level-pill ${levelClass}">${sl.level}</span>${line}
+    <span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${line}
     ${diff ? `<span class="age-vs-level"> · ${diff} yrs</span>` : ""}
     <br/><span style="color: var(--text-tertiary);">${detail}</span>
   </div>`;
@@ -873,8 +890,11 @@ function makeGradMilbCell(p) {
   const detail = sl.is_pitcher
     ? `K/9 ${sl.k_per_9 ?? "—"} · BB/9 ${sl.bb_per_9 ?? "—"}`
     : `${sl.hr ?? 0} HR · ${sl.sb ?? 0} SB`;
+  const seasonTag = sl.is_prior_season && sl.season
+    ? `<span class="prior-season-tag" title="No ${new Date().getFullYear()} stats — showing ${sl.season}">${sl.season}</span> `
+    : "";
   return `<div class="milb-cell">
-    <strong style="font-weight: 500; color: var(--text-primary);">${line}</strong>
+    ${seasonTag}<strong style="font-weight: 500; color: var(--text-primary);">${line}</strong>
     <br/><span style="color: var(--text-tertiary);">${detail}</span>
   </div>`;
 }

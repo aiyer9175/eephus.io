@@ -191,6 +191,11 @@ def _build_full_player_index(season: int) -> dict[str, tuple[int, str]]:
     appears in multiple lists the MLB entry takes precedence (last write
     wins, and we iterate lowest→highest).
 
+    Also walks back one season — early in the year the current-season MiLB
+    rosters aren't fully published, and some prospects (Charlee Soto,
+    Travis Sykora, Noble Meyer in May 2026) only appear in the prior-season
+    rosters. Current-season entries overwrite prior-season ones.
+
     Called once per process; result is module-level cached.
     """
     global _FULL_PLAYER_INDEX
@@ -198,34 +203,38 @@ def _build_full_player_index(season: int) -> dict[str, tuple[int, str]]:
         return _FULL_PLAYER_INDEX
 
     index: dict[str, tuple[int, str]] = {}
-    # Walk from lowest to highest so MLB entry overwrites if present
-    for sport_id in (16, 14, 13, 12, 11, 1):
-        url = f"{MLB_STATS_API}/sports/{sport_id}/players?season={season}"
-        try:
-            resp = requests.get(url, timeout=30)
-            resp.raise_for_status()
-            people = resp.json().get("people", [])
-        except Exception as e:
-            log.debug("player index fetch failed (sportId=%s): %s", sport_id, e)
+    # Walk prior season first so current-season entries (newer affiliations)
+    # win when both have the same player; lowest→highest per season so the
+    # MLB record beats the MiLB record for the same player.
+    for idx_season in (season - 1, season):
+        for sport_id in (16, 14, 13, 12, 11, 1):
+            url = f"{MLB_STATS_API}/sports/{sport_id}/players?season={idx_season}"
+            try:
+                resp = requests.get(url, timeout=30)
+                resp.raise_for_status()
+                people = resp.json().get("people", [])
+            except Exception as e:
+                log.debug("player index fetch failed (sportId=%s, season=%s): %s",
+                          sport_id, idx_season, e)
+                time.sleep(RATE_LIMIT_SECONDS)
+                continue
+            for p in people:
+                name = p.get("fullName", "")
+                if not name:
+                    continue
+                # Skip placeholder API entries that have only a last name
+                # (no firstName). These are stub records — matching them
+                # caused false-positive ID resolutions like "JoJo Parker"
+                # -> id=817866 ("Parker" with no first name).
+                if not p.get("firstName"):
+                    continue
+                key = _norm_key(name)
+                index[key] = (int(p["id"]), p.get("birthDate") or "")
             time.sleep(RATE_LIMIT_SECONDS)
-            continue
-        for p in people:
-            name = p.get("fullName", "")
-            if not name:
-                continue
-            # Skip placeholder API entries that have only a last name
-            # (no firstName). These are stub records — matching them
-            # caused false-positive ID resolutions like "JoJo Parker"
-            # -> id=817866 ("Parker" with no first name).
-            if not p.get("firstName"):
-                continue
-            key = _norm_key(name)
-            index[key] = (int(p["id"]), p.get("birthDate") or "")
-        time.sleep(RATE_LIMIT_SECONDS)
 
     _FULL_PLAYER_INDEX = index
-    log.info("full player index: %d players across all levels (season=%d)",
-             len(index), season)
+    log.info("full player index: %d players across all levels (seasons=%d,%d)",
+             len(index), season - 1, season)
     return index
 
 
@@ -311,6 +320,13 @@ class StatLine:
     # Meta
     is_pitcher: bool
     fetched_at: str       # ISO date
+    # Season this stat line is from. Usually the current season, but when a
+    # player has no current-season stats (injury, late call-up, etc.) we fall
+    # back to the most recent season that has any MiLB/MLB data.
+    season: int | None = None
+    # True when we couldn't find current-season stats and fell back to a
+    # prior year. The UI surfaces this so users know they're seeing last year.
+    is_prior_season: bool = False
 
 
 @dataclass
@@ -371,6 +387,47 @@ def _save_id_cache(cache: dict[str, int | None]):
     ID_CACHE_FILE.write_text(json.dumps(cache, indent=2, sort_keys=True))
 
 
+def _is_historical_stub(record: dict) -> bool:
+    """
+    True if an MLB Stats API people record looks like a 1920s-1940s player
+    stub (no birthDate, plus a debut or lastPlayed year < 2010). Caching
+    these instead of the real prospect causes silent stat-fetch failures.
+    """
+    if record.get("birthDate"):
+        return False
+    debut = record.get("mlbDebutDate") or ""
+    last_played = record.get("lastPlayedDate") or ""
+    for v in (debut, last_played):
+        try:
+            yr = int(v[:4]) if len(v) >= 4 else None
+        except ValueError:
+            yr = None
+        if yr is not None and yr < 2010:
+            return True
+    return False
+
+
+def _last_names_align(query_name: str, api_full_name: str) -> bool:
+    """
+    True if the MLB API result's name plausibly matches the query's last name.
+
+    The /people/search endpoint does loose token matching, so a query for
+    "Ricardo Yan" returns "Yandel Ricardo" because "Ricardo" matched as a
+    first name. Require the query's last token to appear somewhere in the
+    API name — checking the reverse direction would accept "ricardo" in
+    "Yandel Ricardo" matching "Ricardo Yan" since both share the token.
+    """
+    q = _norm_key(query_name).replace("_", " ")
+    a = _norm_key(api_full_name).replace("_", " ")
+    if not q or not a:
+        return True
+    q_parts = q.split()
+    a_parts = a.split()
+    if not q_parts or not a_parts:
+        return True
+    return q_parts[-1] in a_parts
+
+
 def _search_mlbam_via_api(player_name: str) -> tuple[int | None, str | None]:
     """
     Search the MLB Stats API for a player by name.
@@ -382,6 +439,12 @@ def _search_mlbam_via_api(player_name: str) -> tuple[int | None, str | None]:
       2. No active filter — catches MiLB-only prospects not on a 40-man yet.
          We validate birth year >= 1994 on this pass to avoid matching
          historical players with the same name.
+
+    Both passes reject:
+      - historical-stub records (no birthDate, debut < 2010),
+      - token-false-positive matches where the returned last name has no
+        overlap with the queried last name (e.g. query "Ricardo Yan" →
+        result "Yandel Ricardo": "Ricardo" matched as a first name).
     """
     import urllib.parse
     encoded = urllib.parse.quote_plus(player_name)
@@ -400,17 +463,36 @@ def _search_mlbam_via_api(player_name: str) -> tuple[int | None, str | None]:
             log.debug("MLB people search failed for %s: %s", player_name, e)
             continue
 
+        # Score every candidate and pick the best one in this pass. Both
+        # passes can return multiple same-name hits (e.g. Wilmer Flores ID
+        # 527038 = MLB veteran born 1991 + ID 695865 = MiLB prospect born
+        # 2001). Always prefer the candidate with a prospect-era birth year.
+        best: tuple[int, dict] | None = None
         for p in people:
+            if _is_historical_stub(p):
+                continue
+            full_name = p.get("fullName", "")
+            if not _last_names_align(player_name, full_name):
+                continue
             bd = p.get("birthDate") or ""
             try:
                 by = int(bd[:4]) if len(bd) >= 4 else None
             except ValueError:
                 by = None
-            # On pass 2 (all players), require birth year >= 1994 to avoid
-            # matching a historical player who shares the name.
-            if "active=true" not in params and by is not None and by < 1994:
+            # Drop pre-1994 births in every pass — no current prospect is
+            # 32+ years old, regardless of active-roster status.
+            if by is not None and by < 1994:
                 continue
-            return int(p["id"]), bd or None
+            score = 0
+            if by is not None and by >= 1994:
+                score += 10
+            if p.get("active"):
+                score += 1
+            if best is None or score > best[0]:
+                best = (score, p)
+        if best is not None:
+            p = best[1]
+            return int(p["id"]), p.get("birthDate") or None
 
     return None, None
 
@@ -421,8 +503,13 @@ def resolve_mlbam_id(player_key: str, player_name: str) -> int | None:
 
     Resolution order:
       1. Disk cache (instant, permanent once resolved)
-      2. pybaseball Chadwick Bureau lookup (best coverage for historical players)
-      3. MLB Stats API people search (catches recent signings not yet in Chadwick)
+      2. MLB Stats API people search (most up-to-date for current prospects;
+         scores candidates so the prospect-era birth year wins same-name
+         collisions like Wilmer Flores 1991 vs 2001)
+      3. pybaseball Chadwick Bureau lookup (historical-player coverage as
+         a fallback when API search returns nothing)
+      4. Full MLB+MiLB sports/{id}/players index (last resort for prospects
+         not in either of the above)
     """
     cache = _load_id_cache()
     if player_key in cache:
@@ -430,32 +517,44 @@ def resolve_mlbam_id(player_key: str, player_name: str) -> int | None:
 
     mlbam_id = None
 
-    # --- Path 1: pybaseball Chadwick Bureau (exact match only) ---
+    # --- Path 1: MLB Stats API people search ---
+    # Tried first because the API has better same-name disambiguation than
+    # Chadwick (it knows birth years for current prospects; Chadwick often
+    # only has the historical version of a shared name).
+    api_id, _ = _search_mlbam_via_api(player_name)
+    if api_id is not None:
+        log.info("resolved %s via MLB people search (id=%s)", player_name, api_id)
+        mlbam_id = api_id
+
+    # --- Path 2: pybaseball Chadwick Bureau (exact match only) ---
     # NOTE: fuzzy=True is intentionally disabled here. The Chadwick fuzzy
     # matcher routinely returns wrong players (e.g. "Bryce Rainer" → Bryce
-    # Miller, "Arjun Nimmala" → Aaron Nola). Exact match is conservative but
-    # safe; the MLB Stats API search (Path 2) handles players not in Chadwick.
-    try:
-        from pybaseball import playerid_lookup
-        parts = player_name.split(maxsplit=1)
-        if len(parts) >= 2:
-            first, last = parts[0], parts[1]
-            try:
-                df = playerid_lookup(last, first, fuzzy=False)
-                if df is not None and not df.empty:
-                    df_sorted = df.sort_values("key_mlbam", ascending=False)
-                    mlbam_id = int(df_sorted.iloc[0]["key_mlbam"])
-            except Exception as e:
-                log.debug("Chadwick exact lookup failed for %s: %s", player_name, e)
-    except ImportError:
-        log.debug("pybaseball not installed; skipping Chadwick lookup")
-
-    # --- Path 2: MLB Stats API people search ---
+    # Miller, "Arjun Nimmala" → Aaron Nola).
+    #
+    # Filter out same-name historical players (mlb_played_last < 2018) so we
+    # don't cache "Jamie Arnold" → 150374 (a 1974-born pitcher).
     if mlbam_id is None:
-        api_id, _ = _search_mlbam_via_api(player_name)
-        if api_id is not None:
-            log.info("resolved %s via MLB people search (id=%s)", player_name, api_id)
-            mlbam_id = api_id
+        try:
+            from pybaseball import playerid_lookup
+            parts = player_name.split(maxsplit=1)
+            if len(parts) >= 2:
+                first, last = parts[0], parts[1]
+                try:
+                    df = playerid_lookup(last, first, fuzzy=False)
+                    if df is not None and not df.empty:
+                        df_sorted = df.sort_values("key_mlbam", ascending=False)
+                        if "mlb_played_last" in df_sorted.columns:
+                            df_sorted = df_sorted[
+                                df_sorted["mlb_played_last"].isna()
+                                | (df_sorted["mlb_played_last"] >= 2018)
+                            ]
+                        if not df_sorted.empty:
+                            mlbam_id = int(df_sorted.iloc[0]["key_mlbam"])
+                except Exception as e:
+                    log.debug("Chadwick exact lookup failed for %s: %s",
+                              player_name, e)
+        except ImportError:
+            log.debug("pybaseball not installed; skipping Chadwick lookup")
 
     # --- Path 3: Full MLB+MiLB player index (all sport levels) ---
     # Covers prospects not on 40-man rosters who don't appear in the people
@@ -572,66 +671,84 @@ def fetch_birth_date(mlbam_id: int) -> str | None:
     return people[0].get("birthDate")  # e.g. "2006-05-03"
 
 
-def fetch_statline(player_key: str, mlbam_id: int,
-                   season: int, is_pitcher: bool = False,
-                   for_mlb: bool = False) -> StatLine | None:
-    """
-    Fetch a player's stat line for the given season.
+def _fetch_splits_for_season(mlbam_id: int, season: int,
+                             is_pitcher: bool) -> list[dict]:
+    """Fetch every split (MLB + every MiLB level) the player has in `season`.
 
-    Makes a single API call with no sportIds filter, which returns splits
-    for every level the player appeared at (MLB, AAA, AA, …). We then
-    pick the highest level reached.
-
-    If the highest level is MLB:
-      - for_mlb=True  → return the MLB stat line (used for graduates)
-      - for_mlb=False → return None but set level="MLB" so the caller
-                        knows to auto-graduate this player
-
-    The `for_mlb` flag is kept for backward compatibility but no longer
-    changes the API URL — it only controls what we return when MLB
-    activity is detected.
+    Two calls when needed: leagueListId=milb_full first (covers all MiLB
+    levels); if the response is empty we retry without the filter to catch
+    players whose only activity that year was at the MLB level.
     """
     group = "pitching" if is_pitcher else "hitting"
     # IMPORTANT: leagueListId=milb_full is required to get MiLB splits.
-    # Without it, the API silently returns MLB-only stats (it does NOT
-    # default to "all levels" despite what an older comment here claimed).
-    # If a player has only MLB stats this season, we make a second
-    # query (no leagueListId) to pick them up.
+    # Without it, the API silently returns MLB-only stats.
     url = (
         f"{MLB_STATS_API}/people/{mlbam_id}/stats"
         f"?stats=season&group={group}&season={season}"
         f"&leagueListId=milb_full"
     )
     time.sleep(RATE_LIMIT_SECONDS)
+    splits: list[dict] = []
     try:
         resp = requests.get(url, timeout=15)
         resp.raise_for_status()
-        data = resp.json()
+        for block in resp.json().get("stats", []):
+            splits.extend(block.get("splits", []))
     except Exception as e:
-        log.warning("Stats API failed for %s (%s): %s", player_key, mlbam_id, e)
-        return None
+        log.debug("MiLB fetch failed for %s season=%s: %s", mlbam_id, season, e)
 
-    stats_blocks = data.get("stats", [])
-    splits = []
-    for block in stats_blocks:
-        splits.extend(block.get("splits", []))
+    if splits:
+        return splits
 
-    # MLB fallback: if no MiLB stats, the player may have only played MLB
-    # this season (graduated mid-year, etc.). Try once more without the
-    # leagueListId filter to pick up MLB splits.
-    if not splits:
-        mlb_url = (
-            f"{MLB_STATS_API}/people/{mlbam_id}/stats"
-            f"?stats=season&group={group}&season={season}"
-        )
-        time.sleep(RATE_LIMIT_SECONDS)
-        try:
-            resp = requests.get(mlb_url, timeout=15)
-            resp.raise_for_status()
-            for block in resp.json().get("stats", []):
-                splits.extend(block.get("splits", []))
-        except Exception as e:
-            log.debug("MLB fallback fetch failed for %s: %s", player_key, e)
+    # MLB fallback: player may have only MLB activity this season.
+    mlb_url = (
+        f"{MLB_STATS_API}/people/{mlbam_id}/stats"
+        f"?stats=season&group={group}&season={season}"
+    )
+    time.sleep(RATE_LIMIT_SECONDS)
+    try:
+        resp = requests.get(mlb_url, timeout=15)
+        resp.raise_for_status()
+        for block in resp.json().get("stats", []):
+            splits.extend(block.get("splits", []))
+    except Exception as e:
+        log.debug("MLB fallback fetch failed for %s season=%s: %s",
+                  mlbam_id, season, e)
+    return splits
+
+
+# How many prior seasons to walk back to when the requested season has no
+# stats. 3 covers most "no current-year data" cases (injury, college, holdout)
+# without dragging in genuinely stale lines from 4+ years ago.
+PRIOR_SEASON_LOOKBACK = 3
+
+
+def fetch_statline(player_key: str, mlbam_id: int,
+                   season: int, is_pitcher: bool = False,
+                   for_mlb: bool = False) -> StatLine | None:
+    """
+    Fetch a player's stat line for the requested season.
+
+    If the requested season has no stats anywhere (MLB or MiLB), walk back
+    up to PRIOR_SEASON_LOOKBACK seasons looking for the most recent year
+    with data. The returned StatLine carries `season` and `is_prior_season`
+    so the UI can label fallbacks clearly.
+
+    If the highest level is MLB:
+      - for_mlb=True  → return the MLB stat line (used for graduates)
+      - for_mlb=False → fall through and still return the MLB line; the
+                        caller auto-graduates the player when level="MLB"
+    """
+    splits: list[dict] = []
+    found_season = season
+    is_prior = False
+    for offset in range(PRIOR_SEASON_LOOKBACK + 1):
+        try_season = season - offset
+        splits = _fetch_splits_for_season(mlbam_id, try_season, is_pitcher)
+        if splits:
+            found_season = try_season
+            is_prior = offset > 0
+            break
 
     if not splits:
         return None
@@ -639,6 +756,10 @@ def fetch_statline(player_key: str, mlbam_id: int,
     best = _highest_level(splits)
     if best is None:
         return None
+
+    if is_prior:
+        log.info("%s: no %d stats — using %d (level=%s)",
+                 player_key, season, found_season, best["_level"])
 
     at_mlb = best["_level"] == "MLB"
 
@@ -666,6 +787,8 @@ def fetch_statline(player_key: str, mlbam_id: int,
             bb_per_9=_safe_float(stat.get("walksPer9Inn")),
             is_pitcher=True,
             fetched_at=date_today_iso(),
+            season=found_season,
+            is_prior_season=is_prior,
         )
     pa = stat.get("plateAppearances", 0) or 0
     bb = stat.get("baseOnBalls", 0) or 0
@@ -684,6 +807,8 @@ def fetch_statline(player_key: str, mlbam_id: int,
         era=None, fip=None, ip=None, k_per_9=None, bb_per_9=None,
         is_pitcher=False,
         fetched_at=date_today_iso(),
+        season=found_season,
+        is_prior_season=is_prior,
     )
 
 

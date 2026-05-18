@@ -56,7 +56,7 @@ _NAME_ALIASES = {
     "zachary_root":      "Zach Root",
 }
 
-_SUFFIX_RE = re.compile(r"\s+(jr\.?|sr\.?|ii|iii|iv)$", re.IGNORECASE)
+_SUFFIX_RE = re.compile(r"\s+(jr\.?|sr\.?|ii|iii|iv|v)$", re.IGNORECASE)
 
 
 def normalize(name: str) -> str:
@@ -76,17 +76,26 @@ def names_match(expected: str, actual: str, player_key: str) -> bool:
     a = normalize(actual)
     if e == a:
         return True
+    # Whitespace-insensitive comparison: "Jaiden LoRe" and "Jaiden Lo Re"
+    # normalize to "jaiden lore" vs "jaiden lo re"; treat them as equal.
+    if e.replace(" ", "") == a.replace(" ", ""):
+        return True
     # Try alias for this key
     alias = _NAME_ALIASES.get(player_key)
     if alias and normalize(alias) == a:
         return True
-    # Last-name-only fallback (handles Dom vs Dominic, J.C. vs JC, etc.)
+    # Last-name fallback for nicknames: Dom/Dominic, Leo/Leonardo, Zach/Zachary.
+    # Last names must match exactly AND first names must share at least a
+    # 3-char prefix OR one must be a full prefix of the other. A single-letter
+    # match is too permissive — it let "Jett Williams" match "Joe Williams".
     e_parts = e.split()
     a_parts = a.split()
     if e_parts and a_parts and e_parts[-1] == a_parts[-1]:
-        # Last names match; also require first-letter match on first name
-        if e_parts[0] and a_parts[0] and e_parts[0][0] == a_parts[0][0]:
-            return True
+        ef, af = e_parts[0], a_parts[0]
+        if ef and af:
+            short, long_ = (ef, af) if len(ef) <= len(af) else (af, ef)
+            if long_.startswith(short) or (len(ef) >= 3 and len(af) >= 3 and ef[:3] == af[:3]):
+                return True
     return False
 
 
@@ -133,10 +142,16 @@ def main() -> int:
         expected_names.setdefault(k, n)
     con.close()
 
-    # Batch fetch
-    id_to_key: dict[int, str] = {v: k for k, v in valid.items() if k in expected_names}
-    ids_sorted = sorted(id_to_key.keys())
-    print(f"Resolved expected names for {len(id_to_key)} entries.")
+    # Batch fetch. Note: multiple player_keys may legitimately point to the
+    # same MLBAM ID (e.g. an alternate-spelling key and the canonical key
+    # both resolved to the same MLB record), so we group keys by id but
+    # check every (key, id) pair against the API record below.
+    key_id_pairs: list[tuple[str, int]] = [
+        (k, v) for k, v in valid.items() if k in expected_names
+    ]
+    ids_sorted = sorted({pid for _, pid in key_id_pairs})
+    print(f"Resolved expected names for {len(key_id_pairs)} entries "
+          f"({len(ids_sorted)} unique IDs).")
     print(f"Fetching /people in batches of {BATCH_SIZE} "
           f"({(len(ids_sorted) + BATCH_SIZE - 1) // BATCH_SIZE} batches)...")
 
@@ -153,19 +168,58 @@ def main() -> int:
 
     print(f"Got {len(api_records)} person records.")
 
-    # Compare
+    # Compare every (key, id) pair so multiple keys mapping to the same ID
+    # are each independently checked. We flag three failure modes:
+    #   - name mismatch (cached ID points to a different person)
+    #   - same-name birth-year mismatch (cached ID points to a historical
+    #     player who happens to share the prospect's name — e.g. jamie_arnold
+    #     was cached as 150374, a 1974-born pitcher). Every real prospect is
+    #     born 1994 or later.
+    #   - dead pre-2010 player with no birth date. The MLB API has stub
+    #     entries for 1920s-1940s players that lack birthDate but show
+    #     mlbDebutDate or lastPlayedDate. These IDs leaked into the cache
+    #     via earlier resolver versions and the birth-year check can't
+    #     catch them because birthDate is null.
     mismatches: list[tuple[str, int, str, str]] = []
     missing_in_api: list[tuple[str, int]] = []
-    for pid in ids_sorted:
-        key      = id_to_key[pid]
+    for key, pid in key_id_pairs:
         expected = expected_names[key]
         rec      = api_records.get(pid)
         if rec is None:
             missing_in_api.append((key, pid))
             continue
         actual = rec.get("fullName", "")
-        if not names_match(expected, actual, key):
-            mismatches.append((key, pid, expected, actual))
+        bd = rec.get("birthDate") or ""
+        try:
+            birth_year = int(bd[:4]) if len(bd) >= 4 else None
+        except ValueError:
+            birth_year = None
+        too_old = birth_year is not None and birth_year < 1994
+
+        # Detect historical-player stubs (no birth date, played pre-2010)
+        debut = rec.get("mlbDebutDate") or ""
+        last_played = rec.get("lastPlayedDate") or ""
+        historical_stub = False
+        if birth_year is None:
+            try:
+                debut_year = int(debut[:4]) if len(debut) >= 4 else None
+            except ValueError:
+                debut_year = None
+            try:
+                last_year = int(last_played[:4]) if len(last_played) >= 4 else None
+            except ValueError:
+                last_year = None
+            if (debut_year is not None and debut_year < 2010) or \
+               (last_year is not None and last_year < 2010):
+                historical_stub = True
+
+        if not names_match(expected, actual, key) or too_old or historical_stub:
+            label = f"{actual!r}"
+            if too_old:
+                label += f" (born {bd} — too old for prospect status)"
+            elif historical_stub:
+                label += f" (historical stub: debut={debut!r} lastPlayed={last_played!r})"
+            mismatches.append((key, pid, expected, label))
 
     # Report
     print()
@@ -182,7 +236,7 @@ def main() -> int:
         print("Mismatches (cached ID points to a DIFFERENT person):")
         print(f"  {'player_key':30} {'mlbam_id':>9}  expected -> actual")
         for key, pid, expected, actual in mismatches:
-            print(f"  {key:30} {pid:>9}  {expected!r} -> {actual!r}")
+            print(f"  {key:30} {pid:>9}  {expected!r} -> {actual}")
 
     if missing_in_api:
         print()
@@ -194,17 +248,20 @@ def main() -> int:
 
     # Fix
     if args.fix and (mismatches or missing_in_api):
+        # Delete the entries entirely (not just null them) — resolve_mlbam_id
+        # treats `key in cache` as authoritative and short-circuits on None,
+        # so setting null would suppress the retry we want.
         for key, _, _, _ in mismatches:
-            cache[key] = None
+            cache.pop(key, None)
         for key, _ in missing_in_api:
-            cache[key] = None
+            cache.pop(key, None)
         CACHE_FILE.write_text(json.dumps(cache, indent=2, sort_keys=True))
         print()
-        print(f"--fix: nulled {len(mismatches) + len(missing_in_api)} bad cache entries.")
+        print(f"--fix: removed {len(mismatches) + len(missing_in_api)} bad cache entries.")
         print("       Re-run 'py -3 run_monthly.py' to re-resolve them.")
     elif mismatches or missing_in_api:
         print()
-        print("Re-run with --fix to null these entries so they get re-resolved.")
+        print("Re-run with --fix to remove these entries so they get re-resolved.")
 
     return 0 if not mismatches else 1
 
