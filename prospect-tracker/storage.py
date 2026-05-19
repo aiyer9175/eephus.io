@@ -720,6 +720,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "graduation_date": p.graduation_date,
             "birth_date": bd,
             "age": age,
+            # Position in the FV-sorted active list, plus position within
+            # the player's org. None for graduated/inactive (the maps below
+            # only carry actives). Drives the rank pills on prospect detail.
+            "overall_rank": overall_rank_by_key.get(p.player_key),
+            "org_rank": org_rank_by_key.get(p.player_key),
+            "org_rank_total": org_size_by_key.get(p.player_key),
             "age_vs_level": {"tier": avl.tier, "diff": avl.diff},
             "fv_high": p.fv_high,
             "fv_high_label": p.fv_high_label,
@@ -792,6 +798,24 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     actives.sort(key=_active_key)
     if top_n_active is not None:
         actives = actives[:top_n_active]
+
+    # Pre-compute overall_rank (position in the FV-sorted active list) and
+    # org_rank (position within the player's org by the same ordering).
+    # `_serialize` reads these out of the maps below so we don't have to
+    # re-sort in the front-end.
+    overall_rank_by_key: dict[str, int] = {}
+    org_rank_by_key: dict[str, int] = {}
+    org_size_by_key: dict[str, int] = {}
+    org_counters: dict[str, int] = {}
+    org_totals: dict[str, int] = {}
+    for p in actives:
+        org_totals[p.org or "?"] = org_totals.get(p.org or "?", 0) + 1
+    for i, p in enumerate(actives, start=1):
+        overall_rank_by_key[p.player_key] = i
+        org_key = p.org or "?"
+        org_counters[org_key] = org_counters.get(org_key, 0) + 1
+        org_rank_by_key[p.player_key] = org_counters[org_key]
+        org_size_by_key[p.player_key] = org_totals[org_key]
 
     # Inactives: most recently seen first
     inactives.sort(key=lambda p: p.points[-1].snapshot_date if p.points else "", reverse=True)

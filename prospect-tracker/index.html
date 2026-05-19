@@ -607,6 +607,7 @@
         <option value="age_asc">Youngest first</option>
         <option value="age_vs_level">Most young-for-level</option>
         <option value="eta">ETA (earliest first)</option>
+        <option value="level">Current level (MLB → DSL)</option>
       </select>
     </div>
   </div>
@@ -713,6 +714,36 @@ const stockHTML = s => {
   return `<span class="stock-down">▼ ${s.delta.toFixed(1)}</span>`;
 };
 
+// Level hierarchy (low to high). Used to detect promotions/demotions
+// between consecutive seasons in career_stats so we can mark them on the
+// stock chart.
+const LEVEL_RANK = { DSL: 0, FCL: 0, "Rk": 1, R: 1, ROK: 1, A: 2, "A+": 3, AA: 4, AAA: 5, MLB: 6 };
+function levelRank(lvl) {
+  return LEVEL_RANK[lvl] != null ? LEVEL_RANK[lvl] : -1;
+}
+
+// Derive promotion/demotion events from a career_stats list (which arrives
+// sorted most-recent-first per the back-end). Returns events in
+// chronological order each shaped as {date, level, prev_level, kind}.
+function levelChangeEvents(careerStats) {
+  if (!careerStats || careerStats.length < 2) return [];
+  const asc = [...careerStats].sort((a, b) => a.season - b.season);
+  const events = [];
+  for (let i = 1; i < asc.length; i++) {
+    const prev = asc[i - 1];
+    const curr = asc[i];
+    const pr = levelRank(prev.level), cr = levelRank(curr.level);
+    if (pr < 0 || cr < 0 || pr === cr) continue;
+    events.push({
+      date: `${curr.season}-04-01`,           // approx season start
+      level: curr.level,
+      prev_level: prev.level,
+      kind: cr > pr ? "promotion" : "demotion",
+    });
+  }
+  return events;
+}
+
 // =============================================================================
 // SVG CHARTS
 // =============================================================================
@@ -765,13 +796,16 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades) {
 
   // Trade markers — solid violet verticals at each trade_date that falls
   // inside the chart window. A small triangle "T" sits at the top so the
-  // marker is visible even when the line passes through it.
+  // marker is visible even when the line passes through it. Hover includes
+  // the full transaction description.
   const tradeSvg = [];
   for (const tr of (trades || [])) {
     const trT = new Date(tr.trade_date).getTime();
     if (isNaN(trT) || trT < minT || trT > maxT) continue;
     const x = (PAD + ((trT - minT) / timeSpan) * (W - 2 * PAD)).toFixed(1);
-    const label = `${tr.trade_date} · ${tr.from_org ?? "?"} → ${tr.to_org ?? "?"}`;
+    const heading = `${tr.trade_date} · ${tr.from_org ?? "?"} → ${tr.to_org ?? "?"}`;
+    const detail = tr.description ? `\n${tr.description}` : "";
+    const label = escapeHtml(heading + detail);
     tradeSvg.push(
       `<line x1="${x}" y1="${PAD}" x2="${x}" y2="${CHART_BOTTOM}" stroke="var(--grad)" stroke-width="0.9" stroke-dasharray="2,1.5" opacity="0.85"><title>${label}</title></line>`,
       `<polygon points="${x - 2.5},${PAD - 0.5} ${parseFloat(x) + 2.5},${PAD - 0.5} ${x},${PAD + 3}" fill="var(--grad)"><title>${label}</title></polygon>`
@@ -1035,6 +1069,17 @@ function getFilteredActives() {
       const ay = a.eta && a.eta.year != null ? a.eta.year : 9999;
       const by = b.eta && b.eta.year != null ? b.eta.year : 9999;
       return ay - by;
+    });
+  } else if (state.sort === "level") {
+    // Higher level first; FV-raw breaks ties so the highest-FV player at
+    // each level rises to the top within their group.
+    pool.sort((a, b) => {
+      const ar = levelRank(a.statline && a.statline.level);
+      const br = levelRank(b.statline && b.statline.level);
+      if (br !== ar) return br - ar;
+      const af = a.points.length ? a.points[a.points.length - 1].consensus_fv_raw : 0;
+      const bf = b.points.length ? b.points[b.points.length - 1].consensus_fv_raw : 0;
+      return bf - af;
     });
   }
   return pool;
@@ -1451,10 +1496,14 @@ function renderFarmSystems() {
     const stockHtml = (org.stock_up || org.stock_down)
       ? `${org.stock_up  ? `<span class="stock-up">▲${org.stock_up}</span> ` : ''}${org.stock_down ? `<span class="stock-down">▼${org.stock_down}</span>` : ''}`
       : `<span class="stock-flat">—</span>`;
+    // Display rank reflects the current sort: the position in the sorted
+    // list (i+1), not the static farm_rank (which is FV-derived). When the
+    // user sorts by avg_age, the youngest farm shows as #1.
+    const displayRank = i + 1;
 
     return `
       <div class="farm-row" data-org="${escapeHtml(org.org)}" style="cursor:pointer;">
-        <div class="farm-rank">${org.farm_rank}</div>
+        <div class="farm-rank">${displayRank}</div>
         <div>
           <div class="farm-org">${escapeHtml(fullOrgName(org.org))}</div>
           <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}</div>
@@ -1538,7 +1587,7 @@ function findOrg(org) {
 // Bigger version of the line chart used on prospect detail pages — same
 // 20-80 Y-axis as the inline sparkline, but rendered at ~2x size with
 // gridlines at every 5-FV tick and date labels along the bottom.
-function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades) {
+function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats) {
   if (!points || points.length === 0) return "";
   const W = 720, H = 260, PAD_L = 28, PAD_R = 14, PAD_T = 14, PAD_B = 28;
   const innerW = W - PAD_L - PAD_R;
@@ -1590,16 +1639,40 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades) {
     `<text x="${x1}" y="${H - 4}" font-size="9" fill="var(--text-tertiary)" text-anchor="end">${endDate}</text>`,
   );
 
-  // Trade markers
+  // Trade markers — hover shows the full transaction description (the
+  // verbose API text) so a reader can see why the trade fired without
+  // scrolling to the transaction history table below.
   const tradeSvg = [];
   for (const tr of (trades || [])) {
     const trT = new Date(tr.trade_date).getTime();
     if (isNaN(trT) || trT < minT || trT > maxT) continue;
     const x = xScale(tr.trade_date).toFixed(1);
-    const label = `${tr.trade_date} · ${tr.from_org ?? "?"} → ${tr.to_org ?? "?"}`;
+    const heading = `${tr.trade_date} · ${tr.from_org ?? "?"} → ${tr.to_org ?? "?"}`;
+    const detail = tr.description ? `\n${tr.description}` : "";
+    const label = escapeHtml(heading + detail);
     tradeSvg.push(
       `<line x1="${x}" y1="${PAD_T}" x2="${x}" y2="${H - PAD_B}" stroke="var(--grad)" stroke-width="1.2" stroke-dasharray="3,2" opacity="0.85"><title>${label}</title></line>`,
       `<polygon points="${x - 4},${PAD_T - 1} ${parseFloat(x) + 4},${PAD_T - 1} ${x},${PAD_T + 5}" fill="var(--grad)"><title>${label}</title></polygon>`,
+    );
+  }
+
+  // Promotion / demotion markers from career_stats. Derived as season-start
+  // (Apr 1) approximations — career_stats only knows the highest level per
+  // season, so exact in-season dates aren't available. Green ▲ at the
+  // bottom for promotions, red ▼ for demotions. Clamped to the chart range.
+  const levelSvg = [];
+  for (const ev of levelChangeEvents(careerStats || [])) {
+    const evT = new Date(ev.date).getTime();
+    if (isNaN(evT) || evT < minT || evT > maxT) continue;
+    const x = xScale(ev.date).toFixed(1);
+    const color = ev.kind === "promotion" ? "var(--up)" : "var(--down)";
+    const arrow = ev.kind === "promotion" ? "▲" : "▼";
+    const verb = ev.kind === "promotion" ? "Promoted to" : "Demoted to";
+    const label = escapeHtml(`${ev.date.slice(0, 4)}: ${verb} ${ev.level} (from ${ev.prev_level})`);
+    const yBase = H - PAD_B;
+    levelSvg.push(
+      `<line x1="${x}" y1="${yBase}" x2="${x}" y2="${yBase - 6}" stroke="${color}" stroke-width="1.2" opacity="0.85"><title>${label}</title></line>`,
+      `<text x="${x}" y="${yBase - 7}" font-size="9" fill="${color}" text-anchor="middle"><title>${label}</title>${arrow}</text>`,
     );
   }
 
@@ -1612,6 +1685,7 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades) {
     ${yTicks.join("")}
     ${yearSvg.join("")}
     ${tradeSvg.join("")}
+    ${levelSvg.join("")}
     <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     ${circles}
   </svg>`;
@@ -1731,6 +1805,19 @@ function renderPlayerDetail(key) {
   const fvLabel = latest ? latest.consensus_fv_label : "—";
   const fvBadge = latest ? `<span class="fv-badge ${fvClass(fvLabel)}" style="font-size:18px;padding:3px 10px;">${fvLabel}</span>` : "";
 
+  // Rank pills — overall position in the FV-sorted active list, plus org
+  // position. Hidden for graduates/inactives where these fields are null.
+  const rankPills = (p.overall_rank != null || p.org_rank != null)
+    ? `<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+        ${p.overall_rank != null
+          ? `<span style="font-size:11px;color:var(--neon-violet);background:var(--bg-tertiary);border:1px solid var(--border);padding:2px 8px;border-radius:2px;letter-spacing:0.04em;">Overall #${p.overall_rank}</span>`
+          : ""}
+        ${p.org_rank != null
+          ? `<span style="font-size:11px;color:var(--neon-cyan);background:var(--bg-tertiary);border:1px solid var(--border);padding:2px 8px;border-radius:2px;letter-spacing:0.04em;">${escapeHtml(p.org || "?")} #${p.org_rank}${p.org_rank_total ? ` of ${p.org_rank_total}` : ""}</span>`
+          : ""}
+      </div>`
+    : "";
+
   const header = `
     <div style="margin-bottom:14px;">
       <a href="#" onclick="event.preventDefault();goHome();" style="color:var(--neon-cyan);text-decoration:none;font-size:12px;">← Back to list</a>
@@ -1742,6 +1829,7 @@ function renderPlayerDetail(key) {
           ${escapeHtml(p.position ?? "—")} · ${orgLink}${p.age != null ? ` · age ${p.age.toFixed(1)}` : ""}${p.birth_date ? ` · born ${p.birth_date}` : ""}
           ${statusPill ? " · " + statusPill : ""}
         </div>
+        ${rankPills}
       </div>
       <div style="text-align:right;">
         <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;">Current FV</div>
@@ -1823,7 +1911,12 @@ function renderPlayerDetail(key) {
   const isPitcher = p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position);
 
   const chartSection = (p.points && p.points.length >= 2)
-    ? `<div class="detail-title">FV history</div>${makeBigLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades)}`
+    ? `<div class="detail-title">FV history</div>${makeBigLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p.career_stats)}
+       <div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;">
+         <span><span style="color:var(--grad);">▼</span> trade</span>
+         <span><span style="color:var(--up);">▲</span> promotion</span>
+         <span><span style="color:var(--down);">▼</span> demotion</span>
+       </div>`
     : `<div style="color:var(--text-tertiary);font-size:12px;">Not enough FV updates yet for a chart.</div>`;
 
   const careerSection = `<div class="detail-title" style="margin-top:18px;">Stats by season</div>${makeCareerTable(p.career_stats)}`;
@@ -1836,7 +1929,7 @@ function renderPlayerDetail(key) {
     ? `<div class="detail-title" style="margin-top:18px;">Pitch arsenal</div>${makeArsenalBlock(p.pitch_arsenal)}`
     : "";
 
-  const tradesSection = `<div class="detail-title" style="margin-top:18px;">Trade history</div>${makeTradeHistoryBlock(p.trades)}`;
+  const tradesSection = `<div class="detail-title" style="margin-top:18px;">Transaction history</div>${makeTradeHistoryBlock(p.trades)}`;
 
   const etaRows = (() => {
     if (!eta || eta.year == null) return "";
@@ -1975,6 +2068,44 @@ function renderFarmDetail(orgCode) {
     <span style="text-align:center;">Candle</span>
   </div>`;
 
+  // Stats leaderboards — top current-season hitters (by OPS, min 80 PA) and
+  // pitchers (by ERA, min 10 IP) among the org's tracked prospects.
+  const PITCHER_RE = /^(RHP|LHP|SP|RP|MIRP|SIRP)/;
+  const topHitters = rosterPlayers
+    .filter(rp => rp.statline && rp.statline.is_pitcher === false && rp.statline.ops)
+    .map(rp => ({
+      p: rp,
+      sl: rp.statline,
+      ops: parseFloat(rp.statline.ops) || 0,
+    }))
+    .filter(x => x.ops > 0 && (x.sl.games || 0) >= 10)
+    .sort((a, b) => b.ops - a.ops)
+    .slice(0, 5);
+  const topPitchers = rosterPlayers
+    .filter(rp => rp.statline && rp.statline.is_pitcher === true && rp.statline.era)
+    .map(rp => ({
+      p: rp,
+      sl: rp.statline,
+      era: parseFloat(rp.statline.era) || 99,
+      ip: parseFloat(rp.statline.ip) || 0,
+    }))
+    .filter(x => x.ip >= 10 && x.era < 99)
+    .sort((a, b) => a.era - b.era)
+    .slice(0, 5);
+
+  const leaderboardRows = (rows, statLabel, statFn) => rows.map(({ p, sl }) => `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:12px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
+      <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(p.player_name)} <span style="color:var(--text-tertiary);font-size:10px;">${escapeHtml(sl.level || "?")}</span></span>
+      <span style="color:var(--neon-cyan);font-variant-numeric:tabular-nums;white-space:nowrap;">${statFn(sl)}</span>
+    </div>`).join("");
+
+  const hittersBlock = topHitters.length
+    ? leaderboardRows(topHitters, "OPS", sl => `${sl.ops} · ${sl.hr ?? 0} HR`)
+    : `<span style="color:var(--text-tertiary);font-size:12px;">No qualifying hitters yet.</span>`;
+  const pitchersBlock = topPitchers.length
+    ? leaderboardRows(topPitchers, "ERA", sl => `${sl.era} · ${(sl.ip ?? 0).toFixed ? sl.ip.toFixed(1) : sl.ip} IP`)
+    : `<span style="color:var(--text-tertiary);font-size:12px;">No qualifying pitchers yet.</span>`;
+
   // Highlights side panel
   const tp = org.top_prospect;
   const yp = org.youngest;
@@ -1989,6 +2120,10 @@ function renderFarmDetail(orgCode) {
       ${yp ? `<div style="font-size:14px;font-weight:500;">${escapeHtml(yp.name)}</div>
       <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(yp.pos||'')} · age ${yp.age != null ? yp.age.toFixed(1) : "—"} · FV ${yp.fv_label}</div>` : '—'}
     </div>
+    <div class="detail-title">Top hitters (this season)</div>
+    <div style="margin-bottom:14px;">${hittersBlock}</div>
+    <div class="detail-title">Top pitchers (this season)</div>
+    <div style="margin-bottom:14px;">${pitchersBlock}</div>
     <div class="detail-title">Recent graduates (${graduates.length})</div>
     ${graduates.slice(0, 8).map(g => `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:12px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(g.player_key)}');">
         <span style="color:var(--text-primary);">${escapeHtml(g.player_name)}</span>
