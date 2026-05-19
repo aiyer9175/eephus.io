@@ -16,7 +16,7 @@ from scrapers import Snapshot, _parse_fv
 from consensus import (
     snap_to_grade,
     implied_fv_from_rank, compute_consensus_point, build_timeseries,
-    stock_movement,
+    stock_movement, apply_shrinkage, compute_prior_mean_fv,
 )
 
 
@@ -180,10 +180,12 @@ class TestUnweightedConsensus:
 
 class TestCandlestick:
     def _player(self, history):
-        """history = [(date, fv)]"""
+        """history = [(date, fv)]. Shrinkage disabled so the asserted high
+        /low/open/close numbers reflect the raw FV grid the test is
+        checking — TestShrinkage covers the shrinkage path separately."""
         snaps = [_snap("fangraphs", "X", date_=d, fv=fv, label=f"upd-{d}")
                  for d, fv in history]
-        return build_timeseries(snaps)[0]
+        return build_timeseries(snaps, shrinkage_k=0)[0]
 
     def test_high_low_basic(self):
         p = self._player([
@@ -225,7 +227,9 @@ class TestStockMovement:
     def _player_from_points(self, points_data):
         snaps = [_snap("fangraphs", "X", date_=d, fv=fv, label=f"upd-{d}")
                  for d, fv in points_data]
-        return build_timeseries(snaps)[0]
+        # Same rationale as TestCandlestick: stock direction thresholds are
+        # tested against the raw FV grid, not the shrinkage-adjusted one.
+        return build_timeseries(snaps, shrinkage_k=0)[0]
 
     def test_uses_last_two_points_only(self):
         """
@@ -380,3 +384,152 @@ class TestExportSplit:
         luis = payload["players"][0]
         assert luis["org"] == "SFG"
         assert luis["org_rank"] == 1
+
+
+# ---------------------------------------------------------------------------
+# Forward-fill across dates
+# ---------------------------------------------------------------------------
+
+class TestForwardFill:
+    """Sources publish on different days; each ConsensusPoint should still
+    average every source that has ever graded the player up to that date."""
+
+    def test_two_sources_different_dates_average_at_latest(self):
+        """
+        The Wandy Asigen case. FG snaps 47.5 on 2026-05-17; Pipeline
+        International snaps 65 on 2026-05-19. Before forward-fill, the
+        latest point only saw Pipeline. Now it averages both.
+        """
+        snaps = [
+            _snap("fangraphs", "Wandy", date_="2026-05-17",
+                  label="FG 2026 Report", fv=47.5),
+            _snap("mlb_pipeline_international", "Wandy", date_="2026-05-19",
+                  label="MLB Pipeline 2026 International", rank=2, fv=65.0),
+        ]
+        # Disable shrinkage so we isolate the forward-fill effect.
+        p = build_timeseries(snaps, shrinkage_k=0)[0]
+        latest = p.points[-1]
+        assert latest.avg_fv_n == 2
+        assert latest.avg_fv == pytest.approx((47.5 + 65.0) / 2)
+        assert set(latest.sources_contributing) == {
+            "fangraphs", "mlb_pipeline_international"
+        }
+        # And the candle close reflects the averaged value, not 65 alone.
+        assert p.fv_close == 56.0  # 56.25 → snaps to 56
+
+    def test_later_snapshot_from_same_source_overwrites_earlier(self):
+        """A second FG snapshot at a later date replaces the first — the
+        latest point uses FG=70 (not avg of 60 and 70)."""
+        snaps = [
+            _snap("fangraphs", "X", date_="2025-02-15", label="FG 2025", fv=60.0),
+            _snap("fangraphs", "X", date_="2026-02-16", label="FG 2026", fv=70.0),
+        ]
+        p = build_timeseries(snaps, shrinkage_k=0)[0]
+        latest = p.points[-1]
+        assert latest.avg_fv == 70.0
+        assert latest.avg_fv_n == 1
+
+    def test_historical_point_only_sees_earlier_sources(self):
+        """At an early date, sources that haven't graded yet don't
+        contribute (forward-fill, not backward-fill)."""
+        snaps = [
+            _snap("fangraphs", "X", date_="2025-02-15", label="FG 2025", fv=60.0),
+            _snap("espn",      "X", date_="2026-01-27", label="ESPN 2026", fv=50.0),
+        ]
+        p = build_timeseries(snaps, shrinkage_k=0)[0]
+        # Two event dates → two points.
+        assert len(p.points) == 2
+        # 2025 point: only FG is known.
+        assert p.points[0].avg_fv == 60.0
+        assert p.points[0].avg_fv_n == 1
+        # 2026 point: FG carries forward + ESPN joins.
+        assert p.points[1].avg_fv == pytest.approx(55.0)
+        assert p.points[1].avg_fv_n == 2
+
+
+# ---------------------------------------------------------------------------
+# Bayesian shrinkage
+# ---------------------------------------------------------------------------
+
+class TestShrinkage:
+    """Adjusted FV = (n / (n+k)) * raw + (k / (n+k)) * mean_fv."""
+
+    def test_apply_shrinkage_one_source_pulls_a_third_to_prior(self):
+        # Single FG snap at FV 70 with k=2 should land at:
+        # (1/3)*70 + (2/3)*45 = 23.33 + 30 = 53.33 → 53
+        snaps = [_snap("fangraphs", "X", fv=70.0)]
+        p = build_timeseries(snaps, shrinkage_k=2.0, prior_mean_fv=45.0)[0]
+        pt = p.points[-1]
+        assert pt.consensus_fv_pre_shrinkage == 70.0
+        assert pt.consensus_fv_raw == pytest.approx(53.33, abs=0.01)
+        assert pt.consensus_fv == 53.0
+        assert pt.shrinkage_weight == pytest.approx(1/3, abs=0.001)
+
+    def test_more_sources_means_less_shrinkage(self):
+        """n=5 with k=2 keeps 5/7 ≈ 71% weight on the raw value."""
+        snaps = [
+            _snap("fangraphs",        "X", fv=70.0),
+            _snap("espn",             "X", fv=70.0),
+            _snap("just_baseball",    "X", fv=70.0),
+            _snap("tjstats",          "X", fv=70.0),
+            _snap("mlb_pipeline",     "X", fv=70.0),
+        ]
+        p = build_timeseries(snaps, shrinkage_k=2.0, prior_mean_fv=45.0)[0]
+        pt = p.points[-1]
+        assert pt.shrinkage_weight == pytest.approx(5/7, abs=0.001)
+        # (5/7)*70 + (2/7)*45 = 50 + 12.857 = 62.857 → 63
+        assert pt.consensus_fv == 63.0
+
+    def test_shrinkage_k_zero_disables(self):
+        snaps = [_snap("fangraphs", "X", fv=70.0)]
+        p = build_timeseries(snaps, shrinkage_k=0)[0]
+        pt = p.points[-1]
+        assert pt.consensus_fv == 70.0
+        assert pt.consensus_fv_raw == 70.0
+        assert pt.shrinkage_weight == 1.0
+
+    def test_rank_only_player_uses_rank_count_as_n(self):
+        """Rank-only players should also be shrunk — but n is the rank-only
+        count, since that's what produced the rank-implied raw value."""
+        snaps = [
+            _snap("baseball_america", "X", rank=2),  # implied 60
+            _snap("the_athletic",     "X", rank=2),  # implied 60
+        ]
+        p = build_timeseries(snaps, shrinkage_k=2.0, prior_mean_fv=45.0)[0]
+        pt = p.points[-1]
+        assert pt.avg_fv is None
+        assert pt.consensus_fv_pre_shrinkage == 60.0
+        # n=2 (both rank-only sources), k=2 → 50/50 split
+        # (1/2)*60 + (1/2)*45 = 52.5 → 52 (Python's banker's rounding).
+        assert pt.shrinkage_weight == pytest.approx(0.5)
+        assert pt.consensus_fv_raw == 52.5
+        assert pt.consensus_fv == 52.0
+
+    def test_prior_mean_auto_computed_from_pool(self):
+        """When prior_mean_fv is omitted, it's the average of each player's
+        latest pre-shrinkage value (one vote per player)."""
+        snaps = [
+            _snap("fangraphs", "A", fv=70.0),
+            _snap("fangraphs", "B", fv=50.0),
+            _snap("fangraphs", "C", fv=60.0),
+        ]
+        ts = build_timeseries(snaps, shrinkage_k=2.0)
+        # Pool mean = (70+50+60)/3 = 60.
+        # A: (1/3)*70 + (2/3)*60 = 63.33 → 63
+        # B: (1/3)*50 + (2/3)*60 = 56.67 → 57
+        # C: (1/3)*60 + (2/3)*60 = 60     → 60
+        by_name = {p.player_name: p for p in ts}
+        assert by_name["A"].points[-1].consensus_fv == 63.0
+        assert by_name["B"].points[-1].consensus_fv == 57.0
+        assert by_name["C"].points[-1].consensus_fv == 60.0
+
+    def test_compute_prior_mean_fv_skips_pointless_players(self):
+        """build_timeseries never emits a PlayerTimeseries with no points
+        (callers only see scoreable players), but compute_prior_mean_fv
+        defends against empty-point lists anyway."""
+        snaps = [_snap("fangraphs", "X", fv=55.0)]
+        ts = build_timeseries(snaps, shrinkage_k=0)
+        # Force-clear points to simulate the degenerate case.
+        ts[0].points = []
+        # Should fall back to FALLBACK_PRIOR_FV (45.0) rather than crashing.
+        assert compute_prior_mean_fv(ts) == 45.0

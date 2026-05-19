@@ -1,10 +1,10 @@
 """
-Consensus engine — v4 (unweighted).
+Consensus engine — v5 (forward-filled, Bayesian-shrunk).
 
 Anchored to the FanGraphs scouting primer:
   https://blogs.fangraphs.com/the-new-fangraphs-scouting-primer/
 
-Design (v4)
+Design (v5)
 -----------
 Every source that publishes an explicit 20-80 FV grade contributes EQUALLY
 to the consensus. There is no per-source weighting. This includes:
@@ -14,6 +14,7 @@ to the consensus. There is no per-source weighting. This includes:
   * Just Baseball
   * TJStats
   * MLB Pipeline         ("Overall" grade in each prospect bio)
+  * MLB Pipeline Intl.   (International prospects ranking)
 
 Two sources are still rank-only (no public FV):
   * Baseball America
@@ -24,17 +25,42 @@ explicit FV grades from any source; once at least one source has graded
 the player, the FV mean wins and the ranks are used only for the
 informational avg_rank field.
 
+Forward-fill (v5)
+-----------------
+Real-world sources publish on different dates. To prevent a player whose
+two grades arrive on different days from showing only the most recent
+single source, each ConsensusPoint at date D uses the *latest known
+snapshot from every source* up to D. New snapshots overwrite stale ones
+from the same source; sources that have never graded the player simply
+don't contribute.
+
+Bayesian shrinkage (v5)
+-----------------------
+Low-information FVs get pulled toward the prospect-pool mean:
+
+    adjusted_fv = (n / (n + k)) * raw_fv + (k / (n + k)) * mean_fv
+
+  n      — number of sources contributing to raw_fv (explicit-FV count, or
+           rank-only count when only rank-implied FVs are available)
+  k      — tuning constant (default 2)
+  mean_fv— global mean of every player's latest pre-shrinkage raw FV
+
+At n=1 (only one source has graded) shrinkage pulls the raw a third of
+the way to the mean; at n=5 it's only ~29%. A Pipeline-only IFA grade
+no longer carries the same weight as a five-source consensus.
+
 Per (player, date) we compute:
 
-  a. avg_fv             — simple mean of explicit FV grades from sources
-                          that published one. None if no source did.
-  b. avg_rank           — simple mean of ordinal ranks across all sources.
-  c. rank_implied_fv    — mean of rank-converted FVs (rank-tier mapping).
-  d. consensus_fv_raw   — avg_fv if any source published an FV; otherwise
-                          rank_implied_fv. NO source weighting.
-  e. consensus_fv       — rounded to the nearest whole number on the 20-80
-                          scale. No "+" tiers; an average of 58.75 becomes 59,
-                          not "60+".
+  a. avg_fv                       — simple mean of explicit FV grades
+                                     from sources that published one
+  b. avg_rank                     — simple mean of ordinal ranks
+  c. rank_implied_fv              — mean of rank-converted FVs
+  d. consensus_fv_pre_shrinkage   — avg_fv if any explicit FV present,
+                                     otherwise rank_implied_fv
+  e. consensus_fv_raw             — pre_shrinkage value pulled toward
+                                     mean_fv per the Bayesian formula
+  f. consensus_fv                 — rounded post-shrinkage value on the
+                                     20-80 scale
 
 Candlestick fields (fv_high / fv_low / fv_open / fv_close) ride on the
 PlayerTimeseries object so the front-end can render a candle without
@@ -52,6 +78,13 @@ from dataclasses import dataclass
 from datetime import date
 
 from scrapers import Snapshot
+
+
+# Bayesian-shrinkage defaults. k controls how fast the prior fades as more
+# sources contribute; the fallback mean is only used if the prospect pool
+# is empty (e.g. unit tests with zero scoreable players).
+DEFAULT_SHRINKAGE_K = 2.0
+FALLBACK_PRIOR_FV = 45.0
 
 
 # ---------------------------------------------------------------------------
@@ -104,9 +137,20 @@ class ConsensusPoint:
     rank_implied_fv: float | None
     avg_rank_n: int
 
+    # Post-shrinkage consensus. Until apply_shrinkage runs these mirror
+    # consensus_fv_pre_shrinkage.
     consensus_fv: float
     consensus_fv_label: str
     consensus_fv_raw: float
+
+    # Pre-shrinkage raw value (avg_fv or rank_implied_fv fallback). Surfaced
+    # so the front-end can show "raw vs. adjusted" when useful.
+    consensus_fv_pre_shrinkage: float
+
+    # n / (n+k) — the weight Bayesian shrinkage placed on the player's
+    # observations vs. the population mean. 1.0 means no shrinkage applied
+    # (e.g. shrinkage skipped); lower values mean the prior pulled harder.
+    shrinkage_weight: float
 
     sources_contributing: list[str]
     per_source: dict
@@ -140,14 +184,27 @@ class PlayerTimeseries:
 # Core compute — one (player, date) bucket
 # ---------------------------------------------------------------------------
 
-def compute_consensus_point(day_snaps: list[Snapshot]) -> ConsensusPoint | None:
+def compute_consensus_point(
+    day_snaps: list[Snapshot],
+    *,
+    event_date: str | None = None,
+    event_label: str | None = None,
+) -> ConsensusPoint | None:
     """
-    Aggregate one player's snapshots for a single date into a ConsensusPoint.
+    Aggregate one player's snapshots into a ConsensusPoint.
 
-    Unweighted: every source that published an explicit FV grade contributes
-    one equal vote to the FV mean. Sources that publish only a rank
-    contribute to avg_rank (and to a rank-implied FV fallback that is only
-    used when zero sources published an explicit FV).
+    `day_snaps` may come from a single calendar date OR — as it does after
+    forward-fill in build_timeseries — be the latest snapshot from each
+    source as of some event date. The aggregation is the same either way:
+    one equal vote per source.
+
+    Sources that publish only a rank contribute to avg_rank (and to a
+    rank-implied FV fallback that is only used when zero sources published
+    an explicit FV).
+
+    Shrinkage is NOT applied here — the returned point's consensus_fv /
+    consensus_fv_raw equal the pre-shrinkage values. build_timeseries
+    applies shrinkage in a second pass once the population mean is known.
     """
 
     explicit_fvs: list[float] = []
@@ -163,6 +220,7 @@ def compute_consensus_point(day_snaps: list[Snapshot]) -> ConsensusPoint | None:
             "fv_published": s.fv,
             "interval_label": s.interval_label,
             "status": s.status,
+            "snapshot_date": s.snapshot_date,
         }
         if s.fv is not None:
             explicit_fvs.append(s.fv)
@@ -188,13 +246,21 @@ def compute_consensus_point(day_snaps: list[Snapshot]) -> ConsensusPoint | None:
     # rank-implied mean ONLY when no source published an FV grade —
     # otherwise a player ranked only by Baseball America / The Athletic
     # would have no consensus FV at all.
-    consensus_raw = avg_fv if avg_fv is not None else rank_implied_fv
-    assert consensus_raw is not None
-    consensus_fv, consensus_label = snap_to_grade(consensus_raw)
+    pre_shrinkage = avg_fv if avg_fv is not None else rank_implied_fv
+    assert pre_shrinkage is not None
+    consensus_fv, consensus_label = snap_to_grade(pre_shrinkage)
+
+    # Default snapshot_date / interval_label come from the latest snapshot
+    # in `day_snaps` (forward-fill yields a heterogeneous mix); callers
+    # forward-filling across event dates pass explicit overrides.
+    if event_date is None or event_label is None:
+        latest_snap = max(day_snaps, key=lambda s: s.snapshot_date)
+        event_date = event_date or latest_snap.snapshot_date
+        event_label = event_label or latest_snap.interval_label
 
     return ConsensusPoint(
-        snapshot_date=day_snaps[0].snapshot_date,
-        interval_label=day_snaps[0].interval_label,
+        snapshot_date=event_date,
+        interval_label=event_label,
         avg_fv=round(avg_fv, 2) if avg_fv is not None else None,
         avg_fv_n=len(explicit_fvs),
         avg_rank=round(avg_rank, 1) if avg_rank is not None else None,
@@ -202,10 +268,74 @@ def compute_consensus_point(day_snaps: list[Snapshot]) -> ConsensusPoint | None:
         avg_rank_n=len(ranks),
         consensus_fv=consensus_fv,
         consensus_fv_label=consensus_label,
-        consensus_fv_raw=round(consensus_raw, 2),
+        consensus_fv_raw=round(pre_shrinkage, 2),
+        consensus_fv_pre_shrinkage=round(pre_shrinkage, 2),
+        shrinkage_weight=1.0,
         sources_contributing=sorted(contributing_sources),
         per_source=per_source,
     )
+
+
+# ---------------------------------------------------------------------------
+# Bayesian shrinkage
+# ---------------------------------------------------------------------------
+
+def _shrinkage_n(point: ConsensusPoint) -> int:
+    """Number of sources behind the raw FV being shrunk.
+
+    Mirrors compute_consensus_point's fallback rule: explicit FV count when
+    any source published one, else the rank-only count that produced the
+    rank-implied fallback.
+    """
+    if point.avg_fv_n > 0:
+        return point.avg_fv_n
+    return point.avg_rank_n
+
+
+def apply_shrinkage(
+    point: ConsensusPoint,
+    mean_fv: float,
+    k: float = DEFAULT_SHRINKAGE_K,
+) -> None:
+    """Mutate `point` in place to fold Bayesian shrinkage into consensus_fv.
+
+        adjusted = (n / (n + k)) * raw + (k / (n + k)) * mean_fv
+
+    Pre-shrinkage fields stay readable via consensus_fv_pre_shrinkage.
+    """
+    n = _shrinkage_n(point)
+    raw = point.consensus_fv_pre_shrinkage
+    if n <= 0 or k <= 0:
+        # Nothing to shrink toward, or shrinkage disabled. Leave defaults.
+        point.shrinkage_weight = 1.0
+        return
+    weight = n / (n + k)
+    adjusted = weight * raw + (1.0 - weight) * mean_fv
+    point.consensus_fv_raw = round(adjusted, 2)
+    snapped, label = snap_to_grade(adjusted)
+    point.consensus_fv = snapped
+    point.consensus_fv_label = label
+    point.shrinkage_weight = round(weight, 4)
+
+
+def compute_prior_mean_fv(
+    timeseries: list["PlayerTimeseries"],
+    fallback: float = FALLBACK_PRIOR_FV,
+) -> float:
+    """Mean of each player's latest pre-shrinkage consensus FV.
+
+    Each player contributes one data point (their most recent point's
+    pre-shrinkage value), so a single source that grades a hundred
+    prospects can't dominate the prior.
+    """
+    vals: list[float] = []
+    for p in timeseries:
+        if not p.points:
+            continue
+        v = p.points[-1].consensus_fv_pre_shrinkage
+        if v is not None:
+            vals.append(v)
+    return sum(vals) / len(vals) if vals else fallback
 
 
 # ---------------------------------------------------------------------------
@@ -245,7 +375,24 @@ def _candle_fields(points: list[ConsensusPoint]) -> dict:
 
 def build_timeseries(
     snapshots: list[Snapshot],
+    *,
+    shrinkage_k: float = DEFAULT_SHRINKAGE_K,
+    prior_mean_fv: float | None = None,
 ) -> list[PlayerTimeseries]:
+    """Build per-player FV time-series with forward-filled sources and
+    Bayesian shrinkage applied to every point.
+
+    Forward-fill: at each event date, the consensus aggregates the latest
+    snapshot from every source that has ever graded the player up to that
+    date. This is what fixes the Asigen case — FG snaps on 5/17 + Pipeline
+    Intl snaps on 5/19 produce a 5/19 point that averages BOTH grades, not
+    just the most recent single source.
+
+    Shrinkage: after the raw points are built, the population prior mean
+    is computed from each player's latest pre-shrinkage value and applied
+    uniformly across every point. Pass `prior_mean_fv` to override the
+    auto-computed prior (e.g. for unit tests).
+    """
     by_player: dict[str, list[Snapshot]] = defaultdict(list)
     for s in snapshots:
         by_player[s.player_key].append(s)
@@ -258,9 +405,30 @@ def build_timeseries(
         for s in player_snaps:
             by_date[s.snapshot_date].append(s)
 
+        # Walk event dates chronologically, forward-filling per source.
+        # `latest_by_source` holds the most recent Snapshot seen from each
+        # source up to (and including) the current event date.
         points: list[ConsensusPoint] = []
+        latest_by_source: dict[str, Snapshot] = {}
         for snap_date in sorted(by_date):
-            pt = compute_consensus_point(by_date[snap_date])
+            for s in by_date[snap_date]:
+                prev = latest_by_source.get(s.source)
+                # Multiple snapshots from the same source on the same date
+                # (rare): keep the one with the most information — prefer
+                # an explicit FV over a rank-only update from the same day.
+                if (
+                    prev is None
+                    or s.snapshot_date > prev.snapshot_date
+                    or (prev.fv is None and s.fv is not None)
+                ):
+                    latest_by_source[s.source] = s
+
+            event_label = by_date[snap_date][-1].interval_label
+            pt = compute_consensus_point(
+                list(latest_by_source.values()),
+                event_date=snap_date,
+                event_label=event_label,
+            )
             if pt is not None:
                 points.append(pt)
 
@@ -281,15 +449,29 @@ def build_timeseries(
             if "injured_list" in statuses:
                 status = "injured_list"
 
-        candle = _candle_fields(points)
-
+        # Candle fields are populated after shrinkage is applied below.
         result.append(PlayerTimeseries(
             player_key=player_key, player_name=name,
             position=pos, org=org,
             points=points, status=status,
             graduation_date=graduation_date,
-            **candle,
+            fv_high=0.0, fv_high_label="—", fv_high_date="",
+            fv_low=0.0,  fv_low_label="—",  fv_low_date="",
+            fv_open=0.0, fv_close=0.0,
         ))
+
+    # Bayesian shrinkage — second pass. Auto-compute the prior mean from
+    # the pre-shrinkage latest point per player (callers can override).
+    mean_fv = (
+        prior_mean_fv
+        if prior_mean_fv is not None
+        else compute_prior_mean_fv(result)
+    )
+    for p in result:
+        for pt in p.points:
+            apply_shrinkage(pt, mean_fv, shrinkage_k)
+        for attr, val in _candle_fields(p.points).items():
+            setattr(p, attr, val)
 
     result.sort(
         key=lambda p: (p.points[-1].consensus_fv if p.points else 0),
