@@ -1059,6 +1059,37 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             ops_norm=ops_norms,
             era_norm=era_norms,
         )
+        # Performance-vs-level-median enrichment. wRC+/xFIP aren't on the
+        # MLB Stats API, so we compute their conceptual cousins from the
+        # per-level baselines we already have:
+        #   hitter : OPS+ = round(OPS / level_avg_ops * 100). >100 better.
+        #   pitcher: ERA- = round(ERA / level_avg_era * 100). <100 better.
+        # `level_plus_pct` is the same number expressed as a signed delta
+        # (positive = good for either type) so the UI can drive color +
+        # direction without re-branching on stat type.
+        sl_out = dict(sl) if sl else None
+        if sl_out:
+            lvl = sl_out.get("level")
+            norms_perf = (level_norms.get(lvl) or {}).get("perf") or {} if lvl else {}
+            try:
+                if sl_out.get("is_pitcher"):
+                    era = float(sl_out.get("era")) if sl_out.get("era") else None
+                    avg_era = norms_perf.get("avg_era")
+                    if era and avg_era and era > 0:
+                        era_minus = round(era / avg_era * 100)
+                        sl_out["era_minus_level"] = era_minus
+                        sl_out["level_plus_pct"] = round((avg_era - era) / avg_era * 100)
+                else:
+                    ops_str = sl_out.get("ops")
+                    ops = float(ops_str) if ops_str else None
+                    avg_ops = norms_perf.get("avg_ops")
+                    if ops and avg_ops and avg_ops > 0:
+                        ops_plus = round(ops / avg_ops * 100)
+                        sl_out["ops_plus_level"] = ops_plus
+                        sl_out["level_plus_pct"] = round((ops - avg_ops) / avg_ops * 100)
+            except (TypeError, ValueError, ZeroDivisionError):
+                pass
+
         filtered_trades = _filter_real_trades(trades_by_player.get(p.player_key, []))
         acq = acquisitions.get(p.player_key)
         current_acq_method = _classify_current_acquisition(filtered_trades, acq)
@@ -1100,7 +1131,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "fv_open": p.fv_open,
             "fv_close": p.fv_close,
             "stock": stock_movement(p),
-            "statline": sl,
+            "statline": sl_out,
             "pitch_arsenal": pa,
             "statcast": sc,
             "trades": filtered_trades,

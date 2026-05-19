@@ -317,6 +317,42 @@
       text-transform: uppercase;
       font-weight: 600;
     }
+    /* Team logo (ESPN CDN). Sized down on prospect rows, larger on farm
+       headers. img tags fall back to alt text when the CDN 404s. */
+    .team-logo {
+      display: inline-block;
+      object-fit: contain;
+      vertical-align: middle;
+      flex-shrink: 0;
+      background: transparent;
+    }
+    .team-logo-sm { width: 18px; height: 18px; }
+    .team-logo-md { width: 28px; height: 28px; }
+    .team-logo-lg { width: 44px; height: 44px; }
+    .team-logo-xl { width: 64px; height: 64px; }
+    .team-logo-fallback {
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
+      color: var(--text-secondary);
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-light);
+      border-radius: 2px;
+    }
+    /* "Performance vs level median" pill. Color-coded by direction so a
+       reader can glance the row and see who's beating their level. */
+    .lvl-plus {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 2px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border: 1px solid currentColor;
+    }
+    .lvl-plus.lvl-good   { color: var(--up);   background: rgba(94,255,138,0.10); }
+    .lvl-plus.lvl-okay   { color: var(--text-secondary); background: var(--bg-tertiary); }
+    .lvl-plus.lvl-bad    { color: var(--down); background: rgba(255,59,212,0.08); }
 
     /* === FV badges ================================================ */
     .fv-badge {
@@ -566,9 +602,21 @@
     /* === Farm systems ============================================= */
     .farm-header, .farm-row {
       display: grid;
-      grid-template-columns: 36px 54px 1fr 190px 1fr 110px 150px 70px 70px 24px;
+      grid-template-columns: 32px 40px 130px 1fr 180px 1fr 110px 140px 60px 60px 16px;
       gap: 10px;
       align-items: center;
+    }
+    /* Compact "Org · pos · age" headline so a wider Org column doesn't
+       create dead whitespace when team names are short. */
+    .farm-org-cell {
+      display: flex; align-items: center; gap: 8px; min-width: 0;
+    }
+    .farm-org-cell .farm-org-name {
+      min-width: 0; overflow: hidden;
+    }
+    .farm-org-cell .farm-org-name .farm-org {
+      font-size: 13px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .farm-fv-chart-cell { min-width: 0; }
     .farm-fv-chart-cell svg { display: block; width: 100%; height: 50px; }
@@ -1249,15 +1297,14 @@ function makeMilbCell(p) {
   const detail = isPitcher
     ? `K/9 ${sl.k_per_9 ?? "—"} · BB/9 ${sl.bb_per_9 ?? "—"}`
     : `${sl.hr ?? 0} HR · ${sl.sb ?? 0} SB`;
-  // When stats are from a previous season (no current-year data yet),
-  // tag the line with the source year so users don't read stale data as fresh.
   const seasonTag = sl.is_prior_season && sl.season
     ? `<span class="prior-season-tag" title="No ${new Date().getFullYear()} stats yet — showing ${sl.season}">${sl.season}</span>`
     : "";
+  const lvlPlus = levelPlusHTML(sl);
   return `<div class="milb-cell milb-cell-wrap">
     <span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${line}
     ${diff ? `<span class="age-vs-level"> · ${diff} yrs</span>` : ""}
-    <br/><span style="color: var(--text-tertiary);">${detail}</span>
+    ${lvlPlus ? `<br/>${lvlPlus} <span style="color: var(--text-tertiary);">${detail}</span>` : `<br/><span style="color: var(--text-tertiary);">${detail}</span>`}
   </div>`;
 }
 
@@ -1391,7 +1438,7 @@ function renderActives() {
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
-          <div class="player-meta">${escapeHtml(p.position ?? "—")} · ${escapeHtml(p.org ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}</div>
+          <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}</div>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
@@ -1434,7 +1481,7 @@ function renderSpotlights() {
       <div class="rank-num">${i + 1}</div>
       <div>
         <div class="player-name">${escapeHtml(s.player_name)}</div>
-        <div class="player-meta">${escapeHtml(s.position ?? "—")} · ${escapeHtml(s.org ?? "—")}${s.age != null ? `<span class="age-tag">age ${Number(s.age).toFixed(1)}</span>` : ""}${ilTagHTML(s)}</div>
+        <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(s.position ?? "—")} · ${teamLogoHTML(s.org, "sm")}<span>${escapeHtml(s.org ?? "—")}</span>${s.age != null ? `<span class="age-tag">age ${Number(s.age).toFixed(1)}</span>` : ""}${ilTagHTML(s)}</div>
       </div>
       <div style="text-align:center;"><span class="fv-badge ${fvClass(s.fv || "40")}">${escapeHtml(s.fv ?? "—")}</span></div>
       <div class="milb-cell"><span class="level-pill level-neutral">${escapeHtml(s.level ?? "—")}</span>${escapeHtml(s.line ?? "—")}</div>
@@ -1513,7 +1560,7 @@ function renderRecentlyTraded() {
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
-          <div class="player-meta">${escapeHtml(p.position ?? "—")} · ${escapeHtml(p.org ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}</div>
+          <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}</div>
         </div>
         <div>
           <span class="grad-pill" style="background:var(--bg-tertiary);color:var(--neon-violet);border:1px solid var(--border);">${lastTrade.trade_date}</span>
@@ -1581,7 +1628,7 @@ function renderGraduates() {
           <div class="rank-num">${rank++}</div>
           <div>
             <div class="player-name">${escapeHtml(g.player_name)}</div>
-            <div class="player-meta">${escapeHtml(g.position ?? "—")} · ${escapeHtml(g.org ?? "—")}${g.age != null ? `<span class="age-tag">age ${g.age.toFixed(1)}</span>` : ""}</div>
+            <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(g.position ?? "—")} · ${teamLogoHTML(g.org, "sm")}<span>${escapeHtml(g.org ?? "—")}</span>${g.age != null ? `<span class="age-tag">age ${g.age.toFixed(1)}</span>` : ""}</div>
           </div>
           <div class="grad-graduation-cell">
             <span class="${pillClass}">${g.graduation_date}</span>
@@ -1694,6 +1741,49 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
+}
+
+// Map our canonical org codes (PIT, ATH, KCR, SDP, SFG, TBR, WSN, ARI)
+// to the ESPN logo CDN's slugs. ESPN uses 2-3 letter codes that mostly
+// match but differ for a handful of teams.
+const ESPN_LOGO_SLUGS = {
+  ARI: "ari", ATH: "ath", ATL: "atl", BAL: "bal", BOS: "bos",
+  CHC: "chc", CHW: "chw", CIN: "cin", CLE: "cle", COL: "col",
+  DET: "det", HOU: "hou", KCR: "kc",  LAA: "laa", LAD: "lad",
+  MIA: "mia", MIL: "mil", MIN: "min", NYM: "nym", NYY: "nyy",
+  PHI: "phi", PIT: "pit", SDP: "sd",  SEA: "sea", SFG: "sf",
+  STL: "stl", TBR: "tb",  TEX: "tex", TOR: "tor", WSN: "wsh",
+};
+function teamLogoURL(org) {
+  if (!org) return null;
+  const slug = ESPN_LOGO_SLUGS[org] || org.toLowerCase();
+  return `https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png`;
+}
+// Render a team logo with an inline fallback when the CDN 404s. `size`
+// must match a CSS class suffix (sm, md, lg, xl).
+function teamLogoHTML(org, size = "sm", title = null) {
+  if (!org) return "";
+  const url = teamLogoURL(org);
+  if (!url) {
+    return `<span class="team-logo team-logo-${size} team-logo-fallback">${escapeHtml(org)}</span>`;
+  }
+  const t = title != null ? title : org;
+  return `<img class="team-logo team-logo-${size}" src="${url}" alt="${escapeHtml(org)}" title="${escapeHtml(t)}" loading="lazy" onerror="this.outerHTML='<span class=&quot;team-logo team-logo-${size} team-logo-fallback&quot;>${escapeHtml(org)}</span>';">`;
+}
+
+// Performance-vs-level pill. Reads sl.level_plus_pct, sl.ops_plus_level
+// (hitters) or sl.era_minus_level (pitchers). Returns "" when stats
+// aren't yet available — the pill should never show as a question mark.
+function levelPlusHTML(sl) {
+  if (!sl || sl.level_plus_pct == null) return "";
+  const pct = sl.level_plus_pct;
+  const stat = sl.is_pitcher ? "ERA-" : "OPS+";
+  const baseValue = sl.is_pitcher ? sl.era_minus_level : sl.ops_plus_level;
+  // Threshold ±5% as the "okay" band so noise doesn't flip the color.
+  const cls = pct >= 5 ? "lvl-good" : pct <= -5 ? "lvl-bad" : "lvl-okay";
+  const sign = pct > 0 ? `+${pct}` : `${pct}`;
+  const title = `${stat} ${baseValue} (${sign}% vs ${escapeHtml(sl.level || "?")} median)`;
+  return `<span class="lvl-plus ${cls}" title="${title}">${sign}% vs lvl</span>`;
 }
 
 // IL badge for the player-meta line. Returns an empty string when the
@@ -1858,10 +1948,11 @@ function renderFarmSystems() {
 
   const header = `<div class="farm-header">
     <span style="text-align:center;">#</span>
+    <span></span>
     <span>Org</span>
     <span>Tier depth</span>
-    <span>FV stock</span>
     <span>Top prospect</span>
+    <span>FV stock</span>
     <span>Positions</span>
     <span>Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
     <span>Avg age</span>
@@ -1882,16 +1973,19 @@ function renderFarmSystems() {
     return `
       <div class="farm-row" data-org="${escapeHtml(org.org)}" style="cursor:pointer;">
         <div class="farm-rank">${displayRank}</div>
-        <div>
-          <div class="farm-org">${escapeHtml(fullOrgName(org.org))}</div>
-          <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}</div>
+        <div>${teamLogoHTML(org.org, "md", fullOrgName(org.org))}</div>
+        <div class="farm-org-cell">
+          <div class="farm-org-name">
+            <div class="farm-org">${escapeHtml(fullOrgName(org.org))}</div>
+            <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}</div>
+          </div>
         </div>
         <div>${makeTierBar(org.prospects)}</div>
-        <div class="farm-fv-chart-cell">${makeOrgFvChart(org, "mini")}</div>
-        <div style="font-size:12px;">
-          ${tp ? `<span style="font-weight:500;">${escapeHtml(tp.name)}</span>
+        <div style="font-size:12px;min-width:0;overflow:hidden;">
+          ${tp ? `<span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;max-width:130px;vertical-align:middle;">${escapeHtml(tp.name)}</span>
           <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:10px;padding:1px 5px;margin-left:4px;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
         </div>
+        <div class="farm-fv-chart-cell">${makeOrgFvChart(org, "mini")}</div>
         <div>${makePosBreakdown(org.pos_groups)}</div>
         <div class="level-depth-cell">${makeLevelDepth(org.level_counts, activeLevel)}</div>
         <div style="font-size:12px;color:var(--text-secondary);font-variant-numeric:tabular-nums;">${org.avg_age != null ? org.avg_age.toFixed(1) : "—"}</div>
@@ -1930,7 +2024,7 @@ function renderInactive() {
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
-          <div class="player-meta">${escapeHtml(p.position ?? "—")} · ${escapeHtml(p.org ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}</div>
+          <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}</div>
         </div>
         <div class="grad-graduation-cell">
           <span class="grad-pill" style="background:var(--bg-tertiary);color:var(--text-tertiary);border:none;">${lastSeen}</span>
@@ -2372,13 +2466,16 @@ function renderPlayerDetail(key) {
       <a href="#" onclick="event.preventDefault();goHome();" style="color:var(--neon-cyan);text-decoration:none;font-size:12px;">← Back to list</a>
     </div>
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:14px;">
-      <div>
-        <div style="font-size:24px;font-weight:600;letter-spacing:0.02em;color:var(--text-primary);">${escapeHtml(p.player_name)}</div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">
-          ${escapeHtml(p.position ?? "—")} · ${orgLink}${p.age != null ? ` · age ${p.age.toFixed(1)}` : ""}${p.birth_date ? ` · born ${p.birth_date}` : ""}
-          ${statusPill ? " · " + statusPill : ""}
+      <div style="display:flex;align-items:flex-start;gap:14px;">
+        ${teamLogoHTML(p.org, "lg", p.org ? fullOrgName(p.org) : "")}
+        <div>
+          <div style="font-size:24px;font-weight:600;letter-spacing:0.02em;color:var(--text-primary);">${escapeHtml(p.player_name)}</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">
+            ${escapeHtml(p.position ?? "—")} · ${orgLink}${p.age != null ? ` · age ${p.age.toFixed(1)}` : ""}${p.birth_date ? ` · born ${p.birth_date}` : ""}
+            ${statusPill ? " · " + statusPill : ""}
+          </div>
+          ${rankPills}
         </div>
-        ${rankPills}
       </div>
       <div style="text-align:right;">
         <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;">Current FV</div>
@@ -2687,11 +2784,14 @@ function renderFarmDetail(orgCode) {
       <a href="#" onclick="event.preventDefault();goHome();" style="color:var(--neon-cyan);text-decoration:none;font-size:12px;">← Back to list</a>
     </div>
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:14px;">
-      <div>
-        <div style="font-size:28px;font-weight:600;letter-spacing:0.02em;color:var(--text-primary);">${escapeHtml(fullOrgName(org.org))}</div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">
-          <span style="color:var(--text-tertiary);letter-spacing:0.08em;margin-right:8px;">${escapeHtml(org.org)}</span>
-          #${org.farm_rank} of 30 · ${org.count} prospects tracked · Total FV ${org.total_fv != null ? org.total_fv.toFixed(1) : "—"}
+      <div style="display:flex;align-items:center;gap:14px;">
+        ${teamLogoHTML(org.org, "xl", fullOrgName(org.org))}
+        <div>
+          <div style="font-size:28px;font-weight:600;letter-spacing:0.02em;color:var(--text-primary);">${escapeHtml(fullOrgName(org.org))}</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">
+            <span style="color:var(--text-tertiary);letter-spacing:0.08em;margin-right:8px;">${escapeHtml(org.org)}</span>
+            #${org.farm_rank} of 30 · ${org.count} prospects tracked · Total FV ${org.total_fv != null ? org.total_fv.toFixed(1) : "—"}
+          </div>
         </div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">${makeTierBar(org.prospects)}</div>
