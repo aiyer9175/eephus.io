@@ -35,7 +35,9 @@ so the front-end can render them as markers on the FV timeline.
 from __future__ import annotations
 
 import logging
+import re as _re
 import time
+import unicodedata as _uc
 from dataclasses import dataclass, asdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -47,6 +49,57 @@ from scrapers import Snapshot
 from stats import resolve_mlbam_id  # reuses the cached Chadwick lookup
 
 log = logging.getLogger(__name__)
+
+# --- Description ↔ player_name validation ---------------------------------
+# Historically the trades table picked up records under the wrong player_key
+# whenever resolve_mlbam_id returned the ID of a same-name player (e.g.
+# Thomas White's player_key getting Thomas Hatch's transactions). The fix is
+# to validate the API's free-text description against the player's stored
+# name at insert time: if the last name (with hyphen-component fallback) is
+# absent from the description, the record almost certainly belongs to a
+# different player and we drop it.
+
+_NAME_SUFFIXES = {"jr", "sr", "ii", "iii", "iv", "v"}
+
+
+def _normalize_for_match(s: str) -> str:
+    s = (s or "").replace("�", "")  # leftover encoding sentinel
+    s = _uc.normalize("NFKD", s)
+    s = "".join(c for c in s if not _uc.combining(c))
+    s = s.lower()
+    # Drop apostrophes/periods entirely (D'Shawn → dshawn; A.J. → aj).
+    s = _re.sub(r"[.\'’`]", "", s)
+    # Everything else non-alphanumeric becomes whitespace.
+    s = _re.sub(r"[^a-z0-9]+", " ", s)
+    return s
+
+
+def _last_name_keys(player_name: str) -> set[str]:
+    n = _normalize_for_match(player_name)
+    toks = [t for t in n.split() if t and t not in _NAME_SUFFIXES]
+    if len(toks) < 2:
+        return set()
+    # Include the last token, plus the second-to-last when the player has
+    # 3+ tokens — covers hyphenated last names like "Smith-Njigba" where
+    # the API sometimes prints only "Smith".
+    if len(toks) >= 3:
+        return {toks[-1], toks[-2]}
+    return {toks[-1]}
+
+
+def description_references_player(description: str, player_name: str) -> bool:
+    """True when the trade description's text plausibly refers to player_name.
+
+    Last-name match only — diminutives like Jacob/Jake and Michael/Mike are
+    common, but shared surnames are the most reliable signal that the API
+    record actually belongs to this person. Returns True when player_name
+    can't be parsed so we don't reject otherwise-valid trades for fringe
+    name formats."""
+    lasts = _last_name_keys(player_name)
+    if not lasts:
+        return True
+    d_tokens = set(_normalize_for_match(description).split())
+    return any(lt in d_tokens for lt in lasts)
 
 MLB_STATS_API = "https://statsapi.mlb.com/api/v1"
 RATE_LIMIT_SECONDS = 0.5
@@ -159,12 +212,24 @@ def trades_from_api(
     }
 
     trades: list[Trade] = []
+    rejected_mismatch = 0
     for tx in transactions:
         person = tx.get("person") or {}
         mlbam = person.get("id")
         if mlbam not in id_to_key:
             continue
         player_key = id_to_key[mlbam]
+        player_name = tracked_players[player_key][0]
+        description = tx.get("description")
+        # Defensive: reject records whose description doesn't reference our
+        # player. Protects against stale/wrong ID mappings where a different
+        # player's transaction would otherwise land under this player_key
+        # (e.g. Thomas White getting Thomas Hatch's roster moves).
+        if description and not description_references_player(description, player_name):
+            rejected_mismatch += 1
+            log.debug("rejecting api trade for %s (id=%s) — desc mismatch: %s",
+                      player_name, mlbam, description[:120])
+            continue
         from_team = ((tx.get("fromTeam") or {}).get("name"))
         to_team   = ((tx.get("toTeam")   or {}).get("name"))
         trades.append(Trade(
@@ -173,11 +238,12 @@ def trades_from_api(
             from_org=from_team,
             to_org=to_team,
             source="mlb_api",
-            description=tx.get("description"),
+            description=description,
             date_range_start=None,
             date_range_end=None,
         ))
-    log.info("matched %d API trades to tracked players", len(trades))
+    log.info("matched %d API trades to tracked players (rejected %d desc-mismatch)",
+             len(trades), rejected_mismatch)
     return trades
 
 

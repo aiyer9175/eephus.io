@@ -134,6 +134,14 @@ def normalize_key(name: str) -> str:
 # value = canonical key (typically matches the MLB API / most common spelling)
 _CANONICAL_KEYS: dict[str, str] = {
     "leodalis_de_vries": "leo_de_vries",
+    # Josuar Gonzalez (SFG SS) has appeared under three spellings across
+    # sources/cycles. Just Baseball used "Josuar De Jesus" without a team;
+    # collapsing prevents the null-org duplicate from surfacing on the farm page.
+    "josuar_de_jesus": "josuar_gonzalez",
+    "josuar_de_jesus_gonzalez": "josuar_gonzalez",
+    # JoJo Parker (TOR 3B/SS). TJStats pre-season + Just Baseball listed him as
+    # "Joseph Parker" without a team; FanGraphs uses "JoJo Parker" (TOR).
+    "joseph_parker": "jojo_parker",
 }
 
 

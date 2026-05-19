@@ -584,7 +584,7 @@
 
   <div class="search-bar">
     <input type="search" class="search-input" id="search-input"
-           placeholder="Search players…" autocomplete="off" spellcheck="false">
+           placeholder="Search a player" autocomplete="off" spellcheck="false">
   </div>
 
   <div class="filter-bar" id="filter-bar">
@@ -915,7 +915,7 @@ function restoreUIFromState() {
   const sortSel = document.getElementById("sort-select");
   if (sortSel) sortSel.value = state.sort;
   const searchIn = document.getElementById("search-input");
-  if (searchIn) searchIn.value = state.search;
+  if (searchIn) searchIn.value = state.search || "";
 }
 
 function makeEtaCell(p) {
@@ -1246,6 +1246,23 @@ const SOURCE_LABELS = {
   auto_detect: "Auto-detect"
 };
 
+// 3-letter org code → full team name. Used for the farm list label + farm
+// detail header. Compact tables (trades, charts, badges) keep the code so
+// rows stay scannable.
+const ORG_NAMES = {
+  ARI: "Arizona Diamondbacks", ATH: "Athletics", ATL: "Atlanta Braves",
+  BAL: "Baltimore Orioles", BOS: "Boston Red Sox", CHC: "Chicago Cubs",
+  CHW: "Chicago White Sox", CIN: "Cincinnati Reds", CLE: "Cleveland Guardians",
+  COL: "Colorado Rockies", DET: "Detroit Tigers", HOU: "Houston Astros",
+  KCR: "Kansas City Royals", LAA: "Los Angeles Angels", LAD: "Los Angeles Dodgers",
+  MIA: "Miami Marlins", MIL: "Milwaukee Brewers", MIN: "Minnesota Twins",
+  NYM: "New York Mets", NYY: "New York Yankees", PHI: "Philadelphia Phillies",
+  PIT: "Pittsburgh Pirates", SDP: "San Diego Padres", SEA: "Seattle Mariners",
+  SFG: "San Francisco Giants", STL: "St. Louis Cardinals", TBR: "Tampa Bay Rays",
+  TEX: "Texas Rangers", TOR: "Toronto Blue Jays", WSN: "Washington Nationals"
+};
+const fullOrgName = code => ORG_NAMES[code] || code || "—";
+
 function detailTable(p) {
   // Per-source breakdown for the most recent snapshot
   const latest = p.points.length ? p.points[p.points.length - 1] : null;
@@ -1385,7 +1402,16 @@ function makePosBreakdown(posGroups) {
 }
 
 function farmSortedOrgs() {
-  const orgs = (DATA.org_summary || []).slice();
+  let orgs = (DATA.org_summary || []).slice();
+  // Search filter: match against the 3-letter code OR full team name so
+  // "nym", "mets", and "new york" all surface the Mets.
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    orgs = orgs.filter(o =>
+      (o.org || "").toLowerCase().includes(q) ||
+      fullOrgName(o.org).toLowerCase().includes(q)
+    );
+  }
   const s = state.farmSort;
   orgs.sort((a, b) => {
     if (s === "total_fv")  return b.total_fv  - a.total_fv;
@@ -1401,8 +1427,11 @@ function farmSortedOrgs() {
 function renderFarmSystems() {
   const orgs = farmSortedOrgs();
   if (!orgs.length) {
+    const msg = state.search
+      ? `No farm systems match “${escapeHtml(state.search)}”.`
+      : `No farm system data available.`;
     document.getElementById("farm-rows").innerHTML =
-      `<div class="state-message">No farm system data available.</div>`;
+      `<div class="state-message">${msg}</div>`;
     return;
   }
 
@@ -1426,7 +1455,10 @@ function renderFarmSystems() {
     return `
       <div class="farm-row" data-org="${escapeHtml(org.org)}" style="cursor:pointer;">
         <div class="farm-rank">${org.farm_rank}</div>
-        <div class="farm-org">${escapeHtml(org.org)}</div>
+        <div>
+          <div class="farm-org">${escapeHtml(fullOrgName(org.org))}</div>
+          <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}</div>
+        </div>
         <div>${makeTierBar(org.prospects)}</div>
         <div style="font-size:12px;">
           ${tp ? `<span style="font-weight:500;">${escapeHtml(tp.name)}</span>
@@ -1637,9 +1669,9 @@ function makeTradeHistoryBlock(trades) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No trades on record.</div>`;
   }
   const rows = trades.map(t => `<tr>
-    <td>${t.trade_date}</td>
-    <td>${escapeHtml(t.from_org ?? "?")} <span style="color:var(--neon-violet);">→</span> ${escapeHtml(t.to_org ?? "?")}</td>
-    <td style="color:var(--text-tertiary);font-size:11px;">${escapeHtml((t.description || "").slice(0, 120))}</td>
+    <td style="white-space:nowrap;">${t.trade_date}</td>
+    <td style="white-space:nowrap;">${escapeHtml(t.from_org ?? "?")} <span style="color:var(--neon-violet);">→</span> ${escapeHtml(t.to_org ?? "?")}</td>
+    <td style="color:var(--text-secondary);font-size:11px;line-height:1.45;">${escapeHtml(t.description || "")}</td>
   </tr>`).join("");
   return `<table class="detail-table"><thead><tr><th>Date</th><th>Move</th><th>Description</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
@@ -1850,12 +1882,28 @@ function renderFarmDetail(orgCode) {
   const graduates = (DATA.graduates || []).filter(g => g.org === orgCode);
 
   // Recent trades involving this org — pulled from every player's trades.
+  // from_org / to_org are canonical 3-letter codes in the exported JSON, so
+  // a direct equality check is sufficient. Trades for graduates are tagged
+  // so we can label them on the page.
   const allTradesForOrg = [];
-  for (const p of [...rosterPlayers, ...graduates]) {
+  const seen = new Set();
+  for (const p of rosterPlayers) {
     for (const t of (p.trades || [])) {
-      if (t.from_org === orgCode || t.to_org === orgCode
-          || (t.from_org || "").includes(orgCode) || (t.to_org || "").includes(orgCode)) {
-        allTradesForOrg.push({ player: p, trade: t });
+      if (t.from_org === orgCode || t.to_org === orgCode) {
+        const k = `${p.player_key}|${t.trade_date}|${t.from_org}|${t.to_org}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        allTradesForOrg.push({ player: p, trade: t, graduate: false });
+      }
+    }
+  }
+  for (const p of graduates) {
+    for (const t of (p.trades || [])) {
+      if (t.from_org === orgCode || t.to_org === orgCode) {
+        const k = `${p.player_key}|${t.trade_date}|${t.from_org}|${t.to_org}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        allTradesForOrg.push({ player: p, trade: t, graduate: true });
       }
     }
   }
@@ -1867,8 +1915,9 @@ function renderFarmDetail(orgCode) {
     </div>
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:14px;">
       <div>
-        <div style="font-size:28px;font-weight:600;letter-spacing:0.04em;color:var(--text-primary);">${escapeHtml(org.org)}</div>
+        <div style="font-size:28px;font-weight:600;letter-spacing:0.02em;color:var(--text-primary);">${escapeHtml(fullOrgName(org.org))}</div>
         <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">
+          <span style="color:var(--text-tertiary);letter-spacing:0.08em;margin-right:8px;">${escapeHtml(org.org)}</span>
           #${org.farm_rank} of 30 · ${org.count} prospects tracked · Total FV ${org.total_fv != null ? org.total_fv.toFixed(1) : "—"}
         </div>
       </div>
@@ -1947,19 +1996,28 @@ function renderFarmDetail(orgCode) {
       </div>`).join("") || '<span style="color:var(--text-tertiary);font-size:12px;">None</span>'}`;
 
   const tradesHtml = allTradesForOrg.length ? `<table class="detail-table"><thead><tr>
-    <th>Date</th><th>Player</th><th>Move</th>
-    </tr></thead><tbody>${allTradesForOrg.slice(0, 20).map(({ player, trade }) => `<tr>
-      <td>${trade.trade_date}</td>
-      <td style="cursor:pointer;color:var(--neon-cyan);" onclick="goToPlayer('${escapeHtml(player.player_key)}');">${escapeHtml(player.player_name)}</td>
-      <td>${escapeHtml(trade.from_org || "?")} <span style="color:var(--neon-violet);">→</span> ${escapeHtml(trade.to_org || "?")}</td>
-    </tr>`).join("")}</tbody></table>` : `<div style="color:var(--text-tertiary);font-size:12px;">No trades on record involving this org.</div>`;
+    <th>Date</th><th>Player</th><th>Move</th><th>Description</th>
+    </tr></thead><tbody>${allTradesForOrg.slice(0, 25).map(({ player, trade, graduate }) => {
+      const direction = trade.to_org === orgCode
+        ? `<span style="color:var(--neon-green);">+</span>`
+        : `<span style="color:var(--neon-violet);">→</span>`;
+      const gradTag = graduate
+        ? `<span style="font-size:9px;color:var(--text-tertiary);margin-left:6px;letter-spacing:0.04em;">GRAD</span>`
+        : "";
+      return `<tr>
+        <td style="white-space:nowrap;">${trade.trade_date}</td>
+        <td style="cursor:pointer;color:var(--neon-cyan);white-space:nowrap;" onclick="goToPlayer('${escapeHtml(player.player_key)}');">${escapeHtml(player.player_name)}${gradTag}</td>
+        <td style="white-space:nowrap;">${direction} ${escapeHtml(trade.from_org || "?")} → ${escapeHtml(trade.to_org || "?")}</td>
+        <td style="color:var(--text-secondary);font-size:11px;line-height:1.4;">${escapeHtml(trade.description || "")}</td>
+      </tr>`;
+    }).join("")}</tbody></table>` : `<div style="color:var(--text-tertiary);font-size:12px;">No trades on record involving this org.</div>`;
 
   root.innerHTML = header + tilesHtml + `
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
       <div>
         <div class="detail-title">Full roster (${rosterPlayers.length})</div>
         ${rosterHeader}${rosterRows}
-        <div class="detail-title" style="margin-top:18px;">Recent trades involving ${escapeHtml(orgCode)}</div>
+        <div class="detail-title" style="margin-top:18px;">Recent trades involving the ${escapeHtml(fullOrgName(orgCode))}</div>
         ${tradesHtml}
       </div>
       <div>${highlights}</div>

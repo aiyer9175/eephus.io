@@ -503,34 +503,69 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         ("ATH", "OAK"),
     }
 
+    # Verbs that signal a real inter-org player movement. Trades, waiver
+    # claims, contract purchases, Rule 5 selections and free-agent signings
+    # all qualify. Description must contain at least one to count as
+    # "verified". Without this check we'd accept the API's affiliate
+    # assignments (e.g. "Toronto Blue Jays optioned RHP Thomas Hatch to
+    # Buffalo Bisons.") whenever Toronto's parent-org name happened to
+    # canonicalize cleanly — those are intra-org moves, not trades.
+    _REAL_TRADE_VERB_PATTERNS = (
+        "traded ",                     # X traded ... — definitive
+        " off waivers",                # waiver claim ("claimed Y off waivers from X")
+        " on waivers",                 # claimed/awarded on waivers (rarer wording)
+        "purchased the contract",      # contract purchase between orgs
+        "signed as a free agent",      # FA signing (cross-org by definition)
+        "returned to ",                # Rule 5 return
+    )
+    # Verbs that signal a non-trade event. Reject these even when from/to
+    # canonicalize to different MLB codes, because the "to" team is usually
+    # an affiliate or the player's movement is intra-org.
+    _NON_TRADE_VERB_PATTERNS = (
+        "optioned",
+        "recalled",
+        "designated for assignment",
+        "selected the contract",       # MiLB→MLB promotion (intra-org)
+        "sent outright",
+        "sent on a rehab",
+        "sent on a development",
+        "assigned to",                 # affiliate move
+        "activated",
+        "reinstated",
+        "placed on the",
+    )
+
     def _is_real_trade(t: dict) -> bool:
         """
-        True for actual inter-org trades; False for MiLB affiliate
-        assignments (FCL Tigers → Lakeland Flying Tigers etc.) and the
-        Athletics rebrand (OAK ↔ ATH).
+        True only for VERIFIED inter-org trades.
 
-        Two paths qualify:
-          - source='inferred': we only infer when a prospect's canonical
-            org changes across snapshots, so all inferred rows are real
-            EXCEPT the OAK↔ATH rebrand.
-          - source='mlb_api': accept when the description text mentions
-            "traded" (the API's free-text marker for trade transactions —
-            assignments use "assigned"), OR when both from_org and to_org
-            resolve to known 3-letter MLB codes that differ. The
-            description check catches multi-prospect trades where the
-            from/to fields are affiliate names; the canonical-org check
-            catches recent trades whose descriptions haven't propagated.
+        Strict rules:
+          - source='inferred': always False. Inferred org-changes are
+            kept in the DB as a fallback but never displayed; we only
+            surface trades the MLB transactions API confirms.
+          - source='mlb_api':
+              * Both from_org and to_org must canonicalize to distinct
+                3-letter MLB codes (filters out affiliate ↔ parent moves).
+              * Reject the OAK ↔ ATH rebrand pair.
+              * Description (when present) must contain a real-trade verb
+                pattern AND not contain any non-trade verb pattern.
         """
+        if t.get("source") != "mlb_api":
+            return False
         cf = canonical_org(t.get("from_org"))
         ct = canonical_org(t.get("to_org"))
+        if not (cf and ct and cf != ct and len(cf) == 3 and len(ct) == 3):
+            return False
         if (cf, ct) in _REBRAND_PAIRS:
             return False
         desc = (t.get("description") or "").lower()
-        if t.get("source") == "inferred":
-            return bool(cf and ct and cf != ct and len(cf) == 3 and len(ct) == 3)
-        if "traded" in desc:
+        if not desc:
+            # No description — accept the cross-org movement on its face,
+            # though this path is rare (API normally provides text).
             return True
-        return bool(cf and ct and cf != ct and len(cf) == 3 and len(ct) == 3)
+        if any(v in desc for v in _NON_TRADE_VERB_PATTERNS):
+            return False
+        return any(v in desc for v in _REAL_TRADE_VERB_PATTERNS)
 
     def _trade_pref_score(t: dict) -> int:
         """Higher = preferred when collapsing duplicates. Prefer mlb_api
@@ -644,7 +679,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 chosen.append(cluster[0])
 
         chosen.sort(key=lambda x: x["td"])
-        return [c["_t"] for c in chosen]
+        # Canonicalize from_org / to_org to 3-letter codes for display + the
+        # farm-page filter on the front-end. Keep the full original strings
+        # in `from_org_full` / `to_org_full` for the description context, and
+        # leave the description text alone.
+        out: list[dict] = []
+        for c in chosen:
+            t = dict(c["_t"])
+            from_full = t.get("from_org")
+            to_full = t.get("to_org")
+            t["from_org_full"] = from_full
+            t["to_org_full"] = to_full
+            t["from_org"] = canonical_org(from_full)
+            t["to_org"] = canonical_org(to_full)
+            out.append(t)
+        return out
 
     def _serialize(p: PlayerTimeseries) -> dict:
         bd = birth_dates.get(p.player_key)
@@ -772,7 +821,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     org_map: dict[str, dict] = {}
     for idx, p in enumerate(actives):
-        org = p.org or "?"
+        # Skip prospects with no resolved org — they fall through every source
+        # without a team label (rare; usually a name-aliasing bug where the
+        # prospect is double-counted under a different canonical key with an
+        # org). Including them creates a phantom 31st "team" on the farm page.
+        if not p.org:
+            continue
+        org = p.org
         bd = birth_dates.get(p.player_key)
         age = compute_age_decimal(bd)
         latest = p.points[-1]
