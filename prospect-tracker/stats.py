@@ -1954,6 +1954,136 @@ def derive_level_changes(transactions: list[dict],
 
 
 # ---------------------------------------------------------------------------
+# Transaction classification — non-trade events that are still worth
+# surfacing on the prospect detail page. Trades themselves come from the
+# `trades.py` pipeline; everything else (waiver claims, releases,
+# contract purchases, Rule 5 selections/returns, free-agent signings, DFA
+# events) flows through here so the UI can keep "trades" semantically
+# strict while still showing the full transaction history.
+# ---------------------------------------------------------------------------
+
+# typeCode → (kind, polite_label). Anything not in this map is filtered
+# out by derive_transactions (it's either a level change — already in
+# level_changes — an IL placement, or noise like spring-training invites).
+#
+# References:
+#   TR  = Trade                                    (handled by trades.py)
+#   CU  = Claimed Off Waivers                      → waiver_claim
+#   CLM = Claim (older alias)                      → waiver_claim
+#   PU/PUR = Purchased Contract / Selection of Contract → contract_purchase
+#   REL = Released                                 → released
+#   DES = Designated for Assignment                → dfa
+#   OUT = Outrighted (off 40-man, kept by org)     → outrighted
+#   SE  = Selection (Rule 5 / contract selection)  → rule_5_selection
+#         (only emitted when from_team differs from to_team — a within-
+#         org "selection of contract" is just an MLB call-up that
+#         level_changes already covers.)
+#   SC  = Selected (newer alias on some records)   → rule_5_selection
+#   RET = Returned to Org (Rule 5)                 → rule_5_return
+#   SFA = Signed as Free Agent                     → signed_free_agent
+#   SGN = Signed (free agent / minor-league deal)  → signed_free_agent
+# MLB Stats API typeCode → (event kind, polite label). Derived empirically
+# from what the cached payloads actually look like in our DB. Notable
+# pitfalls embedded here:
+#   * CU is "Recalled" (roster recall from MiLB) — NOT a waiver claim.
+#     The real waiver-claim code is CLW.
+#   * SE / SC are "Selection" / "Status Change" — used for routine
+#     activations, IL bookkeeping, fall-league rows. None of these are
+#     events worth surfacing on a prospect page.
+#   * OPT / REC (option / recall) are level changes — already covered by
+#     level_changes, so deliberately omitted here.
+#   * Trades (TR) live in `trades.py` with their own pipeline + snapshot-
+#     inference fallback; including them here would double-emit.
+_TRANSACTION_TYPE_TO_KIND: dict[str, tuple[str, str]] = {
+    "CLW": ("waiver_claim",       "Waiver claim"),
+    "PU":  ("contract_purchase",  "Contract purchase"),
+    "PUR": ("contract_purchase",  "Contract purchase"),
+    "R5":  ("contract_purchase",  "Rule 5 pick"),
+    "R5M": ("contract_purchase",  "Rule 5 pick (MLB)"),
+    "REL": ("released",           "Released"),
+    "DES": ("dfa",                "Designated for assignment"),
+    "DFA": ("dfa",                "Designated for assignment"),
+    "OUT": ("outrighted",         "Outrighted to MiLB"),
+    "RET": ("rule_5_return",      "Rule 5 return"),
+    "RTN": ("rule_5_return",      "Rule 5 return"),
+    "SFA": ("signed_free_agent",  "Signed as free agent"),
+    "SGN": ("signed_free_agent",  "Signed"),
+}
+
+# Additional noise phrases scrubbed specifically by derive_transactions.
+# These appear in rows whose `type_code` lands in our keep-set but whose
+# `description` makes clear the event isn't worth surfacing — usually
+# routine roster bookkeeping already reflected in roster_status.
+_NON_TRANSACTION_PHRASES = (
+    "injured list",
+    "temporarily inactive",
+    "bereavement",
+    "paternity",
+    "restricted list",
+    "roster status changed",
+    "college workout",
+    "high school workout",
+)
+
+
+def derive_transactions(transactions: list[dict]) -> list[dict]:
+    """Turn one player's `/transactions` rows into the cleaned-up
+    NON-TRADE event list that feeds `player.transactions` on the export.
+
+    Trades stay in their own pipeline (`trades.py`) because they're
+    surfaced as first-class events on the FV chart with their own
+    bracketing logic + reconciliation. The list returned here covers
+    everything else worth showing on the timeline: waiver claims, DFAs,
+    releases, outrights, contract purchases, Rule 5 moves, and free-agent
+    signings. Level changes and IL placements are deliberately excluded
+    because they already have dedicated structures (`level_changes`,
+    `roster_status.injury_history`).
+
+    Output shape (per row, sorted oldest to newest):
+        {
+          "date":        "YYYY-MM-DD",
+          "kind":        "waiver_claim" | "released" | "dfa" | ...,
+          "type_code":   "CU",                # original API code
+          "type_desc":   "Claimed Off Waivers",
+          "description": full text from the API,
+          "from_team":   str | None,          # canonical when resolvable
+          "to_team":     str | None,
+        }
+    """
+    out: list[dict] = []
+    for tx in transactions:
+        type_code = (tx.get("type_code") or "").upper()
+        mapped = _TRANSACTION_TYPE_TO_KIND.get(type_code)
+        if mapped is None:
+            continue
+        kind, _polite = mapped
+        # Skip noise: spring-training invites, rehab assignments, and
+        # placeholder-team rows (mirrors derive_level_changes filters),
+        # plus the transaction-specific filters for IL bookkeeping and
+        # workout activations.
+        desc_low = (tx.get("description") or "").lower()
+        if any(p in desc_low for p in _NON_LEVEL_CHANGE_PHRASES):
+            continue
+        if any(p in desc_low for p in _NON_TRANSACTION_PHRASES):
+            continue
+        to_name   = tx.get("to_team_name")   or ""
+        from_name = tx.get("from_team_name") or ""
+        if _is_placeholder_team(to_name) or _is_placeholder_team(from_name):
+            continue
+        out.append({
+            "date":        tx.get("date") or "",
+            "kind":        kind,
+            "type_code":   type_code,
+            "type_desc":   tx.get("type_desc") or "",
+            "description": tx.get("description") or "",
+            "from_team":   from_name or None,
+            "to_team":     to_name or None,
+        })
+    out.sort(key=lambda r: r.get("date") or "")
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Roster-status derivation — MLB debut, 40-man state, options used,
 # career-year bucket, and an approximate service phase. All driven by the
 # per-player transactions cache + career_stats (which we already have).

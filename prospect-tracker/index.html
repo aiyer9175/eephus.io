@@ -1771,14 +1771,37 @@ function levelChangeEvents(player) {
 // color: stroke + fill for the vertical line and glyph.
 // dash:  stroke-dasharray for the vertical guideline.
 // pos:   "top" | "bottom" — where the glyph sits relative to the chart.
+// Visual vocabulary for events that appear on the FV chart + transaction
+// timeline. The set is split into two conceptual groups:
+//   1. "Big" events with their own glyph on the FV chart (trade,
+//      promotion, demotion, signing, debut, graduation).
+//   2. Other transactions — waiver claims, DFAs, releases, contract
+//      purchases, Rule 5 moves — that only appear in the transaction-
+//      history table. They get a glyph too so the table reads as a
+//      coherent vocabulary, but they're not drawn on the chart by
+//      default (the chart filters to TRANSACTION_LEGEND_ORDER).
 const TRANSACTION_KINDS = {
-  trade:      { glyph: "◆", color: "var(--grad)",       dash: "2,1.5", pos: "top",    label: "Trade" },
-  promotion:  { glyph: "▲", color: "var(--up)",         dash: "1,2",   pos: "bottom", label: "Promotion" },
-  demotion:   { glyph: "▼", color: "var(--down)",       dash: "1,2",   pos: "bottom", label: "Demotion" },
-  signing:    { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Signing" },
-  debut:      { glyph: "★", color: "var(--neon-amber)", dash: "2,1.5", pos: "top",    label: "MLB debut" },
-  graduation: { glyph: "✦", color: "var(--neon-violet)",dash: "2,1.5", pos: "top",    label: "Graduation" },
+  trade:               { glyph: "◆", color: "var(--grad)",       dash: "2,1.5", pos: "top",    label: "Trade" },
+  promotion:           { glyph: "▲", color: "var(--up)",         dash: "1,2",   pos: "bottom", label: "Promotion" },
+  demotion:            { glyph: "▼", color: "var(--down)",       dash: "1,2",   pos: "bottom", label: "Demotion" },
+  signing:             { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Signing" },
+  debut:               { glyph: "★", color: "var(--neon-amber)", dash: "2,1.5", pos: "top",    label: "MLB debut" },
+  graduation:          { glyph: "✦", color: "var(--neon-violet)",dash: "2,1.5", pos: "top",    label: "Graduation" },
+  // Non-trade transactions (sourced from player.transactions). Same
+  // shape so makeTransactionHistoryBlock can render them with one code
+  // path; the chart filter (TRANSACTION_LEGEND_ORDER) leaves them out.
+  waiver_claim:        { glyph: "◇", color: "var(--neon-amber)", dash: "1,2",   pos: "top",    label: "Waiver claim" },
+  contract_purchase:   { glyph: "◷", color: "var(--neon-cyan)",  dash: "1,2",   pos: "top",    label: "Contract purchase" },
+  released:            { glyph: "✕", color: "var(--down)",       dash: "1,2",   pos: "top",    label: "Released" },
+  dfa:                 { glyph: "◇", color: "var(--text-tertiary)", dash: "1,2",pos: "top",    label: "Designated for assignment" },
+  outrighted:          { glyph: "▽", color: "var(--text-tertiary)", dash: "1,2",pos: "top",    label: "Outrighted" },
+  rule_5_selection:    { glyph: "◐", color: "var(--neon-cyan)",  dash: "1,2",   pos: "top",    label: "Rule 5 selection" },
+  rule_5_return:       { glyph: "↺", color: "var(--text-tertiary)", dash: "1,2",pos: "top",    label: "Rule 5 return" },
+  signed_free_agent:   { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Signed (FA)" },
 };
+// Only the high-signal events get rendered on the FV trajectory line so
+// the chart doesn't turn into a curtain of glyphs for journeyman-y
+// prospects who've been claimed off waivers six times.
 const TRANSACTION_LEGEND_ORDER = ["trade", "promotion", "demotion", "signing", "debut", "graduation"];
 
 // Build the combined event list for one player. Pulls from:
@@ -1798,6 +1821,20 @@ function transactionEvents(player) {
       date: tr.trade_date,
       kind: "trade",
       label: heading + (tr.description ? `\n${tr.description}` : ""),
+    });
+  }
+  // Non-trade transactions (waiver claims, releases, DFAs, contract
+  // purchases, Rule 5 moves, FA signings). The pipeline writes only
+  // truly-trade rows into `trades`; everything else lives here under
+  // a precise kind. We surface them on the timeline so the FV chart
+  // hover-tooltips show the same vocabulary the transaction table does.
+  for (const tx of (player.transactions || [])) {
+    if (!tx.date || !tx.kind) continue;
+    if (!TRANSACTION_KINDS[tx.kind]) continue;
+    out.push({
+      date: tx.date,
+      kind: tx.kind,
+      label: tx.description || `${tx.date}: ${(TRANSACTION_KINDS[tx.kind] || {}).label || tx.kind}`,
     });
   }
   for (const ev of levelChangeEvents(player)) {
@@ -3966,19 +4003,34 @@ function makeArsenalBlock(pa) {
   return fb + `<table class="detail-table"><thead><tr><th>Pitch</th><th style="text-align:right;">Velo</th><th style="text-align:left;">Usage</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-// Unified transaction-history block — trades + MiLB level changes + MLB
-// debut, all sorted by date. Trades come from `player.trades` (the MLB
-// transactions API + inferred-from-snapshot reconciliation); level
-// changes come from `player.level_changes` (derived from the same
-// transactions API per-player payload). A trade and a same-day level
-// change collapse to one row so cross-org promotions don't double-show.
+// Unified transaction-history block — trades + level changes + other
+// transactions, all sorted by date with a `Type` column that labels
+// each row precisely. The data layers separate cleanly:
+//   - player.trades        → only real trades (typeCode TR)
+//   - player.level_changes → promotions/demotions + MLB debut
+//   - player.transactions  → waiver claims, releases, DFAs, contract
+//                            purchases, Rule 5 moves, FA signings
+// Each kind paints its own colored chip in the Type column so a reader
+// can scan by category without parsing description text.
 function makeTransactionHistoryBlock(player) {
   const trades = player && player.trades || [];
   const levelChanges = player && player.level_changes || [];
-  if (!trades.length && !levelChanges.length) {
+  const otherTx = player && player.transactions || [];
+  if (!trades.length && !levelChanges.length && !otherTx.length) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No transactions on record.</div>`;
   }
-  // Build a flat row list, then sort by date asc.
+
+  // Compact colored chip: the canonical "what kind of transaction is
+  // this?" label. Pulls color from TRANSACTION_KINDS so the legend on
+  // the FV chart, the glyphs on the chart, and this table all agree.
+  const typeChip = (kind) => {
+    const cfg = TRANSACTION_KINDS[kind] || {};
+    const color = cfg.color || "var(--text-tertiary)";
+    const lbl   = cfg.label || kind;
+    return `<span style="display:inline-flex;align-items:center;gap:4px;border:1px solid ${color};color:${color};background:transparent;font-family:var(--font-sans);font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:1px 6px;border-radius:2px;white-space:nowrap;">${escapeHtml(lbl)}</span>`;
+  };
+
+  // Build a flat row list. Each row: {date, kind, move (HTML), detail}.
   const rows = [];
   for (const t of trades) {
     rows.push({
@@ -3990,9 +4042,6 @@ function makeTransactionHistoryBlock(player) {
   }
   for (const lc of levelChanges) {
     if (lc.kind === "debut") {
-      // First time the prospect appears on an MLB roster. Rendered as a
-      // standalone marker rather than a generic "AAA → MLB" promotion so
-      // the eye can find it scanning the timeline.
       const teamPart = lc.to_team ? ` with ${escapeHtml(lc.to_team)}` : "";
       const fromPart = lc.from_level
         ? `<span class="level-pill level-neutral" style="margin-right:4px;">${escapeHtml(lc.from_level)}</span><span style="color:var(--up);margin-right:4px;">↑</span>`
@@ -4017,13 +4066,37 @@ function makeTransactionHistoryBlock(player) {
         : "",
     });
   }
+  // Non-trade transactions: waiver claim, contract purchase, release,
+  // DFA, outright, Rule 5 selection/return, FA signing. Each row's
+  // `move` summarizes the from/to teams (when applicable) so the table
+  // reads like a roster diff regardless of the underlying kind.
+  for (const tx of otherTx) {
+    if (!TRANSACTION_KINDS[tx.kind]) continue;
+    let movePart;
+    if (tx.from_team && tx.to_team) {
+      movePart = `${escapeHtml(tx.from_team)} <span style="color:var(--neon-violet);">→</span> ${escapeHtml(tx.to_team)}`;
+    } else if (tx.to_team) {
+      movePart = `→ ${escapeHtml(tx.to_team)}`;
+    } else if (tx.from_team) {
+      movePart = `${escapeHtml(tx.from_team)} →`;
+    } else {
+      movePart = `<span style="color:var(--text-tertiary);">—</span>`;
+    }
+    rows.push({
+      kind: tx.kind,
+      date: tx.date,
+      move: movePart,
+      detail: escapeHtml(tx.description || ""),
+    });
+  }
   rows.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   const html = rows.map(r => `<tr>
     <td style="white-space:nowrap;">${escapeHtml(r.date)}</td>
-    <td style="white-space:nowrap;">${r.move}</td>
+    <td style="white-space:nowrap;">${typeChip(r.kind)}</td>
+    <td>${r.move}</td>
     <td style="color:var(--text-secondary);font-size:11px;line-height:1.45;">${r.detail}</td>
   </tr>`).join("");
-  return `<table class="detail-table"><thead><tr><th>Date</th><th>Move</th><th>Detail</th></tr></thead><tbody>${html}</tbody></table>`;
+  return `<table class="detail-table"><thead><tr><th>Date</th><th>Type</th><th>Move</th><th>Detail</th></tr></thead><tbody>${html}</tbody></table>`;
 }
 
 // Back-compat shim: older callers (and any deployed embed) used

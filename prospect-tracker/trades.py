@@ -167,14 +167,16 @@ def fetch_trades_in_window(start_date: str, end_date: str,
             return []
         out: list[dict] = []
         for tx in data.get("transactions", []):
-            # The API uses typeCode "TR" for trades. Some prospect-only
-            # deals come through as "ASN" (assignment) or similar — we
-            # include those that have both from-team and to-team set,
-            # which is the marker of a trade-like move.
-            type_code = tx.get("typeCode")
-            from_team = (tx.get("fromTeam") or {}).get("name")
-            to_team   = (tx.get("toTeam")   or {}).get("name")
-            if type_code == "TR" or (from_team and to_team and from_team != to_team):
+            # Only the API's "TR" typeCode is a trade. The previous
+            # filter ALSO accepted any transaction with from_team !=
+            # to_team, which polluted the trades list with waiver
+            # claims (CU), Rule 5 selections/returns (SE/SC), contract
+            # purchases (PU), and outrights (OUT) — all of which have
+            # from/to teams set but are not trades. Those events still
+            # surface in the unified transaction-history view via the
+            # per-player /transactions endpoint (`derive_transactions`),
+            # they just don't pretend to be trades anymore.
+            if tx.get("typeCode") == "TR":
                 out.append(tx)
         return out
 

@@ -665,16 +665,30 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     tx_cache.update(new_tx)
                 log.info("fetched transactions for %d players", len(new_tx))
 
-        # Compute level_changes per player from the cached transactions
-        # using the existing team_affil map. Cheap CPU pass over data we
-        # already have — no extra HTTP.
+        # Compute level_changes + non-trade transactions per player from
+        # the cached transactions. Both are pure CPU passes over the
+        # already-cached payload — no extra HTTP.
+        #
+        # `level_changes` covers promotions/demotions (the FV-chart line
+        # changes); `transactions` covers everything else worth showing
+        # on the timeline (waiver claims, releases, DFAs, contract
+        # purchases, Rule 5 moves, free-agent signings). Trades stay in
+        # their own `trades` table — they have stricter cross-org dedup
+        # logic and an inferred-from-snapshots fallback for prospect-only
+        # deals the global API endpoint hasn't published yet.
+        from stats import derive_transactions
         level_changes_by_key: dict[str, list[dict]] = {}
+        transactions_by_key:  dict[str, list[dict]] = {}
         for key, tx_rows in tx_cache.items():
             evs = derive_level_changes(tx_rows, team_affil)
             if evs:
                 level_changes_by_key[key] = evs
-        log.info("derived level_changes for %d players",
-                 len(level_changes_by_key))
+            txs = derive_transactions(tx_rows)
+            if txs:
+                transactions_by_key[key] = txs
+        log.info("derived level_changes for %d players, "
+                 "non-trade transactions for %d players",
+                 len(level_changes_by_key), len(transactions_by_key))
 
         # --- 3f. MLB roster-status derivation (debut, 40-man, options,
         # service phase). Combines the transactions cache with career_stats
@@ -800,6 +814,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                pitch_arsenals=arsenals,
                                sabermetrics=sabermetrics,
                                trades_by_player=trades_by_player,
+                               transactions_by_player=transactions_by_key,
                                career_stats=load_career_stats(),
                                acquisitions=load_acquisitions(),
                                il_status=load_il_status(),

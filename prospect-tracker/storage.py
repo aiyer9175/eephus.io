@@ -1123,6 +1123,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           pitch_arsenals: dict[str, dict] | None = None,
                           sabermetrics: dict[str, dict] | None = None,
                           trades_by_player: dict[str, list[dict]] | None = None,
+                          transactions_by_player: dict[str, list[dict]] | None = None,
                           career_stats: dict[str, list[dict]] | None = None,
                           acquisitions: dict[str, dict] | None = None,
                           il_status: dict[str, dict] | None = None,
@@ -1154,6 +1155,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     pitch_arsenals = pitch_arsenals or {}
     sabermetrics = sabermetrics or {}
     trades_by_player = trades_by_player or {}
+    transactions_by_player = transactions_by_player or {}
     career_stats = career_stats or {}
     acquisitions = acquisitions or {}
     il_status = il_status or {}
@@ -1731,6 +1733,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "stock": stock_movement(p),
             "statline": sl_out,
             "stat_flags": flags,
+            # Non-trade transactions: waiver claims, releases, DFAs,
+            # contract purchases, Rule 5 selections/returns, FA signings.
+            # Trades stay in their own `trades` field with stricter
+            # cross-org dedup logic (see trades.py + reconcile_trades).
+            "transactions": transactions_by_player.get(p.player_key, []),
             "pitch_arsenal": pa,
             "sabermetrics": sm,
             "trades": filtered_trades,
