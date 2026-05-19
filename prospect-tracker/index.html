@@ -774,7 +774,11 @@
     /* === Farm systems ============================================= */
     .farm-header, .farm-row {
       display: grid;
-      grid-template-columns: 32px 40px 140px 1fr 1fr 130px 1fr 64px 70px 16px;
+      /* Org column widened from 140px → 200px so the longest team names
+         ("Philadelphia Phillies", "Arizona Diamondbacks", "Washington
+         Nationals") fit without ellipsis. The two surrounding 1fr columns
+         absorb the 60px loss on flex space. */
+      grid-template-columns: 32px 40px 200px 1fr 1fr 130px 1fr 64px 70px 16px;
       gap: 12px;
       align-items: center;
     }
@@ -2436,9 +2440,9 @@ function renderFarmSystems() {
           </div>
         </div>
         <div>${makeTierBar(org.prospects)}</div>
-        <div style="font-size:12px;min-width:0;overflow:hidden;">
-          ${tp ? `<span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;max-width:140px;vertical-align:middle;">${escapeHtml(tp.name)}</span>
-          <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:10px;padding:1px 5px;margin-left:4px;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;min-width:0;">
+          ${tp ? `<span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(tp.name)}</span>
+          <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:10px;padding:1px 5px;flex-shrink:0;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
         </div>
         <div>${makePosBreakdown(org.pos_groups)}</div>
         <div class="level-depth-cell">${makeLevelDepth(org.level_counts, activeLevel)}</div>
