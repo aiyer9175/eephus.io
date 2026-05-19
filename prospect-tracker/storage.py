@@ -1214,12 +1214,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         return latest.get("to_org")
 
     def _active_display_org(p: PlayerTimeseries) -> str | None:
-        return p.org or roster_org_by_key.get(p.player_key)
+        # Canonicalize at the display layer so historical snapshots with
+        # pre-rename codes (e.g. "OAK" before the Athletics dropped Oakland)
+        # collapse onto the current canonical key ("ATH") rather than
+        # showing up as a second farm-page entry.
+        return canonical_org(p.org or roster_org_by_key.get(p.player_key))
 
     def _display_org(p: PlayerTimeseries,
                      filtered_trades: list[dict]) -> str | None:
         if p.status == "graduated":
-            return (
+            return canonical_org(
                 _latest_post_graduation_org(p, filtered_trades)
                 or graduate_mlb_org_by_key.get(p.player_key)
                 or roster_org_by_key.get(p.player_key)
