@@ -680,6 +680,92 @@ def latest_run_summary() -> dict | None:
         return None
 
 
+# ---------------------------------------------------------------------------
+# Rolling-window farm-performance signals
+# ---------------------------------------------------------------------------
+# The farm-list page used to rank by raw total_fv (current snapshot). That
+# treats a farm that's been sliding for three months identically to one
+# that just spiked — both look "good" if their accumulated FV is high.
+# The composite below blends three signals so the ranking reflects
+# trajectory, not just inventory:
+#
+#   * total_fv      — current state (60% weight)
+#   * fv_delta_90d  — net FV change over the last 90 days (30% weight)
+#   * recent_grads  — graduations in the last 90 days, scored as a positive
+#                     because promoting prospects to MLB is success, not
+#                     attrition (10% weight)
+#
+# Each signal is rank-percentile-normalized (1.0 = best org, near-zero = worst)
+# so the components share a unit and the weights are interpretable.
+
+FARM_ROLLING_WINDOW_DAYS = 90
+FARM_WEIGHT_TOTAL_FV     = 0.60
+FARM_WEIGHT_DELTA_90D    = 0.30
+FARM_WEIGHT_RECENT_GRADS = 0.10
+
+
+def _rolling_fv_delta(series: list[dict], days: int = FARM_ROLLING_WINDOW_DAYS,
+                      as_of: "date | None" = None) -> float:
+    """Signed change in total_fv between now and `days` ago.
+
+    Uses the org's cumulative-FV series produced by `_build_org_fv_history`.
+    The baseline is the most recent point on or before (today - days); if
+    the series is shorter than the window, we baseline against the first
+    point (the org's whole tracked history is the window).
+    """
+    if not series:
+        return 0.0
+    today = as_of or date.today()
+    cutoff = (today - timedelta(days=days)).isoformat()
+    latest_total = series[-1]["total_fv"]
+    baseline = None
+    for s in reversed(series):
+        if s["date"] <= cutoff:
+            baseline = s["total_fv"]
+            break
+    if baseline is None:
+        baseline = series[0]["total_fv"]
+    return round(latest_total - baseline, 1)
+
+
+def _recent_grad_count(events: list[dict], days: int = FARM_ROLLING_WINDOW_DAYS,
+                       as_of: "date | None" = None) -> int:
+    """Count `kind == graduation` events in the trailing window."""
+    if not events:
+        return 0
+    today = as_of or date.today()
+    cutoff = (today - timedelta(days=days)).isoformat()
+    return sum(1 for e in events
+               if e.get("kind") == "graduation" and (e.get("date") or "") >= cutoff)
+
+
+def _rank_percentile(values: list[float]) -> list[float]:
+    """Convert a list of scores to rank percentiles in [0, 1] where 1.0 is
+    the best (highest input). Ties get the average percentile of the tied
+    rank block so two identical farms don't fight over a tiebreaker that
+    isn't really there.
+    """
+    n = len(values)
+    if n == 0:
+        return []
+    if n == 1:
+        return [1.0]
+    indexed = sorted(range(n), key=lambda i: values[i], reverse=True)
+    pct = [0.0] * n
+    i = 0
+    while i < n:
+        j = i
+        while j + 1 < n and values[indexed[j + 1]] == values[indexed[i]]:
+            j += 1
+        # tied block covers ranks [i+1 .. j+1]; assign the average percentile
+        avg_rank = (i + j) / 2 + 1  # 1-based midpoint
+        share = (n - avg_rank) / (n - 1)
+        for k in range(i, j + 1):
+            pct[indexed[k]] = share
+        i = j + 1
+    return pct
+
+
 def _build_org_fv_history(
     players: list[PlayerTimeseries],
     filter_real_trades,
@@ -1571,10 +1657,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         m["youngest"] = min(m["prospects"], key=lambda x: x["age"] if x["age"] else 99) if m["prospects"] else None
         org_summary.append(m)
 
-    # Sort by total_fv descending — this is the "farm system power ranking"
+    # Stable sort by total_fv for the moment — the composite farm_rank
+    # below overwrites this ordering once the rolling-window signals are
+    # available. We do it here so downstream code that wants the raw
+    # FV-only rank (e.g. the "Total FV" sort chip on the front-end) can
+    # still recover it by re-sorting on total_fv directly.
     org_summary.sort(key=lambda x: -x["total_fv"])
-    for rank_i, entry in enumerate(org_summary, start=1):
-        entry["farm_rank"] = rank_i
 
     # Per-level graded prospect counts, sourced from the affiliate-roster
     # map. Drives both the "sort farms by depth at level X" chips on the
@@ -1601,6 +1689,41 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         hist = org_fv_history.get(entry["org"], {})
         entry["fv_history"] = hist.get("series", [])
         entry["fv_events"]  = hist.get("events", [])
+
+    # Rolling-window signals used to rank farms by trajectory, not just
+    # current inventory. The composite_score (and the derived farm_rank)
+    # are exposed alongside the raw signals so the front-end can show the
+    # underlying numbers when the user wants them.
+    today_iso = date.today()
+    for entry in org_summary:
+        entry["fv_delta_90d"] = _rolling_fv_delta(
+            entry["fv_history"], FARM_ROLLING_WINDOW_DAYS, as_of=today_iso,
+        )
+        entry["recent_grad_count"] = _recent_grad_count(
+            entry["fv_events"], FARM_ROLLING_WINDOW_DAYS, as_of=today_iso,
+        )
+
+    # Composite farm ranking: 60% current FV + 30% 90-day delta + 10%
+    # recent graduations. Each signal is rank-percentile-normalized
+    # before weighting so the weights live on the same scale.
+    fv_pct    = _rank_percentile([e["total_fv"]          for e in org_summary])
+    delta_pct = _rank_percentile([e["fv_delta_90d"]      for e in org_summary])
+    grad_pct  = _rank_percentile([e["recent_grad_count"] for e in org_summary])
+    for entry, fv_p, d_p, g_p in zip(org_summary, fv_pct, delta_pct, grad_pct):
+        entry["composite_score"] = round(
+            FARM_WEIGHT_TOTAL_FV     * fv_p +
+            FARM_WEIGHT_DELTA_90D    * d_p +
+            FARM_WEIGHT_RECENT_GRADS * g_p,
+            4,
+        )
+        entry["score_components"] = {
+            "fv_percentile":    round(fv_p, 4),
+            "delta_percentile": round(d_p, 4),
+            "grad_percentile":  round(g_p, 4),
+        }
+    org_summary.sort(key=lambda x: (-x["composite_score"], -x["total_fv"]))
+    for rank_i, entry in enumerate(org_summary, start=1):
+        entry["farm_rank"] = rank_i
     # ────────────────────────────────────────────────────────────────────────
 
     active_payload = [_serialize(p) for p in actives]

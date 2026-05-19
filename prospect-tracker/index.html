@@ -1151,8 +1151,10 @@
   <div id="farm-section" style="display:none;">
     <div class="filter-bar" id="farm-sort-bar" style="flex-wrap:wrap;gap:6px;">
       <span class="filter-label">Sort by</span>
-      <button class="chip active" data-farm-sort="farm_rank">Farm rank</button>
+      <button class="chip active" data-farm-sort="farm_rank" title="60% current total FV · 30% 90-day FV delta · 10% recent graduations">Farm rank</button>
       <button class="chip" data-farm-sort="total_fv">Total FV</button>
+      <button class="chip" data-farm-sort="fv_delta_90d" title="Net total-FV change over the last 90 days">90-day form</button>
+      <button class="chip" data-farm-sort="recent_grads" title="Graduations in the last 90 days">Recent grads</button>
       <button class="chip" data-farm-sort="count">Depth</button>
       <button class="chip" data-farm-sort="tier_60">60+ prospects</button>
       <button class="chip" data-farm-sort="avg_age">Youngest system</button>
@@ -1164,15 +1166,20 @@
       <button class="chip" data-farm-sort="level_A">A</button>
       <button class="chip" data-farm-sort="level_Rk">Rk</button>
       <button class="chip" data-farm-sort="level_DSL">DSL</button>
-      <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-        <span style="font-size:11px;color:var(--text-tertiary);">Tier bar:</span>
-        <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-70-bg);color:var(--fv-70-fg);">70</span>
-        <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-65-bg);color:var(--fv-65-fg);">65</span>
-        <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-60-bg);color:var(--fv-60-fg);">60</span>
-        <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-55-bg);color:var(--fv-55-fg);">55</span>
-        <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-50-bg);color:var(--fv-50-fg);">50</span>
-        <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-45-bg);color:var(--fv-45-fg);">45</span>
-        <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-40-bg);color:var(--fv-40-fg);">40</span>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--text-tertiary);">
+        <span>Form bar:</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;">
+          <svg width="20" height="6" style="vertical-align:middle;"><line x1="0" y1="5" x2="20" y2="1" stroke="var(--up)" stroke-width="2"/></svg>
+          rising
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:4px;">
+          <svg width="20" height="6" style="vertical-align:middle;"><line x1="0" y1="3" x2="20" y2="3" stroke="var(--text-tertiary)" stroke-width="2"/></svg>
+          flat
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:4px;">
+          <svg width="20" height="6" style="vertical-align:middle;"><line x1="0" y1="1" x2="20" y2="5" stroke="var(--down)" stroke-width="2"/></svg>
+          falling
+        </span>
       </div>
     </div>
     <div id="farm-rows"></div>
@@ -2293,6 +2300,80 @@ function updateMeta() {
 // Tiers descending; matches the fvClass thresholds used for badge colors.
 const TIER_BUCKETS = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
 
+// Form bar — replaces the static tier bar on each farm row. Shows the
+// last ~6 months of the org's running-total FV as a small sparkline,
+// colored by the sign of the 90-day FV delta (rising / flat / falling).
+// `fv_delta_90d` is precomputed server-side and surfaced as the trailing
+// numeric badge so the slope encodes direction and the badge encodes
+// magnitude — both available at a glance.
+const FORM_BAR_W = 110;
+const FORM_BAR_H = 22;
+const FORM_BAR_WINDOW_DAYS = 180;  // ~6 months of trajectory
+
+function makeFarmSparkline(fvHistory, delta90) {
+  const series = fvHistory || [];
+  if (series.length < 2) {
+    return `<div class="tier-bar" style="gap:6px;">
+      <svg width="${FORM_BAR_W}" height="${FORM_BAR_H}" style="border-radius:2px;overflow:hidden;flex-shrink:0">
+        <line x1="0" y1="${FORM_BAR_H / 2}" x2="${FORM_BAR_W}" y2="${FORM_BAR_H / 2}"
+              stroke="var(--border)" stroke-width="1.5" stroke-dasharray="3,3"/>
+      </svg>
+      <span style="color:var(--text-tertiary);font-size:10px;">no history</span>
+    </div>`;
+  }
+
+  // Clip the series to the trailing window so an org with two years of
+  // history doesn't get its recent shape compressed by the long tail.
+  const cutoffMs = Date.now() - FORM_BAR_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  const cutoffIso = new Date(cutoffMs).toISOString().slice(0, 10);
+  let recent = series.filter(s => s.date >= cutoffIso);
+  // Always include at least the last point and one anchor before it so
+  // the line has somewhere to start from when an org has been quiet.
+  if (recent.length < 2) recent = series.slice(-2);
+
+  const vals = recent.map(s => s.total_fv);
+  const minV = Math.min(...vals);
+  const maxV = Math.max(...vals);
+  const range = Math.max(maxV - minV, 1);  // guard against a perfectly flat series
+  const padY = 2;
+  const innerH = FORM_BAR_H - 2 * padY;
+  const points = recent.map((s, i) => {
+    const x = (i / (recent.length - 1)) * FORM_BAR_W;
+    const y = padY + innerH - ((s.total_fv - minV) / range) * innerH;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+
+  // Color the line by the 90-day delta sign so the eye picks up direction
+  // before the brain registers the slope itself.
+  const delta = delta90 || 0;
+  const stroke = delta > 1.5  ? 'var(--up)'
+              : delta < -1.5 ? 'var(--down)'
+              :                'var(--text-tertiary)';
+  const arrow  = delta > 1.5  ? '▲'
+              : delta < -1.5 ? '▼'
+              :                '·';
+  const sign   = delta > 0 ? '+' : '';
+  const deltaLabel = `${arrow}${sign}${delta.toFixed(1)}`;
+  const labelColor = stroke;
+
+  // Subtle fill underneath the line — same hue, low alpha. The fill
+  // closes back to the chart's bottom edge so an "all-low" stretch reads
+  // as a thin slice and an "all-high" stretch reads as a thick wedge.
+  const lastX  = FORM_BAR_W.toFixed(1);
+  const baseY  = (padY + innerH).toFixed(1);
+  const fillPoints = `0,${baseY} ${points} ${lastX},${baseY}`;
+
+  return `<div class="tier-bar" style="gap:8px;">
+    <svg width="${FORM_BAR_W}" height="${FORM_BAR_H}" style="border-radius:2px;overflow:visible;flex-shrink:0"
+         aria-label="90-day form: ${deltaLabel}">
+      <polygon points="${fillPoints}" fill="${stroke}" opacity="0.10"/>
+      <polyline points="${points}" fill="none" stroke="${stroke}"
+                stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>
+    <span style="color:${labelColor};font-size:11px;font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${deltaLabel}</span>
+  </div>`;
+}
+
 function makeTierBar(prospects) {
   const total = (prospects || []).length;
   if (!total) return '<span style="color:var(--text-tertiary);font-size:11px;">—</span>';
@@ -2379,12 +2460,15 @@ function farmSortedOrgs() {
     return orgs;
   }
   orgs.sort((a, b) => {
-    if (s === "total_fv")  return b.total_fv  - a.total_fv;
-    if (s === "count")     return b.count     - a.count;
-    if (s === "tier_60")   return b.tier_60_plus - a.tier_60_plus;
-    if (s === "avg_age")   return (a.avg_age ?? 99) - (b.avg_age ?? 99);
-    if (s === "stock_up")  return b.stock_up  - a.stock_up;
-    return a.farm_rank - b.farm_rank; // default
+    if (s === "total_fv")     return b.total_fv  - a.total_fv;
+    if (s === "fv_delta_90d") return (b.fv_delta_90d ?? 0) - (a.fv_delta_90d ?? 0);
+    if (s === "recent_grads") return (b.recent_grad_count ?? 0) - (a.recent_grad_count ?? 0)
+                                  || b.total_fv - a.total_fv;
+    if (s === "count")        return b.count     - a.count;
+    if (s === "tier_60")      return b.tier_60_plus - a.tier_60_plus;
+    if (s === "avg_age")      return (a.avg_age ?? 99) - (b.avg_age ?? 99);
+    if (s === "stock_up")     return b.stock_up  - a.stock_up;
+    return a.farm_rank - b.farm_rank; // default (composite-derived server-side)
   });
   return orgs;
 }
@@ -2410,7 +2494,7 @@ function renderFarmSystems() {
     <span style="text-align:center;">#</span>
     <span></span>
     <span>Org</span>
-    <span>Tier depth</span>
+    <span title="Cumulative FV history over the last ~6 months, colored by 90-day delta">90-day form</span>
     <span>Top prospect</span>
     <span>Positions</span>
     <span>Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
@@ -2439,7 +2523,7 @@ function renderFarmSystems() {
             <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}</div>
           </div>
         </div>
-        <div>${makeTierBar(org.prospects)}</div>
+        <div>${makeFarmSparkline(org.fv_history, org.fv_delta_90d)}</div>
         <div style="display:flex;align-items:center;gap:6px;font-size:12px;min-width:0;">
           ${tp ? `<span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(tp.name)}</span>
           <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:10px;padding:1px 5px;flex-shrink:0;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
@@ -3476,7 +3560,15 @@ function renderFarmDetail(orgCode) {
           <div class="player-display-name">${escapeHtml(fullOrgName(org.org))}</div>
           <div class="player-display-meta">
             <span style="font-family:var(--font-mono);color:var(--text-tertiary);letter-spacing:0.08em;margin-right:8px;font-weight:600;">${escapeHtml(org.org)}</span>
-            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);">#${org.farm_rank}</strong> of 30 · ${org.count} prospects tracked · Total FV <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : "—"}</strong>
+            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="60% current total FV · 30% 90-day FV delta · 10% recent graduations">#${org.farm_rank}</strong> of 30 · ${org.count} prospects tracked · Total FV <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : "—"}</strong>${
+              org.fv_delta_90d != null
+                ? ` · <span title="Net total-FV change over the last 90 days">90d <strong style="font-family:var(--font-mono);color:${org.fv_delta_90d > 1.5 ? 'var(--up)' : org.fv_delta_90d < -1.5 ? 'var(--down)' : 'var(--text-primary)'};">${org.fv_delta_90d > 0 ? '+' : ''}${org.fv_delta_90d.toFixed(1)}</strong></span>`
+                : ''
+            }${
+              org.recent_grad_count
+                ? ` · <span title="Graduations in the last 90 days">${org.recent_grad_count} recent grad${org.recent_grad_count === 1 ? '' : 's'}</span>`
+                : ''
+            }
           </div>
         </div>
       </div>
