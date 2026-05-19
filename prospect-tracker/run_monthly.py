@@ -51,6 +51,7 @@ from stats import (fetch_statlines_for, derive_statlines_from_career, fetch_birt
                    fetch_career_stats,
                    bulk_fetch_season_stats, merge_bulk_into_career_cache,
                    bulk_resolve_ids,
+                   bulk_fetch_mlb_debut_dates,
                    detect_graduations_from_career,
                    bulk_fetch_drafts,
                    bulk_fetch_ifa_signings,
@@ -658,6 +659,41 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             api_debut = player_index.get_debut_date(mid) if mid else None
             rs = derive_roster_status(tx_rows, cs_rows, api_debut_date=api_debut)
             roster_status_by_key[p.player_key] = rs
+        # Backfill mlb_debut_date for players who have MLB career rows
+        # OR are already marked graduated but for whom PlayerIndex has no
+        # mlbDebutDate (typically older graduates outside the current
+        # season's roster pool, and international free agents who never
+        # had a MiLB stint). Hits /people/{id} once per missing id; the
+        # value gets written into the in-memory roster_status_by_key for
+        # this run and persisted via upsert below.
+        debut_backfill_ids: list[int] = []
+        debut_backfill_keys_by_id: dict[int, str] = {}
+        for p in timeseries:
+            rs = roster_status_by_key.get(p.player_key) or {}
+            if rs.get("mlb_debut_date"):
+                continue
+            mid = ids_by_key.get(p.player_key)
+            if not mid:
+                continue
+            needs_lookup = (
+                p.status == "graduated"
+                or (rs.get("career_mlb_ab", 0) or 0) > 0
+                or (rs.get("career_mlb_ip", 0) or 0) > 0
+                or bool(rs.get("mlb_seasons"))
+            )
+            if needs_lookup:
+                debut_backfill_ids.append(int(mid))
+                debut_backfill_keys_by_id[int(mid)] = p.player_key
+        if debut_backfill_ids:
+            log.info("backfilling mlb_debut_date for %d players missing one",
+                     len(debut_backfill_ids))
+            debut_map = bulk_fetch_mlb_debut_dates(debut_backfill_ids)
+            for mid, debut in debut_map.items():
+                key = debut_backfill_keys_by_id.get(mid)
+                if key:
+                    rs = roster_status_by_key.setdefault(key, {})
+                    rs["mlb_debut_date"] = debut
+
         if roster_status_by_key:
             upsert_roster_status(roster_status_by_key)
         rookie_exhausted_grads = {

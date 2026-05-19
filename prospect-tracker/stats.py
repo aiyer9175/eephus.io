@@ -1007,6 +1007,49 @@ def fetch_birth_date(mlbam_id: int) -> str | None:
     return people[0].get("birthDate")  # e.g. "2006-05-03"
 
 
+def bulk_fetch_mlb_debut_dates(
+    mlbam_ids: "Iterable[int]",
+    max_workers: int = 8,
+) -> dict[int, str]:
+    """Fetch `mlbDebutDate` for each MLBAM id via /people/{id} in parallel.
+
+    Use this to backfill graduates whose PlayerIndex record has no debut
+    date — typically players who left the current MiLB+MLB roster pool
+    a few seasons ago, so the sport-id sweep that builds PlayerIndex
+    doesn't include them anymore.
+
+    Returns `{mlbam_id: 'YYYY-MM-DD'}` for IDs the API returned a debut
+    for; players with no MLB debut on file are omitted from the dict.
+    """
+    ids = [int(m) for m in mlbam_ids if m]
+    out: dict[int, str] = {}
+    if not ids:
+        return out
+
+    def _one(mid: int) -> tuple[int, str | None]:
+        url = f"{MLB_STATS_API}/people/{mid}"
+        try:
+            resp = requests.get(url, timeout=15)
+            resp.raise_for_status()
+            data = resp.json()
+        except Exception as e:
+            log.debug("mlb debut fetch failed for %s: %s", mid, e)
+            return mid, None
+        people = data.get("people") or []
+        if not people:
+            return mid, None
+        return mid, people[0].get("mlbDebutDate")
+
+    worker_count = max(1, min(max_workers, len(ids)))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as ex:
+        for mid, debut in ex.map(_one, ids):
+            if debut:
+                out[mid] = debut
+    log.info("bulk_fetch_mlb_debut_dates: resolved %d/%d via /people/{id}",
+             len(out), len(ids))
+    return out
+
+
 def _fetch_splits_for_season(mlbam_id: int, season: int,
                              is_pitcher: bool) -> list[dict]:
     """Fetch every split (MLB + every MiLB level) the player has in `season`.

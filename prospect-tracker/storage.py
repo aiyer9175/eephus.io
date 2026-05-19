@@ -1186,18 +1186,54 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     def _derived_graduation_date(p: PlayerTimeseries) -> str | None:
         """
-        Display/sort graduation by actual MLB activity when we have it.
+        Resolve a graduate's displayed graduation date.
 
-        Some historical players were auto-graduated by a later pipeline run,
-        which inserted that run date as the snapshot date. For the front end,
-        prefer the first MLB season in career_stats. If the stored date is an
-        exact MLB-debut date from the same season, keep it.
+        Priority (highest first):
+          1. roster_status.mlb_debut_date — the MLB API's authoritative
+             mlbDebutDate (via PlayerIndex). Trusted directly; the
+             `_display_graduation_date` wrapper below converts an
+             obviously-offseason October–December date to a mid-season
+             placeholder because in practice those values mean "40-man
+             selection" rather than "first MLB game".
+          2. The stored graduation_date IF it falls inside the player's
+             first MLB season — a FG "graduates" snapshot taken mid-
+             season of the debut year is the cleanest signal we have
+             when the API has no debut date for the player.
+          3. {first_MLB_season}-07-01 — last-resort mid-season placeholder.
+          4. p.graduation_date as-is for the very rare case where we
+             have nothing else to anchor to (international free agents
+             like Senga / Yoshida with no MiLB rows in our cache).
         """
+        rs = roster_status.get(p.player_key) or {}
+        api_debut = rs.get("mlb_debut_date")
+
         rows = career_stats.get(p.player_key, []) or []
         mlb_years = sorted(
             int(r["season"]) for r in rows
             if r.get("level") == "MLB" and r.get("season")
         )
+
+        if api_debut:
+            try:
+                api_d = date.fromisoformat(api_debut)
+            except ValueError:
+                api_d = None
+            # Rule 5 protection trap: the MLB API sometimes stores the
+            # Rule 5 deadline (~Nov 18-20) as mlbDebutDate for players
+            # who were 40-man-added that day but didn't actually play
+            # until the following season. Detect this when the API date
+            # is in the offseason AND career_stats shows the player's
+            # first MLB season is a later year — roll forward to that
+            # season's mid-year placeholder so dozens of players don't
+            # clump onto the same Rule 5 deadline date.
+            if (api_d and api_d.month >= 10
+                    and mlb_years and mlb_years[0] > api_d.year):
+                first_year = mlb_years[0]
+                if first_year == date.today().year:
+                    return date.today().isoformat()
+                return f"{first_year}-07-01"
+            return api_debut
+
         if not mlb_years:
             return p.graduation_date
         first_year = mlb_years[0]
@@ -1209,12 +1245,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     def _display_graduation_date(p: PlayerTimeseries) -> str | None:
         """
-        Avoid showing an offseason source snapshot as the graduation date.
+        Avoid showing an obviously-offseason snapshot date as the
+        graduation date.
 
-        FanGraphs' graduates pages are often captured after the season
-        (October/November). When we lack MLB career rows for an already-
-        graduated player, use a mid-season placeholder for display instead
-        of implying they graduated in the offseason.
+        Two distinct offseason patterns to defend against:
+          * FG's "Graduates" page is sometimes captured in October or
+            November — that snapshot date is not the player's debut.
+          * The MLB API occasionally stores a Rule 5 protection day
+            (mid-November) as `mlbDebutDate`.
+
+        We only collapse to a {year}-07-01 placeholder when the
+        offseason date does NOT correspond to a real MLB season the
+        player actually played in. Legit late-season debuts (Oct 1-5 is
+        the regular-season end week) are kept as-is.
         """
         grad = _derived_graduation_date(p)
         if not grad:
@@ -1223,9 +1266,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             d = date.fromisoformat(grad)
         except ValueError:
             return grad
-        if d.month >= 10:
-            return f"{d.year}-07-01"
-        return grad
+        if d.month < 10:
+            return grad
+        # Offseason-looking date. Trust it if career_stats shows the
+        # player actually played MLB that same year — otherwise collapse
+        # to the mid-season placeholder.
+        rows = career_stats.get(p.player_key, []) or []
+        mlb_years = {
+            int(r["season"]) for r in rows
+            if r.get("level") == "MLB" and r.get("season")
+        }
+        if d.year in mlb_years:
+            return grad
+        return f"{d.year}-07-01"
 
     # Org rebrand pairs that look like cross-org trades but aren't —
     # the Athletics dropped their "Oakland" prefix mid-2024, which made

@@ -453,3 +453,150 @@ class TestRevalidateAutoGraduations:
         storage = self._setup_db(tmp_path, monkeypatch)
         assert storage.revalidate_auto_graduations(set()) == 0
         assert storage.revalidate_auto_graduations({"anyone"}) == 0
+
+
+# ---------------------------------------------------------------------------
+# Graduation-date derivation — the clump-fix path
+# ---------------------------------------------------------------------------
+
+class TestGraduationDateDerivation:
+    """When a graduate has an authoritative MLB API debut date, that wins
+    over the stored snapshot date and over the {first_year}-07-01
+    placeholder. This is what dissolves the date clumps."""
+
+    def _grad_payload(self, tmp_path, *, name, key,
+                      stored_grad_date, api_debut, mlb_seasons):
+        from storage import export_timeseries_json
+        snaps = [Snapshot(
+            source="fangraphs", snapshot_date=stored_grad_date,
+            interval_label="FG Graduates",
+            player_key=key, player_name=name,
+            position="SS", org="PIT", rank=10, fv=55.0,
+            status="graduated",
+        )]
+        ts = build_timeseries(snaps)
+        career = {key: [{"season": s, "level": "MLB",
+                         "is_pitcher": False, "ab": 200, "games": 60}
+                        for s in mlb_seasons]} if mlb_seasons else {}
+        roster_status = {key: {"mlb_debut_date": api_debut}} if api_debut else {}
+        out = tmp_path / "out.json"
+        export_timeseries_json(
+            ts, out,
+            career_stats=career,
+            roster_status=roster_status,
+        )
+        payload = json.loads(out.read_text())
+        return next(g for g in payload["graduates"] if g["player_name"] == name)
+
+    def test_api_debut_overrides_stored_grad_date(self, tmp_path):
+        """The classic clump-dissolving case: stored snapshot says
+        2022-07-01 but the API knows the actual debut was 2022-08-17."""
+        g = self._grad_payload(
+            tmp_path,
+            name="Freddy Tarnok", key="freddy_tarnok",
+            stored_grad_date="2022-07-01",
+            api_debut="2022-08-17",
+            mlb_seasons=[2022, 2023],
+        )
+        assert g["graduation_date"] == "2022-08-17"
+
+    def test_rule5_protection_rolls_forward_to_first_real_season(self, tmp_path):
+        """Rule 5 protection adds land on the Nov 18-20 deadline and the
+        MLB API sometimes stamps them as `mlbDebutDate`. When the player
+        actually played in a LATER season we roll forward instead of
+        clumping dozens of players on the same Rule 5 deadline date."""
+        g = self._grad_payload(
+            tmp_path,
+            name="Sixto Sanchez", key="sixto_sanchez",
+            stored_grad_date="2019-11-20",
+            api_debut="2019-11-20",     # Rule 5 protection day
+            mlb_seasons=[2020],         # actually played in 2020
+        )
+        # Should display 2020 mid-season, not 2019-07-01.
+        assert g["graduation_date"] == "2020-07-01"
+
+    def test_late_season_debut_kept_when_career_agrees(self, tmp_path):
+        """A regular-season-end debut (Oct 1-5 is the last week of the
+        season) is real — we keep the date if career_stats confirms MLB
+        activity that same year."""
+        g = self._grad_payload(
+            tmp_path,
+            name="October Debut", key="october_debut",
+            stored_grad_date="2024-09-15",
+            api_debut="2024-10-05",
+            mlb_seasons=[2024],
+        )
+        # career_stats confirms 2024 MLB activity → keep the API date.
+        assert g["graduation_date"] == "2024-10-05"
+
+    def test_offseason_api_debut_with_no_career_collapses(self, tmp_path):
+        """If the API says Nov 15 AND career_stats has NO record of MLB
+        activity that year, the date is almost certainly a 40-man add
+        the API misclassified — collapse to mid-season placeholder."""
+        g = self._grad_payload(
+            tmp_path,
+            name="Phantom Debut", key="phantom_debut",
+            stored_grad_date="2024-09-15",
+            api_debut="2024-11-15",
+            mlb_seasons=[],
+        )
+        # No MLB games on file → don't trust the November date.
+        assert g["graduation_date"] == "2024-07-01"
+
+    def test_falls_back_to_career_year_when_no_api_debut(self, tmp_path):
+        """No api_debut available — use the player's first MLB season
+        as a mid-season placeholder, ignoring any offseason snapshot
+        date."""
+        g = self._grad_payload(
+            tmp_path,
+            name="Kodai Senga", key="kodai_senga",
+            stored_grad_date="2025-11-01",   # offseason FG flag
+            api_debut=None,
+            mlb_seasons=[2023, 2024],
+        )
+        # First MLB season is 2023; no api_debut to take precedence.
+        # Stored grad_date starts with "2025-", not "2023-", so
+        # fallback returns "2023-07-01".
+        assert g["graduation_date"] == "2023-07-01"
+
+    def test_stored_date_kept_when_inside_debut_year(self, tmp_path):
+        """When we don't have an api_debut but the stored snapshot date
+        falls inside the player's first MLB season, that snapshot is
+        usually a FG mid-season "graduates" flag — keep it as-is."""
+        g = self._grad_payload(
+            tmp_path,
+            name="Mid Season FG", key="mid_season_fg",
+            stored_grad_date="2024-06-15",
+            api_debut=None,
+            mlb_seasons=[2024],
+        )
+        assert g["graduation_date"] == "2024-06-15"
+
+    def test_no_clumps_for_diverse_api_debuts(self, tmp_path):
+        """Sanity sweep: a handful of graduates with distinct API debut
+        dates should each surface their own date — no clumping back to
+        a shared placeholder."""
+        from storage import export_timeseries_json
+        cohort = [
+            ("Player A", "player_a", "2022-08-17"),
+            ("Player B", "player_b", "2022-09-22"),
+            ("Player C", "player_c", "2022-06-04"),
+            ("Player D", "player_d", "2022-09-04"),
+        ]
+        snaps = [Snapshot(
+            source="fangraphs", snapshot_date="2022-07-01",
+            interval_label="FG Graduates",
+            player_key=key, player_name=name,
+            position="SS", org="PIT", rank=i + 1, fv=55.0,
+            status="graduated",
+        ) for i, (name, key, _) in enumerate(cohort)]
+        ts = build_timeseries(snaps)
+        roster_status = {key: {"mlb_debut_date": debut}
+                         for _, key, debut in cohort}
+        out = tmp_path / "out.json"
+        export_timeseries_json(ts, out, roster_status=roster_status)
+        payload = json.loads(out.read_text())
+        by_name = {g["player_name"]: g for g in payload["graduates"]}
+        dates = sorted(by_name[n]["graduation_date"] for n, _, _ in cohort)
+        # All four distinct — no clump on 2022-07-01.
+        assert dates == ["2022-06-04", "2022-08-17", "2022-09-04", "2022-09-22"]
