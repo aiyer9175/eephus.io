@@ -126,7 +126,12 @@ def normalize_key(name: str) -> str:
     s = s.lower().strip()
     s = re.sub(r"[^a-z0-9\s]", "", s)
     s = re.sub(r"\s+", "_", s)
-    return _CANONICAL_KEYS.get(s, s)
+    return canonical_player_key(s)
+
+
+def canonical_player_key(player_key: str) -> str:
+    """Collapse known alternate player keys onto the canonical key."""
+    return _CANONICAL_KEYS.get(player_key, player_key)
 
 
 # Maps alternate player_keys to their canonical form so different source

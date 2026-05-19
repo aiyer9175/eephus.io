@@ -14,7 +14,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Iterable
 
-from scrapers import Snapshot
+from scrapers import Snapshot, canonical_player_key
 from consensus import PlayerTimeseries, stock_movement
 from stats import StatLine
 
@@ -325,7 +325,12 @@ def load_all_snapshots() -> list[Snapshot]:
                       player_name, position, org, rank, fv, status
                FROM snapshots ORDER BY snapshot_date, source"""
         ).fetchall()
-    return [Snapshot(**dict(r)) for r in rows]
+    snapshots: list[Snapshot] = []
+    for r in rows:
+        d = dict(r)
+        d["player_key"] = canonical_player_key(d["player_key"])
+        snapshots.append(Snapshot(**d))
+    return snapshots
 
 
 def load_statlines() -> dict[str, dict]:
@@ -806,6 +811,26 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             return date.today().isoformat()
         return f"{first_year}-07-01"
 
+    def _display_graduation_date(p: PlayerTimeseries) -> str | None:
+        """
+        Avoid showing an offseason source snapshot as the graduation date.
+
+        FanGraphs' graduates pages are often captured after the season
+        (October/November). When we lack MLB career rows for an already-
+        graduated player, use a mid-season placeholder for display instead
+        of implying they graduated in the offseason.
+        """
+        grad = _derived_graduation_date(p)
+        if not grad:
+            return grad
+        try:
+            d = date.fromisoformat(grad)
+        except ValueError:
+            return grad
+        if d.month >= 10:
+            return f"{d.year}-07-01"
+        return grad
+
     # Org rebrand pairs that look like cross-org trades but aren't —
     # the Athletics dropped their "Oakland" prefix mid-2024, which made
     # every prospect's snapshots flip OAK↔ATH and the inferred path
@@ -1118,7 +1143,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "position": p.position,
             "org": graduate_mlb_org_by_key.get(p.player_key, p.org) if p.status == "graduated" else p.org,
             "status": p.status,
-            "graduation_date": _derived_graduation_date(p) if p.status == "graduated" else p.graduation_date,
+            "graduation_date": _display_graduation_date(p) if p.status == "graduated" else p.graduation_date,
             "birth_date": bd,
             "age": age,
             # Position in the FV-sorted active list, plus position within

@@ -1051,6 +1051,25 @@ def _fetch_splits_for_season(mlbam_id: int, season: int,
         except Exception as e:
             log.debug("stats fetch failed for %s season=%s url=%s: %s",
                       mlbam_id, season, url, e)
+    if not splits:
+        # The season endpoint currently omits some complex-league lines
+        # (notably ACL/FCL) even though yearByYear returns them. Fall back
+        # to yearByYear for the requested season so the player card can show
+        # the same current slash line as the career table.
+        yy_url = (
+            f"{MLB_STATS_API}/people/{mlbam_id}/stats"
+            f"?stats=yearByYear&group={group}&leagueListId=mlb_milb"
+        )
+        try:
+            resp = requests.get(yy_url, timeout=15)
+            resp.raise_for_status()
+            for block in resp.json().get("stats", []):
+                for s in block.get("splits", []):
+                    if str(s.get("season") or "") == str(season):
+                        splits.append(s)
+        except Exception as e:
+            log.debug("yearByYear stats fallback failed for %s season=%s url=%s: %s",
+                      mlbam_id, season, yy_url, e)
     return splits
 
 

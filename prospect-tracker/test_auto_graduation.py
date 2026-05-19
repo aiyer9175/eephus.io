@@ -127,6 +127,30 @@ class TestAutoGraduation:
         # Should not raise
         storage.auto_graduate_player("player_that_does_not_exist")
 
+    def test_load_snapshots_canonicalizes_known_aliases(self, tmp_path, monkeypatch):
+        """Historical DB rows under old Josuar spellings should collapse."""
+        monkeypatch.setattr(storage, "DB_PATH", tmp_path / "test.db")
+        storage.init_db()
+        storage.insert_snapshots([
+            Snapshot(
+                source="just_baseball", snapshot_date="2026-03-04",
+                interval_label="JB 2026 Preseason",
+                player_key="josuar_de_jesus", player_name="Josuar De Jesus",
+                position=None, org=None, rank=58, fv=None, status="active",
+            ),
+            Snapshot(
+                source="fangraphs", snapshot_date="2026-05-17",
+                interval_label="FG 2026 Report",
+                player_key="josuar_gonzalez", player_name="Josuar Gonzalez",
+                position="SS", org="SFG", rank=44, fv=50.0, status="active",
+            ),
+        ])
+
+        ts = build_timeseries(storage.load_all_snapshots())
+
+        assert len([p for p in ts if p.player_key == "josuar_gonzalez"]) == 1
+        assert all("josuar_de_jesus" not in p.player_key for p in ts)
+
 
 class TestFetchStatlineMLBDetection:
     """
@@ -235,3 +259,30 @@ class TestFetchStatlineMLBDetection:
         assert sl.level == "MLB", \
             f"Expected MLB (called-up player), got {sl.level}"
         assert sl.games == 12  # MLB games, not AAA games
+
+    def test_complex_statline_falls_back_to_year_by_year(self):
+        from stats import fetch_statline
+
+        empty = {"stats": [{"splits": []}]}
+        cpx = {"stats": [{"splits": [{
+            "season": "2026",
+            "league": {"name": "Arizona Complex League"},
+            "stat": {"gamesPlayed": 8, "avg": ".423", "obp": ".545",
+                     "slg": ".654", "ops": "1.199", "homeRuns": 1,
+                     "stolenBases": 2, "plateAppearances": 33,
+                     "baseOnBalls": 7, "strikeOuts": 8},
+        }]}]}
+        responses = []
+        for payload in (empty, empty, cpx):
+            mock_resp = MagicMock()
+            mock_resp.json.return_value = payload
+            mock_resp.raise_for_status = MagicMock()
+            responses.append(mock_resp)
+
+        with patch("stats.requests.get", side_effect=responses), \
+             patch("stats.time.sleep"):
+            sl = fetch_statline("josuar_gonzalez", 829034, 2026, is_pitcher=False)
+
+        assert sl is not None
+        assert sl.level == "CPX"
+        assert sl.avg == ".423"

@@ -310,3 +310,5 @@ class TestExportSplit:
         grad_names = [p["player_name"] for p in payload["graduates"]]
         assert grad_names == ["Grad B", "Grad A"]  # 2026 before 2025
         assert all(p["status"] == "graduated" for p in payload["graduates"])
+        grad_a = next(p for p in payload["graduates"] if p["player_name"] == "Grad A")
+        assert grad_a["graduation_date"] == "2025-07-01"
