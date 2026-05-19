@@ -776,9 +776,10 @@
       display: grid;
       /* Org column widened from 140px → 200px so the longest team names
          ("Philadelphia Phillies", "Arizona Diamondbacks", "Washington
-         Nationals") fit without ellipsis. The two surrounding 1fr columns
-         absorb the 60px loss on flex space. */
-      grid-template-columns: 32px 40px 200px 1fr 1fr 130px 1fr 64px 70px 16px;
+         Nationals") fit without ellipsis. The 70px FV-dist column slots
+         between 90-day form and Top prospect — narrow enough to keep the
+         flex columns generous but visible enough to read tier balance. */
+      grid-template-columns: 32px 40px 200px 1fr 70px 1fr 130px 1fr 64px 70px 16px;
       gap: 12px;
       align-items: center;
     }
@@ -978,6 +979,235 @@
       font-variant-numeric: tabular-nums;
     }
 
+    /* === Farm detail layout ======================================= */
+    /* Two-column on standard widths, three-column with a left rail on
+       ultrawide. The right sidebar stays sticky so it remains useful
+       while the user scrolls the long roster. */
+    .farm-detail-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.9fr) minmax(260px, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+    @media (min-width: 1500px) {
+      .farm-detail-grid {
+        grid-template-columns: minmax(240px, 0.85fr) minmax(0, 1.9fr) minmax(260px, 1fr);
+      }
+    }
+    @media (max-width: 1023px) {
+      .farm-detail-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .farm-side {
+      position: sticky;
+      top: 12px;
+      align-self: start;
+      max-height: calc(100vh - 24px);
+      overflow-y: auto;
+      padding-right: 4px;
+      /* Hide scrollbar visually but keep it functional */
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .farm-side::-webkit-scrollbar { width: 6px; }
+    .farm-side::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    @media (max-width: 1023px) {
+      .farm-side { position: static; max-height: none; overflow: visible; }
+    }
+    /* Optional left rail — surfaces secondary at-a-glance breakdowns
+       (position mix, level depth, stock balance) on ultrawide displays
+       where the right sidebar alone leaves usable horizontal space. */
+    .farm-left-rail { display: none; }
+    @media (min-width: 1500px) {
+      .farm-left-rail { display: block; }
+    }
+    .farm-side-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-card);
+    }
+    .farm-side-card .side-title {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: flex; justify-content: space-between; align-items: baseline;
+    }
+    .farm-side-card .side-title .side-count {
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0;
+      font-weight: 500;
+    }
+
+    /* Compact 4-component report card strip (used under the big overall
+       grade). Each cell is letter + label + rank, side-by-side. */
+    .report-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .report-strip-cell {
+      display: flex; flex-direction: column;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-primary);
+    }
+    .report-strip-cell .rs-letter {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .report-strip-cell .rs-label {
+      font-family: var(--font-sans);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    .report-strip-cell .rs-meta {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* FV distribution mini-histogram (sidebar). Vertical bars colored
+       by FV tier with counts on hover. */
+    .fv-histogram {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 56px;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .fv-histogram .fvh-bar {
+      flex: 1;
+      min-width: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 2px 2px 0 0;
+      position: relative;
+      transition: opacity 0.12s;
+    }
+    .fv-histogram .fvh-bar:hover { opacity: 0.7; }
+    .fv-histogram .fvh-bar .fvh-count {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-tertiary);
+    }
+    .fv-histogram-labels {
+      display: flex;
+      gap: 3px;
+      margin-top: 2px;
+    }
+    .fv-histogram-labels span {
+      flex: 1;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-tertiary);
+    }
+
+    /* Acquisition mix horizontal stacked bar */
+    .acq-mix-bar {
+      display: flex;
+      width: 100%;
+      height: 10px;
+      border-radius: 2px;
+      overflow: hidden;
+      margin: 6px 0 8px;
+      background: var(--bg-tertiary);
+    }
+    .acq-mix-bar > div { height: 100%; }
+    .acq-mix-legend {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px 8px;
+      font-size: 11px;
+    }
+    .acq-mix-legend .acq-row {
+      display: flex; justify-content: space-between; align-items: center; gap: 6px;
+      padding: 2px 0;
+    }
+    .acq-mix-legend .acq-row .acq-sw {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .acq-mix-legend .acq-row .acq-label {
+      color: var(--text-primary);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .acq-mix-legend .acq-row .acq-count {
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ETA distribution mini-timeline */
+    .eta-timeline {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 48px;
+      padding: 4px 0;
+    }
+    .eta-timeline .eta-bar {
+      flex: 1;
+      min-width: 10px;
+      background: var(--neon-cyan);
+      opacity: 0.7;
+      border-radius: 2px 2px 0 0;
+      position: relative;
+    }
+    .eta-timeline .eta-bar.empty { background: var(--bg-tertiary); opacity: 1; }
+    .eta-timeline-labels {
+      display: flex;
+      gap: 4px;
+      margin-top: 2px;
+    }
+    .eta-timeline-labels span {
+      flex: 1;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    /* List-page per-row FV-distribution mini bar */
+    .farm-row-fv-dist {
+      display: flex;
+      gap: 1px;
+      height: 18px;
+      align-items: stretch;
+      width: 100%;
+    }
+    .farm-row-fv-dist > div {
+      flex: 1;
+      border-radius: 1px;
+      min-width: 4px;
+    }
+
     /* Detail-page header (player + farm). Uses a paper-card with the
        team-color accent stripe on the left so it reads as a baseball card. */
     .detail-page-header {
@@ -1154,7 +1384,7 @@
       <button class="chip active" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% graduation pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
       <button class="chip" data-farm-sort="top_end" title="Tiered-FV sum of the org's top 5 prospects — an 80 is worth ~100x a 40">Top-end</button>
       <button class="chip" data-farm-sort="depth" title="Tiered-FV sum of prospects #6-25">Depth</button>
-      <button class="chip" data-farm-sort="trajectory" title="Smoothed change in cumulative FV — averages last 3 history points vs 3 near the 90-day cutoff">Trajectory</button>
+      <button class="chip" data-farm-sort="trajectory" title="Smoothed change in cumulative FV — averages last 3 history points vs 3 near the 1-year cutoff. Graduations are neutral.">Trajectory</button>
       <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted graduations in the trailing 12 months">Grad pipeline</button>
       <button class="chip" data-farm-sort="total_fv">Total FV</button>
       <button class="chip" data-farm-sort="count">Count</button>
@@ -2312,14 +2542,16 @@ function updateMeta() {
 const TIER_BUCKETS = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
 
 // Form bar — replaces the static tier bar on each farm row. Shows the
-// last ~6 months of the org's running-total FV as a small sparkline,
-// colored by the sign of the `trajectory_score` (smoothed 90-day delta).
+// last year of the org's running-total FV as a small sparkline, colored
+// by the sign of the `trajectory_score` (smoothed 1-year delta).
+// Graduations are neutral in this series (the line stays flat through
+// them), so a strong farm that's promoting prospects isn't punished.
 // The trajectory number is precomputed server-side and surfaced as the
 // trailing badge so the slope encodes direction and the badge encodes
 // magnitude — both available at a glance.
 const FORM_BAR_W = 110;
 const FORM_BAR_H = 22;
-const FORM_BAR_WINDOW_DAYS = 180;  // ~6 months of trajectory
+const FORM_BAR_WINDOW_DAYS = 365;  // 1 year of trajectory
 
 function makeFarmSparkline(fvHistory, trajectory) {
   const series = fvHistory || [];
@@ -2355,14 +2587,15 @@ function makeFarmSparkline(fvHistory, trajectory) {
   }).join(' ');
 
   // Color the line by the trajectory-score sign so the eye picks up
-  // direction before the brain registers the slope itself.
+  // direction before the brain registers the slope itself. Threshold is
+  // tuned for a 1-year window — small wiggles stay neutral.
   const delta = trajectory || 0;
-  const stroke = delta > 1.5  ? 'var(--up)'
-              : delta < -1.5 ? 'var(--down)'
-              :                'var(--text-tertiary)';
-  const arrow  = delta > 1.5  ? '▲'
-              : delta < -1.5 ? '▼'
-              :                '·';
+  const stroke = delta > 5  ? 'var(--up)'
+              : delta < -5 ? 'var(--down)'
+              :              'var(--text-tertiary)';
+  const arrow  = delta > 5  ? '▲'
+              : delta < -5 ? '▼'
+              :              '·';
   const sign   = delta > 0 ? '+' : '';
   const deltaLabel = `${arrow}${sign}${delta.toFixed(1)}`;
   const labelColor = stroke;
@@ -2447,52 +2680,167 @@ function makeFarmReportCard(org) {
   if (!org || !org.grades) return '';
   const g = org.grades;
   const r = org.component_ranks || {};
-  const s = org.score_components || {};
   const n = (DATA.org_summary || []).length || 30;
-
-  const card = (label, letter, rank, scoreVal, scoreFmt, tooltip) => `
-    <div class="stat-tile" style="border-color:${gradeColor(letter)}33;" title="${escapeHtml(tooltip)}">
-      <div class="stat-label">${escapeHtml(label)}</div>
-      <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px;">
-        <div class="stat-value" style="color:${gradeColor(letter)};font-size:28px;line-height:1;">${escapeHtml(letter || '—')}</div>
-        <div style="font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">
-          #${rank ?? '—'} of ${n}
-        </div>
-      </div>
-      <div style="margin-top:4px;font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);">
-        ${scoreFmt(scoreVal)}
-      </div>
-    </div>`;
 
   const fmtPts = v => v != null ? `${v.toFixed(1)} pts` : '—';
   const fmtSigned = v => v != null
-    ? `<span style="color:${v > 1.5 ? 'var(--up)' : v < -1.5 ? 'var(--down)' : 'var(--text-secondary)'};">${v > 0 ? '+' : ''}${v.toFixed(1)}</span> 90d`
+    ? `${v > 0 ? '+' : ''}${v.toFixed(1)} · 1y`
     : '—';
-  const fmtScore100 = v => v != null ? `${v.toFixed(0)}/100` : '—';
+
+  const stripCell = (label, letter, rank, scoreVal, scoreFmt, tooltip) => `
+    <div class="report-strip-cell" style="border-color:${gradeColor(letter)}33;" title="${escapeHtml(tooltip)}">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;">
+        <span class="rs-letter" style="color:${gradeColor(letter)};">${escapeHtml(letter || '—')}</span>
+        <span class="rs-meta">#${rank ?? '—'}</span>
+      </div>
+      <div class="rs-label">${escapeHtml(label)}</div>
+      <div class="rs-meta">${scoreFmt(scoreVal)}</div>
+    </div>`;
 
   return `
-    <div style="display:grid;grid-template-columns:1.3fr repeat(4, minmax(0, 1fr));gap:10px;margin-bottom:18px;">
-      <div class="stat-tile" style="border-color:${gradeColor(g.overall)}66;background:linear-gradient(135deg, ${gradeColor(g.overall)}10, transparent);">
+    <div style="display:grid;grid-template-columns:minmax(180px, 0.9fr) minmax(0, 2.4fr);gap:12px;margin-bottom:18px;align-items:stretch;">
+      <div class="stat-tile" style="border-color:${gradeColor(g.overall)}66;background:linear-gradient(135deg, ${gradeColor(g.overall)}12, transparent);display:flex;flex-direction:column;justify-content:center;">
         <div class="stat-label">Overall grade</div>
         <div style="display:flex;align-items:baseline;gap:10px;margin-top:2px;">
-          <div class="stat-value" style="color:${gradeColor(g.overall)};font-size:42px;line-height:1;font-weight:700;">${escapeHtml(g.overall || '—')}</div>
+          <div class="stat-value" style="color:${gradeColor(g.overall)};font-size:44px;line-height:1;font-weight:700;">${escapeHtml(g.overall || '—')}</div>
           <div style="font-size:12px;color:var(--text-tertiary);font-family:var(--font-mono);">
             #${org.farm_rank ?? '—'} of ${n}
           </div>
         </div>
-        <div style="margin-top:6px;font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);">
+        <div style="margin-top:4px;font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);">
           farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}/100
         </div>
       </div>
-      ${card('Top-end talent', g.top_end,    r.top_end,    org.top_end_points,
-             fmtPts, 'Tiered-FV sum of the org’s top 5 prospects. An 80 is worth ~100 points; a 40 is worth 1.')}
-      ${card('Depth',          g.depth,      r.depth,      org.depth_points,
-             fmtPts, 'Tiered-FV sum of prospects #6 through #25. Rewards systems with real prospects beyond the top tier.')}
-      ${card('Trajectory',     g.trajectory, r.trajectory, org.trajectory_score,
-             fmtSigned, 'Smoothed 90-day change in cumulative FV — average of last 3 history points vs 3 near the cutoff. Robust to single-source updates.')}
-      ${card('Grad pipeline',  g.grad,       r.grad,       org.grad_pipeline_score,
-             fmtPts, 'FV-weighted graduations in the trailing 12 months. Promoting a 60 is worth ~18 points; a 40 is worth 1.')}
+      <div class="report-strip" style="margin-top:0;">
+        ${stripCell('Top-end',    g.top_end,    r.top_end,    org.top_end_points,
+                    fmtPts,    'Tiered-FV sum of the org’s top 5 prospects. An 80 is worth ~100 points; a 40 is worth 1.')}
+        ${stripCell('Depth',      g.depth,      r.depth,      org.depth_points,
+                    fmtPts,    'Tiered-FV sum of prospects #6 through #25. Rewards systems with real prospects beyond the top tier.')}
+        ${stripCell('Trajectory', g.trajectory, r.trajectory, org.trajectory_score,
+                    fmtSigned, 'Smoothed 1-year change in cumulative FV — average of last 3 history points vs 3 near the cutoff. Graduations are neutral.')}
+        ${stripCell('Grad pipe',  g.grad,       r.grad,       org.grad_pipeline_score,
+                    fmtPts,    'FV-weighted graduations in the trailing 12 months. Promoting a 60 is worth ~18 points; a 40 is worth 1.')}
+      </div>
     </div>`;
+}
+
+// FV-distribution histogram for an org. Used in the farm-detail sidebar
+// and (in compact form) on the farm-list page. Buckets prospects into
+// the standard FV bands (≥60, 55, 50, 45, 40) so the chart matches the
+// tier-bar coloring used elsewhere.
+const FV_HIST_TIERS = [60, 55, 50, 45, 40];
+function makeFvHistogram(prospects, opts) {
+  opts = opts || {};
+  const counts = Object.fromEntries(FV_HIST_TIERS.map(t => [t, 0]));
+  (prospects || []).forEach(p => {
+    const n = parseInt(p.fv_label || p.fv_raw, 10);
+    if (isNaN(n)) return;
+    const tier = FV_HIST_TIERS.find(t => n >= t) ?? 40;
+    counts[tier]++;
+  });
+  const maxCount = Math.max(1, ...FV_HIST_TIERS.map(t => counts[t]));
+  const bars = FV_HIST_TIERS.map(t => {
+    const h = Math.round((counts[t] / maxCount) * 100);
+    return `<div class="fvh-bar" style="height:${h}%;background:var(--fv-${t}-fg);opacity:${counts[t] ? 0.85 : 0.2};" title="${counts[t]} × FV ${t}${t === 60 ? '+' : ''}">${opts.showCounts === false ? '' : `<span class="fvh-count">${counts[t] || ''}</span>`}</div>`;
+  }).join('');
+  const labels = FV_HIST_TIERS.map(t => `<span>${t}${t === 60 ? '+' : ''}</span>`).join('');
+  return `<div class="fv-histogram">${bars}</div><div class="fv-histogram-labels">${labels}</div>`;
+}
+
+// Compact per-row variant used on the farm-list page. No counts, no
+// labels — just the colored bars so it reads as a sparkline alongside
+// the other compact columns. Uses square-root scaling so a single 60+
+// prospect doesn't make the rest invisible.
+function makeFvDistSparkbar(prospects) {
+  const counts = Object.fromEntries(FV_HIST_TIERS.map(t => [t, 0]));
+  (prospects || []).forEach(p => {
+    const n = parseInt(p.fv_label || p.fv_raw, 10);
+    if (isNaN(n)) return;
+    const tier = FV_HIST_TIERS.find(t => n >= t) ?? 40;
+    counts[tier]++;
+  });
+  const maxCount = Math.max(1, ...FV_HIST_TIERS.map(t => counts[t]));
+  const bars = FV_HIST_TIERS.map(t => {
+    const h = counts[t] ? Math.max(15, Math.round(Math.sqrt(counts[t] / maxCount) * 100)) : 8;
+    return `<div title="FV ${t}${t === 60 ? '+' : ''}: ${counts[t]}" style="background:var(--fv-${t}-fg);opacity:${counts[t] ? 0.85 : 0.18};align-self:flex-end;height:${h}%;"></div>`;
+  }).join('');
+  return `<div class="farm-row-fv-dist">${bars}</div>`;
+}
+
+// ETA-timeline mini-chart. Bars stacked by expected MLB debut year so
+// the user can see how the pipeline is loaded over the next few seasons.
+function makeEtaTimeline(rosterPlayers) {
+  const thisYear = new Date().getFullYear();
+  const years = [thisYear, thisYear + 1, thisYear + 2, thisYear + 3, thisYear + 4];
+  const counts = Object.fromEntries(years.map(y => [y, 0]));
+  let beyond = 0;
+  (rosterPlayers || []).forEach(p => {
+    const y = (p.eta && p.eta.year) ? parseInt(p.eta.year, 10) : null;
+    if (!y) return;
+    if (y <= thisYear) counts[thisYear]++;
+    else if (counts[y] != null) counts[y]++;
+    else beyond++;
+  });
+  const cells = years.map(y => counts[y]);
+  cells.push(beyond);
+  const maxCount = Math.max(1, ...cells);
+  const labels = [...years.map(y => String(y).slice(-2)), `${thisYear + 5}+`];
+  const bars = cells.map((c, i) => {
+    const h = Math.round((c / maxCount) * 100);
+    const cls = c ? '' : ' empty';
+    return `<div class="eta-bar${cls}" style="height:${c ? Math.max(8, h) : 6}%;" title="${labels[i]}: ${c} prospect${c === 1 ? '' : 's'}"></div>`;
+  }).join('');
+  const labelHtml = labels.map(l => `<span>${l}</span>`).join('');
+  return `<div class="eta-timeline">${bars}</div><div class="eta-timeline-labels">${labelHtml}</div>`;
+}
+
+// Acquisition-mix horizontal stacked bar with a 2-column legend below.
+// Same buckets/colors as the farm-detail acquisition filter chips so the
+// chart reads as a key for that filter.
+const ACQ_MIX_COLORS = {
+  draft:             "#5090E0",
+  international_fa:  "#E8A020",
+  trade:             "#C8A050",
+  waiver:            "#7EC880",
+  rule_5:            "#C56AC0",
+  free_agent:        "#3DBF7A",
+  contract_purchase: "#A87CC8",
+  unknown:           "var(--text-tertiary)",
+};
+const ACQ_MIX_LABELS = {
+  draft: "Draft",
+  international_fa: "Intl FA",
+  trade: "Trade",
+  waiver: "Waiver",
+  rule_5: "Rule 5",
+  free_agent: "Free agent",
+  contract_purchase: "Purchase",
+  unknown: "Unknown",
+};
+function makeAcqMixBar(rosterPlayers) {
+  const counts = {};
+  (rosterPlayers || []).forEach(p => {
+    const m = (p.current_acquisition || {}).method || "unknown";
+    counts[m] = (counts[m] || 0) + 1;
+  });
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  if (!total) return `<div style="color:var(--text-tertiary);font-size:11px;">No acquisition data.</div>`;
+  const order = ["draft", "international_fa", "trade", "waiver", "rule_5", "free_agent", "contract_purchase", "unknown"];
+  const present = order.filter(k => counts[k]);
+  const segs = present.map(k => {
+    const pct = (counts[k] / total) * 100;
+    return `<div style="width:${pct.toFixed(2)}%;background:${ACQ_MIX_COLORS[k]};" title="${ACQ_MIX_LABELS[k]}: ${counts[k]} (${pct.toFixed(0)}%)"></div>`;
+  }).join('');
+  const legend = present.map(k => `
+    <div class="acq-row">
+      <span style="display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;">
+        <span class="acq-sw" style="background:${ACQ_MIX_COLORS[k]};"></span>
+        <span class="acq-label">${ACQ_MIX_LABELS[k]}</span>
+      </span>
+      <span class="acq-count">${counts[k]}</span>
+    </div>`).join('');
+  return `<div class="acq-mix-bar">${segs}</div>
+    <div class="acq-mix-legend">${legend}</div>`;
 }
 
 // Render the per-level "graded prospects" pills used on the farm list.
@@ -2574,7 +2922,8 @@ function renderFarmSystems() {
     <span style="text-align:center;">#</span>
     <span></span>
     <span>Org</span>
-    <span title="Cumulative FV history over the last ~6 months, colored by 90-day delta">90-day form</span>
+    <span title="Cumulative FV history over the last year, colored by 1-year delta. Graduations don't drop the line — they're neutral.">1-year form</span>
+    <span title="FV distribution — bars colored by tier (60+ / 55 / 50 / 45 / 40)">FV mix</span>
     <span>Top prospect</span>
     <span>Positions</span>
     <span>Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
@@ -2604,6 +2953,7 @@ function renderFarmSystems() {
           </div>
         </div>
         <div>${makeFarmSparkline(org.fv_history, org.trajectory_score)}</div>
+        <div>${makeFvDistSparkbar(org.prospects)}</div>
         <div style="display:flex;align-items:center;gap:6px;font-size:12px;min-width:0;">
           ${tp ? `<span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(tp.name)}</span>
           <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:10px;padding:1px 5px;flex-shrink:0;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
@@ -3665,12 +4015,13 @@ function renderFarmDetail(orgCode) {
     ${makeFarmReportCard(org)}`;
 
   // Per-tier counts live in the tier-bar in the header; tiles cover the
-  // remaining at-a-glance facts (age, stock direction, young-for-level,
-  // position mix) that are not visible elsewhere on this page.
+  // remaining at-a-glance facts (age, stock direction, young-for-level)
+  // that aren't visible elsewhere on this page. Position mix moved to
+  // the sidebar where it sits next to the FV/acquisition/ETA charts.
   const stockHtml = (org.stock_up || org.stock_down)
     ? `${org.stock_up  ? `<span class="stock-up">▲${org.stock_up}</span>` : ''}${org.stock_up && org.stock_down ? ' · ' : ''}${org.stock_down ? `<span class="stock-down">▼${org.stock_down}</span>` : ''}`
     : `<span style="color:var(--text-tertiary);">—</span>`;
-  const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px;">
+  const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px;">
     <div class="stat-tile">
       <div class="stat-label">Avg age</div>
       <div class="stat-value">${org.avg_age != null ? org.avg_age.toFixed(1) : "—"}</div>
@@ -3682,10 +4033,6 @@ function renderFarmDetail(orgCode) {
     <div class="stat-tile">
       <div class="stat-label">Young-for-level</div>
       <div class="stat-value">${org.very_young_count}</div>
-    </div>
-    <div class="stat-tile">
-      <div class="stat-label">Position mix</div>
-      <div style="margin-top:4px;">${makePosBreakdown(org.pos_groups)}</div>
     </div>
   </div>`;
 
@@ -3756,46 +4103,105 @@ function renderFarmDetail(orgCode) {
     ? leaderboardRows(topPitchers, "ERA", sl => `${sl.era} · ${(sl.ip ?? 0).toFixed ? sl.ip.toFixed(1) : sl.ip} IP`)
     : `<span style="color:var(--text-tertiary);font-size:12px;">No qualifying pitchers yet.</span>`;
 
-  // Highlights side panel
+  // Compact side-card sections — each lives in its own card so the
+  // sticky sidebar reads as a stack of focused widgets rather than one
+  // long undifferentiated column. Order is by user attention priority:
+  // top prospect first (most clicked), distribution charts next (always
+  // visible while scrolling), leaderboards + grads + trades at the end.
   const tp = org.top_prospect;
   const yp = org.youngest;
-  const highlights = `
-    <div style="margin-bottom:14px;">
-      <div class="detail-title">Top prospect</div>
-      ${tp ? `<div style="font-size:14px;font-weight:500;cursor:pointer;color:var(--neon-cyan);" onclick="goToPlayer('${escapeHtml((rosterPlayers[0] || {}).player_key || '')}');">${escapeHtml(tp.name)} <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:11px;padding:1px 6px;">${tp.fv_label}</span></div>
-      <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(tp.pos||'')} · age ${tp.age != null ? tp.age.toFixed(1) : "—"}</div>` : '—'}
-    </div>
-    <div style="margin-bottom:14px;">
-      <div class="detail-title">Youngest prospect</div>
-      ${yp ? `<div style="font-size:14px;font-weight:500;">${escapeHtml(yp.name)}</div>
-      <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(yp.pos||'')} · age ${yp.age != null ? yp.age.toFixed(1) : "—"} · FV ${yp.fv_label}</div>` : '—'}
-    </div>
-    <div class="detail-title">Top hitters (this season)</div>
-    <div style="margin-bottom:14px;">${hittersBlock}</div>
-    <div class="detail-title">Top pitchers (this season)</div>
-    <div style="margin-bottom:14px;">${pitchersBlock}</div>
-    <div class="detail-title">Recent graduates (${graduates.length})</div>
-    ${graduates.slice(0, 8).map(g => `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:12px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(g.player_key)}');">
-        <span style="color:var(--text-primary);">${escapeHtml(g.player_name)}</span>
-        <span style="color:var(--text-tertiary);">${g.graduation_date || "—"}</span>
-      </div>`).join("") || '<span style="color:var(--text-tertiary);font-size:12px;">None</span>'}`;
+  const topProspectCard = `<div class="farm-side-card">
+    <div class="side-title">Top prospect</div>
+    ${tp ? `<div style="font-size:14px;font-weight:600;cursor:pointer;color:var(--neon-cyan);" onclick="goToPlayer('${escapeHtml((rosterPlayers[0] || {}).player_key || '')}');">${escapeHtml(tp.name)} <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:11px;padding:1px 6px;">${tp.fv_label}</span></div>
+    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(tp.pos||'')} · age ${tp.age != null ? tp.age.toFixed(1) : "—"}</div>` : '—'}
+  </div>`;
+  const youngestCard = `<div class="farm-side-card">
+    <div class="side-title">Youngest</div>
+    ${yp ? `<div style="font-size:14px;font-weight:600;">${escapeHtml(yp.name)}</div>
+    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(yp.pos||'')} · age ${yp.age != null ? yp.age.toFixed(1) : "—"} · FV ${yp.fv_label}</div>` : '—'}
+  </div>`;
+  const fvDistCard = `<div class="farm-side-card">
+    <div class="side-title">FV distribution <span class="side-count">${(org.prospects || []).length} graded</span></div>
+    ${makeFvHistogram(org.prospects)}
+  </div>`;
+  const acqMixCard = `<div class="farm-side-card">
+    <div class="side-title">Acquired via <span class="side-count">${rosterPlayersAll.length} tracked</span></div>
+    ${makeAcqMixBar(rosterPlayersAll)}
+  </div>`;
+  const etaCard = `<div class="farm-side-card">
+    <div class="side-title">ETA distribution</div>
+    ${makeEtaTimeline(rosterPlayersAll)}
+  </div>`;
+  const hittersCard = `<div class="farm-side-card">
+    <div class="side-title">Top hitters · season</div>
+    ${hittersBlock}
+  </div>`;
+  const pitchersCard = `<div class="farm-side-card">
+    <div class="side-title">Top pitchers · season</div>
+    ${pitchersBlock}
+  </div>`;
 
-  const tradesHtml = allTradesForOrg.length ? `<table class="detail-table"><thead><tr>
-    <th>Date</th><th>Player</th><th>Move</th><th>Description</th>
-    </tr></thead><tbody>${allTradesForOrg.slice(0, 25).map(({ player, trade, graduate }) => {
-      const direction = trade.to_org === orgCode
-        ? `<span style="color:var(--neon-green);">+</span>`
-        : `<span style="color:var(--neon-violet);">→</span>`;
-      const gradTag = graduate
-        ? `<span style="font-size:9px;color:var(--text-tertiary);margin-left:6px;letter-spacing:0.04em;">GRAD</span>`
-        : "";
-      return `<tr>
-        <td style="white-space:nowrap;">${trade.trade_date}</td>
-        <td style="cursor:pointer;color:var(--neon-cyan);white-space:nowrap;" onclick="goToPlayer('${escapeHtml(player.player_key)}');">${escapeHtml(player.player_name)}${gradTag}</td>
-        <td style="white-space:nowrap;">${direction} ${escapeHtml(trade.from_org || "?")} → ${escapeHtml(trade.to_org || "?")}</td>
-        <td style="color:var(--text-secondary);font-size:11px;line-height:1.4;">${escapeHtml(trade.description || "")}</td>
-      </tr>`;
-    }).join("")}</tbody></table>` : `<div style="color:var(--text-tertiary);font-size:12px;">No trades on record involving this org.</div>`;
+  // Compact trades list for the sidebar — same data as the full table
+  // at the bottom of the main column, but stripped to date + player +
+  // direction so it fits a narrow column at a glance.
+  const compactTradesHtml = allTradesForOrg.length
+    ? allTradesForOrg.slice(0, 8).map(({ player, trade, graduate }) => {
+        const dir = trade.to_org === orgCode
+          ? `<span style="color:var(--neon-green);">+</span>`
+          : `<span style="color:var(--neon-violet);">→</span>`;
+        const other = trade.to_org === orgCode ? trade.from_org : trade.to_org;
+        const gradTag = graduate
+          ? `<span style="font-size:9px;color:var(--text-tertiary);margin-left:4px;letter-spacing:0.04em;">GRAD</span>`
+          : "";
+        return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(player.player_key)}');">
+          <span style="font-family:var(--font-mono);color:var(--text-tertiary);font-size:10px;white-space:nowrap;">${trade.trade_date.slice(2)}</span>
+          <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(player.player_name)}${gradTag}</span>
+          <span style="font-family:var(--font-mono);font-size:10px;white-space:nowrap;">${dir} ${escapeHtml(other || "?")}</span>
+        </div>`;
+      }).join("")
+    : `<span style="color:var(--text-tertiary);font-size:11.5px;">None</span>`;
+  const tradesCard = `<div class="farm-side-card">
+    <div class="side-title">Recent trades <span class="side-count">${allTradesForOrg.length} total</span></div>
+    ${compactTradesHtml}
+  </div>`;
+
+  const gradsCard = `<div class="farm-side-card">
+    <div class="side-title">Recent graduates <span class="side-count">${graduates.length}</span></div>
+    ${graduates.slice(0, 8).map(g => `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(g.player_key)}');">
+        <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(g.player_name)}</span>
+        <span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:10px;white-space:nowrap;">${g.graduation_date || "—"}</span>
+      </div>`).join("") || '<span style="color:var(--text-tertiary);font-size:11.5px;">None</span>'}
+  </div>`;
+
+  const sidebarHtml = topProspectCard + youngestCard + fvDistCard + acqMixCard + etaCard + hittersCard + pitchersCard + tradesCard + gradsCard;
+
+  // Optional left rail (≥1500px viewports only — CSS-hidden otherwise).
+  // Surfaces breakdowns that are useful at-a-glance but would otherwise
+  // sit four scrolls deep on the right or get squeezed into stat tiles.
+  const leftRailHtml = `
+    <div class="farm-left-rail">
+      <div class="farm-side-card">
+        <div class="side-title">Position mix</div>
+        <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px;">${makePosBreakdown(org.pos_groups)}</div>
+      </div>
+      <div class="farm-side-card">
+        <div class="side-title">Stock balance</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:600;">
+          <span class="stock-up">▲${org.stock_up || 0}</span>
+          <span style="color:var(--text-tertiary);font-size:11px;">vs.</span>
+          <span class="stock-down">▼${org.stock_down || 0}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">${org.stock_flat || 0} flat over last update</div>
+      </div>
+      <div class="farm-side-card">
+        <div class="side-title">Level depth</div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;">${makeLevelDepth(org.level_counts, null)}</div>
+      </div>
+      <div class="farm-side-card">
+        <div class="side-title">Tier breakdown</div>
+        <div style="margin-top:6px;">${makeTierBar(org.prospects)}</div>
+      </div>
+    </div>`;
 
   // Affiliate-roster section — one tab per level, content swap on click.
   // Highlights tracked prospects with their FV badge inline so the page
@@ -3896,11 +4302,10 @@ function renderFarmDetail(orgCode) {
     </div>
     ${gradedByLevel}`;
 
-  // Acquisition filter chip bar — mirrors the main prospect list's
-  // selector but renders inline as chips since the farm detail page has
-  // no top filter bar. Tally per method shows the user how many tracked
-  // prospects fall into each bucket BEFORE clicking. Filter state is
-  // shared with the main list (state.acqFilter).
+  // Acquisition filter chip bar — same as before but visually paired
+  // with the acquisition-mix chart in the sidebar (which acts as a
+  // legend). Filter state is shared with the main prospect list via
+  // state.acqFilter.
   const ACQ_METHODS_FOR_FARM = [
     ["all",               "All"],
     ["draft",             "Draft"],
@@ -3917,8 +4322,8 @@ function renderFarmDetail(orgCode) {
     acqTallies[m] = (acqTallies[m] || 0) + 1;
   }
   const acqFilterBar = `
-    <div style="display:flex;align-items:center;gap:6px;margin:14px 0 0;flex-wrap:wrap;">
-      <span style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;margin-right:4px;">Acquired via</span>
+    <div style="display:flex;align-items:center;gap:6px;margin:10px 0 0;flex-wrap:wrap;">
+      <span style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;margin-right:4px;">Filter</span>
       ${ACQ_METHODS_FOR_FARM.map(([val, label]) => {
         const n = val === "all" ? rosterPlayersAll.length : (acqTallies[val] || 0);
         const active = state.acqFilter === val;
@@ -3930,17 +4335,16 @@ function renderFarmDetail(orgCode) {
     </div>`;
 
   root.innerHTML = header + tilesHtml + `
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
+    <div class="farm-detail-grid">
+      ${leftRailHtml}
       <div>
-        <div class="detail-title" style="margin-top:18px;">Tracked prospects (${rosterPlayers.length}${state.acqFilter !== "all" ? ` · filtered by ${escapeHtml(ACQ_METHODS_FOR_FARM.find(m => m[0] === state.acqFilter)?.[1] || state.acqFilter)}` : ""})</div>
+        <div class="detail-title" style="margin-top:0;">Tracked prospects (${rosterPlayers.length}${state.acqFilter !== "all" ? ` · filtered by ${escapeHtml(ACQ_METHODS_FOR_FARM.find(m => m[0] === state.acqFilter)?.[1] || state.acqFilter)}` : ""})</div>
         ${acqFilterBar}
         ${rosterHeader}${rosterRows}
         ${gradedSection}
         ${affiliateSection}
-        <div class="detail-title" style="margin-top:18px;">Recent trades involving the ${escapeHtml(fullOrgName(orgCode))}</div>
-        ${tradesHtml}
       </div>
-      <div>${highlights}</div>
+      <div class="farm-side">${sidebarHtml}</div>
     </div>`;
 
   // Wire affiliate level tabs (vanilla — toggle visibility, no re-render).

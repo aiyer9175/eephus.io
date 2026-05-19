@@ -33,7 +33,7 @@ from storage import (
     load_all_snapshots, load_statlines, upsert_statlines,
     insert_trades, load_trades,
     upsert_birth_date, load_birth_dates,
-    auto_graduate_player,
+    auto_graduate_player, revalidate_auto_graduations,
     upsert_pitch_arsenals, load_pitch_arsenals,
     upsert_sabermetrics, load_sabermetrics,
     upsert_career_stats, load_career_stats, load_career_stats_meta,
@@ -670,6 +670,23 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                  len(roster_status_by_key),
                  sum(1 for v in roster_status_by_key.values() if v.get("on_40_man")),
                  len(rookie_exhausted_grads))
+
+        # Strip legacy auto_detect graduation snapshots for players who
+        # don't currently meet the rookie-eligibility rules. Older runs
+        # of the pipeline graduated anyone with an MLB debut date and
+        # that sticky DB state survives across runs — without this
+        # pass, a cup-of-coffee prospect from last month still shows
+        # graduated even after we tightened the gates. FG-sourced
+        # graduations are left alone (external authority).
+        cleared = revalidate_auto_graduations(set(rookie_exhausted_grads))
+        if cleared:
+            log.info("revalidated graduations: cleared %d stale auto_detect rows "
+                     "(players who no longer qualify under current rules)",
+                     cleared)
+            # Rebuild timeseries so the rest of the pipeline + export sees
+            # the corrected statuses.
+            all_snaps = load_all_snapshots()
+            timeseries = build_timeseries(all_snaps)
 
         # --- 3g. Auto-graduate any prospect who has crossed the rookie-
         # eligibility threshold (130 MLB AB / 50 MLB IP) but is still

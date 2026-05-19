@@ -359,3 +359,97 @@ class TestDebutMarkerInLevelChanges:
                       if p["player_name"] == "Pure Prospect")
         # No MLB promotion + no debut_date → no debut row added.
         assert all(lc.get("kind") != "debut" for lc in player["level_changes"])
+
+
+# ---------------------------------------------------------------------------
+# revalidate_auto_graduations — self-healing cleanup of legacy auto_detect
+# graduation snapshots from pre-fix pipeline runs
+# ---------------------------------------------------------------------------
+
+class TestRevalidateAutoGraduations:
+    """Older versions of the pipeline auto-graduated any prospect with an
+    MLB debut, then wrote a synthetic snapshot to the DB. Those rows
+    persist across runs, so even after we tightened the rules the
+    affected players still read as graduates. revalidate_auto_graduations
+    strips those rows when the player no longer meets current rules."""
+
+    def _setup_db(self, tmp_path, monkeypatch):
+        # Point storage at a fresh test DB so we don't clobber the real one.
+        db = tmp_path / "test.db"
+        import storage
+        monkeypatch.setattr(storage, "DB_PATH", db)
+        storage.init_db()
+        return storage
+
+    def test_clears_sub_threshold_player(self, tmp_path, monkeypatch):
+        storage = self._setup_db(tmp_path, monkeypatch)
+        # Seed a snapshot for the player + an auto_detect graduated row.
+        with storage.connect() as con:
+            con.execute(
+                """INSERT INTO snapshots (player_key, player_name, source,
+                   snapshot_date, interval_label, position, org, rank, fv, status)
+                   VALUES ('cup_of_coffee','Cup Coffee','fangraphs',
+                           '2026-01-01','FG 2026','OF','PIT',50,55.0,'active')"""
+            )
+        storage.auto_graduate_player("cup_of_coffee", grad_date="2026-05-18")
+
+        # Player doesn't qualify under current rules → empty set.
+        cleared = storage.revalidate_auto_graduations(set())
+        assert cleared == 1
+
+        # Confirm the auto_detect row is gone, the fangraphs row remains.
+        with storage.connect() as con:
+            rows = con.execute(
+                "SELECT source, status FROM snapshots WHERE player_key='cup_of_coffee'"
+            ).fetchall()
+        sources = sorted((r["source"], r["status"]) for r in rows)
+        assert sources == [("fangraphs", "active")]
+
+    def test_keeps_legitimately_exhausted_player(self, tmp_path, monkeypatch):
+        storage = self._setup_db(tmp_path, monkeypatch)
+        with storage.connect() as con:
+            con.execute(
+                """INSERT INTO snapshots (player_key, player_name, source,
+                   snapshot_date, interval_label, position, org, rank, fv, status)
+                   VALUES ('real_grad','Real Grad','fangraphs',
+                           '2024-01-01','FG 2024','OF','PIT',5,60.0,'active')"""
+            )
+        storage.auto_graduate_player("real_grad", grad_date="2024-08-15")
+
+        # This player IS in the qualified set, so their auto_detect row stays.
+        cleared = storage.revalidate_auto_graduations({"real_grad"})
+        assert cleared == 0
+        with storage.connect() as con:
+            n_auto = con.execute(
+                """SELECT COUNT(*) AS n FROM snapshots
+                   WHERE player_key='real_grad' AND source='auto_detect'"""
+            ).fetchone()["n"]
+        assert n_auto == 1
+
+    def test_leaves_fangraphs_graduated_status_alone(self, tmp_path, monkeypatch):
+        """A FG-sourced 'graduated' snapshot is external authority — even
+        if our local roster_status disagrees, we don't delete it."""
+        storage = self._setup_db(tmp_path, monkeypatch)
+        with storage.connect() as con:
+            con.execute(
+                """INSERT INTO snapshots (player_key, player_name, source,
+                   snapshot_date, interval_label, position, org, rank, fv, status)
+                   VALUES ('fg_graduate','FG Graduate','fangraphs',
+                           '2025-10-01','FG 2025 Graduates','OF','PIT',NULL,60.0,'graduated')"""
+            )
+        # Player not in qualified set, but the only graduated row is the
+        # FG one — revalidation must not touch it.
+        cleared = storage.revalidate_auto_graduations(set())
+        assert cleared == 0
+        with storage.connect() as con:
+            n_grad = con.execute(
+                """SELECT COUNT(*) AS n FROM snapshots
+                   WHERE player_key='fg_graduate' AND status='graduated'"""
+            ).fetchone()["n"]
+        assert n_grad == 1
+
+    def test_idempotent_on_empty_db(self, tmp_path, monkeypatch):
+        """No graduation rows present → no-op, returns 0."""
+        storage = self._setup_db(tmp_path, monkeypatch)
+        assert storage.revalidate_auto_graduations(set()) == 0
+        assert storage.revalidate_auto_graduations({"anyone"}) == 0

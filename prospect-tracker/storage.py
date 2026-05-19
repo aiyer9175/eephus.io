@@ -214,6 +214,48 @@ def insert_snapshots(snapshots: Iterable[Snapshot]) -> int:
     return count
 
 
+def revalidate_auto_graduations(qualified_keys: set[str]) -> int:
+    """Delete `auto_detect` 'graduated' snapshots for players who don't
+    currently meet the rookie-eligibility rules.
+
+    Earlier versions of the pipeline auto-graduated any prospect with an
+    MLB debut date, regardless of whether they'd crossed the 130-AB /
+    50-IP / options-exhausted threshold. Those over-eager rows persist
+    in the DB across runs and `consensus.build_timeseries` reads them as
+    canonical graduations — so a cup-of-coffee prospect from a prior run
+    still shows as a graduate even after we tightened the rules.
+
+    `qualified_keys` is the set of player_keys that DO meet the current
+    rules (passed in by run_monthly from roster_status). Any auto_detect
+    grad snapshot whose key is NOT in that set is removed. FanGraphs-
+    sourced graduated snapshots are left alone — those are external
+    authority.
+
+    Returns the number of rows deleted.
+    """
+    with connect() as con:
+        rows = con.execute(
+            """SELECT player_key FROM snapshots
+               WHERE source = 'auto_detect' AND status = 'graduated'"""
+        ).fetchall()
+        if not rows:
+            return 0
+        to_delete = [r["player_key"] for r in rows
+                     if r["player_key"] not in qualified_keys]
+        if not to_delete:
+            return 0
+        # Use executemany with a single-key clause so SQLite's parameter
+        # list cap (~999) doesn't become a footgun when a lot of legacy
+        # rows need to clear.
+        con.executemany(
+            """DELETE FROM snapshots
+               WHERE source = 'auto_detect' AND status = 'graduated'
+                 AND player_key = ?""",
+            [(k,) for k in to_delete],
+        )
+        return len(to_delete)
+
+
 def auto_graduate_player(player_key: str, grad_date: str | None = None) -> None:
     """
     Mark a player as graduated by inserting a synthetic snapshot.
@@ -709,7 +751,7 @@ def latest_run_summary() -> dict | None:
 # The four 0-100 scores blend linearly into a `farm_score`; the overall
 # letter grade is the bucket that score lands in among the 30 orgs.
 
-FARM_TRAJECTORY_LOOKBACK_DAYS = 90
+FARM_TRAJECTORY_LOOKBACK_DAYS = 365
 FARM_TRAJECTORY_SMOOTH_WINDOW = 3   # avg last 3 fv_history points vs 3 near cutoff
 FARM_GRAD_PIPELINE_MONTHS     = 12
 
@@ -1035,11 +1077,10 @@ def _build_org_fv_history(
                 })
                 org_now = to_org
             elif kind == "graduation":
-                # Removing the player's last FV from their current org —
-                # graduates leave the system, so cumulative FV drops by
-                # their FV on graduation day.
-                contribs[(org_now, d)] -= fv_now
-                dates_by_org[org_now].add(d)
+                # Graduation is a successful exit, not a loss of farm value —
+                # so the cumulative FV line stays flat through it instead of
+                # dropping. The event is still recorded for the grad-pipeline
+                # score and for chart annotation.
                 events_by_org[org_now].append({
                     "date": d, "kind": "graduation",
                     "player_name": p.player_name,
@@ -1892,8 +1933,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # Per-org cumulative FV history — running sum of prospect FVs over time,
     # attributed to whichever org owned the prospect on each snapshot date.
     # Drives the farm-system stock chart on the farm list + farm detail
-    # pages. Trades show as +/- moves between orgs; graduations subtract a
-    # graduate's FV from their org on their graduation date.
+    # pages. Trades show as +/- moves between orgs; graduations are
+    # graduation-neutral — the cumulative line stays flat through them so
+    # a productive farm isn't punished for promoting its top prospects.
     org_fv_history = _build_org_fv_history(
         actives + grads + inactives, _filter_real_trades, trades_by_player,
     )
