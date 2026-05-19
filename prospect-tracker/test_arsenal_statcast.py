@@ -1,4 +1,4 @@
-"""Tests for fetch_pitch_arsenal and fetch_statcast_metrics."""
+"""Tests for fetch_pitch_arsenal and fetch_sabermetrics."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ from unittest.mock import patch, MagicMock
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from stats import (
-    fetch_pitch_arsenal, fetch_statcast_metrics,
-    PitchArsenal, StatcastMetrics,
+    fetch_pitch_arsenal, fetch_sabermetrics,
+    PitchArsenal, Sabermetrics,
     _HARD_PITCH_CODES,
 )
 
@@ -25,10 +25,30 @@ def _mock_resp(data: dict, status: int = 200):
 
 
 # ── Pitch Arsenal ──────────────────────────────────────────────────────────
+# The MLB Stats API renamed `pitchType` → `type` and `avgSpeed` →
+# `averageSpeed`. The fetcher prefers the new field names and falls back
+# to the legacy ones. Tests cover both shapes.
 
 class TestFetchPitchArsenal:
-    def _arsenal_response(self, pitches: list[dict]) -> dict:
-        """Build a fake pitchArsenal API response."""
+    def _arsenal_response_new(self, pitches: list[dict]) -> dict:
+        """Build a fake pitchArsenal response in the current API shape."""
+        return {
+            "stats": [{
+                "splits": [
+                    {
+                        "stat": {
+                            "type": {"code": p["code"], "description": p["name"]},
+                            "averageSpeed": p["speed"],
+                            "percentage": p["pct"],
+                        }
+                    }
+                    for p in pitches
+                ]
+            }]
+        }
+
+    def _arsenal_response_legacy(self, pitches: list[dict]) -> dict:
+        """Build a fake response in the pre-rename API shape (fallback path)."""
         return {
             "stats": [{
                 "splits": [
@@ -44,11 +64,11 @@ class TestFetchPitchArsenal:
             }]
         }
 
-    def test_basic_arsenal(self):
-        fake = self._arsenal_response([
-            {"code": "FF", "name": "4-Seam Fastball", "speed": 96.4, "pct": 0.45},
-            {"code": "SL", "name": "Slider",           "speed": 87.1, "pct": 0.30},
-            {"code": "CH", "name": "Changeup",          "speed": 84.2, "pct": 0.25},
+    def test_basic_arsenal_current_api_shape(self):
+        fake = self._arsenal_response_new([
+            {"code": "FF", "name": "Four-seam FB", "speed": 96.4, "pct": 0.45},
+            {"code": "SL", "name": "Slider",       "speed": 87.1, "pct": 0.30},
+            {"code": "CH", "name": "Changeup",     "speed": 84.2, "pct": 0.25},
         ])
         with patch("stats.requests.get", return_value=_mock_resp(fake)), \
              patch("stats.time.sleep"):
@@ -60,9 +80,20 @@ class TestFetchPitchArsenal:
         assert pa.pitches[0]["pitch_type"] == "FF"   # highest usage first
         assert pa.fb_velo == 96.4
 
+    def test_legacy_api_shape_still_parses(self):
+        """Fallback path: handles the pre-rename `pitchType` / `avgSpeed` shape."""
+        fake = self._arsenal_response_legacy([
+            {"code": "FF", "name": "4-Seam Fastball", "speed": 95.0, "pct": 0.60},
+        ])
+        with patch("stats.requests.get", return_value=_mock_resp(fake)), \
+             patch("stats.time.sleep"):
+            pa = fetch_pitch_arsenal("k", 1, 2026)
+        assert pa is not None
+        assert pa.pitches[0]["pitch_type"] == "FF"
+        assert pa.fb_velo == 95.0
+
     def test_fastball_velo_picks_highest_usage_hard_pitch(self):
-        # Both FF and SI are hard pitches; FF has higher usage
-        fake = self._arsenal_response([
+        fake = self._arsenal_response_new([
             {"code": "FF", "name": "4-Seam",  "speed": 97.0, "pct": 0.40},
             {"code": "SI", "name": "Sinker",   "speed": 95.5, "pct": 0.20},
             {"code": "CB", "name": "Curveball","speed": 79.0, "pct": 0.40},
@@ -74,8 +105,7 @@ class TestFetchPitchArsenal:
         assert pa.fb_velo == 97.0   # FF, not CB
 
     def test_no_fastball_gives_none_fb_velo(self):
-        # Pitcher with only breaking balls (unusual but handle it)
-        fake = self._arsenal_response([
+        fake = self._arsenal_response_new([
             {"code": "SL", "name": "Slider",   "speed": 87.0, "pct": 0.55},
             {"code": "CB", "name": "Curveball","speed": 79.0, "pct": 0.45},
         ])
@@ -100,7 +130,7 @@ class TestFetchPitchArsenal:
         assert pa is None
 
     def test_pitches_sorted_by_usage(self):
-        fake = self._arsenal_response([
+        fake = self._arsenal_response_new([
             {"code": "CH", "name": "Changeup", "speed": 84.0, "pct": 0.10},
             {"code": "FF", "name": "4-Seam",   "speed": 96.0, "pct": 0.55},
             {"code": "SL", "name": "Slider",   "speed": 87.0, "pct": 0.35},
@@ -120,83 +150,83 @@ class TestFetchPitchArsenal:
         assert "FT" in _HARD_PITCH_CODES  # 2-Seam
 
 
-# ── Statcast Metrics ───────────────────────────────────────────────────────
+# ── Sabermetrics (wRC+ / xFIP / wOBA / FIP) ────────────────────────────────
 
-class TestFetchStatcastMetrics:
-    def _sc_response(self, ev=88.5, hh=0.38, la=12.1, bp=0.08) -> dict:
-        return {
-            "stats": [{
-                "splits": [{
-                    "stat": {
-                        "exitVelocity": ev,
-                        "hardHitPercent": hh,
-                        "launchAngle": la,
-                        "barrelPercent": bp,
-                    }
-                }]
-            }]
-        }
+class TestFetchSabermetrics:
+    def _hitter_response(self, *, wrc=140.0, woba=0.365, war=3.5):
+        return {"stats": [{"splits": [{"stat": {
+            "wRcPlus": wrc, "woba": woba, "war": war,
+        }}]}]}
 
-    def test_hitter_metrics(self):
-        fake = self._sc_response(ev=92.3, hh=0.44, la=14.2, bp=0.12)
+    def _pitcher_response(self, *, xfip=3.45, fip=3.22, fip_minus=78.5,
+                          era_minus=82.0, war=2.5):
+        return {"stats": [{"splits": [{"stat": {
+            "xfip": xfip, "fip": fip, "fipMinus": fip_minus,
+            "eraMinus": era_minus, "war": war,
+        }}]}]}
+
+    def test_hitter_sabermetrics(self):
+        fake = self._hitter_response(wrc=219.8, woba=0.476, war=11.33)
         with patch("stats.requests.get", return_value=_mock_resp(fake)), \
              patch("stats.time.sleep"):
-            sc = fetch_statcast_metrics("hitter_key", 1, 2026, is_pitcher=False)
+            sm = fetch_sabermetrics("hitter_key", 1, 2024, is_pitcher=False)
 
-        assert sc is not None
-        assert isinstance(sc, StatcastMetrics)
-        assert sc.exit_velo == 92.3
-        assert sc.hard_hit_pct == 44.0   # converted from 0.44 to percent
-        assert sc.launch_angle == 14.2
-        assert sc.barrel_pct == 12.0
-        assert sc.is_pitcher is False
+        assert sm is not None
+        assert isinstance(sm, Sabermetrics)
+        assert sm.is_pitcher is False
+        assert sm.wrc_plus == 219.8
+        assert sm.woba == 0.476
+        assert sm.war == 11.33
+        # Pitcher fields stay None on a hitter
+        assert sm.xfip is None and sm.fip is None and sm.fip_minus is None
 
-    def test_pitcher_metrics(self):
-        fake = self._sc_response(ev=88.1, hh=0.31, la=10.0, bp=0.05)
+    def test_pitcher_sabermetrics(self):
+        fake = self._pitcher_response(xfip=3.99, fip=3.69, fip_minus=88.4,
+                                       era_minus=85.8, war=1.78)
         with patch("stats.requests.get", return_value=_mock_resp(fake)), \
              patch("stats.time.sleep"):
-            sc = fetch_statcast_metrics("pitcher_key", 1, 2026, is_pitcher=True)
+            sm = fetch_sabermetrics("pitcher_key", 1, 2024, is_pitcher=True)
 
-        assert sc is not None
-        assert sc.is_pitcher is True
-        assert sc.exit_velo == 88.1
-        assert sc.hard_hit_pct == 31.0
+        assert sm is not None
+        assert sm.is_pitcher is True
+        assert sm.xfip == 3.99
+        assert sm.fip == 3.69
+        assert sm.fip_minus == 88.4
+        assert sm.era_minus == 85.8
+        assert sm.war == 1.78
+        assert sm.wrc_plus is None and sm.woba is None
 
     def test_all_none_fields_returns_none(self):
-        """When the API returns no Statcast data (e.g. A-ball), return None."""
+        """When the API returns nothing useful (typical for MiLB seasons)."""
         fake = {"stats": [{"splits": [{"stat": {}}]}]}
         with patch("stats.requests.get", return_value=_mock_resp(fake)), \
              patch("stats.time.sleep"):
-            sc = fetch_statcast_metrics("key", 1, 2026)
-        assert sc is None
+            sm = fetch_sabermetrics("key", 1, 2026)
+        assert sm is None
 
     def test_empty_splits_returns_none(self):
         fake = {"stats": [{"splits": []}]}
         with patch("stats.requests.get", return_value=_mock_resp(fake)), \
              patch("stats.time.sleep"):
-            sc = fetch_statcast_metrics("key", 1, 2026)
-        assert sc is None
+            sm = fetch_sabermetrics("key", 1, 2026)
+        assert sm is None
 
     def test_api_error_returns_none(self):
         with patch("stats.requests.get", side_effect=Exception("timeout")), \
              patch("stats.time.sleep"):
-            sc = fetch_statcast_metrics("key", 1, 2026)
-        assert sc is None
+            sm = fetch_sabermetrics("key", 1, 2026)
+        assert sm is None
 
     def test_partial_metrics_accepted(self):
         """Some fields present, some missing — accept the partial data."""
-        fake = {"stats": [{"splits": [{
-            "stat": {"exitVelocity": 90.0, "hardHitPercent": 0.35}
-        }]}]}
+        fake = {"stats": [{"splits": [{"stat": {"wRcPlus": 130.0}}]}]}
         with patch("stats.requests.get", return_value=_mock_resp(fake)), \
              patch("stats.time.sleep"):
-            sc = fetch_statcast_metrics("key", 1, 2026)
-
-        assert sc is not None
-        assert sc.exit_velo == 90.0
-        assert sc.hard_hit_pct == 35.0
-        assert sc.launch_angle is None
-        assert sc.barrel_pct is None
+            sm = fetch_sabermetrics("key", 1, 2026, is_pitcher=False)
+        assert sm is not None
+        assert sm.wrc_plus == 130.0
+        assert sm.woba is None
+        assert sm.war is None
 
 
 # ── Storage round-trip ─────────────────────────────────────────────────────
@@ -218,25 +248,25 @@ class TestStorageRoundTrip:
         assert loaded["pitcher1"]["fb_velo"] == 96.0
         assert loaded["pitcher1"]["pitches"][0]["pitch_type"] == "FF"
 
-    def test_statcast_upsert_and_load(self, tmp_path, monkeypatch):
+    def test_sabermetrics_upsert_and_load(self, tmp_path, monkeypatch):
         import storage
         monkeypatch.setattr(storage, "DB_PATH", tmp_path / "test.db")
         storage.init_db()
 
-        sc = StatcastMetrics(
+        sm = Sabermetrics(
             player_key="hitter1", mlbam_id=222, season=2026,
             is_pitcher=False,
-            exit_velo=92.5, hard_hit_pct=41.0,
-            launch_angle=13.2, barrel_pct=9.8,
-            fetched_at="2026-05-17",
+            wrc_plus=140.0, woba=0.365,
+            xfip=None, fip=None, fip_minus=None, era_minus=None,
+            war=3.5, fetched_at="2026-05-17",
         )
-        storage.upsert_statcast_metrics({"hitter1": sc}, 2026)
-        loaded = storage.load_statcast_metrics()
+        storage.upsert_sabermetrics({"hitter1": sm}, 2026)
+        loaded = storage.load_sabermetrics()
         assert "hitter1" in loaded
-        assert loaded["hitter1"]["exit_velo"] == 92.5
-        assert loaded["hitter1"]["hard_hit_pct"] == 41.0
+        assert loaded["hitter1"]["wrc_plus"] == 140.0
+        assert loaded["hitter1"]["woba"] == 0.365
 
-    def test_export_includes_arsenal_and_statcast(self, tmp_path, monkeypatch):
+    def test_export_includes_arsenal_and_sabermetrics(self, tmp_path, monkeypatch):
         import storage, json
         from scrapers import Snapshot
         from consensus import build_timeseries
@@ -256,26 +286,28 @@ class TestStorageRoundTrip:
 
         pa = PitchArsenal(
             player_key="test_pitcher", mlbam_id=1, season=2026,
-            pitches=[{"pitch_type": "FF", "pitch_name": "4-Seam",
+            pitches=[{"pitch_type": "FF", "pitch_name": "Four-seam FB",
                       "avg_speed": 97.0, "usage_pct": 0.5}],
             fb_velo=97.0, fetched_at="2026-05-17",
         )
-        sc = StatcastMetrics(
+        sm = Sabermetrics(
             player_key="test_pitcher", mlbam_id=1, season=2026,
-            is_pitcher=True, exit_velo=88.1, hard_hit_pct=30.5,
-            launch_angle=10.0, barrel_pct=5.5, fetched_at="2026-05-17",
+            is_pitcher=True,
+            wrc_plus=None, woba=None,
+            xfip=3.42, fip=3.10, fip_minus=80.0, era_minus=78.0,
+            war=2.4, fetched_at="2026-05-17",
         )
         out = tmp_path / "out.json"
         storage.export_timeseries_json(
             ts, out,
             pitch_arsenals={"test_pitcher": asdict(pa)},
-            statcast_metrics={"test_pitcher": asdict(sc)},
+            sabermetrics={"test_pitcher": asdict(sm)},
         )
         payload = json.loads(out.read_text())
         p = payload["players"][0]
         assert p["pitch_arsenal"] is not None
         assert p["pitch_arsenal"]["fb_velo"] == 97.0
         assert p["pitch_arsenal"]["pitches"][0]["pitch_type"] == "FF"
-        assert p["statcast"] is not None
-        assert p["statcast"]["exit_velo"] == 88.1
-        assert p["statcast"]["hard_hit_pct"] == 30.5
+        assert p["sabermetrics"] is not None
+        assert p["sabermetrics"]["xfip"] == 3.42
+        assert p["sabermetrics"]["fip_minus"] == 80.0

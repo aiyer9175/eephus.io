@@ -589,32 +589,39 @@ class PitchArsenal:
 
 
 @dataclass
-class StatcastMetrics:
+class Sabermetrics:
     """
-    Batted-ball and quality-of-contact metrics from the MLB Stats API's
-    sabermetrics stat type.  Available at AAA for most of the Statcast era
-    (2020+); coverage at AA and below is spottier.
+    Sabermetric quality stats from the MLB Stats API's sabermetrics
+    stat type. Coverage: MLB only — the endpoint returns nothing for
+    minor-league seasons. The UI falls back to level-relative proxies
+    (OPS+ vs level / ERA- vs level) when these aren't available.
 
-    For hitters:
-      exit_velo       — avg exit velocity on contact (mph)
-      hard_hit_pct    — % of batted balls ≥ 95 mph EV
-      launch_angle    — avg launch angle (degrees)
-      barrel_pct      — % of batted balls classified as barrels
+    Hitters (group=hitting):
+      wrc_plus    — wRC+ (park & league adjusted; 100 = league average)
+      woba        — wOBA (linear weights, scaled to OBP)
+      war         — Wins Above Replacement (FanGraphs flavor via wRAA)
 
-    For pitchers (metrics are "against"):
-      exit_velo       — avg EV allowed
-      hard_hit_pct    — hard-hit rate allowed
-      launch_angle    — avg LA allowed
-      barrel_pct      — barrel rate allowed
+    Pitchers (group=pitching, metrics are "against the pitcher"):
+      xfip        — Expected Fielding Independent Pitching
+      fip         — Fielding Independent Pitching
+      fip_minus   — FIP- (100 = league avg, lower is better)
+      era_minus   — ERA- (100 = league avg, lower is better)
+      war         — Wins Above Replacement (pitching)
     """
     player_key: str
     mlbam_id: int
     season: int
     is_pitcher: bool
-    exit_velo: float | None
-    hard_hit_pct: float | None
-    launch_angle: float | None
-    barrel_pct: float | None
+    # Hitter sabermetrics
+    wrc_plus: float | None
+    woba: float | None
+    # Pitcher sabermetrics
+    xfip: float | None
+    fip: float | None
+    fip_minus: float | None
+    era_minus: float | None
+    # Shared
+    war: float | None
     fetched_at: str
 
 
@@ -1308,12 +1315,16 @@ def fetch_pitch_arsenal(player_key: str, mlbam_id: int,
         ?stats=pitchArsenal&group=pitching&season=YEAR
 
     Each split in the response has:
-      split.stat.pitchType  : {"code": "FF", "description": "4-Seam Fastball"}
-      split.stat.avgSpeed   : 96.2
-      split.stat.percentage : 0.42
-      split.stat.totalPitches / split.stat.pitchesPerGame (sometimes present)
+      split.stat.type          : {"code": "FF", "description": "Four-seam FB"}
+      split.stat.averageSpeed  : 96.2
+      split.stat.percentage    : 0.42
+      split.stat.count / split.stat.totalPitches (sometimes present)
 
     Returns None if the player has no arsenal data (common at A/A+).
+
+    NB: The MLB Stats API renamed `pitchType` → `type` and `avgSpeed` →
+    `averageSpeed` at some point. Earlier versions of this function read
+    the old field names and silently returned no pitches for every call.
     """
     url = (
         f"{MLB_STATS_API}/people/{mlbam_id}/stats"
@@ -1337,10 +1348,16 @@ def fetch_pitch_arsenal(player_key: str, mlbam_id: int,
     pitches = []
     for split in splits:
         stat = split.get("stat", {})
-        pt = stat.get("pitchType") or {}
+        # MLB Stats API uses `type` (with `code`/`description`) and
+        # `averageSpeed`. Older versions of this API used `pitchType` and
+        # `avgSpeed` — keep them as fallbacks in case any cached responses
+        # or older endpoints still surface the legacy shape.
+        pt = stat.get("type") or stat.get("pitchType") or {}
         code = pt.get("code", "")
         name = pt.get("description", code)
-        avg_speed = _safe_float(stat.get("avgSpeed"))
+        avg_speed = _safe_float(stat.get("averageSpeed"))
+        if avg_speed is None:
+            avg_speed = _safe_float(stat.get("avgSpeed"))
         pct = _safe_float(stat.get("percentage"))
         if not code:
             continue
@@ -1371,29 +1388,36 @@ def fetch_pitch_arsenal(player_key: str, mlbam_id: int,
 
 
 # ---------------------------------------------------------------------------
-# Statcast / sabermetrics fetch
+# Sabermetrics fetch (wRC+, xFIP, wOBA, FIP, etc.)
 # ---------------------------------------------------------------------------
 
-def fetch_statcast_metrics(player_key: str, mlbam_id: int,
-                           season: int,
-                           is_pitcher: bool = False) -> StatcastMetrics | None:
+def fetch_sabermetrics(player_key: str, mlbam_id: int,
+                       season: int,
+                       is_pitcher: bool = False) -> Sabermetrics | None:
     """
-    Fetch Statcast batted-ball metrics via the MLB Stats API's sabermetrics
-    stat type.
+    Fetch sabermetric quality stats via the MLB Stats API.
 
     Hits:
       GET /api/v1/people/{id}/stats
         ?stats=sabermetrics&group=hitting&season=YEAR   (hitters)
         ?stats=sabermetrics&group=pitching&season=YEAR  (pitchers)
 
-    Key fields in split.stat:
-      exitVelocity      : avg EV (mph)
-      hardHitPercent    : hard-hit rate (0–1 float)
-      launchAngle       : avg LA (degrees)
-      barrelPercent     : barrel rate (0–1 float)
+    Hitter fields in split.stat:
+      wRcPlus   : wRC+ (park & league-adjusted, 100 = league avg)
+      woba      : wOBA (linear weights, scaled to OBP)
+      war       : Wins Above Replacement
 
-    Coverage: reliable at AAA/AA (2020+), spottier at A+/A.
-    Returns None when no data is available at the player's level.
+    Pitcher fields in split.stat:
+      xfip      : Expected Fielding Independent Pitching
+      fip       : Fielding Independent Pitching
+      fipMinus  : FIP- (100 = league avg, lower is better)
+      eraMinus  : ERA- (same scale)
+      war       : Wins Above Replacement (pitching)
+
+    Coverage: MLB only. Minor leagues are not in this endpoint, so this
+    will return None for any prospect that has not yet played in the
+    majors. The UI handles that with a level-relative proxy (OPS+ /
+    ERA-) computed in storage.py.
     """
     group = "pitching" if is_pitcher else "hitting"
     url = (
@@ -1415,27 +1439,175 @@ def fetch_statcast_metrics(player_key: str, mlbam_id: int,
     if not splits:
         return None
 
-    # Use the most recent / highest split (last in list is usually most recent)
+    # Use the most recent split (last in list is usually most recent season slice)
     stat = splits[-1].get("stat", {})
 
-    ev = _safe_float(stat.get("exitVelocity"))
-    hh = _safe_float(stat.get("hardHitPercent"))
-    la = _safe_float(stat.get("launchAngle"))
-    bp = _safe_float(stat.get("barrelPercent"))
+    if is_pitcher:
+        xfip       = _safe_float(stat.get("xfip"))
+        fip        = _safe_float(stat.get("fip"))
+        fip_minus  = _safe_float(stat.get("fipMinus"))
+        era_minus  = _safe_float(stat.get("eraMinus"))
+        war        = _safe_float(stat.get("war"))
+        if all(v is None for v in (xfip, fip, fip_minus, era_minus, war)):
+            return None
+        return Sabermetrics(
+            player_key=player_key, mlbam_id=mlbam_id, season=season,
+            is_pitcher=True,
+            wrc_plus=None, woba=None,
+            xfip=round(xfip, 2) if xfip is not None else None,
+            fip=round(fip, 2) if fip is not None else None,
+            fip_minus=round(fip_minus, 1) if fip_minus is not None else None,
+            era_minus=round(era_minus, 1) if era_minus is not None else None,
+            war=round(war, 2) if war is not None else None,
+            fetched_at=date_today_iso(),
+        )
 
-    # Return None if the API gave us nothing useful (no Statcast at this level)
-    if all(v is None for v in [ev, hh, la, bp]):
+    # Hitters
+    wrc_plus = _safe_float(stat.get("wRcPlus"))
+    woba     = _safe_float(stat.get("woba"))
+    war      = _safe_float(stat.get("war"))
+    if all(v is None for v in (wrc_plus, woba, war)):
         return None
-
-    return StatcastMetrics(
+    return Sabermetrics(
         player_key=player_key, mlbam_id=mlbam_id, season=season,
-        is_pitcher=is_pitcher,
-        exit_velo=round(ev, 1) if ev is not None else None,
-        hard_hit_pct=round(hh * 100, 1) if hh is not None else None,
-        launch_angle=round(la, 1) if la is not None else None,
-        barrel_pct=round(bp * 100, 1) if bp is not None else None,
+        is_pitcher=False,
+        wrc_plus=round(wrc_plus, 1) if wrc_plus is not None else None,
+        woba=round(woba, 3) if woba is not None else None,
+        xfip=None, fip=None, fip_minus=None, era_minus=None,
+        war=round(war, 2) if war is not None else None,
         fetched_at=date_today_iso(),
     )
+
+
+# ---------------------------------------------------------------------------
+# Bulk derive — current-season statline from cached career_stats
+# ---------------------------------------------------------------------------
+# `fetch_career_stats` already returns every season the player has on
+# record in a SINGLE HTTP call (mlb_milb combined endpoint). So once the
+# career cache is warm, we can derive the current-season StatLine without
+# any further API traffic — including the "no current-year stats; walk
+# back to the most recent season with data" fallback that used to fire a
+# fresh HTTP call per prospect per year.
+#
+# Strategy:
+#   - For each (key, is_pitcher), look up career_cache[key] (already
+#     deduped to highest-level-per-season by fetch_career_stats).
+#   - Pick the most recent row whose season ≤ target_season, within
+#     PRIOR_SEASON_LOOKBACK years.
+#   - Map that row's fields onto a StatLine (same shape fetch_statline
+#     would have returned), tagging is_prior_season when the chosen row
+#     pre-dates the target season.
+#
+# Graduates aren't passed through this path (run_monthly skips them); the
+# `for_mlb=True` call site continues to use fetch_statline.
+
+def derive_statline_from_career(
+    player_key: str, mlbam_id: int,
+    career_rows: list[dict],
+    target_season: int,
+    is_pitcher: bool | None = None,
+) -> StatLine | None:
+    """Build a StatLine from cached career_stats rows. No HTTP."""
+    if not career_rows:
+        return None
+    # career_stats is already collapsed to one row per (season, highest
+    # level reached). Sort descending so the freshest in-range season wins.
+    sorted_rows = sorted(
+        (r for r in career_rows if r.get("season") is not None),
+        key=lambda r: r["season"],
+        reverse=True,
+    )
+    chosen = None
+    for row in sorted_rows:
+        s = row["season"]
+        if s > target_season:
+            continue
+        if (target_season - s) > PRIOR_SEASON_LOOKBACK:
+            break  # sorted desc, no point looking further
+        chosen = row
+        break
+    if chosen is None:
+        return None
+
+    found_season = chosen["season"]
+    is_prior = found_season < target_season
+    is_p = bool(is_pitcher if is_pitcher is not None else chosen.get("is_pitcher"))
+    level = chosen.get("level") or "?"
+
+    if is_p:
+        return StatLine(
+            player_key=player_key, mlbam_id=mlbam_id,
+            level=level, games=int(chosen.get("games", 0) or 0),
+            avg=None, obp=None, slg=None, ops=None, hr=None, sb=None,
+            bb_pct=None, k_pct=None,
+            era=str(chosen["era"]) if chosen.get("era") is not None else None,
+            fip=None,
+            ip=_safe_float(chosen.get("ip")),
+            k_per_9=_safe_float(chosen.get("k_per_9")),
+            bb_per_9=_safe_float(chosen.get("bb_per_9")),
+            is_pitcher=True,
+            fetched_at=date_today_iso(),
+            season=found_season,
+            is_prior_season=is_prior,
+        )
+    return StatLine(
+        player_key=player_key, mlbam_id=mlbam_id,
+        level=level, games=int(chosen.get("games", 0) or 0),
+        avg=str(chosen["avg"]) if chosen.get("avg") is not None else None,
+        obp=str(chosen["obp"]) if chosen.get("obp") is not None else None,
+        slg=str(chosen["slg"]) if chosen.get("slg") is not None else None,
+        ops=str(chosen["ops"]) if chosen.get("ops") is not None else None,
+        hr=int(chosen.get("hr") or 0),
+        sb=int(chosen.get("sb") or 0),
+        bb_pct=_safe_float(chosen.get("bb_pct")),
+        k_pct=_safe_float(chosen.get("k_pct")),
+        era=None, fip=None, ip=None, k_per_9=None, bb_per_9=None,
+        is_pitcher=False,
+        fetched_at=date_today_iso(),
+        season=found_season,
+        is_prior_season=is_prior,
+    )
+
+
+def derive_statlines_from_career(
+    players: Iterable[tuple[str, str, bool]],
+    career_cache: dict[str, list[dict]],
+    target_season: int,
+    id_cache: dict[str, int],
+) -> dict[str, StatLine]:
+    """Bulk-derive statlines from the cached career_stats payload.
+
+    Replaces the previous bulk-fetch-statlines call (which made up to 8
+    HTTP calls per prospect with no current-year stats while walking
+    back through prior seasons). Returns the same shape dict.
+    """
+    out: dict[str, StatLine] = {}
+    fallback_count = 0
+    missing_count = 0
+    no_career_count = 0
+    for key, _name, is_pitcher in players:
+        mlbam = id_cache.get(key)
+        if mlbam is None:
+            continue
+        career = career_cache.get(key) or []
+        if not career:
+            no_career_count += 1
+            continue
+        sl = derive_statline_from_career(
+            key, mlbam, career, target_season, is_pitcher=is_pitcher
+        )
+        if sl is None:
+            missing_count += 1
+            continue
+        out[key] = sl
+        if sl.is_prior_season:
+            fallback_count += 1
+    log.info(
+        "derived %d stat lines from career cache (%d via prior-season fallback, "
+        "%d in cache but out-of-range, %d with no career rows on file)",
+        len(out), fallback_count, missing_count, no_career_count,
+    )
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -1611,21 +1783,23 @@ def detect_graduations_from_career(
     statlines: dict[str, "StatLine"] | dict[str, dict] | None = None,
 ) -> dict[str, str | None]:
     """
-    Identify graduated prospects by summing their MLB-level career stats.
+    Identify graduated prospects by checking career MLB stats against the
+    MLB rookie-eligibility thresholds.
 
-    Replaces the per-prospect career-stats API call inside
-    `bulk_detect_graduations`. We already fetch yearByYear career stats for
-    every prospect in the pipeline, so summing the MLB-level rows is a
-    pure-compute operation — no network I/O. With ~3,000 prospects and
-    1-2 matched graduates per run, the old path cost 1-30 sequential
-    `/people/{id}/stats?stats=career` calls (~0.3-10s); the new one is
-    near-instant.
+    A player has lost rookie / prospect status (and is therefore graduated)
+    when their CAREER MLB totals exceed either:
 
-    A player is treated as graduated when:
-        - any year-by-year MLB stat row exists, i.e. they have appeared in
-          an MLB game
-        - OR the current-season statline (if supplied) shows MLB-level
-          activity
+        - Position player: > 130 at-bats
+        - Pitcher        : > 50 innings pitched
+
+    (The third official criterion — > 45 days on an active MLB roster
+    outside September — requires day-by-day transaction data that the
+    public API doesn't expose cleanly, so we approximate by AB/IP only.)
+
+    A player who has *debuted* in MLB but not yet crossed either threshold
+    remains an active prospect. Their `mlb_debut_date` is still surfaced
+    by `collect_mlb_debut_dates` so the UI can pin it on the transaction
+    timeline as its own marker.
 
     Pre-filter: when `player_index` is supplied, we restrict the candidate
     set to prospects whose index record has a non-empty `mlbDebutDate`. A
@@ -1697,6 +1871,7 @@ def detect_graduations_from_career(
             return f"{earliest_season}-07-01"
         return date.today().isoformat()
 
+    debuted_below_threshold = 0
     for player_key in candidate_keys:
         rows = career_stats.get(player_key) or []
         if not rows:
@@ -1708,15 +1883,33 @@ def detect_graduations_from_career(
         if not mlb_rows:
             continue
 
+        # Sum career MLB AB / IP and compare to the rookie thresholds.
+        if is_pitcher:
+            career_total = sum(_safe_float(r.get("ip")) or 0.0 for r in mlb_rows)
+            crossed = career_total > ROOKIE_IP_THRESHOLD
+            metric_label = f"{career_total:.1f} IP"
+        else:
+            career_total = sum(int(r.get("ab") or 0) for r in mlb_rows)
+            crossed = career_total > ROOKIE_AB_THRESHOLD
+            metric_label = f"{career_total} AB"
+
+        if not crossed:
+            debuted_below_threshold += 1
+            continue
+
         debut = _resolve_debut(player_key, mlb_rows)
         graduates[player_key] = debut
-        log.info("GRADUATED (MLB game): %s  debut=%s", player_key, debut)
+        log.info("GRADUATED (rookie threshold passed: %s): %s  debut=%s",
+                 metric_label, player_key, debut)
 
     # Second pass: current-season statline at MLB level. Catches the
-    # recently-called-up case the career-threshold sum misses. Runs over
-    # all active prospects (not just candidate_keys) because a prospect
-    # whose PlayerIndex record lacks a debut date but who shows up with an
-    # MLB statline this season should still graduate.
+    # recently-called-up case the career-threshold sum misses (career
+    # cache might be slightly stale for this very current season). Runs
+    # over all active prospects (not just candidate_keys) because a
+    # prospect whose PlayerIndex record lacks a debut date but who shows
+    # up with an MLB statline this season is also a candidate. Still
+    # subject to the rookie threshold — a player with 1 MLB AB does NOT
+    # graduate.
     if statlines:
         for player_key in active_keys:
             if player_key in graduates:
@@ -1727,12 +1920,84 @@ def detect_graduations_from_career(
             level = sl.level if hasattr(sl, "level") else sl.get("level")
             if level != "MLB":
                 continue
-            debut = _resolve_debut(player_key, None)
+            # Threshold check from the statline. StatLine doesn't carry
+            # AB directly; use career_stats MLB sum if available, else
+            # fall back to "must have at least the threshold worth of
+            # games" as a conservative proxy.
+            rows = career_stats.get(player_key) or []
+            mlb_rows = [r for r in rows if r.get("level") == "MLB"]
+            is_pitcher = bool(
+                rows[0].get("is_pitcher", pitcher_by_key.get(player_key, False))
+                if rows else pitcher_by_key.get(player_key, False)
+            )
+            if is_pitcher:
+                career_total = sum(_safe_float(r.get("ip")) or 0.0 for r in mlb_rows)
+                crossed = career_total > ROOKIE_IP_THRESHOLD
+            else:
+                career_total = sum(int(r.get("ab") or 0) for r in mlb_rows)
+                crossed = career_total > ROOKIE_AB_THRESHOLD
+            if not crossed:
+                continue
+            debut = _resolve_debut(player_key, mlb_rows or None)
             graduates[player_key] = debut
-            log.info("GRADUATED (current-statline MLB): %s  debut=%s",
+            log.info("GRADUATED (current-statline MLB + threshold): %s  debut=%s",
                      player_key, debut)
 
+    if debuted_below_threshold:
+        log.info(
+            "%d prospects debuted in MLB but remain below the rookie threshold "
+            "(>%d AB or >%g IP); kept as active",
+            debuted_below_threshold, ROOKIE_AB_THRESHOLD, ROOKIE_IP_THRESHOLD,
+        )
+
     return graduates
+
+
+def collect_mlb_debut_dates(
+    tracked_players: list[tuple[str, str]] | list[str],
+    player_index: "PlayerIndex | None" = None,
+    id_cache: dict[str, int | None] | None = None,
+    career_stats: dict[str, list[dict]] | None = None,
+) -> dict[str, str]:
+    """
+    Return `{player_key: mlb_debut_date}` for every tracked player who has
+    appeared in an MLB game.
+
+    Resolution priority for the debut date:
+      1. `player_index.mlbDebutDate` (precise, from MLB Stats API)
+      2. Earliest career_stats MLB-row season → `{season}-07-01` (approx)
+
+    The function is intentionally agnostic about graduation status — a
+    player who's debuted but hasn't crossed the rookie threshold still
+    has a debut date, and the UI needs to render it as a transaction
+    marker for both active prospects and graduates.
+    """
+    if id_cache is None:
+        id_cache = _load_id_cache()
+    # Accept either a list of keys or (key, name) tuples.
+    keys: list[str] = []
+    for item in tracked_players:
+        keys.append(item if isinstance(item, str) else item[0])
+
+    out: dict[str, str] = {}
+    career_stats = career_stats or {}
+
+    for key in keys:
+        # Path 1: PlayerIndex (authoritative)
+        if player_index is not None:
+            mid = id_cache.get(key)
+            if mid is not None:
+                debut = player_index.get_debut_date(mid)
+                if debut:
+                    out[key] = debut
+                    continue
+        # Path 2: career_stats fallback — pick the earliest MLB season.
+        rows = career_stats.get(key) or []
+        mlb_rows = [r for r in rows if r.get("level") == "MLB"]
+        if mlb_rows:
+            earliest = min(r["season"] for r in mlb_rows if r.get("season"))
+            out[key] = f"{earliest}-07-01"
+    return out
 
 
 def bulk_detect_graduations(

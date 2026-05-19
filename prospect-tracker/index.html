@@ -1601,6 +1601,63 @@ function makeEtaCell(p) {
   </div>`;
 }
 
+// ─── Headline-stat helper ───────────────────────────────────────────────────
+// Returns the row-level "headline" statistic (wRC+ for hitters, xFIP for
+// pitchers) as a pre-styled HTML chip. The MLB Stats API only carries
+// real wRC+/xFIP for MLB seasons, so for MiLB-only prospects we fall back
+// to the level-relative proxy already computed in storage.py (OPS+ vs
+// league-by-level / ERA- vs league-by-level). Both flavors are labeled
+// inline ("wRC+" / "OPS+") so the reader always knows which they're seeing.
+//
+// Returns "" when no signal is available at all.
+function headlineStatHTML(player, opts = {}) {
+  const size = opts.size || "sm";          // sm | md (card detail)
+  const sl   = player.statline || {};
+  const sm   = player.sabermetrics || {};
+  const isPitcher = sl.is_pitcher;
+  const chipPad = size === "md" ? "3px 9px" : "2px 7px";
+  const chipFz  = size === "md" ? "13px"    : "11px";
+
+  // Choose primary metric in priority: real sabermetric → level-relative proxy.
+  let label, value, color, source;
+  if (isPitcher) {
+    if (sm.xfip != null) {
+      label = "xFIP"; value = sm.xfip.toFixed(2);
+      // xFIP under 3.50 is excellent; over 4.50 is below avg.
+      color = sm.xfip <= 3.50 ? "var(--up)" : sm.xfip >= 4.50 ? "var(--down)" : "var(--text-primary)";
+      source = "MLB · FanGraphs xFIP";
+    } else if (sl.era_minus_level != null) {
+      label = "ERA-";
+      value = sl.era_minus_level;
+      // ERA- under 100 = better than league avg at that level.
+      color = sl.era_minus_level <= 90 ? "var(--up)" : sl.era_minus_level >= 110 ? "var(--down)" : "var(--text-primary)";
+      source = `vs ${sl.level || "level"} median`;
+    } else {
+      return "";
+    }
+  } else {
+    if (sm.wrc_plus != null) {
+      label = "wRC+"; value = Math.round(sm.wrc_plus);
+      // 100 = league avg. >=140 elite, <=80 below avg.
+      color = sm.wrc_plus >= 110 ? "var(--up)" : sm.wrc_plus <= 90 ? "var(--down)" : "var(--text-primary)";
+      source = "MLB · FanGraphs wRC+";
+    } else if (sl.ops_plus_level != null) {
+      label = "OPS+";
+      value = sl.ops_plus_level;
+      color = sl.ops_plus_level >= 110 ? "var(--up)" : sl.ops_plus_level <= 90 ? "var(--down)" : "var(--text-primary)";
+      source = `vs ${sl.level || "level"} median`;
+    } else {
+      return "";
+    }
+  }
+  // Render as a "label : value" chip; the lighter label sits left of the
+  // bold value so the eye locks onto the number first.
+  return `<span title="${source}" style="display:inline-flex;align-items:baseline;gap:5px;padding:${chipPad};border:1px solid var(--border);background:var(--bg-tertiary);border-radius:3px;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:${chipFz};">
+    <span style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;font-weight:600;text-transform:uppercase;">${label}</span>
+    <span style="color:${color};font-weight:700;">${value}</span>
+  </span>`;
+}
+
 function makeMilbCell(p) {
   const sl = p.statline;
   const avl = p.age_vs_level;
@@ -1613,37 +1670,40 @@ function makeMilbCell(p) {
   const diff = (sl.level !== "MLB" && avl && avl.diff != null)
     ? (avl.diff > 0 ? `+${avl.diff.toFixed(1)}` : avl.diff.toFixed(1)) : "";
   const isPitcher = sl.is_pitcher;
-  const line = isPitcher
-    ? `${sl.era ?? "—"} ERA · ${sl.ip ?? "—"} IP`
+  // Supporting line: traditional rate stats + counting stats.
+  const slashLine = isPitcher
+    ? `${sl.era ?? "—"} ERA · ${sl.whip != null ? sl.whip + " WHIP · " : ""}${sl.ip ?? "—"} IP`
     : `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"}`;
   const detail = isPitcher
     ? `K/9 ${sl.k_per_9 ?? "—"} · BB/9 ${sl.bb_per_9 ?? "—"}`
-    : `${sl.hr ?? 0} HR · ${sl.sb ?? 0} SB`;
+    : `${sl.hr ?? 0} HR · ${sl.sb ?? 0} SB · ${sl.bb_pct != null ? sl.bb_pct.toFixed(1) + "% BB" : "—"} · ${sl.k_pct != null ? sl.k_pct.toFixed(1) + "% K" : "—"}`;
   const seasonTag = sl.is_prior_season && sl.season
     ? `<span class="prior-season-tag" title="No ${new Date().getFullYear()} stats yet — showing ${sl.season}">${sl.season}</span>`
     : "";
-  const lvlPlus = levelPlusHTML(sl);
+  const headline = headlineStatHTML(p);
   return `<div class="milb-cell milb-cell-wrap">
-    <span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${line}
-    ${diff ? `<span class="age-vs-level"> · ${diff} yrs</span>` : ""}
-    ${lvlPlus ? `<br/>${lvlPlus} <span style="color: var(--text-tertiary);">${detail}</span>` : `<br/><span style="color: var(--text-tertiary);">${detail}</span>`}
+    <span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${headline}
+    ${diff ? ` <span class="age-vs-level">${diff}y vs lvl</span>` : ""}
+    <br/><span style="color: var(--text-primary);">${slashLine}</span>
+    <br/><span style="color: var(--text-tertiary);">${detail}</span>
   </div>`;
 }
 
 function makeGradMilbCell(p) {
   const sl = p.statline;
   if (!sl) return `<div class="milb-cell"><span style="color: var(--text-tertiary);">stats unavailable</span></div>`;
-  const line = sl.is_pitcher
-    ? `${sl.era} ERA · ${sl.ip} IP`
-    : `${sl.avg}/${sl.obp}/${sl.slg}`;
+  const slashLine = sl.is_pitcher
+    ? `${sl.era ?? "—"} ERA · ${sl.whip != null ? sl.whip + " WHIP · " : ""}${sl.ip ?? "—"} IP`
+    : `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"}`;
   const detail = sl.is_pitcher
     ? `K/9 ${sl.k_per_9 ?? "—"} · BB/9 ${sl.bb_per_9 ?? "—"}`
     : `${sl.hr ?? 0} HR · ${sl.sb ?? 0} SB`;
   const seasonTag = sl.is_prior_season && sl.season
     ? `<span class="prior-season-tag" title="No ${new Date().getFullYear()} stats — showing ${sl.season}">${sl.season}</span> `
     : "";
+  const headline = headlineStatHTML(p);
   return `<div class="milb-cell">
-    ${seasonTag}<strong style="font-weight: 500; color: var(--text-primary);">${line}</strong>
+    ${seasonTag}${headline ? headline + "<br/>" : ""}<strong style="font-weight: 600; color: var(--text-primary);">${slashLine}</strong>
     <br/><span style="color: var(--text-tertiary);">${detail}</span>
   </div>`;
 }
@@ -2670,49 +2730,219 @@ function makeOrgFvChart(org, variant = "big") {
 }
 
 // Year-by-year stat table for the prospect page.
+//
+// Columns are grouped by category — counting / rate / sabermetric — with
+// a colored category header row over them so the reader can navigate to
+// the metric they want without scanning every column header. Group widths
+// are tuned to keep AVG/OBP/SLG together (slash line stays adjacent) and
+// to keep the "headline" sabermetric (wRC+ or xFIP) in the rightmost
+// column where the eye lands last.
 function makeCareerTable(career) {
   if (!career || !career.length) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No multi-season stats available.</div>`;
   }
   const isP = career[0].is_pitcher;
-  const head = isP
-    ? `<tr><th>Season</th><th>Level</th><th>G</th><th>IP</th><th>ERA</th><th>WHIP</th><th>K/9</th><th>BB/9</th><th>W-L</th></tr>`
-    : `<tr><th>Season</th><th>Level</th><th>G</th><th>AVG</th><th>OBP</th><th>SLG</th><th>OPS</th><th>HR</th><th>SB</th><th>BB%</th><th>K%</th></tr>`;
-  const rows = career.map(s => isP
-    ? `<tr><td>${s.season}</td><td><span class="level-pill level-neutral">${s.level}</span></td><td>${s.games}</td><td>${s.ip ?? "—"}</td><td>${s.era ?? "—"}</td><td>${s.whip ?? "—"}</td><td>${s.k_per_9 ?? "—"}</td><td>${s.bb_per_9 ?? "—"}</td><td>${s.wins}-${s.losses}</td></tr>`
-    : `<tr><td>${s.season}</td><td><span class="level-pill level-neutral">${s.level}</span></td><td>${s.games}</td><td>${s.avg}</td><td>${s.obp}</td><td>${s.slg}</td><td>${s.ops}</td><td>${s.hr}</td><td>${s.sb}</td><td>${s.bb_pct != null ? s.bb_pct.toFixed(1) : "—"}</td><td>${s.k_pct != null ? s.k_pct.toFixed(1) : "—"}</td></tr>`
-  ).join("");
-  return `<table class="detail-table"><thead>${head}</thead><tbody>${rows}</tbody></table>`;
+
+  // Sort descending by season so the most recent year is up top.
+  const sorted = [...career].sort((a, b) => (b.season || 0) - (a.season || 0));
+
+  // A "category strip" sits above the column headers. Each cell spans
+  // its category and is tinted lightly so groups read at a glance.
+  const stripStyle = (color) => `padding:5px 8px;background:${color};color:#FBF8F0;text-align:center;font-family:var(--font-sans);font-size:9px;letter-spacing:0.10em;text-transform:uppercase;font-weight:600;border-right:1px solid var(--bg-primary);`;
+  const META_COLOR  = "#3D4A5C";   // slate, season/level
+  const COUNT_COLOR = "#5B6E7E";   // muted blue, counting stats
+  const RATE_COLOR  = "#3F6F47";   // forest, rate / slash stats
+  const SABR_COLOR  = "#8B5A1F";   // burnt orange, sabermetric
+
+  if (isP) {
+    // Pitcher table: META | COUNTING (G, IP, W-L) | RATE (ERA, WHIP, K/9, BB/9) | SABERMETRIC (FIP placeholder)
+    const strip = `<tr>
+      <th colspan="2" style="${stripStyle(META_COLOR)}">Meta</th>
+      <th colspan="3" style="${stripStyle(COUNT_COLOR)}">Counting</th>
+      <th colspan="4" style="${stripStyle(RATE_COLOR)}">Rate</th>
+    </tr>`;
+    const head = `<tr>
+      <th>Season</th><th>Level</th>
+      <th title="Games appeared">G</th>
+      <th title="Innings pitched">IP</th>
+      <th title="Wins–Losses">W-L</th>
+      <th title="Earned Run Average">ERA</th>
+      <th title="Walks + Hits per Inning Pitched">WHIP</th>
+      <th title="Strikeouts per 9 innings">K/9</th>
+      <th title="Walks per 9 innings">BB/9</th>
+    </tr>`;
+    const rows = sorted.map(s => `<tr>
+      <td>${s.season}</td>
+      <td><span class="level-pill level-neutral">${s.level}</span></td>
+      <td>${s.games ?? "—"}</td>
+      <td>${s.ip ?? "—"}</td>
+      <td>${s.wins != null ? `${s.wins}-${s.losses}` : "—"}</td>
+      <td>${s.era ?? "—"}</td>
+      <td>${s.whip ?? "—"}</td>
+      <td>${s.k_per_9 != null ? s.k_per_9.toFixed(2) : "—"}</td>
+      <td>${s.bb_per_9 != null ? s.bb_per_9.toFixed(2) : "—"}</td>
+    </tr>`).join("");
+    return `<table class="detail-table"><thead>${strip}${head}</thead><tbody>${rows}</tbody></table>`;
+  }
+
+  // Hitter table: META | COUNTING (G, AB, HR, SB) | RATE (AVG/OBP/SLG/OPS) | SABERMETRIC (BB%, K%, ISO)
+  const strip = `<tr>
+    <th colspan="2" style="${stripStyle(META_COLOR)}">Meta</th>
+    <th colspan="4" style="${stripStyle(COUNT_COLOR)}">Counting</th>
+    <th colspan="4" style="${stripStyle(RATE_COLOR)}">Slash &amp; Power</th>
+    <th colspan="3" style="${stripStyle(SABR_COLOR)}">Plate discipline</th>
+  </tr>`;
+  const head = `<tr>
+    <th>Season</th><th>Level</th>
+    <th title="Games">G</th>
+    <th title="At-Bats">AB</th>
+    <th title="Home Runs">HR</th>
+    <th title="Stolen Bases">SB</th>
+    <th title="Batting Average">AVG</th>
+    <th title="On-Base Percentage">OBP</th>
+    <th title="Slugging Percentage">SLG</th>
+    <th title="OBP + SLG">OPS</th>
+    <th title="Walk rate">BB%</th>
+    <th title="Strikeout rate">K%</th>
+    <th title="Isolated power = SLG − AVG">ISO</th>
+  </tr>`;
+  const iso = (s) => {
+    const slg = parseFloat(s.slg);
+    const avg = parseFloat(s.avg);
+    if (!isFinite(slg) || !isFinite(avg)) return "—";
+    return (slg - avg).toFixed(3).replace(/^0/, "");
+  };
+  const rows = sorted.map(s => `<tr>
+    <td>${s.season}</td>
+    <td><span class="level-pill level-neutral">${s.level}</span></td>
+    <td>${s.games ?? "—"}</td>
+    <td>${s.ab ?? "—"}</td>
+    <td>${s.hr ?? "—"}</td>
+    <td>${s.sb ?? "—"}</td>
+    <td>${s.avg ?? "—"}</td>
+    <td>${s.obp ?? "—"}</td>
+    <td>${s.slg ?? "—"}</td>
+    <td>${s.ops ?? "—"}</td>
+    <td>${s.bb_pct != null ? s.bb_pct.toFixed(1) : "—"}</td>
+    <td>${s.k_pct != null ? s.k_pct.toFixed(1) : "—"}</td>
+    <td>${iso(s)}</td>
+  </tr>`).join("");
+  return `<table class="detail-table"><thead>${strip}${head}</thead><tbody>${rows}</tbody></table>`;
 }
 
-// Statcast block — exit velo / hard hit / launch angle / barrel %.
-function makeStatcastBlock(sc) {
-  if (!sc) return `<div style="color:var(--text-tertiary);font-size:12px;">No Statcast data on file.</div>`;
-  const tiles = [
-    ["Exit velo",   sc.exit_velo != null ? `${sc.exit_velo} mph` : "—"],
-    ["Hard hit %",  sc.hard_hit_pct != null ? `${sc.hard_hit_pct}%` : "—"],
-    ["Launch angle",sc.launch_angle != null ? `${sc.launch_angle}°` : "—"],
-    ["Barrel %",    sc.barrel_pct != null ? `${sc.barrel_pct}%` : "—"],
-  ];
-  return `<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">${tiles.map(([k, v]) => `
-    <div class="stat-tile">
-      <div class="stat-label">${k}</div>
-      <div class="stat-value" style="color:var(--neon-cyan);font-family:var(--font-mono);font-size:17px;">${v}</div>
+// Sabermetrics block — wRC+ / wOBA / WAR (hitters), xFIP / FIP / FIP-
+// / ERA- / WAR (pitchers). When the MLB Stats API has nothing on file
+// (every MiLB-only prospect), falls back to level-relative proxies
+// (OPS+ vs level / ERA- vs level) so the slot is never blank.
+function makeSabermetricsBlock(player) {
+  const sm = player.sabermetrics;
+  const sl = player.statline || {};
+  // Color thresholds — paint values when they're clearly above / below
+  // average so the eye can pick out elite / poor numbers at a glance.
+  const goodC = "var(--up)", badC = "var(--down)", neutralC = "var(--text-primary)";
+  const colorize = (good, bad, val) => val == null ? neutralC : (good ? goodC : bad ? badC : neutralC);
+
+  const tiles = [];
+  if (sm && (sm.wrc_plus != null || sm.woba != null || sm.war != null)) {
+    // MLB hitter — use real wRC+ / wOBA
+    if (sm.wrc_plus != null) {
+      const v = Math.round(sm.wrc_plus);
+      tiles.push(["wRC+", v, colorize(v >= 110, v <= 90, v),
+                  "Weighted Runs Created+ · 100 = league avg, higher is better"]);
+    }
+    if (sm.woba != null) {
+      const v = sm.woba.toFixed(3).replace(/^0/, "");
+      tiles.push(["wOBA", v, colorize(sm.woba >= 0.340, sm.woba <= 0.300, sm.woba),
+                  "Weighted On-Base Average · linear-weights scale, .320 ≈ avg"]);
+    }
+    if (sm.war != null) {
+      const v = sm.war.toFixed(1);
+      tiles.push(["WAR", v, colorize(sm.war >= 2.0, sm.war <= 0, sm.war),
+                  "FanGraphs Wins Above Replacement"]);
+    }
+  } else if (sm && (sm.xfip != null || sm.fip != null || sm.fip_minus != null || sm.era_minus != null || sm.war != null)) {
+    // MLB pitcher — use real xFIP / FIP / FIP-
+    if (sm.xfip != null) {
+      tiles.push(["xFIP", sm.xfip.toFixed(2), colorize(sm.xfip <= 3.50, sm.xfip >= 4.50, sm.xfip),
+                  "Expected FIP · neutralizes HR/FB rate · league avg ≈ 4.00"]);
+    }
+    if (sm.fip != null) {
+      tiles.push(["FIP", sm.fip.toFixed(2), colorize(sm.fip <= 3.50, sm.fip >= 4.50, sm.fip),
+                  "Fielding-Independent Pitching · same scale as ERA"]);
+    }
+    if (sm.fip_minus != null) {
+      const v = Math.round(sm.fip_minus);
+      tiles.push(["FIP-", v, colorize(v <= 90, v >= 110, v),
+                  "FIP- · 100 = league avg, lower is better"]);
+    }
+    if (sm.era_minus != null) {
+      const v = Math.round(sm.era_minus);
+      tiles.push(["ERA-", v, colorize(v <= 90, v >= 110, v),
+                  "ERA- · 100 = league avg, lower is better"]);
+    }
+    if (sm.war != null) {
+      tiles.push(["WAR", sm.war.toFixed(1), colorize(sm.war >= 2.0, sm.war <= 0, sm.war),
+                  "FanGraphs Wins Above Replacement"]);
+    }
+  } else if (sl.ops_plus_level != null || sl.era_minus_level != null) {
+    // MiLB fallback — level-relative proxies.
+    if (sl.is_pitcher && sl.era_minus_level != null) {
+      const v = sl.era_minus_level;
+      tiles.push([
+        "ERA- (vs level)", v, colorize(v <= 90, v >= 110, v),
+        `Earned Run Average vs ${sl.level || "level"} median · proxy for xFIP (real xFIP requires MLB data)`,
+      ]);
+    } else if (!sl.is_pitcher && sl.ops_plus_level != null) {
+      const v = sl.ops_plus_level;
+      tiles.push([
+        "OPS+ (vs level)", v, colorize(v >= 110, v <= 90, v),
+        `On-base + Slugging vs ${sl.level || "level"} median · proxy for wRC+ (real wRC+ requires MLB data)`,
+      ]);
+    }
+  }
+
+  if (!tiles.length) {
+    return `<div style="color:var(--text-tertiary);font-size:12px;">No advanced stats available yet. ${sl.is_pitcher ? "xFIP" : "wRC+"} requires MLB-level data; level-relative proxies need enough innings/PAs to stabilize.</div>`;
+  }
+
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;">${tiles.map(([label, val, color, title]) => `
+    <div class="stat-tile" title="${escapeHtml(title)}">
+      <div class="stat-label">${escapeHtml(label)}</div>
+      <div class="stat-value" style="color:${color};font-family:var(--font-mono);">${val}</div>
     </div>`).join("")}</div>`;
 }
 
 // Pitch arsenal block — pitch type × usage % × avg velo.
+// Coverage: MLB Stats API only exposes pitch-tracking data for MLB
+// games, so this is populated for graduates and the rare MiLB prospect
+// who's gotten MLB innings. For pure MiLB prospects the block surfaces
+// a clear "not available at this level" message so the user knows the
+// gap is data coverage, not a missing prospect.
 function makeArsenalBlock(pa) {
   if (!pa || !(pa.pitches || []).length) {
-    return `<div style="color:var(--text-tertiary);font-size:12px;">No pitch arsenal data on file.</div>`;
+    return `<div style="color:var(--text-tertiary);font-size:12px;line-height:1.5;">No pitch-tracking data on file. MLB Stats API only carries pitch arsenal for MLB games; MiLB-only pitchers don't yet have this exposed publicly.</div>`;
   }
-  const rows = pa.pitches.map(p => `<tr>
-    <td><span class="src-tag">${escapeHtml(p.pitch_type)}</span> ${escapeHtml(p.pitch_name)}</td>
-    <td style="text-align:right;font-variant-numeric:tabular-nums;">${p.avg_speed != null ? p.avg_speed.toFixed(1) + " mph" : "—"}</td>
-    <td style="text-align:right;font-variant-numeric:tabular-nums;">${p.usage_pct != null ? (p.usage_pct * 100).toFixed(1) + "%" : "—"}</td>
-  </tr>`).join("");
-  const fb = pa.fb_velo != null ? `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;">Primary fastball: <span style="color:var(--neon-green);">${pa.fb_velo} mph</span></div>` : "";
-  return fb + `<table class="detail-table"><thead><tr><th>Pitch</th><th style="text-align:right;">Velo</th><th style="text-align:right;">Usage</th></tr></thead><tbody>${rows}</tbody></table>`;
+  // Sort pitches descending by usage for clear primary-vs-secondary read.
+  const sorted = [...pa.pitches].sort((a, b) => (b.usage_pct || 0) - (a.usage_pct || 0));
+  const rows = sorted.map(p => {
+    // Visual usage bar: 100% of column width = ~highest usage in arsenal.
+    const pct = p.usage_pct != null ? p.usage_pct * 100 : 0;
+    const bar = `<div style="display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums;">
+      <div style="flex:1;height:6px;background:var(--bg-tertiary);border:1px solid var(--border-light);border-radius:2px;overflow:hidden;">
+        <div style="width:${Math.min(100, pct).toFixed(1)}%;height:100%;background:var(--neon-cyan);"></div>
+      </div>
+      <span style="color:var(--text-primary);min-width:42px;text-align:right;">${pct.toFixed(1)}%</span>
+    </div>`;
+    return `<tr>
+      <td><span class="src-tag">${escapeHtml(p.pitch_type)}</span> ${escapeHtml(p.pitch_name)}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;">${p.avg_speed != null ? p.avg_speed.toFixed(1) + " mph" : "—"}</td>
+      <td>${bar}</td>
+    </tr>`;
+  }).join("");
+  const fb = pa.fb_velo != null
+    ? `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-family:var(--font-sans);">Primary fastball velo: <span style="color:var(--neon-green);font-family:var(--font-mono);font-weight:700;">${pa.fb_velo.toFixed(1)} mph</span></div>`
+    : "";
+  return fb + `<table class="detail-table"><thead><tr><th>Pitch</th><th style="text-align:right;">Velo</th><th style="text-align:left;">Usage</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 // Trade history block on the prospect page — every real trade, oldest first.
@@ -2834,7 +3064,36 @@ function renderPlayerDetail(key) {
   const ageSub = (avl.tier && avl.tier !== "unknown" && ageNorm.median_age != null)
     ? `${sl.level} median ${ageNorm.median_age.toFixed(1)}y`
     : "";
+  // Headline sabermetric tile — leads the row so the reader sees the
+  // most-important rate stat first. Pulls real wRC+/xFIP when the API
+  // has them; falls back to OPS+/ERA- (vs level) otherwise. The sub
+  // line says where the number comes from so the reader knows whether
+  // it's a real sabermetric or a level-relative proxy.
+  //
+  // `isPitcher` is derived from position (regex) rather than
+  // statline.is_pitcher because graduates / inactives may not carry a
+  // statline. The same variable feeds the pitch-arsenal section below.
+  const sm = p.sabermetrics || {};
+  const isPitcher = p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position);
+  let headlineTile = null;
+  if (isPitcher) {
+    if (sm.xfip != null) {
+      headlineTile = ["xFIP", sm.xfip.toFixed(2), "MLB · FanGraphs"];
+    } else if (sl.era_minus_level != null) {
+      headlineTile = [`ERA- vs ${sl.level || "level"}`, sl.era_minus_level,
+                       "proxy for xFIP · 100 = level avg"];
+    }
+  } else {
+    if (sm.wrc_plus != null) {
+      headlineTile = ["wRC+", Math.round(sm.wrc_plus), "MLB · FanGraphs"];
+    } else if (sl.ops_plus_level != null) {
+      headlineTile = [`OPS+ vs ${sl.level || "level"}`, sl.ops_plus_level,
+                       "proxy for wRC+ · 100 = level avg"];
+    }
+  }
+
   const tiles = [
+    ...(headlineTile ? [headlineTile] : []),
     ["FV high", p.fv_high_label || p.fv_high || "—", `${p.fv_high_date || ""}`],
     ["FV low",  p.fv_low_label  || p.fv_low  || "—", `${p.fv_low_date || ""}`],
     ["FV open", p.fv_open ?? "—", ""],
@@ -2844,12 +3103,21 @@ function renderPlayerDetail(key) {
         : "—", ageSub],
     ["ETA", eta.year != null ? eta.year : "—", eta.confidence ? `${eta.confidence} conf` : ""],
   ];
-  const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:20px;">${tiles.map(([k, v, sub]) => `
-    <div class="stat-tile">
+  const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;">${tiles.map(([k, v, sub], idx) => {
+    // Headline tile (when present) gets emphasized: thicker left rule
+    // in the team color and a slightly larger value font.
+    const isHead = headlineTile && idx === 0;
+    const extraStyle = isHead
+      ? `border-left:4px solid var(--org-color, var(--bg-header));`
+      : "";
+    const valStyle = isHead ? `font-size:24px;color:var(--neon-cyan);` : "";
+    return `
+    <div class="stat-tile" style="${extraStyle}">
       <div class="stat-label">${k}</div>
-      <div class="stat-value">${v}</div>
+      <div class="stat-value" style="${valStyle}">${v}</div>
       ${sub ? `<div class="stat-sub">${sub}</div>` : ""}
-    </div>`).join("")}</div>`;
+    </div>`;
+  }).join("")}</div>`;
 
   // Level benchmark block — shows the empirical age/OPS/ERA medians
   // at every level the player has touched in their career_stats, plus
@@ -2893,8 +3161,6 @@ function renderPlayerDetail(key) {
       <table class="detail-table"><thead><tr><th>Season</th><th>Level</th><th>Age vs level median</th><th>${perfHeader}</th></tr></thead><tbody>${rows}</tbody></table>`;
   })();
 
-  const isPitcher = p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position);
-
   const chartSection = (p.points && p.points.length >= 2)
     ? `<div class="detail-title">FV history</div>${makeBigLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p.career_stats, p)}
        ${transactionLegend()}`
@@ -2904,7 +3170,15 @@ function renderPlayerDetail(key) {
 
   const sourceSection = `<div class="detail-title" style="margin-top:18px;">Source-by-source FV history</div>${makePerSourceHistory(p.points || [])}`;
 
-  const statcastSection = `<div class="detail-title">Statcast</div>${makeStatcastBlock(p.statcast)}`;
+  // Sabermetrics block — wRC+/xFIP for MLB players, level-relative
+  // proxies (OPS+ / ERA-) otherwise. Title flexes with what's shown
+  // so the user always knows what they're looking at.
+  const _sm = p.sabermetrics || {};
+  const _hasRealSabr = (_sm.wrc_plus != null || _sm.xfip != null);
+  const sabermetricsTitle = _hasRealSabr
+    ? `Advanced stats <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">FanGraphs sabermetrics (MLB)</span>`
+    : `Advanced stats <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">level-relative proxies · MLB sabermetrics unavailable for MiLB</span>`;
+  const sabermetricsSection = `<div class="detail-title">${sabermetricsTitle}</div>${makeSabermetricsBlock(p)}`;
 
   const arsenalSection = isPitcher
     ? `<div class="detail-title" style="margin-top:18px;">Pitch arsenal</div>${makeArsenalBlock(p.pitch_arsenal)}`
@@ -3058,7 +3332,7 @@ function renderPlayerDetail(key) {
   root.innerHTML = header + tilesHtml + `
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
       <div>${chartSection}${careerSection}${levelBenchmarkSection}${sourceSection}</div>
-      <div>${ilSection}${statcastSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${etaRows}</div>
+      <div>${ilSection}${sabermetricsSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${etaRows}</div>
     </div>`;
 }
 

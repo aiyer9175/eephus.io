@@ -35,16 +35,16 @@ from storage import (
     upsert_birth_date, load_birth_dates,
     auto_graduate_player,
     upsert_pitch_arsenals, load_pitch_arsenals,
-    upsert_statcast_metrics, load_statcast_metrics,
+    upsert_sabermetrics, load_sabermetrics,
     upsert_career_stats, load_career_stats, load_career_stats_meta,
     upsert_acquisitions, load_acquisitions,
     upsert_il_status, load_il_status,
     export_timeseries_json,
 )
 from consensus import build_timeseries
-from stats import (fetch_statlines_for, fetch_birth_date,
+from stats import (fetch_statlines_for, derive_statlines_from_career, fetch_birth_date,
                    fetch_birth_date_by_name,
-                   fetch_pitch_arsenal, fetch_statcast_metrics,
+                   fetch_pitch_arsenal, fetch_sabermetrics,
                    fetch_career_stats,
                    bulk_resolve_ids,
                    detect_graduations_from_career,
@@ -391,20 +391,25 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 career_cache.update(new_career)
             log.info("fetched career stats for %d players", len(new_career))
 
-        # --- 3b. Fetch current-season stat lines (top-level digest) -------
+        # --- 3b. Derive current-season stat lines (top-level digest) ------
         # Skips already-graduated prospects since their graduation snapshot
         # already exists; the existing statlines row in the DB is preserved
-        # for the export.
+        # for the export. The career_cache populated in step 3a already
+        # contains every season's row per player, so we derive the
+        # current-or-most-recent statline from it without firing another
+        # HTTP call — even for the "no 2026 stats — using 2025" fallback
+        # case which previously fired 4–8 per-player requests during the
+        # year walkback.
         if not skip_stats:
             non_grad_for_statlines = [
                 (p.player_key, p.player_name, _is_pitcher(p.position))
                 for p in timeseries if p.status != "graduated"
             ]
-            log.info("fetching stat lines for %d non-graduated prospects (all levels)",
+            log.info("deriving stat lines for %d non-graduated prospects from career cache",
                      len(non_grad_for_statlines))
-            new_statlines = fetch_statlines_for(
-                non_grad_for_statlines, season,
-                max_workers=workers, id_cache=ids_by_key,
+            new_statlines = derive_statlines_from_career(
+                non_grad_for_statlines, career_cache, season,
+                id_cache=ids_by_key,
             )
             stat_count = upsert_statlines(new_statlines, season)
             log.info("upserted %d stat lines", stat_count)
@@ -440,20 +445,23 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             all_snaps = load_all_snapshots()
             timeseries = build_timeseries(all_snaps)
 
-        # --- 3d. Pitch arsenals (pitchers) + Statcast metrics (everyone).
-        # Both are best-effort: many MiLB players won't have data, especially
-        # below AA. --fast skips both for dev iteration.
+        # --- 3d. Pitch arsenals (pitchers) + sabermetrics (everyone).
+        # The MLB Stats API only carries this data for MLB seasons, so most
+        # MiLB-only prospects return None. We still include GRADUATES here
+        # because that's where the data actually exists — the prospect
+        # detail page for a graduate gets wRC+/xFIP/arsenal from these
+        # calls. --fast skips both for dev iteration.
         arsenals = load_pitch_arsenals()
-        statcast = load_statcast_metrics()
+        sabermetrics = load_sabermetrics()
         if not skip_stats:
             if fast:
-                log.info("--fast: skipping pitch arsenals + Statcast metrics")
+                log.info("--fast: skipping pitch arsenals + sabermetrics")
             else:
                 pitchers = [(p.player_key, p.player_name)
                             for p in timeseries
-                            if _is_pitcher(p.position) and p.status != "graduated"]
+                            if _is_pitcher(p.position)]
                 all_active = [(p.player_key, p.player_name, _is_pitcher(p.position))
-                              for p in timeseries if p.status != "graduated"]
+                              for p in timeseries]
 
                 log.info("fetching pitch arsenals for %d pitchers", len(pitchers))
                 new_arsenals: dict = {}
@@ -486,36 +494,42 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                         arsenals[k] = asdict(pa)
                 log.info("fetched %d pitch arsenals", len(new_arsenals))
 
-                log.info("fetching Statcast metrics for %d players", len(all_active))
-                new_statcast: dict = {}
-                sc_tasks: list[tuple[str, int, bool]] = [
+                # Sabermetrics (wRC+ / xFIP / wOBA / FIP / FIP- / ERA-).
+                # The MLB Stats API sabermetrics endpoint only covers MLB
+                # seasons, so for most tracked prospects this call returns
+                # None. We still attempt it for everyone: graduates have
+                # full MLB time, and any tracked prospect who's had even
+                # a brief MLB cup-of-coffee will surface a value.
+                log.info("fetching sabermetrics (wRC+/xFIP) for %d players", len(all_active))
+                new_sabermetrics: dict = {}
+                sm_tasks: list[tuple[str, int, bool]] = [
                     (key, ids_by_key[key], is_p) for key, _name, is_p in all_active
                     if key in ids_by_key and ids_by_key[key] is not None
                 ]
-                if sc_tasks:
+                if sm_tasks:
                     if workers is not None:
-                        max_workers = max(1, min(workers, len(sc_tasks)))
+                        max_workers = max(1, min(workers, len(sm_tasks)))
                     else:
-                        max_workers = min(16, max(1, len(sc_tasks)))
+                        max_workers = min(16, max(1, len(sm_tasks)))
                     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
                         future_to_key = {
-                            ex.submit(fetch_statcast_metrics, key, mlbam, season, is_pitcher=is_p): key
-                            for key, mlbam, is_p in sc_tasks
+                            ex.submit(fetch_sabermetrics, key, mlbam, season, is_pitcher=is_p): key
+                            for key, mlbam, is_p in sm_tasks
                         }
                         for fut in concurrent.futures.as_completed(future_to_key):
                             key = future_to_key[fut]
                             try:
-                                sc = fut.result()
-                                if sc:
-                                    new_statcast[key] = sc
+                                sm = fut.result()
+                                if sm:
+                                    new_sabermetrics[key] = sm
                             except Exception as e:
-                                log.debug("statcast fetch failed for %s: %s", key, e)
-                if new_statcast:
-                    upsert_statcast_metrics(new_statcast, season)
-                    for k, sc in new_statcast.items():
+                                log.debug("sabermetrics fetch failed for %s: %s", key, e)
+                if new_sabermetrics:
+                    upsert_sabermetrics(new_sabermetrics, season)
+                    for k, sm in new_sabermetrics.items():
                         from dataclasses import asdict
-                        statcast[k] = asdict(sc)
-                log.info("fetched Statcast metrics for %d players", len(new_statcast))
+                        sabermetrics[k] = asdict(sm)
+                log.info("fetched sabermetrics for %d players", len(new_sabermetrics))
 
 
         # Trade detection. The org-change inference always runs (just walks
@@ -539,7 +553,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         export_timeseries_json(timeseries, out_path,
                                statlines=statlines,
                                pitch_arsenals=arsenals,
-                               statcast_metrics=statcast,
+                               sabermetrics=sabermetrics,
                                trades_by_player=trades_by_player,
                                career_stats=load_career_stats(),
                                acquisitions=load_acquisitions(),

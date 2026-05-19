@@ -83,10 +83,10 @@ CREATE TABLE IF NOT EXISTS pitch_arsenals (
     fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE TABLE IF NOT EXISTS statcast_metrics (
+CREATE TABLE IF NOT EXISTS sabermetrics (
     player_key   TEXT PRIMARY KEY,
     season       INTEGER NOT NULL,
-    payload_json TEXT NOT NULL,       -- serialized StatcastMetrics dataclass
+    payload_json TEXT NOT NULL,       -- serialized Sabermetrics dataclass
     fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -364,30 +364,30 @@ def load_pitch_arsenals() -> dict[str, dict]:
     return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
 
 
-def upsert_statcast_metrics(metrics: dict[str, "StatcastMetrics"], season: int) -> int:
-    """Upsert Statcast metrics. One row per player."""
+def upsert_sabermetrics(metrics: dict[str, "Sabermetrics"], season: int) -> int:
+    """Upsert sabermetrics (wRC+, xFIP, wOBA, FIP, ...). One row per player."""
     n = 0
     with connect() as con:
-        for key, sc in metrics.items():
+        for key, sm in metrics.items():
             con.execute(
-                """INSERT INTO statcast_metrics (player_key, season, payload_json, fetched_at)
+                """INSERT INTO sabermetrics (player_key, season, payload_json, fetched_at)
                    VALUES (?, ?, ?, ?)
                    ON CONFLICT(player_key) DO UPDATE SET
                      season=excluded.season,
                      payload_json=excluded.payload_json,
                      fetched_at=excluded.fetched_at""",
-                (key, season, json.dumps(asdict(sc)), sc.fetched_at),
+                (key, season, json.dumps(asdict(sm)), sm.fetched_at),
             )
             n += 1
     return n
 
 
-def load_statcast_metrics() -> dict[str, dict]:
-    """Return {player_key: metrics_dict} for all stored Statcast metrics."""
+def load_sabermetrics() -> dict[str, dict]:
+    """Return {player_key: metrics_dict} for all stored sabermetrics."""
     try:
         with connect() as con:
             rows = con.execute(
-                "SELECT player_key, payload_json FROM statcast_metrics"
+                "SELECT player_key, payload_json FROM sabermetrics"
             ).fetchall()
     except sqlite3.OperationalError:
         return {}
@@ -720,7 +720,7 @@ def _build_org_fv_history(
 def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           statlines: dict[str, dict] | None = None,
                           pitch_arsenals: dict[str, dict] | None = None,
-                          statcast_metrics: dict[str, dict] | None = None,
+                          sabermetrics: dict[str, dict] | None = None,
                           trades_by_player: dict[str, list[dict]] | None = None,
                           career_stats: dict[str, list[dict]] | None = None,
                           acquisitions: dict[str, dict] | None = None,
@@ -733,7 +733,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     Each player now carries:
       - statline      : slash line / ERA at the highest level this season
       - pitch_arsenal : pitch mix and velo for pitchers (may be None)
-      - statcast      : exit velo, hard-hit %, launch angle, barrel % (may be None)
+      - sabermetrics  : wRC+ / wOBA (hitters), xFIP / FIP / FIP- / ERA-
+                        (pitchers). MLB-only coverage from the MLB Stats
+                        API sabermetrics endpoint; None for prospects who
+                        have not yet appeared in the majors. The UI falls
+                        back to OPS+ (vs level) and ERA- (vs level) — the
+                        `ops_plus_level` / `era_minus_level` fields on
+                        `statline` — when sabermetrics aren't available.
       - trades        : list of trade events
       - career_stats  : year-by-year stats (most recent first), capped at
                         CAREER_SEASONS_KEPT and collapsed to highest level
@@ -742,7 +748,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     """
     statlines = statlines or {}
     pitch_arsenals = pitch_arsenals or {}
-    statcast_metrics = statcast_metrics or {}
+    sabermetrics = sabermetrics or {}
     trades_by_player = trades_by_player or {}
     career_stats = career_stats or {}
     acquisitions = acquisitions or {}
@@ -1050,7 +1056,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         level = sl.get("level") if sl else None
         avl = score_age_vs_level(age, level, baselines=age_baselines)
         pa = pitch_arsenals.get(p.player_key)
-        sc = statcast_metrics.get(p.player_key)
+        sm = sabermetrics.get(p.player_key)
         is_pitcher = bool(p.position and p.position.split("/")[0] in PITCHER_POS_SET)
         latest_fv = p.points[-1].consensus_fv_raw if p.points else None
         eta = estimate_eta(
@@ -1133,7 +1139,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "stock": stock_movement(p),
             "statline": sl_out,
             "pitch_arsenal": pa,
-            "statcast": sc,
+            "sabermetrics": sm,
             "trades": filtered_trades,
             "career_stats": career_stats.get(p.player_key, []),
             "acquisition": acq,
