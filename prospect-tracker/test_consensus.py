@@ -454,19 +454,21 @@ class TestForwardFill:
 class TestShrinkage:
     """Adjusted FV = (n / (n+k)) * raw + (k / (n+k)) * mean_fv."""
 
-    def test_apply_shrinkage_one_source_pulls_a_third_to_prior(self):
-        # Single FG snap at FV 70 with k=2 should land at:
-        # (1/3)*70 + (2/3)*45 = 23.33 + 30 = 53.33 → 53
+    def test_apply_shrinkage_one_source_pulls_hard_to_prior(self):
+        # Single FG snap at FV 70. k=2, N_full=5, n=1:
+        # k_eff = 2 * (5-1)/5 = 1.6
+        # weight = 1 / (1 + 1.6) = 0.3846
+        # adjusted = 0.3846*70 + 0.6154*45 = 26.92 + 27.69 = 54.62 → 55
         snaps = [_snap("fangraphs", "X", fv=70.0)]
         p = build_timeseries(snaps, shrinkage_k=2.0, prior_mean_fv=45.0)[0]
         pt = p.points[-1]
         assert pt.consensus_fv_pre_shrinkage == 70.0
-        assert pt.consensus_fv_raw == pytest.approx(53.33, abs=0.01)
-        assert pt.consensus_fv == 53.0
-        assert pt.shrinkage_weight == pytest.approx(1/3, abs=0.001)
+        assert pt.shrinkage_weight == pytest.approx(1/2.6, abs=0.001)
+        assert pt.consensus_fv_raw == pytest.approx(54.62, abs=0.01)
+        assert pt.consensus_fv == 55.0
 
-    def test_more_sources_means_less_shrinkage(self):
-        """n=5 with k=2 keeps 5/7 ≈ 71% weight on the raw value."""
+    def test_full_coverage_zero_shrinkage(self):
+        """n = N_full → no shrinkage at all. Made's case."""
         snaps = [
             _snap("fangraphs",        "X", fv=70.0),
             _snap("espn",             "X", fv=70.0),
@@ -476,9 +478,55 @@ class TestShrinkage:
         ]
         p = build_timeseries(snaps, shrinkage_k=2.0, prior_mean_fv=45.0)[0]
         pt = p.points[-1]
-        assert pt.shrinkage_weight == pytest.approx(5/7, abs=0.001)
-        # (5/7)*70 + (2/7)*45 = 50 + 12.857 = 62.857 → 63
-        assert pt.consensus_fv == 63.0
+        assert pt.shrinkage_weight == 1.0
+        assert pt.consensus_fv_raw == 70.0
+        assert pt.consensus_fv == 70.0
+
+    def test_above_full_coverage_still_zero_shrinkage(self):
+        """A six-source player (e.g. domestic + Pipeline Intl) still has
+        k_eff clamped to 0 by the max(0, ...) guard."""
+        snaps = [
+            _snap("fangraphs",        "X", fv=60.0),
+            _snap("espn",             "X", fv=60.0),
+            _snap("just_baseball",    "X", fv=60.0),
+            _snap("tjstats",          "X", fv=60.0),
+            _snap("mlb_pipeline",     "X", fv=60.0),
+            _snap("mlb_pipeline_international", "X", fv=60.0),
+        ]
+        p = build_timeseries(snaps, shrinkage_k=2.0, prior_mean_fv=45.0)[0]
+        pt = p.points[-1]
+        assert pt.shrinkage_weight == 1.0
+        assert pt.consensus_fv == 60.0
+
+    def test_partial_coverage_moderate_shrinkage(self):
+        """n=3 with k=2, N_full=5:
+        k_eff = 2 * 2/5 = 0.8 → weight = 3/3.8 = 0.789
+        With raw 60 and prior 45:
+        adjusted = 0.789*60 + 0.211*45 = 47.37 + 9.47 = 56.84 → 57
+        """
+        snaps = [
+            _snap("fangraphs",     "X", fv=60.0),
+            _snap("espn",          "X", fv=60.0),
+            _snap("just_baseball", "X", fv=60.0),
+        ]
+        p = build_timeseries(snaps, shrinkage_k=2.0, prior_mean_fv=45.0)[0]
+        pt = p.points[-1]
+        assert pt.shrinkage_weight == pytest.approx(3/3.8, abs=0.001)
+        assert pt.consensus_fv == 57.0
+
+    def test_n_full_override_threshold(self):
+        """Lowering n_full to 3 means a three-source player gets zero
+        shrinkage."""
+        snaps = [
+            _snap("fangraphs",     "X", fv=60.0),
+            _snap("espn",          "X", fv=60.0),
+            _snap("just_baseball", "X", fv=60.0),
+        ]
+        p = build_timeseries(snaps, shrinkage_k=2.0, shrinkage_n_full=3,
+                             prior_mean_fv=45.0)[0]
+        pt = p.points[-1]
+        assert pt.shrinkage_weight == 1.0
+        assert pt.consensus_fv == 60.0
 
     def test_shrinkage_k_zero_disables(self):
         snaps = [_snap("fangraphs", "X", fv=70.0)]
@@ -489,8 +537,8 @@ class TestShrinkage:
         assert pt.shrinkage_weight == 1.0
 
     def test_rank_only_player_uses_rank_count_as_n(self):
-        """Rank-only players should also be shrunk — but n is the rank-only
-        count, since that's what produced the rank-implied raw value."""
+        """Rank-only players still get shrunk; n is the rank-only count
+        since that's what produced the rank-implied raw value."""
         snaps = [
             _snap("baseball_america", "X", rank=2),  # implied 60
             _snap("the_athletic",     "X", rank=2),  # implied 60
@@ -499,11 +547,11 @@ class TestShrinkage:
         pt = p.points[-1]
         assert pt.avg_fv is None
         assert pt.consensus_fv_pre_shrinkage == 60.0
-        # n=2 (both rank-only sources), k=2 → 50/50 split
-        # (1/2)*60 + (1/2)*45 = 52.5 → 52 (Python's banker's rounding).
-        assert pt.shrinkage_weight == pytest.approx(0.5)
-        assert pt.consensus_fv_raw == 52.5
-        assert pt.consensus_fv == 52.0
+        # n=2, N_full=5: k_eff = 2 * 3/5 = 1.2 → weight = 2/3.2 = 0.625
+        # adjusted = 0.625*60 + 0.375*45 = 37.5 + 16.875 = 54.375 → 54
+        assert pt.shrinkage_weight == pytest.approx(2/3.2, abs=0.001)
+        assert pt.consensus_fv_raw == pytest.approx(54.38, abs=0.01)
+        assert pt.consensus_fv == 54.0
 
     def test_prior_mean_auto_computed_from_pool(self):
         """When prior_mean_fv is omitted, it's the average of each player's
@@ -515,12 +563,13 @@ class TestShrinkage:
         ]
         ts = build_timeseries(snaps, shrinkage_k=2.0)
         # Pool mean = (70+50+60)/3 = 60.
-        # A: (1/3)*70 + (2/3)*60 = 63.33 → 63
-        # B: (1/3)*50 + (2/3)*60 = 56.67 → 57
-        # C: (1/3)*60 + (2/3)*60 = 60     → 60
+        # n=1, k_eff = 2*4/5 = 1.6 → weight = 1/2.6 ≈ 0.3846
+        # A: 0.3846*70 + 0.6154*60 = 26.92 + 36.92 = 63.85 → 64
+        # B: 0.3846*50 + 0.6154*60 = 19.23 + 36.92 = 56.15 → 56
+        # C: 0.3846*60 + 0.6154*60 = 60                    → 60
         by_name = {p.player_name: p for p in ts}
-        assert by_name["A"].points[-1].consensus_fv == 63.0
-        assert by_name["B"].points[-1].consensus_fv == 57.0
+        assert by_name["A"].points[-1].consensus_fv == 64.0
+        assert by_name["B"].points[-1].consensus_fv == 56.0
         assert by_name["C"].points[-1].consensus_fv == 60.0
 
     def test_compute_prior_mean_fv_skips_pointless_players(self):

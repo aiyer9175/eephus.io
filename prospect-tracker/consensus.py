@@ -36,18 +36,27 @@ don't contribute.
 
 Bayesian shrinkage (v5)
 -----------------------
-Low-information FVs get pulled toward the prospect-pool mean:
+Low-information FVs get pulled toward the prospect-pool mean, with the
+prior fading to zero as coverage approaches the maximum number of
+FV-publishing sources:
 
-    adjusted_fv = (n / (n + k)) * raw_fv + (k / (n + k)) * mean_fv
+    k_eff       = k * max(0, (N_full - n) / N_full)
+    adjusted_fv = (n / (n + k_eff)) * raw_fv
+                + (k_eff / (n + k_eff)) * mean_fv
 
   n      — number of sources contributing to raw_fv (explicit-FV count, or
            rank-only count when only rank-implied FVs are available)
   k      — tuning constant (default 2)
+  N_full — source-count at which a player is "fully covered" and gets
+           zero shrinkage (default 5: FG, ESPN, JB, TJ, MLB Pipeline)
   mean_fv— global mean of every player's latest pre-shrinkage raw FV
 
-At n=1 (only one source has graded) shrinkage pulls the raw a third of
-the way to the mean; at n=5 it's only ~29%. A Pipeline-only IFA grade
-no longer carries the same weight as a five-source consensus.
+Weight on the raw value by n (with k=2, N_full=5):
+   n=1 → 38%   n=2 → 63%   n=3 → 79%   n=4 → 91%   n=5 → 100% (no pull)
+
+So an IFA-only Pipeline grade gets pulled hard, a 2-source prospect like
+Asigen sees a moderate correction, and a five-source consensus like
+Jesús Made keeps essentially its raw FV.
 
 Per (player, date) we compute:
 
@@ -81,9 +90,12 @@ from scrapers import Snapshot
 
 
 # Bayesian-shrinkage defaults. k controls how fast the prior fades as more
-# sources contribute; the fallback mean is only used if the prospect pool
-# is empty (e.g. unit tests with zero scoreable players).
+# sources contribute; N_FULL is the source-count at which a player is
+# considered "fully covered" and shrinkage decays to zero. The fallback
+# mean is only used if the prospect pool is empty (e.g. unit tests with
+# zero scoreable players).
 DEFAULT_SHRINKAGE_K = 2.0
+DEFAULT_N_FULL = 5  # FG, ESPN, Just Baseball, TJStats, MLB Pipeline
 FALLBACK_PRIOR_FV = 45.0
 
 
@@ -296,20 +308,28 @@ def apply_shrinkage(
     point: ConsensusPoint,
     mean_fv: float,
     k: float = DEFAULT_SHRINKAGE_K,
+    n_full: int = DEFAULT_N_FULL,
 ) -> None:
     """Mutate `point` in place to fold Bayesian shrinkage into consensus_fv.
 
-        adjusted = (n / (n + k)) * raw + (k / (n + k)) * mean_fv
+        k_eff    = k * max(0, (n_full - n) / n_full)
+        adjusted = (n / (n + k_eff)) * raw + (k_eff / (n + k_eff)) * mean_fv
 
+    When n >= n_full, k_eff = 0 and the raw value passes through unchanged.
     Pre-shrinkage fields stay readable via consensus_fv_pre_shrinkage.
     """
     n = _shrinkage_n(point)
     raw = point.consensus_fv_pre_shrinkage
-    if n <= 0 or k <= 0:
+    if n <= 0 or k <= 0 or n_full <= 0:
         # Nothing to shrink toward, or shrinkage disabled. Leave defaults.
         point.shrinkage_weight = 1.0
         return
-    weight = n / (n + k)
+    k_eff = k * max(0.0, (n_full - n) / n_full)
+    if k_eff == 0.0:
+        # Full coverage — no prior pull.
+        point.shrinkage_weight = 1.0
+        return
+    weight = n / (n + k_eff)
     adjusted = weight * raw + (1.0 - weight) * mean_fv
     point.consensus_fv_raw = round(adjusted, 2)
     snapped, label = snap_to_grade(adjusted)
@@ -377,6 +397,7 @@ def build_timeseries(
     snapshots: list[Snapshot],
     *,
     shrinkage_k: float = DEFAULT_SHRINKAGE_K,
+    shrinkage_n_full: int = DEFAULT_N_FULL,
     prior_mean_fv: float | None = None,
 ) -> list[PlayerTimeseries]:
     """Build per-player FV time-series with forward-filled sources and
@@ -469,7 +490,7 @@ def build_timeseries(
     )
     for p in result:
         for pt in p.points:
-            apply_shrinkage(pt, mean_fv, shrinkage_k)
+            apply_shrinkage(pt, mean_fv, shrinkage_k, shrinkage_n_full)
         for attr, val in _candle_fields(p.points).items():
             setattr(p, attr, val)
 
