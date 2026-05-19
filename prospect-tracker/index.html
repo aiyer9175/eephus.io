@@ -1250,15 +1250,44 @@ const stockHTML = s => {
 // Level hierarchy (low to high). Used to detect promotions/demotions
 // between consecutive seasons in career_stats so we can mark them on the
 // stock chart.
-const LEVEL_RANK = { DSL: 0, FCL: 0, "Rk": 1, R: 1, ROK: 1, A: 2, "A+": 3, AA: 4, AAA: 5, MLB: 6 };
+const LEVEL_RANK = { DSL: 0, FCL: 0, CPX: 0, "Rk": 1, R: 1, ROK: 1, A: 2, "A+": 3, AA: 4, AAA: 5, MLB: 6 };
 function levelRank(lvl) {
   return LEVEL_RANK[lvl] != null ? LEVEL_RANK[lvl] : -1;
 }
 
-// Derive promotion/demotion events from a career_stats list (which arrives
-// sorted most-recent-first per the back-end). Returns events in
-// chronological order each shaped as {date, level, prev_level, kind}.
-function levelChangeEvents(careerStats) {
+// Derive promotion/demotion events for one player.
+//
+// Source of truth (when available): `player.level_changes`, populated by
+// the back-end from the MLB Stats API per-player transactions endpoint —
+// gives the EXACT date of every affiliate assignment, contract selection,
+// or recall, including within-season moves (A → A+ → AA in one summer).
+//
+// Fallback: derive cross-season transitions from career_stats. This is a
+// coarse signal (one event per year-over-year level change, pinned to
+// April 1) but it keeps the chart populated for players whose transaction
+// payload is missing or for graduates whose transactions predate our
+// lookback window.
+function levelChangeEvents(player) {
+  // Back-compat: callers used to pass careerStats directly. If the arg is
+  // an array, treat it as the legacy career_stats list.
+  let careerStats = null;
+  let levelChanges = null;
+  if (Array.isArray(player)) {
+    careerStats = player;
+  } else if (player && typeof player === "object") {
+    careerStats = player.career_stats || null;
+    levelChanges = player.level_changes || null;
+  }
+  if (levelChanges && levelChanges.length) {
+    return levelChanges.map(lc => ({
+      date: lc.date,
+      level: lc.to_level,
+      prev_level: lc.from_level,
+      kind: lc.kind,
+      from_team: lc.from_team,
+      to_team: lc.to_team,
+    }));
+  }
   if (!careerStats || careerStats.length < 2) return [];
   const asc = [...careerStats].sort((a, b) => a.season - b.season);
   const events = [];
@@ -1318,12 +1347,17 @@ function transactionEvents(player) {
       label: heading + (tr.description ? `\n${tr.description}` : ""),
     });
   }
-  for (const ev of levelChangeEvents(player.career_stats || [])) {
+  for (const ev of levelChangeEvents(player)) {
     const verb = ev.kind === "promotion" ? "Promoted to" : "Demoted to";
+    // Prefer the full date when we have it (transactions-derived events);
+    // fall back to just the season for the year-over-year heuristic path.
+    const datePrefix = ev.date && ev.date.length >= 10 ? ev.date : ev.date.slice(0, 4);
+    const toClause   = ev.to_team   ? ` (${ev.to_team})`   : "";
+    const fromClause = ev.from_team ? ` from ${ev.from_team}` : ` (from ${ev.prev_level})`;
     out.push({
       date: ev.date,
       kind: ev.kind,
-      label: `${ev.date.slice(0, 4)}: ${verb} ${ev.level} (from ${ev.prev_level})`,
+      label: `${datePrefix}: ${verb} ${ev.level}${toClause}${fromClause}`,
     });
   }
   const acq = player.acquisition;
@@ -1820,7 +1854,7 @@ function renderActives() {
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
-          <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}</div>
+          <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
@@ -1863,7 +1897,7 @@ function renderSpotlights() {
       <div class="rank-num">${i + 1}</div>
       <div>
         <div class="player-name">${escapeHtml(s.player_name)}</div>
-        <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(s.position ?? "—")} · ${teamLogoHTML(s.org, "sm")}<span>${escapeHtml(s.org ?? "—")}</span>${s.age != null ? `<span class="age-tag">age ${Number(s.age).toFixed(1)}</span>` : ""}${ilTagHTML(s)}</div>
+        <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(s.position ?? "—")} · ${teamLogoHTML(s.org, "sm")}<span>${escapeHtml(s.org ?? "—")}</span>${s.age != null ? `<span class="age-tag">age ${Number(s.age).toFixed(1)}</span>` : ""}${ilTagHTML(s)}${rosterTagHTML(s)}</div>
       </div>
       <div style="text-align:center;"><span class="fv-badge ${fvClass(s.fv || "40")}">${escapeHtml(s.fv ?? "—")}</span></div>
       <div class="milb-cell"><span class="level-pill level-neutral">${escapeHtml(s.level ?? "—")}</span>${escapeHtml(s.line ?? "—")}</div>
@@ -1942,7 +1976,7 @@ function renderRecentlyTraded() {
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
-          <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}</div>
+          <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
         </div>
         <div>
           <span class="grad-pill" style="background:var(--bg-tertiary);color:var(--neon-violet);border:1px solid var(--border);">${lastTrade.trade_date}</span>
@@ -2190,6 +2224,39 @@ function levelPlusHTML(sl) {
   return `<span class="lvl-plus ${cls}" title="${title}">${sign}% vs lvl</span>`;
 }
 
+// MLB roster / options chip for the player-meta line. Only renders for
+// prospects on the 40-man or with options already burned — non-40-man
+// minor leaguers haven't entered the options system yet, so the chip
+// would be visual noise. Tooltip carries debut date + service phase.
+function rosterTagHTML(p) {
+  const rs = p && p.roster_status;
+  if (!rs) return "";
+  const usedYrs = rs.options_used_years || [];
+  if (!rs.on_40_man && usedYrs.length === 0) return "";
+  const total = 3;
+  const used = Math.min(total, rs.options_used || 0);
+  const remaining = (rs.options_remaining != null)
+    ? rs.options_remaining
+    : Math.max(0, total - used);
+  // pip-style mini visual: filled = used, hollow = remaining.
+  const pip = filled => `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;border:1px solid currentColor;background:${filled ? "currentColor" : "transparent"};margin:0 1px;vertical-align:middle;"></span>`;
+  const pips = Array.from({length: total}, (_, i) => pip(i < used)).join("");
+  const tip = [
+    rs.mlb_debut_date ? `MLB debut ${rs.mlb_debut_date}` : null,
+    rs.on_40_man ? "On 40-man" : "Off 40-man",
+    `Options: ${used}/${total} used${usedYrs.length ? ` (${usedYrs.join(", ")})` : ""}`,
+    `Service: ${rs.service_phase}`,
+  ].filter(Boolean).join(" · ");
+  // Color hint: cyan when options remain, amber when out (or 1 left), red on 0.
+  const color = remaining === 0 ? "var(--down)"
+              : remaining === 1 ? "var(--neon-amber)"
+                                : "var(--neon-cyan)";
+  return `<span class="options-tag" title="${escapeHtml(tip)}" style="display:inline-flex;align-items:center;gap:4px;border:1px solid ${color};color:${color};font-family:var(--font-mono);font-size:10px;padding:2px 6px;border-radius:2px;letter-spacing:0.04em;line-height:1;">
+    ${pips}
+    <span>${remaining}/${total}</span>
+  </span>`;
+}
+
 // IL badge for the player-meta line. Returns an empty string when the
 // player isn't on IL; otherwise an amber pill showing the list type and
 // duration in days. Tooltip carries the placement description.
@@ -2428,7 +2495,7 @@ function renderInactive() {
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
-          <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}</div>
+          <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
         </div>
         <div class="grad-graduation-cell">
           <span class="grad-pill" style="background:var(--bg-tertiary);color:var(--text-tertiary);border:none;">${lastSeen}</span>
@@ -3271,6 +3338,82 @@ function renderPlayerDetail(key) {
       </div>`;
   })();
 
+  // MLB roster status block — debut date, 40-man membership, options
+  // remaining, accumulated MLB seasons, and a service-phase bucket.
+  // Driven by storage.derive_roster_status, which walks the per-player
+  // transactions cache plus career_stats. Rendered for any player who
+  // has at least one piece of MLB context (debut date, MLB games, or a
+  // 40-man add) so prospects who have never sniffed the majors stay
+  // unencumbered.
+  const rosterStatusSection = (() => {
+    const rs = p.roster_status || {};
+    const hasMLB = rs.mlb_debut_date || (rs.mlb_seasons || []).length > 0
+                    || rs.on_40_man || rs.options_used;
+    if (!hasMLB) return "";
+    const phaseLabel = {
+      pre_arb:      "Pre-arbitration",
+      arb_eligible: "Arbitration-eligible",
+      post_arb:     "Post-arb / FA window",
+      none:         "—",
+    }[rs.service_phase] || "—";
+    const phaseColor = {
+      pre_arb:      "var(--neon-cyan)",
+      arb_eligible: "var(--neon-amber)",
+      post_arb:     "var(--neon-violet)",
+    }[rs.service_phase] || "var(--text-tertiary)";
+    const optionsTotal = 3;
+    const used = Math.min(optionsTotal, rs.options_used || 0);
+    const remaining = (rs.options_remaining != null)
+      ? rs.options_remaining
+      : Math.max(0, optionsTotal - used);
+    // Visual: three pips, filled = used, hollow = remaining. Matches the
+    // "options pill" pattern most baseball-front-office UIs use.
+    const pip = filled => `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;border:1.5px solid var(--neon-cyan);background:${filled ? "var(--neon-cyan)" : "transparent"};margin-right:3px;vertical-align:middle;"></span>`;
+    const pips = Array.from({length: optionsTotal}, (_, i) => pip(i < used)).join("");
+    const yearList = (rs.options_used_years || []).join(", ");
+    const debutLine = rs.mlb_debut_date
+      ? `<div style="font-size:12px;color:var(--text-secondary);">
+            <span style="color:var(--text-tertiary);">MLB debut:</span>
+            <span style="color:var(--text-primary);font-variant-numeric:tabular-nums;">${escapeHtml(rs.mlb_debut_date)}</span>
+         </div>`
+      : "";
+    const rosterLine = rs.on_40_man
+      ? `<div style="font-size:12px;color:var(--text-secondary);">
+            <span style="color:var(--text-tertiary);">Roster:</span>
+            <span style="color:var(--up);font-weight:600;">On 40-man</span>
+         </div>`
+      : (rs.mlb_debut_date
+          ? `<div style="font-size:12px;color:var(--text-secondary);">
+                <span style="color:var(--text-tertiary);">Roster:</span>
+                <span style="color:var(--text-tertiary);">Off 40-man</span>
+             </div>`
+          : "");
+    const seasonsLine = (rs.mlb_seasons || []).length
+      ? `<div style="font-size:12px;color:var(--text-secondary);">
+            <span style="color:var(--text-tertiary);">MLB seasons:</span>
+            <span style="color:var(--text-primary);font-variant-numeric:tabular-nums;">${rs.mlb_seasons.length} (${rs.mlb_seasons[0]}–${rs.mlb_seasons[rs.mlb_seasons.length-1]})</span>
+         </div>`
+      : "";
+    return `<div class="detail-title" style="margin-top:18px;">MLB roster status</div>
+      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:var(--radius-sm);display:flex;flex-direction:column;gap:6px;">
+        ${debutLine}
+        ${rosterLine}
+        ${seasonsLine}
+        <div style="font-size:12px;color:var(--text-secondary);">
+          <span style="color:var(--text-tertiary);">Service phase:</span>
+          <span style="color:${phaseColor};font-weight:600;">${phaseLabel}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding-top:6px;border-top:1px dashed var(--border-light);">
+          <span style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.04em;text-transform:uppercase;font-weight:600;">MiLB options</span>
+          <span style="display:inline-flex;align-items:center;">${pips}</span>
+          <span style="font-size:12px;color:var(--text-primary);font-variant-numeric:tabular-nums;">${remaining} of ${optionsTotal} left${yearList ? ` <span style="color:var(--text-tertiary);">· used ${escapeHtml(yearList)}</span>` : ""}</span>
+        </div>
+        ${rs.rookie_exhausted
+          ? `<div style="font-size:11px;color:var(--text-tertiary);font-style:italic;">Rookie eligibility exhausted (${rs.career_mlb_ab > 0 ? rs.career_mlb_ab + " AB" : rs.career_mlb_ip + " IP"} career).</div>`
+          : ""}
+      </div>`;
+  })();
+
   // Current-org acquisition. Renders ONLY when the player's current org
   // acquired them via something OTHER than their original draft/IFA path
   // (i.e. they've been moved between orgs at least once). Pairs with the
@@ -3332,7 +3475,7 @@ function renderPlayerDetail(key) {
   root.innerHTML = header + tilesHtml + `
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
       <div>${chartSection}${careerSection}${levelBenchmarkSection}${sourceSection}</div>
-      <div>${ilSection}${sabermetricsSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${etaRows}</div>
+      <div>${ilSection}${rosterStatusSection}${sabermetricsSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${etaRows}</div>
     </div>`;
 }
 
@@ -3441,7 +3584,7 @@ function renderFarmDetail(orgCode) {
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
-          <div class="player-meta">${escapeHtml(p.position ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}</div>
+          <div class="player-meta">${escapeHtml(p.position ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span></div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>

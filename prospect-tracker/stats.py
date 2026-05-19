@@ -526,11 +526,12 @@ LEVEL_LABELS = {
     "International League": "AAA", "Pacific Coast League": "AAA",
     # AA leagues
     "Eastern League": "AA", "Southern League": "AA", "Texas League": "AA",
-    # A+ leagues
+    # A+ leagues (post-2021 realignment: Midwest moved to High-A)
     "Northwest League": "A+", "South Atlantic League": "A+",
+    "Midwest League": "A+",
     # A leagues
     "Carolina League": "A",  "California League": "A",
-    "Midwest League": "A",   "Florida State League": "A",
+    "Florida State League": "A",
     # Rookie / complex
     "Rookie": "Rk", "FCL": "CPX", "ACL": "CPX",
     "Florida Complex League": "CPX", "Arizona Complex League": "CPX",
@@ -1315,6 +1316,456 @@ def fetch_career_stats(player_key: str, mlbam_id: int,
             })
         out.append(row)
     return out[:CAREER_SEASONS_KEPT]
+
+
+# ---------------------------------------------------------------------------
+# Per-player transactions fetch  →  drives level-change detection AND the
+# options / debut-date / service-time heuristics.
+# ---------------------------------------------------------------------------
+
+# How many seasons of transaction history to pull. Six covers the full
+# pre-arb + arbitration window for any active prospect; older rows aren't
+# load-bearing for any downstream derivation.
+TRANSACTIONS_LOOKBACK_SEASONS = 7
+
+
+def fetch_player_transactions(player_key: str, mlbam_id: int,
+                              start_year: int | None = None,
+                              end_year: int | None = None) -> list[dict]:
+    """
+    Pull every transaction touching one player in a window of seasons.
+
+    Hits `/api/v1/transactions?playerId={id}&startDate=...&endDate=...`.
+    The endpoint accepts a playerId filter (undocumented but supported)
+    and returns minor-league affiliate assignments, contract selections,
+    options, recalls, IL placements, etc. We normalize each record to a
+    minimal flat shape so downstream consumers don't have to walk the
+    nested API JSON every time.
+
+    The MLB Stats API description field is latin-1 in places (accented
+    names like "Jesús" come through as garbage) — we decode best-effort
+    so we don't store mojibake.
+    """
+    today = date.today()
+    if start_year is None:
+        start_year = today.year - TRANSACTIONS_LOOKBACK_SEASONS
+    if end_year is None:
+        end_year = today.year
+    url = (f"{MLB_STATS_API}/transactions"
+           f"?playerId={mlbam_id}"
+           f"&startDate={start_year}-01-01"
+           f"&endDate={end_year}-12-31")
+    try:
+        resp = requests.get(url, timeout=20)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as e:
+        log.debug("player transactions fetch failed for %s (id=%s): %s",
+                  player_key, mlbam_id, e)
+        return []
+    out: list[dict] = []
+    for tx in data.get("transactions", []):
+        ft = tx.get("fromTeam") or {}
+        tt = tx.get("toTeam") or {}
+        desc = tx.get("description") or ""
+        # MLB Stats API ships accented names as latin-1 in some descriptions;
+        # try a best-effort decode pass before storing.
+        if "�" in desc or any(ord(c) > 127 for c in desc):
+            try:
+                desc = desc.encode("latin-1", "ignore").decode("utf-8", "ignore") or desc
+            except Exception:
+                pass
+        out.append({
+            "date": tx.get("date") or tx.get("effectiveDate") or "",
+            "type_code": tx.get("typeCode") or "",
+            "type_desc": tx.get("typeDesc") or "",
+            "description": desc,
+            "from_team_id": ft.get("id"),
+            "from_team_name": ft.get("name") or "",
+            "to_team_id": tt.get("id"),
+            "to_team_name": tt.get("name") or "",
+        })
+    out.sort(key=lambda r: r.get("date") or "")
+    return out
+
+
+def bulk_fetch_player_transactions(
+        tasks: list[tuple[str, int]],
+        max_workers: int = 8,
+) -> dict[str, list[dict]]:
+    """Concurrent per-player transactions fetcher.
+
+    `tasks` is a list of (player_key, mlbam_id). Returns
+    {player_key: [tx_rows]} for every player whose fetch produced at
+    least one row (empty results are dropped to keep the cache lean).
+    """
+    if not tasks:
+        return {}
+    out: dict[str, list[dict]] = {}
+    worker_count = max(1, min(max_workers, len(tasks)))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as ex:
+        future_to_key = {
+            ex.submit(fetch_player_transactions, key, mlbam): key
+            for key, mlbam in tasks if mlbam is not None
+        }
+        for fut in concurrent.futures.as_completed(future_to_key):
+            key = future_to_key[fut]
+            try:
+                rows = fut.result()
+                if rows:
+                    out[key] = rows
+            except Exception as e:
+                log.debug("player transactions fetch failed for %s: %s", key, e)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Level-change derivation — turn transactions + team affiliations into
+# {date, from_level, to_level, kind} events the front-end can render as
+# promotion/demotion markers on each prospect's chart.
+# ---------------------------------------------------------------------------
+
+# Lower index = higher level. Reused from LEVEL_ORDER above for callers
+# that want to import this directly (level_changes works on the same set).
+_LEVEL_RANK = {lvl: i for i, lvl in enumerate(LEVEL_ORDER)}
+
+
+def _level_rank(level: str | None) -> int | None:
+    """Return position in LEVEL_ORDER (0 = MLB ... N = DSL). Lower is higher level."""
+    if not level:
+        return None
+    return _LEVEL_RANK.get(level)
+
+
+# Transaction type_code values we treat as "this row changed the player's
+# affiliation/level". The MLB Stats API codes:
+#   ASG — Assignment (most MiLB affiliate moves)
+#   SC  — Status change (optioned, recalled, activated, status change)
+#   SE  — Selected contract (MLB call-up — 40-man addition + roster move)
+#   OPT — Optioned to MiLB
+#   REC — Recalled to MLB
+#   TR  — Trade
+#   PUR — Purchased contract
+#   CLM — Waiver claim
+#   REL — Released
+#   RET — Returned to org (Rule 5)
+#   OUT — Sent outright off 40-man to MiLB
+_LEVEL_AFFECTING_TYPE_CODES = {
+    "ASG", "SC", "SE", "OPT", "REC", "TR", "PUR", "CLM", "RET", "REL", "OUT",
+}
+
+# Phrases in transaction descriptions that mark a row as exhibition /
+# administrative — NOT a real affiliate move. Spring training invites
+# and Futures-Game roster blips are the big false positives; we filter
+# them out so a prospect's chart doesn't show a fake Rk → MLB →
+# whatever blip every February.
+_NON_LEVEL_CHANGE_PHRASES = (
+    "spring training",
+    "non-roster",
+    "invited",
+    "all-star",
+    "futures",
+    " futures ",
+    "exhibition",
+    # Rehab assignments don't change a player's roster status — they're
+    # an IL stint where the player plays MiLB games to ramp back up.
+    # Filter them so an injured MLB player doesn't get a fake AAA/AA
+    # "demotion" marker every July.
+    "sent on a rehab",
+    "sent on rehab",
+    "rehab assignment",
+    "rehabilitation assignment",
+    "transferred to a rehab",
+    # Affiliate "Prospects" rosters (e.g. "Milwaukee Brewers Prospects
+    # activated SS X.") are template placeholder teams the API uses for
+    # back-fields and offseason instructionals; they're never the actual
+    # parent club. Match the verb that always pairs with them.
+    "prospects activated",
+    "prospects assigned",
+)
+
+# Team-name suffixes that mark non-affiliate placeholders (e.g. "Brewers
+# Prospects" stand-ins, "National League Futures" rosters). We never
+# treat moves TO one of these as a level change.
+_PLACEHOLDER_TEAM_PHRASES = (
+    " prospects",
+    " futures",
+    "all-stars",
+    "all-star",
+)
+
+# Verbs that MUST appear in the description for a move TO the parent MLB
+# club to count as a real call-up. Without one of these, "X assigned to
+# <Parent MLB Team>" is always spring training / exhibition. Affiliate
+# moves don't go through this gate — only the MLB destination.
+_REAL_MLB_PROMOTION_VERBS = (
+    "selected the contract",
+    "purchased the contract",
+    "recalled",
+    "called up",
+    "claimed off waivers",
+    "returned ",          # Rule 5 returns to drafting team
+)
+
+
+def _is_placeholder_team(name: str | None) -> bool:
+    if not name:
+        return False
+    low = name.lower()
+    return any(p in low for p in _PLACEHOLDER_TEAM_PHRASES)
+
+
+def derive_level_changes(transactions: list[dict],
+                          team_affiliations: dict[int, dict]) -> list[dict]:
+    """
+    Walk a player's transactions in date order, resolve each move's
+    from/to level via the team_affiliations map, and emit one record per
+    actual level change.
+
+    Returns events shaped like:
+      {date, kind: 'promotion'|'demotion', from_level, to_level,
+       from_team, to_team}
+
+    The function tracks a "current level" cursor so back-to-back
+    same-level affiliate swaps (e.g. AA → AA for a trade) don't produce
+    spurious events. Spring-training invites, Futures-Game roster blips
+    and the affiliate "Prospects" placeholder teams are filtered out
+    because they'd otherwise produce ghost promotions every February.
+    """
+    out: list[dict] = []
+    current_level: str | None = None
+    current_team_id: int | None = None
+    current_team_name: str | None = None
+    for tx in transactions:
+        date_iso = tx.get("date") or ""
+        if not date_iso:
+            continue
+        type_code = tx.get("type_code") or ""
+        if type_code and type_code not in _LEVEL_AFFECTING_TYPE_CODES:
+            continue
+        desc_low = (tx.get("description") or "").lower()
+        if any(p in desc_low for p in _NON_LEVEL_CHANGE_PHRASES):
+            # Spring training / exhibition / placeholder row — never a
+            # real affiliate move, even when the API team_id resolves.
+            continue
+        to_id = tx.get("to_team_id")
+        from_id = tx.get("from_team_id")
+        to_info = team_affiliations.get(int(to_id)) if to_id else None
+        from_info = team_affiliations.get(int(from_id)) if from_id else None
+        to_name = (to_info or {}).get("name") or tx.get("to_team_name")
+        from_name = (from_info or {}).get("name") or tx.get("from_team_name")
+        to_level = (to_info or {}).get("level")
+        from_level = (from_info or {}).get("level") or current_level
+        if not to_level:
+            continue
+        if _is_placeholder_team(to_name) or _is_placeholder_team(tx.get("to_team_name")):
+            continue
+        # Moves TO the parent MLB team need an explicit promotion verb,
+        # otherwise they're spring training / non-roster invites which
+        # don't represent a real level change.
+        if to_level == "MLB":
+            if not any(v in desc_low for v in _REAL_MLB_PROMOTION_VERBS):
+                continue
+        # First move ever — seed the cursor without emitting unless we
+        # also have a different from_level recorded explicitly via a
+        # resolvable from-team.
+        if current_level is None:
+            current_level = to_level
+            current_team_id = to_id
+            current_team_name = to_name
+            if from_info and from_level and from_level != to_level:
+                rk_to = _level_rank(to_level)
+                rk_from = _level_rank(from_level)
+                if rk_to is not None and rk_from is not None:
+                    out.append({
+                        "date": date_iso,
+                        "kind": "promotion" if rk_to < rk_from else "demotion",
+                        "from_level": from_level,
+                        "to_level": to_level,
+                        "from_team": from_name,
+                        "to_team":   to_name,
+                    })
+            continue
+        if to_level == current_level:
+            # Same-level move (cross-affiliate trade, lateral assignment) —
+            # update the team cursor but don't emit a level event.
+            current_team_id = to_id
+            current_team_name = to_name
+            continue
+        rk_to = _level_rank(to_level)
+        rk_from = _level_rank(current_level)
+        if rk_to is None or rk_from is None:
+            current_level = to_level
+            current_team_id = to_id
+            current_team_name = to_name
+            continue
+        out.append({
+            "date": date_iso,
+            "kind": "promotion" if rk_to < rk_from else "demotion",
+            "from_level": current_level,
+            "to_level": to_level,
+            # Prefer the API's from-team when it told us one; otherwise
+            # fall back to the cursor (which tracks where the player WAS
+            # before this row, e.g. for SC activations that omit fromTeam).
+            "from_team": from_name if from_info else current_team_name,
+            "to_team":   to_name,
+        })
+        current_level = to_level
+        current_team_id = to_id
+        current_team_name = to_name
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Roster-status derivation — MLB debut, 40-man state, options used,
+# career-year bucket, and an approximate service phase. All driven by the
+# per-player transactions cache + career_stats (which we already have).
+# Pure CPU pass, no HTTP. The heuristic intentionally rounds the
+# real-world rules — those depend on day-by-day roster status the public
+# Stats API doesn't expose — but it gets us the visualization that drives
+# "options remaining" on each prospect card.
+# ---------------------------------------------------------------------------
+
+# Rookie-status exhaustion thresholds (current MLB rules):
+#   - Position players: 130 MLB at-bats
+#   - Pitchers: 50 MLB innings pitched
+# A player who crosses either threshold loses rookie eligibility and is
+# considered "graduated" by every consensus prospect-tracking source.
+ROOKIE_AB_THRESHOLD = 130
+ROOKIE_IP_THRESHOLD = 50.0
+
+# Standard MLB option allotment. Players added to a 40-man get three
+# option YEARS — distinct seasons in which they spend >20 days on an
+# optional MiLB assignment. A small subset of players get a fourth
+# option granted; we don't try to detect that case automatically.
+DEFAULT_OPTIONS = 3
+
+
+def derive_roster_status(transactions: list[dict],
+                          career_rows: list[dict] | None,
+                          today: date | None = None) -> dict:
+    """
+    Build the MLB roster-status snapshot for one player.
+
+    Returns:
+      {
+        mlb_debut_date     : ISO date of the first `selected the contract`
+                              event into the parent MLB team (or None).
+        on_40_man          : True after a `selected the contract` and not
+                              yet `sent outright` off the 40-man.
+        options_used       : count of distinct seasons in which an `OPT`
+                              row fired (max 3 with default rules).
+        options_used_years : sorted list of the option years above.
+        options_remaining  : max(0, DEFAULT_OPTIONS - options_used).
+        mlb_seasons        : list of seasons (ascending) with any MLB
+                              games on file from career_stats.
+        career_mlb_ab      : sum of MLB at-bats from career_stats.
+        career_mlb_ip      : sum of MLB innings pitched from career_stats.
+        rookie_exhausted   : True once AB / IP threshold is crossed.
+        service_phase      : 'none' | 'pre_arb' | 'arb_eligible' | 'post_arb'
+                              — best-effort bucket from MLB seasons + debut.
+      }
+
+    `transactions` should be the cached payload from
+    fetch_player_transactions. `career_rows` is the cached career_stats
+    list for the same player (highest-level-per-season rows).
+    """
+    today = today or date.today()
+    career_rows = career_rows or []
+
+    debut_date: str | None = None
+    on_40_man = False
+    options_seasons: set[int] = set()
+
+    for tx in transactions or []:
+        date_iso = tx.get("date") or ""
+        desc_low = (tx.get("description") or "").lower()
+        type_code = tx.get("type_code") or ""
+        if not date_iso:
+            continue
+        # Skip exhibition / spring training rows so they don't claim a
+        # debut date or flip the 40-man flag.
+        if any(p in desc_low for p in _NON_LEVEL_CHANGE_PHRASES):
+            continue
+        # 40-man add (typeCode "SE" or any row with "selected the contract").
+        if type_code == "SE" or "selected the contract" in desc_low \
+                or "purchased the contract" in desc_low:
+            on_40_man = True
+            if not debut_date:
+                debut_date = date_iso
+        # 40-man drop — "sent outright" clears once the player passes
+        # through waivers off the 40-man roster.
+        elif "sent outright" in desc_low or "removed from the 40" in desc_low:
+            on_40_man = False
+        # Option year — count any optioning event by season.
+        if type_code == "OPT" or "optioned" in desc_low:
+            try:
+                yr = int(date_iso[:4])
+                # Don't count September call-down / instructional moves
+                # before active rosters expanded — but the public API
+                # doesn't distinguish, so we accept any optioning in the
+                # season as a used option.
+                options_seasons.add(yr)
+            except ValueError:
+                pass
+
+    # MLB games played by season (from career_stats) — drives both the
+    # service-phase bucket and the rookie-exhaustion threshold check.
+    mlb_seasons: list[int] = []
+    mlb_ab_total = 0
+    mlb_ip_total = 0.0
+    for row in career_rows:
+        if row.get("level") != "MLB":
+            continue
+        try:
+            yr = int(row.get("season"))
+        except (TypeError, ValueError):
+            continue
+        if (row.get("games") or 0) > 0 or (row.get("ab") or 0) > 0 \
+                or (row.get("ip") or 0) > 0:
+            mlb_seasons.append(yr)
+        mlb_ab_total += int(row.get("ab") or 0)
+        ip_raw = row.get("ip")
+        if ip_raw:
+            try:
+                mlb_ip_total += float(ip_raw)
+            except (TypeError, ValueError):
+                pass
+    mlb_seasons = sorted(set(mlb_seasons))
+
+    rookie_exhausted = (mlb_ab_total > ROOKIE_AB_THRESHOLD
+                        or mlb_ip_total > ROOKIE_IP_THRESHOLD)
+
+    # Service phase: a rough bucket from MLB seasons played.
+    #   none         → 0 MLB seasons
+    #   pre_arb      → 1–3 MLB seasons since debut
+    #   arb_eligible → 4–6 MLB seasons since debut
+    #   post_arb     → 7+ MLB seasons since debut
+    n_mlb = len(mlb_seasons)
+    if n_mlb == 0 and not debut_date:
+        service_phase = "none"
+    elif n_mlb >= 7:
+        service_phase = "post_arb"
+    elif n_mlb >= 4:
+        service_phase = "arb_eligible"
+    else:
+        service_phase = "pre_arb"
+
+    options_used = min(DEFAULT_OPTIONS, len(options_seasons))
+    options_remaining = max(0, DEFAULT_OPTIONS - options_used)
+
+    return {
+        "mlb_debut_date":     debut_date,
+        "on_40_man":          bool(on_40_man),
+        "options_used":       options_used,
+        "options_used_years": sorted(options_seasons),
+        "options_remaining":  options_remaining,
+        "mlb_seasons":        mlb_seasons,
+        "career_mlb_ab":      mlb_ab_total,
+        "career_mlb_ip":      round(mlb_ip_total, 1),
+        "rookie_exhausted":   bool(rookie_exhausted),
+        "service_phase":      service_phase,
+    }
 
 
 # ---------------------------------------------------------------------------

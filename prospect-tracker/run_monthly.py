@@ -39,6 +39,9 @@ from storage import (
     upsert_career_stats, load_career_stats, load_career_stats_meta,
     upsert_acquisitions, load_acquisitions,
     upsert_il_status, load_il_status,
+    upsert_player_transactions, load_player_transactions,
+    load_player_transactions_meta,
+    upsert_roster_status, load_roster_status,
     export_timeseries_json,
 )
 from consensus import build_timeseries
@@ -51,6 +54,9 @@ from stats import (fetch_statlines_for, derive_statlines_from_career, fetch_birt
                    bulk_fetch_drafts,
                    bulk_fetch_ifa_signings,
                    bulk_fetch_il_status,
+                   bulk_fetch_player_transactions,
+                   derive_level_changes,
+                   derive_roster_status,
                    fetch_team_affiliations,
                    PlayerIndex)
 from trades import detect_trades
@@ -532,6 +538,98 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.info("fetched sabermetrics for %d players", len(new_sabermetrics))
 
 
+        # --- 3e. Per-player transactions cache + within-season level changes.
+        # The /transactions?playerId=X endpoint returns every affiliate
+        # assignment, contract selection, recall, etc. for one player —
+        # the source of truth for promotion/demotion markers and the
+        # options / debut / service-time heuristics. One HTTP call per
+        # player; cached for TRANSACTIONS_FRESH_DAYS so dev iterations
+        # reuse the prior payload.
+        tx_cache = load_player_transactions()
+        tx_meta = load_player_transactions_meta()
+        if not skip_stats:
+            # All players (incl. graduates) — graduates are the ones with
+            # MLB debut + options data worth tracking, and their cache is
+            # stable so the TTL skip keeps subsequent runs cheap.
+            all_for_tx = [
+                (p.player_key, ids_by_key.get(p.player_key))
+                for p in timeseries
+            ]
+            tx_tasks = [
+                (key, mlbam) for key, mlbam in all_for_tx
+                if mlbam is not None and (
+                    force_refetch or not _is_career_fresh(
+                        tx_meta.get(key), CAREER_STATS_FRESH_DAYS)
+                )
+            ]
+            log.info("fetching player transactions for %d players "
+                     "(skipped %d fresh-cached / unresolved)",
+                     len(tx_tasks),
+                     len(all_for_tx) - len(tx_tasks))
+            if tx_tasks:
+                max_w = (max(1, min(workers, len(tx_tasks)))
+                         if workers is not None
+                         else min(16, max(1, len(tx_tasks))))
+                new_tx = bulk_fetch_player_transactions(tx_tasks, max_workers=max_w)
+                if new_tx:
+                    upsert_player_transactions(new_tx)
+                    tx_cache.update(new_tx)
+                log.info("fetched transactions for %d players", len(new_tx))
+
+        # Compute level_changes per player from the cached transactions
+        # using the existing team_affil map. Cheap CPU pass over data we
+        # already have — no extra HTTP.
+        level_changes_by_key: dict[str, list[dict]] = {}
+        for key, tx_rows in tx_cache.items():
+            evs = derive_level_changes(tx_rows, team_affil)
+            if evs:
+                level_changes_by_key[key] = evs
+        log.info("derived level_changes for %d players",
+                 len(level_changes_by_key))
+
+        # --- 3f. MLB roster-status derivation (debut, 40-man, options,
+        # service phase). Combines the transactions cache with career_stats
+        # rows we already loaded for the stat-line derivation. Pure CPU
+        # pass — every player gets a row, even those with no MLB activity,
+        # so downstream the front-end can render `Pre-MLB` vs `Pre-arb` vs
+        # `Arb eligible` consistently.
+        roster_status_by_key: dict[str, dict] = {}
+        for p in timeseries:
+            tx_rows = tx_cache.get(p.player_key, [])
+            cs_rows = career_cache.get(p.player_key, [])
+            rs = derive_roster_status(tx_rows, cs_rows)
+            roster_status_by_key[p.player_key] = rs
+        if roster_status_by_key:
+            upsert_roster_status(roster_status_by_key)
+        rookie_exhausted_grads = {
+            k: v.get("mlb_debut_date")
+            for k, v in roster_status_by_key.items()
+            if v.get("rookie_exhausted")
+        }
+        log.info("roster_status derived for %d players "
+                 "(%d on 40-man, %d rookie-exhausted)",
+                 len(roster_status_by_key),
+                 sum(1 for v in roster_status_by_key.values() if v.get("on_40_man")),
+                 len(rookie_exhausted_grads))
+
+        # --- 3g. Auto-graduate any prospect who has crossed the rookie-
+        # eligibility threshold (130 MLB AB / 50 MLB IP) but is still
+        # marked active. Belt-and-suspenders alongside detect_graduations_from_career,
+        # which already catches the FanGraphs-flagged path.
+        timeseries_by_key = {p.player_key: p for p in timeseries}
+        newly_graduated = 0
+        for pkey, debut in rookie_exhausted_grads.items():
+            p = timeseries_by_key.get(pkey)
+            if not p or p.status == "graduated":
+                continue
+            auto_graduate_player(pkey, grad_date=debut)
+            newly_graduated += 1
+        if newly_graduated:
+            log.info("auto-graduated %d players via rookie-exhaustion threshold",
+                     newly_graduated)
+            all_snaps = load_all_snapshots()
+            timeseries = build_timeseries(all_snaps)
+
         # Trade detection. The org-change inference always runs (just walks
         # snapshots we already have); the MLB API path is skipped under
         # --skip-stats. tracked_players is built directly from ids_by_key,
@@ -558,7 +656,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                career_stats=load_career_stats(),
                                acquisitions=load_acquisitions(),
                                il_status=load_il_status(),
-                               rosters_by_org=rosters_by_org)
+                               rosters_by_org=rosters_by_org,
+                               level_changes=level_changes_by_key,
+                               roster_status=roster_status_by_key)
         log.info("wrote %s", out_path)
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,

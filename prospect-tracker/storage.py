@@ -119,6 +119,26 @@ CREATE TABLE IF NOT EXISTS il_status (
     fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Per-player raw transactions cache (MLB Stats API /transactions?playerId=).
+-- Drives within-season promotion/demotion detection AND the options /
+-- service-time heuristics. One row per player; payload_json is the list
+-- of {date, type_code, description, from_team_id, from_team_name,
+-- to_team_id, to_team_name} dicts sorted ascending by date.
+CREATE TABLE IF NOT EXISTS player_transactions (
+    player_key   TEXT PRIMARY KEY,
+    payload_json TEXT NOT NULL,
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Derived MLB roster timeline per player. Computed from the transactions
+-- cache + career_stats: {debut_date, options_used, on_40_man, service_days,
+-- service_years_decimal, arb_year (0=pre-arb, 1-3=arb, 4+=post-arb)}.
+CREATE TABLE IF NOT EXISTS roster_status (
+    player_key      TEXT PRIMARY KEY,
+    payload_json    TEXT NOT NULL,
+    fetched_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS trades (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
     player_key       TEXT NOT NULL,
@@ -524,6 +544,97 @@ def load_il_status() -> dict[str, dict]:
     return {r["player_key"]: dict(r) for r in rows}
 
 
+def upsert_player_transactions(by_player: dict[str, list[dict]]) -> int:
+    """Upsert per-player transaction lists. One row per player.
+
+    Each list value is the full payload from the MLB Stats API per-player
+    transactions endpoint, normalized to {date, type_code, description,
+    from_team_id, from_team_name, to_team_id, to_team_name}. Pass an empty
+    list to record "we asked, nothing was returned" without rewriting a
+    prior populated row (we keep the old payload in that case).
+    """
+    n = 0
+    with connect() as con:
+        for key, rows in by_player.items():
+            if not rows:
+                # Touch fetched_at only — keeps TTL skip working without
+                # erasing a previously-populated payload.
+                con.execute(
+                    """UPDATE player_transactions
+                       SET fetched_at = datetime('now')
+                       WHERE player_key = ?""",
+                    (key,),
+                )
+                continue
+            con.execute(
+                """INSERT INTO player_transactions
+                     (player_key, payload_json, fetched_at)
+                   VALUES (?, ?, datetime('now'))
+                   ON CONFLICT(player_key) DO UPDATE SET
+                     payload_json=excluded.payload_json,
+                     fetched_at=excluded.fetched_at""",
+                (key, json.dumps(rows)),
+            )
+            n += 1
+    return n
+
+
+def load_player_transactions() -> dict[str, list[dict]]:
+    """Return {player_key: [tx_rows]} for every stored player transaction history."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, payload_json FROM player_transactions"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
+
+
+def load_player_transactions_meta() -> dict[str, str]:
+    """Return {player_key: fetched_at_iso} for every stored player_transactions row."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, fetched_at FROM player_transactions"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: r["fetched_at"] for r in rows}
+
+
+def upsert_roster_status(by_player: dict[str, dict]) -> int:
+    """Upsert derived roster-status dicts (debut/options/service time)."""
+    n = 0
+    with connect() as con:
+        for key, rec in by_player.items():
+            if not rec:
+                continue
+            con.execute(
+                """INSERT INTO roster_status
+                     (player_key, payload_json, fetched_at)
+                   VALUES (?, ?, datetime('now'))
+                   ON CONFLICT(player_key) DO UPDATE SET
+                     payload_json=excluded.payload_json,
+                     fetched_at=excluded.fetched_at""",
+                (key, json.dumps(rec)),
+            )
+            n += 1
+    return n
+
+
+def load_roster_status() -> dict[str, dict]:
+    """Return {player_key: roster_status_dict} for every stored row."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, payload_json FROM roster_status"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
+
+
 def load_career_stats_meta() -> dict[str, str]:
     """Return {player_key: fetched_at_iso} for every stored career_stats row.
 
@@ -731,6 +842,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           acquisitions: dict[str, dict] | None = None,
                           il_status: dict[str, dict] | None = None,
                           rosters_by_org: dict[str, dict[str, list[dict]]] | None = None,
+                          level_changes: dict[str, list[dict]] | None = None,
+                          roster_status: dict[str, dict] | None = None,
                           top_n_active: int | None = None):
     """
     Serialize for the front-end widget.
@@ -759,6 +872,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     acquisitions = acquisitions or {}
     il_status = il_status or {}
     rosters_by_org = rosters_by_org or {}
+    level_changes = level_changes or {}
+    roster_status = roster_status or {}
     birth_dates = load_birth_dates()
     from stats import compute_age_decimal
     from age_level import score_age_vs_level
@@ -1167,6 +1282,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "sabermetrics": sm,
             "trades": filtered_trades,
             "career_stats": career_stats.get(p.player_key, []),
+            # Within-season + cross-season level changes derived from the
+            # MLB Stats API per-player transactions endpoint. One record
+            # per real level transition (lateral affiliate swaps filtered
+            # out). Drives promotion/demotion markers on the FV chart.
+            "level_changes": level_changes.get(p.player_key, []),
+            # MLB roster status: debut, options used, 40-man state,
+            # accumulated service time, arb cycle bucket. Empty dict if
+            # the player has not yet appeared in the majors.
+            "roster_status": roster_status.get(p.player_key, {}),
             "acquisition": acq,
             # How the player's CURRENT org acquired them. Powers the
             # acquisition filter on the main prospect list + farm
