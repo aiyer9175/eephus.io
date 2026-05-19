@@ -1931,6 +1931,43 @@ function renderPlayerDetail(key) {
 
   const tradesSection = `<div class="detail-title" style="margin-top:18px;">Transaction history</div>${makeTradeHistoryBlock(p.trades)}`;
 
+  // Acquisition info: drafted prospects show pick + bonus; IFAs show
+  // "International FA" + (when known) signing details. Section omitted
+  // when we don't have an acquisition record (rare — only prospects whose
+  // MLBAM ID couldn't be resolved at all).
+  const acqSection = (() => {
+    const a = p.acquisition;
+    if (!a) return "";
+    const fmtBonus = b => b == null ? "—" : `$${b.toLocaleString("en-US")}`;
+    if (a.method === "draft") {
+      const pick = a.pick_overall != null
+        ? `Round ${escapeHtml(a.round_label || "?")} · Pick ${a.pick_overall} overall`
+        : `Round ${escapeHtml(a.round_label || "?")}`;
+      const team = a.team_name ? ` by ${escapeHtml(a.team_name)}` : "";
+      const school = a.school ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">From ${escapeHtml(a.school)}</div>` : "";
+      return `<div class="detail-title" style="margin-top:18px;">Acquisition · MLB Draft</div>
+        <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
+          <div style="font-size:14px;color:var(--text-primary);">${a.year} · ${pick}${team}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Signing bonus: <span style="color:var(--neon-cyan);font-variant-numeric:tabular-nums;">${fmtBonus(a.bonus_usd)}</span></div>
+          ${school}
+        </div>`;
+    }
+    if (a.method === "international_fa") {
+      const sub = a.signing_date
+        ? `Signed ${escapeHtml(a.signing_date)}${a.team_name ? ` by ${escapeHtml(a.team_name)}` : ""}`
+        : `Signed as an international amateur free agent`;
+      const bonusLine = a.bonus_usd != null
+        ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Signing bonus: <span style="color:var(--neon-cyan);font-variant-numeric:tabular-nums;">${fmtBonus(a.bonus_usd)}</span></div>`
+        : `<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">Signing-bonus data not on file.</div>`;
+      return `<div class="detail-title" style="margin-top:18px;">Acquisition · International FA</div>
+        <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
+          <div style="font-size:14px;color:var(--text-primary);">${sub}</div>
+          ${bonusLine}
+        </div>`;
+    }
+    return "";
+  })();
+
   const etaRows = (() => {
     if (!eta || eta.year == null) return "";
     const r = [
@@ -2147,16 +2184,84 @@ function renderFarmDetail(orgCode) {
       </tr>`;
     }).join("")}</tbody></table>` : `<div style="color:var(--text-tertiary);font-size:12px;">No trades on record involving this org.</div>`;
 
+  // Affiliate-roster section — one tab per level, content swap on click.
+  // Highlights tracked prospects with their FV badge inline so the page
+  // doubles as a "where in the org are our prospects playing right now".
+  const affilLevels = ["MLB", "AAA", "AA", "A+", "A", "Rk", "DSL"];
+  const orgRosters = (DATA.rosters_by_org || {})[orgCode] || {};
+  const presentLevels = affilLevels.filter(lvl => (orgRosters[lvl] || []).length);
+  const defaultLevel = presentLevels.includes("AAA") ? "AAA" : (presentLevels[0] || "MLB");
+
+  function levelTableHtml(level) {
+    const roster = orgRosters[level] || [];
+    if (!roster.length) {
+      return `<div style="color:var(--text-tertiary);font-size:12px;padding:6px 0;">No players on file at ${escapeHtml(level)}.</div>`;
+    }
+    const rows = roster.map(pl => {
+      const gradedClick = pl.player_key
+        ? ` onclick="goToPlayer('${escapeHtml(pl.player_key)}');" style="cursor:pointer;"`
+        : "";
+      const nameCell = pl.player_key
+        ? `<span style="color:var(--neon-cyan);">${escapeHtml(pl.fullName)}</span>`
+        : escapeHtml(pl.fullName);
+      const fvCell = pl.fv_label
+        ? `<span class="fv-badge ${fvClass(pl.fv_label)}" style="font-size:10px;padding:1px 6px;">${pl.fv_label}</span>`
+        : `<span style="color:var(--text-tertiary);">—</span>`;
+      return `<tr${gradedClick}>
+        <td>${nameCell}</td>
+        <td style="color:var(--text-secondary);">${escapeHtml(pl.position || "—")}</td>
+        <td style="font-variant-numeric:tabular-nums;color:var(--text-secondary);">${pl.age != null ? pl.age.toFixed(1) : "—"}</td>
+        <td style="text-align:center;">${fvCell}</td>
+        <td style="color:var(--text-tertiary);font-size:11px;">${escapeHtml(pl.team_name || "")}</td>
+      </tr>`;
+    }).join("");
+    return `<table class="detail-table"><thead><tr>
+      <th>Player</th><th>Pos</th><th>Age</th><th style="text-align:center;">FV</th><th>Affiliate</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  const affilTabs = presentLevels.map(lvl => {
+    const count = (orgRosters[lvl] || []).length;
+    const graded = (orgRosters[lvl] || []).filter(p => p.fv_label).length;
+    const active = lvl === defaultLevel ? " active" : "";
+    return `<button class="chip level-tab${active}" data-level="${escapeHtml(lvl)}" type="button">${escapeHtml(lvl)} <span style="color:var(--text-tertiary);font-weight:400;">(${count}${graded ? `, ${graded}★` : ""})</span></button>`;
+  }).join("");
+
+  const affilPanels = presentLevels.map(lvl => `
+    <div class="level-panel" data-level="${escapeHtml(lvl)}" style="display:${lvl === defaultLevel ? "block" : "none"};">
+      ${levelTableHtml(lvl)}
+    </div>`).join("");
+
+  const affiliateSection = presentLevels.length ? `
+    <div class="detail-title" style="margin-top:18px;">Affiliate rosters
+      <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">★ = graded prospect</span>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${affilTabs}</div>
+    ${affilPanels}` : "";
+
   root.innerHTML = header + tilesHtml + `
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
       <div>
-        <div class="detail-title">Full roster (${rosterPlayers.length})</div>
+        <div class="detail-title">Tracked prospects (${rosterPlayers.length})</div>
         ${rosterHeader}${rosterRows}
+        ${affiliateSection}
         <div class="detail-title" style="margin-top:18px;">Recent trades involving the ${escapeHtml(fullOrgName(orgCode))}</div>
         ${tradesHtml}
       </div>
       <div>${highlights}</div>
     </div>`;
+
+  // Wire affiliate level tabs (vanilla — toggle visibility, no re-render).
+  document.querySelectorAll("#farm-detail-body .level-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#farm-detail-body .level-tab").forEach(b =>
+        b.classList.toggle("active", b === btn));
+      const lvl = btn.dataset.level;
+      document.querySelectorAll("#farm-detail-body .level-panel").forEach(panel => {
+        panel.style.display = panel.dataset.level === lvl ? "block" : "none";
+      });
+    });
+  });
 }
 
 function render() {

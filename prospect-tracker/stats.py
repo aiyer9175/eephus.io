@@ -261,8 +261,13 @@ class PlayerIndex:
                 age = time.time() - PLAYER_INDEX_CACHE_FILE.stat().st_mtime
                 if age <= PLAYER_INDEX_TTL_SECONDS:
                     data = json.loads(PLAYER_INDEX_CACHE_FILE.read_text(encoding="utf-8"))
-                    if data.get("season") == season and data.get("players"):
-                        idx._build_lookups(data["players"])
+                    players = data.get("players") or []
+                    # Reject older caches that don't carry currentTeam — we
+                    # rely on team info downstream for the affiliate roster
+                    # view, so an upgrade requires a fresh fetch.
+                    has_team_info = bool(players) and "current_team_id" in players[0]
+                    if (data.get("season") == season and players and has_team_info):
+                        idx._build_lookups(players)
                         log.info("loaded player index from disk: %d players (%.1f min old)",
                                  len(idx.players), age / 60)
                         return idx
@@ -315,6 +320,7 @@ class PlayerIndex:
                     if not p.get("firstName"):
                         continue
                     pid = int(p["id"])
+                    ct = p.get("currentTeam") or {}
                     rec = {
                         "id": pid,
                         "fullName": p["fullName"],
@@ -330,6 +336,12 @@ class PlayerIndex:
                         "active": bool(p.get("active")),
                         "sport_id": sport_id,
                         "season": season_,
+                        # currentTeam captured for the affiliate-roster view
+                        # on the farm-system page. Pairs with the team
+                        # affiliation map (fetch_team_affiliations) so we
+                        # can group players by parent org + level.
+                        "current_team_id":   int(ct.get("id")) if ct.get("id") else None,
+                        "current_team_name": ct.get("name") or "",
                     }
                     existing = by_id.get(pid)
                     if existing is None or _is_better_record(rec, existing):
@@ -1870,3 +1882,154 @@ def bulk_detect_graduations(
 
     _save_id_cache(id_cache)
     return graduates, birth_date_updates
+
+
+# ---------------------------------------------------------------------------
+# Draft data — bulk fetch /draft/{year} for acquisition info
+# ---------------------------------------------------------------------------
+
+
+def fetch_draft_year(year: int) -> list[dict]:
+    """Fetch every pick from one draft year. Returns a flat list with our
+    normalized field names; matching to tracked prospects happens downstream.
+
+    Each pick contains:
+      mlbam_id, year, round_label, pick_round, pick_overall, bonus_usd,
+      team_name, school, fullName
+    """
+    url = f"{MLB_STATS_API}/draft/{year}"
+    try:
+        resp = requests.get(url, timeout=30, ttl=30 * 86400)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as e:
+        log.warning("draft fetch failed for %d: %s", year, e)
+        return []
+
+    picks: list[dict] = []
+    rounds = (data.get("drafts") or {}).get("rounds") or []
+    for rnd in rounds:
+        round_label = str(rnd.get("round") or "")
+        for pk in rnd.get("picks", []):
+            pers = pk.get("person") or {}
+            pid = pers.get("id")
+            if not pid:
+                continue
+            bonus_raw = pk.get("signingBonus")
+            try:
+                bonus = int(bonus_raw) if bonus_raw not in (None, "") else None
+            except (TypeError, ValueError):
+                bonus = None
+            # `school` arrives as an object with name/city/state — flatten
+            # to "Oregon State (OR)" for display.
+            school_obj = pk.get("school") or {}
+            if isinstance(school_obj, dict):
+                school_name = school_obj.get("name") or ""
+                state = school_obj.get("state") or ""
+                school_str = f"{school_name} ({state})" if (school_name and state) else school_name
+            else:
+                school_str = str(school_obj) if school_obj else ""
+            picks.append({
+                "mlbam_id":     int(pid),
+                "fullName":     pers.get("fullName") or "",
+                "year":         year,
+                "round_label":  round_label,
+                "pick_round":   pk.get("pickRound"),
+                "pick_overall": pk.get("pickNumber"),
+                "bonus_usd":    bonus,
+                "team_name":    (pk.get("team") or {}).get("name"),
+                "school":       school_str or None,
+            })
+    return picks
+
+
+def bulk_fetch_drafts(years: Iterable[int],
+                      max_workers: int = 6) -> dict[int, dict]:
+    """Fetch many draft years concurrently. Returns {mlbam_id: pick_dict}.
+
+    The first pick we see for a given mlbam_id wins; nobody is drafted
+    twice in practice, but defensive in case of API hiccup."""
+    years_list = list(years)
+    if not years_list:
+        return {}
+
+    by_id: dict[int, dict] = {}
+    with concurrent.futures.ThreadPoolExecutor(
+            max_workers=min(max_workers, len(years_list))) as ex:
+        for picks in ex.map(fetch_draft_year, years_list):
+            for pk in picks:
+                if pk["mlbam_id"] not in by_id:
+                    by_id[pk["mlbam_id"]] = pk
+    log.info("bulk_fetch_drafts: %d picks indexed across %d years",
+             len(by_id), len(years_list))
+    return by_id
+
+
+# ---------------------------------------------------------------------------
+# Affiliation map — fetch /teams?sportId=... to get team→parent_org links
+# ---------------------------------------------------------------------------
+
+# sport_id → level label we expose to the front-end. Drives the per-level
+# roster grouping on the farm detail page.
+_LEVEL_BY_SPORT_ID = {
+    1:  "MLB",
+    11: "AAA",
+    12: "AA",
+    13: "A+",
+    14: "A",
+    16: "Rk",
+    17: "Rk",   # complex-level / DSL sometimes report under 17
+    21: "DSL",
+}
+
+
+def fetch_team_affiliations(season: int) -> dict[int, dict]:
+    """Return {team_id: {name, level, parent_org_id, parent_org_abbr}} for
+    every MLB + MiLB team in the given season. One call per sport level
+    (~6 total) covers the affiliate hierarchy in full.
+
+    parent_org_abbr is the 3-letter MLB code (e.g. NYM, TOR), pulled from
+    the MLB-team record's `abbreviation` field. Some MiLB records carry a
+    different abbreviation than their parent — we canonicalize via the
+    parent's MLB record so downstream code can compare to player.org."""
+    sport_ids = (1, 11, 12, 13, 14, 16)
+    team_info: dict[int, dict] = {}
+    mlb_abbr_by_id: dict[int, str] = {}
+
+    def _fetch(sport_id: int) -> list[dict]:
+        url = f"{MLB_STATS_API}/teams?sportId={sport_id}&season={season}"
+        try:
+            resp = requests.get(url, timeout=20, ttl=7 * 86400)
+            resp.raise_for_status()
+            return resp.json().get("teams", []) or []
+        except Exception as e:
+            log.warning("teams fetch failed (sport=%d): %s", sport_id, e)
+            return []
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as ex:
+        results = list(ex.map(_fetch, sport_ids))
+
+    # First pass: collect MLB-level abbreviations so we can resolve parents
+    for teams, sid in zip(results, sport_ids):
+        if sid != 1:
+            continue
+        for t in teams:
+            mlb_abbr_by_id[int(t["id"])] = t.get("abbreviation") or ""
+
+    # Second pass: every team (MLB + affiliates) → metadata
+    for teams, sid in zip(results, sport_ids):
+        level = _LEVEL_BY_SPORT_ID.get(sid)
+        for t in teams:
+            tid = int(t["id"])
+            parent_id = t.get("parentOrgId")
+            team_info[tid] = {
+                "id":              tid,
+                "name":            t.get("name") or "",
+                "level":           level,
+                "parent_org_id":   parent_id if parent_id else tid,
+                "parent_org_abbr": mlb_abbr_by_id.get(parent_id or tid, ""),
+            }
+
+    log.info("team affiliations: %d teams across %d sport levels",
+             len(team_info), len(sport_ids))
+    return team_info

@@ -37,6 +37,7 @@ from storage import (
     upsert_pitch_arsenals, load_pitch_arsenals,
     upsert_statcast_metrics, load_statcast_metrics,
     upsert_career_stats, load_career_stats, load_career_stats_meta,
+    upsert_acquisitions, load_acquisitions,
     export_timeseries_json,
 )
 from consensus import build_timeseries
@@ -46,6 +47,8 @@ from stats import (fetch_statlines_for, fetch_birth_date,
                    fetch_career_stats,
                    bulk_resolve_ids,
                    detect_graduations_from_career,
+                   bulk_fetch_drafts,
+                   fetch_team_affiliations,
                    PlayerIndex)
 from trades import detect_trades
 
@@ -152,6 +155,130 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             upsert_birth_date(key, bd, overwrite=True)
         if bds_from_index:
             log.info("upserted %d birth dates from PlayerIndex", len(bds_from_index))
+
+        # --- 2b. Bulk fetch draft data for the rolling window of years a
+        # current prospect could plausibly have been drafted in. One call
+        # per year (~10 total) returns thousands of picks each; matching to
+        # tracked prospects happens in-memory via mlbam_id. Players with no
+        # draft match are labeled 'international_fa' since the user's
+        # convention is to treat undrafted prospects as IFA signings.
+        # /draft/{year} payloads are cached on disk for 30 days, so reruns
+        # within a month cost nothing beyond reading the local cache.
+        draft_years = list(range(season - 9, season + 1))
+        log.info("fetching draft picks for years %s", draft_years)
+        draft_by_id = bulk_fetch_drafts(draft_years)
+
+        acquisitions: dict[str, dict] = {}
+        for p in timeseries:
+            mid = ids_by_key.get(p.player_key)
+            if mid is None:
+                continue
+            pick = draft_by_id.get(mid)
+            if pick is not None:
+                acquisitions[p.player_key] = {
+                    "method":       "draft",
+                    "year":         pick["year"],
+                    "round_label":  pick["round_label"],
+                    "pick_round":   pick["pick_round"],
+                    "pick_overall": pick["pick_overall"],
+                    "bonus_usd":    pick["bonus_usd"],
+                    "team_name":    pick["team_name"],
+                    "school":       pick["school"],
+                    "signing_date": None,
+                }
+            else:
+                # No draft record across the lookback window — treat as IFA.
+                # Bonus + signing_date stay unknown unless future enrichment
+                # surfaces them.
+                acquisitions[p.player_key] = {
+                    "method":       "international_fa",
+                    "year":         None,
+                    "round_label":  None,
+                    "pick_round":   None,
+                    "pick_overall": None,
+                    "bonus_usd":    None,
+                    "team_name":    None,
+                    "school":       None,
+                    "signing_date": None,
+                }
+        if acquisitions:
+            upsert_acquisitions(acquisitions)
+            n_draft = sum(1 for a in acquisitions.values() if a["method"] == "draft")
+            log.info("acquisitions: %d draft, %d IFA",
+                     n_draft, len(acquisitions) - n_draft)
+
+        # --- 2c. Affiliate roster map. ~6 HTTP calls (one per sport level)
+        # returns every MLB + MiLB team with its parent_org_id, which lets
+        # us group the PlayerIndex by (parent_org_abbr, level) to build
+        # full affiliate rosters for the farm-system page. Builds the
+        # roster structure here so storage.export_timeseries_json stays a
+        # pure serializer.
+        log.info("fetching team affiliations for season %d", season)
+        team_affil = fetch_team_affiliations(season)
+
+        # Map of MLBAM ID -> {player_key, fv_label, fv_raw} for our tracked
+        # prospects. The roster builder uses this to flag and grade matches.
+        tracked_by_mid: dict[int, dict] = {}
+        for p in timeseries:
+            mid = ids_by_key.get(p.player_key)
+            if mid is None:
+                continue
+            latest = p.points[-1] if p.points else None
+            tracked_by_mid[mid] = {
+                "player_key": p.player_key,
+                "fv_label": latest.consensus_fv_label if latest else None,
+                "fv_raw":   latest.consensus_fv_raw   if latest else None,
+                "status":   p.status,
+            }
+
+        from datetime import date as _date
+        def _age_from(bd: str | None) -> float | None:
+            if not bd:
+                return None
+            try:
+                b = _date.fromisoformat(bd)
+            except ValueError:
+                return None
+            today = _date.today()
+            return round((today - b).days / 365.25, 1)
+
+        # Build {org_abbr: {level: [player_records]}}
+        rosters_by_org: dict[str, dict[str, list[dict]]] = {}
+        for rec in player_index.players:
+            tid = rec.get("current_team_id")
+            if not tid:
+                continue
+            info = team_affil.get(int(tid))
+            if not info:
+                continue
+            org_abbr = info.get("parent_org_abbr") or ""
+            level = info.get("level") or ""
+            if not org_abbr or not level:
+                continue
+            tracked = tracked_by_mid.get(int(rec["id"]))
+            player_record = {
+                "mlbam_id":   rec["id"],
+                "fullName":   rec.get("fullName") or "",
+                "position":   rec.get("position") or "",
+                "age":        _age_from(rec.get("birthDate")),
+                "team_name":  rec.get("current_team_name") or info.get("name"),
+                "player_key": tracked["player_key"] if tracked else None,
+                "fv_label":   tracked["fv_label"] if tracked else None,
+                "fv_raw":     tracked["fv_raw"]   if tracked else None,
+            }
+            rosters_by_org.setdefault(org_abbr, {}).setdefault(level, []).append(player_record)
+
+        # Within each level, sort tracked prospects (by FV desc) ahead of
+        # un-graded org filler — that's the natural reading order on the page.
+        for org, levels in rosters_by_org.items():
+            for level, players in levels.items():
+                players.sort(key=lambda r: (
+                    -(r["fv_raw"] or -1),               # graded first, highest FV
+                    r["fullName"].lower(),
+                ))
+        log.info("built rosters for %d orgs across %d affiliate levels",
+                 len(rosters_by_org), len(set(
+                     lvl for levels in rosters_by_org.values() for lvl in levels)))
 
         # --- 3a. Fetch career year-by-year stats. Three filters narrow the
         # set we actually hit the network for:
@@ -363,7 +490,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                pitch_arsenals=arsenals,
                                statcast_metrics=statcast,
                                trades_by_player=trades_by_player,
-                               career_stats=load_career_stats())
+                               career_stats=load_career_stats(),
+                               acquisitions=load_acquisitions(),
+                               rosters_by_org=rosters_by_org)
         log.info("wrote %s", out_path)
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,

@@ -96,6 +96,20 @@ CREATE TABLE IF NOT EXISTS career_stats (
     fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS acquisitions (
+    player_key   TEXT PRIMARY KEY,
+    method       TEXT NOT NULL,       -- 'draft' | 'international_fa' | 'unknown'
+    year         INTEGER,             -- draft year or IFA signing year
+    round_label  TEXT,                -- '1', '2', 'CBA', 'CBB', etc.
+    pick_round   INTEGER,             -- pick within the round
+    pick_overall INTEGER,             -- overall pick number
+    bonus_usd    INTEGER,             -- signing bonus in dollars
+    team_name    TEXT,                -- drafting / signing team
+    school       TEXT,                -- HS/college for draftees
+    signing_date TEXT,                -- ISO date when known
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS trades (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
     player_key       TEXT NOT NULL,
@@ -402,6 +416,57 @@ def load_career_stats() -> dict[str, list[dict]]:
     return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
 
 
+def upsert_acquisitions(by_key: dict[str, dict]) -> int:
+    """Upsert acquisition rows. Each dict carries:
+      method, year, round_label, pick_round, pick_overall, bonus_usd,
+      team_name, school, signing_date (all optional except method).
+
+    overwrite is the default — IFA inference + draft fetches both produce
+    authoritative records that should replace any prior guess."""
+    n = 0
+    with connect() as con:
+        for key, rec in by_key.items():
+            con.execute(
+                """INSERT INTO acquisitions
+                     (player_key, method, year, round_label, pick_round,
+                      pick_overall, bonus_usd, team_name, school, signing_date,
+                      fetched_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                   ON CONFLICT(player_key) DO UPDATE SET
+                     method=excluded.method,
+                     year=excluded.year,
+                     round_label=excluded.round_label,
+                     pick_round=excluded.pick_round,
+                     pick_overall=excluded.pick_overall,
+                     bonus_usd=excluded.bonus_usd,
+                     team_name=excluded.team_name,
+                     school=excluded.school,
+                     signing_date=excluded.signing_date,
+                     fetched_at=excluded.fetched_at""",
+                (key, rec.get("method"), rec.get("year"),
+                 rec.get("round_label"), rec.get("pick_round"),
+                 rec.get("pick_overall"), rec.get("bonus_usd"),
+                 rec.get("team_name"), rec.get("school"),
+                 rec.get("signing_date")),
+            )
+            n += 1
+    return n
+
+
+def load_acquisitions() -> dict[str, dict]:
+    """Return {player_key: acquisition_dict} for every prospect with one."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                """SELECT player_key, method, year, round_label, pick_round,
+                          pick_overall, bonus_usd, team_name, school, signing_date
+                   FROM acquisitions"""
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: dict(r) for r in rows}
+
+
 def load_career_stats_meta() -> dict[str, str]:
     """Return {player_key: fetched_at_iso} for every stored career_stats row.
 
@@ -453,6 +518,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           statcast_metrics: dict[str, dict] | None = None,
                           trades_by_player: dict[str, list[dict]] | None = None,
                           career_stats: dict[str, list[dict]] | None = None,
+                          acquisitions: dict[str, dict] | None = None,
+                          rosters_by_org: dict[str, dict[str, list[dict]]] | None = None,
                           top_n_active: int | None = None):
     """
     Serialize for the front-end widget.
@@ -472,6 +539,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     statcast_metrics = statcast_metrics or {}
     trades_by_player = trades_by_player or {}
     career_stats = career_stats or {}
+    acquisitions = acquisitions or {}
+    rosters_by_org = rosters_by_org or {}
     birth_dates = load_birth_dates()
     from stats import compute_age_decimal
     from age_level import score_age_vs_level
@@ -741,6 +810,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "statcast": sc,
             "trades": _filter_real_trades(trades_by_player.get(p.player_key, [])),
             "career_stats": career_stats.get(p.player_key, []),
+            "acquisition": acquisitions.get(p.player_key),
             "eta": {
                 "year": eta.eta_year,
                 "confidence": eta.confidence,
@@ -937,6 +1007,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "graduates":  [_serialize(p) for p in grads],
         "org_summary": org_summary,
         "level_norms": level_norms,
+        # Per-org affiliate rosters keyed by parent_org_abbr → level → list.
+        # Each player record carries an FV grade when the player is one of
+        # our tracked prospects, otherwise just basic identity info.
+        "rosters_by_org": rosters_by_org,
     }
     out_path.write_text(json.dumps(payload, indent=2))
     return out_path
