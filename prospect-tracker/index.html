@@ -3012,17 +3012,95 @@ function makeArsenalBlock(pa) {
   return fb + `<table class="detail-table"><thead><tr><th>Pitch</th><th style="text-align:right;">Velo</th><th style="text-align:left;">Usage</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-// Trade history block on the prospect page — every real trade, oldest first.
-function makeTradeHistoryBlock(trades) {
-  if (!trades || !trades.length) {
-    return `<div style="color:var(--text-tertiary);font-size:12px;">No trades on record.</div>`;
+// Unified transaction-history block — trades + MiLB level changes + MLB
+// debut, all sorted by date. Trades come from `player.trades` (the MLB
+// transactions API + inferred-from-snapshot reconciliation); level
+// changes come from `player.level_changes` (derived from the same
+// transactions API per-player payload). A trade and a same-day level
+// change collapse to one row so cross-org promotions don't double-show.
+function makeTransactionHistoryBlock(player) {
+  const trades = player && player.trades || [];
+  const levelChanges = player && player.level_changes || [];
+  if (!trades.length && !levelChanges.length) {
+    return `<div style="color:var(--text-tertiary);font-size:12px;">No transactions on record.</div>`;
   }
-  const rows = trades.map(t => `<tr>
-    <td style="white-space:nowrap;">${t.trade_date}</td>
-    <td style="white-space:nowrap;">${escapeHtml(t.from_org ?? "?")} <span style="color:var(--neon-violet);">→</span> ${escapeHtml(t.to_org ?? "?")}</td>
-    <td style="color:var(--text-secondary);font-size:11px;line-height:1.45;">${escapeHtml(t.description || "")}</td>
+  // Build a flat row list, then sort by date asc.
+  const rows = [];
+  for (const t of trades) {
+    rows.push({
+      kind: "trade",
+      date: t.trade_date,
+      move: `${escapeHtml(t.from_org ?? "?")} <span style="color:var(--neon-violet);">→</span> ${escapeHtml(t.to_org ?? "?")}`,
+      detail: escapeHtml(t.description || ""),
+    });
+  }
+  for (const lc of levelChanges) {
+    const arrow = lc.kind === "promotion"
+      ? `<span style="color:var(--up);">↑</span>`
+      : `<span style="color:var(--down);">↓</span>`;
+    rows.push({
+      kind: lc.kind,
+      date: lc.date,
+      move: `<span class="level-pill level-neutral" style="margin-right:2px;">${escapeHtml(lc.from_level || "?")}</span> ${arrow} <span class="level-pill level-neutral" style="margin-left:2px;">${escapeHtml(lc.to_level || "?")}</span>`,
+      detail: lc.to_team
+        ? `${lc.kind === "promotion" ? "Promoted" : "Demoted"} to ${escapeHtml(lc.to_team)}${lc.from_team ? ` from ${escapeHtml(lc.from_team)}` : ""}`
+        : "",
+    });
+  }
+  rows.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  const html = rows.map(r => `<tr>
+    <td style="white-space:nowrap;">${escapeHtml(r.date)}</td>
+    <td style="white-space:nowrap;">${r.move}</td>
+    <td style="color:var(--text-secondary);font-size:11px;line-height:1.45;">${r.detail}</td>
   </tr>`).join("");
-  return `<table class="detail-table"><thead><tr><th>Date</th><th>Move</th><th>Description</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<table class="detail-table"><thead><tr><th>Date</th><th>Move</th><th>Detail</th></tr></thead><tbody>${html}</tbody></table>`;
+}
+
+// Back-compat shim: older callers (and any deployed embed) used
+// `makeTradeHistoryBlock(p.trades)`. The new unified block takes the
+// whole player, so keep this wrapper so nothing else needs touching.
+function makeTradeHistoryBlock(trades) {
+  return makeTransactionHistoryBlock({ trades, level_changes: [] });
+}
+
+// Injury history block — list every IL stint we can derive from the
+// MLB Stats API per-player transactions payload, oldest first. Stints
+// transferred from 15-day to 60-day collapse into one row showing the
+// longest IL type the player landed on. The currently-active stint
+// renders with an open `present` end-cap.
+function makeInjuryHistoryBlock(history) {
+  if (!history || !history.length) {
+    return `<div style="color:var(--text-tertiary);font-size:12px;">No IL stints on record.</div>`;
+  }
+  // Helper: human readable date span.
+  const fmtDate = iso => {
+    if (!iso) return "—";
+    const d = new Date(iso + "T00:00:00");
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString("en-US", { year: "2-digit", month: "short", day: "numeric" });
+  };
+  const rows = history.map(s => {
+    const sinceFmt = fmtDate(s.since);
+    const untilFmt = s.until ? fmtDate(s.until) : `<span style="color:var(--neon-amber);font-weight:600;">present</span>`;
+    const days = s.days != null
+      ? `${s.days}d`
+      : (s.active && s.since
+          ? (() => {
+              const ms = Date.now() - new Date(s.since + "T00:00:00").getTime();
+              return !isNaN(ms) && ms > 0 ? `${Math.floor(ms / 86400000)}d` : "—";
+            })()
+          : "—");
+    const typeColor = s.active
+      ? "var(--neon-amber)"
+      : (s.type === "60-day" ? "var(--down)" : "var(--text-tertiary)");
+    return `<tr>
+      <td style="white-space:nowrap;font-variant-numeric:tabular-nums;">${sinceFmt} → ${untilFmt}</td>
+      <td style="white-space:nowrap;color:${typeColor};font-weight:${s.active ? 600 : 500};">${escapeHtml(s.type || "?")} IL</td>
+      <td style="white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--text-primary);">${days}</td>
+      <td style="color:var(--text-secondary);font-size:11px;line-height:1.45;">${escapeHtml(s.reason || "")}</td>
+    </tr>`;
+  }).join("");
+  return `<table class="detail-table"><thead><tr><th>Stint</th><th>List</th><th>Length</th><th>Diagnosis</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 // Per-source FV history — shows the full breakdown of how each ranking
@@ -3251,7 +3329,20 @@ function renderPlayerDetail(key) {
     ? `<div class="detail-title" style="margin-top:18px;">Pitch arsenal</div>${makeArsenalBlock(p.pitch_arsenal)}`
     : "";
 
-  const tradesSection = `<div class="detail-title" style="margin-top:18px;">Transaction history</div>${makeTradeHistoryBlock(p.trades)}`;
+  const tradesSection = `<div class="detail-title" style="margin-top:18px;">Transaction history</div>${makeTransactionHistoryBlock(p)}`;
+
+  // Injury history — every IL stint we have on record, oldest first.
+  // Section title flexes with whether the player is currently injured so
+  // the user can spot an open stint without scanning the table.
+  const injurySection = (() => {
+    const history = ((p.roster_status || {}).injury_history) || [];
+    if (!history.length) return "";
+    const active = history.some(s => s.active);
+    const title = active
+      ? `Injury history <span style="font-weight:400;font-size:11px;color:var(--neon-amber);margin-left:6px;">currently on IL · ${history.length} total stint${history.length === 1 ? "" : "s"}</span>`
+      : `Injury history <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">${history.length} stint${history.length === 1 ? "" : "s"} on record</span>`;
+    return `<div class="detail-title" style="margin-top:18px;">${title}</div>${makeInjuryHistoryBlock(history)}`;
+  })();
 
   // Acquisition info: drafted prospects show pick + bonus; IFAs show
   // "International FA" + (when known) signing details. Section omitted
@@ -3475,7 +3566,7 @@ function renderPlayerDetail(key) {
   root.innerHTML = header + tilesHtml + `
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
       <div>${chartSection}${careerSection}${levelBenchmarkSection}${sourceSection}</div>
-      <div>${ilSection}${rosterStatusSection}${sabermetricsSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${etaRows}</div>
+      <div>${ilSection}${rosterStatusSection}${sabermetricsSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${injurySection}${etaRows}</div>
     </div>`;
 }
 

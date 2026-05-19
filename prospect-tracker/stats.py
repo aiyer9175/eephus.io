@@ -1765,7 +1765,120 @@ def derive_roster_status(transactions: list[dict],
         "career_mlb_ip":      round(mlb_ip_total, 1),
         "rookie_exhausted":   bool(rookie_exhausted),
         "service_phase":      service_phase,
+        "injury_history":     derive_injury_history(transactions or []),
     }
+
+
+# ---------------------------------------------------------------------------
+# Injury history derivation — walk transactions to extract every IL stint.
+# Reuses the placement / transfer / activation / rehab regexes defined
+# below for fetch_il_status (same parsing rules, same edge-case handling).
+# ---------------------------------------------------------------------------
+
+
+def _il_stint_reason(desc: str | None) -> str | None:
+    """Return the injury phrase ('Right elbow sprain') from the trailing
+    sentence of an IL placement description. The API always puts the
+    diagnosis after the period that ends the verb clause, when known."""
+    if not desc:
+        return None
+    # Split at the LAST period before any trailing whitespace and take
+    # the final non-empty fragment.
+    parts = [p.strip() for p in desc.rstrip(".").split(". ")]
+    if len(parts) < 2:
+        return None
+    tail = parts[-1]
+    # Sanity guard: skip if the tail still reads like a verb clause.
+    low = tail.lower()
+    if low.startswith(("placed", "transferred", "activated", "reinstated", "sent")):
+        return None
+    return tail or None
+
+
+def derive_injury_history(transactions: list[dict]) -> list[dict]:
+    """
+    Walk a player's transactions in date order to extract IL stints.
+
+    Returns a list of {since, until, type, reason, description, days,
+    active} dicts, oldest first. `since` carries the retroactive date
+    when the placement specified one (the real injury date); otherwise
+    it's the placement-row date. `until` is None for the currently-open
+    stint; `days` is computed if both ends are known.
+
+    `type` is the IL type the stint ENDED at — i.e. "60-day" if a
+    15-day stint got transferred to the 60-day. Consolidates a player's
+    "transferred to 60-day" follow-up into the original stint rather
+    than treating it as a second injury.
+
+    Reuses _IL_PLACE_RE / _IL_TRANSFER_RE / _IL_ACTIVATE_RE / _REHAB_RE
+    from the fetch_il_status path so placement-vs-rehab detection stays
+    consistent across the codebase.
+    """
+    out: list[dict] = []
+    open_stint: dict | None = None
+    for tx in transactions or []:
+        date_iso = tx.get("date") or ""
+        desc = (tx.get("description") or "").strip()
+        if not desc or not date_iso:
+            continue
+        if (tx.get("type_code") or "").upper() != "SC":
+            # IL events are always SC. ASG/SE rows can't open or close
+            # an IL stint, even when their descriptions happen to mention
+            # 'rehab' (e.g. "sent on a rehab assignment to Norfolk Tides"
+            # comes back as ASG and would otherwise muddle the logic).
+            continue
+        if _REHAB_RE.search(desc):
+            # Rehab assignments leave the player on IL — neither open
+            # nor close a stint.
+            continue
+        m_act = _IL_ACTIVATE_RE.search(desc)
+        m_trans = _IL_TRANSFER_RE.search(desc)
+        m_place = _IL_PLACE_RE.search(desc)
+        if m_act and open_stint is not None:
+            open_stint["until"] = date_iso
+            open_stint["active"] = False
+            try:
+                s = date.fromisoformat(open_stint["since"])
+                e = date.fromisoformat(date_iso)
+                open_stint["days"] = (e - s).days
+            except ValueError:
+                pass
+            out.append(open_stint)
+            open_stint = None
+            continue
+        if m_trans and open_stint is not None:
+            open_stint["type"] = m_trans.group(1)
+            if not open_stint.get("reason"):
+                open_stint["reason"] = _il_stint_reason(desc)
+            open_stint["description"] = desc
+            continue
+        if m_place:
+            # Close any prior open stint defensively (should not happen
+            # under normal API ordering, but a missed activation row
+            # would otherwise leave an old stint dangling forever).
+            if open_stint is not None:
+                open_stint["until"] = date_iso
+                open_stint["active"] = False
+                try:
+                    s = date.fromisoformat(open_stint["since"])
+                    e = date.fromisoformat(date_iso)
+                    open_stint["days"] = (e - s).days
+                except ValueError:
+                    pass
+                out.append(open_stint)
+            retro_iso = _parse_il_retro_date(m_place.group(2))
+            open_stint = {
+                "since":       retro_iso or date_iso,
+                "until":       None,
+                "type":        m_place.group(1),
+                "reason":      _il_stint_reason(desc),
+                "description": desc,
+                "days":        None,
+                "active":      True,
+            }
+    if open_stint is not None:
+        out.append(open_stint)
+    return out
 
 
 # ---------------------------------------------------------------------------
