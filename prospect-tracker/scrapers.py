@@ -17,20 +17,19 @@ This rewrite is divided into three tiers and is honest about what works:
       script can reliably get current data without manual intervention.
 
   Tier B — Best-effort HTML scraping
-      For sources that render lists in static HTML (Baseball America,
-      Just Baseball, TJStats), we attempt to parse the public ranking
-      view. Each parser has fallback selector strategies and prints
-      *diagnostic output* explaining exactly what happened — never
-      silent failure. When a site redesigns or paywalls a page, the
-      run_monthly.py output tells you which source failed and why.
+      For sources that render lists in static HTML (ESPN, Just Baseball,
+      MLB Pipeline's archived /milb/prospects/<year>/top100/ pages), we
+      parse the public ranking view. Each parser has fallback selector
+      strategies and prints *diagnostic output* explaining exactly what
+      happened — never silent failure. When a site redesigns or paywalls
+      a page, the run_monthly.py output tells you which source failed
+      and why.
 
   Tier C — Manual CSV ingest
-      For ESPN, The Athletic, and MLB Pipeline (all React-rendered or
-      paywalled), we read from data/manual_rankings.csv. The user
-      pastes the published list into the CSV (10-15 minutes of work per
-      update), and the pipeline ingests it. This is genuinely how most
-      prospect aggregators work — even Baseball America's industry
-      reports involve manual data entry by their editors.
+      For The Athletic (paywall + dynamic) and as a fallback for any
+      Tier B parser that fails, we read from data/manual_rankings.csv.
+      The user pastes the published list into the CSV (10-15 minutes
+      of work per update), and the pipeline ingests it.
 
 A `probe()` function hits every source URL and reports HTTP status, bytes
 returned, rows parsed, and a sample player name without writing anything.
@@ -39,7 +38,9 @@ Call it via `python run_monthly.py --dry-run`.
 
 from __future__ import annotations
 
+import bisect
 import csv
+import html
 import json
 import logging
 import re
@@ -419,6 +420,198 @@ def scrape_just_baseball(url: str, label: str, snap_date: str,
     return rows
 
 
+# --- MLB Pipeline (mlb.com/milb/prospects/<year>/top100/) -----------------
+# Each year's archived Top 100 page is server-rendered HTML with the full
+# ranking embedded as an Apollo Client cache (HTML-encoded JSON inside the
+# page body). Per prospect we recover rank, name, position, current MLB org,
+# and the 20-80 "Overall" scouting grade — which the rest of this pipeline
+# treats as FV. MLBAM person ID is also available via the player ref.
+#
+# Failure modes:
+#   - The default project UA gets HTTP 406; a real-browser UA returns
+#     the same HTML a logged-out reader would see (same workaround used
+#     for ESPN above).
+#   - The "current MLB org" reflects today's roster, not the player's
+#     org at the time the historical list was published. Pipeline updates
+#     these pages over time; treat the org as "as of scrape" rather than
+#     a true season-end snapshot. The rank and FV are the historical
+#     payload — those stay anchored.
+#   - 2021's page returns 99 records, not 100. The original list had 100;
+#     one record is simply not in the Apollo cache. Emit what's there.
+
+MLB_PIPELINE_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
+# (url, label, snapshot_date, year) — the year drives which prospectBio
+# entry to read scout grades from (each player has multiple year-tagged bios).
+MLB_PIPELINE_INTERVALS = [
+    (f"https://www.mlb.com/milb/prospects/{y}/top100/",
+     f"MLB Pipeline {y} Top 100",
+     f"{y}-01-22",
+     y)
+    for y in (2021, 2022, 2023, 2024, 2025, 2026)
+]
+
+
+def _apollo_entities(text: str, typename: str):
+    """Yield (id, body_slice) for each top-level Apollo entity of typename.
+
+    Apollo cache keys look like `"Typename:ID":{...}`. To prevent fields from
+    one record bleeding into the next via a too-wide scan window, we clip each
+    body at the next entity-start boundary in the document.
+    """
+    boundary_starts = sorted(
+        m.start() for m in re.finditer(
+            r'"[A-Z][A-Za-z]+:[A-Za-z0-9_\-]+":\{', text
+        )
+    )
+    boundary_starts.append(len(text))
+    target_re = re.compile(rf'"{re.escape(typename)}:(\d+)":\{{')
+    for m in target_re.finditer(text):
+        i = m.start()
+        nxt = bisect.bisect_right(boundary_starts, i)
+        j = boundary_starts[nxt] if nxt < len(boundary_starts) else len(text)
+        yield m.group(1), text[i:j]
+
+
+def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
+                        force: bool = False) -> list[Snapshot]:
+    """Parse one archived MLB.com Top 100 page into Snapshot rows.
+
+    Algorithm:
+      1. Fetch HTML with a real-browser UA (project UA gets 406).
+      2. html.unescape the body so the embedded JSON becomes plain text.
+      3. Build name + current-team lookups by walking Apollo Person and Team
+         entities (each clipped to its own record window). Affiliate teams
+         carry parentOrgName so a Triple-A roster spot resolves to the
+         parent MLB org via canonical_org().
+      4. Walk RankedPlayerEntity records in document order. Each carries:
+           - "rank": N
+           - "player": {"__ref": "Person:ID"}     → MLBAM ID
+           - "position": "SS/3B" / "RHP" / etc.
+           - "prospectBio": [ {contentText, contentTitle}, ... ]
+         Pick the bio whose contentTitle equals str(year); within its HTML,
+         the line "Scouting grades: ... | Overall: NN" carries the FV.
+    """
+    from trades import canonical_org
+
+    if date.fromisoformat(snap_date) > date.today():
+        return []
+
+    cache_key = f"mlb_pipeline_{year}_top100"
+    cache_path = CACHE_DIR / f"{cache_key}.html"
+    if cache_path.exists() and not force:
+        body = cache_path.read_text(encoding="utf-8")
+        log.info("cache hit: %s (%d bytes)", cache_key, len(body))
+    else:
+        log.info("fetching: %s", url)
+        time.sleep(RATE_LIMIT_SECONDS)
+        try:
+            resp = requests.get(url, headers=MLB_PIPELINE_HEADERS, timeout=30)
+        except requests.RequestException as e:
+            log.error("network error fetching %s: %s", url, e)
+            return []
+        if resp.status_code != 200:
+            log.warning("mlb_pipeline %s: HTTP %d (%d bytes)",
+                        label, resp.status_code, len(resp.text))
+            return []
+        body = resp.text
+        cache_path.write_text(body, encoding="utf-8")
+
+    text = html.unescape(body)
+
+    persons: dict[str, dict] = {}
+    for pid, p_body in _apollo_entities(text, "Person"):
+        first = re.search(r'"useName":"([^"]*)"', p_body)
+        last  = re.search(r'"useLastName":"([^"]*)"', p_body)
+        ar    = re.search(r'"activeRoster":\{"__ref":"Team:(\d+)"\}', p_body)
+        full  = f"{(first.group(1) if first else '').strip()} " \
+                f"{(last.group(1) if last else '').strip()}".strip()
+        persons[pid] = {
+            "name": fix_mojibake(full),
+            "team_id": ar.group(1) if ar else None,
+        }
+
+    teams: dict[str, tuple[str | None, str | None]] = {}
+    for tid, t_body in _apollo_entities(text, "Team"):
+        name_m = re.search(r'"name":"([^"]*)"', t_body)
+        par_m  = re.search(r'"parentOrgName":(null|"([^"]*)")', t_body)
+        parent = par_m.group(2) if (par_m and par_m.group(2)) else None
+        teams[tid] = (
+            name_m.group(1) if name_m else None,
+            parent,
+        )
+
+    def _resolve_org(pid: str) -> str | None:
+        p = persons.get(pid)
+        if not p:
+            return None
+        tid = p.get("team_id")
+        if not tid or tid not in teams:
+            return None
+        name, parent = teams[tid]
+        target = parent or name
+        if not target:
+            return None
+        return canonical_org(target) or target
+
+    rows: list[Snapshot] = []
+    starts = [m.start() for m in re.finditer(
+        re.escape('{"__typename":"RankedPlayerEntity",'), text)]
+    year_str = str(year)
+    seen_ranks: set[int] = set()
+    for idx, s in enumerate(starts):
+        e = starts[idx + 1] if idx + 1 < len(starts) else s + 200_000
+        chunk = text[s:e]
+        rank_m   = re.search(r'"rank":(\d+)', chunk)
+        person_m = re.search(r'"player":\{"__ref":"Person:(\d+)"\}', chunk)
+        pos_m    = re.search(r'"position":"([^"]+)"', chunk)
+        if not (rank_m and person_m):
+            continue
+        rank = int(rank_m.group(1))
+        if rank in seen_ranks:
+            continue
+        seen_ranks.add(rank)
+        pid = person_m.group(1)
+        position = pos_m.group(1) if pos_m else None
+
+        bios = list(re.finditer(
+            r'"contentText":"((?:[^"\\]|\\.)*)","contentTitle":"([^"]*)"', chunk))
+        overall: float | None = None
+        # Prefer the bio whose contentTitle matches the page year.
+        for bio in bios:
+            if bio.group(2) == year_str:
+                m2 = re.search(r'Overall:\s*(\d+)', bio.group(1))
+                if m2:
+                    overall = float(m2.group(1))
+                    break
+        # Fallback: any bio with an Overall grade line.
+        if overall is None:
+            for bio in bios:
+                m2 = re.search(r'Overall:\s*(\d+)', bio.group(1))
+                if m2:
+                    overall = float(m2.group(1))
+                    break
+
+        p = persons.get(pid, {})
+        name = p.get("name") or f"Person {pid}"
+        rows.append(Snapshot(
+            source="mlb_pipeline", snapshot_date=snap_date, interval_label=label,
+            player_key=normalize_key(name), player_name=name,
+            position=position, org=_resolve_org(pid),
+            rank=rank, fv=overall, status="active",
+        ))
+
+    log.info("mlb_pipeline %s -> %d players%s", label, len(rows),
+             " (TIER B working)" if rows else " (TIER B FAILED — selectors stale)")
+    return rows
 
 
 # ===========================================================================
@@ -514,7 +707,8 @@ def scrape_all(force: bool = False) -> tuple[list[Snapshot], dict[str, str]]:
     Active sources:
       - ESPN (Tier B, HTML scraping, Kiley McDaniel's Top 100)
       - Just Baseball (Tier B, HTML scraping)
-      - Manual CSV (Tier C, user-maintained) — FanGraphs, TJStats, MLB Pipeline
+      - MLB Pipeline (Tier B, archived /milb/prospects/<year>/top100/)
+      - Manual CSV (Tier C, user-maintained) — FanGraphs, TJStats, others
 
     Snapshots come from all sources. birth_dates come only from the manual
     CSV (Tier C) — automated scrapers don't surface DOB. The API path
@@ -541,6 +735,16 @@ def scrape_all(force: bool = False) -> tuple[list[Snapshot], dict[str, str]]:
             counts[label] = len(got)
         except Exception as e:
             log.exception("just_baseball %s crashed: %s", label, e)
+            counts[label] = -1
+
+    # Tier B: MLB Pipeline (archived top-100 pages, one per year)
+    for url, label, snap, year in MLB_PIPELINE_INTERVALS:
+        try:
+            got = scrape_mlb_pipeline(url, label, snap, year, force=force)
+            snapshots.extend(got)
+            counts[label] = len(got)
+        except Exception as e:
+            log.exception("mlb_pipeline %s crashed: %s", label, e)
             counts[label] = -1
 
     # Tier C: Manual CSV (FanGraphs, ESPN, TJStats, MLB Pipeline, etc.)
@@ -606,6 +810,16 @@ def probe(force: bool = False) -> None:
                 print(f"  Sample: {got[0].player_name} (rank {got[0].rank}, fv {got[0].fv})")
         else:
             print(f"  FAIL: HTTP {fr.status}")
+
+    # Tier B — MLB Pipeline (per-year archived top 100)
+    for url, label, snap, year in MLB_PIPELINE_INTERVALS:
+        print(f"\n[MLB Pipeline] {label}")
+        print(f"  URL: {url}")
+        got = scrape_mlb_pipeline(url, label, snap, year, force=force)
+        print(f"  Parser found: {len(got)} players")
+        if got:
+            top = got[0]
+            print(f"  Sample: {top.player_name} (rank {top.rank}, fv {top.fv}, org {top.org})")
 
     # Tier C: Manual CSV
     print(f"\n[Manual CSV] manual_rankings.csv")
