@@ -312,3 +312,71 @@ class TestExportSplit:
         assert all(p["status"] == "graduated" for p in payload["graduates"])
         grad_a = next(p for p in payload["graduates"] if p["player_name"] == "Grad A")
         assert grad_a["graduation_date"] == "2025-07-01"
+
+    def test_graduate_org_uses_post_graduation_trade(self, tmp_path):
+        import json
+        from storage import export_timeseries_json
+
+        snaps = [
+            Snapshot("fangraphs", "2025-02-15", "FG 2025 Report",
+                     "richard_fitts", "Richard Fitts", "SP", "BOS",
+                     74, 50.0, "active"),
+            Snapshot("fangraphs", "2025-10-15", "FG 2025 Graduates",
+                     "richard_fitts", "Richard Fitts", "SP", "BOS",
+                     74, 50.0, "graduated"),
+        ]
+        ts = build_timeseries(snaps)
+        out = tmp_path / "out.json"
+        export_timeseries_json(
+            ts, out,
+            trades_by_player={
+                "richard_fitts": [{
+                    "player_key": "richard_fitts",
+                    "trade_date": "2025-11-25",
+                    "date_range_start": "2025-11-25",
+                    "date_range_end": "2025-11-25",
+                    "from_org": "Boston Red Sox",
+                    "to_org": "St. Louis Cardinals",
+                    "source": "mlb_api",
+                    "description": (
+                        "St. Louis Cardinals traded RHP Sonny Gray and cash "
+                        "to Boston Red Sox for RHP Richard Fitts."
+                    ),
+                }]
+            },
+        )
+
+        payload = json.loads(out.read_text())
+        fitts = payload["graduates"][0]
+        assert fitts["org"] == "STL"
+
+    def test_active_no_org_uses_roster_org(self, tmp_path):
+        import json
+        from storage import export_timeseries_json
+
+        snaps = [Snapshot(
+            "mlb_pipeline_international", "2026-05-19",
+            "MLB Pipeline 2026 International",
+            "luis_hernandez", "Luis Hernandez", "SS", None,
+            1, None, "active",
+        )]
+        ts = build_timeseries(snaps)
+        out = tmp_path / "out.json"
+        export_timeseries_json(
+            ts, out,
+            rosters_by_org={
+                "SFG": {
+                    "Rk": [{
+                        "player_key": "luis_hernandez",
+                        "fullName": "Luis Hernandez",
+                        "fv_label": None,
+                        "fv_raw": None,
+                    }]
+                }
+            },
+        )
+
+        payload = json.loads(out.read_text())
+        luis = payload["players"][0]
+        assert luis["org"] == "SFG"
+        assert luis["org_rank"] == 1

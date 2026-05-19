@@ -464,6 +464,13 @@ MLB_PIPELINE_INTERVALS = [
     for y in (2021, 2022, 2023, 2024, 2025, 2026)
 ]
 
+MLB_INTERNATIONAL_INTERVALS = [
+    ("https://www.mlb.com/milb/prospects/international/",
+     "MLB Pipeline 2026 International",
+     date.today().isoformat(),
+     2026)
+]
+
 
 def _apollo_entities(text: str, typename: str):
     """Yield (id, body_slice) for each top-level Apollo entity of typename.
@@ -619,6 +626,180 @@ def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
     return rows
 
 
+def scrape_mlb_international(url: str, label: str, snap_date: str, year: int,
+                             force: bool = False) -> list[Snapshot]:
+    """Parse MLB Pipeline's international ranking table.
+
+    The static page exposes rank/name/position but not signing org. We emit
+    org=None here and let the monthly export merge these rows with the MiLB
+    roster index; only players with an actual affiliate team get an org.
+    """
+    if date.fromisoformat(snap_date) > date.today():
+        return []
+
+    cache_key = f"mlb_pipeline_{year}_international"
+    fr = _fetch(url, cache_key, force=force)
+    if fr.status != 200 or not fr.body:
+        return []
+
+    text = html.unescape(fr.body)
+    from trades import canonical_org
+
+    persons: dict[str, dict] = {}
+    for pid, p_body in _apollo_entities(text, "Person"):
+        first = re.search(r'"useName":"([^"]*)"', p_body)
+        last = re.search(r'"useLastName":"([^"]*)"', p_body)
+        ar = re.search(r'"activeRoster":\{"__ref":"Team:(\d+)"\}', p_body)
+        pos = re.search(
+            r'"primaryPosition":\{[^}]*"abbreviation":"([^"]+)"',
+            p_body,
+        )
+        full = f"{(first.group(1) if first else '').strip()} " \
+               f"{(last.group(1) if last else '').strip()}".strip()
+        persons[pid] = {
+            "name": fix_mojibake(full),
+            "team_id": ar.group(1) if ar else None,
+            "position": pos.group(1) if pos else None,
+        }
+
+    teams: dict[str, str | None] = {}
+    for tid, t_body in _apollo_entities(text, "Team"):
+        par_m = re.search(r'"parentOrgName":(null|"([^"]*)")', t_body)
+        parent = par_m.group(2) if (par_m and par_m.group(2)) else None
+        teams[tid] = canonical_org(parent) if parent else None
+
+    apollo_rows: list[Snapshot] = []
+    starts = [m.start() for m in re.finditer(
+        re.escape('{"__typename":"RankedPlayerEntity",'), text)]
+    seen_ranks: set[int] = set()
+    for idx, s in enumerate(starts):
+        e = starts[idx + 1] if idx + 1 < len(starts) else s + 200_000
+        chunk = text[s:e]
+        rank_m = re.search(r'"rank":(\d+)', chunk)
+        person_m = re.search(r'"player":\{"__ref":"Person:(\d+)"\}', chunk)
+        pos_m = re.search(r'"position":"([^"]+)"', chunk)
+        if not (rank_m and person_m):
+            continue
+        rank = int(rank_m.group(1))
+        if rank in seen_ranks or rank > 50:
+            continue
+        seen_ranks.add(rank)
+        person = persons.get(person_m.group(1), {})
+        name = person.get("name")
+        if not name:
+            continue
+        org = teams.get(person.get("team_id"))
+        if not org:
+            # The IFA merge is intentionally stateside/affiliate-aware:
+            # players without a current roster assignment stay out until
+            # MLB exposes a team for them.
+            continue
+        overall = None
+        overall_m = re.search(r'Overall:\s*(\d+)', chunk)
+        if overall_m:
+            overall = float(overall_m.group(1))
+        apollo_rows.append(Snapshot(
+            source="mlb_pipeline_international",
+            snapshot_date=snap_date,
+            interval_label=label,
+            player_key=normalize_key(name),
+            player_name=name,
+            position=pos_m.group(1) if pos_m else person.get("position"),
+            org=org,
+            rank=rank,
+            fv=overall,
+            status="active",
+        ))
+
+    if apollo_rows:
+        log.info("mlb_international %s -> %d players", label, len(apollo_rows))
+        return apollo_rows
+
+    soup = BeautifulSoup(fr.body, "html.parser")
+    lines = [
+        fix_mojibake(line)
+        for line in soup.get_text("\n").splitlines()
+        if fix_mojibake(line)
+    ]
+
+    start = None
+    for i, line in enumerate(lines):
+        if line.lower().startswith("rank player position"):
+            start = i + 1
+            break
+        if (
+            line.lower() == "rank"
+            and i + 2 < len(lines)
+            and lines[i + 1].lower() == "player"
+            and lines[i + 2].lower() == "position"
+        ):
+            start = i + 1
+            while start < len(lines) and not re.fullmatch(r"\d{1,3}", lines[start]):
+                start += 1
+            break
+    if start is None:
+        log.warning("mlb_international %s: ranking header not found", label)
+        return []
+
+    rows: list[Snapshot] = []
+    valid_positions = {
+        "P", "RHP", "LHP", "SP", "RP", "C", "1B", "2B", "3B", "SS",
+        "OF", "LF", "CF", "RF",
+    }
+    i = start
+    while i < len(lines):
+        line = lines[i]
+        low = line.lower()
+        if low.startswith("show full list") or low.startswith("prospect headlines"):
+            break
+        if not re.fullmatch(r"\d{1,3}", line):
+            i += 1
+            continue
+
+        rank = int(line)
+        if rank > 50:
+            i += 1
+            continue
+
+        name = None
+        pos = None
+        j = i + 1
+        while j < len(lines):
+            candidate = lines[j]
+            cand_low = candidate.lower()
+            if re.fullmatch(r"\d{1,3}", candidate):
+                break
+            if cand_low.startswith("image:") or cand_low.startswith("photo headshot"):
+                j += 1
+                continue
+            if name is None:
+                name = candidate
+            else:
+                m = re.match(r"^([A-Z]{1,3})(?:\b|/)", candidate)
+                if m and m.group(1) in valid_positions:
+                    pos = m.group(1)
+                    break
+            j += 1
+
+        if name and pos:
+            rows.append(Snapshot(
+                source="mlb_pipeline_international",
+                snapshot_date=snap_date,
+                interval_label=label,
+                player_key=normalize_key(name),
+                player_name=name,
+                position=pos,
+                org=None,
+                rank=rank,
+                fv=None,
+                status="active",
+            ))
+        i = max(j + 1, i + 1)
+
+    log.info("mlb_international %s -> %d players", label, len(rows))
+    return rows
+
+
 # ===========================================================================
 # Tier C — Manual CSV ingest
 # ===========================================================================
@@ -752,6 +933,18 @@ def scrape_all(force: bool = False) -> tuple[list[Snapshot], dict[str, str]]:
             log.exception("mlb_pipeline %s crashed: %s", label, e)
             counts[label] = -1
 
+    # Tier B: MLB Pipeline international class. Org is merged later from
+    # resolved affiliate rosters so only signed/assigned players surface
+    # on a team page.
+    for url, label, snap, year in MLB_INTERNATIONAL_INTERVALS:
+        try:
+            got = scrape_mlb_international(url, label, snap, year, force=force)
+            snapshots.extend(got)
+            counts[label] = len(got)
+        except Exception as e:
+            log.exception("mlb_international %s crashed: %s", label, e)
+            counts[label] = -1
+
     # Tier C: Manual CSV (FanGraphs, ESPN, TJStats, MLB Pipeline, etc.)
     csv_birth_dates: dict[str, str] = {}
     try:
@@ -825,6 +1018,16 @@ def probe(force: bool = False) -> None:
         if got:
             top = got[0]
             print(f"  Sample: {top.player_name} (rank {top.rank}, fv {top.fv}, org {top.org})")
+
+    # Tier B — MLB Pipeline international rankings
+    for url, label, snap, year in MLB_INTERNATIONAL_INTERVALS:
+        print(f"\n[MLB Pipeline International] {label}")
+        print(f"  URL: {url}")
+        got = scrape_mlb_international(url, label, snap, year, force=force)
+        print(f"  Parser found: {len(got)} players")
+        if got:
+            top = got[0]
+            print(f"  Sample: {top.player_name} (rank {top.rank}, org {top.org})")
 
     # Tier C: Manual CSV
     print(f"\n[Manual CSV] manual_rankings.csv")

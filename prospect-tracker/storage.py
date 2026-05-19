@@ -903,6 +903,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             if key:
                 graduate_mlb_org_by_key[key] = org_code
 
+    roster_org_by_key: dict[str, str] = {}
+    for org_code, levels in rosters_by_org.items():
+        for recs in levels.values():
+            for rec in recs or []:
+                key = rec.get("player_key")
+                if key and key not in roster_org_by_key:
+                    roster_org_by_key[key] = org_code
+
     def _derived_graduation_date(p: PlayerTimeseries) -> str | None:
         """
         Display/sort graduation by actual MLB activity when we have it.
@@ -967,6 +975,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         " off waivers",                # waiver claim ("claimed Y off waivers from X")
         " on waivers",                 # claimed/awarded on waivers (rarer wording)
         "purchased the contract",      # contract purchase between orgs
+        "purchased contract",          # Rule 5 wording omits "the"
         "signed as a free agent",      # FA signing (cross-org by definition)
         "returned to ",                # Rule 5 return
     )
@@ -1154,7 +1163,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # the description.
     _ACQUISITION_VERB_RULES = (
         (("off waivers", " on waivers", "claimed off waivers"),       "waiver"),
-        (("purchased the contract", "purchase of the contract"),      "contract_purchase"),
+        (("purchased the contract", "purchased contract",
+          "purchase of the contract"),                                "contract_purchase"),
         (("returned to ",),                                           "rule_5"),
         (("selected by",),                                            "rule_5"),
         (("signed as a free agent",),                                 "free_agent"),
@@ -1188,6 +1198,34 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Cross-org event with no recognized verb — fall back to "trade"
         # (typeCode TR is the dominant unclassified case).
         return "trade"
+
+    def _latest_post_graduation_org(p: PlayerTimeseries,
+                                    filtered_trades: list[dict]) -> str | None:
+        grad = _display_graduation_date(p) or p.graduation_date
+        if not grad:
+            return None
+        post_grad = [
+            t for t in filtered_trades
+            if (t.get("trade_date") or "") > grad and t.get("to_org")
+        ]
+        if not post_grad:
+            return None
+        latest = max(post_grad, key=lambda t: t.get("trade_date") or "")
+        return latest.get("to_org")
+
+    def _active_display_org(p: PlayerTimeseries) -> str | None:
+        return p.org or roster_org_by_key.get(p.player_key)
+
+    def _display_org(p: PlayerTimeseries,
+                     filtered_trades: list[dict]) -> str | None:
+        if p.status == "graduated":
+            return (
+                _latest_post_graduation_org(p, filtered_trades)
+                or graduate_mlb_org_by_key.get(p.player_key)
+                or roster_org_by_key.get(p.player_key)
+                or p.org
+            )
+        return _active_display_org(p)
 
     def _serialize(p: PlayerTimeseries) -> dict:
         bd = birth_dates.get(p.player_key)
@@ -1239,6 +1277,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         filtered_trades = _filter_real_trades(trades_by_player.get(p.player_key, []))
         acq = acquisitions.get(p.player_key)
         current_acq_method = _classify_current_acquisition(filtered_trades, acq)
+        display_org = _display_org(p, filtered_trades)
         # Surface the specific trade that brought them to their current
         # org (when applicable). The detail page shows it as the
         # "Acquired by <ORG>" line; filters key on `method` only.
@@ -1256,7 +1295,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "player_key": p.player_key,
             "player_name": p.player_name,
             "position": p.position,
-            "org": graduate_mlb_org_by_key.get(p.player_key, p.org) if p.status == "graduated" else p.org,
+            "org": display_org,
             "status": p.status,
             "graduation_date": _display_graduation_date(p) if p.status == "graduated" else p.graduation_date,
             "birth_date": bd,
@@ -1416,10 +1455,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     org_counters: dict[str, int] = {}
     org_totals: dict[str, int] = {}
     for p in actives:
-        org_totals[p.org or "?"] = org_totals.get(p.org or "?", 0) + 1
+        org_key = _active_display_org(p) or "?"
+        org_totals[org_key] = org_totals.get(org_key, 0) + 1
     for i, p in enumerate(actives, start=1):
         overall_rank_by_key[p.player_key] = i
-        org_key = p.org or "?"
+        org_key = _active_display_org(p) or "?"
         org_counters[org_key] = org_counters.get(org_key, 0) + 1
         org_rank_by_key[p.player_key] = org_counters[org_key]
         org_size_by_key[p.player_key] = org_totals[org_key]
@@ -1456,9 +1496,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # without a team label (rare; usually a name-aliasing bug where the
         # prospect is double-counted under a different canonical key with an
         # org). Including them creates a phantom 31st "team" on the farm page.
-        if not p.org:
+        org = _active_display_org(p)
+        if not org:
             continue
-        org = p.org
         bd = birth_dates.get(p.player_key)
         age = compute_age_decimal(bd)
         latest = p.points[-1]

@@ -286,3 +286,37 @@ class TestFetchStatlineMLBDetection:
         assert sl is not None
         assert sl.level == "CPX"
         assert sl.avg == ".423"
+
+
+class TestMlbPipelineInternational:
+    def test_parses_static_international_rankings_without_org(self):
+        from scrapers import FetchResult, scrape_mlb_international
+
+        html = """
+        <main>
+          <h1>Prospect Rankings</h1>
+          <div>Rank Player Position Birthplace Age Height / Weight Bats Throws</div>
+          <div>1</div>
+          <img alt="Photo headshot of Luis Hernández">
+          <div>Luis Hernández</div>
+          <div>SS San Juan de los Morros, Venezuela 17 5' 10" / 172 lbs R R</div>
+          <div>2</div>
+          <img alt="Photo headshot of Wandy Asigen">
+          <div>Wandy Asigen</div>
+          <div>SS Puerto Plata, Dominican Republic 16 6' 0" / 180 lbs L R</div>
+          <button>Show Full List</button>
+        </main>
+        """
+
+        with patch("scrapers._fetch", return_value=FetchResult(html, 200, False, "u")):
+            rows = scrape_mlb_international(
+                "https://www.mlb.com/milb/prospects/international/",
+                "MLB Pipeline 2026 International",
+                "2026-05-19",
+                2026,
+            )
+
+        assert [r.player_key for r in rows] == ["luis_hernandez", "wandy_asigen"]
+        assert rows[0].rank == 1
+        assert rows[0].position == "SS"
+        assert rows[0].org is None
