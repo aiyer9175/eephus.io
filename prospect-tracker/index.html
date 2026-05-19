@@ -777,14 +777,31 @@
     /* === Farm systems ============================================= */
     .farm-header, .farm-row {
       display: grid;
-      /* Org column widened from 140px → 200px so the longest team names
-         ("Philadelphia Phillies", "Arizona Diamondbacks", "Washington
-         Nationals") fit without ellipsis. The 70px FV-dist column slots
-         between 90-day form and Top prospect — narrow enough to keep the
-         flex columns generous but visible enough to read tier balance. */
-      grid-template-columns: 32px 40px 200px 1fr 70px 1fr 130px 1fr 64px 70px 16px;
+      /* Columns (in order):
+           # · logo · org · grade · form-line · top prospect ·
+           positions · level depth · avg age · stock · arrow
+         Grade slots right after the org name so the letter is the second
+         thing the eye lands on. The old 70px FV-distribution sparkbar
+         was replaced by Grade + a slightly wider form column — the FV
+         histogram lives on the detail page where it can breathe. */
+      grid-template-columns: 32px 40px 200px 60px 1.2fr 1fr 130px 1fr 64px 70px 16px;
       gap: 12px;
       align-items: center;
+    }
+    .farm-grade-cell {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 0; line-height: 1.05;
+    }
+    .farm-grade-cell .fg-letter {
+      font-family: var(--font-serif);
+      font-size: 22px; font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .farm-grade-cell .fg-score {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-tertiary);
+      font-variant-numeric: tabular-nums;
     }
     /* Compact "Org · pos · age" headline so a wider Org column doesn't
        create dead whitespace when team names are short. */
@@ -1197,20 +1214,6 @@
       color: var(--text-tertiary);
     }
 
-    /* List-page per-row FV-distribution mini bar */
-    .farm-row-fv-dist {
-      display: flex;
-      gap: 1px;
-      height: 18px;
-      align-items: stretch;
-      width: 100%;
-    }
-    .farm-row-fv-dist > div {
-      flex: 1;
-      border-radius: 1px;
-      min-width: 4px;
-    }
-
     /* Detail-page header (player + farm). Uses a paper-card with the
        team-color accent stripe on the left so it reads as a baseball card. */
     .detail-page-header {
@@ -1387,7 +1390,7 @@
       <button class="chip active" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% graduation pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
       <button class="chip" data-farm-sort="top_end" title="Tiered-FV sum of the org's top 5 prospects — an 80 is worth ~100x a 40">Top-end</button>
       <button class="chip" data-farm-sort="depth" title="Tiered-FV sum of prospects #6-25">Depth</button>
-      <button class="chip" data-farm-sort="trajectory" title="Smoothed change in cumulative FV — averages last 3 history points vs 3 near the 1-year cutoff. Graduations are neutral.">Trajectory</button>
+      <button class="chip" data-farm-sort="trajectory" title="Cumulative-FV change over the active form window, minus the median org's change over the same window. Positive = developing faster than the typical farm. Graduations are neutral.">Trajectory</button>
       <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted graduations in the trailing 12 months">Grad pipeline</button>
       <button class="chip" data-farm-sort="total_fv">Total FV</button>
       <button class="chip" data-farm-sort="count">Count</button>
@@ -1401,20 +1404,11 @@
       <button class="chip" data-farm-sort="level_A">A</button>
       <button class="chip" data-farm-sort="level_Rk">Rk</button>
       <button class="chip" data-farm-sort="level_DSL">DSL</button>
-      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--text-tertiary);">
-        <span>Form bar:</span>
-        <span style="display:inline-flex;align-items:center;gap:4px;">
-          <svg width="20" height="6" style="vertical-align:middle;"><line x1="0" y1="5" x2="20" y2="1" stroke="var(--up)" stroke-width="2"/></svg>
-          rising
-        </span>
-        <span style="display:inline-flex;align-items:center;gap:4px;">
-          <svg width="20" height="6" style="vertical-align:middle;"><line x1="0" y1="3" x2="20" y2="3" stroke="var(--text-tertiary)" stroke-width="2"/></svg>
-          flat
-        </span>
-        <span style="display:inline-flex;align-items:center;gap:4px;">
-          <svg width="20" height="6" style="vertical-align:middle;"><line x1="0" y1="1" x2="20" y2="5" stroke="var(--down)" stroke-width="2"/></svg>
-          falling
-        </span>
+      <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <span class="filter-label" title="Window used by the form sparkline + Trajectory sort. The line shows each org's growth above (or below) the median org's growth over the same window — so positive = developing faster than the typical farm.">Form window</span>
+        <button class="chip active" data-form-window="1y">1y</button>
+        <button class="chip"        data-form-window="3y">3y</button>
+        <button class="chip"        data-form-window="5y">5y</button>
       </div>
     </div>
     <div id="farm-rows"></div>
@@ -1773,6 +1767,7 @@ function syncToURL() {
   if (state.stockFilter !== "all")        p.set("stock", state.stockFilter);
   if (state.search)                       p.set("q",     state.search);
   if (state.farmSort    !== "farm_rank")  p.set("farm",  state.farmSort);
+  if (state.formWindow  !== "1y")         p.set("formw", state.formWindow);
   if (state.spotlightBucket !== "hot")    p.set("bucket", state.spotlightBucket);
   const hash = p.toString();
   history.replaceState(null, "", hash ? "#" + hash : window.location.pathname + window.location.search);
@@ -1795,6 +1790,10 @@ function syncFromURL() {
   if (p.has("stock")) state.stockFilter = p.get("stock");
   if (p.has("q"))     state.search      = p.get("q");
   if (p.has("farm"))  state.farmSort    = p.get("farm");
+  if (p.has("formw")) {
+    const v = p.get("formw");
+    if (v === "1y" || v === "3y" || v === "5y") state.formWindow = v;
+  }
   if (p.has("bucket")) state.spotlightBucket = p.get("bucket");
 }
 
@@ -1834,6 +1833,7 @@ function goHome() {
   if (state.stockFilter !== "all") p.set("stock", state.stockFilter);
   if (state.search)               p.set("q", state.search);
   if (state.farmSort !== "farm_rank") p.set("farm", state.farmSort);
+  if (state.formWindow !== "1y")      p.set("formw", state.formWindow);
   if (state.spotlightBucket !== "hot") p.set("bucket", state.spotlightBucket);
   _pushHash(p);
 }
@@ -1846,6 +1846,8 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.filterStock === state.stockFilter));
   document.querySelectorAll("[data-farm-sort]").forEach(b =>
     b.classList.toggle("active", b.dataset.farmSort === state.farmSort));
+  document.querySelectorAll("[data-form-window]").forEach(b =>
+    b.classList.toggle("active", b.dataset.formWindow === state.formWindow));
   document.querySelectorAll("[data-spotlight-bucket]").forEach(b =>
     b.classList.toggle("active", b.dataset.spotlightBucket === state.spotlightBucket));
   const orgSel = document.getElementById("org-filter");
@@ -1997,6 +1999,10 @@ const state = {
   sort: "fv",
   inactiveOrg: "all",
   farmSort: "farm_rank",
+  // Active form-bar window. Controls the farm-list sparkline (which
+  // plots growth above the median org over the same window) and the
+  // value used when sorting by "Trajectory".
+  formWindow: "1y",
   spotlightBucket: "hot",
   view: null
 };
@@ -2544,20 +2550,28 @@ function updateMeta() {
 // Tiers descending; matches the fvClass thresholds used for badge colors.
 const TIER_BUCKETS = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
 
-// Form bar — replaces the static tier bar on each farm row. Shows the
-// last year of the org's running-total FV as a small sparkline, colored
-// by the sign of the `trajectory_score` (smoothed 1-year delta).
-// Graduations are neutral in this series (the line stays flat through
-// them), so a strong farm that's promoting prospects isn't punished.
-// The trajectory number is precomputed server-side and surfaced as the
-// trailing badge so the slope encodes direction and the badge encodes
-// magnitude — both available at a glance.
-const FORM_BAR_W = 110;
-const FORM_BAR_H = 22;
-const FORM_BAR_WINDOW_DAYS = 365;  // 1 year of trajectory
+// Form bar — small sparkline on each farm row showing the org's
+// cumulative-FV growth above (or below) the median farm system over the
+// active window (1y / 3y / 5y). We clip the series to the window, anchor
+// every org's curve at zero on its first in-window point, then subtract
+// a linear baseline of `medianTrajectory * (t/windowDays)` so the line
+// represents "FV gained beyond what the typical farm gained". A flat
+// line at zero ≈ tracking the median; a rising line ≈ developing
+// prospects faster than peers. Graduations stay neutral in the upstream
+// series so a productive farm isn't punished for promoting its stars.
+//
+// The trailing badge shows the org's delta-above-median for the window
+// (precomputed server-side as `delta_above_median[window]`), which is
+// what the sort chip and grade signal also key off.
+const FORM_BAR_W = 130;
+const FORM_BAR_H = 26;
+const FORM_WINDOW_DAYS = { "1y": 365, "3y": 365 * 3, "5y": 365 * 5 };
 
-function makeFarmSparkline(fvHistory, trajectory) {
+function makeFarmSparkline(fvHistory, deltaAboveMedian, medianTrajectory, windowKey) {
   const series = fvHistory || [];
+  const windowDays = FORM_WINDOW_DAYS[windowKey] || 365;
+  const median = medianTrajectory || 0;
+
   if (series.length < 2) {
     return `<div class="tier-bar" style="gap:6px;">
       <svg width="${FORM_BAR_W}" height="${FORM_BAR_H}" style="border-radius:2px;overflow:hidden;flex-shrink:0">
@@ -2568,56 +2582,82 @@ function makeFarmSparkline(fvHistory, trajectory) {
     </div>`;
   }
 
-  // Clip the series to the trailing window so an org with two years of
-  // history doesn't get its recent shape compressed by the long tail.
-  const cutoffMs = Date.now() - FORM_BAR_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  // Clip the series to the trailing window. Always include at least two
+  // anchor points so a long-quiet org still gets a baseline to draw from.
+  const cutoffMs = Date.now() - windowDays * 24 * 60 * 60 * 1000;
   const cutoffIso = new Date(cutoffMs).toISOString().slice(0, 10);
   let recent = series.filter(s => s.date >= cutoffIso);
-  // Always include at least the last point and one anchor before it so
-  // the line has somewhere to start from when an org has been quiet.
   if (recent.length < 2) recent = series.slice(-2);
 
-  const vals = recent.map(s => s.total_fv);
-  const minV = Math.min(...vals);
-  const maxV = Math.max(...vals);
-  const range = Math.max(maxV - minV, 1);  // guard against a perfectly flat series
+  // Per-org growth relative to the first in-window point, then minus the
+  // median's linear baseline at the same time fraction. Result: y=0
+  // ≈ tracking the median; positive ≈ above median; negative ≈ below.
+  const startMs = new Date(recent[0].date).getTime();
+  const endMs   = new Date(recent[recent.length - 1].date).getTime();
+  const spanMs  = Math.max(endMs - startMs, 1);
+  const startFv = recent[0].total_fv;
+  const rel = recent.map(s => {
+    const t = (new Date(s.date).getTime() - startMs) / spanMs;  // [0..1]
+    const baseline = median * t;  // median's expected gain by fraction t of the window
+    return {
+      x: t,
+      v: (s.total_fv - startFv) - baseline,
+    };
+  });
+
+  // Scale around zero so the median (y=0) is always visible — that's the
+  // comparison the user is making. Pad the range slightly so a perfectly
+  // flat line doesn't sit at the very edge.
+  const vals = rel.map(p => p.v);
+  const absMax = Math.max(1, ...vals.map(Math.abs));
   const padY = 2;
   const innerH = FORM_BAR_H - 2 * padY;
-  const points = recent.map((s, i) => {
-    const x = (i / (recent.length - 1)) * FORM_BAR_W;
-    const y = padY + innerH - ((s.total_fv - minV) / range) * innerH;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(' ');
+  const zeroY = padY + innerH / 2;
+  const yFor = v => zeroY - (v / absMax) * (innerH / 2);
+  const points = rel.map(p =>
+    `${(p.x * FORM_BAR_W).toFixed(1)},${yFor(p.v).toFixed(1)}`
+  ).join(' ');
 
-  // Color the line by the trajectory-score sign so the eye picks up
-  // direction before the brain registers the slope itself. Threshold is
-  // tuned for a 1-year window — small wiggles stay neutral.
-  const delta = trajectory || 0;
-  const stroke = delta > 5  ? 'var(--up)'
-              : delta < -5 ? 'var(--down)'
-              :              'var(--text-tertiary)';
-  const arrow  = delta > 5  ? '▲'
-              : delta < -5 ? '▼'
-              :              '·';
+  // Color + arrow keyed off the precomputed delta-above-median for the
+  // window. The dead zone scales with the median's magnitude so the
+  // threshold for "essentially average" makes sense whether you're
+  // looking at 1y (median ~ a few hundred FV-points) or 5y (median in
+  // the thousands). Falls back to a hard minimum of 5 so unconfigured
+  // windows still get a coherent answer.
+  const delta = deltaAboveMedian || 0;
+  const deadZone = Math.max(5, Math.abs(median) * 0.05);
+  const stroke = delta >  deadZone ? 'var(--up)'
+              : delta < -deadZone ? 'var(--down)'
+              :                     'var(--text-tertiary)';
+  const arrow  = delta >  deadZone ? '▲'
+              : delta < -deadZone ? '▼'
+              :                     '·';
   const sign   = delta > 0 ? '+' : '';
   const deltaLabel = `${arrow}${sign}${delta.toFixed(1)}`;
-  const labelColor = stroke;
 
-  // Subtle fill underneath the line — same hue, low alpha. The fill
-  // closes back to the chart's bottom edge so an "all-low" stretch reads
-  // as a thin slice and an "all-high" stretch reads as a thick wedge.
-  const lastX  = FORM_BAR_W.toFixed(1);
-  const baseY  = (padY + innerH).toFixed(1);
+  // Median baseline reference at y=0. A faint dashed line gives the eye
+  // an anchor to compare each org's curve against.
+  const medianLine = `<line x1="0" y1="${zeroY.toFixed(1)}" x2="${FORM_BAR_W}" y2="${zeroY.toFixed(1)}"
+        stroke="var(--text-tertiary)" stroke-width="0.7" stroke-dasharray="2,2" opacity="0.55"/>`;
+
+  // Filled wedge between the line and the median baseline so eye picks
+  // up sign-and-magnitude in one glance: above-median orgs get a green
+  // shaded area on top, below-median get a red shaded area below.
+  const lastX = FORM_BAR_W.toFixed(1);
+  const baseY = zeroY.toFixed(1);
   const fillPoints = `0,${baseY} ${points} ${lastX},${baseY}`;
+
+  const titleText = `${windowKey} growth vs median: ${sign}${delta.toFixed(1)} (median Δ ${median.toFixed(1)})`;
 
   return `<div class="tier-bar" style="gap:8px;">
     <svg width="${FORM_BAR_W}" height="${FORM_BAR_H}" style="border-radius:2px;overflow:visible;flex-shrink:0"
-         aria-label="Trajectory: ${deltaLabel}">
+         aria-label="${escapeHtml(titleText)}"><title>${escapeHtml(titleText)}</title>
+      ${medianLine}
       <polygon points="${fillPoints}" fill="${stroke}" opacity="0.10"/>
       <polyline points="${points}" fill="none" stroke="${stroke}"
                 stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
     </svg>
-    <span style="color:${labelColor};font-size:11px;font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${deltaLabel}</span>
+    <span style="color:${stroke};font-size:11px;font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${deltaLabel}</span>
   </div>`;
 }
 
@@ -2684,10 +2724,22 @@ function makeFarmReportCard(org) {
   const g = org.grades;
   const r = org.component_ranks || {};
   const n = (DATA.org_summary || []).length || 30;
+  // Trajectory cell flexes with the active form window. The cell shows
+  // delta-above-median for that window (so the eye-line tracks what the
+  // list-page sparkline is showing), while the component letter grade
+  // stays anchored to the 1y trajectory_score that fed `farm_score` —
+  // recomputing grades per window would let the user appear to "earn"
+  // a different overall grade just by toggling the chip.
+  const win = state.formWindow || "1y";
+  const winLabel = win === "1y" ? "1y" : win === "3y" ? "3y" : "5y";
+  const trajWindowed = (org.delta_above_median || {})[win]
+                      ?? (org.trajectories || {})[win]
+                      ?? org.trajectory_score
+                      ?? null;
 
   const fmtPts = v => v != null ? `${v.toFixed(1)} pts` : '—';
   const fmtSigned = v => v != null
-    ? `${v > 0 ? '+' : ''}${v.toFixed(1)} · 1y`
+    ? `${v > 0 ? '+' : ''}${v.toFixed(1)} · ${winLabel} vs median`
     : '—';
 
   const stripCell = (label, letter, rank, scoreVal, scoreFmt, tooltip) => `
@@ -2719,8 +2771,8 @@ function makeFarmReportCard(org) {
                     fmtPts,    'Tiered-FV sum of the org’s top 5 prospects. An 80 is worth ~100 points; a 40 is worth 1.')}
         ${stripCell('Depth',      g.depth,      r.depth,      org.depth_points,
                     fmtPts,    'Tiered-FV sum of prospects #6 through #25. Rewards systems with real prospects beyond the top tier.')}
-        ${stripCell('Trajectory', g.trajectory, r.trajectory, org.trajectory_score,
-                    fmtSigned, 'Smoothed 1-year change in cumulative FV — average of last 3 history points vs 3 near the cutoff. Graduations are neutral.')}
+        ${stripCell('Trajectory', g.trajectory, r.trajectory, trajWindowed,
+                    fmtSigned, `${winLabel} cumulative-FV growth above the median org's growth over the same window. Letter grade stays anchored to the 1y trajectory used for farm_score. Graduations are neutral.`)}
         ${stripCell('Grad pipe',  g.grad,       r.grad,       org.grad_pipeline_score,
                     fmtPts,    'FV-weighted graduations in the trailing 12 months. Promoting a 60 is worth ~18 points; a 40 is worth 1.')}
       </div>
@@ -2748,26 +2800,6 @@ function makeFvHistogram(prospects, opts) {
   }).join('');
   const labels = FV_HIST_TIERS.map(t => `<span>${t}${t === 60 ? '+' : ''}</span>`).join('');
   return `<div class="fv-histogram">${bars}</div><div class="fv-histogram-labels">${labels}</div>`;
-}
-
-// Compact per-row variant used on the farm-list page. No counts, no
-// labels — just the colored bars so it reads as a sparkline alongside
-// the other compact columns. Uses square-root scaling so a single 60+
-// prospect doesn't make the rest invisible.
-function makeFvDistSparkbar(prospects) {
-  const counts = Object.fromEntries(FV_HIST_TIERS.map(t => [t, 0]));
-  (prospects || []).forEach(p => {
-    const n = parseInt(p.fv_label || p.fv_raw, 10);
-    if (isNaN(n)) return;
-    const tier = FV_HIST_TIERS.find(t => n >= t) ?? 40;
-    counts[tier]++;
-  });
-  const maxCount = Math.max(1, ...FV_HIST_TIERS.map(t => counts[t]));
-  const bars = FV_HIST_TIERS.map(t => {
-    const h = counts[t] ? Math.max(15, Math.round(Math.sqrt(counts[t] / maxCount) * 100)) : 8;
-    return `<div title="FV ${t}${t === 60 ? '+' : ''}: ${counts[t]}" style="background:var(--fv-${t}-fg);opacity:${counts[t] ? 0.85 : 0.18};align-self:flex-end;height:${h}%;"></div>`;
-  }).join('');
-  return `<div class="farm-row-fv-dist">${bars}</div>`;
 }
 
 // ETA-timeline mini-chart. Bars stacked by expected MLB debut year so
@@ -2892,7 +2924,15 @@ function farmSortedOrgs() {
     if (s === "total_fv")      return b.total_fv  - a.total_fv;
     if (s === "top_end")       return (b.top_end_points ?? 0) - (a.top_end_points ?? 0);
     if (s === "depth")         return (b.depth_points   ?? 0) - (a.depth_points   ?? 0);
-    if (s === "trajectory")    return (b.trajectory_score    ?? 0) - (a.trajectory_score    ?? 0);
+    if (s === "trajectory") {
+      // Sort by delta-above-median for the active window so the chip
+      // surfaces "best developers over the chosen window", not "biggest
+      // absolute change irrespective of how the rest of the league moved".
+      const w = state.formWindow || "1y";
+      const ad = (a.delta_above_median || {})[w] ?? a.trajectory_score ?? 0;
+      const bd = (b.delta_above_median || {})[w] ?? b.trajectory_score ?? 0;
+      return bd - ad;
+    }
     if (s === "grad_pipeline") return (b.grad_pipeline_score ?? 0) - (a.grad_pipeline_score ?? 0)
                                    || b.top_end_points - a.top_end_points;
     if (s === "count")         return b.count     - a.count;
@@ -2921,12 +2961,17 @@ function renderFarmSystems() {
     ? state.farmSort.slice("level_".length)
     : null;
 
+  const win = state.formWindow || "1y";
+  const medians = (DATA.farm_trajectory_medians || {});
+  const median = medians[win] ?? 0;
+  const winLabel = win === "1y" ? "1-year" : win === "3y" ? "3-year" : "5-year";
+
   const header = `<div class="farm-header">
     <span style="text-align:center;">#</span>
     <span></span>
     <span>Org</span>
-    <span title="Cumulative FV history over the last year, colored by 1-year delta. Graduations don't drop the line — they're neutral.">1-year form</span>
-    <span title="FV distribution — bars colored by tier (60+ / 55 / 50 / 45 / 40)">FV mix</span>
+    <span style="text-align:center;" title="Overall farm-system letter grade. A+ = #1 org; tiers descend by farm_score (45% top-end · 25% depth · 15% trajectory · 15% grad pipeline).">Grade</span>
+    <span title="${winLabel} cumulative-FV growth above the median org's growth over the same window. Flat baseline = tracking the median farm. Graduations are neutral.">${escapeHtml(winLabel)} form vs median</span>
     <span>Top prospect</span>
     <span>Positions</span>
     <span>Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
@@ -2937,6 +2982,12 @@ function renderFarmSystems() {
 
   const rows = orgs.map((org, i) => {
     const tp = org.top_prospect;
+    const overall = (org.grades && org.grades.overall) || '—';
+    const gradeColorVal = gradeColor(overall);
+    const deltaAbove = (org.delta_above_median || {})[win]
+                      ?? (org.trajectories || {})[win]
+                      ?? org.trajectory_score
+                      ?? 0;
     const stockHtml = (org.stock_up || org.stock_down)
       ? `${org.stock_up  ? `<span class="stock-up">▲${org.stock_up}</span> ` : ''}${org.stock_down ? `<span class="stock-down">▼${org.stock_down}</span>` : ''}`
       : `<span class="stock-flat">—</span>`;
@@ -2955,8 +3006,11 @@ function renderFarmSystems() {
             <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}</div>
           </div>
         </div>
-        <div>${makeFarmSparkline(org.fv_history, org.trajectory_score)}</div>
-        <div>${makeFvDistSparkbar(org.prospects)}</div>
+        <div class="farm-grade-cell" title="Overall grade · farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}/100">
+          <span class="fg-letter" style="color:${gradeColorVal};">${escapeHtml(overall)}</span>
+          <span class="fg-score">${org.farm_score != null ? org.farm_score.toFixed(0) : '—'}</span>
+        </div>
+        <div>${makeFarmSparkline(org.fv_history, deltaAbove, median, win)}</div>
         <div style="display:flex;align-items:center;gap:6px;font-size:12px;min-width:0;">
           ${tp ? `<span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(tp.name)}</span>
           <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:10px;padding:1px 5px;flex-shrink:0;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
@@ -4495,6 +4549,22 @@ function attachHandlers() {
       btn.classList.add("active");
       state.farmSort = btn.dataset.farmSort;
       renderFarmSystems();
+      syncToURL();
+    });
+  });
+
+  // Form-window chips (1y / 3y / 5y). Drives the sparkline + trajectory
+  // delta-above-median on the farm list, and the windowed trajectory
+  // cell on the farm-detail report card. Re-renders both views so the
+  // selector works whether the user is on the list or in a detail page.
+  document.querySelectorAll("[data-form-window]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-form-window]").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.formWindow = btn.dataset.formWindow;
+      if (state.view && state.view.type === "farm") renderFarmDetail(state.view.org);
+      renderFarmSystems();
+      syncToURL();
     });
   });
 }

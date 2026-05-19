@@ -755,6 +755,18 @@ FARM_TRAJECTORY_LOOKBACK_DAYS = 365
 FARM_TRAJECTORY_SMOOTH_WINDOW = 3   # avg last 3 fv_history points vs 3 near cutoff
 FARM_GRAD_PIPELINE_MONTHS     = 12
 
+# Multi-window trajectories. The list page lets the user toggle between
+# these to ask "who's been developing prospects best over the last X?".
+# The 1y entry matches FARM_TRAJECTORY_LOOKBACK_DAYS and feeds the
+# canonical `trajectory_score` (which keeps the report-card grading
+# anchored to the 1y window). Longer windows surface orgs whose growth
+# only shows up over a draft cycle or two.
+FARM_TRAJECTORY_WINDOWS = {
+    "1y": 365,
+    "3y": 365 * 3,
+    "5y": 365 * 5,
+}
+
 FARM_TOP_END_COUNT  = 5             # top N prospects feeding the "stars" score
 FARM_DEPTH_START    = 5             # prospects #6 ...
 FARM_DEPTH_END      = 25            # ... through #25 feed the "depth" score
@@ -2007,12 +2019,43 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     for entry in org_summary:
         entry["top_end_points"] = _top_end_points(entry["prospects"])
         entry["depth_points"]   = _depth_points(entry["prospects"])
-        entry["trajectory_score"] = _trajectory_score(
-            entry["fv_history"], as_of=today_iso,
-        )
+        # Trajectory at each available window. The 1y value is also
+        # surfaced as `trajectory_score` so the report-card grading (which
+        # is intentionally anchored to 1y) keeps using it without having
+        # to know about the dict.
+        entry["trajectories"] = {
+            key: _trajectory_score(
+                entry["fv_history"], lookback_days=days, as_of=today_iso,
+            )
+            for key, days in FARM_TRAJECTORY_WINDOWS.items()
+        }
+        entry["trajectory_score"] = entry["trajectories"]["1y"]
         entry["grad_pipeline_score"] = _grad_pipeline_score(
             entry["fv_events"], as_of=today_iso,
         )
+
+    # Median trajectory per window across all orgs. The list-page chart
+    # subtracts a linear baseline of `median * t/window_days` from each
+    # org's series so the line shows "growth above the typical farm",
+    # not raw FV — that's the comparison the user actually wants when
+    # ranking dev pipelines.
+    def _median(vals: list[float]) -> float:
+        if not vals:
+            return 0.0
+        s = sorted(vals)
+        n = len(s)
+        mid = n // 2
+        return s[mid] if n % 2 else (s[mid - 1] + s[mid]) / 2.0
+
+    farm_trajectory_medians = {
+        key: round(_median([e["trajectories"][key] for e in org_summary]), 2)
+        for key in FARM_TRAJECTORY_WINDOWS
+    }
+    for entry in org_summary:
+        entry["delta_above_median"] = {
+            key: round(entry["trajectories"][key] - farm_trajectory_medians[key], 2)
+            for key in FARM_TRAJECTORY_WINDOWS
+        }
 
     top_end_100 = _normalize_to_100([e["top_end_points"]      for e in org_summary])
     depth_100   = _normalize_to_100([e["depth_points"]        for e in org_summary])
@@ -2095,6 +2138,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "graduates":  graduate_payload,
         "spotlights": spotlight_payload,
         "org_summary": org_summary,
+        "farm_trajectory_medians": farm_trajectory_medians,
         "level_norms": level_norms,
         # Per-org affiliate rosters keyed by parent_org_abbr → level → list.
         # Each player record carries an FV grade when the player is one of
