@@ -1006,6 +1006,99 @@
       font-variant-numeric: tabular-nums;
     }
 
+    /* === Per-org acquisition spending ============================== */
+    /* Stacks a row per year with two side-by-side horizontal bars
+       (IFA above, Draft below). Each bar's width is relative to the
+       org's largest single-year spend so internal proportions read at
+       a glance. Color coding matches the rest of the site's
+       acquisition palette: IFA = amber, Draft = cyan. */
+    .spending-grid {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 4px 10px;
+      align-items: center;
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+    }
+    .spending-year {
+      font-family: var(--font-mono);
+      color: var(--text-tertiary);
+      text-align: right;
+    }
+    .spending-bars {
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .spending-bar {
+      display: grid;
+      grid-template-columns: 30px 1fr 76px;
+      gap: 6px;
+      align-items: center;
+      font-family: var(--font-mono);
+    }
+    .spending-bar .sb-label {
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      font-weight: 700;
+    }
+    .spending-bar .sb-track {
+      height: 9px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-light);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+    .spending-bar .sb-fill {
+      height: 100%;
+      transition: width 0.18s ease;
+    }
+    .spending-bar.sb-ifa   .sb-label { color: var(--neon-amber); }
+    .spending-bar.sb-ifa   .sb-fill  { background: var(--neon-amber); }
+    .spending-bar.sb-draft .sb-label { color: var(--neon-cyan); }
+    .spending-bar.sb-draft .sb-fill  { background: var(--neon-cyan); }
+    .spending-bar .sb-amt {
+      text-align: right;
+      color: var(--text-primary);
+      font-size: 11px;
+    }
+    .spending-totals {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .spending-totals .st-cell {
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+    }
+    .spending-totals .st-cell.st-ifa   { border-left: 3px solid var(--neon-amber); }
+    .spending-totals .st-cell.st-draft { border-left: 3px solid var(--neon-cyan); }
+    .spending-totals .st-label {
+      font-size: 9px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-tertiary);
+    }
+    .spending-totals .st-value {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      margin-top: 2px;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+    .spending-totals .st-sub {
+      font-size: 10.5px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+
     /* === Scouting flags ============================================ */
     /* Green/red chips on the prospect-detail page that surface stats
        clearly above or below MLB-projectable thresholds at the player's
@@ -1456,8 +1549,34 @@
         <option value="age_asc">Youngest first</option>
         <option value="age_vs_level">Most young-for-level</option>
         <option value="eta">ETA (earliest first)</option>
-        <option value="level">Current level (MLB → DSL)</option>
       </select>
+    </div>
+  </div>
+  <!-- Level + position filters live on their own row so the eye can
+       scan all level chips at once without competing with the sort
+       row above. Both are filter dimensions (multiple chips can be
+       on simultaneously — but for v1 we go single-select with an
+       "All" reset to keep the URL state simple). -->
+  <div class="filter-bar" id="filter-bar-secondary">
+    <div class="filter-group">
+      <span class="filter-label">Level</span>
+      <button class="chip active" data-filter-level="all">All</button>
+      <button class="chip" data-filter-level="MLB">MLB</button>
+      <button class="chip" data-filter-level="AAA">AAA</button>
+      <button class="chip" data-filter-level="AA">AA</button>
+      <button class="chip" data-filter-level="A+">A+</button>
+      <button class="chip" data-filter-level="A">A</button>
+      <button class="chip" data-filter-level="CPX" title="Rookie complex leagues (FCL + ACL)">CPX</button>
+      <button class="chip" data-filter-level="DSL" title="Dominican Summer League">DSL</button>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Position</span>
+      <button class="chip active" data-filter-pos="all">All</button>
+      <button class="chip" data-filter-pos="C">C</button>
+      <button class="chip" data-filter-pos="1B">1B</button>
+      <button class="chip" data-filter-pos="INF" title="2B, 3B, SS, multi-position infield">INF</button>
+      <button class="chip" data-filter-pos="OF">OF</button>
+      <button class="chip" data-filter-pos="P" title="SP / RP / RHP / LHP">P</button>
     </div>
   </div>
 
@@ -1503,7 +1622,7 @@
       <button class="chip" data-farm-sort="level_AA">AA</button>
       <button class="chip" data-farm-sort="level_A+">A+</button>
       <button class="chip" data-farm-sort="level_A">A</button>
-      <button class="chip" data-farm-sort="level_Rk">Rk</button>
+      <button class="chip" data-farm-sort="level_CPX">CPX</button>
       <button class="chip" data-farm-sort="level_DSL">DSL</button>
       <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <span class="filter-label" title="Window used by the form sparkline + Trajectory sort. The line shows each org's growth above (or below) the median org's growth over the same window — so positive = developing faster than the typical farm.">Form window</span>
@@ -1581,7 +1700,9 @@ const stockHTML = s => {
 // Level hierarchy (low to high). Used to detect promotions/demotions
 // between consecutive seasons in career_stats so we can mark them on the
 // stock chart.
-const LEVEL_RANK = { DSL: 0, FCL: 0, CPX: 0, "Rk": 1, R: 1, ROK: 1, A: 2, "A+": 3, AA: 4, AAA: 5, MLB: 6 };
+// Post-rename ladder. Legacy aliases ("Rk", "R", "ROK", "FCL") still
+// resolve so any career row that pre-dates the cleanup ranks correctly.
+const LEVEL_RANK = { DSL: 0, FCL: 1, CPX: 1, "Rk": 1, R: 1, ROK: 1, A: 2, "A+": 3, AA: 4, AAA: 5, MLB: 6 };
 function levelRank(lvl) {
   return LEVEL_RANK[lvl] != null ? LEVEL_RANK[lvl] : -1;
 }
@@ -1864,6 +1985,8 @@ function syncToURL() {
   if (state.section     !== "active")     p.set("tab",   state.section);
   if (state.orgFilter   !== "all")        p.set("org",   state.orgFilter);
   if (state.acqFilter   !== "all")        p.set("acq",   state.acqFilter);
+  if (state.levelFilter !== "all")        p.set("lvl",   state.levelFilter);
+  if (state.posFilter   !== "all")        p.set("pos",   state.posFilter);
   if (state.sort        !== "fv")         p.set("sort",  state.sort);
   if (state.stockFilter !== "all")        p.set("stock", state.stockFilter);
   if (state.search)                       p.set("q",     state.search);
@@ -1887,6 +2010,8 @@ function syncFromURL() {
   if (p.has("tab"))   state.section     = p.get("tab");
   if (p.has("org"))   state.orgFilter   = p.get("org");
   if (p.has("acq"))   state.acqFilter   = p.get("acq");
+  if (p.has("lvl"))   state.levelFilter = p.get("lvl");
+  if (p.has("pos"))   state.posFilter   = p.get("pos");
   if (p.has("sort"))  state.sort        = p.get("sort");
   if (p.has("stock")) state.stockFilter = p.get("stock");
   if (p.has("q"))     state.search      = p.get("q");
@@ -1930,6 +2055,8 @@ function goHome() {
   if (state.section !== "active") p.set("tab", state.section);
   if (state.orgFilter !== "all")  p.set("org", state.orgFilter);
   if (state.acqFilter !== "all")  p.set("acq", state.acqFilter);
+  if (state.levelFilter !== "all") p.set("lvl", state.levelFilter);
+  if (state.posFilter !== "all")   p.set("pos", state.posFilter);
   if (state.sort !== "fv")        p.set("sort", state.sort);
   if (state.stockFilter !== "all") p.set("stock", state.stockFilter);
   if (state.search)               p.set("q", state.search);
@@ -1945,6 +2072,10 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.section === state.section));
   document.querySelectorAll("[data-filter-stock]").forEach(b =>
     b.classList.toggle("active", b.dataset.filterStock === state.stockFilter));
+  document.querySelectorAll("[data-filter-level]").forEach(b =>
+    b.classList.toggle("active", b.dataset.filterLevel === state.levelFilter));
+  document.querySelectorAll("[data-filter-pos]").forEach(b =>
+    b.classList.toggle("active", b.dataset.filterPos === state.posFilter));
   document.querySelectorAll("[data-farm-sort]").forEach(b =>
     b.classList.toggle("active", b.dataset.farmSort === state.farmSort));
   document.querySelectorAll("[data-form-window]").forEach(b =>
@@ -2097,6 +2228,15 @@ const state = {
   stockFilter: "all",
   orgFilter: "all",
   acqFilter: "all",
+  // Level filter — one of "all", "MLB", "AAA", "AA", "A+", "A", "CPX", "DSL".
+  // Filters the main prospect list AND the farm-detail tracked-prospects
+  // roster down to players currently at that level.
+  levelFilter: "all",
+  // Position bucket — "all" | "C" | "1B" | "INF" | "OF" | "P". Buckets are
+  // intentionally coarse (INF lumps 2B/3B/SS/multi-pos so a "middle
+  // infield" lookup doesn't need three checks); the per-prospect chip
+  // still shows the precise published position.
+  posFilter: "all",
   sort: "fv",
   inactiveOrg: "all",
   farmSort: "farm_rank",
@@ -2107,6 +2247,20 @@ const state = {
   spotlightBucket: "hot",
   view: null
 };
+
+// Map a player's `position` string ("RHP", "SS/2B", "OF", "1B", "C") to
+// one of the coarse filter buckets. Returns null when the position is
+// missing or doesn't classify (rare — usually catches DH-only or "?").
+function positionBucket(pos) {
+  if (!pos) return null;
+  const head = String(pos).split("/")[0].toUpperCase();
+  if (head === "C") return "C";
+  if (head === "1B") return "1B";
+  if (/^(2B|3B|SS|INF|MI|IF|UTIL)/.test(head)) return "INF";
+  if (/^OF|CF|LF|RF/.test(head)) return "OF";
+  if (/^(RHP|LHP|SP|RP|MIRP|SIRP|P)$/.test(head)) return "P";
+  return null;
+}
 let DATA = null;
 
 function getAllOrgs() {
@@ -2141,6 +2295,18 @@ function getFilteredActives() {
     pool = pool.filter(p =>
       ((p.current_acquisition || {}).method || "unknown") === state.acqFilter);
   }
+  // Level filter — uses the current-season statline.level. Prospects
+  // without a usable statline (recent IFAs, late-season call-ups before
+  // their first row lands) are excluded from any explicit level filter
+  // since we can't place them on the ladder.
+  if (state.levelFilter !== "all") {
+    pool = pool.filter(p => (p.statline || {}).level === state.levelFilter);
+  }
+  // Position filter — maps each prospect's published position string
+  // into the coarse C / 1B / INF / OF / P bucket and matches.
+  if (state.posFilter !== "all") {
+    pool = pool.filter(p => positionBucket(p.position) === state.posFilter);
+  }
   if (state.sort === "age_asc") {
     pool.sort((a, b) => (a.age ?? 99) - (b.age ?? 99));
   } else if (state.sort === "age_vs_level") {
@@ -2151,17 +2317,6 @@ function getFilteredActives() {
       const ay = a.eta && a.eta.year != null ? a.eta.year : 9999;
       const by = b.eta && b.eta.year != null ? b.eta.year : 9999;
       return ay - by;
-    });
-  } else if (state.sort === "level") {
-    // Higher level first; FV-raw breaks ties so the highest-FV player at
-    // each level rises to the top within their group.
-    pool.sort((a, b) => {
-      const ar = levelRank(a.statline && a.statline.level);
-      const br = levelRank(b.statline && b.statline.level);
-      if (br !== ar) return br - ar;
-      const af = a.points.length ? a.points[a.points.length - 1].consensus_fv_raw : 0;
-      const bf = b.points.length ? b.points[b.points.length - 1].consensus_fv_raw : 0;
-      return bf - af;
     });
   }
   return pool;
@@ -2880,6 +3035,196 @@ function makeFarmReportCard(org) {
     </div>`;
 }
 
+// Full-size growth chart for a single org on the farm-detail page.
+// Same conceptual model as the list-page sparkline (org cumulative FV
+// minus a linear median-baseline so the y-axis reads "growth above the
+// typical farm"), drawn larger with gridlines, year markers, and an
+// explicit zero-line so the reader can pick up the magnitude and slope
+// without hovering. Reacts to state.formWindow (1y / 3y / 5y).
+function makeFarmGrowthChart(org, medianTrajectory, windowKey) {
+  const windowDays = FORM_WINDOW_DAYS[windowKey] || 365;
+  const series = (org && org.fv_history) || [];
+  if (series.length < 2) {
+    return `<div style="color:var(--text-tertiary);font-size:12px;">Not enough cumulative-FV history yet for a chart.</div>`;
+  }
+  const cutoffMs = Date.now() - windowDays * 24 * 60 * 60 * 1000;
+  const cutoffIso = new Date(cutoffMs).toISOString().slice(0, 10);
+  let recent = series.filter(s => s.date >= cutoffIso);
+  if (recent.length < 2) recent = series.slice(-2);
+
+  const startMs  = new Date(recent[0].date).getTime();
+  const endMs    = new Date(recent[recent.length - 1].date).getTime();
+  const spanMs   = Math.max(endMs - startMs, 1);
+  const startFv  = recent[0].total_fv;
+  const median   = medianTrajectory || 0;
+  const rel = recent.map(s => {
+    const t = (new Date(s.date).getTime() - startMs) / spanMs;
+    return { x: t, v: (s.total_fv - startFv) - (median * t) };
+  });
+  const vals  = rel.map(p => p.v);
+  const minV  = Math.min(0, ...vals);
+  const maxV  = Math.max(0, ...vals);
+  const padPct = 0.1;
+  const range  = Math.max(1, maxV - minV);
+  const yMin = minV - range * padPct;
+  const yMax = maxV + range * padPct;
+
+  const W = 760, H = 220;
+  const PAD_L = 38, PAD_R = 14, PAD_T = 14, PAD_B = 28;
+  const innerW = W - PAD_L - PAD_R;
+  const innerH = H - PAD_T - PAD_B;
+  const xFor = t => PAD_L + t * innerW;
+  const yFor = v => PAD_T + innerH - ((v - yMin) / (yMax - yMin)) * innerH;
+  const zeroY = yFor(0);
+
+  // Y-axis: 5 ticks across the value range. Tick labels show signed
+  // delta from the typical farm so the units are concrete.
+  const yTicks = [];
+  for (let i = 0; i <= 4; i++) {
+    const v = yMin + (yMax - yMin) * (i / 4);
+    const y = yFor(v).toFixed(1);
+    const isZero = Math.abs(v) < 0.5;
+    yTicks.push(
+      `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="${isZero ? 'var(--text-tertiary)' : 'var(--border-light)'}" stroke-width="${isZero ? 0.9 : 0.4}" stroke-dasharray="${isZero ? '4,3' : '2,3'}"/>`,
+      `<text x="${PAD_L - 5}" y="${y}" dy="3" font-size="9" fill="var(--text-tertiary)" text-anchor="end" font-family="var(--font-mono)">${v >= 0 ? '+' : ''}${v.toFixed(0)}</text>`,
+    );
+  }
+
+  // X-axis: tick + year/quarter labels. We mark every year boundary
+  // that falls inside the window, and label the first + last actual
+  // snapshot date so the axis is anchored.
+  const xMarks = [];
+  const startDate = new Date(recent[0].date);
+  const endDate = new Date(recent[recent.length - 1].date);
+  for (let yr = startDate.getFullYear(); yr <= endDate.getFullYear() + 1; yr++) {
+    const yrT = Date.UTC(yr, 0, 1);
+    if (yrT < startMs || yrT > endMs) continue;
+    const t = (yrT - startMs) / spanMs;
+    const x = xFor(t).toFixed(1);
+    xMarks.push(
+      `<line x1="${x}" y1="${PAD_T}" x2="${x}" y2="${H - PAD_B}" stroke="var(--border-light)" stroke-width="0.4" stroke-dasharray="2,3"/>`,
+      `<text x="${x}" y="${H - PAD_B + 14}" font-size="10" fill="var(--text-tertiary)" text-anchor="middle">${yr}</text>`,
+    );
+  }
+  xMarks.push(
+    `<text x="${xFor(0).toFixed(1)}" y="${H - 4}" font-size="9" fill="var(--text-tertiary)" text-anchor="start">${recent[0].date}</text>`,
+    `<text x="${xFor(1).toFixed(1)}" y="${H - 4}" font-size="9" fill="var(--text-tertiary)" text-anchor="end">${recent[recent.length - 1].date}</text>`,
+  );
+
+  // Plot the median baseline as a clean horizontal at y=0 (drawn
+  // already by the zero-tick above) and a labeled "median pace" tag at
+  // the right edge so readers know what the line represents.
+  const medianTag = `<text x="${(W - PAD_R - 4).toFixed(1)}" y="${(zeroY - 6).toFixed(1)}" font-size="9" fill="var(--text-tertiary)" text-anchor="end" font-style="italic">median farm pace</text>`;
+
+  // Org curve: stroke color by sign of final delta (above-median = up).
+  const finalV = vals[vals.length - 1];
+  const stroke = finalV >  Math.max(5, Math.abs(median) * 0.05) ? 'var(--up)'
+              : finalV < -Math.max(5, Math.abs(median) * 0.05) ? 'var(--down)'
+              :                                                  'var(--text-tertiary)';
+  const points = rel.map(p =>
+    `${xFor(p.x).toFixed(1)},${yFor(p.v).toFixed(1)}`
+  ).join(" ");
+  // Fill polygon between curve and zero-line so above-median shows as
+  // a green shaded region above zero, below-median as red below.
+  const polyTop = `${xFor(0).toFixed(1)},${zeroY.toFixed(1)} ${points} ${xFor(1).toFixed(1)},${zeroY.toFixed(1)}`;
+  const labelTxt = `${windowKey} growth vs median: ${finalV >= 0 ? '+' : ''}${finalV.toFixed(1)}`;
+
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="${escapeHtml(labelTxt)}">
+    ${yTicks.join("")}
+    ${xMarks.join("")}
+    <polygon points="${polyTop}" fill="${stroke}" opacity="0.10"/>
+    <polyline points="${points}" fill="none" stroke="${stroke}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${medianTag}
+    <text x="${(W - PAD_R - 4).toFixed(1)}" y="${PAD_T + 12}" font-size="11" fill="${stroke}" text-anchor="end" font-family="var(--font-mono)" font-weight="700">${escapeHtml(labelTxt)}</text>
+  </svg>`;
+}
+
+// Acquisition-spending block — IFA vs Draft year-by-year for one org.
+// Renders on the farm-detail page so a reader can compare an
+// organization's amateur-talent commitment by channel at a glance.
+// IFA totals come from the Spotrac scrape (every signing in the cycle,
+// not just our tracked prospects); Draft totals come from our own
+// acquisitions table (Bonus-Pool slot bonuses for every drafted player
+// we have on file, including graduates). Bars are scaled relative to
+// the org's largest single year so internal proportions matter more
+// than absolute dollars — the totals header carries the gross.
+function _fmtDollars(n) {
+  if (!n || n <= 0) return "$0";
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(n >= 10_000_000 ? 1 : 2)}M`;
+  if (n >= 1_000)     return `$${(n / 1_000).toFixed(0)}K`;
+  return `$${n.toLocaleString("en-US")}`;
+}
+function makeSpendingBlock(org) {
+  const ifa = org && org.ifa_spending ? org.ifa_spending : {};
+  const draft = org && org.draft_spending ? org.draft_spending : {};
+  const allYears = new Set([
+    ...Object.keys(ifa).map(y => +y),
+    ...Object.keys(draft).map(y => +y),
+  ]);
+  if (allYears.size === 0) {
+    return `<div style="color:var(--text-tertiary);font-size:12px;">No bonus data on file for this org's amateur acquisitions.</div>`;
+  }
+  // Anchor the bars to a recent multi-year window so the chart stays
+  // bounded as our history grows. Last 6 cycles is a clean comparison
+  // band — covers Spotrac IFA 2021-current plus the matching drafts.
+  const years = [...allYears].filter(y => y >= 2021).sort((a, b) => b - a);
+  // Scale: use the max combined single-year spend so IFA and Draft
+  // share a comparable width axis across rows.
+  let maxYear = 1;
+  for (const y of years) {
+    const i = (ifa[y]   || {}).total_usd || 0;
+    const d = (draft[y] || {}).total_usd || 0;
+    maxYear = Math.max(maxYear, i, d);
+  }
+
+  const ifaTotal   = years.reduce((sum, y) => sum + ((ifa[y]   || {}).total_usd || 0), 0);
+  const draftTotal = years.reduce((sum, y) => sum + ((draft[y] || {}).total_usd || 0), 0);
+  const ifaSign    = years.reduce((sum, y) => sum + ((ifa[y]   || {}).signings  || 0), 0);
+  const draftSign  = years.reduce((sum, y) => sum + ((draft[y] || {}).signings  || 0), 0);
+
+  const totalsHtml = `<div class="spending-totals">
+    <div class="st-cell st-ifa">
+      <div class="st-label">International FA · ${years.length}-yr</div>
+      <div class="st-value">${_fmtDollars(ifaTotal)}</div>
+      <div class="st-sub">${ifaSign} signings · avg ${_fmtDollars(ifaSign ? ifaTotal / ifaSign : 0)} / signing</div>
+    </div>
+    <div class="st-cell st-draft">
+      <div class="st-label">Draft · ${years.length}-yr</div>
+      <div class="st-value">${_fmtDollars(draftTotal)}</div>
+      <div class="st-sub">${draftSign} picks signed · avg ${_fmtDollars(draftSign ? draftTotal / draftSign : 0)} / pick</div>
+    </div>
+  </div>`;
+
+  const rowHtml = (yr) => {
+    const iRec = ifa[yr]   || {};
+    const dRec = draft[yr] || {};
+    const iVal = iRec.total_usd || 0;
+    const dVal = dRec.total_usd || 0;
+    const iPct = Math.min(100, (iVal / maxYear) * 100);
+    const dPct = Math.min(100, (dVal / maxYear) * 100);
+    const iTip = iRec.top_player ? `Top: ${iRec.top_player} (${_fmtDollars(iRec.top_bonus || 0)})` : "";
+    const dTip = dRec.top_player ? `Top: ${dRec.top_player} (${_fmtDollars(dRec.top_bonus || 0)})` : "";
+    return `
+      <div class="spending-year">${yr}</div>
+      <div class="spending-bars">
+        <div class="spending-bar sb-ifa" title="${escapeHtml(iTip)}">
+          <span class="sb-label">IFA</span>
+          <span class="sb-track"><span class="sb-fill" style="width:${iPct.toFixed(1)}%;"></span></span>
+          <span class="sb-amt">${_fmtDollars(iVal)}</span>
+        </div>
+        <div class="spending-bar sb-draft" title="${escapeHtml(dTip)}">
+          <span class="sb-label">Draft</span>
+          <span class="sb-track"><span class="sb-fill" style="width:${dPct.toFixed(1)}%;"></span></span>
+          <span class="sb-amt">${_fmtDollars(dVal)}</span>
+        </div>
+      </div>`;
+  };
+
+  return totalsHtml + `<div class="spending-grid">
+    ${years.map(rowHtml).join("")}
+  </div>`;
+}
+
 // FV-distribution histogram for an org. Used in the farm-detail sidebar
 // and (in compact form) on the farm-list page. Buckets prospects into
 // the standard FV bands (≥60, 55, 50, 45, 40) so the chart matches the
@@ -2984,7 +3329,7 @@ function makeAcqMixBar(rosterPlayers) {
 // always read zero) and skips DSL when the org has none, since most
 // systems do not field a DSL squad and an always-zero pill is noise.
 // activeLevel highlights the pill matching the current sort.
-const FARM_DEPTH_LEVELS = ["AAA","AA","A+","A","Rk","DSL"];
+const FARM_DEPTH_LEVELS = ["AAA","AA","A+","A","CPX","DSL"];
 function makeLevelDepth(levelCounts, activeLevel) {
   if (!levelCounts) return `<span style="color:var(--text-tertiary);font-size:10px;">—</span>`;
   return FARM_DEPTH_LEVELS
@@ -4218,13 +4563,24 @@ function renderFarmDetail(orgCode) {
   }
 
   // Resolve full player objects so we can render each roster line with its
-  // FV trajectory chart inline. The acquisition filter (shared with the
-  // main prospect list via state.acqFilter) narrows the roster to only
-  // prospects acquired by this org via the chosen method.
+  // FV trajectory chart inline. The acquisition, level, and position
+  // filters all share state with the main prospect list so toggling
+  // chips on the list page carries through when the user clicks into
+  // a farm — same prospects, same lens.
   const rosterPlayersAll = (DATA.players || []).filter(p => p.org === orgCode);
-  const rosterPlayers = state.acqFilter !== "all"
-    ? rosterPlayersAll.filter(p => ((p.current_acquisition || {}).method || "unknown") === state.acqFilter)
-    : rosterPlayersAll.slice();
+  let rosterPlayers = rosterPlayersAll.slice();
+  if (state.acqFilter !== "all") {
+    rosterPlayers = rosterPlayers.filter(p =>
+      ((p.current_acquisition || {}).method || "unknown") === state.acqFilter);
+  }
+  if (state.levelFilter !== "all") {
+    rosterPlayers = rosterPlayers.filter(p =>
+      (p.statline || {}).level === state.levelFilter);
+  }
+  if (state.posFilter !== "all") {
+    rosterPlayers = rosterPlayers.filter(p =>
+      positionBucket(p.position) === state.posFilter);
+  }
   rosterPlayers.sort((a, b) => {
     const fa = a.points.length ? a.points[a.points.length - 1].consensus_fv_raw : 0;
     const fb = b.points.length ? b.points[b.points.length - 1].consensus_fv_raw : 0;
@@ -4470,7 +4826,7 @@ function renderFarmDetail(orgCode) {
   // Affiliate-roster section — one tab per level, content swap on click.
   // Highlights tracked prospects with their FV badge inline so the page
   // doubles as a "where in the org are our prospects playing right now".
-  const affilLevels = ["MLB", "AAA", "AA", "A+", "A", "Rk", "DSL"];
+  const affilLevels = ["MLB", "AAA", "AA", "A+", "A", "CPX", "DSL"];
   const orgRosters = (DATA.rosters_by_org || {})[orgCode] || {};
   const presentLevels = affilLevels.filter(lvl => (orgRosters[lvl] || []).length);
   const defaultLevel = presentLevels.includes("AAA") ? "AAA" : (presentLevels[0] || "MLB");
@@ -4585,25 +4941,73 @@ function renderFarmDetail(orgCode) {
     const m = (rp.current_acquisition || {}).method || "unknown";
     acqTallies[m] = (acqTallies[m] || 0) + 1;
   }
-  const acqFilterBar = `
-    <div style="display:flex;align-items:center;gap:6px;margin:10px 0 0;flex-wrap:wrap;">
-      <span style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;margin-right:4px;">Filter</span>
-      ${ACQ_METHODS_FOR_FARM.map(([val, label]) => {
-        const n = val === "all" ? rosterPlayersAll.length : (acqTallies[val] || 0);
-        const active = state.acqFilter === val;
+  // Per-roster tallies for the in-page level and position filters so
+  // each chip can show "(N)" and we can dim/disable chips that would
+  // narrow the roster to zero.
+  const levelTallies = {};
+  for (const rp of rosterPlayersAll) {
+    const lvl = (rp.statline || {}).level || "_";
+    levelTallies[lvl] = (levelTallies[lvl] || 0) + 1;
+  }
+  const posTallies = {};
+  for (const rp of rosterPlayersAll) {
+    const b = positionBucket(rp.position);
+    if (b) posTallies[b] = (posTallies[b] || 0) + 1;
+  }
+
+  const FARM_LEVEL_FILTER = [
+    ["all", "All"], ["MLB","MLB"], ["AAA","AAA"], ["AA","AA"], ["A+","A+"],
+    ["A","A"], ["CPX","CPX"], ["DSL","DSL"],
+  ];
+  const FARM_POS_FILTER = [
+    ["all","All"], ["C","C"], ["1B","1B"], ["INF","INF"], ["OF","OF"], ["P","P"],
+  ];
+
+  // Three chip strips stacked tight: acquisition method, level, position.
+  // Each chip shows its tally so the user knows whether selecting it
+  // will yield anything before clicking.
+  const filterStrip = (label, opts, activeVal, dataAttr, tallies) => `
+    <div style="display:flex;align-items:center;gap:6px;margin:6px 0 0;flex-wrap:wrap;">
+      <span style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;margin-right:4px;min-width:50px;">${escapeHtml(label)}</span>
+      ${opts.map(([val, lbl]) => {
+        const n = val === "all" ? rosterPlayersAll.length : (tallies[val] || 0);
+        const active = activeVal === val;
         const disabled = val !== "all" && n === 0;
-        return `<button class="chip${active ? " active" : ""}" data-farm-acq="${val}" type="button"${disabled ? ' disabled style="opacity:0.4;cursor:default;"' : ""}>
-          ${escapeHtml(label)} <span style="color:var(--text-tertiary);font-weight:400;">(${n})</span>
+        return `<button class="chip${active ? " active" : ""}" ${dataAttr}="${val}" type="button"${disabled ? ' disabled style="opacity:0.4;cursor:default;"' : ""}>
+          ${escapeHtml(lbl)} <span style="color:var(--text-tertiary);font-weight:400;">(${n})</span>
         </button>`;
       }).join("")}
     </div>`;
+
+  const acqFilterBar = filterStrip("Acquired", ACQ_METHODS_FOR_FARM,
+    state.acqFilter, "data-farm-acq", acqTallies);
+  const levelFilterBar = filterStrip("Level", FARM_LEVEL_FILTER,
+    state.levelFilter, "data-farm-level", levelTallies);
+  const posFilterBar = filterStrip("Position", FARM_POS_FILTER,
+    state.posFilter, "data-farm-pos", posTallies);
 
   root.innerHTML = header + tilesHtml + `
     <div class="farm-detail-grid">
       ${leftRailHtml}
       <div>
-        <div class="detail-title" style="margin-top:0;">Tracked prospects (${rosterPlayers.length}${state.acqFilter !== "all" ? ` · filtered by ${escapeHtml(ACQ_METHODS_FOR_FARM.find(m => m[0] === state.acqFilter)?.[1] || state.acqFilter)}` : ""})</div>
+        <div class="detail-title" style="margin-top:0;">${(state.formWindow || "1y")} growth vs median farm <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">cumulative-FV change minus median org pace · graduations are neutral</span></div>
+        ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_medians || {})[state.formWindow || "1y"] ?? 0), state.formWindow || "1y")}
+        <div class="detail-title" style="margin-top:18px;">Acquisition spending <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">International FA vs Draft · 2021-current</span></div>
+        ${makeSpendingBlock(org)}
+        <div class="detail-title" style="margin-top:18px;">Tracked prospects (${rosterPlayers.length}${
+          [
+            state.acqFilter !== "all" ? `${escapeHtml(ACQ_METHODS_FOR_FARM.find(m => m[0] === state.acqFilter)?.[1] || state.acqFilter)}` : null,
+            state.levelFilter !== "all" ? escapeHtml(state.levelFilter) : null,
+            state.posFilter !== "all" ? escapeHtml(state.posFilter) : null,
+          ].filter(Boolean).length ? " · filtered " + [
+            state.acqFilter !== "all" ? `${escapeHtml(ACQ_METHODS_FOR_FARM.find(m => m[0] === state.acqFilter)?.[1] || state.acqFilter)}` : null,
+            state.levelFilter !== "all" ? escapeHtml(state.levelFilter) : null,
+            state.posFilter !== "all" ? escapeHtml(state.posFilter) : null,
+          ].filter(Boolean).join(" / ") : ""
+        })</div>
         ${acqFilterBar}
+        ${levelFilterBar}
+        ${posFilterBar}
         ${rosterHeader}${rosterRows}
         ${gradedSection}
         ${affiliateSection}
@@ -4622,13 +5026,31 @@ function renderFarmDetail(orgCode) {
       });
     });
   });
-  // Acquisition filter chips — share state with the main list. Clicking
-  // re-renders the entire farm detail so the roster + tally chips both
-  // reflect the new filter.
+  // Acquisition / level / position filter chips on the farm detail
+  // page. All three share state with the main prospect list so toggling
+  // chips here also reshapes the main list when the user navigates back.
+  // Each click re-renders the entire farm detail so tallies + active
+  // states stay consistent.
   document.querySelectorAll("#farm-detail-body [data-farm-acq]").forEach(btn => {
     if (btn.disabled) return;
     btn.addEventListener("click", () => {
       state.acqFilter = btn.dataset.farmAcq;
+      renderFarmDetail(orgCode);
+      syncToURL();
+    });
+  });
+  document.querySelectorAll("#farm-detail-body [data-farm-level]").forEach(btn => {
+    if (btn.disabled) return;
+    btn.addEventListener("click", () => {
+      state.levelFilter = btn.dataset.farmLevel;
+      renderFarmDetail(orgCode);
+      syncToURL();
+    });
+  });
+  document.querySelectorAll("#farm-detail-body [data-farm-pos]").forEach(btn => {
+    if (btn.disabled) return;
+    btn.addEventListener("click", () => {
+      state.posFilter = btn.dataset.farmPos;
       renderFarmDetail(orgCode);
       syncToURL();
     });
@@ -4718,6 +5140,27 @@ function attachHandlers() {
       btn.classList.add("active");
       state.stockFilter = btn.dataset.filterStock;
       render();
+      syncToURL();
+    });
+  });
+  // Level filter chips (main list + URL state).
+  document.querySelectorAll("[data-filter-level]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-filter-level]").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.levelFilter = btn.dataset.filterLevel;
+      render();
+      syncToURL();
+    });
+  });
+  // Position filter chips.
+  document.querySelectorAll("[data-filter-pos]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-filter-pos]").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.posFilter = btn.dataset.filterPos;
+      render();
+      syncToURL();
     });
   });
   document.getElementById("org-filter").addEventListener("change", e => {

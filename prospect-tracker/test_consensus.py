@@ -370,7 +370,7 @@ class TestExportSplit:
             ts, out,
             rosters_by_org={
                 "SFG": {
-                    "Rk": [{
+                    "CPX": [{
                         "player_key": "luis_hernandez",
                         "fullName": "Luis Hernandez",
                         "fv_label": None,

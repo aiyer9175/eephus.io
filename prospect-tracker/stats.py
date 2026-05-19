@@ -515,13 +515,22 @@ def compute_age_decimal(birth_date: str | None,
 # When the API returns league.sport.name we get codes like "Triple-A".
 # When it only returns league.name we get the actual league name like
 # "Southern League" — we have to map those too.
+#
+# Rookie-level handling: post-2021 realignment, US-based rookie ball is
+# exclusively the Complex Leagues (FCL + ACL), and DSL is a distinct
+# foreign rookie league with its own age curve. We no longer expose a
+# generic "Rk" bucket — the bulk-fetch fallback used to dump everything
+# from sport-id 16 there, hiding CPX vs DSL splits. Now anything that
+# would have landed in Rk classifies as CPX by default and gets
+# overridden to DSL when the league name says so. Legacy aliases stay
+# in the map so historical career rows still resolve to the new bucket.
 LEVEL_LABELS = {
     # MLB
     "MLB": "MLB", "Major League Baseball": "MLB", "The Show": "MLB",
     "American League": "MLB", "National League": "MLB",
     # Sport codes
     "Triple-A": "AAA", "Double-A": "AA", "High-A": "A+", "Single-A": "A",
-    "AAA": "AAA", "AA": "AA", "A+": "A+", "A": "A", "Rk": "Rk",
+    "AAA": "AAA", "AA": "AA", "A+": "A+", "A": "A",
     # AAA leagues
     "International League": "AAA", "Pacific Coast League": "AAA",
     # AA leagues
@@ -532,14 +541,19 @@ LEVEL_LABELS = {
     # A leagues
     "Carolina League": "A",  "California League": "A",
     "Florida State League": "A",
-    # Rookie / complex
-    "Rookie": "Rk", "FCL": "CPX", "ACL": "CPX",
+    # Complex / rookie. "Rookie" / "Rk" / "ROK" all roll into CPX so the
+    # default sport-name match doesn't bypass the CPX label. League-name
+    # matches override later in the loop because their substring is longer.
+    "Rookie": "CPX", "Rk": "CPX", "ROK": "CPX",
+    "FCL": "CPX", "ACL": "CPX",
     "Florida Complex League": "CPX", "Arizona Complex League": "CPX",
-    # DSL
+    "Complex": "CPX", "Complex League": "CPX",
+    # DSL — keep as its own bucket; the age curve at DSL is meaningfully
+    # younger than CPX and the run environment is different.
     "Dominican Summer League": "DSL", "DSL": "DSL",
 }
 # MLB is highest; order matters — _highest_level picks lowest index = highest level
-LEVEL_ORDER = ["MLB", "AAA", "AA", "A+", "A", "Rk", "CPX", "DSL"]
+LEVEL_ORDER = ["MLB", "AAA", "AA", "A+", "A", "CPX", "DSL"]
 
 
 @dataclass
@@ -954,20 +968,27 @@ def _highest_level(splits: list[dict]) -> dict | None:
 
     Now includes MLB as the highest possible level. The label lookup
     uses longest-match to avoid 'A' incorrectly matching 'Triple-A'.
+    League-name (e.g. "Dominican Summer League") wins over sport-name
+    (e.g. "Rookie") so the more specific signal classifies.
     """
     by_level = {}
     for split in splits:
         league = split.get("league", {})
-        level_code = (league.get("sport", {}) or {}).get("name") or league.get("name", "")
-        if not level_code:
-            continue
-        # Find the best (longest key) label match to avoid 'A' matching 'Triple-A'
+        sport_name = (league.get("sport", {}) or {}).get("name") or ""
+        league_name = league.get("name") or ""
+        # Try the more specific name first.
         label = None
-        best_len = 0
-        for key, lbl in LEVEL_LABELS.items():
-            if key.lower() in level_code.lower() and len(key) > best_len:
-                label = lbl
-                best_len = len(key)
+        for candidate in (league_name, sport_name):
+            if not candidate:
+                continue
+            best_len = 0
+            cand_lower = candidate.lower()
+            for key, lbl in LEVEL_LABELS.items():
+                if key.lower() in cand_lower and len(key) > best_len:
+                    label = lbl
+                    best_len = len(key)
+            if label is not None and label in LEVEL_ORDER:
+                break
         if label is None or label not in LEVEL_ORDER:
             continue
         if label not in by_level or LEVEL_ORDER.index(label) < LEVEL_ORDER.index(by_level[label]["_level"]):
@@ -1320,21 +1341,34 @@ def fetch_career_stats(player_key: str, mlbam_id: int,
         if not season:
             continue
         league = s.get("league") or {}
-        level_name = (league.get("sport") or {}).get("name") \
-                     or league.get("name", "")
-        # Map to short label using same logic as _highest_level
+        sport_name = (league.get("sport") or {}).get("name") or ""
+        league_name = league.get("name") or ""
+        # League name takes precedence: "Florida Complex League" should
+        # map to CPX even when sport.name is the generic "Rookie", and
+        # "Dominican Summer League" must hit DSL rather than fall through
+        # to the Rookie-default CPX. We try league_name first, then
+        # sport_name as a fallback.
         label = None
-        best_len = 0
-        for key, lbl in LEVEL_LABELS.items():
-            if key.lower() in level_name.lower() and len(key) > best_len:
-                label = lbl
-                best_len = len(key)
+        for candidate in (league_name, sport_name):
+            if not candidate:
+                continue
+            best_len = 0
+            cand_lower = candidate.lower()
+            for key, lbl in LEVEL_LABELS.items():
+                if key.lower() in cand_lower and len(key) > best_len:
+                    label = lbl
+                    best_len = len(key)
+            if label is not None and label in LEVEL_ORDER:
+                break
         if label is None or label not in LEVEL_ORDER:
             continue
         existing = by_season.get(season)
         if existing is None or LEVEL_ORDER.index(label) < LEVEL_ORDER.index(existing["_level"]):
             s["_level"] = label
-            s["_level_label"] = level_name
+            # Keep the most informative name available — league name when
+            # present (e.g. "Dominican Summer League"), falling back to
+            # sport name ("Rookie") when the API didn't return a league.
+            s["_level_label"] = league_name or sport_name
             by_season[season] = s
 
     if not by_season:
@@ -1422,14 +1456,20 @@ _SPORT_ID_TO_LEVEL = {
     12: "AA",
     13: "A+",
     14: "A",
-    16: "Rk",
+    # Sport-id 16 covers all "Rookie" leagues including the Complex
+    # Leagues (FCL/ACL) AND the Dominican Summer League. We default the
+    # label to CPX and let `_career_row_from_bulk_split` override to DSL
+    # when the per-split league name confirms it.
+    16: "CPX",
+    17: "DSL",  # MLB Stats API occasionally exposes DSL under sport-id 17
+    21: "DSL",  # and 21
 }
 
-# Sports covered by the bulk season-stats path. Matches the per-player
-# leagueListId=mlb_milb coverage for the level set that all five FV
-# sources actually grade. Complex-league levels (CPX) and DSL fall through
-# to per-player career fetch, same as the existing behavior.
-BULK_STATS_SPORT_IDS: tuple[int, ...] = (1, 11, 12, 13, 14, 16)
+# Sports covered by the bulk season-stats path. We now include DSL
+# sport-ids (17 + 21) so DSL prospects are picked up by the bulk path
+# instead of falling to the slower per-player career fetch. Sport-id 16
+# rows get the CPX-vs-DSL refinement via league-name inspection.
+BULK_STATS_SPORT_IDS: tuple[int, ...] = (1, 11, 12, 13, 14, 16, 17, 21)
 
 
 def _career_row_from_bulk_split(split: dict, group: str) -> dict | None:
@@ -1442,6 +1482,14 @@ def _career_row_from_bulk_split(split: dict, group: str) -> dict | None:
     label = _SPORT_ID_TO_LEVEL.get(sport_id)
     if label is None or label not in LEVEL_ORDER:
         return None
+    # Refine rookie-level rows by inspecting the league name. Sport-id 16
+    # lumps the US complex leagues together with DSL on some API responses;
+    # checking the league name kicks DSL rows out of CPX into the correct
+    # bucket. (No-op for non-rookie sports since the labels won't match.)
+    league = split.get("league") or {}
+    league_name = league.get("name") or ""
+    if label == "CPX" and "dominican" in league_name.lower():
+        label = "DSL"
     season = split.get("season")
     if not season:
         return None
@@ -1450,9 +1498,10 @@ def _career_row_from_bulk_split(split: dict, group: str) -> dict | None:
     row: dict = {
         "season": int(season),
         "level": label,
-        # Use the human-readable sport abbreviation/name for the detail-page
-        # tooltip (e.g. "AAA"); falls back to the short label.
-        "level_label": sport.get("abbreviation") or label,
+        # Prefer the actual league name when available (e.g.
+        # "Dominican Summer League"); fall back to sport abbreviation or
+        # the short label so the career-table tooltip is never empty.
+        "level_label": league_name or sport.get("abbreviation") or label,
         "games": int(stat.get("gamesPlayed", 0) or 0),
     }
     if is_pitcher:
@@ -3399,8 +3448,13 @@ _LEVEL_BY_SPORT_ID = {
     12: "AA",
     13: "A+",
     14: "A",
-    16: "Rk",
-    17: "Rk",   # complex-level / DSL sometimes report under 17
+    # Sport-id 16 = Rookie ball (US complex by default). Sport-id 17 is
+    # primarily the DSL; 21 is also DSL on some seasons. Where the API
+    # uses 16 for a DSL team, fetch_team_affiliations callers should
+    # override using the league name — same trick the per-player path
+    # uses to dodge the lumped-rookie ambiguity.
+    16: "CPX",
+    17: "DSL",
     21: "DSL",
 }
 
@@ -3414,7 +3468,10 @@ def fetch_team_affiliations(season: int) -> dict[int, dict]:
     the MLB-team record's `abbreviation` field. Some MiLB records carry a
     different abbreviation than their parent — we canonicalize via the
     parent's MLB record so downstream code can compare to player.org."""
-    sport_ids = (1, 11, 12, 13, 14, 16)
+    # Include sport-ids 16 (US rookie/CPX) and 17 (DSL) so foreign-rookie
+    # affiliates surface on farm pages with the correct level label
+    # rather than being dropped from the affiliation map.
+    sport_ids = (1, 11, 12, 13, 14, 16, 17)
     team_info: dict[int, dict] = {}
     mlb_abbr_by_id: dict[int, str] = {}
 
@@ -3438,12 +3495,20 @@ def fetch_team_affiliations(season: int) -> dict[int, dict]:
         for t in teams:
             mlb_abbr_by_id[int(t["id"])] = t.get("abbreviation") or ""
 
-    # Second pass: every team (MLB + affiliates) → metadata
+    # Second pass: every team (MLB + affiliates) → metadata. We also peek
+    # at the league name to bump rookie-bucket teams from the default CPX
+    # into DSL when their league is the Dominican Summer League — the
+    # MLB Stats API still buckets DSL clubs under sport-id 16 in some
+    # season responses, so we can't rely on sport_id alone.
     for teams, sid in zip(results, sport_ids):
-        level = _LEVEL_BY_SPORT_ID.get(sid)
+        default_level = _LEVEL_BY_SPORT_ID.get(sid)
         for t in teams:
             tid = int(t["id"])
             parent_id = t.get("parentOrgId")
+            league_name = ((t.get("league") or {}).get("name") or "").lower()
+            level = default_level
+            if level == "CPX" and "dominican" in league_name:
+                level = "DSL"
             team_info[tid] = {
                 "id":              tid,
                 "name":            t.get("name") or "",

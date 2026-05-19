@@ -59,8 +59,11 @@ class TestScoreAgeVsLevel:
         assert score_age_vs_level(24.4, "AAA").tier == "neutral"
 
     def test_unknown_level(self):
-        # Rookie complex level isn't in our baseline table
-        r = score_age_vs_level(19.0, "Rk")
+        # Rookie complex level isn't in the static baseline table (CPX
+        # is intentionally excluded — mixed-age league). Post-rename of
+        # Rk → CPX, the same "unknown" disposition should hold for the
+        # CPX label.
+        r = score_age_vs_level(19.0, "CPX")
         assert r.tier == "unknown"
         assert r.diff is None
 

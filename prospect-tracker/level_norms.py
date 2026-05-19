@@ -80,10 +80,13 @@ class LevelPerfNorm:
 
 # Static fallback baselines — same numbers the codebase used before, kept
 # here so a level with too few empirical samples still gets a baseline.
+# Fallbacks no longer carry an "Rk" entry — that bucket folded into CPX
+# with the post-2021 rookie-league cleanup. DSL stays as its own level
+# because its age curve runs ~2y younger than CPX and its run
+# environment is meaningfully different from US complex ball.
 FALLBACK_AGE_BASELINE: dict[str, float] = {
     "DSL": 18.0,
     "CPX": 18.5,
-    "Rk":  19.0,
     "A":   21.0,
     "A+":  22.0,
     "AA":  23.0,
@@ -91,37 +94,37 @@ FALLBACK_AGE_BASELINE: dict[str, float] = {
     "MLB": 27.5,
 }
 FALLBACK_OPS_NORM: dict[str, float] = {
-    "Rk": .750, "CPX": .740, "A": .730, "A+": .720, "AA": .710, "AAA": .730,
+    "DSL": .720, "CPX": .740, "A": .730, "A+": .720, "AA": .710, "AAA": .730, "MLB": .720,
 }
 FALLBACK_ERA_NORM: dict[str, float] = {
-    "Rk": 4.20, "CPX": 4.30, "A": 4.00, "A+": 3.80, "AA": 3.70, "AAA": 4.00,
+    "DSL": 4.40, "CPX": 4.30, "A": 4.00, "A+": 3.80, "AA": 3.70, "AAA": 4.00, "MLB": 4.10,
 }
 
 # Static fallback for the expanded rate stats. These are rough league-wide
 # averages used only when the empirical sample at a level falls below
-# MIN_SAMPLE_N (e.g. DSL with very few tracked prospects). Hitter ISO
-# scales modestly upward toward AAA; pitcher K/9 climbs and HR/9 inflates
-# at the high minors / MLB because hitters get better at punishing pitches.
+# MIN_SAMPLE_N. Hitter ISO scales modestly upward toward AAA; pitcher
+# K/9 climbs and HR/9 inflates at the high minors / MLB because hitters
+# get better at punishing pitches.
 FALLBACK_ISO_NORM: dict[str, float] = {
-    "Rk": .130, "CPX": .125, "A": .130, "A+": .135, "AA": .140, "AAA": .155, "MLB": .165,
+    "DSL": .115, "CPX": .125, "A": .130, "A+": .135, "AA": .140, "AAA": .155, "MLB": .165,
 }
 FALLBACK_BB_PCT_NORM: dict[str, float] = {
-    "Rk": 9.5, "CPX": 9.0, "A": 9.0, "A+": 8.8, "AA": 8.5, "AAA": 8.5, "MLB": 8.4,
+    "DSL": 11.0, "CPX": 9.5, "A": 9.0, "A+": 8.8, "AA": 8.5, "AAA": 8.5, "MLB": 8.4,
 }
 FALLBACK_K_PCT_NORM: dict[str, float] = {
-    "Rk": 24.0, "CPX": 23.5, "A": 23.5, "A+": 23.0, "AA": 22.5, "AAA": 22.5, "MLB": 22.0,
+    "DSL": 22.0, "CPX": 23.0, "A": 23.5, "A+": 23.0, "AA": 22.5, "AAA": 22.5, "MLB": 22.0,
 }
 FALLBACK_WHIP_NORM: dict[str, float] = {
-    "Rk": 1.42, "CPX": 1.45, "A": 1.38, "A+": 1.34, "AA": 1.31, "AAA": 1.34, "MLB": 1.28,
+    "DSL": 1.45, "CPX": 1.42, "A": 1.38, "A+": 1.34, "AA": 1.31, "AAA": 1.34, "MLB": 1.28,
 }
 FALLBACK_K9_NORM: dict[str, float] = {
-    "Rk": 8.6, "CPX": 8.4, "A": 9.0, "A+": 9.1, "AA": 9.2, "AAA": 9.1, "MLB": 8.9,
+    "DSL": 8.4, "CPX": 8.6, "A": 9.0, "A+": 9.1, "AA": 9.2, "AAA": 9.1, "MLB": 8.9,
 }
 FALLBACK_BB9_NORM: dict[str, float] = {
-    "Rk": 4.2, "CPX": 4.3, "A": 3.7, "A+": 3.5, "AA": 3.3, "AAA": 3.4, "MLB": 3.2,
+    "DSL": 4.3, "CPX": 4.2, "A": 3.7, "A+": 3.5, "AA": 3.3, "AAA": 3.4, "MLB": 3.2,
 }
 FALLBACK_HR9_NORM: dict[str, float] = {
-    "Rk": 0.7, "CPX": 0.7, "A": 0.8, "A+": 0.9, "AA": 1.0, "AAA": 1.2, "MLB": 1.3,
+    "DSL": 0.5, "CPX": 0.7, "A": 0.8, "A+": 0.9, "AA": 1.0, "AAA": 1.2, "MLB": 1.3,
 }
 
 

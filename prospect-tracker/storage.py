@@ -1129,6 +1129,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           rosters_by_org: dict[str, dict[str, list[dict]]] | None = None,
                           level_changes: dict[str, list[dict]] | None = None,
                           roster_status: dict[str, dict] | None = None,
+                          ifa_spending_by_org: dict[str, dict[int, dict]] | None = None,
                           top_n_active: int | None = None):
     """
     Serialize for the front-end widget.
@@ -1159,6 +1160,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     rosters_by_org = rosters_by_org or {}
     level_changes = level_changes or {}
     roster_status = roster_status or {}
+    ifa_spending_by_org = ifa_spending_by_org or {}
     birth_dates = load_birth_dates()
     from stats import compute_age_decimal
     from age_level import score_age_vs_level
@@ -1997,7 +1999,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # farm list page and the "graded prospects by level" section on each
     # farm detail page. Only includes prospects with a FV grade — un-graded
     # org filler in the rosters isn't a prospect for our purposes.
-    FARM_LEVELS = ("MLB", "AAA", "AA", "A+", "A", "Rk", "DSL")
+    FARM_LEVELS = ("MLB", "AAA", "AA", "A+", "A", "CPX", "DSL")
     for entry in org_summary:
         org_rosters = rosters_by_org.get(entry["org"], {})
         entry["level_counts"] = {
@@ -2119,6 +2121,51 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     for rank_i, entry in enumerate(org_summary, start=1):
         entry["farm_rank"] = rank_i
     # ────────────────────────────────────────────────────────────────────────
+
+    # ── Per-org draft spending (computed from our acquisitions table) ──
+    # The acquisitions table records `bonus_usd` for every drafted player
+    # we know about — sum by org × year to produce a comparison set for
+    # the IFA spending totals fed in by Spotrac. Pulls from EVERY drafted
+    # player on file (graduates included), not just current actives, so
+    # the multi-year history reflects each org's full cycle spending.
+    draft_spending_by_org: dict[str, dict[int, dict]] = {}
+    for key, rec in acquisitions.items():
+        if (rec or {}).get("method") != "draft":
+            continue
+        bonus = rec.get("bonus_usd")
+        year = rec.get("year")
+        if bonus is None or year is None:
+            continue
+        # Resolve the player's CURRENT org. For drafted prospects the
+        # acquiring team is on the rec, but trades may have moved them
+        # elsewhere — we credit the *acquiring* org rather than the
+        # current one because that's the spending-decision attribution
+        # that matches what Spotrac's per-year IFA tracker does.
+        team_name = rec.get("team_name")
+        from trades import canonical_org
+        org_code = canonical_org(team_name) if team_name else None
+        if not org_code:
+            continue
+        bucket = draft_spending_by_org.setdefault(org_code, {}).setdefault(year, {
+            "total_usd": 0, "signings": 0, "top_bonus": 0, "top_player": None,
+        })
+        bucket["total_usd"] += bonus
+        bucket["signings"]  += 1
+        if bonus > bucket["top_bonus"]:
+            bucket["top_bonus"]  = bonus
+            # Look up the player name — acquisitions records don't carry
+            # it directly, but the player_key works well enough as a
+            # display fallback (the farm page can resolve to full name
+            # via the active/grad maps if needed).
+            bucket["top_player"] = key
+
+    # Attach IFA + draft spending to each org_summary entry so the farm
+    # detail page can render a side-by-side comparison without joining
+    # back to top-level payload structures.
+    for entry in org_summary:
+        org_code = entry["org"]
+        entry["ifa_spending"]   = ifa_spending_by_org.get(org_code, {})
+        entry["draft_spending"] = draft_spending_by_org.get(org_code, {})
 
     active_payload = [_serialize(p) for p in actives]
     inactive_payload = [_serialize(p) for p in inactives]

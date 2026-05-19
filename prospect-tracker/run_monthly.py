@@ -216,9 +216,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
 
         # --- 2b.ii Enrich IFA records with original signing transaction.
         # One /transactions call per IFA prospect returns the SFA/SGN event
-        # that records the signing team + date. Signing-bonus dollars are
-        # not exposed by the public Stats API, so bonus_usd stays None for
-        # IFAs and the frontend's "data not on file" fallback covers it.
+        # that records the signing team + date. The MLB Stats API doesn't
+        # publish signing-bonus dollars; we layer in Spotrac (below) to
+        # fill the bonus_usd field where they have a row for the player.
         if ifa_mids_by_key:
             log.info("fetching IFA signing info for %d prospects",
                      len(ifa_mids_by_key))
@@ -235,6 +235,41 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 n_enriched += 1
             log.info("IFA enrichment: %d/%d signings resolved",
                      n_enriched, len(ifa_mids_by_key))
+
+        # --- 2b.iii Spotrac IFA tracker — bonus dollars + per-org cycle
+        # spending. Scrapes 2021-current; cached per year on disk so
+        # subsequent runs are near-instant. Two outputs feed downstream:
+        #   * ifa_bonus_by_key  — {player_key: bonus_usd}; merged into
+        #     acquisitions[key].bonus_usd for IFA-method prospects so
+        #     the detail page can show the actual signing bonus.
+        #   * ifa_spending_by_org — {org: {year: {total_usd, signings,
+        #     top_bonus, top_player}}}; captures *every* signing across
+        #     2021-now (graded prospects + org filler) so the farm-page
+        #     "IFA spending" view reflects true cycle commitment, not
+        #     just the slice that bled into our tracker.
+        ifa_bonus_by_key: dict[str, int] = {}
+        ifa_spending_by_org: dict[str, dict[int, dict]] = {}
+        try:
+            from spotrac import (
+                scrape_spotrac_ifa_range,
+                build_ifa_bonus_by_key,
+                build_org_ifa_spending,
+            )
+            ifa_years = list(range(2021, date.today().year + 1))
+            spotrac_rows = scrape_spotrac_ifa_range(ifa_years, force=force_refetch)
+            ifa_bonus_by_key = build_ifa_bonus_by_key(spotrac_rows)
+            ifa_spending_by_org = build_org_ifa_spending(spotrac_rows)
+            n_merged = 0
+            for key, bonus in ifa_bonus_by_key.items():
+                rec = acquisitions.get(key)
+                if rec and rec["method"] == "international_fa" and rec.get("bonus_usd") is None:
+                    rec["bonus_usd"] = bonus
+                    n_merged += 1
+            log.info("spotrac IFA: %d rows fetched, %d bonuses merged into acquisitions, "
+                     "%d orgs with spending totals", len(spotrac_rows), n_merged,
+                     len(ifa_spending_by_org))
+        except Exception:
+            log.exception("spotrac IFA scrape failed — continuing without bonus data")
 
         if acquisitions:
             upsert_acquisitions(acquisitions)
@@ -770,7 +805,8 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                il_status=load_il_status(),
                                rosters_by_org=rosters_by_org,
                                level_changes=level_changes_by_key,
-                               roster_status=roster_status_by_key)
+                               roster_status=roster_status_by_key,
+                               ifa_spending_by_org=ifa_spending_by_org)
         log.info("wrote %s", out_path)
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,

@@ -75,13 +75,40 @@ class TestCareerRowFromBulkSplit:
         assert row is not None
         assert row["season"] == 2026
         assert row["level"] == "AAA"
-        assert row["level_label"] == "AAA"
+        # `level_label` now prefers the league name when present so the
+        # career-table tooltip carries the most specific identifier we
+        # have (e.g. "Dominican Summer League" or "International League"
+        # rather than the generic "AAA" / "Rookie" sport abbreviation).
+        # The fixture's league.name is "INT" — verify that's what comes
+        # through instead of the sport abbreviation.
+        assert row["level_label"] == "INT"
         assert row["is_pitcher"] is False
         assert row["ab"] == 180
         # bb_pct = 20/200 * 100 = 10.0
         assert row["bb_pct"] == 10.0
         # k_pct = 50/200 * 100 = 25.0
         assert row["k_pct"] == 25.0
+
+    def test_dominican_summer_league_row_classifies_as_dsl(self):
+        """Sport-id 16 (Rookie) returning a DSL league name should
+        upgrade to the DSL level, not stay in CPX. Regression marker for
+        the post-rename rookie classification."""
+        split = _split_hitter(789, "DSL Bat", sport_id=16, pa=100, bb=10, so=18, ab=85)
+        split["league"]["name"] = "Dominican Summer League"
+        row = _career_row_from_bulk_split(split, group="hitting")
+        assert row is not None
+        assert row["level"] == "DSL"
+        assert row["level_label"] == "Dominican Summer League"
+
+    def test_complex_league_row_stays_cpx(self):
+        """Sport-id 16 with a US complex league name should classify as
+        CPX (and label with the full league name)."""
+        split = _split_hitter(790, "CPX Bat", sport_id=16, pa=100, bb=10, so=18, ab=85)
+        split["league"]["name"] = "Florida Complex League"
+        row = _career_row_from_bulk_split(split, group="hitting")
+        assert row is not None
+        assert row["level"] == "CPX"
+        assert row["level_label"] == "Florida Complex League"
 
     def test_pitcher_row_has_expected_fields(self):
         split = _split_pitcher(456, "Test Pitcher", sport_id=12,
