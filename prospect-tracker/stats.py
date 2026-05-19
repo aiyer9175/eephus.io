@@ -1319,6 +1319,185 @@ def fetch_career_stats(player_key: str, mlbam_id: int,
 
 
 # ---------------------------------------------------------------------------
+# Bulk season-stats fetch
+# ---------------------------------------------------------------------------
+
+# Sport-id → short level label. Mirrors the per-player path's LEVEL_LABELS
+# mapping but keyed on the unambiguous sport id, which the bulk season
+# endpoint returns directly. Avoids the league-name parsing the per-player
+# path needs (where "INT" can mean International League / AAA).
+_SPORT_ID_TO_LEVEL = {
+    1:  "MLB",
+    11: "AAA",
+    12: "AA",
+    13: "A+",
+    14: "A",
+    16: "Rk",
+}
+
+# Sports covered by the bulk season-stats path. Matches the per-player
+# leagueListId=mlb_milb coverage for the level set that all five FV
+# sources actually grade. Complex-league levels (CPX) and DSL fall through
+# to per-player career fetch, same as the existing behavior.
+BULK_STATS_SPORT_IDS: tuple[int, ...] = (1, 11, 12, 13, 14, 16)
+
+
+def _career_row_from_bulk_split(split: dict, group: str) -> dict | None:
+    """Turn one /stats?stats=season split into a row in the same shape as
+    fetch_career_stats output, so the rest of the pipeline (career table,
+    statline derivation, graduation threshold) can consume it without
+    branching on origin."""
+    sport = split.get("sport") or {}
+    sport_id = sport.get("id")
+    label = _SPORT_ID_TO_LEVEL.get(sport_id)
+    if label is None or label not in LEVEL_ORDER:
+        return None
+    season = split.get("season")
+    if not season:
+        return None
+    stat = split.get("stat") or {}
+    is_pitcher = (group == "pitching")
+    row: dict = {
+        "season": int(season),
+        "level": label,
+        # Use the human-readable sport abbreviation/name for the detail-page
+        # tooltip (e.g. "AAA"); falls back to the short label.
+        "level_label": sport.get("abbreviation") or label,
+        "games": int(stat.get("gamesPlayed", 0) or 0),
+    }
+    if is_pitcher:
+        row.update({
+            "era":     str(stat.get("era") or "—"),
+            "ip":      float(stat.get("inningsPitched") or 0)
+                       if stat.get("inningsPitched") else None,
+            "k_per_9": _safe_float(stat.get("strikeoutsPer9Inn")),
+            "bb_per_9":_safe_float(stat.get("walksPer9Inn")),
+            "whip":    _safe_float(stat.get("whip")),
+            "wins":    int(stat.get("wins", 0) or 0),
+            "losses":  int(stat.get("losses", 0) or 0),
+            "is_pitcher": True,
+        })
+    else:
+        pa = stat.get("plateAppearances", 0) or 0
+        bb = stat.get("baseOnBalls", 0) or 0
+        so = stat.get("strikeOuts", 0) or 0
+        row.update({
+            "avg":    str(stat.get("avg") or "—"),
+            "obp":    str(stat.get("obp") or "—"),
+            "slg":    str(stat.get("slg") or "—"),
+            "ops":    str(stat.get("ops") or "—"),
+            "hr":     int(stat.get("homeRuns", 0) or 0),
+            "sb":     int(stat.get("stolenBases", 0) or 0),
+            "rbi":    int(stat.get("rbi", 0) or 0),
+            "ab":     int(stat.get("atBats", 0) or 0),
+            "bb_pct": round(100 * bb / pa, 1) if pa else None,
+            "k_pct":  round(100 * so / pa, 1) if pa else None,
+            "is_pitcher": False,
+        })
+    return row
+
+
+def bulk_fetch_season_stats(
+    season: int,
+    group: str,
+    sport_ids: Iterable[int] = BULK_STATS_SPORT_IDS,
+    page_size: int = 5000,
+) -> dict[int, dict]:
+    """Bulk-fetch one season of stats for every player across the given
+    sports, returning {mlbam_id: career_row}.
+
+    Replaces ~3000 per-player /people/{id}/stats?stats=yearByYear calls
+    with one paginated call per (sport, group) — typically 1-2 pages per
+    combo. The returned rows match the shape fetch_career_stats produces
+    so they can be merged into career_cache directly.
+
+    When a player has stints at multiple levels in the same season, the
+    HIGHEST level (per LEVEL_ORDER) wins — same rule the per-player path
+    uses when collapsing yearByYear splits.
+    """
+    out: dict[int, dict] = {}
+    for sport_id in sport_ids:
+        offset = 0
+        while True:
+            url = (
+                f"{MLB_STATS_API}/stats?stats=season"
+                f"&group={group}&season={season}"
+                f"&sportIds={sport_id}"
+                f"&limit={page_size}&offset={offset}"
+            )
+            try:
+                resp = requests.get(url, timeout=30)
+                resp.raise_for_status()
+                data = resp.json()
+            except Exception as e:
+                log.debug(
+                    "bulk season stats fetch failed (sport=%s season=%s "
+                    "group=%s offset=%d): %s",
+                    sport_id, season, group, offset, e,
+                )
+                break
+            splits: list[dict] = []
+            for block in data.get("stats", []):
+                splits.extend(block.get("splits", []))
+            if not splits:
+                break
+            for s in splits:
+                player = s.get("player") or {}
+                pid = player.get("id")
+                if not pid:
+                    continue
+                row = _career_row_from_bulk_split(s, group)
+                if row is None:
+                    continue
+                pid = int(pid)
+                existing = out.get(pid)
+                if (existing is None
+                        or LEVEL_ORDER.index(row["level"])
+                        < LEVEL_ORDER.index(existing["level"])):
+                    out[pid] = row
+            if len(splits) < page_size:
+                break
+            offset += page_size
+    log.info("bulk_fetch_season_stats season=%d group=%s sports=%s: %d players",
+             season, group, list(sport_ids), len(out))
+    return out
+
+
+def merge_bulk_into_career_cache(
+    bulk_by_mlbam: dict[int, dict],
+    career_cache: dict[str, list[dict]],
+    id_cache: dict[str, int],
+    season: int,
+    eligible_keys: set[str] | None = None,
+) -> dict[str, list[dict]]:
+    """Splice the bulk fetch's current-season rows into the per-player
+    career cache and return the {key: rows} subset that changed so the
+    caller can persist it.
+
+    For each player with a bulk row: drop any existing row for `season`,
+    insert the bulk row at the top of the list, cap to CAREER_SEASONS_KEPT.
+    Players are skipped if `eligible_keys` is provided and they aren't in
+    it (used to exclude graduates from the in-season update).
+    """
+    updates: dict[str, list[dict]] = {}
+    for key, mlbam in id_cache.items():
+        if eligible_keys is not None and key not in eligible_keys:
+            continue
+        if mlbam is None:
+            continue
+        bulk_row = bulk_by_mlbam.get(int(mlbam))
+        if bulk_row is None:
+            continue
+        existing = career_cache.get(key) or []
+        filtered = [r for r in existing if r.get("season") != season]
+        filtered.insert(0, bulk_row)
+        merged = filtered[:CAREER_SEASONS_KEPT]
+        updates[key] = merged
+        career_cache[key] = merged
+    return updates
+
+
+# ---------------------------------------------------------------------------
 # Per-player transactions fetch  →  drives level-change detection AND the
 # options / debut-date / service-time heuristics.
 # ---------------------------------------------------------------------------

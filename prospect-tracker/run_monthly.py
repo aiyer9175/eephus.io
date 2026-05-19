@@ -49,6 +49,7 @@ from stats import (fetch_statlines_for, derive_statlines_from_career, fetch_birt
                    fetch_birth_date_by_name,
                    fetch_pitch_arsenal, fetch_sabermetrics,
                    fetch_career_stats,
+                   bulk_fetch_season_stats, merge_bulk_into_career_cache,
                    bulk_resolve_ids,
                    detect_graduations_from_career,
                    bulk_fetch_drafts,
@@ -337,18 +338,59 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                  len(rosters_by_org), len(set(
                      lvl for levels in rosters_by_org.values() for lvl in levels)))
 
-        # --- 3a. Fetch career year-by-year stats. Three filters narrow the
-        # set we actually hit the network for:
-        #   (1) skip already-graduated prospects (their career is frozen)
-        #   (2) skip prospects whose cached row is < CAREER_STATS_FRESH_DAYS old
-        #       unless --force is set (lets dev iterations within a week reuse
-        #       the cache; monthly runs always refetch)
-        #   (3) skip prospects with no resolved MLBAM ID
-        # Each prospect now costs one HTTP call (combined mlb_milb endpoint
-        # in fetch_career_stats) instead of two, halving traffic again.
+        # --- 3a. Fetch career year-by-year stats.
+        # Two-pass design:
+        #   (1) BULK pass — one paginated call per (sport, group) hits the
+        #       /stats?stats=season endpoint and returns every player's
+        #       current-season line in 12 calls instead of ~3000 per-player
+        #       yearByYear calls. We splice the resulting rows into the
+        #       per-player career_cache so the rest of the pipeline (career
+        #       table, statline derivation, auto-grad threshold) consumes
+        #       them uniformly.
+        #   (2) PER-PLAYER fallback — for players not in the bulk (no
+        #       current-season stats: rookies, IFAs, injured, holdouts)
+        #       OR with no other cached career rows (new to the tracker,
+        #       needs prior-season backfill), still hit yearByYear.
+        # Three filters further narrow the per-player set:
+        #   - skip already-graduated prospects (their career is frozen)
+        #   - skip prospects whose cached row is < CAREER_STATS_FRESH_DAYS old
+        #     unless --force is set
+        #   - skip prospects with no resolved MLBAM ID
         career_cache = load_career_stats()
         career_meta = load_career_stats_meta()
         statlines = load_statlines()
+        non_grad_keys: set[str] = {p.player_key for p in timeseries
+                                   if p.status != "graduated"}
+        keys_with_bulk_2026: set[str] = set()
+        if not skip_stats:
+            # (1) Bulk pass — hitting + pitching across MLB + 5 MiLB levels.
+            bulk_hitting  = bulk_fetch_season_stats(season, group="hitting")
+            bulk_pitching = bulk_fetch_season_stats(season, group="pitching")
+            # Merge: a two-way player would show in both endpoints; pick
+            # the highest-level row (LEVEL_ORDER index ascending).
+            from stats import LEVEL_ORDER
+            bulk_by_mlbam: dict[int, dict] = dict(bulk_hitting)
+            for pid, row in bulk_pitching.items():
+                existing = bulk_by_mlbam.get(pid)
+                if (existing is None
+                        or LEVEL_ORDER.index(row["level"])
+                        < LEVEL_ORDER.index(existing["level"])):
+                    bulk_by_mlbam[pid] = row
+            log.info("bulk season-stats: %d distinct players across hitting+pitching",
+                     len(bulk_by_mlbam))
+
+            # Splice bulk rows into career_cache (non-graduated only) and
+            # persist. The fetched_at refresh inside upsert_career_stats
+            # makes these players "fresh" for the next freshness check.
+            bulk_updates = merge_bulk_into_career_cache(
+                bulk_by_mlbam, career_cache, ids_by_key,
+                season=season, eligible_keys=non_grad_keys,
+            )
+            if bulk_updates:
+                upsert_career_stats(bulk_updates)
+                keys_with_bulk_2026 = set(bulk_updates.keys())
+            log.info("merged bulk season-stats into career_cache for %d players",
+                     len(bulk_updates))
         if not skip_stats:
             non_grad_players = [
                 (p.player_key, p.player_name, _is_pitcher(p.position))
@@ -356,9 +398,19 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             ]
             cs_tasks: list[tuple[str, int, bool]] = []
             skipped_fresh = 0
+            skipped_bulk = 0
             for key, _name, is_p in non_grad_players:
                 mlbam = ids_by_key.get(key)
                 if mlbam is None:
+                    continue
+                # If the bulk pass updated this player AND they already had
+                # at least one prior-season row cached, the per-player fetch
+                # would just refresh data we already have — skip. Players
+                # in the bulk WITHOUT prior-season rows fall through so
+                # yearByYear can backfill the detail-page career history.
+                if (key in keys_with_bulk_2026
+                        and len(career_cache.get(key, [])) > 1):
+                    skipped_bulk += 1
                     continue
                 if not force_refetch and _is_career_fresh(
                         career_meta.get(key), CAREER_STATS_FRESH_DAYS):
@@ -367,11 +419,12 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 cs_tasks.append((key, mlbam, is_p))
             log.info(
                 "fetching career stats for %d players (skipped %d graduated, "
-                "%d fresh-cached, %d unresolved)",
+                "%d covered-by-bulk, %d fresh-cached, %d unresolved)",
                 len(cs_tasks),
                 len(timeseries) - len(non_grad_players),
+                skipped_bulk,
                 skipped_fresh,
-                len(non_grad_players) - skipped_fresh - len(cs_tasks),
+                len(non_grad_players) - skipped_bulk - skipped_fresh - len(cs_tasks),
             )
             new_career: dict = {}
             if cs_tasks:
