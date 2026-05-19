@@ -2,8 +2,8 @@
 
 Tracks consensus future-value grades (20-80 scale, anchored to the
 [FanGraphs scouting primer](https://blogs.fangraphs.com/the-new-fangraphs-scouting-primer/))
-across the major industry prospect-ranking sources. Builds a weighted
-consensusFV per prospect, preserves the full FV time series for
+across the major industry prospect-ranking sources. Builds an unweighted
+consensus FV per prospect, preserves the full FV time series for
 candlestick visuals, fetches current minor-league stat lines, detects
 trades, and separates active prospects (top 100) from graduates.
 
@@ -60,7 +60,7 @@ Column rules:
 
 - **`source`** must be one of: `fangraphs`, `espn`, `just_baseball`,
   `tjstats`, `baseball_america`, `mlb_pipeline`, `the_athletic`.
-  Typos mean the row is ingested but won't be weighted by the consensus
+  Typos mean the row is ingested but won't be averaged into the consensus
   engine.
 - **`snapshot_date`** and **`interval_label`** identify the update.
   Two rows with the same `(source, snapshot_date, interval_label,
@@ -189,21 +189,25 @@ Per (player, snapshot_date) bucket, four metrics:
 2. **`avg_rank`** — mean of ordinal ranks across all sources.
 3. **`rank_implied_fv`** — mean of ranks converted to implied FV via
    the FanGraphs tier mapping.
-4. **`consensus_fv`** — weighted mean of all signals, snapped to a
-   valid published grade (`20, 30, 40, 45, 45+, 50, 50+, 55, 55+, 60,
-   60+, 65, 70, 80`).
+4. **`consensus_fv`** — **unweighted mean** of every source's explicit
+   FV grade, rounded to the nearest whole number on the 20-80 scale.
+   When no source has published an FV for a player (e.g. they appear
+   only on Baseball America or The Athletic lists), `rank_implied_fv`
+   is used as a fallback so the player still gets a consensus value.
 
-Source weights (in `consensus.py`):
+Sources contributing to consensus FV:
 
-```python
-fangraphs:        rank_weight=1.0, fv_weight=3.0
-espn:             rank_weight=1.0, fv_weight=2.5
-just_baseball:    rank_weight=1.0, fv_weight=2.0
-tjstats:          rank_weight=1.0, fv_weight=2.0
-baseball_america: rank_weight=1.0, fv_weight=0.0   # rank-only
-mlb_pipeline:     rank_weight=1.0, fv_weight=0.0
-the_athletic:     rank_weight=1.0, fv_weight=0.0
-```
+| Source             | Publishes FV?           |
+| ------------------ | ----------------------- |
+| FanGraphs          | yes                     |
+| ESPN (McDaniel)    | yes                     |
+| Just Baseball      | yes                     |
+| TJStats            | yes                     |
+| MLB Pipeline       | yes (the "Overall" grade in each prospect bio) |
+| Baseball America   | no — rank only          |
+| The Athletic       | no — rank only          |
+
+No per-source weighting — each FV-grading source counts equally.
 
 Per prospect, candlestick fields (`fv_open`, `fv_high`, `fv_low`,
 `fv_close`) plus stock movement (delta between the two most recent
@@ -242,7 +246,7 @@ reached. IL and graduated players are absent from the stats payload.
 ```
 prospect_tracker/
 ├── scrapers.py              # CSV ingest + diagnostic probe (HTML scraping is best-effort)
-├── consensus.py             # FV grid, weighting, build_timeseries, candlestick
+├── consensus.py             # FV grid, unweighted aggregation, build_timeseries, candlestick
 ├── stats.py                 # MLBAM ID lookup + MiLB stat-line fetcher
 ├── trades.py                # MLB transactions API + org-change inference
 ├── storage.py               # SQLite + JSON export with active/graduate split

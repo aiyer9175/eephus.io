@@ -17,82 +17,113 @@
     To embed in an existing site, see web/embed.html and web/embed.js.
   -->
 
+  <!-- Webfonts: Source Serif for headlines, Inter for UI, JetBrains Mono
+       for numerics. System fallbacks (Georgia / -apple-system / Menlo)
+       keep the page readable offline if the CDN is blocked. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:wght@500;600;700&display=swap">
+
   <style>
-    /* === Cybergoth × retro stock terminal ========================= */
+    /* === Baseball card / sportsbook theme ============================
+       Paper-cream background, navy headers, serif headlines + sans body,
+       team-color accent stripes on every player / farm card.
+       Variable names match the previous theme so the inline `var(--neon-*)`
+       references scattered through the JS render functions continue to work
+       under the new palette (semantic role preserved). */
     :root {
-      /* Backgrounds — pure black with subtle violet undertone */
-      --bg-primary:       #07060B;
-      --bg-secondary:     #0F0D17;
-      --bg-tertiary:      #161324;
-      --text-primary:     #E6FFEC;     /* phosphor white-green     */
-      --text-secondary:   #8C8AA6;     /* dim violet-gray          */
-      --text-tertiary:    #4A4860;     /* deep muted               */
-      --border:           #2A2538;     /* visible against black    */
-      --border-light:     #1A1726;
+      /* Backgrounds — newsprint paper stack */
+      --bg-primary:       #F4F0E6;     /* main page (warm paper)   */
+      --bg-secondary:     #FBF8F0;     /* card surface             */
+      --bg-tertiary:      #ECE6D6;     /* alt rows / muted panels  */
+      --bg-header:        #0E2B4D;     /* deep navy headline band  */
+      --text-primary:     #0F1B2D;     /* near-black navy          */
+      --text-secondary:   #4A5468;     /* slate                    */
+      --text-tertiary:    #8B8474;     /* sepia gray               */
+      --border:           #C9C1AE;     /* warm tan border          */
+      --border-light:     #E2DCC9;     /* faint divider            */
 
-      /* Neon accent palette */
-      --neon-green:       #5EFF8A;
-      --neon-magenta:     #FF3BD4;
-      --neon-cyan:        #00E1FF;
-      --neon-amber:       #FFB347;
-      --neon-violet:      #B794F6;
+      /* Semantic accents (variable names kept for inline-JS compatibility).
+         Mapped to muted, ink-on-paper baseball-card values. */
+      --neon-green:       #1F7A3A;     /* forest green — up        */
+      --neon-magenta:     #B91C1C;     /* brick red — down         */
+      --neon-cyan:        #0E2B4D;     /* navy — link / accent     */
+      --neon-amber:       #C9A227;     /* card gold — highlight    */
+      --neon-violet:      #6B4FA8;     /* royal purple — graduates */
 
-      /* FV tier badges — dark base, glowing accents
-         (rare = hot magenta/orange, average = green, low = dim blue/gray) */
-      --fv-80-bg: #2A0820;  --fv-80-fg: #FF3BD4;   /* hot magenta — elite */
-      --fv-75-bg: #2C0A18;  --fv-75-fg: #FF5EAE;
-      --fv-70-bg: #2A0B12;  --fv-70-fg: #FF7B5E;
-      --fv-65-bg: #2A1408;  --fv-65-fg: #FFA847;
-      --fv-60-bg: #281C06;  --fv-60-fg: #FFD447;
-      --fv-55-bg: #0F1F22;  --fv-55-fg: #5EE7FF;
-      --fv-50-bg: #0A2418;  --fv-50-fg: #5EFF8A;   /* phosphor green — avg */
-      --fv-45-bg: #15182A;  --fv-45-fg: #8C8AA6;
-      --fv-40-bg: #11192C;  --fv-40-fg: #6B86C9;
-      --fv-35-bg: #0E1830;  --fv-35-fg: #4A6BB0;
-      --fv-30-bg: #14151C;  --fv-30-fg: #5A5D70;
-      --fv-25-bg: #101118;  --fv-25-fg: #4A4D60;
-      --fv-20-bg: #0D0E14;  --fv-20-fg: #383B4D;
+      /* FV tier badges — graded like a Topps card stock:
+         elite tiers (70+) get a bold cardinal/gold treatment;
+         middle (50-60) silver/blue; lower (30-40) soft sepia. */
+      --fv-80-bg: #FFF2D6;  --fv-80-fg: #8C5A00;  --fv-80-bd: #C9A227;  /* gold — elite */
+      --fv-75-bg: #FBE3CB;  --fv-75-fg: #8E3C0E;  --fv-75-bd: #B45B2B;
+      --fv-70-bg: #F8D6D1;  --fv-70-fg: #871B16;  --fv-70-bd: #B91C1C;  /* cardinal */
+      --fv-65-bg: #F6E3BF;  --fv-65-fg: #7A5306;  --fv-65-bd: #C9A227;
+      --fv-60-bg: #E8E4D2;  --fv-60-fg: #5A4B12;  --fv-60-bd: #9B8A4B;
+      --fv-55-bg: #D9E5EE;  --fv-55-fg: #1F3F66;  --fv-55-bd: #5979A0;  /* slate-blue */
+      --fv-50-bg: #DEEAD7;  --fv-50-fg: #244B22;  --fv-50-bd: #4D8044;  /* clubhouse green */
+      --fv-45-bg: #E7E2D2;  --fv-45-fg: #5D5640;  --fv-45-bd: #8E866C;
+      --fv-40-bg: #E3DECC;  --fv-40-fg: #4E4A38;  --fv-40-bd: #7E7660;
+      --fv-35-bg: #DAD3BD;  --fv-35-fg: #43402F;  --fv-35-bd: #6E6753;
+      --fv-30-bg: #D2CBB3;  --fv-30-fg: #3B3829;  --fv-30-bd: #5E5847;
+      --fv-25-bg: #C9C2A9;  --fv-25-fg: #2E2C20;  --fv-25-bd: #4E4938;
+      --fv-20-bg: #C1B9A0;  --fv-20-fg: #25241A;  --fv-20-bd: #3F3B2D;
 
-      --level-very-young-bg: #0A2418;  --level-very-young-fg: #5EFF8A;
-      --level-young-bg:      #0F1F22;  --level-young-fg:      #5EE7FF;
-      --level-neutral-bg:    var(--bg-secondary);
+      --level-very-young-bg: #DEEAD7;  --level-very-young-fg: #244B22;
+      --level-young-bg:      #D9E5EE;  --level-young-fg:      #1F3F66;
+      --level-neutral-bg:    var(--bg-tertiary);
                              --level-neutral-fg: var(--text-secondary);
-      --level-old-bg:        #2A1408;  --level-old-fg:        #FFA847;
-      --level-too-old-bg:    #2A0820;  --level-too-old-fg:    #FF3BD4;
-      --level-mlb-bg:        #2A0B12;  --level-mlb-fg:        #FF7B5E;
+      --level-old-bg:        #F6E3BF;  --level-old-fg:        #7A5306;
+      --level-too-old-bg:    #F8D6D1;  --level-too-old-fg:    #871B16;
+      --level-mlb-bg:        #0E2B4D;  --level-mlb-fg:        #FBF8F0;
 
-      --up:    #5EFF8A;
-      --down:  #FF3BD4;
-      --grad:  #B794F6;
-      --radius-sm: 2px;
-      --radius-md: 2px;
-      --radius-lg: 3px;
+      --up:    #1F7A3A;
+      --down:  #B91C1C;
+      --grad:  #6B4FA8;
+      --radius-sm: 3px;
+      --radius-md: 4px;
+      --radius-lg: 6px;
 
-      /* Iridescent gradient used on the page title */
+      /* Defaults for the org-color accent stripe — overridden per row via
+         inline `--org-color` style attribute set by the render functions. */
+      --org-color: #0E2B4D;
+      --org-color-soft: rgba(14, 43, 77, 0.08);
+
+      /* Iridescent gradient retained for the page title — toned down to
+         a vintage-team-card sunset (cardinal → gold → navy). */
       --iridescent: linear-gradient(
-        90deg, #FF3BD4 0%, #B794F6 25%, #5EE7FF 50%, #5EFF8A 75%, #FFD447 100%
+        90deg, #B91C1C 0%, #C9A227 35%, #1F7A3A 65%, #0E2B4D 100%
       );
+
+      --shadow-card: 0 1px 0 rgba(15, 27, 45, 0.05), 0 1px 2px rgba(15, 27, 45, 0.04);
+      --shadow-card-hover: 0 2px 6px rgba(15, 27, 45, 0.12), 0 0 0 1px rgba(14, 43, 77, 0.10);
+
+      --font-serif: "Source Serif Pro", "Source Serif 4", "Libre Caslon Text",
+                    "Lora", Georgia, "Times New Roman", serif;
+      --font-sans:  "Inter", "IBM Plex Sans", -apple-system, BlinkMacSystemFont,
+                    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono:  "JetBrains Mono", "IBM Plex Mono", ui-monospace,
+                    "SF Mono", Menlo, Consolas, monospace;
     }
 
     /* === Base ===================================================== */
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: "JetBrains Mono", "IBM Plex Mono", "Berkeley Mono",
-                   ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-family: var(--font-sans);
       background: var(--bg-primary);
+      /* Faint newsprint texture — two overlaid radial gradients give the
+         paper a subtle dotted-grain feel without needing an image. */
+      background-image:
+        radial-gradient(rgba(15, 27, 45, 0.035) 1px, transparent 1px),
+        radial-gradient(rgba(139, 132, 116, 0.05) 1px, transparent 1px);
+      background-size: 26px 26px, 13px 13px;
+      background-position: 0 0, 13px 13px;
       color: var(--text-primary);
-      line-height: 1.45;
+      line-height: 1.5;
       -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
       font-feature-settings: "tnum" on, "ss01" on;
-    }
-    /* Faint CRT scanline overlay across the whole page */
-    body::before {
-      content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 999;
-      background: repeating-linear-gradient(
-        to bottom, transparent 0, transparent 2px,
-        rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 3px);
-      mix-blend-mode: overlay;
     }
     .container {
       max-width: 1400px;
@@ -100,53 +131,65 @@
       padding: 1.75rem 1.5rem 4rem;
     }
     h1 {
-      font-size: 1.65rem;
-      margin: 0 0 0.4rem;
+      font-family: var(--font-serif);
+      font-size: 2.1rem;
+      margin: 0 0 0.35rem;
       font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      background: var(--iridescent);
-      background-size: 200% 100%;
-      -webkit-background-clip: text;
-              background-clip: text;
-      color: transparent;
-      animation: iridescent-shift 8s linear infinite;
-      filter: drop-shadow(0 0 12px rgba(183,148,246,0.25));
+      letter-spacing: -0.005em;
+      color: var(--text-primary);
+      line-height: 1.1;
     }
-    @keyframes iridescent-shift {
-      0%   { background-position:   0% 50%; }
-      100% { background-position: 200% 50%; }
+    h1 .h1-rule {
+      display: block;
+      width: 64px; height: 3px;
+      background: var(--iridescent);
+      margin-top: 8px;
+      border-radius: 2px;
+    }
+    code, .num, .mono {
+      font-family: var(--font-mono);
+      font-feature-settings: "tnum" on;
     }
     code {
-      font-family: inherit; font-size: 0.9em;
-      background: var(--bg-secondary);
+      font-size: 0.9em;
+      background: var(--bg-tertiary);
       padding: 1px 5px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-light);
-      color: var(--neon-cyan);
+      color: var(--text-primary);
     }
+    a { color: var(--neon-cyan); }
 
     /* === Header ==================================================== */
-    .header { margin-bottom: 1.5rem; }
+    .header { margin-bottom: 1.4rem; }
     .meta-line {
+      font-family: var(--font-mono);
       font-size: 11px;
-      color: var(--text-tertiary);
-      margin-top: 0.5rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      margin-top: 0.85rem;
+      letter-spacing: 0.02em;
     }
-    .meta-line code { color: var(--neon-green); border: none; background: transparent; padding: 0; }
-    .meta-line .dot { margin: 0 8px; color: var(--neon-magenta); }
+    .meta-line code {
+      color: var(--text-primary);
+      border: none;
+      background: transparent;
+      padding: 0;
+      font-weight: 600;
+    }
+    .meta-line .dot { margin: 0 8px; color: var(--text-tertiary); }
 
     /* === Filter bar ================================================ */
     .filter-bar {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
       align-items: center;
       margin-bottom: 1rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border-light);
+      padding: 10px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
     }
     .filter-group {
       display: flex;
@@ -158,92 +201,101 @@
       border-left: 1px solid var(--border-light);
     }
     .filter-label {
+      font-family: var(--font-sans);
       font-size: 10px;
       color: var(--text-tertiary);
       text-transform: uppercase;
       letter-spacing: 0.12em;
+      font-weight: 600;
       margin-right: 4px;
     }
     button.chip {
+      font-family: var(--font-sans);
       font-size: 11px;
-      padding: 4px 11px;
-      border-radius: var(--radius-md);
+      padding: 5px 11px;
+      border-radius: var(--radius-sm);
       border: 1px solid var(--border);
-      background: transparent;
+      background: var(--bg-secondary);
       color: var(--text-secondary);
       cursor: pointer;
-      font-family: inherit;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+      letter-spacing: 0.02em;
+      font-weight: 500;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
     }
     button.chip:hover {
-      background: var(--bg-secondary);
+      background: var(--bg-tertiary);
       color: var(--text-primary);
-      border-color: var(--neon-violet);
+      border-color: var(--text-tertiary);
     }
     button.chip.active {
-      background: var(--bg-secondary);
-      color: var(--neon-green);
-      border-color: var(--neon-green);
-      box-shadow: 0 0 8px rgba(94,255,138,0.18);
+      background: var(--bg-header);
+      color: #FBF8F0;
+      border-color: var(--bg-header);
     }
     select.chip {
+      font-family: var(--font-sans);
       font-size: 11px;
-      padding: 4px 24px 4px 10px;
-      border-radius: var(--radius-md);
+      padding: 5px 24px 5px 10px;
+      border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       background: var(--bg-secondary);
       color: var(--text-primary);
       cursor: pointer;
-      font-family: inherit;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.02em;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23B794F6' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%230E2B4D' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 8px center;
     }
-    select.chip:focus { outline: none; border-color: var(--neon-violet); }
+    select.chip:focus { outline: none; border-color: var(--neon-cyan); }
 
     /* === Section toggle =========================================== */
+    /* Renders as a navy banner of pill-style tabs sitting on the paper,
+       evoking a printed scoreboard. Active tab is filled navy with cream
+       text; inactive tabs are paper with navy text. */
     .section-tabs {
       display: flex;
-      gap: 0;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 1rem;
+      gap: 4px;
+      margin-bottom: 1.1rem;
+      padding: 6px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+      align-items: center;
     }
     .section-tab {
-      padding: 10px 16px;
-      font-size: 11px;
+      padding: 8px 16px;
+      font-family: var(--font-sans);
+      font-size: 12px;
       font-weight: 600;
-      color: var(--text-tertiary);
+      color: var(--text-secondary);
       background: transparent;
       border: none;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
-      font-family: inherit;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      transition: color 0.15s;
+      letter-spacing: 0.04em;
+      transition: background 0.12s, color 0.12s;
     }
-    .section-tab:hover { color: var(--text-secondary); }
+    .section-tab:hover { background: var(--bg-tertiary); color: var(--text-primary); }
     .section-tab.active {
-      color: var(--neon-green);
-      border-bottom-color: var(--neon-green);
-      text-shadow: 0 0 8px rgba(94,255,138,0.4);
+      color: #FBF8F0;
+      background: var(--bg-header);
     }
     .section-count {
       margin-left: auto;
-      font-size: 10px;
+      padding-right: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
       color: var(--text-tertiary);
-      align-self: center;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.02em;
     }
 
-    /* === Player rows (active) ===================================== */
+    /* === Player rows (active) =====================================
+       Each row renders as a baseball-card-style strip: paper background,
+       a thick team-color stripe on the left edge, a thin warm-tan border
+       all around, and a card-lift shadow on hover. The `--org-color`
+       custom property is set inline per row by the render JS. */
     .col-header, .player-row {
       display: grid;
       grid-template-columns: 32px 1.5fr 0.5fr 0.5fr 1.3fr 0.85fr 1.1fr 0.5fr 0.65fr;
@@ -251,71 +303,93 @@
       align-items: center;
     }
     .col-header {
-      font-size: 9px;
+      font-family: var(--font-sans);
+      font-size: 10px;
       color: var(--text-tertiary);
-      padding: 8px 12px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md);
-      margin-bottom: 6px;
+      padding: 9px 14px 9px 18px;
+      background: var(--bg-header);
+      color: rgba(251, 248, 240, 0.78);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
       text-transform: uppercase;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.10em;
       font-weight: 600;
     }
     .player-row {
-      padding: 12px 12px;
-      border-bottom: 1px solid var(--border-light);
+      position: relative;
+      padding: 12px 14px 12px 18px;
+      margin-bottom: 6px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-card);
       cursor: pointer;
-      transition: background 0.1s;
+      transition: box-shadow 0.12s, transform 0.12s;
+    }
+    .player-row::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 5px;
+      background: var(--org-color, var(--bg-header));
+      border-top-left-radius: var(--radius-sm);
+      border-bottom-left-radius: var(--radius-sm);
     }
     .player-row:hover {
-      background: linear-gradient(90deg,
-        rgba(183,148,246,0.06) 0%, rgba(94,255,138,0.04) 50%, transparent 100%);
+      box-shadow: var(--shadow-card-hover);
+      transform: translateY(-1px);
     }
     .rank-num {
-      font-size: 12px;
-      color: var(--neon-violet);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-primary);
       text-align: center;
       font-variant-numeric: tabular-nums;
-      font-weight: 600;
+      font-weight: 700;
     }
     .player-name {
-      font-weight: 600; font-size: 13px;
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 16px;
       color: var(--text-primary);
-      letter-spacing: 0.02em;
+      letter-spacing: -0.005em;
+      line-height: 1.15;
     }
     .player-meta {
-      font-size: 10px;
+      font-family: var(--font-sans);
+      font-size: 11px;
       color: var(--text-secondary);
-      margin-top: 3px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+      margin-top: 4px;
+      letter-spacing: 0.01em;
     }
     .age-tag {
       display: inline-block;
-      font-size: 9px;
-      padding: 1px 5px;
-      border-radius: 2px;
-      background: var(--bg-tertiary);
-      color: var(--neon-cyan);
-      margin-left: 6px;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: 0.04em;
-    }
-    /* IL badge — sits inline with player-meta to call out active injuries.
-       Amber to differentiate from age (cyan) / FV badges (green/red). */
-    .il-tag {
-      display: inline-block;
-      font-size: 9px;
+      font-family: var(--font-mono);
+      font-size: 10px;
       padding: 1px 6px;
       border-radius: 2px;
-      background: rgba(255, 179, 71, 0.12);
-      color: var(--neon-amber);
-      border: 1px solid rgba(255, 179, 71, 0.35);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
       margin-left: 6px;
-      letter-spacing: 0.06em;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0;
+    }
+    /* IL badge — amber so it pops on the paper background without
+       competing with FV badges (which use red/gold for top tiers). */
+    .il-tag {
+      display: inline-block;
+      font-family: var(--font-sans);
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 2px;
+      background: #FFF2D1;
+      color: #8C5A00;
+      border: 1px solid #C9A227;
+      margin-left: 6px;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      font-weight: 600;
+      font-weight: 700;
     }
     /* Team logo (ESPN CDN). Sized down on prospect rows, larger on farm
        headers. img tags fall back to alt text when the CDN 404s. */
@@ -326,102 +400,117 @@
       flex-shrink: 0;
       background: transparent;
     }
-    .team-logo-sm { width: 18px; height: 18px; }
-    .team-logo-md { width: 28px; height: 28px; }
-    .team-logo-lg { width: 44px; height: 44px; }
-    .team-logo-xl { width: 64px; height: 64px; }
+    .team-logo-sm { width: 20px; height: 20px; }
+    .team-logo-md { width: 32px; height: 32px; }
+    .team-logo-lg { width: 52px; height: 52px; }
+    .team-logo-xl { width: 76px; height: 76px; }
     .team-logo-fallback {
       display: inline-flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono);
       font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
-      color: var(--text-secondary);
+      color: var(--text-primary);
       background: var(--bg-tertiary);
-      border: 1px solid var(--border-light);
+      border: 1px solid var(--border);
       border-radius: 2px;
     }
     /* "Performance vs level median" pill. Color-coded by direction so a
        reader can glance the row and see who's beating their level. */
     .lvl-plus {
       display: inline-block;
+      font-family: var(--font-mono);
       font-size: 10px;
       padding: 1px 6px;
       border-radius: 2px;
       font-variant-numeric: tabular-nums;
-      font-weight: 600;
-      letter-spacing: 0.02em;
+      font-weight: 700;
+      letter-spacing: 0;
       border: 1px solid currentColor;
     }
-    .lvl-plus.lvl-good   { color: var(--up);   background: rgba(94,255,138,0.10); }
+    .lvl-plus.lvl-good   { color: var(--up);   background: rgba(31,122,58,0.10); }
     .lvl-plus.lvl-okay   { color: var(--text-secondary); background: var(--bg-tertiary); }
-    .lvl-plus.lvl-bad    { color: var(--down); background: rgba(255,59,212,0.08); }
+    .lvl-plus.lvl-bad    { color: var(--down); background: rgba(185,28,28,0.08); }
 
-    /* === FV badges ================================================ */
+    /* === FV badges =================================================
+       Render like the tier stamps on a baseball card: bold serif numerals
+       on a tinted background with a 1px colored border. Top tiers (70+)
+       use a slight inner shadow to give them depth. */
     .fv-badge {
       display: inline-block;
+      font-family: var(--font-mono);
       padding: 3px 10px;
-      border-radius: var(--radius-md);
-      font-size: 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
       font-weight: 700;
       text-align: center;
-      min-width: 36px;
-      border: 1px solid currentColor;
+      min-width: 40px;
+      border: 1px solid var(--border);
       font-variant-numeric: tabular-nums;
-      letter-spacing: 0.02em;
+      letter-spacing: 0;
     }
-    .fv-80 { background: var(--fv-80-bg); color: var(--fv-80-fg); }
-    .fv-75 { background: var(--fv-75-bg); color: var(--fv-75-fg); }
-    .fv-70 { background: var(--fv-70-bg); color: var(--fv-70-fg); }
-    .fv-65 { background: var(--fv-65-bg); color: var(--fv-65-fg); }
-    .fv-60 { background: var(--fv-60-bg); color: var(--fv-60-fg); }
-    .fv-55 { background: var(--fv-55-bg); color: var(--fv-55-fg); }
-    .fv-50 { background: var(--fv-50-bg); color: var(--fv-50-fg); }
-    .fv-45 { background: var(--fv-45-bg); color: var(--fv-45-fg); }
-    .fv-40 { background: var(--fv-40-bg); color: var(--fv-40-fg); }
-    .fv-35 { background: var(--fv-35-bg); color: var(--fv-35-fg); }
-    .fv-30 { background: var(--fv-30-bg); color: var(--fv-30-fg); }
-    .fv-25 { background: var(--fv-25-bg); color: var(--fv-25-fg); }
-    .fv-20 { background: var(--fv-20-bg); color: var(--fv-20-fg); }
+    .fv-80 { background: var(--fv-80-bg); color: var(--fv-80-fg); border-color: var(--fv-80-bd); }
+    .fv-75 { background: var(--fv-75-bg); color: var(--fv-75-fg); border-color: var(--fv-75-bd); }
+    .fv-70 { background: var(--fv-70-bg); color: var(--fv-70-fg); border-color: var(--fv-70-bd); }
+    .fv-65 { background: var(--fv-65-bg); color: var(--fv-65-fg); border-color: var(--fv-65-bd); }
+    .fv-60 { background: var(--fv-60-bg); color: var(--fv-60-fg); border-color: var(--fv-60-bd); }
+    .fv-55 { background: var(--fv-55-bg); color: var(--fv-55-fg); border-color: var(--fv-55-bd); }
+    .fv-50 { background: var(--fv-50-bg); color: var(--fv-50-fg); border-color: var(--fv-50-bd); }
+    .fv-45 { background: var(--fv-45-bg); color: var(--fv-45-fg); border-color: var(--fv-45-bd); }
+    .fv-40 { background: var(--fv-40-bg); color: var(--fv-40-fg); border-color: var(--fv-40-bd); }
+    .fv-35 { background: var(--fv-35-bg); color: var(--fv-35-fg); border-color: var(--fv-35-bd); }
+    .fv-30 { background: var(--fv-30-bg); color: var(--fv-30-fg); border-color: var(--fv-30-bd); }
+    .fv-25 { background: var(--fv-25-bg); color: var(--fv-25-fg); border-color: var(--fv-25-bd); }
+    .fv-20 { background: var(--fv-20-bg); color: var(--fv-20-fg); border-color: var(--fv-20-bd); }
+    .fv-70, .fv-75, .fv-80 { box-shadow: inset 0 -1px 0 rgba(0,0,0,0.08); }
 
-    .rank-cell, .stock-cell { font-variant-numeric: tabular-nums; font-size: 12px; }
-    .rank-cell { text-align: center; color: var(--text-secondary); letter-spacing: 0.04em; }
-    .stock-cell { text-align: right; font-weight: 600; letter-spacing: 0.04em; }
-    .stock-up    { color: var(--up);    text-shadow: 0 0 6px rgba(94,255,138,0.4); }
-    .stock-down  { color: var(--down);  text-shadow: 0 0 6px rgba(255,59,212,0.4); }
+    .rank-cell, .stock-cell {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      font-size: 13px;
+    }
+    .rank-cell { text-align: center; color: var(--text-secondary); }
+    .stock-cell { text-align: right; font-weight: 700; }
+    .stock-up    { color: var(--up); }
+    .stock-down  { color: var(--down); }
     .stock-flat  { color: var(--text-tertiary); font-weight: 400; }
-    .stock-grad  { color: var(--grad); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .stock-grad  { color: var(--grad); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
 
     /* === MiLB cell ================================================ */
     .milb-cell {
-      font-size: 11px;
-      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-primary);
       font-variant-numeric: tabular-nums;
-      line-height: 1.3;
+      line-height: 1.4;
     }
+    .milb-cell .lvl-plus { margin-right: 2px; }
     .level-pill {
       display: inline-block;
+      font-family: var(--font-sans);
       font-size: 10px;
       padding: 2px 6px;
       border-radius: 2px;
-      margin-right: 5px;
+      margin-right: 6px;
       font-weight: 700;
       border: 1px solid currentColor;
       letter-spacing: 0.06em;
     }
-    .level-very-young { background: var(--level-very-young-bg); color: var(--level-very-young-fg); }
-    .level-young      { background: var(--level-young-bg);      color: var(--level-young-fg); }
-    .level-neutral    { background: var(--level-neutral-bg);    color: var(--level-neutral-fg); }
-    .level-old        { background: var(--level-old-bg);        color: var(--level-old-fg); }
-    .level-too-old    { background: var(--level-too-old-bg);    color: var(--level-too-old-fg); }
-    .level-mlb        { background: var(--level-mlb-bg);        color: var(--level-mlb-fg); }
-    .age-vs-level { font-size: 10px; color: var(--text-tertiary); }
+    .level-very-young { background: var(--level-very-young-bg); color: var(--level-very-young-fg); border-color: #4D8044; }
+    .level-young      { background: var(--level-young-bg);      color: var(--level-young-fg);      border-color: #5979A0; }
+    .level-neutral    { background: var(--level-neutral-bg);    color: var(--level-neutral-fg);    border-color: var(--border); }
+    .level-old        { background: var(--level-old-bg);        color: var(--level-old-fg);        border-color: #C9A227; }
+    .level-too-old    { background: var(--level-too-old-bg);    color: var(--level-too-old-fg);    border-color: #B91C1C; }
+    .level-mlb        { background: var(--level-mlb-bg);        color: var(--level-mlb-fg);        border-color: var(--bg-header); }
+    .age-vs-level { font-size: 11px; color: var(--text-tertiary); }
     .prior-season-tag {
       display: inline-block;
+      font-family: var(--font-mono);
       font-size: 10px;
       padding: 1px 5px;
       margin-right: 5px;
       border: 1px dashed var(--text-tertiary);
       border-radius: 2px;
       color: var(--text-tertiary);
-      letter-spacing: 0.04em;
+      letter-spacing: 0;
       font-variant-numeric: tabular-nums;
       cursor: help;
     }
@@ -431,79 +520,116 @@
       margin-bottom: 10px;
     }
     .search-input {
-      width: 100%; max-width: 320px;
-      padding: 6px 12px 6px 30px;
+      width: 100%; max-width: 360px;
+      padding: 8px 12px 8px 32px;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      background: var(--bg-secondary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23B794F6' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") 9px center no-repeat;
-      color: var(--neon-green);
-      font-size: 12px;
-      font-family: inherit;
-      letter-spacing: 0.04em;
+      background: var(--bg-secondary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230E2B4D' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") 10px center no-repeat;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: var(--font-sans);
+      letter-spacing: 0;
       outline: none;
       box-sizing: border-box;
       transition: border-color 0.15s, box-shadow 0.15s;
+      box-shadow: var(--shadow-card);
     }
     .search-input:focus {
-      border-color: var(--neon-violet);
-      box-shadow: 0 0 10px rgba(183,148,246,0.25);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 0 2px rgba(14,43,77,0.12);
     }
-    .search-input::placeholder { color: var(--text-tertiary); letter-spacing: 0.06em; }
+    .search-input::placeholder { color: var(--text-tertiary); letter-spacing: 0; }
 
     /* === FV trend inline badge ===================================== */
-    .fv-trend-up   { font-size: 9px; font-weight: 700; color: var(--up);   line-height: 1; }
-    .fv-trend-down { font-size: 9px; font-weight: 700; color: var(--down); line-height: 1; }
+    .fv-trend-up   { font-size: 10px; font-weight: 700; color: var(--up);   line-height: 1; }
+    .fv-trend-down { font-size: 10px; font-weight: 700; color: var(--down); line-height: 1; }
 
     /* === ETA cell ================================================== */
     .eta-cell { text-align: center; }
     .eta-year {
-      font-size: 13px; font-weight: 700;
+      font-family: var(--font-mono);
+      font-size: 14px; font-weight: 700;
       font-variant-numeric: tabular-nums;
-      letter-spacing: 0.04em;
     }
-    .eta-now      { color: var(--neon-green);   text-shadow: 0 0 6px rgba(94,255,138,0.5);  }
-    .eta-near     { color: var(--neon-green);   text-shadow: 0 0 4px rgba(94,255,138,0.3);  }
-    .eta-close    { color: var(--neon-cyan);    text-shadow: 0 0 4px rgba(0,225,255,0.3);   }
-    .eta-mid      { color: var(--neon-amber);   text-shadow: 0 0 4px rgba(255,179,71,0.3);  }
-    .eta-far      { color: var(--neon-magenta); text-shadow: 0 0 4px rgba(255,59,212,0.3);  }
+    .eta-now      { color: var(--neon-green); }
+    .eta-near     { color: var(--neon-green); }
+    .eta-close    { color: var(--neon-cyan); }
+    .eta-mid      { color: var(--neon-amber); }
+    .eta-far      { color: var(--neon-magenta); }
     .eta-very-far { color: var(--text-tertiary); }
-    .eta-conf { font-size: 9px; color: var(--text-tertiary); margin-top: 1px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .eta-conf {
+      font-family: var(--font-sans);
+      font-size: 9px;
+      color: var(--text-tertiary);
+      margin-top: 1px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
 
     /* === Detail panel ============================================= */
     .detail-panel {
       display: none;
       padding: 14px 16px;
       background: var(--bg-secondary);
-      border: 1px solid var(--border-light);
-      border-left: 2px solid var(--neon-violet);
-      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--neon-cyan);
+      border-radius: var(--radius-sm);
       margin: 0 12px 8px;
       font-size: 12px;
+      box-shadow: var(--shadow-card);
     }
     .detail-panel.open { display: block; }
     .detail-title {
-      font-size: 10px;
-      color: var(--neon-violet);
-      margin-bottom: 6px;
+      font-family: var(--font-serif);
+      font-size: 15px;
+      color: var(--text-primary);
+      margin-bottom: 8px;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
+      letter-spacing: -0.005em;
+      text-transform: none;
+      border-bottom: 2px solid var(--bg-header);
+      padding-bottom: 4px;
     }
-    .detail-table { width: 100%; border-collapse: collapse; }
+    /* When the title is reused inline (e.g. as a side-panel header) it
+       can opt out of the underline by adding `--no-rule`. */
+    .detail-title.no-rule { border-bottom: 0; padding-bottom: 0; }
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+    }
     .detail-table th, .detail-table td {
-      padding: 5px 8px; text-align: center;
-      font-variant-numeric: tabular-nums; font-size: 11px;
+      padding: 6px 10px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      font-size: 12px;
       border-bottom: 1px solid var(--border-light);
     }
-    .detail-table th { color: var(--text-tertiary); font-weight: 500; }
+    .detail-table thead th {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-bottom: 2px solid var(--bg-header);
+    }
+    .detail-table tbody tr:hover { background: rgba(14, 43, 77, 0.04); }
     .detail-table td:first-child { text-align: left; }
+    .detail-table th:first-child { text-align: left; }
     .src-tag {
-      display: inline-block; font-size: 10px;
-      padding: 1px 5px; border-radius: 2px;
-      background: var(--bg-primary);
-      color: var(--neon-cyan);
-      border: 1px solid var(--border-light);
-      text-transform: uppercase; letter-spacing: 0.06em;
+      display: inline-block;
+      font-family: var(--font-sans);
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 2px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
     }
 
     /* === Spotlight rows ============================================ */
@@ -511,7 +637,7 @@
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .spotlight-header, .spotlight-row {
       display: grid;
@@ -520,26 +646,40 @@
       align-items: center;
     }
     .spotlight-header {
-      font-size: 9px;
-      color: var(--text-tertiary);
-      padding: 8px 12px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md);
-      margin-bottom: 6px;
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: rgba(251, 248, 240, 0.78);
+      padding: 9px 14px 9px 18px;
+      background: var(--bg-header);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
       text-transform: uppercase;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.10em;
       font-weight: 600;
     }
     .spotlight-row {
-      padding: 12px;
-      border-bottom: 1px solid var(--border-light);
+      position: relative;
+      padding: 12px 14px 12px 18px;
+      margin-bottom: 6px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-card);
       cursor: pointer;
-      transition: background 0.1s;
+      transition: box-shadow 0.12s, transform 0.12s;
+    }
+    .spotlight-row::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 5px;
+      background: var(--org-color, var(--bg-header));
+      border-top-left-radius: var(--radius-sm);
+      border-bottom-left-radius: var(--radius-sm);
     }
     .spotlight-row:hover {
-      background: linear-gradient(90deg,
-        rgba(255,59,212,0.05) 0%, rgba(94,255,138,0.04) 55%, transparent 100%);
+      box-shadow: var(--shadow-card-hover);
+      transform: translateY(-1px);
     }
     .driver-list {
       display: flex;
@@ -548,13 +688,15 @@
     }
     .driver-tag {
       display: inline-block;
+      font-family: var(--font-sans);
       font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 2px;
+      padding: 2px 7px;
+      border-radius: 10px;
       border: 1px solid var(--border);
-      background: var(--bg-secondary);
+      background: var(--bg-tertiary);
       color: var(--text-secondary);
-      letter-spacing: 0.03em;
+      letter-spacing: 0.02em;
+      font-weight: 500;
     }
 
     /* === Graduates ================================================ */
@@ -565,38 +707,76 @@
       align-items: center;
     }
     .grad-header {
-      font-size: 9px; color: var(--text-tertiary);
-      padding: 8px 12px; background: var(--bg-secondary);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md); margin-bottom: 6px;
-      text-transform: uppercase; letter-spacing: 0.14em;
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: rgba(251, 248, 240, 0.78);
+      padding: 9px 14px 9px 18px;
+      background: var(--bg-header);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.10em;
       font-weight: 600;
     }
-    .grad-row { padding: 12px 12px; border-bottom: 1px solid var(--border-light); }
-    .grad-pill {
-      display: inline-block; font-size: 10px;
-      padding: 2px 6px; border-radius: 2px;
-      background: rgba(183,148,246,0.1); color: var(--neon-violet);
-      border: 1px solid var(--neon-violet);
-      font-weight: 600; letter-spacing: 0.06em;
+    .grad-row {
+      position: relative;
+      padding: 12px 14px 12px 18px;
+      margin-bottom: 6px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-card);
+      cursor: pointer;
+      transition: box-shadow 0.12s, transform 0.12s;
     }
-    .grad-pill.most-recent { background: rgba(94,255,138,0.1); color: var(--neon-green); border-color: var(--neon-green); }
+    .grad-row::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 5px;
+      background: var(--org-color, var(--neon-violet));
+      border-top-left-radius: var(--radius-sm);
+      border-bottom-left-radius: var(--radius-sm);
+    }
+    .grad-row:hover {
+      box-shadow: var(--shadow-card-hover);
+      transform: translateY(-1px);
+    }
+    .grad-pill {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 2px;
+      background: rgba(107, 79, 168, 0.10);
+      color: var(--neon-violet);
+      border: 1px solid var(--neon-violet);
+      font-weight: 700;
+      letter-spacing: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .grad-pill.most-recent {
+      background: rgba(31, 122, 58, 0.10);
+      color: var(--neon-green);
+      border-color: var(--neon-green);
+    }
 
     /* === Empty / loading / error states =========================== */
     .state-message {
       text-align: center;
       padding: 4rem 1rem;
       color: var(--text-secondary);
-      font-size: 13px;
+      font-size: 14px;
+      font-family: var(--font-sans);
     }
     .state-message code { font-size: 12px; }
     .state-error { color: var(--down); }
     .footnote {
-      font-size: 10px;
+      font-size: 11px;
       color: var(--text-tertiary);
       margin-top: 1.5rem;
       line-height: 1.5;
-      letter-spacing: 0.04em;
+      letter-spacing: 0;
     }
 
     /* === Farm systems ============================================= */
@@ -615,7 +795,7 @@
       min-width: 0; overflow: hidden;
     }
     .farm-org-cell .farm-org-name .farm-org {
-      font-size: 13px;
+      font-size: 15px;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .farm-fv-chart-cell { min-width: 0; }
@@ -623,102 +803,242 @@
     .level-depth-cell {
       display: flex; gap: 3px; flex-wrap: wrap;
     }
-    .level-pill {
+    /* level-pill on farm rows is reused; here we override the default
+       (level-very-young etc.) to a more compact "label N" chip. */
+    .farm-row .level-pill,
+    .farm-header .level-pill {
       display: inline-flex; align-items: baseline; gap: 3px;
-      font-size: 10px; font-variant-numeric: tabular-nums;
-      padding: 1px 5px; border-radius: 2px;
-      border: 1px solid var(--border-light);
-      background: var(--bg-secondary);
-      color: var(--text-secondary);
-      letter-spacing: 0.04em;
+      font-family: var(--font-mono);
+      font-size: 11px; font-variant-numeric: tabular-nums;
+      padding: 2px 6px; border-radius: 2px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      letter-spacing: 0;
+      font-weight: 500;
+      margin-right: 0;
     }
-    .level-pill .lp-label { color: var(--text-tertiary); font-size: 9px; }
-    .level-pill .lp-count { color: var(--text-primary); font-weight: 600; }
-    .level-pill.lp-zero .lp-count { color: var(--text-tertiary); font-weight: 400; }
+    .level-pill .lp-label { color: var(--text-tertiary); font-size: 10px; font-family: var(--font-sans); font-weight: 600; letter-spacing: 0.04em; }
+    .level-pill .lp-count { color: var(--text-primary); font-weight: 700; }
+    .level-pill.lp-zero { background: transparent; }
+    .level-pill.lp-zero .lp-count { color: var(--text-tertiary); font-weight: 500; }
     .level-pill.lp-active {
       border-color: var(--neon-cyan);
-      background: rgba(100, 220, 255, 0.10);
+      background: rgba(14, 43, 77, 0.08);
     }
     .level-pill.lp-active .lp-count { color: var(--neon-cyan); }
 
     .graded-by-level-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 14px;
       margin-top: 6px;
     }
     .graded-level-block {
-      border: 1px solid var(--border-light);
+      border: 1px solid var(--border);
       background: var(--bg-secondary);
-      border-radius: 2px;
-      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      box-shadow: var(--shadow-card);
     }
     .graded-level-header {
       display: flex; align-items: baseline; justify-content: space-between;
-      gap: 8px; margin-bottom: 6px;
-      padding-bottom: 4px;
-      border-bottom: 1px solid var(--border-light);
+      gap: 8px; margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--bg-header);
     }
     .graded-level-name {
-      font-size: 11px; font-weight: 600;
+      font-family: var(--font-serif);
+      font-size: 14px; font-weight: 700;
       color: var(--text-primary);
-      letter-spacing: 0.10em; text-transform: uppercase;
+      letter-spacing: 0;
+      text-transform: none;
     }
     .graded-level-count {
-      font-size: 10px; color: var(--text-tertiary);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-tertiary);
       font-variant-numeric: tabular-nums;
     }
     .graded-prospect-row {
       display: grid;
-      grid-template-columns: 36px 1fr auto;
+      grid-template-columns: 40px 1fr auto;
       gap: 8px;
       align-items: center;
-      padding: 3px 2px;
+      padding: 4px 2px;
       font-size: 12px;
       border-bottom: 1px solid var(--border-light);
     }
     .graded-prospect-row:last-child { border-bottom: 0; }
     .graded-prospect-row:hover {
-      background: rgba(100, 220, 255, 0.06);
+      background: rgba(14, 43, 77, 0.05);
     }
     .farm-header {
-      font-size: 9px; color: var(--text-tertiary);
-      padding: 8px 12px; background: var(--bg-secondary);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md); margin-bottom: 4px;
-      text-transform: uppercase; letter-spacing: 0.14em;
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: rgba(251, 248, 240, 0.78);
+      padding: 9px 14px 9px 18px;
+      background: var(--bg-header);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.10em;
       font-weight: 600;
     }
     .farm-row {
-      padding: 12px 12px;
-      border-bottom: 1px solid var(--border-light);
+      position: relative;
+      padding: 12px 14px 12px 18px;
+      margin-bottom: 6px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-card);
       cursor: pointer;
-      transition: background 0.1s;
+      transition: box-shadow 0.12s, transform 0.12s;
+    }
+    .farm-row::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 5px;
+      background: var(--org-color, var(--bg-header));
+      border-top-left-radius: var(--radius-sm);
+      border-bottom-left-radius: var(--radius-sm);
     }
     .farm-row:hover {
-      background: linear-gradient(90deg,
-        rgba(183,148,246,0.06) 0%, rgba(94,255,138,0.04) 50%, transparent 100%);
+      box-shadow: var(--shadow-card-hover);
+      transform: translateY(-1px);
     }
-    .farm-org { font-size: 14px; font-weight: 700; color: var(--text-primary); letter-spacing: 0.06em; text-transform: uppercase; }
-    .farm-rank { font-size: 13px; color: var(--neon-violet); font-variant-numeric: tabular-nums; font-weight: 700; }
+    .farm-org {
+      font-family: var(--font-serif);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.005em;
+      text-transform: none;
+    }
+    .farm-rank {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      color: var(--bg-header);
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      text-align: center;
+    }
     .farm-detail {
       display: none; padding: 14px 16px;
       background: var(--bg-secondary);
-      border: 1px solid var(--border-light);
-      border-left: 2px solid var(--neon-violet);
-      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--neon-cyan);
+      border-radius: var(--radius-sm);
       margin: 0 0 4px; font-size: 12px;
     }
     .farm-detail.open { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
     .pos-pill {
-      display: inline-block; font-size: 10px;
-      padding: 1px 6px; border-radius: 3px; margin: 1px;
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 2px;
+      margin: 1px;
       font-variant-numeric: tabular-nums;
+      font-weight: 700;
     }
     .tier-bar { display: flex; align-items: center; gap: 6px; }
+    .tier-bar > span {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* === Stat tile (used for FV high/low/age/ETA summary blocks)
+       Card-style key-value tile with serif headline and bold mono value. */
+    .stat-tile {
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-card);
+    }
+    .stat-tile .stat-label {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .stat-tile .stat-value {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      color: var(--text-primary);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      margin-top: 2px;
+      letter-spacing: -0.005em;
+    }
+    .stat-tile .stat-sub {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Detail-page header (player + farm). Uses a paper-card with the
+       team-color accent stripe on the left so it reads as a baseball card. */
+    .detail-page-header {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+      padding: 16px 18px 16px 22px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+    }
+    .detail-page-header::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 6px;
+      background: var(--org-color, var(--bg-header));
+      border-top-left-radius: var(--radius-md);
+      border-bottom-left-radius: var(--radius-md);
+    }
+    .detail-page-header .player-display-name {
+      font-family: var(--font-serif);
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      line-height: 1.05;
+    }
+    .detail-page-header .player-display-meta {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+    .back-link {
+      display: inline-block;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: var(--neon-cyan);
+      text-decoration: none;
+      margin-bottom: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .back-link:hover { text-decoration: underline; }
 
     /* === Responsive =============================================== */
     @media (max-width: 900px) {
+      h1 { font-size: 1.7rem; }
+      .container { padding: 1rem 0.85rem 3rem; }
       .col-header, .player-row {
         grid-template-columns: 28px 1fr 0.4fr 0.7fr;
       }
@@ -737,6 +1057,8 @@
       }
       .spotlight-header span:nth-child(n+4),
       .spotlight-row > div:nth-child(n+4) { display: none; }
+      .detail-page-header .player-display-name { font-size: 22px; }
+      .section-tabs { flex-wrap: wrap; }
     }
   </style>
 </head>
@@ -745,7 +1067,7 @@
 <div class="container">
 
   <header class="header">
-    <h1>MLB Prospect Stock Tracker</h1>
+    <h1>MLB Prospect Stock Tracker<span class="h1-rule" aria-hidden="true"></span></h1>
     <div class="meta-line" id="meta-line">Loading…</div>
   </header>
 
@@ -1434,7 +1756,7 @@ function renderActives() {
   const rows = filtered.map((p, i) => {
     const latest = p.points[p.points.length - 1];
     return `
-      <div class="player-row" data-key="${escapeHtml(p.player_key)}" style="cursor:pointer;">
+      <div class="player-row" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
@@ -1477,7 +1799,7 @@ function renderSpotlights() {
   </div>`;
 
   const rows = rowsData.map((s, i) => `
-    <div class="spotlight-row" data-key="${escapeHtml(s.player_key)}">
+    <div class="spotlight-row" data-key="${escapeHtml(s.player_key)}" style="${orgStripe(s.org)}">
       <div class="rank-num">${i + 1}</div>
       <div>
         <div class="player-name">${escapeHtml(s.player_name)}</div>
@@ -1556,7 +1878,7 @@ function renderRecentlyTraded() {
       ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">+${p.trades.length - 1} earlier</span>`
       : "";
     return `
-      <div class="player-row" data-key="${escapeHtml(p.player_key)}" style="grid-template-columns:${TCOLS};cursor:pointer;">
+      <div class="player-row" data-key="${escapeHtml(p.player_key)}" style="grid-template-columns:${TCOLS};${orgStripe(p.org)}">
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
@@ -1624,7 +1946,7 @@ function renderGraduates() {
         : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
       const fvLabel = g.fv_close != null ? Math.round(g.fv_close) : "—";
       body += `
-        <div class="grad-row" data-key="${escapeHtml(g.player_key)}" style="grid-template-columns:${GCOLS};cursor:pointer;">
+        <div class="grad-row" data-key="${escapeHtml(g.player_key)}" style="grid-template-columns:${GCOLS};${orgStripe(g.org)}">
           <div class="rank-num">${rank++}</div>
           <div>
             <div class="player-name">${escapeHtml(g.player_name)}</div>
@@ -1742,6 +2064,28 @@ function escapeHtml(s) {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
 }
+
+// Primary team color for each org — used to tint the left-edge accent
+// stripe on every card (player row, farm row, detail-page header). Values
+// are MLB primary colors; pulled to make each row instantly identifiable
+// without having to scan to the logo. Falls back to navy for unknown orgs.
+const ORG_COLORS = {
+  ARI: "#A71930", ATH: "#003831", ATL: "#CE1141",
+  BAL: "#DF4601", BOS: "#BD3039", CHC: "#0E3386",
+  CHW: "#27251F", CIN: "#C6011F", CLE: "#0F223E",
+  COL: "#33006F", DET: "#0C2340", HOU: "#002D62",
+  KCR: "#004687", LAA: "#BA0021", LAD: "#005A9C",
+  MIA: "#00A3E0", MIL: "#12284B", MIN: "#002B5C",
+  NYM: "#002D72", NYY: "#003087", PHI: "#E81828",
+  PIT: "#FDB827", SDP: "#2F241D", SEA: "#0C2C56",
+  SFG: "#FD5A1E", STL: "#C41E3A", TBR: "#092C5C",
+  TEX: "#003278", TOR: "#134A8E", WSN: "#AB0003",
+};
+const orgColor = code => ORG_COLORS[code] || "#0E2B4D";
+// Returns a style-attribute fragment ("--org-color:#...;") suitable for
+// concatenation into a player-row / farm-row / detail-page-header.
+// Used so the per-row `::before` stripe paints the team's primary color.
+const orgStripe = code => `--org-color:${orgColor(code)};`;
 
 // Map our canonical org codes (PIT, ATH, KCR, SDP, SFG, TBR, WSN, ARI)
 // to the ESPN logo CDN's slugs. ESPN uses 2-3 letter codes that mostly
@@ -1971,7 +2315,7 @@ function renderFarmSystems() {
     const displayRank = i + 1;
 
     return `
-      <div class="farm-row" data-org="${escapeHtml(org.org)}" style="cursor:pointer;">
+      <div class="farm-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)}">
         <div class="farm-rank">${displayRank}</div>
         <div>${teamLogoHTML(org.org, "md", fullOrgName(org.org))}</div>
         <div class="farm-org-cell">
@@ -2020,7 +2364,7 @@ function renderInactive() {
       ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)
       : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
     return `
-      <div class="grad-row" data-key="${escapeHtml(p.player_key)}" style="grid-template-columns: 32px 1.4fr 1fr 0.5fr 1fr;cursor:pointer;">
+      <div class="grad-row" data-key="${escapeHtml(p.player_key)}" style="grid-template-columns: 32px 1.4fr 1fr 0.5fr 1fr;${orgStripe(p.org)}">
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
@@ -2227,7 +2571,7 @@ function makeOrgFvChart(org, variant = "big") {
   // Direction color: green if last >= first, violet otherwise.
   const isUp = series[series.length - 1].total_fv >= series[0].total_fv;
   const stroke = isUp ? "var(--up)" : "var(--down)";
-  const areaFill = isUp ? "rgba(94,255,138,0.10)" : "rgba(255,59,212,0.08)";
+  const areaFill = isUp ? "rgba(31,122,58,0.14)" : "rgba(185,28,28,0.10)";
 
   // Y-axis ticks (big only) — 4 evenly-spaced reference lines.
   const yTickSvg = [];
@@ -2350,10 +2694,10 @@ function makeStatcastBlock(sc) {
     ["Launch angle",sc.launch_angle != null ? `${sc.launch_angle}°` : "—"],
     ["Barrel %",    sc.barrel_pct != null ? `${sc.barrel_pct}%` : "—"],
   ];
-  return `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">${tiles.map(([k, v]) => `
-    <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 10px;border-radius:2px;">
-      <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;">${k}</div>
-      <div style="font-size:18px;color:var(--neon-green);font-variant-numeric:tabular-nums;">${v}</div>
+  return `<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">${tiles.map(([k, v]) => `
+    <div class="stat-tile">
+      <div class="stat-label">${k}</div>
+      <div class="stat-value" style="color:var(--neon-cyan);font-family:var(--font-mono);font-size:17px;">${v}</div>
     </div>`).join("")}</div>`;
 }
 
@@ -2441,46 +2785,41 @@ function renderPlayerDetail(key) {
   const statusPill = p.status === "graduated"
     ? `<span class="grad-pill" style="background:var(--bg-tertiary);color:var(--grad);">Graduated ${p.graduation_date || ""}</span>`
     : ilNow
-      ? `<span class="grad-pill" style="background:var(--bg-tertiary);color:var(--neon-amber);">${escapeHtml(ilNow.type || "?")} IL${ilDays != null ? ` · ${ilDays}d` : ""}</span>`
+      ? `<span class="grad-pill" style="background:rgba(201,162,39,0.10);color:var(--neon-amber);border-color:var(--neon-amber);">${escapeHtml(ilNow.type || "?")} IL${ilDays != null ? ` · ${ilDays}d` : ""}</span>`
       : "";
 
   const avl = p.age_vs_level || {};
   const fvLabel = latest ? latest.consensus_fv_label : "—";
-  const fvBadge = latest ? `<span class="fv-badge ${fvClass(fvLabel)}" style="font-size:18px;padding:3px 10px;">${fvLabel}</span>` : "";
+  const fvBadge = latest ? `<span class="fv-badge ${fvClass(fvLabel)}" style="font-size:22px;padding:5px 14px;min-width:60px;margin-top:4px;">${fvLabel}</span>` : "";
 
   // Rank pills — overall position in the FV-sorted active list, plus org
   // position. Hidden for graduates/inactives where these fields are null.
+  const rankPill = (label, val, color) => `<span style="font-family:var(--font-mono);font-size:11px;color:${color};background:var(--bg-tertiary);border:1px solid var(--border);padding:3px 9px;border-radius:2px;letter-spacing:0;font-weight:700;font-variant-numeric:tabular-nums;"><span style="font-family:var(--font-sans);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;font-size:10px;color:var(--text-tertiary);margin-right:4px;">${label}</span>${val}</span>`;
   const rankPills = (p.overall_rank != null || p.org_rank != null)
-    ? `<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-        ${p.overall_rank != null
-          ? `<span style="font-size:11px;color:var(--neon-violet);background:var(--bg-tertiary);border:1px solid var(--border);padding:2px 8px;border-radius:2px;letter-spacing:0.04em;">Overall #${p.overall_rank}</span>`
-          : ""}
-        ${p.org_rank != null
-          ? `<span style="font-size:11px;color:var(--neon-cyan);background:var(--bg-tertiary);border:1px solid var(--border);padding:2px 8px;border-radius:2px;letter-spacing:0.04em;">${escapeHtml(p.org || "?")} #${p.org_rank}${p.org_rank_total ? ` of ${p.org_rank_total}` : ""}</span>`
-          : ""}
+    ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+        ${p.overall_rank != null ? rankPill("Overall", "#" + p.overall_rank, "var(--neon-violet)") : ""}
+        ${p.org_rank != null ? rankPill(escapeHtml(p.org || "?"), "#" + p.org_rank + (p.org_rank_total ? " of " + p.org_rank_total : ""), "var(--neon-cyan)") : ""}
       </div>`
     : "";
 
   const header = `
-    <div style="margin-bottom:14px;">
-      <a href="#" onclick="event.preventDefault();goHome();" style="color:var(--neon-cyan);text-decoration:none;font-size:12px;">← Back to list</a>
-    </div>
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:14px;">
-      <div style="display:flex;align-items:flex-start;gap:14px;">
+    <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
+    <div class="detail-page-header" style="${orgStripe(p.org)}">
+      <div style="display:flex;align-items:flex-start;gap:16px;">
         ${teamLogoHTML(p.org, "lg", p.org ? fullOrgName(p.org) : "")}
         <div>
-          <div style="font-size:24px;font-weight:600;letter-spacing:0.02em;color:var(--text-primary);">${escapeHtml(p.player_name)}</div>
-          <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">
-            ${escapeHtml(p.position ?? "—")} · ${orgLink}${p.age != null ? ` · age ${p.age.toFixed(1)}` : ""}${p.birth_date ? ` · born ${p.birth_date}` : ""}
+          <div class="player-display-name">${escapeHtml(p.player_name)}</div>
+          <div class="player-display-meta">
+            <strong style="font-weight:600;color:var(--text-primary);">${escapeHtml(p.position ?? "—")}</strong> · ${orgLink}${p.age != null ? ` · age ${p.age.toFixed(1)}` : ""}${p.birth_date ? ` · born ${p.birth_date}` : ""}
             ${statusPill ? " · " + statusPill : ""}
           </div>
           ${rankPills}
         </div>
       </div>
       <div style="text-align:right;">
-        <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;">Current FV</div>
+        <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Current FV</div>
         ${fvBadge}
-        ${latest && latest.avg_rank != null ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">Avg rank #${latest.avg_rank.toFixed(1)}</div>` : ""}
+        ${latest && latest.avg_rank != null ? `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:4px;">Avg rank #${latest.avg_rank.toFixed(1)}</div>` : ""}
       </div>
     </div>`;
 
@@ -2505,11 +2844,11 @@ function renderPlayerDetail(key) {
         : "—", ageSub],
     ["ETA", eta.year != null ? eta.year : "—", eta.confidence ? `${eta.confidence} conf` : ""],
   ];
-  const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px;">${tiles.map(([k, v, sub]) => `
-    <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 10px;border-radius:2px;">
-      <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;">${k}</div>
-      <div style="font-size:16px;color:var(--text-primary);font-variant-numeric:tabular-nums;">${v}</div>
-      ${sub ? `<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;">${sub}</div>` : ""}
+  const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:20px;">${tiles.map(([k, v, sub]) => `
+    <div class="stat-tile">
+      <div class="stat-label">${k}</div>
+      <div class="stat-value">${v}</div>
+      ${sub ? `<div class="stat-sub">${sub}</div>` : ""}
     </div>`).join("")}</div>`;
 
   // Level benchmark block — shows the empirical age/OPS/ERA medians
@@ -2650,7 +2989,7 @@ function renderPlayerDetail(key) {
       ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;line-height:1.4;">${escapeHtml(il.description)}</div>`
       : "";
     return `<div class="detail-title" style="margin-top:18px;color:var(--neon-amber);">Currently on ${escapeHtml(il.type || "?")} IL</div>
-      <div style="border:1px solid rgba(255,179,71,0.35);background:rgba(255,179,71,0.06);padding:10px 12px;border-radius:2px;">
+      <div style="border:1px solid rgba(201,162,39,0.45);background:rgba(201,162,39,0.10);padding:12px 14px;border-radius:var(--radius-sm);">
         <div style="font-size:14px;color:var(--text-primary);">
           Since ${escapeHtml(sinceFmt || "—")}${days != null ? ` <span style="color:var(--neon-amber);font-variant-numeric:tabular-nums;">· ${days} day${days === 1 ? "" : "s"}</span>` : ""}
         </div>
@@ -2780,21 +3119,19 @@ function renderFarmDetail(orgCode) {
   allTradesForOrg.sort((a, b) => b.trade.trade_date.localeCompare(a.trade.trade_date));
 
   const header = `
-    <div style="margin-bottom:14px;">
-      <a href="#" onclick="event.preventDefault();goHome();" style="color:var(--neon-cyan);text-decoration:none;font-size:12px;">← Back to list</a>
-    </div>
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:14px;">
-      <div style="display:flex;align-items:center;gap:14px;">
+    <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
+    <div class="detail-page-header" style="${orgStripe(org.org)}">
+      <div style="display:flex;align-items:center;gap:16px;">
         ${teamLogoHTML(org.org, "xl", fullOrgName(org.org))}
         <div>
-          <div style="font-size:28px;font-weight:600;letter-spacing:0.02em;color:var(--text-primary);">${escapeHtml(fullOrgName(org.org))}</div>
-          <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">
-            <span style="color:var(--text-tertiary);letter-spacing:0.08em;margin-right:8px;">${escapeHtml(org.org)}</span>
-            #${org.farm_rank} of 30 · ${org.count} prospects tracked · Total FV ${org.total_fv != null ? org.total_fv.toFixed(1) : "—"}
+          <div class="player-display-name">${escapeHtml(fullOrgName(org.org))}</div>
+          <div class="player-display-meta">
+            <span style="font-family:var(--font-mono);color:var(--text-tertiary);letter-spacing:0.08em;margin-right:8px;font-weight:600;">${escapeHtml(org.org)}</span>
+            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);">#${org.farm_rank}</strong> of 30 · ${org.count} prospects tracked · Total FV <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : "—"}</strong>
           </div>
         </div>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">${makeTierBar(org.prospects)}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">${makeTierBar(org.prospects)}</div>
     </div>`;
 
   // Tiles: tier counts, avg age, stock, very-young
@@ -2808,14 +3145,14 @@ function renderFarmDetail(orgCode) {
     ["Young-for-level", org.very_young_count],
     ["Pos. mix",   ""],
   ];
-  const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;">${tileRows.slice(0, 7).map(([k, v]) => `
-    <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 10px;border-radius:2px;">
-      <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;">${k}</div>
-      <div style="font-size:18px;color:var(--text-primary);font-variant-numeric:tabular-nums;">${v}</div>
+  const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px;">${tileRows.slice(0, 7).map(([k, v]) => `
+    <div class="stat-tile">
+      <div class="stat-label">${k}</div>
+      <div class="stat-value">${v}</div>
     </div>`).join("")}
-    <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 10px;border-radius:2px;">
-      <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;">Position mix</div>
-      <div>${makePosBreakdown(org.pos_groups)}</div>
+    <div class="stat-tile">
+      <div class="stat-label">Position mix</div>
+      <div style="margin-top:4px;">${makePosBreakdown(org.pos_groups)}</div>
     </div>
   </div>`;
 
@@ -2826,7 +3163,7 @@ function renderFarmDetail(orgCode) {
       ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)
       : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
     return `
-      <div class="player-row" style="grid-template-columns:32px 1.3fr 0.45fr 0.45fr 1.1fr 0.6fr;cursor:pointer;" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
+      <div class="player-row" style="grid-template-columns:32px 1.3fr 0.45fr 0.45fr 1.1fr 0.6fr;${orgStripe(p.org)}" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>

@@ -1,41 +1,48 @@
 """
-Consensus engine — v3.
+Consensus engine — v4 (unweighted).
 
 Anchored to the FanGraphs scouting primer:
   https://blogs.fangraphs.com/the-new-fangraphs-scouting-primer/
 
-What's new in v3 versus v2
---------------------------
-1. Seven sources, four of them publishing explicit 20-80 FV grades
-   (FanGraphs, ESPN/McDaniel, Just Baseball, TJStats). The other three
-   (BA, MLB Pipeline, The Athletic) are still rank-only.
+Design (v4)
+-----------
+Every source that publishes an explicit 20-80 FV grade contributes EQUALLY
+to the consensus. There is no per-source weighting. This includes:
 
-2. Candlestick fields: every player carries a running fv_high / fv_low
-   pair representing the highest and lowest consensus FV they've ever
-   posted. This lets the front-end render a candlestick (current FV +
-   high/low whiskers).
+  * FanGraphs            (Eric Longenhagen + team)
+  * ESPN                 (McDaniel)
+  * Just Baseball
+  * TJStats
+  * MLB Pipeline         ("Overall" grade in each prospect bio)
 
-3. Stock movement is now "delta since the most recent prior update,"
-   not "delta from first observation." A graduated player or a player
-   with only one update reads as "flat."
+Two sources are still rank-only (no public FV):
+  * Baseball America
+  * The Athletic
 
-4. Output trimmed: per the user's request the rendered fields per point
-   are just consensus_fv (with label) and avg_rank. avg_fv and
-   rank_implied_fv are still in the timeseries for diagnostics but are
-   not surfaced in the default front-end columns.
+These contribute via rank → implied-FV mapping ONLY when a player has no
+explicit FV grades from any source; once at least one source has graded
+the player, the FV mean wins and the ranks are used only for the
+informational avg_rank field.
 
-The compute pipeline per (player, date):
+Per (player, date) we compute:
 
-  a. avg_fv             — simple mean of explicit FV grades from any source
-                          that published one. Display only.
+  a. avg_fv             — simple mean of explicit FV grades from sources
+                          that published one. None if no source did.
   b. avg_rank           — simple mean of ordinal ranks across all sources.
-  c. rank_implied_fv    — mean of rank-converted FVs (FanGraphs tier mapping).
-  d. consensus_fv_raw   — weighted mean across all signals; FV-graders
-                          contribute their explicit FV at fv_weight, all
-                          sources contribute rank-implied FV at rank_weight,
-                          and a source publishing both has its rank halved
-                          to avoid double-counting.
-  e. consensus_fv       — snapped to nearest valid published 20-80 grade.
+  c. rank_implied_fv    — mean of rank-converted FVs (rank-tier mapping).
+  d. consensus_fv_raw   — avg_fv if any source published an FV; otherwise
+                          rank_implied_fv. NO source weighting.
+  e. consensus_fv       — rounded to the nearest whole number on the 20-80
+                          scale. No "+" tiers; an average of 58.75 becomes 59,
+                          not "60+".
+
+Candlestick fields (fv_high / fv_low / fv_open / fv_close) ride on the
+PlayerTimeseries object so the front-end can render a candle without
+re-aggregating per-snapshot data.
+
+Stock movement is "delta since the most recent prior update," not
+"delta from first observation." A graduated player or a player with
+only one update reads as "flat."
 """
 
 from __future__ import annotations
@@ -48,20 +55,11 @@ from scrapers import Snapshot
 
 
 # ---------------------------------------------------------------------------
-# Published-grade grid (20-80, FanGraphs primer)
+# Snap helper — consensus FV is always a whole number on the 20-80 scale.
 # ---------------------------------------------------------------------------
-# 75 is never published; 35 and 65 are rare but real.
-WHOLE_FV_GRADES = [20, 30, 40, 45, 50, 55, 60, 65, 70, 80]
-
-# "+" tier midpoints
-PLUS_GRADES = {
-    "40+": 42.5,
-    "45+": 47.5,
-    "50+": 52.5,
-    "55+": 57.5,
-    "60+": 62.5,
-}
-
+# Sources may publish "+" tiers (e.g. "55+" → 57.5 on ingest, see
+# scrapers._parse_fv), but once aggregated we round to the nearest whole
+# integer. An average of 58.75 becomes 59, not "60+".
 
 def snap_to_grade(raw_fv: float) -> tuple[float, str]:
     """Round a raw averaged FV to the nearest whole number on the 20-80 scale."""
@@ -88,42 +86,6 @@ def implied_fv_from_rank(rank: int | None) -> float | None:
     if rank <= 200:
         return 45.0
     return 40.0
-
-
-# ---------------------------------------------------------------------------
-# Source weights — quality (per-source) × signal type (FV vs rank)
-# ---------------------------------------------------------------------------
-
-@dataclass(frozen=True)
-class SourceWeight:
-    name: str
-    rank_weight: float
-    fv_weight: float
-
-
-DEFAULT_WEIGHTS: dict[str, SourceWeight] = {
-    # FV-grading sources
-    "fangraphs":        SourceWeight("fangraphs",        rank_weight=1.0, fv_weight=3.0),
-    "espn":             SourceWeight("espn",             rank_weight=1.0, fv_weight=2.5),
-    "just_baseball":    SourceWeight("just_baseball",    rank_weight=1.0, fv_weight=2.0),
-    "tjstats":          SourceWeight("tjstats",          rank_weight=1.0, fv_weight=2.0),
-    # Rank-only sources
-    "baseball_america": SourceWeight("baseball_america", rank_weight=1.0, fv_weight=0.0),
-    "mlb_pipeline":     SourceWeight("mlb_pipeline",     rank_weight=1.0, fv_weight=0.0),
-    "the_athletic":     SourceWeight("the_athletic",     rank_weight=1.0, fv_weight=0.0),
-}
-# Weight rationale:
-#   FanGraphs fv_weight=3.0 — primary anchor; the FV scale is theirs.
-#   ESPN fv_weight=2.5      — McDaniel is highly credible; explicit 20-80;
-#                              uses tighter "rare 65" tiering similar to FG.
-#   Just Baseball fv=2.0    — explicit FV, full "+" tier usage, but smaller
-#                              org and less industry sourcing.
-#   TJStats fv=2.0          — explicit FV grounded in tjStuff+/Statcast;
-#                              independent, less consensus-driven.
-#   Rank-only fv=0.0        — they don't publish structured FV.
-#
-# Ranks all equal at 1.0 because no source's ordinal is a priori more
-# reliable than another's. Tune via run_monthly.py --weights overrides.
 
 
 # ---------------------------------------------------------------------------
@@ -178,33 +140,24 @@ class PlayerTimeseries:
 # Core compute — one (player, date) bucket
 # ---------------------------------------------------------------------------
 
-def _weighted_mean(pairs: list[tuple[float, float]]) -> float | None:
-    total_w = sum(w for _, w in pairs if w > 0)
-    if total_w <= 0:
-        return None
-    return sum(v * w for v, w in pairs if w > 0) / total_w
+def compute_consensus_point(day_snaps: list[Snapshot]) -> ConsensusPoint | None:
+    """
+    Aggregate one player's snapshots for a single date into a ConsensusPoint.
 
-
-def compute_consensus_point(
-    day_snaps: list[Snapshot],
-    weights: dict[str, SourceWeight] = DEFAULT_WEIGHTS,
-) -> ConsensusPoint | None:
+    Unweighted: every source that published an explicit FV grade contributes
+    one equal vote to the FV mean. Sources that publish only a rank
+    contribute to avg_rank (and to a rank-implied FV fallback that is only
+    used when zero sources published an explicit FV).
+    """
 
     explicit_fvs: list[float] = []
-    explicit_contribs: list[tuple[str, float, float]] = []
-    sources_with_explicit_fv: set[str] = set()
-
     ranks: list[int] = []
     rank_implied_fvs: list[float] = []
-    rank_contribs: list[tuple[str, float, float]] = []
 
     per_source: dict[str, dict] = {}
     contributing_sources: set[str] = set()
 
     for s in day_snaps:
-        w = weights.get(s.source)
-        if w is None:
-            continue
         per_source[s.source] = {
             "rank": s.rank,
             "fv_published": s.fv,
@@ -213,27 +166,15 @@ def compute_consensus_point(
         }
         if s.fv is not None:
             explicit_fvs.append(s.fv)
-            sources_with_explicit_fv.add(s.source)
             contributing_sources.add(s.source)
-            if w.fv_weight > 0:
-                explicit_contribs.append((s.source, s.fv, w.fv_weight))
+        if s.rank is not None:
+            implied = implied_fv_from_rank(s.rank)
+            if implied is not None:
+                ranks.append(s.rank)
+                rank_implied_fvs.append(implied)
+                contributing_sources.add(s.source)
 
-    for s in day_snaps:
-        w = weights.get(s.source)
-        if w is None or s.rank is None or w.rank_weight <= 0:
-            continue
-        implied = implied_fv_from_rank(s.rank)
-        if implied is None:
-            continue
-        ranks.append(s.rank)
-        rank_implied_fvs.append(implied)
-        contributing_sources.add(s.source)
-        rank_w = w.rank_weight
-        if s.source in sources_with_explicit_fv:
-            rank_w *= 0.5
-        rank_contribs.append((s.source, implied, rank_w))
-
-    if not explicit_contribs and not rank_contribs:
+    if not explicit_fvs and not rank_implied_fvs:
         return None
 
     avg_fv = sum(explicit_fvs) / len(explicit_fvs) if explicit_fvs else None
@@ -243,11 +184,11 @@ def compute_consensus_point(
         if rank_implied_fvs else None
     )
 
-    all_contribs = (
-        [(fv, w) for _, fv, w in explicit_contribs]
-        + [(fv, w) for _, fv, w in rank_contribs]
-    )
-    consensus_raw = _weighted_mean(all_contribs)
+    # Consensus = unweighted mean of explicit FVs. Fall back to the
+    # rank-implied mean ONLY when no source published an FV grade —
+    # otherwise a player ranked only by Baseball America / The Athletic
+    # would have no consensus FV at all.
+    consensus_raw = avg_fv if avg_fv is not None else rank_implied_fv
     assert consensus_raw is not None
     consensus_fv, consensus_label = snap_to_grade(consensus_raw)
 
@@ -304,7 +245,6 @@ def _candle_fields(points: list[ConsensusPoint]) -> dict:
 
 def build_timeseries(
     snapshots: list[Snapshot],
-    weights: dict[str, SourceWeight] = DEFAULT_WEIGHTS,
 ) -> list[PlayerTimeseries]:
     by_player: dict[str, list[Snapshot]] = defaultdict(list)
     for s in snapshots:
@@ -320,7 +260,7 @@ def build_timeseries(
 
         points: list[ConsensusPoint] = []
         for snap_date in sorted(by_date):
-            pt = compute_consensus_point(by_date[snap_date], weights=weights)
+            pt = compute_consensus_point(by_date[snap_date])
             if pt is not None:
                 points.append(pt)
 

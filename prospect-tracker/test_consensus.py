@@ -16,7 +16,7 @@ from scrapers import Snapshot, _parse_fv
 from consensus import (
     snap_to_grade,
     implied_fv_from_rank, compute_consensus_point, build_timeseries,
-    stock_movement, SourceWeight, DEFAULT_WEIGHTS,
+    stock_movement,
 )
 
 
@@ -77,56 +77,66 @@ class TestSnapToGrade:
 # 7-source consensus
 # ---------------------------------------------------------------------------
 
-class TestSevenSourceConsensus:
-    def test_all_four_fv_graders_agree(self):
+class TestUnweightedConsensus:
+    def test_all_five_fv_graders_agree(self):
         """
-        FG, ESPN, JB, TJ all explicit 65. Rank-only sources rank #2
-        (implied 60 from the rank tier mapping).
-
-        The four FV-graders pull toward 65 (combined weight 9.5), but the
-        three rank-only sources at 60 pull down. Result: ~63.3 raw, which
-        snaps to 60+ — exactly the correct outcome ("60 with upside to 65").
+        All five FV-grading sources (FG, ESPN, JB, TJ, MLB Pipeline) explicit
+        at 65; the two rank-only sources (BA, The Athletic) rank #2.
+        Unweighted FV mean = 65. Rank-implied (#2 → 60) does NOT pull the
+        consensus down — it's a fallback only used when no source publishes FV.
         """
         snaps = [
             _snap("fangraphs",        "X", rank=2, fv=65.0),
             _snap("espn",             "X", rank=2, fv=65.0),
             _snap("just_baseball",    "X", rank=2, fv=65.0),
             _snap("tjstats",          "X", rank=2, fv=65.0),
+            _snap("mlb_pipeline",     "X", rank=2, fv=65.0),
             _snap("baseball_america", "X", rank=2),
-            _snap("mlb_pipeline",     "X", rank=2),
             _snap("the_athletic",     "X", rank=2),
         ]
         pt = compute_consensus_point(snaps)
-        assert pt.consensus_fv_label == "63"
+        assert pt.consensus_fv_label == "65"
         assert pt.avg_fv == 65.0
         assert pt.avg_rank == 2.0
-        # All seven sources contributed
+        # All seven sources contributed something (FV or rank)
         assert len(pt.sources_contributing) == 7
 
     def test_fv_graders_split(self):
         """
-        FG 65, ESPN 60, JB 60, TJ 60. Rank-only all #3 (implied 60).
-        Weighted avg: FG dominates with weight 3.0 but pulled by 60s.
-        Expected to snap to 60 or 60+.
+        FG 65, ESPN 60, JB 60, TJ 60, Pipeline 60. Unweighted mean of FVs:
+        (65 + 60 + 60 + 60 + 60) / 5 = 61.0 → snaps to "61".
         """
         snaps = [
             _snap("fangraphs",        "X", rank=3, fv=65.0),
             _snap("espn",             "X", rank=3, fv=60.0),
             _snap("just_baseball",    "X", rank=3, fv=60.0),
             _snap("tjstats",          "X", rank=3, fv=60.0),
+            _snap("mlb_pipeline",     "X", rank=3, fv=60.0),
             _snap("baseball_america", "X", rank=3),
-            _snap("mlb_pipeline",     "X", rank=3),
             _snap("the_athletic",     "X", rank=3),
         ]
         pt = compute_consensus_point(snaps)
         assert pt.consensus_fv_label == "61"
-        assert pt.avg_fv > 60.0  # 4-grader mean is 61.25
+        assert pt.avg_fv == 61.0
+
+    def test_mlb_pipeline_fv_counts(self):
+        """
+        Regression test: MLB Pipeline used to be hard-coded as rank-only
+        (fv_weight=0). With the unweighted engine it contributes its FV
+        like any other grader. Pipeline at 60 alone yields consensus 60.
+        """
+        snaps = [_snap("mlb_pipeline", "X", rank=1, fv=60.0)]
+        pt = compute_consensus_point(snaps)
+        assert pt.consensus_fv_label == "60"
+        assert pt.avg_fv == 60.0
 
     def test_rank_only_sources(self):
-        """Only rank-only sources. Consensus comes purely from rank-implied."""
+        """
+        Only rank-only sources have this player. No explicit FV, so we fall
+        back to rank-implied. All three rank #1 → implied 70.
+        """
         snaps = [
             _snap("baseball_america", "X", rank=1),
-            _snap("mlb_pipeline",     "X", rank=1),
             _snap("the_athletic",     "X", rank=1),
         ]
         pt = compute_consensus_point(snaps)
@@ -134,28 +144,24 @@ class TestSevenSourceConsensus:
         assert pt.avg_rank == 1.0
         assert pt.consensus_fv == 70.0
 
-    def test_missing_sources_dont_break_consensus(self):
-        """Only 2 of 7 sources have this player. Consensus still computes."""
+    def test_explicit_fv_overrides_rank_implied(self):
+        """
+        FG publishes 45, BA only ranks (#85 → implied 50). Unweighted FV mean
+        is just 45 (BA has no FV). Rank-implied does NOT pull it up.
+        """
         snaps = [
-            _snap("fangraphs",     "Newcomer", rank=None, fv=45.0),
+            _snap("fangraphs",        "Newcomer", rank=None, fv=45.0),
             _snap("baseball_america", "Newcomer", rank=85),
         ]
         pt = compute_consensus_point(snaps)
         assert pt is not None
-        # FG 45 weight 3.0, BA rank 85 -> implied 50, weight 1.0
-        # raw = (45*3 + 50*1) / 4 = 46.25 -> rounds to 46
-        assert pt.consensus_fv_label == "46"
+        assert pt.consensus_fv_label == "45"
+        assert pt.avg_rank == 85.0  # BA's rank still surfaces for display
 
-
-# ---------------------------------------------------------------------------
-# Source weighting
-# ---------------------------------------------------------------------------
-
-class TestSourceWeighting:
-    def test_fangraphs_dominates_other_fv_graders(self):
+    def test_all_sources_contribute_equally(self):
         """
-        FG 70 (w=3.0) vs three other FV-graders at 55 (w 2.5 + 2.0 + 2.0).
-        Total: 70*3 + 55*6.5 = 210 + 357.5 = 567.5 / 9.5 = 59.7 -> 60
+        FG 70, three other graders at 55. Unweighted: (70+55+55+55)/4 = 58.75
+        → snaps to "59". (Under the old weighted scheme this returned 60.)
         """
         snaps = [
             _snap("fangraphs",     "X", fv=70.0),
@@ -164,19 +170,8 @@ class TestSourceWeighting:
             _snap("tjstats",       "X", fv=55.0),
         ]
         pt = compute_consensus_point(snaps)
-        assert pt.consensus_fv == 60.0
-
-    def test_custom_weights(self):
-        """Override weights to bias toward TJStats."""
-        custom = dict(DEFAULT_WEIGHTS)
-        custom["tjstats"] = SourceWeight("tjstats", rank_weight=1.0, fv_weight=10.0)
-        snaps = [
-            _snap("fangraphs", "X", fv=50.0),
-            _snap("tjstats",   "X", fv=70.0),
-        ]
-        pt = compute_consensus_point(snaps, weights=custom)
-        # TJ weight 10 dominates FG weight 3
-        assert pt.consensus_fv >= 65.0
+        assert pt.consensus_fv == 59.0
+        assert pt.avg_fv == 58.75
 
 
 # ---------------------------------------------------------------------------
