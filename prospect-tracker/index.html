@@ -2428,6 +2428,73 @@ function makePosBreakdown(posGroups) {
   ).join('');
 }
 
+// Map letter grades to colors. A+/A tiers glow up, D dims down.
+function gradeColor(letter) {
+  if (!letter) return 'var(--text-tertiary)';
+  if (letter === 'A+' || letter === 'A')             return 'var(--up)';
+  if (letter === 'A-' || letter === 'B+')            return '#7EC880';
+  if (letter === 'B'  || letter === 'B-')            return 'var(--text-primary)';
+  if (letter === 'C+' || letter === 'C')             return '#C8A050';
+  if (letter === 'C-' || letter === 'D')             return 'var(--down)';
+  return 'var(--text-secondary)';
+}
+
+// Farm report card — four component grades + the overall. Renders on the
+// farm-detail page right under the header so the user sees at a glance
+// what's actually driving the org's rank (e.g. "A on top-end, D on
+// trajectory" tells a very different story than just "B+ overall").
+function makeFarmReportCard(org) {
+  if (!org || !org.grades) return '';
+  const g = org.grades;
+  const r = org.component_ranks || {};
+  const s = org.score_components || {};
+  const n = (DATA.org_summary || []).length || 30;
+
+  const card = (label, letter, rank, scoreVal, scoreFmt, tooltip) => `
+    <div class="stat-tile" style="border-color:${gradeColor(letter)}33;" title="${escapeHtml(tooltip)}">
+      <div class="stat-label">${escapeHtml(label)}</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px;">
+        <div class="stat-value" style="color:${gradeColor(letter)};font-size:28px;line-height:1;">${escapeHtml(letter || '—')}</div>
+        <div style="font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">
+          #${rank ?? '—'} of ${n}
+        </div>
+      </div>
+      <div style="margin-top:4px;font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);">
+        ${scoreFmt(scoreVal)}
+      </div>
+    </div>`;
+
+  const fmtPts = v => v != null ? `${v.toFixed(1)} pts` : '—';
+  const fmtSigned = v => v != null
+    ? `<span style="color:${v > 1.5 ? 'var(--up)' : v < -1.5 ? 'var(--down)' : 'var(--text-secondary)'};">${v > 0 ? '+' : ''}${v.toFixed(1)}</span> 90d`
+    : '—';
+  const fmtScore100 = v => v != null ? `${v.toFixed(0)}/100` : '—';
+
+  return `
+    <div style="display:grid;grid-template-columns:1.3fr repeat(4, minmax(0, 1fr));gap:10px;margin-bottom:18px;">
+      <div class="stat-tile" style="border-color:${gradeColor(g.overall)}66;background:linear-gradient(135deg, ${gradeColor(g.overall)}10, transparent);">
+        <div class="stat-label">Overall grade</div>
+        <div style="display:flex;align-items:baseline;gap:10px;margin-top:2px;">
+          <div class="stat-value" style="color:${gradeColor(g.overall)};font-size:42px;line-height:1;font-weight:700;">${escapeHtml(g.overall || '—')}</div>
+          <div style="font-size:12px;color:var(--text-tertiary);font-family:var(--font-mono);">
+            #${org.farm_rank ?? '—'} of ${n}
+          </div>
+        </div>
+        <div style="margin-top:6px;font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);">
+          farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}/100
+        </div>
+      </div>
+      ${card('Top-end talent', g.top_end,    r.top_end,    org.top_end_points,
+             fmtPts, 'Tiered-FV sum of the org’s top 5 prospects. An 80 is worth ~100 points; a 40 is worth 1.')}
+      ${card('Depth',          g.depth,      r.depth,      org.depth_points,
+             fmtPts, 'Tiered-FV sum of prospects #6 through #25. Rewards systems with real prospects beyond the top tier.')}
+      ${card('Trajectory',     g.trajectory, r.trajectory, org.trajectory_score,
+             fmtSigned, 'Smoothed 90-day change in cumulative FV — average of last 3 history points vs 3 near the cutoff. Robust to single-source updates.')}
+      ${card('Grad pipeline',  g.grad,       r.grad,       org.grad_pipeline_score,
+             fmtPts, 'FV-weighted graduations in the trailing 12 months. Promoting a 60 is worth ~18 points; a 40 is worth 1.')}
+    </div>`;
+}
+
 // Render the per-level "graded prospects" pills used on the farm list.
 // Hides MLB (graded MLB players are usually graduates; the row would
 // always read zero) and skips DSL when the org has none, since most
@@ -2536,7 +2603,7 @@ function renderFarmSystems() {
             <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}</div>
           </div>
         </div>
-        <div>${makeFarmSparkline(org.fv_history, org.fv_delta_90d)}</div>
+        <div>${makeFarmSparkline(org.fv_history, org.trajectory_score)}</div>
         <div style="display:flex;align-items:center;gap:6px;font-size:12px;min-width:0;">
           ${tp ? `<span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(tp.name)}</span>
           <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:10px;padding:1px 5px;flex-shrink:0;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
@@ -3589,20 +3656,13 @@ function renderFarmDetail(orgCode) {
           <div class="player-display-name">${escapeHtml(fullOrgName(org.org))}</div>
           <div class="player-display-meta">
             <span style="font-family:var(--font-mono);color:var(--text-tertiary);letter-spacing:0.08em;margin-right:8px;font-weight:600;">${escapeHtml(org.org)}</span>
-            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="60% current total FV · 30% 90-day FV delta · 10% recent graduations">#${org.farm_rank}</strong> of 30 · ${org.count} prospects tracked · Total FV <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : "—"}</strong>${
-              org.fv_delta_90d != null
-                ? ` · <span title="Net total-FV change over the last 90 days">90d <strong style="font-family:var(--font-mono);color:${org.fv_delta_90d > 1.5 ? 'var(--up)' : org.fv_delta_90d < -1.5 ? 'var(--down)' : 'var(--text-primary)'};">${org.fv_delta_90d > 0 ? '+' : ''}${org.fv_delta_90d.toFixed(1)}</strong></span>`
-                : ''
-            }${
-              org.recent_grad_count
-                ? ` · <span title="Graduations in the last 90 days">${org.recent_grad_count} recent grad${org.recent_grad_count === 1 ? '' : 's'}</span>`
-                : ''
-            }
+            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="45% top-end talent · 25% depth · 15% trajectory · 15% graduation pipeline (each rescaled 0-100 across the 30 orgs)">#${org.farm_rank}</strong> of 30 · ${org.count} prospects tracked · Total FV <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : "—"}</strong>
           </div>
         </div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">${makeTierBar(org.prospects)}</div>
-    </div>`;
+    </div>
+    ${makeFarmReportCard(org)}`;
 
   // Per-tier counts live in the tier-bar in the header; tiles cover the
   // remaining at-a-glance facts (age, stock direction, young-for-level,
