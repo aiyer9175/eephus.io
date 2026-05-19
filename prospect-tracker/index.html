@@ -455,6 +455,57 @@
       text-transform: uppercase; letter-spacing: 0.06em;
     }
 
+    /* === Spotlight rows ============================================ */
+    .spotlight-subtabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .spotlight-header, .spotlight-row {
+      display: grid;
+      grid-template-columns: 32px 1.25fr 0.45fr 0.75fr 1.15fr 1.55fr;
+      gap: 10px;
+      align-items: center;
+    }
+    .spotlight-header {
+      font-size: 9px;
+      color: var(--text-tertiary);
+      padding: 8px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-weight: 600;
+    }
+    .spotlight-row {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-light);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .spotlight-row:hover {
+      background: linear-gradient(90deg,
+        rgba(255,59,212,0.05) 0%, rgba(94,255,138,0.04) 55%, transparent 100%);
+    }
+    .driver-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .driver-tag {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      letter-spacing: 0.03em;
+    }
+
     /* === Graduates ================================================ */
     .grad-header, .grad-row {
       display: grid;
@@ -555,6 +606,11 @@
       }
       .grad-header .desktop-only, .grad-row .grad-graduation-cell,
       .grad-row .grad-level-cell { display: none; }
+      .spotlight-header, .spotlight-row {
+        grid-template-columns: 28px 1fr 0.45fr;
+      }
+      .spotlight-header span:nth-child(n+4),
+      .spotlight-row > div:nth-child(n+4) { display: none; }
     }
   </style>
 </head>
@@ -576,6 +632,7 @@
 <template id="main-template">
   <div class="section-tabs" id="section-tabs">
     <button class="section-tab active" data-section="active">Active</button>
+    <button class="section-tab" data-section="spotlights">Spotlights</button>
     <button class="section-tab" data-section="traded">Recently Traded</button>
     <button class="section-tab" data-section="graduates">Graduates</button>
     <button class="section-tab" data-section="farm">Farm Systems</button>
@@ -618,6 +675,14 @@
 
   <div id="traded-section" style="display: none;">
     <div id="traded-rows"></div>
+  </div>
+
+  <div id="spotlights-section" style="display: none;">
+    <div class="spotlight-subtabs">
+      <button class="chip active" data-spotlight-bucket="hot">Hot Prospects</button>
+      <button class="chip" data-spotlight-bucket="rebounders">Rebounders</button>
+    </div>
+    <div id="spotlight-rows"></div>
   </div>
 
   <div id="graduates-section" style="display: none;">
@@ -876,6 +941,7 @@ function syncToURL() {
   if (state.stockFilter !== "all")        p.set("stock", state.stockFilter);
   if (state.search)                       p.set("q",     state.search);
   if (state.farmSort    !== "farm_rank")  p.set("farm",  state.farmSort);
+  if (state.spotlightBucket !== "hot")    p.set("bucket", state.spotlightBucket);
   const hash = p.toString();
   history.replaceState(null, "", hash ? "#" + hash : window.location.pathname + window.location.search);
 }
@@ -896,6 +962,7 @@ function syncFromURL() {
   if (p.has("stock")) state.stockFilter = p.get("stock");
   if (p.has("q"))     state.search      = p.get("q");
   if (p.has("farm"))  state.farmSort    = p.get("farm");
+  if (p.has("bucket")) state.spotlightBucket = p.get("bucket");
 }
 
 // Navigation helpers. We rewrite location.hash with pushState so back /
@@ -933,6 +1000,7 @@ function goHome() {
   if (state.stockFilter !== "all") p.set("stock", state.stockFilter);
   if (state.search)               p.set("q", state.search);
   if (state.farmSort !== "farm_rank") p.set("farm", state.farmSort);
+  if (state.spotlightBucket !== "hot") p.set("bucket", state.spotlightBucket);
   _pushHash(p);
 }
 
@@ -944,6 +1012,8 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.filterStock === state.stockFilter));
   document.querySelectorAll("[data-farm-sort]").forEach(b =>
     b.classList.toggle("active", b.dataset.farmSort === state.farmSort));
+  document.querySelectorAll("[data-spotlight-bucket]").forEach(b =>
+    b.classList.toggle("active", b.dataset.spotlightBucket === state.spotlightBucket));
   const orgSel = document.getElementById("org-filter");
   if (orgSel) orgSel.value = state.orgFilter;
   const sortSel = document.getElementById("sort-select");
@@ -1028,7 +1098,16 @@ function makeGradMilbCell(p) {
 // `view` is null for the normal list pages; set to {type:"player", key}
 // or {type:"farm", org} when routed to a detail page. Detail pages take
 // over the main content area and hide the section tabs / filter bar.
-const state = { section: "active", stockFilter: "all", orgFilter: "all", sort: "fv", inactiveOrg: "all", farmSort: "farm_rank", view: null };
+const state = {
+  section: "active",
+  stockFilter: "all",
+  orgFilter: "all",
+  sort: "fv",
+  inactiveOrg: "all",
+  farmSort: "farm_rank",
+  spotlightBucket: "hot",
+  view: null
+};
 let DATA = null;
 
 function getAllOrgs() {
@@ -1141,6 +1220,45 @@ function renderActives() {
   });
 }
 
+function renderSpotlights() {
+  const buckets = DATA.spotlights || {};
+  const bucket = buckets[state.spotlightBucket] ? state.spotlightBucket : "hot";
+  state.spotlightBucket = bucket;
+  const rowsData = buckets[bucket] || [];
+  document.querySelectorAll("[data-spotlight-bucket]").forEach(b =>
+    b.classList.toggle("active", b.dataset.spotlightBucket === bucket));
+
+  const header = `<div class="spotlight-header">
+    <span style="text-align:center;">#</span>
+    <span>Player · pos · org · age</span>
+    <span style="text-align:center;">FV</span>
+    <span>Level · line</span>
+    <span>Strength</span>
+    <span>Drivers</span>
+  </div>`;
+
+  const rows = rowsData.map((s, i) => `
+    <div class="spotlight-row" data-key="${escapeHtml(s.player_key)}">
+      <div class="rank-num">${i + 1}</div>
+      <div>
+        <div class="player-name">${escapeHtml(s.player_name)}</div>
+        <div class="player-meta">${escapeHtml(s.position ?? "—")} · ${escapeHtml(s.org ?? "—")}${s.age != null ? `<span class="age-tag">age ${Number(s.age).toFixed(1)}</span>` : ""}</div>
+      </div>
+      <div style="text-align:center;"><span class="fv-badge ${fvClass(s.fv || "40")}">${escapeHtml(s.fv ?? "—")}</span></div>
+      <div class="milb-cell"><span class="level-pill level-neutral">${escapeHtml(s.level ?? "—")}</span>${escapeHtml(s.line ?? "—")}</div>
+      <div class="stock-cell stock-up" style="text-align:left;">${Number(s.score || 0).toFixed(1)}</div>
+      <div class="driver-list">${(s.drivers || []).map(d => `<span class="driver-tag">${escapeHtml(d)}</span>`).join("")}</div>
+    </div>
+  `).join("");
+
+  document.getElementById("spotlight-rows").innerHTML = rowsData.length
+    ? header + rows
+    : `<div class="state-message">No ${escapeHtml(bucket)} spotlights available from the current data.</div>`;
+  document.querySelectorAll("#spotlights-section .spotlight-row").forEach(row => {
+    row.addEventListener("click", () => goToPlayer(row.dataset.key));
+  });
+}
+
 // Latest trade date for a prospect (or null if they were never traded).
 // Used to sort the "Recently Traded" section.
 function lastTradeDate(p) {
@@ -1233,6 +1351,15 @@ function renderGraduates() {
   const byDate = {};
   for (const g of filtered) (byDate[g.graduation_date] = byDate[g.graduation_date] || []).push(g);
   const sortedDates = Object.keys(byDate).sort().reverse();
+  const isRecentGradDate = dateStr => {
+    if (!dateStr) return false;
+    const d = new Date(`${dateStr}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return false;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffDays = (today - d) / 86400000;
+    return diffDays >= 0 && diffDays <= 14;
+  };
 
   // 8-column grid: # | Player | Graduation | FV | Prospect trajectory | Candle | MLB level | Stats
   const GCOLS = "32px 1.3fr 1fr 0.45fr 1.1fr 0.6fr 0.7fr 1.1fr";
@@ -1250,9 +1377,9 @@ function renderGraduates() {
   let body = header;
   let rank = 1;
   for (const date of sortedDates) {
-    const isMostRecent = date === sortedDates[0];
+    const isRecent = isRecentGradDate(date);
     for (const g of byDate[date]) {
-      const pillClass = isMostRecent ? "grad-pill most-recent" : "grad-pill";
+      const pillClass = isRecent ? "grad-pill most-recent" : "grad-pill";
       const chartHtml = (g.points && g.points.length >= 2)
         ? makeLineChart(g.points, g.fv_open, g.fv_close, g.graduation_date, g.trades)
         : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
@@ -1266,7 +1393,7 @@ function renderGraduates() {
           </div>
           <div class="grad-graduation-cell">
             <span class="${pillClass}">${g.graduation_date}</span>
-            ${isMostRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : ""}
+            ${isRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : ""}
           </div>
           <div style="text-align:center;"><span class="fv-badge ${fvClass(String(fvLabel))}">${fvLabel}</span></div>
           <div class="desktop-only" style="padding-right:6px;">${chartHtml}</div>
@@ -1386,8 +1513,10 @@ function updateMeta() {
     `<span class="dot">·</span>${DATA.inactive_count ?? (DATA.inactive || []).length} inactive` +
     `<span class="dot">·</span>${DATA.graduate_count} graduates`;
   const tradedCount = DATA.players.filter(p => (p.trades || []).length > 0).length;
+  const spotlightCount = ((DATA.spotlights || {})[state.spotlightBucket] || []).length;
   const countMap = {
     active:    `${getFilteredActives().length} of ${DATA.active_count}`,
+    spotlights:`${spotlightCount} ${state.spotlightBucket.replace("_", " ")}`,
     traded:    `${getFilteredTraded().length} of ${tradedCount}`,
     inactive:  `${getFilteredInactives().length} of ${DATA.inactive_count ?? (DATA.inactive || []).length}`,
     graduates: `${getFilteredGrads().length} of ${DATA.graduate_count}`,
@@ -2267,6 +2396,7 @@ function renderFarmDetail(orgCode) {
 function render() {
   const sections = {
     active:    "active-section",
+    spotlights:"spotlights-section",
     traded:    "traded-section",
     inactive:  "inactive-section",
     graduates: "graduates-section",
@@ -2304,6 +2434,7 @@ function render() {
   if (active === "player")       renderPlayerDetail(state.view.key);
   else if (active === "farmDetail") renderFarmDetail(state.view.org);
   else if (active === "active")     renderActives();
+  else if (active === "spotlights") renderSpotlights();
   else if (active === "traded")     renderRecentlyTraded();
   else if (active === "inactive")   renderInactive();
   else if (active === "graduates")  renderGraduates();
@@ -2319,6 +2450,13 @@ function attachHandlers() {
       btn.classList.add("active");
       state.section = btn.dataset.section;
       // Tab switch always returns to the list — drop any detail view.
+      state.view = null;
+      render();
+    });
+  });
+  document.querySelectorAll("[data-spotlight-bucket]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.spotlightBucket = btn.dataset.spotlightBucket;
       state.view = null;
       render();
     });

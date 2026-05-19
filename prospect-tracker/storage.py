@@ -563,6 +563,36 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     PITCHER_POS_SET = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP"}
 
+    graduate_mlb_org_by_key: dict[str, str] = {}
+    for org_code, levels in rosters_by_org.items():
+        for rec in levels.get("MLB", []) or []:
+            key = rec.get("player_key")
+            if key:
+                graduate_mlb_org_by_key[key] = org_code
+
+    def _derived_graduation_date(p: PlayerTimeseries) -> str | None:
+        """
+        Display/sort graduation by actual MLB activity when we have it.
+
+        Some historical players were auto-graduated by a later pipeline run,
+        which inserted that run date as the snapshot date. For the front end,
+        prefer the first MLB season in career_stats. If the stored date is an
+        exact MLB-debut date from the same season, keep it.
+        """
+        rows = career_stats.get(p.player_key, []) or []
+        mlb_years = sorted(
+            int(r["season"]) for r in rows
+            if r.get("level") == "MLB" and r.get("season")
+        )
+        if not mlb_years:
+            return p.graduation_date
+        first_year = mlb_years[0]
+        if p.graduation_date and p.graduation_date.startswith(f"{first_year}-"):
+            return p.graduation_date
+        if first_year == date.today().year:
+            return date.today().isoformat()
+        return f"{first_year}-07-01"
+
     # Org rebrand pairs that look like cross-org trades but aren't —
     # the Athletics dropped their "Oakland" prefix mid-2024, which made
     # every prospect's snapshots flip OAK↔ATH and the inferred path
@@ -784,9 +814,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "player_key": p.player_key,
             "player_name": p.player_name,
             "position": p.position,
-            "org": p.org,
+            "org": graduate_mlb_org_by_key.get(p.player_key, p.org) if p.status == "graduated" else p.org,
             "status": p.status,
-            "graduation_date": p.graduation_date,
+            "graduation_date": _derived_graduation_date(p) if p.status == "graduated" else p.graduation_date,
             "birth_date": bd,
             "age": age,
             # Position in the FV-sorted active list, plus position within
@@ -994,6 +1024,20 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         entry["farm_rank"] = rank_i
     # ────────────────────────────────────────────────────────────────────────
 
+    active_payload = [_serialize(p) for p in actives]
+    inactive_payload = [_serialize(p) for p in inactives]
+    graduate_payload = [_serialize(p) for p in grads]
+    graduate_payload.sort(key=lambda p: p.get("graduation_date") or "", reverse=True)
+
+    from prospect_savant import attach_prospect_savant
+    savant_matched = attach_prospect_savant(
+        active_payload + inactive_payload + graduate_payload,
+        Path(__file__).parent,
+    )
+
+    from spotlights import build_spotlights
+    spotlight_payload = build_spotlights(active_payload, graduate_payload)
+
     payload = {
         "generated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "run": latest_run_summary(),
@@ -1002,9 +1046,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "inactive_count": len(inactives),
         "graduate_count": len(grads),
         "inactive_cutoff": cutoff.isoformat(),
-        "players":    [_serialize(p) for p in actives],
-        "inactive":   [_serialize(p) for p in inactives],
-        "graduates":  [_serialize(p) for p in grads],
+        "prospect_savant_count": savant_matched,
+        "players":    active_payload,
+        "inactive":   inactive_payload,
+        "graduates":  graduate_payload,
+        "spotlights": spotlight_payload,
         "org_summary": org_summary,
         "level_norms": level_norms,
         # Per-org affiliate rosters keyed by parent_org_abbr → level → list.

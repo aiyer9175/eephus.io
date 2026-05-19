@@ -1622,11 +1622,10 @@ def detect_graduations_from_career(
     near-instant.
 
     A player is treated as graduated when:
-        - position-players: career MLB at-bats >= ROOKIE_AB_THRESHOLD (130)
-        - pitchers       : career MLB innings pitched >= ROOKIE_IP_THRESHOLD (50)
+        - any year-by-year MLB stat row exists, i.e. they have appeared in
+          an MLB game
         - OR the current-season statline (if supplied) shows MLB-level
-          activity, even if the cumulative threshold isn't met yet (catches
-          recent call-ups before their AB/IP totals add up).
+          activity
 
     Pre-filter: when `player_index` is supplied, we restrict the candidate
     set to prospects whose index record has a non-empty `mlbDebutDate`. A
@@ -1709,25 +1708,9 @@ def detect_graduations_from_career(
         if not mlb_rows:
             continue
 
-        if is_pitcher:
-            try:
-                total_ip = sum(float(r.get("ip") or 0) for r in mlb_rows)
-            except (TypeError, ValueError):
-                continue
-            exceeded = total_ip >= ROOKIE_IP_THRESHOLD
-        else:
-            try:
-                total_ab = sum(int(r.get("ab") or 0) for r in mlb_rows)
-            except (TypeError, ValueError):
-                continue
-            exceeded = total_ab >= ROOKIE_AB_THRESHOLD
-
-        if not exceeded:
-            continue
-
         debut = _resolve_debut(player_key, mlb_rows)
         graduates[player_key] = debut
-        log.info("GRADUATED (career-stats): %s  debut=%s", player_key, debut)
+        log.info("GRADUATED (MLB game): %s  debut=%s", player_key, debut)
 
     # Second pass: current-season statline at MLB level. Catches the
     # recently-called-up case the career-threshold sum misses. Runs over
