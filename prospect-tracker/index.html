@@ -780,14 +780,21 @@
       /* Columns (in order):
            # · logo · org · grade · form-line · top prospect ·
            positions · level depth · avg age · stock · arrow
-         Grade slots right after the org name so the letter is the second
-         thing the eye lands on. The old 70px FV-distribution sparkbar
-         was replaced by Grade + a slightly wider form column — the FV
-         histogram lives on the detail page where it can breathe. */
-      grid-template-columns: 32px 40px 200px 60px 1.2fr 1fr 130px 1fr 64px 70px 16px;
+         The form column is pinned to a fixed pixel width that's wide
+         enough for the 130px sparkline + the trailing delta-vs-median
+         badge. Pinning (not flex) prevents the SVG (which intentionally
+         renders `overflow:visible` for the polygon outline) from
+         bleeding into the Top-prospect column on narrower viewports.
+         Top-prospect, Positions-mix, and Level-depth absorb the slack. */
+      grid-template-columns: 32px 40px 200px 60px 190px 1.2fr 130px 1fr 64px 70px 16px;
       gap: 12px;
       align-items: center;
     }
+    /* Hard cap the sparkline+badge container at its column width so a
+       perverse render (long badge, browser zoom, etc.) still clips
+       cleanly instead of bleeding into adjacent cells. */
+    .farm-row .tier-bar,
+    .farm-header .tier-bar { max-width: 100%; min-width: 0; overflow: hidden; }
     .farm-grade-cell {
       display: flex; flex-direction: column; align-items: center;
       gap: 0; line-height: 1.05;
@@ -2650,7 +2657,7 @@ function makeFarmSparkline(fvHistory, deltaAboveMedian, medianTrajectory, window
   const titleText = `${windowKey} growth vs median: ${sign}${delta.toFixed(1)} (median Δ ${median.toFixed(1)})`;
 
   return `<div class="tier-bar" style="gap:8px;">
-    <svg width="${FORM_BAR_W}" height="${FORM_BAR_H}" style="border-radius:2px;overflow:visible;flex-shrink:0"
+    <svg width="${FORM_BAR_W}" height="${FORM_BAR_H}" style="border-radius:2px;overflow:hidden;flex-shrink:0"
          aria-label="${escapeHtml(titleText)}"><title>${escapeHtml(titleText)}</title>
       ${medianLine}
       <polygon points="${fillPoints}" fill="${stroke}" opacity="0.10"/>
