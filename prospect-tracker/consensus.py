@@ -91,11 +91,15 @@ from scrapers import Snapshot
 
 # Bayesian-shrinkage defaults. k controls how fast the prior fades as more
 # sources contribute; N_FULL is the source-count at which a player is
-# considered "fully covered" and shrinkage decays to zero. The fallback
-# mean is only used if the prospect pool is empty (e.g. unit tests with
-# zero scoreable players).
+# considered "fully covered" and shrinkage decays to zero. N_FULL is
+# intentionally < the number of FV-grading outlets (5) so a top prospect
+# graded by 4 of the 5 majors still escapes the prior — shrinkage exists
+# to discipline thinly-covered players (e.g. 2026 IFAs with only one
+# source), not to penalize well-known names just because one outlet has
+# only ranked, not FV-graded, them. See `_shrinkage_n` for how the count
+# itself is determined.
 DEFAULT_SHRINKAGE_K = 2.0
-DEFAULT_N_FULL = 5  # FG, ESPN, Just Baseball, TJStats, MLB Pipeline
+DEFAULT_N_FULL = 4
 FALLBACK_PRIOR_FV = 45.0
 
 
@@ -293,15 +297,20 @@ def compute_consensus_point(
 # ---------------------------------------------------------------------------
 
 def _shrinkage_n(point: ConsensusPoint) -> int:
-    """Number of sources behind the raw FV being shrunk.
+    """Total number of sources providing *any* signal on this player.
 
-    Mirrors compute_consensus_point's fallback rule: explicit FV count when
-    any source published one, else the rank-only count that produced the
-    rank-implied fallback.
+    Uses the union of (a) sources that published an explicit FV and (b)
+    sources that ranked the player without an FV. Both kinds of signal
+    are real coverage — if Baseball America or Just Baseball ranks a
+    prospect #4 without grading them, that's still strong evidence we
+    "know who this player is" and the prior shouldn't pull as hard.
+
+    This is more generous than the old rule (`avg_fv_n` only, falling
+    back to `avg_rank_n` only when zero explicit FVs exist), which under-
+    counted prospects like Jesús Made: graded by 4 outlets and ranked by
+    a 5th, but `n` came in at 4 and the prior nudged him down a tier.
     """
-    if point.avg_fv_n > 0:
-        return point.avg_fv_n
-    return point.avg_rank_n
+    return len(point.sources_contributing)
 
 
 def apply_shrinkage(
@@ -320,6 +329,15 @@ def apply_shrinkage(
     """
     n = _shrinkage_n(point)
     raw = point.consensus_fv_pre_shrinkage
+    # Snap the pre-shrinkage value first so the no-pull branches below are
+    # idempotent: re-running apply_shrinkage on an already-shrunk point
+    # (e.g. when tuning the formula and re-patching exported JSON) doesn't
+    # leave stale post-shrinkage values in consensus_fv when the new
+    # parameters say "no pull at all".
+    raw_snapped, raw_label = snap_to_grade(raw)
+    point.consensus_fv = raw_snapped
+    point.consensus_fv_label = raw_label
+    point.consensus_fv_raw = round(raw, 2)
     if n <= 0 or k <= 0 or n_full <= 0:
         # Nothing to shrink toward, or shrinkage disabled. Leave defaults.
         point.shrinkage_weight = 1.0
