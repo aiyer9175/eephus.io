@@ -650,7 +650,13 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         for p in timeseries:
             tx_rows = tx_cache.get(p.player_key, [])
             cs_rows = career_cache.get(p.player_key, [])
-            rs = derive_roster_status(tx_rows, cs_rows)
+            # PlayerIndex carries the MLB Stats API's authoritative
+            # mlbDebutDate — first actual MLB game, not first 40-man add.
+            # Pass it in so derive_roster_status doesn't surface a Rule 5
+            # protection date as the prospect's debut.
+            mid = ids_by_key.get(p.player_key)
+            api_debut = player_index.get_debut_date(mid) if mid else None
+            rs = derive_roster_status(tx_rows, cs_rows, api_debut_date=api_debut)
             roster_status_by_key[p.player_key] = rs
         if roster_status_by_key:
             upsert_roster_status(roster_status_by_key)

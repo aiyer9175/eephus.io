@@ -681,62 +681,142 @@ def latest_run_summary() -> dict | None:
 
 
 # ---------------------------------------------------------------------------
-# Rolling-window farm-performance signals
+# Farm-system grading
 # ---------------------------------------------------------------------------
-# The farm-list page used to rank by raw total_fv (current snapshot). That
-# treats a farm that's been sliding for three months identically to one
-# that just spiked — both look "good" if their accumulated FV is high.
-# The composite below blends three signals so the ranking reflects
-# trajectory, not just inventory:
+# Each org gets a report card with four component scores plus an overall
+# letter grade. The previous system (60% total_fv + 30% 90-day delta + 10%
+# grad count) had three problems we explicitly fix here:
 #
-#   * total_fv      — current state (60% weight)
-#   * fv_delta_90d  — net FV change over the last 90 days (30% weight)
-#   * recent_grads  — graduations in the last 90 days, scored as a positive
-#                     because promoting prospects to MLB is success, not
-#                     attrition (10% weight)
+#   1. Raw total_fv treats a 35 FV org-filler the same as a real prospect.
+#      → Replaced with tiered FV-to-points (an 80 is worth ~100x a 40).
 #
-# Each signal is rank-percentile-normalized (1.0 = best org, near-zero = worst)
-# so the components share a unit and the weights are interpretable.
+#   2. 90-day delta was dominated by whichever single source happened to
+#      update inside the window — a noisy proxy for "trajectory".
+#      → Replaced with a smoothed mean-of-recent vs mean-near-cutoff
+#        comparison that survives any one source's swing.
+#
+#   3. Recent grad count was binary — graduating Roki Sasaki counted the
+#      same as graduating a 40 FV bench bat.
+#      → Replaced with FV-weighted grads in the last 12 months.
+#
+# Component scores (each rescaled to a 0-100 scale across the 30 orgs):
+#   * top_end_points — sum of tiered points for the org's top 5 prospects
+#                      (45% weight, the dominant signal)
+#   * depth_points   — sum of tiered points for prospects #6-25  (25%)
+#   * trajectory     — smoothed change in cumulative FV           (15%)
+#   * grad_pipeline  — FV-weighted graduations in trailing 12 mo  (15%)
+#
+# The four 0-100 scores blend linearly into a `farm_score`; the overall
+# letter grade is the bucket that score lands in among the 30 orgs.
 
-FARM_ROLLING_WINDOW_DAYS = 90
-FARM_WEIGHT_TOTAL_FV     = 0.60
-FARM_WEIGHT_DELTA_90D    = 0.30
-FARM_WEIGHT_RECENT_GRADS = 0.10
+FARM_TRAJECTORY_LOOKBACK_DAYS = 90
+FARM_TRAJECTORY_SMOOTH_WINDOW = 3   # avg last 3 fv_history points vs 3 near cutoff
+FARM_GRAD_PIPELINE_MONTHS     = 12
+
+FARM_TOP_END_COUNT  = 5             # top N prospects feeding the "stars" score
+FARM_DEPTH_START    = 5             # prospects #6 ...
+FARM_DEPTH_END      = 25            # ... through #25 feed the "depth" score
+
+FARM_WEIGHT_TOP_END     = 0.45
+FARM_WEIGHT_DEPTH       = 0.25
+FARM_WEIGHT_TRAJECTORY  = 0.15
+FARM_WEIGHT_GRAD        = 0.15
+
+# Tiered FV → points. Anchored so an 80 ≈ "franchise piece" (worth ~100
+# org-filler prospects) and 40 ≈ "pulse, barely". The shape is roughly
+# geometric — each tier up is ~1.7-2× the previous. Tunable; the curve
+# matters more than exact values.
+FV_POINTS = {
+    80: 100.0, 75: 70.0, 70: 50.0, 65: 30.0,
+    60:  18.0, 55: 10.0, 50:  5.0, 45:  2.5,
+    40:   1.0, 35:  0.3, 30:  0.1, 25: 0.05, 20: 0.0,
+}
 
 
-def _rolling_fv_delta(series: list[dict], days: int = FARM_ROLLING_WINDOW_DAYS,
+def _fv_to_points(fv: float | int | None) -> float:
+    """Tiered FV → points. Interpolates linearly between tier boundaries so
+    a 57.5 (between 55 and 60) returns the midpoint between FV_POINTS[55]
+    and FV_POINTS[60]. Returns 0.0 for None / sub-20 inputs."""
+    if fv is None:
+        return 0.0
+    try:
+        v = float(fv)
+    except (TypeError, ValueError):
+        return 0.0
+    if v <= 20:
+        return 0.0
+    if v >= 80:
+        return FV_POINTS[80]
+    lo = int(v // 5) * 5
+    hi = lo + 5
+    lo_pts = FV_POINTS.get(lo, 0.0)
+    hi_pts = FV_POINTS.get(hi, lo_pts)
+    frac = (v - lo) / 5.0
+    return round(lo_pts + (hi_pts - lo_pts) * frac, 3)
+
+
+def _top_end_points(prospects: list[dict], n: int = FARM_TOP_END_COUNT) -> float:
+    """Sum of tiered points for the org's top N prospects (FV-sorted).
+    Prospects list is expected pre-sorted by fv_raw descending — that
+    matches how `m["prospects"]` is populated in `export_timeseries_json`."""
+    return round(sum(_fv_to_points(p.get("fv_raw")) for p in prospects[:n]), 2)
+
+
+def _depth_points(prospects: list[dict],
+                  start: int = FARM_DEPTH_START,
+                  end: int = FARM_DEPTH_END) -> float:
+    """Sum of tiered points for prospects ranked `start+1` through `end`."""
+    return round(sum(_fv_to_points(p.get("fv_raw")) for p in prospects[start:end]), 2)
+
+
+def _trajectory_score(fv_history: list[dict],
+                      lookback_days: int = FARM_TRAJECTORY_LOOKBACK_DAYS,
+                      smooth_window: int = FARM_TRAJECTORY_SMOOTH_WINDOW,
                       as_of: "date | None" = None) -> float:
-    """Signed change in total_fv between now and `days` ago.
+    """Smoothed FV trajectory: mean of last `smooth_window` history points
+    minus mean of `smooth_window` points ending at/near the lookback cutoff.
 
-    Uses the org's cumulative-FV series produced by `_build_org_fv_history`.
-    The baseline is the most recent point on or before (today - days); if
-    the series is shorter than the window, we baseline against the first
-    point (the org's whole tracked history is the window).
-    """
-    if not series:
+    Smoothing on both ends dilutes any single source's update — the user
+    complaint about the old `_rolling_fv_delta` was that one swing from
+    one source dominated the signal. Averaging 3 points on each end
+    reduces that to ~33% of the result."""
+    if not fv_history or len(fv_history) < 2:
         return 0.0
     today = as_of or date.today()
-    cutoff = (today - timedelta(days=days)).isoformat()
-    latest_total = series[-1]["total_fv"]
-    baseline = None
-    for s in reversed(series):
-        if s["date"] <= cutoff:
-            baseline = s["total_fv"]
-            break
-    if baseline is None:
-        baseline = series[0]["total_fv"]
-    return round(latest_total - baseline, 1)
+    cutoff = (today - timedelta(days=lookback_days)).isoformat()
+
+    k = min(smooth_window, len(fv_history))
+    recent_mean = sum(p["total_fv"] for p in fv_history[-k:]) / k
+
+    baseline_candidates = [p for p in fv_history if p["date"] <= cutoff]
+    if not baseline_candidates:
+        # Whole history is inside the window — baseline against the earliest
+        # points so we still report a directionally-correct change.
+        baseline_candidates = fv_history[:k]
+    bk = min(smooth_window, len(baseline_candidates))
+    baseline_mean = sum(p["total_fv"] for p in baseline_candidates[-bk:]) / bk
+
+    return round(recent_mean - baseline_mean, 1)
 
 
-def _recent_grad_count(events: list[dict], days: int = FARM_ROLLING_WINDOW_DAYS,
-                       as_of: "date | None" = None) -> int:
-    """Count `kind == graduation` events in the trailing window."""
-    if not events:
-        return 0
+def _grad_pipeline_score(fv_events: list[dict],
+                         months: int = FARM_GRAD_PIPELINE_MONTHS,
+                         as_of: "date | None" = None) -> float:
+    """FV-weighted graduations in the trailing window. Each grad's FV at
+    graduation time contributes its tiered point value — so promoting a
+    60 FV is worth ~18 points and a 40 FV is worth 1."""
+    if not fv_events:
+        return 0.0
     today = as_of or date.today()
-    cutoff = (today - timedelta(days=days)).isoformat()
-    return sum(1 for e in events
-               if e.get("kind") == "graduation" and (e.get("date") or "") >= cutoff)
+    cutoff = (today - timedelta(days=months * 30)).isoformat()
+    total = 0.0
+    for e in fv_events:
+        if e.get("kind") != "graduation":
+            continue
+        if (e.get("date") or "") < cutoff:
+            continue
+        total += _fv_to_points(e.get("fv"))
+    return round(total, 2)
 
 
 def _rank_percentile(values: list[float]) -> list[float]:
@@ -764,6 +844,72 @@ def _rank_percentile(values: list[float]) -> list[float]:
             pct[indexed[k]] = share
         i = j + 1
     return pct
+
+
+def _normalize_to_100(values: list[float]) -> list[float]:
+    """Map values to a 0-100 scale anchored at the 5th/95th percentile of
+    the input list. Values outside that range clamp to 0 or 100. Percentile
+    anchors (instead of min/max) keep one outlier from flattening the rest
+    of the distribution into a tiny band."""
+    if not values:
+        return []
+    if len(values) == 1:
+        return [100.0]
+    sorted_vals = sorted(values)
+    n = len(sorted_vals)
+    lo_idx = max(0, int(round(n * 0.05)) - 1)
+    hi_idx = min(n - 1, int(round(n * 0.95)) - 1)
+    if hi_idx <= lo_idx:
+        lo_idx, hi_idx = 0, n - 1
+    lo = sorted_vals[lo_idx]
+    hi = sorted_vals[hi_idx]
+    rng = hi - lo
+    if rng <= 0:
+        return [50.0] * len(values)
+    return [round(max(0.0, min(100.0, (v - lo) / rng * 100.0)), 1) for v in values]
+
+
+# Letter-grade buckets calibrated for ~30 orgs. The skew is intentional —
+# A+ is reserved for the #1 farm, "A" tier covers the top ~20%, and the
+# bottom ~7% gets a D. We don't issue Fs (in a 30-team distribution it
+# feels punitive for what's just "the worst of the bunch").
+def _letter_grade(rank: int, n: int) -> str:
+    if n <= 0 or rank is None:
+        return "—"
+    if rank == 1:
+        return "A+"
+    if n == 1:
+        return "A+"
+    pct = (rank - 1) / (n - 1)
+    if pct < 0.10: return "A"
+    if pct < 0.20: return "A-"
+    if pct < 0.30: return "B+"
+    if pct < 0.45: return "B"
+    if pct < 0.60: return "B-"
+    if pct < 0.72: return "C+"
+    if pct < 0.85: return "C"
+    if pct < 0.95: return "C-"
+    return "D"
+
+
+def _rank_descending(values: list[float]) -> list[int]:
+    """Return 1-based ranks where the largest input gets rank 1. Ties get
+    the same rank (their shared best-of-block rank — `[5, 5, 3]` →
+    `[1, 1, 3]`)."""
+    n = len(values)
+    if n == 0:
+        return []
+    indexed = sorted(range(n), key=lambda i: values[i], reverse=True)
+    ranks = [0] * n
+    i = 0
+    while i < n:
+        j = i
+        while j + 1 < n and values[indexed[j + 1]] == values[indexed[i]]:
+            j += 1
+        for k in range(i, j + 1):
+            ranks[indexed[k]] = i + 1
+        i = j + 1
+    return ranks
 
 
 def _build_org_fv_history(
@@ -1317,6 +1463,66 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             )
         return _active_display_org(p)
 
+    def _level_changes_with_debut(player_key: str) -> list[dict]:
+        """Return the player's level_changes with a `kind: "debut"` row
+        pointing at the prospect's actual MLB debut date.
+
+        We gate on `roster_status.mlb_debut_date` being set — that field
+        is sourced from the MLB API's authoritative `mlbDebutDate` and
+        falls back to the first contract-selection date only when the
+        career rows confirm real MLB activity. A 40-man-only Rule 5
+        protection will NOT have a debut date, so no debut row gets
+        rendered even though the SE transaction may have produced a
+        spurious MiLB→MLB promotion in level_changes.
+        """
+        rows = list(level_changes.get(player_key, []) or [])
+        rs = roster_status.get(player_key) or {}
+        debut_date = rs.get("mlb_debut_date")
+        if not debut_date:
+            return rows
+
+        # Find the level_changes row dated closest to the debut date —
+        # usually the contract-selection row will match exactly. If we
+        # find one within a few days of the authoritative debut date,
+        # convert it in place. Otherwise prepend a synthetic row.
+        from datetime import date as _date
+        try:
+            debut_d = _date.fromisoformat(debut_date)
+        except ValueError:
+            debut_d = None
+        match_idx = None
+        if debut_d is not None:
+            best_diff = 8  # days
+            for i, r in enumerate(rows):
+                if r.get("to_level") != "MLB":
+                    continue
+                try:
+                    d = _date.fromisoformat(r.get("date") or "")
+                except ValueError:
+                    continue
+                diff = abs((d - debut_d).days)
+                if diff <= best_diff:
+                    best_diff = diff
+                    match_idx = i
+
+        if match_idx is not None:
+            marked = dict(rows[match_idx])
+            marked["kind"] = "debut"
+            marked["is_debut"] = True
+            marked["date"] = debut_date  # snap to the authoritative date
+            rows[match_idx] = marked
+        else:
+            rows.append({
+                "date": debut_date,
+                "kind": "debut",
+                "is_debut": True,
+                "from_level": None,
+                "to_level": "MLB",
+                "from_team": None,
+                "to_team": None,
+            })
+        return rows
+
     def _serialize(p: PlayerTimeseries) -> dict:
         bd = birth_dates.get(p.player_key)
         age = compute_age_decimal(bd)
@@ -1414,8 +1620,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # Within-season + cross-season level changes derived from the
             # MLB Stats API per-player transactions endpoint. One record
             # per real level transition (lateral affiliate swaps filtered
-            # out). Drives promotion/demotion markers on the FV chart.
-            "level_changes": level_changes.get(p.player_key, []),
+            # out). The earliest MLB promotion is tagged as the MLB debut
+            # (kind == "debut") so the transaction-history block can
+            # render it distinctly. Drives promotion/demotion markers on
+            # the FV chart.
+            "level_changes": _level_changes_with_debut(p.player_key),
             # MLB roster status: debut, options used, 40-man state,
             # accumulated service time, arb cycle bucket. Empty dict if
             # the player has not yet appeared in the majors.
@@ -1510,20 +1719,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             default=0,
         )
         play_stale = last_played_year < play_cutoff_year
-        recent_mlb = any(
-            row.get("level") == "MLB"
-            and int(row.get("season") or 0) >= play_cutoff_year
-            for row in career
-        )
 
+        # Stale + not playing → inactive. We do NOT treat "any MLB time
+        # this year" as automatic graduation anymore — that flipped
+        # cup-of-coffee players (sub-130-AB / sub-50-IP) to graduates as
+        # soon as their FV reporters lost interest, which is wrong by
+        # both MLB rookie-eligibility rules and the user-facing semantics.
+        # The real graduation paths run earlier:
+        #   * derive_roster_status sets rookie_exhausted when career MLB
+        #     totals cross 130 AB / 50 IP OR when minor-league options
+        #     are used up.
+        #   * detect_graduations_from_career checks the same thresholds
+        #     against the cached career payload.
+        # Both feed auto_graduate_player in run_monthly, so by the time
+        # we get here a legitimately graduated player already has
+        # p.status == "graduated" and was peeled off above.
         if fv_stale and play_stale:
-            if recent_mlb:
-                # Effective graduation — they're playing in the show but
-                # our auto-graduation hasn't fired yet (sub-rookie-
-                # threshold MLB time, or our run is between trips up).
-                grads.append(p)
-            else:
-                inactives.append(p)
+            inactives.append(p)
         else:
             actives.append(p)
 
@@ -1690,38 +1902,72 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         entry["fv_history"] = hist.get("series", [])
         entry["fv_events"]  = hist.get("events", [])
 
-    # Rolling-window signals used to rank farms by trajectory, not just
-    # current inventory. The composite_score (and the derived farm_rank)
-    # are exposed alongside the raw signals so the front-end can show the
-    # underlying numbers when the user wants them.
+    # ── Farm report card ────────────────────────────────────────────────────
+    # Four raw component scores per org, each then rescaled to a 0-100 band
+    # across the 30 orgs and blended into a single farm_score. The blend
+    # weights are FARM_WEIGHT_* above. Each component also gets a letter
+    # grade (its rank's bucket); the overall letter is the bucket the
+    # blended farm_score lands in.
     today_iso = date.today()
     for entry in org_summary:
-        entry["fv_delta_90d"] = _rolling_fv_delta(
-            entry["fv_history"], FARM_ROLLING_WINDOW_DAYS, as_of=today_iso,
+        entry["top_end_points"] = _top_end_points(entry["prospects"])
+        entry["depth_points"]   = _depth_points(entry["prospects"])
+        entry["trajectory_score"] = _trajectory_score(
+            entry["fv_history"], as_of=today_iso,
         )
-        entry["recent_grad_count"] = _recent_grad_count(
-            entry["fv_events"], FARM_ROLLING_WINDOW_DAYS, as_of=today_iso,
+        entry["grad_pipeline_score"] = _grad_pipeline_score(
+            entry["fv_events"], as_of=today_iso,
         )
 
-    # Composite farm ranking: 60% current FV + 30% 90-day delta + 10%
-    # recent graduations. Each signal is rank-percentile-normalized
-    # before weighting so the weights live on the same scale.
-    fv_pct    = _rank_percentile([e["total_fv"]          for e in org_summary])
-    delta_pct = _rank_percentile([e["fv_delta_90d"]      for e in org_summary])
-    grad_pct  = _rank_percentile([e["recent_grad_count"] for e in org_summary])
-    for entry, fv_p, d_p, g_p in zip(org_summary, fv_pct, delta_pct, grad_pct):
-        entry["composite_score"] = round(
-            FARM_WEIGHT_TOTAL_FV     * fv_p +
-            FARM_WEIGHT_DELTA_90D    * d_p +
-            FARM_WEIGHT_RECENT_GRADS * g_p,
-            4,
-        )
+    top_end_100 = _normalize_to_100([e["top_end_points"]      for e in org_summary])
+    depth_100   = _normalize_to_100([e["depth_points"]        for e in org_summary])
+    traj_100    = _normalize_to_100([e["trajectory_score"]    for e in org_summary])
+    grad_100    = _normalize_to_100([e["grad_pipeline_score"] for e in org_summary])
+
+    for entry, te, dp, tr, gr in zip(org_summary, top_end_100, depth_100, traj_100, grad_100):
         entry["score_components"] = {
-            "fv_percentile":    round(fv_p, 4),
-            "delta_percentile": round(d_p, 4),
-            "grad_percentile":  round(g_p, 4),
+            "top_end_100":   te,
+            "depth_100":     dp,
+            "trajectory_100": tr,
+            "grad_100":      gr,
         }
-    org_summary.sort(key=lambda x: (-x["composite_score"], -x["total_fv"]))
+        entry["farm_score"] = round(
+            FARM_WEIGHT_TOP_END    * te +
+            FARM_WEIGHT_DEPTH      * dp +
+            FARM_WEIGHT_TRAJECTORY * tr +
+            FARM_WEIGHT_GRAD       * gr,
+            1,
+        )
+
+    # Per-component ranks (1 = best) feed the component letter grades on
+    # the report card. The overall rank/letter come from farm_score.
+    n_orgs = len(org_summary)
+    top_end_rank = _rank_descending([e["top_end_points"]      for e in org_summary])
+    depth_rank   = _rank_descending([e["depth_points"]        for e in org_summary])
+    traj_rank    = _rank_descending([e["trajectory_score"]    for e in org_summary])
+    grad_rank    = _rank_descending([e["grad_pipeline_score"] for e in org_summary])
+    overall_rank = _rank_descending([e["farm_score"]          for e in org_summary])
+
+    for entry, te_r, dp_r, tr_r, gr_r, ov_r in zip(
+        org_summary, top_end_rank, depth_rank, traj_rank, grad_rank, overall_rank,
+    ):
+        entry["component_ranks"] = {
+            "top_end":    te_r,
+            "depth":      dp_r,
+            "trajectory": tr_r,
+            "grad":       gr_r,
+        }
+        entry["grades"] = {
+            "top_end":    _letter_grade(te_r, n_orgs),
+            "depth":      _letter_grade(dp_r, n_orgs),
+            "trajectory": _letter_grade(tr_r, n_orgs),
+            "grad":       _letter_grade(gr_r, n_orgs),
+            "overall":    _letter_grade(ov_r, n_orgs),
+        }
+
+    # Final sort + farm_rank assignment off of farm_score. Tiebreak by
+    # top_end_points so the org with better stars edges out an equal one.
+    org_summary.sort(key=lambda x: (-x["farm_score"], -x["top_end_points"]))
     for rank_i, entry in enumerate(org_summary, start=1):
         entry["farm_rank"] = rank_i
     # ────────────────────────────────────────────────────────────────────────

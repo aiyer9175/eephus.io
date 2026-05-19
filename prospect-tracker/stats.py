@@ -1822,7 +1822,9 @@ DEFAULT_OPTIONS = 3
 
 def derive_roster_status(transactions: list[dict],
                           career_rows: list[dict] | None,
-                          today: date | None = None) -> dict:
+                          today: date | None = None,
+                          *,
+                          api_debut_date: str | None = None) -> dict:
     """
     Build the MLB roster-status snapshot for one player.
 
@@ -1840,7 +1842,12 @@ def derive_roster_status(transactions: list[dict],
                               games on file from career_stats.
         career_mlb_ab      : sum of MLB at-bats from career_stats.
         career_mlb_ip      : sum of MLB innings pitched from career_stats.
-        rookie_exhausted   : True once AB / IP threshold is crossed.
+        rookie_exhausted   : True once the AB threshold, IP threshold,
+                              OR options-exhaustion rule fires.
+        graduation_reason  : 'ab_threshold' | 'ip_threshold' |
+                              'options_exhausted' | None — explains which
+                              gate flipped rookie_exhausted on. None when
+                              the player is still a prospect.
         service_phase      : 'none' | 'pre_arb' | 'arb_eligible' | 'post_arb'
                               — best-effort bucket from MLB seasons + debut.
       }
@@ -1852,7 +1859,16 @@ def derive_roster_status(transactions: list[dict],
     today = today or date.today()
     career_rows = career_rows or []
 
-    debut_date: str | None = None
+    # 40-man selection isn't an MLB debut — a Rule 5 protection add in
+    # November selects a player to the 40-man without them ever playing.
+    # We separately track the contract-selection date (used to gate
+    # options-exhaustion's "has the team committed?" question) and the
+    # actual MLB debut date (used as the display marker). When the MLB
+    # Stats API surfaces an authoritative mlbDebutDate via PlayerIndex
+    # we prefer that; otherwise we fall back to the first contract-
+    # selection event but ONLY if the career rows actually show MLB
+    # activity (games / AB / IP > 0).
+    selection_date: str | None = None
     on_40_man = False
     options_seasons: set[int] = set()
 
@@ -1870,8 +1886,8 @@ def derive_roster_status(transactions: list[dict],
         if type_code == "SE" or "selected the contract" in desc_low \
                 or "purchased the contract" in desc_low:
             on_40_man = True
-            if not debut_date:
-                debut_date = date_iso
+            if not selection_date:
+                selection_date = date_iso
         # 40-man drop — "sent outright" clears once the player passes
         # through waivers off the 40-man roster.
         elif "sent outright" in desc_low or "removed from the 40" in desc_low:
@@ -1911,9 +1927,42 @@ def derive_roster_status(transactions: list[dict],
             except (TypeError, ValueError):
                 pass
     mlb_seasons = sorted(set(mlb_seasons))
+    has_mlb_activity = bool(mlb_seasons) or mlb_ab_total > 0 or mlb_ip_total > 0
 
-    rookie_exhausted = (mlb_ab_total > ROOKIE_AB_THRESHOLD
-                        or mlb_ip_total > ROOKIE_IP_THRESHOLD)
+    # Resolve the displayed debut date. The MLB API's mlbDebutDate (passed
+    # in as `api_debut_date` via PlayerIndex) is authoritative when set.
+    # Without that we fall back to the first contract-selection event,
+    # BUT only if the player has actually appeared in an MLB game — a
+    # Rule 5 protection in November selects a player to the 40-man
+    # without ever putting them on the field, and we don't want that
+    # date to render as a "debut" in the transaction history.
+    if api_debut_date:
+        debut_date = api_debut_date
+    elif selection_date and has_mlb_activity:
+        debut_date = selection_date
+    else:
+        debut_date = None
+
+    # Rookie / prospect status is lost when the player crosses any of:
+    #   * 130 career MLB at-bats         (hitters)
+    #   * 50  career MLB innings pitched (pitchers)
+    #   * has burned all minor-league options AND has at least debuted
+    #     in MLB — a player with no options left can't be sent down
+    #     without clearing waivers, so the team has effectively committed
+    #     the roster spot. The 45-day active-roster MLB rule from the
+    #     official rookie definition isn't tractable via the public API,
+    #     so options-exhaustion is the practical proxy.
+    options_exhausted = (len(options_seasons) >= DEFAULT_OPTIONS
+                         and debut_date is not None)
+    if mlb_ab_total > ROOKIE_AB_THRESHOLD:
+        graduation_reason: str | None = "ab_threshold"
+    elif mlb_ip_total > ROOKIE_IP_THRESHOLD:
+        graduation_reason = "ip_threshold"
+    elif options_exhausted:
+        graduation_reason = "options_exhausted"
+    else:
+        graduation_reason = None
+    rookie_exhausted = graduation_reason is not None
 
     # Service phase: a rough bucket from MLB seasons played.
     #   none         → 0 MLB seasons
@@ -1943,6 +1992,7 @@ def derive_roster_status(transactions: list[dict],
         "career_mlb_ab":      mlb_ab_total,
         "career_mlb_ip":      round(mlb_ip_total, 1),
         "rookie_exhausted":   bool(rookie_exhausted),
+        "graduation_reason":  graduation_reason,
         "service_phase":      service_phase,
         "injury_history":     derive_injury_history(transactions or []),
     }

@@ -1151,11 +1151,13 @@
   <div id="farm-section" style="display:none;">
     <div class="filter-bar" id="farm-sort-bar" style="flex-wrap:wrap;gap:6px;">
       <span class="filter-label">Sort by</span>
-      <button class="chip active" data-farm-sort="farm_rank" title="60% current total FV · 30% 90-day FV delta · 10% recent graduations">Farm rank</button>
+      <button class="chip active" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% graduation pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
+      <button class="chip" data-farm-sort="top_end" title="Tiered-FV sum of the org's top 5 prospects — an 80 is worth ~100x a 40">Top-end</button>
+      <button class="chip" data-farm-sort="depth" title="Tiered-FV sum of prospects #6-25">Depth</button>
+      <button class="chip" data-farm-sort="trajectory" title="Smoothed change in cumulative FV — averages last 3 history points vs 3 near the 90-day cutoff">Trajectory</button>
+      <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted graduations in the trailing 12 months">Grad pipeline</button>
       <button class="chip" data-farm-sort="total_fv">Total FV</button>
-      <button class="chip" data-farm-sort="fv_delta_90d" title="Net total-FV change over the last 90 days">90-day form</button>
-      <button class="chip" data-farm-sort="recent_grads" title="Graduations in the last 90 days">Recent grads</button>
-      <button class="chip" data-farm-sort="count">Depth</button>
+      <button class="chip" data-farm-sort="count">Count</button>
       <button class="chip" data-farm-sort="tier_60">60+ prospects</button>
       <button class="chip" data-farm-sort="avg_age">Youngest system</button>
       <button class="chip" data-farm-sort="stock_up">Rising prospects</button>
@@ -1325,9 +1327,10 @@ const TRANSACTION_KINDS = {
   promotion:  { glyph: "▲", color: "var(--up)",         dash: "1,2",   pos: "bottom", label: "Promotion" },
   demotion:   { glyph: "▼", color: "var(--down)",       dash: "1,2",   pos: "bottom", label: "Demotion" },
   signing:    { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Signing" },
-  graduation: { glyph: "★", color: "var(--neon-amber)", dash: "2,1.5", pos: "top",    label: "Graduation" },
+  debut:      { glyph: "★", color: "var(--neon-amber)", dash: "2,1.5", pos: "top",    label: "MLB debut" },
+  graduation: { glyph: "✦", color: "var(--neon-violet)",dash: "2,1.5", pos: "top",    label: "Graduation" },
 };
-const TRANSACTION_LEGEND_ORDER = ["trade", "promotion", "demotion", "signing", "graduation"];
+const TRANSACTION_LEGEND_ORDER = ["trade", "promotion", "demotion", "signing", "debut", "graduation"];
 
 // Build the combined event list for one player. Pulls from:
 //   trades         → kind:'trade'
@@ -1349,11 +1352,19 @@ function transactionEvents(player) {
     });
   }
   for (const ev of levelChangeEvents(player)) {
-    const verb = ev.kind === "promotion" ? "Promoted to" : "Demoted to";
     // Prefer the full date when we have it (transactions-derived events);
     // fall back to just the season for the year-over-year heuristic path.
     const datePrefix = ev.date && ev.date.length >= 10 ? ev.date : ev.date.slice(0, 4);
     const toClause   = ev.to_team   ? ` (${ev.to_team})`   : "";
+    if (ev.kind === "debut") {
+      out.push({
+        date: ev.date,
+        kind: "debut",
+        label: `${datePrefix}: MLB Debut${toClause}`,
+      });
+      continue;
+    }
+    const verb = ev.kind === "promotion" ? "Promoted to" : "Demoted to";
     const fromClause = ev.from_team ? ` from ${ev.from_team}` : ` (from ${ev.prev_level})`;
     out.push({
       date: ev.date,
@@ -2302,15 +2313,15 @@ const TIER_BUCKETS = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
 
 // Form bar — replaces the static tier bar on each farm row. Shows the
 // last ~6 months of the org's running-total FV as a small sparkline,
-// colored by the sign of the 90-day FV delta (rising / flat / falling).
-// `fv_delta_90d` is precomputed server-side and surfaced as the trailing
-// numeric badge so the slope encodes direction and the badge encodes
+// colored by the sign of the `trajectory_score` (smoothed 90-day delta).
+// The trajectory number is precomputed server-side and surfaced as the
+// trailing badge so the slope encodes direction and the badge encodes
 // magnitude — both available at a glance.
 const FORM_BAR_W = 110;
 const FORM_BAR_H = 22;
 const FORM_BAR_WINDOW_DAYS = 180;  // ~6 months of trajectory
 
-function makeFarmSparkline(fvHistory, delta90) {
+function makeFarmSparkline(fvHistory, trajectory) {
   const series = fvHistory || [];
   if (series.length < 2) {
     return `<div class="tier-bar" style="gap:6px;">
@@ -2343,9 +2354,9 @@ function makeFarmSparkline(fvHistory, delta90) {
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(' ');
 
-  // Color the line by the 90-day delta sign so the eye picks up direction
-  // before the brain registers the slope itself.
-  const delta = delta90 || 0;
+  // Color the line by the trajectory-score sign so the eye picks up
+  // direction before the brain registers the slope itself.
+  const delta = trajectory || 0;
   const stroke = delta > 1.5  ? 'var(--up)'
               : delta < -1.5 ? 'var(--down)'
               :                'var(--text-tertiary)';
@@ -2365,7 +2376,7 @@ function makeFarmSparkline(fvHistory, delta90) {
 
   return `<div class="tier-bar" style="gap:8px;">
     <svg width="${FORM_BAR_W}" height="${FORM_BAR_H}" style="border-radius:2px;overflow:visible;flex-shrink:0"
-         aria-label="90-day form: ${deltaLabel}">
+         aria-label="Trajectory: ${deltaLabel}">
       <polygon points="${fillPoints}" fill="${stroke}" opacity="0.10"/>
       <polyline points="${points}" fill="none" stroke="${stroke}"
                 stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
@@ -2460,15 +2471,17 @@ function farmSortedOrgs() {
     return orgs;
   }
   orgs.sort((a, b) => {
-    if (s === "total_fv")     return b.total_fv  - a.total_fv;
-    if (s === "fv_delta_90d") return (b.fv_delta_90d ?? 0) - (a.fv_delta_90d ?? 0);
-    if (s === "recent_grads") return (b.recent_grad_count ?? 0) - (a.recent_grad_count ?? 0)
-                                  || b.total_fv - a.total_fv;
-    if (s === "count")        return b.count     - a.count;
-    if (s === "tier_60")      return b.tier_60_plus - a.tier_60_plus;
-    if (s === "avg_age")      return (a.avg_age ?? 99) - (b.avg_age ?? 99);
-    if (s === "stock_up")     return b.stock_up  - a.stock_up;
-    return a.farm_rank - b.farm_rank; // default (composite-derived server-side)
+    if (s === "total_fv")      return b.total_fv  - a.total_fv;
+    if (s === "top_end")       return (b.top_end_points ?? 0) - (a.top_end_points ?? 0);
+    if (s === "depth")         return (b.depth_points   ?? 0) - (a.depth_points   ?? 0);
+    if (s === "trajectory")    return (b.trajectory_score    ?? 0) - (a.trajectory_score    ?? 0);
+    if (s === "grad_pipeline") return (b.grad_pipeline_score ?? 0) - (a.grad_pipeline_score ?? 0)
+                                   || b.top_end_points - a.top_end_points;
+    if (s === "count")         return b.count     - a.count;
+    if (s === "tier_60")       return b.tier_60_plus - a.tier_60_plus;
+    if (s === "avg_age")       return (a.avg_age ?? 99) - (b.avg_age ?? 99);
+    if (s === "stock_up")      return b.stock_up  - a.stock_up;
+    return a.farm_rank - b.farm_rank; // default (farm_score-derived server-side)
   });
   return orgs;
 }
@@ -2961,6 +2974,22 @@ function makeTransactionHistoryBlock(player) {
     });
   }
   for (const lc of levelChanges) {
+    if (lc.kind === "debut") {
+      // First time the prospect appears on an MLB roster. Rendered as a
+      // standalone marker rather than a generic "AAA → MLB" promotion so
+      // the eye can find it scanning the timeline.
+      const teamPart = lc.to_team ? ` with ${escapeHtml(lc.to_team)}` : "";
+      const fromPart = lc.from_level
+        ? `<span class="level-pill level-neutral" style="margin-right:4px;">${escapeHtml(lc.from_level)}</span><span style="color:var(--up);margin-right:4px;">↑</span>`
+        : "";
+      rows.push({
+        kind: lc.kind,
+        date: lc.date,
+        move: `${fromPart}<span class="level-pill" style="background:var(--neon-amber);color:var(--text-on-accent,#1a1208);font-weight:700;letter-spacing:0.04em;">★ MLB DEBUT</span>`,
+        detail: `Major league debut${teamPart}.`,
+      });
+      continue;
+    }
     const arrow = lc.kind === "promotion"
       ? `<span style="color:var(--up);">↑</span>`
       : `<span style="color:var(--down);">↓</span>`;
