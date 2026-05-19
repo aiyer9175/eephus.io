@@ -1170,6 +1170,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         ops_norms_from_norms,
         era_norms_from_norms,
     )
+    from stat_flags import compute_stat_flags
 
     # Empirical level baselines computed from the career_stats payload we
     # already have. age_baselines / ops_norms / era_norms feed into the
@@ -1676,6 +1677,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             except (TypeError, ValueError, ZeroDivisionError):
                 pass
 
+        # Scouting flags — green/red rate-stat indicators driven by the
+        # current statline + the level norms we already built. Skipped for
+        # players whose statline didn't pass the sample-size gate (see
+        # stat_flags.MIN_GAMES_HITTER / MIN_IP_PITCHER); the function
+        # returns [] in that case so the field is safe to render
+        # unconditionally on the prospect detail page.
+        flags = compute_stat_flags(sl_out, level_norms)
+
         filtered_trades = _filter_real_trades(trades_by_player.get(p.player_key, []))
         acq = acquisitions.get(p.player_key)
         current_acq_method = _classify_current_acquisition(filtered_trades, acq)
@@ -1719,6 +1728,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "fv_close": p.fv_close,
             "stock": stock_movement(p),
             "statline": sl_out,
+            "stat_flags": flags,
             "pitch_arsenal": pa,
             "sabermetrics": sm,
             "trades": filtered_trades,

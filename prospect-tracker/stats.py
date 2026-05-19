@@ -573,6 +573,15 @@ class StatLine:
     # True when we couldn't find current-season stats and fell back to a
     # prior year. The UI surfaces this so users know they're seeing last year.
     is_prior_season: bool = False
+    # Derived hitter power metric: SLG - AVG. Carried on the StatLine so
+    # the prospect-page flag computation can read it off without re-deriving
+    # from the slash line string each time.
+    iso: float | None = None
+    # Pitching peripherals used to surface red/green scouting flags. WHIP
+    # comes straight from the API; HR/9 is either the API's `homeRunsPer9`
+    # or a derivation of HR allowed × 9 / IP — see fetch_career_stats.
+    whip: float | None = None
+    hr_per_9: float | None = None
 
 
 @dataclass
@@ -1175,6 +1184,12 @@ def fetch_statline(player_key: str, mlbam_id: int,
 
     stat = best.get("stat", {})
     if is_pitcher:
+        ip_val = (float(stat.get("inningsPitched"))
+                  if stat.get("inningsPitched") else None)
+        hr_allowed = int(stat.get("homeRuns", 0) or 0)
+        hr_per_9 = _safe_float(stat.get("homeRunsPer9"))
+        if hr_per_9 is None and ip_val and ip_val > 0:
+            hr_per_9 = round(hr_allowed * 9.0 / ip_val, 2)
         return StatLine(
             player_key=player_key, mlbam_id=mlbam_id,
             level=best["_level"], games=int(stat.get("gamesPlayed", 0) or 0),
@@ -1182,9 +1197,11 @@ def fetch_statline(player_key: str, mlbam_id: int,
             bb_pct=None, k_pct=None,
             era=str(stat.get("era") or "—"),
             fip=None,                       # MLB Stats API doesn't expose FIP
-            ip=float(stat.get("inningsPitched") or 0) if stat.get("inningsPitched") else None,
+            ip=ip_val,
             k_per_9=_safe_float(stat.get("strikeoutsPer9Inn")),
             bb_per_9=_safe_float(stat.get("walksPer9Inn")),
+            whip=_safe_float(stat.get("whip")),
+            hr_per_9=hr_per_9,
             is_pitcher=True,
             fetched_at=date_today_iso(),
             season=found_season,
@@ -1193,6 +1210,14 @@ def fetch_statline(player_key: str, mlbam_id: int,
     pa = stat.get("plateAppearances", 0) or 0
     bb = stat.get("baseOnBalls", 0) or 0
     so = stat.get("strikeOuts", 0) or 0
+    avg_str = str(stat.get("avg") or "")
+    slg_str = str(stat.get("slg") or "")
+    iso_val = None
+    try:
+        if avg_str and slg_str and avg_str != "—" and slg_str != "—":
+            iso_val = round(float(slg_str) - float(avg_str), 3)
+    except (TypeError, ValueError):
+        iso_val = None
     return StatLine(
         player_key=player_key, mlbam_id=mlbam_id,
         level=best["_level"], games=int(stat.get("gamesPlayed", 0) or 0),
@@ -1204,6 +1229,7 @@ def fetch_statline(player_key: str, mlbam_id: int,
         sb=int(stat.get("stolenBases", 0) or 0),
         bb_pct=round(100 * bb / pa, 1) if pa else None,
         k_pct=round(100 * so / pa, 1) if pa else None,
+        iso=iso_val,
         era=None, fip=None, ip=None, k_per_9=None, bb_per_9=None,
         is_pitcher=False,
         fetched_at=date_today_iso(),
@@ -1325,12 +1351,24 @@ def fetch_career_stats(player_key: str, mlbam_id: int,
             "games": int(stat.get("gamesPlayed", 0) or 0),
         }
         if is_pitcher:
+            ip_val = (float(stat.get("inningsPitched"))
+                      if stat.get("inningsPitched") else None)
+            hr_allowed = int(stat.get("homeRuns", 0) or 0)
+            # HR/9 is one of the cleanest red-flag signals for pitchers
+            # (HR-prone arms struggle as they move up). Use the API's
+            # `homeRunsPer9` when present; fall back to computing from
+            # HR-allowed and IP so we still get a value when the field
+            # is absent at a given level/season.
+            hr_per_9 = _safe_float(stat.get("homeRunsPer9"))
+            if hr_per_9 is None and ip_val and ip_val > 0:
+                hr_per_9 = round(hr_allowed * 9.0 / ip_val, 2)
             row.update({
                 "era": str(stat.get("era") or "—"),
-                "ip": float(stat.get("inningsPitched") or 0)
-                       if stat.get("inningsPitched") else None,
-                "k_per_9": _safe_float(stat.get("strikeoutsPer9Inn")),
+                "ip": ip_val,
+                "k_per_9":  _safe_float(stat.get("strikeoutsPer9Inn")),
                 "bb_per_9": _safe_float(stat.get("walksPer9Inn")),
+                "hr_per_9": hr_per_9,
+                "hr_allowed": hr_allowed,
                 "whip": _safe_float(stat.get("whip")),
                 "wins": int(stat.get("wins", 0) or 0),
                 "losses": int(stat.get("losses", 0) or 0),
@@ -1340,11 +1378,20 @@ def fetch_career_stats(player_key: str, mlbam_id: int,
             pa = stat.get("plateAppearances", 0) or 0
             bb = stat.get("baseOnBalls", 0) or 0
             so = stat.get("strikeOuts", 0) or 0
+            avg_str = str(stat.get("avg") or "")
+            slg_str = str(stat.get("slg") or "")
+            iso_val = None
+            try:
+                if avg_str and slg_str and avg_str != "—" and slg_str != "—":
+                    iso_val = round(float(slg_str) - float(avg_str), 3)
+            except (TypeError, ValueError):
+                iso_val = None
             row.update({
                 "avg": str(stat.get("avg") or "—"),
                 "obp": str(stat.get("obp") or "—"),
                 "slg": str(stat.get("slg") or "—"),
                 "ops": str(stat.get("ops") or "—"),
+                "iso": iso_val,
                 "hr":  int(stat.get("homeRuns", 0) or 0),
                 "sb":  int(stat.get("stolenBases", 0) or 0),
                 "rbi": int(stat.get("rbi", 0) or 0),
@@ -1409,12 +1456,22 @@ def _career_row_from_bulk_split(split: dict, group: str) -> dict | None:
         "games": int(stat.get("gamesPlayed", 0) or 0),
     }
     if is_pitcher:
+        ip_val = (float(stat.get("inningsPitched"))
+                  if stat.get("inningsPitched") else None)
+        hr_allowed = int(stat.get("homeRuns", 0) or 0)
+        # Same HR/9 derivation as the per-player career path — prefer the
+        # API's per-9 metric when surfaced, fall back to the count/IP
+        # computation. See fetch_career_stats for why this matters.
+        hr_per_9 = _safe_float(stat.get("homeRunsPer9"))
+        if hr_per_9 is None and ip_val and ip_val > 0:
+            hr_per_9 = round(hr_allowed * 9.0 / ip_val, 2)
         row.update({
             "era":     str(stat.get("era") or "—"),
-            "ip":      float(stat.get("inningsPitched") or 0)
-                       if stat.get("inningsPitched") else None,
-            "k_per_9": _safe_float(stat.get("strikeoutsPer9Inn")),
-            "bb_per_9":_safe_float(stat.get("walksPer9Inn")),
+            "ip":      ip_val,
+            "k_per_9":  _safe_float(stat.get("strikeoutsPer9Inn")),
+            "bb_per_9": _safe_float(stat.get("walksPer9Inn")),
+            "hr_per_9": hr_per_9,
+            "hr_allowed": hr_allowed,
             "whip":    _safe_float(stat.get("whip")),
             "wins":    int(stat.get("wins", 0) or 0),
             "losses":  int(stat.get("losses", 0) or 0),
@@ -1424,11 +1481,20 @@ def _career_row_from_bulk_split(split: dict, group: str) -> dict | None:
         pa = stat.get("plateAppearances", 0) or 0
         bb = stat.get("baseOnBalls", 0) or 0
         so = stat.get("strikeOuts", 0) or 0
+        avg_str = str(stat.get("avg") or "")
+        slg_str = str(stat.get("slg") or "")
+        iso_val = None
+        try:
+            if avg_str and slg_str and avg_str != "—" and slg_str != "—":
+                iso_val = round(float(slg_str) - float(avg_str), 3)
+        except (TypeError, ValueError):
+            iso_val = None
         row.update({
             "avg":    str(stat.get("avg") or "—"),
             "obp":    str(stat.get("obp") or "—"),
             "slg":    str(stat.get("slg") or "—"),
             "ops":    str(stat.get("ops") or "—"),
+            "iso":    iso_val,
             "hr":     int(stat.get("homeRuns", 0) or 0),
             "sb":     int(stat.get("stolenBases", 0) or 0),
             "rbi":    int(stat.get("rbi", 0) or 0),
@@ -2400,6 +2466,8 @@ def derive_statline_from_career(
             ip=_safe_float(chosen.get("ip")),
             k_per_9=_safe_float(chosen.get("k_per_9")),
             bb_per_9=_safe_float(chosen.get("bb_per_9")),
+            whip=_safe_float(chosen.get("whip")),
+            hr_per_9=_safe_float(chosen.get("hr_per_9")),
             is_pitcher=True,
             fetched_at=date_today_iso(),
             season=found_season,
@@ -2416,6 +2484,7 @@ def derive_statline_from_career(
         sb=int(chosen.get("sb") or 0),
         bb_pct=_safe_float(chosen.get("bb_pct")),
         k_pct=_safe_float(chosen.get("k_pct")),
+        iso=_safe_float(chosen.get("iso")),
         era=None, fip=None, ip=None, k_per_9=None, bb_per_9=None,
         is_pitcher=False,
         fetched_at=date_today_iso(),

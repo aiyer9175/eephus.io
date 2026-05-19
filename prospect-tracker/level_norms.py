@@ -60,10 +60,22 @@ class LevelAgeNorm:
 
 @dataclass
 class LevelPerfNorm:
-    avg_ops: float | None       # hitters
-    avg_era: float | None       # pitchers
-    sample_n_ops: int
-    sample_n_era: int
+    # Hitter rate stats — averages across qualified hitters at the level.
+    avg_ops:    float | None
+    avg_iso:    float | None       # SLG - AVG
+    avg_bb_pct: float | None
+    avg_k_pct:  float | None
+    # Pitcher rate stats — averages across qualified pitchers at the level.
+    avg_era:      float | None
+    avg_whip:     float | None
+    avg_k_per_9:  float | None
+    avg_bb_per_9: float | None
+    avg_hr_per_9: float | None
+    # Per-stat sample sizes. Kept separate because hr_per_9 only populates
+    # for pitcher rows from pipeline runs that include the HR-allowed field,
+    # so older rows in the cache can leave it sparse.
+    sample_n_ops:    int
+    sample_n_era:    int
 
 
 # Static fallback baselines — same numbers the codebase used before, kept
@@ -83,6 +95,33 @@ FALLBACK_OPS_NORM: dict[str, float] = {
 }
 FALLBACK_ERA_NORM: dict[str, float] = {
     "Rk": 4.20, "CPX": 4.30, "A": 4.00, "A+": 3.80, "AA": 3.70, "AAA": 4.00,
+}
+
+# Static fallback for the expanded rate stats. These are rough league-wide
+# averages used only when the empirical sample at a level falls below
+# MIN_SAMPLE_N (e.g. DSL with very few tracked prospects). Hitter ISO
+# scales modestly upward toward AAA; pitcher K/9 climbs and HR/9 inflates
+# at the high minors / MLB because hitters get better at punishing pitches.
+FALLBACK_ISO_NORM: dict[str, float] = {
+    "Rk": .130, "CPX": .125, "A": .130, "A+": .135, "AA": .140, "AAA": .155, "MLB": .165,
+}
+FALLBACK_BB_PCT_NORM: dict[str, float] = {
+    "Rk": 9.5, "CPX": 9.0, "A": 9.0, "A+": 8.8, "AA": 8.5, "AAA": 8.5, "MLB": 8.4,
+}
+FALLBACK_K_PCT_NORM: dict[str, float] = {
+    "Rk": 24.0, "CPX": 23.5, "A": 23.5, "A+": 23.0, "AA": 22.5, "AAA": 22.5, "MLB": 22.0,
+}
+FALLBACK_WHIP_NORM: dict[str, float] = {
+    "Rk": 1.42, "CPX": 1.45, "A": 1.38, "A+": 1.34, "AA": 1.31, "AAA": 1.34, "MLB": 1.28,
+}
+FALLBACK_K9_NORM: dict[str, float] = {
+    "Rk": 8.6, "CPX": 8.4, "A": 9.0, "A+": 9.1, "AA": 9.2, "AAA": 9.1, "MLB": 8.9,
+}
+FALLBACK_BB9_NORM: dict[str, float] = {
+    "Rk": 4.2, "CPX": 4.3, "A": 3.7, "A+": 3.5, "AA": 3.3, "AAA": 3.4, "MLB": 3.2,
+}
+FALLBACK_HR9_NORM: dict[str, float] = {
+    "Rk": 0.7, "CPX": 0.7, "A": 0.8, "A+": 0.9, "AA": 1.0, "AAA": 1.2, "MLB": 1.3,
 }
 
 
@@ -130,8 +169,17 @@ def compute_level_norms(
     cutoff_year = today.year - seasons_window  # inclusive lower bound
 
     ages_by_level: dict[str, list[float]] = defaultdict(list)
-    ops_by_level: dict[str, list[float]] = defaultdict(list)
-    era_by_level: dict[str, list[float]] = defaultdict(list)
+    # Hitter rate-stat distributions per level.
+    ops_by_level:    dict[str, list[float]] = defaultdict(list)
+    iso_by_level:    dict[str, list[float]] = defaultdict(list)
+    bb_pct_by_level: dict[str, list[float]] = defaultdict(list)
+    k_pct_by_level:  dict[str, list[float]] = defaultdict(list)
+    # Pitcher rate-stat distributions per level.
+    era_by_level:    dict[str, list[float]] = defaultdict(list)
+    whip_by_level:   dict[str, list[float]] = defaultdict(list)
+    k9_by_level:     dict[str, list[float]] = defaultdict(list)
+    bb9_by_level:    dict[str, list[float]] = defaultdict(list)
+    hr9_by_level:    dict[str, list[float]] = defaultdict(list)
 
     for player_key, rows in career_stats.items():
         bd_str = birth_dates.get(player_key)
@@ -169,16 +217,60 @@ def compute_level_norms(
                 era = _parse_float(r.get("era"))
                 if era is not None and 0 < era < 30:
                     era_by_level[level].append(era)
+                whip = _parse_float(r.get("whip"))
+                if whip is not None and 0 < whip < 5.0:
+                    whip_by_level[level].append(whip)
+                k9 = _parse_float(r.get("k_per_9"))
+                if k9 is not None and 0 < k9 < 25:
+                    k9_by_level[level].append(k9)
+                bb9 = _parse_float(r.get("bb_per_9"))
+                if bb9 is not None and 0 <= bb9 < 15:
+                    bb9_by_level[level].append(bb9)
+                hr9 = _parse_float(r.get("hr_per_9"))
+                if hr9 is not None and 0 <= hr9 < 5:
+                    hr9_by_level[level].append(hr9)
             else:
                 ops = _parse_float(r.get("ops"))
                 if ops is not None and 0 < ops < 2.0:
                     ops_by_level[level].append(ops)
+                # ISO = SLG - AVG; the row already carries both as strings
+                # (".445" / ".265"). Either value being non-numeric just
+                # drops the sample, same as for any other rate stat.
+                slg = _parse_float(r.get("slg"))
+                avg = _parse_float(r.get("avg"))
+                if slg is not None and avg is not None and 0 <= slg < 1.0 and 0 <= avg < 1.0:
+                    iso_by_level[level].append(slg - avg)
+                bb_pct = _parse_float(r.get("bb_pct"))
+                if bb_pct is not None and 0 <= bb_pct < 30:
+                    bb_pct_by_level[level].append(bb_pct)
+                k_pct = _parse_float(r.get("k_pct"))
+                if k_pct is not None and 0 <= k_pct < 60:
+                    k_pct_by_level[level].append(k_pct)
+
+    def _avg_or_fallback(values, fallback_map, level, ndigits):
+        if len(values) >= MIN_SAMPLE_N:
+            return round(sum(values) / len(values), ndigits)
+        return fallback_map.get(level)
 
     out: dict[str, dict] = {}
-    for level in set(ages_by_level) | set(ops_by_level) | set(era_by_level):
+    all_levels = (
+        set(ages_by_level)
+        | set(ops_by_level) | set(iso_by_level)
+        | set(bb_pct_by_level) | set(k_pct_by_level)
+        | set(era_by_level) | set(whip_by_level)
+        | set(k9_by_level) | set(bb9_by_level) | set(hr9_by_level)
+    )
+    for level in all_levels:
         mean, med, p25, p75, n_age = _summarize(ages_by_level.get(level, []))
-        ops_values = ops_by_level.get(level, [])
-        era_values = era_by_level.get(level, [])
+        ops_values    = ops_by_level.get(level, [])
+        iso_values    = iso_by_level.get(level, [])
+        bb_pct_values = bb_pct_by_level.get(level, [])
+        k_pct_values  = k_pct_by_level.get(level, [])
+        era_values    = era_by_level.get(level, [])
+        whip_values   = whip_by_level.get(level, [])
+        k9_values     = k9_by_level.get(level, [])
+        bb9_values    = bb9_by_level.get(level, [])
+        hr9_values    = hr9_by_level.get(level, [])
         out[level] = {
             "age": (
                 {
@@ -200,18 +292,27 @@ def compute_level_norms(
                 }
             ),
             "perf": {
-                "avg_ops": (
-                    round(sum(ops_values) / len(ops_values), 3)
-                    if len(ops_values) >= MIN_SAMPLE_N
-                    else FALLBACK_OPS_NORM.get(level)
-                ),
-                "avg_era": (
-                    round(sum(era_values) / len(era_values), 2)
-                    if len(era_values) >= MIN_SAMPLE_N
-                    else FALLBACK_ERA_NORM.get(level)
-                ),
-                "sample_n_ops": len(ops_values),
-                "sample_n_era": len(era_values),
+                # Hitter norms
+                "avg_ops":    _avg_or_fallback(ops_values,    FALLBACK_OPS_NORM,    level, 3),
+                "avg_iso":    _avg_or_fallback(iso_values,    FALLBACK_ISO_NORM,    level, 3),
+                "avg_bb_pct": _avg_or_fallback(bb_pct_values, FALLBACK_BB_PCT_NORM, level, 1),
+                "avg_k_pct":  _avg_or_fallback(k_pct_values,  FALLBACK_K_PCT_NORM,  level, 1),
+                # Pitcher norms
+                "avg_era":      _avg_or_fallback(era_values,  FALLBACK_ERA_NORM,    level, 2),
+                "avg_whip":     _avg_or_fallback(whip_values, FALLBACK_WHIP_NORM,   level, 2),
+                "avg_k_per_9":  _avg_or_fallback(k9_values,   FALLBACK_K9_NORM,     level, 2),
+                "avg_bb_per_9": _avg_or_fallback(bb9_values,  FALLBACK_BB9_NORM,    level, 2),
+                "avg_hr_per_9": _avg_or_fallback(hr9_values,  FALLBACK_HR9_NORM,    level, 2),
+                # Sample counts — let the UI hide noisy fallback comparisons.
+                "sample_n_ops":      len(ops_values),
+                "sample_n_iso":      len(iso_values),
+                "sample_n_bb_pct":   len(bb_pct_values),
+                "sample_n_k_pct":    len(k_pct_values),
+                "sample_n_era":      len(era_values),
+                "sample_n_whip":     len(whip_values),
+                "sample_n_k_per_9":  len(k9_values),
+                "sample_n_bb_per_9": len(bb9_values),
+                "sample_n_hr_per_9": len(hr9_values),
             },
         }
     return out

@@ -1006,6 +1006,100 @@
       font-variant-numeric: tabular-nums;
     }
 
+    /* === Scouting flags ============================================ */
+    /* Green/red chips on the prospect-detail page that surface stats
+       clearly above or below MLB-projectable thresholds at the player's
+       current level. The two columns are visually distinct (green
+       background tint + up arrow vs. red tint + down arrow) so the
+       reader picks up direction from peripheral vision before reading
+       a single value. */
+    .flag-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 640px) {
+      .flag-grid { grid-template-columns: 1fr; }
+    }
+    .flag-col {
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+    }
+    .flag-col.flag-col-green { border-left: 3px solid var(--up); }
+    .flag-col.flag-col-red   { border-left: 3px solid var(--down); }
+    .flag-col-title {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex; align-items: baseline; justify-content: space-between;
+    }
+    .flag-col-green .flag-col-title { color: var(--up); }
+    .flag-col-red   .flag-col-title { color: var(--down); }
+    .flag-col-count {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+    .flag-row {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 12.5px;
+    }
+    .flag-row:last-child { border-bottom: 0; }
+    .flag-arrow {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      text-align: center;
+      font-weight: 700;
+    }
+    .flag-col-green .flag-arrow { color: var(--up); }
+    .flag-col-red   .flag-arrow { color: var(--down); }
+    .flag-body {
+      display: flex; flex-direction: column; min-width: 0;
+    }
+    .flag-body .flag-stat {
+      font-family: var(--font-sans);
+      font-weight: 700;
+      color: var(--text-primary);
+      font-size: 12px;
+      letter-spacing: 0.02em;
+    }
+    .flag-body .flag-note {
+      font-size: 10.5px;
+      color: var(--text-secondary);
+      line-height: 1.35;
+      margin-top: 1px;
+    }
+    .flag-numbers {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      font-size: 11px;
+      color: var(--text-primary);
+      text-align: right;
+      white-space: nowrap;
+    }
+    .flag-numbers .flag-delta { display: block; font-size: 10px; color: var(--text-tertiary); margin-top: 1px; }
+    .flag-col-green .flag-numbers .flag-delta { color: var(--up); }
+    .flag-col-red   .flag-numbers .flag-delta { color: var(--down); }
+    .flag-empty {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-style: italic;
+      padding: 4px 0;
+    }
+
     /* === Farm detail layout ======================================= */
     /* Two-column on standard widths, three-column with a left rail on
        ultrawide. The right sidebar stays sticky so it remains useful
@@ -3235,18 +3329,31 @@ function makeCareerTable(career) {
 
   // A "category strip" sits above the column headers. Each cell spans
   // its category and is tinted lightly so groups read at a glance.
+  // Colors are chosen so each tool/skill family reads distinctly:
+  // counting (muted blue), slash (forest green), power (burnt orange —
+  // power = "the boom"), discipline (slate purple), pitcher peripherals
+  // (the sabermetric trio gets the warm color since FIP/HR-9 are the
+  // saber-friendly piece of pitching).
   const stripStyle = (color) => `padding:5px 8px;background:${color};color:#FBF8F0;text-align:center;font-family:var(--font-sans);font-size:9px;letter-spacing:0.10em;text-transform:uppercase;font-weight:600;border-right:1px solid var(--bg-primary);`;
   const META_COLOR  = "#3D4A5C";   // slate, season/level
   const COUNT_COLOR = "#5B6E7E";   // muted blue, counting stats
-  const RATE_COLOR  = "#3F6F47";   // forest, rate / slash stats
-  const SABR_COLOR  = "#8B5A1F";   // burnt orange, sabermetric
+  const SLASH_COLOR = "#3F6F47";   // forest, slash line (AVG/OBP/SLG/OPS)
+  const POWER_COLOR = "#8B5A1F";   // burnt orange, isolated power (ISO) — pure power signal, distinct from slash
+  const DISC_COLOR  = "#5F4B8B";   // slate purple, plate discipline (BB% / K%)
+  const PERIPH_COLOR = "#8B5A1F";  // burnt orange, pitcher peripherals (K/9, BB/9, HR/9)
 
   if (isP) {
-    // Pitcher table: META | COUNTING (G, IP, W-L) | RATE (ERA, WHIP, K/9, BB/9) | SABERMETRIC (FIP placeholder)
+    // Pitcher table groupings:
+    //   Meta | Counting (G, IP, W-L) | Run prevention (ERA, WHIP) |
+    //   Peripherals (K/9, BB/9, HR/9 — the FIP components).
+    // HR/9 belongs with the other peripherals because it's a "things
+    // the pitcher fully owns" stat, alongside strikeouts and walks
+    // (FIP is built from K/9 + BB/9 + HR/9 for exactly that reason).
     const strip = `<tr>
       <th colspan="2" style="${stripStyle(META_COLOR)}">Meta</th>
       <th colspan="3" style="${stripStyle(COUNT_COLOR)}">Counting</th>
-      <th colspan="4" style="${stripStyle(RATE_COLOR)}">Rate</th>
+      <th colspan="2" style="${stripStyle(SLASH_COLOR)}">Run prevention</th>
+      <th colspan="3" style="${stripStyle(PERIPH_COLOR)}">Peripherals</th>
     </tr>`;
     const head = `<tr>
       <th>Season</th><th>Level</th>
@@ -3257,6 +3364,7 @@ function makeCareerTable(career) {
       <th title="Walks + Hits per Inning Pitched">WHIP</th>
       <th title="Strikeouts per 9 innings">K/9</th>
       <th title="Walks per 9 innings">BB/9</th>
+      <th title="Home runs allowed per 9 innings — pitcher's contact-quality red-flag stat (one of the three FIP inputs)">HR/9</th>
     </tr>`;
     const rows = sorted.map(s => `<tr>
       <td>${s.season}</td>
@@ -3268,16 +3376,24 @@ function makeCareerTable(career) {
       <td>${s.whip ?? "—"}</td>
       <td>${s.k_per_9 != null ? s.k_per_9.toFixed(2) : "—"}</td>
       <td>${s.bb_per_9 != null ? s.bb_per_9.toFixed(2) : "—"}</td>
+      <td>${s.hr_per_9 != null ? s.hr_per_9.toFixed(2) : "—"}</td>
     </tr>`).join("");
     return `<table class="detail-table"><thead>${strip}${head}</thead><tbody>${rows}</tbody></table>`;
   }
 
-  // Hitter table: META | COUNTING (G, AB, HR, SB) | RATE (AVG/OBP/SLG/OPS) | SABERMETRIC (BB%, K%, ISO)
+  // Hitter table groupings:
+  //   Meta | Counting (G, AB, HR, SB) | Slash (AVG/OBP/SLG/OPS) |
+  //   Power (ISO) | Plate discipline (BB%, K%).
+  // ISO gets its own group because it's a pure power stat (SLG − AVG):
+  // grouping it with BB%/K% as "plate discipline" was the prior mis-tag.
+  // Single-column groups stay readable as long as the strip-cell color
+  // is distinct from its neighbors — which the POWER_COLOR ensures.
   const strip = `<tr>
     <th colspan="2" style="${stripStyle(META_COLOR)}">Meta</th>
     <th colspan="4" style="${stripStyle(COUNT_COLOR)}">Counting</th>
-    <th colspan="4" style="${stripStyle(RATE_COLOR)}">Slash &amp; Power</th>
-    <th colspan="3" style="${stripStyle(SABR_COLOR)}">Plate discipline</th>
+    <th colspan="4" style="${stripStyle(SLASH_COLOR)}">Slash</th>
+    <th colspan="1" style="${stripStyle(POWER_COLOR)}">Power</th>
+    <th colspan="2" style="${stripStyle(DISC_COLOR)}">Plate discipline</th>
   </tr>`;
   const head = `<tr>
     <th>Season</th><th>Level</th>
@@ -3289,11 +3405,14 @@ function makeCareerTable(career) {
     <th title="On-Base Percentage">OBP</th>
     <th title="Slugging Percentage">SLG</th>
     <th title="OBP + SLG">OPS</th>
+    <th title="Isolated power = SLG − AVG. Pure power signal — strips the batting-average contribution out of slugging.">ISO</th>
     <th title="Walk rate">BB%</th>
     <th title="Strikeout rate">K%</th>
-    <th title="Isolated power = SLG − AVG">ISO</th>
   </tr>`;
-  const iso = (s) => {
+  const isoCell = (s) => {
+    // Prefer the precomputed ISO from the fetcher; recompute on the fly
+    // for any row that pre-dates the field being added to career_stats.
+    if (s.iso != null) return s.iso.toFixed(3).replace(/^0/, "");
     const slg = parseFloat(s.slg);
     const avg = parseFloat(s.avg);
     if (!isFinite(slg) || !isFinite(avg)) return "—";
@@ -3310,11 +3429,76 @@ function makeCareerTable(career) {
     <td>${s.obp ?? "—"}</td>
     <td>${s.slg ?? "—"}</td>
     <td>${s.ops ?? "—"}</td>
+    <td>${isoCell(s)}</td>
     <td>${s.bb_pct != null ? s.bb_pct.toFixed(1) : "—"}</td>
     <td>${s.k_pct != null ? s.k_pct.toFixed(1) : "—"}</td>
-    <td>${iso(s)}</td>
   </tr>`).join("");
   return `<table class="detail-table"><thead>${strip}${head}</thead><tbody>${rows}</tbody></table>`;
+}
+
+// Scouting-flags block — green/red rate-stat indicators precomputed
+// server-side in stat_flags.py. The python side does the threshold work
+// (compare to level norms + absolute floor); the UI just lays them out
+// in two color-coded columns. Green flags = stats clearly above
+// MLB-projectable thresholds at the player's current level. Red flags =
+// stats meaningfully below — projectability concerns, not just "below
+// average". Order within each column is power → discipline → contact
+// → command → results so hitter blocks read top-down by tool category.
+const FLAG_CATEGORY_ORDER = [
+  "power", "discipline", "contact", "strikeouts", "command", "results",
+];
+function makeStatFlagsBlock(player) {
+  const flags = (player && player.stat_flags) || [];
+  if (!flags.length) {
+    // No flags either because the prospect lacks a usable statline
+    // (insufficient sample) or no stat tripped a threshold. Either way
+    // a quiet line is the right disposition — we don't want to paint
+    // a "no flags" prospect as a problem.
+    return `<div class="flag-empty">No flagged stats yet — sample too small or in the league-average band at this level.</div>`;
+  }
+  const sortFn = (a, b) => {
+    const ai = FLAG_CATEGORY_ORDER.indexOf(a.category);
+    const bi = FLAG_CATEGORY_ORDER.indexOf(b.category);
+    return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
+  };
+  const green = flags.filter(f => f.direction === "green").sort(sortFn);
+  const red   = flags.filter(f => f.direction === "red").sort(sortFn);
+
+  const renderRow = f => {
+    const arrow = f.direction === "green" ? "▲" : "▼";
+    const deltaLine = f.delta_display != null && f.level_avg != null
+      ? `<span class="flag-delta">${escapeHtml(f.delta_display)} vs ${escapeHtml(f.level || "?")} avg</span>`
+      : "";
+    const levelAvgVal = f.level_avg != null
+      ? (typeof f.level_avg === "number"
+          ? (Math.abs(f.level_avg) < 1
+              ? f.level_avg.toFixed(3).replace(/^0/, "")
+              : f.level_avg.toFixed(2))
+          : f.level_avg)
+      : "—";
+    return `<div class="flag-row" title="${escapeHtml(f.note || "")}">
+      <div class="flag-arrow">${arrow}</div>
+      <div class="flag-body">
+        <span class="flag-stat">${escapeHtml(f.stat)} ${escapeHtml(f.value_display || "")}</span>
+        <span class="flag-note">${escapeHtml(f.note || "")}</span>
+      </div>
+      <div class="flag-numbers">
+        <span>vs ${escapeHtml(String(levelAvgVal))}</span>
+        ${deltaLine}
+      </div>
+    </div>`;
+  };
+
+  const greenCol = `<div class="flag-col flag-col-green">
+    <div class="flag-col-title">Green flags <span class="flag-col-count">${green.length}</span></div>
+    ${green.length ? green.map(renderRow).join("") : `<div class="flag-empty">No green flags yet.</div>`}
+  </div>`;
+  const redCol = `<div class="flag-col flag-col-red">
+    <div class="flag-col-title">Red flags <span class="flag-col-count">${red.length}</span></div>
+    ${red.length ? red.map(renderRow).join("") : `<div class="flag-empty">No red flags.</div>`}
+  </div>`;
+
+  return `<div class="flag-grid">${greenCol}${redCol}</div>`;
 }
 
 // Sabermetrics block — wRC+ / wOBA / WAR (hitters), xFIP / FIP / FIP-
@@ -3997,8 +4181,19 @@ function renderPlayerDetail(key) {
       <table class="detail-table"><tbody>${r.map(([k, v]) => `<tr><td>${k}</td><td style="text-align:right;">${v}</td></tr>`).join("")}</tbody></table>`;
   })();
 
+  // Scouting flags — green/red rate-stat indicators sit directly under
+  // the headline tiles so they're the first read after the player's FV.
+  // Empty (no statline / sample too small) for late-call-ups, recent
+  // promotions with <15 IP / <15 G, and any 2026 IFA who hasn't played
+  // a competitive game yet; the function renders a neutral message in
+  // those cases so the section never disappears unexpectedly.
+  const flagsTitle = (p.stat_flags && p.stat_flags.length)
+    ? `Scouting flags <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">${p.stat_flags.filter(f => f.direction === "green").length} green · ${p.stat_flags.filter(f => f.direction === "red").length} red · vs ${escapeHtml((p.statline || {}).level || "level")} ${(p.statline || {}).is_prior_season ? "(prior year)" : "average"}</span>`
+    : `Scouting flags <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">no qualifying sample yet</span>`;
+  const flagsSection = `<div class="detail-title" style="margin-top:8px;">${flagsTitle}</div>${makeStatFlagsBlock(p)}`;
+
   // Two-column layout: chart + career on the left, secondary blocks on the right.
-  root.innerHTML = header + tilesHtml + `
+  root.innerHTML = header + tilesHtml + flagsSection + `
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
       <div>${chartSection}${careerSection}${levelBenchmarkSection}${sourceSection}</div>
       <div>${ilSection}${rosterStatusSection}${sabermetricsSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${injurySection}${etaRows}</div>
