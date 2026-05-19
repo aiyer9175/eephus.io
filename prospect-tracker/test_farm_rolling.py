@@ -1,5 +1,7 @@
 """Tests for the farm-system grading helpers introduced in the
-report-card overhaul that replaced the 60/30/10 composite + 90-day form."""
+report-card overhaul that replaced the 60/30/10 composite + 90-day form.
+The trajectory window was later widened from 90 days to 1 year and the
+fv_history series was made graduation-neutral."""
 
 from __future__ import annotations
 
@@ -27,7 +29,9 @@ from storage import (
     _normalize_to_100,
     _rank_descending,
     _letter_grade,
+    _build_org_fv_history,
 )
+from types import SimpleNamespace
 
 
 def _iso_days_ago(n: int, ref: date) -> str:
@@ -110,7 +114,8 @@ class TestTopEndAndDepth:
 
 # ---------------------------------------------------------------------------
 # Smoothed trajectory — the user's main complaint was the old 90-day delta
-# being whipsawed by single source updates
+# being whipsawed by single source updates. The window was widened to 1 year
+# so the form chart and trajectory score reflect a fuller arc.
 # ---------------------------------------------------------------------------
 
 class TestTrajectoryScore:
@@ -125,16 +130,15 @@ class TestTrajectoryScore:
         """A single big spike from one source should NOT dominate the
         trajectory — that was the headline complaint about the old delta."""
         today = date(2026, 5, 19)
-        # 3 calm points near the cutoff (averaging 180) and 3 recent points
-        # where the LAST one is a wild +60 spike (the other two are calm at 180).
-        # Mean of recent = (180 + 180 + 240) / 3 = 200.
-        # Mean of baseline = 180.
-        # Smoothed trajectory = 200 - 180 = 20.  An unsmoothed (latest -
-        # one-baseline) would have reported +60 — 3x the magnitude.
+        # 3 calm points outside the 1-year cutoff (averaging 180) and 3 recent
+        # points where the LAST one is a wild +60 spike (the other two calm
+        # at 180). Mean of recent = (180+180+240)/3 = 200. Mean of baseline
+        # = 180. Smoothed trajectory = 200 - 180 = 20. An unsmoothed
+        # (latest - one-baseline) would have reported +60 — 3x the magnitude.
         series = [
-            {"date": _iso_days_ago(110, today), "total_fv": 180.0},
-            {"date": _iso_days_ago(100, today), "total_fv": 180.0},
-            {"date": _iso_days_ago( 95, today), "total_fv": 180.0},
+            {"date": _iso_days_ago(400, today), "total_fv": 180.0},
+            {"date": _iso_days_ago(380, today), "total_fv": 180.0},
+            {"date": _iso_days_ago(370, today), "total_fv": 180.0},
             {"date": _iso_days_ago( 30, today), "total_fv": 180.0},
             {"date": _iso_days_ago( 15, today), "total_fv": 180.0},
             {"date": today.isoformat(),         "total_fv": 240.0},  # outlier spike
@@ -145,9 +149,9 @@ class TestTrajectoryScore:
     def test_negative_trajectory_for_bleeding_farm(self):
         today = date(2026, 5, 19)
         series = [
-            {"date": _iso_days_ago(120, today), "total_fv": 300.0},
-            {"date": _iso_days_ago(110, today), "total_fv": 290.0},
-            {"date": _iso_days_ago(100, today), "total_fv": 280.0},
+            {"date": _iso_days_ago(420, today), "total_fv": 300.0},
+            {"date": _iso_days_ago(400, today), "total_fv": 290.0},
+            {"date": _iso_days_ago(380, today), "total_fv": 280.0},
             {"date": _iso_days_ago( 20, today), "total_fv": 240.0},
             {"date": _iso_days_ago( 10, today), "total_fv": 235.0},
             {"date": today.isoformat(),         "total_fv": 230.0},
@@ -167,7 +171,7 @@ class TestTrajectoryScore:
             {"date": _iso_days_ago(20, today), "total_fv": 120.0},
             {"date": today.isoformat(),        "total_fv": 140.0},
         ]
-        # No point falls on/before today-90 → baseline = mean of first 3
+        # No point falls on/before today-365 → baseline = mean of first 3
         # (which is just the whole series): (100+120+140)/3 = 120.
         # Recent mean is also (100+120+140)/3 = 120. Result = 0.
         # This is the documented degenerate case — the test pins behavior.
@@ -176,7 +180,7 @@ class TestTrajectoryScore:
     def test_constants_pinned(self):
         # The defaults are referenced directly in the front-end tooltip
         # text — flag loud breakage if someone retunes.
-        assert FARM_TRAJECTORY_LOOKBACK_DAYS == 90
+        assert FARM_TRAJECTORY_LOOKBACK_DAYS == 365
         assert FARM_TRAJECTORY_SMOOTH_WINDOW == 3
 
 
@@ -338,3 +342,53 @@ class TestRankPercentile:
 
     def test_empty_returns_empty(self):
         assert _rank_percentile([]) == []
+
+
+# ---------------------------------------------------------------------------
+# Org FV history — graduations are neutral. A farm that promotes a 60 FV
+# prospect to the majors should not see its cumulative line drop on the
+# graduation date, because that's success, not lost value.
+# ---------------------------------------------------------------------------
+
+def _mk_player(key, name, org, points, status="active", graduation_date=None):
+    """Build a minimal PlayerTimeseries stand-in. `_build_org_fv_history`
+    only reads .points, .player_key, .player_name, .org, .status, and
+    .graduation_date — SimpleNamespace covers all of that without forcing
+    us to populate the candlestick/shrinkage fields."""
+    return SimpleNamespace(
+        player_key=key, player_name=name, org=org, status=status,
+        graduation_date=graduation_date,
+        points=[SimpleNamespace(snapshot_date=d, consensus_fv_raw=fv) for d, fv in points],
+    )
+
+
+class TestBuildOrgFvHistoryGraduations:
+    def test_graduation_does_not_drop_cumulative(self):
+        # One player rated 60 FV all season, then graduates. Cumulative line
+        # should hit 60 on the snapshot date and stay there — NOT drop to 0
+        # on the graduation date.
+        player = _mk_player(
+            "p1", "Prospect One", "ATL",
+            [("2025-04-01", 60.0)],
+            status="graduated", graduation_date="2025-08-15",
+        )
+        out = _build_org_fv_history([player], lambda trades: [], {})
+        series = out["ATL"]["series"]
+        assert series == [{"date": "2025-04-01", "total_fv": 60.0}]
+        # The graduation event is still recorded so grad_pipeline_score and
+        # chart annotations can use it.
+        events = out["ATL"]["events"]
+        assert any(e["kind"] == "graduation" and e["fv"] == 60.0 for e in events)
+
+    def test_trajectory_neutral_through_graduation(self):
+        # Org builds up to 60 FV early, prospect graduates mid-window, no
+        # other movement. Trajectory should be ~0, not strongly negative.
+        player = _mk_player(
+            "p1", "Prospect One", "ATL",
+            [("2025-01-15", 60.0)],
+            status="graduated", graduation_date="2025-09-01",
+        )
+        out = _build_org_fv_history([player], lambda trades: [], {})
+        series = out["ATL"]["series"]
+        traj = _trajectory_score(series, as_of=date(2026, 5, 19))
+        assert traj == 0.0
