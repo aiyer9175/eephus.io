@@ -52,22 +52,25 @@
       --neon-amber:       #C9A227;     /* card gold — highlight    */
       --neon-violet:      #6B4FA8;     /* royal purple — graduates */
 
-      /* FV tier badges — graded like a Topps card stock:
-         elite tiers (70+) get a bold cardinal/gold treatment;
-         middle (50-60) silver/blue; lower (30-40) soft sepia. */
-      --fv-80-bg: #FFF2D6;  --fv-80-fg: #8C5A00;  --fv-80-bd: #C9A227;  /* gold — elite */
-      --fv-75-bg: #FBE3CB;  --fv-75-fg: #8E3C0E;  --fv-75-bd: #B45B2B;
-      --fv-70-bg: #F8D6D1;  --fv-70-fg: #871B16;  --fv-70-bd: #B91C1C;  /* cardinal */
-      --fv-65-bg: #F6E3BF;  --fv-65-fg: #7A5306;  --fv-65-bd: #C9A227;
-      --fv-60-bg: #E8E4D2;  --fv-60-fg: #5A4B12;  --fv-60-bd: #9B8A4B;
-      --fv-55-bg: #D9E5EE;  --fv-55-fg: #1F3F66;  --fv-55-bd: #5979A0;  /* slate-blue */
-      --fv-50-bg: #DEEAD7;  --fv-50-fg: #244B22;  --fv-50-bd: #4D8044;  /* clubhouse green */
-      --fv-45-bg: #E7E2D2;  --fv-45-fg: #5D5640;  --fv-45-bd: #8E866C;
-      --fv-40-bg: #E3DECC;  --fv-40-fg: #4E4A38;  --fv-40-bd: #7E7660;
-      --fv-35-bg: #DAD3BD;  --fv-35-fg: #43402F;  --fv-35-bd: #6E6753;
-      --fv-30-bg: #D2CBB3;  --fv-30-fg: #3B3829;  --fv-30-bd: #5E5847;
-      --fv-25-bg: #C9C2A9;  --fv-25-fg: #2E2C20;  --fv-25-bd: #4E4938;
-      --fv-20-bg: #C1B9A0;  --fv-20-fg: #25241A;  --fv-20-bd: #3F3B2D;
+      /* FV tier badges — sequential heat ramp. Warmth + saturation
+         decrease monotonically as FV drops so a glance at the farm
+         tier-bar ranks quality without reading numbers. 80 = saturated
+         gold (elite, dominates the bar); 50 = warm neutral (MLB-regular
+         threshold); 20 = quiet desaturated dark (org filler). `fg` is
+         dual-purpose: badge text + tier-bar segment fill. */
+      --fv-80-bg: #FFF0CC;  --fv-80-fg: #8A5400;  --fv-80-bd: #C9962A;  /* deep gold — elite */
+      --fv-75-bg: #FDDFB2;  --fv-75-fg: #8B4408;  --fv-75-bd: #C97A1B;  /* amber */
+      --fv-70-bg: #F8CDA8;  --fv-70-fg: #8A2F0A;  --fv-70-bd: #B85419;  /* burnt orange */
+      --fv-65-bg: #F2D8B0;  --fv-65-fg: #6F4A0C;  --fv-65-bd: #A77418;  /* bronze */
+      --fv-60-bg: #EEDFBC;  --fv-60-fg: #5C4818;  --fv-60-bd: #8E7232;  /* olive-bronze */
+      --fv-55-bg: #E5DAC2;  --fv-55-fg: #4F4528;  --fv-55-bd: #806E48;  /* muted warm */
+      --fv-50-bg: #D8D4C0;  --fv-50-fg: #44402A;  --fv-50-bd: #6E6852;  /* MLB-regular threshold */
+      --fv-45-bg: #D2CFBC;  --fv-45-fg: #3F3D2E;  --fv-45-bd: #6B675A;
+      --fv-40-bg: #CDCBB8;  --fv-40-fg: #3A3930;  --fv-40-bd: #686358;
+      --fv-35-bg: #C8C6B4;  --fv-35-fg: #363632;  --fv-35-bd: #645F55;
+      --fv-30-bg: #C3C2B0;  --fv-30-fg: #333332;  --fv-30-bd: #5F5A50;
+      --fv-25-bg: #BEBDAC;  --fv-25-fg: #2F2F2E;  --fv-25-bd: #5A554B;
+      --fv-20-bg: #B9B8A8;  --fv-20-fg: #2B2B2A;  --fv-20-bd: #555047;
 
       --level-very-young-bg: #DEEAD7;  --level-very-young-fg: #244B22;
       --level-young-bg:      #D9E5EE;  --level-young-fg:      #1F3F66;
