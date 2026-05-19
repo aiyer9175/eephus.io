@@ -3442,10 +3442,15 @@ function makeCareerTable(career) {
 // in two color-coded columns. Green flags = stats clearly above
 // MLB-projectable thresholds at the player's current level. Red flags =
 // stats meaningfully below — projectability concerns, not just "below
-// average". Order within each column is power → discipline → contact
-// → command → results so hitter blocks read top-down by tool category.
+// average". Order within each column is tool-natural:
+//   hitters : power → discipline → contact → results
+//   pitchers: strikeouts → command → longball → results
+// so each prospect's flag list reads in scout-report order rather than
+// alphabetical.
 const FLAG_CATEGORY_ORDER = [
-  "power", "discipline", "contact", "strikeouts", "command", "results",
+  "power", "discipline", "contact",
+  "strikeouts", "command", "longball",
+  "results",
 ];
 function makeStatFlagsBlock(player) {
   const flags = (player && player.stat_flags) || [];
