@@ -36,11 +36,11 @@ from storage import (
     auto_graduate_player,
     upsert_pitch_arsenals, load_pitch_arsenals,
     upsert_statcast_metrics, load_statcast_metrics,
-    upsert_career_stats, load_career_stats,
+    upsert_career_stats, load_career_stats, load_career_stats_meta,
     export_timeseries_json,
 )
 from consensus import build_timeseries
-from stats import (fetch_statlines_for, resolve_mlbam_id, fetch_birth_date,
+from stats import (fetch_statlines_for, fetch_birth_date,
                    fetch_birth_date_by_name,
                    fetch_pitch_arsenal, fetch_statcast_metrics,
                    fetch_career_stats,
@@ -50,10 +50,29 @@ from stats import (fetch_statlines_for, resolve_mlbam_id, fetch_birth_date,
 from trades import detect_trades
 
 
+# How long a cached career_stats row stays fresh before we refetch on the
+# next run. Monthly cadence + 7-day window means a normal monthly run
+# always refetches, while dev iterations within a week reuse the cache.
+CAREER_STATS_FRESH_DAYS = 7
+
+
 def _is_pitcher(position: str | None) -> bool:
     if not position:
         return False
     return any(p in position.upper() for p in ("RHP", "LHP", "SP", "RP"))
+
+
+def _is_career_fresh(fetched_at: str | None, max_age_days: int) -> bool:
+    """True if a career_stats row is younger than max_age_days."""
+    if not fetched_at:
+        return False
+    try:
+        from datetime import datetime as _dt
+        # storage writes via datetime('now') which produces 'YYYY-MM-DD HH:MM:SS'.
+        ts = _dt.fromisoformat(fetched_at.replace(" ", "T"))
+    except ValueError:
+        return False
+    return (_dt.utcnow() - ts).days < max_age_days
 
 
 def main(force_refetch: bool = False, skip_stats: bool = False,
@@ -121,7 +140,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         ]
         log.info("bulk resolving IDs + birth dates for %d prospects",
                  len(all_prospects_for_resolve))
-        _ids_resolved, bds_from_index = bulk_resolve_ids(
+        ids_by_key, bds_from_index, player_index = bulk_resolve_ids(
             all_prospects_for_resolve,
             season=season,
             force_rebuild_index=force_refetch,
@@ -134,28 +153,43 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         if bds_from_index:
             log.info("upserted %d birth dates from PlayerIndex", len(bds_from_index))
 
-        # --- 3a. Fetch career year-by-year stats EARLY so they can drive
-        #         the bulk graduation pass below — no per-prospect career
-        #         API calls needed. Replaces 1-30 sequential
-        #         /people/{id}/stats?stats=career calls from the previous
-        #         bulk_detect_graduations implementation with one parallel
-        #         pre-fetch we'd be doing anyway.
+        # --- 3a. Fetch career year-by-year stats. Three filters narrow the
+        # set we actually hit the network for:
+        #   (1) skip already-graduated prospects (their career is frozen)
+        #   (2) skip prospects whose cached row is < CAREER_STATS_FRESH_DAYS old
+        #       unless --force is set (lets dev iterations within a week reuse
+        #       the cache; monthly runs always refetch)
+        #   (3) skip prospects with no resolved MLBAM ID
+        # Each prospect now costs one HTTP call (combined mlb_milb endpoint
+        # in fetch_career_stats) instead of two, halving traffic again.
         career_cache = load_career_stats()
+        career_meta = load_career_stats_meta()
         statlines = load_statlines()
         if not skip_stats:
-            all_players = [
+            non_grad_players = [
                 (p.player_key, p.player_name, _is_pitcher(p.position))
-                for p in timeseries
+                for p in timeseries if p.status != "graduated"
             ]
-            log.info("fetching career year-by-year stats for %d players",
-                     len(all_players))
-            new_career: dict = {}
             cs_tasks: list[tuple[str, int, bool]] = []
-            for key, name, is_p in all_players:
-                mlbam = resolve_mlbam_id(key, name)
+            skipped_fresh = 0
+            for key, _name, is_p in non_grad_players:
+                mlbam = ids_by_key.get(key)
                 if mlbam is None:
                     continue
+                if not force_refetch and _is_career_fresh(
+                        career_meta.get(key), CAREER_STATS_FRESH_DAYS):
+                    skipped_fresh += 1
+                    continue
                 cs_tasks.append((key, mlbam, is_p))
+            log.info(
+                "fetching career stats for %d players (skipped %d graduated, "
+                "%d fresh-cached, %d unresolved)",
+                len(cs_tasks),
+                len(timeseries) - len(non_grad_players),
+                skipped_fresh,
+                len(non_grad_players) - skipped_fresh - len(cs_tasks),
+            )
+            new_career: dict = {}
             if cs_tasks:
                 if workers is not None:
                     max_workers = max(1, min(workers, len(cs_tasks)))
@@ -179,97 +213,76 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 career_cache.update(new_career)
             log.info("fetched career stats for %d players", len(new_career))
 
-        # --- 3b. Bulk graduation detection from career_stats (no API I/O) -
-        # Sums MLB-level rows from career_stats we just fetched. Identifies
-        # any prospect who has crossed the 130-AB / 50-IP rookie threshold.
-        # Replaces the per-prospect /people/{id}/stats?stats=career calls
-        # the old bulk_detect_graduations made.
-        active_for_grad = [
-            (p.player_key, p.player_name, _is_pitcher(p.position))
-            for p in timeseries if p.status != "graduated"
-        ]
-        log.info("bulk graduation check: %d non-graduated prospects",
-                 len(active_for_grad))
-        player_index = PlayerIndex.load_or_build(season)
-        graduates_found = detect_graduations_from_career(
-            career_cache, active_for_grad, player_index=player_index,
-        )
-        if graduates_found:
-            for pkey, debut_date in graduates_found.items():
-                auto_graduate_player(pkey, grad_date=debut_date)
-            log.info("auto-graduated %d players from career-stats sum",
-                     len(graduates_found))
-            # Rebuild timeseries so subsequent steps see correct status
-            all_snaps = load_all_snapshots()
-            timeseries = build_timeseries(all_snaps)
-
-        # --- 3c. Fetch stat lines (current-season top-level digest) ------
+        # --- 3b. Fetch current-season stat lines (top-level digest) -------
+        # Skips already-graduated prospects since their graduation snapshot
+        # already exists; the existing statlines row in the DB is preserved
+        # for the export.
         if not skip_stats:
-            # Rebuild after graduation rebuild above
-            all_players = [
+            non_grad_for_statlines = [
                 (p.player_key, p.player_name, _is_pitcher(p.position))
-                for p in timeseries
+                for p in timeseries if p.status != "graduated"
             ]
-            log.info("fetching stat lines for %d prospects (all levels)",
-                     len(all_players))
-            new_statlines = fetch_statlines_for(all_players, season, max_workers=workers)
+            log.info("fetching stat lines for %d non-graduated prospects (all levels)",
+                     len(non_grad_for_statlines))
+            new_statlines = fetch_statlines_for(
+                non_grad_for_statlines, season,
+                max_workers=workers, id_cache=ids_by_key,
+            )
             stat_count = upsert_statlines(new_statlines, season)
             log.info("upserted %d stat lines", stat_count)
             for k, sl in new_statlines.items():
                 from dataclasses import asdict
                 statlines[k] = asdict(sl)
+        else:
+            new_statlines = {}
 
-            # Auto-graduation: if an active prospect's stat line came back
-            # at MLB level, mark them graduated in the DB immediately.
-            # Their graduation_date will be today (approximate — the exact
-            # date is whenever they first exceeded the rookie threshold, but
-            # we don't track that here; a manual CSV row can correct it).
-            auto_grads: list[str] = []
-            for p in timeseries:
-                if p.status == "graduated":
-                    continue  # already graduated, skip
-                sl = new_statlines.get(p.player_key)
-                if sl and sl.level == "MLB":
-                    log.warning(
-                        "AUTO-GRADUATING %s — detected at MLB level",
-                        p.player_name,
-                    )
-                    # grad_date=None → uses today; bulk detection already
-                    # provides accurate debut dates for most cases
-                    auto_graduate_player(p.player_key, grad_date=None)
-                    auto_grads.append(p.player_name)
+        # --- 3c. Single graduation pass: career-threshold + current-season
+        # MLB-statline, both in-memory. Merges the prior per-player auto-grad
+        # loop into one detect_graduations_from_career call. Pre-filters
+        # candidates by PlayerIndex.mlbDebutDate so we only run the
+        # threshold sum on prospects who actually have an MLB debut on
+        # record (typically <50 of ~3000 active players).
+        active_for_grad = [
+            (p.player_key, p.player_name, _is_pitcher(p.position))
+            for p in timeseries if p.status != "graduated"
+        ]
+        graduates_found = detect_graduations_from_career(
+            career_cache, active_for_grad,
+            player_index=player_index,
+            id_cache=ids_by_key,
+            statlines=new_statlines or None,
+        )
+        if graduates_found:
+            for pkey, debut_date in graduates_found.items():
+                auto_graduate_player(pkey, grad_date=debut_date)
+            log.info("auto-graduated %d players (career-threshold + MLB statline)",
+                     len(graduates_found))
+            # Rebuild timeseries once so subsequent steps + export see the
+            # correct statuses.
+            all_snaps = load_all_snapshots()
+            timeseries = build_timeseries(all_snaps)
 
-            if auto_grads:
-                log.info("Auto-graduated %d players: %s",
-                         len(auto_grads), ", ".join(auto_grads))
-                # Rebuild timeseries so the export reflects the new statuses
-                all_snaps = load_all_snapshots()
-                timeseries = build_timeseries(all_snaps)
-
-            # 3b. Pitch arsenals (pitchers only) + Statcast metrics (all)
-            # Both are best-effort: many MiLB players won't have data,
-            # especially below AA. We fetch and silently skip on None.
-            # --fast skips both — they're the slowest stage of the pipeline
-            # and aren't needed for consensus-FV iteration during dev.
-            arsenals = load_pitch_arsenals()
-            statcast = load_statcast_metrics()
-
+        # --- 3d. Pitch arsenals (pitchers) + Statcast metrics (everyone).
+        # Both are best-effort: many MiLB players won't have data, especially
+        # below AA. --fast skips both for dev iteration.
+        arsenals = load_pitch_arsenals()
+        statcast = load_statcast_metrics()
+        if not skip_stats:
             if fast:
                 log.info("--fast: skipping pitch arsenals + Statcast metrics")
             else:
                 pitchers = [(p.player_key, p.player_name)
-                            for p in timeseries if _is_pitcher(p.position)]
-                hitters  = [(p.player_key, p.player_name)
-                            for p in timeseries if not _is_pitcher(p.position)]
+                            for p in timeseries
+                            if _is_pitcher(p.position) and p.status != "graduated"]
+                all_active = [(p.player_key, p.player_name, _is_pitcher(p.position))
+                              for p in timeseries if p.status != "graduated"]
 
                 log.info("fetching pitch arsenals for %d pitchers", len(pitchers))
                 new_arsenals: dict = {}
-                pa_tasks: list[tuple[str, int]] = []
-                for key, name in pitchers:
-                    mlbam = resolve_mlbam_id(key, name)
-                    if mlbam is None:
-                        continue
-                    pa_tasks.append((key, mlbam))
+                pa_tasks: list[tuple[str, int]] = [
+                    (key, ids_by_key[key]) for key, _name in pitchers
+                    if key in ids_by_key and ids_by_key[key] is not None
+                ]
                 if pa_tasks:
                     if workers is not None:
                         max_workers = max(1, min(workers, len(pa_tasks)))
@@ -295,14 +308,12 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                         arsenals[k] = asdict(pa)
                 log.info("fetched %d pitch arsenals", len(new_arsenals))
 
-                log.info("fetching Statcast metrics for %d players", len(all_players))
+                log.info("fetching Statcast metrics for %d players", len(all_active))
                 new_statcast: dict = {}
-                sc_tasks: list[tuple[str, int, bool]] = []
-                for key, name, is_p in all_players:
-                    mlbam = resolve_mlbam_id(key, name)
-                    if mlbam is None:
-                        continue
-                    sc_tasks.append((key, mlbam, is_p))
+                sc_tasks: list[tuple[str, int, bool]] = [
+                    (key, ids_by_key[key], is_p) for key, _name, is_p in all_active
+                    if key in ids_by_key and ids_by_key[key] is not None
+                ]
                 if sc_tasks:
                     if workers is not None:
                         max_workers = max(1, min(workers, len(sc_tasks)))
@@ -328,22 +339,16 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                         statcast[k] = asdict(sc)
                 log.info("fetched Statcast metrics for %d players", len(new_statcast))
 
-                # Career stats already fetched up in step 3a; nothing more
-                # to do here.
 
-        else:
-            arsenals = load_pitch_arsenals()
-            statcast = load_statcast_metrics()
-
-
-        # The org-change inference always runs (it's just a walk over the
-        # snapshots we already have). The MLB API call is skipped if
-        # --skip-stats was passed, since both depend on external HTTP.
+        # Trade detection. The org-change inference always runs (just walks
+        # snapshots we already have); the MLB API path is skipped under
+        # --skip-stats. tracked_players is built directly from ids_by_key,
+        # avoiding the per-player resolve_mlbam_id loop the previous version
+        # ran here.
         tracked = {}
         if not skip_stats:
             for p in timeseries:
-                tracked[p.player_key] = (p.player_name,
-                                          resolve_mlbam_id(p.player_key, p.player_name))
+                tracked[p.player_key] = (p.player_name, ids_by_key.get(p.player_key))
         new_trades = detect_trades(all_snaps, tracked_players=tracked,
                                     skip_api=skip_stats)
         trade_count = insert_trades(new_trades)

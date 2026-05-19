@@ -821,7 +821,7 @@ def bulk_resolve_ids(
     season: int | None = None,
     force_rebuild_index: bool = False,
     fallback_workers: int = 8,
-) -> tuple[dict[str, int], dict[str, str]]:
+) -> tuple[dict[str, int], dict[str, str], "PlayerIndex"]:
     """
     Resolve MLBAM IDs + birth dates for a batch of prospects in one pass.
 
@@ -834,11 +834,13 @@ def bulk_resolve_ids(
         fallback_workers: thread pool size for the MLB people-search fallback.
 
     Returns:
-        (ids_by_key, birth_dates_by_key)
+        (ids_by_key, birth_dates_by_key, player_index)
 
         ids_by_key contains every successfully-resolved prospect (both new
         and previously-cached). birth_dates_by_key only contains dates we
         just collected from the index — callers can upsert them directly.
+        player_index is the built/loaded PlayerIndex so callers can reuse
+        it for downstream lookups (e.g. mlbDebutDate) without rebuilding.
 
     Performance: ~1.5s one-time index fetch (or ~50ms on a warm cache),
     plus parallel /people/search fallbacks for prospects not in any roster.
@@ -911,7 +913,7 @@ def bulk_resolve_ids(
         "bulk_resolve_ids: %d resolved, %d new, %d via people-search fallback",
         len(ids_out), new_cache_entries, len(fallback_triples),
     )
-    return ids_out, bds_out
+    return ids_out, bds_out, idx
 
 
 # ---------------------------------------------------------------------------
@@ -1167,23 +1169,38 @@ def fetch_career_stats(player_key: str, mlbam_id: int,
     collapse to the HIGHEST level per season since that's what scouts
     react to — the per-level breakdown rarely matters on the profile
     page and would clutter the table.
+
+    Single-call: `leagueListId=mlb_milb` returns MLB + every MiLB level in
+    one response, replacing the prior two-URL pattern (milb_full + MLB).
+    Falls back to the two-URL pattern only if the combined call yields no
+    splits (defensive for API edge cases).
     """
     group = "pitching" if is_pitcher else "hitting"
     base = f"{MLB_STATS_API}/people/{mlbam_id}/stats?stats=yearByYear&group={group}"
-    urls = [
-        f"{base}&leagueListId=milb_full",   # every MiLB level
-        base,                                # MLB-only line
-    ]
+    combined_url = f"{base}&leagueListId=mlb_milb"
+
     raw_splits: list[dict] = []
-    for url in urls:
-        time.sleep(RATE_LIMIT_SECONDS)
-        try:
-            resp = requests.get(url, timeout=15)
-            resp.raise_for_status()
-            for block in resp.json().get("stats", []):
-                raw_splits.extend(block.get("splits", []))
-        except Exception as e:
-            log.debug("career fetch failed for %s url=%s: %s", mlbam_id, url, e)
+    try:
+        resp = requests.get(combined_url, timeout=15)
+        resp.raise_for_status()
+        for block in resp.json().get("stats", []):
+            raw_splits.extend(block.get("splits", []))
+    except Exception as e:
+        log.debug("career fetch failed for %s url=%s: %s", mlbam_id, combined_url, e)
+
+    # Fallback: if the combined call returned nothing, try the legacy
+    # two-URL pattern. This protects against the API silently rejecting
+    # leagueListId=mlb_milb for some players/seasons.
+    if not raw_splits:
+        for url in (f"{base}&leagueListId=milb_full", base):
+            try:
+                resp = requests.get(url, timeout=15)
+                resp.raise_for_status()
+                for block in resp.json().get("stats", []):
+                    raw_splits.extend(block.get("splits", []))
+            except Exception as e:
+                log.debug("career fetch fallback failed for %s url=%s: %s",
+                          mlbam_id, url, e)
 
     if not raw_splits:
         return None
@@ -1418,6 +1435,7 @@ def fetch_statlines_for(
     season: int,
     for_mlb: bool = False,
     max_workers: int | None = None,
+    id_cache: dict[str, int] | None = None,
 ) -> dict[str, StatLine]:
     """
     Bulk-fetch stat lines.
@@ -1427,13 +1445,20 @@ def fetch_statlines_for(
 
     Args:
       max_workers: optional cap on worker threads; if None, uses a safe default.
+      id_cache: optional {player_key: mlbam_id} from a prior bulk_resolve_ids
+                call. Skips the per-player resolve_mlbam_id pass when provided.
     """
     out: dict[str, StatLine] = {}
 
-    # First, resolve MLBAM IDs (sequential to avoid racey cache writes)
+    # First, resolve MLBAM IDs (sequential to avoid racey cache writes).
+    # If caller passed in a pre-built id_cache (from bulk_resolve_ids), use
+    # it directly — saves ~3000 redundant cache lookups during the run.
     id_map: dict[str, tuple[int, bool]] = {}
     for key, name, is_pitcher in players:
-        mlbam = resolve_mlbam_id(key, name)
+        if id_cache is not None:
+            mlbam = id_cache.get(key)
+        else:
+            mlbam = resolve_mlbam_id(key, name)
         if mlbam is None:
             continue
         id_map[key] = (mlbam, is_pitcher)
@@ -1571,6 +1596,7 @@ def detect_graduations_from_career(
     active_players: list[tuple[str, str, bool]],
     player_index: "PlayerIndex | None" = None,
     id_cache: dict[str, int | None] | None = None,
+    statlines: dict[str, "StatLine"] | dict[str, dict] | None = None,
 ) -> dict[str, str | None]:
     """
     Identify graduated prospects by summing their MLB-level career stats.
@@ -1586,6 +1612,15 @@ def detect_graduations_from_career(
     A player is treated as graduated when:
         - position-players: career MLB at-bats >= ROOKIE_AB_THRESHOLD (130)
         - pitchers       : career MLB innings pitched >= ROOKIE_IP_THRESHOLD (50)
+        - OR the current-season statline (if supplied) shows MLB-level
+          activity, even if the cumulative threshold isn't met yet (catches
+          recent call-ups before their AB/IP totals add up).
+
+    Pre-filter: when `player_index` is supplied, we restrict the candidate
+    set to prospects whose index record has a non-empty `mlbDebutDate`. A
+    prospect without an MLB debut date cannot have crossed the rookie
+    threshold by definition, so we skip the threshold sum for them. This
+    typically narrows ~3000 active prospects down to <50 candidates.
 
     Args:
         career_stats : {player_key: [season_row, ...]} from `load_career_stats`.
@@ -1594,11 +1629,16 @@ def detect_graduations_from_career(
         active_players: (player_key, player_name, is_pitcher_hint). The hint
                        fills in if a career_stats row has no `is_pitcher` flag.
         player_index : optional `PlayerIndex` used to look up an accurate
-                       `mlbDebutDate` for the graduation_date. Falls back to
+                       `mlbDebutDate` for the graduation_date AND to
+                       pre-filter the candidate set. Falls back to
                        "{earliest-MLB-season}-07-01" when the index has no
                        debut date for this player.
         id_cache     : optional MLBAM ID cache so we can find the prospect's
                        record in `player_index`. Defaults to disk cache.
+        statlines    : optional {player_key: StatLine | dict} of current-season
+                       statlines. When provided, a prospect whose statline
+                       level == "MLB" is also flagged graduated, mirroring the
+                       previous per-player auto-grad pass in run_monthly.
 
     Returns:
         {player_key: debut_date_or_None}
@@ -1608,10 +1648,47 @@ def detect_graduations_from_career(
     pitcher_by_key = {key: bool(pit) for key, _, pit in active_players}
     active_keys = set(pitcher_by_key)
 
+    # Pre-filter: when we have a PlayerIndex, restrict to prospects with an
+    # mlbDebutDate. The pre-filter is the bulk-equivalent of "did this player
+    # ever play in MLB?" — no debut date means no possible graduation.
+    debut_by_key: dict[str, str] = {}
+    if player_index is not None:
+        for key in active_keys:
+            mid = id_cache.get(key)
+            if mid is None:
+                continue
+            debut = player_index.get_debut_date(mid)
+            if debut:
+                debut_by_key[key] = debut
+        candidate_keys = set(debut_by_key)
+        log.info(
+            "graduation pre-filter: %d/%d active prospects have an mlbDebutDate",
+            len(candidate_keys), len(active_keys),
+        )
+    else:
+        candidate_keys = active_keys
+
     graduates: dict[str, str | None] = {}
-    for player_key, rows in career_stats.items():
-        # Only consider prospects we currently track as non-graduated.
-        if player_key not in active_keys or not rows:
+
+    def _resolve_debut(player_key: str, mlb_rows: list[dict] | None) -> str:
+        """Pick the best graduation_date: index → earliest MLB season → today-ish."""
+        debut = debut_by_key.get(player_key)
+        if debut:
+            return debut
+        if player_index is not None:
+            mid = id_cache.get(player_key)
+            if mid is not None:
+                idx_debut = player_index.get_debut_date(mid)
+                if idx_debut:
+                    return idx_debut
+        if mlb_rows:
+            earliest_season = min(r["season"] for r in mlb_rows)
+            return f"{earliest_season}-07-01"
+        return date.today().isoformat()
+
+    for player_key in candidate_keys:
+        rows = career_stats.get(player_key) or []
+        if not rows:
             continue
         # Per-row is_pitcher is set by fetch_career_stats based on whether
         # we hit the hitting or pitching endpoint; fall back to the hint.
@@ -1636,18 +1713,29 @@ def detect_graduations_from_career(
         if not exceeded:
             continue
 
-        # Source the graduation_date: PlayerIndex.mlbDebutDate is the most
-        # accurate, then July 1 of the earliest MLB season as a fallback.
-        debut: str | None = None
-        if player_index is not None:
-            mid = id_cache.get(player_key)
-            if mid is not None:
-                debut = player_index.get_debut_date(mid)
-        if not debut:
-            earliest_season = min(r["season"] for r in mlb_rows)
-            debut = f"{earliest_season}-07-01"
+        debut = _resolve_debut(player_key, mlb_rows)
         graduates[player_key] = debut
         log.info("GRADUATED (career-stats): %s  debut=%s", player_key, debut)
+
+    # Second pass: current-season statline at MLB level. Catches the
+    # recently-called-up case the career-threshold sum misses. Runs over
+    # all active prospects (not just candidate_keys) because a prospect
+    # whose PlayerIndex record lacks a debut date but who shows up with an
+    # MLB statline this season should still graduate.
+    if statlines:
+        for player_key in active_keys:
+            if player_key in graduates:
+                continue
+            sl = statlines.get(player_key)
+            if sl is None:
+                continue
+            level = sl.level if hasattr(sl, "level") else sl.get("level")
+            if level != "MLB":
+                continue
+            debut = _resolve_debut(player_key, None)
+            graduates[player_key] = debut
+            log.info("GRADUATED (current-statline MLB): %s  debut=%s",
+                     player_key, debut)
 
     return graduates
 

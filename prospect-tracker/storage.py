@@ -402,6 +402,22 @@ def load_career_stats() -> dict[str, list[dict]]:
     return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
 
 
+def load_career_stats_meta() -> dict[str, str]:
+    """Return {player_key: fetched_at_iso} for every stored career_stats row.
+
+    Used by the monthly pipeline to TTL-skip refetching career stats for
+    prospects whose cached row is still fresh.
+    """
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, fetched_at FROM career_stats"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: r["fetched_at"] for r in rows}
+
+
 def start_run() -> int:
     with connect() as con:
         cur = con.execute(
