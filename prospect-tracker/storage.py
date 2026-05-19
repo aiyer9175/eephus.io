@@ -110,6 +110,15 @@ CREATE TABLE IF NOT EXISTS acquisitions (
     fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS il_status (
+    player_key   TEXT PRIMARY KEY,
+    is_on_il     INTEGER NOT NULL,    -- 0/1
+    since        TEXT,                 -- ISO date of placement (retroactive when known)
+    type         TEXT,                 -- '10-day', '15-day', '60-day', etc.
+    description  TEXT,                 -- full transaction text from API
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS trades (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
     player_key       TEXT NOT NULL,
@@ -467,6 +476,49 @@ def load_acquisitions() -> dict[str, dict]:
     return {r["player_key"]: dict(r) for r in rows}
 
 
+def upsert_il_status(by_key: dict[str, dict | None]) -> int:
+    """Upsert IL status. Pass None as the value to clear a prior IL row
+    (player came off IL since the previous run).
+
+    Each non-None dict carries: is_on_il, since, type, description.
+    """
+    n = 0
+    with connect() as con:
+        for key, rec in by_key.items():
+            if rec is None or not rec.get("is_on_il"):
+                # Drop any prior row so a stale "on IL" badge doesn't
+                # linger after activation.
+                con.execute("DELETE FROM il_status WHERE player_key = ?", (key,))
+                continue
+            con.execute(
+                """INSERT INTO il_status
+                     (player_key, is_on_il, since, type, description, fetched_at)
+                   VALUES (?, 1, ?, ?, ?, datetime('now'))
+                   ON CONFLICT(player_key) DO UPDATE SET
+                     is_on_il=1,
+                     since=excluded.since,
+                     type=excluded.type,
+                     description=excluded.description,
+                     fetched_at=excluded.fetched_at""",
+                (key, rec.get("since"), rec.get("type"), rec.get("description")),
+            )
+            n += 1
+    return n
+
+
+def load_il_status() -> dict[str, dict]:
+    """Return {player_key: il_dict} for every prospect currently on IL."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                """SELECT player_key, is_on_il, since, type, description
+                   FROM il_status WHERE is_on_il = 1"""
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: dict(r) for r in rows}
+
+
 def load_career_stats_meta() -> dict[str, str]:
     """Return {player_key: fetched_at_iso} for every stored career_stats row.
 
@@ -672,6 +724,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           trades_by_player: dict[str, list[dict]] | None = None,
                           career_stats: dict[str, list[dict]] | None = None,
                           acquisitions: dict[str, dict] | None = None,
+                          il_status: dict[str, dict] | None = None,
                           rosters_by_org: dict[str, dict[str, list[dict]]] | None = None,
                           top_n_active: int | None = None):
     """
@@ -693,6 +746,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     trades_by_player = trades_by_player or {}
     career_stats = career_stats or {}
     acquisitions = acquisitions or {}
+    il_status = il_status or {}
     rosters_by_org = rosters_by_org or {}
     birth_dates = load_birth_dates()
     from stats import compute_age_decimal
@@ -1061,6 +1115,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "method": current_acq_method,
                 "event":  current_acq_event,
             },
+            # Current IL stint, if any. Powers the IL badge on prospect
+            # cards + the injury duration line on the detail page.
+            # Empty dict (not None) when the player is healthy — the UI
+            # treats `is_on_il` falsy as healthy regardless.
+            "il_status": il_status.get(p.player_key, {}),
             "eta": {
                 "year": eta.eta_year,
                 "confidence": eta.confidence,
@@ -1088,6 +1147,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     cutoff = _inactive_cutoff()
 
+    # Reclassification rules:
+    #   1. Status='graduated' from snapshots or auto-graduation → grads.
+    #   2. On IL right now → stays active (badge tells the story).
+    #   3. Both signals stale (FV cutoff + no games in current/previous
+    #      calendar year):
+    #        - any MLB game in current/previous year → grads (effective
+    #          graduation we missed because rookie-threshold rule hasn't
+    #          fired yet)
+    #        - otherwise → inactives
+    #   4. Anything else → active.
+    # Without (2), legitimately-stale-due-to-injury prospects (Painter,
+    # for example) would tumble into inactive — defeating the IL badge.
+    today = date.today()
+    play_cutoff_year = today.year - 1  # must have played current OR last year
+
     actives: list[PlayerTimeseries] = []
     inactives: list[PlayerTimeseries] = []
     grads: list[PlayerTimeseries] = []
@@ -1104,8 +1178,35 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         except ValueError:
             inactives.append(p)
             continue
-        if latest_date < cutoff:
-            inactives.append(p)
+
+        # On IL → stay active no matter how stale the FV is. The IL badge
+        # on the player card explains the absence of recent updates and
+        # avoids dumping injured-but-real prospects into the inactive bin.
+        if (il_status.get(p.player_key) or {}).get("is_on_il"):
+            actives.append(p)
+            continue
+
+        fv_stale = latest_date < cutoff
+        career = (career_stats or {}).get(p.player_key, []) or []
+        last_played_year = max(
+            (int(row.get("season") or 0) for row in career),
+            default=0,
+        )
+        play_stale = last_played_year < play_cutoff_year
+        recent_mlb = any(
+            row.get("level") == "MLB"
+            and int(row.get("season") or 0) >= play_cutoff_year
+            for row in career
+        )
+
+        if fv_stale and play_stale:
+            if recent_mlb:
+                # Effective graduation — they're playing in the show but
+                # our auto-graduation hasn't fired yet (sub-rookie-
+                # threshold MLB time, or our run is between trips up).
+                grads.append(p)
+            else:
+                inactives.append(p)
         else:
             actives.append(p)
 

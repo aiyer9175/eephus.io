@@ -38,6 +38,7 @@ from storage import (
     upsert_statcast_metrics, load_statcast_metrics,
     upsert_career_stats, load_career_stats, load_career_stats_meta,
     upsert_acquisitions, load_acquisitions,
+    upsert_il_status, load_il_status,
     export_timeseries_json,
 )
 from consensus import build_timeseries
@@ -49,6 +50,7 @@ from stats import (fetch_statlines_for, fetch_birth_date,
                    detect_graduations_from_career,
                    bulk_fetch_drafts,
                    bulk_fetch_ifa_signings,
+                   bulk_fetch_il_status,
                    fetch_team_affiliations,
                    PlayerIndex)
 from trades import detect_trades
@@ -231,6 +233,24 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             n_draft = sum(1 for a in acquisitions.values() if a["method"] == "draft")
             log.info("acquisitions: %d draft, %d IFA",
                      n_draft, len(acquisitions) - n_draft)
+
+        # --- 2b.iii Detect current IL stints. Same /transactions endpoint
+        # as IFA + trade discovery, so we share its 30-day disk cache.
+        # Returns only players currently on IL; everyone else gets cleared
+        # so a prior IL badge doesn't linger after activation.
+        il_mids_by_key = {p.player_key: ids_by_key.get(p.player_key)
+                          for p in timeseries
+                          if ids_by_key.get(p.player_key) is not None
+                          and p.status != "graduated"}
+        log.info("checking IL status for %d active prospects",
+                 len(il_mids_by_key))
+        il_by_mid = bulk_fetch_il_status(il_mids_by_key.values())
+        il_updates: dict[str, dict | None] = {}
+        for key, mid in il_mids_by_key.items():
+            il_updates[key] = il_by_mid.get(mid)
+        upsert_il_status(il_updates)
+        log.info("IL: %d prospects currently on IL",
+                 sum(1 for v in il_updates.values() if v))
 
         # --- 2c. Affiliate roster map. ~6 HTTP calls (one per sport level)
         # returns every MLB + MiLB team with its parent_org_id, which lets
@@ -523,6 +543,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                trades_by_player=trades_by_player,
                                career_stats=load_career_stats(),
                                acquisitions=load_acquisitions(),
+                               il_status=load_il_status(),
                                rosters_by_org=rosters_by_org)
         log.info("wrote %s", out_path)
 

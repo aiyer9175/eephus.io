@@ -2036,6 +2036,169 @@ def bulk_fetch_ifa_signings(mlbam_ids: Iterable[int],
 
 
 # ---------------------------------------------------------------------------
+# Injured List — detect current IL stint from /transactions per player
+# ---------------------------------------------------------------------------
+
+# Regex set for parsing the free-text description of MLB Stats API "SC"
+# (Status Change) transactions. The IL ecosystem has many edge cases:
+#   - retroactive placement: "placed X on the 15-day IL retroactive to Mar 24"
+#   - transfer between lists: "transferred X from 15-day to 60-day"
+#   - rehab assignment: "sent X on a rehab assignment" — does NOT end the
+#     stint; only "activated" or "reinstated" does
+# Patterns are case-insensitive; we let the SC typeCode filter cut the
+# transaction stream down before we run regex.
+_IL_PLACE_RE = _re.compile(
+    r"placed.+?on the\s+(\S+?)\s+(?:injured|disabled)\s+list"
+    r"(?:\s+retroactive to\s+([A-Za-z]+\s+\d+,?\s+\d{4}))?",
+    _re.IGNORECASE,
+)
+_IL_TRANSFER_RE = _re.compile(
+    r"transferred.+?from the\s+\S+?\s+(?:injured|disabled)\s+list\s+"
+    r"to the\s+(\S+?)\s+(?:injured|disabled)\s+list",
+    _re.IGNORECASE,
+)
+_IL_ACTIVATE_RE = _re.compile(
+    r"(?:activated|reinstated)\s.+?from the\s+\S+?\s+(?:injured|disabled)\s+list",
+    _re.IGNORECASE,
+)
+# Bare-activation pattern — "Team activated Player" with no further detail.
+# The MLB API uses this wording for some IL returns (instead of the more
+# explicit "activated from the X-day injured list"). We only honor this as
+# an IL clear when we already know the player is currently on IL; otherwise
+# normal roster activations (e.g. activating an option) would falsely
+# zero out the IL state.
+_BARE_ACTIVATE_RE = _re.compile(
+    r"\bactivated\s+(?:[A-Z]{1,4}\s+)?[A-Z][A-Za-z]",
+    _re.IGNORECASE,
+)
+# Rehab assignments do NOT end the IL stint — the player is still on IL,
+# just playing in the minors to rebuild. Catch the verbiage explicitly so
+# we never let it through the bare-activation fallback.
+_REHAB_RE = _re.compile(r"sent.+?on a rehab assignment", _re.IGNORECASE)
+
+
+def _parse_il_retro_date(retro: str | None) -> str | None:
+    """Convert 'March 24, 2025' (the API's retroactive-to format) to an
+    ISO date string. Returns None if the date can't be parsed."""
+    if not retro:
+        return None
+    from datetime import datetime as _dt
+    cleaned = retro.strip().rstrip(",")
+    for fmt in ("%B %d, %Y", "%b %d, %Y", "%B %d %Y"):
+        try:
+            return _dt.strptime(cleaned, fmt).date().isoformat()
+        except ValueError:
+            continue
+    return None
+
+
+def fetch_il_status(mlbam_id: int) -> dict | None:
+    """Determine the player's current IL stint by walking their full
+    transactions history chronologically.
+
+    Returns a dict when the player is currently on IL:
+      {
+        is_on_il:    True
+        since:       ISO date of the placement (retroactive when given)
+        type:        '10-day' | '15-day' | '60-day' | '7-day' | ...
+        description: full text of the placement transaction
+      }
+
+    Returns None when the player is not on IL.
+
+    Cache TTL is 7 days — IL stints can flip more often than IFA records,
+    but daily refresh on a monthly pipeline is overkill.
+    """
+    url = f"{MLB_STATS_API}/transactions?playerId={mlbam_id}"
+    try:
+        resp = requests.get(url, timeout=20, ttl=7 * 86400)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as e:
+        log.debug("IL transactions fetch failed for %s: %s", mlbam_id, e)
+        return None
+
+    txs = sorted(
+        data.get("transactions") or [],
+        key=lambda t: t.get("date") or "",
+    )
+
+    is_on_il = False
+    il_since: str | None = None
+    il_type:  str | None = None
+    il_desc:  str | None = None
+
+    for tx in txs:
+        if (tx.get("typeCode") or "").upper() != "SC":
+            continue
+        desc = (tx.get("description") or "").strip()
+        if not desc:
+            continue
+        # Rehab assignment — player stays on IL while rehabbing. Skip
+        # before the bare-activation match so "sent on a rehab assignment"
+        # isn't mistaken for an activation by sloppy wording.
+        if _REHAB_RE.search(desc):
+            continue
+        # Explicit activation: "activated from the X-day injured list".
+        # Highest-confidence end-of-stint signal.
+        if _IL_ACTIVATE_RE.search(desc):
+            is_on_il = False
+            il_since = il_type = il_desc = None
+            continue
+        m_t = _IL_TRANSFER_RE.search(desc)
+        if m_t:
+            if is_on_il:
+                il_type = m_t.group(1)
+                il_desc = desc
+            continue
+        m_p = _IL_PLACE_RE.search(desc)
+        if m_p:
+            is_on_il = True
+            il_type = m_p.group(1)
+            retro_iso = _parse_il_retro_date(m_p.group(2))
+            il_since = retro_iso or tx.get("date")
+            il_desc = desc
+            continue
+        # Fallback: bare "<team> activated <player>" when we know they
+        # were on IL. MLB sometimes drops the "from the X-day IL" clause
+        # — Painter's 2024-10-11 activation is the canonical example.
+        if is_on_il and _BARE_ACTIVATE_RE.search(desc):
+            is_on_il = False
+            il_since = il_type = il_desc = None
+
+    if not is_on_il:
+        return None
+    return {
+        "is_on_il":    True,
+        "since":       il_since,
+        "type":        il_type,
+        "description": il_desc,
+    }
+
+
+def bulk_fetch_il_status(mlbam_ids: Iterable[int],
+                         max_workers: int = 8) -> dict[int, dict]:
+    """Concurrent IL-status lookup for many players. Returns
+    {mlbam_id: il_dict} only for players currently on IL.
+
+    Uses the same /transactions endpoint that the IFA + trade pipelines
+    already hit, so cached payloads (30 days for IFA) are reused — only
+    players whose cache TTL has elapsed cost a network call here."""
+    ids = [int(mid) for mid in mlbam_ids if mid is not None]
+    if not ids:
+        return {}
+    out: dict[int, dict] = {}
+    with concurrent.futures.ThreadPoolExecutor(
+            max_workers=min(max_workers, len(ids))) as ex:
+        for mid, rec in zip(ids, ex.map(fetch_il_status, ids)):
+            if rec is not None:
+                out[mid] = rec
+    log.info("bulk_fetch_il_status: %d/%d players currently on IL",
+             len(out), len(ids))
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Affiliation map — fetch /teams?sportId=... to get team→parent_org links
 # ---------------------------------------------------------------------------
 

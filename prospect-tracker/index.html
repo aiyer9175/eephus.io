@@ -302,6 +302,21 @@
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.04em;
     }
+    /* IL badge — sits inline with player-meta to call out active injuries.
+       Amber to differentiate from age (cyan) / FV badges (green/red). */
+    .il-tag {
+      display: inline-block;
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 2px;
+      background: rgba(255, 179, 71, 0.12);
+      color: var(--neon-amber);
+      border: 1px solid rgba(255, 179, 71, 0.35);
+      margin-left: 6px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
 
     /* === FV badges ================================================ */
     .fv-badge {
@@ -1376,7 +1391,7 @@ function renderActives() {
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
-          <div class="player-meta">${escapeHtml(p.position ?? "—")} · ${escapeHtml(p.org ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}</div>
+          <div class="player-meta">${escapeHtml(p.position ?? "—")} · ${escapeHtml(p.org ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}</div>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
@@ -1419,7 +1434,7 @@ function renderSpotlights() {
       <div class="rank-num">${i + 1}</div>
       <div>
         <div class="player-name">${escapeHtml(s.player_name)}</div>
-        <div class="player-meta">${escapeHtml(s.position ?? "—")} · ${escapeHtml(s.org ?? "—")}${s.age != null ? `<span class="age-tag">age ${Number(s.age).toFixed(1)}</span>` : ""}</div>
+        <div class="player-meta">${escapeHtml(s.position ?? "—")} · ${escapeHtml(s.org ?? "—")}${s.age != null ? `<span class="age-tag">age ${Number(s.age).toFixed(1)}</span>` : ""}${ilTagHTML(s)}</div>
       </div>
       <div style="text-align:center;"><span class="fv-badge ${fvClass(s.fv || "40")}">${escapeHtml(s.fv ?? "—")}</span></div>
       <div class="milb-cell"><span class="level-pill level-neutral">${escapeHtml(s.level ?? "—")}</span>${escapeHtml(s.line ?? "—")}</div>
@@ -1498,7 +1513,7 @@ function renderRecentlyTraded() {
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
-          <div class="player-meta">${escapeHtml(p.position ?? "—")} · ${escapeHtml(p.org ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}</div>
+          <div class="player-meta">${escapeHtml(p.position ?? "—")} · ${escapeHtml(p.org ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}</div>
         </div>
         <div>
           <span class="grad-pill" style="background:var(--bg-tertiary);color:var(--neon-violet);border:1px solid var(--border);">${lastTrade.trade_date}</span>
@@ -1679,6 +1694,25 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
+}
+
+// IL badge for the player-meta line. Returns an empty string when the
+// player isn't on IL; otherwise an amber pill showing the list type and
+// duration in days. Tooltip carries the placement description.
+function ilTagHTML(p) {
+  const il = p && p.il_status;
+  if (!il || !il.is_on_il) return "";
+  let days = null;
+  if (il.since) {
+    const ms = Date.now() - new Date(il.since + "T00:00:00").getTime();
+    if (!isNaN(ms) && ms > 0) days = Math.floor(ms / 86400000);
+  }
+  const typeLabel = il.type ? escapeHtml(il.type) + " IL" : "IL";
+  const dayLabel = days != null ? ` · ${days}d` : "";
+  const title = il.description
+    ? escapeHtml(il.description) + (days != null ? `\n${days} days` : "")
+    : `On ${typeLabel}${il.since ? ` since ${escapeHtml(il.since)}` : ""}`;
+  return `<span class="il-tag" title="${title}">${typeLabel}${dayLabel}</span>`;
 }
 
 function updateMeta() {
@@ -1896,7 +1930,7 @@ function renderInactive() {
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
-          <div class="player-meta">${escapeHtml(p.position ?? "—")} · ${escapeHtml(p.org ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}</div>
+          <div class="player-meta">${escapeHtml(p.position ?? "—")} · ${escapeHtml(p.org ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}</div>
         </div>
         <div class="grad-graduation-cell">
           <span class="grad-pill" style="background:var(--bg-tertiary);color:var(--text-tertiary);border:none;">${lastSeen}</span>
@@ -2301,10 +2335,19 @@ function renderPlayerDetail(key) {
   const orgLink = p.org
     ? `<a href="#farm-org=${escapeHtml(p.org)}" onclick="event.preventDefault();goToFarm('${escapeHtml(p.org)}');" style="color:var(--neon-cyan);text-decoration:none;">${escapeHtml(p.org)}</a>`
     : "—";
+  // Header status pill — graduated wins over IL when both apply (a
+  // graduated player who later goes on the MLB IL is now an MLB story,
+  // not a prospect-tracker story).
+  const ilNow = p.il_status && p.il_status.is_on_il ? p.il_status : null;
+  let ilDays = null;
+  if (ilNow && ilNow.since) {
+    const ms = Date.now() - new Date(ilNow.since + "T00:00:00").getTime();
+    if (!isNaN(ms) && ms > 0) ilDays = Math.floor(ms / 86400000);
+  }
   const statusPill = p.status === "graduated"
     ? `<span class="grad-pill" style="background:var(--bg-tertiary);color:var(--grad);">Graduated ${p.graduation_date || ""}</span>`
-    : p.status === "injured_list"
-      ? `<span class="grad-pill" style="background:var(--bg-tertiary);color:var(--neon-amber);">IL</span>`
+    : ilNow
+      ? `<span class="grad-pill" style="background:var(--bg-tertiary);color:var(--neon-amber);">${escapeHtml(ilNow.type || "?")} IL${ilDays != null ? ` · ${ilDays}d` : ""}</span>`
       : "";
 
   const avl = p.age_vs_level || {};
@@ -2487,6 +2530,37 @@ function renderPlayerDetail(key) {
     return "";
   })();
 
+  // Injury block — only shown when the player is currently on IL.
+  // Combines the placement description, list type, since-date, and a
+  // running day counter so a reader gets full context without scrolling
+  // to the transaction history table.
+  const ilSection = (() => {
+    const il = p.il_status;
+    if (!il || !il.is_on_il) return "";
+    let days = null;
+    if (il.since) {
+      const ms = Date.now() - new Date(il.since + "T00:00:00").getTime();
+      if (!isNaN(ms) && ms > 0) days = Math.floor(ms / 86400000);
+    }
+    let sinceFmt = il.since;
+    if (il.since) {
+      const d = new Date(il.since + "T00:00:00");
+      if (!isNaN(d.getTime())) {
+        sinceFmt = d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+      }
+    }
+    const desc = il.description
+      ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;line-height:1.4;">${escapeHtml(il.description)}</div>`
+      : "";
+    return `<div class="detail-title" style="margin-top:18px;color:var(--neon-amber);">Currently on ${escapeHtml(il.type || "?")} IL</div>
+      <div style="border:1px solid rgba(255,179,71,0.35);background:rgba(255,179,71,0.06);padding:10px 12px;border-radius:2px;">
+        <div style="font-size:14px;color:var(--text-primary);">
+          Since ${escapeHtml(sinceFmt || "—")}${days != null ? ` <span style="color:var(--neon-amber);font-variant-numeric:tabular-nums;">· ${days} day${days === 1 ? "" : "s"}</span>` : ""}
+        </div>
+        ${desc}
+      </div>`;
+  })();
+
   // Current-org acquisition. Renders ONLY when the player's current org
   // acquired them via something OTHER than their original draft/IFA path
   // (i.e. they've been moved between orgs at least once). Pairs with the
@@ -2548,7 +2622,7 @@ function renderPlayerDetail(key) {
   root.innerHTML = header + tilesHtml + `
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
       <div>${chartSection}${careerSection}${levelBenchmarkSection}${sourceSection}</div>
-      <div>${statcastSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${etaRows}</div>
+      <div>${ilSection}${statcastSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${etaRows}</div>
     </div>`;
 }
 
@@ -2656,7 +2730,7 @@ function renderFarmDetail(orgCode) {
         <div class="rank-num">${i + 1}</div>
         <div>
           <div class="player-name">${escapeHtml(p.player_name)}</div>
-          <div class="player-meta">${escapeHtml(p.position ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}</div>
+          <div class="player-meta">${escapeHtml(p.position ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}</div>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span></div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
