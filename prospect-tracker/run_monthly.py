@@ -48,6 +48,7 @@ from stats import (fetch_statlines_for, fetch_birth_date,
                    bulk_resolve_ids,
                    detect_graduations_from_career,
                    bulk_fetch_drafts,
+                   bulk_fetch_ifa_signings,
                    fetch_team_affiliations,
                    PlayerIndex)
 from trades import detect_trades
@@ -169,6 +170,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         draft_by_id = bulk_fetch_drafts(draft_years)
 
         acquisitions: dict[str, dict] = {}
+        ifa_mids_by_key: dict[str, int] = {}
         for p in timeseries:
             mid = ids_by_key.get(p.player_key)
             if mid is None:
@@ -188,8 +190,8 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 }
             else:
                 # No draft record across the lookback window — treat as IFA.
-                # Bonus + signing_date stay unknown unless future enrichment
-                # surfaces them.
+                # We enrich below with the original signing transaction.
+                ifa_mids_by_key[p.player_key] = mid
                 acquisitions[p.player_key] = {
                     "method":       "international_fa",
                     "year":         None,
@@ -201,6 +203,29 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     "school":       None,
                     "signing_date": None,
                 }
+
+        # --- 2b.ii Enrich IFA records with original signing transaction.
+        # One /transactions call per IFA prospect returns the SFA/SGN event
+        # that records the signing team + date. Signing-bonus dollars are
+        # not exposed by the public Stats API, so bonus_usd stays None for
+        # IFAs and the frontend's "data not on file" fallback covers it.
+        if ifa_mids_by_key:
+            log.info("fetching IFA signing info for %d prospects",
+                     len(ifa_mids_by_key))
+            ifa_by_id = bulk_fetch_ifa_signings(ifa_mids_by_key.values())
+            n_enriched = 0
+            for key, mid in ifa_mids_by_key.items():
+                sig = ifa_by_id.get(mid)
+                if not sig:
+                    continue
+                rec = acquisitions[key]
+                rec["year"]         = sig.get("year")
+                rec["team_name"]    = sig.get("team_name")
+                rec["signing_date"] = sig.get("signing_date")
+                n_enriched += 1
+            log.info("IFA enrichment: %d/%d signings resolved",
+                     n_enriched, len(ifa_mids_by_key))
+
         if acquisitions:
             upsert_acquisitions(acquisitions)
             n_draft = sum(1 for a in acquisitions.values() if a["method"] == "draft")
@@ -242,7 +267,13 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             today = _date.today()
             return round((today - b).days / 365.25, 1)
 
-        # Build {org_abbr: {level: [player_records]}}
+        # Build {org_abbr: {level: [player_records]}}. The MLB Stats API's
+        # `abbreviation` uses 2-char codes for several teams (AZ, KC, SD,
+        # SF, TB, CWS) while our prospect-ranking sources use 3-letter
+        # canonical codes (ARI, KCR, SDP, SFG, TBR, CHW). Normalize via
+        # canonical_org so the rosters keyed here line up with the codes
+        # the front-end uses on the farm list / detail pages.
+        from trades import canonical_org
         rosters_by_org: dict[str, dict[str, list[dict]]] = {}
         for rec in player_index.players:
             tid = rec.get("current_team_id")
@@ -251,7 +282,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             info = team_affil.get(int(tid))
             if not info:
                 continue
-            org_abbr = info.get("parent_org_abbr") or ""
+            org_abbr = canonical_org(info.get("parent_org_abbr") or "") or ""
             level = info.get("level") or ""
             if not org_abbr or not level:
                 continue

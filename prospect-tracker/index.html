@@ -551,9 +551,72 @@
     /* === Farm systems ============================================= */
     .farm-header, .farm-row {
       display: grid;
-      grid-template-columns: 36px 54px 1fr 190px 110px 70px 70px 24px;
+      grid-template-columns: 36px 54px 1fr 190px 1fr 110px 150px 70px 70px 24px;
       gap: 10px;
       align-items: center;
+    }
+    .farm-fv-chart-cell { min-width: 0; }
+    .farm-fv-chart-cell svg { display: block; width: 100%; height: 50px; }
+    .level-depth-cell {
+      display: flex; gap: 3px; flex-wrap: wrap;
+    }
+    .level-pill {
+      display: inline-flex; align-items: baseline; gap: 3px;
+      font-size: 10px; font-variant-numeric: tabular-nums;
+      padding: 1px 5px; border-radius: 2px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      letter-spacing: 0.04em;
+    }
+    .level-pill .lp-label { color: var(--text-tertiary); font-size: 9px; }
+    .level-pill .lp-count { color: var(--text-primary); font-weight: 600; }
+    .level-pill.lp-zero .lp-count { color: var(--text-tertiary); font-weight: 400; }
+    .level-pill.lp-active {
+      border-color: var(--neon-cyan);
+      background: rgba(100, 220, 255, 0.10);
+    }
+    .level-pill.lp-active .lp-count { color: var(--neon-cyan); }
+
+    .graded-by-level-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 6px;
+    }
+    .graded-level-block {
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      border-radius: 2px;
+      padding: 8px 10px;
+    }
+    .graded-level-header {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 8px; margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .graded-level-name {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: 0.10em; text-transform: uppercase;
+    }
+    .graded-level-count {
+      font-size: 10px; color: var(--text-tertiary);
+      font-variant-numeric: tabular-nums;
+    }
+    .graded-prospect-row {
+      display: grid;
+      grid-template-columns: 36px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 3px 2px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .graded-prospect-row:last-child { border-bottom: 0; }
+    .graded-prospect-row:hover {
+      background: rgba(100, 220, 255, 0.06);
     }
     .farm-header {
       font-size: 9px; color: var(--text-tertiary);
@@ -658,6 +721,19 @@
       </select>
     </div>
     <div class="filter-group">
+      <span class="filter-label">Acquired via</span>
+      <select class="chip" id="acq-filter">
+        <option value="all">All methods</option>
+        <option value="draft">Draft</option>
+        <option value="international_fa">International FA</option>
+        <option value="trade">Trade</option>
+        <option value="waiver">Waiver claim</option>
+        <option value="rule_5">Rule 5</option>
+        <option value="free_agent">Free-agent signing</option>
+        <option value="contract_purchase">Contract purchase</option>
+      </select>
+    </div>
+    <div class="filter-group">
       <span class="filter-label">Sort</span>
       <select class="chip" id="sort-select">
         <option value="fv">Consensus FV</option>
@@ -702,6 +778,13 @@
       <button class="chip" data-farm-sort="tier_60">60+ prospects</button>
       <button class="chip" data-farm-sort="avg_age">Youngest system</button>
       <button class="chip" data-farm-sort="stock_up">Rising prospects</button>
+      <span class="filter-label" style="margin-left:10px;">Depth at level</span>
+      <button class="chip" data-farm-sort="level_AAA">AAA</button>
+      <button class="chip" data-farm-sort="level_AA">AA</button>
+      <button class="chip" data-farm-sort="level_A+">A+</button>
+      <button class="chip" data-farm-sort="level_A">A</button>
+      <button class="chip" data-farm-sort="level_Rk">Rk</button>
+      <button class="chip" data-farm-sort="level_DSL">DSL</button>
       <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <span style="font-size:11px;color:var(--text-tertiary);">Tier bar:</span>
         <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--fv-70-bg);color:var(--fv-70-fg);">70</span>
@@ -810,6 +893,76 @@ function levelChangeEvents(careerStats) {
 }
 
 // =============================================================================
+// TRANSACTION INDICATORS — visual vocabulary shared across every FV chart.
+// =============================================================================
+// One entry per transaction "kind". Each chart looks up `kind` here so the
+// same glyph + color combination represents the same event everywhere
+// (mini sparklines, big prospect chart, farm-system stock chart). When the
+// list changes, the legend on the prospect page and farm-detail page picks
+// up the new entry automatically via TRANSACTION_LEGEND_ORDER.
+//
+// glyph: one-char marker rendered at the top of the chart line.
+// color: stroke + fill for the vertical line and glyph.
+// dash:  stroke-dasharray for the vertical guideline.
+// pos:   "top" | "bottom" — where the glyph sits relative to the chart.
+const TRANSACTION_KINDS = {
+  trade:      { glyph: "◆", color: "var(--grad)",       dash: "2,1.5", pos: "top",    label: "Trade" },
+  promotion:  { glyph: "▲", color: "var(--up)",         dash: "1,2",   pos: "bottom", label: "Promotion" },
+  demotion:   { glyph: "▼", color: "var(--down)",       dash: "1,2",   pos: "bottom", label: "Demotion" },
+  signing:    { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Signing" },
+  graduation: { glyph: "★", color: "var(--neon-amber)", dash: "2,1.5", pos: "top",    label: "Graduation" },
+};
+const TRANSACTION_LEGEND_ORDER = ["trade", "promotion", "demotion", "signing", "graduation"];
+
+// Build the combined event list for one player. Pulls from:
+//   trades         → kind:'trade'
+//   career_stats   → kind:'promotion' | 'demotion'
+//   acquisition    → kind:'signing'   (if signing_date is on file)
+//   graduation_date→ kind:'graduation'(graduates only)
+//
+// Each event has: { date, kind, label } where `label` is the hover-text
+// content. Sorted ascending by date so renderers can iterate in order.
+function transactionEvents(player) {
+  const out = [];
+  for (const tr of (player.trades || [])) {
+    if (!tr.trade_date) continue;
+    const heading = `${tr.trade_date} · ${tr.from_org ?? "?"} → ${tr.to_org ?? "?"}`;
+    out.push({
+      date: tr.trade_date,
+      kind: "trade",
+      label: heading + (tr.description ? `\n${tr.description}` : ""),
+    });
+  }
+  for (const ev of levelChangeEvents(player.career_stats || [])) {
+    const verb = ev.kind === "promotion" ? "Promoted to" : "Demoted to";
+    out.push({
+      date: ev.date,
+      kind: ev.kind,
+      label: `${ev.date.slice(0, 4)}: ${verb} ${ev.level} (from ${ev.prev_level})`,
+    });
+  }
+  const acq = player.acquisition;
+  if (acq && acq.signing_date) {
+    const team = acq.team_name ? ` by ${acq.team_name}` : "";
+    const method = acq.method === "draft" ? "Drafted" : "Signed";
+    out.push({
+      date: acq.signing_date,
+      kind: "signing",
+      label: `${acq.signing_date}: ${method}${team}`,
+    });
+  }
+  if (player.graduation_date) {
+    out.push({
+      date: player.graduation_date,
+      kind: "graduation",
+      label: `${player.graduation_date}: Graduated to MLB`,
+    });
+  }
+  out.sort((a, b) => a.date.localeCompare(b.date));
+  return out;
+}
+
+// =============================================================================
 // SVG CHARTS
 // =============================================================================
 // Y-axis is anchored to the full 20-80 FV scale across both line charts and
@@ -819,7 +972,7 @@ function levelChangeEvents(careerStats) {
 // (for active / inactive prospects).
 const FV_MIN = 20, FV_MAX = 80;
 
-function makeLineChart(points, fvOpen, fvClose, gradDate, trades) {
+function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   if (!points || points.length === 0) return "";
   const W = 200, H = 56, PAD = 4, LABEL_H = 9;
   // Chart area: y from PAD to H-LABEL_H-PAD. Bottom LABEL_H px reserved for year labels.
@@ -859,28 +1012,42 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades) {
     );
   }
 
-  // Trade markers — solid violet verticals at each trade_date that falls
-  // inside the chart window. A small triangle "T" sits at the top so the
-  // marker is visible even when the line passes through it. Hover includes
-  // the full transaction description.
-  const tradeSvg = [];
-  for (const tr of (trades || [])) {
-    const trT = new Date(tr.trade_date).getTime();
-    if (isNaN(trT) || trT < minT || trT > maxT) continue;
-    const x = (PAD + ((trT - minT) / timeSpan) * (W - 2 * PAD)).toFixed(1);
-    const heading = `${tr.trade_date} · ${tr.from_org ?? "?"} → ${tr.to_org ?? "?"}`;
-    const detail = tr.description ? `\n${tr.description}` : "";
-    const label = escapeHtml(heading + detail);
-    tradeSvg.push(
-      `<line x1="${x}" y1="${PAD}" x2="${x}" y2="${CHART_BOTTOM}" stroke="var(--grad)" stroke-width="0.9" stroke-dasharray="2,1.5" opacity="0.85"><title>${label}</title></line>`,
-      `<polygon points="${x - 2.5},${PAD - 0.5} ${parseFloat(x) + 2.5},${PAD - 0.5} ${x},${PAD + 3}" fill="var(--grad)"><title>${label}</title></polygon>`
+  // Transaction markers — one vertical guide + glyph per event, color
+  // and dash style picked from TRANSACTION_KINDS so each event type is
+  // visually distinct. Falls back to legacy trade-only rendering when
+  // the caller didn't pass a full player object (older call sites).
+  const events = player
+    ? transactionEvents(player).filter(e => {
+        const t = new Date(e.date).getTime();
+        return !isNaN(t) && t >= minT && t <= maxT;
+      })
+    : (trades || []).map(tr => ({
+        date: tr.trade_date,
+        kind: "trade",
+        label: `${tr.trade_date} · ${tr.from_org ?? "?"} → ${tr.to_org ?? "?"}${tr.description ? "\n" + tr.description : ""}`,
+      })).filter(e => {
+        const t = new Date(e.date).getTime();
+        return !isNaN(t) && t >= minT && t <= maxT;
+      });
+  const eventSvg = [];
+  for (const ev of events) {
+    const cfg = TRANSACTION_KINDS[ev.kind];
+    if (!cfg) continue;
+    const x = xScale(ev.date).toFixed(1);
+    const label = escapeHtml(ev.label);
+    const top = cfg.pos === "top";
+    const glyphY = top ? PAD + 4 : H - LABEL_H - 1;
+    const fontSize = 6.5;
+    eventSvg.push(
+      `<line x1="${x}" y1="${PAD}" x2="${x}" y2="${CHART_BOTTOM}" stroke="${cfg.color}" stroke-width="0.9" stroke-dasharray="${cfg.dash}" opacity="0.75"><title>${label}</title></line>`,
+      `<text x="${x}" y="${glyphY.toFixed(1)}" font-size="${fontSize}" fill="${cfg.color}" text-anchor="middle"><title>${label}</title>${cfg.glyph}</text>`
     );
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" role="img" aria-label="FV trajectory">
     ${yearSvg.join("")}
     <line x1="${PAD}" y1="${y60.toFixed(1)}" x2="${W - PAD}" y2="${y60.toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,2" />
-    ${tradeSvg.join("")}
+    ${eventSvg.join("")}
     <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
     ${circles}
   </svg>`;
@@ -937,6 +1104,7 @@ function syncToURL() {
   else if (state.view && state.view.type === "farm") p.set("farm-org", state.view.org);
   if (state.section     !== "active")     p.set("tab",   state.section);
   if (state.orgFilter   !== "all")        p.set("org",   state.orgFilter);
+  if (state.acqFilter   !== "all")        p.set("acq",   state.acqFilter);
   if (state.sort        !== "fv")         p.set("sort",  state.sort);
   if (state.stockFilter !== "all")        p.set("stock", state.stockFilter);
   if (state.search)                       p.set("q",     state.search);
@@ -958,6 +1126,7 @@ function syncFromURL() {
   else if (p.has("farm-org")) state.view = { type: "farm", org: p.get("farm-org") };
   if (p.has("tab"))   state.section     = p.get("tab");
   if (p.has("org"))   state.orgFilter   = p.get("org");
+  if (p.has("acq"))   state.acqFilter   = p.get("acq");
   if (p.has("sort"))  state.sort        = p.get("sort");
   if (p.has("stock")) state.stockFilter = p.get("stock");
   if (p.has("q"))     state.search      = p.get("q");
@@ -996,6 +1165,7 @@ function goHome() {
   const p = new URLSearchParams();
   if (state.section !== "active") p.set("tab", state.section);
   if (state.orgFilter !== "all")  p.set("org", state.orgFilter);
+  if (state.acqFilter !== "all")  p.set("acq", state.acqFilter);
   if (state.sort !== "fv")        p.set("sort", state.sort);
   if (state.stockFilter !== "all") p.set("stock", state.stockFilter);
   if (state.search)               p.set("q", state.search);
@@ -1016,6 +1186,8 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.spotlightBucket === state.spotlightBucket));
   const orgSel = document.getElementById("org-filter");
   if (orgSel) orgSel.value = state.orgFilter;
+  const acqSel = document.getElementById("acq-filter");
+  if (acqSel) acqSel.value = state.acqFilter;
   const sortSel = document.getElementById("sort-select");
   if (sortSel) sortSel.value = state.sort;
   const searchIn = document.getElementById("search-input");
@@ -1102,6 +1274,7 @@ const state = {
   section: "active",
   stockFilter: "all",
   orgFilter: "all",
+  acqFilter: "all",
   sort: "fv",
   inactiveOrg: "all",
   farmSort: "farm_rank",
@@ -1137,6 +1310,10 @@ function getFilteredActives() {
   }
   if (state.orgFilter !== "all") {
     pool = pool.filter(p => p.org === state.orgFilter);
+  }
+  if (state.acqFilter !== "all") {
+    pool = pool.filter(p =>
+      ((p.current_acquisition || {}).method || "unknown") === state.acqFilter);
   }
   if (state.sort === "age_asc") {
     pool.sort((a, b) => (a.age ?? 99) - (b.age ?? 99));
@@ -1203,7 +1380,7 @@ function renderActives() {
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
-        <div class="line-chart-cell">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades)}</div>
+        <div class="line-chart-cell">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
         <div class="candle-cell">${makeCandle(p)}</div>
         ${makeMilbCell(p)}
         ${makeEtaCell(p)}
@@ -1329,7 +1506,7 @@ function renderRecentlyTraded() {
         </div>
         <div style="font-size:12px;">${tradeFlow}</div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span>${fvTrendHTML(p)}</div>
-        <div class="line-chart-cell desktop-only">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades)}</div>
+        <div class="line-chart-cell desktop-only">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
         <div class="candle-cell desktop-only">${makeCandle(p)}</div>
         <div class="stock-cell">${stockHTML(p.stock)}</div>
       </div>
@@ -1381,7 +1558,7 @@ function renderGraduates() {
     for (const g of byDate[date]) {
       const pillClass = isRecent ? "grad-pill most-recent" : "grad-pill";
       const chartHtml = (g.points && g.points.length >= 2)
-        ? makeLineChart(g.points, g.fv_open, g.fv_close, g.graduation_date, g.trades)
+        ? makeLineChart(g.points, g.fv_open, g.fv_close, g.graduation_date, g.trades, g)
         : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
       const fvLabel = g.fv_close != null ? Math.round(g.fv_close) : "—";
       body += `
@@ -1575,6 +1752,25 @@ function makePosBreakdown(posGroups) {
   ).join('');
 }
 
+// Render the per-level "graded prospects" pills used on the farm list.
+// Hides MLB (graded MLB players are usually graduates; the row would
+// always read zero) and skips DSL when the org has none, since most
+// systems do not field a DSL squad and an always-zero pill is noise.
+// activeLevel highlights the pill matching the current sort.
+const FARM_DEPTH_LEVELS = ["AAA","AA","A+","A","Rk","DSL"];
+function makeLevelDepth(levelCounts, activeLevel) {
+  if (!levelCounts) return `<span style="color:var(--text-tertiary);font-size:10px;">—</span>`;
+  return FARM_DEPTH_LEVELS
+    .filter(lvl => lvl !== "DSL" || (levelCounts[lvl] || 0) > 0)
+    .map(lvl => {
+      const n = levelCounts[lvl] || 0;
+      const cls = `level-pill${n === 0 ? " lp-zero" : ""}${lvl === activeLevel ? " lp-active" : ""}`;
+      return `<span class="${cls}" title="${lvl}: ${n} graded prospect${n === 1 ? "" : "s"}">
+        <span class="lp-label">${escapeHtml(lvl)}</span><span class="lp-count">${n}</span>
+      </span>`;
+    }).join("");
+}
+
 function farmSortedOrgs() {
   let orgs = (DATA.org_summary || []).slice();
   // Search filter: match against the 3-letter code OR full team name so
@@ -1587,6 +1783,17 @@ function farmSortedOrgs() {
     );
   }
   const s = state.farmSort;
+  // "level_<LVL>" sorts by graded-prospect count at that affiliate level.
+  // Defensive ?? 0 keeps orgs without a level-counts block (older exports)
+  // at the bottom rather than NaN-poisoning the comparator.
+  if (s && s.startsWith("level_")) {
+    const lvl = s.slice("level_".length);
+    orgs.sort((a, b) =>
+      ((b.level_counts || {})[lvl] ?? 0) -
+      ((a.level_counts || {})[lvl] ?? 0)
+      || b.total_fv - a.total_fv);
+    return orgs;
+  }
   orgs.sort((a, b) => {
     if (s === "total_fv")  return b.total_fv  - a.total_fv;
     if (s === "count")     return b.count     - a.count;
@@ -1609,12 +1816,20 @@ function renderFarmSystems() {
     return;
   }
 
+  // Active-level highlight: when the user sorts by "level_<LVL>", that
+  // pill renders with a cyan border so the eye lands on it immediately.
+  const activeLevel = (state.farmSort || "").startsWith("level_")
+    ? state.farmSort.slice("level_".length)
+    : null;
+
   const header = `<div class="farm-header">
     <span style="text-align:center;">#</span>
     <span>Org</span>
     <span>Tier depth</span>
+    <span>FV stock</span>
     <span>Top prospect</span>
     <span>Positions</span>
+    <span>Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
     <span>Avg age</span>
     <span>Stock</span>
     <span></span>
@@ -1638,11 +1853,13 @@ function renderFarmSystems() {
           <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}</div>
         </div>
         <div>${makeTierBar(org.prospects)}</div>
+        <div class="farm-fv-chart-cell">${makeOrgFvChart(org, "mini")}</div>
         <div style="font-size:12px;">
           ${tp ? `<span style="font-weight:500;">${escapeHtml(tp.name)}</span>
           <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:10px;padding:1px 5px;margin-left:4px;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
         </div>
         <div>${makePosBreakdown(org.pos_groups)}</div>
+        <div class="level-depth-cell">${makeLevelDepth(org.level_counts, activeLevel)}</div>
         <div style="font-size:12px;color:var(--text-secondary);font-variant-numeric:tabular-nums;">${org.avg_age != null ? org.avg_age.toFixed(1) : "—"}</div>
         <div class="stock-cell" style="font-size:12px;">${stockHtml}</div>
         <div style="text-align:right;font-size:11px;color:var(--neon-cyan);">→</div>
@@ -1672,7 +1889,7 @@ function renderInactive() {
     const fvLabel = latest ? latest.consensus_fv_label : "—";
     const lastSeen = latest ? latest.snapshot_date : "—";
     const chartHtml = (p.points.length >= 2)
-      ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades)
+      ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)
       : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
     return `
       <div class="grad-row" data-key="${escapeHtml(p.player_key)}" style="grid-template-columns: 32px 1.4fr 1fr 0.5fr 1fr;cursor:pointer;">
@@ -1716,7 +1933,7 @@ function findOrg(org) {
 // Bigger version of the line chart used on prospect detail pages — same
 // 20-80 Y-axis as the inline sparkline, but rendered at ~2x size with
 // gridlines at every 5-FV tick and date labels along the bottom.
-function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats) {
+function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats, player) {
   if (!points || points.length === 0) return "";
   const W = 720, H = 260, PAD_L = 28, PAD_R = 14, PAD_T = 14, PAD_B = 28;
   const innerW = W - PAD_L - PAD_R;
@@ -1768,40 +1985,43 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
     `<text x="${x1}" y="${H - 4}" font-size="9" fill="var(--text-tertiary)" text-anchor="end">${endDate}</text>`,
   );
 
-  // Trade markers — hover shows the full transaction description (the
-  // verbose API text) so a reader can see why the trade fired without
-  // scrolling to the transaction history table below.
-  const tradeSvg = [];
-  for (const tr of (trades || [])) {
-    const trT = new Date(tr.trade_date).getTime();
-    if (isNaN(trT) || trT < minT || trT > maxT) continue;
-    const x = xScale(tr.trade_date).toFixed(1);
-    const heading = `${tr.trade_date} · ${tr.from_org ?? "?"} → ${tr.to_org ?? "?"}`;
-    const detail = tr.description ? `\n${tr.description}` : "";
-    const label = escapeHtml(heading + detail);
-    tradeSvg.push(
-      `<line x1="${x}" y1="${PAD_T}" x2="${x}" y2="${H - PAD_B}" stroke="var(--grad)" stroke-width="1.2" stroke-dasharray="3,2" opacity="0.85"><title>${label}</title></line>`,
-      `<polygon points="${x - 4},${PAD_T - 1} ${parseFloat(x) + 4},${PAD_T - 1} ${x},${PAD_T + 5}" fill="var(--grad)"><title>${label}</title></polygon>`,
-    );
-  }
+  // Transaction markers — unified across all event types. Pulls from
+  // the shared TRANSACTION_KINDS vocabulary so the glyph + color matches
+  // what the mini sparkline shows for the same prospect. Falls through to
+  // legacy trade-only rendering when called without a full player object.
+  const events = player
+    ? transactionEvents(player).filter(e => {
+        const t = new Date(e.date).getTime();
+        return !isNaN(t) && t >= minT && t <= maxT;
+      })
+    : [
+        ...(trades || []).map(tr => ({
+          date: tr.trade_date,
+          kind: "trade",
+          label: `${tr.trade_date} · ${tr.from_org ?? "?"} → ${tr.to_org ?? "?"}${tr.description ? "\n" + tr.description : ""}`,
+        })),
+        ...levelChangeEvents(careerStats || []).map(ev => ({
+          date: ev.date,
+          kind: ev.kind,
+          label: `${ev.date.slice(0, 4)}: ${ev.kind === "promotion" ? "Promoted to" : "Demoted to"} ${ev.level} (from ${ev.prev_level})`,
+        })),
+      ].filter(e => {
+        const t = new Date(e.date).getTime();
+        return !isNaN(t) && t >= minT && t <= maxT;
+      });
 
-  // Promotion / demotion markers from career_stats. Derived as season-start
-  // (Apr 1) approximations — career_stats only knows the highest level per
-  // season, so exact in-season dates aren't available. Green ▲ at the
-  // bottom for promotions, red ▼ for demotions. Clamped to the chart range.
-  const levelSvg = [];
-  for (const ev of levelChangeEvents(careerStats || [])) {
-    const evT = new Date(ev.date).getTime();
-    if (isNaN(evT) || evT < minT || evT > maxT) continue;
+  const eventSvg = [];
+  for (const ev of events) {
+    const cfg = TRANSACTION_KINDS[ev.kind];
+    if (!cfg) continue;
     const x = xScale(ev.date).toFixed(1);
-    const color = ev.kind === "promotion" ? "var(--up)" : "var(--down)";
-    const arrow = ev.kind === "promotion" ? "▲" : "▼";
-    const verb = ev.kind === "promotion" ? "Promoted to" : "Demoted to";
-    const label = escapeHtml(`${ev.date.slice(0, 4)}: ${verb} ${ev.level} (from ${ev.prev_level})`);
+    const label = escapeHtml(ev.label);
+    const top = cfg.pos === "top";
     const yBase = H - PAD_B;
-    levelSvg.push(
-      `<line x1="${x}" y1="${yBase}" x2="${x}" y2="${yBase - 6}" stroke="${color}" stroke-width="1.2" opacity="0.85"><title>${label}</title></line>`,
-      `<text x="${x}" y="${yBase - 7}" font-size="9" fill="${color}" text-anchor="middle"><title>${label}</title>${arrow}</text>`,
+    const glyphY = top ? PAD_T + 6 : yBase - 2;
+    eventSvg.push(
+      `<line x1="${x}" y1="${PAD_T}" x2="${x}" y2="${yBase}" stroke="${cfg.color}" stroke-width="1.2" stroke-dasharray="${cfg.dash}" opacity="0.8"><title>${label}</title></line>`,
+      `<text x="${x}" y="${glyphY.toFixed(1)}" font-size="11" fill="${cfg.color}" text-anchor="middle"><title>${label}</title>${cfg.glyph}</text>`,
     );
   }
 
@@ -1813,10 +2033,167 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="FV trajectory">
     ${yTicks.join("")}
     ${yearSvg.join("")}
-    ${tradeSvg.join("")}
-    ${levelSvg.join("")}
+    ${eventSvg.join("")}
     <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     ${circles}
+  </svg>`;
+}
+
+// Compact inline legend that maps glyph+color → label for every kind in
+// TRANSACTION_KINDS. Used under FV charts so a reader can decode any
+// marker they see without having to hover for the tooltip.
+function transactionLegend(kinds = TRANSACTION_LEGEND_ORDER) {
+  return `<div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;">
+    ${kinds.map(k => {
+      const c = TRANSACTION_KINDS[k];
+      if (!c) return "";
+      return `<span><span style="color:${c.color};font-weight:600;">${c.glyph}</span> ${c.label.toLowerCase()}</span>`;
+    }).join("")}
+  </div>`;
+}
+
+// =============================================================================
+// FARM-SYSTEM CUMULATIVE FV STOCK CHART
+// =============================================================================
+// Renders the running-sum FV time series for one org. Two size variants:
+//   variant="mini"  → 200×56 sparkline used in the farm-system list
+//   variant="big"   → 720×260 detail chart used on the farm detail page
+// Events (trades + graduations) sourced from org.fv_events surface as
+// vertical markers with the unified TRANSACTION_KINDS vocabulary so the
+// glyph+color matches the prospect-page indicators 1:1.
+function makeOrgFvChart(org, variant = "big") {
+  const series = org.fv_history || [];
+  const events = org.fv_events  || [];
+  if (series.length < 2) {
+    return `<div style="color:var(--text-tertiary);font-size:12px;padding:6px 0;">Not enough history yet for a stock chart.</div>`;
+  }
+
+  const isMini = variant === "mini";
+  const W = isMini ? 200 : 720;
+  const H = isMini ? 56  : 240;
+  const PAD_L = isMini ? 4  : 44;
+  const PAD_R = isMini ? 4  : 14;
+  const PAD_T = isMini ? 4  : 14;
+  const PAD_B = isMini ? 9  : 26;
+  const innerW = W - PAD_L - PAD_R;
+  const innerH = H - PAD_T - PAD_B;
+
+  const minT = new Date(series[0].date).getTime();
+  const maxT = new Date(series[series.length - 1].date).getTime();
+  const timeSpan = maxT - minT || 1;
+  // Y range hugs the org's actual FV range so the line uses the full
+  // chart height. Pad 5% top + bottom so peaks/troughs don't kiss the
+  // border. Floor at 0 — cumulative FV can't be negative meaningfully.
+  let yMin = Math.min(...series.map(p => p.total_fv));
+  let yMax = Math.max(...series.map(p => p.total_fv));
+  if (yMin === yMax) { yMin -= 1; yMax += 1; }
+  const yRange = yMax - yMin;
+  const yPad = yRange * 0.06;
+  yMin = Math.max(0, yMin - yPad);
+  yMax = yMax + yPad;
+  const ySpan = yMax - yMin || 1;
+
+  const xScale = d => PAD_L + ((new Date(d).getTime() - minT) / timeSpan) * innerW;
+  const yScale = fv => PAD_T + innerH - ((fv - yMin) / ySpan) * innerH;
+
+  // Direction color: green if last >= first, violet otherwise.
+  const isUp = series[series.length - 1].total_fv >= series[0].total_fv;
+  const stroke = isUp ? "var(--up)" : "var(--down)";
+  const areaFill = isUp ? "rgba(94,255,138,0.10)" : "rgba(255,59,212,0.08)";
+
+  // Y-axis ticks (big only) — 4 evenly-spaced reference lines.
+  const yTickSvg = [];
+  if (!isMini) {
+    const tickStep = Math.max(50, Math.ceil(ySpan / 4 / 50) * 50);
+    for (let v = Math.ceil(yMin / tickStep) * tickStep; v <= yMax; v += tickStep) {
+      const y = yScale(v).toFixed(1);
+      yTickSvg.push(
+        `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="var(--border-light)" stroke-width="0.4" stroke-dasharray="2,3"/>`,
+        `<text x="${PAD_L - 4}" y="${y}" dy="3" font-size="9" fill="var(--text-tertiary)" text-anchor="end">${v}</text>`,
+      );
+    }
+  }
+
+  // Year boundaries with labels (big chart only — mini stays uncluttered).
+  const yearSvg = [];
+  const startYear = new Date(minT).getFullYear();
+  const endYear   = new Date(maxT).getFullYear();
+  for (let yr = startYear; yr <= endYear + 1; yr++) {
+    const yrT = Date.UTC(yr, 0, 1);
+    if (yrT <= minT || yrT >= maxT) continue;
+    const isoDate = new Date(yrT).toISOString().slice(0, 10);
+    const x = xScale(isoDate).toFixed(1);
+    if (isMini) {
+      yearSvg.push(
+        `<line x1="${x}" y1="${PAD_T}" x2="${x}" y2="${H - PAD_B}" stroke="var(--border)" stroke-width="0.4" stroke-dasharray="2,3"/>`,
+        `<text x="${x}" y="${H - 1}" font-size="6.5" fill="var(--text-tertiary)" text-anchor="middle">${yr}</text>`,
+      );
+    } else {
+      yearSvg.push(
+        `<line x1="${x}" y1="${PAD_T}" x2="${x}" y2="${H - PAD_B}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3,3"/>`,
+        `<text x="${x}" y="${H - PAD_B + 14}" font-size="10" fill="var(--text-tertiary)" text-anchor="middle">${yr}</text>`,
+      );
+    }
+  }
+
+  // Build the area + line path. Use polyline for stroke + a closed path
+  // for the soft area fill below the line (signals direction at a glance).
+  const pts = series.map(s => `${xScale(s.date).toFixed(1)},${yScale(s.total_fv).toFixed(1)}`).join(" ");
+  const areaPts = `${PAD_L},${(PAD_T + innerH).toFixed(1)} ${pts} ${(PAD_L + innerW).toFixed(1)},${(PAD_T + innerH).toFixed(1)}`;
+
+  // Event markers — trades (violet) and graduations (gold). Threshold the
+  // FV impact so chart isn't littered with 0-FV pre-ranking trades — those
+  // happened before the player had a tracked grade and don't move the line.
+  // The big chart shows all >0 events; the mini sparkline shows only the
+  // larger ones (≥10 FV) to keep the marker density readable.
+  const minFv = isMini ? 10 : 1;
+  const eventSvg = [];
+  for (const ev of events) {
+    if (!ev.date || (ev.fv || 0) < minFv) continue;
+    const t = new Date(ev.date).getTime();
+    if (isNaN(t) || t < minT || t > maxT) continue;
+    const cfg = TRANSACTION_KINDS[ev.kind];
+    if (!cfg) continue;
+    const x = xScale(ev.date).toFixed(1);
+    const top = cfg.pos === "top";
+    const yBase = H - PAD_B;
+    const glyphY = top ? PAD_T + (isMini ? 4 : 6) : yBase - 2;
+    const fontSize = isMini ? 6.5 : 11;
+    // Direction-aware label: "+ X FV from MIA" reads better than "in / MIA"
+    const dirSym = ev.direction === "in" ? "+" : ev.direction === "out" ? "−" : "";
+    let label;
+    if (ev.kind === "trade") {
+      label = `${ev.date} · ${ev.player_name} (${dirSym}${ev.fv} FV) ${ev.direction === "in" ? "from" : "to"} ${ev.other_org}`;
+    } else if (ev.kind === "graduation") {
+      label = `${ev.date} · ${ev.player_name} graduated (${ev.fv} FV)`;
+    } else {
+      label = `${ev.date} · ${ev.player_name}`;
+    }
+    label = escapeHtml(label);
+    eventSvg.push(
+      `<line x1="${x}" y1="${PAD_T}" x2="${x}" y2="${yBase}" stroke="${cfg.color}" stroke-width="${isMini ? 0.9 : 1.2}" stroke-dasharray="${cfg.dash}" opacity="${isMini ? 0.6 : 0.7}"><title>${label}</title></line>`,
+      `<text x="${x}" y="${glyphY.toFixed(1)}" font-size="${fontSize}" fill="${cfg.color}" text-anchor="middle"><title>${label}</title>${cfg.glyph}</text>`,
+    );
+  }
+
+  // Start + end date labels on the big variant.
+  const xLabelsSvg = [];
+  if (!isMini) {
+    const x0 = xScale(series[0].date).toFixed(1);
+    const x1 = xScale(series[series.length - 1].date).toFixed(1);
+    xLabelsSvg.push(
+      `<text x="${x0}" y="${H - 4}" font-size="9" fill="var(--text-tertiary)" text-anchor="start">${series[0].date}</text>`,
+      `<text x="${x1}" y="${H - 4}" font-size="9" fill="var(--text-tertiary)" text-anchor="end">${series[series.length - 1].date}</text>`,
+    );
+  }
+
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" ${isMini ? 'preserveAspectRatio="none"' : ""} role="img" aria-label="Cumulative FV history">
+    ${yTickSvg.join("")}
+    ${yearSvg.join("")}
+    <polygon points="${areaPts}" fill="${areaFill}" stroke="none"/>
+    ${eventSvg.join("")}
+    <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="${isMini ? 1.5 : 2}" stroke-linecap="round" stroke-linejoin="round"/>
+    ${xLabelsSvg.join("")}
   </svg>`;
 }
 
@@ -2040,12 +2417,8 @@ function renderPlayerDetail(key) {
   const isPitcher = p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position);
 
   const chartSection = (p.points && p.points.length >= 2)
-    ? `<div class="detail-title">FV history</div>${makeBigLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p.career_stats)}
-       <div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;">
-         <span><span style="color:var(--grad);">▼</span> trade</span>
-         <span><span style="color:var(--up);">▲</span> promotion</span>
-         <span><span style="color:var(--down);">▼</span> demotion</span>
-       </div>`
+    ? `<div class="detail-title">FV history</div>${makeBigLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p.career_stats, p)}
+       ${transactionLegend()}`
     : `<div style="color:var(--text-tertiary);font-size:12px;">Not enough FV updates yet for a chart.</div>`;
 
   const careerSection = `<div class="detail-title" style="margin-top:18px;">Stats by season</div>${makeCareerTable(p.career_stats)}`;
@@ -2082,19 +2455,81 @@ function renderPlayerDetail(key) {
         </div>`;
     }
     if (a.method === "international_fa") {
-      const sub = a.signing_date
-        ? `Signed ${escapeHtml(a.signing_date)}${a.team_name ? ` by ${escapeHtml(a.team_name)}` : ""}`
-        : `Signed as an international amateur free agent`;
+      // Headline mirrors the draft block: "<year> · Signed by <team>".
+      // Falls through gracefully when partial fields are missing — we
+      // always have at least one of (year, team, generic label).
+      const team = a.team_name ? `Signed by ${escapeHtml(a.team_name)}` : "Signed as an international amateur free agent";
+      const headline = a.year
+        ? `${a.year} · ${team}`
+        : team;
+      // Render the precise signing date on its own line when present.
+      // Date arrives as ISO (YYYY-MM-DD); format to "Jul 2, 2019" for
+      // readability. Skip the line when only the year is known (it'd
+      // duplicate the headline).
+      let dateLine = "";
+      if (a.signing_date) {
+        const d = new Date(a.signing_date + "T00:00:00");
+        const formatted = isNaN(d.getTime())
+          ? a.signing_date
+          : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+        dateLine = `<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">Signed ${escapeHtml(formatted)}</div>`;
+      }
       const bonusLine = a.bonus_usd != null
         ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Signing bonus: <span style="color:var(--neon-cyan);font-variant-numeric:tabular-nums;">${fmtBonus(a.bonus_usd)}</span></div>`
         : `<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">Signing-bonus data not on file.</div>`;
       return `<div class="detail-title" style="margin-top:18px;">Acquisition · International FA</div>
         <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
-          <div style="font-size:14px;color:var(--text-primary);">${sub}</div>
+          <div style="font-size:14px;color:var(--text-primary);">${headline}</div>
           ${bonusLine}
+          ${dateLine}
         </div>`;
     }
     return "";
+  })();
+
+  // Current-org acquisition. Renders ONLY when the player's current org
+  // acquired them via something OTHER than their original draft/IFA path
+  // (i.e. they've been moved between orgs at least once). Pairs with the
+  // original-acquisition block above to give a complete provenance: where
+  // they entered pro ball AND how their current org got them.
+  const ACQUISITION_LABELS = {
+    draft:             "MLB Draft",
+    international_fa:  "International FA",
+    trade:             "Trade",
+    waiver:            "Waiver claim",
+    rule_5:            "Rule 5",
+    free_agent:        "Free-agent signing",
+    contract_purchase: "Contract purchase",
+    unknown:           "Unknown",
+  };
+  const currentAcqSection = (() => {
+    const ca = p.current_acquisition;
+    if (!ca) return "";
+    const m = ca.method;
+    // Skip when the current acquisition is just the original draft/IFA —
+    // already rendered by the acqSection above. Also skip "unknown".
+    if (m === "draft" || m === "international_fa" || m === "unknown") return "";
+    const ev = ca.event || {};
+    const label = ACQUISITION_LABELS[m] || m;
+    const from = ev.from_org ? escapeHtml(ev.from_org) : "?";
+    const to   = ev.to_org   ? escapeHtml(ev.to_org)   : "?";
+    let dateLine = "";
+    if (ev.date) {
+      const d = new Date(ev.date + "T00:00:00");
+      const fmt = isNaN(d.getTime())
+        ? ev.date
+        : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+      dateLine = `<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">${escapeHtml(fmt)}</div>`;
+    }
+    const desc = ev.description
+      ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;line-height:1.4;">${escapeHtml(ev.description)}</div>`
+      : "";
+    return `<div class="detail-title" style="margin-top:18px;">Acquired by current org · ${escapeHtml(label)}</div>
+      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
+        <div style="font-size:14px;color:var(--text-primary);">From ${from} <span style="color:var(--neon-violet);">→</span> ${to}</div>
+        ${dateLine}
+        ${desc}
+      </div>`;
   })();
 
   const etaRows = (() => {
@@ -2113,7 +2548,7 @@ function renderPlayerDetail(key) {
   root.innerHTML = header + tilesHtml + `
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
       <div>${chartSection}${careerSection}${levelBenchmarkSection}${sourceSection}</div>
-      <div>${statcastSection}${arsenalSection}${tradesSection}${etaRows}</div>
+      <div>${statcastSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${etaRows}</div>
     </div>`;
 }
 
@@ -2130,8 +2565,13 @@ function renderFarmDetail(orgCode) {
   }
 
   // Resolve full player objects so we can render each roster line with its
-  // FV trajectory chart inline.
-  const rosterPlayers = (DATA.players || []).filter(p => p.org === orgCode);
+  // FV trajectory chart inline. The acquisition filter (shared with the
+  // main prospect list via state.acqFilter) narrows the roster to only
+  // prospects acquired by this org via the chosen method.
+  const rosterPlayersAll = (DATA.players || []).filter(p => p.org === orgCode);
+  const rosterPlayers = state.acqFilter !== "all"
+    ? rosterPlayersAll.filter(p => ((p.current_acquisition || {}).method || "unknown") === state.acqFilter)
+    : rosterPlayersAll.slice();
   rosterPlayers.sort((a, b) => {
     const fa = a.points.length ? a.points[a.points.length - 1].consensus_fv_raw : 0;
     const fb = b.points.length ? b.points[b.points.length - 1].consensus_fv_raw : 0;
@@ -2209,7 +2649,7 @@ function renderFarmDetail(orgCode) {
   const rosterRows = rosterPlayers.map((p, i) => {
     const latest = p.points[p.points.length - 1];
     const chart = p.points.length >= 2
-      ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades)
+      ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)
       : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
     return `
       <div class="player-row" style="grid-template-columns:32px 1.3fr 0.45fr 0.45fr 1.1fr 0.6fr;cursor:pointer;" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
@@ -2368,11 +2808,107 @@ function renderFarmDetail(orgCode) {
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${affilTabs}</div>
     ${affilPanels}` : "";
 
+  // "Graded prospects by level" — focused view that strips out the org
+  // filler from affiliate rosters and shows only prospects with an FV
+  // grade, grouped by affiliate level. Each prospect links back to its
+  // detail page. Levels with no graded prospects are skipped entirely so
+  // the section stays dense.
+  const gradedByLevel = (() => {
+    const blocks = [];
+    for (const lvl of affilLevels) {
+      const graded = (orgRosters[lvl] || []).filter(r => r.fv_label);
+      if (!graded.length) continue;
+      // Already sorted FV desc upstream (run_monthly sort key). Keep that.
+      const items = graded.map(pl => {
+        const click = pl.player_key
+          ? ` onclick="goToPlayer('${escapeHtml(pl.player_key)}');" style="cursor:pointer;"`
+          : "";
+        return `<div class="graded-prospect-row"${click}>
+          <span class="fv-badge ${fvClass(pl.fv_label)}" style="font-size:10px;padding:1px 6px;min-width:28px;text-align:center;">${pl.fv_label}</span>
+          <span style="color:${pl.player_key ? "var(--neon-cyan)" : "var(--text-primary)"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(pl.fullName)}</span>
+          <span style="color:var(--text-tertiary);font-size:10px;white-space:nowrap;">${escapeHtml(pl.position || "—")}${pl.age != null ? ` · ${pl.age.toFixed(1)}` : ""}</span>
+        </div>`;
+      }).join("");
+      blocks.push(`
+        <div class="graded-level-block">
+          <div class="graded-level-header">
+            <span class="graded-level-name">${escapeHtml(lvl)}</span>
+            <span class="graded-level-count">${graded.length}</span>
+          </div>
+          ${items}
+        </div>`);
+    }
+    if (!blocks.length) {
+      return `<div style="color:var(--text-tertiary);font-size:12px;">No graded prospects currently assigned to an affiliate.</div>`;
+    }
+    return `<div class="graded-by-level-grid">${blocks.join("")}</div>`;
+  })();
+
+  const totalGraded = affilLevels.reduce(
+    (acc, lvl) => acc + (orgRosters[lvl] || []).filter(r => r.fv_label).length, 0);
+  const gradedSection = `
+    <div class="detail-title" style="margin-top:18px;">Graded prospects by level
+      <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">${totalGraded} total · sorted by FV within each level</span>
+    </div>
+    ${gradedByLevel}`;
+
+  // Cumulative-FV stock chart for the system. Compares this farm's total
+  // FV trajectory against its peak so the header shows "current of peak".
+  // Marker legend lives just below (trades + graduations).
+  const fvHist = org.fv_history || [];
+  const fvPeak = fvHist.length ? Math.max(...fvHist.map(p => p.total_fv)) : 0;
+  const fvCurrent = fvHist.length ? fvHist[fvHist.length - 1].total_fv : 0;
+  const fvFirstDate = fvHist.length ? fvHist[0].date : "";
+  const stockChartSection = `
+    <div class="detail-title" style="margin-top:18px;">Cumulative FV stock
+      <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:8px;">
+        ${fvCurrent.toFixed(1)} now · peak ${fvPeak.toFixed(1)} · since ${escapeHtml(fvFirstDate)}
+      </span>
+    </div>
+    ${makeOrgFvChart(org, "big")}
+    ${transactionLegend(["trade", "graduation"])}`;
+
+  // Acquisition filter chip bar — mirrors the main prospect list's
+  // selector but renders inline as chips since the farm detail page has
+  // no top filter bar. Tally per method shows the user how many tracked
+  // prospects fall into each bucket BEFORE clicking. Filter state is
+  // shared with the main list (state.acqFilter).
+  const ACQ_METHODS_FOR_FARM = [
+    ["all",               "All"],
+    ["draft",             "Draft"],
+    ["international_fa",  "Intl FA"],
+    ["trade",             "Trade"],
+    ["waiver",            "Waiver"],
+    ["rule_5",            "Rule 5"],
+    ["free_agent",        "FA signing"],
+    ["contract_purchase", "Purchase"],
+  ];
+  const acqTallies = {};
+  for (const rp of rosterPlayersAll) {
+    const m = (rp.current_acquisition || {}).method || "unknown";
+    acqTallies[m] = (acqTallies[m] || 0) + 1;
+  }
+  const acqFilterBar = `
+    <div style="display:flex;align-items:center;gap:6px;margin:14px 0 0;flex-wrap:wrap;">
+      <span style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;margin-right:4px;">Acquired via</span>
+      ${ACQ_METHODS_FOR_FARM.map(([val, label]) => {
+        const n = val === "all" ? rosterPlayersAll.length : (acqTallies[val] || 0);
+        const active = state.acqFilter === val;
+        const disabled = val !== "all" && n === 0;
+        return `<button class="chip${active ? " active" : ""}" data-farm-acq="${val}" type="button"${disabled ? ' disabled style="opacity:0.4;cursor:default;"' : ""}>
+          ${escapeHtml(label)} <span style="color:var(--text-tertiary);font-weight:400;">(${n})</span>
+        </button>`;
+      }).join("")}
+    </div>`;
+
   root.innerHTML = header + tilesHtml + `
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
       <div>
-        <div class="detail-title">Tracked prospects (${rosterPlayers.length})</div>
+        ${stockChartSection}
+        <div class="detail-title" style="margin-top:18px;">Tracked prospects (${rosterPlayers.length}${state.acqFilter !== "all" ? ` · filtered by ${escapeHtml(ACQ_METHODS_FOR_FARM.find(m => m[0] === state.acqFilter)?.[1] || state.acqFilter)}` : ""})</div>
+        ${acqFilterBar}
         ${rosterHeader}${rosterRows}
+        ${gradedSection}
         ${affiliateSection}
         <div class="detail-title" style="margin-top:18px;">Recent trades involving the ${escapeHtml(fullOrgName(orgCode))}</div>
         ${tradesHtml}
@@ -2389,6 +2925,17 @@ function renderFarmDetail(orgCode) {
       document.querySelectorAll("#farm-detail-body .level-panel").forEach(panel => {
         panel.style.display = panel.dataset.level === lvl ? "block" : "none";
       });
+    });
+  });
+  // Acquisition filter chips — share state with the main list. Clicking
+  // re-renders the entire farm detail so the roster + tally chips both
+  // reflect the new filter.
+  document.querySelectorAll("#farm-detail-body [data-farm-acq]").forEach(btn => {
+    if (btn.disabled) return;
+    btn.addEventListener("click", () => {
+      state.acqFilter = btn.dataset.farmAcq;
+      renderFarmDetail(orgCode);
+      syncToURL();
     });
   });
 }
@@ -2480,6 +3027,10 @@ function attachHandlers() {
   });
   document.getElementById("org-filter").addEventListener("change", e => {
     state.orgFilter = e.target.value;
+    render();
+  });
+  document.getElementById("acq-filter").addEventListener("change", e => {
+    state.acqFilter = e.target.value;
     render();
   });
   document.getElementById("sort-select").addEventListener("change", e => {

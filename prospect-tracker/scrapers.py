@@ -227,6 +227,139 @@ def _fetch(url: str, cache_key: str, force: bool = False,
 
 
 
+# --- ESPN (Kiley McDaniel Top 100) ----------------------------------------
+# ESPN's preseason/midseason Top 100 article is server-rendered HTML with a
+# clean structure: every prospect lives in an <h2> with the literal pattern
+# "RANK. NAME, POS, TEAM". FV grades appear as their own <h2> tier headers
+# ("65 FV tier", "60 FV tier", etc.) that introduce a block of ranks.
+#
+# This is McDaniel's flagship list and arguably the single highest-signal
+# source we ingest — his FV grades are the explicit anchor for several
+# competing sources, so getting him scraped (not just CSV-imported) is a
+# meaningful upgrade. The article's content_tier meta tag reads "free",
+# so no ESPN+ login is required.
+#
+# Failure mode: ESPN's bot filter rejects generic user-agents. The default
+# project UA gets a CloudFront challenge; using a real-browser UA returns
+# the same HTML a logged-out reader would see.
+
+ESPN_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
+ESPN_INTERVALS = [
+    ("https://www.espn.com/mlb/story/_/id/47684202/top-100-mlb-prospects-2026-"
+     "kiley-mcdaniel-konnor-griffin-kevin-mcgonigle-jesus-made",
+     "ESPN 2026 Preseason", "2026-01-27"),
+]
+
+
+def scrape_espn_top100(url: str, label: str, snap_date: str,
+                       force: bool = False) -> list[Snapshot]:
+    """
+    Parse one ESPN Top 100 article and return Snapshot rows.
+
+    Algorithm:
+      1. Walk the article body's <h2> tags in document order.
+      2. "<N> FV tier" headers reset `current_fv` for the block below.
+      3. "<rank>. <name>, <pos>, <full team>" headers emit a Snapshot,
+         tagged with the most recent FV tier.
+
+    Cleaning:
+      - Org names are canonicalized via trades.canonical_org so "Pittsburgh
+        Pirates" → "PIT", matching the rest of the pipeline.
+      - Position is preserved as the raw label ("SS", "RHP", "CF", etc.)
+        because age-vs-level scoring keys on these.
+      - Names are passed through fix_mojibake so accented characters survive
+        the cached HTML round-trip.
+    """
+    from trades import canonical_org
+
+    if date.fromisoformat(snap_date) > date.today():
+        return []
+    cache_key = "espn_" + re.sub(r"[^a-z0-9]+", "_", label.lower())
+    cache_path = CACHE_DIR / f"{cache_key}.html"
+
+    # Custom-UA fetch — _fetch() uses the project UA which CloudFront
+    # rejects for ESPN. Inline the cache-aware path here rather than
+    # complicate _fetch's signature.
+    if cache_path.exists() and not force:
+        body = cache_path.read_text(encoding="utf-8")
+        log.info("cache hit: %s (%d bytes)", cache_key, len(body))
+        fr = FetchResult(body=body, status=200, from_cache=True, url=url)
+    else:
+        log.info("fetching: %s", url)
+        time.sleep(RATE_LIMIT_SECONDS)
+        try:
+            resp = requests.get(url, headers=ESPN_HEADERS, timeout=30)
+        except requests.RequestException as e:
+            log.error("network error fetching %s: %s", url, e)
+            return []
+        if resp.status_code != 200:
+            log.warning("espn %s: HTTP %d (%d bytes)",
+                        label, resp.status_code, len(resp.text))
+            return []
+        cache_path.write_text(resp.text, encoding="utf-8")
+        fr = FetchResult(body=resp.text, status=200, from_cache=False, url=url)
+
+    body = fr.body
+    # Restrict to the article body so we skip page-header h2s ("Editor's
+    # Picks") and sidebar marketing blocks.
+    start = body.find('class="article-body"')
+    if start < 0:
+        log.warning("espn %s: article-body div not found", label)
+        return []
+    body = body[start:]
+
+    # h2 strip: tolerate any attribute order on the tag and any inner
+    # markup (anchors, spans). We need the raw text content only.
+    heads = re.findall(r"<h2[^>]*>(.*?)</h2>", body, re.DOTALL)
+    fv_header = re.compile(r"^\s*(\d{2,3})\+?\s*FV\s*tier", re.IGNORECASE)
+    rank_line = re.compile(
+        r"^\s*(\d{1,3})\.\s+([^,]+?),\s*([^,]+?),\s*(.+?)\s*$"
+    )
+
+    rows: list[Snapshot] = []
+    current_fv: float | None = None
+    seen_ranks: set[int] = set()
+
+    for h in heads:
+        text = re.sub(r"<[^>]+>", "", h)
+        text = fix_mojibake(text)
+        if not text:
+            continue
+        fm = fv_header.match(text)
+        if fm:
+            current_fv = float(fm.group(1))
+            continue
+        rm = rank_line.match(text)
+        if not rm:
+            continue
+        rank = int(rm.group(1))
+        if not (1 <= rank <= 100) or rank in seen_ranks:
+            continue
+        seen_ranks.add(rank)
+        name = rm.group(2).strip()
+        pos  = rm.group(3).strip() or None
+        team = rm.group(4).strip()
+        org  = canonical_org(team) or team
+        rows.append(Snapshot(
+            source="espn", snapshot_date=snap_date, interval_label=label,
+            player_key=normalize_key(name), player_name=name,
+            position=pos, org=org, rank=rank, fv=current_fv,
+            status="active",
+        ))
+
+    log.info("espn %s -> %d players%s", label, len(rows),
+             " (TIER B working)" if rows else " (TIER B FAILED — selectors stale)")
+    return rows
+
+
 # --- Just Baseball --------------------------------------------------------
 # JB renders prospects as <h2> or <h3> blocks. Each starts with "<rank>. <Name>"
 # and the FV grade appears in the following paragraph as "Future Value: 55".
@@ -379,17 +512,28 @@ def scrape_all(force: bool = False) -> tuple[list[Snapshot], dict[str, str]]:
     Run enabled scrapers, log a summary, return (snapshots, birth_dates).
 
     Active sources:
-      - Just Baseball (Tier B, HTML scraping, working)
-      - Manual CSV (Tier C, user-maintained) — includes FanGraphs, ESPN, TJStats
+      - ESPN (Tier B, HTML scraping, Kiley McDaniel's Top 100)
+      - Just Baseball (Tier B, HTML scraping)
+      - Manual CSV (Tier C, user-maintained) — FanGraphs, TJStats, MLB Pipeline
 
-    Snapshots come from both sources. birth_dates come only from the manual
+    Snapshots come from all sources. birth_dates come only from the manual
     CSV (Tier C) — automated scrapers don't surface DOB. The API path
     (stats.fetch_birth_date) fills in the rest at run_monthly time.
     """
     snapshots: list[Snapshot] = []
     counts: dict[str, int] = {}
 
-    # Tier B: Just Baseball (only working web scraper)
+    # Tier B: ESPN (Kiley McDaniel Top 100, server-rendered HTML)
+    for url, label, snap in ESPN_INTERVALS:
+        try:
+            got = scrape_espn_top100(url, label, snap, force=force)
+            snapshots.extend(got)
+            counts[label] = len(got)
+        except Exception as e:
+            log.exception("espn %s crashed: %s", label, e)
+            counts[label] = -1
+
+    # Tier B: Just Baseball
     for url, label, snap in JB_INTERVALS:
         try:
             got = scrape_just_baseball(url, label, snap, force=force)
@@ -434,7 +578,17 @@ def probe(force: bool = False) -> None:
     print("Probing enabled sources (no DB writes)...")
     print("-" * 70)
 
-    # Tier B — Just Baseball only
+    # Tier B — ESPN
+    for url, label, snap in ESPN_INTERVALS:
+        print(f"\n[ESPN] {label}")
+        print(f"  URL: {url}")
+        got = scrape_espn_top100(url, label, snap, force=force)
+        print(f"  Parser found: {len(got)} players")
+        if got:
+            top = got[0]
+            print(f"  Sample: {top.player_name} (rank {top.rank}, fv {top.fv}, org {top.org})")
+
+    # Tier B — Just Baseball
     for url, label, snap in JB_INTERVALS:
         print(f"\n[Just Baseball] {label}")
         print(f"  URL: {url}")

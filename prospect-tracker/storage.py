@@ -512,6 +512,159 @@ def latest_run_summary() -> dict | None:
         return None
 
 
+def _build_org_fv_history(
+    players: list[PlayerTimeseries],
+    filter_real_trades,
+    trades_by_player: dict[str, list[dict]],
+) -> dict[str, dict]:
+    """
+    Build per-org cumulative FV time series + significant events.
+
+    For each player, build a chronological event timeline of:
+      - snapshot points (consensus_fv changes over time)
+      - real trades (player moves between orgs)
+      - graduation (player exits the system)
+
+    Walk each timeline once and emit per-(org, date) deltas. After
+    aggregating across all players, the running sum within each org
+    produces the cumulative FV chart. Returns a dict keyed by canonical
+    org code:
+
+      {
+        "ATL": {
+          "series": [{"date": "2024-01-04", "total_fv": 240.5}, ...],
+          "events": [{"date": "2024-07-30", "kind": "trade", "player_name":
+                      "Drew Jones", "fv": 50.0, "other_org": "MIA"},
+                     {"date": "2025-04-01", "kind": "graduation",
+                      "player_name": "Spencer Schwellenbach", "fv": 55.0},
+                      ...],
+        },
+        ...
+      }
+
+    Events power the indicator markers on the farm-system stock chart so
+    each dip / spike has an explainable cause.
+    """
+    from trades import canonical_org
+    from collections import defaultdict
+
+    # contribs[(org, date)] = signed FV delta applied that day
+    contribs: dict[tuple[str, str], float] = defaultdict(float)
+    # events_by_org: list of (date, kind, player_name, fv, other_org)
+    events_by_org: dict[str, list[dict]] = defaultdict(list)
+    # Track every date any org sees a change so the time series isn't
+    # collapsed to only dates where a player was added — graduations and
+    # trades show up too.
+    dates_by_org: dict[str, set[str]] = defaultdict(set)
+
+    for p in players:
+        if not p.points:
+            continue
+        sorted_points = sorted(p.points, key=lambda pt: pt.snapshot_date)
+
+        # Pre-filter trades to the ones our chart actually surfaces (the
+        # same set the prospect transaction history shows). Canonicalize
+        # team codes so trade-attribution lines up with org_summary keys.
+        raw_trades = trades_by_player.get(p.player_key, []) or []
+        real_trades = filter_real_trades(raw_trades)
+        trades = []
+        for t in real_trades:
+            d = t.get("trade_date")
+            cf = canonical_org(t.get("from_org"))
+            ct = canonical_org(t.get("to_org"))
+            if not (d and cf and ct):
+                continue
+            trades.append({"date": d, "from": cf, "to": ct})
+        trades.sort(key=lambda t: t["date"])
+
+        # Initial org: pre-first-trade owner if any trade exists, else
+        # the player's current org. Canonicalized to align with the keys
+        # used in org_summary.
+        current_org = canonical_org(p.org) if p.org else None
+        initial_org = trades[0]["from"] if trades else current_org
+        if not initial_org:
+            continue
+
+        # Merge snapshots + trades into one chronological stream. On a
+        # date with both, apply snapshot first (the FV update reflects
+        # the source's view as of the publication date), then the trade.
+        # Each entry: (date, "snapshot", fv) | (date, "trade", from, to)
+        stream: list[tuple] = []
+        for pt in sorted_points:
+            stream.append((pt.snapshot_date, "snapshot", pt.consensus_fv_raw))
+        for t in trades:
+            stream.append((t["date"], "trade", t["from"], t["to"]))
+        if p.status == "graduated" and p.graduation_date:
+            stream.append((p.graduation_date, "graduation"))
+        # Stable sort: ties resolved by index in `stream` (snapshots first
+        # because they're appended before trades).
+        stream.sort(key=lambda x: x[0])
+
+        org_now = initial_org
+        fv_now = 0.0
+        for ev in stream:
+            d = ev[0]
+            kind = ev[1]
+            if kind == "snapshot":
+                new_fv = ev[2]
+                delta = new_fv - fv_now
+                if delta != 0:
+                    contribs[(org_now, d)] += delta
+                    dates_by_org[org_now].add(d)
+                fv_now = new_fv
+            elif kind == "trade":
+                from_org, to_org = ev[2], ev[3]
+                # Move the player's current FV out of from_org into to_org
+                # on the trade date. If from_org doesn't match our tracked
+                # org_now (e.g. a stale inference), trust the API record
+                # and adjust org_now to from_org first.
+                source_org = org_now if org_now == from_org else from_org
+                contribs[(source_org, d)] -= fv_now
+                contribs[(to_org, d)]     += fv_now
+                dates_by_org[source_org].add(d)
+                dates_by_org[to_org].add(d)
+                events_by_org[source_org].append({
+                    "date": d, "kind": "trade", "player_name": p.player_name,
+                    "player_key": p.player_key, "fv": round(fv_now, 1),
+                    "other_org": to_org, "direction": "out",
+                })
+                events_by_org[to_org].append({
+                    "date": d, "kind": "trade", "player_name": p.player_name,
+                    "player_key": p.player_key, "fv": round(fv_now, 1),
+                    "other_org": source_org, "direction": "in",
+                })
+                org_now = to_org
+            elif kind == "graduation":
+                # Removing the player's last FV from their current org —
+                # graduates leave the system, so cumulative FV drops by
+                # their FV on graduation day.
+                contribs[(org_now, d)] -= fv_now
+                dates_by_org[org_now].add(d)
+                events_by_org[org_now].append({
+                    "date": d, "kind": "graduation",
+                    "player_name": p.player_name,
+                    "player_key": p.player_key, "fv": round(fv_now, 1),
+                })
+
+    # Convert per-org contribs to running-sum series.
+    result: dict[str, dict] = {}
+    for org, dates in dates_by_org.items():
+        running = 0.0
+        series = []
+        for d in sorted(dates):
+            running += contribs[(org, d)]
+            series.append({"date": d, "total_fv": round(running, 1)})
+        # Drop leading zero-points so charts don't start with a flat line
+        # before the org has any tracked prospects yet.
+        first_nonzero = next((i for i, s in enumerate(series)
+                              if s["total_fv"] > 0.01), 0)
+        series = series[first_nonzero:]
+        events = sorted(events_by_org.get(org, []),
+                        key=lambda e: (e["date"], e["kind"]))
+        result[org] = {"series": series, "events": events}
+    return result
+
+
 def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           statlines: dict[str, dict] | None = None,
                           pitch_arsenals: dict[str, dict] | None = None,
@@ -794,6 +947,48 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             out.append(t)
         return out
 
+    # Verb patterns that classify a trade-table entry into the discrete
+    # acquisition methods the front-end filter offers. Order matters —
+    # the first pattern that matches wins, so "off waivers" must beat
+    # "traded" for waiver-claim transactions that include both verbs in
+    # the description.
+    _ACQUISITION_VERB_RULES = (
+        (("off waivers", " on waivers", "claimed off waivers"),       "waiver"),
+        (("purchased the contract", "purchase of the contract"),      "contract_purchase"),
+        (("returned to ",),                                           "rule_5"),
+        (("selected by",),                                            "rule_5"),
+        (("signed as a free agent",),                                 "free_agent"),
+        (("traded ",),                                                "trade"),
+    )
+
+    def _classify_current_acquisition(filtered_trades: list[dict],
+                                      acquisition: dict | None) -> str:
+        """How the player's CURRENT org acquired them.
+
+        Returns one of: 'draft', 'international_fa', 'trade', 'waiver',
+        'rule_5', 'free_agent', 'contract_purchase', 'unknown'.
+
+        If there are no cross-org events, the answer is the player's
+        original acquisition method (draft or IFA). Otherwise the most
+        recent inter-org event's verb wins — that's what brought them to
+        their current org. Trade description text drives the verb match
+        because typeCode alone collapses too many move types onto "TR".
+        """
+        if not filtered_trades:
+            if acquisition:
+                m = acquisition.get("method")
+                if m in ("draft", "international_fa"):
+                    return m
+            return "unknown"
+        latest = max(filtered_trades, key=lambda t: t.get("trade_date") or "")
+        desc = (latest.get("description") or "").lower()
+        for patterns, kind in _ACQUISITION_VERB_RULES:
+            if any(pat in desc for pat in patterns):
+                return kind
+        # Cross-org event with no recognized verb — fall back to "trade"
+        # (typeCode TR is the dominant unclassified case).
+        return "trade"
+
     def _serialize(p: PlayerTimeseries) -> dict:
         bd = birth_dates.get(p.player_key)
         age = compute_age_decimal(bd)
@@ -810,6 +1005,22 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             ops_norm=ops_norms,
             era_norm=era_norms,
         )
+        filtered_trades = _filter_real_trades(trades_by_player.get(p.player_key, []))
+        acq = acquisitions.get(p.player_key)
+        current_acq_method = _classify_current_acquisition(filtered_trades, acq)
+        # Surface the specific trade that brought them to their current
+        # org (when applicable). The detail page shows it as the
+        # "Acquired by <ORG>" line; filters key on `method` only.
+        current_acq_event = None
+        if current_acq_method not in ("draft", "international_fa", "unknown"):
+            latest = max(filtered_trades, key=lambda t: t.get("trade_date") or "") if filtered_trades else None
+            if latest:
+                current_acq_event = {
+                    "date":        latest.get("trade_date"),
+                    "from_org":    latest.get("from_org"),
+                    "to_org":      latest.get("to_org"),
+                    "description": latest.get("description"),
+                }
         return {
             "player_key": p.player_key,
             "player_name": p.player_name,
@@ -838,9 +1049,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "statline": sl,
             "pitch_arsenal": pa,
             "statcast": sc,
-            "trades": _filter_real_trades(trades_by_player.get(p.player_key, [])),
+            "trades": filtered_trades,
             "career_stats": career_stats.get(p.player_key, []),
-            "acquisition": acquisitions.get(p.player_key),
+            "acquisition": acq,
+            # How the player's CURRENT org acquired them. Powers the
+            # acquisition filter on the main prospect list + farm
+            # detail roster, and the "Acquired by <ORG>" line on the
+            # prospect detail page when distinct from the original
+            # acquisition.
+            "current_acquisition": {
+                "method": current_acq_method,
+                "event":  current_acq_event,
+            },
             "eta": {
                 "year": eta.eta_year,
                 "confidence": eta.confidence,
@@ -1022,6 +1242,32 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     org_summary.sort(key=lambda x: -x["total_fv"])
     for rank_i, entry in enumerate(org_summary, start=1):
         entry["farm_rank"] = rank_i
+
+    # Per-level graded prospect counts, sourced from the affiliate-roster
+    # map. Drives both the "sort farms by depth at level X" chips on the
+    # farm list page and the "graded prospects by level" section on each
+    # farm detail page. Only includes prospects with a FV grade — un-graded
+    # org filler in the rosters isn't a prospect for our purposes.
+    FARM_LEVELS = ("MLB", "AAA", "AA", "A+", "A", "Rk", "DSL")
+    for entry in org_summary:
+        org_rosters = rosters_by_org.get(entry["org"], {})
+        entry["level_counts"] = {
+            lvl: sum(1 for r in (org_rosters.get(lvl) or []) if r.get("fv_label"))
+            for lvl in FARM_LEVELS
+        }
+
+    # Per-org cumulative FV history — running sum of prospect FVs over time,
+    # attributed to whichever org owned the prospect on each snapshot date.
+    # Drives the farm-system stock chart on the farm list + farm detail
+    # pages. Trades show as +/- moves between orgs; graduations subtract a
+    # graduate's FV from their org on their graduation date.
+    org_fv_history = _build_org_fv_history(
+        actives + grads + inactives, _filter_real_trades, trades_by_player,
+    )
+    for entry in org_summary:
+        hist = org_fv_history.get(entry["org"], {})
+        entry["fv_history"] = hist.get("series", [])
+        entry["fv_events"]  = hist.get("events", [])
     # ────────────────────────────────────────────────────────────────────────
 
     active_payload = [_serialize(p) for p in actives]

@@ -296,9 +296,19 @@ ORG_ALIASES = {
 # 3-letter codes that sources alias to a different canonical form.
 # Sources disagree on Washington: snapshots use "WSN", others use "WSH".
 # Athletics dropped their "Oakland" prefix mid-2024 — treat OAK as ATH.
+# The MLB Stats API uses shorter 2-3 char team codes (AZ, KC, SD, SF, TB,
+# CWS) than the prospect-ranking sources (ARI, KCR, SDP, SFG, TBR, CHW)
+# we keep as canonical. Normalize the API codes onto our canonical form
+# so per-level rosters and the org_summary line up.
 _CODE_REMAP = {
     "WSH": "WSN",
     "OAK": "ATH",
+    "AZ":  "ARI",
+    "CWS": "CHW",
+    "KC":  "KCR",
+    "SD":  "SDP",
+    "SF":  "SFG",
+    "TB":  "TBR",
 }
 
 

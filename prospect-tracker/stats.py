@@ -1949,6 +1949,93 @@ def bulk_fetch_drafts(years: Iterable[int],
 
 
 # ---------------------------------------------------------------------------
+# International FA signings — fetch /transactions?playerId=... per prospect
+# ---------------------------------------------------------------------------
+
+# Transaction typeCodes that indicate the original IFA signing. SFA is the
+# modern code ("Signed as Free Agent"); SGN is the older one. Both arrive
+# with a `toTeam` block carrying the signing org.
+_IFA_SIGN_TYPE_CODES = {"SFA", "SGN"}
+
+
+def fetch_ifa_signing(mlbam_id: int) -> dict | None:
+    """Look up the original international-amateur signing event for one
+    player. Hits /transactions?playerId={id} and returns the EARLIEST
+    free-agent signing transaction, normalized to:
+
+      {year, team_name, signing_date}
+
+    Returns None when the API returns no qualifying transaction (e.g.
+    the player has no signing on record, or was actually drafted and
+    the IFA path was a false-positive in run_monthly's draft lookup).
+
+    Signing-bonus dollars are not exposed by the public Stats API and
+    stay None for IFAs — the frontend already handles that gracefully.
+    """
+    url = f"{MLB_STATS_API}/transactions?playerId={mlbam_id}"
+    try:
+        # IFA signing dates don't change once recorded, so cache aggressively.
+        resp = requests.get(url, timeout=20, ttl=30 * 86400)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as e:
+        log.debug("transactions fetch failed for %s: %s", mlbam_id, e)
+        return None
+
+    txs = data.get("transactions") or []
+    signings = [
+        tx for tx in txs
+        if (tx.get("typeCode") or "").upper() in _IFA_SIGN_TYPE_CODES
+        and tx.get("date")
+    ]
+    if not signings:
+        return None
+
+    # Earliest signing event = the original amateur signing. Later "SFA"
+    # entries (e.g. minor-league re-signings after a release) would shadow
+    # the real one if we took the most recent.
+    signings.sort(key=lambda tx: tx.get("date") or "")
+    first = signings[0]
+    signing_date = first.get("date")
+    year = None
+    if signing_date and len(signing_date) >= 4:
+        try:
+            year = int(signing_date[:4])
+        except ValueError:
+            year = None
+    to_team = first.get("toTeam") or {}
+    team_name = to_team.get("name")
+
+    return {
+        "year":         year,
+        "team_name":    team_name,
+        "signing_date": signing_date,
+    }
+
+
+def bulk_fetch_ifa_signings(mlbam_ids: Iterable[int],
+                            max_workers: int = 8) -> dict[int, dict]:
+    """Concurrently fetch IFA signing info for many players. Returns
+    {mlbam_id: signing_dict}, omitting players with no signing on record.
+
+    Hits one /transactions request per player — these payloads are small
+    and cached for 30 days, so monthly reruns are effectively free after
+    the first pass."""
+    ids = [int(mid) for mid in mlbam_ids if mid is not None]
+    if not ids:
+        return {}
+    out: dict[int, dict] = {}
+    with concurrent.futures.ThreadPoolExecutor(
+            max_workers=min(max_workers, len(ids))) as ex:
+        for mid, rec in zip(ids, ex.map(fetch_ifa_signing, ids)):
+            if rec is not None:
+                out[mid] = rec
+    log.info("bulk_fetch_ifa_signings: resolved %d/%d signings",
+             len(out), len(ids))
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Affiliation map — fetch /teams?sportId=... to get team→parent_org links
 # ---------------------------------------------------------------------------
 
