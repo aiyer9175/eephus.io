@@ -7788,30 +7788,45 @@ function render() {
   // Slice gating: views that traverse graduates / inactive / farm rosters
   // wait for the corresponding sidecar before rendering. The boot path
   // kicks off these loads on first paint so latency is usually masked.
+  // The loading message goes into the section's *body* div (which the
+  // render functions also write to) — NEVER the section root, because
+  // overwriting the section root destroys the filter-bar / rows-div
+  // template that the next render() call expects to find.
   const needsGrad = active === "graduates"
       || active === "injured"       // injured rolls graduates + inactive into the pool
       || (active === "player" && !(DATA.players || []).some(p => p.player_key === state.view.key));
   const needsRosters = active === "farmDetail";
   const needsInactive = active === "injured"
       || (active === "player" && !(DATA.players || []).some(p => p.player_key === state.view.key));
+  // Inner body element per section — must match where the per-section
+  // render function writes its main content.
+  const SECTION_BODY = {
+    graduates:  "grad-rows",
+    injured:    "injured-rows",
+    farmDetail: "farm-detail-body",
+    player:     "player-detail-body",
+  };
+  const showLoading = (msg) => {
+    const id = SECTION_BODY[active];
+    if (!id) return;
+    const target = document.getElementById(id);
+    if (target) target.innerHTML = `<div class="state-message">${msg}</div>`;
+  };
 
   if (needsGrad && DATA._slices && DATA._slices.graduates && !DATA.graduates.length) {
-    const target = document.getElementById(sections[active]);
-    if (target) target.innerHTML = `<div class="state-message">Loading graduates…</div>`;
+    showLoading("Loading graduates…");
     loadSlice("graduates").then(render);
     return;
   }
   if (needsInactive && DATA._slices && DATA._slices.inactive
       && !DATA.inactive.length) {
-    // Inactive is small; don't bother with a separate loading state —
-    // just wait for it then render. Graduates may already be present.
+    // Inactive is small; quiet wait — no loading message.
     loadSlice("inactive").then(render);
     return;
   }
   if (needsRosters && DATA._slices && DATA._slices.rosters_by_org
       && Object.keys(DATA.rosters_by_org).length === 0) {
-    const target = document.getElementById(sections[active]);
-    if (target) target.innerHTML = `<div class="state-message">Loading farm rosters…</div>`;
+    showLoading("Loading farm rosters…");
     loadSlice("rosters_by_org").then(render);
     return;
   }
