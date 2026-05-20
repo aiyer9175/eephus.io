@@ -79,6 +79,9 @@ class ETAResult:
     perf_adj: float           # performance adjustment applied
     age_adj: float            # age-for-level adjustment applied
     fv_adj: float             # FV grade adjustment applied
+    # Health adjustment in years. Positive = ETA pushed back due to
+    # recent injuries / post-TJ recovery; 0 = no impact.
+    health_adj: float = 0.0
 
 
 def estimate_eta(
@@ -90,6 +93,7 @@ def estimate_eta(
     expected_ages: dict[str, float] | None = None,
     ops_norm: dict[str, float] | None = None,
     era_norm: dict[str, float] | None = None,
+    health: dict | None = None,
 ) -> ETAResult:
     """
     Return an ETAResult for the given prospect attributes.
@@ -226,8 +230,40 @@ def estimate_eta(
             fv_adj = +0.25
         signals += 1
 
+    # ── Health adjustment ──────────────────────────────────────────────────
+    # Post-TJ recovery typically costs a pitcher 12-18 months of game
+    # time, and chronic-injury prospects miss enough playing time that
+    # the FV-to-MLB pipeline takes longer. We push the ETA back when:
+    #   * is_post_tj=True and surgery is within ~18 months of today
+    #     (the bulk of the recovery window). Add 1.0 year for pitchers.
+    #   * the 24-month IL-stint count is 3+ — chronic profile. Add 0.5.
+    #   * total IL days in last 24 months are 200+ — Add 0.5 on top.
+    # Capped at +1.5 years total so a healthy-now prospect doesn't get
+    # an obscure forecast for a single bad season.
+    health_adj = 0.0
+    if health:
+        if health.get("is_post_tj"):
+            tj_iso = health.get("tj_surgery_date")
+            if tj_iso:
+                try:
+                    tj_date = date.fromisoformat(tj_iso)
+                    months_since = max(0, (date.today() - tj_date).days // 30)
+                    if months_since < 18:
+                        health_adj += 1.0 if is_pitcher else 0.5
+                except (TypeError, ValueError):
+                    pass
+        if (health.get("il_stints_24mo") or 0) >= 3:
+            health_adj += 0.5
+        if (health.get("il_days_24mo") or 0) >= 200:
+            health_adj += 0.5
+        # Don't double-count: cap at 1.5y so a chronically injured but
+        # not currently-recovering player still has a usable forecast.
+        health_adj = min(1.5, health_adj)
+        if health_adj > 0:
+            signals += 1  # contributes to confidence-tier counting
+
     # ── Combine and clamp ──────────────────────────────────────────────────
-    total = base + perf_adj + age_adj + fv_adj
+    total = base + perf_adj + age_adj + fv_adj + health_adj
     total = max(0.0, total)                 # can't arrive in the past
     eta_year = today_year + round(total)
 
@@ -245,4 +281,5 @@ def estimate_eta(
         perf_adj=round(perf_adj, 2),
         age_adj=round(age_adj, 2),
         fv_adj=round(fv_adj, 2),
+        health_adj=round(health_adj, 2),
     )

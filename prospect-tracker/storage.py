@@ -1622,6 +1622,75 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             return None
         return latest_code
 
+    # Phrases that flag the underlying surgery in an IL stint's
+    # description / reason text. Matched case-insensitively; substring
+    # match is fine because the API descriptions are verbose ("recovery
+    # from Tommy John surgery", "Left UCL surgery", etc.). "UCL sprain"
+    # is intentionally NOT in this set — a sprain isn't a confirmed TJ.
+    _TJ_PHRASES = (
+        "tommy john",
+        "ucl surgery",
+        "ulnar collateral ligament surgery",
+        "internal brace",          # often the modern hybrid UCL repair
+        "ucl reconstruction",
+    )
+
+    def _derive_health_profile(injury_history: list[dict],
+                                today: "date | None" = None) -> dict:
+        """Derive aggregate injury signals used by the UI + ETA model.
+
+        Looks at:
+          * Number of distinct IL stints in the trailing 24 months —
+            anything >= 3 indicates a chronic injury pattern.
+          * Total IL days in the trailing 24 months — separate signal
+            from stint count so a single year-long IL still counts.
+          * Whether the player has had Tommy-John-class elbow surgery
+            on record (any stint description matches _TJ_PHRASES). The
+            chip on the prospect page surfaces this prominently, and
+            ETA can be padded for the typical 12-18 month recovery.
+
+        Open stints (active === True) count toward both metrics
+        because an actively-injured player is currently lost playing
+        time — but the days for an open stint reflect what's elapsed
+        so far, not the full eventual stint length.
+        """
+        from datetime import date as _date, timedelta as _td
+        today = today or _date.today()
+        cutoff = today - _td(days=365 * 2)
+        recent_stints = 0
+        recent_days = 0
+        tj_dates: list[str] = []
+        for stint in injury_history or []:
+            since_str = stint.get("since") or ""
+            try:
+                since = _date.fromisoformat(since_str)
+            except (TypeError, ValueError):
+                continue
+            if since >= cutoff:
+                recent_stints += 1
+                days = stint.get("days") or 0
+                if not days and stint.get("active"):
+                    # Open stint that doesn't have a days field yet —
+                    # estimate as days since `since`.
+                    days = max(0, (today - since).days)
+                recent_days += int(days or 0)
+            desc = " ".join([
+                str(stint.get("description") or ""),
+                str(stint.get("reason") or ""),
+            ]).lower()
+            if any(p in desc for p in _TJ_PHRASES):
+                tj_dates.append(since_str)
+        tj_latest = max(tj_dates) if tj_dates else None
+        return {
+            "il_stints_24mo": recent_stints,
+            "il_days_24mo":   recent_days,
+            "is_post_tj":     bool(tj_dates),
+            # Latest TJ-class surgery date. The UI uses it to label the
+            # chip ("Post-TJ · 2024-09-03"); the ETA helper checks it
+            # against today to decide whether to apply a recovery delay.
+            "tj_surgery_date": tj_latest,
+        }
+
     def _active_display_org(p: PlayerTimeseries) -> str | None:
         # Canonicalize at the display layer so historical snapshots with
         # pre-rename codes (e.g. "OAK" before the Athletics dropped Oakland)
@@ -1719,11 +1788,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         sm = sabermetrics.get(p.player_key)
         is_pitcher = bool(p.position and p.position.split("/")[0] in PITCHER_POS_SET)
         latest_fv = p.points[-1].consensus_fv_raw if p.points else None
+        # Health profile: 24-month IL stints + days + Tommy-John flag.
+        # Computed once from the cached injury_history so the rest of
+        # the pipeline (ETA model, stat_flags injury-prone rule, UI
+        # chip) can pull from one dict instead of re-parsing dates.
+        rs = roster_status.get(p.player_key) or {}
+        health = _derive_health_profile(rs.get("injury_history") or [])
         eta = estimate_eta(
             level, age, is_pitcher, latest_fv, sl,
             expected_ages=age_baselines,
             ops_norm=ops_norms,
             era_norm=era_norms,
+            health=health,
         )
         # Performance-vs-level-median enrichment. wRC+/xFIP aren't on the
         # MLB Stats API, so we compute their conceptual cousins from the
@@ -1762,7 +1838,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # stat_flags.MIN_GAMES_HITTER / MIN_IP_PITCHER); the function
         # returns [] in that case so the field is safe to render
         # unconditionally on the prospect detail page.
-        flags = compute_stat_flags(sl_out, level_norms)
+        flags = compute_stat_flags(sl_out, level_norms, health=health)
 
         filtered_trades = _filter_real_trades(trades_by_player.get(p.player_key, []))
         acq = acquisitions.get(p.player_key)
@@ -1816,6 +1892,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "stock": stock_movement(p),
             "statline": sl_out,
             "stat_flags": flags,
+            # 24-month injury aggregate + Tommy-John flag. Drives the
+            # IL-section roster, the "Post-TJ" chip on the prospect
+            # header, the Injury-prone red flag, and the ETA-delay
+            # adjustment in eta.estimate_eta.
+            "health_profile": health,
             # Non-trade transactions: waiver claims, releases, DFAs,
             # contract purchases, Rule 5 selections/returns, FA signings.
             # Trades stay in their own `trades` field with stricter
@@ -1867,6 +1948,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "perf_adj": eta.perf_adj,
                 "age_adj": eta.age_adj,
                 "fv_adj": eta.fv_adj,
+                "health_adj": eta.health_adj,
             },
             "points": [
                 {

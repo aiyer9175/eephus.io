@@ -1554,6 +1554,7 @@
     <button class="section-tab active" data-section="active">Active</button>
     <button class="section-tab" data-section="spotlights">Spotlights</button>
     <button class="section-tab" data-section="traded">Recently Traded</button>
+    <button class="section-tab" data-section="injured">Injured List</button>
     <button class="section-tab" data-section="graduates">Graduates</button>
     <button class="section-tab" data-section="farm">Farm Systems</button>
     <span class="section-count" id="section-count"></span>
@@ -1642,6 +1643,19 @@
       <button class="chip" data-spotlight-bucket="rebounders">Rebounders</button>
     </div>
     <div id="spotlight-rows"></div>
+  </div>
+
+  <div id="injured-section" style="display: none;">
+    <div class="filter-bar" style="margin-bottom:8px;">
+      <span class="filter-label">Sort</span>
+      <button class="chip active" data-il-sort="days"
+              title="Longest current IL stints first">Days on IL</button>
+      <button class="chip" data-il-sort="fv"
+              title="Highest-FV injured prospects first">FV</button>
+      <button class="chip" data-il-sort="since"
+              title="Most recently placed on IL first">Since (newest)</button>
+    </div>
+    <div id="injured-rows"></div>
   </div>
 
   <div id="graduates-section" style="display: none;">
@@ -2163,6 +2177,7 @@ function syncToURL() {
   if (state.farmTxKind  !== "all")        p.set("ftxk",  state.farmTxKind);
   if (state.farmTxDir   !== "all")        p.set("ftxd",  state.farmTxDir);
   if (state.gradSort    !== "date")       p.set("gsort", state.gradSort);
+  if (state.ilSort      !== "days")       p.set("ilsort", state.ilSort);
   if (state.spotlightBucket !== "hot")    p.set("bucket", state.spotlightBucket);
   const hash = p.toString();
   history.replaceState(null, "", hash ? "#" + hash : window.location.pathname + window.location.search);
@@ -2194,6 +2209,7 @@ function syncFromURL() {
   if (p.has("ftxk")) state.farmTxKind = p.get("ftxk");
   if (p.has("ftxd")) state.farmTxDir  = p.get("ftxd");
   if (p.has("gsort")) state.gradSort  = p.get("gsort");
+  if (p.has("ilsort")) state.ilSort    = p.get("ilsort");
   if (p.has("bucket")) state.spotlightBucket = p.get("bucket");
 }
 
@@ -2252,6 +2268,8 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.filterPos === state.posFilter));
   document.querySelectorAll("[data-grad-sort]").forEach(b =>
     b.classList.toggle("active", b.dataset.gradSort === state.gradSort));
+  document.querySelectorAll("[data-il-sort]").forEach(b =>
+    b.classList.toggle("active", b.dataset.ilSort === state.ilSort));
   document.querySelectorAll("[data-farm-sort]").forEach(b =>
     b.classList.toggle("active", b.dataset.farmSort === state.farmSort));
   document.querySelectorAll("[data-form-window]").forEach(b =>
@@ -2431,6 +2449,11 @@ const state = {
   // returns one split per season), so the WAR sort uses the
   // most-recent-season number — labelled accordingly in the chip.
   gradSort: "date",
+  // Injured-list sort. "days" (default) sorts by elapsed IL days
+  // descending so the longest-out players surface first. "fv" puts
+  // high-FV injured prospects on top; "since" sorts by most-recent
+  // placement.
+  ilSort: "days",
   view: null
 };
 
@@ -2541,8 +2564,8 @@ function renderActives() {
     return `
       <div class="player-row" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
         <div class="rank-num">${i + 1}</div>
-        <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-          ${headshotHTML(p, 32)}
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+          ${headshotHTML(p, 50)}
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}</div>
             <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
@@ -2647,6 +2670,103 @@ function getFilteredTraded() {
     return fb - fa;
   });
   return pool;
+}
+
+// Injured List section — every tracked prospect currently on an IL
+// stint. Pulls from player.il_status (which carries `is_on_il`, type,
+// since-date, days) and renders a focused roster so a user can answer
+// "who's hurt right now and how long are they out?" in one view.
+// Honors the global search box and the per-section sort chips.
+function renderInjured() {
+  const today = new Date();
+  // Build the list from every player array — actives + graduates
+  // (graduates can also be on the MLB IL) + inactives — so a hurt
+  // post-grad still shows up here rather than disappearing into the
+  // graduates view.
+  const pool = [];
+  for (const arr of ["players", "graduates", "inactive"]) {
+    for (const p of (DATA[arr] || [])) {
+      const il = p.il_status || {};
+      if (!il.is_on_il) continue;
+      // Days elapsed since placement. Server fills `days` in il_status
+      // for closed stints but the active stint's days field is often
+      // null — derive from the `since` field.
+      let days = il.days;
+      if ((days == null) && il.since) {
+        const t = new Date(il.since + "T00:00:00").getTime();
+        if (!isNaN(t)) days = Math.max(0, Math.floor((today.getTime() - t) / 86400000));
+      }
+      pool.push({
+        p, il,
+        days: days || 0,
+        since: il.since || "",
+        // FV close (most-recent consensus_fv) so we can sort by talent.
+        fv: p.fv_close || 0,
+      });
+    }
+  }
+
+  // Search filter — shared with the rest of the views.
+  let filtered = pool;
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    filtered = filtered.filter(({ p }) => (p.player_name || "").toLowerCase().includes(q));
+  }
+
+  // Sort.
+  const mode = state.ilSort || "days";
+  if (mode === "fv") {
+    filtered.sort((a, b) => (b.fv || 0) - (a.fv || 0) || (b.days - a.days));
+  } else if (mode === "since") {
+    filtered.sort((a, b) => (b.since || "").localeCompare(a.since || ""));
+  } else {
+    filtered.sort((a, b) => (b.days - a.days) || (b.fv - a.fv));
+  }
+
+  // 7-column grid:  # | Player | IL type | Since | Days | FV | Reason
+  const ILCOLS = "32px 1.6fr 0.65fr 0.85fr 0.5fr 0.45fr 1.4fr";
+  const header = `<div class="col-header" style="grid-template-columns:${ILCOLS};">
+    <span style="text-align:center;">#</span>
+    <span>Player · pos · org</span>
+    <span>IL type</span>
+    <span>Since</span>
+    <span style="text-align:right;">Days</span>
+    <span style="text-align:center;">FV</span>
+    <span>Reason</span>
+  </div>`;
+
+  const rows = filtered.map(({ p, il, days, since, fv }, i) => {
+    const tjBadge = (p.health_profile || {}).is_post_tj
+      ? `<span style="font-size:9px;color:var(--neon-violet);background:rgba(107,79,168,0.15);border:1px solid rgba(107,79,168,0.5);padding:1px 5px;border-radius:2px;letter-spacing:0.04em;text-transform:uppercase;font-weight:700;margin-left:4px;">Post-TJ</span>`
+      : "";
+    const fvLabel = fv ? Math.round(fv) : "—";
+    const reason = il.reason || il.description || "—";
+    return `
+      <div class="player-row" data-key="${escapeHtml(p.player_key)}" style="grid-template-columns:${ILCOLS};${orgStripe(p.org)}">
+        <div class="rank-num">${i + 1}</div>
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+          ${headshotHTML(p, 50)}
+          <div style="min-width:0;flex:1;">
+            <div class="player-name">${escapeHtml(p.player_name)}${tjBadge}</div>
+            <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}</div>
+          </div>
+        </div>
+        <div><span class="grad-pill" style="background:rgba(201,162,39,0.12);color:var(--neon-amber);border:1px solid rgba(201,162,39,0.45);">${escapeHtml(il.type || "?")} IL</span></div>
+        <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12px;color:var(--text-secondary);">${escapeHtml(since || "—")}</div>
+        <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;color:var(--neon-amber);font-weight:600;">${days}d</div>
+        <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}">${fvLabel}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+        <div style="font-size:11px;color:var(--text-secondary);line-height:1.3;">${escapeHtml(reason)}</div>
+      </div>`;
+  }).join("");
+
+  document.getElementById("injured-rows").innerHTML = filtered.length
+    ? header + rows
+    : (state.search
+        ? `<div class="state-message">No injured prospects match "${escapeHtml(state.search)}".</div>`
+        : `<div class="state-message">No tracked prospects are currently on the IL.</div>`);
+  document.querySelectorAll("#injured-section .player-row").forEach(row => {
+    row.addEventListener("click", () => goToPlayer(row.dataset.key));
+  });
 }
 
 function renderRecentlyTraded() {
@@ -2776,8 +2896,8 @@ function renderGraduates() {
     return `
       <div class="grad-row" data-key="${escapeHtml(g.player_key)}" style="grid-template-columns:${GCOLS};${orgStripe(g.org)}">
         <div class="rank-num">${rank}</div>
-        <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-          ${headshotHTML(g, 32)}
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+          ${headshotHTML(g, 50)}
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(g.player_name)}${warTag}</div>
             <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(g.position ?? "—")} · ${teamLogoHTML(g.org, "sm")}<span>${escapeHtml(g.org ?? "—")}</span>${g.age != null ? `<span class="age-tag">age ${g.age.toFixed(1)}</span>` : ""}</div>
@@ -3662,18 +3782,24 @@ function makeSpendingBlock(org) {
     <text x="${CX}" y="${CY + 14}" text-anchor="middle" font-family="var(--font-sans)" font-size="9" letter-spacing="0.1em" fill="var(--text-tertiary)">${years.length}-YR TOTAL</text>
   </svg>`;
 
+  // Build cleaner subline copy. Avoid the previous mix of "signings ·
+  // avg" (which awkwardly omitted the word "bonus") in favor of an
+  // explicit "X bonuses · avg $Y" so the reader sees what the number
+  // is averaging over.
+  const ifaAvg   = ifaSign   ? ifaTotal   / ifaSign   : 0;
+  const draftAvg = draftSign ? draftTotal / draftSign : 0;
   const totalsHtml = `<div class="spending-summary">
     <div class="ss-donut">${donutSvg}</div>
     <div class="ss-totals">
       <div class="st-cell st-ifa">
-        <div class="st-label">International FA · ${ifaPct.toFixed(0)}%</div>
+        <div class="st-label">International FA · ${ifaPct.toFixed(0)}% of spend</div>
         <div class="st-value">${_fmtDollars(ifaTotal)}</div>
-        <div class="st-sub">${ifaSign} signings · avg ${_fmtDollars(ifaSign ? ifaTotal / ifaSign : 0)}</div>
+        <div class="st-sub">${ifaSign} bonuses · avg ${_fmtDollars(ifaAvg)} per signing</div>
       </div>
       <div class="st-cell st-draft">
-        <div class="st-label">Draft · ${draftPct.toFixed(0)}%</div>
+        <div class="st-label">Draft · ${draftPct.toFixed(0)}% of spend</div>
         <div class="st-value">${_fmtDollars(draftTotal)}</div>
-        <div class="st-sub">${draftSign} picks signed · avg ${_fmtDollars(draftSign ? draftTotal / draftSign : 0)}</div>
+        <div class="st-sub">${draftSign} picks signed · avg ${_fmtDollars(draftAvg)} per pick</div>
       </div>
     </div>
   </div>`;
@@ -3716,16 +3842,28 @@ function makeSpendingBlock(org) {
 
   return totalsHtml + `
     <details class="spending-detail">
-      <summary>Per-year detail</summary>
+      <summary>Show per-year breakdown</summary>
       <div class="spending-grid">${years.map(rowHtml).join("")}</div>
     </details>`;
 }
 
 // FV-distribution histogram for an org. Used in the farm-detail sidebar
 // and (in compact form) on the farm-list page. Buckets prospects into
-// the standard FV bands (≥60, 55, 50, 45, 40) so the chart matches the
-// tier-bar coloring used elsewhere.
+// the standard FV bands (≥60, 55, 50, 45, 40). Each tier gets a
+// distinct, vivid color so the histogram reads at a glance — the old
+// pairing tried to reuse the `--fv-XX-fg` text-color set, which paints
+// the bars in dark earth tones that vanish against the sidebar's light
+// cream background. The palette below goes from gold/amber (elite) down
+// through cyan / green / steel to a muted gray for 40 — same intuitive
+// "higher tier = warmer" mapping used everywhere else in the UI.
 const FV_HIST_TIERS = [60, 55, 50, 45, 40];
+const FV_TIER_COLORS = {
+  60: "var(--neon-amber)",       // gold — elite / 60+ tier
+  55: "#C9802A",                  // burnt orange — secondary star tier
+  50: "#3DBF7A",                  // emerald — MLB-regular line
+  45: "#5090E0",                  // steel blue — backup/utility band
+  40: "#8B8B8B",                  // muted gray — org filler
+};
 function makeFvHistogram(prospects, opts) {
   opts = opts || {};
   const counts = Object.fromEntries(FV_HIST_TIERS.map(t => [t, 0]));
@@ -3738,7 +3876,8 @@ function makeFvHistogram(prospects, opts) {
   const maxCount = Math.max(1, ...FV_HIST_TIERS.map(t => counts[t]));
   const bars = FV_HIST_TIERS.map(t => {
     const h = Math.round((counts[t] / maxCount) * 100);
-    return `<div class="fvh-bar" style="height:${h}%;background:var(--fv-${t}-fg);opacity:${counts[t] ? 0.85 : 0.2};" title="${counts[t]} × FV ${t}${t === 60 ? '+' : ''}">${opts.showCounts === false ? '' : `<span class="fvh-count">${counts[t] || ''}</span>`}</div>`;
+    const fill = FV_TIER_COLORS[t] || "var(--text-tertiary)";
+    return `<div class="fvh-bar" style="height:${h}%;background:${fill};opacity:${counts[t] ? 0.9 : 0.2};" title="${counts[t]} × FV ${t}${t === 60 ? '+' : ''}">${opts.showCounts === false ? '' : `<span class="fvh-count">${counts[t] || ''}</span>`}</div>`;
   }).join('');
   const labels = FV_HIST_TIERS.map(t => `<span>${t}${t === 60 ? '+' : ''}</span>`).join('');
   return `<div class="fv-histogram">${bars}</div><div class="fv-histogram-labels">${labels}</div>`;
@@ -4681,6 +4820,16 @@ function renderPlayerDetail(key) {
       ? `<span class="grad-pill" style="background:rgba(201,162,39,0.10);color:var(--neon-amber);border-color:var(--neon-amber);">${escapeHtml(ilNow.type || "?")} IL${ilDays != null ? ` · ${ilDays}d` : ""}</span>`
       : "";
 
+  // Post-Tommy John chip. The health_profile.tj_surgery_date is set
+  // server-side when any IL stint description matches a TJ-class
+  // phrase. The chip shows next to the status pill in the header so
+  // a reader can see at a glance that a pitcher is on the
+  // post-surgery development arc.
+  const hp = p.health_profile || {};
+  const tjPill = hp.is_post_tj
+    ? `<span class="grad-pill" style="background:rgba(107,79,168,0.10);color:var(--neon-violet);border:1px solid rgba(107,79,168,0.55);">Post-TJ${hp.tj_surgery_date ? ` · ${escapeHtml(hp.tj_surgery_date)}` : ""}</span>`
+    : "";
+
   const avl = p.age_vs_level || {};
   const fvLabel = latest ? latest.consensus_fv_label : "—";
   const fvBadge = latest ? `<span class="fv-badge ${fvClass(fvLabel)}" style="font-size:22px;padding:5px 14px;min-width:60px;margin-top:4px;">${fvLabel}</span>` : "";
@@ -4699,13 +4848,14 @@ function renderPlayerDetail(key) {
     <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
     <div class="detail-page-header" style="${orgStripe(p.org)}">
       <div style="display:flex;align-items:flex-start;gap:16px;flex:1;min-width:0;">
-        ${headshotHTML(p, 88)}
+        ${headshotHTML(p, 130)}
         ${teamLogoHTML(p.org, "lg", p.org ? fullOrgName(p.org) : "")}
         <div style="min-width:0;">
           <div class="player-display-name">${escapeHtml(p.player_name)}</div>
           <div class="player-display-meta">
             <strong style="font-weight:600;color:var(--text-primary);">${escapeHtml(p.position ?? "—")}</strong> · ${orgLink}${p.age != null ? ` · age ${p.age.toFixed(1)}` : ""}${p.birth_date ? ` · born ${p.birth_date}` : ""}
             ${statusPill ? " · " + statusPill : ""}
+            ${tjPill     ? " · " + tjPill     : ""}
           </div>
           ${rankPills}
         </div>
@@ -4782,14 +4932,67 @@ function renderPlayerDetail(key) {
     </div>`;
   }).join("")}</div>`;
 
-  // Level benchmark block — shows the empirical age/OPS/ERA medians
-  // at every level the player has touched in their career_stats, plus
-  // the player's own ages/ops at each one so you can read off
-  // "young for level" vs "above-average performance" at a glance.
+  // Age/level-relative performance — shows every level the player has
+  // touched alongside the empirical median for that level. The age
+  // column compares the player to the level's median age; the rate-
+  // stat columns compare each rate stat to the level's average.
+  // Colors: green when the player beats the level (low ERA / high
+  // OPS+ISO / low K% / high BB% / low BB-HR/9), red when they trail.
+  // Hitters and pitchers get different stat columns reflecting what
+  // matters at each position.
   const levelBenchmarkSection = (() => {
     const career = p.career_stats || [];
     if (!career.length) return "";
     const isP = career[0].is_pitcher;
+
+    // Format helpers that always print the delta alongside the raw,
+    // colored by whether the player is above or below the level avg.
+    const fmtDeltaColor = (val, avg, lowerBetter) => {
+      if (val == null || isNaN(val) || avg == null) return "—";
+      const delta = val - avg;
+      // Tolerate signed-zero noise so a 0.0 delta doesn't get a color.
+      const isBetter = lowerBetter ? delta < -0.01 : delta > 0.01;
+      const isWorse  = lowerBetter ? delta > 0.01  : delta < -0.01;
+      const color = isBetter ? "var(--up)" : isWorse ? "var(--down)" : "var(--text-tertiary)";
+      return `<span style="color:${color};">${(delta > 0 ? "+" : "")}${delta.toFixed(2)}</span>`;
+    };
+    // Rate-stat formatter that strips the leading zero ("0.180" → ".180")
+    // and pairs the raw value with a colored delta vs. the level avg.
+    const fmtRate3 = (val, avg, lowerBetter) => {
+      if (val == null || isNaN(val) || avg == null) return "—";
+      const delta = val - avg;
+      const isBetter = lowerBetter ? delta < -0.001 : delta > 0.001;
+      const isWorse  = lowerBetter ? delta > 0.001  : delta < -0.001;
+      const color = isBetter ? "var(--up)" : isWorse ? "var(--down)" : "var(--text-tertiary)";
+      const fmt = n => Math.abs(n) < 1
+        ? (n >= 0 ? "" : "-") + Math.abs(n).toFixed(3).replace(/^0/, "")
+        : n.toFixed(3);
+      const sign = delta > 0 ? "+" : "";
+      return `${fmt(val)} <span style="color:${color};font-size:11px;">(${sign}${fmt(delta)} vs ${fmt(avg)})</span>`;
+    };
+    const fmtPct = (val, avg, lowerBetter) => {
+      if (val == null || isNaN(val) || avg == null) return "—";
+      const delta = val - avg;
+      const isBetter = lowerBetter ? delta < -0.1 : delta > 0.1;
+      const isWorse  = lowerBetter ? delta > 0.1  : delta < -0.1;
+      const color = isBetter ? "var(--up)" : isWorse ? "var(--down)" : "var(--text-tertiary)";
+      const sign = delta > 0 ? "+" : "";
+      return `${val.toFixed(1)}% <span style="color:${color};font-size:11px;">(${sign}${delta.toFixed(1)}pp)</span>`;
+    };
+    const fmtNum = (val, avg, lowerBetter, digits = 2) => {
+      if (val == null || isNaN(val) || avg == null) return "—";
+      const delta = val - avg;
+      const isBetter = lowerBetter ? delta < -0.05 : delta > 0.05;
+      const isWorse  = lowerBetter ? delta > 0.05  : delta < -0.05;
+      const color = isBetter ? "var(--up)" : isWorse ? "var(--down)" : "var(--text-tertiary)";
+      const sign = delta > 0 ? "+" : "";
+      return `${val.toFixed(digits)} <span style="color:${color};font-size:11px;">(${sign}${delta.toFixed(digits)} vs ${avg.toFixed(digits)})</span>`;
+    };
+    const num = v => {
+      const n = parseFloat(v);
+      return isFinite(n) ? n : null;
+    };
+
     const rows = career.map(c => {
       const norm = (DATA.level_norms || {})[c.level] || {};
       const a = norm.age || {};
@@ -4805,23 +5008,37 @@ function renderPlayerDetail(key) {
       const ageDiffHtml = ageDiff != null
         ? `<span style="color:${ageDiff <= -1 ? "var(--up)" : ageDiff >= 1 ? "var(--down)" : "var(--text-tertiary)"};">${ageDiff > 0 ? "+" : ""}${ageDiff.toFixed(1)}y</span>`
         : "—";
-      const perfCol = isP
-        ? (c.era != null && perf.avg_era != null
-            ? `${c.era} vs ${perf.avg_era.toFixed(2)} <span style="color:${parseFloat(c.era) < perf.avg_era ? "var(--up)" : "var(--down)"};">(${(parseFloat(c.era) - perf.avg_era).toFixed(2)})</span>`
-            : "—")
-        : (c.ops != null && perf.avg_ops != null
-            ? `${c.ops} vs ${perf.avg_ops.toFixed(3)} <span style="color:${parseFloat(c.ops) > perf.avg_ops ? "var(--up)" : "var(--down)"};">(${(parseFloat(c.ops) - perf.avg_ops > 0 ? "+" : "")}${(parseFloat(c.ops) - perf.avg_ops).toFixed(3)})</span>`
-            : "—");
+      // Build the stat cells. Hitters get OPS / ISO / BB% / K%;
+      // pitchers get ERA / WHIP / K/9 / BB/9.
+      let statCells;
+      if (isP) {
+        statCells = `
+          <td style="font-variant-numeric:tabular-nums;">${fmtNum(num(c.era), perf.avg_era, true, 2)}</td>
+          <td style="font-variant-numeric:tabular-nums;">${fmtNum(num(c.whip), perf.avg_whip, true, 2)}</td>
+          <td style="font-variant-numeric:tabular-nums;">${fmtNum(num(c.k_per_9), perf.avg_k_per_9, false, 2)}</td>
+          <td style="font-variant-numeric:tabular-nums;">${fmtNum(num(c.bb_per_9), perf.avg_bb_per_9, true, 2)}</td>`;
+      } else {
+        const iso = c.iso != null ? c.iso : (num(c.slg) != null && num(c.avg) != null ? num(c.slg) - num(c.avg) : null);
+        statCells = `
+          <td style="font-variant-numeric:tabular-nums;">${fmtRate3(num(c.ops), perf.avg_ops, false)}</td>
+          <td style="font-variant-numeric:tabular-nums;">${fmtRate3(iso, perf.avg_iso, false)}</td>
+          <td style="font-variant-numeric:tabular-nums;">${fmtPct(num(c.bb_pct), perf.avg_bb_pct, false)}</td>
+          <td style="font-variant-numeric:tabular-nums;">${fmtPct(num(c.k_pct), perf.avg_k_pct, true)}</td>`;
+      }
       return `<tr>
         <td>${c.season}</td>
         <td><span class="level-pill level-neutral">${c.level}</span></td>
         <td style="font-variant-numeric:tabular-nums;">${ageAtSeason != null ? ageAtSeason.toFixed(1) : "—"} vs ${a.median_age != null ? a.median_age.toFixed(1) : "—"} ${ageDiffHtml}</td>
-        <td style="font-variant-numeric:tabular-nums;">${perfCol}</td>
+        ${statCells}
       </tr>`;
     }).join("");
-    const perfHeader = isP ? "ERA vs level median" : "OPS vs level median";
-    return `<div class="detail-title" style="margin-top:18px;">Age-relative performance</div>
-      <table class="detail-table"><thead><tr><th>Season</th><th>Level</th><th>Age vs level median</th><th>${perfHeader}</th></tr></thead><tbody>${rows}</tbody></table>`;
+    const statHeaders = isP
+      ? `<th>ERA vs lvl</th><th>WHIP vs lvl</th><th>K/9 vs lvl</th><th>BB/9 vs lvl</th>`
+      : `<th>OPS vs lvl</th><th>ISO vs lvl</th><th>BB% vs lvl</th><th>K% vs lvl</th>`;
+    return `<div class="detail-title" style="margin-top:18px;">Age &amp; level-relative performance
+        <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">colored delta vs. the empirical level median for each stat</span>
+      </div>
+      <table class="detail-table"><thead><tr><th>Season</th><th>Level</th><th>Age vs lvl</th>${statHeaders}</tr></thead><tbody>${rows}</tbody></table>`;
   })();
 
   const chartSection = (p.points && p.points.length >= 2)
@@ -4944,6 +5161,82 @@ function renderPlayerDetail(key) {
           Since ${escapeHtml(sinceFmt || "—")}${days != null ? ` <span style="color:var(--neon-amber);font-variant-numeric:tabular-nums;">· ${days} day${days === 1 ? "" : "s"}</span>` : ""}
         </div>
         ${desc}
+      </div>`;
+  })();
+
+  // Health profile sidebar card — surfaces the 24-month IL aggregate
+  // even when the player isn't currently on IL. Three numbers + the
+  // Tommy-John state at a glance: stint count, total IL days, and the
+  // surgery date (when applicable). Lets a scouting reader assess
+  // durability risk without scrolling to the Injury history table.
+  const healthSection = (() => {
+    const hp = p.health_profile || {};
+    const stints = hp.il_stints_24mo || 0;
+    const days = hp.il_days_24mo || 0;
+    const hasAnySignal = stints > 0 || days > 0 || hp.is_post_tj;
+    if (!hasAnySignal) return "";
+    // Pick a color for the headline number — green if clean, amber for
+    // mild concern, red for chronic / TJ recovery.
+    const headlineColor = hp.is_post_tj || stints >= 3 || days >= 200
+      ? "var(--down)"
+      : (stints >= 1 || days >= 30)
+        ? "var(--neon-amber)"
+        : "var(--up)";
+    const tjLine = hp.is_post_tj
+      ? `<div style="font-size:12px;color:var(--neon-violet);font-weight:600;margin-top:6px;">Post-TJ recovery${hp.tj_surgery_date ? ` · surgery ${escapeHtml(hp.tj_surgery_date)}` : ""}</div>`
+      : "";
+    return `<div class="detail-title" style="margin-top:18px;">Health profile <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">trailing 24 months</span></div>
+      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:var(--radius-sm);">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <div class="stat-label">IL stints</div>
+            <div class="stat-value" style="color:${headlineColor};font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${stints}</div>
+          </div>
+          <div>
+            <div class="stat-label">Days on IL</div>
+            <div class="stat-value" style="color:${headlineColor};font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${days}d</div>
+          </div>
+        </div>
+        ${tjLine}
+      </div>`;
+  })();
+
+  // Per-source FV card — pulls the latest snapshot point and lays out
+  // each contributing source's grade so the reader can see whether
+  // consensus is unanimous or split. Compact one-row-per-source list
+  // with each FV in its tier color, dimmed when the source hasn't
+  // updated recently.
+  const perSourceSection = (() => {
+    const latestPt = p.points && p.points.length
+      ? p.points[p.points.length - 1] : null;
+    if (!latestPt || !latestPt.per_source) return "";
+    const entries = Object.entries(latestPt.per_source);
+    if (!entries.length) return "";
+    // Display order: highest FV first, then alphabetical for ties.
+    entries.sort(([, av], [, bv]) => {
+      const ax = av.fv_published ?? -1;
+      const bx = bv.fv_published ?? -1;
+      return bx - ax;
+    });
+    const sourceRows = entries.map(([src, info]) => {
+      const fvNum = info.fv_published;
+      const rank = info.rank;
+      const lbl = SOURCE_LABELS[src] || src;
+      const fvCell = fvNum != null
+        ? `<span class="fv-badge ${fvClass(String(Math.round(fvNum)))}" style="font-size:10px;padding:1px 6px;">${Math.round(fvNum)}</span>`
+        : `<span style="color:var(--text-tertiary);font-size:11px;">rank only</span>`;
+      const rankCell = rank != null
+        ? `<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-tertiary);font-size:10px;">#${rank}</span>`
+        : "";
+      return `<div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;">
+        <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(lbl)}</span>
+        ${rankCell}
+        ${fvCell}
+      </div>`;
+    }).join("");
+    return `<div class="detail-title" style="margin-top:18px;">Source consensus <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">latest grade per source</span></div>
+      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">
+        ${sourceRows}
       </div>`;
   })();
 
@@ -5095,7 +5388,7 @@ function renderPlayerDetail(key) {
   root.innerHTML = header + tilesHtml + flagsSection + `
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
       <div>${chartSection}${careerSection}${levelBenchmarkSection}${sourceSection}</div>
-      <div>${ilSection}${rosterStatusSection}${sabermetricsSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${injurySection}${etaRows}</div>
+      <div>${ilSection}${healthSection}${rosterStatusSection}${sabermetricsSection}${perSourceSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${injurySection}${etaRows}</div>
     </div>`;
 }
 
@@ -5270,8 +5563,8 @@ function renderFarmDetail(orgCode) {
     return `
       <div class="player-row" style="grid-template-columns:32px 1.6fr 0.45fr 0.45fr 1.1fr 0.6fr;${orgStripe(p.org)}" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
         <div class="rank-num">${i + 1}</div>
-        <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-          ${headshotHTML(p, 36)}
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+          ${headshotHTML(p, 56)}
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}</div>
             <div class="player-meta">${escapeHtml(p.position ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
@@ -5348,7 +5641,7 @@ function renderFarmDetail(orgCode) {
   const topProspectCard = `<div class="farm-side-card">
     <div class="side-title">Top prospect</div>
     ${tp ? `<div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="goToPlayer('${escapeHtml((tpPlayer || {}).player_key || '')}');">
-      ${headshotHTML(tpPlayer || {}, 44)}
+      ${headshotHTML(tpPlayer || {}, 64)}
       <div style="min-width:0;">
         <div style="font-size:14px;font-weight:600;color:var(--neon-cyan);">${escapeHtml(tp.name)} <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:11px;padding:1px 6px;">${tp.fv_label}</span></div>
         <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(tp.pos||'')} · age ${tp.age != null ? tp.age.toFixed(1) : "—"}</div>
@@ -5358,7 +5651,7 @@ function renderFarmDetail(orgCode) {
   const youngestCard = `<div class="farm-side-card">
     <div class="side-title">Youngest</div>
     ${yp ? `<div style="display:flex;align-items:center;gap:10px;${ypPlayer ? 'cursor:pointer;' : ''}" ${ypPlayer ? `onclick="goToPlayer('${escapeHtml(ypPlayer.player_key)}');"` : ''}>
-      ${headshotHTML(ypPlayer || {}, 44)}
+      ${headshotHTML(ypPlayer || {}, 64)}
       <div style="min-width:0;">
         <div style="font-size:14px;font-weight:600;${ypPlayer ? 'color:var(--neon-cyan);' : ''}">${escapeHtml(yp.name)}</div>
         <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(yp.pos||'')} · age ${yp.age != null ? yp.age.toFixed(1) : "—"} · FV ${yp.fv_label}</div>
@@ -5443,7 +5736,37 @@ function renderFarmDetail(orgCode) {
       </div>`).join("") || '<span style="color:var(--text-tertiary);font-size:11.5px;">None</span>'}
   </div>`;
 
-  const sidebarHtml = topProspectCard + youngestCard + fvDistCard + acqMixCard + etaCard + hittersCard + pitchersCard + recentTxCards + gradsCard;
+  // Currently-on-IL card. Lists this org's tracked prospects on the IL
+  // now, sorted by FV descending so the highest-priority injuries
+  // surface first. Each row links to the prospect detail page so the
+  // reader can drill into the injury history.
+  const ilPlayers = rosterPlayersAll
+    .filter(rp => (rp.il_status || {}).is_on_il)
+    .sort((a, b) => (b.fv_close || 0) - (a.fv_close || 0));
+  const ilCard = `<div class="farm-side-card">
+    <div class="side-title">On the IL <span class="side-count">${ilPlayers.length}</span></div>
+    ${ilPlayers.length
+      ? ilPlayers.slice(0, 8).map(rp => {
+          const il = rp.il_status || {};
+          let days = il.days;
+          if (days == null && il.since) {
+            const t = new Date(il.since + "T00:00:00").getTime();
+            if (!isNaN(t)) days = Math.max(0, Math.floor((Date.now() - t) / 86400000));
+          }
+          const tj = (rp.health_profile || {}).is_post_tj
+            ? ` <span style="font-size:9px;color:var(--neon-violet);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">TJ</span>`
+            : "";
+          const fvL = rp.fv_close != null ? Math.round(rp.fv_close) : null;
+          return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
+            ${fvL != null ? `<span class="fv-badge ${fvClass(String(fvL))}" style="font-size:10px;padding:1px 6px;min-width:24px;text-align:center;">${fvL}</span>` : `<span style="width:24px;"></span>`}
+            <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}${tj}</span>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--neon-amber);font-variant-numeric:tabular-nums;">${days != null ? days + 'd' : '—'}</span>
+          </div>`;
+        }).join("")
+      : '<span style="color:var(--text-tertiary);font-size:11.5px;">All tracked prospects healthy.</span>'}
+  </div>`;
+
+  const sidebarHtml = topProspectCard + youngestCard + fvDistCard + acqMixCard + etaCard + hittersCard + pitchersCard + ilCard + recentTxCards + gradsCard;
 
   // Optional left rail (≥1500px viewports only — CSS-hidden otherwise).
   // Surfaces breakdowns that are useful at-a-glance but would otherwise
@@ -5647,7 +5970,7 @@ function renderFarmDetail(orgCode) {
       <div>
         <div class="detail-title" style="margin-top:0;">${(state.formWindow || "1y")} growth vs median farm <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">cumulative-FV change minus median org pace · graduations are neutral</span></div>
         ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_medians || {})[state.formWindow || "1y"] ?? 0), state.formWindow || "1y")}
-        <div class="detail-title" style="margin-top:18px;">Acquisition spending <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">International FA vs Draft · 2021-current</span></div>
+        <div class="detail-title" style="margin-top:18px;">Acquisition spending <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">Bonus pool dollars — International FA vs Draft, 2021-present</span></div>
         ${makeSpendingBlock(org)}
         <div class="detail-title" style="margin-top:18px;">Tracked prospects (${rosterPlayers.length}${
           [
@@ -5736,6 +6059,7 @@ function render() {
     spotlights:"spotlights-section",
     traded:    "traded-section",
     inactive:  "inactive-section",
+    injured:   "injured-section",
     graduates: "graduates-section",
     farm:      "farm-section",
     player:    "player-detail-section",
@@ -5774,6 +6098,7 @@ function render() {
   else if (active === "spotlights") renderSpotlights();
   else if (active === "traded")     renderRecentlyTraded();
   else if (active === "inactive")   renderInactive();
+  else if (active === "injured")    renderInjured();
   else if (active === "graduates")  renderGraduates();
   else if (active === "farm")       renderFarmSystems();
   updateMeta();
@@ -5846,6 +6171,16 @@ function attachHandlers() {
       btn.classList.add("active");
       state.gradSort = btn.dataset.gradSort;
       renderGraduates();
+      syncToURL();
+    });
+  });
+  // IL sort chips.
+  document.querySelectorAll("[data-il-sort]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-il-sort]").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.ilSort = btn.dataset.ilSort;
+      renderInjured();
       syncToURL();
     });
   });

@@ -267,20 +267,52 @@ def _eval_rule(rule, value: float, level_avg: float | None):
     return None
 
 
-def compute_stat_flags(statline: dict | None, level_norms: dict | None) -> list[dict]:
+def compute_stat_flags(statline: dict | None,
+                       level_norms: dict | None,
+                       health: dict | None = None) -> list[dict]:
     """Build the prospect-page scouting-flags payload.
 
     `statline` is the per-player current-season statline (already a dict
     of the same shape `stats.statline_to_dict` produces). `level_norms`
     is the full `{level: {age, perf}}` blob compute_level_norms returns.
+    `health` is the optional `health_profile` dict produced by storage —
+    when present and indicating chronic-injury risk, we tack an
+    "Injury-prone" red flag onto the result. Health flags are emitted
+    even when the statline gates filter the per-stat rules out, because
+    health doesn't depend on having enough recent playing time."""
+    out: list[dict] = []
 
-    Returns [] when the prospect has no usable statline (graduates,
-    inactives, or any active prospect with no MLB/MiLB at-bats yet)."""
+    # Health flag is the only signal that can fire WITHOUT a usable
+    # statline — a player with no current season stats can still have
+    # an injury pattern. So evaluate it up front.
+    if health:
+        stints = int(health.get("il_stints_24mo") or 0)
+        days   = int(health.get("il_days_24mo") or 0)
+        # Two ways to fire the chronic-injury flag:
+        #   * 3+ separate IL placements in 24 months (recurring issues), OR
+        #   * 200+ cumulative IL days (one major absence is enough).
+        if stints >= 3 or days >= 200:
+            out.append({
+                "stat":          "Health",
+                "direction":     "red",
+                # Pack the count + days into the value display so the
+                # row tells the story without a separate tooltip.
+                "value":         stints,
+                "value_display": f"{stints} IL stint{'s' if stints != 1 else ''} · {days}d",
+                "level":         None,
+                "level_avg":     None,
+                "delta":         0,
+                "delta_display": None,
+                "category":      "health",
+                "polarity":      "below_good",
+                "note":          "Frequent / extended IL time over the last 24 months — durability risk.",
+            })
+
     if not statline:
-        return []
+        return out
     level = statline.get("level")
     if not level:
-        return []
+        return out
     norm_perf = ((level_norms or {}).get(level) or {}).get("perf") or {}
     is_pitcher = bool(statline.get("is_pitcher"))
 
@@ -290,15 +322,14 @@ def compute_stat_flags(statline: dict | None, level_norms: dict | None) -> list[
     if is_pitcher:
         ip = _to_float(statline.get("ip"))
         if ip is None or ip < MIN_IP_PITCHER:
-            return []
+            return out
         rules = PITCHER_RULES
     else:
         games = statline.get("games") or 0
         if games < MIN_GAMES_HITTER:
-            return []
+            return out
         rules = HITTER_RULES
 
-    out: list[dict] = []
     for rule in rules:
         value = _to_float(statline.get(rule.statline_key))
         if value is None:
