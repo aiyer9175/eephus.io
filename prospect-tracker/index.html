@@ -58,19 +58,25 @@
          gold (elite, dominates the bar); 50 = warm neutral (MLB-regular
          threshold); 20 = quiet desaturated dark (org filler). `fg` is
          dual-purpose: badge text + tier-bar segment fill. */
-      --fv-80-bg: #FFF0CC;  --fv-80-fg: #8A5400;  --fv-80-bd: #C9962A;  /* deep gold — elite */
-      --fv-75-bg: #FDDFB2;  --fv-75-fg: #8B4408;  --fv-75-bd: #C97A1B;  /* amber */
-      --fv-70-bg: #F8CDA8;  --fv-70-fg: #8A2F0A;  --fv-70-bd: #B85419;  /* burnt orange */
-      --fv-65-bg: #F2D8B0;  --fv-65-fg: #6F4A0C;  --fv-65-bd: #A77418;  /* bronze */
-      --fv-60-bg: #EEDFBC;  --fv-60-fg: #5C4818;  --fv-60-bd: #8E7232;  /* olive-bronze */
-      --fv-55-bg: #E5DAC2;  --fv-55-fg: #4F4528;  --fv-55-bd: #806E48;  /* muted warm */
-      --fv-50-bg: #D8D4C0;  --fv-50-fg: #44402A;  --fv-50-bd: #6E6852;  /* MLB-regular threshold */
-      --fv-45-bg: #D2CFBC;  --fv-45-fg: #3F3D2E;  --fv-45-bd: #6B675A;
-      --fv-40-bg: #CDCBB8;  --fv-40-fg: #3A3930;  --fv-40-bd: #686358;
-      --fv-35-bg: #C8C6B4;  --fv-35-fg: #363632;  --fv-35-bd: #645F55;
-      --fv-30-bg: #C3C2B0;  --fv-30-fg: #333332;  --fv-30-bd: #5F5A50;
-      --fv-25-bg: #BEBDAC;  --fv-25-fg: #2F2F2E;  --fv-25-bd: #5A554B;
-      --fv-20-bg: #B9B8A8;  --fv-20-fg: #2B2B2A;  --fv-20-bd: #555047;
+      /* FV gradient — wider perceptual jumps than the previous ramp so a
+         glance reads tier separation faster. Elite tiers (80/75/70/65)
+         saturate into warm gold/orange. The 60 → 55 step is the
+         sharpest break — that's the "first-division regular" cutoff
+         and the eye should land on it instantly. Tiers below 50 cool
+         progressively into stone/slate so they recede vs the 50+ band. */
+      --fv-80-bg: #FFE08A;  --fv-80-fg: #6B3D00;  --fv-80-bd: #C9962A;  /* peak gold */
+      --fv-75-bg: #FCC773;  --fv-75-fg: #6E3508;  --fv-75-bd: #C97A1B;  /* deep amber */
+      --fv-70-bg: #F4AB60;  --fv-70-fg: #6C2509;  --fv-70-bd: #B85419;  /* orange */
+      --fv-65-bg: #E89058;  --fv-65-fg: #631F0C;  --fv-65-bd: #A77418;  /* terracotta */
+      --fv-60-bg: #D9B07A;  --fv-60-fg: #523812;  --fv-60-bd: #8E7232;  /* ochre — first-division floor */
+      --fv-55-bg: #D8C39D;  --fv-55-fg: #483B1E;  --fv-55-bd: #806E48;  /* warm beige */
+      --fv-50-bg: #D5CCB0;  --fv-50-fg: #3D3624;  --fv-50-bd: #6E6852;  /* MLB-regular threshold */
+      --fv-45-bg: #C9C5B0;  --fv-45-fg: #3A382B;  --fv-45-bd: #6B675A;  /* cool cream */
+      --fv-40-bg: #BDB9A5;  --fv-40-fg: #36352E;  --fv-40-bd: #686358;  /* stone */
+      --fv-35-bg: #B0AE9F;  --fv-35-fg: #333330;  --fv-35-bd: #645F55;  /* gray-tan */
+      --fv-30-bg: #A1A097;  --fv-30-fg: #303030;  --fv-30-bd: #5F5A50;  /* cool gray */
+      --fv-25-bg: #92928B;  --fv-25-fg: #FBF8F0;  --fv-25-bd: #5A554B;  /* slate (light text) */
+      --fv-20-bg: #82817C;  --fv-20-fg: #FBF8F0;  --fv-20-bd: #555047;  /* muted slate — recedes */
 
       --level-very-young-bg: #DEEAD7;  --level-very-young-fg: #244B22;
       --level-young-bg:      #D9E5EE;  --level-young-fg:      #1F3F66;
@@ -316,7 +322,9 @@
        custom property is set inline per row by the render JS. */
     .col-header, .player-row {
       display: grid;
-      grid-template-columns: 32px 1.5fr 0.5fr 0.5fr 1.3fr 0.85fr 1.1fr 0.5fr 0.65fr;
+      /* 8 cols: # | Player | FV (+stock under) | Rank | History | Candle | MiLB | ETA
+         Stock used to be column 9 — folded under the FV badge via .fv-stock-line. */
+      grid-template-columns: 32px 1.5fr 0.6fr 0.5fr 1.3fr 0.85fr 1.1fr 0.5fr;
       gap: 10px;
       align-items: center;
     }
@@ -328,8 +336,8 @@
       grid-template-columns: 32px 1.6fr 0.65fr 0.85fr 0.5fr 0.45fr 1.4fr;
     }
     .col-header.is-traded, .player-row.is-traded {
-      /* # | Player | Trade date | From → To | FV | History | Candle | Stock */
-      grid-template-columns: 32px 1.3fr 0.7fr 1fr 0.45fr 1.1fr 0.6fr 0.6fr;
+      /* # | Player | Trade date | From → To | FV (+stock under) | History | Candle */
+      grid-template-columns: 32px 1.3fr 0.7fr 1fr 0.55fr 1.1fr 0.6fr;
     }
     .col-header.is-farm-roster, .player-row.is-farm-roster {
       /* # | Player | Pos | Age | Stats | FV */
@@ -507,6 +515,12 @@
       font-variant-numeric: tabular-nums;
       letter-spacing: 0;
     }
+    /* Three named badge sizes — replaces the inline padding/font-size
+       overrides that previously varied across ~12 call sites. */
+    .fv-badge.size-xs { font-size: 9px;  padding: 0 4px;    min-width: 22px; }
+    .fv-badge.size-sm { font-size: 10px; padding: 1px 6px;  min-width: 28px; }
+    .fv-badge.size-md { font-size: 13px; padding: 3px 10px; min-width: 40px; } /* default */
+    .fv-badge.size-lg { font-size: 22px; padding: 5px 14px; min-width: 60px; }
     .fv-80 { background: var(--fv-80-bg); color: var(--fv-80-fg); border-color: var(--fv-80-bd); }
     .fv-75 { background: var(--fv-75-bg); color: var(--fv-75-fg); border-color: var(--fv-75-bd); }
     .fv-70 { background: var(--fv-70-bg); color: var(--fv-70-fg); border-color: var(--fv-70-bd); }
@@ -533,6 +547,15 @@
     .stock-down  { color: var(--down); }
     .stock-flat  { color: var(--text-tertiary); font-weight: 400; }
     .stock-grad  { color: var(--grad); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+    /* Compact stock-delta line that sits under the FV badge on Active /
+       Traded rows. Replaces the dedicated Stock column. */
+    .fv-stock-line {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      margin-top: 3px;
+      text-align: center;
+    }
 
     /* === MiLB cell ================================================ */
     .milb-cell {
@@ -635,6 +658,7 @@
       font-family: var(--font-serif);
       font-size: 15px;
       color: var(--text-primary);
+      margin-top: 18px;
       margin-bottom: 8px;
       font-weight: 600;
       letter-spacing: -0.005em;
@@ -642,9 +666,21 @@
       border-bottom: 2px solid var(--bg-header);
       padding-bottom: 4px;
     }
+    /* First detail-title on a card / panel doesn't need top spacing. */
+    .detail-title.flush { margin-top: 0; }
     /* When the title is reused inline (e.g. as a side-panel header) it
        can opt out of the underline by adding `--no-rule`. */
     .detail-title.no-rule { border-bottom: 0; padding-bottom: 0; }
+    /* Faint context sub-label that sits inline after a detail-title.
+       Replaces ~20 repeated inline `style="font-weight:400;font-size:11px;
+       color:var(--text-tertiary);margin-left:6px;"` spans across the
+       site so every section has the same TITLE + faint sub-label shape. */
+    .detail-title-sub {
+      font-weight: 400;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-left: 6px;
+    }
     .detail-table {
       width: 100%;
       border-collapse: collapse;
@@ -823,6 +859,21 @@
       font-size: 14px;
       font-family: var(--font-sans);
     }
+    /* Subtle flag mark above the empty-state copy. Renders before the
+       text via a ::before pseudo so existing call sites don't need to
+       embed an icon. */
+    .state-message::before {
+      content: "⚐";
+      display: block;
+      font-size: 28px;
+      color: var(--text-tertiary);
+      opacity: 0.7;
+      margin-bottom: 8px;
+      line-height: 1;
+    }
+    /* Loading state shouldn't show the flag — override. */
+    .state-message.is-loading::before { content: none; }
+    .state-message.is-error::before { content: "!"; }
     .state-message code { font-size: 12px; }
     .state-error { color: var(--down); }
     .footnote {
@@ -1052,6 +1103,31 @@
     .tier-bar > span {
       font-family: var(--font-mono);
       font-variant-numeric: tabular-nums;
+    }
+
+    /* === Stat groups (Savant/sabermetric tile clustering) ===========
+       Tiles cluster into semantic buckets (Quality of contact /
+       Discipline / Stuff / Command). The group label sits above its
+       tile row in a faint sans-caps so the eye can chunk by skill
+       family rather than reading 10 tiles as one undifferentiated row. */
+    .stat-groups {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .stat-group-label {
+      font-family: var(--font-sans);
+      font-size: 9px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .stat-group-tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
     }
 
     /* === Stat tile (used for FV high/low/age/ETA summary blocks)
@@ -1643,6 +1719,67 @@
       .detail-page-header .player-display-name { font-size: 22px; }
       .section-tabs { flex-wrap: wrap; }
     }
+    /* === Active list + context rail =================================
+       At very wide viewports (≥1500px) a 240px right rail surfaces
+       league context (top movers, FV distribution, recent grads) so
+       the user has comparative anchors while scanning the main list.
+       Below 1500px the rail collapses entirely — the main grid takes
+       the full container width back. */
+    .active-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    .active-context-rail { display: none; }
+    .active-context-rail .ctx-card {
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow-card);
+    }
+    .active-context-rail .ctx-title {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .active-context-rail .ctx-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 6px;
+      padding: 3px 0;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .active-context-rail .ctx-row:last-child { border-bottom: 0; }
+    @media (min-width: 1500px) {
+      .active-grid { grid-template-columns: minmax(0, 1fr) 240px; }
+      .active-context-rail { display: block; position: sticky; top: 12px; }
+    }
+
+    /* === Player detail layout =====================================
+       Two-column grid (2:1) on wide viewports. Right column collapses
+       to inline below the main content under 900px so mobile keeps the
+       context blocks accessible without forcing them off-screen. */
+    .player-detail-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .player-detail-side {
+      min-width: 0;
+    }
+    @media (max-width: 900px) {
+      .player-detail-grid { grid-template-columns: 1fr; gap: 16px; }
+    }
+
     /* === Position depth chart ====================================== */
     /* Per-org depth chart: 10 columns (C / 1B / 2B / SS / 3B / LF / CF
        / RF / SP / RP), each a vertical stack of FV-tinted player cards
@@ -1730,7 +1867,11 @@
       transition: transform 0.12s, box-shadow 0.12s;
     }
     .compare-toggle:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(15, 27, 45, 0.28); }
-    .compare-toggle.empty { background: var(--bg-secondary); color: var(--text-secondary); border-color: var(--border); }
+    /* Hide the floating Compare button when there's nothing pinned —
+       reduces visual noise for first-time visitors and only surfaces
+       it once they've added a player. The button re-appears via the
+       JS toggle that removes `.is-empty-hidden`. */
+    .compare-toggle.is-empty-hidden { display: none; }
     .compare-toggle .compare-count {
       display: inline-flex; align-items: center; justify-content: center;
       min-width: 18px; padding: 0 5px;
@@ -1767,11 +1908,17 @@
     }
     .compare-panel .compare-close {
       background: transparent;
-      border: none;
-      font-size: 20px;
+      border: 1px solid transparent;
+      font-size: 24px;
+      line-height: 1;
       color: var(--text-tertiary);
       cursor: pointer;
-      padding: 0 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    .compare-panel .compare-close:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
     }
     .compare-card {
       border: 1px solid var(--border);
@@ -1811,6 +1958,41 @@
       letter-spacing: 0.02em;
     }
     .compare-add-btn.is-in { background: var(--neon-amber); color: var(--text-primary); border-color: var(--neon-amber); font-weight: 600; }
+
+    /* === Mobile filter toggle ====================================
+       Desktop: button hidden, filter-bar shown.
+       Mobile (<720px): button visible; filter-bar hidden until the
+       user opens it. Saves ~120px of vertical space on phones. */
+    .filter-toggle {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 8px 14px;
+      margin-bottom: 8px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+    .filter-toggle .filter-toggle-count {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      letter-spacing: 0;
+    }
+    .filter-toggle[aria-expanded="true"] .filter-toggle-arrow { transform: rotate(180deg); }
+    .filter-toggle-arrow { transition: transform 0.15s; display: inline-block; }
+    @media (max-width: 720px) {
+      .filter-toggle { display: inline-flex; }
+      #filter-bar { display: none; }
+      #filter-bar.is-open { display: flex; }
+    }
   </style>
 </head>
 
@@ -1823,7 +2005,7 @@
   </header>
 
   <div id="content">
-    <div class="state-message">Loading prospect data…</div>
+    <div class="state-message is-loading">Loading prospect data…</div>
   </div>
 
 </div>
@@ -1831,7 +2013,7 @@
 <!-- Comparison cart: floating button bottom-right + side panel. Pinned
      prospects persist in localStorage so refresh / sharing keeps the
      comparison alive. Up to 3 players side-by-side. -->
-<button class="compare-toggle empty" id="compare-toggle" type="button" aria-label="Open comparison cart">
+<button class="compare-toggle is-empty-hidden" id="compare-toggle" type="button" aria-label="Open comparison cart">
   <span>Compare</span><span class="compare-count" id="compare-count">0</span>
 </button>
 <aside class="compare-panel" id="compare-panel" role="dialog" aria-label="Compare prospects">
@@ -1858,6 +2040,15 @@
     <input type="search" class="search-input" id="search-input"
            placeholder="Search a player" autocomplete="off" spellcheck="false">
   </div>
+
+  <!-- Mobile filter toggle. At <720px the filter chips collapse behind
+       this button so the user lands on the list without scrolling past
+       80px of filter chrome. Hidden on desktop via CSS. -->
+  <button class="filter-toggle" id="filter-toggle" type="button" aria-expanded="false">
+    <span class="filter-toggle-label">Filters</span>
+    <span class="filter-toggle-count" id="filter-toggle-count"></span>
+    <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
+  </button>
 
   <div class="filter-bar" id="filter-bar">
     <div class="filter-group">
@@ -1899,13 +2090,6 @@
         <option value="eta">ETA (earliest first)</option>
       </select>
     </div>
-  </div>
-  <!-- Level + position filters live on their own row so the eye can
-       scan all level chips at once without competing with the sort
-       row above. Both are filter dimensions (multiple chips can be
-       on simultaneously — but for v1 we go single-select with an
-       "All" reset to keep the URL state simple). -->
-  <div class="filter-bar" id="filter-bar-secondary">
     <div class="filter-group">
       <span class="filter-label">Level</span>
       <button class="chip active" data-filter-level="all">All</button>
@@ -1936,10 +2120,14 @@
 
   <div id="active-section">
     <div id="whats-new"></div>
-    <div id="rows"></div>
+    <div class="active-grid">
+      <div id="rows"></div>
+      <aside id="active-context-rail" class="active-context-rail" aria-label="League context"></aside>
+    </div>
   </div>
 
   <div id="traded-section" style="display: none;">
+    <div id="whats-new-traded"></div>
     <div id="traded-rows"></div>
   </div>
 
@@ -1952,10 +2140,13 @@
   </div>
 
   <div id="injured-section" style="display: none;">
+    <div id="whats-new-injured"></div>
     <div class="filter-bar" style="margin-bottom:8px;">
       <span class="filter-label">Sort</span>
-      <button class="chip active" data-il-sort="days"
-              title="Longest current IL stints first">Days on IL</button>
+      <button class="chip active" data-il-sort="days_asc"
+              title="Shortest current IL stints first — players closest to returning">Days on IL (shortest)</button>
+      <button class="chip" data-il-sort="days"
+              title="Longest current IL stints first">Days on IL (longest)</button>
       <button class="chip" data-il-sort="fv"
               title="Highest-FV injured prospects first">FV</button>
       <button class="chip" data-il-sort="since"
@@ -1965,6 +2156,7 @@
   </div>
 
   <div id="graduates-section" style="display: none;">
+    <div id="whats-new-graduates"></div>
     <div class="filter-bar" style="margin-bottom:8px;">
       <span class="filter-label">Sort</span>
       <button class="chip active" data-grad-sort="date"
@@ -2058,6 +2250,11 @@
       <button class="chip"        data-lb-pos="RF">RF</button>
       <button class="chip"        data-lb-pos="OF" title="Any outfielder">OF</button>
       <button class="chip"        data-lb-pos="P">P</button>
+
+      <span class="filter-label" style="margin-left:10px;">Org</span>
+      <select class="chip" id="lb-org-filter">
+        <option value="all">All orgs</option>
+      </select>
     </div>
     <div id="leaderboard-rows"></div>
   </div>
@@ -2496,13 +2693,23 @@ function makeCandle(p) {
 }
 
 // FV trend: compare last two snapshot points (not all-time open/close)
+// Compact "stock under FV" indicator — replaces the dedicated Stock
+// column on the Active/Traded lists. Pulls from p.stock (already used
+// by the standalone stockHTML helper) so the delta + direction land
+// directly under the FV badge. Returns "" when no stock signal exists.
 function fvTrendHTML(p) {
-  if (p.points.length < 2) return "";
-  const delta = p.points[p.points.length - 1].consensus_fv_raw
-              - p.points[p.points.length - 2].consensus_fv_raw;
-  if (delta >= 2)  return `<div class="fv-trend-up">▲</div>`;
-  if (delta <= -2) return `<div class="fv-trend-down">▼</div>`;
-  return "";
+  const s = p.stock;
+  if (!s) return "";
+  if (s.direction === "graduated") {
+    return `<div class="fv-stock-line"><span class="stock-grad">GRAD</span></div>`;
+  }
+  if (s.direction === "flat" || s.delta == null || Math.abs(s.delta) < 1.5) {
+    return `<div class="fv-stock-line"><span class="stock-flat">— flat</span></div>`;
+  }
+  if (s.delta > 0) {
+    return `<div class="fv-stock-line"><span class="stock-up">▲ +${s.delta.toFixed(1)}</span></div>`;
+  }
+  return `<div class="fv-stock-line"><span class="stock-down">▼ ${s.delta.toFixed(1)}</span></div>`;
 }
 
 // Encode current filter state into the URL hash so the view is shareable.
@@ -2525,8 +2732,12 @@ function syncToURL() {
   if (state.farmTxKind  !== "all")        p.set("ftxk",  state.farmTxKind);
   if (state.farmTxDir   !== "all")        p.set("ftxd",  state.farmTxDir);
   if (state.gradSort    !== "date")       p.set("gsort", state.gradSort);
-  if (state.ilSort      !== "days")       p.set("ilsort", state.ilSort);
+  if (state.ilSort      !== "days_asc")   p.set("ilsort", state.ilSort);
   if (state.spotlightBucket !== "hot")    p.set("bucket", state.spotlightBucket);
+  if (state.lbStat      !== "ops")        p.set("lbstat", state.lbStat);
+  if (state.lbLevel     !== "all")        p.set("lblvl",  state.lbLevel);
+  if (state.lbPos       !== "all")        p.set("lbpos",  state.lbPos);
+  if (state.lbOrg       !== "all")        p.set("lborg",  state.lbOrg);
   const hash = p.toString();
   history.replaceState(null, "", hash ? "#" + hash : window.location.pathname + window.location.search);
 }
@@ -2559,6 +2770,12 @@ function syncFromURL() {
   if (p.has("gsort")) state.gradSort  = p.get("gsort");
   if (p.has("ilsort")) state.ilSort    = p.get("ilsort");
   if (p.has("bucket")) state.spotlightBucket = p.get("bucket");
+  // Leaderboards filters — round-tripped so org pre-fill from
+  // farm-detail's "View org leaderboards →" link sticks.
+  if (p.has("lbstat"))  state.lbStat  = p.get("lbstat");
+  if (p.has("lblvl"))   state.lbLevel = p.get("lblvl");
+  if (p.has("lbpos"))   state.lbPos   = p.get("lbpos");
+  if (p.has("lborg"))   state.lbOrg   = p.get("lborg");
 }
 
 // Navigation helpers. We rewrite location.hash with pushState so back /
@@ -2624,8 +2841,16 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.formWindow === state.formWindow));
   document.querySelectorAll("[data-spotlight-bucket]").forEach(b =>
     b.classList.toggle("active", b.dataset.spotlightBucket === state.spotlightBucket));
+  document.querySelectorAll("[data-lb-stat]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbStat === state.lbStat));
+  document.querySelectorAll("[data-lb-level]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbLevel === state.lbLevel));
+  document.querySelectorAll("[data-lb-pos]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbPos === state.lbPos));
   const orgSel = document.getElementById("org-filter");
   if (orgSel) orgSel.value = state.orgFilter;
+  const lbOrgSel = document.getElementById("lb-org-filter");
+  if (lbOrgSel) lbOrgSel.value = state.lbOrg;
   const acqSel = document.getElementById("acq-filter");
   if (acqSel) acqSel.value = state.acqFilter;
   const sortSel = document.getElementById("sort-select");
@@ -2842,20 +3067,23 @@ const state = {
   // returns one split per season), so the WAR sort uses the
   // most-recent-season number — labelled accordingly in the chip.
   gradSort: "date",
-  // Injured-list sort. "days" (default) sorts by elapsed IL days
-  // descending so the longest-out players surface first. "fv" puts
-  // high-FV injured prospects on top; "since" sorts by most-recent
-  // placement.
-  ilSort: "days",
+  // Injured-list sort. "days_asc" (default) sorts by elapsed IL days
+  // ascending so the players closest to returning surface first.
+  // "days" sorts descending (longest-out first); "fv" puts high-FV
+  // injured prospects on top; "since" sorts by most-recent placement.
+  ilSort: "days_asc",
   // Active list "Healthy only" toggle — hides players currently on
   // an IL stint when set to "healthy". They still appear in their
   // own Injured List tab.
   healthFilter: "all",
-  // Leaderboards tab — stat × level × position-group selection. The
-  // stat key matches a field on statline (ops, era, k_per_9, ...).
+  // Leaderboards tab — stat × level × position-group × org selection.
+  // The stat key matches a field on statline (ops, era, k_per_9, ...).
+  // Org is set when the user clicks "View org leaderboards →" from a
+  // farm-detail page.
   lbStat:  "ops",
   lbLevel: "all",
   lbPos:   "all",
+  lbOrg:   "all",
   view: null
 };
 
@@ -2964,14 +3192,18 @@ function getFilteredGrads() {
   return pool;
 }
 
-// "What changed this week" feed — horizontal strip above the Active
-// list that surfaces the last 7 days of significant events: stock
-// changes (up_strong / down_strong), level promotions, IL adds, recent
-// trades, and graduations. Drives entirely off existing player data —
-// no pipeline change required. Each chip is clickable and routes to
-// the player detail.
-function renderWhatsNew() {
-  const root = document.getElementById("whats-new");
+// "Prospect news this week" feed — horizontal strip above list views
+// surfacing the last 7 days of NEWS events: trades, promotions /
+// demotions, IL adds, graduations, and waivers/releases/DFA/Rule 5.
+// Stock-direction chips were intentionally dropped — they fire on
+// any rolling FV move and crowded out actual transactional news.
+//
+// `rootId` lets multiple tabs host their own feed; `kindFilter` narrows
+// the event set per tab (Injured tab shows IL-only, Traded tab shows
+// trade-only, Graduates tab shows graduation-only). Pass null to keep
+// the full feed (Active tab).
+function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
+  const root = document.getElementById(rootId);
   if (!root) return;
   const now = Date.now();
   const cutoff = now - 7 * 86400000;
@@ -2988,8 +3220,8 @@ function renderWhatsNew() {
         events.push({ ts, kind: "trade", p, label: `traded ${escapeHtml(t.from_org || "?")} → ${escapeHtml(t.to_org || "?")}` });
       }
     }
-    // Level changes (promotions / demotions). Stored on p.transactions
-    // with kind set by storage.derive_level_changes.
+    // Level changes (promotions / demotions) + roster moves. Stored on
+    // p.transactions with kind set by storage.derive_level_changes.
     for (const tx of (p.transactions || [])) {
       const ts = new Date((tx.date || "") + "T00:00:00").getTime();
       if (isNaN(ts) || ts < cutoff) continue;
@@ -3001,7 +3233,7 @@ function renderWhatsNew() {
         events.push({ ts, kind: tx.kind, p, label: escapeHtml(tx.kind.toUpperCase().replace("_", " ")) });
       }
     }
-    // IL placement (only the current open stint — we don't have an IL history of dates).
+    // IL placement (only the current open stint — no per-stint date history).
     const il = p.il_status;
     if (il && il.is_on_il && il.since) {
       const ts = new Date(il.since + "T00:00:00").getTime();
@@ -3016,68 +3248,148 @@ function renderWhatsNew() {
         events.push({ ts, kind: "graduated", p, label: "graduated to MLB" });
       }
     }
-    // Stock direction changes — only "up_strong" / "down_strong" make
-    // the feed. Use the latest snapshot date as the timestamp.
-    if (p.stock && (p.stock.direction === "up_strong" || p.stock.direction === "down_strong")) {
-      const latestPoint = p.points && p.points.length ? p.points[p.points.length - 1] : null;
-      const ts = latestPoint && latestPoint.snapshot_date
-        ? new Date(latestPoint.snapshot_date + "T00:00:00").getTime()
-        : NaN;
-      if (!isNaN(ts) && ts >= cutoff) {
-        const arrow = p.stock.direction === "up_strong" ? "▲▲ stock surging" : "▼▼ stock dropping";
-        events.push({ ts, kind: p.stock.direction, p, label: `${arrow} ${escapeHtml(p.stock.from_label || "")} → ${escapeHtml(p.stock.to_label || "")}` });
-      }
-    }
   }
   if (!events.length) {
     root.innerHTML = "";
     return;
   }
+  // Apply kind filter when caller narrows to a specific tab's interest.
+  const filteredEvents = kindFilter ? events.filter(e => kindFilter(e.kind)) : events;
+  if (!filteredEvents.length) {
+    root.innerHTML = "";
+    return;
+  }
   // Newest first.
-  events.sort((a, b) => b.ts - a.ts);
+  filteredEvents.sort((a, b) => b.ts - a.ts);
   const colorMap = {
     trade: "var(--accent-traded)",
     promotion: "var(--up)",
     demotion: "var(--down)",
     il: "var(--accent-il)",
     graduated: "var(--accent-graduated)",
-    up_strong: "var(--up)",
-    down_strong: "var(--down)",
     waivers: "var(--text-secondary)",
     release: "var(--down)",
     dfa: "var(--down)",
     rule_5: "var(--neon-cyan)",
   };
-  const chips = events.slice(0, 40).map(ev => {
+  const chips = filteredEvents.slice(0, 40).map(ev => {
     const c = colorMap[ev.kind] || "var(--text-secondary)";
     const dateStr = new Date(ev.ts).toISOString().split("T")[0];
+    // FV badge inline so a glance carries quality context too.
+    const fvLbl = ev.p.fv_close != null ? Math.round(ev.p.fv_close) : null;
+    const fvChip = fvLbl != null
+      ? `<span class="fv-badge ${fvClass(String(fvLbl))} size-xs" style="margin-right:5px;">${fvLbl}</span>`
+      : "";
     return `<button class="chip" data-key="${escapeHtml(ev.p.player_key)}" type="button"
                     style="border-color:${c};color:${c};white-space:nowrap;">
-      <span style="font-weight:700;">${escapeHtml(ev.p.player_name)}</span>
+      ${fvChip}<span style="font-weight:700;">${escapeHtml(ev.p.player_name)}</span>
       <span style="color:var(--text-tertiary);margin-left:5px;">${ev.label}</span>
       <span style="color:var(--text-tertiary);margin-left:5px;font-size:9px;">${dateStr}</span>
     </button>`;
   }).join("");
   root.innerHTML = `<div style="margin-bottom:12px;">
-    <div style="font-family:var(--font-sans);font-size:11px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">What changed this week <span style="color:var(--text-tertiary);font-weight:400;letter-spacing:0.02em;text-transform:none;margin-left:6px;">last 7 days · ${events.length} event${events.length === 1 ? "" : "s"}</span></div>
+    <div style="font-family:var(--font-sans);font-size:11px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Prospect news this week <span class="detail-title-sub" style="text-transform:none;letter-spacing:0.02em;">last 7 days · ${filteredEvents.length} event${filteredEvents.length === 1 ? "" : "s"}</span></div>
     <div style="display:flex;gap:6px;overflow-x:auto;padding:4px 0;">${chips}</div>
   </div>`;
 }
 
+// Active-list right context rail — only visible on ≥1500px viewports
+// via CSS. Builds three small cards: top movers (FV stock surging /
+// dropping), FV distribution histogram across the active pool, and
+// recent graduations. All click-throughs route to existing surfaces.
+function renderActiveContextRail() {
+  const rail = document.getElementById("active-context-rail");
+  if (!rail) return;
+  const players = DATA.players || [];
+
+  // Top movers: largest |delta| from stock signal. Cap at 10.
+  const movers = players
+    .filter(p => p.stock && p.stock.delta != null && Math.abs(p.stock.delta) >= 1.5)
+    .slice()
+    .sort((a, b) => Math.abs(b.stock.delta) - Math.abs(a.stock.delta))
+    .slice(0, 6);
+  const moverRows = movers.map(p => {
+    const d = p.stock.delta;
+    const cls = d > 0 ? "stock-up" : "stock-down";
+    const arrow = d > 0 ? "▲" : "▼";
+    return `<div class="ctx-row" data-key="${escapeHtml(p.player_key)}">
+      <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(p.player_name)}</span>
+      <span class="${cls}" style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;">${arrow} ${d > 0 ? "+" : ""}${d.toFixed(1)}</span>
+    </div>`;
+  }).join("");
+  const moversCard = movers.length
+    ? `<div class="ctx-card">
+        <div class="ctx-title">Top movers · this update</div>
+        ${moverRows}
+      </div>`
+    : "";
+
+  // FV distribution — histogram across the active pool, reuse the
+  // tier-bar palette via fvClass-derived fg colors. Bin by 5-FV step.
+  const tiers = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
+  const counts = {};
+  for (const t of tiers) counts[t] = 0;
+  for (const p of players) {
+    if (p.fv_close == null) continue;
+    // round down to nearest 5
+    const t = Math.max(20, Math.min(80, Math.floor(p.fv_close / 5) * 5));
+    counts[t] = (counts[t] || 0) + 1;
+  }
+  const maxCount = Math.max(1, ...Object.values(counts));
+  const distRows = tiers.map(t => {
+    const c = counts[t] || 0;
+    const pct = (c / maxCount) * 100;
+    return `<div style="display:flex;align-items:center;gap:6px;padding:2px 0;font-size:11px;">
+      <span style="width:24px;font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-tertiary);text-align:right;">${t}</span>
+      <div style="flex:1;height:8px;background:var(--bg-tertiary);border-radius:1px;overflow:hidden;">
+        <div style="height:100%;width:${pct.toFixed(1)}%;background:var(--fv-${t}-bd);"></div>
+      </div>
+      <span style="width:24px;font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-secondary);text-align:right;">${c}</span>
+    </div>`;
+  }).join("");
+  const distCard = `<div class="ctx-card">
+    <div class="ctx-title">FV distribution · ${players.filter(p => p.fv_close != null).length} graded</div>
+    ${distRows}
+  </div>`;
+
+  // Recent graduations — last 3, click → Graduates tab.
+  const grads = (DATA.graduates || [])
+    .filter(g => g.graduation_date)
+    .slice()
+    .sort((a, b) => (b.graduation_date || "").localeCompare(a.graduation_date || ""))
+    .slice(0, 3);
+  const gradRows = grads.map(g => {
+    const fv = g.fv_close != null ? Math.round(g.fv_close) : null;
+    return `<div class="ctx-row" data-key="${escapeHtml(g.player_key)}">
+      <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(g.player_name)}</span>
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;">${g.graduation_date}</span>
+      ${fv != null ? `<span class="fv-badge ${fvClass(String(fv))} size-sm">${fv}</span>` : ""}
+    </div>`;
+  }).join("");
+  const gradsCard = grads.length
+    ? `<div class="ctx-card">
+        <div class="ctx-title">Recent graduations</div>
+        ${gradRows}
+      </div>`
+    : "";
+
+  rail.innerHTML = moversCard + distCard + gradsCard;
+}
+
 function renderActives() {
   renderWhatsNew();
+  renderActiveContextRail();
   const filtered = getFilteredActives();
 
   const header = `<div class="col-header">
     <span style="text-align:center;">#</span>
     <span>Player · pos · org · age</span>
-    <span style="text-align:center;">FV</span>
+    <span style="text-align:center;" title="Consensus Future Value · stock delta + direction below">FV · stock</span>
     <span style="text-align:center;">Rank</span>
     <span class="desktop-only" style="text-align:center;">FV history</span>
-    <span class="desktop-only" style="text-align:center;">Candle</span>
+    <span class="desktop-only" style="text-align:center;" title="FV open/high/low/close for the current month, candlestick style">Candle</span>
     <span class="desktop-only">MiLB · age vs. level</span>
     <span class="desktop-only" style="text-align:center;">ETA</span>
-    <span style="text-align:right;">Stock</span>
   </div>`;
 
   const rows = filtered.map((p, i) => {
@@ -3098,7 +3410,6 @@ function renderActives() {
         <div class="candle-cell">${makeCandle(p)}</div>
         ${makeMilbCell(p)}
         ${makeEtaCell(p)}
-        <div class="stock-cell">${stockHTML(p.stock)}</div>
       </div>
     `;
   }).join("");
@@ -3223,6 +3534,7 @@ function renderLeaderboards() {
   const cfg = LB_STATS[statKey] || LB_STATS.ops;
   const lvl  = state.lbLevel || "all";
   const pos  = state.lbPos   || "all";
+  const org  = state.lbOrg   || "all";
 
   const pool = [];
   for (const arr of ["players", "graduates"]) {
@@ -3235,6 +3547,7 @@ function renderLeaderboards() {
       if (cfg.side === "hit" && sl.is_pitcher) continue;
       if (cfg.side === "pit" && !sl.is_pitcher) continue;
       if (lvl !== "all" && sl.level !== lvl) continue;
+      if (org !== "all" && p.org !== org) continue;
       const bucket = positionBucket(p.position);
       if (pos !== "all" && !positionMatches(bucket, pos)) continue;
       // Sample gates — rate stats need volume.
@@ -3252,7 +3565,7 @@ function renderLeaderboards() {
     <span>Level</span>
     <span style="text-align:center;">FV</span>
     <span style="text-align:right;">${escapeHtml(cfg.label)}</span>
-    <span>Supporting line</span>
+    <span title="Stat-specific context: for OPS shows slash + HR/SB; for ERA shows IP + K/9; etc.">Context</span>
   </div>`;
 
   if (!ranked.length) {
@@ -3286,6 +3599,7 @@ function renderLeaderboards() {
 // "who's hurt right now and how long are they out?" in one view.
 // Honors the global search box and the per-section sort chips.
 function renderInjured() {
+  renderWhatsNew("whats-new-injured", kind => kind === "il");
   const today = new Date();
   // Build the list from every player array — actives + graduates
   // (graduates can also be on the MLB IL) + inactives — so a hurt
@@ -3321,14 +3635,20 @@ function renderInjured() {
     filtered = filtered.filter(({ p }) => (p.player_name || "").toLowerCase().includes(q));
   }
 
-  // Sort.
-  const mode = state.ilSort || "days";
+  // Sort. Default is days_asc — shortest current IL stints first, so
+  // the players closest to returning rise to the top. "days" is the
+  // legacy descending variant.
+  const mode = state.ilSort || "days_asc";
   if (mode === "fv") {
-    filtered.sort((a, b) => (b.fv || 0) - (a.fv || 0) || (b.days - a.days));
+    filtered.sort((a, b) => (b.fv || 0) - (a.fv || 0) || (a.days - b.days));
   } else if (mode === "since") {
     filtered.sort((a, b) => (b.since || "").localeCompare(a.since || ""));
-  } else {
+  } else if (mode === "days") {
+    // Longest stints first.
     filtered.sort((a, b) => (b.days - a.days) || (b.fv - a.fv));
+  } else {
+    // days_asc (default): shortest stints first.
+    filtered.sort((a, b) => (a.days - b.days) || (b.fv - a.fv));
   }
 
   // Grid columns live on `.col-header.is-injured` / `.player-row.is-injured`.
@@ -3374,6 +3694,7 @@ function renderInjured() {
 }
 
 function renderRecentlyTraded() {
+  renderWhatsNew("whats-new-traded", kind => kind === "trade");
   const filtered = getFilteredTraded();
 
   // Grid columns live on `.col-header.is-traded` / `.player-row.is-traded`.
@@ -3382,10 +3703,9 @@ function renderRecentlyTraded() {
     <span>Player · pos · org · age</span>
     <span>Trade date</span>
     <span>From → To</span>
-    <span style="text-align:center;">FV</span>
+    <span style="text-align:center;" title="Consensus Future Value · stock delta + direction below">FV · stock</span>
     <span class="desktop-only" style="text-align:center;">FV history</span>
-    <span class="desktop-only" style="text-align:center;">Candle</span>
-    <span style="text-align:right;">Stock</span>
+    <span class="desktop-only" style="text-align:center;" title="FV open/high/low/close for the current month, candlestick style">Candle</span>
   </div>`;
 
   const rows = filtered.map((p, i) => {
@@ -3411,7 +3731,6 @@ function renderRecentlyTraded() {
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span>${fvTrendHTML(p)}</div>
         <div class="line-chart-cell desktop-only">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
         <div class="candle-cell desktop-only">${makeCandle(p)}</div>
-        <div class="stock-cell">${stockHTML(p.stock)}</div>
       </div>
     `;
   }).join("");
@@ -3422,6 +3741,7 @@ function renderRecentlyTraded() {
 }
 
 function renderGraduates() {
+  renderWhatsNew("whats-new-graduates", kind => kind === "graduated");
   const filtered = getFilteredGrads();
 
   // Build a render order based on the active sort. For date-sort we keep
@@ -3575,7 +3895,7 @@ function detailTable(p) {
         ${srcEntries.map(([src, d]) => `<tr>
           <td><span class="src-tag">${escapeHtml(SOURCE_LABELS[src] || src)}</span></td>
           <td>${d.fv_published != null
-            ? `<span class="fv-badge ${fvClass(String(d.fv_published))}" style="font-size:10px;padding:1px 6px;">${d.fv_published}</span>`
+            ? `<span class="fv-badge ${fvClass(String(d.fv_published))}" size-sm">${d.fv_published}</span>`
             : `<span style="color:var(--text-tertiary)">—</span>`}</td>
           <td>${d.rank != null ? `#${d.rank}` : "—"}</td>
         </tr>`).join("")}
@@ -3608,7 +3928,7 @@ function detailTable(p) {
         ${p.points.map(pt => `<tr>
           <td>${pt.snapshot_date}</td>
           <td><span class="src-tag">${escapeHtml(pt.interval_label)}</span></td>
-          <td><span class="fv-badge ${fvClass(pt.consensus_fv_label)}" style="font-size:10px; padding:1px 6px;">${pt.consensus_fv_label}</span></td>
+          <td><span class="fv-badge ${fvClass(pt.consensus_fv_label)}" size-sm">${pt.consensus_fv_label}</span></td>
           <td>${pt.avg_rank != null ? pt.avg_rank.toFixed(1) : "—"}</td>
           <td style="color: var(--text-tertiary);">${pt.sources_contributing ? pt.sources_contributing.length : "—"}</td>
         </tr>`).join("")}
@@ -3751,8 +4071,12 @@ function headshotHTML(player, sizePx = 36) {
   const w = Math.round(sizePx * 0.8);
   const sil = `<svg viewBox="0 0 24 24" aria-hidden="true" style="position:absolute;left:15%;top:15%;width:70%;height:70%;color:var(--text-tertiary);"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
   const wrap = `width:${w}px;height:${h}px;border-radius:3px;flex-shrink:0;background:var(--bg-tertiary);border:1px solid var(--border);overflow:hidden;display:inline-block;position:relative;vertical-align:middle;`;
+  // Dashed border for the placeholder case so amateur / IFA prospects
+  // without an MLBAM ID don't look like a missing image — the dashed
+  // edge reads as "no headshot on file" rather than "broken render".
+  const placeholderWrap = `width:${w}px;height:${h}px;border-radius:3px;flex-shrink:0;background:var(--bg-tertiary);border:1px dashed var(--border);overflow:hidden;display:inline-block;position:relative;vertical-align:middle;`;
   if (!id) {
-    return `<span class="headshot" style="${wrap}">${sil}</span>`;
+    return `<span class="headshot" style="${placeholderWrap}">${sil}</span>`;
   }
   const url = headshotURL(id, h);
   // The silhouette renders behind the img; onerror hides the img so the
@@ -3858,13 +4182,32 @@ function ilTagHTML(p) {
   return `<span class="il-tag" title="${title}">${typeLabel}${dayLabel}</span>`;
 }
 
+// Count how many of the Active-list filter dimensions are off the
+// default "all" value. Used to badge the mobile "Filters" toggle so
+// the user knows hidden filters are active.
+function activeFilterCount() {
+  let n = 0;
+  if (state.stockFilter   !== "all")     n++;
+  if (state.healthFilter  !== "all")     n++;
+  if (state.orgFilter     !== "all")     n++;
+  if (state.acqFilter     !== "all")     n++;
+  if (state.sort          !== "fv")      n++;
+  if (state.levelFilter   !== "all")     n++;
+  if (state.posFilter     !== "all")     n++;
+  return n;
+}
+
 function updateMeta() {
+  const filterCountEl = document.getElementById("filter-toggle-count");
+  if (filterCountEl) {
+    const n = activeFilterCount();
+    filterCountEl.textContent = n ? `· ${n} active` : "";
+  }
   const refreshedAt = DATA.generated_at ? DATA.generated_at.split("T")[0] : "—";
   const meta = document.getElementById("meta-line");
   meta.innerHTML = `Last refresh: <code>${refreshedAt}</code>` +
     `<span class="dot">·</span>${DATA.total_tracked ?? (DATA.players.length + DATA.graduates.length)} prospects tracked` +
     `<span class="dot">·</span>${DATA.active_count} active` +
-    `<span class="dot">·</span>${DATA.inactive_count ?? (DATA.inactive || []).length} inactive` +
     `<span class="dot">·</span>${DATA.graduate_count} graduates`;
   const tradedCount = DATA.players.filter(p => (p.trades || []).length > 0).length;
   const spotlightCount = ((DATA.spotlights || {})[state.spotlightBucket] || []).length;
@@ -4232,7 +4575,7 @@ function makeFarmGrowthChart(org, medianTrajectory, windowKey) {
 // other org, kind chip, player headshot + name, and the description.
 function makeFarmTransactionsSection(allEvents, orgCode) {
   if (!allEvents.length) {
-    return `<div class="detail-title" style="margin-top:18px;">Transaction history</div>
+    return `<div class="detail-title">Farm-system transactions</div>
       <div style="color:var(--text-tertiary);font-size:12px;">No transactions on file for this org's prospects.</div>`;
   }
   // Filter via shared state so back-button navigation preserves the
@@ -4315,8 +4658,8 @@ function makeFarmTransactionsSection(allEvents, orgCode) {
     ? `<div style="font-size:11px;color:var(--text-tertiary);text-align:center;padding:6px;">Showing ${CAP} of ${evs.length}. Use filters above to narrow.</div>`
     : "";
 
-  return `<div class="detail-title" style="margin-top:18px;">Farm-system transactions
-      <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">${allEvents.length} total across tracked prospects</span>
+  return `<div class="detail-title">Farm-system transactions
+      <span class="detail-title-sub">${allEvents.length} total across tracked prospects</span>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px;">
       <span class="filter-label" style="min-width:50px;">Type</span>${kindChips}
@@ -4742,7 +5085,7 @@ function renderFarmSystems() {
         <div>${makeFarmSparkline(org.fv_history, deltaAbove, median, win)}</div>
         <div style="display:flex;align-items:center;gap:6px;font-size:12px;min-width:0;">
           ${tp ? `<span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(tp.name)}</span>
-          <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:10px;padding:1px 5px;flex-shrink:0;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
+          <span class="fv-badge ${fvClass(tp.fv_label)}" size-sm" style="flex-shrink:0;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
         </div>
         <div>${makePosBreakdown(org.pos_groups)}</div>
         <div class="level-depth-cell">${makeLevelDepth(org.level_counts, activeLevel)}</div>
@@ -5188,59 +5531,61 @@ function makeSavantBlock(s) {
   const fmtPct = v => v == null ? null : `${v.toFixed(1)}%`;
   const fmtRate = v => v == null ? null : v.toFixed(3).replace(/^0/, "");
   const fmtMph = v => v == null ? null : `${v.toFixed(1)} mph`;
-  const tiles = [];
-  // Hitter quality-of-contact + discipline tiles.
+
+  // Tiles are grouped into semantic buckets so the eye can chunk by
+  // skill family. Hitters: quality-of-contact + discipline. Pitchers:
+  // quality allowed + stuff + command.
+  const groups = [];
   if (s.role === "hitter") {
-    if (s.xwoba != null) tiles.push(["xwOBA", fmtRate(s.xwoba), colorize(s.xwoba >= 0.350, s.xwoba <= 0.300),
-                                     "Expected wOBA · Statcast contact-quality model · .350+ is plus, .300 is light"]);
-    if (s.woba != null)  tiles.push(["wOBA", fmtRate(s.woba), colorize(s.woba >= 0.340, s.woba <= 0.300),
-                                     "Actual wOBA · linear-weights scale"]);
-    if (s.barrels != null) tiles.push(["Barrels", String(s.barrels), colorize(s.barrels >= 8, false),
-                                       "Statcast barrels · ideal launch angle + exit velo"]);
-    if (s.hard_hit_pct != null) tiles.push(["Hard-Hit%", fmtPct(s.hard_hit_pct),
-                                            colorize(s.hard_hit_pct >= 40, s.hard_hit_pct <= 28),
-                                            "% of batted balls at 95+ mph"]);
-    if (s.max_ev != null) tiles.push(["Max EV", fmtMph(s.max_ev), colorize(s.max_ev >= 108, s.max_ev <= 100),
-                                      "Hardest-hit ball in the sample"]);
-    if (s.ev != null) tiles.push(["Avg EV", fmtMph(s.ev), colorize(s.ev >= 89, s.ev <= 84),
-                                  "Average exit velocity"]);
-    if (s.whiff_pct != null) tiles.push(["Whiff%", fmtPct(s.whiff_pct), colorize(s.whiff_pct <= 22, s.whiff_pct >= 32),
-                                         "Swings-and-misses / total swings · lower is better"]);
-    if (s.chase_pct != null) tiles.push(["Chase%", fmtPct(s.chase_pct), colorize(s.chase_pct <= 24, s.chase_pct >= 32),
-                                         "Swings on out-of-zone pitches · lower is better"]);
-    if (s.bb_pct != null) tiles.push(["BB%", fmtPct(s.bb_pct), colorize(s.bb_pct >= 10, s.bb_pct <= 6),
-                                      "Walks per plate appearance"]);
-    if (s.k_pct != null) tiles.push(["K%", fmtPct(s.k_pct), colorize(s.k_pct <= 20, s.k_pct >= 28),
-                                     "Strikeouts per plate appearance · lower is better"]);
+    const qoc = [];
+    if (s.xwoba != null)        qoc.push(["xwOBA", fmtRate(s.xwoba), colorize(s.xwoba >= 0.350, s.xwoba <= 0.300), "Expected wOBA · Statcast contact-quality model · .350+ is plus, .300 is light"]);
+    if (s.woba != null)         qoc.push(["wOBA", fmtRate(s.woba), colorize(s.woba >= 0.340, s.woba <= 0.300), "Actual wOBA · linear-weights scale"]);
+    if (s.barrels != null)      qoc.push(["Barrels", String(s.barrels), colorize(s.barrels >= 8, false), "Statcast barrels · ideal launch angle + exit velo"]);
+    if (s.hard_hit_pct != null) qoc.push(["Hard-Hit%", fmtPct(s.hard_hit_pct), colorize(s.hard_hit_pct >= 40, s.hard_hit_pct <= 28), "% of batted balls at 95+ mph"]);
+    if (s.max_ev != null)       qoc.push(["Max EV", fmtMph(s.max_ev), colorize(s.max_ev >= 108, s.max_ev <= 100), "Hardest-hit ball in the sample"]);
+    if (s.ev != null)           qoc.push(["Avg EV", fmtMph(s.ev), colorize(s.ev >= 89, s.ev <= 84), "Average exit velocity"]);
+    if (qoc.length) groups.push(["Quality of contact", qoc]);
+
+    const disc = [];
+    if (s.whiff_pct != null) disc.push(["Whiff%", fmtPct(s.whiff_pct), colorize(s.whiff_pct <= 22, s.whiff_pct >= 32), "Swings-and-misses / total swings · lower is better"]);
+    if (s.chase_pct != null) disc.push(["Chase%", fmtPct(s.chase_pct), colorize(s.chase_pct <= 24, s.chase_pct >= 32), "Swings on out-of-zone pitches · lower is better"]);
+    if (s.bb_pct != null)    disc.push(["BB%", fmtPct(s.bb_pct), colorize(s.bb_pct >= 10, s.bb_pct <= 6), "Walks per plate appearance"]);
+    if (s.k_pct != null)     disc.push(["K%", fmtPct(s.k_pct), colorize(s.k_pct <= 20, s.k_pct >= 28), "Strikeouts per plate appearance · lower is better"]);
+    if (disc.length) groups.push(["Plate discipline", disc]);
   } else {
-    // Pitcher tiles — same source CSVs, slightly different lens.
-    if (s.xwoba != null) tiles.push(["Opp xwOBA", fmtRate(s.xwoba),
-                                     colorize(s.xwoba <= 0.300, s.xwoba >= 0.340),
-                                     "xwOBA allowed · contact-quality against · lower is better"]);
-    if (s.hard_hit_pct != null) tiles.push(["Hard-Hit%", fmtPct(s.hard_hit_pct),
-                                            colorize(s.hard_hit_pct <= 32, s.hard_hit_pct >= 42),
-                                            "% of batted balls allowed at 95+ mph · lower is better"]);
-    if (s.whiff_pct != null) tiles.push(["Whiff%", fmtPct(s.whiff_pct), colorize(s.whiff_pct >= 28, s.whiff_pct <= 18),
-                                         "Whiff rate induced · higher is better"]);
-    if (s.k_pct != null) tiles.push(["K%", fmtPct(s.k_pct), colorize(s.k_pct >= 28, s.k_pct <= 18),
-                                     "Strikeout rate · higher is better"]);
-    if (s.bb_pct != null) tiles.push(["BB%", fmtPct(s.bb_pct), colorize(s.bb_pct <= 7, s.bb_pct >= 11),
-                                      "Walk rate · lower is better"]);
-    if (s.barrels != null) tiles.push(["Barrels", String(s.barrels), colorize(false, s.barrels >= 8),
-                                       "Barrels allowed · lower is better"]);
-    if (s.max_velo != null) tiles.push(["Max velo", fmtMph(s.max_velo), neutralC,
-                                        "Hardest pitch in the sample"]);
+    const qal = [];
+    if (s.xwoba != null)        qal.push(["Opp xwOBA", fmtRate(s.xwoba), colorize(s.xwoba <= 0.300, s.xwoba >= 0.340), "xwOBA allowed · contact-quality against · lower is better"]);
+    if (s.hard_hit_pct != null) qal.push(["Hard-Hit%", fmtPct(s.hard_hit_pct), colorize(s.hard_hit_pct <= 32, s.hard_hit_pct >= 42), "% of batted balls allowed at 95+ mph · lower is better"]);
+    if (s.barrels != null)      qal.push(["Barrels", String(s.barrels), colorize(false, s.barrels >= 8), "Barrels allowed · lower is better"]);
+    if (qal.length) groups.push(["Quality allowed", qal]);
+
+    const stuff = [];
+    if (s.whiff_pct != null) stuff.push(["Whiff%", fmtPct(s.whiff_pct), colorize(s.whiff_pct >= 28, s.whiff_pct <= 18), "Whiff rate induced · higher is better"]);
+    if (s.k_pct != null)     stuff.push(["K%", fmtPct(s.k_pct), colorize(s.k_pct >= 28, s.k_pct <= 18), "Strikeout rate · higher is better"]);
+    if (s.max_velo != null)  stuff.push(["Max velo", fmtMph(s.max_velo), neutralC, "Hardest pitch in the sample"]);
+    if (stuff.length) groups.push(["Stuff", stuff]);
+
+    const cmd = [];
+    if (s.bb_pct != null) cmd.push(["BB%", fmtPct(s.bb_pct), colorize(s.bb_pct <= 7, s.bb_pct >= 11), "Walk rate · lower is better"]);
+    if (cmd.length) groups.push(["Command", cmd]);
   }
-  if (!tiles.length) return `<div style="color:var(--text-tertiary);font-size:12px;">No Savant metrics for this player.</div>`;
+
+  if (!groups.length) return `<div style="color:var(--text-tertiary);font-size:12px;">No Savant metrics for this player.</div>`;
+
   const sample = s.pa != null ? `${s.pa} PA` : (s.pitches != null ? `${s.pitches} pitches` : "");
   const sampleNote = sample
     ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;">Sample: ${escapeHtml(sample)}</div>`
     : "";
-  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;">${tiles.map(([label, val, color, title]) => `
-    <div class="stat-tile" title="${escapeHtml(title)}">
-      <div class="stat-label">${escapeHtml(label)}</div>
-      <div class="stat-value" style="color:${color};font-family:var(--font-mono);">${val}</div>
-    </div>`).join("")}</div>${sampleNote}`;
+  const renderGroup = ([title, tiles]) => `
+    <div class="stat-group">
+      <div class="stat-group-label">${escapeHtml(title)}</div>
+      <div class="stat-group-tiles">${tiles.map(([label, val, color, t]) => `
+        <div class="stat-tile" title="${escapeHtml(t)}">
+          <div class="stat-label">${escapeHtml(label)}</div>
+          <div class="stat-value" style="color:${color};font-family:var(--font-mono);">${val}</div>
+        </div>`).join("")}</div>
+    </div>`;
+  return `<div class="stat-groups">${groups.map(renderGroup).join("")}</div>${sampleNote}`;
 }
 
 // Pitch arsenal block — pitch type × usage % × avg velo.
@@ -5273,7 +5618,7 @@ function makeArsenalBlock(pa) {
   const fb = pa.fb_velo != null
     ? `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-family:var(--font-sans);">Primary fastball velo: <span style="color:var(--neon-green);font-family:var(--font-mono);font-weight:700;">${pa.fb_velo.toFixed(1)} mph</span></div>`
     : "";
-  return fb + `<table class="detail-table"><thead><tr><th>Pitch</th><th style="text-align:right;">Velo</th><th style="text-align:left;">Usage</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return fb + `<table class="detail-table"><thead><tr><th>Pitch</th><th title="Average velocity in mph">Velo (mph)</th><th>Usage</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 // Unified transaction-history block — trades + level changes + other
@@ -5448,12 +5793,12 @@ function makePerSourceHistory(points) {
         const d = perSrc[s];
         if (!d) return `<td style="color:var(--text-tertiary);">—</td>`;
         const fv = d.fv_published != null
-          ? `<span class="fv-badge ${fvClass(String(d.fv_published))}" style="font-size:10px;padding:1px 6px;">${d.fv_published}</span>`
+          ? `<span class="fv-badge ${fvClass(String(d.fv_published))}" size-sm">${d.fv_published}</span>`
           : "—";
         const rank = d.rank != null ? `<span style="font-size:10px;color:var(--text-tertiary);"> #${d.rank}</span>` : "";
         return `<td>${fv}${rank}</td>`;
       }).join("")}
-      <td><span class="fv-badge ${fvClass(pt.consensus_fv_label)}" style="font-size:10px;padding:1px 6px;">${pt.consensus_fv_label}</span></td>
+      <td><span class="fv-badge ${fvClass(pt.consensus_fv_label)}" size-sm">${pt.consensus_fv_label}</span></td>
     </tr>`;
   }).join("");
   return `<table class="detail-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
@@ -5497,7 +5842,7 @@ function renderPlayerDetail(key) {
 
   const avl = p.age_vs_level || {};
   const fvLabel = latest ? latest.consensus_fv_label : "—";
-  const fvBadge = latest ? `<span class="fv-badge ${fvClass(fvLabel)}" style="font-size:22px;padding:5px 14px;min-width:60px;margin-top:4px;">${fvLabel}</span>` : "";
+  const fvBadge = latest ? `<span class="fv-badge ${fvClass(fvLabel)}" size-lg" style="margin-top:4px;">${fvLabel}</span>` : "";
 
   // Rank pills — overall position in the FV-sorted active list, plus org
   // position. Hidden for graduates/inactives where these fields are null.
@@ -5519,15 +5864,15 @@ function renderPlayerDetail(key) {
           <div class="player-display-name">${escapeHtml(p.player_name)}</div>
           <div class="player-display-meta">
             <strong style="font-weight:600;color:var(--text-primary);">${escapeHtml(p.position ?? "—")}</strong> · ${orgLink}${p.age != null ? ` · age ${p.age.toFixed(1)}` : ""}${p.birth_date ? ` · born ${p.birth_date}` : ""}
-            ${statusPill ? " · " + statusPill : ""}
-            ${tjPill     ? " · " + tjPill     : ""}
           </div>
+          ${(statusPill || tjPill) ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">${statusPill}${tjPill}</div>` : ""}
           ${rankPills}
         </div>
       </div>
       <div style="text-align:right;">
         <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Current FV</div>
         ${fvBadge}
+        ${(p.fv_high != null || p.fv_low != null || p.fv_open != null || p.fv_close != null) ? `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;font-variant-numeric:tabular-nums;" title="High / Low across history · Open at start of current month · Close = latest">Range ${p.fv_low_label ?? p.fv_low ?? "—"}–${p.fv_high_label ?? p.fv_high ?? "—"} · O ${p.fv_open ?? "—"} · C ${p.fv_close ?? "—"}</div>` : ""}
         ${latest && latest.avg_rank != null ? `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:4px;">Avg rank #${latest.avg_rank.toFixed(1)}</div>` : ""}
         <button class="compare-add-btn${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" style="margin-top:10px;">${compareHas(p.player_key) ? "✓ In compare" : "+ Add to compare"}</button>
       </div>
@@ -5544,59 +5889,28 @@ function renderPlayerDetail(key) {
   const ageSub = (avl.tier && avl.tier !== "unknown" && ageNorm.median_age != null)
     ? `${sl.level} median ${ageNorm.median_age.toFixed(1)}y`
     : "";
-  // Headline sabermetric tile — leads the row so the reader sees the
-  // most-important rate stat first. Pulls real wRC+/xFIP when the API
-  // has them; falls back to OPS+/ERA- (vs level) otherwise. The sub
-  // line says where the number comes from so the reader knows whether
-  // it's a real sabermetric or a level-relative proxy.
-  //
   // `isPitcher` is derived from position (regex) rather than
   // statline.is_pitcher because graduates / inactives may not carry a
-  // statline. The same variable feeds the pitch-arsenal section below.
+  // statline. Drives the arsenal section below.
   const sm = p.sabermetrics || {};
   const isPitcher = p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position);
-  let headlineTile = null;
-  if (isPitcher) {
-    if (sm.xfip != null) {
-      headlineTile = ["xFIP", sm.xfip.toFixed(2), "MLB · FanGraphs"];
-    } else if (sl.era_minus_level != null) {
-      headlineTile = [`ERA- vs ${sl.level || "level"}`, sl.era_minus_level,
-                       "proxy for xFIP · 100 = level avg"];
-    }
-  } else {
-    if (sm.wrc_plus != null) {
-      headlineTile = ["wRC+", Math.round(sm.wrc_plus), "MLB · FanGraphs"];
-    } else if (sl.ops_plus_level != null) {
-      headlineTile = [`OPS+ vs ${sl.level || "level"}`, sl.ops_plus_level,
-                       "proxy for wRC+ · 100 = level avg"];
-    }
-  }
 
+  // Tile row above the big stat sections. The headline sabermetric tile
+  // (wRC+ / xFIP / OPS+ / ERA-) used to live here too — it's the first
+  // tile in the makeSabermetricsBlock further down the page, so this
+  // row now just carries the orthogonal "age vs. level" signal to keep
+  // it from being empty when sabermetrics are unavailable.
   const tiles = [
-    ...(headlineTile ? [headlineTile] : []),
-    ["FV high", p.fv_high_label || p.fv_high || "—", `${p.fv_high_date || ""}`],
-    ["FV low",  p.fv_low_label  || p.fv_low  || "—", `${p.fv_low_date || ""}`],
-    ["FV open", p.fv_open ?? "—", ""],
-    ["FV close",p.fv_close ?? "—", ""],
     ["Age vs. level", avl.tier && avl.tier !== "unknown"
         ? avl.tier.replace(/-/g, " ") + (avl.diff != null ? ` (${avl.diff > 0 ? "+" : ""}${avl.diff.toFixed(1)}y)` : "")
         : "—", ageSub],
   ];
-  const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;">${tiles.map(([k, v, sub], idx) => {
-    // Headline tile (when present) gets emphasized: thicker left rule
-    // in the team color and a slightly larger value font.
-    const isHead = headlineTile && idx === 0;
-    const extraStyle = isHead
-      ? `border-left:4px solid var(--org-color, var(--bg-header));`
-      : "";
-    const valStyle = isHead ? `font-size:24px;color:var(--neon-cyan);` : "";
-    return `
-    <div class="stat-tile" style="${extraStyle}">
+  const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;">${tiles.map(([k, v, sub]) => `
+    <div class="stat-tile">
       <div class="stat-label">${k}</div>
-      <div class="stat-value" style="${valStyle}">${v}</div>
+      <div class="stat-value">${v}</div>
       ${sub ? `<div class="stat-sub">${sub}</div>` : ""}
-    </div>`;
-  }).join("")}</div>`;
+    </div>`).join("")}</div>`;
 
   // Age/level-relative performance — shows every level the player has
   // touched alongside the empirical median for that level. The age
@@ -5701,8 +6015,8 @@ function renderPlayerDetail(key) {
     const statHeaders = isP
       ? `<th>ERA vs lvl</th><th>WHIP vs lvl</th><th>K/9 vs lvl</th><th>BB/9 vs lvl</th>`
       : `<th>OPS vs lvl</th><th>ISO vs lvl</th><th>BB% vs lvl</th><th>K% vs lvl</th>`;
-    return `<div class="detail-title" style="margin-top:18px;">Age &amp; level-relative performance
-        <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">colored delta vs. the empirical level median for each stat</span>
+    return `<div class="detail-title">Age &amp; level-relative performance
+        <span class="detail-title-sub">colored delta vs. the empirical level median for each stat</span>
       </div>
       <table class="detail-table"><thead><tr><th>Season</th><th>Level</th><th>Age vs lvl</th>${statHeaders}</tr></thead><tbody>${rows}</tbody></table>`;
   })();
@@ -5712,9 +6026,9 @@ function renderPlayerDetail(key) {
        ${transactionLegend()}`
     : `<div style="color:var(--text-tertiary);font-size:12px;">Not enough FV updates yet for a chart.</div>`;
 
-  const careerSection = `<div class="detail-title" style="margin-top:18px;">Stats by season</div>${makeCareerTable(p.career_stats)}`;
+  const careerSection = `<div class="detail-title">Stats by season</div>${makeCareerTable(p.career_stats)}`;
 
-  const sourceSection = `<div class="detail-title" style="margin-top:18px;">Source-by-source FV history</div>${makePerSourceHistory(p.points || [])}`;
+  const sourceSection = `<div class="detail-title">Source-by-source FV history</div>${makePerSourceHistory(p.points || [])}`;
 
   // Sabermetrics block — wRC+/xFIP for MLB players, level-relative
   // proxies (OPS+ / ERA-) otherwise. Title flexes with what's shown
@@ -5722,8 +6036,8 @@ function renderPlayerDetail(key) {
   const _sm = p.sabermetrics || {};
   const _hasRealSabr = (_sm.wrc_plus != null || _sm.xfip != null);
   const sabermetricsTitle = _hasRealSabr
-    ? `Advanced stats <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">FanGraphs sabermetrics (MLB)</span>`
-    : `Advanced stats <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">level-relative proxies · MLB sabermetrics unavailable for MiLB</span>`;
+    ? `Advanced stats <span class="detail-title-sub">FanGraphs sabermetrics (MLB)</span>`
+    : `Advanced stats <span class="detail-title-sub">level-relative proxies · MLB sabermetrics unavailable for MiLB</span>`;
   const sabermetricsSection = `<div class="detail-title">${sabermetricsTitle}</div>${makeSabermetricsBlock(p)}`;
 
   // Statcast / Baseball Savant block — populated when CSV exports are
@@ -5732,14 +6046,14 @@ function renderPlayerDetail(key) {
   // tiles for hitters and pitch-quality tiles for pitchers. Silently
   // omitted when the field is absent (MiLB players, or no CSV uploaded).
   const savantSection = (p.prospect_savant && Object.keys(p.prospect_savant).length)
-    ? `<div class="detail-title" style="margin-top:18px;">Statcast / Savant <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">${escapeHtml(p.prospect_savant.level || "")} ${escapeHtml(p.prospect_savant.role || "")} · prospect-savant export</span></div>${makeSavantBlock(p.prospect_savant)}`
+    ? `<div class="detail-title">Statcast / Savant <span class="detail-title-sub">${escapeHtml(p.prospect_savant.level || "")} ${escapeHtml(p.prospect_savant.role || "")} · prospect-savant export</span></div>${makeSavantBlock(p.prospect_savant)}`
     : "";
 
   const arsenalSection = isPitcher
-    ? `<div class="detail-title" style="margin-top:18px;">Pitch arsenal</div>${makeArsenalBlock(p.pitch_arsenal)}`
+    ? `<div class="detail-title">Pitch arsenal</div>${makeArsenalBlock(p.pitch_arsenal)}`
     : "";
 
-  const tradesSection = `<div class="detail-title" style="margin-top:18px;">Transaction history</div>${makeTransactionHistoryBlock(p)}`;
+  const tradesSection = `<div class="detail-title">Transaction history</div>${makeTransactionHistoryBlock(p)}`;
 
   // Injury history — every IL stint we have on record, oldest first.
   // Section title flexes with whether the player is currently injured so
@@ -5750,8 +6064,8 @@ function renderPlayerDetail(key) {
     const active = history.some(s => s.active);
     const title = active
       ? `Injury history <span style="font-weight:400;font-size:11px;color:var(--neon-amber);margin-left:6px;">currently on IL · ${history.length} total stint${history.length === 1 ? "" : "s"}</span>`
-      : `Injury history <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">${history.length} stint${history.length === 1 ? "" : "s"} on record</span>`;
-    return `<div class="detail-title" style="margin-top:18px;">${title}</div>${makeInjuryHistoryBlock(history)}`;
+      : `Injury history <span class="detail-title-sub">${history.length} stint${history.length === 1 ? "" : "s"} on record</span>`;
+    return `<div class="detail-title">${title}</div>${makeInjuryHistoryBlock(history)}`;
   })();
 
   // Acquisition info: drafted prospects show pick + bonus; IFAs show
@@ -5768,7 +6082,7 @@ function renderPlayerDetail(key) {
         : `Round ${escapeHtml(a.round_label || "?")}`;
       const team = a.team_name ? ` by ${escapeHtml(a.team_name)}` : "";
       const school = a.school ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">From ${escapeHtml(a.school)}</div>` : "";
-      return `<div class="detail-title" style="margin-top:18px;">Acquisition · MLB Draft</div>
+      return `<div class="detail-title">Acquisition · MLB Draft</div>
         <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
           <div style="font-size:14px;color:var(--text-primary);">${a.year} · ${pick}${team}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Signing bonus: <span style="color:var(--neon-cyan);font-variant-numeric:tabular-nums;">${fmtBonus(a.bonus_usd)}</span></div>
@@ -5798,7 +6112,7 @@ function renderPlayerDetail(key) {
       const bonusLine = a.bonus_usd != null
         ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Signing bonus: <span style="color:var(--neon-cyan);font-variant-numeric:tabular-nums;">${fmtBonus(a.bonus_usd)}</span></div>`
         : `<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">Signing-bonus data not on file.</div>`;
-      return `<div class="detail-title" style="margin-top:18px;">Acquisition · International FA</div>
+      return `<div class="detail-title">Acquisition · International FA</div>
         <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
           <div style="font-size:14px;color:var(--text-primary);">${headline}</div>
           ${bonusLine}
@@ -5830,7 +6144,7 @@ function renderPlayerDetail(key) {
     const desc = il.description
       ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;line-height:1.4;">${escapeHtml(il.description)}</div>`
       : "";
-    return `<div class="detail-title" style="margin-top:18px;color:var(--neon-amber);">Currently on ${escapeHtml(il.type || "?")} IL</div>
+    return `<div class="detail-title" style="color:var(--neon-amber);">Currently on ${escapeHtml(il.type || "?")} IL</div>
       <div style="border:1px solid var(--accent-il-border);background:var(--accent-il-soft);padding:12px 14px;border-radius:var(--radius-sm);">
         <div style="font-size:14px;color:var(--text-primary);">
           Since ${escapeHtml(sinceFmt || "—")}${days != null ? ` <span style="color:var(--neon-amber);font-variant-numeric:tabular-nums;">· ${days} day${days === 1 ? "" : "s"}</span>` : ""}
@@ -5860,7 +6174,7 @@ function renderPlayerDetail(key) {
     const tjLine = hp.is_post_tj
       ? `<div style="font-size:12px;color:var(--neon-violet);font-weight:600;margin-top:6px;">Post-TJ recovery${hp.tj_surgery_date ? ` · surgery ${escapeHtml(hp.tj_surgery_date)}` : ""}</div>`
       : "";
-    return `<div class="detail-title" style="margin-top:18px;">Health profile <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">trailing 24 months</span></div>
+    return `<div class="detail-title">Health profile <span class="detail-title-sub">trailing 24 months</span></div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:var(--radius-sm);">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div>
@@ -5898,7 +6212,7 @@ function renderPlayerDetail(key) {
       const rank = info.rank;
       const lbl = SOURCE_LABELS[src] || src;
       const fvCell = fvNum != null
-        ? `<span class="fv-badge ${fvClass(String(Math.round(fvNum)))}" style="font-size:10px;padding:1px 6px;">${Math.round(fvNum)}</span>`
+        ? `<span class="fv-badge ${fvClass(String(Math.round(fvNum)))}" size-sm">${Math.round(fvNum)}</span>`
         : `<span style="color:var(--text-tertiary);font-size:11px;">rank only</span>`;
       const rankCell = rank != null
         ? `<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-tertiary);font-size:10px;">#${rank}</span>`
@@ -5909,7 +6223,7 @@ function renderPlayerDetail(key) {
         <td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;">${fvCell}</td>
       </tr>`;
     }).join("");
-    return `<div class="detail-title" style="margin-top:18px;">Source consensus <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">latest grade per source</span></div>
+    return `<div class="detail-title">Source consensus <span class="detail-title-sub">latest grade per source</span></div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">
         <table style="width:100%;border-collapse:collapse;font-size:11.5px;">
           <thead><tr style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;">
@@ -5978,7 +6292,7 @@ function renderPlayerDetail(key) {
             <span style="color:var(--text-primary);font-variant-numeric:tabular-nums;">${rs.mlb_seasons.length} (${rs.mlb_seasons[0]}–${rs.mlb_seasons[rs.mlb_seasons.length-1]})</span>
          </div>`
       : "";
-    return `<div class="detail-title" style="margin-top:18px;">MLB roster status</div>
+    return `<div class="detail-title">MLB roster status</div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:var(--radius-sm);display:flex;flex-direction:column;gap:6px;">
         ${debutLine}
         ${rosterLine}
@@ -6035,7 +6349,7 @@ function renderPlayerDetail(key) {
     const desc = ev.description
       ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;line-height:1.4;">${escapeHtml(ev.description)}</div>`
       : "";
-    return `<div class="detail-title" style="margin-top:18px;">Acquired by current org · ${escapeHtml(label)}</div>
+    return `<div class="detail-title">Acquired by current org · ${escapeHtml(label)}</div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
         <div style="font-size:14px;color:var(--text-primary);">From ${from} <span style="color:var(--neon-violet);">→</span> ${to}</div>
         ${dateLine}
@@ -6051,7 +6365,7 @@ function renderPlayerDetail(key) {
       ["Age vs. level",  eta.age_adj  > 0 ? `+${eta.age_adj}`  : eta.age_adj  < 0 ? `${eta.age_adj}`  : "±0"],
       ["FV grade",       eta.fv_adj   > 0 ? `+${eta.fv_adj}`   : eta.fv_adj   < 0 ? `${eta.fv_adj}`   : "±0"],
     ];
-    return `<div class="detail-title" style="margin-top:18px;">ETA breakdown · ${eta.year}</div>
+    return `<div class="detail-title">ETA breakdown · ${eta.year}</div>
       <table class="detail-table"><tbody>${r.map(([k, v]) => `<tr><td>${k}</td><td style="text-align:right;">${v}</td></tr>`).join("")}</tbody></table>`;
   })();
 
@@ -6061,16 +6375,39 @@ function renderPlayerDetail(key) {
   // promotions with <15 IP / <15 G, and any 2026 IFA who hasn't played
   // a competitive game yet; the function renders a neutral message in
   // those cases so the section never disappears unexpectedly.
+  // "On the same farm" — quick-jump card showing the three other
+  // highest-FV tracked prospects in the same org. Pure context surface,
+  // no new data fetched. Hidden when the player has no org (rare).
+  const sameFarmSection = (() => {
+    if (!p.org) return "";
+    const teammates = (DATA.players || [])
+      .filter(t => t.org === p.org && t.player_key !== p.player_key)
+      .filter(t => t.fv_close != null)
+      .sort((a, b) => (b.fv_close || 0) - (a.fv_close || 0))
+      .slice(0, 4);
+    if (!teammates.length) return "";
+    const rows = teammates.map(t => `
+      <div data-key="${escapeHtml(t.player_key)}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-light);cursor:pointer;font-size:12px;">
+        <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(t.player_name)} <span style="color:var(--text-tertiary);font-size:10px;">${escapeHtml(t.position || "—")}</span></span>
+        <span class="fv-badge ${fvClass(String(Math.round(t.fv_close)))} size-sm">${Math.round(t.fv_close)}</span>
+      </div>`).join("");
+    return `<div class="detail-title">On the same farm <span class="detail-title-sub">other top ${escapeHtml(p.org)} prospects</span></div>
+      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">${rows}</div>`;
+  })();
+
   const flagsTitle = (p.stat_flags && p.stat_flags.length)
-    ? `Scouting flags <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">${p.stat_flags.filter(f => f.direction === "green").length} green · ${p.stat_flags.filter(f => f.direction === "red").length} red · vs ${escapeHtml((p.statline || {}).level || "level")} ${(p.statline || {}).is_prior_season ? "(prior year)" : "average"}</span>`
-    : `Scouting flags <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">no qualifying sample yet</span>`;
+    ? `Scouting flags <span class="detail-title-sub">${p.stat_flags.filter(f => f.direction === "green").length} green · ${p.stat_flags.filter(f => f.direction === "red").length} red · vs ${escapeHtml((p.statline || {}).level || "level")} ${(p.statline || {}).is_prior_season ? "(prior year)" : "average"}</span>`
+    : `Scouting flags <span class="detail-title-sub">no qualifying sample yet</span>`;
   const flagsSection = `<div class="detail-title" style="margin-top:8px;">${flagsTitle}</div>${makeStatFlagsBlock(p)}`;
 
   // Two-column layout: chart + career on the left, secondary blocks on the right.
+  // The right column wraps in a sticky container so on tall pages the
+  // context blocks (health / Savant / events / same-farm) follow the
+  // user's scroll once they pass the chart + career section.
   root.innerHTML = header + tilesHtml + flagsSection + `
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start;">
+    <div class="player-detail-grid">
       <div>${chartSection}${careerSection}${levelBenchmarkSection}${sourceSection}</div>
-      <div>${ilSection}${healthSection}${rosterStatusSection}${sabermetricsSection}${savantSection}${perSourceSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${injurySection}${etaRows}</div>
+      <div class="player-detail-side">${sameFarmSection}${ilSection}${healthSection}${rosterStatusSection}${sabermetricsSection}${savantSection}${perSourceSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${injurySection}${etaRows}</div>
     </div>`;
 }
 
@@ -6134,7 +6471,7 @@ function makePositionDepthChart(rosterPlayersAll) {
       const lvl = sl.level || "—";
       return `<div class="pos-depth-card" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}" title="${escapeHtml(p.player_name)} · ${escapeHtml(p.position || "—")} · ${escapeHtml(lvl)}${p.age != null ? " · age " + p.age.toFixed(1) : ""}">
         <span class="pdc-name">${escapeHtml(p.player_name.split(" ").slice(-1)[0])}</span>
-        <span class="pdc-meta"><span class="fv-badge ${fvClass(fvLabel)}" style="font-size:9px;padding:0 4px;">${fvLabel}</span></span>
+        <span class="pdc-meta"><span class="fv-badge ${fvClass(fvLabel)}" size-xs">${fvLabel}</span></span>
       </div>`;
     }).join("");
     return `<div class="pos-depth-col">
@@ -6391,7 +6728,7 @@ function renderFarmDetail(orgCode) {
     ${tp ? `<div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="goToPlayer('${escapeHtml((tpPlayer || {}).player_key || '')}');">
       ${headshotHTML(tpPlayer || {}, 64)}
       <div style="min-width:0;">
-        <div style="font-size:14px;font-weight:600;color:var(--neon-cyan);">${escapeHtml(tp.name)} <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:11px;padding:1px 6px;">${tp.fv_label}</span></div>
+        <div style="font-size:14px;font-weight:600;color:var(--neon-cyan);">${escapeHtml(tp.name)} <span class="fv-badge ${fvClass(tp.fv_label)}" size-sm">${tp.fv_label}</span></div>
         <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(tp.pos||'')} · age ${tp.age != null ? tp.age.toFixed(1) : "—"}</div>
       </div>
     </div>` : '—'}
@@ -6418,13 +6755,23 @@ function renderFarmDetail(orgCode) {
     <div class="side-title">ETA distribution</div>
     ${makeEtaTimeline(rosterPlayersAll)}
   </div>`;
-  const hittersCard = `<div class="farm-side-card">
-    <div class="side-title">Top hitters · season</div>
-    ${hittersBlock}
-  </div>`;
-  const pitchersCard = `<div class="farm-side-card">
-    <div class="side-title">Top pitchers · season</div>
-    ${pitchersBlock}
+  // Org stat leaders — show one top hitter + one top pitcher inline,
+  // and a deep-link into the Leaderboards tab pre-filtered to this
+  // org for the full board. Replaces the previous 5-row top-OPS + 5-row
+  // top-ERA cards (duplicative of the cross-org Leaderboards tab).
+  const topH = topHitters[0];
+  const topP = topPitchers[0];
+  const leaderRow = (lbl, row, val) => row
+    ? `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;padding:3px 0;font-size:12px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(row.p.player_key)}');">
+        <span><span style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;margin-right:6px;">${lbl}</span><span style="color:var(--text-primary);">${escapeHtml(row.p.player_name)}</span></span>
+        <span style="color:var(--neon-cyan);font-variant-numeric:tabular-nums;">${val}</span>
+      </div>`
+    : `<div style="font-size:11px;color:var(--text-tertiary);padding:3px 0;"><span style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;margin-right:6px;">${lbl}</span>—</div>`;
+  const orgLeadersCard = `<div class="farm-side-card">
+    <div class="side-title">Org stat leaders <span class="side-count">${topHitters.length + topPitchers.length} qualifying</span></div>
+    ${leaderRow("OPS", topH, topH ? `${topH.sl.ops} · ${topH.sl.hr ?? 0} HR` : "")}
+    ${leaderRow("ERA", topP, topP ? `${topP.sl.era} · ${(topP.sl.ip != null ? Number(topP.sl.ip).toFixed(1) : "—")} IP` : "")}
+    <a href="#" onclick="event.preventDefault();state.section='leaderboards';state.lbOrg='${escapeHtml(orgCode)}';state.view=null;render();syncToURL();" style="display:inline-block;margin-top:8px;font-size:11px;color:var(--neon-cyan);text-decoration:none;letter-spacing:0.02em;">View all org leaderboards →</a>
   </div>`;
 
   // Compact transaction list for the sidebar — one row per event with
@@ -6506,7 +6853,7 @@ function renderFarmDetail(orgCode) {
             : "";
           const fvL = rp.fv_close != null ? Math.round(rp.fv_close) : null;
           return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
-            ${fvL != null ? `<span class="fv-badge ${fvClass(String(fvL))}" style="font-size:10px;padding:1px 6px;min-width:24px;text-align:center;">${fvL}</span>` : `<span style="width:24px;"></span>`}
+            ${fvL != null ? `<span class="fv-badge ${fvClass(String(fvL))}" size-sm">${fvL}</span>` : `<span style="width:24px;"></span>`}
             <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}${tj}</span>
             <span style="font-family:var(--font-mono);font-size:10px;color:var(--neon-amber);font-variant-numeric:tabular-nums;">${days != null ? days + 'd' : '—'}</span>
           </div>`;
@@ -6514,7 +6861,7 @@ function renderFarmDetail(orgCode) {
       : '<span style="color:var(--text-tertiary);font-size:11.5px;">All tracked prospects healthy.</span>'}
   </div>`;
 
-  const sidebarHtml = topProspectCard + youngestCard + fvDistCard + acqMixCard + etaCard + hittersCard + pitchersCard + ilCard + recentTxCards + gradsCard;
+  const sidebarHtml = topProspectCard + youngestCard + fvDistCard + acqMixCard + etaCard + orgLeadersCard + ilCard + recentTxCards + gradsCard;
 
   // Optional left rail (≥1500px viewports only — CSS-hidden otherwise).
   // Surfaces breakdowns that are useful at-a-glance but would otherwise
@@ -6565,7 +6912,7 @@ function renderFarmDetail(orgCode) {
         ? `<span style="color:var(--neon-cyan);">${escapeHtml(pl.fullName)}</span>`
         : escapeHtml(pl.fullName);
       const fvCell = pl.fv_label
-        ? `<span class="fv-badge ${fvClass(pl.fv_label)}" style="font-size:10px;padding:1px 6px;">${pl.fv_label}</span>`
+        ? `<span class="fv-badge ${fvClass(pl.fv_label)}" size-sm">${pl.fv_label}</span>`
         : `<span style="color:var(--text-tertiary);">—</span>`;
       return `<tr${gradedClick}>
         <td>${nameCell}</td>
@@ -6593,8 +6940,8 @@ function renderFarmDetail(orgCode) {
     </div>`).join("");
 
   const affiliateSection = presentLevels.length ? `
-    <div class="detail-title" style="margin-top:18px;">Affiliate rosters
-      <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">★ = graded prospect</span>
+    <div class="detail-title">Affiliate rosters
+      <span class="detail-title-sub">★ = graded prospect</span>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${affilTabs}</div>
     ${affilPanels}` : "";
@@ -6618,7 +6965,7 @@ function renderFarmDetail(orgCode) {
           ? ` onclick="goToPlayer('${escapeHtml(pl.player_key)}');" style="cursor:pointer;"`
           : "";
         return `<div class="graded-prospect-row"${click}>
-          <span class="fv-badge ${fvClass(pl.fv_label)}" style="font-size:10px;padding:1px 6px;min-width:28px;text-align:center;">${pl.fv_label}</span>
+          <span class="fv-badge ${fvClass(pl.fv_label)}" size-sm">${pl.fv_label}</span>
           <span style="color:${pl.player_key ? "var(--neon-cyan)" : "var(--text-primary)"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(pl.fullName)}</span>
           <span style="color:var(--text-tertiary);font-size:10px;white-space:nowrap;">${escapeHtml(pl.position || "—")}${pl.age != null ? ` · ${pl.age.toFixed(1)}` : ""}</span>
         </div>`;
@@ -6643,8 +6990,8 @@ function renderFarmDetail(orgCode) {
     .filter(lvl => lvl !== "MLB")
     .reduce((acc, lvl) => acc + (orgRosters[lvl] || []).filter(r => r.fv_label).length, 0);
   const gradedSection = `
-    <div class="detail-title" style="margin-top:18px;">Graded prospects by level
-      <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">MiLB only · ${totalGraded} total · sorted by FV within each level</span>
+    <div class="detail-title">Graded prospects by level
+      <span class="detail-title-sub">MiLB only · ${totalGraded} total · sorted by FV within each level</span>
     </div>
     ${gradedByLevel}`;
 
@@ -6716,13 +7063,13 @@ function renderFarmDetail(orgCode) {
     <div class="farm-detail-grid">
       ${leftRailHtml}
       <div>
-        <div class="detail-title" style="margin-top:0;">${(state.formWindow || "1y")} growth vs median farm <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">cumulative-FV change minus median org pace · graduations are neutral</span></div>
+        <div class="detail-title flush">${(state.formWindow || "1y")} growth vs median farm <span class="detail-title-sub">cumulative-FV change minus median org pace · graduations are neutral</span></div>
         ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_medians || {})[state.formWindow || "1y"] ?? 0), state.formWindow || "1y")}
-        <div class="detail-title" style="margin-top:18px;">Position depth chart <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">Tracked prospects bucketed by primary position · sorted by FV</span></div>
+        <div class="detail-title">Position depth chart <span class="detail-title-sub">Tracked prospects bucketed by primary position · sorted by FV</span></div>
         ${makePositionDepthChart(rosterPlayersAll)}
-        <div class="detail-title" style="margin-top:18px;">Acquisition spending <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">Bonus pool dollars — International FA vs Draft, 2021-present</span></div>
+        <div class="detail-title">Acquisition spending <span class="detail-title-sub">Bonus pool dollars — International FA vs Draft, 2021-present</span></div>
         ${makeSpendingBlock(org)}
-        <div class="detail-title" style="margin-top:18px;">Tracked prospects (${rosterPlayers.length}${
+        <div class="detail-title">Tracked prospects (${rosterPlayers.length}${
           [
             state.acqFilter !== "all" ? `${escapeHtml(ACQ_METHODS_FOR_FARM.find(m => m[0] === state.acqFilter)?.[1] || state.acqFilter)}` : null,
             state.levelFilter !== "all" ? escapeHtml(state.levelFilter) : null,
@@ -6823,13 +7170,16 @@ function render() {
   const searchBar = document.querySelector(".search-bar");
   if (searchBar) searchBar.style.display = isDetail ? "none" : "";
   const filterBar = document.getElementById("filter-bar");
+  const filterToggleBtn = document.getElementById("filter-toggle");
+  const usesFilters = !isDetail && (state.section === "active" || state.section === "traded");
   if (filterBar) {
-    if (isDetail) {
-      filterBar.style.display = "none";
-    } else {
-      const usesFilters = state.section === "active" || state.section === "traded";
-      filterBar.style.display = usesFilters ? "" : "none";
-    }
+    // Style.display set to "" lets the CSS media query take over so
+    // the mobile collapse behavior keeps working; "none" forces hidden
+    // when on a tab that doesn't use these filters.
+    filterBar.style.display = usesFilters ? "" : "none";
+  }
+  if (filterToggleBtn) {
+    filterToggleBtn.style.display = usesFilters ? "" : "none";
   }
 
   let active;
@@ -6929,7 +7279,9 @@ function renderCompareCart() {
   const keys = compareLoad();
   const toggle = document.getElementById("compare-toggle");
   const count  = document.getElementById("compare-count");
-  if (toggle) toggle.classList.toggle("empty", keys.length === 0);
+  // Hide the floating button entirely when nothing's pinned; visible
+  // (full opacity) the moment the user adds their first prospect.
+  if (toggle) toggle.classList.toggle("is-empty-hidden", keys.length === 0);
   if (count)  count.textContent = keys.length;
   // Sync any "Add to compare" buttons on the current page.
   document.querySelectorAll(".compare-add-btn[data-compare-key]").forEach(btn => {
@@ -6961,7 +7313,7 @@ function renderCompareCart() {
     return `<div class="compare-card" style="${orgStripe(p.org)}">
       <div>
         <div class="player-name" style="cursor:pointer;" onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');">${escapeHtml(p.player_name)}
-          <span class="fv-badge ${fvClass(String(fvLabel))}" style="font-size:10px;padding:1px 6px;margin-left:6px;">${fvLabel}</span>
+          <span class="fv-badge ${fvClass(String(fvLabel))}" size-sm" style="margin-left:6px;">${fvLabel}</span>
         </div>
         ${playerMetaHTML(p)}
         <div class="cc-stat" style="margin-top:6px;">${escapeHtml(slashLine)}</div>
@@ -7011,6 +7363,17 @@ function attachHandlers() {
     if (row.dataset.key)      goToPlayer(row.dataset.key);
     else if (row.dataset.org) goToFarm(row.dataset.org);
   });
+
+  // Mobile filter-toggle — flips `#filter-bar.is-open` so the chip
+  // rows expand/collapse. Desktop hides the toggle entirely via CSS.
+  const filterToggle = document.getElementById("filter-toggle");
+  if (filterToggle) {
+    filterToggle.addEventListener("click", () => {
+      const bar = document.getElementById("filter-bar");
+      const isOpen = bar.classList.toggle("is-open");
+      filterToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
+  }
 
   // Comparison-cart open/close + per-card remove buttons.
   document.getElementById("compare-toggle").addEventListener("click", () => {
@@ -7090,6 +7453,11 @@ function attachHandlers() {
   attachChipGroup("lb-stat",  "lbStat",  () => renderLeaderboards());
   attachChipGroup("lb-level", "lbLevel", () => renderLeaderboards());
   attachChipGroup("lb-pos",   "lbPos",   () => renderLeaderboards());
+  document.getElementById("lb-org-filter").addEventListener("change", e => {
+    state.lbOrg = e.target.value;
+    renderLeaderboards();
+    syncToURL();
+  });
   document.getElementById("org-filter").addEventListener("change", e => {
     state.orgFilter = e.target.value;
     render();
@@ -7145,12 +7513,17 @@ function attachHandlers() {
 }
 
 function populateOrgFilter() {
-  const select = document.getElementById("org-filter");
-  for (const org of getAllOrgs()) {
-    const opt = document.createElement("option");
-    opt.value = org;
-    opt.textContent = org;
-    select.appendChild(opt);
+  // Active-list org filter + Leaderboards org filter share the same
+  // org enumeration. Two selects, same options.
+  for (const selId of ["org-filter", "lb-org-filter"]) {
+    const select = document.getElementById(selId);
+    if (!select) continue;
+    for (const org of getAllOrgs()) {
+      const opt = document.createElement("option");
+      opt.value = org;
+      opt.textContent = org;
+      select.appendChild(opt);
+    }
   }
 }
 
