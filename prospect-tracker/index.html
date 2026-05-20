@@ -2498,7 +2498,13 @@ function loadSlice(name) {
                                          : (cur && Object.keys(cur).length > 0);
   if (isPopulated) return Promise.resolve();
   if (_sliceInFlight[name]) return _sliceInFlight[name];
-  const url = DATA._slices[name];
+  // Slice URLs in _slices are bare filenames (e.g. "graduates.json"),
+  // emitted alongside timeseries.json. Browsers resolve them relative
+  // to the *page* URL, not the data file — so we have to splice in the
+  // data dir from DATA_URL ourselves. Without this prefix the fetch
+  // 404s silently and the gate loops on the loading state.
+  const base = DATA_URL.replace(/[^/]+$/, "");
+  const url = base + DATA._slices[name];
   _sliceInFlight[name] = fetch(url, { cache: "no-cache" })
     .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
     .then(payload => { DATA[name] = payload; })
