@@ -1,4 +1,4 @@
-source,snapshot_date,interval_label,player_name,position,org,rank,fv,status,birth_date
+source,snapshot_date,interval_label,player_name,position,org,rank,fv,status,birth_date,hit,game_pwr,raw_pwr,speed,field,throw,fb,sl,cb,ch,cmd
 fangraphs,2021-11-06,FG 2021 Graduated,Wander Franco,SS,TBR,1,80,graduated ,
 fangraphs,2021-11-06,FG 2021 Graduated,Randy Arozarena,LF,TBR,3,60,graduated ,
 fangraphs,2021-11-06,FG 2021 Graduated,Jarred Kelenic,RF,SEA,3,60,graduated ,

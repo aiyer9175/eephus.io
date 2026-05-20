@@ -2135,6 +2135,76 @@
     .rps-plus-pill.is-neutral { background: rgba(167, 100, 252, 0.10); color: var(--neon-violet); }
     .rps-plus-pill.is-null { background: var(--bg-tertiary); color: var(--text-tertiary); border-style: dashed; }
 
+    /* ToolGrade+ pill — same shape as RPS+ but a half-step smaller so
+       it can ride inline next to a player name in list rows without
+       crowding. The numeric value is anchored at 100 = cohort mean tool
+       composite; ≥110 reads green, ≤90 reads red. */
+    .tool-pill {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0;
+      cursor: help;
+      border: 1px solid var(--neon-cyan);
+      vertical-align: middle;
+    }
+    .tool-pill.is-pos     { background: rgba(31, 122, 58, 0.15); color: var(--up); border-color: var(--up); }
+    .tool-pill.is-neg     { background: rgba(185, 28, 28, 0.12); color: var(--down); border-color: var(--down); }
+    .tool-pill.is-neutral { background: rgba(74, 200, 224, 0.10); color: var(--neon-cyan); }
+
+    /* Tools sidebar card — single-spaced grid of tool-grade chips with
+       composites above. Mirrors the layout discipline of the sabermetrics
+       block: subtle border, mono badges, no big visual claims. */
+    .tools-card {
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+    }
+    .tools-card .tools-composite-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px;
+      padding-bottom: 6px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .tools-card .tools-composite-row:last-of-type {
+      border-bottom: none; margin-bottom: 2px; padding-bottom: 2px;
+    }
+    .tools-card .tools-composite-label {
+      font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-tertiary);
+      font-weight: 700;
+    }
+    .tools-card .tools-composite-value {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .tools-card .tools-grade-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 5px 10px;
+      margin-top: 6px;
+    }
+    .tools-card .tools-grade-cell {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .tools-card .tools-grade-name {
+      letter-spacing: 0.04em;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .tools-card .tools-footer {
+      margin-top: 8px;
+      font-size: 10px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.04em;
+    }
+
     /* Overlay-chart legend dot — small square in the per-player color. */
     .csbs-legend-dot {
       display: inline-block; width: 8px; height: 8px;
@@ -4041,7 +4111,7 @@ function renderActives() {
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           ${headshotHTML(p, 50)}
           <div style="min-width:0;flex:1;">
-            <div class="player-name">${escapeHtml(p.player_name)}</div>
+            <div class="player-name">${escapeHtml(p.player_name)}${toolPlusPillHTML(p)}</div>
             ${playerMetaHTML(p)}
           </div>
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
@@ -7213,6 +7283,97 @@ function renderPlayerDetail(key) {
     : `Advanced stats <span class="detail-title-sub">level-relative proxies · MLB sabermetrics unavailable for MiLB</span>`;
   const sabermetricsSection = `<div class="detail-title">${sabermetricsTitle}</div>${makeSabermetricsBlock(p)}`;
 
+  // Scouting tools card — per-tool 20-80 grades + the three composites
+  // (Offensive/Defensive/Overall for hitters; Stuff/Command/Overall for
+  // pitchers). Composites also carry a ToolGrade+ index (100 = cohort
+  // mean, 10 pts = 1 stdev) so a "57 overall" reads in relation to the
+  // active prospect pool. Skipped when no source has graded this player.
+  const toolsSection = (() => {
+    const t = p.tools;
+    if (!t || !t.grades || !Object.keys(t.grades).length) return "";
+    const isPitcher = !!((p.statline || {}).is_pitcher
+                        || (p.sabermetrics || {}).is_pitcher
+                        || ["RHP","LHP","SP","RP","MIRP","SIRP","P"].includes((p.position||"").split("/")[0]));
+    // Half-grade rendering: "57.5" stays as ".5" when not an integer.
+    const fmt = v => v == null ? "—"
+      : (Number.isInteger(v) ? String(v) : v.toFixed(1));
+    const badgeFor = v => v == null
+      ? `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`
+      : `<span class="fv-badge ${fvClass(String(Math.round(v)))} size-sm">${fmt(v)}</span>`;
+    const plusPill = (val) => {
+      if (val == null) return "";
+      const cls = val >= 110 ? "is-pos" : val <= 90 ? "is-neg" : "is-neutral";
+      return `<span class="tool-pill ${cls}" title="ToolGrade+ ${val} · 100 = cohort mean composite, 10 pts = 1 stdev">T+${val}</span>`;
+    };
+    const compositeRow = (label, raw, plus, sub) => {
+      if (raw == null && plus == null) return "";
+      return `<div class="tools-composite-row">
+        <div>
+          <div class="tools-composite-label">${escapeHtml(label)}</div>
+          ${sub ? `<div style="font-size:10px;color:var(--text-tertiary);margin-top:1px;">${escapeHtml(sub)}</div>` : ""}
+        </div>
+        <div class="tools-composite-value">${badgeFor(raw)} ${plusPill(plus)}</div>
+      </div>`;
+    };
+    const gradeCell = (key, label) => {
+      const v = (t.grades || {})[key];
+      const spread = (t.spread || {})[key];
+      const spreadTag = (spread && spread >= 10)
+        ? `<span style="font-size:9px;color:var(--neon-amber);margin-left:4px;" title="Source spread ${spread} grade-points">±${Math.round(spread)}</span>`
+        : "";
+      return `<div class="tools-grade-cell">
+        <span class="tools-grade-name">${escapeHtml(label)}${spreadTag}</span>
+        ${badgeFor(v)}
+      </div>`;
+    };
+    const overallRow = compositeRow("Overall", t.composite_overall, t.composite_overall_plus, "weighted composite");
+    let groupBlocks = "";
+    if (isPitcher) {
+      const stuffRow = compositeRow("Stuff", t.composite_stuff, t.composite_stuff_plus, "avg of pitch grades");
+      const cmdRow = compositeRow("Command", t.composite_cmd, t.composite_cmd_plus, "control / command grade");
+      const stuffGrid = ["fb","sl","cb","ch"]
+        .filter(k => (t.grades || {})[k] != null)
+        .map(k => gradeCell(k, ({fb:"Fastball", sl:"Slider", cb:"Curveball", ch:"Changeup"})[k]))
+        .join("");
+      const cmdGrid = gradeCell("cmd", "Command");
+      groupBlocks = `
+        ${stuffRow}
+        ${stuffGrid ? `<div class="tools-grade-grid">${stuffGrid}</div>` : ""}
+        ${cmdRow}
+        ${(t.grades || {}).cmd != null ? `<div class="tools-grade-grid">${cmdGrid}</div>` : ""}
+      `;
+    } else {
+      const offRow = compositeRow("Offensive", t.composite_off, t.composite_off_plus, "hit · pwr · speed");
+      const defRow = compositeRow("Defensive", t.composite_def, t.composite_def_plus, "field · throw");
+      const offGrid = ["hit","game_pwr","raw_pwr","speed"]
+        .filter(k => (t.grades || {})[k] != null)
+        .map(k => gradeCell(k, ({hit:"Hit", game_pwr:"Game pwr", raw_pwr:"Raw pwr", speed:"Speed"})[k]))
+        .join("");
+      const defGrid = ["field","throw"]
+        .filter(k => (t.grades || {})[k] != null)
+        .map(k => gradeCell(k, ({field:"Field", throw:"Throw"})[k]))
+        .join("");
+      groupBlocks = `
+        ${offRow}
+        ${offGrid ? `<div class="tools-grade-grid">${offGrid}</div>` : ""}
+        ${defRow}
+        ${defGrid ? `<div class="tools-grade-grid">${defGrid}</div>` : ""}
+      `;
+    }
+    const sources = (t.publishing_sources || [])
+      .map(s => SOURCE_LABELS[s] || s)
+      .join(" · ");
+    const footer = sources
+      ? `<div class="tools-footer">Publishing: ${escapeHtml(sources)}</div>`
+      : "";
+    return `<div class="detail-title">Tools <span class="detail-title-sub">20-80 scouting grades · consensus across sources</span></div>
+      <div class="tools-card">
+        ${overallRow}
+        ${groupBlocks}
+        ${footer}
+      </div>`;
+  })();
+
   // Statcast / Baseball Savant block — populated when CSV exports are
   // present in the prospect-tracker root (storage.py wires this up via
   // prospect_savant.attach_prospect_savant). Renders quality-of-contact
@@ -7442,6 +7603,60 @@ function renderPlayerDetail(key) {
       </div>`;
   })();
 
+  // Per-source tool consensus — mirrors the FV per-source block above
+  // but tabulates each source's tool grades. Hitter and pitcher headers
+  // differ; sources that didn't publish any tool grade are omitted so
+  // an FG-only profile doesn't show empty ESPN/Pipeline rows.
+  const toolPerSourceSection = (() => {
+    const latestPt = p.points && p.points.length
+      ? p.points[p.points.length - 1] : null;
+    if (!latestPt || !latestPt.per_source) return "";
+    const entries = Object.entries(latestPt.per_source)
+      .filter(([, v]) => v && v.tools && Object.keys(v.tools).length);
+    if (!entries.length) return "";
+    const isPitcher = !!((p.statline || {}).is_pitcher
+                        || (p.sabermetrics || {}).is_pitcher
+                        || ["RHP","LHP","SP","RP","MIRP","SIRP","P"].includes((p.position||"").split("/")[0]));
+    const keys = isPitcher
+      ? [["fb","FB"],["sl","SL"],["cb","CB"],["ch","CH"],["cmd","CMD"]]
+      : [["hit","HIT"],["game_pwr","GPWR"],["raw_pwr","RPWR"],["speed","SPD"],["field","FLD"],["throw","ARM"]];
+    const headerCells = keys.map(([, lbl]) =>
+      `<th style="text-align:right;padding-bottom:4px;">${lbl}</th>`).join("");
+    const cell = (v) => v == null
+      ? `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;color:var(--text-tertiary);font-size:10px;">—</td>`
+      : `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;"><span class="fv-badge ${fvClass(String(Math.round(v)))} size-xs">${Math.round(v)}</span></td>`;
+    const rows = entries.map(([src, info]) => {
+      const lbl = SOURCE_LABELS[src] || src;
+      const cells = keys.map(([k]) => cell((info.tools || {})[k])).join("");
+      return `<tr>
+        <td style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 6px 3px 0;border-bottom:1px solid var(--border-light);">${escapeHtml(lbl)}</td>
+        ${cells}
+      </tr>`;
+    }).join("");
+    // Wide-spread pill when any single tool has >=10-point spread across
+    // sources — same idiom as the FV wide-spread pill above.
+    const spread = latestPt.tools_spread || {};
+    const widest = Object.entries(spread).reduce(
+      (acc, [k, v]) => (v != null && v > (acc[1] ?? -1)) ? [k, v] : acc, [null, null]);
+    const wideTag = (widest[1] != null && widest[1] >= 10)
+      ? `<div style="font-size:11px;color:var(--neon-amber);margin-bottom:6px;font-family:var(--font-mono);">
+           <span style="display:inline-block;padding:1px 6px;border:1px solid var(--neon-amber);border-radius:10px;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;margin-right:6px;">wide tool spread</span>
+           ${escapeHtml(widest[0])} ranges ${widest[1]} pts across sources
+         </div>`
+      : "";
+    return `<div class="detail-title">Tool consensus <span class="detail-title-sub">latest tool grades per source</span></div>
+      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">
+        ${wideTag}
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+          <thead><tr style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;">
+            <th style="text-align:left;padding-bottom:4px;">Source</th>
+            ${headerCells}
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  })();
+
   // MLB roster status block — debut date, 40-man membership, options
   // remaining, accumulated MLB seasons, and a service-phase bucket.
   // Driven by storage.derive_roster_status, which walks the per-player
@@ -7607,14 +7822,24 @@ function renderPlayerDetail(key) {
   // them as a one-line caption below the title summary instead of a
   // duplicate full block.
   const flagSummary = (() => {
-    const flags = (p.stat_flags || []);
+    // Stat flags + tool flags ride the same green/red summary line —
+    // both arrays share the {direction, stat, ...} shape and the reader
+    // doesn't care whether a callout came from a rate stat or a 60-grade
+    // tool. Tool-derived flags get a small ° suffix so the source is
+    // still visible without doubling the summary line height.
+    const stat = (p.stat_flags || []);
+    const tool = (p.tool_flags || []).map(f => ({ ...f, _origin: "tool" }));
+    const flags = stat.concat(tool);
     if (!flags.length) return "";
     const green = flags.filter(f => f.direction === "green");
     const red   = flags.filter(f => f.direction === "red");
-    const list = arr => arr.map(f => escapeHtml(f.stat)).join(" · ") || "—";
+    const list = arr => arr.map(f =>
+      escapeHtml(f.stat) + (f._origin === "tool" ? "°" : "")
+    ).join(" · ") || "—";
     return `<div style="display:flex;gap:14px;align-items:baseline;font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-bottom:10px;flex-wrap:wrap;">
       ${green.length ? `<span><span style="color:var(--up);font-weight:700;">▲ ${green.length}</span> ${list(green)}</span>` : ""}
       ${red.length   ? `<span><span style="color:var(--down);font-weight:700;">▼ ${red.length}</span> ${list(red)}</span>`   : ""}
+      ${tool.length ? `<span style="color:var(--text-tertiary);font-size:10px;" title="Tool-grade flags are marked with °">° = scouting-tool flag</span>` : ""}
     </div>`;
   })();
 
@@ -7635,7 +7860,7 @@ function renderPlayerDetail(key) {
   root.innerHTML = header + tilesHtml + flagSummary + `
     <div class="player-detail-grid">
       <div>${chartSection}${careerSection}${levelBenchmarkSection}${sourceSection}</div>
-      <div class="player-detail-side">${noteSection}${sameFarmSection}${ilSection}${healthSection}${sabermetricsSection}${savantSection}${perSourceSection}${arsenalSection}${(() => {
+      <div class="player-detail-side">${noteSection}${sameFarmSection}${ilSection}${healthSection}${sabermetricsSection}${toolsSection}${savantSection}${perSourceSection}${toolPerSourceSection}${arsenalSection}${(() => {
         // Below-the-fold context collapses into a <details> accordion so
         // the eye reaches the high-priority cards (health / Savant / per-
         // source) without scrolling past 11 stacked sections. Sections
@@ -9029,6 +9254,21 @@ function rpsPlusPillHTML(p) {
   const diffTxt = diff === 0 ? "matches" : `${diff > 0 ? "+" : ""}${diff}% vs`;
   const title = `RPS+ ${rp.plus} · ${diffTxt} the mean ${ageLabel} prospect (raw score ${rp.raw >= 0 ? "+" : ""}${rp.raw} vs bucket mean ${rp.mean >= 0 ? "+" : ""}${rp.mean.toFixed(1)}, n=${rp.n})`;
   return `<span class="rps-plus-pill ${cls}" title="${escapeHtml(title)}">RPS+ ${rp.plus}</span>`;
+}
+
+// ToolGrade+ pill — small inline composite-overall index. Anchored at
+// 100 = cohort-mean tool composite, 10 pts = 1 stdev (computed at
+// storage time over every serialized prospect). Returns "" when the
+// player has no tool grades — list rows skip the pill silently rather
+// than rendering an empty "T+ —" that adds noise.
+function toolPlusPillHTML(p) {
+  const t = p && p.tools;
+  if (!t || t.composite_overall_plus == null) return "";
+  const v = t.composite_overall_plus;
+  const cls = v >= 110 ? "is-pos" : v <= 90 ? "is-neg" : "is-neutral";
+  const raw = t.composite_overall != null ? t.composite_overall.toFixed(1) : "—";
+  const title = `ToolGrade+ ${v} · overall composite ${raw} (100 = cohort mean tool composite, 10 pts = 1 stdev)`;
+  return `<span class="tool-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(title)}">T+${v}</span>`;
 }
 
 // =============================================================================

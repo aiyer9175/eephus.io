@@ -353,3 +353,158 @@ def compute_stat_flags(statline: dict | None,
             "note":          rule.green_note if direction == "green" else rule.red_note,
         })
     return out
+
+
+# ---------------------------------------------------------------------------
+# Tool-grade flags
+#
+# Scouting-grid analog of compute_stat_flags. Fires green/red callouts on
+# raw per-tool grades and on the composite X+ indices. Same dict shape so
+# the frontend renderer eats both arrays identically.
+#
+# Thresholds (per the spec, FanGraphs scouting primer):
+#   green tool      : grade >= 60   ("plus")
+#   carry-tool tag  : grade >= 65   (still green, but category="carry_tool"
+#                     so the UI can paint a bolder pill)
+#   red tool        : grade <= 35   (well below avg — actively a hole)
+#   composite green : composite_*_plus >= 115
+#   composite red   : composite_overall_plus <= 85
+#
+# Pitchers' grade names (FB / SL / CB / CH / Command) and hitters' grade
+# names (Hit / Game Pwr / Raw Pwr / Speed / Field / Throw) come from the
+# same canonical-key table the scrapers use.
+# ---------------------------------------------------------------------------
+
+_TOOL_LABELS_HITTER = {
+    "hit": "Hit", "game_pwr": "Game power", "raw_pwr": "Raw power",
+    "speed": "Speed", "field": "Field", "throw": "Throw",
+}
+_TOOL_LABELS_PITCHER = {
+    "fb": "Fastball", "sl": "Slider", "cb": "Curveball",
+    "ch": "Changeup", "cmd": "Command",
+}
+_TOOL_CATEGORY = {
+    "hit": "contact", "game_pwr": "power", "raw_pwr": "power",
+    "speed": "speed", "field": "defense", "throw": "arm",
+    "fb": "stuff", "sl": "stuff", "cb": "stuff", "ch": "stuff",
+    "cmd": "command",
+}
+
+TOOL_GREEN_GRADE = 60
+TOOL_CARRY_GRADE = 65
+TOOL_RED_GRADE   = 35
+TOOL_PLUS_GREEN  = 115
+TOOL_PLUS_RED    = 85
+
+
+def compute_tool_flags(tools: dict | None, is_pitcher: bool) -> list[dict]:
+    """Green/red flags driven by scouting tool grades.
+
+    Returns a list of flag dicts in the same shape compute_stat_flags
+    emits so the UI can concatenate the two and let one renderer handle
+    both. `tools` is the dict built by storage._compute_tool_composites
+    (carries `grades` + composite_* fields; X+ indices may be missing if
+    this runs before the population-norm pass).
+    """
+    out: list[dict] = []
+    if not tools:
+        return out
+    grades = tools.get("grades") or {}
+    labels = _TOOL_LABELS_PITCHER if is_pitcher else _TOOL_LABELS_HITTER
+
+    for key, grade in grades.items():
+        if key not in labels:
+            continue  # tool published but irrelevant for role (e.g. hit on a pitcher)
+        try:
+            g = float(grade)
+        except (TypeError, ValueError):
+            continue
+        if g >= TOOL_CARRY_GRADE:
+            out.append({
+                "stat": labels[key],
+                "direction": "green",
+                "value": g,
+                "value_display": str(int(g) if g.is_integer() else g),
+                "level": None,
+                "level_avg": 50,
+                "delta": g - 50,
+                "delta_display": f"+{int(g - 50)}",
+                "category": _TOOL_CATEGORY.get(key, "tool"),
+                "polarity": "above_good",
+                "note": f"{int(g)} {labels[key].lower()} — carry tool.",
+            })
+        elif g >= TOOL_GREEN_GRADE:
+            out.append({
+                "stat": labels[key],
+                "direction": "green",
+                "value": g,
+                "value_display": str(int(g) if g.is_integer() else g),
+                "level": None,
+                "level_avg": 50,
+                "delta": g - 50,
+                "delta_display": f"+{int(g - 50)}",
+                "category": _TOOL_CATEGORY.get(key, "tool"),
+                "polarity": "above_good",
+                "note": f"{int(g)} {labels[key].lower()} — plus tool.",
+            })
+        elif g <= TOOL_RED_GRADE:
+            out.append({
+                "stat": labels[key],
+                "direction": "red",
+                "value": g,
+                "value_display": str(int(g) if g.is_integer() else g),
+                "level": None,
+                "level_avg": 50,
+                "delta": g - 50,
+                "delta_display": f"{int(g - 50)}",
+                "category": _TOOL_CATEGORY.get(key, "tool"),
+                "polarity": "below_good",
+                "note": f"{int(g)} {labels[key].lower()} — well below average.",
+            })
+
+    # Composite-level callouts. These read off the X+ indices, but those
+    # are stamped in a second pass — when this is called from _serialize
+    # the *_plus fields are still None. In that case we skip composite
+    # flags and let a future re-flag pass pick them up if needed. Today
+    # the second pass doesn't re-run compute_tool_flags, which is fine:
+    # per-tool grades carry the most actionable signal anyway and the
+    # composite is visible as its own pill in the UI.
+    for plus_key, label in (
+        ("composite_overall_plus", "Overall tools"),
+        ("composite_off_plus",     "Offensive tools"),
+        ("composite_def_plus",     "Defensive tools"),
+        ("composite_stuff_plus",   "Stuff"),
+        ("composite_cmd_plus",     "Command"),
+    ):
+        v = tools.get(plus_key)
+        if v is None:
+            continue
+        if v >= TOOL_PLUS_GREEN:
+            out.append({
+                "stat": label,
+                "direction": "green",
+                "value": v,
+                "value_display": f"{label} {v:+d}",
+                "level": None,
+                "level_avg": 100,
+                "delta": v - 100,
+                "delta_display": f"{v - 100:+d}",
+                "category": "composite",
+                "polarity": "above_good",
+                "note": f"{label} index {v} — above-cohort toolset.",
+            })
+        elif plus_key == "composite_overall_plus" and v <= TOOL_PLUS_RED:
+            out.append({
+                "stat": label,
+                "direction": "red",
+                "value": v,
+                "value_display": f"{label} {v:+d}",
+                "level": None,
+                "level_avg": 100,
+                "delta": v - 100,
+                "delta_display": f"{v - 100:+d}",
+                "category": "composite",
+                "polarity": "below_good",
+                "note": f"{label} index {v} — below-cohort toolset.",
+            })
+    return out

@@ -14,7 +14,10 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Iterable
 
-from scrapers import Snapshot, canonical_player_key
+from scrapers import (
+    Snapshot, canonical_player_key,
+    HITTER_TOOL_KEYS, PITCHER_TOOL_KEYS, ALL_TOOL_KEYS,
+)
 from consensus import PlayerTimeseries, stock_movement
 from stats import StatLine
 
@@ -25,6 +28,174 @@ DB_PATH = Path(__file__).parent / "prospects.db"
 # without ever being marked graduated — think Wander Franco (suspended) or
 # players who quietly aged out of prospect status.
 INACTIVE_MONTHS = 18
+
+
+def _index_plus(value: float | None, mean: float | None, stdev: float | None) -> int | None:
+    """Generic 'X+' normalization shared by RPS+, DvM+, and ToolGrade+.
+
+    Returns `100 + 10 * (value - mean) / stdev`, rounded to int and
+    clamped to [0, 250] so a perverse one-prospect cohort never produces
+    a nonsense ±400 reading. Returns None when any input is missing or
+    when stdev is zero (no variance → every prospect plots at 100, which
+    is informationally useless but not wrong).
+    """
+    if value is None or mean is None or stdev is None or stdev <= 0:
+        return None
+    plus = round(100 + 10 * (value - mean) / stdev)
+    return max(0, min(250, plus))
+
+
+def _round_half(grade: float | None) -> float | None:
+    """Snap a 20-80 grade to the nearest 0.5 — matches FG's published tool grid."""
+    if grade is None:
+        return None
+    return round(grade * 2) / 2
+
+
+def _compute_tool_composites(grades: dict[str, float] | None,
+                              is_pitcher: bool) -> dict | None:
+    """Build the raw (pre-X+) tools sub-object from per-tool consensus grades.
+
+    Returns a dict with `grades` (the input, copied + rounded to 0.5),
+    the composites (off/def for hitters, stuff/cmd for pitchers, and
+    overall in both cases), or None when no tools are graded.
+    Composites are computed only over the grades that are present —
+    a hitter with hit + power but no field/throw still gets a
+    `composite_off` but no `composite_def`.
+    """
+    if not grades:
+        return None
+    cleaned: dict[str, float] = {}
+    for k, v in grades.items():
+        if v is None:
+            continue
+        try:
+            f = float(v)
+        except (TypeError, ValueError):
+            continue
+        if f < 20 or f > 80:
+            continue
+        cleaned[k] = _round_half(f)
+    if not cleaned:
+        return None
+
+    def _avg(keys):
+        vals = [cleaned[k] for k in keys if k in cleaned]
+        if not vals:
+            return None
+        return round(sum(vals) / len(vals), 2)
+
+    out: dict = {"grades": cleaned}
+    if is_pitcher:
+        stuff = _avg(("fb", "sl", "cb", "ch"))
+        cmd = cleaned.get("cmd")
+        out["composite_stuff"] = stuff
+        out["composite_cmd"] = cmd
+        # Overall = 0.65 stuff + 0.35 cmd; fall back to whichever side
+        # is present so a "stuff-only" prospect still gets an overall.
+        if stuff is not None and cmd is not None:
+            out["composite_overall"] = round(0.65 * stuff + 0.35 * cmd, 2)
+        else:
+            out["composite_overall"] = stuff if stuff is not None else cmd
+        out["composite_off"] = None
+        out["composite_def"] = None
+    else:
+        off = _avg(("hit", "game_pwr", "raw_pwr", "speed"))
+        deff = _avg(("field", "throw"))
+        out["composite_off"] = off
+        out["composite_def"] = deff
+        if off is not None and deff is not None:
+            out["composite_overall"] = round(0.7 * off + 0.3 * deff, 2)
+        else:
+            out["composite_overall"] = off if off is not None else deff
+        out["composite_stuff"] = None
+        out["composite_cmd"] = None
+    return out
+
+
+def _attach_tool_plus_indices(payloads: list[dict]) -> None:
+    """Second-pass population normalization for tool composites.
+
+    Iterates over every serialized prospect once to compute per-composite
+    mean/stdev (across all prospects that have a non-None value for that
+    composite), then back-fills `composite_*_plus` on each tools dict
+    in-place. Mirrors how RPS+ buckets are built in the frontend, but at
+    storage time so the JSON ships with the indices baked in.
+
+    Hitter and pitcher composites use the SAME cohort norms — every
+    prospect in the comparison, regardless of role — so a 60-grade hit
+    tool reads the same way relative to peers as a 60-grade fastball
+    reads relative to pitchers. (If a future iteration wants role-split
+    norms, this is the one place to change.)
+    """
+    composite_keys = ("composite_off", "composite_def",
+                      "composite_stuff", "composite_cmd", "composite_overall")
+    samples: dict[str, list[float]] = {k: [] for k in composite_keys}
+    for pl in payloads:
+        t = pl.get("tools")
+        if not t:
+            continue
+        for k in composite_keys:
+            v = t.get(k)
+            if v is not None:
+                samples[k].append(float(v))
+    cohort_stats: dict[str, tuple[float, float]] = {}
+    for k, vals in samples.items():
+        if len(vals) < 2:
+            cohort_stats[k] = (None, None)
+            continue
+        m = sum(vals) / len(vals)
+        var = sum((x - m) ** 2 for x in vals) / len(vals)
+        cohort_stats[k] = (m, var ** 0.5 if var > 0 else None)
+    for pl in payloads:
+        t = pl.get("tools")
+        if not t:
+            continue
+        for k in composite_keys:
+            mean, stdev = cohort_stats[k]
+            t[f"{k}_plus"] = _index_plus(t.get(k), mean, stdev)
+        # Composite-driven green/red flags piggyback on the X+ pass —
+        # the per-tool compute_tool_flags call inside _serialize ran
+        # before X+ values existed, so we append composite flags here.
+        overall_plus = t.get("composite_overall_plus")
+        off_plus = t.get("composite_off_plus")
+        stuff_plus = t.get("composite_stuff_plus")
+        tool_flags = pl.setdefault("tool_flags", [])
+        for plus_key, plus_val, label in (
+            ("composite_overall_plus", overall_plus, "Overall tools"),
+            ("composite_off_plus",     off_plus,     "Offensive tools"),
+            ("composite_stuff_plus",   stuff_plus,   "Stuff"),
+        ):
+            if plus_val is None:
+                continue
+            if plus_val >= 115:
+                tool_flags.append({
+                    "stat": label,
+                    "direction": "green",
+                    "value": plus_val,
+                    "value_display": f"{label} {plus_val:+d}",
+                    "level": None,
+                    "level_avg": 100,
+                    "delta": plus_val - 100,
+                    "delta_display": f"{plus_val - 100:+d}",
+                    "category": "composite",
+                    "polarity": "above_good",
+                    "note": f"{label} index {plus_val} — above-cohort toolset.",
+                })
+        if overall_plus is not None and overall_plus <= 85:
+            tool_flags.append({
+                "stat": "Overall tools",
+                "direction": "red",
+                "value": overall_plus,
+                "value_display": f"Overall tools {overall_plus:+d}",
+                "level": None,
+                "level_avg": 100,
+                "delta": overall_plus - 100,
+                "delta_display": f"{overall_plus - 100:+d}",
+                "category": "composite",
+                "polarity": "below_good",
+                "note": f"Overall tools index {overall_plus} — below-cohort toolset.",
+            })
 
 
 def _inactive_cutoff() -> date:
@@ -201,20 +372,40 @@ def init_db():
             con.execute("ALTER TABLE players ADD COLUMN birth_date TEXT")
         except sqlite3.OperationalError:
             pass  # column already exists
+        # Migration: add tools_json column to snapshots for per-source
+        # 20-80 tool grades. Older snapshots keep NULL — consensus + the
+        # serializer treat NULL identically to "source didn't publish tools".
+        try:
+            con.execute("ALTER TABLE snapshots ADD COLUMN tools_json TEXT")
+        except sqlite3.OperationalError:
+            pass  # column already exists
 
 
 def insert_snapshots(snapshots: Iterable[Snapshot]) -> int:
     count = 0
     with connect() as con:
         for s in snapshots:
+            tools_json = json.dumps(s.tools) if s.tools else None
             cur = con.execute(
                 """INSERT OR IGNORE INTO snapshots
                    (source, snapshot_date, interval_label, player_key,
-                    player_name, position, org, rank, fv, status)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    player_name, position, org, rank, fv, status, tools_json)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (s.source, s.snapshot_date, s.interval_label, s.player_key,
-                 s.player_name, s.position, s.org, s.rank, s.fv, s.status),
+                 s.player_name, s.position, s.org, s.rank, s.fv, s.status,
+                 tools_json),
             )
+            # If the row already existed (INSERT OR IGNORE no-op) but we
+            # now have tool grades the prior row lacks, fill them in. This
+            # lets a re-run pick up tools from a freshly extended scraper
+            # without forcing a destructive re-ingest.
+            if cur.rowcount == 0 and tools_json:
+                con.execute(
+                    """UPDATE snapshots SET tools_json = ?
+                       WHERE source = ? AND interval_label = ? AND player_key = ?
+                         AND tools_json IS NULL""",
+                    (tools_json, s.source, s.interval_label, s.player_key),
+                )
             count += cur.rowcount
             con.execute(
                 """INSERT INTO players (player_key, player_name, position, org)
@@ -399,13 +590,24 @@ def load_all_snapshots() -> list[Snapshot]:
     with connect() as con:
         rows = con.execute(
             """SELECT source, snapshot_date, interval_label, player_key,
-                      player_name, position, org, rank, fv, status
+                      player_name, position, org, rank, fv, status, tools_json
                FROM snapshots ORDER BY snapshot_date, source"""
         ).fetchall()
     snapshots: list[Snapshot] = []
     for r in rows:
         d = dict(r)
         d["player_key"] = canonical_player_key(d["player_key"])
+        tools_json = d.pop("tools_json", None)
+        tools = None
+        if tools_json:
+            try:
+                parsed = json.loads(tools_json)
+                if isinstance(parsed, dict) and parsed:
+                    tools = {k: float(v) for k, v in parsed.items()
+                             if v is not None}
+            except (ValueError, TypeError):
+                tools = None
+        d["tools"] = tools
         snapshots.append(Snapshot(**d))
     return snapshots
 
@@ -1280,7 +1482,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         ops_norms_from_norms,
         era_norms_from_norms,
     )
-    from stat_flags import compute_stat_flags
+    from stat_flags import compute_stat_flags, compute_tool_flags
 
     # Empirical level baselines computed from the career_stats payload we
     # already have. age_baselines / ops_norms / era_norms feed into the
@@ -1944,6 +2146,33 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # unconditionally on the prospect detail page.
         flags = compute_stat_flags(sl_out, level_norms, health=health)
 
+        # Tool grades — consensus across sources at the latest point.
+        # `tools.grades` carries the per-tool 20-80 consensus; `tools.
+        # composite_*` are derived in _compute_tool_composites. The X+
+        # indices are stamped in a second pass once cohort norms are
+        # known (see _attach_tool_plus_indices at the end of this
+        # function). `tool_flags` mirror stat_flags shape and ride the
+        # same green/red renderer in the UI.
+        latest_point = p.points[-1] if p.points else None
+        tool_consensus_grades = (
+            dict(latest_point.tools_consensus)
+            if latest_point and latest_point.tools_consensus
+            else None
+        )
+        tools_payload = _compute_tool_composites(tool_consensus_grades, is_pitcher)
+        if tools_payload is not None:
+            publishing = []
+            if latest_point:
+                for src, info in (latest_point.per_source or {}).items():
+                    if info and info.get("tools"):
+                        publishing.append(src)
+            tools_payload["publishing_sources"] = sorted(publishing)
+            if latest_point and latest_point.tools_spread:
+                tools_payload["spread"] = dict(latest_point.tools_spread)
+            else:
+                tools_payload["spread"] = {}
+        tool_flags = compute_tool_flags(tools_payload, is_pitcher)
+
         filtered_trades = _filter_real_trades(trades_by_player.get(p.player_key, []))
         acq = acquisitions.get(p.player_key)
         current_acq_method = _classify_current_acquisition(filtered_trades, acq)
@@ -2002,6 +2231,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "stock": stock_movement(p),
             "statline": sl_out,
             "stat_flags": flags,
+            # Scouting tool grades — consensus per-tool 20-80 grades,
+            # three composites (offensive/defensive/overall for hitters;
+            # stuff/command/overall for pitchers), and X+ indices (100 =
+            # cohort mean, 10 pts = 1 stdev). `publishing_sources` lists
+            # the sources that contributed grades. Empty/None when no
+            # source has published tools for this player.
+            "tools": tools_payload,
+            # Green/red callouts for plus-plus or well-below-average
+            # tools. Same {direction, stat, value, ...} shape as
+            # stat_flags so one frontend renderer handles both.
+            "tool_flags": tool_flags,
             # 24-month injury aggregate + Tommy-John flag. Drives the
             # IL-section roster, the "Post-TJ" chip on the prospect
             # header, the Injury-prone red flag, and the ETA-delay
@@ -2084,6 +2324,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     "fv_max": pt.fv_max,
                     "fv_spread": pt.fv_spread,
                     "fv_stddev": pt.fv_stddev,
+                    # Per-tool consensus + per-tool spread on this point.
+                    # `per_source[src].tools` is already carried inside
+                    # per_source above, so the UI can show "Pipeline says
+                    # 60 hit / FanGraphs says 55 hit" without joining.
+                    "tools_consensus": dict(pt.tools_consensus) if pt.tools_consensus else {},
+                    "tools_spread": dict(pt.tools_spread) if pt.tools_spread else {},
                 }
                 for pt in p.points
             ],
@@ -2496,6 +2742,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     inactive_payload = [_serialize(p) for p in inactives]
     graduate_payload = [_serialize(p) for p in grads]
     graduate_payload.sort(key=lambda p: p.get("graduation_date") or "", reverse=True)
+
+    # X+ tool composites need cohort mean/stdev. Use the union of all
+    # serialized prospects so a single norm anchors actives / inactives /
+    # grads consistently — a graduate's last tool grade still reads
+    # "+12 vs cohort mean" the same way it would have the day before
+    # he graduated. Single call ensures every payload's composite_*_plus
+    # references the same baseline.
+    _attach_tool_plus_indices(active_payload + inactive_payload + graduate_payload)
 
     from prospect_savant import attach_prospect_savant
     savant_matched = attach_prospect_savant(

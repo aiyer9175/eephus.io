@@ -101,6 +101,19 @@ class Snapshot:
     rank: int | None
     fv: float | None
     status: str  # active | graduated | injured_list | off_list
+    # Per-source 20-80 tool grades. Canonical keys (any subset of):
+    # hit, game_pwr, raw_pwr, speed, field, throw (hitters)
+    # fb, sl, cb, ch, cmd (pitchers). Missing tools stay absent so we
+    # don't confuse "didn't publish" with "graded 0".
+    tools: dict[str, float] | None = None
+
+
+# Tool taxonomy — canonical keys used everywhere downstream (consensus,
+# storage, UI). Sources map their own labels onto these via the
+# per-scraper translation tables (e.g. PIPELINE_TOOL_KEY below).
+HITTER_TOOL_KEYS = ("hit", "game_pwr", "raw_pwr", "speed", "field", "throw")
+PITCHER_TOOL_KEYS = ("fb", "sl", "cb", "ch", "cmd")
+ALL_TOOL_KEYS = HITTER_TOOL_KEYS + PITCHER_TOOL_KEYS
 
 
 def fix_mojibake(text: str) -> str:
@@ -171,6 +184,88 @@ def _parse_fv(raw) -> float | None:
         return float(raw)
     except ValueError:
         return None
+
+
+# MLB Pipeline labels its tool grades with words/abbreviations that
+# differ from our canonical short keys. This table is the single point
+# of translation; anything not in here is silently dropped (e.g.,
+# "Splitter" — future addition).
+PIPELINE_TOOL_KEY = {
+    "hit": "hit",
+    "power": "game_pwr", "raw power": "raw_pwr",
+    "run": "speed", "speed": "speed",
+    "arm": "throw", "throw": "throw",
+    "field": "field", "fielding": "field",
+    "fastball": "fb", "fb": "fb",
+    "slider": "sl", "sl": "sl",
+    "curveball": "cb", "curve": "cb", "cb": "cb",
+    "changeup": "ch", "change": "ch", "ch": "ch",
+    "control": "cmd", "command": "cmd", "ctl": "cmd",
+}
+
+
+def _parse_pipeline_tools(bio_text: str) -> dict[str, float] | None:
+    """Pull tool grades from an MLB Pipeline bio's Scouting grades line.
+
+    Format observed:
+        Scouting grades: Hit: 55 | Power: 60 | Run: 45 | Arm: 50 |
+        Field: 55 | Overall: 55
+    The Overall: token is already parsed separately for FV; we ignore
+    it here and capture every other "Label: NN" pair, mapping via
+    PIPELINE_TOOL_KEY. Returns None when no tools were recognized.
+    """
+    if not bio_text:
+        return None
+    # Look for "Scouting grades:" preamble so we don't accidentally
+    # match "Hit: " inside narrative prose elsewhere in the bio. Allow
+    # the preamble token to be absent on older snapshots — fall back to
+    # scanning the whole bio for the canonical pipe-delimited segment.
+    seg = bio_text
+    m = re.search(r'Scouting grades:\s*(.+)', bio_text, flags=re.IGNORECASE)
+    if m:
+        seg = m.group(1)
+    tools: dict[str, float] = {}
+    for label, val in re.findall(r'([A-Za-z][A-Za-z ]+?):\s*(\d+)', seg):
+        key = PIPELINE_TOOL_KEY.get(label.strip().lower())
+        if not key:
+            continue
+        try:
+            grade = float(val)
+        except ValueError:
+            continue
+        if grade < 20 or grade > 80:
+            continue
+        tools[key] = grade
+    return tools or None
+
+
+def _parse_csv_tools(row: dict, line_no: int = 0) -> dict[str, float] | None:
+    """Pull 20-80 tool grades from a manual_rankings.csv row.
+
+    Reads any of the canonical tool columns
+    (hit, game_pwr, raw_pwr, speed, field, throw, fb, sl, cb, ch, cmd).
+    Empty cells are dropped; values outside [20, 80] are logged and
+    dropped (not clamped) so transcription typos surface instead of
+    quietly degrading the dataset. Returns None when no tools were
+    provided on this row, matching the Snapshot.tools=None convention
+    for "source didn't publish".
+    """
+    tools: dict[str, float] = {}
+    for key in ALL_TOOL_KEYS:
+        v = (row.get(key) or "").strip()
+        if not v:
+            continue
+        grade = _parse_fv(v)
+        if grade is None:
+            log.warning("manual_rankings line %d: unparseable %s=%r",
+                        line_no, key, v)
+            continue
+        if grade < 20 or grade > 80:
+            log.warning("manual_rankings line %d: %s=%s out of [20,80] range",
+                        line_no, key, grade)
+            continue
+        tools[key] = grade
+    return tools or None
 
 
 # ---------------------------------------------------------------------------
@@ -644,12 +739,14 @@ def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
         bios = list(re.finditer(
             r'"contentText":"((?:[^"\\]|\\.)*)","contentTitle":"([^"]*)"', chunk))
         overall: float | None = None
+        bio_text: str | None = None
         # Prefer the bio whose contentTitle matches the page year.
         for bio in bios:
             if bio.group(2) == year_str:
                 m2 = re.search(r'Overall:\s*(\d+)', bio.group(1))
                 if m2:
                     overall = float(m2.group(1))
+                    bio_text = bio.group(1)
                     break
         # Fallback: any bio with an Overall grade line.
         if overall is None:
@@ -657,7 +754,15 @@ def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
                 m2 = re.search(r'Overall:\s*(\d+)', bio.group(1))
                 if m2:
                     overall = float(m2.group(1))
+                    bio_text = bio.group(1)
                     break
+
+        # Tool grades — the Scouting grades line carries tool grades
+        # ahead of the Overall: token. Parse each "Name: NN" pair and
+        # map onto our canonical tool keys (Run → speed, Power →
+        # game_pwr, etc.). The full line varies in length by source
+        # snapshot; we don't require every tool, just take what's there.
+        tools = _parse_pipeline_tools(bio_text) if bio_text else None
 
         p = persons.get(pid, {})
         name = p.get("name") or f"Person {pid}"
@@ -666,6 +771,7 @@ def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
             player_key=normalize_key(name), player_name=name,
             position=position, org=_resolve_org(pid),
             rank=rank, fv=overall, status="active",
+            tools=tools,
         ))
 
     log.info("mlb_pipeline %s -> %d players%s", label, len(rows),
@@ -909,6 +1015,12 @@ def load_manual_rankings(csv_path: Path = MANUAL_CSV) -> tuple[list[Snapshot], d
                 bd = (r.get("birth_date") or "").strip()
                 if bd and key not in birth_dates:
                     birth_dates[key] = bd
+                # Optional 20-80 tool grade columns. Empty cells stay
+                # absent — sources that don't publish a given tool simply
+                # omit the column value. Anything outside [20,80] is
+                # treated as a typo and skipped (not clamped) so the user
+                # notices the error.
+                tools = _parse_csv_tools(r, line_no=i)
                 rows.append(Snapshot(
                     source=(r.get("source") or "manual").strip(),
                     snapshot_date=(r.get("snapshot_date") or "").strip(),
@@ -920,6 +1032,7 @@ def load_manual_rankings(csv_path: Path = MANUAL_CSV) -> tuple[list[Snapshot], d
                     rank=int(rank) if rank else None,
                     fv=_parse_fv(fv_raw),
                     status=(r.get("status") or "active").strip(),
+                    tools=tools,
                 ))
             except (ValueError, KeyError) as e:
                 log.warning("manual_rankings line %d: %s", i, e)

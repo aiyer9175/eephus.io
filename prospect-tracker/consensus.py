@@ -84,7 +84,7 @@ from __future__ import annotations
 
 import statistics
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 
 from scrapers import Snapshot
@@ -188,6 +188,17 @@ class ConsensusPoint:
     fv_spread: float | None = None      # = fv_max - fv_min, on the raw scale
     fv_stddev: float | None = None      # population stddev of explicit FVs
 
+    # Per-tool consensus, keyed by canonical tool name (hit, game_pwr,
+    # raw_pwr, speed, field, throw, fb, sl, cb, ch, cmd). Each tool's
+    # consensus is the unweighted mean across the sources that published
+    # that tool on this date. Tools absent from every contributing source
+    # are simply omitted from the dict — None never appears as a value.
+    # Empty dict = no source published any tool grade on this date.
+    tools_consensus: dict = field(default_factory=dict)
+    # Per-tool spread (max - min) across publishing sources, for the UI
+    # disagreement read. Only populated when ≥2 sources graded the tool.
+    tools_spread: dict = field(default_factory=dict)
+
 
 @dataclass
 class PlayerTimeseries:
@@ -247,6 +258,13 @@ def compute_consensus_point(
     per_source: dict[str, dict] = {}
     contributing_sources: set[str] = set()
 
+    # Per-tool aggregation across sources. tools_by_key[key] is a list
+    # of (source, grade) pairs; we never average values across multiple
+    # snapshots from the same source — compute_consensus_point already
+    # receives at most one row per source (forward-fill picks the
+    # latest), so duplicates are impossible at this layer.
+    tools_by_key: dict[str, list[float]] = {}
+
     for s in day_snaps:
         per_source[s.source] = {
             "rank": s.rank,
@@ -254,6 +272,7 @@ def compute_consensus_point(
             "interval_label": s.interval_label,
             "status": s.status,
             "snapshot_date": s.snapshot_date,
+            "tools": dict(s.tools) if s.tools else None,
         }
         if s.fv is not None:
             explicit_fvs.append(s.fv)
@@ -263,6 +282,10 @@ def compute_consensus_point(
             if implied is not None:
                 ranks.append(s.rank)
                 rank_implied_fvs.append(implied)
+                contributing_sources.add(s.source)
+        if s.tools:
+            for k, v in s.tools.items():
+                tools_by_key.setdefault(k, []).append(v)
                 contributing_sources.add(s.source)
 
     if not explicit_fvs and not rank_implied_fvs:
@@ -306,6 +329,19 @@ def compute_consensus_point(
         event_date = event_date or latest_snap.snapshot_date
         event_label = event_label or latest_snap.interval_label
 
+    # Per-tool consensus = unweighted mean across publishing sources.
+    # Round to 0.5 grade — matches the precision of FanGraphs' published
+    # tool grids and keeps the UI from showing 57.33-style noise.
+    tools_consensus: dict[str, float] = {}
+    tools_spread: dict[str, float] = {}
+    for k, grades in tools_by_key.items():
+        if not grades:
+            continue
+        mean = sum(grades) / len(grades)
+        tools_consensus[k] = round(mean * 2) / 2
+        if len(grades) >= 2:
+            tools_spread[k] = round(max(grades) - min(grades), 2)
+
     return ConsensusPoint(
         snapshot_date=event_date,
         interval_label=event_label,
@@ -325,6 +361,8 @@ def compute_consensus_point(
         fv_max=fv_max,
         fv_spread=fv_spread,
         fv_stddev=fv_stddev,
+        tools_consensus=tools_consensus,
+        tools_spread=tools_spread,
     )
 
 
