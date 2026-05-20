@@ -3866,27 +3866,50 @@ const getFilteredTraded = getFilteredAcquired;
 // bb_per_9, bb_pct, k_pct) and strings (ops, avg, obp, slg — kept as
 // ".788" so the leading-zero formatting is preserved). Formatters wrap
 // values in `Number(v)` defensively so either type works.
+// Shared "kitchen-sink" support builders. The Context cell on each
+// leaderboard now shows two lines packing every rate + counting stat we
+// have on file for the season — separators are mid-dots; missing values
+// collapse to em-dashes so the line shape stays stable across rows.
+const _lbHitterSupport = r => {
+  const slash = `${r.avg ?? "—"}/${r.obp ?? "—"}/${r.slg ?? "—"}`;
+  const ops = r.ops ?? "—";
+  const iso = r.iso != null ? Number(r.iso).toFixed(3).replace(/^0/, "") : "—";
+  const bb = r.bb_pct != null ? Number(r.bb_pct).toFixed(1) + "%" : "—";
+  const k  = r.k_pct  != null ? Number(r.k_pct ).toFixed(1) + "%" : "—";
+  const games = r.games != null ? `${r.games}G` : "";
+  const ab = r.ab != null ? `${r.ab} AB` : "";
+  const top    = `${slash} · OPS ${ops} · ISO ${iso}`;
+  const bottom = `${r.hr ?? 0} HR · ${r.sb ?? 0} SB · ${r.rbi ?? 0} RBI · BB ${bb} · K ${k}${games ? " · " + games : ""}${ab ? " · " + ab : ""}`;
+  return `<div>${top}</div><div style="color:var(--text-tertiary);margin-top:2px;">${bottom}</div>`;
+};
+const _lbPitcherSupport = r => {
+  const wins = r.wins ?? 0, losses = r.losses ?? 0;
+  const top = `${r.ip ?? "—"} IP · ${r.era ?? "—"} ERA · ${r.whip ?? "—"} WHIP`;
+  const bottom = `K/9 ${r.k_per_9 ?? "—"} · BB/9 ${r.bb_per_9 ?? "—"} · ${wins}-${losses}${r.games != null ? " · " + r.games + "G" : ""}`;
+  return `<div>${top}</div><div style="color:var(--text-tertiary);margin-top:2px;">${bottom}</div>`;
+};
+
 const LB_STATS = {
   ops:     { label: "OPS",     hi: true,  fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : "—",
-             minAB: 50, support: r => `${r.avg ?? "—"}/${r.obp ?? "—"}/${r.slg ?? "—"} · ${r.hr ?? 0} HR · ${r.sb ?? 0} SB`, side: "hit" },
+             minAB: 50, support: _lbHitterSupport, side: "hit" },
   iso:     { label: "ISO",     hi: true,  fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : "—",
-             minAB: 50, support: r => `${r.hr ?? 0} HR · ${r.slg ?? "—"} SLG`, side: "hit" },
+             minAB: 50, support: _lbHitterSupport, side: "hit" },
   bb_pct:  { label: "BB%",     hi: true,  fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
-             minAB: 50, support: r => `K% ${r.k_pct != null ? Number(r.k_pct).toFixed(1) + "%" : "—"} · ${r.avg ?? "—"}/${r.obp ?? "—"}/${r.slg ?? "—"}`, side: "hit" },
+             minAB: 50, support: _lbHitterSupport, side: "hit" },
   k_pct:   { label: "K%",      hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
-             minAB: 50, support: r => `BB% ${r.bb_pct != null ? Number(r.bb_pct).toFixed(1) + "%" : "—"} · ${r.avg ?? "—"}/${r.obp ?? "—"}/${r.slg ?? "—"}`, side: "hit" },
+             minAB: 50, support: _lbHitterSupport, side: "hit" },
   hr:      { label: "HR",      hi: true,  fmt: v => v != null ? String(v) : "—",
-             minAB: 20, support: r => `${r.avg ?? "—"}/${r.obp ?? "—"}/${r.slg ?? "—"} · ${r.iso ?? "—"} ISO`, side: "hit" },
+             minAB: 20, support: _lbHitterSupport, side: "hit" },
   sb:      { label: "SB",      hi: true,  fmt: v => v != null ? String(v) : "—",
-             minAB: 20, support: r => `${r.avg ?? "—"}/${r.obp ?? "—"}/${r.slg ?? "—"}`, side: "hit" },
+             minAB: 20, support: _lbHitterSupport, side: "hit" },
   era:     { label: "ERA",     hi: false, fmt: v => v != null ? Number(v).toFixed(2) : "—",
-             minIP: 15, support: r => `${r.ip ?? "—"} IP · K/9 ${r.k_per_9 ?? "—"} · WHIP ${r.whip ?? "—"}`, side: "pit" },
+             minIP: 15, support: _lbPitcherSupport, side: "pit" },
   whip:    { label: "WHIP",    hi: false, fmt: v => v != null ? Number(v).toFixed(2) : "—",
-             minIP: 15, support: r => `${r.ip ?? "—"} IP · ERA ${r.era ?? "—"} · K/9 ${r.k_per_9 ?? "—"}`, side: "pit" },
+             minIP: 15, support: _lbPitcherSupport, side: "pit" },
   k_per_9: { label: "K/9",     hi: true,  fmt: v => v != null ? Number(v).toFixed(2) : "—",
-             minIP: 15, support: r => `${r.ip ?? "—"} IP · BB/9 ${r.bb_per_9 ?? "—"} · ERA ${r.era ?? "—"}`, side: "pit" },
+             minIP: 15, support: _lbPitcherSupport, side: "pit" },
   bb_per_9:{ label: "BB/9",    hi: false, fmt: v => v != null ? Number(v).toFixed(2) : "—",
-             minIP: 15, support: r => `${r.ip ?? "—"} IP · K/9 ${r.k_per_9 ?? "—"} · ERA ${r.era ?? "—"}`, side: "pit" },
+             minIP: 15, support: _lbPitcherSupport, side: "pit" },
 };
 
 function renderLeaderboards() {
