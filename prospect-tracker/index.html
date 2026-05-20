@@ -4097,7 +4097,17 @@ function renderRecentlyTraded() {
     // round/pick for drafts, signing details for IFA, etc.).
     let contextLine = "";
     if (acq.method === "trade") {
-      contextLine = `<span style="color:var(--text-tertiary);">${escapeHtml(acq.from_org ?? "?")}</span> <span style="color:var(--neon-violet);">→</span> <span style="color:var(--text-primary);">${escapeHtml(acq.to_org ?? "?")}</span>`;
+      // Header: from→to. Sub-line: the API-supplied trade narrative
+      // (e.g. "Twins traded ... to Marlins for ..."). Truncated to keep
+      // the cell from blowing the row height; the full string is
+      // available on hover via the title attribute.
+      const headLine = `<span style="color:var(--text-tertiary);">${escapeHtml(acq.from_org ?? "?")}</span> <span style="color:var(--neon-violet);">→</span> <span style="color:var(--text-primary);">${escapeHtml(acq.to_org ?? "?")}</span>`;
+      const desc = (acq.description || "").trim();
+      const TRUNC = 90;
+      const subLine = desc
+        ? `<span style="display:block;color:var(--text-tertiary);font-size:11px;margin-top:2px;line-height:1.35;" title="${escapeHtml(desc)}">${escapeHtml(desc.length > TRUNC ? desc.slice(0, TRUNC - 1).trimEnd() + "…" : desc)}</span>`
+        : "";
+      contextLine = headLine + subLine;
     } else if (acq.method === "draft" && acq.pick_overall) {
       contextLine = `<span style="color:var(--text-tertiary);">${acq.year} draft</span> · <span style="color:var(--text-primary);">Pick ${acq.pick_overall}${acq.round_label ? ` (R${escapeHtml(acq.round_label)})` : ""}</span>`;
     } else if (acq.method === "international_fa") {
