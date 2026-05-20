@@ -2156,6 +2156,28 @@
     .tool-pill.is-neg     { background: rgba(185, 28, 28, 0.12); color: var(--down); border-color: var(--down); }
     .tool-pill.is-neutral { background: rgba(74, 200, 224, 0.10); color: var(--neon-cyan); }
 
+    /* WAG (WAR Above Grade) pill — graduate-only inline delta showing
+       career WAR/yr vs the FV-grade-implied WAR/yr (FanGraphs primer,
+       lower-bound, hitter/pitcher split, linearly interpolated). Same
+       shape as .tool-pill, amber accent on the neutral state to mark it
+       as a graduate-only signal vs. the universal ToolGrade+ pill. */
+    .wag-pill {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0;
+      cursor: help;
+      border: 1px solid var(--neon-amber);
+      vertical-align: middle;
+    }
+    .wag-pill.is-pos     { background: rgba(31, 122, 58, 0.15); color: var(--up);   border-color: var(--up); }
+    .wag-pill.is-neg     { background: rgba(185, 28, 28, 0.12); color: var(--down); border-color: var(--down); }
+    .wag-pill.is-neutral { background: rgba(232, 165, 31, 0.10); color: var(--neon-amber); }
+
     /* Tools sidebar card — single-spaced grid of tool-grade chips with
        composites above. Mirrors the layout discipline of the sabermetrics
        block: subtle border, mono badges, no big visual claims. */
@@ -2638,7 +2660,7 @@
       <button class="chip" data-grad-sort="fv_close"
               title="Highest final consensus FV (the FV when the player graduated) first">Final FV</button>
       <button class="chip" data-grad-sort="vs_fv_proj"
-              title="Career WAR/year minus FV-grade expected WAR/year (FanGraphs scouting primer, lower-bound; linearly interpolated between grades; hitter/pitcher tables applied separately). Requires ≥1 full MLB season. Highest outperformance first.">vs FV projection</button>
+              title="WAG (WAR Above Grade) — career WAR/year minus the FV-grade-implied WAR/year (FanGraphs scouting primer, lower-bound; linearly interpolated between grades; hitter/pitcher tables applied separately). Requires ≥1 full MLB season. Highest outperformance first.">WAG</button>
     </div>
     <div id="grad-rows"></div>
   </div>
@@ -4834,10 +4856,26 @@ function renderGraduates() {
     const fvLabel = g.fv_close != null ? Math.round(g.fv_close) : "—";
     const sm = g.sabermetrics || {};
     const cw = g.career_war || {};
+    // WAG (WAR Above Grade) — always rendered when the graduate has the
+    // data, regardless of active sort. The other three WAR-sort tags
+    // (war / career_war / war_per_yr) stay sort-dependent since they
+    // duplicate values already shown in the row's MLB stats cell. WAG
+    // is the only one without a redundant home, so it gets the always-on
+    // treatment.
+    let wagPill = "";
+    const wagDelta = gradVsFvProjection(g);
+    if (wagDelta != null) {
+      const isPitcher = !!sm.is_pitcher;
+      const expected = fvExpectedWarPerYr(g.fv_close_raw ?? g.fv_close, isPitcher);
+      const tip = `WAG ${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} — expected ${expected.toFixed(2)} WAR/yr at FV ${Math.round(g.fv_close)} (${isPitcher ? "pitcher" : "hitter"} table), actual ${cw.war_per_yr.toFixed(2)} WAR/yr over ${cw.war_seasons_count} season${cw.war_seasons_count === 1 ? "" : "s"}`;
+      const cls = wagDelta > 0.05 ? "is-pos" : wagDelta < -0.05 ? "is-neg" : "is-neutral";
+      wagPill = `<span class="wag-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(tip)}">${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} WAG</span>`;
+    }
     // When sorting by one of the WAR fields, surface the value on the row
     // so the reader can see the sort key without hovering. Current-season
     // WAR is always shown in the MLB stats cell via gradCurrentWarHTML,
     // so the inline tag here is reserved for the two cumulative sorts.
+    // (vs_fv_proj is handled by the always-on wagPill above.)
     let warTag = "";
     if (sortMode === "war" && sm.war != null) {
       warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);">${sm.war > 0 ? '+' : ''}${sm.war.toFixed(2)} fWAR</span>`;
@@ -4845,14 +4883,6 @@ function renderGraduates() {
       warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="Career WAR · ${cw.war_seasons_count ?? "?"} season${cw.war_seasons_count === 1 ? "" : "s"} (${cw.source || "bbref"})">${cw.career_war > 0 ? '+' : ''}${cw.career_war.toFixed(1)} career WAR</span>`;
     } else if (sortMode === "war_per_yr" && cw.war_per_yr != null) {
       warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="WAR per season — career WAR ÷ ${cw.war_seasons_count ?? "?"} season${cw.war_seasons_count === 1 ? "" : "s"}">${cw.war_per_yr > 0 ? '+' : ''}${cw.war_per_yr.toFixed(2)} WAR/yr</span>`;
-    } else if (sortMode === "vs_fv_proj") {
-      const delta = gradVsFvProjection(g);
-      if (delta != null) {
-        const isPitcher = !!sm.is_pitcher;
-        const expected = fvExpectedWarPerYr(g.fv_close_raw ?? g.fv_close, isPitcher);
-        const tip = `Expected ${expected.toFixed(2)} WAR/yr at FV ${Math.round(g.fv_close)} (${isPitcher ? "pitcher" : "hitter"} table) · actual ${cw.war_per_yr.toFixed(2)} WAR/yr over ${cw.war_seasons_count} season${cw.war_seasons_count === 1 ? "" : "s"}`;
-        warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="${escapeHtml(tip)}">${delta > 0 ? '+' : ''}${delta.toFixed(2)} WAR/yr vs FV</span>`;
-      }
     }
     return `
       <div class="grad-row" data-key="${escapeHtml(g.player_key)}" style="${orgStripe(g.org)}">
@@ -4860,7 +4890,7 @@ function renderGraduates() {
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           ${headshotHTML(g, 50)}
           <div style="min-width:0;flex:1;">
-            <div class="player-name">${escapeHtml(g.player_name)}${warTag}</div>
+            <div class="player-name">${escapeHtml(g.player_name)}${wagPill}${warTag}</div>
             ${playerMetaHTML(g, { showIL: false, showRoster: false })}
           </div>
         </div>
@@ -7140,10 +7170,26 @@ function renderPlayerDetail(key) {
   const ageTileValue = avl.tier && avl.tier !== "unknown"
     ? avl.tier.replace(/-/g, " ") + (avl.diff != null ? ` (${avl.diff > 0 ? "+" : ""}${avl.diff.toFixed(1)}y)` : "")
     : "—";
+  // WAG (WAR Above Grade) — graduate-only tile. gradVsFvProjection
+  // returns null when the player lacks career WAR / has <1 season /
+  // has no FV on record, so the tile silently drops out for active
+  // prospects without MLB time. Sub-text shows the FV anchor (e.g.,
+  // "vs 55 FV projection") so the reader knows the comparison baseline.
+  const wagDeltaTile = gradVsFvProjection(p);
+  const wagColor = wagDeltaTile == null ? "var(--text-primary)"
+                   : wagDeltaTile > 0.05 ? "var(--up)"
+                   : wagDeltaTile < -0.05 ? "var(--down)"
+                   : "var(--text-primary)";
+  const wagTile = wagDeltaTile != null ? [
+    "WAG",
+    `<span style="color:${wagColor};">${wagDeltaTile > 0 ? "+" : ""}${wagDeltaTile.toFixed(2)} WAR/yr</span>`,
+    p.fv_close != null ? `vs ${Math.round(p.fv_close)} FV projection` : "",
+  ] : null;
   const tiles = [
     ["Age vs. level", ageTileValue, ageSub],
     ["RPS+",         rpsPlusValue,  rpsPlusSub],
     ["ETA",          eta.year != null ? String(eta.year) : "—", eta.confidence ? `${eta.confidence} confidence` : ""],
+    wagTile,
     acqLabel ? ["Acquired via", acqLabel, acqSub] : null,
     ["Health (24mo)", healthHeadline, healthSub],
   ].filter(Boolean);
