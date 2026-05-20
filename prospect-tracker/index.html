@@ -3219,28 +3219,48 @@ function makeMilbCell(p) {
   if (!sl) {
     return `<div class="milb-cell milb-cell-wrap"><span style="color: var(--text-tertiary);">no stats yet</span></div>`;
   }
-  // MLB players get the special level-mlb pill; MiLB players use age-vs-level tier colouring.
+  // MLB players get the special level-mlb pill; MiLB players keep the
+  // age-vs-level tier coloring on the level chip itself even though the
+  // text age-vs-level chip has been retired in favor of the RPS pill.
   const tier = (avl && avl.tier && avl.tier !== "unknown") ? avl.tier : "neutral";
   const levelClass = sl.level === "MLB" ? "level-mlb" : `level-${tier}`;
-  const diff = (sl.level !== "MLB" && avl && avl.diff != null)
-    ? (avl.diff > 0 ? `+${avl.diff.toFixed(1)}` : avl.diff.toFixed(1)) : "";
   const isPitcher = sl.is_pitcher;
-  // Supporting line: traditional rate stats + counting stats.
+  const fmtRate3 = v => v == null ? "—" : (Math.abs(v) < 1 ? (v >= 0 ? "" : "-") + Math.abs(v).toFixed(3).replace(/^0/, "") : v.toFixed(3));
+  // Triple-slash / IP+ERA still leads the supporting line; the new
+  // "key stat" detail row below it surfaces the rate stats the reader
+  // most often wants without forcing them into the detail page.
   const slashLine = isPitcher
     ? `${sl.era ?? "—"} ERA · ${sl.whip != null ? sl.whip + " WHIP · " : ""}${sl.ip ?? "—"} IP`
     : `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"}`;
+  // Key-stat detail line: OPS+/ERA- vs level + K%/BB%, plus HR/9 (P) or
+  // ISO (H). Falls back gracefully when a field is missing.
   const detail = isPitcher
-    ? `K/9 ${sl.k_per_9 ?? "—"} · BB/9 ${sl.bb_per_9 ?? "—"}`
-    : `${sl.hr ?? 0} HR · ${sl.sb ?? 0} SB · ${sl.bb_pct != null ? sl.bb_pct.toFixed(1) + "% BB" : "—"} · ${sl.k_pct != null ? sl.k_pct.toFixed(1) + "% K" : "—"}`;
+    ? [
+        sl.era_minus_level != null ? `ERA- ${Math.round(sl.era_minus_level)}` : null,
+        sl.k_pct != null ? `K% ${sl.k_pct.toFixed(1)}` : null,
+        sl.bb_pct != null ? `BB% ${sl.bb_pct.toFixed(1)}` : null,
+        sl.hr_per_9 != null ? `HR/9 ${sl.hr_per_9.toFixed(2)}` : null,
+      ].filter(Boolean).join(" · ")
+    : [
+        sl.ops_plus_level != null ? `OPS+ ${Math.round(sl.ops_plus_level)}` : null,
+        `${sl.hr ?? 0} HR`,
+        sl.iso != null ? `ISO ${fmtRate3(sl.iso)}` : null,
+        sl.bb_pct != null ? `BB% ${sl.bb_pct.toFixed(1)}` : null,
+        sl.k_pct != null ? `K% ${sl.k_pct.toFixed(1)}` : null,
+      ].filter(Boolean).join(" · ");
   const seasonTag = sl.is_prior_season && sl.season
     ? `<span class="prior-season-tag" title="No ${new Date().getFullYear()} stats yet — showing ${sl.season}">${sl.season}</span>`
     : "";
   const headline = headlineStatHTML(p);
   const normTip = levelNormTooltip(sl);
   const tipAttr = normTip ? ` title="${escapeHtml(normTip)}"` : "";
+  // RPS pill takes the slot where the age-vs-level chip used to live.
+  // Falls back to the "RPS —" insufficient-sample variant when the
+  // player doesn't have enough volume yet, so the cell never goes blank.
+  const rps = computeRelProd(p);
   return `<div class="milb-cell milb-cell-wrap"${tipAttr}>
     <span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${headline}
-    ${diff ? ` <span class="age-vs-level">${diff}y vs lvl</span>` : ""}
+    ${rpsPillHTML(rps)}
     <br/><span style="color: var(--text-primary);">${slashLine}</span>
     <br/><span style="color: var(--text-tertiary);">${detail}</span>
   </div>`;
@@ -5125,8 +5145,12 @@ function makeSpendingBlock(org) {
   // is averaging over.
   const ifaAvg   = ifaSign   ? ifaTotal   / ifaSign   : 0;
   const draftAvg = draftSign ? draftTotal / draftSign : 0;
+  const donutLegend = `<div style="display:flex;gap:12px;justify-content:center;margin-top:6px;font-family:var(--font-sans);font-size:10px;color:var(--text-secondary);letter-spacing:0.04em;">
+    <span style="display:inline-flex;align-items:center;gap:5px;"><span aria-hidden="true" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--neon-amber);"></span>IFA</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;"><span aria-hidden="true" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--neon-cyan);"></span>Draft</span>
+  </div>`;
   const totalsHtml = `<div class="spending-summary">
-    <div class="ss-donut">${donutSvg}</div>
+    <div class="ss-donut">${donutSvg}${donutLegend}</div>
     <div class="ss-totals">
       <div class="st-cell st-ifa">
         <div class="st-label">International FA · ${ifaPct.toFixed(0)}% of spend</div>
@@ -5477,7 +5501,12 @@ function renderFarmSystems() {
     <span>Positions</span>
     <span>Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
     <span style="text-align:center;">Avg age</span>
-    <span style="text-align:center;" title="IFA vs Draft bonus-dollar mix over the last 3 years. Hover a donut for exact dollar totals.">Spend mix</span>
+    <span style="text-align:center;" title="IFA vs Draft bonus-dollar mix over the last 3 years. Hover a donut for exact dollar totals.">Spend mix
+      <span style="display:flex;gap:8px;justify-content:center;margin-top:3px;font-weight:400;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;">
+        <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--neon-amber);"></span>IFA</span>
+        <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--neon-cyan);"></span>Draft</span>
+      </span>
+    </span>
     <span style="text-align:right;">Stock</span>
     <span></span>
   </div>`;
