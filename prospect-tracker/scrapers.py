@@ -262,6 +262,13 @@ ESPN_INTERVALS = [
     ("https://www.espn.com/mlb/story/_/id/47684202/top-100-mlb-prospects-2026-"
      "kiley-mcdaniel-konnor-griffin-kevin-mcgonigle-jesus-made",
      "ESPN 2026 Preseason", "2026-01-27"),
+    # Kiley McDaniel's mid-season 2025 update. Same HTML shape as the
+    # preseason article (h2 FV-tier headers + numbered rank/name/pos/team
+    # lines) so the existing parser handles it without changes — the URL
+    # just gets added to the list of intervals we walk.
+    ("https://www.espn.com/mlb/story/_/id/46017620/2025-mlb-prospect-rankings-update-"
+     "kiley-mcdaniel-konnor-griffin-kevin-mcgonigle-jesus-made",
+     "ESPN 2025 In-Season", "2025-08-20"),
 ]
 
 
@@ -322,9 +329,49 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
         return []
     body = body[start:]
 
-    # h2 strip: tolerate any attribute order on the tag and any inner
-    # markup (anchors, spans). We need the raw text content only.
-    heads = re.findall(r"<h2[^>]*>(.*?)</h2>", body, re.DOTALL)
+    # ESPN ships three layouts across these articles:
+    #   * Preseason — every block is an <h2>, including FV-tier headers
+    #     and the rank lines themselves. The original scraper assumed
+    #     this shape.
+    #   * In-season updates, top-of-list — FV-tier headers are still
+    #     <h2> (often wrapped in <strong>), but the rank lines for the
+    #     headline tier move into <p><strong>...</strong></p>
+    #     paragraphs followed by a few description paragraphs.
+    #   * In-season updates, lower tiers — multiple rank lines packed
+    #     into a single <p>, separated by <br/>. No <strong> wrapper,
+    #     no per-prospect commentary.
+    #
+    # We collect (offset, text) candidates from every shape, then sort
+    # by offset so an FV-tier header always resets the running tier
+    # before the rank lines below it land.
+    candidates: list[tuple[int, str]] = []
+    for m in re.finditer(r"<h2[^>]*>(.*?)</h2>", body, re.DOTALL):
+        candidates.append((m.start(), m.group(1)))
+    # <p><strong>…</strong>… — first-child <strong> means we don't
+    # accidentally pick up inline-bolded phrases inside body paragraphs.
+    for m in re.finditer(
+        r"<p[^>]*>\s*(?:<[^>]+>\s*){0,2}<strong>(.*?)</strong>",
+        body, re.DOTALL,
+    ):
+        candidates.append((m.start(), m.group(1)))
+    # <p>…<br/>…<br/>…</p> — each line between <br/> tags is a
+    # candidate. Used by the 55/50 FV tier "list" sections in the
+    # in-season updates. We grab the paragraph body, split on <br/>,
+    # and emit one candidate per fragment so the rank-line regex picks
+    # up "14. JJ Wetherholt, SS, St. Louis Cardinals" cleanly. Lazy
+    # `.*?` matches nested anchors/spans without over-running the
+    # paragraph boundary.
+    for m in re.finditer(r"<p[^>]*>(.*?)</p>", body, re.DOTALL):
+        pblock = m.group(1)
+        if "<br" not in pblock:
+            continue
+        # Split on <br/> variants. Each fragment is a candidate; the
+        # offset is the paragraph's start (we lose the within-block
+        # position but tier headers always precede the paragraph).
+        for frag in re.split(r"<br\s*/?>", pblock):
+            candidates.append((m.start(), frag))
+    candidates.sort(key=lambda c: c[0])
+
     fv_header = re.compile(r"^\s*(\d{2,3})\+?\s*FV\s*tier", re.IGNORECASE)
     rank_line = re.compile(
         r"^\s*(\d{1,3})\.\s+([^,]+?),\s*([^,]+?),\s*(.+?)\s*$"
@@ -334,7 +381,7 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
     current_fv: float | None = None
     seen_ranks: set[int] = set()
 
-    for h in heads:
+    for _, h in candidates:
         text = re.sub(r"<[^>]+>", "", h)
         text = fix_mojibake(text)
         if not text:

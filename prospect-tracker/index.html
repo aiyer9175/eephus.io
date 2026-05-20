@@ -1637,6 +1637,15 @@
   </div>
 
   <div id="graduates-section" style="display: none;">
+    <div class="filter-bar" style="margin-bottom:8px;">
+      <span class="filter-label">Sort</span>
+      <button class="chip active" data-grad-sort="date"
+              title="Most recent graduation first">Graduation date</button>
+      <button class="chip" data-grad-sort="war"
+              title="Current MLB-season WAR, highest first. Graduates without a current-season WAR sink to the bottom.">Current-season WAR</button>
+      <button class="chip" data-grad-sort="fv_close"
+              title="Highest final consensus FV (the FV when the player graduated) first">Final FV</button>
+    </div>
     <div id="grad-rows"></div>
   </div>
 
@@ -1824,7 +1833,14 @@ const TRANSACTION_KINDS = {
   trade:               { glyph: "◆", color: "var(--grad)",       dash: "2,1.5", pos: "top",    label: "Trade" },
   promotion:           { glyph: "▲", color: "var(--up)",         dash: "1,2",   pos: "bottom", label: "Promotion" },
   demotion:            { glyph: "▼", color: "var(--down)",       dash: "1,2",   pos: "bottom", label: "Demotion" },
-  signing:             { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Signing" },
+  // Generic "entered pro ball" — kept for FV-chart markers when we
+  // don't have an acquisition method to disambiguate. The detail-page
+  // transaction-history block re-classifies into `drafted` or
+  // `signed_ifa` based on the prospect's acquisition record so the
+  // chip label tells the reader exactly how the player arrived.
+  signing:             { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Signed" },
+  drafted:             { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Drafted" },
+  signed_ifa:          { glyph: "●", color: "var(--neon-amber)", dash: "1,2",   pos: "bottom", label: "Signed (IFA)" },
   debut:               { glyph: "★", color: "var(--neon-amber)", dash: "2,1.5", pos: "top",    label: "MLB debut" },
   graduation:          { glyph: "✦", color: "var(--neon-violet)",dash: "2,1.5", pos: "top",    label: "Graduation" },
   // Non-trade transactions (sourced from player.transactions). Same
@@ -1837,8 +1853,32 @@ const TRANSACTION_KINDS = {
   outrighted:          { glyph: "▽", color: "var(--text-tertiary)", dash: "1,2",pos: "top",    label: "Outrighted" },
   rule_5_selection:    { glyph: "◐", color: "var(--neon-cyan)",  dash: "1,2",   pos: "top",    label: "Rule 5 selection" },
   rule_5_return:       { glyph: "↺", color: "var(--text-tertiary)", dash: "1,2",pos: "top",    label: "Rule 5 return" },
-  signed_free_agent:   { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Signed (FA)" },
+  signed_free_agent:   { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Signed (MLB FA)" },
 };
+
+// Re-classify a "signed_free_agent" transaction into the more accurate
+// `drafted` / `signed_ifa` kind when its date and team match the
+// player's original acquisition record. The MLB Stats API emits the
+// same SFA/SGN typeCode for draft signings, IFA signings, and later-
+// career FA signings; the only way to tell them apart is to anchor
+// against the prospect's acquisition method + signing_date.
+function reclassifyAcquisitionSigning(player, tx) {
+  if (tx.kind !== "signed_free_agent") return tx.kind;
+  const acq = player && player.acquisition;
+  if (!acq || !acq.method || !acq.signing_date) return tx.kind;
+  if (acq.method !== "draft" && acq.method !== "international_fa") return tx.kind;
+  // Date-match: allow a ±90-day window. Spotrac/MLB IFA dates often
+  // don't perfectly line up with the official signing date the
+  // transactions endpoint records (intl signings sometimes post weeks
+  // after the agreement is announced). The window keeps the mapping
+  // accurate without false positives — a late-career FA signing won't
+  // land within 90 days of an IFA's amateur signing.
+  const a = new Date(acq.signing_date + "T00:00:00").getTime();
+  const b = new Date((tx.date || "") + "T00:00:00").getTime();
+  if (isNaN(a) || isNaN(b)) return tx.kind;
+  if (Math.abs(a - b) > 90 * 86400 * 1000) return tx.kind;
+  return acq.method === "draft" ? "drafted" : "signed_ifa";
+}
 // Only the high-signal events get rendered on the FV trajectory line so
 // the chart doesn't turn into a curtain of glyphs for journeyman-y
 // prospects who've been claimed off waivers six times.
@@ -1868,13 +1908,17 @@ function transactionEvents(player) {
   // truly-trade rows into `trades`; everything else lives here under
   // a precise kind. We surface them on the timeline so the FV chart
   // hover-tooltips show the same vocabulary the transaction table does.
+  // SFA/SGN rows that line up with the player's original acquisition
+  // get re-classified into "drafted" / "signed_ifa" so the chip label
+  // matches the way the player actually entered pro ball.
   for (const tx of (player.transactions || [])) {
     if (!tx.date || !tx.kind) continue;
-    if (!TRANSACTION_KINDS[tx.kind]) continue;
+    const k = reclassifyAcquisitionSigning(player, tx);
+    if (!TRANSACTION_KINDS[k]) continue;
     out.push({
       date: tx.date,
-      kind: tx.kind,
-      label: tx.description || `${tx.date}: ${(TRANSACTION_KINDS[tx.kind] || {}).label || tx.kind}`,
+      kind: k,
+      label: tx.description || `${tx.date}: ${(TRANSACTION_KINDS[k] || {}).label || k}`,
     });
   }
   for (const ev of levelChangeEvents(player)) {
@@ -1901,11 +1945,20 @@ function transactionEvents(player) {
   const acq = player.acquisition;
   if (acq && acq.signing_date) {
     const team = acq.team_name ? ` by ${acq.team_name}` : "";
-    const method = acq.method === "draft" ? "Drafted" : "Signed";
+    // Tag the marker by acquisition method so the chip + legend on the
+    // FV chart says "Drafted" vs "Signed (IFA)" vs the generic "Signed"
+    // for trade / waiver acquisitions. Kinds are real entries in
+    // TRANSACTION_KINDS so the glyph + color matches in the legend.
+    const kindByMethod = {
+      draft:             "drafted",
+      international_fa:  "signed_ifa",
+    };
+    const kind = kindByMethod[acq.method] || "signing";
+    const verb = (TRANSACTION_KINDS[kind] || {}).label || "Signed";
     out.push({
       date: acq.signing_date,
-      kind: "signing",
-      label: `${acq.signing_date}: ${method}${team}`,
+      kind,
+      label: `${acq.signing_date}: ${verb}${team}`,
     });
   }
   if (player.graduation_date) {
@@ -2071,6 +2124,7 @@ function syncToURL() {
   if (state.formWindow  !== "1y")         p.set("formw", state.formWindow);
   if (state.farmTxKind  !== "all")        p.set("ftxk",  state.farmTxKind);
   if (state.farmTxDir   !== "all")        p.set("ftxd",  state.farmTxDir);
+  if (state.gradSort    !== "date")       p.set("gsort", state.gradSort);
   if (state.spotlightBucket !== "hot")    p.set("bucket", state.spotlightBucket);
   const hash = p.toString();
   history.replaceState(null, "", hash ? "#" + hash : window.location.pathname + window.location.search);
@@ -2101,6 +2155,7 @@ function syncFromURL() {
   }
   if (p.has("ftxk")) state.farmTxKind = p.get("ftxk");
   if (p.has("ftxd")) state.farmTxDir  = p.get("ftxd");
+  if (p.has("gsort")) state.gradSort  = p.get("gsort");
   if (p.has("bucket")) state.spotlightBucket = p.get("bucket");
 }
 
@@ -2157,6 +2212,8 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.filterLevel === state.levelFilter));
   document.querySelectorAll("[data-filter-pos]").forEach(b =>
     b.classList.toggle("active", b.dataset.filterPos === state.posFilter));
+  document.querySelectorAll("[data-grad-sort]").forEach(b =>
+    b.classList.toggle("active", b.dataset.gradSort === state.gradSort));
   document.querySelectorAll("[data-farm-sort]").forEach(b =>
     b.classList.toggle("active", b.dataset.farmSort === state.farmSort));
   document.querySelectorAll("[data-form-window]").forEach(b =>
@@ -2330,6 +2387,12 @@ const state = {
   // shared link reopens the same filtered view. Default is "all".
   farmTxKind: "all",
   farmTxDir:  "all",
+  // Graduates sort dimension. "date" (default) = newest first;
+  // "war" = highest current-season WAR; "fv_close" = highest final FV.
+  // Career-aggregated WAR isn't on the MLB Stats API (the endpoint
+  // returns one split per season), so the WAR sort uses the
+  // most-recent-season number — labelled accordingly in the chip.
+  gradSort: "date",
   view: null
 };
 
@@ -2593,6 +2656,12 @@ function renderRecentlyTraded() {
 function renderGraduates() {
   const filtered = getFilteredGrads();
 
+  // Build a render order based on the active sort. For date-sort we keep
+  // the legacy group-by-date layout (each class together, recency
+  // banner) so a "who just graduated" scan still works. For WAR / FV
+  // sorts the rows go flat, since grouping by date wouldn't help.
+  const sortMode = state.gradSort || "date";
+
   // Group by date so the most-recent class can be visually flagged
   const byDate = {};
   for (const g of filtered) (byDate[g.graduation_date] = byDate[g.graduation_date] || []).push(g);
@@ -2620,35 +2689,79 @@ function renderGraduates() {
     <span>MLB stats</span>
   </div>`;
 
-  let body = header;
-  let rank = 1;
-  for (const date of sortedDates) {
-    const isRecent = isRecentGradDate(date);
-    for (const g of byDate[date]) {
-      const pillClass = isRecent ? "grad-pill most-recent" : "grad-pill";
-      const chartHtml = (g.points && g.points.length >= 2)
-        ? makeLineChart(g.points, g.fv_open, g.fv_close, g.graduation_date, g.trades, g)
-        : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
-      const fvLabel = g.fv_close != null ? Math.round(g.fv_close) : "—";
-      body += `
-        <div class="grad-row" data-key="${escapeHtml(g.player_key)}" style="grid-template-columns:${GCOLS};${orgStripe(g.org)}">
-          <div class="rank-num">${rank++}</div>
-          <div>
-            <div class="player-name">${escapeHtml(g.player_name)}</div>
+  // Build the iteration order based on the active sort.
+  let orderedGrads;
+  if (sortMode === "war") {
+    orderedGrads = filtered.slice().sort((a, b) => {
+      const aw = (a.sabermetrics || {}).war;
+      const bw = (b.sabermetrics || {}).war;
+      // null / undefined sink to the bottom regardless of sign of WAR
+      // (we don't want -0.5 above no-WAR-on-file).
+      if (aw == null && bw == null) return 0;
+      if (aw == null) return 1;
+      if (bw == null) return -1;
+      return bw - aw;
+    });
+  } else if (sortMode === "fv_close") {
+    orderedGrads = filtered.slice().sort((a, b) =>
+      ((b.fv_close ?? -1) - (a.fv_close ?? -1))
+      || (b.graduation_date || "").localeCompare(a.graduation_date || "")
+    );
+  } else {
+    // Date sort: preserve the group-by-date pass below.
+    orderedGrads = null;
+  }
+
+  const renderRow = (g, rank, pillClassOverride, sublabel) => {
+    const isRecent = isRecentGradDate(g.graduation_date);
+    const pillClass = pillClassOverride || (isRecent ? "grad-pill most-recent" : "grad-pill");
+    const chartHtml = (g.points && g.points.length >= 2)
+      ? makeLineChart(g.points, g.fv_open, g.fv_close, g.graduation_date, g.trades, g)
+      : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
+    const fvLabel = g.fv_close != null ? Math.round(g.fv_close) : "—";
+    const sm = g.sabermetrics || {};
+    // When sorting by WAR, surface the value on the row so the reader
+    // can see the sort key without hovering. Same for FV.
+    const warTag = sortMode === "war" && sm.war != null
+      ? `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);">${sm.war > 0 ? '+' : ''}${sm.war.toFixed(2)} WAR</span>`
+      : "";
+    return `
+      <div class="grad-row" data-key="${escapeHtml(g.player_key)}" style="grid-template-columns:${GCOLS};${orgStripe(g.org)}">
+        <div class="rank-num">${rank}</div>
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+          ${headshotHTML(g, 32)}
+          <div style="min-width:0;flex:1;">
+            <div class="player-name">${escapeHtml(g.player_name)}${warTag}</div>
             <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(g.position ?? "—")} · ${teamLogoHTML(g.org, "sm")}<span>${escapeHtml(g.org ?? "—")}</span>${g.age != null ? `<span class="age-tag">age ${g.age.toFixed(1)}</span>` : ""}</div>
           </div>
-          <div class="grad-graduation-cell">
-            <span class="${pillClass}">${g.graduation_date}</span>
-            ${isRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : ""}
-          </div>
-          <div style="text-align:center;"><span class="fv-badge ${fvClass(String(fvLabel))}">${fvLabel}</span></div>
-          <div class="desktop-only" style="padding-right:6px;">${chartHtml}</div>
-          <div class="desktop-only">${makeCandle(g)}</div>
-          <div class="grad-level-cell milb-cell"><span class="level-pill level-mlb">MLB</span></div>
-          ${makeGradMilbCell(g)}
-        </div>`;
+        </div>
+        <div class="grad-graduation-cell">
+          <span class="${pillClass}">${g.graduation_date}</span>
+          ${sublabel || (isRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : "")}
+        </div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(String(fvLabel))}">${fvLabel}</span></div>
+        <div class="desktop-only" style="padding-right:6px;">${chartHtml}</div>
+        <div class="desktop-only">${makeCandle(g)}</div>
+        <div class="grad-level-cell milb-cell"><span class="level-pill level-mlb">MLB</span></div>
+        ${makeGradMilbCell(g)}
+      </div>`;
+  };
+
+  let body = header;
+  if (orderedGrads !== null) {
+    // Flat list driven by sort.
+    orderedGrads.forEach((g, i) => {
+      body += renderRow(g, i + 1, null, "");
+    });
+  } else {
+    let rank = 1;
+    for (const dateKey of sortedDates) {
+      for (const g of byDate[dateKey]) {
+        body += renderRow(g, rank++, null, null);
+      }
     }
   }
+
   document.getElementById("grad-rows").innerHTML = filtered.length
     ? body
     : `<div class="state-message">No graduates match these filters.</div>`;
@@ -4151,11 +4264,13 @@ function makeStatFlagsBlock(player) {
               : f.level_avg.toFixed(2))
           : f.level_avg)
       : "—";
+    // Flavor-text "note" stays on the title attribute so a hover still
+    // explains the scouting interpretation; the row itself just shows
+    // the stat + value + level comparison, leaving room to read fast.
     return `<div class="flag-row" title="${escapeHtml(f.note || "")}">
       <div class="flag-arrow">${arrow}</div>
       <div class="flag-body">
         <span class="flag-stat">${escapeHtml(f.stat)} ${escapeHtml(f.value_display || "")}</span>
-        <span class="flag-note">${escapeHtml(f.note || "")}</span>
       </div>
       <div class="flag-numbers">
         <span>vs ${escapeHtml(String(levelAvgVal))}</span>
@@ -4362,7 +4477,8 @@ function makeTransactionHistoryBlock(player) {
   // `move` summarizes the from/to teams (when applicable) so the table
   // reads like a roster diff regardless of the underlying kind.
   for (const tx of otherTx) {
-    if (!TRANSACTION_KINDS[tx.kind]) continue;
+    const kind = reclassifyAcquisitionSigning(player, tx);
+    if (!TRANSACTION_KINDS[kind]) continue;
     let movePart;
     if (tx.from_team && tx.to_team) {
       movePart = `${escapeHtml(tx.from_team)} <span style="color:var(--neon-violet);">→</span> ${escapeHtml(tx.to_team)}`;
@@ -4374,7 +4490,7 @@ function makeTransactionHistoryBlock(player) {
       movePart = `<span style="color:var(--text-tertiary);">—</span>`;
     }
     rows.push({
-      kind: tx.kind,
+      kind: kind,
       date: tx.date,
       move: movePart,
       // Link any tracked prospects mentioned (e.g. multi-player trades
@@ -5350,10 +5466,13 @@ function renderFarmDetail(orgCode) {
   // filler from affiliate rosters and shows only prospects with an FV
   // grade, grouped by affiliate level. Each prospect links back to its
   // detail page. Levels with no graded prospects are skipped entirely so
-  // the section stays dense.
+  // the section stays dense. MLB is intentionally excluded — graded
+  // players on the MLB roster are graduates by definition and clutter
+  // this view; the Affiliate-Rosters section below still shows them.
   const gradedByLevel = (() => {
     const blocks = [];
-    for (const lvl of affilLevels) {
+    const milbLevels = affilLevels.filter(lvl => lvl !== "MLB");
+    for (const lvl of milbLevels) {
       const graded = (orgRosters[lvl] || []).filter(r => r.fv_label);
       if (!graded.length) continue;
       // Already sorted FV desc upstream (run_monthly sort key). Keep that.
@@ -5382,11 +5501,13 @@ function renderFarmDetail(orgCode) {
     return `<div class="graded-by-level-grid">${blocks.join("")}</div>`;
   })();
 
-  const totalGraded = affilLevels.reduce(
-    (acc, lvl) => acc + (orgRosters[lvl] || []).filter(r => r.fv_label).length, 0);
+  // Total count excludes MLB to match what the section actually shows.
+  const totalGraded = affilLevels
+    .filter(lvl => lvl !== "MLB")
+    .reduce((acc, lvl) => acc + (orgRosters[lvl] || []).filter(r => r.fv_label).length, 0);
   const gradedSection = `
     <div class="detail-title" style="margin-top:18px;">Graded prospects by level
-      <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">${totalGraded} total · sorted by FV within each level</span>
+      <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">MiLB only · ${totalGraded} total · sorted by FV within each level</span>
     </div>
     ${gradedByLevel}`;
 
@@ -5646,6 +5767,19 @@ function attachHandlers() {
       btn.classList.add("active");
       state.posFilter = btn.dataset.filterPos;
       render();
+      syncToURL();
+    });
+  });
+  // Graduates sort chips. Different surface entirely from the active
+  // prospect sort dropdown — the graduates list has its own questions
+  // (who graduated most recently / who's been the best MLB performer /
+  // who graduated at the highest FV) and benefits from chip toggles.
+  document.querySelectorAll("[data-grad-sort]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-grad-sort]").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.gradSort = btn.dataset.gradSort;
+      renderGraduates();
       syncToURL();
     });
   });
