@@ -123,10 +123,13 @@ class TestUnweightedConsensus:
         """
         Regression test: MLB Pipeline used to be hard-coded as rank-only
         (fv_weight=0). With the unweighted engine it contributes its FV
-        like any other grader. Pipeline at 60 alone yields consensus 60.
+        like any other grader. With `single_source_k=0` (test override
+        to disable the single-source pull), Pipeline at 60 alone yields
+        consensus 60. (The pull-down path is tested separately in
+        TestConsensusIsSourceMean.)
         """
         snaps = [_snap("mlb_pipeline", "X", rank=1, fv=60.0)]
-        pt = compute_consensus_point(snaps)
+        pt = compute_consensus_point(snaps, single_source_k=0)
         assert pt.consensus_fv_label == "60"
         assert pt.avg_fv == 60.0
 
@@ -147,13 +150,16 @@ class TestUnweightedConsensus:
     def test_explicit_fv_overrides_rank_implied(self):
         """
         FG publishes 45, BA only ranks (#85 → implied 50). Unweighted FV mean
-        is just 45 (BA has no FV). Rank-implied does NOT pull it up.
+        is just 45 (BA has no FV). Rank-implied does NOT pull it up. With
+        `single_source_k=0` we also disable the new single-source pull-down
+        so this test still asserts the "consensus = FG's 45" contract;
+        the pull-down path itself is covered in TestConsensusIsSourceMean.
         """
         snaps = [
             _snap("fangraphs",        "Newcomer", rank=None, fv=45.0),
             _snap("baseball_america", "Newcomer", rank=85),
         ]
-        pt = compute_consensus_point(snaps)
+        pt = compute_consensus_point(snaps, single_source_k=0)
         assert pt is not None
         assert pt.consensus_fv_label == "45"
         assert pt.avg_rank == 85.0  # BA's rank still surfaces for display
@@ -180,12 +186,14 @@ class TestUnweightedConsensus:
 
 class TestCandlestick:
     def _player(self, history):
-        """history = [(date, fv)]. Shrinkage disabled so the asserted high
-        /low/open/close numbers reflect the raw FV grid the test is
-        checking — TestShrinkage covers the shrinkage path separately."""
+        """history = [(date, fv)]. Shrinkage disabled (both the legacy
+        `shrinkage_k` post-pass and the new `single_source_k` pull-down)
+        so the asserted high/low/open/close numbers reflect the raw FV
+        grid the test is checking — TestConsensusIsSourceMean covers the
+        shrinkage paths separately."""
         snaps = [_snap("fangraphs", "X", date_=d, fv=fv, label=f"upd-{d}")
                  for d, fv in history]
-        return build_timeseries(snaps, shrinkage_k=0)[0]
+        return build_timeseries(snaps, shrinkage_k=0, single_source_k=0)[0]
 
     def test_high_low_basic(self):
         p = self._player([
@@ -229,7 +237,9 @@ class TestStockMovement:
                  for d, fv in points_data]
         # Same rationale as TestCandlestick: stock direction thresholds are
         # tested against the raw FV grid, not the shrinkage-adjusted one.
-        return build_timeseries(snaps, shrinkage_k=0)[0]
+        # Single-source pull also disabled so a 1-FG history doesn't get
+        # quietly shrunk before the stock-direction comparison runs.
+        return build_timeseries(snaps, shrinkage_k=0, single_source_k=0)[0]
 
     def test_uses_last_two_points_only(self):
         """
@@ -452,22 +462,52 @@ class TestForwardFill:
 # ---------------------------------------------------------------------------
 
 class TestConsensusIsSourceMean:
-    """Bayesian shrinkage was removed (2026-05). Consensus FV is now just
-    the equal-weighted mean of the source grades contributing to that
-    snapshot — no pull toward a prior, no source-count penalty. Each
-    assertion below documents the new "consensus = mean of sources"
-    contract."""
+    """Bayesian shrinkage is OFF for multi-source consensus (≥2 sources
+    with explicit FVs) — that path stays a pure mean. The 2026 IFA class
+    surfaced a need to discount single-source grades, so a targeted pull
+    toward FV 35 (k=0.5) is re-enabled when exactly one source published
+    an explicit FV. Each test below documents one branch of that policy."""
 
-    def test_single_source_consensus_equals_source_grade(self):
-        # The single most-affected case: a 1-source prospect at 70 stays
-        # at 70 (it used to be pulled down to ~55 by the shrinkage prior).
+    def test_single_source_consensus_pulled_toward_prior(self):
+        # 1-source prospect at FV 70 is pulled toward the FV-35 prior:
+        #   adjusted = (2/3 · 70) + (1/3 · 35) = 58.33 → snaps to FV 58.
+        # The pre-shrinkage value is preserved on the point so the UI
+        # can show "raw 70" in tooltips.
         snaps = [_snap("fangraphs", "X", fv=70.0)]
         p = build_timeseries(snaps)[0]
         pt = p.points[-1]
         assert pt.consensus_fv_pre_shrinkage == 70.0
-        assert pt.consensus_fv == 70.0
-        assert pt.consensus_fv_raw == 70.0
+        assert pt.consensus_fv == 58.0
+        assert abs(pt.consensus_fv_raw - 58.33) < 0.05
+        assert abs(pt.shrinkage_weight - (2.0 / 3.0)) < 1e-9
+        assert pt.avg_fv_n == 1
+
+    def test_multi_source_consensus_not_shrunken(self):
+        # 2 sources at 50 + 60 → consensus mean 55, no shrinkage applied.
+        snaps = [
+            _snap("fangraphs",    "X", fv=50.0),
+            _snap("mlb_pipeline", "X", fv=60.0),
+        ]
+        p = build_timeseries(snaps)[0]
+        pt = p.points[-1]
+        assert pt.consensus_fv_pre_shrinkage == 55.0
+        assert pt.consensus_fv == 55.0
+        assert pt.consensus_fv_raw == 55.0
         assert pt.shrinkage_weight == 1.0
+        assert pt.avg_fv_n == 2
+
+    def test_single_source_rank_only_no_shrinkage(self):
+        # 1 source publishing only a rank (no explicit FV) — explicit_fvs
+        # is empty, so the shrinkage branch (len(explicit_fvs) == 1) does
+        # NOT fire. The consensus uses the rank-implied fallback and
+        # stays at weight 1.0.
+        snaps = [_snap("baseball_america", "X", rank=1)]
+        p = build_timeseries(snaps)[0]
+        pt = p.points[-1]
+        assert pt.shrinkage_weight == 1.0
+        assert pt.avg_fv_n == 0
+        # Rank 1 implies FV 70 in the rank→FV table.
+        assert pt.consensus_fv == 70.0
 
     def test_full_coverage_consensus_equals_mean(self):
         # 4 sources all at 70 → mean 70.
@@ -531,14 +571,16 @@ class TestConsensusIsSourceMean:
 
     def test_pool_doesnt_drag_individual_consensus(self):
         # The old "prior_mean_fv pulled from pool average" path is gone.
-        # Three single-source prospects keep their exact published grades
-        # regardless of how the pool looks.
+        # Three single-source prospects keep their published grades
+        # regardless of how the pool looks. (single_source_k=0 isolates
+        # this test from the new FV-35 pull-down — the policy under test
+        # here is pool-prior absence, not single-source shrinkage.)
         snaps = [
             _snap("fangraphs", "A", fv=70.0),
             _snap("fangraphs", "B", fv=50.0),
             _snap("fangraphs", "C", fv=60.0),
         ]
-        ts = build_timeseries(snaps)
+        ts = build_timeseries(snaps, single_source_k=0)
         by_name = {p.player_name: p for p in ts}
         assert by_name["A"].points[-1].consensus_fv == 70.0
         assert by_name["B"].points[-1].consensus_fv == 50.0
@@ -547,9 +589,12 @@ class TestConsensusIsSourceMean:
     def test_shrinkage_kwargs_are_inert(self):
         # The old shrinkage_k / shrinkage_n_full / prior_mean_fv kwargs
         # remain on build_timeseries for back-compat but are now no-ops.
-        # Passing absurd values shouldn't change the consensus.
+        # Passing absurd values shouldn't change the consensus. We use
+        # single_source_k=0 here to factor out the new FV-35 pull-down
+        # so the assertion focuses on the legacy-kwargs no-op contract.
         snaps = [_snap("fangraphs", "X", fv=70.0)]
-        p_default = build_timeseries(snaps)[0]
+        p_default = build_timeseries(snaps, single_source_k=0)[0]
         p_extreme = build_timeseries(snaps, shrinkage_k=10.0,
-                                     shrinkage_n_full=99, prior_mean_fv=20.0)[0]
+                                     shrinkage_n_full=99, prior_mean_fv=20.0,
+                                     single_source_k=0)[0]
         assert p_default.points[-1].consensus_fv == p_extreme.points[-1].consensus_fv == 70.0

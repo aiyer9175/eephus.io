@@ -109,6 +109,18 @@ DEFAULT_SHRINKAGE_K = 1.5
 DEFAULT_N_FULL = 4
 FALLBACK_PRIOR_FV = 45.0
 
+# Single-source uncertainty pull-down — applied inside
+# compute_consensus_point when exactly one source published an explicit
+# FV. Bayesian shrinkage toward FV 35 with k=0.5:
+#   adjusted = weight · raw + (1 − weight) · PRIOR, weight = 1 / (1 + K) = 2/3
+# Higher raws get pulled harder (a 65 → 55, a 50 → 45). The prior sits
+# at FV 35 deliberately: it's the "barely-a-prospect" floor — pulling
+# toward it expresses "without corroboration we're not confident this
+# is actually a real prospect-grade player". Multi-source consensus is
+# completely untouched (weight = 1.0 in that branch).
+SINGLE_SOURCE_PRIOR = 35.0
+SINGLE_SOURCE_K = 0.5
+
 
 # ---------------------------------------------------------------------------
 # Snap helper — consensus FV is always a whole number on the 20-80 scale.
@@ -233,6 +245,7 @@ def compute_consensus_point(
     *,
     event_date: str | None = None,
     event_label: str | None = None,
+    single_source_k: float = SINGLE_SOURCE_K,
 ) -> ConsensusPoint | None:
     """
     Aggregate one player's snapshots into a ConsensusPoint.
@@ -319,7 +332,28 @@ def compute_consensus_point(
     # would have no consensus FV at all.
     pre_shrinkage = avg_fv if avg_fv is not None else rank_implied_fv
     assert pre_shrinkage is not None
-    consensus_fv, consensus_label = snap_to_grade(pre_shrinkage)
+
+    # Single-source uncertainty pull. When exactly one source published
+    # an explicit FV grade (typically a 2026 IFA prospect appearing only
+    # on Pipeline's Top 50), shrink the consensus toward FV 35 using a
+    # Bayesian prior with k=0.5. This pulls a 65 → 55, a 50 → 45, etc.
+    # Higher grades get pulled harder, which matches the principle that
+    # the variance on a high-end singleton is wider than on a corroborated
+    # grade. Multi-source consensus stays untouched (weight=1.0). The
+    # pre-shrinkage value is preserved on the point for transparency.
+    # Tests can pass single_source_k=0 to disable the pull entirely (e.g.
+    # candlestick fixtures that construct 1-source-per-date histories
+    # to exercise the high/low/open/close logic in isolation).
+    if len(explicit_fvs) == 1 and single_source_k > 0:
+        shrinkage_weight_val = 1.0 / (1.0 + single_source_k)  # = 2/3 at K=0.5
+        consensus_fv_raw_value = (
+            shrinkage_weight_val * pre_shrinkage
+            + (1.0 - shrinkage_weight_val) * SINGLE_SOURCE_PRIOR
+        )
+    else:
+        shrinkage_weight_val = 1.0
+        consensus_fv_raw_value = pre_shrinkage
+    consensus_fv, consensus_label = snap_to_grade(consensus_fv_raw_value)
 
     # Default snapshot_date / interval_label come from the latest snapshot
     # in `day_snaps` (forward-fill yields a heterogeneous mix); callers
@@ -352,9 +386,9 @@ def compute_consensus_point(
         avg_rank_n=len(ranks),
         consensus_fv=consensus_fv,
         consensus_fv_label=consensus_label,
-        consensus_fv_raw=round(pre_shrinkage, 2),
+        consensus_fv_raw=round(consensus_fv_raw_value, 2),
         consensus_fv_pre_shrinkage=round(pre_shrinkage, 2),
-        shrinkage_weight=1.0,
+        shrinkage_weight=shrinkage_weight_val,
         sources_contributing=sorted(contributing_sources),
         per_source=per_source,
         fv_min=fv_min,
@@ -491,6 +525,7 @@ def build_timeseries(
     shrinkage_k: float = DEFAULT_SHRINKAGE_K,
     shrinkage_n_full: int = DEFAULT_N_FULL,
     prior_mean_fv: float | None = None,
+    single_source_k: float = SINGLE_SOURCE_K,
 ) -> list[PlayerTimeseries]:
     """Build per-player FV time-series with forward-filled sources and
     Bayesian shrinkage applied to every point.
@@ -541,6 +576,7 @@ def build_timeseries(
                 list(latest_by_source.values()),
                 event_date=snap_date,
                 event_label=event_label,
+                single_source_k=single_source_k,
             )
             if pt is not None:
                 points.append(pt)
@@ -573,26 +609,15 @@ def build_timeseries(
             fv_open=0.0, fv_close=0.0,
         ))
 
-    # Bayesian shrinkage was removed (2026-05): the pull-toward-prior
-    # was compressing single-source prospects (90% of actives) into a
-    # giant 40-FV cluster. consensus_fv is now just the arithmetic mean
-    # of source grades — what each source publishes is what shows. The
-    # apply_shrinkage / compute_prior_mean_fv functions stay defined
-    # for back-compat callers but are no longer wired into the default
-    # pipeline. consensus_fv mirrors consensus_fv_pre_shrinkage; raw
-    # mirrors the pre-snap mean; shrinkage_weight is fixed at 1.0.
+    # Population-prior Bayesian shrinkage was removed (2026-05): the
+    # pull-toward-prior was compressing single-source prospects (90% of
+    # actives) into a giant 40-FV cluster. compute_consensus_point now
+    # produces the final consensus_fv values directly — multi-source
+    # consensus = arithmetic mean (no shrinkage), single-source = the
+    # targeted FV-35 pull (see SINGLE_SOURCE_PRIOR / SINGLE_SOURCE_K).
+    # The legacy apply_shrinkage / compute_prior_mean_fv functions stay
+    # defined for back-compat callers but are no longer wired in.
     for p in result:
-        for pt in p.points:
-            raw = pt.consensus_fv_pre_shrinkage
-            if raw is None:
-                # No contributing source grades for this snapshot — leave
-                # the point's consensus_fv unset (callers handle null).
-                continue
-            snapped, label = snap_to_grade(raw)
-            pt.consensus_fv = snapped
-            pt.consensus_fv_label = label
-            pt.consensus_fv_raw = round(raw, 2)
-            pt.shrinkage_weight = 1.0
         for attr, val in _candle_fields(p.points).items():
             setattr(p, attr, val)
 

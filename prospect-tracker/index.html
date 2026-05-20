@@ -540,6 +540,26 @@
     .fv-20 { background: var(--fv-20-bg); color: var(--fv-20-fg); border-color: var(--fv-20-bd); }
     .fv-70, .fv-75, .fv-80 { box-shadow: inset 0 -1px 0 rgba(0,0,0,0.08); }
 
+    /* Single-source uncertainty chip — sits to the right of an FV badge
+       whenever exactly one source published an explicit FV at the
+       latest point. Dashed amber to match the "n=1 · single source" pill
+       in the per-source breakdown block. */
+    .fv-confidence-chip {
+      display: inline-block;
+      margin-left: 4px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 1px 5px;
+      border: 1px dashed var(--neon-amber);
+      border-radius: 999px;
+      color: var(--neon-amber);
+      background: rgba(232, 165, 31, 0.08);
+      vertical-align: middle;
+      cursor: help;
+    }
+
     .rank-cell, .stock-cell {
       font-family: var(--font-mono);
       font-variant-numeric: tabular-nums;
@@ -2660,7 +2680,9 @@
       <button class="chip" data-grad-sort="fv_close"
               title="Highest final consensus FV (the FV when the player graduated) first">Final FV</button>
       <button class="chip" data-grad-sort="vs_fv_proj"
-              title="WAG (WAR Above Grade) — career WAR/year minus the FV-grade-implied WAR/year (FanGraphs scouting primer, lower-bound; linearly interpolated between grades; hitter/pitcher tables applied separately). Requires ≥1 full MLB season. Highest outperformance first.">WAG</button>
+              title="WAG (WAR Above Grade) — career WAR/year minus the FV-grade-implied WAR/year (FanGraphs scouting primer, lower-bound; linearly interpolated between grades; hitter/pitcher tables applied separately). Requires ≥1 full MLB season. Highest outperformance first.">WAG (high)</button>
+      <button class="chip" data-grad-sort="vs_fv_proj_low"
+              title="WAG (WAR Above Grade) — same metric as 'WAG (high)' but inverted: lowest delta first, so graduates UNDERPERFORMING their FV grade most heavily surface at the top. Graduates without ≥1 MLB season sink to the bottom.">WAG (low)</button>
     </div>
     <div id="grad-rows"></div>
   </div>
@@ -2902,16 +2924,34 @@ function fvBadgeTooltip(player) {
   if (tier != null && FV_TO_WAR[tier]) {
     parts.push(FV_TO_WAR[tier]);
   }
+  // Surface the single-source pull-down when it applies — the badge
+  // sub-text says "raw N" but doesn't explain why; this line does.
+  const pts = player.points;
+  const last = pts && pts.length ? pts[pts.length - 1] : null;
+  if (last && last.shrinkage_weight != null && last.shrinkage_weight < 1.0
+      && last.consensus_fv_pre_shrinkage != null) {
+    parts.push(`Pulled from ${last.consensus_fv_pre_shrinkage.toFixed(1)} (single-source grade, shrunk 1/3 toward FV 35)`);
+  }
   return parts.join("\n");
 }
 
-// Confidence indicator removed 2026-05 — when consensus FV is simply
-// the mean of source grades (no shrinkage), a single-source grade
-// isn't a "lower confidence" value, just one outlet's opinion. Source
-// count is still surfaced in the badge tooltip as informational text.
-// Kept as a no-op stub so existing call sites don't need rewiring.
+// Confidence indicator — re-enabled 2026-05 for the single-source
+// pull-down path. The chip fires when exactly one source published an
+// explicit FV at the latest point (typical of 2026 IFA prospects
+// appearing only on Pipeline's Top 50). Multi-source players show
+// nothing extra. Source count comes from the canonical avg_fv_n field
+// (added to the per-point export alongside this feature); falls back
+// to recounting per_source for cached payloads that pre-date the
+// export.
 function fvBadgeConfidence(player) {
-  return "";
+  const pts = player && player.points;
+  const last = pts && pts.length ? pts[pts.length - 1] : null;
+  if (!last) return "";
+  const n = last.avg_fv_n != null
+    ? last.avg_fv_n
+    : Object.values(last.per_source || {}).filter(v => v && v.fv_published != null).length;
+  if (n !== 1) return "";
+  return `<span class="fv-confidence-chip" title="Single-source grade — pulled down 1/3 of the way toward FV 35 (Bayesian shrinkage, k=0.5) to reflect 1-source uncertainty. Add a second source to remove the pull.">1 src</span>`;
 }
 
 const fvClass = label => {
@@ -4842,6 +4882,14 @@ function renderGraduates() {
     );
   } else if (sortMode === "vs_fv_proj") {
     orderedGrads = filtered.slice().sort(sortByWarField(g => gradVsFvProjection(g)));
+  } else if (sortMode === "vs_fv_proj_low") {
+    // Ascending WAG: most-underperforming graduates surface first.
+    // Reuse the null-sink semantics of sortByWarField by negating both
+    // sides so graduates without WAG data still sink to the bottom.
+    orderedGrads = filtered.slice().sort(sortByWarField(g => {
+      const d = gradVsFvProjection(g);
+      return d == null ? null : -d;
+    }));
   } else {
     // Date sort: preserve the group-by-date pass below.
     orderedGrads = null;
@@ -7647,9 +7695,12 @@ function renderPlayerDetail(key) {
         Range ${Math.round(latestPt.fv_min)}–${Math.round(latestPt.fv_max)}${sigma}${wide}
       </div>`;
     } else if (explicitFvSources === 1) {
+      const rawTxt = latestPt.consensus_fv_pre_shrinkage != null
+        ? ` (raw ${latestPt.consensus_fv_pre_shrinkage.toFixed(1)})`
+        : "";
       disagreementLine = `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;">
-        <span style="display:inline-block;padding:1px 6px;border:1px dashed var(--neon-amber);border-radius:10px;color:var(--neon-amber);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;">n=1 · single source</span>
-        <span style="margin-left:6px;">consensus reflects one grader only</span>
+        <span style="display:inline-block;padding:1px 6px;border:1px dashed var(--neon-amber);border-radius:10px;color:var(--neon-amber);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;">n=1 · pulled down</span>
+        <span style="margin-left:6px;">consensus pulled 1/3 toward FV 35${rawTxt} · add a second source to remove</span>
       </div>`;
     }
     return `<div class="detail-title">Source consensus <span class="detail-title-sub">latest grade per source</span></div>
