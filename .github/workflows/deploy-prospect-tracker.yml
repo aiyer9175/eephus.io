@@ -1,0 +1,90 @@
+name: Deploy prospect-tracker to GitHub Pages
+
+# Runs the prospect-tracker pipeline and publishes the rendered site
+# (index.html + the four data/*.json files) to GitHub Pages.
+#
+# Triggers:
+#   - push to main that touches anything in prospect-tracker/
+#   - manual run from the Actions tab (workflow_dispatch)
+#   - monthly schedule at 11:00 UTC on the 1st (matches the cadence
+#     baked into the prospect-ranking sources we ingest)
+#
+# Manual setup (one-time):
+#   Repo Settings → Pages → Source: "GitHub Actions"
+#
+# The job pulls Live data each run, so the deployed artifact reflects
+# whatever's in data/manual_rankings.csv at trigger time. No commit-back
+# to main is needed — Pages artifacts are independent of git history.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'prospect-tracker/**'
+      - '.github/workflows/deploy-prospect-tracker.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 11 1 * *'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deploy in flight at a time; in-progress runs get
+# cancelled if a fresh commit lands during the build.
+concurrency:
+  group: pages-prospect-tracker
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    defaults:
+      run:
+        working-directory: prospect-tracker
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: prospect-tracker/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pipeline (regenerates data/*.json)
+        # Hits live MLB Stats API + BBRef for the WAR aggregate. The
+        # pipeline is idempotent and tolerates partial-failure paths
+        # (warnings logged, no exit), so a flaky third-party endpoint
+        # won't fail the deploy.
+        run: python run_monthly.py
+
+      - name: Run test suite
+        # Gate the deploy on pytest so a broken export shape doesn't
+        # publish to Pages. Fast (~2s); no live network needed.
+        run: python -m pytest -q
+
+      - name: Stage site for Pages
+        # Only ship what the browser actually needs: the HTML + the
+        # split JSON payloads. Keeps the artifact small and avoids
+        # accidentally publishing the prospects.db / .cache directory.
+        run: |
+          mkdir -p _site
+          cp index.html _site/
+          mkdir -p _site/data
+          cp data/timeseries.json data/graduates.json data/inactive.json data/rosters_by_org.json _site/data/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: prospect-tracker/_site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
