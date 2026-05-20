@@ -2080,6 +2080,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     "rank_implied_fv": pt.rank_implied_fv,
                     "sources_contributing": pt.sources_contributing,
                     "per_source": pt.per_source,
+                    "fv_min": pt.fv_min,
+                    "fv_max": pt.fv_max,
+                    "fv_spread": pt.fv_spread,
+                    "fv_stddev": pt.fv_stddev,
                 }
                 for pt in p.points
             ],
@@ -2342,28 +2346,53 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             entry["fv_events"], as_of=today_iso,
         )
 
-    # Median trajectory per window across all orgs. The list-page chart
-    # subtracts a linear baseline of `median * t/window_days` from each
-    # org's series so the line shows "growth above the typical farm",
+    # Mean trajectory per window across all orgs. The list-page chart
+    # subtracts a linear baseline of `mean * t/window_days` from each
+    # org's series so the line shows "growth above the average farm",
     # not raw FV — that's the comparison the user actually wants when
-    # ranking dev pipelines.
-    def _median(vals: list[float]) -> float:
-        if not vals:
-            return 0.0
-        s = sorted(vals)
-        n = len(s)
-        mid = n // 2
-        return s[mid] if n % 2 else (s[mid - 1] + s[mid]) / 2.0
+    # ranking dev pipelines. Mean (not median) so the metric responds
+    # to outliers — a system that's well above league mean reflects
+    # real dev outperformance, not just being above the middle of the
+    # pack. Standard deviation is also exported so DS+ can use it to
+    # convert raw deltas into a wRC+-style 100-anchored scale.
+    def _mean(vals: list[float]) -> float:
+        return sum(vals) / len(vals) if vals else 0.0
 
-    farm_trajectory_medians = {
-        key: round(_median([e["trajectories"][key] for e in org_summary]), 2)
+    def _stdev(vals: list[float], mu: float) -> float:
+        if len(vals) < 2:
+            return 0.0
+        return (sum((v - mu) ** 2 for v in vals) / len(vals)) ** 0.5
+
+    farm_trajectory_means = {
+        key: round(_mean([e["trajectories"][key] for e in org_summary]), 2)
+        for key in FARM_TRAJECTORY_WINDOWS
+    }
+    farm_trajectory_stdevs = {
+        key: round(
+            _stdev(
+                [e["trajectories"][key] for e in org_summary],
+                farm_trajectory_means[key],
+            ),
+            4,
+        )
         for key in FARM_TRAJECTORY_WINDOWS
     }
     for entry in org_summary:
-        entry["delta_above_median"] = {
-            key: round(entry["trajectories"][key] - farm_trajectory_medians[key], 2)
+        entry["delta_above_mean"] = {
+            key: round(entry["trajectories"][key] - farm_trajectory_means[key], 2)
             for key in FARM_TRAJECTORY_WINDOWS
         }
+        # DS+ — wRC+/OPS+-style metric anchored at 100 = league mean.
+        # 10 points = 1 stdev, mirroring the OPS+ convention. Stable
+        # under sparse league spread (returns 100 when stdev ≈ 0).
+        entry["ds_plus"] = {}
+        for key in FARM_TRAJECTORY_WINDOWS:
+            sd = farm_trajectory_stdevs[key]
+            delta = entry["delta_above_mean"][key]
+            if sd > 1e-6:
+                entry["ds_plus"][key] = round(100 + 10 * (delta / sd))
+            else:
+                entry["ds_plus"][key] = 100
 
     top_end_100 = _normalize_to_100([e["top_end_points"]      for e in org_summary])
     depth_100   = _normalize_to_100([e["depth_points"]        for e in org_summary])
@@ -2508,7 +2537,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "players":    active_payload,
         "spotlights": spotlight_payload,
         "org_summary": org_summary,
-        "farm_trajectory_medians": farm_trajectory_medians,
+        "farm_trajectory_means": farm_trajectory_means,
+        "farm_trajectory_stdevs": farm_trajectory_stdevs,
         "level_norms": level_norms,
         "_slices": {
             "graduates":      "graduates.json",

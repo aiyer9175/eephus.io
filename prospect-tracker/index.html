@@ -893,7 +893,7 @@
            # · logo · org · grade · form-line · top prospect ·
            positions · level depth · avg age · spend · stock · arrow
          The form column is pinned to a fixed pixel width that's wide
-         enough for the 130px sparkline + the trailing delta-vs-median
+         enough for the 130px sparkline + the trailing delta-vs-mean
          badge. Pinning (not flex) prevents the SVG from bleeding into
          the Top-prospect column on narrower viewports. Top-prospect,
          Positions-mix, and Level-depth absorb the slack. The 56px
@@ -1784,20 +1784,22 @@
     }
 
     /* === Position depth chart ====================================== */
-    /* Per-org depth chart: 10 columns (C / 1B / 2B / SS / 3B / LF / CF
-       / RF / SP / RP), each a vertical stack of FV-tinted player cards
-       sorted high → low so positional logjams pop. */
+    /* Per-org depth chart: 6 columns (C / 1B / MI / 3B / OF / P) so each
+       column has enough room for a full last name + age + level + FV.
+       Cards inside a column are sorted FV desc; tier dividers separate
+       the 50+, 40-tier, and sub-40 groups so a reader can pick up the
+       prospect "spine" at a glance. */
     .pos-depth-grid {
       display: grid;
-      grid-template-columns: repeat(10, minmax(0, 1fr));
-      gap: 6px;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
       margin-top: 8px;
     }
     .pos-depth-col {
       background: var(--bg-tertiary);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-sm);
-      padding: 6px;
+      padding: 8px;
       min-height: 60px;
     }
     .pos-depth-col-head {
@@ -1818,36 +1820,59 @@
       color: var(--text-secondary);
       font-weight: 400;
     }
+    .pos-depth-tier-sep {
+      height: 0;
+      border-top: 1px dashed var(--border);
+      margin: 4px 2px 4px;
+      opacity: 0.6;
+    }
     .pos-depth-card {
       font-family: var(--font-sans);
-      font-size: 10.5px;
-      padding: 4px 6px;
+      font-size: 11px;
+      padding: 5px 7px;
       margin-bottom: 4px;
       background: var(--bg-secondary);
       border: 1px solid var(--border-light);
       border-left: 3px solid var(--org-color, var(--bg-header));
       border-radius: 2px;
       cursor: pointer;
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 4px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      column-gap: 6px;
+      row-gap: 1px;
+      align-items: center;
       line-height: 1.2;
     }
     .pos-depth-card:hover { background: var(--bg-primary); }
     .pos-depth-card .pdc-name {
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
       font-weight: 600; color: var(--text-primary);
+      grid-column: 1; grid-row: 1;
     }
-    .pos-depth-card .pdc-meta {
+    .pos-depth-card .pdc-fv {
+      grid-column: 2; grid-row: 1 / span 2;
+      align-self: center;
+    }
+    .pos-depth-card .pdc-sub {
+      grid-column: 1; grid-row: 2;
       font-family: var(--font-mono);
       font-size: 9px;
       color: var(--text-tertiary);
       font-variant-numeric: tabular-nums;
+      letter-spacing: 0.04em;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .pos-depth-card .pdc-pos {
+      color: var(--neon-cyan);
+      font-weight: 600;
+      margin-right: 4px;
     }
     @media (max-width: 900px) {
-      .pos-depth-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .pos-depth-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
     @media (max-width: 600px) {
-      .pos-depth-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .pos-depth-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     /* === Comparison cart =========================================== */
@@ -2045,6 +2070,29 @@
     .rps-pill.is-neg { background: rgba(185, 28, 28, 0.12); color: var(--down); border: 1px solid var(--down); }
     .rps-pill.is-neutral { background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border); }
     .rps-pill.is-null { background: var(--bg-tertiary); color: var(--text-tertiary); border: 1px dashed var(--border); }
+
+    /* RPS+ pill — wRC+/OPS+-style index. 100 = median prospect at the
+       same integer age; ≥110 reads green, ≤90 reads red. Visually a
+       sibling of .rps-pill but with a violet accent so the eye can tell
+       the two metrics apart at a glance. */
+    .rps-plus-pill {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-variant-numeric: tabular-nums;
+      margin-top: 4px;
+      margin-left: 4px;
+      letter-spacing: 0;
+      cursor: help;
+      border: 1px solid var(--neon-violet);
+    }
+    .rps-plus-pill.is-pos { background: rgba(31, 122, 58, 0.15); color: var(--up); border-color: var(--up); }
+    .rps-plus-pill.is-neg { background: rgba(185, 28, 28, 0.12); color: var(--down); border-color: var(--down); }
+    .rps-plus-pill.is-neutral { background: rgba(167, 100, 252, 0.10); color: var(--neon-violet); }
+    .rps-plus-pill.is-null { background: var(--bg-tertiary); color: var(--text-tertiary); border-style: dashed; }
 
     /* Overlay-chart legend dot — small square in the per-player color. */
     .csbs-legend-dot {
@@ -2349,11 +2397,11 @@
            window used by the sparklines so picking "Development 3y"
            always shows 3-year sparklines alongside 3-year sorting. -->
       <button class="chip" data-farm-sort="trajectory_1y"
-              title="1-year prospect FV development vs the median org. Incoming acquisitions (trades/draft/IFA) excluded — only the org's own development moves the line. Positive = developing faster than the typical farm.">Development 1y</button>
+              title="1-year prospect FV development vs the league mean. Incoming acquisitions (trades/draft/IFA) excluded — only the org's own development moves the line. Positive = developing faster than the average farm.">Development 1y</button>
       <button class="chip active" data-farm-sort="trajectory_3y"
-              title="3-year development vs median (default). Acquisitions excluded.">Development 3y</button>
+              title="3-year development vs mean (default). Acquisitions excluded.">Development 3y</button>
       <button class="chip" data-farm-sort="trajectory_5y"
-              title="5-year development vs median. Acquisitions excluded.">Development 5y</button>
+              title="5-year development vs mean. Acquisitions excluded.">Development 5y</button>
       <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted graduations in the trailing 12 months">Grad pipeline</button>
       <button class="chip" data-farm-sort="ifa_spend" title="International FA bonus dollars committed over the trailing 3 years (Spotrac)">IFA spend (3yr)</button>
       <button class="chip" data-farm-sort="total_fv">Total FV</button>
@@ -2369,7 +2417,7 @@
       <button class="chip" data-farm-sort="level_CPX">CPX</button>
       <button class="chip" data-farm-sort="level_DSL">DSL</button>
       <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-        <span class="filter-label" title="Window used by the development sparkline + Trajectory sort. The line shows each org's prospect FV growth above (or below) the median org over the same window, with incoming acquisitions (trades, draft, IFA) excluded so only true development counts.">Development window</span>
+        <span class="filter-label" title="Window used by the development sparkline + Trajectory sort. The line shows each org's prospect FV growth above (or below) the league mean over the same window, with incoming acquisitions (trades, draft, IFA) excluded so only true development counts.">Development window</span>
         <button class="chip"        data-form-window="1y">1y</button>
         <button class="chip active" data-form-window="3y">3y</button>
         <button class="chip"        data-form-window="5y">5y</button>
@@ -3306,7 +3354,7 @@ function makeMilbCell(p) {
   const rps = computeRelProd(p);
   return `<div class="milb-cell milb-cell-wrap"${tipAttr}>
     <span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${headline}
-    ${rpsPillHTML(rps)}
+    ${rpsPillHTML(rps)}${rpsPlusPillHTML(p)}
     <br/><span style="color: var(--text-primary);">${slashLine}</span>
     <br/><span style="color: var(--text-tertiary);">${detail}</span>
   </div>`;
@@ -3383,13 +3431,13 @@ const state = {
   // still shows the precise published position.
   posFilter: "all",
   sort: "fv",
-  // Default to 3-year development-vs-median sort — the user's preferred
+  // Default to 3-year development-vs-mean sort — the user's preferred
   // entry view. `trajectory_3y` flips both the sort and the development
   // window to 3y (see attachChipGroup("farm-sort", …)). farm_rank stays
   // available as a chip.
   farmSort: "trajectory_3y",
   // Active form-bar window. Controls the farm-list sparkline (which
-  // plots growth above the median org over the same window) and the
+  // plots growth above the league mean over the same window) and the
   // value used when sorting by "Trajectory".
   formWindow: "3y",
   spotlightBucket: "hot",
@@ -4743,26 +4791,26 @@ function updateMeta() {
 const TIER_BUCKETS = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
 
 // Form bar — small sparkline on each farm row showing the org's
-// cumulative-FV growth above (or below) the median farm system over the
-// active window (1y / 3y / 5y). We clip the series to the window, anchor
-// every org's curve at zero on its first in-window point, then subtract
-// a linear baseline of `medianTrajectory * (t/windowDays)` so the line
-// represents "FV gained beyond what the typical farm gained". A flat
-// line at zero ≈ tracking the median; a rising line ≈ developing
+// cumulative-FV growth above (or below) the league-mean farm system over
+// the active window (1y / 3y / 5y). We clip the series to the window,
+// anchor every org's curve at zero on its first in-window point, then
+// subtract a linear baseline of `meanTrajectory * (t/windowDays)` so the
+// line represents "FV gained beyond what the average farm gained". A flat
+// line at zero ≈ tracking the league mean; a rising line ≈ developing
 // prospects faster than peers. Graduations stay neutral in the upstream
 // series so a productive farm isn't punished for promoting its stars.
 //
-// The trailing badge shows the org's delta-above-median for the window
-// (precomputed server-side as `delta_above_median[window]`), which is
+// The trailing badge shows the org's delta-above-mean for the window
+// (precomputed server-side as `delta_above_mean[window]`), which is
 // what the sort chip and grade signal also key off.
 const FORM_BAR_W = 130;
 const FORM_BAR_H = 26;
 const FORM_WINDOW_DAYS = { "1y": 365, "3y": 365 * 3, "5y": 365 * 5 };
 
-function makeFarmSparkline(fvHistory, deltaAboveMedian, medianTrajectory, windowKey) {
+function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey) {
   const series = fvHistory || [];
   const windowDays = FORM_WINDOW_DAYS[windowKey] || 365;
-  const median = medianTrajectory || 0;
+  const baseline = meanTrajectory || 0;
 
   if (series.length < 2) {
     return `<div class="tier-bar" style="gap:6px;">
@@ -4782,22 +4830,22 @@ function makeFarmSparkline(fvHistory, deltaAboveMedian, medianTrajectory, window
   if (recent.length < 2) recent = series.slice(-2);
 
   // Per-org growth relative to the first in-window point, then minus the
-  // median's linear baseline at the same time fraction. Result: y=0
-  // ≈ tracking the median; positive ≈ above median; negative ≈ below.
+  // league mean's linear baseline at the same time fraction. Result: y=0
+  // ≈ tracking the mean; positive ≈ above mean; negative ≈ below.
   const startMs = new Date(recent[0].date).getTime();
   const endMs   = new Date(recent[recent.length - 1].date).getTime();
   const spanMs  = Math.max(endMs - startMs, 1);
   const startFv = recent[0].total_fv;
   const rel = recent.map(s => {
     const t = (new Date(s.date).getTime() - startMs) / spanMs;  // [0..1]
-    const baseline = median * t;  // median's expected gain by fraction t of the window
+    const baselineGain = baseline * t;  // mean's expected gain by fraction t of the window
     return {
       x: t,
-      v: (s.total_fv - startFv) - baseline,
+      v: (s.total_fv - startFv) - baselineGain,
     };
   });
 
-  // Scale around zero so the median (y=0) is always visible — that's the
+  // Scale around zero so the mean (y=0) is always visible — that's the
   // comparison the user is making. Pad the range slightly so a perfectly
   // flat line doesn't sit at the very edge.
   const vals = rel.map(p => p.v);
@@ -4810,14 +4858,14 @@ function makeFarmSparkline(fvHistory, deltaAboveMedian, medianTrajectory, window
     `${(p.x * FORM_BAR_W).toFixed(1)},${yFor(p.v).toFixed(1)}`
   ).join(' ');
 
-  // Color + arrow keyed off the precomputed delta-above-median for the
-  // window. The dead zone scales with the median's magnitude so the
+  // Color + arrow keyed off the precomputed delta-above-mean for the
+  // window. The dead zone scales with the mean's magnitude so the
   // threshold for "essentially average" makes sense whether you're
-  // looking at 1y (median ~ a few hundred FV-points) or 5y (median in
+  // looking at 1y (mean ~ a few hundred FV-points) or 5y (mean in
   // the thousands). Falls back to a hard minimum of 5 so unconfigured
   // windows still get a coherent answer.
-  const delta = deltaAboveMedian || 0;
-  const deadZone = Math.max(5, Math.abs(median) * 0.05);
+  const delta = deltaAboveMean || 0;
+  const deadZone = Math.max(5, Math.abs(baseline) * 0.05);
   const stroke = delta >  deadZone ? 'var(--up)'
               : delta < -deadZone ? 'var(--down)'
               :                     'var(--text-tertiary)';
@@ -4827,24 +4875,24 @@ function makeFarmSparkline(fvHistory, deltaAboveMedian, medianTrajectory, window
   const sign   = delta > 0 ? '+' : '';
   const deltaLabel = `${arrow}${sign}${delta.toFixed(1)}`;
 
-  // Median baseline reference at y=0. A faint dashed line gives the eye
+  // Mean baseline reference at y=0. A faint dashed line gives the eye
   // an anchor to compare each org's curve against.
-  const medianLine = `<line x1="0" y1="${zeroY.toFixed(1)}" x2="${FORM_BAR_W}" y2="${zeroY.toFixed(1)}"
+  const baselineLine = `<line x1="0" y1="${zeroY.toFixed(1)}" x2="${FORM_BAR_W}" y2="${zeroY.toFixed(1)}"
         stroke="var(--text-tertiary)" stroke-width="0.7" stroke-dasharray="2,2" opacity="0.55"/>`;
 
-  // Filled wedge between the line and the median baseline so eye picks
-  // up sign-and-magnitude in one glance: above-median orgs get a green
-  // shaded area on top, below-median get a red shaded area below.
+  // Filled wedge between the line and the mean baseline so eye picks
+  // up sign-and-magnitude in one glance: above-mean orgs get a green
+  // shaded area on top, below-mean get a red shaded area below.
   const lastX = FORM_BAR_W.toFixed(1);
   const baseY = zeroY.toFixed(1);
   const fillPoints = `0,${baseY} ${points} ${lastX},${baseY}`;
 
-  const titleText = `${windowKey} development vs median: ${sign}${delta.toFixed(1)} (median Δ ${median.toFixed(1)}) · acquisitions excluded`;
+  const titleText = `${windowKey} development vs mean: ${sign}${delta.toFixed(1)} (mean Δ ${baseline.toFixed(1)}) · acquisitions excluded`;
 
   return `<div class="tier-bar" style="gap:8px;">
     <svg width="${FORM_BAR_W}" height="${FORM_BAR_H}" style="border-radius:2px;overflow:hidden;flex-shrink:0"
          aria-label="${escapeHtml(titleText)}"><title>${escapeHtml(titleText)}</title>
-      ${medianLine}
+      ${baselineLine}
       <polygon points="${fillPoints}" fill="${stroke}" opacity="0.10"/>
       <polyline points="${points}" fill="none" stroke="${stroke}"
                 stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
@@ -4922,21 +4970,22 @@ function makeFarmReportCard(org) {
   const r = org.component_ranks || {};
   const n = (DATA.org_summary || []).length || 30;
   // Trajectory cell flexes with the active form window. The cell shows
-  // delta-above-median for that window (so the eye-line tracks what the
+  // delta-above-mean for that window (so the eye-line tracks what the
   // list-page sparkline is showing), while the component letter grade
   // stays anchored to the 1y trajectory_score that fed `farm_score` —
   // recomputing grades per window would let the user appear to "earn"
   // a different overall grade just by toggling the chip.
   const win = state.formWindow || "3y";
   const winLabel = win === "1y" ? "1y" : win === "3y" ? "3y" : "5y";
-  const trajWindowed = (org.delta_above_median || {})[win]
+  const trajWindowed = (org.delta_above_mean || {})[win]
                       ?? (org.trajectories || {})[win]
                       ?? org.trajectory_score
                       ?? null;
+  const dsPlus = (org.ds_plus || {})[win];
 
   const fmtPts = v => v != null ? `${v.toFixed(1)} pts` : '—';
   const fmtSigned = v => v != null
-    ? `${v > 0 ? '+' : ''}${v.toFixed(1)} · ${winLabel} vs median`
+    ? `${v > 0 ? '+' : ''}${v.toFixed(1)} · ${winLabel} vs mean${dsPlus != null ? ` · ${winLabel.toUpperCase()}DS+ ${dsPlus}` : ''}`
     : '—';
 
   const stripCell = (label, letter, rank, scoreVal, scoreFmt, tooltip) => `
@@ -4969,7 +5018,7 @@ function makeFarmReportCard(org) {
         ${stripCell('Depth',      g.depth,      r.depth,      org.depth_points,
                     fmtPts,    'Tiered-FV sum of prospects #6 through #25. Rewards systems with real prospects beyond the top tier.')}
         ${stripCell('Trajectory', g.trajectory, r.trajectory, trajWindowed,
-                    fmtSigned, `${winLabel} cumulative-FV growth above the median org's growth over the same window. Letter grade stays anchored to the 1y trajectory used for farm_score. Graduations are neutral.`)}
+                    fmtSigned, `${winLabel} cumulative-FV growth above the league mean over the same window. ${winLabel.toUpperCase()}DS+ is the wRC+/OPS+-style index where 100 = league mean and 10 points = 1 standard deviation. Letter grade stays anchored to the 1y trajectory used for farm_score. Graduations are neutral.`)}
         ${stripCell('Grad pipe',  g.grad,       r.grad,       org.grad_pipeline_score,
                     fmtPts,    'FV-weighted graduations in the trailing 12 months. Promoting a 60 is worth ~18 points; a 40 is worth 1.')}
       </div>
@@ -4978,11 +5027,16 @@ function makeFarmReportCard(org) {
 
 // Full-size growth chart for a single org on the farm-detail page.
 // Same conceptual model as the list-page sparkline (org cumulative FV
-// minus a linear median-baseline so the y-axis reads "growth above the
-// typical farm"), drawn larger with gridlines, year markers, and an
+// minus a linear mean-baseline so the y-axis reads "growth above the
+// league mean"), drawn larger with gridlines, year markers, and an
 // explicit zero-line so the reader can pick up the magnitude and slope
 // without hovering. Reacts to state.formWindow (1y / 3y / 5y).
-function makeFarmGrowthChart(org, medianTrajectory, windowKey) {
+//
+// `chartWidth` is optional — defaults to 760 (the single-pane farm detail
+// page) but can be overridden by the side-by-side compare view, which
+// shrinks each chart to fit N orgs in a row. Height stays fixed because
+// the internal padding constants (PAD_*) are designed for that aspect.
+function makeFarmGrowthChart(org, meanTrajectory, windowKey, chartWidth) {
   const windowDays = FORM_WINDOW_DAYS[windowKey] || 365;
   const series = (org && org.fv_history) || [];
   if (series.length < 2) {
@@ -4997,10 +5051,10 @@ function makeFarmGrowthChart(org, medianTrajectory, windowKey) {
   const endMs    = new Date(recent[recent.length - 1].date).getTime();
   const spanMs   = Math.max(endMs - startMs, 1);
   const startFv  = recent[0].total_fv;
-  const median   = medianTrajectory || 0;
+  const baseline = meanTrajectory || 0;
   const rel = recent.map(s => {
     const t = (new Date(s.date).getTime() - startMs) / spanMs;
-    return { x: t, v: (s.total_fv - startFv) - (median * t) };
+    return { x: t, v: (s.total_fv - startFv) - (baseline * t) };
   });
   const vals  = rel.map(p => p.v);
   const minV  = Math.min(0, ...vals);
@@ -5010,7 +5064,7 @@ function makeFarmGrowthChart(org, medianTrajectory, windowKey) {
   const yMin = minV - range * padPct;
   const yMax = maxV + range * padPct;
 
-  const W = 760, H = 220;
+  const W = chartWidth || 760, H = 220;
   const PAD_L = 38, PAD_R = 14, PAD_T = 14, PAD_B = 28;
   const innerW = W - PAD_L - PAD_R;
   const innerH = H - PAD_T - PAD_B;
@@ -5052,30 +5106,32 @@ function makeFarmGrowthChart(org, medianTrajectory, windowKey) {
     `<text x="${xFor(1).toFixed(1)}" y="${H - 4}" font-size="9" fill="var(--text-tertiary)" text-anchor="end">${recent[recent.length - 1].date}</text>`,
   );
 
-  // Plot the median baseline as a clean horizontal at y=0 (drawn
-  // already by the zero-tick above) and a labeled "median pace" tag at
+  // Plot the mean baseline as a clean horizontal at y=0 (drawn
+  // already by the zero-tick above) and a labeled "mean pace" tag at
   // the right edge so readers know what the line represents.
-  const medianTag = `<text x="${(W - PAD_R - 4).toFixed(1)}" y="${(zeroY - 6).toFixed(1)}" font-size="9" fill="var(--text-tertiary)" text-anchor="end" font-style="italic">median farm pace</text>`;
+  const baselineTag = `<text x="${(W - PAD_R - 4).toFixed(1)}" y="${(zeroY - 6).toFixed(1)}" font-size="9" fill="var(--text-tertiary)" text-anchor="end" font-style="italic">league mean pace</text>`;
 
-  // Org curve: stroke color by sign of final delta (above-median = up).
+  // Org curve: stroke color by sign of final delta (above-mean = up).
   const finalV = vals[vals.length - 1];
-  const stroke = finalV >  Math.max(5, Math.abs(median) * 0.05) ? 'var(--up)'
-              : finalV < -Math.max(5, Math.abs(median) * 0.05) ? 'var(--down)'
-              :                                                  'var(--text-tertiary)';
+  const stroke = finalV >  Math.max(5, Math.abs(baseline) * 0.05) ? 'var(--up)'
+              : finalV < -Math.max(5, Math.abs(baseline) * 0.05) ? 'var(--down)'
+              :                                                    'var(--text-tertiary)';
   const points = rel.map(p =>
     `${xFor(p.x).toFixed(1)},${yFor(p.v).toFixed(1)}`
   ).join(" ");
-  // Fill polygon between curve and zero-line so above-median shows as
-  // a green shaded region above zero, below-median as red below.
+  // Fill polygon between curve and zero-line so above-mean shows as
+  // a green shaded region above zero, below-mean as red below.
   const polyTop = `${xFor(0).toFixed(1)},${zeroY.toFixed(1)} ${points} ${xFor(1).toFixed(1)},${zeroY.toFixed(1)}`;
-  const labelTxt = `${windowKey} development vs median: ${finalV >= 0 ? '+' : ''}${finalV.toFixed(1)}`;
+  const dsPlus = (org && org.ds_plus && org.ds_plus[windowKey] != null)
+    ? `${windowKey.toUpperCase()}DS+ ${org.ds_plus[windowKey]}` : null;
+  const labelTxt = `${windowKey} development vs mean: ${finalV >= 0 ? '+' : ''}${finalV.toFixed(1)}${dsPlus ? ` · ${dsPlus}` : ''}`;
 
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="${escapeHtml(labelTxt)}">
     ${yTicks.join("")}
     ${xMarks.join("")}
     <polygon points="${polyTop}" fill="${stroke}" opacity="0.10"/>
     <polyline points="${points}" fill="none" stroke="${stroke}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    ${medianTag}
+    ${baselineTag}
     <text x="${(W - PAD_R - 4).toFixed(1)}" y="${PAD_T + 12}" font-size="11" fill="${stroke}" text-anchor="end" font-family="var(--font-mono)" font-weight="700">${escapeHtml(labelTxt)}</text>
   </svg>`;
 }
@@ -5497,8 +5553,8 @@ function farmSortedOrgs() {
       else if (s === "trajectory_3y") w = "3y";
       else if (s === "trajectory_5y") w = "5y";
       else w = state.formWindow || "3y";
-      const ad = (a.delta_above_median || {})[w] ?? a.trajectory_score ?? 0;
-      const bd = (b.delta_above_median || {})[w] ?? b.trajectory_score ?? 0;
+      const ad = (a.delta_above_mean || {})[w] ?? a.trajectory_score ?? 0;
+      const bd = (b.delta_above_mean || {})[w] ?? b.trajectory_score ?? 0;
       return bd - ad;
     }
     if (s === "grad_pipeline") return (b.grad_pipeline_score ?? 0) - (a.grad_pipeline_score ?? 0)
@@ -5597,8 +5653,8 @@ function renderFarmSystems() {
     : null;
 
   const win = state.formWindow || "3y";
-  const medians = (DATA.farm_trajectory_medians || {});
-  const median = medians[win] ?? 0;
+  const means = (DATA.farm_trajectory_means || {});
+  const meanBaseline = means[win] ?? 0;
   const winLabel = win === "1y" ? "1-year" : win === "3y" ? "3-year" : "5-year";
 
   const header = `<div class="farm-header">
@@ -5606,7 +5662,7 @@ function renderFarmSystems() {
     <span></span>
     <span>Org</span>
     <span style="text-align:center;" title="Overall farm-system letter grade. A+ = #1 org; tiers descend by farm_score (45% top-end · 25% depth · 15% trajectory · 15% grad pipeline).">Grade</span>
-    <span title="${winLabel} prospect FV development above (or below) the median org over the same window. Incoming acquisitions (trades, draft, IFA) are excluded — only the org's own development moves the line. Flat = tracking the median farm. Graduations are neutral.">${escapeHtml(winLabel)} development vs median</span>
+    <span title="${winLabel} prospect FV development above (or below) the league mean over the same window. Incoming acquisitions (trades, draft, IFA) are excluded — only the org's own development moves the line. Flat = tracking the average farm. Graduations are neutral.">${escapeHtml(winLabel)} development vs mean</span>
     <span>Top prospect</span>
     <span>Positions</span>
     <span>Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
@@ -5625,7 +5681,7 @@ function renderFarmSystems() {
     const tp = org.top_prospect;
     const overall = (org.grades && org.grades.overall) || '—';
     const gradeColorVal = gradeColor(overall);
-    const deltaAbove = (org.delta_above_median || {})[win]
+    const deltaAbove = (org.delta_above_mean || {})[win]
                       ?? (org.trajectories || {})[win]
                       ?? org.trajectory_score
                       ?? 0;
@@ -5652,7 +5708,7 @@ function renderFarmSystems() {
           <span class="fg-score">${org.farm_score != null ? org.farm_score.toFixed(0) : '—'}</span>
           ${makeComponentGrades(org)}
         </div>
-        <div>${makeFarmSparkline(org.fv_history, deltaAbove, median, win)}</div>
+        <div>${makeFarmSparkline(org.fv_history, deltaAbove, meanBaseline, win)}</div>
         <div style="display:flex;align-items:center;gap:6px;font-size:12px;min-width:0;">
           ${tp ? `<span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(tp.name)}</span>
           <span class="fv-badge ${fvClass(tp.fv_label)} size-sm" style="flex-shrink:0;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
@@ -6593,7 +6649,7 @@ function renderPlayerDetail(key) {
     const rpsForHeader = computeRelProd(p);
     return `<div class="detail-title">Age &amp; level-relative performance
         <span class="detail-title-sub">colored delta vs. the empirical level median for each stat</span>
-        <span style="margin-left:8px;vertical-align:middle;">${rpsPillHTML(rpsForHeader)}</span>
+        <span style="margin-left:8px;vertical-align:middle;">${rpsPillHTML(rpsForHeader)}${rpsPlusPillHTML(p)}</span>
       </div>
       <table class="detail-table"><thead><tr><th>Season</th><th>Level</th><th>Age vs lvl</th>${statHeaders}</tr></thead><tbody>${rows}</tbody></table>`;
   })();
@@ -6632,18 +6688,9 @@ function renderPlayerDetail(key) {
 
   const tradesSection = `<div class="detail-title">Transaction history</div>${makeTransactionHistoryBlock(p)}`;
 
-  // Injury history — every IL stint we have on record, oldest first.
-  // Section title flexes with whether the player is currently injured so
-  // the user can spot an open stint without scanning the table.
-  const injurySection = (() => {
-    const history = ((p.roster_status || {}).injury_history) || [];
-    if (!history.length) return "";
-    const active = history.some(s => s.active);
-    const title = active
-      ? `Injury history <span style="font-weight:400;font-size:11px;color:var(--neon-amber);margin-left:6px;">currently on IL · ${history.length} total stint${history.length === 1 ? "" : "s"}</span>`
-      : `Injury history <span class="detail-title-sub">${history.length} stint${history.length === 1 ? "" : "s"} on record</span>`;
-    return `<div class="detail-title">${title}</div>${makeInjuryHistoryBlock(history)}`;
-  })();
+  // Injury history is folded into the health profile sidebar card below
+  // as a collapsible <details> block, so all health information lives
+  // together. Healthy players with no history don't render the block.
 
   // Acquisition info: drafted prospects show pick + bonus; IFAs show
   // "International FA" + (when known) signing details. Section omitted
@@ -6739,7 +6786,8 @@ function renderPlayerDetail(key) {
     const hp = p.health_profile || {};
     const stints = hp.il_stints_24mo || 0;
     const days = hp.il_days_24mo || 0;
-    const hasAnySignal = stints > 0 || days > 0 || hp.is_post_tj;
+    const history = ((p.roster_status || {}).injury_history) || [];
+    const hasAnySignal = stints > 0 || days > 0 || hp.is_post_tj || history.length > 0;
     if (!hasAnySignal) return "";
     // Pick a color for the headline number — green if clean, amber for
     // mild concern, red for chronic / TJ recovery.
@@ -6750,6 +6798,22 @@ function renderPlayerDetail(key) {
         : "var(--up)";
     const tjLine = hp.is_post_tj
       ? `<div style="font-size:12px;color:var(--neon-violet);font-weight:600;margin-top:6px;">Post-TJ recovery${hp.tj_surgery_date ? ` · surgery ${escapeHtml(hp.tj_surgery_date)}` : ""}</div>`
+      : "";
+    // Collapsible full injury history sits inside the same card so all
+    // health information stays together. Active stints flag in amber on
+    // the summary so the user spots an open IL without expanding.
+    const injuryDetails = history.length
+      ? (() => {
+          const active = history.some(s => s.active);
+          const stintLabel = `${history.length} stint${history.length === 1 ? "" : "s"} on record`;
+          const activeTag = active
+            ? ` <span style="color:var(--neon-amber);font-weight:600;">· currently on IL</span>`
+            : "";
+          return `<details style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
+            <summary style="cursor:pointer;font-size:11px;color:var(--text-secondary);letter-spacing:0.04em;text-transform:uppercase;">Injury history · ${stintLabel}${activeTag}</summary>
+            <div style="margin-top:8px;">${makeInjuryHistoryBlock(history)}</div>
+          </details>`;
+        })()
       : "";
     return `<div class="detail-title">Health profile <span class="detail-title-sub">trailing 24 months</span></div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:var(--radius-sm);">
@@ -6764,6 +6828,7 @@ function renderPlayerDetail(key) {
           </div>
         </div>
         ${tjLine}
+        ${injuryDetails}
       </div>`;
   })();
 
@@ -6800,8 +6865,32 @@ function renderPlayerDetail(key) {
         <td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;">${fvCell}</td>
       </tr>`;
     }).join("");
+    // Disagreement summary — uses fv_min/fv_max/fv_spread/fv_stddev
+    // computed in consensus.compute_consensus_point. Only meaningful for
+    // ≥2 explicit FV sources; single-source players get a low-confidence
+    // pill instead. Wide-spread badge fires at ≥10 grade points (a "two
+    // tier" disagreement, e.g., 45 vs 55).
+    const explicitFvSources = entries.filter(([, v]) => v.fv_published != null).length;
+    let disagreementLine = "";
+    if (latestPt.fv_spread != null && latestPt.fv_min != null && latestPt.fv_max != null) {
+      const wide = latestPt.fv_spread >= 10
+        ? ` <span style="display:inline-block;margin-left:6px;padding:1px 6px;border:1px solid var(--neon-amber);border-radius:10px;color:var(--neon-amber);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;">wide spread</span>`
+        : "";
+      const sigma = latestPt.fv_stddev != null
+        ? ` · σ ${latestPt.fv_stddev.toFixed(1)}`
+        : "";
+      disagreementLine = `<div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;margin-bottom:6px;">
+        Range ${Math.round(latestPt.fv_min)}–${Math.round(latestPt.fv_max)}${sigma}${wide}
+      </div>`;
+    } else if (explicitFvSources === 1) {
+      disagreementLine = `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;">
+        <span style="display:inline-block;padding:1px 6px;border:1px dashed var(--neon-amber);border-radius:10px;color:var(--neon-amber);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;">n=1 · single source</span>
+        <span style="margin-left:6px;">consensus reflects one grader only</span>
+      </div>`;
+    }
     return `<div class="detail-title">Source consensus <span class="detail-title-sub">latest grade per source</span></div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">
+        ${disagreementLine}
         <table style="width:100%;border-collapse:collapse;font-size:11.5px;">
           <thead><tr style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;">
             <th style="text-align:left;padding-bottom:4px;">Source</th>
@@ -6984,7 +7073,7 @@ function renderPlayerDetail(key) {
   root.innerHTML = header + tilesHtml + flagsSection + `
     <div class="player-detail-grid">
       <div>${chartSection}${careerSection}${levelBenchmarkSection}${sourceSection}</div>
-      <div class="player-detail-side">${sameFarmSection}${ilSection}${healthSection}${rosterStatusSection}${sabermetricsSection}${savantSection}${perSourceSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${injurySection}${etaRows}</div>
+      <div class="player-detail-side">${sameFarmSection}${ilSection}${healthSection}${rosterStatusSection}${sabermetricsSection}${savantSection}${perSourceSection}${arsenalSection}${acqSection}${currentAcqSection}${tradesSection}${etaRows}</div>
     </div>`;
 }
 
@@ -6992,64 +7081,92 @@ function renderPlayerDetail(key) {
 // FARM SYSTEM DETAIL PAGE
 // ---------------------------------------------------------------------------
 
-// Build the per-org position depth chart. Groups tracked prospects
-// into precise position columns (C/1B/2B/SS/3B/LF/CF/RF/SP/RP) so a
-// reader can spot positional logjams at a glance (e.g., five 50+ FV
-// SS in one system). Sorted FV desc within each column. Cards inherit
-// the org accent stripe and click into the player detail page.
+// Build the per-org position depth chart. Six columns — C / 1B / MI /
+// 3B / OF / P — so each card has room for a player's last name, age,
+// level, and the player's actual position glyph (SS / CF / SP / etc.).
+// Cards are sorted FV desc inside each column with dashed tier separators
+// between the 50+, 40-tier, and sub-40 groups so positional logjams pop
+// at a glance. Cards inherit the org accent stripe and click into the
+// player detail page.
 function makePositionDepthChart(rosterPlayersAll) {
   const COLS = [
     ["C",  "C"],
     ["1B", "1B"],
-    ["2B", "2B"],
-    ["SS", "SS"],
+    ["MI", "MI"],   // 2B + SS
     ["3B", "3B"],
-    ["LF", "LF"],
-    ["CF", "CF"],
-    ["RF", "RF"],
-    ["SP", "SP"],
-    ["RP", "RP"],
+    ["OF", "OF"],   // LF + CF + RF
+    ["P",  "P"],    // SP + RP
   ];
   const buckets = Object.fromEntries(COLS.map(([k]) => [k, []]));
   for (const p of rosterPlayersAll) {
     const head = String(p.position || "").split("/")[0].toUpperCase();
     let col = null;
     if (head === "C")           col = "C";
-    else if (head === "1B")     col = "1B";
-    else if (head === "2B")     col = "2B";
-    else if (head === "SS" || head === "MI" || head === "IF") col = "SS";
+    else if (head === "1B" || head === "DH") col = "1B";
+    else if (head === "2B" || head === "SS" || head === "MI" || head === "IF") col = "MI";
     else if (head === "3B")     col = "3B";
-    else if (head === "LF")     col = "LF";
-    else if (head === "CF" || head === "OF") col = "CF";
-    else if (head === "RF")     col = "RF";
-    else if (head === "RHP" || head === "LHP" || head === "SP") col = "SP";
-    else if (head === "RP" || head === "MIRP" || head === "SIRP") col = "RP";
-    else if (head === "P")      col = "SP";  // unspecified P → SP column
+    else if (head === "LF" || head === "CF" || head === "RF" || head === "OF") col = "OF";
+    else if (head === "RHP" || head === "LHP" || head === "SP" || head === "RP"
+          || head === "MIRP" || head === "SIRP" || head === "P") col = "P";
     if (col) buckets[col].push(p);
   }
   for (const k of Object.keys(buckets)) {
     buckets[k].sort((a, b) => {
       const fa = a.points.length ? a.points[a.points.length - 1].consensus_fv_raw : 0;
       const fb = b.points.length ? b.points[b.points.length - 1].consensus_fv_raw : 0;
-      return fb - fa;
+      if (fb !== fa) return fb - fa;
+      // FV tie → younger first (more upside per age bucket).
+      const aa = a.age ?? 99;
+      const ba = b.age ?? 99;
+      return aa - ba;
     });
   }
   const totalPlayers = Object.values(buckets).reduce((n, arr) => n + arr.length, 0);
   if (!totalPlayers) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No tracked prospects to chart.</div>`;
   }
+  // Tier separator helper: returns "elite" (FV ≥ 50), "regular" (40-49),
+  // "depth" (< 40). The dashed dividers in the column visually group the
+  // tiers the same way a scout's notebook would.
+  const tierOf = (fv) => fv >= 50 ? "elite" : fv >= 40 ? "regular" : "depth";
+  // Compact name format: "F. Lastname" when full first+last would exceed
+  // 12 chars; otherwise full last name only. Keeps cards readable while
+  // disambiguating common surnames within an org.
+  const shortName = (full) => {
+    const parts = (full || "").split(" ").filter(Boolean);
+    if (!parts.length) return "—";
+    const last = parts[parts.length - 1];
+    const first = parts.length > 1 ? parts[0] : "";
+    return first && (first.length + last.length + 1) > 12
+      ? `${first[0]}. ${last}`
+      : last;
+  };
   return `<div class="pos-depth-grid">${COLS.map(([key, label]) => {
     const players = buckets[key];
     const headBadge = `<span class="pos-depth-col-count">(${players.length})</span>`;
+    let lastTier = null;
     const cards = players.map(p => {
       const latest = p.points.length ? p.points[p.points.length - 1] : null;
+      const fvRaw = latest ? latest.consensus_fv_raw : 0;
       const fvLabel = latest ? latest.consensus_fv_label : "—";
       const sl = p.statline || {};
       const lvl = sl.level || "—";
-      return `<div class="pos-depth-card" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}" title="${escapeHtml(p.player_name)} · ${escapeHtml(p.position || "—")} · ${escapeHtml(lvl)}${p.age != null ? " · age " + p.age.toFixed(1) : ""}">
-        <span class="pdc-name">${escapeHtml(p.player_name.split(" ").slice(-1)[0])}</span>
-        <span class="pdc-meta"><span class="fv-badge ${fvClass(fvLabel)} size-xs">${fvLabel}</span></span>
+      const actualPos = String(p.position || "").split("/")[0].toUpperCase();
+      const posGlyph = actualPos && actualPos !== key
+        ? `<span class="pdc-pos">${escapeHtml(actualPos)}</span>`
+        : "";
+      const ageTxt = p.age != null ? `${p.age.toFixed(1)}y` : "?";
+      const tier = tierOf(fvRaw);
+      const sep = (lastTier && lastTier !== tier)
+        ? `<div class="pos-depth-tier-sep" aria-hidden="true"></div>`
+        : "";
+      lastTier = tier;
+      const card = `<div class="pos-depth-card" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}" title="${escapeHtml(p.player_name)} · ${escapeHtml(p.position || "—")} · ${escapeHtml(lvl)} · age ${ageTxt} · FV ${fvLabel}">
+        <span class="pdc-name">${escapeHtml(shortName(p.player_name))}</span>
+        <span class="pdc-fv"><span class="fv-badge ${fvClass(fvLabel)} size-xs">${fvLabel}</span></span>
+        <span class="pdc-sub">${posGlyph}${escapeHtml(lvl)} · ${escapeHtml(ageTxt)}</span>
       </div>`;
+      return sep + card;
     }).join("");
     return `<div class="pos-depth-col">
       <div class="pos-depth-col-head">${label} ${headBadge}</div>
@@ -7230,7 +7347,7 @@ function renderFarmDetail(orgCode) {
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}</div>
             <div class="player-meta">${escapeHtml(p.position ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
-            <div class="player-stat-line" style="margin-top:3px;font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rosterStatLine(p)}${rpsPillHTML(computeRelProd(p))}</div>
+            <div class="player-stat-line" style="margin-top:3px;font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rosterStatLine(p)}${rpsPillHTML(computeRelProd(p))}${rpsPlusPillHTML(p)}</div>
           </div>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span></div>
@@ -7332,6 +7449,87 @@ function renderFarmDetail(orgCode) {
     <div class="side-title">ETA distribution</div>
     ${makeEtaTimeline(rosterPlayersAll)}
   </div>`;
+
+  // Recent movers — prospects with |Δ FV| ≥ 5 over the trailing 30 days.
+  // Δ is computed against the most recent prior consensus point that is
+  // at least 30 days older than the latest point; if no such point
+  // exists the player is skipped. Sorted by absolute movement desc so
+  // the loudest swings surface first.
+  const moversCard = (() => {
+    const cutoffMs = 30 * 24 * 60 * 60 * 1000;
+    const movers = [];
+    for (const rp of rosterPlayersAll) {
+      const pts = rp.points || [];
+      if (pts.length < 2) continue;
+      const latest = pts[pts.length - 1];
+      const latestMs = new Date(latest.snapshot_date + "T00:00:00").getTime();
+      if (isNaN(latestMs)) continue;
+      // Walk backwards to find the most recent point that's already
+      // ≥30 days behind the latest; that's our "30 days ago" reference.
+      let prior = null;
+      for (let i = pts.length - 2; i >= 0; i--) {
+        const ms = new Date(pts[i].snapshot_date + "T00:00:00").getTime();
+        if (!isNaN(ms) && latestMs - ms >= cutoffMs) { prior = pts[i]; break; }
+      }
+      if (!prior) continue;
+      const delta = (latest.consensus_fv_raw ?? 0) - (prior.consensus_fv_raw ?? 0);
+      if (Math.abs(delta) >= 5) movers.push({ rp, delta, latest });
+    }
+    movers.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+    if (!movers.length) {
+      return `<div class="farm-side-card">
+        <div class="side-title">Recent movers <span class="side-count">trailing 30d</span></div>
+        <span style="color:var(--text-tertiary);font-size:11.5px;">No prospects moved ≥5 FV points in the last 30 days.</span>
+      </div>`;
+    }
+    const rows = movers.slice(0, 6).map(({ rp, delta, latest }) => {
+      const arrow = delta > 0 ? "▲" : "▼";
+      const color = delta > 0 ? "var(--up)" : "var(--down)";
+      const fvL = latest.consensus_fv_label;
+      return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
+        <span class="fv-badge ${fvClass(fvL)} size-sm">${fvL}</span>
+        <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}</span>
+        <span style="font-family:var(--font-mono);font-size:10px;color:${color};font-variant-numeric:tabular-nums;font-weight:700;">${arrow}${delta > 0 ? "+" : ""}${delta.toFixed(1)}</span>
+      </div>`;
+    }).join("");
+    return `<div class="farm-side-card">
+      <div class="side-title">Recent movers <span class="side-count">trailing 30d · ${movers.length}</span></div>
+      ${rows}
+    </div>`;
+  })();
+
+  // Promotion candidates — prospects at A+ or AA who are (a) FV ≥ 50
+  // (already a real prospect, not a depth piece) and (b) at-or-below
+  // the empirical median age for their level (young-for-level signals
+  // a likely promotion candidate). Skipped when the org has none.
+  const promoCard = (() => {
+    const PROMO_LEVELS = new Set(["A+", "AA"]);
+    const norms = DATA.level_norms || {};
+    const candidates = rosterPlayersAll.filter(rp => {
+      const sl = rp.statline || {};
+      if (!PROMO_LEVELS.has(sl.level)) return false;
+      const fv = rp.fv_close;
+      if (fv == null || fv < 50) return false;
+      const med = ((norms[sl.level] || {}).age || {}).median_age;
+      if (med == null || rp.age == null) return false;
+      return rp.age <= med;
+    }).sort((a, b) => (b.fv_close || 0) - (a.fv_close || 0));
+    if (!candidates.length) return "";
+    const rows = candidates.slice(0, 6).map(rp => {
+      const sl = rp.statline || {};
+      const fvL = Math.round(rp.fv_close);
+      return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
+        <span class="fv-badge ${fvClass(String(fvL))} size-sm">${fvL}</span>
+        <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}</span>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;">${escapeHtml(sl.level)} · ${rp.age.toFixed(1)}y</span>
+      </div>`;
+    }).join("");
+    return `<div class="farm-side-card">
+      <div class="side-title">Promotion candidates <span class="side-count">${candidates.length}</span></div>
+      <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;margin-bottom:4px;">FV ≥ 50 at A+/AA, young-for-level</div>
+      ${rows}
+    </div>`;
+  })();
   // Org stat leaders — show one top hitter + one top pitcher inline,
   // and a deep-link into the Leaderboards tab pre-filtered to this
   // org for the full board. Replaces the previous 5-row top-OPS + 5-row
@@ -7366,10 +7564,11 @@ function renderFarmDetail(orgCode) {
       ? `<span style="font-size:9px;color:var(--text-tertiary);margin-left:4px;letter-spacing:0.04em;">GRAD</span>`
       : "";
     const cfg = TRANSACTION_KINDS[ev.kind] || {};
-    const chip = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${cfg.color || 'var(--text-tertiary)'};margin-right:6px;vertical-align:middle;" title="${escapeHtml(cfg.label || ev.kind)}"></span>`;
-    return `<div style="display:grid;grid-template-columns:36px 1fr auto;gap:6px;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(ev.player.player_key)}');">
+    const chip = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${cfg.color || 'var(--text-tertiary)'};vertical-align:middle;" title="${escapeHtml(cfg.label || ev.kind)}"></span>`;
+    return `<div style="display:grid;grid-template-columns:36px 8px 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(ev.player.player_key)}');">
       <span style="font-family:var(--font-mono);color:var(--text-tertiary);font-size:10px;white-space:nowrap;">${ev.date ? ev.date.slice(2) : '—'}</span>
-      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${chip}<span style="color:var(--neon-cyan);">${escapeHtml(ev.player.player_name)}</span>${gradTag}</span>
+      ${chip}
+      <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><span style="color:var(--neon-cyan);">${escapeHtml(ev.player.player_name)}</span>${gradTag}</span>
       <span style="font-family:var(--font-mono);font-size:10px;white-space:nowrap;">${arrow} ${escapeHtml(other || "?")}</span>
     </div>`;
   };
@@ -7438,7 +7637,7 @@ function renderFarmDetail(orgCode) {
       : '<span style="color:var(--text-tertiary);font-size:11.5px;">All tracked prospects healthy.</span>'}
   </div>`;
 
-  const sidebarHtml = topProspectCard + youngestCard + fvDistCard + acqMixCard + etaCard + orgLeadersCard + ilCard + recentTxCards + gradsCard;
+  const sidebarHtml = topProspectCard + youngestCard + fvDistCard + acqMixCard + etaCard + moversCard + promoCard + orgLeadersCard + ilCard + recentTxCards + gradsCard;
 
   // Optional left rail (≥1500px viewports only — CSS-hidden otherwise).
   // Surfaces breakdowns that are useful at-a-glance but would otherwise
@@ -7640,14 +7839,14 @@ function renderFarmDetail(orgCode) {
     <div class="farm-detail-grid">
       ${leftRailHtml}
       <div>
-        <div class="detail-title flush">${(state.formWindow || "3y")} development vs median farm <span class="detail-title-sub">prospect FV growth above median, with trades / draft / IFA acquisitions excluded · graduations neutral</span></div>
+        <div class="detail-title flush">${(state.formWindow || "3y")} development vs mean farm <span class="detail-title-sub">prospect FV growth above the league mean, with trades / draft / IFA acquisitions excluded · graduations neutral · DS+ = wRC+/OPS+-style index where 100 = league mean and 10 points = 1 std-dev</span></div>
         <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
           <span class="filter-label">Window</span>
           <button class="chip${(state.formWindow || "3y") === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
           <button class="chip${(state.formWindow || "3y") === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
           <button class="chip${(state.formWindow || "3y") === "5y" ? " active" : ""}" data-form-window="5y" type="button">5y</button>
         </div>
-        ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_medians || {})[state.formWindow || "3y"] ?? 0), state.formWindow || "3y")}
+        ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || "3y"] ?? 0), state.formWindow || "3y")}
         <div class="detail-title">Position depth chart <span class="detail-title-sub">Tracked prospects bucketed by primary position · sorted by FV</span></div>
         ${makePositionDepthChart(rosterPlayersAll)}
         <div class="detail-title">Acquisition spending <span class="detail-title-sub">Bonus pool dollars — International FA vs Draft, 2021-present</span></div>
@@ -7996,6 +8195,83 @@ function rpsPillHTML(rps) {
   return `<span class="rps-pill ${cls}" title="${escapeHtml(title)}">RPS ${sign}${rps.score}</span>`;
 }
 
+// RPS+ — wRC+/OPS+-style median-relative index of a player's raw RPS,
+// anchored at 100 = median prospect at the same integer age. Player
+// ages are bucketed by floor(age); ages ≥25 collapse into a single
+// "25+" bucket since coverage thins out there. The +100 shift keeps
+// the ratio positive even when raw RPS is mildly negative (matches
+// the OPS+/wRC+ convention). Result is clamped to [0, 250].
+//
+// Buckets and bucket-medians are computed lazily on first access from
+// the current DATA.players, then cached. Re-render after DATA changes
+// (which the app already does only on page load) will rebuild on next
+// call. The cache is keyed by player_key so each player ↔ RPS+ pair
+// is O(1) after the first build.
+const _rpsPlusCache = { built: false, byKey: new Map(), bucketMedian: new Map(), bucketSize: new Map() };
+
+function _rpsAgeBucket(age) {
+  if (age == null) return null;
+  const ai = Math.floor(age);
+  return ai >= 25 ? 25 : ai;
+}
+
+function _buildRpsPlusCache() {
+  const players = (DATA.players || []);
+  // Group raw RPS by integer-age bucket so we can take the median.
+  const buckets = new Map();
+  const playerRps = [];
+  for (const p of players) {
+    const r = computeRelProd(p);
+    if (r == null) continue;
+    const b = _rpsAgeBucket(p.age);
+    if (b == null) continue;
+    playerRps.push({ key: p.player_key, bucket: b, raw: r.score });
+    if (!buckets.has(b)) buckets.set(b, []);
+    buckets.get(b).push(r.score);
+  }
+  // Median per bucket. Bucket sizes are also exposed so the tooltip can
+  // tell the user how thin the comparison group is.
+  for (const [b, arr] of buckets) {
+    arr.sort((a, b) => a - b);
+    const n = arr.length;
+    const median = n % 2 ? arr[(n - 1) / 2] : (arr[n / 2 - 1] + arr[n / 2]) / 2;
+    _rpsPlusCache.bucketMedian.set(b, median);
+    _rpsPlusCache.bucketSize.set(b, n);
+  }
+  // RPS+ per player.
+  for (const { key, bucket, raw } of playerRps) {
+    const m = _rpsPlusCache.bucketMedian.get(bucket);
+    let plus;
+    if (m > 0) {
+      plus = Math.round(100 * (raw + 100) / (m + 100));
+    } else {
+      plus = Math.round(100 + (raw - m));
+    }
+    plus = Math.max(0, Math.min(250, plus));
+    _rpsPlusCache.byKey.set(key, { plus, bucket, raw, median: m, n: _rpsPlusCache.bucketSize.get(bucket) });
+  }
+  _rpsPlusCache.built = true;
+}
+
+function getRpsPlus(p) {
+  if (!p || !p.player_key) return null;
+  if (!_rpsPlusCache.built) _buildRpsPlusCache();
+  return _rpsPlusCache.byKey.get(p.player_key) || null;
+}
+
+function rpsPlusPillHTML(p) {
+  const rp = getRpsPlus(p);
+  if (rp == null) {
+    return `<span class="rps-plus-pill is-null" title="RPS+ unavailable — needs a raw RPS (15+ games / 15+ IP) and a known age.">RPS+ —</span>`;
+  }
+  const cls = rp.plus >= 110 ? "is-pos" : rp.plus <= 90 ? "is-neg" : "is-neutral";
+  const ageLabel = rp.bucket >= 25 ? "25+yo" : `${rp.bucket}yo`;
+  const diff = rp.plus - 100;
+  const diffTxt = diff === 0 ? "matches" : `${diff > 0 ? "+" : ""}${diff}% vs`;
+  const title = `RPS+ ${rp.plus} · ${diffTxt} the median ${ageLabel} prospect (raw RPS ${rp.raw >= 0 ? "+" : ""}${rp.raw} vs bucket median ${rp.median >= 0 ? "+" : ""}${rp.median.toFixed(1)}, n=${rp.n})`;
+  return `<span class="rps-plus-pill ${cls}" title="${escapeHtml(title)}">RPS+ ${rp.plus}</span>`;
+}
+
 // Per-player colors used by the overlay chart + legend dots. Cycles
 // through three distinct hues so 3-prospect comparisons stay readable.
 const COMPARE_COLORS = ["var(--neon-cyan)", "var(--neon-violet)", "var(--neon-amber)"];
@@ -8182,7 +8458,7 @@ function makeCompareSideBySide(players) {
             <span class="fv-badge ${fvClass(String(fvLabel))} size-sm" style="margin-left:6px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}</span>
           </div>
           <div class="csbs-meta">${escapeHtml(ageBits.join(" · ")) || "—"}</div>
-          ${rpsPillHTML(rps)}
+          ${rpsPillHTML(rps)}${rpsPlusPillHTML(p)}
         </div>
       </div>
     </div>`;
@@ -8237,30 +8513,85 @@ function makeFarmCompareSideBySide(farms) {
 
   const head = `<div class="compare-sbs-head" style="grid-template-columns:${cols};">${heads}</div>`;
 
+  // Development-vs-mean chart row — reuses makeFarmGrowthChart with a
+  // computed responsive width so the same SVG fits N orgs in a row.
+  // The window selector sits at the top and stays synced with the
+  // farm-detail page via state.formWindow. DS+ already appears in the
+  // chart caption (see makeFarmGrowthChart), so no extra label here.
+  const win = state.formWindow || "3y";
+  const winLabel = win === "1y" ? "1-year" : win === "3y" ? "3-year" : "5-year";
+  const meanBaseline = (DATA.farm_trajectory_means || {})[win] ?? 0;
+  // Heuristic responsive width: the compare-card viewport is ~880px on
+  // a typical workspace; subtract per-cell gap then divide by N. Floor
+  // to keep the SVG readable even with 4-org compare.
+  const chartW = Math.max(220, Math.floor(840 / farms.length) - 12);
+  const chartCells = farms.map(o => `
+    <div style="display:flex;flex-direction:column;gap:4px;min-width:0;overflow:hidden;">
+      ${makeFarmGrowthChart(o, meanBaseline, win, chartW)}
+    </div>
+  `).join("");
+  const chartRow = `<div style="margin-top:14px;">
+    <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
+      <span class="filter-label">${escapeHtml(winLabel)} development vs mean</span>
+      <button class="chip${win === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
+      <button class="chip${win === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
+      <button class="chip${win === "5y" ? " active" : ""}" data-form-window="5y" type="button">5y</button>
+      <span style="margin-left:auto;font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;">DS+ · 100 = league mean · 10 pts = 1 std-dev</span>
+    </div>
+    <div style="display:grid;grid-template-columns:${cols};gap:10px;align-items:start;">${chartCells}</div>
+  </div>`;
+
   // Stat-table: each row is a farm metric, each column is a farm. Reuses
   // the existing .compare-stat-table styles so the visual feel matches
-  // the prospect compare table.
+  // the prospect compare table. DS+ rows expose the wRC+/OPS+-style index
+  // per window so a reader can compare dev pipelines on a fixed 100-anchor.
+  const fmtDsPlus = (o, w) => {
+    const v = o.ds_plus && o.ds_plus[w];
+    if (v == null) return "—";
+    const color = v >= 110 ? "var(--up)" : v <= 90 ? "var(--down)" : "var(--text-primary)";
+    return `<span style="color:${color};font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:700;">${v}</span>`;
+  };
+  const fmtDelta = (o, w) => {
+    const v = o.delta_above_mean && o.delta_above_mean[w];
+    if (v == null) return "—";
+    const sign = v > 0 ? "+" : "";
+    const color = v > 5 ? "var(--up)" : v < -5 ? "var(--down)" : "var(--text-secondary)";
+    return `<span style="color:${color};font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${sign}${v.toFixed(1)}</span>`;
+  };
   const rows = [
-    ["Farm rank",        o => o.farm_rank != null ? `#${o.farm_rank}` : "—"],
-    ["Total FV",         o => o.total_fv != null ? o.total_fv.toFixed(1) : "—"],
-    ["Prospects tracked", o => String(o.count ?? 0)],
-    ["Avg age",          o => o.avg_age != null ? o.avg_age.toFixed(1) : "—"],
-    ["Young-for-level",  o => String(o.very_young_count ?? 0)],
-    ["Top-end grade",    o => (o.grades && o.grades.top_end) || "—"],
-    ["Depth grade",      o => (o.grades && o.grades.depth) || "—"],
-    ["Trajectory grade", o => (o.grades && o.grades.trajectory) || "—"],
-    ["Grad pipeline",    o => (o.grades && o.grades.grad) || "—"],
-    ["Stock ▲/▼",        o => `${o.stock_up || 0} ▲ · ${o.stock_down || 0} ▼`],
+    ["Farm rank",        o => o.farm_rank != null ? `#${o.farm_rank}` : "—", true],
+    ["Total FV",         o => o.total_fv != null ? o.total_fv.toFixed(1) : "—", true],
+    ["Prospects tracked", o => String(o.count ?? 0), true],
+    ["Avg age",          o => o.avg_age != null ? o.avg_age.toFixed(1) : "—", true],
+    ["Young-for-level",  o => String(o.very_young_count ?? 0), true],
+    ["Top-end grade",    o => (o.grades && o.grades.top_end) || "—", true],
+    ["Depth grade",      o => (o.grades && o.grades.depth) || "—", true],
+    ["Trajectory grade", o => (o.grades && o.grades.trajectory) || "—", true],
+    ["Grad pipeline",    o => (o.grades && o.grades.grad) || "—", true],
+    ["Stock ▲/▼",        o => `${o.stock_up || 0} ▲ · ${o.stock_down || 0} ▼`, true],
+    ["1y Δ vs mean",     o => fmtDelta(o, "1y"), false],
+    ["1YDS+",            o => fmtDsPlus(o, "1y"), false],
+    ["3y Δ vs mean",     o => fmtDelta(o, "3y"), false],
+    ["3YDS+",            o => fmtDsPlus(o, "3y"), false],
+    ["5y Δ vs mean",     o => fmtDelta(o, "5y"), false],
+    ["5YDS+",            o => fmtDsPlus(o, "5y"), false],
   ];
-  const tableRows = rows.map(([label, fn]) =>
-    `<tr><th>${label}</th>${farms.map(o => `<td>${escapeHtml(String(fn(o)))}</td>`).join("")}</tr>`
+  const tableRows = rows.map(([label, fn, escape]) =>
+    `<tr><th>${label}</th>${farms.map(o => {
+      const cell = fn(o);
+      return `<td>${escape ? escapeHtml(String(cell)) : cell}</td>`;
+    }).join("")}</tr>`
   ).join("");
   const table = `<table class="compare-stat-table" style="grid-template-columns:120px ${cols.replace("repeat(", "").replace(", minmax(0, 1fr))", "")};margin-top:8px;width:100%;border-collapse:collapse;">
     <tbody>${tableRows}</tbody></table>`;
+  const donutLegend = `<div style="display:flex;gap:8px;justify-content:center;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;">
+      <span style="display:inline-flex;align-items:center;gap:3px;"><i style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--neon-amber);"></i>IFA</span>
+      <span style="display:inline-flex;align-items:center;gap:3px;"><i style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--neon-cyan);"></i>Draft</span>
+    </div>`;
   const donutRow = `<div style="display:grid;grid-template-columns:${cols};gap:10px;margin-top:10px;">
-    ${farms.map(o => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">${makeSpendingDonut(o, 64)}<div style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.06em;">3-yr spend mix</div></div>`).join("")}
+    ${farms.map(o => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">${makeSpendingDonut(o, 64)}${donutLegend}<div style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.06em;">3-yr spend mix</div></div>`).join("")}
   </div>`;
-  return head + donutRow + table;
+  return head + chartRow + donutRow + table;
 }
 
 function makeFarmCompareSingleCard(o) {
@@ -8371,7 +8702,7 @@ function renderCompareCart() {
               <span class="fv-badge ${fvClass(String(fvLabel))} size-sm" style="margin-left:6px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}</span>
             </div>
             ${playerMetaHTML(p)}
-            <div style="margin-top:6px;">${rpsPillHTML(rps)}</div>
+            <div style="margin-top:6px;">${rpsPillHTML(rps)}${rpsPlusPillHTML(p)}</div>
             <div class="cc-stat" style="margin-top:6px;">${escapeHtml(slashLine)}</div>
             <div class="cc-stat" style="margin-top:2px;color:var(--text-tertiary);">${escapeHtml(eta)}${ageVsLevel ? " · " + escapeHtml(ageVsLevel) : ""}</div>
             <div style="margin-top:4px;">${sparkline}</div>
@@ -8400,6 +8731,24 @@ function renderCompareCart() {
   }
 
   body.innerHTML = html;
+
+  // Form-window chips inside the farm-compare block need their own click
+  // listeners — attachChipGroup runs once at app-init against elements
+  // present at that time, so cart-rendered chips would be inert without
+  // this re-attachment. Mutating state.formWindow re-renders the cart,
+  // the farm list, and the farm detail page so all three views stay in
+  // sync no matter which surface triggered the change.
+  body.querySelectorAll("[data-form-window]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.formWindow = btn.dataset.formWindow;
+      if (state.view && state.view.type === "farm") renderFarmDetail(state.view.org);
+      renderFarmSystems();
+      document.querySelectorAll("[data-form-window]").forEach(b =>
+        b.classList.toggle("active", b.dataset.formWindow === state.formWindow));
+      renderCompareCart();
+      syncToURL();
+    });
+  });
 }
 
 function closeCompareAndGo(key) {
@@ -8602,12 +8951,16 @@ function attachHandlers() {
   });
 
   // Form-window chips (1y / 3y / 5y). Drives the sparkline + trajectory
-  // delta-above-median on the farm list, and the windowed trajectory
+  // delta-above-mean on the farm list, and the windowed trajectory
   // cell on the farm-detail report card. Re-renders both views so the
   // selector works whether the user is on the list or in a detail page.
   attachChipGroup("form-window", "formWindow", () => {
     if (state.view && state.view.type === "farm") renderFarmDetail(state.view.org);
     renderFarmSystems();
+    // The compare-cart farm-system block also renders dev-vs-mean charts
+    // and a per-window DS+ table; re-render so the window selector inside
+    // the cart stays in sync with the rest of the app.
+    renderCompareCart();
   });
 }
 

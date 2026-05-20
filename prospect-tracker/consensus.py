@@ -82,6 +82,7 @@ only one update reads as "flat."
 
 from __future__ import annotations
 
+import statistics
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
@@ -177,6 +178,16 @@ class ConsensusPoint:
     sources_contributing: list[str]
     per_source: dict
 
+    # Disagreement fields — computed only from explicit FV grades. Surface
+    # how much sources agree on this player. None when fewer than two
+    # sources published an explicit FV (a single number has no spread).
+    # fv_min / fv_max are snapped to whole 20-80 grades so the UI can
+    # render them next to the integer consensus_fv without mixed precision.
+    fv_min: float | None = None
+    fv_max: float | None = None
+    fv_spread: float | None = None      # = fv_max - fv_min, on the raw scale
+    fv_stddev: float | None = None      # population stddev of explicit FVs
+
 
 @dataclass
 class PlayerTimeseries:
@@ -264,6 +275,21 @@ def compute_consensus_point(
         if rank_implied_fvs else None
     )
 
+    # Disagreement only meaningful with ≥2 explicit FV grades. fv_min /
+    # fv_max get snapped to whole grades for display consistency with
+    # consensus_fv; fv_spread/fv_stddev stay raw so a "2.5-grade spread"
+    # doesn't get hidden by rounding.
+    if len(explicit_fvs) >= 2:
+        raw_min, raw_max = min(explicit_fvs), max(explicit_fvs)
+        fv_min_snapped, _ = snap_to_grade(raw_min)
+        fv_max_snapped, _ = snap_to_grade(raw_max)
+        fv_min = fv_min_snapped
+        fv_max = fv_max_snapped
+        fv_spread = round(raw_max - raw_min, 2)
+        fv_stddev = round(statistics.pstdev(explicit_fvs), 2)
+    else:
+        fv_min = fv_max = fv_spread = fv_stddev = None
+
     # Consensus = unweighted mean of explicit FVs. Fall back to the
     # rank-implied mean ONLY when no source published an FV grade —
     # otherwise a player ranked only by Baseball America / The Athletic
@@ -295,6 +321,10 @@ def compute_consensus_point(
         shrinkage_weight=1.0,
         sources_contributing=sorted(contributing_sources),
         per_source=per_source,
+        fv_min=fv_min,
+        fv_max=fv_max,
+        fv_spread=fv_spread,
+        fv_stddev=fv_stddev,
     )
 
 
