@@ -481,7 +481,7 @@
       border: 1px solid var(--border);
       border-radius: 2px;
     }
-    /* "Performance vs level median" pill. Color-coded by direction so a
+    /* "Performance vs level mean" pill. Color-coded by direction so a
        reader can glance the row and see who's beating their level. */
     .lvl-plus {
       display: inline-block;
@@ -3558,7 +3558,7 @@ function headlineStatHTML(player, opts = {}) {
       value = sl.era_minus_level;
       // ERA- under 100 = better than league avg at that level.
       color = sl.era_minus_level <= 90 ? "var(--up)" : sl.era_minus_level >= 110 ? "var(--down)" : "var(--text-primary)";
-      source = `vs ${sl.level || "level"} median`;
+      source = `vs ${sl.level || "level"} mean`;
     } else {
       return "";
     }
@@ -3572,7 +3572,7 @@ function headlineStatHTML(player, opts = {}) {
       label = "OPS+";
       value = sl.ops_plus_level;
       color = sl.ops_plus_level >= 110 ? "var(--up)" : sl.ops_plus_level <= 90 ? "var(--down)" : "var(--text-primary)";
-      source = `vs ${sl.level || "level"} median`;
+      source = `vs ${sl.level || "level"} mean`;
     } else {
       return "";
     }
@@ -3586,7 +3586,7 @@ function headlineStatHTML(player, opts = {}) {
 }
 
 // Build a tooltip string that places a prospect's slash / rate-stat
-// values next to the empirical median for the same MiLB level. Hooks
+// values next to the empirical mean for the same MiLB level. Hooks
 // off DATA.level_norms (recomputed every export) — when the user
 // hovers a stat cell they see the comparison without needing a full
 // scouting page click. Returns "" when sample is too thin to be
@@ -3600,29 +3600,29 @@ function levelNormTooltip(sl) {
   const lines = [`${sl.level} league context`];
   if (!sl.is_pitcher) {
     if (sl.ops != null && perf.avg_ops != null && perf.sample_n_ops >= 30) {
-      lines.push(`OPS ${sl.ops} vs ${perf.avg_ops} median (${perf.sample_n_ops} samples)`);
+      lines.push(`OPS ${sl.ops} vs ${perf.avg_ops} mean (${perf.sample_n_ops} samples)`);
     }
     if (sl.iso != null && perf.avg_iso != null && perf.sample_n_iso >= 30) {
-      lines.push(`ISO ${sl.iso} vs ${perf.avg_iso} median`);
+      lines.push(`ISO ${sl.iso} vs ${perf.avg_iso} mean`);
     }
     if (sl.bb_pct != null && perf.avg_bb_pct != null && perf.sample_n_bb_pct >= 30) {
-      lines.push(`BB% ${sl.bb_pct.toFixed(1)} vs ${perf.avg_bb_pct} median`);
+      lines.push(`BB% ${sl.bb_pct.toFixed(1)} vs ${perf.avg_bb_pct} mean`);
     }
     if (sl.k_pct != null && perf.avg_k_pct != null && perf.sample_n_k_pct >= 30) {
-      lines.push(`K% ${sl.k_pct.toFixed(1)} vs ${perf.avg_k_pct} median`);
+      lines.push(`K% ${sl.k_pct.toFixed(1)} vs ${perf.avg_k_pct} mean`);
     }
   } else {
     if (sl.era != null && perf.avg_era != null && perf.sample_n_era >= 30) {
-      lines.push(`ERA ${sl.era} vs ${perf.avg_era} median (${perf.sample_n_era} samples)`);
+      lines.push(`ERA ${sl.era} vs ${perf.avg_era} mean (${perf.sample_n_era} samples)`);
     }
     if (sl.whip != null && perf.avg_whip != null && perf.sample_n_whip >= 30) {
-      lines.push(`WHIP ${sl.whip} vs ${perf.avg_whip} median`);
+      lines.push(`WHIP ${sl.whip} vs ${perf.avg_whip} mean`);
     }
     if (sl.k_per_9 != null && perf.avg_k_per_9 != null && perf.sample_n_k_per_9 >= 30) {
-      lines.push(`K/9 ${sl.k_per_9} vs ${perf.avg_k_per_9} median`);
+      lines.push(`K/9 ${sl.k_per_9} vs ${perf.avg_k_per_9} mean`);
     }
     if (sl.bb_per_9 != null && perf.avg_bb_per_9 != null && perf.sample_n_bb_per_9 >= 30) {
-      lines.push(`BB/9 ${sl.bb_per_9} vs ${perf.avg_bb_per_9} median`);
+      lines.push(`BB/9 ${sl.bb_per_9} vs ${perf.avg_bb_per_9} mean`);
     }
   }
   if (lines.length === 1) return "";
@@ -5182,7 +5182,7 @@ function levelPlusHTML(sl) {
   // Threshold ±5% as the "okay" band so noise doesn't flip the color.
   const cls = pct >= 5 ? "lvl-good" : pct <= -5 ? "lvl-bad" : "lvl-okay";
   const sign = pct > 0 ? `+${pct}` : `${pct}`;
-  const title = `${stat} ${baseValue} (${sign}% vs ${escapeHtml(sl.level || "?")} median)`;
+  const title = `${stat} ${baseValue} (${sign}% vs ${escapeHtml(sl.level || "?")} mean)`;
   return `<span class="lvl-plus ${cls}" title="${title}">${sign}% vs lvl</span>`;
 }
 
@@ -6668,13 +6668,13 @@ function makeSabermetricsBlock(player) {
       const v = sl.era_minus_level;
       tiles.push([
         "ERA- (vs level)", v, colorize(v <= 90, v >= 110, v),
-        `Earned Run Average vs ${sl.level || "level"} median · proxy for xFIP (real xFIP requires MLB data)`,
+        `Earned Run Average vs ${sl.level || "level"} mean · proxy for xFIP (real xFIP requires MLB data)`,
       ]);
     } else if (!sl.is_pitcher && sl.ops_plus_level != null) {
       const v = sl.ops_plus_level;
       tiles.push([
         "OPS+ (vs level)", v, colorize(v >= 110, v <= 90, v),
-        `On-base + Slugging vs ${sl.level || "level"} median · proxy for wRC+ (real wRC+ requires MLB data)`,
+        `On-base + Slugging vs ${sl.level || "level"} mean · proxy for wRC+ (real wRC+ requires MLB data)`,
       ]);
     }
   }
@@ -7123,15 +7123,16 @@ function renderPlayerDetail(key) {
     </div>`;
 
   // Highlight tiles: FV high/low/open/close, age vs level, ETA. The
-  // age-vs-level subline cites the empirical median age at the prospect's
+  // age-vs-level subline cites the empirical mean age at the prospect's
   // current level so users can see what we're comparing against.
   const eta = p.eta || {};
   const sl = p.statline || {};
   const levelNorm = (DATA.level_norms || {})[sl.level] || {};
   const ageNorm = levelNorm.age || {};
   const perfNorm = levelNorm.perf || {};
-  const ageSub = (avl.tier && avl.tier !== "unknown" && ageNorm.median_age != null)
-    ? `${sl.level} median ${ageNorm.median_age.toFixed(1)}y`
+  const _ageNormCenter = ageNorm.avg_age != null ? ageNorm.avg_age : ageNorm.median_age;
+  const ageSub = (avl.tier && avl.tier !== "unknown" && _ageNormCenter != null)
+    ? `${sl.level} mean ${_ageNormCenter.toFixed(1)}y`
     : "";
   // `isPitcher` is derived from position (regex) rather than
   // statline.is_pitcher because graduates / inactives may not carry a
@@ -7165,8 +7166,23 @@ function renderPlayerDetail(key) {
                        : "Clean";
   const healthSub = (hpStints || hpDays) ? `${hpStints} stints · ${hpDays}d / 24mo` : "no IL last 24mo";
   const rp = getRpsPlus(p);
-  const rpsPlusValue = rp ? String(rp.plus) : "—";
-  const rpsPlusSub = rp ? `vs same-age peers (n=${rp.n})` : "insufficient sample";
+  // Performance tile — RPS+ for MiLB, but for MLB-level players we
+  // swap to wRC+ (hitters) or xFIP + FIP- (pitchers) since RPS+ is a
+  // MiLB-only proxy and resolves to null for MLB statlines.
+  const _slLevel = (p.statline || {}).level || "";
+  const _mlb = _slLevel === "MLB";
+  let perfTileLabel = "RPS+";
+  let perfTileValue = rp ? String(rp.plus) : "—";
+  let perfTileSub   = rp ? `vs same-age peers (n=${rp.n})` : "insufficient sample";
+  if (_mlb && !sm.is_pitcher && sm.wrc_plus != null) {
+    perfTileLabel = "wRC+";
+    perfTileValue = String(sm.wrc_plus);
+    perfTileSub   = "vs MLB league mean";
+  } else if (_mlb && sm.is_pitcher && (sm.xfip != null || sm.fip_minus != null)) {
+    perfTileLabel = "xFIP / FIP-";
+    perfTileValue = `${sm.xfip != null ? sm.xfip.toFixed(2) : "—"} / ${sm.fip_minus != null ? Math.round(sm.fip_minus) : "—"}`;
+    perfTileSub   = "vs MLB league mean";
+  }
   const ageTileValue = avl.tier && avl.tier !== "unknown"
     ? avl.tier.replace(/-/g, " ") + (avl.diff != null ? ` (${avl.diff > 0 ? "+" : ""}${avl.diff.toFixed(1)}y)` : "")
     : "—";
@@ -7187,7 +7203,7 @@ function renderPlayerDetail(key) {
   ] : null;
   const tiles = [
     ["Age vs. level", ageTileValue, ageSub],
-    ["RPS+",         rpsPlusValue,  rpsPlusSub],
+    [perfTileLabel,  perfTileValue, perfTileSub],
     ["ETA",          eta.year != null ? String(eta.year) : "—", eta.confidence ? `${eta.confidence} confidence` : ""],
     wagTile,
     acqLabel ? ["Acquired via", acqLabel, acqSub] : null,
@@ -7201,9 +7217,9 @@ function renderPlayerDetail(key) {
     </div>`).join("")}</div>`;
 
   // Age/level-relative performance — shows every level the player has
-  // touched alongside the empirical median for that level. The age
-  // column compares the player to the level's median age; the rate-
-  // stat columns compare each rate stat to the level's average.
+  // touched alongside the empirical mean for that level. The age
+  // column compares the player to the level's mean age; the rate-
+  // stat columns compare each rate stat to the level's mean.
   // Colors: green when the player beats the level (low ERA / high
   // OPS+ISO / low K% / high BB% / low BB-HR/9), red when they trail.
   // Hitters and pitchers get different stat columns reflecting what
@@ -7271,8 +7287,9 @@ function renderPlayerDetail(key) {
         const birthT = new Date(p.birth_date).getTime();
         ageAtSeason = ((seasonMid - birthT) / (365.25 * 86400000));
       }
-      const ageDiff = (ageAtSeason != null && a.median_age != null)
-        ? (ageAtSeason - a.median_age) : null;
+      const _ageCenter = a.avg_age != null ? a.avg_age : a.median_age;
+      const ageDiff = (ageAtSeason != null && _ageCenter != null)
+        ? (ageAtSeason - _ageCenter) : null;
       const ageDiffHtml = ageDiff != null
         ? `<span style="color:${ageDiff <= -1 ? "var(--up)" : ageDiff >= 1 ? "var(--down)" : "var(--text-tertiary)"};">${ageDiff > 0 ? "+" : ""}${ageDiff.toFixed(1)}y</span>`
         : "—";
@@ -7296,7 +7313,7 @@ function renderPlayerDetail(key) {
       return `<tr>
         <td>${c.season}</td>
         <td><span class="level-pill level-neutral">${c.level}</span></td>
-        <td style="font-variant-numeric:tabular-nums;">${ageAtSeason != null ? ageAtSeason.toFixed(1) : "—"} vs ${a.median_age != null ? a.median_age.toFixed(1) : "—"} ${ageDiffHtml}</td>
+        <td style="font-variant-numeric:tabular-nums;">${ageAtSeason != null ? ageAtSeason.toFixed(1) : "—"} vs ${_ageCenter != null ? _ageCenter.toFixed(1) : "—"} ${ageDiffHtml}</td>
         ${statCells}
       </tr>`;
     }).join("");
@@ -7304,7 +7321,7 @@ function renderPlayerDetail(key) {
       ? `<th>ERA vs lvl</th><th>WHIP vs lvl</th><th>K/9 vs lvl</th><th>BB/9 vs lvl</th>`
       : `<th>OPS vs lvl</th><th>ISO vs lvl</th><th>BB% vs lvl</th><th>K% vs lvl</th>`;
     return `<div class="detail-title">Age &amp; level-relative performance
-        <span class="detail-title-sub">colored delta vs. the empirical level median for each stat</span>
+        <span class="detail-title-sub">colored delta vs. the empirical level mean for each stat</span>
         <span style="margin-left:8px;vertical-align:middle;display:inline-flex;gap:4px;flex-wrap:wrap;">${rpsPlusPillHTML(p)}${scoutRatesHTML(p)}</span>
       </div>
       <table class="detail-table"><thead><tr><th>Season</th><th>Level</th><th>Age vs lvl</th>${statHeaders}</tr></thead><tbody>${rows}</tbody></table>`;
@@ -8399,7 +8416,7 @@ function renderFarmDetail(orgCode) {
 
   // Promotion candidates — prospects at A+ or AA who are (a) FV ≥ 50
   // (already a real prospect, not a depth piece) and (b) at-or-below
-  // the empirical median age for their level (young-for-level signals
+  // the empirical mean age for their level (young-for-level signals
   // a likely promotion candidate). Skipped when the org has none.
   const promoCard = (() => {
     const PROMO_LEVELS = new Set(["A+", "AA"]);
@@ -8409,9 +8426,10 @@ function renderFarmDetail(orgCode) {
       if (!PROMO_LEVELS.has(sl.level)) return false;
       const fv = rp.fv_close;
       if (fv == null || fv < 50) return false;
-      const med = ((norms[sl.level] || {}).age || {}).median_age;
-      if (med == null || rp.age == null) return false;
-      return rp.age <= med;
+      const ageCenter = (((norms[sl.level] || {}).age || {}).avg_age)
+                     ?? (((norms[sl.level] || {}).age || {}).median_age);
+      if (ageCenter == null || rp.age == null) return false;
+      return rp.age <= ageCenter;
     }).sort((a, b) => (b.fv_close || 0) - (a.fv_close || 0));
     if (!candidates.length) return "";
     const rows = candidates.slice(0, 6).map(rp => {
@@ -9289,7 +9307,51 @@ function getRpsPlus(p) {
   return _rpsPlusCache.byKey.get(p.player_key) || null;
 }
 
+// MLB-level players don't have level-relative stats (ops_plus_level /
+// era_minus_level are MiLB-only — storage.py:_serialize skips them when
+// the statline is MLB), so RPS+ resolves to null and the pill would
+// otherwise read "RPS+ —". Substitute the actual league-relative stats
+// from FanGraphs sabermetrics: wRC+ for hitters (already 100 = MLB
+// league mean), xFIP + FIP- for pitchers (xFIP raw for unit familiarity,
+// FIP- for the 100-anchored read). Returns null when this isn't an MLB
+// player or the sabermetrics fields are missing — caller falls back to
+// the regular RPS+ pill in that case.
+function mlbPerfPillHTML(p) {
+  const sm = p && p.sabermetrics || {};
+  const sl = p && p.statline || {};
+  if ((sl.level || "") !== "MLB") return null;
+  if (!sm.is_pitcher && sm.wrc_plus != null) {
+    const v = sm.wrc_plus;
+    const cls = v >= 110 ? "is-pos" : v <= 90 ? "is-neg" : "is-neutral";
+    return `<span class="rps-plus-pill ${cls}" title="wRC+ ${v} · 100 = MLB league mean">wRC+ ${v}</span>`;
+  }
+  if (sm.is_pitcher && (sm.xfip != null || sm.fip_minus != null)) {
+    const xfip = sm.xfip != null ? sm.xfip.toFixed(2) : "—";
+    const fipMinus = sm.fip_minus != null ? Math.round(sm.fip_minus) : null;
+    // FIP- is the indexed stat (lower = better at run prevention), so
+    // it drives the pill color. xFIP is shown alongside for scouts who
+    // read in ERA units.
+    const cls = fipMinus == null ? "is-neutral"
+      : fipMinus <= 90 ? "is-pos"
+      : fipMinus >= 110 ? "is-neg" : "is-neutral";
+    const label = fipMinus != null
+      ? `xFIP ${xfip} · FIP- ${fipMinus}`
+      : `xFIP ${xfip}`;
+    const tooltip = fipMinus != null
+      ? `${label} · 100 = MLB league mean (FIP-); ~4.00 = MLB league mean (xFIP)`
+      : `${label} · ~4.00 = MLB league mean`;
+    return `<span class="rps-plus-pill ${cls}" title="${escapeHtml(tooltip)}">${label}</span>`;
+  }
+  return null;
+}
+
 function rpsPlusPillHTML(p) {
+  // MLB-level players get their actual league-relative metric instead
+  // of the MiLB-only RPS+ proxy. mlbPerfPillHTML returns null for MiLB
+  // players or MLB players without sabermetrics, so we fall through to
+  // the regular RPS+ pill in those cases.
+  const mlbPill = mlbPerfPillHTML(p);
+  if (mlbPill) return mlbPill;
   const rp = getRpsPlus(p);
   if (rp == null) {
     return `<span class="rps-plus-pill is-null" title="RPS+ unavailable — needs a qualifying sample (15+ games for hitters, 15+ IP for pitchers) and a known age.">RPS+ —</span>`;
@@ -9680,7 +9742,7 @@ function makeCompareSideBySide(players) {
     return `<div><span class="csbs-legend-dot" style="background:${color};"></span><strong>${escapeHtml(p.player_name)}</strong> <span style="color:${cls};font-family:var(--font-mono);font-weight:700;">RPS+ ${rp.plus}</span>${driver ? ` <span class="crps-driver">(${escapeHtml(driver)})</span>` : ""}</div>`;
   }).join("");
   const summary = `<div class="compare-rps-row">
-    <div style="font-family:var(--font-sans);font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;margin-bottom:6px;">RPS+ · 100 = mean prospect at the same age, 10 pts = a meaningful gap</div>
+    <div style="font-family:var(--font-sans);font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;margin-bottom:6px;">RPS+ · 100 = mean prospect at the same age, 10 pts = a meaningful gap · MLB-level players show wRC+ (hitters) or xFIP / FIP- (pitchers) instead</div>
     ${rpsRows}
   </div>`;
   return head + chart + table + summary;

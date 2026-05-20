@@ -322,13 +322,22 @@ def compute_level_norms(
 
 
 def age_baselines_from_norms(norms: dict[str, dict]) -> dict[str, float]:
-    """Pull a flat {level: median_age} dict from the rich norms structure.
-    The median is more robust than the mean against a couple of 30-year-old
-    AAA rehabbers skewing the curve up."""
+    """Pull a flat {level: avg_age} dict from the rich norms structure.
+
+    Uses the arithmetic mean. The mean is more sensitive than the
+    median to outliers (e.g., a 30-year-old AAA rehabber on his way
+    back from injury), but the team wants the comparison anchored at
+    the cohort's actual average rather than the middle value. The
+    median is still computed and stored on the norms dict as
+    ``median_age`` for callers that want it, falling back through it
+    when ``avg_age`` is unavailable in older cached norms blobs.
+    """
     out: dict[str, float] = dict(FALLBACK_AGE_BASELINE)
     for level, blob in norms.items():
         age = blob.get("age", {})
-        out[level] = age.get("median_age", out.get(level, 22.0))
+        out[level] = age.get("avg_age",
+                             age.get("median_age",
+                                     out.get(level, 22.0)))
     return out
 
 
