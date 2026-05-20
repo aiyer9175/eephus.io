@@ -2353,7 +2353,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # ranking dev pipelines. Mean (not median) so the metric responds
     # to outliers — a system that's well above league mean reflects
     # real dev outperformance, not just being above the middle of the
-    # pack. Standard deviation is also exported so DS+ can use it to
+    # pack. Standard deviation is also exported so DvM+ can use it to
     # convert raw deltas into a wRC+-style 100-anchored scale.
     def _mean(vals: list[float]) -> float:
         return sum(vals) / len(vals) if vals else 0.0
@@ -2382,17 +2382,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             key: round(entry["trajectories"][key] - farm_trajectory_means[key], 2)
             for key in FARM_TRAJECTORY_WINDOWS
         }
-        # DS+ — wRC+/OPS+-style metric anchored at 100 = league mean.
+        # DvM+ — wRC+/OPS+-style metric anchored at 100 = league mean.
         # 10 points = 1 stdev, mirroring the OPS+ convention. Stable
         # under sparse league spread (returns 100 when stdev ≈ 0).
-        entry["ds_plus"] = {}
+        entry["dvm_plus"] = {}
         for key in FARM_TRAJECTORY_WINDOWS:
             sd = farm_trajectory_stdevs[key]
             delta = entry["delta_above_mean"][key]
             if sd > 1e-6:
-                entry["ds_plus"][key] = round(100 + 10 * (delta / sd))
+                entry["dvm_plus"][key] = round(100 + 10 * (delta / sd))
             else:
-                entry["ds_plus"][key] = 100
+                entry["dvm_plus"][key] = 100
 
     top_end_100 = _normalize_to_100([e["top_end_points"]      for e in org_summary])
     depth_100   = _normalize_to_100([e["depth_points"]        for e in org_summary])

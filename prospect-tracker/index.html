@@ -1876,29 +1876,26 @@
     }
 
     /* === Comparison cart =========================================== */
+    /* The Compare chip lives in the section-tabs header bar (top of
+       page, anchored to the right via margin-left:auto). Auto-hides when
+       the cart is empty so first-time visitors don't see "Compare (0)"
+       sitting in the chrome. */
     .compare-toggle {
-      position: fixed;
-      bottom: 20px; right: 20px;
-      z-index: 200;
-      display: flex; align-items: center; gap: 8px;
-      padding: 10px 14px;
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-left: auto;
+      padding: 6px 12px;
       background: var(--bg-header);
       color: var(--bg-secondary);
       font-family: var(--font-sans);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       letter-spacing: 0.03em;
       border: 1px solid var(--bg-header);
       border-radius: 999px;
-      box-shadow: 0 2px 10px rgba(15, 27, 45, 0.18);
       cursor: pointer;
       transition: transform 0.12s, box-shadow 0.12s;
     }
-    .compare-toggle:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(15, 27, 45, 0.28); }
-    /* Hide the floating Compare button when there's nothing pinned —
-       reduces visual noise for first-time visitors and only surfaces
-       it once they've added a player. The button re-appears via the
-       JS toggle that removes `.is-empty-hidden`. */
+    .compare-toggle:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(15, 27, 45, 0.20); }
     .compare-toggle.is-empty-hidden { display: none; }
     .compare-toggle .compare-count {
       display: inline-flex; align-items: center; justify-content: center;
@@ -2006,8 +2003,8 @@
     /* === Compare cart 2.0 — side-by-side layout ===================
        When 2+ players are pinned the cart switches from stacked cards
        to a grid: one column per player, shared FV-history overlay
-       chart, head-to-head stat table, and a Relative Production
-       Score (RPS) summary row at the bottom. */
+       chart, head-to-head stat table, and an RPS+ summary row at the
+       bottom. */
     .compare-sbs-head {
       display: grid;
       gap: 10px;
@@ -2052,29 +2049,10 @@
       background: var(--bg-tertiary);
       color: var(--text-primary);
     }
-    /* RPS pill — colored by sign so green = ahead of age/level,
-       red = behind, gray = ungated / insufficient sample. */
-    .rps-pill {
-      display: inline-block;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 999px;
-      font-variant-numeric: tabular-nums;
-      margin-top: 4px;
-      letter-spacing: 0;
-      cursor: help;
-    }
-    .rps-pill.is-pos { background: rgba(31, 122, 58, 0.15); color: var(--up); border: 1px solid var(--up); }
-    .rps-pill.is-neg { background: rgba(185, 28, 28, 0.12); color: var(--down); border: 1px solid var(--down); }
-    .rps-pill.is-neutral { background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border); }
-    .rps-pill.is-null { background: var(--bg-tertiary); color: var(--text-tertiary); border: 1px dashed var(--border); }
-
     /* RPS+ pill — wRC+/OPS+-style index. 100 = median prospect at the
-       same integer age; ≥110 reads green, ≤90 reads red. Visually a
-       sibling of .rps-pill but with a violet accent so the eye can tell
-       the two metrics apart at a glance. */
+       same integer age; ≥110 reads green, ≤90 reads red. Violet accent
+       on the neutral state keeps the eye trained on what's a normal-band
+       reading vs. a notable swing. */
     .rps-plus-pill {
       display: inline-block;
       font-family: var(--font-mono);
@@ -2084,7 +2062,6 @@
       border-radius: 999px;
       font-variant-numeric: tabular-nums;
       margin-top: 4px;
-      margin-left: 4px;
       letter-spacing: 0;
       cursor: help;
       border: 1px solid var(--neon-violet);
@@ -2159,7 +2136,7 @@
       font-weight: 700;
     }
 
-    /* RPS caption + driver line at the bottom of the side-by-side cart. */
+    /* RPS+ caption + driver line at the bottom of the side-by-side cart. */
     .compare-rps-row {
       border-top: 1px solid var(--border);
       padding-top: 10px;
@@ -2230,15 +2207,13 @@
 
 </div>
 
-<!-- Comparison cart: floating button bottom-right + side panel. Pinned
-     prospects persist in localStorage so refresh / sharing keeps the
-     comparison alive. Up to 3 players side-by-side. -->
-<button class="compare-toggle is-empty-hidden" id="compare-toggle" type="button" aria-label="Open comparison cart">
-  <span>Compare</span><span class="compare-count" id="compare-count">0</span>
-</button>
-<aside class="compare-panel" id="compare-panel" role="dialog" aria-label="Compare prospects">
+<!-- Comparison cart: persistent header chip (mounted inside #section-tabs
+     below) + side panel. Pinned prospects/farms persist in localStorage
+     so refresh / sharing keeps the comparison alive. Up to 3 items
+     side-by-side. The chip auto-hides when the cart is empty. -->
+<aside class="compare-panel" id="compare-panel" role="dialog" aria-label="Compare">
   <div class="compare-head">
-    <div class="compare-title">Compare prospects</div>
+    <div class="compare-title">Compare</div>
     <button class="compare-close" id="compare-close" type="button" aria-label="Close">×</button>
   </div>
   <div id="compare-body"></div>
@@ -2254,6 +2229,9 @@
     <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
     <span class="section-count" id="section-count"></span>
+    <button class="compare-toggle is-empty-hidden" id="compare-toggle" type="button" aria-label="Open compare panel" title="Open compare panel (c)">
+      <span>Compare</span><span class="compare-count" id="compare-count">0</span>
+    </button>
   </div>
 
   <div class="search-bar">
@@ -2380,6 +2358,10 @@
               title="Most recent graduation first">Graduation date</button>
       <button class="chip" data-grad-sort="war"
               title="Current MLB-season WAR, highest first. Graduates without a current-season WAR sink to the bottom.">Current-season WAR</button>
+      <button class="chip" data-grad-sort="career_war"
+              title="Cumulative career WAR (BBref), highest first. Graduates with no MLB time sink to the bottom.">Career WAR</button>
+      <button class="chip" data-grad-sort="war_per_yr"
+              title="WAR per MLB season (career WAR ÷ seasons played), highest first. Rate stat — favors graduates with a strong sample-size-adjusted track record.">WAR/year</button>
       <button class="chip" data-grad-sort="fv_close"
               title="Highest final consensus FV (the FV when the player graduated) first">Final FV</button>
     </div>
@@ -3064,6 +3046,15 @@ function syncToURL() {
   if (state.lbPos       !== "all")        p.set("lbpos",   state.lbPos);
   if (state.lbOrg       !== "all")        p.set("lborg",   state.lbOrg);
   if (state.lbSeason    !== String(new Date().getUTCFullYear())) p.set("lbseason", state.lbSeason);
+  // Shareable compare state — encode the currently pinned prospect keys
+  // and farm orgs into the hash so the URL alone reproduces the cart on
+  // load. Mutual exclusivity guarantees at most one of these is non-
+  // empty in normal use; the syncFromURL side handles a stale link that
+  // somehow has both.
+  const compareKeys = compareLoad();
+  const farmKeys    = farmCompareLoad();
+  if (compareKeys.length) p.set("cmp",  compareKeys.join(","));
+  if (farmKeys.length)    p.set("fcmp", farmKeys.join(","));
   const hash = p.toString();
   history.replaceState(null, "", hash ? "#" + hash : window.location.pathname + window.location.search);
 }
@@ -3103,6 +3094,23 @@ function syncFromURL() {
   if (p.has("lbpos"))    state.lbPos    = p.get("lbpos");
   if (p.has("lborg"))    state.lbOrg    = p.get("lborg");
   if (p.has("lbseason")) state.lbSeason = p.get("lbseason");
+  // Shareable compare state. When both keys are present (stale link),
+  // keep the longer list and clear the other — mutual exclusivity
+  // means at most one should be set going forward.
+  if (p.has("cmp") || p.has("fcmp")) {
+    const cmpRaw  = p.has("cmp")  ? p.get("cmp").split(",").filter(Boolean).slice(0, COMPARE_MAX) : [];
+    const fcmpRaw = p.has("fcmp") ? p.get("fcmp").split(",").filter(Boolean).slice(0, FARM_COMPARE_MAX) : [];
+    if (cmpRaw.length && fcmpRaw.length) {
+      if (cmpRaw.length >= fcmpRaw.length) compareSave(cmpRaw), farmCompareSave([]);
+      else compareSave([]), farmCompareSave(fcmpRaw);
+    } else if (cmpRaw.length) {
+      compareSave(cmpRaw);
+      farmCompareSave([]);
+    } else {
+      compareSave([]);
+      farmCompareSave(fcmpRaw);
+    }
+  }
 }
 
 // Navigation helpers. We rewrite location.hash with pushState so back /
@@ -3315,7 +3323,7 @@ function makeMilbCell(p) {
   }
   // MLB players get the special level-mlb pill; MiLB players keep the
   // age-vs-level tier coloring on the level chip itself even though the
-  // text age-vs-level chip has been retired in favor of the RPS pill.
+  // text age-vs-level chip has been retired in favor of the RPS+ pill.
   const tier = (avl && avl.tier && avl.tier !== "unknown") ? avl.tier : "neutral";
   const levelClass = sl.level === "MLB" ? "level-mlb" : `level-${tier}`;
   const isPitcher = sl.is_pitcher;
@@ -3348,13 +3356,12 @@ function makeMilbCell(p) {
   const headline = headlineStatHTML(p);
   const normTip = levelNormTooltip(sl);
   const tipAttr = normTip ? ` title="${escapeHtml(normTip)}"` : "";
-  // RPS pill takes the slot where the age-vs-level chip used to live.
-  // Falls back to the "RPS —" insufficient-sample variant when the
-  // player doesn't have enough volume yet, so the cell never goes blank.
-  const rps = computeRelProd(p);
+  // RPS+ pill takes the slot where the age-vs-level chip used to live.
+  // Falls back to "RPS+ —" when the player doesn't have enough volume
+  // yet (15+ games / 15+ IP), so the cell never goes blank.
   return `<div class="milb-cell milb-cell-wrap"${tipAttr}>
     <span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${headline}
-    ${rpsPillHTML(rps)}${rpsPlusPillHTML(p)}
+    ${rpsPlusPillHTML(p)}
     <br/><span style="color: var(--text-primary);">${slashLine}</span>
     <br/><span style="color: var(--text-tertiary);">${detail}</span>
   </div>`;
@@ -3385,13 +3392,25 @@ function gradCareerWarHTML(p) {
   </div>`;
 }
 
+// Always-on current-season fWAR pill for graduate rows. Uses
+// sabermetrics.war (FanGraphs), the same field the "sort by current-
+// season WAR" chip keys off, so the badge and the sort agree.
+function gradCurrentWarHTML(p) {
+  const w = (p.sabermetrics || {}).war;
+  if (w == null) return "";
+  const yr = new Date().getUTCFullYear();
+  const color = w >= 3 ? "var(--up)" : w <= 0 ? "var(--down)" : "var(--text-primary)";
+  return `<span class="grad-war-current" style="display:inline-block;font-family:var(--font-mono);font-size:10.5px;font-variant-numeric:tabular-nums;font-weight:700;color:${color};padding:1px 6px;border:1px solid ${color};border-radius:999px;margin-right:6px;" title="${yr} season WAR (FanGraphs)">${yr} fWAR ${w >= 0 ? "+" : ""}${w.toFixed(1)}</span>`;
+}
+
 function makeGradMilbCell(p) {
   const sl = p.statline;
+  const currentWar = gradCurrentWarHTML(p);
   if (!sl) {
     // No current-season statline (rare for grads), but career WAR may
     // still be available — show it on its own so the cell isn't blank.
     const warHtml = gradCareerWarHTML(p);
-    return `<div class="milb-cell">${warHtml || `<span style="color: var(--text-tertiary);">stats unavailable</span>`}</div>`;
+    return `<div class="milb-cell">${currentWar}${warHtml || (currentWar ? "" : `<span style="color: var(--text-tertiary);">stats unavailable</span>`)}</div>`;
   }
   const slashLine = sl.is_pitcher
     ? `${sl.era ?? "—"} ERA · ${sl.whip != null ? sl.whip + " WHIP · " : ""}${sl.ip ?? "—"} IP`
@@ -3404,7 +3423,7 @@ function makeGradMilbCell(p) {
     : "";
   const headline = headlineStatHTML(p);
   return `<div class="milb-cell">
-    ${seasonTag}${headline ? headline + "<br/>" : ""}<strong style="font-weight: 600; color: var(--text-primary);">${slashLine}</strong>
+    ${currentWar}${seasonTag}${headline ? headline + "<br/>" : ""}<strong style="font-weight: 600; color: var(--text-primary);">${slashLine}</strong>
     <br/><span style="color: var(--text-tertiary);">${detail}</span>
     ${gradCareerWarHTML(p)}
   </div>`;
@@ -4336,17 +4355,22 @@ function renderGraduates() {
 
   // Build the iteration order based on the active sort.
   let orderedGrads;
+  // Generic null-sink comparator used by all three WAR sorts so a
+  // graduate without WAR data never appears above one with it.
+  const sortByWarField = (extract) => (a, b) => {
+    const aw = extract(a);
+    const bw = extract(b);
+    if (aw == null && bw == null) return 0;
+    if (aw == null) return 1;
+    if (bw == null) return -1;
+    return bw - aw;
+  };
   if (sortMode === "war") {
-    orderedGrads = filtered.slice().sort((a, b) => {
-      const aw = (a.sabermetrics || {}).war;
-      const bw = (b.sabermetrics || {}).war;
-      // null / undefined sink to the bottom regardless of sign of WAR
-      // (we don't want -0.5 above no-WAR-on-file).
-      if (aw == null && bw == null) return 0;
-      if (aw == null) return 1;
-      if (bw == null) return -1;
-      return bw - aw;
-    });
+    orderedGrads = filtered.slice().sort(sortByWarField(g => (g.sabermetrics || {}).war));
+  } else if (sortMode === "career_war") {
+    orderedGrads = filtered.slice().sort(sortByWarField(g => (g.career_war || {}).career_war));
+  } else if (sortMode === "war_per_yr") {
+    orderedGrads = filtered.slice().sort(sortByWarField(g => (g.career_war || {}).war_per_yr));
   } else if (sortMode === "fv_close") {
     orderedGrads = filtered.slice().sort((a, b) =>
       ((b.fv_close ?? -1) - (a.fv_close ?? -1))
@@ -4365,11 +4389,19 @@ function renderGraduates() {
       : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
     const fvLabel = g.fv_close != null ? Math.round(g.fv_close) : "—";
     const sm = g.sabermetrics || {};
-    // When sorting by WAR, surface the value on the row so the reader
-    // can see the sort key without hovering. Same for FV.
-    const warTag = sortMode === "war" && sm.war != null
-      ? `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);">${sm.war > 0 ? '+' : ''}${sm.war.toFixed(2)} WAR</span>`
-      : "";
+    const cw = g.career_war || {};
+    // When sorting by one of the WAR fields, surface the value on the row
+    // so the reader can see the sort key without hovering. Current-season
+    // WAR is always shown in the MLB stats cell via gradCurrentWarHTML,
+    // so the inline tag here is reserved for the two cumulative sorts.
+    let warTag = "";
+    if (sortMode === "war" && sm.war != null) {
+      warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);">${sm.war > 0 ? '+' : ''}${sm.war.toFixed(2)} fWAR</span>`;
+    } else if (sortMode === "career_war" && cw.career_war != null) {
+      warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="Career WAR · ${cw.war_seasons_count ?? "?"} season${cw.war_seasons_count === 1 ? "" : "s"} (${cw.source || "bbref"})">${cw.career_war > 0 ? '+' : ''}${cw.career_war.toFixed(1)} career WAR</span>`;
+    } else if (sortMode === "war_per_yr" && cw.war_per_yr != null) {
+      warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="WAR per season — career WAR ÷ ${cw.war_seasons_count ?? "?"} season${cw.war_seasons_count === 1 ? "" : "s"}">${cw.war_per_yr > 0 ? '+' : ''}${cw.war_per_yr.toFixed(2)} WAR/yr</span>`;
+    }
     return `
       <div class="grad-row" data-key="${escapeHtml(g.player_key)}" style="${orgStripe(g.org)}">
         <div class="rank-num">${rank}</div>
@@ -4981,11 +5013,11 @@ function makeFarmReportCard(org) {
                       ?? (org.trajectories || {})[win]
                       ?? org.trajectory_score
                       ?? null;
-  const dsPlus = (org.ds_plus || {})[win];
+  const dsPlus = (org.dvm_plus || {})[win];
 
   const fmtPts = v => v != null ? `${v.toFixed(1)} pts` : '—';
   const fmtSigned = v => v != null
-    ? `${v > 0 ? '+' : ''}${v.toFixed(1)} · ${winLabel} vs mean${dsPlus != null ? ` · ${winLabel.toUpperCase()}DS+ ${dsPlus}` : ''}`
+    ? `${v > 0 ? '+' : ''}${v.toFixed(1)} · ${winLabel} vs mean${dsPlus != null ? ` · ${winLabel.toUpperCase()}DvM+ ${dsPlus}` : ''}`
     : '—';
 
   const stripCell = (label, letter, rank, scoreVal, scoreFmt, tooltip) => `
@@ -5018,7 +5050,7 @@ function makeFarmReportCard(org) {
         ${stripCell('Depth',      g.depth,      r.depth,      org.depth_points,
                     fmtPts,    'Tiered-FV sum of prospects #6 through #25. Rewards systems with real prospects beyond the top tier.')}
         ${stripCell('Trajectory', g.trajectory, r.trajectory, trajWindowed,
-                    fmtSigned, `${winLabel} cumulative-FV growth above the league mean over the same window. ${winLabel.toUpperCase()}DS+ is the wRC+/OPS+-style index where 100 = league mean and 10 points = 1 standard deviation. Letter grade stays anchored to the 1y trajectory used for farm_score. Graduations are neutral.`)}
+                    fmtSigned, `${winLabel} cumulative-FV growth above the league mean over the same window. ${winLabel.toUpperCase()}DvM+ is the wRC+/OPS+-style index where 100 = league mean and 10 points = 1 standard deviation. Pure-development metric: graduations + acquisitions (trades, draft, IFA) are nullified, so only FV growth while the player is in the org counts. Letter grade stays anchored to the 1y trajectory used for farm_score.`)}
         ${stripCell('Grad pipe',  g.grad,       r.grad,       org.grad_pipeline_score,
                     fmtPts,    'FV-weighted graduations in the trailing 12 months. Promoting a 60 is worth ~18 points; a 40 is worth 1.')}
       </div>
@@ -5122,8 +5154,8 @@ function makeFarmGrowthChart(org, meanTrajectory, windowKey, chartWidth) {
   // Fill polygon between curve and zero-line so above-mean shows as
   // a green shaded region above zero, below-mean as red below.
   const polyTop = `${xFor(0).toFixed(1)},${zeroY.toFixed(1)} ${points} ${xFor(1).toFixed(1)},${zeroY.toFixed(1)}`;
-  const dsPlus = (org && org.ds_plus && org.ds_plus[windowKey] != null)
-    ? `${windowKey.toUpperCase()}DS+ ${org.ds_plus[windowKey]}` : null;
+  const dsPlus = (org && org.dvm_plus && org.dvm_plus[windowKey] != null)
+    ? `${windowKey.toUpperCase()}DvM+ ${org.dvm_plus[windowKey]}` : null;
   const labelTxt = `${windowKey} development vs mean: ${finalV >= 0 ? '+' : ''}${finalV.toFixed(1)}${dsPlus ? ` · ${dsPlus}` : ''}`;
 
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="${escapeHtml(labelTxt)}">
@@ -5662,7 +5694,7 @@ function renderFarmSystems() {
     <span></span>
     <span>Org</span>
     <span style="text-align:center;" title="Overall farm-system letter grade. A+ = #1 org; tiers descend by farm_score (45% top-end · 25% depth · 15% trajectory · 15% grad pipeline).">Grade</span>
-    <span title="${winLabel} prospect FV development above (or below) the league mean over the same window. Incoming acquisitions (trades, draft, IFA) are excluded — only the org's own development moves the line. Flat = tracking the average farm. Graduations are neutral.">${escapeHtml(winLabel)} development vs mean</span>
+    <span title="${winLabel} prospect FV development above (or below) the league mean over the same window. Acquisitions (trades, draft, IFA) contribute zero on arrival; graduations don't subtract — pure-development metric. ${win.toUpperCase()}DvM+ is the wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev.">${escapeHtml(winLabel)} ${win.toUpperCase()}DvM+</span>
     <span>Top prospect</span>
     <span>Positions</span>
     <span>Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
@@ -5708,7 +5740,12 @@ function renderFarmSystems() {
           <span class="fg-score">${org.farm_score != null ? org.farm_score.toFixed(0) : '—'}</span>
           ${makeComponentGrades(org)}
         </div>
-        <div>${makeFarmSparkline(org.fv_history, deltaAbove, meanBaseline, win)}</div>
+        <div>${makeFarmSparkline(org.fv_history, deltaAbove, meanBaseline, win)}${(() => {
+          const v = (org.dvm_plus || {})[win];
+          if (v == null) return '';
+          const color = v >= 110 ? 'var(--up)' : v <= 90 ? 'var(--down)' : 'var(--neon-violet)';
+          return `<div style="margin-top:2px;font-family:var(--font-mono);font-size:13px;font-weight:700;color:${color};font-variant-numeric:tabular-nums;line-height:1.1;" title="${win.toUpperCase()}DvM+ ${v} · 100 = league mean · 10 pts = 1 std-dev · graduations + acquisitions nullified">${win.toUpperCase()}DvM+ ${v}</div>`;
+        })()}</div>
         <div style="display:flex;align-items:center;gap:6px;font-size:12px;min-width:0;">
           ${tp ? `<span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(tp.name)}</span>
           <span class="fv-badge ${fvClass(tp.fv_label)} size-sm" style="flex-shrink:0;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
@@ -6646,10 +6683,9 @@ function renderPlayerDetail(key) {
     const statHeaders = isP
       ? `<th>ERA vs lvl</th><th>WHIP vs lvl</th><th>K/9 vs lvl</th><th>BB/9 vs lvl</th>`
       : `<th>OPS vs lvl</th><th>ISO vs lvl</th><th>BB% vs lvl</th><th>K% vs lvl</th>`;
-    const rpsForHeader = computeRelProd(p);
     return `<div class="detail-title">Age &amp; level-relative performance
         <span class="detail-title-sub">colored delta vs. the empirical level median for each stat</span>
-        <span style="margin-left:8px;vertical-align:middle;">${rpsPillHTML(rpsForHeader)}${rpsPlusPillHTML(p)}</span>
+        <span style="margin-left:8px;vertical-align:middle;">${rpsPlusPillHTML(p)}</span>
       </div>
       <table class="detail-table"><thead><tr><th>Season</th><th>Level</th><th>Age vs lvl</th>${statHeaders}</tr></thead><tbody>${rows}</tbody></table>`;
   })();
@@ -7299,7 +7335,31 @@ function renderFarmDetail(orgCode) {
   const stockHtml = (org.stock_up || org.stock_down)
     ? `${org.stock_up  ? `<span class="stock-up">▲${org.stock_up}</span>` : ''}${org.stock_up && org.stock_down ? ' · ' : ''}${org.stock_down ? `<span class="stock-down">▼${org.stock_down}</span>` : ''}`
     : `<span style="color:var(--text-tertiary);">—</span>`;
-  const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px;">
+  // DvM+ tile — prioritized 3-up stat showing 1y / 3y / 5y development
+  // vs the league mean as a wRC+/OPS+-style index (100 = league mean,
+  // 10 pts = 1 std-dev). Pure-development metric: graduations + acquisitions
+  // are nullified, so only FV gained while the player was in the org counts.
+  const dvmTip = "100 = league mean · 10 pts = 1 std-dev · graduations + acquisitions nullified";
+  const dvmCell = (winKey, label) => {
+    const v = (org.dvm_plus || {})[winKey];
+    if (v == null) return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--text-tertiary);">—</div><div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;">${label}</div></div>`;
+    const color = v >= 110 ? "var(--up)" : v <= 90 ? "var(--down)" : "var(--neon-violet)";
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <div style="font-family:var(--font-mono);font-size:22px;font-weight:700;color:${color};font-variant-numeric:tabular-nums;line-height:1;">${v}</div>
+      <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-secondary);letter-spacing:0.08em;text-transform:uppercase;">${label}</div>
+    </div>`;
+  };
+  const dvmTileHtml = `<div class="stat-tile" style="border-color:var(--neon-violet)44;background:linear-gradient(135deg,rgba(167,100,252,0.06),transparent);" title="${escapeHtml(dvmTip)}">
+    <div class="stat-label" style="margin-bottom:6px;">Development vs mean</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-items:end;">
+      ${dvmCell("1y", "1YDvM+")}
+      ${dvmCell("3y", "3YDvM+")}
+      ${dvmCell("5y", "5YDvM+")}
+    </div>
+  </div>`;
+
+  const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px;">
+    ${dvmTileHtml}
     <div class="stat-tile">
       <div class="stat-label">Avg age</div>
       <div class="stat-value">${org.avg_age != null ? org.avg_age.toFixed(1) : "—"}</div>
@@ -7347,7 +7407,7 @@ function renderFarmDetail(orgCode) {
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}</div>
             <div class="player-meta">${escapeHtml(p.position ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
-            <div class="player-stat-line" style="margin-top:3px;font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rosterStatLine(p)}${rpsPillHTML(computeRelProd(p))}${rpsPlusPillHTML(p)}</div>
+            <div class="player-stat-line" style="margin-top:3px;font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rosterStatLine(p)}${rpsPlusPillHTML(p)}</div>
           </div>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span></div>
@@ -7839,7 +7899,7 @@ function renderFarmDetail(orgCode) {
     <div class="farm-detail-grid">
       ${leftRailHtml}
       <div>
-        <div class="detail-title flush">${(state.formWindow || "3y")} development vs mean farm <span class="detail-title-sub">prospect FV growth above the league mean, with trades / draft / IFA acquisitions excluded · graduations neutral · DS+ = wRC+/OPS+-style index where 100 = league mean and 10 points = 1 std-dev</span></div>
+        <div class="detail-title flush">${(state.formWindow || "3y")} development vs mean farm <span class="detail-title-sub">pure-development metric — graduations + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. DvM+ = wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev</span></div>
         <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
           <span class="filter-label">Window</span>
           <button class="chip${(state.formWindow || "3y") === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
@@ -8108,6 +8168,9 @@ function compareLoad() {
 }
 function compareSave(keys) {
   try { localStorage.setItem(COMPARE_KEY, JSON.stringify(keys)); } catch {}
+  // Mirror to the URL hash so the cart is shareable. syncToURL reads
+  // localStorage, so we update storage first, then push the hash.
+  if (typeof syncToURL === "function") syncToURL();
 }
 function compareHas(key) { return compareLoad().includes(key); }
 function compareToggle(key) {
@@ -8115,6 +8178,11 @@ function compareToggle(key) {
   if (keys.includes(key)) {
     keys = keys.filter(k => k !== key);
   } else if (keys.length < COMPARE_MAX) {
+    // Mutual exclusivity: pinning a prospect clears the farm cart, so
+    // the panel never mixes prospect vs farm contexts. Only fires on
+    // add (not on remove), so deselecting a prospect doesn't blow away
+    // an unrelated farm comparison.
+    if (farmCompareLoad().length > 0) farmCompareSave([]);
     keys.push(key);
   }
   compareSave(keys);
@@ -8131,6 +8199,9 @@ function farmCompareLoad() {
 }
 function farmCompareSave(orgs) {
   try { localStorage.setItem(FARM_COMPARE_KEY, JSON.stringify(orgs)); } catch {}
+  // Same hash-mirroring as compareSave so the URL stays in sync with
+  // whichever cart was last mutated.
+  if (typeof syncToURL === "function") syncToURL();
 }
 function farmCompareHas(org) { return farmCompareLoad().includes(org); }
 function farmCompareToggle(org) {
@@ -8138,6 +8209,10 @@ function farmCompareToggle(org) {
   if (orgs.includes(org)) {
     orgs = orgs.filter(o => o !== org);
   } else if (orgs.length < FARM_COMPARE_MAX) {
+    // Mutual exclusivity: pinning a farm clears the prospect cart for
+    // the same reason as compareToggle above — the panel only ever
+    // shows one type at a time.
+    if (compareLoad().length > 0) compareSave([]);
     orgs.push(org);
   }
   farmCompareSave(orgs);
@@ -8147,8 +8222,10 @@ function farmCompareToggle(org) {
 // Refresh the floating button + panel contents. Called on boot, every
 // compare toggle, and after a re-render (so the player-detail "in cart"
 // state stays in sync with the cart's own state).
-// Relative Production Score (RPS) — quantifies how far ahead of their
-// age + level a prospect is. Composite of:
+// Internal age + level-adjusted production score. No longer surfaced
+// directly in the UI — feeds the bucketed RPS+ index (see below) as
+// the raw value that gets percentile-anchored against same-age peers.
+// Composite of:
 //   - performance vs level (ops_plus_level − 100 for hitters,
 //     100 − era_minus_level for pitchers, both being a "% above level
 //     average" delta)
@@ -8185,22 +8262,18 @@ function computeRelProd(p) {
   }
 }
 
-function rpsPillHTML(rps) {
-  if (rps == null) {
-    return `<span class="rps-pill is-null" title="Insufficient sample to compute Relative Production Score (need 15+ games for hitters, 15+ IP for pitchers, plus age-vs-level data).">RPS —</span>`;
-  }
-  const cls = rps.score > 5 ? "is-pos" : rps.score < -5 ? "is-neg" : "is-neutral";
-  const sign = rps.score > 0 ? "+" : "";
-  const title = `Relative Production Score · performance ${rps.perf >= 0 ? "+" : ""}${rps.perf} · age ${rps.age >= 0 ? "+" : ""}${rps.age} · ${rps.driver}`;
-  return `<span class="rps-pill ${cls}" title="${escapeHtml(title)}">RPS ${sign}${rps.score}</span>`;
-}
-
-// RPS+ — wRC+/OPS+-style median-relative index of a player's raw RPS,
-// anchored at 100 = median prospect at the same integer age. Player
-// ages are bucketed by floor(age); ages ≥25 collapse into a single
-// "25+" bucket since coverage thins out there. The +100 shift keeps
-// the ratio positive even when raw RPS is mildly negative (matches
-// the OPS+/wRC+ convention). Result is clamped to [0, 250].
+// RPS+ — wRC+/OPS+-style median-relative index of a player's raw
+// production score, anchored at 100 = median prospect at the same
+// integer age. Player ages are bucketed by floor(age); ages ≥25
+// collapse into a single "25+" bucket since coverage thins out there.
+// The +100 shift keeps the ratio positive even when the raw input is
+// mildly negative (matches the OPS+/wRC+ convention). Result is
+// clamped to [0, 250].
+//
+// The raw input is whatever `computeRelProd` returns — performance
+// (OPS+ / ERA−) plus age-vs-level adjustment, gated by 15+ games or
+// 15+ IP. computeRelProd remains as an internal helper, but is no
+// longer surfaced as a standalone "RPS" reading anywhere in the UI.
 //
 // Buckets and bucket-medians are computed lazily on first access from
 // the current DATA.players, then cached. Re-render after DATA changes
@@ -8262,13 +8335,13 @@ function getRpsPlus(p) {
 function rpsPlusPillHTML(p) {
   const rp = getRpsPlus(p);
   if (rp == null) {
-    return `<span class="rps-plus-pill is-null" title="RPS+ unavailable — needs a raw RPS (15+ games / 15+ IP) and a known age.">RPS+ —</span>`;
+    return `<span class="rps-plus-pill is-null" title="RPS+ unavailable — needs a qualifying sample (15+ games for hitters, 15+ IP for pitchers) and a known age.">RPS+ —</span>`;
   }
   const cls = rp.plus >= 110 ? "is-pos" : rp.plus <= 90 ? "is-neg" : "is-neutral";
   const ageLabel = rp.bucket >= 25 ? "25+yo" : `${rp.bucket}yo`;
   const diff = rp.plus - 100;
   const diffTxt = diff === 0 ? "matches" : `${diff > 0 ? "+" : ""}${diff}% vs`;
-  const title = `RPS+ ${rp.plus} · ${diffTxt} the median ${ageLabel} prospect (raw RPS ${rp.raw >= 0 ? "+" : ""}${rp.raw} vs bucket median ${rp.median >= 0 ? "+" : ""}${rp.median.toFixed(1)}, n=${rp.n})`;
+  const title = `RPS+ ${rp.plus} · ${diffTxt} the median ${ageLabel} prospect (raw score ${rp.raw >= 0 ? "+" : ""}${rp.raw} vs bucket median ${rp.median >= 0 ? "+" : ""}${rp.median.toFixed(1)}, n=${rp.n})`;
   return `<span class="rps-plus-pill ${cls}" title="${escapeHtml(title)}">RPS+ ${rp.plus}</span>`;
 }
 
@@ -8458,7 +8531,7 @@ function makeCompareSideBySide(players) {
             <span class="fv-badge ${fvClass(String(fvLabel))} size-sm" style="margin-left:6px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}</span>
           </div>
           <div class="csbs-meta">${escapeHtml(ageBits.join(" · ")) || "—"}</div>
-          ${rpsPillHTML(rps)}${rpsPlusPillHTML(p)}
+          ${rpsPlusPillHTML(p)}
         </div>
       </div>
     </div>`;
@@ -8467,18 +8540,22 @@ function makeCompareSideBySide(players) {
   const head = `<div class="compare-sbs-head" style="grid-template-columns:${cols};">${heads}</div>`;
   const chart = `<div class="compare-overlay-chart"><div style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:700;margin-bottom:4px;">FV history · overlay</div>${makeFvOverlayChart(players)}</div>`;
   const table = makeCompareStatTable(players);
-  // RPS summary row — repeat each player's score + driver caption.
+  // RPS+ summary row — repeat each player's index + the raw drivers
+  // (OPS+ / ERA−, age vs level) that fed it, so the reader can see
+  // both the index and what's behind it.
   const rpsRows = players.map((p, i) => {
-    const rps = computeRelProd(p);
+    const rp = getRpsPlus(p);
     const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
-    if (!rps) {
-      return `<div><span class="csbs-legend-dot" style="background:${color};"></span><strong>${escapeHtml(p.player_name)}</strong> <span class="crps-driver">RPS unavailable — insufficient sample</span></div>`;
+    if (rp == null) {
+      return `<div><span class="csbs-legend-dot" style="background:${color};"></span><strong>${escapeHtml(p.player_name)}</strong> <span class="crps-driver">RPS+ unavailable — insufficient sample</span></div>`;
     }
-    const arrow = rps.score >= 0 ? "↑" : "↓";
-    return `<div><span class="csbs-legend-dot" style="background:${color};"></span><strong>${escapeHtml(p.player_name)}</strong> ${arrow} ${rps.score >= 0 ? "+" : ""}${rps.score} <span class="crps-driver">(${escapeHtml(rps.driver)})</span></div>`;
+    const raw = computeRelProd(p);
+    const driver = raw ? raw.driver : "";
+    const cls = rp.plus >= 110 ? "var(--up)" : rp.plus <= 90 ? "var(--down)" : "var(--neon-violet)";
+    return `<div><span class="csbs-legend-dot" style="background:${color};"></span><strong>${escapeHtml(p.player_name)}</strong> <span style="color:${cls};font-family:var(--font-mono);font-weight:700;">RPS+ ${rp.plus}</span>${driver ? ` <span class="crps-driver">(${escapeHtml(driver)})</span>` : ""}</div>`;
   }).join("");
   const summary = `<div class="compare-rps-row">
-    <div style="font-family:var(--font-sans);font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;margin-bottom:6px;">Relative production score · how far ahead of age + level</div>
+    <div style="font-family:var(--font-sans);font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;margin-bottom:6px;">RPS+ · 100 = median prospect at the same age, 10 pts = a meaningful gap</div>
     ${rpsRows}
   </div>`;
   return head + chart + table + summary;
@@ -8516,7 +8593,7 @@ function makeFarmCompareSideBySide(farms) {
   // Development-vs-mean chart row — reuses makeFarmGrowthChart with a
   // computed responsive width so the same SVG fits N orgs in a row.
   // The window selector sits at the top and stays synced with the
-  // farm-detail page via state.formWindow. DS+ already appears in the
+  // farm-detail page via state.formWindow. DvM+ already appears in the
   // chart caption (see makeFarmGrowthChart), so no extra label here.
   const win = state.formWindow || "3y";
   const winLabel = win === "1y" ? "1-year" : win === "3y" ? "3-year" : "5-year";
@@ -8536,17 +8613,17 @@ function makeFarmCompareSideBySide(farms) {
       <button class="chip${win === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
       <button class="chip${win === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
       <button class="chip${win === "5y" ? " active" : ""}" data-form-window="5y" type="button">5y</button>
-      <span style="margin-left:auto;font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;">DS+ · 100 = league mean · 10 pts = 1 std-dev</span>
+      <span style="margin-left:auto;font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;">DvM+ · 100 = league mean · 10 pts = 1 std-dev · graduations + acquisitions nullified</span>
     </div>
     <div style="display:grid;grid-template-columns:${cols};gap:10px;align-items:start;">${chartCells}</div>
   </div>`;
 
   // Stat-table: each row is a farm metric, each column is a farm. Reuses
   // the existing .compare-stat-table styles so the visual feel matches
-  // the prospect compare table. DS+ rows expose the wRC+/OPS+-style index
+  // the prospect compare table. DvM+ rows expose the wRC+/OPS+-style index
   // per window so a reader can compare dev pipelines on a fixed 100-anchor.
   const fmtDsPlus = (o, w) => {
-    const v = o.ds_plus && o.ds_plus[w];
+    const v = o.dvm_plus && o.dvm_plus[w];
     if (v == null) return "—";
     const color = v >= 110 ? "var(--up)" : v <= 90 ? "var(--down)" : "var(--text-primary)";
     return `<span style="color:${color};font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:700;">${v}</span>`;
@@ -8570,11 +8647,11 @@ function makeFarmCompareSideBySide(farms) {
     ["Grad pipeline",    o => (o.grades && o.grades.grad) || "—", true],
     ["Stock ▲/▼",        o => `${o.stock_up || 0} ▲ · ${o.stock_down || 0} ▼`, true],
     ["1y Δ vs mean",     o => fmtDelta(o, "1y"), false],
-    ["1YDS+",            o => fmtDsPlus(o, "1y"), false],
+    ["1YDvM+",            o => fmtDsPlus(o, "1y"), false],
     ["3y Δ vs mean",     o => fmtDelta(o, "3y"), false],
-    ["3YDS+",            o => fmtDsPlus(o, "3y"), false],
+    ["3YDvM+",            o => fmtDsPlus(o, "3y"), false],
     ["5y Δ vs mean",     o => fmtDelta(o, "5y"), false],
-    ["5YDS+",            o => fmtDsPlus(o, "5y"), false],
+    ["5YDvM+",            o => fmtDsPlus(o, "5y"), false],
   ];
   const tableRows = rows.map(([label, fn, escape]) =>
     `<tr><th>${label}</th>${farms.map(o => {
@@ -8592,28 +8669,6 @@ function makeFarmCompareSideBySide(farms) {
     ${farms.map(o => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">${makeSpendingDonut(o, 64)}${donutLegend}<div style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.06em;">3-yr spend mix</div></div>`).join("")}
   </div>`;
   return head + chartRow + donutRow + table;
-}
-
-function makeFarmCompareSingleCard(o) {
-  const grade = (o.grades && o.grades.overall) || "—";
-  const tp = o.top_prospect;
-  const tpHtml = tp
-    ? `<div class="cc-stat" style="margin-top:6px;">Top: <span style="color:var(--text-primary);">${escapeHtml(tp.player_name || "—")}</span>${tp.fv ? ` <span class="fv-badge size-sm ${fvClass(String(tp.fv))}" style="margin-left:4px;">${tp.fv}</span>` : ""}</div>`
-    : "";
-  return `<div class="compare-card" style="${orgStripe(o.org)}">
-    <div style="display:flex;gap:10px;align-items:flex-start;min-width:0;">
-      <span onclick="closeCompareAndGoFarm('${escapeHtml(o.org)}');" style="cursor:pointer;flex-shrink:0;">${teamLogoHTML(o.org, "lg", fullOrgName(o.org))}</span>
-      <div style="min-width:0;flex:1;">
-        <div class="player-name" style="cursor:pointer;" onclick="closeCompareAndGoFarm('${escapeHtml(o.org)}');">${escapeHtml(fullOrgName(o.org))}
-          <span style="margin-left:6px;font-family:var(--font-mono);color:${gradeColor(grade)};font-weight:700;">${escapeHtml(grade)}</span>
-        </div>
-        <div class="cc-stat" style="margin-top:2px;color:var(--text-tertiary);">#${o.farm_rank ?? "—"} of 30 · ${o.count ?? 0} prospects · Total FV ${o.total_fv != null ? o.total_fv.toFixed(1) : "—"}</div>
-        ${tpHtml}
-        <div class="cc-stat" style="margin-top:6px;color:var(--text-tertiary);">Pin a second farm system to compare side-by-side.</div>
-      </div>
-    </div>
-    <button class="cc-remove" data-farm-compare-remove="${escapeHtml(o.org)}" type="button">remove</button>
-  </div>`;
 }
 
 function renderCompareCart() {
@@ -8671,63 +8726,26 @@ function renderCompareCart() {
 
   let html = "";
 
-  // Players section — keep the existing 2+ side-by-side / 1 single-card
-  // split so behavior matches prior versions.
+  // Side-by-side is the only render path. The previous single-card
+  // branches duplicated layout logic — and after mutual-exclusivity
+  // landed, the panel only ever shows one type at a time anyway, so
+  // a 1-pin compare is just a 1-column side-by-side.
   if (players.length || stubs.length) {
     const stubHTML = stubs.map(k => `<div class="compare-card"><div style="color:var(--text-tertiary);">Player "${escapeHtml(k)}" not in current data.</div><button class="cc-remove" data-compare-remove="${escapeHtml(k)}">remove</button></div>`).join("");
-    if (players.length >= 2) {
+    if (players.length) {
       html += `<div class="detail-title flush no-rule" style="font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);">Prospects · ${players.length}</div>`;
-      html += makeCompareSideBySide(players) + stubHTML;
-    } else if (players.length === 1) {
-      const p = players[0];
-      const sl = p.statline || {};
-      const slashLine = sl.is_pitcher
-        ? `${sl.era ?? "—"} ERA · ${sl.ip ?? "—"} IP · K/9 ${sl.k_per_9 ?? "—"}`
-        : `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"} · ${sl.hr ?? 0} HR`;
-      const eta = (p.eta && p.eta.year) ? `ETA ${p.eta.year}` : (p.graduation_date ? "graduated" : "ETA —");
-      const ageVsLevel = (p.age_vs_level && p.age_vs_level.diff != null)
-        ? `${p.age_vs_level.diff > 0 ? "+" : ""}${p.age_vs_level.diff.toFixed(1)}y vs ${sl.level || "lvl"}`
-        : "";
-      const fvLabel = p.fv_close != null ? Math.round(p.fv_close) : "—";
-      const sparkline = (p.points && p.points.length >= 2)
-        ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)
-        : "";
-      const rps = computeRelProd(p);
-      html += `<div class="detail-title flush no-rule" style="font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);">Prospects · 1</div>`;
-      html += `<div class="compare-card" style="${orgStripe(p.org)}">
-        <div style="display:flex;gap:10px;align-items:flex-start;min-width:0;">
-          <span onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');" style="cursor:pointer;flex-shrink:0;">${headshotHTML(p, 64)}</span>
-          <div style="min-width:0;flex:1;">
-            <div class="player-name" style="cursor:pointer;" onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');">${escapeHtml(p.player_name)}
-              <span class="fv-badge ${fvClass(String(fvLabel))} size-sm" style="margin-left:6px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}</span>
-            </div>
-            ${playerMetaHTML(p)}
-            <div style="margin-top:6px;">${rpsPillHTML(rps)}${rpsPlusPillHTML(p)}</div>
-            <div class="cc-stat" style="margin-top:6px;">${escapeHtml(slashLine)}</div>
-            <div class="cc-stat" style="margin-top:2px;color:var(--text-tertiary);">${escapeHtml(eta)}${ageVsLevel ? " · " + escapeHtml(ageVsLevel) : ""}</div>
-            <div style="margin-top:4px;">${sparkline}</div>
-            <div style="margin-top:6px;font-size:10px;color:var(--text-tertiary);">Pin a second prospect to compare side-by-side.</div>
-          </div>
-        </div>
-        <button class="cc-remove" data-compare-remove="${escapeHtml(p.player_key)}" type="button">remove</button>
-      </div>${stubHTML}`;
-    } else {
-      // Only stubs — show them so the user can remove.
-      html += stubHTML;
+      html += makeCompareSideBySide(players);
     }
+    html += stubHTML;
   }
 
-  // Farms section — mirror the prospects split (2+ side-by-side, 1 card).
   if (farms.length || farmStubs.length) {
     const farmStubHTML = farmStubs.map(o => `<div class="compare-card"><div style="color:var(--text-tertiary);">Farm "${escapeHtml(o)}" not in current data.</div><button class="cc-remove" data-farm-compare-remove="${escapeHtml(o)}">remove</button></div>`).join("");
-    html += `<div class="detail-title no-rule" style="font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);margin-top:14px;">Farm systems · ${farms.length}</div>`;
-    if (farms.length >= 2) {
-      html += makeFarmCompareSideBySide(farms) + farmStubHTML;
-    } else if (farms.length === 1) {
-      html += makeFarmCompareSingleCard(farms[0]) + farmStubHTML;
-    } else {
-      html += farmStubHTML;
+    if (farms.length) {
+      html += `<div class="detail-title no-rule" style="font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);margin-top:14px;">Farm systems · ${farms.length}</div>`;
+      html += makeFarmCompareSideBySide(farms);
     }
+    html += farmStubHTML;
   }
 
   body.innerHTML = html;
@@ -8799,6 +8817,24 @@ function attachHandlers() {
     e.preventDefault();
     if (row.dataset.key)      goToPlayer(row.dataset.key);
     else if (row.dataset.org) goToFarm(row.dataset.org);
+  });
+
+  // Global "c" hotkey — toggles compare for the row containing the
+  // currently focused element. Guarded against modifier keys (Ctrl/Cmd
+  // shortcuts stay browser-owned) and against input fields (typing "c"
+  // in the search bar should type a "c", not pin a player). Power-user
+  // surface; the chip remains the primary affordance.
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "c" && e.key !== "C") return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const target = e.target;
+    const tag = target && target.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || (target && target.isContentEditable)) return;
+    const row = target && target.closest && target.closest("[data-key], [data-org]");
+    if (!row) return;
+    e.preventDefault();
+    if (row.dataset.key)      compareToggle(row.dataset.key);
+    else if (row.dataset.org) farmCompareToggle(row.dataset.org);
   });
 
   // Mobile filter-toggle — flips `#filter-bar.is-open` so the chip
@@ -8958,7 +8994,7 @@ function attachHandlers() {
     if (state.view && state.view.type === "farm") renderFarmDetail(state.view.org);
     renderFarmSystems();
     // The compare-cart farm-system block also renders dev-vs-mean charts
-    // and a per-window DS+ table; re-render so the window selector inside
+    // and a per-window DvM+ table; re-render so the window selector inside
     // the cart stays in sync with the rest of the app.
     renderCompareCart();
   });
