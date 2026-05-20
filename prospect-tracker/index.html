@@ -3266,9 +3266,39 @@ function makeMilbCell(p) {
   </div>`;
 }
 
+// FanGraphs-flavored WAR aggregate. Returns a small mono block with
+// cumulative career WAR, the per-season average, and the underlying
+// season count so a reader can see how the average was built. The
+// `career_war` payload is populated server-side by
+// stats.fetch_career_war_bulk; empty dict when no MLB time on file.
+function gradCareerWarHTML(p) {
+  const cw = p.career_war || {};
+  if (cw.career_war == null || cw.war_seasons_count == null) return "";
+  const tot = cw.career_war;
+  const per = cw.war_per_yr;
+  const n   = cw.war_seasons_count;
+  const totColor = tot >= 5 ? "var(--up)" : tot <= 0 ? "var(--down)" : "var(--text-primary)";
+  const perColor = per >= 3 ? "var(--up)" : per <= 0 ? "var(--down)" : "var(--text-secondary)";
+  const seasons = cw.seasons || {};
+  const years = Object.keys(seasons).sort();
+  const tip = years.length
+    ? `Career WAR · FanGraphs\n` + years.map(y => `${y}: ${seasons[y] >= 0 ? "+" : ""}${seasons[y]}`).join("\n")
+    : "Career WAR · FanGraphs";
+  return `<div style="margin-top:4px;font-family:var(--font-mono);font-size:11px;font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">
+    <span style="color:${totColor};font-weight:700;">${tot >= 0 ? "+" : ""}${tot.toFixed(1)} WAR</span>
+    <span style="color:var(--text-tertiary);"> · </span><span style="color:${perColor};">${per >= 0 ? "+" : ""}${per.toFixed(2)}/yr</span>
+    <span style="color:var(--text-tertiary);"> · ${n} season${n === 1 ? "" : "s"}</span>
+  </div>`;
+}
+
 function makeGradMilbCell(p) {
   const sl = p.statline;
-  if (!sl) return `<div class="milb-cell"><span style="color: var(--text-tertiary);">stats unavailable</span></div>`;
+  if (!sl) {
+    // No current-season statline (rare for grads), but career WAR may
+    // still be available — show it on its own so the cell isn't blank.
+    const warHtml = gradCareerWarHTML(p);
+    return `<div class="milb-cell">${warHtml || `<span style="color: var(--text-tertiary);">stats unavailable</span>`}</div>`;
+  }
   const slashLine = sl.is_pitcher
     ? `${sl.era ?? "—"} ERA · ${sl.whip != null ? sl.whip + " WHIP · " : ""}${sl.ip ?? "—"} IP`
     : `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"}`;
@@ -3282,6 +3312,7 @@ function makeGradMilbCell(p) {
   return `<div class="milb-cell">
     ${seasonTag}${headline ? headline + "<br/>" : ""}<strong style="font-weight: 600; color: var(--text-primary);">${slashLine}</strong>
     <br/><span style="color: var(--text-tertiary);">${detail}</span>
+    ${gradCareerWarHTML(p)}
   </div>`;
 }
 

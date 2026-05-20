@@ -36,6 +36,7 @@ from storage import (
     auto_graduate_player, revalidate_auto_graduations,
     upsert_pitch_arsenals, load_pitch_arsenals,
     upsert_sabermetrics, load_sabermetrics,
+    upsert_career_war, load_career_war, load_career_war_meta,
     upsert_career_stats, load_career_stats, load_career_stats_meta,
     upsert_acquisitions, load_acquisitions,
     upsert_il_status, load_il_status,
@@ -48,6 +49,7 @@ from consensus import build_timeseries
 from stats import (fetch_statlines_for, derive_statlines_from_career, fetch_birth_date,
                    fetch_birth_date_by_name,
                    fetch_pitch_arsenal, fetch_sabermetrics,
+                   fetch_career_war_bulk,
                    fetch_career_stats,
                    bulk_fetch_season_stats, merge_bulk_into_career_cache,
                    bulk_resolve_ids,
@@ -626,6 +628,57 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                         sabermetrics[k] = asdict(sm)
                 log.info("fetched sabermetrics for %d players", len(new_sabermetrics))
 
+                # --- 3d-bis. Career WAR for anyone who has touched MLB.
+                # Uses pybaseball.batting_stats / pitching_stats once per
+                # year in the window to pull FanGraphs WAR. The MLB Stats
+                # API only exposes WAR via single-season sabermetrics calls,
+                # so a per-player loop would cost ~2-4k extra requests on
+                # a cold cache; the bulk FG pull is two calls per year.
+                # Cohort = every tracked player whose career_stats carries
+                # at least one MLB row (covers active cup-of-coffee call-
+                # ups, graduates, and reclassified inactives in one pass).
+                war_cohort: list[tuple[str, int, bool]] = []
+                _cs_now = load_career_stats()
+                for p in timeseries:
+                    mid = ids_by_key.get(p.player_key)
+                    if not mid:
+                        continue
+                    rows = _cs_now.get(p.player_key, []) or []
+                    has_mlb = any(r.get("level") == "MLB" for r in rows)
+                    if not has_mlb:
+                        continue
+                    is_p = bool((rows[0].get("is_pitcher") if rows else False))
+                    war_cohort.append((p.player_key, mid, is_p))
+                if war_cohort:
+                    war_meta = load_career_war_meta()
+                    if force_refetch:
+                        war_targets = war_cohort
+                    else:
+                        war_targets = [
+                            t for t in war_cohort
+                            if not _is_career_fresh(war_meta.get(t[0]), CAREER_STATS_FRESH_DAYS)
+                        ]
+                    log.info("fetching career WAR for %d players "
+                             "(skipped %d fresh-cached)",
+                             len(war_targets),
+                             len(war_cohort) - len(war_targets))
+                    if war_targets:
+                        # 10-year window covers every modern graduate.
+                        # Older grads (rare) get truncated WAR but still
+                        # surface a value.
+                        try:
+                            war_data = fetch_career_war_bulk(
+                                war_targets,
+                                start_year=season - 10,
+                                end_year=season,
+                            )
+                            if war_data:
+                                upsert_career_war(war_data)
+                                log.info("cached career WAR for %d players",
+                                         len(war_data))
+                        except Exception as e:
+                            log.warning("career WAR fetch failed: %s", e)
+
 
         # --- 3e. Per-player transactions cache + within-season level changes.
         # The /transactions?playerId=X endpoint returns every affiliate
@@ -816,6 +869,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                trades_by_player=trades_by_player,
                                transactions_by_player=transactions_by_key,
                                career_stats=load_career_stats(),
+                               career_war=load_career_war(),
                                acquisitions=load_acquisitions(),
                                il_status=load_il_status(),
                                rosters_by_org=rosters_by_org,

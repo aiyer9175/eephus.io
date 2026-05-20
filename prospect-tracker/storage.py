@@ -96,6 +96,21 @@ CREATE TABLE IF NOT EXISTS career_stats (
     fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Per-graduate career WAR aggregated from FanGraphs (bulk batting_stats /
+-- pitching_stats pull via pybaseball). payload_json is a dict:
+--   {"seasons": {"2023": 1.5, "2024": 2.8, ...},
+--    "career_war": 4.3,
+--    "war_per_yr": 2.15,
+--    "war_seasons_count": 2,
+--    "source": "fangraphs"}
+-- Only populated for graduates / inactives that have at least one MLB
+-- season on file; actives skip this fetch entirely (no value-add yet).
+CREATE TABLE IF NOT EXISTS career_war (
+    player_key   TEXT PRIMARY KEY,
+    payload_json TEXT NOT NULL,
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS acquisitions (
     player_key   TEXT PRIMARY KEY,
     method       TEXT NOT NULL,       -- 'draft' | 'international_fa' | 'unknown'
@@ -490,6 +505,58 @@ def load_career_stats() -> dict[str, list[dict]]:
     except sqlite3.OperationalError:
         return {}
     return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
+
+
+def upsert_career_war(by_key: dict[str, dict]) -> int:
+    """Upsert one career-WAR aggregate per graduate. Skips empty payloads.
+
+    Caller is expected to wrap each aggregate as:
+      {"seasons": {"2023": 1.5, "2024": 2.8, ...},
+       "career_war": 4.3,
+       "war_per_yr": 2.15,
+       "war_seasons_count": 2,
+       "source": "fangraphs"}
+    """
+    n = 0
+    with connect() as con:
+        for key, rec in by_key.items():
+            if not rec:
+                continue
+            con.execute(
+                """INSERT INTO career_war (player_key, payload_json, fetched_at)
+                   VALUES (?, ?, datetime('now'))
+                   ON CONFLICT(player_key) DO UPDATE SET
+                     payload_json=excluded.payload_json,
+                     fetched_at=excluded.fetched_at""",
+                (key, json.dumps(rec)),
+            )
+            n += 1
+    return n
+
+
+def load_career_war() -> dict[str, dict]:
+    """Return {player_key: war_aggregate_dict} for every cached graduate."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, payload_json FROM career_war"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
+
+
+def load_career_war_meta() -> dict[str, str]:
+    """Return {player_key: fetched_at_iso} so the pipeline can decide
+    whether the cached WAR aggregate is fresh enough to skip refetching."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, fetched_at FROM career_war"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: r["fetched_at"] for r in rows}
 
 
 def upsert_acquisitions(by_key: dict[str, dict]) -> int:
@@ -1160,6 +1227,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           trades_by_player: dict[str, list[dict]] | None = None,
                           transactions_by_player: dict[str, list[dict]] | None = None,
                           career_stats: dict[str, list[dict]] | None = None,
+                          career_war: dict[str, dict] | None = None,
                           acquisitions: dict[str, dict] | None = None,
                           il_status: dict[str, dict] | None = None,
                           rosters_by_org: dict[str, dict[str, list[dict]]] | None = None,
@@ -1193,6 +1261,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     trades_by_player = trades_by_player or {}
     transactions_by_player = transactions_by_player or {}
     career_stats = career_stats or {}
+    career_war = career_war or {}
     acquisitions = acquisitions or {}
     il_status = il_status or {}
     rosters_by_org = rosters_by_org or {}
@@ -1955,6 +2024,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "sabermetrics": sm,
             "trades": filtered_trades,
             "career_stats": career_stats.get(p.player_key, []),
+            # Aggregated FanGraphs WAR for everyone who's touched MLB —
+            # populated by the bulk career-WAR fetch in run_monthly. Carries
+            # {seasons: {year: war}, career_war, war_per_yr,
+            # war_seasons_count, source}. Empty dict when no MLB time on
+            # file (every active prospect who hasn't debuted).
+            "career_war": career_war.get(p.player_key, {}),
             # Within-season + cross-season level changes derived from the
             # MLB Stats API per-player transactions endpoint. One record
             # per real level transition (lateral affiliate swaps filtered

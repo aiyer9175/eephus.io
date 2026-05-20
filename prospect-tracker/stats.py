@@ -2584,6 +2584,125 @@ def fetch_sabermetrics(player_key: str, mlbam_id: int,
 
 
 # ---------------------------------------------------------------------------
+# Career WAR — bulk FanGraphs pull via pybaseball
+# ---------------------------------------------------------------------------
+# FanGraphs is the only place that publishes a per-season WAR series we can
+# stitch into a "career WAR" number. The MLB Stats API only returns WAR
+# inside the `stats=sabermetrics` endpoint and only one season at a time,
+# so a per-player loop would be 2-4k extra requests on a cold cache.
+# pybaseball.batting_stats / pitching_stats serve up the whole FG leader-
+# board for a year in one shot; we call them once per season in the
+# requested window and join by `IDfg` after a one-time MLBAM→FG mapping.
+#
+# Returned aggregate per player_key:
+#   {"seasons": {"2023": 1.5, "2024": 2.8, ...},
+#    "career_war": 4.3,
+#    "war_per_yr": 2.15,
+#    "war_seasons_count": 2,
+#    "source": "fangraphs"}
+# `seasons` is sparse — only years the player actually appeared in MLB.
+
+def fetch_career_war_bulk(
+    targets: list[tuple[str, int, bool]],
+    start_year: int,
+    end_year: int,
+) -> dict[str, dict]:
+    """Pull career WAR aggregates for the given (player_key, mlbam_id,
+    is_pitcher) cohort. Returns one aggregate per player_key that found
+    at least one MLB season in the window. Players with no MLB data
+    are silently absent from the result (caller treats absence as "no
+    MLB career on record").
+
+    Backed by Baseball-Reference's WAR tables via pybaseball.bwar_bat /
+    bwar_pitch — two static CSV downloads cached client-side, so the
+    cost is ~5MB one-time even for a 944-player cohort. We tried the
+    FanGraphs route first; FG's anti-scraping responses 403 on
+    pybaseball's legacy endpoint as of 2025. BBRef WAR (rWAR) differs
+    slightly in methodology but is the same shape: per-season WAR you
+    can sum into a career total.
+
+    Two-way players are handled by summing batting and pitching WAR for
+    the same season; multi-team stints by summing all rows for a given
+    (mlb_ID, year_ID).
+
+    On any pybaseball/pandas import failure or HTTP error, returns an
+    empty dict so the rest of the pipeline keeps running. The caller
+    can fall back to the previous run's cached aggregate via
+    storage.load_career_war().
+    """
+    if not targets:
+        return {}
+    try:
+        import pybaseball as pyb
+    except ImportError:
+        log.warning("pybaseball not installed; skipping career WAR fetch")
+        return {}
+
+    cohort_ids = {mid for _, mid, _ in targets if mid}
+    if not cohort_ids:
+        return {}
+
+    # Pull the two BBRef WAR datasets in one shot each. `return_all=True`
+    # surfaces the full multi-year frame; we filter by mlb_ID in-memory.
+    def _by_year(df, value_col="WAR"):
+        """Return {mlb_ID: {year: war_total}} after summing stints."""
+        out: dict[int, dict[int, float]] = {}
+        if df is None or df.empty:
+            return out
+        # Filter to cohort + valid year + valid WAR before iteration.
+        sub = df[df["mlb_ID"].isin(cohort_ids)]
+        sub = sub[sub["year_ID"].between(start_year, end_year)]
+        sub = sub[sub[value_col].notna()]
+        for _, row in sub.iterrows():
+            try:
+                mid = int(row["mlb_ID"])
+                yr  = int(row["year_ID"])
+                war = float(row[value_col])
+            except (TypeError, ValueError):
+                continue
+            yr_map = out.setdefault(mid, {})
+            yr_map[yr] = yr_map.get(yr, 0.0) + war
+        return out
+
+    bat_by_id: dict[int, dict[int, float]] = {}
+    pit_by_id: dict[int, dict[int, float]] = {}
+    try:
+        bat_by_id = _by_year(pyb.bwar_bat(return_all=True))
+    except Exception as e:
+        log.warning("bwar_bat fetch failed: %s", e)
+    try:
+        pit_by_id = _by_year(pyb.bwar_pitch(return_all=True))
+    except Exception as e:
+        log.warning("bwar_pitch fetch failed: %s", e)
+
+    if not bat_by_id and not pit_by_id:
+        return {}
+
+    result: dict[str, dict] = {}
+    for player_key, mid, _is_pitcher in targets:
+        bat_yrs = bat_by_id.get(mid, {})
+        pit_yrs = pit_by_id.get(mid, {})
+        if not bat_yrs and not pit_yrs:
+            continue
+        seasons: dict[str, float] = {}
+        all_years = set(bat_yrs) | set(pit_yrs)
+        for yr in sorted(all_years):
+            total = bat_yrs.get(yr, 0.0) + pit_yrs.get(yr, 0.0)
+            seasons[str(yr)] = round(total, 2)
+        career_war = round(sum(seasons.values()), 2)
+        n = len(seasons)
+        war_per_yr = round(career_war / n, 2) if n else 0.0
+        result[player_key] = {
+            "seasons": seasons,
+            "career_war": career_war,
+            "war_per_yr": war_per_yr,
+            "war_seasons_count": n,
+            "source": "bbref",
+        }
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Bulk derive — current-season statline from cached career_stats
 # ---------------------------------------------------------------------------
 # `fetch_career_stats` already returns every season the player has on
