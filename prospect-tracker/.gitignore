@@ -7,6 +7,9 @@ prospects.db-journal
 prospects.db-wal
 prospects.db-shm
 data/timeseries.json
+data/graduates.json
+data/inactive.json
+data/rosters_by_org.json
 
 # --- Python -------------------------------------------------------------
 __pycache__/
