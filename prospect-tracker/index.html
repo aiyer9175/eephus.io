@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MLB Prospect Stock Tracker</title>
+  <title>MLB Prospect Portal</title>
   <meta name="description" content="Consensus FV tracker across seven industry prospect-ranking sources.">
 
   <!--
@@ -1890,7 +1890,7 @@
     .compare-panel {
       position: fixed;
       top: 20px; right: 20px;
-      width: min(720px, calc(100vw - 40px));
+      width: min(960px, calc(100vw - 40px));
       max-height: calc(100vh - 80px);
       overflow: auto;
       z-index: 201;
@@ -1963,6 +1963,175 @@
       letter-spacing: 0.02em;
     }
     .compare-add-btn.is-in { background: var(--neon-amber); color: var(--text-primary); border-color: var(--neon-amber); font-weight: 600; }
+    /* Compact "+ to compare" toggle used on prospect list rows. Square,
+       icon-sized so it fits beside the player name without breaking the
+       grid layout. */
+    .compare-add-btn.is-compact {
+      font-size: 14px;
+      padding: 0;
+      width: 22px;
+      height: 22px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+    .compare-add-btn.is-compact:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+
+    /* === Compare cart 2.0 — side-by-side layout ===================
+       When 2+ players are pinned the cart switches from stacked cards
+       to a grid: one column per player, shared FV-history overlay
+       chart, head-to-head stat table, and a Relative Production
+       Score (RPS) summary row at the bottom. */
+    .compare-sbs-head {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .compare-sbs-head .csbs-player {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-primary);
+      padding: 8px 10px;
+      border-left: 3px solid var(--csbs-color, var(--bg-header));
+      position: relative;
+    }
+    .compare-sbs-head .csbs-name {
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-primary);
+      letter-spacing: -0.005em;
+      cursor: pointer;
+      line-height: 1.2;
+    }
+    .compare-sbs-head .csbs-meta {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 3px;
+      font-family: var(--font-sans);
+    }
+    .compare-sbs-head .csbs-remove {
+      position: absolute;
+      top: 4px; right: 4px;
+      background: transparent;
+      border: none;
+      color: var(--text-tertiary);
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 999px;
+    }
+    .compare-sbs-head .csbs-remove:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+    /* RPS pill — colored by sign so green = ahead of age/level,
+       red = behind, gray = ungated / insufficient sample. */
+    .rps-pill {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-variant-numeric: tabular-nums;
+      margin-top: 4px;
+      letter-spacing: 0;
+      cursor: help;
+    }
+    .rps-pill.is-pos { background: rgba(31, 122, 58, 0.15); color: var(--up); border: 1px solid var(--up); }
+    .rps-pill.is-neg { background: rgba(185, 28, 28, 0.12); color: var(--down); border: 1px solid var(--down); }
+    .rps-pill.is-neutral { background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border); }
+    .rps-pill.is-null { background: var(--bg-tertiary); color: var(--text-tertiary); border: 1px dashed var(--border); }
+
+    /* Overlay-chart legend dot — small square in the per-player color. */
+    .csbs-legend-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 2px;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .compare-overlay-chart {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      background: var(--bg-primary);
+      padding: 8px;
+      margin-bottom: 12px;
+    }
+
+    /* Head-to-head stat table inside the cart. Numeric columns are
+       right-aligned and tabular-numed. Best value in green; worst in
+       red. Single-value rows stay neutral. */
+    .compare-stat-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      margin-bottom: 12px;
+    }
+    .compare-stat-table th, .compare-stat-table td {
+      padding: 4px 8px;
+      border-bottom: 1px solid var(--border-light);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .compare-stat-table th:first-child, .compare-stat-table td:first-child {
+      text-align: left;
+      color: var(--text-tertiary);
+      font-family: var(--font-sans);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+      padding-left: 0;
+    }
+    .compare-stat-table thead th {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      font-weight: 700;
+      border-bottom: 2px solid var(--bg-header);
+    }
+    .compare-stat-table td.is-best { color: var(--up); font-weight: 700; }
+    .compare-stat-table td.is-worst { color: var(--down); }
+    .compare-stat-table tbody tr.is-group-header td {
+      padding-top: 8px;
+      border-bottom: none;
+      color: var(--text-tertiary);
+      font-family: var(--font-sans);
+      font-size: 9px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      text-align: left;
+      font-weight: 700;
+    }
+
+    /* RPS caption + driver line at the bottom of the side-by-side cart. */
+    .compare-rps-row {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .compare-rps-row .crps-driver {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      color: var(--text-tertiary);
+    }
+
+    @media (max-width: 720px) {
+      .compare-sbs-head { grid-template-columns: 1fr !important; }
+      .compare-stat-table { font-size: 10.5px; }
+      .compare-stat-table th, .compare-stat-table td { padding: 3px 5px; }
+    }
 
     /* === Mobile filter toggle ====================================
        Desktop: button hidden, filter-bar shown.
@@ -2005,7 +2174,7 @@
 <div class="container">
 
   <header class="header">
-    <h1>MLB Prospect Stock Tracker<span class="h1-rule" aria-hidden="true"></span></h1>
+    <h1>MLB Prospect Portal<span class="h1-rule" aria-hidden="true"></span></h1>
     <div class="meta-line" id="meta-line">Loading…</div>
   </header>
 
@@ -3474,6 +3643,7 @@ function renderActives() {
             <div class="player-name">${escapeHtml(p.player_name)}</div>
             ${playerMetaHTML(p)}
           </div>
+          <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeConfidence(p)}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
@@ -3763,9 +3933,12 @@ function renderLeaderboards() {
     return `
       <div class="player-row is-leaderboard" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
         <div class="rank-num">${i + 1}</div>
-        <div>
-          <div class="player-name">${escapeHtml(p.player_name)}</div>
-          ${playerMetaHTML(p)}
+        <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
+          <div style="min-width:0;flex:1;">
+            <div class="player-name">${escapeHtml(p.player_name)}</div>
+            ${playerMetaHTML(p)}
+          </div>
+          <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
         <div><span class="level-pill ${r.level === "MLB" ? "level-mlb" : "level-neutral"}">${escapeHtml(r.level || "—")}</span></div>
         <div style="text-align:center;">${fvLabel !== "—" ? `<span class="fv-badge ${fvClass(String(fvLabel))}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
@@ -3861,6 +4034,7 @@ function renderInjured() {
             <div class="player-name">${escapeHtml(p.player_name)}${tjBadge}</div>
             ${playerMetaHTML(p, { showIL: false, showRoster: false })}
           </div>
+          <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
         <div><span class="grad-pill" style="background:var(--accent-il-soft);color:var(--accent-il);border:1px solid var(--accent-il-border);">${escapeHtml(il.type || "?")} IL</span></div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12px;color:var(--text-secondary);">${escapeHtml(since || "—")}</div>
@@ -3920,9 +4094,12 @@ function renderRecentlyTraded() {
     return `
       <div class="player-row is-traded" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
         <div class="rank-num">${i + 1}</div>
-        <div>
-          <div class="player-name">${escapeHtml(p.player_name)}</div>
-          ${playerMetaHTML(p)}
+        <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
+          <div style="min-width:0;flex:1;">
+            <div class="player-name">${escapeHtml(p.player_name)}</div>
+            ${playerMetaHTML(p)}
+          </div>
+          <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
         <div>
           <span class="grad-pill" style="background:var(--bg-tertiary);color:${meta.color};border:1px solid var(--border);">${escapeHtml(acq.date)}</span>
@@ -6272,8 +6449,10 @@ function renderPlayerDetail(key) {
     const statHeaders = isP
       ? `<th>ERA vs lvl</th><th>WHIP vs lvl</th><th>K/9 vs lvl</th><th>BB/9 vs lvl</th>`
       : `<th>OPS vs lvl</th><th>ISO vs lvl</th><th>BB% vs lvl</th><th>K% vs lvl</th>`;
+    const rpsForHeader = computeRelProd(p);
     return `<div class="detail-title">Age &amp; level-relative performance
         <span class="detail-title-sub">colored delta vs. the empirical level median for each stat</span>
+        <span style="margin-left:8px;vertical-align:middle;">${rpsPillHTML(rpsForHeader)}</span>
       </div>
       <table class="detail-table"><thead><tr><th>Season</th><th>Level</th><th>Age vs lvl</th>${statHeaders}</tr></thead><tbody>${rows}</tbody></table>`;
   })();
@@ -7554,6 +7733,266 @@ function compareToggle(key) {
 // Refresh the floating button + panel contents. Called on boot, every
 // compare toggle, and after a re-render (so the player-detail "in cart"
 // state stays in sync with the cart's own state).
+// Relative Production Score (RPS) — quantifies how far ahead of their
+// age + level a prospect is. Composite of:
+//   - performance vs level (ops_plus_level − 100 for hitters,
+//     100 − era_minus_level for pitchers, both being a "% above level
+//     average" delta)
+//   - age vs level (each year young = +10 points; old = −10 points)
+// Volume-gated (skip players under min sample). Returns null when we
+// can't compute meaningfully.
+function computeRelProd(p) {
+  if (!p) return null;
+  const sl = p.statline || {};
+  const avl = p.age_vs_level || {};
+  const ageAdj = avl.diff != null ? -avl.diff * 10 : 0;
+  if (sl.is_pitcher) {
+    if (sl.era_minus_level == null) return null;
+    const ip = Number(sl.ip || 0);
+    if (ip < 15) return null;
+    const perfAdj = 100 - sl.era_minus_level;
+    return {
+      score: Math.round(perfAdj + ageAdj),
+      perf: Math.round(perfAdj),
+      age: Math.round(ageAdj),
+      driver: `ERA- ${sl.era_minus_level} · ${avl.diff != null ? `${avl.diff > 0 ? "+" : ""}${avl.diff.toFixed(1)}y vs ${sl.level || "level"}` : "age unknown"}`,
+    };
+  } else {
+    if (sl.ops_plus_level == null) return null;
+    const games = Number(sl.games || 0);
+    if (games < 15) return null;
+    const perfAdj = sl.ops_plus_level - 100;
+    return {
+      score: Math.round(perfAdj + ageAdj),
+      perf: Math.round(perfAdj),
+      age: Math.round(ageAdj),
+      driver: `OPS+ ${sl.ops_plus_level} · ${avl.diff != null ? `${avl.diff > 0 ? "+" : ""}${avl.diff.toFixed(1)}y vs ${sl.level || "level"}` : "age unknown"}`,
+    };
+  }
+}
+
+function rpsPillHTML(rps) {
+  if (rps == null) {
+    return `<span class="rps-pill is-null" title="Insufficient sample to compute Relative Production Score (need 15+ games for hitters, 15+ IP for pitchers, plus age-vs-level data).">RPS —</span>`;
+  }
+  const cls = rps.score > 5 ? "is-pos" : rps.score < -5 ? "is-neg" : "is-neutral";
+  const sign = rps.score > 0 ? "+" : "";
+  const title = `Relative Production Score · performance ${rps.perf >= 0 ? "+" : ""}${rps.perf} · age ${rps.age >= 0 ? "+" : ""}${rps.age} · ${rps.driver}`;
+  return `<span class="rps-pill ${cls}" title="${escapeHtml(title)}">RPS ${sign}${rps.score}</span>`;
+}
+
+// Per-player colors used by the overlay chart + legend dots. Cycles
+// through three distinct hues so 3-prospect comparisons stay readable.
+const COMPARE_COLORS = ["var(--neon-cyan)", "var(--neon-violet)", "var(--neon-amber)"];
+
+// Multi-player FV-history overlay. One SVG with one polyline per
+// pinned prospect. Each prospect is in their assigned compare color.
+// Shares the X-axis (date range across ALL prospects) and Y-axis
+// (FV 20-80).
+function makeFvOverlayChart(players) {
+  if (!players.length) return "";
+  // Common time range covers every player's points.
+  let minT = Infinity, maxT = -Infinity;
+  for (const p of players) {
+    for (const pt of (p.points || [])) {
+      const t = new Date(pt.snapshot_date).getTime();
+      if (isNaN(t)) continue;
+      if (t < minT) minT = t;
+      if (t > maxT) maxT = t;
+    }
+  }
+  if (!isFinite(minT) || !isFinite(maxT) || minT === maxT) {
+    return `<div style="color:var(--text-tertiary);font-size:11px;padding:8px;">Not enough FV history for an overlay chart.</div>`;
+  }
+  const W = 720, H = 140, PAD = 8, Y_LABEL_W = 16, LABEL_H = 12;
+  const CHART_BOTTOM = H - LABEL_H - PAD;
+  const X_LEFT = PAD + Y_LABEL_W;
+  const timeSpan = maxT - minT;
+  const xScale = d => X_LEFT + ((new Date(d).getTime() - minT) / timeSpan) * (W - X_LEFT - PAD);
+  const yScale = fv => CHART_BOTTOM - ((fv - 20) / (80 - 20)) * (CHART_BOTTOM - PAD);
+
+  // Y-axis labels + a reference line at FV 50.
+  const yAxis = `
+    <text x="${PAD}" y="${(yScale(80) + 3).toFixed(1)}" font-size="9" fill="var(--text-tertiary)" font-family="var(--font-mono)">80</text>
+    <text x="${PAD}" y="${(yScale(50) + 3).toFixed(1)}" font-size="9" fill="var(--text-tertiary)" font-family="var(--font-mono)">50</text>
+    <text x="${PAD}" y="${(yScale(20) + 3).toFixed(1)}" font-size="9" fill="var(--text-tertiary)" font-family="var(--font-mono)">20</text>
+    <line x1="${X_LEFT}" y1="${yScale(50).toFixed(1)}" x2="${W - PAD}" y2="${yScale(50).toFixed(1)}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3,3"/>`;
+
+  // Year gridlines + labels along the X axis.
+  const yearSvg = [];
+  const startYear = new Date(minT).getFullYear();
+  const endYear   = new Date(maxT).getFullYear();
+  for (let yr = startYear; yr <= endYear + 1; yr++) {
+    const yrT = Date.UTC(yr, 0, 1);
+    if (yrT <= minT || yrT >= maxT) continue;
+    const x = xScale(new Date(yrT).toISOString().split("T")[0]).toFixed(1);
+    yearSvg.push(
+      `<line x1="${x}" y1="${PAD}" x2="${x}" y2="${CHART_BOTTOM}" stroke="var(--border)" stroke-width="0.4" stroke-dasharray="2,3"/>`,
+      `<text x="${x}" y="${H - 1}" font-size="9" fill="var(--text-tertiary)" text-anchor="middle">${yr}</text>`
+    );
+  }
+
+  // One polyline + endpoint dots per player.
+  const lines = players.map((p, i) => {
+    const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
+    const pts = (p.points || []).map(pt => `${xScale(pt.snapshot_date).toFixed(1)},${yScale(pt.consensus_fv_raw).toFixed(1)}`).join(" ");
+    const last = p.points && p.points.length ? p.points[p.points.length - 1] : null;
+    const endDot = last
+      ? `<circle cx="${xScale(last.snapshot_date).toFixed(1)}" cy="${yScale(last.consensus_fv_raw).toFixed(1)}" r="3.5" fill="${color}"><title>${escapeHtml(p.player_name)}: FV ${last.consensus_fv_label} (${last.snapshot_date})</title></circle>`
+      : "";
+    return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6"/>${endDot}`;
+  }).join("");
+
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;overflow:visible;">
+    ${yAxis}
+    ${yearSvg.join("")}
+    ${lines}
+  </svg>`;
+}
+
+// Head-to-head stat table. Each row is one stat; one column per
+// pinned player. Best value in green, worst in red, neutral
+// otherwise. Hitters and pitchers get different stat lists; mixed
+// rosters (hitter + pitcher pinned together) fall back to FV / age /
+// level / ETA rows only.
+function makeCompareStatTable(players) {
+  if (!players.length) return "";
+  // Decide which stat list applies based on the majority side. A
+  // mixed pinning (e.g., one hitter + one pitcher) shows the universal
+  // rows only.
+  const sides = players.map(p => (p.statline || {}).is_pitcher ? "pit" : "hit");
+  const uniqSides = new Set(sides);
+  const universal = [
+    ["Age",          p => p.age != null ? p.age.toFixed(1) : null,    { hi: false, fmt: v => v.toFixed(1) }],
+    ["Current FV",   p => p.fv_close,                                 { hi: true,  fmt: v => String(Math.round(v)) }],
+    ["Level",        p => (p.statline || {}).level || null,           { categorical: true }],
+    ["ETA",          p => (p.eta || {}).year || null,                 { hi: false, fmt: v => String(v) }],
+    ["Games (PA/IP volume)", p => {
+      const sl = p.statline || {};
+      return sl.is_pitcher ? (sl.ip != null ? Number(sl.ip) : null) : (sl.games != null ? sl.games : null);
+    }, { hi: true, fmt: v => v.toFixed ? v.toFixed(1) : String(v) }],
+  ];
+  const hitRows = [
+    ["AVG",  p => (p.statline || {}).avg,   { hi: true,  fmt: v => v }],
+    ["OBP",  p => (p.statline || {}).obp,   { hi: true,  fmt: v => v }],
+    ["SLG",  p => (p.statline || {}).slg,   { hi: true,  fmt: v => v }],
+    ["OPS",  p => (p.statline || {}).ops,   { hi: true,  fmt: v => v }],
+    ["ISO",  p => (p.statline || {}).iso,   { hi: true,  fmt: v => (typeof v === "number" ? v.toFixed(3).replace(/^0/, "") : v) }],
+    ["HR",   p => (p.statline || {}).hr,    { hi: true,  fmt: v => String(v) }],
+    ["SB",   p => (p.statline || {}).sb,    { hi: true,  fmt: v => String(v) }],
+    ["BB%",  p => (p.statline || {}).bb_pct,{ hi: true,  fmt: v => v.toFixed(1) + "%" }],
+    ["K%",   p => (p.statline || {}).k_pct, { hi: false, fmt: v => v.toFixed(1) + "%" }],
+    ["OPS+ (vs level)", p => (p.statline || {}).ops_plus_level, { hi: true, fmt: v => String(Math.round(v)) }],
+  ];
+  const pitRows = [
+    ["ERA",  p => (p.statline || {}).era,    { hi: false, fmt: v => v }],
+    ["WHIP", p => (p.statline || {}).whip,   { hi: false, fmt: v => (typeof v === "number" ? v.toFixed(2) : v) }],
+    ["IP",   p => (p.statline || {}).ip,     { hi: true,  fmt: v => (typeof v === "number" ? v.toFixed(1) : v) }],
+    ["K/9",  p => (p.statline || {}).k_per_9, { hi: true, fmt: v => (typeof v === "number" ? v.toFixed(2) : v) }],
+    ["BB/9", p => (p.statline || {}).bb_per_9,{ hi: false, fmt: v => (typeof v === "number" ? v.toFixed(2) : v) }],
+    ["ERA- (vs level)", p => (p.statline || {}).era_minus_level, { hi: false, fmt: v => String(Math.round(v)) }],
+  ];
+  // Group headers.
+  const sections = [];
+  sections.push(["Identity / FV", universal]);
+  if (uniqSides.size === 1) {
+    sections.push(sides[0] === "pit" ? ["Pitching", pitRows] : ["Hitting", hitRows]);
+  } else {
+    sections.push(["Stats", []]);  // mixed pinning — no comparable stat rows
+  }
+  // Build header.
+  const headerCols = players.map((p, i) => {
+    const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
+    return `<th><span class="csbs-legend-dot" style="background:${color};"></span>${escapeHtml(p.player_name)}</th>`;
+  }).join("");
+  const header = `<thead><tr><th>Stat</th>${headerCols}</tr></thead>`;
+  // Build body.
+  const renderRow = ([label, getValue, opts]) => {
+    const rawVals = players.map(getValue);
+    const numericVals = rawVals.map(v => v == null ? null : Number(v)).filter(v => v != null && !isNaN(v));
+    let bestIdx = -1, worstIdx = -1;
+    if (!opts.categorical && numericVals.length >= 2) {
+      // Find indices of best/worst non-null numeric values.
+      let bestVal = opts.hi ? -Infinity : Infinity;
+      let worstVal = opts.hi ? Infinity : -Infinity;
+      rawVals.forEach((v, i) => {
+        if (v == null) return;
+        const n = Number(v);
+        if (isNaN(n)) return;
+        if (opts.hi ? n > bestVal : n < bestVal) { bestVal = n; bestIdx = i; }
+        if (opts.hi ? n < worstVal : n > worstVal) { worstVal = n; worstIdx = i; }
+      });
+      // If best == worst (all equal), drop highlighting.
+      if (bestVal === worstVal) { bestIdx = -1; worstIdx = -1; }
+    }
+    const cells = rawVals.map((v, i) => {
+      if (v == null) return `<td style="color:var(--text-tertiary);">—</td>`;
+      let display = v;
+      if (opts.fmt && !opts.categorical) {
+        try { display = opts.fmt(typeof v === "number" ? v : Number(v)); }
+        catch { display = String(v); }
+      }
+      const cls = i === bestIdx ? "is-best" : i === worstIdx ? "is-worst" : "";
+      return `<td class="${cls}">${escapeHtml(String(display))}</td>`;
+    }).join("");
+    return `<tr><td>${escapeHtml(label)}</td>${cells}</tr>`;
+  };
+  const body = sections.map(([title, rows]) => {
+    const groupHeader = `<tr class="is-group-header"><td colspan="${players.length + 1}">${escapeHtml(title)}</td></tr>`;
+    if (!rows.length) return groupHeader + `<tr><td colspan="${players.length + 1}" style="color:var(--text-tertiary);font-size:10px;">Mixed pinning — pin only hitters or only pitchers to compare side-specific stats.</td></tr>`;
+    return groupHeader + rows.map(renderRow).join("");
+  }).join("");
+  return `<table class="compare-stat-table">${header}<tbody>${body}</tbody></table>`;
+}
+
+// Side-by-side cart layout — used when 2+ players are pinned.
+function makeCompareSideBySide(players) {
+  // Per-player header row with name, FV badge, RPS pill, remove btn.
+  const cols = `repeat(${players.length}, minmax(0, 1fr))`;
+  const heads = players.map((p, i) => {
+    const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
+    const fvLabel = p.fv_close != null ? Math.round(p.fv_close) : "—";
+    const sl = p.statline || {};
+    const ageBits = [];
+    if (p.age != null) ageBits.push(`${p.age.toFixed(1)}yo`);
+    if (sl.level) ageBits.push(sl.level);
+    if (p.org) ageBits.push(p.org);
+    const rps = computeRelProd(p);
+    return `<div class="csbs-player" style="--csbs-color:${color};">
+      <button class="csbs-remove" data-compare-remove="${escapeHtml(p.player_key)}" type="button" title="Remove from compare">×</button>
+      <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
+        <span onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');" style="cursor:pointer;flex-shrink:0;">${headshotHTML(p, 56)}</span>
+        <div style="min-width:0;flex:1;">
+          <div class="csbs-name" onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');">${escapeHtml(p.player_name)}
+            <span class="fv-badge ${fvClass(String(fvLabel))} size-sm" style="margin-left:6px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}</span>
+          </div>
+          <div class="csbs-meta">${escapeHtml(ageBits.join(" · ")) || "—"}</div>
+          ${rpsPillHTML(rps)}
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+
+  const head = `<div class="compare-sbs-head" style="grid-template-columns:${cols};">${heads}</div>`;
+  const chart = `<div class="compare-overlay-chart"><div style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:700;margin-bottom:4px;">FV history · overlay</div>${makeFvOverlayChart(players)}</div>`;
+  const table = makeCompareStatTable(players);
+  // RPS summary row — repeat each player's score + driver caption.
+  const rpsRows = players.map((p, i) => {
+    const rps = computeRelProd(p);
+    const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
+    if (!rps) {
+      return `<div><span class="csbs-legend-dot" style="background:${color};"></span><strong>${escapeHtml(p.player_name)}</strong> <span class="crps-driver">RPS unavailable — insufficient sample</span></div>`;
+    }
+    const arrow = rps.score >= 0 ? "↑" : "↓";
+    return `<div><span class="csbs-legend-dot" style="background:${color};"></span><strong>${escapeHtml(p.player_name)}</strong> ${arrow} ${rps.score >= 0 ? "+" : ""}${rps.score} <span class="crps-driver">(${escapeHtml(rps.driver)})</span></div>`;
+  }).join("");
+  const summary = `<div class="compare-rps-row">
+    <div style="font-family:var(--font-sans);font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;margin-bottom:6px;">Relative production score · how far ahead of age + level</div>
+    ${rpsRows}
+  </div>`;
+  return head + chart + table + summary;
+}
+
 function renderCompareCart() {
   const keys = compareLoad();
   const toggle = document.getElementById("compare-toggle");
@@ -7566,7 +8005,12 @@ function renderCompareCart() {
   document.querySelectorAll(".compare-add-btn[data-compare-key]").forEach(btn => {
     const isIn = keys.includes(btn.dataset.compareKey);
     btn.classList.toggle("is-in", isIn);
-    btn.textContent = isIn ? "✓ In compare" : "+ Add to compare";
+    if (btn.classList.contains("is-compact")) {
+      btn.textContent = isIn ? "✓" : "+";
+      btn.title = isIn ? "Remove from compare" : "Add to compare";
+    } else {
+      btn.textContent = isIn ? "✓ In compare" : "+ Add to compare";
+    }
   });
   const body = document.getElementById("compare-body");
   if (!body) return;
@@ -7574,6 +8018,23 @@ function renderCompareCart() {
     body.innerHTML = `<div style="color:var(--text-tertiary);font-size:13px;padding:8px 4px;">No prospects pinned yet. Open a player detail and tap "+ Add to compare".</div>`;
     return;
   }
+  // Resolve every pinned key to a full player object (or render a
+  // stub if the pin is stale — player no longer in current data).
+  const players = [];
+  const stubs = [];
+  for (const k of keys) {
+    const p = findPlayer(k);
+    if (p) players.push(p);
+    else   stubs.push(k);
+  }
+  // 2+ valid players pinned → side-by-side comparison. 1 player or
+  // only stubs → fall back to the single-card view per the plan.
+  if (players.length >= 2) {
+    const stubHTML = stubs.map(k => `<div class="compare-card"><div style="color:var(--text-tertiary);">Player "${escapeHtml(k)}" not in current data.</div><button class="cc-remove" data-compare-remove="${escapeHtml(k)}">remove</button></div>`).join("");
+    body.innerHTML = makeCompareSideBySide(players) + stubHTML;
+    return;
+  }
+  // Single-player fallback — keep the legacy card layout.
   const cards = keys.map(k => {
     const p = findPlayer(k);
     if (!p) return `<div class="compare-card"><div>Player "${escapeHtml(k)}" not found in current data.</div><button class="cc-remove" data-compare-remove="${escapeHtml(k)}">remove</button></div>`;
@@ -7589,15 +8050,21 @@ function renderCompareCart() {
     const sparkline = (p.points && p.points.length >= 2)
       ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)
       : "";
+    const rps = computeRelProd(p);
     return `<div class="compare-card" style="${orgStripe(p.org)}">
-      <div>
-        <div class="player-name" style="cursor:pointer;" onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');">${escapeHtml(p.player_name)}
-          <span class="fv-badge ${fvClass(String(fvLabel))} size-sm" style="margin-left:6px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>
+      <div style="display:flex;gap:10px;align-items:flex-start;min-width:0;">
+        <span onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');" style="cursor:pointer;flex-shrink:0;">${headshotHTML(p, 64)}</span>
+        <div style="min-width:0;flex:1;">
+          <div class="player-name" style="cursor:pointer;" onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');">${escapeHtml(p.player_name)}
+            <span class="fv-badge ${fvClass(String(fvLabel))} size-sm" style="margin-left:6px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}</span>
+          </div>
+          ${playerMetaHTML(p)}
+          <div style="margin-top:6px;">${rpsPillHTML(rps)}</div>
+          <div class="cc-stat" style="margin-top:6px;">${escapeHtml(slashLine)}</div>
+          <div class="cc-stat" style="margin-top:2px;color:var(--text-tertiary);">${escapeHtml(eta)}${ageVsLevel ? " · " + escapeHtml(ageVsLevel) : ""}</div>
+          <div style="margin-top:4px;">${sparkline}</div>
+          <div style="margin-top:6px;font-size:10px;color:var(--text-tertiary);">Pin a second prospect to compare side-by-side.</div>
         </div>
-        ${playerMetaHTML(p)}
-        <div class="cc-stat" style="margin-top:6px;">${escapeHtml(slashLine)}</div>
-        <div class="cc-stat" style="margin-top:2px;color:var(--text-tertiary);">${escapeHtml(eta)}${ageVsLevel ? " · " + escapeHtml(ageVsLevel) : ""}</div>
-        <div style="margin-top:4px;">${sparkline}</div>
       </div>
       <button class="cc-remove" data-compare-remove="${escapeHtml(p.player_key)}" type="button">remove</button>
     </div>`;
