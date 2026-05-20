@@ -522,18 +522,9 @@
     .fv-badge.size-md { font-size: 13px; padding: 3px 10px; min-width: 40px; } /* default */
     .fv-badge.size-lg { font-size: 22px; padding: 5px 14px; min-width: 60px; }
 
-    /* Low-confidence marker hanging off the FV badge — faint asterisk
-       superscript flagging that fewer than 3 sources contributed to
-       the consensus. Tooltipped with the exact source count. */
-    .fv-low-conf {
-      font-family: var(--font-sans);
-      font-size: 0.8em;
-      color: var(--text-tertiary);
-      margin-left: 2px;
-      vertical-align: super;
-      line-height: 0;
-      cursor: help;
-    }
+    /* .fv-low-conf removed 2026-05 along with the confidence asterisk —
+       with shrinkage gone the "low confidence" penalty no longer
+       applies (every FV is just the published source mean). */
     .fv-80 { background: var(--fv-80-bg); color: var(--fv-80-fg); border-color: var(--fv-80-bd); }
     .fv-75 { background: var(--fv-75-bg); color: var(--fv-75-fg); border-color: var(--fv-75-bd); }
     .fv-70 { background: var(--fv-70-bg); color: var(--fv-70-fg); border-color: var(--fv-70-bd); }
@@ -902,14 +893,15 @@
       display: grid;
       /* Columns (in order):
            # · logo · org · grade · form-line · top prospect ·
-           positions · level depth · avg age · stock · arrow
+           positions · level depth · avg age · spend · stock · arrow
          The form column is pinned to a fixed pixel width that's wide
          enough for the 130px sparkline + the trailing delta-vs-median
-         badge. Pinning (not flex) prevents the SVG (which intentionally
-         renders `overflow:visible` for the polygon outline) from
-         bleeding into the Top-prospect column on narrower viewports.
-         Top-prospect, Positions-mix, and Level-depth absorb the slack. */
-      grid-template-columns: 32px 40px 200px 110px 190px 1.2fr 130px 1fr 64px 70px 16px;
+         badge. Pinning (not flex) prevents the SVG from bleeding into
+         the Top-prospect column on narrower viewports. Top-prospect,
+         Positions-mix, and Level-depth absorb the slack. The 56px
+         spend-mix column hosts a small IFA-vs-Draft donut with
+         hover-tooltipped dollar totals. */
+      grid-template-columns: 32px 40px 200px 110px 190px 1.2fr 130px 1fr 64px 56px 70px 16px;
       gap: 12px;
       align-items: center;
     }
@@ -2041,7 +2033,7 @@
   <div class="section-tabs" id="section-tabs">
     <button class="section-tab active" data-section="active">Active</button>
     <button class="section-tab" data-section="spotlights">Spotlights</button>
-    <button class="section-tab" data-section="traded">Recently Traded</button>
+    <button class="section-tab" data-section="traded">Recently Acquired</button>
     <button class="section-tab" data-section="injured">Injured List</button>
     <button class="section-tab" data-section="graduates">Graduates</button>
     <button class="section-tab" data-section="farm">Farm Systems</button>
@@ -2090,7 +2082,6 @@
         <option value="trade">Trade</option>
         <option value="waiver">Waiver claim</option>
         <option value="rule_5">Rule 5</option>
-        <option value="free_agent">Free-agent signing</option>
         <option value="contract_purchase">Contract purchase</option>
       </select>
     </div>
@@ -2162,8 +2153,6 @@
               title="Longest current IL stints first">Days on IL (longest)</button>
       <button class="chip" data-il-sort="fv"
               title="Highest-FV injured prospects first">FV</button>
-      <button class="chip" data-il-sort="since"
-              title="Most recently placed on IL first">Since (newest)</button>
     </div>
     <div id="injured-rows"></div>
   </div>
@@ -2185,17 +2174,17 @@
   <div id="farm-section" style="display:none;">
     <div class="filter-bar" id="farm-sort-bar" style="flex-wrap:wrap;gap:6px;">
       <span class="filter-label">Sort by</span>
-      <button class="chip active" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% graduation pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
+      <button class="chip" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% graduation pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
       <button class="chip" data-farm-sort="top_end" title="Tiered-FV sum of the org's top 5 prospects — an 80 is worth ~100x a 40">Top-end</button>
       <button class="chip" data-farm-sort="depth" title="Tiered-FV sum of prospects #6-25">Depth</button>
-      <!-- Three explicit Trajectory chips, one per window. Clicking
-           any of them sets both the active sort AND the form-window
-           used by the line charts above, so picking "Trajectory 3y"
-           always shows 3-year line charts alongside 3-year sorting. -->
+      <!-- Three explicit Development chips, one per window. Clicking
+           any of them sets both the active sort AND the development-
+           window used by the sparklines so picking "Development 3y"
+           always shows 3-year sparklines alongside 3-year sorting. -->
       <button class="chip" data-farm-sort="trajectory_1y"
               title="1-year prospect FV development vs the median org. Incoming acquisitions (trades/draft/IFA) excluded — only the org's own development moves the line. Positive = developing faster than the typical farm.">Development 1y</button>
-      <button class="chip" data-farm-sort="trajectory_3y"
-              title="3-year development vs median. Acquisitions excluded.">Development 3y</button>
+      <button class="chip active" data-farm-sort="trajectory_3y"
+              title="3-year development vs median (default). Acquisitions excluded.">Development 3y</button>
       <button class="chip" data-farm-sort="trajectory_5y"
               title="5-year development vs median. Acquisitions excluded.">Development 5y</button>
       <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted graduations in the trailing 12 months">Grad pipeline</button>
@@ -2214,8 +2203,8 @@
       <button class="chip" data-farm-sort="level_DSL">DSL</button>
       <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <span class="filter-label" title="Window used by the development sparkline + Trajectory sort. The line shows each org's prospect FV growth above (or below) the median org over the same window, with incoming acquisitions (trades, draft, IFA) excluded so only true development counts.">Development window</span>
-        <button class="chip active" data-form-window="1y">1y</button>
-        <button class="chip"        data-form-window="3y">3y</button>
+        <button class="chip"        data-form-window="1y">1y</button>
+        <button class="chip active" data-form-window="3y">3y</button>
         <button class="chip"        data-form-window="5y">5y</button>
       </div>
     </div>
@@ -2240,9 +2229,8 @@
       <button class="chip"        data-lb-stat="k_per_9" title="Strikeouts per 9 IP">K/9</button>
       <button class="chip"        data-lb-stat="bb_per_9" title="Walks per 9 IP (lower is better)">BB/9</button>
 
-      <span class="filter-label" style="margin-left:10px;">Level</span>
-      <button class="chip active" data-lb-level="all">All</button>
-      <button class="chip"        data-lb-level="MLB">MLB</button>
+      <span class="filter-label" style="margin-left:10px;" title="Prospect leaderboard — MiLB levels only. Graduates and MLB-level rows are excluded.">Level</span>
+      <button class="chip active" data-lb-level="all">All MiLB</button>
       <button class="chip"        data-lb-level="AAA">AAA</button>
       <button class="chip"        data-lb-level="AA">AA</button>
       <button class="chip"        data-lb-level="A+">A+</button>
@@ -2337,10 +2325,12 @@ const FV_TO_WAR = {
 };
 
 // Build a tooltip string for an FV badge: tier label, raw (unsnapped)
-// FV when the shrinkage moved it materially, source count + a "low
-// confidence" caveat when fewer than 3 sources graded the player, and
-// the FanGraphs WAR projection for the tier. Newlines render as
-// multi-line tooltips in every modern browser.
+// mean of source grades when it differs from the snapped tier, and the
+// FanGraphs WAR projection for the tier. Source-count references were
+// removed 2026-05 — the consensus is just the mean of source grades
+// now, so the source count carries no model meaning. (Anyone curious
+// about per-source breakdown can still see it on the player detail
+// "Source consensus" card.)
 function fvBadgeTooltip(player) {
   if (!player) return "";
   const parts = [];
@@ -2352,32 +2342,19 @@ function fvBadgeTooltip(player) {
     }
     parts.push(line);
   }
-  const latest = player.points && player.points.length
-    ? player.points[player.points.length - 1] : null;
-  const sourceCount = latest && latest.per_source
-    ? Object.keys(latest.per_source).length : 0;
-  if (sourceCount > 0) {
-    const lowConf = sourceCount < 3 ? " (low confidence)" : "";
-    parts.push(`${sourceCount} source${sourceCount === 1 ? "" : "s"} contributing${lowConf}`);
-  }
   if (tier != null && FV_TO_WAR[tier]) {
     parts.push(FV_TO_WAR[tier]);
   }
   return parts.join("\n");
 }
 
-// Small confidence indicator that hangs off an FV badge when the
-// consensus is built on fewer than 3 sources. A faint asterisk is
-// enough to flag the badge as "look closer before trusting" without
-// crowding the value.
+// Confidence indicator removed 2026-05 — when consensus FV is simply
+// the mean of source grades (no shrinkage), a single-source grade
+// isn't a "lower confidence" value, just one outlet's opinion. Source
+// count is still surfaced in the badge tooltip as informational text.
+// Kept as a no-op stub so existing call sites don't need rewiring.
 function fvBadgeConfidence(player) {
-  if (!player) return "";
-  const latest = player.points && player.points.length
-    ? player.points[player.points.length - 1] : null;
-  const sourceCount = latest && latest.per_source
-    ? Object.keys(latest.per_source).length : 0;
-  if (sourceCount >= 3) return "";
-  return `<span class="fv-low-conf" title="${sourceCount} source${sourceCount === 1 ? "" : "s"} only — low-confidence consensus">*</span>`;
+  return "";
 }
 
 const fvClass = label => {
@@ -2902,8 +2879,8 @@ function goHome() {
   if (state.sort !== "fv")        p.set("sort", state.sort);
   if (state.stockFilter !== "all") p.set("stock", state.stockFilter);
   if (state.search)               p.set("q", state.search);
-  if (state.farmSort !== "farm_rank") p.set("farm", state.farmSort);
-  if (state.formWindow !== "1y")      p.set("formw", state.formWindow);
+  if (state.farmSort !== "trajectory_3y") p.set("farm", state.farmSort);
+  if (state.formWindow !== "3y")          p.set("formw", state.formWindow);
   if (state.spotlightBucket !== "hot") p.set("bucket", state.spotlightBucket);
   _pushHash(p);
 }
@@ -3140,11 +3117,15 @@ const state = {
   // still shows the precise published position.
   posFilter: "all",
   sort: "fv",
-  farmSort: "farm_rank",
+  // Default to 3-year development-vs-median sort — the user's preferred
+  // entry view. `trajectory_3y` flips both the sort and the development
+  // window to 3y (see attachChipGroup("farm-sort", …)). farm_rank stays
+  // available as a chip.
+  farmSort: "trajectory_3y",
   // Active form-bar window. Controls the farm-list sparkline (which
   // plots growth above the median org over the same window) and the
   // value used when sorting by "Trajectory".
-  formWindow: "1y",
+  formWindow: "3y",
   spotlightBucket: "hot",
   // Farm-detail "Transaction history" filters. Persisted on the URL so a
   // shared link reopens the same filtered view. Default is "all".
@@ -3555,38 +3536,131 @@ function renderSpotlights() {
         : `<div class="state-message">No ${escapeHtml(bucket)} spotlights available from the current data.</div>`);
 }
 
-// Latest trade date for a prospect (or null if they were never traded).
-// Used to sort the "Recently Traded" section.
-function lastTradeDate(p) {
-  const trades = p.trades || [];
-  if (!trades.length) return null;
-  // Trades arrive sorted ascending by date from the back-end; take the last.
-  return trades[trades.length - 1].trade_date;
+// Resolve a prospect's most-recent inbound acquisition into their
+// CURRENT org. Returns null if we can't identify one. Supported method
+// kinds, in priority order (most recent wins):
+//   trade           — p.trades[].to_org === p.org
+//   waiver_claim    — p.transactions[] kind=waiver_claim, to_org === p.org
+//   rule_5          — p.transactions[] kind=rule_5* into current org
+//   purchase        — p.transactions[] kind=contract_purchase
+//   free_agent      — p.transactions[] kind=signed_free_agent (MiLB FA, mostly)
+//   international_fa — p.acquisition (signing_date) when method=international_fa
+//   draft           — p.acquisition (year + pick) when method=draft
+function latestAcquisition(p) {
+  const events = [];
+  // Trades into current org.
+  for (const t of (p.trades || [])) {
+    if (t.to_org === p.org && t.trade_date) {
+      events.push({
+        date: t.trade_date,
+        method: "trade",
+        from_org: t.from_org,
+        to_org: t.to_org,
+        description: t.description || "",
+        sort_key: t.trade_date,
+      });
+    }
+  }
+  // Non-trade transactions into current org.
+  for (const tx of (p.transactions || [])) {
+    const k = (tx.kind || "").toLowerCase();
+    let method = null;
+    // Method keys match the existing `#acq-filter` <select> values so
+    // the shared Active-list / Recently-Acquired filter applies the
+    // same semantics on both pages. `signed_free_agent` is excluded —
+    // most active prospects have annual MiLB contract renewals tagged
+    // that way, which would drown out genuine acquisition events.
+    if (k === "waiver_claim")        method = "waiver";
+    else if (k.startsWith("rule_5")) method = "rule_5";
+    else if (k === "contract_purchase") method = "contract_purchase";
+    if (!method) continue;
+    if (tx.to_org && tx.to_org !== p.org) continue;  // not into current org
+    if (!tx.date) continue;
+    events.push({
+      date: tx.date,
+      method,
+      from_org: tx.from_org || null,
+      to_org: tx.to_org || p.org,
+      description: tx.description || "",
+      sort_key: tx.date,
+    });
+  }
+  // Original acquisition (draft / IFA) — only if they're still with
+  // the org that drafted / signed them (no events more recent).
+  const a = p.acquisition;
+  if (a && a.method) {
+    const sameOrg = !a.team_abbr || a.team_abbr === p.org || !p.org;
+    // Acquisitions don't always have a precise date; use signing_date,
+    // then year-only as a fallback so they don't sort before trades.
+    const date = a.signing_date || (a.year ? `${a.year}-01-01` : null);
+    if (sameOrg && date) {
+      const method = a.method === "international_fa" ? "international_fa"
+                   : a.method === "draft" ? "draft"
+                   : a.method;
+      events.push({
+        date,
+        method,
+        from_org: null,
+        to_org: p.org,
+        description: a.school
+          ? `Drafted from ${a.school}`
+          : (a.team_name ? `Signed by ${a.team_name}` : ""),
+        bonus_usd: a.bonus_usd,
+        pick_overall: a.pick_overall,
+        round_label: a.round_label,
+        year: a.year,
+        sort_key: date,
+      });
+    }
+  }
+  if (!events.length) return null;
+  events.sort((a, b) => b.sort_key.localeCompare(a.sort_key));
+  return events[0];
 }
 
-function getFilteredTraded() {
-  // Active prospects only (graduates have their own section).
-  let pool = DATA.players.filter(p => (p.trades || []).length > 0);
+// Pretty label + chip color for each acquisition method. Method keys
+// match the global `#acq-filter` <select> values.
+const ACQ_LABELS = {
+  trade:             { label: "Trade",             color: "var(--accent-traded)" },
+  waiver:            { label: "Waiver claim",      color: "var(--neon-amber)" },
+  rule_5:            { label: "Rule 5",            color: "var(--neon-cyan)" },
+  contract_purchase: { label: "Contract purchase", color: "var(--text-secondary)" },
+  international_fa:  { label: "International FA",  color: "var(--neon-violet)" },
+  draft:             { label: "MLB Draft",         color: "var(--up)" },
+};
+
+function getFilteredAcquired() {
+  // Active prospects only (graduates have their own section). For each
+  // active player we resolve their MOST RECENT inbound acquisition; the
+  // pool is players where that resolves to something.
+  let pool = [];
+  for (const p of (DATA.players || [])) {
+    const acq = latestAcquisition(p);
+    if (!acq) continue;
+    pool.push({ p, acq });
+  }
   if (state.search) {
     const q = state.search.toLowerCase();
-    pool = pool.filter(p => p.player_name.toLowerCase().includes(q));
+    pool = pool.filter(({ p }) => p.player_name.toLowerCase().includes(q));
   }
   if (state.orgFilter !== "all") {
-    pool = pool.filter(p => p.org === state.orgFilter);
+    pool = pool.filter(({ p }) => p.org === state.orgFilter);
   }
-  // Sort by most recent trade first; tiebreak by consensus FV desc so a
-  // 50-FV prospect who was traded on the same date as a 35-FV org filler
-  // appears above the filler.
+  if (state.acqFilter !== "all") {
+    pool = pool.filter(({ acq }) => acq.method === state.acqFilter);
+  }
+  // Sort by acquisition date desc; tiebreak by FV desc.
   pool.sort((a, b) => {
-    const da = lastTradeDate(a) || "";
-    const db = lastTradeDate(b) || "";
-    if (da !== db) return db.localeCompare(da);
-    const fa = a.points.length ? a.points[a.points.length - 1].consensus_fv_raw : 0;
-    const fb = b.points.length ? b.points[b.points.length - 1].consensus_fv_raw : 0;
+    if (a.acq.date !== b.acq.date) return b.acq.date.localeCompare(a.acq.date);
+    const fa = a.p.points.length ? a.p.points[a.p.points.length - 1].consensus_fv_raw : 0;
+    const fb = b.p.points.length ? b.p.points[b.p.points.length - 1].consensus_fv_raw : 0;
     return fb - fa;
   });
   return pool;
 }
+
+// Back-compat alias for callers that still reference the old name.
+const getFilteredTraded = getFilteredAcquired;
 
 // Cross-org leaderboards — top N prospects by a chosen stat for the
 // chosen season. Pulls from career_stats (year-by-year per-level rows)
@@ -3634,35 +3708,35 @@ function renderLeaderboards() {
   const season = Number(state.lbSeason || new Date().getUTCFullYear());
 
   // Walk every (player, career_stats row) for the selected season.
-  // A player can have multiple rows in the same season if they spent
-  // time at multiple levels — each becomes its own leaderboard entry
-  // so a Jesús Made AA-then-AAA year would land in both AAA and AA
-  // boards, but only the matching row when the user picks a specific
-  // level.
+  // Restricted to ACTIVE PROSPECTS — graduates are excluded since they're
+  // no longer prospects, and MLB-level rows are excluded since this is a
+  // prospect leaderboard (the Active list itself already covers MLB-graded
+  // prospects who happen to have MLB-level stats). A player can have
+  // multiple MiLB rows in the same season; each becomes its own entry
+  // so a Jesús Made AA-then-AAA year would land in both AAA and AA boards.
   const pool = [];
-  for (const arr of ["players", "graduates"]) {
-    for (const p of (DATA[arr] || [])) {
-      const career = p.career_stats || [];
-      if (!career.length) continue;
-      // Wrong-side gate at the player level — `p.position` is the most
-      // current designation. is_pitcher on the row is authoritative
-      // when present.
-      const bucket = positionBucket(p.position);
-      if (pos !== "all" && !positionMatches(bucket, pos)) continue;
-      if (org !== "all" && p.org !== org) continue;
-      for (const r of career) {
-        if (r.season !== season) continue;
-        if (cfg.side === "hit" && r.is_pitcher) continue;
-        if (cfg.side === "pit" && !r.is_pitcher) continue;
-        if (lvl !== "all" && r.level !== lvl) continue;
-        const v = r[statKey];
-        if (v == null) continue;
-        // Sample gates — AB for hitters, IP for pitchers. Both may
-        // arrive as strings; Number()-coerce.
-        if (cfg.minAB && Number(r.ab ?? 0) < cfg.minAB) continue;
-        if (cfg.minIP && Number(r.ip ?? 0) < cfg.minIP) continue;
-        pool.push({ p, r, v: Number(v) });
-      }
+  for (const p of (DATA.players || [])) {
+    const career = p.career_stats || [];
+    if (!career.length) continue;
+    // Wrong-side gate at the player level — `p.position` is the most
+    // current designation. is_pitcher on the row is authoritative
+    // when present.
+    const bucket = positionBucket(p.position);
+    if (pos !== "all" && !positionMatches(bucket, pos)) continue;
+    if (org !== "all" && p.org !== org) continue;
+    for (const r of career) {
+      if (r.season !== season) continue;
+      if (r.level === "MLB") continue;  // prospect leaderboard — MiLB only
+      if (cfg.side === "hit" && r.is_pitcher) continue;
+      if (cfg.side === "pit" && !r.is_pitcher) continue;
+      if (lvl !== "all" && r.level !== lvl) continue;
+      const v = r[statKey];
+      if (v == null) continue;
+      // Sample gates — AB for hitters, IP for pitchers. Both may
+      // arrive as strings; Number()-coerce.
+      if (cfg.minAB && Number(r.ab ?? 0) < cfg.minAB) continue;
+      if (cfg.minIP && Number(r.ip ?? 0) < cfg.minIP) continue;
+      pool.push({ p, r, v: Number(v) });
     }
   }
   pool.sort((a, b) => cfg.hi ? (b.v - a.v) : (a.v - b.v));
@@ -3680,7 +3754,7 @@ function renderLeaderboards() {
   if (!ranked.length) {
     const minLabel = cfg.minAB ? `${cfg.minAB} AB` : `${cfg.minIP || 0} IP`;
     document.getElementById("leaderboard-rows").innerHTML =
-      header + `<div class="state-message">No ${season} ${cfg.side === "hit" ? "hitters" : "pitchers"} qualify under these filters (min ${minLabel}).</div>`;
+      header + `<div class="state-message">No active MiLB ${cfg.side === "hit" ? "hitters" : "pitchers"} qualify for the ${season} ${escapeHtml(cfg.label)} board under these filters (min ${minLabel}).</div>`;
     return;
   }
 
@@ -3804,28 +3878,45 @@ function renderInjured() {
 }
 
 function renderRecentlyTraded() {
+  // Keep the news feed scoped to trade events on this tab (still the
+  // most user-relevant signal even now that the section also covers
+  // waivers / FA / Rule 5).
   renderWhatsNew("whats-new-traded", kind => kind === "trade");
-  const filtered = getFilteredTraded();
+  const filtered = getFilteredAcquired();
 
   // Grid columns live on `.col-header.is-traded` / `.player-row.is-traded`.
   const header = `<div class="col-header is-traded">
     <span style="text-align:center;">#</span>
     <span>Player · pos · org · age</span>
-    <span>Trade date</span>
-    <span>From → To</span>
+    <span>Acquisition date</span>
+    <span>Method · context</span>
     <span style="text-align:center;" title="Consensus Future Value · stock delta + direction below">FV · stock</span>
     <span class="desktop-only" style="text-align:center;">FV history</span>
     <span class="desktop-only" style="text-align:center;" title="FV open/high/low/close for the current month, candlestick style">Candle</span>
   </div>`;
 
-  const rows = filtered.map((p, i) => {
+  const rows = filtered.map(({ p, acq }, i) => {
     const latest = p.points[p.points.length - 1];
-    const idx = DATA.players.indexOf(p);
-    const lastTrade = p.trades[p.trades.length - 1];
-    const tradeFlow = `<span style="color:var(--text-tertiary);">${escapeHtml(lastTrade.from_org ?? "?")}</span> <span style="color:var(--neon-violet);">→</span> <span style="color:var(--text-primary);">${escapeHtml(lastTrade.to_org ?? "?")}</span>`;
-    const multiTrade = p.trades.length > 1
-      ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">+${p.trades.length - 1} earlier</span>`
-      : "";
+    const meta = ACQ_LABELS[acq.method] || { label: acq.method, color: "var(--text-secondary)" };
+    // The "method · context" cell shows the acquisition method as a
+    // colored pill, plus a short context line (from→to for trades,
+    // round/pick for drafts, signing details for IFA, etc.).
+    let contextLine = "";
+    if (acq.method === "trade") {
+      contextLine = `<span style="color:var(--text-tertiary);">${escapeHtml(acq.from_org ?? "?")}</span> <span style="color:var(--neon-violet);">→</span> <span style="color:var(--text-primary);">${escapeHtml(acq.to_org ?? "?")}</span>`;
+    } else if (acq.method === "draft" && acq.pick_overall) {
+      contextLine = `<span style="color:var(--text-tertiary);">${acq.year} draft</span> · <span style="color:var(--text-primary);">Pick ${acq.pick_overall}${acq.round_label ? ` (R${escapeHtml(acq.round_label)})` : ""}</span>`;
+    } else if (acq.method === "international_fa") {
+      const bonus = acq.bonus_usd ? ` · $${(acq.bonus_usd / 1_000_000).toFixed(2)}M` : "";
+      contextLine = `<span style="color:var(--text-tertiary);">${acq.year || "—"} IFA${bonus}</span>`;
+    } else if (acq.method === "waiver" && acq.from_org) {
+      contextLine = `<span style="color:var(--text-tertiary);">claimed from ${escapeHtml(acq.from_org)}</span>`;
+    } else if (acq.method === "rule_5" && acq.from_org) {
+      contextLine = `<span style="color:var(--text-tertiary);">Rule 5 from ${escapeHtml(acq.from_org)}</span>`;
+    } else {
+      contextLine = `<span style="color:var(--text-tertiary);">${escapeHtml(acq.description || "—")}</span>`;
+    }
+    const methodPill = `<span class="grad-pill" style="background:var(--bg-tertiary);color:${meta.color};border:1px solid var(--border);">${escapeHtml(meta.label)}</span>`;
     return `
       <div class="player-row is-traded" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
         <div class="rank-num">${i + 1}</div>
@@ -3834,10 +3925,12 @@ function renderRecentlyTraded() {
           ${playerMetaHTML(p)}
         </div>
         <div>
-          <span class="grad-pill" style="background:var(--bg-tertiary);color:var(--neon-violet);border:1px solid var(--border);">${lastTrade.trade_date}</span>
-          ${multiTrade}
+          <span class="grad-pill" style="background:var(--bg-tertiary);color:${meta.color};border:1px solid var(--border);">${escapeHtml(acq.date)}</span>
         </div>
-        <div style="font-size:12px;">${tradeFlow}</div>
+        <div style="font-size:12px;display:flex;flex-direction:column;gap:3px;">
+          ${methodPill}
+          <span style="font-size:11px;">${contextLine}</span>
+        </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeConfidence(p)}</span>${fvTrendHTML(p)}</div>
         <div class="line-chart-cell desktop-only">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
         <div class="candle-cell desktop-only">${makeCandle(p)}</div>
@@ -3847,7 +3940,7 @@ function renderRecentlyTraded() {
 
   document.getElementById("traded-rows").innerHTML = filtered.length
     ? header + rows
-    : `<div class="state-message">No traded prospects match these filters.</div>`;
+    : `<div class="state-message">No acquired prospects match these filters.</div>`;
 }
 
 function renderGraduates() {
@@ -4033,14 +4126,13 @@ function detailTable(p) {
   return `
     <div class="detail-title">FV history · ${p.points.length} update interval${p.points.length !== 1 ? "s" : ""}</div>
     <table class="detail-table">
-      <thead><tr><th>Date</th><th>Update</th><th>Consensus FV</th><th>Avg rank</th><th># sources</th></tr></thead>
+      <thead><tr><th>Date</th><th>Update</th><th>Consensus FV</th><th>Avg rank</th></tr></thead>
       <tbody>
         ${p.points.map(pt => `<tr>
           <td>${pt.snapshot_date}</td>
           <td><span class="src-tag">${escapeHtml(pt.interval_label)}</span></td>
           <td><span class="fv-badge ${fvClass(pt.consensus_fv_label)} size-sm">${pt.consensus_fv_label}</span></td>
           <td>${pt.avg_rank != null ? pt.avg_rank.toFixed(1) : "—"}</td>
-          <td style="color: var(--text-tertiary);">${pt.sources_contributing ? pt.sources_contributing.length : "—"}</td>
         </tr>`).join("")}
       </tbody>
     </table>
@@ -4319,7 +4411,11 @@ function updateMeta() {
     `<span class="dot">·</span>${DATA.total_tracked ?? (DATA.players.length + DATA.graduates.length)} prospects tracked` +
     `<span class="dot">·</span>${DATA.active_count} active` +
     `<span class="dot">·</span>${DATA.graduate_count} graduates`;
-  const tradedCount = DATA.players.filter(p => (p.trades || []).length > 0).length;
+  // "Acquired" pool size = every active prospect for whom we can
+  // resolve a most-recent inbound move (trade / waiver / draft / IFA /
+  // etc.). Practically that's nearly every active player; the section
+  // count surfaces how many match the active filters.
+  const tradedCount = (DATA.players || []).reduce((n, p) => n + (latestAcquisition(p) ? 1 : 0), 0);
   const spotlightCount = ((DATA.spotlights || {})[state.spotlightBucket] || []).length;
   const countMap = {
     active:       `${getFilteredActives().length} of ${DATA.active_count}`,
@@ -4524,7 +4620,7 @@ function makeFarmReportCard(org) {
   // stays anchored to the 1y trajectory_score that fed `farm_score` —
   // recomputing grades per window would let the user appear to "earn"
   // a different overall grade just by toggling the chip.
-  const win = state.formWindow || "1y";
+  const win = state.formWindow || "3y";
   const winLabel = win === "1y" ? "1y" : win === "3y" ? "3y" : "5y";
   const trajWindowed = (org.delta_above_median || {})[win]
                       ?? (org.trajectories || {})[win]
@@ -5089,7 +5185,7 @@ function farmSortedOrgs() {
       if (s === "trajectory_1y") w = "1y";
       else if (s === "trajectory_3y") w = "3y";
       else if (s === "trajectory_5y") w = "5y";
-      else w = state.formWindow || "1y";
+      else w = state.formWindow || "3y";
       const ad = (a.delta_above_median || {})[w] ?? a.trajectory_score ?? 0;
       const bd = (b.delta_above_median || {})[w] ?? b.trajectory_score ?? 0;
       return bd - ad;
@@ -5108,6 +5204,53 @@ function farmSortedOrgs() {
 // Compact component-grade strip for the Farm list row. Each chip is
 // one of: top-end talent · prospect depth · trajectory vs peers ·
 // graduation pipeline. Hover gives the rank within the 30 orgs.
+// Tiny IFA-vs-Draft donut for the Farm-list row. Aggregates dollar
+// totals over the last 3 years and renders two arc segments. Hovering
+// the donut surfaces precise dollar amounts + percentages via a
+// native title tooltip.
+function makeSpendingDonut(org, size = 38) {
+  const ifa = org && org.ifa_spending ? org.ifa_spending : {};
+  const draft = org && org.draft_spending ? org.draft_spending : {};
+  // Last 3 years cutoff — anchored at the current year so 2024–2026
+  // counts as a "3yr" window for fresh data.
+  const cutoff = new Date().getUTCFullYear() - 3;
+  let ifaTotal = 0, draftTotal = 0;
+  for (const [y, v] of Object.entries(ifa)) {
+    if (+y >= cutoff) ifaTotal += (v && v.total_usd) || 0;
+  }
+  for (const [y, v] of Object.entries(draft)) {
+    if (+y >= cutoff) draftTotal += (v && v.total_usd) || 0;
+  }
+  const total = ifaTotal + draftTotal;
+  if (total <= 0) {
+    return `<div style="text-align:center;color:var(--text-tertiary);font-size:10px;" title="No IFA or draft bonus data on file (last 3 years).">—</div>`;
+  }
+  const ifaPct = ifaTotal / total * 100;
+  const draftPct = draftTotal / total * 100;
+  const fmt = n => `$${(n / 1_000_000).toFixed(1)}M`;
+  // SVG donut — two stroked arcs on a single circle. IFA starts at 12
+  // o'clock and goes clockwise; Draft fills the remainder. Calculated
+  // via stroke-dasharray (arc_length total_remaining).
+  const cx = size / 2;
+  const r = (size - 8) / 2;
+  const circumference = 2 * Math.PI * r;
+  const ifaArc = circumference * (ifaTotal / total);
+  const draftArc = circumference - ifaArc;
+  const tooltip = `IFA: ${fmt(ifaTotal)} (${ifaPct.toFixed(0)}%) · Draft: ${fmt(draftTotal)} (${draftPct.toFixed(0)}%) · 3-year totals`;
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;" title="${escapeHtml(tooltip)}">
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;">
+      <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--bg-tertiary)" stroke-width="6"/>
+      <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--neon-amber)" stroke-width="6"
+              stroke-dasharray="${ifaArc.toFixed(2)} ${(circumference - ifaArc).toFixed(2)}"
+              stroke-dashoffset="0" transform="rotate(-90 ${cx} ${cx})" stroke-linecap="butt"/>
+      <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--neon-cyan)" stroke-width="6"
+              stroke-dasharray="${draftArc.toFixed(2)} ${(circumference - draftArc).toFixed(2)}"
+              stroke-dashoffset="${(-ifaArc).toFixed(2)}" transform="rotate(-90 ${cx} ${cx})" stroke-linecap="butt"/>
+    </svg>
+    <div style="font-size:9px;font-family:var(--font-mono);color:var(--text-tertiary);font-variant-numeric:tabular-nums;">${fmt(total)}</div>
+  </div>`;
+}
+
 function makeComponentGrades(org) {
   const grades = (org && org.grades) || {};
   const ranks  = (org && org.component_ranks) || {};
@@ -5142,7 +5285,7 @@ function renderFarmSystems() {
     ? state.farmSort.slice("level_".length)
     : null;
 
-  const win = state.formWindow || "1y";
+  const win = state.formWindow || "3y";
   const medians = (DATA.farm_trajectory_medians || {});
   const median = medians[win] ?? 0;
   const winLabel = win === "1y" ? "1-year" : win === "3y" ? "3-year" : "5-year";
@@ -5157,6 +5300,7 @@ function renderFarmSystems() {
     <span>Positions</span>
     <span>Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
     <span style="text-align:center;">Avg age</span>
+    <span style="text-align:center;" title="IFA vs Draft bonus-dollar mix over the last 3 years. Hover a donut for exact dollar totals.">Spend mix</span>
     <span style="text-align:right;">Stock</span>
     <span></span>
   </div>`;
@@ -5200,6 +5344,7 @@ function renderFarmSystems() {
         <div>${makePosBreakdown(org.pos_groups)}</div>
         <div class="level-depth-cell">${makeLevelDepth(org.level_counts, activeLevel)}</div>
         <div style="text-align:center;font-size:12px;color:var(--text-secondary);font-variant-numeric:tabular-nums;">${org.avg_age != null ? org.avg_age.toFixed(1) : "—"}</div>
+        <div style="display:flex;justify-content:center;">${makeSpendingDonut(org)}</div>
         <div class="stock-cell" style="font-size:12px;">${stockHtml}</div>
         <div style="text-align:right;font-size:11px;color:var(--neon-cyan);">→</div>
       </div>`;
@@ -7175,14 +7320,14 @@ function renderFarmDetail(orgCode) {
     <div class="farm-detail-grid">
       ${leftRailHtml}
       <div>
-        <div class="detail-title flush">${(state.formWindow || "1y")} development vs median farm <span class="detail-title-sub">prospect FV growth above median, with trades / draft / IFA acquisitions excluded · graduations neutral</span></div>
+        <div class="detail-title flush">${(state.formWindow || "3y")} development vs median farm <span class="detail-title-sub">prospect FV growth above median, with trades / draft / IFA acquisitions excluded · graduations neutral</span></div>
         <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
           <span class="filter-label">Window</span>
-          <button class="chip${(state.formWindow || "1y") === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
-          <button class="chip${(state.formWindow || "1y") === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
-          <button class="chip${(state.formWindow || "1y") === "5y" ? " active" : ""}" data-form-window="5y" type="button">5y</button>
+          <button class="chip${(state.formWindow || "3y") === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
+          <button class="chip${(state.formWindow || "3y") === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
+          <button class="chip${(state.formWindow || "3y") === "5y" ? " active" : ""}" data-form-window="5y" type="button">5y</button>
         </div>
-        ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_medians || {})[state.formWindow || "1y"] ?? 0), state.formWindow || "1y")}
+        ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_medians || {})[state.formWindow || "3y"] ?? 0), state.formWindow || "3y")}
         <div class="detail-title">Position depth chart <span class="detail-title-sub">Tracked prospects bucketed by primary position · sorted by FV</span></div>
         ${makePositionDepthChart(rosterPlayersAll)}
         <div class="detail-title">Acquisition spending <span class="detail-title-sub">Bonus pool dollars — International FA vs Draft, 2021-present</span></div>

@@ -505,16 +505,26 @@ def build_timeseries(
             fv_open=0.0, fv_close=0.0,
         ))
 
-    # Bayesian shrinkage — second pass. Auto-compute the prior mean from
-    # the pre-shrinkage latest point per player (callers can override).
-    mean_fv = (
-        prior_mean_fv
-        if prior_mean_fv is not None
-        else compute_prior_mean_fv(result)
-    )
+    # Bayesian shrinkage was removed (2026-05): the pull-toward-prior
+    # was compressing single-source prospects (90% of actives) into a
+    # giant 40-FV cluster. consensus_fv is now just the arithmetic mean
+    # of source grades — what each source publishes is what shows. The
+    # apply_shrinkage / compute_prior_mean_fv functions stay defined
+    # for back-compat callers but are no longer wired into the default
+    # pipeline. consensus_fv mirrors consensus_fv_pre_shrinkage; raw
+    # mirrors the pre-snap mean; shrinkage_weight is fixed at 1.0.
     for p in result:
         for pt in p.points:
-            apply_shrinkage(pt, mean_fv, shrinkage_k, shrinkage_n_full)
+            raw = pt.consensus_fv_pre_shrinkage
+            if raw is None:
+                # No contributing source grades for this snapshot — leave
+                # the point's consensus_fv unset (callers handle null).
+                continue
+            snapped, label = snap_to_grade(raw)
+            pt.consensus_fv = snapped
+            pt.consensus_fv_label = label
+            pt.consensus_fv_raw = round(raw, 2)
+            pt.shrinkage_weight = 1.0
         for attr, val in _candle_fields(p.points).items():
             setattr(p, attr, val)
 

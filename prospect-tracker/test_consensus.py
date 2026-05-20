@@ -451,155 +451,105 @@ class TestForwardFill:
 # Bayesian shrinkage
 # ---------------------------------------------------------------------------
 
-class TestShrinkage:
-    """Adjusted FV = (n / (n+k)) * raw + (k / (n+k)) * mean_fv."""
+class TestConsensusIsSourceMean:
+    """Bayesian shrinkage was removed (2026-05). Consensus FV is now just
+    the equal-weighted mean of the source grades contributing to that
+    snapshot — no pull toward a prior, no source-count penalty. Each
+    assertion below documents the new "consensus = mean of sources"
+    contract."""
 
-    def test_apply_shrinkage_one_source_pulls_hard_to_prior(self):
-        # Single FG snap at FV 70. k=2, N_full=4 (new default), n=1:
-        # k_eff = 2 * (4-1)/4 = 1.5
-        # weight = 1 / (1 + 1.5) = 0.4
-        # adjusted = 0.4*70 + 0.6*45 = 28.0 + 27.0 = 55.0 → 55
+    def test_single_source_consensus_equals_source_grade(self):
+        # The single most-affected case: a 1-source prospect at 70 stays
+        # at 70 (it used to be pulled down to ~55 by the shrinkage prior).
         snaps = [_snap("fangraphs", "X", fv=70.0)]
-        p = build_timeseries(snaps, shrinkage_k=2.0, prior_mean_fv=45.0)[0]
+        p = build_timeseries(snaps)[0]
         pt = p.points[-1]
         assert pt.consensus_fv_pre_shrinkage == 70.0
-        assert pt.shrinkage_weight == pytest.approx(1/2.5, abs=0.001)
-        assert pt.consensus_fv_raw == pytest.approx(55.0, abs=0.01)
-        assert pt.consensus_fv == 55.0
+        assert pt.consensus_fv == 70.0
+        assert pt.consensus_fv_raw == 70.0
+        assert pt.shrinkage_weight == 1.0
 
-    def test_full_coverage_zero_shrinkage(self):
-        """n = N_full → no shrinkage at all. Made's case."""
+    def test_full_coverage_consensus_equals_mean(self):
+        # 4 sources all at 70 → mean 70.
         snaps = [
             _snap("fangraphs",        "X", fv=70.0),
             _snap("espn",             "X", fv=70.0),
             _snap("just_baseball",    "X", fv=70.0),
             _snap("tjstats",          "X", fv=70.0),
         ]
-        p = build_timeseries(snaps, shrinkage_k=2.0, prior_mean_fv=45.0)[0]
+        p = build_timeseries(snaps)[0]
         pt = p.points[-1]
         assert pt.shrinkage_weight == 1.0
         assert pt.consensus_fv_raw == 70.0
         assert pt.consensus_fv == 70.0
 
-    def test_jesus_made_case_rank_only_source_counts(self):
-        """The motivating regression: a 4-source FV consensus PLUS one
-        rank-only outlet should clear the n_full=4 threshold and bypass
-        shrinkage entirely. Old behavior (n=avg_fv_n only) tagged this as
-        n=4 → mild pull → consensus drifted a tier below the raw avg.
-        Reported as 'Jesús Made should be higher than 61'."""
+    def test_jesus_made_case_no_more_drift(self):
+        # 4 explicit grades averaging 62.5 + 1 rank-only source.
+        # snap_to_grade(62.5) → 62 (banker's rounding). The motivating
+        # regression: with shrinkage, this collapsed below 61; now the
+        # consensus exactly matches the raw arithmetic mean.
         snaps = [
             _snap("fangraphs",     "Made", fv=65.0),
             _snap("mlb_pipeline",  "Made", fv=65.0),
             _snap("tjstats",       "Made", fv=60.0),
             _snap("espn",          "Made", fv=60.0),
-            _snap("just_baseball", "Made", rank=4),  # ranks only, no FV
+            _snap("just_baseball", "Made", rank=4),
         ]
-        p = build_timeseries(snaps, shrinkage_k=2.0, prior_mean_fv=45.0)[0]
+        p = build_timeseries(snaps)[0]
         pt = p.points[-1]
-        assert pt.shrinkage_weight == 1.0
         assert pt.consensus_fv_pre_shrinkage == 62.5
-        # snap_to_grade uses Python's banker's rounding, so 62.5 → 62.
-        # Pre-fix this would have been pulled down to ~61 by the prior.
         assert pt.consensus_fv == 62.0
-
-    def test_above_full_coverage_still_zero_shrinkage(self):
-        """A six-source player (e.g. domestic + Pipeline Intl) still has
-        k_eff clamped to 0 by the max(0, ...) guard."""
-        snaps = [
-            _snap("fangraphs",        "X", fv=60.0),
-            _snap("espn",             "X", fv=60.0),
-            _snap("just_baseball",    "X", fv=60.0),
-            _snap("tjstats",          "X", fv=60.0),
-            _snap("mlb_pipeline",     "X", fv=60.0),
-            _snap("mlb_pipeline_international", "X", fv=60.0),
-        ]
-        p = build_timeseries(snaps, shrinkage_k=2.0, prior_mean_fv=45.0)[0]
-        pt = p.points[-1]
         assert pt.shrinkage_weight == 1.0
-        assert pt.consensus_fv == 60.0
 
-    def test_partial_coverage_moderate_shrinkage(self):
-        """n=3 with k=2, N_full=4 (new default):
-        k_eff = 2 * 1/4 = 0.5 → weight = 3/3.5 ≈ 0.857
-        With raw 60 and prior 45:
-        adjusted = 0.857*60 + 0.143*45 = 51.43 + 6.43 = 57.86 → 58
-        """
+    def test_partial_coverage_no_pull(self):
+        # 3 sources at 60 → mean 60. Used to drift to 58 under shrinkage.
         snaps = [
             _snap("fangraphs",     "X", fv=60.0),
             _snap("espn",          "X", fv=60.0),
             _snap("just_baseball", "X", fv=60.0),
         ]
-        p = build_timeseries(snaps, shrinkage_k=2.0, prior_mean_fv=45.0)[0]
+        p = build_timeseries(snaps)[0]
         pt = p.points[-1]
-        assert pt.shrinkage_weight == pytest.approx(3/3.5, abs=0.001)
-        assert pt.consensus_fv == 58.0
-
-    def test_n_full_override_threshold(self):
-        """Lowering n_full to 3 means a three-source player gets zero
-        shrinkage."""
-        snaps = [
-            _snap("fangraphs",     "X", fv=60.0),
-            _snap("espn",          "X", fv=60.0),
-            _snap("just_baseball", "X", fv=60.0),
-        ]
-        p = build_timeseries(snaps, shrinkage_k=2.0, shrinkage_n_full=3,
-                             prior_mean_fv=45.0)[0]
-        pt = p.points[-1]
-        assert pt.shrinkage_weight == 1.0
         assert pt.consensus_fv == 60.0
-
-    def test_shrinkage_k_zero_disables(self):
-        snaps = [_snap("fangraphs", "X", fv=70.0)]
-        p = build_timeseries(snaps, shrinkage_k=0)[0]
-        pt = p.points[-1]
-        assert pt.consensus_fv == 70.0
-        assert pt.consensus_fv_raw == 70.0
+        assert pt.consensus_fv_raw == 60.0
         assert pt.shrinkage_weight == 1.0
 
-    def test_rank_only_player_uses_rank_count_as_n(self):
-        """Rank-only players still get shrunk; n is the total contributing
-        source count (sources_contributing), which for a rank-only player
-        equals the rank-only count."""
+    def test_rank_only_consensus_is_rank_implied_mean(self):
+        # 2 rank-only sources both implying FV 60 (rank 2 → 60 in the
+        # rank→FV table). Consensus is exactly 60, no shrinkage drift.
         snaps = [
-            _snap("baseball_america", "X", rank=2),  # implied 60
-            _snap("the_athletic",     "X", rank=2),  # implied 60
+            _snap("baseball_america", "X", rank=2),
+            _snap("the_athletic",     "X", rank=2),
         ]
-        p = build_timeseries(snaps, shrinkage_k=2.0, prior_mean_fv=45.0)[0]
+        p = build_timeseries(snaps)[0]
         pt = p.points[-1]
         assert pt.avg_fv is None
         assert pt.consensus_fv_pre_shrinkage == 60.0
-        # n=2, N_full=4: k_eff = 2 * 2/4 = 1.0 → weight = 2/3 ≈ 0.667
-        # adjusted = 0.667*60 + 0.333*45 = 40.0 + 15.0 = 55.0 → 55
-        assert pt.shrinkage_weight == pytest.approx(2/3.0, abs=0.001)
-        assert pt.consensus_fv_raw == pytest.approx(55.0, abs=0.01)
-        assert pt.consensus_fv == 55.0
+        assert pt.consensus_fv == 60.0
+        assert pt.consensus_fv_raw == 60.0
+        assert pt.shrinkage_weight == 1.0
 
-    def test_prior_mean_auto_computed_from_pool(self):
-        """When prior_mean_fv is omitted, it's the average of each player's
-        latest pre-shrinkage value (one vote per player)."""
+    def test_pool_doesnt_drag_individual_consensus(self):
+        # The old "prior_mean_fv pulled from pool average" path is gone.
+        # Three single-source prospects keep their exact published grades
+        # regardless of how the pool looks.
         snaps = [
             _snap("fangraphs", "A", fv=70.0),
             _snap("fangraphs", "B", fv=50.0),
             _snap("fangraphs", "C", fv=60.0),
         ]
-        ts = build_timeseries(snaps, shrinkage_k=2.0)
-        # Pool mean = (70+50+60)/3 = 60.
-        # n=1, n_full=4: k_eff = 2 * 3/4 = 1.5 → weight = 1/2.5 = 0.4
-        # A: 0.4*70 + 0.6*60 = 28.0 + 36.0 = 64.0 → 64
-        # B: 0.4*50 + 0.6*60 = 20.0 + 36.0 = 56.0 → 56
-        # C: 0.4*60 + 0.6*60 = 60                  → 60
+        ts = build_timeseries(snaps)
         by_name = {p.player_name: p for p in ts}
-        assert by_name["A"].points[-1].consensus_fv == 64.0
-        assert by_name["B"].points[-1].consensus_fv == 56.0
+        assert by_name["A"].points[-1].consensus_fv == 70.0
+        assert by_name["B"].points[-1].consensus_fv == 50.0
         assert by_name["C"].points[-1].consensus_fv == 60.0
 
-    def test_compute_prior_mean_fv_skips_pointless_players(self):
-        """build_timeseries never emits a PlayerTimeseries with no points
-        (callers only see scoreable players), but compute_prior_mean_fv
-        defends against empty-point lists anyway."""
-        snaps = [_snap("fangraphs", "X", fv=55.0)]
-        ts = build_timeseries(snaps, shrinkage_k=0)
-        # Force-clear points to simulate the degenerate case.
-        ts[0].points = []
-        # Should fall back to FALLBACK_PRIOR_FV (45.0) rather than crashing.
-        assert compute_prior_mean_fv(ts) == 45.0
+    def test_shrinkage_kwargs_are_inert(self):
+        # The old shrinkage_k / shrinkage_n_full / prior_mean_fv kwargs
+        # remain on build_timeseries for back-compat but are now no-ops.
+        # Passing absurd values shouldn't change the consensus.
+        snaps = [_snap("fangraphs", "X", fv=70.0)]
+        p_default = build_timeseries(snaps)[0]
+        p_extreme = build_timeseries(snaps, shrinkage_k=10.0,
+                                     shrinkage_n_full=99, prior_mean_fv=20.0)[0]
+        assert p_default.points[-1].consensus_fv == p_extreme.points[-1].consensus_fv == 70.0
