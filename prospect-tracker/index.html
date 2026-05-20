@@ -1043,6 +1043,13 @@
       font-weight: 700;
     }
     .spending-bar .sb-track {
+      /* The track + fill are rendered as <span>s inside the grid; both
+         need explicit block layout so the track fills the 1fr grid
+         cell and the fill honors its inline `width:X%`. Without these
+         display rules they'd both collapse to text-line-height and the
+         coloured fill wouldn't be visible. */
+      display: block;
+      width: 100%;
       height: 9px;
       background: var(--bg-tertiary);
       border: 1px solid var(--border-light);
@@ -1051,6 +1058,7 @@
       overflow: hidden;
     }
     .spending-bar .sb-fill {
+      display: block;
       height: 100%;
       transition: width 0.18s ease;
     }
@@ -1659,7 +1667,16 @@
       <button class="chip active" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% graduation pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
       <button class="chip" data-farm-sort="top_end" title="Tiered-FV sum of the org's top 5 prospects — an 80 is worth ~100x a 40">Top-end</button>
       <button class="chip" data-farm-sort="depth" title="Tiered-FV sum of prospects #6-25">Depth</button>
-      <button class="chip" data-farm-sort="trajectory" title="Cumulative-FV change over the active form window, minus the median org's change over the same window. Positive = developing faster than the typical farm. Graduations are neutral.">Trajectory</button>
+      <!-- Three explicit Trajectory chips, one per window. Clicking
+           any of them sets both the active sort AND the form-window
+           used by the line charts above, so picking "Trajectory 3y"
+           always shows 3-year line charts alongside 3-year sorting. -->
+      <button class="chip" data-farm-sort="trajectory_1y"
+              title="1-year cumulative-FV change vs the median org over the same window. Positive = developing faster than the typical farm.">Trajectory 1y</button>
+      <button class="chip" data-farm-sort="trajectory_3y"
+              title="3-year cumulative-FV change vs the median org over the same window.">Trajectory 3y</button>
+      <button class="chip" data-farm-sort="trajectory_5y"
+              title="5-year cumulative-FV change vs the median org over the same window.">Trajectory 5y</button>
       <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted graduations in the trailing 12 months">Grad pipeline</button>
       <button class="chip" data-farm-sort="total_fv">Total FV</button>
       <button class="chip" data-farm-sort="count">Count</button>
@@ -1984,7 +2001,11 @@ const FV_MIN = 20, FV_MAX = 80;
 
 function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   if (!points || points.length === 0) return "";
-  const W = 200, H = 56, PAD = 4, LABEL_H = 9;
+  // Reserve 9px of left margin for the 20/80 Y-axis labels so the chart
+  // line itself doesn't get squeezed by them. The labels sit OUTSIDE
+  // the line's X range, anchored at x≈1; the polyline runs from
+  // x=Y_LABEL_W+PAD onward.
+  const W = 200, H = 56, PAD = 4, LABEL_H = 9, Y_LABEL_W = 9;
   // Chart area: y from PAD to H-LABEL_H-PAD. Bottom LABEL_H px reserved for year labels.
   const CHART_BOTTOM = H - LABEL_H - PAD;
   // Per-prospect time domain: first recorded FV → graduation_date (if graduated)
@@ -1997,7 +2018,10 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   const minT = new Date(firstDate).getTime();
   const maxT = new Date(endDate).getTime();
   const timeSpan = maxT - minT || 1;
-  const xScale = d => PAD + ((new Date(d).getTime() - minT) / timeSpan) * (W - 2 * PAD);
+  // X-axis starts after the Y-label margin so the 20/80 markers don't
+  // overlap the line's left edge.
+  const X_LEFT = PAD + Y_LABEL_W;
+  const xScale = d => X_LEFT + ((new Date(d).getTime() - minT) / timeSpan) * (W - X_LEFT - PAD);
   const yScale = fv => CHART_BOTTOM - ((fv - FV_MIN) / (FV_MAX - FV_MIN)) * (CHART_BOTTOM - PAD);
 
   const isUp = fvClose > fvOpen, isDown = fvClose < fvOpen;
@@ -2006,7 +2030,20 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   const circles = points.map(pt =>
     `<circle cx="${xScale(pt.snapshot_date).toFixed(1)}" cy="${yScale(pt.consensus_fv_raw).toFixed(1)}" r="2" fill="${stroke}"><title>${pt.snapshot_date} · ${pt.interval_label} · FV ${pt.consensus_fv_label}</title></circle>`
   ).join("");
-  const y60 = yScale(60);
+  // Reference line at FV 50 — the "MLB-regular" threshold. Anyone
+  // hovering above this line projects as an above-average MLB player;
+  // below is a complementary/backup profile. The previous mark at FV
+  // 60 only flagged the rare star tier, which is too narrow a band to
+  // be useful as a constant reference on a per-prospect chart.
+  const yRef = yScale(50);
+
+  // Y-axis labels — 20 at the bottom, 80 at the top. Mini chart, so
+  // we keep them small and dim. They anchor the line's vertical range
+  // so the reader can immediately tell what a flat-near-the-top vs
+  // flat-near-the-bottom curve means.
+  const yLabels = `
+    <text x="${(PAD).toFixed(1)}" y="${(yScale(80) + 3).toFixed(1)}" font-size="6.5" fill="var(--text-tertiary)" font-family="var(--font-mono)">80</text>
+    <text x="${(PAD).toFixed(1)}" y="${(yScale(20) + 3).toFixed(1)}" font-size="6.5" fill="var(--text-tertiary)" font-family="var(--font-mono)">20</text>`;
 
   // Year boundary lines + labels
   const yearSvg = [];
@@ -2015,7 +2052,7 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   for (let yr = startYear; yr <= endYear + 1; yr++) {
     const yrT = Date.UTC(yr, 0, 1); // Jan 1 UTC
     if (yrT <= minT || yrT >= maxT) continue;
-    const x = (PAD + ((yrT - minT) / timeSpan) * (W - 2 * PAD)).toFixed(1);
+    const x = (X_LEFT + ((yrT - minT) / timeSpan) * (W - X_LEFT - PAD)).toFixed(1);
     yearSvg.push(
       `<line x1="${x}" y1="${PAD}" x2="${x}" y2="${CHART_BOTTOM}" stroke="var(--border)" stroke-width="0.4" stroke-dasharray="2,3"/>`,
       `<text x="${x}" y="${H - 1}" font-size="6.5" fill="var(--text-tertiary)" text-anchor="middle">${yr}</text>`
@@ -2056,7 +2093,8 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
 
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" role="img" aria-label="FV trajectory">
     ${yearSvg.join("")}
-    <line x1="${PAD}" y1="${y60.toFixed(1)}" x2="${W - PAD}" y2="${y60.toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,2" />
+    <line x1="${X_LEFT}" y1="${yRef.toFixed(1)}" x2="${W - PAD}" y2="${yRef.toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,2" />
+    ${yLabels}
     ${eventSvg.join("")}
     <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
     ${circles}
@@ -2533,7 +2571,15 @@ function renderSpotlights() {
   const buckets = DATA.spotlights || {};
   const bucket = buckets[state.spotlightBucket] ? state.spotlightBucket : "hot";
   state.spotlightBucket = bucket;
-  const rowsData = buckets[bucket] || [];
+  let rowsData = buckets[bucket] || [];
+  // Spotlights honor the same search box the other sections do — the
+  // search bar lives at the top of the template and is shared across
+  // every list view, so it should narrow the spotlights too.
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    rowsData = rowsData.filter(s =>
+      (s.player_name || "").toLowerCase().includes(q));
+  }
   document.querySelectorAll("[data-spotlight-bucket]").forEach(b =>
     b.classList.toggle("active", b.dataset.spotlightBucket === bucket));
 
@@ -2562,7 +2608,9 @@ function renderSpotlights() {
 
   document.getElementById("spotlight-rows").innerHTML = rowsData.length
     ? header + rows
-    : `<div class="state-message">No ${escapeHtml(bucket)} spotlights available from the current data.</div>`;
+    : (state.search
+        ? `<div class="state-message">No ${escapeHtml(bucket)} spotlights match "${escapeHtml(state.search)}".</div>`
+        : `<div class="state-message">No ${escapeHtml(bucket)} spotlights available from the current data.</div>`);
   document.querySelectorAll("#spotlights-section .spotlight-row").forEach(row => {
     row.addEventListener("click", () => goToPlayer(row.dataset.key));
   });
@@ -2979,13 +3027,18 @@ function headshotURL(mlbamId, sizePx) {
 }
 function headshotHTML(player, sizePx = 36) {
   const id = (player && (player.mlbam_id || (player.statline || {}).mlbam_id));
-  const size = sizePx;
+  // Baseball-card aspect: width ≈ 0.8 × height. MLB's stock headshots
+  // are framed shoulders-up with portrait proportions, so a rounded
+  // rectangle reads as "baseball card" rather than the previous
+  // circular avatar treatment.
+  const h = sizePx;
+  const w = Math.round(sizePx * 0.8);
   const sil = `<svg viewBox="0 0 24 24" aria-hidden="true" style="position:absolute;left:15%;top:15%;width:70%;height:70%;color:var(--text-tertiary);"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
-  const wrap = `width:${size}px;height:${size}px;border-radius:50%;flex-shrink:0;background:var(--bg-tertiary);border:1px solid var(--border);overflow:hidden;display:inline-block;position:relative;vertical-align:middle;`;
+  const wrap = `width:${w}px;height:${h}px;border-radius:3px;flex-shrink:0;background:var(--bg-tertiary);border:1px solid var(--border);overflow:hidden;display:inline-block;position:relative;vertical-align:middle;`;
   if (!id) {
     return `<span class="headshot" style="${wrap}">${sil}</span>`;
   }
-  const url = headshotURL(id, size);
+  const url = headshotURL(id, h);
   // The silhouette renders behind the img; onerror hides the img so the
   // silhouette shows through if Cloudinary 404s (rare).
   return `<span class="headshot" style="${wrap}">
@@ -3226,9 +3279,14 @@ function makeTierBar(prospects) {
 
   const W = 110;
   let x = 0;
+  // SVG `fill` as an attribute (fill="var(--…)") doesn't reliably
+  // resolve CSS custom properties across browsers — Safari in
+  // particular renders the rect transparent. The inline `style="fill:
+  // var(--…)"` form goes through the CSS pipeline and honors the var
+  // everywhere we care about.
   const segments = TIER_BUCKETS.filter(t => counts[t] > 0).map(t => {
     const w = (counts[t] / total) * W;
-    const rect = `<rect x="${x.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="10" fill="var(--fv-${t}-fg)" opacity="0.9"><title>${counts[t]} × FV ${t}${t === 60 ? '+' : ''}</title></rect>`;
+    const rect = `<rect x="${x.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="10" style="fill:var(--fv-${t}-fg);" opacity="0.9"><title>${counts[t]} × FV ${t}${t === 60 ? '+' : ''}</title></rect>`;
     x += w;
     return rect;
   }).join('');
@@ -3808,11 +3866,16 @@ function farmSortedOrgs() {
     if (s === "total_fv")      return b.total_fv  - a.total_fv;
     if (s === "top_end")       return (b.top_end_points ?? 0) - (a.top_end_points ?? 0);
     if (s === "depth")         return (b.depth_points   ?? 0) - (a.depth_points   ?? 0);
-    if (s === "trajectory") {
-      // Sort by delta-above-median for the active window so the chip
-      // surfaces "best developers over the chosen window", not "biggest
-      // absolute change irrespective of how the rest of the league moved".
-      const w = state.formWindow || "1y";
+    // Explicit per-window trajectory sorts (the chip click handler
+    // also flips state.formWindow so the line chart matches the sort
+    // key). Falls back to state.formWindow if a generic "trajectory"
+    // key sneaks in via URL params for backward compat.
+    if (s === "trajectory_1y" || s === "trajectory_3y" || s === "trajectory_5y" || s === "trajectory") {
+      let w;
+      if (s === "trajectory_1y") w = "1y";
+      else if (s === "trajectory_3y") w = "3y";
+      else if (s === "trajectory_5y") w = "5y";
+      else w = state.formWindow || "1y";
       const ad = (a.delta_above_median || {})[w] ?? a.trajectory_score ?? 0;
       const bd = (b.delta_above_median || {})[w] ?? b.trajectory_score ?? 0;
       return bd - ad;
@@ -4002,8 +4065,11 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
       `<text x="${PAD_L - 4}" y="${y}" dy="3" font-size="9" fill="var(--text-tertiary)" text-anchor="end">${fv}</text>`,
     );
   }
-  // 60-FV emphasis
-  yTicks.push(`<line x1="${PAD_L}" y1="${yScale(60).toFixed(1)}" x2="${W - PAD_R}" y2="${yScale(60).toFixed(1)}" stroke="var(--neon-amber)" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.5"/>`);
+  // 50-FV emphasis — the "MLB regular" tier. Replaces the previous
+  // FV-60 highlight because 50 is the meaningful "this projects as a
+  // major leaguer" line; 60 was a star-tier marker that didn't help
+  // the typical prospect chart.
+  yTicks.push(`<line x1="${PAD_L}" y1="${yScale(50).toFixed(1)}" x2="${W - PAD_R}" y2="${yScale(50).toFixed(1)}" stroke="var(--neon-amber)" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.5"/>`);
 
   // Year boundaries
   const yearSvg = [];
@@ -5817,7 +5883,19 @@ function attachHandlers() {
     btn.addEventListener("click", () => {
       document.querySelectorAll("[data-farm-sort]").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      state.farmSort = btn.dataset.farmSort;
+      const key = btn.dataset.farmSort;
+      state.farmSort = key;
+      // Trajectory_(1|3|5)y chips also flip the active form window so
+      // the line charts on the farm rows update to match the window
+      // the sort is keying off. Without this the sort would re-order
+      // rows but the inline sparklines would still show the old
+      // window's slope — confusing and inconsistent.
+      const trajMatch = /^trajectory_(1y|3y|5y)$/.exec(key);
+      if (trajMatch) {
+        state.formWindow = trajMatch[1];
+        document.querySelectorAll("[data-form-window]").forEach(b =>
+          b.classList.toggle("active", b.dataset.formWindow === state.formWindow));
+      }
       renderFarmSystems();
       syncToURL();
     });

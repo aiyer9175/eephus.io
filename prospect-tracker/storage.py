@@ -1558,11 +1558,84 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         latest = max(post_grad, key=lambda t: t.get("trade_date") or "")
         return latest.get("to_org")
 
+    # Static allowlist of MLB 3-letter org codes used to gate the
+    # transaction-based org override. `canonical_org()` passes through
+    # affiliate names it can't resolve (e.g. "Sugar Land Space Cowboys"
+    # stays as that string), so we whitelist by the known MLB codes
+    # rather than trusting the canonicalization output blind.
+    _MLB_ORG_CODES_FOR_OVERRIDE = frozenset({
+        "ARI", "ATH", "ATL", "BAL", "BOS", "CHC", "CHW", "CIN", "CLE",
+        "COL", "DET", "HOU", "KCR", "LAA", "LAD", "MIA", "MIL", "MIN",
+        "NYM", "NYY", "PHI", "PIT", "SDP", "SEA", "SFG", "STL", "TBR",
+        "TEX", "TOR", "WSN",
+    })
+
+    def _latest_cross_org_transaction(p: PlayerTimeseries) -> str | None:
+        """Return the to_org of the player's most-recent cross-org
+        transaction (Rule 5 return, waiver claim, contract purchase
+        across teams, FA signing) IF that transaction post-dates every
+        snapshot we have on file AND resolves to a known MLB-org code.
+
+        The snapshot-derived `p.org` lags reality for events the
+        ranking sources haven't refreshed against yet — most commonly
+        Rule 5 returns mid-season, where a player gets shipped back to
+        his original org but the FV-ranking sites still show him with
+        the team that drafted him. We bridge the gap by trusting the
+        MLB Stats API transaction record. The MLB-code gate prevents
+        accidentally writing an affiliate name (e.g. a Triple-A team
+        name from a contract-purchase to Sugar Land) into the org
+        field."""
+        tx_rows = (transactions_by_player or {}).get(p.player_key) or []
+        if not tx_rows:
+            return None
+        cross_org_kinds = ("rule_5_return", "waiver_claim", "contract_purchase",
+                           "signed_free_agent")
+        relevant = []
+        for tx in tx_rows:
+            if tx.get("kind") not in cross_org_kinds:
+                continue
+            from_code = canonical_org(tx.get("from_team_name"))
+            to_code = canonical_org(tx.get("to_team_name"))
+            if not from_code or not to_code:
+                continue
+            if from_code == to_code:
+                continue
+            # Both endpoints must resolve to known MLB codes — affiliate
+            # names that canonical_org passes through get rejected here.
+            if to_code not in _MLB_ORG_CODES_FOR_OVERRIDE:
+                continue
+            relevant.append((tx, to_code))
+        if not relevant:
+            return None
+        latest_tx, latest_code = max(relevant, key=lambda x: x[0].get("date") or "")
+        latest_date = latest_tx.get("date") or ""
+        if not latest_date:
+            return None
+        # Only override when the transaction is newer than EVERY snapshot
+        # we have on file. If the rankings already moved the player, we
+        # trust them (they may have caught a subsequent trade).
+        latest_snap_date = max(
+            (pt.snapshot_date for pt in p.points if pt.snapshot_date),
+            default="",
+        )
+        if latest_date <= latest_snap_date:
+            return None
+        return latest_code
+
     def _active_display_org(p: PlayerTimeseries) -> str | None:
         # Canonicalize at the display layer so historical snapshots with
         # pre-rename codes (e.g. "OAK" before the Athletics dropped Oakland)
         # collapse onto the current canonical key ("ATH") rather than
         # showing up as a second farm-page entry.
+        #
+        # A recent cross-org transaction (Rule 5 return, waiver claim,
+        # contract purchase across teams) overrides the snapshot-derived
+        # org because the FV-ranking sources usually lag those moves by
+        # weeks; trusting the MLB transactions record keeps the team
+        # logo on the player card pointing at where they actually play.
+        tx_override = _latest_cross_org_transaction(p)
+        if tx_override:
+            return tx_override
         return canonical_org(p.org or roster_org_by_key.get(p.player_key))
 
     def _display_org(p: PlayerTimeseries,
