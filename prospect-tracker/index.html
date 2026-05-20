@@ -5616,7 +5616,9 @@ function renderFarmSystems() {
         <div style="text-align:center;font-size:12px;color:var(--text-secondary);font-variant-numeric:tabular-nums;">${org.avg_age != null ? org.avg_age.toFixed(1) : "—"}</div>
         <div style="display:flex;justify-content:center;">${makeSpendingDonut(org)}</div>
         <div class="stock-cell" style="font-size:12px;">${stockHtml}</div>
-        <div style="text-align:right;font-size:11px;color:var(--neon-cyan);">→</div>
+        <div style="text-align:right;">
+          <button class="compare-add-btn is-compact${farmCompareHas(org.org) ? " is-in" : ""}" data-farm-compare-key="${escapeHtml(org.org)}" type="button" title="${farmCompareHas(org.org) ? "Remove farm from compare" : "Add farm to compare"}" aria-label="Toggle farm compare">${farmCompareHas(org.org) ? "✓" : "+"}</button>
+        </div>
       </div>`;
   }).join('');
 
@@ -7799,6 +7801,11 @@ function attachChipGroup(attr, stateKey, onChange, opts = {}) {
 // review the side-by-side panel from anywhere. Persists across reload.
 const COMPARE_KEY = "prospect-tracker.compare";
 const COMPARE_MAX = 3;
+// Farms get their own localStorage key + max so a user can pin 3 prospects
+// AND 3 farm systems without one displacing the other. Render path joins
+// them into a single side-panel with two sections.
+const FARM_COMPARE_KEY = "prospect-tracker.farm-compare";
+const FARM_COMPARE_MAX = 3;
 
 function compareLoad() {
   try {
@@ -7820,6 +7827,29 @@ function compareToggle(key) {
     keys.push(key);
   }
   compareSave(keys);
+  renderCompareCart();
+}
+
+function farmCompareLoad() {
+  try {
+    const raw = localStorage.getItem(FARM_COMPARE_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.slice(0, FARM_COMPARE_MAX) : [];
+  } catch { return []; }
+}
+function farmCompareSave(orgs) {
+  try { localStorage.setItem(FARM_COMPARE_KEY, JSON.stringify(orgs)); } catch {}
+}
+function farmCompareHas(org) { return farmCompareLoad().includes(org); }
+function farmCompareToggle(org) {
+  let orgs = farmCompareLoad();
+  if (orgs.includes(org)) {
+    orgs = orgs.filter(o => o !== org);
+  } else if (orgs.length < FARM_COMPARE_MAX) {
+    orgs.push(org);
+  }
+  farmCompareSave(orgs);
   renderCompareCart();
 }
 
@@ -8086,15 +8116,94 @@ function makeCompareSideBySide(players) {
   return head + chart + table + summary;
 }
 
+// Build the side-by-side farm-systems block for the compare cart.
+// Mirrors the prospect csbs grid: one column per pinned farm, IFA/Draft
+// donut + headline FV-tier strip + farm grades + top prospect.
+function makeFarmCompareSideBySide(farms) {
+  const cols = `repeat(${farms.length}, minmax(0, 1fr))`;
+  const heads = farms.map((o, i) => {
+    const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
+    const grade = (o.grades && o.grades.overall) || "—";
+    const tp = o.top_prospect;
+    const tpHtml = tp
+      ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Top: <span style="color:var(--text-primary);">${escapeHtml(tp.player_name || "—")}</span>${tp.fv ? ` <span class="fv-badge size-sm ${fvClass(String(tp.fv))}" style="margin-left:4px;">${tp.fv}</span>` : ""}</div>`
+      : "";
+    return `<div class="csbs-player" style="--csbs-color:${color};">
+      <button class="csbs-remove" data-farm-compare-remove="${escapeHtml(o.org)}" type="button" title="Remove from compare">×</button>
+      <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
+        <span style="flex-shrink:0;">${teamLogoHTML(o.org, "lg", fullOrgName(o.org))}</span>
+        <div style="min-width:0;flex:1;">
+          <div class="csbs-name" onclick="closeCompareAndGoFarm('${escapeHtml(o.org)}');">${escapeHtml(fullOrgName(o.org))}
+            <span style="margin-left:6px;font-family:var(--font-mono);color:${gradeColor(grade)};font-weight:700;">${escapeHtml(grade)}</span>
+          </div>
+          <div class="csbs-meta">#${o.farm_rank ?? "—"} of 30 · ${o.count ?? 0} tracked · Total FV ${o.total_fv != null ? o.total_fv.toFixed(1) : "—"}</div>
+          ${tpHtml}
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+
+  const head = `<div class="compare-sbs-head" style="grid-template-columns:${cols};">${heads}</div>`;
+
+  // Stat-table: each row is a farm metric, each column is a farm. Reuses
+  // the existing .compare-stat-table styles so the visual feel matches
+  // the prospect compare table.
+  const rows = [
+    ["Farm rank",        o => o.farm_rank != null ? `#${o.farm_rank}` : "—"],
+    ["Total FV",         o => o.total_fv != null ? o.total_fv.toFixed(1) : "—"],
+    ["Prospects tracked", o => String(o.count ?? 0)],
+    ["Avg age",          o => o.avg_age != null ? o.avg_age.toFixed(1) : "—"],
+    ["Young-for-level",  o => String(o.very_young_count ?? 0)],
+    ["Top-end grade",    o => (o.grades && o.grades.top_end) || "—"],
+    ["Depth grade",      o => (o.grades && o.grades.depth) || "—"],
+    ["Trajectory grade", o => (o.grades && o.grades.trajectory) || "—"],
+    ["Grad pipeline",    o => (o.grades && o.grades.grad) || "—"],
+    ["Stock ▲/▼",        o => `${o.stock_up || 0} ▲ · ${o.stock_down || 0} ▼`],
+  ];
+  const tableRows = rows.map(([label, fn]) =>
+    `<tr><th>${label}</th>${farms.map(o => `<td>${escapeHtml(String(fn(o)))}</td>`).join("")}</tr>`
+  ).join("");
+  const table = `<table class="compare-stat-table" style="grid-template-columns:120px ${cols.replace("repeat(", "").replace(", minmax(0, 1fr))", "")};margin-top:8px;width:100%;border-collapse:collapse;">
+    <tbody>${tableRows}</tbody></table>`;
+  const donutRow = `<div style="display:grid;grid-template-columns:${cols};gap:10px;margin-top:10px;">
+    ${farms.map(o => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">${makeSpendingDonut(o, 64)}<div style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.06em;">3-yr spend mix</div></div>`).join("")}
+  </div>`;
+  return head + donutRow + table;
+}
+
+function makeFarmCompareSingleCard(o) {
+  const grade = (o.grades && o.grades.overall) || "—";
+  const tp = o.top_prospect;
+  const tpHtml = tp
+    ? `<div class="cc-stat" style="margin-top:6px;">Top: <span style="color:var(--text-primary);">${escapeHtml(tp.player_name || "—")}</span>${tp.fv ? ` <span class="fv-badge size-sm ${fvClass(String(tp.fv))}" style="margin-left:4px;">${tp.fv}</span>` : ""}</div>`
+    : "";
+  return `<div class="compare-card" style="${orgStripe(o.org)}">
+    <div style="display:flex;gap:10px;align-items:flex-start;min-width:0;">
+      <span onclick="closeCompareAndGoFarm('${escapeHtml(o.org)}');" style="cursor:pointer;flex-shrink:0;">${teamLogoHTML(o.org, "lg", fullOrgName(o.org))}</span>
+      <div style="min-width:0;flex:1;">
+        <div class="player-name" style="cursor:pointer;" onclick="closeCompareAndGoFarm('${escapeHtml(o.org)}');">${escapeHtml(fullOrgName(o.org))}
+          <span style="margin-left:6px;font-family:var(--font-mono);color:${gradeColor(grade)};font-weight:700;">${escapeHtml(grade)}</span>
+        </div>
+        <div class="cc-stat" style="margin-top:2px;color:var(--text-tertiary);">#${o.farm_rank ?? "—"} of 30 · ${o.count ?? 0} prospects · Total FV ${o.total_fv != null ? o.total_fv.toFixed(1) : "—"}</div>
+        ${tpHtml}
+        <div class="cc-stat" style="margin-top:6px;color:var(--text-tertiary);">Pin a second farm system to compare side-by-side.</div>
+      </div>
+    </div>
+    <button class="cc-remove" data-farm-compare-remove="${escapeHtml(o.org)}" type="button">remove</button>
+  </div>`;
+}
+
 function renderCompareCart() {
   const keys = compareLoad();
+  const farmKeys = farmCompareLoad();
+  const totalCount = keys.length + farmKeys.length;
   const toggle = document.getElementById("compare-toggle");
   const count  = document.getElementById("compare-count");
   // Hide the floating button entirely when nothing's pinned; visible
-  // (full opacity) the moment the user adds their first prospect.
-  if (toggle) toggle.classList.toggle("is-empty-hidden", keys.length === 0);
-  if (count)  count.textContent = keys.length;
-  // Sync any "Add to compare" buttons on the current page.
+  // (full opacity) the moment the user adds their first prospect or farm.
+  if (toggle) toggle.classList.toggle("is-empty-hidden", totalCount === 0);
+  if (count)  count.textContent = totalCount;
+  // Sync any "Add to compare" buttons on the current page (prospects).
   document.querySelectorAll(".compare-add-btn[data-compare-key]").forEach(btn => {
     const isIn = keys.includes(btn.dataset.compareKey);
     btn.classList.toggle("is-in", isIn);
@@ -8105,10 +8214,19 @@ function renderCompareCart() {
       btn.textContent = isIn ? "✓ In compare" : "+ Add to compare";
     }
   });
+  // Same loop for farm-compare buttons (data-farm-compare-key).
+  document.querySelectorAll(".compare-add-btn[data-farm-compare-key]").forEach(btn => {
+    const isIn = farmKeys.includes(btn.dataset.farmCompareKey);
+    btn.classList.toggle("is-in", isIn);
+    if (btn.classList.contains("is-compact")) {
+      btn.textContent = isIn ? "✓" : "+";
+      btn.title = isIn ? "Remove farm from compare" : "Add farm to compare";
+    }
+  });
   const body = document.getElementById("compare-body");
   if (!body) return;
-  if (!keys.length) {
-    body.innerHTML = `<div style="color:var(--text-tertiary);font-size:13px;padding:8px 4px;">No prospects pinned yet. Open a player detail and tap "+ Add to compare".</div>`;
+  if (!totalCount) {
+    body.innerHTML = `<div style="color:var(--text-tertiary);font-size:13px;padding:8px 4px;">No prospects or farm systems pinned yet. Tap "+ Add to compare" on any list or detail view.</div>`;
     return;
   }
   // Resolve every pinned key to a full player object (or render a
@@ -8120,54 +8238,86 @@ function renderCompareCart() {
     if (p) players.push(p);
     else   stubs.push(k);
   }
-  // 2+ valid players pinned → side-by-side comparison. 1 player or
-  // only stubs → fall back to the single-card view per the plan.
-  if (players.length >= 2) {
-    const stubHTML = stubs.map(k => `<div class="compare-card"><div style="color:var(--text-tertiary);">Player "${escapeHtml(k)}" not in current data.</div><button class="cc-remove" data-compare-remove="${escapeHtml(k)}">remove</button></div>`).join("");
-    body.innerHTML = makeCompareSideBySide(players) + stubHTML;
-    return;
+  const farms = [];
+  const farmStubs = [];
+  for (const o of farmKeys) {
+    const f = findOrg(o);
+    if (f) farms.push(f);
+    else   farmStubs.push(o);
   }
-  // Single-player fallback — keep the legacy card layout.
-  const cards = keys.map(k => {
-    const p = findPlayer(k);
-    if (!p) return `<div class="compare-card"><div>Player "${escapeHtml(k)}" not found in current data.</div><button class="cc-remove" data-compare-remove="${escapeHtml(k)}">remove</button></div>`;
-    const sl = p.statline || {};
-    const slashLine = sl.is_pitcher
-      ? `${sl.era ?? "—"} ERA · ${sl.ip ?? "—"} IP · K/9 ${sl.k_per_9 ?? "—"}`
-      : `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"} · ${sl.hr ?? 0} HR`;
-    const eta = (p.eta && p.eta.year) ? `ETA ${p.eta.year}` : (p.graduation_date ? "graduated" : "ETA —");
-    const ageVsLevel = (p.age_vs_level && p.age_vs_level.diff != null)
-      ? `${p.age_vs_level.diff > 0 ? "+" : ""}${p.age_vs_level.diff.toFixed(1)}y vs ${sl.level || "lvl"}`
-      : "";
-    const fvLabel = p.fv_close != null ? Math.round(p.fv_close) : "—";
-    const sparkline = (p.points && p.points.length >= 2)
-      ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)
-      : "";
-    const rps = computeRelProd(p);
-    return `<div class="compare-card" style="${orgStripe(p.org)}">
-      <div style="display:flex;gap:10px;align-items:flex-start;min-width:0;">
-        <span onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');" style="cursor:pointer;flex-shrink:0;">${headshotHTML(p, 64)}</span>
-        <div style="min-width:0;flex:1;">
-          <div class="player-name" style="cursor:pointer;" onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');">${escapeHtml(p.player_name)}
-            <span class="fv-badge ${fvClass(String(fvLabel))} size-sm" style="margin-left:6px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}</span>
+
+  let html = "";
+
+  // Players section — keep the existing 2+ side-by-side / 1 single-card
+  // split so behavior matches prior versions.
+  if (players.length || stubs.length) {
+    const stubHTML = stubs.map(k => `<div class="compare-card"><div style="color:var(--text-tertiary);">Player "${escapeHtml(k)}" not in current data.</div><button class="cc-remove" data-compare-remove="${escapeHtml(k)}">remove</button></div>`).join("");
+    if (players.length >= 2) {
+      html += `<div class="detail-title flush no-rule" style="font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);">Prospects · ${players.length}</div>`;
+      html += makeCompareSideBySide(players) + stubHTML;
+    } else if (players.length === 1) {
+      const p = players[0];
+      const sl = p.statline || {};
+      const slashLine = sl.is_pitcher
+        ? `${sl.era ?? "—"} ERA · ${sl.ip ?? "—"} IP · K/9 ${sl.k_per_9 ?? "—"}`
+        : `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"} · ${sl.hr ?? 0} HR`;
+      const eta = (p.eta && p.eta.year) ? `ETA ${p.eta.year}` : (p.graduation_date ? "graduated" : "ETA —");
+      const ageVsLevel = (p.age_vs_level && p.age_vs_level.diff != null)
+        ? `${p.age_vs_level.diff > 0 ? "+" : ""}${p.age_vs_level.diff.toFixed(1)}y vs ${sl.level || "lvl"}`
+        : "";
+      const fvLabel = p.fv_close != null ? Math.round(p.fv_close) : "—";
+      const sparkline = (p.points && p.points.length >= 2)
+        ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)
+        : "";
+      const rps = computeRelProd(p);
+      html += `<div class="detail-title flush no-rule" style="font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);">Prospects · 1</div>`;
+      html += `<div class="compare-card" style="${orgStripe(p.org)}">
+        <div style="display:flex;gap:10px;align-items:flex-start;min-width:0;">
+          <span onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');" style="cursor:pointer;flex-shrink:0;">${headshotHTML(p, 64)}</span>
+          <div style="min-width:0;flex:1;">
+            <div class="player-name" style="cursor:pointer;" onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');">${escapeHtml(p.player_name)}
+              <span class="fv-badge ${fvClass(String(fvLabel))} size-sm" style="margin-left:6px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}</span>
+            </div>
+            ${playerMetaHTML(p)}
+            <div style="margin-top:6px;">${rpsPillHTML(rps)}</div>
+            <div class="cc-stat" style="margin-top:6px;">${escapeHtml(slashLine)}</div>
+            <div class="cc-stat" style="margin-top:2px;color:var(--text-tertiary);">${escapeHtml(eta)}${ageVsLevel ? " · " + escapeHtml(ageVsLevel) : ""}</div>
+            <div style="margin-top:4px;">${sparkline}</div>
+            <div style="margin-top:6px;font-size:10px;color:var(--text-tertiary);">Pin a second prospect to compare side-by-side.</div>
           </div>
-          ${playerMetaHTML(p)}
-          <div style="margin-top:6px;">${rpsPillHTML(rps)}</div>
-          <div class="cc-stat" style="margin-top:6px;">${escapeHtml(slashLine)}</div>
-          <div class="cc-stat" style="margin-top:2px;color:var(--text-tertiary);">${escapeHtml(eta)}${ageVsLevel ? " · " + escapeHtml(ageVsLevel) : ""}</div>
-          <div style="margin-top:4px;">${sparkline}</div>
-          <div style="margin-top:6px;font-size:10px;color:var(--text-tertiary);">Pin a second prospect to compare side-by-side.</div>
         </div>
-      </div>
-      <button class="cc-remove" data-compare-remove="${escapeHtml(p.player_key)}" type="button">remove</button>
-    </div>`;
-  }).join("");
-  body.innerHTML = cards;
+        <button class="cc-remove" data-compare-remove="${escapeHtml(p.player_key)}" type="button">remove</button>
+      </div>${stubHTML}`;
+    } else {
+      // Only stubs — show them so the user can remove.
+      html += stubHTML;
+    }
+  }
+
+  // Farms section — mirror the prospects split (2+ side-by-side, 1 card).
+  if (farms.length || farmStubs.length) {
+    const farmStubHTML = farmStubs.map(o => `<div class="compare-card"><div style="color:var(--text-tertiary);">Farm "${escapeHtml(o)}" not in current data.</div><button class="cc-remove" data-farm-compare-remove="${escapeHtml(o)}">remove</button></div>`).join("");
+    html += `<div class="detail-title no-rule" style="font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);margin-top:14px;">Farm systems · ${farms.length}</div>`;
+    if (farms.length >= 2) {
+      html += makeFarmCompareSideBySide(farms) + farmStubHTML;
+    } else if (farms.length === 1) {
+      html += makeFarmCompareSingleCard(farms[0]) + farmStubHTML;
+    } else {
+      html += farmStubHTML;
+    }
+  }
+
+  body.innerHTML = html;
 }
 
 function closeCompareAndGo(key) {
   document.getElementById("compare-panel").classList.remove("open");
   goToPlayer(key);
+}
+
+function closeCompareAndGoFarm(org) {
+  document.getElementById("compare-panel").classList.remove("open");
+  goToFarm(org);
 }
 
 function attachHandlers() {
@@ -8183,6 +8333,13 @@ function attachHandlers() {
     if (addBtn) {
       e.stopPropagation();
       compareToggle(addBtn.dataset.compareKey);
+      return;
+    }
+    // Same handler for farm-pin buttons.
+    const farmAddBtn = e.target.closest(".compare-add-btn[data-farm-compare-key]");
+    if (farmAddBtn) {
+      e.stopPropagation();
+      farmCompareToggle(farmAddBtn.dataset.farmCompareKey);
       return;
     }
     const row = e.target.closest("[data-key], [data-org]");
@@ -8225,7 +8382,9 @@ function attachHandlers() {
   });
   document.getElementById("compare-body").addEventListener("click", (e) => {
     const rm = e.target.closest("[data-compare-remove]");
-    if (rm) compareToggle(rm.dataset.compareRemove);
+    if (rm) { compareToggle(rm.dataset.compareRemove); return; }
+    const frm = e.target.closest("[data-farm-compare-remove]");
+    if (frm) farmCompareToggle(frm.dataset.farmCompareRemove);
   });
 
   document.querySelectorAll(".section-tab").forEach(btn => {
