@@ -1063,6 +1063,46 @@
       color: var(--text-primary);
       font-size: 11px;
     }
+    /* Donut + totals layout. On wide screens the donut sits to the
+       left of the two totals tiles; on narrow ones it stacks above. */
+    .spending-summary {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 640px) {
+      .spending-summary { grid-template-columns: 1fr; justify-items: center; }
+    }
+    .spending-summary .ss-totals {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 720px) {
+      .spending-summary .ss-totals { grid-template-columns: 1fr; }
+    }
+    /* Year-by-year detail uses <details>; tighten the summary chevron
+       so it sits flush with the rest of the page typography. */
+    .spending-detail {
+      margin-top: 4px;
+    }
+    .spending-detail summary {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      padding: 4px 0;
+      user-select: none;
+      font-weight: 600;
+    }
+    .spending-detail summary:hover { color: var(--text-secondary); }
+    .spending-detail[open] summary { color: var(--text-secondary); }
+    .spending-detail .spending-grid { margin-top: 8px; }
+
     .spending-totals {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -2029,6 +2069,8 @@ function syncToURL() {
   if (state.search)                       p.set("q",     state.search);
   if (state.farmSort    !== "farm_rank")  p.set("farm",  state.farmSort);
   if (state.formWindow  !== "1y")         p.set("formw", state.formWindow);
+  if (state.farmTxKind  !== "all")        p.set("ftxk",  state.farmTxKind);
+  if (state.farmTxDir   !== "all")        p.set("ftxd",  state.farmTxDir);
   if (state.spotlightBucket !== "hot")    p.set("bucket", state.spotlightBucket);
   const hash = p.toString();
   history.replaceState(null, "", hash ? "#" + hash : window.location.pathname + window.location.search);
@@ -2057,6 +2099,8 @@ function syncFromURL() {
     const v = p.get("formw");
     if (v === "1y" || v === "3y" || v === "5y") state.formWindow = v;
   }
+  if (p.has("ftxk")) state.farmTxKind = p.get("ftxk");
+  if (p.has("ftxd")) state.farmTxDir  = p.get("ftxd");
   if (p.has("bucket")) state.spotlightBucket = p.get("bucket");
 }
 
@@ -2282,6 +2326,10 @@ const state = {
   // value used when sorting by "Trajectory".
   formWindow: "1y",
   spotlightBucket: "hot",
+  // Farm-detail "Transaction history" filters. Persisted on the URL so a
+  // shared link reopens the same filtered view. Default is "all".
+  farmTxKind: "all",
+  farmTxDir:  "all",
   view: null
 };
 
@@ -2392,9 +2440,12 @@ function renderActives() {
     return `
       <div class="player-row" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
         <div class="rank-num">${i + 1}</div>
-        <div>
-          <div class="player-name">${escapeHtml(p.player_name)}</div>
-          <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+          ${headshotHTML(p, 32)}
+          <div style="min-width:0;flex:1;">
+            <div class="player-name">${escapeHtml(p.player_name)}</div>
+            <div class="player-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
+          </div>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
@@ -2735,6 +2786,101 @@ function teamLogoURL(org) {
   if (!org) return null;
   const slug = ESPN_LOGO_SLUGS[org] || org.toLowerCase();
   return `https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png`;
+}
+
+// Highlight tracked-prospect names inside a transaction description.
+// Walks the global DATA arrays once on first call to build a name→key
+// index, then on every invocation scans the text for those names and
+// replaces them with clickable anchors. Skips the focal player's own
+// name (the row already labels them separately) so we don't render the
+// link twice on the same row. Case-insensitive match; longest-name-first
+// so "Jose Vasquez" beats "Jose" when both are tracked.
+let _NAME_INDEX = null;
+function _buildNameIndex() {
+  const map = new Map();          // lower-name → player_key (longest-name-first wins)
+  const all = [];
+  for (const arr of ["players", "graduates", "inactive"]) {
+    for (const p of (DATA[arr] || [])) {
+      if (p.player_name && p.player_key) all.push(p);
+    }
+  }
+  // Insert sorted by name length descending so when we build a single
+  // alternation regex, the longer names are tried first.
+  all.sort((a, b) => b.player_name.length - a.player_name.length);
+  for (const p of all) {
+    const lc = p.player_name.toLowerCase();
+    if (!map.has(lc)) map.set(lc, p.player_key);
+  }
+  return map;
+}
+function _nameIndex() {
+  if (_NAME_INDEX == null) _NAME_INDEX = _buildNameIndex();
+  return _NAME_INDEX;
+}
+function highlightTrackedNamesInText(text, excludeKey) {
+  if (!text) return "";
+  const idx = _nameIndex();
+  // Build the alternation pattern in a single pass so we don't recompile
+  // regexes per call.
+  const names = [...idx.keys()].sort((a, b) => b.length - a.length);
+  if (!names.length) return escapeHtml(text);
+  // Escape regex specials and join with |. Cap the alternation to a
+  // sane size — even with all tracked names it'll be <1MB of pattern.
+  const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Performance note: we do this scan on each render. The alternation
+  // regex caches inside the same function so subsequent calls reuse it.
+  const re = new RegExp("\\b(" + names.map(escRe).join("|") + ")\\b", "gi");
+  // Process the string in chunks: each regex match becomes an anchor;
+  // surrounding text is HTML-escaped.
+  const out = [];
+  let lastIdx = 0;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > lastIdx) out.push(escapeHtml(text.slice(lastIdx, m.index)));
+    const matched = m[0];
+    const key = idx.get(matched.toLowerCase());
+    if (!key || key === excludeKey) {
+      out.push(escapeHtml(matched));
+    } else {
+      out.push(`<a href="#player=${escapeHtml(key)}" onclick="event.preventDefault();event.stopPropagation();goToPlayer('${escapeHtml(key)}');" style="color:var(--neon-cyan);text-decoration:none;">${escapeHtml(matched)}</a>`);
+    }
+    lastIdx = m.index + matched.length;
+  }
+  if (lastIdx < text.length) out.push(escapeHtml(text.slice(lastIdx)));
+  return out.join("");
+}
+
+// Player headshot helper. Pulls from MLB's Cloudinary CDN — same path
+// MLB.com uses on player profiles, and Cloudinary's d_people:generic
+// transform returns a silhouette placeholder when the player has no
+// headshot on file, so missing-image cases handle themselves without
+// our own fallback. For players we don't have an mlbam_id for (older
+// IFAs, some pre-resolution prospects) we render an inline SVG
+// silhouette in a circle so the layout still has something to point to.
+function headshotURL(mlbamId, sizePx) {
+  if (!mlbamId) return null;
+  // Cloudinary returns the requested resolution; we request 2x for
+  // sharp rendering on retina displays.
+  const r = Math.max(60, Math.round(sizePx * 2));
+  return `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_${r},q_auto:best/v1/people/${mlbamId}/headshot/67/current`;
+}
+function headshotHTML(player, sizePx = 36) {
+  const id = (player && (player.mlbam_id || (player.statline || {}).mlbam_id));
+  const size = sizePx;
+  const sil = `<svg viewBox="0 0 24 24" aria-hidden="true" style="position:absolute;left:15%;top:15%;width:70%;height:70%;color:var(--text-tertiary);"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+  const wrap = `width:${size}px;height:${size}px;border-radius:50%;flex-shrink:0;background:var(--bg-tertiary);border:1px solid var(--border);overflow:hidden;display:inline-block;position:relative;vertical-align:middle;`;
+  if (!id) {
+    return `<span class="headshot" style="${wrap}">${sil}</span>`;
+  }
+  const url = headshotURL(id, size);
+  // The silhouette renders behind the img; onerror hides the img so the
+  // silhouette shows through if Cloudinary 404s (rare).
+  return `<span class="headshot" style="${wrap}">
+    ${sil}
+    <img src="${url}" alt="" loading="lazy"
+         style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;"
+         onerror="this.style.display='none'"/>
+  </span>`;
 }
 // Render a team logo with an inline fallback when the CDN 404s. `size`
 // must match a CSS class suffix (sm, md, lg, xl).
@@ -3176,6 +3322,113 @@ function makeFarmGrowthChart(org, medianTrajectory, windowKey) {
   </svg>`;
 }
 
+// Full farm-system transactions section — a chronological table of every
+// trade + non-trade transaction touching the org. Kind chips above the
+// table filter by event type (trades, waiver claims, releases, etc.);
+// the "in/out" toggle filters by direction. The same data feeds the
+// sidebar per-kind cards but here it has room to breathe — full date,
+// other org, kind chip, player headshot + name, and the description.
+function makeFarmTransactionsSection(allEvents, orgCode) {
+  if (!allEvents.length) {
+    return `<div class="detail-title" style="margin-top:18px;">Transaction history</div>
+      <div style="color:var(--text-tertiary);font-size:12px;">No transactions on file for this org's prospects.</div>`;
+  }
+  // Filter via shared state so back-button navigation preserves the
+  // active filter chips.
+  const activeKind = state.farmTxKind || "all";
+  const activeDir  = state.farmTxDir  || "all";
+
+  let evs = allEvents.slice();
+  if (activeKind !== "all") evs = evs.filter(e => e.kind === activeKind);
+  if (activeDir === "in")   evs = evs.filter(e => e.to_org === orgCode);
+  if (activeDir === "out")  evs = evs.filter(e => e.from_org === orgCode);
+
+  // Build per-kind tallies for the chip labels so the user can see how
+  // many events of each type exist before filtering.
+  const kindTallies = { all: allEvents.length };
+  for (const e of allEvents) {
+    kindTallies[e.kind] = (kindTallies[e.kind] || 0) + 1;
+  }
+  // Kind chips: kinds the org actually has events for, plus "All".
+  const FARM_TX_KINDS = [
+    ["all",                "All"],
+    ["trade",              "Trades"],
+    ["waiver_claim",       "Waiver claims"],
+    ["signed_free_agent",  "FA signings"],
+    ["released",           "Releases"],
+    ["dfa",                "DFA"],
+    ["outrighted",         "Outrights"],
+    ["contract_purchase",  "Purchases"],
+    ["rule_5_return",      "Rule 5 returns"],
+  ];
+  const kindChips = FARM_TX_KINDS
+    .filter(([k]) => k === "all" || kindTallies[k])
+    .map(([k, lbl]) => {
+      const active = activeKind === k;
+      const n = kindTallies[k] || 0;
+      return `<button class="chip${active ? " active" : ""}" data-farm-tx-kind="${escapeHtml(k)}" type="button">${escapeHtml(lbl)} <span style="color:var(--text-tertiary);font-weight:400;">(${n})</span></button>`;
+    }).join("");
+
+  const inN  = allEvents.filter(e => e.to_org === orgCode).length;
+  const outN = allEvents.filter(e => e.from_org === orgCode).length;
+  const dirChips = [
+    ["all", "Both", allEvents.length],
+    ["in",  "In",   inN],
+    ["out", "Out",  outN],
+  ].map(([k, lbl, n]) => {
+    const active = activeDir === k;
+    return `<button class="chip${active ? " active" : ""}" data-farm-tx-dir="${escapeHtml(k)}" type="button">${escapeHtml(lbl)} <span style="color:var(--text-tertiary);font-weight:400;">(${n})</span></button>`;
+  }).join("");
+
+  const rowHtml = (ev) => {
+    const cfg = TRANSACTION_KINDS[ev.kind] || {};
+    const kindChip = `<span style="display:inline-flex;align-items:center;gap:4px;border:1px solid ${cfg.color || 'var(--text-tertiary)'};color:${cfg.color || 'var(--text-tertiary)'};background:transparent;font-family:var(--font-sans);font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:1px 6px;border-radius:2px;white-space:nowrap;">${escapeHtml(cfg.label || ev.kind)}</span>`;
+    const inbound = ev.to_org === orgCode;
+    const arrow = inbound
+      ? `<span style="color:var(--up);font-weight:700;">+</span>`
+      : `<span style="color:var(--down);font-weight:700;">→</span>`;
+    const other = inbound ? ev.from_org : ev.to_org;
+    const gradTag = ev.graduate
+      ? `<span style="font-size:9px;color:var(--text-tertiary);margin-left:6px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;">grad</span>`
+      : "";
+    // Inline highlight of the player name as a clickable link.
+    const name = `<a href="#player=${escapeHtml(ev.player.player_key)}" onclick="event.preventDefault();event.stopPropagation();goToPlayer('${escapeHtml(ev.player.player_key)}');" style="color:var(--neon-cyan);text-decoration:none;font-weight:600;">${escapeHtml(ev.player.player_name)}</a>${gradTag}`;
+    const desc = ev.description
+      ? `<span style="color:var(--text-secondary);font-size:11px;">${highlightTrackedNamesInText(ev.description, ev.player.player_key)}</span>`
+      : "";
+    return `<tr>
+      <td style="white-space:nowrap;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;color:var(--text-secondary);">${escapeHtml(ev.date || "—")}</td>
+      <td>${kindChip}</td>
+      <td>${name}</td>
+      <td style="white-space:nowrap;font-family:var(--font-mono);font-size:11px;">${arrow} ${escapeHtml(other || "—")}</td>
+      <td>${desc}</td>
+    </tr>`;
+  };
+
+  // Cap the visible rows. Showing 200 events at once is fine for the
+  // typical org; if a user wants more they can use chip filters.
+  const CAP = 200;
+  const shown = evs.slice(0, CAP);
+  const tail = evs.length > CAP
+    ? `<div style="font-size:11px;color:var(--text-tertiary);text-align:center;padding:6px;">Showing ${CAP} of ${evs.length}. Use filters above to narrow.</div>`
+    : "";
+
+  return `<div class="detail-title" style="margin-top:18px;">Farm-system transactions
+      <span style="font-weight:400;font-size:11px;color:var(--text-tertiary);margin-left:6px;">${allEvents.length} total across tracked prospects</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px;">
+      <span class="filter-label" style="min-width:50px;">Type</span>${kindChips}
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;">
+      <span class="filter-label" style="min-width:50px;">Direction</span>${dirChips}
+    </div>
+    <table class="detail-table"><thead><tr>
+      <th>Date</th><th>Type</th><th>Prospect</th><th>Move</th><th>Detail</th>
+    </tr></thead><tbody>${shown.map(rowHtml).join("")}</tbody></table>
+    ${tail}`;
+}
+
+
 // Acquisition-spending block — IFA vs Draft year-by-year for one org.
 // Renders on the farm-detail page so a reader can compare an
 // organization's amateur-talent commitment by channel at a glance.
@@ -3201,44 +3454,77 @@ function makeSpendingBlock(org) {
   if (allYears.size === 0) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No bonus data on file for this org's amateur acquisitions.</div>`;
   }
-  // Anchor the bars to a recent multi-year window so the chart stays
-  // bounded as our history grows. Last 6 cycles is a clean comparison
-  // band — covers Spotrac IFA 2021-current plus the matching drafts.
+  // Window: Spotrac IFA data starts in 2021, so anchor here to keep the
+  // comparison apples-to-apples. Drafts before 2021 exist in our data
+  // but the per-year mini-bar list filters them out for symmetry.
   const years = [...allYears].filter(y => y >= 2021).sort((a, b) => b - a);
-  // Scale: use the max combined single-year spend so IFA and Draft
-  // share a comparable width axis across rows.
+
+  const ifaTotal   = years.reduce((sum, y) => sum + ((ifa[y]   || {}).total_usd || 0), 0);
+  const draftTotal = years.reduce((sum, y) => sum + ((draft[y] || {}).total_usd || 0), 0);
+  const ifaSign    = years.reduce((sum, y) => sum + ((ifa[y]   || {}).signings  || 0), 0);
+  const draftSign  = years.reduce((sum, y) => sum + ((draft[y] || {}).signings  || 0), 0);
+  const grandTotal = ifaTotal + draftTotal;
+  const ifaPct     = grandTotal ? (ifaTotal / grandTotal) * 100 : 0;
+  const draftPct   = grandTotal ? (draftTotal / grandTotal) * 100 : 0;
+
+  // Donut chart — IFA vs Draft share of the multi-year amateur spend.
+  // Built from two stroked circle arcs: the IFA arc starts at 12
+  // o'clock and goes clockwise; the Draft arc fills the remainder.
+  // Stroke-dasharray is "arc_length total_circumference" so the
+  // fraction of the circle each arc covers maps directly to its
+  // dollar share of grandTotal.
+  const R = 48, CX = 60, CY = 60, STROKE = 16;
+  const C = 2 * Math.PI * R;
+  const ifaArc   = (C * ifaPct)   / 100;
+  const draftArc = (C * draftPct) / 100;
+  const ifaColor   = "var(--neon-amber)";
+  const draftColor = "var(--neon-cyan)";
+  const donutSvg = `<svg viewBox="0 0 120 120" width="140" height="140" role="img" aria-label="IFA vs Draft spending mix">
+    <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="var(--bg-tertiary)" stroke-width="${STROKE}"/>
+    <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${draftColor}" stroke-width="${STROKE}"
+            stroke-dasharray="${C} ${C}"
+            transform="rotate(-90 ${CX} ${CY})"/>
+    <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${ifaColor}" stroke-width="${STROKE}"
+            stroke-dasharray="${ifaArc.toFixed(2)} ${C}"
+            transform="rotate(-90 ${CX} ${CY})"/>
+    <text x="${CX}" y="${CY - 2}" text-anchor="middle" font-family="var(--font-mono)" font-size="18" font-weight="700" fill="var(--text-primary)">${_fmtDollars(grandTotal)}</text>
+    <text x="${CX}" y="${CY + 14}" text-anchor="middle" font-family="var(--font-sans)" font-size="9" letter-spacing="0.1em" fill="var(--text-tertiary)">${years.length}-YR TOTAL</text>
+  </svg>`;
+
+  const totalsHtml = `<div class="spending-summary">
+    <div class="ss-donut">${donutSvg}</div>
+    <div class="ss-totals">
+      <div class="st-cell st-ifa">
+        <div class="st-label">International FA · ${ifaPct.toFixed(0)}%</div>
+        <div class="st-value">${_fmtDollars(ifaTotal)}</div>
+        <div class="st-sub">${ifaSign} signings · avg ${_fmtDollars(ifaSign ? ifaTotal / ifaSign : 0)}</div>
+      </div>
+      <div class="st-cell st-draft">
+        <div class="st-label">Draft · ${draftPct.toFixed(0)}%</div>
+        <div class="st-value">${_fmtDollars(draftTotal)}</div>
+        <div class="st-sub">${draftSign} picks signed · avg ${_fmtDollars(draftSign ? draftTotal / draftSign : 0)}</div>
+      </div>
+    </div>
+  </div>`;
+
+  // Year-by-year mini bars kept underneath the donut. The donut shows
+  // the multi-year mix at a glance; the per-year bars let the reader
+  // see cycle-to-cycle changes (e.g. a deadline trade-deadline draft
+  // year that spikes draft spending). Scaled to the largest single-
+  // year combined total so internal proportions stay readable.
   let maxYear = 1;
   for (const y of years) {
     const i = (ifa[y]   || {}).total_usd || 0;
     const d = (draft[y] || {}).total_usd || 0;
     maxYear = Math.max(maxYear, i, d);
   }
-
-  const ifaTotal   = years.reduce((sum, y) => sum + ((ifa[y]   || {}).total_usd || 0), 0);
-  const draftTotal = years.reduce((sum, y) => sum + ((draft[y] || {}).total_usd || 0), 0);
-  const ifaSign    = years.reduce((sum, y) => sum + ((ifa[y]   || {}).signings  || 0), 0);
-  const draftSign  = years.reduce((sum, y) => sum + ((draft[y] || {}).signings  || 0), 0);
-
-  const totalsHtml = `<div class="spending-totals">
-    <div class="st-cell st-ifa">
-      <div class="st-label">International FA · ${years.length}-yr</div>
-      <div class="st-value">${_fmtDollars(ifaTotal)}</div>
-      <div class="st-sub">${ifaSign} signings · avg ${_fmtDollars(ifaSign ? ifaTotal / ifaSign : 0)} / signing</div>
-    </div>
-    <div class="st-cell st-draft">
-      <div class="st-label">Draft · ${years.length}-yr</div>
-      <div class="st-value">${_fmtDollars(draftTotal)}</div>
-      <div class="st-sub">${draftSign} picks signed · avg ${_fmtDollars(draftSign ? draftTotal / draftSign : 0)} / pick</div>
-    </div>
-  </div>`;
-
   const rowHtml = (yr) => {
     const iRec = ifa[yr]   || {};
     const dRec = draft[yr] || {};
     const iVal = iRec.total_usd || 0;
     const dVal = dRec.total_usd || 0;
-    const iPct = Math.min(100, (iVal / maxYear) * 100);
-    const dPct = Math.min(100, (dVal / maxYear) * 100);
+    const iPctYr = Math.min(100, (iVal / maxYear) * 100);
+    const dPctYr = Math.min(100, (dVal / maxYear) * 100);
     const iTip = iRec.top_player ? `Top: ${iRec.top_player} (${_fmtDollars(iRec.top_bonus || 0)})` : "";
     const dTip = dRec.top_player ? `Top: ${dRec.top_player} (${_fmtDollars(dRec.top_bonus || 0)})` : "";
     return `
@@ -3246,20 +3532,22 @@ function makeSpendingBlock(org) {
       <div class="spending-bars">
         <div class="spending-bar sb-ifa" title="${escapeHtml(iTip)}">
           <span class="sb-label">IFA</span>
-          <span class="sb-track"><span class="sb-fill" style="width:${iPct.toFixed(1)}%;"></span></span>
+          <span class="sb-track"><span class="sb-fill" style="width:${iPctYr.toFixed(1)}%;"></span></span>
           <span class="sb-amt">${_fmtDollars(iVal)}</span>
         </div>
         <div class="spending-bar sb-draft" title="${escapeHtml(dTip)}">
           <span class="sb-label">Draft</span>
-          <span class="sb-track"><span class="sb-fill" style="width:${dPct.toFixed(1)}%;"></span></span>
+          <span class="sb-track"><span class="sb-fill" style="width:${dPctYr.toFixed(1)}%;"></span></span>
           <span class="sb-amt">${_fmtDollars(dVal)}</span>
         </div>
       </div>`;
   };
 
-  return totalsHtml + `<div class="spending-grid">
-    ${years.map(rowHtml).join("")}
-  </div>`;
+  return totalsHtml + `
+    <details class="spending-detail">
+      <summary>Per-year detail</summary>
+      <div class="spending-grid">${years.map(rowHtml).join("")}</div>
+    </details>`;
 }
 
 // FV-distribution histogram for an org. Used in the farm-detail sidebar
@@ -4032,12 +4320,15 @@ function makeTransactionHistoryBlock(player) {
 
   // Build a flat row list. Each row: {date, kind, move (HTML), detail}.
   const rows = [];
+  const focalKey = player && player.player_key;
   for (const t of trades) {
     rows.push({
       kind: "trade",
       date: t.trade_date,
       move: `${escapeHtml(t.from_org ?? "?")} <span style="color:var(--neon-violet);">→</span> ${escapeHtml(t.to_org ?? "?")}`,
-      detail: escapeHtml(t.description || ""),
+      // Highlight any other tracked prospects named in the trade text so
+      // a multi-prospect deal becomes a navigation hub from each leg.
+      detail: highlightTrackedNamesInText(t.description || "", focalKey),
     });
   }
   for (const lc of levelChanges) {
@@ -4086,7 +4377,9 @@ function makeTransactionHistoryBlock(player) {
       kind: tx.kind,
       date: tx.date,
       move: movePart,
-      detail: escapeHtml(tx.description || ""),
+      // Link any tracked prospects mentioned (e.g. multi-player trades
+      // where the other party shows up in the description).
+      detail: highlightTrackedNamesInText(tx.description || "", focalKey),
     });
   }
   rows.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
@@ -4223,9 +4516,10 @@ function renderPlayerDetail(key) {
   const header = `
     <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
     <div class="detail-page-header" style="${orgStripe(p.org)}">
-      <div style="display:flex;align-items:flex-start;gap:16px;">
+      <div style="display:flex;align-items:flex-start;gap:16px;flex:1;min-width:0;">
+        ${headshotHTML(p, 88)}
         ${teamLogoHTML(p.org, "lg", p.org ? fullOrgName(p.org) : "")}
-        <div>
+        <div style="min-width:0;">
           <div class="player-display-name">${escapeHtml(p.player_name)}</div>
           <div class="player-display-meta">
             <strong style="font-weight:600;color:var(--text-primary);">${escapeHtml(p.position ?? "—")}</strong> · ${orgLink}${p.age != null ? ` · age ${p.age.toFixed(1)}` : ""}${p.birth_date ? ` · born ${p.birth_date}` : ""}
@@ -4662,33 +4956,70 @@ function renderFarmDetail(orgCode) {
 
   const graduates = (DATA.graduates || []).filter(g => g.org === orgCode);
 
-  // Recent trades involving this org — pulled from every player's trades.
-  // from_org / to_org are canonical 3-letter codes in the exported JSON, so
-  // a direct equality check is sufficient. Trades for graduates are tagged
-  // so we can label them on the page.
-  const allTradesForOrg = [];
-  const seen = new Set();
-  for (const p of rosterPlayers) {
+  // Build a unified list of every event involving this org — trades,
+  // waiver claims, releases, DFAs, contract purchases, Rule 5 moves,
+  // FA signings. Each event carries:
+  //   { player, kind, date, from_org, to_org, description, graduate }
+  // and we render the same list two ways below:
+  //   (a) the sidebar shows the most recent few of each kind in
+  //       compact per-kind cards;
+  //   (b) the main column gets a full chronological "Farm-system
+  //       transactions" section with kind-filter chips.
+  //
+  // Pulls from BOTH active prospects (rosterPlayersAll — pre-filter,
+  // since we want all events for the org regardless of the user's
+  // current acquisition/level/pos filter) and graduates / inactives.
+  const allEventsForOrg = [];
+  const seenEvent = new Set();
+  // Don't restrict to the user-filtered roster — every prospect tied
+  // to this org has events worth surfacing on the farm page, even when
+  // a level / position filter is excluding them from the table above.
+  const sources = [
+    ...rosterPlayersAll.map(p => ({ p, graduate: false })),
+    ...graduates.map(p => ({ p, graduate: true })),
+    ...((DATA.inactive || []).filter(p => p.org === orgCode).map(p => ({ p, graduate: false }))),
+  ];
+  for (const { p, graduate } of sources) {
     for (const t of (p.trades || [])) {
-      if (t.from_org === orgCode || t.to_org === orgCode) {
-        const k = `${p.player_key}|${t.trade_date}|${t.from_org}|${t.to_org}`;
-        if (seen.has(k)) continue;
-        seen.add(k);
-        allTradesForOrg.push({ player: p, trade: t, graduate: false });
-      }
+      if (t.from_org !== orgCode && t.to_org !== orgCode) continue;
+      const k = `${p.player_key}|trade|${t.trade_date}|${t.from_org}|${t.to_org}`;
+      if (seenEvent.has(k)) continue;
+      seenEvent.add(k);
+      allEventsForOrg.push({
+        player: p, graduate,
+        kind: "trade",
+        date: t.trade_date,
+        from_org: t.from_org, to_org: t.to_org,
+        description: t.description || "",
+      });
+    }
+    for (const tx of (p.transactions || [])) {
+      if (tx.from_org !== orgCode && tx.to_org !== orgCode) continue;
+      const k = `${p.player_key}|${tx.kind}|${tx.date}|${tx.from_org}|${tx.to_org}`;
+      if (seenEvent.has(k)) continue;
+      seenEvent.add(k);
+      allEventsForOrg.push({
+        player: p, graduate,
+        kind: tx.kind,
+        date: tx.date,
+        from_org: tx.from_org, to_org: tx.to_org,
+        description: tx.description || "",
+      });
     }
   }
-  for (const p of graduates) {
-    for (const t of (p.trades || [])) {
-      if (t.from_org === orgCode || t.to_org === orgCode) {
-        const k = `${p.player_key}|${t.trade_date}|${t.from_org}|${t.to_org}`;
-        if (seen.has(k)) continue;
-        seen.add(k);
-        allTradesForOrg.push({ player: p, trade: t, graduate: true });
-      }
-    }
+  allEventsForOrg.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  // For backward compat with the sidebar trade-only render path below.
+  const allTradesForOrg = allEventsForOrg.filter(e => e.kind === "trade")
+    .map(e => ({ player: e.player, trade: { trade_date: e.date, from_org: e.from_org, to_org: e.to_org, description: e.description }, graduate: e.graduate }));
+
+  // Group events by kind for the sidebar's "Recent transactions" cards
+  // (top 5 per kind). Kinds are presented in roster-event order so a
+  // reader scanning the sidebar can pick up the "what's changed lately"
+  // story without having to parse a flat list.
+  const eventsByKind = {};
+  for (const ev of allEventsForOrg) {
+    (eventsByKind[ev.kind] = eventsByKind[ev.kind] || []).push(ev);
   }
-  allTradesForOrg.sort((a, b) => b.trade.trade_date.localeCompare(a.trade.trade_date));
 
   const header = `
     <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
@@ -4729,18 +5060,41 @@ function renderFarmDetail(orgCode) {
     </div>
   </div>`;
 
-  // Full roster with mini FV charts
+  // Compact stat line for a roster row: slash + counting for hitters,
+  // ERA + peripherals for pitchers. One line, monospace, dimmed; the
+  // full season detail still lives on the prospect page.
+  const rosterStatLine = (p) => {
+    const sl = p.statline;
+    if (!sl) return `<span style="color:var(--text-tertiary);">no stats yet</span>`;
+    const isP = sl.is_pitcher;
+    const levelPill = `<span class="level-pill level-neutral" style="margin-right:4px;">${escapeHtml(sl.level || "?")}</span>`;
+    const slash = isP
+      ? `${sl.era ?? "—"} ERA · ${sl.whip != null ? sl.whip + " WHIP · " : ""}${sl.k_per_9 != null ? sl.k_per_9.toFixed(1) + " K/9 · " : ""}${sl.bb_per_9 != null ? sl.bb_per_9.toFixed(1) + " BB/9 · " : ""}${sl.ip ?? "—"} IP`
+      : `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"} · ${sl.hr ?? 0} HR${sl.sb ? ' · ' + sl.sb + ' SB' : ''}${sl.bb_pct != null ? ' · ' + sl.bb_pct.toFixed(0) + '% BB' : ''}${sl.k_pct != null ? ' · ' + sl.k_pct.toFixed(0) + '% K' : ''}`;
+    const prior = sl.is_prior_season && sl.season
+      ? `<span class="prior-season-tag" title="No ${new Date().getFullYear()} stats yet — showing ${sl.season}">${sl.season}</span>`
+      : "";
+    return `${levelPill}${prior}<span style="color:var(--text-primary);font-family:var(--font-mono);font-size:11px;">${slash}</span>`;
+  };
+
+  // Full roster with mini FV charts + an inline current-season stat
+  // line under each player's name. Column proportions widened slightly
+  // on the Player cell since the stat row needs the horizontal room.
   const rosterRows = rosterPlayers.map((p, i) => {
     const latest = p.points[p.points.length - 1];
     const chart = p.points.length >= 2
       ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)
       : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
     return `
-      <div class="player-row" style="grid-template-columns:32px 1.3fr 0.45fr 0.45fr 1.1fr 0.6fr;${orgStripe(p.org)}" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
+      <div class="player-row" style="grid-template-columns:32px 1.6fr 0.45fr 0.45fr 1.1fr 0.6fr;${orgStripe(p.org)}" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
         <div class="rank-num">${i + 1}</div>
-        <div>
-          <div class="player-name">${escapeHtml(p.player_name)}</div>
-          <div class="player-meta">${escapeHtml(p.position ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+          ${headshotHTML(p, 36)}
+          <div style="min-width:0;flex:1;">
+            <div class="player-name">${escapeHtml(p.player_name)}</div>
+            <div class="player-meta">${escapeHtml(p.position ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
+            <div class="player-stat-line" style="margin-top:3px;font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rosterStatLine(p)}</div>
+          </div>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span></div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
@@ -4749,9 +5103,9 @@ function renderFarmDetail(orgCode) {
       </div>`;
   }).join("");
 
-  const rosterHeader = `<div class="col-header" style="grid-template-columns:32px 1.3fr 0.45fr 0.45fr 1.1fr 0.6fr;">
+  const rosterHeader = `<div class="col-header" style="grid-template-columns:32px 1.6fr 0.45fr 0.45fr 1.1fr 0.6fr;">
     <span style="text-align:center;">#</span>
-    <span>Player</span>
+    <span>Player · current stats</span>
     <span style="text-align:center;">FV</span>
     <span style="text-align:center;">Rank</span>
     <span style="text-align:center;">FV history</span>
@@ -4803,15 +5157,31 @@ function renderFarmDetail(orgCode) {
   // visible while scrolling), leaderboards + grads + trades at the end.
   const tp = org.top_prospect;
   const yp = org.youngest;
+  // Look up the full player objects (rosterPlayersAll, not the filtered
+  // rosterPlayers) so the headshot resolves regardless of active
+  // chip-filter state. Top prospect = highest-FV row in the org's
+  // tracked set; youngest = the org_summary's pre-resolved pointer.
+  const tpPlayer = rosterPlayersAll.find(rp => rp.player_name === (tp && tp.name)) || rosterPlayersAll[0];
+  const ypPlayer = yp ? rosterPlayersAll.find(rp => rp.player_name === yp.name) : null;
   const topProspectCard = `<div class="farm-side-card">
     <div class="side-title">Top prospect</div>
-    ${tp ? `<div style="font-size:14px;font-weight:600;cursor:pointer;color:var(--neon-cyan);" onclick="goToPlayer('${escapeHtml((rosterPlayers[0] || {}).player_key || '')}');">${escapeHtml(tp.name)} <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:11px;padding:1px 6px;">${tp.fv_label}</span></div>
-    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(tp.pos||'')} · age ${tp.age != null ? tp.age.toFixed(1) : "—"}</div>` : '—'}
+    ${tp ? `<div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="goToPlayer('${escapeHtml((tpPlayer || {}).player_key || '')}');">
+      ${headshotHTML(tpPlayer || {}, 44)}
+      <div style="min-width:0;">
+        <div style="font-size:14px;font-weight:600;color:var(--neon-cyan);">${escapeHtml(tp.name)} <span class="fv-badge ${fvClass(tp.fv_label)}" style="font-size:11px;padding:1px 6px;">${tp.fv_label}</span></div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(tp.pos||'')} · age ${tp.age != null ? tp.age.toFixed(1) : "—"}</div>
+      </div>
+    </div>` : '—'}
   </div>`;
   const youngestCard = `<div class="farm-side-card">
     <div class="side-title">Youngest</div>
-    ${yp ? `<div style="font-size:14px;font-weight:600;">${escapeHtml(yp.name)}</div>
-    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(yp.pos||'')} · age ${yp.age != null ? yp.age.toFixed(1) : "—"} · FV ${yp.fv_label}</div>` : '—'}
+    ${yp ? `<div style="display:flex;align-items:center;gap:10px;${ypPlayer ? 'cursor:pointer;' : ''}" ${ypPlayer ? `onclick="goToPlayer('${escapeHtml(ypPlayer.player_key)}');"` : ''}>
+      ${headshotHTML(ypPlayer || {}, 44)}
+      <div style="min-width:0;">
+        <div style="font-size:14px;font-weight:600;${ypPlayer ? 'color:var(--neon-cyan);' : ''}">${escapeHtml(yp.name)}</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(yp.pos||'')} · age ${yp.age != null ? yp.age.toFixed(1) : "—"} · FV ${yp.fv_label}</div>
+      </div>
+    </div>` : '—'}
   </div>`;
   const fvDistCard = `<div class="farm-side-card">
     <div class="side-title">FV distribution <span class="side-count">${(org.prospects || []).length} graded</span></div>
@@ -4834,29 +5204,54 @@ function renderFarmDetail(orgCode) {
     ${pitchersBlock}
   </div>`;
 
-  // Compact trades list for the sidebar — same data as the full table
-  // at the bottom of the main column, but stripped to date + player +
-  // direction so it fits a narrow column at a glance.
-  const compactTradesHtml = allTradesForOrg.length
-    ? allTradesForOrg.slice(0, 8).map(({ player, trade, graduate }) => {
-        const dir = trade.to_org === orgCode
-          ? `<span style="color:var(--neon-green);">+</span>`
-          : `<span style="color:var(--neon-violet);">→</span>`;
-        const other = trade.to_org === orgCode ? trade.from_org : trade.to_org;
-        const gradTag = graduate
-          ? `<span style="font-size:9px;color:var(--text-tertiary);margin-left:4px;letter-spacing:0.04em;">GRAD</span>`
-          : "";
-        return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(player.player_key)}');">
-          <span style="font-family:var(--font-mono);color:var(--text-tertiary);font-size:10px;white-space:nowrap;">${trade.trade_date.slice(2)}</span>
-          <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(player.player_name)}${gradTag}</span>
-          <span style="font-family:var(--font-mono);font-size:10px;white-space:nowrap;">${dir} ${escapeHtml(other || "?")}</span>
-        </div>`;
-      }).join("")
-    : `<span style="color:var(--text-tertiary);font-size:11.5px;">None</span>`;
-  const tradesCard = `<div class="farm-side-card">
-    <div class="side-title">Recent trades <span class="side-count">${allTradesForOrg.length} total</span></div>
-    ${compactTradesHtml}
-  </div>`;
+  // Compact transaction list for the sidebar — one row per event with
+  // a colored chip in front denoting the kind (trade / waiver claim /
+  // release / DFA / etc.) and a +/→ arrow that flips for in vs. out
+  // moves. The full chronological history lives in the main column;
+  // this is a "top 12 most recent" snapshot keyed off the same data.
+  const compactEventRow = (ev) => {
+    const inbound = ev.to_org === orgCode;
+    const arrow = inbound
+      ? `<span style="color:var(--up);font-weight:700;">+</span>`
+      : `<span style="color:var(--down);font-weight:700;">→</span>`;
+    const other = inbound ? ev.from_org : ev.to_org;
+    const gradTag = ev.graduate
+      ? `<span style="font-size:9px;color:var(--text-tertiary);margin-left:4px;letter-spacing:0.04em;">GRAD</span>`
+      : "";
+    const cfg = TRANSACTION_KINDS[ev.kind] || {};
+    const chip = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${cfg.color || 'var(--text-tertiary)'};margin-right:6px;vertical-align:middle;" title="${escapeHtml(cfg.label || ev.kind)}"></span>`;
+    return `<div style="display:grid;grid-template-columns:36px 1fr auto;gap:6px;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(ev.player.player_key)}');">
+      <span style="font-family:var(--font-mono);color:var(--text-tertiary);font-size:10px;white-space:nowrap;">${ev.date ? ev.date.slice(2) : '—'}</span>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${chip}<span style="color:var(--neon-cyan);">${escapeHtml(ev.player.player_name)}</span>${gradTag}</span>
+      <span style="font-family:var(--font-mono);font-size:10px;white-space:nowrap;">${arrow} ${escapeHtml(other || "?")}</span>
+    </div>`;
+  };
+
+  // Per-kind sidebar sections. Each renders the most recent few events
+  // of that kind so the eye can scan by category without one section
+  // crowding the others out. Skipped (omitted from the sidebar) when
+  // the org has zero of that kind so we don't show empty cards.
+  const sideEventSections = [
+    ["trade",              "Recent trades",         8],
+    ["waiver_claim",       "Recent waiver claims",  5],
+    ["signed_free_agent",  "Recent FA signings",    5],
+    ["released",           "Recent releases",       5],
+    ["dfa",                "Recent DFAs",           5],
+    ["outrighted",         "Recent outrights",      5],
+    ["contract_purchase",  "Contract purchases",    5],
+    ["rule_5_return",      "Rule 5 returns",        5],
+  ];
+  const recentTxCards = sideEventSections
+    .map(([kind, title, cap]) => {
+      const evs = (eventsByKind[kind] || []);
+      if (!evs.length) return "";
+      const html = evs.slice(0, cap).map(compactEventRow).join("");
+      return `<div class="farm-side-card">
+        <div class="side-title">${escapeHtml(title)} <span class="side-count">${evs.length}</span></div>
+        ${html}
+      </div>`;
+    })
+    .join("");
 
   const gradsCard = `<div class="farm-side-card">
     <div class="side-title">Recent graduates <span class="side-count">${graduates.length}</span></div>
@@ -4866,7 +5261,7 @@ function renderFarmDetail(orgCode) {
       </div>`).join("") || '<span style="color:var(--text-tertiary);font-size:11.5px;">None</span>'}
   </div>`;
 
-  const sidebarHtml = topProspectCard + youngestCard + fvDistCard + acqMixCard + etaCard + hittersCard + pitchersCard + tradesCard + gradsCard;
+  const sidebarHtml = topProspectCard + youngestCard + fvDistCard + acqMixCard + etaCard + hittersCard + pitchersCard + recentTxCards + gradsCard;
 
   // Optional left rail (≥1500px viewports only — CSS-hidden otherwise).
   // Surfaces breakdowns that are useful at-a-glance but would otherwise
@@ -5084,6 +5479,7 @@ function renderFarmDetail(orgCode) {
         ${rosterHeader}${rosterRows}
         ${gradedSection}
         ${affiliateSection}
+        ${makeFarmTransactionsSection(allEventsForOrg, orgCode)}
       </div>
       <div class="farm-side">${sidebarHtml}</div>
     </div>`;
@@ -5124,6 +5520,23 @@ function renderFarmDetail(orgCode) {
     if (btn.disabled) return;
     btn.addEventListener("click", () => {
       state.posFilter = btn.dataset.farmPos;
+      renderFarmDetail(orgCode);
+      syncToURL();
+    });
+  });
+  // Farm transaction-history filter chips (kind + direction). Both
+  // share state via state.farmTxKind / state.farmTxDir so the URL
+  // captures the active view.
+  document.querySelectorAll("#farm-detail-body [data-farm-tx-kind]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.farmTxKind = btn.dataset.farmTxKind;
+      renderFarmDetail(orgCode);
+      syncToURL();
+    });
+  });
+  document.querySelectorAll("#farm-detail-body [data-farm-tx-dir]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.farmTxDir = btn.dataset.farmTxDir;
       renderFarmDetail(orgCode);
       syncToURL();
     });

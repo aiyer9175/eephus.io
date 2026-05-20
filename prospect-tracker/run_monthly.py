@@ -821,7 +821,8 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                rosters_by_org=rosters_by_org,
                                level_changes=level_changes_by_key,
                                roster_status=roster_status_by_key,
-                               ifa_spending_by_org=ifa_spending_by_org)
+                               ifa_spending_by_org=ifa_spending_by_org,
+                               player_ids=ids_by_key)
         log.info("wrote %s", out_path)
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,

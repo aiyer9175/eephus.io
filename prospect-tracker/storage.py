@@ -1131,6 +1131,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           level_changes: dict[str, list[dict]] | None = None,
                           roster_status: dict[str, dict] | None = None,
                           ifa_spending_by_org: dict[str, dict[int, dict]] | None = None,
+                          player_ids: dict[str, int] | None = None,
                           top_n_active: int | None = None):
     """
     Serialize for the front-end widget.
@@ -1163,6 +1164,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     level_changes = level_changes or {}
     roster_status = roster_status or {}
     ifa_spending_by_org = ifa_spending_by_org or {}
+    player_ids = player_ids or {}
     birth_dates = load_birth_dates()
     from stats import compute_age_decimal
     from age_level import score_age_vs_level
@@ -1706,9 +1708,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     "to_org":      latest.get("to_org"),
                     "description": latest.get("description"),
                 }
+        # mlbam_id at top-level so every consumer (UI headshot, link to
+        # MLB.com, etc.) can read it without digging into the statline —
+        # graduates / inactives sometimes lack a current-season statline
+        # but still need their MLB headshot to render.
+        _mlbam = player_ids.get(p.player_key)
+        if _mlbam is None and sl_out:
+            _mlbam = sl_out.get("mlbam_id")
         return {
             "player_key": p.player_key,
             "player_name": p.player_name,
+            "mlbam_id": _mlbam,
             "position": p.position,
             "org": display_org,
             "status": p.status,
@@ -1737,7 +1747,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # contract purchases, Rule 5 selections/returns, FA signings.
             # Trades stay in their own `trades` field with stricter
             # cross-org dedup logic (see trades.py + reconcile_trades).
-            "transactions": transactions_by_player.get(p.player_key, []),
+            # Each row is decorated with from_org / to_org (canonical
+            # 3-letter codes) so farm-page consumers can filter events
+            # that touch a given org without re-resolving team names.
+            "transactions": [
+                {**tx,
+                 "from_org": canonical_org(tx.get("from_team")) if tx.get("from_team") else None,
+                 "to_org":   canonical_org(tx.get("to_team"))   if tx.get("to_team")   else None}
+                for tx in transactions_by_player.get(p.player_key, [])
+            ],
             "pitch_arsenal": pa,
             "sabermetrics": sm,
             "trades": filtered_trades,
