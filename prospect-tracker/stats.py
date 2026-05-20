@@ -92,10 +92,13 @@ class _ReqProxy:
             ttl = CACHE_TTL_SECONDS
         # Resolve final force decision
         do_force = force or FORCE_REFETCH
-        # Cache path derived from URL hash
+        # Cache path derived from URL hash. md5() can't actually fail on
+        # a bytes input; the fallback is defensive against future caller
+        # bugs that feed in a non-str url. Log so the surface isn't silent.
         try:
             key = hashlib.md5(url.encode("utf-8")).hexdigest()
-        except Exception:
+        except Exception as e:
+            log.debug("md5 hash failed for cache key %r: %s — falling back to builtin hash", url, e)
             key = str(abs(hash(url)))
         cache_path = CACHE_DIR / f"mlb_{key}.json"
 
@@ -111,9 +114,11 @@ class _ReqProxy:
                     resp.encoding = "utf-8"
                     resp.url = url
                     return resp
-                except Exception:
-                    # fall through to network fetch
-                    pass
+                except Exception as e:
+                    # Corrupt cache file (truncated, bad encoding) → log so
+                    # a recurring issue surfaces in run notes, and fall
+                    # through to a fresh network fetch.
+                    log.debug("cache read failed for %s: %s — refetching", url, e)
 
         # Network fetch (respects module rate limit)
         time.sleep(RATE_LIMIT_SECONDS)
@@ -147,7 +152,6 @@ class _ReqProxy:
         return getattr(_requests, name)
 
 requests = _ReqProxy()
-import concurrent.futures
 
 log = logging.getLogger(__name__)
 
