@@ -7118,7 +7118,7 @@ function renderFarmDetail(orgCode) {
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}</div>
             <div class="player-meta">${escapeHtml(p.position ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
-            <div class="player-stat-line" style="margin-top:3px;font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rosterStatLine(p)}</div>
+            <div class="player-stat-line" style="margin-top:3px;font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rosterStatLine(p)}${rpsPillHTML(computeRelProd(p))}</div>
           </div>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span></div>
