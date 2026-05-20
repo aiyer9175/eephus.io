@@ -972,21 +972,35 @@ def _build_org_fv_history(
     trades_by_player: dict[str, list[dict]],
 ) -> dict[str, dict]:
     """
-    Build per-org cumulative FV time series + significant events.
+    Build per-org cumulative **development** FV time series + events.
 
-    For each player, build a chronological event timeline of:
-      - snapshot points (consensus_fv changes over time)
-      - real trades (player moves between orgs)
-      - graduation (player exits the system)
+    The series tracks how each org's prospects grow ABOVE their baseline
+    FV at the time they entered the org — so incoming acquisitions
+    (trades, draft, IFA) contribute zero on the day they arrive; only
+    subsequent FV growth (or decline) shows up on the line.
 
-    Walk each timeline once and emit per-(org, date) deltas. After
-    aggregating across all players, the running sum within each org
-    produces the cumulative FV chart. Returns a dict keyed by canonical
-    org code:
+    Algorithm:
+      1. Walk each player's chronological stream (snapshots + trades +
+         graduations).
+      2. On the FIRST snapshot we see while a player is in a given org,
+         record that org's entry baseline for the player (no contribution
+         to the running total on that date — just plant a marker).
+      3. On subsequent snapshots in the same org, contribute the delta
+         from the prior snapshot (`new_fv - prev_fv`). This is the org's
+         development credit for that player.
+      4. On a trade, the source org's accumulated development credit
+         stays in their cumulative chart (development credit is
+         permanent — an org doesn't lose past credit for trading a
+         developed prospect away). The receiving org records a new
+         entry baseline at the player's current FV and only future
+         snapshots in that org count.
+      5. Graduations don't subtract — the org keeps credit for whatever
+         development happened before the player exited the system.
 
+    Returns:
       {
         "ATL": {
-          "series": [{"date": "2024-01-04", "total_fv": 240.5}, ...],
+          "series": [{"date": "2024-01-04", "total_fv": 0.0}, ...],
           "events": [{"date": "2024-07-30", "kind": "trade", "player_name":
                       "Drew Jones", "fv": 50.0, "other_org": "MIA"},
                      {"date": "2025-04-01", "kind": "graduation",
@@ -996,8 +1010,10 @@ def _build_org_fv_history(
         ...
       }
 
-    Events power the indicator markers on the farm-system stock chart so
-    each dip / spike has an explainable cause.
+    `series.total_fv` here is interpreted as "cumulative DEVELOPMENT-FV"
+    rather than "cumulative roster FV". Event markers (trade in/out,
+    graduation) still annotate the chart even though they don't move
+    the line.
     """
     from trades import canonical_org
     from collections import defaultdict
@@ -1056,25 +1072,42 @@ def _build_org_fv_history(
 
         org_now = initial_org
         fv_now = 0.0
+        # Per-org "have we set the baseline yet?" flag. The first
+        # snapshot we see for the player in a given org plants the
+        # baseline (no contribution); subsequent snapshots credit the
+        # delta. Trades-in reset this for the receiving org so the
+        # acquisition itself contributes nothing — only future
+        # development credits the new org.
+        baselined: set[str] = set()
         for ev in stream:
             d = ev[0]
             kind = ev[1]
             if kind == "snapshot":
                 new_fv = ev[2]
-                delta = new_fv - fv_now
-                if delta != 0:
-                    contribs[(org_now, d)] += delta
+                if org_now not in baselined:
+                    # First snapshot for this player while in this org —
+                    # plant the entry baseline. Add the date to the org's
+                    # series so the chart has a starting point on the day
+                    # the org first "saw" the player, but contribute 0.
+                    baselined.add(org_now)
                     dates_by_org[org_now].add(d)
+                else:
+                    delta = new_fv - fv_now
+                    if delta != 0:
+                        contribs[(org_now, d)] += delta
+                        dates_by_org[org_now].add(d)
                 fv_now = new_fv
             elif kind == "trade":
                 from_org, to_org = ev[2], ev[3]
-                # Move the player's current FV out of from_org into to_org
-                # on the trade date. If from_org doesn't match our tracked
-                # org_now (e.g. a stale inference), trust the API record
-                # and adjust org_now to from_org first.
+                # If from_org doesn't match our tracked org_now (rare,
+                # e.g. stale inference), trust the API record.
                 source_org = org_now if org_now == from_org else from_org
-                contribs[(source_org, d)] -= fv_now
-                contribs[(to_org, d)]     += fv_now
+                # Development credit is PERMANENT — the source org keeps
+                # whatever development they earned before the trade. The
+                # receiving org records a baseline at the player's current
+                # FV and only future snapshots count. Both sides get an
+                # event marker for chart annotation; neither side moves
+                # the cumulative line on this date.
                 dates_by_org[source_org].add(d)
                 dates_by_org[to_org].add(d)
                 events_by_org[source_org].append({
@@ -1088,11 +1121,14 @@ def _build_org_fv_history(
                     "other_org": source_org, "direction": "in",
                 })
                 org_now = to_org
+                # Treat the receiving org as "baselined" immediately —
+                # the trade itself sets the baseline (fv_now), and the
+                # next snapshot will credit only growth above it.
+                baselined.add(to_org)
             elif kind == "graduation":
-                # Graduation is a successful exit, not a loss of farm value —
-                # so the cumulative FV line stays flat through it instead of
-                # dropping. The event is still recorded for the grad-pipeline
-                # score and for chart annotation.
+                # Graduation is a successful exit — the org keeps the
+                # development credit they earned, the line stays flat
+                # through the event. Marker is annotated for the chart.
                 events_by_org[org_now].append({
                     "date": d, "kind": "graduation",
                     "player_name": p.player_name,
@@ -1100,6 +1136,10 @@ def _build_org_fv_history(
                 })
 
     # Convert per-org contribs to running-sum series.
+    # Under the development-only model the line legitimately starts at
+    # 0 (no development credit yet) and may stay flat for stretches —
+    # so we keep every recorded date, including leading zeroes, rather
+    # than skipping ahead to the first non-zero point.
     result: dict[str, dict] = {}
     for org, dates in dates_by_org.items():
         running = 0.0
@@ -1107,11 +1147,6 @@ def _build_org_fv_history(
         for d in sorted(dates):
             running += contribs[(org, d)]
             series.append({"date": d, "total_fv": round(running, 1)})
-        # Drop leading zero-points so charts don't start with a flat line
-        # before the org has any tracked prospects yet.
-        first_nonzero = next((i for i, s in enumerate(series)
-                              if s["total_fv"] > 0.01), 0)
-        series = series[first_nonzero:]
         events = sorted(events_by_org.get(org, []),
                         key=lambda e: (e["date"], e["kind"]))
         result[org] = {"series": series, "events": events}
@@ -1889,6 +1924,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "fv_low_date": p.fv_low_date,
             "fv_open": p.fv_open,
             "fv_close": p.fv_close,
+            # Unsnapped post-shrinkage FV at the latest snapshot. Lets the
+            # UI distinguish a "high 40" (e.g. 42.3) from a "low 40"
+            # (e.g. 37.8) — both round to the 40 tier label but the raw
+            # value clarifies how much the shrinkage moved them.
+            "fv_close_raw": (round(p.points[-1].consensus_fv_raw, 2)
+                             if p.points else None),
             "stock": stock_movement(p),
             "statline": sl_out,
             "stat_flags": flags,

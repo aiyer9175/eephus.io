@@ -345,9 +345,11 @@ class TestRankPercentile:
 
 
 # ---------------------------------------------------------------------------
-# Org FV history — graduations are neutral. A farm that promotes a 60 FV
-# prospect to the majors should not see its cumulative line drop on the
-# graduation date, because that's success, not lost value.
+# Org FV history (development-only model). Each player's FIRST snapshot in
+# an org plants a baseline (0 contribution); subsequent snapshots credit
+# only the delta from the prior snapshot. Trades and graduations don't
+# move the line either way — development credit is permanent in the source
+# org, the receiving org starts fresh at baseline.
 # ---------------------------------------------------------------------------
 
 def _mk_player(key, name, org, points, status="active", graduation_date=None):
@@ -363,10 +365,11 @@ def _mk_player(key, name, org, points, status="active", graduation_date=None):
 
 
 class TestBuildOrgFvHistoryGraduations:
-    def test_graduation_does_not_drop_cumulative(self):
-        # One player rated 60 FV all season, then graduates. Cumulative line
-        # should hit 60 on the snapshot date and stay there — NOT drop to 0
-        # on the graduation date.
+    def test_first_snapshot_is_baseline_only(self):
+        # One player rated 60 FV. Under the development-only model the
+        # first snapshot plants the baseline — it contributes 0 to the
+        # org's cumulative line, NOT 60. Graduation also doesn't move
+        # the line, so the series is just the baseline point at 0.
         player = _mk_player(
             "p1", "Prospect One", "ATL",
             [("2025-04-01", 60.0)],
@@ -374,15 +377,15 @@ class TestBuildOrgFvHistoryGraduations:
         )
         out = _build_org_fv_history([player], lambda trades: [], {})
         series = out["ATL"]["series"]
-        assert series == [{"date": "2025-04-01", "total_fv": 60.0}]
+        assert series == [{"date": "2025-04-01", "total_fv": 0.0}]
         # The graduation event is still recorded so grad_pipeline_score and
         # chart annotations can use it.
         events = out["ATL"]["events"]
         assert any(e["kind"] == "graduation" and e["fv"] == 60.0 for e in events)
 
     def test_trajectory_neutral_through_graduation(self):
-        # Org builds up to 60 FV early, prospect graduates mid-window, no
-        # other movement. Trajectory should be ~0, not strongly negative.
+        # Org has one prospect that never changes FV before graduation.
+        # Development credit = 0; trajectory = 0.
         player = _mk_player(
             "p1", "Prospect One", "ATL",
             [("2025-01-15", 60.0)],
@@ -392,3 +395,38 @@ class TestBuildOrgFvHistoryGraduations:
         series = out["ATL"]["series"]
         traj = _trajectory_score(series, as_of=date(2026, 5, 19))
         assert traj == 0.0
+
+    def test_development_only_credits_growth_not_acquisition(self):
+        # Two orgs, identical baselines. Org A trades in a 55-FV prospect
+        # mid-window (acquisition); Org B keeps an existing prospect who
+        # grows from 50 → 55 over the same window (development).
+        # Under the development-only model:
+        #   - Org A gets 0 development credit (trade-in is baseline; no
+        #     subsequent snapshots).
+        #   - Org B gets +5 development credit.
+        org_a_player = _mk_player(
+            "pA", "Acquired", "ATL",
+            [("2025-01-01", 55.0), ("2025-07-01", 55.0)],
+        )
+        org_b_player = _mk_player(
+            "pB", "Developed", "MIL",
+            [("2025-01-01", 50.0), ("2025-07-01", 55.0)],
+        )
+        # Org A's player was traded FROM "NYM" TO "ATL" on Jan 15.
+        trades_by_player = {
+            "pA": [{"trade_date": "2025-01-15", "from_org": "NYM", "to_org": "ATL"}],
+        }
+        out = _build_org_fv_history(
+            [org_a_player, org_b_player],
+            # Pass-through filter: trust everything in trades_by_player.
+            lambda trades: trades,
+            trades_by_player,
+        )
+        # ATL: baseline at the Jan 1 snapshot (still in NYM, contributes 0),
+        # trade-in event Jan 15 (no contribution), Jul 1 snapshot at the
+        # same 55 FV (delta = 0). Final running total: 0.
+        atl_final = out["ATL"]["series"][-1]["total_fv"]
+        # MIL: Jan 1 baseline (0), Jul 1 snapshot at 55 = delta of +5.
+        mil_final = out["MIL"]["series"][-1]["total_fv"]
+        assert atl_final == 0.0, f"ATL trade-in should not be credited as development, got {atl_final}"
+        assert mil_final == 5.0, f"MIL +5 FV growth should be credited as development, got {mil_final}"

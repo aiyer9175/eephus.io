@@ -521,6 +521,19 @@
     .fv-badge.size-sm { font-size: 10px; padding: 1px 6px;  min-width: 28px; }
     .fv-badge.size-md { font-size: 13px; padding: 3px 10px; min-width: 40px; } /* default */
     .fv-badge.size-lg { font-size: 22px; padding: 5px 14px; min-width: 60px; }
+
+    /* Low-confidence marker hanging off the FV badge — faint asterisk
+       superscript flagging that fewer than 3 sources contributed to
+       the consensus. Tooltipped with the exact source count. */
+    .fv-low-conf {
+      font-family: var(--font-sans);
+      font-size: 0.8em;
+      color: var(--text-tertiary);
+      margin-left: 2px;
+      vertical-align: super;
+      line-height: 0;
+      cursor: help;
+    }
     .fv-80 { background: var(--fv-80-bg); color: var(--fv-80-fg); border-color: var(--fv-80-bd); }
     .fv-75 { background: var(--fv-75-bg); color: var(--fv-75-fg); border-color: var(--fv-75-bd); }
     .fv-70 { background: var(--fv-70-bg); color: var(--fv-70-fg); border-color: var(--fv-70-bd); }
@@ -2180,11 +2193,11 @@
            used by the line charts above, so picking "Trajectory 3y"
            always shows 3-year line charts alongside 3-year sorting. -->
       <button class="chip" data-farm-sort="trajectory_1y"
-              title="1-year cumulative-FV change vs the median org over the same window. Positive = developing faster than the typical farm.">Trajectory 1y</button>
+              title="1-year prospect FV development vs the median org. Incoming acquisitions (trades/draft/IFA) excluded — only the org's own development moves the line. Positive = developing faster than the typical farm.">Development 1y</button>
       <button class="chip" data-farm-sort="trajectory_3y"
-              title="3-year cumulative-FV change vs the median org over the same window.">Trajectory 3y</button>
+              title="3-year development vs median. Acquisitions excluded.">Development 3y</button>
       <button class="chip" data-farm-sort="trajectory_5y"
-              title="5-year cumulative-FV change vs the median org over the same window.">Trajectory 5y</button>
+              title="5-year development vs median. Acquisitions excluded.">Development 5y</button>
       <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted graduations in the trailing 12 months">Grad pipeline</button>
       <button class="chip" data-farm-sort="ifa_spend" title="International FA bonus dollars committed over the trailing 3 years (Spotrac)">IFA spend (3yr)</button>
       <button class="chip" data-farm-sort="total_fv">Total FV</button>
@@ -2200,7 +2213,7 @@
       <button class="chip" data-farm-sort="level_CPX">CPX</button>
       <button class="chip" data-farm-sort="level_DSL">DSL</button>
       <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-        <span class="filter-label" title="Window used by the form sparkline + Trajectory sort. The line shows each org's growth above (or below) the median org's growth over the same window — so positive = developing faster than the typical farm.">Form window</span>
+        <span class="filter-label" title="Window used by the development sparkline + Trajectory sort. The line shows each org's prospect FV growth above (or below) the median org over the same window, with incoming acquisitions (trades, draft, IFA) excluded so only true development counts.">Development window</span>
         <button class="chip active" data-form-window="1y">1y</button>
         <button class="chip"        data-form-window="3y">3y</button>
         <button class="chip"        data-form-window="5y">5y</button>
@@ -2255,6 +2268,14 @@
       <select class="chip" id="lb-org-filter">
         <option value="all">All orgs</option>
       </select>
+
+      <span class="filter-label" style="margin-left:10px;">Season</span>
+      <button class="chip active" data-lb-season="2026">2026</button>
+      <button class="chip"        data-lb-season="2025">2025</button>
+      <button class="chip"        data-lb-season="2024">2024</button>
+      <button class="chip"        data-lb-season="2023">2023</button>
+      <button class="chip"        data-lb-season="2022">2022</button>
+      <button class="chip"        data-lb-season="2021">2021</button>
     </div>
     <div id="leaderboard-rows"></div>
   </div>
@@ -2295,6 +2316,70 @@ async function loadData() {
 // =============================================================================
 // FORMATTING HELPERS
 // =============================================================================
+// FanGraphs scouting-primer FV → projected peak MLB WAR/yr. From the
+// public primer at blogs.fangraphs.com/the-new-fangraphs-scouting-primer.
+// Surfaced via fvBadgeTooltip below so readers see the WAR projection
+// alongside the FV tier label.
+const FV_TO_WAR = {
+  80: "7+ WAR/yr peak (Hall of Fame tier)",
+  75: "6 WAR/yr peak (perennial All-Star)",
+  70: "5 WAR/yr peak (All-Star)",
+  65: "4 WAR/yr peak (perennial above-average)",
+  60: "3.5 WAR/yr peak (above-average regular)",
+  55: "3 WAR/yr peak (first-division regular)",
+  50: "2.5 WAR/yr peak (average MLB regular)",
+  45: "1.5 WAR/yr peak (second-division regular / platoon)",
+  40: "0.5 WAR/yr peak (up-and-down / fringe MLB)",
+  35: "Org filler / Quad-A",
+  30: "Org filler / non-prospect",
+  25: "Org filler / non-prospect",
+  20: "Org filler / non-prospect",
+};
+
+// Build a tooltip string for an FV badge: tier label, raw (unsnapped)
+// FV when the shrinkage moved it materially, source count + a "low
+// confidence" caveat when fewer than 3 sources graded the player, and
+// the FanGraphs WAR projection for the tier. Newlines render as
+// multi-line tooltips in every modern browser.
+function fvBadgeTooltip(player) {
+  if (!player) return "";
+  const parts = [];
+  const tier = player.fv_close != null ? Math.round(player.fv_close) : null;
+  if (tier != null) {
+    let line = `FV ${tier}`;
+    if (player.fv_close_raw != null && Math.abs(player.fv_close_raw - tier) > 0.05) {
+      line += ` · raw ${player.fv_close_raw.toFixed(1)}`;
+    }
+    parts.push(line);
+  }
+  const latest = player.points && player.points.length
+    ? player.points[player.points.length - 1] : null;
+  const sourceCount = latest && latest.per_source
+    ? Object.keys(latest.per_source).length : 0;
+  if (sourceCount > 0) {
+    const lowConf = sourceCount < 3 ? " (low confidence)" : "";
+    parts.push(`${sourceCount} source${sourceCount === 1 ? "" : "s"} contributing${lowConf}`);
+  }
+  if (tier != null && FV_TO_WAR[tier]) {
+    parts.push(FV_TO_WAR[tier]);
+  }
+  return parts.join("\n");
+}
+
+// Small confidence indicator that hangs off an FV badge when the
+// consensus is built on fewer than 3 sources. A faint asterisk is
+// enough to flag the badge as "look closer before trusting" without
+// crowding the value.
+function fvBadgeConfidence(player) {
+  if (!player) return "";
+  const latest = player.points && player.points.length
+    ? player.points[player.points.length - 1] : null;
+  const sourceCount = latest && latest.per_source
+    ? Object.keys(latest.per_source).length : 0;
+  if (sourceCount >= 3) return "";
+  return `<span class="fv-low-conf" title="${sourceCount} source${sourceCount === 1 ? "" : "s"} only — low-confidence consensus">*</span>`;
+}
+
 const fvClass = label => {
   const n = parseInt(label, 10);
   if (n >= 80) return "fv-80";
@@ -2734,10 +2819,11 @@ function syncToURL() {
   if (state.gradSort    !== "date")       p.set("gsort", state.gradSort);
   if (state.ilSort      !== "days_asc")   p.set("ilsort", state.ilSort);
   if (state.spotlightBucket !== "hot")    p.set("bucket", state.spotlightBucket);
-  if (state.lbStat      !== "ops")        p.set("lbstat", state.lbStat);
-  if (state.lbLevel     !== "all")        p.set("lblvl",  state.lbLevel);
-  if (state.lbPos       !== "all")        p.set("lbpos",  state.lbPos);
-  if (state.lbOrg       !== "all")        p.set("lborg",  state.lbOrg);
+  if (state.lbStat      !== "ops")        p.set("lbstat",  state.lbStat);
+  if (state.lbLevel     !== "all")        p.set("lblvl",   state.lbLevel);
+  if (state.lbPos       !== "all")        p.set("lbpos",   state.lbPos);
+  if (state.lbOrg       !== "all")        p.set("lborg",   state.lbOrg);
+  if (state.lbSeason    !== String(new Date().getUTCFullYear())) p.set("lbseason", state.lbSeason);
   const hash = p.toString();
   history.replaceState(null, "", hash ? "#" + hash : window.location.pathname + window.location.search);
 }
@@ -2772,10 +2858,11 @@ function syncFromURL() {
   if (p.has("bucket")) state.spotlightBucket = p.get("bucket");
   // Leaderboards filters — round-tripped so org pre-fill from
   // farm-detail's "View org leaderboards →" link sticks.
-  if (p.has("lbstat"))  state.lbStat  = p.get("lbstat");
-  if (p.has("lblvl"))   state.lbLevel = p.get("lblvl");
-  if (p.has("lbpos"))   state.lbPos   = p.get("lbpos");
-  if (p.has("lborg"))   state.lbOrg   = p.get("lborg");
+  if (p.has("lbstat"))   state.lbStat   = p.get("lbstat");
+  if (p.has("lblvl"))    state.lbLevel  = p.get("lblvl");
+  if (p.has("lbpos"))    state.lbPos    = p.get("lbpos");
+  if (p.has("lborg"))    state.lbOrg    = p.get("lborg");
+  if (p.has("lbseason")) state.lbSeason = p.get("lbseason");
 }
 
 // Navigation helpers. We rewrite location.hash with pushState so back /
@@ -2847,6 +2934,8 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.lbLevel === state.lbLevel));
   document.querySelectorAll("[data-lb-pos]").forEach(b =>
     b.classList.toggle("active", b.dataset.lbPos === state.lbPos));
+  document.querySelectorAll("[data-lb-season]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbSeason === state.lbSeason));
   const orgSel = document.getElementById("org-filter");
   if (orgSel) orgSel.value = state.orgFilter;
   const lbOrgSel = document.getElementById("lb-org-filter");
@@ -3076,14 +3165,15 @@ const state = {
   // an IL stint when set to "healthy". They still appear in their
   // own Injured List tab.
   healthFilter: "all",
-  // Leaderboards tab — stat × level × position-group × org selection.
-  // The stat key matches a field on statline (ops, era, k_per_9, ...).
-  // Org is set when the user clicks "View org leaderboards →" from a
-  // farm-detail page.
-  lbStat:  "ops",
-  lbLevel: "all",
-  lbPos:   "all",
-  lbOrg:   "all",
+  // Leaderboards tab — stat × season × level × position-group × org
+  // selection. Pulls from career_stats (year-by-year per-level rows) so
+  // historical seasons work. The stat key matches a field on the
+  // career_stats row (ops, era, k_per_9, ...).
+  lbStat:   "ops",
+  lbLevel:  "all",
+  lbPos:    "all",
+  lbOrg:    "all",
+  lbSeason: String(new Date().getUTCFullYear()),
   view: null
 };
 
@@ -3404,7 +3494,7 @@ function renderActives() {
             ${playerMetaHTML(p)}
           </div>
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span>${fvTrendHTML(p)}</div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeConfidence(p)}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
         <div class="line-chart-cell">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
         <div class="candle-cell">${makeCandle(p)}</div>
@@ -3498,62 +3588,81 @@ function getFilteredTraded() {
   return pool;
 }
 
-// Cross-org leaderboards — top N prospects by a chosen statline field,
-// filtered by level + position group. Pulls statlines out of the active
-// + graduate arrays (so a recently-graduated MLB hitter can still top a
-// AAA wOBA board if AAA was their last MiLB stop). Min-sample defaults
-// keep tiny PA/IP rows from polluting the rate-stat boards.
+// Cross-org leaderboards — top N prospects by a chosen stat for the
+// chosen season. Pulls from career_stats (year-by-year per-level rows)
+// rather than the latest-statline blob, so historical seasons (2021+)
+// work and the AB/IP gates use the actual season's volume.
 //
 // Stat config: each key on `LB_STATS` defines how to render the value,
-// the supporting line, and how to sort (high vs low is better).
+// the supporting line, and how to sort (high vs low is better). The
+// minAB/minIP gates are intentionally generous so leaderboards stay
+// populated even in shallow MiLB seasons or early in the current year.
+//
+// Statline values arrive as a mix of floats (iso, era, whip, k_per_9,
+// bb_per_9, bb_pct, k_pct) and strings (ops, avg, obp, slg — kept as
+// ".788" so the leading-zero formatting is preserved). Formatters wrap
+// values in `Number(v)` defensively so either type works.
 const LB_STATS = {
-  ops:     { label: "OPS",     hi: true,  fmt: v => v != null ? v.toFixed(3).replace(/^0/, "") : "—",
-             minPA: 80, support: sl => `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"} · ${sl.hr ?? 0} HR · ${sl.sb ?? 0} SB`, side: "hit" },
-  iso:     { label: "ISO",     hi: true,  fmt: v => v != null ? v.toFixed(3).replace(/^0/, "") : "—",
-             minPA: 80, support: sl => `${sl.hr ?? 0} HR · ${sl.slg ?? "—"} SLG`, side: "hit" },
-  bb_pct:  { label: "BB%",     hi: true,  fmt: v => v != null ? v.toFixed(1) + "%" : "—",
-             minPA: 80, support: sl => `K% ${sl.k_pct != null ? sl.k_pct.toFixed(1) + "%" : "—"} · ${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"}`, side: "hit" },
-  k_pct:   { label: "K%",      hi: false, fmt: v => v != null ? v.toFixed(1) + "%" : "—",
-             minPA: 80, support: sl => `BB% ${sl.bb_pct != null ? sl.bb_pct.toFixed(1) + "%" : "—"} · ${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"}`, side: "hit" },
+  ops:     { label: "OPS",     hi: true,  fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : "—",
+             minAB: 50, support: r => `${r.avg ?? "—"}/${r.obp ?? "—"}/${r.slg ?? "—"} · ${r.hr ?? 0} HR · ${r.sb ?? 0} SB`, side: "hit" },
+  iso:     { label: "ISO",     hi: true,  fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : "—",
+             minAB: 50, support: r => `${r.hr ?? 0} HR · ${r.slg ?? "—"} SLG`, side: "hit" },
+  bb_pct:  { label: "BB%",     hi: true,  fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+             minAB: 50, support: r => `K% ${r.k_pct != null ? Number(r.k_pct).toFixed(1) + "%" : "—"} · ${r.avg ?? "—"}/${r.obp ?? "—"}/${r.slg ?? "—"}`, side: "hit" },
+  k_pct:   { label: "K%",      hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+             minAB: 50, support: r => `BB% ${r.bb_pct != null ? Number(r.bb_pct).toFixed(1) + "%" : "—"} · ${r.avg ?? "—"}/${r.obp ?? "—"}/${r.slg ?? "—"}`, side: "hit" },
   hr:      { label: "HR",      hi: true,  fmt: v => v != null ? String(v) : "—",
-             minPA: 50, support: sl => `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"} · ${sl.iso ?? "—"} ISO`, side: "hit" },
+             minAB: 20, support: r => `${r.avg ?? "—"}/${r.obp ?? "—"}/${r.slg ?? "—"} · ${r.iso ?? "—"} ISO`, side: "hit" },
   sb:      { label: "SB",      hi: true,  fmt: v => v != null ? String(v) : "—",
-             minPA: 50, support: sl => `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"}`, side: "hit" },
+             minAB: 20, support: r => `${r.avg ?? "—"}/${r.obp ?? "—"}/${r.slg ?? "—"}`, side: "hit" },
   era:     { label: "ERA",     hi: false, fmt: v => v != null ? Number(v).toFixed(2) : "—",
-             minIP: 25, support: sl => `${sl.ip ?? "—"} IP · K/9 ${sl.k_per_9 ?? "—"} · WHIP ${sl.whip ?? "—"}`, side: "pit" },
+             minIP: 15, support: r => `${r.ip ?? "—"} IP · K/9 ${r.k_per_9 ?? "—"} · WHIP ${r.whip ?? "—"}`, side: "pit" },
   whip:    { label: "WHIP",    hi: false, fmt: v => v != null ? Number(v).toFixed(2) : "—",
-             minIP: 25, support: sl => `${sl.ip ?? "—"} IP · ERA ${sl.era ?? "—"} · K/9 ${sl.k_per_9 ?? "—"}`, side: "pit" },
+             minIP: 15, support: r => `${r.ip ?? "—"} IP · ERA ${r.era ?? "—"} · K/9 ${r.k_per_9 ?? "—"}`, side: "pit" },
   k_per_9: { label: "K/9",     hi: true,  fmt: v => v != null ? Number(v).toFixed(2) : "—",
-             minIP: 25, support: sl => `${sl.ip ?? "—"} IP · BB/9 ${sl.bb_per_9 ?? "—"} · ERA ${sl.era ?? "—"}`, side: "pit" },
+             minIP: 15, support: r => `${r.ip ?? "—"} IP · BB/9 ${r.bb_per_9 ?? "—"} · ERA ${r.era ?? "—"}`, side: "pit" },
   bb_per_9:{ label: "BB/9",    hi: false, fmt: v => v != null ? Number(v).toFixed(2) : "—",
-             minIP: 25, support: sl => `${sl.ip ?? "—"} IP · K/9 ${sl.k_per_9 ?? "—"} · ERA ${sl.era ?? "—"}`, side: "pit" },
+             minIP: 15, support: r => `${r.ip ?? "—"} IP · K/9 ${r.k_per_9 ?? "—"} · ERA ${r.era ?? "—"}`, side: "pit" },
 };
 
 function renderLeaderboards() {
-  const statKey = state.lbStat || "ops";
-  const cfg = LB_STATS[statKey] || LB_STATS.ops;
-  const lvl  = state.lbLevel || "all";
-  const pos  = state.lbPos   || "all";
-  const org  = state.lbOrg   || "all";
+  const statKey = state.lbStat   || "ops";
+  const cfg = LB_STATS[statKey]   || LB_STATS.ops;
+  const lvl    = state.lbLevel    || "all";
+  const pos    = state.lbPos      || "all";
+  const org    = state.lbOrg      || "all";
+  const season = Number(state.lbSeason || new Date().getUTCFullYear());
 
+  // Walk every (player, career_stats row) for the selected season.
+  // A player can have multiple rows in the same season if they spent
+  // time at multiple levels — each becomes its own leaderboard entry
+  // so a Jesús Made AA-then-AAA year would land in both AAA and AA
+  // boards, but only the matching row when the user picks a specific
+  // level.
   const pool = [];
   for (const arr of ["players", "graduates"]) {
     for (const p of (DATA[arr] || [])) {
-      const sl = p.statline;
-      if (!sl) continue;
-      const v = sl[statKey];
-      if (v == null) continue;
-      // Wrong-side gate: don't show pitchers on hitter boards (and vice versa).
-      if (cfg.side === "hit" && sl.is_pitcher) continue;
-      if (cfg.side === "pit" && !sl.is_pitcher) continue;
-      if (lvl !== "all" && sl.level !== lvl) continue;
-      if (org !== "all" && p.org !== org) continue;
+      const career = p.career_stats || [];
+      if (!career.length) continue;
+      // Wrong-side gate at the player level — `p.position` is the most
+      // current designation. is_pitcher on the row is authoritative
+      // when present.
       const bucket = positionBucket(p.position);
       if (pos !== "all" && !positionMatches(bucket, pos)) continue;
-      // Sample gates — rate stats need volume.
-      if (cfg.minPA && (sl.pa ?? sl.ab ?? 0) < cfg.minPA) continue;
-      if (cfg.minIP && (sl.ip ?? 0) < cfg.minIP) continue;
-      pool.push({ p, sl, v });
+      if (org !== "all" && p.org !== org) continue;
+      for (const r of career) {
+        if (r.season !== season) continue;
+        if (cfg.side === "hit" && r.is_pitcher) continue;
+        if (cfg.side === "pit" && !r.is_pitcher) continue;
+        if (lvl !== "all" && r.level !== lvl) continue;
+        const v = r[statKey];
+        if (v == null) continue;
+        // Sample gates — AB for hitters, IP for pitchers. Both may
+        // arrive as strings; Number()-coerce.
+        if (cfg.minAB && Number(r.ab ?? 0) < cfg.minAB) continue;
+        if (cfg.minIP && Number(r.ip ?? 0) < cfg.minIP) continue;
+        pool.push({ p, r, v: Number(v) });
+      }
     }
   }
   pool.sort((a, b) => cfg.hi ? (b.v - a.v) : (a.v - b.v));
@@ -3569,12 +3678,13 @@ function renderLeaderboards() {
   </div>`;
 
   if (!ranked.length) {
+    const minLabel = cfg.minAB ? `${cfg.minAB} AB` : `${cfg.minIP || 0} IP`;
     document.getElementById("leaderboard-rows").innerHTML =
-      header + `<div class="state-message">No players qualify under these filters (min ${cfg.minPA ? cfg.minPA + " PA" : (cfg.minIP || 0) + " IP"}).</div>`;
+      header + `<div class="state-message">No ${season} ${cfg.side === "hit" ? "hitters" : "pitchers"} qualify under these filters (min ${minLabel}).</div>`;
     return;
   }
 
-  const rows = ranked.map(({ p, sl, v }, i) => {
+  const rows = ranked.map(({ p, r, v }, i) => {
     const fvLabel = p.fv_close != null ? Math.round(p.fv_close) : "—";
     return `
       <div class="player-row is-leaderboard" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
@@ -3583,10 +3693,10 @@ function renderLeaderboards() {
           <div class="player-name">${escapeHtml(p.player_name)}</div>
           ${playerMetaHTML(p)}
         </div>
-        <div><span class="level-pill ${sl.level === "MLB" ? "level-mlb" : "level-neutral"}">${escapeHtml(sl.level || "—")}</span></div>
-        <div style="text-align:center;">${fvLabel !== "—" ? `<span class="fv-badge ${fvClass(String(fvLabel))}">${fvLabel}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+        <div><span class="level-pill ${r.level === "MLB" ? "level-mlb" : "level-neutral"}">${escapeHtml(r.level || "—")}</span></div>
+        <div style="text-align:center;">${fvLabel !== "—" ? `<span class="fv-badge ${fvClass(String(fvLabel))}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div style="text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:700;color:var(--text-primary);">${cfg.fmt(v)}</div>
-        <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${cfg.support(sl)}</div>
+        <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${cfg.support(r)}</div>
       </div>`;
   }).join("");
 
@@ -3681,7 +3791,7 @@ function renderInjured() {
         <div><span class="grad-pill" style="background:var(--accent-il-soft);color:var(--accent-il);border:1px solid var(--accent-il-border);">${escapeHtml(il.type || "?")} IL</span></div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12px;color:var(--text-secondary);">${escapeHtml(since || "—")}</div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;color:var(--neon-amber);font-weight:600;">${days}d</div>
-        <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}">${fvLabel}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+        <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.3;">${escapeHtml(reason)}</div>
       </div>`;
   }).join("");
@@ -3728,7 +3838,7 @@ function renderRecentlyTraded() {
           ${multiTrade}
         </div>
         <div style="font-size:12px;">${tradeFlow}</div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span>${fvTrendHTML(p)}</div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeConfidence(p)}</span>${fvTrendHTML(p)}</div>
         <div class="line-chart-cell desktop-only">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
         <div class="candle-cell desktop-only">${makeCandle(p)}</div>
       </div>
@@ -3826,7 +3936,7 @@ function renderGraduates() {
           <span class="${pillClass}">${g.graduation_date}</span>
           ${sublabel || (isRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : "")}
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(String(fvLabel))}">${fvLabel}</span></div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(String(fvLabel))}" title="${escapeHtml(fvBadgeTooltip(g))}">${fvLabel}${fvBadgeConfidence(g)}</span></div>
         <div class="desktop-only" style="padding-right:6px;">${chartHtml}</div>
         <div class="desktop-only">${makeCandle(g)}</div>
         <div class="grad-level-cell milb-cell"><span class="level-pill level-mlb">MLB</span></div>
@@ -3895,7 +4005,7 @@ function detailTable(p) {
         ${srcEntries.map(([src, d]) => `<tr>
           <td><span class="src-tag">${escapeHtml(SOURCE_LABELS[src] || src)}</span></td>
           <td>${d.fv_published != null
-            ? `<span class="fv-badge ${fvClass(String(d.fv_published))}" size-sm">${d.fv_published}</span>`
+            ? `<span class="fv-badge ${fvClass(String(d.fv_published))} size-sm">${d.fv_published}</span>`
             : `<span style="color:var(--text-tertiary)">—</span>`}</td>
           <td>${d.rank != null ? `#${d.rank}` : "—"}</td>
         </tr>`).join("")}
@@ -3928,7 +4038,7 @@ function detailTable(p) {
         ${p.points.map(pt => `<tr>
           <td>${pt.snapshot_date}</td>
           <td><span class="src-tag">${escapeHtml(pt.interval_label)}</span></td>
-          <td><span class="fv-badge ${fvClass(pt.consensus_fv_label)}" size-sm">${pt.consensus_fv_label}</span></td>
+          <td><span class="fv-badge ${fvClass(pt.consensus_fv_label)} size-sm">${pt.consensus_fv_label}</span></td>
           <td>${pt.avg_rank != null ? pt.avg_rank.toFixed(1) : "—"}</td>
           <td style="color: var(--text-tertiary);">${pt.sources_contributing ? pt.sources_contributing.length : "—"}</td>
         </tr>`).join("")}
@@ -4217,7 +4327,7 @@ function updateMeta() {
     traded:       `${getFilteredTraded().length} of ${tradedCount}`,
     graduates:    `${getFilteredGrads().length} of ${DATA.graduate_count}`,
     farm:         `${(DATA.org_summary || []).length} organizations`,
-    leaderboards: `top 25 by ${(LB_STATS[state.lbStat] || LB_STATS.ops).label}`,
+    leaderboards: `top 25 ${state.lbSeason || new Date().getUTCFullYear()} by ${(LB_STATS[state.lbStat] || LB_STATS.ops).label}`,
   };
   document.getElementById("section-count").textContent = countMap[state.section] || "";
 }
@@ -4326,7 +4436,7 @@ function makeFarmSparkline(fvHistory, deltaAboveMedian, medianTrajectory, window
   const baseY = zeroY.toFixed(1);
   const fillPoints = `0,${baseY} ${points} ${lastX},${baseY}`;
 
-  const titleText = `${windowKey} growth vs median: ${sign}${delta.toFixed(1)} (median Δ ${median.toFixed(1)})`;
+  const titleText = `${windowKey} development vs median: ${sign}${delta.toFixed(1)} (median Δ ${median.toFixed(1)}) · acquisitions excluded`;
 
   return `<div class="tier-bar" style="gap:8px;">
     <svg width="${FORM_BAR_W}" height="${FORM_BAR_H}" style="border-radius:2px;overflow:hidden;flex-shrink:0"
@@ -4555,7 +4665,7 @@ function makeFarmGrowthChart(org, medianTrajectory, windowKey) {
   // Fill polygon between curve and zero-line so above-median shows as
   // a green shaded region above zero, below-median as red below.
   const polyTop = `${xFor(0).toFixed(1)},${zeroY.toFixed(1)} ${points} ${xFor(1).toFixed(1)},${zeroY.toFixed(1)}`;
-  const labelTxt = `${windowKey} growth vs median: ${finalV >= 0 ? '+' : ''}${finalV.toFixed(1)}`;
+  const labelTxt = `${windowKey} development vs median: ${finalV >= 0 ? '+' : ''}${finalV.toFixed(1)}`;
 
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="${escapeHtml(labelTxt)}">
     ${yTicks.join("")}
@@ -5042,7 +5152,7 @@ function renderFarmSystems() {
     <span></span>
     <span>Org</span>
     <span style="text-align:center;" title="Overall farm-system letter grade. A+ = #1 org; tiers descend by farm_score (45% top-end · 25% depth · 15% trajectory · 15% grad pipeline).">Grade</span>
-    <span title="${winLabel} cumulative-FV growth above the median org's growth over the same window. Flat baseline = tracking the median farm. Graduations are neutral.">${escapeHtml(winLabel)} form vs median</span>
+    <span title="${winLabel} prospect FV development above (or below) the median org over the same window. Incoming acquisitions (trades, draft, IFA) are excluded — only the org's own development moves the line. Flat = tracking the median farm. Graduations are neutral.">${escapeHtml(winLabel)} development vs median</span>
     <span>Top prospect</span>
     <span>Positions</span>
     <span>Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
@@ -5085,7 +5195,7 @@ function renderFarmSystems() {
         <div>${makeFarmSparkline(org.fv_history, deltaAbove, median, win)}</div>
         <div style="display:flex;align-items:center;gap:6px;font-size:12px;min-width:0;">
           ${tp ? `<span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(tp.name)}</span>
-          <span class="fv-badge ${fvClass(tp.fv_label)}" size-sm" style="flex-shrink:0;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
+          <span class="fv-badge ${fvClass(tp.fv_label)} size-sm" style="flex-shrink:0;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
         </div>
         <div>${makePosBreakdown(org.pos_groups)}</div>
         <div class="level-depth-cell">${makeLevelDepth(org.level_counts, activeLevel)}</div>
@@ -5793,12 +5903,12 @@ function makePerSourceHistory(points) {
         const d = perSrc[s];
         if (!d) return `<td style="color:var(--text-tertiary);">—</td>`;
         const fv = d.fv_published != null
-          ? `<span class="fv-badge ${fvClass(String(d.fv_published))}" size-sm">${d.fv_published}</span>`
+          ? `<span class="fv-badge ${fvClass(String(d.fv_published))} size-sm">${d.fv_published}</span>`
           : "—";
         const rank = d.rank != null ? `<span style="font-size:10px;color:var(--text-tertiary);"> #${d.rank}</span>` : "";
         return `<td>${fv}${rank}</td>`;
       }).join("")}
-      <td><span class="fv-badge ${fvClass(pt.consensus_fv_label)}" size-sm">${pt.consensus_fv_label}</span></td>
+      <td><span class="fv-badge ${fvClass(pt.consensus_fv_label)} size-sm">${pt.consensus_fv_label}</span></td>
     </tr>`;
   }).join("");
   return `<table class="detail-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
@@ -5842,7 +5952,9 @@ function renderPlayerDetail(key) {
 
   const avl = p.age_vs_level || {};
   const fvLabel = latest ? latest.consensus_fv_label : "—";
-  const fvBadge = latest ? `<span class="fv-badge ${fvClass(fvLabel)}" size-lg" style="margin-top:4px;">${fvLabel}</span>` : "";
+  const fvBadge = latest
+    ? `<span class="fv-badge ${fvClass(fvLabel)} size-lg" style="margin-top:4px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>`
+    : "";
 
   // Rank pills — overall position in the FV-sorted active list, plus org
   // position. Hidden for graduates/inactives where these fields are null.
@@ -6212,7 +6324,7 @@ function renderPlayerDetail(key) {
       const rank = info.rank;
       const lbl = SOURCE_LABELS[src] || src;
       const fvCell = fvNum != null
-        ? `<span class="fv-badge ${fvClass(String(Math.round(fvNum)))}" size-sm">${Math.round(fvNum)}</span>`
+        ? `<span class="fv-badge ${fvClass(String(Math.round(fvNum)))} size-sm">${Math.round(fvNum)}</span>`
         : `<span style="color:var(--text-tertiary);font-size:11px;">rank only</span>`;
       const rankCell = rank != null
         ? `<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-tertiary);font-size:10px;">#${rank}</span>`
@@ -6471,7 +6583,7 @@ function makePositionDepthChart(rosterPlayersAll) {
       const lvl = sl.level || "—";
       return `<div class="pos-depth-card" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}" title="${escapeHtml(p.player_name)} · ${escapeHtml(p.position || "—")} · ${escapeHtml(lvl)}${p.age != null ? " · age " + p.age.toFixed(1) : ""}">
         <span class="pdc-name">${escapeHtml(p.player_name.split(" ").slice(-1)[0])}</span>
-        <span class="pdc-meta"><span class="fv-badge ${fvClass(fvLabel)}" size-xs">${fvLabel}</span></span>
+        <span class="pdc-meta"><span class="fv-badge ${fvClass(fvLabel)} size-xs">${fvLabel}</span></span>
       </div>`;
     }).join("");
     return `<div class="pos-depth-col">
@@ -6728,7 +6840,7 @@ function renderFarmDetail(orgCode) {
     ${tp ? `<div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="goToPlayer('${escapeHtml((tpPlayer || {}).player_key || '')}');">
       ${headshotHTML(tpPlayer || {}, 64)}
       <div style="min-width:0;">
-        <div style="font-size:14px;font-weight:600;color:var(--neon-cyan);">${escapeHtml(tp.name)} <span class="fv-badge ${fvClass(tp.fv_label)}" size-sm">${tp.fv_label}</span></div>
+        <div style="font-size:14px;font-weight:600;color:var(--neon-cyan);">${escapeHtml(tp.name)} <span class="fv-badge ${fvClass(tp.fv_label)} size-sm">${tp.fv_label}</span></div>
         <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${escapeHtml(tp.pos||'')} · age ${tp.age != null ? tp.age.toFixed(1) : "—"}</div>
       </div>
     </div>` : '—'}
@@ -6853,7 +6965,7 @@ function renderFarmDetail(orgCode) {
             : "";
           const fvL = rp.fv_close != null ? Math.round(rp.fv_close) : null;
           return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
-            ${fvL != null ? `<span class="fv-badge ${fvClass(String(fvL))}" size-sm">${fvL}</span>` : `<span style="width:24px;"></span>`}
+            ${fvL != null ? `<span class="fv-badge ${fvClass(String(fvL))} size-sm">${fvL}</span>` : `<span style="width:24px;"></span>`}
             <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}${tj}</span>
             <span style="font-family:var(--font-mono);font-size:10px;color:var(--neon-amber);font-variant-numeric:tabular-nums;">${days != null ? days + 'd' : '—'}</span>
           </div>`;
@@ -6912,7 +7024,7 @@ function renderFarmDetail(orgCode) {
         ? `<span style="color:var(--neon-cyan);">${escapeHtml(pl.fullName)}</span>`
         : escapeHtml(pl.fullName);
       const fvCell = pl.fv_label
-        ? `<span class="fv-badge ${fvClass(pl.fv_label)}" size-sm">${pl.fv_label}</span>`
+        ? `<span class="fv-badge ${fvClass(pl.fv_label)} size-sm">${pl.fv_label}</span>`
         : `<span style="color:var(--text-tertiary);">—</span>`;
       return `<tr${gradedClick}>
         <td>${nameCell}</td>
@@ -6965,7 +7077,7 @@ function renderFarmDetail(orgCode) {
           ? ` onclick="goToPlayer('${escapeHtml(pl.player_key)}');" style="cursor:pointer;"`
           : "";
         return `<div class="graded-prospect-row"${click}>
-          <span class="fv-badge ${fvClass(pl.fv_label)}" size-sm">${pl.fv_label}</span>
+          <span class="fv-badge ${fvClass(pl.fv_label)} size-sm">${pl.fv_label}</span>
           <span style="color:${pl.player_key ? "var(--neon-cyan)" : "var(--text-primary)"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(pl.fullName)}</span>
           <span style="color:var(--text-tertiary);font-size:10px;white-space:nowrap;">${escapeHtml(pl.position || "—")}${pl.age != null ? ` · ${pl.age.toFixed(1)}` : ""}</span>
         </div>`;
@@ -7063,7 +7175,13 @@ function renderFarmDetail(orgCode) {
     <div class="farm-detail-grid">
       ${leftRailHtml}
       <div>
-        <div class="detail-title flush">${(state.formWindow || "1y")} growth vs median farm <span class="detail-title-sub">cumulative-FV change minus median org pace · graduations are neutral</span></div>
+        <div class="detail-title flush">${(state.formWindow || "1y")} development vs median farm <span class="detail-title-sub">prospect FV growth above median, with trades / draft / IFA acquisitions excluded · graduations neutral</span></div>
+        <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
+          <span class="filter-label">Window</span>
+          <button class="chip${(state.formWindow || "1y") === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
+          <button class="chip${(state.formWindow || "1y") === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
+          <button class="chip${(state.formWindow || "1y") === "5y" ? " active" : ""}" data-form-window="5y" type="button">5y</button>
+        </div>
         ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_medians || {})[state.formWindow || "1y"] ?? 0), state.formWindow || "1y")}
         <div class="detail-title">Position depth chart <span class="detail-title-sub">Tracked prospects bucketed by primary position · sorted by FV</span></div>
         ${makePositionDepthChart(rosterPlayersAll)}
@@ -7100,6 +7218,22 @@ function renderFarmDetail(orgCode) {
       document.querySelectorAll("#farm-detail-body .level-panel").forEach(panel => {
         panel.style.display = panel.dataset.level === lvl ? "block" : "none";
       });
+    });
+  });
+  // Development-window chips above the farm-detail growth chart. Each
+  // farm-detail render produces a fresh chip row, so we re-attach
+  // listeners scoped to #farm-detail-body each time. Shares
+  // `state.formWindow` with the Farm-list chips so the choice persists
+  // across tab switches.
+  document.querySelectorAll("#farm-detail-body [data-form-window]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.formWindow = btn.dataset.formWindow;
+      // Mirror the active class on the Farm-list chips too so the UI
+      // stays in sync if the user navigates back.
+      document.querySelectorAll("[data-form-window]").forEach(b =>
+        b.classList.toggle("active", b.dataset.formWindow === state.formWindow));
+      renderFarmDetail(orgCode);
+      syncToURL();
     });
   });
   // Acquisition / level / position filter chips on the farm detail
@@ -7313,7 +7447,7 @@ function renderCompareCart() {
     return `<div class="compare-card" style="${orgStripe(p.org)}">
       <div>
         <div class="player-name" style="cursor:pointer;" onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');">${escapeHtml(p.player_name)}
-          <span class="fv-badge ${fvClass(String(fvLabel))}" size-sm" style="margin-left:6px;">${fvLabel}</span>
+          <span class="fv-badge ${fvClass(String(fvLabel))} size-sm" style="margin-left:6px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>
         </div>
         ${playerMetaHTML(p)}
         <div class="cc-stat" style="margin-top:6px;">${escapeHtml(slashLine)}</div>
@@ -7450,23 +7584,32 @@ function attachHandlers() {
   // Leaderboards chip groups — stat picker swaps the metric the board
   // is sorted by; level/pos chips narrow the qualifying pool. All three
   // re-render the leaderboard but don't touch other tabs.
-  attachChipGroup("lb-stat",  "lbStat",  () => renderLeaderboards());
-  attachChipGroup("lb-level", "lbLevel", () => renderLeaderboards());
-  attachChipGroup("lb-pos",   "lbPos",   () => renderLeaderboards());
-  document.getElementById("lb-org-filter").addEventListener("change", e => {
+  attachChipGroup("lb-stat",   "lbStat",   () => renderLeaderboards());
+  attachChipGroup("lb-level",  "lbLevel",  () => renderLeaderboards());
+  attachChipGroup("lb-pos",    "lbPos",    () => renderLeaderboards());
+  attachChipGroup("lb-season", "lbSeason", () => renderLeaderboards());
+  // Null-guard each selector binding — missing elements (caused by template
+  // ordering, embed contexts, or future markup changes) would otherwise
+  // throw a TypeError that aborts attachHandlers and breaks every other
+  // tab. Each selector wraps in `if (el)` like populateOrgFilter does.
+  const lbOrgEl = document.getElementById("lb-org-filter");
+  if (lbOrgEl) lbOrgEl.addEventListener("change", e => {
     state.lbOrg = e.target.value;
     renderLeaderboards();
     syncToURL();
   });
-  document.getElementById("org-filter").addEventListener("change", e => {
+  const orgEl = document.getElementById("org-filter");
+  if (orgEl) orgEl.addEventListener("change", e => {
     state.orgFilter = e.target.value;
     render();
   });
-  document.getElementById("acq-filter").addEventListener("change", e => {
+  const acqEl = document.getElementById("acq-filter");
+  if (acqEl) acqEl.addEventListener("change", e => {
     state.acqFilter = e.target.value;
     render();
   });
-  document.getElementById("sort-select").addEventListener("change", e => {
+  const sortEl = document.getElementById("sort-select");
+  if (sortEl) sortEl.addEventListener("change", e => {
     state.sort = e.target.value;
     render();
   });

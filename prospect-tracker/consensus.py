@@ -98,7 +98,13 @@ from scrapers import Snapshot
 # source), not to penalize well-known names just because one outlet has
 # only ranked, not FV-graded, them. See `_shrinkage_n` for how the count
 # itself is determined.
-DEFAULT_SHRINKAGE_K = 2.0
+# Lowered from 2.0 → 1.5 in 2026-05 to ease the 40-tier clustering. With
+# k=2.0 a 1-source prospect got 38% weight on the raw FV; the prior
+# (population mean ≈ 40) dominated and most weakly-covered prospects
+# collapsed onto a 40 tier regardless of what the source actually said.
+# At k=1.5 a 1-source FV gets ~45% raw weight; 2-source ~70% — moves
+# the marginal cases off 40 without affecting well-covered prospects.
+DEFAULT_SHRINKAGE_K = 1.5
 DEFAULT_N_FULL = 4
 FALLBACK_PRIOR_FV = 45.0
 
