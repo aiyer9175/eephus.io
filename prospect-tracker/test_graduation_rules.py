@@ -203,7 +203,7 @@ class TestSubThresholdMlbStaysActive:
         }
         out = tmp_path / "out.json"
         export_timeseries_json(ts, out, career_stats=career)
-        payload = json.loads(out.read_text())
+        from storage import load_export_unified as _leu; payload = _leu(out)
         names_active = {p["player_name"] for p in payload["players"]}
         names_grad   = {p["player_name"] for p in payload["graduates"]}
         names_inact  = {p["player_name"] for p in payload.get("inactives", [])}
@@ -252,7 +252,7 @@ class TestDebutMarkerInLevelChanges:
         export_timeseries_json(ts, out,
                                level_changes=level_changes,
                                roster_status=roster_status)
-        payload = json.loads(out.read_text())
+        from storage import load_export_unified as _leu; payload = _leu(out)
         player = next(p for p in payload["players"]
                       if p["player_name"] == "Star Rookie")
         lcs = player["level_changes"]
@@ -296,7 +296,7 @@ class TestDebutMarkerInLevelChanges:
         export_timeseries_json(ts, out,
                                level_changes=level_changes,
                                roster_status=roster_status)
-        payload = json.loads(out.read_text())
+        from storage import load_export_unified as _leu; payload = _leu(out)
         player = next(p for p in payload["players"]
                       if p["player_name"] == "Rule 5 Add")
         # The spurious MLB promotion stays as a normal promotion (we
@@ -321,7 +321,7 @@ class TestDebutMarkerInLevelChanges:
         }
         out = tmp_path / "out.json"
         export_timeseries_json(ts, out, roster_status=roster_status)
-        payload = json.loads(out.read_text())
+        from storage import load_export_unified as _leu; payload = _leu(out)
         player = next(p for p in payload["players"]
                       if p["player_name"] == "Quiet Debut")
         lcs = player["level_changes"]
@@ -354,7 +354,7 @@ class TestDebutMarkerInLevelChanges:
         export_timeseries_json(ts, out,
                                level_changes=level_changes,
                                roster_status=roster_status)
-        payload = json.loads(out.read_text())
+        from storage import load_export_unified as _leu; payload = _leu(out)
         player = next(p for p in payload["players"]
                       if p["player_name"] == "Pure Prospect")
         # No MLB promotion + no debut_date → no debut row added.
@@ -485,7 +485,7 @@ class TestGraduationDateDerivation:
             career_stats=career,
             roster_status=roster_status,
         )
-        payload = json.loads(out.read_text())
+        from storage import load_export_unified as _leu; payload = _leu(out)
         return next(g for g in payload["graduates"] if g["player_name"] == name)
 
     def test_api_debut_overrides_stored_grad_date(self, tmp_path):
@@ -595,7 +595,7 @@ class TestGraduationDateDerivation:
                          for _, key, debut in cohort}
         out = tmp_path / "out.json"
         export_timeseries_json(ts, out, roster_status=roster_status)
-        payload = json.loads(out.read_text())
+        from storage import load_export_unified as _leu; payload = _leu(out)
         by_name = {g["player_name"]: g for g in payload["graduates"]}
         dates = sorted(by_name[n]["graduation_date"] for n, _, _ in cohort)
         # All four distinct — no clump on 2022-07-01.

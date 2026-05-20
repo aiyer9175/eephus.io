@@ -303,7 +303,7 @@ class TestStorageRoundTrip:
             pitch_arsenals={"test_pitcher": asdict(pa)},
             sabermetrics={"test_pitcher": asdict(sm)},
         )
-        payload = json.loads(out.read_text())
+        from storage import load_export_unified as _leu; payload = _leu(out)
         p = payload["players"][0]
         assert p["pitch_arsenal"] is not None
         assert p["pitch_arsenal"]["fb_velo"] == 97.0

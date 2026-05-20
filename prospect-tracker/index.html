@@ -2458,14 +2458,56 @@ const DATA_URL = "data/timeseries.json";
 // =============================================================================
 // LOAD DATA
 // =============================================================================
+// timeseries.json is the boot-critical payload (~24MB) carrying the
+// active-prospect list, spotlights, org summaries, and norms tables.
+// Three sidecar JSONs are fetched on demand:
+//   - graduates.json     (~14MB) when the user opens the Graduates tab
+//   - inactive.json      (~4MB)  when the user opens the Inactive view
+//   - rosters_by_org.json (~2MB)  when the user opens any farm-detail page
+//
+// The boot file advertises sidecars via `_slices`. We default-fill the
+// arrays with [] so first-paint render code that walks DATA.graduates
+// etc. doesn't crash before a slice arrives.
 async function loadData() {
   try {
     const resp = await fetch(DATA_URL, { cache: "no-cache" });
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    return await resp.json();
+    const d = await resp.json();
+    // Back-compat: a monolithic timeseries.json may still carry these
+    // arrays inline. The boot path tolerates either shape.
+    if (!Array.isArray(d.graduates))  d.graduates = [];
+    if (!Array.isArray(d.inactive))   d.inactive = [];
+    if (!d.rosters_by_org)            d.rosters_by_org = {};
+    return d;
   } catch (err) {
     return { __error: err.message };
   }
+}
+
+// In-flight fetch promises per slice name so concurrent callers share a
+// single request. Resolves when the slice has been merged into DATA.
+const _sliceInFlight = {};
+function loadSlice(name) {
+  if (!DATA || !DATA._slices || !DATA._slices[name]) {
+    // Slice not advertised (monolithic legacy export) — already on DATA.
+    return Promise.resolve();
+  }
+  // Already merged.
+  const cur = DATA[name];
+  const isPopulated = Array.isArray(cur) ? cur.length > 0
+                                         : (cur && Object.keys(cur).length > 0);
+  if (isPopulated) return Promise.resolve();
+  if (_sliceInFlight[name]) return _sliceInFlight[name];
+  const url = DATA._slices[name];
+  _sliceInFlight[name] = fetch(url, { cache: "no-cache" })
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(payload => { DATA[name] = payload; })
+    .catch(err => {
+      console.warn(`slice ${name} fetch failed:`, err);
+      // Leave the empty default so render code doesn't loop.
+    })
+    .finally(() => { delete _sliceInFlight[name]; });
+  return _sliceInFlight[name];
 }
 
 // =============================================================================
@@ -7743,6 +7785,37 @@ function render() {
     if (el) el.style.display = name === active ? "block" : "none";
   }
 
+  // Slice gating: views that traverse graduates / inactive / farm rosters
+  // wait for the corresponding sidecar before rendering. The boot path
+  // kicks off these loads on first paint so latency is usually masked.
+  const needsGrad = active === "graduates"
+      || active === "injured"       // injured rolls graduates + inactive into the pool
+      || (active === "player" && !(DATA.players || []).some(p => p.player_key === state.view.key));
+  const needsRosters = active === "farmDetail";
+  const needsInactive = active === "injured"
+      || (active === "player" && !(DATA.players || []).some(p => p.player_key === state.view.key));
+
+  if (needsGrad && DATA._slices && DATA._slices.graduates && !DATA.graduates.length) {
+    const target = document.getElementById(sections[active]);
+    if (target) target.innerHTML = `<div class="state-message">Loading graduates…</div>`;
+    loadSlice("graduates").then(render);
+    return;
+  }
+  if (needsInactive && DATA._slices && DATA._slices.inactive
+      && !DATA.inactive.length) {
+    // Inactive is small; don't bother with a separate loading state —
+    // just wait for it then render. Graduates may already be present.
+    loadSlice("inactive").then(render);
+    return;
+  }
+  if (needsRosters && DATA._slices && DATA._slices.rosters_by_org
+      && Object.keys(DATA.rosters_by_org).length === 0) {
+    const target = document.getElementById(sections[active]);
+    if (target) target.innerHTML = `<div class="state-message">Loading farm rosters…</div>`;
+    loadSlice("rosters_by_org").then(render);
+    return;
+  }
+
   if (active === "player")       renderPlayerDetail(state.view.key);
   else if (active === "farmDetail") renderFarmDetail(state.view.org);
   else if (active === "active")     renderActives();
@@ -8576,6 +8649,19 @@ function populateOrgFilter() {
   // any in-page "+ Compare" buttons on first paint, then again after
   // every section render (renderCompareCart re-syncs button visuals).
   renderCompareCart();
+
+  // Warm the sidecar slices in the background. The user has to click
+  // before they touch the graduates/inactive/farm-detail data, so by
+  // the time they navigate, the slice is usually already on DATA.
+  // If they beat the network, the render branches re-fire render()
+  // once the slice arrives.
+  if (DATA && DATA._slices) {
+    setTimeout(() => {
+      loadSlice("graduates");
+      loadSlice("rosters_by_org");
+      loadSlice("inactive");
+    }, 0);
+  }
 })();
 </script>
 </body>

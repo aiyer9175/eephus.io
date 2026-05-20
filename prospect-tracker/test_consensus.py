@@ -301,7 +301,7 @@ class TestExportSplit:
         ts = build_timeseries(snaps)
         out = tmp_path / "out.json"
         export_timeseries_json(ts, out, top_n_active=3)
-        payload = json.loads(out.read_text())
+        from storage import load_export_unified as _leu; payload = _leu(out)
 
         # Active list trimmed to top 3 by consensus FV
         assert payload["active_count"] == 3
@@ -350,7 +350,7 @@ class TestExportSplit:
             },
         )
 
-        payload = json.loads(out.read_text())
+        from storage import load_export_unified as _leu; payload = _leu(out)
         fitts = payload["graduates"][0]
         assert fitts["org"] == "STL"
 
@@ -380,7 +380,7 @@ class TestExportSplit:
             },
         )
 
-        payload = json.loads(out.read_text())
+        from storage import load_export_unified as _leu; payload = _leu(out)
         luis = payload["players"][0]
         assert luis["org"] == "SFG"
         assert luis["org_rank"] == 1

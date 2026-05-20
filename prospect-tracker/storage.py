@@ -2477,7 +2477,26 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     from spotlights import build_spotlights
     spotlight_payload = build_spotlights(active_payload, graduate_payload)
 
-    payload = {
+    # Split the export into a boot-critical file plus three lazy-loaded
+    # sidecars so a first-paint download doesn't drag along ~40MB of
+    # graduate / inactive / affiliate-roster data that the user typically
+    # doesn't need until they navigate to those tabs.
+    #
+    #   timeseries.json   — meta + active players + spotlights + org
+    #                       summaries + level/trajectory norms (boot path)
+    #   graduates.json    — graduate-player payloads
+    #   inactive.json     — inactive-player payloads
+    #   rosters_by_org.json — per-org affiliate rosters (farm-detail only)
+    #
+    # The boot file carries `_slices` so the frontend knows which sidecars
+    # exist and can fetch them on first tab-switch. Counts are duplicated
+    # into the boot meta so empty-state copy can render before the slice
+    # arrives.
+    # NOTE: the boot JSON intentionally omits `graduates`, `inactive`, and
+    # `rosters_by_org` — those slices live in sidecar files and the frontend
+    # fetches them on demand. Tests that want a single dict can call
+    # `load_export_unified(out_path)` to reassemble them.
+    boot = {
         "generated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "run": latest_run_summary(),
         "total_tracked": len(timeseries),
@@ -2487,16 +2506,45 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "inactive_cutoff": cutoff.isoformat(),
         "prospect_savant_count": savant_matched,
         "players":    active_payload,
-        "inactive":   inactive_payload,
-        "graduates":  graduate_payload,
         "spotlights": spotlight_payload,
         "org_summary": org_summary,
         "farm_trajectory_medians": farm_trajectory_medians,
         "level_norms": level_norms,
-        # Per-org affiliate rosters keyed by parent_org_abbr → level → list.
-        # Each player record carries an FV grade when the player is one of
-        # our tracked prospects, otherwise just basic identity info.
-        "rosters_by_org": rosters_by_org,
+        "_slices": {
+            "graduates":      "graduates.json",
+            "inactive":       "inactive.json",
+            "rosters_by_org": "rosters_by_org.json",
+        },
     }
-    out_path.write_text(json.dumps(payload, indent=2))
+    out_dir = out_path.parent
+    out_path.write_text(json.dumps(boot, indent=2))
+    (out_dir / "graduates.json").write_text(json.dumps(graduate_payload, indent=2))
+    (out_dir / "inactive.json").write_text(json.dumps(inactive_payload, indent=2))
+    (out_dir / "rosters_by_org.json").write_text(json.dumps(rosters_by_org, indent=2))
     return out_path
+
+
+def load_export_unified(boot_path: Path) -> dict:
+    """Inverse of `export_timeseries_json`'s split — reads the boot JSON
+    and inlines `graduates` / `inactive` / `rosters_by_org` from the
+    sidecar files (if they exist) so callers (mostly tests) can work
+    with a single dict.
+
+    Returns the boot dict unchanged when the sidecars aren't present
+    (legacy monolithic export, or a partial run).
+    """
+    boot_path = Path(boot_path)
+    payload = json.loads(boot_path.read_text())
+    out_dir = boot_path.parent
+    for slice_name in ("graduates", "inactive", "rosters_by_org"):
+        if slice_name in payload:
+            continue
+        sidecar = out_dir / f"{slice_name}.json"
+        if sidecar.exists():
+            payload[slice_name] = json.loads(sidecar.read_text())
+        else:
+            # Empty default keeps test assertions like `for g in
+            # payload["graduates"]` from raising KeyError when the slice
+            # is genuinely empty for this run.
+            payload[slice_name] = [] if slice_name != "rosters_by_org" else {}
+    return payload

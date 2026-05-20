@@ -119,7 +119,7 @@ class TestExportIncludesAgeVsLevel:
             statlines={"young_aaa_guy": asdict(sl)},
             top_n_active=10,
         )
-        payload = json.loads(out.read_text())
+        from storage import load_export_unified as _leu; payload = _leu(out)
         p = payload["players"][0]
         assert p["age"] is not None
         assert p["age_vs_level"]["tier"] == "very-young"
@@ -146,6 +146,6 @@ class TestExportIncludesAgeVsLevel:
         ts = build_timeseries(storage.load_all_snapshots())
         out = tmp_path / "out.json"
         storage.export_timeseries_json(ts, out)
-        payload = json.loads(out.read_text())
+        from storage import load_export_unified as _leu; payload = _leu(out)
         p = payload["players"][0]
         assert p["age_vs_level"]["tier"] == "unknown"

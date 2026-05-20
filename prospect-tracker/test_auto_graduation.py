@@ -114,7 +114,7 @@ class TestAutoGraduation:
         ts = build_timeseries(storage.load_all_snapshots())
         out = tmp_path / "out.json"
         storage.export_timeseries_json(ts, out)
-        payload = json.loads(out.read_text())
+        from storage import load_export_unified as _leu; payload = _leu(out)
 
         assert payload["active_count"] == 0
         assert payload["graduate_count"] == 1
