@@ -1994,6 +1994,12 @@
       margin-top: 4px;
       font-variant-numeric: tabular-nums;
     }
+    .spending-totals .st-pool {
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed var(--border-light);
+      cursor: help;
+    }
 
     /* === Scouting flags ============================================ */
     /* Green/red chips on the prospect-detail page that surface stats
@@ -5063,7 +5069,10 @@ const state = {
   // Career-aggregated WAR isn't on the MLB Stats API (the endpoint
   // returns one split per season), so the WAR sort uses the
   // most-recent-season number — labelled accordingly in the chip.
-  gradSort: "date",
+  // Default sort is WAG (vs_fv_proj) — the headline metric for
+  // graduates. Sort by graduation date is still one click away via
+  // the "Date" chip on the graduates page.
+  gradSort: "vs_fv_proj",
   // Injured-list sort. "days_asc" (default) sorts by elapsed IL days
   // ascending so the players closest to returning surface first.
   // "days" sorts descending (longest-out first); "fv" puts high-FV
@@ -6145,6 +6154,90 @@ function estimateMarketAavMM(warPerYr) {
   return Math.round(warPerYr * DOLLARS_PER_WAR_MM * 10) / 10;
 }
 
+// MLB salary cost model — used to convert a graduate's career WAR into
+// realized surplus value (market production minus what their team
+// actually paid them across the cost-controlled window).
+//
+//   Years 1-3 (pre-arb): league minimum ($0.76M for 2024).
+//   Years 4-6 (arb):     ~30% / 55% / 80% of the FA-equivalent value
+//                        from the prior season's WAR. Caps below at
+//                        league min so a -WAR season doesn't produce
+//                        a negative salary.
+//   Years 7+ (post-arb): assume the player is paid at fair-market rate
+//                        for the current season (FA equivalent of THIS
+//                        year's WAR).
+//
+// The model is approximate — the user can replace `total_salary` with a
+// scraped Spotrac contract value once that pipeline lands. Until then
+// the league-min + arb-fraction proxy is a reasonable estimate that
+// preserves the "outperformed his contract" comparison.
+const LEAGUE_MIN_SALARY_MM = 0.76;
+const ARB_FRACTIONS = [0.30, 0.55, 0.80];
+
+function estimateRealizedSurplusValueMM(g) {
+  const seasons = ((g || {}).career_war || {}).seasons || {};
+  const years = Object.keys(seasons).filter(y => seasons[y] != null).sort();
+  if (!years.length) return null;
+  let totalValue = 0;
+  let totalSalary = 0;
+  for (let i = 0; i < years.length; i++) {
+    const war = Number(seasons[years[i]]) || 0;
+    const marketValue = Math.max(0, war) * DOLLARS_PER_WAR_MM;
+    let salary;
+    if (i < 3) {
+      salary = LEAGUE_MIN_SALARY_MM;
+    } else if (i < 6) {
+      const priorWar = Number(seasons[years[i - 1]]) || 0;
+      const arbBase = Math.max(0, priorWar) * DOLLARS_PER_WAR_MM;
+      salary = Math.max(LEAGUE_MIN_SALARY_MM, arbBase * ARB_FRACTIONS[i - 3]);
+    } else {
+      const faEquivalent = Math.max(0, war) * DOLLARS_PER_WAR_MM;
+      salary = Math.max(LEAGUE_MIN_SALARY_MM, faEquivalent);
+    }
+    totalValue += marketValue;
+    totalSalary += salary;
+  }
+  const totalWar = years.reduce((sum, y) => sum + (Number(seasons[y]) || 0), 0);
+  return {
+    realized_surplus: Math.round((totalValue - totalSalary) * 10) / 10,
+    total_war: Math.round(totalWar * 10) / 10,
+    total_value: Math.round(totalValue * 10) / 10,
+    total_salary: Math.round(totalSalary * 10) / 10,
+    season_count: years.length,
+  };
+}
+
+// MLB Draft assigned bonus pools per team — sourced from MLB.com's
+// 2026 draft bonus pool article (mlb.com/news/mlb-draft-2026-bonus-
+// pool-pick-values). Total pools tied to each team's full slate of
+// 2026 picks. Pool ceilings are the MLB-assigned baselines; teams may
+// exceed by up to ~5% before luxury-tax penalties.
+//   Source codes (CWS, TB, KC, SD, SF, WSH, OAK) translated to our
+//   canonical 3-letter codes (CHW, TBR, KCR, SDP, SFG, WSN, ATH) per
+//   _CODE_REMAP in trades.py.
+const MLB_DRAFT_BONUS_POOLS = {
+  2026: {
+    "PIT": 19130700, "TBR": 19009300, "CHW": 17592100, "SFG": 17350600,
+    "MIN": 16929600, "STL": 16612300, "KCR": 15954000, "ATL": 15870800,
+    "COL": 15557600, "ATH": 13840300, "HOU": 13712700, "ARI": 13603100,
+    "BAL": 13114000, "WSN": 12278300, "MIA": 11960100, "LAA": 11755400,
+    "CIN": 10758500, "TEX": 10219200, "CHC":  9644100, "SDP":  9479000,
+    "CLE":  9303700, "DET":  9165100, "BOS":  8219200, "SEA":  8218200,
+    "MIL":  8042900, "PHI":  7773000, "NYY":  7342800, "NYM":  6730900,
+    "TOR":  5543100, "LAD":  3951900,
+  },
+};
+
+// Compute draft-pool utilization for an org+year. Returns null when
+// either the pool ceiling or the org's actual spend isn't on file.
+function _orgDraftPoolUtilization(org, year) {
+  const ceiling = (MLB_DRAFT_BONUS_POOLS[year] || {})[org && org.org];
+  if (!ceiling) return null;
+  const spent = ((org.draft_spending || {})[year] || {}).total_usd;
+  if (spent == null) return null;
+  return { spent, cap: ceiling, pct: (spent / ceiling) * 100 };
+}
+
 // FV → estimated MLB surplus value ($M), per Craig Edwards / FanGraphs
 // 2019 framework. Hitters carry more value than pitchers at the same FV
 // because pitchers face higher injury attrition + reliever-conversion
@@ -6309,6 +6402,43 @@ function gradVsFvProjection(g) {
   return r.war_per_yr - expected;
 }
 
+// WAG-by-season sparkline for a graduate. Bars: green when the
+// season's WAR exceeded the FV-grade-implied baseline, red when it
+// fell short. A dashed midline at y = 0 anchors the eye to "matched
+// expectation." Tooltip per bar enumerates the season's actual WAR,
+// the FV-implied baseline, and the resulting WAG. Returns "" when the
+// graduate lacks the data needed (no seasons, no FV grade).
+function makeWagChart(g) {
+  const seasons = (g.career_war || {}).seasons || {};
+  const years = Object.keys(seasons).filter(y => seasons[y] != null).sort();
+  if (years.length === 0) return "";
+  const fv = g.fv_close_raw ?? g.fv_close;
+  if (fv == null) return "";
+  const isPitcher = !!(g.sabermetrics && g.sabermetrics.is_pitcher);
+  const baseline = fvExpectedWarPerYr(fv, isPitcher);
+  if (baseline == null) return "";
+  const wars   = years.map(y => Number(seasons[y]));
+  const wagVals = wars.map(w => w - baseline);
+  const maxAbs = Math.max(0.5, ...wagVals.map(v => Math.abs(v)));
+  const W = 70, H = 32, PAD = 2;
+  const mid = H / 2;
+  const innerH = (H - 2 * PAD) / 2;
+  const barW = Math.max(3, Math.floor((W - 2 * PAD) / years.length) - 1);
+  const bars = wagVals.map((v, i) => {
+    const barH = Math.abs(v) / maxAbs * innerH;
+    const x = PAD + i * (barW + 1);
+    const y = v >= 0 ? mid - barH : mid;
+    const fill = v >= 0 ? "var(--up)" : "var(--down)";
+    const sign = v >= 0 ? "+" : "";
+    const tip = `${years[i]}: ${sign}${v.toFixed(2)} WAG · ${wars[i] >= 0 ? "+" : ""}${wars[i].toFixed(1)} WAR vs ${baseline.toFixed(2)} FV-${Math.round(fv)} expected`;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(1, barH).toFixed(1)}" fill="${fill}"><title>${escapeHtml(tip)}</title></rect>`;
+  }).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="WAG by season">
+    <line x1="0" y1="${mid}" x2="${W}" y2="${mid}" stroke="var(--text-tertiary)" stroke-width="0.6" stroke-dasharray="2,2" opacity="0.7"/>
+    ${bars}
+  </svg>`;
+}
+
 function renderGraduates() {
   renderWhatsNew("whats-new-graduates", kind => kind === "graduated");
   const filtered = getFilteredGrads();
@@ -6339,7 +6469,7 @@ function renderGraduates() {
     <span>Player · pos · org · age</span>
     <span class="grad-graduation-cell">Graduation</span>
     <span style="text-align:center;">FV</span>
-    <span class="desktop-only" style="text-align:center;">Prospect trajectory</span>
+    <span class="desktop-only" style="text-align:center;" title="Per-season bars vs FV-implied baseline — green when the season's WAR exceeded their grade, red when it fell short. The full FV-trajectory chart lives on each graduate's detail page.">WAG by season</span>
     <span class="desktop-only" style="text-align:center;">Candle</span>
     <span class="grad-level-cell">Level</span>
     <span>MLB stats</span>
@@ -6392,9 +6522,13 @@ function renderGraduates() {
   const renderRow = (g, rank, pillClassOverride, sublabel) => {
     const isRecent = isRecentGradDate(g.graduation_date);
     const pillClass = pillClassOverride || (isRecent ? "grad-pill most-recent" : "grad-pill");
-    const chartHtml = (g.points && g.points.length >= 2)
-      ? makeLineChart(g.points, g.fv_open, g.fv_close, g.graduation_date, g.trades, g)
-      : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
+    // WAG-by-season sparkline replaces the older FV-trajectory chart on
+    // the graduate LIST page — the WAG signal is more useful for
+    // ranking graduates by realized output vs their grade. The full
+    // FV chart still renders on each graduate's detail page.
+    const wagSparkHtml = makeWagChart(g);
+    const chartHtml = wagSparkHtml
+      || `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
     const fvLabel = g.fv_close != null ? Math.round(g.fv_close) : "—";
     const sm = g.sabermetrics || {};
     const cw = g.career_war || {};
@@ -7384,6 +7518,23 @@ function makeSpendingBlock(org) {
     <span style="display:inline-flex;align-items:center;gap:5px;"><span aria-hidden="true" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--neon-amber);"></span>IFA</span>
     <span style="display:inline-flex;align-items:center;gap:5px;"><span aria-hidden="true" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--spend-draft);"></span>Draft</span>
   </div>`;
+  // 2026 draft-pool utilization caption — when the org has a known
+  // pool ceiling for the most-recent draft year AND a spend value on
+  // file. Comparison reads "$5.4M / $7.7M pool (70%)" with the
+  // percentage color-coded: green if ≥95% (used the full bag),
+  // neutral if 70-95%, amber if <70% (left budget on the table).
+  const draftUtil = _orgDraftPoolUtilization(org, 2026);
+  let draftPoolCaption = "";
+  if (draftUtil) {
+    const pctColor = draftUtil.pct >= 95 ? "var(--up)"
+                   : draftUtil.pct >= 70 ? "var(--text-secondary)"
+                   : "var(--neon-amber)";
+    draftPoolCaption = `<div class="st-pool" title="MLB-assigned 2026 draft bonus pool from the slot-value framework. Teams may exceed by up to ~5% before luxury-tax penalties.">
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);letter-spacing:0.02em;font-variant-numeric:tabular-nums;">2026 pool: ${_fmtDollars(draftUtil.spent)} / ${_fmtDollars(draftUtil.cap)}</span>
+      <span style="font-family:var(--font-mono);font-size:10px;color:${pctColor};font-weight:700;font-variant-numeric:tabular-nums;margin-left:6px;">${draftUtil.pct.toFixed(0)}%</span>
+    </div>`;
+  }
+
   const totalsHtml = `<div class="spending-summary">
     <div class="ss-donut">${donutSvg}${donutLegend}</div>
     <div class="ss-totals">
@@ -7396,6 +7547,7 @@ function makeSpendingBlock(org) {
         <div class="st-label">Draft · ${draftPct.toFixed(0)}% of spend</div>
         <div class="st-value">${_fmtDollars(draftTotal)}</div>
         <div class="st-sub">${draftSign} picks signed · avg ${_fmtDollars(draftAvg)} per pick</div>
+        ${draftPoolCaption}
       </div>
     </div>
   </div>`;
@@ -8932,10 +9084,36 @@ function renderPlayerDetail(key) {
   // Rank pills — overall position in the FV-sorted active list, plus org
   // position. Hidden for graduates/inactives where these fields are null.
   const rankPill = (label, val, color) => `<span style="font-family:var(--font-mono);font-size:11px;color:${color};background:var(--bg-tertiary);border:1px solid var(--border);padding:3px 9px;border-radius:2px;letter-spacing:0;font-weight:700;font-variant-numeric:tabular-nums;"><span style="font-family:var(--font-sans);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;font-size:10px;color:var(--text-tertiary);margin-right:4px;">${label}</span>${val}</span>`;
-  const rankPills = (p.overall_rank != null || p.org_rank != null)
+  // WAG rank — graduate-only. Computes the player's percentile and
+  // ordinal position within the graduate pool by WAG. This makes WAG a
+  // first-class signal on graduate detail pages (alongside the WAG
+  // tile in the stat-tile row).
+  let wagRankPill = "";
+  if (p.status === "graduated" && typeof DATA !== "undefined" && Array.isArray(DATA.graduates)) {
+    const myWag = gradVsFvProjection(p);
+    if (myWag != null) {
+      const pool = DATA.graduates
+        .map(g => ({ key: g.player_key, wag: gradVsFvProjection(g) }))
+        .filter(x => x.wag != null);
+      pool.sort((a, b) => b.wag - a.wag);
+      const idx = pool.findIndex(x => x.key === p.player_key);
+      if (idx >= 0) {
+        const n = pool.length;
+        const rank = idx + 1;
+        const pct = ((n - rank) / Math.max(1, n - 1)) * 100;
+        const tip = `Among ${n} graduates with enough MLB playing time, ranked #${rank} by WAG (top ${(100 - pct).toFixed(0)}% if pct lower). Higher WAG = outperformed the FV-implied WAR/yr expectation.`;
+        const color = pct >= 75 ? "var(--up)"
+                    : pct >= 25 ? "var(--neon-cyan)"
+                    : "var(--down)";
+        wagRankPill = `<span style="font-family:var(--font-mono);font-size:11px;color:${color};background:var(--bg-tertiary);border:1px solid var(--border);padding:3px 9px;border-radius:2px;letter-spacing:0;font-weight:700;font-variant-numeric:tabular-nums;cursor:help;" title="${escapeHtml(tip)}"><span style="font-family:var(--font-sans);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;font-size:10px;color:var(--text-tertiary);margin-right:4px;">WAG rank</span>#${rank} of ${n}</span>`;
+      }
+    }
+  }
+  const rankPills = (p.overall_rank != null || p.org_rank != null || wagRankPill)
     ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
         ${p.overall_rank != null ? rankPill("Overall", "#" + p.overall_rank, "var(--neon-violet)") : ""}
         ${p.org_rank != null ? rankPill(escapeHtml(p.org || "?"), "#" + p.org_rank + (p.org_rank_total ? " of " + p.org_rank_total : ""), "var(--neon-cyan)") : ""}
+        ${wagRankPill}
       </div>`
     : "";
 
@@ -9330,12 +9508,54 @@ function renderPlayerDetail(key) {
     const surplusRow = surplus != null
       ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
            <div>
-             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Surplus value</div>
+             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${p.status === "graduated" ? "Expected surplus (FV)" : "Surplus value"}</div>
              <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">FV ${Math.round(fv)} ${_isPit ? "pitcher" : "hitter"} · 6yr cost-controlled</div>
            </div>
-           <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="Estimated MLB surplus value over the player's 6-year cost-controlled window. Derived from FV ${Math.round(fv)} via the FanGraphs / Craig Edwards 2019 framework (hitter/pitcher split). Real surplus depends on health, performance variance, and changes in $/WAR market rate.">${fmtUsd(surplus)}</div>
+           <div style="font-family:var(--font-mono);font-size:${p.status === "graduated" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="Estimated MLB surplus value over the player's 6-year cost-controlled window. Derived from FV ${Math.round(fv)} via the FanGraphs / Craig Edwards 2019 framework (hitter/pitcher split). Real surplus depends on health, performance variance, and changes in $/WAR market rate.">${fmtUsd(surplus)}</div>
          </div>`
       : "";
+    // Graduate-only: REALIZED surplus value computed from actual MLB
+    // WAR vs estimated salary paid. Side-by-side with the expected
+    // (FV-implied) row above so the reader can see whether the
+    // graduate has outperformed or underperformed their grade.
+    // Realized = sum of (season WAR × $/WAR market) − sum of estimated
+    // salary (league min for pre-arb, arb fractions for years 4-6,
+    // FA equivalent thereafter). Spotrac contract data is a follow-up
+    // wave that will replace the salary estimate with exact AAV.
+    let realizedRow = "";
+    let realizedDelta = null;
+    if (p.status === "graduated") {
+      const realized = estimateRealizedSurplusValueMM(p);
+      if (realized) {
+        const rColor = realized.realized_surplus >= 50 ? "var(--up)"
+                     : realized.realized_surplus >= 10 ? "var(--neon-cyan)"
+                     : realized.realized_surplus >= 0 ? "var(--text-primary)"
+                     : "var(--down)";
+        const rTip = `Career WAR ${realized.total_war.toFixed(1)} × $${DOLLARS_PER_WAR_MM}M/WAR = ${fmtUsd(realized.total_value)} market value. Subtract estimated salary paid ($${realized.total_salary.toFixed(1)}M — league-min model: pre-arb at MLB minimum, arb years scaled to 30/55/80% of FA-equivalent, FA years at fair market). Result = realized surplus value over ${realized.season_count} MLB season${realized.season_count === 1 ? "" : "s"}. Exact AAV will replace the salary estimate once contract data is integrated.`;
+        realizedRow = `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;" title="${escapeHtml(rTip)}">
+           <div>
+             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Realized surplus (WAR)</div>
+             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${realized.total_war.toFixed(1)} WAR over ${realized.season_count} season${realized.season_count === 1 ? "" : "s"}</div>
+           </div>
+           <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:${rColor};font-variant-numeric:tabular-nums;">${fmtUsd(realized.realized_surplus)}</div>
+         </div>`;
+        if (surplus != null) {
+          realizedDelta = realized.realized_surplus - surplus;
+        }
+      }
+    }
+    // Δ vs expected — only when both sides are present.
+    let surplusDeltaRow = "";
+    if (realizedDelta != null) {
+      const dColor = realizedDelta >= 5 ? "var(--up)"
+                   : realizedDelta <= -5 ? "var(--down)"
+                   : "var(--text-tertiary)";
+      const dSign = realizedDelta > 0 ? "+" : "";
+      surplusDeltaRow = `<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
+         <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;" title="Realized surplus minus expected (FV-implied) surplus. Positive = the graduate has outperformed the bet implied by their final prospect grade.">Δ vs expected</div>
+         <div style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:${dColor};font-variant-numeric:tabular-nums;">${dSign}${fmtUsd(Math.abs(realizedDelta)).replace("$", realizedDelta < 0 ? "−$" : "$")}</div>
+       </div>`;
+    }
     // Graduate-only: market-AAV equivalent of the realized WAR rate.
     // gradWarPerYr returns a playing-time-weighted WAR/yr value when
     // the graduate has ≥1 full-season equivalent of MLB playing time;
@@ -9409,7 +9629,7 @@ function renderPlayerDetail(key) {
            <div style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:${roiColor};font-variant-numeric:tabular-nums;">${roiSign}${fmtUsd(Math.abs(roi)).replace("$", roi < 0 ? "−$" : "$")}</div>
          </div>`;
     }
-    const inner = surplusRow + aavRow + acqRow + bonusRow + roiRow;
+    const inner = surplusRow + realizedRow + surplusDeltaRow + aavRow + acqRow + bonusRow + roiRow;
     if (!inner) return "";
     return `<div class="detail-title">Surplus value <span class="detail-title-sub">FV-implied · FanGraphs 2019 framework</span></div>
       <div class="detail-card">${inner}</div>`;
@@ -9994,33 +10214,103 @@ function renderPlayerDetail(key) {
     const myBucket = positionBucket(p.position);
     const myFv = p.fv_close_raw != null ? p.fv_close_raw : p.fv_close;
     if (myBucket == null || myFv == null || p.age == null) return "";
-    const matches = (DATA.players || [])
+    const myIsPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP)$/.test(String(p.position || "").split("/")[0].toUpperCase());
+
+    // Composite-similarity scorer — sums weighted, normalized deltas
+    // across FV, age, Tools+, key rate stats, and player-vs-level RPS+
+    // (when present). Each axis has a reference unit so the deltas land
+    // on comparable scales; the weighted sum is then a Euclidean
+    // distance where SMALLER = more similar. Same position bucket is
+    // a hard filter so a SS doesn't match a 1B regardless of stats.
+    //
+    // Weight emphasis: FV (1.5x) > position-stats (1.0x) > Tools+ (0.9x)
+    // > age (0.7x). FV is the loudest scouting signal, stats reflect
+    // current performance, Tools+ captures scouting-tool shape, age
+    // contextualizes development.
+    const W_FV = 1.5, W_AGE = 0.7, W_TOOLS = 0.9, W_STATS = 1.0;
+    const norm = (delta, scale) => Math.abs(delta) / scale;
+    const score = (a, b) => {
+      const aFv = a.fv_close_raw != null ? a.fv_close_raw : a.fv_close;
+      const bFv = b.fv_close_raw != null ? b.fv_close_raw : b.fv_close;
+      let s = 0;
+      let weights = 0;
+      // FV — 10 grade points = 1 unit of distance.
+      if (aFv != null && bFv != null) {
+        s += W_FV * Math.pow(norm(aFv - bFv, 10), 2);
+        weights += W_FV;
+      }
+      // Age — 2 years = 1 unit.
+      if (a.age != null && b.age != null) {
+        s += W_AGE * Math.pow(norm(a.age - b.age, 2), 2);
+        weights += W_AGE;
+      }
+      // Tools+ — 15 plus points = 1 unit.
+      const aT = a.tools && a.tools.composite_overall_plus;
+      const bT = b.tools && b.tools.composite_overall_plus;
+      if (aT != null && bT != null) {
+        s += W_TOOLS * Math.pow(norm(aT - bT, 15), 2);
+        weights += W_TOOLS;
+      }
+      // Stats — OPS for hitters, ERA for pitchers. Reference scales
+      // (150 OPS pts / 1.5 ERA) match the granularity at which
+      // scouting-grade differences typically show up.
+      const aSL = a.statline || {};
+      const bSL = b.statline || {};
+      if (aSL.is_pitcher === bSL.is_pitcher && aSL.is_pitcher !== undefined) {
+        if (aSL.is_pitcher) {
+          const aEra = parseFloat(aSL.era);
+          const bEra = parseFloat(bSL.era);
+          if (isFinite(aEra) && isFinite(bEra)) {
+            s += W_STATS * Math.pow(norm(aEra - bEra, 1.5), 2);
+            weights += W_STATS;
+          }
+        } else {
+          const aOps = parseFloat(aSL.ops);
+          const bOps = parseFloat(bSL.ops);
+          if (isFinite(aOps) && isFinite(bOps)) {
+            s += W_STATS * Math.pow(norm(aOps - bOps, 0.150), 2);
+            weights += W_STATS;
+          }
+        }
+      }
+      // Normalize to per-weight average so two prospects with only
+      // FV+age comparable get ranked against ones with full feature
+      // coverage on a comparable scale.
+      return weights > 0 ? Math.sqrt(s / weights) : Infinity;
+    };
+
+    const candidates = (DATA.players || [])
       .filter(t => t.player_key !== p.player_key)
       .filter(t => positionBucket(t.position) === myBucket)
-      .filter(t => {
-        const tFv = t.fv_close_raw != null ? t.fv_close_raw : t.fv_close;
-        return tFv != null && Math.abs(tFv - myFv) <= 2;
-      })
-      .filter(t => t.age != null && Math.abs(t.age - p.age) <= 1)
-      .sort((a, b) => {
-        const aFv = a.fv_close_raw != null ? a.fv_close_raw : a.fv_close;
-        const bFv = b.fv_close_raw != null ? b.fv_close_raw : b.fv_close;
-        if (bFv !== aFv) return bFv - aFv;
-        return (a.age || 99) - (b.age || 99);
-      })
+      .filter(t => (t.fv_close_raw != null || t.fv_close != null) && t.age != null);
+    if (!candidates.length) return "";
+    const ranked = candidates
+      .map(t => ({ t, s: score(p, t) }))
+      .filter(x => isFinite(x.s))
+      .sort((a, b) => a.s - b.s)
       .slice(0, 4);
-    if (!matches.length) return "";
-    const rows = matches.map(t => {
+    if (!ranked.length) return "";
+
+    const rows = ranked.map(({ t, s }) => {
       const tFv = t.fv_close_raw != null ? t.fv_close_raw : t.fv_close;
       const orgTag = t.org
         ? `<span style="color:var(--text-tertiary);font-size:9.5px;margin-left:4px;">${escapeHtml(t.org)}</span>`
         : "";
-      return `<div data-key="${escapeHtml(t.player_key)}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-light);cursor:pointer;font-size:12px;">
-        <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;">${escapeHtml(t.player_name)} <span style="color:var(--text-tertiary);font-size:10px;">${escapeHtml(t.position || "—")} · ${t.age != null ? t.age.toFixed(1) + "y" : "—"}</span>${orgTag}</span>
+      // Surface the similarity score subtly so the user can see why
+      // the match landed where it did. 0 = identical; lower = closer.
+      // The match-quality label converts the raw distance into a
+      // human-readable bucket.
+      const matchLabel = s < 0.25 ? "very close"
+                       : s < 0.45 ? "close"
+                       : s < 0.70 ? "similar"
+                       : "loose";
+      const matchTip = `Composite similarity score: ${s.toFixed(2)} (smaller = closer). Match across FV, age, Tools+, and current-season rate stats.`;
+      return `<div data-key="${escapeHtml(t.player_key)}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-light);cursor:pointer;font-size:12px;" title="${escapeHtml(matchTip)}">
+        <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;">${escapeHtml(t.player_name)} <span style="color:var(--text-tertiary);font-size:10px;">${escapeHtml(t.position || "—")} · ${t.age != null ? t.age.toFixed(1) + "y" : "—"} · ${matchLabel}</span>${orgTag}</span>
         <span class="fv-badge ${fvClass(String(Math.round(tFv)))} size-sm">${Math.round(tFv)}</span>
       </div>`;
     }).join("");
-    return `<div class="detail-title">Similar prospects <span class="detail-title-sub">same position · FV ±2 · age ±1</span></div>
+    return `<div class="detail-title">Similar prospects <span class="detail-title-sub">composite match — position, FV, age, Tools+, stats</span></div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">${rows}</div>`;
   })();
 
