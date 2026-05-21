@@ -2481,8 +2481,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                                if k != "_extras" and isinstance(v, (int, float))}
                     if not numeric:
                         continue
+                    # Use the SOURCE's actual publication date (info.snapshot_date),
+                    # not the consensus-point date (pt.snapshot_date). Forward-fill
+                    # carries each source's latest snapshot into every later
+                    # consensus point — without this, a stale source would appear
+                    # to have published at every consensus date after its last
+                    # real update, corrupting the LATEST/STALE logic.
+                    src_snapshot_date = info.get("snapshot_date") or pt.snapshot_date
                     source_history.setdefault(src, []).append({
-                        "snapshot_date": pt.snapshot_date,
+                        "snapshot_date": src_snapshot_date,
                         "interval_label": info.get("interval_label")
                                           or pt.interval_label,
                         "grades": numeric,

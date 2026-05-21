@@ -858,3 +858,64 @@ class TestCutterCanonical:
         from scrapers import PITCHER_TOOL_KEYS, ALL_TOOL_KEYS
         assert "ct" in PITCHER_TOOL_KEYS
         assert "ct" in ALL_TOOL_KEYS
+
+
+# ---------------------------------------------------------------------------
+# Forward-fill verification — Tools+ uses each source's MOST RECENT
+# publication. This is the latest-only rule the UI source-history
+# dropdown discloses.
+# ---------------------------------------------------------------------------
+
+class TestConsensusForwardFill:
+    def test_uses_latest_per_source(self):
+        """When the same source publishes tools on two different dates,
+        the final consensus point must use the LATER value only — not
+        the mean of both. Forward-fill picks the latest per source."""
+        older = Snapshot(
+            source="fangraphs", snapshot_date="2024-02-14",
+            interval_label="2024report",
+            player_key="x", player_name="X",
+            position="SS", org="PIT", rank=None, fv=50.0, status="active",
+            tools={"hit": 50.0},
+        )
+        newer = Snapshot(
+            source="fangraphs", snapshot_date="2025-07-31",
+            interval_label="2025updated",
+            player_key="x", player_name="X",
+            position="SS", org="PIT", rank=None, fv=60.0, status="active",
+            tools={"hit": 60.0},
+        )
+        ts = build_timeseries([older, newer], single_source_k=0)
+        assert len(ts) == 1
+        latest_point = ts[0].points[-1]
+        # The final consensus uses the newer publication only —
+        # forward-fill drops the older snapshot once a newer one exists.
+        assert latest_point.tools_consensus["hit"] == 60.0, \
+            f"expected 60 (latest), got {latest_point.tools_consensus['hit']} (mean would be 55)"
+
+    def test_two_sources_consensus_uses_each_latest(self):
+        """When two sources publish, the consensus is the mean of EACH
+        source's latest value — not a mean across all snapshots."""
+        fg_old = Snapshot(
+            source="fangraphs", snapshot_date="2024-02-14",
+            interval_label="2024report",
+            player_key="x", player_name="X", position="SS", org="PIT",
+            rank=None, fv=50.0, status="active", tools={"hit": 50.0},
+        )
+        fg_new = Snapshot(
+            source="fangraphs", snapshot_date="2025-07-31",
+            interval_label="2025updated",
+            player_key="x", player_name="X", position="SS", org="PIT",
+            rank=None, fv=60.0, status="active", tools={"hit": 60.0},
+        )
+        pipe_new = Snapshot(
+            source="mlb_pipeline", snapshot_date="2025-08-01",
+            interval_label="MLB Pipeline 2025 Top 100",
+            player_key="x", player_name="X", position="SS", org="PIT",
+            rank=None, fv=55.0, status="active", tools={"hit": 50.0},
+        )
+        ts = build_timeseries([fg_old, fg_new, pipe_new], single_source_k=0)
+        latest_point = ts[0].points[-1]
+        # FG latest = 60, Pipeline latest = 50, mean = 55.
+        # The 50 from fg_old must NOT participate.
+        assert latest_point.tools_consensus["hit"] == 55.0
