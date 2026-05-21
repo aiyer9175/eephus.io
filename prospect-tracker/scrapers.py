@@ -204,15 +204,91 @@ PIPELINE_TOOL_KEY = {
 }
 
 
+# ESPN tool labels → canonical tool keys. Mirrors PIPELINE_TOOL_KEY but
+# matches the long-form labels ESPN ships in its prospect commentary
+# (e.g. "Game Power" instead of "Power", "Fielding" instead of "Field").
+ESPN_TOOL_KEY: dict[str, str] = {
+    "hit":          "hit",
+    "game power":   "game_pwr",
+    "raw power":    "raw_pwr",
+    "power":        "game_pwr",   # ambiguous fallback when ESPN ships only "Power"
+    "speed":        "speed",
+    "run":          "speed",
+    "fielding":     "field",
+    "field":        "field",
+    "throwing":     "throw",
+    "arm":          "throw",
+    # Pitcher tools — same regex captures them if ESPN ever switches to a
+    # mixed pitcher/hitter section format. Currently their pitcher tool
+    # lines look like "Fastball: 60/70" rather than the hitter Hit/Power
+    # block but the helper handles both shapes.
+    "fastball":     "fb",
+    "slider":       "sl",
+    "curveball":    "cb",
+    "curve":        "cb",
+    "changeup":     "ch",
+    "change":       "ch",
+    "command":      "cmd",
+    "control":      "cmd",
+}
+
+
+def _parse_espn_tools(commentary_text: str) -> dict[str, float] | None:
+    """Pull tool grades from an ESPN prospect's commentary block.
+
+    ESPN ships tools as 'Label: PV/FV' (left=present, right=future).
+    Example commentary fragment:
+
+        Konnor Griffin, SS, Pittsburgh Pirates
+        Age: 19 | Bats: Right | Throws: Right
+        Hit: 45/50
+        Game Power: 50/65
+        Raw Power: 60/70
+        Speed: 70/70
+        Fielding: 45/55
+        Throwing: 65/65
+
+    We always take the FUTURE value (rightmost integer). When a single-
+    integer format is used (rare), we use that value as-is. Out-of-range
+    values (< 20 or > 80) are dropped silently.
+    """
+    if not commentary_text:
+        return None
+    tools: dict[str, float] = {}
+    # Match 'Label: 45/50' (capture FV = group 2) OR 'Label: 50'
+    # (capture FV = group 3). Trailing (?![\d/]) prevents "55/6" inside
+    # "55/60" from being interpreted as FV=6.
+    pattern = re.compile(
+        r"([A-Za-z][A-Za-z ]+?):\s*(?:\d+\s*/\s*(\d+)|(\d+))(?![\d/])"
+    )
+    for m in pattern.finditer(commentary_text):
+        label = m.group(1).strip().lower()
+        key = ESPN_TOOL_KEY.get(label)
+        if not key:
+            continue
+        fv_str = m.group(2) or m.group(3)
+        try:
+            grade = float(fv_str)
+        except (TypeError, ValueError):
+            continue
+        if grade < 20 or grade > 80:
+            continue
+        tools[key] = grade
+    return tools or None
+
+
 def _parse_pipeline_tools(bio_text: str) -> dict[str, float] | None:
     """Pull tool grades from an MLB Pipeline bio's Scouting grades line.
 
     Format observed:
         Scouting grades: Hit: 55 | Power: 60 | Run: 45 | Arm: 50 |
         Field: 55 | Overall: 55
-    The Overall: token is already parsed separately for FV; we ignore
-    it here and capture every other "Label: NN" pair, mapping via
-    PIPELINE_TOOL_KEY. Returns None when no tools were recognized.
+    Some bios ship a PV/FV pair ("Hit: 55/60") for borderline prospects.
+    When that happens, the right-hand integer (the future value) is the
+    authoritative grade. The Overall: token is parsed separately for FV
+    and ignored here; we capture every other "Label: NN" or "Label: NN/MM"
+    pair and map via PIPELINE_TOOL_KEY. Returns None when no tools were
+    recognized.
     """
     if not bio_text:
         return None
@@ -225,13 +301,22 @@ def _parse_pipeline_tools(bio_text: str) -> dict[str, float] | None:
     if m:
         seg = m.group(1)
     tools: dict[str, float] = {}
-    for label, val in re.findall(r'([A-Za-z][A-Za-z ]+?):\s*(\d+)', seg):
-        key = PIPELINE_TOOL_KEY.get(label.strip().lower())
+    # Two-arm pattern: PV/FV (group 2 = FV) OR single value (group 3).
+    # The trailing (?![\d/]) lookahead prevents matching "Hit: 55/6" as
+    # FV=6 when the real text is "Hit: 55/60" — the slash + digit must
+    # not be followed by another digit or slash.
+    pattern = re.compile(
+        r"([A-Za-z][A-Za-z ]+?):\s*(?:\d+\s*/\s*(\d+)|(\d+))(?![\d/])"
+    )
+    for m in pattern.finditer(seg):
+        label = m.group(1).strip().lower()
+        key = PIPELINE_TOOL_KEY.get(label)
         if not key:
             continue
+        fv_str = m.group(2) or m.group(3)
         try:
-            grade = float(val)
-        except ValueError:
+            grade = float(fv_str)
+        except (TypeError, ValueError):
             continue
         if grade < 20 or grade > 80:
             continue
@@ -476,7 +561,7 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
     current_fv: float | None = None
     seen_ranks: set[int] = set()
 
-    for _, h in candidates:
+    for i, (off, h) in enumerate(candidates):
         text = re.sub(r"<[^>]+>", "", h)
         text = fix_mojibake(text)
         if not text:
@@ -496,11 +581,23 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
         pos  = rm.group(3).strip() or None
         team = rm.group(4).strip()
         org  = canonical_org(team) or team
+        # Tool-grade capture: the article body between the current rank
+        # line's offset and the next candidate's offset is the player's
+        # commentary block. ESPN's preseason format ships tool lines
+        # ("Hit: 45/50") inside this block. Strip HTML tags, then feed
+        # to _parse_espn_tools which always takes the rightmost integer
+        # as the FV grade.
+        next_off = candidates[i + 1][0] if i + 1 < len(candidates) else len(body)
+        commentary = body[off:next_off]
+        # Decode common HTML entities so "&amp;" doesn't break label matches.
+        commentary = html.unescape(re.sub(r"<[^>]+>", " ", commentary))
+        commentary = fix_mojibake(commentary)
+        tools = _parse_espn_tools(commentary)
         rows.append(Snapshot(
             source="espn", snapshot_date=snap_date, interval_label=label,
             player_key=normalize_key(name), player_name=name,
             position=pos, org=org, rank=rank, fv=current_fv,
-            status="active",
+            status="active", tools=tools,
         ))
 
     log.info("espn %s -> %d players%s", label, len(rows),

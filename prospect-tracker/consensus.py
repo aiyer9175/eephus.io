@@ -272,6 +272,11 @@ class PlayerTimeseries:
     fv_open: float           # consensus_fv at the FIRST observation (candle "open")
     fv_close: float          # consensus_fv at the LATEST observation (candle "close")
 
+    # Total (source, snapshot_date) pairs across the player's history where
+    # an explicit FV was published. Drives the single-instance shrinkage
+    # trigger and the frontend "1" mark on the FV badge.
+    fv_total_instances: int = 0
+
     # Set when status == "graduated"; date of the first source's grad signal.
     graduation_date: str | None = None
 
@@ -286,6 +291,7 @@ def compute_consensus_point(
     event_date: str | None = None,
     event_label: str | None = None,
     single_source_k: float = SINGLE_SOURCE_K,
+    total_fv_instances: int | None = None,
 ) -> ConsensusPoint | None:
     """
     Aggregate one player's snapshots into a ConsensusPoint.
@@ -299,9 +305,13 @@ def compute_consensus_point(
     rank-implied FV fallback that is only used when zero sources published
     an explicit FV).
 
-    Shrinkage is NOT applied here — the returned point's consensus_fv /
-    consensus_fv_raw equal the pre-shrinkage values. build_timeseries
-    applies shrinkage in a second pass once the population mean is known.
+    Single-instance shrinkage: when `total_fv_instances` is provided
+    (build_timeseries passes the player-level count of explicit-FV
+    snapshots across history), the FV-35 pull only fires when the player
+    has accumulated 1 instance ever — a FanGraphs-only prospect re-graded
+    over 5 snapshots is well-observed and escapes the pull. When the
+    kwarg is omitted (legacy callers + per-point unit tests), falls back
+    to the older per-point trigger (`len(explicit_fvs) == 1`).
     """
 
     # Collapse multi-list outlets (Pipeline Top 100 + Pipeline
@@ -378,18 +388,26 @@ def compute_consensus_point(
     pre_shrinkage = avg_fv if avg_fv is not None else rank_implied_fv
     assert pre_shrinkage is not None
 
-    # Single-source uncertainty pull. When exactly one source published
-    # an explicit FV grade (typically a 2026 IFA prospect appearing only
-    # on Pipeline's Top 50), shrink the consensus toward FV 35 using a
-    # Bayesian prior with k=0.5. This pulls a 65 → 55, a 50 → 45, etc.
+    # Single-instance uncertainty pull. When the player has accumulated
+    # only ONE explicit-FV instance across their entire history (1
+    # snapshot, 1 source, ever — typically a brand-new 2026 IFA appearing
+    # only on Pipeline's Top 50), shrink the consensus toward FV 35 using
+    # a Bayesian prior with k=0.5. This pulls a 65 → 55, a 50 → 45, etc.
     # Higher grades get pulled harder, which matches the principle that
     # the variance on a high-end singleton is wider than on a corroborated
-    # grade. Multi-source consensus stays untouched (weight=1.0). The
-    # pre-shrinkage value is preserved on the point for transparency.
-    # Tests can pass single_source_k=0 to disable the pull entirely (e.g.
-    # candlestick fixtures that construct 1-source-per-date histories
-    # to exercise the high/low/open/close logic in isolation).
-    if len(explicit_fvs) == 1 and single_source_k > 0:
+    # grade. A player re-graded over multiple snapshots — even by a
+    # single source — escapes the pull because the source has confirmed
+    # the grade over time. Multi-source consensus also stays untouched.
+    # The pre-shrinkage value is preserved on the point for transparency.
+    #
+    # Legacy callers (per-point unit tests) that omit total_fv_instances
+    # fall back to the older per-point trigger so synthetic fixtures
+    # keep working without plumbing a player-level count.
+    if total_fv_instances is not None:
+        should_shrink = total_fv_instances <= 1 and explicit_fvs and single_source_k > 0
+    else:
+        should_shrink = len(explicit_fvs) == 1 and single_source_k > 0
+    if should_shrink:
         shrinkage_weight_val = 1.0 / (1.0 + single_source_k)  # = 2/3 at K=0.5
         consensus_fv_raw_value = (
             shrinkage_weight_val * pre_shrinkage
@@ -598,6 +616,20 @@ def build_timeseries(
         for s in player_snaps:
             by_date[s.snapshot_date].append(s)
 
+        # Single-instance shrinkage trigger: count how many published-FV
+        # observations the player has accumulated across their entire
+        # history (deduped per (source, snapshot_date)). With ≥2 instances
+        # the player is considered well-observed and the FV-35 pull does
+        # NOT fire at any of their points — even single-source players
+        # who have been re-graded over time escape the pull. Brand-new
+        # prospects with exactly one published grade still get pulled,
+        # which is the intended uncertainty signal.
+        seen_fv_keys: set[tuple[str, str]] = set()
+        for s in player_snaps:
+            if s.fv is not None:
+                seen_fv_keys.add((s.source, s.snapshot_date))
+        total_fv_instances = len(seen_fv_keys)
+
         # Walk event dates chronologically, forward-filling per source.
         # `latest_by_source` holds the most recent Snapshot seen from each
         # source up to (and including) the current event date.
@@ -622,6 +654,7 @@ def build_timeseries(
                 event_date=snap_date,
                 event_label=event_label,
                 single_source_k=single_source_k,
+                total_fv_instances=total_fv_instances,
             )
             if pt is not None:
                 points.append(pt)
@@ -652,6 +685,7 @@ def build_timeseries(
             fv_high=0.0, fv_high_label="—", fv_high_date="",
             fv_low=0.0,  fv_low_label="—",  fv_low_date="",
             fv_open=0.0, fv_close=0.0,
+            fv_total_instances=total_fv_instances,
         ))
 
     # Population-prior Bayesian shrinkage was removed (2026-05): the

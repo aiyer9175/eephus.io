@@ -49,6 +49,13 @@
       --neon-cyan:        #0E2B4D;     /* navy — link / accent     */
       --neon-amber:       #C9A227;     /* card gold — highlight    */
       --neon-violet:      #6B4FA8;     /* royal purple — graduates */
+      /* Dedicated tokens for the IFA / Draft spend-mix visualizations.
+         Draft was previously sharing --neon-cyan with the header blue
+         which made the legend swatches nearly invisible against the
+         global nav. Saddle/parchment is unused elsewhere in the palette
+         and reads as "old-school baseball card" against the warm paper. */
+      --spend-ifa:        var(--neon-amber);
+      --spend-draft:      #8E6E47;     /* warm saddle/parchment    */
 
       /* FV tier badges — sequential heat ramp. Warmth + saturation
          decrease monotonically as FV drops so a glance at the farm
@@ -161,6 +168,8 @@
       --neon-cyan:        #8FCDF5;
       --neon-amber:       #F4C952;
       --neon-violet:      #B49AE8;
+      --spend-ifa:        var(--neon-amber);
+      --spend-draft:      #C9A579;     /* lifted saddle for dark theme */
 
       --up:    #5DCF7A;
       --down:  #F47B7B;
@@ -216,6 +225,48 @@
       background-size: 24px 24px, 38px 38px;
       background-position: 0 0, 12px 19px;
     }
+    /* Legibility-pass overrides — sites where the auto-cascade still
+       falls short of the WCAG-AA 4.5:1 floor on the warm-slate dark
+       backgrounds. Each rule targets one specific element where the
+       contrast lift wasn't enough at the variable level. */
+    [data-theme="dark"] {
+      /* Row-hover surface lifted so a hover read is unambiguous against
+         the new card surface (the prior pass closed the gap between
+         bg-secondary and bg-tertiary, killing the hover signal). */
+      --bg-row-hover: #353C4D;
+    }
+    [data-theme="dark"] .player-row:hover,
+    [data-theme="dark"] .grad-row:hover,
+    [data-theme="dark"] .farm-row:hover,
+    [data-theme="dark"] .spotlight-row:hover {
+      background: var(--bg-row-hover);
+    }
+    /* Active filter chip — invert the muddy bg-header/secondary pairing
+       to a lifted-cream surface so the selected state reads as live
+       rather than as a darkened-out chip. */
+    [data-theme="dark"] button.chip.active {
+      background: var(--text-primary);
+      color: var(--bg-header);
+      border-color: var(--text-primary);
+    }
+    /* Detail-page stock-chip-flat — the original bg-secondary + text-
+       tertiary combo merged into the surrounding card. Drop bg to the
+       primary layer + add the visible border. */
+    [data-theme="dark"] .detail-stock-chip.stock-chip-flat {
+      background: var(--bg-primary);
+      border-color: var(--border);
+      color: var(--text-secondary);
+    }
+    /* Sparkline baselines + chart gridlines — the dashed gray reference
+     * lines lose visibility against the warmer slate background. Bump
+     * the dashed-stroke opacity at the SVG level so any chart inheriting
+     * the global rule reads clearly. */
+    [data-theme="dark"] svg [stroke-dasharray] {
+      opacity: 0.85;
+    }
+    /* eta-mid wasn't overridden in the prior wave — match the other
+       ETA color codes shipped at the same time. */
+    [data-theme="dark"] .eta-mid { color: #F4C952; }
 
     /* Theme toggle button — small icon-only pill in the top-right
        header bar. Sun glyph in dark mode (click to go light), moon
@@ -235,6 +286,57 @@
       transition: background 0.12s, border-color 0.12s, color 0.12s;
     }
     #theme-toggle:hover { background: var(--bg-tertiary); border-color: var(--text-tertiary); }
+
+    /* Global controls rail — sits in the persistent <header> so the
+       watchlist / compare / theme buttons survive content overwrites on
+       detail pages. Visually compact; on narrow viewports the labels
+       hide and only the icons render. */
+    .global-controls {
+      position: absolute;
+      top: 18px;
+      right: 24px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      z-index: 4;
+    }
+    .global-ctrl {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 11.5px;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .global-ctrl:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-color: var(--text-tertiary);
+    }
+    .global-ctrl-count {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      background: var(--neon-amber);
+      color: var(--bg-header);
+      padding: 1px 6px;
+      border-radius: 999px;
+      line-height: 1.2;
+    }
+    #global-theme-toggle { padding: 5px 9px; }
+    .global-compare.is-empty-hidden { display: none; }
+    @media (max-width: 760px) {
+      .global-ctrl-label { display: none; }
+      .global-controls { top: 12px; right: 10px; }
+      .global-ctrl { padding: 5px 8px; }
+    }
 
     /* === Base ===================================================== */
     * { box-sizing: border-box; }
@@ -466,11 +568,11 @@
        custom property is set inline per row by the render JS. */
     .col-header, .player-row {
       display: grid;
-      /* 7 cols: # | Player | FV (+stock under) | Rank | History | MiLB | ETA
-         Candle column dropped (FV history sparkline already shows the
-         same trajectory); the reclaimed width goes to Player + history.
-         Stock used to be column 9 — folded under the FV badge via .fv-stock-line. */
-      grid-template-columns: 32px 1.7fr 0.6fr 0.5fr 1.5fr 1.2fr 0.5fr;
+      /* 8 cols: # | Player | FV (+stock under) | Rank | History | Candle | MiLB | ETA
+         The candle column is back — it carries OHLC values via hover
+         while the line-history cell carries trajectory shape, so the
+         two visualizations are complementary rather than redundant. */
+      grid-template-columns: 32px 1.65fr 0.55fr 0.45fr 1.2fr 70px 1.1fr 0.5fr;
       gap: 10px;
       align-items: center;
     }
@@ -759,11 +861,18 @@
        amber), Post-TJ (lighter red), On IL (saturated red). Each chip
        leads with a small colored dot for emphasis (set via CSS ::before
        so the JS just passes a class name). */
-    .row-tag.health-il      { color: var(--down);       border-color: var(--down);       background: rgba(185,28,28,0.14); }
-    .row-tag.health-tj      { color: var(--down);       border-color: var(--down);       background: rgba(185,28,28,0.08); }
-    .row-tag.health-chronic { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.10); }
-    .row-tag.health-watch   { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.05); }
-    .row-tag.health-healthy { color: var(--up);         border-color: var(--up);         background: rgba(31,122,58,0.08); }
+    /* Health label color ramp — five distinct hues so the user can
+       tell the chips apart at a glance:
+         On IL  : red    (acute, "right now" — most urgent)
+         TJ     : violet (surgery-specific — orthogonal to IL)
+         Freq.  : amber  (chronic profile flag — history-based concern)
+         Recent : cyan   (informational note — minor history)
+         Healthy: green  (clean) */
+    .row-tag.health-il      { color: var(--down);         border-color: var(--down);         background: rgba(185,28,28,0.14); }
+    .row-tag.health-tj      { color: var(--neon-violet);  border-color: var(--neon-violet);  background: rgba(107,79,168,0.12); }
+    .row-tag.health-chronic { color: var(--neon-amber);   border-color: var(--neon-amber);   background: rgba(232,165,31,0.14); }
+    .row-tag.health-watch   { color: var(--neon-cyan);    border-color: var(--neon-cyan);    background: rgba(14,43,77,0.08); }
+    .row-tag.health-healthy { color: var(--up);           border-color: var(--up);           background: rgba(31,122,58,0.08); }
     .row-tag.health-il::before,
     .row-tag.health-tj::before,
     .row-tag.health-chronic::before,
@@ -777,9 +886,9 @@
       flex: 0 0 auto;
     }
     .row-tag.health-il::before      { background: var(--down); }
-    .row-tag.health-tj::before      { background: var(--down); opacity: 0.7; }
+    .row-tag.health-tj::before      { background: var(--neon-violet); }
     .row-tag.health-chronic::before { background: var(--neon-amber); }
-    .row-tag.health-watch::before   { background: var(--neon-amber); opacity: 0.6; }
+    .row-tag.health-watch::before   { background: var(--neon-cyan); }
     .row-tag.health-healthy::before { background: var(--up); }
     .row-tag.acq-trade      { color: var(--neon-cyan);  border-color: var(--neon-cyan);  background: rgba(74,200,224,0.10); }
     .row-tag.acq-rule5,
@@ -1063,8 +1172,19 @@
     .detail-title-sub {
       font-weight: 400;
       font-size: 11px;
+      font-style: italic;
       color: var(--text-tertiary);
       margin-left: 6px;
+    }
+    /* Reusable card chrome — every sidebar-style card opts into this
+       class to inherit consistent border + background + padding +
+       radius. Replaces ~20 inline `style="border:..."` blocks across
+       the prospect detail + farm detail + leaderboards pages. */
+    .detail-card {
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
     }
     .detail-table {
       width: 100%;
@@ -1305,6 +1425,151 @@
       gap: 10px;
       align-items: center;
     }
+    /* Sticky header — column labels stay anchored below the global nav
+       as the farm list scrolls. The offset matches the new --sticky-top
+       custom property so future changes touch one place. */
+    :root { --sticky-top: 60px; }
+    .farm-header {
+      position: sticky;
+      top: var(--sticky-top, 60px);
+      z-index: 5;
+      background: var(--bg-primary);
+    }
+    /* Farm-list top-3 prospects strip — replaces the single "top prospect"
+       cell with up to three compact name+FV chips so the row conveys the
+       strength shape in one read. */
+    .farm-top3-stack { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .farm-top3-chip {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 4px; font-size: 11px; min-width: 0;
+    }
+    .farm-top3-name {
+      color: var(--text-primary);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      flex: 1; min-width: 0;
+    }
+    /* 30-day pulse chip stacked under the sparkline */
+    .farm-pulse {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
+      margin-top: 3px;
+      text-align: center;
+      display: flex; gap: 6px; justify-content: center;
+    }
+    .farm-pulse .pulse-acq { color: var(--neon-cyan); font-weight: 700; }
+    /* Last-visit rank delta — small chip next to the rank number. */
+    .farm-rank-delta {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 700;
+      margin-top: 2px;
+      letter-spacing: 0.02em;
+    }
+    /* Recent-grad alumni badge — small chip next to the org code. */
+    .farm-alumni-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--neon-violet);
+      border: 1px solid var(--neon-violet);
+      border-radius: 999px;
+      padding: 1px 6px;
+      margin-left: 6px;
+      cursor: help;
+      background: rgba(107, 79, 168, 0.08);
+    }
+    /* Pinned-farms divider between watchlisted + the rest. */
+    .farm-divider {
+      grid-column: 1 / -1;
+      padding: 8px 0 4px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      border-top: 1px dashed var(--border-light);
+      margin-top: 4px;
+    }
+    /* Farm-row net stock chip + confidence dot. */
+    .farm-stock-net {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      padding: 2px 7px;
+      border-radius: 2px;
+      cursor: help;
+    }
+    .farm-conf-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--dot-color);
+      margin-left: 4px;
+      vertical-align: middle;
+      cursor: help;
+    }
+    /* ETA wave — small bar histogram under the positions cell. */
+    .farm-eta-wave {
+      display: flex; gap: 2px; margin-top: 4px;
+      align-items: flex-end; justify-content: center;
+    }
+    .farm-eta-wave-col {
+      display: flex; flex-direction: column; align-items: center; gap: 1px;
+    }
+    .farm-eta-wave-bar {
+      width: 8px;
+      background: var(--neon-cyan);
+      border-radius: 1px 1px 0 0;
+    }
+    .farm-eta-wave-label {
+      font-size: 7.5px; color: var(--text-tertiary);
+      font-family: var(--font-mono); letter-spacing: 0;
+    }
+    /* Inline expand-on-row panel for farm rows. */
+    .farm-row-expand {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 10px;
+      transition: background 0.12s, color 0.12s;
+    }
+    .farm-row-expand:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .farm-row.is-expanded .farm-row-panel {
+      grid-column: 1 / -1;
+      margin-top: 10px;
+      padding: 12px 14px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    .farm-row .farm-row-panel { display: none; }
+    /* Card-mode layout — flips the grid into a card stack for narrow
+       viewports or when the user picks "Cards" in the View group. */
+    .farm-rows-cards #farm-rows {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .farm-rows-cards .farm-header { display: none; }
+    .farm-rows-cards .farm-row {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      padding: 14px 16px;
+    }
+    .farm-rows-cards .farm-row > * { width: 100%; }
     /* Hard cap the sparkline container at its column width so a perverse
        render (long badge, browser zoom, etc.) clips cleanly instead of
        bleeding into adjacent cells. */
@@ -1647,8 +1912,8 @@
     }
     .spending-bar.sb-ifa   .sb-label { color: var(--neon-amber); }
     .spending-bar.sb-ifa   .sb-fill  { background: var(--neon-amber); }
-    .spending-bar.sb-draft .sb-label { color: var(--neon-cyan); }
-    .spending-bar.sb-draft .sb-fill  { background: var(--neon-cyan); }
+    .spending-bar.sb-draft .sb-label { color: var(--spend-draft); }
+    .spending-bar.sb-draft .sb-fill  { background: var(--spend-draft); }
     .spending-bar .sb-amt {
       text-align: right;
       color: var(--text-primary);
@@ -1707,7 +1972,7 @@
       padding: 8px 10px;
     }
     .spending-totals .st-cell.st-ifa   { border-left: 3px solid var(--neon-amber); }
-    .spending-totals .st-cell.st-draft { border-left: 3px solid var(--neon-cyan); }
+    .spending-totals .st-cell.st-draft { border-left: 3px solid var(--spend-draft); }
     .spending-totals .st-label {
       font-size: 9px;
       letter-spacing: 0.10em;
@@ -2207,7 +2472,16 @@
     }
     .player-detail-side {
       min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
+    /* Wrapped sections (those passed through the wrap() helper for
+       jump-link anchors) inherit the gap; cards inside the sidebar
+       don't add extra top margin so the gap is the only rhythm
+       authority. */
+    .player-detail-side > * { margin-top: 0; }
+    .player-detail-side > div > .detail-title:first-child { margin-top: 0; }
     @media (max-width: 900px) {
       .player-detail-grid { grid-template-columns: 1fr; gap: 16px; }
     }
@@ -2935,6 +3209,29 @@
   <header class="header">
     <h1>MLB Prospect Portal<span class="h1-rule" aria-hidden="true"></span></h1>
     <div class="meta-line" id="meta-line">Loading…</div>
+    <!-- Persistent global controls — these survive content overwrites
+         on detail pages where the section-tabs strip in #main-template
+         gets blown away by renderPlayerDetail / renderFarmDetail. The
+         in-template versions (inside #section-tabs below) stay too for
+         keyboard accessibility on the list pages, but these are the
+         always-available affordances. -->
+    <div class="global-controls" id="global-controls">
+      <button class="global-ctrl" id="global-watchlist" type="button"
+              title="Open your watchlist" aria-label="Watchlist">
+        <span aria-hidden="true">★</span>
+        <span class="global-ctrl-label">Watchlist</span>
+      </button>
+      <button class="global-ctrl global-compare is-empty-hidden" id="global-compare" type="button"
+              title="Open compare panel" aria-label="Compare">
+        <span aria-hidden="true">⇆</span>
+        <span class="global-ctrl-label">Compare</span>
+        <span class="global-ctrl-count" id="global-compare-count">0</span>
+      </button>
+      <button class="global-ctrl" id="global-theme-toggle" type="button"
+              aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
+        <span class="theme-icon" aria-hidden="true">☾</span>
+      </button>
+    </div>
   </header>
 
   <div id="content">
@@ -3048,11 +3345,12 @@
       <span class="filter-label">Sort</span>
       <select class="chip" id="sort-select">
         <option value="fv">Consensus FV</option>
+        <option value="avg_rank">Average rank (across sources)</option>
         <option value="age_asc">Youngest first</option>
         <option value="age_vs_level">Most young-for-level</option>
         <option value="eta">ETA (earliest first)</option>
         <option value="stock_movers">Biggest movers (|ΔFV|)</option>
-        <option value="t_plus">ToolGrade+ (toolsiest)</option>
+        <option value="t_plus">Tools+ (toolsiest)</option>
         <option value="source_confidence">Source confidence (most sources first)</option>
       </select>
     </div>
@@ -3184,6 +3482,11 @@
         <button class="chip active" data-form-window="3y">3y</button>
         <button class="chip"        data-form-window="5y">5y</button>
       </div>
+      <div class="filter-group">
+        <span class="filter-label">View</span>
+        <button class="chip active" data-farm-view="table">Table</button>
+        <button class="chip"        data-farm-view="cards">Cards</button>
+      </div>
     </div>
     <div id="farm-rows"></div>
   </div>
@@ -3203,8 +3506,8 @@
       <button class="chip"        data-lb-stat="sb"      title="Stolen bases">SB</button>
       <button class="chip"        data-lb-stat="era"     title="Earned-run average (lower is better)">ERA</button>
       <button class="chip"        data-lb-stat="whip"    title="Walks + hits / IP (lower is better)">WHIP</button>
-      <button class="chip"        data-lb-stat="k_per_9" title="Strikeouts per 9 IP">K/9</button>
-      <button class="chip"        data-lb-stat="bb_per_9" title="Walks per 9 IP (lower is better)">BB/9</button>
+      <button class="chip"        data-lb-stat="pitcher_k_pct" title="Pitcher K% — strikeouts as % of batters faced">K%</button>
+      <button class="chip"        data-lb-stat="pitcher_bb_pct" title="Pitcher BB% — walks as % of batters faced (lower is better)">BB%</button>
 
       <span class="filter-label" style="margin-left:10px;" title="Prospect leaderboard — MiLB levels only. Graduates and MLB-level rows are excluded.">Level</span>
       <button class="chip active" data-lb-level="all">All MiLB</button>
@@ -3307,24 +3610,35 @@ const DATA_URL = "data/timeseries.json";
 // dark, click to go light) so users always see the destination state.
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
-  const btn = document.getElementById("theme-toggle");
-  if (btn) {
-    const icon = btn.querySelector(".theme-icon");
-    if (icon) icon.textContent = theme === "dark" ? "☀" : "☾";
-    btn.title = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
+  // Sync both the in-template theme toggle (list pages) AND the
+  // persistent global toggle (header rail, always visible).
+  for (const id of ["theme-toggle", "global-theme-toggle"]) {
+    const btn = document.getElementById(id);
+    if (btn) {
+      const icon = btn.querySelector(".theme-icon");
+      if (icon) icon.textContent = theme === "dark" ? "☀" : "☾";
+      btn.title = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
+    }
   }
 }
 function wireThemeToggle() {
-  const btn = document.getElementById("theme-toggle");
-  if (!btn) return;
-  // Sync the icon to the current theme right away.
   applyTheme(document.documentElement.getAttribute("data-theme") || "light");
-  btn.addEventListener("click", () => {
+  const toggleHandler = () => {
     const cur = document.documentElement.getAttribute("data-theme") || "light";
     const next = cur === "dark" ? "light" : "dark";
     try { localStorage.setItem("prospect-tracker.theme", next); } catch (_) {}
     applyTheme(next);
-  });
+  };
+  // Wire both toggles independently — neither requires the other to
+  // exist (the global one is always present in the persistent header;
+  // the in-template one only exists once #main-template has mounted).
+  for (const id of ["theme-toggle", "global-theme-toggle"]) {
+    const btn = document.getElementById(id);
+    if (btn && !btn.dataset.wired) {
+      btn.addEventListener("click", toggleHandler);
+      btn.dataset.wired = "1";
+    }
+  }
 }
 
 // =============================================================================
@@ -3444,8 +3758,9 @@ function fvBadgeTooltip(player) {
 }
 
 // Returns the count of explicit-FV sources at the player's latest
-// point. Used by both confidence indicators below; falls back to
-// recounting per_source for cached payloads that pre-date avg_fv_n.
+// point. Used inside the wide-spread "W" mark tooltip (how many sources
+// are currently grading the player). Falls back to recounting per_source
+// for cached payloads that pre-date avg_fv_n.
 function _fvSourceCount(player) {
   const pts = player && player.points;
   const last = pts && pts.length ? pts[pts.length - 1] : null;
@@ -3453,6 +3768,26 @@ function _fvSourceCount(player) {
   return last.avg_fv_n != null
     ? last.avg_fv_n
     : Object.values(last.per_source || {}).filter(v => v && v.fv_published != null).length;
+}
+
+// Returns the total (source, snapshot_date) instances where an explicit
+// FV exists across the player's full history. Drives the single-instance
+// shrinkage indicator: 1 instance ever → pulled toward FV 35; ≥2 → well-
+// observed, no pull (including single-source players re-graded across
+// multiple snapshots). Falls back to a per-point sweep for payloads
+// pre-dating the player-level field.
+function _fvTotalInstances(player) {
+  if (!player) return 0;
+  if (typeof player.fv_total_instances === "number") return player.fv_total_instances;
+  const seen = new Set();
+  for (const pt of (player.points || [])) {
+    for (const [src, obs] of Object.entries(pt.per_source || {})) {
+      if (obs && obs.fv_published != null) {
+        seen.add(src + "|" + (obs.snapshot_date || pt.snapshot_date || ""));
+      }
+    }
+  }
+  return seen.size;
 }
 
 // Returns " is-wide" when the player has ≥2 sources disagreeing by
@@ -3477,19 +3812,23 @@ function fvBadgeWideMarkHTML(player) {
   return `<span class="fv-wide-mark" title="Wide source disagreement — sources differ by ${sp} grade points across ${n} sources. Open the per-source breakdown (now inside the More details accordion) for the per-source FVs.">W</span>`;
 }
 
-// Returns " is-single-source" when exactly one source published an
-// explicit FV. Callers append to the FV badge's class list → dashed
-// amber outline via CSS. Empty string otherwise.
+// Returns " is-single-source" when the player has only ONE explicit-FV
+// instance across their entire history (1 snapshot, ever — typically a
+// brand-new IFA appearing only on Pipeline's Top 50). The CSS class
+// name keeps its legacy "single-source" wording for back-compat, but
+// the trigger is now player-level instance count, not per-point source
+// count. A single-source player who has been re-graded across multiple
+// snapshots is well-observed and does NOT carry the indicator.
 function fvBadgeSingleClass(player) {
-  return _fvSourceCount(player) === 1 ? " is-single-source" : "";
+  return _fvTotalInstances(player) === 1 ? " is-single-source" : "";
 }
 
-// Real-DOM "1" mark for single-source badges. Lives at the top-left of
+// Real-DOM "1" mark for single-instance badges. Lives at the top-left of
 // the badge (the wide W lives at top-right) so the two can co-exist
 // visually if they ever fire together. `title` explains the FV-35 pull.
 function fvBadgeSingleMarkHTML(player) {
   if (!fvBadgeSingleClass(player)) return "";
-  return `<span class="fv-single-mark" title="Single-source grade — pulled down 1/3 of the way toward FV 35 (Bayesian shrinkage, k=0.5) to reflect 1-source uncertainty. Add a second source to remove the pull.">1</span>`;
+  return `<span class="fv-single-mark" title="Single observation — only one published grade across this player's history. Pulled 1/3 toward FV 35 (Bayesian shrinkage, k=0.5); the pull lifts as soon as a second grade update lands, even from the same source.">1</span>`;
 }
 
 // Acquisition-method tooltip helper — builds the per-method context
@@ -3561,10 +3900,10 @@ function healthBadgeHTML(p) {
   const stints = hp.il_stints_24mo || 0;
   const ildays = hp.il_days_24mo || 0;
   if (stints >= 3 || ildays >= 200) {
-    return `<span class="row-tag health-chronic" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 24 months — high recurrence">Chronic</span>`;
+    return `<span class="row-tag health-chronic" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 24 months — high recurrence. Different from being currently on IL (the IL chip surfaces that state separately).">Freq. Injured</span>`;
   }
   if (stints >= 1 || ildays >= 30) {
-    return `<span class="row-tag health-watch" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 24 months — minor injury history">Watch</span>`;
+    return `<span class="row-tag health-watch" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 24 months — recent injury history">Recent Injury</span>`;
   }
   // No reported IL activity in the past 24 months — surface explicitly
   // as "Healthy" so the lack of a chip doesn't get confused with missing
@@ -3765,11 +4104,10 @@ function playerExpandedMetaHTML(p) {
     if (sv.bb_pct != null)     bits.push(`BB ${Number(sv.bb_pct).toFixed(0)}%`);
     if (bits.length) parts.push(`<span class="expand-savant">${bits.join(" · ")}</span>`);
   }
-  if (p.fv_open != null && p.fv_close != null) {
-    const o = Math.round(p.fv_open), h = Math.round(p.fv_high ?? p.fv_close),
-          l = Math.round(p.fv_low  ?? p.fv_open),  c = Math.round(p.fv_close);
-    parts.push(`<span title="Open / High / Low / Close">O ${o} · H ${h} · L ${l} · C ${c}</span>`);
-  }
+  // OHLC text was previously rendered here, but it duplicated what the
+  // stock chart in the row already visualizes. The same numbers now
+  // surface on hover of the candle cell (see makeCandle) so the
+  // expanded meta stays focused on stats unique to this row.
   if (!parts.length) return "";
   return `<div class="player-row-expand">${parts.join("   ·   ")}</div>`;
 }
@@ -4210,6 +4548,7 @@ function syncToURL() {
   if (state.density     && state.density !== "standard") p.set("density", state.density);
   if (state.search)                       p.set("q",     state.search);
   if (state.farmSort    !== "farm_rank")  p.set("farm",  state.farmSort);
+  if (state.farmViewMode && state.farmViewMode !== "table") p.set("farmview", state.farmViewMode);
   if (state.formWindow  !== "1y")         p.set("formw", state.formWindow);
   if (state.farmTxKind  !== "all")        p.set("ftxk",  state.farmTxKind);
   if (state.farmTxDir   !== "all")        p.set("ftxd",  state.farmTxDir);
@@ -4256,6 +4595,7 @@ function syncFromURL() {
   if (p.has("density")) state.density   = p.get("density");
   if (p.has("q"))     state.search      = p.get("q");
   if (p.has("farm"))  state.farmSort    = p.get("farm");
+  if (p.has("farmview")) state.farmViewMode = p.get("farmview");
   if (p.has("formw")) {
     const v = p.get("formw");
     if (v === "1y" || v === "3y" || v === "5y") state.formWindow = v;
@@ -4491,10 +4831,14 @@ function levelNormTooltip(sl) {
     if (sl.whip != null && perf.avg_whip != null && perf.sample_n_whip >= 30) {
       lines.push(`WHIP ${sl.whip} vs ${perf.avg_whip} mean`);
     }
-    if (sl.k_per_9 != null && perf.avg_k_per_9 != null && perf.sample_n_k_per_9 >= 30) {
+    if (sl.k_pct != null && perf.avg_pitcher_k_pct != null && (perf.sample_n_pitcher_k_pct ?? 0) >= 30) {
+      lines.push(`K% ${sl.k_pct}% vs ${perf.avg_pitcher_k_pct}% mean`);
+    } else if (sl.k_per_9 != null && perf.avg_k_per_9 != null && perf.sample_n_k_per_9 >= 30) {
       lines.push(`K/9 ${sl.k_per_9} vs ${perf.avg_k_per_9} mean`);
     }
-    if (sl.bb_per_9 != null && perf.avg_bb_per_9 != null && perf.sample_n_bb_per_9 >= 30) {
+    if (sl.bb_pct != null && perf.avg_pitcher_bb_pct != null && (perf.sample_n_pitcher_bb_pct ?? 0) >= 30) {
+      lines.push(`BB% ${sl.bb_pct}% vs ${perf.avg_pitcher_bb_pct}% mean`);
+    } else if (sl.bb_per_9 != null && perf.avg_bb_per_9 != null && perf.sample_n_bb_per_9 >= 30) {
       lines.push(`BB/9 ${sl.bb_per_9} vs ${perf.avg_bb_per_9} mean`);
     }
   }
@@ -4609,7 +4953,9 @@ function makeGradMilbCell(p) {
     ? `${sl.era ?? "—"} ERA · ${sl.whip != null ? sl.whip + " WHIP · " : ""}${sl.ip ?? "—"} IP`
     : `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"}`;
   const detail = sl.is_pitcher
-    ? `K/9 ${sl.k_per_9 ?? "—"} · BB/9 ${sl.bb_per_9 ?? "—"}`
+    ? (sl.k_pct != null || sl.bb_pct != null
+        ? `K% ${sl.k_pct != null ? sl.k_pct.toFixed(1) + "%" : "—"} · BB% ${sl.bb_pct != null ? sl.bb_pct.toFixed(1) + "%" : "—"}`
+        : `K/9 ${sl.k_per_9 ?? "—"} · BB/9 ${sl.bb_per_9 ?? "—"}`)
     : `${sl.hr ?? 0} HR · ${sl.sb ?? 0} SB`;
   const seasonTag = sl.is_prior_season && sl.season
     ? `<span class="prior-season-tag" title="No ${new Date().getFullYear()} stats — showing ${sl.season}">${sl.season}</span> `
@@ -4652,6 +4998,10 @@ const state = {
   // Top-30-organizations leaderboard. The Trajectory (DvM+) chip is
   // still a one-click option; its window comes from formWindow below.
   farmSort: "farm_rank",
+  // View mode for the farm system list — "table" (default) or "cards".
+  // Cards mode flips the row layout into a grid of vertical stacks
+  // (auto-fit columns), better for narrow viewports + visual scan.
+  farmViewMode: "table",
   // Active form-bar window. Controls the farm-list sparkline (which
   // plots growth above the league mean over the same window) and the
   // value used when sorting by "Trajectory".
@@ -4841,6 +5191,18 @@ function getFilteredActives() {
       const an = (lastA && lastA.avg_fv_n) || 0;
       const bn = (lastB && lastB.avg_fv_n) || 0;
       return bn - an || (b.fv_close ?? -1) - (a.fv_close ?? -1);
+    });
+  } else if (state.sort === "avg_rank") {
+    // Average rank across sources — useful tie-breaker when two
+    // prospects sit at the same FV. Pulls from the latest point's
+    // avg_rank field (already computed across publishing sources).
+    // Players without a rank sink to the bottom.
+    pool.sort((a, b) => {
+      const lastA = (a.points && a.points.length) ? a.points[a.points.length - 1] : null;
+      const lastB = (b.points && b.points.length) ? b.points[b.points.length - 1] : null;
+      const ar = (lastA && lastA.avg_rank != null) ? lastA.avg_rank : 9999;
+      const br = (lastB && lastB.avg_rank != null) ? lastB.avg_rank : 9999;
+      return ar - br;
     });
   }
   return pool;
@@ -5054,6 +5416,7 @@ function renderActives() {
     <span style="text-align:center;" title="Consensus Future Value · stock delta + direction below">FV · stock</span>
     <span style="text-align:center;">Rank</span>
     <span class="desktop-only" style="text-align:center;">FV history</span>
+    <span class="desktop-only" style="text-align:center;" title="OHLC candle — hover for the FV open / high / low / close values">Candle</span>
     <span class="desktop-only">MiLB · age vs. level</span>
     <span class="desktop-only" style="text-align:center;">ETA</span>
   </div>`;
@@ -5079,6 +5442,7 @@ function renderActives() {
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
         <div class="line-chart-cell">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
+        <div class="desktop-only" style="display:flex;justify-content:center;">${makeCandle(p)}</div>
         ${makeMilbCell(p)}
         ${makeEtaCell(p)}
         ${playerExpandedMetaHTML(p)}
@@ -5321,6 +5685,14 @@ const LB_STATS = {
              minIP: 15, support: _lbPitcherSupport, side: "pit" },
   bb_per_9:{ label: "BB/9",    hi: false, fmt: v => v != null ? Number(v).toFixed(2) : "—",
              minIP: 15, support: _lbPitcherSupport, side: "pit" },
+  // Pitcher K% / BB% — strikeouts and walks as % of batters faced.
+  // The lb-stat sort keys for the leaderboard chips use these
+  // identifiers; statline rows expose k_pct / bb_pct fields (pitcher
+  // statlines now also populate them, mirroring the hitter side).
+  pitcher_k_pct:  { label: "K%",  hi: true,  fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+                    minIP: 15, support: _lbPitcherSupport, side: "pit", field: "k_pct" },
+  pitcher_bb_pct: { label: "BB%", hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+                    minIP: 15, support: _lbPitcherSupport, side: "pit", field: "bb_pct" },
 };
 
 // Watchlist tab — renders the starred prospects using the same row
@@ -5454,7 +5826,12 @@ function renderLeaderboards() {
       if (cfg.side === "hit" && r.is_pitcher) continue;
       if (cfg.side === "pit" && !r.is_pitcher) continue;
       if (lvl !== "all" && r.level !== lvl) continue;
-      const v = r[statKey];
+      // Allow LB_STATS entries to override the row-field name (e.g.
+      // the leaderboard chip `pitcher_k_pct` reads the row's `k_pct`
+      // field so we can keep distinct chip IDs without polluting the
+      // row schema with duplicates).
+      const fieldKey = cfg.field || statKey;
+      const v = r[fieldKey];
       if (v == null) continue;
       // Sample gates — AB for hitters, IP for pitchers. Both may
       // arrive as strings; Number()-coerce.
@@ -5705,6 +6082,44 @@ function fvExpectedWarPerYr(fv, isPitcher) {
     }
   }
   return null;
+}
+
+// $/WAR market anchor. Recent free-agent winters have averaged ~$9-10M
+// per win above replacement; we use $9.5M as a stable midpoint. Used
+// to convert a graduate's playing-time-weighted WAR/year into a market-
+// equivalent Average Annual Value — the AAV a comparable free agent
+// would command on the open market for that production rate.
+const DOLLARS_PER_WAR_MM = 9.5;
+function estimateMarketAavMM(warPerYr) {
+  if (warPerYr == null || !isFinite(warPerYr)) return null;
+  // Replacement-level (~0 WAR) reads as league min (~$0.75M); below
+  // that floor we clamp because no negative-AAV contract exists.
+  if (warPerYr <= 0) return 0.75;
+  return Math.round(warPerYr * DOLLARS_PER_WAR_MM * 10) / 10;
+}
+
+// FV → estimated MLB surplus value ($M), per Craig Edwards / FanGraphs
+// 2019 framework. Hitters carry more value than pitchers at the same FV
+// because pitchers face higher injury attrition + reliever-conversion
+// risk. Values are TOTAL surplus across the 6-year cost-controlled
+// window, NOT per-year. Linear-interpolate between table rows for
+// half-grade FVs.
+const SURPLUS_VALUE_MM = {
+  hitter:  { 80: 200, 75: 130, 70: 80, 65: 50, 60: 35, 55: 20, 50: 10, 45: 5,  40: 2,   35: 1 },
+  pitcher: { 80: 100, 75: 80,  70: 55, 65: 35, 60: 25, 55: 12, 50: 7,  45: 4,  40: 1.5, 35: 1 },
+};
+function estimateSurplusValueMM(fv, isPitcher) {
+  if (fv == null) return null;
+  const table = SURPLUS_VALUE_MM[isPitcher ? "pitcher" : "hitter"];
+  // Clamp to the 35-80 anchor range. Below 35 reads as ~$0.5M (a
+  // league-min cost-controlled WAR0 player floor); above 80 caps at
+  // the elite tier.
+  if (fv >= 80) return table[80];
+  if (fv <= 35) return 0.5;
+  const lo = Math.floor(fv / 5) * 5;
+  const hi = lo + 5;
+  const t  = (fv - lo) / 5;
+  return Math.round((table[lo] * (1 - t) + table[hi] * t) * 10) / 10;
 }
 
 // Playing-time-weighted MLB WAR/year, with a minimum-sample gate to
@@ -5990,7 +6405,7 @@ function renderGraduates() {
           <span class="${pillClass}">${g.graduation_date}</span>
           ${sublabel || (isRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : "")}
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(String(fvLabel))}" title="${escapeHtml(fvBadgeTooltip(g))}">${fvLabel}${fvBadgeConfidence(g)}</span></div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(g)}${fvBadgeSingleClass(g)}" title="${escapeHtml(fvBadgeTooltip(g))}">${fvLabel}${fvBadgeWideMarkHTML(g)}${fvBadgeSingleMarkHTML(g)}</span></div>
         <div class="desktop-only" style="padding-right:6px;">${chartHtml}</div>
         <div class="desktop-only">${makeCandle(g)}</div>
         <div class="grad-level-cell milb-cell"><span class="level-pill level-mlb">MLB</span></div>
@@ -6920,7 +7335,7 @@ function makeSpendingBlock(org) {
   const draftAvg = draftSign ? draftTotal / draftSign : 0;
   const donutLegend = `<div style="display:flex;gap:12px;justify-content:center;margin-top:6px;font-family:var(--font-sans);font-size:10px;color:var(--text-secondary);letter-spacing:0.04em;">
     <span style="display:inline-flex;align-items:center;gap:5px;"><span aria-hidden="true" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--neon-amber);"></span>IFA</span>
-    <span style="display:inline-flex;align-items:center;gap:5px;"><span aria-hidden="true" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--neon-cyan);"></span>Draft</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;"><span aria-hidden="true" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--spend-draft);"></span>Draft</span>
   </div>`;
   const totalsHtml = `<div class="spending-summary">
     <div class="ss-donut">${donutSvg}${donutLegend}</div>
@@ -7302,12 +7717,77 @@ function makeSpendingDonut(org, size = 48) {
       <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--neon-amber)" stroke-width="6"
               stroke-dasharray="${ifaArc.toFixed(2)} ${(circumference - ifaArc).toFixed(2)}"
               stroke-dashoffset="0" transform="rotate(-90 ${cx} ${cx})" stroke-linecap="butt"/>
-      <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--neon-cyan)" stroke-width="6"
+      <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--spend-draft)" stroke-width="6"
               stroke-dasharray="${draftArc.toFixed(2)} ${(circumference - draftArc).toFixed(2)}"
               stroke-dashoffset="${(-ifaArc).toFixed(2)}" transform="rotate(-90 ${cx} ${cx})" stroke-linecap="butt"/>
     </svg>
     <div style="font-size:9px;font-family:var(--font-mono);color:var(--text-tertiary);font-variant-numeric:tabular-nums;">${fmt(total)}</div>
   </div>`;
+}
+
+// Tiny stacked FV-tier bar for the farm-list Grade cell. Segments
+// proportional to tier_60_plus / tier_55 / tier_50 / sub-50 counts.
+// Hover each segment for `N × FV bucket` context.
+function makeOrgTierBar(org) {
+  const sixty  = org.tier_60_plus || 0;
+  const fifty5 = org.tier_55 || 0;
+  const fifty  = org.tier_50 || 0;
+  const sub    = Math.max(0, (org.count || 0) - sixty - fifty5 - fifty);
+  const total  = sixty + fifty5 + fifty + sub;
+  if (!total) return "";
+  const W = 64, H = 4;
+  let x = 0;
+  const seg = (cnt, fillVar, label) => {
+    if (!cnt) return "";
+    const w = (cnt / total) * W;
+    const rect = `<rect x="${x.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="${H}" style="fill:var(${fillVar});"><title>${cnt} × FV ${label}</title></rect>`;
+    x += w;
+    return rect;
+  };
+  return `<svg width="${W}" height="${H}" style="border-radius:1px;margin-top:4px;" aria-hidden="true">
+    ${seg(sixty,  "--fv-60-fg", "60+")}
+    ${seg(fifty5, "--fv-55-fg", "55")}
+    ${seg(fifty,  "--fv-50-fg", "50")}
+    ${seg(sub,    "--fv-40-fg", "<50")}
+  </svg>`;
+}
+
+// ETA wave bar histogram — counts at Y / Y+1 / Y+2 / Y+3+ relative to
+// the current calendar year. Driven by the pre-rendered etaByOrg map
+// computed once at the top of renderFarmSystems.
+function makeOrgEtaWave(counts, currentYear) {
+  if (!counts || !counts.some(v => v > 0)) return "";
+  const max = Math.max(...counts);
+  const yrs = [`'${String(currentYear).slice(-2)}`,
+               `'${String(currentYear + 1).slice(-2)}`,
+               `'${String(currentYear + 2).slice(-2)}`,
+               `'${String(currentYear + 3).slice(-2)}+`];
+  const bars = counts.map((c, i) => `
+    <div class="farm-eta-wave-col">
+      <span class="farm-eta-wave-bar" style="height:${(2 + 12 * (c / max)).toFixed(1)}px;opacity:${(c > 0 ? 0.45 + 0.55 * (c / max) : 0.2).toFixed(2)};"
+            title="${c} prospect${c === 1 ? "" : "s"} ETA ${currentYear + i}${i === 3 ? "+" : ""}"></span>
+      <span class="farm-eta-wave-label">${yrs[i]}</span>
+    </div>`).join("");
+  return `<div class="farm-eta-wave">${bars}</div>`;
+}
+
+// Last-visit farm rank persistence — snapshot map of farm_rank keyed by
+// org code. Stored in localStorage; 30-day stale gate so a long
+// absence doesn't surface meaningless deltas.
+const FARM_RANK_HISTORY_KEY = "farmRanks_lastVisit";
+function loadLastVisitFarmRanks() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(FARM_RANK_HISTORY_KEY) || "{}");
+    if (!raw.ts || Date.now() - raw.ts > 30 * 86400 * 1000) return {};
+    return raw.ranks || {};
+  } catch { return {}; }
+}
+function snapshotCurrentFarmRanks(orgs) {
+  const map = {};
+  for (const o of orgs) if (o.farm_rank != null) map[o.org] = o.farm_rank;
+  try {
+    localStorage.setItem(FARM_RANK_HISTORY_KEY, JSON.stringify({ ranks: map, ts: Date.now() }));
+  } catch { /* localStorage may be full / private — silent */ }
 }
 
 function makeComponentGrades(org) {
@@ -7329,6 +7809,15 @@ function makeComponentGrades(org) {
 
 function renderFarmSystems() {
   const orgs = farmSortedOrgs();
+  // Apply card-mode class based on state.farmViewMode. The class flips
+  // #farm-section into a CSS grid of cards via the .farm-rows-cards
+  // stylesheet rules; .table-mode is the default no-op.
+  const farmSection = document.getElementById("farm-section");
+  if (farmSection) {
+    farmSection.classList.toggle("farm-rows-cards", state.farmViewMode === "cards");
+  }
+  document.querySelectorAll("[data-farm-view]").forEach(b =>
+    b.classList.toggle("active", b.dataset.farmView === (state.farmViewMode || "table")));
   if (!orgs.length) {
     const msg = state.search
       ? `No farm systems match “${escapeHtml(state.search)}”.`
@@ -7343,6 +7832,64 @@ function renderFarmSystems() {
   const activeLevel = (state.farmSort || "").startsWith("level_")
     ? state.farmSort.slice("level_".length)
     : null;
+
+  // ── Pre-render passes ──────────────────────────────────────────────
+  // Walk the active prospects + graduates once to build per-org
+  // aggregates that feed several new row cells. Doing this once at
+  // the top of the render avoids repeating O(players) work per row.
+  const currentYear = new Date().getUTCFullYear();
+  const cutoffMs30 = Date.now() - 30 * 86400 * 1000;
+  const cutoffMs12mo = Date.now() - 365 * 86400 * 1000;
+  const etaByOrg = {};
+  const pulseByOrg = {};
+  const confByOrg = {};
+  for (const pl of (DATA.players || [])) {
+    if (!pl.org) continue;
+    // ETA bucket
+    if (pl.eta && pl.eta.year != null) {
+      const bucket = Math.min(3, Math.max(0, pl.eta.year - currentYear));
+      (etaByOrg[pl.org] ||= [0, 0, 0, 0])[bucket]++;
+    }
+    // 30-day pulse: stock-direction signals + acquisitions
+    const s = pl.stock;
+    if (s && s.delta != null && s.from_date) {
+      const ageMs = Date.now() - new Date(s.from_date + "T00:00:00").getTime();
+      if (ageMs >= 0 && ageMs <= 30 * 86400 * 1000) {
+        const b = (pulseByOrg[pl.org] ||= { up: 0, down: 0, acq: 0 });
+        if (s.delta > 0) b.up++;
+        else if (s.delta < 0) b.down++;
+      }
+    }
+    // Source confidence: multi-instance share of the roster.
+    const c = (confByOrg[pl.org] ||= { multi: 0, total: 0 });
+    c.total++;
+    if ((pl.fv_total_instances ?? 0) >= 2) c.multi++;
+  }
+  for (const o of orgs) {
+    for (const ev of (o.fv_events || [])) {
+      const t = new Date(ev.date + "T00:00:00").getTime();
+      if (isNaN(t) || t < cutoffMs30) continue;
+      if (/^(trade_in|draft|ifa|waiver_in|rule_5_in|signed_free_agent|signing|drafted)$/.test(ev.kind)) {
+        (pulseByOrg[o.org] ||= { up: 0, down: 0, acq: 0 }).acq++;
+      }
+    }
+  }
+  const alumniByOrg = {};
+  for (const g of (DATA.graduates || [])) {
+    if (!g.org || !g.graduation_date) continue;
+    const t = new Date(g.graduation_date + "T00:00:00").getTime();
+    if (isNaN(t) || t < cutoffMs12mo) continue;
+    const fv = g.fv_close ?? g.fv_close_raw;
+    if (fv == null || fv < 55) continue;
+    (alumniByOrg[g.org] ||= []).push({
+      name: g.player_name,
+      fv: Math.round(fv),
+      date: g.graduation_date,
+    });
+  }
+  // Last-visit rank deltas — load BEFORE rendering, snapshot AFTER so
+  // the same render cycle doesn't compare against itself.
+  const lastVisitRanks = loadLastVisitFarmRanks();
 
   const win = state.formWindow || "3y";
   const means = (DATA.farm_trajectory_means || {});
@@ -7363,14 +7910,14 @@ function renderFarmSystems() {
     <span style="text-align:center;" title="IFA vs Draft bonus-dollar mix over the last 3 years. Hover a donut for exact dollar totals.">Spend mix
       <span style="display:flex;gap:8px;justify-content:center;margin-top:3px;font-weight:400;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;">
         <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--neon-amber);"></span>IFA</span>
-        <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--neon-cyan);"></span>Draft</span>
+        <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--spend-draft);"></span>Draft</span>
       </span>
     </span>
     <span style="text-align:right;">Stock</span>
     <span></span>
   </div>`;
 
-  const rows = orgs.map((org, i) => {
+  const buildRow = (org, displayRank) => {
     const tp = org.top_prospect;
     const overall = (org.grades && org.grades.overall) || '—';
     const gradeColorVal = gradeColor(overall);
@@ -7378,28 +7925,66 @@ function renderFarmSystems() {
                       ?? (org.trajectories || {})[win]
                       ?? org.trajectory_score
                       ?? 0;
-    const stockHtml = (org.stock_up || org.stock_down)
-      ? `${org.stock_up  ? `<span class="stock-up">▲${org.stock_up}</span> ` : ''}${org.stock_down ? `<span class="stock-down">▼${org.stock_down}</span>` : ''}`
+    // Net stock chip — replace raw ▲5 ▼2 counts with a single colored
+    // pill showing net movement. The tooltip carries the breakdown.
+    const stockUp = org.stock_up || 0;
+    const stockDown = org.stock_down || 0;
+    const stockFlat = org.stock_flat || 0;
+    const stockNet = stockUp - stockDown;
+    const stockCls = stockNet > 0 ? "stock-chip-up" : stockNet < 0 ? "stock-chip-down" : "stock-chip-flat";
+    const stockSign = stockNet > 0 ? "+" : "";
+    const stockHtml = (stockUp || stockDown)
+      ? `<span class="farm-stock-net ${stockCls}" title="Rising ${stockUp} · Falling ${stockDown} · Flat ${stockFlat}">${stockSign}${stockNet} net</span>`
       : `<span class="stock-flat">—</span>`;
-    // Display rank reflects the current sort: the position in the sorted
-    // list (i+1), not the static farm_rank (which is FV-derived). When the
-    // user sorts by avg_age, the youngest farm shows as #1.
-    const displayRank = i + 1;
-
+    // Last-visit rank delta (G21).
+    const prev = lastVisitRanks[org.org];
+    const rankDelta = (prev != null && org.farm_rank != null) ? (prev - org.farm_rank) : null;
+    const deltaChip = (rankDelta == null || rankDelta === 0)
+      ? ""
+      : `<div class="farm-rank-delta ${rankDelta > 0 ? 'stock-up' : 'stock-down'}" title="Was #${prev} on your last visit">${rankDelta > 0 ? '+' : ''}${rankDelta}${rankDelta > 0 ? '↑' : '↓'}</div>`;
+    // Top-3 prospects strip (G16).
+    const top3 = (org.prospects || []).slice(0, 3);
+    const topHtml = top3.length
+      ? `<div class="farm-top3-stack">${top3.map(t => `<div class="farm-top3-chip">
+           <span class="farm-top3-name">${escapeHtml(t.name)}</span>
+           <span class="fv-badge ${fvClass(t.fv_label)} size-xs" style="flex-shrink:0;">${t.fv_label}</span>
+         </div>`).join("")}</div>`
+      : '<span style="color:var(--text-tertiary);">—</span>';
+    // Recent-grad alumni badge (G22).
+    const alumni = alumniByOrg[org.org] || [];
+    const alumniBadge = alumni.length
+      ? ` <span class="farm-alumni-badge" title="${escapeHtml(alumni.map(a => `${a.name} · FV ${a.fv} · graduated ${a.date}`).join(" · "))}">✦ ${alumni.length}</span>`
+      : "";
+    // Confidence dot (G26) — green/amber/red based on multi-instance share.
+    const conf = confByOrg[org.org];
+    const confPct = conf && conf.total ? (conf.multi / conf.total) : null;
+    const confDot = confPct == null
+      ? ""
+      : `<span class="farm-conf-dot" style="--dot-color:${confPct >= 0.7 ? 'var(--up)' : confPct >= 0.4 ? 'var(--neon-amber)' : 'var(--down)'};" title="${Math.round(confPct * 100)}% of tracked prospects have ≥2 grade instances; ${conf.total - conf.multi} are single-instance (Bayesian-shrunk)"></span>`;
+    // 30-day pulse (G19).
+    const pulse = pulseByOrg[org.org] || {};
+    const pulseHasAny = pulse.up || pulse.down || pulse.acq;
+    const pulseHtml = `<div class="farm-pulse" title="Trailing 30 days — FV upgrades / downgrades / new acquisitions">
+        ${pulse.up   ? `<span class="stock-up">▲${pulse.up}</span>` : ""}
+        ${pulse.down ? `<span class="stock-down">▼${pulse.down}</span>` : ""}
+        ${pulse.acq  ? `<span class="pulse-acq">+${pulse.acq}</span>` : ""}
+        ${!pulseHasAny ? `<span class="stock-flat">— quiet</span>` : ""}
+      </div>`;
     return `
       <div class="farm-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)}">
-        <div class="farm-rank">${displayRank}</div>
+        <div class="farm-rank">${displayRank}${deltaChip}</div>
         <div>${teamLogoHTML(org.org, "md", fullOrgName(org.org))}</div>
         <div class="farm-org-cell">
           <div class="farm-org-name">
             <div class="farm-org">${escapeHtml(fullOrgName(org.org))}</div>
-            <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}</div>
+            <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}${alumniBadge}</div>
           </div>
         </div>
         <div class="farm-grade-cell" title="Overall grade · farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}/100">
           <span class="fg-letter" style="color:${gradeColorVal};">${escapeHtml(overall)}</span>
-          <span class="fg-score">${org.farm_score != null ? org.farm_score.toFixed(0) : '—'}</span>
+          <span class="fg-score">${org.farm_score != null ? org.farm_score.toFixed(0) : '—'}${confDot}</span>
           ${makeComponentGrades(org)}
+          ${makeOrgTierBar(org)}
         </div>
         <div class="farm-dvm-hero">${(() => {
           const v = (org.dvm_plus || {})[win];
@@ -7407,12 +7992,9 @@ function renderFarmSystems() {
           const color = v >= 110 ? 'var(--up)' : v <= 90 ? 'var(--down)' : 'var(--neon-violet)';
           return `<span class="fdh-value" style="color:${color};" title="${win.toUpperCase()}DvM+ ${v} · 100 = league mean · 10 pts = 1 std-dev · graduations + acquisitions nullified">${v}</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
         })()}</div>
-        <div>${makeFarmSparkline(org.fv_history, deltaAbove, meanBaseline, win)}</div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:12px;min-width:0;">
-          ${tp ? `<span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(tp.name)}</span>
-          <span class="fv-badge ${fvClass(tp.fv_label)} size-sm" style="flex-shrink:0;">${tp.fv_label}</span>` : '<span style="color:var(--text-tertiary);">—</span>'}
-        </div>
-        <div>${makePosBreakdown(org.pos_groups)}</div>
+        <div>${makeFarmSparkline(org.fv_history, deltaAbove, meanBaseline, win)}${pulseHtml}</div>
+        <div>${topHtml}</div>
+        <div>${makePosBreakdown(org.pos_groups)}${makeOrgEtaWave(etaByOrg[org.org], currentYear)}</div>
         <div class="level-depth-cell">${makeLevelDepth(org.level_counts, activeLevel)}</div>
         <div style="text-align:center;font-size:12px;color:var(--text-secondary);font-variant-numeric:tabular-nums;">${org.avg_age != null ? org.avg_age.toFixed(1) : "—"}</div>
         <div style="display:flex;justify-content:center;">${makeSpendingDonut(org)}</div>
@@ -7422,9 +8004,24 @@ function renderFarmSystems() {
           <button class="compare-add-btn is-compact${farmCompareHas(org.org) ? " is-in" : ""}" data-farm-compare-key="${escapeHtml(org.org)}" type="button" title="${farmCompareHas(org.org) ? "Remove farm from compare" : "Add farm to compare"}" aria-label="Toggle farm compare">${farmCompareHas(org.org) ? "✓" : "+"}</button>
         </div>
       </div>`;
-  }).join('');
+  };
 
-  document.getElementById("farm-rows").innerHTML = header + rows;
+  // Partition into pinned (watchlisted) + the rest. Pinned farms float
+  // to the top above a dashed divider so the user keeps an eye on the
+  // orgs they care about regardless of sort.
+  const pinned = orgs.filter(o => farmWatchlistHas(o.org));
+  const rest   = orgs.filter(o => !farmWatchlistHas(o.org));
+  const pinnedRows = pinned.map((o, i) => buildRow(o, i + 1)).join("");
+  const restRows   = rest.map((o, i) => buildRow(o, i + 1)).join("");
+  const dividerRow = (pinned.length && rest.length)
+    ? `<div class="farm-divider">All farms</div>`
+    : "";
+  document.getElementById("farm-rows").innerHTML = header + pinnedRows + dividerRow + restRows;
+
+  // Snapshot the current ranks AFTER the DOM lands — defer via rAF so a
+  // subsequent re-render still has the previous-visit values to compare
+  // against (deferring lets THIS render finish first).
+  requestAnimationFrame(() => snapshotCurrentFarmRanks(orgs));
 }
 
 // =============================================================================
@@ -8425,9 +9022,14 @@ function renderPlayerDetail(key) {
   }
   const hpStints = hp.il_stints_24mo || 0;
   const hpDays = hp.il_days_24mo || 0;
+  // Health profile headline — describes the 24-month injury HISTORY,
+  // not the player's current IL status. "Freq. Injured" is the chronic
+  // flag (3+ stints OR 200+ days in 24mo); "Recent Injury" is the
+  // medium-watch state (1-2 stints OR 30+ days). The currently-on-IL
+  // state is surfaced separately via the IL chip elsewhere on the row.
   const healthHeadline = hp.is_post_tj ? "Post-TJ"
-                       : (hpStints >= 3 || hpDays >= 200) ? "Chronic"
-                       : (hpStints >= 1 || hpDays >= 30) ? "Watch"
+                       : (hpStints >= 3 || hpDays >= 200) ? "Freq. Injured"
+                       : (hpStints >= 1 || hpDays >= 30) ? "Recent Injury"
                        : "Clean";
   const healthSub = (hpStints || hpDays) ? `${hpStints} stints · ${hpDays}d / 24mo` : "no IL last 24mo";
   const rp = getRpsPlus(p);
@@ -8589,11 +9191,15 @@ function renderPlayerDetail(key) {
       // pitchers get ERA / WHIP / K/9 / BB/9.
       let statCells;
       if (isP) {
+        // Pitcher stat cells: ERA / WHIP / K% / BB% per batter faced.
+        // K% / BB% replace the older K/9 / BB/9 columns because per-
+        // batter rates better normalize starter vs. reliever workload
+        // (a reliever K/9 of 14 reads dominant but levels out in K%).
         statCells = `
           <td style="font-variant-numeric:tabular-nums;">${fmtNum(num(c.era), perf.avg_era, true, 2)}</td>
           <td style="font-variant-numeric:tabular-nums;">${fmtNum(num(c.whip), perf.avg_whip, true, 2)}</td>
-          <td style="font-variant-numeric:tabular-nums;">${fmtNum(num(c.k_per_9), perf.avg_k_per_9, false, 2)}</td>
-          <td style="font-variant-numeric:tabular-nums;">${fmtNum(num(c.bb_per_9), perf.avg_bb_per_9, true, 2)}</td>`;
+          <td style="font-variant-numeric:tabular-nums;">${fmtPct(num(c.k_pct), perf.avg_pitcher_k_pct, false)}</td>
+          <td style="font-variant-numeric:tabular-nums;">${fmtPct(num(c.bb_pct), perf.avg_pitcher_bb_pct, true)}</td>`;
       } else {
         const iso = c.iso != null ? c.iso : (num(c.slg) != null && num(c.avg) != null ? num(c.slg) - num(c.avg) : null);
         statCells = `
@@ -8610,7 +9216,7 @@ function renderPlayerDetail(key) {
       </tr>`;
     }).join("");
     const statHeaders = isP
-      ? `<th>ERA vs lvl</th><th>WHIP vs lvl</th><th>K/9 vs lvl</th><th>BB/9 vs lvl</th>`
+      ? `<th>ERA vs lvl</th><th>WHIP vs lvl</th><th>K% vs lvl</th><th>BB% vs lvl</th>`
       : `<th>OPS vs lvl</th><th>ISO vs lvl</th><th>BB% vs lvl</th><th>K% vs lvl</th>`;
     return `<table class="detail-table"><thead><tr><th>Season</th><th>Level</th><th>Age vs lvl</th>${statHeaders}</tr></thead><tbody>${rows}</tbody></table>`;
   })();
@@ -8653,6 +9259,115 @@ function renderPlayerDetail(key) {
     : `Advanced stats <span class="detail-title-sub">level-relative proxies · MLB sabermetrics unavailable for MiLB</span>`;
   const sabermetricsSection = `<div class="detail-title">${sabermetricsTitle}</div>${makeSabermetricsBlock(p)}`;
 
+  // Surplus-value sidebar card — FV-implied trade value ($M) per the
+  // Craig Edwards / FanGraphs 2019 framework, paired with the
+  // acquisition method + signing bonus and an implied ROI line. The
+  // financial anchor that the rest of the sabermetrics / tools cards
+  // contextualize. Hidden for players without an FV grade.
+  const surplusValueSection = (() => {
+    const fv = p.fv_close ?? null;
+    if (fv == null && !p.acquisition) return "";
+    const _isPit = !!(p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position));
+    const surplus = estimateSurplusValueMM(fv, _isPit);
+    const fmtUsd = m => {
+      if (m == null) return "—";
+      if (m >= 100) return `$${m.toFixed(0)}M`;
+      if (m >= 10)  return `$${m.toFixed(0)}M`;
+      if (m >= 1)   return `$${m.toFixed(1)}M`;
+      return `$${(m * 1000).toFixed(0)}K`;
+    };
+    const surplusColor = surplus == null ? "var(--text-primary)"
+                       : surplus >= 50 ? "var(--up)"
+                       : surplus >= 10 ? "var(--neon-cyan)"
+                       : "var(--text-primary)";
+    const surplusRow = surplus != null
+      ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
+           <div>
+             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Surplus value</div>
+             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">FV ${Math.round(fv)} ${_isPit ? "pitcher" : "hitter"} · 6yr cost-controlled</div>
+           </div>
+           <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="Estimated MLB surplus value over the player's 6-year cost-controlled window. Derived from FV ${Math.round(fv)} via the FanGraphs / Craig Edwards 2019 framework (hitter/pitcher split). Real surplus depends on health, performance variance, and changes in $/WAR market rate.">${fmtUsd(surplus)}</div>
+         </div>`
+      : "";
+    // Graduate-only: market-AAV equivalent of the realized WAR rate.
+    // gradWarPerYr returns a playing-time-weighted WAR/yr value when
+    // the graduate has ≥1 full-season equivalent of MLB playing time;
+    // multiplying by the $/WAR anchor gives the annual contract value
+    // a comparable free agent would command on the open market.
+    let aavRow = "";
+    if (p.status === "graduated") {
+      const warRate = gradWarPerYr(p);
+      if (warRate && warRate.war_per_yr != null) {
+        const aav = estimateMarketAavMM(warRate.war_per_yr);
+        const aavColor = aav == null ? "var(--text-primary)"
+                       : aav >= 30 ? "var(--up)"
+                       : aav >= 10 ? "var(--neon-cyan)"
+                       : "var(--text-primary)";
+        aavRow = `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
+           <div>
+             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Realized market AAV</div>
+             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${warRate.war_per_yr.toFixed(2)} WAR/yr × $${DOLLARS_PER_WAR_MM}M · ${warRate.war_seasons_count} season${warRate.war_seasons_count === 1 ? "" : "s"}</div>
+           </div>
+           <div style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:${aavColor};font-variant-numeric:tabular-nums;" title="Market-equivalent Average Annual Value. Multiplies the graduate's playing-time-weighted WAR/yr by the prevailing $/WAR market rate (~$${DOLLARS_PER_WAR_MM}M, the recent free-agent winter average). What a comparable free agent would command per year on the open market.">${fmtUsd(aav)}/yr</div>
+         </div>`;
+      }
+    }
+    // Acquisition headline — method label + sub-text. Mirrors the
+    // existing acqSection in the More-details accordion but tighter,
+    // and lives above-the-fold here so the financial story is whole.
+    const a = p.acquisition || {};
+    const fmtBonus = b => b == null ? null : `$${(b / 1_000_000).toFixed(b >= 1_000_000 ? 1 : 2)}M`;
+    let acqLabel = "—";
+    let acqSub = "";
+    let acqBonus = null;
+    if (a.method === "draft") {
+      const pickTxt = a.pick_overall != null
+        ? `Round ${escapeHtml(a.round_label || "?")} · Pick #${a.pick_overall}${a.year ? " · " + a.year : ""}`
+        : `Round ${escapeHtml(a.round_label || "?")}${a.year ? " · " + a.year : ""}`;
+      acqLabel = "Drafted";
+      acqSub = pickTxt;
+      acqBonus = a.bonus_usd;
+    } else if (a.method === "international_fa") {
+      acqLabel = "International FA";
+      acqSub = a.year ? `Signed ${a.year}` : "Signed as IFA";
+      acqBonus = a.bonus_usd;
+    }
+    const acqRow = (acqLabel !== "—")
+      ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:${acqBonus != null ? "1px solid var(--border-light)" : "none"};margin-bottom:${acqBonus != null ? "8px" : "0"};">
+           <div>
+             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Acquired</div>
+             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${escapeHtml(acqSub)}</div>
+           </div>
+           <div style="font-family:var(--font-sans);font-size:13px;font-weight:600;color:var(--text-primary);">${escapeHtml(acqLabel)}</div>
+         </div>`
+      : "";
+    const bonusFmt = fmtBonus(acqBonus);
+    const bonusRow = bonusFmt
+      ? `<div style="display:flex;justify-content:space-between;align-items:center;${surplus != null && acqBonus != null ? "padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;" : ""}">
+           <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Signing bonus</div>
+           <div style="font-family:var(--font-mono);font-size:13px;color:var(--text-primary);font-variant-numeric:tabular-nums;">${bonusFmt}</div>
+         </div>`
+      : "";
+    // Implied ROI — surplus value minus signing bonus. Only when both
+    // are known. Positive surplus means the org is sitting on more
+    // value than they invested.
+    let roiRow = "";
+    if (surplus != null && acqBonus != null) {
+      const bonusInMM = acqBonus / 1_000_000;
+      const roi = surplus - bonusInMM;
+      const roiColor = roi > 0 ? "var(--up)" : roi < 0 ? "var(--down)" : "var(--text-tertiary)";
+      const roiSign = roi > 0 ? "+" : "";
+      roiRow = `<div style="display:flex;justify-content:space-between;align-items:center;">
+           <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;" title="Estimated surplus value − signing bonus. Positive means the org is sitting on more value than it invested.">Implied ROI</div>
+           <div style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:${roiColor};font-variant-numeric:tabular-nums;">${roiSign}${fmtUsd(Math.abs(roi)).replace("$", roi < 0 ? "−$" : "$")}</div>
+         </div>`;
+    }
+    const inner = surplusRow + aavRow + acqRow + bonusRow + roiRow;
+    if (!inner) return "";
+    return `<div class="detail-title">Surplus value <span class="detail-title-sub">FV-implied · FanGraphs 2019 framework</span></div>
+      <div class="detail-card">${inner}</div>`;
+  })();
+
   // Scouting tools card — per-tool 20-80 grades + the three composites
   // (Offensive/Defensive/Overall for hitters; Stuff/Command/Overall for
   // pitchers). Composites also carry a ToolGrade+ index (100 = cohort
@@ -8673,7 +9388,7 @@ function renderPlayerDetail(key) {
     const plusPill = (val) => {
       if (val == null) return "";
       const cls = val >= 110 ? "is-pos" : val <= 90 ? "is-neg" : "is-neutral";
-      return `<span class="tool-pill ${cls}" title="ToolGrade+ ${val} · 100 = cohort mean composite, 10 pts = 1 stdev">T+${val}</span>`;
+      return `<span class="tool-pill ${cls}" title="Tools+ ${val} · 100 = cohort mean composite (outlier-biased, power-3 mean), 10 pts = 1 stdev">Tools+${val}</span>`;
     };
     // Composite chip — vertical stack: label · (grade badge + T+ pill).
     // The headline (Overall) gets a slightly stronger background to
@@ -8977,13 +9692,17 @@ function renderPlayerDetail(key) {
       disagreementLine = `<div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;margin-bottom:6px;">
         Range ${Math.round(latestPt.fv_min)}–${Math.round(latestPt.fv_max)}${sigma}${wide}
       </div>`;
-    } else if (explicitFvSources === 1) {
+    } else if (_fvTotalInstances(p) === 1) {
+      // Single-INSTANCE player (1 published grade across the entire
+      // history). The FV consensus has been pulled 1/3 toward FV 35 by
+      // the Bayesian shrinkage in consensus.py. Once a second grade
+      // update lands — even from the same source — the pull lifts.
       const rawTxt = latestPt.consensus_fv_pre_shrinkage != null
         ? ` (raw ${latestPt.consensus_fv_pre_shrinkage.toFixed(1)})`
         : "";
       disagreementLine = `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;">
-        <span style="display:inline-block;padding:1px 6px;border:1px dashed var(--neon-amber);border-radius:10px;color:var(--neon-amber);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;">n=1 · pulled down</span>
-        <span style="margin-left:6px;">consensus pulled 1/3 toward FV 35${rawTxt} · the dashed amber outline on the FV badge marks this state; add a second source to remove</span>
+        <span style="display:inline-block;padding:1px 6px;border:1px dashed var(--neon-amber);border-radius:10px;color:var(--neon-amber);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;">1 instance · pulled down</span>
+        <span style="margin-left:6px;">consensus pulled 1/3 toward FV 35${rawTxt} · the dashed amber outline on the FV badge marks this state; the pull lifts as soon as a second grade update lands, even from the same source</span>
       </div>`;
     }
     const fvPanelHTML = `
@@ -9320,7 +10039,7 @@ function renderPlayerDetail(key) {
   root.innerHTML = header + tilesHtml + flagSummary + jumpLinkStrip + `
     <div class="player-detail-grid">
       <div>${wrap("detail-chart", chartSection)}${wrap("detail-stats", consolidatedCareerSection)}${sourceSection}</div>
-      <div class="player-detail-side">${noteSection}${ilSection}${wrap("detail-health", healthSection)}${sabermetricsSection}${wrap("detail-tools", toolsSection)}${wrap("detail-savant", savantSection)}${wrap("detail-arsenal", arsenalSection)}${sameFarmSection}${similarProspectsSection}${(() => {
+      <div class="player-detail-side">${noteSection}${ilSection}${wrap("detail-health", healthSection)}${sabermetricsSection}${surplusValueSection}${wrap("detail-tools", toolsSection)}${wrap("detail-savant", savantSection)}${wrap("detail-arsenal", arsenalSection)}${sameFarmSection}${similarProspectsSection}${(() => {
         // Below-the-fold context collapses into a <details> accordion so
         // the eye reaches the high-priority cards (health / Savant /
         // tools) without scrolling past 11 stacked sections. The
@@ -10806,8 +11525,8 @@ function toolPlusPillHTML(p) {
   const v = t.composite_overall_plus;
   const cls = v >= 110 ? "is-pos" : v <= 90 ? "is-neg" : "is-neutral";
   const raw = t.composite_overall != null ? t.composite_overall.toFixed(1) : "—";
-  const title = `ToolGrade+ ${v} · overall composite ${raw} (100 = cohort mean tool composite, 10 pts = 1 stdev)`;
-  return `<span class="tool-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(title)}">T+${v}</span>`;
+  const title = `Tools+ ${v} · overall composite ${raw} (100 = cohort mean tool composite, outlier-biased power-3 mean, 10 pts = 1 stdev)`;
+  return `<span class="tool-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(title)}">Tools+${v}</span>`;
 }
 
 // =============================================================================
@@ -11281,7 +12000,7 @@ function makeFarmCompareSideBySide(farms) {
     <tbody>${tableRows}</tbody></table>`;
   const donutLegend = `<div style="display:flex;gap:8px;justify-content:center;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;">
       <span style="display:inline-flex;align-items:center;gap:3px;"><i style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--neon-amber);"></i>IFA</span>
-      <span style="display:inline-flex;align-items:center;gap:3px;"><i style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--neon-cyan);"></i>Draft</span>
+      <span style="display:inline-flex;align-items:center;gap:3px;"><i style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--spend-draft);"></i>Draft</span>
     </div>`;
   const donutRow = `<div style="display:grid;grid-template-columns:${cols};gap:10px;margin-top:10px;">
     ${farms.map(o => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">${makeSpendingDonut(o, 56)}${donutLegend}<div style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.06em;">3-yr spend mix</div></div>`).join("")}
@@ -11299,6 +12018,12 @@ function renderCompareCart() {
   // (full opacity) the moment the user adds their first prospect or farm.
   if (toggle) toggle.classList.toggle("is-empty-hidden", totalCount === 0);
   if (count)  count.textContent = totalCount;
+  // Persistent header-rail compare button — same hide-when-empty logic
+  // as the in-template button. Survives detail-page content overwrites.
+  const gToggle = document.getElementById("global-compare");
+  const gCount  = document.getElementById("global-compare-count");
+  if (gToggle) gToggle.classList.toggle("is-empty-hidden", totalCount === 0);
+  if (gCount)  gCount.textContent = totalCount;
   // Sync any "Add to compare" buttons on the current page (prospects).
   document.querySelectorAll(".compare-add-btn[data-compare-key]").forEach(btn => {
     const isIn = keys.includes(btn.dataset.compareKey);
@@ -11598,6 +12323,28 @@ function attachHandlers() {
     panel.classList.toggle("open");
     if (panel.classList.contains("open")) renderCompareCart();
   });
+  // Persistent header-rail compare button — opens the same compare
+  // panel. Same handler shape as the in-template button.
+  const gCompare = document.getElementById("global-compare");
+  if (gCompare) {
+    gCompare.addEventListener("click", () => {
+      const panel = document.getElementById("compare-panel");
+      panel.classList.toggle("open");
+      if (panel.classList.contains("open")) renderCompareCart();
+    });
+  }
+  // Persistent header-rail watchlist link — navigates to the watchlist
+  // tab from anywhere in the app (detail pages included, where the
+  // section-tabs strip isn't rendered).
+  const gWatchlist = document.getElementById("global-watchlist");
+  if (gWatchlist) {
+    gWatchlist.addEventListener("click", () => {
+      state.view = { type: "list" };
+      state.section = "watchlist";
+      syncToURL();
+      renderSection();
+    });
+  }
   document.getElementById("compare-close").addEventListener("click", () => {
     document.getElementById("compare-panel").classList.remove("open");
   });
@@ -11766,6 +12513,8 @@ function attachHandlers() {
     // the cart stays in sync with the rest of the app.
     renderCompareCart();
   });
+  // Farm view-mode toggle (table / cards) — flips state + re-renders.
+  attachChipGroup("farm-view", "farmViewMode", () => renderFarmSystems());
 }
 
 // Command palette wiring — single keyboard surface that jumps the user

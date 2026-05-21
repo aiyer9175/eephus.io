@@ -52,16 +52,36 @@ def _round_half(grade: float | None) -> float | None:
     return round(grade * 2) / 2
 
 
+_TOOLS_POWER_MEAN_P = 3.0  # >1 biases composite toward outliers
+
+
+def _power_mean(vals: list[float], p: float = _TOOLS_POWER_MEAN_P) -> float | None:
+    """Lₚ power mean — biases the composite toward outliers when p > 1.
+
+    p=1 reduces to arithmetic mean; p→∞ approaches max. p=3 is a
+    moderate "rewards a standout tool" bias: a 70+50+50+50 hitter
+    goes from 55 (arith mean) to ~57.6 (power-3). A uniform 50/50/50/50
+    profile stays at 50. Operates in the FV-grade space (20-80) and
+    returns a value in the same band.
+    """
+    if not vals:
+        return None
+    n = len(vals)
+    return (sum(v ** p for v in vals) / n) ** (1.0 / p)
+
+
 def _compute_tool_composites(grades: dict[str, float] | None,
                               is_pitcher: bool) -> dict | None:
-    """Build the raw (pre-X+) tools sub-object from per-tool consensus grades.
+    """Build the raw (pre-Tools+) tools sub-object from per-tool consensus grades.
 
     Returns a dict with `grades` (the input, copied + rounded to 0.5),
     the composites (off/def for hitters, stuff/cmd for pitchers, and
     overall in both cases), or None when no tools are graded.
     Composites are computed only over the grades that are present —
     a hitter with hit + power but no field/throw still gets a
-    `composite_off` but no `composite_def`.
+    `composite_off` but no `composite_def`. The off/def composites use
+    a power mean (p=3) so a single standout tool lifts the composite
+    more than balanced average tools — better captures "toolsy".
     """
     if not grades:
         return None
@@ -80,10 +100,13 @@ def _compute_tool_composites(grades: dict[str, float] | None,
         return None
 
     def _avg(keys):
+        # Outlier-biased power mean (Lₚ, p=3). Falls back to None when
+        # none of the keys are present in `cleaned`.
         vals = [cleaned[k] for k in keys if k in cleaned]
         if not vals:
             return None
-        return round(sum(vals) / len(vals), 2)
+        result = _power_mean(vals)
+        return round(result, 2) if result is not None else None
 
     out: dict = {"grades": cleaned}
     if is_pitcher:
@@ -2397,6 +2420,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # value clarifies how much the shrinkage moved them.
             "fv_close_raw": (round(p.points[-1].consensus_fv_raw, 2)
                              if p.points else None),
+            # Total (source, snapshot_date) instances where a published FV
+            # exists across the player's full history. When 1, the FV
+            # consensus is pulled toward FV 35 (Bayesian shrinkage); when
+            # ≥2 the player is "well-observed" and escapes the pull —
+            # including single-source players who've been re-graded over
+            # multiple snapshots. Frontend `is-single-source` outline +
+            # corner mark read off this field.
+            "fv_total_instances": getattr(p, "fv_total_instances", 0),
             "stock": stock_movement(p),
             "statline": sl_out,
             "stat_flags": flags,

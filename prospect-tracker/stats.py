@@ -1215,11 +1215,20 @@ def fetch_statline(player_key: str, mlbam_id: int,
         hr_per_9 = _safe_float(stat.get("homeRunsPer9"))
         if hr_per_9 is None and ip_val and ip_val > 0:
             hr_per_9 = round(hr_allowed * 9.0 / ip_val, 2)
+        # Pitcher K% / BB% — per batter faced. Populated alongside the
+        # K/9 / BB/9 holdovers so the frontend can show whichever rate
+        # convention is preferred. K%/BB% are the more workload-stable
+        # numbers (a reliever K/9 of 14 vs. a starter K/9 of 11 looks
+        # dominant but normalizes in K%).
+        tbf = int(stat.get("battersFaced", 0) or 0)
+        so_p = int(stat.get("strikeOuts", 0) or 0)
+        bb_p = int(stat.get("baseOnBalls", 0) or 0)
         return StatLine(
             player_key=player_key, mlbam_id=mlbam_id,
             level=best["_level"], games=int(stat.get("gamesPlayed", 0) or 0),
             avg=None, obp=None, slg=None, ops=None, hr=None, sb=None,
-            bb_pct=None, k_pct=None,
+            bb_pct=round(100 * bb_p / tbf, 1) if tbf else None,
+            k_pct=round(100 * so_p / tbf, 1) if tbf else None,
             era=str(stat.get("era") or "—"),
             fip=None,                       # MLB Stats API doesn't expose FIP
             ip=ip_val,
@@ -1400,11 +1409,23 @@ def fetch_career_stats(player_key: str, mlbam_id: int,
             hr_per_9 = _safe_float(stat.get("homeRunsPer9"))
             if hr_per_9 is None and ip_val and ip_val > 0:
                 hr_per_9 = round(hr_allowed * 9.0 / ip_val, 2)
+            # Per-batter rates — K% / BB% measured against batters
+            # faced, not innings. More resilient than K/9 to starter vs.
+            # reliever workload differences (a reliever K/9 of 14 vs.
+            # a starter K/9 of 11 looks dominant but normalizes when you
+            # use K%). When TBF is absent (older bulk paths), fall back
+            # to None so the consumer can decide how to render the gap.
+            tbf = int(stat.get("battersFaced", 0) or 0)
+            so_p = int(stat.get("strikeOuts", 0) or 0)
+            bb_p = int(stat.get("baseOnBalls", 0) or 0)
             row.update({
                 "era": str(stat.get("era") or "—"),
                 "ip": ip_val,
                 "k_per_9":  _safe_float(stat.get("strikeoutsPer9Inn")),
                 "bb_per_9": _safe_float(stat.get("walksPer9Inn")),
+                "k_pct":  round(100 * so_p / tbf, 1) if tbf else None,
+                "bb_pct": round(100 * bb_p / tbf, 1) if tbf else None,
+                "tbf": tbf,
                 "hr_per_9": hr_per_9,
                 "hr_allowed": hr_allowed,
                 "whip": _safe_float(stat.get("whip")),
@@ -1518,11 +1539,17 @@ def _career_row_from_bulk_split(split: dict, group: str) -> dict | None:
         hr_per_9 = _safe_float(stat.get("homeRunsPer9"))
         if hr_per_9 is None and ip_val and ip_val > 0:
             hr_per_9 = round(hr_allowed * 9.0 / ip_val, 2)
+        tbf = int(stat.get("battersFaced", 0) or 0)
+        so_p = int(stat.get("strikeOuts", 0) or 0)
+        bb_p = int(stat.get("baseOnBalls", 0) or 0)
         row.update({
             "era":     str(stat.get("era") or "—"),
             "ip":      ip_val,
             "k_per_9":  _safe_float(stat.get("strikeoutsPer9Inn")),
             "bb_per_9": _safe_float(stat.get("walksPer9Inn")),
+            "k_pct":   round(100 * so_p / tbf, 1) if tbf else None,
+            "bb_pct":  round(100 * bb_p / tbf, 1) if tbf else None,
+            "tbf":     tbf,
             "hr_per_9": hr_per_9,
             "hr_allowed": hr_allowed,
             "whip":    _safe_float(stat.get("whip")),

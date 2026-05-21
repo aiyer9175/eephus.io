@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
-from scrapers import Snapshot, _parse_fv
+from scrapers import Snapshot, _parse_fv, _parse_espn_tools, _parse_pipeline_tools
 from consensus import (
     snap_to_grade,
     implied_fv_from_rank, compute_consensus_point, build_timeseries,
@@ -50,6 +50,68 @@ class TestParseFV:
     def test_empty(self):
         assert _parse_fv("") is None
         assert _parse_fv("   ") is None
+
+
+class TestParseEspnTools:
+    def test_pv_fv_format_takes_rightmost(self):
+        # ESPN's preseason block — left=present, right=future. We take FV.
+        commentary = (
+            "Konnor Griffin, SS, Pittsburgh Pirates\n"
+            "Age: 19 | Bats: Right | Throws: Right\n"
+            "Hit: 45/50\nGame Power: 50/65\nRaw Power: 60/70\n"
+            "Speed: 70/70\nFielding: 45/55\nThrowing: 65/65\n"
+        )
+        tools = _parse_espn_tools(commentary)
+        assert tools["hit"] == 50.0
+        assert tools["game_pwr"] == 65.0
+        assert tools["raw_pwr"] == 70.0
+        assert tools["speed"] == 70.0
+        assert tools["field"] == 55.0
+        assert tools["throw"] == 65.0
+
+    def test_single_value_fallback(self):
+        # If ESPN ever drops the PV/FV format and ships a single grade,
+        # use it as-is.
+        tools = _parse_espn_tools("Hit: 55\nPower: 60\n")
+        assert tools["hit"] == 55.0
+        assert tools["game_pwr"] == 60.0
+
+    def test_out_of_range_dropped(self):
+        # 12 and 99 are not on the 20-80 scale; both silently skipped.
+        tools = _parse_espn_tools("Hit: 12/99\nSpeed: 50/55\n")
+        assert "hit" not in (tools or {})
+        assert tools["speed"] == 55.0
+
+    def test_empty_returns_none(self):
+        assert _parse_espn_tools("") is None
+        assert _parse_espn_tools("No tools here") is None
+
+
+class TestParsePipelineTools:
+    def test_single_value_format(self):
+        # Current Pipeline format — single integer per tool.
+        bio = "Scouting grades: Hit: 55 | Power: 60 | Run: 45 | Arm: 50 | Field: 55 | Overall: 55"
+        tools = _parse_pipeline_tools(bio)
+        assert tools["hit"] == 55.0
+        assert tools["game_pwr"] == 60.0
+        assert tools["speed"] == 45.0
+        assert tools["throw"] == 50.0
+        assert tools["field"] == 55.0
+
+    def test_pv_fv_format_safety(self):
+        # If Pipeline starts shipping PV/FV pairs, take the rightmost.
+        bio = "Scouting grades: Hit: 50/60 | Power: 55/65"
+        tools = _parse_pipeline_tools(bio)
+        assert tools["hit"] == 60.0
+        assert tools["game_pwr"] == 65.0
+
+    def test_mixed_formats(self):
+        # Mix of single-value and PV/FV in the same bio.
+        bio = "Scouting grades: Hit: 50/60 | Power: 55 | Run: 40/50"
+        tools = _parse_pipeline_tools(bio)
+        assert tools["hit"] == 60.0
+        assert tools["game_pwr"] == 55.0
+        assert tools["speed"] == 50.0
 
 
 # ---------------------------------------------------------------------------
@@ -575,6 +637,24 @@ class TestConsensusIsSourceMean:
         assert pt.consensus_fv == 60.0
         assert pt.consensus_fv_raw == 60.0
         assert pt.shrinkage_weight == 1.0
+
+    def test_multi_point_single_source_not_pulled(self):
+        # Same source publishing across 3 snapshots — the player has 3
+        # FV instances even though only 1 source contributed. Under the
+        # single-INSTANCE semantics, this player is well-observed and
+        # escapes the FV-35 pull. Each point's consensus equals the raw
+        # published value at that snapshot.
+        snaps = [
+            _snap("fangraphs", "Smith", fv=60.0, date_="2024-02-15"),
+            _snap("fangraphs", "Smith", fv=60.0, date_="2025-02-15"),
+            _snap("fangraphs", "Smith", fv=60.0, date_="2026-02-15"),
+        ]
+        p = build_timeseries(snaps)[0]
+        assert p.fv_total_instances == 3
+        for pt in p.points:
+            assert pt.consensus_fv == 60.0
+            assert pt.consensus_fv_raw == 60.0
+            assert pt.shrinkage_weight == 1.0
 
     def test_pool_doesnt_drag_individual_consensus(self):
         # The old "prior_mean_fv pulled from pool average" path is gone.
