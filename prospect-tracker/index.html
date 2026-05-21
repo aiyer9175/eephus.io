@@ -634,10 +634,17 @@
       background: var(--org-color, var(--bg-header));
       border-top-left-radius: var(--radius-sm);
       border-bottom-left-radius: var(--radius-sm);
+      transition: width 0.12s, box-shadow 0.12s;
     }
     .player-row:hover {
       box-shadow: var(--shadow-card-hover);
       transform: translateY(-1px);
+    }
+    /* Hover state widens + glows the org-color stripe so the row the
+       mouse is on reads "I'm clickable" louder than the lift alone. */
+    .player-row:hover::before {
+      width: 7px;
+      box-shadow: 0 0 8px var(--org-color, var(--neon-cyan));
     }
     /* Phase 4 virtualization — browser-native skip-rendering when a row
        is off-screen. `contain-intrinsic-size` gives the layout engine an
@@ -8090,6 +8097,83 @@ function playerMetaHTML(p, opts = {}) {
   return `<div class="player-meta">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${ageTag}${ilTag}${rosterTag}</div>`;
 }
 
+// One-line auto-generated "Quick read" summary for a player. Surfaces
+// the four highest-leverage facts (age + position + level → top tools
+// → FV consensus → stock direction → ETA) in a single readable line
+// so a reader doesn't have to scroll the detail page to get the gist.
+// Returns "" when essential fields are missing.
+function makeQuickReadSummary(p) {
+  if (!p) return "";
+  const sl = p.statline || {};
+  const tools = (p.tools && p.tools.grades) || {};
+  const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+  const ageNum = p.age != null ? Number(p.age) : null;
+  if (!latest && ageNum == null) return "";
+
+  const isP = !!(sl.is_pitcher) || /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(String(p.position || ""));
+  // Top two tools by grade for an at-a-glance "what makes this guy".
+  // Different label set for pitchers (pitch grades + command) vs
+  // hitters (offensive + defensive tools).
+  const TOOL_LABELS = isP
+    ? { fb: "fastball", sl: "slider", cb: "curveball", ch: "changeup",
+        cmd: "command", ct: "cutter", sp: "splitter" }
+    : { hit: "hit",   game_pwr: "game power", raw_pwr: "raw power",
+        speed: "speed", field: "defense", throw: "arm" };
+  const _gradeLabel = (g) => {
+    if (g >= 70) return "plus-plus";
+    if (g >= 60) return "plus";
+    if (g >= 55) return "above-avg";
+    if (g >= 50) return "avg";
+    return null;
+  };
+  const topTools = Object.entries(tools)
+    .filter(([k, v]) => TOOL_LABELS[k] && v != null && v >= 50)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 2)
+    .map(([k, v]) => {
+      const lab = _gradeLabel(v);
+      if (!lab) return null;
+      return `${lab} ${TOOL_LABELS[k]}`;
+    })
+    .filter(Boolean);
+
+  const parts = [];
+  // Age + position + current level. "21yo SS at AA" style.
+  const agePart = ageNum != null && !isNaN(ageNum) ? `${Math.round(ageNum)}-year-old` : "";
+  const posPart = p.position ? p.position.split("/")[0] : "";
+  const levelPart = sl.level ? ` at ${sl.level}` : "";
+  if (agePart || posPart) {
+    parts.push(`${agePart}${posPart ? ` ${escapeHtml(posPart)}` : ""}${levelPart}`);
+  }
+
+  // Top tools narrative.
+  if (topTools.length) {
+    parts.push(`${topTools.join(" / ")}`);
+  }
+
+  // FV consensus.
+  if (latest && latest.consensus_fv_label) {
+    parts.push(`<span style="font-weight:600;color:var(--text-primary);">${escapeHtml(latest.consensus_fv_label)} FV</span>`);
+  }
+
+  // Stock direction (when meaningful).
+  const s = p.stock;
+  if (s && s.delta != null && Math.abs(s.delta) >= 1.5 && s.direction !== "graduated") {
+    const arrow = s.delta > 0 ? "▲" : "▼";
+    const sign = s.delta > 0 ? "+" : "";
+    const color = s.delta > 0 ? "var(--up)" : "var(--down)";
+    parts.push(`<span style="color:${color};font-weight:600;">stock ${arrow} ${sign}${s.delta.toFixed(1)}</span>`);
+  }
+
+  // ETA — graduates skip (they're already in MLB).
+  if (p.status !== "graduated" && p.eta && p.eta.year != null) {
+    parts.push(`ETA ${p.eta.year}`);
+  }
+
+  if (parts.length < 2) return "";
+  return `<div class="quick-read" style="font-family:var(--font-sans);font-size:13px;color:var(--text-secondary);line-height:1.55;margin:10px 0 14px;padding:8px 12px;border-left:3px solid var(--neon-cyan);background:rgba(78,224,255,0.04);border-radius:0 var(--radius-sm) var(--radius-sm) 0;">${parts.join(" · ")}</div>`;
+}
+
 function ilTagHTML(p) {
   const il = p && p.il_status;
   if (!il || !il.is_on_il) return "";
@@ -11390,8 +11474,24 @@ function renderPlayerDetail(key) {
       const sigma = latestPt.fv_stddev != null
         ? ` · σ ${latestPt.fv_stddev.toFixed(1)}`
         : "";
-      disagreementLine = `<div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;margin-bottom:6px;">
-        Range ${Math.round(latestPt.fv_min)}–${Math.round(latestPt.fv_max)}${sigma}${wide}
+      // Consensus drift hint — when spread is ≥5 FV points, name the
+      // highest + lowest source explicitly so the reader can spot
+      // disagreement without scanning every row.
+      let driftLine = "";
+      if (latestPt.fv_spread >= 5 && sortedFvEntries.length >= 2) {
+        const highEntry = sortedFvEntries.find(([, v]) => v.fv_published != null);
+        const lowEntry = [...sortedFvEntries].reverse().find(([, v]) => v.fv_published != null);
+        if (highEntry && lowEntry && highEntry[0] !== lowEntry[0]) {
+          const hiLab = SOURCE_LABELS[highEntry[0]] || highEntry[0];
+          const loLab = SOURCE_LABELS[lowEntry[0]] || lowEntry[0];
+          driftLine = `<div style="font-size:10.5px;color:var(--text-tertiary);margin-top:2px;font-family:var(--font-sans);letter-spacing:0.02em;">${escapeHtml(hiLab)} ${Math.round(highEntry[1].fv_published)} high · ${escapeHtml(loLab)} ${Math.round(lowEntry[1].fv_published)} low</div>`;
+        }
+      }
+      disagreementLine = `<div style="margin-bottom:6px;">
+        <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">
+          Range ${Math.round(latestPt.fv_min)}–${Math.round(latestPt.fv_max)}${sigma}${wide}
+        </div>
+        ${driftLine}
       </div>`;
     } else if (_fvTotalInstances(p) === 1) {
       // Single-INSTANCE player (1 published grade across the entire
@@ -11844,7 +11944,8 @@ function renderPlayerDetail(key) {
         ${moreDetailsAccordion}
       </div>`
     : "";
-  root.innerHTML = header + tilesHtml + flagSummary + jumpLinkStrip + `
+  const quickReadHtml = makeQuickReadSummary(p);
+  root.innerHTML = header + quickReadHtml + tilesHtml + flagSummary + jumpLinkStrip + `
     <div class="player-detail-grid">
       <div>${wrap("detail-chart", chartSection)}${wrap("detail-stats", consolidatedCareerSection)}${sourceSection}${wideGrid}</div>
       <div class="player-detail-side">${noteSection}${ilSection}${wrap("detail-health", healthSection)}${sabermetricsSection}${surplusValueSection}${sameFarmSection}${similarProspectsSection}</div>

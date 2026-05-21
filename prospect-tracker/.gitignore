@@ -10,6 +10,8 @@ data/timeseries.json
 data/graduates.json
 data/inactive.json
 data/rosters_by_org.json
+# FanGraphs CSV drop folder — user-supplied exports + processed archive
+data/fangraphs_imports/
 
 # --- Python -------------------------------------------------------------
 __pycache__/

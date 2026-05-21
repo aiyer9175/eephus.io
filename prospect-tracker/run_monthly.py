@@ -125,6 +125,22 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         else:
             log.warning("encoding fix script failed: %s", result.stderr)
 
+        # --- 0b. Auto-ingest FanGraphs CSV drops --------------------------
+        # Files dropped into data/fangraphs_imports/ matching
+        # `fangraphs_<list>_<YYYY-MM-DD>.csv` get parsed + inserted into
+        # the snapshots DB before the rest of the run picks them up.
+        # Wrapped in try/except so a malformed file never blocks the
+        # downstream pipeline.
+        try:
+            from fangraphs_csv import ingest_drops as _fg_ingest_drops
+            fg_inserted, fg_files = _fg_ingest_drops()
+            if fg_files:
+                log.info("fangraphs_csv: ingested %d snapshots from %d file(s)",
+                         fg_inserted, fg_files)
+        except Exception:
+            log.exception("fangraphs_csv: drop-folder ingest failed — "
+                          "continuing with the rest of the pipeline")
+
         # --- 1. Scrape & store rankings ---------------------------------
         snapshots, csv_birth_dates = scrape_all(force=force_refetch)
         log.info("scraped %d total snapshot rows", len(snapshots))
