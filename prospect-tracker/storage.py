@@ -1467,6 +1467,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           contracts_by_key: dict[str, dict] | None = None,
                           draft_pools: dict | None = None,
                           player_ids: dict[str, int] | None = None,
+                          swing_zone_heat_by_key: dict[str, list] | None = None,
                           top_n_active: int | None = None):
     """
     Serialize for the front-end widget.
@@ -2718,6 +2719,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         m = org_map[org]
         m["prospects"].append({
             "name": p.player_name,
+            "player_key": p.player_key,
             "pos": p.position,
             "age": age,
             "fv_label": fv_lab,
@@ -2964,6 +2966,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     inactive_payload = [_serialize(p) for p in inactives]
     graduate_payload = [_serialize(p) for p in grads]
     graduate_payload.sort(key=lambda p: p.get("graduation_date") or "", reverse=True)
+
+    # Statcast swing-zone heatmap arrays (13 floats per graduate). Only
+    # attached on graduate payloads; active prospects skip the field
+    # since Statcast doesn't publish MiLB pitch coordinates.
+    if swing_zone_heat_by_key:
+        for gp in graduate_payload:
+            heat = swing_zone_heat_by_key.get(gp.get("player_key"))
+            if heat:
+                gp["swing_zone_heat"] = heat
 
     # X+ tool composites need cohort mean/stdev. Use the union of all
     # serialized prospects so a single norm anchors actives / inactives /

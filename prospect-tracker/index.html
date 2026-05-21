@@ -3634,6 +3634,7 @@
                 title="Sort by DvM+ for the currently selected development window (1y / 3y / 5y, picked on the right). Acquisitions + graduations are nullified — pure development of prospects already in the system.">Trajectory (DvM+)</button>
         <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted graduations in the trailing 12 months">Grad pipeline</button>
         <button class="chip" data-farm-sort="ifa_spend" title="International FA bonus dollars committed over the trailing 3 years (Spotrac)">IFA spend (3yr)</button>
+        <button class="chip" data-farm-sort="surplus" title="Aggregate FV-implied surplus value ($M) across all active prospects in the org">Surplus value</button>
         <button class="chip" data-farm-sort="total_fv">Total FV</button>
         <button class="chip" data-farm-sort="count">Count</button>
         <button class="chip" data-farm-sort="tier_60">60+ prospects</button>
@@ -3725,7 +3726,7 @@
     <div class="filter-bar" id="glossary-filter-bar" style="flex-wrap:wrap;gap:6px;align-items:center;">
       <span class="filter-label">Category</span>
       <button class="chip active" data-glossary-cat="all" type="button">All</button>
-      <button class="chip" data-glossary-cat="custom-index" type="button">Custom indices</button>
+      <button class="chip" data-glossary-cat="custom-index" type="button">Arkmetrics</button>
       <button class="chip" data-glossary-cat="scouting" type="button">Scouting</button>
       <button class="chip" data-glossary-cat="hitter-stat" type="button">Hitter stats</button>
       <button class="chip" data-glossary-cat="pitcher-stat" type="button">Pitcher stats</button>
@@ -4319,15 +4320,19 @@ const fvClass = label => {
   return "fv-20";
 };
 
-const stockHTML = s => {
+// Stock direction + delta. Same inner HTML in two places (raw chip vs.
+// the `.fv-stock-line` wrapper under the FV badge); the optional
+// `wrapperClass` arg lets fvTrendHTML reuse this without duplicating.
+const stockInnerHTML = s => {
   if (!s) return `<span class="stock-flat">—</span>`;
   if (s.direction === "graduated") return `<span class="stock-grad">GRAD</span>`;
-  if (s.direction === "flat" || Math.abs(s.delta) < 1.5) {
+  if (s.direction === "flat" || s.delta == null || Math.abs(s.delta) < 1.5) {
     return `<span class="stock-flat">— flat</span>`;
   }
   if (s.delta > 0) return `<span class="stock-up">▲ +${s.delta.toFixed(1)}</span>`;
   return `<span class="stock-down">▼ ${s.delta.toFixed(1)}</span>`;
 };
+const stockHTML = s => stockInnerHTML(s);
 
 // Level hierarchy (low to high). Used to detect promotions/demotions
 // between consecutive seasons in career_stats so we can mark them on the
@@ -4707,16 +4712,7 @@ function makeCandle(p) {
 function fvTrendHTML(p) {
   const s = p.stock;
   if (!s) return "";
-  if (s.direction === "graduated") {
-    return `<div class="fv-stock-line"><span class="stock-grad">GRAD</span></div>`;
-  }
-  if (s.direction === "flat" || s.delta == null || Math.abs(s.delta) < 1.5) {
-    return `<div class="fv-stock-line"><span class="stock-flat">— flat</span></div>`;
-  }
-  if (s.delta > 0) {
-    return `<div class="fv-stock-line"><span class="stock-up">▲ +${s.delta.toFixed(1)}</span></div>`;
-  }
-  return `<div class="fv-stock-line"><span class="stock-down">▼ ${s.delta.toFixed(1)}</span></div>`;
+  return `<div class="fv-stock-line">${stockInnerHTML(s)}</div>`;
 }
 
 // Encode current filter state into the URL hash so the view is shareable.
@@ -5029,12 +5025,12 @@ function levelNormTooltip(sl) {
       lines.push(`WHIP ${sl.whip} vs ${perf.avg_whip} mean`);
     }
     if (sl.k_pct != null && perf.avg_pitcher_k_pct != null && (perf.sample_n_pitcher_k_pct ?? 0) >= 30) {
-      lines.push(`K% ${sl.k_pct}% vs ${perf.avg_pitcher_k_pct}% mean`);
+      lines.push(`K% ${sl.k_pct.toFixed(1)}% vs ${perf.avg_pitcher_k_pct}% mean`);
     } else if (sl.k_per_9 != null && perf.avg_k_per_9 != null && perf.sample_n_k_per_9 >= 30) {
       lines.push(`K/9 ${sl.k_per_9} vs ${perf.avg_k_per_9} mean`);
     }
     if (sl.bb_pct != null && perf.avg_pitcher_bb_pct != null && (perf.sample_n_pitcher_bb_pct ?? 0) >= 30) {
-      lines.push(`BB% ${sl.bb_pct}% vs ${perf.avg_pitcher_bb_pct}% mean`);
+      lines.push(`BB% ${sl.bb_pct.toFixed(1)}% vs ${perf.avg_pitcher_bb_pct}% mean`);
     } else if (sl.bb_per_9 != null && perf.avg_bb_per_9 != null && perf.sample_n_bb_per_9 >= 30) {
       lines.push(`BB/9 ${sl.bb_per_9} vs ${perf.avg_bb_per_9} mean`);
     }
@@ -5060,7 +5056,11 @@ function makeMilbCell(p) {
   // "key stat" detail row below it surfaces the rate stats the reader
   // most often wants without forcing them into the detail page.
   const slashLine = isPitcher
-    ? `${sl.era ?? "—"} ERA · ${sl.whip != null ? sl.whip + " WHIP · " : ""}${sl.ip ?? "—"} IP`
+    ? [
+        sl.era != null ? `${sl.era} ERA` : null,
+        sl.whip != null ? `${sl.whip} WHIP` : null,
+        sl.ip != null ? `${sl.ip} IP` : null,
+      ].filter(Boolean).join(" · ") || "—"
     : `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"}`;
   // Key-stat detail line: OPS+/ERA- vs level + K%/BB%, plus HR/9 (P) or
   // ISO (H). Falls back gracefully when a field is missing.
@@ -5073,7 +5073,7 @@ function makeMilbCell(p) {
       ].filter(Boolean).join(" · ")
     : [
         sl.ops_plus_level != null ? `OPS+ ${Math.round(sl.ops_plus_level)}` : null,
-        `${sl.hr ?? 0} HR`,
+        sl.hr != null ? `${sl.hr} HR` : null,
         sl.iso != null ? `ISO ${fmtRate3(sl.iso)}` : null,
         sl.bb_pct != null ? `BB% ${sl.bb_pct.toFixed(1)}` : null,
         sl.k_pct != null ? `K% ${sl.k_pct.toFixed(1)}` : null,
@@ -5084,14 +5084,8 @@ function makeMilbCell(p) {
   const headline = headlineStatHTML(p);
   const normTip = levelNormTooltip(sl);
   const tipAttr = normTip ? ` title="${escapeHtml(normTip)}"` : "";
-  // RPS+ pill takes the slot where the age-vs-level chip used to live.
-  // Falls back to "RPS+ —" when the player doesn't have enough volume
-  // yet (15+ games / 15+ IP), so the cell never goes blank.
-  // For MLB-level prospects, rpsPlusPillHTML routes through
-  // mlbPerfPillHTML and returns the same wRC+/xFIP chip the headline
-  // already shows — duplicate. Skip the RPS+ pill in that case; the
-  // headline carries the league-relative read, and MiLB players keep
-  // the age-relative RPS+ alongside their level-relative OPS+/ERA-.
+  // Skip the RPS+ pill at MLB level since the headline already carries
+  // the league-relative (wRC+ / xFIP) read.
   const supplementaryPill = sl.level === "MLB" ? "" : rpsPlusPillHTML(p);
   return `<div class="milb-cell milb-cell-wrap"${tipAttr}>
     <span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${headline}
@@ -5864,13 +5858,30 @@ const _lbHitterSupport = r => {
   const games = r.games != null ? `${r.games}G` : "";
   const ab = r.ab != null ? `${r.ab} AB` : "";
   const top    = `${slash} · OPS ${ops} · ISO ${iso}`;
-  const bottom = `${r.hr ?? 0} HR · ${r.sb ?? 0} SB · ${r.rbi ?? 0} RBI · BB ${bb} · K ${k}${games ? " · " + games : ""}${ab ? " · " + ab : ""}`;
+  const bottom = [
+    r.hr != null ? `${r.hr} HR` : null,
+    r.sb != null ? `${r.sb} SB` : null,
+    r.rbi != null ? `${r.rbi} RBI` : null,
+    r.bb_pct != null ? `BB ${bb}` : null,
+    r.k_pct != null ? `K ${k}` : null,
+    games || null,
+    ab || null,
+  ].filter(Boolean).join(" · ");
   return `<div>${top}</div><div style="color:var(--text-tertiary);margin-top:2px;">${bottom}</div>`;
 };
 const _lbPitcherSupport = r => {
-  const wins = r.wins ?? 0, losses = r.losses ?? 0;
-  const top = `${r.ip ?? "—"} IP · ${r.era ?? "—"} ERA · ${r.whip ?? "—"} WHIP`;
-  const bottom = `K/9 ${r.k_per_9 ?? "—"} · BB/9 ${r.bb_per_9 ?? "—"} · ${wins}-${losses}${r.games != null ? " · " + r.games + "G" : ""}`;
+  const wins = r.wins, losses = r.losses;
+  const top = [
+    r.ip != null ? `${r.ip} IP` : null,
+    r.era != null ? `${r.era} ERA` : null,
+    r.whip != null ? `${r.whip} WHIP` : null,
+  ].filter(Boolean).join(" · ") || "—";
+  const bottom = [
+    r.k_per_9 != null ? `K/9 ${r.k_per_9}` : null,
+    r.bb_per_9 != null ? `BB/9 ${r.bb_per_9}` : null,
+    (wins != null || losses != null) ? `${wins ?? 0}-${losses ?? 0}` : null,
+    r.games != null ? `${r.games}G` : null,
+  ].filter(Boolean).join(" · ");
   return `<div>${top}</div><div style="color:var(--text-tertiary);margin-top:2px;">${bottom}</div>`;
 };
 
@@ -5994,7 +6005,7 @@ function renderWatchlist() {
         ${teamLogoHTML(org.org, "md", fullOrgName(org.org))}
         <div style="flex:1;min-width:0;">
           <div style="font-weight:600;font-size:14px;color:var(--text-primary);">${escapeHtml(fullOrgName(org.org))}</div>
-          <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;margin-top:2px;">${escapeHtml(org.org)}${tp ? ` · top: <span style="color:var(--text-secondary);">${escapeHtml(tp.name)}</span> <span class="fv-badge ${fvClass(tp.fv_label)} size-xs">${escapeHtml(tp.fv_label)}</span>` : ""}</div>
+          <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;margin-top:2px;">${escapeHtml(org.org)}${tp ? ` · top: ${tp.player_key ? `<a href="#player=${escapeHtml(tp.player_key)}" onclick="event.stopPropagation();" style="color:var(--text-secondary);text-decoration:none;">${escapeHtml(tp.name)}</a>` : `<span style="color:var(--text-secondary);">${escapeHtml(tp.name)}</span>`} <span class="fv-badge ${fvClass(tp.fv_label)} size-xs">${escapeHtml(tp.fv_label)}</span>` : ""}</div>
         </div>
         <div style="font-family:var(--font-serif);font-size:22px;line-height:1;color:${gradeColor(overall)};font-weight:700;min-width:36px;text-align:center;" title="Farm grade">${escapeHtml(overall)}</div>
         <div style="font-family:var(--font-mono);font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;color:${dvm == null ? 'var(--text-tertiary)' : (dvm >= 110 ? 'var(--up)' : dvm <= 90 ? 'var(--down)' : 'var(--neon-violet)')};min-width:42px;text-align:right;" title="${win.toUpperCase()}DvM+">${dvm == null ? "—" : dvm}</div>
@@ -6122,7 +6133,12 @@ function renderGlossary() {
   for (const [catKey, catLabel] of GLOSSARY_CATEGORIES) {
     const items = buckets.get(catKey) || [];
     if (!items.length) continue;
-    items.sort((a, b) => a.entry.name.localeCompare(b.entry.name));
+    items.sort((a, b) => {
+      const pa = a.entry.priority ?? 99;
+      const pb = b.entry.priority ?? 99;
+      if (pa !== pb) return pa - pb;
+      return a.entry.name.localeCompare(b.entry.name);
+    });
     totalRendered += items.length;
     parts.push(`<div class="glossary-cat-heading">${escapeHtml(catLabel)} <span style="color:var(--text-tertiary);font-weight:500;letter-spacing:0;margin-left:6px;">${items.length}</span></div>`);
     for (const { slug, entry } of items) {
@@ -7001,7 +7017,7 @@ const SOURCE_LABELS = {
 // general-stat, methodology, financial, level, status.
 // =============================================================================
 const GLOSSARY_CATEGORIES = [
-  ["custom-index", "Custom indices"],
+  ["custom-index", "Arkmetrics"],
   ["scouting",     "Scouting"],
   ["hitter-stat",  "Hitter stats"],
   ["pitcher-stat", "Pitcher stats"],
@@ -7013,382 +7029,415 @@ const GLOSSARY_CATEGORIES = [
 ];
 
 const GLOSSARY = {
-  // ---- Custom indices ----
-  "fv": {
-    name: "FV", aliases: ["FV", "Future Value", "Consensus FV"], category: "custom-index",
-    short: "Future Value — the consensus 20-80 scouting grade representing a prospect's projected MLB ceiling.",
-    long: "FV is the central anchor of the entire site. Each tracked source (FanGraphs, MLB Pipeline, ESPN, Just Baseball, TJStats, Baseball America, The Athletic) publishes a 20-80 grade per prospect; the site aggregates them into a consensus value with Bayesian shrinkage on single-instance grades. FV 50 = projected MLB regular; FV 60 = first-division regular / future star; FV 70+ = perennial all-star ceiling.",
-    formula: "consensus_fv = mean(published_fvs) + shrinkage_pull · (FV_35 − mean) when only 1 instance exists",
-    example: "Jackson Holliday's FV 65 means scouts collectively see him as a future star — one tier above an everyday regular but below a perennial all-star.",
-    related: ["tools_plus", "wag", "tvi", "shrinkage"],
-  },
+  // ---- Arkmetrics (site-built custom indices) ----
   "tools_plus": {
     name: "Tools+", aliases: ["Tools+", "T+", "ToolGrade+"], category: "custom-index",
+    priority: 10,
     short: "Outlier-biased composite of scouting tool grades, anchored at 100 = cohort mean.",
-    long: "Power-mean (Lₚ with p=3) of the player's per-tool 20-80 grades, then z-score-normalized across the active-prospect cohort. 10 points = 1 stdev, so a Tools+ of 115 reads as ~1.5 stdev above the prospect-pool average. The power-mean (vs simple arithmetic mean) emphasizes outlier tools — a 70-grade power tool moves the composite more than evenly-distributed 55s would, capturing the 'toolsy' intuition that one elite tool defines the profile.",
+    long: "Power-mean (Lₚ with p=3) of the player's per-tool 20-80 grades, then z-score-normalized across the active-prospect cohort. 10 points = 1 stdev, so a Tools+ of 115 reads as ~1.5 stdev above the prospect-pool average. The power-mean (vs simple arithmetic mean) emphasizes outlier tools, since a 70-grade power tool moves the composite more than evenly-distributed 55s would, capturing the 'toolsy' intuition that one elite tool defines the profile.",
     formula: "Tools+ = 100 + 10 · (composite − μ) / σ\nwhere composite = (Σ tool_grade^3 / n)^(1/3)",
-    example: "A 70-grade Game Power + 50-grade Hit + 50-grade Speed + 50-grade Field hitter posts a Tools+ around 115 — the power-mean lifts the composite above what a simple-mean of 55 would produce because power skews the result.",
+    example: "A 70-grade Game Power + 50-grade Hit + 50-grade Speed + 50-grade Field hitter posts a Tools+ around 115; the power-mean lifts the composite above what a simple-mean of 55 would produce because power skews the result.",
     related: ["fv", "pwr_plus", "pd_plus", "stf_plus"],
   },
   "rps_plus": {
     name: "RPS+", aliases: ["RPS+", "Rate Performance Score"], category: "custom-index",
-    short: "Age-relative level performance index — 100 = mean of same-age prospects at the same level.",
-    long: "RPS+ converts a player's level-relative rate stats (OPS+ for hitters, ERA- for pitchers) into a single index normalized against the cohort of same-age prospects at the same level. 100 = exactly average for the age/level bucket; 130 = ~3 stdev above; 70 = ~3 stdev below. MLB-level prospects substitute the canonical wRC+ (hitters) or xFIP/FIP- (pitchers) since league-relative stats are already MLB-anchored.",
+    priority: 20,
+    short: "Age-relative level performance index; 100 = mean of same-age prospects at the same level.",
+    long: "RPS+ converts a player's level-relative rate stats (OPS+ for hitters, ERA- for pitchers) into a single index normalized against the cohort of same-age prospects at the same level. 100 = exactly average for the age/level bucket, 130 = ~3 stdev above, 70 = ~3 stdev below. MLB-level prospects substitute the canonical wRC+ (hitters) or xFIP/FIP- (pitchers) since league-relative stats are already MLB-anchored.",
     formula: "RPS+ = 100 + 10 · (player_score − bucket_mean) / bucket_stdev",
     example: "A 19-year-old hitter at A+ posting a 130 OPS+ vs the level mean reads as RPS+ 120 (well above other 19yos at A+), even if his raw OPS+ vs the level looks identical to a 22-year-old's.",
     related: ["fv", "ops_plus_level", "era_minus_level", "wrc_plus"],
   },
   "dvm_plus": {
     name: "DvM+", aliases: ["DvM+", "Development vs Mean"], category: "custom-index",
-    short: "Farm-system development index — 100 = league-mean FV growth over the development window.",
-    long: "wRC+-style index for organizational development. Measures each farm's cumulative FV growth over a window (1y / 3y / 5y) and scores it against the league-mean farm. Acquisitions are nullified (a trade-in adds zero to the source farm) and graduations don't subtract — pure development of prospects already in the system. 100 = league mean; 10 pts = 1 stdev across the 30 orgs.",
+    priority: 5,
+    short: "Farm-system development index; 100 = league-mean FV growth over the development window.",
+    long: "wRC+-style index for organizational development. Measures each farm's cumulative FV growth over a window (1y / 3y / 5y) and scores it against the league-mean farm. Acquisitions are nullified (a trade-in adds zero to the source farm) and graduations don't subtract; pure development of prospects already in the system. 100 = league mean, 10 pts = 1 stdev across the 30 orgs.",
     formula: "DvM+ = 100 + 10 · (org_growth − league_mean_growth) / league_stdev",
     example: "An org with a 3yDvM+ of 130 has grown its prospects' aggregate FV 3 stdev faster than the average farm system over the last 3 years, after stripping out acquisitions.",
     related: ["farm_rank", "stock", "fv"],
   },
   "pwr_plus": {
     name: "PWR+", aliases: ["PWR+", "Power Index"], category: "custom-index",
-    short: "Hitter power index — ISO + HR-rate vs level-mean. 100 = league-average power.",
-    long: "Composite of isolated power (SLG − AVG) and home-run rate, both normalized against the player's current level. Weighted 60% ISO / 40% HR-rate to reflect that ISO is a more stable single-year power signal than raw HR totals (sample-noise dampens). Hitters only; 40-game minimum.",
+    priority: 30,
+    short: "Hitter power index; ISO + HR-rate vs level-mean. 100 = league-average power.",
+    long: "Composite of isolated power (SLG minus AVG) and home-run rate, both normalized against the player's current level. Weighted 60% ISO and 40% HR-rate to reflect that ISO is a more stable single-year power signal than raw HR totals (sample-noise dampens). Hitters only, 40-game minimum.",
     formula: "PWR+ = 100 · (0.6 · ISO_ratio + 0.4 · HR_rate_ratio)\nwhere ratios are player ÷ level_mean",
-    example: "A AA hitter with a .240 ISO at a level where the mean is .140 posts a PWR+ of ~145 — ~45% more power than the typical AA bat.",
+    example: "A AA hitter with a .240 ISO at a level where the mean is .140 posts a PWR+ of ~145, about 45% more power than the typical AA bat.",
     related: ["iso", "tools_plus", "rps_plus"],
   },
   "pd_plus": {
     name: "PD+", aliases: ["PD+", "Plate Discipline"], category: "custom-index",
-    short: "Plate discipline index — BB% − K% differential vs level-mean. 100 = average.",
-    long: "Additive shift on the BB%−K% differential vs the player's level mean. PD+ = 100 + (player_diff − level_diff). A hitter walking 10% and striking out 20% (−10 diff) at a level where the mean is +5% BB minus 22% K (−17 diff) posts a PD+ of 107. Hitters only; 40-game minimum.",
+    priority: 35,
+    short: "Plate discipline index; BB% minus K% differential vs level-mean. 100 = average.",
+    long: "Additive shift on the BB% minus K% differential vs the player's level mean. PD+ = 100 + (player_diff − level_diff). A hitter walking 10% and striking out 20% (−10 diff) at a level where the mean is +5% BB minus 22% K (−17 diff) posts a PD+ of 107. Hitters only, 40-game minimum.",
     formula: "PD+ = 100 + (BB%player − K%player) − (BB%level − K%level)",
-    example: "Juan Soto's career-prospect PD+ would have been ~125-130 — his BB%−K% differential was ~25 points above the typical bat at every level.",
+    example: "Juan Soto's career-prospect PD+ would have been ~125 to 130, since his BB% minus K% differential was ~25 points above the typical bat at every level.",
     related: ["bb_pct", "k_pct", "pwr_plus"],
   },
   "stf_plus": {
     name: "STF+", aliases: ["STF+", "Stuff", "Pitcher Stuff+"], category: "custom-index",
-    short: "Pitcher stuff index — K/9 + BB/9 + HR/9 normalized to level-mean. 100 = league-average stuff.",
-    long: "Z-score composite of three peripheral rates: strikeouts (positive), walks (negative), and home-runs allowed (negative), each normalized to the level mean with an approximate σ = 15% of mean. 10 points ≈ 1 stdev. Pitchers only; 20-IP minimum.",
+    priority: 40,
+    short: "Pitcher stuff index; K/9 + BB/9 + HR/9 normalized to level-mean. 100 = league-average stuff.",
+    long: "Z-score composite of three peripheral rates: strikeouts (positive), walks (negative), and home-runs allowed (negative), each normalized to the level mean with an approximate σ = 15% of mean. 10 points ≈ 1 stdev. Pitchers only, 20-IP minimum.",
     formula: "STF+ = 100 + 10 · (z(K/9) − z(BB/9) − z(HR/9))",
-    example: "A AA pitcher running a 12 K/9, 2.5 BB/9, 0.8 HR/9 at a level where the means are 9 / 3.5 / 1.0 posts a STF+ around 125 — well-above-average stuff for the level.",
+    example: "A AA pitcher running a 12 K/9, 2.5 BB/9, 0.8 HR/9 at a level where the means are 9 / 3.5 / 1.0 posts a STF+ around 125, well-above-average stuff for the level.",
     related: ["k_per_9", "bb_per_9", "hr_per_9", "fip"],
   },
   "tvi": {
     name: "TVI", aliases: ["TVI", "Trade Value Index"], category: "custom-index",
+    priority: 15,
     short: "Cleveland-derived expected MLB surplus value ($M) interpolated from consensus FV.",
     long: "Maps consensus FV to estimated total surplus value across a prospect's 6-year cost-controlled MLB window using a published industry table (FanGraphs / Craig Edwards 2019 framework). Linearly interpolated between half-grade ticks. Higher FV = exponentially higher TVI because of the WAR distribution at the upper tail.",
-    formula: "TVI ≈ piecewise-linear interp on (FV, $M) anchor points: 80→$145M · 70→$60M · 60→$25M · 50→$9M · 40→$1.5M",
-    example: "A 55-FV prospect has a TVI of ~$15M — the team is sitting on ~$15M of surplus value above league-min cost over the 6yr window if the player hits his projection.",
+    formula: "TVI ≈ piecewise-linear interp on (FV, $M) anchor points: 80→$145M, 70→$60M, 60→$25M, 50→$9M, 40→$1.5M",
+    example: "A 55-FV prospect has a TVI of ~$15M; the team is sitting on ~$15M of surplus value above league-min cost over the 6yr window if the player hits his projection.",
     related: ["fv", "surplus_value", "war"],
   },
   "wag": {
     name: "WAG", aliases: ["WAG", "WAR Above Grade"], category: "custom-index",
-    short: "Graduate-only metric — playing-time-weighted MLB WAR/yr minus FV-grade-implied baseline.",
-    long: "Measures whether a graduated prospect has out- or under-performed their final FV grade. WAR/yr is computed playing-time-weighted (per-graduate PA or IP, with a minimum-sample gate of ≥1 full-season equivalent of MLB time so a thin-debut Ben Rice isn't punished). Subtracted against the FV→WAR primer table (FanGraphs lower-bound, hitter/pitcher split, linearly interpolated). Positive = beat the bet; negative = missed.",
+    priority: 8,
+    short: "Graduate-only metric; playing-time-weighted MLB WAR/yr minus FV-grade-implied baseline.",
+    long: "Measures whether a graduated prospect has out- or under-performed their final FV grade. WAR/yr is computed playing-time-weighted (per-graduate PA or IP, with a minimum-sample gate of ≥1 full-season equivalent of MLB time so a thin-debut Ben Rice isn't punished). Subtracted against the FV→WAR primer table (FanGraphs lower-bound, hitter/pitcher split, linearly interpolated). Positive = beat the bet, negative = missed.",
     formula: "WAG = (Σ season_WAR × PA_share) / season_count − expected_WAR(FV)",
-    example: "Bobby Witt Jr. graduated as a 60 FV (expected ~3.4 WAR/yr) and has averaged ~6 WAR/yr in his MLB time — WAG of +2.6, a major outperformance.",
+    example: "Bobby Witt Jr. graduated as a 60 FV (expected ~3.4 WAR/yr) and has averaged ~6 WAR/yr in his MLB time, posting a WAG of +2.6, a major outperformance.",
     related: ["fv", "war", "fv_war_table"],
   },
   // ---- Scouting ----
+  "fv": {
+    name: "FV", aliases: ["FV", "Future Value", "Consensus FV"], category: "scouting",
+    priority: 1,
+    short: "Future Value, the 20-80 scouting grade for a prospect's projected MLB ceiling.",
+    long: "Every tracked source (FanGraphs, MLB Pipeline, ESPN, Just Baseball, TJStats, Baseball America, The Athletic) publishes a 20-80 grade per prospect. The site averages them into a consensus FV, with Bayesian shrinkage applied to single-instance grades. FV 50 is a projected MLB regular, FV 60 is a first-division regular or future star, FV 70+ is perennial all-star ceiling.",
+    formula: "consensus_fv = mean(published_fvs) + shrinkage_pull · (FV_35 − mean) when only 1 instance exists",
+    example: "Jackson Holliday's FV 65 means scouts collectively see him as a future star, one tier above an everyday regular but below a perennial all-star.",
+    related: ["tools_plus", "wag", "tvi", "shrinkage"],
+  },
   "twenty_eighty": {
     name: "20-80 scale", aliases: ["20-80 scale", "Scouting scale"], category: "scouting",
-    short: "The standard scouting grade ladder — 20 = far-below-MLB, 50 = MLB-average, 80 = elite.",
-    long: "Industry-standard scouting grades since the 1950s. Built around a Gaussian: 50 is the MLB-average bench/role player, 60 is a first-division regular / All-Star, 70 is perennial All-Star, 80 is Hall-of-Fame ceiling. Used for both individual tools (Hit / Power / Speed / Field / Throw / Fastball / etc.) and overall Future Value.",
+    priority: 20,
+    short: "The standard scouting ladder. 20 = far below MLB, 50 = MLB average, 80 = elite.",
+    long: "Scouting grades have been built on this scale since the 1950s. 50 is an MLB-average bench or role player, 60 is a first-division regular or All-Star, 70 is a perennial All-Star, 80 is a Hall-of-Fame ceiling. Used for individual tools (Hit, Power, Speed, Field, Throw, Fastball) and for overall Future Value.",
     example: "A 70-grade fastball means top ~5% of MLB starters. A 70-grade hit tool means batting-title contender.",
     related: ["fv", "tools_plus"],
   },
   "hit_tool": {
     name: "Hit tool", aliases: ["Hit", "Hit tool"], category: "scouting",
-    short: "20-80 scouting grade for the player's bat-to-ball ability and projected batting average.",
-    long: "Composite assessment of contact rate, plate coverage, pitch recognition, and projected batting average against MLB pitching. 50 = ~.260 BA, 60 = ~.290 BA, 70 = ~.320 BA ceiling.",
+    short: "20-80 grade for bat-to-ball ability and projected batting average.",
+    long: "Contact rate, plate coverage, pitch recognition, and projected batting average against MLB pitching. 50 ≈ .260 BA, 60 ≈ .290, 70 ≈ .320 ceiling.",
     related: ["game_power", "tools_plus"],
   },
   "game_power": {
     name: "Game Power", aliases: ["Game pwr", "Game Power"], category: "scouting",
-    short: "20-80 scouting grade for in-game power output (HR + extra-base hits).",
-    long: "How much of the player's raw power actually translates into in-game HRs and doubles given their swing path, pitch recognition, and approach. Game power is almost always ≤ raw power for the same player.",
+    short: "20-80 grade for in-game power output (HRs and extra-base hits).",
+    long: "How much of a hitter's raw power actually plays in games, given swing path, pitch recognition, and approach. Almost always ≤ raw power for the same player.",
     related: ["raw_power", "iso", "pwr_plus"],
   },
   "raw_power": {
     name: "Raw Power", aliases: ["Raw pwr", "Raw Power"], category: "scouting",
-    short: "20-80 grade for batting-practice / theoretical max power, regardless of in-game application.",
-    long: "What a player CAN do — exit velocity, BP-display home-run distance, peak EV. Distinct from game power, which factors in whether the swing actually unlocks the raw tool in competition.",
+    short: "20-80 grade for BP / theoretical max power, regardless of in-game application.",
+    long: "What a hitter can do at peak: exit velocity, BP home-run distance, peak EV. Different from game power, which folds in whether the swing actually unlocks the raw tool in competition.",
     related: ["game_power"],
   },
   "speed_tool": {
     name: "Speed", aliases: ["Speed", "Run", "SPD"], category: "scouting",
-    short: "20-80 scouting grade for foot speed — 60-yard dash, home-to-first time, and baserunning instincts.",
-    long: "Used in both offensive (baserunning, BABIP, extra-base hits) and defensive (range, jumps, recovery) contexts. On the site speed contributes to both the offensive and defensive composites for hitters.",
+    short: "20-80 grade for foot speed. 60-yard dash, home-to-first time, baserunning instincts.",
+    long: "Plays on both sides of the ball: offense (baserunning, BABIP, extra bases) and defense (range, jumps, recovery). Speed contributes to both the offensive and defensive composites for hitters.",
     related: ["tools_plus"],
   },
   "field_tool": {
     name: "Field", aliases: ["Field", "FLD"], category: "scouting",
-    short: "20-80 grade for defensive ability — range, hands, instincts, throwing accuracy.",
-    long: "Position-relative grade — a 60 Field at SS isn't the same skill ceiling as a 60 Field at 1B. The 50 anchor is 'plays an average MLB-level version of the position.'",
+    short: "20-80 grade for defense; range, hands, instincts, throwing accuracy.",
+    long: "Grades are position-relative. A 60 Field at SS isn't the same skill ceiling as a 60 Field at 1B. The 50 anchor is 'plays an average MLB-level version of the position.'",
     related: ["throw_tool", "speed_tool"],
   },
   "throw_tool": {
     name: "Throw", aliases: ["Throw", "Arm", "ARM"], category: "scouting",
-    short: "20-80 grade for throwing arm strength + accuracy.",
-    long: "Critical for OF / SS / 3B / C; less weighted at 1B and 2B. 60+ = legitimate plus arm; 70+ = elite (think Andruw Jones, Yadier Molina caliber).",
+    short: "20-80 grade for arm strength and accuracy.",
+    long: "Critical for OF, SS, 3B, C; less weighted at 1B and 2B. 60+ is a legitimate plus arm, 70+ is elite (Andruw Jones, Yadier Molina caliber).",
     related: ["field_tool"],
   },
   "graduation_rule": {
     name: "Graduation rule", aliases: ["Graduation", "Graduated"], category: "scouting",
-    short: "A prospect graduates from rookie status after exceeding 130 MLB at-bats, 50 IP, or 45 days on the active roster.",
-    long: "MLB's official rookie limits: 130 at-bats (hitters) or 50 innings (pitchers) or 45 days on the 26-man roster (excluding September). Once any threshold is crossed, the player is removed from prospect rankings and appears on the Graduates tab here.",
+    short: "A prospect graduates from rookie status after 130 MLB at-bats, 50 IP, or 45 days on the active roster.",
+    long: "MLB's official rookie limits: 130 at-bats (hitters), 50 innings (pitchers), or 45 days on the 26-man roster (excluding September). Once any threshold is crossed, the player drops off prospect rankings and shows up on the Graduates tab here.",
     related: ["wag"],
   },
   // ---- Hitter stats ----
+  "wrc_plus": {
+    name: "wRC+", aliases: ["wRC+", "Weighted Runs Created Plus"], category: "hitter-stat",
+    priority: 5,
+    short: "League- and park-adjusted offensive value. 100 = MLB average.",
+    long: "100 is exactly league-average run creation. 120 is 20% above, 80 is 20% below. Park-adjusted and league-adjusted. MLB-only on this site; MiLB equivalents use the level-relative RPS+ proxy.",
+    related: ["rps_plus", "ops"],
+  },
   "ops": {
     name: "OPS", category: "hitter-stat",
-    short: "On-base Plus Slugging — sum of OBP and SLG; the simplest catch-all hitter rate stat.",
-    long: "OBP + SLG. Captures both getting-on-base and power in one number. .700 = below average, .800 = above-average regular, .900+ = star-level. Doesn't park-adjust or league-adjust on its own — use wRC+ for that.",
+    priority: 10,
+    short: "On-base Plus Slugging; OBP + SLG. The simplest catch-all hitter rate.",
+    long: ".700 is below average, .800 is an above-average regular, .900+ is star-level. Doesn't park-adjust or league-adjust; use wRC+ for that.",
     formula: "OPS = OBP + SLG",
     related: ["obp", "slg", "wrc_plus", "iso"],
   },
   "iso": {
     name: "ISO", category: "hitter-stat",
-    short: "Isolated Power — extra-base hits per at-bat (SLG − AVG). Pure power rate.",
-    long: "Strips singles out of slugging by subtracting batting average. .140 = average MLB power, .200 = above-average, .250+ = elite. ISO normalizes power across hitters with very different contact profiles.",
+    priority: 15,
+    short: "Isolated Power, SLG minus AVG. Pure power rate.",
+    long: "Strips singles out of slugging by subtracting batting average. .140 is average MLB power, .200 is above-average, .250+ is elite. Normalizes power across hitters with very different contact profiles.",
     formula: "ISO = SLG − AVG",
     related: ["slg", "pwr_plus"],
   },
   "avg": {
     name: "AVG", category: "hitter-stat",
-    short: "Batting Average — hits divided by at-bats. The classic but limited rate stat.",
-    long: "H / AB. Doesn't reward walks, doesn't distinguish singles from homers. Still useful as a contact-quality signal. .260-.270 = MLB average; .300+ = above average.",
+    short: "Batting Average. Hits divided by at-bats.",
+    long: "H / AB. Doesn't reward walks, doesn't distinguish singles from homers. Still useful as a contact-quality signal. .260 to .270 is MLB average, .300+ is above average.",
     related: ["obp", "ops"],
   },
   "obp": {
     name: "OBP", category: "hitter-stat",
-    short: "On-base Percentage — times reached base (H + BB + HBP) divided by plate appearances.",
-    long: "Captures both contact and discipline. .330 = MLB average, .380+ = elite. Doesn't include reached-on-error.",
+    short: "On-base Percentage. Times reached base (H + BB + HBP) divided by plate appearances.",
+    long: "Captures contact and discipline together. .330 is MLB average, .380+ is elite. Doesn't include reached-on-error.",
     related: ["bb_pct", "ops"],
   },
   "slg": {
     name: "SLG", category: "hitter-stat",
-    short: "Slugging Percentage — total bases per at-bat. Weights extra-base hits.",
-    long: "(1B + 2·2B + 3·3B + 4·HR) / AB. .425 = MLB average; .500+ = above-average; .550+ = elite.",
+    short: "Slugging Percentage. Total bases per at-bat; weights extra-base hits.",
+    long: "(1B + 2·2B + 3·3B + 4·HR) / AB. .425 is MLB average, .500+ is above-average, .550+ is elite.",
     related: ["iso", "ops"],
   },
   "bb_pct": {
     name: "BB%", aliases: ["BB%", "Walk rate"], category: "hitter-stat",
-    short: "Walk rate — walks divided by plate appearances. Approach + discipline indicator.",
-    long: "Around 8% is MLB average; 12%+ is elite. Sticky across levels (a strong walk rate at A+ usually persists into AAA / MLB).",
+    priority: 20,
+    short: "Walk rate. Walks divided by plate appearances.",
+    long: "~8% is MLB average, 12%+ is elite. Sticky across levels; a strong walk rate at A+ usually persists into AAA and MLB.",
     formula: "BB% = BB / PA",
     related: ["k_pct", "pd_plus"],
   },
   "k_pct": {
     name: "K%", aliases: ["K%", "Strikeout rate"], category: "hitter-stat",
-    short: "Strikeout rate — strikeouts divided by plate appearances. Lower is better for hitters.",
-    long: "MLB average is ~22%. Sub-18% = above-average contact; 28%+ = swing-and-miss concern. Mostly sticky across levels.",
+    priority: 20,
+    short: "Strikeout rate. Strikeouts divided by plate appearances; lower is better for hitters.",
+    long: "MLB average is ~22%. Sub-18% is above-average contact, 28%+ is a swing-and-miss concern. Mostly sticky across levels.",
     formula: "K% = K / PA",
     related: ["bb_pct", "pd_plus"],
-  },
-  "wrc_plus": {
-    name: "wRC+", aliases: ["wRC+", "Weighted Runs Created Plus"], category: "hitter-stat",
-    short: "League- and park-adjusted offensive value, anchored at 100 = MLB average.",
-    long: "100 = exactly league-average run creation; 120 = 20% above; 80 = 20% below. The canonical FanGraphs hitter metric, accounting for park factors and league context. MLB-only on this site (MiLB equivalents use the level-relative RPS+ proxy).",
-    related: ["rps_plus", "ops"],
   },
   // ---- Pitcher stats ----
   "era": {
     name: "ERA", category: "pitcher-stat",
-    short: "Earned Run Average — earned runs allowed per 9 innings. The classic pitcher headline.",
-    long: "Doesn't park- or defense-adjust on its own. 4.00 = ~MLB average; sub-3.50 = above-average; sub-3.00 = elite. Use FIP / xFIP for a defense-independent read.",
+    priority: 8,
+    short: "Earned Run Average. Earned runs allowed per 9 innings.",
+    long: "Doesn't park-adjust or defense-adjust. 4.00 is MLB average, sub-3.50 is above-average, sub-3.00 is elite. Use FIP or xFIP for a defense-independent read.",
     formula: "ERA = ER · 9 / IP",
     related: ["fip", "xfip", "whip"],
   },
-  "whip": {
-    name: "WHIP", category: "pitcher-stat",
-    short: "Walks + Hits per Inning Pitched. Measures baserunner volume.",
-    long: "(BB + H) / IP. 1.30 = ~MLB average; sub-1.20 = above average; sub-1.10 = elite. Captures both walk rate and contact-quality allowed in one number.",
-    formula: "WHIP = (BB + H) / IP",
-    related: ["era"],
-  },
   "fip": {
     name: "FIP", aliases: ["FIP"], category: "pitcher-stat",
-    short: "Fielding-Independent Pitching — ERA-scaled metric using only K, BB, HBP, HR.",
-    long: "Estimates what a pitcher's ERA would be if they had league-average luck on balls in play. ~4.00 = MLB average. Use FIP- for the 100-anchored version.",
+    priority: 12,
+    short: "Fielding-Independent Pitching. ERA-scaled, using only K, BB, HBP, HR.",
+    long: "What a pitcher's ERA would be with league-average luck on balls in play. ~4.00 is MLB average. Use FIP- for the 100-anchored version.",
     formula: "FIP = ((13·HR) + 3·(BB+HBP) − 2·K) / IP + constant",
     related: ["era", "xfip", "fip_minus"],
   },
+  "whip": {
+    name: "WHIP", category: "pitcher-stat",
+    priority: 15,
+    short: "Walks + Hits per Inning Pitched. Baserunner volume.",
+    long: "(BB + H) / IP. 1.30 is MLB average, sub-1.20 is above average, sub-1.10 is elite. Combines walk rate and contact-quality allowed.",
+    formula: "WHIP = (BB + H) / IP",
+    related: ["era"],
+  },
   "xfip": {
     name: "xFIP", category: "pitcher-stat",
-    short: "Expected FIP — FIP using league-average HR/FB rate instead of actual HR allowed.",
-    long: "Strips out HR luck. More predictive year-over-year than FIP. ~4.00 = MLB average; sub-3.50 = above-average.",
+    priority: 18,
+    short: "Expected FIP. FIP using league-average HR/FB rate instead of actual HR allowed.",
+    long: "Strips out HR luck. More predictive year-over-year than FIP. ~4.00 is MLB average, sub-3.50 is above-average.",
     related: ["fip", "era"],
   },
   "fip_minus": {
     name: "FIP-", aliases: ["FIP-", "FIP minus"], category: "pitcher-stat",
     short: "Park- and league-adjusted FIP scaled to 100 = MLB average. Lower is better.",
-    long: "100 = exactly league-average run prevention (defense-independent); 80 = 20% better than average (top-tier); 120 = 20% worse. Inverts the usual 'higher = better' convention because lower run prevention is better.",
+    long: "100 is league-average run prevention (defense-independent), 80 is 20% better (top-tier), 120 is 20% worse. Inverts the usual 'higher = better' convention because lower run prevention is better.",
     related: ["fip", "wrc_plus"],
   },
   "k_per_9": {
     name: "K/9", category: "pitcher-stat",
-    short: "Strikeouts per 9 innings. A starter's headline whiff rate.",
-    long: "9 K/9 = MLB average for a starter; 11+ = elite. K% (per-batter) is more workload-stable but K/9 is the classic baseball-card stat.",
+    short: "Strikeouts per 9 innings.",
+    long: "9 K/9 is MLB average for a starter, 11+ is elite. K% (per-batter) is more workload-stable but K/9 is the classic baseball-card stat.",
     formula: "K/9 = K · 9 / IP",
     related: ["k_pct_pitcher", "stf_plus"],
   },
   "bb_per_9": {
     name: "BB/9", category: "pitcher-stat",
-    short: "Walks per 9 innings. Command/control indicator.",
-    long: "3.0 BB/9 = MLB average; sub-2.5 = above average; sub-2.0 = elite command. Below 5 K-BB ratio is a yellow flag.",
+    short: "Walks per 9 innings. Command / control indicator.",
+    long: "3.0 BB/9 is MLB average, sub-2.5 is above average, sub-2.0 is elite command. Below a 5:1 K-BB ratio is a yellow flag.",
     formula: "BB/9 = BB · 9 / IP",
     related: ["bb_pct_pitcher", "stf_plus"],
   },
   "hr_per_9": {
     name: "HR/9", category: "pitcher-stat",
-    short: "Home runs allowed per 9 innings. HR-suppression indicator.",
-    long: "~1.3 HR/9 = MLB average; sub-1.0 = above average. Heavily dependent on park + league environment.",
+    short: "Home runs allowed per 9 innings.",
+    long: "~1.3 HR/9 is MLB average, sub-1.0 is above average. Heavily park- and league-dependent.",
     formula: "HR/9 = HR · 9 / IP",
     related: ["fip", "xfip"],
   },
   "k_pct_pitcher": {
     name: "K% (pitcher)", aliases: ["Pitcher K%"], category: "pitcher-stat",
-    short: "Pitcher strikeout rate — strikeouts as % of batters faced. Workload-stable.",
-    long: "Better than K/9 for comparing starters vs relievers because per-batter rate doesn't depend on IP/start. ~22% = MLB average; 28%+ = elite.",
+    short: "Pitcher strikeout rate. Strikeouts as % of batters faced.",
+    long: "Better than K/9 for comparing starters vs relievers since per-batter rate doesn't depend on IP per start. ~22% is MLB average, 28%+ is elite.",
     formula: "K% = K / TBF",
     related: ["k_per_9", "stf_plus"],
   },
   "bb_pct_pitcher": {
     name: "BB% (pitcher)", aliases: ["Pitcher BB%"], category: "pitcher-stat",
-    short: "Pitcher walk rate — walks as % of batters faced.",
-    long: "~8% = MLB average; sub-7% = above average; sub-6% = elite command. More workload-stable than BB/9.",
+    short: "Pitcher walk rate. Walks as % of batters faced.",
+    long: "~8% is MLB average, sub-7% is above average, sub-6% is elite command. More workload-stable than BB/9.",
     formula: "BB% = BB / TBF",
     related: ["bb_per_9", "stf_plus"],
   },
   // ---- General stats ----
   "war": {
     name: "WAR", aliases: ["WAR", "fWAR"], category: "general-stat",
-    short: "Wins Above Replacement — single-number value estimate, defense + offense + baserunning + position adjustment.",
-    long: "FanGraphs' implementation (fWAR) is the version used on this site. 2 WAR/yr ≈ MLB regular; 4 WAR ≈ above-average regular; 6+ WAR ≈ All-Star; 8+ WAR ≈ MVP candidate. Used as the realized output baseline for the WAG metric.",
+    priority: 5,
+    short: "Wins Above Replacement. Single-number value estimate; offense, defense, baserunning, position adjustment.",
+    long: "FanGraphs' implementation (fWAR) is the version used here. 2 WAR/yr is an MLB regular, 4 is an above-average regular, 6+ is All-Star, 8+ is MVP candidate. Used as the realized output baseline for WAG.",
     related: ["wag", "tvi", "war_war_table"],
   },
   // ---- Methodology ----
   "consensus_fv": {
     name: "Consensus FV", category: "methodology",
-    short: "The site-computed FV that averages all source publications and applies single-instance shrinkage.",
-    long: "For every snapshot, the consensus FV is the mean of explicit FVs published by any source. When only one source has ever published the player (across their entire history, not just the latest snapshot), the consensus is Bayesian-pulled 1/3 toward FV 35 to reflect single-observation uncertainty. The pull lifts as soon as a second grade lands — even from the same source.",
+    priority: 8,
+    short: "The site-computed FV; averages all source publications and applies single-instance shrinkage.",
+    long: "For every snapshot, the consensus FV is the mean of explicit FVs published by any tracked source. When only one source has ever published the player (across their entire history, not just the latest snapshot), the consensus is Bayesian-pulled 1/3 toward FV 35 to reflect single-observation uncertainty. The pull lifts as soon as a second grade lands, even from the same source.",
     related: ["fv", "shrinkage", "wide_spread"],
+  },
+  "stock": {
+    name: "Stock", aliases: ["Stock", "Stock movement"], category: "methodology",
+    priority: 12,
+    short: "Trailing-window FV trajectory; direction and delta since the player's prior snapshot.",
+    long: "Compares latest consensus_fv_raw against the prior point in the player's history. ▲ is up by ≥1.5 FV, ▼ is down, — is flat. Shows up on list rows and as a stock chip in the detail-page header.",
+    related: ["fv", "dvm_plus"],
+  },
+  "farm_rank": {
+    name: "Farm rank", category: "methodology",
+    priority: 15,
+    short: "Composite rank of all 30 MLB farm systems. 45% top-end + 25% depth + 15% trajectory + 15% grad pipeline.",
+    long: "Each component scored 0-100 across the 30 orgs, then blended. Top-end is a tiered FV-points sum of the top 5 prospects (an FV 80 worth ~100× an FV 40). Depth is the same sum for prospects 6 through 25. Trajectory is 1y DvM+. Grad pipeline is FV-weighted graduations in the trailing 12 months.",
+    formula: "farm_score = 0.45·top_end + 0.25·depth + 0.15·trajectory + 0.15·grad_pipeline",
+    related: ["dvm_plus", "fv"],
+  },
+  "eta": {
+    name: "ETA", category: "methodology",
+    priority: 22,
+    short: "Estimated MLB arrival year. Derived from level, age vs level mean, and FV grade adjustments.",
+    long: "Starts from the current-level baseline (AAA ≈ 0.8 yr to MLB, AA ≈ 1.5 yr, A+ ≈ 2.5 yr) and applies adjustments for performance (RPS+ vs level), age vs level mean, FV grade, and IL/health flags. Confidence label (high / mid / low) reflects the spread between the components.",
+    related: ["fv", "rps_plus"],
   },
   "shrinkage": {
     name: "Single-instance shrinkage", aliases: ["Bayesian shrinkage", "Single-instance pull"], category: "methodology",
     short: "FV-toward-35 pull applied when a prospect has only one published grade in their entire history.",
-    long: "k=0.5 Bayesian shrinkage: consensus = (2/3 · raw_FV) + (1/3 · 35). The FV badge for single-instance prospects carries a dashed amber outline + small '1' mark. A FanGraphs-only prospect graded multiple times across snapshots is well-observed and NOT shrunken — only true single-observations get the pull.",
+    long: "k=0.5 Bayesian shrinkage: consensus = (2/3 · raw_FV) + (1/3 · 35). The FV badge for single-instance prospects carries a dashed amber outline plus a small '1' mark. A FanGraphs-only prospect graded multiple times across snapshots is well-observed and is NOT shrunken; only true single-observations get the pull.",
     formula: "if total_fv_instances ≤ 1: pulled_fv = (2/3) · raw_fv + (1/3) · 35",
     related: ["consensus_fv", "fv"],
   },
   "wide_spread": {
     name: "Wide-spread indicator", aliases: ["W indicator", "Wide indicator"], category: "methodology",
-    short: "Purple 'W' mark on the FV badge — sources disagree by ≥10 grade points (a two-tier gap).",
-    long: "When 2+ sources have published the player and their max-min spread is ≥10 grade points (e.g., FG 45 vs Pipeline 55), the FV badge carries a violet 'W' corner mark. Hover for the spread + source count. Indicates the consensus is the average of meaningfully disagreeing views — a 'wide read' rather than tight consensus.",
+    short: "Purple 'W' mark on the FV badge; sources disagree by ≥10 grade points (a two-tier gap).",
+    long: "When 2+ sources have published the player and their max-min spread is ≥10 grade points (e.g., FG 45 vs Pipeline 55), the FV badge carries a violet 'W' corner mark. Hover for the spread and source count. Means the consensus averages meaningfully disagreeing views, a 'wide read' rather than tight consensus.",
     related: ["consensus_fv", "single_instance"],
-  },
-  "stock": {
-    name: "Stock", aliases: ["Stock", "Stock movement"], category: "methodology",
-    short: "Trailing-window FV trajectory — direction + delta since the player's prior consensus snapshot.",
-    long: "Compares latest consensus_fv_raw against the prior point in the player's history. ▲ = up by ≥1.5 FV; ▼ = down; — = flat. Surfaced via small chips on list rows + a stock chip in the detail-page header.",
-    related: ["fv", "dvm_plus"],
-  },
-  "eta": {
-    name: "ETA", category: "methodology",
-    short: "Estimated MLB arrival year — derived from level + age vs level mean + FV grade adjustments.",
-    long: "Walks from the player's current level baseline (e.g., AAA = 0.8 yr to MLB, AA = 1.5 yr, A+ = 2.5 yr) with adjustments for performance (RPS+ vs level), age vs level mean, FV grade, and IL/health flags. Confidence label (high / mid / low) reflects the spread between the components.",
-    related: ["fv", "rps_plus"],
-  },
-  "farm_rank": {
-    name: "Farm rank", category: "methodology",
-    short: "Composite rank of all 30 MLB orgs — 45% top-end + 25% depth + 15% trajectory + 15% grad pipeline.",
-    long: "Each component scored 0-100 across the 30 orgs, then blended linearly. Top-end = tiered FV-points sum of the top 5 prospects (an FV 80 worth ~100× an FV 40). Depth = same sum for prospects #6-25. Trajectory = 1y DvM+. Grad pipeline = FV-weighted graduations in the trailing 12mo.",
-    formula: "farm_score = 0.45·top_end + 0.25·depth + 0.15·trajectory + 0.15·grad_pipeline",
-    related: ["dvm_plus", "fv"],
   },
   // ---- Financial ----
   "surplus_value": {
     name: "Surplus value", category: "financial",
+    priority: 10,
     short: "Total $M of MLB value above cost-controlled salary across a prospect's 6yr team-control window.",
-    long: "Expected: FV-derived (TVI table). Realized: actual career WAR × $9.5M/WAR market rate minus actual / estimated salaries paid. Positive = team beat the bet implied by the player's grade; negative = paid more than the realized value.",
+    long: "Expected: FV-derived (TVI table). Realized: actual career WAR × $9.5M/WAR market rate minus actual or estimated salaries paid. Positive means the team beat the bet implied by the player's grade, negative means they paid more than the realized value.",
     related: ["tvi", "war", "aav", "wag"],
   },
   "aav": {
     name: "AAV", aliases: ["AAV", "Average Annual Value"], category: "financial",
-    short: "Average Annual Value — total contract value divided by years. The standard contract headline.",
-    long: "For deferral-heavy deals (e.g., Ohtani's $700M / 10yr but only ~$46M present-value AAV) the displayed AAV is the present-value-adjusted figure, not the raw money / years.",
+    priority: 20,
+    short: "Average Annual Value. Total contract value divided by years.",
+    long: "For deferral-heavy deals (e.g., Ohtani's $700M / 10yr but only ~$46M present-value AAV) the displayed AAV is the present-value-adjusted figure, not raw money divided by years.",
     related: ["surplus_value"],
   },
   "bonus_pool": {
     name: "Bonus pool", category: "financial",
-    short: "Per-team MLB-assigned amateur signing budget — separate IFA pool + draft pool ceilings per year.",
-    long: "Draft pool = sum of the team's first-10-rounds slot values. IFA pool = MLB-assigned international signing budget (base ~$5.95M + competitive-balance bonuses). Teams can exceed by up to ~5% before luxury-tax penalties.",
+    priority: 25,
+    short: "Per-team amateur signing budget. Separate IFA pool and draft pool ceilings per year.",
+    long: "Draft pool is the sum of the team's first-10-rounds slot values. IFA pool is the MLB-assigned international signing budget (base ~$5.95M plus competitive-balance bonuses). Teams can exceed by up to ~5% before luxury-tax penalties kick in.",
     related: ["slot_value"],
   },
   "slot_value": {
     name: "Slot value", category: "financial",
     short: "MLB-assigned bonus value for an individual draft pick. Sums into the team's draft pool ceiling.",
-    long: "Each pick in the first 10 rounds has a published slot value. Teams can sign over slot for top picks if they sign under for later picks (rebalancing within the pool). Going over the pool total triggers a tax + potential future-pick penalty.",
+    long: "Every pick in the first 10 rounds has a published slot value. Teams can sign over slot for top picks if they sign under for later picks (rebalancing within the pool). Going over the pool total triggers a tax plus potential future-pick penalty.",
     related: ["bonus_pool"],
   },
   // ---- Levels ----
   "mlb": {
     name: "MLB", category: "level",
-    short: "Major League Baseball — the top tier. The destination level for every prospect's projection.",
+    short: "Major League Baseball. The top tier; the destination for every prospect's projection.",
     related: ["aaa"],
   },
   "aaa": {
     name: "AAA", aliases: ["AAA"], category: "level",
-    short: "Triple-A — the last level before MLB. Many AAA prospects are MLB call-up candidates.",
-    long: "International League (Eastern AAA) + Pacific Coast League (Western AAA). Avg age ~26 — most AAA players are 4A vets, but young AAA performers (≤24) are typically near-term MLB candidates.",
+    short: "Triple-A. The last level before MLB; many AAA prospects are MLB call-up candidates.",
+    long: "International League (Eastern AAA) and Pacific Coast League (Western AAA). Avg age ~26. Most AAA players are 4A vets, but young AAA performers (≤24) are typically near-term MLB candidates.",
     related: ["aa", "mlb"],
   },
   "aa": {
     name: "AA", aliases: ["AA"], category: "level",
-    short: "Double-A — the level where prospect projections become real. The hardest dev jump.",
-    long: "Texas / Eastern / Southern Leagues. Avg age ~23. AA is widely considered the level where pitching quality + breaking-ball usage approximates MLB conditions; prospects who succeed at AA usually carry their performance forward.",
+    short: "Double-A. The level where prospect projections become real; the hardest development jump.",
+    long: "Texas, Eastern, and Southern Leagues. Avg age ~23. AA is the level where pitching quality and breaking-ball usage start to approximate MLB conditions. Prospects who succeed at AA usually carry their performance forward.",
     related: ["a_plus", "aaa"],
   },
   "a_plus": {
     name: "A+", aliases: ["A+", "High-A"], category: "level",
-    short: "High-A — the second full-season level above Single-A.",
+    short: "High-A. The second full-season level above Single-A.",
     long: "Avg age ~22. Most college draftees start here; HS draftees usually arrive after a year of A-ball.",
     related: ["a", "aa"],
   },
   "a": {
     name: "A", aliases: ["A", "Low-A", "Single-A"], category: "level",
-    short: "Low-A / Single-A — the first full-season level.",
-    long: "Avg age ~21. The first level of structured 130+ game seasons after the complex / DSL.",
+    short: "Low-A / Single-A. The first full-season level.",
+    long: "Avg age ~21. The first level of structured 130+ game seasons after the complex or DSL.",
     related: ["a_plus", "cpx"],
   },
   "cpx": {
     name: "CPX", aliases: ["CPX", "Complex League"], category: "level",
-    short: "Complex League — short-season rookie ball at the team's spring-training complex.",
+    short: "Complex League. Short-season rookie ball at the team's spring-training complex.",
     long: "Avg age ~19. Most HS draftees and recent IFAs get their first stateside reps in the CPX.",
     related: ["dsl", "a"],
   },
   "dsl": {
     name: "DSL", aliases: ["DSL", "Dominican Summer League"], category: "level",
-    short: "Dominican Summer League — the entry point for most international amateur signings.",
-    long: "Avg age ~18. Heavily Latin American — primarily Dominican, Venezuelan, Colombian players who signed as 16-yo IFAs.",
+    short: "Dominican Summer League. The entry point for most international amateur signings.",
+    long: "Avg age ~18. Heavily Latin American; primarily Dominican, Venezuelan, and Colombian players who signed as 16-year-old IFAs.",
     related: ["cpx", "ifa"],
   },
   // ---- Status / Misc ----
   "ifa": {
     name: "IFA", aliases: ["IFA", "International FA", "International Free Agent"], category: "status",
-    short: "International Free Agent — amateur players signed from outside the U.S./Canada/Puerto Rico.",
-    long: "Each org has a fixed annual IFA bonus pool. Players sign at 16 from Latin America (heavy DR / VZ representation), Asia (KBO/NPB posting after age 25), Cuba, and elsewhere. Top IFAs get bonuses in the $3-5M range.",
+    short: "International Free Agent. Amateur players signed from outside the U.S., Canada, and Puerto Rico.",
+    long: "Each org has a fixed annual IFA bonus pool. Players sign at 16 from Latin America (heavy DR and VZ representation), Asia (KBO and NPB posting after age 25), Cuba, and elsewhere. Top IFAs get bonuses in the $3-5M range.",
     related: ["bonus_pool", "dsl"],
   },
   "post_tj": {
     name: "Post-TJ", aliases: ["Post-Tommy John", "TJ recovery"], category: "status",
-    short: "Player is recovering from Tommy John (UCL replacement) elbow surgery. ~14-18mo recovery typical.",
+    short: "Player is recovering from Tommy John (UCL replacement) elbow surgery. ~14-18 month recovery typical.",
     long: "Tommy John (ulnar collateral ligament reconstruction) is the most common pitching surgery. Recovery curve: 0-6mo throwing, 6-12mo mound work, 12-14mo rehab assignments, 14-18mo MLB return. Roughly 80% of TJ recipients return to prior form within 2 years; ~10% never pitch at the same level again.",
     related: ["on_il"],
   },
   "on_il": {
     name: "On IL", aliases: ["IL", "Injured List", "Currently on IL"], category: "status",
     short: "Player is currently on the active Injured List. Multiple IL types: 7-day, 10-day, 15-day, 60-day.",
-    long: "60-day IL freezes a player's 40-man roster slot. 15-day IL is the standard major-injury duration. The site surfaces every IL stint over the trailing 24 months (the Health profile aggregates the count + total IL days).",
+    long: "60-day IL freezes a player's 40-man roster slot. 15-day IL is the standard major-injury duration. The site surfaces every IL stint over the trailing 24 months; the Health profile aggregates the count and total IL days.",
     related: ["post_tj"],
+  },
+  "strike_zone": {
+    name: "Strike zone", aliases: ["Strike zone", "Swing zone heat", "Zone heat"], category: "general-stat",
+    short: "13-bin grid showing pitch outcomes by location. 3×3 inner zones plus 4 chase wedges around them.",
+    long: "On graduate detail pages, the heat color shows swing rate per zone from Statcast pitch-by-pitch data over the player's last 3 MLB seasons. Inner 3×3 bins cover the rulebook strike zone; the four outer wedges cover chase pitches above, below, left, and right of the zone. Catcher's view: zone 0 is upper-left, zone 8 is lower-right.",
+    related: ["fv"],
   },
 };
 
@@ -8206,7 +8255,7 @@ function makeFarmTransactionsSection(allEvents, orgCode) {
       <td style="white-space:nowrap;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;color:var(--text-secondary);">${escapeHtml(ev.date || "—")}</td>
       <td>${kindChip}</td>
       <td>${name}</td>
-      <td style="white-space:nowrap;font-family:var(--font-mono);font-size:11px;">${arrow} ${escapeHtml(other || "—")}</td>
+      <td style="white-space:nowrap;font-family:var(--font-mono);font-size:11px;">${arrow} ${other ? `<a href="#farm-org=${escapeHtml(other)}" style="color:inherit;text-decoration:none;">${escapeHtml(other)}</a>` : "—"}</td>
       <td>${desc}</td>
     </tr>`;
   };
@@ -8652,8 +8701,27 @@ function farmSortedOrgs() {
       .filter(([y]) => +y >= cutoff)
       .reduce((sum, [, v]) => sum + ((v && v.total_usd) || 0), 0);
   };
+  // Aggregate surplus value per org for the "surplus" sort — same
+  // computation as renderFarmSystems but built lazily and only when needed.
+  let _surplusMemo = null;
+  const surplusForOrg = (orgCode) => {
+    if (!_surplusMemo) {
+      _surplusMemo = {};
+      const PITCHER_RE = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/;
+      for (const pl of (DATA.players || [])) {
+        if (!pl.org || pl.fv_close == null) continue;
+        const isP = PITCHER_RE.test(String(pl.position || "").split("/")[0].toUpperCase());
+        const sv  = estimateSurplusValueMM(pl.fv_close, isP);
+        if (sv == null) continue;
+        _surplusMemo[pl.org] = (_surplusMemo[pl.org] || 0) + sv;
+      }
+    }
+    return _surplusMemo[orgCode] || 0;
+  };
   orgs.sort((a, b) => {
     if (s === "ifa_spend")     return ifaSpend3yr(b) - ifaSpend3yr(a);
+    if (s === "surplus")       return surplusForOrg(b.org) - surplusForOrg(a.org)
+                                   || (a.farm_rank - b.farm_rank);
     if (s === "total_fv")      return b.total_fv  - a.total_fv;
     if (s === "top_end")       return (b.top_end_points ?? 0) - (a.top_end_points ?? 0);
     if (s === "depth")         return (b.depth_points   ?? 0) - (a.depth_points   ?? 0);
@@ -8896,6 +8964,20 @@ function renderFarmSystems() {
       date: g.graduation_date,
     });
   }
+  // Aggregate surplus value per org — sum each active prospect's FV-implied
+  // TVI table value, split hitter / pitcher. Same call powering the per-org
+  // Surplus tile on renderFarmDetail.
+  const PITCHER_RE = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/;
+  const surplusByOrg = {};
+  const countByOrg = {};
+  for (const pl of (DATA.players || [])) {
+    if (!pl.org || pl.fv_close == null) continue;
+    const isP = PITCHER_RE.test(String(pl.position || "").split("/")[0].toUpperCase());
+    const s = estimateSurplusValueMM(pl.fv_close, isP);
+    if (s == null) continue;
+    surplusByOrg[pl.org] = (surplusByOrg[pl.org] || 0) + s;
+    countByOrg[pl.org]   = (countByOrg[pl.org]   || 0) + 1;
+  }
   // Last-visit rank deltas — load BEFORE rendering, snapshot AFTER so
   // the same render cycle doesn't compare against itself.
   const lastVisitRanks = loadLastVisitFarmRanks();
@@ -9006,7 +9088,16 @@ function renderFarmSystems() {
         <div>${makePosBreakdown(org.pos_groups)}${makeOrgEtaWave(etaByOrg[org.org], currentYear)}</div>
         <div class="level-depth-cell">${makeLevelDepth(org.level_counts, activeLevel)}</div>
         <div style="text-align:center;font-size:12px;color:var(--text-secondary);font-variant-numeric:tabular-nums;">${org.avg_age != null ? org.avg_age.toFixed(1) : "—"}</div>
-        <div style="display:flex;justify-content:center;">${makeSpendingDonut(org)}</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+          ${makeSpendingDonut(org)}
+          ${(() => {
+            const s = surplusByOrg[org.org];
+            const n = countByOrg[org.org];
+            if (s == null || !n) return "";
+            const fmt = s >= 100 ? s.toFixed(0) : s.toFixed(1);
+            return `<span class="g-term" data-term="surplus_value" style="font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);font-variant-numeric:tabular-nums;letter-spacing:0.02em;" title="Total surplus value across ${n} active prospects · sum of FV-implied TVI">$${fmt}M · ${n}p</span>`;
+          })()}
+        </div>
         <div class="stock-cell" style="font-size:12px;">${stockHtml}</div>
         <div style="text-align:right;display:flex;gap:4px;justify-content:flex-end;align-items:center;">
           <button class="watch-btn${farmWatchlistHas(org.org) ? " is-in" : ""}" data-farm-watch-key="${escapeHtml(org.org)}" type="button" title="${farmWatchlistHas(org.org) ? "Remove farm from watchlist" : "Add farm to watchlist"}">${farmWatchlistHas(org.org) ? "★" : "☆"}</button>
@@ -10163,10 +10254,9 @@ function renderPlayerDetail(key) {
     const fmtDeltaColor = (val, avg, lowerBetter) => {
       if (val == null || isNaN(val) || avg == null) return "—";
       const delta = val - avg;
-      // Tolerate signed-zero noise so a 0.0 delta doesn't get a color.
-      const isBetter = lowerBetter ? delta < -0.01 : delta > 0.01;
-      const isWorse  = lowerBetter ? delta > 0.01  : delta < -0.01;
-      const color = isBetter ? "var(--up)" : isWorse ? "var(--down)" : "var(--text-tertiary)";
+      if (Math.abs(delta) < 0.005) return `<span style="color:var(--text-tertiary);">—</span>`;
+      const isBetter = lowerBetter ? delta < 0 : delta > 0;
+      const color = isBetter ? "var(--up)" : "var(--down)";
       return `<span style="color:${color};">${(delta > 0 ? "+" : "")}${delta.toFixed(2)}</span>`;
     };
     // Rate-stat formatter that strips the leading zero ("0.180" → ".180")
@@ -10629,6 +10719,20 @@ function renderPlayerDetail(key) {
   const arsenalSection = isPitcher
     ? `<div class="detail-title">Pitch arsenal</div>${makeArsenalBlock(p.pitch_arsenal)}`
     : "";
+
+  // Statcast swing-zone heatmap. Graduates only; needs the 13-bin
+  // `swing_zone_heat` array attached by storage.py. Reuses the existing
+  // `makeStrikeZoneHeatmap` renderer by passing a synthetic `zone_heat`
+  // wrapper.
+  const swingZoneSection = (() => {
+    if (p.status !== "graduated") return "";
+    const heat = p.swing_zone_heat;
+    if (!Array.isArray(heat) || !heat.some(v => v != null)) return "";
+    return `<div class="detail-title"><span class="g-term" data-term="strike_zone">Swing-zone heat</span> <span class="detail-title-sub">Statcast · last 3 MLB seasons · heat = swing rate per zone</span></div>
+      <div class="detail-card" style="display:flex;justify-content:center;padding:14px 12px;">
+        ${makeStrikeZoneHeatmap({ zone_heat: heat })}
+      </div>`;
+  })();
 
   const tradesSection = `<div class="detail-title">Transaction history</div>${makeTransactionHistoryBlock(p)}`;
 
@@ -11229,6 +11333,7 @@ function renderPlayerDetail(key) {
     ["Health",  "detail-health",    !!healthSection],
     ["Savant",  "detail-savant",    !!savantSection],
     ["Arsenal", "detail-arsenal",   !!arsenalSection],
+    ["Swing zone", "detail-swing-zone", !!swingZoneSection],
   ].filter(([, , show]) => show);
   const jumpLinkStrip = jumpLinkPairs.length >= 3
     ? `<nav class="detail-jumplinks" aria-label="Jump to section">${jumpLinkPairs.map(([label, id]) =>
@@ -11267,6 +11372,7 @@ function renderPlayerDetail(key) {
     wrap("detail-tools",   toolsSection),
     wrap("detail-savant",  savantSection),
     wrap("detail-arsenal", arsenalSection),
+    wrap("detail-swing-zone", swingZoneSection),
     contractDetailsSection,
   ].filter(Boolean).join("");
   const wideGrid = (wideCards || moreDetailsAccordion)
@@ -11971,11 +12077,12 @@ function renderFarmDetail(orgCode) {
       : "";
     const cfg = TRANSACTION_KINDS[ev.kind] || {};
     const chip = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${cfg.color || 'var(--text-tertiary)'};vertical-align:middle;" title="${escapeHtml(cfg.label || ev.kind)}"></span>`;
+    const otherTeam = other ? `<a href="#farm-org=${escapeHtml(other)}" onclick="event.stopPropagation();" style="color:inherit;text-decoration:none;">${escapeHtml(other)}</a>` : "?";
     return `<div style="display:grid;grid-template-columns:36px 8px 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(ev.player.player_key)}');">
       <span style="font-family:var(--font-mono);color:var(--text-tertiary);font-size:10px;white-space:nowrap;">${ev.date ? ev.date.slice(2) : '—'}</span>
       ${chip}
       <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><span style="color:var(--neon-cyan);">${escapeHtml(ev.player.player_name)}</span>${gradTag}</span>
-      <span style="font-family:var(--font-mono);font-size:10px;white-space:nowrap;">${arrow} ${escapeHtml(other || "?")}</span>
+      <span style="font-family:var(--font-mono);font-size:10px;white-space:nowrap;">${arrow} ${otherTeam}</span>
     </div>`;
   };
 

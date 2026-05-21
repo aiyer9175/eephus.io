@@ -894,6 +894,30 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         log.info("detected %d trades (%d new)", len(new_trades), trade_count)
         trades_by_player = load_trades()
 
+        # --- 4b. Graduate swing-zone heatmaps. Scrape Statcast pitch-by-pitch
+        # data for each graduate's last few MLB seasons, aggregate to a
+        # 13-bin heat array. Hard-wrapped so a Savant outage never fails
+        # the full regen.
+        swing_zone_heat_by_key = {}
+        try:
+            from graduate_savant import build_graduate_swing_zone_heat
+            career_war_all = load_career_war()
+            grad_payloads = []
+            for p in timeseries:
+                if p.status != "graduated":
+                    continue
+                mlbam = ids_by_key.get(p.player_key)
+                if not mlbam:
+                    continue
+                grad_payloads.append({
+                    "player_key": p.player_key,
+                    "mlbam_id":   mlbam,
+                    "career_war": career_war_all.get(p.player_key) or {},
+                })
+            swing_zone_heat_by_key = build_graduate_swing_zone_heat(grad_payloads)
+        except Exception:
+            log.exception("graduate savant scrape failed — continuing without heatmaps")
+
         # --- 5. Export -------------------------------------------------
         out_dir.mkdir(parents=True, exist_ok=True)
         out_path = out_dir / "timeseries.json"
@@ -913,7 +937,8 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                ifa_spending_by_org=ifa_spending_by_org,
                                contracts_by_key=contracts_by_key,
                                draft_pools=draft_pools,
-                               player_ids=ids_by_key)
+                               player_ids=ids_by_key,
+                               swing_zone_heat_by_key=swing_zone_heat_by_key)
         log.info("wrote %s", out_path)
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
