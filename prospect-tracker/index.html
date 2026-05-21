@@ -3739,6 +3739,7 @@
 
   <div id="active-section">
     <div id="whats-new"></div>
+    <div id="scarcity-heatmap-card"></div>
     <div class="active-grid">
       <div id="rows"></div>
       <aside id="active-context-rail" class="active-context-rail" aria-label="League context"></aside>
@@ -5783,9 +5784,112 @@ function renderActiveContextRail() {
   rail.innerHTML = moversCard + distCard + gradsCard;
 }
 
+// Org × position scarcity heatmap. Walks DATA.players, buckets each
+// active prospect into one of 5 position groups (C / IF / OF / SP / RP),
+// sums FV per (org, position) cell, and renders a 30×5 grid colored by
+// FV total. Light = thin, dark = stacked. Clicking a cell drills into
+// that org's farm detail filtered by position.
+function renderScarcityHeatmap() {
+  const host = document.getElementById("scarcity-heatmap-card");
+  if (!host) return;
+  // Honor a session-scoped collapse flag so the user can hide it once
+  // they've absorbed the data and not have it re-appear every render.
+  const collapsed = (sessionStorage.getItem("scarcity_collapsed") === "1");
+
+  const POS_LABELS = [
+    ["C",  "C",  /^C(?:$|\b)/],
+    ["IF", "IF", /^(?:1B|2B|3B|SS|INF|IF|UTIL|MI|DH)/],
+    ["OF", "OF", /^(?:CF|LF|RF|OF)/],
+    ["SP", "SP", /^(?:RHP|LHP|SP|P)$/],
+    ["RP", "RP", /^(?:RP|MIRP|SIRP)$/],
+  ];
+  const players = (DATA.players || []);
+  if (!players.length) { host.innerHTML = ""; return; }
+
+  // Aggregate FV totals by (org, position group).
+  const orgs = Array.from(new Set(players.map(p => p.org).filter(Boolean))).sort();
+  const grid = {};
+  for (const o of orgs) grid[o] = Array(POS_LABELS.length).fill(0);
+  let maxCell = 0;
+  for (const p of players) {
+    if (!p.org || p.fv_close == null) continue;
+    const head = String(p.position || "").split("/")[0].toUpperCase();
+    if (!head) continue;
+    let col = POS_LABELS.findIndex(([, , re]) => re.test(head));
+    if (col < 0) continue;
+    grid[p.org][col] += p.fv_close;
+    if (grid[p.org][col] > maxCell) maxCell = grid[p.org][col];
+  }
+  if (maxCell <= 0) { host.innerHTML = ""; return; }
+
+  const cellColor = (val) => {
+    if (val <= 0) return "var(--bg-secondary)";
+    const t = Math.min(1, val / maxCell);
+    // Cyan-violet ramp matching the rest of the site palette.
+    const r = Math.round(40 + (110 - 40) * t);
+    const g = Math.round(80 + (200 - 80) * t);
+    const b = Math.round(180 + (255 - 180) * t);
+    return `rgba(${r},${g},${b},${0.20 + 0.60 * t})`;
+  };
+
+  const headerCells = `<div></div>` + POS_LABELS.map(
+    ([, lbl]) => `<div class="t-stat-label" style="text-align:center;padding:4px 0;">${lbl}</div>`
+  ).join("");
+
+  const rows = orgs.map(o => {
+    const cells = grid[o].map((v, i) => {
+      const txt = v >= 1 ? Math.round(v) : "";
+      const tip = v >= 1
+        ? `${fullOrgName(o)} · ${POS_LABELS[i][1]} · total FV ${Math.round(v)}`
+        : `${fullOrgName(o)} · ${POS_LABELS[i][1]} · thin`;
+      return `<div title="${escapeHtml(tip)}"
+        data-scarcity-org="${escapeHtml(o)}" data-scarcity-pos="${POS_LABELS[i][1]}"
+        style="background:${cellColor(v)};border:1px solid var(--border-light);height:22px;font-size:10px;font-family:var(--font-mono);color:var(--text-secondary);display:flex;align-items:center;justify-content:center;cursor:${v >= 1 ? 'pointer' : 'default'};">${txt}</div>`;
+    }).join("");
+    return `<div style="display:contents;">
+      <div data-org="${escapeHtml(o)}" style="${orgStripe(o)};display:flex;align-items:center;gap:6px;padding:2px 6px;font-size:11px;font-weight:600;color:var(--text-secondary);cursor:pointer;">${teamLogoHTML(o, "sm", fullOrgName(o))}<span>${escapeHtml(o)}</span></div>
+      ${cells}
+    </div>`;
+  }).join("");
+
+  host.innerHTML = `
+    <details class="detail-card" ${collapsed ? "" : "open"} id="scarcity-details" style="margin-bottom:14px;padding:10px 12px;">
+      <summary style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <span class="t-section-title">Position scarcity · league-wide</span>
+        <span class="t-card-caption" style="font-style:normal;">Total FV per (org × position) · click cell to drill into farm</span>
+      </summary>
+      <div style="overflow-x:auto;margin-top:10px;">
+        <div style="display:grid;grid-template-columns:80px repeat(${POS_LABELS.length}, minmax(48px, 1fr));gap:2px;min-width:480px;">
+          ${headerCells}
+          ${rows}
+        </div>
+      </div>
+    </details>`;
+
+  // Persist the open/close state in sessionStorage so the user's
+  // collapse choice survives tab-switches within the same session.
+  const det = document.getElementById("scarcity-details");
+  if (det) {
+    det.addEventListener("toggle", () => {
+      sessionStorage.setItem("scarcity_collapsed", det.open ? "0" : "1");
+    });
+  }
+  // Click a cell → farm-detail page (cell carries org); click an org
+  // label row header → farm-detail too. Position drilldown isn't wired
+  // through the farm-detail filter API yet, so for now we just route
+  // to the org's farm page.
+  host.querySelectorAll("[data-scarcity-org]").forEach(cell => {
+    cell.addEventListener("click", (e) => {
+      const org = e.currentTarget.getAttribute("data-scarcity-org");
+      if (org && typeof goToFarm === "function") goToFarm(org);
+    });
+  });
+}
+
 function renderActives() {
   renderWhatsNew();
   renderActiveContextRail();
+  renderScarcityHeatmap();
   const filtered = getFilteredActives();
 
   const header = `<div class="col-header">
@@ -9481,6 +9585,79 @@ function transactionLegend(kinds = TRANSACTION_LEGEND_ORDER) {
 // are tuned to keep AVG/OBP/SLG together (slash line stays adjacent) and
 // to keep the "headline" sabermetric (wRC+ or xFIP) in the rightmost
 // column where the eye lands last.
+// Tiny inline sparkline. `values` is a numeric array (may contain nulls
+// which are skipped). Returns an SVG string sized for an inline cell.
+// Used by the career-trends strip above the per-season table.
+function _miniSparkline(values, opts = {}) {
+  const w = opts.width || 64;
+  const h = opts.height || 18;
+  const stroke = opts.stroke || "var(--neon-cyan)";
+  const fill = opts.fill || "rgba(78, 224, 255, 0.18)";
+  const pts = (values || []).map(v => (v == null || isNaN(v)) ? null : Number(v));
+  const valid = pts.filter(v => v != null);
+  if (valid.length < 2) {
+    return `<svg width="${w}" height="${h}" aria-hidden="true">
+      <line x1="0" y1="${h/2}" x2="${w}" y2="${h/2}" stroke="var(--border)" stroke-width="1" stroke-dasharray="2,3"/>
+    </svg>`;
+  }
+  const lo = Math.min(...valid);
+  const hi = Math.max(...valid);
+  const span = (hi - lo) || 1;
+  const xs = pts.length > 1 ? w / (pts.length - 1) : w;
+  let lastX = 0;
+  const linePts = pts.map((v, i) => {
+    if (v == null) return null;
+    const x = i * xs;
+    const y = h - 2 - ((v - lo) / span) * (h - 4);
+    lastX = x;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).filter(Boolean).join(" ");
+  const area = `M 0,${h} L ${linePts.split(" ").join(" L ")} L ${lastX},${h} Z`;
+  return `<svg width="${w}" height="${h}" aria-hidden="true">
+    <path d="${area}" fill="${fill}" stroke="none"/>
+    <polyline points="${linePts}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+
+// Career-trend strip above the season-by-season table. Shows 3-4 key
+// stats with a sparkline + the most recent value, so the reader gets
+// the directional read at a glance before parsing the full table.
+function makeCareerTrendStrip(career) {
+  if (!career || career.length < 2) return "";
+  const isP = career[0].is_pitcher;
+  const sorted = [...career].sort((a, b) => (a.season || 0) - (b.season || 0));
+  const cells = (isP
+    ? [
+        { key: "era",      label: "ERA",  fmt: v => v.toFixed(2), invert: true,
+          stroke: "var(--down)", fill: "rgba(255, 95, 162, 0.18)" },
+        { key: "whip",     label: "WHIP", fmt: v => v.toFixed(2), invert: true,
+          stroke: "var(--down)", fill: "rgba(255, 95, 162, 0.18)" },
+        { key: "k_per_9",  label: "K/9",  fmt: v => v.toFixed(1) },
+        { key: "bb_per_9", label: "BB/9", fmt: v => v.toFixed(1), invert: true,
+          stroke: "var(--down)", fill: "rgba(255, 95, 162, 0.18)" },
+      ]
+    : [
+        { key: "avg", label: "AVG", fmt: v => Number(v).toFixed(3).replace(/^0/, "") },
+        { key: "obp", label: "OBP", fmt: v => Number(v).toFixed(3).replace(/^0/, "") },
+        { key: "slg", label: "SLG", fmt: v => Number(v).toFixed(3).replace(/^0/, "") },
+        { key: "ops", label: "OPS", fmt: v => Number(v).toFixed(3).replace(/^0/, ""),
+          stroke: "var(--up)", fill: "rgba(64, 224, 132, 0.18)" },
+      ]
+  );
+  const tiles = cells.map(({ key, label, fmt, invert, stroke, fill }) => {
+    const vals = sorted.map(s => s[key] != null ? Number(s[key]) : null);
+    if (!vals.some(v => v != null)) return "";
+    const last = [...vals].reverse().find(v => v != null);
+    return `<div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 10px;border-right:1px solid var(--border-light);min-width:90px;">
+      <span class="t-stat-label">${label}</span>
+      ${_miniSparkline(vals, { stroke: stroke, fill: fill })}
+      <span class="t-stat-value" style="font-size:13px;">${last != null ? fmt(last) : "—"}</span>
+    </div>`;
+  }).join("");
+  if (!tiles) return "";
+  return `<div class="detail-card" style="display:flex;flex-wrap:wrap;padding:0;margin-bottom:10px;overflow-x:auto;">${tiles}</div>`;
+}
+
 function makeCareerTable(career) {
   if (!career || !career.length) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No multi-season stats available.</div>`;
@@ -10204,7 +10381,9 @@ function renderPlayerDetail(key) {
   // FV-tier modifier on the header drives the subtle radial-gradient
   // overlay. We round the close FV to the nearest published tier (40/45/
   // 50/55/60/65/70/80) and stamp `.fv-tier-NN` so the right glow color
-  // resolves from the FV palette CSS vars.
+  // resolves from the FV palette CSS vars. Elite tiers (70+ chrome,
+  // 60+ holo) also get a "rarity" border treatment — the FV ramp from
+  // trading-card grading lore.
   const _fvTierClass = (() => {
     const fv = p.fv_close;
     if (fv == null) return "";
@@ -10213,7 +10392,10 @@ function renderPlayerDetail(key) {
     for (const b of buckets) {
       if (fv >= b - 2.5) { pick = b; break; }
     }
-    return `fv-tier-${pick}`;
+    const rarity = fv >= 70 ? "card-rarity-chrome"
+                 : fv >= 60 ? "card-rarity-holo"
+                 : "";
+    return `fv-tier-${pick}${rarity ? " " + rarity : ""}`;
   })();
   const header = `
     <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
@@ -10560,6 +10742,7 @@ function renderPlayerDetail(key) {
          <span class="detail-title-sub">colored delta vs. level mean when "show level deltas" is on</span>
          <span style="margin-left:8px;vertical-align:middle;display:inline-flex;gap:4px;flex-wrap:wrap;">${rpsPlusPillHTML(p)}${scoutRatesHTML(p)}</span>
        </div>
+       ${makeCareerTrendStrip(p.career_stats)}
        <div style="margin-bottom:6px;">
          <button type="button" class="chip active" data-career-toggle="deltas" style="font-size:10px;padding:3px 10px;">Show level deltas</button>
        </div>
@@ -10935,6 +11118,41 @@ function renderPlayerDetail(key) {
     return `<div class="detail-title"><span class="g-term" data-term="strike_zone">Swing-zone heat</span> <span class="detail-title-sub">Statcast · last 3 MLB seasons · heat = swing rate per zone</span></div>
       <div class="detail-card" style="display:flex;justify-content:center;padding:14px 12px;">
         ${makeStrikeZoneHeatmap({ zone_heat: heat })}
+      </div>`;
+  })();
+
+  // Career projection arc — graduate-only. Pairs the existing WAG bar
+  // chart (per-season WAR vs FV-implied baseline) with a one-line
+  // summary so the graduate detail page tells the full performance-vs-
+  // projection story above the fold.
+  const projectionArcSection = (() => {
+    if (p.status !== "graduated") return "";
+    const wagChart = makeWagChart(p);
+    if (!wagChart) return "";
+    const delta = gradVsFvProjection(p);
+    const r = gradWarPerYr(p);
+    const fv = p.fv_close_raw ?? p.fv_close;
+    const isPit = !!(p.sabermetrics && p.sabermetrics.is_pitcher);
+    const expected = fv != null ? fvExpectedWarPerYr(fv, isPit) : null;
+    let summary = "";
+    if (delta != null && r && expected != null) {
+      const verb = Math.abs(delta) < 0.05
+        ? "Matching"
+        : delta > 0 ? "Outperforming" : "Trailing";
+      const color = delta > 0.05 ? "var(--up)"
+                  : delta < -0.05 ? "var(--down)"
+                  : "var(--text-secondary)";
+      const sign = delta > 0 ? "+" : "";
+      summary = `<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;">
+        <strong style="color:${color};">${verb} projection by ${sign}${delta.toFixed(1)} WAR/yr</strong>
+        over ${r.war_seasons_count} MLB season${r.war_seasons_count === 1 ? "" : "s"}.
+        <span style="color:var(--text-tertiary);">Actual ${r.war_per_yr.toFixed(2)} vs FV ${Math.round(fv)} baseline ${expected.toFixed(2)} WAR/yr.</span>
+      </div>`;
+    }
+    return `<div class="detail-title"><span class="g-term" data-term="wag">Projection vs reality</span> <span class="detail-title-sub">per-season WAR vs FV-implied baseline</span></div>
+      <div class="detail-card" style="padding:14px 14px 10px;">
+        ${wagChart}
+        ${summary}
       </div>`;
   })();
 
@@ -11538,6 +11756,7 @@ function renderPlayerDetail(key) {
     ["Savant",  "detail-savant",    !!savantSection],
     ["Arsenal", "detail-arsenal",   !!arsenalSection],
     ["Swing zone", "detail-swing-zone", !!swingZoneSection],
+    ["Projection", "detail-projection", !!projectionArcSection],
   ].filter(([, , show]) => show);
   const jumpLinkStrip = jumpLinkPairs.length >= 3
     ? `<nav class="detail-jumplinks" aria-label="Jump to section">${jumpLinkPairs.map(([label, id]) =>
@@ -11577,6 +11796,7 @@ function renderPlayerDetail(key) {
     wrap("detail-savant",  savantSection),
     wrap("detail-arsenal", arsenalSection),
     wrap("detail-swing-zone", swingZoneSection),
+    wrap("detail-projection", projectionArcSection),
     contractDetailsSection,
   ].filter(Boolean).join("");
   const wideGrid = (wideCards || moreDetailsAccordion)
