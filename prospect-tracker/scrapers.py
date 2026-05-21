@@ -859,7 +859,13 @@ def scrape_mlb_international(url: str, label: str, snap_date: str, year: int,
             player_name=name,
             position=pos_m.group(1) if pos_m else person.get("position"),
             org=org,
-            rank=rank,
+            # The Pipeline International list ranks players 1-50 within the
+            # IFA class only — it is NOT comparable to the overall Top-100
+            # rank emitted by scrape_mlb_pipeline. Surfacing rank here would
+            # make a #1 IFA (real FV ~55) look like a #1 prospect overall
+            # (rank-implied FV ~70). Strip it so only the explicit Overall
+            # FV contributes to consensus.
+            rank=None,
             fv=overall,
             status="active",
         ))
@@ -943,7 +949,10 @@ def scrape_mlb_international(url: str, label: str, snap_date: str, year: int,
                 player_name=name,
                 position=pos,
                 org=None,
-                rank=rank,
+                # Same as the Apollo branch above — the IFA list rank is
+                # not the same scale as overall Top-100 rank, so we don't
+                # let it leak into rank-implied FV.
+                rank=None,
                 fv=None,
                 status="active",
             ))

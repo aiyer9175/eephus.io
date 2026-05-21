@@ -317,6 +317,11 @@ class TestMlbPipelineInternational:
             )
 
         assert [r.player_key for r in rows] == ["luis_hernandez", "wandy_asigen"]
-        assert rows[0].rank == 1
+        # Rank is intentionally None for the IFA scraper — the IFA list
+        # ranks players 1-50 within the international class only, NOT
+        # against the overall Top-100 prospect pool. Surfacing it would
+        # let a #1 IFA (real FV ~55) inherit a Top-100 #1 rank-implied
+        # FV ~70 through the consensus engine.
+        assert rows[0].rank is None
         assert rows[0].position == "SS"
         assert rows[0].org is None

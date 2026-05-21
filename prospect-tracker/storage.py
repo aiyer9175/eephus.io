@@ -1852,17 +1852,118 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     def _latest_post_graduation_org(p: PlayerTimeseries,
                                     filtered_trades: list[dict]) -> str | None:
+        """Pick the org a graduate is currently on by walking every
+        post-graduation move on record.
+
+        Today's bug surfaced via Otto Lopez: he was traded TOR → SFG on
+        2024-02-13 (a real bilateral trade), then DFA'd by SFG on
+        2024-04-01, then claimed off waivers by MIA on 2024-04-04. The
+        waiver claim is on `p.transactions[]`, NOT `filtered_trades`
+        (which only carries bilateral trades). Looking at trades alone
+        returned SFG — leaving Otto on the Giants in the UI when he was
+        actually a Marlin.
+
+        Fix: union the post-grad cross-org events from BOTH sources,
+        sort by date, take the latest. Then collapse short bounce chains
+        — if the latest event came from an intermediate org the player
+        only briefly belonged to (< 90 days), surface the stable origin
+        instead. Otto's chain becomes TOR → MIA rather than SFG → MIA.
+        """
         grad = _display_graduation_date(p) or p.graduation_date
         if not grad:
             return None
-        post_grad = [
-            t for t in filtered_trades
-            if (t.get("trade_date") or "") > grad and t.get("to_org")
-        ]
-        if not post_grad:
+        events: list[tuple[str, str, str]] = []  # (date, from_org, to_org)
+        for t in filtered_trades or []:
+            d = t.get("trade_date") or ""
+            if d > grad and t.get("to_org"):
+                events.append((d, t.get("from_org") or "", t.get("to_org")))
+        cross_org_kinds = ("rule_5_return", "waiver_claim",
+                           "contract_purchase", "signed_free_agent",
+                           "rule_5", "waiver")
+        tx_rows = (transactions_by_player or {}).get(p.player_key) or []
+        for tx in tx_rows:
+            kind = tx.get("kind")
+            if kind not in cross_org_kinds:
+                continue
+            d = tx.get("date") or ""
+            if d <= grad:
+                continue
+            to_code = (canonical_org(tx.get("to_team_name"))
+                       or canonical_org(tx.get("to_team")))
+            from_code = (canonical_org(tx.get("from_team_name"))
+                         or canonical_org(tx.get("from_team")))
+            if not to_code or to_code == from_code:
+                continue
+            if to_code not in _MLB_ORG_CODES_FOR_OVERRIDE:
+                continue
+            events.append((d, from_code or "", to_code))
+        if not events:
             return None
-        latest = max(post_grad, key=lambda t: t.get("trade_date") or "")
-        return latest.get("to_org")
+        events.sort()  # latest is last
+        return events[-1][2]
+
+    # Bounce-chain collapse window — when a player passes through a
+    # short-tenure intermediate org en route to their current home, we
+    # roll the org-change message up to the stable prior org. 90 days
+    # captures DFA→trade→DFA→waiver chains without lumping in a real
+    # half-season stint at the intermediate club.
+    _BOUNCE_WINDOW_DAYS = 90
+
+    def _collapse_bounce_chain(latest_event: dict | None,
+                               all_events: list[dict]) -> dict | None:
+        """Walk backward from `latest_event` through events where the
+        chosen `from_org` was itself acquired by that org within
+        _BOUNCE_WINDOW_DAYS earlier. Returns a copy of `latest_event`
+        with `from_org` replaced by the stable origin (and a
+        `bounce_via` list recording the skipped intermediaries with
+        their durations) — or the original event if no collapse fires.
+        """
+        from datetime import date as _date
+        if not latest_event:
+            return latest_event
+        events = sorted(
+            [e for e in (all_events or []) if e.get("date") and e.get("to_org")],
+            key=lambda e: e["date"],
+        )
+        cur = dict(latest_event)
+        bounce_via: list[dict] = []
+        max_loops = 5  # cheap safety against pathological data
+        while max_loops:
+            max_loops -= 1
+            from_org = cur.get("from_org")
+            if not from_org:
+                break
+            # Find the most recent earlier event where the player ARRIVED
+            # at `from_org`. If that arrival date is < window days before
+            # `cur.date`, the from_org was a brief stopover — collapse.
+            cur_d = cur.get("date") or ""
+            try:
+                cur_dt = _date.fromisoformat(cur_d)
+            except (TypeError, ValueError):
+                break
+            prior = None
+            for e in events:
+                if (e.get("to_org") == from_org
+                        and e.get("date") and e["date"] < cur_d):
+                    prior = e  # iterate forward so last match wins
+            if not prior:
+                break
+            try:
+                prior_dt = _date.fromisoformat(prior["date"])
+            except (TypeError, ValueError):
+                break
+            gap_days = (cur_dt - prior_dt).days
+            if gap_days >= _BOUNCE_WINDOW_DAYS:
+                break  # this from_org was a real tenure, stop walking
+            bounce_via.append({
+                "org": from_org,
+                "days": gap_days,
+                "arrived": prior["date"],
+            })
+            cur["from_org"] = prior.get("from_org") or ""
+        if bounce_via:
+            cur["bounce_via"] = bounce_via
+        return cur
 
     # Static allowlist of MLB 3-letter org codes used to gate the
     # transaction-based org override. `canonical_org()` passes through
@@ -2175,21 +2276,84 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
         filtered_trades = _filter_real_trades(trades_by_player.get(p.player_key, []))
         acq = acquisitions.get(p.player_key)
-        current_acq_method = _classify_current_acquisition(filtered_trades, acq)
+        # Build the unified post-acquisition event list: real trades +
+        # cross-org transactions (waivers, Rule 5, contract purchases,
+        # FA signings). Sorted by date so [-1] is the latest. Each entry
+        # carries a `kind` so the method classifier can prefer the
+        # transaction-derived label over verb-matching the trade
+        # description when there's a more recent non-trade event.
+        _all_acq_events: list[dict] = []
+        for t in filtered_trades:
+            _all_acq_events.append({
+                "kind": "trade",
+                "date": t.get("trade_date"),
+                "from_org": t.get("from_org"),
+                "to_org": t.get("to_org"),
+                "description": t.get("description"),
+            })
+        _cross_org_tx_kinds = ("rule_5_return", "waiver_claim",
+                               "contract_purchase", "signed_free_agent",
+                               "rule_5", "waiver")
+        _tx_method_map = {
+            "waiver_claim": "waiver", "waiver": "waiver",
+            "rule_5": "rule_5", "rule_5_return": "rule_5",
+            "contract_purchase": "contract_purchase",
+            "signed_free_agent": "free_agent",
+        }
+        for tx in (transactions_by_player or {}).get(p.player_key, []):
+            kind = tx.get("kind")
+            if kind not in _cross_org_tx_kinds:
+                continue
+            to_code = (canonical_org(tx.get("to_team_name"))
+                       or canonical_org(tx.get("to_team")))
+            from_code = (canonical_org(tx.get("from_team_name"))
+                         or canonical_org(tx.get("from_team")))
+            if not to_code or to_code == from_code:
+                continue
+            if to_code not in _MLB_ORG_CODES_FOR_OVERRIDE:
+                continue
+            _all_acq_events.append({
+                "kind": _tx_method_map.get(kind, "trade"),
+                "date": tx.get("date"),
+                "from_org": from_code,
+                "to_org": to_code,
+                "description": tx.get("description"),
+            })
+        _all_acq_events.sort(key=lambda e: e.get("date") or "")
+
+        # Classify method from the latest unified event when available
+        # (catches waiver-then-no-trade cases like Otto Lopez), otherwise
+        # fall back to the original trade-only classifier for backwards
+        # compatibility with the rest of the pipeline.
+        if _all_acq_events:
+            latest_acq = _all_acq_events[-1]
+            if latest_acq["kind"] != "trade":
+                current_acq_method = latest_acq["kind"]
+            else:
+                current_acq_method = _classify_current_acquisition(filtered_trades, acq)
+        else:
+            current_acq_method = _classify_current_acquisition(filtered_trades, acq)
+
         display_org = _display_org(p, filtered_trades)
-        # Surface the specific trade that brought them to their current
-        # org (when applicable). The detail page shows it as the
-        # "Acquired by <ORG>" line; filters key on `method` only.
+        # Surface the specific event that brought them to their current
+        # org. Picks the latest from the unified events list (trade or
+        # transaction), then runs the result through _collapse_bounce_chain
+        # so short-tenure intermediates (e.g., Otto Lopez's 51-day SFG
+        # stopover en route from TOR to MIA) get rolled up to the
+        # stable prior org. The full bounce path is preserved on
+        # `bounce_via` for the detail-page tooltip.
         current_acq_event = None
-        if current_acq_method not in ("draft", "international_fa", "unknown"):
-            latest = max(filtered_trades, key=lambda t: t.get("trade_date") or "") if filtered_trades else None
-            if latest:
-                current_acq_event = {
-                    "date":        latest.get("trade_date"),
-                    "from_org":    latest.get("from_org"),
-                    "to_org":      latest.get("to_org"),
-                    "description": latest.get("description"),
-                }
+        if current_acq_method not in ("draft", "international_fa", "unknown") and _all_acq_events:
+            latest_event = _all_acq_events[-1]
+            collapsed = _collapse_bounce_chain(latest_event, _all_acq_events)
+            current_acq_event = {
+                "date":        collapsed.get("date"),
+                "from_org":    collapsed.get("from_org"),
+                "to_org":      collapsed.get("to_org"),
+                "description": collapsed.get("description"),
+            }
+            if collapsed.get("bounce_via"):
+                current_acq_event["bounce_via"] = collapsed["bounce_via"]
         # mlbam_id at top-level so every consumer (UI headshot, link to
         # MLB.com, etc.) can read it without digging into the statline —
         # graduates / inactives sometimes lack a current-season statline

@@ -128,6 +128,95 @@
                     "SF Mono", Menlo, Consolas, monospace;
     }
 
+    /* === Dark theme =================================================
+       Layered over the light :root palette via `[data-theme="dark"]`
+       attribute on <html>. The toggle (top-right header) flips the
+       attribute and persists the choice in localStorage. On boot we
+       respect prefers-color-scheme when no stored preference exists.
+       Variable names are unchanged so the ~1000 inline `var(--*)`
+       references throughout the JS render functions keep working —
+       only the values shift. */
+    [data-theme="dark"] {
+      --bg-primary:       #0F1B2D;   /* deep navy page */
+      --bg-secondary:     #15243B;   /* card surface  */
+      --bg-tertiary:      #1C2D49;   /* alt rows      */
+      --bg-header:        #0B1422;   /* header band   */
+      --text-primary:     #F4F0E6;   /* paper cream   */
+      --text-secondary:   #B8B6AC;   /* warm gray     */
+      --text-tertiary:    #7C8089;   /* muted slate   */
+      --border:           #2A3851;
+      --border-light:     #1F2A40;
+
+      /* Accent hues — slightly lifted for dark backgrounds so the
+         eye still picks them out. The variable NAMES match the light
+         theme; only the values shift. */
+      --neon-green:       #4ECB6A;
+      --neon-magenta:     #F26B6B;
+      --neon-cyan:        #7CC4F0;
+      --neon-amber:       #F0C040;
+      --neon-violet:      #A688E2;
+
+      --up:    #4ECB6A;
+      --down:  #F26B6B;
+      --grad:  #A688E2;
+
+      /* FV badges — keep the same warm-to-cool gradient (the gold/orange
+         elite tiers read beautifully against navy). Bump the lower-tier
+         `fg` to a lighter shade so labels stay legible on the muted
+         backgrounds. */
+      --fv-80-bg: #FFE08A;  --fv-80-fg: #6B3D00;  --fv-80-bd: #C9962A;
+      --fv-75-bg: #FCC773;  --fv-75-fg: #6E3508;  --fv-75-bd: #C97A1B;
+      --fv-70-bg: #F4AB60;  --fv-70-fg: #6C2509;  --fv-70-bd: #B85419;
+      --fv-65-bg: #E89058;  --fv-65-fg: #631F0C;  --fv-65-bd: #A77418;
+      --fv-60-bg: #D9B07A;  --fv-60-fg: #523812;  --fv-60-bd: #8E7232;
+      --fv-55-bg: #B8A37D;  --fv-55-fg: #2A2010;  --fv-55-bd: #806E48;
+      --fv-50-bg: #9A9078;  --fv-50-fg: #1E1A10;  --fv-50-bd: #6E6852;
+      --fv-45-bg: #807760;  --fv-45-fg: #F4F0E6;  --fv-45-bd: #6B675A;
+      --fv-40-bg: #5E5847;  --fv-40-fg: #F4F0E6;  --fv-40-bd: #686358;
+      --fv-35-bg: #4D483D;  --fv-35-fg: #DDD9CB;  --fv-35-bd: #645F55;
+      --fv-30-bg: #3E3A33;  --fv-30-fg: #C6C2B5;  --fv-30-bd: #5F5A50;
+      --fv-25-bg: #322F2A;  --fv-25-fg: #B0ACA0;  --fv-25-bd: #5A554B;
+      --fv-20-bg: #28252F;  --fv-20-fg: #A09C90;  --fv-20-bd: #555047;
+
+      --level-very-young-bg: #1C3A20;  --level-very-young-fg: #B8E5BA;
+      --level-young-bg:      #1A3247;  --level-young-fg:      #B0D4F0;
+      --level-neutral-bg:    var(--bg-tertiary);
+                             --level-neutral-fg: var(--text-secondary);
+      --level-old-bg:        #4A3A18;  --level-old-fg:        #F4D88A;
+      --level-too-old-bg:    #4A1E1A;  --level-too-old-fg:    #F4ADAA;
+      --level-mlb-bg:        #FBF8F0;  --level-mlb-fg:        #0E2B4D;
+
+      --accent-tj-soft:        rgba(166, 136, 226, 0.22);
+      --accent-tj-border:      rgba(166, 136, 226, 0.60);
+      --accent-il-soft:        rgba(240, 192, 64, 0.18);
+      --accent-il-border:      rgba(240, 192, 64, 0.55);
+
+      --org-color: #7CC4F0;
+      --org-color-soft: rgba(124, 196, 240, 0.10);
+
+      --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.30), 0 1px 2px rgba(0, 0, 0, 0.20);
+      --shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(124, 196, 240, 0.18);
+    }
+
+    /* Theme toggle button — small icon-only pill in the top-right
+       header bar. Sun glyph in dark mode (click to go light), moon
+       glyph in light mode (click to go dark). Active state is implicit
+       in which glyph shows. */
+    #theme-toggle {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    #theme-toggle:hover { background: var(--bg-tertiary); border-color: var(--text-tertiary); }
+
     /* === Base ===================================================== */
     * { box-sizing: border-box; }
     body {
@@ -562,18 +651,31 @@
       vertical-align: middle;
       cursor: help;
     }
-    .fv-confidence-chip.is-wide {
-      font-size: 10.5px;
+    /* Wide-FV-spread indicator — instead of a separate chip that warps
+       the row's line-height, we outline the FV badge in violet and tuck
+       a small "W" mark in the top-right corner. The badge's outer
+       dimensions stay the same (outline doesn't take layout space the
+       way border does), so adjacent badges/pills stay aligned. */
+    .fv-badge.is-wide {
+      outline: 2px solid var(--neon-violet);
+      outline-offset: 1px;
+      position: relative;
+      overflow: visible;
+    }
+    .fv-badge.is-wide::after {
+      content: "W";
+      position: absolute;
+      top: -5px; right: -7px;
+      font-family: var(--font-mono);
+      font-size: 8.5px;
       font-weight: 800;
-      letter-spacing: 0.06em;
-      padding: 2px 7px;
-      border-style: solid;
-      border-width: 1.5px;
-      border-color: var(--neon-violet);
       color: #fff;
       background: var(--neon-violet);
-      text-transform: uppercase;
-      box-shadow: 0 0 0 1px rgba(107, 79, 168, 0.20);
+      border-radius: 999px;
+      padding: 0 4px;
+      line-height: 1.4;
+      letter-spacing: 0;
+      pointer-events: none;
     }
 
     /* Row tag pills — shared shape for the flag counter, health,
@@ -599,9 +701,34 @@
     }
     .row-tag .flag-up   { color: var(--up); }
     .row-tag .flag-down { color: var(--down); }
+    /* Health chip — graduated levels from "clean" up through "On IL".
+       Each level has a distinct color so a scout can read severity at
+       a glance: Healthy (silent), Watch (soft amber), Chronic (saturated
+       amber), Post-TJ (lighter red), On IL (saturated red). Each chip
+       leads with a small colored dot for emphasis (set via CSS ::before
+       so the JS just passes a class name). */
     .row-tag.health-il      { color: var(--down);       border-color: var(--down);       background: rgba(185,28,28,0.14); }
     .row-tag.health-tj      { color: var(--down);       border-color: var(--down);       background: rgba(185,28,28,0.08); }
     .row-tag.health-chronic { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.10); }
+    .row-tag.health-watch   { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.05); }
+    .row-tag.health-healthy { color: var(--up);         border-color: var(--up);         background: rgba(31,122,58,0.08); }
+    .row-tag.health-il::before,
+    .row-tag.health-tj::before,
+    .row-tag.health-chronic::before,
+    .row-tag.health-watch::before,
+    .row-tag.health-healthy::before {
+      content: "";
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      margin-right: 4px;
+      flex: 0 0 auto;
+    }
+    .row-tag.health-il::before      { background: var(--down); }
+    .row-tag.health-tj::before      { background: var(--down); opacity: 0.7; }
+    .row-tag.health-chronic::before { background: var(--neon-amber); }
+    .row-tag.health-watch::before   { background: var(--neon-amber); opacity: 0.6; }
+    .row-tag.health-healthy::before { background: var(--up); }
     .row-tag.acq-trade      { color: var(--neon-cyan);  border-color: var(--neon-cyan);  background: rgba(74,200,224,0.10); }
     .row-tag.acq-rule5,
     .row-tag.acq-waiver     { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.06); }
@@ -809,11 +936,15 @@
       font-size: 14px; font-weight: 700;
       font-variant-numeric: tabular-nums;
     }
-    .eta-now      { color: var(--neon-green); }
-    .eta-near     { color: var(--neon-green); }
+    /* ETA heat ramp — distinct hue per year out from today so 2026 and
+       2027 don't read as the same "green". Forest-green bold for
+       current-year (anchors as 'ready now'); softer leaf-green for +1;
+       cyan/gold/orange for +2/+3/+4; gray once we're 5+ years out. */
+    .eta-now      { color: var(--neon-green); font-weight: 700; }
+    .eta-near     { color: #4FA64A; }
     .eta-close    { color: var(--neon-cyan); }
     .eta-mid      { color: var(--neon-amber); }
-    .eta-far      { color: var(--neon-magenta); }
+    .eta-far      { color: #C97A1B; }
     .eta-very-far { color: var(--text-tertiary); }
 
     /* === Detail panel ============================================= */
@@ -2008,106 +2139,140 @@
        Cards inside a column are sorted FV desc; tier dividers separate
        the 50+, 40-tier, and sub-40 groups so a reader can pick up the
        prospect "spine" at a glance. */
+    /* Row-per-position layout — the depth chart reads left-to-right
+       within each position (top prospects first). One row per position
+       instead of the previous 10-column grid that produced very tall
+       columns and hid scout-relevant signals. By default we show the
+       top 5 cards per row; an inline "show all (N)" chip reveals the
+       overflow when the user wants the full depth. */
     .pos-depth-grid {
       display: grid;
-      grid-template-columns: repeat(10, minmax(0, 1fr));
-      gap: 6px;
+      grid-template-columns: 56px 1fr auto;
+      column-gap: 12px;
+      row-gap: 6px;
       margin-top: 8px;
     }
-    .pos-depth-col {
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-sm);
-      padding: 8px;
-      min-height: 60px;
-    }
-    .pos-depth-col-head {
+    .pos-depth-row-label {
       font-family: var(--font-sans);
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--text-tertiary);
-      text-align: center;
-      padding-bottom: 4px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 6px;
+      align-self: center;
+      text-align: right;
+      padding-right: 4px;
+      border-right: 1px solid var(--border-light);
     }
-    .pos-depth-col-count {
+    .pos-depth-row-label .pos-count {
+      display: block;
       font-family: var(--font-mono);
       font-size: 9px;
-      color: var(--text-secondary);
       font-weight: 400;
+      color: var(--text-tertiary);
+      letter-spacing: 0;
+      text-transform: none;
+      margin-top: 1px;
     }
-    .pos-depth-tier-sep {
-      height: 0;
-      border-top: 1px dashed var(--border);
-      margin: 4px 2px 4px;
-      opacity: 0.6;
+    .pos-depth-row-prospects {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      min-width: 0;
+      align-items: center;
+    }
+    .pos-depth-row-prospects > .pos-depth-card.is-overflow { display: none; }
+    .pos-depth-row.is-expanded .pos-depth-row-prospects > .pos-depth-card.is-overflow {
+      display: inline-flex;
+    }
+    .pos-depth-row-expand {
+      align-self: center;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      background: transparent;
+      border: 1px solid var(--border-light);
+      border-radius: 999px;
+      padding: 2px 8px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .pos-depth-row-expand:hover { color: var(--text-primary); border-color: var(--border); }
+    .pos-depth-row.is-expanded .pos-depth-row-expand { color: var(--neon-cyan); border-color: var(--neon-cyan); }
+    .pos-depth-row.is-empty .pos-depth-row-prospects {
+      color: var(--text-tertiary); font-size: 11px; font-style: italic;
     }
     .pos-depth-card {
-      font-family: var(--font-sans);
-      font-size: 11px;
-      padding: 5px 7px;
-      margin-bottom: 4px;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 8px;
       background: var(--bg-secondary);
       border: 1px solid var(--border-light);
       border-left: 3px solid var(--org-color, var(--bg-header));
-      border-radius: 2px;
-      cursor: pointer;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      grid-template-rows: auto auto;
-      column-gap: 6px;
-      row-gap: 1px;
-      align-items: center;
+      border-radius: 3px;
+      font-family: var(--font-sans);
+      font-size: 11px;
       line-height: 1.2;
+      cursor: pointer;
+      white-space: nowrap;
+      max-width: 100%;
     }
     .pos-depth-card:hover { background: var(--bg-primary); }
     .pos-depth-card .pdc-name {
-      overflow: hidden;
       font-weight: 600; color: var(--text-primary);
-      grid-column: 1; grid-row: 1;
-      min-width: 0;
-      line-height: 1.15;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      word-break: break-word;
+      max-width: 110px;
+      overflow: hidden; text-overflow: ellipsis;
     }
-    .pos-depth-card .pdc-fv {
-      grid-column: 2; grid-row: 1 / span 2;
-      align-self: center;
-      flex-shrink: 0;
-    }
+    .pos-depth-card .pdc-fv { flex-shrink: 0; }
     .pos-depth-card .pdc-sub {
-      grid-column: 1; grid-row: 2;
       font-family: var(--font-mono);
       font-size: 9px;
       color: var(--text-tertiary);
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.04em;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .pos-depth-card .pdc-pos {
       color: var(--neon-cyan);
       font-weight: 600;
-      margin-right: 4px;
     }
     .pos-depth-card .pdc-eta {
-      margin-left: 4px;
       font-family: var(--font-mono);
       font-weight: 600;
-      letter-spacing: 0;
     }
-    @media (max-width: 1400px) {
-      .pos-depth-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .pos-depth-card .pdc-icons {
+      display: inline-flex; align-items: center; gap: 3px;
+      margin-left: 2px;
     }
+    .pos-depth-card .pdc-age-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      display: inline-block;
+    }
+    .pos-depth-card .pdc-age-dot.dot-young { background: var(--up); }
+    .pos-depth-card .pdc-age-dot.dot-old   { background: var(--down); }
+    .pos-depth-card .pdc-age-dot.dot-neutral { background: var(--text-tertiary); opacity: 0.6; }
+    .pos-depth-card .pdc-health {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 14px; height: 14px; border-radius: 50%;
+      font-size: 8px; font-weight: 800; letter-spacing: 0;
+      line-height: 1;
+    }
+    .pos-depth-card .pdc-health.h-il { background: var(--down); color: #fff; }
+    .pos-depth-card .pdc-health.h-tj { background: var(--down); color: #fff; opacity: 0.7; }
+    .pos-depth-card .pdc-health.h-chronic { background: var(--neon-amber); color: #fff; }
+    .pos-depth-card .pdc-acq {
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      letter-spacing: 0.02em;
+      color: var(--text-tertiary);
+      padding: 0 4px;
+      border-radius: 999px;
+      border: 1px solid var(--border-light);
+    }
+    .pos-depth-card .pdc-acq.acq-trade  { color: var(--neon-cyan); border-color: var(--neon-cyan); }
+    .pos-depth-card .pdc-acq.acq-ifa    { color: var(--neon-amber); border-color: var(--neon-amber); }
+    .pos-depth-card .pdc-acq.acq-rule5,
+    .pos-depth-card .pdc-acq.acq-waiver { color: var(--neon-violet); border-color: var(--neon-violet); }
     @media (max-width: 900px) {
-      .pos-depth-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
-    }
-    @media (max-width: 600px) {
-      .pos-depth-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .pos-depth-grid { grid-template-columns: 48px 1fr; }
+      .pos-depth-row-expand { grid-column: 2 / -1; justify-self: start; margin-top: 2px; }
+      .pos-depth-card .pdc-name { max-width: 90px; }
     }
 
     /* === Comparison cart =========================================== */
@@ -2692,6 +2857,9 @@
     <button class="compare-toggle is-empty-hidden" id="compare-toggle" type="button" aria-label="Open compare panel" title="Open compare panel (c)">
       <span>Compare</span><span class="compare-count" id="compare-count">0</span>
     </button>
+    <button id="theme-toggle" type="button" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
+      <span class="theme-icon">☾</span>
+    </button>
   </div>
 
   <div class="search-bar">
@@ -2856,30 +3024,34 @@
 
   <div id="farm-section" style="display:none;">
     <div class="filter-bar" id="farm-sort-bar" style="flex-wrap:wrap;gap:6px;">
-      <span class="filter-label">Sort by</span>
-      <button class="chip active" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% graduation pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
-      <button class="chip" data-farm-sort="top_end" title="Tiered-FV sum of the org's top 5 prospects — an 80 is worth ~100x a 40">Top-end</button>
-      <button class="chip" data-farm-sort="depth" title="Tiered-FV sum of prospects #6-25">Depth</button>
-      <!-- Single Trajectory chip — sorts by DvM+ for whichever window
-           is selected in the right-hand "Development window" picker, so
-           three chips (one per window) would just duplicate that control. -->
-      <button class="chip" data-farm-sort="trajectory"
-              title="Sort by DvM+ for the currently selected development window (1y / 3y / 5y, picked on the right). Acquisitions + graduations are nullified — pure development of prospects already in the system.">Trajectory (DvM+)</button>
-      <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted graduations in the trailing 12 months">Grad pipeline</button>
-      <button class="chip" data-farm-sort="ifa_spend" title="International FA bonus dollars committed over the trailing 3 years (Spotrac)">IFA spend (3yr)</button>
-      <button class="chip" data-farm-sort="total_fv">Total FV</button>
-      <button class="chip" data-farm-sort="count">Count</button>
-      <button class="chip" data-farm-sort="tier_60">60+ prospects</button>
-      <button class="chip" data-farm-sort="avg_age">Youngest system</button>
-      <button class="chip" data-farm-sort="stock_up">Rising prospects</button>
-      <span class="filter-label" style="margin-left:10px;">Depth at level</span>
-      <button class="chip" data-farm-sort="level_AAA">AAA</button>
-      <button class="chip" data-farm-sort="level_AA">AA</button>
-      <button class="chip" data-farm-sort="level_A+">A+</button>
-      <button class="chip" data-farm-sort="level_A">A</button>
-      <button class="chip" data-farm-sort="level_CPX">CPX</button>
-      <button class="chip" data-farm-sort="level_DSL">DSL</button>
-      <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <div class="filter-group">
+        <span class="filter-label">Sort by</span>
+        <button class="chip active" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% graduation pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
+        <button class="chip" data-farm-sort="top_end" title="Tiered-FV sum of the org's top 5 prospects — an 80 is worth ~100x a 40">Top-end</button>
+        <button class="chip" data-farm-sort="depth" title="Tiered-FV sum of prospects #6-25">Depth</button>
+        <!-- Single Trajectory chip — sorts by DvM+ for whichever window
+             is selected in the right-hand "Development window" picker, so
+             three chips (one per window) would just duplicate that control. -->
+        <button class="chip" data-farm-sort="trajectory"
+                title="Sort by DvM+ for the currently selected development window (1y / 3y / 5y, picked on the right). Acquisitions + graduations are nullified — pure development of prospects already in the system.">Trajectory (DvM+)</button>
+        <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted graduations in the trailing 12 months">Grad pipeline</button>
+        <button class="chip" data-farm-sort="ifa_spend" title="International FA bonus dollars committed over the trailing 3 years (Spotrac)">IFA spend (3yr)</button>
+        <button class="chip" data-farm-sort="total_fv">Total FV</button>
+        <button class="chip" data-farm-sort="count">Count</button>
+        <button class="chip" data-farm-sort="tier_60">60+ prospects</button>
+        <button class="chip" data-farm-sort="avg_age">Youngest system</button>
+        <button class="chip" data-farm-sort="stock_up">Rising prospects</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Depth at level</span>
+        <button class="chip" data-farm-sort="level_AAA">AAA</button>
+        <button class="chip" data-farm-sort="level_AA">AA</button>
+        <button class="chip" data-farm-sort="level_A+">A+</button>
+        <button class="chip" data-farm-sort="level_A">A</button>
+        <button class="chip" data-farm-sort="level_CPX">CPX</button>
+        <button class="chip" data-farm-sort="level_DSL">DSL</button>
+      </div>
+      <div class="filter-group" style="margin-left:auto;">
         <span class="filter-label" title="Window used by the development sparkline + Trajectory sort. The line shows each org's prospect FV growth above (or below) the league mean over the same window, with incoming acquisitions (trades, draft, IFA) excluded so only true development counts.">Development window</span>
         <button class="chip"        data-form-window="1y">1y</button>
         <button class="chip active" data-form-window="3y">3y</button>
@@ -2978,6 +3150,22 @@
 
 <script>
 // =============================================================================
+// THEME INIT (runs synchronously before any content paints)
+// =============================================================================
+// Resolve preference: localStorage > prefers-color-scheme > "light" default.
+// Setting the attribute on <html> synchronously avoids a flash of the wrong
+// theme — CSS variables under [data-theme="dark"] take effect immediately.
+// =============================================================================
+(function initTheme() {
+  let stored = null;
+  try { stored = localStorage.getItem("prospect-tracker.theme"); } catch (_) {}
+  const sysDark = window.matchMedia
+    && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const theme = stored || (sysDark ? "dark" : "light");
+  document.documentElement.setAttribute("data-theme", theme);
+})();
+
+// =============================================================================
 // CONFIG
 // =============================================================================
 // If your timeseries.json lives at a different path (or on a different host),
@@ -2985,6 +3173,32 @@
 // work for CDN/cross-origin hosts (CORS must be configured on that host).
 // =============================================================================
 const DATA_URL = "data/timeseries.json";
+
+// Sync the theme toggle's icon + wire its click handler. Called after the
+// main template mounts so the #theme-toggle element exists. The icon
+// flips between ☾ (currently light, click to go dark) and ☀ (currently
+// dark, click to go light) so users always see the destination state.
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  const btn = document.getElementById("theme-toggle");
+  if (btn) {
+    const icon = btn.querySelector(".theme-icon");
+    if (icon) icon.textContent = theme === "dark" ? "☀" : "☾";
+    btn.title = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
+  }
+}
+function wireThemeToggle() {
+  const btn = document.getElementById("theme-toggle");
+  if (!btn) return;
+  // Sync the icon to the current theme right away.
+  applyTheme(document.documentElement.getAttribute("data-theme") || "light");
+  btn.addEventListener("click", () => {
+    const cur = document.documentElement.getAttribute("data-theme") || "light";
+    const next = cur === "dark" ? "light" : "dark";
+    try { localStorage.setItem("prospect-tracker.theme", next); } catch (_) {}
+    applyTheme(next);
+  });
+}
 
 // =============================================================================
 // LOAD DATA
@@ -3102,13 +3316,11 @@ function fvBadgeTooltip(player) {
   return parts.join("\n");
 }
 
-// Confidence indicator — fires next to the FV badge for two
-// data-quality cases:
-//   * 1 src  — exactly one source published an explicit FV (the
-//              consensus is the FV-35 single-source pull-down).
-//   * wide ±N — ≥2 sources disagree by ≥10 grade points (the consensus
-//               is the mean but scouts disagree wildly on this player).
-// The two are mutually exclusive (no spread possible with 1 source).
+// Confidence indicator — fires next to the FV badge for the
+// single-source case only. Wide-spread is handled separately via
+// `fvBadgeWideClass(p)` which adds the `.is-wide` class directly to
+// the FV badge (purple outline + small W mark) so it doesn't warp
+// the row's line-height.
 // Source count comes from the canonical avg_fv_n field; falls back to
 // recounting per_source for cached payloads that pre-date the export.
 function fvBadgeConfidence(player) {
@@ -3121,10 +3333,18 @@ function fvBadgeConfidence(player) {
   if (n === 1) {
     return `<span class="fv-confidence-chip" title="Single-source grade — pulled down 1/3 of the way toward FV 35 (Bayesian shrinkage, k=0.5) to reflect 1-source uncertainty. Add a second source to remove the pull.">1 src</span>`;
   }
-  if (last.fv_spread != null && last.fv_spread >= 10) {
-    const sp = Math.round(last.fv_spread);
-    return `<span class="fv-confidence-chip is-wide" title="Wide source disagreement — sources differ by ${last.fv_spread.toFixed(1)} grade points across ${n} sources. Open the player detail page for the per-source breakdown.">wide ±${sp}</span>`;
-  }
+  return "";
+}
+
+// Returns " is-wide" when the player has ≥2 sources disagreeing by
+// ≥10 grade points. Callers append the return value to the FV badge's
+// class list. Result: purple outline + small W in the corner via CSS,
+// no layout shift. Empty string for prospects with no wide-spread.
+function fvBadgeWideClass(player) {
+  const pts = player && player.points;
+  const last = pts && pts.length ? pts[pts.length - 1] : null;
+  if (!last) return "";
+  if (last.fv_spread != null && last.fv_spread >= 10) return " is-wide";
   return "";
 }
 
@@ -3178,6 +3398,11 @@ function flagCounterPillHTML(p) {
 // Mutually exclusive — only one chip ever shows per row. Healthy
 // prospects render nothing.
 function healthBadgeHTML(p) {
+  // Severity tiers (top-down): On IL > Post-TJ > Chronic > Watch > Healthy.
+  // Each tier renders a chip with a colored dot prefix and a distinct
+  // background so a scout can read severity at a glance. Healthy is
+  // also surfaced (small green chip) so the absence of a chip never
+  // means "we don't know" — it always means "no health data on file".
   const il = p.il_status || {};
   if (il.is_on_il) {
     const days = il.days_on_il;
@@ -3192,7 +3417,17 @@ function healthBadgeHTML(p) {
   const stints = hp.il_stints_24mo || 0;
   const ildays = hp.il_days_24mo || 0;
   if (stints >= 3 || ildays >= 200) {
-    return `<span class="row-tag health-chronic" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 24 months">Chronic</span>`;
+    return `<span class="row-tag health-chronic" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 24 months — high recurrence">Chronic</span>`;
+  }
+  if (stints >= 1 || ildays >= 30) {
+    return `<span class="row-tag health-watch" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 24 months — minor injury history">Watch</span>`;
+  }
+  // No reported IL activity in the past 24 months — surface explicitly
+  // as "Healthy" so the lack of a chip doesn't get confused with missing
+  // data. Only fires when we have an `health_profile` object on the
+  // record at all; pre-injury-tracking inactives stay silent.
+  if (hp && Object.keys(hp).length) {
+    return `<span class="row-tag health-healthy" title="No IL activity in the past 24 months">Healthy</span>`;
   }
   return "";
 }
@@ -4167,9 +4402,15 @@ function makeMilbCell(p) {
   // RPS+ pill takes the slot where the age-vs-level chip used to live.
   // Falls back to "RPS+ —" when the player doesn't have enough volume
   // yet (15+ games / 15+ IP), so the cell never goes blank.
+  // For MLB-level prospects, rpsPlusPillHTML routes through
+  // mlbPerfPillHTML and returns the same wRC+/xFIP chip the headline
+  // already shows — duplicate. Skip the RPS+ pill in that case; the
+  // headline carries the league-relative read, and MiLB players keep
+  // the age-relative RPS+ alongside their level-relative OPS+/ERA-.
+  const supplementaryPill = sl.level === "MLB" ? "" : rpsPlusPillHTML(p);
   return `<div class="milb-cell milb-cell-wrap"${tipAttr}>
     <span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${headline}
-    ${rpsPlusPillHTML(p)}
+    ${supplementaryPill}
     <br/><span style="color: var(--text-primary);">${slashLine}</span>
     <br/><span style="color: var(--text-tertiary);">${detail}</span>
   </div>`;
@@ -4691,7 +4932,7 @@ function renderActives() {
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
           <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeConfidence(p)}</span>${fvTrendHTML(p)}</div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeConfidence(p)}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
         <div class="line-chart-cell">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
         ${makeMilbCell(p)}
@@ -4989,7 +5230,7 @@ function renderWatchlist() {
             </div>
             <button class="watch-btn is-in" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="Remove from watchlist">★</button>
           </div>
-          <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}${fvBadgeConfidence(p)}</span>${fvTrendHTML(p)}` : "—"}</div>
+          <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}">${latest.consensus_fv_label}${fvBadgeConfidence(p)}</span>${fvTrendHTML(p)}` : "—"}</div>
           <div class="rank-cell">${latest && latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
           <div class="line-chart-cell">${p.points && p.points.length >= 2 ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p) : ""}</div>
           ${makeMilbCell(p)}
@@ -5110,7 +5351,7 @@ function renderLeaderboards() {
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
         <div><span class="level-pill ${r.level === "MLB" ? "level-mlb" : "level-neutral"}">${escapeHtml(r.level || "—")}</span></div>
-        <div style="text-align:center;">${fvLabel !== "—" ? `<span class="fv-badge ${fvClass(String(fvLabel))}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+        <div style="text-align:center;">${fvLabel !== "—" ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div style="text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:700;color:var(--text-primary);">${cfg.fmt(v)}</div>
         <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${cfg.support(r)}</div>
       </div>`;
@@ -5208,7 +5449,7 @@ function renderInjured() {
         <div><span class="grad-pill" style="background:var(--accent-il-soft);color:var(--accent-il);border:1px solid var(--accent-il-border);">${escapeHtml(il.type || "?")} IL</span></div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12px;color:var(--text-secondary);">${escapeHtml(since || "—")}</div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;color:var(--neon-amber);font-weight:600;">${days}d</div>
-        <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+        <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.3;">${escapeHtml(reason)}</div>
       </div>`;
   }).join("");
@@ -5287,7 +5528,7 @@ function renderRecentlyTraded() {
           ${methodPill}
           <span style="font-size:11px;">${contextLine}</span>
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeConfidence(p)}</span>${fvTrendHTML(p)}</div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeConfidence(p)}</span>${fvTrendHTML(p)}</div>
         <div class="line-chart-cell desktop-only">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
         <div class="candle-cell desktop-only">${makeCandle(p)}</div>
       </div>
@@ -5329,12 +5570,15 @@ function fvExpectedWarPerYr(fv, isPitcher) {
 //   war_per_yr = (sum of WAR across MLB years)
 //              / (sum of season fractions across MLB years)
 //
-// where one "season fraction" is PA/600 for hitters (falling back to
-// AB×1.1/600 when PA is null) and IP/130 for pitchers — 130 IP is
-// a compromise between the textbook 162-IP starter qualifier and a
-// reliever full season (~60 IP), so multi-year relievers can still
-// qualify. Current year is INCLUDED — the PA-weighting already
-// downweights in-progress partial seasons naturally.
+// where one "season fraction" is the year's PA (or IP) divided by the
+// graduate's PERSONAL full-season denominator — the average of their
+// own qualifying full MLB seasons. A reliever's denominator might be
+// ~60 IP; a platoon hitter's might be ~400 PA; a workhorse starter's
+// might be ~180 IP. We fall back to a league-wide default (600 PA /
+// 130 IP) only when the player has no qualifying full season on file
+// yet (so a 50-PA-debut Ben Rice is still measured against 600, not
+// 50). Current year is INCLUDED — the PA-weighting already downweights
+// in-progress partial seasons naturally.
 //
 // Returns null (and the caller skips rendering) when total playing
 // time across the player's MLB career sums to less than 1.0 full
@@ -5343,12 +5587,50 @@ function fvExpectedWarPerYr(fv, isPitcher) {
 // a misleading number.
 //
 // Returns:
-//   { war_per_yr, war_seasons_count, war_total } | null
+//   { war_per_yr, war_seasons_count, war_total,
+//     denom, denom_unit, denom_source } | null
+//   where denom is the per-season denominator used, denom_unit is
+//   "PA" or "IP", and denom_source is "personal" or "default".
+function gradPersonalFullSeason(careerStats, isPitcher) {
+  // Threshold for "this is a full-season workload, not a debut stub":
+  // PA ≥ 300 for hitters, IP ≥ 50 for pitchers. Anything below feeds
+  // the player's career bucket but doesn't define their typical
+  // season — otherwise a 50-PA debut would calibrate the denominator
+  // to itself and the gate would trivially pass.
+  const FULL_THRESHOLD = isPitcher ? 50 : 300;
+  const FALLBACK = isPitcher ? 130 : 600;
+  const observed = [];
+  for (const row of (careerStats || [])) {
+    if ((row.level || "").toUpperCase() !== "MLB") continue;
+    let v = NaN;
+    if (isPitcher) {
+      const ip = Number(row.ip);
+      if (isFinite(ip) && ip > 0) v = ip;
+    } else {
+      const pa = Number(row.pa);
+      if (isFinite(pa) && pa > 0) v = pa;
+      else {
+        const ab = Number(row.ab);
+        if (isFinite(ab) && ab > 0) v = ab * 1.1;
+      }
+    }
+    if (isFinite(v) && v >= FULL_THRESHOLD) observed.push(v);
+  }
+  if (!observed.length) {
+    return { denom: FALLBACK, source: "default" };
+  }
+  const mean = observed.reduce((s, x) => s + x, 0) / observed.length;
+  return { denom: mean, source: "personal" };
+}
+
 function gradWarPerYr(g) {
   const cw = g.career_war || {};
   const seasons = cw.seasons || {};
   const careerStats = g.career_stats || [];
   const isPitcher = !!(g.sabermetrics && g.sabermetrics.is_pitcher);
+
+  const { denom, source: denomSource } = gradPersonalFullSeason(careerStats, isPitcher);
+  if (!isFinite(denom) || denom <= 0) return null;
 
   // Sum of season fractions per year — multiple MLB rows in one year
   // (e.g., mid-season trade) accumulate, then we match against
@@ -5358,20 +5640,22 @@ function gradWarPerYr(g) {
     if ((row.level || "").toUpperCase() !== "MLB") continue;
     const yr = parseInt(row.season, 10);
     if (isNaN(yr)) continue;
-    let frac = 0;
+    let raw = NaN;
     if (isPitcher) {
       const ip = Number(row.ip);
-      if (!isNaN(ip) && ip > 0) frac = ip / 130;
+      if (isFinite(ip) && ip > 0) raw = ip;
     } else {
       const pa = Number(row.pa);
-      if (!isNaN(pa) && pa > 0) {
-        frac = pa / 600;
-      } else {
+      if (isFinite(pa) && pa > 0) raw = pa;
+      else {
         const ab = Number(row.ab);
-        if (!isNaN(ab) && ab > 0) frac = (ab * 1.1) / 600;
+        if (isFinite(ab) && ab > 0) raw = ab * 1.1;
       }
     }
-    if (frac > 0) fracBySeason[yr] = (fracBySeason[yr] || 0) + frac;
+    if (isFinite(raw) && raw > 0) {
+      const frac = raw / denom;
+      fracBySeason[yr] = (fracBySeason[yr] || 0) + frac;
+    }
   }
 
   let totalWar = 0;
@@ -5389,13 +5673,17 @@ function gradWarPerYr(g) {
   }
   // Minimum-sample gate: require ≥1 full-season equivalent of
   // playing time before extrapolating a rate. Ben Rice with only a
-  // 50-PA debut (0.083 seasons) drops out; once he banks a real
-  // follow-up year the gate opens.
+  // 50-PA debut (50/600 ≈ 0.083 seasons under the default denom)
+  // drops out; once he banks a real follow-up year the gate opens
+  // AND his personal denominator can replace the default.
   if (count < 1 || totalFrac < 1.0) return null;
   return {
     war_per_yr: totalWar / totalFrac,
     war_seasons_count: count,
     war_total: totalWar,
+    denom: denom,
+    denom_unit: isPitcher ? "IP" : "PA",
+    denom_source: denomSource,
   };
 }
 
@@ -5516,8 +5804,11 @@ function renderGraduates() {
       const isPitcher = !!sm.is_pitcher;
       const expected = fvExpectedWarPerYr(g.fv_close_raw ?? g.fv_close, isPitcher);
       const r = gradWarPerYr(g);  // never null when wagDelta isn't
-      const denomNote = isPitcher ? "130 IP" : "600 PA";
-      const tip = `WAG ${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} — expected ${expected.toFixed(2)} WAR/yr at FV ${Math.round(g.fv_close)} (${isPitcher ? "pitcher" : "hitter"} table), actual ${r.war_per_yr.toFixed(2)} WAR/yr over ${r.war_seasons_count} MLB season${r.war_seasons_count === 1 ? "" : "s"} weighted by playing time (1 season = ${denomNote})`;
+      const denomFmt = isPitcher ? `${r.denom.toFixed(1)} IP` : `${Math.round(r.denom)} PA`;
+      const denomTag = r.denom_source === "personal"
+        ? `personal avg full season = ${denomFmt}`
+        : `league default = ${denomFmt}`;
+      const tip = `WAG ${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} — expected ${expected.toFixed(2)} WAR/yr at FV ${Math.round(g.fv_close)} (${isPitcher ? "pitcher" : "hitter"} table), actual ${r.war_per_yr.toFixed(2)} WAR/yr over ${r.war_seasons_count} MLB season${r.war_seasons_count === 1 ? "" : "s"} weighted by playing time (1 season = ${denomTag})`;
       const cls = wagDelta > 0.05 ? "is-pos" : wagDelta < -0.05 ? "is-neg" : "is-neutral";
       wagPill = `<span class="wag-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(tip)}">${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} WAG</span>`;
     }
@@ -5534,8 +5825,11 @@ function renderGraduates() {
     } else if (sortMode === "war_per_yr") {
       const r = gradWarPerYr(g);
       if (r) {
-        const denomNote = sm.is_pitcher ? "130 IP" : "600 PA";
-        warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="WAR/year — total MLB WAR ÷ ${r.war_seasons_count} season${r.war_seasons_count === 1 ? "" : "s"} weighted by playing time (1 season = ${denomNote}). Requires ≥1 full-season equivalent of MLB time.">${r.war_per_yr > 0 ? '+' : ''}${r.war_per_yr.toFixed(2)} WAR/yr</span>`;
+        const denomFmt = sm.is_pitcher ? `${r.denom.toFixed(1)} IP` : `${Math.round(r.denom)} PA`;
+        const denomTag = r.denom_source === "personal"
+          ? `personal avg full season = ${denomFmt}`
+          : `league default = ${denomFmt}`;
+        warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="WAR/year — total MLB WAR ÷ ${r.war_seasons_count} season${r.war_seasons_count === 1 ? "" : "s"} weighted by playing time (1 season = ${denomTag}). Requires ≥1 full-season equivalent of MLB time.">${r.war_per_yr > 0 ? '+' : ''}${r.war_per_yr.toFixed(2)} WAR/yr</span>`;
       }
     }
     return `
@@ -7469,6 +7763,86 @@ function makeArsenalRadar(pa) {
   </svg>`;
 }
 
+// Strike-zone heatmap — 3×3 inner grid (numbered 1-9 per the Savant
+// convention) plus 4 "chase" wedges around the edges (10-13). Filled
+// from `pa.zone_heat` (a 13-element array of 0-1 heat values, with
+// indices 0-8 = inner zones, 9-12 = chase). Empty/missing data renders
+// a faint grid with a "no location data" caption so the visualization
+// still communicates structure to the reader.
+function makeStrikeZoneHeatmap(pa) {
+  if (!pa) return "";
+  const heat = Array.isArray(pa.zone_heat) ? pa.zone_heat : null;
+  // Cell color helper — green-to-red gradient on a 0-1 input. Cool
+  // (low heat) uses the up/green token; hot (high) uses the down/red.
+  // Returns a faded gray when heat is missing.
+  const cellFill = (v) => {
+    if (v == null || !isFinite(v)) return "var(--bg-tertiary)";
+    const t = Math.max(0, Math.min(1, Number(v)));
+    if (t < 0.05) return "var(--bg-tertiary)";
+    // Three-stop gradient: green (cool) → amber (warm) → red (hot).
+    if (t < 0.5) {
+      const lerp = t / 0.5;
+      // Green → amber. RGB lerp on neon-green→neon-amber.
+      const r = Math.round(31 + (201 - 31) * lerp);
+      const g = Math.round(122 + (162 - 122) * lerp);
+      const b = Math.round(58 + (39 - 58) * lerp);
+      return `rgba(${r},${g},${b},${0.18 + 0.42 * lerp})`;
+    } else {
+      const lerp = (t - 0.5) / 0.5;
+      const r = Math.round(201 + (185 - 201) * lerp);
+      const g = Math.round(162 + (28 - 162) * lerp);
+      const b = Math.round(39 + (28 - 39) * lerp);
+      return `rgba(${r},${g},${b},${0.55 + 0.35 * lerp})`;
+    }
+  };
+  // 3×3 inner zone grid laid out top-to-bottom, left-to-right (mirrors
+  // the catcher's view standard in Savant).
+  const cells = [];
+  for (let i = 0; i < 9; i++) {
+    const x = 30 + (i % 3) * 30;
+    const y = 30 + Math.floor(i / 3) * 30;
+    const v = heat ? heat[i] : null;
+    const fill = cellFill(v);
+    const tip = v != null ? `Zone ${i + 1}: ${Math.round(v * 100)}%` : `Zone ${i + 1}: no data`;
+    cells.push(`<rect x="${x}" y="${y}" width="30" height="30" fill="${fill}" stroke="var(--border)" stroke-width="0.8"><title>${tip}</title></rect>`);
+  }
+  // Chase wedges around the edges (indices 9-12 = up/down/left/right).
+  // Drawn as thin trapezoidal regions outside the 3×3.
+  const chaseLabels = ["above zone", "below zone", "inside zone", "outside zone"];
+  const chasePaths = [
+    `M30,30 L120,30 L100,10 L50,10 Z`,   // top
+    `M30,120 L120,120 L100,140 L50,140 Z`, // bottom
+    `M30,30 L30,120 L10,100 L10,50 Z`,    // left
+    `M120,30 L120,120 L140,100 L140,50 Z`, // right
+  ];
+  for (let i = 0; i < 4; i++) {
+    const v = heat ? heat[9 + i] : null;
+    const fill = cellFill(v);
+    const tip = v != null
+      ? `Chase ${chaseLabels[i]}: ${Math.round(v * 100)}%`
+      : `Chase ${chaseLabels[i]}: no data`;
+    cells.push(`<path d="${chasePaths[i]}" fill="${fill}" stroke="var(--border-light)" stroke-width="0.6"><title>${tip}</title></path>`);
+  }
+  const note = heat
+    ? ""
+    : `<div style="font-size:9.5px;color:var(--text-tertiary);margin-top:4px;text-align:center;font-style:italic;">No pitch-location data on file yet</div>`;
+  return `<div style="flex-shrink:0;text-align:center;">
+    <div style="font-family:var(--font-sans);font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px;">Strike-zone heat</div>
+    <svg viewBox="0 0 150 150" width="150" height="150" role="img" aria-label="Strike zone heatmap" style="display:block;">
+      <!-- Subtle home-plate outline behind the cells. -->
+      <rect x="10" y="10" width="130" height="130" fill="transparent" stroke="var(--border-light)" stroke-width="0.6"/>
+      ${cells.join("")}
+      <!-- Inner zone-1 to zone-9 labels (small, dim). -->
+      ${Array.from({length: 9}, (_, i) => {
+        const x = 45 + (i % 3) * 30;
+        const y = 50 + Math.floor(i / 3) * 30;
+        return `<text x="${x}" y="${y}" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-tertiary)" opacity="0.45">${i + 1}</text>`;
+      }).join("")}
+    </svg>
+    ${note}
+  </div>`;
+}
+
 function makeArsenalBlock(pa) {
   if (!pa || !(pa.pitches || []).length) {
     return `<div style="color:var(--text-tertiary);font-size:12px;line-height:1.5;">No pitch-tracking data on file. MLB Stats API only carries pitch arsenal for MLB games; MiLB-only pitchers don't yet have this exposed publicly.</div>`;
@@ -7497,11 +7871,13 @@ function makeArsenalBlock(pa) {
   // screens — pure visual at-a-glance summary of pitch mix. Collapses
   // below the table on narrow viewports via flex-wrap.
   const radar = makeArsenalRadar(pa);
+  const zone = makeStrikeZoneHeatmap(pa);
   const tableHtml = `<table class="detail-table"><thead><tr><th>Pitch</th><th title="Average velocity in mph">Velo (mph)</th><th>Usage</th></tr></thead><tbody>${rows}</tbody></table>`;
-  if (!radar) return fb + tableHtml;
+  if (!radar && !zone) return fb + tableHtml;
   return fb + `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
-    <div style="flex:1;min-width:240px;">${tableHtml}</div>
-    <div style="flex-shrink:0;">${radar}</div>
+    <div style="flex:1;min-width:200px;">${tableHtml}</div>
+    ${radar || ""}
+    ${zone || ""}
   </div>`;
 }
 
@@ -7737,7 +8113,7 @@ function renderPlayerDetail(key) {
   const avl = p.age_vs_level || {};
   const fvLabel = latest ? latest.consensus_fv_label : "—";
   const fvBadge = latest
-    ? `<span class="fv-badge ${fvClass(fvLabel)} size-lg" style="margin-top:4px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>`
+    ? `<span class="fv-badge ${fvClass(fvLabel)} size-lg${fvBadgeWideClass(p)}" style="margin-top:4px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>`
     : "";
 
   // Rank pills — overall position in the FV-sorted active list, plus org
@@ -8584,7 +8960,7 @@ function renderPlayerDetail(key) {
   root.innerHTML = header + tilesHtml + flagSummary + `
     <div class="player-detail-grid">
       <div>${chartSection}${careerSection}${levelBenchmarkSection}${sourceSection}</div>
-      <div class="player-detail-side">${noteSection}${sameFarmSection}${ilSection}${healthSection}${sabermetricsSection}${toolsSection}${savantSection}${perSourceSection}${toolPerSourceSection}${arsenalSection}${(() => {
+      <div class="player-detail-side">${noteSection}${ilSection}${healthSection}${sabermetricsSection}${toolsSection}${savantSection}${perSourceSection}${toolPerSourceSection}${arsenalSection}${sameFarmSection}${(() => {
         // Below-the-fold context collapses into a <details> accordion so
         // the eye reaches the high-priority cards (health / Savant / per-
         // source) without scrolling past 11 stacked sections. Sections
@@ -8617,7 +8993,7 @@ function renderPlayerDetail(key) {
 // into the player detail page.
 function makePositionDepthChart(rosterPlayersAll, sortMode) {
   sortMode = sortMode || "fv";
-  const COLS = [
+  const ROWS = [
     ["C",  "C"],
     ["1B", "1B"],
     ["2B", "2B"],
@@ -8629,7 +9005,7 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
     ["SP", "SP"],
     ["RP", "RP"],
   ];
-  const buckets = Object.fromEntries(COLS.map(([k]) => [k, []]));
+  const buckets = Object.fromEntries(ROWS.map(([k]) => [k, []]));
   for (const p of rosterPlayersAll) {
     const head = String(p.position || "").split("/")[0].toUpperCase();
     let col = null;
@@ -8659,13 +9035,8 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
   if (!totalPlayers) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No tracked prospects to chart.</div>`;
   }
-  // Tier separators only make sense when sorted by FV — for age/ETA
-  // sorts the cards would interleave grades and a dashed line would
-  // mislead the eye.
-  const tierOf = (fv) => fv >= 50 ? "elite" : fv >= 40 ? "regular" : "depth";
   // Compact name format: "F. Lastname" when full first+last would exceed
-  // 12 chars; otherwise full last name only. With 2-line wrap on .pdc-name
-  // long single-word last names (e.g., "Hernandez-Sosa") stay readable.
+  // 12 chars; otherwise full last name only.
   const shortName = (full) => {
     const parts = (full || "").split(" ").filter(Boolean);
     if (!parts.length) return "—";
@@ -8688,13 +9059,50 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
                : "eta-very-far";
     return `<span class="pdc-eta ${cls}" title="ETA ${year}">'${yy}</span>`;
   };
-  return `<div class="pos-depth-grid">${COLS.map(([key, label]) => {
+  // Small per-card icons: age-vs-level dot + health glyph + acq pill.
+  // Each gates on its data; clean prospects render no icon cluster at all.
+  const iconsHTML = (p) => {
+    const bits = [];
+    const avl = p.age_vs_level || {};
+    if (avl.tier && avl.tier !== "unknown") {
+      let dot = "dot-neutral";
+      if (avl.tier === "very-young" || avl.tier === "young") dot = "dot-young";
+      else if (avl.tier === "old" || avl.tier === "too-old") dot = "dot-old";
+      const tip = avl.diff != null
+        ? `Age vs level: ${avl.diff > 0 ? "+" : ""}${avl.diff.toFixed(1)}y (${avl.tier.replace(/-/g, " ")})`
+        : `Age vs level: ${avl.tier}`;
+      bits.push(`<span class="pdc-age-dot ${dot}" title="${escapeHtml(tip)}"></span>`);
+    }
+    const il = p.il_status || {};
+    const hp = p.health_profile || {};
+    if (il.is_on_il) {
+      bits.push(`<span class="pdc-health h-il" title="${escapeHtml(il.description || "On IL")}">!</span>`);
+    } else if (hp.is_post_tj) {
+      bits.push(`<span class="pdc-health h-tj" title="Post-Tommy John surgery">TJ</span>`);
+    } else if ((hp.il_stints_24mo || 0) >= 3 || (hp.il_days_24mo || 0) >= 200) {
+      bits.push(`<span class="pdc-health h-chronic" title="Chronic IL history">C</span>`);
+    }
+    const acqMethod = (p.current_acquisition || {}).method
+                   || (p.acquisition || {}).method;
+    if (acqMethod === "trade") {
+      bits.push(`<span class="pdc-acq acq-trade" title="Acquired via trade">TR</span>`);
+    } else if (acqMethod === "international_fa") {
+      bits.push(`<span class="pdc-acq acq-ifa" title="International FA signing">IFA</span>`);
+    } else if (acqMethod === "rule_5") {
+      bits.push(`<span class="pdc-acq acq-rule5" title="Rule 5 pick">R5</span>`);
+    } else if (acqMethod === "waiver") {
+      bits.push(`<span class="pdc-acq acq-waiver" title="Waiver claim">W</span>`);
+    }
+    return bits.length ? `<span class="pdc-icons">${bits.join("")}</span>` : "";
+  };
+  // Default visible cards per row before the overflow cards get clipped.
+  // Five is a sensible "starting depth" — covers a typical lineup spot
+  // plus a couple of backups; click "show all" to reveal the rest.
+  const TOP_N = 5;
+  return `<div class="pos-depth-grid">${ROWS.map(([key, label]) => {
     const players = buckets[key];
-    const headBadge = `<span class="pos-depth-col-count">(${players.length})</span>`;
-    let lastTier = null;
-    const cards = players.map(p => {
+    const cards = players.map((p, idx) => {
       const latest = p.points.length ? p.points[p.points.length - 1] : null;
-      const fvRaw = latest ? latest.consensus_fv_raw : 0;
       const fvLabel = latest ? latest.consensus_fv_label : "—";
       const sl = p.statline || {};
       const lvl = sl.level || "—";
@@ -8704,23 +9112,26 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
         : "";
       const ageTxt = p.age != null ? `${p.age.toFixed(1)}y` : "?";
       const etaYear = p.eta && p.eta.year != null ? p.eta.year : null;
-      const tier = tierOf(fvRaw);
-      const sep = (sortMode === "fv" && lastTier && lastTier !== tier)
-        ? `<div class="pos-depth-tier-sep" aria-hidden="true"></div>`
-        : "";
-      lastTier = tier;
       const titleEta = etaYear ? ` · ETA ${etaYear}` : "";
-      const card = `<div class="pos-depth-card" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}" title="${escapeHtml(p.player_name)} · ${escapeHtml(p.position || "—")} · ${escapeHtml(lvl)} · age ${ageTxt} · FV ${fvLabel}${titleEta}">
-        <span class="pdc-name">${escapeHtml(shortName(p.player_name))}</span>
+      const overflow = idx >= TOP_N ? " is-overflow" : "";
+      return `<div class="pos-depth-card${overflow}" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}" title="${escapeHtml(p.player_name)} · ${escapeHtml(p.position || "—")} · ${escapeHtml(lvl)} · age ${ageTxt} · FV ${fvLabel}${titleEta}">
         <span class="pdc-fv"><span class="fv-badge ${fvClass(fvLabel)} size-xs">${fvLabel}</span></span>
-        <span class="pdc-sub">${posGlyph}${escapeHtml(lvl)} · ${escapeHtml(ageTxt)}${yearTag(etaYear)}</span>
+        <span class="pdc-name">${escapeHtml(shortName(p.player_name))}</span>
+        <span class="pdc-sub">${posGlyph}${escapeHtml(lvl)}${yearTag(etaYear)}</span>
+        ${iconsHTML(p)}
       </div>`;
-      return sep + card;
     }).join("");
-    return `<div class="pos-depth-col">
-      <div class="pos-depth-col-head">${label} ${headBadge}</div>
-      ${cards || `<div style="font-size:10px;color:var(--text-tertiary);text-align:center;padding-top:8px;">—</div>`}
-    </div>`;
+    const count = players.length;
+    const overflowCount = Math.max(0, count - TOP_N);
+    const expandBtn = overflowCount > 0
+      ? `<button class="pos-depth-row-expand" data-pos-row-expand="${escapeHtml(key)}" type="button">show all ${count}</button>`
+      : `<span style="font-family:var(--font-mono);font-size:9.5px;color:var(--text-tertiary);">${count}</span>`;
+    const rowCls = count === 0 ? "pos-depth-row is-empty" : "pos-depth-row";
+    return `<span class="pos-depth-row-label">${label}<span class="pos-count">(${count})</span></span>
+      <div class="pos-depth-row-prospects ${rowCls}" data-pos-row="${escapeHtml(key)}">
+        ${cards || "no tracked prospects"}
+      </div>
+      ${expandBtn}`;
   }).join("")}</div>`;
 }
 
@@ -10494,11 +10905,11 @@ function makeFarmCompareSideBySide(farms) {
     ["Trajectory grade", o => (o.grades && o.grades.trajectory) || "—", true],
     ["Grad pipeline",    o => (o.grades && o.grades.grad) || "—", true],
     ["Stock ▲/▼",        o => `${o.stock_up || 0} ▲ · ${o.stock_down || 0} ▼`, true],
-    ["1y Δ vs mean",     o => fmtDelta(o, "1y"), false],
+    // Raw "Δ vs mean" rows removed — DvM+ encodes the same delta on a
+    // normalized 100-anchored scale (100 = league mean, 10 pts = 1 std
+    // dev). Showing both is double counting and clutters the table.
     ["1YDvM+",            o => fmtDsPlus(o, "1y"), false],
-    ["3y Δ vs mean",     o => fmtDelta(o, "3y"), false],
     ["3YDvM+",            o => fmtDsPlus(o, "3y"), false],
-    ["5y Δ vs mean",     o => fmtDelta(o, "5y"), false],
     ["5YDvM+",            o => fmtDsPlus(o, "5y"), false],
   ];
   const tableRows = rows.map(([label, fn, escape]) =>
@@ -10669,6 +11080,24 @@ function attachHandlers() {
       if (row) row.classList.toggle("is-expanded");
       return;
     }
+    // Position-depth-chart "show all" toggle — reveals overflow cards
+    // (idx ≥ 5) inline within the row's flex container.
+    const posExpandBtn = e.target.closest("[data-pos-row-expand]");
+    if (posExpandBtn) {
+      e.stopPropagation();
+      const key = posExpandBtn.dataset.posRowExpand;
+      const cards = document.querySelector(`[data-pos-row="${CSS.escape(key)}"]`);
+      const grid = posExpandBtn.closest(".pos-depth-grid");
+      if (cards && grid) {
+        // Toggle .is-expanded on a synthetic "row" wrapper — we use the
+        // cards container itself plus a class on the button.
+        const expanded = cards.classList.toggle("is-expanded");
+        posExpandBtn.classList.toggle("is-expanded", expanded);
+        const total = cards.querySelectorAll(".pos-depth-card").length;
+        posExpandBtn.textContent = expanded ? `show top 5` : `show all ${total}`;
+      }
+      return;
+    }
     const farmWatchBtn = e.target.closest(".watch-btn[data-farm-watch-key]");
     if (farmWatchBtn) {
       e.stopPropagation();
@@ -10782,6 +11211,7 @@ function attachHandlers() {
   });
   attachChipGroup("filter-health", "healthFilter", () => render());
   attachChipGroup("filter-spread", "spreadFilter", () => render());
+  wireThemeToggle();
   // Density toggle chips — body class + localStorage so the choice
   // survives across sessions and reloads. URL also persists via
   // syncToURL/syncFromURL above.
