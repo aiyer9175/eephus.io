@@ -4276,8 +4276,123 @@ function acqTooltip(p, method) {
 // compact ▲N ▼N chip. Hidden when the prospect has no flags. Hover
 // reveals the comma-separated list of flag names so the reader can
 // audit the count without opening the detail page.
+// Derive additional green/red flags from FanGraphs scout-only signals
+// (Versa multi-position eligibility, FG-reported TJ Date, elite FB
+// velocity from Tops, plus-plus hard-hit rate). Returns an array of
+// flag dicts in the same shape stat_flags.py emits so the existing UI
+// consumers pick them up without changes. `_origin` is stamped so
+// rendering can tag them with a small "*" if desired.
+function computeFgFlags(p) {
+  if (!p) return [];
+  // Walk newest -> oldest to find the latest FG snapshot with extras.
+  let ex = null;
+  for (let i = ((p.points || [])).length - 1; i >= 0; i--) {
+    const fg = p.points[i] && p.points[i].per_source && p.points[i].per_source.fangraphs;
+    const e = fg && fg.tools && fg.tools._extras;
+    if (e) { ex = e; break; }
+  }
+  if (!ex) return [];
+  const flags = [];
+
+  // Versa — multi-position eligibility (≥3 distinct positions).
+  if (ex.versa) {
+    const parts = String(ex.versa).split(/[\/,]/).map(s => s.trim()).filter(Boolean);
+    if (parts.length >= 3) {
+      flags.push({
+        stat:          "Versa",
+        direction:     "green",
+        value_display: parts.join("/"),
+        category:      "defense",
+        polarity:      "above_good",
+        note:          "Multi-position eligible — adds defensive value.",
+        _origin:       "fg",
+      });
+    }
+  }
+
+  // Post-TJ red flag — only when the existing health profile didn't
+  // already pick up the surgery (avoid double-emitting). Window of 24
+  // months for "recent."
+  const tj = ex.tj_date;
+  const hp = p.health_profile || {};
+  if (tj && !hp.is_post_tj) {
+    try {
+      const tjMs = new Date(tj + "T00:00:00").getTime();
+      const ageMs = Date.now() - tjMs;
+      if (!isNaN(ageMs) && ageMs >= 0 && ageMs <= 2 * 365 * 86400000) {
+        flags.push({
+          stat:          "Post-TJ",
+          direction:     "red",
+          value_display: `since ${tj}`,
+          category:      "health",
+          polarity:      "below_good",
+          note:          "Tommy John surgery on record (FG report) — recovery window may apply.",
+          _origin:       "fg",
+        });
+      }
+    } catch (_) {}
+  }
+
+  // Elite FB velocity — FG's `tops` is a string like "102" or "96-99".
+  // Match the highest number in the string and trigger ≥100 mph.
+  if (ex.tops) {
+    const nums = String(ex.tops).match(/\d+/g);
+    const topMph = nums ? Math.max(...nums.map(Number)) : null;
+    if (topMph && topMph >= 100) {
+      flags.push({
+        stat:          "FB velo",
+        direction:     "green",
+        value_display: `tops ${topMph} mph`,
+        category:      "stuff",
+        polarity:      "above_good",
+        note:          "Elite top-end fastball velocity.",
+        _origin:       "fg",
+      });
+    }
+  }
+
+  // Plus contact quality — hard-hit % ≥ 45.
+  if (ex.hard_hit_pct != null && ex.hard_hit_pct >= 0.45) {
+    flags.push({
+      stat:          "Hard Hit%",
+      direction:     "green",
+      value_display: `${(ex.hard_hit_pct * 100).toFixed(0)}%`,
+      category:      "contact_quality",
+      polarity:      "above_good",
+      note:          "Plus contact quality — elite hard-hit rate.",
+      _origin:       "fg",
+    });
+  }
+
+  // Frame / athleticism red flags — FG uses a -2..+2 scale where
+  // negative is "undersized for projected role." Cautionary only.
+  if (ex.frame != null && Number(ex.frame) <= -2) {
+    flags.push({
+      stat:          "Frame",
+      direction:     "red",
+      value_display: String(ex.frame),
+      category:      "physical",
+      polarity:      "below_good",
+      note:          "Undersized frame for projected role.",
+      _origin:       "fg",
+    });
+  }
+  if (ex.athl != null && Number(ex.athl) <= -2) {
+    flags.push({
+      stat:          "Athl",
+      direction:     "red",
+      value_display: String(ex.athl),
+      category:      "physical",
+      polarity:      "below_good",
+      note:          "Below-average athleticism.",
+      _origin:       "fg",
+    });
+  }
+  return flags;
+}
+
 function flagCounterPillHTML(p) {
-  const flags = (p.stat_flags || []).concat(p.tool_flags || []);
+  const flags = (p.stat_flags || []).concat(p.tool_flags || []).concat(computeFgFlags(p));
   if (!flags.length) return "";
   const g = flags.filter(f => f.direction === "green").length;
   const r = flags.filter(f => f.direction === "red").length;
@@ -4524,7 +4639,7 @@ function _inlineBadgeStrip(p, max = 3) {
 // data being present.
 function playerExpandedMetaHTML(p) {
   const parts = [];
-  const flags = (p.stat_flags || []).concat(p.tool_flags || []);
+  const flags = (p.stat_flags || []).concat(p.tool_flags || []).concat(computeFgFlags(p));
   if (flags.length) {
     const g = flags.filter(f => f.direction === "green");
     const r = flags.filter(f => f.direction === "red");
@@ -7338,6 +7453,55 @@ const SOURCE_LABELS = {
   auto_detect: "Auto-detect"
 };
 
+// Parse a FanGraphs height string ("6' 4\"" or "6'4" or just `74`) into
+// total inches. Returns null when the value is unparseable.
+function _parseHtToInches(s) {
+  if (s == null || s === "") return null;
+  if (typeof s === "number") return Math.round(s);
+  const txt = String(s).trim();
+  // Match feet'inches" or feet'inches.
+  const m = txt.match(/^(\d+)\s*['’]\s*(\d+)/);
+  if (m) {
+    const ft = parseInt(m[1], 10);
+    const inch = parseInt(m[2], 10);
+    if (isFinite(ft) && isFinite(inch)) return ft * 12 + inch;
+  }
+  // Bare number → assume inches already.
+  const bare = parseInt(txt, 10);
+  return isFinite(bare) && bare > 30 && bare < 100 ? bare : null;
+}
+
+// BMI from imperial inputs. Returns rounded float or null.
+function _computeBmi(heightInches, weightLb) {
+  if (!heightInches || !weightLb) return null;
+  const h = Number(heightInches);
+  const w = Number(weightLb);
+  if (!isFinite(h) || !isFinite(w) || h <= 0 || w <= 0) return null;
+  return Math.round((w * 703) / (h * h) * 10) / 10;
+}
+
+// Pull (height_in, weight_lb, bmi, height_display) from the most
+// recent FG snapshot's _extras blob, or all-null when not available.
+function _getPhysicalProfile(p) {
+  const pts = (p && p.points) || [];
+  for (let i = pts.length - 1; i >= 0; i--) {
+    const fg = pts[i] && pts[i].per_source && pts[i].per_source.fangraphs;
+    const ex = fg && fg.tools && fg.tools._extras;
+    if (!ex) continue;
+    const ht = _parseHtToInches(ex.height);
+    const wt = ex.weight != null ? Number(ex.weight) : null;
+    if (ht || wt) {
+      return {
+        height_in: ht,
+        weight_lb: wt && isFinite(wt) ? wt : null,
+        bmi: _computeBmi(ht, wt),
+        height_display: ex.height || (ht ? `${Math.floor(ht/12)}' ${ht%12}"` : null),
+      };
+    }
+  }
+  return { height_in: null, weight_lb: null, bmi: null, height_display: null };
+}
+
 // Prettify a FanGraphs interval_label slug for display.
 // Slugs in the DB look like "2024report" / "2025-updated" / "2023_Graduated";
 // the UI shows them as "FanGraphs 2024 Report" / "FanGraphs 2025 Updated"
@@ -8115,7 +8279,28 @@ function playerMetaHTML(p, opts = {}) {
     : "";
   const ilTag = showIL ? ilTagHTML(p) : "";
   const rosterTag = showRoster ? rosterTagHTML(p) : "";
-  return `<div class="player-meta">${escapeHtml(p.position ?? "—")} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${ageTag}${ilTag}${rosterTag}</div>`;
+  // Versa chip cluster — when FG publishes a multi-position eligibility
+  // string (e.g. "SS/CF" or "2B/SS/3B"), show the secondary positions
+  // as small inline chips after the primary position. The primary
+  // position is whatever the player payload already carries; the
+  // FG Versa adds the others. Filtered to positions that aren't the
+  // primary so we don't double-print.
+  let versaChips = "";
+  for (let i = ((p && p.points) || []).length - 1; i >= 0; i--) {
+    const fg = p.points[i] && p.points[i].per_source && p.points[i].per_source.fangraphs;
+    const ex = fg && fg.tools && fg.tools._extras;
+    if (!ex || !ex.versa) continue;
+    const parts = String(ex.versa).split(/[\/,]/).map(s => s.trim()).filter(Boolean);
+    const primary = String(p.position || "").split("/")[0].toUpperCase();
+    const others = parts.filter(x => x.toUpperCase() !== primary);
+    if (others.length) {
+      versaChips = others.map(pos =>
+        `<span class="row-tag" style="margin-left:4px;font-size:9px;color:var(--text-tertiary);border-color:var(--border-light);background:transparent;" title="FanGraphs positional eligibility: ${escapeHtml(ex.versa)}">+${escapeHtml(pos)}</span>`
+      ).join("");
+    }
+    break;
+  }
+  return `<div class="player-meta">${escapeHtml(p.position ?? "—")}${versaChips} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${ageTag}${ilTag}${rosterTag}</div>`;
 }
 
 // One-line auto-generated "Quick read" summary for a player. Surfaces
@@ -10605,6 +10790,17 @@ function renderPlayerDetail(key) {
           <div class="player-display-meta">
             <strong style="font-weight:600;color:var(--text-primary);">${escapeHtml(p.position ?? "—")}</strong> · ${orgLink}${p.age != null ? ` · age ${p.age.toFixed(1)}` : ""}${p.birth_date ? ` · born ${p.birth_date}` : ""}
           </div>
+          ${(() => {
+            // Physical line — Ht · Wt · BMI from the latest FG snapshot.
+            const phys = _getPhysicalProfile(p);
+            if (!phys.height_in && !phys.weight_lb) return "";
+            const bits = [];
+            if (phys.height_display) bits.push(escapeHtml(phys.height_display));
+            if (phys.weight_lb != null) bits.push(`${phys.weight_lb} lb`);
+            if (phys.bmi != null) bits.push(`BMI ${phys.bmi.toFixed(1)}`);
+            if (!bits.length) return "";
+            return `<div class="player-display-meta" style="margin-top:2px;font-size:11.5px;color:var(--text-tertiary);" title="From FanGraphs scouting report">${bits.join(" · ")}</div>`;
+          })()}
           ${(statusPill || tjPill) ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">${statusPill}${tjPill}</div>` : ""}
           ${rankPills}
         </div>
@@ -10991,6 +11187,27 @@ function renderPlayerDetail(key) {
            <div style="font-family:var(--font-mono);font-size:${p.status === "graduated" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="Estimated MLB surplus value over the player's 6-year cost-controlled window. Derived from FV ${Math.round(fv)} via the FanGraphs / Craig Edwards 2019 framework (hitter/pitcher split). Real surplus depends on health, performance variance, and changes in $/WAR market rate.">${fmtUsd(surplus)}</div>
          </div>`
       : "";
+    // Expected market AAV — FV-derived WAR/yr × $/WAR market rate.
+    // Same projection logic the WAG metric uses, surfaced as a "what
+    // the player is worth on the open market if FV holds" tile.
+    // Renders for everyone with a usable FV (active + graduates).
+    let expectedAavRow = "";
+    if (fv != null) {
+      const expectedWar = fvExpectedWarPerYr(fv, _isPit);
+      if (expectedWar != null) {
+        const expectedAav = Math.round(expectedWar * DOLLARS_PER_WAR_MM * 10) / 10;
+        const eaColor = expectedAav >= 30 ? "var(--up)"
+                       : expectedAav >= 10 ? "var(--neon-cyan)"
+                       : "var(--text-primary)";
+        expectedAavRow = `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
+           <div>
+             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Expected market AAV</div>
+             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">FV ${Math.round(fv)} → ${expectedWar.toFixed(2)} WAR/yr × $${DOLLARS_PER_WAR_MM}M</div>
+           </div>
+           <div style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:${eaColor};font-variant-numeric:tabular-nums;" title="If the player hits their FV projection, this is what a comparable free agent would command per year at the prevailing $/WAR rate.">${fmtUsd(expectedAav)}/yr</div>
+         </div>`;
+      }
+    }
     // Graduate-only: REALIZED surplus value computed from actual MLB
     // WAR vs estimated salary paid. Side-by-side with the expected
     // (FV-implied) row above so the reader can see whether the
@@ -11110,7 +11327,30 @@ function renderPlayerDetail(key) {
            <div style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:${roiColor};font-variant-numeric:tabular-nums;">${roiSign}${fmtUsd(Math.abs(roi)).replace("$", roi < 0 ? "−$" : "$")}</div>
          </div>`;
     }
-    const inner = surplusRow + realizedRow + surplusDeltaRow + aavRow + acqRow + bonusRow + roiRow;
+    // Actual ROI — graduate-only. Realized market value (career WAR ×
+    // $/WAR) minus the all-in cost (signing bonus + salary paid so
+    // far). Negative when the team paid more than they got back.
+    let actualRoiRow = "";
+    if (p.status === "graduated") {
+      const realized = (typeof estimateRealizedSurplusValueMM === "function")
+        ? estimateRealizedSurplusValueMM(p) : null;
+      if (realized && realized.total_value != null && realized.total_salary != null) {
+        const bonusMM = acqBonus ? acqBonus / 1_000_000 : 0;
+        const totalCost = realized.total_salary + bonusMM;
+        const actualRoi = realized.total_value - totalCost;
+        const arColor = actualRoi > 0 ? "var(--up)" : actualRoi < 0 ? "var(--down)" : "var(--text-tertiary)";
+        const arSign = actualRoi > 0 ? "+" : "";
+        const ratio = totalCost > 0 ? (realized.total_value / totalCost) : null;
+        const ratioTag = ratio != null
+          ? ` <span style="font-size:10px;color:var(--text-tertiary);">(${ratio.toFixed(1)}×)</span>`
+          : "";
+        actualRoiRow = `<div style="display:flex;justify-content:space-between;align-items:center;">
+           <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;" title="Realized market value (career WAR × $/WAR) minus actual cost (signing bonus + salary paid). Ratio in parens = value ÷ cost.">Actual ROI</div>
+           <div style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:${arColor};font-variant-numeric:tabular-nums;">${arSign}${fmtUsd(Math.abs(actualRoi)).replace("$", actualRoi < 0 ? "−$" : "$")}${ratioTag}</div>
+         </div>`;
+      }
+    }
+    const inner = surplusRow + expectedAavRow + realizedRow + surplusDeltaRow + aavRow + acqRow + bonusRow + roiRow + actualRoiRow;
     if (!inner) return "";
     return `<div class="detail-title">Surplus value <span class="detail-title-sub">FV-implied · FanGraphs 2019 framework</span></div>
       <div class="detail-card">${inner}</div>`;
@@ -11214,6 +11454,9 @@ function renderPlayerDetail(key) {
       return (pts.length && pts[pts.length - 1].per_source) || {};
     })();
     const _perSourceTooltip = (key, consensusVal) => {
+      // FV-only breakdown — each source contributes a single future
+      // grade. Present grades, if published, stay in the data but are
+      // not surfaced here.
       const lines = [];
       lines.push(consensusVal != null
         ? `Consensus ${Number.isInteger(consensusVal) ? consensusVal : consensusVal.toFixed(1)}`
@@ -11222,28 +11465,41 @@ function renderPlayerDetail(key) {
         .map(([src, info]) => {
           const tools = (info && info.tools) || {};
           const fut = tools[key];
-          const pres = tools._extras && tools._extras.present
-                       ? tools._extras.present[key] : undefined;
-          if (fut == null && pres == null) return null;
-          return { src, fut, pres };
+          if (fut == null) return null;
+          return { src, fut };
         })
         .filter(Boolean);
-      // Sort by future grade desc so the top-of-card matches the rest
-      // of the per-source visual ordering.
       entries.sort((a, b) => (b.fut ?? -1) - (a.fut ?? -1));
-      for (const { src, fut, pres } of entries) {
+      for (const { src, fut } of entries) {
         const lbl = SOURCE_LABELS[src] || src;
-        let val;
-        if (pres != null && fut != null && pres !== fut) {
-          val = `${Math.round(pres)}/${Math.round(fut)}`;
-        } else if (fut != null) {
-          val = String(Math.round(fut));
-        } else {
-          val = String(Math.round(pres));
-        }
-        lines.push(`${lbl} ${val}`);
+        lines.push(`${lbl} ${Math.round(fut)}`);
       }
       return lines.join(" · ");
+    };
+    // FG _extras live on the latest fangraphs snapshot. Used by F1/F2
+    // to surface FG-only 20-80 grades (Pitch Sel, Bat Ctrl, Arm) that
+    // aren't part of the canonical multi-source tool grid.
+    const _fgExtras = (() => {
+      for (let i = ((p.points || [])).length - 1; i >= 0; i--) {
+        const fg = p.points[i] && p.points[i].per_source && p.points[i].per_source.fangraphs;
+        const ex = fg && fg.tools && fg.tools._extras;
+        if (ex) return ex;
+      }
+      return null;
+    })();
+    // FG-only grade cell renderer. Same shape as the canonical
+    // gradeCell but stamps a small "FG" superscript indicating
+    // single-source attribution.
+    const fgGradeCell = (extrasKey, label) => {
+      if (!_fgExtras) return "";
+      const v = _fgExtras[extrasKey];
+      if (v == null || isNaN(Number(v))) return "";
+      const fgAttr = `<sup style="font-size:8px;letter-spacing:0.04em;color:var(--neon-violet);margin-left:2px;" title="Published by FanGraphs only — single-source grade">FG</sup>`;
+      const tip = `${label} · FanGraphs ${Math.round(v)} · single-source grade`;
+      return `<div class="tools-grade-cell" title="${escapeHtml(tip)}">
+        <span class="tools-grade-name">${escapeHtml(label)}${fgAttr}</span>
+        ${badgeFor(v)}
+      </div>`;
     };
     const gradeCell = (key, label) => {
       const v = (t.grades || {})[key];
@@ -11310,7 +11566,18 @@ function renderPlayerDetail(key) {
           return gradeCell(k, labels[k]);
         })
         .join("");
-      groupBlocks = cells ? `<div class="tools-grade-grid">${cells}</div>` : "";
+      // FG-only hitter grades: Pitch Sel, Bat Ctrl, and Arm. Each
+      // renders only when FG published the value. The Arm grade
+      // duplicates `throw` for position players, but FG sometimes
+      // publishes one without the other; show it when present to
+      // surface FG's view even if the consensus already covers throw.
+      const fgExtraCells = [
+        fgGradeCell("pitch_sel", "Pitch Sel"),
+        fgGradeCell("bat_ctrl",  "Bat Ctrl"),
+        fgGradeCell("arm",       "Arm"),
+      ].filter(Boolean).join("");
+      const allCells = cells + fgExtraCells;
+      groupBlocks = allCells ? `<div class="tools-grade-grid">${allCells}</div>` : "";
     }
     const sources = (t.publishing_sources || [])
       .map(s => SOURCE_LABELS[s] || s)
@@ -11420,9 +11687,15 @@ function renderPlayerDetail(key) {
           <span class="t-stat-value" style="font-size:13px;${hint ? `color:${hint};` : ""}">${escapeHtml(String(value))}</span>
         </div>`;
 
-    // PHYSICAL
-    if (_hasAny("frame", "athl", "levers", "arm", "perf", "delivery")) {
+    // PHYSICAL — leads with Ht/Wt/BMI when FG publishes them, then
+    // the FG-only physical descriptors (Frame, Athl, etc.).
+    const physical = _getPhysicalProfile(p);
+    const _hasPhysicalDescriptors = _hasAny("frame", "athl", "levers", "arm", "perf", "delivery");
+    if (physical.height_in || physical.weight_lb || _hasPhysicalDescriptors) {
       const tiles = [
+        _tile("Ht",  physical.height_display || (physical.height_in ? `${Math.floor(physical.height_in/12)}' ${physical.height_in%12}"` : null)),
+        _tile("Wt",  physical.weight_lb != null ? `${physical.weight_lb} lb` : null),
+        _tile("BMI", physical.bmi != null ? physical.bmi.toFixed(1) : null),
         _tile("Frame", _fmt(ex.frame)),
         _tile("Athl",  _fmt(ex.athl)),
         _tile("Levers", _fmt(ex.levers)),
@@ -11625,9 +11898,22 @@ function renderPlayerDetail(key) {
       : (stints >= 1 || days >= 30)
         ? "var(--neon-amber)"
         : "var(--up)";
+    // FG-sourced TJ date — surfaces when MLB-API path didn't catch
+    // the surgery. Provides a backup data source for older surgeries
+    // that fell off the API's transaction window.
+    let fgTjDate = null;
+    if (!hp.is_post_tj) {
+      for (let i = ((p.points || [])).length - 1; i >= 0; i--) {
+        const fg = p.points[i] && p.points[i].per_source && p.points[i].per_source.fangraphs;
+        const ex = fg && fg.tools && fg.tools._extras;
+        if (ex && ex.tj_date) { fgTjDate = ex.tj_date; break; }
+      }
+    }
     const tjLine = hp.is_post_tj
       ? `<div style="font-size:12px;color:var(--neon-violet);font-weight:600;margin-top:6px;">Post-TJ recovery${hp.tj_surgery_date ? ` · surgery ${escapeHtml(hp.tj_surgery_date)}` : ""}</div>`
-      : "";
+      : (fgTjDate
+        ? `<div style="font-size:12px;color:var(--neon-violet);font-weight:600;margin-top:6px;" title="MLB IL feed didn't surface the surgery; FanGraphs published it.">Post-TJ · FG record ${escapeHtml(fgTjDate)}</div>`
+        : "");
     // Collapsible full injury history sits inside the same card so all
     // health information stays together. Active stints flag in amber on
     // the summary so the user spots an open IL without expanding.
@@ -11758,42 +12044,51 @@ function renderPlayerDetail(key) {
       const isPitcherTab = !!((p.statline || {}).is_pitcher
                           || (p.sabermetrics || {}).is_pitcher
                           || ["RHP","LHP","SP","RP","MIRP","SIRP","P"].includes((p.position||"").split("/")[0]));
-      const keys = isPitcherTab
+      // Canonical multi-source key set. For hitters we also surface
+      // FG-only extras (Pitch Sel, Bat Ctrl, Arm) when at least one
+      // source in this row's pool publishes them — the columns are
+      // tagged with "(FG)" so the reader knows the attribution.
+      const baseKeys = isPitcherTab
         ? [["fb","FB"],["sl","SL"],["cb","CB"],["ch","CH"],["cmd","CMD"]]
         : [["hit","HIT"],["game_pwr","GPWR"],["raw_pwr","RPWR"],["speed","SPD"],["field","FLD"],["throw","ARM"]];
+      const _extrasKeys = isPitcherTab
+        ? []
+        : [["pitch_sel", "PS"], ["bat_ctrl", "BC"]];  // arm already in throw column
+      const _anyExtra = (eKey) => toolEntries.some(([, info]) => {
+        const ex = info && info.tools && info.tools._extras;
+        return ex && ex[eKey] != null;
+      });
+      const extrasKeys = _extrasKeys.filter(([k]) => _anyExtra(k));
+      const keys = baseKeys.concat(
+        extrasKeys.map(([k, lbl]) => [`__extras_${k}`, `${lbl}*`])
+      );
       const headerCells = keys.map(([, lbl]) =>
         `<th style="text-align:right;padding-bottom:4px;">${lbl}</th>`).join("");
-      // Cell renderer. When a present grade is also available (FG-only
-      // today), render as "pres/fut" so the reader sees both the
-      // current floor and the projection. Single value otherwise.
-      const cellTool = (fut, pres) => {
-        if (fut == null && pres == null) {
-          return `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;color:var(--text-tertiary);font-size:10px;">—</td>`;
-        }
-        if (pres != null && fut != null && pres !== fut) {
-          return `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;">
-            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);">${Math.round(pres)}/</span><span class="fv-badge ${fvClass(String(Math.round(fut)))} size-xs">${Math.round(fut)}</span>
-          </td>`;
-        }
-        const v = fut != null ? fut : pres;
-        return `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;"><span class="fv-badge ${fvClass(String(Math.round(v)))} size-xs">${Math.round(v)}</span></td>`;
-      };
+      // FV-only cell renderer. Each source contributes a single
+      // future grade per tool; present-grade pairs are not shown.
+      const cellTool = (v) => v == null
+        ? `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;color:var(--text-tertiary);font-size:10px;">—</td>`
+        : `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;"><span class="fv-badge ${fvClass(String(Math.round(v)))} size-xs">${Math.round(v)}</span></td>`;
       const toolRows = toolEntries.map(([src, info]) => {
         const lbl = SOURCE_LABELS[src] || src;
         const tools = info.tools || {};
-        const present = (tools._extras && tools._extras.present) || {};
-        const cells = keys.map(([k]) => cellTool(tools[k], present[k])).join("");
+        const extras = (tools._extras) || {};
+        const cells = keys.map(([k]) => {
+          // Synthetic key for FG-only extras lives under tools._extras.
+          if (k.startsWith("__extras_")) {
+            return cellTool(extras[k.slice("__extras_".length)]);
+          }
+          return cellTool(tools[k]);
+        }).join("");
         return `<tr>
           <td style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 6px 3px 0;border-bottom:1px solid var(--border-light);">${escapeHtml(lbl)}</td>
           ${cells}
         </tr>`;
       }).join("");
-      // Footer caption only when ≥1 source carries present/future pairs.
-      const _hasPresFut = toolEntries.some(([, v]) =>
-        v.tools && v.tools._extras && v.tools._extras.present &&
-        Object.keys(v.tools._extras.present).length);
-      const presFutCaption = _hasPresFut
-        ? `<div style="margin-top:4px;font-size:10px;color:var(--text-tertiary);letter-spacing:0.02em;">FG cells show present/future when both grades are published.</div>`
+      // Footer caption documenting the * attribution.
+      const _hasExtras = extrasKeys.length > 0;
+      const extrasCaption = _hasExtras
+        ? `<div style="margin-top:4px;font-size:10px;color:var(--text-tertiary);letter-spacing:0.02em;">* = FanGraphs-only grade (PS = Pitch Sel, BC = Bat Ctrl).</div>`
         : "";
       const spread = latestPt.tools_spread || {};
       const widest = Object.entries(spread).reduce(
@@ -11813,7 +12108,7 @@ function renderPlayerDetail(key) {
           </tr></thead>
           <tbody>${toolRows}</tbody>
         </table>
-        ${presFutCaption}`;
+        ${extrasCaption}`;
     }
     const toolsTabAvailable = !!toolsPanelHTML;
     const tabStrip = `<div class="per-source-tabs">
@@ -12117,7 +12412,8 @@ function renderPlayerDetail(key) {
     // still visible without doubling the summary line height.
     const stat = (p.stat_flags || []);
     const tool = (p.tool_flags || []).map(f => ({ ...f, _origin: "tool" }));
-    const flags = stat.concat(tool);
+    const fg   = computeFgFlags(p);
+    const flags = stat.concat(tool).concat(fg);
     if (!flags.length) return "";
     const green = flags.filter(f => f.direction === "green");
     const red   = flags.filter(f => f.direction === "red");
