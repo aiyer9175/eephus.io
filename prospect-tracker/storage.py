@@ -1526,7 +1526,6 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           contracts_by_key: dict[str, dict] | None = None,
                           draft_pools: dict | None = None,
                           player_ids: dict[str, int] | None = None,
-                          swing_zone_heat_by_key: dict[str, list] | None = None,
                           top_n_active: int | None = None):
     """
     Serialize for the front-end widget.
@@ -2169,9 +2168,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 recent_stints += 1
                 days = stint.get("days") or 0
                 if not days and stint.get("active"):
-                    # Open stint that doesn't have a days field yet —
-                    # estimate as days since `since`.
+                    # Open stint without a closed-stint days field — estimate
+                    # as (today - since). Cap at the trailing-window length
+                    # (~730d) so a stale open stint whose activation row
+                    # never landed in the API can't blow the total up.
                     days = max(0, (today - since).days)
+                # Cap any single stint at the 24-month window length to
+                # prevent old data anomalies from inflating the headline.
+                _MAX_PER_STINT_DAYS = 730
+                if days > _MAX_PER_STINT_DAYS:
+                    days = _MAX_PER_STINT_DAYS
                 recent_days += int(days or 0)
             desc = " ".join([
                 str(stint.get("description") or ""),
@@ -2180,6 +2186,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             if any(p in desc for p in _TJ_PHRASES):
                 tj_dates.append(since_str)
         tj_latest = max(tj_dates) if tj_dates else None
+        # Final aggregate cap: the trailing-24-month window is itself ~730
+        # days long, so the SUM of IL days within that window can't
+        # exceed 730. Multiple overlapping stints (rare but possible from
+        # transferred 15→60 day rows) could otherwise double-count.
+        if recent_days > 730:
+            recent_days = 730
         return {
             "il_stints_24mo": recent_stints,
             "il_days_24mo":   recent_days,
@@ -3032,15 +3044,6 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     inactive_payload = [_serialize(p) for p in inactives]
     graduate_payload = [_serialize(p) for p in grads]
     graduate_payload.sort(key=lambda p: p.get("graduation_date") or "", reverse=True)
-
-    # Statcast swing-zone heatmap arrays (13 floats per graduate). Only
-    # attached on graduate payloads; active prospects skip the field
-    # since Statcast doesn't publish MiLB pitch coordinates.
-    if swing_zone_heat_by_key:
-        for gp in graduate_payload:
-            heat = swing_zone_heat_by_key.get(gp.get("player_key"))
-            if heat:
-                gp["swing_zone_heat"] = heat
 
     # X+ tool composites need cohort mean/stdev. Use the union of all
     # serialized prospects so a single norm anchors actives / inactives /

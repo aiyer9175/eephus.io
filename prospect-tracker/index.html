@@ -7339,12 +7339,12 @@ const GLOSSARY = {
     related: ["stf_plus", "tools_plus", "fv"],
   },
   "tvi": {
-    name: "TVI", aliases: ["TVI", "Trade Value Index"], category: "custom-index",
+    name: "SUR+", aliases: ["SUR+", "TVI", "Surplus Plus", "Trade Value Index"], category: "custom-index",
     priority: 15,
     short: "Cleveland-derived expected MLB surplus value ($M) interpolated from consensus FV.",
-    long: "Maps consensus FV to estimated total surplus value across a prospect's 6-year cost-controlled MLB window using a published industry table (FanGraphs / Craig Edwards 2019 framework). Linearly interpolated between half-grade ticks. Higher FV = exponentially higher TVI because of the WAR distribution at the upper tail.",
-    formula: "TVI ≈ piecewise-linear interp on (FV, $M) anchor points: 80→$145M, 70→$60M, 60→$25M, 50→$9M, 40→$1.5M",
-    example: "A 55-FV prospect has a TVI of ~$15M; the team is sitting on ~$15M of surplus value above league-min cost over the 6yr window if the player hits his projection.",
+    long: "Maps consensus FV to estimated total surplus value across a prospect's 6-year cost-controlled MLB window using a published industry table (FanGraphs / Craig Edwards 2019 framework). Linearly interpolated between half-grade ticks. Higher FV = exponentially higher SUR+ because of the WAR distribution at the upper tail.",
+    formula: "SUR+ ≈ piecewise-linear interp on (FV, $M) anchor points: 80→$145M, 70→$60M, 60→$25M, 50→$9M, 40→$1.5M",
+    example: "A 55-FV prospect has a SUR+ of ~$15M; the team is sitting on ~$15M of surplus value above league-min cost over the 6yr window if the player hits his projection.",
     related: ["fv", "surplus_value", "war"],
   },
   "wag": {
@@ -7603,7 +7603,7 @@ const GLOSSARY = {
     name: "Surplus value", category: "financial",
     priority: 10,
     short: "Total $M of MLB value above cost-controlled salary across a prospect's 6yr team-control window.",
-    long: "Expected: FV-derived (TVI table). Realized: actual career WAR × $9.5M/WAR market rate minus actual or estimated salaries paid. Positive means the team beat the bet implied by the player's grade, negative means they paid more than the realized value.",
+    long: "Expected: FV-derived (SUR+ table). Realized: actual career WAR × $9.5M/WAR market rate minus actual or estimated salaries paid. Positive means the team beat the bet implied by the player's grade, negative means they paid more than the realized value.",
     related: ["tvi", "war", "aav", "wag"],
   },
   "aav": {
@@ -7686,12 +7686,6 @@ const GLOSSARY = {
     short: "Player is currently on the active Injured List. Multiple IL types: 7-day, 10-day, 15-day, 60-day.",
     long: "60-day IL freezes a player's 40-man roster slot. 15-day IL is the standard major-injury duration. The site surfaces every IL stint over the trailing 24 months; the Health profile aggregates the count and total IL days.",
     related: ["post_tj"],
-  },
-  "strike_zone": {
-    name: "Strike zone", aliases: ["Strike zone", "Swing zone heat", "Zone heat"], category: "general-stat",
-    short: "13-bin grid showing pitch outcomes by location. 3×3 inner zones plus 4 chase wedges around them.",
-    long: "On graduate detail pages, the heat color shows swing rate per zone from Statcast pitch-by-pitch data for the current MLB season. Inner 3×3 bins cover the rulebook strike zone; the four outer wedges cover chase pitches above, below, left, and right of the zone. Catcher's view: zone 0 is upper-left, zone 8 is lower-right.",
-    related: ["fv"],
   },
 };
 
@@ -9219,7 +9213,7 @@ function renderFarmSystems() {
     });
   }
   // Aggregate surplus value per org — sum each active prospect's FV-implied
-  // TVI table value, split hitter / pitcher. Same call powering the per-org
+  // SUR+ table value, split hitter / pitcher. Same call powering the per-org
   // Surplus tile on renderFarmDetail.
   const PITCHER_RE = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/;
   const surplusByOrg = {};
@@ -9349,7 +9343,7 @@ function renderFarmSystems() {
             const n = countByOrg[org.org];
             if (s == null || !n) return "";
             const fmt = s >= 100 ? s.toFixed(0) : s.toFixed(1);
-            return `<span class="g-term" data-term="surplus_value" style="font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);font-variant-numeric:tabular-nums;letter-spacing:0.02em;" title="Total surplus value across ${n} active prospects · sum of FV-implied TVI">$${fmt}M · ${n}p</span>`;
+            return `<span class="g-term" data-term="surplus_value" style="font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);font-variant-numeric:tabular-nums;letter-spacing:0.02em;" title="Total surplus value across ${n} active prospects · sum of FV-implied SUR+">$${fmt}M · ${n}p</span>`;
           })()}
         </div>
         <div class="stock-cell" style="font-size:12px;">${stockHtml}</div>
@@ -10202,14 +10196,29 @@ function makeInjuryHistoryBlock(history) {
   const rows = history.map(s => {
     const sinceFmt = fmtDate(s.since);
     const untilFmt = s.until ? fmtDate(s.until) : `<span style="color:var(--neon-amber);font-weight:600;">present</span>`;
-    const days = s.days != null
-      ? `${s.days}d`
-      : (s.active && s.since
-          ? (() => {
-              const ms = Date.now() - new Date(s.since + "T00:00:00").getTime();
-              return !isNaN(ms) && ms > 0 ? `${Math.floor(ms / 86400000)}d` : "—";
-            })()
-          : "—");
+    // Sanity-cap displayed days. Some open stints carry ancient `since`
+    // dates because the MLB API never recorded an activation row — those
+    // would otherwise read as "thousands of days." If the computed value
+    // looks unreasonable (>2 years), flag it with a tilde + tooltip so
+    // the reader knows the data is questionable rather than truthful.
+    const SANITY_CAP_DAYS = 730;
+    const days = (() => {
+      let raw = null, fromOpen = false;
+      if (s.days != null) {
+        raw = Number(s.days);
+      } else if (s.active && s.since) {
+        const ms = Date.now() - new Date(s.since + "T00:00:00").getTime();
+        if (!isNaN(ms) && ms > 0) {
+          raw = Math.floor(ms / 86400000);
+          fromOpen = true;
+        }
+      }
+      if (raw == null) return "—";
+      if (raw > SANITY_CAP_DAYS) {
+        return `<span title="Reported ${raw} days — likely stale data (no activation row on file). Capped at 2yr." style="color:var(--text-tertiary);">~${SANITY_CAP_DAYS}d</span>`;
+      }
+      return `${raw}d`;
+    })();
     const typeColor = s.active
       ? "var(--neon-amber)"
       : (s.type === "60-day" ? "var(--down)" : "var(--text-tertiary)");
@@ -11074,20 +11083,6 @@ function renderPlayerDetail(key) {
     ? `<div class="detail-title">Pitch arsenal</div>${makeArsenalBlock(p.pitch_arsenal)}`
     : "";
 
-  // Statcast swing-zone heatmap. Graduates only; needs the 13-bin
-  // `swing_zone_heat` array attached by storage.py. Reuses the existing
-  // `makeStrikeZoneHeatmap` renderer by passing a synthetic `zone_heat`
-  // wrapper.
-  const swingZoneSection = (() => {
-    if (p.status !== "graduated") return "";
-    const heat = p.swing_zone_heat;
-    if (!Array.isArray(heat) || !heat.some(v => v != null)) return "";
-    return `<div class="detail-title"><span class="g-term" data-term="strike_zone">Swing-zone heat</span> <span class="detail-title-sub">Statcast · current MLB season · heat = swing rate per zone</span></div>
-      <div class="detail-card" style="display:flex;justify-content:center;padding:14px 12px;">
-        ${makeStrikeZoneHeatmap({ zone_heat: heat })}
-      </div>`;
-  })();
-
   // Career projection arc — graduate-only. Pairs the existing WAG bar
   // chart (per-season WAR vs FV-implied baseline) with a one-line
   // summary so the graduate detail page tells the full performance-vs-
@@ -11722,7 +11717,6 @@ function renderPlayerDetail(key) {
     ["Health",  "detail-health",    !!healthSection],
     ["Savant",  "detail-savant",    !!savantSection],
     ["Arsenal", "detail-arsenal",   !!arsenalSection],
-    ["Swing zone", "detail-swing-zone", !!swingZoneSection],
     ["Projection", "detail-projection", !!projectionArcSection],
   ].filter(([, , show]) => show);
   const jumpLinkStrip = jumpLinkPairs.length >= 3
@@ -11762,7 +11756,6 @@ function renderPlayerDetail(key) {
     wrap("detail-tools",   toolsSection),
     wrap("detail-savant",  savantSection),
     wrap("detail-arsenal", arsenalSection),
-    wrap("detail-swing-zone", swingZoneSection),
     wrap("detail-projection", projectionArcSection),
     contractDetailsSection,
   ].filter(Boolean).join("");
@@ -12385,50 +12378,68 @@ function renderFarmDetail(orgCode) {
     </div>`;
   })();
 
-  // Promotion candidates — prospects at A+ or AA who are (a) FV ≥ 50
-  // (already a real prospect, not a depth piece) and (b) at-or-below
-  // the empirical mean age for their level (young-for-level signals
-  // a likely promotion candidate). Skipped when the org has none.
+  // Promotion candidates — prospects at A+/AA/AAA who are young-for-
+  // level AND signal a promotion case via FV (scout view) OR RPS+
+  // (performance vs same-age peers at level). Both signals are weighted
+  // into a composite `promo_score` for ranking so a 50-FV prospect
+  // raking at RPS+ 130 surfaces alongside a 55-FV name with
+  // average-for-level results. Skipped when the org has none.
   const promoCard = (() => {
-    // Expanded promotion-candidate set: A+/AA/AAA. A young-for-level AAA
-    // prospect with FV ≥ 50 is a near-term MLB call-up candidate; the
-    // older "A+/AA only" gate missed the obvious "knocking on the door"
-    // tier. The summary header counts candidates by ETA year so a
-    // reader sees the call-up wave shape at a glance.
     const PROMO_LEVELS = new Set(["A+", "AA", "AAA"]);
     const norms = DATA.level_norms || {};
-    const candidates = rosterPlayersAll.filter(rp => {
+    // Composite ranking: lean on FV but let strong RPS+ overperformance
+    // pull a prospect up (and weak RPS+ pull one down). Weight chosen
+    // so a +20 RPS+ swing is worth ~8 FV points — roughly one tier.
+    const _promoScore = (fv, rpsPlus) => {
+      const rps = rpsPlus != null ? rpsPlus : 100;
+      return (fv ?? 0) + (rps - 100) * 0.4;
+    };
+    const candidates = rosterPlayersAll.map(rp => {
       const sl = rp.statline || {};
-      if (!PROMO_LEVELS.has(sl.level)) return false;
-      const fv = rp.fv_close;
-      if (fv == null || fv < 50) return false;
+      if (!PROMO_LEVELS.has(sl.level)) return null;
       const ageCenter = (((norms[sl.level] || {}).age || {}).avg_age)
                      ?? (((norms[sl.level] || {}).age || {}).median_age);
-      if (ageCenter == null || rp.age == null) return false;
-      return rp.age <= ageCenter;
-    }).sort((a, b) => (b.fv_close || 0) - (a.fv_close || 0));
+      if (ageCenter == null || rp.age == null) return null;
+      if (rp.age > ageCenter) return null;
+      const fv = rp.fv_close;
+      const rpsObj = (typeof getRpsPlus === "function") ? getRpsPlus(rp) : null;
+      const rpsPlus = rpsObj ? rpsObj.plus : null;
+      // Inclusion gate: scout signal (FV ≥ 50) OR performance signal
+      // (RPS+ ≥ 110, well-above same-age peers). At least one must fire.
+      const fvOk  = fv != null && fv >= 50;
+      const rpsOk = rpsPlus != null && rpsPlus >= 110;
+      if (!fvOk && !rpsOk) return null;
+      return { rp, fv, rpsPlus, score: _promoScore(fv, rpsPlus) };
+    }).filter(Boolean)
+      .sort((a, b) => b.score - a.score);
     if (!candidates.length) return "";
-    // By-ETA-year tally — only counted when the prospect's ETA is set.
     const etaCounts = {};
-    for (const c of candidates) {
-      const yr = c.eta && c.eta.year;
+    for (const { rp } of candidates) {
+      const yr = rp.eta && rp.eta.year;
       if (yr != null) etaCounts[yr] = (etaCounts[yr] || 0) + 1;
     }
     const etaSummary = Object.keys(etaCounts).sort()
       .map(y => `${etaCounts[y]} in ${y}`).join(" · ");
-    const rows = candidates.slice(0, 6).map(rp => {
+    const rows = candidates.slice(0, 6).map(({ rp, fv, rpsPlus }) => {
       const sl = rp.statline || {};
-      const fvL = Math.round(rp.fv_close);
+      const fvL = fv != null ? Math.round(fv) : "—";
+      const fvBadge = fvL !== "—"
+        ? `<span class="fv-badge ${fvClass(String(fvL))} size-sm">${fvL}</span>`
+        : `<span class="fv-badge size-sm" style="opacity:0.4;">—</span>`;
+      const rpsChip = rpsPlus != null
+        ? `<span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:${rpsPlus >= 120 ? 'var(--up)' : rpsPlus >= 100 ? 'var(--neon-cyan)' : 'var(--text-tertiary)'};font-variant-numeric:tabular-nums;" title="RPS+ ${rpsPlus} vs same-age peers at ${sl.level}">${rpsPlus}</span>`
+        : `<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);">—</span>`;
       const etaTxt = (rp.eta && rp.eta.year != null) ? `ETA ${rp.eta.year}` : "ETA —";
-      return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
-        <span class="fv-badge ${fvClass(String(fvL))} size-sm">${fvL}</span>
+      return `<div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
+        ${fvBadge}
         <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}</span>
+        ${rpsChip}
         <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;">${escapeHtml(sl.level)} · ${rp.age.toFixed(1)}y · ${etaTxt}</span>
       </div>`;
     }).join("");
     return `<div class="farm-side-card">
       <div class="side-title">Promotion candidates <span class="side-count">${candidates.length}</span></div>
-      <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;margin-bottom:4px;">FV ≥ 50 at A+/AA/AAA, young-for-level</div>
+      <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;margin-bottom:4px;">Young-for-level at A+/AA/AAA · FV ≥ 50 or RPS+ ≥ 110 · ranked by FV + 0.4·(RPS+ − 100)</div>
       ${etaSummary ? `<div style="font-size:10px;color:var(--neon-cyan);font-family:var(--font-mono);letter-spacing:0.02em;margin-bottom:6px;font-variant-numeric:tabular-nums;">${etaSummary}</div>` : ""}
       ${rows}
     </div>`;
@@ -13733,11 +13744,10 @@ function computeStuffPlus(p) {
   return _clampPlus(100 + 10 * (zk - zw - zh));
 }
 
-// Trade Value Index (TVI) — Cleveland-derived expected MLB surplus
-// value in $M for a prospect at a given consensus FV. Linearly
-// interpolated between half-grade ticks. Returns null when consensus
-// FV is missing.
-const _TVI_TABLE = [
+// Surplus Plus (SUR+) — Cleveland-derived expected MLB surplus value
+// in $M for a prospect at a given consensus FV. Linearly interpolated
+// between half-grade ticks. Returns null when consensus FV is missing.
+const _SUR_TABLE = [
   [80, 145], [75, 90], [70, 60], [65, 40], [60, 25],
   [55, 15], [50,  9], [45,  4], [40, 1.5], [35, 0.5], [30, 0],
 ];
@@ -13745,11 +13755,11 @@ function computeTradeValue(p) {
   const latest = p && p.points && p.points.length ? p.points[p.points.length - 1] : null;
   const fv = latest ? Number(latest.consensus_fv) : (p && Number(p.fv_close));
   if (fv == null || !isFinite(fv)) return null;
-  if (fv >= _TVI_TABLE[0][0]) return _TVI_TABLE[0][1];
-  if (fv <= _TVI_TABLE[_TVI_TABLE.length - 1][0]) return 0;
-  for (let i = 0; i < _TVI_TABLE.length - 1; i++) {
-    const [hiFv, hiVal] = _TVI_TABLE[i];
-    const [loFv, loVal] = _TVI_TABLE[i + 1];
+  if (fv >= _SUR_TABLE[0][0]) return _SUR_TABLE[0][1];
+  if (fv <= _SUR_TABLE[_SUR_TABLE.length - 1][0]) return 0;
+  for (let i = 0; i < _SUR_TABLE.length - 1; i++) {
+    const [hiFv, hiVal] = _SUR_TABLE[i];
+    const [loFv, loVal] = _SUR_TABLE[i + 1];
     if (fv <= hiFv && fv >= loFv) {
       const t = (fv - loFv) / (hiFv - loFv);
       return loVal + (hiVal - loVal) * t;
@@ -13797,12 +13807,12 @@ function tradeValuePillHTML(p) {
   const v = computeTradeValue(p);
   if (v == null) return "";
   const formatted = v >= 100 ? `$${v.toFixed(0)}M` : v >= 10 ? `$${v.toFixed(1)}M` : `$${v.toFixed(1)}M`;
-  return `<span class="rps-plus-pill is-neutral g-term" data-term="tvi" style="color:var(--card-gold);border-color:var(--card-gold);background:rgba(201,162,39,0.10);" title="${escapeHtml(`Estimated MLB surplus value (Cleveland-derived FV→$ table) at consensus FV ${(p.points && p.points.length ? p.points[p.points.length - 1].consensus_fv_label : "?")}`)}">TVI ${formatted}</span>`;
+  return `<span class="rps-plus-pill is-neutral g-term" data-term="tvi" style="color:var(--card-gold);border-color:var(--card-gold);background:rgba(201,162,39,0.10);" title="${escapeHtml(`Estimated MLB surplus value (Cleveland-derived FV→$ table) at consensus FV ${(p.points && p.points.length ? p.points[p.points.length - 1].consensus_fv_label : "?")}`)}">SUR+ ${formatted}</span>`;
 }
 
 // Composite helper for the prospect detail stat strip / rows — renders
 // all available "+" pills inline so a hitter shows PWR+/PD+, a pitcher
-// shows STF+, every player shows TVI. Omits pills whose underlying
+// shows STF+, every player shows SUR+. Omits pills whose underlying
 // metric returned null so the row doesn't fill with "—" placeholders.
 function scoutRatesHTML(p) {
   return [
