@@ -11556,9 +11556,14 @@ function renderPlayerDetail(key) {
     const gradeCell = (key, label) => {
       const v = (t.grades || {})[key];
       const spread = (t.spread || {})[key];
-      const spreadTag = (spread && spread >= 10)
-        ? `<span style="font-size:9px;color:var(--neon-amber);margin-left:4px;" title="Source spread ${spread} grade-points">±${Math.round(spread)}</span>`
-        : "";
+      // Lower threshold from 10 to 5 so mild source disagreement is
+      // visible (light amber) vs significant disagreement (full amber).
+      let spreadTag = "";
+      if (spread && spread >= 5) {
+        const strong = spread >= 10;
+        const color = strong ? "var(--neon-amber)" : "rgba(255,191,0,0.7)";
+        spreadTag = `<span style="font-size:9px;color:${color};margin-left:4px;" title="Source spread ${spread} grade-points">±${Math.round(spread)}</span>`;
+      }
       const dualMark = key === "speed" ? dualMarkerHTML : "";
       const tip = _perSourceTooltip(key, v);
       return `<div class="tools-grade-cell" title="${escapeHtml(tip)}">
@@ -11631,12 +11636,40 @@ function renderPlayerDetail(key) {
     const sources = (t.publishing_sources || [])
       .map(s => SOURCE_LABELS[s] || s)
       .join(" · ");
+    const sourceCount = (t.publishing_sources || []).length;
+    // Source-count badge — at-a-glance signal for how many independent
+    // outlets back this consensus.
+    let sourceBadge = "";
+    if (sourceCount > 0) {
+      const badgeLabel = sourceCount === 1 ? "Single-source"
+                        : sourceCount === 2 ? "2 sources"
+                                            : `${sourceCount} sources · consensus`;
+      const badgeColor = sourceCount === 1 ? "var(--text-tertiary)"
+                       : sourceCount === 2 ? "var(--neon-cyan)"
+                                           : "var(--neon-cyan)";
+      const badgeWeight = sourceCount >= 3 ? "600" : "500";
+      sourceBadge = `<span class="tool-pill" style="background:transparent;border:1px solid ${badgeColor};color:${badgeColor};font-weight:${badgeWeight};margin-right:6px;" title="${sourceCount} source${sourceCount === 1 ? '' : 's'} published tool grades for this prospect">${badgeLabel}</span>`;
+    }
+    // "Tools+ uses latest" disclosure — only renders when source_history
+    // has at least one source with ≥2 publications (i.e., older grades
+    // exist that aren't feeding Tools+). Makes the latest-only rule
+    // visible without changing behavior.
+    let toolsPlusDisclosure = "";
+    const sh = t.source_history || {};
+    const hasHistorical = Object.values(sh).some(arr => Array.isArray(arr) && arr.length >= 2);
+    if (hasHistorical) {
+      toolsPlusDisclosure = `<span style="color:var(--text-tertiary);font-size:11px;">Tools+ uses each source's most recent publication. See history below.</span>`;
+    }
     const footerParts = [];
     if (hasSpeedMarker) {
       footerParts.push(`<span class="tools-footer-legend">◆</span> Speed counts toward both composites`);
     }
-    if (sources) {
-      footerParts.push(`Publishing: ${escapeHtml(sources)}`);
+    if (sourceBadge || sources) {
+      const publishingTxt = sources ? `Publishing: ${escapeHtml(sources)}` : "";
+      footerParts.push(`${sourceBadge}${publishingTxt}`);
+    }
+    if (toolsPlusDisclosure) {
+      footerParts.push(toolsPlusDisclosure);
     }
     const footer = footerParts.length
       ? `<div class="tools-footer">${footerParts.join("<br>")}</div>`
@@ -11698,6 +11731,87 @@ function renderPlayerDetail(key) {
         ${groupBlocks}
         ${footer}
       </div>${twoWayExtraCard}`;
+  })();
+
+  // Source-by-source tool history dropdown. Lists every publication
+  // each source has issued for this prospect, newest-first. The top
+  // row in each source's table gets a "LATEST" pill — that's the row
+  // feeding Tools+. Older rows are visually de-emphasized so the
+  // most-recent-only consensus rule is legible. Hidden when no source
+  // has ≥2 publications (no history to show).
+  const sourceHistorySection = (() => {
+    const t = p.tools;
+    if (!t || !t.source_history) return "";
+    const sh = t.source_history;
+    const recency = t.source_recency || {};
+    // Only render when ≥1 source has ≥2 publications.
+    const hasHistory = Object.values(sh).some(arr => Array.isArray(arr) && arr.length >= 2);
+    if (!hasHistory) return "";
+    // Order sources by latest publication date (newest first).
+    const orderedSources = Object.keys(sh).sort((a, b) => {
+      const da = (recency[a] || {}).latest_date || "";
+      const db = (recency[b] || {}).latest_date || "";
+      return db.localeCompare(da);
+    });
+    // Per-source table: header row + one row per publication.
+    const HITTER_KEYS = ["hit","game_pwr","raw_pwr","speed","field","throw","pitch_sel","bat_ctrl"];
+    const PITCHER_KEYS = ["fb","sl","cb","ch","cmd","ct"];
+    const HITTER_LABELS = {hit:"Hit", game_pwr:"GP", raw_pwr:"RP", speed:"Spd",
+                           field:"Fld", throw:"Thr", pitch_sel:"PSel", bat_ctrl:"BC"};
+    const PITCHER_LABELS = {fb:"FB", sl:"SL", cb:"CB", ch:"CH", cmd:"Cmd", ct:"CT"};
+    const renderTable = (src, entries) => {
+      // Figure out which key set to use (whichever appears in latest entry).
+      const latest = entries[0] || {};
+      const latestGrades = latest.grades || {};
+      const isPitTab = PITCHER_KEYS.some(k => latestGrades[k] != null);
+      const keys = isPitTab ? PITCHER_KEYS : HITTER_KEYS;
+      const labels = isPitTab ? PITCHER_LABELS : HITTER_LABELS;
+      const presentKeys = keys.filter(k => entries.some(e => (e.grades || {})[k] != null));
+      const headerCells = presentKeys.map(k => `<th style="padding:4px 8px;font-size:10px;color:var(--text-tertiary);text-align:right;">${escapeHtml(labels[k])}</th>`).join("");
+      const rows = entries.map((e, idx) => {
+        const isLatest = idx === 0;
+        const dimColor = isLatest ? "var(--text-primary)" : "var(--text-tertiary)";
+        const latestPill = isLatest
+          ? `<span style="display:inline-block;margin-left:6px;padding:1px 5px;font-size:9px;letter-spacing:0.04em;background:var(--neon-cyan);color:var(--bg-primary);border-radius:2px;">LATEST</span>`
+          : "";
+        const cells = presentKeys.map(k => {
+          const v = (e.grades || {})[k];
+          return `<td style="padding:4px 8px;text-align:right;color:${dimColor};font-family:var(--font-mono);font-size:11px;">${v != null ? Math.round(v) : "—"}</td>`;
+        }).join("");
+        const intervalDisplay = fgPrettifyInterval(src, e.interval_label);
+        return `<tr>
+          <td style="padding:4px 8px;color:${dimColor};font-size:11px;white-space:nowrap;">${escapeHtml(e.snapshot_date)}${latestPill}</td>
+          <td style="padding:4px 8px;color:${dimColor};font-size:11px;">${escapeHtml(intervalDisplay || e.interval_label || "")}</td>
+          ${cells}
+        </tr>`;
+      }).join("");
+      const srcRecency = recency[src] || {};
+      const staleHint = srcRecency.is_stale
+        ? `<span style="margin-left:6px;font-size:9px;color:var(--neon-amber);" title="Last publication ${srcRecency.stale_days} days ago — older than ${365} days">STALE</span>`
+        : "";
+      return `<div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;">
+          ${escapeHtml(SOURCE_LABELS[src] || src)} <span style="color:var(--text-tertiary);font-weight:400;">· ${entries.length} publication${entries.length === 1 ? "" : "s"}</span>${staleHint}
+        </div>
+        <table style="width:100%;border-collapse:collapse;border:1px solid var(--border-light);">
+          <thead><tr style="background:rgba(255,255,255,0.02);">
+            <th style="padding:4px 8px;font-size:10px;color:var(--text-tertiary);text-align:left;">Date</th>
+            <th style="padding:4px 8px;font-size:10px;color:var(--text-tertiary);text-align:left;">Update</th>
+            ${headerCells}
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    };
+    const blocks = orderedSources
+      .map(src => renderTable(src, sh[src]))
+      .join("");
+    return `<details style="margin:10px 0 14px;">
+      <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--text-secondary);padding:8px 0;">
+        Source-by-source tool history <span style="color:var(--text-tertiary);font-weight:400;font-size:11px;">· timeline of every publication per source</span>
+      </summary>
+      <div style="padding:8px 0;">${blocks}</div>
+    </details>`;
   })();
 
   // Statcast / Baseball Savant block — populated when CSV exports are
@@ -12594,7 +12708,7 @@ function renderPlayerDetail(key) {
   // Contract details + the More-details accordion live here so they
   // get more horizontal real estate than the narrow sidebar provides.
   const wideCards = [
-    wrap("detail-tools",   toolsSection),
+    wrap("detail-tools",   toolsSection + (sourceHistorySection || "")),
     wrap("detail-savant",  savantSection),
     wrap("detail-arsenal", arsenalSection),
     wrap("detail-projection", projectionArcSection),

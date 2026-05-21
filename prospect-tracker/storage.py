@@ -29,6 +29,13 @@ DB_PATH = Path(__file__).parent / "prospects.db"
 # players who quietly aged out of prospect status.
 INACTIVE_MONTHS = 18
 
+# After this many days since a source's most recent tool publication,
+# we flag that source as "stale" in tools.source_recency. The UI uses
+# the flag to visually de-emphasize the source in the history dropdown
+# without removing it from Tools+ (Tools+ always uses each source's
+# latest publication regardless of age).
+TOOL_FRESHNESS_DAYS = 365
+
 
 def _index_plus(value: float | None, mean: float | None, stdev: float | None) -> int | None:
     """Generic 'X+' normalization shared by RPS+, DvM+, and ToolGrade+.
@@ -2449,6 +2456,92 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                         tools_payload["hitter_payload"] = hitter_payload
                     if pitcher_payload is not None:
                         tools_payload["pitcher_payload"] = pitcher_payload
+            # Time-series + per-source history. The UI uses these to
+            # render the "Source-by-source tool history" dropdown and to
+            # disclose that Tools+ uses each source's most recent
+            # publication (older rows are kept for context, not math).
+            #
+            # `history`: consensus tool grades at each snapshot date.
+            # `source_history`: per-source publication timeline.
+            # `source_recency`: latest publication date + stale flag per source.
+            history_entries: list[dict] = []
+            source_history: dict[str, list[dict]] = {}
+            for pt in (p.points or []):
+                pt_per_src = pt.per_source or {}
+                pt_consensus = pt.tools_consensus or {}
+                # Walk each source's published tools at this point.
+                for src, info in pt_per_src.items():
+                    if not info:
+                        continue
+                    src_tools = info.get("tools") or {}
+                    if not isinstance(src_tools, dict):
+                        continue
+                    # Filter out _extras + non-numeric junk.
+                    numeric = {k: v for k, v in src_tools.items()
+                               if k != "_extras" and isinstance(v, (int, float))}
+                    if not numeric:
+                        continue
+                    source_history.setdefault(src, []).append({
+                        "snapshot_date": pt.snapshot_date,
+                        "interval_label": info.get("interval_label")
+                                          or pt.interval_label,
+                        "grades": numeric,
+                        "extras_present": bool(
+                            isinstance(src_tools.get("_extras"), dict)
+                            and src_tools["_extras"]
+                        ),
+                    })
+                # Consensus snapshot — append once per point that produced
+                # any tool consensus.
+                if pt_consensus:
+                    contributing = [src for src, info in pt_per_src.items()
+                                    if info and info.get("tools")]
+                    history_entries.append({
+                        "snapshot_date": pt.snapshot_date,
+                        "interval_label": pt.interval_label,
+                        "consensus": dict(pt_consensus),
+                        "sources": sorted(contributing),
+                    })
+            # Dedupe source_history per source by (date, interval_label) —
+            # forward-fill carries the same snapshot forward many times.
+            for src in list(source_history.keys()):
+                seen = set()
+                deduped = []
+                for entry in source_history[src]:
+                    key = (entry["snapshot_date"], entry["interval_label"])
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    deduped.append(entry)
+                # Newest-first so the latest row sits at the top of the
+                # rendered table.
+                deduped.sort(key=lambda e: e["snapshot_date"], reverse=True)
+                source_history[src] = deduped
+            if history_entries:
+                # Newest-first for the consensus timeline too.
+                history_entries.sort(key=lambda e: e["snapshot_date"], reverse=True)
+                tools_payload["history"] = history_entries
+            if source_history:
+                tools_payload["source_history"] = source_history
+                # Recency: latest publication per source + stale flag.
+                today_iso = date.today().isoformat()
+                source_recency: dict[str, dict] = {}
+                for src, entries in source_history.items():
+                    if not entries:
+                        continue
+                    latest = entries[0]["snapshot_date"]
+                    try:
+                        d_latest = date.fromisoformat(latest)
+                        stale_days = (date.fromisoformat(today_iso) - d_latest).days
+                    except ValueError:
+                        stale_days = None
+                    source_recency[src] = {
+                        "latest_date": latest,
+                        "stale_days": stale_days,
+                        "is_stale": (stale_days is not None
+                                     and stale_days > TOOL_FRESHNESS_DAYS),
+                    }
+                tools_payload["source_recency"] = source_recency
         tool_flags = compute_tool_flags(tools_payload, is_pitcher)
 
         filtered_trades = _filter_real_trades(trades_by_player.get(p.player_key, []))

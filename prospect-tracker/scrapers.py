@@ -121,7 +121,11 @@ class Snapshot:
 # composite_off / Tools+ rather than living in _extras.
 HITTER_TOOL_KEYS = ("hit", "game_pwr", "raw_pwr", "speed", "field", "throw",
                     "pitch_sel", "bat_ctrl")
-PITCHER_TOOL_KEYS = ("fb", "sl", "cb", "ch", "cmd")
+# `ct` (cutter) is a distinct pitch family Just Baseball grades separately.
+# FG and MLB Pipeline today fold it into FB; the consensus is fine with
+# sparse keys, so prospects without a published cutter grade simply lack
+# the slot.
+PITCHER_TOOL_KEYS = ("fb", "sl", "cb", "ch", "cmd", "ct")
 ALL_TOOL_KEYS = HITTER_TOOL_KEYS + PITCHER_TOOL_KEYS
 
 
@@ -245,21 +249,11 @@ ESPN_TOOL_KEY: dict[str, str] = {
 def _parse_espn_tools(commentary_text: str) -> dict[str, float] | None:
     """Pull tool grades from an ESPN prospect's commentary block.
 
-    ESPN ships tools as 'Label: PV/FV' (left=present, right=future).
-    Example commentary fragment:
-
-        Konnor Griffin, SS, Pittsburgh Pirates
-        Age: 19 | Bats: Right | Throws: Right
-        Hit: 45/50
-        Game Power: 50/65
-        Raw Power: 60/70
-        Speed: 70/70
-        Fielding: 45/55
-        Throwing: 65/65
-
-    We always take the FUTURE value (rightmost integer). When a single-
-    integer format is used (rare), we use that value as-is. Out-of-range
-    values (< 20 or > 80) are dropped silently.
+    ESPN historically shipped tools as 'Label: PV/FV' (left=present,
+    right=future). The 2025+ articles dropped that structured format
+    in favor of prose ("plus runner", "70 raw power") — when no
+    structured pairs are found, we fall through to the prose parser.
+    Out-of-range values (< 20 or > 80) are dropped silently.
     """
     if not commentary_text:
         return None
@@ -275,7 +269,9 @@ def _parse_espn_tools(commentary_text: str) -> dict[str, float] | None:
         key = ESPN_TOOL_KEY.get(label)
         if not key:
             continue
-        fv_str = m.group(2) or m.group(3)
+        fv_str = m.group(2) or m.group(1) and m.group(3)
+        if not fv_str:
+            continue
         try:
             grade = float(fv_str)
         except (TypeError, ValueError):
@@ -283,6 +279,159 @@ def _parse_espn_tools(commentary_text: str) -> dict[str, float] | None:
         if grade < 20 or grade > 80:
             continue
         tools[key] = grade
+    if tools:
+        return tools
+    # Fall through: ESPN now publishes tools as prose. Try the prose
+    # extractor — quality is lower but McDaniel's narrative still
+    # encodes opinions worth feeding into consensus (per-source
+    # tooltip discloses prose-estimated provenance).
+    return _parse_espn_prose_tools(commentary_text)
+
+
+# Descriptor → 20-80 grade. Includes hyphenated and non-hyphenated
+# variants ("plus-plus" / "double-plus" / "above-average" / "above average").
+ESPN_DESCRIPTOR_GRADE: dict[str, float] = {
+    "plus-plus": 70.0, "double-plus": 70.0, "elite": 70.0,
+    "80-grade": 80.0, "80 grade": 80.0,
+    "plus": 60.0,
+    "above-average": 55.0, "above average": 55.0, "solid-average": 55.0,
+    "average": 50.0, "solid average": 50.0,
+    "below-average": 45.0, "below average": 45.0, "fringe": 45.0,
+    "well-below": 35.0, "well below": 35.0,
+    "30-grade": 30.0, "30 grade": 30.0,
+}
+
+# Tool noun → canonical key. Ordered so longest phrases win
+# ("raw power" beats "power"); the prose parser iterates this list and
+# takes the first match for each key. Each tuple is (noun, key, allow_pre).
+# `allow_pre`: True means "<descriptor> <noun>" works (e.g., "plus runner");
+# False means only "<NN>-grade <noun>" works (e.g., "70-grade arm" for
+# nouns whose adjective form is ambiguous with general English).
+ESPN_PROSE_TOOL_NOUN: list[tuple[str, str, bool]] = [
+    ("raw power",   "raw_pwr", True),
+    ("game power",  "game_pwr", True),
+    ("power",       "game_pwr", True),     # fallback when only "power" appears
+    ("hit tool",    "hit",      True),
+    ("contact tool","hit",      True),
+    ("runner",      "speed",    True),
+    ("run tool",    "speed",    True),
+    ("speed",       "speed",    True),
+    ("defender",    "field",    True),
+    ("defense",     "field",    True),
+    ("glove",       "field",    True),
+    ("arm",         "throw",    False),    # "his arm" is too generic for adj match
+    ("throwing",    "throw",    True),
+    ("fastball",    "fb",       True),
+    ("slider",      "sl",       True),
+    ("sweeper",     "sl",       True),
+    ("curveball",   "cb",       True),
+    ("curve",       "cb",       True),
+    ("changeup",    "ch",       True),
+    ("splitter",    "ch",       True),
+    ("cutter",      "ct",       True),
+    ("command",     "cmd",      True),
+    ("control",     "cmd",      True),
+]
+
+
+def _velocity_to_fb_grade(sits_min: float, sits_max: float | None,
+                          peak: float | None) -> float | None:
+    """Map a fastball velocity band to an approximate FB grade.
+
+    Conservative scouting rule of thumb (McDaniel's own writing):
+      sits 90-92 → 50,  93-95 → 55,  94-97 → 60,  96-99 → 65,  98+ → 70.
+    Anchor on the upper end of the sits band; if missing, anchor on peak.
+    """
+    anchor = sits_max if sits_max is not None else (peak if peak is not None else sits_min)
+    if anchor is None:
+        return None
+    if anchor >= 99: return 70.0
+    if anchor >= 97: return 65.0
+    if anchor >= 95: return 60.0
+    if anchor >= 93: return 55.0
+    if anchor >= 90: return 50.0
+    if anchor >= 87: return 45.0
+    return 40.0
+
+
+# Pre-compiled regexes for the prose parser.
+_ESPN_PROSE_VELO_RE = re.compile(
+    r"(\d{2,3})\s*[-–]\s*(\d{2,3})\s*(?:mph)?\s*fastball"
+    r"(?:[^.]{0,80}peaks?\s*(?:at)?\s*(\d{2,3}))?",
+    re.IGNORECASE,
+)
+# Numeric grade pattern: "70-grade fastball" / "70 grade fastball" / "70 raw power".
+# The trailing `\s+` is required so we don't match "2024 draft" or "19 yo"
+# — only a digits-then-tool-noun sequence. The noun is mapped to a
+# canonical key via ESPN_PROSE_TOOL_NOUN; unknown nouns are silently dropped.
+_ESPN_PROSE_NUMERIC_RE = re.compile(
+    r"\b(\d{2})(?:[\s-]?grade)?\s+([a-z][a-z ]{2,15})", re.IGNORECASE,
+)
+
+
+def _parse_espn_prose_tools(commentary_text: str) -> dict[str, float] | None:
+    """Best-effort prose parser for ESPN tool grades.
+
+    Extracts:
+      - "<NN>-grade <noun>" patterns (e.g., "70 raw power")
+      - "<descriptor> <noun>" within a 15-char window (e.g., "plus runner")
+      - Fastball velocity bands ("94-98 mph fastball") → FB grade
+    Returns dict[key→grade] or None when nothing parseable found. First
+    match per tool wins (rest are downgraded since the narrative
+    typically opens with the loudest tool).
+    """
+    if not commentary_text:
+        return None
+    text = commentary_text
+    tools: dict[str, float] = {}
+
+    # Pass 1: "NN-grade noun" patterns ("70 raw power", "60-grade fastball").
+    for m in _ESPN_PROSE_NUMERIC_RE.finditer(text):
+        grade = float(m.group(1))
+        if grade < 20 or grade > 80:
+            continue
+        noun_chunk = m.group(2).lower().strip()
+        for noun, key, _ in ESPN_PROSE_TOOL_NOUN:
+            if noun_chunk.startswith(noun):
+                if key not in tools:
+                    tools[key] = grade
+                break
+
+    # Pass 2: "<descriptor> <noun>" within close proximity. Build a single
+    # mega-regex per noun for speed.
+    desc_alt = "|".join(re.escape(d) for d in ESPN_DESCRIPTOR_GRADE)
+    for noun, key, allow_pre in ESPN_PROSE_TOOL_NOUN:
+        if not allow_pre or key in tools:
+            continue
+        # "<descriptor>[ space + up to 2 short words ] <noun>" — keep the
+        # window tight so unrelated descriptors elsewhere in the paragraph
+        # don't bleed in. Allows for "above-average to plus defender" by
+        # also matching "plus defender" inside the same span.
+        pat = re.compile(
+            rf"\b({desc_alt})\b(?:[\s\w]{{0,20}}?)\b{re.escape(noun)}\b",
+            re.IGNORECASE,
+        )
+        m = pat.search(text)
+        if m:
+            desc = m.group(1).lower()
+            grade = ESPN_DESCRIPTOR_GRADE.get(desc)
+            if grade is not None:
+                tools[key] = grade
+
+    # Pass 3: velocity → fb grade (only when fb wasn't already captured).
+    if "fb" not in tools:
+        velo_m = _ESPN_PROSE_VELO_RE.search(text)
+        if velo_m:
+            try:
+                lo = float(velo_m.group(1))
+                hi = float(velo_m.group(2))
+                peak = float(velo_m.group(3)) if velo_m.group(3) else None
+                fb_grade = _velocity_to_fb_grade(lo, hi, peak)
+                if fb_grade is not None:
+                    tools["fb"] = fb_grade
+            except (TypeError, ValueError):
+                pass
+
     return tools or None
 
 
@@ -566,6 +715,18 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
         r"^\s*(\d{1,3})\.\s+([^,]+?),\s*([^,]+?),\s*(.+?)\s*$"
     )
 
+    # First pass: identify which candidates are rank lines, so the
+    # commentary slice can use ONLY rank-line offsets as boundaries
+    # (inline-bolded fragments inside body paragraphs were truncating
+    # commentary to a few chars, starving the prose parser).
+    rank_offsets: list[int] = []
+    for (off, h) in candidates:
+        text = re.sub(r"<[^>]+>", "", h)
+        text = fix_mojibake(text)
+        if rank_line.match(text):
+            rank_offsets.append(off)
+    rank_offsets.append(len(body))  # sentinel for the last player
+
     rows: list[Snapshot] = []
     current_fv: float | None = None
     seen_ranks: set[int] = set()
@@ -590,13 +751,17 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
         pos  = rm.group(3).strip() or None
         team = rm.group(4).strip()
         org  = canonical_org(team) or team
-        # Tool-grade capture: the article body between the current rank
-        # line's offset and the next candidate's offset is the player's
-        # commentary block. ESPN's preseason format ships tool lines
-        # ("Hit: 45/50") inside this block. Strip HTML tags, then feed
-        # to _parse_espn_tools which always takes the rightmost integer
-        # as the FV grade.
-        next_off = candidates[i + 1][0] if i + 1 < len(candidates) else len(body)
+        # Tool-grade capture: the article body between this rank line's
+        # offset and the NEXT RANK LINE's offset is the player's full
+        # commentary block. ESPN's preseason format used to ship tool
+        # lines ("Hit: 45/50") inside; 2025+ articles ship descriptive
+        # prose ("plus runner", "94-98 mph fastball"). _parse_espn_tools
+        # handles structured lines and falls through to the prose parser
+        # when none are present.
+        try:
+            next_off = rank_offsets[rank_offsets.index(off) + 1]
+        except (ValueError, IndexError):
+            next_off = len(body)
         commentary = body[off:next_off]
         # Decode common HTML entities so "&amp;" doesn't break label matches.
         commentary = html.unescape(re.sub(r"<[^>]+>", " ", commentary))
@@ -617,15 +782,112 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
 # --- Just Baseball --------------------------------------------------------
 # JB renders prospects as <h2> or <h3> blocks. Each starts with "<rank>. <Name>"
 # and the FV grade appears in the following paragraph as "Future Value: 55".
+# Per-player tool grades live in a <figure class="wp-block-table"> table
+# immediately after the heading. Header row carries column labels (variable
+# per pitcher — Sweeper vs Slider, Splitter vs Changeup), value row carries
+# present/future grade pairs. We always take the FUTURE grade.
 
 JB_INTERVALS = [
     ("https://www.justbaseball.com/prospects/top-100-mlb-prospects/",
      "JB 2026 Preseason", "2026-03-04"),
 ]
 
+# JB column header → canonical tool key. Lowercased headers — Splitter
+# rides the ch slot, Sweeper rides the sl slot (variants of those pitch
+# families). Cutter gets its own canonical key (PITCHER_TOOL_KEYS extended).
+JB_TOOL_KEY: dict[str, str] = {
+    # hitters
+    "hit":               "hit",
+    "plate disc":        "pitch_sel",
+    "plate disc.":       "pitch_sel",
+    "plate discipline":  "pitch_sel",
+    "bat ctrl":          "bat_ctrl",
+    "bat control":       "bat_ctrl",
+    "game power":        "game_pwr",
+    "raw power":         "raw_pwr",
+    "power":             "game_pwr",
+    "run":               "speed",
+    "speed":             "speed",
+    "field":             "field",
+    "fielding":          "field",
+    "arm":               "throw",
+    "throwing":          "throw",
+    # pitchers
+    "fastball":          "fb",
+    "fb":                "fb",
+    "slider":            "sl",
+    "sweeper":           "sl",       # sweeper = slider variant
+    "curveball":         "cb",
+    "curve":             "cb",
+    "changeup":          "ch",
+    "splitter":          "ch",       # splitter rides the changeup slot
+    "cutter":            "ct",
+    "command":           "cmd",
+    "control":           "cmd",
+}
+
+
+def _parse_jb_tool_table(table_html) -> tuple[dict[str, float] | None, float | None]:
+    """Parse one JB wp-block-table into (tools_dict, fv).
+
+    Header row → labels (lowercased, stripped). Value row → "pres/fut"
+    grade pairs (or singletons). For each (header, value) pair we map
+    header to canonical key via JB_TOOL_KEY and keep the future grade
+    if it parses to a valid 20-80 number. The FV column is returned
+    separately (parsed as singleton, may carry "+" suffix).
+    """
+    if table_html is None:
+        return None, None
+    if isinstance(table_html, str):
+        sub = BeautifulSoup(table_html, "html.parser")
+        table = sub.find("table")
+    else:
+        table = table_html if getattr(table_html, "name", None) == "table" else table_html.find("table")
+    if not table:
+        return None, None
+    rows = table.find_all("tr")
+    if len(rows) < 2:
+        return None, None
+    headers = [c.get_text(" ", strip=True).lower() for c in rows[0].find_all(["td", "th"])]
+    values = [c.get_text(" ", strip=True) for c in rows[1].find_all(["td", "th"])]
+    if not headers or len(values) < len(headers):
+        return None, None
+    tools: dict[str, float] = {}
+    fv: float | None = None
+    for hdr, raw in zip(headers, values):
+        hdr_norm = hdr.strip().rstrip(".").rstrip()
+        if hdr_norm in ("fv", "f.v.", "future value"):
+            fv = _parse_fv(raw)
+            continue
+        key = JB_TOOL_KEY.get(hdr_norm) or JB_TOOL_KEY.get(hdr.strip())
+        if not key:
+            continue
+        # "55/60" → take the right side; "60" → take as-is.
+        m = re.search(r"(\d{1,2})(?:\s*/\s*(\d{1,2}))?", raw)
+        if not m:
+            continue
+        fut = m.group(2) or m.group(1)
+        try:
+            grade = float(fut)
+        except (TypeError, ValueError):
+            continue
+        if grade < 20 or grade > 80:
+            continue
+        tools[key] = grade
+    return (tools or None), fv
+
+
+# Heading format example: "1. Konnor Griffin – SS – Pittsburgh Pirates"
+# Dash variants: en-dash (–), em-dash (—), or regular hyphen-minus (-).
+_JB_HEADING_RE = re.compile(
+    r"^(\d{1,3})\.\s+(.+?)\s+[–—\-]\s+([\w/,\.]+)\s+[–—\-]\s+(.+?)\s*$"
+)
+
 
 def scrape_just_baseball(url: str, label: str, snap_date: str,
                          force: bool = False) -> list[Snapshot]:
+    from trades import canonical_org
+
     if date.fromisoformat(snap_date) > date.today():
         return []
     cache_key = "jb_" + re.sub(r"[^a-z0-9]+", "_", label.lower())
@@ -637,38 +899,57 @@ def scrape_just_baseball(url: str, label: str, snap_date: str,
 
     rows: list[Snapshot] = []
     seen_names: set[str] = set()
-    # Scan all heading levels — JB has used both h2 and h3 over time.
-    for h in soup.find_all(["h2", "h3", "h4"]):
-        text = h.get_text(" ", strip=True)
-        # "100. Player Name" or "100. Player Name, OF, Yankees"
-        m = re.match(r"^(\d{1,3})\.\s+([A-Z][\w'\-]+(?:\s+[A-Z][\w'\-\.]+)+)", text)
+    n_with_tools = 0
+    # Each prospect lives in <section class="toc-list__entry">. The
+    # section contains exactly one heading and one wp-block-table tools
+    # grid — much more reliable than chasing siblings across the
+    # article's flat content.
+    for section in soup.find_all("section", class_="toc-list__entry"):
+        hdr = section.find(["h1", "h2", "h3", "h4"])
+        if not hdr:
+            continue
+        text = hdr.get_text(" ", strip=True)
+        m = _JB_HEADING_RE.match(text)
         if not m:
-            continue
-        rank = int(m.group(1))
-        if not (1 <= rank <= 200):
-            continue
-        name = m.group(2).strip()
-        if name in seen_names:
+            # Fall back to the older "100. Player Name" pattern so we
+            # don't drop prospects when the dashed format isn't present.
+            simple = re.match(r"^(\d{1,3})\.\s+([A-Z][\w'\-]+(?:\s+[A-Z][\w'\-\.]+)+)", text)
+            if not simple:
+                continue
+            rank = int(simple.group(1))
+            name = simple.group(2).strip()
+            position = None
+            org_full = None
+        else:
+            rank = int(m.group(1))
+            name = m.group(2).strip()
+            position = m.group(3).strip().split(",")[0]  # take primary position
+            org_full = m.group(4).strip()
+        if not (1 <= rank <= 200) or name in seen_names:
             continue
         seen_names.add(name)
-        # Look for FV in next ~6 siblings
+        org = canonical_org(org_full) if org_full else None
+        # Tools + FV from the section's table.
+        tools = None
         fv = None
-        cur = h
-        for _ in range(8):
-            cur = cur.find_next_sibling()
-            if cur is None:
-                break
-            sib_text = cur.get_text(" ", strip=True) if hasattr(cur, "get_text") else str(cur)
-            fv_m = re.search(r"(?:Future Value|FV|F\.V\.)[:\s]+([0-9]+\+?)", sib_text)
+        table = section.find("table")
+        if table:
+            tools, fv = _parse_jb_tool_table(table)
+        # FV fallback — prose-style "Future Value: 55" if it ever returns.
+        if fv is None:
+            sect_text = section.get_text(" ", strip=True)
+            fv_m = re.search(r"(?:Future Value|F\.V\.)[:\s]+([0-9]+\+?)", sect_text)
             if fv_m:
                 fv = _parse_fv(fv_m.group(1))
-                break
+        if tools:
+            n_with_tools += 1
         rows.append(Snapshot(
             source="just_baseball", snapshot_date=snap_date, interval_label=label,
             player_key=normalize_key(name), player_name=name,
-            position=None, org=None, rank=rank, fv=fv, status="active",
+            position=position, org=org, rank=rank, fv=fv, status="active",
+            tools=tools,
         ))
-    log.info("just_baseball %s -> %d players%s", label, len(rows),
+    log.info("just_baseball %s -> %d players (%d with tools)%s", label, len(rows), n_with_tools,
              " (TIER B working)" if rows else " (TIER B FAILED — selectors stale)")
     return rows
 
@@ -720,6 +1001,37 @@ MLB_INTERNATIONAL_INTERVALS = [
 ]
 
 
+# MLB Pipeline per-org top-30 lists. Same Apollo Cache structure as the
+# Top-100 page (verified empirically — URL pattern `mlb.com/prospects/
+# <year>/<slug>` returns 200 with the same RankedPlayerEntity records).
+# Each org publishes ~25-30 prospect bios; tools come through the same
+# `Scouting grades:` line that _parse_pipeline_tools already handles.
+# Coverage boost: 30 orgs × 25 prospects × 2 years ≈ 1500 additional
+# Snapshot rows, most of which overlap with FG → massive lift in
+# multi-source consensus opportunity.
+MLB_PIPELINE_ORG_SLUGS = (
+    # AL East / Central / West
+    "yankees", "red-sox", "blue-jays", "orioles", "rays",
+    "white-sox", "guardians", "tigers", "royals", "twins",
+    "astros", "athletics", "angels", "mariners", "rangers",
+    # NL East / Central / West
+    "braves", "marlins", "mets", "phillies", "nationals",
+    "cubs", "reds", "brewers", "pirates", "cardinals",
+    "diamondbacks", "rockies", "dodgers", "padres", "giants",
+)
+MLB_PIPELINE_ORG_YEARS = (2025, 2026)
+
+MLB_PIPELINE_ORG_INTERVALS = [
+    (f"https://www.mlb.com/prospects/{y}/{slug}",
+     f"MLB Pipeline {y} {slug.replace('-', ' ').title()} Top 30",
+     f"{y}-01-22",
+     y,
+     f"mlb_pipeline_{y}_org_{slug.replace('-', '_')}")
+    for y in MLB_PIPELINE_ORG_YEARS
+    for slug in MLB_PIPELINE_ORG_SLUGS
+]
+
+
 def _apollo_entities(text: str, typename: str):
     """Yield (id, body_slice) for each top-level Apollo entity of typename.
 
@@ -742,7 +1054,8 @@ def _apollo_entities(text: str, typename: str):
 
 
 def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
-                        force: bool = False) -> list[Snapshot]:
+                        force: bool = False,
+                        cache_key: str | None = None) -> list[Snapshot]:
     """Parse one archived MLB.com Top 100 page into Snapshot rows.
 
     Algorithm:
@@ -765,7 +1078,8 @@ def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
     if date.fromisoformat(snap_date) > date.today():
         return []
 
-    cache_key = f"mlb_pipeline_{year}_top100"
+    if cache_key is None:
+        cache_key = f"mlb_pipeline_{year}_top100"
     cache_path = CACHE_DIR / f"{cache_key}.html"
     if cache_path.exists() and not force:
         body = cache_path.read_text(encoding="utf-8")
@@ -1416,6 +1730,26 @@ def scrape_all(force: bool = False) -> tuple[list[Snapshot], dict[str, str]]:
         except Exception as e:
             log.exception("mlb_pipeline %s crashed: %s", label, e)
             counts[label] = -1
+
+    # Tier B: MLB Pipeline per-org top-30 lists. Reuses the same Apollo
+    # walker as the Top-100; expands coverage from ~600 to ~2100 Pipeline
+    # snapshots, dramatically increasing multi-source consensus overlap.
+    # ~60 fetches first run (rate-limited by RATE_LIMIT_SECONDS in _fetch);
+    # subsequent runs are cache-hits.
+    org_total = 0
+    org_with_tools = 0
+    for url, label, snap, year, cache_key in MLB_PIPELINE_ORG_INTERVALS:
+        try:
+            got = scrape_mlb_pipeline(url, label, snap, year,
+                                       force=force, cache_key=cache_key)
+            snapshots.extend(got)
+            org_total += len(got)
+            org_with_tools += sum(1 for s in got if s.tools)
+        except Exception as e:
+            log.exception("mlb_pipeline org %s crashed: %s", label, e)
+    counts["mlb_pipeline_orgs"] = org_total
+    log.info("mlb_pipeline org pages: %d snapshots across %d (org, year) pairs, %d with tools",
+             org_total, len(MLB_PIPELINE_ORG_INTERVALS), org_with_tools)
 
     # Tier B: MLB Pipeline international class. Org is merged later from
     # resolved affiliate rosters so only signed/assigned players surface

@@ -685,3 +685,176 @@ class TestConsensusIsSourceMean:
                                      shrinkage_n_full=99, prior_mean_fv=20.0,
                                      single_source_k=0)[0]
         assert p_default.points[-1].consensus_fv == p_extreme.points[-1].consensus_fv == 70.0
+
+
+# ---------------------------------------------------------------------------
+# Just Baseball table parser (Step 1 of broadening-consensus integration)
+# ---------------------------------------------------------------------------
+
+class TestParseJbToolTable:
+    def test_hitter_table(self):
+        from scrapers import _parse_jb_tool_table
+        html_block = """
+        <table class="has-fixed-layout"><tbody>
+          <tr>
+            <td><strong>HIT</strong></td>
+            <td><strong>Plate Disc.</strong></td>
+            <td><strong>GAME POWER</strong></td>
+            <td><strong>RUN</strong></td>
+            <td><strong>FIELD</strong></td>
+            <td><strong>FV</strong></td>
+          </tr>
+          <tr>
+            <td>50/60</td><td>50/60</td><td>55/70</td>
+            <td>70/70</td><td>55/65</td><td>70</td>
+          </tr>
+        </tbody></table>
+        """
+        tools, fv = _parse_jb_tool_table(html_block)
+        assert fv == 70.0
+        assert tools["hit"] == 60.0
+        assert tools["pitch_sel"] == 60.0   # Plate Disc → pitch_sel
+        assert tools["game_pwr"] == 70.0
+        assert tools["speed"] == 70.0       # RUN → speed
+        assert tools["field"] == 65.0
+
+    def test_pitcher_table_with_sweeper_and_splitter(self):
+        from scrapers import _parse_jb_tool_table
+        html_block = """
+        <table><tbody>
+          <tr>
+            <td><strong>FASTBALL</strong></td>
+            <td><strong>Sweeper</strong></td>
+            <td><strong>Slider</strong></td>
+            <td><strong>CURVEBALL</strong></td>
+            <td><strong>Splitter</strong></td>
+            <td><strong>COMMAND</strong></td>
+            <td><strong>FV</strong></td>
+          </tr>
+          <tr>
+            <td>70/70</td><td>60/60</td><td>50/50</td>
+            <td>55/60</td><td>50/55</td><td>45/50</td><td>65</td>
+          </tr>
+        </tbody></table>
+        """
+        tools, fv = _parse_jb_tool_table(html_block)
+        assert fv == 65.0
+        assert tools["fb"] == 70.0
+        # Both sweeper + slider map to sl; the later (slider) value
+        # overwrites the earlier (sweeper) — both are real publications.
+        assert tools["sl"] == 50.0
+        assert tools["cb"] == 60.0
+        # Both splitter + nothing maps to ch — splitter rides the changeup slot.
+        assert tools["ch"] == 55.0
+        assert tools["cmd"] == 50.0
+
+    def test_no_table_returns_none(self):
+        from scrapers import _parse_jb_tool_table
+        tools, fv = _parse_jb_tool_table("<p>No table here</p>")
+        assert tools is None
+        assert fv is None
+
+    def test_out_of_range_dropped(self):
+        from scrapers import _parse_jb_tool_table
+        html_block = """
+        <table><tr><td>HIT</td><td>RUN</td><td>FV</td></tr>
+        <tr><td>15/99</td><td>50/55</td><td>60</td></tr></table>
+        """
+        tools, fv = _parse_jb_tool_table(html_block)
+        assert fv == 60.0
+        assert "hit" not in (tools or {})  # 99 fails 20-80 gate
+        assert tools["speed"] == 55.0
+
+
+# ---------------------------------------------------------------------------
+# ESPN prose parser (Step 3) — exercises the fallback that handles
+# ESPN's 2025+ articles where structured "Hit: 45/50" lines were
+# replaced with descriptive prose.
+# ---------------------------------------------------------------------------
+
+class TestParseEspnProseTools:
+    def test_plus_runner_to_speed_60(self):
+        from scrapers import _parse_espn_prose_tools
+        tools = _parse_espn_prose_tools(
+            "Bazzana is a plus runner who will steal some bags and play decent defense."
+        )
+        assert tools["speed"] == 60.0
+
+    def test_numeric_grade_pattern(self):
+        from scrapers import _parse_espn_prose_tools
+        tools = _parse_espn_prose_tools(
+            "Griffin has a 70 raw power, plus speed, and an above-average hit tool."
+        )
+        assert tools["raw_pwr"] == 70.0
+        assert tools["speed"] == 60.0
+        assert tools["hit"] == 55.0  # above-average → 55
+
+    def test_velocity_to_fb_grade(self):
+        from scrapers import _parse_espn_prose_tools
+        # 94-98 mph fastball that peaks at 99 → fb=65 (anchor sits_max=98)
+        tools = _parse_espn_prose_tools(
+            "His 94-98 mph fastball peaks at 99 mph."
+        )
+        assert tools["fb"] == 65.0
+
+    def test_raw_vs_game_power_disambiguation(self):
+        from scrapers import _parse_espn_prose_tools
+        # When both "raw power" and "game power" appear, longer match wins.
+        tools = _parse_espn_prose_tools("He has plus raw power and average game power.")
+        assert tools.get("raw_pwr") == 60.0
+        assert tools.get("game_pwr") == 50.0
+
+    def test_plus_plus_glove(self):
+        from scrapers import _parse_espn_prose_tools
+        tools = _parse_espn_prose_tools("Elite defender with a plus-plus glove.")
+        # "elite defender" or "plus-plus glove" — at least one maps field to 70.
+        assert tools.get("field") in (60.0, 70.0)
+
+    def test_empty_returns_none(self):
+        from scrapers import _parse_espn_prose_tools
+        assert _parse_espn_prose_tools("") is None
+        assert _parse_espn_prose_tools("No tools described here at all.") is None
+
+    def test_full_parser_falls_through_to_prose_when_no_structured(self):
+        """_parse_espn_tools must fall through to _parse_espn_prose_tools
+        when no structured 'Label: 45/50' blocks are present."""
+        from scrapers import _parse_espn_tools
+        tools = _parse_espn_tools("He's a plus runner with an above-average hit tool.")
+        assert tools is not None
+        assert tools.get("speed") == 60.0
+        assert tools.get("hit") == 55.0
+
+
+# ---------------------------------------------------------------------------
+# Pipeline org-page URL list (Step 2) — smoke-check the catalog so that
+# accidental removal/typo is caught at test time, not at scrape time.
+# ---------------------------------------------------------------------------
+
+class TestPipelineOrgIntervals:
+    def test_thirty_orgs_per_year(self):
+        from scrapers import MLB_PIPELINE_ORG_INTERVALS, MLB_PIPELINE_ORG_SLUGS, MLB_PIPELINE_ORG_YEARS
+        assert len(MLB_PIPELINE_ORG_SLUGS) == 30
+        assert len(MLB_PIPELINE_ORG_INTERVALS) == 30 * len(MLB_PIPELINE_ORG_YEARS)
+
+    def test_url_pattern(self):
+        from scrapers import MLB_PIPELINE_ORG_INTERVALS
+        url, label, snap, year, cache_key = MLB_PIPELINE_ORG_INTERVALS[0]
+        assert url.startswith("https://www.mlb.com/prospects/")
+        assert cache_key.startswith("mlb_pipeline_")
+        assert "org_" in cache_key
+
+    def test_cache_keys_unique(self):
+        from scrapers import MLB_PIPELINE_ORG_INTERVALS
+        keys = [interval[4] for interval in MLB_PIPELINE_ORG_INTERVALS]
+        assert len(set(keys)) == len(keys)
+
+
+# ---------------------------------------------------------------------------
+# Cutter as canonical pitcher key (Step 1a)
+# ---------------------------------------------------------------------------
+
+class TestCutterCanonical:
+    def test_ct_in_pitcher_keys(self):
+        from scrapers import PITCHER_TOOL_KEYS, ALL_TOOL_KEYS
+        assert "ct" in PITCHER_TOOL_KEYS
+        assert "ct" in ALL_TOOL_KEYS
