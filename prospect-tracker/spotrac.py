@@ -196,12 +196,26 @@ def scrape_spotrac_ifa(year: int, force: bool = False) -> list[dict]:
     return out
 
 
-def scrape_spotrac_ifa_range(years: Iterable[int], force: bool = False) -> list[dict]:
+def scrape_spotrac_ifa_range(years: Iterable[int], force: bool = False,
+                             max_workers: int = 4) -> list[dict]:
     """Convenience: fetch + parse multiple seasons in one shot. Useful
-    for the run_monthly bootstrap that wants 2021–current in one call."""
+    for the run_monthly bootstrap that wants 2021-current in one call.
+
+    Parallelized so a 5-year range (~5 sequential pages × 0.5s ≈ 2.5s)
+    drops to one round-trip with workers."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    years_list = list(years)
     all_rows: list[dict] = []
-    for y in years:
-        all_rows.extend(scrape_spotrac_ifa(y, force=force))
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        future_to_year = {ex.submit(scrape_spotrac_ifa, y, force=force): y
+                          for y in years_list}
+        for fut in as_completed(future_to_year):
+            y = future_to_year[fut]
+            try:
+                all_rows.extend(fut.result())
+            except Exception:
+                log.exception("spotrac IFA worker failed for year %s", y)
     return all_rows
 
 
@@ -417,14 +431,28 @@ def scrape_spotrac_team_contracts(team_slug: str,
     return out
 
 
-def scrape_all_spotrac_contracts(force: bool = False) -> list[dict]:
+def scrape_all_spotrac_contracts(force: bool = False,
+                                 max_workers: int = 6) -> list[dict]:
     """Walk every team's yearly contract page. Returns one merged list.
 
-    ~30 HTTP requests × 0.5s rate limit ≈ 15s added to the regen.
-    Cached on subsequent runs."""
+    Bulk-fetches in parallel via ThreadPoolExecutor. Cold-cache: ~30
+    pages × ~0.5s ÷ 6 workers ≈ 3s. Warm-cache: near-instant.
+    """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    slugs = list(_SPOTRAC_TEAM_SLUGS.items())
     rows: list[dict] = []
-    for team_code, slug in _SPOTRAC_TEAM_SLUGS.items():
-        rows.extend(scrape_spotrac_team_contracts(slug, force=force))
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        future_to_team = {
+            ex.submit(scrape_spotrac_team_contracts, slug, force): team_code
+            for team_code, slug in slugs
+        }
+        for fut in as_completed(future_to_team):
+            team_code = future_to_team[fut]
+            try:
+                rows.extend(fut.result())
+            except Exception:
+                log.exception("spotrac contracts worker failed for %s", team_code)
     log.info("spotrac contracts: %d player-rows across %d teams",
              len(rows), len(_SPOTRAC_TEAM_SLUGS))
     return rows

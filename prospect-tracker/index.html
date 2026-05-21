@@ -357,9 +357,15 @@
       flex-wrap: wrap;
       gap: 6px;
       margin: 0 0 16px;
-      padding: 8px 0;
+      padding: 8px 12px;
       border-top: 1px solid var(--border-light);
       border-bottom: 1px solid var(--border-light);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: var(--bg-primary);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
     .detail-jumplinks a {
       font-family: var(--font-sans);
@@ -396,7 +402,7 @@
       font-feature-settings: "tnum" on, "ss01" on;
     }
     .container {
-      max-width: 1400px;
+      max-width: 1680px;
       margin: 0 auto;
       padding: 1.75rem 1.5rem 4rem;
     }
@@ -1185,6 +1191,66 @@
       background: var(--bg-secondary);
       padding: 10px 12px;
       border-radius: var(--radius-sm);
+    }
+    /* Horizontal-scroll wrapper for dense tables. Lets the table scroll
+       independently on narrow viewports instead of forcing the whole
+       page to scroll. Pair with a max-width: 100% on the inner table. */
+    .table-scroll-x {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      max-width: 100%;
+    }
+    /* Shared typography utilities (B2 design-system pass). */
+    .t-stat-value {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+    }
+    .t-stat-label {
+      font-family: var(--font-sans);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+    .t-section-title {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+    .t-card-caption {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+    /* Standard empty-state container for list pages. */
+    .empty-state {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 24px;
+      text-align: center;
+      color: var(--text-secondary);
+      margin: 24px auto;
+      max-width: 480px;
+    }
+    .empty-state-title {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    .empty-state-sub {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.5;
     }
     .detail-table {
       width: 100%;
@@ -2376,6 +2442,107 @@
       border-top-left-radius: var(--radius-md);
       border-bottom-left-radius: var(--radius-md);
     }
+    /* FV-tier driven radial-gradient overlay on the detail-page header.
+       Driven by the .fv-tier-* modifier set on the header div by the
+       renderer. Capped at 10% opacity so text stays readable. */
+    .detail-page-header::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 18% 30%,
+        var(--fv-tier-glow, transparent) 0%, transparent 65%);
+      opacity: 0.10;
+      border-radius: var(--radius-md);
+      z-index: 0;
+    }
+    .detail-page-header > * { position: relative; z-index: 1; }
+    .detail-page-header.fv-tier-80 { --fv-tier-glow: var(--fv-80); }
+    .detail-page-header.fv-tier-70 { --fv-tier-glow: var(--fv-70); }
+    .detail-page-header.fv-tier-65 { --fv-tier-glow: var(--fv-65); }
+    .detail-page-header.fv-tier-60 { --fv-tier-glow: var(--fv-60); }
+    .detail-page-header.fv-tier-55 { --fv-tier-glow: var(--fv-55); }
+    .detail-page-header.fv-tier-50 { --fv-tier-glow: var(--fv-50); }
+    .detail-page-header.fv-tier-45 { --fv-tier-glow: var(--fv-45); }
+    .detail-page-header.fv-tier-40 { --fv-tier-glow: var(--fv-40); }
+    /* Headshot framing — opt-in wrapper around the standard img.
+       Adds a team-color top border + subtle inner shadow for the
+       trading-card aesthetic on player detail. */
+    .headshot-frame {
+      display: inline-block;
+      position: relative;
+      border-top: 4px solid var(--org-color, var(--neon-cyan));
+      background: var(--bg-secondary);
+      border-radius: 2px;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        0 2px 6px rgba(0,0,0,0.25);
+      padding: 2px;
+      overflow: hidden;
+    }
+    .headshot-frame img { display: block; max-width: 100%; height: auto; }
+    /* FV-rarity modifier — applied to .detail-card.card-rarity-* to
+       give elite-tier cards a chrome/holo border treatment. CSS-only,
+       no images. */
+    .card-rarity-chrome {
+      border: 2px solid transparent;
+      background:
+        linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+        linear-gradient(135deg,
+          rgba(220,220,235,0.85) 0%,
+          rgba(160,170,200,0.45) 35%,
+          rgba(255,255,255,0.85) 50%,
+          rgba(160,170,200,0.45) 65%,
+          rgba(220,220,235,0.85) 100%) border-box;
+      animation: chrome-shimmer 4.2s linear infinite;
+      background-size: 100% 100%, 300% 300%;
+    }
+    @keyframes chrome-shimmer {
+      from { background-position: 0% 0%, 0% 0%; }
+      to   { background-position: 0% 0%, 300% 0%; }
+    }
+    .card-rarity-holo {
+      border: 2px solid transparent;
+      background:
+        linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+        linear-gradient(135deg,
+          #4ee0ff 0%, #b455ff 25%,
+          #ff5fa2 50%, #ffd45a 75%, #4ee0ff 100%) border-box;
+      background-size: 100% 100%, 300% 300%;
+      animation: holo-shift 6s linear infinite;
+    }
+    @keyframes holo-shift {
+      from { background-position: 0% 0%, 0% 0%; }
+      to   { background-position: 0% 0%, 300% 100%; }
+    }
+    /* Hover-flip on the sidebar position-depth micro-cards. Pure CSS
+       3D flip; back face shows the secondary chip set (ETA, health). */
+    .pos-depth-card-3d {
+      perspective: 600px;
+      cursor: pointer;
+    }
+    .pos-depth-card-3d .pdc-inner {
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s ease;
+      width: 100%;
+      min-height: 56px;
+    }
+    .pos-depth-card-3d:hover .pdc-inner { transform: rotateY(180deg); }
+    .pos-depth-card-3d .pdc-front,
+    .pos-depth-card-3d .pdc-back {
+      position: absolute; inset: 0;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+    .pos-depth-card-3d .pdc-back {
+      transform: rotateY(180deg);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      padding: 6px 8px;
+    }
     .detail-page-header .player-display-name {
       font-family: var(--font-serif);
       font-size: 30px;
@@ -2461,7 +2628,14 @@
       .farm-row > div:nth-child(6),
       .farm-row > div:nth-child(n+8):not(:last-child) { display: none; }
       .detail-page-header .player-display-name { font-size: 22px; }
+      .detail-page-header { gap: 10px; padding: 12px 14px 12px 18px; margin-bottom: 12px; }
+      .detail-page-header .player-display-meta { font-size: 12px; margin-top: 4px; }
       .section-tabs { flex-wrap: wrap; }
+      /* Chip filter bars stay on one line at narrow viewports; the
+         wrapping behavior produced 2- or 3-row stacks at tablet widths
+         which read as cramped. Horizontal scroll is cleaner. */
+      .filter-bar { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .filter-bar > .filter-group { flex-shrink: 0; }
     }
     /* === Active list + context rail =================================
        At very wide viewports (≥1500px) a 240px right rail surfaces
@@ -2955,8 +3129,8 @@
       border: 1px solid var(--border-light);
       background: var(--bg-secondary);
       border-radius: var(--radius-sm);
-      padding: 14px 16px;
-      margin-bottom: 12px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
       scroll-margin-top: 80px;
     }
     .glossary-card.is-highlighted {
@@ -7076,13 +7250,22 @@ const GLOSSARY = {
     related: ["bb_pct", "k_pct", "pwr_plus"],
   },
   "stf_plus": {
-    name: "STF+", aliases: ["STF+", "Stuff", "Pitcher Stuff+"], category: "custom-index",
+    name: "STF+", aliases: ["STF+", "Pitcher Stuff+", "Peripheral Stuff"], category: "custom-index",
     priority: 40,
-    short: "Pitcher stuff index; K/9 + BB/9 + HR/9 normalized to level-mean. 100 = league-average stuff.",
-    long: "Z-score composite of three peripheral rates: strikeouts (positive), walks (negative), and home-runs allowed (negative), each normalized to the level mean with an approximate σ = 15% of mean. 10 points ≈ 1 stdev. Pitchers only, 20-IP minimum.",
-    formula: "STF+ = 100 + 10 · (z(K/9) − z(BB/9) − z(HR/9))",
-    example: "A AA pitcher running a 12 K/9, 2.5 BB/9, 0.8 HR/9 at a level where the means are 9 / 3.5 / 1.0 posts a STF+ around 125, well-above-average stuff for the level.",
-    related: ["k_per_9", "bb_per_9", "hr_per_9", "fip"],
+    short: "Peripheral pitcher index; K%, BB%, HR/9 vs level mean. 100 = league-average stuff.",
+    long: "Z-score composite of three workload-stable peripheral rates: strikeout rate (positive), walk rate (negative), and HR/9 (negative), each normalized to the pitcher's current level mean with an approximate σ = 15% of mean. K% and BB% are per-batter rates so a reliever's stuff reads the same way relative to a starter's, unlike K/9 which over-rewards short-outing relievers. 10 points ≈ 1 stdev. Pitchers only, 20-IP or 30-BF sample gate.",
+    formula: "STF+ = 100 + 10 · (0.55·z(K%) − 0.30·z(BB%) − 0.15·z(HR/9))",
+    example: "A AA pitcher running a 30% K%, 7% BB%, 0.8 HR/9 at a level where the means are 22% / 9% / 1.0 posts a STF+ around 125, well-above-average peripherals for the level.",
+    related: ["stuff_grade_plus", "k_pct_pitcher", "bb_pct_pitcher", "hr_per_9", "fip"],
+  },
+  "stuff_grade_plus": {
+    name: "Stuff grade+", aliases: ["Stuff grade+", "Stuff grade", "Scouting stuff+"], category: "custom-index",
+    priority: 42,
+    short: "Scouting-grade pitch composite; power-mean of fastball + secondaries grades, z-scored across the prospect cohort.",
+    long: "Outlier-biased composite (Lₚ with p=3) of the pitcher's 20-80 grades on Fastball + Slider + Curveball + Changeup, then z-scored across the active-prospect cohort. 100 = cohort mean, 10 pts = 1 stdev. Different from STF+, which measures results (K%, BB%, HR/9) against level peers; Stuff grade+ measures projected stuff from scouting reports. The two can diverge when results outrun (or lag) the underlying scouting view.",
+    formula: "Stuff grade+ = 100 + 10 · (composite_stuff − μ) / σ\nwhere composite_stuff = (Σ pitch_grade^3 / n)^(1/3)",
+    example: "A pitcher with 70 fastball / 60 slider / 55 curve / 50 change posts a composite around 62; if the prospect-cohort mean is 55 and σ is 6, Stuff grade+ ≈ 112.",
+    related: ["stf_plus", "tools_plus", "fv"],
   },
   "tvi": {
     name: "TVI", aliases: ["TVI", "Trade Value Index"], category: "custom-index",
@@ -10018,11 +10201,25 @@ function renderPlayerDetail(key) {
       </div>`
     : "";
 
+  // FV-tier modifier on the header drives the subtle radial-gradient
+  // overlay. We round the close FV to the nearest published tier (40/45/
+  // 50/55/60/65/70/80) and stamp `.fv-tier-NN` so the right glow color
+  // resolves from the FV palette CSS vars.
+  const _fvTierClass = (() => {
+    const fv = p.fv_close;
+    if (fv == null) return "";
+    const buckets = [80, 70, 65, 60, 55, 50, 45, 40];
+    let pick = 50;
+    for (const b of buckets) {
+      if (fv >= b - 2.5) { pick = b; break; }
+    }
+    return `fv-tier-${pick}`;
+  })();
   const header = `
     <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
-    <div class="detail-page-header" style="${orgStripe(p.org)}">
+    <div class="detail-page-header ${_fvTierClass}" style="${orgStripe(p.org)}">
       <div style="display:flex;align-items:flex-start;gap:16px;flex:1;min-width:0;">
-        ${headshotHTML(p, 130)}
+        <div class="headshot-frame">${headshotHTML(p, 130)}</div>
         ${teamLogoHTML(p.org, "lg", p.org ? fullOrgName(p.org) : "")}
         <div style="min-width:0;">
           <div class="player-display-name">${escapeHtml(p.player_name)}</div>
@@ -10645,12 +10842,19 @@ function renderPlayerDetail(key) {
     if (isPitcher) {
       const overallChip = compositeChip("Overall", t.composite_overall, t.composite_overall_plus,
         "Weighted composite: 65% stuff + 35% command", true);
-      const stuffChip = compositeChip("Stuff", t.composite_stuff, t.composite_stuff_plus,
-        "Average of pitch grades (fastball + secondaries)", false);
+      const stuffGradeChip = compositeChip("Stuff grade+", t.composite_stuff, t.composite_stuff_plus,
+        "Scouting composite: power-mean of fastball + secondaries, z-scored vs prospect cohort", false);
       const cmdChip = compositeChip("Command", t.composite_cmd, t.composite_cmd_plus,
         "Control / command grade", false);
-      compositeBar = (overallChip || stuffChip || cmdChip)
-        ? `<div class="tools-composite-bar">${overallChip}${stuffChip}${cmdChip}</div>`
+      // Peripheral STF+ — K%, BB%, HR/9 vs level mean. Lives on the
+      // statline, not the tools dict, so we pull it from `p.statline`.
+      const stfPeriph = (p.statline || {}).stf_plus_periph;
+      const stfChip = stfPeriph != null
+        ? compositeChip("STF+", null, stfPeriph,
+            "Peripheral stuff index — z-score composite of K%, BB%, HR/9 vs level mean (20-IP / 30-BF sample gate)", false)
+        : "";
+      compositeBar = (overallChip || stuffGradeChip || stfChip || cmdChip)
+        ? `<div class="tools-composite-bar">${overallChip}${stuffGradeChip}${stfChip}${cmdChip}</div>`
         : "";
       const stuffGrid = ["fb","sl","cb","ch"]
         .filter(k => (t.grades || {})[k] != null)

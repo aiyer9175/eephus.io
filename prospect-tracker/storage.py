@@ -55,6 +55,65 @@ def _round_half(grade: float | None) -> float | None:
 _TOOLS_POWER_MEAN_P = 3.0  # >1 biases composite toward outliers
 
 
+def _compute_peripheral_stf_plus(sl: dict | None,
+                                 norms_perf: dict | None) -> int | None:
+    """Z-score composite of K%, BB%, and HR/9 vs the level mean.
+
+    Workload-stable peripheral STF+. Per-batter K%/BB% replace per-9 rates
+    so a starter and a reliever can be compared on the same footing.
+
+      stf = 100 + 10 · (0.55·z_K − 0.30·z_BB − 0.15·z_HR9)
+
+    where z scores are (value − μ) / σ and σ is approximated as 15% of
+    the level mean (the level_norms blocks don't ship a real stdev; the
+    15%-of-mean rule of thumb matches the spread observed across
+    pitchers at every level on this site). Walks and HRs are subtracted
+    so a low rate (good) raises the composite.
+
+    Returns None when:
+      - The pitcher's sample is below the gate (<20 IP and <30 BF).
+      - K%, BB%, and HR/9 are all missing.
+      - The level baselines aren't available.
+    """
+    if not sl or not norms_perf or not sl.get("is_pitcher"):
+        return None
+    try:
+        ip = float(sl.get("ip") or 0)
+    except (TypeError, ValueError):
+        ip = 0
+    try:
+        bf = float(sl.get("batters_faced") or sl.get("tbf") or 0)
+    except (TypeError, ValueError):
+        bf = 0
+    if ip < 20 and bf < 30:
+        return None
+    def _z(val_key, mu_key, invert=False):
+        try:
+            v = sl.get(val_key)
+            mu = norms_perf.get(mu_key)
+            if v is None or mu is None or mu == 0:
+                return None
+            v = float(v)
+            sigma = 0.15 * float(mu)
+            if sigma <= 0:
+                return None
+            z = (v - mu) / sigma
+            return -z if invert else z
+        except (TypeError, ValueError):
+            return None
+    z_k  = _z("k_pct",     "avg_pitcher_k_pct")
+    z_bb = _z("bb_pct",    "avg_pitcher_bb_pct", invert=True)
+    z_hr = _z("hr_per_9",  "avg_hr_per_9",       invert=True)
+    parts = [(0.55, z_k), (0.30, z_bb), (0.15, z_hr)]
+    parts = [(w, z) for w, z in parts if z is not None]
+    if not parts:
+        return None
+    weight_sum = sum(w for w, _ in parts)
+    composite = sum(w * z for w, z in parts) / weight_sum
+    stf = round(100 + 10 * composite)
+    return max(0, min(250, stf))
+
+
 def _power_mean(vals: list[float], p: float = _TOOLS_POWER_MEAN_P) -> float | None:
     """Lₚ power mean — biases the composite toward outliers when p > 1.
 
@@ -2261,6 +2320,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                         era_minus = round(era / avg_era * 100)
                         sl_out["era_minus_level"] = era_minus
                         sl_out["level_plus_pct"] = round((avg_era - era) / avg_era * 100)
+                    # Peripheral STF+ (K%, BB%, HR/9 vs level mean). Replaces
+                    # the scouting-grade composite as the headline STF+ chip;
+                    # the scouting composite is still computed in tools.* but
+                    # gets relabeled "Stuff grade+" in the UI.
+                    stf_periph = _compute_peripheral_stf_plus(sl_out, norms_perf)
+                    if stf_periph is not None:
+                        sl_out["stf_plus_periph"] = stf_periph
                 else:
                     ops_str = sl_out.get("ops")
                     ops = float(ops_str) if ops_str else None

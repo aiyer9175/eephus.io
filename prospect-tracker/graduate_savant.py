@@ -17,7 +17,9 @@ from __future__ import annotations
 import csv
 import io
 import logging
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from pathlib import Path
 
@@ -26,6 +28,13 @@ import requests
 from scrapers import CACHE_DIR, HEADERS, RATE_LIMIT_SECONDS
 
 log = logging.getLogger(__name__)
+
+# Bulk-fetch concurrency. ThreadPool size is capped so we never hammer
+# Baseball Savant with more than this many in-flight requests. The shared
+# `_FETCH_LOCK` serializes the rate-limit sleep so workers don't all
+# hammer the endpoint in the same window.
+_BULK_MAX_WORKERS = 6
+_FETCH_LOCK = threading.Lock()
 
 
 # ---------------------------------------------------------------------------
@@ -140,16 +149,21 @@ def scrape_savant_pitches(mlbam_id: int, year: int,
     Returns a list of dicts with the eight columns the heatmap needs.
     Empty list on any fetch / parse failure. Cached on disk per
     (player, year) pair.
+
+    Thread-safe via `_FETCH_LOCK` around the rate-limit sleep so the
+    parallel orchestrator can call this from multiple workers without
+    bursting Savant.
     """
     cache_key = f"savant_pitches_{mlbam_id}_{year}"
     cache_path = CACHE_DIR / f"{cache_key}.csv"
     if cache_path.exists() and not force:
         body = cache_path.read_text(encoding="utf-8")
-        log.info("cache hit: %s (%d bytes)", cache_key, len(body))
+        log.debug("cache hit: %s (%d bytes)", cache_key, len(body))
     else:
         url = _SAVANT_CSV_URL.format(year=year, mlbam_id=mlbam_id)
         log.info("fetching savant pitches: %s", url)
-        time.sleep(RATE_LIMIT_SECONDS)
+        with _FETCH_LOCK:
+            time.sleep(RATE_LIMIT_SECONDS)
         try:
             resp = requests.get(url, headers=HEADERS, timeout=60)
         except requests.RequestException as e:
@@ -190,16 +204,25 @@ def scrape_savant_pitches(mlbam_id: int, year: int,
 # ---------------------------------------------------------------------------
 
 def build_graduate_swing_zone_heat(graduates, max_seasons: int = 3,
-                                   force: bool = False) -> dict:
+                                   force: bool = False,
+                                   max_workers: int = _BULK_MAX_WORKERS) -> dict:
     """For each graduate with an mlbam_id, walk their MLB seasons in
     ``career_war.seasons`` (most recent ``max_seasons``), scrape and
     aggregate pitches, return ``{player_key: heat_array}``.
 
+    Bulk-fetches in parallel via a ThreadPoolExecutor (``max_workers``
+    in-flight) so a cold cache of ~50 graduates × 3 seasons completes in
+    a fraction of the sequential time. Cached requests skip the rate-
+    limit entirely, so warm-cache runs are near-instant regardless of
+    worker count.
+
     Graduates without an mlbam_id, or with no MLB seasons in the
     requested window, are skipped.
     """
-    out: dict = {}
     today = date.today()
+    # Build the full list of (player_key, mlbam_id, year) work items.
+    work_items: list[tuple[str, int, int]] = []
+    seasons_by_key: dict[str, list[int]] = {}
     for g in graduates:
         mlbam = g.get("mlbam_id")
         key = g.get("player_key")
@@ -216,10 +239,40 @@ def build_graduate_swing_zone_heat(graduates, max_seasons: int = 3,
             seasons = []
         if not seasons:
             continue
-        all_pitches: list[dict] = []
+        seasons_by_key[key] = seasons
         for yr in seasons:
-            all_pitches.extend(scrape_savant_pitches(mlbam, yr, force=force))
-        heat = compute_swing_zone_heat(all_pitches)
+            work_items.append((key, mlbam, yr))
+
+    if not work_items:
+        log.info("graduate_savant: nothing to fetch")
+        return {}
+
+    log.info("graduate_savant: bulk-fetching %d (graduate, year) pairs "
+             "across %d workers", len(work_items), max_workers)
+    t_start = time.monotonic()
+
+    # Pitches grouped by player_key as workers complete.
+    pitches_by_key: dict[str, list[dict]] = {k: [] for k in seasons_by_key}
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        future_to_meta = {
+            ex.submit(scrape_savant_pitches, mlbam, yr, force): (key, yr)
+            for key, mlbam, yr in work_items
+        }
+        for fut in as_completed(future_to_meta):
+            key, yr = future_to_meta[fut]
+            try:
+                pitches = fut.result()
+            except Exception:
+                log.exception("savant worker failed for %s/%s", key, yr)
+                continue
+            pitches_by_key[key].extend(pitches)
+
+    elapsed = time.monotonic() - t_start
+    log.info("graduate_savant: %d pairs fetched in %.1fs", len(work_items), elapsed)
+
+    out: dict = {}
+    for key, pitches in pitches_by_key.items():
+        heat = compute_swing_zone_heat(pitches)
         if any(v is not None for v in heat):
             out[key] = heat
     log.info("graduate_savant: %d graduates with swing zone heat", len(out))
