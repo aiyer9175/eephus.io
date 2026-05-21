@@ -2532,6 +2532,26 @@
     @media (max-width: 900px) {
       .player-detail-grid { grid-template-columns: 1fr; gap: 16px; }
     }
+    /* Wide-card grid below the chart + career table. Holds the cards
+       that benefit from more horizontal width than the narrow sidebar
+       offers — Tools / Savant / Arsenal / Contract details / More
+       details. Single-column on mid-width viewports, 2-col at ≥1200px. */
+    .detail-wide-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .detail-wide-grid > * { margin-top: 0; }
+    @media (min-width: 1200px) {
+      .detail-wide-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      /* The More-details accordion spans both columns for legibility. */
+      .detail-wide-grid > .player-detail-more {
+        grid-column: 1 / -1;
+      }
+    }
 
     /* === Position depth chart ====================================== */
     /* Per-org depth chart: 6 columns (C / 1B / MI / 3B / OF / P) so each
@@ -2853,6 +2873,111 @@
        same integer age; ≥110 reads green, ≤90 reads red. Violet accent
        on the neutral state keeps the eye trained on what's a normal-band
        reading vs. a notable swing. */
+
+    /* ----- Glossary click-to-define ----- */
+    /* Inline .g-term wrappers — dotted underline + help cursor so the
+       user knows the term is interactive. The dotted style mirrors
+       conventional inline-glossary indicators (e.g. Wikipedia footnotes,
+       MDN inline links) without competing with regular hyperlinks. */
+    .g-term {
+      cursor: help;
+      text-decoration: underline dotted var(--text-tertiary);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+      transition: color 0.12s, text-decoration-color 0.12s;
+    }
+    .g-term:hover {
+      color: var(--neon-cyan);
+      text-decoration-color: var(--neon-cyan);
+    }
+    /* Floating popover anchored near the clicked term. position absolute;
+       positioned via JS. Hidden by default — `.is-open` reveals it. */
+    .glossary-popover {
+      display: none;
+      position: absolute;
+      z-index: 50;
+      width: 320px;
+      max-width: 90vw;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-card-hover);
+      padding: 12px 14px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+    .glossary-popover.is-open { display: block; }
+    .glossary-popover .gp-term {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--neon-cyan);
+    }
+    .glossary-popover .gp-cat {
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+    .glossary-popover .gp-short {
+      margin: 8px 0;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .glossary-popover .gp-long {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .glossary-popover .gp-formula,
+    .gp-formula {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-light);
+      border-radius: 2px;
+      padding: 6px 8px;
+      margin-top: 8px;
+      white-space: pre-wrap;
+      color: var(--text-primary);
+    }
+    .glossary-popover .gp-open {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--neon-cyan);
+      text-decoration: none;
+    }
+    .glossary-popover .gp-open:hover { text-decoration: underline; }
+    /* Per-term card on the Glossary page. */
+    .glossary-card {
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      scroll-margin-top: 80px;
+    }
+    .glossary-card.is-highlighted {
+      animation: glossary-highlight 1.8s ease-out;
+    }
+    @keyframes glossary-highlight {
+      0%   { background: rgba(143, 205, 245, 0.25); }
+      100% { background: var(--bg-secondary); }
+    }
+    .glossary-cat-heading {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin: 18px 0 8px;
+      font-weight: 700;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
     .rps-plus-pill {
       display: inline-block;
       font-family: var(--font-mono);
@@ -3323,6 +3448,7 @@
     <button class="section-tab" data-section="graduates">Graduates</button>
     <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
+    <button class="section-tab" data-section="glossary" title="Stats, indices, scouting concepts, and methodology — every term used on the site">Glossary</button>
     <button class="section-tab" data-section="watchlist" title="Your starred prospects and farm systems — private to this browser">Watchlist<span class="section-tab-count" id="watchlist-tab-count"></span></button>
     <span class="section-count" id="section-count"></span>
     <button class="compare-toggle is-empty-hidden" id="compare-toggle" type="button" aria-label="Open compare panel" title="Open compare panel (c)">
@@ -3593,6 +3719,23 @@
       <button class="chip"        data-lb-season="2021">2021</button>
     </div>
     <div id="leaderboard-rows"></div>
+  </div>
+
+  <div id="glossary-section" style="display: none;">
+    <div class="filter-bar" id="glossary-filter-bar" style="flex-wrap:wrap;gap:6px;align-items:center;">
+      <span class="filter-label">Category</span>
+      <button class="chip active" data-glossary-cat="all" type="button">All</button>
+      <button class="chip" data-glossary-cat="custom-index" type="button">Custom indices</button>
+      <button class="chip" data-glossary-cat="scouting" type="button">Scouting</button>
+      <button class="chip" data-glossary-cat="hitter-stat" type="button">Hitter stats</button>
+      <button class="chip" data-glossary-cat="pitcher-stat" type="button">Pitcher stats</button>
+      <button class="chip" data-glossary-cat="methodology" type="button">Methodology</button>
+      <button class="chip" data-glossary-cat="financial" type="button">Financial</button>
+      <button class="chip" data-glossary-cat="level" type="button">Levels</button>
+      <button class="chip" data-glossary-cat="status" type="button">Status</button>
+      <input type="search" class="search-input" id="glossary-search" placeholder="Search the glossary…" style="margin-left:10px;max-width:260px;">
+    </div>
+    <div id="glossary-rows"></div>
   </div>
 
   <div id="watchlist-section" style="display: none;">
@@ -4597,6 +4740,8 @@ function syncToURL() {
   if (state.farmSort    !== "farm_rank")  p.set("farm",  state.farmSort);
   if (state.farmViewMode && state.farmViewMode !== "table") p.set("farmview", state.farmViewMode);
   if (state.rosterSort  && state.rosterSort  !== "fv")    p.set("rsort", state.rosterSort);
+  if (state.glossaryCat && state.glossaryCat !== "all")    p.set("gcat", state.glossaryCat);
+  if (state.glossarySearch)                                 p.set("gq",   state.glossarySearch);
   if (state.formWindow  !== "1y")         p.set("formw", state.formWindow);
   if (state.farmTxKind  !== "all")        p.set("ftxk",  state.farmTxKind);
   if (state.farmTxDir   !== "all")        p.set("ftxd",  state.farmTxDir);
@@ -4645,6 +4790,9 @@ function syncFromURL() {
   if (p.has("farm"))  state.farmSort    = p.get("farm");
   if (p.has("farmview")) state.farmViewMode = p.get("farmview");
   if (p.has("rsort")) state.rosterSort   = p.get("rsort");
+  if (p.has("gcat"))  state.glossaryCat   = p.get("gcat");
+  if (p.has("gq"))    state.glossarySearch = p.get("gq");
+  if (p.has("g"))     state.glossaryTerm   = p.get("g");
   if (p.has("formw")) {
     const v = p.get("formw");
     if (v === "1y" || v === "3y" || v === "5y") state.formWindow = v;
@@ -5051,6 +5199,12 @@ const state = {
   // tools_plus / surplus. Persisted in the URL so a sort choice
   // survives reloads + shared links.
   rosterSort: "fv",
+  // Glossary state — active category filter + search query + per-load
+  // term-to-scroll-to slug. Term-to-scroll-to clears after being
+  // consumed once so a subsequent re-render doesn't re-scroll.
+  glossaryCat: "all",
+  glossarySearch: "",
+  glossaryTerm: null,
   // View mode for the farm system list — "table" (default) or "cards".
   // Cards mode flips the row layout into a grid of vertical stacks
   // (auto-fit columns), better for narrow viewports + visual scan.
@@ -5937,6 +6091,174 @@ function renderLeaderboards() {
   document.getElementById("leaderboard-rows").innerHTML = header + rows;
 }
 
+// =============================================================================
+// GLOSSARY render — categorized term cards with filter + search support.
+// Reads from the GLOSSARY const + state.glossaryCat / state.glossarySearch.
+// =============================================================================
+function renderGlossary() {
+  const root = document.getElementById("glossary-rows");
+  if (!root) return;
+  const cat = state.glossaryCat || "all";
+  const search = (state.glossarySearch || "").toLowerCase().trim();
+  document.querySelectorAll("[data-glossary-cat]").forEach(b =>
+    b.classList.toggle("active", b.dataset.glossaryCat === cat));
+
+  // Group entries by category, preserving the canonical category order.
+  const buckets = new Map(GLOSSARY_CATEGORIES.map(([k]) => [k, []]));
+  for (const [slug, entry] of Object.entries(GLOSSARY)) {
+    if (cat !== "all" && entry.category !== cat) continue;
+    if (search) {
+      const hay = (entry.name + " " + (entry.aliases || []).join(" ") +
+                   " " + entry.short + " " + (entry.long || "")).toLowerCase();
+      if (!hay.includes(search)) continue;
+    }
+    const list = buckets.get(entry.category);
+    if (list) list.push({ slug, entry });
+  }
+
+  // Render each non-empty bucket — heading + alphabetized cards inside.
+  const parts = [];
+  let totalRendered = 0;
+  for (const [catKey, catLabel] of GLOSSARY_CATEGORIES) {
+    const items = buckets.get(catKey) || [];
+    if (!items.length) continue;
+    items.sort((a, b) => a.entry.name.localeCompare(b.entry.name));
+    totalRendered += items.length;
+    parts.push(`<div class="glossary-cat-heading">${escapeHtml(catLabel)} <span style="color:var(--text-tertiary);font-weight:500;letter-spacing:0;margin-left:6px;">${items.length}</span></div>`);
+    for (const { slug, entry } of items) {
+      const aliases = (entry.aliases || []).filter(a => a !== entry.name);
+      const aliasLine = aliases.length
+        ? `<div style="font-size:10px;color:var(--text-tertiary);font-style:italic;margin-top:2px;">Also: ${aliases.map(a => escapeHtml(a)).join(" · ")}</div>`
+        : "";
+      const formulaBlock = entry.formula
+        ? `<div class="gp-formula" style="margin-top:8px;">${escapeHtml(entry.formula)}</div>`
+        : "";
+      const exampleLine = entry.example
+        ? `<div style="font-size:11.5px;color:var(--text-secondary);font-style:italic;margin-top:8px;line-height:1.5;"><strong style="font-style:normal;color:var(--text-tertiary);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;">Example</strong><br>${escapeHtml(entry.example)}</div>`
+        : "";
+      const relatedChips = (entry.related || [])
+        .map(r => GLOSSARY[r] ? `<a href="#g-${escapeHtml(r)}" data-related-term="${escapeHtml(r)}" style="font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);text-decoration:none;border:1px solid var(--border-light);padding:2px 8px;border-radius:999px;margin-right:4px;">${escapeHtml(GLOSSARY[r].name)}</a>` : "")
+        .filter(Boolean).join("");
+      const relatedBlock = relatedChips
+        ? `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;"><span style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);margin-right:4px;">Related</span>${relatedChips}</div>`
+        : "";
+      parts.push(`<div class="glossary-card" id="g-${escapeHtml(slug)}">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+          <div>
+            <span class="gp-term" style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--neon-cyan);">${escapeHtml(entry.name)}</span>
+            ${aliasLine}
+          </div>
+          <span class="gp-cat" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;">${escapeHtml(catLabel)}</span>
+        </div>
+        <div style="margin-top:10px;font-size:13px;color:var(--text-primary);line-height:1.5;">${escapeHtml(entry.short)}</div>
+        ${entry.long ? `<div style="margin-top:8px;font-size:12px;color:var(--text-secondary);line-height:1.55;">${escapeHtml(entry.long)}</div>` : ""}
+        ${formulaBlock}
+        ${exampleLine}
+        ${relatedBlock}
+      </div>`);
+    }
+  }
+
+  if (!totalRendered) {
+    root.innerHTML = `<div class="state-message">No glossary terms match these filters.</div>`;
+    return;
+  }
+  root.innerHTML = parts.join("");
+
+  // If a specific term was requested (via state.glossaryTerm / URL g=),
+  // scroll to it + add the highlight pulse class. Defer one frame so the
+  // DOM lands before scrollIntoView fires.
+  if (state.glossaryTerm) {
+    const slug = (_resolveGlossaryTerm(state.glossaryTerm) || {}).slug;
+    if (slug) {
+      requestAnimationFrame(() => {
+        const card = document.getElementById("g-" + slug);
+        if (card) {
+          card.scrollIntoView({ behavior: "smooth", block: "start" });
+          card.classList.remove("is-highlighted");
+          // Force reflow so the animation restarts on re-navigation.
+          void card.offsetWidth;
+          card.classList.add("is-highlighted");
+        }
+      });
+      // Clear the request after consuming it so a manual scroll later
+      // doesn't re-trigger the highlight.
+      state.glossaryTerm = null;
+    }
+  }
+}
+
+// Click-to-define popover — opens a small floating card with the
+// term's definition. Re-uses a single .glossary-popover element
+// across clicks, positioned just below the clicked term.
+function openGlossaryPopover(anchorEl) {
+  const term = anchorEl.dataset.term;
+  const resolved = _resolveGlossaryTerm(term);
+  if (!resolved) return;
+  const { slug, entry } = resolved;
+  let pop = document.getElementById("glossary-popover");
+  if (!pop) {
+    pop = document.createElement("div");
+    pop.id = "glossary-popover";
+    pop.className = "glossary-popover";
+    document.body.appendChild(pop);
+  }
+  const formula = entry.formula
+    ? `<div class="gp-formula">${escapeHtml(entry.formula)}</div>` : "";
+  pop.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+      <span class="gp-term">${escapeHtml(entry.name)}</span>
+      <span class="gp-cat">${escapeHtml(entry.category.replace("-", " "))}</span>
+    </div>
+    <div class="gp-short">${escapeHtml(entry.short)}</div>
+    ${entry.long ? `<div class="gp-long">${escapeHtml(entry.long)}</div>` : ""}
+    ${formula}
+    <a class="gp-open" href="#" data-glossary-open="${escapeHtml(slug)}">Open in glossary →</a>
+  `;
+  // Position — anchor below the clicked element, or above if there
+  // isn't room. Clamp to viewport.
+  const rect = anchorEl.getBoundingClientRect();
+  const scrollY = window.scrollY || window.pageYOffset;
+  const scrollX = window.scrollX || window.pageXOffset;
+  const popW = 320;
+  let left = Math.min(window.innerWidth - popW - 16,
+                      Math.max(8, rect.left + scrollX));
+  let top = rect.bottom + scrollY + 8;
+  // If popover would go off the bottom, anchor above instead.
+  if (rect.bottom + 280 > window.innerHeight) {
+    top = rect.top + scrollY - 280;
+  }
+  // Narrow viewport — center it modally.
+  if (window.innerWidth <= 720) {
+    left = Math.max(8, (window.innerWidth - popW) / 2);
+    top = scrollY + 80;
+  }
+  pop.style.left = left + "px";
+  pop.style.top = top + "px";
+  pop.classList.add("is-open");
+
+  // Outside-click dismissal — deferred so the click that opened the
+  // popover doesn't immediately close it.
+  setTimeout(() => {
+    const dismiss = (e) => {
+      if (!pop.contains(e.target) && !e.target.closest(".g-term")) {
+        pop.classList.remove("is-open");
+        document.removeEventListener("click", dismiss);
+        document.removeEventListener("keydown", escDismiss);
+      }
+    };
+    const escDismiss = (e) => {
+      if (e.key === "Escape") {
+        pop.classList.remove("is-open");
+        document.removeEventListener("click", dismiss);
+        document.removeEventListener("keydown", escDismiss);
+      }
+    };
+    document.addEventListener("click", dismiss);
+    document.addEventListener("keydown", escDismiss);
+  }, 0);
+}
+
 // Injured List section — every tracked prospect currently on an IL
 // stint. Pulls from player.il_status (which carries `is_on_il`, type,
 // since-date, days) and renders a focused roster so a user can answer
@@ -6244,6 +6566,33 @@ function _orgDraftPoolUtilization(org, year) {
   if (!ceiling) return null;
   const spent = ((org.draft_spending || {})[year] || {}).total_usd;
   if (spent == null) return null;
+  return { spent, cap: ceiling, pct: (spent / ceiling) * 100 };
+}
+
+// MLB-assigned international amateur signing bonus pools per team.
+// Source: MLB.com's 2026 international signing-day article (the IFA
+// pool breakdown section). Five tiers based on market size + comp-
+// balance picks. Teams can trade pool money in/out (up to 60% of
+// original); these values are the BASE allocation, not post-trade
+// adjusted.
+const MLB_IFA_BONUS_POOLS = {
+  2026: {
+    "ARI": 8034900, "BAL": 8034900, "CLE": 8034900, "COL": 8034900,
+    "KCR": 8034900, "PIT": 8034900, "STL": 8034900,
+    "ATH": 7357100, "CIN": 7357100, "DET": 7357100, "MIA": 7357100,
+    "MIL": 7357100, "MIN": 7357100, "SEA": 7357100, "TBR": 7357100,
+    "ATL": 6679200, "CHC": 6679200, "CHW": 6679200, "LAA": 6679200,
+    "LAD": 6679200, "PHI": 6679200, "TEX": 6679200, "WSN": 6679200,
+    "BOS": 5940000, "SDP": 5940000, "TOR": 5940000,
+    "HOU": 5440000, "NYY": 5440000, "NYM": 5440000, "SFG": 5440000,
+  },
+};
+
+function _orgIfaPoolUtilization(org, year) {
+  const ceiling = (MLB_IFA_BONUS_POOLS[year] || {})[org && org.org];
+  if (!ceiling) return null;
+  const spent = ((org.ifa_spending || {})[year] || {}).total_usd;
+  if (spent == null) return { spent: null, cap: ceiling, pct: null };
   return { spent, cap: ceiling, pct: (spent / ceiling) * 100 };
 }
 
@@ -6571,7 +6920,7 @@ function renderGraduates() {
         : `league default = ${denomFmt}`;
       const tip = `WAG ${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} — expected ${expected.toFixed(2)} WAR/yr at FV ${Math.round(g.fv_close)} (${isPitcher ? "pitcher" : "hitter"} table), actual ${r.war_per_yr.toFixed(2)} WAR/yr over ${r.war_seasons_count} MLB season${r.war_seasons_count === 1 ? "" : "s"} weighted by playing time (1 season = ${denomTag})`;
       const cls = wagDelta > 0.05 ? "is-pos" : wagDelta < -0.05 ? "is-neg" : "is-neutral";
-      wagPill = `<span class="wag-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(tip)}">${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} WAG</span>`;
+      wagPill = `<span class="wag-pill ${cls} g-term" data-term="wag" style="margin-left:6px;" title="${escapeHtml(tip)}">${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} WAG</span>`;
     }
     // When sorting by one of the WAR fields, surface the value on the row
     // so the reader can see the sort key without hovering. Current-season
@@ -6641,6 +6990,425 @@ const SOURCE_LABELS = {
   mlb_pipeline: "MLB Pipeline", the_athletic: "The Athletic",
   auto_detect: "Auto-detect"
 };
+
+// =============================================================================
+// GLOSSARY — every stat, index, scouting concept, and methodology term used
+// across the site, with a short definition for the click-to-define popover
+// and a longer entry for the Glossary page. Each key is the canonical slug
+// referenced by `data-term` on inline `.g-term` spans. `aliases` lets a
+// display variant ("T+", "ToolGrade+") resolve to the same entry.
+// Categories: custom-index, scouting, hitter-stat, pitcher-stat,
+// general-stat, methodology, financial, level, status.
+// =============================================================================
+const GLOSSARY_CATEGORIES = [
+  ["custom-index", "Custom indices"],
+  ["scouting",     "Scouting"],
+  ["hitter-stat",  "Hitter stats"],
+  ["pitcher-stat", "Pitcher stats"],
+  ["general-stat", "General stats"],
+  ["methodology",  "Methodology"],
+  ["financial",    "Financial"],
+  ["level",        "Levels"],
+  ["status",       "Status"],
+];
+
+const GLOSSARY = {
+  // ---- Custom indices ----
+  "fv": {
+    name: "FV", aliases: ["FV", "Future Value", "Consensus FV"], category: "custom-index",
+    short: "Future Value — the consensus 20-80 scouting grade representing a prospect's projected MLB ceiling.",
+    long: "FV is the central anchor of the entire site. Each tracked source (FanGraphs, MLB Pipeline, ESPN, Just Baseball, TJStats, Baseball America, The Athletic) publishes a 20-80 grade per prospect; the site aggregates them into a consensus value with Bayesian shrinkage on single-instance grades. FV 50 = projected MLB regular; FV 60 = first-division regular / future star; FV 70+ = perennial all-star ceiling.",
+    formula: "consensus_fv = mean(published_fvs) + shrinkage_pull · (FV_35 − mean) when only 1 instance exists",
+    example: "Jackson Holliday's FV 65 means scouts collectively see him as a future star — one tier above an everyday regular but below a perennial all-star.",
+    related: ["tools_plus", "wag", "tvi", "shrinkage"],
+  },
+  "tools_plus": {
+    name: "Tools+", aliases: ["Tools+", "T+", "ToolGrade+"], category: "custom-index",
+    short: "Outlier-biased composite of scouting tool grades, anchored at 100 = cohort mean.",
+    long: "Power-mean (Lₚ with p=3) of the player's per-tool 20-80 grades, then z-score-normalized across the active-prospect cohort. 10 points = 1 stdev, so a Tools+ of 115 reads as ~1.5 stdev above the prospect-pool average. The power-mean (vs simple arithmetic mean) emphasizes outlier tools — a 70-grade power tool moves the composite more than evenly-distributed 55s would, capturing the 'toolsy' intuition that one elite tool defines the profile.",
+    formula: "Tools+ = 100 + 10 · (composite − μ) / σ\nwhere composite = (Σ tool_grade^3 / n)^(1/3)",
+    example: "A 70-grade Game Power + 50-grade Hit + 50-grade Speed + 50-grade Field hitter posts a Tools+ around 115 — the power-mean lifts the composite above what a simple-mean of 55 would produce because power skews the result.",
+    related: ["fv", "pwr_plus", "pd_plus", "stf_plus"],
+  },
+  "rps_plus": {
+    name: "RPS+", aliases: ["RPS+", "Rate Performance Score"], category: "custom-index",
+    short: "Age-relative level performance index — 100 = mean of same-age prospects at the same level.",
+    long: "RPS+ converts a player's level-relative rate stats (OPS+ for hitters, ERA- for pitchers) into a single index normalized against the cohort of same-age prospects at the same level. 100 = exactly average for the age/level bucket; 130 = ~3 stdev above; 70 = ~3 stdev below. MLB-level prospects substitute the canonical wRC+ (hitters) or xFIP/FIP- (pitchers) since league-relative stats are already MLB-anchored.",
+    formula: "RPS+ = 100 + 10 · (player_score − bucket_mean) / bucket_stdev",
+    example: "A 19-year-old hitter at A+ posting a 130 OPS+ vs the level mean reads as RPS+ 120 (well above other 19yos at A+), even if his raw OPS+ vs the level looks identical to a 22-year-old's.",
+    related: ["fv", "ops_plus_level", "era_minus_level", "wrc_plus"],
+  },
+  "dvm_plus": {
+    name: "DvM+", aliases: ["DvM+", "Development vs Mean"], category: "custom-index",
+    short: "Farm-system development index — 100 = league-mean FV growth over the development window.",
+    long: "wRC+-style index for organizational development. Measures each farm's cumulative FV growth over a window (1y / 3y / 5y) and scores it against the league-mean farm. Acquisitions are nullified (a trade-in adds zero to the source farm) and graduations don't subtract — pure development of prospects already in the system. 100 = league mean; 10 pts = 1 stdev across the 30 orgs.",
+    formula: "DvM+ = 100 + 10 · (org_growth − league_mean_growth) / league_stdev",
+    example: "An org with a 3yDvM+ of 130 has grown its prospects' aggregate FV 3 stdev faster than the average farm system over the last 3 years, after stripping out acquisitions.",
+    related: ["farm_rank", "stock", "fv"],
+  },
+  "pwr_plus": {
+    name: "PWR+", aliases: ["PWR+", "Power Index"], category: "custom-index",
+    short: "Hitter power index — ISO + HR-rate vs level-mean. 100 = league-average power.",
+    long: "Composite of isolated power (SLG − AVG) and home-run rate, both normalized against the player's current level. Weighted 60% ISO / 40% HR-rate to reflect that ISO is a more stable single-year power signal than raw HR totals (sample-noise dampens). Hitters only; 40-game minimum.",
+    formula: "PWR+ = 100 · (0.6 · ISO_ratio + 0.4 · HR_rate_ratio)\nwhere ratios are player ÷ level_mean",
+    example: "A AA hitter with a .240 ISO at a level where the mean is .140 posts a PWR+ of ~145 — ~45% more power than the typical AA bat.",
+    related: ["iso", "tools_plus", "rps_plus"],
+  },
+  "pd_plus": {
+    name: "PD+", aliases: ["PD+", "Plate Discipline"], category: "custom-index",
+    short: "Plate discipline index — BB% − K% differential vs level-mean. 100 = average.",
+    long: "Additive shift on the BB%−K% differential vs the player's level mean. PD+ = 100 + (player_diff − level_diff). A hitter walking 10% and striking out 20% (−10 diff) at a level where the mean is +5% BB minus 22% K (−17 diff) posts a PD+ of 107. Hitters only; 40-game minimum.",
+    formula: "PD+ = 100 + (BB%player − K%player) − (BB%level − K%level)",
+    example: "Juan Soto's career-prospect PD+ would have been ~125-130 — his BB%−K% differential was ~25 points above the typical bat at every level.",
+    related: ["bb_pct", "k_pct", "pwr_plus"],
+  },
+  "stf_plus": {
+    name: "STF+", aliases: ["STF+", "Stuff", "Pitcher Stuff+"], category: "custom-index",
+    short: "Pitcher stuff index — K/9 + BB/9 + HR/9 normalized to level-mean. 100 = league-average stuff.",
+    long: "Z-score composite of three peripheral rates: strikeouts (positive), walks (negative), and home-runs allowed (negative), each normalized to the level mean with an approximate σ = 15% of mean. 10 points ≈ 1 stdev. Pitchers only; 20-IP minimum.",
+    formula: "STF+ = 100 + 10 · (z(K/9) − z(BB/9) − z(HR/9))",
+    example: "A AA pitcher running a 12 K/9, 2.5 BB/9, 0.8 HR/9 at a level where the means are 9 / 3.5 / 1.0 posts a STF+ around 125 — well-above-average stuff for the level.",
+    related: ["k_per_9", "bb_per_9", "hr_per_9", "fip"],
+  },
+  "tvi": {
+    name: "TVI", aliases: ["TVI", "Trade Value Index"], category: "custom-index",
+    short: "Cleveland-derived expected MLB surplus value ($M) interpolated from consensus FV.",
+    long: "Maps consensus FV to estimated total surplus value across a prospect's 6-year cost-controlled MLB window using a published industry table (FanGraphs / Craig Edwards 2019 framework). Linearly interpolated between half-grade ticks. Higher FV = exponentially higher TVI because of the WAR distribution at the upper tail.",
+    formula: "TVI ≈ piecewise-linear interp on (FV, $M) anchor points: 80→$145M · 70→$60M · 60→$25M · 50→$9M · 40→$1.5M",
+    example: "A 55-FV prospect has a TVI of ~$15M — the team is sitting on ~$15M of surplus value above league-min cost over the 6yr window if the player hits his projection.",
+    related: ["fv", "surplus_value", "war"],
+  },
+  "wag": {
+    name: "WAG", aliases: ["WAG", "WAR Above Grade"], category: "custom-index",
+    short: "Graduate-only metric — playing-time-weighted MLB WAR/yr minus FV-grade-implied baseline.",
+    long: "Measures whether a graduated prospect has out- or under-performed their final FV grade. WAR/yr is computed playing-time-weighted (per-graduate PA or IP, with a minimum-sample gate of ≥1 full-season equivalent of MLB time so a thin-debut Ben Rice isn't punished). Subtracted against the FV→WAR primer table (FanGraphs lower-bound, hitter/pitcher split, linearly interpolated). Positive = beat the bet; negative = missed.",
+    formula: "WAG = (Σ season_WAR × PA_share) / season_count − expected_WAR(FV)",
+    example: "Bobby Witt Jr. graduated as a 60 FV (expected ~3.4 WAR/yr) and has averaged ~6 WAR/yr in his MLB time — WAG of +2.6, a major outperformance.",
+    related: ["fv", "war", "fv_war_table"],
+  },
+  // ---- Scouting ----
+  "twenty_eighty": {
+    name: "20-80 scale", aliases: ["20-80 scale", "Scouting scale"], category: "scouting",
+    short: "The standard scouting grade ladder — 20 = far-below-MLB, 50 = MLB-average, 80 = elite.",
+    long: "Industry-standard scouting grades since the 1950s. Built around a Gaussian: 50 is the MLB-average bench/role player, 60 is a first-division regular / All-Star, 70 is perennial All-Star, 80 is Hall-of-Fame ceiling. Used for both individual tools (Hit / Power / Speed / Field / Throw / Fastball / etc.) and overall Future Value.",
+    example: "A 70-grade fastball means top ~5% of MLB starters. A 70-grade hit tool means batting-title contender.",
+    related: ["fv", "tools_plus"],
+  },
+  "hit_tool": {
+    name: "Hit tool", aliases: ["Hit", "Hit tool"], category: "scouting",
+    short: "20-80 scouting grade for the player's bat-to-ball ability and projected batting average.",
+    long: "Composite assessment of contact rate, plate coverage, pitch recognition, and projected batting average against MLB pitching. 50 = ~.260 BA, 60 = ~.290 BA, 70 = ~.320 BA ceiling.",
+    related: ["game_power", "tools_plus"],
+  },
+  "game_power": {
+    name: "Game Power", aliases: ["Game pwr", "Game Power"], category: "scouting",
+    short: "20-80 scouting grade for in-game power output (HR + extra-base hits).",
+    long: "How much of the player's raw power actually translates into in-game HRs and doubles given their swing path, pitch recognition, and approach. Game power is almost always ≤ raw power for the same player.",
+    related: ["raw_power", "iso", "pwr_plus"],
+  },
+  "raw_power": {
+    name: "Raw Power", aliases: ["Raw pwr", "Raw Power"], category: "scouting",
+    short: "20-80 grade for batting-practice / theoretical max power, regardless of in-game application.",
+    long: "What a player CAN do — exit velocity, BP-display home-run distance, peak EV. Distinct from game power, which factors in whether the swing actually unlocks the raw tool in competition.",
+    related: ["game_power"],
+  },
+  "speed_tool": {
+    name: "Speed", aliases: ["Speed", "Run", "SPD"], category: "scouting",
+    short: "20-80 scouting grade for foot speed — 60-yard dash, home-to-first time, and baserunning instincts.",
+    long: "Used in both offensive (baserunning, BABIP, extra-base hits) and defensive (range, jumps, recovery) contexts. On the site speed contributes to both the offensive and defensive composites for hitters.",
+    related: ["tools_plus"],
+  },
+  "field_tool": {
+    name: "Field", aliases: ["Field", "FLD"], category: "scouting",
+    short: "20-80 grade for defensive ability — range, hands, instincts, throwing accuracy.",
+    long: "Position-relative grade — a 60 Field at SS isn't the same skill ceiling as a 60 Field at 1B. The 50 anchor is 'plays an average MLB-level version of the position.'",
+    related: ["throw_tool", "speed_tool"],
+  },
+  "throw_tool": {
+    name: "Throw", aliases: ["Throw", "Arm", "ARM"], category: "scouting",
+    short: "20-80 grade for throwing arm strength + accuracy.",
+    long: "Critical for OF / SS / 3B / C; less weighted at 1B and 2B. 60+ = legitimate plus arm; 70+ = elite (think Andruw Jones, Yadier Molina caliber).",
+    related: ["field_tool"],
+  },
+  "graduation_rule": {
+    name: "Graduation rule", aliases: ["Graduation", "Graduated"], category: "scouting",
+    short: "A prospect graduates from rookie status after exceeding 130 MLB at-bats, 50 IP, or 45 days on the active roster.",
+    long: "MLB's official rookie limits: 130 at-bats (hitters) or 50 innings (pitchers) or 45 days on the 26-man roster (excluding September). Once any threshold is crossed, the player is removed from prospect rankings and appears on the Graduates tab here.",
+    related: ["wag"],
+  },
+  // ---- Hitter stats ----
+  "ops": {
+    name: "OPS", category: "hitter-stat",
+    short: "On-base Plus Slugging — sum of OBP and SLG; the simplest catch-all hitter rate stat.",
+    long: "OBP + SLG. Captures both getting-on-base and power in one number. .700 = below average, .800 = above-average regular, .900+ = star-level. Doesn't park-adjust or league-adjust on its own — use wRC+ for that.",
+    formula: "OPS = OBP + SLG",
+    related: ["obp", "slg", "wrc_plus", "iso"],
+  },
+  "iso": {
+    name: "ISO", category: "hitter-stat",
+    short: "Isolated Power — extra-base hits per at-bat (SLG − AVG). Pure power rate.",
+    long: "Strips singles out of slugging by subtracting batting average. .140 = average MLB power, .200 = above-average, .250+ = elite. ISO normalizes power across hitters with very different contact profiles.",
+    formula: "ISO = SLG − AVG",
+    related: ["slg", "pwr_plus"],
+  },
+  "avg": {
+    name: "AVG", category: "hitter-stat",
+    short: "Batting Average — hits divided by at-bats. The classic but limited rate stat.",
+    long: "H / AB. Doesn't reward walks, doesn't distinguish singles from homers. Still useful as a contact-quality signal. .260-.270 = MLB average; .300+ = above average.",
+    related: ["obp", "ops"],
+  },
+  "obp": {
+    name: "OBP", category: "hitter-stat",
+    short: "On-base Percentage — times reached base (H + BB + HBP) divided by plate appearances.",
+    long: "Captures both contact and discipline. .330 = MLB average, .380+ = elite. Doesn't include reached-on-error.",
+    related: ["bb_pct", "ops"],
+  },
+  "slg": {
+    name: "SLG", category: "hitter-stat",
+    short: "Slugging Percentage — total bases per at-bat. Weights extra-base hits.",
+    long: "(1B + 2·2B + 3·3B + 4·HR) / AB. .425 = MLB average; .500+ = above-average; .550+ = elite.",
+    related: ["iso", "ops"],
+  },
+  "bb_pct": {
+    name: "BB%", aliases: ["BB%", "Walk rate"], category: "hitter-stat",
+    short: "Walk rate — walks divided by plate appearances. Approach + discipline indicator.",
+    long: "Around 8% is MLB average; 12%+ is elite. Sticky across levels (a strong walk rate at A+ usually persists into AAA / MLB).",
+    formula: "BB% = BB / PA",
+    related: ["k_pct", "pd_plus"],
+  },
+  "k_pct": {
+    name: "K%", aliases: ["K%", "Strikeout rate"], category: "hitter-stat",
+    short: "Strikeout rate — strikeouts divided by plate appearances. Lower is better for hitters.",
+    long: "MLB average is ~22%. Sub-18% = above-average contact; 28%+ = swing-and-miss concern. Mostly sticky across levels.",
+    formula: "K% = K / PA",
+    related: ["bb_pct", "pd_plus"],
+  },
+  "wrc_plus": {
+    name: "wRC+", aliases: ["wRC+", "Weighted Runs Created Plus"], category: "hitter-stat",
+    short: "League- and park-adjusted offensive value, anchored at 100 = MLB average.",
+    long: "100 = exactly league-average run creation; 120 = 20% above; 80 = 20% below. The canonical FanGraphs hitter metric, accounting for park factors and league context. MLB-only on this site (MiLB equivalents use the level-relative RPS+ proxy).",
+    related: ["rps_plus", "ops"],
+  },
+  // ---- Pitcher stats ----
+  "era": {
+    name: "ERA", category: "pitcher-stat",
+    short: "Earned Run Average — earned runs allowed per 9 innings. The classic pitcher headline.",
+    long: "Doesn't park- or defense-adjust on its own. 4.00 = ~MLB average; sub-3.50 = above-average; sub-3.00 = elite. Use FIP / xFIP for a defense-independent read.",
+    formula: "ERA = ER · 9 / IP",
+    related: ["fip", "xfip", "whip"],
+  },
+  "whip": {
+    name: "WHIP", category: "pitcher-stat",
+    short: "Walks + Hits per Inning Pitched. Measures baserunner volume.",
+    long: "(BB + H) / IP. 1.30 = ~MLB average; sub-1.20 = above average; sub-1.10 = elite. Captures both walk rate and contact-quality allowed in one number.",
+    formula: "WHIP = (BB + H) / IP",
+    related: ["era"],
+  },
+  "fip": {
+    name: "FIP", aliases: ["FIP"], category: "pitcher-stat",
+    short: "Fielding-Independent Pitching — ERA-scaled metric using only K, BB, HBP, HR.",
+    long: "Estimates what a pitcher's ERA would be if they had league-average luck on balls in play. ~4.00 = MLB average. Use FIP- for the 100-anchored version.",
+    formula: "FIP = ((13·HR) + 3·(BB+HBP) − 2·K) / IP + constant",
+    related: ["era", "xfip", "fip_minus"],
+  },
+  "xfip": {
+    name: "xFIP", category: "pitcher-stat",
+    short: "Expected FIP — FIP using league-average HR/FB rate instead of actual HR allowed.",
+    long: "Strips out HR luck. More predictive year-over-year than FIP. ~4.00 = MLB average; sub-3.50 = above-average.",
+    related: ["fip", "era"],
+  },
+  "fip_minus": {
+    name: "FIP-", aliases: ["FIP-", "FIP minus"], category: "pitcher-stat",
+    short: "Park- and league-adjusted FIP scaled to 100 = MLB average. Lower is better.",
+    long: "100 = exactly league-average run prevention (defense-independent); 80 = 20% better than average (top-tier); 120 = 20% worse. Inverts the usual 'higher = better' convention because lower run prevention is better.",
+    related: ["fip", "wrc_plus"],
+  },
+  "k_per_9": {
+    name: "K/9", category: "pitcher-stat",
+    short: "Strikeouts per 9 innings. A starter's headline whiff rate.",
+    long: "9 K/9 = MLB average for a starter; 11+ = elite. K% (per-batter) is more workload-stable but K/9 is the classic baseball-card stat.",
+    formula: "K/9 = K · 9 / IP",
+    related: ["k_pct_pitcher", "stf_plus"],
+  },
+  "bb_per_9": {
+    name: "BB/9", category: "pitcher-stat",
+    short: "Walks per 9 innings. Command/control indicator.",
+    long: "3.0 BB/9 = MLB average; sub-2.5 = above average; sub-2.0 = elite command. Below 5 K-BB ratio is a yellow flag.",
+    formula: "BB/9 = BB · 9 / IP",
+    related: ["bb_pct_pitcher", "stf_plus"],
+  },
+  "hr_per_9": {
+    name: "HR/9", category: "pitcher-stat",
+    short: "Home runs allowed per 9 innings. HR-suppression indicator.",
+    long: "~1.3 HR/9 = MLB average; sub-1.0 = above average. Heavily dependent on park + league environment.",
+    formula: "HR/9 = HR · 9 / IP",
+    related: ["fip", "xfip"],
+  },
+  "k_pct_pitcher": {
+    name: "K% (pitcher)", aliases: ["Pitcher K%"], category: "pitcher-stat",
+    short: "Pitcher strikeout rate — strikeouts as % of batters faced. Workload-stable.",
+    long: "Better than K/9 for comparing starters vs relievers because per-batter rate doesn't depend on IP/start. ~22% = MLB average; 28%+ = elite.",
+    formula: "K% = K / TBF",
+    related: ["k_per_9", "stf_plus"],
+  },
+  "bb_pct_pitcher": {
+    name: "BB% (pitcher)", aliases: ["Pitcher BB%"], category: "pitcher-stat",
+    short: "Pitcher walk rate — walks as % of batters faced.",
+    long: "~8% = MLB average; sub-7% = above average; sub-6% = elite command. More workload-stable than BB/9.",
+    formula: "BB% = BB / TBF",
+    related: ["bb_per_9", "stf_plus"],
+  },
+  // ---- General stats ----
+  "war": {
+    name: "WAR", aliases: ["WAR", "fWAR"], category: "general-stat",
+    short: "Wins Above Replacement — single-number value estimate, defense + offense + baserunning + position adjustment.",
+    long: "FanGraphs' implementation (fWAR) is the version used on this site. 2 WAR/yr ≈ MLB regular; 4 WAR ≈ above-average regular; 6+ WAR ≈ All-Star; 8+ WAR ≈ MVP candidate. Used as the realized output baseline for the WAG metric.",
+    related: ["wag", "tvi", "war_war_table"],
+  },
+  // ---- Methodology ----
+  "consensus_fv": {
+    name: "Consensus FV", category: "methodology",
+    short: "The site-computed FV that averages all source publications and applies single-instance shrinkage.",
+    long: "For every snapshot, the consensus FV is the mean of explicit FVs published by any source. When only one source has ever published the player (across their entire history, not just the latest snapshot), the consensus is Bayesian-pulled 1/3 toward FV 35 to reflect single-observation uncertainty. The pull lifts as soon as a second grade lands — even from the same source.",
+    related: ["fv", "shrinkage", "wide_spread"],
+  },
+  "shrinkage": {
+    name: "Single-instance shrinkage", aliases: ["Bayesian shrinkage", "Single-instance pull"], category: "methodology",
+    short: "FV-toward-35 pull applied when a prospect has only one published grade in their entire history.",
+    long: "k=0.5 Bayesian shrinkage: consensus = (2/3 · raw_FV) + (1/3 · 35). The FV badge for single-instance prospects carries a dashed amber outline + small '1' mark. A FanGraphs-only prospect graded multiple times across snapshots is well-observed and NOT shrunken — only true single-observations get the pull.",
+    formula: "if total_fv_instances ≤ 1: pulled_fv = (2/3) · raw_fv + (1/3) · 35",
+    related: ["consensus_fv", "fv"],
+  },
+  "wide_spread": {
+    name: "Wide-spread indicator", aliases: ["W indicator", "Wide indicator"], category: "methodology",
+    short: "Purple 'W' mark on the FV badge — sources disagree by ≥10 grade points (a two-tier gap).",
+    long: "When 2+ sources have published the player and their max-min spread is ≥10 grade points (e.g., FG 45 vs Pipeline 55), the FV badge carries a violet 'W' corner mark. Hover for the spread + source count. Indicates the consensus is the average of meaningfully disagreeing views — a 'wide read' rather than tight consensus.",
+    related: ["consensus_fv", "single_instance"],
+  },
+  "stock": {
+    name: "Stock", aliases: ["Stock", "Stock movement"], category: "methodology",
+    short: "Trailing-window FV trajectory — direction + delta since the player's prior consensus snapshot.",
+    long: "Compares latest consensus_fv_raw against the prior point in the player's history. ▲ = up by ≥1.5 FV; ▼ = down; — = flat. Surfaced via small chips on list rows + a stock chip in the detail-page header.",
+    related: ["fv", "dvm_plus"],
+  },
+  "eta": {
+    name: "ETA", category: "methodology",
+    short: "Estimated MLB arrival year — derived from level + age vs level mean + FV grade adjustments.",
+    long: "Walks from the player's current level baseline (e.g., AAA = 0.8 yr to MLB, AA = 1.5 yr, A+ = 2.5 yr) with adjustments for performance (RPS+ vs level), age vs level mean, FV grade, and IL/health flags. Confidence label (high / mid / low) reflects the spread between the components.",
+    related: ["fv", "rps_plus"],
+  },
+  "farm_rank": {
+    name: "Farm rank", category: "methodology",
+    short: "Composite rank of all 30 MLB orgs — 45% top-end + 25% depth + 15% trajectory + 15% grad pipeline.",
+    long: "Each component scored 0-100 across the 30 orgs, then blended linearly. Top-end = tiered FV-points sum of the top 5 prospects (an FV 80 worth ~100× an FV 40). Depth = same sum for prospects #6-25. Trajectory = 1y DvM+. Grad pipeline = FV-weighted graduations in the trailing 12mo.",
+    formula: "farm_score = 0.45·top_end + 0.25·depth + 0.15·trajectory + 0.15·grad_pipeline",
+    related: ["dvm_plus", "fv"],
+  },
+  // ---- Financial ----
+  "surplus_value": {
+    name: "Surplus value", category: "financial",
+    short: "Total $M of MLB value above cost-controlled salary across a prospect's 6yr team-control window.",
+    long: "Expected: FV-derived (TVI table). Realized: actual career WAR × $9.5M/WAR market rate minus actual / estimated salaries paid. Positive = team beat the bet implied by the player's grade; negative = paid more than the realized value.",
+    related: ["tvi", "war", "aav", "wag"],
+  },
+  "aav": {
+    name: "AAV", aliases: ["AAV", "Average Annual Value"], category: "financial",
+    short: "Average Annual Value — total contract value divided by years. The standard contract headline.",
+    long: "For deferral-heavy deals (e.g., Ohtani's $700M / 10yr but only ~$46M present-value AAV) the displayed AAV is the present-value-adjusted figure, not the raw money / years.",
+    related: ["surplus_value"],
+  },
+  "bonus_pool": {
+    name: "Bonus pool", category: "financial",
+    short: "Per-team MLB-assigned amateur signing budget — separate IFA pool + draft pool ceilings per year.",
+    long: "Draft pool = sum of the team's first-10-rounds slot values. IFA pool = MLB-assigned international signing budget (base ~$5.95M + competitive-balance bonuses). Teams can exceed by up to ~5% before luxury-tax penalties.",
+    related: ["slot_value"],
+  },
+  "slot_value": {
+    name: "Slot value", category: "financial",
+    short: "MLB-assigned bonus value for an individual draft pick. Sums into the team's draft pool ceiling.",
+    long: "Each pick in the first 10 rounds has a published slot value. Teams can sign over slot for top picks if they sign under for later picks (rebalancing within the pool). Going over the pool total triggers a tax + potential future-pick penalty.",
+    related: ["bonus_pool"],
+  },
+  // ---- Levels ----
+  "mlb": {
+    name: "MLB", category: "level",
+    short: "Major League Baseball — the top tier. The destination level for every prospect's projection.",
+    related: ["aaa"],
+  },
+  "aaa": {
+    name: "AAA", aliases: ["AAA"], category: "level",
+    short: "Triple-A — the last level before MLB. Many AAA prospects are MLB call-up candidates.",
+    long: "International League (Eastern AAA) + Pacific Coast League (Western AAA). Avg age ~26 — most AAA players are 4A vets, but young AAA performers (≤24) are typically near-term MLB candidates.",
+    related: ["aa", "mlb"],
+  },
+  "aa": {
+    name: "AA", aliases: ["AA"], category: "level",
+    short: "Double-A — the level where prospect projections become real. The hardest dev jump.",
+    long: "Texas / Eastern / Southern Leagues. Avg age ~23. AA is widely considered the level where pitching quality + breaking-ball usage approximates MLB conditions; prospects who succeed at AA usually carry their performance forward.",
+    related: ["a_plus", "aaa"],
+  },
+  "a_plus": {
+    name: "A+", aliases: ["A+", "High-A"], category: "level",
+    short: "High-A — the second full-season level above Single-A.",
+    long: "Avg age ~22. Most college draftees start here; HS draftees usually arrive after a year of A-ball.",
+    related: ["a", "aa"],
+  },
+  "a": {
+    name: "A", aliases: ["A", "Low-A", "Single-A"], category: "level",
+    short: "Low-A / Single-A — the first full-season level.",
+    long: "Avg age ~21. The first level of structured 130+ game seasons after the complex / DSL.",
+    related: ["a_plus", "cpx"],
+  },
+  "cpx": {
+    name: "CPX", aliases: ["CPX", "Complex League"], category: "level",
+    short: "Complex League — short-season rookie ball at the team's spring-training complex.",
+    long: "Avg age ~19. Most HS draftees and recent IFAs get their first stateside reps in the CPX.",
+    related: ["dsl", "a"],
+  },
+  "dsl": {
+    name: "DSL", aliases: ["DSL", "Dominican Summer League"], category: "level",
+    short: "Dominican Summer League — the entry point for most international amateur signings.",
+    long: "Avg age ~18. Heavily Latin American — primarily Dominican, Venezuelan, Colombian players who signed as 16-yo IFAs.",
+    related: ["cpx", "ifa"],
+  },
+  // ---- Status / Misc ----
+  "ifa": {
+    name: "IFA", aliases: ["IFA", "International FA", "International Free Agent"], category: "status",
+    short: "International Free Agent — amateur players signed from outside the U.S./Canada/Puerto Rico.",
+    long: "Each org has a fixed annual IFA bonus pool. Players sign at 16 from Latin America (heavy DR / VZ representation), Asia (KBO/NPB posting after age 25), Cuba, and elsewhere. Top IFAs get bonuses in the $3-5M range.",
+    related: ["bonus_pool", "dsl"],
+  },
+  "post_tj": {
+    name: "Post-TJ", aliases: ["Post-Tommy John", "TJ recovery"], category: "status",
+    short: "Player is recovering from Tommy John (UCL replacement) elbow surgery. ~14-18mo recovery typical.",
+    long: "Tommy John (ulnar collateral ligament reconstruction) is the most common pitching surgery. Recovery curve: 0-6mo throwing, 6-12mo mound work, 12-14mo rehab assignments, 14-18mo MLB return. Roughly 80% of TJ recipients return to prior form within 2 years; ~10% never pitch at the same level again.",
+    related: ["on_il"],
+  },
+  "on_il": {
+    name: "On IL", aliases: ["IL", "Injured List", "Currently on IL"], category: "status",
+    short: "Player is currently on the active Injured List. Multiple IL types: 7-day, 10-day, 15-day, 60-day.",
+    long: "60-day IL freezes a player's 40-man roster slot. 15-day IL is the standard major-injury duration. The site surfaces every IL stint over the trailing 24 months (the Health profile aggregates the count + total IL days).",
+    related: ["post_tj"],
+  },
+};
+
+// Alias lookup — maps display variants ("T+", "ToolGrade+") to canonical
+// slugs ("tools_plus") so `data-term` can use either form.
+const _GLOSSARY_ALIAS_TO_SLUG = (() => {
+  const out = {};
+  for (const [slug, entry] of Object.entries(GLOSSARY)) {
+    out[slug] = slug;
+    out[entry.name] = slug;
+    for (const a of (entry.aliases || [])) out[a] = slug;
+  }
+  return out;
+})();
+
+function _resolveGlossaryTerm(termOrSlug) {
+  if (!termOrSlug) return null;
+  const slug = _GLOSSARY_ALIAS_TO_SLUG[termOrSlug] || termOrSlug;
+  return GLOSSARY[slug] ? { slug, entry: GLOSSARY[slug] } : null;
+}
 
 // 3-letter org code → full team name. Used for the farm list label + farm
 // detail header. Compact tables (trades, charts, badges) keep the code so
@@ -9681,6 +10449,59 @@ function renderPlayerDetail(key) {
       <div class="detail-card">${inner}</div>`;
   })();
 
+  // Contract details — Spotrac-sourced year-by-year salary breakdown.
+  // Lives alongside (NOT inside) the surplus value card so the user can
+  // see the full contract picture without losing the FV-implied vs
+  // realized comparison. Hidden when the player has no contract data.
+  const contractDetailsSection = (() => {
+    const c = p.current_contract;
+    if (!c || c.aav_usd == null) return "";
+    const fmtUsd = n => {
+      if (n == null) return "—";
+      if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(n >= 10_000_000 ? 1 : 2)}M`;
+      if (n >= 1_000)     return `$${Math.round(n / 1_000)}K`;
+      return `$${n}`;
+    };
+    const currentYear = new Date().getUTCFullYear();
+    const salaryByYear = c.salary_by_year || {};
+    const years = Object.keys(salaryByYear).sort();
+    const yearRows = years.map(yr => {
+      const isCurrent = String(yr) === String(currentYear);
+      const sal = salaryByYear[yr];
+      const tag = isCurrent
+        ? `<span style="font-size:9px;color:var(--neon-cyan);background:rgba(143,205,245,0.08);padding:1px 6px;border-radius:2px;font-family:var(--font-sans);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;margin-left:6px;">Now</span>`
+        : "";
+      return `<tr>
+        <td style="padding:4px 8px 4px 0;color:var(--text-secondary);font-family:var(--font-mono);font-size:11.5px;font-variant-numeric:tabular-nums;">${yr}${tag}</td>
+        <td style="padding:4px 0;text-align:right;color:var(--text-primary);font-family:var(--font-mono);font-size:11.5px;font-variant-numeric:tabular-nums;font-weight:600;">${fmtUsd(sal)}</td>
+      </tr>`;
+    }).join("");
+    const spotracLink = c.spotrac_id
+      ? `<a href="https://www.spotrac.com/mlb/player/_/id/${escapeHtml(c.spotrac_id)}/" target="_blank" rel="noopener" style="font-size:10px;color:var(--neon-cyan);text-decoration:none;letter-spacing:0.02em;">Spotrac page →</a>`
+      : "";
+    const headlineRow = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:10px;border-bottom:1px solid var(--border-light);margin-bottom:10px;gap:10px;">
+        <div>
+          <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;"><span class="g-term" data-term="aav">AAV</span></div>
+          <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${c.years_remaining || "?"} yr · signed thru ${c.signed_through || "?"}</div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;" title="${escapeHtml("Average Annual Value — total contract / years remaining (present-value adjusted by Spotrac for deferral-heavy deals)")}">${fmtUsd(c.aav_usd)}</div>
+      </div>`;
+    const totalsRow = `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;margin-top:6px;border-top:1px solid var(--border-light);font-size:11px;color:var(--text-secondary);">
+        <span>Total value: <strong style="color:var(--text-primary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${fmtUsd(c.total_usd)}</strong></span>
+        ${spotracLink}
+      </div>`;
+    return `<div class="detail-title">Contract details <span class="detail-title-sub">Spotrac · active deal</span></div>
+      <div class="detail-card">
+        ${headlineRow}
+        <table style="width:100%;border-collapse:collapse;">
+          <tbody>${yearRows}</tbody>
+        </table>
+        ${totalsRow}
+      </div>`;
+  })();
+
   // Scouting tools card — per-tool 20-80 grades + the three composites
   // (Offensive/Defensive/Overall for hitters; Stuff/Command/Overall for
   // pitchers). Composites also carry a ToolGrade+ index (100 = cohort
@@ -10419,33 +11240,45 @@ function renderPlayerDetail(key) {
   // context blocks (health / Savant / events / same-farm) follow the
   // user's scroll once they pass the chart + career section.
   const wrap = (id, html) => html ? `<div id="${id}">${html}</div>` : "";
+  // Wider cards live in the main column below the chart + career table
+  // so they get full horizontal width. Sidebar stays as a tight stack
+  // of summary cards. The wide grid becomes 2-col at ≥1200px.
+  const moreDetailsAccordion = (() => {
+    const moreSectionList = [
+      [perSourceTabbedSection, "per-source"],
+      [acqSection,             "acquisition"],
+      [currentAcqSection,      "current org"],
+      [tradesSection,          "transactions"],
+      [etaRows,                "ETA"],
+      [rosterStatusSection,    "roster status"],
+    ].filter(([html]) => html);
+    if (!moreSectionList.length) return "";
+    const moreSections = moreSectionList.map(([html]) => html).join("");
+    const labels = moreSectionList.map(([, label]) => label).join(" · ");
+    return `<details class="player-detail-more" open style="margin-top:0;">
+      <summary style="cursor:pointer;font-family:var(--font-sans);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);padding:8px 12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">More details · ${escapeHtml(labels)}</summary>
+      <div style="margin-top:10px;">${moreSections}</div>
+    </details>`;
+  })();
+  // Wide-card grid below the career table. Tools / Savant / Arsenal /
+  // Contract details + the More-details accordion live here so they
+  // get more horizontal real estate than the narrow sidebar provides.
+  const wideCards = [
+    wrap("detail-tools",   toolsSection),
+    wrap("detail-savant",  savantSection),
+    wrap("detail-arsenal", arsenalSection),
+    contractDetailsSection,
+  ].filter(Boolean).join("");
+  const wideGrid = (wideCards || moreDetailsAccordion)
+    ? `<div class="detail-wide-grid">
+        ${wideCards}
+        ${moreDetailsAccordion}
+      </div>`
+    : "";
   root.innerHTML = header + tilesHtml + flagSummary + jumpLinkStrip + `
     <div class="player-detail-grid">
-      <div>${wrap("detail-chart", chartSection)}${wrap("detail-stats", consolidatedCareerSection)}${sourceSection}</div>
-      <div class="player-detail-side">${noteSection}${ilSection}${wrap("detail-health", healthSection)}${sabermetricsSection}${surplusValueSection}${wrap("detail-tools", toolsSection)}${wrap("detail-savant", savantSection)}${wrap("detail-arsenal", arsenalSection)}${sameFarmSection}${similarProspectsSection}${(() => {
-        // Below-the-fold context that used to collapse into a closed
-        // <details> accordion. Now defaults OPEN so the reader sees
-        // the acquisition / transaction / ETA / per-source sections
-        // without an extra click. The summary line is still a
-        // collapsible toggle for users who want to hide it. The
-        // count + section labels in the summary tell the reader at a
-        // glance what's inside.
-        const moreSectionList = [
-          [perSourceTabbedSection, "per-source"],
-          [acqSection,             "acquisition"],
-          [currentAcqSection,      "current org"],
-          [tradesSection,          "transactions"],
-          [etaRows,                "ETA"],
-          [rosterStatusSection,    "roster status"],
-        ].filter(([html]) => html);
-        if (!moreSectionList.length) return "";
-        const moreSections = moreSectionList.map(([html]) => html).join("");
-        const labels = moreSectionList.map(([, label]) => label).join(" · ");
-        return `<details class="player-detail-more" open style="margin-top:10px;">
-          <summary style="cursor:pointer;font-family:var(--font-sans);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);padding:8px 12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">More details · ${escapeHtml(labels)}</summary>
-          <div style="margin-top:10px;">${moreSections}</div>
-        </details>`;
-      })()}</div>
+      <div>${wrap("detail-chart", chartSection)}${wrap("detail-stats", consolidatedCareerSection)}${sourceSection}${wideGrid}</div>
+      <div class="player-detail-side">${noteSection}${ilSection}${wrap("detail-health", healthSection)}${sabermetricsSection}${surplusValueSection}${sameFarmSection}${similarProspectsSection}</div>
     </div>`;
 }
 
@@ -11393,7 +12226,89 @@ function renderFarmDetail(orgCode) {
       : '<span style="color:var(--text-tertiary);font-size:11.5px;">All tracked prospects healthy.</span>'}
   </div>`;
 
-  const sidebarHtml = topProspectCard + youngestCard + depthHeatmapCard + fvDistCard + acqMixCard + etaCard + moversCard + promoCard + toolsLeaderboardCard + orgLeadersCard + ilCard + recentTxCards + gradsCard + comparableFarmsCard;
+  // Bonus pools card — MLB-assigned 2026 draft + IFA pool ceilings for
+  // this org, with actual-spend utilization when on file. Color-coded
+  // by % utilization. Card hidden when no pool ceilings are on file.
+  const bonusPoolsCard = (() => {
+    const year = new Date().getUTCFullYear();
+    const draftUtil = _orgDraftPoolUtilization(org, year);
+    const ifaUtil = _orgIfaPoolUtilization(org, year);
+    if (!draftUtil && !ifaUtil) return "";
+    const fmtUsd = m => {
+      if (m == null) return "—";
+      if (m >= 1_000_000) return `$${(m / 1_000_000).toFixed(2)}M`;
+      if (m >= 1_000)     return `$${Math.round(m / 1_000)}K`;
+      return `$${m}`;
+    };
+    const utilColor = (pct) => pct == null ? "var(--text-tertiary)"
+                            : pct >= 95 ? "var(--up)"
+                            : pct >= 70 ? "var(--text-secondary)"
+                            : "var(--neon-amber)";
+    const renderRow = (label, slug, util, swatch) => {
+      if (!util) return "";
+      const pctTxt = util.pct != null ? `${util.pct.toFixed(0)}%` : "—";
+      const spentTxt = util.spent != null ? fmtUsd(util.spent) : "—";
+      const pctColor = utilColor(util.pct);
+      return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;">
+        <span style="display:inline-flex;align-items:center;gap:6px;">
+          <span aria-hidden="true" style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${swatch};"></span>
+          <span class="g-term" data-term="${slug}" style="color:var(--text-primary);font-weight:600;">${label}</span>
+        </span>
+        <span style="font-family:var(--font-mono);color:var(--text-tertiary);font-size:10.5px;font-variant-numeric:tabular-nums;text-align:right;">${spentTxt} / ${fmtUsd(util.cap)}</span>
+        <span style="font-family:var(--font-mono);color:${pctColor};font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;">${pctTxt}</span>
+      </div>`;
+    };
+    const draftRow = renderRow("Draft pool", "bonus_pool", draftUtil, "var(--spend-draft, var(--neon-cyan))");
+    const ifaRow = renderRow("IFA pool", "bonus_pool", ifaUtil, "var(--neon-amber)");
+    return `<div class="farm-side-card">
+      <div class="side-title">Bonus pools <span class="side-count">${year} · MLB-assigned</span></div>
+      ${draftRow}
+      ${ifaRow}
+      <div style="font-size:10px;color:var(--text-tertiary);margin-top:6px;font-style:italic;">Teams can exceed draft pool by ~5% before tax penalties; IFA pool is a hard cap.</div>
+    </div>`;
+  })();
+
+  // Upcoming draft picks card — every numbered pick the org owns in
+  // the current draft cycle, sorted by overall number. Source: the
+  // MLB.com draft-pool article's per-pick slot values (DATA.mlb_draft_pools).
+  const upcomingPicksCard = (() => {
+    const year = new Date().getUTCFullYear();
+    const pool = (DATA.mlb_draft_pools || {})[year] || (DATA.mlb_draft_pools || {})[String(year)];
+    if (!pool || !Array.isArray(pool.pick_values)) return "";
+    const orgPicks = pool.pick_values
+      .filter(p => p.team === org.org)
+      .sort((a, b) => (a.pick_overall || 9999) - (b.pick_overall || 9999));
+    if (!orgPicks.length) return "";
+    // Approximate round from pick_overall. The compensation/CB rounds
+    // make this fuzzy at the boundaries; an exact mapping would need
+    // the article's section labels which we don't preserve.
+    const roundLabel = (n) => {
+      if (n == null) return "?";
+      if (n <= 27) return "1";
+      if (n <= 43) return "CBA";   // Competitive Balance A + comp picks
+      if (n <= 75) return "2";
+      if (n <= 110) return "3";
+      const r = Math.ceil((n - 30) / 30) + 1;
+      return String(Math.max(1, r));
+    };
+    const fmtSlot = (s) => s >= 1_000_000 ? `$${(s/1_000_000).toFixed(2)}M` : `$${Math.round(s/1_000)}K`;
+    const rows = orgPicks.map(p => `<div style="display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;">
+      <span style="font-family:var(--font-mono);font-weight:700;color:var(--neon-cyan);font-variant-numeric:tabular-nums;min-width:38px;">#${p.pick_overall}</span>
+      <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.04em;color:var(--text-tertiary);background:var(--bg-tertiary);padding:1px 6px;border-radius:2px;">R${roundLabel(p.pick_overall)}</span>
+      <span style="font-family:var(--font-mono);color:var(--text-primary);font-size:10.5px;font-variant-numeric:tabular-nums;text-align:right;">${fmtSlot(p.slot_usd)} slot</span>
+    </div>`).join("");
+    const totalSlot = orgPicks.reduce((sum, p) => sum + (p.slot_usd || 0), 0);
+    return `<div class="farm-side-card">
+      <div class="side-title">Upcoming draft picks <span class="side-count">${year} · ${orgPicks.length}</span></div>
+      ${rows}
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;font-size:11px;color:var(--text-secondary);">
+        <span>Total slot value</span>
+        <span style="font-family:var(--font-mono);color:var(--text-primary);font-weight:700;font-variant-numeric:tabular-nums;">${fmtSlot(totalSlot)}</span>
+      </div>
+    </div>`;
+  })();
+
+  const sidebarHtml = topProspectCard + youngestCard + bonusPoolsCard + upcomingPicksCard + depthHeatmapCard + fvDistCard + acqMixCard + etaCard + moversCard + promoCard + toolsLeaderboardCard + orgLeadersCard + ilCard + recentTxCards + gradsCard + comparableFarmsCard;
 
   // Optional left rail (≥1500px viewports only — CSS-hidden otherwise).
   // Surfaces breakdowns that are useful at-a-glance but would otherwise
@@ -11754,6 +12669,7 @@ function render() {
     graduates:    "graduates-section",
     farm:         "farm-section",
     leaderboards: "leaderboards-section",
+    glossary:     "glossary-section",
     watchlist:    "watchlist-section",
     player:       "player-detail-section",
     farmDetail:   "farm-detail-section",
@@ -11843,6 +12759,7 @@ function render() {
   else if (active === "graduates")  renderGraduates();
   else if (active === "farm")       renderFarmSystems();
   else if (active === "leaderboards") renderLeaderboards();
+  else if (active === "glossary")   renderGlossary();
   else if (active === "watchlist")  renderWatchlist();
   decorateA11yRows();
   updateMeta();
@@ -12221,7 +13138,7 @@ function rpsPlusPillHTML(p) {
   const diff = rp.plus - 100;
   const diffTxt = diff === 0 ? "matches" : `${diff > 0 ? "+" : ""}${diff}% vs`;
   const title = `RPS+ ${rp.plus} · ${diffTxt} the mean ${ageLabel} prospect (raw score ${rp.raw >= 0 ? "+" : ""}${rp.raw} vs bucket mean ${rp.mean >= 0 ? "+" : ""}${rp.mean.toFixed(1)}, n=${rp.n})`;
-  return `<span class="rps-plus-pill ${cls}" title="${escapeHtml(title)}">RPS+ ${rp.plus}</span>`;
+  return `<span class="rps-plus-pill ${cls}" title="${escapeHtml(title)}"><span class="g-term" data-term="rps_plus">RPS+</span> ${rp.plus}</span>`;
 }
 
 // ToolGrade+ pill — small inline composite-overall index. Anchored at
@@ -12236,7 +13153,7 @@ function toolPlusPillHTML(p) {
   const cls = v >= 110 ? "is-pos" : v <= 90 ? "is-neg" : "is-neutral";
   const raw = t.composite_overall != null ? t.composite_overall.toFixed(1) : "—";
   const title = `Tools+ ${v} · overall composite ${raw} (100 = cohort mean tool composite, outlier-biased power-3 mean, 10 pts = 1 stdev)`;
-  return `<span class="tool-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(title)}">Tools+${v}</span>`;
+  return `<span class="tool-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(title)}"><span class="g-term" data-term="tools_plus">Tools+</span>${v}</span>`;
 }
 
 // =============================================================================
@@ -12346,37 +13263,43 @@ function computeTradeValue(p) {
 // Render helpers — small colored pills for the four new metrics. The
 // shared `.rps-plus-pill` styles (violet accent, neutral/pos/neg) get
 // reused with stat-specific labels so every "X+" reading reads as the
-// same family of metric.
-function _plusPill(label, value, classFn, tooltip) {
+// same family of metric. Optional `slug` arg attaches the glossary
+// click-to-define affordance (`.g-term[data-term]`) to the entire pill.
+function _plusPill(label, value, classFn, tooltip, slug) {
+  const gClass = slug ? " g-term" : "";
+  const gAttr  = slug ? ` data-term="${slug}"` : "";
   if (value == null) {
-    return `<span class="rps-plus-pill is-null" title="${escapeHtml(label + " unavailable — insufficient sample or missing inputs.")}">${label} —</span>`;
+    return `<span class="rps-plus-pill is-null${gClass}"${gAttr} title="${escapeHtml(label + " unavailable — insufficient sample or missing inputs.")}">${label} —</span>`;
   }
   const cls = classFn(value);
-  return `<span class="rps-plus-pill ${cls}" title="${escapeHtml(tooltip)}">${label} ${value}</span>`;
+  return `<span class="rps-plus-pill ${cls}${gClass}"${gAttr} title="${escapeHtml(tooltip)}">${label} ${value}</span>`;
 }
 function powerPlusPillHTML(p) {
   const v = computePowerPlus(p);
   if (v == null) return "";   // hitters only — silently omit for pitchers
   return _plusPill("PWR+", v, n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral",
-    `PWR+ ${v} · ISO + HR-rate vs ${p.statline.level || "level"} mean (100 = league-average power)`);
+    `PWR+ ${v} · ISO + HR-rate vs ${p.statline.level || "level"} mean (100 = league-average power)`,
+    "pwr_plus");
 }
 function disciplinePlusPillHTML(p) {
   const v = computeDisciplinePlus(p);
   if (v == null) return "";
   return _plusPill("PD+", v, n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral",
-    `PD+ ${v} · BB%−K% differential vs ${p.statline.level || "level"} mean (100 = league-average plate discipline)`);
+    `PD+ ${v} · BB%−K% differential vs ${p.statline.level || "level"} mean (100 = league-average plate discipline)`,
+    "pd_plus");
 }
 function stuffPlusPillHTML(p) {
   const v = computeStuffPlus(p);
   if (v == null) return "";
   return _plusPill("STF+", v, n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral",
-    `STF+ ${v} · K/9 + BB/9 + HR/9 normalized to ${p.statline.level || "level"} mean (100 = league-average stuff, 10 pts ≈ 1 std-dev)`);
+    `STF+ ${v} · K/9 + BB/9 + HR/9 normalized to ${p.statline.level || "level"} mean (100 = league-average stuff, 10 pts ≈ 1 std-dev)`,
+    "stf_plus");
 }
 function tradeValuePillHTML(p) {
   const v = computeTradeValue(p);
   if (v == null) return "";
   const formatted = v >= 100 ? `$${v.toFixed(0)}M` : v >= 10 ? `$${v.toFixed(1)}M` : `$${v.toFixed(1)}M`;
-  return `<span class="rps-plus-pill is-neutral" style="color:var(--card-gold);border-color:var(--card-gold);background:rgba(201,162,39,0.10);" title="${escapeHtml(`Estimated MLB surplus value (Cleveland-derived FV→$ table) at consensus FV ${(p.points && p.points.length ? p.points[p.points.length - 1].consensus_fv_label : "?")}`)}">TVI ${formatted}</span>`;
+  return `<span class="rps-plus-pill is-neutral g-term" data-term="tvi" style="color:var(--card-gold);border-color:var(--card-gold);background:rgba(201,162,39,0.10);" title="${escapeHtml(`Estimated MLB surplus value (Cleveland-derived FV→$ table) at consensus FV ${(p.points && p.points.length ? p.points[p.points.length - 1].consensus_fv_label : "?")}`)}">TVI ${formatted}</span>`;
 }
 
 // Composite helper for the prospect detail stat strip / rows — renders
@@ -12923,6 +13846,56 @@ function attachHandlers() {
       }
       return;
     }
+    // Glossary term click → open the floating popover. Lives in the
+    // delegated listener so any new `.g-term` wrapper anywhere on the
+    // page becomes clickable without re-binding.
+    const gTermBtn = e.target.closest(".g-term[data-term]");
+    if (gTermBtn) {
+      e.stopPropagation();
+      e.preventDefault();
+      openGlossaryPopover(gTermBtn);
+      return;
+    }
+    // "Open in glossary →" link inside the popover — navigate to the
+    // Glossary tab with the term hash. Dismiss the popover first.
+    const gOpenBtn = e.target.closest("[data-glossary-open]");
+    if (gOpenBtn) {
+      e.preventDefault();
+      const slug = gOpenBtn.dataset.glossaryOpen;
+      const pop = document.getElementById("glossary-popover");
+      if (pop) pop.classList.remove("is-open");
+      state.section = "glossary";
+      state.view = { type: "list" };
+      state.glossaryTerm = slug;
+      syncToURL();
+      renderSection();
+      return;
+    }
+    // Related-term chips inside a glossary card — scroll to the
+    // related term + flash highlight, no popover (we're already on the
+    // glossary page).
+    const relatedBtn = e.target.closest("[data-related-term]");
+    if (relatedBtn) {
+      e.preventDefault();
+      const slug = relatedBtn.dataset.relatedTerm;
+      const card = document.getElementById("g-" + slug);
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+        card.classList.remove("is-highlighted");
+        void card.offsetWidth;
+        card.classList.add("is-highlighted");
+      }
+      return;
+    }
+    // Glossary category chip click.
+    const gCatBtn = e.target.closest("[data-glossary-cat]");
+    if (gCatBtn) {
+      e.stopPropagation();
+      state.glossaryCat = gCatBtn.dataset.glossaryCat;
+      syncToURL();
+      renderGlossary();
+      return;
+    }
     // Career-by-season "Show level deltas" toggle — flips the deltas
     // panel and the raw panel inside the consolidated career table.
     // Default ON; state is ephemeral.
@@ -13408,6 +14381,16 @@ function populateOrgFilter() {
   // every keystroke for long notes).
   let _noteSaveTimer = null;
   document.getElementById("content").addEventListener("input", (e) => {
+    // Glossary search box — debounced re-render.
+    if (e.target && e.target.id === "glossary-search") {
+      clearTimeout(_glossarySearchTimer);
+      _glossarySearchTimer = setTimeout(() => {
+        state.glossarySearch = e.target.value || "";
+        syncToURL();
+        renderGlossary();
+      }, 120);
+      return;
+    }
     const ta = e.target.closest("textarea[data-note-key], textarea[data-farm-note-key]");
     if (!ta) return;
     clearTimeout(_noteSaveTimer);
@@ -13419,6 +14402,7 @@ function populateOrgFilter() {
       _noteSaveTimer = setTimeout(() => noteSave(key, ta.value), 250);
     }
   });
+  let _glossarySearchTimer = null;
 
   // Warm the sidecar slices in the background. The user has to click
   // before they touch the graduates/inactive/farm-detail data, so by
