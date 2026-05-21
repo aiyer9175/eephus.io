@@ -1,32 +1,25 @@
-"""Auto-ingest FanGraphs board CSV exports dropped into the program folder.
+"""Auto-ingest FanGraphs board CSV exports — v2, four-CSV report sets.
 
-The user exports a FanGraphs board view ("Top 100", "Org PIT", "Draft
-2026", etc.) directly from FanGraphs as a CSV and drops the file into
-``data/fangraphs_imports/``. The filename encodes the list scope + the
-snapshot date so the parser can map a single CSV to a single Snapshot
-batch with the right `(source, interval_label, snapshot_date)` triple.
+A complete FanGraphs board report is FOUR CSVs sharing the same PlayerId:
 
-Filename syntax::
+  * summary-<slug>.csv          (Top 100, FV, Risk/Trend, signing info, report)
+  * position-<slug>.csv         (hitter tools w/ pres-fut, Versa, Con Style)
+  * pitching-<slug>.csv         (pitch tools, TJ Date, FB Type, Sits/Tops)
+  * physicalattributes-<slug>.csv  (Frame, Athl, Levers, Arm, Perf, Delivery)
 
-    fangraphs_<list>_<YYYY-MM-DD>.csv
+Files sharing the same <slug> get joined into one Snapshot per player.
+The summary CSV is the only one strictly required; the other three add
+extras when present.
 
-where ``<list>`` is e.g. ``top100``, ``org-PIT``, ``pos-SS``,
-``draft-2026``, ``intl-2026``, or any free-form slug.
+Publish date is auto-detected from the row-level decimal Age column:
+``snapshot_date = birth_date + age × 365.25 days``. We use birth dates
+already on file (storage.load_birth_dates) and take the median across
+~20 players to land within a day of the true publication date.
 
-Two CSV column shapes are supported, automatically:
-
-1. Standard board export (the sample format) — 23 cols including FV,
-   rank, ETA, Risk, Trend, physical info, report text, video URL, FG
-   PlayerId. No tool grades.
-
-2. Scouting Summary view — adds per-tool 20-80 grades plus an optional
-   "Contact" qualitative descriptor.
-
-The auto-scraper is column-flexible: it picks up whichever fields the
-CSV actually carries. Tool grades land in the snapshot's `tools` field;
-non-grade extras (Risk, ETA, Report, Video, PlayerId, physical info,
-Contact style) ride on a reserved ``_extras`` key inside the same JSON
-blob so no schema migration is needed.
+Tool grades come as "<present> / <future>" strings. The future grade
+lands at the top of `snapshot.tools` (consensus.py expects future-as-
+canonical). Present grades + all non-grade extras nest under
+``_extras`` in the same JSON blob.
 """
 
 from __future__ import annotations
@@ -35,10 +28,12 @@ import csv
 import logging
 import re
 import shutil
-from datetime import date, datetime
+from collections import defaultdict
+from datetime import date, datetime, timedelta
 from pathlib import Path
+from statistics import median
 
-from scrapers import Snapshot, normalize_key, fix_mojibake, _parse_fv, ALL_TOOL_KEYS
+from scrapers import Snapshot, normalize_key, fix_mojibake, _parse_fv
 
 log = logging.getLogger(__name__)
 
@@ -51,9 +46,6 @@ _BASE = Path(__file__).parent
 DROP_DIR = _BASE / "data" / "fangraphs_imports"
 PROCESSED_DIR = DROP_DIR / "processed"
 
-# Cap on stored scouting-report length so a multi-page report doesn't
-# bloat the snapshots row. The frontend shows the first paragraph
-# inline + a collapse for the rest; 8000 chars is enough for that.
 _REPORT_MAX_CHARS = 8000
 
 
@@ -61,135 +53,29 @@ _REPORT_MAX_CHARS = 8000
 # Filename parsing
 # ---------------------------------------------------------------------------
 
-# fangraphs_<list-slug>_<YYYY-MM-DD>.csv. The list slug accepts word
-# characters + dashes so org codes ("org-PIT") and year-stamped boards
-# ("draft-2026") both work.
-_FILENAME_RE = re.compile(r"^fangraphs_([\w-]+)_(\d{4}-\d{2}-\d{2})\.csv$",
-                          re.IGNORECASE)
+# <type>-<slug>.csv, case-insensitive. Type is one of summary, position,
+# pitching, physical (or physicalattributes, which aliases to physical).
+_FILENAME_RE = re.compile(
+    r"^(summary|position|pitching|physical(?:attributes)?)-([\w-]+)\.csv$",
+    re.IGNORECASE,
+)
 
 
 def _parse_filename(name: str) -> tuple[str, str] | None:
-    """Return (list_slug, snapshot_date_iso) for a valid FG-CSV filename,
-    or None for anything that doesn't match the convention. The slug is
-    lowercased; the date keeps its YYYY-MM-DD ISO form."""
+    """Return ``(type, slug)`` for a valid FG-CSV filename, or None.
+    ``type`` is one of {summary, position, pitching, physical}.
+    ``physicalattributes-<slug>.csv`` aliases to type=physical."""
     m = _FILENAME_RE.match(name)
     if not m:
         return None
-    slug = m.group(1).lower()
-    date_iso = m.group(2)
-    # Validate the date — a typo like 2026-13-01 should be rejected.
-    try:
-        datetime.strptime(date_iso, "%Y-%m-%d")
-    except ValueError:
-        return None
-    return slug, date_iso
+    raw_type = m.group(1).lower()
+    if raw_type == "physicalattributes":
+        raw_type = "physical"
+    return raw_type, m.group(2).lower()
 
 
 # ---------------------------------------------------------------------------
-# Column normalization
-# ---------------------------------------------------------------------------
-
-# Map of normalized (lower, stripped) header → canonical snapshot field.
-# Multiple FG column names can resolve to the same canonical field
-# (e.g., "hit", "hit pres", "hit fut" all become "hit"). Tool grades use
-# the canonical keys from `scrapers.ALL_TOOL_KEYS`.
-_HEADER_MAP: dict[str, str] = {
-    # Identity + ranking
-    "name":          "player_name",
-    "player":        "player_name",
-    "org":           "org",
-    "team":          "org",
-    "pos":           "position",
-    "position":      "position",
-    "fv":            "fv",
-    "top 100":       "rank",
-    "top 200":       "rank",
-    "rank":          "rank",
-    "org rk":        "org_rank",
-    "org rank":      "org_rank",
-    # Lifecycle context
-    "current level": "current_level",
-    "level":         "current_level",
-    "eta":           "eta_year",
-    "status":        "status",
-    # Profile context
-    "risk":          "risk",
-    "trend":         "trend",
-    "age":           "age",
-    "ht":            "height",
-    "height":        "height",
-    "wt":            "weight",
-    "weight":        "weight",
-    "b":             "bats",
-    "bats":          "bats",
-    "t":             "throws",
-    "throws":        "throws",
-    # Signing info
-    "sign yr":       "sign_year",
-    "sign mkt":      "sign_market",
-    "sign org":      "sign_org",
-    "bonus":         "bonus",
-    "signed from":   "signed_from",
-    # Narrative + FG id
-    "report":        "report",
-    "video":         "video_url",
-    "playerid":      "fg_player_id",
-    "player id":     "fg_player_id",
-    "contact":       "contact_style",
-    "contact style": "contact_style",
-    # Hitter tools (canonical + common variants)
-    "hit":           "hit",
-    "hit pres":      "hit",
-    "hit fut":       "hit",
-    "game":          "game_pwr",
-    "game pwr":      "game_pwr",
-    "game pres":     "game_pwr",
-    "game fut":      "game_pwr",
-    "raw":           "raw_pwr",
-    "raw pwr":       "raw_pwr",
-    "raw pres":      "raw_pwr",
-    "raw fut":       "raw_pwr",
-    "spd":           "speed",
-    "speed":         "speed",
-    "fld":           "field",
-    "field":         "field",
-    "thr":           "throw",
-    # Pitcher tools
-    "fb":            "fb",
-    "fastball":      "fb",
-    "sl":            "sl",
-    "slider":        "sl",
-    "cb":            "cb",
-    "curveball":     "cb",
-    "curve":         "cb",
-    "ch":            "ch",
-    "changeup":      "ch",
-    "cmd":           "cmd",
-    "command":       "cmd",
-    "ct":            "ct",
-    "cutter":        "ct",
-    "sp":            "sp",
-    "splitter":      "sp",
-}
-
-
-def _normalize_row(raw_row: dict) -> dict:
-    """Rebuild a CSV row keyed by canonical field names. Headers that
-    don't appear in the header map are dropped silently — the scraper
-    is forward-compatible with FG adding new columns."""
-    out: dict = {}
-    for k, v in raw_row.items():
-        if k is None:
-            continue
-        canon = _HEADER_MAP.get(str(k).strip().lower())
-        if canon is None:
-            continue
-        out[canon] = v
-    return out
-
-
-# ---------------------------------------------------------------------------
-# Coercion helpers
+# Coercers
 # ---------------------------------------------------------------------------
 
 _BLANK = {"", "—", "-", "n/a", "na", "null"}
@@ -198,7 +84,7 @@ _BLANK = {"", "—", "-", "n/a", "na", "null"}
 def _str_or_none(v) -> str | None:
     if v is None:
         return None
-    s = str(v).strip()
+    s = str(v).strip().strip('"')
     if not s or s.lower() in _BLANK:
         return None
     return s
@@ -208,8 +94,7 @@ def _to_int(v) -> int | None:
     s = _str_or_none(v)
     if s is None:
         return None
-    # Strip thousands separators + trailing decimal noise.
-    s = s.replace(",", "").replace("$", "")
+    s = s.replace(",", "").replace("$", "").strip()
     try:
         return int(float(s))
     except (TypeError, ValueError):
@@ -220,7 +105,7 @@ def _to_float(v) -> float | None:
     s = _str_or_none(v)
     if s is None:
         return None
-    s = s.replace(",", "").replace("$", "")
+    s = s.replace(",", "").replace("$", "").strip().rstrip("%")
     try:
         return float(s)
     except (TypeError, ValueError):
@@ -228,8 +113,7 @@ def _to_float(v) -> float | None:
 
 
 def _to_grade(v) -> float | None:
-    """Coerce to a 20-80 tool grade. Out-of-range values return None so
-    typos surface rather than silently degrading the dataset."""
+    """Single 20-80 grade. Out-of-range returns None so typos surface."""
     g = _to_float(v)
     if g is None:
         return None
@@ -238,115 +122,65 @@ def _to_grade(v) -> float | None:
     return g
 
 
-# ---------------------------------------------------------------------------
-# Row → Snapshot
-# ---------------------------------------------------------------------------
+def _parse_grade_pair(v) -> tuple[float | None, float | None]:
+    """Parse FanGraphs '<present> / <future>' tool-grade strings.
 
-# Canonical fields that count as "tool grade." Matches scrapers.ALL_TOOL_KEYS
-# plus a couple of common FG additions (cutter, splitter).
-_TOOL_FIELDS = set(ALL_TOOL_KEYS) | {"ct", "sp"}
+    Returns ``(present, future)`` as floats in [20, 80], or None per slot
+    when missing/invalid. A single value ("45") is treated as future-only.
+    """
+    s = _str_or_none(v)
+    if s is None:
+        return (None, None)
+    if "/" not in s:
+        return (None, _to_grade(s))
+    parts = [p.strip() for p in s.split("/", 1)]
+    present = _to_grade(parts[0]) if parts[0] else None
+    future = _to_grade(parts[1]) if len(parts) > 1 and parts[1] else None
+    return (present, future)
 
-# Non-grade extras that we want to preserve per snapshot. They land
-# inside the snapshot's `tools` dict under the reserved `_extras` key.
-_EXTRA_FIELDS = (
-    "risk", "trend", "eta_year", "current_level", "org_rank",
-    "age", "height", "weight", "bats", "throws",
-    "sign_year", "sign_market", "sign_org", "bonus", "signed_from",
-    "report", "video_url", "fg_player_id", "contact_style",
+
+def _to_pct(v) -> float | None:
+    """0.5 / "0.5" / "50%" / "50" → 0.5 (decimal). None on parse failure."""
+    s = _str_or_none(v)
+    if s is None:
+        return None
+    has_pct = s.endswith("%")
+    raw = s.rstrip("%").strip()
+    try:
+        f = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if has_pct or f > 1.0:
+        f = f / 100.0
+    if f < 0 or f > 1:
+        return None
+    return round(f, 4)
+
+
+_DATE_FORMATS = (
+    "%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y",
+    "%B %d, %Y", "%b %d, %Y", "%B %d %Y", "%b %d %Y",
 )
 
 
-def _parse_row(raw_row: dict, list_slug: str, snapshot_date: str) -> Snapshot | None:
-    """Convert one normalized-header CSV row to a Snapshot, or None if
-    the row is missing the minimum required fields (Name)."""
-    row = _normalize_row(raw_row)
-    name = _str_or_none(row.get("player_name"))
-    if not name:
+def _to_iso_date(v) -> str | None:
+    s = _str_or_none(v)
+    if s is None:
         return None
-    name = fix_mojibake(name)
-    key = normalize_key(name)
-
-    # Rank: prefer the explicit Top-N column, fall back to org_rank.
-    rank = _to_int(row.get("rank"))
-    if rank is None:
-        rank = _to_int(row.get("org_rank"))
-
-    fv = _parse_fv(_str_or_none(row.get("fv")) or "")
-
-    # Tool grades — only land when the column was present AND the
-    # parsed grade is in [20, 80].
-    tools: dict[str, float] = {}
-    for k in _TOOL_FIELDS:
-        if k not in row:
+    for fmt in _DATE_FORMATS:
+        try:
+            return datetime.strptime(s, fmt).date().isoformat()
+        except ValueError:
             continue
-        g = _to_grade(row.get(k))
-        if g is not None:
-            tools[k] = g
-
-    # Extras blob — typed coercion for numeric extras, raw string for
-    # textual ones. Truncate the report to keep snapshot rows small.
-    extras: dict = {}
-    if "risk" in row:           extras["risk"]           = _str_or_none(row.get("risk"))
-    if "trend" in row:          extras["trend"]          = _str_or_none(row.get("trend"))
-    if "eta_year" in row:       extras["eta_year"]       = _to_int(row.get("eta_year"))
-    if "current_level" in row:  extras["current_level"]  = _str_or_none(row.get("current_level"))
-    if "org_rank" in row:       extras["org_rank"]       = _to_int(row.get("org_rank"))
-    if "age" in row:            extras["age"]            = _to_float(row.get("age"))
-    if "height" in row:         extras["height"]         = _str_or_none(row.get("height"))
-    if "weight" in row:         extras["weight"]         = _to_int(row.get("weight"))
-    if "bats" in row:           extras["bats"]           = _str_or_none(row.get("bats"))
-    if "throws" in row:         extras["throws"]         = _str_or_none(row.get("throws"))
-    if "sign_year" in row:      extras["sign_year"]      = _to_int(row.get("sign_year"))
-    if "sign_market" in row:    extras["sign_market"]    = _str_or_none(row.get("sign_market"))
-    if "sign_org" in row:       extras["sign_org"]       = _str_or_none(row.get("sign_org"))
-    if "bonus" in row:          extras["bonus"]          = _to_int(row.get("bonus"))
-    if "signed_from" in row:    extras["signed_from"]    = _str_or_none(row.get("signed_from"))
-    if "video_url" in row:      extras["video_url"]      = _str_or_none(row.get("video_url"))
-    if "fg_player_id" in row:   extras["fg_player_id"]   = _to_int(row.get("fg_player_id"))
-    if "contact_style" in row:  extras["contact_style"]  = _str_or_none(row.get("contact_style"))
-    if "report" in row:
-        rpt = _str_or_none(row.get("report"))
-        if rpt and len(rpt) > _REPORT_MAX_CHARS:
-            rpt = rpt[:_REPORT_MAX_CHARS]
-        if rpt:
-            extras["report"] = rpt
-
-    # Drop None-valued extras so re-serialized JSON is compact.
-    extras = {k: v for k, v in extras.items() if v is not None and v != ""}
-
-    # Merge tools + extras into one dict that lands in snapshot.tools.
-    # `_extras` only appears when something to surface exists.
-    tools_payload: dict | None = None
-    if tools or extras:
-        tools_payload = dict(tools)
-        if extras:
-            tools_payload["_extras"] = extras
-
-    # Status defaults to "active" — graduations are detected by the
-    # downstream pipeline using career-threshold rules, not the FG
-    # board's Current Level column.
-    return Snapshot(
-        source="fangraphs",
-        snapshot_date=snapshot_date,
-        interval_label=list_slug,
-        player_key=key,
-        player_name=name,
-        position=_str_or_none(row.get("position")),
-        org=_str_or_none(row.get("org")),
-        rank=rank,
-        fv=fv,
-        status=(_str_or_none(row.get("status")) or "active").lower(),
-        tools=tools_payload,
-    )
+    return None
 
 
 # ---------------------------------------------------------------------------
-# File I/O
+# Encoding-safe CSV reader
 # ---------------------------------------------------------------------------
 
 def _read_csv_rows(path: Path) -> list[dict]:
-    """Read a CSV into a list of header-keyed dict rows, trying a few
-    common encodings (Windows exports occasionally arrive as cp1252)."""
+    """Read a CSV into header-keyed dicts. Tries a few common encodings."""
     for enc in ("utf-8-sig", "utf-8", "latin-1", "cp1252"):
         try:
             with path.open(encoding=enc, newline="") as f:
@@ -359,43 +193,374 @@ def _read_csv_rows(path: Path) -> list[dict]:
     return []
 
 
-def parse_csv(path: Path) -> tuple[list[Snapshot], str | None]:
-    """Parse a single FG-CSV file into a list of Snapshots.
-
-    Returns ``(snapshots, error)``. ``error`` is None on success or a
-    short reason string when the file should stay in the drop folder
-    (bad filename, missing Name column, no rows). Files that parse but
-    skip individual rows still return success — the per-row skip is
-    logged but doesn't fail the file.
-    """
-    parsed = _parse_filename(path.name)
-    if not parsed:
-        return [], f"filename does not match fangraphs_<list>_<YYYY-MM-DD>.csv"
-    list_slug, snapshot_date = parsed
-
-    rows = _read_csv_rows(path)
-    if not rows:
-        return [], "no rows or unreadable encoding"
-
-    # Sanity: every supported FG export has SOME identity column. If
-    # none of the rows have a recognizable Name header, the file is
-    # almost certainly not a FG board export — bail without touching it.
-    sample_headers = {str(k).strip().lower() for k in (rows[0] or {}).keys()}
-    if not (sample_headers & {"name", "player"}):
-        return [], "missing Name/Player column"
-
-    snapshots: list[Snapshot] = []
-    skipped = 0
-    for r in rows:
-        snap = _parse_row(r, list_slug, snapshot_date)
-        if snap is None:
-            skipped += 1
+def _norm_headers(row: dict) -> dict:
+    """Return a copy of ``row`` with headers stripped + lowercased."""
+    out = {}
+    for k, v in row.items():
+        if k is None:
             continue
-        snapshots.append(snap)
-    if skipped:
-        log.info("fangraphs_csv: %s — skipped %d rows missing required fields",
-                 path.name, skipped)
-    return snapshots, None
+        out[str(k).strip().lower()] = v
+    return out
+
+
+def _row_id(row: dict) -> tuple[str, str | None]:
+    """Compute (player_key, fg_player_id) join keys from a normalized row."""
+    name = _str_or_none(row.get("name") or row.get("player"))
+    if name is None:
+        return ("", None)
+    name = fix_mojibake(name)
+    pid = _str_or_none(row.get("playerid") or row.get("player id"))
+    return (normalize_key(name), pid)
+
+
+# ---------------------------------------------------------------------------
+# Per-type row parsers
+# ---------------------------------------------------------------------------
+
+_TOOL_HITTER_COLS = (
+    # (csv_header, canonical_tool_key)
+    ("hit",      "hit"),
+    ("game pwr", "game_pwr"),
+    ("raw pwr",  "raw_pwr"),
+    ("spd",      "speed"),
+    ("fld",      "field"),
+)
+
+_TOOL_PITCHER_COLS = (
+    ("fb",  "fb"),
+    ("sl",  "sl"),
+    ("cb",  "cb"),
+    ("ch",  "ch"),
+    ("cmd", "cmd"),
+)
+
+
+def _parse_summary_row(raw: dict) -> dict | None:
+    """Parse one row of summary-<slug>.csv. Returns a dict keyed by the
+    canonical fields the rest of the pipeline cares about, or None when
+    the row is missing the minimum identity columns."""
+    row = _norm_headers(raw)
+    pkey, fg_id = _row_id(row)
+    if not pkey:
+        return None
+
+    name_clean = fix_mojibake(_str_or_none(row.get("name")) or "")
+    return {
+        "player_key":   pkey,
+        "fg_player_id": _to_int(fg_id) if fg_id else None,
+        "player_name":  name_clean,
+        "position":     _str_or_none(row.get("pos")),
+        "org":          _str_or_none(row.get("org")),
+        "rank":         _to_int(row.get("top 100")) or _to_int(row.get("rank")),
+        "org_rank":     _to_int(row.get("org rk")),
+        "fv":           _parse_fv(_str_or_none(row.get("fv")) or ""),
+        "current_level": _str_or_none(row.get("current level")),
+        "eta_year":     _to_int(row.get("eta")),
+        "risk":         _str_or_none(row.get("risk")),
+        "trend":        _str_or_none(row.get("trend")),
+        "age":          _to_float(row.get("age")),
+        "height":       _str_or_none(row.get("ht") or row.get("height")),
+        "weight":       _to_int(row.get("wt") or row.get("weight")),
+        "bats":         _str_or_none(row.get("b") or row.get("bats")),
+        "throws":       _str_or_none(row.get("t") or row.get("throws")),
+        "sign_year":    _to_int(row.get("sign yr")),
+        "sign_market":  _str_or_none(row.get("sign mkt")),
+        "sign_org":     _str_or_none(row.get("sign org")),
+        "bonus":        _to_int(row.get("bonus")),
+        "signed_from":  _str_or_none(row.get("signed from")),
+        "report":       _str_or_none(row.get("report")),
+        "video_url":    _str_or_none(row.get("video")),
+    }
+
+
+def _parse_position_row(raw: dict) -> dict | None:
+    """Hitter scouting board row. Tool grades arrive as 'pres / fut'."""
+    row = _norm_headers(raw)
+    pkey, fg_id = _row_id(row)
+    if not pkey:
+        return None
+    out: dict = {
+        "player_key":   pkey,
+        "fg_player_id": _to_int(fg_id) if fg_id else None,
+    }
+    # Tools: (present, future) per slot.
+    tools_fut: dict[str, float] = {}
+    tools_pres: dict[str, float] = {}
+    for hdr, key in _TOOL_HITTER_COLS:
+        pres, fut = _parse_grade_pair(row.get(hdr))
+        if fut is not None:
+            tools_fut[key] = fut
+        if pres is not None:
+            tools_pres[key] = pres
+    out["tools_future"] = tools_fut
+    out["tools_present"] = tools_pres
+    # Position scouting also publishes a few non-grade extras.
+    out["pitch_sel"]     = _to_grade(row.get("pitch sel"))
+    out["bat_ctrl"]      = _to_grade(row.get("bat ctrl"))
+    out["contact_style"] = _str_or_none(row.get("con style"))
+    out["versa"]         = _str_or_none(row.get("versa"))
+    out["hard_hit_pct"]  = _to_pct(row.get("hard hit%"))
+    return out
+
+
+def _parse_pitching_row(raw: dict) -> dict | None:
+    row = _norm_headers(raw)
+    pkey, fg_id = _row_id(row)
+    if not pkey:
+        return None
+    out: dict = {
+        "player_key":   pkey,
+        "fg_player_id": _to_int(fg_id) if fg_id else None,
+    }
+    tools_fut: dict[str, float] = {}
+    tools_pres: dict[str, float] = {}
+    for hdr, key in _TOOL_PITCHER_COLS:
+        pres, fut = _parse_grade_pair(row.get(hdr))
+        if fut is not None:
+            tools_fut[key] = fut
+        if pres is not None:
+            tools_pres[key] = pres
+    out["tools_future"]  = tools_fut
+    out["tools_present"] = tools_pres
+    out["tj_date"]       = _to_iso_date(row.get("tj date"))
+    out["fb_type"]       = _str_or_none(row.get("fb type"))
+    out["sits"]          = _str_or_none(row.get("sits"))
+    out["tops"]          = _str_or_none(row.get("tops"))
+    return out
+
+
+def _parse_physical_row(raw: dict) -> dict | None:
+    row = _norm_headers(raw)
+    pkey, fg_id = _row_id(row)
+    if not pkey:
+        return None
+    return {
+        "player_key":   pkey,
+        "fg_player_id": _to_int(fg_id) if fg_id else None,
+        "frame":        _to_int(row.get("frame")),
+        "athl":         _to_int(row.get("athl")),
+        "levers":       _str_or_none(row.get("levers")),
+        "arm":          _to_grade(row.get("arm")),
+        "perf":         _to_int(row.get("perf")),
+        "delivery":     _str_or_none(row.get("delivery")),
+    }
+
+
+_TYPE_PARSERS = {
+    "summary":  _parse_summary_row,
+    "position": _parse_position_row,
+    "pitching": _parse_pitching_row,
+    "physical": _parse_physical_row,
+}
+
+
+# ---------------------------------------------------------------------------
+# Auto-detect publish date
+# ---------------------------------------------------------------------------
+
+def _detect_publish_date(summary_rows: list[dict],
+                         birth_dates: dict[str, str],
+                         fallback_mtime: float | None = None,
+                         today: date | None = None) -> str | None:
+    """Back-calculate snapshot_date = birth_date + age × 365.25 from the
+    summary rows, take the median across all matched players. Returns
+    an ISO date string or None if neither the age-based path nor the
+    fallback mtime is usable.
+    """
+    today = today or date.today()
+    earliest = date(2018, 1, 1)
+    estimates: list[date] = []
+    for row in summary_rows:
+        pkey = row.get("player_key")
+        age = row.get("age")
+        if not pkey or age is None or age <= 0 or age > 60:
+            continue
+        bd_iso = birth_dates.get(pkey)
+        if not bd_iso:
+            continue
+        try:
+            bd = date.fromisoformat(bd_iso)
+        except ValueError:
+            continue
+        days = age * 365.25
+        est = bd + timedelta(days=days)
+        if earliest <= est <= today + timedelta(days=2):
+            estimates.append(est)
+
+    # ≥2 estimates is enough for a meaningful median; real FG exports
+    # carry hundreds of rows so this gate is satisfied trivially. Less
+    # than 2 estimates falls through to the mtime fallback. Single-row
+    # edge cases (where one stale birth date could skew the result)
+    # also fall through — better to use mtime than trust one estimate.
+    if len(estimates) >= 2:
+        ord_vals = sorted(d.toordinal() for d in estimates)
+        med = ord_vals[len(ord_vals) // 2]
+        result = date.fromordinal(med)
+        log.info("fangraphs_csv: auto-detected publish date %s "
+                 "(median of %d age-back-solves)",
+                 result.isoformat(), len(estimates))
+        return result.isoformat()
+
+    if fallback_mtime is not None:
+        result = date.fromtimestamp(fallback_mtime)
+        if earliest <= result <= today + timedelta(days=2):
+            log.warning("fangraphs_csv: only %d age-based date estimates "
+                        "available; falling back to file mtime → %s",
+                        len(estimates), result.isoformat())
+            return result.isoformat()
+
+    log.warning("fangraphs_csv: could not determine publish date "
+                "(%d estimates, no usable mtime)", len(estimates))
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Join four CSVs into per-player merged dicts
+# ---------------------------------------------------------------------------
+
+def _join_report_set(summary_rows: list[dict],
+                     position_rows: list[dict],
+                     pitching_rows: list[dict],
+                     physical_rows: list[dict]) -> list[dict]:
+    """Join the four per-type row lists by FG PlayerId (preferred) with
+    a name-key fallback. Summary is the spine — only summary players
+    appear in the output. Other rows that don't match are dropped with
+    a debug log."""
+    by_pid: dict[int, dict] = {}
+    by_key: dict[str, dict] = {}
+    for r in summary_rows:
+        if r is None:
+            continue
+        by_key[r["player_key"]] = r
+        if r.get("fg_player_id") is not None:
+            by_pid[r["fg_player_id"]] = r
+
+    def _lookup(other_row: dict) -> dict | None:
+        if other_row is None:
+            return None
+        pid = other_row.get("fg_player_id")
+        if pid is not None and pid in by_pid:
+            return by_pid[pid]
+        return by_key.get(other_row.get("player_key"))
+
+    for r in position_rows or []:
+        host = _lookup(r)
+        if host is None:
+            continue
+        host.setdefault("_position", r)
+    for r in pitching_rows or []:
+        host = _lookup(r)
+        if host is None:
+            continue
+        host.setdefault("_pitching", r)
+    for r in physical_rows or []:
+        host = _lookup(r)
+        if host is None:
+            continue
+        host.setdefault("_physical", r)
+
+    return list(by_key.values())
+
+
+# ---------------------------------------------------------------------------
+# Build a Snapshot from a merged row
+# ---------------------------------------------------------------------------
+
+def _build_snapshot(merged: dict, slug: str, snapshot_date: str) -> Snapshot:
+    """Convert a merged summary+position+pitching+physical row into one
+    Snapshot. Future grades land canonically; present grades + all
+    non-grade fields land under ``_extras``."""
+    tools_future: dict[str, float] = {}
+    tools_present: dict[str, float] = {}
+    pos_block = merged.get("_position") or {}
+    pit_block = merged.get("_pitching") or {}
+    phys_block = merged.get("_physical") or {}
+
+    tools_future.update(pos_block.get("tools_future") or {})
+    tools_future.update(pit_block.get("tools_future") or {})
+    tools_present.update(pos_block.get("tools_present") or {})
+    tools_present.update(pit_block.get("tools_present") or {})
+
+    extras: dict = {}
+
+    # Summary extras.
+    for k in ("risk", "trend", "eta_year", "current_level", "org_rank",
+              "age", "height", "weight", "bats", "throws",
+              "sign_year", "sign_market", "sign_org", "bonus",
+              "signed_from", "video_url", "fg_player_id"):
+        v = merged.get(k)
+        if v is not None and v != "":
+            extras[k] = v
+    rpt = merged.get("report")
+    if rpt:
+        if len(rpt) > _REPORT_MAX_CHARS:
+            rpt = rpt[:_REPORT_MAX_CHARS]
+        extras["report"] = rpt
+
+    # Position-block extras.
+    for k in ("pitch_sel", "bat_ctrl", "contact_style", "versa", "hard_hit_pct"):
+        v = pos_block.get(k)
+        if v is not None and v != "":
+            extras[k] = v
+
+    # Pitching-block extras.
+    for k in ("tj_date", "fb_type", "sits", "tops"):
+        v = pit_block.get(k)
+        if v is not None and v != "":
+            extras[k] = v
+
+    # Physical-block extras.
+    for k in ("frame", "athl", "levers", "arm", "perf", "delivery"):
+        v = phys_block.get(k)
+        if v is not None and v != "":
+            extras[k] = v
+
+    if tools_present:
+        extras["present"] = tools_present
+
+    tools_payload: dict | None = None
+    if tools_future or extras:
+        tools_payload = dict(tools_future)
+        if extras:
+            tools_payload["_extras"] = extras
+
+    return Snapshot(
+        source="fangraphs",
+        snapshot_date=snapshot_date,
+        interval_label=slug,
+        player_key=merged["player_key"],
+        player_name=merged["player_name"],
+        position=merged.get("position"),
+        org=merged.get("org"),
+        rank=merged.get("rank") or merged.get("org_rank"),
+        fv=merged.get("fv"),
+        status="active",
+        tools=tools_payload,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Group files by slug
+# ---------------------------------------------------------------------------
+
+def _group_drops(files: list[Path]) -> list[dict]:
+    """Walk a list of *.csv paths, group by (slug), return one entry
+    per slug as a dict with keys for whichever types are present. Files
+    whose names don't match the convention are reported via a sentinel
+    'unparseable' list returned alongside."""
+    groups: dict[str, dict] = defaultdict(dict)
+    for p in files:
+        parsed = _parse_filename(p.name)
+        if not parsed:
+            groups.setdefault("__unparseable__", {}).setdefault("_files", []).append(p)
+            continue
+        ftype, slug = parsed
+        groups[slug][ftype] = p
+        groups[slug].setdefault("slug", slug)
+    return [g for slug, g in sorted(groups.items()) if slug != "__unparseable__"] + (
+        [{"slug": "__unparseable__", "_files": groups["__unparseable__"]["_files"]}]
+        if "__unparseable__" in groups else []
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -404,14 +569,11 @@ def parse_csv(path: Path) -> tuple[list[Snapshot], str | None]:
 
 def ingest_drops(today: date | None = None,
                  drop_dir: Path | None = None,
-                 processed_dir: Path | None = None) -> tuple[int, int]:
-    """Scan the drop folder, parse each `fangraphs_*.csv` file, and
-    insert the resulting snapshots into the DB. Successfully ingested
-    files move into ``processed/`` with an `.imported.<timestamp>`
-    suffix. Files that fail to parse stay in the drop folder + log a
-    warning.
+                 processed_dir: Path | None = None,
+                 birth_dates: dict[str, str] | None = None) -> tuple[int, int]:
+    """Scan the drop folder, group CSVs by slug, ingest each report set.
 
-    Returns ``(snapshots_inserted, files_processed)``.
+    Returns ``(snapshots_inserted, report_sets_processed)``.
     """
     today = today or date.today()
     drop_dir = drop_dir or DROP_DIR
@@ -419,44 +581,123 @@ def ingest_drops(today: date | None = None,
     drop_dir.mkdir(parents=True, exist_ok=True)
     processed_dir.mkdir(parents=True, exist_ok=True)
 
-    # Lazy import keeps `fangraphs_csv` standalone for unit tests that
-    # don't want to touch the DB layer.
-    from storage import insert_snapshots
+    # Lazy DB import so unit tests can stub insert_snapshots without
+    # paying for the DB connection on import.
+    from storage import insert_snapshots, load_birth_dates
+    if birth_dates is None:
+        try:
+            birth_dates = load_birth_dates()
+        except Exception:
+            log.exception("fangraphs_csv: load_birth_dates failed; "
+                          "falling back to mtime-only date detection")
+            birth_dates = {}
 
     files = sorted(p for p in drop_dir.glob("*.csv") if p.is_file())
     if not files:
         return 0, 0
 
+    groups = _group_drops(files)
     inserted_total = 0
-    files_processed = 0
-    for path in files:
-        try:
-            snaps, err = parse_csv(path)
-        except Exception:
-            log.exception("fangraphs_csv: parse_csv crashed on %s", path.name)
+    sets_processed = 0
+    for grp in groups:
+        if grp.get("slug") == "__unparseable__":
+            for p in grp.get("_files", []):
+                log.warning("fangraphs_csv: skipping %s — filename does "
+                            "not match <type>-<slug>.csv", p.name)
             continue
-        if err is not None:
-            log.warning("fangraphs_csv: skipping %s (%s)", path.name, err)
+        slug = grp["slug"]
+        if "summary" not in grp:
+            log.warning("fangraphs_csv: skipping report set '%s' — missing "
+                        "required summary-<slug>.csv (have: %s)",
+                        slug, sorted(k for k in grp if k != "slug"))
+            continue
+        n, ok = _process_one_set(grp, slug, birth_dates, today,
+                                 processed_dir, insert_snapshots)
+        if ok:
+            inserted_total += n
+            sets_processed += 1
+
+    log.info("fangraphs_csv: ingested %d snapshots from %d report-set(s)",
+             inserted_total, sets_processed)
+    return inserted_total, sets_processed
+
+
+def _process_one_set(grp: dict, slug: str, birth_dates: dict[str, str],
+                     today: date, processed_dir: Path,
+                     insert_fn) -> tuple[int, bool]:
+    """Parse the four CSVs in one slug-group, build snapshots, insert,
+    move files to processed/. Returns (n_inserted, success)."""
+    parsed_by_type: dict[str, list[dict]] = {}
+    mtimes: list[float] = []
+    for ftype in ("summary", "position", "pitching", "physical"):
+        path = grp.get(ftype)
+        if path is None:
+            parsed_by_type[ftype] = []
             continue
         try:
-            n = insert_snapshots(snaps)
-        except Exception:
-            log.exception("fangraphs_csv: insert_snapshots failed on %s", path.name)
+            mtimes.append(path.stat().st_mtime)
+        except OSError:
+            pass
+        raw_rows = _read_csv_rows(path)
+        parser = _TYPE_PARSERS[ftype]
+        parsed: list[dict] = []
+        skipped = 0
+        for r in raw_rows:
+            try:
+                p = parser(r)
+            except Exception:
+                log.exception("fangraphs_csv: parser crashed on %s row", ftype)
+                skipped += 1
+                continue
+            if p is None:
+                skipped += 1
+                continue
+            parsed.append(p)
+        if skipped:
+            log.info("fangraphs_csv: %s — skipped %d unparseable rows in %s",
+                     path.name, skipped, ftype)
+        parsed_by_type[ftype] = parsed
+
+    summary_rows = parsed_by_type["summary"]
+    if not summary_rows:
+        log.warning("fangraphs_csv: report set '%s' produced 0 summary rows", slug)
+        return 0, False
+
+    fallback_mtime = max(mtimes) if mtimes else None
+    snapshot_date = _detect_publish_date(
+        summary_rows, birth_dates, fallback_mtime=fallback_mtime, today=today,
+    )
+    if not snapshot_date:
+        log.warning("fangraphs_csv: report set '%s' — could not determine "
+                    "publish date; leaving files in place", slug)
+        return 0, False
+
+    merged = _join_report_set(
+        summary_rows,
+        parsed_by_type["position"],
+        parsed_by_type["pitching"],
+        parsed_by_type["physical"],
+    )
+    snapshots = [_build_snapshot(m, slug, snapshot_date) for m in merged]
+    try:
+        n = insert_fn(snapshots)
+    except Exception:
+        log.exception("fangraphs_csv: insert_snapshots failed on slug %s", slug)
+        return 0, False
+
+    # Move all four files into a per-set processed subfolder.
+    set_dir = processed_dir / f"{slug}__{snapshot_date}"
+    set_dir.mkdir(parents=True, exist_ok=True)
+    for ftype in ("summary", "position", "pitching", "physical"):
+        src = grp.get(ftype)
+        if src is None:
             continue
-        inserted_total += n
-        files_processed += 1
-        # Move the file to processed/ with a timestamp so a future run
-        # can see what's been picked up but doesn't re-import.
-        stamp = today.strftime("%Y%m%d") + "-" + datetime.now().strftime("%H%M%S")
-        dest = processed_dir / f"{path.name}.imported.{stamp}"
         try:
-            shutil.move(str(path), str(dest))
+            shutil.move(str(src), str(set_dir / src.name))
         except Exception:
             log.exception("fangraphs_csv: could not move %s to processed/",
-                          path.name)
-        log.info("fangraphs_csv: ingested %d snapshots from %s "
-                 "(%d total rows)", n, path.name, len(snaps))
-
-    log.info("fangraphs_csv: ingested %d snapshots from %d file(s)",
-             inserted_total, files_processed)
-    return inserted_total, files_processed
+                          src.name)
+    log.info("fangraphs_csv: ingested %d snapshots from report-set "
+             "(slug=%s, date=%s, rows=%d)",
+             n, slug, snapshot_date, len(snapshots))
+    return n, True
