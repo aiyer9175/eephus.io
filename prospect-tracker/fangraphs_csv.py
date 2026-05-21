@@ -548,15 +548,44 @@ def _join_report_set(summary_rows: list[dict],
     """Join the four per-type row lists by FG PlayerId (preferred) with
     a name-key fallback. Summary is the spine — only summary players
     appear in the output. Other rows that don't match are dropped with
-    a debug log."""
+    a debug log.
+
+    When two summary rows share the same name-key but have different FG
+    PlayerIds (e.g. "Julio Rodríguez" the M's superstar vs. "Julio
+    Rodriguez" the SFG SIRP — both normalize to `julio_rodriguez`), the
+    higher-FV row wins the bare key and the loser is dropped with a
+    warning. This trades off completeness for accuracy: the prominent
+    prospect users actually look up keeps the canonical key, instead of
+    being silently overwritten by an org-filler with the same name."""
     by_pid: dict[int, dict] = {}
     by_key: dict[str, dict] = {}
     for r in summary_rows:
         if r is None:
             continue
-        by_key[r["player_key"]] = r
+        pk = r["player_key"]
+        existing = by_key.get(pk)
+        if existing is not None:
+            # Same name-key appearing twice in a single summary CSV is
+            # always a collision — two distinct humans normalize to the
+            # same key (e.g. "Julio Rodríguez" and "Julio Rodriguez").
+            # We can't rely on fg_player_id mismatch alone because
+            # non-MLB prospects have alphanumeric IDs like "sa829387"
+            # that get coerced to None by `_to_int()`, so both rows look
+            # PID-less. Higher-FV row wins the bare key; loser is logged.
+            ex_fv = existing.get("fv") or 0
+            new_fv = r.get("fv") or 0
+            keep, drop = (r, existing) if new_fv > ex_fv else (existing, r)
+            log.warning(
+                "fangraphs_csv: name-key collision on %s — keeping "
+                "fg_id=%s fv=%s org=%s, dropping fg_id=%s fv=%s org=%s",
+                pk, keep.get("fg_player_id"), keep.get("fv"), keep.get("org"),
+                drop.get("fg_player_id"), drop.get("fv"), drop.get("org"),
+            )
+            by_key[pk] = keep
+        else:
+            by_key[pk] = r
         if r.get("fg_player_id") is not None:
-            by_pid[r["fg_player_id"]] = r
+            by_pid[r["fg_player_id"]] = by_key[pk]
 
     def _lookup(other_row: dict) -> dict | None:
         if other_row is None:

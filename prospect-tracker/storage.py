@@ -489,30 +489,37 @@ def init_db():
 
 
 def insert_snapshots(snapshots: Iterable[Snapshot]) -> int:
+    # UPSERT — re-ingest of a (source, interval_label, player_key) tuple
+    # overwrites the prior row's FV / rank / status / name. This is the
+    # only way to correct stale snapshots (e.g. a wrong FV written by an
+    # earlier buggy ingest path); the previous INSERT OR IGNORE silently
+    # skipped re-runs and let bad data persist forever.
+    #
+    # position / org preserve the prior non-null value because some
+    # sources don't republish them on every refresh; tools_json behaves
+    # the same so a re-run with no tools doesn't wipe ones we already had.
     count = 0
     with connect() as con:
         for s in snapshots:
             tools_json = json.dumps(s.tools) if s.tools else None
             cur = con.execute(
-                """INSERT OR IGNORE INTO snapshots
+                """INSERT INTO snapshots
                    (source, snapshot_date, interval_label, player_key,
                     player_name, position, org, rank, fv, status, tools_json)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(source, interval_label, player_key) DO UPDATE SET
+                       snapshot_date = excluded.snapshot_date,
+                       player_name   = excluded.player_name,
+                       position      = COALESCE(excluded.position, snapshots.position),
+                       org           = COALESCE(excluded.org,      snapshots.org),
+                       rank          = excluded.rank,
+                       fv            = excluded.fv,
+                       status        = excluded.status,
+                       tools_json    = COALESCE(excluded.tools_json, snapshots.tools_json)""",
                 (s.source, s.snapshot_date, s.interval_label, s.player_key,
                  s.player_name, s.position, s.org, s.rank, s.fv, s.status,
                  tools_json),
             )
-            # If the row already existed (INSERT OR IGNORE no-op) but we
-            # now have tool grades the prior row lacks, fill them in. This
-            # lets a re-run pick up tools from a freshly extended scraper
-            # without forcing a destructive re-ingest.
-            if cur.rowcount == 0 and tools_json:
-                con.execute(
-                    """UPDATE snapshots SET tools_json = ?
-                       WHERE source = ? AND interval_label = ? AND player_key = ?
-                         AND tools_json IS NULL""",
-                    (tools_json, s.source, s.interval_label, s.player_key),
-                )
             count += cur.rowcount
             con.execute(
                 """INSERT INTO players (player_key, player_name, position, org)

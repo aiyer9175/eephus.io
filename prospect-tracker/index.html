@@ -1013,8 +1013,32 @@
     body.density-expanded .player-row-expand { display: block; }
     body.density-expanded .player-row { row-gap: 4px; }
     body.density-expanded .player-row .expand-savant { color: var(--text-secondary); }
-    body.density-expanded .player-row .expand-flag-up   { color: var(--up); margin-right: 4px; }
-    body.density-expanded .player-row .expand-flag-down { color: var(--down); }
+
+    /* One-line auto-narrative under each list row's player name —
+       absorbs the green/red flag content that used to render as a
+       separate row pill + detail-page summary block. Wraps to 2 lines
+       on narrow viewports; clamps to 1 line on desktop so the row
+       height stays predictable. Hidden on the Compact density toggle
+       where the row needs to stay tight. */
+    .player-row-summary {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-top: 3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    @media (min-width: 1200px) {
+      .player-row-summary {
+        -webkit-line-clamp: 1;
+        white-space: nowrap;
+      }
+    }
+    body.density-compact .player-row-summary { display: none; }
 
     /* Mobile-only performance pill — keeps RPS+/wRC+/xFIP visible when
        the MiLB stats cell collapses out of the row at <900px. */
@@ -4449,18 +4473,6 @@ function computeFgFlags(p) {
   return flags;
 }
 
-function flagCounterPillHTML(p) {
-  const flags = (p.stat_flags || []).concat(p.tool_flags || []).concat(computeFgFlags(p));
-  if (!flags.length) return "";
-  const g = flags.filter(f => f.direction === "green").length;
-  const r = flags.filter(f => f.direction === "red").length;
-  if (!g && !r) return "";
-  const list = flags.map(f => f.stat).join(" · ");
-  const greenPart = g ? `<span class="flag-up">▲${g}</span>` : "";
-  const redPart   = r ? `<span class="flag-down">▼${r}</span>` : "";
-  return `<span class="row-tag" title="${escapeHtml(list)}">${greenPart}${redPart}</span>`;
-}
-
 // Single inline chip surfacing the most-concerning health signal:
 //   On IL > Post-TJ > chronic-IL (≥3 stints or ≥200 IL days last 12mo).
 // Mutually exclusive — only one chip ever shows per row. Healthy
@@ -4669,9 +4681,11 @@ function recentAcqBadgeHTML(p) {
 // noisy; this helper renders at most `max` visible pills + an "+N"
 // overflow chip that surfaces the rest via a native `title=` tooltip.
 function _inlineBadgeStrip(p, max = 3) {
+  // `flagCounterPillHTML` removed — flag content now lives inline as
+  // ▲/▼ tags in the row-summary line (see `makeListRowSummary`), so a
+  // separate ▲N▼N counter pill would be redundant noise.
   const builders = [
     typeof toolPlusPillHTML       === "function" ? toolPlusPillHTML       : null,
-    typeof flagCounterPillHTML    === "function" ? flagCounterPillHTML    : null,
     typeof healthBadgeHTML        === "function" ? healthBadgeHTML        : null,
     typeof recentAcqBadgeHTML     === "function" ? recentAcqBadgeHTML     : null,
     typeof acqPillHTML            === "function" ? acqPillHTML            : null,
@@ -4697,14 +4711,9 @@ function _inlineBadgeStrip(p, max = 3) {
 // data being present.
 function playerExpandedMetaHTML(p) {
   const parts = [];
-  const flags = (p.stat_flags || []).concat(p.tool_flags || []).concat(computeFgFlags(p));
-  if (flags.length) {
-    const g = flags.filter(f => f.direction === "green");
-    const r = flags.filter(f => f.direction === "red");
-    const lhs = g.length ? `<span class="expand-flag-up">▲ ${g.map(f => escapeHtml(f.stat)).join(", ")}</span>` : "";
-    const rhs = r.length ? `<span class="expand-flag-down">▼ ${r.map(f => escapeHtml(f.stat)).join(", ")}</span>` : "";
-    parts.push(`${lhs}${lhs && rhs ? "   " : ""}${rhs}`);
-  }
+  // Flag content moved into the always-visible row summary (see
+  // `makeListRowSummary`). The expanded-meta row now only carries
+  // Savant tiles unique to expanded density.
   const sv = p.prospect_savant;
   if (sv && Object.keys(sv).length) {
     const bits = [];
@@ -6167,6 +6176,7 @@ function renderActives() {
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
             ${playerMetaHTML(p)}<span class="mobile-only-pill">${rpsPlusPillHTML(p)}</span>
+            ${makeListRowSummary(p)}
           </div>
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
@@ -8846,13 +8856,17 @@ function playerMetaHTML(p, opts = {}) {
 // → FV consensus → stock direction → ETA) in a single readable line
 // so a reader doesn't have to scroll the detail page to get the gist.
 // Returns "" when essential fields are missing.
-function makeQuickReadSummary(p) {
-  if (!p) return "";
+// Build the ordered `parts[]` array used by both the detail-page
+// quick-read card and the list-row summary line. Factored out so the
+// two callers don't drift in what they show — the only difference is
+// the wrapper element each one renders around the joined parts.
+function makeQuickReadSummaryParts(p) {
+  if (!p) return [];
   const sl = p.statline || {};
   const tools = (p.tools && p.tools.grades) || {};
   const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
   const ageNum = p.age != null ? Number(p.age) : null;
-  if (!latest && ageNum == null) return "";
+  if (!latest && ageNum == null) return [];
 
   const isP = !!(sl.is_pitcher) || /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(String(p.position || ""));
   // Top two tools by grade for an at-a-glance "what makes this guy".
@@ -8960,8 +8974,55 @@ function makeQuickReadSummary(p) {
     }
   }
 
+  // Flag tags — green ▲ / red ▼ chips spliced inline so the summary
+  // carries the same content the standalone flag block used to. Source
+  // order: stat_flags + tool_flags (server-computed) + computeFgFlags
+  // (client-side, FG-extras-derived). Capped at 5 to keep the summary
+  // line readable; remaining flags surface via hover-tooltips on the
+  // overall flag count earlier in the row (none today — see Step 2.4).
+  const flagsAll = (p.stat_flags || [])
+    .concat((p.tool_flags || []).map(f => ({ ...f, _origin: "tool" })))
+    .concat(typeof computeFgFlags === "function" ? computeFgFlags(p) : []);
+  if (flagsAll.length) {
+    // Sort priorities (lower = first):
+    //   0  red health/post-TJ (most critical)
+    //   1  green carry-tool (≥65 grade)
+    //   2  other red
+    //   3  other green / fg
+    const rank = f =>
+      (f.direction === "red"   && f.category === "health"        ? 0 :
+       f.direction === "green" && typeof f.value === "number"
+                                && f.value >= 65                 ? 1 :
+       f.direction === "red"                                     ? 2 :
+                                                                   3);
+    flagsAll.sort((a, b) => rank(a) - rank(b));
+    const TOP_FLAGS = 5;
+    flagsAll.slice(0, TOP_FLAGS).forEach(f => {
+      const arrow = f.direction === "green" ? "▲" : "▼";
+      const color = f.direction === "green" ? "var(--up)" : "var(--down)";
+      const tip   = f.note || "";
+      const suffix = f._origin === "tool" ? "°" : "";
+      parts.push(`<span style="color:${color};font-weight:600;" title="${escapeHtml(tip)}">${arrow} ${escapeHtml(f.stat)}${suffix}</span>`);
+    });
+  }
+
+  return parts;
+}
+
+function makeQuickReadSummary(p) {
+  const parts = makeQuickReadSummaryParts(p);
   if (parts.length < 2) return "";
   return `<div class="quick-read" style="font-family:var(--font-sans);font-size:13px;color:var(--text-secondary);line-height:1.55;margin:10px 0 14px;padding:8px 12px;border-left:3px solid var(--neon-cyan);background:rgba(78,224,255,0.04);border-radius:0 var(--radius-sm) var(--radius-sm) 0;">${parts.join(" · ")}</div>`;
+}
+
+// List-row variant — same content as the detail-page quick-read but
+// renders without the cyan card chrome so it inherits the row's
+// typography. Drops to nothing when the summary is too sparse to add
+// value (< 2 parts), avoiding a 1-token blurb under thin profiles.
+function makeListRowSummary(p) {
+  const parts = makeQuickReadSummaryParts(p);
+  if (parts.length < 2) return "";
+  return `<div class="player-row-summary">${parts.join(" · ")}</div>`;
 }
 
 function ilTagHTML(p) {
@@ -10744,11 +10805,11 @@ function makeCareerTable(career) {
 }
 
 // Scouting flags previously rendered as their own standalone block; the
-// data now drives a compact summary line directly above the prospect-
-// detail body (see `flagSummary` in renderPlayerDetail) and the colored
-// cells of the career table. The standalone block + its sort helpers
-// were removed because they duplicated the level-relative deltas the
-// career table already shows.
+// data now lives inline as ▲/▼ tags inside the quick-read summary
+// (see `makeQuickReadSummaryParts`) and the colored cells of the career
+// table. The standalone block + its sort helpers were removed because
+// they duplicated the level-relative deltas the career table already
+// shows.
 
 // Sabermetrics block — wRC+ / wOBA / WAR (hitters), xFIP / FIP / FIP-
 // / ERA- / WAR (pitchers). When the MLB Stats API has nothing on file
@@ -13141,33 +13202,8 @@ function renderPlayerDetail(key) {
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">${rows}</div>`;
   })();
 
-  // Scouting flags get distilled into the "Age & level-relative
-  // performance" table cells (green/red deltas vs level mean). When the
-  // server-side flag layer carries scout-narrative notes, we surface
-  // them as a one-line caption below the title summary instead of a
-  // duplicate full block.
-  const flagSummary = (() => {
-    // Stat flags + tool flags ride the same green/red summary line —
-    // both arrays share the {direction, stat, ...} shape and the reader
-    // doesn't care whether a callout came from a rate stat or a 60-grade
-    // tool. Tool-derived flags get a small ° suffix so the source is
-    // still visible without doubling the summary line height.
-    const stat = (p.stat_flags || []);
-    const tool = (p.tool_flags || []).map(f => ({ ...f, _origin: "tool" }));
-    const fg   = computeFgFlags(p);
-    const flags = stat.concat(tool).concat(fg);
-    if (!flags.length) return "";
-    const green = flags.filter(f => f.direction === "green");
-    const red   = flags.filter(f => f.direction === "red");
-    const list = arr => arr.map(f =>
-      escapeHtml(f.stat) + (f._origin === "tool" ? "°" : "")
-    ).join(" · ") || "—";
-    return `<div style="display:flex;gap:14px;align-items:baseline;font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-bottom:10px;flex-wrap:wrap;">
-      ${green.length ? `<span><span style="color:var(--up);font-weight:700;">▲ ${green.length}</span> ${list(green)}</span>` : ""}
-      ${red.length   ? `<span><span style="color:var(--down);font-weight:700;">▼ ${red.length}</span> ${list(red)}</span>`   : ""}
-      ${tool.length ? `<span style="color:var(--text-tertiary);font-size:10px;" title="Tool-grade flags are marked with °">° = scouting-tool flag</span>` : ""}
-    </div>`;
-  })();
+  // Flag block removed — flag content now lives inline as ▲/▼ tags
+  // inside the quick-read summary (see `makeQuickReadSummaryParts`).
 
   // Private notes — localStorage-backed, never leaves the browser. The
   // textarea slots into the right sidebar so the main column stays
@@ -13246,7 +13282,7 @@ function renderPlayerDetail(key) {
       </div>`
     : "";
   const quickReadHtml = makeQuickReadSummary(p);
-  root.innerHTML = header + quickReadHtml + tilesHtml + flagSummary + jumpLinkStrip + `
+  root.innerHTML = header + quickReadHtml + tilesHtml + jumpLinkStrip + `
     <div class="player-detail-grid">
       <div>${wrap("detail-chart", chartSection)}${wrap("detail-stats", consolidatedCareerSection)}${sourceSection}${wideGrid}</div>
       <div class="player-detail-side">${noteSection}${ilSection}${wrap("detail-health", healthSection)}${sabermetricsSection}${surplusValueSection}${sameFarmSection}${similarProspectsSection}</div>
