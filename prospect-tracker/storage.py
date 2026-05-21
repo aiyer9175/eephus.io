@@ -100,8 +100,13 @@ def _compute_tool_composites(grades: dict[str, float] | None,
         out["composite_off"] = None
         out["composite_def"] = None
     else:
+        # Speed counts toward BOTH composites — it shapes offense (range
+        # on the bases, BABIP, taking the extra base) and defense (range
+        # in the field, jumps, recovery). Including it on both sides
+        # avoids penalizing burner CFs whose defensive value is range-
+        # driven rather than arm-driven.
         off = _avg(("hit", "game_pwr", "raw_pwr", "speed"))
-        deff = _avg(("field", "throw"))
+        deff = _avg(("field", "throw", "speed"))
         out["composite_off"] = off
         out["composite_def"] = deff
         if off is not None and deff is not None:

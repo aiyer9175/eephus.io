@@ -137,65 +137,84 @@
        references throughout the JS render functions keep working —
        only the values shift. */
     [data-theme="dark"] {
-      --bg-primary:       #0F1B2D;   /* deep navy page */
-      --bg-secondary:     #15243B;   /* card surface  */
-      --bg-tertiary:      #1C2D49;   /* alt rows      */
-      --bg-header:        #0B1422;   /* header band   */
-      --text-primary:     #F4F0E6;   /* paper cream   */
-      --text-secondary:   #B8B6AC;   /* warm gray     */
-      --text-tertiary:    #7C8089;   /* muted slate   */
-      --border:           #2A3851;
-      --border-light:     #1F2A40;
+      /* Backgrounds — shift from navy toward "vintage dark card stock":
+         a warm slate that retains the baseball-card paper feel. Each
+         layer is ~5% lighter than the last so layered cards still stack
+         visually. The cooler navy from the original palette read as
+         "generic tech UI" rather than continuing the warm-paper
+         character of the light theme. */
+      --bg-primary:       #1A1E29;   /* warm dark slate */
+      --bg-secondary:     #232836;   /* card surface */
+      --bg-tertiary:      #2C3242;   /* alt rows / muted panels */
+      --bg-header:        #0F121C;   /* deep header band */
+      --text-primary:     #F4EFE0;   /* lifted paper cream */
+      --text-secondary:   #D0CCBA;   /* warm light gray — lifted for contrast */
+      --text-tertiary:    #95907D;   /* sepia muted — lifted from #7C8089 */
+      --border:           #3F4555;
+      --border-light:     #2F3543;
 
-      /* Accent hues — slightly lifted for dark backgrounds so the
-         eye still picks them out. The variable NAMES match the light
-         theme; only the values shift. */
-      --neon-green:       #4ECB6A;
-      --neon-magenta:     #F26B6B;
-      --neon-cyan:        #7CC4F0;
-      --neon-amber:       #F0C040;
-      --neon-violet:      #A688E2;
+      /* Accent hues — keep the light-theme intent but lifted for dark
+         backgrounds. The variable NAMES match the light theme; only the
+         values shift. */
+      --neon-green:       #5DCF7A;
+      --neon-magenta:     #F47B7B;
+      --neon-cyan:        #8FCDF5;
+      --neon-amber:       #F4C952;
+      --neon-violet:      #B49AE8;
 
-      --up:    #4ECB6A;
-      --down:  #F26B6B;
-      --grad:  #A688E2;
+      --up:    #5DCF7A;
+      --down:  #F47B7B;
+      --grad:  #B49AE8;
 
-      /* FV badges — keep the same warm-to-cool gradient (the gold/orange
-         elite tiers read beautifully against navy). Bump the lower-tier
-         `fg` to a lighter shade so labels stay legible on the muted
-         backgrounds. */
-      --fv-80-bg: #FFE08A;  --fv-80-fg: #6B3D00;  --fv-80-bd: #C9962A;
-      --fv-75-bg: #FCC773;  --fv-75-fg: #6E3508;  --fv-75-bd: #C97A1B;
-      --fv-70-bg: #F4AB60;  --fv-70-fg: #6C2509;  --fv-70-bd: #B85419;
-      --fv-65-bg: #E89058;  --fv-65-fg: #631F0C;  --fv-65-bd: #A77418;
-      --fv-60-bg: #D9B07A;  --fv-60-fg: #523812;  --fv-60-bd: #8E7232;
-      --fv-55-bg: #B8A37D;  --fv-55-fg: #2A2010;  --fv-55-bd: #806E48;
-      --fv-50-bg: #9A9078;  --fv-50-fg: #1E1A10;  --fv-50-bd: #6E6852;
-      --fv-45-bg: #807760;  --fv-45-fg: #F4F0E6;  --fv-45-bd: #6B675A;
-      --fv-40-bg: #5E5847;  --fv-40-fg: #F4F0E6;  --fv-40-bd: #686358;
-      --fv-35-bg: #4D483D;  --fv-35-fg: #DDD9CB;  --fv-35-bd: #645F55;
-      --fv-30-bg: #3E3A33;  --fv-30-fg: #C6C2B5;  --fv-30-bd: #5F5A50;
-      --fv-25-bg: #322F2A;  --fv-25-fg: #B0ACA0;  --fv-25-bd: #5A554B;
-      --fv-20-bg: #28252F;  --fv-20-fg: #A09C90;  --fv-20-bd: #555047;
+      /* FV badges — keep the warm-to-cool ramp but lift `fg` contrast
+         on the 45-25 mid-band so labels stay readable on the darker
+         backgrounds. The elite tiers (80-60) stay nearly the same as
+         the light theme — saturated gold/orange already pop on dark. */
+      --fv-80-bg: #FFE08A;  --fv-80-fg: #5B3300;  --fv-80-bd: #C9962A;
+      --fv-75-bg: #FCC773;  --fv-75-fg: #5E2D08;  --fv-75-bd: #C97A1B;
+      --fv-70-bg: #F4AB60;  --fv-70-fg: #5C2009;  --fv-70-bd: #B85419;
+      --fv-65-bg: #E89058;  --fv-65-fg: #531A0C;  --fv-65-bd: #A77418;
+      --fv-60-bg: #D9B07A;  --fv-60-fg: #422E12;  --fv-60-bd: #8E7232;
+      --fv-55-bg: #B89C72;  --fv-55-fg: #1F170A;  --fv-55-bd: #806E48;
+      --fv-50-bg: #9C8E70;  --fv-50-fg: #14110A;  --fv-50-bd: #6E6852;
+      --fv-45-bg: #7C7458;  --fv-45-fg: #F4EFE0;  --fv-45-bd: #6B675A;
+      --fv-40-bg: #595440;  --fv-40-fg: #F4EFE0;  --fv-40-bd: #686358;
+      --fv-35-bg: #4B453A;  --fv-35-fg: #E0DCCB;  --fv-35-bd: #645F55;
+      --fv-30-bg: #3E392F;  --fv-30-fg: #CCC6B5;  --fv-30-bd: #5F5A50;
+      --fv-25-bg: #322E26;  --fv-25-fg: #B6B0A0;  --fv-25-bd: #5A554B;
+      --fv-20-bg: #28241D;  --fv-20-fg: #A6A090;  --fv-20-bd: #555047;
 
-      --level-very-young-bg: #1C3A20;  --level-very-young-fg: #B8E5BA;
-      --level-young-bg:      #1A3247;  --level-young-fg:      #B0D4F0;
+      /* Level pills — same warm-to-cool intent, bump bg saturation so
+         they pop on the dark warm slate. */
+      --level-very-young-bg: #234A28;  --level-very-young-fg: #C5EAC8;
+      --level-young-bg:      #1F3A53;  --level-young-fg:      #C0DCF2;
       --level-neutral-bg:    var(--bg-tertiary);
                              --level-neutral-fg: var(--text-secondary);
-      --level-old-bg:        #4A3A18;  --level-old-fg:        #F4D88A;
-      --level-too-old-bg:    #4A1E1A;  --level-too-old-fg:    #F4ADAA;
-      --level-mlb-bg:        #FBF8F0;  --level-mlb-fg:        #0E2B4D;
+      --level-old-bg:        #5A4520;  --level-old-fg:        #F8DE94;
+      --level-too-old-bg:    #5A241F;  --level-too-old-fg:    #F8B6B0;
+      --level-mlb-bg:        #F4EFE0;  --level-mlb-fg:        #0F121C;
 
-      --accent-tj-soft:        rgba(166, 136, 226, 0.22);
-      --accent-tj-border:      rgba(166, 136, 226, 0.60);
-      --accent-il-soft:        rgba(240, 192, 64, 0.18);
-      --accent-il-border:      rgba(240, 192, 64, 0.55);
+      --accent-tj-soft:        rgba(180, 154, 232, 0.22);
+      --accent-tj-border:      rgba(180, 154, 232, 0.60);
+      --accent-il-soft:        rgba(244, 201, 82, 0.18);
+      --accent-il-border:      rgba(244, 201, 82, 0.55);
 
-      --org-color: #7CC4F0;
-      --org-color-soft: rgba(124, 196, 240, 0.10);
+      --org-color: #8FCDF5;
+      --org-color-soft: rgba(143, 205, 245, 0.10);
 
-      --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.30), 0 1px 2px rgba(0, 0, 0, 0.20);
-      --shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(124, 196, 240, 0.18);
+      /* Warmer drop shadow that doesn't muddy the warm backgrounds. */
+      --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.40), 0 1px 2px rgba(0, 0, 0, 0.25);
+      --shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.50), 0 0 0 1px rgba(143, 205, 245, 0.18);
+    }
+    /* Paper-grain texture mirrored from the light theme so the
+       baseball-card character carries across both themes — just at
+       lower opacity with a warm cream tint instead of slate ink. */
+    [data-theme="dark"] body {
+      background-image:
+        radial-gradient(rgba(244, 239, 224, 0.025) 1px, transparent 1px),
+        radial-gradient(rgba(244, 239, 224, 0.015) 1px, transparent 1px);
+      background-size: 24px 24px, 38px 38px;
+      background-position: 0 0, 12px 19px;
     }
 
     /* Theme toggle button — small icon-only pill in the top-right
@@ -219,6 +238,44 @@
 
     /* === Base ===================================================== */
     * { box-sizing: border-box; }
+    /* Smooth in-page scroll for the detail-page jump-link chips so
+       clicking "Health" doesn't snap the page. Globally safe — the only
+       other in-page anchors are the section headers in the watchlist
+       picker which already use scrollIntoView with the same behavior. */
+    html { scroll-behavior: smooth; }
+    /* Section anchors offset by a sticky header height (~60px) so a
+       jump lands the section heading below the global nav, not under
+       it. Mirrors the offset used by IDE goto-line behavior. */
+    [id^="detail-"] { scroll-margin-top: 70px; }
+    /* Detail-page jump-link chip strip — sits under the stat tiles and
+       links to in-page section anchors. Hidden on narrow viewports
+       where horizontal scrolling would dominate. */
+    .detail-jumplinks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 0 0 16px;
+      padding: 8px 0;
+      border-top: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .detail-jumplinks a {
+      font-family: var(--font-sans);
+      font-size: 10.5px;
+      letter-spacing: 0.04em;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .detail-jumplinks a:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-color: var(--text-tertiary);
+    }
     body {
       margin: 0;
       font-family: var(--font-sans);
@@ -629,54 +686,49 @@
     .fv-20 { background: var(--fv-20-bg); color: var(--fv-20-fg); border-color: var(--fv-20-bd); }
     .fv-70, .fv-75, .fv-80 { box-shadow: inset 0 -1px 0 rgba(0,0,0,0.08); }
 
-    /* Single-source uncertainty chip — sits to the right of an FV badge
-       whenever exactly one source published an explicit FV at the
-       latest point. Dashed amber to match the "n=1 · single source" pill
-       in the per-source breakdown block. The `.is-wide` variant fires
-       when ≥2 sources disagree by ≥10 grade points and uses a brighter
-       solid-border treatment so the spread reading reads as more urgent
-       than the 1-source pull (which is a quieter informational flag). */
-    .fv-confidence-chip {
-      display: inline-block;
-      margin-left: 4px;
-      font-family: var(--font-mono);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      padding: 1px 5px;
-      border: 1px dashed var(--neon-amber);
-      border-radius: 999px;
-      color: var(--neon-amber);
-      background: rgba(232, 165, 31, 0.08);
-      vertical-align: middle;
-      cursor: help;
-    }
-    /* Wide-FV-spread indicator — instead of a separate chip that warps
-       the row's line-height, we outline the FV badge in violet and tuck
-       a small "W" mark in the top-right corner. The badge's outer
-       dimensions stay the same (outline doesn't take layout space the
-       way border does), so adjacent badges/pills stay aligned. */
+    /* FV-badge data-quality outlines — two mutually-exclusive states:
+         is-wide          → ≥2 sources disagree by ≥10 grade points
+                            (solid violet outline + "W" mark, top-right)
+         is-single-source → exactly one source published an explicit FV
+                            (dashed amber outline + "1" mark, top-left)
+       Outlines (not borders) so the badge's outer box stays the same
+       size and adjacent pills don't shift. The corner marks are real
+       DOM spans (not ::after pseudos) so they can carry their own
+       `title` tooltips explaining the indicator. */
     .fv-badge.is-wide {
       outline: 2px solid var(--neon-violet);
       outline-offset: 1px;
       position: relative;
       overflow: visible;
     }
-    .fv-badge.is-wide::after {
-      content: "W";
+    .fv-badge.is-single-source {
+      outline: 2px dashed var(--neon-amber);
+      outline-offset: 1px;
+      position: relative;
+      overflow: visible;
+    }
+    /* When both fire (rare — would require a 1-source consensus with
+       ≥10 spread, which is mathematically impossible today, but the
+       CSS is defensive) the solid violet wide outline wins visually. */
+    .fv-badge.is-wide.is-single-source {
+      outline-style: solid;
+    }
+    .fv-wide-mark,
+    .fv-single-mark {
       position: absolute;
-      top: -5px; right: -7px;
       font-family: var(--font-mono);
       font-size: 8.5px;
       font-weight: 800;
       color: #fff;
-      background: var(--neon-violet);
       border-radius: 999px;
       padding: 0 4px;
       line-height: 1.4;
       letter-spacing: 0;
-      pointer-events: none;
+      cursor: help;
+      z-index: 1;
     }
+    .fv-wide-mark   { top: -5px; right: -7px; background: var(--neon-violet); }
+    .fv-single-mark { top: -5px; left: -6px;  background: var(--neon-amber); }
 
     /* Row tag pills — shared shape for the flag counter, health,
        acquisition, and other small inline indicators sitting next to
@@ -857,6 +909,33 @@
       font-variant-numeric: tabular-nums;
       margin-top: 3px;
       text-align: center;
+    }
+    /* Detail-page stock chip — slightly larger than the row stock-line,
+       inline next to the FV range pill in the header. Carries the
+       movement direction and the since-date as a tooltip. */
+    .detail-stock-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 2px;
+      margin-top: 6px;
+      letter-spacing: 0.02em;
+      cursor: help;
+    }
+    .detail-stock-chip.stock-chip-up    { background: rgba(31, 122, 58, 0.14); color: var(--up);   border: 1px solid rgba(31, 122, 58, 0.30); }
+    .detail-stock-chip.stock-chip-down  { background: rgba(185, 28, 28, 0.12); color: var(--down); border: 1px solid rgba(185, 28, 28, 0.30); }
+    .detail-stock-chip.stock-chip-flat  { background: var(--bg-secondary);     color: var(--text-tertiary); border: 1px solid var(--border-light); font-weight: 500; }
+    .detail-stock-chip.stock-chip-grad  { background: rgba(167, 139, 250, 0.14); color: var(--grad); border: 1px solid rgba(167, 139, 250, 0.30); text-transform: uppercase; letter-spacing: 0.08em; }
+    .detail-stock-chip-since {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 10px;
+      opacity: 0.78;
     }
 
     /* === MiLB cell ================================================ */
@@ -2523,28 +2602,50 @@
       padding: 10px 12px;
       border-radius: var(--radius-sm);
     }
-    .tools-card .tools-composite-row {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 8px;
-      padding-bottom: 6px;
-      margin-bottom: 6px;
+    /* Compact 3-up composite chip bar — replaces the stacked composite
+       rows. Each chip is a labeled badge group (Overall / Off / Def
+       for hitters, Overall / Stuff / Cmd for pitchers). Grid auto-fits
+       so a player missing one composite still looks balanced. */
+    .tools-card .tools-composite-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+      gap: 6px;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
       border-bottom: 1px solid var(--border-light);
     }
-    .tools-card .tools-composite-row:last-of-type {
-      border-bottom: none; margin-bottom: 2px; padding-bottom: 2px;
+    .tools-card .tools-composite-chip {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 4px;
+      padding: 7px 6px 6px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-primary);
+      border-radius: 3px;
+      min-width: 0;
     }
-    .tools-card .tools-composite-label {
-      font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    .tools-card .tools-composite-chip.is-headline {
+      background: var(--bg-secondary);
+      border-color: var(--border);
+    }
+    .tools-card .tools-composite-chip-label {
+      font-size: 9px; letter-spacing: 0.10em;
+      text-transform: uppercase; font-weight: 800;
       color: var(--text-tertiary);
-      font-weight: 700;
+      line-height: 1;
     }
-    .tools-card .tools-composite-value {
-      display: flex; align-items: center; gap: 6px;
+    .tools-card .tools-composite-chip-value {
+      display: flex; align-items: center; gap: 4px;
+      font-variant-numeric: tabular-nums;
+      flex-wrap: wrap; justify-content: center;
     }
     .tools-card .tools-grade-grid {
       display: grid; grid-template-columns: repeat(2, 1fr);
       gap: 5px 10px;
-      margin-top: 6px;
+    }
+    .tools-card .tools-grade-grid + .tools-grade-grid {
+      margin-top: 8px; padding-top: 8px;
+      border-top: 1px dashed var(--border-light);
     }
     .tools-card .tools-grade-cell {
       display: flex; align-items: center; justify-content: space-between;
@@ -2556,11 +2657,37 @@
       letter-spacing: 0.04em;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+    .tool-dual-marker {
+      display: inline-block;
+      margin-left: 3px;
+      color: var(--neon-cyan);
+      font-size: 9px;
+      font-weight: 700;
+      cursor: help;
+      vertical-align: 1px;
+    }
     .tools-card .tools-footer {
       margin-top: 8px;
       font-size: 10px;
       color: var(--text-tertiary);
       letter-spacing: 0.04em;
+      line-height: 1.5;
+    }
+    .tools-card .tools-footer-legend {
+      color: var(--neon-cyan);
+      font-weight: 600;
+    }
+    /* Tab strip atop the combined per-source card (FV / Tools panels).
+       Reuses .chip styling; .active gets the inverted treatment so the
+       selected tab reads as the live state. */
+    .per-source-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .per-source-tabs .chip {
+      font-size: 10px;
+      padding: 3px 10px;
     }
 
     /* Overlay-chart legend dot — small square in the per-player color. */
@@ -3316,36 +3443,53 @@ function fvBadgeTooltip(player) {
   return parts.join("\n");
 }
 
-// Confidence indicator — fires next to the FV badge for the
-// single-source case only. Wide-spread is handled separately via
-// `fvBadgeWideClass(p)` which adds the `.is-wide` class directly to
-// the FV badge (purple outline + small W mark) so it doesn't warp
-// the row's line-height.
-// Source count comes from the canonical avg_fv_n field; falls back to
-// recounting per_source for cached payloads that pre-date the export.
-function fvBadgeConfidence(player) {
+// Returns the count of explicit-FV sources at the player's latest
+// point. Used by both confidence indicators below; falls back to
+// recounting per_source for cached payloads that pre-date avg_fv_n.
+function _fvSourceCount(player) {
   const pts = player && player.points;
   const last = pts && pts.length ? pts[pts.length - 1] : null;
-  if (!last) return "";
-  const n = last.avg_fv_n != null
+  if (!last) return null;
+  return last.avg_fv_n != null
     ? last.avg_fv_n
     : Object.values(last.per_source || {}).filter(v => v && v.fv_published != null).length;
-  if (n === 1) {
-    return `<span class="fv-confidence-chip" title="Single-source grade — pulled down 1/3 of the way toward FV 35 (Bayesian shrinkage, k=0.5) to reflect 1-source uncertainty. Add a second source to remove the pull.">1 src</span>`;
-  }
-  return "";
 }
 
 // Returns " is-wide" when the player has ≥2 sources disagreeing by
-// ≥10 grade points. Callers append the return value to the FV badge's
-// class list. Result: purple outline + small W in the corner via CSS,
-// no layout shift. Empty string for prospects with no wide-spread.
+// ≥10 grade points. Callers append to the FV badge's class list →
+// violet solid outline via CSS. Empty string otherwise.
 function fvBadgeWideClass(player) {
   const pts = player && player.points;
   const last = pts && pts.length ? pts[pts.length - 1] : null;
   if (!last) return "";
   if (last.fv_spread != null && last.fv_spread >= 10) return " is-wide";
   return "";
+}
+
+// Real-DOM "W" mark for wide-spread badges. Lives inside the badge so
+// the `title` attribute hovers. Returns "" when the badge isn't wide.
+function fvBadgeWideMarkHTML(player) {
+  if (!fvBadgeWideClass(player)) return "";
+  const pts = player && player.points;
+  const last = pts && pts.length ? pts[pts.length - 1] : null;
+  const n = _fvSourceCount(player) || 0;
+  const sp = last && last.fv_spread != null ? last.fv_spread.toFixed(1) : "?";
+  return `<span class="fv-wide-mark" title="Wide source disagreement — sources differ by ${sp} grade points across ${n} sources. Open the per-source breakdown (now inside the More details accordion) for the per-source FVs.">W</span>`;
+}
+
+// Returns " is-single-source" when exactly one source published an
+// explicit FV. Callers append to the FV badge's class list → dashed
+// amber outline via CSS. Empty string otherwise.
+function fvBadgeSingleClass(player) {
+  return _fvSourceCount(player) === 1 ? " is-single-source" : "";
+}
+
+// Real-DOM "1" mark for single-source badges. Lives at the top-left of
+// the badge (the wide W lives at top-right) so the two can co-exist
+// visually if they ever fire together. `title` explains the FV-35 pull.
+function fvBadgeSingleMarkHTML(player) {
+  if (!fvBadgeSingleClass(player)) return "";
+  return `<span class="fv-single-mark" title="Single-source grade — pulled down 1/3 of the way toward FV 35 (Bayesian shrinkage, k=0.5) to reflect 1-source uncertainty. Add a second source to remove the pull.">1</span>`;
 }
 
 // Acquisition-method tooltip helper — builds the per-method context
@@ -4932,7 +5076,7 @@ function renderActives() {
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
           <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeConfidence(p)}</span>${fvTrendHTML(p)}</div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
         <div class="line-chart-cell">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
         ${makeMilbCell(p)}
@@ -5230,7 +5374,7 @@ function renderWatchlist() {
             </div>
             <button class="watch-btn is-in" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="Remove from watchlist">★</button>
           </div>
-          <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}">${latest.consensus_fv_label}${fvBadgeConfidence(p)}</span>${fvTrendHTML(p)}` : "—"}</div>
+          <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>${fvTrendHTML(p)}` : "—"}</div>
           <div class="rank-cell">${latest && latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
           <div class="line-chart-cell">${p.points && p.points.length >= 2 ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p) : ""}</div>
           ${makeMilbCell(p)}
@@ -5351,7 +5495,7 @@ function renderLeaderboards() {
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
         <div><span class="level-pill ${r.level === "MLB" ? "level-mlb" : "level-neutral"}">${escapeHtml(r.level || "—")}</span></div>
-        <div style="text-align:center;">${fvLabel !== "—" ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+        <div style="text-align:center;">${fvLabel !== "—" ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div style="text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:700;color:var(--text-primary);">${cfg.fmt(v)}</div>
         <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${cfg.support(r)}</div>
       </div>`;
@@ -5449,7 +5593,7 @@ function renderInjured() {
         <div><span class="grad-pill" style="background:var(--accent-il-soft);color:var(--accent-il);border:1px solid var(--accent-il-border);">${escapeHtml(il.type || "?")} IL</span></div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12px;color:var(--text-secondary);">${escapeHtml(since || "—")}</div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;color:var(--neon-amber);font-weight:600;">${days}d</div>
-        <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+        <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.3;">${escapeHtml(reason)}</div>
       </div>`;
   }).join("");
@@ -5528,7 +5672,7 @@ function renderRecentlyTraded() {
           ${methodPill}
           <span style="font-size:11px;">${contextLine}</span>
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeConfidence(p)}</span>${fvTrendHTML(p)}</div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>${fvTrendHTML(p)}</div>
         <div class="line-chart-cell desktop-only">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
         <div class="candle-cell desktop-only">${makeCandle(p)}</div>
       </div>
@@ -7398,8 +7542,33 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
   }
 
   const pts = points.map(pt => `${xScale(pt.snapshot_date).toFixed(1)},${yScale(pt.consensus_fv_raw).toFixed(1)}`).join(" ");
+  // Build a hover tooltip that surfaces the consensus FV plus the
+  // per-source breakdown at that snapshot. Sources sorted highest FV
+  // first; sources with rank-only (no FV) appended at the end so the
+  // reader still sees which lists carried the player.
+  const buildPointTitle = (pt) => {
+    const head = `${pt.snapshot_date} · ${pt.interval_label} · FV ${pt.consensus_fv_label}`;
+    const ps = pt.per_source || {};
+    const entries = Object.entries(ps);
+    if (!entries.length) return head;
+    const withFv = entries.filter(([, v]) => v && v.fv_published != null);
+    const rankOnly = entries.filter(([, v]) => v && v.fv_published == null && v.rank != null);
+    withFv.sort(([, a], [, b]) => b.fv_published - a.fv_published);
+    const parts = withFv.map(([src, v]) => {
+      const lbl = SOURCE_LABELS[src] || src;
+      const fvShown = Number.isInteger(v.fv_published) ? v.fv_published : v.fv_published.toFixed(1);
+      const rk = v.rank != null ? ` (#${v.rank})` : "";
+      return `${lbl} ${fvShown}${rk}`;
+    });
+    const rankParts = rankOnly.map(([src, v]) => `${SOURCE_LABELS[src] || src} #${v.rank}`);
+    const sources = [...parts, ...rankParts].join(" · ");
+    const spreadTail = (pt.fv_spread != null && withFv.length >= 2)
+      ? `\nspread ${Math.round(pt.fv_spread)} across ${withFv.length} sources`
+      : "";
+    return `${head}\n── ${sources}${spreadTail}`;
+  };
   const circles = points.map(pt =>
-    `<circle cx="${xScale(pt.snapshot_date).toFixed(1)}" cy="${yScale(pt.consensus_fv_raw).toFixed(1)}" r="3" fill="${stroke}"><title>${pt.snapshot_date} · ${pt.interval_label} · FV ${pt.consensus_fv_label}</title></circle>`
+    `<circle cx="${xScale(pt.snapshot_date).toFixed(1)}" cy="${yScale(pt.consensus_fv_raw).toFixed(1)}" r="3" fill="${stroke}"><title>${escapeHtml(buildPointTitle(pt))}</title></circle>`
   ).join("");
 
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="FV trajectory">
@@ -8113,7 +8282,7 @@ function renderPlayerDetail(key) {
   const avl = p.age_vs_level || {};
   const fvLabel = latest ? latest.consensus_fv_label : "—";
   const fvBadge = latest
-    ? `<span class="fv-badge ${fvClass(fvLabel)} size-lg${fvBadgeWideClass(p)}" style="margin-top:4px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeConfidence(p)}</span>`
+    ? `<span class="fv-badge ${fvClass(fvLabel)} size-lg${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" style="margin-top:4px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>`
     : "";
 
   // Rank pills — overall position in the FV-sorted active list, plus org
@@ -8144,10 +8313,57 @@ function renderPlayerDetail(key) {
       <div style="text-align:right;">
         <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Current FV</div>
         ${fvBadge}
-        ${(p.fv_high != null || p.fv_low != null || p.fv_open != null || p.fv_close != null) ? `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;font-variant-numeric:tabular-nums;" title="High / Low across history · Open at start of current month · Close = latest">Range ${p.fv_low_label ?? p.fv_low ?? "—"}–${p.fv_high_label ?? p.fv_high ?? "—"} · O ${p.fv_open ?? "—"} · C ${p.fv_close ?? "—"}</div>` : ""}
+        ${(() => {
+          if (p.fv_high == null && p.fv_low == null && p.fv_open == null && p.fv_close == null) return "";
+          const fmtFvDate = d => {
+            if (!d) return "";
+            const dt = new Date(d + "T00:00:00");
+            if (isNaN(dt.getTime())) return "";
+            return dt.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+          };
+          const hDate = fmtFvDate(p.fv_high_date);
+          const lDate = fmtFvDate(p.fv_low_date);
+          const lowText = p.fv_low_label ?? p.fv_low ?? "—";
+          const highText = p.fv_high_label ?? p.fv_high ?? "—";
+          const lowFull = p.fv_low_date ? ` (${lDate})` : "";
+          const highFull = p.fv_high_date ? ` (${hDate})` : "";
+          const tipParts = ["High / Low across history · Open at start of current month · Close = latest"];
+          if (p.fv_high_date) tipParts.push(`High first hit: ${p.fv_high_date}`);
+          if (p.fv_low_date) tipParts.push(`Low first hit: ${p.fv_low_date}`);
+          const tip = tipParts.join(" · ");
+          return `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">Range ${lowText}${lowFull}–${highText}${highFull} · O ${p.fv_open ?? "—"} · C ${p.fv_close ?? "—"}</div>`;
+        })()}
+        ${(() => {
+          const s = p.stock;
+          if (!s) return "";
+          const fmtDate = d => {
+            if (!d) return "";
+            const dt = new Date(d + "T00:00:00");
+            if (isNaN(dt.getTime())) return d;
+            return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+          };
+          const sinceTxt = s.from_date ? ` since ${fmtDate(s.from_date)}` : "";
+          const tipParts = [];
+          if (s.from_label != null && s.to_label != null) tipParts.push(`FV ${s.from_label} → ${s.to_label}`);
+          if (s.from_date && s.to_date) tipParts.push(`${s.from_date} → ${s.to_date}`);
+          else if (s.from_date) tipParts.push(`since ${s.from_date}`);
+          const tip = tipParts.join(" · ");
+          if (s.direction === "graduated") {
+            return `<div><span class="detail-stock-chip stock-chip-grad" title="${escapeHtml(tip || "Graduated")}">GRAD</span></div>`;
+          }
+          if (s.direction === "flat" || s.delta == null || Math.abs(s.delta) < 1.5) {
+            return `<div><span class="detail-stock-chip stock-chip-flat" title="${escapeHtml(tip || "No meaningful FV movement")}">— flat</span></div>`;
+          }
+          const arrow = s.delta > 0 ? "▲" : "▼";
+          const sign = s.delta > 0 ? "+" : "";
+          const cls = s.delta > 0 ? "stock-chip-up" : "stock-chip-down";
+          return `<div><span class="detail-stock-chip ${cls}" title="${escapeHtml(tip)}">${arrow} ${sign}${s.delta.toFixed(1)} FV${sinceTxt ? `<span class="detail-stock-chip-since"> · ${escapeHtml(sinceTxt.trim())}</span>` : ""}</span></div>`;
+        })()}
         ${latest && latest.avg_rank != null ? `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:4px;">Avg rank #${latest.avg_rank.toFixed(1)}</div>` : ""}
         <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:10px;align-items:center;">
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
+          <button class="watch-btn" id="detail-copy-url" type="button" title="Copy shareable link" aria-label="Copy link">🔗</button>
+          <button class="watch-btn" id="detail-copy-key" type="button" data-copy-key="${escapeHtml(p.player_key)}" title="Copy player key" aria-label="Copy player key">⧉</button>
           <button class="compare-add-btn${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button">${compareHas(p.player_key) ? "✓ In compare" : "+ Add to compare"}</button>
         </div>
       </div>
@@ -8187,8 +8403,26 @@ function renderPlayerDetail(key) {
                  : acqMethod === "contract_purchase" ? "Purchase"
                  : null;
   const acqYear = (p.acquisition && p.acquisition.year) || null;
-  const acqSub = p.acquisition && p.acquisition.method === "draft" && p.acquisition.pick_overall != null
-    ? `Pick #${p.acquisition.pick_overall}` : (acqYear ? String(acqYear) : "");
+  // For non-draft/non-IFA acquisitions (trade, waiver, rule 5...), surface
+  // the from→to org path inline in the sub-text and enumerate any
+  // bounce-through intermediaries via a tooltip. `current_acquisition.event`
+  // carries `from_org`, `to_org`, and the new `bounce_via` array.
+  const curEv = (p.current_acquisition && p.current_acquisition.event) || null;
+  const bounceVia = (curEv && Array.isArray(curEv.bounce_via)) ? curEv.bounce_via : [];
+  const bouncePathTxt = bounceVia.length
+    ? bounceVia.map(b => `via ${escapeHtml(b.org)} (${b.days}d)`).join(" · ")
+    : "";
+  let acqSub = "";
+  if (p.acquisition && p.acquisition.method === "draft" && p.acquisition.pick_overall != null) {
+    acqSub = `Pick #${p.acquisition.pick_overall}`;
+  } else if (curEv && curEv.from_org && curEv.to_org && (acqMethod === "trade" || acqMethod === "waiver_claim" || acqMethod === "rule_5")) {
+    const tip = bouncePathTxt
+      ? `${curEv.from_org} → ${curEv.to_org} — ${bouncePathTxt.replace(/&[a-z]+;/g, "")}`
+      : `${curEv.from_org} → ${curEv.to_org}`;
+    acqSub = `<span title="${escapeHtml(tip)}">${escapeHtml(curEv.from_org)} → ${escapeHtml(curEv.to_org)}${bounceVia.length ? ` <span style="color:var(--neon-violet);font-size:9px;" title="${escapeHtml(bouncePathTxt)}">•${bounceVia.length}</span>` : ""}</span>`;
+  } else if (acqYear) {
+    acqSub = String(acqYear);
+  }
   const hpStints = hp.il_stints_24mo || 0;
   const hpDays = hp.il_days_24mo || 0;
   const healthHeadline = hp.is_post_tj ? "Post-TJ"
@@ -8228,12 +8462,36 @@ function renderPlayerDetail(key) {
                    : wagDeltaTile < -0.05 ? "var(--down)"
                    : "var(--text-primary)";
   const wagRateTile = wagDeltaTile != null ? gradWarPerYr(p) : null;
+  // Career WAR-by-year sparkline — a tiny SVG bar chart of the
+  // graduate's WAR by season. Bars above the centerline = positive
+  // WAR, below = negative. Each bar carries a per-year <title> for
+  // hover. Empty/silent when no seasons data is on file.
+  const careerWarSparkline = (() => {
+    const seasons = (p.career_war && p.career_war.seasons) || null;
+    if (!seasons) return "";
+    const years = Object.keys(seasons).filter(y => seasons[y] != null).sort();
+    if (!years.length) return "";
+    const wars = years.map(y => Number(seasons[y]));
+    const maxAbs = Math.max(1, ...wars.map(v => Math.abs(v)));
+    const w = 96, h = 22;
+    const barW = Math.max(5, Math.floor((w - 4) / years.length) - 2);
+    const mid = h / 2;
+    const bars = wars.map((v, i) => {
+      const barH = Math.abs(v) / maxAbs * (h / 2 - 1.5);
+      const x = 2 + i * (barW + 2);
+      const y = v >= 0 ? mid - barH : mid;
+      const fill = v >= 0 ? "var(--up)" : "var(--down)";
+      const tipVal = v >= 0 ? `+${v.toFixed(1)}` : v.toFixed(1);
+      return `<rect x="${x}" y="${y.toFixed(1)}" width="${barW}" height="${barH.toFixed(1)}" fill="${fill}"><title>${years[i]}: ${tipVal} WAR</title></rect>`;
+    }).join("");
+    return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="display:block;margin-top:4px;" aria-label="Career WAR by season"><line x1="0" y1="${mid}" x2="${w}" y2="${mid}" stroke="var(--border-light)" stroke-width="0.5"/>${bars}</svg>`;
+  })();
   const wagTile = wagDeltaTile != null ? [
     "WAG",
     `<span style="color:${wagColor};">${wagDeltaTile > 0 ? "+" : ""}${wagDeltaTile.toFixed(2)} WAR/yr</span>`,
     p.fv_close != null
-      ? `vs ${Math.round(p.fv_close)} FV proj · ${wagRateTile.war_seasons_count} MLB season${wagRateTile.war_seasons_count === 1 ? "" : "s"} (PT-weighted)`
-      : "",
+      ? `vs ${Math.round(p.fv_close)} FV proj · ${wagRateTile.war_seasons_count} MLB season${wagRateTile.war_seasons_count === 1 ? "" : "s"} (PT-weighted)${careerWarSparkline}`
+      : `${careerWarSparkline}`,
   ] : null;
   const tiles = [
     ["Age vs. level", ageTileValue, ageSub],
@@ -8354,11 +8612,7 @@ function renderPlayerDetail(key) {
     const statHeaders = isP
       ? `<th>ERA vs lvl</th><th>WHIP vs lvl</th><th>K/9 vs lvl</th><th>BB/9 vs lvl</th>`
       : `<th>OPS vs lvl</th><th>ISO vs lvl</th><th>BB% vs lvl</th><th>K% vs lvl</th>`;
-    return `<div class="detail-title">Age &amp; level-relative performance
-        <span class="detail-title-sub">colored delta vs. the empirical level mean for each stat</span>
-        <span style="margin-left:8px;vertical-align:middle;display:inline-flex;gap:4px;flex-wrap:wrap;">${rpsPlusPillHTML(p)}${scoutRatesHTML(p)}</span>
-      </div>
-      <table class="detail-table"><thead><tr><th>Season</th><th>Level</th><th>Age vs lvl</th>${statHeaders}</tr></thead><tbody>${rows}</tbody></table>`;
+    return `<table class="detail-table"><thead><tr><th>Season</th><th>Level</th><th>Age vs lvl</th>${statHeaders}</tr></thead><tbody>${rows}</tbody></table>`;
   })();
 
   const chartSection = (p.points && p.points.length >= 2)
@@ -8366,7 +8620,26 @@ function renderPlayerDetail(key) {
        ${transactionLegend()}`
     : `<div style="color:var(--text-tertiary);font-size:12px;">Not enough FV updates yet for a chart.</div>`;
 
-  const careerSection = `<div class="detail-title">Stats by season</div>${makeCareerTable(p.career_stats)}`;
+  // Consolidated career table — was two adjacent tables (raw "Stats by
+  // season" + colored "Age & level-relative performance"). The toggle
+  // chip above flips between the two: ON (default) shows the colored
+  // delta-vs-level table; OFF strips the deltas and renders raw cells.
+  // State is ephemeral — re-render starts on deltas-ON. Title pill row
+  // mirrors the old "Age & level-relative" header (RPS+ / scout rates).
+  const careerRawTableHTML = makeCareerTable(p.career_stats);
+  const consolidatedCareerSection = (p.career_stats && p.career_stats.length)
+    ? `<div class="detail-title">Career by season
+         <span class="detail-title-sub">colored delta vs. level mean when "show level deltas" is on</span>
+         <span style="margin-left:8px;vertical-align:middle;display:inline-flex;gap:4px;flex-wrap:wrap;">${rpsPlusPillHTML(p)}${scoutRatesHTML(p)}</span>
+       </div>
+       <div style="margin-bottom:6px;">
+         <button type="button" class="chip active" data-career-toggle="deltas" style="font-size:10px;padding:3px 10px;">Show level deltas</button>
+       </div>
+       <div class="career-by-season" data-career-mode="deltas">
+         <div data-career-panel="deltas">${levelBenchmarkSection || careerRawTableHTML}</div>
+         <div data-career-panel="raw" style="display:none;">${careerRawTableHTML}</div>
+       </div>`
+    : "";
 
   const sourceSection = `<div class="detail-title">Source-by-source FV history</div>${makePerSourceHistory(p.points || [])}`;
 
@@ -8402,70 +8675,94 @@ function renderPlayerDetail(key) {
       const cls = val >= 110 ? "is-pos" : val <= 90 ? "is-neg" : "is-neutral";
       return `<span class="tool-pill ${cls}" title="ToolGrade+ ${val} · 100 = cohort mean composite, 10 pts = 1 stdev">T+${val}</span>`;
     };
-    const compositeRow = (label, raw, plus, sub) => {
+    // Composite chip — vertical stack: label · (grade badge + T+ pill).
+    // The headline (Overall) gets a slightly stronger background to
+    // anchor the eye; Off/Def/Stuff/Cmd are equally-weighted slots.
+    const compositeChip = (label, raw, plus, tip, headline) => {
       if (raw == null && plus == null) return "";
-      return `<div class="tools-composite-row">
-        <div>
-          <div class="tools-composite-label">${escapeHtml(label)}</div>
-          ${sub ? `<div style="font-size:10px;color:var(--text-tertiary);margin-top:1px;">${escapeHtml(sub)}</div>` : ""}
-        </div>
-        <div class="tools-composite-value">${badgeFor(raw)} ${plusPill(plus)}</div>
+      const titleAttr = tip ? ` title="${escapeHtml(tip)}"` : "";
+      const cls = headline ? "tools-composite-chip is-headline" : "tools-composite-chip";
+      return `<div class="${cls}"${titleAttr}>
+        <div class="tools-composite-chip-label">${escapeHtml(label)}</div>
+        <div class="tools-composite-chip-value">${badgeFor(raw)} ${plusPill(plus)}</div>
       </div>`;
     };
+    const dualMarkerHTML = `<span class="tool-dual-marker" title="Speed contributes to BOTH offensive (baserunning, BABIP, extra bases) and defensive (range, jumps) composites.">◆</span>`;
     const gradeCell = (key, label) => {
       const v = (t.grades || {})[key];
       const spread = (t.spread || {})[key];
       const spreadTag = (spread && spread >= 10)
         ? `<span style="font-size:9px;color:var(--neon-amber);margin-left:4px;" title="Source spread ${spread} grade-points">±${Math.round(spread)}</span>`
         : "";
+      const dualMark = key === "speed" ? dualMarkerHTML : "";
       return `<div class="tools-grade-cell">
-        <span class="tools-grade-name">${escapeHtml(label)}${spreadTag}</span>
+        <span class="tools-grade-name">${escapeHtml(label)}${dualMark}${spreadTag}</span>
         ${badgeFor(v)}
       </div>`;
     };
-    const overallRow = compositeRow("Overall", t.composite_overall, t.composite_overall_plus, "weighted composite");
+    let compositeBar = "";
     let groupBlocks = "";
+    let hasSpeedMarker = false;
     if (isPitcher) {
-      const stuffRow = compositeRow("Stuff", t.composite_stuff, t.composite_stuff_plus, "avg of pitch grades");
-      const cmdRow = compositeRow("Command", t.composite_cmd, t.composite_cmd_plus, "control / command grade");
+      const overallChip = compositeChip("Overall", t.composite_overall, t.composite_overall_plus,
+        "Weighted composite: 65% stuff + 35% command", true);
+      const stuffChip = compositeChip("Stuff", t.composite_stuff, t.composite_stuff_plus,
+        "Average of pitch grades (fastball + secondaries)", false);
+      const cmdChip = compositeChip("Command", t.composite_cmd, t.composite_cmd_plus,
+        "Control / command grade", false);
+      compositeBar = (overallChip || stuffChip || cmdChip)
+        ? `<div class="tools-composite-bar">${overallChip}${stuffChip}${cmdChip}</div>`
+        : "";
       const stuffGrid = ["fb","sl","cb","ch"]
         .filter(k => (t.grades || {})[k] != null)
         .map(k => gradeCell(k, ({fb:"Fastball", sl:"Slider", cb:"Curveball", ch:"Changeup"})[k]))
         .join("");
-      const cmdGrid = gradeCell("cmd", "Command");
+      const cmdGrid = (t.grades || {}).cmd != null ? gradeCell("cmd", "Command") : "";
       groupBlocks = `
-        ${stuffRow}
         ${stuffGrid ? `<div class="tools-grade-grid">${stuffGrid}</div>` : ""}
-        ${cmdRow}
-        ${(t.grades || {}).cmd != null ? `<div class="tools-grade-grid">${cmdGrid}</div>` : ""}
+        ${cmdGrid ? `<div class="tools-grade-grid">${cmdGrid}</div>` : ""}
       `;
     } else {
-      const offRow = compositeRow("Offensive", t.composite_off, t.composite_off_plus, "hit · pwr · speed");
-      const defRow = compositeRow("Defensive", t.composite_def, t.composite_def_plus, "field · throw");
-      const offGrid = ["hit","game_pwr","raw_pwr","speed"]
+      const overallChip = compositeChip("Overall", t.composite_overall, t.composite_overall_plus,
+        "Weighted composite: 70% offensive + 30% defensive", true);
+      const offChip = compositeChip("Offensive", t.composite_off, t.composite_off_plus,
+        "Average of hit · game power · raw power · speed", false);
+      const defChip = compositeChip("Defensive", t.composite_def, t.composite_def_plus,
+        "Average of field · throw · speed", false);
+      compositeBar = (overallChip || offChip || defChip)
+        ? `<div class="tools-composite-bar">${overallChip}${offChip}${defChip}</div>`
+        : "";
+      // Unified grade grid — speed appears once (with the ◆ dual marker)
+      // even though it contributes to both composites. Order mirrors the
+      // 5-tool scouting convention: hit / power / speed / field / throw.
+      const hitterOrder = ["hit","game_pwr","raw_pwr","speed","field","throw"];
+      const labels = {hit:"Hit", game_pwr:"Game pwr", raw_pwr:"Raw pwr",
+                      speed:"Speed", field:"Field", throw:"Throw"};
+      const cells = hitterOrder
         .filter(k => (t.grades || {})[k] != null)
-        .map(k => gradeCell(k, ({hit:"Hit", game_pwr:"Game pwr", raw_pwr:"Raw pwr", speed:"Speed"})[k]))
+        .map(k => {
+          if (k === "speed") hasSpeedMarker = true;
+          return gradeCell(k, labels[k]);
+        })
         .join("");
-      const defGrid = ["field","throw"]
-        .filter(k => (t.grades || {})[k] != null)
-        .map(k => gradeCell(k, ({field:"Field", throw:"Throw"})[k]))
-        .join("");
-      groupBlocks = `
-        ${offRow}
-        ${offGrid ? `<div class="tools-grade-grid">${offGrid}</div>` : ""}
-        ${defRow}
-        ${defGrid ? `<div class="tools-grade-grid">${defGrid}</div>` : ""}
-      `;
+      groupBlocks = cells ? `<div class="tools-grade-grid">${cells}</div>` : "";
     }
     const sources = (t.publishing_sources || [])
       .map(s => SOURCE_LABELS[s] || s)
       .join(" · ");
-    const footer = sources
-      ? `<div class="tools-footer">Publishing: ${escapeHtml(sources)}</div>`
+    const footerParts = [];
+    if (hasSpeedMarker) {
+      footerParts.push(`<span class="tools-footer-legend">◆</span> Speed counts toward both composites`);
+    }
+    if (sources) {
+      footerParts.push(`Publishing: ${escapeHtml(sources)}`);
+    }
+    const footer = footerParts.length
+      ? `<div class="tools-footer">${footerParts.join("<br>")}</div>`
       : "";
     return `<div class="detail-title">Tools <span class="detail-title-sub">20-80 scouting grades · consensus across sources</span></div>
       <div class="tools-card">
-        ${overallRow}
+        ${compositeBar}
         ${groupBlocks}
         ${footer}
       </div>`;
@@ -8635,19 +8932,24 @@ function renderPlayerDetail(key) {
   // consensus is unanimous or split. Compact one-row-per-source list
   // with each FV in its tier color, dimmed when the source hasn't
   // updated recently.
-  const perSourceSection = (() => {
+  // Tabbed per-source consensus card — combines FV-per-source and
+  // tool-grade-per-source into a single accordion-internal card with a
+  // FV / Tools tab strip. Per-source is power-user info; the accordion
+  // placement keeps it from competing with health/tools/savant cards
+  // above the fold. State is ephemeral — re-render starts on FV tab.
+  const perSourceTabbedSection = (() => {
     const latestPt = p.points && p.points.length
       ? p.points[p.points.length - 1] : null;
     if (!latestPt || !latestPt.per_source) return "";
     const entries = Object.entries(latestPt.per_source);
     if (!entries.length) return "";
-    // Display order: highest FV first, then alphabetical for ties.
-    entries.sort(([, av], [, bv]) => {
+    // FV panel ----------------------------------------------------------
+    const sortedFvEntries = entries.slice().sort(([, av], [, bv]) => {
       const ax = av.fv_published ?? -1;
       const bx = bv.fv_published ?? -1;
       return bx - ax;
     });
-    const sourceRows = entries.map(([src, info]) => {
+    const sourceRows = sortedFvEntries.map(([src, info]) => {
       const fvNum = info.fv_published;
       const rank = info.rank;
       const lbl = SOURCE_LABELS[src] || src;
@@ -8663,11 +8965,6 @@ function renderPlayerDetail(key) {
         <td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;">${fvCell}</td>
       </tr>`;
     }).join("");
-    // Disagreement summary — uses fv_min/fv_max/fv_spread/fv_stddev
-    // computed in consensus.compute_consensus_point. Only meaningful for
-    // ≥2 explicit FV sources; single-source players get a low-confidence
-    // pill instead. Wide-spread badge fires at ≥10 grade points (a "two
-    // tier" disagreement, e.g., 45 vs 55).
     const explicitFvSources = entries.filter(([, v]) => v.fv_published != null).length;
     let disagreementLine = "";
     if (latestPt.fv_spread != null && latestPt.fv_min != null && latestPt.fv_max != null) {
@@ -8686,74 +8983,72 @@ function renderPlayerDetail(key) {
         : "";
       disagreementLine = `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;">
         <span style="display:inline-block;padding:1px 6px;border:1px dashed var(--neon-amber);border-radius:10px;color:var(--neon-amber);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;">n=1 · pulled down</span>
-        <span style="margin-left:6px;">consensus pulled 1/3 toward FV 35${rawTxt} · add a second source to remove</span>
+        <span style="margin-left:6px;">consensus pulled 1/3 toward FV 35${rawTxt} · the dashed amber outline on the FV badge marks this state; add a second source to remove</span>
       </div>`;
     }
-    return `<div class="detail-title">Source consensus <span class="detail-title-sub">latest grade per source</span></div>
-      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">
-        ${disagreementLine}
-        <table style="width:100%;border-collapse:collapse;font-size:11.5px;">
-          <thead><tr style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;">
-            <th style="text-align:left;padding-bottom:4px;">Source</th>
-            <th style="text-align:right;padding-bottom:4px;">Rank</th>
-            <th style="text-align:right;padding-bottom:4px;">FV</th>
-          </tr></thead>
-          <tbody>${sourceRows}</tbody>
-        </table>
-      </div>`;
-  })();
+    const fvPanelHTML = `
+      ${disagreementLine}
+      <table style="width:100%;border-collapse:collapse;font-size:11.5px;">
+        <thead><tr style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;">
+          <th style="text-align:left;padding-bottom:4px;">Source</th>
+          <th style="text-align:right;padding-bottom:4px;">Rank</th>
+          <th style="text-align:right;padding-bottom:4px;">FV</th>
+        </tr></thead>
+        <tbody>${sourceRows}</tbody>
+      </table>`;
 
-  // Per-source tool consensus — mirrors the FV per-source block above
-  // but tabulates each source's tool grades. Hitter and pitcher headers
-  // differ; sources that didn't publish any tool grade are omitted so
-  // an FG-only profile doesn't show empty ESPN/Pipeline rows.
-  const toolPerSourceSection = (() => {
-    const latestPt = p.points && p.points.length
-      ? p.points[p.points.length - 1] : null;
-    if (!latestPt || !latestPt.per_source) return "";
-    const entries = Object.entries(latestPt.per_source)
-      .filter(([, v]) => v && v.tools && Object.keys(v.tools).length);
-    if (!entries.length) return "";
-    const isPitcher = !!((p.statline || {}).is_pitcher
-                        || (p.sabermetrics || {}).is_pitcher
-                        || ["RHP","LHP","SP","RP","MIRP","SIRP","P"].includes((p.position||"").split("/")[0]));
-    const keys = isPitcher
-      ? [["fb","FB"],["sl","SL"],["cb","CB"],["ch","CH"],["cmd","CMD"]]
-      : [["hit","HIT"],["game_pwr","GPWR"],["raw_pwr","RPWR"],["speed","SPD"],["field","FLD"],["throw","ARM"]];
-    const headerCells = keys.map(([, lbl]) =>
-      `<th style="text-align:right;padding-bottom:4px;">${lbl}</th>`).join("");
-    const cell = (v) => v == null
-      ? `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;color:var(--text-tertiary);font-size:10px;">—</td>`
-      : `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;"><span class="fv-badge ${fvClass(String(Math.round(v)))} size-xs">${Math.round(v)}</span></td>`;
-    const rows = entries.map(([src, info]) => {
-      const lbl = SOURCE_LABELS[src] || src;
-      const cells = keys.map(([k]) => cell((info.tools || {})[k])).join("");
-      return `<tr>
-        <td style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 6px 3px 0;border-bottom:1px solid var(--border-light);">${escapeHtml(lbl)}</td>
-        ${cells}
-      </tr>`;
-    }).join("");
-    // Wide-spread pill when any single tool has >=10-point spread across
-    // sources — same idiom as the FV wide-spread pill above.
-    const spread = latestPt.tools_spread || {};
-    const widest = Object.entries(spread).reduce(
-      (acc, [k, v]) => (v != null && v > (acc[1] ?? -1)) ? [k, v] : acc, [null, null]);
-    const wideTag = (widest[1] != null && widest[1] >= 10)
-      ? `<div style="font-size:11px;color:var(--neon-amber);margin-bottom:6px;font-family:var(--font-mono);">
-           <span style="display:inline-block;padding:1px 6px;border:1px solid var(--neon-amber);border-radius:10px;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;margin-right:6px;">wide tool spread</span>
-           ${escapeHtml(widest[0])} ranges ${widest[1]} pts across sources
-         </div>`
-      : "";
-    return `<div class="detail-title">Tool consensus <span class="detail-title-sub">latest tool grades per source</span></div>
-      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">
+    // Tools panel -------------------------------------------------------
+    const toolEntries = entries.filter(([, v]) => v && v.tools && Object.keys(v.tools).length);
+    let toolsPanelHTML = "";
+    if (toolEntries.length) {
+      const isPitcherTab = !!((p.statline || {}).is_pitcher
+                          || (p.sabermetrics || {}).is_pitcher
+                          || ["RHP","LHP","SP","RP","MIRP","SIRP","P"].includes((p.position||"").split("/")[0]));
+      const keys = isPitcherTab
+        ? [["fb","FB"],["sl","SL"],["cb","CB"],["ch","CH"],["cmd","CMD"]]
+        : [["hit","HIT"],["game_pwr","GPWR"],["raw_pwr","RPWR"],["speed","SPD"],["field","FLD"],["throw","ARM"]];
+      const headerCells = keys.map(([, lbl]) =>
+        `<th style="text-align:right;padding-bottom:4px;">${lbl}</th>`).join("");
+      const cellTool = (v) => v == null
+        ? `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;color:var(--text-tertiary);font-size:10px;">—</td>`
+        : `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;"><span class="fv-badge ${fvClass(String(Math.round(v)))} size-xs">${Math.round(v)}</span></td>`;
+      const toolRows = toolEntries.map(([src, info]) => {
+        const lbl = SOURCE_LABELS[src] || src;
+        const cells = keys.map(([k]) => cellTool((info.tools || {})[k])).join("");
+        return `<tr>
+          <td style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 6px 3px 0;border-bottom:1px solid var(--border-light);">${escapeHtml(lbl)}</td>
+          ${cells}
+        </tr>`;
+      }).join("");
+      const spread = latestPt.tools_spread || {};
+      const widest = Object.entries(spread).reduce(
+        (acc, [k, v]) => (v != null && v > (acc[1] ?? -1)) ? [k, v] : acc, [null, null]);
+      const wideTag = (widest[1] != null && widest[1] >= 10)
+        ? `<div style="font-size:11px;color:var(--neon-amber);margin-bottom:6px;font-family:var(--font-mono);">
+             <span style="display:inline-block;padding:1px 6px;border:1px solid var(--neon-amber);border-radius:10px;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;margin-right:6px;">wide tool spread</span>
+             ${escapeHtml(widest[0])} ranges ${widest[1]} pts across sources
+           </div>`
+        : "";
+      toolsPanelHTML = `
         ${wideTag}
         <table style="width:100%;border-collapse:collapse;font-size:11px;">
           <thead><tr style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;">
             <th style="text-align:left;padding-bottom:4px;">Source</th>
             ${headerCells}
           </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
+          <tbody>${toolRows}</tbody>
+        </table>`;
+    }
+    const toolsTabAvailable = !!toolsPanelHTML;
+    const tabStrip = `<div class="per-source-tabs">
+        <button type="button" class="chip active" data-per-source-tab="fv">FV</button>
+        ${toolsTabAvailable ? `<button type="button" class="chip" data-per-source-tab="tools">Tools</button>` : ""}
+      </div>`;
+    return `<div class="detail-title">Source consensus <span class="detail-title-sub">latest per source · FV + tool grades</span></div>
+      <div class="per-source-card" style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">
+        ${tabStrip}
+        <div class="per-source-panel" data-per-source-panel="fv">${fvPanelHTML}</div>
+        ${toolsTabAvailable ? `<div class="per-source-panel" data-per-source-panel="tools" style="display:none;">${toolsPanelHTML}</div>` : ""}
       </div>`;
   })();
 
@@ -8870,9 +9165,18 @@ function renderPlayerDetail(key) {
     const desc = ev.description
       ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;line-height:1.4;">${escapeHtml(ev.description)}</div>`
       : "";
+    // Bounce-via line: when an intermediary org held the player briefly
+    // (TOR → SFG → MIA collapses to TOR → MIA in the headline; SFG
+    // surfaces here as a "via" annotation so the full path stays
+    // reconstructable from the UI).
+    const bounceVia = Array.isArray(ev.bounce_via) ? ev.bounce_via : [];
+    const bounceLine = bounceVia.length
+      ? `<div style="font-size:11px;color:var(--neon-violet);margin-top:4px;font-family:var(--font-mono);letter-spacing:0.02em;" title="Intermediate stops collapsed into the headline trade">${bounceVia.map(b => `via ${escapeHtml(b.org)} (${b.days} day${b.days === 1 ? "" : "s"})`).join(" · ")}</div>`
+      : "";
     return `<div class="detail-title">Acquired by current org · ${escapeHtml(label)}</div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
         <div style="font-size:14px;color:var(--text-primary);">From ${from} <span style="color:var(--neon-violet);">→</span> ${to}</div>
+        ${bounceLine}
         ${dateLine}
         ${desc}
       </div>`;
@@ -8916,6 +9220,44 @@ function renderPlayerDetail(key) {
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">${rows}</div>`;
   })();
 
+  // Similar prospects — cross-org match by position bucket + FV ±2 + age
+  // ±1. Surfaces comps that share the player's role and grade so the
+  // reader can scan how the same archetype is graded around the league.
+  // Hidden when no matches; same compact-row idiom as sameFarmSection.
+  const similarProspectsSection = (() => {
+    const myBucket = positionBucket(p.position);
+    const myFv = p.fv_close_raw != null ? p.fv_close_raw : p.fv_close;
+    if (myBucket == null || myFv == null || p.age == null) return "";
+    const matches = (DATA.players || [])
+      .filter(t => t.player_key !== p.player_key)
+      .filter(t => positionBucket(t.position) === myBucket)
+      .filter(t => {
+        const tFv = t.fv_close_raw != null ? t.fv_close_raw : t.fv_close;
+        return tFv != null && Math.abs(tFv - myFv) <= 2;
+      })
+      .filter(t => t.age != null && Math.abs(t.age - p.age) <= 1)
+      .sort((a, b) => {
+        const aFv = a.fv_close_raw != null ? a.fv_close_raw : a.fv_close;
+        const bFv = b.fv_close_raw != null ? b.fv_close_raw : b.fv_close;
+        if (bFv !== aFv) return bFv - aFv;
+        return (a.age || 99) - (b.age || 99);
+      })
+      .slice(0, 4);
+    if (!matches.length) return "";
+    const rows = matches.map(t => {
+      const tFv = t.fv_close_raw != null ? t.fv_close_raw : t.fv_close;
+      const orgTag = t.org
+        ? `<span style="color:var(--text-tertiary);font-size:9.5px;margin-left:4px;">${escapeHtml(t.org)}</span>`
+        : "";
+      return `<div data-key="${escapeHtml(t.player_key)}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-light);cursor:pointer;font-size:12px;">
+        <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;">${escapeHtml(t.player_name)} <span style="color:var(--text-tertiary);font-size:10px;">${escapeHtml(t.position || "—")} · ${t.age != null ? t.age.toFixed(1) + "y" : "—"}</span>${orgTag}</span>
+        <span class="fv-badge ${fvClass(String(Math.round(tFv)))} size-sm">${Math.round(tFv)}</span>
+      </div>`;
+    }).join("");
+    return `<div class="detail-title">Similar prospects <span class="detail-title-sub">same position · FV ±2 · age ±1</span></div>
+      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">${rows}</div>`;
+  })();
+
   // Scouting flags get distilled into the "Age & level-relative
   // performance" table cells (green/red deltas vs level mean). When the
   // server-side flag layer carries scout-narrative notes, we surface
@@ -8953,21 +9295,38 @@ function renderPlayerDetail(key) {
       <textarea class="player-note-area" data-note-key="${escapeHtml(p.player_key)}" placeholder="Scouting notes, follow-up reminders, links — saved as you type.">${escapeHtml(existing)}</textarea>`;
   })();
 
+  // Jump-link chip strip — quick in-page nav under the header. Only
+  // chips for sections that actually render are shown; the strip itself
+  // is hidden when fewer than 3 chips would appear (avoids a vestigial
+  // 1-chip noise bar on data-thin profiles).
+  const jumpLinkPairs = [
+    ["Chart",   "detail-chart",     !!chartSection],
+    ["Stats",   "detail-stats",     !!consolidatedCareerSection],
+    ["Tools",   "detail-tools",     !!toolsSection],
+    ["Health",  "detail-health",    !!healthSection],
+    ["Savant",  "detail-savant",    !!savantSection],
+    ["Arsenal", "detail-arsenal",   !!arsenalSection],
+  ].filter(([, , show]) => show);
+  const jumpLinkStrip = jumpLinkPairs.length >= 3
+    ? `<nav class="detail-jumplinks" aria-label="Jump to section">${jumpLinkPairs.map(([label, id]) =>
+        `<a href="#${id}">${escapeHtml(label)}</a>`).join("")}</nav>`
+    : "";
+
   // Two-column layout: chart + career on the left, secondary blocks on the right.
   // The right column wraps in a sticky container so on tall pages the
   // context blocks (health / Savant / events / same-farm) follow the
   // user's scroll once they pass the chart + career section.
-  root.innerHTML = header + tilesHtml + flagSummary + `
+  const wrap = (id, html) => html ? `<div id="${id}">${html}</div>` : "";
+  root.innerHTML = header + tilesHtml + flagSummary + jumpLinkStrip + `
     <div class="player-detail-grid">
-      <div>${chartSection}${careerSection}${levelBenchmarkSection}${sourceSection}</div>
-      <div class="player-detail-side">${noteSection}${ilSection}${healthSection}${sabermetricsSection}${toolsSection}${savantSection}${perSourceSection}${toolPerSourceSection}${arsenalSection}${sameFarmSection}${(() => {
+      <div>${wrap("detail-chart", chartSection)}${wrap("detail-stats", consolidatedCareerSection)}${sourceSection}</div>
+      <div class="player-detail-side">${noteSection}${ilSection}${wrap("detail-health", healthSection)}${sabermetricsSection}${wrap("detail-tools", toolsSection)}${wrap("detail-savant", savantSection)}${wrap("detail-arsenal", arsenalSection)}${sameFarmSection}${similarProspectsSection}${(() => {
         // Below-the-fold context collapses into a <details> accordion so
-        // the eye reaches the high-priority cards (health / Savant / per-
-        // source) without scrolling past 11 stacked sections. Sections
-        // inside are reference info — acquisition history, current
-        // acquisition card, transactions, ETA, MLB roster status —
-        // valuable when wanted but rarely the reason to open the page.
-        const moreSections = [acqSection, currentAcqSection, tradesSection, etaRows, rosterStatusSection]
+        // the eye reaches the high-priority cards (health / Savant /
+        // tools) without scrolling past 11 stacked sections. The
+        // per-source consensus card lives here — power-user info worth
+        // having but not what the typical reader opens the page for.
+        const moreSections = [perSourceTabbedSection, acqSection, currentAcqSection, tradesSection, etaRows, rosterStatusSection]
           .filter(Boolean).join("");
         if (!moreSections) return "";
         return `<details class="player-detail-more" style="margin-top:10px;">
@@ -11109,6 +11468,75 @@ function attachHandlers() {
       e.stopPropagation();
       state.watchlistTab = wlTabBtn.dataset.wlTab;
       renderWatchlist();
+      return;
+    }
+    // Combined per-source card: FV / Tools tab swap. Local DOM mutation
+    // only; state isn't persisted, so a re-render of the detail page
+    // resets to the FV tab. Lives inside the More details accordion.
+    const perSrcTabBtn = e.target.closest("[data-per-source-tab]");
+    if (perSrcTabBtn) {
+      e.stopPropagation();
+      const card = perSrcTabBtn.closest(".per-source-card");
+      if (card) {
+        const tab = perSrcTabBtn.dataset.perSourceTab;
+        card.querySelectorAll("[data-per-source-tab]").forEach(b => {
+          b.classList.toggle("active", b.dataset.perSourceTab === tab);
+        });
+        card.querySelectorAll("[data-per-source-panel]").forEach(panel => {
+          panel.style.display = (panel.dataset.perSourcePanel === tab) ? "" : "none";
+        });
+      }
+      return;
+    }
+    // Career-by-season "Show level deltas" toggle — flips the deltas
+    // panel and the raw panel inside the consolidated career table.
+    // Default ON; state is ephemeral.
+    const careerToggleBtn = e.target.closest("[data-career-toggle]");
+    if (careerToggleBtn) {
+      e.stopPropagation();
+      const wrap = careerToggleBtn.parentElement && careerToggleBtn.parentElement.nextElementSibling;
+      if (wrap && wrap.classList.contains("career-by-season")) {
+        const wasOn = careerToggleBtn.classList.contains("active");
+        const nowOn = !wasOn;
+        careerToggleBtn.classList.toggle("active", nowOn);
+        const targetMode = nowOn ? "deltas" : "raw";
+        wrap.dataset.careerMode = targetMode;
+        wrap.querySelectorAll("[data-career-panel]").forEach(panel => {
+          panel.style.display = (panel.dataset.careerPanel === targetMode) ? "" : "none";
+        });
+      }
+      return;
+    }
+    // Detail-header share buttons — copy current URL or raw player_key.
+    // Feedback is the title attribute briefly flipping to "Copied!" then
+    // restoring; no toast infrastructure needed.
+    const copyUrlBtn = e.target.closest("#detail-copy-url");
+    if (copyUrlBtn) {
+      e.stopPropagation();
+      const url = window.location.href;
+      const restore = copyUrlBtn.title;
+      navigator.clipboard.writeText(url).then(() => {
+        copyUrlBtn.title = "Copied link!";
+        setTimeout(() => { copyUrlBtn.title = restore; }, 1200);
+      }).catch(() => {
+        copyUrlBtn.title = "Copy failed";
+        setTimeout(() => { copyUrlBtn.title = restore; }, 1200);
+      });
+      return;
+    }
+    const copyKeyBtn = e.target.closest("#detail-copy-key");
+    if (copyKeyBtn) {
+      e.stopPropagation();
+      const key = copyKeyBtn.dataset.copyKey || "";
+      if (!key) return;
+      const restore = copyKeyBtn.title;
+      navigator.clipboard.writeText(key).then(() => {
+        copyKeyBtn.title = "Copied key!";
+        setTimeout(() => { copyKeyBtn.title = restore; }, 1200);
+      }).catch(() => {
+        copyKeyBtn.title = "Copy failed";
+        setTimeout(() => { copyKeyBtn.title = restore; }, 1200);
+      });
       return;
     }
     const row = e.target.closest("[data-key], [data-org]");
