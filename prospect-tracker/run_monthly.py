@@ -92,6 +92,126 @@ def _is_career_fresh(fetched_at: str | None, max_age_days: int) -> bool:
     return (_dt.utcnow() - ts).days < max_age_days
 
 
+def rebuild_only(out_dir: Path = Path("data")) -> None:
+    """Fast export-only path: ingest any FG drops, rebuild the timeseries
+    from the current DB state, write `data/timeseries.json`. No scraping,
+    no MLB API calls. Use after a fangraphs_csv drop when you don't want
+    to wait through the full monthly pipeline."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        stream=sys.stdout,
+    )
+    log = logging.getLogger("rebuild_only")
+    init_db()
+
+    # First: drain the FanGraphs drop folder so any waiting CSVs land
+    # in the DB before we rebuild.
+    try:
+        from fangraphs_csv import ingest_drops as _fg_ingest_drops
+        fg_inserted, fg_files = _fg_ingest_drops(called_from_run_monthly=True)
+        if fg_files:
+            log.info("fangraphs_csv: ingested %d snapshots from %d report-set(s)",
+                     fg_inserted, fg_files)
+    except Exception:
+        log.exception("fangraphs_csv: drop-folder ingest failed — continuing")
+
+    log.info("rebuild_only: loading snapshots + ancillary tables from DB")
+    all_snaps = load_all_snapshots()
+    timeseries = build_timeseries(all_snaps)
+    log.info("rebuild_only: built timeseries for %d players", len(timeseries))
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "timeseries.json"
+    export_timeseries_json(
+        timeseries, out_path,
+        statlines=load_statlines(),
+        pitch_arsenals=load_pitch_arsenals(),
+        sabermetrics=load_sabermetrics(),
+        trades_by_player=load_trades(),
+        transactions_by_player=_derive_all_transactions(),
+        career_stats=load_career_stats(),
+        career_war=load_career_war(),
+        acquisitions=load_acquisitions(),
+        il_status=load_il_status(),
+        rosters_by_org={},  # rosters_by_org is built at scrape time
+        level_changes=_derive_all_level_changes(),
+        roster_status={},
+        ifa_spending_by_org={},
+        contracts_by_key={},
+        draft_pools={},
+        player_ids={},
+    )
+
+    # Post-export sanity: surface what landed in the JSON so the user
+    # doesn't have to grep the file.
+    _post_export_summary(out_path, all_snaps, log)
+
+
+def _derive_all_level_changes() -> dict:
+    """Helper: rebuild level_changes_by_key from the cached transactions
+    table without firing any HTTP calls. Mirrors the per-player loop in
+    main(). Used by rebuild_only()."""
+    try:
+        from stats import derive_level_changes
+        from team_affil import load_team_affil
+    except Exception:
+        return {}
+    tx_cache = load_player_transactions()
+    try:
+        team_affil = load_team_affil()
+    except Exception:
+        team_affil = {}
+    out: dict = {}
+    for key, tx_rows in (tx_cache or {}).items():
+        try:
+            evs = derive_level_changes(tx_rows, team_affil)
+            if evs:
+                out[key] = evs
+        except Exception:
+            continue
+    return out
+
+
+def _derive_all_transactions() -> dict:
+    """Helper: rebuild transactions_by_key from cached per-player tx rows."""
+    try:
+        from stats import derive_transactions
+    except Exception:
+        return {}
+    tx_cache = load_player_transactions()
+    out: dict = {}
+    for key, tx_rows in (tx_cache or {}).items():
+        try:
+            txs = derive_transactions(tx_rows)
+            if txs:
+                out[key] = txs
+        except Exception:
+            continue
+    return out
+
+
+def _post_export_summary(out_path: Path, all_snaps, log) -> None:
+    """Final log line summarizing what just got written. Helps the user
+    confirm a regen actually picked up the new fangraphs rows."""
+    try:
+        from collections import Counter
+        src_counter = Counter()
+        latest_date = ""
+        for s in all_snaps:
+            src_counter[s.source] += 1
+            if s.snapshot_date > latest_date:
+                latest_date = s.snapshot_date
+        fg_count = src_counter.get("fangraphs", 0)
+        n_total = sum(src_counter.values())
+        n_sources = len(src_counter)
+        log.info("timeseries.json refreshed: %d snapshots across %d sources "
+                 "(latest %s, fangraphs rows: %d) → %s",
+                 n_total, n_sources, latest_date or "n/a", fg_count, out_path)
+    except Exception:
+        log.exception("post-export summary failed (non-fatal)")
+
+
 def main(force_refetch: bool = False, skip_stats: bool = False,
          out_dir: Path = Path("data"), workers: int | None = None,
          cache_ttl: int | None = None, no_cache: bool = False, fast: bool = False):
@@ -133,9 +253,12 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # downstream pipeline.
         try:
             from fangraphs_csv import ingest_drops as _fg_ingest_drops
-            fg_inserted, fg_files = _fg_ingest_drops()
+            # called_from_run_monthly=True so the function knows the
+            # full pipeline will refresh timeseries.json downstream and
+            # suppresses the standalone-rebuild hint.
+            fg_inserted, fg_files = _fg_ingest_drops(called_from_run_monthly=True)
             if fg_files:
-                log.info("fangraphs_csv: ingested %d snapshots from %d file(s)",
+                log.info("fangraphs_csv: ingested %d snapshots from %d report-set(s)",
                          fg_inserted, fg_files)
         except Exception:
             log.exception("fangraphs_csv: drop-folder ingest failed — "
@@ -948,6 +1071,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                draft_pools=draft_pools,
                                player_ids=ids_by_key)
         log.info("wrote %s", out_path)
+        _post_export_summary(out_path, all_snaps, log)
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
                    notes=f"{len(timeseries)} players, {len(new_trades)} trades")
@@ -980,9 +1104,18 @@ if __name__ == "__main__":
                     help="Skip pitch arsenals + Statcast metrics fetch. "
                          "Core consensus FV / stat lines still fetched. "
                          "Useful for local dev iterations.")
+    ap.add_argument("--rebuild-only", action="store_true",
+                    help="Skip scraping entirely. Ingest any pending "
+                         "FanGraphs CSV drops, then rebuild + export "
+                         "data/timeseries.json from the current DB state. "
+                         "Use after dropping new FG CSVs to push the data "
+                         "to the website without rerunning the full pipeline.")
     args = ap.parse_args()
     if args.dry_run:
         probe(force=args.force)
+        sys.exit(0)
+    if args.rebuild_only:
+        rebuild_only(out_dir=args.out_dir)
         sys.exit(0)
     main(force_refetch=args.force, skip_stats=args.skip_stats, out_dir=args.out_dir,
          workers=args.workers, cache_ttl=args.cache_ttl, no_cache=args.no_cache,

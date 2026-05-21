@@ -1,25 +1,43 @@
-"""Auto-ingest FanGraphs board CSV exports — v2, four-CSV report sets.
+"""Auto-ingest FanGraphs board CSV exports — v3, four-CSV report sets.
 
 A complete FanGraphs board report is FOUR CSVs sharing the same PlayerId:
 
-  * summary-<slug>.csv          (Top 100, FV, Risk/Trend, signing info, report)
-  * position-<slug>.csv         (hitter tools w/ pres-fut, Versa, Con Style)
-  * pitching-<slug>.csv         (pitch tools, TJ Date, FB Type, Sits/Tops)
-  * physicalattributes-<slug>.csv  (Frame, Athl, Levers, Arm, Perf, Delivery)
+  * summary    — Top 100, FV, Risk/Trend, signing info, scouting report
+  * position   — hitter tools w/ pres/fut, Versa, Con Style, Hard Hit%,
+                 Avg EV / Max EV
+  * pitching   — pitch tools, TJ Date, FB Type, Sits/Tops, RPM FB / RPM Break
+  * physical   — Frame, Athl, Levers, Arm, Perf, Delivery
 
-Files sharing the same <slug> get joined into one Snapshot per player.
-The summary CSV is the only one strictly required; the other three add
-extras when present.
+Two supported drop layouts (both work; mix and match freely):
+
+  1. **Subfolder per report set** (preferred — simplest naming):
+
+        data/fangraphs_imports/<slug>/<any-name>.csv  × 4 files
+
+     Folder name is the slug. Files inside can have any name; their
+     type (summary / position / pitching / physical) is detected from
+     the column-header signature.
+
+  2. **Legacy flat layout** (still supported):
+
+        data/fangraphs_imports/<type>-<slug>.csv
+
+     Filename pattern: `summary-2025_Updated.csv`, etc. Type comes from
+     the prefix.
 
 Publish date is auto-detected from the row-level decimal Age column:
 ``snapshot_date = birth_date + age × 365.25 days``. We use birth dates
 already on file (storage.load_birth_dates) and take the median across
-~20 players to land within a day of the true publication date.
+matched players. Falls back to file mtime when too few birth dates align.
 
 Tool grades come as "<present> / <future>" strings. The future grade
 lands at the top of `snapshot.tools` (consensus.py expects future-as-
 canonical). Present grades + all non-grade extras nest under
 ``_extras`` in the same JSON blob.
+
+**After dropping new CSVs**: run `python run_monthly.py --rebuild-only`
+to push the new data to `data/timeseries.json` (and therefore the
+website) without waiting through the full monthly pipeline.
 """
 
 from __future__ import annotations
@@ -300,6 +318,10 @@ def _parse_position_row(raw: dict) -> dict | None:
     out["contact_style"] = _str_or_none(row.get("con style"))
     out["versa"]         = _str_or_none(row.get("versa"))
     out["hard_hit_pct"]  = _to_pct(row.get("hard hit%"))
+    # Older FG exports (2021-2024) publish raw exit-velo columns
+    # alongside Hard Hit%. Land as decimal MPH in extras.
+    out["avg_ev"]        = _to_float(row.get("avg ev"))
+    out["max_ev"]        = _to_float(row.get("max ev"))
     return out
 
 
@@ -326,6 +348,9 @@ def _parse_pitching_row(raw: dict) -> dict | None:
     out["fb_type"]       = _str_or_none(row.get("fb type"))
     out["sits"]          = _str_or_none(row.get("sits"))
     out["tops"]          = _str_or_none(row.get("tops"))
+    # Statcast-style spin columns from older boards (2021-2024).
+    out["rpm_fb"]        = _to_int(row.get("rpm fb"))
+    out["rpm_break"]     = _to_int(row.get("rpm break"))
     return out
 
 
@@ -498,13 +523,14 @@ def _build_snapshot(merged: dict, slug: str, snapshot_date: str) -> Snapshot:
         extras["report"] = rpt
 
     # Position-block extras.
-    for k in ("pitch_sel", "bat_ctrl", "contact_style", "versa", "hard_hit_pct"):
+    for k in ("pitch_sel", "bat_ctrl", "contact_style", "versa",
+              "hard_hit_pct", "avg_ev", "max_ev"):
         v = pos_block.get(k)
         if v is not None and v != "":
             extras[k] = v
 
     # Pitching-block extras.
-    for k in ("tj_date", "fb_type", "sits", "tops"):
+    for k in ("tj_date", "fb_type", "sits", "tops", "rpm_fb", "rpm_break"):
         v = pit_block.get(k)
         if v is not None and v != "":
             extras[k] = v
@@ -564,14 +590,127 @@ def _group_drops(files: list[Path]) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Content-based CSV type classifier
+# ---------------------------------------------------------------------------
+
+def _classify_csv(headers: list[str] | set[str]) -> str | None:
+    """Decide which of {summary, position, pitching, physical} a CSV is
+    by looking at its header set. Returns None when no signature
+    matches. Used by the subfolder layout where files can have any name.
+
+    Signatures (normalized to lowercase + stripped):
+      summary  → has 'report' column (the long scouting prose)
+      position → has 'hit' + at least one of {pitch sel, versa, con style}
+      pitching → has 'fb type' OR 'tj date'
+      physical → has both 'frame' and 'athl'
+    """
+    norm = {str(h).strip().lower() for h in (headers or [])}
+    if "report" in norm:
+        return "summary"
+    if "fb type" in norm or "tj date" in norm:
+        return "pitching"
+    if "hit" in norm and (
+        "pitch sel" in norm or "versa" in norm or "con style" in norm
+    ):
+        return "position"
+    if "frame" in norm and "athl" in norm:
+        return "physical"
+    return None
+
+
+def _sniff_headers(path: Path) -> list[str]:
+    """Read just the first line of a CSV to get its header list. Returns
+    an empty list when the file can't be decoded with any known
+    encoding."""
+    for enc in ("utf-8-sig", "utf-8", "latin-1", "cp1252"):
+        try:
+            with path.open(encoding=enc, newline="") as f:
+                reader = csv.reader(f)
+                try:
+                    return next(reader)
+                except StopIteration:
+                    return []
+        except UnicodeDecodeError:
+            continue
+    return []
+
+
+def _group_subfolders(drop_dir: Path) -> list[dict]:
+    """Walk one-level-deep subfolders of the drop dir. Each subfolder
+    is one report set; the folder name is the slug; the CSVs inside
+    auto-classify by content. Returns a list of group dicts identical
+    in shape to those produced by `_group_drops()`."""
+    out: list[dict] = []
+    if not drop_dir.is_dir():
+        return out
+    for sub in sorted(drop_dir.iterdir()):
+        if not sub.is_dir():
+            continue
+        if sub.name == "processed":
+            continue
+        if sub.name.startswith("."):
+            continue
+        csvs = sorted(p for p in sub.glob("*.csv") if p.is_file())
+        if not csvs:
+            continue
+        grp: dict = {"slug": sub.name, "_is_subfolder": True,
+                     "_folder": sub, "_unclassified": []}
+        for path in csvs:
+            headers = _sniff_headers(path)
+            ftype = _classify_csv(headers)
+            if ftype is None:
+                grp["_unclassified"].append(path)
+                continue
+            if ftype in grp:
+                # Two files of the same type in one report set — keep the
+                # newer mtime, log the duplicate.
+                log.warning("fangraphs_csv: duplicate %s CSV in '%s' "
+                            "(%s and %s); keeping the newer file",
+                            ftype, sub.name, grp[ftype].name, path.name)
+                if path.stat().st_mtime > grp[ftype].stat().st_mtime:
+                    grp[ftype] = path
+                continue
+            grp[ftype] = path
+        out.append(grp)
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Orchestrator
 # ---------------------------------------------------------------------------
 
 def ingest_drops(today: date | None = None,
                  drop_dir: Path | None = None,
                  processed_dir: Path | None = None,
-                 birth_dates: dict[str, str] | None = None) -> tuple[int, int]:
+                 birth_dates: dict[str, str] | None = None,
+                 called_from_run_monthly: bool = False) -> tuple[int, int]:
     """Scan the drop folder, group CSVs by slug, ingest each report set.
+
+    Two layouts supported (use whichever is more convenient — they can
+    coexist in the same drop folder):
+
+    1. **Subfolder per report set** (preferred): each report set lives
+       in its own subfolder. Folder name = slug. CSVs inside can have
+       any name; their type is detected from the column headers via
+       `_classify_csv()`.
+
+    2. **Legacy flat layout**: CSVs at the root of the drop folder
+       named `<type>-<slug>.csv` (e.g. `summary-2025_Updated.csv`).
+
+    On success, the whole subfolder (layout 1) or the individual files
+    (layout 2) move into `processed/<slug>__<date>/` so the same drop
+    isn't re-ingested on a subsequent run.
+
+    **IMPORTANT: This only writes to the snapshots DB.** The frontend
+    serves `data/timeseries.json`, which is regenerated by
+    `export_timeseries_json()` inside `run_monthly.py`. If you call
+    `ingest_drops()` directly (not via `run_monthly.py`), you MUST
+    follow up with `python run_monthly.py --rebuild-only` to refresh
+    the JSON. The function prints a reminder line when this is needed.
+
+    Args:
+      called_from_run_monthly: pass True from inside `run_monthly.py`
+        so the standalone-rebuild hint is suppressed.
 
     Returns ``(snapshots_inserted, report_sets_processed)``.
     """
@@ -592,24 +731,33 @@ def ingest_drops(today: date | None = None,
                           "falling back to mtime-only date detection")
             birth_dates = {}
 
-    files = sorted(p for p in drop_dir.glob("*.csv") if p.is_file())
-    if not files:
+    # Two-pass collection: subfolders first (new layout), then loose
+    # CSVs at the drop-dir root (legacy <type>-<slug>.csv pattern).
+    groups: list[dict] = []
+    groups.extend(_group_subfolders(drop_dir))
+    loose_files = sorted(p for p in drop_dir.glob("*.csv") if p.is_file())
+    if loose_files:
+        groups.extend(_group_drops(loose_files))
+
+    if not groups:
         return 0, 0
 
-    groups = _group_drops(files)
     inserted_total = 0
     sets_processed = 0
     for grp in groups:
         if grp.get("slug") == "__unparseable__":
             for p in grp.get("_files", []):
                 log.warning("fangraphs_csv: skipping %s — filename does "
-                            "not match <type>-<slug>.csv", p.name)
+                            "not match <type>-<slug>.csv and no recognized "
+                            "header signature", p.name)
             continue
         slug = grp["slug"]
         if "summary" not in grp:
+            present = sorted(k for k in grp
+                             if k not in {"slug", "_is_subfolder", "_folder",
+                                          "_unclassified"})
             log.warning("fangraphs_csv: skipping report set '%s' — missing "
-                        "required summary-<slug>.csv (have: %s)",
-                        slug, sorted(k for k in grp if k != "slug"))
+                        "summary CSV (have: %s)", slug, present)
             continue
         n, ok = _process_one_set(grp, slug, birth_dates, today,
                                  processed_dir, insert_snapshots)
@@ -619,6 +767,15 @@ def ingest_drops(today: date | None = None,
 
     log.info("fangraphs_csv: ingested %d snapshots from %d report-set(s)",
              inserted_total, sets_processed)
+
+    # Reminder for standalone callers: just writing to the DB isn't
+    # enough — the timeseries.json export must be rebuilt for the
+    # website to see the new data.
+    if inserted_total > 0 and not called_from_run_monthly:
+        log.info("fangraphs_csv: %d new snapshots inserted into the DB. "
+                 "Run 'python run_monthly.py --rebuild-only' to push the "
+                 "new data into data/timeseries.json so the website "
+                 "picks it up.", inserted_total)
     return inserted_total, sets_processed
 
 
@@ -685,18 +842,28 @@ def _process_one_set(grp: dict, slug: str, birth_dates: dict[str, str],
         log.exception("fangraphs_csv: insert_snapshots failed on slug %s", slug)
         return 0, False
 
-    # Move all four files into a per-set processed subfolder.
-    set_dir = processed_dir / f"{slug}__{snapshot_date}"
-    set_dir.mkdir(parents=True, exist_ok=True)
-    for ftype in ("summary", "position", "pitching", "physical"):
-        src = grp.get(ftype)
-        if src is None:
-            continue
+    # Move the whole report set into `processed/<slug>__<date>/`.
+    # Subfolder layout: rename the entire folder. Flat layout: move
+    # each typed CSV one at a time + any unclassified loose files that
+    # came along for the ride.
+    set_dest = processed_dir / f"{slug}__{snapshot_date}"
+    if grp.get("_is_subfolder") and grp.get("_folder"):
         try:
-            shutil.move(str(src), str(set_dir / src.name))
+            shutil.move(str(grp["_folder"]), str(set_dest))
         except Exception:
-            log.exception("fangraphs_csv: could not move %s to processed/",
-                          src.name)
+            log.exception("fangraphs_csv: could not move folder %s "
+                          "to processed/", grp["_folder"])
+    else:
+        set_dest.mkdir(parents=True, exist_ok=True)
+        for ftype in ("summary", "position", "pitching", "physical"):
+            src = grp.get(ftype)
+            if src is None:
+                continue
+            try:
+                shutil.move(str(src), str(set_dest / src.name))
+            except Exception:
+                log.exception("fangraphs_csv: could not move %s to processed/",
+                              src.name)
     log.info("fangraphs_csv: ingested %d snapshots from report-set "
              "(slug=%s, date=%s, rows=%d)",
              n, slug, snapshot_date, len(snapshots))

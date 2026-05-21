@@ -1,4 +1,4 @@
-"""Tests for the FanGraphs four-CSV auto-ingest (v2)."""
+"""Tests for the FanGraphs four-CSV auto-ingest (v3)."""
 
 from __future__ import annotations
 
@@ -18,6 +18,9 @@ from fangraphs_csv import (
     _join_report_set,
     _build_snapshot,
     _detect_publish_date,
+    _classify_csv,
+    _sniff_headers,
+    _group_subfolders,
     ingest_drops,
 )
 
@@ -447,3 +450,203 @@ class TestIngestDrops:
         )
         assert n_inserted == 0
         assert n_sets == 0
+
+
+# ---------------------------------------------------------------------------
+# Content-based CSV type classifier
+# ---------------------------------------------------------------------------
+
+class TestClassifyCsv:
+    def test_summary_signature(self):
+        headers = ["Top 100", "Org Rk", "Name", "Org", "Pos", "FV",
+                   "Report", "Video", "PlayerId"]
+        assert _classify_csv(headers) == "summary"
+
+    def test_position_signature_with_versa(self):
+        headers = ["Name", "Pos", "Org", "Top 100", "Hit", "Versa",
+                   "Con Style", "Hard Hit%", "FV", "PlayerId"]
+        assert _classify_csv(headers) == "position"
+
+    def test_position_signature_old_layout(self):
+        # Older FG exports (2021-2024) don't have Versa/Con Style but
+        # do have Pitch Sel + Hit.
+        headers = ["Name", "Pos", "Org", "Top 100", "Hit", "Pitch Sel",
+                   "Bat Ctrl", "Game Pwr", "Avg EV", "Max EV", "Hard Hit%",
+                   "FV", "PlayerId"]
+        assert _classify_csv(headers) == "position"
+
+    def test_pitching_signature(self):
+        headers = ["Name", "Pos", "Org", "TJ Date", "FB Type", "FB",
+                   "SL", "CMD", "Sits", "Tops", "FV", "PlayerId"]
+        assert _classify_csv(headers) == "pitching"
+
+    def test_physical_signature(self):
+        headers = ["Name", "Pos", "Age", "Frame", "Athl", "Levers",
+                   "Arm", "Perf", "Delivery", "PlayerId"]
+        assert _classify_csv(headers) == "physical"
+
+    def test_unclassifiable(self):
+        headers = ["Foo", "Bar", "Baz"]
+        assert _classify_csv(headers) is None
+
+    def test_summary_wins_when_both_signatures_present(self):
+        # If a CSV somehow has both Report (summary) and Pitch Sel
+        # (position), the summary classification wins by ordering.
+        headers = ["Name", "Hit", "Pitch Sel", "Report"]
+        assert _classify_csv(headers) == "summary"
+
+
+# ---------------------------------------------------------------------------
+# Position parser — new extras
+# ---------------------------------------------------------------------------
+
+class TestPositionExtras:
+    def test_avg_ev_max_ev(self):
+        r = _parse_position_row({
+            "Name": "Test Bat", "Pos": "CF", "Org": "LAD",
+            "Hit": "60", "Avg EV": "92.5", "Max EV": "113.4",
+            "PlayerId": "111",
+        })
+        assert r["avg_ev"] == 92.5
+        assert r["max_ev"] == 113.4
+
+
+class TestPitchingExtras:
+    def test_rpm_columns(self):
+        r = _parse_pitching_row({
+            "Name": "Test Arm", "Pos": "SP", "Org": "NYM",
+            "FB": "60", "RPM FB": "2350", "RPM Break": "2800",
+            "PlayerId": "222",
+        })
+        assert r["rpm_fb"] == 2350
+        assert r["rpm_break"] == 2800
+
+
+# ---------------------------------------------------------------------------
+# Subfolder layout end-to-end
+# ---------------------------------------------------------------------------
+
+class TestSubfolderLayout:
+    def test_group_subfolders_classifies_by_content(self, tmp_path):
+        sub = tmp_path / "2025_Updated"
+        sub.mkdir()
+        (sub / "anything1.csv").write_text(_SUMMARY_CSV, encoding="utf-8")
+        (sub / "anything2.csv").write_text(_POSITION_CSV, encoding="utf-8")
+        (sub / "anything3.csv").write_text(_PITCHING_CSV, encoding="utf-8")
+        (sub / "anything4.csv").write_text(_PHYSICAL_CSV, encoding="utf-8")
+
+        groups = _group_subfolders(tmp_path)
+        assert len(groups) == 1
+        grp = groups[0]
+        assert grp["slug"] == "2025_Updated"
+        assert grp["_is_subfolder"] is True
+        assert "summary" in grp
+        assert "position" in grp
+        assert "pitching" in grp
+        assert "physical" in grp
+        assert grp["_unclassified"] == []
+
+    def test_subfolder_ingest_moves_whole_folder(self, tmp_path, monkeypatch):
+        inserted = []
+        monkeypatch.setattr("storage.insert_snapshots",
+                            lambda snaps: (inserted.extend(snaps), len(snaps))[1])
+        monkeypatch.setattr("storage.load_birth_dates", lambda: {
+            "konnor_griffin":  (date(2025, 7, 29) - timedelta(days=int(365.25 * 19.4361111))).isoformat(),
+            "bubba_chandler":  (date(2025, 7, 29) - timedelta(days=int(365.25 * 23.0472222))).isoformat(),
+        })
+
+        drop = tmp_path / "drop"
+        processed = drop / "processed"
+        drop.mkdir()
+        sub = drop / "2025_Updated"
+        sub.mkdir()
+        (sub / "filename-can-be-anything.csv").write_text(_SUMMARY_CSV, encoding="utf-8")
+        (sub / "another-anything.csv").write_text(_POSITION_CSV, encoding="utf-8")
+        (sub / "blah.csv").write_text(_PITCHING_CSV, encoding="utf-8")
+        (sub / "different.csv").write_text(_PHYSICAL_CSV, encoding="utf-8")
+
+        n_inserted, n_sets = ingest_drops(
+            today=date(2026, 1, 1),
+            drop_dir=drop, processed_dir=processed,
+        )
+        assert n_sets == 1
+        assert n_inserted == 2
+
+        # Whole folder moved to processed/<slug>__<date>/
+        moved_dirs = list(processed.glob("2025_Updated__*"))
+        assert len(moved_dirs) == 1
+        moved_files = sorted(p.name for p in moved_dirs[0].iterdir())
+        assert "filename-can-be-anything.csv" in moved_files
+        assert "another-anything.csv" in moved_files
+        assert "blah.csv" in moved_files
+        assert "different.csv" in moved_files
+        # Original subfolder gone.
+        assert not sub.exists()
+
+    def test_subfolder_missing_summary_stays_put(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("storage.insert_snapshots",
+                            lambda snaps: len(list(snaps)))
+        monkeypatch.setattr("storage.load_birth_dates", lambda: {})
+        drop = tmp_path / "drop"
+        processed = drop / "processed"
+        drop.mkdir()
+        sub = drop / "incomplete-set"
+        sub.mkdir()
+        (sub / "x.csv").write_text(_POSITION_CSV, encoding="utf-8")
+
+        n_inserted, n_sets = ingest_drops(
+            today=date(2026, 1, 1),
+            drop_dir=drop, processed_dir=processed,
+        )
+        assert n_sets == 0
+        assert sub.exists()  # folder stays for the user to fix
+
+
+# ---------------------------------------------------------------------------
+# called_from_run_monthly hint
+# ---------------------------------------------------------------------------
+
+class TestCalledFromRunMonthlyHint:
+    def test_standalone_call_prints_hint(self, tmp_path, monkeypatch, caplog):
+        import logging
+        caplog.set_level(logging.INFO, logger="fangraphs_csv")
+        monkeypatch.setattr("storage.insert_snapshots",
+                            lambda snaps: len(list(snaps)))
+        monkeypatch.setattr("storage.load_birth_dates", lambda: {
+            "konnor_griffin":  (date(2025, 7, 29) - timedelta(days=int(365.25 * 19.4361111))).isoformat(),
+            "bubba_chandler":  (date(2025, 7, 29) - timedelta(days=int(365.25 * 23.0472222))).isoformat(),
+        })
+
+        drop = tmp_path / "drop"
+        processed = drop / "processed"
+        drop.mkdir()
+        (drop / "summary-x.csv").write_text(_SUMMARY_CSV, encoding="utf-8")
+        ingest_drops(
+            today=date(2026, 1, 1),
+            drop_dir=drop, processed_dir=processed,
+            called_from_run_monthly=False,
+        )
+        joined = "\n".join(rec.getMessage() for rec in caplog.records)
+        assert "rebuild-only" in joined
+
+    def test_run_monthly_call_suppresses_hint(self, tmp_path, monkeypatch, caplog):
+        import logging
+        caplog.set_level(logging.INFO, logger="fangraphs_csv")
+        monkeypatch.setattr("storage.insert_snapshots",
+                            lambda snaps: len(list(snaps)))
+        monkeypatch.setattr("storage.load_birth_dates", lambda: {
+            "konnor_griffin":  (date(2025, 7, 29) - timedelta(days=int(365.25 * 19.4361111))).isoformat(),
+            "bubba_chandler":  (date(2025, 7, 29) - timedelta(days=int(365.25 * 23.0472222))).isoformat(),
+        })
+
+        drop = tmp_path / "drop"
+        processed = drop / "processed"
+        drop.mkdir()
+        (drop / "summary-x.csv").write_text(_SUMMARY_CSV, encoding="utf-8")
+        ingest_drops(
+            today=date(2026, 1, 1),
+            drop_dir=drop, processed_dir=processed,
+            called_from_run_monthly=True,
+        )
+        joined = "\n".join(rec.getMessage() for rec in caplog.records)
+        assert "rebuild-only" not in joined
