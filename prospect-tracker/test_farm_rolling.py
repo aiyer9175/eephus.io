@@ -16,7 +16,14 @@ from storage import (
     FARM_WEIGHT_TOP_END,
     FARM_WEIGHT_DEPTH,
     FARM_WEIGHT_TRAJECTORY,
+    FARM_WEIGHT_DVM_PLUS,
     FARM_WEIGHT_GRAD,
+    FARM_WEIGHT_TALENT_TRANSLATION,
+    FARM_WEIGHT_FINANCIAL_ROI,
+    FARM_WEIGHT_TOOLS_QUALITY,
+    FARM_WEIGHT_INTL_DEPTH,
+    FARM_WEIGHT_READINESS,
+    FARM_WEIGHT_HEALTH,
     FARM_TRAJECTORY_LOOKBACK_DAYS,
     FARM_TRAJECTORY_SMOOTH_WINDOW,
     FARM_GRAD_PIPELINE_MONTHS,
@@ -301,25 +308,53 @@ class TestLetterGrade:
 
 class TestCompositeWeights:
     def test_weights_sum_to_one(self):
-        total = (FARM_WEIGHT_TOP_END + FARM_WEIGHT_DEPTH
-                 + FARM_WEIGHT_TRAJECTORY + FARM_WEIGHT_GRAD)
-        assert abs(total - 1.0) < 1e-9
+        # Post-Overhaul: 10 components must sum to 1.0 exactly (allowing
+        # the usual float tolerance). FARM_WEIGHT_TRAJECTORY is now an
+        # alias for FARM_WEIGHT_DVM_PLUS — don't double-count it.
+        total = (FARM_WEIGHT_TOP_END
+                 + FARM_WEIGHT_DEPTH
+                 + FARM_WEIGHT_DVM_PLUS
+                 + FARM_WEIGHT_GRAD
+                 + FARM_WEIGHT_TALENT_TRANSLATION
+                 + FARM_WEIGHT_FINANCIAL_ROI
+                 + FARM_WEIGHT_TOOLS_QUALITY
+                 + FARM_WEIGHT_INTL_DEPTH
+                 + FARM_WEIGHT_READINESS
+                 + FARM_WEIGHT_HEALTH)
+        assert abs(total - 1.0) < 1e-9, f"weights sum to {total}, not 1.0"
 
     def test_top_end_is_the_dominant_signal(self):
         # The whole rationale of the overhaul — stars matter more than
-        # depth or trajectory. If someone re-tunes and breaks this
+        # any single other signal. If someone re-tunes and breaks this
         # invariant the test fails loud.
         assert FARM_WEIGHT_TOP_END > FARM_WEIGHT_DEPTH
-        assert FARM_WEIGHT_TOP_END > FARM_WEIGHT_TRAJECTORY
+        assert FARM_WEIGHT_TOP_END > FARM_WEIGHT_DVM_PLUS
         assert FARM_WEIGHT_TOP_END > FARM_WEIGHT_GRAD
+        assert FARM_WEIGHT_TOP_END > FARM_WEIGHT_TALENT_TRANSLATION
+        assert FARM_WEIGHT_TOP_END > FARM_WEIGHT_FINANCIAL_ROI
 
     def test_inventory_dominates_movement(self):
-        # Inventory (top_end + depth) should outweigh movement (trajectory
-        # + grad). Otherwise a flatlined-but-stacked farm can rank below
-        # a churning-but-empty one — which is what the overhaul kills.
+        # Inventory (top_end + depth) should outweigh movement (DvM+
+        # + grad). A flatlined-but-stacked farm should still rank
+        # above a churning-but-empty one.
         inventory = FARM_WEIGHT_TOP_END + FARM_WEIGHT_DEPTH
-        movement  = FARM_WEIGHT_TRAJECTORY + FARM_WEIGHT_GRAD
+        movement  = FARM_WEIGHT_DVM_PLUS + FARM_WEIGHT_GRAD
         assert inventory > movement
+
+    def test_big_four_still_majority(self):
+        # The original 4-component report card should still control
+        # most of the score; new components (WAG / ROI / Tools+ /
+        # IFA / Readiness / Health) augment, don't dominate.
+        big_four = (FARM_WEIGHT_TOP_END + FARM_WEIGHT_DEPTH
+                    + FARM_WEIGHT_DVM_PLUS + FARM_WEIGHT_GRAD)
+        assert big_four >= 0.55, f"big-four only {big_four}; should be >= 0.55"
+
+    def test_health_is_smallest_signal(self):
+        # Health is intentionally the lowest-weighted component — it's
+        # the most volatile + has the smallest predictive value among
+        # the new categories. Keep it that way.
+        assert FARM_WEIGHT_HEALTH <= FARM_WEIGHT_READINESS
+        assert FARM_WEIGHT_HEALTH <= FARM_WEIGHT_INTL_DEPTH
 
 
 # ---------------------------------------------------------------------------

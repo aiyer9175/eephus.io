@@ -1183,10 +1183,26 @@ FARM_TOP_END_COUNT  = 5             # top N prospects feeding the "stars" score
 FARM_DEPTH_START    = 5             # prospects #6 ...
 FARM_DEPTH_END      = 25            # ... through #25 feed the "depth" score
 
-FARM_WEIGHT_TOP_END     = 0.45
-FARM_WEIGHT_DEPTH       = 0.25
-FARM_WEIGHT_TRAJECTORY  = 0.15
-FARM_WEIGHT_GRAD        = 0.15
+# Farm-score blend weights — 10 components, sum to 1.0. The "big-4"
+# (Top-End + Depth + DvM+ + Grad Pipeline) still control ~70%; WAG and
+# Financial ROI add the MLB-impact lens (~18%); the three "Profile"
+# components (Tools+ / IFA depth / Readiness / Health) provide
+# secondary signal worth a combined ~12%. DvM+ REPLACED the raw
+# Trajectory weight (DvM+ is the z-scored, league-mean-anchored
+# version of the same delta — strictly more informative).
+FARM_WEIGHT_TOP_END             = 0.28
+FARM_WEIGHT_DEPTH               = 0.18
+FARM_WEIGHT_DVM_PLUS            = 0.12   # was FARM_WEIGHT_TRAJECTORY
+FARM_WEIGHT_GRAD                = 0.12
+FARM_WEIGHT_TALENT_TRANSLATION  = 0.10   # NEW — per-org WAG mean
+FARM_WEIGHT_FINANCIAL_ROI       = 0.08   # NEW — WAR per million spent
+FARM_WEIGHT_TOOLS_QUALITY       = 0.06   # NEW — top-10 mean composite_overall
+FARM_WEIGHT_INTL_DEPTH          = 0.03   # NEW — IFA % + multi-year span
+FARM_WEIGHT_READINESS           = 0.02   # NEW — (very_young - very_old) %
+FARM_WEIGHT_HEALTH              = 0.01   # NEW — INVERSE (lower burden = better)
+# Back-compat alias — kept so external imports don't break. The blend
+# no longer uses FARM_WEIGHT_TRAJECTORY directly; DvM+ took its slot.
+FARM_WEIGHT_TRAJECTORY  = FARM_WEIGHT_DVM_PLUS
 
 # Tiered FV → points. Anchored so an 80 ≈ "franchise piece" (worth ~100
 # org-filler prospects) and 40 ≈ "pulse, barely". The shape is roughly
@@ -1219,6 +1235,78 @@ def _fv_to_points(fv: float | int | None) -> float:
     hi_pts = FV_POINTS.get(hi, lo_pts)
     frac = (v - lo) / 5.0
     return round(lo_pts + (hi_pts - lo_pts) * frac, 3)
+
+
+# Hardcoded industry-standard FV → expected career WAR mapping.
+# Anchored to FanGraphs / public research:
+# https://blogs.fangraphs.com/the-new-fangraphs-scouting-primer/
+# Each FV tier maps to a typical career WAR projection at MLB retirement.
+# Used by _grad_wag() to compute WAR Above Grade per graduate, which then
+# rolls up to the per-org Talent Translation report-card grade.
+FV_EXPECTED_WAR = {
+    80: 60.0,   # HOF-tier (10+ year stars)
+    75: 40.0,
+    70: 25.0,   # Perennial All-Star
+    65: 17.0,
+    60: 12.0,   # Strong everyday regular
+    55:  6.0,
+    50:  3.0,   # Average regular
+    45:  1.5,
+    40:  0.5,
+    35:  0.1,
+    30:  0.0,
+    25:  0.0,
+    20:  0.0,
+}
+
+
+def _fv_to_expected_war(fv: float | int | None) -> float | None:
+    """Linear-interpolate FV (20-80) → expected career WAR via FV_EXPECTED_WAR.
+    Returns None for None / out-of-range inputs so the caller can distinguish
+    'no projection' from 'projected 0 WAR' (which is a valid 35-FV projection)."""
+    if fv is None:
+        return None
+    try:
+        v = float(fv)
+    except (TypeError, ValueError):
+        return None
+    if v < 20 or v > 80:
+        return None
+    keys = sorted(FV_EXPECTED_WAR.keys())
+    if v <= keys[0]:
+        return FV_EXPECTED_WAR[keys[0]]
+    if v >= keys[-1]:
+        return FV_EXPECTED_WAR[keys[-1]]
+    for i in range(len(keys) - 1):
+        lo, hi = keys[i], keys[i + 1]
+        if lo <= v <= hi:
+            t = (v - lo) / (hi - lo) if hi > lo else 0
+            return round(FV_EXPECTED_WAR[lo] + t * (FV_EXPECTED_WAR[hi] - FV_EXPECTED_WAR[lo]), 2)
+    return None
+
+
+def _grad_wag(graduate_payload: dict) -> float | None:
+    """WAG (WAR Above Grade) for one graduate: actual career WAR minus
+    the FV-implied expected WAR at the time of graduation.
+
+      WAG > 0 → graduate has outperformed their final prospect grade.
+      WAG < 0 → graduate has underperformed.
+      WAG = 0 → graduate is on the FV-implied trajectory.
+
+    Returns None when career_war is unknown OR when fv_close is missing
+    (e.g., a player who was never publicly graded). Distinct from
+    'returned a 0' — None means 'no projection possible'."""
+    cw = graduate_payload.get("career_war") or {}
+    total_war = cw.get("career_war")
+    fv_close = graduate_payload.get("fv_close_raw")
+    if fv_close is None:
+        fv_close = graduate_payload.get("fv_close")
+    if total_war is None or fv_close is None:
+        return None
+    expected = _fv_to_expected_war(fv_close)
+    if expected is None:
+        return None
+    return round(float(total_war) - expected, 2)
 
 
 def _top_end_points(prospects: list[dict], n: int = FARM_TOP_END_COUNT) -> float:
@@ -2959,6 +3047,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "stock_down": 0,
                 "stock_flat": 0,
                 "very_young_count": 0,
+                # Companion of very_young_count — drives the Readiness
+                # report-card grade. Net (very_young - very_old) per org.
+                "very_old_count": 0,
+                # Accumulators for the extended report-card grades
+                # added in the Farm System Overhaul. Populated below and
+                # finalized in the second pass after the actives loop.
+                "_active_keys": [],
+                "_ifa_years":  [],
+                "_ifa_count":  0,
+                "_post_tj_count": 0,
+                "_il_days_sum":   0,
+                "_il_days_count": 0,
             }
         m = org_map[org]
         m["prospects"].append({
@@ -2989,6 +3089,87 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             m["stock_flat"] += 1
         if avl.tier == "very-young":
             m["very_young_count"] += 1
+        elif avl.tier == "very-old":
+            m["very_old_count"] += 1
+
+        # Tools+ Quality accumulator — composite_overall (raw 20-80
+        # power-mean of per-tool grades). Computed directly from the
+        # latest consensus tools dict so it's available BEFORE the X+
+        # cohort normalization pass. We aggregate the raw composite,
+        # which is the right axis for "how good are the prospects'
+        # tools?" — the X+ normalization is for peer comparison, not
+        # cross-org quality.
+        is_pitcher_p = bool(p.position and p.position.split("/")[0] in PITCHER_POS_SET)
+        _comp = _compute_tool_composites(
+            dict(p.points[-1].tools_consensus) if p.points[-1].tools_consensus else None,
+            is_pitcher_p,
+        )
+        if _comp and _comp.get("composite_overall") is not None:
+            m.setdefault("_tools_comp_overall", []).append(float(_comp["composite_overall"]))
+
+        # Extended report-card accumulators (Farm Overhaul Step 5/6/7).
+        m["_active_keys"].append(p.player_key)
+        acq_rec = (acquisitions or {}).get(p.player_key) or {}
+        if acq_rec.get("method") == "international_fa":
+            m["_ifa_count"] += 1
+            y = acq_rec.get("year")
+            if y is not None:
+                m["_ifa_years"].append(y)
+        # Health profile (reuse the same helper the per-prospect path uses).
+        rs_player = (roster_status or {}).get(p.player_key) or {}
+        hp = _derive_health_profile(rs_player.get("injury_history") or [])
+        if hp.get("is_post_tj"):
+            m["_post_tj_count"] += 1
+        il_days = int(hp.get("il_days_12mo") or 0)
+        m["_il_days_sum"]   += il_days
+        m["_il_days_count"] += 1
+
+    # ── Per-org graduate aggregates (Farm Overhaul Steps 2 & 3) ──
+    # Walk graduates ONCE to compute:
+    #   - WAG sum + count (per-grad WAG via _grad_wag)
+    #   - Total career WAR (across grads with a value)
+    #   - Total bonus USD (across grads with bonus on file)
+    # All grouped by graduate's CURRENT org (per user's choice).
+    grad_agg: dict[str, dict] = {}
+    for gp in grads:
+        if not gp.points:
+            continue
+        # Resolve graduate's display org via the same helper actives use,
+        # falling back to the player's source org if needed.
+        gp_org = canonical_org(
+            _latest_post_graduation_org(gp, []) or
+            graduate_mlb_org_by_key.get(gp.player_key) or
+            roster_org_by_key.get(gp.player_key) or
+            gp.org
+        )
+        if not gp_org:
+            continue
+        # Build a minimal payload that _grad_wag can read.
+        cw = (career_war or {}).get(gp.player_key) or {}
+        fv_close_raw = (round(gp.points[-1].consensus_fv_raw, 2)
+                        if gp.points else None)
+        wag = _grad_wag({
+            "career_war":   cw,
+            "fv_close_raw": fv_close_raw,
+            "fv_close":     gp.fv_close,
+        })
+        career_war_val = cw.get("career_war")
+        bonus_usd = (acquisitions or {}).get(gp.player_key, {}).get("bonus_usd")
+
+        bucket = grad_agg.setdefault(gp_org, {
+            "wag_sum": 0.0, "wag_count": 0,
+            "war_sum": 0.0, "war_count": 0,
+            "bonus_sum": 0, "bonus_count": 0,
+        })
+        if wag is not None:
+            bucket["wag_sum"] += wag
+            bucket["wag_count"] += 1
+        if career_war_val is not None:
+            bucket["war_sum"] += float(career_war_val)
+            bucket["war_count"] += 1
+        if bonus_usd is not None:
+            bucket["bonus_sum"] += int(bonus_usd)
+            bucket["bonus_count"] += 1
 
     # Finalize each org entry
     org_summary = []
@@ -2999,6 +3180,77 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         m["avg_age"] = round(sum(ages) / len(ages), 1) if ages else None
         m["top_prospect"] = m["prospects"][0] if m["prospects"] else None
         m["youngest"] = min(m["prospects"], key=lambda x: x["age"] if x["age"] else 99) if m["prospects"] else None
+
+        # ── Farm Overhaul: per-org extended report-card aggregates ──
+        # Talent Translation (WAG) — mean of grad WAG values. Orgs with
+        # fewer than 3 graduates with valid WAG get None so they grade
+        # as "—" rather than D (no data isn't the same as bad data).
+        gagg = grad_agg.get(org) or {}
+        wag_count = gagg.get("wag_count") or 0
+        m["talent_translation"] = {
+            "wag_mean": (round(gagg["wag_sum"] / wag_count, 2)
+                         if wag_count >= 3 else None),
+            "wag_sum":  round(gagg.get("wag_sum") or 0.0, 2),
+            "grad_count": wag_count,
+        }
+        # Financial ROI — WAR per million USD spent on the grads who
+        # have both signing bonus AND career WAR on file. Requires the
+        # bonus union (we use a separate bonus_count gate so a free
+        # agent without a published bonus doesn't drag the ratio down).
+        bonus_sum = gagg.get("bonus_sum") or 0
+        war_sum = gagg.get("war_sum") or 0.0
+        m["financial_roi"] = {
+            "war_per_million": (round(war_sum / (bonus_sum / 1_000_000), 3)
+                                if bonus_sum >= 1_000_000 else None),
+            "total_career_war":  round(war_sum, 2),
+            "total_bonus_usd":   bonus_sum,
+            "grad_count_with_bonus": gagg.get("bonus_count") or 0,
+        }
+        # Tools+ Quality — top-10 mean of raw composite_overall (the
+        # 20-80 power-mean of per-tool grades). Top-10 (not all) so a
+        # top-heavy farm with raw-tools stars isn't dragged down by
+        # un-graded depth. NOTE: the value here is on the 20-80 scale,
+        # NOT the X+ (z-scored 100-anchored) scale — see Tools+ Quality
+        # glossary entry for why.
+        _comp_overalls = sorted(m.pop("_tools_comp_overall", []) or [], reverse=True)
+        m["tools_quality"] = {
+            "top10_mean":  round(sum(_comp_overalls[:10]) / len(_comp_overalls[:10]), 2)
+                            if _comp_overalls else None,
+            "mean":        round(sum(_comp_overalls) / len(_comp_overalls), 2)
+                            if _comp_overalls else None,
+            "graded_count": len(_comp_overalls),
+        }
+        # International Depth — IFA % and year-span across actives.
+        n_actives = len(m["prospects"]) or 1
+        ifa_year_span = len(set(m.pop("_ifa_years") or []))
+        ifa_count = m.pop("_ifa_count") or 0
+        m["international_depth"] = {
+            "ifa_pct":  round(ifa_count / n_actives, 3) if n_actives else 0,
+            "ifa_count": ifa_count,
+            "year_span": ifa_year_span,
+        }
+        # Readiness — (very_young - very_old) / total actives. Can go
+        # negative for organizationally over-age systems.
+        m["readiness"] = {
+            "pct_signal":       round((m["very_young_count"] - m["very_old_count"]) / n_actives, 3),
+            "very_young_count": m["very_young_count"],
+            "very_old_count":   m["very_old_count"],
+        }
+        # Health burden (LOWER IS BETTER) — combines post-TJ % and
+        # mean trailing 12-month IL days. The ranking layer below
+        # inverts so the LOWEST burden gets the BEST letter grade.
+        post_tj_count = m.pop("_post_tj_count") or 0
+        il_days_sum = m.pop("_il_days_sum") or 0
+        il_days_count = m.pop("_il_days_count") or 0
+        post_tj_pct = post_tj_count / n_actives if n_actives else 0
+        il_days_mean = (il_days_sum / il_days_count) if il_days_count else 0
+        m["health_burden"] = {
+            "score":       round(100 * post_tj_pct + il_days_mean, 2),
+            "post_tj_pct": round(post_tj_pct, 3),
+            "il_days_mean": round(il_days_mean, 1),
+            "post_tj_count": post_tj_count,
+        }
+        # _active_keys stays for the Tools+ second pass; popped later.
         org_summary.append(m)
 
     # Stable sort by total_fv for the moment — the composite farm_rank
@@ -3108,50 +3360,155 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             else:
                 entry["dvm_plus"][key] = 100
 
+    # Helper: normalize a list where some entries may be None (small-
+    # sample orgs without enough data). None values get the cohort
+    # median, so they sit dead-center in the blend instead of dragging
+    # the org to either extreme.
+    def _normalize_with_none(values: list[float | None]) -> list[float]:
+        present = [v for v in values if v is not None]
+        if not present:
+            return [50.0] * len(values)
+        norm = _normalize_to_100(present)
+        med = sorted(norm)[len(norm) // 2] if norm else 50.0
+        out: list[float] = []
+        idx = 0
+        for v in values:
+            if v is None:
+                out.append(med)
+            else:
+                out.append(norm[idx]); idx += 1
+        return out
+
     top_end_100 = _normalize_to_100([e["top_end_points"]      for e in org_summary])
     depth_100   = _normalize_to_100([e["depth_points"]        for e in org_summary])
-    traj_100    = _normalize_to_100([e["trajectory_score"]    for e in org_summary])
-    grad_100    = _normalize_to_100([e["grad_pipeline_score"] for e in org_summary])
+    # DvM+ replaces raw trajectory in the blend. The 1y window is the
+    # default report-card axis (matches the old behavior of using the
+    # 1y trajectory). DvM+ values are already 100-anchored, but we
+    # rescale them through _normalize_to_100 so the 0-100 band is
+    # consistent with the other components.
+    dvm_plus_100 = _normalize_to_100([e["dvm_plus"]["1y"]     for e in org_summary])
+    grad_100     = _normalize_to_100([e["grad_pipeline_score"] for e in org_summary])
+    # Also expose trajectory_100 for back-compat (UI tooltip still shows
+    # the raw value even though it no longer drives the letter grade).
+    traj_100     = _normalize_to_100([e["trajectory_score"]    for e in org_summary])
 
-    for entry, te, dp, tr, gr in zip(org_summary, top_end_100, depth_100, traj_100, grad_100):
+    # New components — None-safe normalization for small-sample orgs.
+    wag_100    = _normalize_with_none([(e["talent_translation"] or {}).get("wag_mean")        for e in org_summary])
+    roi_100    = _normalize_with_none([(e["financial_roi"]      or {}).get("war_per_million") for e in org_summary])
+    tools_100  = _normalize_with_none([(e["tools_quality"]      or {}).get("top10_mean")      for e in org_summary])
+    # International depth: 0.7 * IFA% + 0.3 * (year_span / 10), capped.
+    def _intl_score(e):
+        d = e["international_depth"] or {}
+        return 0.7 * (d.get("ifa_pct") or 0) + 0.3 * min((d.get("year_span") or 0) / 10.0, 1.0)
+    intl_100   = _normalize_to_100([_intl_score(e) for e in org_summary])
+    ready_100  = _normalize_to_100([(e["readiness"] or {}).get("pct_signal", 0) for e in org_summary])
+    # Health is INVERTED — lower burden score = better. Negate before
+    # normalization so the LOWEST burden gets the HIGHEST 100-score.
+    health_100 = _normalize_to_100([-(e["health_burden"] or {}).get("score", 0) for e in org_summary])
+
+    for entry, te, dp, dvm, gr, tr, wg, ro, tq, intl, rd, hl in zip(
+        org_summary, top_end_100, depth_100, dvm_plus_100, grad_100, traj_100,
+        wag_100, roi_100, tools_100, intl_100, ready_100, health_100,
+    ):
         entry["score_components"] = {
-            "top_end_100":   te,
-            "depth_100":     dp,
-            "trajectory_100": tr,
-            "grad_100":      gr,
+            "top_end_100":             te,
+            "depth_100":               dp,
+            "dvm_plus_100":            dvm,
+            "grad_100":                gr,
+            "trajectory_100":          tr,   # back-compat / tooltip
+            "talent_translation_100":  wg,
+            "financial_roi_100":       ro,
+            "tools_quality_100":       tq,
+            "intl_depth_100":          intl,
+            "readiness_100":           rd,
+            "health_burden_100":       hl,
         }
         entry["farm_score"] = round(
-            FARM_WEIGHT_TOP_END    * te +
-            FARM_WEIGHT_DEPTH      * dp +
-            FARM_WEIGHT_TRAJECTORY * tr +
-            FARM_WEIGHT_GRAD       * gr,
+            FARM_WEIGHT_TOP_END             * te
+          + FARM_WEIGHT_DEPTH               * dp
+          + FARM_WEIGHT_DVM_PLUS            * dvm
+          + FARM_WEIGHT_GRAD                * gr
+          + FARM_WEIGHT_TALENT_TRANSLATION  * wg
+          + FARM_WEIGHT_FINANCIAL_ROI       * ro
+          + FARM_WEIGHT_TOOLS_QUALITY       * tq
+          + FARM_WEIGHT_INTL_DEPTH          * intl
+          + FARM_WEIGHT_READINESS           * rd
+          + FARM_WEIGHT_HEALTH              * hl,
             1,
         )
 
     # Per-component ranks (1 = best) feed the component letter grades on
     # the report card. The overall rank/letter come from farm_score.
     n_orgs = len(org_summary)
-    top_end_rank = _rank_descending([e["top_end_points"]      for e in org_summary])
-    depth_rank   = _rank_descending([e["depth_points"]        for e in org_summary])
-    traj_rank    = _rank_descending([e["trajectory_score"]    for e in org_summary])
-    grad_rank    = _rank_descending([e["grad_pipeline_score"] for e in org_summary])
-    overall_rank = _rank_descending([e["farm_score"]          for e in org_summary])
+    top_end_rank = _rank_descending([e["top_end_points"]       for e in org_summary])
+    depth_rank   = _rank_descending([e["depth_points"]         for e in org_summary])
+    dvm_rank     = _rank_descending([e["dvm_plus"]["1y"]       for e in org_summary])
+    traj_rank    = _rank_descending([e["trajectory_score"]     for e in org_summary])
+    grad_rank    = _rank_descending([e["grad_pipeline_score"]  for e in org_summary])
+    overall_rank = _rank_descending([e["farm_score"]           for e in org_summary])
 
-    for entry, te_r, dp_r, tr_r, gr_r, ov_r in zip(
-        org_summary, top_end_rank, depth_rank, traj_rank, grad_rank, overall_rank,
+    # Helper to rank a sparse list (None → rank=None, gets "—" letter).
+    def _rank_with_none(values: list[float | None]) -> list[int | None]:
+        present_idx = [i for i, v in enumerate(values) if v is not None]
+        present_vals = [values[i] for i in present_idx]
+        sub_ranks = _rank_descending(present_vals)
+        out: list[int | None] = [None] * len(values)
+        for i, r in zip(present_idx, sub_ranks):
+            out[i] = r
+        return out
+
+    wag_rank    = _rank_with_none([(e["talent_translation"] or {}).get("wag_mean")        for e in org_summary])
+    roi_rank    = _rank_with_none([(e["financial_roi"]      or {}).get("war_per_million") for e in org_summary])
+    tools_rank  = _rank_with_none([(e["tools_quality"]      or {}).get("top10_mean")      for e in org_summary])
+    intl_rank   = _rank_descending([_intl_score(e)                                          for e in org_summary])
+    ready_rank  = _rank_descending([(e["readiness"]      or {}).get("pct_signal", 0)        for e in org_summary])
+    # Health rank: LOWEST burden score = rank 1 (best). _rank_descending
+    # ranks highest first, so negate the score before passing.
+    health_rank = _rank_descending([-(e["health_burden"] or {}).get("score", 0)             for e in org_summary])
+    n_with_wag    = sum(1 for r in wag_rank   if r is not None)
+    n_with_roi    = sum(1 for r in roi_rank   if r is not None)
+    n_with_tools  = sum(1 for r in tools_rank if r is not None)
+
+    for entry, te_r, dp_r, dvm_r, gr_r, tr_r, ov_r, wg_r, ro_r, tq_r, intl_r, rd_r, hl_r in zip(
+        org_summary, top_end_rank, depth_rank, dvm_rank, grad_rank, traj_rank, overall_rank,
+        wag_rank, roi_rank, tools_rank, intl_rank, ready_rank, health_rank,
     ):
         entry["component_ranks"] = {
-            "top_end":    te_r,
-            "depth":      dp_r,
-            "trajectory": tr_r,
-            "grad":       gr_r,
+            "top_end":            te_r,
+            "depth":              dp_r,
+            "dvm_plus":           dvm_r,
+            "trajectory":         tr_r,
+            "grad":               gr_r,
+            "talent_translation": wg_r,
+            "financial_roi":      ro_r,
+            "tools_quality":      tq_r,
+            "intl_depth":         intl_r,
+            "readiness":          rd_r,
+            "health_burden":      hl_r,
         }
+        # Letter grades. None ranks → "—" (insufficient data). Small
+        # samples for WAG / ROI / Tools+ also get "—" via the same
+        # gate so a 1-graduate org doesn't get an A or D off a single
+        # data point.
         entry["grades"] = {
-            "top_end":    _letter_grade(te_r, n_orgs),
-            "depth":      _letter_grade(dp_r, n_orgs),
-            "trajectory": _letter_grade(tr_r, n_orgs),
-            "grad":       _letter_grade(gr_r, n_orgs),
-            "overall":    _letter_grade(ov_r, n_orgs),
+            "top_end":            _letter_grade(te_r, n_orgs),
+            "depth":              _letter_grade(dp_r, n_orgs),
+            "dvm_plus":           _letter_grade(dvm_r, n_orgs),
+            "trajectory":         _letter_grade(tr_r, n_orgs),
+            "grad":               _letter_grade(gr_r, n_orgs),
+            "talent_translation": (_letter_grade(wg_r, n_with_wag)
+                                    if wg_r is not None
+                                    and (entry["talent_translation"]["grad_count"] or 0) >= 3 else "—"),
+            "financial_roi":      (_letter_grade(ro_r, n_with_roi)
+                                    if ro_r is not None
+                                    and (entry["financial_roi"]["grad_count_with_bonus"] or 0) >= 3 else "—"),
+            "tools_quality":      (_letter_grade(tq_r, n_with_tools)
+                                    if tq_r is not None
+                                    and (entry["tools_quality"]["graded_count"] or 0) >= 5 else "—"),
+            "intl_depth":         _letter_grade(intl_r, n_orgs),
+            "readiness":          _letter_grade(rd_r, n_orgs),
+            "health_burden":      _letter_grade(hl_r, n_orgs),
+            "overall":            _letter_grade(ov_r, n_orgs),
         }
 
     # Final sort + farm_rank assignment off of farm_score. Tiebreak by
@@ -3218,6 +3575,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # he graduated. Single call ensures every payload's composite_*_plus
     # references the same baseline.
     _attach_tool_plus_indices(active_payload + inactive_payload + graduate_payload)
+
+    # Cleanup: `_active_keys` was retained on org_summary entries for
+    # potential post-serialization joins (now unused after Tools+ moved
+    # into the actives loop). Drop the field so the JSON doesn't carry
+    # an internal-only key.
+    for entry in org_summary:
+        entry.pop("_active_keys", None)
 
     from prospect_savant import attach_prospect_savant
     savant_matched = attach_prospect_savant(

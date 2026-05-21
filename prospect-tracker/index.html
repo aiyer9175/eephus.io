@@ -7783,11 +7783,11 @@ const GLOSSARY = {
   "dvm_plus": {
     name: "DvM+", aliases: ["DvM+", "Development vs Mean"], category: "custom-index",
     priority: 5,
-    short: "Farm-system development index; 100 = league-mean FV growth over the development window.",
-    long: "wRC+-style index for organizational development. Measures each farm's cumulative FV growth over a window (1y / 3y / 5y) and scores it against the league-mean farm. Acquisitions are nullified (a trade-in adds zero to the source farm) and graduations don't subtract; pure development of prospects already in the system. 100 = league mean, 10 pts = 1 stdev across the 30 orgs.",
+    short: "Farm-system development index; 100 = league-mean FV growth. Drives the Development component of the farm report card.",
+    long: "wRC+-style index for organizational development. Measures each farm's cumulative FV growth over a window (1y / 3y / 5y) and scores it against the league-mean farm. Acquisitions are nullified (a trade-in adds zero to the source farm) and graduations don't subtract; pure development of prospects already in the system. 100 = league mean, 10 pts = 1 stdev across the 30 orgs. The 1y window drives the Development letter grade in the farm report card (replaced raw Trajectory in the blend).",
     formula: "DvM+ = 100 + 10 · (org_growth − league_mean_growth) / league_stdev",
     example: "An org with a 3yDvM+ of 130 has grown its prospects' aggregate FV 3 stdev faster than the average farm system over the last 3 years, after stripping out acquisitions.",
-    related: ["farm_rank", "stock", "fv"],
+    related: ["farm_rank", "farm_grade_talent_translation", "stock", "fv"],
   },
   "pwr_plus": {
     name: "PWR+", aliases: ["PWR+", "Power Index"], category: "custom-index",
@@ -8432,6 +8432,61 @@ const GLOSSARY = {
     name: "Arc badge", aliases: ["Arc"], category: "indicators",
     priority: 54,
     short: "Spotlight badge for sustained multi-update FV movement in one direction — the steady riser/decliner pattern.",
+  },
+
+  // ---- Farm-system report card components (custom-index) ----
+  // Added in the Farm Overhaul: the 4-component report card grew to
+  // 10 components organized into 3 tiers on the farm detail page.
+  "farm_report_card": {
+    name: "Farm report card", aliases: ["Farm grade", "Report card"], category: "custom-index",
+    priority: 50,
+    short: "Per-org letter grade across 10 components (Talent, MLB impact, Profile). Overall = weighted blend of all 10.",
+    long: "Three tiers: TALENT (top-end / depth / development / grad pipe — 70% of farm_score) drives the prospect-quality projection. MLB IMPACT (talent translation / financial ROI — 18%) measures historical conversion to big-league value. PROFILE (Tools+ quality / IFA depth / readiness / health — 12%) adds secondary signal. The 1y DvM+ replaced raw Trajectory in the blend; small-sample WAG / ROI / Tools+ grades show '—' instead of an unfair D.",
+    formula: "farm_score = 0.28·TopEnd + 0.18·Depth + 0.12·DvM+ + 0.12·GradPipe + 0.10·WAG + 0.08·ROI + 0.06·Tools+ + 0.03·IFA + 0.02·Readiness + 0.01·Health",
+    related: ["farm_grade_talent_translation", "farm_grade_financial_roi", "farm_grade_tools_quality", "farm_grade_intl_depth", "farm_grade_readiness", "farm_grade_health_burden", "dvm_plus"],
+  },
+  "farm_grade_talent_translation": {
+    name: "Talent Translation", aliases: ["Talent Translation", "WAG grade", "Farm WAG"], category: "custom-index",
+    priority: 55,
+    short: "Per-org mean WAG across recent graduates. Positive = farm beats projections; negative = underperforms.",
+    long: "For each graduate with both a final FV and career WAR on file, we compute WAG = actual_career_WAR − FV-implied expected_WAR (via the hardcoded FV→WAR primer table). Per-org grade = mean of WAG values. Orgs with fewer than 3 qualifying graduates grade as '—' rather than picking up an unfair letter off one data point.",
+    related: ["wag", "fv", "farm_report_card"],
+  },
+  "farm_grade_financial_roi": {
+    name: "Financial ROI", aliases: ["Financial ROI", "WAR/$1M", "Farm ROI"], category: "custom-index",
+    priority: 56,
+    short: "WAR-per-million-dollars-spent across the org's graduates. Pure capital efficiency.",
+    long: "Aggregates total career WAR yielded by graduates against total signing-bonus dollars paid (draft + IFA). Higher = better bargain capture. Lagging indicator — a recent draft class hasn't converted yet. Orgs with fewer than 3 grads with both bonus AND career-WAR data on file grade as '—'.",
+    formula: "ROI = total_career_WAR / (total_bonus_USD / 1,000,000)",
+    related: ["wag", "signing_bonus", "farm_report_card"],
+  },
+  "farm_grade_tools_quality": {
+    name: "Tools+ Quality", aliases: ["Tools+ Quality", "Farm Tools+"], category: "custom-index",
+    priority: 57,
+    short: "Top-10 mean of composite_overall across active prospects. Raw scouting quality, orthogonal to FV consensus.",
+    long: "We rank an org's actives by composite_overall (the 20-80 power-mean of their per-tool grades) and take the top 10. Top-10 (not all-active mean) so a top-heavy farm with raw-tools stars isn't dragged down by un-graded depth. A '60 raw power' system grades higher than a '50 across the board' system, even if their FV consensus is the same.",
+    related: ["tools_plus", "farm_report_card"],
+  },
+  "farm_grade_intl_depth": {
+    name: "International Depth", aliases: ["IFA depth", "Intl depth"], category: "custom-index",
+    priority: 58,
+    short: "IFA % × multi-year diversity. Rewards orgs with broad, steady international scouting.",
+    long: "Combines magnitude (IFA share of actives) and diversity (number of distinct IFA signing years represented). Score = 0.7 × ifa_pct + 0.3 × (year_span / 10, capped at 1.0). Penalizes draft-only feast/famine; rewards a steady DR/VZ/Cuba pipeline.",
+    related: ["ifa", "dsl", "farm_report_card"],
+  },
+  "farm_grade_readiness": {
+    name: "Readiness", aliases: ["Farm Readiness", "Young-for-level %"], category: "custom-index",
+    priority: 59,
+    short: "Share of prospects flagged 'very young for level' minus 'very old for level'. Long runway vs peaking now.",
+    long: "Per-org (very_young_count − very_old_count) / total_actives. Positive = many under-age prospects (long development horizon); negative = old-for-level system that's peaking now. Uses the same per-prospect age_vs_level tiers the row chip uses.",
+    related: ["farm_report_card"],
+  },
+  "farm_grade_health_burden": {
+    name: "Health Burden", aliases: ["Health grade", "Farm health"], category: "custom-index",
+    priority: 60,
+    short: "Combined post-TJ % and trailing 12-month IL-days mean. INVERSE — lower burden = better letter grade.",
+    long: "Per-org health_burden = 100 × post_tj_pct + il_days_mean. The score is INVERTED before ranking so the org with the LOWEST burden gets the BEST letter grade (A+ = healthiest system). The Health component has the smallest weight in farm_score (1%) because it's the most volatile category, but ranks separately as a stand-alone indicator.",
+    related: ["post_tj", "on_il", "il_10_15_60", "farm_report_card"],
   },
 };
 
@@ -9186,6 +9241,28 @@ function makeFarmReportCard(org) {
       <div class="rs-meta">${scoreFmt(scoreVal)}</div>
     </div>`;
 
+  // Format helpers for the new components.
+  const fmtSignedRaw = v => v != null ? `${v > 0 ? '+' : ''}${v.toFixed(2)}` : '—';
+  const fmtPct       = v => v != null ? `${(v * 100).toFixed(0)}%` : '—';
+  const fmtWarPerM   = v => v != null ? `${v.toFixed(2)} WAR/$1M` : '—';
+  const fmtPlus      = v => v != null ? `${v.toFixed(1)}` : '—';
+  const fmtScore     = v => v != null ? `${v.toFixed(1)}` : '—';
+
+  // Tier label helper — a small uppercase eyebrow above each strip.
+  const tierLabel = txt => `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;margin:10px 0 4px;">${escapeHtml(txt)}</div>`;
+
+  const tt  = org.talent_translation || {};
+  const fr  = org.financial_roi      || {};
+  const tq  = org.tools_quality      || {};
+  const idp = org.international_depth || {};
+  const rdy = org.readiness          || {};
+  const hb  = org.health_burden      || {};
+
+  // The 1y DvM+ index drives the Development letter grade (it replaced
+  // raw Trajectory in farm_score). Show the user-chosen window's value
+  // alongside for context — same flex pattern as the old Trajectory cell.
+  const dvm1y = (org.dvm_plus || {})["1y"];
+
   return `
     <div style="display:grid;grid-template-columns:minmax(180px, 0.9fr) minmax(0, 2.4fr);gap:12px;margin-bottom:18px;align-items:stretch;">
       <div class="stat-tile" style="border-color:${gradeColor(g.overall)}66;background:linear-gradient(135deg, ${gradeColor(g.overall)}12, transparent);display:flex;flex-direction:column;justify-content:center;">
@@ -9199,16 +9276,42 @@ function makeFarmReportCard(org) {
         <div style="margin-top:4px;font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);">
           farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}/100
         </div>
+        <div style="margin-top:6px;font-size:10px;color:var(--text-tertiary);line-height:1.4;">
+          10 components across 3 tiers — Talent, MLB impact, Profile.
+        </div>
       </div>
-      <div class="report-strip" style="margin-top:0;">
-        ${stripCell('Top-end',    g.top_end,    r.top_end,    org.top_end_points,
-                    fmtPts,    'Tiered-FV sum of the org’s top 5 prospects. An 80 is worth ~100 points; a 40 is worth 1.')}
-        ${stripCell('Depth',      g.depth,      r.depth,      org.depth_points,
-                    fmtPts,    'Tiered-FV sum of prospects #6 through #25. Rewards systems with real prospects beyond the top tier.')}
-        ${stripCell('Trajectory', g.trajectory, r.trajectory, trajWindowed,
-                    fmtSigned, `${winLabel} cumulative-FV growth above the league mean over the same window. ${winLabel.toUpperCase()}DvM+ is the wRC+/OPS+-style index where 100 = league mean and 10 points = 1 standard deviation. Pure-development metric: graduations + acquisitions (trades, draft, IFA) are nullified, so only FV growth while the player is in the org counts. Letter grade stays anchored to the 1y trajectory used for farm_score.`)}
-        ${stripCell('Grad pipe',  g.grad,       r.grad,       org.grad_pipeline_score,
-                    fmtPts,    'FV-weighted graduations in the trailing 12 months. Promoting a 60 is worth ~18 points; a 40 is worth 1.')}
+      <div>
+        ${tierLabel('Talent · ' + '70%' + ' of farm_score')}
+        <div class="report-strip" style="margin-top:0;">
+          ${stripCell('Top-end',         g.top_end,    r.top_end,    org.top_end_points,        fmtPts,
+                      'Tiered-FV sum of the org’s top 5 prospects. An 80 is worth ~100 points; a 40 is worth 1.')}
+          ${stripCell('Depth',           g.depth,      r.depth,      org.depth_points,          fmtPts,
+                      'Tiered-FV sum of prospects #6 through #25. Rewards systems with real prospects beyond the top tier.')}
+          ${stripCell('Development',     g.dvm_plus,   r.dvm_plus,   dvm1y,                     fmtPlus,
+                      '1-year DvM+ — the wRC+/OPS+-style index where 100 = league mean trajectory and 10 points = 1 stdev. Replaced raw Trajectory in the blend; DvM+ is the league-normalized version of the same signal.')}
+          ${stripCell('Grad pipe',       g.grad,       r.grad,       org.grad_pipeline_score,   fmtPts,
+                      'FV-weighted graduations in the trailing 12 months. Promoting a 60 is worth ~18 points; a 40 is worth 1.')}
+        </div>
+
+        ${tierLabel('MLB impact · ' + '18%' + ' of farm_score')}
+        <div class="report-strip" style="margin-top:0;">
+          ${stripCell('Talent Translation', g.talent_translation, r.talent_translation, tt.wag_mean,            fmtSignedRaw,
+                      'WAG (WAR Above Grade) mean across the org’s graduates. Positive = graduates beat their FV-implied career WAR projection; negative = underperform. "—" when the org has fewer than 3 gradutes with both career WAR and a final FV on file.')}
+          ${stripCell('Financial ROI',      g.financial_roi,      r.financial_roi,      fr.war_per_million,     fmtWarPerM,
+                      'Career WAR yielded per million dollars of signing bonus spent. Higher = better bargain capture. "—" when the org has fewer than 3 grads with bonus + career-WAR data on file. Lagging indicator — recent draft classes haven\\'t converted yet.')}
+        </div>
+
+        ${tierLabel('Profile · ' + '12%' + ' of farm_score')}
+        <div class="report-strip" style="margin-top:0;">
+          ${stripCell('Tools+ Quality',  g.tools_quality, r.tools_quality, tq.top10_mean,           fmtScore,
+                      'Top-10 mean of composite_overall (the 20-80 power-mean of per-tool grades) across actives. Measures raw scouting quality independent of FV consensus — a 60-tool farm grades above a 50-across-the-board one.')}
+          ${stripCell('Intl depth',      g.intl_depth,    r.intl_depth,    idp.ifa_pct,             fmtPct,
+                      'IFA % of actives plus a multi-year diversity bonus (0.7 × IFA pct + 0.3 × year-span / 10). Rewards orgs that invest globally + steadily.')}
+          ${stripCell('Readiness',       g.readiness,     r.readiness,     rdy.pct_signal,          fmtPct,
+                      '(very-young-for-level − very-old-for-level) / total. Positive = long runway; negative = peaking now / over-age.')}
+          ${stripCell('Health',          g.health_burden, r.health_burden, hb.score,                fmtScore,
+                      'Combined post-TJ % and trailing 12-month IL-days mean. INVERSE metric — lower score = better letter grade. Lowest-burden farm gets the A+.')}
+        </div>
       </div>
     </div>`;
 }
@@ -10017,15 +10120,19 @@ function snapshotCurrentFarmRanks(orgs) {
 function makeComponentGrades(org) {
   const grades = (org && org.grades) || {};
   const ranks  = (org && org.component_ranks) || {};
+  // List view only shows the Tier-1 "Talent" strip (4 letters). The
+  // remaining 6 components (Tier-2 MLB impact + Tier-3 Profile) live
+  // on the farm-detail page so the org row stays scannable.
   const items = [
-    ["T", grades.top_end,    ranks.top_end,    "Top-end talent grade (FV-weighted top 5)"],
-    ["D", grades.depth,      ranks.depth,      "Prospect depth grade (FV-weighted #6–25)"],
-    ["J", grades.trajectory, ranks.trajectory, "Trajectory grade (FV-growth vs peers)"],
-    ["G", grades.grad,       ranks.grad,       "Graduation pipeline grade (FV-weighted recent grads)"],
+    ["T", grades.top_end,  ranks.top_end,  "Top-end talent grade (FV-weighted top 5)"],
+    ["D", grades.depth,    ranks.depth,    "Prospect depth grade (FV-weighted #6–25)"],
+    ["J", grades.dvm_plus, ranks.dvm_plus, "Development grade (DvM+ — 1y trajectory z-scored vs league mean). Replaced raw Trajectory in the farm_score blend."],
+    ["G", grades.grad,     ranks.grad,     "Graduation pipeline grade (FV-weighted recent grads)"],
   ];
   const anyGrade = items.some(([, g]) => g != null);
   if (!anyGrade) return "";
-  return `<div class="fg-components">${items.map(([k, g, r, title]) => `
+  const stripTitle = "Tier-1 (Talent) component grades. Click the row for the full 10-grade report card — Talent Translation / Financial ROI / Tools+ Quality / IFA / Readiness / Health.";
+  return `<div class="fg-components" title="${escapeHtml(stripTitle)}">${items.map(([k, g, r, title]) => `
     <span class="fg-comp" title="${escapeHtml(title)}${r != null ? ` · rank ${r}/30` : ""}">
       <span class="fg-comp-label">${k}</span>${escapeHtml(g || "—")}
     </span>`).join("")}</div>`;
