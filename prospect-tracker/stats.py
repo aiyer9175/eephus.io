@@ -2671,6 +2671,9 @@ def fetch_career_war_bulk(
 
     # Pull the two BBRef WAR datasets in one shot each. `return_all=True`
     # surfaces the full multi-year frame; we filter by mlb_ID in-memory.
+    # `.itertuples()` is roughly an order of magnitude faster than
+    # `.iterrows()` for row-by-row pandas iteration. We only read three
+    # columns per row, so the tuple-based access is fine.
     def _by_year(df, value_col="WAR"):
         """Return {mlb_ID: {year: war_total}} after summing stints."""
         out: dict[int, dict[int, float]] = {}
@@ -2680,27 +2683,40 @@ def fetch_career_war_bulk(
         sub = df[df["mlb_ID"].isin(cohort_ids)]
         sub = sub[sub["year_ID"].between(start_year, end_year)]
         sub = sub[sub[value_col].notna()]
-        for _, row in sub.iterrows():
+        for row in sub.itertuples(index=False):
             try:
-                mid = int(row["mlb_ID"])
-                yr  = int(row["year_ID"])
-                war = float(row[value_col])
+                mid = int(getattr(row, "mlb_ID"))
+                yr  = int(getattr(row, "year_ID"))
+                war = float(getattr(row, value_col))
             except (TypeError, ValueError):
                 continue
             yr_map = out.setdefault(mid, {})
             yr_map[yr] = yr_map.get(yr, 0.0) + war
         return out
 
+    # bwar_bat + bwar_pitch are independent ~5 MB CSV downloads from
+    # baseball-reference.com. Fetching them in parallel cuts the bWAR
+    # refresh path roughly in half.
     bat_by_id: dict[int, dict[int, float]] = {}
     pit_by_id: dict[int, dict[int, float]] = {}
-    try:
-        bat_by_id = _by_year(pyb.bwar_bat(return_all=True))
-    except Exception as e:
-        log.warning("bwar_bat fetch failed: %s", e)
-    try:
-        pit_by_id = _by_year(pyb.bwar_pitch(return_all=True))
-    except Exception as e:
-        log.warning("bwar_pitch fetch failed: %s", e)
+    import concurrent.futures as _cf
+
+    def _safe_fetch(fn, label):
+        try:
+            return fn(return_all=True)
+        except Exception as e:
+            log.warning("%s fetch failed: %s", label, e)
+            return None
+
+    with _cf.ThreadPoolExecutor(max_workers=2) as ex:
+        f_bat = ex.submit(_safe_fetch, pyb.bwar_bat, "bwar_bat")
+        f_pit = ex.submit(_safe_fetch, pyb.bwar_pitch, "bwar_pitch")
+        bat_df = f_bat.result()
+        pit_df = f_pit.result()
+    if bat_df is not None:
+        bat_by_id = _by_year(bat_df)
+    if pit_df is not None:
+        pit_by_id = _by_year(pit_df)
 
     if not bat_by_id and not pit_by_id:
         return {}

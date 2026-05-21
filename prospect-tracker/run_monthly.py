@@ -675,7 +675,10 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 # at least one MLB row (covers active cup-of-coffee call-
                 # ups, graduates, and reclassified inactives in one pass).
                 war_cohort: list[tuple[str, int, bool]] = []
-                _cs_now = load_career_stats()
+                # career_cache is kept in-sync with the DB via the
+                # career_cache.update(new_career) call earlier in this
+                # block, so we can reuse it here without re-reading.
+                _cs_now = career_cache
                 for p in timeseries:
                     mid = ids_by_key.get(p.player_key)
                     if not mid:
@@ -769,13 +772,23 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         from stats import derive_transactions
         level_changes_by_key: dict[str, list[dict]] = {}
         transactions_by_key:  dict[str, list[dict]] = {}
-        for key, tx_rows in tx_cache.items():
+        # Per-player CPU pass with no shared mutable state. ThreadPool
+        # over a fixed worker count recoups its overhead at ~3000-player
+        # scale and trims a second or two off the run.
+        def _derive_one(item):
+            key, tx_rows = item
             evs = derive_level_changes(tx_rows, team_affil)
-            if evs:
-                level_changes_by_key[key] = evs
             txs = derive_transactions(tx_rows)
-            if txs:
-                transactions_by_key[key] = txs
+            return key, evs, txs
+        items = list(tx_cache.items())
+        if items:
+            max_w = max(2, min(8, len(items)))
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max_w) as ex:
+                for key, evs, txs in ex.map(_derive_one, items):
+                    if evs:
+                        level_changes_by_key[key] = evs
+                    if txs:
+                        transactions_by_key[key] = txs
         log.info("derived level_changes for %d players, "
                  "non-trade transactions for %d players",
                  len(level_changes_by_key), len(transactions_by_key))
@@ -896,6 +909,12 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         log.info("detected %d trades (%d new)", len(new_trades), trade_count)
         trades_by_player = load_trades()
 
+        # Career WAR — loaded once here and reused by both the savant
+        # orchestrator (needs `seasons` to know which MLB years exist)
+        # and the JSON export. Reading it twice was a measurable slice
+        # of the warm-cache cost.
+        career_war_all = load_career_war()
+
         # --- 4b. Graduate swing-zone heatmaps. Bulk-fetch Statcast pitch-by-
         # pitch data for each graduate's last few MLB seasons (one HTTP
         # call per year carrying every batter ID), aggregate to a 13-bin
@@ -908,7 +927,6 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         else:
             try:
                 from graduate_savant import build_graduate_swing_zone_heat
-                career_war_all = load_career_war()
                 grad_payloads = []
                 for p in timeseries:
                     if p.status != "graduated":
@@ -934,8 +952,8 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                sabermetrics=sabermetrics,
                                trades_by_player=trades_by_player,
                                transactions_by_player=transactions_by_key,
-                               career_stats=load_career_stats(),
-                               career_war=load_career_war(),
+                               career_stats=career_cache,
+                               career_war=career_war_all,
                                acquisitions=load_acquisitions(),
                                il_status=load_il_status(),
                                rosters_by_org=rosters_by_org,

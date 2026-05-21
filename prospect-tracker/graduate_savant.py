@@ -365,7 +365,7 @@ def _parse_savant_csv(body: str) -> list[dict]:
     return rows
 
 
-def build_graduate_swing_zone_heat(graduates, max_seasons: int = 3,
+def build_graduate_swing_zone_heat(graduates, max_seasons: int = 1,
                                    force: bool = False,
                                    max_workers: int = _BULK_MAX_WORKERS,
                                    batters_per_request: int = _BULK_BATTERS_PER_REQUEST) -> dict:

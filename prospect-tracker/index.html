@@ -3739,7 +3739,6 @@
 
   <div id="active-section">
     <div id="whats-new"></div>
-    <div id="scarcity-heatmap-card"></div>
     <div class="active-grid">
       <div id="rows"></div>
       <aside id="active-context-rail" class="active-context-rail" aria-label="League context"></aside>
@@ -5784,112 +5783,9 @@ function renderActiveContextRail() {
   rail.innerHTML = moversCard + distCard + gradsCard;
 }
 
-// Org × position scarcity heatmap. Walks DATA.players, buckets each
-// active prospect into one of 5 position groups (C / IF / OF / SP / RP),
-// sums FV per (org, position) cell, and renders a 30×5 grid colored by
-// FV total. Light = thin, dark = stacked. Clicking a cell drills into
-// that org's farm detail filtered by position.
-function renderScarcityHeatmap() {
-  const host = document.getElementById("scarcity-heatmap-card");
-  if (!host) return;
-  // Honor a session-scoped collapse flag so the user can hide it once
-  // they've absorbed the data and not have it re-appear every render.
-  const collapsed = (sessionStorage.getItem("scarcity_collapsed") === "1");
-
-  const POS_LABELS = [
-    ["C",  "C",  /^C(?:$|\b)/],
-    ["IF", "IF", /^(?:1B|2B|3B|SS|INF|IF|UTIL|MI|DH)/],
-    ["OF", "OF", /^(?:CF|LF|RF|OF)/],
-    ["SP", "SP", /^(?:RHP|LHP|SP|P)$/],
-    ["RP", "RP", /^(?:RP|MIRP|SIRP)$/],
-  ];
-  const players = (DATA.players || []);
-  if (!players.length) { host.innerHTML = ""; return; }
-
-  // Aggregate FV totals by (org, position group).
-  const orgs = Array.from(new Set(players.map(p => p.org).filter(Boolean))).sort();
-  const grid = {};
-  for (const o of orgs) grid[o] = Array(POS_LABELS.length).fill(0);
-  let maxCell = 0;
-  for (const p of players) {
-    if (!p.org || p.fv_close == null) continue;
-    const head = String(p.position || "").split("/")[0].toUpperCase();
-    if (!head) continue;
-    let col = POS_LABELS.findIndex(([, , re]) => re.test(head));
-    if (col < 0) continue;
-    grid[p.org][col] += p.fv_close;
-    if (grid[p.org][col] > maxCell) maxCell = grid[p.org][col];
-  }
-  if (maxCell <= 0) { host.innerHTML = ""; return; }
-
-  const cellColor = (val) => {
-    if (val <= 0) return "var(--bg-secondary)";
-    const t = Math.min(1, val / maxCell);
-    // Cyan-violet ramp matching the rest of the site palette.
-    const r = Math.round(40 + (110 - 40) * t);
-    const g = Math.round(80 + (200 - 80) * t);
-    const b = Math.round(180 + (255 - 180) * t);
-    return `rgba(${r},${g},${b},${0.20 + 0.60 * t})`;
-  };
-
-  const headerCells = `<div></div>` + POS_LABELS.map(
-    ([, lbl]) => `<div class="t-stat-label" style="text-align:center;padding:4px 0;">${lbl}</div>`
-  ).join("");
-
-  const rows = orgs.map(o => {
-    const cells = grid[o].map((v, i) => {
-      const txt = v >= 1 ? Math.round(v) : "";
-      const tip = v >= 1
-        ? `${fullOrgName(o)} · ${POS_LABELS[i][1]} · total FV ${Math.round(v)}`
-        : `${fullOrgName(o)} · ${POS_LABELS[i][1]} · thin`;
-      return `<div title="${escapeHtml(tip)}"
-        data-scarcity-org="${escapeHtml(o)}" data-scarcity-pos="${POS_LABELS[i][1]}"
-        style="background:${cellColor(v)};border:1px solid var(--border-light);height:22px;font-size:10px;font-family:var(--font-mono);color:var(--text-secondary);display:flex;align-items:center;justify-content:center;cursor:${v >= 1 ? 'pointer' : 'default'};">${txt}</div>`;
-    }).join("");
-    return `<div style="display:contents;">
-      <div data-org="${escapeHtml(o)}" style="${orgStripe(o)};display:flex;align-items:center;gap:6px;padding:2px 6px;font-size:11px;font-weight:600;color:var(--text-secondary);cursor:pointer;">${teamLogoHTML(o, "sm", fullOrgName(o))}<span>${escapeHtml(o)}</span></div>
-      ${cells}
-    </div>`;
-  }).join("");
-
-  host.innerHTML = `
-    <details class="detail-card" ${collapsed ? "" : "open"} id="scarcity-details" style="margin-bottom:14px;padding:10px 12px;">
-      <summary style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <span class="t-section-title">Position scarcity · league-wide</span>
-        <span class="t-card-caption" style="font-style:normal;">Total FV per (org × position) · click cell to drill into farm</span>
-      </summary>
-      <div style="overflow-x:auto;margin-top:10px;">
-        <div style="display:grid;grid-template-columns:80px repeat(${POS_LABELS.length}, minmax(48px, 1fr));gap:2px;min-width:480px;">
-          ${headerCells}
-          ${rows}
-        </div>
-      </div>
-    </details>`;
-
-  // Persist the open/close state in sessionStorage so the user's
-  // collapse choice survives tab-switches within the same session.
-  const det = document.getElementById("scarcity-details");
-  if (det) {
-    det.addEventListener("toggle", () => {
-      sessionStorage.setItem("scarcity_collapsed", det.open ? "0" : "1");
-    });
-  }
-  // Click a cell → farm-detail page (cell carries org); click an org
-  // label row header → farm-detail too. Position drilldown isn't wired
-  // through the farm-detail filter API yet, so for now we just route
-  // to the org's farm page.
-  host.querySelectorAll("[data-scarcity-org]").forEach(cell => {
-    cell.addEventListener("click", (e) => {
-      const org = e.currentTarget.getAttribute("data-scarcity-org");
-      if (org && typeof goToFarm === "function") goToFarm(org);
-    });
-  });
-}
-
 function renderActives() {
   renderWhatsNew();
   renderActiveContextRail();
-  renderScarcityHeatmap();
   const filtered = getFilteredActives();
 
   const header = `<div class="col-header">
@@ -6163,37 +6059,58 @@ const _lbPitcherSupport = r => {
   return `<div>${top}</div><div style="color:var(--text-tertiary);margin-top:2px;">${bottom}</div>`;
 };
 
-// Cell heat color — maps a numeric value into the cyan/violet/red ramp
-// based on its rank position within a numeric `values` array. `hi=true`
-// means higher values are better (so the top end gets the cyan/up
-// treatment); `hi=false` flips the ramp so a low ERA/WHIP/K% also
-// reads green. Returns inline-style suitable for the cell's
-// `background-color` + a paired `color` for contrast.
+// Cell heat color — maps a numeric value into a red-violet-cyan ramp
+// anchored at the LEAGUE MEAN of the full qualified pool (not just the
+// displayed top-N). Values are z-scored against the pool's mean/stdev
+// so the spectrum spreads cleanly across the leaderboard: the top of
+// the board reads as several stdevs above mean, the bottom as the
+// quasi-league-average tail.
 //
-// Used in the leaderboard primary-stat cell to give the reader a
-// shape-of-the-board signal at a glance — the gap between #1 and #25
-// becomes visible without parsing the numbers.
+// `hi=true` means higher values are better; `hi=false` flips the ramp
+// so low ERA / WHIP / BB% reads green too. Returns an inline-style
+// `{bg, fg}` pair for use on a stat cell.
 function cellHeatColor(value, values, hi = true) {
   if (value == null || isNaN(value)) return { bg: "transparent", fg: "var(--text-tertiary)" };
-  const valid = values.filter(v => v != null && !isNaN(v));
-  if (valid.length < 2) return { bg: "transparent", fg: "var(--text-primary)" };
-  const lo = Math.min(...valid);
-  const hiV = Math.max(...valid);
-  const span = (hiV - lo) || 1;
-  let t = (Number(value) - lo) / span; // 0 = worst, 1 = best in displayed pool
-  if (!hi) t = 1 - t; // flip so low = good for ERA/WHIP/BB%/K% etc.
-  t = Math.max(0, Math.min(1, t));
-  // Three-band ramp: top third → strong cyan, middle → soft violet,
-  // bottom → muted slate. Alpha gives a card-like wash, not a hard chip.
+  const valid = values.filter(v => v != null && !isNaN(v)).map(Number);
+  if (valid.length < 3) return { bg: "transparent", fg: "var(--text-primary)" };
+  const mean = valid.reduce((s, x) => s + x, 0) / valid.length;
+  const variance = valid.reduce((s, x) => s + (x - mean) ** 2, 0) / valid.length;
+  const stdev = Math.sqrt(variance) || 1;
+  let z = (Number(value) - mean) / stdev;
+  if (!hi) z = -z;
+  // Clamp to ±3σ. Above mean (z > 0) ramps red → violet → cyan;
+  // below mean (z < 0) stays muted. Most leaderboard entries land
+  // between z=0.5 and z=3, so the gradient gets real distribution.
+  z = Math.max(-1.5, Math.min(3.5, z));
   let bg;
-  if (t >= 0.67) {
-    const a = 0.18 + 0.22 * ((t - 0.67) / 0.33);
-    bg = `rgba(78, 224, 255, ${a.toFixed(2)})`;
-  } else if (t >= 0.33) {
-    const a = 0.12 + 0.10 * ((t - 0.33) / 0.34);
-    bg = `rgba(180, 85, 255, ${a.toFixed(2)})`;
+  if (z <= 0) {
+    // At/below mean — soft slate wash, signals "table stakes."
+    bg = "rgba(120, 130, 145, 0.06)";
   } else {
-    bg = "rgba(120, 130, 145, 0.08)";
+    // Three-band gradient above mean:
+    //   0.0-1.0σ  → violet wash (above league mean)
+    //   1.0-2.0σ  → blue-cyan (well above)
+    //   2.0-3.5σ  → strong cyan + amber tip at the very top (elite)
+    if (z < 1.0) {
+      const a = 0.10 + 0.10 * z;                  // 0.10 → 0.20
+      bg = `rgba(180, 85, 255, ${a.toFixed(2)})`;
+    } else if (z < 2.0) {
+      const t = z - 1.0;                          // 0..1
+      const a = 0.20 + 0.12 * t;                  // 0.20 → 0.32
+      // Lerp violet → cyan along t.
+      const r = Math.round(180 + (78 - 180) * t);
+      const g = Math.round(85 + (224 - 85) * t);
+      const b = Math.round(255 + (255 - 255) * t);
+      bg = `rgba(${r}, ${g}, ${b}, ${a.toFixed(2)})`;
+    } else {
+      const t = Math.min(1, (z - 2.0) / 1.5);     // 0..1
+      const a = 0.32 + 0.18 * t;                  // 0.32 → 0.50
+      // Lerp cyan → amber-hot at the elite tail.
+      const r = Math.round(78 + (255 - 78) * t);
+      const g = Math.round(224 + (200 - 224) * t);
+      const b = Math.round(255 + (90 - 255) * t);
+      bg = `rgba(${r}, ${g}, ${b}, ${a.toFixed(2)})`;
+    }
   }
   return { bg, fg: "var(--text-primary)" };
 }
@@ -6393,9 +6310,12 @@ function renderLeaderboards() {
     return;
   }
 
-  // Heat-color reference set: every displayed value for the active stat
-  // becomes the cohort against which each cell's intensity is computed.
-  const _heatValues = ranked.map(({ v }) => v).filter(v => v != null);
+  // Heat-color reference set: every QUALIFYING value (not just the
+  // top-25 displayed) becomes the cohort for the league-mean anchor +
+  // z-score scaling. The top of the board lands several stdevs above
+  // mean and gets the strong color treatment; the tail closer to mean
+  // stays muted.
+  const _heatValues = pool.map(({ v }) => v).filter(v => v != null);
   const rows = ranked.map(({ p, r, v }, i) => {
     const fvLabel = p.fv_close != null ? Math.round(p.fv_close) : "—";
     const heat = cellHeatColor(v, _heatValues, !!cfg.hi);
@@ -6459,35 +6379,43 @@ function renderGlossary() {
     totalRendered += items.length;
     parts.push(`<div class="glossary-cat-heading">${escapeHtml(catLabel)} <span style="color:var(--text-tertiary);font-weight:500;letter-spacing:0;margin-left:6px;">${items.length}</span></div>`);
     for (const { slug, entry } of items) {
-      const aliases = (entry.aliases || []).filter(a => a !== entry.name);
-      const aliasLine = aliases.length
-        ? `<div style="font-size:10px;color:var(--text-tertiary);font-style:italic;margin-top:2px;">Also: ${aliases.map(a => escapeHtml(a)).join(" · ")}</div>`
+      // Pick the longest space-containing alias as the spelled-out
+      // form (e.g. "Development vs Mean" for DvM+). Show it next to
+      // the abbreviation in parens. The other aliases drop entirely
+      // since they're already search-discoverable via the alias lookup.
+      const altNames = (entry.aliases || [])
+        .filter(a => a !== entry.name && a.includes(" "));
+      const fullName = altNames.length
+        ? altNames.sort((a, b) => b.length - a.length)[0]
         : "";
       const formulaBlock = entry.formula
-        ? `<div class="gp-formula" style="margin-top:8px;">${escapeHtml(entry.formula)}</div>`
+        ? `<div class="gp-formula" style="margin-top:6px;font-size:11px;">${escapeHtml(entry.formula)}</div>`
         : "";
-      const exampleLine = entry.example
-        ? `<div style="font-size:11.5px;color:var(--text-secondary);font-style:italic;margin-top:8px;line-height:1.5;"><strong style="font-style:normal;color:var(--text-tertiary);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;">Example</strong><br>${escapeHtml(entry.example)}</div>`
-        : "";
+      // Long, example, and related collapse into a single optional
+      // <details> below the short — keeps the card compact at rest;
+      // the user opens it for the full read.
+      const moreBits = [];
+      if (entry.long)    moreBits.push(`<div style="margin-top:6px;font-size:12px;color:var(--text-secondary);line-height:1.5;">${escapeHtml(entry.long)}</div>`);
+      if (entry.formula) moreBits.push(formulaBlock);
+      if (entry.example) moreBits.push(`<div style="font-size:11.5px;color:var(--text-secondary);font-style:italic;margin-top:6px;line-height:1.45;"><span style="font-style:normal;color:var(--text-tertiary);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Example · </span>${escapeHtml(entry.example)}</div>`);
       const relatedChips = (entry.related || [])
-        .map(r => GLOSSARY[r] ? `<a href="#g-${escapeHtml(r)}" data-related-term="${escapeHtml(r)}" style="font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);text-decoration:none;border:1px solid var(--border-light);padding:2px 8px;border-radius:999px;margin-right:4px;">${escapeHtml(GLOSSARY[r].name)}</a>` : "")
+        .map(r => GLOSSARY[r] ? `<a href="#g-${escapeHtml(r)}" data-related-term="${escapeHtml(r)}" style="font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);text-decoration:none;border:1px solid var(--border-light);padding:2px 8px;border-radius:999px;">${escapeHtml(GLOSSARY[r].name)}</a>` : "")
         .filter(Boolean).join("");
-      const relatedBlock = relatedChips
-        ? `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;"><span style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);margin-right:4px;">Related</span>${relatedChips}</div>`
+      if (relatedChips) {
+        moreBits.push(`<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;"><span style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);">Related</span>${relatedChips}</div>`);
+      }
+      const detailsHtml = moreBits.length
+        ? `<details class="gp-more" style="margin-top:6px;"><summary style="cursor:pointer;font-size:10px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;list-style:none;outline:none;user-select:none;">+ more</summary><div style="margin-top:6px;">${moreBits.join("")}</div></details>`
         : "";
       parts.push(`<div class="glossary-card" id="g-${escapeHtml(slug)}">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
-          <div>
-            <span class="gp-term" style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--neon-cyan);">${escapeHtml(entry.name)}</span>
-            ${aliasLine}
+          <div style="min-width:0;">
+            <span class="gp-term" style="font-family:var(--font-mono);font-size:16px;font-weight:700;color:var(--neon-cyan);">${escapeHtml(entry.name)}</span>${fullName ? ` <span style="font-family:var(--font-sans);font-size:14px;font-weight:500;color:var(--text-secondary);">(${escapeHtml(fullName)})</span>` : ""}
           </div>
           <span class="gp-cat" style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;">${escapeHtml(catLabel)}</span>
         </div>
-        <div style="margin-top:10px;font-size:13px;color:var(--text-primary);line-height:1.5;">${escapeHtml(entry.short)}</div>
-        ${entry.long ? `<div style="margin-top:8px;font-size:12px;color:var(--text-secondary);line-height:1.55;">${escapeHtml(entry.long)}</div>` : ""}
-        ${formulaBlock}
-        ${exampleLine}
-        ${relatedBlock}
+        <div style="margin-top:4px;font-size:12.5px;color:var(--text-primary);line-height:1.4;">${escapeHtml(entry.short)}</div>
+        ${detailsHtml}
       </div>`);
     }
   }
@@ -7762,7 +7690,7 @@ const GLOSSARY = {
   "strike_zone": {
     name: "Strike zone", aliases: ["Strike zone", "Swing zone heat", "Zone heat"], category: "general-stat",
     short: "13-bin grid showing pitch outcomes by location. 3×3 inner zones plus 4 chase wedges around them.",
-    long: "On graduate detail pages, the heat color shows swing rate per zone from Statcast pitch-by-pitch data over the player's last 3 MLB seasons. Inner 3×3 bins cover the rulebook strike zone; the four outer wedges cover chase pitches above, below, left, and right of the zone. Catcher's view: zone 0 is upper-left, zone 8 is lower-right.",
+    long: "On graduate detail pages, the heat color shows swing rate per zone from Statcast pitch-by-pitch data for the current MLB season. Inner 3×3 bins cover the rulebook strike zone; the four outer wedges cover chase pitches above, below, left, and right of the zone. Catcher's view: zone 0 is upper-left, zone 8 is lower-right.",
     related: ["fv"],
   },
 };
@@ -11154,7 +11082,7 @@ function renderPlayerDetail(key) {
     if (p.status !== "graduated") return "";
     const heat = p.swing_zone_heat;
     if (!Array.isArray(heat) || !heat.some(v => v != null)) return "";
-    return `<div class="detail-title"><span class="g-term" data-term="strike_zone">Swing-zone heat</span> <span class="detail-title-sub">Statcast · last 3 MLB seasons · heat = swing rate per zone</span></div>
+    return `<div class="detail-title"><span class="g-term" data-term="strike_zone">Swing-zone heat</span> <span class="detail-title-sub">Statcast · current MLB season · heat = swing rate per zone</span></div>
       <div class="detail-card" style="display:flex;justify-content:center;padding:14px 12px;">
         ${makeStrikeZoneHeatmap({ zone_heat: heat })}
       </div>`;
