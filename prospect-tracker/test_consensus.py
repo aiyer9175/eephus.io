@@ -409,6 +409,13 @@ class TestForwardFill:
         The Wandy Asigen case. FG snaps 47.5 on 2026-05-17; Pipeline
         International snaps 65 on 2026-05-19. Before forward-fill, the
         latest point only saw Pipeline. Now it averages both.
+
+        Note on Pipeline source aliasing: when the Top 100 row is
+        absent (as here), `mlb_pipeline_international` gets relabeled
+        to canonical `mlb_pipeline` inside the consensus engine so the
+        outlet counts as one source rather than two. The averaged FV
+        and avg_fv_n are unchanged from the original test intent —
+        only the source-name spelling shifts.
         """
         snaps = [
             _snap("fangraphs", "Wandy", date_="2026-05-17",
@@ -422,7 +429,7 @@ class TestForwardFill:
         assert latest.avg_fv_n == 2
         assert latest.avg_fv == pytest.approx((47.5 + 65.0) / 2)
         assert set(latest.sources_contributing) == {
-            "fangraphs", "mlb_pipeline_international"
+            "fangraphs", "mlb_pipeline"
         }
         # And the candle close reflects the averaged value, not 65 alone.
         assert p.fv_close == 56.0  # 56.25 → snaps to 56

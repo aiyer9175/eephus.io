@@ -84,7 +84,7 @@ from __future__ import annotations
 
 import statistics
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace as _dc_replace
 from datetime import date
 
 from scrapers import Snapshot
@@ -120,6 +120,46 @@ FALLBACK_PRIOR_FV = 45.0
 # completely untouched (weight = 1.0 in that branch).
 SINGLE_SOURCE_PRIOR = 35.0
 SINGLE_SOURCE_K = 0.5
+
+# Source aliases — outlets that publish multiple separate lists but
+# count as one editorial voice. MLB Pipeline splits its yearly coverage
+# into the Top 100 (`mlb_pipeline`) and the International Top 50
+# (`mlb_pipeline_international`); a 16-year-old who appears on both
+# lists would otherwise show up as "2 sources" and dodge the single-
+# source pull-down. Keys = source string emitted by the scraper, values
+# = the canonical source name we collapse to for consensus + per_source.
+SOURCE_ALIASES = {
+    "mlb_pipeline_international": "mlb_pipeline",
+}
+
+
+def _dedupe_source_aliases(day_snaps: list[Snapshot]) -> list[Snapshot]:
+    """Collapse multi-list outlets (e.g. MLB Pipeline Top 100 + Pipeline
+    International) into a single canonical source per outlet.
+
+    When the player appears on BOTH lists, we keep the canonical one
+    (Pipeline Top 100) and drop the alias (Pipeline International) so
+    the aggregator doesn't count them twice. When the player only
+    appears on the alias list, we relabel it to the canonical source
+    name so per_source / avg_fv_n / sources_contributing reflect "one
+    Pipeline grade" rather than "one Pipeline International grade".
+    """
+    if not day_snaps or not SOURCE_ALIASES:
+        return day_snaps
+    canonical_present = {s.source for s in day_snaps}
+    out: list[Snapshot] = []
+    for s in day_snaps:
+        target = SOURCE_ALIASES.get(s.source)
+        if target is None:
+            out.append(s)
+            continue
+        if target in canonical_present:
+            # Canonical outlet's row exists — drop the alias entirely.
+            continue
+        # Canonical outlet missing — keep the alias but relabel it so
+        # downstream code treats it as the canonical source.
+        out.append(_dc_replace(s, source=target))
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -263,6 +303,11 @@ def compute_consensus_point(
     consensus_fv_raw equal the pre-shrinkage values. build_timeseries
     applies shrinkage in a second pass once the population mean is known.
     """
+
+    # Collapse multi-list outlets (Pipeline Top 100 + Pipeline
+    # International, etc.) into one canonical source per outlet before
+    # any aggregation logic runs — see _dedupe_source_aliases.
+    day_snaps = _dedupe_source_aliases(day_snaps)
 
     explicit_fvs: list[float] = []
     ranks: list[int] = []

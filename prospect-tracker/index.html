@@ -543,7 +543,10 @@
     /* Single-source uncertainty chip — sits to the right of an FV badge
        whenever exactly one source published an explicit FV at the
        latest point. Dashed amber to match the "n=1 · single source" pill
-       in the per-source breakdown block. */
+       in the per-source breakdown block. The `.is-wide` variant fires
+       when ≥2 sources disagree by ≥10 grade points and uses a brighter
+       solid-border treatment so the spread reading reads as more urgent
+       than the 1-source pull (which is a quieter informational flag). */
     .fv-confidence-chip {
       display: inline-block;
       margin-left: 4px;
@@ -558,6 +561,90 @@
       background: rgba(232, 165, 31, 0.08);
       vertical-align: middle;
       cursor: help;
+    }
+    .fv-confidence-chip.is-wide {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      padding: 2px 7px;
+      border-style: solid;
+      border-width: 1.5px;
+      border-color: var(--neon-violet);
+      color: #fff;
+      background: var(--neon-violet);
+      text-transform: uppercase;
+      box-shadow: 0 0 0 1px rgba(107, 79, 168, 0.20);
+    }
+
+    /* Row tag pills — shared shape for the flag counter, health,
+       acquisition, and other small inline indicators sitting next to
+       the player name. Each variant overrides border + bg color so
+       readers can scan by hue (green=positive, red=concern, cyan=move,
+       amber=watch, neutral=info). */
+    .row-tag {
+      display: inline-flex; align-items: center; gap: 3px;
+      margin-left: 4px;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 1px 5px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      vertical-align: middle;
+      cursor: help;
+      line-height: 1.3;
+    }
+    .row-tag .flag-up   { color: var(--up); }
+    .row-tag .flag-down { color: var(--down); }
+    .row-tag.health-il      { color: var(--down);       border-color: var(--down);       background: rgba(185,28,28,0.14); }
+    .row-tag.health-tj      { color: var(--down);       border-color: var(--down);       background: rgba(185,28,28,0.08); }
+    .row-tag.health-chronic { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.10); }
+    .row-tag.acq-trade      { color: var(--neon-cyan);  border-color: var(--neon-cyan);  background: rgba(74,200,224,0.10); }
+    .row-tag.acq-rule5,
+    .row-tag.acq-waiver     { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.06); }
+
+    /* Density modes — body-level class toggles drive how dense each
+       prospect row is. Compact strips chart / milb / eta cells and
+       shrinks the headshot; Expanded reveals a second meta line below
+       the name with Savant micro-tile + flag detail. Standard = today. */
+    body.density-compact .player-row > .line-chart-cell,
+    body.density-compact .player-row > .milb-cell,
+    body.density-compact .player-row > .eta-cell { display: none !important; }
+    body.density-compact .player-row .headshot,
+    body.density-compact .player-row .headshot-img,
+    body.density-compact .player-row img.headshot { width: 36px !important; height: 36px !important; }
+
+    .player-row-expand {
+      grid-column: 2 / -1;
+      font-size: 10.5px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+      font-family: var(--font-mono);
+      letter-spacing: 0.02em;
+      display: none;
+    }
+    body.density-expanded .player-row-expand { display: block; }
+    body.density-expanded .player-row { row-gap: 4px; }
+    body.density-expanded .player-row .expand-savant { color: var(--text-secondary); }
+    body.density-expanded .player-row .expand-flag-up   { color: var(--up); margin-right: 4px; }
+    body.density-expanded .player-row .expand-flag-down { color: var(--down); }
+
+    /* Mobile-only performance pill — keeps RPS+/wRC+/xFIP visible when
+       the MiLB stats cell collapses out of the row at <900px. */
+    .mobile-only-pill { display: none; }
+    @media (max-width: 900px) {
+      .mobile-only-pill { display: inline-flex; margin-left: 6px; vertical-align: middle; }
+    }
+
+    /* Density toggle — three-state chip strip that sits next to the
+       sort/search controls. Active chip uses the same .chip.active
+       styling other toggle groups share. */
+    .density-toggle {
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-left: 4px;
     }
 
     .rank-cell, .stock-cell {
@@ -2570,6 +2657,11 @@
       <button class="chip" data-filter-health="healthy" title="Hide players currently on the IL">Healthy only</button>
     </div>
     <div class="filter-group">
+      <span class="filter-label">FV agreement</span>
+      <button class="chip active" data-filter-spread="all" title="Show every active prospect regardless of source spread">All</button>
+      <button class="chip" data-filter-spread="wide" title="Only show prospects where ≥2 sources disagree by at least 10 grade points (the 'wide spread' / breakout-candidate filter)">Wide FV spread</button>
+    </div>
+    <div class="filter-group">
       <span class="filter-label">Org</span>
       <select class="chip" id="org-filter">
         <option value="all">All organizations</option>
@@ -2600,7 +2692,18 @@
         <option value="age_asc">Youngest first</option>
         <option value="age_vs_level">Most young-for-level</option>
         <option value="eta">ETA (earliest first)</option>
+        <option value="stock_movers">Biggest movers (|ΔFV|)</option>
+        <option value="t_plus">ToolGrade+ (toolsiest)</option>
+        <option value="source_confidence">Source confidence (most sources first)</option>
       </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Density</span>
+      <div class="density-toggle">
+        <button class="chip" data-density="compact" type="button" title="Strip the FV chart, MiLB stats, and ETA columns — just name + FV + rank. Half-height rows.">Compact</button>
+        <button class="chip active" data-density="standard" type="button" title="Default row layout — name, FV, rank, FV history chart, MiLB stats, ETA.">Standard</button>
+        <button class="chip" data-density="expanded" type="button" title="Adds a second meta line under each name with flag detail, Statcast micro-tile (when available), and recent FV history (open/high/low/close).">Expanded</button>
+      </div>
     </div>
     <div class="filter-group">
       <span class="filter-label">Level</span>
@@ -2680,9 +2783,9 @@
       <button class="chip" data-grad-sort="fv_close"
               title="Highest final consensus FV (the FV when the player graduated) first">Final FV</button>
       <button class="chip" data-grad-sort="vs_fv_proj"
-              title="WAG (WAR Above Grade) — career WAR/year minus the FV-grade-implied WAR/year (FanGraphs scouting primer, lower-bound; linearly interpolated between grades; hitter/pitcher tables applied separately). Requires ≥1 full MLB season. Highest outperformance first.">WAG (high)</button>
+              title="WAG (WAR Above Grade) — playing-time-weighted MLB WAR/year (PA for hitters / IP for pitchers) minus the FV-grade-implied WAR/year (FanGraphs primer, lower-bound; linearly interpolated; hitter/pitcher tables split). Requires ≥1 full-season equivalent of MLB playing time. Highest outperformance first.">WAG (high)</button>
       <button class="chip" data-grad-sort="vs_fv_proj_low"
-              title="WAG (WAR Above Grade) — same metric as 'WAG (high)' but inverted: lowest delta first, so graduates UNDERPERFORMING their FV grade most heavily surface at the top. Graduates without ≥1 MLB season sink to the bottom.">WAG (low)</button>
+              title="WAG (WAR Above Grade) — same metric as 'WAG (high)' but inverted: lowest delta first, so graduates UNDERPERFORMING their FV grade most heavily surface at the top. Playing-time-weighted; requires ≥1 full-season equivalent of MLB playing time (thin-debut graduates sink to the bottom).">WAG (low)</button>
     </div>
     <div id="grad-rows"></div>
   </div>
@@ -2935,14 +3038,15 @@ function fvBadgeTooltip(player) {
   return parts.join("\n");
 }
 
-// Confidence indicator — re-enabled 2026-05 for the single-source
-// pull-down path. The chip fires when exactly one source published an
-// explicit FV at the latest point (typical of 2026 IFA prospects
-// appearing only on Pipeline's Top 50). Multi-source players show
-// nothing extra. Source count comes from the canonical avg_fv_n field
-// (added to the per-point export alongside this feature); falls back
-// to recounting per_source for cached payloads that pre-date the
-// export.
+// Confidence indicator — fires next to the FV badge for two
+// data-quality cases:
+//   * 1 src  — exactly one source published an explicit FV (the
+//              consensus is the FV-35 single-source pull-down).
+//   * wide ±N — ≥2 sources disagree by ≥10 grade points (the consensus
+//               is the mean but scouts disagree wildly on this player).
+// The two are mutually exclusive (no spread possible with 1 source).
+// Source count comes from the canonical avg_fv_n field; falls back to
+// recounting per_source for cached payloads that pre-date the export.
 function fvBadgeConfidence(player) {
   const pts = player && player.points;
   const last = pts && pts.length ? pts[pts.length - 1] : null;
@@ -2950,8 +3054,143 @@ function fvBadgeConfidence(player) {
   const n = last.avg_fv_n != null
     ? last.avg_fv_n
     : Object.values(last.per_source || {}).filter(v => v && v.fv_published != null).length;
-  if (n !== 1) return "";
-  return `<span class="fv-confidence-chip" title="Single-source grade — pulled down 1/3 of the way toward FV 35 (Bayesian shrinkage, k=0.5) to reflect 1-source uncertainty. Add a second source to remove the pull.">1 src</span>`;
+  if (n === 1) {
+    return `<span class="fv-confidence-chip" title="Single-source grade — pulled down 1/3 of the way toward FV 35 (Bayesian shrinkage, k=0.5) to reflect 1-source uncertainty. Add a second source to remove the pull.">1 src</span>`;
+  }
+  if (last.fv_spread != null && last.fv_spread >= 10) {
+    const sp = Math.round(last.fv_spread);
+    return `<span class="fv-confidence-chip is-wide" title="Wide source disagreement — sources differ by ${last.fv_spread.toFixed(1)} grade points across ${n} sources. Open the player detail page for the per-source breakdown.">wide ±${sp}</span>`;
+  }
+  return "";
+}
+
+// Acquisition-method tooltip helper — builds the per-method context
+// string for acqPillHTML. Lifted out so it can stay readable.
+function acqTooltip(p, method) {
+  const cur = p.current_acquisition || {};
+  const evt = cur.event || {};
+  const orig = p.acquisition || {};
+  if (method === "draft") {
+    const yr = orig.year ? `, ${orig.year}` : "";
+    return orig.pick_overall != null
+      ? `Drafted pick #${orig.pick_overall}${yr}`
+      : `Drafted${yr}`;
+  }
+  if (method === "international_fa") {
+    const yr = orig.year ? ` ${orig.year}` : "";
+    return `International FA signing${yr}`;
+  }
+  if (method === "trade") {
+    const date = evt.date || "?";
+    const from = evt.from_org || "?";
+    const to = evt.to_org || "?";
+    return `Acquired via trade — ${from} → ${to} (${date})`;
+  }
+  if (method === "rule_5")     return `Acquired via Rule 5 draft${evt.date ? ` (${evt.date})` : ""}`;
+  if (method === "waiver")     return `Waiver claim${evt.from_org ? ` from ${evt.from_org}` : ""}${evt.date ? ` (${evt.date})` : ""}`;
+  if (method === "free_agent") return `Free-agent signing${evt.date ? ` (${evt.date})` : ""}`;
+  if (method === "contract_purchase") return `Contract purchase${evt.date ? ` (${evt.date})` : ""}`;
+  return "Acquired";
+}
+
+// Inline pill summing the prospect's stat_flags + tool_flags into a
+// compact ▲N ▼N chip. Hidden when the prospect has no flags. Hover
+// reveals the comma-separated list of flag names so the reader can
+// audit the count without opening the detail page.
+function flagCounterPillHTML(p) {
+  const flags = (p.stat_flags || []).concat(p.tool_flags || []);
+  if (!flags.length) return "";
+  const g = flags.filter(f => f.direction === "green").length;
+  const r = flags.filter(f => f.direction === "red").length;
+  if (!g && !r) return "";
+  const list = flags.map(f => f.stat).join(" · ");
+  const greenPart = g ? `<span class="flag-up">▲${g}</span>` : "";
+  const redPart   = r ? `<span class="flag-down">▼${r}</span>` : "";
+  return `<span class="row-tag" title="${escapeHtml(list)}">${greenPart}${redPart}</span>`;
+}
+
+// Single inline chip surfacing the most-concerning health signal:
+//   On IL > Post-TJ > chronic-IL (≥3 stints or ≥200 IL days last 24mo).
+// Mutually exclusive — only one chip ever shows per row. Healthy
+// prospects render nothing.
+function healthBadgeHTML(p) {
+  const il = p.il_status || {};
+  if (il.is_on_il) {
+    const days = il.days_on_il;
+    const what = il.description ? il.description : "On IL";
+    return `<span class="row-tag health-il" title="${escapeHtml(what)}">IL${days != null ? ` ${days}d` : ""}</span>`;
+  }
+  const hp = p.health_profile || {};
+  if (hp.is_post_tj) {
+    const d = hp.tj_surgery_date ? ` (${hp.tj_surgery_date})` : "";
+    return `<span class="row-tag health-tj" title="Post-Tommy John surgery${d}">TJ</span>`;
+  }
+  const stints = hp.il_stints_24mo || 0;
+  const ildays = hp.il_days_24mo || 0;
+  if (stints >= 3 || ildays >= 200) {
+    return `<span class="row-tag health-chronic" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 24 months">Chronic</span>`;
+  }
+  return "";
+}
+
+// Acquisition-method pill. Uses current_acquisition.method (so a
+// recently-traded prospect reads "Trade") and falls back to the
+// original acquisition method when current is missing/unknown. Tooltip
+// surfaces pick number / from-org / date depending on the method.
+function acqPillHTML(p) {
+  const cur = (p.current_acquisition || {}).method;
+  const orig = (p.acquisition || {}).method;
+  const method = (cur && cur !== "unknown") ? cur
+               : (orig && orig !== "unknown") ? orig
+               : null;
+  if (!method) return "";
+  const labels = {
+    draft: "Draft", international_fa: "IFA", trade: "Trade",
+    rule_5: "Rule 5", waiver: "Waiver", free_agent: "FA",
+    contract_purchase: "Purchase",
+  };
+  const label = labels[method];
+  if (!label) return "";
+  const cls = method === "trade" ? "acq-trade"
+    : method === "rule_5" ? "acq-rule5"
+    : method === "waiver" ? "acq-waiver"
+    : "";
+  return `<span class="row-tag ${cls}" title="${escapeHtml(acqTooltip(p, method))}">${label}</span>`;
+}
+
+// Second meta line under the player name, rendered only in the
+// Expanded density mode. Surfaces (when available) a flag detail
+// line, a Statcast micro-tile, and a recent-FV-history caption pulled
+// from the candlestick fields. Each block guards on the underlying
+// data being present.
+function playerExpandedMetaHTML(p) {
+  const parts = [];
+  const flags = (p.stat_flags || []).concat(p.tool_flags || []);
+  if (flags.length) {
+    const g = flags.filter(f => f.direction === "green");
+    const r = flags.filter(f => f.direction === "red");
+    const lhs = g.length ? `<span class="expand-flag-up">▲ ${g.map(f => escapeHtml(f.stat)).join(", ")}</span>` : "";
+    const rhs = r.length ? `<span class="expand-flag-down">▼ ${r.map(f => escapeHtml(f.stat)).join(", ")}</span>` : "";
+    parts.push(`${lhs}${lhs && rhs ? "   " : ""}${rhs}`);
+  }
+  const sv = p.prospect_savant;
+  if (sv && Object.keys(sv).length) {
+    const bits = [];
+    if (sv.xwoba != null)      bits.push(`xwOBA ${Number(sv.xwoba).toFixed(3).replace(/^0/, "")}`);
+    if (sv.barrel_pct != null) bits.push(`barrel ${Number(sv.barrel_pct).toFixed(1)}%`);
+    if (sv.hard_hit_pct != null) bits.push(`HardHit ${Number(sv.hard_hit_pct).toFixed(0)}%`);
+    if (sv.whiff_pct != null)  bits.push(`whiff ${Number(sv.whiff_pct).toFixed(0)}%`);
+    if (sv.k_pct != null)      bits.push(`K ${Number(sv.k_pct).toFixed(0)}%`);
+    if (sv.bb_pct != null)     bits.push(`BB ${Number(sv.bb_pct).toFixed(0)}%`);
+    if (bits.length) parts.push(`<span class="expand-savant">${bits.join(" · ")}</span>`);
+  }
+  if (p.fv_open != null && p.fv_close != null) {
+    const o = Math.round(p.fv_open), h = Math.round(p.fv_high ?? p.fv_close),
+          l = Math.round(p.fv_low  ?? p.fv_open),  c = Math.round(p.fv_close);
+    parts.push(`<span title="Open / High / Low / Close">O ${o} · H ${h} · L ${l} · C ${c}</span>`);
+  }
+  if (!parts.length) return "";
+  return `<div class="player-row-expand">${parts.join("   ·   ")}</div>`;
 }
 
 const fvClass = label => {
@@ -3386,6 +3625,8 @@ function syncToURL() {
   if (state.posFilter   !== "all")        p.set("pos",   state.posFilter);
   if (state.sort        !== "fv")         p.set("sort",  state.sort);
   if (state.stockFilter !== "all")        p.set("stock", state.stockFilter);
+  if (state.spreadFilter && state.spreadFilter !== "all") p.set("spread", state.spreadFilter);
+  if (state.density     && state.density !== "standard") p.set("density", state.density);
   if (state.search)                       p.set("q",     state.search);
   if (state.farmSort    !== "farm_rank")  p.set("farm",  state.farmSort);
   if (state.formWindow  !== "1y")         p.set("formw", state.formWindow);
@@ -3430,6 +3671,8 @@ function syncFromURL() {
   if (p.has("pos"))   state.posFilter   = p.get("pos");
   if (p.has("sort"))  state.sort        = p.get("sort");
   if (p.has("stock")) state.stockFilter = p.get("stock");
+  if (p.has("spread")) state.spreadFilter = p.get("spread");
+  if (p.has("density")) state.density   = p.get("density");
   if (p.has("q"))     state.search      = p.get("q");
   if (p.has("farm"))  state.farmSort    = p.get("farm");
   if (p.has("formw")) {
@@ -3516,6 +3759,15 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.section === state.section));
   document.querySelectorAll("[data-filter-stock]").forEach(b =>
     b.classList.toggle("active", b.dataset.filterStock === state.stockFilter));
+  document.querySelectorAll("[data-filter-spread]").forEach(b =>
+    b.classList.toggle("active", b.dataset.filterSpread === (state.spreadFilter || "all")));
+  document.querySelectorAll("[data-filter-health]").forEach(b =>
+    b.classList.toggle("active", b.dataset.filterHealth === (state.healthFilter || "all")));
+  document.querySelectorAll("[data-density]").forEach(b =>
+    b.classList.toggle("active", b.dataset.density === (state.density || "standard")));
+  // Body class mirrors state.density so the CSS rules can target it.
+  document.body.classList.remove("density-compact", "density-standard", "density-expanded");
+  document.body.classList.add(`density-${state.density || "standard"}`);
   document.querySelectorAll("[data-filter-level]").forEach(b =>
     b.classList.toggle("active", b.dataset.filterLevel === state.levelFilter));
   document.querySelectorAll("[data-filter-pos]").forEach(b =>
@@ -3837,6 +4089,15 @@ const state = {
   // an IL stint when set to "healthy". They still appear in their
   // own Injured List tab.
   healthFilter: "all",
+  // FV-agreement lens — "wide" filters down to prospects whose latest
+  // point shows ≥10 grade-points of disagreement between explicit-FV
+  // sources. Default "all" passes everyone through.
+  spreadFilter: "all",
+  // Row density — "compact" / "standard" / "expanded". Picked up from
+  // URL > localStorage > default on boot. Drives a body-level class
+  // and (for Expanded) the per-row second meta line.
+  density: (typeof localStorage !== "undefined"
+            && localStorage.getItem("prospect-tracker.density")) || "standard",
   // Leaderboards tab — stat × season × level × position-group × org
   // selection. Pulls from career_stats (year-by-year per-level rows) so
   // historical seasons work. The stat key matches a field on the
@@ -3938,6 +4199,15 @@ function getFilteredActives() {
   if (state.posFilter !== "all") {
     pool = pool.filter(p => positionMatches(positionBucket(p.position), state.posFilter));
   }
+  // FV agreement lens — only show prospects with ≥10-point disagreement
+  // between explicit-FV sources at the latest point. Useful for finding
+  // contested/breakout candidates without scanning the per-source block.
+  if (state.spreadFilter === "wide") {
+    pool = pool.filter(p => {
+      const last = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+      return last && last.fv_spread != null && last.fv_spread >= 10;
+    });
+  }
   if (state.sort === "age_asc") {
     pool.sort((a, b) => (a.age ?? 99) - (b.age ?? 99));
   } else if (state.sort === "age_vs_level") {
@@ -3948,6 +4218,39 @@ function getFilteredActives() {
       const ay = a.eta && a.eta.year != null ? a.eta.year : 9999;
       const by = b.eta && b.eta.year != null ? b.eta.year : 9999;
       return ay - by;
+    });
+  } else if (state.sort === "stock_movers") {
+    // Biggest absolute FV movement across the player's recorded history.
+    // |fv_close - fv_open| picks up both risers and fallers without
+    // requiring the reader to pre-select a direction (the Stock chip
+    // narrows by direction if they want).
+    pool.sort((a, b) => {
+      const da = (a.fv_close != null && a.fv_open != null) ? Math.abs(a.fv_close - a.fv_open) : -1;
+      const db = (b.fv_close != null && b.fv_open != null) ? Math.abs(b.fv_close - b.fv_open) : -1;
+      return db - da;
+    });
+  } else if (state.sort === "t_plus") {
+    // ToolGrade+ desc, nulls (no tool data) sink to the bottom. Tie-
+    // break on consensus FV so a 60 FV with T+ 110 beats a 50 FV with
+    // T+ 110.
+    pool.sort((a, b) => {
+      const av = (a.tools || {}).composite_overall_plus;
+      const bv = (b.tools || {}).composite_overall_plus;
+      if (av == null && bv == null) return (b.fv_close ?? -1) - (a.fv_close ?? -1);
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return bv - av || (b.fv_close ?? -1) - (a.fv_close ?? -1);
+    });
+  } else if (state.sort === "source_confidence") {
+    // Most-corroborated FVs first — multi-source consensus floats above
+    // single-source pulls. Tie-break on consensus FV so the order is
+    // stable inside an n-tier.
+    pool.sort((a, b) => {
+      const lastA = (a.points && a.points.length) ? a.points[a.points.length - 1] : null;
+      const lastB = (b.points && b.points.length) ? b.points[b.points.length - 1] : null;
+      const an = (lastA && lastA.avg_fv_n) || 0;
+      const bn = (lastB && lastB.avg_fv_n) || 0;
+      return bn - an || (b.fv_close ?? -1) - (a.fv_close ?? -1);
     });
   }
   return pool;
@@ -4173,8 +4476,8 @@ function renderActives() {
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           ${headshotHTML(p, 50)}
           <div style="min-width:0;flex:1;">
-            <div class="player-name">${escapeHtml(p.player_name)}${toolPlusPillHTML(p)}</div>
-            ${playerMetaHTML(p)}
+            <div class="player-name">${escapeHtml(p.player_name)}${toolPlusPillHTML(p)}${flagCounterPillHTML(p)}${healthBadgeHTML(p)}${acqPillHTML(p)}</div>
+            ${playerMetaHTML(p)}<span class="mobile-only-pill">${rpsPlusPillHTML(p)}</span>
           </div>
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
@@ -4184,6 +4487,7 @@ function renderActives() {
         <div class="line-chart-cell">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
         ${makeMilbCell(p)}
         ${makeEtaCell(p)}
+        ${playerExpandedMetaHTML(p)}
       </div>
     `;
   }).join("");
@@ -4809,16 +5113,97 @@ function fvExpectedWarPerYr(fv, isPitcher) {
   return null;
 }
 
-function gradVsFvProjection(g) {
+// Playing-time-weighted MLB WAR/year, with a minimum-sample gate to
+// suppress small-sample noise (Ben Rice's −0.3 WAR over 50 PA debut
+// motivated the gate). The rate is:
+//
+//   war_per_yr = (sum of WAR across MLB years)
+//              / (sum of season fractions across MLB years)
+//
+// where one "season fraction" is PA/600 for hitters (falling back to
+// AB×1.1/600 when PA is null) and IP/130 for pitchers — 130 IP is
+// a compromise between the textbook 162-IP starter qualifier and a
+// reliever full season (~60 IP), so multi-year relievers can still
+// qualify. Current year is INCLUDED — the PA-weighting already
+// downweights in-progress partial seasons naturally.
+//
+// Returns null (and the caller skips rendering) when total playing
+// time across the player's MLB career sums to less than 1.0 full
+// season equivalent, or when no MLB year carries usable playing-time
+// data. No equally-weighted fallback — better to render nothing than
+// a misleading number.
+//
+// Returns:
+//   { war_per_yr, war_seasons_count, war_total } | null
+function gradWarPerYr(g) {
   const cw = g.career_war || {};
-  if (cw.war_per_yr == null) return null;
-  if ((cw.war_seasons_count ?? 0) < 1) return null;
+  const seasons = cw.seasons || {};
+  const careerStats = g.career_stats || [];
+  const isPitcher = !!(g.sabermetrics && g.sabermetrics.is_pitcher);
+
+  // Sum of season fractions per year — multiple MLB rows in one year
+  // (e.g., mid-season trade) accumulate, then we match against
+  // career_war.seasons by year to compute total WAR alongside.
+  const fracBySeason = {};
+  for (const row of careerStats) {
+    if ((row.level || "").toUpperCase() !== "MLB") continue;
+    const yr = parseInt(row.season, 10);
+    if (isNaN(yr)) continue;
+    let frac = 0;
+    if (isPitcher) {
+      const ip = Number(row.ip);
+      if (!isNaN(ip) && ip > 0) frac = ip / 130;
+    } else {
+      const pa = Number(row.pa);
+      if (!isNaN(pa) && pa > 0) {
+        frac = pa / 600;
+      } else {
+        const ab = Number(row.ab);
+        if (!isNaN(ab) && ab > 0) frac = (ab * 1.1) / 600;
+      }
+    }
+    if (frac > 0) fracBySeason[yr] = (fracBySeason[yr] || 0) + frac;
+  }
+
+  let totalWar = 0;
+  let totalFrac = 0;
+  let count = 0;
+  for (const yr in seasons) {
+    const y = parseInt(yr, 10);
+    const w = seasons[yr];
+    if (w == null) continue;
+    const frac = fracBySeason[y];
+    if (!frac || frac <= 0) continue;
+    totalWar += Number(w);
+    totalFrac += frac;
+    count += 1;
+  }
+  // Minimum-sample gate: require ≥1 full-season equivalent of
+  // playing time before extrapolating a rate. Ben Rice with only a
+  // 50-PA debut (0.083 seasons) drops out; once he banks a real
+  // follow-up year the gate opens.
+  if (count < 1 || totalFrac < 1.0) return null;
+  return {
+    war_per_yr: totalWar / totalFrac,
+    war_seasons_count: count,
+    war_total: totalWar,
+  };
+}
+
+function gradVsFvProjection(g) {
+  // WAG = (playing-time-weighted MLB WAR/yr) − (FV-grade-implied
+  // WAR/yr). gradWarPerYr returns null when the player has < 1 full-
+  // season equivalent of MLB playing time, so a thin-debut prospect
+  // (Ben Rice with only 50 PA) silently drops out instead of reading
+  // as a massive bust.
+  const r = gradWarPerYr(g);
+  if (!r) return null;
   const fv = g.fv_close_raw ?? g.fv_close;
   if (fv == null) return null;
   const isPitcher = !!(g.sabermetrics && g.sabermetrics.is_pitcher);
   const expected = fvExpectedWarPerYr(fv, isPitcher);
   if (expected == null) return null;
-  return cw.war_per_yr - expected;
+  return r.war_per_yr - expected;
 }
 
 function renderGraduates() {
@@ -4874,7 +5259,13 @@ function renderGraduates() {
   } else if (sortMode === "career_war") {
     orderedGrads = filtered.slice().sort(sortByWarField(g => (g.career_war || {}).career_war));
   } else if (sortMode === "war_per_yr") {
-    orderedGrads = filtered.slice().sort(sortByWarField(g => (g.career_war || {}).war_per_yr));
+    // Playing-time-weighted WAR/yr — same definition as WAG's
+    // denominator, so a graduate without ≥1 full-season equivalent
+    // of playing time sinks to the null end of the sort.
+    orderedGrads = filtered.slice().sort(sortByWarField(g => {
+      const r = gradWarPerYr(g);
+      return r ? r.war_per_yr : null;
+    }));
   } else if (sortMode === "fv_close") {
     orderedGrads = filtered.slice().sort((a, b) =>
       ((b.fv_close ?? -1) - (a.fv_close ?? -1))
@@ -4915,7 +5306,9 @@ function renderGraduates() {
     if (wagDelta != null) {
       const isPitcher = !!sm.is_pitcher;
       const expected = fvExpectedWarPerYr(g.fv_close_raw ?? g.fv_close, isPitcher);
-      const tip = `WAG ${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} — expected ${expected.toFixed(2)} WAR/yr at FV ${Math.round(g.fv_close)} (${isPitcher ? "pitcher" : "hitter"} table), actual ${cw.war_per_yr.toFixed(2)} WAR/yr over ${cw.war_seasons_count} season${cw.war_seasons_count === 1 ? "" : "s"}`;
+      const r = gradWarPerYr(g);  // never null when wagDelta isn't
+      const denomNote = isPitcher ? "130 IP" : "600 PA";
+      const tip = `WAG ${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} — expected ${expected.toFixed(2)} WAR/yr at FV ${Math.round(g.fv_close)} (${isPitcher ? "pitcher" : "hitter"} table), actual ${r.war_per_yr.toFixed(2)} WAR/yr over ${r.war_seasons_count} MLB season${r.war_seasons_count === 1 ? "" : "s"} weighted by playing time (1 season = ${denomNote})`;
       const cls = wagDelta > 0.05 ? "is-pos" : wagDelta < -0.05 ? "is-neg" : "is-neutral";
       wagPill = `<span class="wag-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(tip)}">${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} WAG</span>`;
     }
@@ -4929,8 +5322,12 @@ function renderGraduates() {
       warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);">${sm.war > 0 ? '+' : ''}${sm.war.toFixed(2)} fWAR</span>`;
     } else if (sortMode === "career_war" && cw.career_war != null) {
       warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="Career WAR · ${cw.war_seasons_count ?? "?"} season${cw.war_seasons_count === 1 ? "" : "s"} (${cw.source || "bbref"})">${cw.career_war > 0 ? '+' : ''}${cw.career_war.toFixed(1)} career WAR</span>`;
-    } else if (sortMode === "war_per_yr" && cw.war_per_yr != null) {
-      warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="WAR per season — career WAR ÷ ${cw.war_seasons_count ?? "?"} season${cw.war_seasons_count === 1 ? "" : "s"}">${cw.war_per_yr > 0 ? '+' : ''}${cw.war_per_yr.toFixed(2)} WAR/yr</span>`;
+    } else if (sortMode === "war_per_yr") {
+      const r = gradWarPerYr(g);
+      if (r) {
+        const denomNote = sm.is_pitcher ? "130 IP" : "600 PA";
+        warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="WAR/year — total MLB WAR ÷ ${r.war_seasons_count} season${r.war_seasons_count === 1 ? "" : "s"} weighted by playing time (1 season = ${denomNote}). Requires ≥1 full-season equivalent of MLB time.">${r.war_per_yr > 0 ? '+' : ''}${r.war_per_yr.toFixed(2)} WAR/yr</span>`;
+      }
     }
     return `
       <div class="grad-row" data-key="${escapeHtml(g.player_key)}" style="${orgStripe(g.org)}">
@@ -5308,6 +5705,7 @@ function activeFilterCount() {
   let n = 0;
   if (state.stockFilter   !== "all")     n++;
   if (state.healthFilter  !== "all")     n++;
+  if (state.spreadFilter && state.spreadFilter !== "all") n++;
   if (state.orgFilter     !== "all")     n++;
   if (state.acqFilter     !== "all")     n++;
   if (state.sort          !== "fv")      n++;
@@ -7244,10 +7642,13 @@ function renderPlayerDetail(key) {
                    : wagDeltaTile > 0.05 ? "var(--up)"
                    : wagDeltaTile < -0.05 ? "var(--down)"
                    : "var(--text-primary)";
+  const wagRateTile = wagDeltaTile != null ? gradWarPerYr(p) : null;
   const wagTile = wagDeltaTile != null ? [
     "WAG",
     `<span style="color:${wagColor};">${wagDeltaTile > 0 ? "+" : ""}${wagDeltaTile.toFixed(2)} WAR/yr</span>`,
-    p.fv_close != null ? `vs ${Math.round(p.fv_close)} FV projection` : "",
+    p.fv_close != null
+      ? `vs ${Math.round(p.fv_close)} FV proj · ${wagRateTile.war_seasons_count} MLB season${wagRateTile.war_seasons_count === 1 ? "" : "s"} (PT-weighted)`
+      : "",
   ] : null;
   const tiles = [
     ["Age vs. level", ageTileValue, ageSub],
@@ -10160,6 +10561,24 @@ function attachHandlers() {
     });
   });
   attachChipGroup("filter-health", "healthFilter", () => render());
+  attachChipGroup("filter-spread", "spreadFilter", () => render());
+  // Density toggle chips — body class + localStorage so the choice
+  // survives across sessions and reloads. URL also persists via
+  // syncToURL/syncFromURL above.
+  document.querySelectorAll("[data-density]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const prev = state.density || "standard";
+      const next = btn.dataset.density;
+      document.body.classList.remove(`density-${prev}`);
+      state.density = next;
+      document.body.classList.add(`density-${state.density}`);
+      try { localStorage.setItem("prospect-tracker.density", next); } catch {}
+      document.querySelectorAll("[data-density]").forEach(b =>
+        b.classList.toggle("active", b.dataset.density === next));
+      render();
+      syncToURL();
+    });
+  });
   // Level filter chips (main list + URL state).
   document.querySelectorAll("[data-filter-level]").forEach(btn => {
     btn.addEventListener("click", () => {
