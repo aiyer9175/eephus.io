@@ -605,6 +605,70 @@
     .row-tag.acq-trade      { color: var(--neon-cyan);  border-color: var(--neon-cyan);  background: rgba(74,200,224,0.10); }
     .row-tag.acq-rule5,
     .row-tag.acq-waiver     { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.06); }
+    .row-tag.savant-inline-pill { color: var(--neon-violet); border-color: var(--neon-violet); background: rgba(107,79,168,0.10); }
+    .row-tag.arsenal-mini    { color: var(--neon-cyan);   border-color: var(--neon-cyan);   background: rgba(74,200,224,0.06); letter-spacing: 0.04em; }
+    .row-tag.recent-acq      { color: #fff; border-color: var(--neon-cyan); background: var(--neon-cyan); text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* Subtle full-row FV-tier background tint. Derived from the
+       existing --fv-NN-bg palette but at 3–8% alpha so it's a
+       background wash rather than a paint job. Org-color left stripe
+       (inline style on .player-row) stacks on top of this. Hover state
+       already brightens the row via the existing :hover rule, so the
+       tint stays visible only at rest. */
+    .player-row[data-fv-tier="80"] { background-color: rgba(255, 224, 138, 0.08); }
+    .player-row[data-fv-tier="75"] { background-color: rgba(252, 199, 115, 0.07); }
+    .player-row[data-fv-tier="70"] { background-color: rgba(244, 171,  96, 0.07); }
+    .player-row[data-fv-tier="65"] { background-color: rgba(232, 144,  88, 0.06); }
+    .player-row[data-fv-tier="60"] { background-color: rgba(217, 176, 122, 0.06); }
+    .player-row[data-fv-tier="55"] { background-color: rgba(216, 195, 157, 0.05); }
+    .player-row[data-fv-tier="50"] { background-color: rgba(213, 204, 176, 0.04); }
+    .player-row[data-fv-tier="45"] { background-color: rgba(201, 197, 176, 0.03); }
+    .player-row[data-fv-tier="35"] { background-color: rgba(176, 174, 159, 0.04); }
+    .player-row[data-fv-tier="30"],
+    .player-row[data-fv-tier="25"],
+    .player-row[data-fv-tier="20"] { background-color: rgba(146, 146, 139, 0.05); }
+
+    /* Mobile tap-to-expand. Chevron button is hidden on desktop and
+       shown on mobile, where the row collapses to 4 columns. Tap →
+       toggle .is-expanded on the .player-row → re-display the chart /
+       milb / eta cells stacked below as a second grid row spanning
+       the full width. */
+    .row-expand-btn {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 28px; height: 28px;
+      background: transparent;
+      color: var(--text-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: transform 0.15s, color 0.15s, border-color 0.15s;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    @media (max-width: 720px) {
+      .row-expand-btn { display: inline-flex; }
+      .player-row.is-expanded .row-expand-btn {
+        transform: rotate(180deg);
+        color: var(--neon-cyan);
+        border-color: var(--neon-cyan);
+      }
+      .player-row.is-expanded > .line-chart-cell,
+      .player-row.is-expanded > .milb-cell,
+      .player-row.is-expanded > .eta-cell {
+        display: block !important;
+        grid-column: 1 / -1;
+        padding-top: 6px;
+        margin-top: 4px;
+        border-top: 1px solid var(--border-light);
+      }
+    }
+
+    /* When Density is Expanded, the existing playerExpandedMetaHTML
+       already shows a 5-field Statcast strip on the second meta line —
+       the inline 2-field savant pill becomes redundant. Hide it. */
+    body.density-expanded .savant-inline-pill { display: none; }
 
     /* Density modes — body-level class toggles drive how dense each
        prospect row is. Compact strips chart / milb / eta cells and
@@ -2793,13 +2857,13 @@
   <div id="farm-section" style="display:none;">
     <div class="filter-bar" id="farm-sort-bar" style="flex-wrap:wrap;gap:6px;">
       <span class="filter-label">Sort by</span>
-      <button class="chip" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% graduation pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
+      <button class="chip active" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% graduation pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
       <button class="chip" data-farm-sort="top_end" title="Tiered-FV sum of the org's top 5 prospects — an 80 is worth ~100x a 40">Top-end</button>
       <button class="chip" data-farm-sort="depth" title="Tiered-FV sum of prospects #6-25">Depth</button>
       <!-- Single Trajectory chip — sorts by DvM+ for whichever window
            is selected in the right-hand "Development window" picker, so
            three chips (one per window) would just duplicate that control. -->
-      <button class="chip active" data-farm-sort="trajectory"
+      <button class="chip" data-farm-sort="trajectory"
               title="Sort by DvM+ for the currently selected development window (1y / 3y / 5y, picked on the right). Acquisitions + graduations are nullified — pure development of prospects already in the system.">Trajectory (DvM+)</button>
       <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted graduations in the trailing 12 months">Grad pipeline</button>
       <button class="chip" data-farm-sort="ifa_spend" title="International FA bonus dollars committed over the trailing 3 years (Spotrac)">IFA spend (3yr)</button>
@@ -3137,6 +3201,18 @@ function healthBadgeHTML(p) {
 // recently-traded prospect reads "Trade") and falls back to the
 // original acquisition method when current is missing/unknown. Tooltip
 // surfaces pick number / from-org / date depending on the method.
+// Compact-bonus formatter for the inline IFA pill. The existing
+// fmtBonus (defined locally inside acquisitionSection) renders the
+// full dollar amount; here we want "$1.5M" / "$250k" so the bonus
+// fits in a row chip without word-wrapping.
+function fmtBonusCompact(usd) {
+  if (usd == null || !isFinite(usd)) return null;
+  const n = Number(usd);
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}M`;
+  if (n >= 1_000)     return `$${Math.round(n / 1_000)}k`;
+  return `$${Math.round(n)}`;
+}
+
 function acqPillHTML(p) {
   const cur = (p.current_acquisition || {}).method;
   const orig = (p.acquisition || {}).method;
@@ -3149,13 +3225,139 @@ function acqPillHTML(p) {
     rule_5: "Rule 5", waiver: "Waiver", free_agent: "FA",
     contract_purchase: "Purchase",
   };
-  const label = labels[method];
+  let label = labels[method];
   if (!label) return "";
+  // IFA prospects with a known signing bonus get the dollar amount
+  // appended to the pill (e.g., "IFA $1.5M"). Keeps the canonical IFA
+  // label visible while surfacing the size of the signing.
+  let tooltip = acqTooltip(p, method);
+  if (method === "international_fa") {
+    const bonus = (p.acquisition || {}).bonus_usd;
+    const compact = fmtBonusCompact(bonus);
+    if (compact) {
+      label = `IFA ${compact}`;
+      tooltip = `${tooltip} · Signing bonus ${Number(bonus).toLocaleString("en-US")}`;
+    }
+  }
   const cls = method === "trade" ? "acq-trade"
     : method === "rule_5" ? "acq-rule5"
     : method === "waiver" ? "acq-waiver"
     : "";
-  return `<span class="row-tag ${cls}" title="${escapeHtml(acqTooltip(p, method))}">${label}</span>`;
+  return `<span class="row-tag ${cls}" title="${escapeHtml(tooltip)}">${label}</span>`;
+}
+
+// Statcast micro-pill — Standard-density always-on view of the two
+// most-cited Statcast fields per role. xwOBA + barrel% for hitters,
+// whiff% + max velo for pitchers. Returns "" when the prospect has no
+// prospect_savant payload or both fields are null. Hidden via CSS in
+// Expanded mode where playerExpandedMetaHTML already renders the
+// 5-field strip to avoid duplication.
+function savantInlinePillHTML(p) {
+  const sv = p && p.prospect_savant;
+  if (!sv || !Object.keys(sv).length) return "";
+  const role = (sv.role || "").toLowerCase();
+  const isPit = role === "pitcher"
+             || (!role && (p.sabermetrics || {}).is_pitcher);
+  const fmtPct = v => v == null ? null : `${Number(v).toFixed(0)}%`;
+  const parts = [];
+  let tipParts = [];
+  if (isPit) {
+    if (sv.whiff_pct != null) {
+      parts.push(`wh ${fmtPct(sv.whiff_pct)}`);
+      tipParts.push(`Whiff% ${fmtPct(sv.whiff_pct)}`);
+    }
+    if (sv.max_velo != null) {
+      parts.push(`${Math.round(sv.max_velo)} mph`);
+      tipParts.push(`Max velo ${Number(sv.max_velo).toFixed(1)} mph`);
+    }
+  } else {
+    if (sv.xwoba != null) {
+      const x = Number(sv.xwoba).toFixed(3).replace(/^0/, "");
+      parts.push(`xwOBA ${x}`);
+      tipParts.push(`xwOBA ${x}`);
+    }
+    if (sv.barrel_pct != null) {
+      parts.push(`brl ${fmtPct(sv.barrel_pct)}`);
+      tipParts.push(`Barrel% ${fmtPct(sv.barrel_pct)}`);
+    }
+  }
+  if (!parts.length) return "";
+  const lvl = sv.level ? ` (${sv.level})` : "";
+  const tip = `Statcast${lvl}: ${tipParts.join(" · ")}`;
+  return `<span class="row-tag savant-inline-pill" title="${escapeHtml(tip)}">${parts.join(" · ")}</span>`;
+}
+
+// Pitcher arsenal mini-chip — top 3 pitches by usage. Hidden for
+// hitters and for any pitcher whose pitch_arsenal isn't on file yet.
+// Renders the compact pitch-type code + usage %; tooltip carries the
+// full mix with velos.
+function arsenalMiniHTML(p) {
+  const pa = p && p.pitch_arsenal;
+  const pitches = pa && pa.pitches;
+  if (!pitches || !pitches.length) return "";
+  // Defensive: re-sort desc by usage_pct in case the upstream order
+  // changed. usage_pct can be either 0–1 or 0–100 depending on payload
+  // vintage; we normalize to percentage in the label.
+  const sorted = pitches.slice().sort((a, b) =>
+    (Number(b.usage_pct) || 0) - (Number(a.usage_pct) || 0));
+  const top = sorted.slice(0, 3);
+  const toPct = u => {
+    const n = Number(u);
+    if (!isFinite(n)) return null;
+    return n <= 1 ? Math.round(n * 100) : Math.round(n);
+  };
+  const labelBits = top.map(pi => {
+    const pct = toPct(pi.usage_pct);
+    if (pct == null) return null;
+    return `${pi.pitch_type || pi.pitch_name || "?"} ${pct}`;
+  }).filter(Boolean);
+  if (!labelBits.length) return "";
+  const tipBits = sorted.map(pi => {
+    const pct = toPct(pi.usage_pct);
+    const velo = pi.avg_speed != null ? ` @ ${Number(pi.avg_speed).toFixed(1)} mph` : "";
+    return `${pi.pitch_name || pi.pitch_type || "?"} ${pct != null ? pct + "%" : "?"}${velo}`;
+  });
+  return `<span class="row-tag arsenal-mini" title="${escapeHtml("Pitch mix: " + tipBits.join(" · "))}">${escapeHtml(labelBits.join(" · "))}</span>`;
+}
+
+// "Newly acquired" chip — fires when the most recent trade / waiver
+// claim / Rule 5 pick / contract purchase happened in the last 30
+// days. Quieter version of the perma-Acquisition pill (which says
+// "this player was once acquired via X"); this one says "very
+// recently". Both can show on the same row — complementary signals.
+function recentAcqBadgeHTML(p) {
+  const events = [];
+  for (const t of (p.trades || [])) {
+    if (t && t.trade_date) {
+      events.push({ kind: "trade", date: t.trade_date,
+                    from: t.from_org, to: t.to_org });
+    }
+  }
+  for (const tx of (p.transactions || [])) {
+    if (!tx || !tx.date) continue;
+    if (tx.kind === "waiver_claim" || tx.kind === "rule_5"
+        || tx.kind === "contract_purchase") {
+      events.push({ kind: tx.kind, date: tx.date,
+                    from: tx.from_org, to: tx.to_org });
+    }
+  }
+  if (!events.length) return "";
+  // Latest event wins.
+  events.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const e = events[0];
+  const dt = new Date(e.date + "T00:00:00");
+  if (isNaN(dt.getTime())) return "";
+  const days = Math.floor((Date.now() - dt.getTime()) / 86400000);
+  if (days < 0 || days > 30) return "";
+  const kindLabels = {
+    trade: "Acquired via trade",
+    waiver_claim: "Waiver claim",
+    rule_5: "Rule 5 pick",
+    contract_purchase: "Contract purchase",
+  };
+  const arrow = (e.from && e.to) ? ` — ${e.from} → ${e.to}` : "";
+  const tip = `${kindLabels[e.kind] || "Acquired"}${arrow} on ${e.date} (${days} day${days === 1 ? "" : "s"} ago)`;
+  return `<span class="row-tag recent-acq" title="${escapeHtml(tip)}">new · ${days}d</span>`;
 }
 
 // Second meta line under the player name, rendered only in the
@@ -4061,10 +4263,10 @@ const state = {
   // still shows the precise published position.
   posFilter: "all",
   sort: "fv",
-  // Default sort is the unified "Trajectory (DvM+)" chip — it reads
-  // whichever window the user picked in the right-side "Development
-  // window" selector. Default window is 3y (see formWindow below).
-  farmSort: "trajectory",
+  // Default sort is the overall Farm rank — the closest analog to a
+  // Top-30-organizations leaderboard. The Trajectory (DvM+) chip is
+  // still a one-click option; its window comes from formWindow below.
+  farmSort: "farm_rank",
   // Active form-bar window. Controls the farm-list sparkline (which
   // plots growth above the league mean over the same window) and the
   // value used when sorting by "Trajectory".
@@ -4095,9 +4297,12 @@ const state = {
   spreadFilter: "all",
   // Row density — "compact" / "standard" / "expanded". Picked up from
   // URL > localStorage > default on boot. Drives a body-level class
-  // and (for Expanded) the per-row second meta line.
+  // and (for Expanded) the per-row second meta line. Defaults to
+  // "expanded" so a fresh visitor lands on the densest row layout
+  // (Statcast micro-tile + flag detail + FV history caption visible);
+  // any user with a saved preference in localStorage keeps it.
   density: (typeof localStorage !== "undefined"
-            && localStorage.getItem("prospect-tracker.density")) || "standard",
+            && localStorage.getItem("prospect-tracker.density")) || "expanded",
   // Leaderboards tab — stat × season × level × position-group × org
   // selection. Pulls from career_stats (year-by-year per-level rows) so
   // historical seasons work. The stat key matches a field on the
@@ -4470,17 +4675,21 @@ function renderActives() {
 
   const rows = filtered.map((p, i) => {
     const latest = p.points[p.points.length - 1];
+    const fvTier = latest && latest.consensus_fv != null
+      ? String(Math.round(latest.consensus_fv))
+      : "";
     return `
-      <div class="player-row" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
+      <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
         <div class="rank-num">${i + 1}</div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           ${headshotHTML(p, 50)}
           <div style="min-width:0;flex:1;">
-            <div class="player-name">${escapeHtml(p.player_name)}${toolPlusPillHTML(p)}${flagCounterPillHTML(p)}${healthBadgeHTML(p)}${acqPillHTML(p)}</div>
+            <div class="player-name">${escapeHtml(p.player_name)}${toolPlusPillHTML(p)}${flagCounterPillHTML(p)}${healthBadgeHTML(p)}${acqPillHTML(p)}${recentAcqBadgeHTML(p)}${savantInlinePillHTML(p)}${arsenalMiniHTML(p)}</div>
             ${playerMetaHTML(p)}<span class="mobile-only-pill">${rpsPlusPillHTML(p)}</span>
           </div>
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
+          <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeConfidence(p)}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
@@ -10447,6 +10656,17 @@ function attachHandlers() {
     if (watchBtn) {
       e.stopPropagation();
       watchlistToggle(watchBtn.dataset.watchKey);
+      return;
+    }
+    // Mobile-only ▾ chevron — expand/collapse the row inline to reveal
+    // FV chart, MiLB stats, and ETA cells (which the mobile grid
+    // hides by default). stopPropagation so the row-tap-to-open-detail
+    // behavior doesn't also fire.
+    const expandBtn = e.target.closest(".row-expand-btn");
+    if (expandBtn) {
+      e.stopPropagation();
+      const row = expandBtn.closest(".player-row");
+      if (row) row.classList.toggle("is-expanded");
       return;
     }
     const farmWatchBtn = e.target.closest(".watch-btn[data-farm-watch-key]");
