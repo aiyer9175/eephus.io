@@ -575,10 +575,11 @@
     .col-header, .player-row {
       display: grid;
       /* 8 cols: # | Player | FV (+stock under) | Rank | History | Candle | MiLB | ETA
-         The candle column is back — it carries OHLC values via hover
-         while the line-history cell carries trajectory shape, so the
-         two visualizations are complementary rather than redundant. */
-      grid-template-columns: 32px 1.65fr 0.55fr 0.45fr 1.2fr 70px 1.1fr 0.5fr;
+         The candle column was dropped: OHLC values are now surfaced
+         via hover on the FV-history sparkline cell itself, so the
+         dedicated 70px column was duplicative. Reclaimed width goes
+         to the MiLB stat cell (previously truncated on most rows). */
+      grid-template-columns: 32px 1.65fr 0.55fr 0.35fr 1.2fr 1.45fr 0.5fr;
       gap: 10px;
       align-items: center;
     }
@@ -1200,6 +1201,26 @@
       -webkit-overflow-scrolling: touch;
       max-width: 100%;
     }
+    /* === Pill / chip vertical-alignment normalizer ====================
+       The site uses six+ pill-style classes (.fv-badge, .row-tag,
+       .level-pill, .rps-plus-pill, .driver-tag, .recent-acq) that all
+       inline side-by-side on row lines + detail headers. Aligning their
+       line-height + vertical-align here means they no longer drift
+       relative to each other when mixed in the same flex line. */
+    .fv-badge, .row-tag, .level-pill, .rps-plus-pill,
+    .driver-tag, .stock-up, .stock-down, .stock-flat, .stock-grad {
+      vertical-align: middle;
+      line-height: 1.4;
+    }
+    /* Overflow pill for row-line badge clusters — shown when more than
+       3 inline badges would render on a single player-row. Mirrors the
+       row-tag base style but with a discreet "+N" affordance. */
+    .row-tag.is-overflow {
+      cursor: help;
+      color: var(--text-tertiary);
+      border-color: var(--border);
+      background: transparent;
+    }
     /* Shared typography utilities (B2 design-system pass). */
     .t-stat-value {
       font-family: var(--font-mono);
@@ -1371,7 +1392,7 @@
       font-family: var(--font-sans);
       font-size: 10px;
       padding: 2px 7px;
-      border-radius: 10px;
+      border-radius: 999px;
       border: 1px solid var(--border);
       background: var(--bg-tertiary);
       color: var(--text-secondary);
@@ -2209,7 +2230,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       padding: 10px 12px;
-      margin-bottom: 10px;
+      margin-bottom: 14px;
       box-shadow: var(--shadow-card);
     }
     /* Sticky filter strip directly above the roster table — keeps the
@@ -2687,7 +2708,10 @@
        context blocks accessible without forcing them off-screen. */
     .player-detail-grid {
       display: grid;
-      grid-template-columns: 2fr 1fr;
+      /* minmax keeps the main column from squeezing the sidebar below
+         a useful width; sidebar guarantees 280px before it starts
+         eating into the main column at narrow viewports. */
+      grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
       gap: 24px;
       align-items: start;
     }
@@ -2709,7 +2733,9 @@
     /* Wide-card grid below the chart + career table. Holds the cards
        that benefit from more horizontal width than the narrow sidebar
        offers — Tools / Savant / Arsenal / Contract details / More
-       details. Single-column on mid-width viewports, 2-col at ≥1200px. */
+       details. Responsive ramp: 1 col under 1200px, 2 cols 1200-1399px,
+       3 cols at 1400px+ so wide displays can lay the cards side-by-side
+       instead of stacking down the page. */
     .detail-wide-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -2724,6 +2750,20 @@
       /* The More-details accordion spans both columns for legibility. */
       .detail-wide-grid > .player-detail-more {
         grid-column: 1 / -1;
+      }
+    }
+    @media (min-width: 1400px) {
+      .detail-wide-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+      /* More-details accordion stays full-width at every size. */
+      .detail-wide-grid > .player-detail-more {
+        grid-column: 1 / -1;
+      }
+      /* Tools card claims a 2-column span so the radar + grade grid
+         have room without wrap-induced cramping. */
+      .detail-wide-grid > #detail-tools {
+        grid-column: span 2;
       }
     }
 
@@ -4443,6 +4483,33 @@ function recentAcqBadgeHTML(p) {
   return `<span class="row-tag recent-acq" title="${escapeHtml(tip)}">new · ${days}d</span>`;
 }
 
+// Inline badge cluster for player-row lines — toolPlus, flagCounter,
+// healthBadge, acqPill, recentAcqBadge, savantInlinePill, arsenalMini
+// can each produce a pill. When 7 pills appear inline the row gets
+// noisy; this helper renders at most `max` visible pills + an "+N"
+// overflow chip that surfaces the rest via a native `title=` tooltip.
+function _inlineBadgeStrip(p, max = 3) {
+  const builders = [
+    typeof toolPlusPillHTML       === "function" ? toolPlusPillHTML       : null,
+    typeof flagCounterPillHTML    === "function" ? flagCounterPillHTML    : null,
+    typeof healthBadgeHTML        === "function" ? healthBadgeHTML        : null,
+    typeof recentAcqBadgeHTML     === "function" ? recentAcqBadgeHTML     : null,
+    typeof acqPillHTML            === "function" ? acqPillHTML            : null,
+    typeof savantInlinePillHTML   === "function" ? savantInlinePillHTML   : null,
+    typeof arsenalMiniHTML        === "function" ? arsenalMiniHTML        : null,
+  ].filter(Boolean);
+  const all = builders.map(fn => fn(p) || "").filter(Boolean);
+  if (all.length <= max) return all.join("");
+  const visible = all.slice(0, max).join("");
+  const hiddenCount = all.length - max;
+  // Strip HTML tags from hidden pills for the tooltip — easier on the
+  // eye than raw markup in a title attribute.
+  const hiddenText = all.slice(max)
+    .map(s => s.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim())
+    .filter(Boolean).join(" · ");
+  return `${visible}<span class="row-tag is-overflow" title="${escapeHtml(hiddenText)}">+${hiddenCount}</span>`;
+}
+
 // Second meta line under the player name, rendered only in the
 // Expanded density mode. Surfaces (when available) a flag detail
 // line, a Statcast micro-tile, and a recent-FV-history caption pulled
@@ -4844,6 +4911,20 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
     <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
     ${circles}
   </svg>`;
+}
+
+// OHLC tooltip text — the four FV anchor values for the player's
+// current-period candle, formatted for use as a native `title=` on
+// the FV-history sparkline cell. Replaces the dedicated Candle column
+// (the column was redundant with the sparkline immediately to its
+// left; hover gives the same OHLC read without burning real estate).
+function _ohlcTooltip(p) {
+  if (!p) return "";
+  const o = p.fv_open  != null ? p.fv_open  : "—";
+  const h = p.fv_high  != null ? p.fv_high  : "—";
+  const l = p.fv_low   != null ? p.fv_low   : "—";
+  const c = p.fv_close != null ? p.fv_close : "—";
+  return `Open ${o} · High ${h} · Low ${l} · Close ${c}`;
 }
 
 function makeCandle(p) {
@@ -5793,8 +5874,7 @@ function renderActives() {
     <span>Player · pos · org · age</span>
     <span style="text-align:center;" title="Consensus Future Value · stock delta + direction below">FV · stock</span>
     <span style="text-align:center;">Rank</span>
-    <span class="desktop-only" style="text-align:center;">FV history</span>
-    <span class="desktop-only" style="text-align:center;" title="OHLC candle — hover for the FV open / high / low / close values">Candle</span>
+    <span class="desktop-only" style="text-align:center;" title="FV history sparkline — hover for OHLC open / high / low / close">FV history</span>
     <span class="desktop-only">MiLB · age vs. level</span>
     <span class="desktop-only" style="text-align:center;">ETA</span>
   </div>`;
@@ -5810,7 +5890,7 @@ function renderActives() {
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           ${headshotHTML(p, 50)}
           <div style="min-width:0;flex:1;">
-            <div class="player-name">${escapeHtml(p.player_name)}${toolPlusPillHTML(p)}${flagCounterPillHTML(p)}${healthBadgeHTML(p)}${acqPillHTML(p)}${recentAcqBadgeHTML(p)}${savantInlinePillHTML(p)}${arsenalMiniHTML(p)}</div>
+            <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
             ${playerMetaHTML(p)}<span class="mobile-only-pill">${rpsPlusPillHTML(p)}</span>
           </div>
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
@@ -5819,8 +5899,7 @@ function renderActives() {
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
-        <div class="line-chart-cell">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
-        <div class="desktop-only" style="display:flex;justify-content:center;">${makeCandle(p)}</div>
+        <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
         ${makeMilbCell(p)}
         ${makeEtaCell(p)}
         ${playerExpandedMetaHTML(p)}
@@ -12480,8 +12559,8 @@ function renderFarmDetail(orgCode) {
     const cfg = TRANSACTION_KINDS[ev.kind] || {};
     const chip = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${cfg.color || 'var(--text-tertiary)'};vertical-align:middle;" title="${escapeHtml(cfg.label || ev.kind)}"></span>`;
     const otherTeam = other ? `<a href="#farm-org=${escapeHtml(other)}" onclick="event.stopPropagation();" style="color:inherit;text-decoration:none;">${escapeHtml(other)}</a>` : "?";
-    return `<div style="display:grid;grid-template-columns:36px 8px 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(ev.player.player_key)}');">
-      <span style="font-family:var(--font-mono);color:var(--text-tertiary);font-size:10px;white-space:nowrap;">${ev.date ? ev.date.slice(2) : '—'}</span>
+    return `<div style="display:grid;grid-template-columns:30px 8px 1fr auto;gap:4px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(ev.player.player_key)}');">
+      <span style="font-family:var(--font-mono);color:var(--text-tertiary);font-size:9px;white-space:nowrap;">${ev.date ? ev.date.slice(2) : '—'}</span>
       ${chip}
       <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><span style="color:var(--neon-cyan);">${escapeHtml(ev.player.player_name)}</span>${gradTag}</span>
       <span style="font-family:var(--font-mono);font-size:10px;white-space:nowrap;">${arrow} ${otherTeam}</span>
@@ -12492,27 +12571,35 @@ function renderFarmDetail(orgCode) {
   // of that kind so the eye can scan by category without one section
   // crowding the others out. Skipped (omitted from the sidebar) when
   // the org has zero of that kind so we don't show empty cards.
-  const sideEventSections = [
-    ["trade",              "Recent trades",         8],
-    ["waiver_claim",       "Recent waiver claims",  5],
-    ["signed_free_agent",  "Recent FA signings",    5],
-    ["released",           "Recent releases",       5],
-    ["dfa",                "Recent DFAs",           5],
-    ["outrighted",         "Recent outrights",      5],
-    ["contract_purchase",  "Contract purchases",    5],
-    ["rule_5_return",      "Rule 5 returns",        5],
-  ];
-  const recentTxCards = sideEventSections
-    .map(([kind, title, cap]) => {
-      const evs = (eventsByKind[kind] || []);
-      if (!evs.length) return "";
-      const html = evs.slice(0, cap).map(compactEventRow).join("");
-      return `<div class="farm-side-card">
-        <div class="side-title">${escapeHtml(title)} <span class="side-count">${evs.length}</span></div>
-        ${html}
-      </div>`;
-    })
-    .join("");
+  //
+  // Trades + FA signings get promoted to a "top" bucket and render
+  // higher in the sidebar; the rest stay grouped together near the
+  // bottom. The "what just happened" cards now lead.
+  const _topKinds    = ["trade", "signed_free_agent"];
+  const _bottomKinds = ["waiver_claim", "released", "dfa", "outrighted",
+                        "contract_purchase", "rule_5_return"];
+  const _kindMeta = {
+    "trade":              ["Recent trades",         8],
+    "waiver_claim":       ["Recent waiver claims",  5],
+    "signed_free_agent":  ["Recent FA signings",    5],
+    "released":           ["Recent releases",       5],
+    "dfa":                ["Recent DFAs",           5],
+    "outrighted":         ["Recent outrights",      5],
+    "contract_purchase":  ["Contract purchases",    5],
+    "rule_5_return":      ["Rule 5 returns",        5],
+  };
+  const _buildKindCard = (kind) => {
+    const evs = (eventsByKind[kind] || []);
+    if (!evs.length) return "";
+    const [title, cap] = _kindMeta[kind] || [kind, 5];
+    const html = evs.slice(0, cap).map(compactEventRow).join("");
+    return `<div class="farm-side-card">
+      <div class="side-title">${escapeHtml(title)} <span class="side-count">${evs.length}</span></div>
+      ${html}
+    </div>`;
+  };
+  const topTxCards    = _topKinds.map(_buildKindCard).join("");
+  const bottomTxCards = _bottomKinds.map(_buildKindCard).join("");
 
   // Alumni / Recent graduates — show each graduate's FV-at-grad badge
   // plus their realized Market AAV when WAR data exists for them.
@@ -12817,7 +12904,27 @@ function renderFarmDetail(orgCode) {
     </div>`;
   })();
 
-  const sidebarHtml = topProspectCard + youngestCard + bonusPoolsCard + upcomingPicksCard + depthHeatmapCard + fvDistCard + acqMixCard + etaCard + moversCard + promoCard + toolsLeaderboardCard + orgLeadersCard + ilCard + recentTxCards + gradsCard + comparableFarmsCard;
+  // Sidebar order, top → bottom:
+  //   Top prospect + Youngest (anchor cards) →
+  //   Recent trades + FA signings (what just happened — promoted from
+  //     buried-in-stack so the activity story leads) →
+  //   Promotion candidates + Recent movers (forward-looking signals) →
+  //   Distribution snapshots (FV histogram, acquisition mix, ETA wave) →
+  //   Tools leaders + Org stat leaders →
+  //   Health / IL +
+  //   Bonus pools + Upcoming picks + Depth heatmap (planning context) →
+  //   Other transaction kinds (waivers, releases, DFAs, etc.) →
+  //   Recent graduates (alumni) → Comparable farms (peer view).
+  const sidebarHtml =
+    topProspectCard + youngestCard +
+    topTxCards +
+    promoCard + moversCard +
+    fvDistCard + acqMixCard + etaCard +
+    toolsLeaderboardCard + orgLeadersCard +
+    ilCard +
+    bonusPoolsCard + upcomingPicksCard + depthHeatmapCard +
+    bottomTxCards +
+    gradsCard + comparableFarmsCard;
 
   // Optional left rail (≥1500px viewports only — CSS-hidden otherwise).
   // Surfaces breakdowns that are useful at-a-glance but would otherwise
