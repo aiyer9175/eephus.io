@@ -273,6 +273,41 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         except Exception:
             log.exception("spotrac IFA scrape failed — continuing without bonus data")
 
+        # Spotrac team contract pages — pulls current-year salary + AAV +
+        # remaining contract years for every active MLB roster player.
+        # Used downstream to replace the league-min+arb salary estimate
+        # in the realized-surplus calc for graduates. ~30 HTTP requests
+        # per regen (cached); failure is non-fatal so the rest of the
+        # pipeline keeps running with the synthesized salary model.
+        contracts_by_key: dict[str, dict] = {}
+        try:
+            from spotrac import scrape_all_spotrac_contracts, build_contracts_by_key
+            contract_rows = scrape_all_spotrac_contracts(force=force_refetch)
+            contracts_by_key = build_contracts_by_key(contract_rows)
+            log.info("spotrac contracts: %d player-rows fetched, %d unique players",
+                     len(contract_rows), len(contracts_by_key))
+        except Exception:
+            log.exception("spotrac contracts scrape failed — continuing without contract data")
+
+        # MLB Draft bonus-pool back-fill — fetches per-year articles
+        # for 2021-current and consolidates the per-team pool + per-pick
+        # slot value into one nested dict keyed by year. Drives the
+        # spending-block utilization caption on the farm detail page.
+        # 2024-2026 articles parse to full 30-team coverage; 2021-2023
+        # have partial coverage (top teams only) per the article format.
+        draft_pools: dict = {}
+        try:
+            from scrapers import build_draft_pools
+            draft_pools = build_draft_pools(
+                range(2021, date.today().year + 1),
+                force=force_refetch,
+            )
+            covered = sorted(draft_pools.keys())
+            log.info("MLB draft pools: %d years on file (%s)",
+                     len(draft_pools), ", ".join(str(y) for y in covered))
+        except Exception:
+            log.exception("MLB draft pool scrape failed — continuing without pool data")
+
         if acquisitions:
             upsert_acquisitions(acquisitions)
             n_draft = sum(1 for a in acquisitions.values() if a["method"] == "draft")
@@ -876,6 +911,8 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                level_changes=level_changes_by_key,
                                roster_status=roster_status_by_key,
                                ifa_spending_by_org=ifa_spending_by_org,
+                               contracts_by_key=contracts_by_key,
+                               draft_pools=draft_pools,
                                player_ids=ids_by_key)
         log.info("wrote %s", out_path)
 

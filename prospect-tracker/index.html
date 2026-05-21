@@ -6178,13 +6178,29 @@ function estimateRealizedSurplusValueMM(g) {
   const seasons = ((g || {}).career_war || {}).seasons || {};
   const years = Object.keys(seasons).filter(y => seasons[y] != null).sort();
   if (!years.length) return null;
+  // Spotrac-sourced active contract — when present, we know the exact
+  // per-year salary across the remaining contract window. Use those
+  // values to override the league-min + arb-fraction model for any
+  // seasons (current + future) that overlap. Prior seasons that
+  // aren't in the contract still use the synthesized model.
+  const contract = (g || {}).current_contract || {};
+  const salaryByYear = contract.salary_by_year || {};
   let totalValue = 0;
   let totalSalary = 0;
+  let actualSalaryUsed = 0;
   for (let i = 0; i < years.length; i++) {
-    const war = Number(seasons[years[i]]) || 0;
+    const year = years[i];
+    const war = Number(seasons[year]) || 0;
     const marketValue = Math.max(0, war) * DOLLARS_PER_WAR_MM;
     let salary;
-    if (i < 3) {
+    // Actual Spotrac salary when available — the team's yearly page
+    // covers the active contract window (current year + remaining
+    // years), so older seasons fall through to the model.
+    const actualUsd = salaryByYear[year] || salaryByYear[Number(year)];
+    if (actualUsd != null && actualUsd > 0) {
+      salary = actualUsd / 1_000_000;
+      actualSalaryUsed++;
+    } else if (i < 3) {
       salary = LEAGUE_MIN_SALARY_MM;
     } else if (i < 6) {
       const priorWar = Number(seasons[years[i - 1]]) || 0;
@@ -6204,34 +6220,27 @@ function estimateRealizedSurplusValueMM(g) {
     total_value: Math.round(totalValue * 10) / 10,
     total_salary: Math.round(totalSalary * 10) / 10,
     season_count: years.length,
+    actual_salary_seasons: actualSalaryUsed,
   };
 }
 
-// MLB Draft assigned bonus pools per team — sourced from MLB.com's
-// 2026 draft bonus pool article (mlb.com/news/mlb-draft-2026-bonus-
-// pool-pick-values). Total pools tied to each team's full slate of
-// 2026 picks. Pool ceilings are the MLB-assigned baselines; teams may
-// exceed by up to ~5% before luxury-tax penalties.
-//   Source codes (CWS, TB, KC, SD, SF, WSH, OAK) translated to our
-//   canonical 3-letter codes (CHW, TBR, KCR, SDP, SFG, WSN, ATH) per
-//   _CODE_REMAP in trades.py.
-const MLB_DRAFT_BONUS_POOLS = {
-  2026: {
-    "PIT": 19130700, "TBR": 19009300, "CHW": 17592100, "SFG": 17350600,
-    "MIN": 16929600, "STL": 16612300, "KCR": 15954000, "ATL": 15870800,
-    "COL": 15557600, "ATH": 13840300, "HOU": 13712700, "ARI": 13603100,
-    "BAL": 13114000, "WSN": 12278300, "MIA": 11960100, "LAA": 11755400,
-    "CIN": 10758500, "TEX": 10219200, "CHC":  9644100, "SDP":  9479000,
-    "CLE":  9303700, "DET":  9165100, "BOS":  8219200, "SEA":  8218200,
-    "MIL":  8042900, "PHI":  7773000, "NYY":  7342800, "NYM":  6730900,
-    "TOR":  5543100, "LAD":  3951900,
-  },
-};
+// MLB Draft assigned bonus pools per team — now read from the JSON
+// payload (DATA.mlb_draft_pools) produced by storage.build_draft_pools.
+// Per-year keys (2021-current) carry { team_pools: {ORG: usd},
+// pick_values: [{pick_overall, slot_usd, team}, ...] }. Team-pool
+// ceilings are MLB-assigned baselines; clubs may exceed by ~5%
+// before luxury-tax penalties.
+function _draftPoolsForYear(year) {
+  if (year == null) return null;
+  const all = (typeof DATA !== "undefined" && DATA && DATA.mlb_draft_pools) || {};
+  // JSON object keys are strings; the consumer may pass either form.
+  return all[year] || all[String(year)] || null;
+}
 
-// Compute draft-pool utilization for an org+year. Returns null when
-// either the pool ceiling or the org's actual spend isn't on file.
 function _orgDraftPoolUtilization(org, year) {
-  const ceiling = (MLB_DRAFT_BONUS_POOLS[year] || {})[org && org.org];
+  const yearData = _draftPoolsForYear(year);
+  if (!yearData || !yearData.team_pools) return null;
+  const ceiling = yearData.team_pools[org && org.org];
   if (!ceiling) return null;
   const spent = ((org.draft_spending || {})[year] || {}).total_usd;
   if (spent == null) return null;
@@ -6525,10 +6534,22 @@ function renderGraduates() {
     // WAG-by-season sparkline replaces the older FV-trajectory chart on
     // the graduate LIST page — the WAG signal is more useful for
     // ranking graduates by realized output vs their grade. The full
-    // FV chart still renders on each graduate's detail page.
+    // FV chart still renders on each graduate's detail page. The
+    // single-number WAG also lands inline next to the sparkline so a
+    // reader doesn't need to hover to know the magnitude.
     const wagSparkHtml = makeWagChart(g);
+    const wagDeltaCellNum = gradVsFvProjection(g);
+    let wagValueInline = "";
+    if (wagDeltaCellNum != null) {
+      const wagCellColor = wagDeltaCellNum > 0.05 ? "var(--up)"
+                         : wagDeltaCellNum < -0.05 ? "var(--down)"
+                         : "var(--text-tertiary)";
+      const sign = wagDeltaCellNum > 0 ? "+" : "";
+      wagValueInline = `<span style="font-family:var(--font-mono);font-size:10.5px;font-weight:700;color:${wagCellColor};font-variant-numeric:tabular-nums;margin-left:4px;" title="WAG (WAR Above Grade) — playing-time-weighted WAR/yr minus FV-implied baseline">${sign}${wagDeltaCellNum.toFixed(2)}</span>`;
+    }
     const chartHtml = wagSparkHtml
-      || `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;">${wagSparkHtml}${wagValueInline}</span>`
+      : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
     const fvLabel = g.fv_close != null ? Math.round(g.fv_close) : "—";
     const sm = g.sabermetrics || {};
     const cw = g.career_war || {};
@@ -7518,20 +7539,30 @@ function makeSpendingBlock(org) {
     <span style="display:inline-flex;align-items:center;gap:5px;"><span aria-hidden="true" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--neon-amber);"></span>IFA</span>
     <span style="display:inline-flex;align-items:center;gap:5px;"><span aria-hidden="true" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--spend-draft);"></span>Draft</span>
   </div>`;
-  // 2026 draft-pool utilization caption — when the org has a known
-  // pool ceiling for the most-recent draft year AND a spend value on
-  // file. Comparison reads "$5.4M / $7.7M pool (70%)" with the
-  // percentage color-coded: green if ≥95% (used the full bag),
-  // neutral if 70-95%, amber if <70% (left budget on the table).
-  const draftUtil = _orgDraftPoolUtilization(org, 2026);
+  // Draft-pool utilization caption — surfaces the most-recent year on
+  // file where we have BOTH a spend value AND an MLB-assigned pool
+  // ceiling. Reads "$5.4M / $7.7M pool · 70%" with the percentage
+  // color-coded: green if ≥95% (used the full bag), neutral if 70-95%,
+  // amber if <70% (left budget on the table). Per-year captions also
+  // attach to each year's mini-bar row below so multi-year cycles are
+  // visible at once.
   let draftPoolCaption = "";
-  if (draftUtil) {
-    const pctColor = draftUtil.pct >= 95 ? "var(--up)"
-                   : draftUtil.pct >= 70 ? "var(--text-secondary)"
+  let mostRecentDraftUtil = null;
+  for (const yr of years) {  // years is sorted desc above
+    const util = _orgDraftPoolUtilization(org, yr);
+    if (util) {
+      mostRecentDraftUtil = { year: yr, util };
+      break;
+    }
+  }
+  if (mostRecentDraftUtil) {
+    const { year: yr, util } = mostRecentDraftUtil;
+    const pctColor = util.pct >= 95 ? "var(--up)"
+                   : util.pct >= 70 ? "var(--text-secondary)"
                    : "var(--neon-amber)";
-    draftPoolCaption = `<div class="st-pool" title="MLB-assigned 2026 draft bonus pool from the slot-value framework. Teams may exceed by up to ~5% before luxury-tax penalties.">
-      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);letter-spacing:0.02em;font-variant-numeric:tabular-nums;">2026 pool: ${_fmtDollars(draftUtil.spent)} / ${_fmtDollars(draftUtil.cap)}</span>
-      <span style="font-family:var(--font-mono);font-size:10px;color:${pctColor};font-weight:700;font-variant-numeric:tabular-nums;margin-left:6px;">${draftUtil.pct.toFixed(0)}%</span>
+    draftPoolCaption = `<div class="st-pool" title="MLB-assigned ${yr} draft bonus pool from the slot-value framework (mlb.com). Teams may exceed by up to ~5% before luxury-tax penalties.">
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);letter-spacing:0.02em;font-variant-numeric:tabular-nums;">${yr} pool: ${_fmtDollars(util.spent)} / ${_fmtDollars(util.cap)}</span>
+      <span style="font-family:var(--font-mono);font-size:10px;color:${pctColor};font-weight:700;font-variant-numeric:tabular-nums;margin-left:6px;">${util.pct.toFixed(0)}%</span>
     </div>`;
   }
 
@@ -7572,6 +7603,17 @@ function makeSpendingBlock(org) {
     const dPctYr = Math.min(100, (dVal / maxYear) * 100);
     const iTip = iRec.top_player ? `Top: ${iRec.top_player} (${_fmtDollars(iRec.top_bonus || 0)})` : "";
     const dTip = dRec.top_player ? `Top: ${dRec.top_player} (${_fmtDollars(dRec.top_bonus || 0)})` : "";
+    // Per-year draft pool utilization — appended after the draft
+    // dollar amount when MLB-assigned pool data is on file for that
+    // year. "85%" colored green ≥95% / neutral 70-95% / amber <70%.
+    const util = _orgDraftPoolUtilization(org, yr);
+    let utilSuffix = "";
+    if (util) {
+      const pctColor = util.pct >= 95 ? "var(--up)"
+                     : util.pct >= 70 ? "var(--text-tertiary)"
+                     : "var(--neon-amber)";
+      utilSuffix = ` <span title="MLB-assigned ${yr} pool: ${_fmtDollars(util.cap)} (${util.pct.toFixed(0)}% used)" style="font-family:var(--font-mono);font-size:9px;color:${pctColor};font-weight:700;letter-spacing:0;font-variant-numeric:tabular-nums;margin-left:4px;cursor:help;">${util.pct.toFixed(0)}%</span>`;
+    }
     return `
       <div class="spending-year">${yr}</div>
       <div class="spending-bars">
@@ -7583,7 +7625,7 @@ function makeSpendingBlock(org) {
         <div class="spending-bar sb-draft" title="${escapeHtml(dTip)}">
           <span class="sb-label">Draft</span>
           <span class="sb-track"><span class="sb-fill" style="width:${dPctYr.toFixed(1)}%;"></span></span>
-          <span class="sb-amt">${_fmtDollars(dVal)}</span>
+          <span class="sb-amt">${_fmtDollars(dVal)}${utilSuffix}</span>
         </div>
       </div>`;
   };
@@ -9531,7 +9573,11 @@ function renderPlayerDetail(key) {
                      : realized.realized_surplus >= 10 ? "var(--neon-cyan)"
                      : realized.realized_surplus >= 0 ? "var(--text-primary)"
                      : "var(--down)";
-        const rTip = `Career WAR ${realized.total_war.toFixed(1)} × $${DOLLARS_PER_WAR_MM}M/WAR = ${fmtUsd(realized.total_value)} market value. Subtract estimated salary paid ($${realized.total_salary.toFixed(1)}M — league-min model: pre-arb at MLB minimum, arb years scaled to 30/55/80% of FA-equivalent, FA years at fair market). Result = realized surplus value over ${realized.season_count} MLB season${realized.season_count === 1 ? "" : "s"}. Exact AAV will replace the salary estimate once contract data is integrated.`;
+        const actualSeasons = realized.actual_salary_seasons || 0;
+        const salaryNote = actualSeasons > 0
+          ? `${actualSeasons} season${actualSeasons === 1 ? "" : "s"} use Spotrac's actual contract salary; remaining seasons use the league-min + arb-fraction model (pre-arb at MLB minimum, arb years at 30/55/80% of FA-equivalent, FA years at fair market)`
+          : `League-min + arb-fraction model: pre-arb at MLB minimum, arb years scaled to 30/55/80% of FA-equivalent, FA years at fair market`;
+        const rTip = `Career WAR ${realized.total_war.toFixed(1)} × $${DOLLARS_PER_WAR_MM}M/WAR = ${fmtUsd(realized.total_value)} market value. Subtract salary paid ($${realized.total_salary.toFixed(1)}M — ${salaryNote}). Result = realized surplus value over ${realized.season_count} MLB season${realized.season_count === 1 ? "" : "s"}.`;
         realizedRow = `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;" title="${escapeHtml(rTip)}">
            <div>
              <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Realized surplus (WAR)</div>
@@ -10377,16 +10423,26 @@ function renderPlayerDetail(key) {
     <div class="player-detail-grid">
       <div>${wrap("detail-chart", chartSection)}${wrap("detail-stats", consolidatedCareerSection)}${sourceSection}</div>
       <div class="player-detail-side">${noteSection}${ilSection}${wrap("detail-health", healthSection)}${sabermetricsSection}${surplusValueSection}${wrap("detail-tools", toolsSection)}${wrap("detail-savant", savantSection)}${wrap("detail-arsenal", arsenalSection)}${sameFarmSection}${similarProspectsSection}${(() => {
-        // Below-the-fold context collapses into a <details> accordion so
-        // the eye reaches the high-priority cards (health / Savant /
-        // tools) without scrolling past 11 stacked sections. The
-        // per-source consensus card lives here — power-user info worth
-        // having but not what the typical reader opens the page for.
-        const moreSections = [perSourceTabbedSection, acqSection, currentAcqSection, tradesSection, etaRows, rosterStatusSection]
-          .filter(Boolean).join("");
-        if (!moreSections) return "";
-        return `<details class="player-detail-more" style="margin-top:10px;">
-          <summary style="cursor:pointer;font-family:var(--font-sans);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);padding:8px 12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">More details · acquisition · transactions · ETA</summary>
+        // Below-the-fold context that used to collapse into a closed
+        // <details> accordion. Now defaults OPEN so the reader sees
+        // the acquisition / transaction / ETA / per-source sections
+        // without an extra click. The summary line is still a
+        // collapsible toggle for users who want to hide it. The
+        // count + section labels in the summary tell the reader at a
+        // glance what's inside.
+        const moreSectionList = [
+          [perSourceTabbedSection, "per-source"],
+          [acqSection,             "acquisition"],
+          [currentAcqSection,      "current org"],
+          [tradesSection,          "transactions"],
+          [etaRows,                "ETA"],
+          [rosterStatusSection,    "roster status"],
+        ].filter(([html]) => html);
+        if (!moreSectionList.length) return "";
+        const moreSections = moreSectionList.map(([html]) => html).join("");
+        const labels = moreSectionList.map(([, label]) => label).join(" · ");
+        return `<details class="player-detail-more" open style="margin-top:10px;">
+          <summary style="cursor:pointer;font-family:var(--font-sans);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);padding:8px 12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">More details · ${escapeHtml(labels)}</summary>
           <div style="margin-top:10px;">${moreSections}</div>
         </details>`;
       })()}</div>
@@ -11227,7 +11283,16 @@ function renderFarmDetail(orgCode) {
   // position-group) feature vector. Top 3 closest orgs (excluding the
   // current one) render with logo + name + sim%. Clicking navigates.
   const comparableFarmsCard = (() => {
+    // Build a composite feature vector for every org spanning multiple
+    // axes — talent distribution (FV histogram), positional mix,
+    // developmental momentum, age profile, momentum, ETA wave shape,
+    // and acquisition-strategy cultural signal. The dimensions are
+    // pre-normalized into 0-N scales so cosine similarity isn't
+    // dominated by any single high-magnitude axis.
+    const win = state.formWindow || "3y";
     const featureVec = (o) => {
+      const v = [];
+      // FV histogram — 5 buckets, raw counts.
       const fvHist = [0, 0, 0, 0, 0];  // 50, 55, 60, 65, 70+
       for (const pr of (o.prospects || [])) {
         const fv = Number(pr.fv_label) || Math.round(pr.fv_raw || 0);
@@ -11237,9 +11302,41 @@ function renderFarmDetail(orgCode) {
         else if (fv >= 55) fvHist[1]++;
         else if (fv >= 50) fvHist[0]++;
       }
+      v.push(...fvHist);
+      // Position-group counts — 5 buckets, raw counts.
       const posCounts = o.pos_groups || {};
-      const posVec = ["C","IF","OF","SP","RP"].map(k => posCounts[k] || 0);
-      return [...fvHist, ...posVec];
+      v.push(...["C","IF","OF","SP","RP"].map(k => posCounts[k] || 0));
+      // Tier counts — 60+ / 55 / 50, raw from org_summary.
+      v.push((o.tier_60_plus || 0));
+      v.push((o.tier_55 || 0));
+      v.push((o.tier_50 || 0));
+      // Stock momentum — up vs down vs flat balance.
+      v.push(o.stock_up   || 0);
+      v.push(o.stock_down || 0);
+      // DvM+ for the active window — centered at 100, scaled so cosine
+      // doesn't blow up. Subtract 100 + clamp to ±30 so a 130 DvM+
+      // contributes as 30, a 70 contributes as -30.
+      const dvm = (o.dvm_plus || {})[win];
+      v.push(dvm != null ? Math.max(-30, Math.min(30, dvm - 100)) : 0);
+      // Average age — centered at 22 (typical prospect mean).
+      v.push(o.avg_age != null ? (o.avg_age - 22) * 5 : 0);
+      // Young-for-level count — talent-development signal.
+      v.push(o.very_young_count || 0);
+      // Acquisition strategy — IFA vs Draft balance over the last 3yr.
+      // Both are dollar totals; we scale to $M units so they're on
+      // par with the other axes. Cultural signal for farm-building
+      // style (heavy IFA vs heavy draft = different orgs).
+      const cutoff = new Date().getUTCFullYear() - 3;
+      let ifa3yr = 0, draft3yr = 0;
+      for (const [yr, rec] of Object.entries(o.ifa_spending || {})) {
+        if (+yr >= cutoff) ifa3yr += (rec && rec.total_usd) || 0;
+      }
+      for (const [yr, rec] of Object.entries(o.draft_spending || {})) {
+        if (+yr >= cutoff) draft3yr += (rec && rec.total_usd) || 0;
+      }
+      v.push(ifa3yr / 1_000_000);    // $M units
+      v.push(draft3yr / 1_000_000);  // $M units
+      return v;
     };
     const cosine = (a, b) => {
       let dot = 0, na = 0, nb = 0;
@@ -11257,11 +11354,11 @@ function renderFarmDetail(orgCode) {
       .slice(0, 3);
     if (!comps.length) return "";
     return `<div class="farm-side-card">
-      <div class="side-title">Comparable farms <span class="side-count">FV mix + position balance</span></div>
+      <div class="side-title">Comparable farms <span class="side-count">composite: FV mix · positions · tiers · momentum · age · spend</span></div>
       ${comps.map(({ o, sim }) => `<div data-org="${escapeHtml(o.org)}" style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;">
         ${teamLogoHTML(o.org, "sm", fullOrgName(o.org))}
         <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(fullOrgName(o.org))} <span style="color:var(--text-tertiary);font-size:9px;letter-spacing:0.06em;">${escapeHtml(o.org)}</span></span>
-        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;">${Math.round(sim * 100)}%</span>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;" title="Composite cosine similarity score across talent distribution, positional mix, tier counts, stock momentum, ${win.toUpperCase()} DvM+, age profile, young-for-level count, and 3yr IFA/Draft spend mix.">${Math.round(sim * 100)}%</span>
       </div>`).join("")}
     </div>`;
   })();

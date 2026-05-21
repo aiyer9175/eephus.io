@@ -1059,6 +1059,215 @@ def scrape_mlb_international(url: str, label: str, snap_date: str, year: int,
     return rows
 
 
+# --- MLB Draft bonus pool articles ----------------------------------------
+# Each year MLB.com publishes an article enumerating every team's draft
+# bonus pool + every numbered pick's slot value. URL slug varies by year
+# (the article author + editorial conventions shifted between 2021 and
+# 2026), so we keep a per-year URL table rather than templating.
+#
+# Content format also shifts:
+#   * 2024-2026 use structured "Bonus pools by team" + "First Round"
+#     Markdown blocks with one "<team>: $<amount>" line per entry. Both
+#     team pools and per-pick values are reliably parseable.
+#   * 2022-2023 use inline prose ("the Tigers ($14,253,800), Rangers
+#     ($12,641,000), ...") — partial coverage of the top ~10-12 teams
+#     by pool size. Pick values are surfaced in a separate prose block
+#     that's harder to parse.
+#   * 2021 is prose-only with even fewer enumerated teams.
+#
+# The scraper handles all three shapes: structured headings first,
+# inline-prose pattern as a fallback. Years where only partial data is
+# available log how many teams + picks landed so the caller can decide
+# what to do with the gaps.
+
+_MLB_DRAFT_POOL_URLS: dict[int, str] = {
+    2021: "https://www.mlb.com/news/2021-mlb-draft-bonus-slots",
+    2022: "https://www.mlb.com/news/mlb-draft-2022-bonus-pools-pick-values",
+    2023: "https://www.mlb.com/news/mlb-draft-2023-bonus-pools-pick-values",
+    2024: "https://www.mlb.com/news/mlb-draft-2024-bonus-pick-values",
+    2025: "https://www.mlb.com/news/mlb-draft-2025-bonus-pick-values",
+    2026: "https://www.mlb.com/news/mlb-draft-2026-bonus-pool-pick-values",
+}
+
+
+def _parse_structured_team_pools(body: str) -> dict[str, int]:
+    """Parse a structured team-pool list. MLB.com uses several heading
+    variants across years:
+        * "**Bonus pools by team**"  (2024, 2025)
+        * "**Bonus pools by club:**" (2023)
+        * "**Bonus pools**"          (2026)
+    All appear as Markdown headings wrapped in `**...**` in the article
+    body, so a regex anchored on the `**` form skips identically-worded
+    navigation links elsewhere on the page. Parses the following
+    "<TeamShortName>: $<amount>" lines until the next `**` subheading.
+    Returns {team_name: usd}."""
+    pattern = re.compile(r'\*\*Bonus pool[s]?(?:[^*]*?)\*\*')
+    pools: dict[str, int] = {}
+    for hm in pattern.finditer(body):
+        section_start = hm.end()
+        end = body.find("**", section_start)
+        section = body[section_start:end if end > 0 else section_start + 5000]
+        for m in re.finditer(r'([A-Z][A-Za-z\.\- ]+?):\s*\$([0-9,]+)', section):
+            name = m.group(1).strip()
+            if len(name) > 25 or len(name) < 3:
+                continue
+            try:
+                amount = int(m.group(2).replace(",", ""))
+            except ValueError:
+                continue
+            pools[name] = amount
+        if pools:
+            return pools
+    return {}
+
+
+def _parse_inline_team_pools(body: str) -> dict[str, int]:
+    """Parse inline-prose pool mentions for older-format articles. Looks
+    for patterns like "Pirates ($14,394,000)" or "the Tigers
+    ($14,253,800)". Partial coverage (only the teams the prose explicitly
+    enumerates), but better than nothing for 2021-2023."""
+    pools: dict[str, int] = {}
+    for m in re.finditer(r'([A-Z][A-Za-z\.\- ]{2,20})\s*\(\$([0-9,]+)\)', body):
+        name = m.group(1).strip()
+        try:
+            amount = int(m.group(2).replace(",", ""))
+        except ValueError:
+            continue
+        # Filter likely-non-team strings.
+        if any(t in name.lower() for t in ("pick", "round", "season", "draft", "year", "lottery", "incentive")):
+            continue
+        if amount < 500_000 or amount > 30_000_000:
+            continue
+        pools[name] = amount
+    return pools
+
+
+def _parse_structured_pick_values(body: str) -> list[dict]:
+    r"""Parse per-pick lines from the structured 2024+ format. Each pick
+    appears as "N\. <Team>: $<amount>" (the backslash-escape in front of
+    the period is a Markdown artifact)."""
+    picks: list[dict] = []
+    pattern = re.compile(
+        r'(\d{1,3})\\?\.\s*([A-Z][A-Za-z\.\- ]+?):\s*\$([0-9,]+)'
+    )
+    for m in pattern.finditer(body):
+        try:
+            pick_overall = int(m.group(1))
+        except ValueError:
+            continue
+        if pick_overall < 1 or pick_overall > 700:
+            continue
+        name = m.group(2).strip()
+        if len(name) > 25:
+            continue
+        try:
+            amount = int(m.group(3).replace(",", ""))
+        except ValueError:
+            continue
+        picks.append({
+            "pick_overall": pick_overall,
+            "slot_usd":     amount,
+            "team":         name,
+        })
+    # Dedup duplicates that can arise from the same pick being mentioned
+    # twice in adjacent sub-sections — keep the FIRST occurrence.
+    seen = set()
+    out: list[dict] = []
+    for p in picks:
+        if p["pick_overall"] in seen:
+            continue
+        seen.add(p["pick_overall"])
+        out.append(p)
+    return out
+
+
+def scrape_mlb_draft_pool(year: int, force: bool = False) -> dict:
+    """Fetch + parse one year's MLB.com draft bonus-pool article.
+
+    Returns:
+        {
+          "year":        int,
+          "team_pools":  {team_short_name: usd, ...},
+          "pick_values": [{pick_overall, slot_usd, team}, ...],
+        }
+    Returns an empty dict on fetch failure. Returns a partial result
+    when the article is in the inline-prose format (older years) — the
+    caller can check len(team_pools) to gauge coverage.
+    """
+    url = _MLB_DRAFT_POOL_URLS.get(year)
+    if not url:
+        log.warning("mlb_draft_pool: no URL on file for %d", year)
+        return {}
+    cache_key = f"mlb_draft_pool_{year}"
+    fr = _fetch(url, cache_key, force=force)
+    if fr.status != 200 or not fr.body:
+        log.warning("mlb_draft_pool %d: fetch failed (status=%d)", year, fr.status)
+        return {}
+    body = fr.body
+    # Structured-format parse first; fall back to inline prose.
+    team_pools = _parse_structured_team_pools(body)
+    if not team_pools:
+        team_pools = _parse_inline_team_pools(body)
+    pick_values = _parse_structured_pick_values(body)
+    log.info("mlb_draft_pool %d: %d team pools, %d pick values",
+             year, len(team_pools), len(pick_values))
+    return {"year": year, "team_pools": team_pools, "pick_values": pick_values}
+
+
+# Short-name overrides for team strings the MLB.com articles use that
+# canonical_org() doesn't recognize on its own. Currently the only
+# stragglers: "D-backs" (2022 article uses the dash-prefixed short
+# form instead of "Diamondbacks"). Add new entries here as future
+# articles surface different formatting.
+_DRAFT_POOL_NAME_OVERRIDES: dict[str, str] = {
+    "D-backs": "ARI",
+}
+
+
+def build_draft_pools(years, force: bool = False) -> dict:
+    """Aggregate per-year draft pools into the canonical-key layout the
+    frontend expects:
+
+        {
+          year: {
+            "team_pools":  {ORG: usd, ...},     # ORG = canonical 3-letter
+            "pick_values": [{pick_overall, slot_usd, team}, ...],
+          },
+          ...
+        }
+
+    Team names from the article are canonicalized through `canonical_org`
+    (with a few short-name overrides). Years where no pools could be
+    parsed are silently skipped — caller logs the years actually on file.
+    """
+    from trades import canonical_org
+    out: dict[int, dict] = {}
+    for year in years:
+        data = scrape_mlb_draft_pool(year, force=force)
+        if not data:
+            continue
+        canonical_pools: dict[str, int] = {}
+        for raw, usd in (data.get("team_pools") or {}).items():
+            code = _DRAFT_POOL_NAME_OVERRIDES.get(raw) or canonical_org(raw)
+            if not code or len(code) > 4:
+                continue
+            canonical_pools[code] = usd
+        canonical_picks: list[dict] = []
+        for pv in (data.get("pick_values") or []):
+            raw = pv.get("team")
+            code = _DRAFT_POOL_NAME_OVERRIDES.get(raw) or (canonical_org(raw) if raw else None)
+            canonical_picks.append({
+                "pick_overall": pv.get("pick_overall"),
+                "slot_usd":     pv.get("slot_usd"),
+                "team":         code or raw,
+            })
+        out[year] = {
+            "team_pools":  canonical_pools,
+            "pick_values": canonical_picks,
+        }
+    return out
+
+
 # ===========================================================================
 # Tier C — Manual CSV ingest
 # ===========================================================================

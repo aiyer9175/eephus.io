@@ -229,6 +229,223 @@ def build_ifa_bonus_by_key(signings: list[dict]) -> dict[str, int]:
     return out
 
 
+# ---------------------------------------------------------------------------
+# Team contract scraper — pulls AAV / per-year salary from Spotrac's
+# yearly contract tables. Each team's roster lives on its own page, and
+# each row carries:
+#   - Player name + Spotrac id (from the cell's <a href>)
+#   - Position (data-export attribute on cell 1)
+#   - Per-year salary (data-export attribute on each year column)
+# The page is FUTURE-only — it shows current-year salary plus the
+# remaining contract years. Historical seasons (years already played)
+# don't appear, so the realized-surplus pipeline still falls back to
+# the league-min model for prior seasons.
+# ---------------------------------------------------------------------------
+
+# Spotrac team URL slugs — full hyphenated team names. Keyed by our
+# canonical 3-letter codes so the consumer can iterate via _SPOTRAC_TEAM_SLUGS
+# without re-resolving codes. ATH (Athletics) drops the "Oakland" prefix
+# per the team's mid-2024 rename; all other slugs are the standard
+# "<city>-<nickname>" form.
+_SPOTRAC_TEAM_SLUGS: dict[str, str] = {
+    "ARI": "arizona-diamondbacks",
+    "ATL": "atlanta-braves",
+    "ATH": "athletics",
+    "BAL": "baltimore-orioles",
+    "BOS": "boston-red-sox",
+    "CHC": "chicago-cubs",
+    "CHW": "chicago-white-sox",
+    "CIN": "cincinnati-reds",
+    "CLE": "cleveland-guardians",
+    "COL": "colorado-rockies",
+    "DET": "detroit-tigers",
+    "HOU": "houston-astros",
+    "KCR": "kansas-city-royals",
+    "LAA": "los-angeles-angels",
+    "LAD": "los-angeles-dodgers",
+    "MIA": "miami-marlins",
+    "MIL": "milwaukee-brewers",
+    "MIN": "minnesota-twins",
+    "NYM": "new-york-mets",
+    "NYY": "new-york-yankees",
+    "PHI": "philadelphia-phillies",
+    "PIT": "pittsburgh-pirates",
+    "SDP": "san-diego-padres",
+    "SEA": "seattle-mariners",
+    "SFG": "san-francisco-giants",
+    "STL": "st-louis-cardinals",
+    "TBR": "tampa-bay-rays",
+    "TEX": "texas-rangers",
+    "TOR": "toronto-blue-jays",
+    "WSN": "washington-nationals",
+}
+
+
+def _parse_year_header(th_text: str) -> int | None:
+    """Header cells render the literal year ("2026") or a label ("Pos").
+    Returns the int year when parseable, None otherwise."""
+    if not th_text:
+        return None
+    s = th_text.strip()
+    if s.isdigit() and 2000 <= int(s) <= 2100:
+        return int(s)
+    return None
+
+
+def _parse_team_contract_table(table, team_slug: str) -> list[dict]:
+    """Parse one Spotrac yearly contract table (dataTable-active /
+    dataTable-injured / dataTable-dead share the same structure).
+    Returns one dict per row with the per-year salary map plus derived
+    AAV / total / years_remaining / signed_through fields."""
+    rows: list[dict] = []
+    thead = table.find("thead")
+    if not thead:
+        return rows
+    # Build column-index → year map by walking the header row.
+    header_years: dict[int, int] = {}
+    th_cells = thead.find_all("th")
+    for idx, th in enumerate(th_cells):
+        year = _parse_year_header(th.get_text(strip=True))
+        if year is not None:
+            header_years[idx] = year
+    if not header_years:
+        return rows
+
+    tbody = table.find("tbody")
+    if not tbody:
+        return rows
+    for tr in tbody.find_all("tr", recursive=False):
+        tds = tr.find_all("td", recursive=False)
+        if not tds:
+            continue
+        # Cell 0 holds player name + Spotrac link. data-export is the
+        # canonical display name ("Kyle Tucker"); the cell's text adds
+        # a sort prefix and a duplicate ("Tucker Kyle Tucker").
+        name_cell = tds[0]
+        name = (name_cell.get("data-export") or "").strip()
+        if not name:
+            link = name_cell.find("a")
+            name = (link.get_text(strip=True) if link else
+                    name_cell.get_text(strip=True))
+        if not name:
+            continue
+        name = fix_mojibake(name)
+        spotrac_id = None
+        link = name_cell.find("a")
+        if link and link.get("href"):
+            m = re.search(r"/id/(\d+)/", link["href"])
+            spotrac_id = m.group(1) if m else None
+        # Position from cell 1's data-export attribute (cleaner than the
+        # text, which mixes SP/DH etc.).
+        position = None
+        if len(tds) > 1:
+            position = (tds[1].get("data-export") or "").strip() or None
+        # Per-year salary — walk header_years map, pull data-export
+        # (integer dollar amount) from each year column. Empty values
+        # ("UFA", " ", None) skipped.
+        salary_by_year: dict[int, int] = {}
+        for col_idx, year in header_years.items():
+            if col_idx >= len(tds):
+                continue
+            raw = (tds[col_idx].get("data-export") or "").strip()
+            if not raw or not raw.isdigit():
+                continue
+            try:
+                salary_by_year[year] = int(raw)
+            except ValueError:
+                continue
+        if not salary_by_year:
+            # No future-year salary on file — player is either on a
+            # 1-year deal that already ended (rare) or unsigned. Skip.
+            continue
+        years_remaining = len(salary_by_year)
+        total_usd = sum(salary_by_year.values())
+        # AAV — the canonical "annual average value" is total / years.
+        # For deferral-heavy deals (e.g., Ohtani) Spotrac's per-year
+        # cash flow shown here already reflects the present-value
+        # smoothing, so the simple mean is consistent with what the
+        # site reports as AAV.
+        aav_usd = total_usd // max(1, years_remaining)
+        # Signed-through year = max year on file.
+        signed_through = max(salary_by_year.keys()) if salary_by_year else None
+        # Current-year salary — picked off the lowest year in the map
+        # so the consumer doesn't need to know what the "current" year
+        # is at scrape time.
+        current_year = min(salary_by_year.keys())
+        salary_usd = salary_by_year.get(current_year)
+        rows.append({
+            "player_name":      name,
+            "player_key":       canonical_player_key(normalize_key(name)),
+            "spotrac_id":       spotrac_id,
+            "position":         position,
+            "team_slug":        team_slug,
+            "salary_usd":       salary_usd,
+            "aav_usd":          aav_usd,
+            "total_usd":        total_usd,
+            "salary_by_year":   salary_by_year,
+            "years_remaining":  years_remaining,
+            "signed_through":   signed_through,
+            "current_year":     current_year,
+        })
+    return rows
+
+
+def scrape_spotrac_team_contracts(team_slug: str,
+                                   force: bool = False) -> list[dict]:
+    """Fetch + parse one team's Spotrac yearly contract page. Returns a
+    list of dicts (see _parse_team_contract_table). Includes the active
+    roster + injured-list + dead-money tables (every player the team is
+    paying), but skips the org-level summary table.
+
+    Returns [] on fetch / parse failure with a logged warning so the
+    pipeline can continue without contract data for that team."""
+    url = f"https://www.spotrac.com/mlb/{team_slug}/yearly/"
+    cache_key = f"spotrac_team_{team_slug}"
+    fr = _fetch(url, cache_key, force=force)
+    if fr.status != 200 or not fr.body:
+        log.warning("spotrac team %s: fetch failed (status=%d)",
+                    team_slug, fr.status)
+        return []
+    soup = BeautifulSoup(fr.body, "html.parser")
+    out: list[dict] = []
+    # Three sub-tables share the per-row structure; walk each.
+    for table_id in ("dataTable-active", "dataTable-injured", "dataTable-dead"):
+        t = soup.find("table", id=table_id)
+        if t is None:
+            continue
+        out.extend(_parse_team_contract_table(t, team_slug))
+    return out
+
+
+def scrape_all_spotrac_contracts(force: bool = False) -> list[dict]:
+    """Walk every team's yearly contract page. Returns one merged list.
+
+    ~30 HTTP requests × 0.5s rate limit ≈ 15s added to the regen.
+    Cached on subsequent runs."""
+    rows: list[dict] = []
+    for team_code, slug in _SPOTRAC_TEAM_SLUGS.items():
+        rows.extend(scrape_spotrac_team_contracts(slug, force=force))
+    log.info("spotrac contracts: %d player-rows across %d teams",
+             len(rows), len(_SPOTRAC_TEAM_SLUGS))
+    return rows
+
+
+def build_contracts_by_key(rows: list[dict]) -> dict[str, dict]:
+    """Collapse multi-team rows to {player_key: contract_dict}. When a
+    player appears on multiple team pages (rare — Spotrac updates fast
+    so a mid-season trade usually only shows on the destination team),
+    keep the row with the highest AAV as a defensive tiebreak."""
+    out: dict[str, dict] = {}
+    for r in rows:
+        key = r.get("player_key")
+        if not key:
+            continue
+        prev = out.get(key)
+        if prev is None or (r.get("aav_usd") or 0) > (prev.get("aav_usd") or 0):
+            out[key] = r
+    return out
+
+
 def build_org_ifa_spending(signings: list[dict]) -> dict[str, dict[int, dict]]:
     """Aggregate signings into per-org per-year spending totals.
 

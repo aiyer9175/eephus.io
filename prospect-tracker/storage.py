@@ -1464,6 +1464,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           level_changes: dict[str, list[dict]] | None = None,
                           roster_status: dict[str, dict] | None = None,
                           ifa_spending_by_org: dict[str, dict[int, dict]] | None = None,
+                          contracts_by_key: dict[str, dict] | None = None,
+                          draft_pools: dict | None = None,
                           player_ids: dict[str, int] | None = None,
                           top_n_active: int | None = None):
     """
@@ -1498,6 +1500,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     level_changes = level_changes or {}
     roster_status = roster_status or {}
     ifa_spending_by_org = ifa_spending_by_org or {}
+    contracts_by_key = contracts_by_key or {}
+    draft_pools = draft_pools or {}
     player_ids = player_ids or {}
     birth_dates = load_birth_dates()
     from stats import compute_age_decimal
@@ -2492,6 +2496,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "method": current_acq_method,
                 "event":  current_acq_event,
             },
+            # Spotrac-sourced active contract. Populated only when the
+            # player has a current MLB contract on file (active roster /
+            # IL / dead-money tables on Spotrac's yearly team page).
+            # Absent for prospects still in MiLB or anyone Spotrac
+            # doesn't list. Drives the realized-surplus calc on
+            # graduate detail pages — current-year salary slot reads
+            # from `aav_usd` when present; prior seasons still use the
+            # league-min + arb-fraction model.
+            **({"current_contract": {
+                "aav_usd":         _ct.get("aav_usd"),
+                "salary_usd":      _ct.get("salary_usd"),
+                "total_usd":       _ct.get("total_usd"),
+                "salary_by_year":  _ct.get("salary_by_year"),
+                "years_remaining": _ct.get("years_remaining"),
+                "signed_through":  _ct.get("signed_through"),
+                "spotrac_id":      _ct.get("spotrac_id"),
+            }} if (_ct := contracts_by_key.get(p.player_key)) else {}),
             # Current IL stint, if any. Powers the IL badge on prospect
             # cards + the injury duration line on the detail page.
             # Empty dict (not None) when the player is healthy — the UI
@@ -2995,6 +3016,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "farm_trajectory_means": farm_trajectory_means,
         "farm_trajectory_stdevs": farm_trajectory_stdevs,
         "level_norms": level_norms,
+        # MLB Draft bonus-pool ceilings + per-pick slot values, scraped
+        # from MLB.com per year. Keyed by year (int). Drives the
+        # spending-block utilization caption on the farm detail page.
+        "mlb_draft_pools": draft_pools,
         "_slices": {
             "graduates":      "graduates.json",
             "inactive":       "inactive.json",
