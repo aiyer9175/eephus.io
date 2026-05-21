@@ -383,16 +383,109 @@ _TYPE_PARSERS = {
 # Auto-detect publish date
 # ---------------------------------------------------------------------------
 
-def _detect_publish_date(summary_rows: list[dict],
+# FanGraphs publishes on a stable annual cycle. The slug names the user
+# (or auto-classifier) puts on each report set encode which publication
+# they belong to:
+#
+#   * Report     — preseason, late January / mid-February
+#   * Updated    — trade deadline, late July / early August
+#   * Graduated  — post-season, early November
+#
+# Hand-curated dates for each (year, kind) we've seen. Anything not in
+# the table falls back to the type-defaults below, then to age-based
+# back-solve if the slug doesn't match either pattern.
+FG_PUBLICATION_CALENDAR: dict[tuple[int, str], str] = {
+    # 2021
+    (2021, "report"):    "2021-02-26",
+    (2021, "updated"):   "2021-07-30",
+    (2021, "graduated"): "2021-11-08",
+    # 2022
+    (2022, "report"):    "2022-02-24",
+    (2022, "updated"):   "2022-08-02",
+    (2022, "graduated"): "2022-11-09",
+    # 2023
+    (2023, "report"):    "2023-02-23",
+    (2023, "updated"):   "2023-08-01",
+    (2023, "graduated"): "2023-11-06",
+    # 2024
+    (2024, "report"):    "2024-02-14",
+    (2024, "updated"):   "2024-08-01",
+    (2024, "graduated"): "2024-11-13",
+    # 2025
+    (2025, "report"):    "2025-02-13",
+    (2025, "updated"):   "2025-07-31",
+    (2025, "graduated"): "2025-11-13",
+    # 2026
+    (2026, "report"):    "2026-02-12",
+}
+
+# Slugs not in the table get this month/day per kind as a safe default.
+_FG_TYPE_DEFAULTS: dict[str, tuple[int, int]] = {
+    "report":    (2, 14),
+    "updated":   (7, 30),
+    "graduated": (11, 6),
+}
+
+# Slug parser: captures the publication year + kind from slugs like
+# `2025updated`, `2025-updated`, `2024_Report`, `2023Graduated`,
+# `2025graduates` (FG's later naming convention also accepts).
+_FG_SLUG_RE = re.compile(
+    r"^(?P<year>\d{4})[-_]?(?P<kind>report|updated|graduated|graduates)$",
+    re.IGNORECASE,
+)
+
+
+def _resolve_calendar_date(slug: str) -> str | None:
+    """Try to resolve `slug` to an FG publish date via the calendar
+    table or the per-kind month/day defaults. Returns None when the
+    slug doesn't match the (year, kind) pattern."""
+    if not slug:
+        return None
+    m = _FG_SLUG_RE.match(slug)
+    if not m:
+        return None
+    year = int(m.group("year"))
+    kind = m.group("kind").lower()
+    if kind == "graduates":
+        kind = "graduated"  # FG used both names across years
+    # Calendar table hit?
+    iso = FG_PUBLICATION_CALENDAR.get((year, kind))
+    if iso:
+        return iso
+    # Fallback: per-kind month/day defaults.
+    md = _FG_TYPE_DEFAULTS.get(kind)
+    if md is None:
+        return None
+    month, day = md
+    try:
+        return date(year, month, day).isoformat()
+    except ValueError:
+        return None
+
+
+def _detect_publish_date(slug: str,
+                         summary_rows: list[dict],
                          birth_dates: dict[str, str],
                          fallback_mtime: float | None = None,
                          today: date | None = None) -> str | None:
-    """Back-calculate snapshot_date = birth_date + age × 365.25 from the
-    summary rows, take the median across all matched players. Returns
-    an ISO date string or None if neither the age-based path nor the
-    fallback mtime is usable.
+    """Resolve a publish date for one report set.
+
+    Control flow:
+      1. If `slug` matches `<year><kind>` (report/updated/graduated),
+         return the hardcoded FG calendar date. This is the authoritative
+         path — FG's cycle is stable, so we know within a few days when
+         each board landed.
+      2. Otherwise back-calculate `snapshot_date = birth_date + age ×
+         365.25` from the summary rows, median across matched players.
+      3. Final fallback: the latest CSV's file mtime.
     """
     today = today or date.today()
+    # Calendar path — wins when the slug matches.
+    cal = _resolve_calendar_date(slug)
+    if cal is not None:
+        log.info("fangraphs_csv: publish date %s for slug '%s' via "
+                 "FG calendar table", cal, slug)
+        return cal
     earliest = date(2018, 1, 1)
     estimates: list[date] = []
     for row in summary_rows:
@@ -822,7 +915,8 @@ def _process_one_set(grp: dict, slug: str, birth_dates: dict[str, str],
 
     fallback_mtime = max(mtimes) if mtimes else None
     snapshot_date = _detect_publish_date(
-        summary_rows, birth_dates, fallback_mtime=fallback_mtime, today=today,
+        slug, summary_rows, birth_dates,
+        fallback_mtime=fallback_mtime, today=today,
     )
     if not snapshot_date:
         log.warning("fangraphs_csv: report set '%s' — could not determine "
@@ -868,3 +962,50 @@ def _process_one_set(grp: dict, slug: str, birth_dates: dict[str, str],
              "(slug=%s, date=%s, rows=%d)",
              n, slug, snapshot_date, len(snapshots))
     return n, True
+
+
+# ---------------------------------------------------------------------------
+# One-shot: backfill publish dates on already-ingested fangraphs snapshots
+# ---------------------------------------------------------------------------
+
+def backfill_publish_dates(db_path: Path | None = None) -> list[tuple[str, str, str, int]]:
+    """One-shot migration: for every distinct fangraphs interval_label in
+    the snapshots DB, recompute the publish date via the calendar table
+    and UPDATE matching rows. Idempotent — re-running is a no-op once
+    all dates are correct.
+
+    Returns a list of ``(interval_label, old_date, new_date, n_rows)``
+    tuples documenting every change, so the caller can log per-slug
+    diffs. Unchanged slugs (calendar miss, or already correct) are
+    omitted from the return.
+    """
+    import sqlite3
+    from storage import DB_PATH
+    path = db_path or DB_PATH
+
+    changes: list[tuple[str, str, str, int]] = []
+    with sqlite3.connect(str(path)) as con:
+        con.row_factory = sqlite3.Row
+        rows = con.execute(
+            "SELECT DISTINCT interval_label, snapshot_date "
+            "FROM snapshots WHERE source = 'fangraphs' "
+            "ORDER BY interval_label, snapshot_date"
+        ).fetchall()
+        for r in rows:
+            old_date = r["snapshot_date"]
+            slug = r["interval_label"]
+            corrected = _resolve_calendar_date(slug)
+            if not corrected or corrected == old_date:
+                continue
+            cur = con.execute(
+                "UPDATE snapshots SET snapshot_date = ? "
+                "WHERE source = 'fangraphs' "
+                "  AND interval_label = ? "
+                "  AND snapshot_date = ?",
+                (corrected, slug, old_date),
+            )
+            n_rows = cur.rowcount
+            if n_rows > 0:
+                changes.append((slug, old_date, corrected, n_rows))
+        con.commit()
+    return changes

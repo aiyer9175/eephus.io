@@ -1110,9 +1110,34 @@ if __name__ == "__main__":
                          "data/timeseries.json from the current DB state. "
                          "Use after dropping new FG CSVs to push the data "
                          "to the website without rerunning the full pipeline.")
+    ap.add_argument("--rebackdate-fangraphs", action="store_true",
+                    help="One-shot migration: walk every fangraphs "
+                         "interval_label, recompute publish date via the "
+                         "FG calendar table, UPDATE matching snapshots. "
+                         "Idempotent. After running, follow with "
+                         "--rebuild-only to push the corrected dates to "
+                         "data/timeseries.json.")
     args = ap.parse_args()
     if args.dry_run:
         probe(force=args.force)
+        sys.exit(0)
+    if args.rebackdate_fangraphs:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+            stream=sys.stdout,
+        )
+        _log = logging.getLogger("rebackdate")
+        from fangraphs_csv import backfill_publish_dates
+        changes = backfill_publish_dates()
+        if not changes:
+            _log.info("rebackdate: no changes needed — every fangraphs slug "
+                      "already maps to its calendar date")
+        for slug, old, new, n in changes:
+            _log.info("rebackdate: %s: %s -> %s (%d rows)", slug, old, new, n)
+        _log.info("rebackdate: %d slug(s) updated. Run "
+                  "'python run_monthly.py --rebuild-only' to push the "
+                  "corrected dates to data/timeseries.json.", len(changes))
         sys.exit(0)
     if args.rebuild_only:
         rebuild_only(out_dir=args.out_dir)

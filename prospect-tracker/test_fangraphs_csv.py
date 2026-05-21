@@ -312,7 +312,36 @@ class TestBuildSnapshot:
 # ---------------------------------------------------------------------------
 
 class TestDetectPublishDate:
-    def test_median_back_solve(self):
+    def test_calendar_known_slug(self):
+        # Known (year, kind) from the calendar table — back-solve and
+        # mtime fallback are bypassed.
+        out = _detect_publish_date("2025updated", [], {},
+                                    fallback_mtime=None,
+                                    today=date(2026, 1, 1))
+        assert out == "2025-07-31"
+
+    def test_calendar_dashed_slug(self):
+        out = _detect_publish_date("2024-report", [], {},
+                                    fallback_mtime=None,
+                                    today=date(2026, 1, 1))
+        assert out == "2024-02-14"
+
+    def test_calendar_underscore_slug(self):
+        out = _detect_publish_date("2023_Graduated", [], {},
+                                    fallback_mtime=None,
+                                    today=date(2026, 1, 1))
+        assert out == "2023-11-06"
+
+    def test_calendar_unknown_year_uses_kind_defaults(self):
+        # 2099 isn't in the table, but the kind defaults should fire.
+        out = _detect_publish_date("2099updated", [], {},
+                                    fallback_mtime=None,
+                                    today=date(2100, 1, 1))
+        assert out == "2099-07-30"  # _FG_TYPE_DEFAULTS["updated"]
+
+    def test_median_back_solve_when_slug_doesnt_match(self):
+        # Free-form slug ("midseason-special") doesn't match the regex
+        # → fall through to age-based back-solve.
         target = date(2025, 7, 29)
         rows = []
         birth_dates = {}
@@ -324,14 +353,17 @@ class TestDetectPublishDate:
                 "age": (target - bd).days / 365.25,
             })
             birth_dates[pkey] = bd.isoformat()
-        out = _detect_publish_date(rows, birth_dates, today=target + timedelta(days=10))
+        out = _detect_publish_date("midseason-special", rows, birth_dates,
+                                    today=target + timedelta(days=10))
         assert out is not None
         out_date = date.fromisoformat(out)
         assert abs((out_date - target).days) <= 1
 
     def test_falls_back_to_mtime_when_no_matches(self):
-        # mtime ~ 2024-06-01 12:00 UTC
+        # mtime ~ 2024-06-01 12:00 UTC. Free-form slug → calendar
+        # bypassed, no birth dates → back-solve fails, mtime path used.
         out = _detect_publish_date(
+            "freeform-slug",
             [{"player_key": "unknown", "age": 21.0}],
             birth_dates={},
             fallback_mtime=1717243200.0,
@@ -341,7 +373,7 @@ class TestDetectPublishDate:
         assert out.startswith("2024-")
 
     def test_no_signal_no_fallback_returns_none(self):
-        out = _detect_publish_date([], {}, fallback_mtime=None,
+        out = _detect_publish_date("free-form", [], {}, fallback_mtime=None,
                                     today=date(2026, 1, 1))
         assert out is None
 

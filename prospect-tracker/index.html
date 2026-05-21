@@ -4847,7 +4847,7 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   const stroke = isUp ? "var(--up)" : isDown ? "var(--down)" : "var(--text-tertiary)";
   const pts = points.map(pt => `${xScale(pt.snapshot_date).toFixed(1)},${yScale(pt.consensus_fv_raw).toFixed(1)}`).join(" ");
   const circles = points.map(pt =>
-    `<circle cx="${xScale(pt.snapshot_date).toFixed(1)}" cy="${yScale(pt.consensus_fv_raw).toFixed(1)}" r="2" fill="${stroke}"><title>${pt.snapshot_date} · ${pt.interval_label} · FV ${pt.consensus_fv_label}</title></circle>`
+    `<circle cx="${xScale(pt.snapshot_date).toFixed(1)}" cy="${yScale(pt.consensus_fv_raw).toFixed(1)}" r="2" fill="${stroke}"><title>${pt.snapshot_date} · ${fgPrettifyInterval(null, pt.interval_label)} · FV ${pt.consensus_fv_label}</title></circle>`
   ).join("");
   // Reference line at FV 50 — the "MLB-regular" threshold. Anyone
   // hovering above this line projects as an above-average MLB player;
@@ -7338,6 +7338,27 @@ const SOURCE_LABELS = {
   auto_detect: "Auto-detect"
 };
 
+// Prettify a FanGraphs interval_label slug for display.
+// Slugs in the DB look like "2024report" / "2025-updated" / "2023_Graduated";
+// the UI shows them as "FanGraphs 2024 Report" / "FanGraphs 2025 Updated"
+// / "FanGraphs 2023 Graduated". When source is passed and isn't fangraphs,
+// the original label passes through. When source is null/undefined (used
+// in places where we don't track source per-row), the helper still
+// recognises the FG slug pattern by content — those slugs don't collide
+// with the manual_rankings labels used by other sources.
+const _FG_INTERVAL_RE = /^(\d{4})[-_]?(report|updated|graduated|graduates)$/i;
+function fgPrettifyInterval(source, intervalLabel) {
+  if (!intervalLabel) return intervalLabel || "";
+  // Explicit non-FG source: pass through.
+  if (source && source !== "fangraphs") return intervalLabel;
+  const m = String(intervalLabel).match(_FG_INTERVAL_RE);
+  if (!m) return intervalLabel;
+  let kind = m[2].toLowerCase();
+  if (kind === "graduates") kind = "graduated";
+  const cap = kind.charAt(0).toUpperCase() + kind.slice(1);
+  return `FanGraphs ${m[1]} ${cap}`;
+}
+
 // =============================================================================
 // GLOSSARY — every stat, index, scouting concept, and methodology term used
 // across the site, with a short definition for the click-to-define popover
@@ -7859,7 +7880,7 @@ function detailTable(p) {
       <tbody>
         ${p.points.map(pt => `<tr>
           <td>${pt.snapshot_date}</td>
-          <td><span class="src-tag">${escapeHtml(pt.interval_label)}</span></td>
+          <td><span class="src-tag">${escapeHtml(fgPrettifyInterval(null, pt.interval_label))}</span></td>
           <td><span class="fv-badge ${fvClass(pt.consensus_fv_label)} size-sm">${pt.consensus_fv_label}</span></td>
           <td>${pt.avg_rank != null ? pt.avg_rank.toFixed(1) : "—"}</td>
         </tr>`).join("")}
@@ -8168,6 +8189,43 @@ function makeQuickReadSummary(p) {
   // ETA — graduates skip (they're already in MLB).
   if (p.status !== "graduated" && p.eta && p.eta.year != null) {
     parts.push(`ETA ${p.eta.year}`);
+  }
+
+  // FanGraphs-derived loud signals: pitcher velo profile + FB shape;
+  // hitter contact-style + positional versatility. Pulled from the
+  // most recent FG snapshot's _extras blob. Each only renders when
+  // populated (so non-pitchers don't get FB Type, etc.).
+  let _fgExtras = null;
+  for (let i = (p.points || []).length - 1; i >= 0; i--) {
+    const pt = p.points[i];
+    const fg = pt && pt.per_source && pt.per_source.fangraphs;
+    const ex = fg && fg.tools && fg.tools._extras;
+    if (ex && Object.keys(ex).length) { _fgExtras = ex; break; }
+  }
+  if (_fgExtras) {
+    if (isP) {
+      if (_fgExtras.sits) {
+        const fbType = _fgExtras.fb_type ? `, ${escapeHtml(_fgExtras.fb_type)} FB` : "";
+        parts.push(`<span style="color:var(--text-primary);">${escapeHtml(_fgExtras.sits)} sit${fbType}</span>`);
+      }
+      // Post-TJ flag when surgery date is within 18 months.
+      if (_fgExtras.tj_date) {
+        try {
+          const tjDt = new Date(_fgExtras.tj_date + "T00:00:00").getTime();
+          const ageMs = Date.now() - tjDt;
+          if (!isNaN(ageMs) && ageMs > 0 && ageMs <= 1.5 * 365 * 86400000) {
+            parts.push(`<span style="color:var(--accent-tj);font-weight:600;">post-TJ</span>`);
+          }
+        } catch (_) {}
+      }
+    } else {
+      if (_fgExtras.versa) {
+        parts.push(`<span style="color:var(--text-primary);">${escapeHtml(_fgExtras.versa)}</span>`);
+      }
+      if (_fgExtras.contact_style) {
+        parts.push(`<span style="font-style:italic;color:var(--text-secondary);">${escapeHtml(_fgExtras.contact_style)}</span>`);
+      }
+    }
   }
 
   if (parts.length < 2) return "";
@@ -9655,7 +9713,7 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
   // first; sources with rank-only (no FV) appended at the end so the
   // reader still sees which lists carried the player.
   const buildPointTitle = (pt) => {
-    const head = `${pt.snapshot_date} · ${pt.interval_label} · FV ${pt.consensus_fv_label}`;
+    const head = `${pt.snapshot_date} · ${fgPrettifyInterval(null, pt.interval_label)} · FV ${pt.consensus_fv_label}`;
     const ps = pt.per_source || {};
     const entries = Object.entries(ps);
     if (!entries.length) return head;
@@ -10413,7 +10471,7 @@ function makePerSourceHistory(points) {
     const perSrc = pt.per_source || {};
     return `<tr>
       <td>${pt.snapshot_date}</td>
-      <td><span class="src-tag">${escapeHtml(pt.interval_label)}</span></td>
+      <td><span class="src-tag">${escapeHtml(fgPrettifyInterval(null, pt.interval_label))}</span></td>
       ${sortedSources.map(s => {
         const d = perSrc[s];
         if (!d) return `<td style="color:var(--text-tertiary);">—</td>`;
@@ -11146,6 +11204,47 @@ function renderPlayerDetail(key) {
       </div>`;
     };
     const dualMarkerHTML = `<span class="tool-dual-marker" title="Speed contributes to BOTH offensive (baserunning, BABIP, extra bases) and defensive (range, jumps) composites.">◆</span>`;
+    // Per-source tooltip builder. Reads from the latest snapshot's
+    // per_source dict; lists each source that published this tool with
+    // its grade. FanGraphs gets a "present/future" pair when both
+    // present + future are populated (FG is the only source publishing
+    // both). Returns a plain-text string suitable for a `title=` attr.
+    const _latestPerSource = (() => {
+      const pts = p.points || [];
+      return (pts.length && pts[pts.length - 1].per_source) || {};
+    })();
+    const _perSourceTooltip = (key, consensusVal) => {
+      const lines = [];
+      lines.push(consensusVal != null
+        ? `Consensus ${Number.isInteger(consensusVal) ? consensusVal : consensusVal.toFixed(1)}`
+        : "Consensus —");
+      const entries = Object.entries(_latestPerSource)
+        .map(([src, info]) => {
+          const tools = (info && info.tools) || {};
+          const fut = tools[key];
+          const pres = tools._extras && tools._extras.present
+                       ? tools._extras.present[key] : undefined;
+          if (fut == null && pres == null) return null;
+          return { src, fut, pres };
+        })
+        .filter(Boolean);
+      // Sort by future grade desc so the top-of-card matches the rest
+      // of the per-source visual ordering.
+      entries.sort((a, b) => (b.fut ?? -1) - (a.fut ?? -1));
+      for (const { src, fut, pres } of entries) {
+        const lbl = SOURCE_LABELS[src] || src;
+        let val;
+        if (pres != null && fut != null && pres !== fut) {
+          val = `${Math.round(pres)}/${Math.round(fut)}`;
+        } else if (fut != null) {
+          val = String(Math.round(fut));
+        } else {
+          val = String(Math.round(pres));
+        }
+        lines.push(`${lbl} ${val}`);
+      }
+      return lines.join(" · ");
+    };
     const gradeCell = (key, label) => {
       const v = (t.grades || {})[key];
       const spread = (t.spread || {})[key];
@@ -11153,7 +11252,8 @@ function renderPlayerDetail(key) {
         ? `<span style="font-size:9px;color:var(--neon-amber);margin-left:4px;" title="Source spread ${spread} grade-points">±${Math.round(spread)}</span>`
         : "";
       const dualMark = key === "speed" ? dualMarkerHTML : "";
-      return `<div class="tools-grade-cell">
+      const tip = _perSourceTooltip(key, v);
+      return `<div class="tools-grade-cell" title="${escapeHtml(tip)}">
         <span class="tools-grade-name">${escapeHtml(label)}${dualMark}${spreadTag}</span>
         ${badgeFor(v)}
       </div>`;
@@ -11278,6 +11378,140 @@ function renderPlayerDetail(key) {
       <div class="detail-card" style="padding:14px 14px 10px;">
         ${wagChart}
         ${summary}
+      </div>`;
+  })();
+
+  // FanGraphs scout-notes card — surfaces the deep _extras blob that
+  // FG's four-CSV exports populate per snapshot. Only renders when at
+  // least one FG snapshot has populated extras; gracefully hides each
+  // sub-row whose fields are missing.
+  const fgScoutNotesSection = (() => {
+    const pts = (p.points || []);
+    // Walk newest → oldest, find the latest snapshot that carries FG
+    // _extras inside its per_source["fangraphs"].tools blob OR via
+    // pt.tools_consensus (when the consensus was the only place we
+    // stamped tools — older snapshots).
+    let latestExtras = null;
+    let latestDate = null;
+    let latestLabel = null;
+    for (let i = pts.length - 1; i >= 0; i--) {
+      const pt = pts[i];
+      const fgEntry = (pt && pt.per_source && pt.per_source.fangraphs) || null;
+      const tools = (fgEntry && fgEntry.tools) || null;
+      const extras = tools && tools._extras;
+      if (extras && Object.keys(extras).length) {
+        latestExtras = extras;
+        latestDate = pt.snapshot_date;
+        latestLabel = fgEntry.interval_label || pt.interval_label;
+        break;
+      }
+    }
+    if (!latestExtras) return "";
+    const ex = latestExtras;
+    const _fmt = (v) => (v == null || v === "") ? "—" : v;
+    const _hasAny = (...keys) => keys.some(k => ex[k] != null && ex[k] !== "");
+
+    // Each sub-row only renders when ≥1 underlying field is present.
+    const rows = [];
+    const _tile = (label, value, hint) => value == null || value === "" || value === "—"
+      ? ""
+      : `<div style="display:flex;flex-direction:column;gap:2px;min-width:0;">
+          <span class="t-stat-label">${label}</span>
+          <span class="t-stat-value" style="font-size:13px;${hint ? `color:${hint};` : ""}">${escapeHtml(String(value))}</span>
+        </div>`;
+
+    // PHYSICAL
+    if (_hasAny("frame", "athl", "levers", "arm", "perf", "delivery")) {
+      const tiles = [
+        _tile("Frame", _fmt(ex.frame)),
+        _tile("Athl",  _fmt(ex.athl)),
+        _tile("Levers", _fmt(ex.levers)),
+        _tile("Arm",   _fmt(ex.arm)),
+        _tile("Perf",  _fmt(ex.perf)),
+        _tile("Delivery", _fmt(ex.delivery)),
+      ].filter(Boolean).join("");
+      rows.push(`<div style="margin-bottom:8px;">
+        <div class="t-section-title" style="margin-bottom:4px;">Physical</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px 12px;">${tiles}</div>
+      </div>`);
+    }
+
+    // HITTER
+    if (_hasAny("contact_style", "versa", "pitch_sel", "bat_ctrl", "hard_hit_pct", "avg_ev", "max_ev")) {
+      const tiles = [
+        _tile("Con Style", _fmt(ex.contact_style)),
+        _tile("Versa",     _fmt(ex.versa)),
+        _tile("Pitch Sel", _fmt(ex.pitch_sel)),
+        _tile("Bat Ctrl",  _fmt(ex.bat_ctrl)),
+        _tile("Hard Hit%", ex.hard_hit_pct != null ? `${(ex.hard_hit_pct*100).toFixed(0)}%` : "—"),
+        _tile("Avg EV",    ex.avg_ev != null ? `${ex.avg_ev.toFixed(1)} mph` : "—"),
+        _tile("Max EV",    ex.max_ev != null ? `${ex.max_ev.toFixed(1)} mph` : "—"),
+      ].filter(Boolean).join("");
+      if (tiles) {
+        rows.push(`<div style="margin-bottom:8px;">
+          <div class="t-section-title" style="margin-bottom:4px;">Hitter</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px 12px;">${tiles}</div>
+        </div>`);
+      }
+    }
+
+    // PITCHER
+    if (_hasAny("fb_type", "sits", "tops", "rpm_fb", "rpm_break", "tj_date")) {
+      const tjColor = ex.tj_date ? "var(--accent-tj)" : null;
+      const tiles = [
+        _tile("FB Type",   _fmt(ex.fb_type)),
+        _tile("Sits",      _fmt(ex.sits)),
+        _tile("Tops",      _fmt(ex.tops)),
+        _tile("RPM FB",    _fmt(ex.rpm_fb)),
+        _tile("RPM Break", _fmt(ex.rpm_break)),
+        _tile("TJ Date",   _fmt(ex.tj_date), tjColor),
+      ].filter(Boolean).join("");
+      if (tiles) {
+        rows.push(`<div style="margin-bottom:8px;">
+          <div class="t-section-title" style="margin-bottom:4px;">Pitcher</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px 12px;">${tiles}</div>
+        </div>`);
+      }
+    }
+
+    // OUTLOOK
+    if (_hasAny("risk", "trend", "eta_year", "sign_year", "sign_market", "sign_org", "bonus", "signed_from")) {
+      const _bonus = ex.bonus != null
+        ? (ex.bonus >= 1_000_000 ? `$${(ex.bonus/1e6).toFixed(2)}M` : `$${(ex.bonus/1e3).toFixed(0)}K`)
+        : "—";
+      const tiles = [
+        _tile("Risk",       _fmt(ex.risk)),
+        _tile("Trend",      _fmt(ex.trend)),
+        _tile("ETA",        _fmt(ex.eta_year)),
+        _tile("Sign Yr",    _fmt(ex.sign_year)),
+        _tile("Bonus",      _bonus),
+        _tile("Signed From", _fmt(ex.signed_from)),
+      ].filter(Boolean).join("");
+      if (tiles) {
+        rows.push(`<div style="margin-bottom:8px;">
+          <div class="t-section-title" style="margin-bottom:4px;">Outlook</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px 12px;">${tiles}</div>
+        </div>`);
+      }
+    }
+
+    // REPORT (multi-paragraph) — collapsible
+    let reportHtml = "";
+    if (ex.report) {
+      reportHtml = `<details style="margin-top:8px;border-top:1px solid var(--border-light);padding-top:8px;">
+        <summary class="t-section-title" style="cursor:pointer;">Full FanGraphs scouting report</summary>
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-top:8px;white-space:pre-wrap;">${escapeHtml(ex.report)}</div>
+      </details>`;
+    }
+
+    if (!rows.length && !reportHtml) return "";
+    const labelPretty = fgPrettifyInterval("fangraphs", latestLabel) || "FanGraphs";
+    return `<div class="detail-title">FanGraphs scout notes
+        <span class="detail-title-sub">${escapeHtml(labelPretty)}${latestDate ? ` · ${latestDate}` : ""}</span>
+      </div>
+      <div class="detail-card" style="padding:12px 14px;">
+        ${rows.join("")}
+        ${reportHtml}
       </div>`;
   })();
 
@@ -11529,17 +11763,38 @@ function renderPlayerDetail(key) {
         : [["hit","HIT"],["game_pwr","GPWR"],["raw_pwr","RPWR"],["speed","SPD"],["field","FLD"],["throw","ARM"]];
       const headerCells = keys.map(([, lbl]) =>
         `<th style="text-align:right;padding-bottom:4px;">${lbl}</th>`).join("");
-      const cellTool = (v) => v == null
-        ? `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;color:var(--text-tertiary);font-size:10px;">—</td>`
-        : `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;"><span class="fv-badge ${fvClass(String(Math.round(v)))} size-xs">${Math.round(v)}</span></td>`;
+      // Cell renderer. When a present grade is also available (FG-only
+      // today), render as "pres/fut" so the reader sees both the
+      // current floor and the projection. Single value otherwise.
+      const cellTool = (fut, pres) => {
+        if (fut == null && pres == null) {
+          return `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;color:var(--text-tertiary);font-size:10px;">—</td>`;
+        }
+        if (pres != null && fut != null && pres !== fut) {
+          return `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;">
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);">${Math.round(pres)}/</span><span class="fv-badge ${fvClass(String(Math.round(fut)))} size-xs">${Math.round(fut)}</span>
+          </td>`;
+        }
+        const v = fut != null ? fut : pres;
+        return `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;"><span class="fv-badge ${fvClass(String(Math.round(v)))} size-xs">${Math.round(v)}</span></td>`;
+      };
       const toolRows = toolEntries.map(([src, info]) => {
         const lbl = SOURCE_LABELS[src] || src;
-        const cells = keys.map(([k]) => cellTool((info.tools || {})[k])).join("");
+        const tools = info.tools || {};
+        const present = (tools._extras && tools._extras.present) || {};
+        const cells = keys.map(([k]) => cellTool(tools[k], present[k])).join("");
         return `<tr>
           <td style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 6px 3px 0;border-bottom:1px solid var(--border-light);">${escapeHtml(lbl)}</td>
           ${cells}
         </tr>`;
       }).join("");
+      // Footer caption only when ≥1 source carries present/future pairs.
+      const _hasPresFut = toolEntries.some(([, v]) =>
+        v.tools && v.tools._extras && v.tools._extras.present &&
+        Object.keys(v.tools._extras.present).length);
+      const presFutCaption = _hasPresFut
+        ? `<div style="margin-top:4px;font-size:10px;color:var(--text-tertiary);letter-spacing:0.02em;">FG cells show present/future when both grades are published.</div>`
+        : "";
       const spread = latestPt.tools_spread || {};
       const widest = Object.entries(spread).reduce(
         (acc, [k, v]) => (v != null && v > (acc[1] ?? -1)) ? [k, v] : acc, [null, null]);
@@ -11557,7 +11812,8 @@ function renderPlayerDetail(key) {
             ${headerCells}
           </tr></thead>
           <tbody>${toolRows}</tbody>
-        </table>`;
+        </table>
+        ${presFutCaption}`;
     }
     const toolsTabAvailable = !!toolsPanelHTML;
     const tabStrip = `<div class="per-source-tabs">
@@ -11897,6 +12153,7 @@ function renderPlayerDetail(key) {
     ["Savant",  "detail-savant",    !!savantSection],
     ["Arsenal", "detail-arsenal",   !!arsenalSection],
     ["Projection", "detail-projection", !!projectionArcSection],
+    ["FG scout",   "detail-fgscout",    !!fgScoutNotesSection],
   ].filter(([, , show]) => show);
   const jumpLinkStrip = jumpLinkPairs.length >= 3
     ? `<nav class="detail-jumplinks" aria-label="Jump to section">${jumpLinkPairs.map(([label, id]) =>
@@ -11936,6 +12193,7 @@ function renderPlayerDetail(key) {
     wrap("detail-savant",  savantSection),
     wrap("detail-arsenal", arsenalSection),
     wrap("detail-projection", projectionArcSection),
+    wrap("detail-fgscout",    fgScoutNotesSection),
     contractDetailsSection,
   ].filter(Boolean).join("");
   const wideGrid = (wideCards || moreDetailsAccordion)
@@ -12760,6 +13018,43 @@ function renderFarmDetail(orgCode) {
       </div>`
     : "";
 
+  // Versa watch — prospects whose latest FanGraphs snapshot tags a
+  // multi-position Versa (e.g. "SS/CF", "2B/SS/3B"). Surfaces FG's
+  // positional-versatility signal at the org level. Helper pulls the
+  // value out of the per_source.fangraphs._extras blob.
+  const versaWatchCard = (() => {
+    const _latestFgVersa = (rp) => {
+      const pts = rp && rp.points || [];
+      for (let i = pts.length - 1; i >= 0; i--) {
+        const fg = pts[i] && pts[i].per_source && pts[i].per_source.fangraphs;
+        const ex = fg && fg.tools && fg.tools._extras;
+        if (ex && ex.versa) return ex.versa;
+      }
+      return null;
+    };
+    const versaPlayers = rosterPlayersAll
+      .map(rp => ({ rp, versa: _latestFgVersa(rp) }))
+      .filter(x => x.versa)
+      .sort((a, b) => (b.rp.fv_close || 0) - (a.rp.fv_close || 0))
+      .slice(0, 6);
+    if (!versaPlayers.length) return "";
+    const rows = versaPlayers.map(({ rp, versa }) => {
+      const fvL = rp.fv_close != null ? Math.round(rp.fv_close) : null;
+      const fvBadge = fvL != null
+        ? `<span class="fv-badge ${fvClass(String(fvL))} size-xs" style="flex-shrink:0;">${fvL}</span>`
+        : `<span style="width:22px;flex-shrink:0;"></span>`;
+      return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
+        ${fvBadge}
+        <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}</span>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);white-space:nowrap;">${escapeHtml(versa)}</span>
+      </div>`;
+    }).join("");
+    return `<div class="farm-side-card">
+      <div class="side-title">Versa watch <span class="side-count">multi-position eligible · FG</span></div>
+      ${rows}
+    </div>`;
+  })();
+
   // Level × position depth heatmap — 7 levels × 5 position buckets.
   // Cells shaded by total FV (so 3 elite prospects glow brighter than
   // 5 depth pieces). Hovering surfaces the count + total FV per cell.
@@ -13021,7 +13316,7 @@ function renderFarmDetail(orgCode) {
     topTxCards +
     promoCard + moversCard +
     fvDistCard + acqMixCard + etaCard +
-    toolsLeaderboardCard + orgLeadersCard +
+    toolsLeaderboardCard + versaWatchCard + orgLeadersCard +
     ilCard +
     bonusPoolsCard + upcomingPicksCard + depthHeatmapCard +
     bottomTxCards +
