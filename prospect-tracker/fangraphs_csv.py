@@ -237,11 +237,16 @@ def _row_id(row: dict) -> tuple[str, str | None]:
 
 _TOOL_HITTER_COLS = (
     # (csv_header, canonical_tool_key)
-    ("hit",      "hit"),
-    ("game pwr", "game_pwr"),
-    ("raw pwr",  "raw_pwr"),
-    ("spd",      "speed"),
-    ("fld",      "field"),
+    ("hit",       "hit"),
+    ("game pwr",  "game_pwr"),
+    ("raw pwr",   "raw_pwr"),
+    ("spd",       "speed"),
+    ("fld",       "field"),
+    # FG publishes pitch_sel and bat_ctrl as single-value 20-80 grades
+    # (no "/" split). They sit alongside the standard hitter tools as
+    # first-class canonical keys — see scrapers.HITTER_TOOL_KEYS.
+    ("pitch sel", "pitch_sel"),
+    ("bat ctrl",  "bat_ctrl"),
 )
 
 _TOOL_PITCHER_COLS = (
@@ -313,8 +318,8 @@ def _parse_position_row(raw: dict) -> dict | None:
     out["tools_future"] = tools_fut
     out["tools_present"] = tools_pres
     # Position scouting also publishes a few non-grade extras.
-    out["pitch_sel"]     = _to_grade(row.get("pitch sel"))
-    out["bat_ctrl"]      = _to_grade(row.get("bat ctrl"))
+    # pitch_sel and bat_ctrl are now canonical hitter tools (parsed via
+    # _TOOL_HITTER_COLS above) — no longer extracted here.
     out["contact_style"] = _str_or_none(row.get("con style"))
     out["versa"]         = _str_or_none(row.get("versa"))
     out["hard_hit_pct"]  = _to_pct(row.get("hard hit%"))
@@ -615,9 +620,9 @@ def _build_snapshot(merged: dict, slug: str, snapshot_date: str) -> Snapshot:
             rpt = rpt[:_REPORT_MAX_CHARS]
         extras["report"] = rpt
 
-    # Position-block extras.
-    for k in ("pitch_sel", "bat_ctrl", "contact_style", "versa",
-              "hard_hit_pct", "avg_ev", "max_ev"):
+    # Position-block extras. pitch_sel and bat_ctrl now ride as
+    # canonical hitter tools in tools_future (see _TOOL_HITTER_COLS).
+    for k in ("contact_style", "versa", "hard_hit_pct", "avg_ev", "max_ev"):
         v = pos_block.get(k)
         if v is not None and v != "":
             extras[k] = v

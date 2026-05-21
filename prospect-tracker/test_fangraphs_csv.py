@@ -682,3 +682,194 @@ class TestCalledFromRunMonthlyHint:
         )
         joined = "\n".join(rec.getMessage() for rec in caplog.records)
         assert "rebuild-only" not in joined
+
+
+# ---------------------------------------------------------------------------
+# Pitch Sel / Bat Ctrl as canonical hitter tools (Step 3 of the
+# "we're still failing to pull tools from FG" integration)
+# ---------------------------------------------------------------------------
+
+class TestPitchSelBatCtrlCanonical:
+    def test_position_row_promotes_pitch_sel_and_bat_ctrl(self):
+        """FG-published Pitch Sel and Bat Ctrl land in tools_future as
+        canonical hitter tools (no "/" split — single value treated as
+        future-only by _parse_grade_pair), NOT in extras."""
+        r = _parse_position_row({
+            "Name": "Konnor Griffin", "Pos": "SS", "Org": "PIT",
+            "Hit": "20 / 45", "Pitch Sel": "60", "Bat Ctrl": "70",
+            "PlayerId": "35376",
+        })
+        assert r["tools_future"]["pitch_sel"] == 60
+        assert r["tools_future"]["bat_ctrl"] == 70
+        # Extras must not duplicate them.
+        assert "pitch_sel" not in r
+        assert "bat_ctrl" not in r
+
+    def test_build_snapshot_does_not_keep_pitch_sel_in_extras(self):
+        s = _parse_summary_row({
+            "Name": "Konnor Griffin", "Org": "PIT", "Pos": "SS",
+            "FV": "65", "PlayerId": "35376",
+        })
+        p = _parse_position_row({
+            "Name": "Konnor Griffin", "Pos": "SS", "Org": "PIT",
+            "Hit": "20 / 45", "Pitch Sel": "60", "Bat Ctrl": "70",
+            "PlayerId": "35376",
+        })
+        merged = _join_report_set([s], [p], [], [])
+        snap = _build_snapshot(merged[0], "demo", "2025-08-01")
+        assert snap.tools["pitch_sel"] == 60
+        assert snap.tools["bat_ctrl"] == 70
+        extras = snap.tools.get("_extras", {})
+        assert "pitch_sel" not in extras
+        assert "bat_ctrl" not in extras
+
+
+# ---------------------------------------------------------------------------
+# Storage round-trip: load_all_snapshots must preserve _extras and not
+# corrupt numeric tool grades. Guard against the Step 1 regression.
+# ---------------------------------------------------------------------------
+
+class TestStorageRoundTripPreservesExtras:
+    def test_insert_and_load_keeps_extras(self, tmp_path, monkeypatch):
+        """Round-trip a FG snapshot with _extras through SQLite and
+        confirm the load path returns both numeric tools AND the
+        sibling _extras dict intact."""
+        from scrapers import Snapshot
+        import storage as storage_mod
+
+        # Point storage at an isolated DB for this test.
+        db_path = tmp_path / "test_prospects.db"
+        monkeypatch.setattr(storage_mod, "DB_PATH", db_path)
+
+        storage_mod.init_db()
+        snap = Snapshot(
+            source="fangraphs",
+            snapshot_date="2025-08-15",
+            interval_label="2025updated",
+            player_key="jesus_made",
+            player_name="Jesús Made",
+            position="SS",
+            org="MIL",
+            rank=1,
+            fv=62.0,
+            status="active",
+            tools={
+                "hit": 60.0, "game_pwr": 60.0, "speed": 60.0,
+                "pitch_sel": 55.0, "bat_ctrl": 60.0,
+                "_extras": {
+                    "height": "6' 0", "weight": 190, "bats": "R", "throws": "R",
+                    "contact_style": "InsideOut", "hard_hit_pct": 0.5,
+                    "frame": 3, "athl": 4, "perf": 4, "delivery": "Smooth",
+                },
+            },
+        )
+        storage_mod.insert_snapshots([snap])
+        loaded = storage_mod.load_all_snapshots()
+        assert len(loaded) == 1
+        out = loaded[0]
+        assert out.source == "fangraphs"
+        assert out.tools["hit"] == 60.0
+        assert out.tools["pitch_sel"] == 55.0
+        assert out.tools["bat_ctrl"] == 60.0
+        # _extras is the load-path's biggest historical victim — verify
+        # it survives intact (this is the bug the integration fixes).
+        ex = out.tools["_extras"]
+        assert ex["height"] == "6' 0"
+        assert ex["weight"] == 190
+        assert ex["bats"] == "R"
+        assert ex["throws"] == "R"
+        assert ex["contact_style"] == "InsideOut"
+        assert ex["hard_hit_pct"] == 0.5
+        assert ex["frame"] == 3
+        assert ex["athl"] == 4
+        assert ex["perf"] == 4
+        assert ex["delivery"] == "Smooth"
+
+    def test_legacy_extras_pitch_sel_lifted_to_canonical(self, tmp_path, monkeypatch):
+        """Backwards-compat: legacy DB rows that stored pitch_sel/
+        bat_ctrl under _extras get lifted to canonical tools at load
+        time, so existing rows don't need a re-ingest to participate
+        in consensus aggregation."""
+        from scrapers import Snapshot
+        import storage as storage_mod
+
+        db_path = tmp_path / "test_legacy.db"
+        monkeypatch.setattr(storage_mod, "DB_PATH", db_path)
+        storage_mod.init_db()
+        snap = Snapshot(
+            source="fangraphs",
+            snapshot_date="2024-02-14",
+            interval_label="2024report",
+            player_key="legacy_guy",
+            player_name="Legacy Guy",
+            position="SS", org="PIT", rank=50, fv=50.0, status="active",
+            tools={
+                "hit": 50.0,
+                "_extras": {"pitch_sel": 55, "bat_ctrl": 60, "height": "6' 2"},
+            },
+        )
+        storage_mod.insert_snapshots([snap])
+        loaded = storage_mod.load_all_snapshots()
+        out = loaded[0]
+        # Lifted to canonical hitter tools.
+        assert out.tools["pitch_sel"] == 55.0
+        assert out.tools["bat_ctrl"] == 60.0
+        # _extras stays intact (we don't strip the source data — a
+        # future re-ingest with new code will overwrite).
+        assert out.tools["_extras"]["pitch_sel"] == 55
+
+
+# ---------------------------------------------------------------------------
+# Consensus aggregation must skip the _extras sibling key (Step 2)
+# ---------------------------------------------------------------------------
+
+class TestConsensusSkipsExtras:
+    def test_extras_key_not_in_tools_by_key(self):
+        """compute_consensus_point must treat `_extras` as metadata —
+        never aggregate it as a numeric tool grade (float({...}) would
+        raise; missing skip = pollution of tools_by_key)."""
+        from scrapers import Snapshot
+        from consensus import compute_consensus_point
+
+        a = Snapshot(source="fangraphs", snapshot_date="2025-08-15",
+                     interval_label="2025updated", player_key="x",
+                     player_name="X", position="SS", org="MIL",
+                     rank=1, fv=60.0, status="active",
+                     tools={"hit": 60.0, "_extras": {"height": "6' 0"}})
+        b = Snapshot(source="mlb_pipeline", snapshot_date="2025-08-15",
+                     interval_label="pipe", player_key="x",
+                     player_name="X", position="SS", org="MIL",
+                     rank=2, fv=55.0, status="active",
+                     tools={"hit": 55.0})
+        pt = compute_consensus_point([a, b])
+        assert pt is not None
+        assert "_extras" not in pt.tools_consensus
+        assert pt.tools_consensus["hit"] == 57.5
+        # _extras must still ride per_source so the UI sees it.
+        assert pt.per_source["fangraphs"]["tools"]["_extras"] == {"height": "6' 0"}
+
+
+# ---------------------------------------------------------------------------
+# Two-way player tool composites (Step 9)
+# ---------------------------------------------------------------------------
+
+class TestTwoWayPlayerComposites:
+    def test_both_payloads_emit_when_both_keys_present(self):
+        """A consensus-grades dict with both hitter and pitcher canonical
+        keys produces a usable hitter composite AND pitcher composite
+        when _compute_tool_composites is called for each side."""
+        from storage import _compute_tool_composites
+
+        grades = {
+            "hit": 55.0, "game_pwr": 60.0, "raw_pwr": 60.0,
+            "speed": 50.0, "field": 50.0,
+            "fb": 65.0, "sl": 55.0, "cb": 50.0, "ch": 55.0, "cmd": 50.0,
+        }
+        hitter = _compute_tool_composites(grades, is_pitcher=False)
+        pitcher = _compute_tool_composites(grades, is_pitcher=True)
+        assert hitter is not None and hitter["composite_off"] is not None
+        assert pitcher is not None and pitcher["composite_stuff"] is not None
+        # Hitter payload should not over-claim stuff; pitcher payload
+        # should not over-claim offense.
+        assert hitter["composite_stuff"] is None
+        assert pitcher["composite_off"] is None

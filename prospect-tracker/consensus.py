@@ -353,6 +353,11 @@ def compute_consensus_point(
                 contributing_sources.add(s.source)
         if s.tools:
             for k, v in s.tools.items():
+                # `_extras` is a sibling metadata dict, not a tool grade —
+                # passes through per_source.tools._extras via the dict
+                # copy at line 343, must not enter numeric aggregation.
+                if k == "_extras":
+                    continue
                 tools_by_key.setdefault(k, []).append(v)
                 contributing_sources.add(s.source)
 

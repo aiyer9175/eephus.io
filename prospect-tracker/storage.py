@@ -187,7 +187,10 @@ def _compute_tool_composites(grades: dict[str, float] | None,
         # in the field, jumps, recovery). Including it on both sides
         # avoids penalizing burner CFs whose defensive value is range-
         # driven rather than arm-driven.
-        off = _avg(("hit", "game_pwr", "raw_pwr", "speed"))
+        # pitch_sel + bat_ctrl are plate-discipline / barrel-control
+        # tools (FG-published); they belong on the offensive side.
+        off = _avg(("hit", "game_pwr", "raw_pwr", "speed",
+                    "pitch_sel", "bat_ctrl"))
         deff = _avg(("field", "throw", "speed"))
         out["composite_off"] = off
         out["composite_def"] = deff
@@ -241,6 +244,16 @@ def _attach_tool_plus_indices(payloads: list[dict]) -> None:
         for k in composite_keys:
             mean, stdev = cohort_stats[k]
             t[f"{k}_plus"] = _index_plus(t.get(k), mean, stdev)
+        # Two-way players: stamp the same indices on hitter_payload /
+        # pitcher_payload sub-dicts so each Tools card renders its own
+        # Tools+ numbers against the shared cohort norms.
+        for sub_key in ("hitter_payload", "pitcher_payload"):
+            sub = t.get(sub_key)
+            if not sub:
+                continue
+            for k in composite_keys:
+                mean, stdev = cohort_stats[k]
+                sub[f"{k}_plus"] = _index_plus(sub.get(k), mean, stdev)
         # Composite-driven green/red flags piggyback on the X+ pass —
         # the per-tool compute_tool_flags call inside _serialize ran
         # before X+ values existed, so we append composite flags here.
@@ -689,11 +702,47 @@ def load_all_snapshots() -> list[Snapshot]:
         if tools_json:
             try:
                 parsed = json.loads(tools_json)
-                if isinstance(parsed, dict) and parsed:
-                    tools = {k: float(v) for k, v in parsed.items()
-                             if v is not None}
             except (ValueError, TypeError):
-                tools = None
+                parsed = None
+            if isinstance(parsed, dict) and parsed:
+                tools = {}
+                for k, v in parsed.items():
+                    if v is None:
+                        continue
+                    # `_extras` is a nested dict of source-specific
+                    # non-grade metadata (FG ships height, weight, sits,
+                    # tops, fb_type, tj_date, frame, athl, perf, levers,
+                    # arm, delivery, contact_style, hard_hit_pct, etc.).
+                    # Pass it through verbatim so per_source.tools._extras
+                    # reaches the UI.
+                    if k == "_extras" and isinstance(v, dict):
+                        tools["_extras"] = v
+                        continue
+                    try:
+                        tools[k] = float(v)
+                    except (TypeError, ValueError):
+                        continue
+                # Backwards-compat lift: pitch_sel and bat_ctrl were
+                # historically stored under _extras; they are now
+                # canonical hitter tools. Pull them up so legacy DB rows
+                # don't need a re-ingest to participate in consensus
+                # aggregation and composite_off / Tools+.
+                extras = tools.get("_extras") if isinstance(tools.get("_extras"), dict) else None
+                if extras:
+                    for lifted_key in ("pitch_sel", "bat_ctrl"):
+                        if lifted_key in tools:
+                            continue
+                        raw = extras.get(lifted_key)
+                        if raw is None:
+                            continue
+                        try:
+                            f = float(raw)
+                        except (TypeError, ValueError):
+                            continue
+                        if 20 <= f <= 80:
+                            tools[lifted_key] = f
+                if not tools:
+                    tools = None
         d["tools"] = tools
         snapshots.append(Snapshot(**d))
     return snapshots
@@ -2383,6 +2432,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 tools_payload["spread"] = dict(latest_point.tools_spread)
             else:
                 tools_payload["spread"] = {}
+            # Two-way player detection: when both hitter AND pitcher
+            # canonical tool keys appear in the consensus grades, emit
+            # both payloads so the UI can render two Tools cards stacked
+            # (e.g., Reggie Crawford, Ohtani). The position-inferred
+            # default payload (above) stays populated for legacy UI paths.
+            if tool_consensus_grades:
+                has_hitter = any(k in tool_consensus_grades for k in HITTER_TOOL_KEYS)
+                has_pitcher = any(k in tool_consensus_grades for k in PITCHER_TOOL_KEYS)
+                if has_hitter and has_pitcher:
+                    hitter_payload = _compute_tool_composites(
+                        tool_consensus_grades, is_pitcher=False)
+                    pitcher_payload = _compute_tool_composites(
+                        tool_consensus_grades, is_pitcher=True)
+                    if hitter_payload is not None:
+                        tools_payload["hitter_payload"] = hitter_payload
+                    if pitcher_payload is not None:
+                        tools_payload["pitcher_payload"] = pitcher_payload
         tool_flags = compute_tool_flags(tools_payload, is_pitcher)
 
         filtered_trades = _filter_real_trades(trades_by_player.get(p.player_key, []))

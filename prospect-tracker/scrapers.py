@@ -102,16 +102,25 @@ class Snapshot:
     fv: float | None
     status: str  # active | graduated | injured_list | off_list
     # Per-source 20-80 tool grades. Canonical keys (any subset of):
-    # hit, game_pwr, raw_pwr, speed, field, throw (hitters)
+    # hit, game_pwr, raw_pwr, speed, field, throw, pitch_sel, bat_ctrl (hitters)
     # fb, sl, cb, ch, cmd (pitchers). Missing tools stay absent so we
     # don't confuse "didn't publish" with "graded 0".
-    tools: dict[str, float] | None = None
+    # May also carry an `_extras` dict (sibling, not a tool grade) for
+    # source-specific non-grade metadata — FanGraphs ships height,
+    # weight, bats, throws, sits, tops, fb_type, tj_date, frame, athl,
+    # perf, levers, arm, delivery, contact_style, hard_hit_pct, etc.
+    # under _extras so they ride per_source.tools._extras through to UI.
+    tools: dict | None = None
 
 
 # Tool taxonomy — canonical keys used everywhere downstream (consensus,
 # storage, UI). Sources map their own labels onto these via the
 # per-scraper translation tables (e.g. PIPELINE_TOOL_KEY below).
-HITTER_TOOL_KEYS = ("hit", "game_pwr", "raw_pwr", "speed", "field", "throw")
+# pitch_sel and bat_ctrl are FG-published 20-80 grades treated as
+# first-class hitter tools so they aggregate cross-source and feed
+# composite_off / Tools+ rather than living in _extras.
+HITTER_TOOL_KEYS = ("hit", "game_pwr", "raw_pwr", "speed", "field", "throw",
+                    "pitch_sel", "bat_ctrl")
 PITCHER_TOOL_KEYS = ("fb", "sl", "cb", "ch", "cmd")
 ALL_TOOL_KEYS = HITTER_TOOL_KEYS + PITCHER_TOOL_KEYS
 

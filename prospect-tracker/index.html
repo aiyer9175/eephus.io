@@ -5448,13 +5448,21 @@ function makeMilbCell(p) {
         sl.bb_pct != null ? `BB% ${sl.bb_pct.toFixed(1)}` : null,
         sl.hr_per_9 != null ? `HR/9 ${sl.hr_per_9.toFixed(2)}` : null,
       ].filter(Boolean).join(" · ")
-    : [
-        sl.ops_plus_level != null ? `OPS+ ${Math.round(sl.ops_plus_level)}` : null,
-        sl.hr != null ? `${sl.hr} HR` : null,
-        sl.iso != null ? `ISO ${fmtRate3(sl.iso)}` : null,
-        sl.bb_pct != null ? `BB% ${sl.bb_pct.toFixed(1)}` : null,
-        sl.k_pct != null ? `K% ${sl.k_pct.toFixed(1)}` : null,
-      ].filter(Boolean).join(" · ");
+    : (() => {
+        // Pull Hard Hit% from FG _extras (decimal 0.0-1.0, displayed as %).
+        // Sits alongside the in-season rate stats so a scout-derived
+        // signal lives next to the statline-derived ones.
+        const _ex = _getFgExtras(p);
+        const _hh = _ex && _ex.hard_hit_pct != null ? (_ex.hard_hit_pct * 100).toFixed(0) + "%" : null;
+        return [
+          sl.ops_plus_level != null ? `OPS+ ${Math.round(sl.ops_plus_level)}` : null,
+          sl.hr != null ? `${sl.hr} HR` : null,
+          sl.iso != null ? `ISO ${fmtRate3(sl.iso)}` : null,
+          sl.bb_pct != null ? `BB% ${sl.bb_pct.toFixed(1)}` : null,
+          sl.k_pct != null ? `K% ${sl.k_pct.toFixed(1)}` : null,
+          _hh != null ? `HH ${_hh}` : null,
+        ].filter(Boolean).join(" · ");
+      })();
   const seasonTag = sl.is_prior_season && sl.season
     ? `<span class="prior-season-tag" title="No ${new Date().getFullYear()} stats yet — showing ${sl.season}">${sl.season}</span>`
     : "";
@@ -7502,6 +7510,33 @@ function _getPhysicalProfile(p) {
   return { height_in: null, weight_lb: null, bmi: null, height_display: null };
 }
 
+// Walk back through FG snapshots to find the most recent _extras blob
+// of any kind. Returns null if no FG snapshot ever shipped extras.
+function _getFgExtras(p) {
+  const pts = (p && p.points) || [];
+  for (let i = pts.length - 1; i >= 0; i--) {
+    const fg = pts[i] && pts[i].per_source && pts[i].per_source.fangraphs;
+    const ex = fg && fg.tools && fg.tools._extras;
+    if (ex) return ex;
+  }
+  return null;
+}
+
+// Handedness from FG _extras. bats: L/R/S, throws: L/R.
+function _getHandedness(p) {
+  const ex = _getFgExtras(p);
+  if (!ex) return { bats: null, throws: null };
+  return { bats: ex.bats || null, throws: ex.throws || null };
+}
+
+// FG ships developmental grades on a 1-5 scale (Frame, Athl, Perf).
+// Map to a readable descriptor for the Physical & Developmental block.
+const _FG_15_LABELS = ["", "Below avg", "Avg", "Above avg", "Plus", "Plus-plus"];
+function _fgGradeLabel(n) {
+  const i = Math.max(0, Math.min(5, Number(n) | 0));
+  return _FG_15_LABELS[i] || "";
+}
+
 // Prettify a FanGraphs interval_label slug for display.
 // Slugs in the DB look like "2024report" / "2025-updated" / "2023_Graduated";
 // the UI shows them as "FanGraphs 2024 Report" / "FanGraphs 2025 Updated"
@@ -8300,7 +8335,15 @@ function playerMetaHTML(p, opts = {}) {
     }
     break;
   }
-  return `<div class="player-meta">${escapeHtml(p.position ?? "—")}${versaChips} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${ageTag}${ilTag}${rosterTag}</div>`;
+  // B/T handedness chip — small monospace pill from FG _extras. Only
+  // renders when FG published either bats or throws for this prospect.
+  let btChip = "";
+  const _hand = _getHandedness(p);
+  if (_hand.bats || _hand.throws) {
+    const _bt = `${_hand.bats || "—"}/${_hand.throws || "—"}`;
+    btChip = `<span class="row-tag" style="margin-left:6px;font-size:9px;color:var(--text-tertiary);border-color:var(--border-light);background:transparent;font-family:var(--font-mono);" title="Bats ${_hand.bats || "?"} / Throws ${_hand.throws || "?"} (FanGraphs)">B/T ${escapeHtml(_bt)}</span>`;
+  }
+  return `<div class="player-meta">${escapeHtml(p.position ?? "—")}${versaChips} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${ageTag}${btChip}${ilTag}${rosterTag}</div>`;
 }
 
 // One-line auto-generated "Quick read" summary for a player. Surfaces
@@ -8388,6 +8431,15 @@ function makeQuickReadSummary(p) {
     if (ex && Object.keys(ex).length) { _fgExtras = ex; break; }
   }
   if (_fgExtras) {
+    // Bats/throws comes before the role-specific narrative — gives
+    // readers the handedness at a glance before pitcher velo / hitter
+    // contact-style commentary. Only renders when ≥1 side is published.
+    if (_fgExtras.bats || _fgExtras.throws) {
+      const _b = _fgExtras.bats ? `Bats ${escapeHtml(_fgExtras.bats)}` : "";
+      const _t = _fgExtras.throws ? `throws ${escapeHtml(_fgExtras.throws)}` : "";
+      const _bt = [_b, _t].filter(Boolean).join(", ");
+      parts.push(`<span style="color:var(--text-primary);">${_bt}</span>`);
+    }
     if (isP) {
       if (_fgExtras.sits) {
         const fbType = _fgExtras.fb_type ? `, ${escapeHtml(_fgExtras.fb_type)} FB` : "";
@@ -11547,7 +11599,7 @@ function renderPlayerDetail(key) {
       const overallChip = compositeChip("Overall", t.composite_overall, t.composite_overall_plus,
         "Weighted composite: 70% offensive + 30% defensive", true);
       const offChip = compositeChip("Offensive", t.composite_off, t.composite_off_plus,
-        "Average of hit · game power · raw power · speed", false);
+        "Power-mean of hit · game power · raw power · speed · pitch selection · bat control", false);
       const defChip = compositeChip("Defensive", t.composite_def, t.composite_def_plus,
         "Average of field · throw · speed", false);
       compositeBar = (overallChip || offChip || defChip)
@@ -11555,10 +11607,13 @@ function renderPlayerDetail(key) {
         : "";
       // Unified grade grid — speed appears once (with the ◆ dual marker)
       // even though it contributes to both composites. Order mirrors the
-      // 5-tool scouting convention: hit / power / speed / field / throw.
-      const hitterOrder = ["hit","game_pwr","raw_pwr","speed","field","throw"];
+      // scouting convention: hit / power / speed / field / throw, with
+      // pitch_sel + bat_ctrl appended as offensive plate-discipline tools.
+      const hitterOrder = ["hit","game_pwr","raw_pwr","speed","field","throw",
+                           "pitch_sel","bat_ctrl"];
       const labels = {hit:"Hit", game_pwr:"Game pwr", raw_pwr:"Raw pwr",
-                      speed:"Speed", field:"Field", throw:"Throw"};
+                      speed:"Speed", field:"Field", throw:"Throw",
+                      pitch_sel:"Pitch Sel", bat_ctrl:"Bat Ctrl"};
       const cells = hitterOrder
         .filter(k => (t.grades || {})[k] != null)
         .map(k => {
@@ -11566,16 +11621,10 @@ function renderPlayerDetail(key) {
           return gradeCell(k, labels[k]);
         })
         .join("");
-      // FG-only hitter grades: Pitch Sel, Bat Ctrl, and Arm. Each
-      // renders only when FG published the value. The Arm grade
-      // duplicates `throw` for position players, but FG sometimes
-      // publishes one without the other; show it when present to
-      // surface FG's view even if the consensus already covers throw.
-      const fgExtraCells = [
-        fgGradeCell("pitch_sel", "Pitch Sel"),
-        fgGradeCell("bat_ctrl",  "Bat Ctrl"),
-        fgGradeCell("arm",       "Arm"),
-      ].filter(Boolean).join("");
+      // FG-only hitter Arm grade — duplicates `throw` for position
+      // players, but FG sometimes publishes one without the other;
+      // shown when present so the FG view isn't lost.
+      const fgExtraCells = fgGradeCell("arm", "Arm");
       const allCells = cells + fgExtraCells;
       groupBlocks = allCells ? `<div class="tools-grade-grid">${allCells}</div>` : "";
     }
@@ -11592,12 +11641,63 @@ function renderPlayerDetail(key) {
     const footer = footerParts.length
       ? `<div class="tools-footer">${footerParts.join("<br>")}</div>`
       : "";
-    return `<div class="detail-title">Tools <span class="detail-title-sub">20-80 scouting grades · consensus across sources</span></div>
+    // Two-way player: when the export shipped both hitter_payload AND
+    // pitcher_payload, render a second card below the primary one so
+    // both sides of a two-way profile (Crawford / Ohtani) are visible.
+    // The primary card above uses the position-inferred default; the
+    // secondary uses whichever side the position didn't cover.
+    let twoWayExtraCard = "";
+    const otherKey = isPitcher ? "hitter_payload" : "pitcher_payload";
+    const otherPayload = t[otherKey];
+    if (otherPayload && otherPayload.grades && Object.keys(otherPayload.grades).length) {
+      const otherIsPitcher = otherKey === "pitcher_payload";
+      const op = otherPayload;
+      const otherCells = otherIsPitcher
+        ? ["fb","sl","cb","ch","cmd"]
+            .filter(k => (op.grades || {})[k] != null)
+            .map(k => {
+              const lab = ({fb:"Fastball", sl:"Slider", cb:"Curveball",
+                            ch:"Changeup", cmd:"Command"})[k];
+              const v = op.grades[k];
+              return `<div class="tools-grade-cell">
+                <span class="tools-grade-name">${escapeHtml(lab)}</span>
+                ${badgeFor(v)}
+              </div>`;
+            }).join("")
+        : ["hit","game_pwr","raw_pwr","speed","field","throw","pitch_sel","bat_ctrl"]
+            .filter(k => (op.grades || {})[k] != null)
+            .map(k => {
+              const lab = ({hit:"Hit", game_pwr:"Game pwr", raw_pwr:"Raw pwr",
+                            speed:"Speed", field:"Field", throw:"Throw",
+                            pitch_sel:"Pitch Sel", bat_ctrl:"Bat Ctrl"})[k];
+              const v = op.grades[k];
+              return `<div class="tools-grade-cell">
+                <span class="tools-grade-name">${escapeHtml(lab)}</span>
+                ${badgeFor(v)}
+              </div>`;
+            }).join("");
+      const otherOverall = compositeChip("Overall",
+        op.composite_overall, op.composite_overall_plus,
+        otherIsPitcher ? "Weighted composite: 65% stuff + 35% command"
+                       : "Weighted composite: 70% offensive + 30% defensive", true);
+      const otherCompositeBar = otherOverall
+        ? `<div class="tools-composite-bar">${otherOverall}</div>`
+        : "";
+      twoWayExtraCard = `<div class="detail-title">Tools (${otherIsPitcher ? "pitching" : "hitting"}) <span class="detail-title-sub">two-way profile · second toolset</span></div>
+        <div class="tools-card">
+          ${otherCompositeBar}
+          ${otherCells ? `<div class="tools-grade-grid">${otherCells}</div>` : ""}
+        </div>`;
+    }
+    const primaryTitle = otherPayload
+      ? `Tools (${isPitcher ? "pitching" : "hitting"}) <span class="detail-title-sub">20-80 scouting grades · consensus across sources</span>`
+      : `Tools <span class="detail-title-sub">20-80 scouting grades · consensus across sources</span>`;
+    return `<div class="detail-title">${primaryTitle}</div>
       <div class="tools-card">
         ${compositeBar}
         ${groupBlocks}
         ${footer}
-      </div>`;
+      </div>${twoWayExtraCard}`;
   })();
 
   // Statcast / Baseball Savant block — populated when CSV exports are
@@ -11687,35 +11787,44 @@ function renderPlayerDetail(key) {
           <span class="t-stat-value" style="font-size:13px;${hint ? `color:${hint};` : ""}">${escapeHtml(String(value))}</span>
         </div>`;
 
-    // PHYSICAL — leads with Ht/Wt/BMI when FG publishes them, then
-    // the FG-only physical descriptors (Frame, Athl, etc.).
+    // PHYSICAL & DEVELOPMENTAL — leads with Ht/Wt/BMI when FG publishes
+    // them, then handedness, then FG's 1-5 developmental grades
+    // (Frame, Athl, Perf) with descriptors, then position-agnostic
+    // mechanics (Levers, Arm, Delivery).
     const physical = _getPhysicalProfile(p);
+    const hand = _getHandedness(p);
     const _hasPhysicalDescriptors = _hasAny("frame", "athl", "levers", "arm", "perf", "delivery");
-    if (physical.height_in || physical.weight_lb || _hasPhysicalDescriptors) {
+    const _hasHandedness = !!(hand.bats || hand.throws);
+    const _fg15 = (n) => {
+      if (n == null || n === "") return null;
+      const label = _fgGradeLabel(n);
+      return label ? `${n}/5 · ${label}` : `${n}/5`;
+    };
+    if (physical.height_in || physical.weight_lb || _hasPhysicalDescriptors || _hasHandedness) {
       const tiles = [
         _tile("Ht",  physical.height_display || (physical.height_in ? `${Math.floor(physical.height_in/12)}' ${physical.height_in%12}"` : null)),
         _tile("Wt",  physical.weight_lb != null ? `${physical.weight_lb} lb` : null),
         _tile("BMI", physical.bmi != null ? physical.bmi.toFixed(1) : null),
-        _tile("Frame", _fmt(ex.frame)),
-        _tile("Athl",  _fmt(ex.athl)),
+        _tile("B/T", (hand.bats || hand.throws) ? `${hand.bats || "—"}/${hand.throws || "—"}` : null),
+        _tile("Frame", _fg15(ex.frame)),
+        _tile("Athl",  _fg15(ex.athl)),
+        _tile("Perf",  _fg15(ex.perf)),
         _tile("Levers", _fmt(ex.levers)),
         _tile("Arm",   _fmt(ex.arm)),
-        _tile("Perf",  _fmt(ex.perf)),
         _tile("Delivery", _fmt(ex.delivery)),
       ].filter(Boolean).join("");
       rows.push(`<div style="margin-bottom:8px;">
-        <div class="t-section-title" style="margin-bottom:4px;">Physical</div>
+        <div class="t-section-title" style="margin-bottom:4px;">Physical &amp; Developmental</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px 12px;">${tiles}</div>
       </div>`);
     }
 
-    // HITTER
-    if (_hasAny("contact_style", "versa", "pitch_sel", "bat_ctrl", "hard_hit_pct", "avg_ev", "max_ev")) {
+    // HITTER — pitch_sel and bat_ctrl now live in the canonical Tools
+    // card; this block carries the remaining FG-only hitter descriptors.
+    if (_hasAny("contact_style", "versa", "hard_hit_pct", "avg_ev", "max_ev")) {
       const tiles = [
         _tile("Con Style", _fmt(ex.contact_style)),
         _tile("Versa",     _fmt(ex.versa)),
-        _tile("Pitch Sel", _fmt(ex.pitch_sel)),
-        _tile("Bat Ctrl",  _fmt(ex.bat_ctrl)),
         _tile("Hard Hit%", ex.hard_hit_pct != null ? `${(ex.hard_hit_pct*100).toFixed(0)}%` : "—"),
         _tile("Avg EV",    ex.avg_ev != null ? `${ex.avg_ev.toFixed(1)} mph` : "—"),
         _tile("Max EV",    ex.max_ev != null ? `${ex.max_ev.toFixed(1)} mph` : "—"),
