@@ -236,8 +236,8 @@ def estimate_eta(
     # the FV-to-MLB pipeline takes longer. We push the ETA back when:
     #   * is_post_tj=True and surgery is within ~18 months of today
     #     (the bulk of the recovery window). Add 1.0 year for pitchers.
-    #   * the 24-month IL-stint count is 3+ — chronic profile. Add 0.5.
-    #   * total IL days in last 24 months are 200+ — Add 0.5 on top.
+    #   * the 12-month IL-stint count is 3+ — chronic profile. Add 0.5.
+    #   * total IL days in last 12 months are 200+ — Add 0.5 on top.
     # Capped at +1.5 years total so a healthy-now prospect doesn't get
     # an obscure forecast for a single bad season.
     health_adj = 0.0
@@ -252,9 +252,9 @@ def estimate_eta(
                         health_adj += 1.0 if is_pitcher else 0.5
                 except (TypeError, ValueError):
                     pass
-        if (health.get("il_stints_24mo") or 0) >= 3:
+        if (health.get("il_stints_12mo") or 0) >= 3:
             health_adj += 0.5
-        if (health.get("il_days_24mo") or 0) >= 200:
+        if (health.get("il_days_12mo") or 0) >= 200:
             health_adj += 0.5
         # Don't double-count: cap at 1.5y so a chronically injured but
         # not currently-recovering player still has a usable forecast.

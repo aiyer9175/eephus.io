@@ -286,10 +286,10 @@ def compute_stat_flags(statline: dict | None,
     # statline — a player with no current season stats can still have
     # an injury pattern. So evaluate it up front.
     if health:
-        stints = int(health.get("il_stints_24mo") or 0)
-        days   = int(health.get("il_days_24mo") or 0)
+        stints = int(health.get("il_stints_12mo") or 0)
+        days   = int(health.get("il_days_12mo") or 0)
         # Two ways to fire the chronic-injury flag:
-        #   * 3+ separate IL placements in 24 months (recurring issues), OR
+        #   * 3+ separate IL placements in 12 months (recurring issues), OR
         #   * 200+ cumulative IL days (one major absence is enough).
         if stints >= 3 or days >= 200:
             out.append({
@@ -305,7 +305,7 @@ def compute_stat_flags(statline: dict | None,
                 "delta_display": None,
                 "category":      "health",
                 "polarity":      "below_good",
-                "note":          "Frequent / extended IL time over the last 24 months — durability risk.",
+                "note":          "Frequent / extended IL time over the last 12 months — durability risk.",
             })
 
     if not statline:

@@ -574,15 +574,32 @@
        custom property is set inline per row by the render JS. */
     .col-header, .player-row {
       display: grid;
-      /* 8 cols: # | Player | FV (+stock under) | Rank | History | Candle | MiLB | ETA
-         The candle column was dropped: OHLC values are now surfaced
-         via hover on the FV-history sparkline cell itself, so the
-         dedicated 70px column was duplicative. Reclaimed width goes
-         to the MiLB stat cell (previously truncated on most rows). */
-      grid-template-columns: 32px 1.65fr 0.55fr 0.35fr 1.2fr 1.45fr 0.5fr;
+      /* 10 cols: # | Player | FV (+stock under) | Rank | History | MiLB | Ht | Wt | BMI | ETA
+         Ht/Wt/BMI added as compact desktop-only mono cells. The candle
+         column is gone — OHLC surfaces via hover on the FV-history
+         sparkline. Reclaimed width split between MiLB and the three
+         physical cells. */
+      grid-template-columns: 32px 1.6fr 0.55fr 0.35fr 1.0fr 1.3fr 0.4fr 0.4fr 0.35fr 0.5fr;
       gap: 10px;
       align-items: center;
     }
+    /* Compact mono cells for Ht/Wt/BMI. Tertiary-color text keeps
+       these from competing with FV / Rank for visual attention.
+       .sort-header makes any header clickable to set state.sort —
+       active column gets cyan via .is-active. */
+    .phys-cell {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      text-align: center;
+    }
+    .sort-header {
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.12s;
+    }
+    .sort-header:hover { color: var(--neon-cyan); }
+    .sort-header.is-active { color: var(--neon-cyan); }
     /* Row variants — each section's per-render `grid-template-columns`
        lived inline before; centralizing here keeps the renderers terse
        and lets a single media-query block handle mobile collapses. */
@@ -978,6 +995,7 @@
        the name with Savant micro-tile + flag detail. Standard = today. */
     body.density-compact .player-row > .line-chart-cell,
     body.density-compact .player-row > .milb-cell,
+    body.density-compact .player-row > .phys-cell,
     body.density-compact .player-row > .eta-cell { display: none !important; }
     body.density-compact .player-row .headshot,
     body.density-compact .player-row .headshot-img,
@@ -2608,6 +2626,7 @@
       .player-row .candle-cell,
       .player-row .milb-cell-wrap,
       .player-row .eta-cell,
+      .player-row .phys-cell,
       .col-header .desktop-only { display: none; }
       /* Row variants collapse to a name + key-stat layout on mobile so
          the wide desktop grids don't squish columns into illegibility. */
@@ -3712,6 +3731,39 @@
       <button class="chip" data-filter-spread="wide" title="Only show prospects where ≥2 sources disagree by at least 10 grade points (the 'wide spread' / breakout-candidate filter)">Wide FV spread</button>
     </div>
     <div class="filter-group">
+      <span class="filter-label" title="Filter prospects by a specific tool grade meeting a minimum threshold. 'Any tool' matches when any one canonical 20-80 grade meets the threshold; pick a specific tool to isolate it.">Tool grade</span>
+      <select class="chip" id="tool-filter-key">
+        <option value="off">— off —</option>
+        <option value="any">Any tool</option>
+        <optgroup label="Hitter">
+          <option value="hit">Hit</option>
+          <option value="game_pwr">Game pwr</option>
+          <option value="raw_pwr">Raw pwr</option>
+          <option value="speed">Speed</option>
+          <option value="field">Field</option>
+          <option value="throw">Throw</option>
+          <option value="pitch_sel">Pitch Sel</option>
+          <option value="bat_ctrl">Bat Ctrl</option>
+        </optgroup>
+        <optgroup label="Pitcher">
+          <option value="fb">Fastball</option>
+          <option value="sl">Slider</option>
+          <option value="cb">Curveball</option>
+          <option value="ch">Changeup</option>
+          <option value="cmd">Command</option>
+          <option value="ct">Cutter</option>
+        </optgroup>
+      </select>
+      <select class="chip" id="tool-filter-min">
+        <option value="0">≥ any</option>
+        <option value="50">≥ 50</option>
+        <option value="55">≥ 55</option>
+        <option value="60">≥ 60</option>
+        <option value="65">≥ 65</option>
+        <option value="70">≥ 70</option>
+      </select>
+    </div>
+    <div class="filter-group">
       <span class="filter-label">Org</span>
       <select class="chip" id="org-filter">
         <option value="all">All organizations</option>
@@ -3746,6 +3798,12 @@
         <option value="stock_movers">Biggest movers (|ΔFV|)</option>
         <option value="t_plus">Tools+ (toolsiest)</option>
         <option value="source_confidence">Source confidence (most sources first)</option>
+        <option value="ht_desc">Tallest first</option>
+        <option value="ht_asc">Shortest first</option>
+        <option value="wt_desc">Heaviest first</option>
+        <option value="wt_asc">Lightest first</option>
+        <option value="bmi_desc">Highest BMI</option>
+        <option value="bmi_asc">Lowest BMI</option>
       </select>
     </div>
     <div class="filter-group">
@@ -4404,7 +4462,7 @@ function flagCounterPillHTML(p) {
 }
 
 // Single inline chip surfacing the most-concerning health signal:
-//   On IL > Post-TJ > chronic-IL (≥3 stints or ≥200 IL days last 24mo).
+//   On IL > Post-TJ > chronic-IL (≥3 stints or ≥200 IL days last 12mo).
 // Mutually exclusive — only one chip ever shows per row. Healthy
 // prospects render nothing.
 function healthBadgeHTML(p) {
@@ -4424,20 +4482,20 @@ function healthBadgeHTML(p) {
     const d = hp.tj_surgery_date ? ` (${hp.tj_surgery_date})` : "";
     return `<span class="row-tag health-tj" title="Post-Tommy John surgery${d}">TJ</span>`;
   }
-  const stints = hp.il_stints_24mo || 0;
-  const ildays = hp.il_days_24mo || 0;
+  const stints = hp.il_stints_12mo || 0;
+  const ildays = hp.il_days_12mo || 0;
   if (stints >= 3 || ildays >= 200) {
-    return `<span class="row-tag health-chronic" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 24 months — high recurrence. Different from being currently on IL (the IL chip surfaces that state separately).">Freq. Injured</span>`;
+    return `<span class="row-tag health-chronic" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12 months — high recurrence. Different from being currently on IL (the IL chip surfaces that state separately).">Freq. Injured</span>`;
   }
   if (stints >= 1 || ildays >= 30) {
-    return `<span class="row-tag health-watch" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 24 months — recent injury history">Recent Injury</span>`;
+    return `<span class="row-tag health-watch" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12 months — recent injury history">Recent Injury</span>`;
   }
-  // No reported IL activity in the past 24 months — surface explicitly
+  // No reported IL activity in the past 12 months — surface explicitly
   // as "Healthy" so the lack of a chip doesn't get confused with missing
   // data. Only fires when we have an `health_profile` object on the
   // record at all; pre-injury-tracking inactives stay silent.
   if (hp && Object.keys(hp).length) {
-    return `<span class="row-tag health-healthy" title="No IL activity in the past 24 months">Healthy</span>`;
+    return `<span class="row-tag health-healthy" title="No IL activity in the past 12 months">Healthy</span>`;
   }
   return "";
 }
@@ -5289,8 +5347,33 @@ function restoreUIFromState() {
   if (acqSel) acqSel.value = state.acqFilter;
   const sortSel = document.getElementById("sort-select");
   if (sortSel) sortSel.value = state.sort;
+  const tfKeySel = document.getElementById("tool-filter-key");
+  if (tfKeySel) tfKeySel.value = state.toolFilterKey || "off";
+  const tfMinSel = document.getElementById("tool-filter-min");
+  if (tfMinSel) tfMinSel.value = String(state.toolFilterMin || 0);
   const searchIn = document.getElementById("search-input");
   if (searchIn) searchIn.value = state.search || "";
+  // Header-cell .is-active sync runs after the header is rendered too.
+  syncSortHeaderActive();
+}
+
+// Stamp .is-active on the header cell whose data-sort-key matches the
+// current state.sort. Direction-paired keys (ht_asc / ht_desc) both
+// resolve to the same physical column, so an asc/desc toggle still
+// keeps the cell highlighted.
+function syncSortHeaderActive() {
+  const headers = document.querySelectorAll(".col-header .sort-header[data-sort-key]");
+  if (!headers.length) return;
+  // Normalize direction-paired keys to their column base ("ht" / "wt" /
+  // "bmi") so toggling asc/desc keeps the highlight on the column.
+  const base = (k) => k.endsWith("_asc") ? k.slice(0, -4)
+                : k.endsWith("_desc") ? k.slice(0, -5)
+                : k;
+  const activeBase = base(state.sort);
+  headers.forEach(h => {
+    const hBase = base(h.dataset.sortKey);
+    h.classList.toggle("is-active", hBase === activeBase);
+  });
 }
 
 function makeEtaCell(p) {
@@ -5619,6 +5702,14 @@ const state = {
   // point shows ≥10 grade-points of disagreement between explicit-FV
   // sources. Default "all" passes everyone through.
   spreadFilter: "all",
+  // Tool-grade filter — restrict to prospects whose specified tool
+  // grade meets a minimum threshold. `toolFilterKey` is "off" (default),
+  // "any" (matches the threshold across any single tool), or a canonical
+  // tool key (hit / game_pwr / raw_pwr / speed / field / throw /
+  // pitch_sel / bat_ctrl / fb / sl / cb / ch / cmd / ct). `toolFilterMin`
+  // is 0 (no threshold) or 50/55/60/65/70.
+  toolFilterKey: "off",
+  toolFilterMin: 0,
   // Row density — "compact" / "standard" / "expanded". Picked up from
   // URL > localStorage > default on boot. Drives a body-level class
   // and (for Expanded) the per-row second meta line. Defaults to
@@ -5737,6 +5828,21 @@ function getFilteredActives() {
       return last && last.fv_spread != null && last.fv_spread >= 10;
     });
   }
+  // Tool-grade filter — restrict to prospects whose chosen tool meets
+  // the minimum 20-80 threshold. "any" matches when any one tool meets
+  // it (useful for finding outlier-toolsy prospects); a specific key
+  // (hit / fb / cmd / etc.) isolates that one tool.
+  if (state.toolFilterKey && state.toolFilterKey !== "off" && state.toolFilterMin > 0) {
+    pool = pool.filter(p => {
+      const grades = (p.tools && p.tools.grades) || {};
+      if (state.toolFilterKey === "any") {
+        return Object.entries(grades).some(([k, v]) =>
+          k !== "_extras" && typeof v === "number" && v >= state.toolFilterMin);
+      }
+      const v = grades[state.toolFilterKey];
+      return typeof v === "number" && v >= state.toolFilterMin;
+    });
+  }
   if (state.sort === "age_asc") {
     pool.sort((a, b) => (a.age ?? 99) - (b.age ?? 99));
   } else if (state.sort === "age_vs_level") {
@@ -5792,6 +5898,42 @@ function getFilteredActives() {
       const ar = (lastA && lastA.avg_rank != null) ? lastA.avg_rank : 9999;
       const br = (lastB && lastB.avg_rank != null) ? lastB.avg_rank : 9999;
       return ar - br;
+    });
+  } else if (state.sort === "ht_asc" || state.sort === "ht_desc") {
+    // Height — pulled from the latest FG snapshot's _extras via the
+    // shared _getPhysicalProfile helper. Players without published
+    // height data sink to the bottom regardless of sort direction.
+    const dir = state.sort === "ht_asc" ? 1 : -1;
+    pool.sort((a, b) => {
+      const ah = _getPhysicalProfile(a).height_in;
+      const bh = _getPhysicalProfile(b).height_in;
+      if (ah == null && bh == null) return 0;
+      if (ah == null) return 1;
+      if (bh == null) return -1;
+      return (ah - bh) * dir;
+    });
+  } else if (state.sort === "wt_asc" || state.sort === "wt_desc") {
+    const dir = state.sort === "wt_asc" ? 1 : -1;
+    pool.sort((a, b) => {
+      const aw = _getPhysicalProfile(a).weight_lb;
+      const bw = _getPhysicalProfile(b).weight_lb;
+      if (aw == null && bw == null) return 0;
+      if (aw == null) return 1;
+      if (bw == null) return -1;
+      return (aw - bw) * dir;
+    });
+  } else if (state.sort === "bmi_asc" || state.sort === "bmi_desc") {
+    // BMI is a derived stat: scouts often use higher BMI as a soft
+    // durability signal (heavy frame = injury proxy). Surface it as a
+    // sort axis so users can scan size profiles without opening details.
+    const dir = state.sort === "bmi_asc" ? 1 : -1;
+    pool.sort((a, b) => {
+      const ab = _getPhysicalProfile(a).bmi;
+      const bb = _getPhysicalProfile(b).bmi;
+      if (ab == null && bb == null) return 0;
+      if (ab == null) return 1;
+      if (bb == null) return -1;
+      return (ab - bb) * dir;
     });
   }
   return pool;
@@ -6002,11 +6144,14 @@ function renderActives() {
   const header = `<div class="col-header">
     <span style="text-align:center;">#</span>
     <span>Player · pos · org · age</span>
-    <span style="text-align:center;" title="Consensus Future Value · stock delta + direction below">FV · stock</span>
-    <span style="text-align:center;">Rank</span>
+    <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="Consensus Future Value · stock delta + direction below · click to sort">FV · stock</span>
+    <span class="sort-header" style="text-align:center;" data-sort-key="avg_rank" title="Average rank across sources · click to sort">Rank</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline — hover for OHLC open / high / low / close">FV history</span>
     <span class="desktop-only">MiLB · age vs. level</span>
-    <span class="desktop-only" style="text-align:center;">ETA</span>
+    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="ht_desc" title="Height (from FanGraphs) · click to sort tallest first; click again for shortest">Ht</span>
+    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="wt_desc" title="Weight in lbs (from FanGraphs) · click to sort heaviest first; click again for lightest">Wt</span>
+    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="BMI calculated from Ht/Wt · click to sort highest first; click again for lowest">BMI</span>
+    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
   </div>`;
 
   const rows = filtered.map((p, i) => {
@@ -6031,6 +6176,21 @@ function renderActives() {
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
         <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
         ${makeMilbCell(p)}
+        ${(() => {
+          // Ht / Wt / BMI cells — pulled from the latest FG snapshot's
+          // _extras via _getPhysicalProfile. Shows em dashes when FG hasn't
+          // published a height or weight for this prospect.
+          const phys = _getPhysicalProfile(p);
+          const ht  = phys.height_display
+                      || (phys.height_in
+                          ? `${Math.floor(phys.height_in/12)}'${phys.height_in%12}"`
+                          : "—");
+          const wt  = phys.weight_lb != null ? String(Math.round(phys.weight_lb)) : "—";
+          const bmi = phys.bmi != null ? phys.bmi.toFixed(1) : "—";
+          return `<div class="phys-cell desktop-only">${escapeHtml(ht)}</div>
+                  <div class="phys-cell desktop-only">${escapeHtml(wt)}</div>
+                  <div class="phys-cell desktop-only">${escapeHtml(bmi)}</div>`;
+        })()}
         ${makeEtaCell(p)}
         ${playerExpandedMetaHTML(p)}
       </div>
@@ -6040,6 +6200,8 @@ function renderActives() {
   document.getElementById("rows").innerHTML = filtered.length
     ? header + rows
     : `<div class="state-message">No active prospects match these filters.</div>`;
+  // Highlight the active sort column in the fresh header.
+  syncSortHeaderActive();
 }
 
 function renderSpotlights() {
@@ -6607,6 +6769,16 @@ function renderGlossary() {
       if (entry.long)    moreBits.push(`<div style="margin-top:6px;font-size:12px;color:var(--text-secondary);line-height:1.5;">${escapeHtml(entry.long)}</div>`);
       if (entry.formula) moreBits.push(formulaBlock);
       if (entry.example) moreBits.push(`<div style="font-size:11.5px;color:var(--text-secondary);font-style:italic;margin-top:6px;line-height:1.45;"><span style="font-style:normal;color:var(--text-tertiary);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Example · </span>${escapeHtml(entry.example)}</div>`);
+      // Optional visual example — entries with a `visual_html` field render
+      // an inline preview of the actual UI element they describe (FV
+      // badge, stock arrow, IL chip, etc.). Keeps the glossary
+      // self-explanatory without forcing the reader to find a real prospect.
+      if (entry.visual_html) {
+        moreBits.push(`<div style="margin-top:8px;">
+          <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;margin-bottom:6px;">Visual</div>
+          <div class="glossary-visual" style="padding:10px 12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:rgba(255,255,255,0.02);display:flex;flex-wrap:wrap;align-items:center;gap:8px;">${entry.visual_html}</div>
+        </div>`);
+      }
       const relatedChips = (entry.related || [])
         .map(r => GLOSSARY[r] ? `<a href="#g-${escapeHtml(r)}" data-related-term="${escapeHtml(r)}" style="font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);text-decoration:none;border:1px solid var(--border-light);padding:2px 8px;border-radius:999px;">${escapeHtml(GLOSSARY[r].name)}</a>` : "")
         .filter(Boolean).join("");
@@ -7577,6 +7749,15 @@ const GLOSSARY_CATEGORIES = [
   ["financial",    "Financial"],
   ["level",        "Levels"],
   ["status",       "Status"],
+  // Casual-fan MLB jargon — Rule 5, 40-man, options, service time,
+  // DFA, IL types, etc. Distinct from "methodology" (site-built) and
+  // "status" (per-player conditions) — these are universal MLB concepts.
+  ["mlb-rules",    "MLB rules & jargon"],
+  // Visual indicators / badges / chips used across the site (Stock arrow,
+  // FV badge, Tools+ pill, RPS+ pill, IL chip, LATEST/STALE source pills).
+  // Each entry carries a `visual_html` field that renders an inline
+  // example of the actual UI element in the glossary card.
+  ["indicators",   "Indicators & badges"],
 ];
 
 const GLOSSARY = {
@@ -7990,8 +8171,267 @@ const GLOSSARY = {
   "on_il": {
     name: "On IL", aliases: ["IL", "Injured List", "Currently on IL"], category: "status",
     short: "Player is currently on the active Injured List. Multiple IL types: 7-day, 10-day, 15-day, 60-day.",
-    long: "60-day IL freezes a player's 40-man roster slot. 15-day IL is the standard major-injury duration. The site surfaces every IL stint over the trailing 24 months; the Health profile aggregates the count and total IL days.",
+    long: "60-day IL freezes a player's 40-man roster slot. 15-day IL is the standard major-injury duration. The site surfaces every IL stint over the trailing 12 months; the Health profile aggregates the count and total IL days.",
+    related: ["post_tj", "il_10_15_60"],
+  },
+
+  // ---- Scouting tool grades (pitcher + hitter abbreviations) ----
+  "fastball_grade": {
+    name: "Fastball", aliases: ["FB", "Fastball", "Fastball grade"], category: "scouting",
+    short: "20-80 scouting grade for a pitcher's fastball — velocity, movement, shape, and command of the pitch.",
+    long: "Most pitchers' headline tool. 60+ is plus (mid-90s + ride or sink); 70+ is plus-plus (upper-90s + carry). The grade folds together velo, vertical/horizontal break, and command of the pitch; pure velo without shape rarely earns above 55.",
+    related: ["slider_grade", "command_grade"],
+  },
+  "slider_grade": {
+    name: "Slider", aliases: ["SL", "Sl", "Slider", "Sweeper"], category: "scouting",
+    short: "20-80 grade for the pitcher's slider (or sweeper variant) — sharpness, depth, tunneling with the fastball.",
+    long: "Sliders sit ~5-10 mph below the FB; sweepers add ~15-18 inches of horizontal break. Both ride the 'sl' slot in our data because their roles overlap. 60+ is a true out-pitch slider; 50 is average MLB shape.",
+    related: ["fastball_grade", "curveball_grade"],
+  },
+  "curveball_grade": {
+    name: "Curveball", aliases: ["CB", "Cb", "Curveball", "Curve"], category: "scouting",
+    short: "20-80 grade for the curveball — depth, shape, and command of the slowest breaking pitch.",
+    long: "Distinct from a slider by velocity (8-12 mph slower than the FB vs. 5-10) and by primarily vertical break. Spike/knuckle/standard grips all map to 'cb' in our data. 60+ curveballs typically pair with a deep FB slot (over-the-top arm action).",
+    related: ["slider_grade", "fastball_grade"],
+  },
+  "changeup_grade": {
+    name: "Changeup", aliases: ["CH", "Ch", "Changeup", "Splitter"], category: "scouting",
+    short: "20-80 grade for the changeup (or splitter) — velo separation, arm-action deception, and command.",
+    long: "Changeups sit 8-12 mph below the FB with sink/fade. Splitters sit 8-12 mph below with hard tumble — different grip, same role in the arsenal. Both ride the 'ch' slot. 60+ changeups define a starter's profile vs. lefties.",
+    related: ["fastball_grade"],
+  },
+  "command_grade": {
+    name: "Command", aliases: ["Cmd", "Command", "Control"], category: "scouting",
+    short: "20-80 grade for the ability to locate pitches WITHIN the strike zone (not just throw strikes).",
+    long: "Control = ability to throw strikes; Command = ability to throw the right strike. Plus command (60+) means consistently spotting the FB on the corner, burying the breaker below the zone, etc. Most prospects sit 45-50; a 60 command grade dramatically lifts the ceiling.",
+    related: ["fastball_grade"],
+  },
+  "cutter_grade": {
+    name: "Cutter", aliases: ["CT", "Ct", "Cutter"], category: "scouting",
+    short: "20-80 grade for the cutter — a hybrid between FB and slider with late horizontal break, ~3-5 mph below the FB.",
+    long: "FG and Pipeline don't always grade the cutter as a distinct slot; Just Baseball does. We carry 'ct' as a canonical key so JB-graded cutters flow into consensus when published. The pitch's role is FB-like (in-zone, two-strike strike-out option) but with arm-side cut.",
+    related: ["fastball_grade", "slider_grade"],
+  },
+  "pitch_sel": {
+    name: "Pitch Selection", aliases: ["Pitch Sel", "PSel", "Plate Disc.", "Plate Discipline"], category: "scouting",
+    short: "20-80 grade for a hitter's swing decisions and pitch recognition — chase / contact rate / zone awareness.",
+    long: "A separate skill from the hit tool (bat-to-ball). 60+ pitch selection means low chase, high z-contact, willingness to take walks. FG publishes this as a standalone grade; Just Baseball calls it 'Plate Disc.'. Feeds the offensive composite alongside Hit / Game Power.",
+    related: ["hit_tool", "bat_ctrl"],
+  },
+  "bat_ctrl": {
+    name: "Bat Control", aliases: ["Bat Ctrl", "BC"], category: "scouting",
+    short: "20-80 grade for barrel control — the ability to manipulate the bat in-zone, foul off tough pitches, square balls up.",
+    long: "Distinct from the broader hit tool. Bat control speaks to swing path quality, bat-head awareness, and 2-strike adjustability — the difference between a plus hitter who barrels everything (60+) and one who hits .280 but chases the barrel (50).",
+    related: ["hit_tool", "pitch_sel"],
+  },
+
+  // ---- Casual-fan MLB rules / jargon ----
+  "rule_5_draft": {
+    name: "Rule 5 Draft", aliases: ["Rule 5", "Rule 5 Draft"], category: "mlb-rules",
+    priority: 10,
+    short: "MLB's December draft of minor leaguers left unprotected by their org. Selecting team must keep the player on its MLB 26-man all season or offer them back.",
+    long: "Held during the Winter Meetings (early December). Any player signed at 18+ with 4 years of pro service, or at 19+ with 5 years, must be added to the 40-man roster by the Nov 20 protection deadline or risk Rule 5 selection. Picks cost $100K. Returning a Rule 5 pick costs the selecting team $50K.",
+    related: ["forty_man_roster", "rule_4_draft"],
+  },
+  "rule_4_draft": {
+    name: "Rule 4 Draft", aliases: ["Rule 4", "MLB Draft", "Amateur Draft"], category: "mlb-rules",
+    priority: 5,
+    short: "The annual July amateur player draft — 20 rounds, picks from US/Canada/Puerto Rico HS and college. Distinct from the Rule 5 (Dec) draft.",
+    long: "Each team has a bonus pool sized to their pick slot values; spending under pool saves nothing, spending over by >5% triggers picks-forfeiture penalties. International players (DSL/Latin America) don't go through Rule 4 — they sign as IFAs.",
+    related: ["draft_pool", "rule_5_draft", "ifa", "signing_bonus"],
+  },
+  "forty_man_roster": {
+    name: "40-man roster", aliases: ["40-man", "40-man roster"], category: "mlb-rules",
+    priority: 12,
+    short: "The 40 players a team can call up to MLB without exposing to other clubs. Drives Rule 5 protection deadlines.",
+    long: "Includes the active 26-man + players on the 10/15-day IL + minor leaguers added to protect from Rule 5. The 60-day IL adds an EXTRA slot temporarily. Teams crunch to fit 40 every November; DFAs and trades shake players loose.",
+    related: ["rule_5_draft", "dfa", "options"],
+  },
+  "options": {
+    name: "Options", aliases: ["Option years", "Optional Assignment", "Optionable"], category: "mlb-rules",
+    priority: 15,
+    short: "Each 40-man player has 3 (sometimes 4) option years allowing free MLB↔AAA shuttle. After they're used, the player must clear waivers to be sent down.",
+    long: "An 'option' is burned the first time a player is sent to the minors in a season AND spends 20+ days there. Burning an option each of three seasons exhausts them. Out-of-options players are higher-stakes 40-man slots — they can't be sent down freely.",
+    related: ["forty_man_roster", "service_time"],
+  },
+  "service_time": {
+    name: "Service time", aliases: ["MLB service time", "Service days"], category: "mlb-rules",
+    priority: 18,
+    short: "MLB days accrued on the active roster or IL. 172 days = 1 'year' of service. 3 yrs → arbitration; 6 yrs → free agency.",
+    long: "The single biggest factor in a player's career economics. Teams routinely 'manipulate' service time by holding rookies in AAA for 2-3 weeks to preserve a year of team control. 'Super Two' is the additional ~22% of 2-yr players who reach arbitration a year early.",
+    related: ["arbitration", "options"],
+  },
+  "arbitration": {
+    name: "Arbitration", aliases: ["Salary arbitration", "Arb"], category: "mlb-rules",
+    priority: 20,
+    short: "Salary process for players with 3-6 yrs of MLB service. Player + team file binding numbers; an arbitrator picks one if they don't settle.",
+    long: "Arbitration cases are heard in February. The arbitrator picks ONE side's number — no splitting. Most cases settle before the hearing. Arb-year salaries scale up year over year (Yr1 ~$1M, Yr3 ~$8M for stars). Super Twos get a 4th arb year.",
+    related: ["service_time"],
+  },
+  "dfa": {
+    name: "DFA", aliases: ["Designated for Assignment", "DFA'd"], category: "mlb-rules",
+    priority: 22,
+    short: "Removal from the 40-man roster. Team has 7 days to trade, waive, or release the player. A common 40-man crunch mechanism.",
+    long: "A DFA freezes the player off the active roster and starts the 7-day clock. Outcomes: outright to AAA (player can refuse if they have 3+ MLB service yrs), waiver claim (any other team grabs them), trade, or release. Most DFA'd players clear waivers and accept the outright.",
+    related: ["forty_man_roster", "options"],
+  },
+  "mlb_debut": {
+    name: "MLB debut", aliases: ["MLB Debut", "Major League debut"], category: "mlb-rules",
+    priority: 25,
+    short: "First MLB appearance. Triggers the rookie-eligibility clock (130 AB / 50 IP / 45 active-roster days) for losing prospect status.",
+    long: "We mark MLB debuts with a ★ chip on the transaction-history table. Pre-debut, a prospect's value is theoretical; post-debut, the FV starts converting to (or away from) real MLB performance. Graduation removes a player from prospect lists.",
+    related: ["graduation_rule"],
+  },
+  "signing_bonus": {
+    name: "Signing bonus", aliases: ["Signing bonus", "Draft bonus", "IFA bonus"], category: "mlb-rules",
+    priority: 28,
+    short: "Lump-sum payment at signing for amateur players. Draftees pull from the team's draft pool; IFAs from the IFA pool.",
+    long: "Draft slot values are published each year by MLB. Teams can spend up to 5% over pool with progressive tax penalties; >5% costs future first-round picks. IFA bonuses are capped at the assigned pool size (~$5.95M base + competitive-balance bonuses) — no overage allowed since 2017.",
+    related: ["draft_pool", "rule_4_draft", "ifa"],
+  },
+  "il_10_15_60": {
+    name: "IL types (10/15/60-day)", aliases: ["10-day IL", "15-day IL", "60-day IL", "IL types"], category: "mlb-rules",
+    priority: 30,
+    short: "Three IL durations. 10-day for position players, 15-day for pitchers (post-2022), 60-day frees the 40-man slot.",
+    long: "A team can transfer between IL types — a 15-day IL stint can convert to 60-day when the player misses more time. The 60-day IL removes the player from the 40-man count (extra roster flexibility). Concussion IL is a separate 7-day version.",
+    related: ["on_il", "forty_man_roster"],
+  },
+  "two_way_player": {
+    name: "Two-way player", aliases: ["Two-way", "TWP", "Two way"], category: "mlb-rules",
+    priority: 35,
+    short: "A player who appears as both pitcher and position player. Must clear 20 IP + 20 PA across 20+ games to officially qualify.",
+    long: "Ohtani is the canonical example. The site detects two-way profiles when a prospect has both hitter (hit/game_pwr/...) AND pitcher (fb/sl/...) canonical tool grades — both Tools cards then render. Reggie Crawford and a handful of recent draftees fit the pattern.",
+    related: ["hit_tool", "fastball_grade"],
+  },
+  "present_vs_future_grades": {
+    name: "Present vs Future grades", aliases: ["PV/FV", "Present grade", "Future grade"], category: "mlb-rules",
+    priority: 40,
+    short: "Scouting grades come in pairs: present grade (what they show today) and future grade (projected peak). FG ships them as 'Hit 30/55' = present 30, future 55.",
+    long: "We always store the FUTURE grade as the canonical tool number (the projection is the actionable signal). Present grades ride alongside in _extras['present'] for sources that publish both. The gap between present and future encodes risk / development runway.",
+    related: ["fv"],
+  },
+  "complex_league": {
+    name: "Complex league", aliases: ["CPX", "Complex", "ACL", "FCL", "AZL"], category: "mlb-rules",
+    priority: 45,
+    short: "Rookie-level stateside ball played at team training complexes (Arizona or Florida). Mostly recent draftees + DSL graduates.",
+    long: "Two leagues: ACL (Arizona Complex League, ex-AZL) and FCL (Florida Complex League, ex-GCL). Games at team backfields, no fans. Players are 17-20. The 2021 MiLB reorg consolidated the older rookie-level leagues into these two.",
+    related: ["dsl"],
+  },
+  "dsl": {
+    name: "DSL", aliases: ["Dominican Summer League"], category: "mlb-rules",
+    priority: 48,
+    short: "Dominican Summer League — the entry point for international amateur signees. Players are 16-19, mostly IFAs.",
+    long: "Affiliated rookie ball played in the Dominican Republic. Each MLB org runs at least one DSL team; many run two (DSL Yankees / DSL Yankees Bombers). DSL → complex league (CPX) → A-ball is the typical international development ladder.",
+    related: ["complex_league", "ifa"],
+  },
+
+  // ---- Indicators / badges / visual chips ----
+  // Each entry's visual_html renders an inline example of the actual
+  // UI element so a reader can see exactly what to look for on the site.
+  "stock_arrow": {
+    name: "Stock arrow", aliases: ["▲", "▼", "Stock direction"], category: "indicators",
+    priority: 5,
+    short: "Green ▲ = consensus FV rose since the last update; red ▼ = fell. Magnitude is the FV-delta.",
+    long: "Drives the 'Up' / 'Down' filter on the Active list. Stock is computed as 'delta since the most recent prior update' — a player with only one update reads as 'flat'. Movements ≥ 1.5 grade-points show in the row's meta line.",
+    related: ["stock", "fv"],
+    visual_html: '<span style="color:var(--up);font-weight:600;">▲ +5.0</span><span style="color:var(--text-tertiary);">vs</span><span style="color:var(--down);font-weight:600;">▼ −3.5</span>',
+  },
+  "fv_badge": {
+    name: "FV badge", aliases: ["FV chip", "FV pill"], category: "indicators",
+    priority: 10,
+    short: "Color-coded chip showing the player's consensus Future Value. Red = elite (70+), orange = high (60-65), yellow = mid (50-55), grey = lower (40-45).",
+    related: ["fv", "consensus_fv"],
+    visual_html: '<span class="fv-badge fv-70">70</span><span class="fv-badge fv-60">60</span><span class="fv-badge fv-50">50</span><span class="fv-badge fv-45">45</span>',
+  },
+  "tools_plus_pill": {
+    name: "Tools+ pill", aliases: ["T+ pill", "Tools+ chip"], category: "indicators",
+    priority: 12,
+    short: "Pill on the row showing Tools+ index. Green ≥110, red ≤90, neutral 91-109. 100 = cohort mean.",
+    related: ["tools_plus"],
+    visual_html: '<span class="tool-pill is-pos">Tools+ 118</span><span class="tool-pill is-neutral">Tools+ 102</span><span class="tool-pill is-neg">Tools+ 88</span>',
+  },
+  "rps_plus_pill": {
+    name: "RPS+ pill", aliases: ["RPS+ chip"], category: "indicators",
+    priority: 14,
+    short: "Pill showing age-relative level performance. 100 = mean of same-age prospects at the same level.",
+    related: ["rps_plus"],
+    visual_html: '<span class="rps-plus-pill is-pos">RPS+ 125</span><span class="rps-plus-pill is-neutral">RPS+ 100</span><span class="rps-plus-pill is-neg">RPS+ 78</span>',
+  },
+  "wide_spread_mark": {
+    name: "Wide-spread mark (W)", aliases: ["W mark", "Wide spread"], category: "indicators",
+    priority: 18,
+    short: "Small 'W' on the FV badge — at least two FV-publishing sources disagree by ≥10 grade-points on the latest update.",
+    related: ["wide_spread", "fv"],
+    visual_html: '<span class="fv-badge fv-60">60<sup style="font-size:8px;margin-left:1px;color:var(--neon-amber);font-weight:700;">W</sup></span><span style="font-size:11px;color:var(--text-tertiary);">→ sources disagree by 10+ grade points</span>',
+  },
+  "single_source_mark": {
+    name: "Single-source mark (1)", aliases: ["1 mark", "Single source"], category: "indicators",
+    priority: 20,
+    short: "Small '1' on the FV badge — only one source has ever published an explicit FV for this player. Consensus is Bayesian-shrunk.",
+    related: ["consensus_fv", "shrinkage"],
+    visual_html: '<span class="fv-badge fv-55">55<sup style="font-size:8px;margin-left:1px;color:var(--text-tertiary);font-weight:700;">1</sup></span><span style="font-size:11px;color:var(--text-tertiary);">→ only one source has graded this player</span>',
+  },
+  "il_chip": {
+    name: "IL chip", aliases: ["IL tag"], category: "indicators",
+    priority: 22,
+    short: "Amber chip when a player is currently on the IL. Tooltip shows IL type + days elapsed + transaction description.",
+    related: ["on_il", "il_10_15_60"],
+    visual_html: '<span class="il-tag" style="display:inline-block;padding:2px 6px;border:1px solid var(--neon-amber);color:var(--neon-amber);font-size:10px;letter-spacing:0.04em;border-radius:2px;font-family:var(--font-mono);">10-day IL · 14d</span>',
+  },
+  "post_tj_chip": {
+    name: "Post-TJ chip", aliases: ["TJ chip"], category: "indicators",
+    priority: 24,
+    short: "Violet chip when the player is within ~18 months of Tommy John surgery. ETA pads automatically for the recovery window.",
     related: ["post_tj"],
+    visual_html: '<span style="display:inline-block;padding:2px 6px;border:1px solid var(--neon-violet);color:var(--neon-violet);font-size:10px;letter-spacing:0.04em;border-radius:2px;font-family:var(--font-mono);font-weight:700;">Post-TJ · 2024-09-03</span>',
+  },
+  "latest_pill": {
+    name: "LATEST pill", aliases: ["LATEST source"], category: "indicators",
+    priority: 30,
+    short: "Cyan pill in the 'Source-by-source tool history' dropdown marking the row that feeds Tools+. One per source.",
+    long: "Tools+ uses each source's MOST RECENT publication only — forward-fill picks the latest per source. Older rows are dimmed and don't count toward the consensus math.",
+    related: ["tools_plus"],
+    visual_html: '<span style="font-size:11px;color:var(--text-primary);font-family:var(--font-mono);">2025-07-31</span><span style="display:inline-block;padding:1px 5px;font-size:9px;letter-spacing:0.04em;background:var(--neon-cyan);color:var(--bg-primary);border-radius:2px;font-weight:700;">LATEST</span><span style="font-size:11px;color:var(--text-tertiary);">FanGraphs 2025 Updated</span>',
+  },
+  "stale_pill": {
+    name: "STALE pill", aliases: ["STALE source"], category: "indicators",
+    priority: 32,
+    short: "Amber pill on the per-source history header when a source's latest publication is >365 days old.",
+    long: "Stale sources still appear in the consensus (their most recent grade is still valid until refreshed) but the pill signals that the projection is aging. Sources go stale when an outlet stops covering a prospect.",
+    visual_html: '<span style="font-size:12px;color:var(--text-secondary);font-weight:600;">MLB Pipeline</span><span style="font-size:9px;color:var(--neon-amber);font-family:var(--font-mono);">STALE</span><span style="font-size:11px;color:var(--text-tertiary);">(last published 484 days ago)</span>',
+  },
+  "green_flag": {
+    name: "Green flag", aliases: ["Green flag", "Plus signal"], category: "indicators",
+    priority: 36,
+    short: "Above-cohort signal on a tool or rate stat — e.g., 60+ hit tool, top-decile K%.",
+    long: "Green flags appear in the per-player flag strip (3 visible, more on hover) and in the dedicated Flags section on the detail page. They're computed from a mix of tool grades, rate stats vs. level norms, and composite indices.",
+    related: ["red_flag"],
+  },
+  "red_flag": {
+    name: "Red flag", aliases: ["Red flag", "Concern signal"], category: "indicators",
+    priority: 38,
+    short: "Below-cohort signal flagged for concern — e.g., 30 hit tool, bottom-decile contact, chronic injury history.",
+    related: ["green_flag"],
+  },
+  "fg_only_badge": {
+    name: "FG superscript", aliases: ["FG-only grade", "Single-source grade"], category: "indicators",
+    priority: 42,
+    short: "Small violet 'FG' superscript next to a tool name — that grade is published by FanGraphs only (no cross-source consensus).",
+  },
+  "heat_badge": {
+    name: "Heat badge", aliases: ["Heat", "Trending hot"], category: "indicators",
+    priority: 50,
+    short: "Spotlight badge for prospects with top-decile recent stock movement — rising fast across multiple sources.",
+  },
+  "surprise_badge": {
+    name: "Surprise badge", aliases: ["Surprise"], category: "indicators",
+    priority: 52,
+    short: "Spotlight badge for out-of-nowhere rises — sources just started covering a prospect not previously ranked.",
+  },
+  "arc_badge": {
+    name: "Arc badge", aliases: ["Arc"], category: "indicators",
+    priority: 54,
+    short: "Spotlight badge for sustained multi-update FV movement in one direction — the steady riser/decliner pattern.",
   },
 };
 
@@ -8498,6 +8938,7 @@ function activeFilterCount() {
   if (state.sort          !== "fv")      n++;
   if (state.levelFilter   !== "all")     n++;
   if (state.posFilter     !== "all")     n++;
+  if (state.toolFilterKey && state.toolFilterKey !== "off" && state.toolFilterMin > 0) n++;
   return n;
 }
 
@@ -10408,88 +10849,36 @@ function makeArsenalRadar(pa) {
   </svg>`;
 }
 
-// Strike-zone heatmap — 3×3 inner grid (numbered 1-9 per the Savant
-// convention) plus 4 "chase" wedges around the edges (10-13). Filled
-// from `pa.zone_heat` (a 13-element array of 0-1 heat values, with
-// indices 0-8 = inner zones, 9-12 = chase). Empty/missing data renders
-// a faint grid with a "no location data" caption so the visualization
-// still communicates structure to the reader.
-function makeStrikeZoneHeatmap(pa) {
-  if (!pa) return "";
-  const heat = Array.isArray(pa.zone_heat) ? pa.zone_heat : null;
-  // Cell color helper — green-to-red gradient on a 0-1 input. Cool
-  // (low heat) uses the up/green token; hot (high) uses the down/red.
-  // Returns a faded gray when heat is missing.
-  const cellFill = (v) => {
-    if (v == null || !isFinite(v)) return "var(--bg-tertiary)";
-    const t = Math.max(0, Math.min(1, Number(v)));
-    if (t < 0.05) return "var(--bg-tertiary)";
-    // Three-stop gradient: green (cool) → amber (warm) → red (hot).
-    if (t < 0.5) {
-      const lerp = t / 0.5;
-      // Green → amber. RGB lerp on neon-green→neon-amber.
-      const r = Math.round(31 + (201 - 31) * lerp);
-      const g = Math.round(122 + (162 - 122) * lerp);
-      const b = Math.round(58 + (39 - 58) * lerp);
-      return `rgba(${r},${g},${b},${0.18 + 0.42 * lerp})`;
-    } else {
-      const lerp = (t - 0.5) / 0.5;
-      const r = Math.round(201 + (185 - 201) * lerp);
-      const g = Math.round(162 + (28 - 162) * lerp);
-      const b = Math.round(39 + (28 - 39) * lerp);
-      return `rgba(${r},${g},${b},${0.55 + 0.35 * lerp})`;
-    }
-  };
-  // 3×3 inner zone grid laid out top-to-bottom, left-to-right (mirrors
-  // the catcher's view standard in Savant).
-  const cells = [];
-  for (let i = 0; i < 9; i++) {
-    const x = 30 + (i % 3) * 30;
-    const y = 30 + Math.floor(i / 3) * 30;
-    const v = heat ? heat[i] : null;
-    const fill = cellFill(v);
-    const tip = v != null ? `Zone ${i + 1}: ${Math.round(v * 100)}%` : `Zone ${i + 1}: no data`;
-    cells.push(`<rect x="${x}" y="${y}" width="30" height="30" fill="${fill}" stroke="var(--border)" stroke-width="0.8"><title>${tip}</title></rect>`);
-  }
-  // Chase wedges around the edges (indices 9-12 = up/down/left/right).
-  // Drawn as thin trapezoidal regions outside the 3×3.
-  const chaseLabels = ["above zone", "below zone", "inside zone", "outside zone"];
-  const chasePaths = [
-    `M30,30 L120,30 L100,10 L50,10 Z`,   // top
-    `M30,120 L120,120 L100,140 L50,140 Z`, // bottom
-    `M30,30 L30,120 L10,100 L10,50 Z`,    // left
-    `M120,30 L120,120 L140,100 L140,50 Z`, // right
-  ];
-  for (let i = 0; i < 4; i++) {
-    const v = heat ? heat[9 + i] : null;
-    const fill = cellFill(v);
-    const tip = v != null
-      ? `Chase ${chaseLabels[i]}: ${Math.round(v * 100)}%`
-      : `Chase ${chaseLabels[i]}: no data`;
-    cells.push(`<path d="${chasePaths[i]}" fill="${fill}" stroke="var(--border-light)" stroke-width="0.6"><title>${tip}</title></path>`);
-  }
-  const note = heat
-    ? ""
-    : `<div style="font-size:9.5px;color:var(--text-tertiary);margin-top:4px;text-align:center;font-style:italic;">No pitch-location data on file yet</div>`;
-  return `<div style="flex-shrink:0;text-align:center;">
-    <div style="font-family:var(--font-sans);font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px;">Strike-zone heat</div>
-    <svg viewBox="0 0 150 150" width="150" height="150" role="img" aria-label="Strike zone heatmap" style="display:block;">
-      <!-- Subtle home-plate outline behind the cells. -->
-      <rect x="10" y="10" width="130" height="130" fill="transparent" stroke="var(--border-light)" stroke-width="0.6"/>
-      ${cells.join("")}
-      <!-- Inner zone-1 to zone-9 labels (small, dim). -->
-      ${Array.from({length: 9}, (_, i) => {
-        const x = 45 + (i % 3) * 30;
-        const y = 50 + Math.floor(i / 3) * 30;
-        return `<text x="${x}" y="${y}" text-anchor="middle" font-family="var(--font-mono)" font-size="9" fill="var(--text-tertiary)" opacity="0.45">${i + 1}</text>`;
-      }).join("")}
-    </svg>
-    ${note}
-  </div>`;
-}
+// (Strike-zone heatmap removed — pitch_arsenal.zone_heat was unreliable
+// and the visualization never communicated location signal cleanly.
+// Pitch arsenal block still shows the per-pitch table + radar.)
 
-function makeArsenalBlock(pa) {
+function makeArsenalBlock(pa, p) {
+  // FanGraphs arsenal profile line (Sits / Tops / FB Type / RPM FB /
+  // RPM Break) — pulled from the latest FG snapshot's _extras. Renders
+  // ABOVE the empty-state and ABOVE the pitch table so MiLB-only
+  // pitchers with no Statcast data still get FG's scouting context.
+  let fgArsenalLine = "";
+  if (p) {
+    const ex = _getFgExtras(p);
+    if (ex && (ex.sits || ex.tops || ex.fb_type || ex.rpm_fb || ex.rpm_break)) {
+      const parts = [];
+      if (ex.sits) parts.push(`<span style="color:var(--text-primary);font-weight:600;">${escapeHtml(ex.sits)} sit</span>`);
+      if (ex.tops) parts.push(`<span style="color:var(--text-secondary);">tops ${escapeHtml(ex.tops)}</span>`);
+      if (ex.fb_type) parts.push(`<span style="color:var(--text-secondary);">${escapeHtml(ex.fb_type)} FB</span>`);
+      if (ex.rpm_fb) parts.push(`<span style="color:var(--text-tertiary);">${escapeHtml(String(ex.rpm_fb))} RPM (FB)</span>`);
+      if (ex.rpm_break) parts.push(`<span style="color:var(--text-tertiary);">${escapeHtml(String(ex.rpm_break))} RPM (Break)</span>`);
+      fgArsenalLine = `<div style="font-family:var(--font-sans);font-size:12px;line-height:1.6;margin-bottom:10px;padding:6px 10px;border-left:3px solid var(--neon-violet);background:rgba(190,120,255,0.05);border-radius:0 var(--radius-sm) var(--radius-sm) 0;">
+        <span style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;margin-right:8px;">FG arsenal</span>
+        ${parts.join(' · ')}
+      </div>`;
+    }
+  }
   if (!pa || !(pa.pitches || []).length) {
+    // Even without Statcast arsenal data, surface the FG line if present.
+    if (fgArsenalLine) {
+      return fgArsenalLine + `<div style="color:var(--text-tertiary);font-size:12px;line-height:1.5;">No Statcast pitch-tracking data on file. MLB Stats API only carries pitch arsenal for MLB games; MiLB-only pitchers don't yet have this exposed publicly.</div>`;
+    }
     return `<div style="color:var(--text-tertiary);font-size:12px;line-height:1.5;">No pitch-tracking data on file. MLB Stats API only carries pitch arsenal for MLB games; MiLB-only pitchers don't yet have this exposed publicly.</div>`;
   }
   // Sort pitches descending by usage for clear primary-vs-secondary read.
@@ -10516,13 +10905,11 @@ function makeArsenalBlock(pa) {
   // screens — pure visual at-a-glance summary of pitch mix. Collapses
   // below the table on narrow viewports via flex-wrap.
   const radar = makeArsenalRadar(pa);
-  const zone = makeStrikeZoneHeatmap(pa);
   const tableHtml = `<table class="detail-table"><thead><tr><th>Pitch</th><th title="Average velocity in mph">Velo (mph)</th><th>Usage</th></tr></thead><tbody>${rows}</tbody></table>`;
-  if (!radar && !zone) return fb + tableHtml;
-  return fb + `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+  if (!radar) return fgArsenalLine + fb + tableHtml;
+  return fgArsenalLine + fb + `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
     <div style="flex:1;min-width:200px;">${tableHtml}</div>
-    ${radar || ""}
-    ${zone || ""}
+    ${radar}
   </div>`;
 }
 
@@ -10970,18 +11357,18 @@ function renderPlayerDetail(key) {
   } else if (acqYear) {
     acqSub = String(acqYear);
   }
-  const hpStints = hp.il_stints_24mo || 0;
-  const hpDays = hp.il_days_24mo || 0;
-  // Health profile headline — describes the 24-month injury HISTORY,
+  const hpStints = hp.il_stints_12mo || 0;
+  const hpDays = hp.il_days_12mo || 0;
+  // Health profile headline — describes the 12-month injury HISTORY,
   // not the player's current IL status. "Freq. Injured" is the chronic
-  // flag (3+ stints OR 200+ days in 24mo); "Recent Injury" is the
+  // flag (3+ stints OR 200+ days in 12mo); "Recent Injury" is the
   // medium-watch state (1-2 stints OR 30+ days). The currently-on-IL
   // state is surfaced separately via the IL chip elsewhere on the row.
   const healthHeadline = hp.is_post_tj ? "Post-TJ"
                        : (hpStints >= 3 || hpDays >= 200) ? "Freq. Injured"
                        : (hpStints >= 1 || hpDays >= 30) ? "Recent Injury"
                        : "Clean";
-  const healthSub = (hpStints || hpDays) ? `${hpStints} stints · ${hpDays}d / 24mo` : "no IL last 24mo";
+  const healthSub = (hpStints || hpDays) ? `${hpStints} stints · ${hpDays}d / 12mo` : "no IL last 12mo";
   const rp = getRpsPlus(p);
   // Performance tile — RPS+ for MiLB, but for MLB-level players we
   // swap to wRC+ (hitters) or xFIP + FIP- (pitchers) since RPS+ is a
@@ -11051,7 +11438,7 @@ function renderPlayerDetail(key) {
     ["ETA",          eta.year != null ? String(eta.year) : "—", eta.confidence ? `${eta.confidence} confidence` : ""],
     wagTile,
     acqLabel ? ["Acquired via", acqLabel, acqSub] : null,
-    ["Health (24mo)", healthHeadline, healthSub],
+    ["Health (12mo)", healthHeadline, healthSub],
   ].filter(Boolean);
   const tilesHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;">${tiles.map(([k, v, sub]) => `
     <div class="stat-tile">
@@ -11490,8 +11877,24 @@ function renderPlayerDetail(key) {
       if (raw == null && plus == null) return "";
       const titleAttr = tip ? ` title="${escapeHtml(tip)}"` : "";
       const cls = headline ? "tools-composite-chip is-headline" : "tools-composite-chip";
+      // Composite label → glossary slug. Wraps known composite names
+      // (Overall, Stuff grade+, STF+, etc.) so the click opens the
+      // glossary popover with the matching definition.
+      const COMPOSITE_TO_GLOSSARY = {
+        "Overall":         "tools_plus",
+        "Offensive":       "tools_plus",
+        "Defensive":       "tools_plus",
+        "Stuff grade+":    "stuff_grade_plus",
+        "Command":         "command_grade",
+        "STF+":            "stf_plus",
+        "Tools+":          "tools_plus",
+      };
+      const slug = COMPOSITE_TO_GLOSSARY[label];
+      const labelHtml = slug
+        ? `<span class="g-term" data-term="${escapeHtml(slug)}">${escapeHtml(label)}</span>`
+        : escapeHtml(label);
       return `<div class="${cls}"${titleAttr}>
-        <div class="tools-composite-chip-label">${escapeHtml(label)}</div>
+        <div class="tools-composite-chip-label">${labelHtml}</div>
         <div class="tools-composite-chip-value">${badgeFor(raw)} ${plusPill(plus)}</div>
       </div>`;
     };
@@ -11553,6 +11956,16 @@ function renderPlayerDetail(key) {
         ${badgeFor(v)}
       </div>`;
     };
+    // Canonical tool key → glossary slug. Wrapping the tool label in a
+    // .g-term span makes it click-to-open the glossary popover with the
+    // matching definition — one-click definitions for every grade name.
+    const TOOL_TO_GLOSSARY = {
+      hit: "hit_tool", game_pwr: "game_power", raw_pwr: "raw_power",
+      speed: "speed_tool", field: "field_tool", throw: "throw_tool",
+      pitch_sel: "pitch_sel", bat_ctrl: "bat_ctrl",
+      fb: "fastball_grade", sl: "slider_grade", cb: "curveball_grade",
+      ch: "changeup_grade", cmd: "command_grade", ct: "cutter_grade",
+    };
     const gradeCell = (key, label) => {
       const v = (t.grades || {})[key];
       const spread = (t.spread || {})[key];
@@ -11566,8 +11979,12 @@ function renderPlayerDetail(key) {
       }
       const dualMark = key === "speed" ? dualMarkerHTML : "";
       const tip = _perSourceTooltip(key, v);
+      const slug = TOOL_TO_GLOSSARY[key];
+      const labelHtml = slug
+        ? `<span class="g-term" data-term="${escapeHtml(slug)}">${escapeHtml(label)}</span>`
+        : escapeHtml(label);
       return `<div class="tools-grade-cell" title="${escapeHtml(tip)}">
-        <span class="tools-grade-name">${escapeHtml(label)}${dualMark}${spreadTag}</span>
+        <span class="tools-grade-name">${labelHtml}${dualMark}${spreadTag}</span>
         ${badgeFor(v)}
       </div>`;
     };
@@ -11632,6 +12049,33 @@ function renderPlayerDetail(key) {
       const fgExtraCells = fgGradeCell("arm", "Arm");
       const allCells = cells + fgExtraCells;
       groupBlocks = allCells ? `<div class="tools-grade-grid">${allCells}</div>` : "";
+    }
+    // Development row — FG's 1-5 dev grades (Frame / Athl / Perf).
+    // These live in _extras (1-5 scale, NOT 20-80) so they get their
+    // own row beneath the canonical grade grid rather than mixing
+    // scales. Renders for both hitters and pitchers when published.
+    {
+      const ex = _getFgExtras(p);
+      if (ex && (ex.frame != null || ex.athl != null || ex.perf != null)) {
+        const fg15Cell = (key, label) => {
+          const v = ex[key];
+          if (v == null || v === "") return "";
+          const desc = _fgGradeLabel(v);
+          return `<div class="tools-grade-cell" title="FanGraphs ${label} grade · 1-5 scale${desc ? ' · ' + desc : ''}">
+            <span class="tools-grade-name">${escapeHtml(label)}<sup style="font-size:8px;letter-spacing:0.04em;color:var(--neon-violet);margin-left:2px;" title="FanGraphs-only developmental grade (1-5 scale)">FG</sup></span>
+            <span style="font-family:var(--font-mono);font-weight:600;color:var(--text-primary);">${v}/5</span>
+          </div>`;
+        };
+        const devCells = [
+          fg15Cell("frame", "Frame"),
+          fg15Cell("athl",  "Athl"),
+          fg15Cell("perf",  "Perf"),
+        ].filter(Boolean).join("");
+        if (devCells) {
+          groupBlocks += `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;margin:10px 0 4px;">Development (FanGraphs · 1-5 scale)</div>
+            <div class="tools-grade-grid">${devCells}</div>`;
+        }
+      }
     }
     const sources = (t.publishing_sources || [])
       .map(s => SOURCE_LABELS[s] || s)
@@ -11824,7 +12268,7 @@ function renderPlayerDetail(key) {
     : "";
 
   const arsenalSection = isPitcher
-    ? `<div class="detail-title">Pitch arsenal</div>${makeArsenalBlock(p.pitch_arsenal)}`
+    ? `<div class="detail-title">Pitch arsenal</div>${makeArsenalBlock(p.pitch_arsenal, p)}`
     : "";
 
   // Career projection arc — graduate-only. Pairs the existing WAG bar
@@ -11901,40 +12345,32 @@ function renderPlayerDetail(key) {
           <span class="t-stat-value" style="font-size:13px;${hint ? `color:${hint};` : ""}">${escapeHtml(String(value))}</span>
         </div>`;
 
-    // PHYSICAL & DEVELOPMENTAL — leads with Ht/Wt/BMI when FG publishes
-    // them, then handedness, then FG's 1-5 developmental grades
-    // (Frame, Athl, Perf) with descriptors, then position-agnostic
-    // mechanics (Levers, Arm, Delivery).
+    // PHYSICAL — shrunken after the FG redistribution: Ht/Wt/BMI/B/T plus
+    // position-agnostic mechanics (Levers, Arm, Delivery). The 1-5 dev
+    // grades (Frame / Athl / Perf) now live in the Tools card alongside
+    // other scouting grades.
     const physical = _getPhysicalProfile(p);
     const hand = _getHandedness(p);
-    const _hasPhysicalDescriptors = _hasAny("frame", "athl", "levers", "arm", "perf", "delivery");
+    const _hasPhysicalDescriptors = _hasAny("levers", "arm", "delivery");
     const _hasHandedness = !!(hand.bats || hand.throws);
-    const _fg15 = (n) => {
-      if (n == null || n === "") return null;
-      const label = _fgGradeLabel(n);
-      return label ? `${n}/5 · ${label}` : `${n}/5`;
-    };
     if (physical.height_in || physical.weight_lb || _hasPhysicalDescriptors || _hasHandedness) {
       const tiles = [
         _tile("Ht",  physical.height_display || (physical.height_in ? `${Math.floor(physical.height_in/12)}' ${physical.height_in%12}"` : null)),
         _tile("Wt",  physical.weight_lb != null ? `${physical.weight_lb} lb` : null),
         _tile("BMI", physical.bmi != null ? physical.bmi.toFixed(1) : null),
         _tile("B/T", (hand.bats || hand.throws) ? `${hand.bats || "—"}/${hand.throws || "—"}` : null),
-        _tile("Frame", _fg15(ex.frame)),
-        _tile("Athl",  _fg15(ex.athl)),
-        _tile("Perf",  _fg15(ex.perf)),
         _tile("Levers", _fmt(ex.levers)),
         _tile("Arm",   _fmt(ex.arm)),
         _tile("Delivery", _fmt(ex.delivery)),
       ].filter(Boolean).join("");
       rows.push(`<div style="margin-bottom:8px;">
-        <div class="t-section-title" style="margin-bottom:4px;">Physical &amp; Developmental</div>
+        <div class="t-section-title" style="margin-bottom:4px;">Physical</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px 12px;">${tiles}</div>
       </div>`);
     }
 
-    // HITTER — pitch_sel and bat_ctrl now live in the canonical Tools
-    // card; this block carries the remaining FG-only hitter descriptors.
+    // HITTER — pitch_sel and bat_ctrl live in the canonical Tools card;
+    // this block carries the remaining FG-only hitter descriptors.
     if (_hasAny("contact_style", "versa", "hard_hit_pct", "avg_ev", "max_ev")) {
       const tiles = [
         _tile("Con Style", _fmt(ex.contact_style)),
@@ -11951,63 +12387,39 @@ function renderPlayerDetail(key) {
       }
     }
 
-    // PITCHER
-    if (_hasAny("fb_type", "sits", "tops", "rpm_fb", "rpm_break", "tj_date")) {
-      const tjColor = ex.tj_date ? "var(--accent-tj)" : null;
-      const tiles = [
-        _tile("FB Type",   _fmt(ex.fb_type)),
-        _tile("Sits",      _fmt(ex.sits)),
-        _tile("Tops",      _fmt(ex.tops)),
-        _tile("RPM FB",    _fmt(ex.rpm_fb)),
-        _tile("RPM Break", _fmt(ex.rpm_break)),
-        _tile("TJ Date",   _fmt(ex.tj_date), tjColor),
-      ].filter(Boolean).join("");
-      if (tiles) {
-        rows.push(`<div style="margin-bottom:8px;">
-          <div class="t-section-title" style="margin-bottom:4px;">Pitcher</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px 12px;">${tiles}</div>
-        </div>`);
-      }
-    }
+    // PITCHER + OUTLOOK + REPORT blocks removed — fb_type / sits / tops /
+    // rpm_fb / rpm_break now ride in the Pitch Arsenal card; tj_date in
+    // the Health card; the long-form report has its own top-level
+    // collapsible (fgReportSection); risk / trend / eta / sign_yr / bonus /
+    // signed_from were duplicates of the ETA and Acquisition cards.
 
-    // OUTLOOK
-    if (_hasAny("risk", "trend", "eta_year", "sign_year", "sign_market", "sign_org", "bonus", "signed_from")) {
-      const _bonus = ex.bonus != null
-        ? (ex.bonus >= 1_000_000 ? `$${(ex.bonus/1e6).toFixed(2)}M` : `$${(ex.bonus/1e3).toFixed(0)}K`)
-        : "—";
-      const tiles = [
-        _tile("Risk",       _fmt(ex.risk)),
-        _tile("Trend",      _fmt(ex.trend)),
-        _tile("ETA",        _fmt(ex.eta_year)),
-        _tile("Sign Yr",    _fmt(ex.sign_year)),
-        _tile("Bonus",      _bonus),
-        _tile("Signed From", _fmt(ex.signed_from)),
-      ].filter(Boolean).join("");
-      if (tiles) {
-        rows.push(`<div style="margin-bottom:8px;">
-          <div class="t-section-title" style="margin-bottom:4px;">Outlook</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px 12px;">${tiles}</div>
-        </div>`);
-      }
-    }
-
-    // REPORT (multi-paragraph) — collapsible
-    let reportHtml = "";
-    if (ex.report) {
-      reportHtml = `<details style="margin-top:8px;border-top:1px solid var(--border-light);padding-top:8px;">
-        <summary class="t-section-title" style="cursor:pointer;">Full FanGraphs scouting report</summary>
-        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-top:8px;white-space:pre-wrap;">${escapeHtml(ex.report)}</div>
-      </details>`;
-    }
-
-    if (!rows.length && !reportHtml) return "";
+    if (!rows.length) return "";
     const labelPretty = fgPrettifyInterval("fangraphs", latestLabel) || "FanGraphs";
     return `<div class="detail-title">FanGraphs scout notes
         <span class="detail-title-sub">${escapeHtml(labelPretty)}${latestDate ? ` · ${latestDate}` : ""}</span>
       </div>
       <div class="detail-card" style="padding:12px 14px;">
         ${rows.join("")}
-        ${reportHtml}
+      </div>`;
+  })();
+
+  // Standalone FanGraphs scouting report card — promoted out of the FG
+  // scout-notes block. The long-form prose is the most valuable narrative
+  // on the page, so it lives in its own collapsible card at the bottom
+  // of the detail layout where it doesn't compete with the dense tiles.
+  const fgReportSection = (() => {
+    const ex = _getFgExtras(p);
+    if (!ex || !ex.report) return "";
+    return `<div class="detail-title">FanGraphs scouting report
+        <span class="detail-title-sub">long-form prose · most recent FG publication</span>
+      </div>
+      <div class="detail-card" style="padding:14px 16px;">
+        <details open>
+          <summary style="cursor:pointer;font-size:12px;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;padding:2px 0 8px;">
+            Show / hide
+          </summary>
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap;padding-top:6px;">${escapeHtml(ex.report)}</div>
+        </details>
       </div>`;
   })();
 
@@ -12102,15 +12514,15 @@ function renderPlayerDetail(key) {
       </div>`;
   })();
 
-  // Health profile sidebar card — surfaces the 24-month IL aggregate
+  // Health profile sidebar card — surfaces the 12-month IL aggregate
   // even when the player isn't currently on IL. Three numbers + the
   // Tommy-John state at a glance: stint count, total IL days, and the
   // surgery date (when applicable). Lets a scouting reader assess
   // durability risk without scrolling to the Injury history table.
   const healthSection = (() => {
     const hp = p.health_profile || {};
-    const stints = hp.il_stints_24mo || 0;
-    const days = hp.il_days_24mo || 0;
+    const stints = hp.il_stints_12mo || 0;
+    const days = hp.il_days_12mo || 0;
     const history = ((p.roster_status || {}).injury_history) || [];
     const hasAnySignal = stints > 0 || days > 0 || hp.is_post_tj || history.length > 0;
     if (!hasAnySignal) return "";
@@ -12153,7 +12565,7 @@ function renderPlayerDetail(key) {
           </details>`;
         })()
       : "";
-    return `<div class="detail-title">Health profile <span class="detail-title-sub">trailing 24 months</span></div>
+    return `<div class="detail-title">Health profile <span class="detail-title-sub">trailing 12 months</span></div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:var(--radius-sm);">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div>
@@ -12673,6 +13085,7 @@ function renderPlayerDetail(key) {
     ["Arsenal", "detail-arsenal",   !!arsenalSection],
     ["Projection", "detail-projection", !!projectionArcSection],
     ["FG scout",   "detail-fgscout",    !!fgScoutNotesSection],
+    ["FG report",  "detail-fgreport",   !!fgReportSection],
   ].filter(([, , show]) => show);
   const jumpLinkStrip = jumpLinkPairs.length >= 3
     ? `<nav class="detail-jumplinks" aria-label="Jump to section">${jumpLinkPairs.map(([label, id]) =>
@@ -12714,6 +13127,10 @@ function renderPlayerDetail(key) {
     wrap("detail-projection", projectionArcSection),
     wrap("detail-fgscout",    fgScoutNotesSection),
     contractDetailsSection,
+    // Long-form FG scouting report — promoted out of the FG scout-notes
+    // card so the narrative gets its own visual real estate at the
+    // bottom of the page (per UI cleanup plan, Step 6).
+    wrap("detail-fgreport",  fgReportSection),
   ].filter(Boolean).join("");
   const wideGrid = (wideCards || moreDetailsAccordion)
     ? `<div class="detail-wide-grid">
@@ -12830,7 +13247,7 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
       bits.push(`<span class="pdc-health h-il" title="${escapeHtml(il.description || "On IL")}">!</span>`);
     } else if (hp.is_post_tj) {
       bits.push(`<span class="pdc-health h-tj" title="Post-Tommy John surgery">TJ</span>`);
-    } else if ((hp.il_stints_24mo || 0) >= 3 || (hp.il_days_24mo || 0) >= 200) {
+    } else if ((hp.il_stints_12mo || 0) >= 3 || (hp.il_days_12mo || 0) >= 200) {
       bits.push(`<span class="pdc-health h-chronic" title="Chronic IL history">C</span>`);
     }
     const acqMethod = (p.current_acquisition || {}).method
@@ -15680,6 +16097,45 @@ function attachHandlers() {
   const sortEl = document.getElementById("sort-select");
   if (sortEl) sortEl.addEventListener("change", e => {
     state.sort = e.target.value;
+    // Mirror dropdown-driven sort changes into the column-click sort
+    // header indicator (the header carries .is-active when its
+    // data-sort-key matches state.sort).
+    syncSortHeaderActive();
+    render();
+  });
+  // Column-click sort — delegated handler on the document so it picks up
+  // .sort-header cells inside any current OR future-rendered col-header.
+  // Clicking the same header twice toggles asc/desc when the data-sort-key
+  // ends in _desc / _asc (the Ht/Wt/BMI headers do; FV / Rank / ETA do not).
+  document.addEventListener("click", (e) => {
+    const hdr = e.target.closest && e.target.closest(".sort-header[data-sort-key]");
+    if (!hdr) return;
+    const key = hdr.dataset.sortKey;
+    if (state.sort === key && key.endsWith("_desc")) {
+      state.sort = key.slice(0, -5) + "_asc";
+    } else if (state.sort === key && key.endsWith("_asc")) {
+      state.sort = key.slice(0, -4) + "_desc";
+    } else {
+      state.sort = key;
+    }
+    // Mirror into the sort dropdown so the chip and the header stay
+    // visually in sync.
+    const sortSel = document.getElementById("sort-select");
+    if (sortSel) sortSel.value = state.sort;
+    syncSortHeaderActive();
+    render();
+  });
+  // Tool-grade filter — two selects (key + min threshold). Either changing
+  // re-runs render(); the filter passes when toolFilterKey != "off" AND
+  // toolFilterMin > 0. See getFilteredActives() for the matching logic.
+  const tfKeyEl = document.getElementById("tool-filter-key");
+  if (tfKeyEl) tfKeyEl.addEventListener("change", e => {
+    state.toolFilterKey = e.target.value;
+    render();
+  });
+  const tfMinEl = document.getElementById("tool-filter-min");
+  if (tfMinEl) tfMinEl.addEventListener("change", e => {
+    state.toolFilterMin = parseInt(e.target.value, 10) || 0;
     render();
   });
 

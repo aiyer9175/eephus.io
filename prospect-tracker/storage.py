@@ -2194,10 +2194,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         """Derive aggregate injury signals used by the UI + ETA model.
 
         Looks at:
-          * Number of distinct IL stints in the trailing 24 months —
+          * Number of distinct IL stints in the trailing 12 months —
             anything >= 3 indicates a chronic injury pattern.
-          * Total IL days in the trailing 24 months — separate signal
-            from stint count so a single year-long IL still counts.
+          * Total IL days in the trailing 12 months — separate signal
+            from stint count so a single multi-month IL still counts.
           * Whether the player has had Tommy-John-class elbow surgery
             on record (any stint description matches _TJ_PHRASES). The
             chip on the prospect page surfaces this prominently, and
@@ -2210,7 +2210,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         """
         from datetime import date as _date, timedelta as _td
         today = today or _date.today()
-        cutoff = today - _td(days=365 * 2)
+        cutoff = today - _td(days=365)
         recent_stints = 0
         recent_days = 0
         tj_dates: list[str] = []
@@ -2226,12 +2226,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 if not days and stint.get("active"):
                     # Open stint without a closed-stint days field — estimate
                     # as (today - since). Cap at the trailing-window length
-                    # (~730d) so a stale open stint whose activation row
+                    # (~365d) so a stale open stint whose activation row
                     # never landed in the API can't blow the total up.
                     days = max(0, (today - since).days)
-                # Cap any single stint at the 24-month window length to
+                # Cap any single stint at the 12-month window length to
                 # prevent old data anomalies from inflating the headline.
-                _MAX_PER_STINT_DAYS = 730
+                _MAX_PER_STINT_DAYS = 365
                 if days > _MAX_PER_STINT_DAYS:
                     days = _MAX_PER_STINT_DAYS
                 recent_days += int(days or 0)
@@ -2242,15 +2242,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             if any(p in desc for p in _TJ_PHRASES):
                 tj_dates.append(since_str)
         tj_latest = max(tj_dates) if tj_dates else None
-        # Final aggregate cap: the trailing-24-month window is itself ~730
+        # Final aggregate cap: the trailing-12-month window is itself ~365
         # days long, so the SUM of IL days within that window can't
-        # exceed 730. Multiple overlapping stints (rare but possible from
+        # exceed 365. Multiple overlapping stints (rare but possible from
         # transferred 15→60 day rows) could otherwise double-count.
-        if recent_days > 730:
-            recent_days = 730
+        if recent_days > 365:
+            recent_days = 365
         return {
-            "il_stints_24mo": recent_stints,
-            "il_days_24mo":   recent_days,
+            "il_stints_12mo": recent_stints,
+            "il_days_12mo":   recent_days,
             "is_post_tj":     bool(tj_dates),
             # Latest TJ-class surgery date. The UI uses it to label the
             # chip ("Post-TJ · 2024-09-03"); the ETA helper checks it
@@ -2355,7 +2355,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         sm = sabermetrics.get(p.player_key)
         is_pitcher = bool(p.position and p.position.split("/")[0] in PITCHER_POS_SET)
         latest_fv = p.points[-1].consensus_fv_raw if p.points else None
-        # Health profile: 24-month IL stints + days + Tommy-John flag.
+        # Health profile: 12-month IL stints + days + Tommy-John flag.
         # Computed once from the cached injury_history so the rest of
         # the pipeline (ETA model, stat_flags injury-prone rule, UI
         # chip) can pull from one dict instead of re-parsing dates.
@@ -2691,7 +2691,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # tools. Same {direction, stat, value, ...} shape as
             # stat_flags so one frontend renderer handles both.
             "tool_flags": tool_flags,
-            # 24-month injury aggregate + Tommy-John flag. Drives the
+            # 12-month injury aggregate + Tommy-John flag. Drives the
             # IL-section roster, the "Post-TJ" chip on the prospect
             # header, the Injury-prone red flag, and the ETA-delay
             # adjustment in eta.estimate_eta.
