@@ -6163,6 +6163,41 @@ const _lbPitcherSupport = r => {
   return `<div>${top}</div><div style="color:var(--text-tertiary);margin-top:2px;">${bottom}</div>`;
 };
 
+// Cell heat color — maps a numeric value into the cyan/violet/red ramp
+// based on its rank position within a numeric `values` array. `hi=true`
+// means higher values are better (so the top end gets the cyan/up
+// treatment); `hi=false` flips the ramp so a low ERA/WHIP/K% also
+// reads green. Returns inline-style suitable for the cell's
+// `background-color` + a paired `color` for contrast.
+//
+// Used in the leaderboard primary-stat cell to give the reader a
+// shape-of-the-board signal at a glance — the gap between #1 and #25
+// becomes visible without parsing the numbers.
+function cellHeatColor(value, values, hi = true) {
+  if (value == null || isNaN(value)) return { bg: "transparent", fg: "var(--text-tertiary)" };
+  const valid = values.filter(v => v != null && !isNaN(v));
+  if (valid.length < 2) return { bg: "transparent", fg: "var(--text-primary)" };
+  const lo = Math.min(...valid);
+  const hiV = Math.max(...valid);
+  const span = (hiV - lo) || 1;
+  let t = (Number(value) - lo) / span; // 0 = worst, 1 = best in displayed pool
+  if (!hi) t = 1 - t; // flip so low = good for ERA/WHIP/BB%/K% etc.
+  t = Math.max(0, Math.min(1, t));
+  // Three-band ramp: top third → strong cyan, middle → soft violet,
+  // bottom → muted slate. Alpha gives a card-like wash, not a hard chip.
+  let bg;
+  if (t >= 0.67) {
+    const a = 0.18 + 0.22 * ((t - 0.67) / 0.33);
+    bg = `rgba(78, 224, 255, ${a.toFixed(2)})`;
+  } else if (t >= 0.33) {
+    const a = 0.12 + 0.10 * ((t - 0.33) / 0.34);
+    bg = `rgba(180, 85, 255, ${a.toFixed(2)})`;
+  } else {
+    bg = "rgba(120, 130, 145, 0.08)";
+  }
+  return { bg, fg: "var(--text-primary)" };
+}
+
 const LB_STATS = {
   ops:     { label: "OPS",     hi: true,  fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : "—",
              minAB: 50, support: _lbHitterSupport, side: "hit" },
@@ -6358,8 +6393,12 @@ function renderLeaderboards() {
     return;
   }
 
+  // Heat-color reference set: every displayed value for the active stat
+  // becomes the cohort against which each cell's intensity is computed.
+  const _heatValues = ranked.map(({ v }) => v).filter(v => v != null);
   const rows = ranked.map(({ p, r, v }, i) => {
     const fvLabel = p.fv_close != null ? Math.round(p.fv_close) : "—";
+    const heat = cellHeatColor(v, _heatValues, !!cfg.hi);
     return `
       <div class="player-row is-leaderboard" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
         <div class="rank-num">${i + 1}</div>
@@ -6372,7 +6411,7 @@ function renderLeaderboards() {
         </div>
         <div><span class="level-pill ${r.level === "MLB" ? "level-mlb" : "level-neutral"}">${escapeHtml(r.level || "—")}</span></div>
         <div style="text-align:center;">${fvLabel !== "—" ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
-        <div style="text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:700;color:var(--text-primary);">${cfg.fmt(v)}</div>
+        <div style="text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:700;color:${heat.fg};background:${heat.bg};padding:4px 8px;border-radius:var(--radius-sm);">${cfg.fmt(v)}</div>
         <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${cfg.support(r)}</div>
       </div>`;
   }).join("");

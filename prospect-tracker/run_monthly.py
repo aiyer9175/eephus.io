@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from datetime import date
 import concurrent.futures
@@ -93,7 +94,8 @@ def _is_career_fresh(fetched_at: str | None, max_age_days: int) -> bool:
 
 def main(force_refetch: bool = False, skip_stats: bool = False,
          out_dir: Path = Path("data"), workers: int | None = None,
-         cache_ttl: int | None = None, no_cache: bool = False, fast: bool = False):
+         cache_ttl: int | None = None, no_cache: bool = False, fast: bool = False,
+         skip_savant: bool = False):
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -894,29 +896,34 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         log.info("detected %d trades (%d new)", len(new_trades), trade_count)
         trades_by_player = load_trades()
 
-        # --- 4b. Graduate swing-zone heatmaps. Scrape Statcast pitch-by-pitch
-        # data for each graduate's last few MLB seasons, aggregate to a
-        # 13-bin heat array. Hard-wrapped so a Savant outage never fails
-        # the full regen.
+        # --- 4b. Graduate swing-zone heatmaps. Bulk-fetch Statcast pitch-by-
+        # pitch data for each graduate's last few MLB seasons (one HTTP
+        # call per year carrying every batter ID), aggregate to a 13-bin
+        # heat array. Hard-wrapped so a Savant outage never fails the
+        # full regen. Skipped entirely via --skip-savant or the
+        # PT_SKIP_SAVANT env var.
         swing_zone_heat_by_key = {}
-        try:
-            from graduate_savant import build_graduate_swing_zone_heat
-            career_war_all = load_career_war()
-            grad_payloads = []
-            for p in timeseries:
-                if p.status != "graduated":
-                    continue
-                mlbam = ids_by_key.get(p.player_key)
-                if not mlbam:
-                    continue
-                grad_payloads.append({
-                    "player_key": p.player_key,
-                    "mlbam_id":   mlbam,
-                    "career_war": career_war_all.get(p.player_key) or {},
-                })
-            swing_zone_heat_by_key = build_graduate_swing_zone_heat(grad_payloads)
-        except Exception:
-            log.exception("graduate savant scrape failed — continuing without heatmaps")
+        if skip_savant or os.environ.get("PT_SKIP_SAVANT") == "1":
+            log.info("graduate savant scrape skipped (flag set)")
+        else:
+            try:
+                from graduate_savant import build_graduate_swing_zone_heat
+                career_war_all = load_career_war()
+                grad_payloads = []
+                for p in timeseries:
+                    if p.status != "graduated":
+                        continue
+                    mlbam = ids_by_key.get(p.player_key)
+                    if not mlbam:
+                        continue
+                    grad_payloads.append({
+                        "player_key": p.player_key,
+                        "mlbam_id":   mlbam,
+                        "career_war": career_war_all.get(p.player_key) or {},
+                    })
+                swing_zone_heat_by_key = build_graduate_swing_zone_heat(grad_payloads)
+            except Exception:
+                log.exception("graduate savant scrape failed — continuing without heatmaps")
 
         # --- 5. Export -------------------------------------------------
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -972,10 +979,14 @@ if __name__ == "__main__":
                     help="Skip pitch arsenals + Statcast metrics fetch. "
                          "Core consensus FV / stat lines still fetched. "
                          "Useful for local dev iterations.")
+    ap.add_argument("--skip-savant", action="store_true",
+                    help="Skip the Statcast pitch-by-pitch scrape that powers "
+                         "graduate swing-zone heatmaps. Use when graduate "
+                         "heatmaps aren't needed and you want a faster regen.")
     args = ap.parse_args()
     if args.dry_run:
         probe(force=args.force)
         sys.exit(0)
     main(force_refetch=args.force, skip_stats=args.skip_stats, out_dir=args.out_dir,
          workers=args.workers, cache_ttl=args.cache_ttl, no_cache=args.no_cache,
-         fast=args.fast)
+         fast=args.fast, skip_savant=args.skip_savant)

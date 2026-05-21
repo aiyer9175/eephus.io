@@ -29,12 +29,15 @@ from scrapers import CACHE_DIR, HEADERS, RATE_LIMIT_SECONDS
 
 log = logging.getLogger(__name__)
 
-# Bulk-fetch concurrency. ThreadPool size is capped so we never hammer
-# Baseball Savant with more than this many in-flight requests. The shared
-# `_FETCH_LOCK` serializes the rate-limit sleep so workers don't all
-# hammer the endpoint in the same window.
-_BULK_MAX_WORKERS = 6
+# Bulk-fetch concurrency. The Savant CSV endpoint accepts MULTIPLE
+# `batters_lookup[]=ID` params in a single request; one HTTP round-trip
+# returns every pitch every listed batter saw that season. That collapses
+# what was ~150 (graduate × year) requests down to ~3 (one per season)
+# at the cost of a single ~10-30 MB response per call.
+_BULK_BATTERS_PER_REQUEST = 50   # cap so URLs don't blow past Savant's limit
+_BULK_MAX_WORKERS = 4            # parallelism across year-level batches
 _FETCH_LOCK = threading.Lock()
+_BULK_RATE_LIMIT_SECONDS = 0.25  # per-request sleep; small batches go fast
 
 
 # ---------------------------------------------------------------------------
@@ -69,6 +72,24 @@ _SAVANT_CSV_URL = (
     "&sort_col=pitches"
     "&type=details"
 )
+
+def _build_bulk_url(mlbam_ids: list[int], year: int) -> str:
+    """Construct a bulk Savant CSV URL with multiple batter IDs."""
+    base = (
+        "https://baseballsavant.mlb.com/statcast_search/csv"
+        "?all=true"
+        "&hfGT=R%7C"
+        f"&hfSea={year}%7C"
+        "&player_type=batter"
+    )
+    batter_params = "".join(f"&batters_lookup%5B%5D={mid}" for mid in mlbam_ids)
+    tail = (
+        "&min_pitches=0&min_results=0"
+        "&group_by=name"
+        "&sort_col=pitches"
+        "&type=details"
+    )
+    return base + batter_params + tail
 
 
 # ---------------------------------------------------------------------------
@@ -203,26 +224,172 @@ def scrape_savant_pitches(mlbam_id: int, year: int,
 # Orchestrator
 # ---------------------------------------------------------------------------
 
+def _scrape_savant_pitches_bulk(mlbam_ids: list[int], year: int,
+                                force: bool = False) -> dict[int, list[dict]]:
+    """Fetch one bulk CSV containing every pitch every listed batter saw
+    in ``year``. Returns ``{mlbam_id: [pitch_dicts]}``.
+
+    Per-(batter, year) cache files are written so subsequent runs can
+    pre-fill from disk and skip any batter whose CSV already lives in
+    the cache. The bulk request only goes out for the batters not yet
+    cached, so warm runs are essentially instant.
+
+    On any fetch / parse failure for the bulk request, every UNCACHED
+    batter for that year gets an empty list — graceful degradation.
+    """
+    out: dict[int, list[dict]] = {}
+
+    # Pre-fill from per-batter cache files; bulk-fetch only the misses.
+    to_fetch: list[int] = []
+    for mid in mlbam_ids:
+        cache_path = CACHE_DIR / f"savant_pitches_{mid}_{year}.csv"
+        if cache_path.exists() and not force:
+            body = cache_path.read_text(encoding="utf-8")
+            out[mid] = _parse_savant_csv(body)
+        else:
+            to_fetch.append(mid)
+
+    if not to_fetch:
+        return out
+
+    url = _build_bulk_url(to_fetch, year)
+    log.info("savant bulk fetch: %d batters · year %d · URL len %d",
+             len(to_fetch), year, len(url))
+    with _FETCH_LOCK:
+        time.sleep(_BULK_RATE_LIMIT_SECONDS)
+    try:
+        resp = requests.get(url, headers=HEADERS, timeout=180)
+    except requests.RequestException as e:
+        log.warning("savant bulk fetch network error for year %d: %s", year, e)
+        for mid in to_fetch:
+            out[mid] = []
+        return out
+    if resp.status_code != 200:
+        log.warning("savant bulk fetch non-200 for year %d: HTTP %d",
+                    year, resp.status_code)
+        for mid in to_fetch:
+            out[mid] = []
+        return out
+
+    # Parse the combined CSV once, then split by batter.
+    body = resp.text
+    rows_by_batter: dict[int, list[str]] = {mid: [] for mid in to_fetch}
+    header = ""
+    try:
+        reader = csv.DictReader(io.StringIO(body))
+        header_fields = reader.fieldnames or []
+        header = ",".join(header_fields)
+        # Find the batter-id column. Savant uses "batter" as the ID col.
+        bid_col = "batter"
+        if bid_col not in header_fields:
+            log.warning("savant bulk: 'batter' column missing in CSV; got %s",
+                        header_fields[:8])
+            for mid in to_fetch:
+                out[mid] = []
+            return out
+        for r in reader:
+            try:
+                bid = int(r.get(bid_col) or 0)
+            except (TypeError, ValueError):
+                continue
+            if bid in rows_by_batter:
+                # Re-serialize the dict row back to CSV for caching.
+                # Keeping the original line text would be cheaper, but
+                # DictReader doesn't expose it. Build minimal CSV per
+                # cache so the disk cache stays per-batter usable.
+                rows_by_batter[bid].append(_row_dict_to_csv_line(r, header_fields))
+                # Also accumulate the parsed pitch dict into the output.
+                out.setdefault(bid, []).append({
+                    "plate_x":     _safe_float(r.get("plate_x")),
+                    "plate_z":     _safe_float(r.get("plate_z")),
+                    "sz_top":      _safe_float(r.get("sz_top")),
+                    "sz_bot":      _safe_float(r.get("sz_bot")),
+                    "description": r.get("description") or "",
+                    "pitch_type":  r.get("pitch_type") or "",
+                    "type":        r.get("type") or "",
+                    "game_date":   r.get("game_date") or "",
+                })
+    except Exception:
+        log.exception("savant bulk CSV parse failed for year %d", year)
+        for mid in to_fetch:
+            out.setdefault(mid, [])
+        return out
+
+    # Persist per-batter cache so warm runs hit disk for individual
+    # players (and so `scrape_savant_pitches` still works in single-
+    # player mode).
+    for mid in to_fetch:
+        cache_path = CACHE_DIR / f"savant_pitches_{mid}_{year}.csv"
+        body_out = header + "\n" + "\n".join(rows_by_batter.get(mid, []))
+        try:
+            cache_path.write_text(body_out, encoding="utf-8")
+        except Exception:
+            log.exception("failed to write savant cache for %s/%s", mid, year)
+        out.setdefault(mid, [])
+    return out
+
+
+def _row_dict_to_csv_line(r: dict, fields: list[str]) -> str:
+    """Re-serialize a DictReader row back to a CSV line for caching.
+    Values containing commas or quotes get wrapped + escaped per RFC 4180."""
+    parts = []
+    for f in fields:
+        v = "" if r.get(f) is None else str(r.get(f))
+        if "," in v or '"' in v or "\n" in v:
+            v = '"' + v.replace('"', '""') + '"'
+        parts.append(v)
+    return ",".join(parts)
+
+
+def _parse_savant_csv(body: str) -> list[dict]:
+    """Parse the project's per-batter CSV cache into pitch dicts."""
+    if not body or not body.strip():
+        return []
+    rows = []
+    try:
+        reader = csv.DictReader(io.StringIO(body))
+        for r in reader:
+            rows.append({
+                "plate_x":     _safe_float(r.get("plate_x")),
+                "plate_z":     _safe_float(r.get("plate_z")),
+                "sz_top":      _safe_float(r.get("sz_top")),
+                "sz_bot":      _safe_float(r.get("sz_bot")),
+                "description": r.get("description") or "",
+                "pitch_type":  r.get("pitch_type") or "",
+                "type":        r.get("type") or "",
+                "game_date":   r.get("game_date") or "",
+            })
+    except Exception:
+        log.exception("savant CSV parse failed")
+        return []
+    return rows
+
+
 def build_graduate_swing_zone_heat(graduates, max_seasons: int = 3,
                                    force: bool = False,
-                                   max_workers: int = _BULK_MAX_WORKERS) -> dict:
+                                   max_workers: int = _BULK_MAX_WORKERS,
+                                   batters_per_request: int = _BULK_BATTERS_PER_REQUEST) -> dict:
     """For each graduate with an mlbam_id, walk their MLB seasons in
     ``career_war.seasons`` (most recent ``max_seasons``), scrape and
     aggregate pitches, return ``{player_key: heat_array}``.
 
-    Bulk-fetches in parallel via a ThreadPoolExecutor (``max_workers``
-    in-flight) so a cold cache of ~50 graduates × 3 seasons completes in
-    a fraction of the sequential time. Cached requests skip the rate-
-    limit entirely, so warm-cache runs are near-instant regardless of
-    worker count.
+    Year-batched bulk fetch: groups all (graduate, year) pairs by year,
+    issues ONE Savant request per year carrying up to
+    ``batters_per_request`` batter IDs. ~50 graduates × 3 seasons
+    collapses from 150 sequential HTTP calls to 3 (one per season),
+    typically returning in <10s on a cold cache. Per-batter cache files
+    are still written so single-player calls (`scrape_savant_pitches`)
+    stay fast.
 
     Graduates without an mlbam_id, or with no MLB seasons in the
     requested window, are skipped.
     """
     today = date.today()
-    # Build the full list of (player_key, mlbam_id, year) work items.
-    work_items: list[tuple[str, int, int]] = []
     seasons_by_key: dict[str, list[int]] = {}
+    mlbam_by_key: dict[str, int] = {}
+    # year -> set of (key, mlbam) tuples
+    year_to_pairs: dict[int, list[tuple[str, int]]] = {}
+
     for g in graduates:
         mlbam = g.get("mlbam_id")
         key = g.get("player_key")
@@ -240,38 +407,53 @@ def build_graduate_swing_zone_heat(graduates, max_seasons: int = 3,
         if not seasons:
             continue
         seasons_by_key[key] = seasons
+        mlbam_by_key[key] = mlbam
         for yr in seasons:
-            work_items.append((key, mlbam, yr))
+            year_to_pairs.setdefault(yr, []).append((key, mlbam))
 
-    if not work_items:
+    if not year_to_pairs:
         log.info("graduate_savant: nothing to fetch")
         return {}
 
-    log.info("graduate_savant: bulk-fetching %d (graduate, year) pairs "
-             "across %d workers", len(work_items), max_workers)
+    # Build batch jobs: (year, [mlbam_ids]). Splits large years across
+    # multiple sub-batches so URL length stays under typical 8KB limits.
+    jobs: list[tuple[int, list[int]]] = []
+    for yr, pairs in year_to_pairs.items():
+        ids = list({mid for _, mid in pairs})  # dedupe
+        for i in range(0, len(ids), batters_per_request):
+            jobs.append((yr, ids[i:i + batters_per_request]))
+
+    log.info("graduate_savant: %d bulk job(s) across %d worker(s) "
+             "(years: %s)", len(jobs), max_workers,
+             sorted(year_to_pairs.keys()))
     t_start = time.monotonic()
 
-    # Pitches grouped by player_key as workers complete.
-    pitches_by_key: dict[str, list[dict]] = {k: [] for k in seasons_by_key}
+    # mlbam_id -> [pitches]; accumulated as bulk responses come back.
+    pitches_by_mlbam: dict[int, list[dict]] = {}
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        future_to_meta = {
-            ex.submit(scrape_savant_pitches, mlbam, yr, force): (key, yr)
-            for key, mlbam, yr in work_items
+        future_to_job = {
+            ex.submit(_scrape_savant_pitches_bulk, ids, yr, force): (yr, ids)
+            for yr, ids in jobs
         }
-        for fut in as_completed(future_to_meta):
-            key, yr = future_to_meta[fut]
+        for fut in as_completed(future_to_job):
+            yr, ids = future_to_job[fut]
             try:
-                pitches = fut.result()
+                bucket = fut.result()
             except Exception:
-                log.exception("savant worker failed for %s/%s", key, yr)
+                log.exception("savant bulk job failed for year %d", yr)
                 continue
-            pitches_by_key[key].extend(pitches)
+            for mid, pitches in bucket.items():
+                pitches_by_mlbam.setdefault(mid, []).extend(pitches)
 
     elapsed = time.monotonic() - t_start
-    log.info("graduate_savant: %d pairs fetched in %.1fs", len(work_items), elapsed)
+    log.info("graduate_savant: %d bulk job(s) fetched in %.1fs",
+             len(jobs), elapsed)
 
     out: dict = {}
-    for key, pitches in pitches_by_key.items():
+    for key, mid in mlbam_by_key.items():
+        pitches = pitches_by_mlbam.get(mid, [])
+        if not pitches:
+            continue
         heat = compute_swing_zone_heat(pitches)
         if any(v is not None for v in heat):
             out[key] = heat
