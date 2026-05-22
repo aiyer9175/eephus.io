@@ -107,7 +107,9 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     init_db()
 
     # First: drain the FanGraphs drop folder so any waiting CSVs land
-    # in the DB before we rebuild.
+    # in the DB before we rebuild. (The FG ingest internally routes
+    # <year>draft slugs to draft_csv, so dropping a draft CSV set works
+    # without a separate call.)
     try:
         from fangraphs_csv import ingest_drops as _fg_ingest_drops
         fg_inserted, fg_files = _fg_ingest_drops(called_from_run_monthly=True)
@@ -116,6 +118,17 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
                      fg_inserted, fg_files)
     except Exception:
         log.exception("fangraphs_csv: drop-folder ingest failed — continuing")
+
+    # Draft pipeline — promote any newly-drafted players + write the
+    # draft_timeseries.json sidecar. Promotion is idempotent.
+    try:
+        from draft_promotion import promote_drafted_players
+        from draft_export import export_draft_json
+        promote_drafted_players()
+        n_draft = export_draft_json(out_dir / "draft_timeseries.json")
+        log.info("draft pipeline (rebuild): exported %d draft prospects", n_draft)
+    except Exception:
+        log.exception("draft pipeline crashed in rebuild_only — continuing")
 
     log.info("rebuild_only: loading snapshots + ancillary tables from DB")
     all_snaps = load_all_snapshots()
@@ -283,6 +296,36 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         except Exception:
             log.exception("fangraphs_csv: drop-folder ingest failed — "
                           "continuing with the rest of the pipeline")
+
+        # --- 0c. Draft pipeline (scrape + promote + export) -------------
+        # Scrapes the amateur sources (ESPN draft Top 150 + MLB Pipeline
+        # draft) and refreshes the per-year results table from the MLB
+        # Stats API. All draft data lives in draft_* tables and exports
+        # to data/draft_timeseries.json, completely separate from the
+        # MiLB pipeline that follows. Failures here never block the MiLB
+        # run.
+        try:
+            from scrapers import scrape_all_draft, scrape_mlb_draft_tracker
+            from storage import insert_draft_snapshots, upsert_draft_results
+            from draft_promotion import promote_drafted_players
+            from draft_export import export_draft_json
+
+            draft_snaps = scrape_all_draft(force=force_refetch)
+            if draft_snaps:
+                n_d = insert_draft_snapshots(draft_snaps)
+                log.info("inserted %d draft snapshot rows", n_d)
+            # Refresh draft results from the MLB Stats API (cheap, cached).
+            this_year = date.today().year
+            for y in range(2021, this_year + 1):
+                rows = scrape_mlb_draft_tracker(y, force=force_refetch)
+                if rows:
+                    upsert_draft_results(rows)
+            promote_drafted_players()
+            n_draft = export_draft_json(out_dir / "draft_timeseries.json")
+            log.info("draft pipeline: exported %d prospects across all classes",
+                     n_draft)
+        except Exception:
+            log.exception("draft pipeline crashed — continuing with MiLB run")
 
         # --- 1. Scrape & store rankings ---------------------------------
         snapshots, csv_birth_dates = scrape_all(force=force_refetch)

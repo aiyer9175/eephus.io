@@ -1769,6 +1769,84 @@
       letter-spacing: 0;
     }
 
+    /* === Draft section =============================================
+       Layout for the Draft tab. Cards in the Rankings sub-view share
+       the FV color scheme but never display RPS+ / Age-vs-Level /
+       MLB-stat tiles — those are MiLB-cohort metrics that have no
+       NCAA equivalent. The grid auto-fills so the page works on both
+       mobile and wide displays.                                       */
+    .draft-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 10px;
+    }
+    .draft-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      transition: border-color 0.15s;
+    }
+    .draft-card:hover { border-color: var(--neon-cyan); }
+    .draft-report {
+      transition: max-height 0.2s, mask-image 0.2s;
+    }
+    .draft-card:hover .draft-report {
+      max-height: 240px;
+      mask-image: none;
+    }
+    .draft-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .draft-table th, .draft-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    .draft-table th {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+    .draft-table tbody tr:hover { background: var(--bg-tertiary); }
+    .draft-results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 10px;
+    }
+    .draft-panel {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+    }
+    .draft-panel h3 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+    }
+    .draft-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 12px;
+    }
+    .draft-list li {
+      padding: 4px 0;
+      border-bottom: 1px dashed var(--border);
+      line-height: 1.5;
+    }
+    .draft-list li small {
+      color: var(--text-tertiary);
+      margin-left: 4px;
+    }
+
     /* === Farm systems ============================================= */
     .farm-header, .farm-row {
       display: grid;
@@ -4244,6 +4322,7 @@
     <button class="section-tab" data-section="spotlights">Spotlights</button>
     <button class="section-tab" data-section="traded">Recently Acquired</button>
     <button class="section-tab" data-section="injured">Injured List</button>
+    <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">Draft</button>
     <button class="section-tab" data-section="graduates">Graduates</button>
     <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
@@ -4434,6 +4513,34 @@
               title="Highest-FV injured prospects first">FV</button>
     </div>
     <div id="injured-rows"></div>
+  </div>
+
+  <!-- Draft prospects — fully separate from the MiLB pipeline.
+       Per-class chips at top, then a sub-tab strip for Rankings /
+       Draft Order & Slots / Results & Bonuses / Leaderboard /
+       Class Strength. Draft Stock+ is the per-class normalized index
+       (100 = class median). RPS+ never appears here — NCAA / HS
+       environments don't share a cohort with MiLB. -->
+  <div id="draft-section" style="display: none;">
+    <div id="draft-class-bar" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+      <span class="filter-label" title="Draft class year">Class</span>
+      <!-- Year chips populate dynamically from DATA.draft.classes -->
+      <span id="draft-class-chips"></span>
+    </div>
+    <div id="draft-subtab-bar" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+      <span class="filter-label">View</span>
+      <button class="chip active" data-draft-view="rankings"
+              title="Consensus rankings across sources">Rankings</button>
+      <button class="chip" data-draft-view="order"
+              title="Pre-draft: draft order + slot values. Post-draft: every pick with team + slot + signing bonus.">Order &amp; Slots</button>
+      <button class="chip" data-draft-view="results"
+              title="Post-draft signing tracker: bonus vs. slot, team spend vs. pool, unsigned picks">Results &amp; Bonuses</button>
+      <button class="chip" data-draft-view="leaderboard"
+              title="Top of class by Draft Stock+, per-position bests, per-tool bests">Leaderboard</button>
+      <button class="chip" data-draft-view="class-strength"
+              title="FV distribution per class (60 FV count, 55 FV count, etc.) side-by-side across years">Class Strength</button>
+    </div>
+    <div id="draft-rows"></div>
   </div>
 
   <div id="graduates-section" style="display: none;">
@@ -6247,6 +6354,12 @@ const state = {
   stockFilter: "all",
   orgFilter: "all",
   acqFilter: "all",
+  // Draft tab sub-state. draftYear defaults to the most recent class on
+  // first load (resolved inside renderDraft when DATA.draft is loaded);
+  // draftView toggles between Rankings / Order & Slots / Results /
+  // Leaderboard / Class Strength sub-views inside the Draft panel.
+  draftYear: null,
+  draftView: "rankings",
   // Class filter — restrict to prospects acquired in a specific year
   // (draft year for drafted players; IFA signing year for IFAs). "all"
   // means no class restriction. Drives the "Class of YYYY" dropdown
@@ -8131,6 +8244,526 @@ function makeWagChart(g) {
     <line x1="0" y1="${mid}" x2="${W}" y2="${mid}" stroke="var(--text-tertiary)" stroke-width="0.6" stroke-dasharray="2,2" opacity="0.7"/>
     ${bars}
   </svg>`;
+}
+
+// =============================================================================
+// DRAFT SECTION
+// =============================================================================
+// Renders the Draft panel: per-class chip selector + sub-view (Rankings /
+// Order & Slots / Results & Bonuses / Leaderboard / Class Strength).
+// Reads from `DATA.draft` (loaded lazily from data/draft_timeseries.json).
+// Never touches DATA.prospects / DATA.graduates / DATA.farms — the schema
+// firewall is on the Python side; this is just the rendering counterpart.
+// =============================================================================
+
+// Format USD as compact (e.g. $8.95M, $675K). Returns "—" for missing.
+function _fmtUSD(v) {
+  if (v == null || v === "") return "—";
+  const n = Number(v);
+  if (!isFinite(n)) return "—";
+  if (n >= 1_000_000) return "$" + (n / 1_000_000).toFixed(2) + "M";
+  if (n >= 1_000) return "$" + (n / 1_000).toFixed(0) + "K";
+  return "$" + n.toLocaleString();
+}
+
+// Draft Stock+ → color. 130+ = green, 110-129 = teal, 90-109 = neutral,
+// 70-89 = orange, <70 = red. Mirrors RPS+ palette but distinct hues so
+// users don't conflate the two.
+function _stockPlusColor(sp) {
+  if (sp == null) return "var(--text-tertiary)";
+  if (sp >= 130) return "var(--neon-green)";
+  if (sp >= 110) return "var(--neon-cyan)";
+  if (sp >= 90)  return "var(--text-secondary)";
+  if (sp >= 70)  return "var(--neon-orange)";
+  return "var(--neon-red)";
+}
+
+// FV bucket color — reuse the existing FV palette.
+function _draftFvBucketColor(fv) {
+  if (fv == null) return "var(--text-tertiary)";
+  if (fv >= 60)   return "var(--neon-green)";
+  if (fv >= 55)   return "var(--neon-cyan)";
+  if (fv >= 50)   return "var(--neon-violet)";
+  if (fv >= 45)   return "var(--neon-orange)";
+  return "var(--text-tertiary)";
+}
+
+async function renderDraft() {
+  const host = document.getElementById("draft-rows");
+  const classChips = document.getElementById("draft-class-chips");
+  if (!host) return;
+
+  // Lazy-load the draft payload. Shape:
+  //   { generated_at, classes: [{year, is_current, n_prospects,
+  //                              fv_distribution, prospects: [...],
+  //                              draft_order: [...], team_pool_usd, ...}] }
+  if (!DATA.draft) {
+    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
+      Loading draft data…</div>`;
+    try {
+      const base = DATA_URL.replace(/[^/]+$/, "");
+      const resp = await fetch(base + "draft_timeseries.json", { cache: "no-cache" });
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      DATA.draft = await resp.json();
+    } catch (e) {
+      host.innerHTML = `<div style="padding:14px;color:var(--neon-red);">
+        Could not load draft data: ${escapeHtml(String(e.message || e))}.
+        Run <code>python run_monthly.py --rebuild-only</code> to regenerate
+        <code>data/draft_timeseries.json</code>.</div>`;
+      return;
+    }
+  }
+
+  const classes = (DATA.draft && DATA.draft.classes) || [];
+  if (!classes.length) {
+    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
+      No draft classes available.</div>`;
+    return;
+  }
+
+  // Pick the current class. Defaults to the most recent (first in the list,
+  // since classes are emitted year-DESC by draft_export.py).
+  if (!state.draftYear || !classes.find(c => c.year === state.draftYear)) {
+    state.draftYear = classes[0].year;
+  }
+  if (!state.draftView) state.draftView = "rankings";
+
+  // Year chip strip
+  classChips.innerHTML = classes.map(c => `
+    <button class="chip ${c.year === state.draftYear ? "active" : ""}"
+            data-draft-year="${c.year}"
+            title="${c.n_prospects} prospects${c.is_current ? " · current class" : ""}">
+      ${c.year}${c.is_current ? " ⏳" : ""}
+    </button>
+  `).join("");
+  classChips.querySelectorAll("[data-draft-year]").forEach(b => {
+    b.addEventListener("click", () => {
+      state.draftYear = +b.dataset.draftYear;
+      renderDraft();
+    });
+  });
+
+  // Sub-view chips wire to draftView
+  document.querySelectorAll("[data-draft-view]").forEach(b => {
+    b.classList.toggle("active", b.dataset.draftView === state.draftView);
+    b.onclick = () => {
+      state.draftView = b.dataset.draftView;
+      renderDraft();
+    };
+  });
+
+  const cls = classes.find(c => c.year === state.draftYear);
+  if (!cls) {
+    host.innerHTML = `<div style="padding:14px;">Class ${state.draftYear} not found.</div>`;
+    return;
+  }
+
+  switch (state.draftView) {
+    case "order":          return _renderDraftOrder(host, cls);
+    case "results":        return _renderDraftResults(host, cls);
+    case "leaderboard":    return _renderDraftLeaderboard(host, cls);
+    case "class-strength": return _renderClassStrength(host, classes);
+    case "rankings":
+    default:               return _renderDraftRankings(host, cls);
+  }
+}
+
+function _renderDraftRankings(host, cls) {
+  const prospects = cls.prospects || [];
+  // Group by FV tier (defensive against missing FV).
+  const tiers = {};
+  for (const p of prospects) {
+    const t = p.consensus_fv == null ? "Unranked"
+              : (p.consensus_fv >= 60 ? "60 FV"
+              : p.consensus_fv >= 55 ? "55 FV"
+              : p.consensus_fv >= 50 ? "50 FV"
+              : p.consensus_fv >= 45 ? "45 FV"
+              : p.consensus_fv >= 40 ? "40 FV"
+              : "< 40 FV");
+    (tiers[t] = tiers[t] || []).push(p);
+  }
+  const tierOrder = ["60 FV","55 FV","50 FV","45 FV","40 FV","< 40 FV","Unranked"];
+
+  // Header strip
+  let html = `<div style="padding:12px 14px;background:var(--bg-secondary);
+       border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
+    <strong style="color:var(--text-primary);">${cls.year} draft class —
+    ${prospects.length} ranked prospects</strong>
+    ${cls.is_current ? " · still pre-draft" : " · drafted"}
+    · sources: FanGraphs, ESPN draft, MLB Pipeline draft.
+    Draft Stock+ is normalized within this class only (100 = class median).
+  </div>`;
+
+  for (const tier of tierOrder) {
+    const players = tiers[tier];
+    if (!players || !players.length) continue;
+    html += `<div style="margin:14px 0 6px;font-size:13px;font-weight:600;
+                color:var(--text-primary);border-bottom:1px solid var(--border);
+                padding-bottom:4px;">${tier}
+                <span style="font-weight:400;color:var(--text-tertiary);
+                margin-left:6px;">${players.length}</span></div>`;
+    html += `<div class="draft-grid">`;
+    for (const p of players) {
+      html += _renderDraftCard(p);
+    }
+    html += `</div>`;
+  }
+  host.innerHTML = html;
+}
+
+function _renderDraftCard(p) {
+  const sp = p.draft_stock_plus;
+  const spColor = _stockPlusColor(sp);
+  const fvColor = _draftFvBucketColor(p.consensus_fv);
+  const pRound = p.projected_round ? `R${p.projected_round}` : "—";
+
+  // Tools: latest per source, merged into a single display tier.
+  // Show the highest grade per canonical tool across sources.
+  const tools = {};
+  for (const src in (p.tool_grades || {})) {
+    const tg = p.tool_grades[src] || {};
+    for (const k in tg) {
+      if (k === "_extras") continue;
+      if (tools[k] == null || tg[k] > tools[k]) tools[k] = tg[k];
+    }
+  }
+  const toolKeys = Object.keys(tools).sort();
+  const toolPills = toolKeys.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">
+        ${toolKeys.map(k =>
+          `<span title="${escapeHtml(k.toUpperCase())}: ${tools[k]}"
+                 style="font-size:10px;padding:1px 5px;border-radius:3px;
+                 background:var(--bg-tertiary);color:var(--text-secondary);">
+            ${escapeHtml(k.toUpperCase())} <strong style="color:${_draftFvBucketColor(tools[k])};">${tools[k]}</strong>
+          </span>`).join("")}
+      </div>` : "";
+
+  // Status badge (post-draft picks get the team + pick number).
+  let statusBadge = "";
+  if (p.status === "drafted" && p.drafted_team) {
+    const bonusStr = p.signing_bonus
+      ? ` · ${_fmtUSD(p.signing_bonus)}${p.over_slot_pct != null
+                 ? ` (${p.over_slot_pct > 0 ? "+" : ""}${p.over_slot_pct}% slot)` : ""}`
+      : (p.signed ? "" : " · unsigned");
+    statusBadge = `<div style="margin-top:6px;font-size:11px;color:var(--neon-cyan);">
+      DRAFTED · R${p.drafted_round || "?"} #${p.drafted_pick} · ${escapeHtml(p.drafted_team)}${bonusStr}
+    </div>`;
+  } else if (p.status === "unsigned") {
+    statusBadge = `<div style="margin-top:6px;font-size:11px;color:var(--neon-orange);">UNSIGNED</div>`;
+  }
+
+  const milbLink = p.milb_key
+    ? `<a href="#tab=active" onclick="event.preventDefault();state.section='active';state.view={key:'${escapeHtml(p.milb_key)}'};render();syncToURL();"
+         style="font-size:10px;color:var(--neon-green);text-decoration:none;
+         margin-left:6px;">→ MiLB profile</a>`
+    : "";
+
+  // School + commit line
+  const schoolLine = p.school
+    ? `${escapeHtml(p.school)}${p.college_commit ? ` · ${escapeHtml(p.college_commit)} commit` : ""}`
+    : "";
+
+  // Report (first source's writeup, truncated). The full writeup lives
+  // in tool_grades[source]._extras.report; expose a "more" toggle later.
+  let report = "";
+  for (const src in (p.tool_grades || {})) {
+    const ext = (p.tool_grades[src] || {})._extras || {};
+    if (ext.report) { report = ext.report; break; }
+  }
+  const reportLine = report
+    ? `<div class="draft-report" style="margin-top:8px;font-size:11px;
+          color:var(--text-secondary);line-height:1.4;
+          max-height:60px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 50%,transparent);">
+        ${escapeHtml(report.slice(0, 400))}…</div>` : "";
+
+  return `<div class="draft-card">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:16px;font-weight:700;color:var(--text-primary);">
+        #${p.consensus_rank ? Math.round(p.consensus_rank) : "?"}</span>
+      <span style="font-size:14px;font-weight:600;flex:1;">
+        ${escapeHtml(p.player_name)}${milbLink}
+      </span>
+      <span style="font-size:11px;padding:2px 6px;border-radius:4px;
+            background:${fvColor}22;color:${fvColor};font-weight:700;"
+            title="Consensus future value (avg of latest snapshot per source)">
+        FV ${p.consensus_fv != null ? p.consensus_fv : "—"}
+      </span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:11px;
+         color:var(--text-secondary);margin-top:4px;">
+      <span>${escapeHtml(p.position || "?")}</span>
+      <span style="color:var(--text-tertiary);">·</span>
+      <span title="HS = High School, COL = College; h=hitter, p=pitcher">
+        ${escapeHtml(p.player_type || "?")}</span>
+      <span style="color:var(--text-tertiary);">·</span>
+      <span>${schoolLine}</span>
+      <span style="margin-left:auto;display:flex;gap:6px;">
+        <span style="padding:1px 6px;border-radius:3px;background:${spColor}22;
+              color:${spColor};font-weight:700;"
+              title="Draft Stock+ — class-normalized index (100 = class median, +30 ≈ top decile)">
+          DS+ ${sp != null ? sp : "—"}</span>
+        <span style="padding:1px 6px;border-radius:3px;background:var(--bg-tertiary);
+              color:var(--text-secondary);"
+              title="Projected round derived from average rank">
+          ${pRound}</span>
+      </span>
+    </div>
+    ${toolPills}
+    ${statusBadge}
+    ${reportLine}
+  </div>`;
+}
+
+function _renderDraftOrder(host, cls) {
+  const order = cls.draft_order || [];
+  if (!order.length) {
+    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
+      No draft order data for ${cls.year}. ${cls.is_current
+        ? "Slot values + pick assignments will populate as MLB publishes them."
+        : "This class predates our draft-order ingest."}</div>`;
+    return;
+  }
+  const isPost = !cls.is_current;
+  const rows = order.map(o => `
+    <tr>
+      <td style="text-align:center;font-weight:600;">${o.pick_overall}</td>
+      <td>R${o.round_label || "?"}.${o.pick_in_round || "?"}</td>
+      <td><strong>${escapeHtml(o.team || "?")}</strong></td>
+      <td>${isPost && o.player_name ? escapeHtml(o.player_name) : "<span style='color:var(--text-tertiary);'>—</span>"}</td>
+      <td style="text-align:right;color:var(--text-secondary);">${_fmtUSD(o.slot_usd)}</td>
+      <td style="text-align:right;">${_fmtUSD(o.bonus_usd)}</td>
+      <td style="text-align:right;color:${o.bonus_usd && o.slot_usd
+        ? (o.bonus_usd > o.slot_usd ? "var(--neon-orange)" : "var(--neon-cyan)")
+        : "var(--text-tertiary)"};">
+        ${o.bonus_usd && o.slot_usd
+          ? ((o.bonus_usd > o.slot_usd ? "+" : "") +
+             Math.round((o.bonus_usd / o.slot_usd - 1) * 100) + "%")
+          : "—"}
+      </td>
+      <td style="text-align:center;">
+        ${o.signed ? "<span style='color:var(--neon-green);'>✓</span>"
+                   : "<span style='color:var(--neon-red);'>✗</span>"}
+      </td>
+    </tr>`).join("");
+
+  host.innerHTML = `
+    <div style="padding:12px 14px;background:var(--bg-secondary);
+         border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
+      <strong style="color:var(--text-primary);">${cls.year} draft order</strong>
+      · ${order.length} picks on file
+      · Slot values from MLB Stats API
+      ${isPost ? "· Bonuses + signings from MLB Stats API" : "· Pre-draft (no bonuses yet)"}
+    </div>
+    <table class="draft-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Round</th><th>Team</th><th>Player</th>
+          <th style="text-align:right;">Slot</th>
+          <th style="text-align:right;">Bonus</th>
+          <th style="text-align:right;">vs slot</th>
+          <th>Signed</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function _renderDraftResults(host, cls) {
+  if (cls.is_current) {
+    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
+      ${cls.year} draft hasn't happened yet. Results + bonuses populate
+      after July's draft day.</div>`;
+    return;
+  }
+  // Per-team roll-up: pool vs. spend, surplus deployed, picks signed.
+  const spend = cls.team_spend_usd || {};
+  const pool  = cls.team_pool_usd || {};
+  const teams = Array.from(new Set([...Object.keys(spend), ...Object.keys(pool)]));
+  teams.sort((a, b) => (spend[b] || 0) - (spend[a] || 0));
+
+  const rows = teams.map(t => {
+    const s = spend[t] || 0;
+    const p = pool[t] || 0;
+    const pct = p ? Math.round((s / p - 1) * 100) : null;
+    const overColor = pct == null ? "var(--text-tertiary)"
+                    : pct > 0 ? "var(--neon-orange)"
+                    : "var(--neon-cyan)";
+    return `<tr>
+      <td><strong>${escapeHtml(t)}</strong></td>
+      <td style="text-align:right;">${_fmtUSD(p)}</td>
+      <td style="text-align:right;">${_fmtUSD(s)}</td>
+      <td style="text-align:right;color:${overColor};">${pct == null ? "—" : (pct > 0 ? "+" : "") + pct + "%"}</td>
+    </tr>`;
+  }).join("");
+
+  // Class-level roll-up — find the biggest bonus + biggest over-slot.
+  const prospects = (cls.prospects || []).filter(p => p.signing_bonus);
+  prospects.sort((a, b) => (b.signing_bonus || 0) - (a.signing_bonus || 0));
+  const biggest = prospects.slice(0, 5);
+  const overSlot = (cls.prospects || []).filter(p => p.over_slot_pct != null);
+  overSlot.sort((a, b) => (b.over_slot_pct || 0) - (a.over_slot_pct || 0));
+  const biggestOver = overSlot.slice(0, 5);
+
+  host.innerHTML = `
+    <div class="draft-results-grid">
+      <div class="draft-panel">
+        <h3>Team pool spend</h3>
+        <table class="draft-table">
+          <thead>
+            <tr><th>Team</th>
+            <th style="text-align:right;">Pool</th>
+            <th style="text-align:right;">Spend</th>
+            <th style="text-align:right;">vs pool</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div class="draft-panel">
+        <h3>Biggest bonuses</h3>
+        <ul class="draft-list">
+          ${biggest.map(p => `<li>
+            <span style="color:var(--text-tertiary);">#${p.drafted_pick}</span>
+            <strong>${escapeHtml(p.player_name)}</strong>
+            <small>${escapeHtml(p.drafted_team || "?")}</small>
+            <span style="float:right;">${_fmtUSD(p.signing_bonus)}</span>
+          </li>`).join("")}
+        </ul>
+        <h3 style="margin-top:14px;">Biggest over-slot</h3>
+        <ul class="draft-list">
+          ${biggestOver.map(p => `<li>
+            <span style="color:var(--text-tertiary);">#${p.drafted_pick}</span>
+            <strong>${escapeHtml(p.player_name)}</strong>
+            <small>${escapeHtml(p.drafted_team || "?")}</small>
+            <span style="float:right;color:var(--neon-orange);">+${p.over_slot_pct}%</span>
+          </li>`).join("")}
+        </ul>
+      </div>
+    </div>`;
+}
+
+function _renderDraftLeaderboard(host, cls) {
+  const prospects = (cls.prospects || []).slice();
+  prospects.sort((a, b) => (b.draft_stock_plus || 0) - (a.draft_stock_plus || 0));
+  const top = prospects.slice(0, 50);
+
+  // Per-position bests
+  const byPos = {};
+  for (const p of prospects) {
+    if (!p.position) continue;
+    const key = p.position;
+    if (!byPos[key] || (p.draft_stock_plus || 0) > (byPos[key].draft_stock_plus || 0)) {
+      byPos[key] = p;
+    }
+  }
+  const posRows = Object.keys(byPos).sort().map(pos => {
+    const p = byPos[pos];
+    return `<li><strong>${escapeHtml(pos)}</strong> —
+      ${escapeHtml(p.player_name)} (${escapeHtml(p.school || "?")})
+      <span style="color:${_stockPlusColor(p.draft_stock_plus)};float:right;">
+        DS+ ${p.draft_stock_plus || "—"}</span></li>`;
+  }).join("");
+
+  // Per-tool bests — scan tool_grades and find the top in each canonical tool.
+  const toolBest = {};
+  for (const p of prospects) {
+    for (const src in (p.tool_grades || {})) {
+      const tg = p.tool_grades[src] || {};
+      for (const k in tg) {
+        if (k === "_extras") continue;
+        const v = tg[k];
+        if (!isFinite(v)) continue;
+        if (!toolBest[k] || v > toolBest[k].grade) {
+          toolBest[k] = { player: p, grade: v };
+        }
+      }
+    }
+  }
+  const toolOrder = ["hit","game_pwr","raw_pwr","speed","field","throw",
+                     "pitch_sel","bat_ctrl","fb","sl","cb","ch","cmd","ct"];
+  const toolRows = toolOrder
+    .filter(k => toolBest[k])
+    .map(k => {
+      const { player, grade } = toolBest[k];
+      return `<li><strong>${escapeHtml(k.toUpperCase())}</strong>
+        <span style="color:${_draftFvBucketColor(grade)};">${grade}</span> —
+        ${escapeHtml(player.player_name)}
+        <small>(${escapeHtml(player.school || "?")})</small></li>`;
+    }).join("");
+
+  const topRows = top.map((p, i) => `<tr>
+    <td>${i + 1}</td>
+    <td><strong>${escapeHtml(p.player_name)}</strong></td>
+    <td>${escapeHtml(p.position || "?")}</td>
+    <td>${escapeHtml(p.school || "?")}</td>
+    <td style="color:${_stockPlusColor(p.draft_stock_plus)};">${p.draft_stock_plus || "—"}</td>
+    <td>${p.consensus_fv != null ? p.consensus_fv : "—"}</td>
+    <td>${p.projected_round ? "R" + p.projected_round : "—"}</td>
+  </tr>`).join("");
+
+  host.innerHTML = `
+    <div class="draft-results-grid">
+      <div class="draft-panel" style="grid-column:1/-1;">
+        <h3>${cls.year} class top 50 by Draft Stock+</h3>
+        <table class="draft-table">
+          <thead><tr><th>#</th><th>Name</th><th>Pos</th><th>School</th>
+            <th>DS+</th><th>FV</th><th>Round</th></tr></thead>
+          <tbody>${topRows}</tbody>
+        </table>
+      </div>
+      <div class="draft-panel">
+        <h3>Best at each position</h3>
+        <ul class="draft-list">${posRows}</ul>
+      </div>
+      <div class="draft-panel">
+        <h3>Best tool grades in class</h3>
+        <ul class="draft-list">${toolRows}</ul>
+      </div>
+    </div>`;
+}
+
+function _renderClassStrength(host, classes) {
+  // FV distribution bar chart side-by-side across years.
+  const fvOrder = ["60","55","50+","50","45+","45","40+","40"];
+  // Find max bucket count for y-axis scale
+  let max = 0;
+  for (const c of classes) {
+    for (const k of fvOrder) {
+      const v = (c.fv_distribution || {})[k] || 0;
+      if (v > max) max = v;
+    }
+  }
+  const barH = 100;
+  const barW = 18;
+  const gap = 4;
+  const groupW = fvOrder.length * (barW + gap);
+
+  const charts = classes.map(c => {
+    const dist = c.fv_distribution || {};
+    const bars = fvOrder.map((k, i) => {
+      const v = dist[k] || 0;
+      const h = max ? (v / max) * barH : 0;
+      return `<g transform="translate(${i * (barW + gap)},0)">
+        <rect x="0" y="${barH - h}" width="${barW}" height="${h}"
+              fill="${_draftFvBucketColor(parseFloat(k))}"
+              title="${k} FV — ${v} prospects"/>
+        <text x="${barW/2}" y="${barH - h - 4}" text-anchor="middle"
+              font-size="9" fill="var(--text-secondary)">${v || ""}</text>
+        <text x="${barW/2}" y="${barH + 10}" text-anchor="middle"
+              font-size="9" fill="var(--text-tertiary)">${k}</text>
+      </g>`;
+    }).join("");
+    return `<div class="draft-panel" style="text-align:center;">
+      <h3>${c.year}${c.is_current ? " ⏳" : ""}</h3>
+      <svg width="${groupW}" height="${barH + 20}" style="display:block;margin:8px auto;">
+        ${bars}
+      </svg>
+      <div style="font-size:11px;color:var(--text-tertiary);">
+        ${c.n_prospects} ranked · stock+ mean ${c.stock_plus_mean || "—"}
+      </div>
+    </div>`;
+  }).join("");
+
+  host.innerHTML = `<div class="draft-results-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));">${charts}</div>`;
 }
 
 function renderGraduates() {
@@ -16488,6 +17121,7 @@ function render() {
     spotlights:   "spotlights-section",
     traded:       "traded-section",
     injured:      "injured-section",
+    draft:        "draft-section",
     graduates:    "graduates-section",
     farm:         "farm-section",
     leaderboards: "leaderboards-section",
@@ -16578,6 +17212,7 @@ function render() {
   else if (active === "spotlights") renderSpotlights();
   else if (active === "traded")     renderRecentlyTraded();
   else if (active === "injured")    renderInjured();
+  else if (active === "draft")      renderDraft();
   else if (active === "graduates")  renderGraduates();
   else if (active === "farm")       renderFarmSystems();
   else if (active === "leaderboards") renderLeaderboards();

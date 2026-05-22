@@ -885,6 +885,27 @@ def ingest_drops(today: date | None = None,
         log.info("fangraphs_csv: %d cross-CSV name collisions detected; "
                  "disambiguating by fg_player_id", len(canonical_owners))
 
+    # Slug-router gate: hand any <year>draft slug off to draft_csv. Done
+    # before any per-set processing so amateur prospect rows can never land
+    # in the MiLB snapshots table. The handoff happens once per ingest
+    # call regardless of how many draft sets are present — draft_csv has
+    # its own subfolder walker.
+    try:
+        from draft_csv import is_draft_slug, ingest_drops as _draft_ingest
+        draft_groups = [g for g in groups if is_draft_slug(g.get("slug", ""))]
+    except ImportError:
+        draft_groups = []
+    if draft_groups:
+        log.info("fangraphs_csv: %d draft set(s) detected; routing to draft_csv",
+                 len(draft_groups))
+        try:
+            _draft_ingest(drop_dir=drop_dir, processed_dir=processed_dir)
+        except Exception:
+            log.exception("fangraphs_csv: draft_csv ingest crashed")
+        # Drop the draft groups from the MiLB processing list.
+        draft_slugs = {g["slug"] for g in draft_groups}
+        groups = [g for g in groups if g.get("slug") not in draft_slugs]
+
     inserted_total = 0
     sets_processed = 0
     for grp in groups:

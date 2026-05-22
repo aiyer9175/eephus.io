@@ -465,6 +465,117 @@ CREATE TABLE IF NOT EXISTS runs (
     stat_lines    INTEGER DEFAULT 0,
     notes         TEXT
 );
+
+-- ===========================================================================
+-- Draft prospects (amateurs — HS/college players in upcoming MLB drafts)
+-- ===========================================================================
+-- Parallel track to the snapshots/players tables. Column-level firewall:
+-- no draft player ever appears in `snapshots`, `players`, `statlines`,
+-- `sabermetrics`, etc. until they're DRAFTED (see draft_promotion.py),
+-- at which point a single MiLB snapshot row is created in the standard
+-- tables. RPS+ and other MiLB-cohort metrics are structurally excluded.
+
+CREATE TABLE IF NOT EXISTS draft_snapshots (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    source          TEXT NOT NULL,        -- 'fangraphs' | 'espn_draft' | 'mlb_pipeline_draft' | 'manual'
+    snapshot_date   TEXT NOT NULL,
+    interval_label  TEXT NOT NULL,
+    player_key      TEXT NOT NULL,        -- draft_<year>_<name_slug>
+    player_name     TEXT NOT NULL,
+    position        TEXT,
+    school          TEXT,                 -- HS or college name
+    college_commit  TEXT,                 -- HS commits (NULL for college players)
+    player_type     TEXT,                 -- 'HSh'|'HSp'|'COLh'|'COLp'
+    draft_year      INTEGER NOT NULL,
+    rank            INTEGER,              -- per-source rank within the class
+    fv              REAL,
+    risk            TEXT,
+    status          TEXT NOT NULL,        -- 'draft_active' | 'drafted' | 'unsigned' | 'transferred'
+    tools_json      TEXT,                 -- {tools_future, tools_present, report, video, ...}
+    inserted_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(source, interval_label, player_key)
+);
+CREATE INDEX IF NOT EXISTS idx_draft_snap_year   ON draft_snapshots(draft_year);
+CREATE INDEX IF NOT EXISTS idx_draft_snap_player ON draft_snapshots(player_key);
+CREATE INDEX IF NOT EXISTS idx_draft_snap_date   ON draft_snapshots(snapshot_date);
+
+CREATE TABLE IF NOT EXISTS draft_players (
+    player_key      TEXT PRIMARY KEY,
+    player_name     TEXT NOT NULL,
+    position        TEXT,
+    school          TEXT,
+    college_commit  TEXT,
+    player_type     TEXT,
+    draft_year      INTEGER NOT NULL,
+    birth_date      TEXT,
+    bats            TEXT,
+    throws          TEXT,
+    height          TEXT,
+    weight          INTEGER,
+    fg_player_id    TEXT,
+    mlbam_id        INTEGER,
+    promoted_key    TEXT,                  -- canonical MiLB player_key after draft (NULL until drafted)
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Post-draft picks + signing bonuses. One row per (year, pick_overall).
+CREATE TABLE IF NOT EXISTS draft_results (
+    draft_year     INTEGER NOT NULL,
+    pick_overall   INTEGER NOT NULL,
+    round_label    TEXT,                  -- '1', '2', 'CBA', 'CBB', 'PPI', etc.
+    pick_in_round  INTEGER,
+    team           TEXT NOT NULL,         -- canonical org code
+    player_key     TEXT,                  -- draft_<year>_<name_slug> when matched
+    player_name    TEXT NOT NULL,
+    school         TEXT,
+    slot_usd       INTEGER,
+    bonus_usd      INTEGER,
+    signed         INTEGER NOT NULL DEFAULT 0,
+    source         TEXT,                  -- 'fg_draft_csv' | 'mlb_draft_tracker' | 'manual'
+    inserted_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (draft_year, pick_overall)
+);
+CREATE INDEX IF NOT EXISTS idx_draft_results_team   ON draft_results(team);
+CREATE INDEX IF NOT EXISTS idx_draft_results_player ON draft_results(player_key);
+
+-- Mock drafts: one row per (source, snapshot, year, pick).
+CREATE TABLE IF NOT EXISTS draft_mocks (
+    source          TEXT NOT NULL,
+    snapshot_date   TEXT NOT NULL,
+    draft_year      INTEGER NOT NULL,
+    pick_overall    INTEGER NOT NULL,
+    team            TEXT NOT NULL,
+    player_key      TEXT,
+    player_name     TEXT NOT NULL,
+    PRIMARY KEY (source, snapshot_date, draft_year, pick_overall)
+);
+CREATE INDEX IF NOT EXISTS idx_draft_mocks_year ON draft_mocks(draft_year);
+
+-- Draft order — the assigned pick sequence (1-30 first round + comp picks)
+-- for a given year. Pre-draft this drives the "Draft Order & Slots" panel;
+-- post-draft it's redundant with draft_results.team but we keep it so the
+-- mock-draft view can show team logos before draft day.
+CREATE TABLE IF NOT EXISTS draft_order (
+    draft_year     INTEGER NOT NULL,
+    pick_overall   INTEGER NOT NULL,
+    round_label    TEXT,
+    pick_in_round  INTEGER,
+    team           TEXT NOT NULL,
+    slot_usd       INTEGER,
+    source         TEXT NOT NULL,         -- 'mlb_draft_pool' | 'manual'
+    inserted_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (draft_year, pick_overall)
+);
+
+-- Maps draft_<year>_<name> player_keys to canonical MiLB keys after
+-- promotion. Read at promotion time + by the Draft UI to surface a
+-- "DRAFTED — see MiLB profile" link.
+CREATE TABLE IF NOT EXISTS draft_canonical_keys (
+    draft_key      TEXT PRIMARY KEY,
+    milb_key       TEXT NOT NULL,
+    promoted_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_draft_canonical_milb ON draft_canonical_keys(milb_key);
 """
 
 
@@ -971,6 +1082,301 @@ def load_acquisitions() -> dict[str, dict]:
         return {}
     return {r["player_key"]: dict(r) for r in rows}
 
+
+# ===========================================================================
+# Draft prospects (amateurs) — parallel track to snapshots/players
+# ===========================================================================
+
+def insert_draft_snapshots(snapshots: Iterable) -> int:
+    """Upsert draft prospect snapshots. Accepts any iterable of objects
+    with the standard Snapshot field set plus draft-specific extras
+    (school, college_commit, player_type, draft_year). Either a
+    `DraftSnapshot` dataclass instance or a plain dict works."""
+    count = 0
+    with connect() as con:
+        for s in snapshots:
+            if hasattr(s, "__dict__"):
+                d = s.__dict__
+            elif hasattr(s, "_asdict"):
+                d = s._asdict()
+            else:
+                d = dict(s)
+            tools = d.get("tools")
+            tools_json = json.dumps(tools) if tools else None
+            cur = con.execute(
+                """INSERT INTO draft_snapshots
+                     (source, snapshot_date, interval_label, player_key,
+                      player_name, position, school, college_commit, player_type,
+                      draft_year, rank, fv, risk, status, tools_json)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(source, interval_label, player_key) DO UPDATE SET
+                       snapshot_date  = excluded.snapshot_date,
+                       player_name    = excluded.player_name,
+                       position       = COALESCE(excluded.position, draft_snapshots.position),
+                       school         = COALESCE(excluded.school, draft_snapshots.school),
+                       college_commit = COALESCE(excluded.college_commit, draft_snapshots.college_commit),
+                       player_type    = COALESCE(excluded.player_type, draft_snapshots.player_type),
+                       draft_year     = excluded.draft_year,
+                       rank           = excluded.rank,
+                       fv             = excluded.fv,
+                       risk           = COALESCE(excluded.risk, draft_snapshots.risk),
+                       status         = excluded.status,
+                       tools_json     = COALESCE(excluded.tools_json, draft_snapshots.tools_json)""",
+                (d.get("source"), d.get("snapshot_date"), d.get("interval_label"),
+                 d.get("player_key"), d.get("player_name"), d.get("position"),
+                 d.get("school"), d.get("college_commit"), d.get("player_type"),
+                 d.get("draft_year"), d.get("rank"), d.get("fv"),
+                 d.get("risk"), d.get("status", "draft_active"), tools_json),
+            )
+            count += cur.rowcount
+            con.execute(
+                """INSERT INTO draft_players
+                     (player_key, player_name, position, school, college_commit,
+                      player_type, draft_year, birth_date, bats, throws,
+                      height, weight, fg_player_id, mlbam_id)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(player_key) DO UPDATE SET
+                       player_name    = excluded.player_name,
+                       position       = COALESCE(excluded.position, draft_players.position),
+                       school         = COALESCE(excluded.school, draft_players.school),
+                       college_commit = COALESCE(excluded.college_commit, draft_players.college_commit),
+                       player_type    = COALESCE(excluded.player_type, draft_players.player_type),
+                       draft_year     = excluded.draft_year,
+                       birth_date     = COALESCE(excluded.birth_date, draft_players.birth_date),
+                       bats           = COALESCE(excluded.bats, draft_players.bats),
+                       throws         = COALESCE(excluded.throws, draft_players.throws),
+                       height         = COALESCE(excluded.height, draft_players.height),
+                       weight         = COALESCE(excluded.weight, draft_players.weight),
+                       fg_player_id   = COALESCE(excluded.fg_player_id, draft_players.fg_player_id),
+                       mlbam_id       = COALESCE(excluded.mlbam_id, draft_players.mlbam_id),
+                       updated_at     = datetime('now')""",
+                (d.get("player_key"), d.get("player_name"), d.get("position"),
+                 d.get("school"), d.get("college_commit"), d.get("player_type"),
+                 d.get("draft_year"), d.get("birth_date"),
+                 d.get("bats"), d.get("throws"),
+                 d.get("height"), d.get("weight"),
+                 d.get("fg_player_id"), d.get("mlbam_id")),
+            )
+    return count
+
+
+def load_draft_snapshots(draft_year: int | None = None) -> list[dict]:
+    """Return draft_snapshots rows. Filter by draft_year if given."""
+    q = """SELECT id, source, snapshot_date, interval_label, player_key,
+                  player_name, position, school, college_commit, player_type,
+                  draft_year, rank, fv, risk, status, tools_json, inserted_at
+           FROM draft_snapshots"""
+    params: tuple = ()
+    if draft_year is not None:
+        q += " WHERE draft_year = ?"
+        params = (draft_year,)
+    q += " ORDER BY draft_year DESC, snapshot_date DESC, rank ASC"
+    try:
+        with connect() as con:
+            rows = con.execute(q, params).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    out: list[dict] = []
+    for r in rows:
+        d = dict(r)
+        if d.get("tools_json"):
+            try:
+                d["tools"] = json.loads(d["tools_json"])
+            except (ValueError, TypeError):
+                d["tools"] = None
+        else:
+            d["tools"] = None
+        out.append(d)
+    return out
+
+
+def load_draft_players(draft_year: int | None = None) -> dict[str, dict]:
+    """Return {player_key: draft_player_dict} for the named draft year
+    (or every year when draft_year is None)."""
+    q = """SELECT player_key, player_name, position, school, college_commit,
+                  player_type, draft_year, birth_date, bats, throws,
+                  height, weight, fg_player_id, mlbam_id, promoted_key
+           FROM draft_players"""
+    params: tuple = ()
+    if draft_year is not None:
+        q += " WHERE draft_year = ?"
+        params = (draft_year,)
+    try:
+        with connect() as con:
+            rows = con.execute(q, params).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: dict(r) for r in rows}
+
+
+def upsert_draft_results(rows: Iterable[dict]) -> int:
+    """Upsert post-draft pick rows. Each dict carries:
+      draft_year, pick_overall, round_label, pick_in_round, team,
+      player_key (optional), player_name, school, slot_usd, bonus_usd,
+      signed, source.
+    UNIQUE on (draft_year, pick_overall) — re-runs overwrite."""
+    n = 0
+    with connect() as con:
+        for r in rows:
+            con.execute(
+                """INSERT INTO draft_results
+                     (draft_year, pick_overall, round_label, pick_in_round,
+                      team, player_key, player_name, school,
+                      slot_usd, bonus_usd, signed, source)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(draft_year, pick_overall) DO UPDATE SET
+                     round_label   = COALESCE(excluded.round_label, draft_results.round_label),
+                     pick_in_round = COALESCE(excluded.pick_in_round, draft_results.pick_in_round),
+                     team          = excluded.team,
+                     player_key    = COALESCE(excluded.player_key, draft_results.player_key),
+                     player_name   = excluded.player_name,
+                     school        = COALESCE(excluded.school, draft_results.school),
+                     slot_usd      = COALESCE(excluded.slot_usd, draft_results.slot_usd),
+                     bonus_usd     = COALESCE(excluded.bonus_usd, draft_results.bonus_usd),
+                     signed        = excluded.signed,
+                     source        = excluded.source,
+                     inserted_at   = datetime('now')""",
+                (r.get("draft_year"), r.get("pick_overall"),
+                 r.get("round_label"), r.get("pick_in_round"),
+                 r.get("team"), r.get("player_key"),
+                 r.get("player_name"), r.get("school"),
+                 r.get("slot_usd"), r.get("bonus_usd"),
+                 1 if r.get("signed") else 0, r.get("source")),
+            )
+            n += 1
+    return n
+
+
+def load_draft_results(draft_year: int | None = None) -> list[dict]:
+    q = """SELECT draft_year, pick_overall, round_label, pick_in_round,
+                  team, player_key, player_name, school,
+                  slot_usd, bonus_usd, signed, source
+           FROM draft_results"""
+    params: tuple = ()
+    if draft_year is not None:
+        q += " WHERE draft_year = ?"
+        params = (draft_year,)
+    q += " ORDER BY draft_year DESC, pick_overall ASC"
+    try:
+        with connect() as con:
+            rows = con.execute(q, params).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [dict(r) for r in rows]
+
+
+def upsert_draft_order(rows: Iterable[dict]) -> int:
+    n = 0
+    with connect() as con:
+        for r in rows:
+            con.execute(
+                """INSERT INTO draft_order
+                     (draft_year, pick_overall, round_label, pick_in_round,
+                      team, slot_usd, source)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(draft_year, pick_overall) DO UPDATE SET
+                     round_label   = COALESCE(excluded.round_label, draft_order.round_label),
+                     pick_in_round = COALESCE(excluded.pick_in_round, draft_order.pick_in_round),
+                     team          = excluded.team,
+                     slot_usd      = COALESCE(excluded.slot_usd, draft_order.slot_usd),
+                     source        = excluded.source,
+                     inserted_at   = datetime('now')""",
+                (r.get("draft_year"), r.get("pick_overall"),
+                 r.get("round_label"), r.get("pick_in_round"),
+                 r.get("team"), r.get("slot_usd"), r.get("source")),
+            )
+            n += 1
+    return n
+
+
+def load_draft_order(draft_year: int | None = None) -> list[dict]:
+    q = """SELECT draft_year, pick_overall, round_label, pick_in_round,
+                  team, slot_usd, source
+           FROM draft_order"""
+    params: tuple = ()
+    if draft_year is not None:
+        q += " WHERE draft_year = ?"
+        params = (draft_year,)
+    q += " ORDER BY draft_year DESC, pick_overall ASC"
+    try:
+        with connect() as con:
+            rows = con.execute(q, params).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [dict(r) for r in rows]
+
+
+def upsert_draft_mocks(rows: Iterable[dict]) -> int:
+    n = 0
+    with connect() as con:
+        for r in rows:
+            con.execute(
+                """INSERT INTO draft_mocks
+                     (source, snapshot_date, draft_year, pick_overall,
+                      team, player_key, player_name)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(source, snapshot_date, draft_year, pick_overall)
+                   DO UPDATE SET
+                     team        = excluded.team,
+                     player_key  = COALESCE(excluded.player_key, draft_mocks.player_key),
+                     player_name = excluded.player_name""",
+                (r.get("source"), r.get("snapshot_date"), r.get("draft_year"),
+                 r.get("pick_overall"), r.get("team"),
+                 r.get("player_key"), r.get("player_name")),
+            )
+            n += 1
+    return n
+
+
+def load_draft_mocks(draft_year: int | None = None) -> list[dict]:
+    q = """SELECT source, snapshot_date, draft_year, pick_overall,
+                  team, player_key, player_name
+           FROM draft_mocks"""
+    params: tuple = ()
+    if draft_year is not None:
+        q += " WHERE draft_year = ?"
+        params = (draft_year,)
+    q += " ORDER BY snapshot_date DESC, pick_overall ASC"
+    try:
+        with connect() as con:
+            rows = con.execute(q, params).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [dict(r) for r in rows]
+
+
+def link_draft_to_milb(draft_key: str, milb_key: str) -> None:
+    """Record a promotion: draft prospect -> MiLB player_key."""
+    with connect() as con:
+        con.execute(
+            """INSERT INTO draft_canonical_keys (draft_key, milb_key)
+               VALUES (?, ?)
+               ON CONFLICT(draft_key) DO UPDATE SET
+                 milb_key    = excluded.milb_key,
+                 promoted_at = datetime('now')""",
+            (draft_key, milb_key),
+        )
+        con.execute(
+            """UPDATE draft_players SET promoted_key = ?, updated_at = datetime('now')
+               WHERE player_key = ?""",
+            (milb_key, draft_key),
+        )
+
+
+def load_draft_canonical_keys() -> dict[str, str]:
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT draft_key, milb_key FROM draft_canonical_keys"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["draft_key"]: r["milb_key"] for r in rows}
+
+
+# ===========================================================================
+# IL status (existing functionality below)
+# ===========================================================================
 
 def upsert_il_status(by_key: dict[str, dict | None]) -> int:
     """Upsert IL status. Pass None as the value to clear a prior IL row

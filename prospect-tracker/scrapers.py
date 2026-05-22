@@ -113,6 +113,29 @@ class Snapshot:
     tools: dict | None = None
 
 
+@dataclass
+class DraftSnapshot:
+    """Amateur prospect snapshot. Parallel to Snapshot but draft-scoped.
+    No `org` field — amateurs aren't in an MLB pipeline. School / commit
+    take its place, and `draft_year` partitions snapshots by class so the
+    same name across classes never collides."""
+    source: str            # 'espn_draft' | 'mlb_pipeline_draft' | 'fangraphs' | 'manual'
+    snapshot_date: str
+    interval_label: str
+    player_key: str        # draft_<year>_<name_slug>
+    player_name: str
+    position: str | None
+    school: str | None
+    college_commit: str | None
+    player_type: str | None  # 'HSh'|'HSp'|'COLh'|'COLp'
+    draft_year: int
+    rank: int | None
+    fv: float | None
+    risk: str | None
+    status: str            # 'draft_active' | 'drafted' | 'unsigned' | 'transferred'
+    tools: dict | None = None
+
+
 # Tool taxonomy — canonical keys used everywhere downstream (consensus,
 # storage, UI). Sources map their own labels onto these via the
 # per-scraper translation tables (e.g. PIPELINE_TOOL_KEY below).
@@ -1500,6 +1523,435 @@ def scrape_mlb_international(url: str, label: str, snap_date: str, year: int,
         i = max(j + 1, i + 1)
 
     log.info("mlb_international %s -> %d players", label, len(rows))
+    return rows
+
+
+# --- Draft prospect scrapers (ESPN + MLB Pipeline) -----------------------
+# Amateur draft class scrapers. Parallel to scrape_espn_top100 /
+# scrape_mlb_pipeline but emit DraftSnapshot (no org, has school +
+# draft_year + player_type).
+#
+# Both reuse the existing HTML walkers — ESPN's h2-tier + rank-line
+# parsing and MLB.com's Apollo-cache walker — which is why the new
+# functions are mostly bookkeeping rather than parser code.
+
+
+def _draft_player_key(draft_year: int, name: str) -> str:
+    """Local copy of draft_csv.draft_player_key to avoid a circular
+    import (draft_csv imports from scrapers)."""
+    return f"draft_{draft_year}_{normalize_key(name)}"
+
+
+ESPN_DRAFT_INTERVALS = [
+    # Kiley McDaniel's mid-cycle 2026 draft Top 150.
+    ("https://www.espn.com/mlb/story/_/id/48778463/2026-mlb-draft-rankings-update-top-150-prospects",
+     "ESPN 2026 Draft Top 150", "2026-05-20", 2026),
+]
+
+
+def scrape_espn_draft(url: str, label: str, snap_date: str, draft_year: int,
+                      force: bool = False) -> list[DraftSnapshot]:
+    """Parse one ESPN draft prospect article.
+
+    Same h2-tier + rank-line structure as `scrape_espn_top100`, but the
+    rank line format is `<N>. <name>, <pos>, <school>` (school instead
+    of MLB team). Tool-prose extraction and writeup capture reuse the
+    existing helpers (`_parse_espn_tools`, `_ESPN_BIO_HEADER`,
+    `_ESPN_TOOL_LABEL`).
+    """
+    if date.fromisoformat(snap_date) > date.today():
+        return []
+    cache_key = "espn_draft_" + re.sub(r"[^a-z0-9]+", "_", label.lower())
+    cache_path = CACHE_DIR / f"{cache_key}.html"
+
+    if cache_path.exists() and not force:
+        body = cache_path.read_text(encoding="utf-8")
+        log.info("cache hit: %s (%d bytes)", cache_key, len(body))
+    else:
+        log.info("fetching: %s", url)
+        time.sleep(RATE_LIMIT_SECONDS)
+        try:
+            resp = requests.get(url, headers=ESPN_HEADERS, timeout=30)
+        except requests.RequestException as e:
+            log.error("network error fetching %s: %s", url, e)
+            return []
+        if resp.status_code != 200:
+            log.warning("espn_draft %s: HTTP %d", label, resp.status_code)
+            return []
+        cache_path.write_text(resp.text, encoding="utf-8")
+        body = resp.text
+
+    start = body.find('class="article-body"')
+    if start < 0:
+        log.warning("espn_draft %s: article-body div not found", label)
+        return []
+    body = body[start:]
+
+    # Same candidate collection as scrape_espn_top100.
+    candidates: list[tuple[int, str]] = []
+    for m in re.finditer(r"<h2[^>]*>(.*?)</h2>", body, re.DOTALL):
+        candidates.append((m.start(), m.group(1)))
+    for m in re.finditer(
+        r"<p[^>]*>\s*(?:<[^>]+>\s*){0,2}<strong>(.*?)</strong>",
+        body, re.DOTALL,
+    ):
+        candidates.append((m.start(), m.group(1)))
+    for m in re.finditer(r"<p[^>]*>(.*?)</p>", body, re.DOTALL):
+        pblock = m.group(1)
+        # br-split list: each fragment between <br/> is a candidate.
+        # Solo-rank paragraphs (no <br/>): the whole paragraph is a candidate.
+        if "<br" in pblock:
+            for frag in re.split(r"<br\s*/?>", pblock):
+                candidates.append((m.start(), frag))
+        else:
+            candidates.append((m.start(), pblock))
+    candidates.sort(key=lambda c: c[0])
+
+    fv_header = re.compile(r"^\s*(\d{2,3})\+?\s*FV\s*tier", re.IGNORECASE)
+    # Rank line: "1. Roch Cholowsky (21.3), SS, UCLA"
+    # or         "2. Grady Emerson (18.4), SS, Fort Worth Christian HS (TX), Texas commit"
+    # Groups: (1) rank, (2) name+age, (3) pos, (4) school/commit chunk
+    rank_line = re.compile(
+        r"^\s*(\d{1,3})\.\s+(.+?),\s*([A-Za-z0-9/]+?),\s*(.+?)\s*$"
+    )
+    # Strip the "(age.x)" suffix the article appends to every name.
+    _age_paren = re.compile(r"\s*\(\d{1,2}(?:\.\d+)?\)\s*$")
+    # College-commit suffix on HS players: ", <School> commit"
+    _commit_re = re.compile(r"^(.+?)\s*,\s*(.+?)\s+commit\s*$", re.IGNORECASE)
+
+    rank_offsets: list[int] = []
+    for (off, h) in candidates:
+        text = re.sub(r"<[^>]+>", "", h)
+        text = fix_mojibake(text)
+        if rank_line.match(text):
+            rank_offsets.append(off)
+    rank_offsets.append(len(body))
+
+    rows: list[DraftSnapshot] = []
+    current_fv: float | None = None
+    seen_ranks: set[int] = set()
+
+    for (off, h) in candidates:
+        text = re.sub(r"<[^>]+>", "", h)
+        text = fix_mojibake(text)
+        if not text:
+            continue
+        fm = fv_header.match(text)
+        if fm:
+            current_fv = float(fm.group(1))
+            continue
+        rm = rank_line.match(text)
+        if not rm:
+            continue
+        rank = int(rm.group(1))
+        if not (1 <= rank <= 200) or rank in seen_ranks:
+            continue
+        seen_ranks.add(rank)
+        name = rm.group(2).strip()
+        name = _age_paren.sub("", name).strip()
+        pos  = rm.group(3).strip() or None
+        school = rm.group(4).strip()
+        # Pull college commit out of the school chunk for HS players.
+        commit = None
+        cm = _commit_re.match(school)
+        if cm:
+            school = cm.group(1).strip()
+            commit = cm.group(2).strip()
+
+        # Commentary slice → tools + writeup
+        try:
+            next_off = rank_offsets[rank_offsets.index(off) + 1]
+        except (ValueError, IndexError):
+            next_off = len(body)
+        commentary = body[off:next_off]
+        commentary = html.unescape(re.sub(r"<[^>]+>", " ", commentary))
+        commentary = fix_mojibake(commentary)
+        tools = _parse_espn_tools(commentary)
+
+        prose = re.sub(r"\s+", " ", commentary).strip()
+        rank_prefix = f"{rank}. {name}, {pos}, {school}" if pos else f"{rank}. {name}, {school}"
+        idx = prose.find(rank_prefix)
+        if idx >= 0:
+            prose = prose[idx + len(rank_prefix):]
+        while True:
+            stripped = _ESPN_BIO_HEADER.sub("", prose, count=1)
+            stripped = _ESPN_TOOL_LABEL.sub("", stripped, count=1)
+            if stripped == prose:
+                break
+            prose = stripped
+        prose = re.sub(r"\s+", " ", prose).strip()
+        if prose and len(prose) > 60:
+            tools = tools or {}
+            tools.setdefault("_extras", {})["report"] = prose[:8000]
+
+        # Heuristic player_type from school string.
+        ptype = None
+        if re.search(r"\bHS\b", school, re.IGNORECASE) or "High School" in school:
+            ptype = "HS"
+        elif school:
+            ptype = "COL"
+        # Add h/p suffix from position
+        if ptype:
+            ptype += "p" if pos and any(p in pos.upper() for p in ("SP", "RP", "RHP", "LHP")) else "h"
+
+        rows.append(DraftSnapshot(
+            source="espn_draft", snapshot_date=snap_date, interval_label=label,
+            player_key=_draft_player_key(draft_year, name),
+            player_name=name, position=pos, school=school,
+            college_commit=commit, player_type=ptype, draft_year=draft_year,
+            rank=rank, fv=current_fv, risk=None, status="draft_active",
+            tools=tools,
+        ))
+
+    log.info("espn_draft %s -> %d players%s", label, len(rows),
+             " (TIER B working)" if rows else " (TIER B FAILED — selectors stale)")
+    return rows
+
+
+MLB_PIPELINE_DRAFT_INTERVALS = [
+    ("https://www.mlb.com/milb/prospects/draft",
+     "MLB Pipeline 2026 Draft Top 250",
+     date.today().isoformat(),
+     2026),
+]
+
+
+def scrape_mlb_pipeline_draft(url: str, label: str, snap_date: str,
+                              draft_year: int,
+                              force: bool = False) -> list[DraftSnapshot]:
+    """Parse MLB Pipeline's amateur draft prospect rankings page.
+
+    Same Apollo cache pattern as `scrape_mlb_pipeline` (Top 100). Schools
+    live on the Person entity in `colleges[0].name` / `highschools[0].name`
+    instead of `activeRoster.parentOrgName`.
+    """
+    if date.fromisoformat(snap_date) > date.today():
+        return []
+
+    cache_key = f"mlb_pipeline_draft_{draft_year}"
+    cache_path = CACHE_DIR / f"{cache_key}.html"
+    if cache_path.exists() and not force:
+        body = cache_path.read_text(encoding="utf-8")
+        log.info("cache hit: %s (%d bytes)", cache_key, len(body))
+    else:
+        log.info("fetching: %s", url)
+        time.sleep(RATE_LIMIT_SECONDS)
+        try:
+            resp = requests.get(url, headers=MLB_PIPELINE_HEADERS, timeout=30)
+        except requests.RequestException as e:
+            log.error("network error fetching %s: %s", url, e)
+            return []
+        if resp.status_code != 200:
+            log.warning("mlb_pipeline_draft %s: HTTP %d", label, resp.status_code)
+            return []
+        body = resp.text
+        cache_path.write_text(body, encoding="utf-8")
+
+    text = html.unescape(body)
+
+    persons: dict[str, dict] = {}
+    for pid, p_body in _apollo_entities(text, "Person"):
+        first = re.search(r'"useName":"([^"]*)"', p_body)
+        last  = re.search(r'"useLastName":"([^"]*)"', p_body)
+        full  = f"{(first.group(1) if first else '').strip()} " \
+                f"{(last.group(1) if last else '').strip()}".strip()
+        # School: prefer colleges[0].name, else highschools[0].name + state suffix.
+        school = None
+        col_m = re.search(r'"colleges":\[\{[^}]*"name":"([^"]+)"', p_body)
+        if col_m:
+            school = col_m.group(1)
+        else:
+            hs_m = re.search(
+                r'"highschools":\[\{[^}]*"name":"([^"]+)"'
+                r'(?:[^}]*"state":"([^"]+)")?', p_body)
+            if hs_m:
+                base = hs_m.group(1)
+                state = hs_m.group(2)
+                school = f"{base} HS ({state})" if state else f"{base} HS"
+        age_m = re.search(r'"currentAge":(\d+)', p_body)
+        pos_m = re.search(r'"primaryPosition":\{[^}]*"abbreviation":"([^"]+)"', p_body)
+        persons[pid] = {
+            "name":   fix_mojibake(full),
+            "school": school,
+            "age":    int(age_m.group(1)) if age_m else None,
+            "position": pos_m.group(1) if pos_m else None,
+        }
+
+    rows: list[DraftSnapshot] = []
+    starts = [m.start() for m in re.finditer(
+        re.escape('{"__typename":"RankedPlayerEntity",'), text)]
+    seen_ranks: set[int] = set()
+    for idx, s in enumerate(starts):
+        e = starts[idx + 1] if idx + 1 < len(starts) else s + 200_000
+        chunk = text[s:e]
+        rank_m   = re.search(r'"rank":(\d+)', chunk)
+        person_m = re.search(r'"player":\{"__ref":"Person:(\d+)"\}', chunk)
+        pos_m    = re.search(r'"position":"([^"]+)"', chunk)
+        if not (rank_m and person_m):
+            continue
+        rank = int(rank_m.group(1))
+        if rank in seen_ranks:
+            continue
+        seen_ranks.add(rank)
+        pid = person_m.group(1)
+        person = persons.get(pid, {})
+        name = person.get("name")
+        if not name:
+            continue
+        position = pos_m.group(1) if pos_m else person.get("position")
+
+        # Bio + tools + writeup from prospectBio (same shape as top-100)
+        bios = list(re.finditer(
+            r'"contentText":"((?:[^"\\]|\\.)*)","contentTitle":"([^"]*)"', chunk))
+        overall: float | None = None
+        bio_text: str | None = None
+        year_str = str(draft_year)
+        for bio in bios:
+            if bio.group(2) == year_str:
+                m2 = re.search(r'Overall:\s*(\d+)', bio.group(1))
+                if m2:
+                    overall = float(m2.group(1))
+                bio_text = bio.group(1)
+                break
+        if bio_text is None and bios:
+            bio_text = bios[0].group(1)
+            m2 = re.search(r'Overall:\s*(\d+)', bio_text)
+            if m2:
+                overall = float(m2.group(1))
+
+        tools = _parse_pipeline_tools(bio_text) if bio_text else None
+        prose = _clean_pipeline_writeup(bio_text) if bio_text else None
+        if prose and len(prose) > 60:
+            tools = tools or {}
+            tools.setdefault("_extras", {})["report"] = prose[:8000]
+        if person.get("age") is not None:
+            tools = tools or {}
+            tools.setdefault("_extras", {})["age"] = person["age"]
+
+        school = person.get("school")
+        ptype = None
+        if school:
+            if "HS" in school or "High School" in school:
+                ptype = "HS"
+            else:
+                ptype = "COL"
+            ptype += "p" if position and any(p in position.upper() for p in ("SP", "RP", "RHP", "LHP", "P")) else "h"
+
+        rows.append(DraftSnapshot(
+            source="mlb_pipeline_draft", snapshot_date=snap_date,
+            interval_label=label,
+            player_key=_draft_player_key(draft_year, name),
+            player_name=name, position=position, school=school,
+            college_commit=None, player_type=ptype, draft_year=draft_year,
+            rank=rank, fv=overall, risk=None, status="draft_active",
+            tools=tools,
+        ))
+
+    log.info("mlb_pipeline_draft %s -> %d players%s", label, len(rows),
+             " (TIER B working)" if rows else " (TIER B FAILED — selectors stale)")
+    return rows
+
+
+def scrape_all_draft(force: bool = False) -> list[DraftSnapshot]:
+    """Run all draft scrapers, return their combined output."""
+    out: list[DraftSnapshot] = []
+    for url, label, snap, year in ESPN_DRAFT_INTERVALS:
+        try:
+            out.extend(scrape_espn_draft(url, label, snap, year, force=force))
+        except Exception as e:
+            log.exception("espn_draft %s crashed: %s", label, e)
+    for url, label, snap, year in MLB_PIPELINE_DRAFT_INTERVALS:
+        try:
+            out.extend(scrape_mlb_pipeline_draft(url, label, snap, year, force=force))
+        except Exception as e:
+            log.exception("mlb_pipeline_draft %s crashed: %s", label, e)
+    log.info("scrape_all_draft: %d total draft snapshots", len(out))
+    return out
+
+
+# --- MLB Draft results via Stats API (post-draft per-pick + signing bonus) -
+# MLB exposes the full draft history via statsapi.mlb.com/api/v1/draft/<year>.
+# Each pick carries person, team, pickNumber, pickRound, signingBonus,
+# pickValue (slot), and a scoutingReport blurb. No HTML scraping needed.
+
+MLB_DRAFT_API_TEMPLATE = "https://statsapi.mlb.com/api/v1/draft/{year}"
+
+
+def scrape_mlb_draft_tracker(year: int, force: bool = False) -> list[dict]:
+    """Pull one year's draft results from the MLB Stats API.
+
+    Returns a list of dicts compatible with `storage.upsert_draft_results`.
+    Covers every round + pick + signing bonus + slot value. Unsigned
+    picks have `signingBonus=null` and surface as `signed=0`."""
+    url = MLB_DRAFT_API_TEMPLATE.format(year=year)
+    cache_key = f"mlb_draft_api_{year}"
+    fr = _fetch(url, cache_key, force=force, accept_json=True)
+    if fr.status != 200 or not fr.body:
+        log.info("mlb_draft_tracker %d: no data (HTTP %d)", year, fr.status)
+        return []
+    try:
+        payload = json.loads(fr.body)
+    except json.JSONDecodeError:
+        log.warning("mlb_draft_tracker %d: non-JSON response", year)
+        return []
+
+    from trades import canonical_org
+    rows: list[dict] = []
+    rounds = (payload.get("drafts") or {}).get("rounds") or []
+    for r_block in rounds:
+        round_label = str(r_block.get("round") or "")
+        for p in r_block.get("picks") or []:
+            pick_overall = p.get("pickNumber")
+            if not pick_overall:
+                continue
+            person = p.get("person") or {}
+            name = fix_mojibake(person.get("fullName") or "")
+            if not name:
+                continue
+            team_full = (p.get("team") or {}).get("name") or ""
+            org = canonical_org(team_full) or team_full or None
+            if not org:
+                continue
+            bonus = p.get("signingBonus")
+            try:
+                bonus_int = int(float(bonus)) if bonus is not None else None
+            except (TypeError, ValueError):
+                bonus_int = None
+            slot = p.get("pickValue")
+            # pickValue is often a string like "$8,950,000".
+            slot_int = None
+            if slot is not None:
+                s = re.sub(r"[^\d]", "", str(slot))
+                if s:
+                    try:
+                        slot_int = int(s)
+                    except ValueError:
+                        pass
+            # is_signed: explicit flag preferred, else infer from bonus.
+            is_signed_raw = p.get("isSigned")
+            if is_signed_raw is True:
+                signed = 1
+            elif is_signed_raw is False:
+                signed = 0
+            else:
+                signed = 1 if bonus_int else 0
+            rows.append({
+                "draft_year":   year,
+                "pick_overall": pick_overall,
+                "round_label":  p.get("pickRound") or round_label or None,
+                "pick_in_round": p.get("roundPickNumber"),
+                "team":         org,
+                "player_key":   _draft_player_key(year, name),
+                "player_name":  name,
+                "school":       (p.get("school") or {}).get("name") if isinstance(p.get("school"), dict) else None,
+                "slot_usd":     slot_int,
+                "bonus_usd":    bonus_int,
+                "signed":       signed,
+                "source":       "mlb_stats_api",
+            })
+
+    log.info("mlb_draft_tracker %d: %d picks parsed (%d signed)",
+             year, len(rows), sum(1 for r in rows if r.get("signed")))
     return rows
 
 
