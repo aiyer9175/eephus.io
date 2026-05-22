@@ -201,6 +201,17 @@ _LEADING_HEADER_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Leading writeup-source label noise — MLB Pipeline draft + overseas
+# scrapes prepend "Video scouting report »" (or •, —, :, etc.) before
+# the actual prose. The » (U+00BB) is the most common form in the
+# stored draft data; bullets and dashes appear in newer scrapes.
+# Character class also includes the U+FFFD replacement char that shows
+# up when latin-1 / utf-8 decode mojibakes the separator.
+_LEADING_VIDEO_REPORT_RE = re.compile(
+    r"^Video\s+scouting\s+report\s*[•‣◦·–—:\-»«›‹>?�]+\s*",
+    re.IGNORECASE,
+)
+
 
 def _clean_report_prose(text: str | None) -> str | None:
     """Centralized writeup cleaner — strips page-navigation cruft,
@@ -255,6 +266,7 @@ def _clean_report_prose(text: str | None) -> str | None:
 
     # 5. Strip leading section header artifacts.
     s = _LEADING_HEADER_RE.sub("", s).lstrip()
+    s = _LEADING_VIDEO_REPORT_RE.sub("", s).lstrip()
 
     # 6. Collapse non-breaking space + double spaces.
     s = s.replace(" ", " ")
@@ -265,6 +277,126 @@ def _clean_report_prose(text: str | None) -> str | None:
     if len(s) < 15:
         return None
     return s
+
+
+def _backfill_writeup_cleanup(
+    paths: tuple[str, ...] = (
+        "data/scout_reports.json",
+        "data/draft_timeseries.json",
+        "data/overseas_timeseries.json",
+    ),
+) -> dict[str, tuple[int, int]]:
+    """One-shot pass that re-applies `_clean_report_prose` to every
+    writeup already stored on disk. The scrapers all call the cleaner
+    at scrape time, but writeups ingested BEFORE the cleaner was wired
+    in (or before any later regex tweaks) still carry cruft like
+    "Video scouting report" or "Read the full report >>". This walks
+    every known writeup field in each JSON file in place.
+
+    Returns {path: (cleaned, total)} for logging."""
+    import json
+    import pathlib
+
+    results: dict[str, tuple[int, int]] = {}
+
+    def _maybe_clean(obj: dict, key: str, ctr: list[int]) -> None:
+        """Re-clean obj[key] if it's a non-trivial string."""
+        v = obj.get(key)
+        if not isinstance(v, str) or not v.strip():
+            return
+        ctr[1] += 1
+        cleaned = _clean_report_prose(v)
+        if cleaned is not None and cleaned != v:
+            obj[key] = cleaned
+            ctr[0] += 1
+        elif cleaned is None and len(v) >= 15:
+            # Cleaner rejected the string outright — leave the original
+            # in place rather than dropping the writeup entirely.
+            pass
+
+    def _walk_tool_grades(prospects: list) -> tuple[int, int]:
+        """Per-prospect: scan tool_grades[*]._extras + each snapshot's
+        points[].tools._extras for writeup fields. The per-snapshot
+        path is where the draft/overseas sources actually carry their
+        prose — tool_grades is the latest-grade flat view."""
+        ctr = [0, 0]
+        EXTRAS_KEYS = ("report", "writeup", "bio", "scouting_report", "prose")
+
+        def _scan_extras(extras: dict) -> None:
+            if not isinstance(extras, dict):
+                return
+            for k in EXTRAS_KEYS:
+                _maybe_clean(extras, k, ctr)
+
+        for p in prospects or []:
+            if not isinstance(p, dict):
+                continue
+            tg = p.get("tool_grades") or {}
+            for sub in tg.values() if isinstance(tg, dict) else []:
+                if isinstance(sub, dict):
+                    _scan_extras(sub.get("_extras") or {})
+            # Per-snapshot writeups — draft + overseas attach the
+            # historical prose to each `points[].tools._extras` so the
+            # report-cleaner needs to walk every snapshot, not just the
+            # latest tool_grades summary.
+            for snap in (p.get("points") or []):
+                if not isinstance(snap, dict):
+                    continue
+                tools = snap.get("tools") or {}
+                if isinstance(tools, dict):
+                    _scan_extras(tools.get("_extras") or {})
+            # A handful of draft sources lift the report up to the
+            # prospect object directly — clean those too.
+            for k in EXTRAS_KEYS:
+                _maybe_clean(p, k, ctr)
+        return tuple(ctr)  # type: ignore[return-value]
+
+    for path_str in paths:
+        path = pathlib.Path(path_str)
+        if not path.exists():
+            print(f"  skip (missing): {path_str}")
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            print(f"  skip (parse failed): {path_str} — {exc}")
+            continue
+
+        cleaned = 0
+        total = 0
+
+        if path.name == "scout_reports.json":
+            # Shape: { player_key: { source: [ {date, label, text, hash}, ... ] } }
+            for sources in data.values() if isinstance(data, dict) else []:
+                if not isinstance(sources, dict):
+                    continue
+                for entries in sources.values():
+                    if not isinstance(entries, list):
+                        continue
+                    for entry in entries:
+                        if not isinstance(entry, dict):
+                            continue
+                        ctr = [0, 0]
+                        _maybe_clean(entry, "text", ctr)
+                        cleaned += ctr[0]
+                        total += ctr[1]
+        elif path.name == "draft_timeseries.json":
+            for cls in (data.get("classes") or []):
+                c, t = _walk_tool_grades(cls.get("prospects") or [])
+                cleaned += c
+                total += t
+        elif path.name == "overseas_timeseries.json":
+            for league in (data.get("leagues") or []):
+                c, t = _walk_tool_grades(league.get("prospects") or [])
+                cleaned += c
+                total += t
+
+        if cleaned:
+            path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+        results[path_str] = (cleaned, total)
+        print(f"  {path_str}: cleaned {cleaned} of {total} writeups")
+
+    return results
 
 
 def normalize_key(name: str) -> str:

@@ -187,82 +187,124 @@
        references throughout the JS render functions keep working —
        only the values shift. */
     [data-theme="dark"] {
-      /* Backgrounds — shift from navy toward "vintage dark card stock":
-         a warm slate that retains the baseball-card paper feel. Each
-         layer is ~5% lighter than the last so layered cards still stack
-         visually. The cooler navy from the original palette read as
-         "generic tech UI" rather than continuing the warm-paper
-         character of the light theme. */
-      --bg-primary:       #1A1E29;   /* warm dark slate */
-      --bg-secondary:     #232836;   /* card surface */
-      --bg-tertiary:      #2C3242;   /* alt rows / muted panels */
-      --bg-header:        #0F121C;   /* deep header band */
-      --text-primary:     #F4EFE0;   /* lifted paper cream */
-      --text-secondary:   #D0CCBA;   /* warm light gray — lifted for contrast */
-      --text-tertiary:    #95907D;   /* sepia muted — lifted from #7C8089 */
-      --border:           #3F4555;
-      --border-light:     #2F3543;
+      /* DARK MODE = Topps Chrome / refractor aesthetic. Where the light
+         theme evokes a traditional warm-paper baseball card, dark mode
+         leans modern-premium: deep ink-black background, chromed silver
+         borders on the detail header, refractor-rainbow accent ramp,
+         holographic glow on elite-tier FV badges. */
+      --bg-primary:       #0A0E16;   /* deep ink */
+      --bg-secondary:     #141923;   /* card surface */
+      --bg-tertiary:      #1E2535;   /* alt rows */
+      --bg-header:        #050810;   /* near-black header band */
+      --text-primary:     #E8EEF5;
+      --text-secondary:   #A8B5C8;
+      --text-tertiary:    #6B7A8F;
+      --border:           #2A3142;
+      --border-light:     #1E2535;
 
-      /* Accent hues — keep the light-theme intent but lifted for dark
-         backgrounds. The variable NAMES match the light theme; only the
-         values shift. */
-      --neon-green:       #5DCF7A;
-      --neon-magenta:     #F47B7B;
-      --neon-cyan:        #8FCDF5;
-      --neon-amber:       #F4C952;
-      --neon-violet:      #B49AE8;
+      /* Refractor accent ramp — cyan + magenta + gold + mint, the
+         classic Topps Chrome rainbow. Variable NAMES match the light
+         theme so per-component styles work without changes. */
+      --neon-green:       #4FFF9E;   /* refractor mint */
+      --neon-magenta:     #FF4FD8;   /* refractor magenta */
+      --neon-cyan:        #00D9FF;   /* refractor cyan */
+      --neon-amber:       #FFD700;   /* refractor gold */
+      --neon-violet:      #B47CFF;   /* refractor purple */
       --spend-ifa:        var(--neon-amber);
-      --spend-draft:      #C9A579;     /* lifted saddle for dark theme */
+      --spend-draft:      #4FD9FF;
 
-      --up:    #5DCF7A;
-      --down:  #F47B7B;
-      --grad:  #B49AE8;
+      --up:    #4FFF9E;
+      --down:  #FF6B7A;
+      --grad:  #B47CFF;
 
-      /* FV badges — keep the warm-to-cool ramp but lift `fg` contrast
-         on the 45-25 mid-band so labels stay readable on the darker
-         backgrounds. The elite tiers (80-60) stay nearly the same as
-         the light theme — saturated gold/orange already pop on dark. */
-      --fv-80-bg: #FFE08A;  --fv-80-fg: #5B3300;  --fv-80-bd: #C9962A;
-      --fv-75-bg: #FCC773;  --fv-75-fg: #5E2D08;  --fv-75-bd: #C97A1B;
-      --fv-70-bg: #F4AB60;  --fv-70-fg: #5C2009;  --fv-70-bd: #B85419;
-      --fv-65-bg: #E89058;  --fv-65-fg: #531A0C;  --fv-65-bd: #A77418;
-      --fv-60-bg: #D9B07A;  --fv-60-fg: #422E12;  --fv-60-bd: #8E7232;
-      --fv-55-bg: #B89C72;  --fv-55-fg: #1F170A;  --fv-55-bd: #806E48;
-      --fv-50-bg: #9C8E70;  --fv-50-fg: #14110A;  --fv-50-bd: #6E6852;
-      --fv-45-bg: #7C7458;  --fv-45-fg: #F4EFE0;  --fv-45-bd: #6B675A;
-      --fv-40-bg: #595440;  --fv-40-fg: #F4EFE0;  --fv-40-bd: #686358;
-      --fv-35-bg: #4B453A;  --fv-35-fg: #E0DCCB;  --fv-35-bd: #645F55;
-      --fv-30-bg: #3E392F;  --fv-30-fg: #CCC6B5;  --fv-30-bd: #5F5A50;
-      --fv-25-bg: #322E26;  --fv-25-fg: #B6B0A0;  --fv-25-bd: #5A554B;
-      --fv-20-bg: #28241D;  --fv-20-fg: #A6A090;  --fv-20-bd: #555047;
+      /* FV tiers — refractor rainbow (replaces the warm gold ramp).
+         80=gold, 70=magenta, 65=purple, 60=cyan, 55=mint, 50-20 dim
+         to silver/graphite so elite tiers pop hard against them. */
+      --fv-80-bg: #FFD700;  --fv-80-fg: #1A1208;  --fv-80-bd: #FFB300;
+      --fv-75-bg: #FFAB4F;  --fv-75-fg: #1A0F02;  --fv-75-bd: #E08A1A;
+      --fv-70-bg: #FF6FE0;  --fv-70-fg: #170518;  --fv-70-bd: #D930B5;
+      --fv-65-bg: #B47CFF;  --fv-65-fg: #0F0418;  --fv-65-bd: #8B4FE0;
+      --fv-60-bg: #4FD9FF;  --fv-60-fg: #02181F;  --fv-60-bd: #1AB0E0;
+      --fv-55-bg: #4FFF9E;  --fv-55-fg: #021A0B;  --fv-55-bd: #1AE070;
+      --fv-50-bg: #B8C5D8;  --fv-50-fg: #0F1420;  --fv-50-bd: #8B95AB;
+      --fv-45-bg: #6B7A8F;  --fv-45-fg: #E8EEF5;  --fv-45-bd: #4A5468;
+      --fv-40-bg: #4A5468;  --fv-40-fg: #E8EEF5;  --fv-40-bd: #353C4E;
+      --fv-35-bg: #3A4254;  --fv-35-fg: #D0D8E8;  --fv-35-bd: #2A3142;
+      --fv-30-bg: #2E3548;  --fv-30-fg: #B8C5D8;  --fv-30-bd: #232A3A;
+      --fv-25-bg: #25293A;  --fv-25-fg: #A0AAB8;  --fv-25-bd: #1E2535;
+      --fv-20-bg: #1E2535;  --fv-20-fg: #8B95AB;  --fv-20-bd: #1A2030;
 
-      /* Level pills — same warm-to-cool intent, bump bg saturation so
-         they pop on the dark warm slate. */
-      --level-very-young-bg: #234A28;  --level-very-young-fg: #C5EAC8;
-      --level-young-bg:      #1F3A53;  --level-young-fg:      #C0DCF2;
+      /* Level pills — refractor tones (mint/cyan/gold/magenta) to
+         match the FV ramp aesthetic. */
+      --level-very-young-bg: #163A28;  --level-very-young-fg: #4FFF9E;
+      --level-young-bg:      #12283D;  --level-young-fg:      #4FD9FF;
       --level-neutral-bg:    var(--bg-tertiary);
                              --level-neutral-fg: var(--text-secondary);
-      --level-old-bg:        #5A4520;  --level-old-fg:        #F8DE94;
-      --level-too-old-bg:    #5A241F;  --level-too-old-fg:    #F8B6B0;
-      --level-mlb-bg:        #F4EFE0;  --level-mlb-fg:        #0F121C;
+      --level-old-bg:        #3D2A0E;  --level-old-fg:        #FFD700;
+      --level-too-old-bg:    #3D1218;  --level-too-old-fg:    #FF6B7A;
+      --level-mlb-bg:        #E8EEF5;  --level-mlb-fg:        #05080F;
 
-      --accent-tj-soft:        rgba(180, 154, 232, 0.22);
-      --accent-tj-border:      rgba(180, 154, 232, 0.60);
-      --accent-il-soft:        rgba(244, 201, 82, 0.18);
-      --accent-il-border:      rgba(244, 201, 82, 0.55);
+      --accent-tj-soft:        rgba(180, 124, 255, 0.20);
+      --accent-tj-border:      rgba(180, 124, 255, 0.60);
+      --accent-il-soft:        rgba(255, 215, 0, 0.16);
+      --accent-il-border:      rgba(255, 215, 0, 0.55);
 
-      --org-color: #8FCDF5;
-      --org-color-soft: rgba(143, 205, 245, 0.10);
+      --org-color: #00D9FF;
+      --org-color-soft: rgba(0, 217, 255, 0.10);
 
-      /* Warmer drop shadow that doesn't muddy the warm backgrounds. */
-      --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.40), 0 1px 2px rgba(0, 0, 0, 0.25);
-      --shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.50), 0 0 0 1px rgba(143, 205, 245, 0.18);
+      /* Deeper inked drop shadow + cyan refractor halo on hover. */
+      --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.65), 0 2px 6px rgba(0, 0, 0, 0.50);
+      --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.70), 0 0 0 1px rgba(0, 217, 255, 0.30);
 
-      /* In dark mode the neon accents are LIGHT (lifted blue/gold/green)
-         so text sitting on them needs to flip to near-black. The hover
-         tint also flips: lift over the dark surface instead of darken. */
-      --text-on-accent: #0F121C;
-      --bg-hover: rgba(244, 239, 224, 0.06);
+      /* Refractor accents are SATURATED — text on them flips to ink. */
+      --text-on-accent: #05080F;
+      --bg-hover: rgba(0, 217, 255, 0.08);
+    }
+
+    /* ── Topps Chrome / refractor card treatments (dark mode only) ──
+       Light mode keeps the warm-paper feel; these overrides amp the
+       detail-page header into a chromed silver frame and put a
+       holographic glow on elite-tier FV badges so the modern card
+       lineage reads at a glance. */
+    [data-theme="dark"] .detail-page-header {
+      /* Chromed silver gradient border via double-background trick. The
+         inner layer is the actual surface; outer is the silvery edge. */
+      border: 1px solid transparent;
+      background-image:
+        linear-gradient(var(--bg-secondary), var(--bg-secondary)),
+        linear-gradient(135deg, #2A3142 0%, #8FA8C8 50%, #2A3142 100%);
+      background-origin: border-box;
+      background-clip: padding-box, border-box;
+    }
+    [data-theme="dark"] .card-rarity-chrome {
+      /* Faster shimmer + brighter under the deep-ink background. */
+      animation-duration: 3s;
+      filter: brightness(1.15) saturate(1.1);
+    }
+    [data-theme="dark"] .card-rarity-holo {
+      /* Saturated refractor rainbow replaces the lighter foil tint. */
+      background:
+        linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+        linear-gradient(135deg,
+          #00D9FF 0%, #FF4FD8 25%, #FFD700 50%,
+          #4FFF9E 75%, #00D9FF 100%) border-box;
+      background-size: 100% 100%, 300% 300%;
+    }
+    /* Holographic glow on elite FV badges — the refractor shine. */
+    [data-theme="dark"] .fv-badge.fv-80 {
+      box-shadow: 0 0 16px rgba(255, 215, 0, 0.60), 0 0 4px rgba(255, 215, 0, 0.80);
+    }
+    [data-theme="dark"] .fv-badge.fv-75 {
+      box-shadow: 0 0 12px rgba(255, 171, 79, 0.55);
+    }
+    [data-theme="dark"] .fv-badge.fv-70 {
+      box-shadow: 0 0 12px rgba(255, 111, 224, 0.55);
+    }
+    [data-theme="dark"] .fv-badge.fv-65 {
+      box-shadow: 0 0 10px rgba(180, 124, 255, 0.50);
+    }
+    [data-theme="dark"] .fv-badge.fv-60 {
+      box-shadow: 0 0 8px rgba(79, 217, 255, 0.45);
     }
     /* ── Standard breakpoints (Phase 1 of the UI restructure) ──
        Today there are 8 distinct @media values (640, 720, 760, 900,
@@ -487,7 +529,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 4px;
-      margin: 8px 0 16px;
+      margin: 4px 0 16px;
       padding: 6px 8px;
       border-top: 1px solid var(--border-light);
       border-bottom: 1px solid var(--border-light);
@@ -497,6 +539,7 @@
       background: var(--bg-primary);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
     .detail-tab {
       font-family: var(--font-sans);
@@ -524,9 +567,13 @@
     .detail-tab-panel {
       /* Tab content fills the available width. Sub-grids inside each
          tab still use .player-detail-grid / .detail-wide-grid as
-         needed. */
+         needed. min-width:0 prevents nested 3-col grids from blowing
+         out their column width on narrow viewports. */
       width: 100%;
+      min-width: 0;
     }
+    .detail-tab-panel > * { min-width: 0; }
+    .farm-overview-main { min-width: 0; }
     /* Pagination strip — used at the bottom of every paginated list /
        leaderboard / glossary view. Prev/Next anchors at the ends with
        numbered chips between; "Showing X-Y of Z" caption right-aligned. */
@@ -1260,6 +1307,37 @@
       overflow: hidden;
       text-overflow: ellipsis;
       display: inline-block;
+    }
+    /* Per-tool 20-80 grade pills (5 tools, hitter or pitcher set).
+       Compact "HIT 55" pairs so a row can show all 5 in ~150px. */
+    body.density-expanded .player-row .expand-tools {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+      margin-right: 6px;
+    }
+    body.density-expanded .player-row .expand-tool-pill {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 3px;
+      padding: 1px 6px;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.3;
+    }
+    body.density-expanded .player-row .etp-label {
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+      font-weight: 600;
+    }
+    body.density-expanded .player-row .etp-val {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
     }
 
     /* One-line auto-narrative under each list row's player name —
@@ -2062,7 +2140,10 @@
     /* Sticky header — column labels stay anchored below the global nav
        as the farm list scrolls. The offset matches the new --sticky-top
        custom property so future changes touch one place. */
-    :root { --sticky-top: 60px; }
+    /* Updated for the v4 tab refactor — the new .detail-tabs strip
+       is ~52px tall (padding + chip + border-bottom), so other sticky
+       elements need to park beneath it instead of behind it. */
+    :root { --sticky-top: 64px; }
     .farm-header {
       position: sticky;
       top: var(--sticky-top, 60px);
@@ -2880,9 +2961,9 @@
     }
     .farm-side {
       position: sticky;
-      top: 12px;
+      top: calc(var(--sticky-top, 64px) + 12px);
       align-self: start;
-      max-height: calc(100vh - 24px);
+      max-height: calc(100vh - var(--sticky-top, 64px) - 24px);
       overflow-y: auto;
       padding-right: 4px;
       /* Hide scrollbar visually but keep it functional */
@@ -3050,6 +3131,19 @@
       font-size: 10px; color: var(--text-tertiary); margin-top: 4px;
       line-height: 1.4;
     }
+    /* Horizontal decision-tree SVG. Default view on desktop; mobile
+       drops back to the accordion fallback below. */
+    .grade-tree-svg {
+      margin: 12px 0;
+      padding: 8px 0;
+    }
+    .grade-tree-fallback { display: none; }
+    @media (max-width: 860px) {
+      .grade-tree-svg { display: none; }
+      .grade-tree-fallback { display: block; }
+      .grade-tree-fallback > summary { display: none; }
+      .grade-tree-fallback > div { display: block; }
+    }
     .gt-branch {
       border: 1px solid var(--border-light);
       border-radius: var(--radius-sm);
@@ -3149,6 +3243,11 @@
       padding: 6px; border-radius: 3px;
       background: var(--bg-primary);
     }
+    .rs-stat.is-warn {
+      background: rgba(220, 80, 80, 0.10);
+      border: 1px solid rgba(220, 80, 80, 0.30);
+    }
+    .rs-stat.is-warn .rs-stat-val { color: var(--down); }
     .rs-stat-label {
       font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
       color: var(--text-tertiary);
@@ -3412,7 +3511,7 @@
       justify-content: space-between;
       gap: 18px;
       flex-wrap: wrap;
-      margin-bottom: 18px;
+      margin-bottom: 8px;
       padding: 16px 18px 16px 22px;
       background: var(--bg-secondary);
       border: 1px solid var(--border);
@@ -5764,9 +5863,11 @@ function _inlineBadgeStrip(p, max = 3) {
   // list-row inline strip per beta-cleanup plan. Acquisition method is
   // still surfaced on the detail-page tile + accordion; on the list it
   // was either redundant (method also shown elsewhere) or visual noise.
+  // Tools+ pill removed here — it lived twice (inline strip AND the
+  // expanded-row footer). The expanded row owns it now; this strip
+  // keeps the higher-signal pills (boom/bust, health, Savant, arsenal).
   const builders = [
     typeof boomBustPillHTML       === "function" ? boomBustPillHTML       : null,
-    typeof toolPlusPillHTML       === "function" ? toolPlusPillHTML       : null,
     typeof healthBadgeHTML        === "function" ? healthBadgeHTML        : null,
     typeof savantInlinePillHTML   === "function" ? savantInlinePillHTML   : null,
     typeof arsenalMiniHTML        === "function" ? arsenalMiniHTML        : null,
@@ -5788,8 +5889,47 @@ function _inlineBadgeStrip(p, max = 3) {
 // line, a Statcast micro-tile, and a recent-FV-history caption pulled
 // from the candlestick fields. Each block guards on the underlying
 // data being present.
+// Tool grades shown on prospect list expanded rows — compact pill
+// strip with the 5 most-relevant 20-80 grades for the player type.
+// Reads p.tools.grades when populated, falls back to the latest
+// snapshot's tools_consensus. Returns "" when no grades available.
+function _toolGradeStripHTML(p) {
+  const grades = (p.tools && p.tools.grades) || {};
+  const latest = (p.points && p.points.length)
+    ? (p.points[p.points.length - 1].tools_consensus || {}) : {};
+  const get = k => {
+    const v = grades[k];
+    if (v != null && !isNaN(v)) return Number(v);
+    const lv = latest[k];
+    return (lv != null && !isNaN(lv)) ? Number(lv) : null;
+  };
+  // Pick per-tool keys based on whether the prospect reads as pitcher.
+  const pos = String(p.position || '').toUpperCase();
+  const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(pos)
+                  || ((p.sabermetrics || {}).is_pitcher === true);
+  const keys = isPitcher
+    ? [['FB','fb'], ['SL','sl'], ['CB','cb'], ['CH','ch'], ['CMD','cmd']]
+    : [['HIT','hit'], ['POW','game_pwr'], ['SPD','speed'], ['FLD','field'], ['ARM','throw']];
+  const pills = keys.map(([label, k]) => {
+    const v = get(k);
+    if (v == null) return null;
+    // Color by 20-80 tier — 60+ green, 50 neutral, 40 orange, ≤35 red.
+    const c = v >= 60 ? 'var(--up)'
+            : v >= 50 ? 'var(--text-primary)'
+            : v >= 40 ? 'var(--neon-amber)'
+            :           'var(--down)';
+    return `<span class="expand-tool-pill" title="${label} ${v} / 80"><span class="etp-label">${label}</span><span class="etp-val" style="color:${c};">${Math.round(v)}</span></span>`;
+  }).filter(Boolean);
+  if (!pills.length) return '';
+  return `<span class="expand-tools">${pills.join('')}</span>`;
+}
+
 function playerExpandedMetaHTML(p) {
   const parts = [];
+  // Per-tool 20-80 grade pills — primary signal we want surfaced on
+  // expanded rows since the inline strip no longer carries Tools+.
+  const toolStrip = _toolGradeStripHTML(p);
+  if (toolStrip) parts.push(toolStrip);
   // Flag content moved into the always-visible row summary (see
   // `makeListRowSummary`). The expanded-meta row now only carries
   // Savant tiles unique to expanded density.
@@ -8060,12 +8200,40 @@ function renderCharts() {
   const sx = v => ML + ((v - xLo) / (xHi - xLo)) * innerW;
   const sy = v => MT + innerH - ((v - yLo) / (yHi - yLo)) * innerH;
 
-  // Trendline
+  // Trendline + on-chart R² chip. Chip sits top-right so it's visible
+  // without consulting the caption below — gives the reader an instant
+  // read on trend strength. Hover anywhere on the dashed line shows the
+  // full equation as a tooltip.
   let trend = trendOn ? _linearRegression(dots.map(d => [d.x, d.y])) : null;
   const trendLine = trend
     ? `<line x1="${sx(xLo).toFixed(1)}" y1="${sy(trend.m * xLo + trend.b).toFixed(1)}"
               x2="${sx(xHi).toFixed(1)}" y2="${sy(trend.m * xHi + trend.b).toFixed(1)}"
-              stroke="var(--neon-orange)" stroke-width="1.5" stroke-dasharray="6,4"/>`
+              stroke="var(--neon-orange)" stroke-width="1.5" stroke-dasharray="6,4"
+              style="cursor:help;">
+         <title>Linear trendline: y = ${trend.m.toFixed(4)}x + ${trend.b.toFixed(3)} · R² = ${trend.r2.toFixed(3)}</title>
+       </line>`
+    : "";
+  // R² chip — a small pill near top-right of the plot area.
+  const r2Chip = trend
+    ? (() => {
+        const cx = ML + innerW - 8;  // right edge of plot area
+        const cy = MT + 14;
+        const r2 = trend.r2;
+        // Color the chip by trend strength: strong (≥0.5), moderate
+        // (≥0.2), weak (<0.2). Keeps the user from over-trusting noise.
+        const fill = r2 >= 0.5 ? "var(--up)"
+                  :  r2 >= 0.2 ? "var(--neon-orange)"
+                  :              "var(--text-tertiary)";
+        return `
+          <g style="cursor:help;">
+            <title>R² = ${r2.toFixed(3)} — share of variance the linear fit explains. ≥0.5 strong, 0.2–0.5 moderate, &lt;0.2 weak.</title>
+            <rect x="${(cx - 88).toFixed(1)}" y="${(cy - 12).toFixed(1)}" width="86" height="20"
+                  rx="3" fill="var(--bg-secondary)" stroke="${fill}" stroke-width="1"/>
+            <text x="${(cx - 80).toFixed(1)}" y="${(cy + 2).toFixed(1)}"
+                  font-family="var(--font-mono)" font-size="10" font-weight="700"
+                  fill="${fill}">R² ${r2.toFixed(3)}</text>
+          </g>`;
+      })()
     : "";
 
   // Axis ticks (4 each)
@@ -8105,6 +8273,7 @@ function renderCharts() {
     <text x="14" y="${(MT+innerH/2).toFixed(1)}" text-anchor="middle"
           font-size="11" fill="var(--text-primary)" font-weight="600"
           transform="rotate(-90 14 ${(MT+innerH/2).toFixed(1)})">${escapeHtml(yAxis.label)}</text>
+    ${r2Chip}
   `;
   document.getElementById("chart-meta").innerHTML =
     `${dots.length} ${mode} plotted · ${escapeHtml(xAxis.label)} vs ${escapeHtml(yAxis.label)}`;
@@ -11656,7 +11825,14 @@ const GLOSSARY = {
     priority: 60,
     short: "Combined post-TJ % and trailing 12-month IL-days mean. INVERSE — lower burden = better letter grade.",
     long: "Per-org health_burden = 100 × post_tj_pct + il_days_mean. The score is INVERTED before ranking so the org with the LOWEST burden gets the BEST letter grade (A+ = healthiest system). The Health component has the smallest weight in farm_score (1%) because it's the most volatile category, but ranks separately as a stand-alone indicator.",
-    related: ["post_tj", "on_il", "il_10_15_60", "farm_report_card"],
+    related: ["post_tj", "on_il", "il_10_15_60", "farm_il_pct_current", "farm_report_card"],
+  },
+  "farm_il_pct_current": {
+    name: "On IL now (farm)", aliases: ["IL%", "Farm IL%", "On IL now"], category: "custom-index",
+    priority: 61,
+    short: "Share of an org's tracked actives currently on the injured list (any type). Snapshot, not trailing window.",
+    long: "Per-org il_pct_current = il_current_count / active_count, computed at export time from the il_status table (the same source the per-player IL chip uses). Distinct from Health Burden, which weights 12-month IL DAYS — this metric just counts WHO IS DOWN RIGHT NOW. Surfaced on the Roster Snapshot tile and highlighted red when ≥10% of the org is currently sidelined.",
+    related: ["farm_grade_health_burden", "on_il", "il_10_15_60"],
   },
 };
 
@@ -12772,6 +12948,166 @@ function makeFarmReportCard(org) {
     ? `<span class="gt-comp-cap" title="Conviction cap applied — no graduate with WAR/yr ≥ 4.0 (last 5yr) or career WAR ≥ 12 ever. Capped at the 75th-pctile farm_score (uncapped would be ${org.farm_score_uncapped != null ? org.farm_score_uncapped.toFixed(1) : '—'}).">CAPPED</span>`
     : '';
 
+  // ── Horizontal SVG decision tree ──
+  // Root rectangle (left) → 4 branch circles (middle) → leaf bars (right).
+  // Each leaf displays: name · letter grade · metric value as the
+  // "payoff" of that path. Mirrors a probability/decision-tree
+  // visualization. At narrow viewports (<860px) CSS hides the SVG and
+  // falls back to the accordion below.
+  const svgTree = (() => {
+    // Each branch declares its leaves up front so geometry computes from
+    // a single source of truth. `metric` is the short value shown next to
+    // each leaf bar.
+    const branchSpecs = [
+      {
+        key: 'acquisition_strategy', label: 'Acquisition', weight: W.acquisition_strategy,
+        leaves: [
+          { label: 'Draft Performance',  letterKey: 'acq_draft',  metric: draftFmt(draftMetric) },
+          { label: 'IFA Performance',    letterKey: 'acq_ifa',    metric: fmtSignedWag((t.acq_ifa || {}).wag_mean) },
+          { label: 'Trade Acumen',       letterKey: 'tx_trades',  metric: fmtNetFv(tradeLeaf.net_fv) },
+          { label: 'Waiver Claims',      letterKey: 'tx_waivers', metric: fmtNetFv(waiverLeaf.net_fv) },
+        ],
+      },
+      {
+        key: 'development', label: 'Development', weight: W.development,
+        leaves: [
+          { label: 'Hitter Tools DvM+',  letterKey: 'dev_hitter',  metric: fmtDvm((t.dev_hitter  || {}).dvm_plus) },
+          { label: 'Pitcher Tools DvM+', letterKey: 'dev_pitcher', metric: fmtDvm((t.dev_pitcher || {}).dvm_plus) },
+        ],
+      },
+      {
+        key: 'financial', label: 'Financial', weight: W.financial,
+        leaves: [
+          { label: 'WAR per $M',            letterKey: 'fin_war_per_m',             metric: fmtWarPerM((t.fin_war_per_m        || {}).value) },
+          { label: 'Grad-Contract Surplus', letterKey: 'fin_contract_surplus',      metric: fmtUsdPerYr((t.fin_contract_surplus || {}).mean_usd_per_yr) },
+          { label: 'Draft Pool Efficiency', letterKey: 'fin_draft_pool_efficiency', metric: fmtWarPerM(draftEffLeaf.war_per_m_pool) },
+          { label: 'IFA ROI',               letterKey: 'fin_ifa_roi',               metric: fmtWarPerM(ifaRoiLeaf.war_per_m_ifa) },
+        ],
+      },
+      {
+        key: 'mlb_production', label: 'MLB Production', weight: W.mlb_production,
+        leaves: [
+          { label: 'Hitter Production',  letterKey: 'mlb_hitter_wag',            metric: fmtSignedWag((t.mlb_hitter_wag  || {}).wag_mean) },
+          { label: 'Pitcher Production', letterKey: 'mlb_pitcher_wag',           metric: fmtSignedWag((t.mlb_pitcher_wag || {}).wag_mean) },
+          { label: 'Boom Rate',          letterKey: 'mlb_production_boom_pct',   metric: fmtPct(boomLeaf.boom_pct) },
+          { label: 'Top-3 Grad WAR/yr',  letterKey: 'mlb_production_top_grads',  metric: topGrads.top3_war_per_yr != null ? topGrads.top3_war_per_yr.toFixed(2) + ' WAR/yr' : '—' },
+          { label: 'Conviction',         letterKey: 'mlb_production_conviction', metric: convFmt(convLeaf.conviction) },
+        ],
+      },
+    ];
+
+    // Geometry. Leaves stack vertically; branches sit at the midpoint
+    // of their leaf group. Root sits at canvas midpoint.
+    const LEAF_H = 26, LEAF_GAP = 4, GROUP_GAP = 18;
+    const LEAF_W = 280;
+    const BRANCH_R = 32;
+    const ROOT_W = 156, ROOT_H = 92;
+    const PAD_T = 18, PAD_L = 12;
+    const COL_ROOT_RIGHT = PAD_L + ROOT_W;       // 168
+    const COL_BRANCH_X = 360;                    // branch center x
+    const COL_LEAF_LEFT = 540;                   // leaf left edge
+
+    // Layout leaves + compute branch centers
+    let yCursor = PAD_T;
+    const branchLayouts = branchSpecs.map(b => {
+      const leafLayouts = b.leaves.map(leaf => {
+        const ly = yCursor + LEAF_H / 2;
+        yCursor += LEAF_H + LEAF_GAP;
+        return { ...leaf, y: ly };
+      });
+      const branchY = (leafLayouts[0].y + leafLayouts[leafLayouts.length - 1].y) / 2;
+      yCursor += GROUP_GAP;
+      return { ...b, branchY, leafLayouts };
+    });
+
+    const svgH = yCursor - GROUP_GAP + PAD_T;
+    const svgW = COL_LEAF_LEFT + LEAF_W + PAD_L;
+    const rootY = svgH / 2;
+
+    const rootColor = gradeColor(g.overall);
+
+    // Root → branch elbow paths. Stroke colored by branch grade.
+    const rootBranchPaths = branchLayouts.map(b => {
+      const branchLetter = g[b.key] || '—';
+      const c = gradeColor(branchLetter);
+      const midX = (COL_ROOT_RIGHT + (COL_BRANCH_X - BRANCH_R)) / 2;
+      return `<path d="M ${COL_ROOT_RIGHT} ${rootY} L ${midX} ${rootY} L ${midX} ${b.branchY} L ${COL_BRANCH_X - BRANCH_R} ${b.branchY}"
+                    fill="none" stroke="${c}" stroke-width="2" opacity="0.75"/>`;
+    }).join('');
+
+    // Branch → leaf elbow paths.
+    const branchLeafPaths = branchLayouts.map(b => {
+      const branchLetter = g[b.key] || '—';
+      const c = gradeColor(branchLetter);
+      return b.leafLayouts.map(leaf => {
+        const midX = (COL_BRANCH_X + BRANCH_R + COL_LEAF_LEFT) / 2;
+        return `<path d="M ${COL_BRANCH_X + BRANCH_R} ${b.branchY} L ${midX} ${b.branchY} L ${midX} ${leaf.y} L ${COL_LEAF_LEFT} ${leaf.y}"
+                      fill="none" stroke="${c}" stroke-width="1.5" opacity="0.55"/>`;
+      }).join('');
+    }).join('');
+
+    // Root rectangle + label.
+    const rootRect = `
+      <rect x="${PAD_L}" y="${rootY - ROOT_H / 2}" width="${ROOT_W}" height="${ROOT_H}"
+            rx="4" fill="var(--bg-secondary)" stroke="${rootColor}" stroke-width="2.5"/>
+      <text x="${PAD_L + ROOT_W / 2}" y="${rootY - 22}" text-anchor="middle"
+            style="font-family:var(--font-sans);font-size:10px;letter-spacing:0.10em;text-transform:uppercase;font-weight:600;fill:var(--text-tertiary);">FARM GRADE</text>
+      <text x="${PAD_L + ROOT_W / 2}" y="${rootY + 8}" text-anchor="middle"
+            style="font-family:var(--font-serif);font-size:36px;font-weight:700;fill:${rootColor};">${escapeHtml(g.overall || '—')}</text>
+      <text x="${PAD_L + ROOT_W / 2}" y="${rootY + 28}" text-anchor="middle"
+            style="font-family:var(--font-mono);font-size:11px;fill:var(--text-secondary);">#${org.farm_rank ?? '—'} of ${n} · ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}</text>
+      ${capped ? `<text x="${PAD_L + ROOT_W / 2}" y="${rootY + 42}" text-anchor="middle"
+            style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;font-weight:700;fill:#d8643c;">CAPPED</text>` : ''}`;
+
+    // Branch circles + labels.
+    const branchNodes = branchLayouts.map(b => {
+      const branchLetter = g[b.key] || '—';
+      const branchRank = r[b.key];
+      const c = gradeColor(branchLetter);
+      return `
+        <circle cx="${COL_BRANCH_X}" cy="${b.branchY}" r="${BRANCH_R}"
+                fill="var(--bg-secondary)" stroke="${c}" stroke-width="2.5"/>
+        <text x="${COL_BRANCH_X}" y="${b.branchY - 4}" text-anchor="middle"
+              style="font-family:var(--font-serif);font-size:20px;font-weight:700;fill:${c};">${escapeHtml(branchLetter)}</text>
+        <text x="${COL_BRANCH_X}" y="${b.branchY + 12}" text-anchor="middle"
+              style="font-family:var(--font-mono);font-size:9px;fill:var(--text-tertiary);">${b.weight}%${branchRank ? ` · #${branchRank}` : ''}</text>
+        <text x="${COL_BRANCH_X + BRANCH_R + 8}" y="${b.branchY - BRANCH_R - 4}" text-anchor="start"
+              style="font-family:var(--font-sans);font-size:11px;letter-spacing:0.04em;font-weight:600;fill:var(--text-primary);">${escapeHtml(b.label)}</text>`;
+    }).join('');
+
+    // Leaf bars.
+    const leafBars = branchLayouts.map(b => {
+      return b.leafLayouts.map(leaf => {
+        const letter = g[leaf.letterKey] || '—';
+        const c = gradeColor(letter);
+        const yTop = leaf.y - LEAF_H / 2;
+        return `
+          <rect x="${COL_LEAF_LEFT}" y="${yTop}" width="${LEAF_W}" height="${LEAF_H}"
+                rx="3" fill="var(--bg-secondary)" stroke="${c}" stroke-width="1" opacity="0.95"/>
+          <rect x="${COL_LEAF_LEFT}" y="${yTop}" width="4" height="${LEAF_H}"
+                fill="${c}" opacity="0.9"/>
+          <text x="${COL_LEAF_LEFT + 12}" y="${leaf.y + 4}" text-anchor="start"
+                style="font-family:var(--font-sans);font-size:11px;font-weight:600;fill:var(--text-primary);">${escapeHtml(leaf.label)}</text>
+          <text x="${COL_LEAF_LEFT + LEAF_W - 8}" y="${leaf.y + 4}" text-anchor="end"
+                style="font-family:var(--font-mono);font-size:10.5px;fill:var(--text-secondary);">
+            <tspan style="fill:${c};font-weight:700;">${escapeHtml(letter)}</tspan>
+            <tspan dx="6">${escapeHtml(leaf.metric)}</tspan>
+          </text>`;
+      }).join('');
+    }).join('');
+
+    return `
+      <svg class="grade-tree-svg" viewBox="0 0 ${svgW} ${svgH}" width="100%"
+           preserveAspectRatio="xMidYMid meet"
+           style="display:block;max-width:${svgW}px;margin:0 auto;">
+        ${rootBranchPaths}
+        ${branchLeafPaths}
+        ${rootRect}
+        ${branchNodes}
+        ${leafBars}
+      </svg>`;
+  })();
+
   return `
     <div class="grade-tree">
       <div class="grade-tree-composite" style="border-color:${gradeColor(g.overall)}66;background:linear-gradient(135deg, ${gradeColor(g.overall)}12, transparent);">
@@ -12784,14 +13120,20 @@ function makeFarmReportCard(org) {
         </div>
         <div class="gt-comp-foot">Acquisition Strategy ${W.acquisition_strategy}% · Development ${W.development}% · Financial ${W.financial}% · MLB Production ${W.mlb_production}%</div>
       </div>
-      ${branch('Acquisition Strategy', 'acquisition_strategy', W.acquisition_strategy, acqSubs,
-               'Outcome quality of how this org acquires prospects — via draft, IFA signings, trades, and waiver claims.')}
-      ${branch('Development',         'development',          W.development,          devSubs,
-               'Per-tool development pace vs the league mean farm. Hitter + pitcher Tools DvM+ composites (100 = league mean, +10 = 1σ).')}
-      ${branch('Financial',           'financial',            W.financial,            finSubs,
-               'Capital efficiency (v4). WAR per $M of signing bonus + grad-contract surplus + draft-pool efficiency (WAR/$M of pool) + IFA ROI (WAR/$M of bonuses signed). All 4 leaves equally weighted.')}
-      ${branch('MLB Production',      'mlb_production',       W.mlb_production,       mlbSubs,
-               'Whether this org produces MLB players, especially top-end ones (v4). 5 leaves: Hitter + Pitcher 3-input composites (WAG + WAR/yr + top-3 career WAR), Boom Rate (% settled grads with career WAR ≥ +5), Top-3 Grad WAR/yr, and Conviction (star-tier grad present). Conviction caps the composite for orgs without a star.')}
+      ${svgTree}
+      <details class="grade-tree-fallback" style="margin-top:12px;">
+        <summary style="cursor:pointer;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;padding:6px 0;">Show as accordion (full tooltips + ranks)</summary>
+        <div style="margin-top:8px;">
+          ${branch('Acquisition Strategy', 'acquisition_strategy', W.acquisition_strategy, acqSubs,
+                   'Outcome quality of how this org acquires prospects — via draft, IFA signings, trades, and waiver claims.')}
+          ${branch('Development',         'development',          W.development,          devSubs,
+                   'Per-tool development pace vs the league mean farm. Hitter + pitcher Tools DvM+ composites (100 = league mean, +10 = 1σ).')}
+          ${branch('Financial',           'financial',            W.financial,            finSubs,
+                   'Capital efficiency (v4). WAR per $M of signing bonus + grad-contract surplus + draft-pool efficiency (WAR/$M of pool) + IFA ROI (WAR/$M of bonuses signed). All 4 leaves equally weighted.')}
+          ${branch('MLB Production',      'mlb_production',       W.mlb_production,       mlbSubs,
+                   'Whether this org produces MLB players, especially top-end ones (v4). 5 leaves: Hitter + Pitcher 3-input composites (WAG + WAR/yr + top-3 career WAR), Boom Rate (% settled grads with career WAR ≥ +5), Top-3 Grad WAR/yr, and Conviction (star-tier grad present). Conviction caps the composite for orgs without a star.')}
+        </div>
+      </details>
     </div>`;
 }
 
@@ -12816,6 +13158,10 @@ function makeRosterSnapshotTile(org) {
         <div class="rs-stat" title="Top-10 mean of composite_overall (20-80 power mean)"><span class="rs-stat-label">Tools+ top10</span><span class="rs-stat-val">${num(tq.top10_mean)}</span></div>
         <div class="rs-stat" title="(very-young − very-old) / total actives"><span class="rs-stat-label">Readiness</span><span class="rs-stat-val">${pct(rdy.pct_signal)}</span></div>
         <div class="rs-stat" title="100·post-TJ% + IL-days mean (lower is better)"><span class="rs-stat-label">Health burden</span><span class="rs-stat-val">${num(hb.score)}</span></div>
+        <div class="rs-stat${hb.il_pct_current >= 0.10 ? ' is-warn' : ''}" title="${hb.il_current_count != null ? hb.il_current_count : '—'} of ${hb.active_count != null ? hb.active_count : '—'} tracked actives currently on the IL. Highlighted red when ≥10%.">
+          <span class="rs-stat-label">On IL now</span>
+          <span class="rs-stat-val">${hb.il_pct_current != null ? (hb.il_pct_current * 100).toFixed(0) + '%' : '—'}${hb.il_current_count != null ? ` <span style="font-size:10px;color:var(--text-tertiary);font-weight:400;">(${hb.il_current_count}/${hb.active_count})</span>` : ''}</span>
+        </div>
       </div>
     </div>`;
 }
@@ -13502,11 +13848,11 @@ function makeGradCohortChart(grads, opts = {}) {
       FV ${t}${t === 60 ? "+" : ""}
     </span>`).join(" ");
 
-  return `<div class="grad-cohort-chart" style="margin: var(--space-3) 0;">
+  return `<div class="grad-cohort-chart" style="margin: var(--space-3) 0;max-width:720px;">
     <div style="font-family: var(--font-sans); font-size: var(--fs-sm); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-bottom: var(--space-1);">
       Graduate classes — last ${yearsN} years, stacked by FV at graduation
     </div>
-    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" style="display:block;">
+    <svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;max-height:${H * 1.4}px;">
       ${bars}
       ${yAxis}
     </svg>
@@ -13672,9 +14018,9 @@ function makeCohortHistogram(values, opts = {}) {
     <div style="font-family: var(--font-sans); font-size: var(--fs-sm); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-bottom: var(--space-1);">
       ${escapeHtml(opts.label)} · distribution across ${xs.length} qualifying prospect${xs.length === 1 ? "" : "s"}
     </div>` : "";
-  return `<div class="cohort-histogram" style="margin: var(--space-3) 0;">
+  return `<div class="cohort-histogram" style="margin: var(--space-3) 0;max-width:720px;">
     ${labelLine}
-    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" style="display:block;">
+    <svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;max-height:${H * 1.6}px;">
       ${bars}
       ${thrLine}
       ${axis}

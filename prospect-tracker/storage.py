@@ -4266,6 +4266,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "_post_tj_count": 0,
                 "_il_days_sum":   0,
                 "_il_days_count": 0,
+                # Currently-on-IL counter. Increments once per active
+                # whose il_status.is_on_il is true at export time;
+                # finalized into health_burden.il_pct_current (count /
+                # active total) so the farm card can flag orgs with a
+                # high share of the org sidelined right now.
+                "_il_current_count": 0,
                 # Per-org tool-development accumulator (Step 3 of the
                 # ToolsDvM+ plan). Keyed by canonical tool name (hit,
                 # game_pwr, etc.) — each entry holds the per-prospect
@@ -4377,6 +4383,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         il_days = int(hp.get("il_days_12mo") or 0)
         m["_il_days_sum"]   += il_days
         m["_il_days_count"] += 1
+        # Currently-on-IL: il_status table is the source of truth for
+        # "on IL right now". il_status was loaded above and attached as
+        # `il_status` (dict keyed by player_key).
+        if (il_status or {}).get(p.player_key, {}).get("is_on_il"):
+            m["_il_current_count"] = m.get("_il_current_count", 0) + 1
 
     # ── Per-org graduate aggregates (Farm Overhaul Steps 2 & 3) ──
     # Walk graduates ONCE to compute:
@@ -4689,13 +4700,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         post_tj_count = m.pop("_post_tj_count") or 0
         il_days_sum = m.pop("_il_days_sum") or 0
         il_days_count = m.pop("_il_days_count") or 0
+        il_current_count = m.pop("_il_current_count") or 0
         post_tj_pct = post_tj_count / n_actives if n_actives else 0
         il_days_mean = (il_days_sum / il_days_count) if il_days_count else 0
+        il_pct_current = (il_current_count / n_actives) if n_actives else 0
         m["health_burden"] = {
             "score":       round(100 * post_tj_pct + il_days_mean, 2),
             "post_tj_pct": round(post_tj_pct, 3),
             "il_days_mean": round(il_days_mean, 1),
             "post_tj_count": post_tj_count,
+            "il_pct_current": round(il_pct_current, 3),
+            "il_current_count": il_current_count,
+            "active_count": n_actives,
         }
         # Per-tool development — mean lifetime delta across actives that
         # have ≥2 consensus observations of each tool. Sparse-data gate:
