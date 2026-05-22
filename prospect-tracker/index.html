@@ -2039,7 +2039,36 @@
       background: var(--bg-tertiary);
       flex-shrink: 0;
     }
-    /* Initial chip used when the headshot 404s. JS does the swap. */
+    /* Wrapper around draft/overseas headshots. Hosts the optional
+       FV-tier ring + chrome/holo treatment for elite-tier prospects
+       (matches the MiLB headshotHTML wrapper). Keeps the image at
+       36×36 with the same baseball-card shape. */
+    .prospect-headshot-wrap {
+      display: inline-block;
+      width: 36px;
+      height: 36px;
+      border-radius: 4px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      vertical-align: middle;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+    .prospect-headshot-wrap > .prospect-headshot {
+      width: 100%;
+      height: 100%;
+      border-radius: 0;  /* outer wrap controls the corner */
+      border: 0;
+      object-fit: cover;
+    }
+    .prospect-headshot-wrap > .prospect-headshot-silhouette {
+      width: 100%;
+      height: 100%;
+    }
+    /* Initial chip used when the headshot 404s. JS does the swap.
+       Now only used by legacy callers — _headshotImg routes to the
+       silhouette fallback instead. */
     .prospect-initial {
       width: 36px;
       height: 36px;
@@ -3600,6 +3629,41 @@
     @keyframes holo-shift {
       from { background-position: 0% 0%, 0% 0%; }
       to   { background-position: 0% 0%, 300% 100%; }
+    }
+    /* FV-tier ring around any headshot / silhouette wrapper. Border
+       width slimmer than the detail-page card-rarity so the ring stays
+       readable around 36-50px row headshots. Color sourced from the
+       --fv-NN-bd CSS var which matches the badge palette. The chrome
+       / holo treatments (for FV 70+ / 60+ respectively) layer on top
+       of this base ring when the player ranks elite. */
+    .fv-headshot-ring {
+      /* Force the ring to draw on every wrapper that gets the class.
+         The base wrapper already sets border:1px solid var(--border);
+         we override to the FV-tier color via more specific rules. */
+      box-sizing: border-box !important;
+    }
+    .fv-headshot-ring.fv-tier-80 { border: 2px solid var(--fv-80-bd) !important; }
+    .fv-headshot-ring.fv-tier-75 { border: 2px solid var(--fv-75-bd) !important; }
+    .fv-headshot-ring.fv-tier-70 { border: 2px solid var(--fv-70-bd) !important; }
+    .fv-headshot-ring.fv-tier-65 { border: 2px solid var(--fv-65-bd) !important; }
+    .fv-headshot-ring.fv-tier-60 { border: 2px solid var(--fv-60-bd) !important; }
+    .fv-headshot-ring.fv-tier-55 { border: 1.5px solid var(--fv-55-bd) !important; }
+    .fv-headshot-ring.fv-tier-50 { border: 1.5px solid var(--fv-50-bd) !important; }
+    .fv-headshot-ring.fv-tier-45 { border: 1px solid var(--fv-45-bd) !important; }
+    .fv-headshot-ring.fv-tier-40 { border: 1px solid var(--fv-40-bd) !important; }
+    .fv-headshot-ring.fv-tier-35 { border: 1px solid var(--fv-35-bd) !important; }
+    .fv-headshot-ring.fv-tier-30,
+    .fv-headshot-ring.fv-tier-25,
+    .fv-headshot-ring.fv-tier-20 { border: 1px solid var(--border) !important; }
+    /* When chrome/holo class also applies, the gradient border from
+       those rules overrides the flat FV-tier color. The chrome shimmer
+       + holo rainbow already encode "this is an elite prospect" — but
+       we tone the shimmer down a touch in the small headshot variant. */
+    .fv-headshot-ring.card-rarity-chrome,
+    .fv-headshot-ring.card-rarity-holo {
+      /* Slimmer ring on small row headshots; the wrapper already
+         applies the animation, just trim the visual weight. */
+      border-width: 2px !important;
     }
     /* Hover-flip on the sidebar position-depth micro-cards. Pure CSS
        3D flip; back face shows the secondary chip set (ETA, health). */
@@ -5209,6 +5273,14 @@
     <div id="farm-detail-body"></div>
   </div>
 
+  <div id="draft-detail-section" style="display: none;">
+    <div id="draft-detail-body"></div>
+  </div>
+
+  <div id="overseas-detail-section" style="display: none;">
+    <div id="overseas-detail-body"></div>
+  </div>
+
 </template>
 
 <!-- html2canvas — vendored locally (~200KB). Powers the "Share as image"
@@ -6479,6 +6551,8 @@ function syncToURL() {
   const p = new URLSearchParams();
   if (state.view && state.view.type === "player") p.set("player", state.view.key);
   else if (state.view && state.view.type === "farm") p.set("farm-org", state.view.org);
+  else if (state.view && state.view.type === "draftee") p.set("draft", state.view.key);
+  else if (state.view && state.view.type === "overseas_player") p.set("overseas", state.view.key);
   if (state.section     !== "active")     p.set("tab",   state.section);
   if (state.orgFilter   !== "all")        p.set("org",   state.orgFilter);
   if (state.acqFilter   !== "all")        p.set("acq",   state.acqFilter);
@@ -6510,6 +6584,8 @@ function syncToURL() {
   // matching detail page so other views don't carry an unused param.
   if (state.view && state.view.type === "player" && state.playerTab && state.playerTab !== "overview") p.set("ptab", state.playerTab);
   if (state.view && state.view.type === "farm"   && state.farmTab   && state.farmTab   !== "overview") p.set("ftab", state.farmTab);
+  if (state.view && state.view.type === "draftee" && state.prospectTab && state.prospectTab !== "overview") p.set("dttab", state.prospectTab);
+  if (state.view && state.view.type === "overseas_player" && state.prospectTab && state.prospectTab !== "overview") p.set("ostab", state.prospectTab);
   // Pagination — only encoded when on a non-default page (page 1 = no
   // param, keeps URLs short for the common case).
   const _pg = state.pages || {};
@@ -6545,6 +6621,13 @@ function syncFromURL() {
   const p = new URLSearchParams(hash);
   if (p.has("player"))   state.view = { type: "player", key: p.get("player") };
   else if (p.has("farm-org")) state.view = { type: "farm", org: p.get("farm-org") };
+  else if (p.has("draft"))    state.view = { type: "draftee", key: p.get("draft") };
+  else if (p.has("overseas")) state.view = { type: "overseas_player", key: p.get("overseas") };
+  // Draft / overseas detail tab (shared `prospectTab` slot — both detail
+  // page types use the same 3-tab schema). Default 'overview'.
+  state.prospectTab = p.has("dttab") ? p.get("dttab")
+                    : p.has("ostab") ? p.get("ostab")
+                    : "overview";
   if (p.has("tab"))   state.section     = p.get("tab");
   if (p.has("org"))   state.orgFilter   = p.get("org");
   if (p.has("acq"))   state.acqFilter   = p.get("acq");
@@ -6631,6 +6714,16 @@ function _pushHash(params) {
 function goToPlayer(key) {
   const p = new URLSearchParams();
   p.set("player", key);
+  _pushHash(p);
+}
+function goToDraftee(key) {
+  const p = new URLSearchParams();
+  p.set("draft", key);
+  _pushHash(p);
+}
+function goToOverseas(key) {
+  const p = new URLSearchParams();
+  p.set("overseas", key);
   _pushHash(p);
 }
 function goToFarm(org) {
@@ -7102,6 +7195,9 @@ const state = {
   // land on the requested tab.
   playerTab: "overview",
   farmTab:   "overview",
+  // Shared by both draft + overseas detail pages. Both pages use the
+  // same 3-tab schema (Overview / Tools & Scouting / Acquisition).
+  prospectTab: "overview",
   // Pagination — current page (1-indexed) + page size per list view.
   // Centralizing here lets every paginated renderer slice through the
   // same helpers + share the click delegate. Filter mutations RESET the
@@ -9262,14 +9358,36 @@ function _stockPlusColor(sp) {
 
 // Headshot <img> with graceful onerror fallback to a text-initial chip.
 // `name` is used for the initial letters when the image fails.
-function _headshotImg(url, name) {
-  const initial = (name || "?").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
-  if (!url) {
-    return `<span class="prospect-initial">${escapeHtml(initial)}</span>`;
+function _headshotImg(url, name, opts) {
+  opts = opts || {};
+  // Silhouette SVG always renders inside the wrapper; the <img> sits
+  // ABOVE it. When the image 404s, the img is hidden via onerror and
+  // the silhouette underneath shows through. Same pattern as the MiLB
+  // headshotHTML helper.
+  const sil = `<svg viewBox="0 0 24 24" aria-hidden="true" class="prospect-headshot-silhouette" style="position:absolute;inset:0;width:100%;height:100%;color:var(--text-tertiary);padding:8%;box-sizing:border-box;"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+  // Optional FV-tier ring around the wrapper. Callers that have a
+  // numeric FV (most card render sites) pass `opts.fv` so the
+  // headshot picks up the same chrome/holo treatment as the MiLB
+  // detail headshot.
+  let ringClass = "";
+  if (opts.fv != null && isFinite(opts.fv)) {
+    const tiers = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
+    let tier = 20;
+    for (const t of tiers) { if (opts.fv >= t - 2.5) { tier = t; break; } }
+    ringClass = `fv-headshot-ring fv-tier-${tier}`;
+    if (tier >= 70)      ringClass += " card-rarity-chrome";
+    else if (tier >= 60) ringClass += " card-rarity-holo";
   }
-  return `<img class="prospect-headshot" src="${escapeHtml(url)}"
+  const wrapCls = `prospect-headshot-wrap${ringClass ? " " + ringClass : ""}`;
+  if (!url) {
+    return `<span class="${wrapCls}" style="position:relative;">${sil}</span>`;
+  }
+  // Silhouette renders behind the img; onerror hides the img so the
+  // silhouette shows through if the URL 404s.
+  return `<span class="${wrapCls}" style="position:relative;">${sil}<img class="prospect-headshot" src="${escapeHtml(url)}"
        alt="${escapeHtml(name || "")}" loading="lazy"
-       onerror="this.outerHTML='<span class=&quot;prospect-initial&quot;>${escapeHtml(initial)}</span>';">`;
+       style="position:relative;z-index:1;"
+       onerror="this.style.display='none'"></span>`;
 }
 
 // College logo <img> with graceful onerror fallback to a small initial chip.
@@ -9583,14 +9701,14 @@ function _renderDraftCard(p) {
     ? `Consensus sequential rank · raw avg ${p.consensus_rank.toFixed(2)}`
     : "Consensus rank";
 
-  return `<div class="draft-card" style="position:relative;">
+  return `<div class="draft-card" style="position:relative;cursor:pointer;" onclick="if(event.target.closest('a,button'))return;goToDraftee('${escapeHtml(p.player_key)}');">
     <button class="share-as-image share-inline"
             data-share-target=".draft-card"
             data-share-filename="draft-${escapeHtml(p.player_key)}"
             style="position:absolute;top:6px;right:6px;"
             title="Save this draft card as a PNG image">⤴</button>
     <div style="display:flex;align-items:center;gap:8px;">
-      ${_headshotImg(p.headshot_url, p.player_name)}
+      ${_headshotImg(p.headshot_url, p.player_name, { fv: p.consensus_fv })}
       <span style="font-size:16px;font-weight:700;color:var(--text-primary);"
             title="${escapeHtml(pickTitle)}">#${pickDisplay}</span>
       <span style="font-size:14px;font-weight:600;flex:1;">
@@ -10161,14 +10279,14 @@ function _renderOverseasCard(p) {
   // _flagImg returns an <img> or emoji span; we shrink it with the
   // {small:true} mode so it tucks neatly next to the league chip.
   const leagueFlag = _flagImg(p.country_flag_svg, p.country_flag, p.country, { small: true });
-  return `<div class="draft-card" style="position:relative;">
+  return `<div class="draft-card" style="position:relative;cursor:pointer;" onclick="if(event.target.closest('a,button'))return;goToOverseas('${escapeHtml(p.player_key)}');">
     <button class="share-as-image share-inline"
             data-share-target=".draft-card"
             data-share-filename="overseas-${escapeHtml(p.player_key)}"
             style="position:absolute;top:6px;right:6px;"
             title="Save this overseas card as a PNG image">⤴</button>
     <div style="display:flex;align-items:center;gap:8px;">
-      ${_headshotImg(p.headshot_url, p.player_name)}
+      ${_headshotImg(p.headshot_url, p.player_name, { fv: p.consensus_fv })}
       <span style="font-size:14px;font-weight:600;flex:1;">
         ${escapeHtml(p.player_name)}${milbLink}
       </span>
@@ -10196,6 +10314,389 @@ function _renderOverseasCard(p) {
     ${statusBadge}
     ${reportLine}
   </div>`;
+}
+
+// =============================================================================
+// DRAFT + OVERSEAS DETAIL PAGES
+// =============================================================================
+// Full per-prospect pages reached via ?draft=<key> / ?overseas=<key>.
+// Both share the same 3-tab schema (Overview / Tools & Scouting /
+// Acquisition) reusing the same `.detail-tabs` CSS the MiLB pages
+// use. Card click → goToDraftee/goToOverseas → URL hash → detail
+// page renders.
+// =============================================================================
+
+// Helper: locate a draft prospect by player_key across all loaded
+// classes. Returns { p, cls } or null. Both fields are needed because
+// some draft-tab metadata (year, slot context) lives at the class level.
+function _findDraftee(key) {
+  if (!key || !DATA.draft || !DATA.draft.classes) return null;
+  for (const cls of DATA.draft.classes) {
+    const ps = cls.prospects || [];
+    for (const p of ps) if (p.player_key === key) return { p, cls };
+  }
+  return null;
+}
+
+// Helper: locate an overseas prospect by player_key across all leagues.
+function _findOverseas(key) {
+  if (!key || !DATA.overseas || !DATA.overseas.leagues) return null;
+  for (const l of DATA.overseas.leagues) {
+    const ps = l.prospects || [];
+    for (const p of ps) if (p.player_key === key) return { p, league: l };
+  }
+  return null;
+}
+
+// Compact "stat tile" — used in both draft + overseas overview tabs.
+// Mirrors the visual of `.rs-stat` on farm pages so the styling reads
+// consistently across the site.
+function _statTileHTML(label, value, opts) {
+  opts = opts || {};
+  const tone = opts.tone || "";
+  const titleAttr = opts.title ? ` title="${escapeHtml(opts.title)}"` : "";
+  return `<div class="rs-stat${tone ? ' is-' + tone : ''}"${titleAttr}>
+    <span class="rs-stat-label">${escapeHtml(label)}</span>
+    <span class="rs-stat-val">${value}</span>
+  </div>`;
+}
+
+// Per-tool grade grid — reads tool_grades[source] aggregating the
+// highest grade per canonical tool across sources, then renders a
+// per-tool row showing each source's grade alongside the consensus.
+function _renderProspectToolsGrid(p) {
+  const tg = p.tool_grades || {};
+  const sources = Object.keys(tg);
+  if (!sources.length) {
+    return `<div style="color:var(--text-tertiary);font-size:12px;padding:8px 0;">No tool grades on file from any source.</div>`;
+  }
+  // Collect the set of tool keys across all sources, preserving the
+  // canonical hitter / pitcher ordering when possible.
+  const HITTER_ORDER = ["hit", "game_pwr", "raw_pwr", "speed", "field", "throw", "pitch_sel", "bat_ctrl"];
+  const PITCHER_ORDER = ["fb", "sl", "cb", "ch", "cmd", "ct", "sp"];
+  const seen = new Set();
+  for (const src of sources) {
+    for (const k of Object.keys(tg[src] || {})) {
+      if (k === "_extras") continue;
+      seen.add(k);
+    }
+  }
+  const isPit = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || ""));
+  const order = isPit ? PITCHER_ORDER : HITTER_ORDER;
+  const toolKeys = [
+    ...order.filter(k => seen.has(k)),
+    ...[...seen].filter(k => !order.includes(k)),
+  ];
+
+  const tierColor = v => v == null ? "var(--text-tertiary)"
+                       : v >= 70 ? "var(--neon-orange)"
+                       : v >= 60 ? "var(--neon-green)"
+                       : v >= 55 ? "var(--neon-cyan)"
+                       : v >= 50 ? "var(--text-primary)"
+                       : v >= 45 ? "var(--neon-amber)"
+                       :           "var(--down)";
+  const headerRow = `<tr>
+    <th style="text-align:left;color:var(--text-tertiary);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;padding:6px 8px;">Tool</th>
+    ${sources.map(src => `<th style="text-align:center;color:var(--text-tertiary);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;padding:6px 8px;">${escapeHtml(src)}</th>`).join("")}
+    <th style="text-align:center;color:var(--text-tertiary);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;padding:6px 8px;">Best</th>
+  </tr>`;
+  const rows = toolKeys.map(k => {
+    let bestVal = null;
+    const cells = sources.map(src => {
+      const v = (tg[src] || {})[k];
+      if (v == null) return `<td style="text-align:center;color:var(--text-tertiary);padding:4px 8px;">—</td>`;
+      if (bestVal == null || v > bestVal) bestVal = v;
+      return `<td style="text-align:center;padding:4px 8px;font-family:var(--font-mono);font-weight:700;color:${tierColor(v)};">${v}</td>`;
+    }).join("");
+    return `<tr>
+      <td style="padding:4px 8px;color:var(--text-secondary);font-size:12px;">${escapeHtml(k.toUpperCase())}</td>
+      ${cells}
+      <td style="text-align:center;padding:4px 8px;font-family:var(--font-mono);font-weight:700;color:${tierColor(bestVal)};background:rgba(255,255,255,0.04);">${bestVal != null ? bestVal : "—"}</td>
+    </tr>`;
+  }).join("");
+  return `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead>${headerRow}</thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+// Per-source scouting reports. One <details> block per source so the
+// reader can open whichever publication they care about without JS
+// plumbing for tab swaps. First source defaults to open.
+function _renderProspectScoutingReports(p) {
+  const tg = p.tool_grades || {};
+  const sources = Object.keys(tg).filter(src => {
+    const ext = (tg[src] || {})._extras || {};
+    return ext.report && String(ext.report).trim().length > 30;
+  });
+  if (!sources.length) {
+    return `<div style="color:var(--text-tertiary);font-size:12px;padding:8px 0;">No scouting reports on file. ESPN draft / MLB Pipeline / FanGraphs sources publish writeups on a delay; check back after the next refresh.</div>`;
+  }
+  return sources.map((src, i) => {
+    const ext = (tg[src] || {})._extras || {};
+    const isOpen = i === 0 ? " open" : "";
+    return `<details class="scout-src-details"${isOpen} style="margin-bottom:8px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
+      <summary style="cursor:pointer;font-family:var(--font-sans);font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;padding:8px 12px;color:var(--neon-cyan);">${escapeHtml(src)}</summary>
+      <div style="padding:0 12px 12px;font-size:12px;line-height:1.6;color:var(--text-primary);white-space:pre-wrap;">${escapeHtml(ext.report)}</div>
+    </details>`;
+  }).join("");
+}
+
+async function renderDraftDetail(key) {
+  const root = document.getElementById("draft-detail-body");
+  if (!root) return;
+  // Lazy-load the draft payload if it hasn't arrived yet.
+  if (!DATA.draft) {
+    root.innerHTML = `<div class="state-message">Loading draft data…</div>`;
+    try {
+      const base = DATA_URL.replace(/[^/]+$/, "");
+      const resp = await fetch(`${base}draft_timeseries.json`);
+      DATA.draft = await resp.json();
+    } catch (e) {
+      root.innerHTML = `<div class="state-message">Could not load draft data: ${escapeHtml(e.message || e)}</div>`;
+      return;
+    }
+  }
+  const hit = _findDraftee(key);
+  if (!hit) {
+    root.innerHTML = `<div class="state-message">Unknown draft prospect: ${escapeHtml(key)}. <a href="#" onclick="goHome();return false;">Back to list</a>.</div>`;
+    return;
+  }
+  const { p, cls } = hit;
+  const fvInt = p.consensus_fv != null ? Math.round(p.consensus_fv) : null;
+  const fvColor = _draftFvBucketColor(p.consensus_fv);
+  const stockColor = _stockPlusColor(p.draft_stock_plus);
+
+  // Header — back link, name + FV badge, draft-year + school chip,
+  // FV-tier ring around the headshot (matches MiLB detail page).
+  const headshotBig = _headshotImg(p.headshot_url, p.player_name,
+    { fv: p.consensus_fv });
+  const headerHtml = `
+    <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
+    <div class="detail-page-header" style="${fvInt != null ? `--fv-tier-glow:${fvColor};` : ''}">
+      <div style="display:flex;align-items:flex-start;gap:16px;flex:1;min-width:0;">
+        <div style="width:90px;height:113px;">${headshotBig.replace('36px;height:36px', '90px;height:113px')}</div>
+        <div style="min-width:0;flex:1;">
+          <div class="player-display-name">${escapeHtml(p.player_name)}</div>
+          <div class="player-display-meta">
+            <strong style="font-weight:600;color:var(--text-primary);">${escapeHtml(p.position || "—")}</strong>
+            ${p.school ? ` · ${escapeHtml(p.school)}` : ""}
+            ${p.college_commit ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(p.college_commit)} commit</span>` : ""}
+          </div>
+          <div class="player-display-meta" style="margin-top:4px;font-size:11px;color:var(--text-tertiary);">
+            ${cls.year} draft class · ${p.player_type || "amateur"}
+            ${p.bats ? ` · B/T ${escapeHtml(p.bats)}/${escapeHtml(p.throws || "?")}` : ""}
+            ${p.height ? ` · ${escapeHtml(p.height)}` : ""}
+            ${p.weight ? ` · ${escapeHtml(String(p.weight))} lb` : ""}
+          </div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Current FV</div>
+        <span class="fv-badge ${fvClass(String(fvInt || "40"))} size-lg" style="margin-top:4px;">${fvInt != null ? fvInt : "—"}</span>
+        ${p.draft_stock_plus != null ? `<div style="margin-top:8px;font-family:var(--font-mono);font-size:11px;color:${stockColor};font-weight:700;" title="Draft Stock+ — z-normalized within the ${cls.year} class">DS+ ${p.draft_stock_plus}</div>` : ""}
+        ${p.consensus_pick != null || p.consensus_rank != null ? `<div style="margin-top:4px;font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">Consensus #${p.consensus_pick || Math.round(p.consensus_rank || 0)}</div>` : ""}
+      </div>
+    </div>`;
+
+  // Status badge for already-drafted prospects.
+  const statusBadge = p.status === "drafted" && p.drafted_team
+    ? `<div class="rs-stat is-pos" style="grid-column:span 2;">
+        <span class="rs-stat-label">Drafted ${cls.year}</span>
+        <span class="rs-stat-val" style="color:var(--neon-cyan);">${escapeHtml(p.drafted_team)} · R${p.drafted_round || "?"} #${p.drafted_pick || "?"}</span>
+       </div>`
+    : "";
+
+  // Stat-tile grid for the overview.
+  const overviewTiles = `<div class="rs-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));">
+    ${_statTileHTML("Class", String(cls.year))}
+    ${_statTileHTML("Position", escapeHtml(p.position || "—"))}
+    ${_statTileHTML("Proj round", p.projected_round ? `R${p.projected_round}` : "—")}
+    ${p.draft_stock_plus != null ? _statTileHTML("Draft Stock+", `<span style="color:${stockColor};">${p.draft_stock_plus}</span>`,
+      { title: "Z-normalized within this draft class. 100 = class median." }) : ""}
+    ${p.signing_bonus ? _statTileHTML("Signing $", _fmtUSD(p.signing_bonus)) : ""}
+    ${p.slot_value ? _statTileHTML("Slot $", _fmtUSD(p.slot_value)) : ""}
+    ${p.over_slot_pct != null ? _statTileHTML("vs slot", `${p.over_slot_pct > 0 ? '+' : ''}${p.over_slot_pct}%`,
+      { tone: p.over_slot_pct > 0 ? "pos" : (p.over_slot_pct < 0 ? "warn" : "") }) : ""}
+    ${statusBadge}
+  </div>`;
+
+  // Overview tab content.
+  const overviewHtml = `
+    <div class="detail-title flush">Overview</div>
+    ${overviewTiles}`;
+
+  // Tools & Scouting tab content.
+  const toolsScoutingHtml = `
+    <div class="detail-title flush">Tool grades · per source</div>
+    ${_renderProspectToolsGrid(p)}
+    <div class="detail-title">Scouting reports</div>
+    ${_renderProspectScoutingReports(p)}`;
+
+  // Acquisition tab content.
+  const milbLinkHtml = p.milb_key
+    ? `<div style="margin-top:14px;"><a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(p.milb_key)}');" style="color:var(--neon-cyan);font-weight:600;">→ Open MiLB prospect profile (${escapeHtml(p.milb_key)})</a></div>`
+    : "";
+  const acquisitionHtml = `
+    <div class="detail-title flush">Draft order context</div>
+    <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+      ${p.status === "drafted" && p.drafted_team
+        ? `Drafted by <strong style="color:var(--text-primary);">${escapeHtml(p.drafted_team)}</strong>
+           in round ${p.drafted_round || "?"} (pick #${p.drafted_pick || "?"})
+           of the ${cls.year} MLB Draft.`
+        : `Projected for round <strong style="color:var(--text-primary);">${p.projected_round || "?"}</strong> in the ${cls.year} MLB Draft.`}
+    </div>
+    ${p.signing_bonus ? `<div style="margin-top:10px;font-size:13px;">
+        Signing bonus: <strong>${_fmtUSD(p.signing_bonus)}</strong>${p.slot_value ? ` · Slot value: ${_fmtUSD(p.slot_value)}` : ""}${p.over_slot_pct != null ? ` (<span style="color:${p.over_slot_pct > 0 ? 'var(--neon-orange)' : 'var(--text-tertiary)'};">${p.over_slot_pct > 0 ? '+' : ''}${p.over_slot_pct}% vs slot</span>)` : ""}
+      </div>` : ""}
+    ${p.college_commit ? `<div style="margin-top:10px;font-size:13px;color:var(--text-secondary);">College commit: <strong style="color:var(--neon-cyan);">${escapeHtml(p.college_commit)}</strong></div>` : ""}
+    ${p.school ? `<div style="margin-top:6px;font-size:12px;color:var(--text-tertiary);">School: ${escapeHtml(p.school)}</div>` : ""}
+    ${milbLinkHtml}`;
+
+  const tabs = [
+    { key: "overview",    label: "Overview",          html: overviewHtml },
+    { key: "scouting",    label: "Tools & Scouting",  html: toolsScoutingHtml },
+    { key: "acquisition", label: "Acquisition",        html: acquisitionHtml },
+  ];
+  const tabBar = renderDetailTabs(tabs, state.prospectTab, "prospect");
+  root.innerHTML = headerHtml + tabBar;
+}
+
+async function renderOverseasDetail(key) {
+  const root = document.getElementById("overseas-detail-body");
+  if (!root) return;
+  if (!DATA.overseas) {
+    root.innerHTML = `<div class="state-message">Loading overseas data…</div>`;
+    try {
+      const base = DATA_URL.replace(/[^/]+$/, "");
+      const resp = await fetch(`${base}overseas_timeseries.json`);
+      DATA.overseas = await resp.json();
+    } catch (e) {
+      root.innerHTML = `<div class="state-message">Could not load overseas data: ${escapeHtml(e.message || e)}</div>`;
+      return;
+    }
+  }
+  const hit = _findOverseas(key);
+  if (!hit) {
+    root.innerHTML = `<div class="state-message">Unknown overseas prospect: ${escapeHtml(key)}. <a href="#" onclick="goHome();return false;">Back to list</a>.</div>`;
+    return;
+  }
+  const { p, league } = hit;
+  const fvInt = p.consensus_fv != null ? Math.round(p.consensus_fv) : null;
+  const fvColor = _draftFvBucketColor(p.consensus_fv);
+  const leagueColor = _leagueBadgeColor(p.league);
+  const leagueFlag = _flagImg(p.country_flag_svg, p.country_flag, p.country, { small: true });
+
+  const headshotBig = _headshotImg(p.headshot_url, p.player_name,
+    { fv: p.consensus_fv });
+  const statusPill = p.status === "mlb_promoted"
+    ? `<span class="grad-pill" style="background:var(--bg-tertiary);color:var(--neon-green);">MLB-promoted${p.signed_team ? ` · ${escapeHtml(p.signed_team)}` : ""}</span>`
+    : p.status === "signed" || (p.status === "posted" && p.signed_team)
+      ? `<span class="grad-pill" style="background:var(--accent-il-soft);color:var(--neon-cyan);">Signed${p.signed_team ? ` · ${escapeHtml(p.signed_team)}` : ""}</span>`
+      : p.status === "posted"
+        ? `<span class="grad-pill" style="background:var(--accent-il-soft);color:var(--neon-orange);">POSTED${p.posting_days_remaining != null ? ` · ${p.posting_days_remaining}d remaining` : ""}</span>`
+        : "";
+  const headerHtml = `
+    <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
+    <div class="detail-page-header" style="${fvInt != null ? `--fv-tier-glow:${fvColor};` : ''}">
+      <div style="display:flex;align-items:flex-start;gap:16px;flex:1;min-width:0;">
+        <div style="width:90px;height:113px;">${headshotBig.replace('36px;height:36px', '90px;height:113px')}</div>
+        <div style="min-width:0;flex:1;">
+          <div class="player-display-name">${escapeHtml(p.player_name)}</div>
+          <div class="player-display-meta">
+            <strong style="font-weight:600;color:var(--text-primary);">${escapeHtml(p.position || "—")}</strong>
+            · ${escapeHtml(p.current_team || "?")}
+            · <span style="display:inline-flex;align-items:center;gap:4px;color:${leagueColor};font-weight:700;">${escapeHtml(p.league || "?")}${leagueFlag ? ` ${leagueFlag}` : ""}</span>
+          </div>
+          <div class="player-display-meta" style="margin-top:4px;font-size:11px;color:var(--text-tertiary);">
+            ${p.bats ? `B/T ${escapeHtml(p.bats)}/${escapeHtml(p.throws || "?")}` : ""}
+            ${p.height ? ` · ${escapeHtml(p.height)}` : ""}
+            ${p.weight ? ` · ${escapeHtml(String(p.weight))} lb` : ""}
+            ${p.eta_year ? ` · ETA ${p.eta_year}` : ""}
+          </div>
+          ${statusPill ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">${statusPill}</div>` : ""}
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Current FV</div>
+        <span class="fv-badge ${fvClass(String(fvInt || "40"))} size-lg" style="margin-top:4px;">${fvInt != null ? fvInt : "—"}</span>
+      </div>
+    </div>`;
+
+  // Overview stat tiles.
+  const bonus = p.signed_bonus_usd || p.proj_bonus_usd;
+  const overviewTiles = `<div class="rs-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));">
+    ${_statTileHTML("League", `${escapeHtml(p.league || "—")}`)}
+    ${_statTileHTML("Country", escapeHtml(p.country || "—"))}
+    ${_statTileHTML("Current team", escapeHtml(p.current_team || "—"))}
+    ${p.eta_year ? _statTileHTML("ETA", String(p.eta_year)) : ""}
+    ${bonus ? _statTileHTML(p.signed_bonus_usd ? "Signed bonus" : "Proj bonus", _fmtUSD(bonus)) : ""}
+    ${p.signed_team ? _statTileHTML("Signed by", escapeHtml(p.signed_team), { tone: "pos" }) : ""}
+  </div>`;
+
+  // Career-arc sparkline if data exists.
+  let arcHtml = "";
+  if (p.career_arc && p.career_arc.values && p.career_arc.values.length >= 2) {
+    const vals = p.career_arc.values;
+    const xs = vals.map(v => v.value).filter(v => v != null);
+    if (xs.length >= 2) {
+      const min = Math.min(...xs), max = Math.max(...xs);
+      const W = 240, H = 50;
+      const step = W / Math.max(1, xs.length - 1);
+      const isPitcher = p.career_arc.primary_metric === "era"
+                      || p.career_arc.primary_metric === "fip";
+      const yAt = v => {
+        if (max === min) return H / 2;
+        const norm = (v - min) / (max - min);
+        return isPitcher ? norm * H : (1 - norm) * H;
+      };
+      const pts = xs.map((v, i) => `${i * step},${yAt(v).toFixed(1)}`).join(" ");
+      arcHtml = `<div class="detail-title">Career arc <span class="detail-title-sub">${escapeHtml(p.career_arc.primary_metric.toUpperCase())}</span></div>
+        <svg width="${W}" height="${H}" style="overflow:visible;">
+          <polyline points="${pts}" fill="none" stroke="var(--neon-cyan)" stroke-width="1.5"/>
+          ${xs.map((v, i) => `<circle cx="${i*step}" cy="${yAt(v).toFixed(1)}" r="2.5" fill="var(--neon-cyan)"/>`).join("")}
+        </svg>
+        <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">${escapeHtml(String(xs[0]))} → ${escapeHtml(String(xs[xs.length-1]))}</div>`;
+    }
+  }
+
+  const overviewHtml = `
+    <div class="detail-title flush">Overview</div>
+    ${overviewTiles}
+    ${arcHtml}`;
+
+  const toolsScoutingHtml = `
+    <div class="detail-title flush">Tool grades · per source</div>
+    ${_renderProspectToolsGrid(p)}
+    <div class="detail-title">Scouting reports</div>
+    ${_renderProspectScoutingReports(p)}`;
+
+  const milbLinkHtml = p.milb_key
+    ? `<div style="margin-top:14px;"><a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(p.milb_key)}');" style="color:var(--neon-cyan);font-weight:600;">→ Open MiLB prospect profile (${escapeHtml(p.milb_key)})</a></div>`
+    : "";
+  const acquisitionHtml = `
+    <div class="detail-title flush">Posting / signing timeline</div>
+    <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">
+      ${p.posted_date ? `<div><strong style="color:var(--text-primary);">${escapeHtml(p.posted_date)}</strong> — posted by ${escapeHtml(p.current_team || "his ${p.league || 'overseas'} team")}</div>` : ""}
+      ${p.posting_days_remaining != null && p.status === "posted"
+        ? `<div style="color:var(--neon-orange);"><strong>${p.posting_days_remaining}d</strong> remaining in the posting window</div>` : ""}
+      ${p.signed_team ? `<div><strong style="color:var(--text-primary);">${escapeHtml(p.signed_date || "—")}</strong> — signed by <strong style="color:var(--neon-cyan);">${escapeHtml(p.signed_team)}</strong>${p.signed_bonus_usd ? ` for <strong>${_fmtUSD(p.signed_bonus_usd)}</strong>` : ""}</div>` : ""}
+      ${!p.signed_team && p.proj_team ? `<div>Projected to sign with <strong>${escapeHtml(p.proj_team)}</strong>${p.proj_bonus_usd ? ` for ~${_fmtUSD(p.proj_bonus_usd)}` : ""}</div>` : ""}
+    </div>
+    <div class="detail-title">League context</div>
+    <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+      <div><strong style="color:var(--text-primary);">${escapeHtml((league.league_context || {}).name || p.league)}</strong> (${escapeHtml(p.league || "?")})${(league.league_context || {}).country ? ` · ${escapeHtml(league.league_context.country)}` : ""}</div>
+      ${(league.league_context || {}).translation_pct != null ? `<div style="margin-top:4px;color:var(--text-tertiary);font-size:12px;">MLB translation: ~${league.league_context.translation_pct}% wRC+ haircut typical.</div>` : ""}
+    </div>
+    ${milbLinkHtml}`;
+
+  const tabs = [
+    { key: "overview",    label: "Overview",          html: overviewHtml },
+    { key: "scouting",    label: "Tools & Scouting",  html: toolsScoutingHtml },
+    { key: "acquisition", label: "Acquisition",        html: acquisitionHtml },
+  ];
+  const tabBar = renderDetailTabs(tabs, state.prospectTab, "prospect");
+  root.innerHTML = headerHtml + tabBar;
 }
 
 function _renderOverseasStats(host, prospects, leagues) {
@@ -11008,10 +11509,10 @@ const GLOSSARY = {
   "rps_plus": {
     name: "RPS+", aliases: ["RPS+", "Rate Performance Score"], category: "custom-index",
     priority: 20,
-    short: "Age-relative level performance index; 100 = mean of same-age prospects at the same level.",
-    long: "RPS+ converts a player's level-relative rate stats (OPS+ for hitters, ERA- for pitchers) into a single index normalized against the cohort of same-age prospects at the same level. 100 = exactly average for the age/level bucket, 130 = ~3 stdev above, 70 = ~3 stdev below. MLB-level prospects substitute the canonical wRC+ (hitters) or xFIP/FIP- (pitchers) since league-relative stats are already MLB-anchored.",
-    formula: "RPS+ = 100 + 10 · (player_score − bucket_mean) / bucket_stdev",
-    example: "A 19-year-old hitter at A+ posting a 130 OPS+ vs the level mean reads as RPS+ 120 (well above other 19yos at A+), even if his raw OPS+ vs the level looks identical to a 22-year-old's.",
+    short: "Level-anchored rate index normalized by age cohort AND position group. 100 = mean of same-age, same-position-group prospects.",
+    long: "RPS+ converts a player's level-relative rate stats (OPS+ for hitters, ERA- for pitchers) into a single index. The cohort it normalizes against is now (age × position group), so a 21yo catcher is compared to other 21yo catchers, not the global 21yo pool. Falls back to age-only when the per-position cell has <30 prospects. A small position multiplier (C ×1.08, MI ×1.05, CF ×1.04, CI ×1.00, COF ×0.97, 1B ×0.95, DH ×0.92, P ×1.00) is applied AFTER the cohort normalization so the catcher-vs-1B distinction survives the per-bucket renormalization. MLB-level prospects substitute the canonical wRC+ (hitters) or xFIP/FIP- (pitchers) since those are already MLB-anchored. Weighting priority: LEVEL anchor (highest, via the OPS+ / ERA- input) → AGE cohort → POSITION multiplier.",
+    formula: "RPS+ = 100 × (player_score + 100) / (cohort_mean + 100) × position_multiplier · clamped [0, 250]",
+    example: "A 21yo catcher and a 21yo 1B with identical OPS+ vs level read at different RPS+ — catcher gets ×1.08, first-baseman ×0.95.",
     related: ["fv", "ops_plus_level", "era_minus_level", "wrc_plus"],
   },
   "dvm_plus": {
@@ -12151,7 +12652,7 @@ document.addEventListener("click", async (e) => {
 // the new state to the URL so back/forward + sharable links work.
 const _PG_KEYS = ["leaderboard","actives","glossary","draft","overseas","spotlights","watchlist","farmRoster","farmTx"];
 document.addEventListener("click", (e) => {
-  const btn = e.target && e.target.closest && e.target.closest("[data-player-tab],[data-farm-tab]," + _PG_KEYS.map(k => `[data-${k}-page]`).join(","));
+  const btn = e.target && e.target.closest && e.target.closest("[data-player-tab],[data-farm-tab],[data-prospect-tab]," + _PG_KEYS.map(k => `[data-${k}-page]`).join(","));
   if (!btn || btn.disabled) return;
   // Detail-page tab swap.
   if (btn.dataset.playerTab) {
@@ -12161,6 +12662,12 @@ document.addEventListener("click", (e) => {
   }
   if (btn.dataset.farmTab) {
     state.farmTab = btn.dataset.farmTab;
+    syncToURL(); render();
+    return;
+  }
+  if (btn.dataset.prospectTab) {
+    // Shared by both draft + overseas detail pages.
+    state.prospectTab = btn.dataset.prospectTab;
     syncToURL(); render();
     return;
   }
@@ -12316,6 +12823,36 @@ function headshotURL(mlbamId, sizePx) {
   const r = Math.max(60, Math.round(sizePx * 2));
   return `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_${r},q_auto:best/v1/people/${mlbamId}/headshot/67/current`;
 }
+// Resolve a player's FV to the nearest published tier (80/75/70/65/60/
+// 55/50/45/40/35/30/25/20) so the wrapper picks up the right palette
+// CSS var. Returns null when the player has no FV yet.
+function _playerFvTier(player) {
+  if (!player) return null;
+  const points = player.points || [];
+  const fv = (points.length
+    ? (points[points.length - 1].consensus_fv_raw ?? points[points.length - 1].consensus_fv)
+    : null) ?? player.fv_close ?? player.consensus_fv;
+  if (fv == null || !isFinite(fv)) return null;
+  const tiers = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
+  for (const t of tiers) {
+    if (fv >= t - 2.5) return t;
+  }
+  return 20;
+}
+
+// Build the wrapper-class string applied to ANY headshot/silhouette
+// frame so the prospect's FV tier (and chrome/holo rarity for the
+// 60+/70+ tiers) wraps the picture itself. Empty string when no FV
+// is known.
+function _fvHeadshotRingClass(player) {
+  const tier = _playerFvTier(player);
+  if (tier == null) return "";
+  let cls = `fv-headshot-ring fv-tier-${tier}`;
+  if (tier >= 70) cls += " card-rarity-chrome";
+  else if (tier >= 60) cls += " card-rarity-holo";
+  return cls;
+}
+
 function headshotHTML(player, sizePx = 36) {
   const id = (player && (player.mlbam_id || (player.statline || {}).mlbam_id));
   // Baseball-card aspect: width ≈ 0.8 × height. MLB's stock headshots
@@ -12325,13 +12862,17 @@ function headshotHTML(player, sizePx = 36) {
   const h = sizePx;
   const w = Math.round(sizePx * 0.8);
   const sil = `<svg viewBox="0 0 24 24" aria-hidden="true" style="position:absolute;left:15%;top:15%;width:70%;height:70%;color:var(--text-tertiary);"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+  // FV-tier ring on every headshot wrapper. The chrome/holo classes
+  // already exist (used on the detail-page header); same animations
+  // get applied around the image itself.
+  const ringClass = _fvHeadshotRingClass(player);
   const wrap = `width:${w}px;height:${h}px;border-radius:3px;flex-shrink:0;background:var(--bg-tertiary);border:1px solid var(--border);overflow:hidden;display:inline-block;position:relative;vertical-align:middle;`;
   // Dashed border for the placeholder case so amateur / IFA prospects
   // without an MLBAM ID don't look like a missing image — the dashed
   // edge reads as "no headshot on file" rather than "broken render".
   const placeholderWrap = `width:${w}px;height:${h}px;border-radius:3px;flex-shrink:0;background:var(--bg-tertiary);border:1px dashed var(--border);overflow:hidden;display:inline-block;position:relative;vertical-align:middle;`;
   if (!id) {
-    return `<span class="headshot" style="${placeholderWrap}">${sil}</span>`;
+    return `<span class="headshot ${ringClass}" style="${placeholderWrap}">${sil}</span>`;
   }
   const url = headshotURL(id, h);
   // The silhouette renders behind the img; onerror hides the img so the
@@ -12341,7 +12882,7 @@ function headshotHTML(player, sizePx = 36) {
   // ~400px ahead of scroll, masking the request latency). Native
   // loading="lazy" stays as a fallback for environments where the
   // observer never runs (no-JS, browser without IO support, etc).
-  return `<span class="headshot" style="${wrap}">
+  return `<span class="headshot ${ringClass}" style="${wrap}">
     ${sil}
     <img data-src="${url}" alt="" loading="lazy"
          style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;"
@@ -19448,6 +19989,8 @@ function render() {
     watchlist:    "watchlist-section",
     player:       "player-detail-section",
     farmDetail:   "farm-detail-section",
+    draftDetail:  "draft-detail-section",
+    overseasDetail: "overseas-detail-section",
   };
 
   // Detail view takes over: hide tabs, filter bar, search; show one section.
@@ -19472,6 +20015,8 @@ function render() {
   let active;
   if (state.view && state.view.type === "player") active = "player";
   else if (state.view && state.view.type === "farm") active = "farmDetail";
+  else if (state.view && state.view.type === "draftee") active = "draftDetail";
+  else if (state.view && state.view.type === "overseas_player") active = "overseasDetail";
   else active = state.section;
 
   for (const [name, id] of Object.entries(sections)) {
@@ -19495,10 +20040,12 @@ function render() {
   // Inner body element per section — must match where the per-section
   // render function writes its main content.
   const SECTION_BODY = {
-    graduates:  "grad-rows",
-    injured:    "injured-rows",
-    farmDetail: "farm-detail-body",
-    player:     "player-detail-body",
+    graduates:      "grad-rows",
+    injured:        "injured-rows",
+    farmDetail:     "farm-detail-body",
+    player:         "player-detail-body",
+    draftDetail:    "draft-detail-body",
+    overseasDetail: "overseas-detail-body",
   };
   const showLoading = (msg) => {
     const id = SECTION_BODY[active];
@@ -19526,7 +20073,9 @@ function render() {
   }
 
   if (active === "player")       renderPlayerDetail(state.view.key);
-  else if (active === "farmDetail") renderFarmDetail(state.view.org);
+  else if (active === "farmDetail")     renderFarmDetail(state.view.org);
+  else if (active === "draftDetail")    renderDraftDetail(state.view.key);
+  else if (active === "overseasDetail") renderOverseasDetail(state.view.key);
   else if (active === "active")     renderActives();
   else if (active === "spotlights") renderSpotlights();
   else if (active === "traded")     renderRecentlyTraded();
@@ -19903,39 +20452,118 @@ function _rpsAgeBucket(age) {
   return ai >= 25 ? 25 : ai;
 }
 
+// Position-group bucket for RPS+ cohort normalization. Coarser than
+// `positionBucket` so the per-(age, group) cell still has enough
+// prospects to anchor a mean (the global `positionBucket` returns
+// "SS" / "2B" / "CF" / "LF" / "RF" separately, which thins the cell
+// to <30 prospects in many age buckets).
+//   C   → catcher
+//   MI  → middle infield (SS, 2B)
+//   CI  → corner infield  (1B, 3B)
+//   CF  → center field
+//   COF → corner outfield (LF, RF)
+//   OF  → ambiguous outfield (just "OF")
+//   INF → ambiguous infield
+//   DH  → designated hitter
+//   P   → pitcher
+function _rpsPositionGroup(pos) {
+  const b = positionBucket(pos);
+  if (!b) return null;
+  if (b === "C")  return "C";
+  if (b === "SS" || b === "2B") return "MI";
+  if (b === "1B" || b === "3B") return "CI";
+  if (b === "CF") return "CF";
+  if (b === "LF" || b === "RF") return "COF";
+  if (b === "OF") return "OF";
+  if (b === "INF") return "INF";
+  if (b === "DH") return "DH";
+  if (b === "P")  return "P";
+  return null;
+}
+
+// Position multipliers reflecting positional difficulty. Applied
+// OUTSIDE the cohort-mean normalization so the effect survives the
+// per-bucket renormalization. Source: rough rule-of-thumb based on
+// positional adjustment values used in WAR calculations (catcher +12.5
+// runs, SS +7.5, 2B +2.5, 3B 0, CF +2.5, LF/RF −7.5, 1B −12.5, DH −17.5)
+// translated to a ~±10% RPS+ swing.
+//
+// Pitchers stay at 1.00 because RPS+ flows through ERA- (already
+// position-corrected internally — pitching is the only thing pitchers do).
+const _RPS_POSITION_MULTIPLIERS = {
+  C:   1.08,
+  MI:  1.05,
+  CF:  1.04,
+  CI:  1.00,
+  INF: 1.02,
+  OF:  0.99,
+  COF: 0.97,
+  DH:  0.92,
+  P:   1.00,
+};
+function _rpsPositionMultiplier(p) {
+  const g = _rpsPositionGroup(p && p.position);
+  if (!g) return 1.00;
+  return _RPS_POSITION_MULTIPLIERS[g] || 1.00;
+}
+
 function _buildRpsPlusCache() {
   const players = (DATA.players || []);
-  // Group raw RPS by integer-age bucket so we can take the mean.
-  const buckets = new Map();
+  // Group raw RPS by (integer age × position group) so the mean
+  // anchors each comparison to its true cohort. Falls back to
+  // age-only when the per-position cell has <30 prospects.
+  const buckets = new Map();        // key "age::group" → [scores]
+  const ageBuckets = new Map();     // key "age" → [scores] (fallback)
   const playerRps = [];
+  const MIN_SAMPLE = 30;
   for (const p of players) {
     const r = computeRelProd(p);
     if (r == null) continue;
-    const b = _rpsAgeBucket(p.age);
-    if (b == null) continue;
-    playerRps.push({ key: p.player_key, bucket: b, raw: r.score });
-    if (!buckets.has(b)) buckets.set(b, []);
-    buckets.get(b).push(r.score);
+    const ageB = _rpsAgeBucket(p.age);
+    if (ageB == null) continue;
+    const group = _rpsPositionGroup(p.position) || "?";
+    const key = `${ageB}::${group}`;
+    playerRps.push({ key: p.player_key, bucket: key, ageBucket: ageB,
+                     group, raw: r.score, posMult: _rpsPositionMultiplier(p) });
+    if (!buckets.has(key))     buckets.set(key, []);
+    if (!ageBuckets.has(ageB)) ageBuckets.set(ageB, []);
+    buckets.get(key).push(r.score);
+    ageBuckets.get(ageB).push(r.score);
   }
-  // Arithmetic mean per bucket. Bucket sizes are also exposed so the
-  // tooltip can tell the user how thin the comparison group is.
-  for (const [b, arr] of buckets) {
-    const n = arr.length;
-    const mean = arr.reduce((s, x) => s + x, 0) / n;
-    _rpsPlusCache.bucketMean.set(b, mean);
-    _rpsPlusCache.bucketSize.set(b, n);
+  // Per-bucket means (age × position group + age-only fallback).
+  for (const [k, arr] of buckets) {
+    const mean = arr.reduce((s, x) => s + x, 0) / arr.length;
+    _rpsPlusCache.bucketMean.set(k, mean);
+    _rpsPlusCache.bucketSize.set(k, arr.length);
   }
-  // RPS+ per player.
-  for (const { key, bucket, raw } of playerRps) {
-    const m = _rpsPlusCache.bucketMean.get(bucket);
+  for (const [k, arr] of ageBuckets) {
+    const mean = arr.reduce((s, x) => s + x, 0) / arr.length;
+    _rpsPlusCache.bucketMean.set(String(k), mean);
+    _rpsPlusCache.bucketSize.set(String(k), arr.length);
+  }
+  // RPS+ per player. Apply position multiplier OUTSIDE the cohort
+  // normalization so the position effect doesn't get washed out by
+  // re-anchoring against a position-specific mean.
+  for (const { key, bucket, ageBucket, raw, posMult } of playerRps) {
+    let n = _rpsPlusCache.bucketSize.get(bucket) || 0;
+    let m, usedBucket;
+    if (n >= MIN_SAMPLE) {
+      m = _rpsPlusCache.bucketMean.get(bucket);
+      usedBucket = bucket;
+    } else {
+      m = _rpsPlusCache.bucketMean.get(String(ageBucket));
+      n = _rpsPlusCache.bucketSize.get(String(ageBucket)) || 0;
+      usedBucket = String(ageBucket);
+    }
     let plus;
     if (m > 0) {
-      plus = Math.round(100 * (raw + 100) / (m + 100));
+      plus = (100 * (raw + 100) / (m + 100));
     } else {
-      plus = Math.round(100 + (raw - m));
+      plus = (100 + (raw - m));
     }
-    plus = Math.max(0, Math.min(250, plus));
-    _rpsPlusCache.byKey.set(key, { plus, bucket, raw, mean: m, n: _rpsPlusCache.bucketSize.get(bucket) });
+    plus = plus * posMult;
+    plus = Math.round(Math.max(0, Math.min(250, plus)));
+    _rpsPlusCache.byKey.set(key, { plus, bucket: usedBucket, raw, mean: m, n, posMult });
   }
   _rpsPlusCache.built = true;
 }
@@ -19996,10 +20624,20 @@ function rpsPlusPillHTML(p) {
     return `<span class="rps-plus-pill is-null" title="RPS+ unavailable — needs a qualifying sample (15+ games for hitters, 15+ IP for pitchers) and a known age.">RPS+ —</span>`;
   }
   const cls = rp.plus >= 110 ? "is-pos" : rp.plus <= 90 ? "is-neg" : "is-neutral";
-  const ageLabel = rp.bucket >= 25 ? "25+yo" : `${rp.bucket}yo`;
+  // rp.bucket is "age::group" when the per-position cell had ≥30
+  // prospects, else just "age" (age-only fallback). Parse out the
+  // age + group for the tooltip.
+  const bucketParts = String(rp.bucket).split("::");
+  const ageNum = parseInt(bucketParts[0], 10);
+  const groupTag = bucketParts.length > 1 ? bucketParts[1] : null;
+  const ageLabel = ageNum >= 25 ? "25+yo" : `${ageNum}yo`;
+  const cohortLabel = groupTag ? `${ageLabel} ${groupTag}` : `${ageLabel} (all positions)`;
   const diff = rp.plus - 100;
   const diffTxt = diff === 0 ? "matches" : `${diff > 0 ? "+" : ""}${diff}% vs`;
-  const title = `RPS+ ${rp.plus} · ${diffTxt} the mean ${ageLabel} prospect (raw score ${rp.raw >= 0 ? "+" : ""}${rp.raw} vs bucket mean ${rp.mean >= 0 ? "+" : ""}${rp.mean.toFixed(1)}, n=${rp.n})`;
+  const posMultTxt = rp.posMult != null && rp.posMult !== 1.00
+    ? ` · position adj ×${rp.posMult.toFixed(2)}`
+    : "";
+  const title = `RPS+ ${rp.plus} · ${diffTxt} the mean ${cohortLabel} prospect (raw score ${rp.raw >= 0 ? "+" : ""}${rp.raw} vs bucket mean ${rp.mean >= 0 ? "+" : ""}${rp.mean.toFixed(1)}, n=${rp.n}${posMultTxt})`;
   return `<span class="rps-plus-pill ${cls}" title="${escapeHtml(title)}"><span class="g-term" data-term="rps_plus">RPS+</span> ${rp.plus}</span>`;
 }
 

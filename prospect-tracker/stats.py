@@ -1302,15 +1302,15 @@ def fetch_career_stats(player_key: str, mlbam_id: int,
     """
     Pull year-by-year MiLB + MLB splits for one player in a single call.
 
-    Returns a list of {season, level, level_label, games, ip / pa, ...}
-    one row per (season, highest level reached that year). Returns None
-    if the API gave us nothing.
+    Returns one row per (season, level) tuple so a player who played
+    A+/AA in 2025 surfaces BOTH levels. Rows sorted by season descending,
+    then highest level first within each season. Returns None if the
+    API gave us nothing.
 
-    The yearByYear endpoint returns one split per (season, league/level),
-    so a player with stints at A+/AA in 2025 produces two rows. We
-    collapse to the HIGHEST level per season since that's what scouts
-    react to — the per-level breakdown rarely matters on the profile
-    page and would clutter the table.
+    Callers that want the most-recent / highest level per season can
+    use the first row per season; consumers that want the full ladder
+    (the prospect-detail career table, the boom-bust sample floor) get
+    every (season, level) split they need.
 
     Single-call: `leagueListId=mlb_milb` returns MLB + every MiLB level in
     one response, replacing the prior two-URL pattern (milb_full + MLB).
@@ -1347,8 +1347,12 @@ def fetch_career_stats(player_key: str, mlbam_id: int,
     if not raw_splits:
         return None
 
-    # Group by season and pick the highest level per year.
-    by_season: dict[str, dict] = {}
+    # Keep every (season, level) split — a 2025 AA-then-AAA stint
+    # produces TWO entries so the consumer sees both rungs of the ladder.
+    # `accepted` is the merged stash; rows sort by (season desc, then
+    # level rank asc within the season — highest level first).
+    accepted: list[dict] = []
+    seen: set[tuple[str, str]] = set()  # de-dup (season, level)
     for s in raw_splits:
         season = str(s.get("season") or "")
         if not season:
@@ -1375,24 +1379,34 @@ def fetch_career_stats(player_key: str, mlbam_id: int,
                 break
         if label is None or label not in LEVEL_ORDER:
             continue
-        existing = by_season.get(season)
-        if existing is None or LEVEL_ORDER.index(label) < LEVEL_ORDER.index(existing["_level"]):
-            s["_level"] = label
-            # Keep the most informative name available — league name when
-            # present (e.g. "Dominican Summer League"), falling back to
-            # sport name ("Rookie") when the API didn't return a league.
-            s["_level_label"] = league_name or sport_name
-            by_season[season] = s
+        key = (season, label)
+        if key in seen:
+            # Some seasons surface the same level twice via different
+            # affiliates (e.g. mid-season trade to another AA team).
+            # Keep the first occurrence; downstream sums see the API's
+            # aggregate via its own composite stat row.
+            continue
+        seen.add(key)
+        s["_level"] = label
+        s["_level_label"] = league_name or sport_name
+        accepted.append(s)
 
-    if not by_season:
+    if not accepted:
         return None
 
+    # Sort: season desc, then level rank asc (highest level first) inside
+    # each season. The "first row per season" matches the legacy
+    # behavior, but later rows now carry the lower-level splits.
+    accepted.sort(key=lambda r: (
+        -int(r.get("season") or 0),
+        LEVEL_ORDER.index(r["_level"]),
+    ))
+
     out: list[dict] = []
-    for season in sorted(by_season, reverse=True):
-        s = by_season[season]
+    for s in accepted:
         stat = s.get("stat", {})
         row = {
-            "season": int(season),
+            "season": int(s.get("season") or 0),
             "level": s["_level"],
             "level_label": s["_level_label"],
             "games": int(stat.get("gamesPlayed", 0) or 0),
@@ -1464,7 +1478,18 @@ def fetch_career_stats(player_key: str, mlbam_id: int,
                 "is_pitcher": False,
             })
         out.append(row)
-    return out[:CAREER_SEASONS_KEPT]
+    # Cap at CAREER_SEASONS_KEPT UNIQUE seasons (not rows) so the
+    # multi-level expansion doesn't accidentally truncate the table to
+    # mid-2023. Walk the sorted list collecting rows until the season
+    # set hits the cap.
+    kept_seasons: set[int] = set()
+    capped: list[dict] = []
+    for r in out:
+        kept_seasons.add(r["season"])
+        if len(kept_seasons) > CAREER_SEASONS_KEPT:
+            break
+        capped.append(r)
+    return capped
 
 
 # ---------------------------------------------------------------------------

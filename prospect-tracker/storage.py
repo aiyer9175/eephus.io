@@ -2170,6 +2170,40 @@ def _fv_to_expected_war(fv: float | int | None) -> float | None:
     return None
 
 
+# FV → expected WAR-per-year (the FanGraphs scouting-primer "lower bound"
+# rate). Mirrors the JS `FV_WAR_ANCHORS` + `fvExpectedWarPerYr` in
+# [index.html] so the boom/bust label the backend stamps matches the WAG
+# pill the frontend already shows on every graduate page.
+FV_EXPECTED_WAR_PER_YR_HITTER = {
+    30: -0.1, 40: 0.0, 45: 0.8, 50: 1.6, 55: 2.5, 60: 3.4, 70: 5.0, 80: 7.0,
+}
+FV_EXPECTED_WAR_PER_YR_PITCHER = {
+    30: -0.1, 40: 0.0, 45: 1.0, 50: 1.8, 55: 2.6, 60: 3.5, 70: 5.0, 80: 7.0,
+}
+
+
+def _fv_to_expected_war_per_yr(fv, is_pitcher: bool = False) -> float | None:
+    """Linear-interpolate FV → expected WAR/yr. None for None / out-of-range."""
+    if fv is None:
+        return None
+    try:
+        v = float(fv)
+    except (TypeError, ValueError):
+        return None
+    table = FV_EXPECTED_WAR_PER_YR_PITCHER if is_pitcher else FV_EXPECTED_WAR_PER_YR_HITTER
+    keys = sorted(table.keys())
+    if v <= keys[0]:
+        return table[keys[0]]
+    if v >= keys[-1]:
+        return table[keys[-1]]
+    for i in range(len(keys) - 1):
+        lo, hi = keys[i], keys[i + 1]
+        if lo <= v <= hi:
+            t = (v - lo) / (hi - lo) if hi > lo else 0
+            return round(table[lo] + t * (table[hi] - table[lo]), 3)
+    return None
+
+
 # Industry-standard draft pick-slot value curve (career WAR expectations
 # based on FanGraphs / Baseball America surplus-value research). A
 # 1st-overall pick has historically averaged ~9 career WAR; the curve
@@ -2216,17 +2250,14 @@ def _pick_slot_expected_war(pick_overall) -> float | None:
     return _PICK_SLOT_EXPECTED_WAR[-1][1]
 
 
-def _grad_wag(graduate_payload: dict) -> float | None:
-    """WAG (WAR Above Grade) for one graduate: actual career WAR minus
-    the FV-implied expected WAR at the time of graduation.
+def _grad_wag_cumulative(graduate_payload: dict) -> float | None:
+    """Legacy career-cumulative WAG: actual career WAR minus FV-implied
+    CAREER WAR. Biased against mid-career grads who haven't accumulated
+    yet (a 2-yr Yamamoto with 4 WAR vs FV 65/17 expected reads as −13).
+    Kept for any consumer that needs the long-horizon view.
 
-      WAG > 0 → graduate has outperformed their final prospect grade.
-      WAG < 0 → graduate has underperformed.
-      WAG = 0 → graduate is on the FV-implied trajectory.
-
-    Returns None when career_war is unknown OR when fv_close is missing
-    (e.g., a player who was never publicly graded). Distinct from
-    'returned a 0' — None means 'no projection possible'."""
+    The CURRENT default is `_grad_wag` (below), which is rate-based and
+    matches the frontend WAG pill."""
     cw = graduate_payload.get("career_war") or {}
     total_war = cw.get("career_war")
     fv_close = graduate_payload.get("fv_close_raw")
@@ -2240,19 +2271,62 @@ def _grad_wag(graduate_payload: dict) -> float | None:
     return round(float(total_war) - expected, 2)
 
 
+def _grad_wag(graduate_payload: dict) -> float | None:
+    """WAG (WAR Above Grade) for one graduate, rate-based:
+    (career WAR/yr) − (FV-implied WAR/yr).
+
+      WAG > 0 → graduate is producing ABOVE their FV-implied rate.
+      WAG < 0 → graduate is producing BELOW.
+      WAG = 0 → tracking the FV-implied trajectory.
+
+    Source of truth — boom/bust label + per-org talent_translation
+    rollups both read this. Mirrors the frontend `gradVsFvProjection`
+    helper so the WAG pill on every graduate detail page matches what
+    the backend stamps. Returns None when career_war.war_per_yr is
+    missing OR when fv_close is missing (player never publicly graded).
+    Distinct from 'returned a 0' — None means 'no projection possible'."""
+    cw = graduate_payload.get("career_war") or {}
+    war_per_yr = cw.get("war_per_yr")
+    fv_close = graduate_payload.get("fv_close_raw")
+    if fv_close is None:
+        fv_close = graduate_payload.get("fv_close")
+    if war_per_yr is None or fv_close is None:
+        return None
+    # Pitcher vs hitter table — pulled from the player's position when
+    # available; falls back to hitter table when unknown.
+    _PITCHER_POS_LOCAL = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP", "P"}
+    is_pitcher = False
+    pos = (graduate_payload.get("position") or "").upper().split("/")[0]
+    if pos in _PITCHER_POS_LOCAL:
+        is_pitcher = True
+    saberm = graduate_payload.get("sabermetrics") or {}
+    if saberm.get("is_pitcher") is True:
+        is_pitcher = True
+    expected = _fv_to_expected_war_per_yr(fv_close, is_pitcher=is_pitcher)
+    if expected is None:
+        return None
+    return round(float(war_per_yr) - expected, 2)
+
+
 def _compute_boom_bust(graduate_payload: dict) -> str:
     """Categorize a graduate as boom / bust / settled / unsettled,
-    anchored on WAG (WAR Above Grade) with a sample-size floor.
+    anchored on RATE-BASED WAG (WAR/yr above the FV-implied WAR/yr)
+    with a sample-size floor.
 
     Returns one of:
-      "boom"      — WAG ≥ +5.0, meets sample floor (clearly outperformed)
-      "bust"      — WAG ≤ −2.0, meets sample floor (clearly underperformed)
+      "boom"      — WAG ≥ +1.5 WAR/yr, meets sample floor
+      "bust"      — WAG ≤ −0.7 WAR/yr, meets sample floor
       "settled"   — meets sample floor but landed in the middle band
       "unsettled" — no WAG, or sample too small to call
 
     Sample-size floor: ≥2 MLB seasons OR ≥800 career PA OR ≥200 career IP.
-    Cup-of-coffee debuts (<800 PA / <200 IP / ≤1 season) stay 'unsettled'
-    so we don't mislabel them on light samples."""
+    Cup-of-coffee debuts stay 'unsettled' so we don't mislabel them on
+    light samples.
+
+    Thresholds re-anchored from cumulative (+5 / −2 career WAR) to
+    rate (+1.5 / −0.7 WAR/yr) so mid-career grads — a 2-yr Yamamoto
+    producing 2.4 WAR/yr vs FV 65's 3.5 implied — get the fair label.
+    Matches the frontend `gradVsFvProjection` pill."""
     wag = _grad_wag(graduate_payload)
     cw = graduate_payload.get("career_war") or {}
     seasons = cw.get("war_seasons_count") or 0
@@ -2271,9 +2345,9 @@ def _compute_boom_bust(graduate_payload: dict) -> str:
     meets_floor = (seasons >= 2) or (total_pa >= 800) or (total_ip >= 200)
     if wag is None or not meets_floor:
         return "unsettled"
-    if wag >= 5.0:
+    if wag >= 1.5:
         return "boom"
-    if wag <= -2.0:
+    if wag <= -0.7:
         return "bust"
     return "settled"
 
@@ -4453,7 +4527,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         )
         if not gp_org:
             continue
-        # Build a minimal payload that _grad_wag can read.
+        # Build a minimal payload that _grad_wag can read. Pass through
+        # the player's position so the rate-based WAG picks the right
+        # pitcher/hitter expected-WAR-per-yr table.
         cw = (career_war or {}).get(gp.player_key) or {}
         fv_close_raw = (round(gp.points[-1].consensus_fv_raw, 2)
                         if gp.points else None)
@@ -4461,6 +4537,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "career_war":   cw,
             "fv_close_raw": fv_close_raw,
             "fv_close":     gp.fv_close,
+            "position":     gp.position,
         })
         career_war_val = cw.get("career_war")
         gp_acq = (acquisitions or {}).get(gp.player_key, {}) or {}

@@ -13,6 +13,7 @@ from storage import (
     FV_EXPECTED_WAR,
     _fv_to_expected_war,
     _grad_wag,
+    _grad_wag_cumulative,
     _letter_grade,
     _rank_descending,
 )
@@ -57,17 +58,19 @@ class TestFvToExpectedWar:
 
 
 # ---------------------------------------------------------------------------
-# Per-graduate WAG (Step 1)
+# Per-graduate cumulative WAG — the legacy career-total view.
+# Kept under `_grad_wag_cumulative` since the canonical `_grad_wag`
+# is now rate-based (matches the frontend gradVsFvProjection pill).
 # ---------------------------------------------------------------------------
 
-class TestGradWag:
+class TestGradWagCumulative:
     def test_positive_when_war_beats_projection(self):
         # FV 50 → expected 3.0 WAR. Career WAR of 10 → WAG = +7.0.
         grad = {
             "career_war": {"career_war": 10.0},
             "fv_close_raw": 50.0,
         }
-        assert _grad_wag(grad) == 7.0
+        assert _grad_wag_cumulative(grad) == 7.0
 
     def test_negative_when_war_misses_projection(self):
         # FV 60 → expected 12.0 WAR. Career WAR of 3 → WAG = -9.0.
@@ -75,7 +78,7 @@ class TestGradWag:
             "career_war": {"career_war": 3.0},
             "fv_close_raw": 60.0,
         }
-        assert _grad_wag(grad) == -9.0
+        assert _grad_wag_cumulative(grad) == -9.0
 
     def test_zero_when_war_matches_projection(self):
         # FV 50 → expected 3.0 WAR. Career WAR of 3 → WAG = 0.
@@ -83,18 +86,18 @@ class TestGradWag:
             "career_war": {"career_war": 3.0},
             "fv_close_raw": 50.0,
         }
-        assert _grad_wag(grad) == 0.0
+        assert _grad_wag_cumulative(grad) == 0.0
 
     def test_none_when_career_war_missing(self):
         # No career_war at all → None (not 0).
-        assert _grad_wag({"fv_close_raw": 50.0}) is None
-        assert _grad_wag({"career_war": {}, "fv_close_raw": 50.0}) is None
-        assert _grad_wag({"career_war": {"career_war": None},
+        assert _grad_wag_cumulative({"fv_close_raw": 50.0}) is None
+        assert _grad_wag_cumulative({"career_war": {}, "fv_close_raw": 50.0}) is None
+        assert _grad_wag_cumulative({"career_war": {"career_war": None},
                           "fv_close_raw": 50.0}) is None
 
     def test_none_when_fv_close_missing(self):
-        assert _grad_wag({"career_war": {"career_war": 5.0}}) is None
-        assert _grad_wag({"career_war": {"career_war": 5.0},
+        assert _grad_wag_cumulative({"career_war": {"career_war": 5.0}}) is None
+        assert _grad_wag_cumulative({"career_war": {"career_war": 5.0},
                           "fv_close_raw": None,
                           "fv_close": None}) is None
 
@@ -104,7 +107,64 @@ class TestGradWag:
             "career_war": {"career_war": 5.0},
             "fv_close": 50.0,
         }
-        assert _grad_wag(grad) == 2.0  # 5.0 - 3.0
+        assert _grad_wag_cumulative(grad) == 2.0  # 5.0 - 3.0
+
+
+# ---------------------------------------------------------------------------
+# Per-graduate rate-based WAG (current default) — (WAR/yr − FV-implied
+# WAR/yr). Mirrors the frontend `gradVsFvProjection` pill so the boom/
+# bust label backend stamps matches what the user sees on the card.
+# ---------------------------------------------------------------------------
+
+class TestGradWagRate:
+    def test_positive_when_war_per_yr_beats_projection(self):
+        # FV 50 hitter → expected 1.6 WAR/yr. 3.0 WAR/yr → +1.4 WAG.
+        grad = {
+            "career_war": {"war_per_yr": 3.0},
+            "fv_close_raw": 50.0,
+            "position": "SS",
+        }
+        assert _grad_wag(grad) == 1.4
+
+    def test_pitcher_uses_pitcher_table(self):
+        # FV 60 pitcher → expected 3.5 WAR/yr. 5.0 WAR/yr → +1.5 WAG.
+        grad = {
+            "career_war": {"war_per_yr": 5.0},
+            "fv_close_raw": 60.0,
+            "position": "RHP",
+        }
+        assert _grad_wag(grad) == 1.5
+
+    def test_negative_when_war_per_yr_misses_projection(self):
+        # FV 65 hitter → between FV 60 (3.4) and FV 70 (5.0) → 3.4 + 0.5*(1.6) = 4.2 WAR/yr expected.
+        # 1.0 WAR/yr → −3.2.
+        grad = {
+            "career_war": {"war_per_yr": 1.0},
+            "fv_close_raw": 65.0,
+            "position": "OF",
+        }
+        v = _grad_wag(grad)
+        assert v is not None and v < 0
+
+    def test_none_when_war_per_yr_missing(self):
+        assert _grad_wag({"fv_close_raw": 50.0}) is None
+        assert _grad_wag({"career_war": {}, "fv_close_raw": 50.0}) is None
+
+    def test_yamamoto_shaped_grad_classifies_as_boom(self):
+        # Yamamoto-shape: 2 MLB seasons / 4 WAR total / 2.4 WAR/yr / FV 65.
+        # On the OLD cumulative WAG → 4 - 17 = -13 (BUST, unfair).
+        # On the NEW rate WAG → 2.4 - 4.2 = -1.8 (settled/bust, fairer).
+        # Witt-shape: 5 seasons / 28 WAR / 5.6 WAR/yr / FV 60.
+        # Cumulative: 28 - 12 = +16 (BOOM).
+        # Rate: 5.6 - 3.4 = +2.2 (BOOM ✓).
+        witt = {
+            "career_war": {"war_per_yr": 5.6, "career_war": 28.0, "war_seasons_count": 5},
+            "career_stats": [{"pa": 600}] * 5,
+            "fv_close_raw": 60.0,
+            "position": "SS",
+        }
+        from storage import _compute_boom_bust
+        assert _compute_boom_bust(witt) == "boom"
 
 
 # ---------------------------------------------------------------------------
