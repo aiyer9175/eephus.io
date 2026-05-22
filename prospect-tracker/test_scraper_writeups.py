@@ -70,6 +70,10 @@ ESPN_FIXTURE = """
   a 70 grade, but everyone agrees the bat is the carrying tool.</p>
   <h2>2. Stub Player, SS, New York Yankees</h2>
   <p>too short</p>
+  <h2>50. Edge Case, RHP, Tampa Bay Rays</h2>
+  <p>Edge Case mirrors the rank-50 entries from in-season updates — a
+  brief paragraph beneath the rank header. The scraper's `1 <= rank <= 100`
+  gate must pass rank 50 unchanged so this player still emits a Snapshot.</p>
 </div>
 </body></html>
 """
@@ -102,6 +106,27 @@ def test_espn_extracts_writeup(cache_dir):
     # Narrative survives intact.
     assert "elite contact rates" in report
     assert len(report) <= 8000
+
+
+def test_espn_handles_high_rank_articles(cache_dir):
+    # Regression guard for the rank-50 path — used by the 2026 in-season
+    # top-50 article added to ESPN_INTERVALS. Confirms the gate +
+    # rank-line regex pass rank 50 unchanged.
+    (cache_dir / "espn_test_label.html").write_text(ESPN_FIXTURE,
+                                                     encoding="utf-8")
+    rows = scrape_espn_top100(
+        url="http://example.invalid/espn",
+        label="test_label",
+        snap_date="2026-01-01",
+    )
+    edge = next((r for r in rows if "edge_case" in r.player_key), None)
+    assert edge is not None, (
+        f"rank-50 entry didn't produce a Snapshot — "
+        f"got keys {[r.player_key for r in rows]}"
+    )
+    assert edge.rank == 50
+    extras = (edge.tools or {}).get("_extras", {}) if edge.tools else {}
+    assert "report" in extras, "rank-50 entry should still carry a writeup when prose exists"
 
 
 def test_espn_skips_short_blurbs(cache_dir):

@@ -1660,6 +1660,16 @@
       color: var(--neon-green);
       border-color: var(--neon-green);
     }
+    /* "FG writeup" indicator on graduate-list rows. Flags that the
+       prospect has a FanGraphs graduate-year scouting writeup on file.
+       Cyan to match the FanGraphs source-tab styling elsewhere. */
+    .grad-pill.grad-writeup-pill {
+      background: rgba(78, 224, 255, 0.12);
+      color: var(--neon-cyan);
+      border-color: var(--neon-cyan);
+      font-weight: 600;
+      margin-left: var(--space-1);
+    }
 
     /* Sticky "what just graduated" banner. Sits above the date-grouped
        rows in renderGraduates when at least one graduate's date is
@@ -8192,13 +8202,24 @@ function renderGraduates() {
         warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="WAR/year — total MLB WAR ÷ ${r.war_seasons_count} season${r.war_seasons_count === 1 ? "" : "s"} weighted by playing time (1 season = ${denomTag}). Requires ≥1 full-season equivalent of MLB time.">${r.war_per_yr > 0 ? '+' : ''}${r.war_per_yr.toFixed(2)} WAR/yr</span>`;
       }
     }
+    // "FG writeup" pill — only shows when FanGraphs published a
+    // graduate-year writeup for this player. Reads from the
+    // scout_reports sidecar (lazy-loaded; the pill silently no-ops
+    // until the sidecar arrives). The label-substring check matches
+    // both "2024graduates" and "2024 Graduated" variants.
+    const fgGradReport = ((DATA.scout_reports || {})[g.player_key] || {}).fangraphs;
+    const hasGradWriteup = !!(fgGradReport
+      && (fgGradReport.label || "").toLowerCase().includes("graduat"));
+    const gradWriteupPill = hasGradWriteup
+      ? `<span class="grad-pill grad-writeup-pill" title="FanGraphs published a graduate-year writeup — open the detail page to read it (${escapeHtml(fgGradReport.label || "")} · ${escapeHtml(fgGradReport.date || "")})">FG writeup</span>`
+      : "";
     return `
       <div class="grad-row" data-key="${escapeHtml(g.player_key)}" style="${orgStripe(g.org)}">
         <div class="rank-num">${rank}</div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           ${headshotHTML(g, 50)}
           <div style="min-width:0;flex:1;">
-            <div class="player-name">${escapeHtml(g.player_name)}${wagPill}${warTag}</div>
+            <div class="player-name">${escapeHtml(g.player_name)}${wagPill}${warTag}${gradWriteupPill}</div>
             ${playerMetaHTML(g, { showIL: false, showRoster: false })}
           </div>
         </div>
@@ -14018,14 +14039,25 @@ function renderPlayerDetail(key) {
     }
     const anyPopulated = SOURCES.some(s => latestBySrc[s.key]);
     if (!anyPopulated) return "";
-    // Default-active tab = source with the most-recent publication date.
+    // Default-active tab pick:
+    //   1. For GRADUATES with a FanGraphs grad-year writeup, promote
+    //      the fangraphs tab so the year-end retrospective is the
+    //      first thing scouts see when reviewing a graduate.
+    //   2. Otherwise: source with the most-recent publication date.
     let defaultSrc = null;
-    let bestDate = "";
-    for (const { key } of SOURCES) {
-      const r = latestBySrc[key];
-      if (r && r.date > bestDate) {
-        bestDate = r.date;
-        defaultSrc = key;
+    const isGrad = p && p.status === "graduated";
+    const fgEntry = latestBySrc.fangraphs;
+    if (isGrad && fgEntry
+        && (fgEntry.label || "").toLowerCase().includes("graduat")) {
+      defaultSrc = "fangraphs";
+    } else {
+      let bestDate = "";
+      for (const { key } of SOURCES) {
+        const r = latestBySrc[key];
+        if (r && r.date > bestDate) {
+          bestDate = r.date;
+          defaultSrc = key;
+        }
       }
     }
     const tabs = SOURCES.map(s => {

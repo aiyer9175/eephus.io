@@ -150,3 +150,56 @@ def test_every_section_renders(server):
                 f"silent empty render (htmlLen={res.get('htmlLen')})"
             )
     assert not failed, "Section render gaps:\n  " + "\n  ".join(failed)
+
+
+def test_graduates_page_shows_fg_writeup_pills(server):
+    """Once the scout-reports sidecar is loaded, graduates with a FG
+    grad-year writeup should display the `.grad-writeup-pill` indicator.
+    Guards the Stage 3a UI surfacing — silently swallowed if the data
+    isn't ingested (sidecar-empty → pill rightfully absent)."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    import json
+    from pathlib import Path
+
+    # Cheap pre-check: does the local scout_reports.json carry any
+    # fangraphs entry with a "graduat" label? If not, skip — there's
+    # nothing for the pill to flag.
+    sr_path = Path(__file__).parent / "data" / "scout_reports.json"
+    if not sr_path.exists():
+        pytest.skip("scout_reports.json not present — no data to test against")
+    sidecar = json.loads(sr_path.read_text(encoding="utf-8"))
+    eligible_keys = {
+        k for k, by_src in sidecar.items()
+        if "fangraphs" in by_src
+        and "graduat" in (by_src["fangraphs"].get("label") or "").lower()
+    }
+    if not eligible_keys:
+        pytest.skip("no FG grad-year writeups in sidecar — nothing to flag")
+
+    page_errors: list[str] = []
+    with sync_playwright() as p:
+        try:
+            browser = p.chromium.launch(headless=True)
+        except Exception as exc:
+            pytest.skip(f"chromium not installed for playwright: {exc}")
+        page = browser.new_page()
+        page.on("pageerror", lambda err: page_errors.append(err.message))
+        page.goto(server, wait_until="load", timeout=15_000)
+        page.wait_for_timeout(3000)
+        # Navigate to Graduates + wait for the slice + sidecar to settle.
+        page.click('.section-tab[data-section="graduates"]')
+        page.wait_for_timeout(2500)
+        n_pills = page.evaluate(
+            "document.querySelectorAll('.grad-writeup-pill').length"
+        )
+        browser.close()
+
+    assert not page_errors, (
+        "JS errors during graduates render:\n  " + "\n  ".join(page_errors)
+    )
+    assert n_pills >= 1, (
+        f"expected ≥1 .grad-writeup-pill in the graduates list (sidecar "
+        f"has {len(eligible_keys)} eligible graduates), got {n_pills}"
+    )

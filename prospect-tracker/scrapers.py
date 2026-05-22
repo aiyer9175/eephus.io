@@ -646,6 +646,13 @@ ESPN_INTERVALS = [
     ("https://www.espn.com/mlb/story/_/id/46017620/2025-mlb-prospect-rankings-update-"
      "kiley-mcdaniel-konnor-griffin-kevin-mcgonigle-jesus-made",
      "ESPN 2025 In-Season", "2025-08-20"),
+    # 2026 in-season top-50 update. Shorter ranking pool (1-50 instead
+    # of 1-100) but the parser's rank gate (`1 <= rank <= 100`) passes
+    # all rank-50 entries unchanged. Writeup extraction + tool parsing
+    # work identically.
+    ("https://www.espn.com/mlb/story/_/id/48825315/top-50-2026-mlb-prospects-rankings-update-"
+     "jesus-made-leo-de-vries-colt-emerson",
+     "ESPN 2026 In-Season", "2026-05-22"),
 ]
 
 # Stripper for the structured preamble ESPN ships before the writeup
