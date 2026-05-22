@@ -133,6 +133,49 @@
                     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       --font-mono:  "JetBrains Mono", "IBM Plex Mono", ui-monospace,
                     "SF Mono", Menlo, Consolas, monospace;
+
+      /* ── Design system primitives (Phase 1 of the UI restructure) ──
+         Spacing + type + neutral interaction tokens. Replaces the prior
+         66 distinct padding values + 26 distinct font-sizes scattered
+         throughout the file. New code SHOULD prefer these tokens.
+         Existing inline `style=""` blocks pick them up automatically
+         via `var(--*)` references; tests guard against drift back to
+         fractional/scattered values. */
+      --space-1: 4px;       /* badge inset, tight grid gap */
+      --space-2: 8px;       /* compact row inset */
+      --space-3: 12px;      /* default row inset */
+      --space-4: 16px;      /* card inset */
+      --space-5: 24px;      /* section gap */
+      --space-6: 32px;      /* page gutter */
+
+      --fs-xs:    10px;     /* badges, micro-labels */
+      --fs-sm:    11px;     /* dense table cell */
+      --fs-base:  12px;     /* row body */
+      --fs-md:    13px;     /* card body, detail body */
+      --fs-lg:    14px;     /* section sub-head */
+      --fs-xl:    18px;     /* page heading */
+      --fs-xxl:   24px;     /* hero stat */
+
+      /* Text intended to sit on an accent-color background (e.g. the
+         neon-cyan stock pill, the recent-acq tag, the .pdc-health pills).
+         Light theme: navy accent → cream text. Dark theme overrides
+         below flip this so the light-blue accent gets near-black text. */
+      --text-on-accent: #FBF8F0;
+      /* Text intended to sit on an always-dark surface (e.g. the page
+         header band — `--bg-header` is deep navy/charcoal in BOTH
+         themes). Always cream; does NOT flip per theme. Carries
+         built-in alpha for caption-style usage so callers don't need
+         `opacity:` (which bleeds to children). */
+      --text-on-dark-muted: rgba(251, 248, 240, 0.78);
+      /* Subtle hover tint applied over interactive surfaces. Light
+         theme darkens slightly; dark theme lifts slightly. */
+      --bg-hover: rgba(15, 27, 45, 0.05);
+
+      /* Standard transitions for interactive feedback. Components opt
+         in by setting `transition: var(--transition-hover)` or via the
+         baseline rule further down that targets buttons/links. */
+      --transition-hover: background-color 120ms ease, color 120ms ease,
+                          border-color 120ms ease;
     }
 
     /* === Dark theme =================================================
@@ -214,7 +257,50 @@
       /* Warmer drop shadow that doesn't muddy the warm backgrounds. */
       --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.40), 0 1px 2px rgba(0, 0, 0, 0.25);
       --shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.50), 0 0 0 1px rgba(143, 205, 245, 0.18);
+
+      /* In dark mode the neon accents are LIGHT (lifted blue/gold/green)
+         so text sitting on them needs to flip to near-black. The hover
+         tint also flips: lift over the dark surface instead of darken. */
+      --text-on-accent: #0F121C;
+      --bg-hover: rgba(244, 239, 224, 0.06);
     }
+    /* ── Standard breakpoints (Phase 1 of the UI restructure) ──
+       Today there are 8 distinct @media values (640, 720, 760, 900,
+       1023, 1200, 1400, 1500). New CSS SHOULD use the 4-tier canonical
+       set below. Existing rules stay in place until per-page polish in
+       Phase 2 — touching them blindly risks breaking working layouts.
+
+         --bp-mobile:  ≤640px      phone, single column
+         --bp-tablet:  641-1024px  filter bar collapses, columns hide
+         --bp-desktop: ≥1025px     full layout
+         --bp-wide:    ≥1440px     luxury — extra columns visible
+
+       Reference (don't import — CSS vars don't work inside @media): */
+
+    /* ── Baseline interactive feedback (Phase 1 of the UI restructure) ──
+       Default hover affordance for things the user can click. Per-
+       component rules with higher specificity (`.fv-badge:hover`,
+       `.player-row:hover`, etc.) keep their custom hover treatment;
+       this only fills the GAPS — chips/cells/glossary terms that today
+       have no visible hover cue. Numeric / tabular cells use the
+       tabular-num font feature so digits align across rows. */
+    button:not(:disabled), [role="button"], a {
+      transition: var(--transition-hover);
+    }
+    /* Generic class hooks for hoverable surfaces — components opt in
+       by adding `data-hoverable` or one of these classes. Stays subtle
+       so it doesn't fight with per-component styling. */
+    [data-hoverable]:hover,
+    .hover-tint:hover {
+      background-color: var(--bg-hover);
+    }
+    /* Universal numeric alignment — every cell tagged `.num` (or via
+       data-num) gets tabular-nums + right-align. Use on cells that
+       hold numeric values across rows so decimals stack. */
+    .num, [data-num], .rank-cell, .score-cell {
+      font-variant-numeric: tabular-nums;
+    }
+
     /* Paper-grain texture mirrored from the light theme so the
        baseball-card character carries across both themes — just at
        lower opacity with a warm cream tint instead of slate ink. */
@@ -497,7 +583,7 @@
     }
     button.chip {
       font-family: var(--font-sans);
-      font-size: 11px;
+      font-size: var(--fs-sm);
       padding: 5px 11px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
@@ -506,7 +592,7 @@
       cursor: pointer;
       letter-spacing: 0.02em;
       font-weight: 500;
-      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      transition: var(--transition-hover);
     }
     button.chip:hover {
       background: var(--bg-tertiary);
@@ -515,8 +601,9 @@
     }
     button.chip.active {
       background: var(--bg-header);
-      color: var(--bg-secondary);
+      color: var(--text-on-dark-muted);
       border-color: var(--bg-header);
+      font-weight: 600;
     }
     select.chip {
       font-family: var(--font-sans);
@@ -589,7 +676,7 @@
          column is gone — OHLC surfaces via hover on the FV-history
          sparkline. Reclaimed width split between MiLB and the three
          physical cells. */
-      grid-template-columns: 32px 1.6fr 0.55fr 0.35fr 1.0fr 1.3fr 0.4fr 0.4fr 0.35fr 0.5fr;
+      grid-template-columns: 32px 1.6fr 0.55fr 0.4fr 1.0fr 1.3fr 0.4fr 0.4fr 0.4fr 0.6fr;
       gap: 10px;
       align-items: center;
     }
@@ -606,10 +693,20 @@
     .sort-header {
       cursor: pointer;
       user-select: none;
-      transition: color 0.12s;
+      transition: var(--transition-hover);
+      position: relative;
     }
     .sort-header:hover { color: var(--neon-cyan); }
     .sort-header.is-active { color: var(--neon-cyan); }
+    /* Visible chevron next to the active sort column so users know
+       which one is driving order without hovering. Direction-agnostic
+       (▾) — toggle order is per-column-state, exposing a v2 hook for
+       per-direction arrows if needed. */
+    .sort-header.is-active::after {
+      content: " ▾";
+      font-size: 0.8em;
+      opacity: 0.7;
+    }
     /* Row variants — each section's per-render `grid-template-columns`
        lived inline before; centralizing here keeps the renderers terse
        and lets a single media-query block handle mobile collapses. */
@@ -635,7 +732,7 @@
       color: var(--text-tertiary);
       padding: 9px 14px 9px 18px;
       background: var(--bg-header);
-      color: rgba(251, 248, 240, 0.78);
+      color: var(--text-on-dark-muted);
       border-radius: var(--radius-sm);
       margin-bottom: 8px;
       text-transform: uppercase;
@@ -860,11 +957,11 @@
     .fv-single-mark {
       position: absolute;
       font-family: var(--font-mono);
-      font-size: 8.5px;
+      font-size: var(--fs-xs);
       font-weight: 800;
-      color: #fff;
+      color: var(--text-on-accent);
       border-radius: 999px;
-      padding: 0 4px;
+      padding: 0 var(--space-1);
       line-height: 1.4;
       letter-spacing: 0;
       cursor: help;
@@ -936,7 +1033,7 @@
     .row-tag.acq-waiver     { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.06); }
     .row-tag.savant-inline-pill { color: var(--neon-violet); border-color: var(--neon-violet); background: rgba(107,79,168,0.10); }
     .row-tag.arsenal-mini    { color: var(--neon-cyan);   border-color: var(--neon-cyan);   background: rgba(74,200,224,0.06); letter-spacing: 0.04em; }
-    .row-tag.recent-acq      { color: #fff; border-color: var(--neon-cyan); background: var(--neon-cyan); text-transform: uppercase; letter-spacing: 0.06em; }
+    .row-tag.recent-acq      { color: var(--text-on-accent); border-color: var(--neon-cyan); background: var(--neon-cyan); text-transform: uppercase; letter-spacing: 0.06em; }
 
     /* Subtle full-row FV-tier background tint. Derived from the
        existing --fv-NN-bg palette but at 3–8% alpha so it's a
@@ -1435,9 +1532,10 @@
     /* === Spotlight rows ============================================ */
     .spotlight-subtabs {
       display: flex;
-      gap: 6px;
+      gap: var(--space-2);
       flex-wrap: wrap;
-      margin-bottom: 12px;
+      margin-bottom: var(--space-3);
+      align-items: center;
     }
     .spotlight-header, .spotlight-row {
       display: grid;
@@ -1448,7 +1546,7 @@
     .spotlight-header {
       font-family: var(--font-sans);
       font-size: 10px;
-      color: rgba(251, 248, 240, 0.78);
+      color: var(--text-on-dark-muted);
       padding: 9px 14px 9px 18px;
       background: var(--bg-header);
       border-radius: var(--radius-sm);
@@ -1511,7 +1609,7 @@
     .grad-header {
       font-family: var(--font-sans);
       font-size: 10px;
-      color: rgba(251, 248, 240, 0.78);
+      color: var(--text-on-dark-muted);
       padding: 9px 14px 9px 18px;
       background: var(--bg-header);
       border-radius: var(--radius-sm);
@@ -1561,6 +1659,46 @@
       background: rgba(31, 122, 58, 0.10);
       color: var(--neon-green);
       border-color: var(--neon-green);
+    }
+
+    /* Sticky "what just graduated" banner. Sits above the date-grouped
+       rows in renderGraduates when at least one graduate's date is
+       within the past 14 days. Pulsing green dot signals freshness;
+       the row-level `most-recent` pill on each date band still flags
+       the specific class. */
+    .grad-recent-banner {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      margin-bottom: var(--space-3);
+      background: rgba(31, 122, 58, 0.08);
+      border: 1px solid rgba(31, 122, 58, 0.30);
+      border-left: 3px solid var(--neon-green);
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: var(--fs-md);
+      color: var(--text-primary);
+    }
+    .grad-recent-banner .grb-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--neon-green);
+      box-shadow: 0 0 0 0 rgba(31, 122, 58, 0.50);
+      animation: grb-pulse 2s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes grb-pulse {
+      0%   { box-shadow: 0 0 0 0   rgba(31, 122, 58, 0.50); }
+      70%  { box-shadow: 0 0 0 10px rgba(31, 122, 58, 0); }
+      100% { box-shadow: 0 0 0 0   rgba(31, 122, 58, 0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .grad-recent-banner .grb-dot { animation: none; }
+    }
+    .grad-recent-banner .grb-text strong {
+      color: var(--neon-green);
+      font-weight: 700;
     }
 
     /* === Empty / loading / error states =========================== */
@@ -1768,13 +1906,16 @@
     .farm-row.is-expanded .farm-row-panel {
       grid-column: 1 / -1;
       margin-top: 10px;
-      padding: 12px 14px;
+      padding: var(--space-3) var(--space-4);
       border: 1px solid var(--border-light);
       background: var(--bg-secondary);
       border-radius: var(--radius-sm);
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;
+      /* Bumped from 220→260 (P2-6) so each panel has breathing room
+         for its viz at typical desktop widths. Narrower widths still
+         collapse via auto-fit. */
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: var(--space-4);
     }
     .farm-row .farm-row-panel { display: none; }
     /* Card-mode layout — flips the grid into a card stack for narrow
@@ -1944,7 +2085,7 @@
     .farm-header {
       font-family: var(--font-sans);
       font-size: 10px;
-      color: rgba(251, 248, 240, 0.78);
+      color: var(--text-on-dark-muted);
       padding: 9px 14px 9px 18px;
       background: var(--bg-header);
       border-radius: var(--radius-sm);
@@ -3279,9 +3420,9 @@
       font-size: 8px; font-weight: 800; letter-spacing: 0;
       line-height: 1;
     }
-    .pos-depth-card .pdc-health.h-il { background: var(--down); color: #fff; }
-    .pos-depth-card .pdc-health.h-tj { background: var(--down); color: #fff; opacity: 0.7; }
-    .pos-depth-card .pdc-health.h-chronic { background: var(--neon-amber); color: #fff; }
+    .pos-depth-card .pdc-health.h-il { background: var(--down); color: var(--text-on-accent); }
+    .pos-depth-card .pdc-health.h-tj { background: var(--down); color: var(--text-on-accent); opacity: 0.7; }
+    .pos-depth-card .pdc-health.h-chronic { background: var(--neon-amber); color: var(--text-on-accent); }
     .pos-depth-card .pdc-acq {
       font-family: var(--font-mono);
       font-size: 8.5px;
@@ -4381,6 +4522,10 @@
       <button class="chip"        data-lb-season="2022">2022</button>
       <button class="chip"        data-lb-season="2021">2021</button>
     </div>
+    <!-- Cohort histogram + top-10 sparklines land here in Phase 3.
+         Empty container today; renderLeaderboards fills it in once the
+         viz functions ship. -->
+    <div id="leaderboard-viz"></div>
     <div id="leaderboard-rows"></div>
   </div>
 
@@ -4411,14 +4556,18 @@
       <button class="chip" data-wl-tab="farms" type="button">Farm systems<span class="wl-tab-count" id="wl-tab-farms-count"></span></button>
     </div>
     <div id="watchlist-prospects-panel">
-      <div id="watchlist-empty" style="font-size:13px;color:var(--text-secondary);padding:12px 0;display:none;">
-        No prospects starred yet. Click the ☆ icon on any prospect to add them. Watchlist + notes are private to this browser.
+      <div id="watchlist-empty" class="state-message" style="display:none;">
+        <div style="font-size:32px;margin-bottom:var(--space-2);opacity:0.5;">☆</div>
+        <div style="font-size:var(--fs-md);color:var(--text-secondary);margin-bottom:var(--space-1);">No prospects starred yet</div>
+        <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Click the ☆ icon on any prospect to track them here. Watchlist + notes are private to this browser.</div>
       </div>
       <div id="watchlist-rows"></div>
     </div>
     <div id="watchlist-farms-panel" style="display:none;">
-      <div id="watchlist-farms-empty" style="font-size:13px;color:var(--text-secondary);padding:12px 0;display:none;">
-        No farm systems starred yet. Click the ☆ icon next to any farm to add it. Watchlist is private to this browser.
+      <div id="watchlist-farms-empty" class="state-message" style="display:none;">
+        <div style="font-size:32px;margin-bottom:var(--space-2);opacity:0.5;">☆</div>
+        <div style="font-size:var(--fs-md);color:var(--text-secondary);margin-bottom:var(--space-1);">No farm systems starred yet</div>
+        <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Click the ☆ icon next to any farm to track it here. Watchlist is private to this browser.</div>
       </div>
       <div id="watchlist-farms-rows"></div>
     </div>
@@ -7125,6 +7274,11 @@ function renderLeaderboards() {
   }).join("");
 
   document.getElementById("leaderboard-rows").innerHTML = header + rows;
+  // Phase 3 viz lands here (cohort histogram + top-10 sparkline card).
+  // Reset on each render so stale viz from a prior stat/level doesn't
+  // linger; Phase 3 fns will fill it in.
+  const vizSlot = document.getElementById("leaderboard-viz");
+  if (vizSlot) vizSlot.innerHTML = "";
 }
 
 // =============================================================================
@@ -7406,7 +7560,7 @@ function renderInjured() {
         </div>
         <div><span class="grad-pill" style="background:var(--accent-il-soft);color:var(--accent-il);border:1px solid var(--accent-il-border);">${escapeHtml(il.type || "?")} IL</span></div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12px;color:var(--text-secondary);">${escapeHtml(since || "—")}</div>
-        <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;color:var(--neon-amber);font-weight:600;">${days}d</div>
+        <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;color:${days > 60 ? 'var(--down)' : days > 14 ? 'var(--neon-amber)' : 'var(--text-secondary)'};font-weight:600;" title="${days > 60 ? 'Long-term IL (60+ days)' : days > 14 ? '15-60 day stint' : 'Short stint (≤14 days)'}">${days}d</div>
         <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.3;">${escapeHtml(reason)}</div>
       </div>`;
@@ -8038,8 +8192,24 @@ function renderGraduates() {
     }
   }
 
+  // Sticky "what just graduated" banner — counts graduates whose
+  // date falls within the past 14 days. Shown only in date-sort mode
+  // (the WAR sort flat-list doesn't preserve date grouping). The
+  // banner is informational; the row-level `most-recent` pill on each
+  // date band still calls out the specific class.
+  let banner = "";
+  if (sortMode === "date") {
+    const recentCount = filtered.filter(g => isRecentGradDate(g.graduation_date)).length;
+    if (recentCount > 0) {
+      banner = `<div class="grad-recent-banner" role="status">
+        <span class="grb-dot"></span>
+        <span class="grb-text"><strong>${recentCount}</strong> new graduate${recentCount === 1 ? "" : "s"} in the past 14 days</span>
+      </div>`;
+    }
+  }
+
   document.getElementById("grad-rows").innerHTML = filtered.length
-    ? body
+    ? banner + body
     : `<div class="state-message">No graduates match these filters.</div>`;
 }
 

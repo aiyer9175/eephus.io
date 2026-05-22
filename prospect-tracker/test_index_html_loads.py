@@ -68,3 +68,85 @@ def test_page_boots_without_js_errors(server):
         "Boot IIFE never finished — #content still shows the placeholder. "
         "Likely a JS error before the fetch."
     )
+
+
+# All 11 list/scan sections + the 2 detail entry points. Each must
+# render without JS errors AND either show content or a `.state-message`
+# empty-state placeholder. Catches the regression where a section
+# silently renders blank because a render fn threw mid-build.
+SECTION_TABS = [
+    "active",
+    "spotlights",
+    "traded",
+    "injured",
+    "graduates",
+    "farm",
+    "leaderboards",
+    "glossary",
+    "watchlist",
+]
+
+
+def test_every_section_renders(server):
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    page_errors: list[str] = []
+    section_results: dict[str, dict] = {}
+
+    with sync_playwright() as p:
+        try:
+            browser = p.chromium.launch(headless=True)
+        except Exception as exc:
+            pytest.skip(f"chromium not installed for playwright: {exc}")
+        page = browser.new_page()
+        page.on("pageerror", lambda err: page_errors.append(err.message))
+        page.goto(server, wait_until="load", timeout=15_000)
+        page.wait_for_timeout(3000)  # let boot + initial render settle
+
+        for section in SECTION_TABS:
+            # Click the section-tab button — same path as a real user.
+            page.click(f'.section-tab[data-section="{section}"]')
+            # Slice-gated sections (graduates, injured) fire one extra
+            # render once the lazy sidecar arrives — give it room.
+            page.wait_for_timeout(800)
+            result = page.evaluate(f"""() => {{
+                const sec = document.getElementById('{section}-section');
+                if (!sec) return {{found: false}};
+                const visible = sec.style.display !== 'none';
+                const html = sec.innerHTML;
+                // Has content if there's either a populated row container
+                // OR an explicit empty-state placeholder.
+                const hasRows = !!sec.querySelector(
+                    '.player-row, .grad-row, .farm-row, .spotlight-row, .glossary-card');
+                const hasStateMsg = !!sec.querySelector('.state-message');
+                return {{
+                    found: true,
+                    visible,
+                    hasRows,
+                    hasStateMsg,
+                    htmlLen: html.length,
+                }};
+            }}""")
+            section_results[section] = result
+
+        browser.close()
+
+    assert not page_errors, (
+        f"JS errors during section walk:\n  " + "\n  ".join(page_errors)
+    )
+
+    # Every section must (a) exist and (b) be in a defined state — either
+    # rows rendered OR an explicit empty-state placeholder. A section that
+    # shows neither is silently broken.
+    failed = []
+    for section, res in section_results.items():
+        if not res.get("found"):
+            failed.append(f"{section}: section div not found in DOM")
+            continue
+        if not (res.get("hasRows") or res.get("hasStateMsg")):
+            failed.append(
+                f"{section}: rendered no rows AND no .state-message — "
+                f"silent empty render (htmlLen={res.get('htmlLen')})"
+            )
+    assert not failed, "Section render gaps:\n  " + "\n  ".join(failed)
