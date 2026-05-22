@@ -249,6 +249,16 @@
       color: var(--bg-header);
       border-color: var(--text-primary);
     }
+    /* Section tabs (Active / Spotlights / Farm / Glossary / etc.) —
+       the base .section-tab.active uses var(--bg-secondary) text on
+       var(--bg-header) bg, which collapses to near-1:1 contrast in
+       dark mode (both very dark). Mirror the chip-active inversion:
+       light text on dark anchor so the selected tab reads clearly. */
+    [data-theme="dark"] .section-tab.active {
+      background: var(--text-primary);
+      color: var(--bg-header);
+      border-color: var(--text-primary);
+    }
     /* Detail-page stock-chip-flat — the original bg-secondary + text-
        tertiary combo merged into the surrounding card. Drop bg to the
        primary layer + add the visible border. */
@@ -947,6 +957,27 @@
     .player-row[data-fv-tier="25"],
     .player-row[data-fv-tier="20"] { background-color: rgba(146, 146, 139, 0.05); }
 
+    /* Dark-mode FV-tier overrides — the warm light-theme rgba tints
+       above produce DARKER perceived backgrounds on the dark base
+       (#232836) for high-FV rows (warm tones absorb into the dark
+       backdrop). Replace with brightness-monotonic WHITE overlays so
+       higher FV reads as a brighter row, matching the light-theme
+       intent. Low-FV tiers fall to transparent (no tint) so they don't
+       compete with the high-FV highlights. */
+    [data-theme="dark"] .player-row[data-fv-tier="80"] { background-color: rgba(255, 255, 255, 0.10); }
+    [data-theme="dark"] .player-row[data-fv-tier="75"] { background-color: rgba(255, 255, 255, 0.08); }
+    [data-theme="dark"] .player-row[data-fv-tier="70"] { background-color: rgba(255, 255, 255, 0.07); }
+    [data-theme="dark"] .player-row[data-fv-tier="65"] { background-color: rgba(255, 255, 255, 0.05); }
+    [data-theme="dark"] .player-row[data-fv-tier="60"] { background-color: rgba(255, 255, 255, 0.04); }
+    [data-theme="dark"] .player-row[data-fv-tier="55"] { background-color: rgba(255, 255, 255, 0.03); }
+    [data-theme="dark"] .player-row[data-fv-tier="50"] { background-color: rgba(255, 255, 255, 0.02); }
+    [data-theme="dark"] .player-row[data-fv-tier="45"],
+    [data-theme="dark"] .player-row[data-fv-tier="40"],
+    [data-theme="dark"] .player-row[data-fv-tier="35"],
+    [data-theme="dark"] .player-row[data-fv-tier="30"],
+    [data-theme="dark"] .player-row[data-fv-tier="25"],
+    [data-theme="dark"] .player-row[data-fv-tier="20"] { background-color: transparent; }
+
     /* Mobile tap-to-expand. Chevron button is hidden on desktop and
        shown on mobile, where the row collapses to 4 columns. Tap →
        toggle .is-expanded on the .player-row → re-display the chart /
@@ -997,9 +1028,16 @@
     body.density-compact .player-row > .milb-cell,
     body.density-compact .player-row > .phys-cell,
     body.density-compact .player-row > .eta-cell { display: none !important; }
+    /* Compact density v2 — tighter than the previous 36px headshot
+       baseline. Shrinks headshot to 28px, drops player-name to 12px
+       and meta to 10px, collapses row padding so a compact list reads
+       as a true lookup table. */
+    body.density-compact .player-row { padding-top: 4px; padding-bottom: 4px; }
     body.density-compact .player-row .headshot,
     body.density-compact .player-row .headshot-img,
-    body.density-compact .player-row img.headshot { width: 36px !important; height: 36px !important; }
+    body.density-compact .player-row img.headshot { width: 28px !important; height: 28px !important; }
+    body.density-compact .player-name { font-size: 12px; }
+    body.density-compact .player-meta  { font-size: 10px; line-height: 1.2; }
 
     .player-row-expand {
       grid-column: 2 / -1;
@@ -1013,6 +1051,18 @@
     body.density-expanded .player-row-expand { display: block; }
     body.density-expanded .player-row { row-gap: 4px; }
     body.density-expanded .player-row .expand-savant { color: var(--text-secondary); }
+    /* Mini-stats strip (Expanded mode v2) — tertiary line under the
+       Savant micro-tile. Shows current-season perf, Tools+ composite,
+       and the recent FV-cycle trail. */
+    body.density-expanded .player-row .expand-mini-strip {
+      color: var(--text-tertiary);
+      font-size: 10px;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-block;
+    }
 
     /* One-line auto-narrative under each list row's player name —
        absorbs the green/red flag content that used to render as a
@@ -1550,17 +1600,54 @@
     .farm-header, .farm-row {
       display: grid;
       /* Columns (in order):
-           # · logo · org · grade (hero) · DvM+ (hero) · sparkline ·
-           top prospect · positions · level depth · avg age · spend · stock · arrow
+           # · logo · org · grade (hero) · DvM+ (hero) · tool DvM+ ·
+           sparkline · top prospect · positions · level depth · avg age ·
+           spend · stock · arrow
          Grade + DvM+ are the visual anchors per row — each gets a wider
          dedicated column with larger typography so the eye locks onto
-         them before the secondary cells. The sparkline (160px fixed)
-         carries the trajectory shape; the DvM+ cell carries the
-         numeric anchor. */
-      grid-template-columns: 32px 40px 180px 80px 110px 160px 1fr 110px 1fr 56px 64px 60px 56px;
+         them before the secondary cells. The Tool DvM+ cell sits next
+         to the org DvM+ since both measure development pace from
+         different angles. */
+      grid-template-columns: 32px 40px 180px 80px 110px 76px 160px 1fr 110px 1fr 56px 64px 64px 60px 56px;
       gap: 10px;
       align-items: center;
     }
+
+    /* Farm-list Surplus cell — promoted out of the Spend-mix cell into
+       its own scannable column. Big cyan dollar value with a small
+       prospect-count caption under it. */
+    .farm-surplus-cell {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 1px;
+    }
+    .farm-surplus-amt {
+      font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+      color: var(--neon-cyan); font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
+    }
+    .farm-surplus-count {
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--text-tertiary); font-variant-numeric: tabular-nums;
+    }
+
+    /* Tool DvM+ cell — 3-row stack (Tools / Hit / Pit). Tonal shading
+       mirrors the existing tooldev grid: green ≥110, red ≤90. */
+    .fl-tool-dvm { display: flex; flex-direction: column; gap: 2px; }
+    .fl-td-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 1px 4px; border-radius: 2px;
+      font-family: var(--font-mono); font-size: 10px;
+      font-variant-numeric: tabular-nums;
+    }
+    .fl-td-label { color: var(--text-tertiary); letter-spacing: 0.04em; }
+    .fl-td-val   { font-weight: 600; color: var(--text-primary); }
+    .fl-td-strong { background: rgba(38, 161, 81, 0.15); }
+    .fl-td-strong .fl-td-val { color: var(--up); }
+    .fl-td-pos    .fl-td-val { color: var(--up); }
+    .fl-td-neg    .fl-td-val { color: var(--down); }
+    .fl-td-weak   { background: rgba(204, 60, 60, 0.12); }
+    .fl-td-weak   .fl-td-val { color: var(--down); }
+    .fl-td-empty  .fl-td-val { color: var(--text-tertiary); }
     /* Sticky header — column labels stay anchored below the global nav
        as the farm list scrolls. The offset matches the new --sticky-top
        custom property so future changes touch one place. */
@@ -2377,6 +2464,197 @@
       color: var(--text-secondary);
       margin-top: 1px;
       font-variant-numeric: tabular-nums;
+    }
+
+    /* ─── Farm Grade Tree v2 ─── 5-branch hierarchical grade with
+       collapsible <details> per main branch. Composite headline tile
+       at the top mirrors the old "Overall grade" stat tile. Each
+       branch summary is a single clickable row showing the parent
+       grade; expanded body reveals the 2-3 sub-cells underneath. */
+    .grade-tree { margin: 6px 0 18px; }
+    .grade-tree-composite {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin-bottom: 8px;
+    }
+    .gt-comp-eyebrow {
+      font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-tertiary); font-weight: 600;
+    }
+    .gt-comp-row {
+      display: flex; align-items: baseline; gap: 14px; margin-top: 4px;
+    }
+    .gt-comp-letter {
+      font-family: var(--font-serif); font-size: 40px;
+      line-height: 1; font-weight: 700;
+    }
+    .gt-comp-rank {
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    .gt-comp-score {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .gt-comp-foot {
+      font-size: 10px; color: var(--text-tertiary); margin-top: 4px;
+      line-height: 1.4;
+    }
+    .gt-branch {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      margin-bottom: 4px;
+      background: var(--bg-secondary);
+    }
+    .gt-branch summary {
+      display: grid;
+      grid-template-columns: 16px 1fr auto auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      list-style: none;
+    }
+    .gt-branch summary::-webkit-details-marker { display: none; }
+    .gt-branch summary:hover { background: var(--bg-primary); }
+    .gt-marker {
+      font-size: 11px; color: var(--text-tertiary);
+      transition: transform 0.15s;
+    }
+    .gt-branch[open] .gt-marker { transform: rotate(180deg); }
+    .gt-branch-label {
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 0.04em; color: var(--text-primary);
+    }
+    .gt-branch-letter {
+      font-family: var(--font-serif); font-size: 20px;
+      font-weight: 700; line-height: 1;
+    }
+    .gt-branch-rank {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    .gt-branch-weight {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--text-tertiary);
+      background: var(--bg-primary);
+      padding: 2px 6px; border-radius: 3px;
+    }
+    .gt-subs {
+      padding: 4px 12px 10px 38px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 4px;
+    }
+    .gt-sub-cell {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 8px;
+      align-items: baseline;
+      padding: 6px 10px;
+      border: 1px solid;
+      border-radius: 3px;
+      background: var(--bg-primary);
+    }
+    .gt-sub-label {
+      font-size: 11px; color: var(--text-secondary);
+    }
+    .gt-sub-letter {
+      font-family: var(--font-serif); font-size: 14px;
+      font-weight: 700; line-height: 1;
+    }
+    .gt-sub-rank {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--text-tertiary);
+    }
+    .gt-sub-meta {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Roster Snapshot — displaced-metric tiles (Top-End, Depth, Grad
+       Pipeline, Tools+ Quality, Readiness, Health). Ungraded — just
+       raw numbers for context next to the tree. */
+    .roster-snapshot {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin-bottom: 18px;
+      background: var(--bg-secondary);
+    }
+    .rs-eyebrow {
+      font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-tertiary); font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .rs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      gap: 8px;
+    }
+    .rs-stat {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 6px; border-radius: 3px;
+      background: var(--bg-primary);
+    }
+    .rs-stat-label {
+      font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+    .rs-stat-val {
+      font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+      color: var(--text-primary); margin-top: 2px;
+    }
+
+    /* Scouting reports card (sidebar, prospect detail). Tab strip
+       across the top switches between sources; one body visible at
+       a time. Empty tabs (no prose ingested from that source) render
+       dimmed + disabled. */
+    .scouting-reports-card {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      background: var(--bg-secondary);
+      padding: 8px 10px 12px;
+      margin-bottom: 12px;
+    }
+    .sr-tab-strip {
+      display: flex; gap: 2px;
+      border-bottom: 1px solid var(--border-light);
+      margin: 0 -10px 8px;
+      padding: 0 10px;
+    }
+    .sr-tab {
+      background: transparent; border: none;
+      padding: 4px 8px; cursor: pointer;
+      font-family: var(--font-sans); font-size: 10px;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      color: var(--text-tertiary); font-weight: 600;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .sr-tab:hover:not(.is-empty) { color: var(--text-secondary); }
+    .sr-tab.is-active {
+      color: var(--text-primary);
+      border-bottom-color: var(--neon-cyan);
+    }
+    .sr-tab.is-empty {
+      color: var(--text-tertiary); opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .sr-body { display: block; }
+    .sr-body.is-hidden { display: none; }
+    .sr-meta {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--text-tertiary);
+      margin-bottom: 6px;
+    }
+    .sr-prose {
+      font-size: 12px; color: var(--text-secondary);
+      line-height: 1.6; white-space: pre-wrap;
+      max-height: 420px; overflow-y: auto;
     }
 
     /* Tool Development card (farm-detail page). Composite ToolsDvM+
@@ -4114,10 +4392,13 @@
       <button class="chip" data-glossary-cat="scouting" type="button">Scouting</button>
       <button class="chip" data-glossary-cat="hitter-stat" type="button">Hitter stats</button>
       <button class="chip" data-glossary-cat="pitcher-stat" type="button">Pitcher stats</button>
+      <button class="chip" data-glossary-cat="general-stat" type="button">General stats</button>
       <button class="chip" data-glossary-cat="methodology" type="button">Methodology</button>
       <button class="chip" data-glossary-cat="financial" type="button">Financial</button>
       <button class="chip" data-glossary-cat="level" type="button">Levels</button>
       <button class="chip" data-glossary-cat="status" type="button">Status</button>
+      <button class="chip" data-glossary-cat="mlb-rules" type="button">MLB Jargon</button>
+      <button class="chip" data-glossary-cat="indicators" type="button">Indicators</button>
       <input type="search" class="search-input" id="glossary-search" placeholder="Search the glossary…" style="margin-left:10px;max-width:260px;">
     </div>
     <div id="glossary-rows"></div>
@@ -4815,6 +5096,28 @@ function playerExpandedMetaHTML(p) {
     if (sv.k_pct != null)      bits.push(`K ${Number(sv.k_pct).toFixed(0)}%`);
     if (sv.bb_pct != null)     bits.push(`BB ${Number(sv.bb_pct).toFixed(0)}%`);
     if (bits.length) parts.push(`<span class="expand-savant">${bits.join(" · ")}</span>`);
+  }
+  // Mini-stats strip (Expanded mode richer fold) — surfaces tertiary
+  // signals not already on the row: current-season perf, Tools+
+  // composite, and the FV-cycle trail. Only renders when at least one
+  // piece is populated so prospects with thin profiles don't carry an
+  // empty line.
+  const tpComp = p.tools && p.tools.composite_overall_plus;
+  const milbStat = (() => {
+    const sl = p.statline || {};
+    if (sl.is_pitcher) return sl.era != null ? `ERA ${sl.era}${sl.level ? ` · ${sl.level}` : ''}` : null;
+    return sl.ops != null ? `OPS ${sl.ops}${sl.level ? ` · ${sl.level}` : ''}` : null;
+  })();
+  const trail = (p.points || []).slice(-5)
+    .map(pt => `${(pt.snapshot_date || '').slice(0, 7)} (${pt.consensus_fv_label || '—'})`)
+    .join(' → ');
+  const stripBits = [
+    milbStat,
+    tpComp != null ? `Tools+ ${tpComp}` : null,
+    trail || null,
+  ].filter(Boolean);
+  if (stripBits.length) {
+    parts.push(`<span class="expand-mini-strip">${escapeHtml(stripBits.join('   ·   '))}</span>`);
   }
   // OHLC text was previously rendered here, but it duplicated what the
   // stock chart in the row already visualizes. The same numbers now
@@ -6256,8 +6559,12 @@ function renderActives() {
 
   const rows = filtered.map((p, i) => {
     const latest = p.points[p.points.length - 1];
+    // Snap FV to the nearest 5-grade tier so data-fv-tier matches the
+    // CSS rules (which are tier-anchored at 80/75/.../20). Previously
+    // rounded to the nearest integer, leaving any prospect off the
+    // tier breakpoints (e.g. FV=42 → tier "42") without a tint rule.
     const fvTier = latest && latest.consensus_fv != null
-      ? String(Math.round(latest.consensus_fv))
+      ? String(Math.round(latest.consensus_fv / 5) * 5)
       : "";
     return `
       <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
@@ -7853,7 +8160,7 @@ const GLOSSARY_CATEGORIES = [
   // Casual-fan MLB jargon — Rule 5, 40-man, options, service time,
   // DFA, IL types, etc. Distinct from "methodology" (site-built) and
   // "status" (per-player conditions) — these are universal MLB concepts.
-  ["mlb-rules",    "MLB rules & jargon"],
+  ["mlb-rules",    "MLB Jargon"],
   // Visual indicators / badges / chips used across the site (Stock arrow,
   // FV badge, Tools+ pill, RPS+ pill, IL chip, LATEST/STALE source pills).
   // Each entry carries a `visual_html` field that renders an inline
@@ -7927,30 +8234,30 @@ const GLOSSARY = {
     related: ["iso", "tools_plus", "rps_plus"],
   },
   "pd_plus": {
-    name: "PD+", aliases: ["PD+", "Plate Discipline"], category: "custom-index",
+    name: "Disci+", aliases: ["Disci+", "PD+", "Plate Discipline+", "Plate Discipline"], category: "custom-index",
     priority: 35,
     short: "Plate discipline index; BB% minus K% differential vs level-mean. 100 = average.",
-    long: "Additive shift on the BB% minus K% differential vs the player's level mean. PD+ = 100 + (player_diff − level_diff). A hitter walking 10% and striking out 20% (−10 diff) at a level where the mean is +5% BB minus 22% K (−17 diff) posts a PD+ of 107. Hitters only, 40-game minimum.",
-    formula: "PD+ = 100 + (BB%player − K%player) − (BB%level − K%level)",
-    example: "Juan Soto's career-prospect PD+ would have been ~125 to 130, since his BB% minus K% differential was ~25 points above the typical bat at every level.",
+    long: "Additive shift on the BB% minus K% differential vs the player's level mean. Disci+ = 100 + (player_diff − level_diff). A hitter walking 10% and striking out 20% (−10 diff) at a level where the mean is +5% BB minus 22% K (−17 diff) posts a Disci+ of 107. Hitters only, 40-game minimum. (Renamed from PD+ for symmetry with the other plus-stats — the underlying metric is unchanged.)",
+    formula: "Disci+ = 100 + (BB%player − K%player) − (BB%level − K%level)",
+    example: "Juan Soto's career-prospect Disci+ would have been ~125 to 130, since his BB% minus K% differential was ~25 points above the typical bat at every level.",
     related: ["bb_pct", "k_pct", "pwr_plus"],
   },
   "stf_plus": {
-    name: "STF+", aliases: ["STF+", "Pitcher Stuff+", "Peripheral Stuff"], category: "custom-index",
+    name: "pStuff+", aliases: ["pStuff+", "STF+", "Pitcher Stuff+", "Peripheral Stuff"], category: "custom-index",
     priority: 40,
-    short: "Peripheral pitcher index; K%, BB%, HR/9 vs level mean. 100 = league-average stuff.",
-    long: "Z-score composite of three workload-stable peripheral rates: strikeout rate (positive), walk rate (negative), and HR/9 (negative), each normalized to the pitcher's current level mean with an approximate σ = 15% of mean. K% and BB% are per-batter rates so a reliever's stuff reads the same way relative to a starter's, unlike K/9 which over-rewards short-outing relievers. 10 points ≈ 1 stdev. Pitchers only, 20-IP or 30-BF sample gate.",
-    formula: "STF+ = 100 + 10 · (0.55·z(K%) − 0.30·z(BB%) − 0.15·z(HR/9))",
-    example: "A AA pitcher running a 30% K%, 7% BB%, 0.8 HR/9 at a level where the means are 22% / 9% / 1.0 posts a STF+ around 125, well-above-average peripherals for the level.",
+    short: "Peripheral pitcher index; K%, BB%, HR/9 vs level mean. 100 = league-average peripherals.",
+    long: "Z-score composite of three workload-stable peripheral rates: strikeout rate (positive), walk rate (negative), and HR/9 (negative), each normalized to the pitcher's current level mean with an approximate σ = 15% of mean. K% and BB% are per-batter rates so a reliever's stuff reads the same way relative to a starter's, unlike K/9 which over-rewards short-outing relievers. 10 points ≈ 1 stdev. Pitchers only, 20-IP or 30-BF sample gate. (Renamed from STF+ — the 'p' prefix marks it as the peripheral version, contrasting with FVStuff+ which scores scouting-grade stuff.)",
+    formula: "pStuff+ = 100 + 10 · (0.55·z(K%) − 0.30·z(BB%) − 0.15·z(HR/9))",
+    example: "A AA pitcher running a 30% K%, 7% BB%, 0.8 HR/9 at a level where the means are 22% / 9% / 1.0 posts a pStuff+ around 125, well-above-average peripherals for the level.",
     related: ["stuff_grade_plus", "k_pct_pitcher", "bb_pct_pitcher", "hr_per_9", "fip"],
   },
   "stuff_grade_plus": {
-    name: "Stuff grade+", aliases: ["Stuff grade+", "Stuff grade", "Scouting stuff+"], category: "custom-index",
+    name: "FVStuff+", aliases: ["FVStuff+", "Stuff grade+", "Stuff grade", "Scouting stuff+"], category: "custom-index",
     priority: 42,
     short: "Scouting-grade pitch composite; power-mean of fastball + secondaries grades, z-scored across the prospect cohort.",
-    long: "Outlier-biased composite (Lₚ with p=3) of the pitcher's 20-80 grades on Fastball + Slider + Curveball + Changeup, then z-scored across the active-prospect cohort. 100 = cohort mean, 10 pts = 1 stdev. Different from STF+, which measures results (K%, BB%, HR/9) against level peers; Stuff grade+ measures projected stuff from scouting reports. The two can diverge when results outrun (or lag) the underlying scouting view.",
-    formula: "Stuff grade+ = 100 + 10 · (composite_stuff − μ) / σ\nwhere composite_stuff = (Σ pitch_grade^3 / n)^(1/3)",
-    example: "A pitcher with 70 fastball / 60 slider / 55 curve / 50 change posts a composite around 62; if the prospect-cohort mean is 55 and σ is 6, Stuff grade+ ≈ 112.",
+    long: "Outlier-biased composite (Lₚ with p=3) of the pitcher's 20-80 grades on Fastball + Slider + Curveball + Changeup, then z-scored across the active-prospect cohort. 100 = cohort mean, 10 pts = 1 stdev. Different from pStuff+, which measures results (K%, BB%, HR/9) against level peers; FVStuff+ measures projected stuff from scouting reports. The two can diverge when results outrun (or lag) the underlying scouting view. (Renamed from 'Stuff grade+' — the 'FV' prefix signals it's anchored to the FV-grade scale, contrasting with pStuff+'s peripheral-stats anchoring.)",
+    formula: "FVStuff+ = 100 + 10 · (composite_stuff − μ) / σ\nwhere composite_stuff = (Σ pitch_grade^3 / n)^(1/3)",
+    example: "A pitcher with 70 fastball / 60 slider / 55 curve / 50 change posts a composite around 62; if the prospect-cohort mean is 55 and σ is 6, FVStuff+ ≈ 112.",
     related: ["stf_plus", "tools_plus", "fv"],
   },
   "tvi": {
@@ -8394,7 +8701,56 @@ const GLOSSARY = {
     priority: 20,
     short: "Salary process for players with 3-6 yrs of MLB service. Player + team file binding numbers; an arbitrator picks one if they don't settle.",
     long: "Arbitration cases are heard in February. The arbitrator picks ONE side's number — no splitting. Most cases settle before the hearing. Arb-year salaries scale up year over year (Yr1 ~$1M, Yr3 ~$8M for stars). Super Twos get a 4th arb year.",
-    related: ["service_time"],
+    related: ["service_time", "pre_arbitration", "super_two"],
+  },
+  "pre_arbitration": {
+    name: "Pre-arb", aliases: ["Pre-arbitration", "Pre-arb", "Cost-controlled years"], category: "mlb-rules",
+    priority: 21,
+    short: "Service-time window from 0 to ~3 yrs MLB time. Player is paid at or near the league minimum with no salary leverage.",
+    long: "Pre-arb is the most team-friendly part of a player's career — most graduates spend their first 2-3 MLB years here. Salaries are unilaterally set by the club (subject to league minimum, ~$760k in 2024). The new CBA introduced a Pre-Arb Bonus Pool that retroactively rewards top performers but doesn't change the unilateral-pay structure. Once the player crosses 3.000 of MLB service (or qualifies as Super Two), they enter arbitration.",
+    related: ["service_time", "arbitration", "super_two"],
+  },
+  "super_two": {
+    name: "Super Two", aliases: ["Super Two", "Super-2"], category: "mlb-rules",
+    priority: 22,
+    short: "Players in the top 22% of 2-3 service-year players get a 4th arbitration year. Costs the team an extra arb cycle.",
+    long: "After each season, MLB identifies players with between 2.000 and 3.000 of service time. The top 22% by service days qualify as Super Two and become arb-eligible a year early. Teams aggressively manage call-ups to keep top prospects below the Super Two cutoff — usually requires keeping the player on the active roster for fewer than ~125 days in his first MLB season.",
+    related: ["service_time", "arbitration", "service_time_manipulation"],
+  },
+  "service_time_manipulation": {
+    name: "Service-time manipulation", aliases: ["Service time manipulation", "Promotion timing"], category: "mlb-rules",
+    priority: 24,
+    short: "Strategic delay of a top prospect's MLB debut to gain an extra year of team control. Less common post-2022 CBA but not eliminated.",
+    long: "If a club holds a prospect in AAA for the first ~3 weeks of the regular season, the player won't accumulate 172 days of MLB service that year — pushing free agency back by a year. The 2022 CBA introduced PPI (Prospect Promotion Incentive) draft picks for clubs that promote top prospects on Opening Day AND those players finish top-2 in ROY voting or top-5 in MVP/Cy Young — partially aligning incentives. Famous examples: Kris Bryant (2015 grievance lost), Vladimir Guerrero Jr. (2019 demotion).",
+    related: ["service_time", "super_two", "rookie_status"],
+  },
+  "free_agency": {
+    name: "Free agency", aliases: ["Free agency", "FA", "Unrestricted FA", "UFA"], category: "mlb-rules",
+    priority: 26,
+    short: "Players with 6+ years of MLB service can sign with any team in the offseason. The market opens 5 days after the World Series.",
+    long: "Major-league free agency requires 6.000 of service time. The 5-day window after the World Series is exclusive negotiating period with the prior team; after that, the player is open to all 30 clubs. Minor-league free agency is separate — minor-leaguers become 6-year MiLB FAs after their 6th professional season unless on a 40-man roster. Spotrac, MLB Trade Rumors, and Baseball-Reference all track FA classes by year.",
+    related: ["service_time", "qualifying_offer", "compensation_pick"],
+  },
+  "qualifying_offer": {
+    name: "Qualifying Offer (QO)", aliases: ["Qualifying Offer", "QO"], category: "mlb-rules",
+    priority: 27,
+    short: "One-year contract offered to UFAs at the avg of the top 125 salaries (~$21M in 2024). Declining costs the signing team a draft pick.",
+    long: "Teams can extend a QO to free agents who spent the entire prior season with the team and haven't received one before. If the player declines (almost always) and signs elsewhere, the signing team forfeits draft picks; the losing team gets a compensation pick. The QO value is calculated annually as the simple average of the top 125 player salaries. Mid-season trade acquisitions are NOT QO-eligible (a key trade-deadline tax).",
+    related: ["free_agency", "compensation_pick"],
+  },
+  "compensation_pick": {
+    name: "Compensation pick", aliases: ["Compensation pick", "Comp pick", "Comp-A", "Comp-B"], category: "mlb-rules",
+    priority: 27,
+    short: "Extra draft picks awarded for QO-declined free agents, Prospect Promotion Incentive (PPI), and revenue-sharing balance.",
+    long: "Two main sources: (1) QO comp — teams losing a QO'd FA get a pick after either round 1 (small-market teams) or after round 4 (mid/large markets, depending on luxury-tax status). The signing team forfeits a pick to balance. (2) PPI — clubs that promote a top prospect on Opening Day and the player wins ROY (or top-2) earn a pick after round 1. The Competitive Balance Lottery also awards 10-12 picks (Round A + Round B) to lower-revenue clubs.",
+    related: ["rule_4_draft", "qualifying_offer", "free_agency"],
+  },
+  "outright_assignment": {
+    name: "Outrighted", aliases: ["Outrighted", "Outright assignment", "Cleared waivers"], category: "mlb-rules",
+    priority: 23,
+    short: "Post-DFA path — player clears waivers and is sent off the 40-man roster down to AAA. Player can refuse if they have 3+ MLB service yrs.",
+    long: "After a DFA, the team has 7 days. If the player clears waivers (no other club claims them), they can be outrighted to AAA. The player loses 40-man protection but keeps minor-league assignment rights. Players with 3+ MLB service years OR a prior outright in their career can REFUSE the outright and elect free agency. Each outright stays on the player's record permanently.",
+    related: ["dfa", "forty_man_roster", "free_agency"],
   },
   "dfa": {
     name: "DFA", aliases: ["Designated for Assignment", "DFA'd"], category: "mlb-rules",
@@ -8566,12 +8922,69 @@ const GLOSSARY = {
   // Added in the Farm Overhaul: the 4-component report card grew to
   // 10 components organized into 3 tiers on the farm detail page.
   "farm_report_card": {
-    name: "Farm report card", aliases: ["Farm grade", "Report card"], category: "custom-index",
+    name: "Farm grade tree", aliases: ["Farm grade", "Report card", "Grade tree"], category: "custom-index",
     priority: 50,
-    short: "Per-org letter grade across 10 components (Talent, MLB impact, Profile). Overall = weighted blend of all 10.",
-    long: "Three tiers: TALENT (top-end / depth / development / grad pipe — 70% of farm_score) drives the prospect-quality projection. MLB IMPACT (talent translation / financial ROI — 18%) measures historical conversion to big-league value. PROFILE (Tools+ quality / IFA depth / readiness / health — 12%) adds secondary signal. The 1y DvM+ replaced raw Trajectory in the blend; small-sample WAG / ROI / Tools+ grades show '—' instead of an unfair D.",
-    formula: "farm_score = 0.28·TopEnd + 0.18·Depth + 0.12·DvM+ + 0.12·GradPipe + 0.10·WAG + 0.08·ROI + 0.06·Tools+ + 0.03·IFA + 0.02·Readiness + 0.01·Health",
-    related: ["farm_grade_talent_translation", "farm_grade_financial_roi", "farm_grade_tools_quality", "farm_grade_intl_depth", "farm_grade_readiness", "farm_grade_health_burden", "dvm_plus"],
+    short: "5-branch hierarchical farm grade. Each main branch has 2 sub-grades; the composite is a weighted blend of the 5 mains.",
+    long: "The v2 grade tree replaces the prior flat 10-component blend. Five main grades (Acquisitions / Development / Transactions / Financial / MLB Production) each compose 2 sub-grades. Composite farm_score = weighted sum of the 5 main-grade 100-anchored scores. Development is the top-weighted axis since it's the single biggest controllable skill. Displaced metrics (Top-End / Depth / Grad Pipe / Tools+ Quality / Readiness / Health) live as ungraded supplementary tiles in the Roster Snapshot beside the tree. Every leaf is z-score normalized across the 30 orgs and anchored at 100 (wRC+/OPS+ shape); sparse-data leaves get '—'. Leaf rolls up to main grade as the mean of present sub-grade scores; main rolls up to composite via weighted sum.",
+    formula: "farm_score = 0.15·Acquisitions + 0.35·Development + 0.10·Transactions + 0.15·Financial + 0.25·MLB_Production\n  Acquisitions   = mean(IFA_perf, Draft_perf)\n  Development    = mean(Hitter_Tools_DvM+, Pitcher_Tools_DvM+)\n  Transactions   = mean(Trade_net_FV, Waiver_net_FV)\n  Financial      = mean(WAR_per_$M, Grad_contract_surplus)\n  MLB_Production = mean(Hitter_WAG, Pitcher_WAG)",
+    related: ["farm_grade_acquisitions", "farm_grade_development", "farm_grade_transactions", "farm_grade_financial", "farm_grade_mlb_production", "dvm_plus", "wag", "sur_plus"],
+  },
+  "farm_grade_acquisitions": {
+    name: "Acquisitions", aliases: ["Acquisitions grade", "Acq grade"], category: "custom-index",
+    priority: 51,
+    short: "Outcome quality of how this org acquires prospects. Pick-slot-adjusted draft value + mean WAG of IFA grads.",
+    long: "Acquisitions branch of the farm grade tree (15% of farm_score). Two sub-grades, equal weight: (a) IFA Performance — mean WAG of internationally-signed graduates, (b) Draft Pick Performance — mean of (actual career WAR − pick-slot-expected WAR) across drafted graduates. The pick-slot adjustment uses a step curve calibrated from FanGraphs / Baseball America surplus-value research (1st-overall ≈ 9 WAR expectation; top-10 ≈ 4; 1st round ≈ 2.5; tails to ≈ 0 in the late rounds). A 28th-rounder making the majors scores higher than a #1 overall reaching the same outcome because the org beat the market at that slot. Sparse-data gate: each sub-grade requires ≥3 qualifying graduates or shows '—'; Draft falls back to raw WAG mean when pick_overall is missing.",
+    related: ["wag", "farm_report_card", "farm_grade_financial"],
+  },
+  "farm_grade_development": {
+    name: "Development", aliases: ["Development grade", "Dev grade"], category: "custom-index",
+    priority: 52,
+    short: "Per-tool dev pace of the org's prospects vs the league. TOP-WEIGHTED branch (35%) — the single biggest controllable skill.",
+    long: "Development branch of the farm grade tree. Two sub-grades, equal weight: (a) Hitter Tools DvM+ — mean of HitDvM+ / PowerDvM+ / SpeedDvM+ / FieldDvM+ / ArmDvM+ / PitchSelDvM+ / BatCtrlDvM+ for this org's actives, (b) Pitcher Tools DvM+ — mean of FB / SL / CB / CH / Cmd / CtDvM+. Both 100-anchored (100 = league mean dev pace, +10 = 1σ). Measures pure tool growth in-org, independent of raw FV — a 40-grade hit tool that grew to 55 over 2 cycles signals development skill regardless of where the prospect started.",
+    related: ["dvm_plus", "tools_dvm_plus", "tool_delta", "farm_report_card"],
+  },
+  "farm_grade_transactions": {
+    name: "Transactions", aliases: ["Transactions grade", "Trade grade"], category: "custom-index",
+    priority: 53,
+    short: "Net FV gained vs lost via trades + waiver claims. Trade acumen + FA / Rule 5 work.",
+    long: "Transactions branch (10% of farm_score). Two sub-grades, equal weight: (a) Trades — net FV (incoming minus outgoing) at the FV captured on each trade date, (b) Waiver Claims — net FV from cross-org non-trade events (waiver claims, Rule 5, contract purchases, FA signings) using the prospect's most-recent FV as a proxy. Intentionally light-weighted because trade-acumen signal is real but small-sample — most orgs do 1-3 prospect-impactful trades per year.",
+    related: ["trade", "waiver_claim", "fv", "farm_report_card"],
+  },
+  "farm_grade_financial": {
+    name: "Financial / SUR+", aliases: ["Financial grade", "SUR+", "Surplus grade"], category: "custom-index",
+    priority: 54,
+    short: "Org's capital efficiency. WAR per $1M of signing bonus plus grad-contract surplus value.",
+    long: "Financial branch of the farm grade tree (15% of farm_score). Two sub-grades, equal weight: (a) WAR per $M — total career WAR yielded by graduates divided by total signing bonus paid (existing Financial ROI metric, reused), (b) Grad-Contract Surplus — for graduates with both Spotrac contract data and signing bonus on file, the per-year surplus (current AAV minus bonus amortized over 6 years, the typical pre-arb cost-controlled window). Positive = MLB salary value exceeded acquisition cost. The composite of the two scores is SUR+, an 100-anchored capital-efficiency index (wRC+/OPS+ shape).",
+    formula: "SUR+ = mean of z-scored (war_per_$M, mean grad surplus per year), each anchored at 100 + 10·z",
+    related: ["wag", "war", "signing_bonus", "farm_report_card"],
+  },
+  "farm_grade_mlb_production": {
+    name: "MLB Production", aliases: ["MLB Production grade", "Production grade"], category: "custom-index",
+    priority: 55,
+    short: "WAG of graduates split by position type. Hitter WAG + pitcher WAG show which side of the system actually produced.",
+    long: "MLB Production branch (25% of farm_score). Two sub-grades, equal weight: (a) Hitter WAG — mean WAG across hitter graduates, (b) Pitcher WAG — mean WAG across pitcher graduates. Same WAG definition as Talent Translation but split so an org strong on hitters but weak on pitchers (or vice versa) shows that asymmetry. Sparse-data gate: each sub-grade requires ≥3 qualifying graduates.",
+    related: ["wag", "war", "farm_report_card"],
+  },
+  "sur_plus": {
+    name: "SUR+", aliases: ["SUR+", "Surplus index"], category: "custom-index",
+    priority: 56,
+    short: "Capital-efficiency index for farm systems. 100 = league mean, +10 = 1σ.",
+    long: "Composite of WAR/$M (existing Financial ROI) and Grad-Contract Surplus (current AAV − amortized bonus per year). Each input z-scored across the 30 orgs and anchored at 100. Designed to mirror the wRC+/OPS+ shape so the reader can compare it against DvM+ + ToolsDvM+ on the same dial. Powers the Financial branch of the farm grade tree.",
+    related: ["farm_grade_financial", "wag", "farm_report_card"],
+  },
+  "trade": {
+    name: "Trade", aliases: ["Trade", "Trade event"], category: "transactions",
+    priority: 60,
+    short: "Cross-org player swap. The Transactions branch of the farm grade tree rolls up net trade FV per org.",
+    long: "Every trade involving a tracked prospect generates two fv_events on the org timeline: a 'trade out' on the sending org and a 'trade in' on the receiving org, both stamped with the prospect's consensus FV at the trade date. Per-org net = sum(fv_in) − sum(fv_out). Higher net = better trade acumen (the org captured more talent than it gave up at the FV the league assigned on the trade date). Note that a fair trade by retrospective WAR can still register asymmetrically here because trade-date FV may have lagged or led actual development.",
+    related: ["farm_grade_transactions", "fv", "trades"],
+  },
+  "waiver_claim": {
+    name: "Waiver claim", aliases: ["Waiver claim", "Waiver", "Rule 5", "FA signing"], category: "transactions",
+    priority: 61,
+    short: "Non-trade cross-org acquisition. Counted in the Transactions branch alongside trades.",
+    long: "Includes waiver claims, Rule 5 selections + returns, contract purchases, and free-agent signings. Each event generates a non-trade fv_event tagged with the prospect's most-recent consensus FV (vs trades which use FV at the trade date — waivers happen on too short a timeline for an explicit FV-at-date lookup to be worth the cost). The Transactions branch's Waiver Claims sub-grade sums these per org as a net FV: claimed-in minus released-out.",
+    related: ["farm_grade_transactions", "trade", "fv"],
   },
   "farm_grade_talent_translation": {
     name: "Talent Translation", aliases: ["Talent Translation", "WAG grade", "Farm WAG"], category: "custom-index",
@@ -8978,7 +9391,13 @@ function playerMetaHTML(p, opts = {}) {
 // quick-read card and the list-row summary line. Factored out so the
 // two callers don't drift in what they show — the only difference is
 // the wrapper element each one renders around the joined parts.
-function makeQuickReadSummaryParts(p) {
+function makeQuickReadSummaryParts(p, opts = {}) {
+  // listMode=true: caller is the prospect-list row (where age/pos/org/B-T,
+  // FV badge + stock arrow, and ETA cell already live elsewhere on the
+  // row). Skip those segments to avoid repeating info the eye already
+  // sees in sibling cells. The detail-page caller leaves listMode false
+  // and gets the full narrative.
+  const { listMode = false } = opts;
   if (!p) return [];
   const sl = p.statline || {};
   const tools = (p.tools && p.tools.grades) || {};
@@ -9015,34 +9434,42 @@ function makeQuickReadSummaryParts(p) {
 
   const parts = [];
   // Age + position + current level. "21yo SS at AA" style.
-  const agePart = ageNum != null && !isNaN(ageNum) ? `${Math.round(ageNum)}-year-old` : "";
-  const posPart = p.position ? p.position.split("/")[0] : "";
-  const levelPart = sl.level ? ` at ${sl.level}` : "";
-  if (agePart || posPart) {
-    parts.push(`${agePart}${posPart ? ` ${escapeHtml(posPart)}` : ""}${levelPart}`);
+  // Skipped on list rows: playerMetaHTML already shows position + age;
+  // level lives in the MiLB stats cell.
+  if (!listMode) {
+    const agePart = ageNum != null && !isNaN(ageNum) ? `${Math.round(ageNum)}-year-old` : "";
+    const posPart = p.position ? p.position.split("/")[0] : "";
+    const levelPart = sl.level ? ` at ${sl.level}` : "";
+    if (agePart || posPart) {
+      parts.push(`${agePart}${posPart ? ` ${escapeHtml(posPart)}` : ""}${levelPart}`);
+    }
   }
 
-  // Top tools narrative.
+  // Top tools narrative — kept on BOTH views; it's the only place this
+  // info lives on the list row.
   if (topTools.length) {
     parts.push(`${topTools.join(" / ")}`);
   }
 
-  // FV consensus.
-  if (latest && latest.consensus_fv_label) {
+  // FV consensus — skipped on list rows (FV badge cell already shows it).
+  if (!listMode && latest && latest.consensus_fv_label) {
     parts.push(`<span style="font-weight:600;color:var(--text-primary);">${escapeHtml(latest.consensus_fv_label)} FV</span>`);
   }
 
-  // Stock direction (when meaningful).
-  const s = p.stock;
-  if (s && s.delta != null && Math.abs(s.delta) >= 1.5 && s.direction !== "graduated") {
-    const arrow = s.delta > 0 ? "▲" : "▼";
-    const sign = s.delta > 0 ? "+" : "";
-    const color = s.delta > 0 ? "var(--up)" : "var(--down)";
-    parts.push(`<span style="color:${color};font-weight:600;">stock ${arrow} ${sign}${s.delta.toFixed(1)}</span>`);
+  // Stock direction — skipped on list rows (fvTrendHTML beside the
+  // FV badge shows the same arrow + delta).
+  if (!listMode) {
+    const s = p.stock;
+    if (s && s.delta != null && Math.abs(s.delta) >= 1.5 && s.direction !== "graduated") {
+      const arrow = s.delta > 0 ? "▲" : "▼";
+      const sign = s.delta > 0 ? "+" : "";
+      const color = s.delta > 0 ? "var(--up)" : "var(--down)";
+      parts.push(`<span style="color:${color};font-weight:600;">stock ${arrow} ${sign}${s.delta.toFixed(1)}</span>`);
+    }
   }
 
-  // ETA — graduates skip (they're already in MLB).
-  if (p.status !== "graduated" && p.eta && p.eta.year != null) {
+  // ETA — skipped on list rows (dedicated ETA cell shows the year).
+  if (!listMode && p.status !== "graduated" && p.eta && p.eta.year != null) {
     parts.push(`ETA ${p.eta.year}`);
   }
 
@@ -9058,10 +9485,9 @@ function makeQuickReadSummaryParts(p) {
     if (ex && Object.keys(ex).length) { _fgExtras = ex; break; }
   }
   if (_fgExtras) {
-    // Bats/throws comes before the role-specific narrative — gives
-    // readers the handedness at a glance before pitcher velo / hitter
-    // contact-style commentary. Only renders when ≥1 side is published.
-    if (_fgExtras.bats || _fgExtras.throws) {
+    // Bats/throws — skipped on list rows (playerMetaHTML already shows
+    // a B/T chip from the same source).
+    if (!listMode && (_fgExtras.bats || _fgExtras.throws)) {
       const _b = _fgExtras.bats ? `Bats ${escapeHtml(_fgExtras.bats)}` : "";
       const _t = _fgExtras.throws ? `throws ${escapeHtml(_fgExtras.throws)}` : "";
       const _bt = [_b, _t].filter(Boolean).join(", ");
@@ -9156,8 +9582,11 @@ function makeQuickReadSummary(p) {
 // typography. Drops to nothing when the summary is too sparse to add
 // value (< 2 parts), avoiding a 1-token blurb under thin profiles.
 function makeListRowSummary(p) {
-  const parts = makeQuickReadSummaryParts(p);
-  if (parts.length < 2) return "";
+  // listMode=true trims segments whose data already shows on sibling
+  // cells of the same row (age/pos/level, FV badge, stock arrow, ETA,
+  // B/T chip) — see makeQuickReadSummaryParts for the gating.
+  const parts = makeQuickReadSummaryParts(p, { listMode: true });
+  if (!parts.length) return "";
   return `<div class="player-row-summary">${parts.join(" · ")}</div>`;
 }
 
@@ -9405,110 +9834,131 @@ function gradeColor(letter) {
 // what's actually driving the org's rank (e.g. "A on top-end, D on
 // trajectory" tells a very different story than just "B+ overall").
 function makeFarmReportCard(org) {
+  // The v2 grade tree — replaces the prior 3-tier 10-cell strip. Five
+  // main grades (Acquisitions, Development, Transactions, Financial,
+  // MLB Production) each composed of 2 sub-grades, rolling into one
+  // composite. Rendered as collapsible <details> branches for native
+  // expand/collapse without any JS wiring.
   if (!org || !org.grades) return '';
   const g = org.grades;
   const r = org.component_ranks || {};
+  const t = org.tree || {};
   const n = (DATA.org_summary || []).length || 30;
-  // Trajectory cell flexes with the active form window. The cell shows
-  // delta-above-mean for that window (so the eye-line tracks what the
-  // list-page sparkline is showing), while the component letter grade
-  // stays anchored to the 1y trajectory_score that fed `farm_score` —
-  // recomputing grades per window would let the user appear to "earn"
-  // a different overall grade just by toggling the chip.
-  const win = state.formWindow || "3y";
-  const winLabel = win === "1y" ? "1y" : win === "3y" ? "3y" : "5y";
-  const trajWindowed = (org.delta_above_mean || {})[win]
-                      ?? (org.trajectories || {})[win]
-                      ?? org.trajectory_score
-                      ?? null;
-  const dsPlus = (org.dvm_plus || {})[win];
 
-  const fmtPts = v => v != null ? `${v.toFixed(1)} pts` : '—';
-  const fmtSigned = v => v != null
-    ? `${v > 0 ? '+' : ''}${v.toFixed(1)} · ${winLabel} vs mean${dsPlus != null ? ` · ${winLabel.toUpperCase()}DvM+ ${dsPlus}` : ''}`
-    : '—';
+  // Display weights (must match storage.FARM_TREE_WEIGHT_*).
+  const W = { acquisitions: 15, development: 35, transactions: 10, financial: 15, mlb_production: 25 };
 
-  const stripCell = (label, letter, rank, scoreVal, scoreFmt, tooltip) => `
-    <div class="report-strip-cell" style="border-color:${gradeColor(letter)}33;" title="${escapeHtml(tooltip)}">
-      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;">
-        <span class="rs-letter" style="color:${gradeColor(letter)};">${escapeHtml(letter || '—')}</span>
-        <span class="rs-meta">#${rank ?? '—'}</span>
-      </div>
-      <div class="rs-label">${escapeHtml(label)}</div>
-      <div class="rs-meta">${scoreFmt(scoreVal)}</div>
+  // Format helpers for leaf score values.
+  const fmtSignedWag = v => v != null ? `WAG ${v >= 0 ? '+' : ''}${v.toFixed(2)}` : '—';
+  const fmtDvm       = v => v != null ? `${v}` : '—';
+  const fmtNetFv     = v => v != null ? `${v >= 0 ? '+' : ''}${v.toFixed(0)} FV` : '—';
+  const fmtWarPerM   = v => v != null ? `${v.toFixed(2)} WAR/$M` : '—';
+  const fmtUsdPerYr  = v => v != null ? `$${(v / 1_000_000).toFixed(1)}M / yr` : '—';
+
+  // Sub-grade cell: label · letter · rank · raw value.
+  const subCell = (label, letterKey, rankKey, scoreFmt, scoreVal) => {
+    const letter = g[letterKey] || '—';
+    const rank = r[rankKey];
+    return `
+    <div class="gt-sub-cell" style="border-color:${gradeColor(letter)}33;">
+      <span class="gt-sub-label">${escapeHtml(label)}</span>
+      <span class="gt-sub-letter" style="color:${gradeColor(letter)};">${escapeHtml(letter)}</span>
+      <span class="gt-sub-rank">#${rank ?? '—'}</span>
+      <span class="gt-sub-meta">${scoreFmt(scoreVal)}</span>
     </div>`;
+  };
 
-  // Format helpers for the new components.
-  const fmtSignedRaw = v => v != null ? `${v > 0 ? '+' : ''}${v.toFixed(2)}` : '—';
-  const fmtPct       = v => v != null ? `${(v * 100).toFixed(0)}%` : '—';
-  const fmtWarPerM   = v => v != null ? `${v.toFixed(2)} WAR/$1M` : '—';
-  const fmtPlus      = v => v != null ? `${v.toFixed(1)}` : '—';
-  const fmtScore     = v => v != null ? `${v.toFixed(1)}` : '—';
+  // Main-grade branch (<details>) with sub-cells inside.
+  const branch = (label, parentKey, weightPct, subsHtml, tooltip) => {
+    const letter = g[parentKey] || '—';
+    const rank = r[parentKey];
+    return `
+    <details class="gt-branch" open>
+      <summary title="${escapeHtml(tooltip)}">
+        <span class="gt-marker">▾</span>
+        <span class="gt-branch-label">${escapeHtml(label)}</span>
+        <span class="gt-branch-letter" style="color:${gradeColor(letter)};">${escapeHtml(letter)}</span>
+        <span class="gt-branch-rank">#${rank ?? '—'}</span>
+        <span class="gt-branch-weight">${weightPct}%</span>
+      </summary>
+      <div class="gt-subs">${subsHtml}</div>
+    </details>`;
+  };
 
-  // Tier label helper — a small uppercase eyebrow above each strip.
-  const tierLabel = txt => `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;margin:10px 0 4px;">${escapeHtml(txt)}</div>`;
+  // Tree branches.
+  // Draft Pick Performance — prefer pick-slot-adjusted value (WAR
+  // above the historical expectation at each pick slot) when on file;
+  // fall back to raw WAG mean when org has <3 grads with both
+  // pick_overall and career_war.
+  const draftMetric = (t.acq_draft || {}).pick_value_mean ?? (t.acq_draft || {}).wag_mean;
+  const draftFmt = (t.acq_draft || {}).pick_value_mean != null
+    ? (v => v != null ? `${v >= 0 ? '+' : ''}${v.toFixed(2)} WAR vs slot` : '—')
+    : fmtSignedWag;
+  const acqSubs =
+    subCell('IFA Performance',        'acq_ifa',   'acq_ifa',   fmtSignedWag, (t.acq_ifa   || {}).wag_mean) +
+    subCell('Draft Pick Performance', 'acq_draft', 'acq_draft', draftFmt, draftMetric);
 
-  const tt  = org.talent_translation || {};
-  const fr  = org.financial_roi      || {};
-  const tq  = org.tools_quality      || {};
-  const idp = org.international_depth || {};
-  const rdy = org.readiness          || {};
-  const hb  = org.health_burden      || {};
+  const devSubs =
+    subCell('Hitter Tools DvM+',  'dev_hitter',  'dev_hitter',  fmtDvm, (t.dev_hitter  || {}).dvm_plus) +
+    subCell('Pitcher Tools DvM+', 'dev_pitcher', 'dev_pitcher', fmtDvm, (t.dev_pitcher || {}).dvm_plus);
 
-  // The 1y DvM+ index drives the Development letter grade (it replaced
-  // raw Trajectory in farm_score). Show the user-chosen window's value
-  // alongside for context — same flex pattern as the old Trajectory cell.
-  const dvm1y = (org.dvm_plus || {})["1y"];
+  const txSubs =
+    subCell('Trades',        'tx_trades',  'tx_trades',  fmtNetFv, (t.tx_trades  || {}).net_fv) +
+    subCell('Waiver Claims', 'tx_waivers', 'tx_waivers', fmtNetFv, (t.tx_waivers || {}).net_fv);
+
+  const finSubs =
+    subCell('WAR per $M',            'fin_war_per_m',        'fin_war_per_m',        fmtWarPerM,  (t.fin_war_per_m        || {}).value) +
+    subCell('Grad-Contract Surplus', 'fin_contract_surplus', 'fin_contract_surplus', fmtUsdPerYr, (t.fin_contract_surplus || {}).mean_usd_per_yr);
+
+  const mlbSubs =
+    subCell('Hitter WAG',  'mlb_hitter_wag',  'mlb_hitter_wag',  fmtSignedWag, (t.mlb_hitter_wag  || {}).wag_mean) +
+    subCell('Pitcher WAG', 'mlb_pitcher_wag', 'mlb_pitcher_wag', fmtSignedWag, (t.mlb_pitcher_wag || {}).wag_mean);
 
   return `
-    <div style="display:grid;grid-template-columns:minmax(180px, 0.9fr) minmax(0, 2.4fr);gap:12px;margin-bottom:18px;align-items:stretch;">
-      <div class="stat-tile" style="border-color:${gradeColor(g.overall)}66;background:linear-gradient(135deg, ${gradeColor(g.overall)}12, transparent);display:flex;flex-direction:column;justify-content:center;">
-        <div class="stat-label">Overall grade</div>
-        <div style="display:flex;align-items:baseline;gap:10px;margin-top:2px;">
-          <div class="stat-value" style="color:${gradeColor(g.overall)};font-size:44px;line-height:1;font-weight:700;">${escapeHtml(g.overall || '—')}</div>
-          <div style="font-size:12px;color:var(--text-tertiary);font-family:var(--font-mono);">
-            #${org.farm_rank ?? '—'} of ${n}
-          </div>
+    <div class="grade-tree">
+      <div class="grade-tree-composite" style="border-color:${gradeColor(g.overall)}66;background:linear-gradient(135deg, ${gradeColor(g.overall)}12, transparent);">
+        <div class="gt-comp-eyebrow">Overall farm grade · weighted composite of the 5 branches below</div>
+        <div class="gt-comp-row">
+          <span class="gt-comp-letter" style="color:${gradeColor(g.overall)};">${escapeHtml(g.overall || '—')}</span>
+          <span class="gt-comp-rank">#${org.farm_rank ?? '—'} of ${n}</span>
+          <span class="gt-comp-score">farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'} / 100</span>
         </div>
-        <div style="margin-top:4px;font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);">
-          farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}/100
-        </div>
-        <div style="margin-top:6px;font-size:10px;color:var(--text-tertiary);line-height:1.4;">
-          10 components across 3 tiers — Talent, MLB impact, Profile.
-        </div>
+        <div class="gt-comp-foot">Acquisitions ${W.acquisitions}% · Development ${W.development}% · Transactions ${W.transactions}% · Financial ${W.financial}% · MLB Production ${W.mlb_production}%</div>
       </div>
-      <div>
-        ${tierLabel('Talent · ' + '70%' + ' of farm_score')}
-        <div class="report-strip" style="margin-top:0;">
-          ${stripCell('Top-end',         g.top_end,    r.top_end,    org.top_end_points,        fmtPts,
-                      'Tiered-FV sum of the org’s top 5 prospects. An 80 is worth ~100 points; a 40 is worth 1.')}
-          ${stripCell('Depth',           g.depth,      r.depth,      org.depth_points,          fmtPts,
-                      'Tiered-FV sum of prospects #6 through #25. Rewards systems with real prospects beyond the top tier.')}
-          ${stripCell('Development',     g.dvm_plus,   r.dvm_plus,   dvm1y,                     fmtPlus,
-                      '1-year DvM+ — the wRC+/OPS+-style index where 100 = league mean trajectory and 10 points = 1 stdev. Replaced raw Trajectory in the blend; DvM+ is the league-normalized version of the same signal.')}
-          ${stripCell('Grad pipe',       g.grad,       r.grad,       org.grad_pipeline_score,   fmtPts,
-                      'FV-weighted graduations in the trailing 12 months. Promoting a 60 is worth ~18 points; a 40 is worth 1.')}
-        </div>
+      ${branch('Acquisitions',   'acquisitions',   W.acquisitions,   acqSubs,
+               'Outcome quality of how this org acquires prospects. Mean WAG of IFA-signed graduates and draft-pick graduates.')}
+      ${branch('Development',    'development',    W.development,    devSubs,
+               'Per-tool development pace vs the league mean farm. Hitter + pitcher Tools DvM+ composites (100 = league mean, +10 = 1σ).')}
+      ${branch('Transactions',   'transactions',   W.transactions,   txSubs,
+               'Net FV gained vs lost via trades and via non-trade cross-org moves (waivers / Rule 5 / FA signings).')}
+      ${branch('Financial',      'financial',      W.financial,      finSubs,
+               'Capital efficiency. WAR per $1M of signing bonus spent across graduates, plus the AAV produced by graduates beyond their amortized signing cost.')}
+      ${branch('MLB Production', 'mlb_production', W.mlb_production, mlbSubs,
+               'WAG mean of graduates split by position type. Hitter WAG + pitcher WAG show which side of the system actually produced.')}
+    </div>`;
+}
 
-        ${tierLabel('MLB impact · ' + '18%' + ' of farm_score')}
-        <div class="report-strip" style="margin-top:0;">
-          ${stripCell('Talent Translation', g.talent_translation, r.talent_translation, tt.wag_mean,            fmtSignedRaw,
-                      'WAG (WAR Above Grade) mean across the org’s graduates. Positive = graduates beat their FV-implied career WAR projection; negative = underperform. "—" when the org has fewer than 3 gradutes with both career WAR and a final FV on file.')}
-          ${stripCell('Financial ROI',      g.financial_roi,      r.financial_roi,      fr.war_per_million,     fmtWarPerM,
-                      'Career WAR yielded per million dollars of signing bonus spent. Higher = better bargain capture. "—" when the org has fewer than 3 grads with bonus + career-WAR data on file. Lagging indicator — recent draft classes haven’t converted yet.')}
-        </div>
-
-        ${tierLabel('Profile · ' + '12%' + ' of farm_score')}
-        <div class="report-strip" style="margin-top:0;">
-          ${stripCell('Tools+ Quality',  g.tools_quality, r.tools_quality, tq.top10_mean,           fmtScore,
-                      'Top-10 mean of composite_overall (the 20-80 power-mean of per-tool grades) across actives. Measures raw scouting quality independent of FV consensus — a 60-tool farm grades above a 50-across-the-board one.')}
-          ${stripCell('Intl depth',      g.intl_depth,    r.intl_depth,    idp.ifa_pct,             fmtPct,
-                      'IFA % of actives plus a multi-year diversity bonus (0.7 × IFA pct + 0.3 × year-span / 10). Rewards orgs that invest globally + steadily.')}
-          ${stripCell('Readiness',       g.readiness,     r.readiness,     rdy.pct_signal,          fmtPct,
-                      '(very-young-for-level − very-old-for-level) / total. Positive = long runway; negative = peaking now / over-age.')}
-          ${stripCell('Health',          g.health_burden, r.health_burden, hb.score,                fmtScore,
-                      'Combined post-TJ % and trailing 12-month IL-days mean. INVERSE metric — lower score = better letter grade. Lowest-burden farm gets the A+.')}
-        </div>
+// Roster Snapshot — ungraded informational tiles for the 6 displaced
+// metrics (Top-End / Depth / Grad Pipeline / Tools+ Quality / Readiness
+// / Health). The grade tree absorbed these axes by routing their data
+// into the new leaves; the tiles preserve the raw numbers as context.
+function makeRosterSnapshotTile(org) {
+  if (!org) return '';
+  const tq  = org.tools_quality       || {};
+  const rdy = org.readiness           || {};
+  const hb  = org.health_burden       || {};
+  const pct = v => v != null ? `${(v * 100).toFixed(0)}%` : '—';
+  const num = v => v != null ? `${v.toFixed(1)}` : '—';
+  return `
+    <div class="roster-snapshot">
+      <div class="rs-eyebrow">Roster snapshot · informational, not graded</div>
+      <div class="rs-grid">
+        <div class="rs-stat" title="Tiered-FV sum of the org's top 5 prospects"><span class="rs-stat-label">Top-end FV</span><span class="rs-stat-val">${num(org.top_end_points)}</span></div>
+        <div class="rs-stat" title="Tiered-FV sum of prospects #6-25"><span class="rs-stat-label">Depth FV</span><span class="rs-stat-val">${num(org.depth_points)}</span></div>
+        <div class="rs-stat" title="FV-weighted graduations in trailing 12 months"><span class="rs-stat-label">Grad pipe</span><span class="rs-stat-val">${num(org.grad_pipeline_score)}</span></div>
+        <div class="rs-stat" title="Top-10 mean of composite_overall (20-80 power mean)"><span class="rs-stat-label">Tools+ top10</span><span class="rs-stat-val">${num(tq.top10_mean)}</span></div>
+        <div class="rs-stat" title="(very-young − very-old) / total actives"><span class="rs-stat-label">Readiness</span><span class="rs-stat-val">${pct(rdy.pct_signal)}</span></div>
+        <div class="rs-stat" title="100·post-TJ% + IL-days mean (lower is better)"><span class="rs-stat-label">Health burden</span><span class="rs-stat-val">${num(hb.score)}</span></div>
       </div>
     </div>`;
 }
@@ -10248,6 +10698,17 @@ function farmSortedOrgs() {
     if (s === "tier_60")       return b.tier_60_plus - a.tier_60_plus;
     if (s === "avg_age")       return (a.avg_age ?? 99) - (b.avg_age ?? 99);
     if (s === "stock_up")      return b.stock_up  - a.stock_up;
+    // Tree v2 main-grade sorts. Each reads off the 100-anchored
+    // composite stamped onto the org payload by storage._zscore_to_100.
+    if (s === "acquisitions")   return ((b.acquisitions_score   ?? -1) - (a.acquisitions_score   ?? -1));
+    if (s === "development")    return ((b.development_score    ?? -1) - (a.development_score    ?? -1));
+    if (s === "transactions")   return ((b.transactions_score   ?? -1) - (a.transactions_score   ?? -1));
+    if (s === "financial")      return ((b.financial_score      ?? -1) - (a.financial_score      ?? -1));
+    if (s === "mlb_production") return ((b.mlb_production_score ?? -1) - (a.mlb_production_score ?? -1));
+    // Tool DvM+ composite sorts.
+    if (s === "tools_dvm_plus")  return ((b.tool_dev?.tools_dvm_plus ?? -1) - (a.tool_dev?.tools_dvm_plus ?? -1));
+    if (s === "hitter_dvm_plus") return ((b.tree?.dev_hitter?.dvm_plus  ?? -1) - (a.tree?.dev_hitter?.dvm_plus  ?? -1));
+    if (s === "pitcher_dvm_plus")return ((b.tree?.dev_pitcher?.dvm_plus ?? -1) - (a.tree?.dev_pitcher?.dvm_plus ?? -1));
     return a.farm_rank - b.farm_rank; // default (farm_score-derived server-side)
   });
   return orgs;
@@ -10371,22 +10832,50 @@ function snapshotCurrentFarmRanks(orgs) {
 function makeComponentGrades(org) {
   const grades = (org && org.grades) || {};
   const ranks  = (org && org.component_ranks) || {};
-  // List view only shows the Tier-1 "Talent" strip (4 letters). The
-  // remaining 6 components (Tier-2 MLB impact + Tier-3 Profile) live
-  // on the farm-detail page so the org row stays scannable.
+  // 5-letter strip mirrors the v2 grade tree's five main branches.
+  // Click the row to open the full hierarchical tree on the detail page.
   const items = [
-    ["T", grades.top_end,  ranks.top_end,  "Top-end talent grade (FV-weighted top 5)"],
-    ["D", grades.depth,    ranks.depth,    "Prospect depth grade (FV-weighted #6–25)"],
-    ["J", grades.dvm_plus, ranks.dvm_plus, "Development grade (DvM+ — 1y trajectory z-scored vs league mean). Replaced raw Trajectory in the farm_score blend."],
-    ["G", grades.grad,     ranks.grad,     "Graduation pipeline grade (FV-weighted recent grads)"],
+    ["A", grades.acquisitions,   ranks.acquisitions,   "Acquisitions — outcome quality of IFA + draft signings (15% of farm_score)"],
+    ["D", grades.development,    ranks.development,    "Development — hitter + pitcher Tools DvM+ composite (35% of farm_score · top-weighted)"],
+    ["T", grades.transactions,   ranks.transactions,   "Transactions — net FV from trades + waiver claims (10% of farm_score)"],
+    ["F", grades.financial,      ranks.financial,      "Financial / SUR+ — WAR per $1M + grad-contract surplus (15% of farm_score)"],
+    ["M", grades.mlb_production, ranks.mlb_production, "MLB Production — hitter + pitcher WAG of graduates (25% of farm_score)"],
   ];
   const anyGrade = items.some(([, g]) => g != null);
   if (!anyGrade) return "";
-  const stripTitle = "Tier-1 (Talent) component grades. Click the row for the full 10-grade report card — Talent Translation / Financial ROI / Tools+ Quality / IFA / Readiness / Health.";
+  const stripTitle = "Farm grade tree — 5 main branches. Click the row for the full breakdown (each branch expands into 2 sub-grades).";
   return `<div class="fg-components" title="${escapeHtml(stripTitle)}">${items.map(([k, g, r, title]) => `
     <span class="fg-comp" title="${escapeHtml(title)}${r != null ? ` · rank ${r}/30` : ""}">
       <span class="fg-comp-label">${k}</span>${escapeHtml(g || "—")}
     </span>`).join("")}</div>`;
+}
+
+// Compact Tool DvM+ cell for each farm-list row. Three stacked numerical
+// rows (composite ToolsDvM+ / Hit-tools / Pit-tools) with light tonal
+// shading so a glance reads who develops well. Empty when no tool-dev
+// data has been computed yet for this org.
+function makeToolDvmCell(org) {
+  const td = (org && org.tool_dev) || {};
+  const tree = (org && org.tree) || {};
+  const composite = td.tools_dvm_plus;
+  const hitter = (tree.dev_hitter || {}).dvm_plus;
+  const pitcher = (tree.dev_pitcher || {}).dvm_plus;
+  if (composite == null && hitter == null && pitcher == null) return "";
+  const cellTone = v =>
+    v == null     ? "fl-td-empty" :
+    v >= 110      ? "fl-td-strong" :
+    v >= 100      ? "fl-td-pos" :
+    v >= 90       ? "fl-td-neg" : "fl-td-weak";
+  const row = (label, val, tip) => `
+    <div class="fl-td-row ${cellTone(val)}" title="${escapeHtml(tip)}">
+      <span class="fl-td-label">${label}</span>
+      <span class="fl-td-val">${val ?? '—'}</span>
+    </div>`;
+  return `<div class="fl-tool-dvm" title="Tool development pace vs league mean (100 = mean, +10 = 1σ)">
+    ${row('Tools', composite, `ToolsDvM+ ${composite ?? '—'} · composite of all per-tool DvM+ values`)}
+    ${row('Hit',   hitter,    `Hitter Tools DvM+ ${hitter ?? '—'} · mean of hit/power/speed/field/arm/pitch_sel/bat_ctrl DvM+`)}
+    ${row('Pit',   pitcher,   `Pitcher Tools DvM+ ${pitcher ?? '—'} · mean of fb/sl/cb/ch/cmd/ct DvM+`)}
+  </div>`;
 }
 
 function renderFarmSystems() {
@@ -10498,6 +10987,7 @@ function renderFarmSystems() {
     <span>Org</span>
     <span style="text-align:center;" title="Overall farm-system letter grade. A+ = #1 org; tiers descend by farm_score (45% top-end · 25% depth · 15% trajectory · 15% grad pipeline).">Grade</span>
     <span style="text-align:center;" title="${winLabel} ${win.toUpperCase()}DvM+ — wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. Acquisitions contribute zero on arrival; graduations don't subtract — pure-development metric.">${win.toUpperCase()}DvM+</span>
+    <span style="text-align:center;" title="Tool development pace vs league mean (100 = league mean, +10 = 1σ). Composite + hitter + pitcher rows.">Tool DvM+</span>
     <span style="text-align:center;">${escapeHtml(winLabel)} trajectory</span>
     <span>Top prospects</span>
     <span>Positions</span>
@@ -10509,6 +10999,7 @@ function renderFarmSystems() {
         <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--spend-draft);"></span>Draft</span>
       </span>
     </span>
+    <span class="sort-header" style="text-align:center;" data-farm-sort="surplus" title="Sum of FV-implied surplus value across the org's active prospects (millions USD). Click to sort by surplus.">Surplus</span>
     <span style="text-align:right;">Stock</span>
     <span></span>
   </div>`;
@@ -10588,6 +11079,7 @@ function renderFarmSystems() {
           const color = v >= 110 ? 'var(--up)' : v <= 90 ? 'var(--down)' : 'var(--neon-violet)';
           return `<span class="fdh-value" style="color:${color};" title="${win.toUpperCase()}DvM+ ${v} · 100 = league mean · 10 pts = 1 std-dev · graduations + acquisitions nullified">${v}</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
         })()}</div>
+        <div>${makeToolDvmCell(org)}</div>
         <div>${makeFarmSparkline(org.fv_history, deltaAbove, meanBaseline, win)}${pulseHtml}</div>
         <div>${topHtml}</div>
         <div>${makePosBreakdown(org.pos_groups)}${makeOrgEtaWave(etaByOrg[org.org], currentYear)}</div>
@@ -10595,14 +11087,14 @@ function renderFarmSystems() {
         <div style="text-align:center;font-size:12px;color:var(--text-secondary);font-variant-numeric:tabular-nums;">${org.avg_age != null ? org.avg_age.toFixed(1) : "—"}</div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
           ${makeSpendingDonut(org)}
-          ${(() => {
+        </div>
+        <div class="farm-surplus-cell">${(() => {
             const s = surplusByOrg[org.org];
             const n = countByOrg[org.org];
-            if (s == null || !n) return "";
+            if (s == null || !n) return '<span style="color:var(--text-tertiary);">—</span>';
             const fmt = s >= 100 ? s.toFixed(0) : s.toFixed(1);
-            return `<span class="g-term" data-term="surplus_value" style="font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);font-variant-numeric:tabular-nums;letter-spacing:0.02em;" title="Total surplus value across ${n} active prospects · sum of FV-implied SUR+">$${fmt}M · ${n}p</span>`;
-          })()}
-        </div>
+            return `<span class="g-term farm-surplus-amt" data-term="surplus_value" title="Total surplus value across ${n} active prospects · sum of FV-implied SUR+">$${fmt}M</span><div class="farm-surplus-count">${n}p</div>`;
+          })()}</div>
         <div class="stock-cell" style="font-size:12px;">${stockHtml}</div>
         <div style="text-align:right;display:flex;gap:4px;justify-content:flex-end;align-items:center;">
           <button class="watch-btn${farmWatchlistHas(org.org) ? " is-in" : ""}" data-farm-watch-key="${escapeHtml(org.org)}" type="button" title="${farmWatchlistHas(org.org) ? "Remove farm from watchlist" : "Add farm to watchlist"}">${farmWatchlistHas(org.org) ? "★" : "☆"}</button>
@@ -12242,9 +12734,11 @@ function renderPlayerDetail(key) {
         "Overall":         "tools_plus",
         "Offensive":       "tools_plus",
         "Defensive":       "tools_plus",
-        "Stuff grade+":    "stuff_grade_plus",
+        "FVStuff+":        "stuff_grade_plus",  // renamed from "Stuff grade+"
+        "Stuff grade+":    "stuff_grade_plus",  // kept for back-compat tooltip lookup
         "Command":         "command_grade",
-        "STF+":            "stf_plus",
+        "pStuff+":         "stf_plus",          // renamed from "STF+"
+        "STF+":            "stf_plus",          // kept for back-compat
         "Tools+":          "tools_plus",
       };
       const slug = COMPOSITE_TO_GLOSSARY[label];
@@ -12365,16 +12859,16 @@ function renderPlayerDetail(key) {
     if (isPitcher) {
       const overallChip = compositeChip("Overall", t.composite_overall, t.composite_overall_plus,
         "Weighted composite: 65% stuff + 35% command", true);
-      const stuffGradeChip = compositeChip("Stuff grade+", t.composite_stuff, t.composite_stuff_plus,
-        "Scouting composite: power-mean of fastball + secondaries, z-scored vs prospect cohort", false);
+      const stuffGradeChip = compositeChip("FVStuff+", t.composite_stuff, t.composite_stuff_plus,
+        "Scouting composite: power-mean of fastball + secondaries, z-scored vs prospect cohort (renamed from 'Stuff grade+')", false);
       const cmdChip = compositeChip("Command", t.composite_cmd, t.composite_cmd_plus,
         "Control / command grade", false);
-      // Peripheral STF+ — K%, BB%, HR/9 vs level mean. Lives on the
+      // Peripheral pStuff+ — K%, BB%, HR/9 vs level mean. Lives on the
       // statline, not the tools dict, so we pull it from `p.statline`.
       const stfPeriph = (p.statline || {}).stf_plus_periph;
       const stfChip = stfPeriph != null
-        ? compositeChip("STF+", null, stfPeriph,
-            "Peripheral stuff index — z-score composite of K%, BB%, HR/9 vs level mean (20-IP / 30-BF sample gate)", false)
+        ? compositeChip("pStuff+", null, stfPeriph,
+            "Peripheral stuff index — z-score composite of K%, BB%, HR/9 vs level mean (20-IP / 30-BF sample gate). Renamed from 'STF+'.", false)
         : "";
       compositeBar = (overallChip || stuffGradeChip || stfChip || cmdChip)
         ? `<div class="tools-composite-bar">${overallChip}${stuffGradeChip}${stfChip}${cmdChip}</div>`
@@ -12774,23 +13268,73 @@ function renderPlayerDetail(key) {
       </div>`;
   })();
 
-  // Standalone FanGraphs scouting report card — promoted out of the FG
-  // scout-notes block. The long-form prose is the most valuable narrative
-  // on the page, so it lives in its own collapsible card at the bottom
-  // of the detail layout where it doesn't compete with the dense tiles.
-  const fgReportSection = (() => {
-    const ex = _getFgExtras(p);
-    if (!ex || !ex.report) return "";
-    return `<div class="detail-title">FanGraphs scouting report
-        <span class="detail-title-sub">long-form prose · most recent FG publication</span>
-      </div>
-      <div class="detail-card" style="padding:14px 16px;">
-        <details open>
-          <summary style="cursor:pointer;font-size:12px;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;padding:2px 0 8px;">
-            Show / hide
-          </summary>
-          <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap;padding-top:6px;">${escapeHtml(ex.report)}</div>
-        </details>
+  // Scouting reports (multi-source, tabbed) — sidebar card. Tabs cover
+  // the four scrape sources; today only FanGraphs publishes long-form
+  // prose so the other tabs render as dimmed/disabled placeholders.
+  // When MLB Pipeline / ESPN / Just Baseball ingest stores prose, this
+  // function picks it up without code changes.
+  const scoutingReportsSection = (() => {
+    // Walk per_source across all snapshots, newest-first, collecting the
+    // most-recent report per source.
+    const SOURCES = [
+      { key: "fangraphs",     label: "FanGraphs"    },
+      { key: "mlb_pipeline",  label: "MLB Pipeline" },
+      { key: "espn",          label: "ESPN"         },
+      { key: "just_baseball", label: "Just Baseball"},
+    ];
+    const latestBySrc = {}; // {srcKey: {date, label, text}}
+    for (let i = (p.points || []).length - 1; i >= 0; i--) {
+      const pt = p.points[i];
+      const ps = (pt && pt.per_source) || {};
+      for (const { key } of SOURCES) {
+        if (latestBySrc[key]) continue;
+        const info = ps[key];
+        const extras = (info && info.tools && info.tools._extras) || {};
+        const text = extras.report || extras.notes || extras.commentary || null;
+        if (text && String(text).trim().length > 50) {
+          latestBySrc[key] = {
+            date:  pt.snapshot_date,
+            label: pt.interval_label || (info && info.interval_label) || "",
+            text:  String(text).trim(),
+          };
+        }
+      }
+    }
+    const anyPopulated = SOURCES.some(s => latestBySrc[s.key]);
+    if (!anyPopulated) return "";
+    // Default-active tab = source with the most-recent publication date.
+    let defaultSrc = null;
+    let bestDate = "";
+    for (const { key } of SOURCES) {
+      const r = latestBySrc[key];
+      if (r && r.date > bestDate) {
+        bestDate = r.date;
+        defaultSrc = key;
+      }
+    }
+    const tabs = SOURCES.map(s => {
+      const has = !!latestBySrc[s.key];
+      const cls = has ? (s.key === defaultSrc ? "sr-tab is-active" : "sr-tab")
+                      : "sr-tab is-empty";
+      const disabled = has ? "" : "disabled";
+      const title = has
+        ? `${s.label} — published ${latestBySrc[s.key].date}`
+        : `${s.label} — no report on file (no long-form scouting prose ingested from this source yet)`;
+      return `<button class="${cls}" data-sr-source="${escapeHtml(s.key)}" ${disabled} title="${escapeHtml(title)}" type="button">${escapeHtml(s.label)}</button>`;
+    }).join("");
+    const bodies = SOURCES.map(s => {
+      const r = latestBySrc[s.key];
+      const hidden = s.key !== defaultSrc;
+      if (!r) return "";
+      return `<div class="sr-body${hidden ? ' is-hidden' : ''}" data-sr-body="${escapeHtml(s.key)}">
+        <div class="sr-meta">${escapeHtml(s.label)} · published ${escapeHtml(r.date)}${r.label ? ` (${escapeHtml(r.label)})` : ""}</div>
+        <div class="sr-prose">${escapeHtml(r.text)}</div>
+      </div>`;
+    }).join("");
+    return `<div class="detail-title">Scouting reports <span class="detail-title-sub">latest published per source</span></div>
+      <div class="scouting-reports-card">
+        <div class="sr-tab-strip" role="tablist">${tabs}</div>
+        ${bodies}
       </div>`;
   })();
 
@@ -13470,7 +14014,7 @@ function renderPlayerDetail(key) {
     ["Tool dev", "detail-tooldev",  !!toolDevSection],
     ["Projection", "detail-projection", !!projectionArcSection],
     ["FG scout",   "detail-fgscout",    !!fgScoutNotesSection],
-    ["FG report",  "detail-fgreport",   !!fgReportSection],
+    ["Scout reports", "detail-scoutreports", !!scoutingReportsSection],
   ].filter(([, , show]) => show);
   const jumpLinkStrip = jumpLinkPairs.length >= 3
     ? `<nav class="detail-jumplinks" aria-label="Jump to section">${jumpLinkPairs.map(([label, id]) =>
@@ -13513,10 +14057,8 @@ function renderPlayerDetail(key) {
     wrap("detail-projection", projectionArcSection),
     wrap("detail-fgscout",    fgScoutNotesSection),
     contractDetailsSection,
-    // Long-form FG scouting report — promoted out of the FG scout-notes
-    // card so the narrative gets its own visual real estate at the
-    // bottom of the page (per UI cleanup plan, Step 6).
-    wrap("detail-fgreport",  fgReportSection),
+    // (Scouting reports moved to the sidebar — see detail-scoutreports
+    // slot in the right-column template below.)
   ].filter(Boolean).join("");
   const wideGrid = (wideCards || moreDetailsAccordion)
     ? `<div class="detail-wide-grid">
@@ -13528,7 +14070,7 @@ function renderPlayerDetail(key) {
   root.innerHTML = header + quickReadHtml + tilesHtml + jumpLinkStrip + `
     <div class="player-detail-grid">
       <div>${wrap("detail-chart", chartSection)}${wrap("detail-stats", consolidatedCareerSection)}${sourceSection}${wideGrid}</div>
-      <div class="player-detail-side">${noteSection}${ilSection}${wrap("detail-health", healthSection)}${sabermetricsSection}${surplusValueSection}${sameFarmSection}${similarProspectsSection}</div>
+      <div class="player-detail-side">${noteSection}${ilSection}${wrap("detail-health", healthSection)}${sabermetricsSection}${surplusValueSection}${wrap("detail-scoutreports", scoutingReportsSection)}${sameFarmSection}${similarProspectsSection}</div>
     </div>`;
 }
 
@@ -13835,6 +14377,7 @@ function renderFarmDetail(orgCode) {
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">${makeTierBar(org.prospects)}</div>
     </div>
     ${makeFarmReportCard(org)}
+    ${makeRosterSnapshotTile(org)}
     ${makeFarmToolDevCard(org)}`;
 
   // Per-tier counts live in the tier-bar in the header; tiles cover the
@@ -15618,15 +16161,15 @@ function powerPlusPillHTML(p) {
 function disciplinePlusPillHTML(p) {
   const v = computeDisciplinePlus(p);
   if (v == null) return "";
-  return _plusPill("PD+", v, n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral",
-    `PD+ ${v} · BB%−K% differential vs ${p.statline.level || "level"} mean (100 = league-average plate discipline)`,
+  return _plusPill("Disci+", v, n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral",
+    `Disci+ ${v} · BB%−K% differential vs ${p.statline.level || "level"} mean (100 = league-average plate discipline). Renamed from PD+.`,
     "pd_plus");
 }
 function stuffPlusPillHTML(p) {
   const v = computeStuffPlus(p);
   if (v == null) return "";
-  return _plusPill("STF+", v, n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral",
-    `STF+ ${v} · K/9 + BB/9 + HR/9 normalized to ${p.statline.level || "level"} mean (100 = league-average stuff, 10 pts ≈ 1 std-dev)`,
+  return _plusPill("pStuff+", v, n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral",
+    `pStuff+ ${v} · K/9 + BB/9 + HR/9 normalized to ${p.statline.level || "level"} mean (100 = league-average peripherals, 10 pts ≈ 1 std-dev). Renamed from STF+.`,
     "stf_plus");
 }
 function tradeValuePillHTML(p) {
@@ -16096,6 +16639,22 @@ function attachHandlers() {
   // data-org and the delegation does the rest. Phase 4 a11y bolts onto
   // this same listener (Enter/Space → click).
   document.getElementById("content").addEventListener("click", (e) => {
+    // Scouting reports tab strip — switch which source's prose is
+    // visible. Disabled (empty) tabs short-circuit; .is-active gets
+    // toggled in tandem with .sr-body visibility.
+    const srTab = e.target.closest(".sr-tab[data-sr-source]");
+    if (srTab) {
+      e.stopPropagation();
+      if (srTab.disabled || srTab.classList.contains("is-empty")) return;
+      const card = srTab.closest(".scouting-reports-card");
+      if (!card) return;
+      const src = srTab.dataset.srSource;
+      card.querySelectorAll(".sr-tab").forEach(t =>
+        t.classList.toggle("is-active", t === srTab));
+      card.querySelectorAll(".sr-body").forEach(b =>
+        b.classList.toggle("is-hidden", b.dataset.srBody !== src));
+      return;
+    }
     // "+ Add to compare" buttons live inside .compare-add-btn — handle
     // those before the row delegation so the click doesn't navigate.
     const addBtn = e.target.closest(".compare-add-btn[data-compare-key]");

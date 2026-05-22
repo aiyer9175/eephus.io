@@ -1211,6 +1211,25 @@ FARM_WEIGHT_HEALTH              = 0.01   # NEW — INVERSE (lower burden = bette
 # no longer uses FARM_WEIGHT_TRAJECTORY directly; DvM+ took its slot.
 FARM_WEIGHT_TRAJECTORY  = FARM_WEIGHT_DVM_PLUS
 
+# ────────────────────────────────────────────────────────────────────────
+# Farm Grade Tree (v2 composite — replaces the flat 10-component blend)
+#
+# Five main grades, each composed of 2 sub-grades, rolling into one
+# composite. Weighted by signal strength: Development (controllable
+# skill) and MLB Production (outcome proof) carry the most weight;
+# Transactions is intentionally light because trade-acumen signal is
+# real but small-sample. See `farm_report_card` glossary entry for the
+# full tree shape.
+# ────────────────────────────────────────────────────────────────────────
+FARM_TREE_WEIGHT_ACQUISITIONS   = 0.15
+FARM_TREE_WEIGHT_DEVELOPMENT    = 0.35   # ← top-weighted: dev is the
+                                          # single biggest controllable skill
+FARM_TREE_WEIGHT_TRANSACTIONS   = 0.10
+FARM_TREE_WEIGHT_FINANCIAL      = 0.15
+FARM_TREE_WEIGHT_MLB_PRODUCTION = 0.25
+# Sub-grades inside each parent — 50/50 for all parents in v1.
+FARM_TREE_SUB_WEIGHT_EQUAL = 0.5
+
 # Tiered FV → points. Anchored so an 80 ≈ "franchise piece" (worth ~100
 # org-filler prospects) and 40 ≈ "pulse, barely". The shape is roughly
 # geometric — each tier up is ~1.7-2× the previous. Tunable; the curve
@@ -1290,6 +1309,52 @@ def _fv_to_expected_war(fv: float | int | None) -> float | None:
             t = (v - lo) / (hi - lo) if hi > lo else 0
             return round(FV_EXPECTED_WAR[lo] + t * (FV_EXPECTED_WAR[hi] - FV_EXPECTED_WAR[lo]), 2)
     return None
+
+
+# Industry-standard draft pick-slot value curve (career WAR expectations
+# based on FanGraphs / Baseball America surplus-value research). A
+# 1st-overall pick has historically averaged ~9 career WAR; the curve
+# decays steeply through the supplemental + 2nd round and tails to ~0
+# by the late rounds. Used to compute "draft pick value above
+# expectation" = actual_war − slot_expected_war, which credits orgs
+# that beat the market at each pick slot (e.g., a 28th-rounder making
+# the majors counts more than a #1 overall reaching the same outcome).
+_PICK_SLOT_EXPECTED_WAR: list[tuple[int, float]] = [
+    (1,    9.00),   # 1st overall — historical Trout-tier ceiling
+    (5,    6.00),   # top 5 — All-Star floor
+    (10,   4.00),   # top 10 — regular floor
+    (20,   2.50),   # 1st round
+    (35,   1.80),   # supplemental / late 1st
+    (50,   1.20),   # mid-2nd
+    (75,   0.80),   # late 2nd / 3rd
+    (100,  0.55),   # 3rd-4th
+    (150,  0.35),   # 4th-5th
+    (200,  0.22),   # mid-rounds
+    (300,  0.13),   # 6th-10th
+    (500,  0.07),   # late rounds
+    (10_000, 0.03), # undrafted / non-tracked tail
+]
+
+
+def _pick_slot_expected_war(pick_overall) -> float | None:
+    """Step-lookup the historical expected career WAR for a draft slot.
+    Returns None when the pick number is missing/invalid (e.g., IFA
+    signing with no overall pick). The step function is a deliberate
+    simplification over the smooth power curve — pick slots already
+    quantize into round groupings, and the step boundaries align with
+    common round breakpoints (top-5, top-10, 1st round, 2nd, etc.)."""
+    if pick_overall is None:
+        return None
+    try:
+        p = int(pick_overall)
+    except (TypeError, ValueError):
+        return None
+    if p < 1:
+        return None
+    for threshold, war in _PICK_SLOT_EXPECTED_WAR:
+        if p <= threshold:
+            return war
+    return _PICK_SLOT_EXPECTED_WAR[-1][1]
 
 
 def _grad_wag(graduate_payload: dict) -> float | None:
@@ -3258,22 +3323,83 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "fv_close":     gp.fv_close,
         })
         career_war_val = cw.get("career_war")
-        bonus_usd = (acquisitions or {}).get(gp.player_key, {}).get("bonus_usd")
+        gp_acq = (acquisitions or {}).get(gp.player_key, {}) or {}
+        bonus_usd = gp_acq.get("bonus_usd")
+        gp_method = gp_acq.get("method")  # "draft" | "international_fa" | "unknown"
+        gp_is_pitcher = bool(gp.position
+                             and gp.position.split("/")[0] in PITCHER_POS)
+        gp_contract = (contracts_by_key or {}).get(gp.player_key) or {}
+        gp_aav = gp_contract.get("aav_usd")
 
         bucket = grad_agg.setdefault(gp_org, {
             "wag_sum": 0.0, "wag_count": 0,
             "war_sum": 0.0, "war_count": 0,
             "bonus_sum": 0, "bonus_count": 0,
+            # Tree v2 splits — same WAG but partitioned by acquisition
+            # method (IFA vs Draft) and position type (Hitter vs Pitcher)
+            # so the grade tree's Acquisitions and MLB Production
+            # branches can each grade their own sub-axis.
+            "ifa_wag_sum": 0.0,   "ifa_wag_count":   0,
+            "draft_wag_sum": 0.0, "draft_wag_count": 0,
+            "hit_wag_sum": 0.0,   "hit_wag_count":   0,
+            "pit_wag_sum": 0.0,   "pit_wag_count":   0,
+            # Grad-Contract Surplus — current AAV − (bonus amortized over
+            # 6 years, the rough cost-controlled window before the player
+            # would have hit arb/FA). Positive = grad's MLB salary value
+            # exceeds the org's signing-bonus outlay.
+            "contract_surplus_sum": 0.0, "contract_surplus_count": 0,
+            # Pick-slot-adjusted draft performance (v2 of Draft Pick
+            # Performance). actual_war − slot_expected_war per drafted
+            # grad. Credits orgs that beat the market at each pick slot;
+            # strictly more informative than raw WAG for the "did this
+            # org draft well?" question.
+            "draft_pick_value_sum": 0.0, "draft_pick_value_count": 0,
         })
         if wag is not None:
             bucket["wag_sum"] += wag
             bucket["wag_count"] += 1
+            # Acquisition-method split
+            if gp_method == "international_fa":
+                bucket["ifa_wag_sum"] += wag
+                bucket["ifa_wag_count"] += 1
+            elif gp_method == "draft":
+                bucket["draft_wag_sum"] += wag
+                bucket["draft_wag_count"] += 1
+            # Position split for MLB Production branch
+            if gp_is_pitcher:
+                bucket["pit_wag_sum"] += wag
+                bucket["pit_wag_count"] += 1
+            else:
+                bucket["hit_wag_sum"] += wag
+                bucket["hit_wag_count"] += 1
         if career_war_val is not None:
             bucket["war_sum"] += float(career_war_val)
             bucket["war_count"] += 1
         if bonus_usd is not None:
             bucket["bonus_sum"] += int(bonus_usd)
             bucket["bonus_count"] += 1
+        # Grad-Contract Surplus accumulator. 6-year amortization mirrors
+        # the typical pre-FA cost-controlled window for a graduate; longer
+        # extensions get credited yearly via aav_usd, not the bonus.
+        if gp_aav and bonus_usd:
+            try:
+                surplus_yr = float(gp_aav) - (float(bonus_usd) / 6.0)
+                bucket["contract_surplus_sum"]   += surplus_yr
+                bucket["contract_surplus_count"] += 1
+            except (TypeError, ValueError):
+                pass
+        # Pick-slot-adjusted draft value (v2 of Acquisitions/Draft).
+        # Requires both a draft method AND a numeric pick_overall AND a
+        # career_war on file. The delta is positive when the org
+        # extracted more MLB value from that pick slot than the league
+        # historically gets — credits late-round hits more than #1
+        # overalls reaching the majors. Falls back silently when any
+        # piece is missing (Spotrac-only graduates, IFA signings, etc.)
+        if gp_method == "draft" and career_war_val is not None:
+            slot_exp = _pick_slot_expected_war(gp_acq.get("pick_overall"))
+            if slot_exp is not None:
+                bucket["draft_pick_value_sum"]   += float(career_war_val) - slot_exp
+                bucket["draft_pick_value_count"] += 1
 
     # Finalize each org entry
     org_summary = []
@@ -3374,6 +3500,74 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "per_tool_dvm_plus": {},   # filled in the league pass below
             "tools_dvm_plus":    None,
         }
+
+        # ── Farm Grade Tree v2 sub-grades — leaf-level metrics ──
+        # All grade-tree leaves get their underlying values stamped here.
+        # The 100-anchored league-normalized versions + composites are
+        # computed in a separate pass below (once league mean+stdev are
+        # known across every org's leaf values). Sparse-data gates apply
+        # at the leaf level (count threshold per leaf).
+        _wag_sum = gagg.get("wag_sum") or 0.0
+        m["tree"] = {
+            # ACQUISITIONS branch
+            "acq_ifa": {
+                "wag_mean": (round(gagg["ifa_wag_sum"] / gagg["ifa_wag_count"], 2)
+                             if (gagg.get("ifa_wag_count") or 0) >= 3 else None),
+                "wag_sum":  round(gagg.get("ifa_wag_sum") or 0.0, 2),
+                "grad_count": gagg.get("ifa_wag_count") or 0,
+            },
+            "acq_draft": {
+                # Raw WAG mean across drafted graduates — kept for the
+                # detail-page tooltip context (it answers "did drafted
+                # grads beat their FV at graduation?").
+                "wag_mean": (round(gagg["draft_wag_sum"] / gagg["draft_wag_count"], 2)
+                             if (gagg.get("draft_wag_count") or 0) >= 3 else None),
+                "wag_sum":  round(gagg.get("draft_wag_sum") or 0.0, 2),
+                # Pick-slot-adjusted value — answers the more on-point
+                # "did this org beat the market at the pick slots it
+                # used?". The grade tree z-scores this (not wag_mean)
+                # because it directly captures draft acumen.
+                "pick_value_mean": (round(gagg["draft_pick_value_sum"] / gagg["draft_pick_value_count"], 2)
+                                    if (gagg.get("draft_pick_value_count") or 0) >= 3 else None),
+                "pick_value_count": gagg.get("draft_pick_value_count") or 0,
+                "grad_count": gagg.get("draft_wag_count") or 0,
+            },
+            # DEVELOPMENT branch — hitter/pitcher composites filled by
+            # the per-tool DvM+ league pass below.
+            "dev_hitter": {"dvm_plus": None, "n_groups": 0},
+            "dev_pitcher": {"dvm_plus": None, "n_groups": 0},
+            # TRANSACTIONS branch — fv_in/fv_out filled by the
+            # trade+waiver scoreboard pass below.
+            "tx_trades":  {"net_fv": None, "fv_in": 0.0, "fv_out": 0.0,
+                           "in_count": 0, "out_count": 0},
+            "tx_waivers": {"net_fv": None, "fv_in": 0.0, "fv_out": 0.0,
+                           "in_count": 0, "out_count": 0},
+            # FINANCIAL branch — war_per_million reused from financial_roi;
+            # grad-contract surplus mean computed here.
+            "fin_war_per_m": {
+                "value": m["financial_roi"]["war_per_million"],
+                "grad_count": m["financial_roi"]["grad_count_with_bonus"],
+            },
+            "fin_contract_surplus": {
+                "mean_usd_per_yr": (round(gagg["contract_surplus_sum"] / gagg["contract_surplus_count"], 0)
+                                    if (gagg.get("contract_surplus_count") or 0) >= 3 else None),
+                "grad_count": gagg.get("contract_surplus_count") or 0,
+            },
+            # MLB PRODUCTION branch — hitter/pitcher WAG splits.
+            "mlb_hitter_wag": {
+                "wag_mean": (round(gagg["hit_wag_sum"] / gagg["hit_wag_count"], 2)
+                             if (gagg.get("hit_wag_count") or 0) >= 3 else None),
+                "wag_sum":  round(gagg.get("hit_wag_sum") or 0.0, 2),
+                "grad_count": gagg.get("hit_wag_count") or 0,
+            },
+            "mlb_pitcher_wag": {
+                "wag_mean": (round(gagg["pit_wag_sum"] / gagg["pit_wag_count"], 2)
+                             if (gagg.get("pit_wag_count") or 0) >= 3 else None),
+                "wag_sum":  round(gagg.get("pit_wag_sum") or 0.0, 2),
+                "grad_count": gagg.get("pit_wag_count") or 0,
+            },
+        }
+
         # _active_keys stays for the Tools+ second pass; popped later.
         org_summary.append(m)
 
@@ -3445,6 +3639,24 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _entry = next(e for e in org_summary if e["org"] == org_code)
         _entry["tool_dev"]["tools_dvm_plus_rank"] = r
 
+    # ── Tree v2: Hitter / Pitcher Tools DvM+ composites ──
+    # Filter the per_tool_dvm_plus dict (just computed) into hitter-only
+    # and pitcher-only groupings, average within each. These feed the
+    # Development branch of the grade tree.
+    _HITTER_TOOL_DVM_KEYS = {"hit", "power", "speed", "field", "arm",
+                             "pitch_sel", "bat_ctrl"}
+    _PITCHER_TOOL_DVM_KEYS = {"fb", "sl", "cb", "ch", "cmd", "ct"}
+    for entry in org_summary:
+        per_grp = entry["tool_dev"].get("per_tool_dvm_plus") or {}
+        h_vals = [v for k, v in per_grp.items()
+                  if k in _HITTER_TOOL_DVM_KEYS and v is not None]
+        p_vals = [v for k, v in per_grp.items()
+                  if k in _PITCHER_TOOL_DVM_KEYS and v is not None]
+        entry["tree"]["dev_hitter"]["dvm_plus"]  = int(round(sum(h_vals) / len(h_vals))) if h_vals else None
+        entry["tree"]["dev_hitter"]["n_groups"]  = len(h_vals)
+        entry["tree"]["dev_pitcher"]["dvm_plus"] = int(round(sum(p_vals) / len(p_vals))) if p_vals else None
+        entry["tree"]["dev_pitcher"]["n_groups"] = len(p_vals)
+
     # Per-level graded prospect counts, sourced from the affiliate-roster
     # map. Drives both the "sort farms by depth at level X" chips on the
     # farm list page and the "graded prospects by level" section on each
@@ -3471,6 +3683,79 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         hist = org_fv_history.get(entry["org"], {})
         entry["fv_history"] = hist.get("series", [])
         entry["fv_events"]  = hist.get("events", [])
+
+    # ── Tree v2: Transactions branch scoreboards ──
+    # Trades sub-grade — walk each org's fv_events for kind=="trade",
+    # sum incoming FV minus outgoing FV. Higher net FV = better trade
+    # acumen (the org acquired more talent than it gave up at the FV
+    # captured on the trade date).
+    for entry in org_summary:
+        in_fv = 0.0
+        out_fv = 0.0
+        in_n = 0
+        out_n = 0
+        for ev in (entry["fv_events"] or []):
+            if ev.get("kind") != "trade":
+                continue
+            fv = ev.get("fv") or 0.0
+            if ev.get("direction") == "in":
+                in_fv += fv
+                in_n  += 1
+            elif ev.get("direction") == "out":
+                out_fv += fv
+                out_n  += 1
+        entry["tree"]["tx_trades"] = {
+            "net_fv":    round(in_fv - out_fv, 1) if (in_n + out_n) else None,
+            "fv_in":     round(in_fv, 1),
+            "fv_out":    round(out_fv, 1),
+            "in_count":  in_n,
+            "out_count": out_n,
+        }
+
+    # Waivers sub-grade — walk transactions_by_player for non-trade
+    # cross-org events (waiver_claim, rule_5_return, contract_purchase,
+    # signed_free_agent). Cross-reference player FV at the transaction
+    # date is expensive; use the player's most-recent consensus FV as a
+    # close-enough proxy since most waiver moves involve fringe players
+    # whose FV doesn't swing much over short periods.
+    _WAIVER_KINDS = {"waiver_claim", "rule_5_return", "contract_purchase",
+                     "signed_free_agent"}
+    _waiver_in_by_org:  dict[str, list[float]] = {}
+    _waiver_out_by_org: dict[str, list[float]] = {}
+    _player_fv_by_key: dict[str, float] = {}
+    for p in actives + grads + inactives:
+        if p.points and p.points[-1].consensus_fv_raw is not None:
+            _player_fv_by_key[p.player_key] = float(p.points[-1].consensus_fv_raw)
+    _txs = transactions_by_player or {}
+    for pkey, txs in _txs.items():
+        fv = _player_fv_by_key.get(pkey)
+        if fv is None:
+            continue
+        for tx in (txs or []):
+            kind = tx.get("kind")
+            if kind not in _WAIVER_KINDS:
+                continue
+            from_team = tx.get("from_team_name")
+            to_team   = tx.get("to_team_name")
+            from_org  = canonical_org(from_team) if from_team else None
+            to_org    = canonical_org(to_team)   if to_team   else None
+            if from_org:
+                _waiver_out_by_org.setdefault(from_org, []).append(fv)
+            if to_org:
+                _waiver_in_by_org.setdefault(to_org, []).append(fv)
+    for entry in org_summary:
+        org_code = entry["org"]
+        in_list  = _waiver_in_by_org.get(org_code, [])
+        out_list = _waiver_out_by_org.get(org_code, [])
+        in_fv  = round(sum(in_list), 1)
+        out_fv = round(sum(out_list), 1)
+        entry["tree"]["tx_waivers"] = {
+            "net_fv":    round(in_fv - out_fv, 1) if (in_list or out_list) else None,
+            "fv_in":     in_fv,
+            "fv_out":    out_fv,
+            "in_count":  len(in_list),
+            "out_count": len(out_list),
+        }
 
     # ── Farm report card ────────────────────────────────────────────────────
     # Four raw component scores per org, each then rescaled to a 0-100 band
@@ -3608,7 +3893,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "readiness_100":           rd,
             "health_burden_100":       hl,
         }
-        entry["farm_score"] = round(
+        # Legacy 10-component blend — preserved on entry so anything that
+        # already references farm_score before the tree composite below
+        # overwrites it keeps a value to fall back to.
+        entry["farm_score_legacy"] = round(
             FARM_WEIGHT_TOP_END             * te
           + FARM_WEIGHT_DEPTH               * dp
           + FARM_WEIGHT_DVM_PLUS            * dvm
@@ -3621,6 +3909,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
           + FARM_WEIGHT_HEALTH              * hl,
             1,
         )
+        # farm_score gets overwritten with the tree composite below; we
+        # set it here so the field exists if downstream code reads it
+        # before the tree pass finishes.
+        entry["farm_score"] = entry["farm_score_legacy"]
 
     # Per-component ranks (1 = best) feed the component letter grades on
     # the report card. The overall rank/letter come from farm_score.
@@ -3695,6 +3987,145 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "health_burden":      _letter_grade(hl_r, n_orgs),
             "overall":            _letter_grade(ov_r, n_orgs),
         }
+
+    # ────────────────────────────────────────────────────────────────────────
+    # ── Farm Grade Tree v2 — main grade composites + new farm_score ──
+    # ────────────────────────────────────────────────────────────────────────
+    # 11 leaf metrics, each independently z-normalized across orgs.
+    # Sparse-data orgs get None for that leaf and the parent main grade
+    # falls back to the mean of its present sub-grades. Composite
+    # farm_score = weighted sum of the 5 main-grade 100-anchored scores.
+
+    def _zscore_to_100(values: list[float | None],
+                       higher_is_better: bool = True) -> list[float | None]:
+        """Per-org list → 100-anchored z-score list. None stays None.
+        Mirrors the wRC+/OPS+ 100-anchor (μ → 100, +1σ → 110)."""
+        present = [v for v in values if v is not None]
+        if len(present) < 3:
+            return [None] * len(values)
+        mu = sum(present) / len(present)
+        var = sum((v - mu) ** 2 for v in present) / len(present)
+        sd = var ** 0.5
+        if sd < 1e-6:
+            return [100.0 if v is not None else None for v in values]
+        sign = 1.0 if higher_is_better else -1.0
+        out: list[float | None] = []
+        for v in values:
+            if v is None:
+                out.append(None)
+            else:
+                out.append(round(100 + 10 * sign * (v - mu) / sd, 1))
+        return out
+
+    # Pull leaf raw values per org.
+    leaf_raw = {
+        "acq_ifa":              [(e["tree"]["acq_ifa"]              or {}).get("wag_mean")        for e in org_summary],
+        # Draft sub-grade scores on pick-slot-adjusted value, not raw
+        # WAG. Falls back to wag_mean when an org has <3 graduates
+        # with both pick_overall AND career_war on file.
+        "acq_draft":            [
+            (e["tree"]["acq_draft"] or {}).get("pick_value_mean")
+            if (e["tree"]["acq_draft"] or {}).get("pick_value_mean") is not None
+            else (e["tree"]["acq_draft"] or {}).get("wag_mean")
+            for e in org_summary
+        ],
+        "dev_hitter":           [(e["tree"]["dev_hitter"]           or {}).get("dvm_plus") for e in org_summary],
+        "dev_pitcher":          [(e["tree"]["dev_pitcher"]          or {}).get("dvm_plus") for e in org_summary],
+        "tx_trades":            [(e["tree"]["tx_trades"]            or {}).get("net_fv")   for e in org_summary],
+        "tx_waivers":           [(e["tree"]["tx_waivers"]           or {}).get("net_fv")   for e in org_summary],
+        "fin_war_per_m":        [(e["tree"]["fin_war_per_m"]        or {}).get("value")    for e in org_summary],
+        "fin_contract_surplus": [(e["tree"]["fin_contract_surplus"] or {}).get("mean_usd_per_yr") for e in org_summary],
+        "mlb_hitter_wag":       [(e["tree"]["mlb_hitter_wag"]       or {}).get("wag_mean") for e in org_summary],
+        "mlb_pitcher_wag":      [(e["tree"]["mlb_pitcher_wag"]      or {}).get("wag_mean") for e in org_summary],
+    }
+    # Z-anchor each leaf at 100. All these metrics are higher-is-better.
+    leaf_100 = {k: _zscore_to_100(vs, higher_is_better=True)
+                for k, vs in leaf_raw.items()}
+
+    # Stamp leaf 100-anchored scores onto each org for display.
+    for i, entry in enumerate(org_summary):
+        for k, vs in leaf_100.items():
+            entry["tree"][k]["score_100"] = vs[i]
+
+    # Build main-grade scores by averaging the 100-anchored leaves
+    # present for that parent. Orgs with NO present leaves under a
+    # parent get None for that main grade (rare — usually only when
+    # all sub-grades sparse-gated out).
+    TREE_PARENTS = {
+        "acquisitions":   ["acq_ifa", "acq_draft"],
+        "development":    ["dev_hitter", "dev_pitcher"],
+        "transactions":   ["tx_trades", "tx_waivers"],
+        "financial":      ["fin_war_per_m", "fin_contract_surplus"],
+        "mlb_production": ["mlb_hitter_wag", "mlb_pitcher_wag"],
+    }
+    for i, entry in enumerate(org_summary):
+        for parent, leaves in TREE_PARENTS.items():
+            vs = [leaf_100[k][i] for k in leaves if leaf_100[k][i] is not None]
+            entry[f"{parent}_score"] = (
+                round(sum(vs) / len(vs), 1) if vs else None
+            )
+        # Composite farm_score from the 5 main grades, weighted. Orgs
+        # missing a main grade contribute its weight at 100 (league mean)
+        # so the overall doesn't get crushed by data-sparse axes.
+        weights = {
+            "acquisitions":   FARM_TREE_WEIGHT_ACQUISITIONS,
+            "development":    FARM_TREE_WEIGHT_DEVELOPMENT,
+            "transactions":   FARM_TREE_WEIGHT_TRANSACTIONS,
+            "financial":      FARM_TREE_WEIGHT_FINANCIAL,
+            "mlb_production": FARM_TREE_WEIGHT_MLB_PRODUCTION,
+        }
+        composite = 0.0
+        for parent, w in weights.items():
+            v = entry.get(f"{parent}_score")
+            composite += w * (v if v is not None else 100.0)
+        entry["farm_score"] = round(composite, 1)
+
+    # Letter grades for the 11 leaves + 5 main + composite (17 total).
+    # Sparse-data leaves get "—"; sparse parents and composite always grade
+    # (since they fall back to 100 for missing children).
+    def _rank_list(values: list[float | None]) -> list[int | None]:
+        idx = [i for i, v in enumerate(values) if v is not None]
+        sub = _rank_descending([values[i] for i in idx])
+        ranks: list[int | None] = [None] * len(values)
+        for i, r in zip(idx, sub):
+            ranks[i] = r
+        return ranks
+
+    leaf_ranks = {k: _rank_list(vs) for k, vs in leaf_100.items()}
+    parent_ranks = {
+        parent: _rank_list([e.get(f"{parent}_score") for e in org_summary])
+        for parent in TREE_PARENTS
+    }
+    composite_rank = _rank_list([e["farm_score"] for e in org_summary])
+
+    n_orgs_tree = len(org_summary)
+    for i, entry in enumerate(org_summary):
+        # Update entry["grades"] with the new tree grades (existing legacy
+        # grades stay so the report-card glossary references still resolve).
+        g = entry.get("grades") or {}
+        # 5 main grades
+        for parent in TREE_PARENTS:
+            r = parent_ranks[parent][i]
+            present_n = sum(1 for x in parent_ranks[parent] if x is not None)
+            g[parent] = _letter_grade(r, present_n) if r is not None else "—"
+        # 10 sub-grades — keyed identically to leaf_raw
+        for k in leaf_raw:
+            r = leaf_ranks[k][i]
+            present_n = sum(1 for x in leaf_ranks[k] if x is not None)
+            g[k] = _letter_grade(r, present_n) if r is not None else "—"
+        # Composite (overwrites the legacy `overall` letter so the
+        # displayed grade matches the displayed farm_score).
+        r = composite_rank[i]
+        g["overall"] = _letter_grade(r, n_orgs_tree) if r is not None else "—"
+        entry["grades"] = g
+        # Also stamp the ranks so the UI can read off them directly.
+        cr = entry.get("component_ranks") or {}
+        for parent in TREE_PARENTS:
+            cr[parent] = parent_ranks[parent][i]
+        for k in leaf_raw:
+            cr[k] = leaf_ranks[k][i]
+        cr["overall"] = composite_rank[i]
+        entry["component_ranks"] = cr
 
     # Final sort + farm_rank assignment off of farm_score. Tiebreak by
     # top_end_points so the org with better stars edges out an equal one.
