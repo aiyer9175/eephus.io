@@ -2062,6 +2062,7 @@
       box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
     }
     .country-flag.large { height: 22px; }
+    .country-flag.small { height: 10px; vertical-align: -1px; }
     /* College logo chip — same footprint as the headshot but tighter. */
     .college-logo {
       width: 22px;
@@ -9287,7 +9288,9 @@ function _collegeLogoImg(url, school) {
 // emoji rendering still shows *something* if the SVG CDN is down).
 function _flagImg(svgUrl, emoji, country, opts) {
   opts = opts || {};
-  const cls = opts.large ? "country-flag large" : "country-flag";
+  const cls = opts.large ? "country-flag large"
+            : opts.small ? "country-flag small"
+            :              "country-flag";
   if (svgUrl) {
     return `<img class="${cls}" src="${escapeHtml(svgUrl)}" alt="${escapeHtml(country || "")}"
          loading="lazy" title="${escapeHtml(country || "")}"
@@ -9363,9 +9366,22 @@ async function renderDraft() {
     });
   });
 
-  // Sub-view chips wire to draftView
+  // Sub-view chips wire to draftView. The Lottery chip hides on
+  // classes whose lottery_odds is empty — those years are already
+  // drafted (or pre-projection), so the lottery view has nothing to
+  // show. If the user is currently on a hidden sub-view, snap them
+  // back to the Rankings default.
+  const _selectedCls = classes.find(c => c.year === state.draftYear);
+  const _selectedHasLottery = !!(_selectedCls && _selectedCls.lottery_odds && _selectedCls.lottery_odds.length);
   document.querySelectorAll("[data-draft-view]").forEach(b => {
-    b.classList.toggle("active", b.dataset.draftView === state.draftView);
+    const view = b.dataset.draftView;
+    if (view === "lottery" && !_selectedHasLottery) {
+      b.style.display = "none";
+      if (state.draftView === "lottery") state.draftView = "rankings";
+    } else {
+      b.style.display = "";
+    }
+    b.classList.toggle("active", view === state.draftView);
     b.onclick = () => {
       state.draftView = b.dataset.draftView;
       resetPage("draft");
@@ -9373,7 +9389,7 @@ async function renderDraft() {
     };
   });
 
-  const cls = classes.find(c => c.year === state.draftYear);
+  const cls = _selectedCls;
   if (!cls) {
     host.innerHTML = `<div style="padding:14px;">Class ${state.draftYear} not found.</div>`;
     return;
@@ -9383,55 +9399,68 @@ async function renderDraft() {
     case "order":          return _renderDraftOrder(host, cls);
     case "results":        return _renderDraftResults(host, cls);
     case "leaderboard":    return _renderDraftLeaderboard(host, cls);
-    case "lottery":        return _renderDraftLottery(host, cls, classes);
+    case "lottery":        return _renderDraftLottery(host, cls);
     case "class-strength": return _renderClassStrength(host, classes);
     case "rankings":
     default:               return _renderDraftRankings(host, cls);
   }
 }
 
-// Tankathon's odds always describe the NEXT MLB Draft. When the
-// active class is the upcoming one (e.g., 2027), use its lottery_odds.
-// Otherwise fall back to any class whose lottery_odds is populated —
-// almost always the year after the current one.
-function _renderDraftLottery(host, cls, allClasses) {
-  let target = cls;
-  if (!target.lottery_odds || target.lottery_odds.length === 0) {
-    target = allClasses.find(c => c.lottery_odds && c.lottery_odds.length) || cls;
-  }
-  const odds = target.lottery_odds || [];
+// Lottery view — STRICT to the selected class only. The chip-strip
+// gating below also hides the Lottery sub-tab on classes with no
+// lottery rows (typically anything that's already drafted). The
+// rendered table is the FULL projected first round + 12 comp picks
+// (1A / 1B), with the odds column blank for deterministic slots.
+function _renderDraftLottery(host, cls) {
+  const odds = cls.lottery_odds || [];
   if (!odds.length) {
-    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
-      No lottery odds on file. Tankathon's odds populate during the
-      regular season (typically July onward as the standings firm up).
-      Run <code>python -c "from scrapers import scrape_tankathon_lottery;
-      print(scrape_tankathon_lottery(${target.year}))"</code> to refresh.</div>`;
+    host.innerHTML = `
+      <div style="padding:18px;background:var(--bg-secondary);border-radius:6px;color:var(--text-secondary);font-size:13px;line-height:1.5;">
+        <strong style="color:var(--text-primary);font-size:14px;">Draft order is locked for ${cls.year}.</strong><br>
+        Lottery odds only apply to the upcoming draft (one season ahead). Switch to the <a href="#" onclick="event.preventDefault();state.draftView='order';renderDraft();syncToURL();" style="color:var(--neon-cyan);">Order &amp; Slots</a> sub-view to see the confirmed pick order for ${cls.year}.
+      </div>`;
     return;
   }
-  const rows = odds.map((o, i) => `<tr>
-    <td>${i + 1}</td>
-    <td><strong>${escapeHtml(o.team)}</strong></td>
-    <td style="text-align:right;font-weight:600;color:${
-      o.odds_pct >= 15 ? "var(--neon-orange)"
-      : o.odds_pct >= 5 ? "var(--neon-cyan)"
-      : "var(--text-secondary)"};">
-      ${o.odds_pct.toFixed(2)}%
-    </td>
-    <td>${escapeHtml(o.snapshot_date)}</td>
-  </tr>`).join("");
+  // Highlight color for the odds cell: brighter when the % is higher.
+  const oddsColor = v => v == null ? "var(--text-tertiary)"
+                       : v >= 15 ? "var(--neon-orange)"
+                       : v >= 5  ? "var(--neon-cyan)"
+                       :           "var(--text-secondary)";
+  const fmtOdds = v => v == null ? "—" : `${v.toFixed(2)}%`;
+  // Round-label badge color so comp picks (1A / 1B) read distinctly
+  // from the regular first-round rows.
+  const rlColor = lbl => lbl === "1A" ? "var(--neon-violet)"
+                       : lbl === "1B" ? "var(--neon-amber)"
+                       :                "var(--text-tertiary)";
+  const rows = odds.map(o => {
+    const rl = o.round_label || "1";
+    return `<tr>
+      <td style="text-align:center;font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${o.pick_pos}</td>
+      <td><span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:0.04em;color:${rlColor(rl)};border:1px solid ${rlColor(rl)};">${escapeHtml(rl)}</span></td>
+      <td><strong>${escapeHtml(o.team)}</strong></td>
+      <td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums;color:${oddsColor(o.odds_pct)};">${fmtOdds(o.odds_pct)}</td>
+      <td style="color:var(--text-tertiary);font-size:11px;">${escapeHtml(o.snapshot_date || "")}</td>
+    </tr>`;
+  }).join("");
+
+  const nLottery = odds.filter(o => o.odds_pct != null).length;
+  const nComp = odds.filter(o => o.round_label === "1A" || o.round_label === "1B").length;
 
   host.innerHTML = `
     <div style="padding:12px 14px;background:var(--bg-secondary);
-         border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
-      <strong style="color:var(--text-primary);">${target.year} MLB Draft Lottery</strong>
-      · top 6 picks determined by lottery (CBA 2022+).
-      Odds reflect % chance of landing the #1 overall pick.
-      Source: Tankathon (live standings-based projection).
+         border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
+      <strong style="color:var(--text-primary);">${cls.year} MLB Draft projection</strong>
+      · ${odds.length} picks shown (round 1 + ${nComp} competitive-balance).
+      First ${nLottery} carry live lottery odds (% chance at #1 overall).
+      Slots 7-30 are deterministic by current standings; comp picks
+      (Round 1A / 1B) are slotted by revenue-sharing eligibility.
+      Source: Tankathon.
     </div>
     <div class="draft-panel">
       <table class="draft-table">
         <thead><tr>
-          <th>Projected Order</th>
+          <th style="text-align:center;">Pick</th>
+          <th>Round</th>
           <th>Team</th>
           <th style="text-align:right;">% at #1</th>
           <th>As of</th>
@@ -9442,27 +9471,17 @@ function _renderDraftLottery(host, cls, allClasses) {
 }
 
 function _renderDraftRankings(host, cls) {
-  const prospects = cls.prospects || [];
-  // Group by FV tier (defensive against missing FV).
-  const tierFor = p => p.consensus_fv == null ? "Unranked"
-              : (p.consensus_fv >= 60 ? "60 FV"
-              : p.consensus_fv >= 55 ? "55 FV"
-              : p.consensus_fv >= 50 ? "50 FV"
-              : p.consensus_fv >= 45 ? "45 FV"
-              : p.consensus_fv >= 40 ? "40 FV"
-              : "< 40 FV");
-  const tierOrder = ["60 FV","55 FV","50 FV","45 FV","40 FV","< 40 FV","Unranked"];
-  // Flatten in tier order so pagination slices across tiers; track each
-  // entry's tier so the renderer can emit tier headers when the page
-  // boundary crosses a group.
-  const tierCounts = {};
-  const flat = [];
-  for (const tier of tierOrder) {
-    const inTier = prospects.filter(p => tierFor(p) === tier);
-    if (!inTier.length) continue;
-    tierCounts[tier] = inTier.length;
-    for (const p of inTier) flat.push({ tier, p });
-  }
+  // FLAT consensus-rank order. Prior versions grouped by FV tier;
+  // user dropped that — FV now reads off the per-card badge only.
+  const prospects = (cls.prospects || []).slice();
+  const rankKey = p => {
+    const k = p.consensus_pick != null ? p.consensus_pick
+            : p.consensus_rank != null ? p.consensus_rank
+            : 9999;
+    return Number(k);
+  };
+  prospects.sort((a, b) => rankKey(a) - rankKey(b)
+                          || (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0));
 
   // Header strip
   let html = `<div style="padding:12px 14px;background:var(--bg-secondary);
@@ -9475,31 +9494,18 @@ function _renderDraftRankings(host, cls) {
   </div>`;
 
   const pageSize = state.pageSizes.draft || 50;
-  const totalItems = flat.length;
+  const totalItems = prospects.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   if ((state.pages.draft || 1) > totalPages) state.pages.draft = 1;
   const curPage = state.pages.draft || 1;
-  const pagedItems = pageSlice(flat, curPage, pageSize);
+  const pagedItems = pageSlice(prospects, curPage, pageSize);
   const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "draft");
 
-  // Emit tier headers + cards; open a fresh draft-grid each time the
-  // tier changes within the current page.
-  let lastTier = null;
-  for (const { tier, p } of pagedItems) {
-    if (tier !== lastTier) {
-      if (lastTier !== null) html += `</div>`;
-      const fullCount = tierCounts[tier] || 0;
-      html += `<div style="margin:14px 0 6px;font-size:13px;font-weight:600;
-                  color:var(--text-primary);border-bottom:1px solid var(--border);
-                  padding-bottom:4px;">${tier}
-                  <span style="font-weight:400;color:var(--text-tertiary);
-                  margin-left:6px;">${fullCount}</span></div>`;
-      html += `<div class="draft-grid">`;
-      lastTier = tier;
-    }
+  html += `<div class="draft-grid">`;
+  for (const p of pagedItems) {
     html += _renderDraftCard(p);
   }
-  if (lastTier !== null) html += `</div>`;
+  html += `</div>`;
   host.innerHTML = html + paginationStrip;
 }
 
@@ -9939,17 +9945,28 @@ async function renderOverseas() {
     return;
   }
 
-  // League chip strip (All + each league with prospect counts).
+  // League chip strip (All + each league with prospect counts). The
+  // chip carries the LEAGUE country's flag (e.g., 🇯🇵 for NPB) so the
+  // flag<>league pairing stays consistent with the cards below.
   const totalProspects = leagues.reduce((s, l) => s + l.n_prospects, 0);
+  // Pick a sample prospect per league to source the flag SVG/emoji.
+  const leagueFlag = (l) => {
+    const sample = (l.prospects || [])[0];
+    if (!sample) return "";
+    return _flagImg(sample.country_flag_svg, sample.country_flag, sample.country, { small: true });
+  };
   const chipsHtml = [
     `<button class="chip ${state.overseasLeague === "all" ? "active" : ""}"
              data-overseas-league="all">All <span style="opacity:.6;">${totalProspects}</span></button>`,
-    ...leagues.map(l => `
+    ...leagues.map(l => {
+      const flag = leagueFlag(l);
+      return `
       <button class="chip ${state.overseasLeague === l.league ? "active" : ""}"
               data-overseas-league="${l.league}"
               title="${l.league_context.name || l.league} · ${l.league_context.country || ""}">
-        ${l.league} <span style="opacity:.6;">${l.n_prospects}</span>
-      </button>`)
+        ${flag ? `${flag} ` : ""}${l.league} <span style="opacity:.6;">${l.n_prospects}</span>
+      </button>`;
+    })
   ].join("");
   leagueChips.innerHTML = chipsHtml;
   leagueChips.querySelectorAll("[data-overseas-league]").forEach(b => {
@@ -9988,28 +10005,26 @@ async function renderOverseas() {
 }
 
 function _renderOverseasRankings(host, leagues) {
-  // Flatten across leagues + tiers in canonical order so pagination
-  // slices the merged list. Each flat entry carries enough context to
-  // re-emit the right league header + tier header on group transitions.
-  const tierFor = p => p.consensus_fv == null ? "Unranked"
-              : (p.consensus_fv >= 60 ? "60 FV"
-              : p.consensus_fv >= 55 ? "55 FV"
-              : p.consensus_fv >= 50 ? "50 FV"
-              : p.consensus_fv >= 45 ? "45 FV"
-              : p.consensus_fv >= 40 ? "40 FV"
-              : "< 40 FV");
-  const tierOrder = ["60 FV","55 FV","50 FV","45 FV","40 FV","< 40 FV","Unranked"];
+  // FLAT sort by FV (descending). Prior versions grouped by league
+  // and then by FV tier; user dropped both groupings — the league
+  // chip strip still filters upstream, and each card surfaces its
+  // own league badge + flag inline with the team.
   const flat = [];
-  const tierCounts = {};
   for (const l of leagues) {
-    for (const tier of tierOrder) {
-      const inTier = l.prospects.filter(p => tierFor(p) === tier);
-      if (!inTier.length) continue;
-      const tk = l.league + "::" + tier;
-      tierCounts[tk] = inTier.length;
-      for (const p of inTier) flat.push({ league: l, tier, p });
+    for (const p of l.prospects) {
+      // Attach league context to the prospect so the card has it.
+      flat.push({ ...p, _league_obj: l });
     }
   }
+  flat.sort((a, b) => {
+    const fa = a.consensus_fv != null ? a.consensus_fv : -1;
+    const fb = b.consensus_fv != null ? b.consensus_fv : -1;
+    if (fa !== fb) return fb - fa;
+    const ra = a.consensus_rank != null ? a.consensus_rank : 9999;
+    const rb = b.consensus_rank != null ? b.consensus_rank : 9999;
+    if (ra !== rb) return ra - rb;
+    return (a.player_name || "").localeCompare(b.player_name || "");
+  });
 
   const pageSize = state.pageSizes.overseas || 50;
   const totalItems = flat.length;
@@ -10019,43 +10034,22 @@ function _renderOverseasRankings(host, leagues) {
   const pagedItems = pageSlice(flat, curPage, pageSize);
   const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "overseas");
 
-  let html = "";
-  let lastLeague = null, lastTier = null, gridOpen = false;
-  for (const { league: l, tier, p } of pagedItems) {
-    if (lastLeague !== l.league) {
-      if (gridOpen) { html += `</div>`; gridOpen = false; }
-      const ctx = l.league_context || {};
-      html += `<div style="padding:12px 14px;background:var(--bg-secondary);
-           border-radius:6px;margin:14px 0 8px;font-size:12px;
-           color:var(--text-secondary);border-left:3px solid ${_leagueBadgeColor(l.league)};">
-        <strong style="color:var(--text-primary);font-size:13px;">
-          ${escapeHtml(ctx.name || l.league)} (${l.league})
-        </strong>
-        · ${l.n_prospects} prospects
-        · ${escapeHtml(ctx.season_window || "")}
-        ${ctx.translation_pct != null
-          ? `<br><span style="color:var(--text-tertiary);">
-              ${escapeHtml(ctx.split_note || "")} · MLB translation: <strong>${ctx.translation_pct}% wRC+ haircut</strong> typical.</span>`
-          : ""}
-      </div>`;
-      lastLeague = l.league;
-      lastTier = null;
-    }
-    if (lastTier !== tier) {
-      if (gridOpen) { html += `</div>`; gridOpen = false; }
-      const fullCount = tierCounts[l.league + "::" + tier] || 0;
-      html += `<div style="margin:10px 0 6px;font-size:13px;font-weight:600;
-                 color:var(--text-primary);border-bottom:1px solid var(--border);
-                 padding-bottom:4px;">${tier}
-                 <span style="font-weight:400;color:var(--text-tertiary);
-                 margin-left:6px;">${fullCount}</span></div>`;
-      html += `<div class="draft-grid">`;
-      gridOpen = true;
-      lastTier = tier;
-    }
+  // Header summary so the user sees what the filter resolved to.
+  const leagueList = leagues.length === 1
+    ? `${leagues[0].league_context?.name || leagues[0].league}`
+    : `${leagues.length} leagues`;
+  const head = `<div style="padding:12px 14px;background:var(--bg-secondary);
+       border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
+    <strong style="color:var(--text-primary);">${escapeHtml(leagueList)} —
+    ${totalItems} prospects</strong>, sorted by consensus FV.
+    Each card shows its league + country flag inline next to the team.
+  </div>`;
+
+  let html = head + `<div class="draft-grid">`;
+  for (const p of pagedItems) {
     html += _renderOverseasCard(p);
   }
-  if (gridOpen) html += `</div>`;
+  html += `</div>`;
   host.innerHTML = html + paginationStrip;
 }
 
@@ -10159,6 +10153,14 @@ function _renderOverseasCard(p) {
         ${p.signed_bonus_usd ? "" : "~"}${_fmtUSD(bonus)}</span>`
     : "";
 
+  // FV displays as a rounded integer even if stale exports stored a
+  // decimal (defensive — overseas_export.py now rounds on write).
+  const fvInt = p.consensus_fv != null ? Math.round(p.consensus_fv) : null;
+  // Country flag now lives INLINE with the league badge (it represents
+  // the country whose LEAGUE this is, not the player's nationality).
+  // _flagImg returns an <img> or emoji span; we shrink it with the
+  // {small:true} mode so it tucks neatly next to the league chip.
+  const leagueFlag = _flagImg(p.country_flag_svg, p.country_flag, p.country, { small: true });
   return `<div class="draft-card" style="position:relative;">
     <button class="share-as-image share-inline"
             data-share-target=".draft-card"
@@ -10167,25 +10169,25 @@ function _renderOverseasCard(p) {
             title="Save this overseas card as a PNG image">⤴</button>
     <div style="display:flex;align-items:center;gap:8px;">
       ${_headshotImg(p.headshot_url, p.player_name)}
-      ${_flagImg(p.country_flag_svg, p.country_flag, p.country, { large: true })}
       <span style="font-size:14px;font-weight:600;flex:1;">
         ${escapeHtml(p.player_name)}${milbLink}
       </span>
-      <span style="font-size:10px;padding:2px 6px;border-radius:4px;
-            background:${leagueColor}22;color:${leagueColor};font-weight:700;">
-        ${escapeHtml(p.league || "?")}
+      <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 6px;border-radius:4px;
+            background:${leagueColor}22;color:${leagueColor};font-weight:700;"
+            title="${escapeHtml(p.country || p.league || '')} — country of the league">
+        ${escapeHtml(p.league || "?")}${leagueFlag ? ` ${leagueFlag}` : ""}
       </span>
       <span style="font-size:11px;padding:2px 6px;border-radius:4px;
             background:${fvColor}22;color:${fvColor};font-weight:700;"
             title="Consensus future value">
-        FV ${p.consensus_fv != null ? p.consensus_fv : "—"}
+        FV ${fvInt != null ? fvInt : "—"}
       </span>
     </div>
     <div style="display:flex;align-items:center;gap:8px;font-size:11px;
          color:var(--text-secondary);margin-top:4px;flex-wrap:wrap;">
       <span>${escapeHtml(p.position || "?")}</span>
       <span style="color:var(--text-tertiary);">·</span>
-      <span>${escapeHtml(p.current_team || "?")}</span>
+      <span>${escapeHtml(p.current_team || "?")} <span style="color:var(--text-tertiary);font-size:10px;">(${escapeHtml(p.league || "?")})</span></span>
       ${p.eta_year ? `<span style="color:var(--text-tertiary);">·</span><span title="MLB ETA">ETA ${p.eta_year}</span>` : ""}
       <span style="margin-left:auto;display:flex;gap:6px;">${bonusPill}</span>
     </div>
@@ -10336,11 +10338,15 @@ function _renderOverseasPosting(host, prospects) {
 }
 
 function _renderOverseasSigned(host, prospects) {
+  // POSTING CLASSES view. Each posting year gets its own table with
+  // a header rollup (count, total bonus, mean WAG, mean WAR/yr). WAG
+  // + WAR/yr are sourced via the prospect's milb_key linking to the
+  // graduate's MLB performance — both pulled through the same helpers
+  // used by the graduate page + farm grade tree so numbers match.
   const signed = prospects.filter(p => p.status === "mlb_promoted" || p.signed_team);
-  signed.sort((a, b) => (b.signed_date || "").localeCompare(a.signed_date || ""));
   if (!signed.length) {
     host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
-      No recently signed overseas free agents in the current data.
+      No signed overseas free agents in the current data.
       Signings auto-populate when:
       <ul>
         <li>An FG overseas CSV ships with <code>Proj Team</code> set to an
@@ -10349,33 +10355,121 @@ function _renderOverseasSigned(host, prospects) {
       </ul></div>`;
     return;
   }
-  const rows = signed.map(p => `<tr>
-    <td>${_flagImg(p.country_flag_svg, p.country_flag, p.country)}</td>
-    <td><strong>${escapeHtml(p.player_name)}</strong>
-        ${p.milb_key
-          ? ` <a href="#tab=active" onclick="event.preventDefault();state.section='active';state.view={key:'${escapeHtml(p.milb_key)}'};render();syncToURL();"
-                 style="font-size:10px;color:var(--neon-green);text-decoration:none;">→ MiLB</a>` : ""}</td>
-    <td>${escapeHtml(p.league)}</td>
-    <td>${escapeHtml(p.position || "")}</td>
-    <td><strong>${escapeHtml(p.signed_team || p.proj_team || "?")}</strong></td>
-    <td>${escapeHtml(p.signed_date || "—")}</td>
-    <td style="text-align:right;font-weight:600;">${_fmtUSD(p.signed_bonus_usd || p.proj_bonus_usd)}</td>
-    <td style="text-align:right;">FV ${p.consensus_fv ?? "—"}</td>
-  </tr>`).join("");
 
-  host.innerHTML = `
-    <div class="draft-panel">
-      <h3>Recently signed — ${signed.length} player(s)</h3>
-      <table class="draft-table">
-        <thead><tr>
-          <th></th><th>Name</th><th>Lg</th><th>Pos</th>
-          <th>Signed by</th><th>Date</th>
-          <th style="text-align:right;">Bonus</th>
-          <th style="text-align:right;">FV</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
+  // Lookup table from milb_key → graduate object. DATA.graduates is the
+  // canonical source for career WAR + boom-label metrics.
+  const gradsByKey = {};
+  for (const g of (DATA.graduates || [])) {
+    if (g.player_key) gradsByKey[g.player_key] = g;
+  }
+  // Active players (not yet graduated) also carry career_war for the
+  // mid-season case where Yamamoto/Imanaga are still "active" prospects
+  // by status flag but already accumulating MLB WAR.
+  const playersByKey = {};
+  for (const p of (DATA.players || [])) {
+    if (p.player_key) playersByKey[p.player_key] = p;
+  }
+
+  // Per-prospect WAG + WAR/yr via the canonical helpers. Returns
+  // {wag, war_per_yr} with nulls for sub-floor samples.
+  const perfFor = (op) => {
+    if (!op.milb_key) return { wag: null, war_per_yr: null };
+    const g = gradsByKey[op.milb_key] || playersByKey[op.milb_key];
+    if (!g) return { wag: null, war_per_yr: null };
+    const wpyObj = gradWarPerYr(g);
+    return {
+      wag: gradVsFvProjection(g),
+      war_per_yr: wpyObj ? wpyObj.war_per_yr : null,
+    };
+  };
+
+  // Group by posting year (or signed year fallback).
+  const yearOf = (op) => {
+    const d = op.posted_date || op.signed_date;
+    if (!d) return "—";
+    return String(d).slice(0, 4);
+  };
+  const byYear = {};
+  for (const op of signed) {
+    const yr = yearOf(op);
+    (byYear[yr] = byYear[yr] || []).push(op);
+  }
+  // Year sort descending; "—" rows sink last.
+  const years = Object.keys(byYear).sort((a, b) => {
+    if (a === "—") return 1;
+    if (b === "—") return -1;
+    return b.localeCompare(a);
+  });
+
+  const mean = arr => arr.length ? arr.reduce((s, v) => s + v, 0) / arr.length : null;
+  const fmtSigned = v => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}`;
+  const fmtWpy    = v => v == null ? "—" : `${v.toFixed(2)}`;
+
+  const sections = years.map(yr => {
+    const ops = byYear[yr].slice().sort((a, b) =>
+      (b.signed_bonus_usd || b.proj_bonus_usd || 0)
+      - (a.signed_bonus_usd || a.proj_bonus_usd || 0));
+    const totalBonus = ops.reduce((s, op) =>
+      s + (op.signed_bonus_usd || op.proj_bonus_usd || 0), 0);
+    const perfs = ops.map(perfFor);
+    const wags = perfs.map(x => x.wag).filter(v => v != null);
+    const wpys = perfs.map(x => x.war_per_yr).filter(v => v != null);
+    const meanWag = mean(wags);
+    const meanWpy = mean(wpys);
+
+    const rows = ops.map((op, i) => {
+      const perf = perfs[i];
+      const wagColor = perf.wag == null ? "var(--text-tertiary)"
+                     : perf.wag >= 0   ? "var(--up)" : "var(--down)";
+      const wpyColor = perf.war_per_yr == null ? "var(--text-tertiary)"
+                     : perf.war_per_yr >= 2.0  ? "var(--up)"
+                     : perf.war_per_yr >= 0.5  ? "var(--text-primary)"
+                     :                            "var(--down)";
+      const milbLink = op.milb_key
+        ? ` <a href="#" onclick="event.preventDefault();state.section='active';state.view={type:'player',key:'${escapeHtml(op.milb_key)}'};render();syncToURL();" style="font-size:10px;color:var(--neon-green);text-decoration:none;">→ MiLB</a>` : "";
+      const leagueFlag = _flagImg(op.country_flag_svg, op.country_flag, op.country, { small: true });
+      return `<tr>
+        <td><strong>${escapeHtml(op.player_name)}</strong>${milbLink}</td>
+        <td><span style="display:inline-flex;align-items:center;gap:3px;color:var(--text-secondary);">${escapeHtml(op.league || "?")}${leagueFlag ? ` ${leagueFlag}` : ""}</span></td>
+        <td><strong>${escapeHtml(op.signed_team || op.proj_team || "?")}</strong></td>
+        <td>${escapeHtml(op.signed_date || op.posted_date || "—")}</td>
+        <td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums;">${_fmtUSD(op.signed_bonus_usd || op.proj_bonus_usd) || "—"}</td>
+        <td style="text-align:right;color:${wagColor};font-variant-numeric:tabular-nums;">${fmtSigned(perf.wag)}</td>
+        <td style="text-align:right;color:${wpyColor};font-variant-numeric:tabular-nums;">${fmtWpy(perf.war_per_yr)}</td>
+      </tr>`;
+    }).join("");
+
+    const meanWagHtml = meanWag == null ? "—"
+      : `<span style="color:${meanWag >= 0 ? 'var(--up)' : 'var(--down)'};">${fmtSigned(meanWag)}</span>`;
+    const meanWpyHtml = meanWpy == null ? "—"
+      : `<span style="color:${meanWpy >= 1.0 ? 'var(--up)' : 'var(--text-primary)'};">${fmtWpy(meanWpy)}</span>`;
+    return `
+      <div class="draft-panel" style="margin-bottom:18px;">
+        <h3 style="font-family:var(--font-sans);font-size:13px;letter-spacing:0.06em;text-transform:uppercase;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">
+          ${escapeHtml(yr)} POSTING CLASS
+          <span style="font-weight:500;color:var(--text-tertiary);text-transform:none;letter-spacing:0;margin-left:8px;">
+            ${ops.length} signed
+            · ${_fmtUSD(totalBonus) || "—"} total
+            · mean WAG ${meanWagHtml}
+            · mean ${meanWpyHtml} WAR/yr
+          </span>
+        </h3>
+        <table class="draft-table">
+          <thead><tr>
+            <th>Player</th>
+            <th>League</th>
+            <th>Signed by</th>
+            <th>Date</th>
+            <th style="text-align:right;">Bonus</th>
+            <th style="text-align:right;" title="WAR Above Grade — career WAR/yr minus FV-implied expectation. Requires ≥1 full-season MLB sample (else '—').">Career WAG</th>
+            <th style="text-align:right;" title="Playing-time-weighted career WAR per season. Requires ≥1 full-season MLB sample (else '—').">WAR/yr</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }).join("");
+
+  host.innerHTML = sections;
 }
 
 function _renderOverseasLeaderboard(host, prospects, allLeagues) {
@@ -11833,6 +11927,20 @@ const GLOSSARY = {
     short: "Share of an org's tracked actives currently on the injured list (any type). Snapshot, not trailing window.",
     long: "Per-org il_pct_current = il_current_count / active_count, computed at export time from the il_status table (the same source the per-player IL chip uses). Distinct from Health Burden, which weights 12-month IL DAYS — this metric just counts WHO IS DOWN RIGHT NOW. Surfaced on the Roster Snapshot tile and highlighted red when ≥10% of the org is currently sidelined.",
     related: ["farm_grade_health_burden", "on_il", "il_10_15_60"],
+  },
+  "overseas_posting_class": {
+    name: "Overseas posting class", aliases: ["Posting class", "Overseas class"], category: "methodology",
+    priority: 62,
+    short: "Year-grouped view of MLB-signed overseas free agents (NPB / KBO / CPBL / etc.), with per-class rollups for total bonus, mean WAG, and mean WAR/yr.",
+    long: "Lives on the Overseas page → Signed sub-tab. Every signed prospect is grouped by `posting_year` (posted_date.year, falling back to signed_date.year). Each year-section shows class totals (count, $ bonuses paid) plus mean WAG and mean WAR/yr across signees that have accumulated ≥1 full-season MLB sample. Both performance numbers are sourced via the prospect's `milb_key` joining to the graduate's career_war + boom-label payload — same numbers the boom-bust pill and farm grade tree consume.",
+    related: ["wag", "career_war", "ifa", "posting_system"],
+  },
+  "draft_comp_pick": {
+    name: "Competitive-balance pick (1A / 1B)", aliases: ["Comp pick", "CBA pick", "Competitive balance", "1A pick", "1B pick"], category: "mlb-rules",
+    priority: 63,
+    short: "Extra draft slots awarded to small-revenue clubs under the 2022 CBA. Round 1A (6 picks) lands after round 1; Round 1B (6 picks) lands after round 2.",
+    long: "Eligible clubs are the 6 smallest-revenue + 6 smallest-market teams. Round 1A picks are slotted after the regular first round (pick 31-36); Round 1B picks land after the regular second round. They're TRADEABLE — comp picks are the only draft slots a team may swap. Tankathon's projection assigns these by current eligibility; the lottery view surfaces them at the bottom with a 1A / 1B label.",
+    related: ["draft_slot", "draft_pool", "draft_order"],
   },
 };
 

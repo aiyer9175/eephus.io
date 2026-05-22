@@ -81,15 +81,19 @@ class LotteryPlumbing(unittest.TestCase):
             self.assertIn("lottery_odds", klass)
             self.assertIsInstance(klass["lottery_odds"], list)
 
-    def test_lottery_odds_sorted_descending(self):
+    def test_lottery_odds_sorted_by_pick_pos(self):
+        # Post-v4 the lottery_odds field carries the full projected
+        # first round + comp picks, sorted by pick_pos ascending so
+        # the consumer renders the natural draft order. Picks 7+ have
+        # odds_pct=None (deterministic slots).
         export = build_draft_export()
         for klass in export["classes"]:
             odds = klass["lottery_odds"]
             if len(odds) < 2:
                 continue
-            vals = [o["odds_pct"] for o in odds]
-            self.assertEqual(vals, sorted(vals, reverse=True),
-                             f"lottery odds for {klass['year']} not sorted")
+            positions = [o["pick_pos"] for o in odds]
+            self.assertEqual(positions, sorted(positions),
+                             f"lottery odds for {klass['year']} not sorted by pick_pos")
 
 
 if __name__ == "__main__":

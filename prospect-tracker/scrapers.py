@@ -2220,6 +2220,38 @@ SPOTRAC_HEADERS = {
 }
 
 
+def _normalize_round_label(raw: str) -> str | None:
+    """Map Spotrac's round-cell text to a canonical round_label.
+
+    Examples it handles:
+      "1" → "1"     "2" → "2"     "10" → "10"
+      "1A" / "1a" / "1-A" / "Comp Round A" / "Competitive Balance A" → "1A"
+      "1B" / "Comp Round B" / "Competitive Balance B"               → "1B"
+      "2A" / "Comp Round A" within round 2 → "2A"  (best-effort)
+    Returns None when the text is empty or unparseable."""
+    if not raw:
+        return None
+    s = raw.strip()
+    if not s:
+        return None
+    # Plain integer round.
+    try:
+        return str(int(s))
+    except ValueError:
+        pass
+    # Comp-pick variants. Look for a round-prefix digit + A/B suffix.
+    m = re.match(r"^\s*(\d+)\s*[-\s]?\s*([ABab])\b", s)
+    if m:
+        return f"{m.group(1)}{m.group(2).upper()}"
+    # "Comp Round A" / "Competitive Balance A" with no explicit round prefix.
+    if re.search(r"\bComp(?:etitive)?\b.*\bA\b", s, re.IGNORECASE):
+        return "1A"
+    if re.search(r"\bComp(?:etitive)?\b.*\bB\b", s, re.IGNORECASE):
+        return "1B"
+    # Last resort — return the raw label upper-cased to preserve info.
+    return s.upper()[:4]
+
+
 def scrape_spotrac_draft_order(year: int, force: bool = False) -> list[dict]:
     """Parse Spotrac's MLB draft page → draft_order rows ready for
     `storage.upsert_draft_order`.
@@ -2267,9 +2299,13 @@ def scrape_spotrac_draft_order(year: int, force: bool = False) -> list[dict]:
 
     out: list[dict] = []
     body_rows = master.find_all("tr")[1:]
-    # Track running pick number per round (sometimes Spotrac collapses the
-    # Round cell only on the first row of the round).
-    last_round = None
+    # Track running pick number per round. Spotrac labels rounds as
+    # "1", "2", … for the regular rounds and "1A", "1B", "Comp Round
+    # A", "1-A", etc. for competitive-balance picks. We preserve the
+    # canonical label in `round_label` (text) but still track a
+    # numeric continuity counter so `pick_in_round` resets cleanly
+    # when the canonical label changes.
+    last_label: str | None = None
     pick_in_round = 0
     for r in body_rows:
         cells = [c.get_text(" ", strip=True) for c in r.find_all(["td", "th"])]
@@ -2285,14 +2321,11 @@ def scrape_spotrac_draft_order(year: int, force: bool = False) -> list[dict]:
             pick = int(pick_raw)
         except ValueError:
             continue
-        try:
-            round_num = int(round_raw) if round_raw else last_round
-        except ValueError:
-            round_num = last_round
-        if round_num is None:
+        round_label = _normalize_round_label(round_raw) if round_raw else last_label
+        if round_label is None:
             continue
-        if round_num != last_round:
-            last_round = round_num
+        if round_label != last_label:
+            last_label = round_label
             pick_in_round = 0
         pick_in_round += 1
         team_code = canonical_org(team_raw) or team_raw or None
@@ -2309,7 +2342,7 @@ def scrape_spotrac_draft_order(year: int, force: bool = False) -> list[dict]:
         out.append({
             "draft_year":    year,
             "pick_overall":  pick,
-            "round_label":   str(round_num),
+            "round_label":   round_label,
             "pick_in_round": pick_in_round,
             "team":          team_code,
             "slot_usd":      slot_int,
@@ -2331,11 +2364,18 @@ TANKATHON_URL = "https://www.tankathon.com/mlb"
 
 
 def scrape_tankathon_lottery(year: int, force: bool = False) -> list[dict]:
-    """Parse Tankathon's MLB page → draft_lottery_odds rows.
+    """Parse Tankathon's MLB page → draft_lottery_odds rows for the
+    FULL projected first-round order (not just the top-6 lottery
+    slots). `year` is the draft year the projection applies to.
 
-    `year` is the draft year the odds apply to (e.g., during the 2026
-    MLB season, the odds project the 2027 draft). Tankathon doesn't
-    expose the year explicitly; the caller passes it.
+    Output row shape:
+      {draft_year, team, pick_pos, odds_pct (nullable past pick 6),
+       round_label ('1' or '1A'/'1B' for comp picks),
+       snapshot_date, source='tankathon'}
+
+    Lottery slots (top 6) carry a real `odds_pct` % chance at #1.
+    Deterministic slots (7+) carry `odds_pct=None`. Comp-round picks
+    are labeled '1A' or '1B' depending on Tankathon's row classifier.
     """
     from trades import canonical_org
 
@@ -2366,15 +2406,22 @@ def scrape_tankathon_lottery(year: int, force: bool = False) -> list[dict]:
 
     out: list[dict] = []
     today = date.today().isoformat()
+    seen_pos: set[int] = set()  # de-dup if Tankathon repeats a row
     rows = table.find_all("tr")
     for r in rows[1:]:
         cells = [c.get_text(" ", strip=True) for c in r.find_all(["td", "th"])]
-        if len(cells) < 8:
+        if len(cells) < 2:
             continue
         pos_raw = cells[0].strip()
         team_raw = cells[1].strip()
-        odds_raw = cells[7].strip()
-        if not pos_raw or not team_raw or not odds_raw:
+        # Odds column is the last numeric "%" cell. Most layouts put it
+        # at cell index 7; defensively scan all cells for "X%" and take
+        # the LAST one — picks 7+ won't have one (dash or blank).
+        odds_raw = ""
+        for c in cells:
+            if "%" in c:
+                odds_raw = c.strip()
+        if not pos_raw or not team_raw:
             continue
         # Team cell format: "LA Angels LAA" — the abbreviation is the
         # last all-caps token. Fall back to the raw string if not found.
@@ -2387,32 +2434,105 @@ def scrape_tankathon_lottery(year: int, force: bool = False) -> list[dict]:
         team_code = canonical_org(team_code or team_raw) or team_code or team_raw
         if not team_code:
             continue
-        m = re.search(r"(\d+(?:\.\d+)?)\s*%", odds_raw)
-        if not m:
+        # Parse pick position. Tankathon labels comp picks like "27a" /
+        # "27b" — keep the numeric prefix as pick_pos and surface the
+        # suffix in round_label.
+        m_pos = re.match(r"(\d+)\s*([ab])?", pos_raw, re.IGNORECASE)
+        if not m_pos:
             continue
         try:
-            odds = float(m.group(1))
+            pos = int(m_pos.group(1))
         except ValueError:
             continue
-        # Only lottery slots (top 6) carry an actual lottery odds value.
-        # Beyond that, Tankathon publishes the deterministic slot but the
-        # "%" column shows the slot as "—"; we already skipped those.
-        try:
-            pos = int(pos_raw)
-        except ValueError:
+        suffix = (m_pos.group(2) or "").upper()
+        if pos in seen_pos and not suffix:
             continue
-        if pos > 6:
-            continue
+        seen_pos.add(pos)
+
+        # Round label — top-30 are first round; comp picks get the
+        # suffix; if a row's position is past 30 with no suffix it's the
+        # start of round 2 (Tankathon's projection sometimes extends).
+        if suffix:
+            round_label = f"1{suffix}"
+        elif pos <= 30:
+            round_label = "1"
+        else:
+            round_label = "2"
+
+        # Parse odds. Picks 1-6 carry a real %; later rows have "—" or
+        # blank and we store None.
+        odds: float | None = None
+        if odds_raw:
+            m_odds = re.search(r"(\d+(?:\.\d+)?)\s*%", odds_raw)
+            if m_odds:
+                try:
+                    odds = float(m_odds.group(1))
+                except ValueError:
+                    odds = None
+
         out.append({
             "draft_year":    year,
             "team":          team_code,
-            "pick_pos":      1,         # Tankathon only ships odds at #1
+            "pick_pos":      pos,
             "odds_pct":      odds,
+            "round_label":   round_label,
             "snapshot_date": today,
             "source":        "tankathon",
         })
 
-    log.info("tankathon_lottery (draft %d): %d teams parsed", year, len(out))
+    # Competitive Balance picks live OUTSIDE the main projected-order
+    # table as a sidebar widget. Each row reads `{pos} | {team name} |
+    # Competitive Balance`. The 12 comp picks split 6+6 into Round A
+    # (after round 1, real MLB pick_pos 31-36) and Round B (after round
+    # 2, real pick_pos ~37-42 by this site's convention; MLB places
+    # Round B after round 2 around pick 66 but Tankathon collapses
+    # both into a single block).
+    # We renumber the comp picks 31, 32, ... so they don't collide on
+    # the (draft_year, team, pick_pos) primary key with the regular
+    # first-round picks above. The first 6 get round_label "1A", the
+    # next 6 get "1B".
+    comp_els = soup.find_all(string=lambda s: s and "Competitive Balance" in s)
+    seen_comp = set()  # de-dup if Tankathon ever repeats a row
+    comp_rows: list[dict] = []
+    for el in comp_els:
+        parent = el.parent.parent if el.parent and el.parent.parent else None
+        if parent is None:
+            continue
+        texts = [s.strip() for s in parent.stripped_strings]
+        if len(texts) < 3 or texts[-1] != "Competitive Balance":
+            continue
+        try:
+            site_pos = int(texts[0])
+        except ValueError:
+            continue
+        team_name = texts[1]
+        key = (site_pos, team_name)
+        if key in seen_comp:
+            continue
+        seen_comp.add(key)
+        # Resolve team code from the team name (Tankathon shows the
+        # short label here, e.g., "NY Mets", "Cleveland"). Use
+        # canonical_org as the lookup which understands common variants.
+        team_code = canonical_org(team_name) or team_name
+        comp_rows.append({"site_pos": site_pos, "team_code": team_code})
+
+    # Renumber: first 6 → pick_pos 31-36 (Round A); next 6 → 37-42 (B).
+    for i, r in enumerate(comp_rows):
+        new_pos = 31 + i
+        out.append({
+            "draft_year":    year,
+            "team":          r["team_code"],
+            "pick_pos":      new_pos,
+            "odds_pct":      None,
+            "round_label":   "1A" if i < 6 else "1B",
+            "snapshot_date": today,
+            "source":        "tankathon",
+        })
+
+    n_lottery = sum(1 for r in out if r["odds_pct"] is not None)
+    n_comp = sum(1 for r in out if r["round_label"] in {"1A", "1B"})
+    log.info("tankathon_lottery (draft %d): %d projected picks (%d with odds, %d comp)",
+             year, len(out), n_lottery, n_comp)
     return out
 
 

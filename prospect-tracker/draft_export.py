@@ -326,15 +326,20 @@ def _build_class(year: int,
     today = date.today()
     is_current = (year >= today.year)
 
-    # Lottery odds — only populated for classes that haven't drafted yet
-    # AND for which Tankathon has shipped projections (typically the
-    # next-up class during the current MLB season).
+    # Lottery + projected order — only populated for classes that
+    # haven't drafted yet AND for which Tankathon has shipped a
+    # projection. Now stores the FULL first-round projection (picks
+    # 1-30 + 12 competitive-balance picks at 31-42 with round_label
+    # "1A" / "1B"). Picks 7+ have odds_pct=None (deterministic slots).
+    # Sort by pick_pos so the consumer renders the natural draft order.
     lottery_rows = (lottery_by_year or {}).get(year) or []
     lottery_odds = sorted(
-        ({"team": r["team"], "odds_pct": r["odds_pct"],
-          "pick_pos": r["pick_pos"], "snapshot_date": r["snapshot_date"]}
+        ({"team": r["team"], "odds_pct": r.get("odds_pct"),
+          "pick_pos": r["pick_pos"],
+          "round_label": r.get("round_label") or "1",
+          "snapshot_date": r["snapshot_date"]}
          for r in lottery_rows),
-        key=lambda r: (-r["odds_pct"], r["pick_pos"]),
+        key=lambda r: r["pick_pos"],
     )
 
     return {

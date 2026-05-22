@@ -577,15 +577,17 @@ CREATE TABLE IF NOT EXISTS draft_canonical_keys (
 );
 CREATE INDEX IF NOT EXISTS idx_draft_canonical_milb ON draft_canonical_keys(milb_key);
 
--- Draft lottery odds (Tankathon). One row per (year, team, pick_pos,
--- snapshot_date) so we can keep a history of how odds moved across
--- the season as standings shifted. pick_pos is 1..6 (only the top 6
--- picks are lottery-determined under the current MLB CBA).
+-- Draft lottery + projected order (Tankathon). Originally stored just
+-- lottery odds for the top-6 picks; now stores the FULL projected
+-- first-round order (slots 1-30 + comp picks). `odds_pct` is nullable
+-- for deterministic slots (picks 7+). `round_label` distinguishes
+-- regular ("1") from competitive-balance ("1A" / "1B") picks.
 CREATE TABLE IF NOT EXISTS draft_lottery_odds (
     draft_year      INTEGER NOT NULL,
     team            TEXT NOT NULL,
     pick_pos        INTEGER NOT NULL,
-    odds_pct        REAL NOT NULL,
+    odds_pct        REAL,
+    round_label     TEXT NOT NULL DEFAULT '1',
     snapshot_date   TEXT NOT NULL,
     source          TEXT NOT NULL,
     inserted_at     TEXT NOT NULL DEFAULT (datetime('now')),
@@ -704,6 +706,46 @@ def init_db():
             con.execute("ALTER TABLE snapshots ADD COLUMN tools_json TEXT")
         except sqlite3.OperationalError:
             pass  # column already exists
+        # Migration: add round_label to draft_lottery_odds so the table
+        # can store comp picks (1A / 1B) alongside the regular first-round
+        # projection. Old rows default to '1'.
+        try:
+            con.execute("ALTER TABLE draft_lottery_odds ADD COLUMN round_label TEXT NOT NULL DEFAULT '1'")
+        except sqlite3.OperationalError:
+            pass  # column already exists
+        # Migration: relax odds_pct NOT NULL constraint so picks 7+ on
+        # the projected order (no published odds) can be stored. SQLite
+        # doesn't support ALTER COLUMN — rebuild the table preserving
+        # existing rows. Only triggers when the schema is the old one.
+        try:
+            cols = {r[1]: r for r in con.execute("PRAGMA table_info(draft_lottery_odds)").fetchall()}
+            # The PRAGMA row format is (cid, name, type, notnull, dflt_value, pk).
+            if cols.get("odds_pct") and cols["odds_pct"][3] == 1:  # notnull flag
+                con.executescript("""
+                    CREATE TABLE draft_lottery_odds_new (
+                        draft_year      INTEGER NOT NULL,
+                        team            TEXT NOT NULL,
+                        pick_pos        INTEGER NOT NULL,
+                        odds_pct        REAL,
+                        round_label     TEXT NOT NULL DEFAULT '1',
+                        snapshot_date   TEXT NOT NULL,
+                        source          TEXT NOT NULL,
+                        inserted_at     TEXT NOT NULL DEFAULT (datetime('now')),
+                        PRIMARY KEY (draft_year, team, pick_pos, snapshot_date)
+                    );
+                    INSERT INTO draft_lottery_odds_new
+                      (draft_year, team, pick_pos, odds_pct, round_label,
+                       snapshot_date, source, inserted_at)
+                    SELECT draft_year, team, pick_pos, odds_pct, round_label,
+                           snapshot_date, source, inserted_at
+                    FROM draft_lottery_odds;
+                    DROP TABLE draft_lottery_odds;
+                    ALTER TABLE draft_lottery_odds_new RENAME TO draft_lottery_odds;
+                    CREATE INDEX IF NOT EXISTS idx_draft_lottery_year
+                      ON draft_lottery_odds(draft_year);
+                """)
+        except sqlite3.OperationalError:
+            pass
 
 
 def insert_snapshots(snapshots: Iterable[Snapshot]) -> int:
@@ -1472,21 +1514,23 @@ def load_draft_canonical_keys() -> dict[str, str]:
 
 
 def upsert_draft_lottery_odds(rows: Iterable[dict]) -> int:
-    """Upsert lottery odds rows. Each row carries draft_year, team,
-    pick_pos (1-6), odds_pct, snapshot_date, source."""
+    """Upsert lottery + projected-order rows. Each row: draft_year, team,
+    pick_pos, odds_pct (nullable for picks 7+), round_label (default '1';
+    '1A' / '1B' for competitive-balance picks), snapshot_date, source."""
     n = 0
     with connect() as con:
         for r in rows:
             con.execute(
                 """INSERT INTO draft_lottery_odds
-                     (draft_year, team, pick_pos, odds_pct, snapshot_date, source)
-                   VALUES (?, ?, ?, ?, ?, ?)
+                     (draft_year, team, pick_pos, odds_pct, round_label, snapshot_date, source)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)
                    ON CONFLICT(draft_year, team, pick_pos, snapshot_date) DO UPDATE SET
                      odds_pct    = excluded.odds_pct,
+                     round_label = excluded.round_label,
                      source      = excluded.source,
                      inserted_at = datetime('now')""",
-                (r["draft_year"], r["team"], r["pick_pos"], r["odds_pct"],
-                 r["snapshot_date"], r["source"]),
+                (r["draft_year"], r["team"], r["pick_pos"], r.get("odds_pct"),
+                 r.get("round_label", "1"), r["snapshot_date"], r["source"]),
             )
             n += 1
     return n
@@ -1497,7 +1541,7 @@ def load_draft_lottery_odds(draft_year: int | None = None,
     """Return lottery odds rows. When latest_only=True, restrict to
     the most recent snapshot_date per (draft_year, team, pick_pos)."""
     if latest_only:
-        q = """SELECT draft_year, team, pick_pos, odds_pct, snapshot_date, source
+        q = """SELECT draft_year, team, pick_pos, odds_pct, round_label, snapshot_date, source
                FROM draft_lottery_odds o
                WHERE snapshot_date = (
                  SELECT MAX(snapshot_date) FROM draft_lottery_odds
@@ -1506,7 +1550,7 @@ def load_draft_lottery_odds(draft_year: int | None = None,
                    AND pick_pos   = o.pick_pos
                )"""
     else:
-        q = """SELECT draft_year, team, pick_pos, odds_pct, snapshot_date, source
+        q = """SELECT draft_year, team, pick_pos, odds_pct, round_label, snapshot_date, source
                FROM draft_lottery_odds"""
     params: tuple = ()
     if draft_year is not None:

@@ -414,7 +414,11 @@ def _build_league(league: str,
             "bats":            player_meta.get("bats"),
             "throws":          player_meta.get("throws"),
             "fg_player_id":    player_meta.get("fg_player_id"),
-            "consensus_fv":    fv,
+            # Round FV to the nearest integer at export time so the
+            # frontend never has to render "55.5". _parse_fv keeps the
+            # raw float internally for sort precision; only the export
+            # surface gets coerced to int.
+            "consensus_fv":    int(round(fv)) if fv is not None else None,
             "risk":            any_snap.get("risk"),
             "status":          status,
             "posted_date":     posted_date,
