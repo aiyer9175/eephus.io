@@ -93,9 +93,12 @@ def test_ethan_salas_style_profile_can_rebound_despite_top100_rank():
     assert "Ethan Salas" in names
 
 
-def test_roster_fringe_bucket_is_not_exported_without_optionality():
+def test_spotlights_export_keys():
+    """Spotlights now exports three buckets (risers + rebounders +
+    fallers) plus a legacy `hot` alias kept for one rebuild cycle so
+    older cached frontends still render."""
     out = build_spotlights([], [])
-    assert set(out) == {"hot", "rebounders"}
+    assert set(out) == {"risers", "rebounders", "fallers", "hot"}
 
 
 def test_stable_multi_source_top100_player_is_not_rebounder():

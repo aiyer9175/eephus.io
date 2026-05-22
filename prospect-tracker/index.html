@@ -4709,8 +4709,12 @@
 
   <div id="spotlights-section" style="display: none;">
     <div class="spotlight-subtabs">
-      <button class="chip active" data-spotlight-bucket="hot">Hot Prospects</button>
-      <button class="chip" data-spotlight-bucket="rebounders">Rebounders</button>
+      <button class="chip active" data-spotlight-bucket="risers"
+              title="Prospects whose 2026-season performance has been a clear leap from prior seasons. Includes broad surface-stat jumps, young-for-level breakouts, and continued high performers.">Risers</button>
+      <button class="chip" data-spotlight-bucket="rebounders"
+              title="Pedigree-comeback narrative: previously hyped (first-round pick / IFA / $1M+ bonus) prospects whose prior season was weak but who have bounced back this year with improved skills.">Rebounders</button>
+      <button class="chip" data-spotlight-bucket="fallers"
+              title="Prospects whose 2026 performance has materially deteriorated. Very-young and young+pedigreed prospects are filtered out unless their K-rate has cratered (Bryce Rainer-style).">Fallers</button>
     </div>
     <div id="spotlight-rows"></div>
   </div>
@@ -6183,7 +6187,7 @@ function syncToURL() {
   if (state.farmTxDir   !== "all")        p.set("ftxd",  state.farmTxDir);
   if (state.gradSort    !== "date")       p.set("gsort", state.gradSort);
   if (state.ilSort      !== "days_asc")   p.set("ilsort", state.ilSort);
-  if (state.spotlightBucket !== "hot")    p.set("bucket", state.spotlightBucket);
+  if (state.spotlightBucket !== "risers") p.set("bucket", state.spotlightBucket);
   if (state.lbStat      !== "ops")        p.set("lbstat",  state.lbStat);
   if (state.lbLevel     !== "all")        p.set("lblvl",   state.lbLevel);
   if (state.lbPos       !== "all")        p.set("lbpos",   state.lbPos);
@@ -6697,7 +6701,7 @@ const state = {
   // plots growth above the league mean over the same window) and the
   // value used when sorting by "Trajectory".
   formWindow: "3y",
-  spotlightBucket: "hot",
+  spotlightBucket: "risers",
   // Farm-detail "Transaction history" filters. Persisted on the URL so a
   // shared link reopens the same filtered view. Default is "all".
   farmTxKind: "all",
@@ -7084,9 +7088,12 @@ function renderActiveContextRail() {
   if (!rail) return;
   const players = DATA.players || [];
 
-  // Top movers: largest |delta| from stock signal. Cap at 10.
+  // Top movers: largest |delta| from the performance-anchored stock
+  // signal (compute_movement). Cap at 6. Each row now carries a small
+  // caption with the dominant driver string ("OPS +.270 vs '25" or
+  // "K% +21.6pp") so users see WHY this player surfaced.
   const movers = players
-    .filter(p => p.stock && p.stock.delta != null && Math.abs(p.stock.delta) >= 1.5)
+    .filter(p => p.stock && p.stock.delta != null && Math.abs(p.stock.delta) >= 2.0)
     .slice()
     .sort((a, b) => Math.abs(b.stock.delta) - Math.abs(a.stock.delta))
     .slice(0, 6);
@@ -7094,8 +7101,15 @@ function renderActiveContextRail() {
     const d = p.stock.delta;
     const cls = d > 0 ? "stock-up" : "stock-down";
     const arrow = d > 0 ? "▲" : "▼";
+    const driver = (p.stock.drivers && p.stock.drivers[0]) || "";
+    const driverHtml = driver
+      ? `<div style="font-size:10px;color:var(--text-tertiary);margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(driver)}</div>`
+      : "";
     return `<div class="ctx-row" data-key="${escapeHtml(p.player_key)}">
-      <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(p.player_name)}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(p.player_name)}</div>
+        ${driverHtml}
+      </div>
       <span class="${cls}" style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;">${arrow} ${d > 0 ? "+" : ""}${d.toFixed(1)}</span>
     </div>`;
   }).join("");
@@ -7233,7 +7247,14 @@ function renderActives() {
 
 function renderSpotlights() {
   const buckets = DATA.spotlights || {};
-  const bucket = buckets[state.spotlightBucket] ? state.spotlightBucket : "hot";
+  // Spotlights now ship three buckets: risers / rebounders / fallers.
+  // Legacy `hot` is still aliased to `risers` in the export for one
+  // rebuild cycle so a stale frontend / cached payload still renders.
+  // Bucket-name fallback chain handles both old (`hot`) and new
+  // (`risers`) cached selections without orphaning user state.
+  let bucket = state.spotlightBucket;
+  if (bucket === "hot" && buckets.risers) bucket = "risers";
+  if (!buckets[bucket]) bucket = buckets.risers ? "risers" : "hot";
   state.spotlightBucket = bucket;
   let rowsData = buckets[bucket] || [];
   // Spotlights honor the same search box the other sections do — the

@@ -3910,6 +3910,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         else:
             payload["boom_label"] = None
 
+        # Performance-anchored movement engine (replaces the FV-delta-only
+        # `stock_movement`). compute_movement reads statline / career_stats
+        # / age_vs_level / tools_consensus / acquisition / prospect_savant —
+        # all of which are stamped on the payload above. Falls back to the
+        # legacy `stock_movement` output (already in payload["stock"]) if
+        # the engine raises.
+        try:
+            from spotlights import compute_movement
+            payload["stock"] = compute_movement(payload)
+        except Exception:
+            log.exception("compute_movement failed for %s — keeping legacy "
+                          "FV-delta stock signal", p.player_key)
+
         return payload
 
     cutoff = _inactive_cutoff()
