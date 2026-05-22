@@ -4417,6 +4417,43 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # `rosters_by_org` — those slices live in sidecar files and the frontend
     # fetches them on demand. Tests that want a single dict can call
     # `load_export_unified(out_path)` to reassemble them.
+    # ── Scout-reports extraction (Tier 2 perf — slice splitting) ──
+    # The FanGraphs scout report prose lives inside per_source.fangraphs.
+    # tools._extras.report on most snapshots. Across all players it's
+    # ~11MB of repeated prose (same text often carries across cycles for
+    # a single prospect). Extract the LATEST report per source per
+    # player into a separate sidecar so the boot file shrinks ~17%.
+    # Strip the `report` string from every per_source._extras dict in
+    # the boot payload to dedupe.
+    scout_reports_sidecar: dict[str, dict[str, dict]] = {}
+    def _harvest_and_strip_reports(player_payload):
+        pkey = player_payload.get("player_key")
+        latest_by_src: dict[str, dict] = {}
+        for pt in (player_payload.get("points") or []):
+            for src, info in (pt.get("per_source") or {}).items():
+                tools = (info or {}).get("tools") or {}
+                ex = tools.get("_extras") or {}
+                rpt = ex.get("report")
+                if rpt:
+                    # Snapshot the newest report per source (loop walks
+                    # in date order — later iterations overwrite earlier).
+                    latest_by_src[src] = {
+                        "date": pt.get("snapshot_date"),
+                        "label": pt.get("interval_label"),
+                        "text": rpt,
+                    }
+                    # Strip the report from the inline _extras so it
+                    # doesn't bloat the boot payload.
+                    ex["report"] = None
+        if latest_by_src:
+            scout_reports_sidecar[pkey] = latest_by_src
+    for p in active_payload:
+        _harvest_and_strip_reports(p)
+    for p in graduate_payload:
+        _harvest_and_strip_reports(p)
+    for p in inactive_payload:
+        _harvest_and_strip_reports(p)
+
     boot = {
         "generated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "run": latest_run_summary(),
@@ -4440,21 +4477,28 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "graduates":      "graduates.json",
             "inactive":       "inactive.json",
             "rosters_by_org": "rosters_by_org.json",
+            "scout_reports":  "scout_reports.json",
         },
     }
     out_dir = out_path.parent
-    out_path.write_text(json.dumps(boot, indent=2))
-    (out_dir / "graduates.json").write_text(json.dumps(graduate_payload, indent=2))
-    (out_dir / "inactive.json").write_text(json.dumps(inactive_payload, indent=2))
-    (out_dir / "rosters_by_org.json").write_text(json.dumps(rosters_by_org, indent=2))
+    # Compact JSON (no indent, no spaces in separators) — cuts the boot
+    # payload roughly in half. The files are still valid JSON, just not
+    # human-readable. Open in a browser DevTools console + JSON.parse if
+    # you need to inspect interactively.
+    _compact = {"separators": (",", ":")}
+    out_path.write_text(json.dumps(boot, **_compact))
+    (out_dir / "graduates.json").write_text(json.dumps(graduate_payload, **_compact))
+    (out_dir / "inactive.json").write_text(json.dumps(inactive_payload, **_compact))
+    (out_dir / "rosters_by_org.json").write_text(json.dumps(rosters_by_org, **_compact))
+    (out_dir / "scout_reports.json").write_text(json.dumps(scout_reports_sidecar, **_compact))
     return out_path
 
 
 def load_export_unified(boot_path: Path) -> dict:
     """Inverse of `export_timeseries_json`'s split — reads the boot JSON
-    and inlines `graduates` / `inactive` / `rosters_by_org` from the
-    sidecar files (if they exist) so callers (mostly tests) can work
-    with a single dict.
+    and inlines `graduates` / `inactive` / `rosters_by_org` /
+    `scout_reports` from the sidecar files (if they exist) so callers
+    (mostly tests) can work with a single dict.
 
     Returns the boot dict unchanged when the sidecars aren't present
     (legacy monolithic export, or a partial run).
@@ -4462,7 +4506,7 @@ def load_export_unified(boot_path: Path) -> dict:
     boot_path = Path(boot_path)
     payload = json.loads(boot_path.read_text())
     out_dir = boot_path.parent
-    for slice_name in ("graduates", "inactive", "rosters_by_org"):
+    for slice_name in ("graduates", "inactive", "rosters_by_org", "scout_reports"):
         if slice_name in payload:
             continue
         sidecar = out_dir / f"{slice_name}.json"
@@ -4472,5 +4516,5 @@ def load_export_unified(boot_path: Path) -> dict:
             # Empty default keeps test assertions like `for g in
             # payload["graduates"]` from raising KeyError when the slice
             # is genuinely empty for this run.
-            payload[slice_name] = [] if slice_name != "rosters_by_org" else {}
+            payload[slice_name] = [] if slice_name == "graduates" or slice_name == "inactive" else {}
     return payload

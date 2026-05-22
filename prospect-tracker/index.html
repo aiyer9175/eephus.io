@@ -6591,7 +6591,7 @@ function renderActives() {
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
-        <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
+        <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${lazyLineChartHTML(p)}</div>
         ${makeMilbCell(p)}
         ${(() => {
           // Ht / Wt / BMI cells — pulled from the latest FG snapshot's
@@ -6987,7 +6987,7 @@ function renderWatchlist() {
           </div>
           <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>${fvTrendHTML(p)}` : "—"}</div>
           <div class="rank-cell">${latest && latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
-          <div class="line-chart-cell">${p.points && p.points.length >= 2 ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p) : ""}</div>
+          <div class="line-chart-cell">${p.points && p.points.length >= 2 ? lazyLineChartHTML(p) : ""}</div>
           ${makeMilbCell(p)}
           ${makeEtaCell(p)}
         </div>
@@ -7487,7 +7487,7 @@ function renderRecentlyTraded() {
           <span style="font-size:11px;">${contextLine}</span>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>${fvTrendHTML(p)}</div>
-        <div class="line-chart-cell desktop-only">${makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)}</div>
+        <div class="line-chart-cell desktop-only">${lazyLineChartHTML(p)}</div>
         <div class="candle-cell desktop-only">${makeCandle(p)}</div>
       </div>
     `;
@@ -9308,9 +9308,14 @@ function headshotHTML(player, sizePx = 36) {
   const url = headshotURL(id, h);
   // The silhouette renders behind the img; onerror hides the img so the
   // silhouette shows through if Cloudinary 404s (rare).
+  // Lazy: data-src → src swap is performed by `_lazyImageObserver` when
+  // the row enters the viewport (with rootMargin 400px so the swap fires
+  // ~400px ahead of scroll, masking the request latency). Native
+  // loading="lazy" stays as a fallback for environments where the
+  // observer never runs (no-JS, browser without IO support, etc).
   return `<span class="headshot" style="${wrap}">
     ${sil}
-    <img src="${url}" alt="" loading="lazy"
+    <img data-src="${url}" alt="" loading="lazy"
          style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;"
          onerror="this.style.display='none'"/>
   </span>`;
@@ -13350,29 +13355,38 @@ function renderPlayerDetail(key) {
   // When MLB Pipeline / ESPN / Just Baseball ingest stores prose, this
   // function picks it up without code changes.
   const scoutingReportsSection = (() => {
-    // Walk per_source across all snapshots, newest-first, collecting the
-    // most-recent report per source.
+    // v3 — scout reports moved to a lazy-loaded sidecar (data/scout_reports.json)
+    // to shave ~11MB off the boot payload. Read from DATA.scout_reports
+    // when the section renders; if the sidecar hasn't arrived yet,
+    // kick off loadSlice and let the next render() pick it up.
     const SOURCES = [
       { key: "fangraphs",     label: "FanGraphs"    },
       { key: "mlb_pipeline",  label: "MLB Pipeline" },
       { key: "espn",          label: "ESPN"         },
       { key: "just_baseball", label: "Just Baseball"},
     ];
+    const sidecar = (DATA.scout_reports && DATA.scout_reports[p.player_key]) || null;
+    if (sidecar === null && DATA._slices && DATA._slices.scout_reports) {
+      // First touch of any prospect detail page kicks off the sidecar
+      // warm. After load, re-render so the section populates.
+      loadSlice("scout_reports").then(() => {
+        if (state.view && state.view.type === "player"
+            && state.view.key === p.player_key) {
+          render();
+        }
+      });
+      return `<div class="detail-title">Scouting reports <span class="detail-title-sub">loading…</span></div>
+        <div class="scouting-reports-card" style="opacity:0.5;">
+          <div class="sr-meta">Fetching reports sidecar…</div>
+        </div>`;
+    }
     const latestBySrc = {}; // {srcKey: {date, label, text}}
-    for (let i = (p.points || []).length - 1; i >= 0; i--) {
-      const pt = p.points[i];
-      const ps = (pt && pt.per_source) || {};
+    if (sidecar) {
+      // Sidecar entry is {source: {date, label, text}} — copy through.
       for (const { key } of SOURCES) {
-        if (latestBySrc[key]) continue;
-        const info = ps[key];
-        const extras = (info && info.tools && info.tools._extras) || {};
-        const text = extras.report || extras.notes || extras.commentary || null;
-        if (text && String(text).trim().length > 50) {
-          latestBySrc[key] = {
-            date:  pt.snapshot_date,
-            label: pt.interval_label || (info && info.interval_label) || "",
-            text:  String(text).trim(),
-          };
+        const r = sidecar[key];
+        if (r && r.text && String(r.text).trim().length > 50) {
+          latestBySrc[key] = { date: r.date, label: r.label, text: String(r.text).trim() };
         }
       }
     }
@@ -14595,7 +14609,7 @@ function renderFarmDetail(orgCode) {
   const rosterRows = rosterPlayers.map((p, i) => {
     const latest = p.points[p.points.length - 1];
     const chart = p.points.length >= 2
-      ? makeLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p)
+      ? lazyLineChartHTML(p)
       : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
     return `
       <div class="player-row is-farm-roster" style="${orgStripe(p.org)}" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
@@ -15716,8 +15730,92 @@ function render() {
   else if (active === "glossary")   renderGlossary();
   else if (active === "watchlist")  renderWatchlist();
   decorateA11yRows();
+  observeLazyImages();
+  observeLazyCharts();
   updateMeta();
   syncToURL();
+}
+
+// IntersectionObserver-based lazy loading for headshot images. Cuts
+// first-paint network cost from ~2400 image requests (one per active
+// row) to ~50 (only what's visible + 400px ahead). data-src → src swap
+// fires on intersect, then the observer unhooks the image. Re-run after
+// every render() so newly-inserted rows get observed.
+const _lazyImageObserver = ("IntersectionObserver" in window)
+  ? new IntersectionObserver((entries, obs) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        const img = e.target;
+        const src = img.dataset.src;
+        if (src) {
+          img.src = src;
+          img.removeAttribute("data-src");
+        }
+        obs.unobserve(img);
+      }
+    }, { rootMargin: "400px 0px", threshold: 0.01 })
+  : null;
+function observeLazyImages() {
+  if (!_lazyImageObserver) {
+    // Fallback: no IO support → swap everything immediately so images
+    // still appear (relies on native loading="lazy" for deferral).
+    document.querySelectorAll("img[data-src]").forEach(img => {
+      img.src = img.dataset.src;
+      img.removeAttribute("data-src");
+    });
+    return;
+  }
+  document.querySelectorAll("img[data-src]").forEach(img => {
+    _lazyImageObserver.observe(img);
+  });
+}
+
+// Lazy sparkline rendering. `makeLineChart` is heavy — it builds a
+// full SVG string per row (gradient defs, points, year labels, trade
+// markers). With ~2400 active rows that's a noticeable parse hit on
+// first paint. `lazyLineChartHTML(p)` emits a sized placeholder div
+// + stashes the chart args in a Map; the observer materializes the
+// SVG only when the row scrolls within 200px of the viewport.
+let _lazyChartCounter = 0;
+const _lazyChartArgs = new Map();
+const _lazyChartObserver = ("IntersectionObserver" in window)
+  ? new IntersectionObserver((entries, obs) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        const el = e.target;
+        const id = el.dataset.lazyChart;
+        const args = _lazyChartArgs.get(id);
+        if (args) {
+          el.innerHTML = makeLineChart(args.points, args.fvOpen, args.fvClose,
+                                       args.gradDate, args.trades, args.player);
+          _lazyChartArgs.delete(id);
+        }
+        obs.unobserve(el);
+      }
+    }, { rootMargin: "200px 0px", threshold: 0.01 })
+  : null;
+function lazyLineChartHTML(p) {
+  if (!p || !p.points || p.points.length === 0) return "";
+  if (!_lazyChartObserver) {
+    return makeLineChart(p.points, p.fv_open, p.fv_close,
+                         p.graduation_date, p.trades, p);
+  }
+  const id = "lc_" + (++_lazyChartCounter);
+  _lazyChartArgs.set(id, {
+    points: p.points,
+    fvOpen: p.fv_open,
+    fvClose: p.fv_close,
+    gradDate: p.graduation_date,
+    trades: p.trades,
+    player: p,
+  });
+  return `<div data-lazy-chart="${id}" style="width:200px;height:56px;display:inline-block;vertical-align:middle;"></div>`;
+}
+function observeLazyCharts() {
+  if (!_lazyChartObserver) return;
+  document.querySelectorAll("div[data-lazy-chart]").forEach(el => {
+    _lazyChartObserver.observe(el);
+  });
 }
 
 // Phase 4 a11y: every list/grid row that the delegated click handler
@@ -17422,6 +17520,7 @@ function populateOrgFilter() {
       loadSlice("graduates");
       loadSlice("rosters_by_org");
       loadSlice("inactive");
+      loadSlice("scout_reports");
     }, 0);
   }
 })();

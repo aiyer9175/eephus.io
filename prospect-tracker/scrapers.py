@@ -435,6 +435,45 @@ def _parse_espn_prose_tools(commentary_text: str) -> dict[str, float] | None:
     return tools or None
 
 
+def _clean_pipeline_writeup(bio_text: str) -> str | None:
+    """Extract the narrative prose from an MLB Pipeline bio's contentText.
+
+    Pipeline bios mix the structured "Scouting grades: Hit: ... | Overall: NN"
+    line with the prospect's narrative paragraph(s). We:
+      1. Promote JSON-escaped `\\n` to real newlines so paragraph breaks
+         survive (BeautifulSoup parsing later collapses them otherwise).
+      2. Unescape HTML entities and strip any leftover tags Pipeline ships
+         around the prose (<p>, <em>, etc).
+      3. Fix UTF-8 mojibake from the upstream cache.
+      4. Drop the Scouting grades line — tools already parsed it.
+      5. Collapse runs of whitespace within paragraphs but preserve
+         paragraph breaks (`\\n\\n`).
+
+    Returns the cleaned prose, or None if nothing meaningful remains.
+    """
+    if not bio_text:
+        return None
+    raw = bio_text.replace("\\n", "\n").replace("\\t", " ")
+    raw = html.unescape(raw)
+    raw = re.sub(r"<[^>]+>", " ", raw)
+    # Drop the Scouting grades line in its entirety. Done BEFORE
+    # `fix_mojibake` because the latter normalizes runs of whitespace
+    # (including newlines) into single spaces, which would collapse
+    # the `\n\n` paragraph separators we rely on below.
+    raw = re.sub(r"Scouting grades:[^\n]*Overall:\s*\d+\s*\n?", "", raw,
+                 count=1, flags=re.IGNORECASE)
+    # Split paragraphs first, THEN clean each one. fix_mojibake runs
+    # per-paragraph so its space-collapsing only affects within-paragraph
+    # runs, leaving the paragraph boundary intact.
+    paragraphs = []
+    for p in raw.split("\n\n"):
+        p = fix_mojibake(p)
+        p = re.sub(r"\s+", " ", p).strip()
+        if p:
+            paragraphs.append(p)
+    return "\n\n".join(paragraphs) or None
+
+
 def _parse_pipeline_tools(bio_text: str) -> dict[str, float] | None:
     """Pull tool grades from an MLB Pipeline bio's Scouting grades line.
 
@@ -609,6 +648,27 @@ ESPN_INTERVALS = [
      "ESPN 2025 In-Season", "2025-08-20"),
 ]
 
+# Stripper for the structured preamble ESPN ships before the writeup
+# prose. Each prospect's article block looks like:
+#   1. Konnor Griffin, SS, Pittsburgh Pirates
+#   Age: 19 | Bats: Right | Throws: Right
+#   Hit: 45/50 Game Power: 50/65 Raw Power: 60/70 Speed: 70/70 ...
+#   Reminds me of: <comp> | Type: <tier> | <prose paragraph>
+# After HTML strip + whitespace collapse, all of that becomes one long
+# space-separated line. _parse_espn_tools already ingested every "Label:
+# 45/50" pair; the report panel only needs the narrative. We strip the
+# rank line + Age/Bats/Throws + tool-grade pairs in order. "Reminds me
+# of:" and "Type:" carry meaningful prose (comp + tier) so they stay.
+_ESPN_BIO_HEADER = re.compile(
+    r"^\s*(?:Age|Bats|Throws)\s*:\s*\S+\s*\|?\s*", re.IGNORECASE
+)
+_ESPN_TOOL_LABEL = re.compile(
+    r"^\s*(?:Hit|Game\s+Power|Raw\s+Power|Power|Speed|Run|Fielding|"
+    r"Field|Throwing|Arm|Fastball|Curveball|Slider|Changeup|Splitter|"
+    r"Sweeper|Cutter|Sinker|Command|Control)\s*:\s*\d+(?:\s*/\s*\d+)?\s*\|?\s*",
+    re.IGNORECASE,
+)
+
 
 def scrape_espn_top100(url: str, label: str, snap_date: str,
                        force: bool = False) -> list[Snapshot]:
@@ -767,6 +827,33 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
         commentary = html.unescape(re.sub(r"<[^>]+>", " ", commentary))
         commentary = fix_mojibake(commentary)
         tools = _parse_espn_tools(commentary)
+        # Writeup cleanup:
+        #   1. Find the literal "rank. name, pos, team" string and slice
+        #      past it. Using the already-parsed fields makes this
+        #      tolerant of the multi-word team names ("Pittsburgh
+        #      Pirates", "St. Louis Cardinals") that broke earlier
+        #      regex-only attempts.
+        #   2. Chip off leading Age/Bats/Throws + tool-grade pairs.
+        #      _parse_espn_tools already captured those; the report only
+        #      wants the narrative.
+        #   3. Collapse the runs of whitespace tag-stripping left behind.
+        prose = re.sub(r"\s+", " ", commentary).strip()
+        rank_prefix = f"{rank}. {name}, {pos}, {team}" if pos else f"{rank}. {name}, {team}"
+        idx = prose.find(rank_prefix)
+        if idx >= 0:
+            prose = prose[idx + len(rank_prefix):]
+        # Loop the front-strippers — each .sub() peels off at most one
+        # leading label/pair, so iterate until a pass produces no change.
+        while True:
+            stripped = _ESPN_BIO_HEADER.sub("", prose, count=1)
+            stripped = _ESPN_TOOL_LABEL.sub("", stripped, count=1)
+            if stripped == prose:
+                break
+            prose = stripped
+        prose = re.sub(r"\s+", " ", prose).strip()
+        if prose and len(prose) > 60:
+            tools = tools or {}
+            tools.setdefault("_extras", {})["report"] = prose[:8000]
         rows.append(Snapshot(
             source="espn", snapshot_date=snap_date, interval_label=label,
             player_key=normalize_key(name), player_name=name,
@@ -943,6 +1030,21 @@ def scrape_just_baseball(url: str, label: str, snap_date: str,
                 fv = _parse_fv(fv_m.group(1))
         if tools:
             n_with_tools += 1
+        # Writeup — grab paragraph children only so we skip the heading
+        # (rank/name/pos already captured) and the wp-block-table (tool
+        # grades already captured). Paragraph breaks preserved with \n\n
+        # so the frontend can split-on-blank-lines if needed. Mojibake
+        # fix runs per paragraph so its whitespace normalization can't
+        # collapse the paragraph separators.
+        paragraphs = [
+            fix_mojibake(par.get_text(" ", strip=True))
+            for par in section.find_all("p")
+            if par.get_text(strip=True)
+        ]
+        prose = "\n\n".join(p for p in paragraphs if p).strip()
+        if prose and len(prose) > 60:
+            tools = tools or {}
+            tools.setdefault("_extras", {})["report"] = prose[:8000]
         rows.append(Snapshot(
             source="just_baseball", snapshot_date=snap_date, interval_label=label,
             player_key=normalize_key(name), player_name=name,
@@ -1183,6 +1285,18 @@ def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
         # game_pwr, etc.). The full line varies in length by source
         # snapshot; we don't require every tool, just take what's there.
         tools = _parse_pipeline_tools(bio_text) if bio_text else None
+
+        # Writeup — bio_text is the prospect's full bio prose from the
+        # Apollo cache. It carries the narrative paragraph plus a
+        # "Scouting grades: ... | Overall: NN" line which we already
+        # parsed for tools. Strip the grades line + any embedded HTML
+        # (Pipeline sometimes wraps paragraphs in <p>/<em>), then keep
+        # the rest as the report. JSON-escaped newlines (`\\n`) are
+        # promoted to real newlines so paragraph breaks survive.
+        prose = _clean_pipeline_writeup(bio_text) if bio_text else None
+        if prose and len(prose) > 60:
+            tools = tools or {}
+            tools.setdefault("_extras", {})["report"] = prose[:8000]
 
         p = persons.get(pid, {})
         name = p.get("name") or f"Person {pid}"

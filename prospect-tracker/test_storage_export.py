@@ -210,3 +210,66 @@ class TestToolsHistoryOrdersNewestFirst:
         dates = [e["snapshot_date"] for e in history]
         assert dates == sorted(dates, reverse=True), \
             f"expected newest-first, got {dates}"
+
+
+# ---------------------------------------------------------------------------
+# Scout-report sidecar — verify the harvester collects writeups from each
+# source key the scrapers can emit. Pre-Tier-2 only `fangraphs` populated
+# `_extras.report`; now ESPN / Just Baseball / MLB Pipeline do too. The
+# harvester is source-agnostic, so the assertion here is per-source
+# round-trip from per_source._extras.report → scout_reports.json sidecar.
+# ---------------------------------------------------------------------------
+
+class TestScoutReportSidecarPerSource:
+    def test_all_four_sources_round_trip_to_sidecar(
+            self, tmp_path, monkeypatch):
+        # One snapshot per source, each carrying a distinct report string
+        # in `tools._extras.report`. The harvester should pick up all
+        # four and key them by source in scout_reports.json.
+        def snap(source: str, report_text: str) -> Snapshot:
+            return Snapshot(
+                source=source,
+                snapshot_date="2025-07-31",
+                interval_label="2025updated",
+                player_key="multi_src_player",
+                player_name="Multi Src Player",
+                position="OF", org="BOS",
+                rank=1, fv=60.0, status="active",
+                tools={"hit": 55.0, "_extras": {"report": report_text}},
+            )
+
+        # Each report's text includes the source key verbatim so a
+        # cross-contamination bug would show up as a mismatched tag.
+        snaps = [
+            snap("fangraphs",
+                 "fangraphs tag — plus contact, plus raw power."),
+            snap("mlb_pipeline",
+                 "mlb_pipeline tag — emerging top-100 prospect."),
+            snap("espn",
+                 "espn tag — 70-grade bat speed, average defender."),
+            snap("just_baseball",
+                 "just_baseball tag — floor of an everyday corner OF."),
+        ]
+        monkeypatch.setattr(storage, "DB_PATH", tmp_path / "test.db")
+        storage.init_db()
+        storage.insert_snapshots(snaps)
+        ts = build_timeseries(snaps, single_source_k=0)
+        out_path = tmp_path / "timeseries.json"
+        storage.export_timeseries_json(ts, out_path)
+
+        sidecar = json.loads(
+            (tmp_path / "scout_reports.json").read_text(encoding="utf-8"))
+        assert "multi_src_player" in sidecar, \
+            f"sidecar missing player; keys={list(sidecar.keys())[:5]}"
+        reports = sidecar["multi_src_player"]
+        for src in ("fangraphs", "mlb_pipeline", "espn", "just_baseball"):
+            assert src in reports, \
+                f"sidecar missing source '{src}'; got {list(reports.keys())}"
+            entry = reports[src]
+            assert entry.get("text"), f"empty report text for {src}"
+            assert entry.get("date") == "2025-07-31"
+            # Each source's text carries its source key verbatim — a
+            # cross-source mix-up during harvest would land the wrong tag here.
+            assert src in entry["text"], (
+                f"{src} report text doesn't carry its own tag; got {entry['text']!r}"
+            )
