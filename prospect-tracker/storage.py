@@ -1316,6 +1316,72 @@ def _grad_wag(graduate_payload: dict) -> float | None:
     return round(float(total_war) - expected, 2)
 
 
+def _compute_tool_deltas(player_points: list[dict]) -> dict[str, dict]:
+    """Per-tool lifetime delta for one prospect.
+
+    Walks `player_points[i].tools_consensus` across the prospect's full
+    history; for each tool with ≥2 observations, returns first/last
+    grade, delta (latest − earliest), the dates that bracket the window,
+    and the observation count. Tools with only one snapshot are skipped
+    (no delta computable).
+
+    Used downstream by:
+      * `export_timeseries_json` → enrich each player payload with
+        `tool_deltas`; the UI shows a +N / -N chip next to each tool
+        grade on the prospect-detail page.
+      * `_per_org_tool_dev_aggregates` → feed the per-org DvM+ rollup
+        (HitDvM+, PowerDvM+, …, ToolsDvM+).
+    """
+    by_tool: dict[str, list[tuple[str, float]]] = {}
+    for pt in player_points or []:
+        tc = pt.get("tools_consensus") or {}
+        date = pt.get("snapshot_date")
+        for k, v in tc.items():
+            if v is None:
+                continue
+            try:
+                fv = float(v)
+            except (TypeError, ValueError):
+                continue
+            by_tool.setdefault(k, []).append((date, fv))
+    out: dict[str, dict] = {}
+    for k, obs in by_tool.items():
+        if len(obs) < 2:
+            continue
+        obs.sort(key=lambda x: (x[0] or ""))
+        first_date, first_v = obs[0]
+        last_date, last_v = obs[-1]
+        out[k] = {
+            "delta":      round(last_v - first_v, 2),
+            "first":      first_v,
+            "last":       last_v,
+            "first_date": first_date,
+            "last_date":  last_date,
+            "n_obs":      len(obs),
+        }
+    return out
+
+
+# Per-tool DvM+ grouping. Most keys are 1:1 to a canonical tool from
+# scrapers.HITTER_TOOL_KEYS / PITCHER_TOOL_KEYS; "power" averages
+# game_pwr + raw_pwr for a single Power index that doesn't double-count.
+TOOL_GROUPS: dict[str, list[str]] = {
+    "hit":       ["hit"],
+    "power":     ["game_pwr", "raw_pwr"],
+    "speed":     ["speed"],
+    "field":     ["field"],
+    "arm":       ["throw"],
+    "pitch_sel": ["pitch_sel"],
+    "bat_ctrl":  ["bat_ctrl"],
+    "fb":        ["fb"],
+    "sl":        ["sl"],
+    "cb":        ["cb"],
+    "ch":        ["ch"],
+    "cmd":       ["cmd"],
+    "ct":        ["ct"],
+}
+
+
 def _top_end_points(prospects: list[dict], n: int = FARM_TOP_END_COUNT) -> float:
     """Sum of tiered points for the org's top N prospects (FV-sorted).
     Prospects list is expected pre-sorted by fv_raw descending — that
@@ -2867,6 +2933,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "fv_adj": eta.fv_adj,
                 "health_adj": eta.health_adj,
             },
+            # Per-tool lifetime delta map (first observation → latest).
+            # `{hit: {delta, first, last, first_date, last_date, n_obs}, ...}`
+            # Tools with <2 consensus observations are omitted. Powers the
+            # +N / -N delta chips in the prospect-detail Tools section and
+            # the "Tool development" wide card.
+            "tool_deltas": _compute_tool_deltas([
+                {"snapshot_date": pt.snapshot_date,
+                 "tools_consensus": pt.tools_consensus}
+                for pt in p.points
+            ]),
             "points": [
                 {
                     "snapshot_date": pt.snapshot_date,
@@ -3066,6 +3142,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "_post_tj_count": 0,
                 "_il_days_sum":   0,
                 "_il_days_count": 0,
+                # Per-org tool-development accumulator (Step 3 of the
+                # ToolsDvM+ plan). Keyed by canonical tool name (hit,
+                # game_pwr, etc.) — each entry holds the per-prospect
+                # lifetime delta (latest − first consensus grade) for
+                # every active prospect with ≥2 observations of that
+                # tool. Finalized in the second pass into mean_delta per
+                # tool, then league-normalized into HitDvM+ / PowerDvM+
+                # / etc. in `_attach_per_tool_dvm_plus`.
+                "_tool_dev_sums": {},
             }
         m = org_map[org]
         m["prospects"].append({
@@ -3113,6 +3198,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         )
         if _comp and _comp.get("composite_overall") is not None:
             m.setdefault("_tools_comp_overall", []).append(float(_comp["composite_overall"]))
+
+        # Per-prospect tool deltas (latest − first consensus grade for each
+        # tool with ≥2 observations). Sum into the org bucket so the
+        # second pass can produce mean-delta-per-tool and the league
+        # normalization can produce HitDvM+ / PowerDvM+ / etc.
+        _td = _compute_tool_deltas([
+            {"snapshot_date": pt.snapshot_date,
+             "tools_consensus": pt.tools_consensus}
+            for pt in p.points
+        ])
+        for _tk, _info in _td.items():
+            m["_tool_dev_sums"].setdefault(_tk, []).append(_info["delta"])
 
         # Extended report-card accumulators (Farm Overhaul Step 5/6/7).
         m["_active_keys"].append(p.player_key)
@@ -3257,6 +3354,26 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "il_days_mean": round(il_days_mean, 1),
             "post_tj_count": post_tj_count,
         }
+        # Per-tool development — mean lifetime delta across actives that
+        # have ≥2 consensus observations of each tool. Sparse-data gate:
+        # tools with fewer than 3 contributing prospects are dropped (a
+        # 1-prospect mean is too noisy to compare across orgs). The
+        # per-tool DvM+ + composite ToolsDvM+ are computed in a second
+        # league-wide pass below, once every org's mean_delta is known.
+        _tool_sums = m.pop("_tool_dev_sums") or {}
+        per_tool: dict[str, dict] = {}
+        for _tk, _deltas in _tool_sums.items():
+            if len(_deltas) < 3:
+                continue
+            per_tool[_tk] = {
+                "mean_delta":  round(sum(_deltas) / len(_deltas), 2),
+                "n_prospects": len(_deltas),
+            }
+        m["tool_dev"] = {
+            "per_tool":          per_tool,
+            "per_tool_dvm_plus": {},   # filled in the league pass below
+            "tools_dvm_plus":    None,
+        }
         # _active_keys stays for the Tools+ second pass; popped later.
         org_summary.append(m)
 
@@ -3266,6 +3383,67 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # FV-only rank (e.g. the "Total FV" sort chip on the front-end) can
     # still recover it by re-sorting on total_fv directly.
     org_summary.sort(key=lambda x: -x["total_fv"])
+
+    # ── Per-tool DvM+ league pass (HitDvM+, PowerDvM+, …, ToolsDvM+) ──
+    # For each TOOL_GROUP, gather every org's mean_delta on the tools in
+    # that group (averaged for multi-tool groups like Power = mean of
+    # game_pwr + raw_pwr). Compute league mean μ + stdev σ across orgs
+    # that have data; convert each org's value to a 100-anchored index
+    # via 100 + 10·z. Mirrors the wRC+-style anchoring used by `dvm_plus`
+    # elsewhere in the report card. Orgs without data for a given group
+    # get None; tool groups with fewer than 3 orgs reporting are dropped
+    # entirely (no statistical anchor possible).
+    def _group_mean_delta_for_org(per_tool: dict, keys: list[str]) -> float | None:
+        vals = [per_tool[k]["mean_delta"] for k in keys
+                if k in per_tool and per_tool[k].get("mean_delta") is not None]
+        return sum(vals) / len(vals) if vals else None
+
+    for grp_name, tool_keys in TOOL_GROUPS.items():
+        org_vals: list[tuple[str, float | None]] = []
+        for e in org_summary:
+            v = _group_mean_delta_for_org(e["tool_dev"]["per_tool"], tool_keys)
+            org_vals.append((e["org"], v))
+        populated = [v for _, v in org_vals if v is not None]
+        if len(populated) < 3:
+            # Not enough signal to anchor a league mean — every org gets None.
+            for org_code, _ in org_vals:
+                _entry = next(e for e in org_summary if e["org"] == org_code)
+                _entry["tool_dev"]["per_tool_dvm_plus"][grp_name] = None
+            continue
+        mu = sum(populated) / len(populated)
+        var = sum((v - mu) ** 2 for v in populated) / len(populated)
+        sd = var ** 0.5
+        for org_code, v in org_vals:
+            _entry = next(e for e in org_summary if e["org"] == org_code)
+            if v is None or sd < 1e-6:
+                _entry["tool_dev"]["per_tool_dvm_plus"][grp_name] = None
+            else:
+                z = (v - mu) / sd
+                _entry["tool_dev"]["per_tool_dvm_plus"][grp_name] = int(round(100 + 10 * z))
+
+    # Composite ToolsDvM+ — unweighted mean of the per-group DvM+ values
+    # an org actually has. Orgs missing every group entry get None.
+    _composite_vals: list[tuple[str, int | None]] = []
+    for entry in org_summary:
+        per_grp = entry["tool_dev"].get("per_tool_dvm_plus") or {}
+        vs = [v for v in per_grp.values() if v is not None]
+        composite = int(round(sum(vs) / len(vs))) if vs else None
+        entry["tool_dev"]["tools_dvm_plus"] = composite
+        _composite_vals.append((entry["org"], composite))
+
+    # Rank for the composite — descending (higher composite = rank 1).
+    # `_rank_descending` doesn't take None; do the present-filter inline
+    # (mirrors the `_rank_with_none` helper defined later inside the
+    # same parent function).
+    _present_idx = [i for i, (_, v) in enumerate(_composite_vals) if v is not None]
+    _present_vals = [_composite_vals[i][1] for i in _present_idx]
+    _sub_ranks = _rank_descending(_present_vals)
+    _ranks: list[int | None] = [None] * len(_composite_vals)
+    for i, r in zip(_present_idx, _sub_ranks):
+        _ranks[i] = r
+    for (org_code, _), r in zip(_composite_vals, _ranks):
+        _entry = next(e for e in org_summary if e["org"] == org_code)
+        _entry["tool_dev"]["tools_dvm_plus_rank"] = r
 
     # Per-level graded prospect counts, sourced from the affiliate-roster
     # map. Drives both the "sort farms by depth at level X" chips on the

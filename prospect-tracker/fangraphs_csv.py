@@ -271,6 +271,10 @@ def _parse_summary_row(raw: dict) -> dict | None:
     return {
         "player_key":   pkey,
         "fg_player_id": _to_int(fg_id) if fg_id else None,
+        # Raw string FG PlayerId preserved so cross-CSV disambiguation
+        # can tell apart alphanumeric IDs (e.g. "sa3007992") that the
+        # int-coerced field collapses to None.
+        "fg_player_id_str": fg_id if fg_id else None,
         "player_name":  name_clean,
         "position":     _str_or_none(row.get("pos")),
         "org":          _str_or_none(row.get("org")),
@@ -869,6 +873,18 @@ def ingest_drops(today: date | None = None,
     if not groups:
         return 0, 0
 
+    # Cross-CSV canonical-owner map. Pre-scan every summary CSV so the
+    # build path can suffix the player_key when a row's fg_player_id
+    # doesn't match the dominant owner of that name across all cycles.
+    # This prevents two distinct humans sharing a name (e.g. Julio
+    # Rodríguez M's CF vs. Julio Rodriguez SFG SIRP) from merging into
+    # one prospect profile.
+    summary_groups = [g for g in groups if g.get("summary")]
+    canonical_owners = _compute_fg_canonical_owners(summary_groups)
+    if canonical_owners:
+        log.info("fangraphs_csv: %d cross-CSV name collisions detected; "
+                 "disambiguating by fg_player_id", len(canonical_owners))
+
     inserted_total = 0
     sets_processed = 0
     for grp in groups:
@@ -887,7 +903,8 @@ def ingest_drops(today: date | None = None,
                         "summary CSV (have: %s)", slug, present)
             continue
         n, ok = _process_one_set(grp, slug, birth_dates, today,
-                                 processed_dir, insert_snapshots)
+                                 processed_dir, insert_snapshots,
+                                 canonical_owners=canonical_owners)
         if ok:
             inserted_total += n
             sets_processed += 1
@@ -906,9 +923,95 @@ def ingest_drops(today: date | None = None,
     return inserted_total, sets_processed
 
 
+# ---------------------------------------------------------------------------
+# Cross-CSV player_key disambiguation
+# ---------------------------------------------------------------------------
+
+def _compute_fg_canonical_owners(groups: list[dict]) -> dict[str, str]:
+    """Pre-scan every summary CSV across all report sets, return a map
+    ``{player_key: canonical_fg_player_id_str}`` for keys that need
+    disambiguation.
+
+    The canonical owner of a colliding name-key is the FG PlayerId with
+    the most cycle appearances (tiebreak: highest max FV across cycles).
+    Snapshots whose fg_player_id differs from the canonical owner get
+    their player_key suffixed with the PID at build time, so two distinct
+    humans sharing a name never end up merged on the same prospect.
+
+    Players whose name-key has only one PID across the entire run aren't
+    added to the map — no disambiguation needed.
+    """
+    # {pkey: {pid_str: (cycle_count, max_fv)}}
+    seen: dict[str, dict[str | None, list[float]]] = {}
+    for grp in groups:
+        path = grp.get("summary")
+        if path is None:
+            continue
+        for raw in _read_csv_rows(path):
+            try:
+                parsed = _parse_summary_row(raw)
+            except Exception:
+                continue
+            if not parsed:
+                continue
+            pkey = parsed["player_key"]
+            pid = parsed.get("fg_player_id_str")
+            fv = parsed.get("fv") or 0.0
+            seen.setdefault(pkey, {}).setdefault(pid, []).append(fv)
+
+    owners: dict[str, str] = {}
+    for pkey, by_pid in seen.items():
+        # Only PIDs that are non-None can be canonical owners. A row
+        # with a known PID always wins over a PID-less duplicate so
+        # the unknown-PID rows get suffixed (with the literal token
+        # "noid") and the known person keeps the bare key.
+        if len(by_pid) <= 1:
+            continue
+        # Score: (cycle_count, max_fv) — bigger wins. Sort by the
+        # score tuple only (PIDs can be None, which is not orderable
+        # against str in Python 3).
+        scored = [((len(fvs), max(fvs)), pid) for pid, fvs in by_pid.items()]
+        scored.sort(key=lambda x: x[0], reverse=True)
+        canonical_pid = scored[0][1]
+        if canonical_pid is not None:
+            owners[pkey] = canonical_pid
+        else:
+            # Edge case: every PID is None for this pkey (multiple un-IDed
+            # humans share a name). Use a sentinel so all of them get
+            # suffixed with "__noid_<index>" by the suffix logic later.
+            owners[pkey] = "__all_noid__"
+    return owners
+
+
+def _disambiguate_key(player_key: str,
+                      row_pid_str: str | None,
+                      canonical_owners: dict[str, str]) -> str:
+    """Return the player_key the snapshot should be stored under.
+
+    Bare key when this row's PID matches the canonical owner (or no
+    canonical owner exists for this name). Suffixed key when the row is
+    for a different human than the canonical owner — e.g. the SFG SIRP
+    Julio Rodriguez becomes `julio_rodriguez__sa3007992` while the
+    Mariners CF (PID 23697, canonical) keeps `julio_rodriguez`.
+    """
+    canonical = canonical_owners.get(player_key)
+    if canonical is None:
+        return player_key
+    if canonical == "__all_noid__":
+        # Every collision row is PID-less. Suffix all of them with a
+        # short hash of the player_name so they stay distinct.
+        suffix = (row_pid_str or "noid").replace("/", "_")
+        return f"{player_key}__{suffix}"
+    if row_pid_str == canonical:
+        return player_key
+    suffix = (row_pid_str or "noid").replace("/", "_")
+    return f"{player_key}__{suffix}"
+
+
 def _process_one_set(grp: dict, slug: str, birth_dates: dict[str, str],
                      today: date, processed_dir: Path,
-                     insert_fn) -> tuple[int, bool]:
+                     insert_fn,
+                     canonical_owners: dict[str, str] | None = None) -> tuple[int, bool]:
     """Parse the four CSVs in one slug-group, build snapshots, insert,
     move files to processed/. Returns (n_inserted, success)."""
     parsed_by_type: dict[str, list[dict]] = {}
@@ -963,7 +1066,37 @@ def _process_one_set(grp: dict, slug: str, birth_dates: dict[str, str],
         parsed_by_type["pitching"],
         parsed_by_type["physical"],
     )
-    snapshots = [_build_snapshot(m, slug, snapshot_date) for m in merged]
+    owners = canonical_owners or {}
+    snapshots = []
+    for m in merged:
+        snap = _build_snapshot(m, slug, snapshot_date)
+        if owners:
+            disambiguated = _disambiguate_key(
+                snap.player_key, m.get("fg_player_id_str"), owners,
+            )
+            if disambiguated != snap.player_key:
+                log.info(
+                    "fangraphs_csv: disambiguating %s → %s "
+                    "(fg_pid=%s differs from canonical %s)",
+                    snap.player_key, disambiguated,
+                    m.get("fg_player_id_str"), owners.get(snap.player_key),
+                )
+                # dataclasses.replace would be cleaner but Snapshot is
+                # an @dataclass(frozen=False) so direct assignment works.
+                snap = snap.__class__(
+                    source=snap.source,
+                    snapshot_date=snap.snapshot_date,
+                    interval_label=snap.interval_label,
+                    player_key=disambiguated,
+                    player_name=snap.player_name,
+                    position=snap.position,
+                    org=snap.org,
+                    rank=snap.rank,
+                    fv=snap.fv,
+                    status=snap.status,
+                    tools=snap.tools,
+                )
+        snapshots.append(snap)
     try:
         n = insert_fn(snapshots)
     except Exception:

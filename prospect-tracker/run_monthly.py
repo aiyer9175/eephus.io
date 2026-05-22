@@ -121,6 +121,25 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     timeseries = build_timeseries(all_snaps)
     log.info("rebuild_only: built timeseries for %d players", len(timeseries))
 
+    # Preserve the existing rosters_by_org sidecar — it's built at
+    # scrape time during the full pipeline, so a rebuild-only pass would
+    # otherwise clobber it with `{}` and break every farm-detail page.
+    # Same pass-through applies to roster_status (used by per-prospect
+    # 40-man / options state on the detail page) so we don't lose those
+    # signals on every fast rebuild.
+    existing_rosters: dict = {}
+    rosters_path = out_dir / "rosters_by_org.json"
+    if rosters_path.exists():
+        try:
+            with rosters_path.open(encoding="utf-8") as fp:
+                existing_rosters = json.load(fp)
+        except Exception:
+            log.exception("rebuild_only: could not load existing rosters_by_org.json — "
+                          "falling back to empty (farm-detail pages will be blank)")
+    else:
+        log.warning("rebuild_only: no existing rosters_by_org.json — farm-detail "
+                    "pages will be blank until a full `python run_monthly.py` runs")
+
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / "timeseries.json"
     export_timeseries_json(
@@ -134,7 +153,7 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
         career_war=load_career_war(),
         acquisitions=load_acquisitions(),
         il_status=load_il_status(),
-        rosters_by_org={},  # rosters_by_org is built at scrape time
+        rosters_by_org=existing_rosters,
         level_changes=_derive_all_level_changes(),
         roster_status={},
         ifa_spending_by_org={},

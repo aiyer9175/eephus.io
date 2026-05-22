@@ -2379,6 +2379,70 @@
       font-variant-numeric: tabular-nums;
     }
 
+    /* Tool Development card (farm-detail page). Composite ToolsDvM+
+       headline at the top + a tight 7-cell hitter grid and 6-cell
+       pitcher grid below. Each cell shows the per-tool DvM+ value;
+       tone shifts green for ≥100 and red for ≤90 so a glance reads
+       which tools the org actually develops well. Empty cell means
+       the org has too few prospects with multi-cycle observations
+       of that tool for a league anchor to compute. */
+    .tooldev-card {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      background: var(--bg-secondary);
+      margin: 12px 0 20px;
+    }
+    .tooldev-headline {
+      display: flex; align-items: baseline; gap: 12px;
+      margin-bottom: 12px; padding-bottom: 10px;
+      border-bottom: 1px dashed var(--border-light);
+    }
+    .tooldev-headline .td-headline-label {
+      font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-secondary); font-weight: 600;
+    }
+    .tooldev-headline .td-headline-val {
+      font-family: var(--font-mono); font-size: 24px; font-weight: 700;
+      color: var(--text-primary);
+    }
+    .tooldev-headline .td-headline-rank {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    .tooldev-headline.is-strong .td-headline-val { color: var(--up); }
+    .tooldev-headline.is-pos .td-headline-val { color: var(--up); }
+    .tooldev-headline.is-neg .td-headline-val { color: var(--down); }
+    .tooldev-headline.is-weak .td-headline-val { color: var(--down); }
+    .tooldev-section-label {
+      font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-tertiary); font-weight: 600; margin-bottom: 4px;
+    }
+    .tooldev-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+      gap: 4px;
+    }
+    .tooldev-cell {
+      padding: 6px 8px; border-radius: 3px; text-align: center;
+      background: var(--bg-primary); border: 1px solid transparent;
+    }
+    .tooldev-cell .td-label {
+      font-size: 9px; color: var(--text-tertiary);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .tooldev-cell .td-val {
+      font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+      margin-top: 2px; color: var(--text-primary);
+    }
+    .tooldev-cell.is-strong { background: rgba(38, 161, 81, 0.15); border-color: rgba(38, 161, 81, 0.3); }
+    .tooldev-cell.is-strong .td-val { color: var(--up); }
+    .tooldev-cell.is-pos .td-val { color: var(--up); }
+    .tooldev-cell.is-neg .td-val { color: var(--down); }
+    .tooldev-cell.is-weak { background: rgba(204, 60, 60, 0.12); border-color: rgba(204, 60, 60, 0.25); }
+    .tooldev-cell.is-weak .td-val { color: var(--down); }
+    .tooldev-cell.is-empty .td-val { color: var(--text-tertiary); font-weight: 500; }
+
     /* FV distribution mini-histogram (sidebar). Vertical bars colored
        by FV tier with counts on hover. */
     .fv-histogram {
@@ -3367,6 +3431,23 @@
       letter-spacing: 0.04em;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+    /* Lifetime tool-delta chip — small +N / -N indicator next to each
+       tool's grade badge in the prospect-detail Tools section, plus the
+       Tool Development wide card and the prospect-list summary line.
+       Uses the same up/down color tokens as the FV stock indicator. */
+    .tool-delta {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 4px;
+      border-radius: 3px;
+      margin-left: 4px;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    .tool-delta.is-pos  { color: var(--up);   background: rgba(38, 161, 81, 0.10); }
+    .tool-delta.is-neg  { color: var(--down); background: rgba(204, 60, 60, 0.10); }
+    .tool-delta.is-flat { color: var(--text-tertiary); background: var(--bg-secondary); }
     .tool-dual-marker {
       display: inline-block;
       margin-left: 3px;
@@ -4088,6 +4169,16 @@
   const theme = stored || (sysDark ? "dark" : "light");
   document.documentElement.setAttribute("data-theme", theme);
 })();
+
+// Canonical tool key → human-friendly display label. Used by the
+// prospect-detail Tool Development card, the list-row summary's
+// gainer tag, and the farm-detail Tool Development grid.
+const TOOL_DISPLAY_NAMES = {
+  hit: "Hit", game_pwr: "Game Pwr", raw_pwr: "Raw Pwr",
+  speed: "Speed", field: "Field", throw: "Arm",
+  pitch_sel: "Pitch Sel", bat_ctrl: "Bat Ctrl",
+  fb: "FB", sl: "SL", cb: "CB", ch: "CH", cmd: "Cmd", ct: "CT", sp: "SP",
+};
 
 // =============================================================================
 // CONFIG
@@ -7797,7 +7888,34 @@ const GLOSSARY = {
     long: "wRC+-style index for organizational development. Measures each farm's cumulative FV growth over a window (1y / 3y / 5y) and scores it against the league-mean farm. Acquisitions are nullified (a trade-in adds zero to the source farm) and graduations don't subtract; pure development of prospects already in the system. 100 = league mean, 10 pts = 1 stdev across the 30 orgs. The 1y window drives the Development letter grade in the farm report card (replaced raw Trajectory in the blend).",
     formula: "DvM+ = 100 + 10 · (org_growth − league_mean_growth) / league_stdev",
     example: "An org with a 3yDvM+ of 130 has grown its prospects' aggregate FV 3 stdev faster than the average farm system over the last 3 years, after stripping out acquisitions.",
-    related: ["farm_rank", "farm_grade_talent_translation", "stock", "fv"],
+    related: ["farm_rank", "farm_grade_talent_translation", "stock", "fv", "tools_dvm_plus"],
+  },
+  "tool_delta": {
+    name: "Tool Δ", aliases: ["Tool delta", "Tool dev", "Tool development"], category: "custom-index",
+    priority: 6,
+    short: "Lifetime change in a prospect's consensus tool grade — first observation to latest.",
+    long: "Per-tool lifetime delta computed across a prospect's full consensus history. For each tool with ≥2 published consensus snapshots, we record first_grade, last_grade, and delta = (last − first). Powers the +N / -N chip beside each tool grade in the prospect-detail Tools section, the Tool development table on the same page, and the org-level rollups (HitDvM+, PowerDvM+, …, ToolsDvM+) on the farm-detail page. Tools observed only once produce no delta — that's a 'not enough signal' state, not a 'no change' state.",
+    formula: "tool_delta(tool) = consensus_grade_latest(tool) − consensus_grade_first(tool)",
+    example: "Jesús Made's game-power tool was 30 in the FG 2024 pre-season and 60 by the 2026 pre-season report — a +30 lifetime delta over 12 observations.",
+    related: ["tools_dvm_plus", "fv", "tools_plus"],
+  },
+  "tools_dvm_plus": {
+    name: "ToolsDvM+", aliases: ["ToolsDvM+", "Tools Development vs Mean"], category: "custom-index",
+    priority: 7,
+    short: "Org-level tool development composite. 100 = league-mean dev pace across all tools; +10 = 1σ above.",
+    long: "Composite of every per-tool DvM+ an org has populated (HitDvM+, PowerDvM+, SpeedDvM+, FieldDvM+, ArmDvM+, PitchSelDvM+, BatCtrlDvM+ for hitters; FBDvM+, SLDvM+, CBDvM+, CHDvM+, CmdDvM+, CtDvM+ for pitchers). Each per-tool DvM+ is computed by taking every active prospect's lifetime tool delta, averaging within the org, then scoring that mean against the league: 100 + 10·z. Orgs with too few multi-cycle prospects on a given tool get '—' for that cell rather than a noisy 1-prospect mean. Attribution: current org — trade-acquired prospects bring their full lifetime delta with them (mixes acquisition + development skill, same convention as Financial ROI). Standalone display metric for now; not yet folded into farm_score.",
+    formula: "ToolsDvM+ = mean over tools of (100 + 10·(org_mean_delta − league_mean) / league_stdev)",
+    example: "NYM ToolsDvM+ = 106 (rank 1 of 30) — Mets actives have grown across the toolset roughly 0.6σ faster than the league-mean farm over their tracked careers. NYY ToolsDvM+ = 91 (rank 30) — Yankees actives have grown ~0.9σ slower.",
+    related: ["dvm_plus", "tool_delta", "tools_plus", "farm_rank"],
+  },
+  "tool_specific_dvm_plus": {
+    name: "HitDvM+ / PowerDvM+ / …", aliases: ["HitDvM+", "PowerDvM+", "SpeedDvM+", "FieldDvM+", "ArmDvM+", "PitchSelDvM+", "BatCtrlDvM+", "FBDvM+", "SLDvM+", "CBDvM+", "CHDvM+", "CmdDvM+", "CtDvM+"], category: "custom-index",
+    priority: 8,
+    short: "Per-tool org development index. 100 = league mean; +10 = 1σ. Reveals which tools the org actually develops well.",
+    long: "Same wRC+ shape as DvM+ and ToolsDvM+ but scoped to a single tool. For each tool group (Hit, Power = mean of game_pwr + raw_pwr, Speed, Field, Arm, PitchSel, BatCtrl, FB, SL, CB, CH, Cmd, Ct), we compute every org's mean lifetime delta across its actives that have ≥2 consensus observations of that tool, then anchor the league at 100 + 10·z. Cell renders '—' for orgs with fewer than 3 prospects contributing — not enough signal to compare. Read these to find a farm's development specialties: HitDvM+ 115 means this org grows the hit tool 1.5σ better than the typical farm.",
+    formula: "ToolDvM+ = 100 + 10 · (org_mean_lifetime_delta − league_mean) / league_stdev",
+    example: "MIL HitDvM+ 119 + PowerDvM+ 124 = a power-bat development specialist; their hitters add ~2σ more game power across their org tenure than the league mean.",
+    related: ["tools_dvm_plus", "tool_delta", "dvm_plus", "tools_plus"],
   },
   "pwr_plus": {
     name: "PWR+", aliases: ["PWR+", "Power Index"], category: "custom-index",
@@ -9006,6 +9124,24 @@ function makeQuickReadSummaryParts(p) {
     });
   }
 
+  // Tool-dev gainers — surface 1-2 tools that grew ≥+5 grade points
+  // over the prospect's lifetime. Compact "▲ Hit / Game Pwr" hint that
+  // hovers to "X tools improved ≥+5 lifetime". Hidden when no tool
+  // qualifies (the typical case for new prospects with <2 cycles).
+  const _td = p.tool_deltas || {};
+  const gainers = Object.entries(_td)
+    .filter(([, info]) => info.delta >= 5)
+    .sort(([, a], [, b]) => b.delta - a.delta)
+    .slice(0, 2)
+    .map(([k, info]) => ({
+      label: (typeof TOOL_DISPLAY_NAMES === "object" && TOOL_DISPLAY_NAMES[k]) || k,
+      delta: info.delta,
+    }));
+  if (gainers.length) {
+    const tip = gainers.map(g => `${g.label} +${g.delta}`).join(", ") + " lifetime";
+    parts.push(`<span style="color:var(--up);font-weight:600;" title="${escapeHtml(tip)}">▲ ${gainers.map(g => g.label).join(" / ")}</span>`);
+  }
+
   return parts;
 }
 
@@ -9359,7 +9495,7 @@ function makeFarmReportCard(org) {
           ${stripCell('Talent Translation', g.talent_translation, r.talent_translation, tt.wag_mean,            fmtSignedRaw,
                       'WAG (WAR Above Grade) mean across the org’s graduates. Positive = graduates beat their FV-implied career WAR projection; negative = underperform. "—" when the org has fewer than 3 gradutes with both career WAR and a final FV on file.')}
           ${stripCell('Financial ROI',      g.financial_roi,      r.financial_roi,      fr.war_per_million,     fmtWarPerM,
-                      'Career WAR yielded per million dollars of signing bonus spent. Higher = better bargain capture. "—" when the org has fewer than 3 grads with bonus + career-WAR data on file. Lagging indicator — recent draft classes haven\\'t converted yet.')}
+                      'Career WAR yielded per million dollars of signing bonus spent. Higher = better bargain capture. "—" when the org has fewer than 3 grads with bonus + career-WAR data on file. Lagging indicator — recent draft classes haven’t converted yet.')}
         </div>
 
         ${tierLabel('Profile · ' + '12%' + ' of farm_score')}
@@ -9373,6 +9509,60 @@ function makeFarmReportCard(org) {
           ${stripCell('Health',          g.health_burden, r.health_burden, hb.score,                fmtScore,
                       'Combined post-TJ % and trailing 12-month IL-days mean. INVERSE metric — lower score = better letter grade. Lowest-burden farm gets the A+.')}
         </div>
+      </div>
+    </div>`;
+}
+
+// Tool Development card — per-org composite ToolsDvM+ + grid of
+// per-tool DvM+ (HitDvM+, PowerDvM+, …, CtDvM+). Mirrors the
+// wRC+/OPS+ 100-anchor (100 = league mean dev pace, +10 = 1σ above).
+// Empty when org has too few prospects with multi-cycle tool data
+// for the league normalization to anchor (per-group <3 orgs).
+function makeFarmToolDevCard(org) {
+  const td = (org && org.tool_dev) || {};
+  const composite = td.tools_dvm_plus;
+  const per = td.per_tool_dvm_plus || {};
+  const populated = Object.values(per).some(v => v != null);
+  if (composite == null && !populated) return "";
+  const cellHtml = (label, key) => {
+    const v = per[key];
+    if (v == null) {
+      return `<div class="tooldev-cell is-empty"><div class="td-label">${label}</div><div class="td-val">—</div></div>`;
+    }
+    const tone = v >= 110 ? "is-strong" : v >= 100 ? "is-pos" : v >= 90 ? "is-neg" : "is-weak";
+    return `<div class="tooldev-cell ${tone}" title="${label}DvM+ ${v} · 100 = league mean dev pace · +10 = 1σ above"><div class="td-label">${label}</div><div class="td-val">${v}</div></div>`;
+  };
+  const compositeTone =
+    composite == null ? "is-empty" :
+    composite >= 110 ? "is-strong" :
+    composite >= 100 ? "is-pos" :
+    composite >= 90 ? "is-neg" : "is-weak";
+  return `<div class="detail-title">Tool development
+    <span class="detail-title-sub">per-tool DvM+ across actives · 100 = league mean dev pace · +10 = 1σ · attribution to current org</span></div>
+    <div class="tooldev-card">
+      <div class="tooldev-headline ${compositeTone}">
+        <span class="td-headline-label">ToolsDvM+</span>
+        <span class="td-headline-val">${composite ?? "—"}</span>
+        <span class="td-headline-rank" title="Rank among the 30 orgs (1 = best development pace)">#${td.tools_dvm_plus_rank ?? "—"}</span>
+      </div>
+      <div class="tooldev-section-label">Hitter tools</div>
+      <div class="tooldev-grid">
+        ${cellHtml("Hit",      "hit")}
+        ${cellHtml("Power",    "power")}
+        ${cellHtml("Speed",    "speed")}
+        ${cellHtml("Field",    "field")}
+        ${cellHtml("Arm",      "arm")}
+        ${cellHtml("PitchSel", "pitch_sel")}
+        ${cellHtml("BatCtrl",  "bat_ctrl")}
+      </div>
+      <div class="tooldev-section-label" style="margin-top:8px;">Pitcher tools</div>
+      <div class="tooldev-grid">
+        ${cellHtml("FB",  "fb")}
+        ${cellHtml("SL",  "sl")}
+        ${cellHtml("CB",  "cb")}
+        ${cellHtml("CH",  "ch")}
+        ${cellHtml("Cmd", "cmd")}
+        ${cellHtml("CT",  "ct")}
       </div>
     </div>`;
 }
@@ -12134,6 +12324,19 @@ function renderPlayerDetail(key) {
       fb: "fastball_grade", sl: "slider_grade", cb: "curveball_grade",
       ch: "changeup_grade", cmd: "command_grade", ct: "cutter_grade",
     };
+    // Lifetime delta chip — shows +N / -N alongside the current grade
+    // when ≥2 consensus observations exist. Pulled from p.tool_deltas
+    // (computed at export time by storage._compute_tool_deltas).
+    // Returns "" when no delta is tracked for this tool.
+    const deltaChip = (key) => {
+      const td = (p.tool_deltas || {})[key];
+      if (!td) return "";
+      const d = td.delta;
+      const cls = d > 0 ? "is-pos" : d < 0 ? "is-neg" : "is-flat";
+      const arrow = d > 0 ? "▲" : d < 0 ? "▼" : "·";
+      const tip = `Consensus grew from ${td.first} on ${td.first_date} to ${td.last} on ${td.last_date} (${td.n_obs} grades on file)`;
+      return `<span class="tool-delta ${cls}" title="${escapeHtml(tip)}">${arrow}${Math.abs(d)}</span>`;
+    };
     const gradeCell = (key, label) => {
       const v = (t.grades || {})[key];
       const spread = (t.spread || {})[key];
@@ -12153,7 +12356,7 @@ function renderPlayerDetail(key) {
         : escapeHtml(label);
       return `<div class="tools-grade-cell" title="${escapeHtml(tip)}">
         <span class="tools-grade-name">${labelHtml}${dualMark}${spreadTag}</span>
-        ${badgeFor(v)}
+        ${badgeFor(v)}${deltaChip(key)}
       </div>`;
     };
     let compositeBar = "";
@@ -13205,6 +13408,44 @@ function renderPlayerDetail(key) {
   // Flag block removed — flag content now lives inline as ▲/▼ tags
   // inside the quick-read summary (see `makeQuickReadSummaryParts`).
 
+  // Tool Development — first → latest consensus grade per tracked tool.
+  // Sorted by |delta| so the biggest movers (positive or negative) read
+  // first. Only renders when the prospect has ≥1 tool with ≥2 consensus
+  // observations. Slots into the wide-card grid alongside Arsenal.
+  const toolDevSection = (() => {
+    const td = p.tool_deltas || {};
+    const keys = Object.keys(td);
+    if (!keys.length) return "";
+    const rows = keys
+      .sort((a, b) => Math.abs(td[b].delta) - Math.abs(td[a].delta))
+      .map(k => {
+        const info = td[k];
+        const label = TOOL_DISPLAY_NAMES[k] || k;
+        const dir = info.delta > 0 ? "is-pos" : info.delta < 0 ? "is-neg" : "is-flat";
+        const arrow = info.delta > 0 ? "▲" : info.delta < 0 ? "▼" : "·";
+        return `<tr>
+          <td style="padding:4px 8px;">${escapeHtml(label)}</td>
+          <td style="padding:4px 8px;text-align:center;font-family:var(--font-mono);">${info.first}</td>
+          <td style="padding:4px 8px;text-align:center;font-family:var(--font-mono);">${info.last}</td>
+          <td style="padding:4px 8px;text-align:center;"><span class="tool-delta ${dir}">${arrow}${Math.abs(info.delta)}</span></td>
+          <td style="padding:4px 8px;color:var(--text-tertiary);font-size:10px;">${info.first_date} → ${info.last_date} · ${info.n_obs} grades</td>
+        </tr>`;
+      }).join("");
+    return `<div class="detail-title">Tool development <span class="detail-title-sub">consensus delta over career · lifetime first → latest</span></div>
+      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr style="color:var(--text-tertiary);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid var(--border-light);">
+            <th style="padding:4px 8px;text-align:left;">Tool</th>
+            <th style="padding:4px 8px;text-align:center;">First</th>
+            <th style="padding:4px 8px;text-align:center;">Latest</th>
+            <th style="padding:4px 8px;text-align:center;">Δ</th>
+            <th style="padding:4px 8px;text-align:left;">Window</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  })();
+
   // Private notes — localStorage-backed, never leaves the browser. The
   // textarea slots into the right sidebar so the main column stays
   // dedicated to chart + career + sources. Hidden on graduates because
@@ -13226,6 +13467,7 @@ function renderPlayerDetail(key) {
     ["Health",  "detail-health",    !!healthSection],
     ["Savant",  "detail-savant",    !!savantSection],
     ["Arsenal", "detail-arsenal",   !!arsenalSection],
+    ["Tool dev", "detail-tooldev",  !!toolDevSection],
     ["Projection", "detail-projection", !!projectionArcSection],
     ["FG scout",   "detail-fgscout",    !!fgScoutNotesSection],
     ["FG report",  "detail-fgreport",   !!fgReportSection],
@@ -13267,6 +13509,7 @@ function renderPlayerDetail(key) {
     wrap("detail-tools",   toolsSection + (sourceHistorySection || "")),
     wrap("detail-savant",  savantSection),
     wrap("detail-arsenal", arsenalSection),
+    wrap("detail-tooldev",    toolDevSection),
     wrap("detail-projection", projectionArcSection),
     wrap("detail-fgscout",    fgScoutNotesSection),
     contractDetailsSection,
@@ -13591,7 +13834,8 @@ function renderFarmDetail(orgCode) {
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">${makeTierBar(org.prospects)}</div>
     </div>
-    ${makeFarmReportCard(org)}`;
+    ${makeFarmReportCard(org)}
+    ${makeFarmToolDevCard(org)}`;
 
   // Per-tier counts live in the tier-bar in the header; tiles cover the
   // remaining at-a-glance facts (age, stock direction, young-for-level)

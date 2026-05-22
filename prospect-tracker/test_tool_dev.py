@@ -1,0 +1,190 @@
+"""Tests for the prospect tool-development tracking system.
+
+Covers:
+  * `_compute_tool_deltas` — per-prospect, per-tool lifetime delta
+    computation (first observation → latest) from a list of consensus
+    points.
+  * `TOOL_GROUPS` — the canonical tool-key grouping used to derive
+    PowerDvM+ (= mean of game_pwr + raw_pwr) and friends.
+  * End-to-end sanity check against the on-disk `data/timeseries.json`
+    so a future export regression (e.g. accidentally stripping
+    `tool_deltas` or `tool_dev`) breaks the suite. Skipped when the
+    JSON file isn't present (vanilla CI without data)."""
+
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).parent))
+
+from storage import TOOL_GROUPS, _compute_tool_deltas
+
+_TIMESERIES = Path(__file__).parent / "data" / "timeseries.json"
+
+
+# ---------------------------------------------------------------------------
+# _compute_tool_deltas — per-prospect helper
+# ---------------------------------------------------------------------------
+
+class TestComputeToolDeltas:
+    def test_lifetime_delta_first_to_last(self):
+        # Two snapshots, hit 50 → hit 55, delta = +5.
+        out = _compute_tool_deltas([
+            {"snapshot_date": "2023-01-01",
+             "tools_consensus": {"hit": 50.0}},
+            {"snapshot_date": "2024-08-15",
+             "tools_consensus": {"hit": 55.0}},
+        ])
+        assert out["hit"]["delta"] == 5.0
+        assert out["hit"]["first"] == 50.0
+        assert out["hit"]["last"] == 55.0
+        assert out["hit"]["first_date"] == "2023-01-01"
+        assert out["hit"]["last_date"] == "2024-08-15"
+        assert out["hit"]["n_obs"] == 2
+
+    def test_negative_delta(self):
+        out = _compute_tool_deltas([
+            {"snapshot_date": "2023-01-01",
+             "tools_consensus": {"speed": 60.0}},
+            {"snapshot_date": "2024-08-15",
+             "tools_consensus": {"speed": 55.0}},
+            {"snapshot_date": "2025-02-01",
+             "tools_consensus": {"speed": 50.0}},
+        ])
+        assert out["speed"]["delta"] == -10.0
+        assert out["speed"]["n_obs"] == 3
+
+    def test_skips_tools_with_one_observation(self):
+        # `raw_pwr` only appears once → not in output (no delta computable).
+        out = _compute_tool_deltas([
+            {"snapshot_date": "2023-01-01",
+             "tools_consensus": {"hit": 50.0, "raw_pwr": 60.0}},
+            {"snapshot_date": "2024-08-15",
+             "tools_consensus": {"hit": 55.0}},
+        ])
+        assert "hit" in out
+        assert "raw_pwr" not in out
+
+    def test_handles_out_of_order_snapshots(self):
+        # Snapshots passed in reverse date order — sort happens internally.
+        out = _compute_tool_deltas([
+            {"snapshot_date": "2024-08-15",
+             "tools_consensus": {"hit": 55.0}},
+            {"snapshot_date": "2023-01-01",
+             "tools_consensus": {"hit": 50.0}},
+        ])
+        assert out["hit"]["delta"] == 5.0
+        assert out["hit"]["first"] == 50.0
+        assert out["hit"]["last"] == 55.0
+
+    def test_returns_empty_when_no_tools(self):
+        out = _compute_tool_deltas([
+            {"snapshot_date": "2023-01-01", "tools_consensus": {}},
+            {"snapshot_date": "2024-08-15", "tools_consensus": None},
+        ])
+        assert out == {}
+
+    def test_skips_none_values(self):
+        # tools_consensus might carry an explicit None for a tool dropped
+        # by all sources on that cycle — those shouldn't count as obs.
+        out = _compute_tool_deltas([
+            {"snapshot_date": "2023-01-01",
+             "tools_consensus": {"hit": None}},
+            {"snapshot_date": "2024-08-15",
+             "tools_consensus": {"hit": 55.0}},
+        ])
+        assert "hit" not in out  # only 1 valid observation
+
+
+# ---------------------------------------------------------------------------
+# TOOL_GROUPS — canonical groupings used by per-tool DvM+
+# ---------------------------------------------------------------------------
+
+class TestToolGroups:
+    def test_power_groups_both_power_tools(self):
+        # PowerDvM+ averages game_pwr + raw_pwr so an org doesn't get
+        # double-counted for developing both.
+        assert set(TOOL_GROUPS["power"]) == {"game_pwr", "raw_pwr"}
+
+    def test_arm_maps_to_throw_canonical_key(self):
+        # Display name "Arm" is fed by the canonical "throw" key.
+        assert TOOL_GROUPS["arm"] == ["throw"]
+
+    def test_all_canonical_keys_covered(self):
+        # Every canonical tool key from scrapers should appear in at
+        # least one TOOL_GROUPS bucket.
+        from scrapers import HITTER_TOOL_KEYS, PITCHER_TOOL_KEYS
+        all_canonical = set(HITTER_TOOL_KEYS) | set(PITCHER_TOOL_KEYS)
+        all_grouped: set[str] = set()
+        for keys in TOOL_GROUPS.values():
+            all_grouped.update(keys)
+        # Allow scrapers to declare more keys than we group (forward-
+        # compatible) but every group key must be canonical.
+        assert all_grouped <= all_canonical
+
+
+# ---------------------------------------------------------------------------
+# End-to-end sanity against the exported timeseries.json
+# ---------------------------------------------------------------------------
+
+class TestExportedFields:
+    def setup_method(self):
+        if not _TIMESERIES.exists():
+            pytest.skip(f"{_TIMESERIES} not present — skip e2e checks")
+        with _TIMESERIES.open(encoding="utf-8") as fp:
+            self.d = json.load(fp)
+
+    def test_at_least_one_player_has_tool_deltas(self):
+        # Sanity — if NO player has tool_deltas, the export hook is broken.
+        count = sum(1 for p in self.d["players"] if p.get("tool_deltas"))
+        assert count > 0, "no players carry tool_deltas — export hook broken?"
+
+    def test_tool_delta_shape(self):
+        # Find any player with deltas, verify the shape matches.
+        p = next(p for p in self.d["players"] if p.get("tool_deltas"))
+        for tool, info in p["tool_deltas"].items():
+            assert "delta" in info and "first" in info and "last" in info
+            assert "first_date" in info and "last_date" in info
+            assert "n_obs" in info and info["n_obs"] >= 2
+            assert info["delta"] == round(info["last"] - info["first"], 2)
+
+    def test_every_org_has_tool_dev_field(self):
+        orgs = (list(self.d["org_summary"].values())
+                if isinstance(self.d["org_summary"], dict)
+                else self.d["org_summary"])
+        for o in orgs:
+            assert "tool_dev" in o, f"{o['org']} missing tool_dev"
+            assert "per_tool" in o["tool_dev"]
+            assert "per_tool_dvm_plus" in o["tool_dev"]
+            assert "tools_dvm_plus" in o["tool_dev"]
+
+    def test_tools_dvm_plus_anchored_at_100(self):
+        # League mean of the composite should sit very close to 100
+        # since each per-tool DvM+ is itself anchored at 100. Allow
+        # ±3 wiggle for the per-org-mean-of-means rounding.
+        orgs = (list(self.d["org_summary"].values())
+                if isinstance(self.d["org_summary"], dict)
+                else self.d["org_summary"])
+        vals = [o["tool_dev"]["tools_dvm_plus"] for o in orgs
+                if o["tool_dev"].get("tools_dvm_plus") is not None]
+        assert vals, "no orgs have a composite ToolsDvM+"
+        mean = sum(vals) / len(vals)
+        assert 97 <= mean <= 103, (
+            f"ToolsDvM+ should be anchored at ~100 across the cohort; got {mean:.1f}"
+        )
+
+    def test_tools_dvm_plus_rank_uniqueish(self):
+        orgs = (list(self.d["org_summary"].values())
+                if isinstance(self.d["org_summary"], dict)
+                else self.d["org_summary"])
+        ranks = [o["tool_dev"].get("tools_dvm_plus_rank") for o in orgs
+                 if o["tool_dev"].get("tools_dvm_plus_rank") is not None]
+        # Every populated org has a rank; rank 1 exists; ranks fit in
+        # the 1..n_orgs range.
+        assert ranks, "no populated ranks"
+        assert min(ranks) == 1
+        assert max(ranks) <= len(orgs)

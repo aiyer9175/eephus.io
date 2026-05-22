@@ -20,7 +20,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from fangraphs_csv import _join_report_set
+from fangraphs_csv import _compute_fg_canonical_owners, _disambiguate_key, _join_report_set
 from storage import DB_PATH, Snapshot, init_db, insert_snapshots
 
 
@@ -181,3 +181,94 @@ class TestNameKeyCollision:
         assert len(merged) == 1
         assert merged[0]["fv"] == 45.0
         assert merged[0]["org"] == "DET"
+
+
+# ---------------------------------------------------------------------------
+# Cross-CSV disambiguation (different humans sharing a name across cycles)
+# ---------------------------------------------------------------------------
+
+class TestCrossCsvDisambiguation:
+    """Two distinct humans normalize to the same player_key across
+    multiple FG CSVs. The within-CSV collision rule alone can't fix it
+    because each cycle only has one row for the lesser player. The
+    canonical-owner precomputation routes the lesser human to a suffixed
+    player_key so the prominent prospect's timeline stays clean.
+
+    Real example: Julio Rodriguez (Mariners CF, PID 23697) appears in
+    2021report, 2021updated, 2022report. The 2022updated CSV omits him
+    (he had already graduated to MLB) but DOES contain a different Julio
+    Rodriguez — SFG SIRP, PID sa3007992, FV 35+. Without disambiguation,
+    that pitcher's snapshot ends up on the Mariners CF's timeline,
+    showing a phantom FV=37.5 entry plus FB/CB/sits-velo pitcher tools
+    on a hitter's profile."""
+
+    def _slug_grp(self, slug, *rows):
+        """Build the {summary: path, ...} shape `_compute_fg_canonical_owners`
+        expects — for these tests we'll bypass file I/O by patching
+        `_read_csv_rows` (see fixtures below)."""
+        return {"summary": slug, "_rows": rows}
+
+    def test_canonical_owner_picks_most_frequent_pid(self, monkeypatch):
+        # Build a 4-cycle history: pkey=julio_rodriguez appears with
+        # PID 23697 in 3 cycles and PID sa3007992 in 1. Canonical = 23697.
+        from fangraphs_csv import _read_csv_rows
+        cycles = {
+            "2021report":  [{"Name": "Julio Rodríguez", "PlayerId": "23697",     "FV": "60"}],
+            "2021updated": [{"Name": "Julio Rodríguez", "PlayerId": "23697",     "FV": "60"}],
+            "2022report":  [{"Name": "Julio Rodríguez", "PlayerId": "23697",     "FV": "65"},
+                            {"Name": "Julio Rodriguez", "PlayerId": "sa3007992", "FV": "35+"}],
+            "2022updated": [{"Name": "Julio Rodriguez", "PlayerId": "sa3007992", "FV": "35+"}],
+        }
+        def fake_read(path):
+            return cycles[path]
+        monkeypatch.setattr("fangraphs_csv._read_csv_rows", fake_read)
+        groups = [{"summary": slug} for slug in cycles]
+        owners = _compute_fg_canonical_owners(groups)
+        assert owners.get("julio_rodriguez") == "23697"
+
+    def test_disambiguate_key_bare_when_pid_matches_canonical(self):
+        owners = {"julio_rodriguez": "23697"}
+        assert _disambiguate_key("julio_rodriguez", "23697", owners) \
+            == "julio_rodriguez"
+
+    def test_disambiguate_key_suffixed_when_pid_differs(self):
+        owners = {"julio_rodriguez": "23697"}
+        assert _disambiguate_key("julio_rodriguez", "sa3007992", owners) \
+            == "julio_rodriguez__sa3007992"
+
+    def test_disambiguate_key_passthrough_when_no_collision(self):
+        # Player_key not in owners map → no disambiguation, bare key.
+        owners = {"some_other_player": "12345"}
+        assert _disambiguate_key("aaron_judge", "592450", owners) \
+            == "aaron_judge"
+
+    def test_disambiguate_key_all_noid_sentinel(self):
+        # Edge case: every colliding row is PID-less. Each row gets a
+        # suffix; canonical owner is the literal sentinel.
+        owners = {"todd_peterson": "__all_noid__"}
+        assert _disambiguate_key("todd_peterson", None, owners) \
+            == "todd_peterson__noid"
+        assert _disambiguate_key("todd_peterson", "sa1234", owners) \
+            == "todd_peterson__sa1234"
+
+    def test_julio_rodriguez_2022updated_not_under_canonical_key(self):
+        """Top-level integration: after the cross-CSV fix runs, the
+        Mariners CF (canonical julio_rodriguez) must NOT have a 2022updated
+        FG snapshot — the only "Julio Rodriguez" in that cycle is the SFG
+        SIRP, and his data belongs under a different player_key."""
+        if not DB_PATH.exists():
+            pytest.skip(f"prospects.db not at {DB_PATH}; skip")
+        con = sqlite3.connect(str(DB_PATH))
+        rows = con.execute(
+            "SELECT fv FROM snapshots "
+            "WHERE player_key='julio_rodriguez' "
+            "  AND source='fangraphs' "
+            "  AND interval_label='2022updated'"
+        ).fetchall()
+        con.close()
+        assert not rows, (
+            f"Mariners Julio Rodriguez should have no 2022updated FG "
+            f"snapshot (he had graduated to MLB by August 2022). "
+            f"Found: {rows}. The SFG SIRP's snapshot should live under "
+            f"julio_rodriguez__sa3007992 instead."
+        )
