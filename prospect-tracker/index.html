@@ -723,8 +723,8 @@
       grid-template-columns: 32px 1.6fr 0.45fr 0.4fr 0.4fr 1.0fr 0.6fr;
     }
     .col-header.is-leaderboard, .player-row.is-leaderboard {
-      /* # | Player | Level | FV | Stat value | Supporting line */
-      grid-template-columns: 32px 1.8fr 0.55fr 0.45fr 0.85fr 1.5fr;
+      /* # | Player | Level | FV | Stat value | Trend | Supporting line */
+      grid-template-columns: 32px 1.8fr 0.55fr 0.45fr 0.85fr 0.55fr 1.5fr;
     }
     .col-header {
       font-family: var(--font-sans);
@@ -7237,6 +7237,7 @@ function renderLeaderboards() {
     <span>Level</span>
     <span style="text-align:center;">FV</span>
     <span style="text-align:right;">${escapeHtml(cfg.label)}</span>
+    <span style="text-align:center;" title="Year-over-year ${escapeHtml(cfg.label)} trend across this prospect's career (oldest → newest season).">Trend</span>
     <span title="Stat-specific context: for OPS shows slash + HR/SB; for ERA shows IP + K/9; etc.">Context</span>
   </div>`;
 
@@ -7253,9 +7254,32 @@ function renderLeaderboards() {
   // mean and gets the strong color treatment; the tail closer to mean
   // stays muted.
   const _heatValues = pool.map(({ v }) => v).filter(v => v != null);
+  // Per-prospect career trend for the active stat. Reads ALL rows
+  // (any level, any season) sorted chronologically so the spark shows
+  // the prospect's arc, not just one year.
+  const trendField = cfg.field || statKey;
   const rows = ranked.map(({ p, r, v }, i) => {
     const fvLabel = p.fv_close != null ? Math.round(p.fv_close) : "—";
     const heat = cellHeatColor(v, _heatValues, !!cfg.hi);
+    // Stat-side gate (hitter/pitcher) + same field-name fallback used
+    // upstream. Skip the season being viewed only if there's at least
+    // one prior data point — keep it if it's the only one.
+    const trendVals = (p.career_stats || [])
+      .filter(row =>
+        (cfg.side !== "hit" || !row.is_pitcher) &&
+        (cfg.side !== "pit" || row.is_pitcher) &&
+        row.level !== "MLB" &&
+        row[trendField] != null
+      )
+      .sort((a, b) => (a.season || 0) - (b.season || 0))
+      .map(row => Number(row[trendField]));
+    const trendCell = trendVals.length >= 2
+      ? _miniSparkline(trendVals, {
+          width: 56, height: 18,
+          stroke: cfg.hi ? "var(--up)" : "var(--down)",
+          fill: "rgba(78, 224, 255, 0.12)",
+        })
+      : `<span style="color:var(--text-tertiary);font-size:10px;">—</span>`;
     return `
       <div class="player-row is-leaderboard" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
         <div class="rank-num">${i + 1}</div>
@@ -7269,16 +7293,29 @@ function renderLeaderboards() {
         <div><span class="level-pill ${r.level === "MLB" ? "level-mlb" : "level-neutral"}">${escapeHtml(r.level || "—")}</span></div>
         <div style="text-align:center;">${fvLabel !== "—" ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div style="text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:700;color:${heat.fg};background:${heat.bg};padding:4px 8px;border-radius:var(--radius-sm);">${cfg.fmt(v)}</div>
+        <div style="text-align:center;" title="${trendVals.length} season${trendVals.length === 1 ? "" : "s"} of ${escapeHtml(cfg.label)} data">${trendCell}</div>
         <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${cfg.support(r)}</div>
       </div>`;
   }).join("");
 
   document.getElementById("leaderboard-rows").innerHTML = header + rows;
-  // Phase 3 viz lands here (cohort histogram + top-10 sparkline card).
-  // Reset on each render so stale viz from a prior stat/level doesn't
-  // linger; Phase 3 fns will fill it in.
+  // Phase 3 viz: cohort histogram showing where the top-10 sits in the
+  // full qualifying-prospect distribution. The vertical dashed line +
+  // cyan highlight bin makes the percentile context obvious.
   const vizSlot = document.getElementById("leaderboard-viz");
-  if (vizSlot) vizSlot.innerHTML = "";
+  if (vizSlot) {
+    const allValues = pool.map(({ v }) => v);
+    // 10th-place threshold for the highlight band. Falls back to the
+    // last ranked entry if the pool is shorter than 10.
+    const tenthIdx = Math.min(9, ranked.length - 1);
+    const threshold = ranked[tenthIdx] ? ranked[tenthIdx].v : null;
+    vizSlot.innerHTML = makeCohortHistogram(allValues, {
+      threshold,
+      hi: !!cfg.hi,
+      fmt: cfg.fmt,
+      label: cfg.label,
+    });
+  }
 }
 
 // =============================================================================
@@ -8208,9 +8245,16 @@ function renderGraduates() {
     }
   }
 
+  // Phase 3 P3-F — cohort histogram showing graduation classes per
+  // year stacked by FV-at-graduation tier. Surfaces strong-class vs
+  // weak-class context the date-grouped scroll can't reveal. Sourced
+  // from the UNFILTERED graduates pool so the chart isn't deceptive
+  // when the user has narrowed the table.
+  const cohortChart = makeGradCohortChart(DATA.graduates || [], { years: 6 });
+
   document.getElementById("grad-rows").innerHTML = filtered.length
-    ? banner + body
-    : `<div class="state-message">No graduates match these filters.</div>`;
+    ? cohortChart + banner + body
+    : cohortChart + `<div class="state-message">No graduates match these filters.</div>`;
 }
 
 const SOURCE_LABELS = {
@@ -10664,6 +10708,407 @@ const FV_TIER_COLORS = {
   45: "#5090E0",                  // steel blue — backup/utility band
   40: "#8B8B8B",                  // muted gray — org filler
 };
+// Age-vs-FV scatter for farm detail (Phase 3 P3-B). Visualizes the
+// org's roster as a 2D distribution of age × FV, with point size
+// scaled by composite Tools+ when available (bigger dot = more polish
+// for the age). Position-bucket hue: hitters cyan, pitchers amber,
+// catchers violet. Surfaces shape of the pipeline at a glance — a
+// young/high-FV cluster is a deep system; a wide spray across older
+// ages with mid FV is mostly org filler.
+//
+// Args:
+//   prospects — array of player objects (rosterPlayersAll)
+// Returns: HTML wrapped SVG, or "" if too few plottable points.
+function makeAgeFvScatter(prospects) {
+  // Resolve (age, fv, color, size, label) for each plottable prospect.
+  const POS_COLOR = {
+    C: "var(--neon-violet)",
+    P: "var(--neon-amber)",
+    INF: "var(--neon-cyan)",
+    OF: "var(--up)",
+  };
+  const colorFor = pos => {
+    if (!pos) return "var(--text-secondary)";
+    const bucket = positionBucket ? positionBucket(pos) : pos;
+    return POS_COLOR[bucket] || "var(--text-secondary)";
+  };
+  const points = (prospects || []).map(p => {
+    const age = p.age;
+    const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+    const fv = latest ? latest.consensus_fv_raw : null;
+    if (age == null || fv == null) return null;
+    const toolsPlus = (p.tools || {}).composite_overall_plus;
+    return {
+      age, fv,
+      color: colorFor(p.position),
+      tools_plus: toolsPlus,
+      name: p.player_name || p.player_key,
+      position: p.position || "?",
+      level: (p.statline || {}).level || "?",
+      key: p.player_key,
+    };
+  }).filter(Boolean);
+  if (points.length < 5) return "";
+
+  const W = 480;
+  const H = 260;
+  const PAD_L = 32;
+  const PAD_R = 16;
+  const PAD_T = 14;
+  const PAD_B = 28;
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = H - PAD_T - PAD_B;
+
+  // Domain: clamp to the standard prospect age + FV bands so the axis
+  // is stable across orgs. Soft-extend if data exceeds.
+  const ageMin = Math.min(16, ...points.map(p => p.age));
+  const ageMax = Math.max(26, ...points.map(p => p.age));
+  const fvMin = 35, fvMax = 80;
+  const ageSpan = ageMax - ageMin || 1;
+  const fvSpan = fvMax - fvMin;
+  const xFor = age => PAD_L + ((age - ageMin) / ageSpan) * chartW;
+  const yFor = fv => PAD_T + chartH - ((fv - fvMin) / fvSpan) * chartH;
+
+  // Point radius: 3px baseline + scale 0-4px from Tools+ (or default).
+  const rFor = tp => {
+    if (tp == null) return 3.5;
+    const norm = Math.max(0, Math.min(1, (tp - 90) / 30));
+    return 3 + norm * 4;
+  };
+
+  // Gridlines for the major FV tiers (40, 50, 60, 70) so the eye
+  // anchors. Subtle so they don't compete with the points.
+  const gridStyle = `stroke: var(--border-light); stroke-width: 0.5; stroke-dasharray: 2,3;`;
+  const yTickStyle = `font-family: var(--font-mono); font-size: 9px; fill: var(--text-tertiary);`;
+  const yTicks = [40, 50, 60, 70].map(fv => {
+    const y = yFor(fv);
+    return `<line x1="${PAD_L}" y1="${y}" x2="${PAD_L + chartW}" y2="${y}" style="${gridStyle}"/>
+            <text x="${PAD_L - 4}" y="${y + 3}" text-anchor="end" style="${yTickStyle}">${fv}</text>`;
+  }).join("");
+  const xTicks = [16, 18, 20, 22, 24, 26].filter(a => a >= ageMin && a <= ageMax).map(age => {
+    const x = xFor(age);
+    return `<line x1="${x}" y1="${PAD_T}" x2="${x}" y2="${PAD_T + chartH}" style="${gridStyle}" opacity="0.5"/>
+            <text x="${x}" y="${PAD_T + chartH + 14}" text-anchor="middle" style="${yTickStyle}">${age}</text>`;
+  }).join("");
+
+  // Points sorted so smaller circles render LAST → big polished
+  // prospects don't get hidden behind a noisy 40-tier cluster.
+  const sortedPts = [...points].sort((a, b) => rFor(a.tools_plus) - rFor(b.tools_plus));
+  const dots = sortedPts.map(p => {
+    const cx = xFor(p.age);
+    const cy = yFor(p.fv);
+    const r = rFor(p.tools_plus);
+    const tip = `${p.name} · ${p.position} · age ${p.age.toFixed(1)} · FV ${p.fv.toFixed(1)}${p.tools_plus != null ? ` · Tools+ ${p.tools_plus}` : ""}`;
+    return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}"
+                    fill="${p.color}" opacity="0.65" stroke="${p.color}" stroke-width="0.5">
+      <title>${escapeHtml(tip)}</title>
+    </circle>`;
+  }).join("");
+
+  // Axis titles.
+  const axisTitleStyle = `font-family: var(--font-sans); font-size: 10px; fill: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;`;
+  const xTitle = `<text x="${PAD_L + chartW / 2}" y="${H - 4}" text-anchor="middle" style="${axisTitleStyle}">Age</text>`;
+  const yTitle = `<text x="6" y="${PAD_T + chartH / 2}" text-anchor="middle"
+                        style="${axisTitleStyle}" transform="rotate(-90, 6, ${PAD_T + chartH / 2})">FV</text>`;
+
+  // Color-key legend.
+  const legendItems = [
+    ["C", "var(--neon-violet)"],
+    ["INF", "var(--neon-cyan)"],
+    ["OF", "var(--up)"],
+    ["P", "var(--neon-amber)"],
+  ].map(([label, c]) => `
+    <span style="display:inline-flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);">
+      <span style="display:inline-block;width:8px;height:8px;background:${c};border-radius:50%;"></span>${label}
+    </span>`).join(" ");
+
+  return `<div class="age-fv-scatter" style="margin: var(--space-3) 0;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--space-1);gap:var(--space-3);flex-wrap:wrap;">
+      <span style="font-family: var(--font-sans); font-size: var(--fs-sm); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">
+        Age vs FV — pipeline shape · ${points.length} plottable prospect${points.length === 1 ? "" : "s"}
+      </span>
+      <span style="display:inline-flex;gap:var(--space-3);">${legendItems}</span>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMinYMin meet" style="display:block;max-width:${W}px;">
+      ${yTicks}
+      ${xTicks}
+      ${dots}
+      ${xTitle}
+      ${yTitle}
+    </svg>
+  </div>`;
+}
+
+// Graduates cohort chart (Phase 3 P3-F). Stacked bars per graduation
+// year × FV-at-graduation tier. Lets scouts spot strong vs weak draft
+// classes at a glance. Tiers + colors mirror `.fv-badge` palette so
+// the visual reads as "more 60+ orange = better class."
+//
+// Args:
+//   grads — full array of graduates from DATA.graduates
+//   opts.years — number of recent years to include (default 6)
+// Returns: HTML string with SVG, or "" if too few grads to chart.
+function makeGradCohortChart(grads, opts = {}) {
+  const yearsN = opts.years || 6;
+  const buckets = {}; // year → tier → count
+  const TIERS = [60, 55, 50, 45, 40];  // 60 is "60+"
+  const tierOf = fv => {
+    const n = parseInt(fv, 10);
+    if (isNaN(n)) return 40;
+    if (n >= 60) return 60;
+    if (n >= 55) return 55;
+    if (n >= 50) return 50;
+    if (n >= 45) return 45;
+    return 40;
+  };
+  for (const g of (grads || [])) {
+    if (!g.graduation_date) continue;
+    const y = parseInt(g.graduation_date.slice(0, 4), 10);
+    if (isNaN(y)) continue;
+    const tier = tierOf(g.fv_close ?? g.fv_label);
+    buckets[y] = buckets[y] || Object.fromEntries(TIERS.map(t => [t, 0]));
+    buckets[y][tier]++;
+  }
+  const thisYear = new Date().getFullYear();
+  const years = [];
+  for (let y = thisYear - yearsN + 1; y <= thisYear; y++) years.push(y);
+  const counts = years.map(y => TIERS.map(t => (buckets[y] || {})[t] || 0));
+  const totals = counts.map(arr => arr.reduce((a, b) => a + b, 0));
+  if (totals.reduce((a, b) => a + b, 0) < 5) return "";
+  const maxTotal = Math.max(1, ...totals);
+
+  const W = 600;
+  const H = 140;
+  const PAD_L = 32;
+  const PAD_R = 16;
+  const PAD_T = 8;
+  const PAD_B = 24;
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = H - PAD_T - PAD_B;
+  const bw = chartW / years.length * 0.7;
+  const gap = (chartW - bw * years.length) / years.length;
+
+  const cssVarForTier = t =>
+    `var(--fv-${t}-bg)`;
+
+  const bars = years.map((year, i) => {
+    const x = PAD_L + gap / 2 + i * (bw + gap);
+    const total = totals[i];
+    let yCursor = PAD_T + chartH;
+    const segments = TIERS.map((tier, ti) => {
+      const c = counts[i][ti];
+      if (!c) return "";
+      const segH = (c / maxTotal) * chartH;
+      yCursor -= segH;
+      return `<rect x="${x.toFixed(1)}" y="${yCursor.toFixed(1)}"
+                    width="${bw.toFixed(1)}" height="${segH.toFixed(1)}"
+                    fill="${cssVarForTier(tier)}" stroke="var(--border-light)" stroke-width="0.5">
+        <title>${year}: ${c} graduate${c === 1 ? "" : "s"} at FV ${tier}${tier === 60 ? "+" : ""}</title>
+      </rect>`;
+    }).join("");
+    const xLabel = `<text x="${(x + bw / 2).toFixed(1)}" y="${(H - 8)}" text-anchor="middle"
+                          style="font-family: var(--font-mono); font-size: 10px; fill: var(--text-secondary);">${year}</text>`;
+    const totalLabel = total > 0
+      ? `<text x="${(x + bw / 2).toFixed(1)}" y="${(yCursor - 4).toFixed(1)}" text-anchor="middle"
+              style="font-family: var(--font-mono); font-size: 10px; fill: var(--text-primary); font-weight: 700;">${total}</text>`
+      : "";
+    return segments + xLabel + totalLabel;
+  }).join("");
+
+  // Y-axis: just min / max so the chart reads quickly.
+  const yLabelStyle = `font-family: var(--font-mono); font-size: 9px; fill: var(--text-tertiary);`;
+  const yAxis = `
+    <text x="${PAD_L - 4}" y="${(PAD_T + chartH).toFixed(1)}" text-anchor="end" style="${yLabelStyle}">0</text>
+    <text x="${PAD_L - 4}" y="${(PAD_T + 8).toFixed(1)}" text-anchor="end" style="${yLabelStyle}">${maxTotal}</text>
+  `;
+
+  // Legend strip — tier color → label.
+  const legendItems = TIERS.map(t => `
+    <span style="display:inline-flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);">
+      <span style="display:inline-block;width:10px;height:10px;background:${cssVarForTier(t)};border:1px solid var(--border-light);border-radius:2px;"></span>
+      FV ${t}${t === 60 ? "+" : ""}
+    </span>`).join(" ");
+
+  return `<div class="grad-cohort-chart" style="margin: var(--space-3) 0;">
+    <div style="font-family: var(--font-sans); font-size: var(--fs-sm); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-bottom: var(--space-1);">
+      Graduate classes — last ${yearsN} years, stacked by FV at graduation
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" style="display:block;">
+      ${bars}
+      ${yAxis}
+    </svg>
+    <div style="display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-1);">${legendItems}</div>
+  </div>`;
+}
+
+// Farm cross-org heatmap (Phase 3 P3-A). Renders all 30 orgs in a
+// vertical strip with three columns (1y / 3y / 5y DvM+). Each cell's
+// hue + opacity encodes the org's deviation from league-mean (100):
+// green ↑ for above-mean development pace, red ↓ for below, opacity
+// scales with magnitude. The composite-ranked top orgs sit at the top
+// of the strip so a glance ranks the league.
+//
+// Args:
+//   orgs — array of org_summary entries (one per MLB org)
+// Returns: HTML string with a labelled SVG.
+function makeFarmHeatmap(orgs) {
+  const WINDOWS = ["1y", "3y", "5y"];
+  // Sort by composite farm_score descending so the top orgs land at
+  // the top of the heatmap. Stable secondary by org name for ties.
+  const sorted = [...(orgs || [])].sort((a, b) =>
+    ((b.farm_score ?? -999) - (a.farm_score ?? -999)) ||
+    (a.org || "").localeCompare(b.org || ""));
+  if (sorted.length < 5) return "";
+  // Layout constants: row height 16px, label column 56px, cell w 78px.
+  const ROW_H = 16;
+  const LABEL_W = 56;
+  const CELL_W = 78;
+  const HEADER_H = 22;
+  const W = LABEL_W + CELL_W * WINDOWS.length;
+  const H = HEADER_H + sorted.length * ROW_H;
+
+  // Cell shading: clamp DvM+ deviation to ±20 (one standard dev ~10).
+  // Use --up / --down tokens so theme flips automatically.
+  const cellFill = (dvm) => {
+    if (dvm == null) return { color: "var(--bg-tertiary)", opacity: 0.30 };
+    const delta = dvm - 100;
+    const mag = Math.min(1, Math.abs(delta) / 20);
+    const color = delta >= 0 ? "var(--up)" : "var(--down)";
+    // Min 0.10 opacity so empty/zero cells still register; max 0.85.
+    const opacity = 0.10 + mag * 0.75;
+    return { color, opacity };
+  };
+
+  // Header row — window labels.
+  const labelStyle = `font-family: var(--font-sans); font-size: 10px; fill: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;`;
+  const header = WINDOWS.map((w, i) => {
+    const x = LABEL_W + i * CELL_W + CELL_W / 2;
+    return `<text x="${x}" y="14" text-anchor="middle" style="${labelStyle}">${w} DvM+</text>`;
+  }).join("");
+
+  // One <g> per org row: label + 3 cells + cell-text.
+  const rowsSvg = sorted.map((org, idx) => {
+    const y = HEADER_H + idx * ROW_H;
+    const orgLabel = `<text x="${LABEL_W - 6}" y="${y + ROW_H / 2 + 3}" text-anchor="end" style="font-family: var(--font-mono); font-size: 10px; fill: var(--text-secondary); font-weight: 600;">${escapeHtml(org.org || "?")}</text>`;
+    const cells = WINDOWS.map((w, i) => {
+      const dvm = (org.dvm_plus || {})[w];
+      const { color, opacity } = cellFill(dvm);
+      const cx = LABEL_W + i * CELL_W;
+      const valText = dvm == null
+        ? "—"
+        : String(Math.round(dvm));
+      const valColor = dvm == null
+        ? "var(--text-tertiary)"
+        : (Math.abs(dvm - 100) >= 12 ? "var(--text-on-accent)" : "var(--text-primary)");
+      const tip = `${org.org}: ${w} DvM+ ${dvm == null ? "no data" : `= ${dvm} (${dvm > 100 ? "+" : ""}${dvm - 100} vs league)`}`;
+      return `<g>
+        <rect x="${cx}" y="${y + 1}" width="${CELL_W - 2}" height="${ROW_H - 2}" fill="${color}" opacity="${opacity.toFixed(2)}" rx="2"/>
+        <text x="${cx + CELL_W / 2}" y="${y + ROW_H / 2 + 3}" text-anchor="middle"
+              style="font-family: var(--font-mono); font-size: 10px; font-weight: 700; fill: ${valColor}; pointer-events: none;">${valText}</text>
+        <title>${tip}</title>
+      </g>`;
+    }).join("");
+    return orgLabel + cells;
+  }).join("");
+
+  return `<div class="farm-heatmap" style="margin: var(--space-3) 0;">
+    <div style="font-family: var(--font-sans); font-size: var(--fs-sm); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-bottom: var(--space-1);">
+      League-wide development pace (DvM+ vs window — 100 = league mean)
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMinYMin meet" style="display:block;max-width:${W}px;">
+      ${header}
+      ${rowsSvg}
+    </svg>
+  </div>`;
+}
+
+// Cohort histogram (Phase 3 P3-D). Bins a stat's full distribution
+// across the qualifying-prospects pool into ~20 buckets, then renders
+// the result as a horizontal SVG strip. The bucket(s) containing the
+// `threshold` (typically the top-10 cutoff) glow cyan so the reader
+// sees where their leaderboard top-N sits in the wider distribution.
+//
+// Args:
+//   values    — array of numbers (the stat's distribution; pool[].v)
+//   opts.threshold — numeric cutoff above which the bin tints cyan
+//                    (NaN/null disables the highlight)
+//   opts.hi   — true if higher is better (default: true). When false,
+//               the highlight tints values BELOW threshold instead.
+//   opts.fmt  — value formatter for tooltips (default: 2-decimal)
+//   opts.label — short label shown above the histogram
+//   opts.width / opts.height — SVG dims, default 600 × 80
+function makeCohortHistogram(values, opts = {}) {
+  const W = opts.width || 600;
+  const H = opts.height || 80;
+  const PAD = 4;
+  const N_BINS = 24;
+  const xs = (values || []).map(Number).filter(v => !isNaN(v));
+  if (xs.length < 5) return "";
+  const hi = opts.hi !== false;
+  const lo = Math.min(...xs);
+  const hiV = Math.max(...xs);
+  const span = (hiV - lo) || 1;
+  const binW = span / N_BINS;
+  const bins = new Array(N_BINS).fill(0);
+  for (const v of xs) {
+    const idx = Math.min(N_BINS - 1, Math.max(0, Math.floor((v - lo) / binW)));
+    bins[idx]++;
+  }
+  const maxCount = Math.max(1, ...bins);
+  const bw = (W - PAD * 2) / N_BINS;
+  const fmt = opts.fmt || (v => v.toFixed(2));
+  const threshold = (opts.threshold != null && !isNaN(opts.threshold))
+    ? Number(opts.threshold) : null;
+  const bars = bins.map((c, i) => {
+    const x = PAD + i * bw;
+    const binLow = lo + i * binW;
+    const binHi = binLow + binW;
+    const inHighlight = threshold == null
+      ? false
+      : hi ? binHi >= threshold : binLow <= threshold;
+    const fill = inHighlight ? "var(--neon-cyan)" : "var(--border)";
+    const opacity = c ? (inHighlight ? 0.85 : 0.55) : 0.10;
+    const barH = (c / maxCount) * (H - PAD * 2 - 14);
+    const y = H - PAD - 14 - barH;
+    const tip = `${c} prospect${c === 1 ? "" : "s"} between ${fmt(binLow)} and ${fmt(binHi)}`;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${Math.max(1, bw - 1).toFixed(1)}" height="${Math.max(0, barH).toFixed(1)}" fill="${fill}" opacity="${opacity}"><title>${tip}</title></rect>`;
+  }).join("");
+  // X-axis labels: low / mid / high so the reader anchors the range
+  // without the chart turning into a tick parade.
+  const midV = lo + span / 2;
+  const labelStyle = `font-family: var(--font-mono); font-size: 9px; fill: var(--text-tertiary);`;
+  const axis = `
+    <text x="${PAD}" y="${H - 2}" style="${labelStyle}">${fmt(lo)}</text>
+    <text x="${W / 2}" y="${H - 2}" text-anchor="middle" style="${labelStyle}">${fmt(midV)}</text>
+    <text x="${W - PAD}" y="${H - 2}" text-anchor="end" style="${labelStyle}">${fmt(hiV)}</text>
+  `;
+  // Threshold marker line — vertical rule + small label.
+  let thrLine = "";
+  if (threshold != null && threshold >= lo && threshold <= hiV) {
+    const tx = PAD + ((threshold - lo) / span) * (W - PAD * 2);
+    thrLine = `
+      <line x1="${tx.toFixed(1)}" y1="${PAD}" x2="${tx.toFixed(1)}" y2="${H - PAD - 14}"
+            stroke="var(--neon-cyan)" stroke-width="1" stroke-dasharray="2,3" opacity="0.8"/>
+      <text x="${tx.toFixed(1)}" y="${PAD + 8}" text-anchor="middle"
+            style="font-family: var(--font-mono); font-size: 9px; fill: var(--neon-cyan); font-weight: 700;">
+        top 10
+      </text>
+    `;
+  }
+  const labelLine = opts.label ? `
+    <div style="font-family: var(--font-sans); font-size: var(--fs-sm); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-bottom: var(--space-1);">
+      ${escapeHtml(opts.label)} · distribution across ${xs.length} qualifying prospect${xs.length === 1 ? "" : "s"}
+    </div>` : "";
+  return `<div class="cohort-histogram" style="margin: var(--space-3) 0;">
+    ${labelLine}
+    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" style="display:block;">
+      ${bars}
+      ${thrLine}
+      ${axis}
+    </svg>
+  </div>`;
+}
+
 function makeFvHistogram(prospects, opts) {
   opts = opts || {};
   const counts = Object.fromEntries(FV_HIST_TIERS.map(t => [t, 0]));
@@ -11364,7 +11809,18 @@ function renderFarmSystems() {
   const dividerRow = (pinned.length && rest.length)
     ? `<div class="farm-divider">All farms</div>`
     : "";
-  document.getElementById("farm-rows").innerHTML = header + pinnedRows + dividerRow + restRows;
+  // Phase 3 P3-A — cross-org DvM+ heatmap at the top of the section.
+  // Hidden when the user has filtered down to a small subset (the
+  // heatmap is a "league-wide context" tool; a 3-org view doesn't
+  // benefit from one). Pinned + rest combined here so search-filtered
+  // sub-views still see the league snapshot.
+  const heatmapHtml = (orgs.length >= 12)
+    ? makeFarmHeatmap(DATA.org_summary
+        ? (Array.isArray(DATA.org_summary) ? DATA.org_summary : Object.values(DATA.org_summary))
+        : [])
+    : "";
+  document.getElementById("farm-rows").innerHTML =
+    heatmapHtml + header + pinnedRows + dividerRow + restRows;
 
   // Snapshot the current ranks AFTER the DOM lands — defer via rAF so a
   // subsequent re-render still has the previous-visit values to compare
@@ -15669,6 +16125,8 @@ function renderFarmDetail(orgCode) {
           <button class="chip${state.depthSort === "eta" ? " active" : ""}" data-depth-sort="eta" type="button" title="Soonest ETA first, FV as tiebreaker. Prospects without an ETA sink to the bottom.">ETA</button>
         </div>
         ${makePositionDepthChart(rosterPlayersAll, state.depthSort || "fv")}
+        <div class="detail-title">Age vs FV scatter <span class="detail-title-sub">Each dot is one prospect — point size scales with composite Tools+ when published, hue encodes position bucket</span></div>
+        ${makeAgeFvScatter(rosterPlayersAll)}
         <div class="detail-title">Acquisition spending <span class="detail-title-sub">Bonus pool dollars — International FA vs Draft, 2021-present</span></div>
         ${makeSpendingBlock(org)}
         <div class="detail-title">Tracked prospects (${rosterPlayers.length}${
