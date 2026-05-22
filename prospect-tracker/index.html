@@ -1679,18 +1679,22 @@
          tier-warm (score 75-84): amber glow, "watch list" energy.
          tier-hot  (score 85+):   red-hot, "this guy is moving" alert.
        Sits in the inline badge strip on active-list rows. */
-    .row-tag.breakout-pill {
+    /* BOOM / BUST graduate pills — replaces the old breakout pill
+       (removed 2026-05). Anchored on WAG (WAR Above Grade) with a
+       sample-size floor; only surfaces on graduates clearly above /
+       below their FV-implied WAR. */
+    .row-tag.boom-bust-pill {
       font-weight: 700;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       padding: 1px 6px;
     }
-    .row-tag.breakout-pill.tier-warm {
-      background: rgba(201, 162, 39, 0.18);
-      color: var(--neon-amber);
-      border-color: var(--neon-amber);
+    .row-tag.boom-bust-pill.tier-boom {
+      background: rgba(34, 197, 94, 0.18);
+      color: var(--neon-green);
+      border-color: var(--neon-green);
     }
-    .row-tag.breakout-pill.tier-hot {
+    .row-tag.boom-bust-pill.tier-bust {
       background: rgba(185, 28, 28, 0.18);
       color: var(--down);
       border-color: var(--down);
@@ -2088,11 +2092,15 @@
       gap: var(--space-4);
     }
     .farm-row .farm-row-panel { display: none; }
-    /* Card-mode layout — flips the grid into a card stack for narrow
-       viewports or when the user picks "Cards" in the View group. */
+    /* Card-mode layout — the DEFAULT view for the Farm Systems list.
+       Each org renders as a hero tile: logo + name + grade letter at
+       the top, top-3 prospects + sparkline in the middle, key metrics
+       (top-end / depth / trajectory / boom% / bust%) along the bottom.
+       The .farm-row's children are projected into named slots via the
+       order property; missing slots collapse gracefully. */
     .farm-rows-cards #farm-rows {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
       gap: 14px;
     }
     .farm-rows-cards .farm-header { display: none; }
@@ -2102,8 +2110,130 @@
       align-items: stretch;
       gap: 10px;
       padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      transition: border-color 0.15s, transform 0.1s;
+    }
+    .farm-rows-cards .farm-row:hover {
+      border-color: var(--neon-cyan);
+      transform: translateY(-1px);
     }
     .farm-rows-cards .farm-row > * { width: 100%; }
+    /* Card-mode hero — the first 4 row children (rank, logo, org code,
+       grade-letter) get pulled into a horizontal hero row at the top.
+       Display-orchestrated via CSS grid; the source row order doesn't
+       change so a re-flow to table-mode is seamless. */
+    .farm-rows-cards .farm-row .farm-cell-rank,
+    .farm-rows-cards .farm-row .farm-cell-logo,
+    .farm-rows-cards .farm-row .farm-cell-org,
+    .farm-rows-cards .farm-row .farm-cell-grade {
+      display: inline-flex;
+      align-items: center;
+      width: auto;
+    }
+    /* Hero strip: rank + logo + org-id stacked left, grade right. */
+    .farm-rows-cards .farm-card-hero {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .farm-rows-cards .farm-card-hero .hero-logo-link img {
+      width: 44px; height: 44px; object-fit: contain;
+    }
+    .farm-rows-cards .farm-card-hero .hero-meta {
+      display: flex; flex-direction: column; gap: 2px;
+      min-width: 0;
+    }
+    .farm-rows-cards .farm-card-hero .hero-name {
+      font-weight: 700; font-size: 14px;
+      color: var(--text-primary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .farm-rows-cards .farm-card-hero .hero-rank {
+      font-size: 11px; color: var(--text-secondary);
+      letter-spacing: 0.03em;
+    }
+    /* Metrics strip — 2-3 short labeled cells at the bottom. */
+    .farm-rows-cards .farm-card-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 6px 12px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      padding-top: 6px;
+      border-top: 1px solid var(--border);
+    }
+    .farm-rows-cards .farm-card-metrics .metric-cell {
+      display: flex; flex-direction: column;
+    }
+    .farm-rows-cards .farm-card-metrics .metric-label {
+      color: var(--text-tertiary);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .farm-rows-cards .farm-card-metrics .metric-value {
+      font-weight: 600; color: var(--text-primary);
+      font-size: 13px;
+    }
+    .farm-rows-cards .farm-card-metrics .metric-value.tier-boom { color: var(--neon-green); }
+    .farm-rows-cards .farm-card-metrics .metric-value.tier-bust { color: var(--down); }
+    /* Top prospects strip — show the existing 3-up component prominently. */
+    .farm-rows-cards .farm-card-top-prospects {
+      padding: 4px 0;
+    }
+    /* Share-as-image button — small ⤴ icon. Hover-reveal on list rows,
+       always-visible in detail-page headers. Style scoped via the
+       parent .farm-row / .player-row / .draft-card / etc. */
+    .share-as-image {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s;
+    }
+    .share-as-image:hover {
+      background: var(--neon-cyan);
+      color: var(--bg-primary);
+    }
+    .share-as-image.share-inline {
+      font-size: 10px;
+      padding: 1px 5px;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .farm-row:hover .share-as-image.share-inline,
+    .player-row:hover .share-as-image.share-inline,
+    .draft-card:hover .share-as-image.share-inline,
+    .grad-row:hover .share-as-image.share-inline {
+      opacity: 1;
+    }
+    /* In card mode, reveal the .card-only elements (they ship with
+       inline display:none for back-compat) and hide the now-redundant
+       hero pieces (rank cell, logo cell, org cell, grade cell) since
+       the hero strip already shows them. The non-hero cells (sparkline,
+       top-prospects, depth, etc.) stay visible — they're the meat of
+       the card. */
+    .farm-rows-cards .farm-row .card-only {
+      display: flex !important;
+    }
+    .farm-rows-cards .farm-row > .farm-rank.table-only-cell,
+    .farm-rows-cards .farm-row > .farm-org-cell.table-only-cell,
+    .farm-rows-cards .farm-row > .table-only-cell:nth-of-type(2),
+    .farm-rows-cards .farm-row .farm-grade-cell {
+      display: none;
+    }
+    /* Re-show the grade-cell ONLY inside the hero (where we want it). */
+    .farm-rows-cards .farm-row .farm-card-hero .farm-grade-cell {
+      display: flex !important;
+    }
     /* Hard cap the sparkline container at its column width so a perverse
        render (long badge, browser zoom, etc.) clips cleanly instead of
        bleeding into adjacent cells. */
@@ -2951,6 +3081,31 @@
       color: var(--text-primary);
       border-bottom-color: var(--neon-cyan);
     }
+    /* Tiny cycle-count chip on the source tab when ≥2 historical
+       writeups exist (a 3 means "FG has shipped a writeup for this
+       prospect across 3 distinct cycles"). */
+    .sr-tab-count {
+      font-size: 9px;
+      color: var(--text-tertiary);
+      background: var(--bg-tertiary);
+      padding: 0 4px;
+      border-radius: 6px;
+      margin-left: 4px;
+      vertical-align: 1px;
+    }
+    /* Cycle picker — dropdown beneath the source tab. Sits flush with
+       the report card. */
+    .sr-cycle-picker {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 11px;
+      padding: 2px 6px;
+      margin-bottom: 8px;
+      max-width: 100%;
+    }
+    .sr-cycle-body.is-hidden { display: none; }
     .sr-tab.is-empty {
       color: var(--text-tertiary); opacity: 0.35;
       cursor: not-allowed;
@@ -4384,6 +4539,7 @@
     <button class="section-tab" data-section="graduates">Graduates</button>
     <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
+    <button class="section-tab" data-section="charts" title="Build custom scatter plots: pick X/Y axes from age, height, FV, tools, and per-org metrics. Optional trendline with R².">Charts</button>
     <button class="section-tab" data-section="glossary" title="Stats, indices, scouting concepts, and methodology — every term used on the site">Glossary</button>
     <button class="section-tab" data-section="watchlist" title="Your starred prospects and farm systems — private to this browser">Watchlist<span class="section-tab-count" id="watchlist-tab-count"></span></button>
     <span class="section-count" id="section-count"></span>
@@ -4424,7 +4580,7 @@
     <div class="filter-group">
       <span class="filter-label">FV agreement</span>
       <button class="chip active" data-filter-spread="all" title="Show every active prospect regardless of source spread">All</button>
-      <button class="chip" data-filter-spread="wide" title="Only show prospects where ≥2 sources disagree by at least 10 grade points (the 'wide spread' / breakout-candidate filter)">Wide FV spread</button>
+      <button class="chip" data-filter-spread="wide" title="Only show prospects where ≥2 sources disagree by at least 10 grade points — useful for finding consensus-split players">Wide FV spread</button>
     </div>
     <div class="filter-group">
       <span class="filter-label" title="Filter prospects by a specific tool grade meeting a minimum threshold. 'Any tool' matches when any one canonical 20-80 grade meets the threshold; pick a specific tool to isolate it.">Tool grade</span>
@@ -4690,8 +4846,8 @@
       </div>
       <div class="filter-group">
         <span class="filter-label">View</span>
-        <button class="chip active" data-farm-view="table">Table</button>
-        <button class="chip"        data-farm-view="cards">Cards</button>
+        <button class="chip"        data-farm-view="table">Table</button>
+        <button class="chip active" data-farm-view="cards">Cards</button>
       </div>
     </div>
     <div id="farm-rows"></div>
@@ -4758,6 +4914,37 @@
     <div id="leaderboard-rows"></div>
   </div>
 
+  <!-- Charts — user-built scatter plots with optional trendline + R².
+       Two modes: prospects (each dot = one active prospect) and farms
+       (each dot = one MLB org). Axes drawn from a shared metadata map
+       in JS so adding a new field = one entry. Share-as-image button
+       below the chart. -->
+  <div id="charts-section" style="display: none;">
+    <div id="charts-controls" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+      <span class="filter-label">Mode</span>
+      <button class="chip active" data-chart-mode="prospects"
+              title="Each dot = one active prospect">Prospects</button>
+      <button class="chip" data-chart-mode="farms"
+              title="Each dot = one MLB farm system">Farms</button>
+      <span class="filter-label" style="margin-left:12px;">X axis</span>
+      <select id="chart-axis-x"></select>
+      <span class="filter-label">Y axis</span>
+      <select id="chart-axis-y"></select>
+      <label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary);margin-left:8px;">
+        <input type="checkbox" id="chart-trendline" checked>
+        Trendline + R²
+      </label>
+      <button class="share-as-image" data-share-target="#chart-canvas-wrap"
+              data-share-filename="chart" style="margin-left:auto;"
+              title="Save this chart as a PNG image">⤴ Save PNG</button>
+    </div>
+    <div id="chart-canvas-wrap" style="background:var(--bg-secondary);border-radius:8px;padding:14px;">
+      <div id="chart-meta" style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;"></div>
+      <svg id="chart-svg" width="100%" viewBox="0 0 760 480" style="background:transparent;font-family:var(--font-sans);"></svg>
+      <div id="chart-stats" style="font-size:11px;color:var(--text-tertiary);margin-top:6px;"></div>
+    </div>
+  </div>
+
   <div id="glossary-section" style="display: none;">
     <div class="filter-bar" id="glossary-filter-bar" style="flex-wrap:wrap;gap:6px;align-items:center;">
       <span class="filter-label">Category</span>
@@ -4811,6 +4998,12 @@
   </div>
 
 </template>
+
+<!-- html2canvas — vendored locally (~200KB). Powers the "Share as image"
+     buttons on prospect / farm / leaderboard / chart-builder surfaces.
+     Loaded async so it doesn't block first paint; the export helper
+     gates on `window.html2canvas` being defined before firing. -->
+<script src="vendor/html2canvas.min.js" defer></script>
 
 <script>
 // =============================================================================
@@ -5430,16 +5623,25 @@ function recentAcqBadgeHTML(p) {
 // can each produce a pill. When 7 pills appear inline the row gets
 // noisy; this helper renders at most `max` visible pills + an "+N"
 // overflow chip that surfaces the rest via a native `title=` tooltip.
-// Phase B1 — Breakout Signal pill. Surfaces when the backend-computed
-// `breakout_score` crosses the 75 threshold: prospect is showing strong
-// FV growth + young-for-level + tool development + green stat flags.
-// Tier coloring: 75-84 orange, 85+ red-hot. Click jumps to detail page.
-function breakoutPillHTML(p) {
-  const s = p && p.breakout_score;
-  if (s == null || s < 75) return "";
-  const tier = s >= 85 ? "tier-hot" : "tier-warm";
-  const tip = `Breakout Signal ${s}/100 — composite of FV growth, age-for-level, tool development, and green stat flags.`;
-  return `<span class="row-tag breakout-pill ${tier}" title="${escapeHtml(tip)}">BREAKOUT</span>`;
+// REMOVED 2026-05: breakoutPillHTML was an active-prospect "trajectory"
+// composite that conflated FV growth with high FV. Replaced by the
+// WAG-anchored BOOM / BUST graduate pills (boomBustPillHTML below) and
+// the per-org boom%/bust% rollups on farm cards.
+
+// BOOM / BUST pill — surfaces only on graduates whose career WAG +
+// sample-size floor place them clearly above (+5 WAR) or below (−2 WAR)
+// their final FV grade's expected WAR. Sub-floor graduates (cup of
+// coffee, <800 PA / <200 IP / <2 seasons) carry no pill; the floor
+// keeps light-sample debuts from being mislabeled.
+function boomBustPillHTML(p) {
+  const lab = p && p.boom_label;
+  if (lab !== "boom" && lab !== "bust") return "";
+  const cw = (p.career_war || {}).career_war;
+  const cwSummary = (cw != null) ? `${cw.toFixed ? cw.toFixed(1) : cw} career WAR` : "career WAR";
+  const tip = lab === "boom"
+    ? `BOOM — outperformed FV-implied WAR projection (${cwSummary}). WAG ≥ +5.`
+    : `BUST — fell short of FV-implied WAR projection (${cwSummary}). WAG ≤ −2.`;
+  return `<span class="row-tag boom-bust-pill tier-${lab}" title="${escapeHtml(tip)}">${lab.toUpperCase()}</span>`;
 }
 
 function _inlineBadgeStrip(p, max = 3) {
@@ -5451,7 +5653,7 @@ function _inlineBadgeStrip(p, max = 3) {
   // still surfaced on the detail-page tile + accordion; on the list it
   // was either redundant (method also shown elsewhere) or visual noise.
   const builders = [
-    typeof breakoutPillHTML       === "function" ? breakoutPillHTML       : null,
+    typeof boomBustPillHTML       === "function" ? boomBustPillHTML       : null,
     typeof toolPlusPillHTML       === "function" ? toolPlusPillHTML       : null,
     typeof healthBadgeHTML        === "function" ? healthBadgeHTML        : null,
     typeof savantInlinePillHTML   === "function" ? savantInlinePillHTML   : null,
@@ -5972,7 +6174,7 @@ function syncToURL() {
   if (state.density     && state.density !== "standard") p.set("density", state.density);
   if (state.search)                       p.set("q",     state.search);
   if (state.farmSort    !== "farm_rank")  p.set("farm",  state.farmSort);
-  if (state.farmViewMode && state.farmViewMode !== "table") p.set("farmview", state.farmViewMode);
+  if (state.farmViewMode && state.farmViewMode !== "cards") p.set("farmview", state.farmViewMode);
   if (state.rosterSort  && state.rosterSort  !== "fv")    p.set("rsort", state.rosterSort);
   if (state.glossaryCat && state.glossaryCat !== "all")    p.set("gcat", state.glossaryCat);
   if (state.glossarySearch)                                 p.set("gq",   state.glossarySearch);
@@ -6452,6 +6654,12 @@ const state = {
   // Leaderboard inside the Overseas panel.
   overseasLeague: "all",
   overseasView: "rankings",
+  // Charts tab sub-state. chartMode = "prospects" | "farms"; chartX /
+  // chartY default to the first two entries of the active mode's axis
+  // list (set lazily inside renderCharts).
+  chartMode: "prospects",
+  chartX: null,
+  chartY: null,
   // Class filter — restrict to prospects acquired in a specific year
   // (draft year for drafted players; IFA signing year for IFAs). "all"
   // means no class restriction. Drives the "Class of YYYY" dropdown
@@ -6484,7 +6692,7 @@ const state = {
   // View mode for the farm system list — "table" (default) or "cards".
   // Cards mode flips the row layout into a grid of vertical stacks
   // (auto-fit columns), better for narrow viewports + visual scan.
-  farmViewMode: "table",
+  farmViewMode: "cards",
   // Active form-bar window. Controls the farm-list sparkline (which
   // plots growth above the league mean over the same window) and the
   // value used when sorting by "Trajectory".
@@ -7434,6 +7642,209 @@ function renderWatchlist() {
     `;
   }).join("");
   if (fRowsEl) fRowsEl.innerHTML = fRows;
+}
+
+// =============================================================================
+// CHARTS — user-built scatter plots over prospects or farm systems
+// =============================================================================
+// Axis metadata: key + label + getter (per-entity value extractor) +
+// formatter (for tooltips + axis ticks). Add new axes here and they
+// appear in both the X and Y dropdowns automatically.
+const CHART_AXES = {
+  prospects: [
+    { key: "age",            label: "Age",                getter: p => p.age,                                fmt: v => v.toFixed(1) },
+    { key: "fv",             label: "Consensus FV",       getter: p => (p.points && p.points.length) ? p.points[p.points.length-1].consensus_fv_raw : null, fmt: v => v.toFixed(1) },
+    { key: "overall_rank",   label: "Overall rank",       getter: p => p.overall_rank,                       fmt: v => "#" + v },
+    { key: "rps_plus",       label: "RPS+",               getter: p => (p.statline && p.statline.rps_plus), fmt: v => Math.round(v).toString() },
+    { key: "tools_plus",     label: "Tools+",             getter: p => p.tools_plus,                         fmt: v => Math.round(v).toString() },
+    { key: "height_in",      label: "Height (in)",        getter: p => _heightToInches(p.height || (p.player_info && p.player_info.height)),  fmt: v => v.toFixed(0) + '"' },
+    { key: "weight",         label: "Weight (lb)",        getter: p => parseInt(p.weight || (p.player_info && p.player_info.weight), 10) || null, fmt: v => v.toFixed(0) + "lb" },
+    { key: "eta_year",       label: "ETA year",           getter: p => (p.eta && p.eta.year),                fmt: v => v.toString() },
+    { key: "hit",            label: "Hit grade",          getter: p => _tcOf(p, "hit"),                     fmt: v => v.toFixed(0) },
+    { key: "game_pwr",       label: "Game power",         getter: p => _tcOf(p, "game_pwr"),                fmt: v => v.toFixed(0) },
+    { key: "raw_pwr",        label: "Raw power",          getter: p => _tcOf(p, "raw_pwr"),                 fmt: v => v.toFixed(0) },
+    { key: "speed",          label: "Speed",              getter: p => _tcOf(p, "speed"),                   fmt: v => v.toFixed(0) },
+    { key: "field",          label: "Fielding",           getter: p => _tcOf(p, "field"),                   fmt: v => v.toFixed(0) },
+    { key: "fb",             label: "Fastball",           getter: p => _tcOf(p, "fb"),                      fmt: v => v.toFixed(0) },
+    { key: "cmd",            label: "Command",            getter: p => _tcOf(p, "cmd"),                     fmt: v => v.toFixed(0) },
+  ],
+  farms: [
+    { key: "farm_rank",      label: "Farm rank",          getter: o => o.farm_rank,                          fmt: v => "#" + v },
+    { key: "dvm_plus_3y",    label: "DvM+ (3y)",          getter: o => (o.dvm_plus || {})["3y"],            fmt: v => Math.round(v).toString() },
+    { key: "top_end",        label: "Top-end points",     getter: o => o.top_end_points,                     fmt: v => v.toFixed(1) },
+    { key: "depth",          label: "Depth points",       getter: o => o.depth_points,                       fmt: v => v.toFixed(1) },
+    { key: "trajectory",     label: "Trajectory score",   getter: o => o.trajectory_score,                   fmt: v => v.toFixed(1) },
+    { key: "wag_mean",       label: "WAG mean (grads)",   getter: o => (o.talent_translation || {}).wag_mean, fmt: v => v.toFixed(2) },
+    { key: "boom_pct",       label: "Boom %",             getter: o => (o.talent_translation || {}).boom_pct, fmt: v => v.toFixed(1) + "%" },
+    { key: "bust_pct",       label: "Bust %",             getter: o => (o.talent_translation || {}).bust_pct, fmt: v => v.toFixed(1) + "%" },
+    { key: "ifa_spend_3yr",  label: "IFA spend 3y ($M)",  getter: o => (o.ifa_spending || {}).total_3y_usd ? (o.ifa_spending.total_3y_usd / 1e6) : null, fmt: v => "$" + v.toFixed(1) + "M" },
+    { key: "count",          label: "Prospect count",     getter: o => o.count,                              fmt: v => v.toString() },
+    { key: "avg_age",        label: "Avg age",            getter: o => o.avg_age,                            fmt: v => v.toFixed(1) },
+    { key: "very_young",     label: "Very young count",   getter: o => o.very_young_count,                   fmt: v => v.toString() },
+  ],
+};
+
+// Extract a consensus tool grade from the latest snapshot.
+function _tcOf(p, tool) {
+  const points = p.points || [];
+  if (!points.length) return null;
+  const tc = points[points.length - 1].tools_consensus || {};
+  const v = tc[tool];
+  return v != null ? Number(v) : null;
+}
+
+function _heightToInches(h) {
+  if (!h) return null;
+  // FG ships as `6' 2"` or `6'2"`; normalize.
+  const m = String(h).match(/(\d+)'\s*(\d+)/);
+  if (!m) return null;
+  return parseInt(m[1], 10) * 12 + parseInt(m[2], 10);
+}
+
+function _linearRegression(pts) {
+  // Returns {m, b, r2} via least-squares. `pts` is array of [x, y].
+  const n = pts.length;
+  if (n < 2) return null;
+  let sx = 0, sy = 0, sxy = 0, sxx = 0;
+  for (const [x, y] of pts) { sx += x; sy += y; sxy += x*y; sxx += x*x; }
+  const mxBase = (n * sxx - sx * sx);
+  if (mxBase === 0) return null;
+  const m = (n * sxy - sx * sy) / mxBase;
+  const b = (sy - m * sx) / n;
+  let ssRes = 0, ssTot = 0;
+  const meanY = sy / n;
+  for (const [x, y] of pts) {
+    const yhat = m * x + b;
+    ssRes += (y - yhat) ** 2;
+    ssTot += (y - meanY) ** 2;
+  }
+  const r2 = ssTot === 0 ? 1 : 1 - ssRes / ssTot;
+  return { m, b, r2 };
+}
+
+function renderCharts() {
+  const mode = state.chartMode || "prospects";
+  const axes = CHART_AXES[mode];
+  // Default axes
+  if (!state.chartX || !axes.find(a => a.key === state.chartX)) state.chartX = axes[0].key;
+  if (!state.chartY || !axes.find(a => a.key === state.chartY)) state.chartY = axes[1].key;
+
+  // Populate dropdowns
+  const xSel = document.getElementById("chart-axis-x");
+  const ySel = document.getElementById("chart-axis-y");
+  const opts = axes.map(a => `<option value="${a.key}">${escapeHtml(a.label)}</option>`).join("");
+  xSel.innerHTML = opts;
+  ySel.innerHTML = opts;
+  xSel.value = state.chartX;
+  ySel.value = state.chartY;
+  xSel.onchange = () => { state.chartX = xSel.value; renderCharts(); };
+  ySel.onchange = () => { state.chartY = ySel.value; renderCharts(); };
+
+  // Mode chips
+  document.querySelectorAll("[data-chart-mode]").forEach(b => {
+    b.classList.toggle("active", b.dataset.chartMode === mode);
+    b.onclick = () => { state.chartMode = b.dataset.chartMode; renderCharts(); };
+  });
+
+  const trendCb = document.getElementById("chart-trendline");
+  trendCb.onchange = () => renderCharts();
+  const trendOn = !!trendCb.checked;
+
+  const xAxis = axes.find(a => a.key === state.chartX);
+  const yAxis = axes.find(a => a.key === state.chartY);
+
+  // Build the entity list.
+  let entities = [];
+  if (mode === "prospects") {
+    entities = Object.values(DATA.players || {}).filter(p => p && p.status === "active");
+  } else {
+    entities = (DATA.org_summary || []).filter(o => o && o.org);
+  }
+  const dots = [];
+  for (const e of entities) {
+    const xv = xAxis.getter(e);
+    const yv = yAxis.getter(e);
+    if (xv == null || yv == null || !isFinite(xv) || !isFinite(yv)) continue;
+    dots.push({
+      x: Number(xv), y: Number(yv),
+      label: e.player_name || e.org,
+      key: e.player_key || e.org,
+      org: e.org,
+    });
+  }
+
+  // SVG layout
+  const W = 760, H = 480;
+  const ML = 60, MR = 16, MT = 16, MB = 50;
+  const innerW = W - ML - MR, innerH = H - MT - MB;
+  const svg = document.getElementById("chart-svg");
+  if (!dots.length) {
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="var(--text-tertiary)">No data points with both axes populated.</text>`;
+    document.getElementById("chart-meta").innerHTML = "";
+    document.getElementById("chart-stats").innerHTML = "";
+    return;
+  }
+  const xs = dots.map(d => d.x), ys = dots.map(d => d.y);
+  const xMin = Math.min(...xs), xMax = Math.max(...xs);
+  const yMin = Math.min(...ys), yMax = Math.max(...ys);
+  const xPad = (xMax - xMin) * 0.05 || 1;
+  const yPad = (yMax - yMin) * 0.05 || 1;
+  const xLo = xMin - xPad, xHi = xMax + xPad;
+  const yLo = yMin - yPad, yHi = yMax + yPad;
+  const sx = v => ML + ((v - xLo) / (xHi - xLo)) * innerW;
+  const sy = v => MT + innerH - ((v - yLo) / (yHi - yLo)) * innerH;
+
+  // Trendline
+  let trend = trendOn ? _linearRegression(dots.map(d => [d.x, d.y])) : null;
+  const trendLine = trend
+    ? `<line x1="${sx(xLo).toFixed(1)}" y1="${sy(trend.m * xLo + trend.b).toFixed(1)}"
+              x2="${sx(xHi).toFixed(1)}" y2="${sy(trend.m * xHi + trend.b).toFixed(1)}"
+              stroke="var(--neon-orange)" stroke-width="1.5" stroke-dasharray="6,4"/>`
+    : "";
+
+  // Axis ticks (4 each)
+  const tickCount = 4;
+  const xTicks = [], yTicks = [];
+  for (let i = 0; i <= tickCount; i++) {
+    const tx = xLo + ((xHi - xLo) * i) / tickCount;
+    const ty = yLo + ((yHi - yLo) * i) / tickCount;
+    xTicks.push({ v: tx, x: sx(tx) });
+    yTicks.push({ v: ty, y: sy(ty) });
+  }
+  const xGrid = xTicks.map(t =>
+    `<line x1="${t.x.toFixed(1)}" y1="${MT}" x2="${t.x.toFixed(1)}" y2="${MT+innerH}" stroke="var(--border)" stroke-width="0.5"/>`).join("");
+  const yGrid = yTicks.map(t =>
+    `<line x1="${ML}" y1="${t.y.toFixed(1)}" x2="${ML+innerW}" y2="${t.y.toFixed(1)}" stroke="var(--border)" stroke-width="0.5"/>`).join("");
+  const xTickLabels = xTicks.map(t =>
+    `<text x="${t.x.toFixed(1)}" y="${(MT+innerH+16).toFixed(1)}" text-anchor="middle" font-size="10" fill="var(--text-secondary)">${xAxis.fmt(t.v)}</text>`).join("");
+  const yTickLabels = yTicks.map(t =>
+    `<text x="${(ML-6).toFixed(1)}" y="${(t.y+3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--text-secondary)">${yAxis.fmt(t.v)}</text>`).join("");
+
+  // Dots
+  const dotsHtml = dots.map(d =>
+    `<circle cx="${sx(d.x).toFixed(1)}" cy="${sy(d.y).toFixed(1)}" r="3.5"
+             fill="var(--neon-cyan)" fill-opacity="0.7" stroke="var(--bg-primary)" stroke-width="0.5">
+       <title>${escapeHtml(d.label)} · ${xAxis.label}=${xAxis.fmt(d.x)}, ${yAxis.label}=${yAxis.fmt(d.y)}</title>
+     </circle>`).join("");
+
+  svg.innerHTML = `
+    ${xGrid}${yGrid}
+    <line x1="${ML}" y1="${MT+innerH}" x2="${ML+innerW}" y2="${MT+innerH}" stroke="var(--text-secondary)" stroke-width="1"/>
+    <line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT+innerH}" stroke="var(--text-secondary)" stroke-width="1"/>
+    ${trendLine}
+    ${dotsHtml}
+    ${xTickLabels}${yTickLabels}
+    <text x="${(ML+innerW/2).toFixed(1)}" y="${(H-12).toFixed(1)}" text-anchor="middle"
+          font-size="11" fill="var(--text-primary)" font-weight="600">${escapeHtml(xAxis.label)}</text>
+    <text x="14" y="${(MT+innerH/2).toFixed(1)}" text-anchor="middle"
+          font-size="11" fill="var(--text-primary)" font-weight="600"
+          transform="rotate(-90 14 ${(MT+innerH/2).toFixed(1)})">${escapeHtml(yAxis.label)}</text>
+  `;
+  document.getElementById("chart-meta").innerHTML =
+    `${dots.length} ${mode} plotted · ${escapeHtml(xAxis.label)} vs ${escapeHtml(yAxis.label)}`;
+  document.getElementById("chart-stats").innerHTML = trend
+    ? `Trendline: y = ${trend.m.toFixed(3)}x + ${trend.b.toFixed(2)} · R² = ${trend.r2.toFixed(3)}`
+    : "Trendline disabled";
 }
 
 function renderLeaderboards() {
@@ -8667,7 +9078,12 @@ function _renderDraftCard(p) {
     ? `Consensus sequential rank · raw avg ${p.consensus_rank.toFixed(2)}`
     : "Consensus rank";
 
-  return `<div class="draft-card">
+  return `<div class="draft-card" style="position:relative;">
+    <button class="share-as-image share-inline"
+            data-share-target=".draft-card"
+            data-share-filename="draft-${escapeHtml(p.player_key)}"
+            style="position:absolute;top:6px;right:6px;"
+            title="Save this draft card as a PNG image">⤴</button>
     <div style="display:flex;align-items:center;gap:8px;">
       ${_headshotImg(p.headshot_url, p.player_name)}
       <span style="font-size:16px;font-weight:700;color:var(--text-primary);"
@@ -9217,7 +9633,12 @@ function _renderOverseasCard(p) {
         ${p.signed_bonus_usd ? "" : "~"}${_fmtUSD(bonus)}</span>`
     : "";
 
-  return `<div class="draft-card">
+  return `<div class="draft-card" style="position:relative;">
+    <button class="share-as-image share-inline"
+            data-share-target=".draft-card"
+            data-share-filename="overseas-${escapeHtml(p.player_key)}"
+            style="position:absolute;top:6px;right:6px;"
+            title="Save this overseas card as a PNG image">⤴</button>
     <div style="display:flex;align-items:center;gap:8px;">
       ${_headshotImg(p.headshot_url, p.player_name)}
       ${_flagImg(p.country_flag_svg, p.country_flag, p.country, { large: true })}
@@ -9671,11 +10092,23 @@ function renderGraduates() {
     // "FG writeup" pill — only shows when FanGraphs published a
     // graduate-year writeup for this player. Reads from the
     // scout_reports sidecar (lazy-loaded; the pill silently no-ops
-    // until the sidecar arrives). The label-substring check matches
-    // both "2024graduates" and "2024 Graduated" variants.
-    const fgGradReport = ((DATA.scout_reports || {})[g.player_key] || {}).fangraphs;
-    const hasGradWriteup = !!(fgGradReport
-      && (fgGradReport.label || "").toLowerCase().includes("graduat"));
+    // until the sidecar arrives). Multi-cycle shape (2026-05): the
+    // sidecar entry per source is a LIST of {date, label, text, hash}.
+    // Scan the list for any cycle whose label mentions "graduat".
+    const fgEntries = ((DATA.scout_reports || {})[g.player_key] || {}).fangraphs;
+    const fgGradReport = (() => {
+      if (!fgEntries) return null;
+      if (Array.isArray(fgEntries)) {
+        return fgEntries.find(e => ((e.label || "").toLowerCase().includes("graduat")));
+      }
+      // Legacy single-entry shape (pre-2026-05 sidecars).
+      if (typeof fgEntries === "object"
+          && (fgEntries.label || "").toLowerCase().includes("graduat")) {
+        return fgEntries;
+      }
+      return null;
+    })();
+    const hasGradWriteup = !!fgGradReport;
     const gradWriteupPill = hasGradWriteup
       ? `<span class="grad-pill grad-writeup-pill" title="FanGraphs published a graduate-year writeup — open the detail page to read it (${escapeHtml(fgGradReport.label || "")} · ${escapeHtml(fgGradReport.date || "")})">FG writeup</span>`
       : "";
@@ -10936,6 +11369,104 @@ function escapeHtml(s) {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
 }
+
+// =============================================================================
+// IMAGE EXPORT — html2canvas wrapper for "Share as image" + "Copy as tweet"
+// =============================================================================
+// Captures any DOM element to a 2x DPR PNG. The trigger HTML lives at each
+// share-button surface (.share-as-image[data-share-target=...]); a single
+// delegated click handler reads the target selector, finds the wrapping
+// element, rasterizes it, and triggers a download. Tweet flow opens the
+// Twitter compose intent with the page URL + a short caption pre-filled.
+async function exportElementAsImage(el, opts = {}) {
+  if (!window.html2canvas) {
+    alert("Image export not ready — refresh and try again (vendor script still loading).");
+    return null;
+  }
+  if (!el) return null;
+  const scale = opts.scale || 2;
+  // Add a temporary watermark so re-shared images keep attribution.
+  const watermark = document.createElement("div");
+  watermark.textContent = "prospect-tracker";
+  Object.assign(watermark.style, {
+    position: "absolute", bottom: "8px", right: "12px",
+    fontSize: "10px", color: "rgba(255,255,255,0.55)",
+    fontFamily: "var(--font-sans, sans-serif)",
+    pointerEvents: "none", zIndex: "9999",
+  });
+  // Position-relative on the el so the watermark anchors correctly.
+  const prevPos = el.style.position;
+  if (!prevPos || prevPos === "static") el.style.position = "relative";
+  el.appendChild(watermark);
+  try {
+    const canvas = await html2canvas(el, {
+      scale,
+      backgroundColor: getComputedStyle(document.body).backgroundColor || "#0a0a0a",
+      useCORS: true,
+      logging: false,
+    });
+    return canvas;
+  } catch (err) {
+    console.error("exportElementAsImage failed:", err);
+    return null;
+  } finally {
+    el.removeChild(watermark);
+    el.style.position = prevPos || "";
+  }
+}
+
+async function downloadElementAsPng(el, filename) {
+  const canvas = await exportElementAsImage(el);
+  if (!canvas) return;
+  const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+  if (!blob) return;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename || "prospect-card.png";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function openTweetIntent(text) {
+  const url = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text || "")
+            + "&url=" + encodeURIComponent(location.href);
+  window.open(url, "_blank", "noopener,width=600,height=480");
+}
+
+// Delegated click handler for .share-as-image buttons. Two flavors:
+//   * data-share-target=".css-selector" — picks the nearest ancestor
+//     matching the selector and rasterizes that subtree.
+//   * data-share-tweet="..." — opens a Twitter intent with the given
+//     caption (image-less share, since Twitter doesn't accept inline
+//     image uploads from a query param).
+// The button itself stays out of the captured screenshot (we hide it
+// while html2canvas runs and restore afterward).
+document.addEventListener("click", async (e) => {
+  const btn = e.target && e.target.closest && e.target.closest(".share-as-image");
+  if (!btn) return;
+  e.stopPropagation();
+  e.preventDefault();
+  const tweetText = btn.dataset.shareTweet;
+  if (tweetText !== undefined) {
+    openTweetIntent(tweetText);
+    return;
+  }
+  const sel = btn.dataset.shareTarget;
+  if (!sel) return;
+  const target = btn.closest(sel) || document.querySelector(sel);
+  if (!target) return;
+  const prevDisplay = btn.style.display;
+  btn.style.display = "none";
+  try {
+    const fname = (btn.dataset.shareFilename || "prospect-card") + ".png";
+    await downloadElementAsPng(target, fname);
+  } finally {
+    btn.style.display = prevDisplay || "";
+  }
+});
 
 // Primary team color for each org — used to tint the left-edge accent
 // stripe on every card (player row, farm row, detail-page header). Values
@@ -13303,11 +13834,46 @@ function renderFarmSystems() {
     const pulseHasAny = pulse.up || pulse.down || pulse.acq;
     const pulseTooltip = `Trailing 30 days · ${pulse.up ? `▲${pulse.up} ` : ''}${pulse.down ? `▼${pulse.down} ` : ''}${pulse.acq ? `+${pulse.acq} new ` : ''}${!pulseHasAny ? 'quiet' : ''}`;
     const pulseHtml = "";
+    // Card-mode-only hero strip + metrics footer. CSS rules below
+     // (.farm-rows-cards .card-only-hero/.card-only-metrics) make these
+     // visible ONLY when the parent has the .farm-rows-cards modifier,
+     // and CSS hides the original table cells in card mode (see the
+     // .farm-rows-cards .farm-row > .table-only-cell rule).
+    const tt = org.talent_translation || {};
+    const boomPct = tt.boom_pct;
+    const bustPct = tt.bust_pct;
+    const dvm = ((org.dvm_plus || {})[win]);
+    const heroHtml = `
+      <div class="farm-card-hero card-only" style="display:none;">
+        <a href="#tab=farm&farm=${escapeHtml(org.org)}" class="hero-logo-link" onclick="event.preventDefault();state.section='farm';state.view={type:'farm',org:'${escapeHtml(org.org)}'};render();syncToURL();">
+          ${teamLogoHTML(org.org, "md", fullOrgName(org.org))}
+        </a>
+        <div class="hero-meta">
+          <div class="hero-name">${escapeHtml(fullOrgName(org.org))}</div>
+          <div class="hero-rank">#${displayRank} · ${escapeHtml(org.org)}${alumniBadge}</div>
+        </div>
+        <div class="farm-grade-cell" title="Overall grade · farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}/100">
+          <span class="fg-letter" style="color:${gradeColorVal};font-size:28px;">${escapeHtml(overall)}</span>
+          <button class="share-as-image share-inline"
+                  data-share-target=".farm-row"
+                  data-share-filename="farm-${escapeHtml(org.org)}"
+                  title="Save this farm card as an image">⤴</button>
+        </div>
+      </div>`;
+    const metricsHtml = `
+      <div class="farm-card-metrics card-only" style="display:none;">
+        <div class="metric-cell"><span class="metric-label">${win.toUpperCase()}DvM+</span><span class="metric-value">${dvm != null ? dvm : "—"}</span></div>
+        <div class="metric-cell"><span class="metric-label">Top-End</span><span class="metric-value">${org.top_end_points != null ? org.top_end_points.toFixed(0) : "—"}</span></div>
+        <div class="metric-cell"><span class="metric-label">Depth</span><span class="metric-value">${org.depth_points != null ? org.depth_points.toFixed(0) : "—"}</span></div>
+        <div class="metric-cell" title="Per-org graduate boom % — % of settled grads with WAG ≥ +5"><span class="metric-label">Boom%</span><span class="metric-value tier-boom">${boomPct != null ? boomPct + "%" : "—"}</span></div>
+        <div class="metric-cell" title="Per-org graduate bust % — % of settled grads with WAG ≤ −2"><span class="metric-label">Bust%</span><span class="metric-value tier-bust">${bustPct != null ? bustPct + "%" : "—"}</span></div>
+      </div>`;
     return `
       <div class="farm-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)}">
-        <div class="farm-rank">${displayRank}${deltaChip}</div>
-        <div>${teamLogoHTML(org.org, "md", fullOrgName(org.org))}</div>
-        <div class="farm-org-cell">
+        ${heroHtml}
+        <div class="farm-rank table-only-cell">${displayRank}${deltaChip}</div>
+        <div class="table-only-cell">${teamLogoHTML(org.org, "md", fullOrgName(org.org))}</div>
+        <div class="farm-org-cell table-only-cell">
           <div class="farm-org-name">
             <div class="farm-org">${escapeHtml(fullOrgName(org.org))}</div>
             <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}${alumniBadge}</div>
@@ -13346,6 +13912,7 @@ function renderFarmSystems() {
           <button class="watch-btn${farmWatchlistHas(org.org) ? " is-in" : ""}" data-farm-watch-key="${escapeHtml(org.org)}" type="button" title="${farmWatchlistHas(org.org) ? "Remove farm from watchlist" : "Add farm to watchlist"}">${farmWatchlistHas(org.org) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${farmCompareHas(org.org) ? " is-in" : ""}" data-farm-compare-key="${escapeHtml(org.org)}" type="button" title="${farmCompareHas(org.org) ? "Remove farm from compare" : "Add farm to compare"}" aria-label="Toggle farm compare">${farmCompareHas(org.org) ? "✓" : "+"}</button>
         </div>
+        ${metricsHtml}
       </div>`;
   };
 
@@ -14395,7 +14962,12 @@ function renderPlayerDetail(key) {
         </div>
       </div>
       <div style="text-align:right;">
-        <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Current FV</div>
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">
+          <button class="share-as-image" data-share-target="#player-detail-body"
+                  data-share-filename="${escapeHtml(p.player_key)}"
+                  title="Save this prospect profile as a PNG image">⤴ Share</button>
+          <span>Current FV</span>
+        </div>
         ${fvBadge}
         ${(() => {
           if (p.fv_high == null && p.fv_low == null && p.fv_open == null && p.fv_close == null) return "";
@@ -15611,23 +16183,32 @@ function renderPlayerDetail(key) {
           <div class="sr-meta">Fetching reports sidecar…</div>
         </div>`;
     }
-    const latestBySrc = {}; // {srcKey: {date, label, text}}
+    // entriesBySrc: {srcKey: [{date, label, text, hash}, ...]} newest-first.
+    // Supports both the new multi-cycle shape (2026-05+) and the legacy
+    // single-entry shape so older cached sidecars still render.
+    const entriesBySrc = {};
     if (sidecar) {
-      // Sidecar entry is {source: {date, label, text}} — copy through.
       for (const { key } of SOURCES) {
         const r = sidecar[key];
-        if (r && r.text && String(r.text).trim().length > 50) {
-          latestBySrc[key] = { date: r.date, label: r.label, text: String(r.text).trim() };
+        if (!r) continue;
+        let list = [];
+        if (Array.isArray(r)) {
+          list = r.filter(e => e && e.text && String(e.text).trim().length > 50)
+                  .map(e => ({ date: e.date, label: e.label, text: String(e.text).trim(), hash: e.hash }));
+        } else if (typeof r === "object" && r.text && String(r.text).trim().length > 50) {
+          list = [{ date: r.date, label: r.label, text: String(r.text).trim() }];
         }
+        if (list.length) entriesBySrc[key] = list;
       }
     }
-    const anyPopulated = SOURCES.some(s => latestBySrc[s.key]);
+    const anyPopulated = SOURCES.some(s => entriesBySrc[s.key]);
     if (!anyPopulated) return "";
-    // Default-active tab pick:
-    //   1. For GRADUATES with a FanGraphs grad-year writeup, promote
-    //      the fangraphs tab so the year-end retrospective is the
-    //      first thing scouts see when reviewing a graduate.
-    //   2. Otherwise: source with the most-recent publication date.
+    // Latest entry per source (entries are newest-first).
+    const latestBySrc = {};
+    for (const { key } of SOURCES) {
+      if (entriesBySrc[key]) latestBySrc[key] = entriesBySrc[key][0];
+    }
+    // Default-active tab pick: same logic as before but on latestBySrc.
     let defaultSrc = null;
     const isGrad = p && p.status === "graduated";
     const fgEntry = latestBySrc.fangraphs;
@@ -15645,25 +16226,47 @@ function renderPlayerDetail(key) {
       }
     }
     const tabs = SOURCES.map(s => {
-      const has = !!latestBySrc[s.key];
+      const has = !!entriesBySrc[s.key];
       const cls = has ? (s.key === defaultSrc ? "sr-tab is-active" : "sr-tab")
                       : "sr-tab is-empty";
       const disabled = has ? "" : "disabled";
+      const nCycles = has ? entriesBySrc[s.key].length : 0;
       const title = has
-        ? `${s.label} — published ${latestBySrc[s.key].date}`
+        ? `${s.label} — ${nCycles} cycle${nCycles === 1 ? "" : "s"} on file (latest ${latestBySrc[s.key].date})`
         : `${s.label} — no report on file (no long-form scouting prose ingested from this source yet)`;
-      return `<button class="${cls}" data-sr-source="${escapeHtml(s.key)}" ${disabled} title="${escapeHtml(title)}" type="button">${escapeHtml(s.label)}</button>`;
+      const countTag = nCycles > 1 ? ` <span class="sr-tab-count">${nCycles}</span>` : "";
+      return `<button class="${cls}" data-sr-source="${escapeHtml(s.key)}" ${disabled} title="${escapeHtml(title)}" type="button">${escapeHtml(s.label)}${countTag}</button>`;
     }).join("");
     const bodies = SOURCES.map(s => {
-      const r = latestBySrc[s.key];
+      const list = entriesBySrc[s.key];
+      if (!list || !list.length) return "";
       const hidden = s.key !== defaultSrc;
-      if (!r) return "";
+      // Cycle picker — only show when ≥2 cycles. Each <option> carries
+      // the cycle index so the change handler can swap the body without
+      // re-rendering the whole detail panel.
+      const cyclePicker = list.length >= 2
+        ? `<select class="sr-cycle-picker" data-sr-cycle-picker="${escapeHtml(s.key)}"
+                   title="View an earlier cycle's writeup from this source">
+             ${list.map((e, i) => `<option value="${i}">${escapeHtml(e.label || e.date || "(cycle " + (i+1) + ")")} · ${escapeHtml(e.date || "")}</option>`).join("")}
+           </select>`
+        : "";
+      // Render the LATEST entry by default. Older cycles render in
+      // hidden <div data-sr-cycle="N"> blocks and the picker handler
+      // swaps which one is visible.
+      const renderedCycles = list.map((e, i) => `
+        <div class="sr-cycle-body${i === 0 ? '' : ' is-hidden'}" data-sr-cycle="${i}">
+          <div class="sr-meta">${escapeHtml(s.label)} · published ${escapeHtml(e.date)}${e.label ? ` (${escapeHtml(e.label)})` : ""}</div>
+          <div class="sr-prose">${escapeHtml(e.text)}</div>
+        </div>`).join("");
       return `<div class="sr-body${hidden ? ' is-hidden' : ''}" data-sr-body="${escapeHtml(s.key)}">
-        <div class="sr-meta">${escapeHtml(s.label)} · published ${escapeHtml(r.date)}${r.label ? ` (${escapeHtml(r.label)})` : ""}</div>
-        <div class="sr-prose">${escapeHtml(r.text)}</div>
+        ${cyclePicker}
+        ${renderedCycles}
       </div>`;
     }).join("");
-    return `<div class="detail-title">Scouting reports <span class="detail-title-sub">latest published per source</span></div>
+    return `<div class="detail-title">Scouting reports <span class="detail-title-sub">${
+      Object.values(entriesBySrc).some(l => l.length >= 2)
+        ? "select a cycle to view its writeup" : "latest published per source"
+    }</span></div>
       <div class="scouting-reports-card">
         <div class="sr-tab-strip" role="tablist">${tabs}</div>
         ${bodies}
@@ -16707,6 +17310,10 @@ function renderFarmDetail(orgCode) {
         </div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">${makeTierBar(org.prospects)}</div>
+      <button class="share-as-image" data-share-target="#farm-detail-body"
+              data-share-filename="farm-${escapeHtml(org.org)}-detail"
+              style="position:absolute;top:12px;right:12px;"
+              title="Save this farm profile as a PNG image">⤴ Share</button>
     </div>
     ${makeFarmReportCard(org)}
     ${makeRosterSnapshotTile(org)}
@@ -17883,6 +18490,7 @@ function render() {
     graduates:    "graduates-section",
     farm:         "farm-section",
     leaderboards: "leaderboards-section",
+    charts:       "charts-section",
     glossary:     "glossary-section",
     watchlist:    "watchlist-section",
     player:       "player-detail-section",
@@ -17975,6 +18583,7 @@ function render() {
   else if (active === "graduates")  renderGraduates();
   else if (active === "farm")       renderFarmSystems();
   else if (active === "leaderboards") renderLeaderboards();
+  else if (active === "charts")       renderCharts();
   else if (active === "glossary")   renderGlossary();
   else if (active === "watchlist")  renderWatchlist();
   decorateA11yRows();
@@ -19367,6 +19976,22 @@ function attachHandlers() {
 
   // Back/forward navigation: re-read the hash and re-render whenever the
   // user uses browser-history controls (or anything else mutates the hash).
+  // Scouting-report cycle picker — change handler for the per-source
+  // <select> that lets users switch between earlier writeup cycles.
+  // (The click handler above swaps source tabs; this swaps cycles
+  // within the currently-visible source.)
+  document.getElementById("content").addEventListener("change", (e) => {
+    const picker = e.target && e.target.closest
+      ? e.target.closest("select[data-sr-cycle-picker]")
+      : null;
+    if (!picker) return;
+    const body = picker.closest(".sr-body");
+    if (!body) return;
+    const idx = picker.value;
+    body.querySelectorAll(".sr-cycle-body").forEach(c =>
+      c.classList.toggle("is-hidden", c.dataset.srCycle !== idx));
+  });
+
   window.addEventListener("hashchange", () => {
     syncFromURL();
     restoreUIFromState();

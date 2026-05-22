@@ -265,7 +265,12 @@ class TestScoutReportSidecarPerSource:
         for src in ("fangraphs", "mlb_pipeline", "espn", "just_baseball"):
             assert src in reports, \
                 f"sidecar missing source '{src}'; got {list(reports.keys())}"
-            entry = reports[src]
+            # Sidecar shape changed 2026-05: per-source value is now a
+            # list of {date, label, text, hash} entries (newest first).
+            entries = reports[src]
+            assert isinstance(entries, list) and len(entries) >= 1, \
+                f"{src} should be a non-empty list, got {entries!r}"
+            entry = entries[0]
             assert entry.get("text"), f"empty report text for {src}"
             assert entry.get("date") == "2025-07-31"
             # Each source's text carries its source key verbatim — a

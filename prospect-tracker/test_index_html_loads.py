@@ -170,10 +170,19 @@ def test_graduates_page_shows_fg_writeup_pills(server):
     if not sr_path.exists():
         pytest.skip("scout_reports.json not present — no data to test against")
     sidecar = json.loads(sr_path.read_text(encoding="utf-8"))
+    # Multi-cycle shape (2026-05): sidecar[key]["fangraphs"] is a list
+    # of {date, label, text, hash} entries newest-first. Iterate every
+    # cycle to find one with a "graduat"-labeled label.
+    def _has_grad_label(entries):
+        if isinstance(entries, dict):     # legacy single-entry shape
+            return "graduat" in (entries.get("label") or "").lower()
+        if isinstance(entries, list):
+            return any("graduat" in (e.get("label") or "").lower() for e in entries)
+        return False
     eligible_keys = {
         k for k, by_src in sidecar.items()
         if "fangraphs" in by_src
-        and "graduat" in (by_src["fangraphs"].get("label") or "").lower()
+        and _has_grad_label(by_src["fangraphs"])
     }
     if not eligible_keys:
         pytest.skip("no FG grad-year writeups in sidecar — nothing to flag")

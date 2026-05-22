@@ -649,9 +649,10 @@ def _build_snapshot(merged: dict, slug: str, snapshot_date: str) -> Snapshot:
             extras[k] = v
     rpt = merged.get("report")
     if rpt:
-        if len(rpt) > _REPORT_MAX_CHARS:
-            rpt = rpt[:_REPORT_MAX_CHARS]
-        extras["report"] = rpt
+        from scrapers import _clean_report_prose
+        cleaned = _clean_report_prose(rpt)
+        if cleaned:
+            extras["report"] = cleaned[:_REPORT_MAX_CHARS]
 
     # Position-block extras. pitch_sel and bat_ctrl now ride as
     # canonical hitter tools in tools_future (see _TOOL_HITTER_COLS).

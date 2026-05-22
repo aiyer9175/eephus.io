@@ -24,7 +24,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from storage import _compute_breakout_score
+# `_compute_breakout_score` was removed 2026-05; replaced by BOOM/BUST
+# graduate labels. The Phase B1 breakout-score test block below is
+# skipped entirely via a module-level pytest.skip — see TestPhaseB1Breakout.
 import level_norms
 import storage
 
@@ -109,6 +111,9 @@ class TestPhaseA4DvmShrinkage:
 # Phase B1 - Breakout Signal composite
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skip(reason="_compute_breakout_score removed 2026-05; "
+                         "replaced by WAG-anchored BOOM/BUST graduate labels "
+                         "(see test_boom_bust.py)")
 class TestPhaseB1BreakoutSignal:
     def _make_point(self, date, fv):
         # Minimal Point-like object with .snapshot_date + .consensus_fv_raw

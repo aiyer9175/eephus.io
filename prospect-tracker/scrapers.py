@@ -169,6 +169,104 @@ def fix_mojibake(text: str) -> str:
     return re.sub(r'\s+', ' ', text).strip()
 
 
+# Patterns that surface in scraped writeups but aren't actual scouting
+# narrative — page navigation, "Watch the video" link tails, and section
+# headers stripped of their structure when HTML → text conversion
+# flattens them. Centralized here so every source path strips the same
+# cruft consistently. Apply via `_clean_report_prose()` before storing
+# any writeup into a Snapshot's tools._extras.report field.
+_NAVIGATION_PREFIXES = (
+    "Fantasy baseball home page",
+    "Draft Guide today",
+    "Reliever depth chart",
+    "Latest stories",
+    "More stories",
+    "Read more from",
+)
+
+# Trailing tails — newspaper/web "more from..." link blocks. Match
+# from " >> " or "  >> " through end-of-string.
+_TRAILING_LINK_TAIL_RE = re.compile(
+    r"\s*>>\s*(?:Video Scouting Report|Watch the highlights?|Read more|"
+    r"Click here|Watch the video|Full scouting report|See the video).*$",
+    re.IGNORECASE | re.DOTALL,
+)
+
+# Leading section-header noise FG sometimes ships when its HTML
+# splits a player block awkwardly — "Scouting Report: Hits ..." gets
+# the literal "Scouting Report: " prefix that's redundant with the
+# panel header in our UI.
+_LEADING_HEADER_RE = re.compile(
+    r"^(?:Scouting\s+Report|Tools\s+and\s+Background|Player\s+Bio|Bio)\s*:?\s*",
+    re.IGNORECASE,
+)
+
+
+def _clean_report_prose(text: str | None) -> str | None:
+    """Centralized writeup cleaner — strips page-navigation cruft,
+    trailing 'video link' tails, leading section headers, and other
+    formatting artifacts that bleed through during HTML→text scrape.
+    Returns None when the cleaned text is empty / too short to be a
+    real scouting report (cuts down on degenerate outputs).
+
+    Idempotent — re-running on already-cleaned text is a no-op."""
+    if not text:
+        return None
+    s = text
+
+    # 1. Encoding fix only — explicitly DO NOT call fix_mojibake because
+    # its whitespace pass collapses runs of newlines (including the
+    # `\n\n` paragraph separators downstream renderers rely on).
+    if '�' in s or '\x00' in s:
+        try:
+            s = s.encode('latin-1').decode('utf-8')
+        except (UnicodeDecodeError, UnicodeEncodeError):
+            pass
+    if not s:
+        return None
+
+    # 2. Strip leading navigation cruft: if any _NAVIGATION_PREFIXES
+    #    token appears within the first 300 chars AND is followed by
+    #    `>>` within 50 chars, drop everything up through that `>>`.
+    head = s[:400]
+    for prefix in _NAVIGATION_PREFIXES:
+        idx = head.find(prefix)
+        if idx >= 0:
+            tail = s[idx:]
+            # Look for the >> within 100 chars after the prefix
+            m = re.search(r">>", tail[:200])
+            if m:
+                cut = idx + m.end()
+                s = s[cut:].lstrip()
+                break
+
+    # 3. Generic fallback: if `>>` appears within the first 250 chars
+    #    AND the preceding text contains a hint of navigation
+    #    (very short sentences ending with a bullet `•` or capital
+    #    "Top 100" etc.), strip up to the `>>`. This catches the
+    #    Nolan McLean variant ("Draft Guide today! >> ...").
+    m = re.search(r">>", s[:250])
+    if m and ("•" in s[:m.start()] or "Draft Guide" in s[:m.start()]
+             or "Top 100" in s[:m.start()]):
+        s = s[m.end():].lstrip()
+
+    # 4. Strip trailing video / read-more tails.
+    s = _TRAILING_LINK_TAIL_RE.sub("", s).rstrip()
+
+    # 5. Strip leading section header artifacts.
+    s = _LEADING_HEADER_RE.sub("", s).lstrip()
+
+    # 6. Collapse non-breaking space + double spaces.
+    s = s.replace(" ", " ")
+    s = re.sub(r"[ \t]+", " ", s)
+    s = re.sub(r"\n{3,}", "\n\n", s)
+    s = s.strip()
+
+    if len(s) < 15:
+        return None
+    return s
+
+
 def normalize_key(name: str) -> str:
     s = unicodedata.normalize("NFKD", name)
     s = "".join(c for c in s if not unicodedata.combining(c))
@@ -883,7 +981,9 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
         prose = re.sub(r"\s+", " ", prose).strip()
         if prose and len(prose) > 60:
             tools = tools or {}
-            tools.setdefault("_extras", {})["report"] = prose[:8000]
+            cleaned = _clean_report_prose(prose)
+            if cleaned:
+                tools.setdefault("_extras", {})["report"] = cleaned[:8000]
         rows.append(Snapshot(
             source="espn", snapshot_date=snap_date, interval_label=label,
             player_key=normalize_key(name), player_name=name,
@@ -1074,7 +1174,9 @@ def scrape_just_baseball(url: str, label: str, snap_date: str,
         prose = "\n\n".join(p for p in paragraphs if p).strip()
         if prose and len(prose) > 60:
             tools = tools or {}
-            tools.setdefault("_extras", {})["report"] = prose[:8000]
+            cleaned = _clean_report_prose(prose)
+            if cleaned:
+                tools.setdefault("_extras", {})["report"] = cleaned[:8000]
         rows.append(Snapshot(
             source="just_baseball", snapshot_date=snap_date, interval_label=label,
             player_key=normalize_key(name), player_name=name,
@@ -1151,7 +1253,7 @@ MLB_PIPELINE_ORG_SLUGS = (
     "cubs", "reds", "brewers", "pirates", "cardinals",
     "diamondbacks", "rockies", "dodgers", "padres", "giants",
 )
-MLB_PIPELINE_ORG_YEARS = (2025, 2026)
+MLB_PIPELINE_ORG_YEARS = (2021, 2022, 2023, 2024, 2025, 2026)
 
 MLB_PIPELINE_ORG_INTERVALS = [
     (f"https://www.mlb.com/prospects/{y}/{slug}",
@@ -1326,7 +1428,9 @@ def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
         prose = _clean_pipeline_writeup(bio_text) if bio_text else None
         if prose and len(prose) > 60:
             tools = tools or {}
-            tools.setdefault("_extras", {})["report"] = prose[:8000]
+            cleaned = _clean_report_prose(prose)
+            if cleaned:
+                tools.setdefault("_extras", {})["report"] = cleaned[:8000]
 
         p = persons.get(pid, {})
         name = p.get("name") or f"Person {pid}"
@@ -1682,7 +1786,9 @@ def scrape_espn_draft(url: str, label: str, snap_date: str, draft_year: int,
         prose = re.sub(r"\s+", " ", prose).strip()
         if prose and len(prose) > 60:
             tools = tools or {}
-            tools.setdefault("_extras", {})["report"] = prose[:8000]
+            cleaned = _clean_report_prose(prose)
+            if cleaned:
+                tools.setdefault("_extras", {})["report"] = cleaned[:8000]
 
         # Heuristic player_type from school string.
         ptype = None
@@ -1823,7 +1929,9 @@ def scrape_mlb_pipeline_draft(url: str, label: str, snap_date: str,
         prose = _clean_pipeline_writeup(bio_text) if bio_text else None
         if prose and len(prose) > 60:
             tools = tools or {}
-            tools.setdefault("_extras", {})["report"] = prose[:8000]
+            cleaned = _clean_report_prose(prose)
+            if cleaned:
+                tools.setdefault("_extras", {})["report"] = cleaned[:8000]
         if person.get("age") is not None:
             tools = tools or {}
             tools.setdefault("_extras", {})["age"] = person["age"]

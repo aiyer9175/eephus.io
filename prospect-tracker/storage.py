@@ -2182,78 +2182,50 @@ def _grad_wag(graduate_payload: dict) -> float | None:
     return round(float(total_war) - expected, 2)
 
 
-def _compute_breakout_score(points: list, tool_deltas: dict,
-                            stat_flags: list, age_vs_level_diff: float | None) -> int | None:
-    """0-100 composite identifying prospects positioned to break out
-    next year. Equal-weight blend (Phase B1) of four signals:
+def _compute_boom_bust(graduate_payload: dict) -> str:
+    """Categorize a graduate as boom / bust / settled / unsettled,
+    anchored on WAG (WAR Above Grade) with a sample-size floor.
 
-      1. FV growth in last 12 months — latest consensus_fv_raw minus
-         the most-recent point ≥ 365 days earlier. Scaled so +5 grade
-         pts in 12mo maxes the axis.
-      2. Age-vs-level (negative diff = young-for-level → bonus).
-         Scaled so −2y maxes the axis, +2y zeroes it.
-      3. Tool-development delta — mean across `tool_deltas[*].delta`.
-         Scaled so a +5 mean grade move maxes the axis.
-      4. Active green stat flags — count of `stat_flags[*].direction ==
-         "up"`. Scaled so 4+ green flags max the axis.
+    Returns one of:
+      "boom"      — WAG ≥ +5.0, meets sample floor (clearly outperformed)
+      "bust"      — WAG ≤ −2.0, meets sample floor (clearly underperformed)
+      "settled"   — meets sample floor but landed in the middle band
+      "unsettled" — no WAG, or sample too small to call
 
-    Each axis normalized to [0, 1], then averaged → multiplied by 100.
-    Returns None when too few inputs are available to be meaningful
-    (need at least 2 of the 4 axes resolvable).
-    """
-    from datetime import datetime, timedelta
-
-    def _clamp01(x: float) -> float:
-        return max(0.0, min(1.0, x))
-
-    axes: list[float] = []
-
-    # 1. FV growth in last 12 months
-    if points and len(points) >= 2:
-        latest = points[-1]
+    Sample-size floor: ≥2 MLB seasons OR ≥800 career PA OR ≥200 career IP.
+    Cup-of-coffee debuts (<800 PA / <200 IP / ≤1 season) stay 'unsettled'
+    so we don't mislabel them on light samples."""
+    wag = _grad_wag(graduate_payload)
+    cw = graduate_payload.get("career_war") or {}
+    seasons = cw.get("war_seasons_count") or 0
+    career_rows = graduate_payload.get("career_stats") or []
+    total_pa = 0
+    total_ip = 0.0
+    for s in career_rows:
         try:
-            latest_dt = datetime.strptime(latest.snapshot_date, "%Y-%m-%d")
-            cutoff = latest_dt - timedelta(days=365)
-            prior = None
-            for pt in reversed(points[:-1]):
-                pt_dt = datetime.strptime(pt.snapshot_date, "%Y-%m-%d")
-                if pt_dt <= cutoff:
-                    prior = pt; break
-            if prior is None:
-                prior = points[0]  # fall back to oldest
-            if (latest.consensus_fv_raw is not None
-                    and prior.consensus_fv_raw is not None):
-                delta_fv = latest.consensus_fv_raw - prior.consensus_fv_raw
-                # +5 grade pts → 1.0; -5 → 0; linear between.
-                axes.append(_clamp01((delta_fv + 5.0) / 10.0))
-        except (ValueError, AttributeError):
+            total_pa += int(s.get("pa") or 0)
+        except (TypeError, ValueError):
             pass
+        try:
+            total_ip += float(s.get("ip") or 0)
+        except (TypeError, ValueError):
+            pass
+    meets_floor = (seasons >= 2) or (total_pa >= 800) or (total_ip >= 200)
+    if wag is None or not meets_floor:
+        return "unsettled"
+    if wag >= 5.0:
+        return "boom"
+    if wag <= -2.0:
+        return "bust"
+    return "settled"
 
-    # 2. Age-vs-level
-    if age_vs_level_diff is not None:
-        # diff < 0 means YOUNG for level. -2y → 1.0; +2y → 0.0.
-        axes.append(_clamp01((-age_vs_level_diff + 2.0) / 4.0))
 
-    # 3. Tool-development delta mean
-    if tool_deltas:
-        deltas = [td.get("delta") for td in tool_deltas.values()
-                  if td and td.get("delta") is not None]
-        if deltas:
-            mean_delta = sum(deltas) / len(deltas)
-            # +5 mean grade pts → 1.0; -5 → 0.
-            axes.append(_clamp01((mean_delta + 5.0) / 10.0))
-
-    # 4. Green stat flags
-    if stat_flags:
-        n_green = sum(1 for f in stat_flags
-                      if (f.get("direction") or "").lower() == "up")
-        # 4+ green flags → 1.0; 0 → 0.0.
-        axes.append(_clamp01(n_green / 4.0))
-
-    # Require at least 2 axes resolvable for a meaningful composite.
-    if len(axes) < 2:
-        return None
-    return int(round(sum(axes) / len(axes) * 100))
+# REMOVED 2026-05: `_compute_breakout_score` was an active-prospect
+# composite that conflated "rising" with "high-FV" and rendered as a
+# vague BREAKOUT pill. Replaced by the WAG-anchored BOOM / BUST graduate
+# labels (`_compute_boom_bust` above) and the per-org boom_pct/bust_pct
+# rollups. The "wide FV spread" filter chip stays — it's a different
+# concept (source variance, not trajectory).
 
 
 def _compute_tool_deltas(player_points: list[dict]) -> dict[str, dict]:
@@ -2605,9 +2577,17 @@ def _build_org_fv_history(
                     baselined.add(org_now)
                     dates_by_org[org_now].add(d)
                 else:
-                    delta = new_fv - fv_now
-                    if delta != 0:
-                        contribs[(org_now, d)] += delta
+                    # WAR-tail-weighted trajectory: rather than raw FV
+                    # delta (which credits a 40→45 jump the same as a
+                    # 70→75 jump), credit the FV-implied WAR delta from
+                    # the FV_EXPECTED_WAR curve. A 70→75 lift contributes
+                    # ~15 WAR; a 40→45 lift contributes ~1 WAR — exactly
+                    # the tail weighting users expect.
+                    war_before = _fv_to_expected_war(fv_now) or 0.0
+                    war_after  = _fv_to_expected_war(new_fv) or 0.0
+                    delta_war = war_after - war_before
+                    if delta_war != 0:
+                        contribs[(org_now, d)] += delta_war
                         dates_by_org[org_now].add(d)
                 fv_now = new_fv
             elif kind == "trade":
@@ -3739,7 +3719,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _mlbam = player_ids.get(p.player_key)
         if _mlbam is None and sl_out:
             _mlbam = sl_out.get("mlbam_id")
-        return {
+        payload = {
             "player_key": p.player_key,
             "player_name": p.player_name,
             "mlbam_id": _mlbam,
@@ -3883,20 +3863,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                  "tools_consensus": pt.tools_consensus}
                 for pt in p.points
             ]),
-            # Phase B1 — Breakout Signal: 0-100 composite that highlights
-            # prospects with upward FV trajectory + young-for-level + tool
-            # development + active stat-flag green signals. UI surfaces a
-            # "BREAKOUT" pill when score ≥ 75.
-            "breakout_score": _compute_breakout_score(
-                p.points,
-                _compute_tool_deltas([
-                    {"snapshot_date": pt.snapshot_date,
-                     "tools_consensus": pt.tools_consensus}
-                    for pt in p.points
-                ]),
-                flags,
-                (avl.diff if avl else None),
-            ),
+            # `breakout_score` removed 2026-05 — replaced with WAG-anchored
+            # BOOM / BUST graduate labels (see boom_label below for grads).
+            # Active prospects no longer get a trajectory composite; the
+            # "Wide FV spread" filter chip remains for cross-source variance.
             "points": [
                 {
                     "snapshot_date": pt.snapshot_date,
@@ -3926,6 +3896,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 for pt in p.points
             ],
         }
+
+        # Boom / Bust label — graduates only. Computed post-payload-build
+        # since _compute_boom_bust reads career_war + career_stats fields
+        # that were just stamped on the dict. Active prospects get None
+        # (label only meaningful after the prospect has graduated AND
+        # cleared the sample floor).
+        if p.status == "graduated":
+            try:
+                payload["boom_label"] = _compute_boom_bust(payload)
+            except Exception:
+                payload["boom_label"] = "unsettled"
+        else:
+            payload["boom_label"] = None
+
+        return payload
 
     cutoff = _inactive_cutoff()
 
@@ -4163,13 +4148,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # tool with ≥2 observations). Sum into the org bucket so the
         # second pass can produce mean-delta-per-tool and the league
         # normalization can produce HitDvM+ / PowerDvM+ / etc.
+        # WAR-tail-weighted: store the FV→WAR-converted delta rather
+        # than the raw FV grade delta, so a 70→75 hit-tool lift counts
+        # ~10x a 40→45 hit-tool lift in the per-tool DvM+ math.
         _td = _compute_tool_deltas([
             {"snapshot_date": pt.snapshot_date,
              "tools_consensus": pt.tools_consensus}
             for pt in p.points
         ])
         for _tk, _info in _td.items():
-            m["_tool_dev_sums"].setdefault(_tk, []).append(_info["delta"])
+            first_war = _fv_to_expected_war(_info.get("first")) or 0.0
+            last_war  = _fv_to_expected_war(_info.get("last"))  or 0.0
+            delta_war = last_war - first_war
+            m["_tool_dev_sums"].setdefault(_tk, []).append(delta_war)
 
         # Extended report-card accumulators (Farm Overhaul Step 5/6/7).
         m["_active_keys"].append(p.player_key)
@@ -4275,7 +4266,29 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "hit_career_war_sum":  0.0, "hit_career_war_count":  0,
             "pit_war_per_yr_sum":  0.0, "pit_war_per_yr_count":  0,
             "pit_career_war_sum":  0.0, "pit_career_war_count":  0,
+            # BOOM / BUST counters — populated below from
+            # _compute_boom_bust. boom_pct / bust_pct rollups use these
+            # to surface per-org "developmental tail" rates on farm cards.
+            "boom_count":      0,
+            "bust_count":      0,
+            "settled_count":   0,   # boom + bust + settled (i.e. excluded "unsettled")
         })
+        # Boom/Bust classification for this graduate.
+        career_rows = (career_stats or {}).get(gp.player_key, []) or []
+        boom_label = _compute_boom_bust({
+            "career_war":   cw,
+            "fv_close_raw": fv_close_raw,
+            "fv_close":     gp.fv_close,
+            "career_stats": career_rows,
+        })
+        if boom_label == "boom":
+            bucket["boom_count"] += 1
+            bucket["settled_count"] += 1
+        elif boom_label == "bust":
+            bucket["bust_count"] += 1
+            bucket["settled_count"] += 1
+        elif boom_label == "settled":
+            bucket["settled_count"] += 1
         if wag is not None:
             bucket["wag_sum"] += wag
             bucket["wag_count"] += 1
@@ -4368,11 +4381,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # as "—" rather than D (no data isn't the same as bad data).
         gagg = grad_agg.get(org) or {}
         wag_count = gagg.get("wag_count") or 0
+        # BOOM / BUST per-org rates. Settled count = booms + busts +
+        # settled (i.e. graduates that cleared the 800-PA/200-IP/2-season
+        # sample floor). Min 5 settled grads or None — small-sample orgs
+        # get "—" rather than a noisy %.
+        settled_count = gagg.get("settled_count") or 0
+        if settled_count >= 5:
+            boom_pct = round(100.0 * (gagg.get("boom_count") or 0) / settled_count, 1)
+            bust_pct = round(100.0 * (gagg.get("bust_count") or 0) / settled_count, 1)
+        else:
+            boom_pct = None
+            bust_pct = None
         m["talent_translation"] = {
             "wag_mean": (round(gagg["wag_sum"] / wag_count, 2)
                          if wag_count >= 3 else None),
             "wag_sum":  round(gagg.get("wag_sum") or 0.0, 2),
             "grad_count": wag_count,
+            "boom_pct":      boom_pct,
+            "bust_pct":      bust_pct,
+            "boom_count":    gagg.get("boom_count") or 0,
+            "bust_count":    gagg.get("bust_count") or 0,
+            "settled_count": settled_count,
         }
         # Financial ROI — WAR per million USD spent on the grads who
         # have both signing bonus AND career WAR on file. Requires the
@@ -5367,28 +5396,43 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # player into a separate sidecar so the boot file shrinks ~17%.
     # Strip the `report` string from every per_source._extras dict in
     # the boot payload to dedupe.
-    scout_reports_sidecar: dict[str, dict[str, dict]] = {}
+    # Multi-cycle scout-reports sidecar.
+    # Shape: scout_reports_sidecar[player_key][source] = [
+    #   {date, label, text, hash}, ...   # ordered NEWEST → oldest
+    # ]
+    # Dedup by SHA1 of stripped text so identical writeups across
+    # consecutive cycles only appear once (very common for off-cycle
+    # months where FG reposts the same report under a new label).
+    import hashlib
+    scout_reports_sidecar: dict[str, dict[str, list[dict]]] = {}
     def _harvest_and_strip_reports(player_payload):
         pkey = player_payload.get("player_key")
-        latest_by_src: dict[str, dict] = {}
+        # Walk in date order, collecting unique report texts per source.
+        by_src_seen_hashes: dict[str, set[str]] = {}
+        by_src_entries: dict[str, list[dict]] = {}
         for pt in (player_payload.get("points") or []):
             for src, info in (pt.get("per_source") or {}).items():
                 tools = (info or {}).get("tools") or {}
                 ex = tools.get("_extras") or {}
                 rpt = ex.get("report")
                 if rpt:
-                    # Snapshot the newest report per source (loop walks
-                    # in date order — later iterations overwrite earlier).
-                    latest_by_src[src] = {
-                        "date": pt.get("snapshot_date"),
-                        "label": pt.get("interval_label"),
-                        "text": rpt,
-                    }
-                    # Strip the report from the inline _extras so it
-                    # doesn't bloat the boot payload.
+                    h = hashlib.sha1(rpt.strip().encode("utf-8")).hexdigest()[:12]
+                    seen = by_src_seen_hashes.setdefault(src, set())
+                    if h not in seen:
+                        seen.add(h)
+                        by_src_entries.setdefault(src, []).append({
+                            "date": pt.get("snapshot_date"),
+                            "label": pt.get("interval_label"),
+                            "text": rpt,
+                            "hash": h,
+                        })
+                    # Strip the inline report so it doesn't bloat boot.
                     ex["report"] = None
-        if latest_by_src:
-            scout_reports_sidecar[pkey] = latest_by_src
+        # Reverse each list so newest is first (the walk was oldest-first).
+        if by_src_entries:
+            for src in by_src_entries:
+                by_src_entries[src].reverse()
+            scout_reports_sidecar[pkey] = by_src_entries
     for p in active_payload:
         _harvest_and_strip_reports(p)
     for p in graduate_payload:

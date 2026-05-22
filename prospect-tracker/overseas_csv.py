@@ -238,9 +238,10 @@ def _merged_to_snapshot_dict(m: dict,
 
     if m.get("report"):
         rpt = m["report"]
-        if len(rpt) > _REPORT_MAX_CHARS:
-            rpt = rpt[:_REPORT_MAX_CHARS]
-        extras["report"] = rpt
+        from scrapers import _clean_report_prose
+        cleaned = _clean_report_prose(rpt)
+        if cleaned:
+            extras["report"] = cleaned[:_REPORT_MAX_CHARS]
 
     if extras:
         tools["_extras"] = extras

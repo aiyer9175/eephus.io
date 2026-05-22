@@ -461,7 +461,10 @@ class TestBuildOrgFvHistoryGraduations:
         # trade-in event Jan 15 (no contribution), Jul 1 snapshot at the
         # same 55 FV (delta = 0). Final running total: 0.
         atl_final = out["ATL"]["series"][-1]["total_fv"]
-        # MIL: Jan 1 baseline (0), Jul 1 snapshot at 55 = delta of +5.
+        # MIL: Jan 1 baseline (0), Jul 1 snapshot at 55. As of 2026-05
+        # `_build_org_fv_history` credits FV-implied WAR delta (not raw
+        # FV) so the trajectory math is tail-weighted. 50→55 = 6−3 = +3
+        # WAR-equivalent. Earlier expectation was the raw FV delta (+5).
         mil_final = out["MIL"]["series"][-1]["total_fv"]
         assert atl_final == 0.0, f"ATL trade-in should not be credited as development, got {atl_final}"
-        assert mil_final == 5.0, f"MIL +5 FV growth should be credited as development, got {mil_final}"
+        assert mil_final == 3.0, f"MIL +5 FV growth → +3 WAR-equivalent, got {mil_final}"
