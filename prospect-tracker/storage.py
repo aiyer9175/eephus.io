@@ -1221,12 +1221,18 @@ FARM_WEIGHT_TRAJECTORY  = FARM_WEIGHT_DVM_PLUS
 # real but small-sample. See `farm_report_card` glossary entry for the
 # full tree shape.
 # ────────────────────────────────────────────────────────────────────────
-FARM_TREE_WEIGHT_ACQUISITIONS   = 0.15
-FARM_TREE_WEIGHT_DEVELOPMENT    = 0.35   # ← top-weighted: dev is the
-                                          # single biggest controllable skill
-FARM_TREE_WEIGHT_TRANSACTIONS   = 0.10
-FARM_TREE_WEIGHT_FINANCIAL      = 0.15
-FARM_TREE_WEIGHT_MLB_PRODUCTION = 0.25
+# v3 weights — merged Acquisitions + Transactions into a single
+# "Acquisition Strategy" branch. Tree drops from 5 → 4 main branches.
+# Development stays top-weighted (controllable skill); Acquisition
+# Strategy and MLB Production tie at 25% (both are outcome axes).
+FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.25
+FARM_TREE_WEIGHT_DEVELOPMENT          = 0.35
+FARM_TREE_WEIGHT_FINANCIAL            = 0.15
+FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.25
+# Back-compat aliases — anything that imported the v2 constants still
+# works. The composite blend below uses the v3 names exclusively.
+FARM_TREE_WEIGHT_ACQUISITIONS = FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
+FARM_TREE_WEIGHT_TRANSACTIONS = 0.0   # rolled into Acquisition Strategy
 # Sub-grades inside each parent — 50/50 for all parents in v1.
 FARM_TREE_SUB_WEIGHT_EQUAL = 0.5
 
@@ -3216,6 +3222,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # tool, then league-normalized into HitDvM+ / PowerDvM+
                 # / etc. in `_attach_per_tool_dvm_plus`.
                 "_tool_dev_sums": {},
+                # Tree v3 — Draft Ceiling Hits accumulator. Counter of
+                # drafted actives whose FV ≥ 60 within 3yr of draft.
+                # Pulled into the Draft Pick Performance leaf's 2nd
+                # sub-input (50/50 z-blend with pick-slot-adjusted WAR).
+                "_draft_actives_count": 0,
+                "_draft_ceiling_hits":  0,
             }
         m = org_map[org]
         m["prospects"].append({
@@ -3284,6 +3296,20 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             y = acq_rec.get("year")
             if y is not None:
                 m["_ifa_years"].append(y)
+        # Tree v3 — Draft Ceiling Hits: count drafted actives whose
+        # current consensus FV ≥ 60 and whose draft year is within the
+        # last 3 years. Captures whether the org's recent draft classes
+        # produced high-ceiling prospects (not just whether grads beat
+        # the slot in retrospect). Denominator: all drafted actives.
+        if acq_rec.get("method") == "draft":
+            m["_draft_actives_count"] = m.get("_draft_actives_count", 0) + 1
+            draft_yr = acq_rec.get("year")
+            today_yr = date.today().year
+            if (draft_yr is not None
+                    and today_yr - int(draft_yr) <= 3
+                    and fv_raw is not None
+                    and fv_raw >= 60.0):
+                m["_draft_ceiling_hits"] = m.get("_draft_ceiling_hits", 0) + 1
         # Health profile (reuse the same helper the per-prospect path uses).
         rs_player = (roster_status or {}).get(p.player_key) or {}
         hp = _derive_health_profile(rs_player.get("injury_history") or [])
@@ -3354,6 +3380,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # strictly more informative than raw WAG for the "did this
             # org draft well?" question.
             "draft_pick_value_sum": 0.0, "draft_pick_value_count": 0,
+            # Tree v3 splits — supplemental WAR/yr + cumulative WAR
+            # aggregators per IFA / hitter / pitcher subset. The 3-input
+            # composite (WAG + WAR/yr + cumulative WAR) is the v3 leaf
+            # score for IFA Performance + Hitter MLB Production + Pitcher
+            # MLB Production. Captures peak rate (WAR/yr) and total
+            # impact (cumulative WAR), not just the WAG expectation delta.
+            "ifa_war_per_yr_sum":  0.0, "ifa_war_per_yr_count":  0,
+            "ifa_career_war_sum":  0.0, "ifa_career_war_count":  0,
+            "hit_war_per_yr_sum":  0.0, "hit_war_per_yr_count":  0,
+            "hit_career_war_sum":  0.0, "hit_career_war_count":  0,
+            "pit_war_per_yr_sum":  0.0, "pit_war_per_yr_count":  0,
+            "pit_career_war_sum":  0.0, "pit_career_war_count":  0,
         })
         if wag is not None:
             bucket["wag_sum"] += wag
@@ -3375,6 +3413,36 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         if career_war_val is not None:
             bucket["war_sum"] += float(career_war_val)
             bucket["war_count"] += 1
+        # Tree v3 — cumulative WAR + WAR-per-year splits for IFA /
+        # Hitter / Pitcher subsets. Per `career_war` payload shape:
+        # `career_war` (total) + `war_per_yr` (career_war /
+        # war_seasons_count). The 3-input composite at the leaf level
+        # blends WAG + WAR/yr + cumulative WAR equally.
+        war_per_yr = cw.get("war_per_yr")
+        if career_war_val is not None or war_per_yr is not None:
+            cval = float(career_war_val) if career_war_val is not None else None
+            yval = float(war_per_yr)     if war_per_yr     is not None else None
+            if gp_method == "international_fa":
+                if cval is not None:
+                    bucket["ifa_career_war_sum"]  += cval
+                    bucket["ifa_career_war_count"] += 1
+                if yval is not None:
+                    bucket["ifa_war_per_yr_sum"]   += yval
+                    bucket["ifa_war_per_yr_count"] += 1
+            if gp_is_pitcher:
+                if cval is not None:
+                    bucket["pit_career_war_sum"]  += cval
+                    bucket["pit_career_war_count"] += 1
+                if yval is not None:
+                    bucket["pit_war_per_yr_sum"]   += yval
+                    bucket["pit_war_per_yr_count"] += 1
+            else:
+                if cval is not None:
+                    bucket["hit_career_war_sum"]  += cval
+                    bucket["hit_career_war_count"] += 1
+                if yval is not None:
+                    bucket["hit_war_per_yr_sum"]   += yval
+                    bucket["hit_war_per_yr_count"] += 1
         if bonus_usd is not None:
             bucket["bonus_sum"] += int(bonus_usd)
             bucket["bonus_count"] += 1
@@ -3508,40 +3576,56 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # known across every org's leaf values). Sparse-data gates apply
         # at the leaf level (count threshold per leaf).
         _wag_sum = gagg.get("wag_sum") or 0.0
+        # Helper: gated mean per (sum_key, count_key, min_count).
+        def _gated_mean(sk, ck, gate=3, prec=2):
+            n = gagg.get(ck) or 0
+            return round(gagg[sk] / n, prec) if n >= gate else None
+        # Draft Ceiling Hits — % of recent (≤3yr) drafted actives with FV ≥ 60.
+        _draft_actives_n = m.pop("_draft_actives_count", 0) or 0
+        _draft_ceiling_n = m.pop("_draft_ceiling_hits",  0) or 0
+        _draft_ceiling_pct = (round(_draft_ceiling_n / _draft_actives_n, 3)
+                              if _draft_actives_n >= 3 else None)
         m["tree"] = {
-            # ACQUISITIONS branch
+            # ACQUISITION STRATEGY branch (v3 — merged Acquisitions + Transactions).
+            # IFA Performance — 3-input composite. WAG + WAR-per-year +
+            # cumulative WAR over IFA-method graduates. Captures expectation
+            # delta, peak rate, and total impact.
             "acq_ifa": {
-                "wag_mean": (round(gagg["ifa_wag_sum"] / gagg["ifa_wag_count"], 2)
-                             if (gagg.get("ifa_wag_count") or 0) >= 3 else None),
-                "wag_sum":  round(gagg.get("ifa_wag_sum") or 0.0, 2),
+                "wag_mean":         _gated_mean("ifa_wag_sum",        "ifa_wag_count"),
+                "war_per_yr_mean":  _gated_mean("ifa_war_per_yr_sum", "ifa_war_per_yr_count"),
+                "career_war_mean":  _gated_mean("ifa_career_war_sum", "ifa_career_war_count"),
+                "wag_sum":   round(gagg.get("ifa_wag_sum") or 0.0, 2),
                 "grad_count": gagg.get("ifa_wag_count") or 0,
             },
+            # Draft Performance — pick-slot-adjusted WAR (existing) + Draft
+            # Ceiling Hits (new sub-input).
             "acq_draft": {
-                # Raw WAG mean across drafted graduates — kept for the
-                # detail-page tooltip context (it answers "did drafted
-                # grads beat their FV at graduation?").
-                "wag_mean": (round(gagg["draft_wag_sum"] / gagg["draft_wag_count"], 2)
-                             if (gagg.get("draft_wag_count") or 0) >= 3 else None),
+                "wag_mean": _gated_mean("draft_wag_sum", "draft_wag_count"),
                 "wag_sum":  round(gagg.get("draft_wag_sum") or 0.0, 2),
-                # Pick-slot-adjusted value — answers the more on-point
-                # "did this org beat the market at the pick slots it
-                # used?". The grade tree z-scores this (not wag_mean)
-                # because it directly captures draft acumen.
-                "pick_value_mean": (round(gagg["draft_pick_value_sum"] / gagg["draft_pick_value_count"], 2)
-                                    if (gagg.get("draft_pick_value_count") or 0) >= 3 else None),
+                "pick_value_mean":  _gated_mean("draft_pick_value_sum", "draft_pick_value_count"),
                 "pick_value_count": gagg.get("draft_pick_value_count") or 0,
+                # New v3 sub-input — recent draft ceiling hits as a %
+                # of recent drafted actives. Z-blended 50/50 with the
+                # pick-slot-adjusted value at the leaf-scoring layer.
+                "ceiling_hits_pct":   _draft_ceiling_pct,
+                "ceiling_hits_count": _draft_ceiling_n,
+                "draft_actives_count": _draft_actives_n,
                 "grad_count": gagg.get("draft_wag_count") or 0,
             },
             # DEVELOPMENT branch — hitter/pitcher composites filled by
             # the per-tool DvM+ league pass below.
             "dev_hitter": {"dvm_plus": None, "n_groups": 0},
             "dev_pitcher": {"dvm_plus": None, "n_groups": 0},
-            # TRANSACTIONS branch — fv_in/fv_out filled by the
-            # trade+waiver scoreboard pass below.
+            # Trade + Waiver scoreboards (filled by the v2 pass below).
+            # In v3 these are leaves under Acquisition Strategy.
             "tx_trades":  {"net_fv": None, "fv_in": 0.0, "fv_out": 0.0,
-                           "in_count": 0, "out_count": 0},
+                           "in_count": 0, "out_count": 0,
+                           # v3 enhancer — fills in the WAR-delta pass below.
+                           "war_delta": None, "war_in": 0.0, "war_out": 0.0},
             "tx_waivers": {"net_fv": None, "fv_in": 0.0, "fv_out": 0.0,
-                           "in_count": 0, "out_count": 0},
+                           "in_count": 0, "out_count": 0,
+                           # v3 enhancer — fills in the hit-rate pass below.
+                           "hit_rate": None, "claims_total": 0, "claims_with_mlb": 0},
             # FINANCIAL branch — war_per_million reused from financial_roi;
             # grad-contract surplus mean computed here.
             "fin_war_per_m": {
@@ -3553,16 +3637,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                                     if (gagg.get("contract_surplus_count") or 0) >= 3 else None),
                 "grad_count": gagg.get("contract_surplus_count") or 0,
             },
-            # MLB PRODUCTION branch — hitter/pitcher WAG splits.
+            # MLB PRODUCTION branch — 3-input composites per position.
+            # Hitter MLB Production blends Hitter WAG + Hitter WAR/yr +
+            # Hitter Cumulative WAR across hitter graduates. Same shape
+            # for the pitcher leaf with pitcher grads.
             "mlb_hitter_wag": {
-                "wag_mean": (round(gagg["hit_wag_sum"] / gagg["hit_wag_count"], 2)
-                             if (gagg.get("hit_wag_count") or 0) >= 3 else None),
+                "wag_mean":        _gated_mean("hit_wag_sum",        "hit_wag_count"),
+                "war_per_yr_mean": _gated_mean("hit_war_per_yr_sum", "hit_war_per_yr_count"),
+                "career_war_mean": _gated_mean("hit_career_war_sum", "hit_career_war_count"),
                 "wag_sum":  round(gagg.get("hit_wag_sum") or 0.0, 2),
                 "grad_count": gagg.get("hit_wag_count") or 0,
             },
             "mlb_pitcher_wag": {
-                "wag_mean": (round(gagg["pit_wag_sum"] / gagg["pit_wag_count"], 2)
-                             if (gagg.get("pit_wag_count") or 0) >= 3 else None),
+                "wag_mean":        _gated_mean("pit_wag_sum",        "pit_wag_count"),
+                "war_per_yr_mean": _gated_mean("pit_war_per_yr_sum", "pit_war_per_yr_count"),
+                "career_war_mean": _gated_mean("pit_career_war_sum", "pit_career_war_count"),
                 "wag_sum":  round(gagg.get("pit_wag_sum") or 0.0, 2),
                 "grad_count": gagg.get("pit_wag_count") or 0,
             },
@@ -3684,32 +3773,41 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         entry["fv_history"] = hist.get("series", [])
         entry["fv_events"]  = hist.get("events", [])
 
-    # ── Tree v2: Transactions branch scoreboards ──
-    # Trades sub-grade — walk each org's fv_events for kind=="trade",
-    # sum incoming FV minus outgoing FV. Higher net FV = better trade
-    # acumen (the org acquired more talent than it gave up at the FV
-    # captured on the trade date).
+    # ── Tree v3: Trade Acumen scoreboard (FV + WAR delta) ──
+    # Two co-equal sub-inputs feed this leaf:
+    #   1. Net FV (sum of incoming FV − outgoing FV at trade date)
+    #   2. Trade WAR Delta (career WAR of acquired grads − career WAR
+    #      of traded-away grads). Captures retrospective trade value,
+    #      not just the league's FV consensus at the trade moment.
     for entry in org_summary:
-        in_fv = 0.0
-        out_fv = 0.0
-        in_n = 0
-        out_n = 0
+        in_fv = 0.0;  out_fv = 0.0
+        in_n  = 0;    out_n  = 0
+        in_war = 0.0; out_war = 0.0
+        in_war_n = 0; out_war_n = 0
         for ev in (entry["fv_events"] or []):
             if ev.get("kind") != "trade":
                 continue
             fv = ev.get("fv") or 0.0
+            pkey = ev.get("player_key")
+            cw = ((career_war or {}).get(pkey) or {}).get("career_war")
             if ev.get("direction") == "in":
-                in_fv += fv
-                in_n  += 1
+                in_fv += fv; in_n += 1
+                if cw is not None:
+                    in_war += float(cw); in_war_n += 1
             elif ev.get("direction") == "out":
-                out_fv += fv
-                out_n  += 1
+                out_fv += fv; out_n += 1
+                if cw is not None:
+                    out_war += float(cw); out_war_n += 1
         entry["tree"]["tx_trades"] = {
             "net_fv":    round(in_fv - out_fv, 1) if (in_n + out_n) else None,
             "fv_in":     round(in_fv, 1),
             "fv_out":    round(out_fv, 1),
             "in_count":  in_n,
             "out_count": out_n,
+            # WAR-delta enhancer (only meaningful with ≥1 grad each side).
+            "war_delta": round(in_war - out_war, 2) if (in_war_n + out_war_n) >= 3 else None,
+            "war_in":    round(in_war, 2),
+            "war_out":   round(out_war, 2),
         }
 
     # Waivers sub-grade — walk transactions_by_player for non-trade
@@ -3722,39 +3820,73 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                      "signed_free_agent"}
     _waiver_in_by_org:  dict[str, list[float]] = {}
     _waiver_out_by_org: dict[str, list[float]] = {}
+    # v3 hit-rate accumulators — per-org claimed-into-org count + count
+    # of those that reached MLB. Used to compute Waiver Hit Rate as a
+    # 50/50 z-blend partner to net_fv at the leaf-scoring layer.
+    _waiver_claims_by_org:    dict[str, int] = {}
+    _waiver_mlb_hits_by_org:  dict[str, int] = {}
     _player_fv_by_key: dict[str, float] = {}
     for p in actives + grads + inactives:
         if p.points and p.points[-1].consensus_fv_raw is not None:
             _player_fv_by_key[p.player_key] = float(p.points[-1].consensus_fv_raw)
     _txs = transactions_by_player or {}
+    # Tally distinct kinds we encounter for a debug log — surfaces drift
+    # if a new transaction type slips through derive_transactions
+    # without being grouped here.
+    _waiver_kinds_seen: dict[str, int] = {}
     for pkey, txs in _txs.items():
         fv = _player_fv_by_key.get(pkey)
+        # Reached-MLB signal — career_war present + any season recorded
+        # means the player landed on a big-league roster at some point.
+        cw_entry = (career_war or {}).get(pkey) or {}
+        _player_reached_mlb = bool(cw_entry.get("career_war") is not None
+                                   or (cw_entry.get("seasons") or {}))
         if fv is None:
             continue
         for tx in (txs or []):
             kind = tx.get("kind")
             if kind not in _WAIVER_KINDS:
                 continue
-            from_team = tx.get("from_team_name")
-            to_team   = tx.get("to_team_name")
+            _waiver_kinds_seen[kind] = _waiver_kinds_seen.get(kind, 0) + 1
+            # IMPORTANT: derive_transactions in stats.py emits the
+            # `from_team` / `to_team` keys (not `_team_name`). An earlier
+            # version of this loop used the wrong field names and silently
+            # produced an empty scoreboard for all 30 orgs. The fix below
+            # tracks the canonical field shape that stats.py actually
+            # ships.
+            from_team = tx.get("from_team")
+            to_team   = tx.get("to_team")
             from_org  = canonical_org(from_team) if from_team else None
             to_org    = canonical_org(to_team)   if to_team   else None
             if from_org:
                 _waiver_out_by_org.setdefault(from_org, []).append(fv)
             if to_org:
                 _waiver_in_by_org.setdefault(to_org, []).append(fv)
+                _waiver_claims_by_org[to_org] = _waiver_claims_by_org.get(to_org, 0) + 1
+                if _player_reached_mlb:
+                    _waiver_mlb_hits_by_org[to_org] = _waiver_mlb_hits_by_org.get(to_org, 0) + 1
+    # _waiver_kinds_seen tally available for debug if a future kind
+    # silently drops out of the filter — print or log on demand.
     for entry in org_summary:
         org_code = entry["org"]
         in_list  = _waiver_in_by_org.get(org_code, [])
         out_list = _waiver_out_by_org.get(org_code, [])
         in_fv  = round(sum(in_list), 1)
         out_fv = round(sum(out_list), 1)
+        claims_total   = _waiver_claims_by_org.get(org_code, 0)
+        claims_mlb_hit = _waiver_mlb_hits_by_org.get(org_code, 0)
         entry["tree"]["tx_waivers"] = {
             "net_fv":    round(in_fv - out_fv, 1) if (in_list or out_list) else None,
             "fv_in":     in_fv,
             "fv_out":    out_fv,
             "in_count":  len(in_list),
             "out_count": len(out_list),
+            # v3 — Waiver Hit Rate (% claimed-into-org who reached MLB).
+            # Sparse-data gate: <3 claims → None.
+            "hit_rate":        (round(claims_mlb_hit / claims_total, 3)
+                                if claims_total >= 3 else None),
+            "claims_total":    claims_total,
+            "claims_with_mlb": claims_mlb_hit,
         }
 
     # ── Farm report card ────────────────────────────────────────────────────
@@ -4017,30 +4149,74 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 out.append(round(100 + 10 * sign * (v - mu) / sd, 1))
         return out
 
-    # Pull leaf raw values per org.
-    leaf_raw = {
-        "acq_ifa":              [(e["tree"]["acq_ifa"]              or {}).get("wag_mean")        for e in org_summary],
-        # Draft sub-grade scores on pick-slot-adjusted value, not raw
-        # WAG. Falls back to wag_mean when an org has <3 graduates
-        # with both pick_overall AND career_war on file.
-        "acq_draft":            [
-            (e["tree"]["acq_draft"] or {}).get("pick_value_mean")
-            if (e["tree"]["acq_draft"] or {}).get("pick_value_mean") is not None
-            else (e["tree"]["acq_draft"] or {}).get("wag_mean")
-            for e in org_summary
+    # ── v3 leaf scoring with multi-input composites ──
+    # Some leaves blend 2-3 z-scored sub-inputs (e.g. IFA Performance =
+    # WAG + WAR/yr + Cumulative WAR). Each sub-input is anchored at 100
+    # across orgs with present data; the leaf score is the mean of
+    # present sub-input scores per org. Single-input leaves use the
+    # existing 1-input z-score path.
+    LEAF_SPECS: dict[str, list[tuple[str, callable]]] = {
+        # IFA Performance — 3 inputs (WAG / WAR-per-year / cumulative WAR)
+        "acq_ifa": [
+            ("wag",        lambda e: (e["tree"]["acq_ifa"] or {}).get("wag_mean")),
+            ("war_per_yr", lambda e: (e["tree"]["acq_ifa"] or {}).get("war_per_yr_mean")),
+            ("cum_war",    lambda e: (e["tree"]["acq_ifa"] or {}).get("career_war_mean")),
         ],
-        "dev_hitter":           [(e["tree"]["dev_hitter"]           or {}).get("dvm_plus") for e in org_summary],
-        "dev_pitcher":          [(e["tree"]["dev_pitcher"]          or {}).get("dvm_plus") for e in org_summary],
-        "tx_trades":            [(e["tree"]["tx_trades"]            or {}).get("net_fv")   for e in org_summary],
-        "tx_waivers":           [(e["tree"]["tx_waivers"]           or {}).get("net_fv")   for e in org_summary],
-        "fin_war_per_m":        [(e["tree"]["fin_war_per_m"]        or {}).get("value")    for e in org_summary],
-        "fin_contract_surplus": [(e["tree"]["fin_contract_surplus"] or {}).get("mean_usd_per_yr") for e in org_summary],
-        "mlb_hitter_wag":       [(e["tree"]["mlb_hitter_wag"]       or {}).get("wag_mean") for e in org_summary],
-        "mlb_pitcher_wag":      [(e["tree"]["mlb_pitcher_wag"]      or {}).get("wag_mean") for e in org_summary],
+        # Draft Performance — pick-slot-adjusted value + ceiling-hits %
+        "acq_draft": [
+            ("pick_value", lambda e: ((e["tree"]["acq_draft"] or {}).get("pick_value_mean")
+                                      or (e["tree"]["acq_draft"] or {}).get("wag_mean"))),
+            ("ceiling_pct", lambda e: (e["tree"]["acq_draft"] or {}).get("ceiling_hits_pct")),
+        ],
+        # Trade Acumen — net FV + retrospective WAR delta
+        "tx_trades": [
+            ("net_fv",    lambda e: (e["tree"]["tx_trades"] or {}).get("net_fv")),
+            ("war_delta", lambda e: (e["tree"]["tx_trades"] or {}).get("war_delta")),
+        ],
+        # Waiver Claims — net FV + reach-MLB hit rate
+        "tx_waivers": [
+            ("net_fv",   lambda e: (e["tree"]["tx_waivers"] or {}).get("net_fv")),
+            ("hit_rate", lambda e: (e["tree"]["tx_waivers"] or {}).get("hit_rate")),
+        ],
+        # Development — single-input (per-tool DvM+ composite)
+        "dev_hitter":  [("dvm_plus", lambda e: (e["tree"]["dev_hitter"]  or {}).get("dvm_plus"))],
+        "dev_pitcher": [("dvm_plus", lambda e: (e["tree"]["dev_pitcher"] or {}).get("dvm_plus"))],
+        # Financial — single-input each
+        "fin_war_per_m":        [("war_per_m", lambda e: (e["tree"]["fin_war_per_m"]        or {}).get("value"))],
+        "fin_contract_surplus": [("surplus",   lambda e: (e["tree"]["fin_contract_surplus"] or {}).get("mean_usd_per_yr"))],
+        # MLB Production — 3 inputs each (WAG / WAR-per-year / cumulative WAR)
+        "mlb_hitter_wag": [
+            ("wag",        lambda e: (e["tree"]["mlb_hitter_wag"] or {}).get("wag_mean")),
+            ("war_per_yr", lambda e: (e["tree"]["mlb_hitter_wag"] or {}).get("war_per_yr_mean")),
+            ("cum_war",    lambda e: (e["tree"]["mlb_hitter_wag"] or {}).get("career_war_mean")),
+        ],
+        "mlb_pitcher_wag": [
+            ("wag",        lambda e: (e["tree"]["mlb_pitcher_wag"] or {}).get("wag_mean")),
+            ("war_per_yr", lambda e: (e["tree"]["mlb_pitcher_wag"] or {}).get("war_per_yr_mean")),
+            ("cum_war",    lambda e: (e["tree"]["mlb_pitcher_wag"] or {}).get("career_war_mean")),
+        ],
     }
-    # Z-anchor each leaf at 100. All these metrics are higher-is-better.
-    leaf_100 = {k: _zscore_to_100(vs, higher_is_better=True)
-                for k, vs in leaf_raw.items()}
+    # Compute each leaf's 100-anchored per-org list. Multi-input leaves
+    # z-score each sub-input independently then average the present
+    # z-scores per org (so sparse sub-inputs don't drag the leaf to None
+    # if at least one is present).
+    leaf_100: dict[str, list[float | None]] = {}
+    leaf_raw: dict[str, list[float | None]] = {}  # back-compat for tests
+    for leaf_key, specs in LEAF_SPECS.items():
+        sub_z_lists = []
+        for _, getter in specs:
+            raw = [getter(e) for e in org_summary]
+            sub_z_lists.append(_zscore_to_100(raw, higher_is_better=True))
+        # Per-org leaf score = mean of present sub-input z-scores.
+        per_org_scores: list[float | None] = []
+        for i in range(len(org_summary)):
+            present = [z[i] for z in sub_z_lists if z[i] is not None]
+            per_org_scores.append(round(sum(present) / len(present), 1)
+                                  if present else None)
+        leaf_100[leaf_key] = per_org_scores
+        # Back-compat: leaf_raw[k] points to the FIRST sub-input's raw
+        # values (used by some legacy test inspections).
+        leaf_raw[leaf_key] = [specs[0][1](e) for e in org_summary]
 
     # Stamp leaf 100-anchored scores onto each org for display.
     for i, entry in enumerate(org_summary):
@@ -4051,34 +4227,43 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # present for that parent. Orgs with NO present leaves under a
     # parent get None for that main grade (rare — usually only when
     # all sub-grades sparse-gated out).
+    # v3 tree shape — Acquisition Strategy absorbs both the prior
+    # Acquisitions (IFA + Draft) and Transactions (Trade + Waiver)
+    # branches. Four main parents, ten leaves total.
     TREE_PARENTS = {
-        "acquisitions":   ["acq_ifa", "acq_draft"],
-        "development":    ["dev_hitter", "dev_pitcher"],
-        "transactions":   ["tx_trades", "tx_waivers"],
-        "financial":      ["fin_war_per_m", "fin_contract_surplus"],
-        "mlb_production": ["mlb_hitter_wag", "mlb_pitcher_wag"],
+        "acquisition_strategy": ["acq_ifa", "acq_draft", "tx_trades", "tx_waivers"],
+        "development":          ["dev_hitter", "dev_pitcher"],
+        "financial":            ["fin_war_per_m", "fin_contract_surplus"],
+        "mlb_production":       ["mlb_hitter_wag", "mlb_pitcher_wag"],
     }
+    # Legacy parent aliases — kept so any UI or test still reading
+    # entry["acquisitions_score"] / entry["transactions_score"]
+    # resolves to a sensible value (the parent's score, or None).
     for i, entry in enumerate(org_summary):
         for parent, leaves in TREE_PARENTS.items():
             vs = [leaf_100[k][i] for k in leaves if leaf_100[k][i] is not None]
             entry[f"{parent}_score"] = (
                 round(sum(vs) / len(vs), 1) if vs else None
             )
-        # Composite farm_score from the 5 main grades, weighted. Orgs
-        # missing a main grade contribute its weight at 100 (league mean)
-        # so the overall doesn't get crushed by data-sparse axes.
+        # Composite farm_score from the 4 main grades (v3), weighted.
+        # Orgs missing a main grade contribute its weight at 100 (league
+        # mean) so the overall doesn't get crushed by data-sparse axes.
         weights = {
-            "acquisitions":   FARM_TREE_WEIGHT_ACQUISITIONS,
-            "development":    FARM_TREE_WEIGHT_DEVELOPMENT,
-            "transactions":   FARM_TREE_WEIGHT_TRANSACTIONS,
-            "financial":      FARM_TREE_WEIGHT_FINANCIAL,
-            "mlb_production": FARM_TREE_WEIGHT_MLB_PRODUCTION,
+            "acquisition_strategy": FARM_TREE_WEIGHT_ACQUISITION_STRATEGY,
+            "development":          FARM_TREE_WEIGHT_DEVELOPMENT,
+            "financial":            FARM_TREE_WEIGHT_FINANCIAL,
+            "mlb_production":       FARM_TREE_WEIGHT_MLB_PRODUCTION,
         }
         composite = 0.0
         for parent, w in weights.items():
             v = entry.get(f"{parent}_score")
             composite += w * (v if v is not None else 100.0)
         entry["farm_score"] = round(composite, 1)
+        # Back-compat: legacy field names (acquisitions_score,
+        # transactions_score) resolve to the merged Acquisition Strategy
+        # value so any UI reading the old keys still gets a number.
+        entry["acquisitions_score"] = entry.get("acquisition_strategy_score")
+        entry["transactions_score"] = entry.get("acquisition_strategy_score")
 
     # Letter grades for the 11 leaves + 5 main + composite (17 total).
     # Sparse-data leaves get "—"; sparse parents and composite always grade
@@ -4100,14 +4285,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     n_orgs_tree = len(org_summary)
     for i, entry in enumerate(org_summary):
-        # Update entry["grades"] with the new tree grades (existing legacy
-        # grades stay so the report-card glossary references still resolve).
+        # Update entry["grades"] with the v3 tree grades. Existing legacy
+        # grades stay so the report-card glossary references still resolve.
         g = entry.get("grades") or {}
-        # 5 main grades
+        # 4 main grades + back-compat aliases for the old 5-branch names
         for parent in TREE_PARENTS:
             r = parent_ranks[parent][i]
             present_n = sum(1 for x in parent_ranks[parent] if x is not None)
             g[parent] = _letter_grade(r, present_n) if r is not None else "—"
+        # Back-compat: legacy keys still readable by old UI code paths.
+        g["acquisitions"] = g.get("acquisition_strategy", "—")
+        g["transactions"] = g.get("acquisition_strategy", "—")
         # 10 sub-grades — keyed identically to leaf_raw
         for k in leaf_raw:
             r = leaf_ranks[k][i]
@@ -4122,6 +4310,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         cr = entry.get("component_ranks") or {}
         for parent in TREE_PARENTS:
             cr[parent] = parent_ranks[parent][i]
+        cr["acquisitions"] = cr.get("acquisition_strategy")  # back-compat
+        cr["transactions"] = cr.get("acquisition_strategy")  # back-compat
         for k in leaf_raw:
             cr[k] = leaf_ranks[k][i]
         cr["overall"] = composite_rank[i]

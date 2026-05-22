@@ -1,12 +1,19 @@
-"""Tests for the v2 farm grade tree (5 main grades, 11 leaf sub-grades).
+"""Tests for the v3 farm grade tree (4 main grades, 10 leaf sub-grades).
+
+v3 changes vs v2:
+  * Acquisitions + Transactions merged → Acquisition Strategy (4 leaves).
+  * MLB Production + IFA Performance use 3-input composites (WAG +
+    WAR-per-year + Cumulative WAR).
+  * Waiver scoreboard kind-mapping bug fixed (was '—' for all 30 orgs).
+  * Draft adds Ceiling Hits %; Trade adds WAR Delta; Waiver adds Hit Rate.
 
 Backend assertions:
   * Weight constants sum to 1.0, Development is top-weighted.
   * `_zscore_to_100` math behaves like the wRC+/OPS+ shape.
-  * Generated `entry["tree"]` carries the expected shape per org.
-  * `entry["grades"]` includes the 5 main + 10 sub + composite keys.
+  * Generated `entry["tree"]` carries the v3 leaf shapes.
+  * `entry["grades"]` includes 4 main + 10 sub + composite keys.
   * Sparse-data sub-grades render '—' rather than an unfair letter.
-  * farm_score is the weighted blend of the 5 main scores."""
+  * Waiver scoreboard now populates."""
 from __future__ import annotations
 
 import json
@@ -19,10 +26,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from storage import (
     FARM_TREE_SUB_WEIGHT_EQUAL,
-    FARM_TREE_WEIGHT_ACQUISITIONS,
+    FARM_TREE_WEIGHT_ACQUISITION_STRATEGY,
     FARM_TREE_WEIGHT_DEVELOPMENT,
     FARM_TREE_WEIGHT_FINANCIAL,
     FARM_TREE_WEIGHT_MLB_PRODUCTION,
+    # Legacy aliases (v2) still importable for back-compat
+    FARM_TREE_WEIGHT_ACQUISITIONS,
     FARM_TREE_WEIGHT_TRANSACTIONS,
     _pick_slot_expected_war,
 )
@@ -36,10 +45,10 @@ _TIMESERIES = Path(__file__).parent / "data" / "timeseries.json"
 
 class TestTreeWeights:
     def test_main_weights_sum_to_one(self):
+        # v3: 4 main branches sum to 1.0.
         total = (
-            FARM_TREE_WEIGHT_ACQUISITIONS
+            FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
             + FARM_TREE_WEIGHT_DEVELOPMENT
-            + FARM_TREE_WEIGHT_TRANSACTIONS
             + FARM_TREE_WEIGHT_FINANCIAL
             + FARM_TREE_WEIGHT_MLB_PRODUCTION
         )
@@ -51,8 +60,7 @@ class TestTreeWeights:
         # Per user decision, Development is the single biggest skill —
         # it must outweigh all other main grades.
         others = [
-            FARM_TREE_WEIGHT_ACQUISITIONS,
-            FARM_TREE_WEIGHT_TRANSACTIONS,
+            FARM_TREE_WEIGHT_ACQUISITION_STRATEGY,
             FARM_TREE_WEIGHT_FINANCIAL,
             FARM_TREE_WEIGHT_MLB_PRODUCTION,
         ]
@@ -62,6 +70,13 @@ class TestTreeWeights:
 
     def test_sub_weight_is_50_percent(self):
         assert FARM_TREE_SUB_WEIGHT_EQUAL == 0.5
+
+    def test_v2_aliases_preserved_for_back_compat(self):
+        # Legacy v2 constants kept so old imports don't break. The
+        # Acquisitions alias should point at the merged Acq Strategy
+        # weight; Transactions alias collapses to 0.
+        assert FARM_TREE_WEIGHT_ACQUISITIONS == FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
+        assert FARM_TREE_WEIGHT_TRANSACTIONS == 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -174,11 +189,16 @@ class TestExportedTreeShape:
                          "mlb_pitcher_wag"]:
                 assert leaf in o["tree"], f"{o['org']} missing tree.{leaf}"
 
-    def test_every_org_has_5_main_grades(self):
+    def test_every_org_has_4_main_grades(self):
+        # v3 — Acquisitions + Transactions merged → Acquisition Strategy.
         for o in self.orgs:
-            for parent in ["acquisitions", "development", "transactions",
+            for parent in ["acquisition_strategy", "development",
                            "financial", "mlb_production"]:
                 assert parent in o["grades"], f"{o['org']} grades missing {parent}"
+        # Back-compat aliases still resolve (so old UI keys keep working).
+        for o in self.orgs:
+            assert "acquisitions" in o["grades"], "back-compat acquisitions alias missing"
+            assert "transactions" in o["grades"], "back-compat transactions alias missing"
 
     def test_every_org_has_all_10_sub_grades(self):
         for o in self.orgs:
@@ -189,12 +209,9 @@ class TestExportedTreeShape:
                 assert leaf in o["grades"], f"{o['org']} grades missing {leaf}"
 
     def test_main_scores_centered_near_100(self):
-        # The 5 main grades are each composed of z-scored leaves so the
-        # population mean should sit near 100. Allow ±5 wiggle for
-        # small-sample mean-of-means rounding.
-        for parent in ["acquisitions_score", "development_score",
-                       "transactions_score", "financial_score",
-                       "mlb_production_score"]:
+        # v3 — 4 main grades; each centered near 100 by construction.
+        for parent in ["acquisition_strategy_score", "development_score",
+                       "financial_score", "mlb_production_score"]:
             vals = [o.get(parent) for o in self.orgs if o.get(parent) is not None]
             assert vals, f"no orgs have {parent}"
             mean = sum(vals) / len(vals)
@@ -203,16 +220,13 @@ class TestExportedTreeShape:
             )
 
     def test_farm_score_is_weighted_blend(self):
-        # Re-derive composite from main scores using the exported weights
-        # and ensure it matches farm_score within ±0.2 (accounting for
-        # display rounding to 1 decimal place).
+        # v3 — recompute from 4 main scores.
         for o in self.orgs:
             recomputed = (
-                FARM_TREE_WEIGHT_ACQUISITIONS   * (o.get("acquisitions_score")   or 100.0)
-              + FARM_TREE_WEIGHT_DEVELOPMENT    * (o.get("development_score")    or 100.0)
-              + FARM_TREE_WEIGHT_TRANSACTIONS   * (o.get("transactions_score")   or 100.0)
-              + FARM_TREE_WEIGHT_FINANCIAL      * (o.get("financial_score")      or 100.0)
-              + FARM_TREE_WEIGHT_MLB_PRODUCTION * (o.get("mlb_production_score") or 100.0)
+                FARM_TREE_WEIGHT_ACQUISITION_STRATEGY * (o.get("acquisition_strategy_score") or 100.0)
+              + FARM_TREE_WEIGHT_DEVELOPMENT          * (o.get("development_score")          or 100.0)
+              + FARM_TREE_WEIGHT_FINANCIAL            * (o.get("financial_score")            or 100.0)
+              + FARM_TREE_WEIGHT_MLB_PRODUCTION       * (o.get("mlb_production_score")       or 100.0)
             )
             assert abs(recomputed - o["farm_score"]) < 0.2, (
                 f"{o['org']} farm_score {o['farm_score']} doesn't match "
@@ -269,3 +283,48 @@ class TestExportedTreeShape:
             "expected at least some '—' grades for sparse leaves across "
             "the 10 leaf×30 org matrix"
         )
+
+    # ── v3 new-feature tests ──
+
+    def test_waiver_scoreboard_populates(self):
+        # v3 bugfix — waiver scoreboard was '—' for all 30 orgs because
+        # the filter loop read tx.get("kind") via wrong field names. After
+        # the fix, at least 5 orgs should have non-None tx_waivers.net_fv.
+        n_populated = sum(
+            1 for o in self.orgs
+            if (o["tree"]["tx_waivers"] or {}).get("net_fv") is not None
+        )
+        assert n_populated >= 5, (
+            f"waiver scoreboard populated only {n_populated}/30 orgs — "
+            f"expected most orgs to have at least some claim activity"
+        )
+
+    def test_ifa_composite_carries_three_inputs(self):
+        # v3 — IFA Performance leaf gains WAR/yr + Cumulative WAR
+        # alongside the existing WAG. At least one org should have all
+        # three populated (>=3 IFA grads, each with career_war + war/yr).
+        candidates = [
+            o for o in self.orgs
+            if (o["tree"]["acq_ifa"] or {}).get("wag_mean")        is not None
+            and (o["tree"]["acq_ifa"] or {}).get("war_per_yr_mean") is not None
+            and (o["tree"]["acq_ifa"] or {}).get("career_war_mean") is not None
+        ]
+        assert candidates, (
+            "no org has all 3 IFA composite inputs populated — "
+            "WAR/yr + cumulative WAR backfill broken?"
+        )
+
+    def test_mlb_production_three_input_composite(self):
+        # v3 — Hitter + Pitcher MLB Production each carry WAG, WAR/yr,
+        # Cumulative WAR. Verify at least one org has all three on at
+        # least one position side.
+        for side in ("mlb_hitter_wag", "mlb_pitcher_wag"):
+            candidates = [
+                o for o in self.orgs
+                if (o["tree"][side] or {}).get("wag_mean")        is not None
+                and (o["tree"][side] or {}).get("war_per_yr_mean") is not None
+                and (o["tree"][side] or {}).get("career_war_mean") is not None
+            ]
+            assert candidates, (
+                f"no org has all 3 inputs on {side} — composite broken?"
+            )
