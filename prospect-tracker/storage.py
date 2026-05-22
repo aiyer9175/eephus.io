@@ -94,23 +94,33 @@ def _compute_peripheral_stf_plus(sl: dict | None,
         bf = 0
     if ip < 20 and bf < 30:
         return None
-    def _z(val_key, mu_key, invert=False):
+    def _z(val_key, mu_key, std_key, invert=False):
+        # Phase A3 — prefer the level's empirical sigma when level_norms
+        # has enough samples to compute it; fall back to the 0.15×mu
+        # rule of thumb otherwise. The empirical sigma is meaningfully
+        # tighter for K%/BB% (the real per-level distribution is
+        # narrower than 15% of the mean) and looser for HR/9 (real
+        # spread is wider) — so the z-scores get more honest at both ends.
         try:
             v = sl.get(val_key)
             mu = norms_perf.get(mu_key)
             if v is None or mu is None or mu == 0:
                 return None
             v = float(v)
-            sigma = 0.15 * float(mu)
+            empirical_sigma = norms_perf.get(std_key)
+            if empirical_sigma is not None and float(empirical_sigma) > 0:
+                sigma = float(empirical_sigma)
+            else:
+                sigma = 0.15 * float(mu)
             if sigma <= 0:
                 return None
             z = (v - mu) / sigma
             return -z if invert else z
         except (TypeError, ValueError):
             return None
-    z_k  = _z("k_pct",     "avg_pitcher_k_pct")
-    z_bb = _z("bb_pct",    "avg_pitcher_bb_pct", invert=True)
-    z_hr = _z("hr_per_9",  "avg_hr_per_9",       invert=True)
+    z_k  = _z("k_pct",     "avg_pitcher_k_pct",  "std_pitcher_k_pct")
+    z_bb = _z("bb_pct",    "avg_pitcher_bb_pct", "std_pitcher_bb_pct", invert=True)
+    z_hr = _z("hr_per_9",  "avg_hr_per_9",       "std_hr_per_9",       invert=True)
     parts = [(0.55, z_k), (0.30, z_bb), (0.15, z_hr)]
     parts = [(w, z) for w, z in parts if z is not None]
     if not parts:
@@ -1385,6 +1395,80 @@ def _grad_wag(graduate_payload: dict) -> float | None:
     if expected is None:
         return None
     return round(float(total_war) - expected, 2)
+
+
+def _compute_breakout_score(points: list, tool_deltas: dict,
+                            stat_flags: list, age_vs_level_diff: float | None) -> int | None:
+    """0-100 composite identifying prospects positioned to break out
+    next year. Equal-weight blend (Phase B1) of four signals:
+
+      1. FV growth in last 12 months — latest consensus_fv_raw minus
+         the most-recent point ≥ 365 days earlier. Scaled so +5 grade
+         pts in 12mo maxes the axis.
+      2. Age-vs-level (negative diff = young-for-level → bonus).
+         Scaled so −2y maxes the axis, +2y zeroes it.
+      3. Tool-development delta — mean across `tool_deltas[*].delta`.
+         Scaled so a +5 mean grade move maxes the axis.
+      4. Active green stat flags — count of `stat_flags[*].direction ==
+         "up"`. Scaled so 4+ green flags max the axis.
+
+    Each axis normalized to [0, 1], then averaged → multiplied by 100.
+    Returns None when too few inputs are available to be meaningful
+    (need at least 2 of the 4 axes resolvable).
+    """
+    from datetime import datetime, timedelta
+
+    def _clamp01(x: float) -> float:
+        return max(0.0, min(1.0, x))
+
+    axes: list[float] = []
+
+    # 1. FV growth in last 12 months
+    if points and len(points) >= 2:
+        latest = points[-1]
+        try:
+            latest_dt = datetime.strptime(latest.snapshot_date, "%Y-%m-%d")
+            cutoff = latest_dt - timedelta(days=365)
+            prior = None
+            for pt in reversed(points[:-1]):
+                pt_dt = datetime.strptime(pt.snapshot_date, "%Y-%m-%d")
+                if pt_dt <= cutoff:
+                    prior = pt; break
+            if prior is None:
+                prior = points[0]  # fall back to oldest
+            if (latest.consensus_fv_raw is not None
+                    and prior.consensus_fv_raw is not None):
+                delta_fv = latest.consensus_fv_raw - prior.consensus_fv_raw
+                # +5 grade pts → 1.0; -5 → 0; linear between.
+                axes.append(_clamp01((delta_fv + 5.0) / 10.0))
+        except (ValueError, AttributeError):
+            pass
+
+    # 2. Age-vs-level
+    if age_vs_level_diff is not None:
+        # diff < 0 means YOUNG for level. -2y → 1.0; +2y → 0.0.
+        axes.append(_clamp01((-age_vs_level_diff + 2.0) / 4.0))
+
+    # 3. Tool-development delta mean
+    if tool_deltas:
+        deltas = [td.get("delta") for td in tool_deltas.values()
+                  if td and td.get("delta") is not None]
+        if deltas:
+            mean_delta = sum(deltas) / len(deltas)
+            # +5 mean grade pts → 1.0; -5 → 0.
+            axes.append(_clamp01((mean_delta + 5.0) / 10.0))
+
+    # 4. Green stat flags
+    if stat_flags:
+        n_green = sum(1 for f in stat_flags
+                      if (f.get("direction") or "").lower() == "up")
+        # 4+ green flags → 1.0; 0 → 0.0.
+        axes.append(_clamp01(n_green / 4.0))
+
+    # Require at least 2 axes resolvable for a meaningful composite.
+    if len(axes) < 2:
+        return None
+    return int(round(sum(axes) / len(axes) * 100))
 
 
 def _compute_tool_deltas(player_points: list[dict]) -> dict[str, dict]:
@@ -3014,6 +3098,20 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                  "tools_consensus": pt.tools_consensus}
                 for pt in p.points
             ]),
+            # Phase B1 — Breakout Signal: 0-100 composite that highlights
+            # prospects with upward FV trajectory + young-for-level + tool
+            # development + active stat-flag green signals. UI surfaces a
+            # "BREAKOUT" pill when score ≥ 75.
+            "breakout_score": _compute_breakout_score(
+                p.points,
+                _compute_tool_deltas([
+                    {"snapshot_date": pt.snapshot_date,
+                     "tools_consensus": pt.tools_consensus}
+                    for pt in p.points
+                ]),
+                flags,
+                (avl.diff if avl else None),
+            ),
             "points": [
                 {
                     "snapshot_date": pt.snapshot_date,
@@ -3676,32 +3774,53 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # elsewhere in the report card. Orgs without data for a given group
     # get None; tool groups with fewer than 3 orgs reporting are dropped
     # entirely (no statistical anchor possible).
-    def _group_mean_delta_for_org(per_tool: dict, keys: list[str]) -> float | None:
-        vals = [per_tool[k]["mean_delta"] for k in keys
-                if k in per_tool and per_tool[k].get("mean_delta") is not None]
-        return sum(vals) / len(vals) if vals else None
+    def _group_mean_delta_for_org(per_tool: dict, keys: list[str]) -> tuple[float | None, int]:
+        """Returns (group mean_delta, total prospects contributing).
+        The n is the prospect count used to shrink small-sample orgs
+        toward the league mean (Phase A4)."""
+        vals_n = [(per_tool[k]["mean_delta"], per_tool[k].get("n_prospects", 0))
+                  for k in keys
+                  if k in per_tool and per_tool[k].get("mean_delta") is not None]
+        if not vals_n:
+            return (None, 0)
+        return (sum(v for v, _ in vals_n) / len(vals_n),
+                sum(n for _, n in vals_n))
+
+    # Bayesian shrinkage strength. k=2 means an org with n=3 prospects
+    # gets 60% weight on its own mean_delta + 40% on the league mean.
+    # n=10 → 83% own + 17% mean. n=30 → 94% own + 6% mean. Tuned so
+    # small samples don't get dragged out of contention by one outlier
+    # but big samples retain their actual signal.
+    _DVM_SHRINK_K = 2
 
     for grp_name, tool_keys in TOOL_GROUPS.items():
-        org_vals: list[tuple[str, float | None]] = []
+        org_vals: list[tuple[str, float | None, int]] = []
         for e in org_summary:
-            v = _group_mean_delta_for_org(e["tool_dev"]["per_tool"], tool_keys)
-            org_vals.append((e["org"], v))
-        populated = [v for _, v in org_vals if v is not None]
-        if len(populated) < 3:
-            # Not enough signal to anchor a league mean — every org gets None.
-            for org_code, _ in org_vals:
+            v, n = _group_mean_delta_for_org(e["tool_dev"]["per_tool"], tool_keys)
+            org_vals.append((e["org"], v, n))
+        populated = [v for _, v, _ in org_vals if v is not None]
+        # Lowered gate from <3 → <2 (Phase A4). With just 2 orgs
+        # reporting we can still anchor a (low-confidence) mean +
+        # surface a DvM+ for both; the per-org shrinkage below
+        # protects against single-prospect noise.
+        if len(populated) < 2:
+            for org_code, _, _ in org_vals:
                 _entry = next(e for e in org_summary if e["org"] == org_code)
                 _entry["tool_dev"]["per_tool_dvm_plus"][grp_name] = None
             continue
         mu = sum(populated) / len(populated)
         var = sum((v - mu) ** 2 for v in populated) / len(populated)
         sd = var ** 0.5
-        for org_code, v in org_vals:
+        for org_code, v, n in org_vals:
             _entry = next(e for e in org_summary if e["org"] == org_code)
             if v is None or sd < 1e-6:
                 _entry["tool_dev"]["per_tool_dvm_plus"][grp_name] = None
             else:
-                z = (v - mu) / sd
+                # Bayesian shrinkage toward the league mean before
+                # z-scoring. shrunk = (n/(n+k))·v + (k/(n+k))·μ
+                weight = n / (n + _DVM_SHRINK_K) if n > 0 else 0.0
+                shrunk_v = weight * v + (1 - weight) * mu
+                z = (shrunk_v - mu) / sd
                 _entry["tool_dev"]["per_tool_dvm_plus"][grp_name] = int(round(100 + 10 * z))
 
     # Composite ToolsDvM+ — unweighted mean of the per-group DvM+ values
@@ -3812,10 +3931,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     # Waivers sub-grade — walk transactions_by_player for non-trade
     # cross-org events (waiver_claim, rule_5_return, contract_purchase,
-    # signed_free_agent). Cross-reference player FV at the transaction
-    # date is expensive; use the player's most-recent consensus FV as a
-    # close-enough proxy since most waiver moves involve fringe players
-    # whose FV doesn't swing much over short periods.
+    # signed_free_agent).
+    #
+    # Phase A2 (2026-05): switched from the always-LATEST-FV proxy to a
+    # transaction-date FV lookup. The prior approach over-valued waiver
+    # claims that bloomed years AFTER the claim (e.g., a 2021 waiver of
+    # a prospect now at FV 50 was credited at FV 50, not the FV ~38 the
+    # claiming org actually saw). Walks player.points[] once per player
+    # and indexes by snapshot_date so the per-tx lookup is O(log n).
     _WAIVER_KINDS = {"waiver_claim", "rule_5_return", "contract_purchase",
                      "signed_free_agent"}
     _waiver_in_by_org:  dict[str, list[float]] = {}
@@ -3825,29 +3948,63 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # 50/50 z-blend partner to net_fv at the leaf-scoring layer.
     _waiver_claims_by_org:    dict[str, int] = {}
     _waiver_mlb_hits_by_org:  dict[str, int] = {}
-    _player_fv_by_key: dict[str, float] = {}
+    # Build a per-player chronological FV history (sorted ascending by
+    # snapshot_date) so fv_at_date is a simple right-bisect. Skip
+    # players with no points or no FV data at all.
+    _player_fv_history: dict[str, list[tuple[str, float]]] = {}
     for p in actives + grads + inactives:
-        if p.points and p.points[-1].consensus_fv_raw is not None:
-            _player_fv_by_key[p.player_key] = float(p.points[-1].consensus_fv_raw)
+        hist: list[tuple[str, float]] = []
+        for pt in (p.points or []):
+            if pt.consensus_fv_raw is not None:
+                hist.append((pt.snapshot_date, float(pt.consensus_fv_raw)))
+        if hist:
+            # points are already date-ordered upstream, but sort
+            # defensively in case of out-of-order ingest.
+            hist.sort(key=lambda t: t[0])
+            _player_fv_history[p.player_key] = hist
+
+    def _fv_at_date(pkey: str, cutoff_date: str) -> float | None:
+        """Return the most-recent consensus_fv_raw at-or-before cutoff
+        for this player, or None if no point exists by that date.
+        Falls back to the OLDEST point when cutoff predates all points
+        (rare — usually a Rule-5/waiver before the player was published)."""
+        hist = _player_fv_history.get(pkey)
+        if not hist:
+            return None
+        # Right-bisect: find the last point where date <= cutoff_date.
+        import bisect
+        idx = bisect.bisect_right([t[0] for t in hist], cutoff_date) - 1
+        if idx < 0:
+            # Cutoff predates all snapshots — use the OLDEST FV as the
+            # best available proxy (better than dropping the tx).
+            return hist[0][1]
+        return hist[idx][1]
+
     _txs = transactions_by_player or {}
     # Tally distinct kinds we encounter for a debug log — surfaces drift
     # if a new transaction type slips through derive_transactions
     # without being grouped here.
     _waiver_kinds_seen: dict[str, int] = {}
     for pkey, txs in _txs.items():
-        fv = _player_fv_by_key.get(pkey)
+        if pkey not in _player_fv_history:
+            continue
         # Reached-MLB signal — career_war present + any season recorded
         # means the player landed on a big-league roster at some point.
         cw_entry = (career_war or {}).get(pkey) or {}
         _player_reached_mlb = bool(cw_entry.get("career_war") is not None
                                    or (cw_entry.get("seasons") or {}))
-        if fv is None:
-            continue
         for tx in (txs or []):
             kind = tx.get("kind")
             if kind not in _WAIVER_KINDS:
                 continue
             _waiver_kinds_seen[kind] = _waiver_kinds_seen.get(kind, 0) + 1
+            # Transaction-date FV — what the claiming org actually saw,
+            # not the retrospective FV. Falls back to the player's
+            # oldest FV when the tx predates all snapshots.
+            tx_date = tx.get("date") or ""
+            fv = _fv_at_date(pkey, tx_date)
+            if fv is None:
+                continue
             # IMPORTANT: derive_transactions in stats.py emits the
             # `from_team` / `to_team` keys (not `_team_name`). An earlier
             # version of this loop used the wrong field names and silently

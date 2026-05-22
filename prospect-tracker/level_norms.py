@@ -275,6 +275,17 @@ def compute_level_norms(
             return round(sum(values) / len(values), ndigits)
         return fallback_map.get(level)
 
+    def _std_or_none(values, min_n):
+        """Population stdev of a value list, or None when the sample is
+        below `min_n`. Callers fall back to the 0.15×mu rule of thumb."""
+        if len(values) < min_n:
+            return None
+        import statistics
+        try:
+            return round(statistics.pstdev(values), 4)
+        except statistics.StatisticsError:
+            return None
+
     out: dict[str, dict] = {}
     all_levels = (
         set(ages_by_level)
@@ -343,6 +354,14 @@ def compute_level_norms(
                 "sample_n_hr_per_9": len(hr9_values),
                 "sample_n_pitcher_k_pct":  len(pitcher_k_pct_values),
                 "sample_n_pitcher_bb_pct": len(pitcher_bb_pct_values),
+                # Empirical stdevs for the Z-score family (Phase A3).
+                # Replaces the historical `sigma = 0.15 * mu` approximation
+                # used in `_compute_peripheral_stf_plus`. Only populated
+                # when the sample is ≥30 — below that, callers should
+                # fall back to the 15%-of-mean rule of thumb.
+                "std_pitcher_k_pct":  _std_or_none(pitcher_k_pct_values,  30),
+                "std_pitcher_bb_pct": _std_or_none(pitcher_bb_pct_values, 30),
+                "std_hr_per_9":       _std_or_none(hr9_values,            30),
             },
         }
     return out

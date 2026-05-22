@@ -629,8 +629,10 @@
     .section-tabs {
       display: flex;
       gap: 4px;
-      margin-bottom: 1.1rem;
-      padding: 6px;
+      /* Phase C4 — tightened from 1.1rem + 6px padding to var(--space-2) +
+         4px padding. Saves ~6px vertical on the persistent top chrome. */
+      margin-bottom: var(--space-2);
+      padding: 4px;
       background: var(--bg-secondary);
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
@@ -1355,8 +1357,11 @@
       font-family: var(--font-serif);
       font-size: 15px;
       color: var(--text-primary);
-      margin-top: 18px;
-      margin-bottom: 8px;
+      /* Phase C1 — compressed from 18px to 12px (var(--space-3)) so
+         detail pages render ~90-120px denser across the typical 15-20
+         titled sections. Per the metric-audit plan. */
+      margin-top: var(--space-3);
+      margin-bottom: var(--space-2);
       font-weight: 600;
       letter-spacing: -0.005em;
       text-transform: none;
@@ -1669,6 +1674,26 @@
       border-color: var(--neon-cyan);
       font-weight: 600;
       margin-left: var(--space-1);
+    }
+    /* Phase B1 — Breakout Signal pill. Two tiers:
+         tier-warm (score 75-84): amber glow, "watch list" energy.
+         tier-hot  (score 85+):   red-hot, "this guy is moving" alert.
+       Sits in the inline badge strip on active-list rows. */
+    .row-tag.breakout-pill {
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 1px 6px;
+    }
+    .row-tag.breakout-pill.tier-warm {
+      background: rgba(201, 162, 39, 0.18);
+      color: var(--neon-amber);
+      border-color: var(--neon-amber);
+    }
+    .row-tag.breakout-pill.tier-hot {
+      background: rgba(185, 28, 28, 0.18);
+      color: var(--down);
+      border-color: var(--down);
     }
 
     /* Sticky "what just graduated" banner. Sits above the date-grouped
@@ -5211,6 +5236,18 @@ function recentAcqBadgeHTML(p) {
 // can each produce a pill. When 7 pills appear inline the row gets
 // noisy; this helper renders at most `max` visible pills + an "+N"
 // overflow chip that surfaces the rest via a native `title=` tooltip.
+// Phase B1 — Breakout Signal pill. Surfaces when the backend-computed
+// `breakout_score` crosses the 75 threshold: prospect is showing strong
+// FV growth + young-for-level + tool development + green stat flags.
+// Tier coloring: 75-84 orange, 85+ red-hot. Click jumps to detail page.
+function breakoutPillHTML(p) {
+  const s = p && p.breakout_score;
+  if (s == null || s < 75) return "";
+  const tier = s >= 85 ? "tier-hot" : "tier-warm";
+  const tip = `Breakout Signal ${s}/100 — composite of FV growth, age-for-level, tool development, and green stat flags.`;
+  return `<span class="row-tag breakout-pill ${tier}" title="${escapeHtml(tip)}">BREAKOUT</span>`;
+}
+
 function _inlineBadgeStrip(p, max = 3) {
   // `flagCounterPillHTML` removed — flag content now lives inline as
   // ▲/▼ tags in the row-summary line (see `makeListRowSummary`), so a
@@ -5220,6 +5257,7 @@ function _inlineBadgeStrip(p, max = 3) {
   // still surfaced on the detail-page tile + accordion; on the list it
   // was either redundant (method also shown elsewhere) or visual noise.
   const builders = [
+    typeof breakoutPillHTML       === "function" ? breakoutPillHTML       : null,
     typeof toolPlusPillHTML       === "function" ? toolPlusPillHTML       : null,
     typeof healthBadgeHTML        === "function" ? healthBadgeHTML        : null,
     typeof savantInlinePillHTML   === "function" ? savantInlinePillHTML   : null,
@@ -7866,18 +7904,56 @@ const SURPLUS_VALUE_MM = {
   hitter:  { 80: 200, 75: 130, 70: 80, 65: 50, 60: 35, 55: 20, 50: 10, 45: 5,  40: 2,   35: 1 },
   pitcher: { 80: 100, 75: 80,  70: 55, 65: 35, 60: 25, 55: 12, 50: 7,  45: 4,  40: 1.5, 35: 1 },
 };
-function estimateSurplusValueMM(fv, isPitcher) {
+
+// Per-position surplus multiplier (Phase A1 — applied AFTER the
+// hitter/pitcher base table). Reflects that a 50 FV catcher or
+// shortstop carries more org value than a 50 FV first-baseman or
+// reliever because of position scarcity + defensive premium.
+// Anchored to MLB free-agent comp surveys (up-the-middle premium ~10%,
+// bat-only positions ~10% discount, RP fungibility ~30% discount).
+// Falls back to 1.00 for unknown positions so legacy callers without
+// a position arg behave identically.
+const SURPLUS_POSITION_MULT = {
+  C:    1.05,
+  SS:   1.10,
+  "2B": 1.00,
+  "3B": 0.95,
+  "1B": 0.90,
+  CF:   1.05,
+  LF:   0.95,
+  RF:   0.95,
+  OF:   0.97,
+  DH:   0.85,
+  // Pitchers
+  SP:   1.00,
+  RHP:  1.00,
+  LHP:  1.00,
+  RP:   0.70,
+  MIRP: 0.85,
+  SIRP: 0.75,
+};
+function surplusPositionMult(position) {
+  if (!position) return 1.0;
+  const p = String(position).split("/")[0].trim().toUpperCase();
+  return SURPLUS_POSITION_MULT[p] != null ? SURPLUS_POSITION_MULT[p] : 1.0;
+}
+
+function estimateSurplusValueMM(fv, isPitcher, position) {
   if (fv == null) return null;
   const table = SURPLUS_VALUE_MM[isPitcher ? "pitcher" : "hitter"];
   // Clamp to the 35-80 anchor range. Below 35 reads as ~$0.5M (a
   // league-min cost-controlled WAR0 player floor); above 80 caps at
   // the elite tier.
-  if (fv >= 80) return table[80];
-  if (fv <= 35) return 0.5;
-  const lo = Math.floor(fv / 5) * 5;
-  const hi = lo + 5;
-  const t  = (fv - lo) / 5;
-  return Math.round((table[lo] * (1 - t) + table[hi] * t) * 10) / 10;
+  let base;
+  if (fv >= 80)      base = table[80];
+  else if (fv <= 35) base = 0.5;
+  else {
+    const lo = Math.floor(fv / 5) * 5;
+    const hi = lo + 5;
+    const t  = (fv - lo) / 5;
+    base = table[lo] * (1 - t) + table[hi] * t;
+  }
+  return Math.round(base * surplusPositionMult(position) * 10) / 10;
 }
 
 // Playing-time-weighted MLB WAR/year, with a minimum-sample gate to
@@ -8273,9 +8349,72 @@ function renderGraduates() {
   // when the user has narrowed the table.
   const cohortChart = makeGradCohortChart(DATA.graduates || [], { years: 6 });
 
+  // Phase B4 — Class Strength Index. For each graduation year, compute
+  // median FV-at-graduation across all that year's grads; rank against
+  // the all-time median. Surfaces "good draft classes" vs "weak" ones.
+  // Strip appears ABOVE the cohort chart.
+  const classStrengthStrip = (() => {
+    const all = DATA.graduates || [];
+    if (all.length < 30) return "";  // not enough cross-year data
+    // Bucket all grads by year + collect FV-at-grad
+    const byYear = {};
+    const allFvs = [];
+    for (const g of all) {
+      // Graduate payloads carry fv_close (numeric) — fv_label is null.
+      // Fall back through both for resilience.
+      const rawFv = g.fv_close != null ? g.fv_close : g.fv_label;
+      const fv = Math.round(parseFloat(rawFv));
+      if (!g.graduation_date || isNaN(fv)) continue;
+      const y = parseInt(g.graduation_date.slice(0, 4), 10);
+      if (isNaN(y)) continue;
+      (byYear[y] = byYear[y] || []).push(fv);
+      allFvs.push(fv);
+    }
+    if (allFvs.length < 30) return "";
+    // All-time median for percentile anchor.
+    const sortedAll = allFvs.slice().sort((a, b) => a - b);
+    const allTimeMedian = sortedAll[Math.floor(sortedAll.length / 2)];
+    // Compute per-year median + percentile.
+    const yearStats = Object.entries(byYear)
+      .map(([y, fvs]) => {
+        const sorted = fvs.slice().sort((a, b) => a - b);
+        const med = sorted[Math.floor(sorted.length / 2)];
+        // Percentile: where this year's median sits in ALL grads' FV
+        // distribution. 50 = average year, 75+ = strong class.
+        const below = sortedAll.filter(v => v < med).length;
+        const pct = Math.round((below / sortedAll.length) * 100);
+        return { year: parseInt(y, 10), median: med, n: fvs.length, percentile: pct };
+      })
+      .sort((a, b) => b.year - a.year)
+      .slice(0, 6);  // most recent 6 years
+    const cells = yearStats.map(s => {
+      const tone = s.percentile >= 70 ? "var(--up)"
+                 : s.percentile <= 30 ? "var(--down)"
+                 : "var(--text-secondary)";
+      const label = s.percentile >= 70 ? "STRONG"
+                  : s.percentile <= 30 ? "WEAK"
+                  : "AVG";
+      return `<div style="flex:1;min-width:90px;padding:var(--space-2) var(--space-3);border-right:1px solid var(--border-light);">
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;font-weight:600;">${s.year}</div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-top:2px;">
+          <span style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;">FV ${s.median}</span>
+          <span style="font-family:var(--font-mono);font-size:10px;color:${tone};font-weight:700;">${label}</span>
+        </div>
+        <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;">${s.percentile}th pct · n=${s.n}</div>
+      </div>`;
+    }).join("");
+    return `<div class="class-strength-strip" style="display:flex;flex-wrap:wrap;border:1px solid var(--border-light);border-radius:var(--radius-md);background:var(--bg-secondary);margin-bottom:var(--space-3);overflow:hidden;">
+      <div style="padding:var(--space-2) var(--space-3);border-right:1px solid var(--border-light);background:var(--bg-tertiary);">
+        <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Class strength</div>
+        <div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">All-time median: FV ${allTimeMedian}</div>
+      </div>
+      ${cells}
+    </div>`;
+  })();
+
   document.getElementById("grad-rows").innerHTML = filtered.length
-    ? cohortChart + banner + body
-    : cohortChart + `<div class="state-message">No graduates match these filters.</div>`;
+    ? classStrengthStrip + cohortChart + banner + body
+    : classStrengthStrip + cohortChart + `<div class="state-message">No graduates match these filters.</div>`;
 }
 
 const SOURCE_LABELS = {
@@ -11370,7 +11509,7 @@ function farmSortedOrgs() {
       for (const pl of (DATA.players || [])) {
         if (!pl.org || pl.fv_close == null) continue;
         const isP = PITCHER_RE.test(String(pl.position || "").split("/")[0].toUpperCase());
-        const sv  = estimateSurplusValueMM(pl.fv_close, isP);
+        const sv  = estimateSurplusValueMM(pl.fv_close, isP, pl.position);
         if (sv == null) continue;
         _surplusMemo[pl.org] = (_surplusMemo[pl.org] || 0) + sv;
       }
@@ -11682,7 +11821,7 @@ function renderFarmSystems() {
   for (const pl of (DATA.players || [])) {
     if (!pl.org || pl.fv_close == null) continue;
     const isP = PITCHER_RE.test(String(pl.position || "").split("/")[0].toUpperCase());
-    const s = estimateSurplusValueMM(pl.fv_close, isP);
+    const s = estimateSurplusValueMM(pl.fv_close, isP, pl.position);
     if (s == null) continue;
     surplusByOrg[pl.org] = (surplusByOrg[pl.org] || 0) + s;
     countByOrg[pl.org]   = (countByOrg[pl.org]   || 0) + 1;
@@ -12431,6 +12570,32 @@ function makeArsenalRadar(pa) {
 // and the visualization never communicated location signal cleanly.
 // Pitch arsenal block still shows the per-pitch table + radar.)
 
+// Phase B3 — Velocity Trend extractor. Walks the player's points[]
+// looking for FG `_extras.sits` velocity strings (e.g. "96-99") and
+// returns chronological [(date, midpoint_mph)] for sparkline use.
+// Parses "94-97" → 95.5, "97" → 97. Skips unparseable values.
+function extractVeloHistory(p) {
+  const out = [];
+  for (const pt of (p && p.points) || []) {
+    const fg = pt.per_source && pt.per_source.fangraphs;
+    const ex = fg && fg.tools && fg.tools._extras;
+    if (!ex || !ex.sits) continue;
+    const s = String(ex.sits).trim();
+    let mph = null;
+    const range = s.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+    const single = s.match(/^\s*(\d+(?:\.\d+)?)\s*$/);
+    if (range) {
+      mph = (parseFloat(range[1]) + parseFloat(range[2])) / 2;
+    } else if (single) {
+      mph = parseFloat(single[1]);
+    }
+    if (mph != null && !isNaN(mph) && mph >= 60 && mph <= 110) {
+      out.push({ date: pt.snapshot_date, mph });
+    }
+  }
+  return out;
+}
+
 function makeArsenalBlock(pa, p) {
   // FanGraphs arsenal profile line (Sits / Tops / FB Type / RPM FB /
   // RPM Break) — pulled from the latest FG snapshot's _extras. Renders
@@ -12446,6 +12611,23 @@ function makeArsenalBlock(pa, p) {
       if (ex.fb_type) parts.push(`<span style="color:var(--text-secondary);">${escapeHtml(ex.fb_type)} FB</span>`);
       if (ex.rpm_fb) parts.push(`<span style="color:var(--text-tertiary);">${escapeHtml(String(ex.rpm_fb))} RPM (FB)</span>`);
       if (ex.rpm_break) parts.push(`<span style="color:var(--text-tertiary);">${escapeHtml(String(ex.rpm_break))} RPM (Break)</span>`);
+      // Phase B3 — velocity trend sparkline. Replaces the static sits
+      // line with a year-over-year mini-sparkline when we have ≥2
+      // points of FG sits history. Visualizes velo trajectory
+      // (recovery from TJ, mechanical changes, etc.).
+      const veloHist = extractVeloHistory(p);
+      if (veloHist.length >= 2) {
+        const mphs = veloHist.map(v => v.mph);
+        const first = mphs[0], last = mphs[mphs.length - 1];
+        const delta = last - first;
+        const arrow = delta > 0.5 ? "↑" : delta < -0.5 ? "↓" : "→";
+        const aColor = delta > 0.5 ? "var(--up)" : delta < -0.5 ? "var(--down)" : "var(--text-secondary)";
+        const sparkSVG = (typeof _miniSparkline === "function")
+          ? _miniSparkline(mphs, {width: 56, height: 14, stroke: aColor})
+          : "";
+        const tip = veloHist.map(v => `${v.date}: ${v.mph.toFixed(1)} mph`).join(" · ");
+        parts.push(`<span style="display:inline-flex;align-items:center;gap:4px;" title="${escapeHtml(tip)}">${sparkSVG}<span style="font-family:var(--font-mono);font-size:10px;color:${aColor};font-weight:700;">${arrow}${delta > 0 ? "+" : ""}${delta.toFixed(1)}</span></span>`);
+      }
       fgArsenalLine = `<div style="font-family:var(--font-sans);font-size:12px;line-height:1.6;margin-bottom:10px;padding:6px 10px;border-left:3px solid var(--neon-violet);background:rgba(190,120,255,0.05);border-radius:0 var(--radius-sm) var(--radius-sm) 0;">
         <span style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;margin-right:8px;">FG arsenal</span>
         ${parts.join(' · ')}
@@ -13186,7 +13368,7 @@ function renderPlayerDetail(key) {
     const fv = p.fv_close ?? null;
     if (fv == null && !p.acquisition) return "";
     const _isPit = !!(p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position));
-    const surplus = estimateSurplusValueMM(fv, _isPit);
+    const surplus = estimateSurplusValueMM(fv, _isPit, p.position);
     const fmtUsd = m => {
       if (m == null) return "—";
       if (m >= 100) return `$${m.toFixed(0)}M`;
@@ -13198,13 +13380,25 @@ function renderPlayerDetail(key) {
                        : surplus >= 50 ? "var(--up)"
                        : surplus >= 10 ? "var(--neon-cyan)"
                        : "var(--text-primary)";
+    // Phase B2 — Position Scarcity chip. Shows when the position-mult
+    // (already baked into the surplus value above) is meaningfully off
+    // 1.0, so the reader knows the headline number was adjusted for
+    // up-the-middle premium / reliever discount / etc.
+    const scarcity = surplusPositionMult(p.position);
+    let scarcityChip = "";
+    if (Math.abs(scarcity - 1.0) >= 0.05) {
+      const pct = (scarcity - 1.0) * 100;
+      const sign = pct > 0 ? "+" : "";
+      const chipColor = scarcity > 1.0 ? "var(--up)" : "var(--down)";
+      scarcityChip = `<span style="display:inline-block;margin-left:6px;font-family:var(--font-mono);font-size:9px;font-weight:700;color:${chipColor};border:1px solid ${chipColor};padding:1px 4px;border-radius:3px;letter-spacing:0.04em;" title="Position scarcity multiplier ×${scarcity.toFixed(2)} (${sign}${pct.toFixed(0)}% vs the league baseline). Up-the-middle defenders carry a premium; bat-only / reliever roles carry a discount.">×${scarcity.toFixed(2)}</span>`;
+    }
     const surplusRow = surplus != null
       ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
            <div>
-             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${p.status === "graduated" ? "Expected surplus (FV)" : "Surplus value"}</div>
+             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${p.status === "graduated" ? "Expected surplus (FV)" : "Surplus value"}${scarcityChip}</div>
              <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">FV ${Math.round(fv)} ${_isPit ? "pitcher" : "hitter"} · 6yr cost-controlled</div>
            </div>
-           <div style="font-family:var(--font-mono);font-size:${p.status === "graduated" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="Estimated MLB surplus value over the player's 6-year cost-controlled window. Derived from FV ${Math.round(fv)} via the FanGraphs / Craig Edwards 2019 framework (hitter/pitcher split). Real surplus depends on health, performance variance, and changes in $/WAR market rate.">${fmtUsd(surplus)}</div>
+           <div style="font-family:var(--font-mono);font-size:${p.status === "graduated" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="Estimated MLB surplus value over the player's 6-year cost-controlled window. Derived from FV ${Math.round(fv)} via the FanGraphs / Craig Edwards 2019 framework (hitter/pitcher split), then adjusted by position scarcity multiplier. Real surplus depends on health, performance variance, and changes in $/WAR market rate.">${fmtUsd(surplus)}</div>
          </div>`
       : "";
     // Expected market AAV — FV-derived WAR/yr × $/WAR market rate.
@@ -15035,7 +15229,7 @@ function renderFarmDetail(orgCode) {
       const sv = (p) => {
         if (p.fv_close == null) return -1;
         const isP = !!(p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position));
-        return estimateSurplusValueMM(p.fv_close, isP) || 0;
+        return estimateSurplusValueMM(p.fv_close, isP, p.position) || 0;
       };
       return sv(b) - sv(a);
     },
@@ -15150,7 +15344,7 @@ function renderFarmDetail(orgCode) {
       const fv = p.fv_close;
       if (fv == null) continue;
       const isP = !!(p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position));
-      const s = estimateSurplusValueMM(fv, isP);
+      const s = estimateSurplusValueMM(fv, isP, p.position);
       if (s == null) continue;
       total += s;
       n++;
