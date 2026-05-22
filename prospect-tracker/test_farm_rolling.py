@@ -51,23 +51,26 @@ def _iso_days_ago(n: int, ref: date) -> str:
 
 class TestFvToPoints:
     def test_table_anchors_match(self):
-        # Spot-check a few tiers — these anchor the curve and tests below.
-        assert _fv_to_points(80) == 100.0
-        assert _fv_to_points(70) == 50.0
-        assert _fv_to_points(60) == 18.0
-        assert _fv_to_points(50) == 5.0
+        # FV_POINTS curve was steepened in v4 (2026-05) — top-end now
+        # dramatically dominates org-fillers (an 80 is worth 250, vs the
+        # old 100). These anchors are the new ones; the geometric ratio
+        # tests below verify the curve still has the right shape.
+        assert _fv_to_points(80) == 250.0
+        assert _fv_to_points(70) == 120.0
+        assert _fv_to_points(60) == 35.0
+        assert _fv_to_points(50) == 8.0
         assert _fv_to_points(40) == 1.0
 
     def test_interpolates_between_tiers(self):
-        # 57.5 sits halfway between FV 55 (10.0) and FV 60 (18.0).
-        # Expected: 10 + 0.5 * (18 - 10) = 14.0
-        assert _fv_to_points(57.5) == 14.0
+        # 57.5 sits halfway between FV 55 (18.0) and FV 60 (35.0).
+        # Expected: 18 + 0.5 * (35 - 18) = 26.5
+        assert _fv_to_points(57.5) == 26.5
 
     def test_plus_grades_via_half_step(self):
         # "55+" semantically is a 57.5 — the existing CSV stores rounded
         # consensus_fv_raw floats, so we test the float path that the
-        # pipeline actually uses. Half-step interpolation gives 14.0.
-        assert _fv_to_points(57.5) == 14.0
+        # pipeline actually uses. Half-step interpolation gives 26.5.
+        assert _fv_to_points(57.5) == 26.5
 
     def test_geometric_top_is_dominant(self):
         # The whole point of the tiered curve: top-tier prospects swamp
@@ -216,8 +219,9 @@ class TestGradPipelineScore:
             {"kind": "graduation", "fv": 55, "date": _iso_days_ago(400, today)},  # outside
             {"kind": "graduation", "fv": 50, "date": _iso_days_ago(100, today)},  # inside
         ]
-        # Only the 100-days-ago grad counts — score = points(50) = 5.0.
-        assert _grad_pipeline_score(events, as_of=today) == 5.0
+        # Only the 100-days-ago grad counts — score = points(50) = 8.0
+        # under the v4 FV_POINTS curve (was 5.0 pre-v4).
+        assert _grad_pipeline_score(events, as_of=today) == 8.0
 
     def test_ignores_non_graduation_events(self):
         today = date(2026, 5, 19)
@@ -225,8 +229,9 @@ class TestGradPipelineScore:
             {"kind": "trade",      "fv": 60, "date": _iso_days_ago(20, today)},
             {"kind": "graduation", "fv": 45, "date": _iso_days_ago(30, today)},
         ]
-        # Only the graduation contributes — points(45) = 2.5.
-        assert _grad_pipeline_score(events, as_of=today) == 2.5
+        # Only the graduation contributes — points(45) = 3.5 under
+        # the v4 FV_POINTS curve (was 2.5 pre-v4).
+        assert _grad_pipeline_score(events, as_of=today) == 3.5
 
     def test_empty_returns_zero(self):
         assert _grad_pipeline_score([], as_of=date(2026, 5, 19)) == 0.0

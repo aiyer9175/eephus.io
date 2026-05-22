@@ -2938,6 +2938,15 @@
       font-family: var(--font-mono); font-size: 11px;
       color: var(--text-secondary);
     }
+    .gt-comp-cap {
+      font-family: var(--font-mono); font-size: 9px;
+      letter-spacing: 0.08em; font-weight: 700;
+      padding: 2px 6px; border-radius: var(--radius-sm);
+      background: rgba(220, 100, 60, 0.18);
+      color: #d8643c;
+      border: 1px solid rgba(220, 100, 60, 0.40);
+      cursor: help;
+    }
     .gt-comp-foot {
       font-size: 10px; color: var(--text-tertiary); margin-top: 4px;
       line-height: 1.4;
@@ -11151,10 +11160,10 @@ const GLOSSARY = {
   "farm_report_card": {
     name: "Farm grade tree", aliases: ["Farm grade", "Report card", "Grade tree"], category: "custom-index",
     priority: 50,
-    short: "4-branch hierarchical farm grade. Composite = weighted blend of Acquisition Strategy + Development + Financial + MLB Production.",
-    long: "Grade tree v3 — Acquisitions + Transactions are now merged into a single Acquisition Strategy branch (Draft + IFA + Trade + Waiver Claims as 4 sub-leaves). Composite farm_score = weighted sum of the 4 main-grade 100-anchored scores. Development stays top-weighted (35%) — the single biggest controllable skill. MLB Production (25%) and Acquisition Strategy (25%) tie at second; Financial (15%) anchors at the bottom. MLB Production + IFA Performance now use 3-input composites (WAG + WAR-per-year + Cumulative WAR) so peak rate and total impact register alongside expectation deltas. Displaced metrics (Top-End / Depth / Grad Pipe / Tools+ Quality / Readiness / Health) live as ungraded supplementary tiles in the Roster Snapshot. Every leaf z-score normalized across the 30 orgs; sparse leaves get '—'.",
-    formula: "farm_score = 0.25·Acquisition_Strategy + 0.35·Development + 0.15·Financial + 0.25·MLB_Production\n  Acquisition_Strategy = mean(Draft, IFA, Trade, Waiver)\n  Development          = mean(Hitter_Tools_DvM+, Pitcher_Tools_DvM+)\n  Financial            = mean(WAR_per_$M, Grad_contract_surplus)\n  MLB_Production       = mean(Hitter_3input, Pitcher_3input)\n  Hitter_3input        = mean of z(WAG, WAR_per_yr, Cumulative_WAR) over hitter grads",
-    related: ["farm_grade_acquisition_strategy", "farm_grade_development", "farm_grade_financial", "farm_grade_mlb_production", "dvm_plus", "wag", "sur_plus"],
+    short: "4-branch hierarchical farm grade (v4). Composite = weighted blend of Acquisition Strategy + Development + Financial + MLB Production. Star-tier focus + financial ROI emphasis.",
+    long: "Grade tree v4 — rebalanced to emphasize star-tier production and financial ROI. Weights: MLB Production 30% + Development 30% (tied top), Financial 20% + Acquisition Strategy 20% (tied bottom). MLB Production grew from 2 to 5 leaves (added Boom Rate, Top-3 Grad WAR/yr, Conviction). Financial grew from 2 to 4 leaves (added Draft Pool Efficiency, IFA ROI). FV_POINTS curve steepened so an 80-grade prospect is worth 2.5× the old curve and 250× a 40-grade org-filler — top-end orgs separate dramatically. Conviction cap: orgs without a star-tier grad (WAR/yr ≥ 4.0 last 5yr OR career WAR ≥ 12 ever) clamp at the 75th-percentile farm_score, preventing depth-only orgs from grading elite. Every leaf z-score normalized across the 30 orgs; sparse leaves get '—'.",
+    formula: "farm_score = 0.20·Acquisition_Strategy + 0.30·Development + 0.20·Financial + 0.30·MLB_Production\n  Acquisition_Strategy = mean(Draft, IFA, Trade, Waiver)\n  Development          = mean(Hitter_Tools_DvM+, Pitcher_Tools_DvM+)\n  Financial            = mean(WAR_per_$M, Grad_contract_surplus, Draft_pool_efficiency, IFA_ROI)\n  MLB_Production       = mean(Hitter_3input, Pitcher_3input, Boom_rate, Top3_WAR_per_yr, Conviction)\n  if Conviction = 0 and farm_score > p75: farm_score = p75  (Conviction cap)",
+    related: ["farm_grade_acquisition_strategy", "farm_grade_development", "farm_grade_financial", "farm_grade_mlb_production", "mlb_production_boom_pct", "mlb_production_top_grads", "mlb_production_conviction", "fin_draft_pool_efficiency", "fin_ifa_roi", "dvm_plus", "wag", "sur_plus"],
   },
   "farm_grade_acquisition_strategy": {
     name: "Acquisition Strategy", aliases: ["Acquisition Strategy", "Acquisitions", "Acq Strategy"], category: "custom-index",
@@ -11175,7 +11184,7 @@ const GLOSSARY = {
   "farm_grade_development": {
     name: "Development", aliases: ["Development grade", "Dev grade"], category: "custom-index",
     priority: 52,
-    short: "Per-tool dev pace of the org's prospects vs the league. TOP-WEIGHTED branch (35%) — the single biggest controllable skill.",
+    short: "Per-tool dev pace of the org's prospects vs the league. TOP-WEIGHTED branch (30%, tied with MLB Production in v4) — the single biggest controllable skill.",
     long: "Development branch of the farm grade tree. Two sub-grades, equal weight: (a) Hitter Tools DvM+ — mean of HitDvM+ / PowerDvM+ / SpeedDvM+ / FieldDvM+ / ArmDvM+ / PitchSelDvM+ / BatCtrlDvM+ for this org's actives, (b) Pitcher Tools DvM+ — mean of FB / SL / CB / CH / Cmd / CtDvM+. Both 100-anchored (100 = league mean dev pace, +10 = 1σ). Measures pure tool growth in-org, independent of raw FV — a 40-grade hit tool that grew to 55 over 2 cycles signals development skill regardless of where the prospect started.",
     related: ["dvm_plus", "tools_dvm_plus", "tool_delta", "farm_report_card"],
   },
@@ -11189,18 +11198,53 @@ const GLOSSARY = {
   "farm_grade_financial": {
     name: "Financial / SUR+", aliases: ["Financial grade", "SUR+", "Surplus grade"], category: "custom-index",
     priority: 54,
-    short: "Org's capital efficiency. WAR per $1M of signing bonus plus grad-contract surplus value.",
-    long: "Financial branch of the farm grade tree (15% of farm_score). Two sub-grades, equal weight: (a) WAR per $M — total career WAR yielded by graduates divided by total signing bonus paid (existing Financial ROI metric, reused), (b) Grad-Contract Surplus — for graduates with both Spotrac contract data and signing bonus on file, the per-year surplus (current AAV minus bonus amortized over 6 years, the typical pre-arb cost-controlled window). Positive = MLB salary value exceeded acquisition cost. The composite of the two scores is SUR+, an 100-anchored capital-efficiency index (wRC+/OPS+ shape).",
-    formula: "SUR+ = mean of z-scored (war_per_$M, mean grad surplus per year), each anchored at 100 + 10·z",
-    related: ["wag", "war", "signing_bonus", "farm_report_card"],
+    short: "Org's capital efficiency. 4 leaves (v4): WAR per $M, grad-contract surplus, draft-pool efficiency, IFA ROI.",
+    long: "Financial branch of the farm grade tree (20% of farm_score in v4, up from 15% in v3 to reflect the explicit financial-ROI emphasis). Four sub-grades, equal weight: (a) WAR per $M — total career WAR yielded by graduates divided by total signing bonus paid, (b) Grad-Contract Surplus — for graduates with both Spotrac contract data and signing bonus, per-year surplus (current AAV minus bonus amortized over 6 years), (c) Draft Pool Efficiency — trailing-3yr rolling WAR per $M of draft-pool spend, (d) IFA ROI — trailing-5yr rolling WAR per $M of IFA bonus spend. SUR+ shape preserved at the composite level (100-anchored, +10 = 1σ).",
+    formula: "Financial_score = mean of z-anchored (war_per_$M, mean grad surplus per yr, war_per_M_draft_pool, war_per_M_IFA)",
+    related: ["wag", "war", "signing_bonus", "fin_draft_pool_efficiency", "fin_ifa_roi", "farm_report_card"],
   },
   "farm_grade_mlb_production": {
     name: "MLB Production", aliases: ["MLB Production grade", "Production grade"], category: "custom-index",
     priority: 55,
-    short: "Position-split 3-input composite (WAG + WAR-per-year + Cumulative WAR) over graduates. Hitter vs pitcher side shown separately.",
-    long: "MLB Production branch (25% of farm_score). Two sub-grades, equal weight: (a) Hitter MLB Production — equal-weighted z-blend of Hitter WAG (expectation delta), Hitter WAR-per-year (peak rate), and Hitter Cumulative WAR (total impact) across hitter graduates. (b) Pitcher MLB Production — same 3-input composite over pitcher graduates. The v3 redesign supplements WAG with raw WAR signals so an org that produces 8 league-average regulars scores comparably to one that produces 2 stars of the same total WAR. Sparse-data gate: each sub-input requires ≥3 qualifying graduates or contributes None; leaf rolls up the mean of present z-scored sub-inputs.",
-    formula: "Position_score = mean of z-anchored(WAG, WAR_per_yr, Cumulative_WAR) across position-filtered graduates",
-    related: ["wag", "war", "farm_report_card"],
+    short: "Whether the org produces MLB players, especially top-end ones. 5 leaves (v4): hitter + pitcher 3-input composites, boom rate, top-3 grad WAR/yr, Conviction.",
+    long: "MLB Production branch (30% of farm_score in v4, up from 25%, tied for top weight with Development). Five sub-grades, equal weight: (a) Hitter MLB Production — equal-weighted z-blend of Hitter WAG + Hitter WAR-per-year + Top-3 Hitter Career WAR. (b) Pitcher MLB Production — same 3-input composite for pitchers. (c) Boom Rate — share of settled grads with career WAR ≥ +5 (min 5 settled). (d) Top-3 Grad WAR/yr — mean WAR/yr of the org's top-3 grads by rate (min 3 qualifying). (e) Conviction — binary flag: 1 if any grad has WAR/yr ≥ 4.0 in trailing 5yr OR career WAR ≥ 12 ever, else 0. Conviction additionally drives the farm-score cap: conviction=0 orgs clamp at the 75th-percentile farm_score regardless of branch grades, so depth-only orgs can't grade elite without a star.",
+    formula: "Production_score = mean of z-anchored (Hitter_3input, Pitcher_3input, boom_pct, top3_WAR_per_yr, conviction)\nConviction cap: if conviction = 0 and farm_score > p75 → farm_score = p75",
+    related: ["wag", "war", "mlb_production_boom_pct", "mlb_production_top_grads", "mlb_production_conviction", "farm_report_card"],
+  },
+  "mlb_production_boom_pct": {
+    name: "Boom Rate", aliases: ["Boom Rate", "Boom %", "Boom percentage"], category: "custom-index",
+    priority: 56,
+    short: "Share of an org's settled MLB graduates with career WAR ≥ +5 (true 'boom' outcomes).",
+    long: "Boom Rate leaf inside MLB Production v4. For each graduate the org produced, classify as boom / settled / bust once the player meets a sample floor (800 PA / 200 IP / ≥2 MLB seasons). Boom = career WAR ≥ +5 (well above replacement, regular-to-star outcome). Boom Rate = boom_count / settled_count. Min 5 settled grads or the leaf returns '—'. Complements WAG-based metrics by giving direct credit for star outcomes rather than smoothing them through expectation deltas.",
+    related: ["farm_grade_mlb_production", "mlb_production_top_grads", "mlb_production_conviction", "boom_bust", "wag"],
+  },
+  "mlb_production_top_grads": {
+    name: "Top-3 Grad WAR/yr", aliases: ["Top-3 Grad WAR/yr", "Top-3 Grad WAR per Year"], category: "custom-index",
+    priority: 57,
+    short: "Mean WAR/yr across the org's top-3 graduates by rate. Captures peak star-tier production without depth dilution.",
+    long: "Top-3 Grad WAR/yr leaf inside MLB Production v4. For each graduate meeting the boom-bust sample floor (≥800 PA / ≥200 IP / ≥2 MLB seasons), compute WAR/yr (career WAR / MLB seasons). Sort desc, take mean of top 3. Min 3 qualifying grads or the leaf returns '—'. An org producing one Skenes + two solid regulars (e.g. 5.0 + 2.5 + 2.0 / 3 = 3.17) scores far above one producing 10 league-average grads (1.0 + 1.0 + 1.0 = 1.0), as intended. Pairs with `mlb_production_top_grads_pitcher_only` for position-group breakdowns.",
+    related: ["farm_grade_mlb_production", "mlb_production_boom_pct", "mlb_production_conviction", "wag"],
+  },
+  "mlb_production_conviction": {
+    name: "Conviction", aliases: ["Conviction", "Star presence flag"], category: "custom-index",
+    priority: 58,
+    short: "Binary 0/1 flag: org has produced at least one star-tier grad (WAR/yr ≥ 4.0 last 5yr OR career WAR ≥ 12 ever). Drives the farm-score cap.",
+    long: "Conviction leaf inside MLB Production v4. Fires (=1) if at least one graduate satisfies EITHER (a) WAR/yr ≥ 4.0 (All-Star tier) with last MLB year within the trailing 5 years, OR (b) career WAR ≥ 12 ever (high-end Hall-of-Very-Good output). Otherwise =0. PIT (Skenes) → 1; KCR (Witt Jr.) → 1; orgs without a recent star → 0. Beyond contributing as a leaf input, Conviction drives a post-process **farm-score cap**: conviction=0 orgs whose composite would exceed the 75th-percentile farm_score get clamped to that p75 value. This prevents depth-only orgs from grading elite without a star ceiling — they can still be A-tier in depth / acquisitions / development, but not the very top.",
+    related: ["farm_grade_mlb_production", "mlb_production_top_grads", "mlb_production_boom_pct"],
+  },
+  "fin_draft_pool_efficiency": {
+    name: "Draft Pool Efficiency", aliases: ["Draft Pool Efficiency", "Draft pool ROI"], category: "custom-index",
+    priority: 59,
+    short: "Trailing-3yr-window WAR per $M of draft-pool spend. Captures whether the org's draft dollars translated to MLB production.",
+    long: "Draft Pool Efficiency leaf inside Financial v4. Numerator: sum of career WAR for grads drafted in the window (T-5)…(T-2) — that's a 4-year lookback ending 2 years before today so drafted players have had time to develop. Denominator: sum of MLB-published draft-pool spend for those same draft years (from `mlb_draft_pools` org-summary data). Output: WAR/$M. Gated at ≥3 contributing grads with both draft_year and career_war on file. Complements WAR per $M (signing-bonus-based) by tying outcomes to the per-org pool the team was allotted, capturing slot-money discipline + late-round hits.",
+    related: ["farm_grade_financial", "fin_ifa_roi", "war", "signing_bonus"],
+  },
+  "fin_ifa_roi": {
+    name: "IFA ROI", aliases: ["IFA ROI", "International FA ROI"], category: "custom-index",
+    priority: 60,
+    short: "Trailing-5yr-window WAR per $M of IFA bonus spend. Captures whether the org's international signings translated to MLB production.",
+    long: "IFA ROI leaf inside Financial v4. Numerator: sum of career WAR for IFA-method grads signed in (T-8)…(T-3) — longer 6-year window because IFA prospects need more development time. Denominator: sum of org's total IFA bonus spending over those same signing years (from the per-year IFA spend table). Output: WAR/$M. Gated at ≥2 contributing grads with signed_year + bonus on file. Cubans / Asian-pro signings + bonus-pool-busting splash signings show up here as high-spend low-ROI; orgs that develop deep $200K–$500K signings (e.g. Cleveland's Latin America operation) show high ROI.",
+    related: ["farm_grade_financial", "fin_draft_pool_efficiency", "war", "signing_bonus", "ifa"],
   },
   "sur_plus": {
     name: "SUR+", aliases: ["SUR+", "Surplus index"], category: "custom-index",
@@ -12198,11 +12242,12 @@ function gradeColor(letter) {
 // what's actually driving the org's rank (e.g. "A on top-end, D on
 // trajectory" tells a very different story than just "B+ overall").
 function makeFarmReportCard(org) {
-  // v3 grade tree — 4 main branches. Acquisition Strategy merges the
-  // prior Acquisitions + Transactions (4 sub-leaves: Draft / IFA /
-  // Trade / Waiver). MLB Production + IFA Performance now show 3-input
-  // composites (WAG + WAR-per-year + Cumulative WAR). Rendered as
-  // collapsible <details> branches for native expand/collapse.
+  // v4 grade tree — 4 main branches. MLB Production grew from 2 leaves
+  // to 5 (added Boom%, Top-3 grad WAR, Conviction); Financial grew from
+  // 2 to 4 (added Draft Pool Efficiency, IFA ROI). FV_POINTS curve
+  // steepened so star-tier grads dominate. Conviction cap: orgs with no
+  // star-tier grad (WAR/yr ≥ 4 recent OR career WAR ≥ 12) are clamped
+  // to the 75th-percentile farm_score.
   if (!org || !org.grades) return '';
   const g = org.grades;
   const r = org.component_ranks || {};
@@ -12210,7 +12255,7 @@ function makeFarmReportCard(org) {
   const n = (DATA.org_summary || []).length || 30;
 
   // Display weights (must match storage.FARM_TREE_WEIGHT_*).
-  const W = { acquisition_strategy: 25, development: 35, financial: 15, mlb_production: 25 };
+  const W = { acquisition_strategy: 20, development: 30, financial: 20, mlb_production: 30 };
 
   // Format helpers for leaf score values.
   const fmtSignedWag = v => v != null ? `WAG ${v >= 0 ? '+' : ''}${v.toFixed(2)}` : '—';
@@ -12291,18 +12336,57 @@ function makeFarmReportCard(org) {
     subCell('Hitter Tools DvM+',  'dev_hitter',  'dev_hitter',  fmtDvm, (t.dev_hitter  || {}).dvm_plus) +
     subCell('Pitcher Tools DvM+', 'dev_pitcher', 'dev_pitcher', fmtDvm, (t.dev_pitcher || {}).dvm_plus);
 
+  // Financial v4 — 4 leaves. Legacy WAR/$M + grad-contract surplus
+  // plus two new ROI rollups (draft pool efficiency, IFA spend ROI).
+  const draftEffLeaf = t.fin_draft_pool_efficiency || {};
+  const draftEffTooltip = draftEffLeaf.war_per_m_pool != null
+    ? `Trailing 3yr-window WAR per $M of draft-pool spend. ${draftEffLeaf.grad_count ?? 0} contributing grads, ${draftEffLeaf.pool_total_usd != null ? '$' + (draftEffLeaf.pool_total_usd / 1_000_000).toFixed(1) + 'M pool' : 'pool data unavailable'}.`
+    : `Insufficient draft-pool data (needs ≥3 contributing grads with draft-pool spend on file).`;
+  const ifaRoiLeaf = t.fin_ifa_roi || {};
+  const ifaRoiTooltip = ifaRoiLeaf.war_per_m_ifa != null
+    ? `Trailing 5yr-window WAR per $M of IFA spend. ${ifaRoiLeaf.grad_count ?? 0} contributing grads, ${ifaRoiLeaf.spend_total_usd != null ? '$' + (ifaRoiLeaf.spend_total_usd / 1_000_000).toFixed(1) + 'M IFA spend' : 'spend data unavailable'}.`
+    : `Insufficient IFA-spend data (needs ≥2 contributing grads with signed_year + bonus on file).`;
   const finSubs =
-    subCell('WAR per $M',            'fin_war_per_m',        'fin_war_per_m',        fmtWarPerM,  (t.fin_war_per_m        || {}).value) +
-    subCell('Grad-Contract Surplus', 'fin_contract_surplus', 'fin_contract_surplus', fmtUsdPerYr, (t.fin_contract_surplus || {}).mean_usd_per_yr);
+    subCell('WAR per $M',            'fin_war_per_m',              'fin_war_per_m',              fmtWarPerM,  (t.fin_war_per_m        || {}).value) +
+    subCell('Grad-Contract Surplus', 'fin_contract_surplus',       'fin_contract_surplus',       fmtUsdPerYr, (t.fin_contract_surplus || {}).mean_usd_per_yr) +
+    subCell('Draft Pool Efficiency', 'fin_draft_pool_efficiency',  'fin_draft_pool_efficiency',  fmtWarPerM,  draftEffLeaf.war_per_m_pool, draftEffTooltip) +
+    subCell('IFA ROI',               'fin_ifa_roi',                'fin_ifa_roi',                fmtWarPerM,  ifaRoiLeaf.war_per_m_ifa,    ifaRoiTooltip);
 
-  // MLB Production v3 — 3-input composites per position. Primary metric
-  // shown is WAG mean; tooltip carries the WAR/yr + Cumulative WAR
-  // supplementary inputs.
+  // MLB Production v4 — 5 leaves. The two 3-input WAG composites per
+  // position group, plus boom% rate + top-3 grad WAR/yr + binary
+  // Conviction (star-tier grad present).
+  const boomLeaf  = t.mlb_production_boom_pct  || {};
+  const topGrads  = t.mlb_production_top_grads || {};
+  const convLeaf  = t.mlb_production_conviction || {};
+  const boomTooltip = boomLeaf.boom_pct != null
+    ? `Share of settled graduates with career WAR ≥ +5. ${boomLeaf.settled_count ?? 0} settled grads (min 5).`
+    : `Insufficient settled grads (needs ≥5 with 800 PA / 200 IP / 2+ MLB seasons).`;
+  const topGradsTooltip = topGrads.top3_war_per_yr != null
+    ? `Mean WAR/yr across the org's top-3 graduates by rate. Captures peak star-tier production. ${topGrads.grad_count_qualifying ?? 0} qualifying grads (min 3).`
+    : `Insufficient grads to compute top-3 mean (needs ≥3 qualifying graduates).`;
+  const convTooltip = convLeaf.conviction != null
+    ? (convLeaf.conviction === 1
+        ? `STAR PRESENT — at least one grad with WAR/yr ≥ 4.0 in trailing 5yr OR career WAR ≥ 12 ever. Peak ${convLeaf.peak_war_per_yr != null ? convLeaf.peak_war_per_yr.toFixed(1) + ' WAR/yr' : '—'} / ${convLeaf.peak_career_war != null ? convLeaf.peak_career_war.toFixed(1) + ' career WAR' : '—'}.`
+        : `No star — peak grad ${convLeaf.peak_war_per_yr != null ? convLeaf.peak_war_per_yr.toFixed(1) + ' WAR/yr' : '—'} / ${convLeaf.peak_career_war != null ? convLeaf.peak_career_war.toFixed(1) + ' career WAR' : '—'}. Below WAR/yr ≥ 4.0 (recent) AND career WAR ≥ 12 thresholds.`)
+    : `No graduate sample.`;
+  const convFmt = v => v === 1 ? 'STAR ✓' : (v === 0 ? 'no star' : '—');
   const mlbSubs =
-    subCell('Hitter MLB Production',  'mlb_hitter_wag',  'mlb_hitter_wag',  fmtSignedWag, (t.mlb_hitter_wag  || {}).wag_mean,
+    subCell('Hitter MLB Production',  'mlb_hitter_wag',              'mlb_hitter_wag',              fmtSignedWag, (t.mlb_hitter_wag  || {}).wag_mean,
             `3-input composite. ${fmt3input('mlb_hitter_wag')}`) +
-    subCell('Pitcher MLB Production', 'mlb_pitcher_wag', 'mlb_pitcher_wag', fmtSignedWag, (t.mlb_pitcher_wag || {}).wag_mean,
-            `3-input composite. ${fmt3input('mlb_pitcher_wag')}`);
+    subCell('Pitcher MLB Production', 'mlb_pitcher_wag',             'mlb_pitcher_wag',             fmtSignedWag, (t.mlb_pitcher_wag || {}).wag_mean,
+            `3-input composite. ${fmt3input('mlb_pitcher_wag')}`) +
+    subCell('Boom Rate',              'mlb_production_boom_pct',     'mlb_production_boom_pct',     fmtPct,       boomLeaf.boom_pct, boomTooltip) +
+    subCell('Top-3 Grad WAR/yr',      'mlb_production_top_grads',    'mlb_production_top_grads',    v => v != null ? v.toFixed(2) + ' WAR/yr' : '—', topGrads.top3_war_per_yr, topGradsTooltip) +
+    subCell('Conviction',             'mlb_production_conviction',   'mlb_production_conviction',   convFmt,      convLeaf.conviction, convTooltip);
+
+  // Conviction cap: depth-only orgs without a star-tier grad clamp at
+  // the 75th-percentile farm_score. Surface as a small badge + tooltip
+  // on the composite score so the user understands why the number
+  // didn't track the branch grades.
+  const capped = org.conviction_cap_applied === true;
+  const cappedBadge = capped
+    ? `<span class="gt-comp-cap" title="Conviction cap applied — no graduate with WAR/yr ≥ 4.0 (last 5yr) or career WAR ≥ 12 ever. Capped at the 75th-pctile farm_score (uncapped would be ${org.farm_score_uncapped != null ? org.farm_score_uncapped.toFixed(1) : '—'}).">CAPPED</span>`
+    : '';
 
   return `
     <div class="grade-tree">
@@ -12312,6 +12396,7 @@ function makeFarmReportCard(org) {
           <span class="gt-comp-letter" style="color:${gradeColor(g.overall)};">${escapeHtml(g.overall || '—')}</span>
           <span class="gt-comp-rank">#${org.farm_rank ?? '—'} of ${n}</span>
           <span class="gt-comp-score">farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'} / 100</span>
+          ${cappedBadge}
         </div>
         <div class="gt-comp-foot">Acquisition Strategy ${W.acquisition_strategy}% · Development ${W.development}% · Financial ${W.financial}% · MLB Production ${W.mlb_production}%</div>
       </div>
@@ -12320,9 +12405,9 @@ function makeFarmReportCard(org) {
       ${branch('Development',         'development',          W.development,          devSubs,
                'Per-tool development pace vs the league mean farm. Hitter + pitcher Tools DvM+ composites (100 = league mean, +10 = 1σ).')}
       ${branch('Financial',           'financial',            W.financial,            finSubs,
-               'Capital efficiency. WAR per $1M of signing bonus spent across graduates, plus the AAV produced by graduates beyond their amortized signing cost.')}
+               'Capital efficiency (v4). WAR per $M of signing bonus + grad-contract surplus + draft-pool efficiency (WAR/$M of pool) + IFA ROI (WAR/$M of bonuses signed). All 4 leaves equally weighted.')}
       ${branch('MLB Production',      'mlb_production',       W.mlb_production,       mlbSubs,
-               '3-input composite per position (WAG + WAR-per-year + Cumulative WAR). Hitter side + pitcher side show which half of the system actually produced.')}
+               'Whether this org produces MLB players, especially top-end ones (v4). 5 leaves: Hitter + Pitcher 3-input composites (WAG + WAR/yr + top-3 career WAR), Boom Rate (% settled grads with career WAR ≥ +5), Top-3 Grad WAR/yr, and Conviction (star-tier grad present). Conviction caps the composite for orgs without a star.')}
     </div>`;
 }
 

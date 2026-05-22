@@ -56,17 +56,17 @@ class TestTreeWeights:
             f"Main weights must sum to 1.0; got {total}"
         )
 
-    def test_development_is_top_weighted(self):
-        # Per user decision, Development is the single biggest skill —
-        # it must outweigh all other main grades.
-        others = [
-            FARM_TREE_WEIGHT_ACQUISITION_STRATEGY,
-            FARM_TREE_WEIGHT_FINANCIAL,
-            FARM_TREE_WEIGHT_MLB_PRODUCTION,
-        ]
-        assert FARM_TREE_WEIGHT_DEVELOPMENT > max(others), (
-            "Development must be the top-weighted main grade."
+    def test_development_and_mlb_production_are_top_weighted(self):
+        # v4 weights (2026-05): Development + MLB Production tie at 0.30
+        # as the joint top-weighted main grades. The user's focus on
+        # "producing top-end MLB talent" promoted MLB Production from
+        # 0.25 → 0.30 to match Development. Acquisition Strategy and
+        # Financial both sit at 0.20 below them.
+        assert FARM_TREE_WEIGHT_DEVELOPMENT == FARM_TREE_WEIGHT_MLB_PRODUCTION, (
+            "v4: Development and MLB Production tie as the top main grades"
         )
+        assert FARM_TREE_WEIGHT_DEVELOPMENT > FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
+        assert FARM_TREE_WEIGHT_DEVELOPMENT > FARM_TREE_WEIGHT_FINANCIAL
 
     def test_sub_weight_is_50_percent(self):
         assert FARM_TREE_SUB_WEIGHT_EQUAL == 0.5

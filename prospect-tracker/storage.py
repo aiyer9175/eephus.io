@@ -2016,14 +2016,16 @@ FARM_WEIGHT_TRAJECTORY  = FARM_WEIGHT_DVM_PLUS
 # real but small-sample. See `farm_report_card` glossary entry for the
 # full tree shape.
 # ────────────────────────────────────────────────────────────────────────
-# v3 weights — merged Acquisitions + Transactions into a single
-# "Acquisition Strategy" branch. Tree drops from 5 → 4 main branches.
-# Development stays top-weighted (controllable skill); Acquisition
-# Strategy and MLB Production tie at 25% (both are outcome axes).
-FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.25
-FARM_TREE_WEIGHT_DEVELOPMENT          = 0.35
-FARM_TREE_WEIGHT_FINANCIAL            = 0.15
-FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.25
+# v4 weights (2026-05) — explicit top-end + financial emphasis. MLB
+# Production grows because the user's primary ask is "produce MLB
+# players, especially top-end" — and the new boom% / top-3 WAR /
+# Conviction leaves live here. Financial bumps to reflect the explicit
+# cost/ROI ask. Development drops slightly to make room (still second-
+# heaviest — controllable-skill signal is real). Weights sum to 1.00.
+FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.20    # was 0.25
+FARM_TREE_WEIGHT_DEVELOPMENT          = 0.30    # was 0.35
+FARM_TREE_WEIGHT_FINANCIAL            = 0.20    # was 0.15
+FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.30    # was 0.25
 # Back-compat aliases — anything that imported the v2 constants still
 # works. The composite blend below uses the v3 names exclusively.
 FARM_TREE_WEIGHT_ACQUISITIONS = FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
@@ -2031,14 +2033,26 @@ FARM_TREE_WEIGHT_TRANSACTIONS = 0.0   # rolled into Acquisition Strategy
 # Sub-grades inside each parent — 50/50 for all parents in v1.
 FARM_TREE_SUB_WEIGHT_EQUAL = 0.5
 
-# Tiered FV → points. Anchored so an 80 ≈ "franchise piece" (worth ~100
-# org-filler prospects) and 40 ≈ "pulse, barely". The shape is roughly
-# geometric — each tier up is ~1.7-2× the previous. Tunable; the curve
-# matters more than exact values.
+# Tiered FV → points. v4 (2026-05) steepened curve — each tier above 50
+# is ~1.7-2× the previous, so an 80 is worth ~250 org-fillers and a 70
+# is worth ~120. The old curve was too flat at the top (a 70 was only
+# 3× a 50) and didn't properly reward orgs producing star-tier
+# prospects relative to depth-only systems. The bottom tail (35-45)
+# flattens further so a single 35-FV org-filler contributes near zero.
+# `_fv_to_points` linearly interpolates within tiers so a 57.5 still
+# maps cleanly between the 55 and 60 anchors.
 FV_POINTS = {
-    80: 100.0, 75: 70.0, 70: 50.0, 65: 30.0,
-    60:  18.0, 55: 10.0, 50:  5.0, 45:  2.5,
-    40:   1.0, 35:  0.3, 30:  0.1, 25: 0.05, 20: 0.0,
+    80: 250.0,    # franchise piece — Skenes / Trout tier
+    75: 160.0,
+    70: 120.0,    # bona fide All-Star
+    65:  75.0,
+    60:  35.0,    # everyday regular
+    55:  18.0,
+    50:   8.0,    # MLB average
+    45:   3.5,
+    40:   1.0,    # org-filler
+    35:   0.3,
+    30:   0.1, 25: 0.05, 20: 0.0,
 }
 
 
@@ -2218,6 +2232,164 @@ def _compute_boom_bust(graduate_payload: dict) -> str:
     if wag <= -2.0:
         return "bust"
     return "settled"
+
+
+# ── v4 farm-tree leaves: top-end / Conviction / spend ROI ──────────────
+# These four helpers feed the new MLB Production + Financial leaves
+# (`mlb_production_top_grads`, `mlb_production_conviction`,
+# `fin_draft_pool_efficiency`, `fin_ifa_roi`). Each consumes the per-org
+# `grad_agg` bucket the upstream pass already accumulated (specifically
+# `_top_grads` / `_draft_pool_grads` / `_ifa_grads`) plus the relevant
+# spend table.
+
+# Conviction threshold: a "star-tier grad" is one with WAR/yr ≥ 4.0 in the
+# trailing 5 years OR career WAR ≥ 12 ever. The OR cuts both ways — a
+# Skenes-style burst (huge WAR/yr, only 1-2 seasons) registers via the
+# WAR/yr branch; a long-career All-Star (Trout-tier, several 5+ WAR
+# seasons) registers via the career WAR branch.
+_CONVICTION_WAR_PER_YR_THRESHOLD = 4.0
+_CONVICTION_CAREER_WAR_THRESHOLD = 12.0
+_CONVICTION_RECENCY_YEARS        = 5
+
+
+def _compute_top_grads_leaf(gagg: dict) -> dict:
+    """Top-3 grad WAR/yr mean — uses only grads that cleared the boom-
+    bust sample floor (already filtered into `_top_grads` upstream).
+    Gates at ≥3 qualifying grads or returns None (`top3_war_per_yr`)."""
+    grads = gagg.get("_top_grads") or []
+    yvals = [g["war_per_yr"] for g in grads
+             if g.get("war_per_yr") is not None]
+    yvals.sort(reverse=True)
+    top3 = yvals[:3]
+    return {
+        "top3_war_per_yr": (round(sum(top3) / len(top3), 2)
+                            if len(top3) >= 3 else None),
+        "grad_count_qualifying": len(grads),
+        # Also expose top-3 career WAR for the swapped mlb_*_wag input.
+        "top3_career_war": _top3_career_war(grads, is_pitcher=None),
+    }
+
+
+def _top3_career_war(grads: list[dict], is_pitcher: bool | None) -> float | None:
+    """Top-3 career WAR mean across a subset of grads. When is_pitcher
+    is None, uses every grad in the list; when True/False, filters to
+    that side. Returns None when fewer than 3 grads qualify."""
+    if is_pitcher is None:
+        pool = list(grads)
+    else:
+        pool = [g for g in grads if bool(g.get("is_pitcher")) == is_pitcher]
+    cwars = sorted([g["career_war"] for g in pool
+                    if g.get("career_war") is not None], reverse=True)[:3]
+    return round(sum(cwars) / len(cwars), 2) if len(cwars) >= 3 else None
+
+
+def _compute_conviction_leaf(gagg: dict, today: date | None = None) -> dict:
+    """Binary conviction flag (0 / 1). 1 when the org has produced AT
+    LEAST ONE grad meeting either threshold:
+      * war_per_yr ≥ 4.0 AND last_mlb_year within the last 5 years, OR
+      * career_war ≥ 12 (ever).
+    Returns {conviction, peak_war_per_yr, peak_career_war} so the leaf
+    can carry both the binary signal AND the supporting numbers (used
+    for tooltip 'Skenes: 6.2 WAR/yr · 12.4 career')."""
+    grads = gagg.get("_top_grads") or []
+    today = today or date.today()
+    recency_cutoff = today.year - _CONVICTION_RECENCY_YEARS
+
+    recent_war_per_yrs = [g.get("war_per_yr") or 0.0
+                          for g in grads
+                          if (g.get("last_mlb_year") or 0) >= recency_cutoff]
+    peak_war_per_yr = max(recent_war_per_yrs) if recent_war_per_yrs else None
+
+    career_wars = [g.get("career_war") or 0.0 for g in grads]
+    peak_career_war = max(career_wars) if career_wars else None
+
+    has_star_recent  = (peak_war_per_yr is not None
+                        and peak_war_per_yr >= _CONVICTION_WAR_PER_YR_THRESHOLD)
+    has_career_star  = (peak_career_war is not None
+                        and peak_career_war >= _CONVICTION_CAREER_WAR_THRESHOLD)
+    conviction = 1 if (has_star_recent or has_career_star) else 0
+    return {
+        "conviction":      conviction,
+        "peak_war_per_yr": round(peak_war_per_yr, 2) if peak_war_per_yr is not None else None,
+        "peak_career_war": round(peak_career_war, 2) if peak_career_war is not None else None,
+        "grad_count_qualifying": len(grads),
+    }
+
+
+def _compute_draft_pool_efficiency(gagg: dict,
+                                   draft_pools: dict | None,
+                                   org_code: str) -> dict:
+    """Per-org WAR-per-$M-draft-pool over a 3-year rolling window.
+
+    Numerator: sum of grad career WAR for grads drafted in years
+    (T-5)…(T-2) — gives at least 3 development years before counting WAR.
+    Denominator: sum of draft-pool spend across the same years.
+    Gates at ≥3 contributing grads."""
+    draft_pools = draft_pools or {}
+    grads = gagg.get("_draft_pool_grads") or []
+    today_year = date.today().year
+    start_year = today_year - 5
+    end_year   = today_year - 2
+
+    relevant = [g for g in grads
+                if start_year <= g["draft_year"] <= end_year]
+    if len(relevant) < 3:
+        return {"war_per_m_pool": None, "grad_count": len(relevant),
+                "war_total": 0.0, "pool_total_usd": 0}
+    war_total = sum(g["career_war"] for g in relevant)
+    pool_total = 0
+    for y in range(start_year, end_year + 1):
+        pools_y = (draft_pools.get(y) or {}).get("team_pools") or {}
+        pool_total += int(pools_y.get(org_code) or 0)
+    if pool_total <= 0:
+        return {"war_per_m_pool": None, "grad_count": len(relevant),
+                "war_total": round(war_total, 2), "pool_total_usd": 0}
+    war_per_m = round(war_total / (pool_total / 1_000_000.0), 3)
+    return {
+        "war_per_m_pool": war_per_m,
+        "grad_count":     len(relevant),
+        "war_total":      round(war_total, 2),
+        "pool_total_usd": pool_total,
+    }
+
+
+def _compute_ifa_roi(gagg: dict, ifa_org_spending: dict) -> dict:
+    """Per-org WAR-per-$M-IFA over a 5-year rolling window. IFA needs
+    more time to develop than the draft; we look (T-8)…(T-3) for grads.
+    Numerator: career WAR sum across IFA-signed grads in the window.
+    Denominator: IFA bonus spend across same years (sourced from
+    Spotrac via the per-year `ifa_org_spending` dict).
+    Gates at ≥2 contributing grads."""
+    grads = gagg.get("_ifa_grads") or []
+    today_year = date.today().year
+    start_year = today_year - 8
+    end_year   = today_year - 3
+
+    relevant = [g for g in grads
+                if start_year <= g["signed_year"] <= end_year]
+    if len(relevant) < 2:
+        return {"war_per_m_ifa": None, "grad_count": len(relevant),
+                "war_total": 0.0, "ifa_total_usd": 0}
+    war_total = sum(g["career_war"] for g in relevant)
+    # ifa_org_spending shape varies: {year: {total_usd: ...}} or
+    # {year: amount}. Tolerate both.
+    ifa_total = 0
+    for y in range(start_year, end_year + 1):
+        v = ifa_org_spending.get(y) or ifa_org_spending.get(str(y))
+        if isinstance(v, dict):
+            ifa_total += int(v.get("total_usd") or v.get("total") or 0)
+        elif isinstance(v, (int, float)):
+            ifa_total += int(v)
+    if ifa_total <= 0:
+        return {"war_per_m_ifa": None, "grad_count": len(relevant),
+                "war_total": round(war_total, 2), "ifa_total_usd": 0}
+    war_per_m = round(war_total / (ifa_total / 1_000_000.0), 3)
+    return {
+        "war_per_m_ifa": war_per_m,
+        "grad_count":    len(relevant),
+        "war_total":     round(war_total, 2),
+        "ifa_total_usd": ifa_total,
+    }
 
 
 # REMOVED 2026-05: `_compute_breakout_score` was an active-prospect
@@ -4285,6 +4457,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "boom_count":      0,
             "bust_count":      0,
             "settled_count":   0,   # boom + bust + settled (i.e. excluded "unsettled")
+            # v4 top-end / financial inputs.
+            # _top_grads:  list of (career_war, war_per_yr, season_count, is_pitcher, last_mlb_year) for grads
+            #              that clear the boom-bust sample floor. Used for
+            #              top-3 grad WAR + Conviction leaf.
+            # _draft_pool_grads:  list of (draft_year, career_war) — fuels
+            #                     fin_draft_pool_efficiency leaf.
+            # _ifa_grads:         list of (signed_year, bonus_usd, career_war)
+            #                     — fuels fin_ifa_roi leaf.
+            "_top_grads":         [],
+            "_draft_pool_grads":  [],
+            "_ifa_grads":         [],
         })
         # Boom/Bust classification for this graduate.
         career_rows = (career_stats or {}).get(gp.player_key, []) or []
@@ -4377,6 +4560,47 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             if slot_exp is not None:
                 bucket["draft_pick_value_sum"]   += float(career_war_val) - slot_exp
                 bucket["draft_pick_value_count"] += 1
+
+        # v4 — top-end / financial lists.
+        # Top-3 grad list: only grads that clear the boom_bust sample
+        # floor (≥800 PA / ≥200 IP / ≥2 MLB seasons). career_war + war/yr
+        # carry through so the leaf can pick max-N.
+        if boom_label in {"boom", "bust", "settled"} and career_war_val is not None:
+            yval = cw.get("war_per_yr")
+            seasons = cw.get("war_seasons_count") or 0
+            # Find last MLB year for Conviction's 5-year recency window.
+            mlb_seasons = [int(r.get("season") or 0)
+                           for r in career_rows
+                           if (r.get("level") == "MLB" and r.get("season"))]
+            last_mlb_year = max(mlb_seasons) if mlb_seasons else None
+            bucket["_top_grads"].append({
+                "career_war":   float(career_war_val),
+                "war_per_yr":   float(yval) if yval is not None else None,
+                "seasons":      int(seasons),
+                "is_pitcher":   gp_is_pitcher,
+                "last_mlb_year": last_mlb_year,
+            })
+        # Draft-pool efficiency: grads drafted via the draft method,
+        # tagged with their draft year + career WAR. The leaf-level
+        # computation joins these to the per-year draft pool spend.
+        if gp_method == "draft" and career_war_val is not None:
+            dy = gp_acq.get("year")
+            if dy is not None:
+                bucket["_draft_pool_grads"].append({
+                    "draft_year": int(dy),
+                    "career_war": float(career_war_val),
+                })
+        # IFA ROI: grads signed via IFA, tagged with their signing year
+        # + bonus + career WAR. Bonus-less IFAs (rare on file) skipped
+        # since we can't compute spend-side ROI without it.
+        if gp_method == "international_fa" and career_war_val is not None and bonus_usd:
+            sy = gp_acq.get("year")
+            if sy is not None:
+                bucket["_ifa_grads"].append({
+                    "signed_year": int(sy),
+                    "bonus_usd":   int(bonus_usd),
+                    "career_war":  float(career_war_val),
+                })
 
     # Finalize each org entry
     org_summary = []
@@ -4569,7 +4793,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "mlb_hitter_wag": {
                 "wag_mean":        _gated_mean("hit_wag_sum",        "hit_wag_count"),
                 "war_per_yr_mean": _gated_mean("hit_war_per_yr_sum", "hit_war_per_yr_count"),
+                # v4: top-3 career WAR (hitter subset) replaces the mean
+                # in the leaf composite — preserves the mean too for any
+                # tooltip / debug consumer.
                 "career_war_mean": _gated_mean("hit_career_war_sum", "hit_career_war_count"),
+                "top3_career_war": _top3_career_war(gagg.get("_top_grads") or [], is_pitcher=False),
                 "wag_sum":  round(gagg.get("hit_wag_sum") or 0.0, 2),
                 "grad_count": gagg.get("hit_wag_count") or 0,
             },
@@ -4577,9 +4805,25 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "wag_mean":        _gated_mean("pit_wag_sum",        "pit_wag_count"),
                 "war_per_yr_mean": _gated_mean("pit_war_per_yr_sum", "pit_war_per_yr_count"),
                 "career_war_mean": _gated_mean("pit_career_war_sum", "pit_career_war_count"),
+                "top3_career_war": _top3_career_war(gagg.get("_top_grads") or [], is_pitcher=True),
                 "wag_sum":  round(gagg.get("pit_wag_sum") or 0.0, 2),
                 "grad_count": gagg.get("pit_wag_count") or 0,
             },
+            # ── v4 new leaves ────────────────────────────────────────
+            # MLB Production: top-end grads, boom%, Conviction.
+            "mlb_production_boom_pct": {
+                "boom_pct":      boom_pct,
+                "settled_count": settled_count,
+            },
+            "mlb_production_top_grads":  _compute_top_grads_leaf(gagg),
+            "mlb_production_conviction": _compute_conviction_leaf(gagg),
+            # Financial: draft-pool efficiency + IFA ROI. Both pull the
+            # per-year spend tables from the kwargs and join against
+            # the bucket's per-grad signing-year + career_war records.
+            "fin_draft_pool_efficiency": _compute_draft_pool_efficiency(
+                gagg, draft_pools, org),
+            "fin_ifa_roi": _compute_ifa_roi(
+                gagg, ifa_spending_by_org.get(org) or {}),
         }
 
         # _active_keys stays for the Tools+ second pass; popped later.
@@ -5168,16 +5412,37 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Financial — single-input each
         "fin_war_per_m":        [("war_per_m", lambda e: (e["tree"]["fin_war_per_m"]        or {}).get("value"))],
         "fin_contract_surplus": [("surplus",   lambda e: (e["tree"]["fin_contract_surplus"] or {}).get("mean_usd_per_yr"))],
-        # MLB Production — 3 inputs each (WAG / WAR-per-year / cumulative WAR)
+        # MLB Production — 3 inputs each (WAG / WAR-per-year / TOP-3
+        # cumulative WAR). v4 swap: cumulative-WAR-mean → top-3-cum-WAR.
+        # The mean was getting dragged down by the long tail of org-
+        # filler grads; top-3 captures the org's actual ceiling output
+        # within its hitter / pitcher cohort.
         "mlb_hitter_wag": [
             ("wag",        lambda e: (e["tree"]["mlb_hitter_wag"] or {}).get("wag_mean")),
             ("war_per_yr", lambda e: (e["tree"]["mlb_hitter_wag"] or {}).get("war_per_yr_mean")),
-            ("cum_war",    lambda e: (e["tree"]["mlb_hitter_wag"] or {}).get("career_war_mean")),
+            ("top3_cum_war", lambda e: (e["tree"]["mlb_hitter_wag"] or {}).get("top3_career_war")),
         ],
         "mlb_pitcher_wag": [
             ("wag",        lambda e: (e["tree"]["mlb_pitcher_wag"] or {}).get("wag_mean")),
             ("war_per_yr", lambda e: (e["tree"]["mlb_pitcher_wag"] or {}).get("war_per_yr_mean")),
-            ("cum_war",    lambda e: (e["tree"]["mlb_pitcher_wag"] or {}).get("career_war_mean")),
+            ("top3_cum_war", lambda e: (e["tree"]["mlb_pitcher_wag"] or {}).get("top3_career_war")),
+        ],
+        # v4 NEW leaves under MLB Production.
+        "mlb_production_boom_pct": [
+            ("boom_pct", lambda e: (e["tree"]["mlb_production_boom_pct"] or {}).get("boom_pct")),
+        ],
+        "mlb_production_top_grads": [
+            ("top3_war_per_yr", lambda e: (e["tree"]["mlb_production_top_grads"] or {}).get("top3_war_per_yr")),
+        ],
+        "mlb_production_conviction": [
+            ("conviction", lambda e: (e["tree"]["mlb_production_conviction"] or {}).get("conviction")),
+        ],
+        # v4 NEW leaves under Financial.
+        "fin_draft_pool_efficiency": [
+            ("war_per_m_pool", lambda e: (e["tree"]["fin_draft_pool_efficiency"] or {}).get("war_per_m_pool")),
+        ],
+        "fin_ifa_roi": [
+            ("war_per_m_ifa", lambda e: (e["tree"]["fin_ifa_roi"] or {}).get("war_per_m_ifa")),
         ],
     }
     # Compute each leaf's 100-anchored per-org list. Multi-input leaves
@@ -5214,11 +5479,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # v3 tree shape — Acquisition Strategy absorbs both the prior
     # Acquisitions (IFA + Draft) and Transactions (Trade + Waiver)
     # branches. Four main parents, ten leaves total.
+    # v4: financial branch gains draft-pool efficiency + IFA ROI;
+    # mlb_production gains boom%, top-3 WAR/yr, and Conviction.
+    # 13 leaves total across 4 parents.
     TREE_PARENTS = {
         "acquisition_strategy": ["acq_ifa", "acq_draft", "tx_trades", "tx_waivers"],
         "development":          ["dev_hitter", "dev_pitcher"],
-        "financial":            ["fin_war_per_m", "fin_contract_surplus"],
-        "mlb_production":       ["mlb_hitter_wag", "mlb_pitcher_wag"],
+        "financial":            ["fin_war_per_m", "fin_contract_surplus",
+                                  "fin_draft_pool_efficiency", "fin_ifa_roi"],
+        "mlb_production":       ["mlb_hitter_wag", "mlb_pitcher_wag",
+                                  "mlb_production_boom_pct",
+                                  "mlb_production_top_grads",
+                                  "mlb_production_conviction"],
     }
     # Legacy parent aliases — kept so any UI or test still reading
     # entry["acquisitions_score"] / entry["transactions_score"]
@@ -5243,11 +5515,31 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             v = entry.get(f"{parent}_score")
             composite += w * (v if v is not None else 100.0)
         entry["farm_score"] = round(composite, 1)
+        entry["conviction_cap_applied"] = False
         # Back-compat: legacy field names (acquisitions_score,
         # transactions_score) resolve to the merged Acquisition Strategy
         # value so any UI reading the old keys still gets a number.
         entry["acquisitions_score"] = entry.get("acquisition_strategy_score")
         entry["transactions_score"] = entry.get("acquisition_strategy_score")
+
+    # ── v4 Conviction cap ──
+    # Orgs without a star-tier grad (conviction=0) cap at the 75th-pctile
+    # farm_score across all orgs. They can still grade A in depth or
+    # acquisition strategy — they just can't claim the elite-overall
+    # tier without a star ceiling. Frontend reads
+    # `conviction_cap_applied` to show a tooltip ("No star-tier grad in
+    # last 5y — capped at 75th-percentile farm score").
+    scores = [e["farm_score"] for e in org_summary
+              if e.get("farm_score") is not None]
+    if scores:
+        cap = sorted(scores)[int(len(scores) * 0.75)]
+        for entry in org_summary:
+            conv = ((entry["tree"].get("mlb_production_conviction") or {})
+                    .get("conviction"))
+            if conv == 0 and entry["farm_score"] is not None and entry["farm_score"] > cap:
+                entry["farm_score_uncapped"] = entry["farm_score"]
+                entry["farm_score"] = cap
+                entry["conviction_cap_applied"] = True
 
     # Letter grades for the 11 leaves + 5 main + composite (17 total).
     # Sparse-data leaves get "—"; sparse parents and composite always grade
