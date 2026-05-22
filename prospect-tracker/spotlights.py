@@ -595,6 +595,55 @@ def _level_repeat(p: dict) -> bool:
     return any(r.get("level") == cur_level for r in priors)
 
 
+# Age cap above level-mean — gates excessively-old prospects out of
+# every spotlight bucket (riser / rebound / faller). Anchored on a
+# PROSPECT-aspirational baseline by level (NOT the empirical median —
+# the empirical AAA pool is ~25.7 because it includes the journeymen
+# we want to filter, so anchoring on empirical means defeats the
+# purpose). The static baselines below match the scouting convention
+# (FanGraphs primer):
+#   A=21, A+=22, AA=23, AAA=24, MLB=26
+# Caps (years above the baseline, INCLUSIVE on the threshold so the
+# user's named boundary cases — Griff McGarry at 27.0/AAA pitcher,
+# diff exactly +3.0 — also get cut):
+#   hitters  → disqualified when (age − baseline) >= +2.0
+#   pitchers → disqualified when (age − baseline) >= +3.0  (later debut)
+# Players at rookie levels (DSL / CPX / ROK) or with missing age/level
+# pass through (cap doesn't fire) — those levels don't have a clean
+# prospect-aspirational anchor.
+# Filters out journeymen (Maverick Handley at 28/MLB → diff +2.2 → cut;
+# Cal Conley at 26.8/AAA → +2.8 → cut; Griff McGarry at 27/AAA pitcher
+# → +3.0 — at the boundary, passes through as marginal) without
+# disqualifying legitimate 23-yo AAA prospects (Kristian Campbell → -1).
+_SPOTLIGHT_AGE_BASELINES: dict[str, float] = {
+    "A":   21.0,
+    "A+":  22.0,
+    "AA":  23.0,
+    "AAA": 24.0,
+    "MLB": 26.0,
+}
+_AGE_CAP_HITTER = 2.0
+_AGE_CAP_PITCHER = 3.0
+
+
+def _exceeds_age_cap(age, level, is_pitcher: bool) -> bool:
+    """True when the prospect is too old for their level to qualify
+    for any spotlight bucket. Returns False (pass-through) when age is
+    missing or the level lacks an aspirational baseline (rookie / DSL).
+    See thresholds above."""
+    if age is None:
+        return False
+    baseline = _SPOTLIGHT_AGE_BASELINES.get(level)
+    if baseline is None:
+        return False
+    try:
+        diff = float(age) - baseline
+    except (TypeError, ValueError):
+        return False
+    cap = _AGE_CAP_PITCHER if is_pitcher else _AGE_CAP_HITTER
+    return diff >= cap
+
+
 def _classify_movement(p: dict, perf_delta, skills_delta,
                        list_jump_score, pedigree) -> tuple[str, float, list[str]]:
     """Return (bucket, composite_score, drivers). Bucket is one of:
@@ -608,6 +657,14 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     is_pitcher = bool(sl.get("is_pitcher"))
     age = p.get("age_vs_level") or {}
     tier = age.get("tier")
+    # Age-cap gate (per-level + per-side). Anchored on the prospect-
+    # aspirational baseline by level (see _SPOTLIGHT_AGE_BASELINES) —
+    # NOT the empirical median, which is dragged up by the journeymen
+    # we're trying to filter. Returns "none" before any bucket
+    # classification so capped prospects never reach the riser /
+    # faller / rebound paths.
+    if _exceeds_age_cap(p.get("age"), sl.get("level"), is_pitcher):
+        return ("none", 0.0, drivers)
     young_for_level = tier in {"very-young", "young"}
     very_young = tier == "very-young"
     ped_pts = pedigree or 0.0

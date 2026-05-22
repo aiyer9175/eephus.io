@@ -141,5 +141,169 @@ class CompositeShape(unittest.TestCase):
         self.assertEqual(m["bucket"], "none")
 
 
+# ---------------------------------------------------------------------------
+# Age-cap filter (per-level + per-side) — gates excessively-old prospects
+# out of every spotlight bucket. Hitters: diff > +2.0 above level mean
+# disqualifies. Pitchers: diff > +3.0 (later debut curve).
+# ---------------------------------------------------------------------------
+
+from spotlights import _classify_movement, _exceeds_age_cap
+
+
+class AgeCapHelper(unittest.TestCase):
+    """Cap is computed against aspirational baselines (A=21, A+=22,
+    AA=23, AAA=24, MLB=26). Hitters disqualified at >+2.0, pitchers
+    at >+3.0."""
+
+    def test_hitter_cap_at_plus_2(self):
+        # AAA baseline 24. 26.5yo hitter → diff +2.5 → cut.
+        self.assertTrue(_exceeds_age_cap(26.5, "AAA", is_pitcher=False))
+        # Boundary INCLUSIVE: 26.0 → diff +2.0 → cut (>= cap).
+        self.assertTrue(_exceeds_age_cap(26.0, "AAA", is_pitcher=False))
+        # Just under: 25.9 → diff +1.9 → eligible.
+        self.assertFalse(_exceeds_age_cap(25.9, "AAA", is_pitcher=False))
+        # Young AAA hitter clearly passes.
+        self.assertFalse(_exceeds_age_cap(23.0, "AAA", is_pitcher=False))
+
+    def test_pitcher_cap_at_plus_3(self):
+        # Pitchers get a 1-year grace. AAA: 27.5 → diff +3.5 → cut.
+        self.assertTrue(_exceeds_age_cap(27.5, "AAA", is_pitcher=True))
+        # Boundary INCLUSIVE: 27.0 → diff +3.0 → cut.
+        self.assertTrue(_exceeds_age_cap(27.0, "AAA", is_pitcher=True))
+        # Just under: 26.9 → diff +2.9 → eligible.
+        self.assertFalse(_exceeds_age_cap(26.9, "AAA", is_pitcher=True))
+        # 26.5 (would cap a hitter) is fine for a pitcher.
+        self.assertFalse(_exceeds_age_cap(26.5, "AAA", is_pitcher=True))
+
+    def test_journeymen_examples_filtered(self):
+        # User's named cases — all should be capped.
+        # Maverick Handley 28.2 at MLB (baseline 26) → diff +2.2 → cut.
+        self.assertTrue(_exceeds_age_cap(28.2, "MLB", is_pitcher=False))
+        # Cal Conley 26.8 at AAA → diff +2.8 → cut.
+        self.assertTrue(_exceeds_age_cap(26.8, "AAA", is_pitcher=False))
+        # Griff McGarry 27.0 at AAA pitcher → diff +3.0 → cut (boundary).
+        self.assertTrue(_exceeds_age_cap(27.0, "AAA", is_pitcher=True))
+
+    def test_legit_prospects_not_capped(self):
+        # Kristian Campbell at 23/AAA → diff −1 → easy pass.
+        self.assertFalse(_exceeds_age_cap(23.0, "AAA", is_pitcher=False))
+        # George Lombard Jr 21/AAA → diff −3.
+        self.assertFalse(_exceeds_age_cap(21.0, "AAA", is_pitcher=False))
+
+    def test_rookie_level_passes_through(self):
+        # CPX / DSL prospects have no aspirational baseline → no cap.
+        self.assertFalse(_exceeds_age_cap(22.0, "CPX", is_pitcher=False))
+        self.assertFalse(_exceeds_age_cap(22.0, "DSL", is_pitcher=False))
+        # Missing age also passes through.
+        self.assertFalse(_exceeds_age_cap(None, "AAA", is_pitcher=False))
+        # Missing level passes through.
+        self.assertFalse(_exceeds_age_cap(28.0, None, is_pitcher=False))
+
+
+class AgeCapClassification(unittest.TestCase):
+    """Verify _classify_movement returns bucket='none' for prospects past
+    the age cap, regardless of the surface stats / pedigree / skills
+    deltas that would otherwise classify them as riser / faller / rebound."""
+
+    def _payload(self, *, age, is_pitcher=False, level="AAA"):
+        return {
+            "age":          age,
+            "age_vs_level": {"diff": None, "tier": "neutral"},  # cap reads `age` + `level` directly
+            "statline":     {"is_pitcher": is_pitcher, "level": level,
+                             "ops": 0.900 if not is_pitcher else None,
+                             "era": 2.50 if is_pitcher else None,
+                             "k_pct": None},
+            "points":       [],
+            "career_stats": [],
+            "prospect_savant": {},
+        }
+
+    def test_old_hitter_capped_out_of_riser(self):
+        # AAA baseline 24. 26.5yo hitter → diff +2.5 → cut even with
+        # otherwise riser-worthy surface jump.
+        p = self._payload(age=26.5, is_pitcher=False)
+        bucket, score, drivers = _classify_movement(
+            p, perf_delta=0.150, skills_delta=2.0,
+            list_jump_score=0.0, pedigree=0.5)
+        self.assertEqual(bucket, "none")
+
+    def test_eligible_hitter_not_capped(self):
+        # 25.5yo at AAA → diff +1.5 → eligible.
+        p = self._payload(age=25.5, is_pitcher=False)
+        bucket, score, drivers = _classify_movement(
+            p, perf_delta=0.150, skills_delta=2.0,
+            list_jump_score=0.0, pedigree=0.5)
+        self.assertEqual(bucket, "riser",
+            f"+1.5 above level mean should NOT cap; got {bucket}")
+
+    def test_old_pitcher_capped(self):
+        # Pitcher at +3.5 above level mean (27.5 AAA) → capped.
+        p = self._payload(age=27.5, is_pitcher=True)
+        bucket, _, _ = _classify_movement(
+            p, perf_delta=-0.80, skills_delta=-3.5,
+            list_jump_score=0.0, pedigree=2.5)
+        self.assertEqual(bucket, "none")
+
+    def test_eligible_pitcher_not_capped_at_plus_2_5(self):
+        # Pitcher at +2.5 (26.5 AAA → would cap hitter, eligible for pitcher).
+        p = self._payload(age=26.5, is_pitcher=True)
+        bucket, _, _ = _classify_movement(
+            p, perf_delta=-0.80, skills_delta=-3.5,
+            list_jump_score=0.0, pedigree=0.5)
+        self.assertEqual(bucket, "faller",
+            f"+2.5 pitcher should NOT cap; got {bucket}")
+
+    def test_unknown_level_passes_through(self):
+        # CPX shape — no aspirational baseline → cap doesn't fire.
+        p = self._payload(age=22.0, is_pitcher=False, level="CPX")
+        p["age_vs_level"]["tier"] = "unknown"
+        bucket, _, _ = _classify_movement(
+            p, perf_delta=0.150, skills_delta=2.0,
+            list_jump_score=0.0, pedigree=0.5)
+        # Expect riser — cap doesn't fire, riser path activates on
+        # the surface jump.
+        self.assertEqual(bucket, "riser")
+
+
+class AgeCapIntegration(unittest.TestCase):
+    """Integration-style anchors against real spotlights output. Verifies
+    the cap actually filters real-world journeymen out of the buckets.
+    Skips if timeseries.json isn't present."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.players = _load_players()
+
+    def _bucket_names(self, bucket):
+        names = []
+        for p in self.players.values():
+            try:
+                m = compute_movement(p)
+            except Exception:
+                continue
+            if m.get("bucket") == bucket:
+                names.append(p.get("player_name") or "?")
+        return names
+
+    def test_old_journeymen_not_in_any_bucket(self):
+        # These are the canonical examples the user called out as
+        # "should not be considered prospects" — all 27-29 yo MiLB
+        # journeymen with no realistic prospect ceiling.
+        journeymen = {"Maverick Handley", "Cal Conley", "Griff McGarry"}
+        all_buckets = set()
+        for bucket in ("riser", "rebound", "faller"):
+            all_buckets.update(self._bucket_names(bucket))
+        leak = journeymen & all_buckets
+        if not leak:
+            return
+        # Tolerant: data might not include some of the named players.
+        # Only fail when at least one IS in the data AND classified.
+        present = {p.get("player_name") for p in self.players.values()
+                   if p.get("player_name") in journeymen}
+        offenders = leak & present
+        self.assertFalse(offenders,
+            f"Age cap should filter these journeymen from all buckets: {offenders}")
+
+
 if __name__ == "__main__":
     unittest.main()

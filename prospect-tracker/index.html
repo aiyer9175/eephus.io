@@ -7742,6 +7742,18 @@ function renderSpotlights() {
   const rankOffset = (curPage - 1) * pageSize;
   const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "spotlights");
 
+  // Age-cap subtitle — small note explaining the per-level / per-side
+  // age threshold so users know why the lists are shorter than the
+  // raw movement output. Surfaces above the rows. Clickable into the
+  // glossary entry for the full formula.
+  const ageCapNote = `<div style="font-size:11px;color:var(--text-tertiary);margin:4px 0 10px;line-height:1.5;">
+    Filtered to age-eligible prospects per level —
+    <span class="g-term" data-term="spotlight_age_cap" style="cursor:help;color:var(--neon-cyan);">hitters &lt; +2y</span>,
+    <span class="g-term" data-term="spotlight_age_cap" style="cursor:help;color:var(--neon-cyan);">pitchers &lt; +3y</span>
+    above the level-prospect baseline (AAA=24, MLB=26). Journeymen past
+    their prospect window are dropped from every bucket.
+  </div>`;
+
   const header = `<div class="spotlight-header">
     <span style="text-align:center;">#</span>
     <span>Player · pos · org · age</span>
@@ -7766,8 +7778,8 @@ function renderSpotlights() {
   `).join("");
 
   document.getElementById("spotlight-rows").innerHTML = rowsData.length
-    ? header + rows + paginationStrip
-    : (state.search
+    ? ageCapNote + header + rows + paginationStrip
+    : ageCapNote + (state.search
         ? `<div class="state-message">No ${escapeHtml(bucket)} spotlights match "${escapeHtml(state.search)}".</div>`
         : `<div class="state-message">No ${escapeHtml(bucket)} spotlights available from the current data.</div>`);
 }
@@ -12442,6 +12454,13 @@ const GLOSSARY = {
     short: "Extra draft slots awarded to small-revenue clubs under the 2022 CBA. Round 1A (6 picks) lands after round 1; Round 1B (6 picks) lands after round 2.",
     long: "Eligible clubs are the 6 smallest-revenue + 6 smallest-market teams. Round 1A picks are slotted after the regular first round (pick 31-36); Round 1B picks land after the regular second round. They're TRADEABLE — comp picks are the only draft slots a team may swap. Tankathon's projection assigns these by current eligibility; the lottery view surfaces them at the bottom with a 1A / 1B label.",
     related: ["draft_slot", "draft_pool", "draft_order"],
+  },
+  "spotlight_age_cap": {
+    name: "Spotlight age cap", aliases: ["Age cap", "Spotlight age filter"], category: "methodology",
+    priority: 64,
+    short: "Per-level + per-side age threshold that gates excessively-old prospects out of the Risers / Rebounders / Fallers buckets. Anchored on the prospect-aspirational level baseline (A=21, A+=22, AA=23, AAA=24, MLB=26).",
+    long: "Hitters get disqualified when their age is ≥ +2.0 years above the level baseline; pitchers get a 1-year grace (≥ +3.0) since later debuts are common. Anchored on aspirational baselines NOT empirical level means — the empirical AAA pool is dragged up by the same journeymen we're trying to filter, so anchoring on the empirical median defeats the purpose. Examples (AAA, baseline 24): a 26.0+ hitter is cut; a 27.0+ pitcher is cut. The cap fires inside `_classify_movement` in spotlights.py BEFORE bucket classification — capped prospects return bucket='none' and never reach the Risers / Fallers / Rebounders lists. Players at rookie levels (DSL/CPX/ROK) and players with missing age/level pass through (no cap fires). The cap is SPECIFIC to the spotlights section — it does not affect the active prospect list, farm rosters, leaderboards, or any other view.",
+    related: ["age_vs_level", "spotlights"],
   },
 };
 
