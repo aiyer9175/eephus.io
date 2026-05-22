@@ -480,6 +480,105 @@
       color: var(--text-primary);
       border-color: var(--text-tertiary);
     }
+    /* Detail-page tab bar — sticky chip strip beneath the header on
+       prospect + farm-detail pages. Visually mirrors the jumplinks chip
+       row but each chip is a button that swaps the panel below. */
+    .detail-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin: 8px 0 16px;
+      padding: 6px 8px;
+      border-top: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-light);
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: var(--bg-primary);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .detail-tab {
+      font-family: var(--font-sans);
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .detail-tab:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-color: var(--text-tertiary);
+    }
+    .detail-tab.active {
+      background: var(--neon-cyan);
+      color: var(--bg-primary);
+      border-color: var(--neon-cyan);
+    }
+    .detail-tab-panel {
+      /* Tab content fills the available width. Sub-grids inside each
+         tab still use .player-detail-grid / .detail-wide-grid as
+         needed. */
+      width: 100%;
+    }
+    /* Pagination strip — used at the bottom of every paginated list /
+       leaderboard / glossary view. Prev/Next anchors at the ends with
+       numbered chips between; "Showing X-Y of Z" caption right-aligned. */
+    .pg-strip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 12px 0;
+      margin-top: 12px;
+      border-top: 1px solid var(--border-light);
+    }
+    .pg-chip, .pg-nav {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-variant-numeric: tabular-nums;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .pg-chip:hover:not(.active), .pg-nav:hover:not(:disabled) {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-color: var(--text-tertiary);
+    }
+    .pg-chip.active {
+      background: var(--neon-cyan);
+      color: var(--bg-primary);
+      border-color: var(--neon-cyan);
+      cursor: default;
+    }
+    .pg-nav[disabled] {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .pg-ellipsis {
+      padding: 0 6px;
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+    }
+    .pg-count {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-variant-numeric: tabular-nums;
+    }
     body {
       margin: 0;
       font-family: var(--font-sans);
@@ -6168,6 +6267,70 @@ function fvTrendHTML(p) {
   return `<div class="fv-stock-line">${stockInnerHTML(s)}</div>`;
 }
 
+// Pagination helpers — used by every list/leaderboard/glossary view to
+// slice a long array into one page's worth of rows + render a chip
+// strip (prev / 1..N / next + "showing X-Y of Z" footer).
+function pageSlice(arr, page, pageSize) {
+  const p = Math.max(1, page | 0);
+  return arr.slice((p - 1) * pageSize, p * pageSize);
+}
+
+// Compute the page-chip window: always show first + last + current and
+// current±1; gaps elide to "…". Examples (current = 5, total = 12):
+//   [1, "…", 4, 5, 6, "…", 12]
+function computePageWindow(cur, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const out = [1];
+  const lo = Math.max(2, cur - 1);
+  const hi = Math.min(total - 1, cur + 1);
+  if (lo > 2) out.push("…");
+  for (let i = lo; i <= hi; i++) out.push(i);
+  if (hi < total - 1) out.push("…");
+  out.push(total);
+  return out;
+}
+
+// Pagination strip. Returns "" when not needed (≤ 1 page). `dataKey`
+// becomes the `data-{dataKey}-page` attribute name; the global click
+// delegate looks the matching state.pages entry up by the same key.
+function renderPaginationStrip(currentPage, totalItems, pageSize, dataKey) {
+  const total = Math.ceil(totalItems / Math.max(1, pageSize));
+  if (total <= 1) return "";
+  const cur = Math.min(Math.max(1, currentPage), total);
+  const pages = computePageWindow(cur, total);
+  const chips = pages.map(p =>
+    p === "…"
+      ? `<span class="pg-ellipsis">…</span>`
+      : `<button class="pg-chip${p === cur ? " active" : ""}" data-${dataKey}-page="${p}" type="button">${p}</button>`
+  ).join("");
+  const lo = (cur - 1) * pageSize + 1;
+  const hi = Math.min(cur * pageSize, totalItems);
+  return `
+    <div class="pg-strip">
+      <button class="pg-nav" data-${dataKey}-page="${Math.max(1, cur - 1)}" type="button"${cur === 1 ? " disabled" : ""}>◀ Prev</button>
+      ${chips}
+      <button class="pg-nav" data-${dataKey}-page="${Math.min(total, cur + 1)}" type="button"${cur === total ? " disabled" : ""}>Next ▶</button>
+      <span class="pg-count">Showing ${lo}–${hi} of ${totalItems}</span>
+    </div>`;
+}
+
+// Detail-page tab bar. tabs = [{ key, label, html }, ...]. activeKey
+// selects which tab's html actually renders (others are off-DOM). The
+// data-detail-tab attribute drives the click delegate that mutates the
+// matching state slot (state.playerTab or state.farmTab) + re-renders.
+function renderDetailTabs(tabs, activeKey, dataKey) {
+  const visible = tabs.filter(t => t.html);
+  if (!visible.length) return "";
+  const active = visible.find(t => t.key === activeKey) || visible[0];
+  const chips = visible.map(t => {
+    const cls = "detail-tab" + (t.key === active.key ? " active" : "");
+    return `<button class="${cls}" data-${dataKey}-tab="${escapeHtml(t.key)}" type="button">${escapeHtml(t.label)}</button>`;
+  }).join("");
+  return `
+    <nav class="detail-tabs" aria-label="Page sections">${chips}</nav>
+    <div class="detail-tab-panel">${active.html}</div>`;
+}
+
 // Encode current filter state into the URL hash so the view is shareable.
 // Detail pages get a dedicated `player=KEY` or `farm=ORG` hash param;
 // when set they take precedence over the list-page filters at render time.
@@ -6202,6 +6365,22 @@ function syncToURL() {
   if (state.lbPos       !== "all")        p.set("lbpos",   state.lbPos);
   if (state.lbOrg       !== "all")        p.set("lborg",   state.lbOrg);
   if (state.lbSeason    !== String(new Date().getUTCFullYear())) p.set("lbseason", state.lbSeason);
+  // Detail-page tab selection. Only encoded when actively on the
+  // matching detail page so other views don't carry an unused param.
+  if (state.view && state.view.type === "player" && state.playerTab && state.playerTab !== "overview") p.set("ptab", state.playerTab);
+  if (state.view && state.view.type === "farm"   && state.farmTab   && state.farmTab   !== "overview") p.set("ftab", state.farmTab);
+  // Pagination — only encoded when on a non-default page (page 1 = no
+  // param, keeps URLs short for the common case).
+  const _pg = state.pages || {};
+  if ((_pg.leaderboard || 1) > 1) p.set("lbpage",  _pg.leaderboard);
+  if ((_pg.actives     || 1) > 1) p.set("apage",   _pg.actives);
+  if ((_pg.glossary    || 1) > 1) p.set("gpage",   _pg.glossary);
+  if ((_pg.draft       || 1) > 1) p.set("dpage",   _pg.draft);
+  if ((_pg.overseas    || 1) > 1) p.set("opage",   _pg.overseas);
+  if ((_pg.spotlights  || 1) > 1) p.set("spage",   _pg.spotlights);
+  if ((_pg.watchlist   || 1) > 1) p.set("wpage",   _pg.watchlist);
+  if ((_pg.farmRoster  || 1) > 1) p.set("frpage",  _pg.farmRoster);
+  if ((_pg.farmTx      || 1) > 1) p.set("ftxpage", _pg.farmTx);
   // Shareable compare state — encode the currently pinned prospect keys
   // and farm orgs into the hash so the URL alone reproduces the cart on
   // load. Mutual exclusivity guarantees at most one of these is non-
@@ -6258,6 +6437,21 @@ function syncFromURL() {
   if (p.has("lbpos"))    state.lbPos    = p.get("lbpos");
   if (p.has("lborg"))    state.lbOrg    = p.get("lborg");
   if (p.has("lbseason")) state.lbSeason = p.get("lbseason");
+  // Detail-page tab + pagination state. Reset to defaults when missing
+  // so back-navigating to a list doesn't carry stale page numbers.
+  state.playerTab = p.has("ptab") ? p.get("ptab") : "overview";
+  state.farmTab   = p.has("ftab") ? p.get("ftab") : "overview";
+  if (!state.pages) state.pages = {};
+  const _readPage = (k, key) => { state.pages[key] = p.has(k) ? Math.max(1, parseInt(p.get(k), 10) || 1) : 1; };
+  _readPage("lbpage",  "leaderboard");
+  _readPage("apage",   "actives");
+  _readPage("gpage",   "glossary");
+  _readPage("dpage",   "draft");
+  _readPage("opage",   "overseas");
+  _readPage("spage",   "spotlights");
+  _readPage("wpage",   "watchlist");
+  _readPage("frpage",  "farmRoster");
+  _readPage("ftxpage", "farmTx");
   // Shareable compare state. When both keys are present (stale link),
   // keep the longer list and clear the other — mutual exclusivity
   // means at most one should be set going forward.
@@ -6762,6 +6956,23 @@ const state = {
   lbPos:    "all",
   lbOrg:    "all",
   lbSeason: String(new Date().getUTCFullYear()),
+  // Detail-page tab selection — which tab the prospect/farm detail page
+  // opens on. URL-round-tripped via ?ptab=... / ?ftab=... so deep links
+  // land on the requested tab.
+  playerTab: "overview",
+  farmTab:   "overview",
+  // Pagination — current page (1-indexed) + page size per list view.
+  // Centralizing here lets every paginated renderer slice through the
+  // same helpers + share the click delegate. Filter mutations RESET the
+  // matching page to 1 so users don't land on an empty page.
+  pages: {
+    leaderboard: 1, actives: 1, glossary: 1, draft: 1, overseas: 1,
+    spotlights: 1, watchlist: 1, farmRoster: 1, farmTx: 1,
+  },
+  pageSizes: {
+    leaderboard: 25, actives: 50, glossary: 30, draft: 50, overseas: 50,
+    spotlights: 25, watchlist: 25, farmRoster: 50, farmTx: 50,
+  },
   view: null
 };
 
@@ -7185,6 +7396,14 @@ function renderActives() {
   renderWhatsNew();
   renderActiveContextRail();
   const filtered = getFilteredActives();
+  const pageSize = state.pageSizes.actives || 50;
+  const totalItems = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  if ((state.pages.actives || 1) > totalPages) state.pages.actives = 1;
+  const curPage = state.pages.actives || 1;
+  const pagedRows = pageSlice(filtered, curPage, pageSize);
+  const rankOffset = (curPage - 1) * pageSize;
+  const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "actives");
 
   const header = `<div class="col-header">
     <span style="text-align:center;">#</span>
@@ -7199,7 +7418,7 @@ function renderActives() {
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
   </div>`;
 
-  const rows = filtered.map((p, i) => {
+  const rows = pagedRows.map((p, i) => {
     const latest = p.points[p.points.length - 1];
     // Snap FV to the nearest 5-grade tier so data-fv-tier matches the
     // CSS rules (which are tier-anchored at 80/75/.../20). Previously
@@ -7210,7 +7429,7 @@ function renderActives() {
       : "";
     return `
       <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
-        <div class="rank-num">${i + 1}</div>
+        <div class="rank-num">${rankOffset + i + 1}</div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           ${headshotHTML(p, 50)}
           <div style="min-width:0;flex:1;">
@@ -7248,7 +7467,7 @@ function renderActives() {
   }).join("");
 
   document.getElementById("rows").innerHTML = filtered.length
-    ? header + rows
+    ? header + rows + paginationStrip
     : `<div class="state-message">No active prospects match these filters.</div>`;
   // Highlight the active sort column in the fresh header.
   syncSortHeaderActive();
@@ -7277,6 +7496,15 @@ function renderSpotlights() {
   document.querySelectorAll("[data-spotlight-bucket]").forEach(b =>
     b.classList.toggle("active", b.dataset.spotlightBucket === bucket));
 
+  const pageSize = state.pageSizes.spotlights || 25;
+  const totalItems = rowsData.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  if ((state.pages.spotlights || 1) > totalPages) state.pages.spotlights = 1;
+  const curPage = state.pages.spotlights || 1;
+  const pagedRows = pageSlice(rowsData, curPage, pageSize);
+  const rankOffset = (curPage - 1) * pageSize;
+  const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "spotlights");
+
   const header = `<div class="spotlight-header">
     <span style="text-align:center;">#</span>
     <span>Player · pos · org · age</span>
@@ -7286,9 +7514,9 @@ function renderSpotlights() {
     <span>Drivers</span>
   </div>`;
 
-  const rows = rowsData.map((s, i) => `
+  const rows = pagedRows.map((s, i) => `
     <div class="spotlight-row" data-key="${escapeHtml(s.player_key)}" style="${orgStripe(s.org)}">
-      <div class="rank-num">${i + 1}</div>
+      <div class="rank-num">${rankOffset + i + 1}</div>
       <div>
         <div class="player-name">${escapeHtml(s.player_name)}</div>
         ${playerMetaHTML(s)}
@@ -7301,7 +7529,7 @@ function renderSpotlights() {
   `).join("");
 
   document.getElementById("spotlight-rows").innerHTML = rowsData.length
-    ? header + rows
+    ? header + rows + paginationStrip
     : (state.search
         ? `<div class="state-message">No ${escapeHtml(bucket)} spotlights match "${escapeHtml(state.search)}".</div>`
         : `<div class="state-message">No ${escapeHtml(bucket)} spotlights available from the current data.</div>`);
@@ -7603,6 +7831,14 @@ function renderWatchlist() {
   } else {
     if (empty) empty.style.display = "none";
     players.sort((a, b) => (b.fv_close ?? -1) - (a.fv_close ?? -1) || a.player_name.localeCompare(b.player_name));
+    const pageSize = state.pageSizes.watchlist || 25;
+    const totalItems = players.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    if ((state.pages.watchlist || 1) > totalPages) state.pages.watchlist = 1;
+    const curPage = state.pages.watchlist || 1;
+    const pagedPlayers = pageSlice(players, curPage, pageSize);
+    const rankOffset = (curPage - 1) * pageSize;
+    const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "watchlist");
     const pHeader = `<div class="col-header">
       <span style="text-align:center;">#</span>
       <span>Player · pos · org · age</span>
@@ -7612,11 +7848,11 @@ function renderWatchlist() {
       <span class="desktop-only">MiLB · age vs. level</span>
       <span class="desktop-only" style="text-align:center;">ETA</span>
     </div>`;
-    const pRows = players.map((p, i) => {
+    const pRows = pagedPlayers.map((p, i) => {
       const latest = p.points && p.points.length ? p.points[p.points.length - 1] : null;
       return `
         <div class="player-row" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-          <div class="rank-num">${i + 1}</div>
+          <div class="rank-num">${rankOffset + i + 1}</div>
           <div style="display:flex;align-items:center;gap:10px;min-width:0;">
             ${headshotHTML(p, 50)}
             <div style="min-width:0;flex:1;">
@@ -7633,7 +7869,7 @@ function renderWatchlist() {
         </div>
       `;
     }).join("");
-    if (rowsEl) rowsEl.innerHTML = pHeader + pRows;
+    if (rowsEl) rowsEl.innerHTML = pHeader + pRows + paginationStrip;
   }
 
   // ----- Starred farm systems -----
@@ -7923,7 +8159,14 @@ function renderLeaderboards() {
     }
   }
   pool.sort((a, b) => cfg.hi ? (b.v - a.v) : (a.v - b.v));
-  const ranked = pool.slice(0, 25);
+  const pageSize = state.pageSizes.leaderboard || 25;
+  const totalItems = pool.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  if ((state.pages.leaderboard || 1) > totalPages) state.pages.leaderboard = 1;
+  const curPage = state.pages.leaderboard || 1;
+  const ranked = pageSlice(pool, curPage, pageSize);
+  const rankOffset = (curPage - 1) * pageSize;
+  const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "leaderboard");
 
   const header = `<div class="col-header is-leaderboard">
     <span style="text-align:center;">#</span>
@@ -7976,7 +8219,7 @@ function renderLeaderboards() {
       : `<span style="color:var(--text-tertiary);font-size:10px;">—</span>`;
     return `
       <div class="player-row is-leaderboard" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-num">${i + 1}</div>
+        <div class="rank-num">${rankOffset + i + 1}</div>
         <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}</div>
@@ -7992,7 +8235,7 @@ function renderLeaderboards() {
       </div>`;
   }).join("");
 
-  document.getElementById("leaderboard-rows").innerHTML = header + rows;
+  document.getElementById("leaderboard-rows").innerHTML = header + rows + paginationStrip;
   // Phase 3 viz: cohort histogram showing where the top-10 sits in the
   // full qualifying-prospect distribution. The vertical dashed line +
   // cyan highlight bin makes the percentile context obvious.
@@ -8037,9 +8280,11 @@ function renderGlossary() {
     if (list) list.push({ slug, entry });
   }
 
-  // Render each non-empty bucket — heading + alphabetized cards inside.
-  const parts = [];
-  let totalRendered = 0;
+  // Flatten into a category-ordered list so pagination can slice across
+  // buckets while still emitting headers when the current page enters a
+  // new category. Each entry carries its catKey/catLabel for re-grouping.
+  const flat = [];
+  const catBucketSize = new Map();
   for (const [catKey, catLabel] of GLOSSARY_CATEGORIES) {
     const items = buckets.get(catKey) || [];
     if (!items.length) continue;
@@ -8049,9 +8294,43 @@ function renderGlossary() {
       if (pa !== pb) return pa - pb;
       return a.entry.name.localeCompare(b.entry.name);
     });
-    totalRendered += items.length;
-    parts.push(`<div class="glossary-cat-heading">${escapeHtml(catLabel)} <span style="color:var(--text-tertiary);font-weight:500;letter-spacing:0;margin-left:6px;">${items.length}</span></div>`);
-    for (const { slug, entry } of items) {
+    catBucketSize.set(catKey, items.length);
+    for (const { slug, entry } of items) flat.push({ slug, entry, catKey, catLabel });
+  }
+  const totalRendered = flat.length;
+  // Glossary deep-link page hop: if a specific term was requested AND
+  // it's in the current filtered/searched flat list, snap the page to
+  // wherever it lands so the requested card actually renders + scrolls.
+  if (state.glossaryTerm) {
+    const slug = (_resolveGlossaryTerm(state.glossaryTerm) || {}).slug;
+    if (slug) {
+      const idx = flat.findIndex(x => x.slug === slug);
+      if (idx >= 0) {
+        const ps = state.pageSizes.glossary || 30;
+        state.pages.glossary = Math.floor(idx / ps) + 1;
+      }
+    }
+  }
+  const pageSize = state.pageSizes.glossary || 30;
+  const totalItems = flat.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  if ((state.pages.glossary || 1) > totalPages) state.pages.glossary = 1;
+  const curPage = state.pages.glossary || 1;
+  const pagedItems = pageSlice(flat, curPage, pageSize);
+  const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "glossary");
+
+  // Render: emit a category header whenever this page's catKey shifts.
+  const parts = [];
+  let lastCat = null;
+  for (const { slug, entry, catKey, catLabel } of pagedItems) {
+    if (catKey !== lastCat) {
+      const fullCount = catBucketSize.get(catKey) || 0;
+      parts.push(`<div class="glossary-cat-heading">${escapeHtml(catLabel)} <span style="color:var(--text-tertiary);font-weight:500;letter-spacing:0;margin-left:6px;">${fullCount}</span></div>`);
+      lastCat = catKey;
+    }
+    {
+      // Original card render block follows — wrapped to keep the
+      // for-loop variables in scope without re-indenting.
       // Pick the longest space-containing alias as the spelled-out
       // form (e.g. "Development vs Mean" for DvM+). Show it next to
       // the abbreviation in parens. The other aliases drop entirely
@@ -8107,7 +8386,7 @@ function renderGlossary() {
     root.innerHTML = `<div class="state-message">No glossary terms match these filters.</div>`;
     return;
   }
-  root.innerHTML = parts.join("");
+  root.innerHTML = parts.join("") + paginationStrip;
 
   // If a specific term was requested (via state.glossaryTerm / URL g=),
   // scroll to it + add the highlight pulse class. Defer one frame so the
@@ -8910,6 +9189,7 @@ async function renderDraft() {
   classChips.querySelectorAll("[data-draft-year]").forEach(b => {
     b.addEventListener("click", () => {
       state.draftYear = +b.dataset.draftYear;
+      resetPage("draft");
       renderDraft();
     });
   });
@@ -8919,6 +9199,7 @@ async function renderDraft() {
     b.classList.toggle("active", b.dataset.draftView === state.draftView);
     b.onclick = () => {
       state.draftView = b.dataset.draftView;
+      resetPage("draft");
       renderDraft();
     };
   });
@@ -8994,18 +9275,25 @@ function _renderDraftLottery(host, cls, allClasses) {
 function _renderDraftRankings(host, cls) {
   const prospects = cls.prospects || [];
   // Group by FV tier (defensive against missing FV).
-  const tiers = {};
-  for (const p of prospects) {
-    const t = p.consensus_fv == null ? "Unranked"
+  const tierFor = p => p.consensus_fv == null ? "Unranked"
               : (p.consensus_fv >= 60 ? "60 FV"
               : p.consensus_fv >= 55 ? "55 FV"
               : p.consensus_fv >= 50 ? "50 FV"
               : p.consensus_fv >= 45 ? "45 FV"
               : p.consensus_fv >= 40 ? "40 FV"
               : "< 40 FV");
-    (tiers[t] = tiers[t] || []).push(p);
-  }
   const tierOrder = ["60 FV","55 FV","50 FV","45 FV","40 FV","< 40 FV","Unranked"];
+  // Flatten in tier order so pagination slices across tiers; track each
+  // entry's tier so the renderer can emit tier headers when the page
+  // boundary crosses a group.
+  const tierCounts = {};
+  const flat = [];
+  for (const tier of tierOrder) {
+    const inTier = prospects.filter(p => tierFor(p) === tier);
+    if (!inTier.length) continue;
+    tierCounts[tier] = inTier.length;
+    for (const p of inTier) flat.push({ tier, p });
+  }
 
   // Header strip
   let html = `<div style="padding:12px 14px;background:var(--bg-secondary);
@@ -9017,21 +9305,33 @@ function _renderDraftRankings(host, cls) {
     Draft Stock+ is normalized within this class only (100 = class median).
   </div>`;
 
-  for (const tier of tierOrder) {
-    const players = tiers[tier];
-    if (!players || !players.length) continue;
-    html += `<div style="margin:14px 0 6px;font-size:13px;font-weight:600;
-                color:var(--text-primary);border-bottom:1px solid var(--border);
-                padding-bottom:4px;">${tier}
-                <span style="font-weight:400;color:var(--text-tertiary);
-                margin-left:6px;">${players.length}</span></div>`;
-    html += `<div class="draft-grid">`;
-    for (const p of players) {
-      html += _renderDraftCard(p);
+  const pageSize = state.pageSizes.draft || 50;
+  const totalItems = flat.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  if ((state.pages.draft || 1) > totalPages) state.pages.draft = 1;
+  const curPage = state.pages.draft || 1;
+  const pagedItems = pageSlice(flat, curPage, pageSize);
+  const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "draft");
+
+  // Emit tier headers + cards; open a fresh draft-grid each time the
+  // tier changes within the current page.
+  let lastTier = null;
+  for (const { tier, p } of pagedItems) {
+    if (tier !== lastTier) {
+      if (lastTier !== null) html += `</div>`;
+      const fullCount = tierCounts[tier] || 0;
+      html += `<div style="margin:14px 0 6px;font-size:13px;font-weight:600;
+                  color:var(--text-primary);border-bottom:1px solid var(--border);
+                  padding-bottom:4px;">${tier}
+                  <span style="font-weight:400;color:var(--text-tertiary);
+                  margin-left:6px;">${fullCount}</span></div>`;
+      html += `<div class="draft-grid">`;
+      lastTier = tier;
     }
-    html += `</div>`;
+    html += _renderDraftCard(p);
   }
-  host.innerHTML = html;
+  if (lastTier !== null) html += `</div>`;
+  host.innerHTML = html + paginationStrip;
 }
 
 function _renderDraftCard(p) {
@@ -9486,6 +9786,7 @@ async function renderOverseas() {
   leagueChips.querySelectorAll("[data-overseas-league]").forEach(b => {
     b.addEventListener("click", () => {
       state.overseasLeague = b.dataset.overseasLeague;
+      resetPage("overseas");
       renderOverseas();
     });
   });
@@ -9495,6 +9796,7 @@ async function renderOverseas() {
     b.classList.toggle("active", b.dataset.overseasView === state.overseasView);
     b.onclick = () => {
       state.overseasView = b.dataset.overseasView;
+      resetPage("overseas");
       renderOverseas();
     };
   });
@@ -9517,50 +9819,75 @@ async function renderOverseas() {
 }
 
 function _renderOverseasRankings(host, leagues) {
-  let html = "";
+  // Flatten across leagues + tiers in canonical order so pagination
+  // slices the merged list. Each flat entry carries enough context to
+  // re-emit the right league header + tier header on group transitions.
+  const tierFor = p => p.consensus_fv == null ? "Unranked"
+              : (p.consensus_fv >= 60 ? "60 FV"
+              : p.consensus_fv >= 55 ? "55 FV"
+              : p.consensus_fv >= 50 ? "50 FV"
+              : p.consensus_fv >= 45 ? "45 FV"
+              : p.consensus_fv >= 40 ? "40 FV"
+              : "< 40 FV");
+  const tierOrder = ["60 FV","55 FV","50 FV","45 FV","40 FV","< 40 FV","Unranked"];
+  const flat = [];
+  const tierCounts = {};
   for (const l of leagues) {
-    const ctx = l.league_context || {};
-    html += `<div style="padding:12px 14px;background:var(--bg-secondary);
-         border-radius:6px;margin:14px 0 8px;font-size:12px;
-         color:var(--text-secondary);border-left:3px solid ${_leagueBadgeColor(l.league)};">
-      <strong style="color:var(--text-primary);font-size:13px;">
-        ${escapeHtml(ctx.name || l.league)} (${l.league})
-      </strong>
-      · ${l.n_prospects} prospects
-      · ${escapeHtml(ctx.season_window || "")}
-      ${ctx.translation_pct != null
-        ? `<br><span style="color:var(--text-tertiary);">
-            ${escapeHtml(ctx.split_note || "")} · MLB translation: <strong>${ctx.translation_pct}% wRC+ haircut</strong> typical.</span>`
-        : ""}
-    </div>`;
-
-    // Group by FV tier.
-    const tiers = {};
-    for (const p of l.prospects) {
-      const t = p.consensus_fv == null ? "Unranked"
-                : (p.consensus_fv >= 60 ? "60 FV"
-                : p.consensus_fv >= 55 ? "55 FV"
-                : p.consensus_fv >= 50 ? "50 FV"
-                : p.consensus_fv >= 45 ? "45 FV"
-                : p.consensus_fv >= 40 ? "40 FV"
-                : "< 40 FV");
-      (tiers[t] = tiers[t] || []).push(p);
-    }
-    const order = ["60 FV","55 FV","50 FV","45 FV","40 FV","< 40 FV","Unranked"];
-    for (const t of order) {
-      const players = tiers[t];
-      if (!players || !players.length) continue;
-      html += `<div style="margin:10px 0 6px;font-size:13px;font-weight:600;
-                 color:var(--text-primary);border-bottom:1px solid var(--border);
-                 padding-bottom:4px;">${t}
-                 <span style="font-weight:400;color:var(--text-tertiary);
-                 margin-left:6px;">${players.length}</span></div>`;
-      html += `<div class="draft-grid">`;
-      for (const p of players) html += _renderOverseasCard(p);
-      html += `</div>`;
+    for (const tier of tierOrder) {
+      const inTier = l.prospects.filter(p => tierFor(p) === tier);
+      if (!inTier.length) continue;
+      const tk = l.league + "::" + tier;
+      tierCounts[tk] = inTier.length;
+      for (const p of inTier) flat.push({ league: l, tier, p });
     }
   }
-  host.innerHTML = html;
+
+  const pageSize = state.pageSizes.overseas || 50;
+  const totalItems = flat.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  if ((state.pages.overseas || 1) > totalPages) state.pages.overseas = 1;
+  const curPage = state.pages.overseas || 1;
+  const pagedItems = pageSlice(flat, curPage, pageSize);
+  const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "overseas");
+
+  let html = "";
+  let lastLeague = null, lastTier = null, gridOpen = false;
+  for (const { league: l, tier, p } of pagedItems) {
+    if (lastLeague !== l.league) {
+      if (gridOpen) { html += `</div>`; gridOpen = false; }
+      const ctx = l.league_context || {};
+      html += `<div style="padding:12px 14px;background:var(--bg-secondary);
+           border-radius:6px;margin:14px 0 8px;font-size:12px;
+           color:var(--text-secondary);border-left:3px solid ${_leagueBadgeColor(l.league)};">
+        <strong style="color:var(--text-primary);font-size:13px;">
+          ${escapeHtml(ctx.name || l.league)} (${l.league})
+        </strong>
+        · ${l.n_prospects} prospects
+        · ${escapeHtml(ctx.season_window || "")}
+        ${ctx.translation_pct != null
+          ? `<br><span style="color:var(--text-tertiary);">
+              ${escapeHtml(ctx.split_note || "")} · MLB translation: <strong>${ctx.translation_pct}% wRC+ haircut</strong> typical.</span>`
+          : ""}
+      </div>`;
+      lastLeague = l.league;
+      lastTier = null;
+    }
+    if (lastTier !== tier) {
+      if (gridOpen) { html += `</div>`; gridOpen = false; }
+      const fullCount = tierCounts[l.league + "::" + tier] || 0;
+      html += `<div style="margin:10px 0 6px;font-size:13px;font-weight:600;
+                 color:var(--text-primary);border-bottom:1px solid var(--border);
+                 padding-bottom:4px;">${tier}
+                 <span style="font-weight:400;color:var(--text-tertiary);
+                 margin-left:6px;">${fullCount}</span></div>`;
+      html += `<div class="draft-grid">`;
+      gridOpen = true;
+      lastTier = tier;
+    }
+    html += _renderOverseasCard(p);
+  }
+  if (gridOpen) html += `</div>`;
+  host.innerHTML = html + paginationStrip;
 }
 
 function _renderOverseasCard(p) {
@@ -11533,6 +11860,63 @@ document.addEventListener("click", async (e) => {
   }
 });
 
+// Global click delegate for pagination chips + detail-page tab buttons.
+// One listener handles every paginated view + both detail-page tab
+// bars; the data-attribute on the button names which state slot to
+// mutate. After mutating, re-run the view-routing render() and persist
+// the new state to the URL so back/forward + sharable links work.
+const _PG_KEYS = ["leaderboard","actives","glossary","draft","overseas","spotlights","watchlist","farmRoster","farmTx"];
+document.addEventListener("click", (e) => {
+  const btn = e.target && e.target.closest && e.target.closest("[data-player-tab],[data-farm-tab]," + _PG_KEYS.map(k => `[data-${k}-page]`).join(","));
+  if (!btn || btn.disabled) return;
+  // Detail-page tab swap.
+  if (btn.dataset.playerTab) {
+    state.playerTab = btn.dataset.playerTab;
+    syncToURL(); render();
+    return;
+  }
+  if (btn.dataset.farmTab) {
+    state.farmTab = btn.dataset.farmTab;
+    syncToURL(); render();
+    return;
+  }
+  // Pagination chip — find which page key fired.
+  for (const k of _PG_KEYS) {
+    const v = btn.dataset[k + "Page"];
+    if (v != null) {
+      const n = Math.max(1, parseInt(v, 10) || 1);
+      if ((state.pages[k] || 1) === n) return;
+      state.pages[k] = n;
+      syncToURL(); render();
+      // After re-render, scroll the active pagination strip into view
+      // so the new chip selection sits where the cursor expected it.
+      requestAnimationFrame(() => {
+        const sel = `[data-${k}-page="${n}"]`;
+        const node = document.querySelector(sel);
+        if (node && node.scrollIntoView) node.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      });
+      return;
+    }
+  }
+});
+
+// Reset a paginated view's page back to 1. Call from any filter /
+// search / sort mutation so the user doesn't end up on an empty page.
+function resetPage(key) {
+  if (state.pages && (state.pages[key] || 1) !== 1) {
+    state.pages[key] = 1;
+  }
+}
+
+// Shorthand: every list view that shares the top-of-page filter bar
+// (search / org / level / pos / acq / class / sort / stock / health)
+// resets together. Spotlights + watchlist also honor the search box.
+function resetListPages() {
+  resetPage("actives");
+  resetPage("spotlights");
+  resetPage("watchlist");
+}
+
 // Primary team color for each org — used to tint the left-edge accent
 // stripe on every card (player row, farm row, detail-page header). Values
 // are MLB primary colors; pulled to make each row instantly identifiable
@@ -12684,13 +13068,15 @@ function makeFarmTransactionsSection(allEvents, orgCode) {
     </tr>`;
   };
 
-  // Cap the visible rows. Showing 200 events at once is fine for the
-  // typical org; if a user wants more they can use chip filters.
-  const CAP = 200;
-  const shown = evs.slice(0, CAP);
-  const tail = evs.length > CAP
-    ? `<div style="font-size:11px;color:var(--text-tertiary);text-align:center;padding:6px;">Showing ${CAP} of ${evs.length}. Use filters above to narrow.</div>`
-    : "";
+  // Paginate the filtered events. Replaces the prior hard 200-row cap
+  // with a navigable pager — every event is reachable, page size 50.
+  const pageSize = state.pageSizes.farmTx || 50;
+  const totalItems = evs.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  if ((state.pages.farmTx || 1) > totalPages) state.pages.farmTx = 1;
+  const curPage = state.pages.farmTx || 1;
+  const shown = pageSlice(evs, curPage, pageSize);
+  const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "farmTx");
 
   return `<div class="detail-title">Farm-system transactions
       <span class="detail-title-sub">${allEvents.length} total across tracked prospects</span>
@@ -12704,7 +13090,7 @@ function makeFarmTransactionsSection(allEvents, orgCode) {
     <table class="detail-table"><thead><tr>
       <th>Date</th><th>Type</th><th>Prospect</th><th>Move</th><th>Detail</th>
     </tr></thead><tbody>${shown.map(rowHtml).join("")}</tbody></table>
-    ${tail}`;
+    ${paginationStrip}`;
 }
 
 
@@ -17041,78 +17427,44 @@ function renderPlayerDetail(key) {
       <textarea class="player-note-area" data-note-key="${escapeHtml(p.player_key)}" placeholder="Scouting notes, follow-up reminders, links — saved as you type.">${escapeHtml(existing)}</textarea>`;
   })();
 
-  // Jump-link chip strip — quick in-page nav under the header. Only
-  // chips for sections that actually render are shown; the strip itself
-  // is hidden when fewer than 3 chips would appear (avoids a vestigial
-  // 1-chip noise bar on data-thin profiles).
-  const jumpLinkPairs = [
-    ["Chart",   "detail-chart",     !!chartSection],
-    ["Stats",   "detail-stats",     !!consolidatedCareerSection],
-    ["Tools",   "detail-tools",     !!toolsSection],
-    ["Health",  "detail-health",    !!healthSection],
-    ["Savant",  "detail-savant",    !!savantSection],
-    ["Arsenal", "detail-arsenal",   !!arsenalSection],
-    ["Tool dev", "detail-tooldev",  !!toolDevSection],
-    ["Projection", "detail-projection", !!projectionArcSection],
-    ["FG scout",   "detail-fgscout",    !!fgScoutNotesSection],
-    ["Scout reports", "detail-scoutreports", !!scoutingReportsSection],
-  ].filter(([, , show]) => show);
-  const jumpLinkStrip = jumpLinkPairs.length >= 3
-    ? `<nav class="detail-jumplinks" aria-label="Jump to section">${jumpLinkPairs.map(([label, id]) =>
-        `<a href="#${id}">${escapeHtml(label)}</a>`).join("")}</nav>`
-    : "";
-
-  // Two-column layout: chart + career on the left, secondary blocks on the right.
-  // The right column wraps in a sticky container so on tall pages the
-  // context blocks (health / Savant / events / same-farm) follow the
-  // user's scroll once they pass the chart + career section.
-  const wrap = (id, html) => html ? `<div id="${id}">${html}</div>` : "";
-  // Wider cards live in the main column below the chart + career table
-  // so they get full horizontal width. Sidebar stays as a tight stack
-  // of summary cards. The wide grid becomes 2-col at ≥1200px.
-  const moreDetailsAccordion = (() => {
-    const moreSectionList = [
-      [perSourceTabbedSection, "per-source"],
-      [acqSection,             "acquisition"],
-      [currentAcqSection,      "current org"],
-      [tradesSection,          "transactions"],
-      [etaRows,                "ETA"],
-      [rosterStatusSection,    "roster status"],
-    ].filter(([html]) => html);
-    if (!moreSectionList.length) return "";
-    const moreSections = moreSectionList.map(([html]) => html).join("");
-    const labels = moreSectionList.map(([, label]) => label).join(" · ");
-    return `<details class="player-detail-more" open style="margin-top:0;">
-      <summary style="cursor:pointer;font-family:var(--font-sans);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);padding:8px 12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">More details · ${escapeHtml(labels)}</summary>
-      <div style="margin-top:10px;">${moreSections}</div>
-    </details>`;
-  })();
-  // Wide-card grid below the career table. Tools / Savant / Arsenal /
-  // Contract details + the More-details accordion live here so they
-  // get more horizontal real estate than the narrow sidebar provides.
-  const wideCards = [
-    wrap("detail-tools",   toolsSection + (sourceHistorySection || "")),
-    wrap("detail-savant",  savantSection),
-    wrap("detail-arsenal", arsenalSection),
-    wrap("detail-tooldev",    toolDevSection),
-    wrap("detail-projection", projectionArcSection),
-    wrap("detail-fgscout",    fgScoutNotesSection),
-    contractDetailsSection,
-    // (Scouting reports moved to the sidebar — see detail-scoutreports
-    // slot in the right-column template below.)
+  // "Back of a baseball card" tab bar. Header + quick-read summary +
+  // stat-tile strip stay always-visible above the tabs; the dense
+  // sections below cluster into 5 tabs (Overview / Performance /
+  // Scouting & Tools / Health & Status / Context). Each tab's content
+  // is the join of the relevant section snippets — empty strings drop
+  // out cleanly. The active tab comes from state.playerTab and is
+  // URL-round-tripped via ?ptab=...
+  const overviewHtml = [chartSection, sourceSection, surplusValueSection, noteSection]
+    .filter(Boolean).join("");
+  const performanceHtml = [consolidatedCareerSection, sabermetricsSection,
+                           savantSection, arsenalSection, projectionArcSection]
+    .filter(Boolean).join("");
+  // Tools card pulls its per-source publication history alongside,
+  // matching the original layout. Scouting reports keeps its inner
+  // source-tab picker intact — that lives inside scoutingReportsSection.
+  const scoutingHtml = [
+    toolsSection + (sourceHistorySection || ""),
+    toolDevSection, fgScoutNotesSection, scoutingReportsSection,
+  ].filter(s => s && s.trim()).join("");
+  const healthHtml = [ilSection, healthSection, contractDetailsSection]
+    .filter(Boolean).join("");
+  const contextHtml = [
+    acqSection, currentAcqSection, tradesSection, etaRows,
+    rosterStatusSection, perSourceTabbedSection,
+    sameFarmSection, similarProspectsSection,
   ].filter(Boolean).join("");
-  const wideGrid = (wideCards || moreDetailsAccordion)
-    ? `<div class="detail-wide-grid">
-        ${wideCards}
-        ${moreDetailsAccordion}
-      </div>`
-    : "";
+
+  const tabs = [
+    { key: "overview",    label: "Overview",        html: overviewHtml },
+    { key: "performance", label: "Performance",     html: performanceHtml },
+    { key: "scouting",    label: "Scouting & Tools", html: scoutingHtml },
+    { key: "health",      label: "Health & Status", html: healthHtml },
+    { key: "context",     label: "Context",         html: contextHtml },
+  ];
+  const tabBar = renderDetailTabs(tabs, state.playerTab, "player");
+
   const quickReadHtml = makeQuickReadSummary(p);
-  root.innerHTML = header + quickReadHtml + tilesHtml + jumpLinkStrip + `
-    <div class="player-detail-grid">
-      <div>${wrap("detail-chart", chartSection)}${wrap("detail-stats", consolidatedCareerSection)}${sourceSection}${wideGrid}</div>
-      <div class="player-detail-side">${noteSection}${ilSection}${wrap("detail-health", healthSection)}${sabermetricsSection}${surplusValueSection}${wrap("detail-scoutreports", scoutingReportsSection)}${sameFarmSection}${similarProspectsSection}</div>
-    </div>`;
+  root.innerHTML = header + quickReadHtml + tilesHtml + tabBar;
 }
 
 // ---------------------------------------------------------------------------
@@ -17561,14 +17913,25 @@ function renderFarmDetail(orgCode) {
   // Full roster with mini FV charts + an inline current-season stat
   // line under each player's name. Column proportions widened slightly
   // on the Player cell since the stat row needs the horizontal room.
-  const rosterRows = rosterPlayers.map((p, i) => {
+  // Paginate at page-size 50 — most orgs have ~30-60 tracked prospects,
+  // so most farms still render in one page; the deep AAA-heavy orgs
+  // get a visible page chip strip.
+  const _rosterPageSize = state.pageSizes.farmRoster || 50;
+  const _rosterTotalItems = rosterPlayers.length;
+  const _rosterTotalPages = Math.max(1, Math.ceil(_rosterTotalItems / _rosterPageSize));
+  if ((state.pages.farmRoster || 1) > _rosterTotalPages) state.pages.farmRoster = 1;
+  const _rosterCurPage = state.pages.farmRoster || 1;
+  const _rosterPaged = pageSlice(rosterPlayers, _rosterCurPage, _rosterPageSize);
+  const _rosterRankOffset = (_rosterCurPage - 1) * _rosterPageSize;
+  const rosterPaginationStrip = renderPaginationStrip(_rosterCurPage, _rosterTotalItems, _rosterPageSize, "farmRoster");
+  const rosterRows = _rosterPaged.map((p, i) => {
     const latest = p.points[p.points.length - 1];
     const chart = p.points.length >= 2
       ? lazyLineChartHTML(p)
       : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
     return `
       <div class="player-row is-farm-roster" style="${orgStripe(p.org)}" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
-        <div class="rank-num">${i + 1}</div>
+        <div class="rank-num">${_rosterRankOffset + i + 1}</div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           ${headshotHTML(p, 56)}
           <div style="min-width:0;flex:1;">
@@ -18434,62 +18797,89 @@ function renderFarmDetail(orgCode) {
   const posFilterBar = filterStrip("Position", FARM_POS_FILTER,
     state.posFilter, "data-farm-pos", posTallies);
 
-  root.innerHTML = header + tilesHtml + `
+  // "Back of a baseball card" tab layout. Header + tile strip stay
+  // always-visible above the tab bar; everything else clusters into 5
+  // tabs (Overview / Roster / Development / Finances / Transactions).
+  // The Overview tab keeps the original 3-column dashboard (left rail
+  // + main summary + sidebar context cards). The deeper drill-downs
+  // (roster table, depth chart, spending, transactions table, affiliate
+  // rosters) get their own dedicated tabs. URL state via ?ftab=...
+
+  // Filter / sort summary line for the Tracked prospects header.
+  const _filterParts = [
+    state.acqFilter !== "all" ? `${escapeHtml(ACQ_METHODS_FOR_FARM.find(m => m[0] === state.acqFilter)?.[1] || state.acqFilter)}` : null,
+    state.levelFilter !== "all" ? escapeHtml(state.levelFilter) : null,
+    state.posFilter !== "all" ? escapeHtml(state.posFilter) : null,
+  ].filter(Boolean);
+  const _filterSuffix = _filterParts.length ? " · filtered " + _filterParts.join(" / ") : "";
+
+  const overviewHtml = `
     <div class="farm-detail-grid">
       ${leftRailHtml}
-      <div>
-        <div class="detail-title flush">${(state.formWindow || "3y")} development vs mean farm <span class="detail-title-sub">pure-development metric — graduations + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. DvM+ = wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev</span></div>
-        <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
-          <span class="filter-label">Window</span>
-          <button class="chip${(state.formWindow || "3y") === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
-          <button class="chip${(state.formWindow || "3y") === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
-          <button class="chip${(state.formWindow || "3y") === "5y" ? " active" : ""}" data-form-window="5y" type="button">5y</button>
-        </div>
-        ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || "3y"] ?? 0), state.formWindow || "3y")}
-        <div class="detail-title">Position depth chart <span class="detail-title-sub">Tracked prospects bucketed by primary position · 10 columns (C / 1B / 2B / SS / 3B / LF / CF / RF / SP / RP)</span></div>
-        <div class="filter-bar" style="margin:6px 0 4px;padding:6px 10px;">
-          <span class="filter-label">Sort</span>
-          <button class="chip${(state.depthSort || "fv") === "fv" ? " active" : ""}" data-depth-sort="fv" type="button" title="Highest FV first, age as tiebreaker. Dashed dividers separate the 50+, 40-tier, and sub-40 groups.">FV</button>
-          <button class="chip${state.depthSort === "age" ? " active" : ""}" data-depth-sort="age" type="button" title="Youngest first, FV as tiebreaker.">Age</button>
-          <button class="chip${state.depthSort === "eta" ? " active" : ""}" data-depth-sort="eta" type="button" title="Soonest ETA first, FV as tiebreaker. Prospects without an ETA sink to the bottom.">ETA</button>
-        </div>
+      <div class="farm-overview-main">
+        <div class="detail-title flush">Organization snapshot <span class="detail-title-sub">stock balance, pos mix, promotion ladder, tier shape — all at a glance. Drill into the other tabs for roster / dev / finance / transactions detail.</span></div>
         ${makePositionDepthChart(rosterPlayersAll, state.depthSort || "fv")}
-        <div class="detail-title">Age vs FV scatter <span class="detail-title-sub">Each dot is one prospect — point size scales with composite Tools+ when published, hue encodes position bucket</span></div>
-        ${makeAgeFvScatter(rosterPlayersAll)}
-        <div class="detail-title">Acquisition spending <span class="detail-title-sub">Bonus pool dollars — International FA vs Draft, 2021-present</span></div>
-        ${makeSpendingBlock(org)}
-        <div class="detail-title">Tracked prospects (${rosterPlayers.length}${
-          [
-            state.acqFilter !== "all" ? `${escapeHtml(ACQ_METHODS_FOR_FARM.find(m => m[0] === state.acqFilter)?.[1] || state.acqFilter)}` : null,
-            state.levelFilter !== "all" ? escapeHtml(state.levelFilter) : null,
-            state.posFilter !== "all" ? escapeHtml(state.posFilter) : null,
-          ].filter(Boolean).length ? " · filtered " + [
-            state.acqFilter !== "all" ? `${escapeHtml(ACQ_METHODS_FOR_FARM.find(m => m[0] === state.acqFilter)?.[1] || state.acqFilter)}` : null,
-            state.levelFilter !== "all" ? escapeHtml(state.levelFilter) : null,
-            state.posFilter !== "all" ? escapeHtml(state.posFilter) : null,
-          ].filter(Boolean).join(" / ") : ""
-        })</div>
-        <div class="farm-roster-filters">
-          ${acqFilterBar}
-          ${levelFilterBar}
-          ${posFilterBar}
-          <div class="filter-bar" style="padding:6px 10px;">
-            <span class="filter-label">Sort roster</span>
-            <button class="chip${(state.rosterSort || "fv") === "fv" ? " active" : ""}" data-roster-sort="fv" type="button" title="Consensus FV (default)">FV</button>
-            <button class="chip${state.rosterSort === "avg_rank" ? " active" : ""}" data-roster-sort="avg_rank" type="button" title="Average rank across sources">Avg rank</button>
-            <button class="chip${state.rosterSort === "age" ? " active" : ""}" data-roster-sort="age" type="button" title="Youngest first">Age</button>
-            <button class="chip${state.rosterSort === "eta" ? " active" : ""}" data-roster-sort="eta" type="button" title="Soonest ETA first">ETA</button>
-            <button class="chip${state.rosterSort === "tools_plus" ? " active" : ""}" data-roster-sort="tools_plus" type="button" title="Toolsiest first — Tools+ index">Tools+</button>
-            <button class="chip${state.rosterSort === "surplus" ? " active" : ""}" data-roster-sort="surplus" type="button" title="Per-prospect FV-implied surplus value, highest first">Surplus</button>
-          </div>
-        </div>
-        ${rosterHeader}${rosterRows}
-        ${gradedSection}
-        ${affiliateSection}
-        ${makeFarmTransactionsSection(allEventsForOrg, orgCode)}
       </div>
       <div class="farm-side">${sidebarHtml}</div>
     </div>`;
+
+  const rosterTabHtml = `
+    <div class="detail-title flush">Tracked prospects (${rosterPlayers.length}${_filterSuffix})</div>
+    <div class="farm-roster-filters">
+      ${acqFilterBar}
+      ${levelFilterBar}
+      ${posFilterBar}
+      <div class="filter-bar" style="padding:6px 10px;">
+        <span class="filter-label">Sort roster</span>
+        <button class="chip${(state.rosterSort || "fv") === "fv" ? " active" : ""}" data-roster-sort="fv" type="button" title="Consensus FV (default)">FV</button>
+        <button class="chip${state.rosterSort === "avg_rank" ? " active" : ""}" data-roster-sort="avg_rank" type="button" title="Average rank across sources">Avg rank</button>
+        <button class="chip${state.rosterSort === "age" ? " active" : ""}" data-roster-sort="age" type="button" title="Youngest first">Age</button>
+        <button class="chip${state.rosterSort === "eta" ? " active" : ""}" data-roster-sort="eta" type="button" title="Soonest ETA first">ETA</button>
+        <button class="chip${state.rosterSort === "tools_plus" ? " active" : ""}" data-roster-sort="tools_plus" type="button" title="Toolsiest first — Tools+ index">Tools+</button>
+        <button class="chip${state.rosterSort === "surplus" ? " active" : ""}" data-roster-sort="surplus" type="button" title="Per-prospect FV-implied surplus value, highest first">Surplus</button>
+      </div>
+    </div>
+    ${rosterHeader}${rosterRows}
+    ${rosterPaginationStrip}
+    <div class="detail-title">Position depth chart <span class="detail-title-sub">Tracked prospects bucketed by primary position · 10 columns (C / 1B / 2B / SS / 3B / LF / CF / RF / SP / RP)</span></div>
+    <div class="filter-bar" style="margin:6px 0 4px;padding:6px 10px;">
+      <span class="filter-label">Sort</span>
+      <button class="chip${(state.depthSort || "fv") === "fv" ? " active" : ""}" data-depth-sort="fv" type="button" title="Highest FV first, age as tiebreaker. Dashed dividers separate the 50+, 40-tier, and sub-40 groups.">FV</button>
+      <button class="chip${state.depthSort === "age" ? " active" : ""}" data-depth-sort="age" type="button" title="Youngest first, FV as tiebreaker.">Age</button>
+      <button class="chip${state.depthSort === "eta" ? " active" : ""}" data-depth-sort="eta" type="button" title="Soonest ETA first, FV as tiebreaker. Prospects without an ETA sink to the bottom.">ETA</button>
+    </div>
+    ${makePositionDepthChart(rosterPlayersAll, state.depthSort || "fv")}
+    <div class="detail-title">Age vs FV scatter <span class="detail-title-sub">Each dot is one prospect — point size scales with composite Tools+ when published, hue encodes position bucket</span></div>
+    ${makeAgeFvScatter(rosterPlayersAll)}
+    ${gradedSection}`;
+
+  const devTabHtml = `
+    <div class="detail-title flush">${(state.formWindow || "3y")} development vs mean farm <span class="detail-title-sub">pure-development metric — graduations + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. DvM+ = wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev</span></div>
+    <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
+      <span class="filter-label">Window</span>
+      <button class="chip${(state.formWindow || "3y") === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
+      <button class="chip${(state.formWindow || "3y") === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
+      <button class="chip${(state.formWindow || "3y") === "5y" ? " active" : ""}" data-form-window="5y" type="button">5y</button>
+    </div>
+    ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || "3y"] ?? 0), state.formWindow || "3y")}`;
+
+  const financesTabHtml = `
+    <div class="detail-title flush">Acquisition spending <span class="detail-title-sub">Bonus pool dollars — International FA vs Draft, 2021-present</span></div>
+    ${makeSpendingBlock(org)}`;
+
+  const transactionsTabHtml = `
+    ${affiliateSection}
+    ${makeFarmTransactionsSection(allEventsForOrg, orgCode)}`;
+
+  const tabs = [
+    { key: "overview",     label: "Overview",     html: overviewHtml },
+    { key: "roster",       label: "Roster",       html: rosterTabHtml },
+    { key: "development",  label: "Development",  html: devTabHtml },
+    { key: "finances",     label: "Finances",     html: financesTabHtml },
+    { key: "transactions", label: "Transactions & Pipeline", html: transactionsTabHtml },
+  ];
+  const tabBar = renderDetailTabs(tabs, state.farmTab, "farm");
+  root.innerHTML = header + tilesHtml + tabBar;
 
   // Wire affiliate level tabs (vanilla — toggle visibility, no re-render).
   document.querySelectorAll("#farm-detail-body .level-tab").forEach(btn => {
@@ -18533,6 +18923,7 @@ function renderFarmDetail(orgCode) {
   document.querySelectorAll("#farm-detail-body [data-roster-sort]").forEach(btn => {
     btn.addEventListener("click", () => {
       state.rosterSort = btn.dataset.rosterSort;
+      resetPage("farmRoster");
       syncToURL();
       renderFarmDetail(orgCode);
     });
@@ -18572,6 +18963,7 @@ function renderFarmDetail(orgCode) {
   document.querySelectorAll("#farm-detail-body [data-farm-tx-kind]").forEach(btn => {
     btn.addEventListener("click", () => {
       state.farmTxKind = btn.dataset.farmTxKind;
+      resetPage("farmTx");
       renderFarmDetail(orgCode);
       syncToURL();
     });
@@ -18579,6 +18971,7 @@ function renderFarmDetail(orgCode) {
   document.querySelectorAll("#farm-detail-body [data-farm-tx-dir]").forEach(btn => {
     btn.addEventListener("click", () => {
       state.farmTxDir = btn.dataset.farmTxDir;
+      resetPage("farmTx");
       renderFarmDetail(orgCode);
       syncToURL();
     });
@@ -19922,6 +20315,7 @@ function attachHandlers() {
     if (gCatBtn) {
       e.stopPropagation();
       state.glossaryCat = gCatBtn.dataset.glossaryCat;
+      resetPage("glossary");
       syncToURL();
       renderGlossary();
       return;
@@ -20078,7 +20472,7 @@ function attachHandlers() {
       render();
     });
   });
-  attachChipGroup("spotlight-bucket", "spotlightBucket", () => render(), { clearView: true });
+  attachChipGroup("spotlight-bucket", "spotlightBucket", () => { resetPage("spotlights"); render(); }, { clearView: true });
 
   // Back/forward navigation: re-read the hash and re-render whenever the
   // user uses browser-history controls (or anything else mutates the hash).
@@ -20109,12 +20503,13 @@ function attachHandlers() {
       document.querySelectorAll("[data-filter-stock]").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       state.stockFilter = btn.dataset.filterStock;
+      resetListPages();
       render();
       syncToURL();
     });
   });
-  attachChipGroup("filter-health", "healthFilter", () => render());
-  attachChipGroup("filter-spread", "spreadFilter", () => render());
+  attachChipGroup("filter-health", "healthFilter", () => { resetListPages(); render(); });
+  attachChipGroup("filter-spread", "spreadFilter", () => { resetListPages(); render(); });
   wireThemeToggle();
   // Density toggle chips — body class + localStorage so the choice
   // survives across sessions and reloads. URL also persists via
@@ -20139,6 +20534,7 @@ function attachHandlers() {
       document.querySelectorAll("[data-filter-level]").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       state.levelFilter = btn.dataset.filterLevel;
+      resetListPages();
       render();
       syncToURL();
     });
@@ -20149,6 +20545,7 @@ function attachHandlers() {
       document.querySelectorAll("[data-filter-pos]").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       state.posFilter = btn.dataset.filterPos;
+      resetListPages();
       render();
       syncToURL();
     });
@@ -20164,10 +20561,10 @@ function attachHandlers() {
   // Leaderboards chip groups — stat picker swaps the metric the board
   // is sorted by; level/pos chips narrow the qualifying pool. All three
   // re-render the leaderboard but don't touch other tabs.
-  attachChipGroup("lb-stat",   "lbStat",   () => renderLeaderboards());
-  attachChipGroup("lb-level",  "lbLevel",  () => renderLeaderboards());
-  attachChipGroup("lb-pos",    "lbPos",    () => renderLeaderboards());
-  attachChipGroup("lb-season", "lbSeason", () => renderLeaderboards());
+  attachChipGroup("lb-stat",   "lbStat",   () => { resetPage("leaderboard"); renderLeaderboards(); });
+  attachChipGroup("lb-level",  "lbLevel",  () => { resetPage("leaderboard"); renderLeaderboards(); });
+  attachChipGroup("lb-pos",    "lbPos",    () => { resetPage("leaderboard"); renderLeaderboards(); });
+  attachChipGroup("lb-season", "lbSeason", () => { resetPage("leaderboard"); renderLeaderboards(); });
   // Null-guard each selector binding — missing elements (caused by template
   // ordering, embed contexts, or future markup changes) would otherwise
   // throw a TypeError that aborts attachHandlers and breaks every other
@@ -20175,22 +20572,26 @@ function attachHandlers() {
   const lbOrgEl = document.getElementById("lb-org-filter");
   if (lbOrgEl) lbOrgEl.addEventListener("change", e => {
     state.lbOrg = e.target.value;
+    resetPage("leaderboard");
     renderLeaderboards();
     syncToURL();
   });
   const orgEl = document.getElementById("org-filter");
   if (orgEl) orgEl.addEventListener("change", e => {
     state.orgFilter = e.target.value;
+    resetListPages();
     render();
   });
   const acqEl = document.getElementById("acq-filter");
   if (acqEl) acqEl.addEventListener("change", e => {
     state.acqFilter = e.target.value;
+    resetListPages();
     render();
   });
   const classEl = document.getElementById("class-filter");
   if (classEl) classEl.addEventListener("change", e => {
     state.classFilter = e.target.value;
+    resetListPages();
     render();
   });
   const sortEl = document.getElementById("sort-select");
@@ -20200,6 +20601,7 @@ function attachHandlers() {
     // header indicator (the header carries .is-active when its
     // data-sort-key matches state.sort).
     syncSortHeaderActive();
+    resetListPages();
     render();
   });
   // Column-click sort — delegated handler on the document so it picks up
@@ -20222,6 +20624,7 @@ function attachHandlers() {
     const sortSel = document.getElementById("sort-select");
     if (sortSel) sortSel.value = state.sort;
     syncSortHeaderActive();
+    resetListPages();
     render();
   });
   // Tool-grade filter — two selects (key + min threshold). Either changing
@@ -20230,11 +20633,13 @@ function attachHandlers() {
   const tfKeyEl = document.getElementById("tool-filter-key");
   if (tfKeyEl) tfKeyEl.addEventListener("change", e => {
     state.toolFilterKey = e.target.value;
+    resetListPages();
     render();
   });
   const tfMinEl = document.getElementById("tool-filter-min");
   if (tfMinEl) tfMinEl.addEventListener("change", e => {
     state.toolFilterMin = parseInt(e.target.value, 10) || 0;
+    resetListPages();
     render();
   });
 
@@ -20242,6 +20647,7 @@ function attachHandlers() {
   if (searchInput) {
     searchInput.addEventListener("input", e => {
       state.search = e.target.value.trim();
+      resetListPages();
       render();
     });
     // Clear search on Escape
@@ -20471,6 +20877,7 @@ function populateOrgFilter() {
       clearTimeout(_glossarySearchTimer);
       _glossarySearchTimer = setTimeout(() => {
         state.glossarySearch = e.target.value || "";
+        resetPage("glossary");
         syncToURL();
         renderGlossary();
       }, 120);
