@@ -69,8 +69,10 @@ from collections import defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+from player_images import college_logo_url, player_headshot_url
 from storage import (
     load_draft_canonical_keys,
+    load_draft_lottery_odds,
     load_draft_order,
     load_draft_players,
     load_draft_results,
@@ -104,10 +106,13 @@ def _stock_plus(rank: float | None, class_ranks: list[int]) -> int | None:
     return int(round(70 + pct * 60))
 
 
-def _projected_round(rank: float | None) -> int | None:
-    if rank is None or rank < 1:
+def _projected_round(pick: float | None) -> int | None:
+    """Map a pick number → round number. Pick 1-30 = R1, 31-60 = R2, etc.
+    Accepts either the continuous consensus_rank or the integer
+    consensus_pick — same math either way."""
+    if pick is None or pick < 1:
         return None
-    return min(int((rank - 1) // 30) + 1, 20)
+    return min(int((pick - 1) // 30) + 1, 20)
 
 
 def _latest_per_source(snaps: list[dict]) -> dict[str, dict]:
@@ -151,7 +156,8 @@ def _build_class(year: int,
                  players_by_key: dict[str, dict],
                  results_by_year: dict[int, list[dict]],
                  order_by_year: dict[int, list[dict]],
-                 canonical_keys: dict[str, str]) -> dict:
+                 canonical_keys: dict[str, str],
+                 lottery_by_year: dict[int, list[dict]] | None = None) -> dict:
     """Build one draft-class payload."""
     snaps = [s for s in all_snaps if s.get("draft_year") == year]
     by_player: dict[str, list[dict]] = defaultdict(list)
@@ -182,12 +188,18 @@ def _build_class(year: int,
         any_snap = sorted(plist, key=lambda r: r.get("snapshot_date") or "")[-1]
         player_meta = players_by_key.get(pk) or {}
 
-        fv = _consensus(plist, "fv")
+        # Snap consensus FV to the nearest integer for display. Keep
+        # the raw average around so Draft Stock+ and FV-bucket math can
+        # still see fractional resolution.
+        fv_raw = _consensus(plist, "fv")
+        fv = int(round(fv_raw)) if fv_raw is not None else None
         rank = consensus_ranks.get(pk)
         sp = _stock_plus(rank, class_rank_list)
         if sp is not None:
             stock_plus_values.append(sp)
-        bucket = _fv_bucket(fv)
+        # Bucket from the raw value so the 47.5 → "45+" bucket survives
+        # even after we round display FV to 48.
+        bucket = _fv_bucket(fv_raw)
         if bucket:
             fv_dist[bucket] += 1
 
@@ -235,10 +247,17 @@ def _build_class(year: int,
             "throws":         player_meta.get("throws"),
             "fg_player_id":   player_meta.get("fg_player_id"),
             "draft_year":     year,
-            "consensus_fv":   fv,
-            "consensus_rank": rank,
-            "projected_round": _projected_round(rank),
+            "consensus_fv":   fv,                # snapped integer (e.g. 48)
+            "consensus_fv_raw": fv_raw,          # raw avg (e.g. 47.5) — for tooltips / analytics
+            "consensus_rank": rank,              # raw avg of per-source ranks
+            "consensus_pick": None,              # populated post-sort (sequential 1, 2, 3, ...)
+            "projected_round": None,             # populated post-sort from consensus_pick
             "draft_stock_plus": sp,
+            "headshot_url":   player_headshot_url({
+                "mlbam_id":     player_meta.get("mlbam_id"),
+                "fg_player_id": player_meta.get("fg_player_id"),
+            }),
+            "school_logo_url": college_logo_url(any_snap.get("school") or player_meta.get("school")),
             "status":         status,
             "drafted_pick":   drafted_pick,
             "drafted_team":   drafted_team,
@@ -255,9 +274,22 @@ def _build_class(year: int,
             "points":         points,
         })
 
-    # Sort by consensus_rank ascending (NULLs to the bottom)
-    prospects.sort(key=lambda p: (p.get("consensus_rank") is None,
-                                   p.get("consensus_rank") or 9999))
+    # Sort by continuous consensus_rank ascending, with FV (desc) +
+    # player name as deterministic tiebreakers. Then assign sequential
+    # consensus_pick = 1, 2, 3, ... so the UI never shows duplicate
+    # ranks or gaps. consensus_rank stays as the raw average (visible
+    # in tooltips); consensus_pick is what the rendered "rank" reads.
+    prospects.sort(key=lambda p: (
+        p.get("consensus_rank") is None,
+        p.get("consensus_rank") if p.get("consensus_rank") is not None else 9999,
+        -(p.get("consensus_fv_raw") or 0),
+        p.get("player_name") or "",
+    ))
+    for i, p in enumerate(prospects, start=1):
+        if p.get("consensus_rank") is not None:
+            p["consensus_pick"] = i
+            p["projected_round"] = _projected_round(i)
+        # Else leaves consensus_pick / projected_round as None (unranked).
 
     # Draft order — pre-draft, this is the pick-by-pick sequence from
     # `draft_order` (slot values only). Post-draft, augment with actual
@@ -294,6 +326,17 @@ def _build_class(year: int,
     today = date.today()
     is_current = (year >= today.year)
 
+    # Lottery odds — only populated for classes that haven't drafted yet
+    # AND for which Tankathon has shipped projections (typically the
+    # next-up class during the current MLB season).
+    lottery_rows = (lottery_by_year or {}).get(year) or []
+    lottery_odds = sorted(
+        ({"team": r["team"], "odds_pct": r["odds_pct"],
+          "pick_pos": r["pick_pos"], "snapshot_date": r["snapshot_date"]}
+         for r in lottery_rows),
+        key=lambda r: (-r["odds_pct"], r["pick_pos"]),
+    )
+
     return {
         "year":            year,
         "is_current":      is_current,
@@ -304,6 +347,7 @@ def _build_class(year: int,
         "draft_order":     order_list,
         "team_pool_usd":   dict(team_pool),
         "team_spend_usd":  dict(team_spend),
+        "lottery_odds":    lottery_odds,
     }
 
 
@@ -314,6 +358,7 @@ def build_draft_export() -> dict:
     results_all = load_draft_results()
     order_all = load_draft_order()
     canonical = load_draft_canonical_keys()
+    lottery_all = load_draft_lottery_odds(latest_only=True)
 
     results_by_year: dict[int, list[dict]] = defaultdict(list)
     for r in results_all:
@@ -321,13 +366,21 @@ def build_draft_export() -> dict:
     order_by_year: dict[int, list[dict]] = defaultdict(list)
     for r in order_all:
         order_by_year[r["draft_year"]].append(r)
+    lottery_by_year: dict[int, list[dict]] = defaultdict(list)
+    for r in lottery_all:
+        lottery_by_year[r["draft_year"]].append(r)
 
+    # Years come from snapshots ∪ results ∪ order ∪ lottery so a
+    # forward-looking lottery year (e.g. 2027 when we only have 2026
+    # snapshots) still surfaces as its own class block.
     years = sorted({s["draft_year"] for s in all_snaps} |
-                   {r["draft_year"] for r in results_all},
+                   {r["draft_year"] for r in results_all} |
+                   {r["draft_year"] for r in order_all} |
+                   {r["draft_year"] for r in lottery_all},
                    reverse=True)
 
     classes = [_build_class(y, all_snaps, players, results_by_year,
-                            order_by_year, canonical)
+                            order_by_year, canonical, lottery_by_year)
                for y in years]
 
     return {

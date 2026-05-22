@@ -902,9 +902,25 @@ def ingest_drops(today: date | None = None,
             _draft_ingest(drop_dir=drop_dir, processed_dir=processed_dir)
         except Exception:
             log.exception("fangraphs_csv: draft_csv ingest crashed")
-        # Drop the draft groups from the MiLB processing list.
         draft_slugs = {g["slug"] for g in draft_groups}
         groups = [g for g in groups if g.get("slug") not in draft_slugs]
+
+    # Same routing pattern for <year>overseas slugs → overseas_csv. Keeps
+    # KBO/NPB pros out of the MiLB snapshots table.
+    try:
+        from overseas_csv import is_overseas_slug, ingest_drops as _overseas_ingest
+        overseas_groups = [g for g in groups if is_overseas_slug(g.get("slug", ""))]
+    except ImportError:
+        overseas_groups = []
+    if overseas_groups:
+        log.info("fangraphs_csv: %d overseas set(s) detected; routing to overseas_csv",
+                 len(overseas_groups))
+        try:
+            _overseas_ingest(drop_dir=drop_dir, processed_dir=processed_dir)
+        except Exception:
+            log.exception("fangraphs_csv: overseas_csv ingest crashed")
+        overseas_slugs = {g["slug"] for g in overseas_groups}
+        groups = [g for g in groups if g.get("slug") not in overseas_slugs]
 
     inserted_total = 0
     sets_processed = 0

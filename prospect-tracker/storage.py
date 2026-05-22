@@ -576,6 +576,103 @@ CREATE TABLE IF NOT EXISTS draft_canonical_keys (
     promoted_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_draft_canonical_milb ON draft_canonical_keys(milb_key);
+
+-- Draft lottery odds (Tankathon). One row per (year, team, pick_pos,
+-- snapshot_date) so we can keep a history of how odds moved across
+-- the season as standings shifted. pick_pos is 1..6 (only the top 6
+-- picks are lottery-determined under the current MLB CBA).
+CREATE TABLE IF NOT EXISTS draft_lottery_odds (
+    draft_year      INTEGER NOT NULL,
+    team            TEXT NOT NULL,
+    pick_pos        INTEGER NOT NULL,
+    odds_pct        REAL NOT NULL,
+    snapshot_date   TEXT NOT NULL,
+    source          TEXT NOT NULL,
+    inserted_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (draft_year, team, pick_pos, snapshot_date)
+);
+CREATE INDEX IF NOT EXISTS idx_draft_lottery_year ON draft_lottery_odds(draft_year);
+
+-- ===========================================================================
+-- Overseas prospects (established KBO/NPB/CPBL pros)
+-- ===========================================================================
+-- Parallel cohort to draft amateurs and MiLB prospects. NPB / KBO players
+-- are established pros in foreign top leagues, eligible for MLB through
+-- the posting system or international FA. Status journey:
+--   overseas_active  →  posted  →  signed  →  mlb_promoted
+-- RPS+ and other MiLB-cohort metrics are structurally excluded: overseas
+-- prospects live in their own tables, never touching `snapshots` /
+-- `players` / `statlines` until promotion to MLB.
+
+CREATE TABLE IF NOT EXISTS overseas_snapshots (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    source          TEXT NOT NULL,           -- 'fangraphs' | 'manual'
+    snapshot_date   TEXT NOT NULL,
+    interval_label  TEXT NOT NULL,
+    player_key      TEXT NOT NULL,           -- 'overseas_<league>_<name_slug>'
+    player_name     TEXT NOT NULL,
+    position        TEXT,
+    league          TEXT,                    -- 'NPB' | 'KBO' | 'CPBL' | 'CUBA' | 'NPBF'
+    country         TEXT,
+    current_team    TEXT,                    -- foreign club they currently play for
+    proj_team       TEXT,                    -- projected MLB destination (when FG guesses)
+    proj_bonus_usd  INTEGER,
+    eta_year        INTEGER,
+    fv              REAL,
+    risk            TEXT,
+    status          TEXT NOT NULL,           -- 'overseas_active'|'posted'|'signed'|'mlb_promoted'
+    tools_json      TEXT,
+    inserted_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(source, interval_label, player_key)
+);
+CREATE INDEX IF NOT EXISTS idx_overseas_snap_league ON overseas_snapshots(league);
+CREATE INDEX IF NOT EXISTS idx_overseas_snap_player ON overseas_snapshots(player_key);
+CREATE INDEX IF NOT EXISTS idx_overseas_snap_date   ON overseas_snapshots(snapshot_date);
+
+CREATE TABLE IF NOT EXISTS overseas_players (
+    player_key       TEXT PRIMARY KEY,
+    player_name      TEXT NOT NULL,
+    position         TEXT,
+    league           TEXT,
+    country          TEXT,
+    current_team     TEXT,
+    proj_team        TEXT,
+    proj_bonus_usd   INTEGER,
+    eta_year         INTEGER,
+    birth_date       TEXT,
+    bats             TEXT,
+    throws           TEXT,
+    height           TEXT,
+    weight           INTEGER,
+    fg_player_id     TEXT,
+    mlbam_id         INTEGER,
+    promoted_key     TEXT,                   -- canonical MiLB key after signing
+    posted_date      TEXT,                   -- ISO date of posting (when known)
+    signed_date      TEXT,
+    signed_team      TEXT,
+    signed_bonus_usd INTEGER,
+    updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Per-player season stats from FG player pages. Mirrors the `statlines`
+-- table shape but scoped to KBO/NPB/CPBL leagues.
+CREATE TABLE IF NOT EXISTS overseas_statlines (
+    player_key   TEXT NOT NULL,
+    season       INTEGER NOT NULL,
+    league       TEXT NOT NULL,              -- 'NPB' | 'KBO' | 'NPBF' (NPB farm) | 'CPBL'
+    team         TEXT,
+    payload_json TEXT NOT NULL,              -- {pa, ip, avg, obp, slg, era, k_pct, bb_pct, wrc_plus, fip, ...}
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, season, league)
+);
+CREATE INDEX IF NOT EXISTS idx_overseas_stats_player ON overseas_statlines(player_key);
+
+CREATE TABLE IF NOT EXISTS overseas_canonical_keys (
+    overseas_key   TEXT PRIMARY KEY,
+    milb_key       TEXT NOT NULL,
+    signed_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_overseas_canon_milb ON overseas_canonical_keys(milb_key);
 """
 
 
@@ -1372,6 +1469,288 @@ def load_draft_canonical_keys() -> dict[str, str]:
     except sqlite3.OperationalError:
         return {}
     return {r["draft_key"]: r["milb_key"] for r in rows}
+
+
+def upsert_draft_lottery_odds(rows: Iterable[dict]) -> int:
+    """Upsert lottery odds rows. Each row carries draft_year, team,
+    pick_pos (1-6), odds_pct, snapshot_date, source."""
+    n = 0
+    with connect() as con:
+        for r in rows:
+            con.execute(
+                """INSERT INTO draft_lottery_odds
+                     (draft_year, team, pick_pos, odds_pct, snapshot_date, source)
+                   VALUES (?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(draft_year, team, pick_pos, snapshot_date) DO UPDATE SET
+                     odds_pct    = excluded.odds_pct,
+                     source      = excluded.source,
+                     inserted_at = datetime('now')""",
+                (r["draft_year"], r["team"], r["pick_pos"], r["odds_pct"],
+                 r["snapshot_date"], r["source"]),
+            )
+            n += 1
+    return n
+
+
+def load_draft_lottery_odds(draft_year: int | None = None,
+                            latest_only: bool = True) -> list[dict]:
+    """Return lottery odds rows. When latest_only=True, restrict to
+    the most recent snapshot_date per (draft_year, team, pick_pos)."""
+    if latest_only:
+        q = """SELECT draft_year, team, pick_pos, odds_pct, snapshot_date, source
+               FROM draft_lottery_odds o
+               WHERE snapshot_date = (
+                 SELECT MAX(snapshot_date) FROM draft_lottery_odds
+                 WHERE draft_year = o.draft_year
+                   AND team       = o.team
+                   AND pick_pos   = o.pick_pos
+               )"""
+    else:
+        q = """SELECT draft_year, team, pick_pos, odds_pct, snapshot_date, source
+               FROM draft_lottery_odds"""
+    params: tuple = ()
+    if draft_year is not None:
+        q += " AND draft_year = ?" if "WHERE" in q else " WHERE draft_year = ?"
+        params = (draft_year,)
+    q += " ORDER BY draft_year DESC, odds_pct DESC, pick_pos ASC"
+    try:
+        with connect() as con:
+            return [dict(r) for r in con.execute(q, params).fetchall()]
+    except sqlite3.OperationalError:
+        return []
+
+
+# ===========================================================================
+# Overseas prospects (KBO/NPB/CPBL) — parallel track to snapshots/players.
+# Same firewall pattern as the draft tables.
+# ===========================================================================
+
+def insert_overseas_snapshots(snapshots: Iterable) -> int:
+    """Upsert overseas prospect snapshots. Accepts iterables of objects
+    with __dict__ (e.g. dataclass instances) or plain dicts."""
+    count = 0
+    with connect() as con:
+        for s in snapshots:
+            if hasattr(s, "__dict__"):
+                d = s.__dict__
+            elif hasattr(s, "_asdict"):
+                d = s._asdict()
+            else:
+                d = dict(s)
+            tools = d.get("tools")
+            tools_json = json.dumps(tools) if tools else None
+            cur = con.execute(
+                """INSERT INTO overseas_snapshots
+                     (source, snapshot_date, interval_label, player_key,
+                      player_name, position, league, country, current_team,
+                      proj_team, proj_bonus_usd, eta_year, fv, risk,
+                      status, tools_json)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(source, interval_label, player_key) DO UPDATE SET
+                     snapshot_date  = excluded.snapshot_date,
+                     player_name    = excluded.player_name,
+                     position       = COALESCE(excluded.position, overseas_snapshots.position),
+                     league         = COALESCE(excluded.league, overseas_snapshots.league),
+                     country        = COALESCE(excluded.country, overseas_snapshots.country),
+                     current_team   = COALESCE(excluded.current_team, overseas_snapshots.current_team),
+                     proj_team      = COALESCE(excluded.proj_team, overseas_snapshots.proj_team),
+                     proj_bonus_usd = COALESCE(excluded.proj_bonus_usd, overseas_snapshots.proj_bonus_usd),
+                     eta_year       = COALESCE(excluded.eta_year, overseas_snapshots.eta_year),
+                     fv             = excluded.fv,
+                     risk           = COALESCE(excluded.risk, overseas_snapshots.risk),
+                     status         = excluded.status,
+                     tools_json     = COALESCE(excluded.tools_json, overseas_snapshots.tools_json)""",
+                (d.get("source"), d.get("snapshot_date"), d.get("interval_label"),
+                 d.get("player_key"), d.get("player_name"), d.get("position"),
+                 d.get("league"), d.get("country"), d.get("current_team"),
+                 d.get("proj_team"), d.get("proj_bonus_usd"), d.get("eta_year"),
+                 d.get("fv"), d.get("risk"), d.get("status", "overseas_active"),
+                 tools_json),
+            )
+            count += cur.rowcount
+            con.execute(
+                """INSERT INTO overseas_players
+                     (player_key, player_name, position, league, country,
+                      current_team, proj_team, proj_bonus_usd, eta_year,
+                      birth_date, bats, throws, height, weight,
+                      fg_player_id, mlbam_id)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(player_key) DO UPDATE SET
+                     player_name    = excluded.player_name,
+                     position       = COALESCE(excluded.position, overseas_players.position),
+                     league         = COALESCE(excluded.league, overseas_players.league),
+                     country        = COALESCE(excluded.country, overseas_players.country),
+                     current_team   = COALESCE(excluded.current_team, overseas_players.current_team),
+                     proj_team      = COALESCE(excluded.proj_team, overseas_players.proj_team),
+                     proj_bonus_usd = COALESCE(excluded.proj_bonus_usd, overseas_players.proj_bonus_usd),
+                     eta_year       = COALESCE(excluded.eta_year, overseas_players.eta_year),
+                     birth_date     = COALESCE(excluded.birth_date, overseas_players.birth_date),
+                     bats           = COALESCE(excluded.bats, overseas_players.bats),
+                     throws         = COALESCE(excluded.throws, overseas_players.throws),
+                     height         = COALESCE(excluded.height, overseas_players.height),
+                     weight         = COALESCE(excluded.weight, overseas_players.weight),
+                     fg_player_id   = COALESCE(excluded.fg_player_id, overseas_players.fg_player_id),
+                     mlbam_id       = COALESCE(excluded.mlbam_id, overseas_players.mlbam_id),
+                     updated_at     = datetime('now')""",
+                (d.get("player_key"), d.get("player_name"), d.get("position"),
+                 d.get("league"), d.get("country"), d.get("current_team"),
+                 d.get("proj_team"), d.get("proj_bonus_usd"), d.get("eta_year"),
+                 d.get("birth_date"), d.get("bats"), d.get("throws"),
+                 d.get("height"), d.get("weight"),
+                 d.get("fg_player_id"), d.get("mlbam_id")),
+            )
+    return count
+
+
+def load_overseas_snapshots(league: str | None = None) -> list[dict]:
+    q = """SELECT id, source, snapshot_date, interval_label, player_key,
+                  player_name, position, league, country, current_team,
+                  proj_team, proj_bonus_usd, eta_year, fv, risk, status,
+                  tools_json, inserted_at
+           FROM overseas_snapshots"""
+    params: tuple = ()
+    if league is not None:
+        q += " WHERE league = ?"
+        params = (league,)
+    q += " ORDER BY league ASC, snapshot_date DESC, fv DESC"
+    try:
+        with connect() as con:
+            rows = con.execute(q, params).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    out: list[dict] = []
+    for r in rows:
+        d = dict(r)
+        if d.get("tools_json"):
+            try:
+                d["tools"] = json.loads(d["tools_json"])
+            except (ValueError, TypeError):
+                d["tools"] = None
+        else:
+            d["tools"] = None
+        out.append(d)
+    return out
+
+
+def load_overseas_players(league: str | None = None) -> dict[str, dict]:
+    q = """SELECT player_key, player_name, position, league, country,
+                  current_team, proj_team, proj_bonus_usd, eta_year,
+                  birth_date, bats, throws, height, weight,
+                  fg_player_id, mlbam_id, promoted_key,
+                  posted_date, signed_date, signed_team, signed_bonus_usd
+           FROM overseas_players"""
+    params: tuple = ()
+    if league is not None:
+        q += " WHERE league = ?"
+        params = (league,)
+    try:
+        with connect() as con:
+            rows = con.execute(q, params).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: dict(r) for r in rows}
+
+
+def upsert_overseas_statlines(rows: Iterable[dict]) -> int:
+    """Upsert per-season overseas stat lines. Each row carries
+    player_key, season, league, team, payload (dict)."""
+    n = 0
+    with connect() as con:
+        for r in rows:
+            payload = r.get("payload") or {k: v for k, v in r.items()
+                                           if k not in {"player_key", "season",
+                                                        "league", "team"}}
+            con.execute(
+                """INSERT INTO overseas_statlines
+                     (player_key, season, league, team, payload_json)
+                   VALUES (?, ?, ?, ?, ?)
+                   ON CONFLICT(player_key, season, league) DO UPDATE SET
+                     team         = COALESCE(excluded.team, overseas_statlines.team),
+                     payload_json = excluded.payload_json,
+                     fetched_at   = datetime('now')""",
+                (r["player_key"], r["season"], r["league"], r.get("team"),
+                 json.dumps(payload, default=str)),
+            )
+            n += 1
+    return n
+
+
+def load_overseas_statlines(player_key: str | None = None) -> list[dict]:
+    q = """SELECT player_key, season, league, team, payload_json
+           FROM overseas_statlines"""
+    params: tuple = ()
+    if player_key is not None:
+        q += " WHERE player_key = ?"
+        params = (player_key,)
+    q += " ORDER BY player_key ASC, season ASC"
+    try:
+        with connect() as con:
+            rows = con.execute(q, params).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    out: list[dict] = []
+    for r in rows:
+        d = dict(r)
+        if d.get("payload_json"):
+            try:
+                d["payload"] = json.loads(d["payload_json"])
+            except (ValueError, TypeError):
+                d["payload"] = {}
+        out.append(d)
+    return out
+
+
+def link_overseas_to_milb(overseas_key: str, milb_key: str,
+                          signed_team: str | None = None,
+                          signed_bonus_usd: int | None = None,
+                          signed_date: str | None = None) -> None:
+    """Record a signing: overseas → MiLB. Also stamps the player row
+    with the signing metadata for the UI."""
+    with connect() as con:
+        con.execute(
+            """INSERT INTO overseas_canonical_keys (overseas_key, milb_key)
+               VALUES (?, ?)
+               ON CONFLICT(overseas_key) DO UPDATE SET
+                 milb_key   = excluded.milb_key,
+                 signed_at  = datetime('now')""",
+            (overseas_key, milb_key),
+        )
+        con.execute(
+            """UPDATE overseas_players
+               SET promoted_key = ?,
+                   signed_team = COALESCE(?, signed_team),
+                   signed_bonus_usd = COALESCE(?, signed_bonus_usd),
+                   signed_date = COALESCE(?, signed_date),
+                   updated_at = datetime('now')
+               WHERE player_key = ?""",
+            (milb_key, signed_team, signed_bonus_usd, signed_date, overseas_key),
+        )
+
+
+def load_overseas_canonical_keys() -> dict[str, str]:
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT overseas_key, milb_key FROM overseas_canonical_keys"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["overseas_key"]: r["milb_key"] for r in rows}
+
+
+def upsert_overseas_posting(player_key: str, posted_date: str | None = None) -> None:
+    """Mark a prospect as posted (NPB/KBO posting system)."""
+    with connect() as con:
+        con.execute(
+            """UPDATE overseas_players SET posted_date = ?, updated_at = datetime('now')
+               WHERE player_key = ?""",
+            (posted_date, player_key),
+        )
+        con.execute(
+            """UPDATE overseas_snapshots SET status = 'posted'
+               WHERE player_key = ? AND status = 'overseas_active'""",
+            (player_key,),
+        )
 
 
 # ===========================================================================

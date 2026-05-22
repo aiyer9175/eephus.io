@@ -1955,6 +1955,227 @@ def scrape_mlb_draft_tracker(year: int, force: bool = False) -> list[dict]:
     return rows
 
 
+# --- Spotrac draft order + slot values -----------------------------------
+# Spotrac publishes the live MLB draft order with per-pick slot values
+# (Slotted Bonus) ahead of the draft. More current than MLB.com's
+# pool articles, which lag until late spring. Same real-browser UA
+# trick we use for ESPN — the default project UA gets 403.
+#
+# Page shape: the first <table> on `/mlb/draft/_/year/<year>` has 625
+# rows, one per pick across all 20 rounds, with columns:
+#   Round | Pick | Team | (logo) | Player | Pos | Age | Bat/Throw |
+#   Pre-Draft Team | Slotted Bonus
+# Pre-draft, Player/Pos/Age are empty; Slotted Bonus is populated for
+# every pick that has a slot value (R1-R10 ~ all picks; later rounds
+# get a flat $150,000-ish under-slot value).
+
+SPOTRAC_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
+
+def scrape_spotrac_draft_order(year: int, force: bool = False) -> list[dict]:
+    """Parse Spotrac's MLB draft page → draft_order rows ready for
+    `storage.upsert_draft_order`.
+
+    Each row: draft_year, pick_overall, round_label, pick_in_round,
+    team, slot_usd, source='spotrac'."""
+    from trades import canonical_org
+
+    url = f"https://www.spotrac.com/mlb/draft/_/year/{year}"
+    cache_key = f"spotrac_draft_{year}"
+    cache_path = CACHE_DIR / f"{cache_key}.html"
+    if cache_path.exists() and not force:
+        body = cache_path.read_text(encoding="utf-8")
+        log.info("cache hit: %s (%d bytes)", cache_key, len(body))
+    else:
+        log.info("fetching: %s", url)
+        time.sleep(RATE_LIMIT_SECONDS)
+        try:
+            resp = requests.get(url, headers=SPOTRAC_HEADERS, timeout=30)
+        except requests.RequestException as e:
+            log.error("network error fetching %s: %s", url, e)
+            return []
+        if resp.status_code != 200:
+            log.warning("spotrac_draft_order %d: HTTP %d", year, resp.status_code)
+            return []
+        body = resp.text
+        cache_path.write_text(body, encoding="utf-8")
+
+    soup = BeautifulSoup(body, "html.parser")
+    # Take the first table that has both a 'Round' and 'Slotted Bonus'
+    # header — that's the master pick list. Other tables on the page
+    # are per-round subsets that duplicate the data.
+    master = None
+    for t in soup.find_all("table"):
+        rows = t.find_all("tr")
+        if not rows:
+            continue
+        headers = [c.get_text(strip=True).lower() for c in rows[0].find_all(["th", "td"])]
+        if "round" in headers and "slotted bonus" in headers:
+            master = t
+            break
+    if master is None:
+        log.warning("spotrac_draft_order %d: master table not found", year)
+        return []
+
+    out: list[dict] = []
+    body_rows = master.find_all("tr")[1:]
+    # Track running pick number per round (sometimes Spotrac collapses the
+    # Round cell only on the first row of the round).
+    last_round = None
+    pick_in_round = 0
+    for r in body_rows:
+        cells = [c.get_text(" ", strip=True) for c in r.find_all(["td", "th"])]
+        if len(cells) < 10:
+            continue
+        round_raw = cells[0].strip()
+        pick_raw  = cells[1].strip()
+        team_raw  = cells[2].strip()
+        slot_raw  = cells[9].strip()
+        if not pick_raw:
+            continue
+        try:
+            pick = int(pick_raw)
+        except ValueError:
+            continue
+        try:
+            round_num = int(round_raw) if round_raw else last_round
+        except ValueError:
+            round_num = last_round
+        if round_num is None:
+            continue
+        if round_num != last_round:
+            last_round = round_num
+            pick_in_round = 0
+        pick_in_round += 1
+        team_code = canonical_org(team_raw) or team_raw or None
+        if not team_code:
+            continue
+        slot_int = None
+        if slot_raw and slot_raw not in {"-", "—", ""}:
+            digits = re.sub(r"[^\d]", "", slot_raw)
+            if digits:
+                try:
+                    slot_int = int(digits)
+                except ValueError:
+                    slot_int = None
+        out.append({
+            "draft_year":    year,
+            "pick_overall":  pick,
+            "round_label":   str(round_num),
+            "pick_in_round": pick_in_round,
+            "team":          team_code,
+            "slot_usd":      slot_int,
+            "source":        "spotrac",
+        })
+
+    log.info("spotrac_draft_order %d: %d picks parsed (%d with slot values)",
+             year, len(out), sum(1 for r in out if r.get("slot_usd")))
+    return out
+
+
+# --- Tankathon lottery odds ----------------------------------------------
+# Tankathon's MLB page shows the projected lottery position for the
+# *next* MLB Draft based on current standings. Under the 2022 CBA the
+# top 6 picks are lottery-determined for the non-playoff teams, so
+# the "Odds" column is each team's % chance of landing #1 overall.
+
+TANKATHON_URL = "https://www.tankathon.com/mlb"
+
+
+def scrape_tankathon_lottery(year: int, force: bool = False) -> list[dict]:
+    """Parse Tankathon's MLB page → draft_lottery_odds rows.
+
+    `year` is the draft year the odds apply to (e.g., during the 2026
+    MLB season, the odds project the 2027 draft). Tankathon doesn't
+    expose the year explicitly; the caller passes it.
+    """
+    from trades import canonical_org
+
+    cache_key = "tankathon_mlb"
+    cache_path = CACHE_DIR / f"{cache_key}.html"
+    if cache_path.exists() and not force:
+        body = cache_path.read_text(encoding="utf-8")
+        log.info("cache hit: %s (%d bytes)", cache_key, len(body))
+    else:
+        log.info("fetching: %s", TANKATHON_URL)
+        time.sleep(RATE_LIMIT_SECONDS)
+        try:
+            resp = requests.get(TANKATHON_URL, headers=SPOTRAC_HEADERS, timeout=20)
+        except requests.RequestException as e:
+            log.error("network error fetching tankathon: %s", e)
+            return []
+        if resp.status_code != 200:
+            log.warning("tankathon_lottery: HTTP %d", resp.status_code)
+            return []
+        body = resp.text
+        cache_path.write_text(body, encoding="utf-8")
+
+    soup = BeautifulSoup(body, "html.parser")
+    table = soup.find("table")
+    if not table:
+        log.warning("tankathon_lottery: no table on page")
+        return []
+
+    out: list[dict] = []
+    today = date.today().isoformat()
+    rows = table.find_all("tr")
+    for r in rows[1:]:
+        cells = [c.get_text(" ", strip=True) for c in r.find_all(["td", "th"])]
+        if len(cells) < 8:
+            continue
+        pos_raw = cells[0].strip()
+        team_raw = cells[1].strip()
+        odds_raw = cells[7].strip()
+        if not pos_raw or not team_raw or not odds_raw:
+            continue
+        # Team cell format: "LA Angels LAA" — the abbreviation is the
+        # last all-caps token. Fall back to the raw string if not found.
+        tokens = team_raw.split()
+        team_code = None
+        for tok in reversed(tokens):
+            if re.fullmatch(r"[A-Z]{2,4}", tok):
+                team_code = tok
+                break
+        team_code = canonical_org(team_code or team_raw) or team_code or team_raw
+        if not team_code:
+            continue
+        m = re.search(r"(\d+(?:\.\d+)?)\s*%", odds_raw)
+        if not m:
+            continue
+        try:
+            odds = float(m.group(1))
+        except ValueError:
+            continue
+        # Only lottery slots (top 6) carry an actual lottery odds value.
+        # Beyond that, Tankathon publishes the deterministic slot but the
+        # "%" column shows the slot as "—"; we already skipped those.
+        try:
+            pos = int(pos_raw)
+        except ValueError:
+            continue
+        if pos > 6:
+            continue
+        out.append({
+            "draft_year":    year,
+            "team":          team_code,
+            "pick_pos":      1,         # Tankathon only ships odds at #1
+            "odds_pct":      odds,
+            "snapshot_date": today,
+            "source":        "tankathon",
+        })
+
+    log.info("tankathon_lottery (draft %d): %d teams parsed", year, len(out))
+    return out
+
+
 # --- MLB Draft bonus pool articles ----------------------------------------
 # Each year MLB.com publishes an article enumerating every team's draft
 # bonus pool + every numbered pick's slot value. URL slug varies by year

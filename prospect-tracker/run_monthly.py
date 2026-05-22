@@ -130,6 +130,20 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     except Exception:
         log.exception("draft pipeline crashed in rebuild_only — continuing")
 
+    # Overseas pipeline — promote any newly-signed KBO/NPB players +
+    # ingest any manual postings + write the overseas_timeseries.json
+    # sidecar. Skips stats refresh on rebuild_only (that's a slow HTTP
+    # path; only fires in the full main()).
+    try:
+        from overseas_promotion import promote_signed_players, ingest_postings
+        from overseas_export import export_overseas_json
+        ingest_postings()
+        promote_signed_players()
+        n_ov = export_overseas_json(out_dir / "overseas_timeseries.json")
+        log.info("overseas pipeline (rebuild): exported %d overseas prospects", n_ov)
+    except Exception:
+        log.exception("overseas pipeline crashed in rebuild_only — continuing")
+
     log.info("rebuild_only: loading snapshots + ancillary tables from DB")
     all_snaps = load_all_snapshots()
     timeseries = build_timeseries(all_snaps)
@@ -320,12 +334,45 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 rows = scrape_mlb_draft_tracker(y, force=force_refetch)
                 if rows:
                     upsert_draft_results(rows)
+            # Spotrac per-pick slot values + Tankathon lottery odds.
+            # Both feed downstream into draft_order / draft_lottery_odds.
+            from scrapers import scrape_spotrac_draft_order, scrape_tankathon_lottery
+            from storage import upsert_draft_order, upsert_draft_lottery_odds
+            this_year = date.today().year
+            for y in (this_year, this_year + 1):
+                so_rows = scrape_spotrac_draft_order(y, force=force_refetch)
+                if so_rows:
+                    upsert_draft_order(so_rows)
+            # Tankathon publishes odds for the *next* draft class (e.g.,
+            # during the 2026 season → 2027 lottery). Stamp those rows
+            # with the next-year draft.
+            tk_rows = scrape_tankathon_lottery(this_year + 1, force=force_refetch)
+            if tk_rows:
+                upsert_draft_lottery_odds(tk_rows)
+
             promote_drafted_players()
             n_draft = export_draft_json(out_dir / "draft_timeseries.json")
             log.info("draft pipeline: exported %d prospects across all classes",
                      n_draft)
         except Exception:
             log.exception("draft pipeline crashed — continuing with MiLB run")
+
+        # --- 0d. Overseas pipeline (refresh FG stats + promote + export) -
+        # KBO/NPB stat refresh is HTTP-heavy (one fetch per overseas
+        # prospect, ~50 fetches/run). Wrap in its own try/except so a
+        # single bad FG page never blocks the MiLB run.
+        try:
+            from overseas_stats import refresh_overseas_stats
+            from overseas_promotion import promote_signed_players, ingest_postings
+            from overseas_export import export_overseas_json
+
+            refresh_overseas_stats(force=force_refetch)
+            ingest_postings()
+            promote_signed_players()
+            n_ov = export_overseas_json(out_dir / "overseas_timeseries.json")
+            log.info("overseas pipeline: exported %d prospects", n_ov)
+        except Exception:
+            log.exception("overseas pipeline crashed — continuing with MiLB run")
 
         # --- 1. Scrape & store rankings ---------------------------------
         snapshots, csv_birth_dates = scrape_all(force=force_refetch)

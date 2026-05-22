@@ -1846,6 +1846,63 @@
       color: var(--text-tertiary);
       margin-left: 4px;
     }
+    /* === Polish: images, flags, college logos ===================== */
+    /* Square headshot — left-edge of every Draft / Overseas card.
+       Sized so it doesn't dominate; falls back via JS onerror to a
+       text-initial chip so a missing image doesn't leave a hole.       */
+    .prospect-headshot {
+      width: 36px;
+      height: 36px;
+      border-radius: 4px;
+      object-fit: cover;
+      background: var(--bg-tertiary);
+      flex-shrink: 0;
+    }
+    /* Initial chip used when the headshot 404s. JS does the swap. */
+    .prospect-initial {
+      width: 36px;
+      height: 36px;
+      border-radius: 4px;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    /* Country flag (SVG via flagcdn.com). Aspect ratio ~4:3 standard. */
+    .country-flag {
+      height: 14px;
+      width: auto;
+      border-radius: 2px;
+      vertical-align: -2px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+    }
+    .country-flag.large { height: 22px; }
+    /* College logo chip — same footprint as the headshot but tighter. */
+    .college-logo {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      vertical-align: -5px;
+      margin-right: 4px;
+    }
+    .school-initial {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      border-radius: 3px;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      text-align: center;
+      line-height: 22px;
+      font-size: 10px;
+      font-weight: 700;
+      vertical-align: -5px;
+      margin-right: 4px;
+    }
 
     /* === Farm systems ============================================= */
     .farm-header, .farm-row {
@@ -4323,6 +4380,7 @@
     <button class="section-tab" data-section="traded">Recently Acquired</button>
     <button class="section-tab" data-section="injured">Injured List</button>
     <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">Draft</button>
+    <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
     <button class="section-tab" data-section="graduates">Graduates</button>
     <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
@@ -4537,10 +4595,39 @@
               title="Post-draft signing tracker: bonus vs. slot, team spend vs. pool, unsigned picks">Results &amp; Bonuses</button>
       <button class="chip" data-draft-view="leaderboard"
               title="Top of class by Draft Stock+, per-position bests, per-tool bests">Leaderboard</button>
+      <button class="chip" data-draft-view="lottery"
+              title="Lottery odds for the next draft (top 6 picks). Scraped from Tankathon based on current standings.">Lottery Odds</button>
       <button class="chip" data-draft-view="class-strength"
               title="FV distribution per class (60 FV count, 55 FV count, etc.) side-by-side across years">Class Strength</button>
     </div>
     <div id="draft-rows"></div>
+  </div>
+
+  <!-- Overseas prospects — established KBO/NPB/CPBL pros eligible for
+       MLB. Mirrors the Draft section pattern: per-league chips at top,
+       sub-tab strip for Rankings / Season Stats / Posting Tracker /
+       Recently Signed / Leaderboard. Reuses .draft-grid / .draft-card /
+       .draft-table styles. RPS+ never appears here — different league
+       cohorts. -->
+  <div id="overseas-section" style="display: none;">
+    <div id="overseas-league-bar" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+      <span class="filter-label" title="Source league">League</span>
+      <span id="overseas-league-chips"></span>
+    </div>
+    <div id="overseas-subtab-bar" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+      <span class="filter-label">View</span>
+      <button class="chip active" data-overseas-view="rankings"
+              title="Rankings + tool grades + writeups, grouped by FV tier">Rankings</button>
+      <button class="chip" data-overseas-view="stats"
+              title="Per-season KBO/NPB/CPBL stats scraped from FanGraphs player pages">Season Stats</button>
+      <button class="chip" data-overseas-view="posting"
+              title="Players currently posted (KBO/NPB posting system) — days remaining in their MLB negotiation window">Posting Tracker</button>
+      <button class="chip" data-overseas-view="signed"
+              title="Recently signed overseas free agents and where they landed">Recently Signed</button>
+      <button class="chip" data-overseas-view="leaderboard"
+              title="Top by FV + per-position bests + biggest projected bonuses">Leaderboard</button>
+    </div>
+    <div id="overseas-rows"></div>
   </div>
 
   <div id="graduates-section" style="display: none;">
@@ -6360,6 +6447,11 @@ const state = {
   // Leaderboard / Class Strength sub-views inside the Draft panel.
   draftYear: null,
   draftView: "rankings",
+  // Overseas tab sub-state. overseasLeague defaults to "all"; overseasView
+  // toggles Rankings / Season Stats / Posting Tracker / Recently Signed /
+  // Leaderboard inside the Overseas panel.
+  overseasLeague: "all",
+  overseasView: "rankings",
   // Class filter — restrict to prospects acquired in a specific year
   // (draft year for drafted players; IFA signing year for IFAs). "all"
   // means no class restriction. Drives the "Class of YYYY" dropdown
@@ -8278,6 +8370,44 @@ function _stockPlusColor(sp) {
   return "var(--neon-red)";
 }
 
+// Headshot <img> with graceful onerror fallback to a text-initial chip.
+// `name` is used for the initial letters when the image fails.
+function _headshotImg(url, name) {
+  const initial = (name || "?").split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
+  if (!url) {
+    return `<span class="prospect-initial">${escapeHtml(initial)}</span>`;
+  }
+  return `<img class="prospect-headshot" src="${escapeHtml(url)}"
+       alt="${escapeHtml(name || "")}" loading="lazy"
+       onerror="this.outerHTML='<span class=&quot;prospect-initial&quot;>${escapeHtml(initial)}</span>';">`;
+}
+
+// College logo <img> with graceful onerror fallback to a small initial chip.
+function _collegeLogoImg(url, school) {
+  if (!school) return "";
+  const initial = (school.match(/[A-Z]/g) || school.slice(0, 2)).slice(0, 3).join("");
+  if (!url) {
+    return `<span class="school-initial" title="${escapeHtml(school)}">${escapeHtml(initial)}</span>`;
+  }
+  return `<img class="college-logo" src="${escapeHtml(url)}" alt="${escapeHtml(school)}"
+       loading="lazy" title="${escapeHtml(school)}"
+       onerror="this.outerHTML='<span class=&quot;school-initial&quot; title=&quot;${escapeHtml(school)}&quot;>${escapeHtml(initial)}</span>';">`;
+}
+
+// Country flag <img> with fallback to emoji glyph (so OS-specific
+// emoji rendering still shows *something* if the SVG CDN is down).
+function _flagImg(svgUrl, emoji, country, opts) {
+  opts = opts || {};
+  const cls = opts.large ? "country-flag large" : "country-flag";
+  if (svgUrl) {
+    return `<img class="${cls}" src="${escapeHtml(svgUrl)}" alt="${escapeHtml(country || "")}"
+         loading="lazy" title="${escapeHtml(country || "")}"
+         onerror="this.outerHTML='<span title=&quot;${escapeHtml(country || "")}&quot;>${escapeHtml(emoji || "")}</span>';">`;
+  }
+  if (emoji) return `<span title="${escapeHtml(country || "")}">${escapeHtml(emoji)}</span>`;
+  return "";
+}
+
 // FV bucket color — reuse the existing FV palette.
 function _draftFvBucketColor(fv) {
   if (fv == null) return "var(--text-tertiary)";
@@ -8362,10 +8492,62 @@ async function renderDraft() {
     case "order":          return _renderDraftOrder(host, cls);
     case "results":        return _renderDraftResults(host, cls);
     case "leaderboard":    return _renderDraftLeaderboard(host, cls);
+    case "lottery":        return _renderDraftLottery(host, cls, classes);
     case "class-strength": return _renderClassStrength(host, classes);
     case "rankings":
     default:               return _renderDraftRankings(host, cls);
   }
+}
+
+// Tankathon's odds always describe the NEXT MLB Draft. When the
+// active class is the upcoming one (e.g., 2027), use its lottery_odds.
+// Otherwise fall back to any class whose lottery_odds is populated —
+// almost always the year after the current one.
+function _renderDraftLottery(host, cls, allClasses) {
+  let target = cls;
+  if (!target.lottery_odds || target.lottery_odds.length === 0) {
+    target = allClasses.find(c => c.lottery_odds && c.lottery_odds.length) || cls;
+  }
+  const odds = target.lottery_odds || [];
+  if (!odds.length) {
+    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
+      No lottery odds on file. Tankathon's odds populate during the
+      regular season (typically July onward as the standings firm up).
+      Run <code>python -c "from scrapers import scrape_tankathon_lottery;
+      print(scrape_tankathon_lottery(${target.year}))"</code> to refresh.</div>`;
+    return;
+  }
+  const rows = odds.map((o, i) => `<tr>
+    <td>${i + 1}</td>
+    <td><strong>${escapeHtml(o.team)}</strong></td>
+    <td style="text-align:right;font-weight:600;color:${
+      o.odds_pct >= 15 ? "var(--neon-orange)"
+      : o.odds_pct >= 5 ? "var(--neon-cyan)"
+      : "var(--text-secondary)"};">
+      ${o.odds_pct.toFixed(2)}%
+    </td>
+    <td>${escapeHtml(o.snapshot_date)}</td>
+  </tr>`).join("");
+
+  host.innerHTML = `
+    <div style="padding:12px 14px;background:var(--bg-secondary);
+         border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
+      <strong style="color:var(--text-primary);">${target.year} MLB Draft Lottery</strong>
+      · top 6 picks determined by lottery (CBA 2022+).
+      Odds reflect % chance of landing the #1 overall pick.
+      Source: Tankathon (live standings-based projection).
+    </div>
+    <div class="draft-panel">
+      <table class="draft-table">
+        <thead><tr>
+          <th>Projected Order</th>
+          <th>Team</th>
+          <th style="text-align:right;">% at #1</th>
+          <th>As of</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
 }
 
 function _renderDraftRankings(host, cls) {
@@ -8476,16 +8658,27 @@ function _renderDraftCard(p) {
           max-height:60px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 50%,transparent);">
         ${escapeHtml(report.slice(0, 400))}…</div>` : "";
 
+  const pickDisplay = p.consensus_pick != null
+    ? p.consensus_pick
+    : (p.consensus_rank != null ? Math.round(p.consensus_rank) : "?");
+  // Tooltip surfaces the raw averaged rank so users can see where the
+  // sequential rank came from without polluting the visible value.
+  const pickTitle = p.consensus_rank != null
+    ? `Consensus sequential rank · raw avg ${p.consensus_rank.toFixed(2)}`
+    : "Consensus rank";
+
   return `<div class="draft-card">
     <div style="display:flex;align-items:center;gap:8px;">
-      <span style="font-size:16px;font-weight:700;color:var(--text-primary);">
-        #${p.consensus_rank ? Math.round(p.consensus_rank) : "?"}</span>
+      ${_headshotImg(p.headshot_url, p.player_name)}
+      <span style="font-size:16px;font-weight:700;color:var(--text-primary);"
+            title="${escapeHtml(pickTitle)}">#${pickDisplay}</span>
       <span style="font-size:14px;font-weight:600;flex:1;">
         ${escapeHtml(p.player_name)}${milbLink}
       </span>
       <span style="font-size:11px;padding:2px 6px;border-radius:4px;
             background:${fvColor}22;color:${fvColor};font-weight:700;"
-            title="Consensus future value (avg of latest snapshot per source)">
+            title="Consensus future value${p.consensus_fv_raw != null && p.consensus_fv_raw !== p.consensus_fv
+              ? ` (raw avg ${p.consensus_fv_raw.toFixed(1)})` : ''}">
         FV ${p.consensus_fv != null ? p.consensus_fv : "—"}
       </span>
     </div>
@@ -8496,7 +8689,7 @@ function _renderDraftCard(p) {
       <span title="HS = High School, COL = College; h=hitter, p=pitcher">
         ${escapeHtml(p.player_type || "?")}</span>
       <span style="color:var(--text-tertiary);">·</span>
-      <span>${schoolLine}</span>
+      <span>${_collegeLogoImg(p.school_logo_url, p.school)}${schoolLine}</span>
       <span style="margin-left:auto;display:flex;gap:6px;">
         <span style="padding:1px 6px;border-radius:3px;background:${spColor}22;
               color:${spColor};font-weight:700;"
@@ -8504,7 +8697,7 @@ function _renderDraftCard(p) {
           DS+ ${sp != null ? sp : "—"}</span>
         <span style="padding:1px 6px;border-radius:3px;background:var(--bg-tertiary);
               color:var(--text-secondary);"
-              title="Projected round derived from average rank">
+              title="Projected round derived from sequential rank">
           ${pRound}</span>
       </span>
     </div>
@@ -8764,6 +8957,570 @@ function _renderClassStrength(host, classes) {
   }).join("");
 
   host.innerHTML = `<div class="draft-results-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));">${charts}</div>`;
+}
+
+// =============================================================================
+// OVERSEAS SECTION (KBO / NPB / CPBL prospects)
+// =============================================================================
+// Mirrors the Draft section: per-league chip selector + sub-view
+// (Rankings / Season Stats / Posting Tracker / Recently Signed /
+// Leaderboard). Reads from `DATA.overseas` (lazy-loaded from
+// data/overseas_timeseries.json). Reuses the .draft-card / .draft-grid
+// / .draft-table styles so the visual language stays consistent.
+// RPS+ never appears — NPB/KBO are different league environments and
+// share no cohort with MiLB.
+// =============================================================================
+
+// League badge palette — keeps the visual signal tight (NPB green,
+// KBO blue, CPBL violet) so users can scan across the page.
+function _leagueBadgeColor(league) {
+  switch (league) {
+    case "NPB":  return "var(--neon-green)";
+    case "NPBF": return "var(--neon-orange)";
+    case "KBO":  return "var(--neon-cyan)";
+    case "CPBL": return "var(--neon-violet)";
+    case "CUBA": return "var(--neon-red)";
+    default:     return "var(--text-secondary)";
+  }
+}
+
+// Overseas status color
+function _overseasStatusColor(status) {
+  switch (status) {
+    case "mlb_promoted":   return "var(--neon-green)";
+    case "signed":         return "var(--neon-cyan)";
+    case "posted":         return "var(--neon-orange)";
+    default:               return "var(--text-tertiary)";
+  }
+}
+
+async function renderOverseas() {
+  const host = document.getElementById("overseas-rows");
+  const leagueChips = document.getElementById("overseas-league-chips");
+  if (!host) return;
+
+  // Lazy-load the overseas payload.
+  if (!DATA.overseas) {
+    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
+      Loading overseas data…</div>`;
+    try {
+      const base = DATA_URL.replace(/[^/]+$/, "");
+      const resp = await fetch(base + "overseas_timeseries.json", { cache: "no-cache" });
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      DATA.overseas = await resp.json();
+    } catch (e) {
+      host.innerHTML = `<div style="padding:14px;color:var(--neon-red);">
+        Could not load overseas data: ${escapeHtml(String(e.message || e))}.
+        Run <code>python run_monthly.py --rebuild-only</code> to regenerate
+        <code>data/overseas_timeseries.json</code>.</div>`;
+      return;
+    }
+  }
+
+  const leagues = (DATA.overseas && DATA.overseas.leagues) || [];
+  if (!leagues.length) {
+    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
+      No overseas prospects on file.</div>`;
+    return;
+  }
+
+  // League chip strip (All + each league with prospect counts).
+  const totalProspects = leagues.reduce((s, l) => s + l.n_prospects, 0);
+  const chipsHtml = [
+    `<button class="chip ${state.overseasLeague === "all" ? "active" : ""}"
+             data-overseas-league="all">All <span style="opacity:.6;">${totalProspects}</span></button>`,
+    ...leagues.map(l => `
+      <button class="chip ${state.overseasLeague === l.league ? "active" : ""}"
+              data-overseas-league="${l.league}"
+              title="${l.league_context.name || l.league} · ${l.league_context.country || ""}">
+        ${l.league} <span style="opacity:.6;">${l.n_prospects}</span>
+      </button>`)
+  ].join("");
+  leagueChips.innerHTML = chipsHtml;
+  leagueChips.querySelectorAll("[data-overseas-league]").forEach(b => {
+    b.addEventListener("click", () => {
+      state.overseasLeague = b.dataset.overseasLeague;
+      renderOverseas();
+    });
+  });
+
+  // Sub-view chips
+  document.querySelectorAll("[data-overseas-view]").forEach(b => {
+    b.classList.toggle("active", b.dataset.overseasView === state.overseasView);
+    b.onclick = () => {
+      state.overseasView = b.dataset.overseasView;
+      renderOverseas();
+    };
+  });
+
+  // Filter prospects by league chip selection.
+  const selectedLeagues = state.overseasLeague === "all"
+    ? leagues
+    : leagues.filter(l => l.league === state.overseasLeague);
+  // Merged prospect list for views that don't care about league grouping.
+  const prospects = selectedLeagues.flatMap(l => l.prospects.map(p => ({...p, _ctx: l.league_context})));
+
+  switch (state.overseasView) {
+    case "stats":       return _renderOverseasStats(host, prospects, selectedLeagues);
+    case "posting":     return _renderOverseasPosting(host, prospects);
+    case "signed":      return _renderOverseasSigned(host, prospects);
+    case "leaderboard": return _renderOverseasLeaderboard(host, prospects, leagues);
+    case "rankings":
+    default:            return _renderOverseasRankings(host, selectedLeagues);
+  }
+}
+
+function _renderOverseasRankings(host, leagues) {
+  let html = "";
+  for (const l of leagues) {
+    const ctx = l.league_context || {};
+    html += `<div style="padding:12px 14px;background:var(--bg-secondary);
+         border-radius:6px;margin:14px 0 8px;font-size:12px;
+         color:var(--text-secondary);border-left:3px solid ${_leagueBadgeColor(l.league)};">
+      <strong style="color:var(--text-primary);font-size:13px;">
+        ${escapeHtml(ctx.name || l.league)} (${l.league})
+      </strong>
+      · ${l.n_prospects} prospects
+      · ${escapeHtml(ctx.season_window || "")}
+      ${ctx.translation_pct != null
+        ? `<br><span style="color:var(--text-tertiary);">
+            ${escapeHtml(ctx.split_note || "")} · MLB translation: <strong>${ctx.translation_pct}% wRC+ haircut</strong> typical.</span>`
+        : ""}
+    </div>`;
+
+    // Group by FV tier.
+    const tiers = {};
+    for (const p of l.prospects) {
+      const t = p.consensus_fv == null ? "Unranked"
+                : (p.consensus_fv >= 60 ? "60 FV"
+                : p.consensus_fv >= 55 ? "55 FV"
+                : p.consensus_fv >= 50 ? "50 FV"
+                : p.consensus_fv >= 45 ? "45 FV"
+                : p.consensus_fv >= 40 ? "40 FV"
+                : "< 40 FV");
+      (tiers[t] = tiers[t] || []).push(p);
+    }
+    const order = ["60 FV","55 FV","50 FV","45 FV","40 FV","< 40 FV","Unranked"];
+    for (const t of order) {
+      const players = tiers[t];
+      if (!players || !players.length) continue;
+      html += `<div style="margin:10px 0 6px;font-size:13px;font-weight:600;
+                 color:var(--text-primary);border-bottom:1px solid var(--border);
+                 padding-bottom:4px;">${t}
+                 <span style="font-weight:400;color:var(--text-tertiary);
+                 margin-left:6px;">${players.length}</span></div>`;
+      html += `<div class="draft-grid">`;
+      for (const p of players) html += _renderOverseasCard(p);
+      html += `</div>`;
+    }
+  }
+  host.innerHTML = html;
+}
+
+function _renderOverseasCard(p) {
+  const fvColor = _draftFvBucketColor(p.consensus_fv);
+  const leagueColor = _leagueBadgeColor(p.league);
+  const statusColor = _overseasStatusColor(p.status);
+
+  // Tool grades — merge highest per canonical tool across sources.
+  const tools = {};
+  for (const src in (p.tool_grades || {})) {
+    const tg = p.tool_grades[src] || {};
+    for (const k in tg) {
+      if (k === "_extras") continue;
+      if (tools[k] == null || tg[k] > tools[k]) tools[k] = tg[k];
+    }
+  }
+  const toolKeys = Object.keys(tools).sort();
+  const toolPills = toolKeys.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">
+        ${toolKeys.map(k =>
+          `<span title="${escapeHtml(k.toUpperCase())}: ${tools[k]}"
+                 style="font-size:10px;padding:1px 5px;border-radius:3px;
+                 background:var(--bg-tertiary);color:var(--text-secondary);">
+            ${escapeHtml(k.toUpperCase())} <strong style="color:${_draftFvBucketColor(tools[k])};">${tools[k]}</strong>
+          </span>`).join("")}
+      </div>` : "";
+
+  // Career arc mini-sparkline (last few seasons of the primary metric).
+  let arc = "";
+  if (p.career_arc && p.career_arc.values && p.career_arc.values.length >= 2) {
+    const vals = p.career_arc.values;
+    const xs = vals.map(v => v.value).filter(v => v != null);
+    if (xs.length >= 2) {
+      const min = Math.min(...xs), max = Math.max(...xs);
+      const W = 80, H = 22;
+      const step = W / Math.max(1, xs.length - 1);
+      const isPitcher = p.career_arc.primary_metric === "era"
+                      || p.career_arc.primary_metric === "fip";
+      // For pitchers, invert so lower (better) goes up.
+      const yAt = v => {
+        if (max === min) return H / 2;
+        const norm = (v - min) / (max - min);
+        return isPitcher ? norm * H : (1 - norm) * H;
+      };
+      const pts = xs.map((v, i) => `${i * step},${yAt(v).toFixed(1)}`).join(" ");
+      arc = `<div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
+        <span style="font-size:10px;color:var(--text-tertiary);">
+          ${escapeHtml(p.career_arc.primary_metric.toUpperCase())}
+        </span>
+        <svg width="${W}" height="${H}" style="overflow:visible;">
+          <polyline points="${pts}" fill="none" stroke="var(--neon-cyan)" stroke-width="1.5"/>
+          ${xs.map((v, i) => `<circle cx="${i*step}" cy="${yAt(v).toFixed(1)}" r="2" fill="var(--neon-cyan)"/>`).join("")}
+        </svg>
+        <span style="font-size:10px;color:var(--text-secondary);">
+          ${escapeHtml(String(xs[0]))} → ${escapeHtml(String(xs[xs.length-1]))}
+        </span>
+      </div>`;
+    }
+  }
+
+  // Status badge
+  let statusBadge = "";
+  if (p.status === "mlb_promoted" && p.signed_team) {
+    statusBadge = `<div style="margin-top:6px;font-size:11px;color:var(--neon-green);">
+      MLB-SIGNED · ${escapeHtml(p.signed_team)}${p.signed_bonus_usd
+        ? ` · ${_fmtUSD(p.signed_bonus_usd)}` : ""}</div>`;
+  } else if (p.status === "signed" && p.proj_team) {
+    statusBadge = `<div style="margin-top:6px;font-size:11px;color:var(--neon-cyan);">
+      Pending → ${escapeHtml(p.proj_team)}</div>`;
+  } else if (p.status === "posted") {
+    statusBadge = `<div style="margin-top:6px;font-size:11px;color:var(--neon-orange);">
+      POSTED${p.posting_days_remaining != null
+        ? ` · ${p.posting_days_remaining} days remaining` : ""}</div>`;
+  }
+
+  const milbLink = p.milb_key
+    ? `<a href="#tab=active" onclick="event.preventDefault();state.section='active';state.view={key:'${escapeHtml(p.milb_key)}'};render();syncToURL();"
+         style="font-size:10px;color:var(--neon-green);text-decoration:none;
+         margin-left:6px;">→ MiLB profile</a>`
+    : "";
+
+  // First-source report (truncated, hover-to-expand via CSS).
+  let report = "";
+  for (const src in (p.tool_grades || {})) {
+    const ext = (p.tool_grades[src] || {})._extras || {};
+    if (ext.report) { report = ext.report; break; }
+  }
+  const reportLine = report
+    ? `<div class="draft-report" style="margin-top:8px;font-size:11px;
+          color:var(--text-secondary);line-height:1.4;
+          max-height:60px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 50%,transparent);">
+        ${escapeHtml(report.slice(0, 400))}…</div>` : "";
+
+  // Bonus pill (projected or signed).
+  const bonus = p.signed_bonus_usd || p.proj_bonus_usd;
+  const bonusPill = bonus
+    ? `<span style="padding:1px 6px;border-radius:3px;background:var(--bg-tertiary);
+            color:var(--text-secondary);"
+            title="${p.signed_bonus_usd ? 'Actual signing bonus' : 'FG projected signing bonus'}">
+        ${p.signed_bonus_usd ? "" : "~"}${_fmtUSD(bonus)}</span>`
+    : "";
+
+  return `<div class="draft-card">
+    <div style="display:flex;align-items:center;gap:8px;">
+      ${_headshotImg(p.headshot_url, p.player_name)}
+      ${_flagImg(p.country_flag_svg, p.country_flag, p.country, { large: true })}
+      <span style="font-size:14px;font-weight:600;flex:1;">
+        ${escapeHtml(p.player_name)}${milbLink}
+      </span>
+      <span style="font-size:10px;padding:2px 6px;border-radius:4px;
+            background:${leagueColor}22;color:${leagueColor};font-weight:700;">
+        ${escapeHtml(p.league || "?")}
+      </span>
+      <span style="font-size:11px;padding:2px 6px;border-radius:4px;
+            background:${fvColor}22;color:${fvColor};font-weight:700;"
+            title="Consensus future value">
+        FV ${p.consensus_fv != null ? p.consensus_fv : "—"}
+      </span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:11px;
+         color:var(--text-secondary);margin-top:4px;flex-wrap:wrap;">
+      <span>${escapeHtml(p.position || "?")}</span>
+      <span style="color:var(--text-tertiary);">·</span>
+      <span>${escapeHtml(p.current_team || "?")}</span>
+      ${p.eta_year ? `<span style="color:var(--text-tertiary);">·</span><span title="MLB ETA">ETA ${p.eta_year}</span>` : ""}
+      <span style="margin-left:auto;display:flex;gap:6px;">${bonusPill}</span>
+    </div>
+    ${toolPills}
+    ${arc}
+    ${statusBadge}
+    ${reportLine}
+  </div>`;
+}
+
+function _renderOverseasStats(host, prospects, leagues) {
+  // Two tables: hitters + pitchers, with last-season stats.
+  // Identify each player as hitter/pitcher from their stat payload.
+  const recentSeason = (p) => {
+    const stats = p.stats || [];
+    return stats.length ? stats[stats.length - 1] : null;
+  };
+  const hitters = [], pitchers = [];
+  for (const p of prospects) {
+    const s = recentSeason(p);
+    if (!s) continue;
+    const isP = (s.payload && (s.payload.era != null || s.payload.ip != null));
+    (isP ? pitchers : hitters).push({ p, s });
+  }
+  hitters.sort((a, b) => (b.s.payload?.wrc_plus || 0) - (a.s.payload?.wrc_plus || 0));
+  pitchers.sort((a, b) => (a.s.payload?.era ?? 99) - (b.s.payload?.era ?? 99));
+
+  const hitRows = hitters.map(({p, s}) => `<tr>
+    <td>${_flagImg(p.country_flag_svg, p.country_flag, p.country)}</td>
+    <td><strong>${escapeHtml(p.player_name)}</strong>
+        <small style="color:var(--text-tertiary);"> ${escapeHtml(p.position || "")}</small></td>
+    <td>${escapeHtml(p.league)}</td>
+    <td>${s.season}</td>
+    <td>${escapeHtml(s.team || "")}</td>
+    <td style="text-align:right;">${s.payload?.pa ?? "—"}</td>
+    <td style="text-align:right;">${(s.payload?.avg ?? 0).toFixed ? s.payload.avg.toFixed(3) : "—"}</td>
+    <td style="text-align:right;">${(s.payload?.obp ?? 0).toFixed ? s.payload.obp.toFixed(3) : "—"}</td>
+    <td style="text-align:right;">${(s.payload?.slg ?? 0).toFixed ? s.payload.slg.toFixed(3) : "—"}</td>
+    <td style="text-align:right;">${s.payload?.hr ?? "—"}</td>
+    <td style="text-align:right;">${s.payload?.sb ?? "—"}</td>
+    <td style="text-align:right;">${s.payload?.bb_pct != null ? (s.payload.bb_pct*100).toFixed(1)+"%" : "—"}</td>
+    <td style="text-align:right;">${s.payload?.k_pct  != null ? (s.payload.k_pct *100).toFixed(1)+"%" : "—"}</td>
+    <td style="text-align:right;font-weight:600;">${s.payload?.wrc_plus ?? "—"}${
+      s.payload?.wrc_plus_mlbe != null
+        ? `<small style="color:var(--text-tertiary);font-weight:400;display:block;font-size:9px;"
+                   title="MLB-equivalent wRC+ — league-raw × ${(p._ctx?.hitter_wrc_factor || 1).toFixed(2)}">
+            ${s.payload.wrc_plus_mlbe} MLBe</small>` : ""}</td>
+  </tr>`).join("");
+
+  const pitRows = pitchers.map(({p, s}) => `<tr>
+    <td>${_flagImg(p.country_flag_svg, p.country_flag, p.country)}</td>
+    <td><strong>${escapeHtml(p.player_name)}</strong>
+        <small style="color:var(--text-tertiary);"> ${escapeHtml(p.position || "")}</small></td>
+    <td>${escapeHtml(p.league)}</td>
+    <td>${s.season}</td>
+    <td>${escapeHtml(s.team || "")}</td>
+    <td style="text-align:right;">${s.payload?.ip ?? "—"}</td>
+    <td style="text-align:right;font-weight:600;">${s.payload?.era ?? "—"}${
+      s.payload?.era_mlbe != null
+        ? `<small style="color:var(--text-tertiary);font-weight:400;display:block;font-size:9px;"
+                   title="MLB-equivalent ERA — league-raw × ${(p._ctx?.pitcher_era_factor || 1).toFixed(2)}">
+            ${s.payload.era_mlbe} MLBe</small>` : ""}</td>
+    <td style="text-align:right;">${s.payload?.fip ?? "—"}</td>
+    <td style="text-align:right;">${s.payload?.k_per_9 ?? "—"}</td>
+    <td style="text-align:right;">${s.payload?.bb_per_9 ?? "—"}</td>
+    <td style="text-align:right;">${s.payload?.k_pct != null ? (s.payload.k_pct*100).toFixed(1)+"%" : "—"}</td>
+    <td style="text-align:right;">${s.payload?.bb_pct != null ? (s.payload.bb_pct*100).toFixed(1)+"%" : "—"}</td>
+    <td style="text-align:right;">${s.payload?.war ?? "—"}</td>
+  </tr>`).join("");
+
+  host.innerHTML = `
+    <div class="draft-panel" style="margin-bottom:14px;">
+      <h3>Hitters — most recent season (${hitters.length})</h3>
+      <table class="draft-table">
+        <thead><tr>
+          <th></th><th>Name</th><th>Lg</th><th>Year</th><th>Team</th>
+          <th style="text-align:right;">PA</th>
+          <th style="text-align:right;">AVG</th>
+          <th style="text-align:right;">OBP</th>
+          <th style="text-align:right;">SLG</th>
+          <th style="text-align:right;">HR</th>
+          <th style="text-align:right;">SB</th>
+          <th style="text-align:right;">BB%</th>
+          <th style="text-align:right;">K%</th>
+          <th style="text-align:right;" title="wRC+ (lg-adj, 100 = league avg)">wRC+</th>
+        </tr></thead>
+        <tbody>${hitRows || "<tr><td colspan='14' style='text-align:center;color:var(--text-tertiary);padding:14px;'>No hitters in this view.</td></tr>"}</tbody>
+      </table>
+    </div>
+    <div class="draft-panel">
+      <h3>Pitchers — most recent season (${pitchers.length})</h3>
+      <table class="draft-table">
+        <thead><tr>
+          <th></th><th>Name</th><th>Lg</th><th>Year</th><th>Team</th>
+          <th style="text-align:right;">IP</th>
+          <th style="text-align:right;">ERA</th>
+          <th style="text-align:right;">FIP</th>
+          <th style="text-align:right;">K/9</th>
+          <th style="text-align:right;">BB/9</th>
+          <th style="text-align:right;">K%</th>
+          <th style="text-align:right;">BB%</th>
+          <th style="text-align:right;">WAR</th>
+        </tr></thead>
+        <tbody>${pitRows || "<tr><td colspan='13' style='text-align:center;color:var(--text-tertiary);padding:14px;'>No pitchers in this view.</td></tr>"}</tbody>
+      </table>
+    </div>`;
+}
+
+function _renderOverseasPosting(host, prospects) {
+  const posted = prospects.filter(p => p.status === "posted" || p.posted_date);
+  if (!posted.length) {
+    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
+      No prospects currently in a posting window.
+      <br><br>
+      Posting events are tracked via <code>data/overseas_postings.csv</code>
+      (columns: <code>player_name, league, posted_date, posting_window_end</code>).
+      Drop a row when MLB Network confirms a posting; the next
+      <code>run_monthly</code> rebuild flips the status and starts the
+      countdown.</div>`;
+    return;
+  }
+  const rows = posted.sort((a, b) => (a.posting_days_remaining ?? 999) - (b.posting_days_remaining ?? 999))
+    .map(p => `<tr>
+      <td>${_flagImg(p.country_flag_svg, p.country_flag, p.country)}</td>
+      <td>${_headshotImg(p.headshot_url, p.player_name)} <strong>${escapeHtml(p.player_name)}</strong></td>
+      <td>${escapeHtml(p.league)}</td>
+      <td>${escapeHtml(p.position || "")}</td>
+      <td>${escapeHtml(p.current_team || "")}</td>
+      <td>${escapeHtml(p.posted_date || "—")}</td>
+      <td style="text-align:right;color:${(p.posting_days_remaining ?? 0) <= 7 ? "var(--neon-orange)" : "var(--text-primary)"};">
+        ${p.posting_days_remaining != null ? p.posting_days_remaining + " days" : "—"}
+      </td>
+      <td style="text-align:right;">${_fmtUSD(p.proj_bonus_usd)}</td>
+    </tr>`).join("");
+
+  host.innerHTML = `
+    <div class="draft-panel">
+      <h3>Posting Tracker — ${posted.length} player(s)</h3>
+      <table class="draft-table">
+        <thead><tr>
+          <th></th><th>Name</th><th>Lg</th><th>Pos</th><th>Current team</th>
+          <th>Posted</th><th style="text-align:right;">Window left</th>
+          <th style="text-align:right;">Proj bonus</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function _renderOverseasSigned(host, prospects) {
+  const signed = prospects.filter(p => p.status === "mlb_promoted" || p.signed_team);
+  signed.sort((a, b) => (b.signed_date || "").localeCompare(a.signed_date || ""));
+  if (!signed.length) {
+    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
+      No recently signed overseas free agents in the current data.
+      Signings auto-populate when:
+      <ul>
+        <li>An FG overseas CSV ships with <code>Proj Team</code> set to an
+            MLB org code (e.g., "LAD"), OR</li>
+        <li>The player surfaces on an MLB affiliate roster.</li>
+      </ul></div>`;
+    return;
+  }
+  const rows = signed.map(p => `<tr>
+    <td>${_flagImg(p.country_flag_svg, p.country_flag, p.country)}</td>
+    <td><strong>${escapeHtml(p.player_name)}</strong>
+        ${p.milb_key
+          ? ` <a href="#tab=active" onclick="event.preventDefault();state.section='active';state.view={key:'${escapeHtml(p.milb_key)}'};render();syncToURL();"
+                 style="font-size:10px;color:var(--neon-green);text-decoration:none;">→ MiLB</a>` : ""}</td>
+    <td>${escapeHtml(p.league)}</td>
+    <td>${escapeHtml(p.position || "")}</td>
+    <td><strong>${escapeHtml(p.signed_team || p.proj_team || "?")}</strong></td>
+    <td>${escapeHtml(p.signed_date || "—")}</td>
+    <td style="text-align:right;font-weight:600;">${_fmtUSD(p.signed_bonus_usd || p.proj_bonus_usd)}</td>
+    <td style="text-align:right;">FV ${p.consensus_fv ?? "—"}</td>
+  </tr>`).join("");
+
+  host.innerHTML = `
+    <div class="draft-panel">
+      <h3>Recently signed — ${signed.length} player(s)</h3>
+      <table class="draft-table">
+        <thead><tr>
+          <th></th><th>Name</th><th>Lg</th><th>Pos</th>
+          <th>Signed by</th><th>Date</th>
+          <th style="text-align:right;">Bonus</th>
+          <th style="text-align:right;">FV</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function _renderOverseasLeaderboard(host, prospects, allLeagues) {
+  prospects.sort((a, b) => (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0));
+  const top = prospects.slice(0, 30);
+
+  // Per-position bests
+  const byPos = {};
+  for (const p of prospects) {
+    if (!p.position) continue;
+    if (!byPos[p.position] || (p.consensus_fv ?? 0) > (byPos[p.position].consensus_fv ?? 0)) {
+      byPos[p.position] = p;
+    }
+  }
+  const posRows = Object.keys(byPos).sort().map(pos => {
+    const p = byPos[pos];
+    return `<li><strong>${escapeHtml(pos)}</strong> —
+      ${escapeHtml(p.player_name)} <small>${_flagImg(p.country_flag_svg, p.country_flag, p.country)} ${escapeHtml(p.league)}</small>
+      <span style="float:right;color:${_draftFvBucketColor(p.consensus_fv)};">
+        FV ${p.consensus_fv ?? "—"}</span></li>`;
+  }).join("");
+
+  // Biggest projected bonuses
+  const byBonus = prospects.filter(p => p.proj_bonus_usd || p.signed_bonus_usd)
+    .sort((a, b) => (b.signed_bonus_usd || b.proj_bonus_usd || 0)
+                  - (a.signed_bonus_usd || a.proj_bonus_usd || 0));
+  const bonusRows = byBonus.slice(0, 10).map(p => `<li>
+    ${_flagImg(p.country_flag_svg, p.country_flag, p.country)} <strong>${escapeHtml(p.player_name)}</strong>
+    <small>${escapeHtml(p.league)}</small>
+    <span style="float:right;">${_fmtUSD(p.signed_bonus_usd || p.proj_bonus_usd)}
+      ${p.signed_bonus_usd ? "" : "<small style='color:var(--text-tertiary);'> (proj)</small>"}
+    </span></li>`).join("");
+
+  // Best tool grades across leagues
+  const toolBest = {};
+  for (const p of prospects) {
+    for (const src in (p.tool_grades || {})) {
+      const tg = p.tool_grades[src] || {};
+      for (const k in tg) {
+        if (k === "_extras") continue;
+        const v = tg[k];
+        if (!isFinite(v)) continue;
+        if (!toolBest[k] || v > toolBest[k].grade) {
+          toolBest[k] = { player: p, grade: v };
+        }
+      }
+    }
+  }
+  const toolOrder = ["hit","game_pwr","raw_pwr","speed","field","throw",
+                     "pitch_sel","bat_ctrl","fb","sl","cb","ch","cmd"];
+  const toolRows = toolOrder.filter(k => toolBest[k]).map(k => {
+    const { player, grade } = toolBest[k];
+    return `<li><strong>${escapeHtml(k.toUpperCase())}</strong>
+      <span style="color:${_draftFvBucketColor(grade)};">${grade}</span> —
+      ${escapeHtml(player.player_name)}
+      <small>${_flagImg(player.country_flag_svg, player.country_flag, player.country)} ${escapeHtml(player.league)}</small></li>`;
+  }).join("");
+
+  const topRows = top.map((p, i) => `<tr>
+    <td>${i + 1}</td>
+    <td>${_flagImg(p.country_flag_svg, p.country_flag, p.country)}</td>
+    <td><strong>${escapeHtml(p.player_name)}</strong></td>
+    <td>${escapeHtml(p.position || "?")}</td>
+    <td><span style="color:${_leagueBadgeColor(p.league)};font-weight:600;">${escapeHtml(p.league)}</span></td>
+    <td>${escapeHtml(p.current_team || "?")}</td>
+    <td style="font-weight:600;color:${_draftFvBucketColor(p.consensus_fv)};">FV ${p.consensus_fv ?? "—"}</td>
+    <td>${p.eta_year || "—"}</td>
+  </tr>`).join("");
+
+  host.innerHTML = `
+    <div class="draft-results-grid">
+      <div class="draft-panel" style="grid-column:1/-1;">
+        <h3>Top by FV (across all leagues)</h3>
+        <table class="draft-table">
+          <thead><tr><th>#</th><th></th><th>Name</th><th>Pos</th>
+            <th>Lg</th><th>Team</th><th>FV</th><th>ETA</th></tr></thead>
+          <tbody>${topRows}</tbody>
+        </table>
+      </div>
+      <div class="draft-panel">
+        <h3>Best at each position</h3>
+        <ul class="draft-list">${posRows}</ul>
+      </div>
+      <div class="draft-panel">
+        <h3>Best tool grades</h3>
+        <ul class="draft-list">${toolRows}</ul>
+      </div>
+      <div class="draft-panel">
+        <h3>Biggest projected bonuses</h3>
+        <ul class="draft-list">${bonusRows || "<li style='color:var(--text-tertiary);'>No projected bonuses on file yet.</li>"}</ul>
+      </div>
+    </div>`;
 }
 
 function renderGraduates() {
@@ -17122,6 +17879,7 @@ function render() {
     traded:       "traded-section",
     injured:      "injured-section",
     draft:        "draft-section",
+    overseas:     "overseas-section",
     graduates:    "graduates-section",
     farm:         "farm-section",
     leaderboards: "leaderboards-section",
@@ -17213,6 +17971,7 @@ function render() {
   else if (active === "traded")     renderRecentlyTraded();
   else if (active === "injured")    renderInjured();
   else if (active === "draft")      renderDraft();
+  else if (active === "overseas")   renderOverseas();
   else if (active === "graduates")  renderGraduates();
   else if (active === "farm")       renderFarmSystems();
   else if (active === "leaderboards") renderLeaderboards();
