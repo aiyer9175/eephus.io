@@ -2183,7 +2183,7 @@
     .spotlight-header {
       font-family: var(--font-sans);
       font-size: 10px;
-      color: var(--text-on-dark-muted);
+      color: #F5EBDC;
       padding: 9px 14px 9px 18px;
       background: var(--bg-header);
       border-radius: var(--radius-sm);
@@ -2191,6 +2191,10 @@
       text-transform: uppercase;
       letter-spacing: 0.10em;
       font-weight: 600;
+    }
+    .spotlight-header > span {
+      display: block;
+      color: #F5EBDC !important;
     }
     .spotlight-row {
       position: relative;
@@ -2270,7 +2274,7 @@
     .grad-header {
       font-family: var(--font-sans);
       font-size: 10px;
-      color: var(--text-on-dark-muted);
+      color: #F5EBDC;
       padding: 9px 14px 9px 18px;
       background: var(--bg-header);
       border-radius: var(--radius-sm);
@@ -2278,6 +2282,10 @@
       text-transform: uppercase;
       letter-spacing: 0.10em;
       font-weight: 600;
+    }
+    .grad-header > span {
+      display: block;
+      color: #F5EBDC !important;
     }
     .grad-row {
       position: relative;
@@ -3221,7 +3229,7 @@
     .farm-header {
       font-family: var(--font-sans);
       font-size: 10px;
-      color: var(--text-on-dark-muted);
+      color: #F5EBDC;
       padding: 9px 14px 9px 18px;
       background: var(--bg-header);
       border-radius: var(--radius-sm);
@@ -3229,6 +3237,10 @@
       text-transform: uppercase;
       letter-spacing: 0.10em;
       font-weight: 600;
+    }
+    .farm-header > span {
+      display: block;
+      color: #F5EBDC !important;
     }
     .farm-row {
       position: relative;
@@ -6268,7 +6280,7 @@ function fvBadgeTooltip(player) {
   if (tier != null) {
     let line = `FV ${tier}`;
     if (player.fv_close_raw != null && Math.abs(player.fv_close_raw - tier) > 0.05) {
-      line += ` · raw ${player.fv_close_raw.toFixed(1)}`;
+      line += ` · raw ${fvCeil(player.fv_close_raw)}`;
     }
     parts.push(line);
   }
@@ -6281,7 +6293,7 @@ function fvBadgeTooltip(player) {
   const last = pts && pts.length ? pts[pts.length - 1] : null;
   if (last && last.shrinkage_weight != null && last.shrinkage_weight < 1.0
       && last.consensus_fv_pre_shrinkage != null) {
-    parts.push(`Pulled from ${last.consensus_fv_pre_shrinkage.toFixed(1)} (single-source grade, shrunk 1/3 toward FV 35)`);
+    parts.push(`Pulled from ${fvCeil(last.consensus_fv_pre_shrinkage)} (single-source grade, shrunk 1/3 toward FV 35)`);
   }
   return parts.join("\n");
 }
@@ -6866,7 +6878,7 @@ function _toolGradeStripHTML(p) {
             : v >= 50 ? 'var(--text-primary)'
             : v >= 40 ? 'var(--neon-amber)'
             :           'var(--down)';
-    return `<span class="expand-tool-pill" title="${label} ${v} / 80"><span class="etp-label">${label}</span><span class="etp-val" style="color:${c};">${Math.round(v)}</span></span>`;
+    return `<span class="expand-tool-pill" title="${label} ${fvCeil(v)} / 80"><span class="etp-label">${label}</span><span class="etp-val" style="color:${c};">${fvCeil(v)}</span></span>`;
   });
   // At least one populated pill required — pure-placeholder rows show
   // nothing rather than a row of invisible slots.
@@ -6944,7 +6956,7 @@ function expandedPerSourceFvHTML(p) {
     const deltaStr = delta == null || delta === 0 ? "="
                    : (delta > 0 ? `+${delta}` : `${delta}`);
     const srcLbl = src.replace(/_/g, " ").replace(/\bmlb\b/i, "MLB");
-    entries.push(`<span class="expand-source-fv"><span class="src-name">${escapeHtml(srcLbl)}</span> <b>${Math.round(Number(fv))}</b> <span class="src-delta ${deltaClass}">${escapeHtml(deltaStr)}</span></span>`);
+    entries.push(`<span class="expand-source-fv"><span class="src-name">${escapeHtml(srcLbl)}</span> <b>${fvCeil(fv)}</b> <span class="src-delta ${deltaClass}">${escapeHtml(deltaStr)}</span></span>`);
   }
   if (!entries.length) return "";
   return `<div class="expand-source-fvs">${entries.join("")}</div>`;
@@ -7130,7 +7142,17 @@ function reclassifyAcquisitionSigning(player, tx) {
 // Only the high-signal events get rendered on the FV trajectory line so
 // the chart doesn't turn into a curtain of glyphs for journeyman-y
 // prospects who've been claimed off waivers six times.
-const TRANSACTION_LEGEND_ORDER = ["trade", "promotion", "demotion", "signing", "debut", "graduation"];
+const TRANSACTION_LEGEND_ORDER = ["trade", "promotion", "demotion", "debut", "graduation"];
+
+// Event kinds that DON'T render as FV-chart markers. The chart's
+// X-axis starts at the player's first FV grade — which for drafted /
+// IFA prospects is right around the signing date. A "signed" marker
+// at the same X position as the chart's left edge is redundant and
+// just clutters the timeline. The transaction-history detail block
+// still shows the signing row; only the chart drops it.
+const CHART_HIDDEN_KINDS = new Set([
+  "signing", "drafted", "signed_ifa", "signed_free_agent",
+]);
 
 // Build the combined event list for one player. Pulls from:
 //   trades         → kind:'trade'
@@ -7234,6 +7256,19 @@ function transactionEvents(player) {
 // grade and ends at graduation_date (for graduates) or the last snapshot.
 const FV_MIN = 35, FV_MAX = 75;
 
+// Ceiling-round any FV-style decimal value to an integer. User
+// prefers "hard round up" semantics — 50.2 reads as 51, not 50 —
+// since FV grades are conventionally integers and a fractional
+// reading shouldn't suppress to the lower tier when displayed.
+// Returns the original value when not finite (preserves "—" / null
+// rendering at call sites that null-check before formatting).
+function fvCeil(v) {
+  if (v == null) return v;
+  const n = Number(v);
+  if (!isFinite(n)) return null;
+  return Math.ceil(n);
+}
+
 function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   if (!points || points.length === 0) return "";
   // Reserve 9px of left margin for the 20/80 Y-axis labels so the chart
@@ -7297,11 +7332,14 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   // only visual the user needs; dots added clutter.
   const circles = "";
 
-  // Tool-change markers — small glyph above the chart at each
-  // snapshot where the mean tool grade shifted ≥3 points vs the prior
-  // snapshot. Tells the story of whether FV moves are accompanied by
-  // tool-grade moves (or whether FV climbed without tool support, etc.)
-  // without doubling the chart's line count.
+  // Tool composite trajectory — dashed violet line tracking the mean
+  // per-tool grade at each snapshot, plotted on the same FV scale.
+  // Lets the user compare FV movement against tool-grade movement in
+  // a single glance: when the dashed line trends up alongside the FV
+  // curve, the tools are backing the grade; when the dashed line is
+  // flat while FV climbs, the bump is scout-narrative-driven rather
+  // than tool-supported. Dashed + violet keeps it visually separate
+  // from the segmented FV curve.
   const toolMean = (tc) => {
     if (!tc) return null;
     const vals = [];
@@ -7311,22 +7349,17 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
     }
     return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   };
-  const toolMarkerSvg = [];
-  for (let i = 1; i < points.length; i++) {
-    const prev = toolMean(points[i - 1].tools_consensus);
-    const cur = toolMean(points[i].tools_consensus);
-    if (prev == null || cur == null) continue;
-    const delta = cur - prev;
-    if (Math.abs(delta) < 3) continue;
-    const x = xScale(points[i].snapshot_date).toFixed(1);
-    const glyph = delta > 0 ? "▲" : "▼";
-    const color = delta > 0 ? "var(--up)" : "var(--down)";
-    const sign = delta > 0 ? "+" : "";
-    const tip = `${points[i].snapshot_date} · Tool ${sign}${delta.toFixed(1)} (mean grade ${prev.toFixed(1)} → ${cur.toFixed(1)})`;
-    toolMarkerSvg.push(
-      `<text x="${x}" y="${(PAD + 5).toFixed(1)}" font-size="6" fill="${color}" text-anchor="middle" font-family="var(--font-mono)"><title>${escapeHtml(tip)}</title>${glyph}</text>`
-    );
-  }
+  const toolCoords = points.map(pt => {
+    const m = toolMean(pt.tools_consensus);
+    if (m == null) return null;
+    return { x: xScale(pt.snapshot_date), y: yScale(m), mean: m, date: pt.snapshot_date };
+  }).filter(Boolean);
+  const toolTip = toolCoords.length
+    ? `Tool trajectory · mean per-tool grade ${toolCoords[0].mean.toFixed(1)} → ${toolCoords[toolCoords.length - 1].mean.toFixed(1)}`
+    : "";
+  const toolLineSvg = toolCoords.length >= 2
+    ? `<polyline points="${toolCoords.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ')}" fill="none" stroke="var(--neon-violet)" stroke-width="1" stroke-dasharray="3,2" opacity="0.75" vector-effect="non-scaling-stroke"><title>${escapeHtml(toolTip)}</title></polyline>`
+    : "";
   // Reference line at FV 50 — the "MLB-regular" threshold. Anyone
   // hovering above this line projects as an above-average MLB player;
   // below is a complementary/backup profile. The previous mark at FV
@@ -7364,7 +7397,7 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
     ? transactionEvents(player).filter(e => {
         const t = new Date(e.date).getTime();
         return !isNaN(t) && t >= minT && t <= maxT;
-      })
+      }).filter(e => !CHART_HIDDEN_KINDS.has(e.kind))
     : (trades || []).map(tr => ({
         date: tr.trade_date,
         kind: "trade",
@@ -7393,9 +7426,9 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
     <line x1="${X_LEFT}" y1="${yRef.toFixed(1)}" x2="${W - PAD}" y2="${yRef.toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,2" vector-effect="non-scaling-stroke" />
     ${yLabels}
     ${eventSvg.join("")}
+    ${toolLineSvg}
     ${segments.join("")}
     ${circles}
-    ${toolMarkerSvg.join("")}
   </svg>`;
 }
 
@@ -8715,7 +8748,7 @@ function renderActiveContextRail() {
     .sort((a, b) => (b.graduation_date || "").localeCompare(a.graduation_date || ""))
     .slice(0, 3);
   const gradRows = grads.map(g => {
-    const fv = g.fv_close != null ? Math.round(g.fv_close) : null;
+    const fv = g.fv_close != null ? fvCeil(g.fv_close) : null;
     return `<div class="ctx-row" data-key="${escapeHtml(g.player_key)}">
       <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(g.player_name)}</span>
       <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;">${g.graduation_date}</span>
@@ -9375,10 +9408,10 @@ function renderWatchlist() {
 const CHART_AXES = {
   prospects: [
     { key: "age",            label: "Age",                getter: p => p.age,                                fmt: v => v.toFixed(1) },
-    { key: "fv",             label: "Consensus FV",       getter: p => (p.points && p.points.length) ? p.points[p.points.length-1].consensus_fv_raw : null, fmt: v => Math.round(v).toString() },
+    { key: "fv",             label: "Consensus FV",       getter: p => (p.points && p.points.length) ? p.points[p.points.length-1].consensus_fv_raw : null, fmt: v => fvCeil(v).toString() },
     { key: "overall_rank",   label: "Overall rank",       getter: p => p.overall_rank,                       fmt: v => "#" + v },
     { key: "rps_plus",       label: "RPS+",               getter: p => (p.statline && p.statline.rps_plus), fmt: v => Math.round(v).toString() },
-    { key: "tool",           label: "Tool",               getter: p => p.tool,                               fmt: v => Math.round(v).toString() },
+    { key: "tool",           label: "Tool",               getter: p => p.tool,                               fmt: v => fvCeil(v).toString() },
     { key: "height_in",      label: "Height (in)",        getter: p => _heightToInches(p.height || (p.player_info && p.player_info.height)),  fmt: v => v.toFixed(0) + '"' },
     { key: "weight",         label: "Weight (lb)",        getter: p => parseInt(p.weight || (p.player_info && p.player_info.weight), 10) || null, fmt: v => v.toFixed(0) + "lb" },
     { key: "eta_year",       label: "ETA year",           getter: p => (p.eta && p.eta.year),                fmt: v => v.toString() },
@@ -9703,7 +9736,7 @@ function renderLeaderboards() {
   // the prospect's arc, not just one year.
   const trendField = cfg.field || statKey;
   const rows = ranked.map(({ p, r, v }, i) => {
-    const fvLabel = p.fv_close != null ? Math.round(p.fv_close) : "—";
+    const fvLabel = p.fv_close != null ? fvCeil(p.fv_close) : "—";
     const heat = cellHeatColor(v, _heatValues, !!cfg.hi);
     // Stat-side gate (hitter/pitcher) + same field-name fallback used
     // upstream. Skip the season being viewed only if there's at least
@@ -10063,7 +10096,7 @@ function renderInjured() {
     const tjBadge = (p.health_profile || {}).is_post_tj
       ? `<span style="font-size:9px;color:var(--accent-tj);background:var(--accent-tj-soft);border:1px solid var(--accent-tj-border);padding:1px 5px;border-radius:2px;letter-spacing:0.04em;text-transform:uppercase;font-weight:700;margin-left:4px;">Post-TJ</span>`
       : "";
-    const fvLabel = fv ? Math.round(fv) : "—";
+    const fvLabel = fv ? fvCeil(fv) : "—";
     const reason = il.reason || il.description || "—";
     return `
       <div class="player-row is-injured" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
@@ -10569,7 +10602,7 @@ function makeWagChart(g) {
     const y = v >= 0 ? mid - barH : mid;
     const fill = v >= 0 ? "var(--up)" : "var(--down)";
     const sign = v >= 0 ? "+" : "";
-    const tip = `${years[i]}: ${sign}${v.toFixed(2)} WAG · ${wars[i] >= 0 ? "+" : ""}${wars[i].toFixed(1)} WAR vs ${baseline.toFixed(2)} FV-${Math.round(fv)} expected`;
+    const tip = `${years[i]}: ${sign}${v.toFixed(2)} WAG · ${wars[i] >= 0 ? "+" : ""}${wars[i].toFixed(1)} WAR vs ${baseline.toFixed(2)} FV-${fvCeil(fv)} expected`;
     return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(1, barH).toFixed(1)}" fill="${fill}"><title>${escapeHtml(tip)}</title></rect>`;
   }).join("");
   return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="WAG by season">
@@ -11015,8 +11048,8 @@ function _renderDraftCard(p) {
       <span style="font-size:11px;padding:2px 6px;border-radius:4px;
             background:${fvColor}22;color:${fvColor};font-weight:700;"
             title="Consensus future value${p.consensus_fv_raw != null && p.consensus_fv_raw !== p.consensus_fv
-              ? ` (raw avg ${Math.round(p.consensus_fv_raw)})` : ''}">
-        FV ${p.consensus_fv != null ? Math.round(p.consensus_fv) : "—"}
+              ? ` (raw avg ${fvCeil(p.consensus_fv_raw)})` : ''}">
+        FV ${p.consensus_fv != null ? fvCeil(p.consensus_fv) : "—"}
       </span>
     </div>
     <div style="display:flex;align-items:center;gap:8px;font-size:11px;
@@ -11253,7 +11286,7 @@ function _renderDraftLeaderboard(host, cls) {
     <td>${escapeHtml(p.position || "?")}</td>
     <td>${escapeHtml(p.school || "?")}</td>
     <td style="color:${_stockPlusColor(p.draft_stock_plus)};">${p.draft_stock_plus || "—"}</td>
-    <td>${p.consensus_fv != null ? Math.round(p.consensus_fv) : "—"}</td>
+    <td>${p.consensus_fv != null ? fvCeil(p.consensus_fv) : "—"}</td>
     <td>${p.projected_round ? "R" + p.projected_round : "—"}</td>
   </tr>`).join("");
 
@@ -11620,7 +11653,7 @@ function _renderOverseasCard(p) {
 
   // FV displays as a rounded integer even if stale exports stored a
   // decimal (defensive — overseas_export.py now rounds on write).
-  const fvInt = p.consensus_fv != null ? Math.round(p.consensus_fv) : null;
+  const fvInt = p.consensus_fv != null ? fvCeil(p.consensus_fv) : null;
   // Country flag now lives INLINE with the league badge (it represents
   // the country whose LEAGUE this is, not the player's nationality).
   // _flagImg returns an <img> or emoji span; we shrink it with the
@@ -11845,7 +11878,7 @@ async function renderDraftDetail(key) {
     return;
   }
   const { p, cls } = hit;
-  const fvInt = p.consensus_fv != null ? Math.round(p.consensus_fv) : null;
+  const fvInt = p.consensus_fv != null ? fvCeil(p.consensus_fv) : null;
   const fvColor = _draftFvBucketColor(p.consensus_fv);
   const stockColor = _stockPlusColor(p.draft_stock_plus);
 
@@ -11964,7 +11997,7 @@ async function renderOverseasDetail(key) {
     return;
   }
   const { p, league } = hit;
-  const fvInt = p.consensus_fv != null ? Math.round(p.consensus_fv) : null;
+  const fvInt = p.consensus_fv != null ? fvCeil(p.consensus_fv) : null;
   const fvColor = _draftFvBucketColor(p.consensus_fv);
   const leagueColor = _leagueBadgeColor(p.league);
   const leagueFlag = _flagImg(p.country_flag_svg, p.country_flag, p.country, { small: true });
@@ -12378,7 +12411,7 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
     return `<li><strong>${escapeHtml(pos)}</strong> —
       ${escapeHtml(p.player_name)} <small>${_flagImg(p.country_flag_svg, p.country_flag, p.country)} ${escapeHtml(p.league)}</small>
       <span style="float:right;color:${_draftFvBucketColor(p.consensus_fv)};">
-        FV ${p.consensus_fv != null ? Math.round(p.consensus_fv) : "—"}</span></li>`;
+        FV ${p.consensus_fv != null ? fvCeil(p.consensus_fv) : "—"}</span></li>`;
   }).join("");
 
   // Biggest projected bonuses
@@ -12448,7 +12481,7 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
     <td>${escapeHtml(p.position || "?")}</td>
     <td><span style="color:${_leagueBadgeColor(p.league)};font-weight:600;">${escapeHtml(p.league)}</span></td>
     <td>${escapeHtml(p.current_team || "?")}</td>
-    <td style="font-weight:600;color:${_draftFvBucketColor(p.consensus_fv)};">FV ${p.consensus_fv != null ? Math.round(p.consensus_fv) : "—"}</td>
+    <td style="font-weight:600;color:${_draftFvBucketColor(p.consensus_fv)};">FV ${p.consensus_fv != null ? fvCeil(p.consensus_fv) : "—"}</td>
     <td>${p.eta_year || "—"}</td>
   </tr>`).join("");
 
@@ -12579,7 +12612,7 @@ function renderGraduates() {
     const chartHtml = wagSparkHtml
       ? `<span style="display:inline-flex;align-items:center;gap:4px;">${wagSparkHtml}${wagValueInline}</span>`
       : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
-    const fvLabel = g.fv_close != null ? Math.round(g.fv_close) : "—";
+    const fvLabel = g.fv_close != null ? fvCeil(g.fv_close) : "—";
     const sm = g.sabermetrics || {};
     const cw = g.career_war || {};
     // WAG (WAR Above Grade) — always rendered when the graduate has the
@@ -12598,7 +12631,7 @@ function renderGraduates() {
       const denomTag = r.denom_source === "personal"
         ? `personal avg full season = ${denomFmt}`
         : `league default = ${denomFmt}`;
-      const tip = `WAG ${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} — expected ${expected.toFixed(2)} WAR/yr at FV ${Math.round(g.fv_close)} (${isPitcher ? "pitcher" : "hitter"} table), actual ${r.war_per_yr.toFixed(2)} WAR/yr over ${r.war_seasons_count} MLB season${r.war_seasons_count === 1 ? "" : "s"} weighted by playing time (1 season = ${denomTag})`;
+      const tip = `WAG ${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} — expected ${expected.toFixed(2)} WAR/yr at FV ${fvCeil(g.fv_close)} (${isPitcher ? "pitcher" : "hitter"} table), actual ${r.war_per_yr.toFixed(2)} WAR/yr over ${r.war_seasons_count} MLB season${r.war_seasons_count === 1 ? "" : "s"} weighted by playing time (1 season = ${denomTag})`;
       const cls = wagDelta > 0.05 ? "is-pos" : wagDelta < -0.05 ? "is-neg" : "is-neutral";
       wagPill = `<span class="wag-pill ${cls} g-term" data-term="wag" style="margin-left:6px;" title="${escapeHtml(tip)}">${wagDelta > 0 ? '+' : ''}${wagDelta.toFixed(2)} WAG</span>`;
     }
@@ -17058,7 +17091,7 @@ function renderFarmSystems() {
     if (fv == null || fv < 55) continue;
     (alumniByOrg[g.org] ||= []).push({
       name: g.player_name,
-      fv: Math.round(fv),
+      fv: fvCeil(fv),
       date: g.graduation_date,
     });
   }
@@ -17374,7 +17407,7 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
     ? transactionEvents(player).filter(e => {
         const t = new Date(e.date).getTime();
         return !isNaN(t) && t >= minT && t <= maxT;
-      })
+      }).filter(e => !CHART_HIDDEN_KINDS.has(e.kind))
     : [
         ...(trades || []).map(tr => ({
           date: tr.trade_date,
@@ -17464,11 +17497,10 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
   // still surfaces via the per-segment <title> tooltips above.
   const circles = "";
 
-  // Tool-change markers — small glyph above the chart at each snapshot
-  // where the mean tool grade shifted ≥3 points vs the prior snapshot.
-  // Tells whether FV moves are accompanied by tool-grade moves (or
-  // FV climbed without tool support, etc.) without adding a second
-  // line to the chart.
+  // Tool composite trajectory — dashed violet line tracking the mean
+  // per-tool grade at each snapshot, plotted on the same FV scale.
+  // Lets the user compare FV movement against tool-grade movement
+  // in a single glance without adding a separate chart.
   const toolMean = (tc) => {
     if (!tc) return null;
     const vals = [];
@@ -17478,31 +17510,25 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
     }
     return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   };
-  const toolMarkerSvg = [];
-  for (let i = 1; i < points.length; i++) {
-    const prev = toolMean(points[i - 1].tools_consensus);
-    const cur = toolMean(points[i].tools_consensus);
-    if (prev == null || cur == null) continue;
-    const delta = cur - prev;
-    if (Math.abs(delta) < 3) continue;
-    const x = xScale(points[i].snapshot_date).toFixed(1);
-    const glyph = delta > 0 ? "▲" : "▼";
-    const color = delta > 0 ? "var(--up)" : "var(--down)";
-    const sign = delta > 0 ? "+" : "";
-    const tip = `${points[i].snapshot_date} · Tool ${sign}${delta.toFixed(1)} (mean tool grade ${prev.toFixed(1)} → ${cur.toFixed(1)})`;
-    toolMarkerSvg.push(
-      `<text x="${x}" y="${(PAD_T + 9).toFixed(1)}" font-size="11" fill="${color}" text-anchor="middle" font-family="var(--font-mono)" font-weight="700"><title>${escapeHtml(tip)}</title>${glyph}</text>`,
-      `<text x="${x}" y="${(PAD_T + 19).toFixed(1)}" font-size="8" fill="${color}" text-anchor="middle" font-family="var(--font-mono)" opacity="0.85"><title>${escapeHtml(tip)}</title>${sign}${delta.toFixed(1)}</text>`
-    );
-  }
+  const toolCoords = points.map(pt => {
+    const m = toolMean(pt.tools_consensus);
+    if (m == null) return null;
+    return { x: xScale(pt.snapshot_date), y: yScale(m), mean: m, date: pt.snapshot_date };
+  }).filter(Boolean);
+  const toolTip = toolCoords.length
+    ? `Tool trajectory · mean per-tool grade ${toolCoords[0].mean.toFixed(1)} → ${toolCoords[toolCoords.length - 1].mean.toFixed(1)}`
+    : "";
+  const toolLineSvg = toolCoords.length >= 2
+    ? `<polyline points="${toolCoords.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ')}" fill="none" stroke="var(--neon-violet)" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.8" vector-effect="non-scaling-stroke"><title>${escapeHtml(toolTip)}</title></polyline>`
+    : "";
 
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="FV trajectory">
     ${yTicks.join("")}
     ${yearSvg.join("")}
     ${eventSvg.join("")}
+    ${toolLineSvg}
     ${segments.join("")}
     ${circles}
-    ${toolMarkerSvg.join("")}
   </svg>`;
 }
 
@@ -18710,7 +18736,7 @@ function renderPlayerDetail(key) {
     "WAG",
     `<span style="color:${wagColor};">${wagDeltaTile > 0 ? "+" : ""}${wagDeltaTile.toFixed(2)} WAR/yr</span>`,
     p.fv_close != null
-      ? `vs ${Math.round(p.fv_close)} FV proj · ${wagRateTile.war_seasons_count} MLB season${wagRateTile.war_seasons_count === 1 ? "" : "s"} (PT-weighted)${careerWarSparkline}`
+      ? `vs ${fvCeil(p.fv_close)} FV proj · ${wagRateTile.war_seasons_count} MLB season${wagRateTile.war_seasons_count === 1 ? "" : "s"} (PT-weighted)${careerWarSparkline}`
       : `${careerWarSparkline}`,
   ] : null;
   // v3 cleanup — Health (12mo) tile dropped. The full Health section
@@ -18932,9 +18958,9 @@ function renderPlayerDetail(key) {
       ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
            <div>
              <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${p.status === "graduated" ? "Expected surplus (FV)" : "Surplus value"}${scarcityChip}</div>
-             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">FV ${Math.round(fv)} ${_isPit ? "pitcher" : "hitter"} · 6yr cost-controlled</div>
+             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">FV ${fvCeil(fv)} ${_isPit ? "pitcher" : "hitter"} · 6yr cost-controlled</div>
            </div>
-           <div style="font-family:var(--font-mono);font-size:${p.status === "graduated" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="Estimated MLB surplus value over the player's 6-year cost-controlled window. Derived from FV ${Math.round(fv)} via the FanGraphs / Craig Edwards 2019 framework (hitter/pitcher split), then adjusted by position scarcity multiplier. Real surplus depends on health, performance variance, and changes in $/WAR market rate.">${fmtUsd(surplus)}</div>
+           <div style="font-family:var(--font-mono);font-size:${p.status === "graduated" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="Estimated MLB surplus value over the player's 6-year cost-controlled window. Derived from FV ${fvCeil(fv)} via the FanGraphs / Craig Edwards 2019 framework (hitter/pitcher split), then adjusted by position scarcity multiplier. Real surplus depends on health, performance variance, and changes in $/WAR market rate.">${fmtUsd(surplus)}</div>
          </div>`
       : "";
     // Expected market AAV — FV-derived WAR/yr × $/WAR market rate.
@@ -18952,7 +18978,7 @@ function renderPlayerDetail(key) {
         expectedAavRow = `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
            <div>
              <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Expected market AAV</div>
-             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">FV ${Math.round(fv)} → ${expectedWar.toFixed(2)} WAR/yr × $${DOLLARS_PER_WAR_MM}M</div>
+             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">FV ${fvCeil(fv)} → ${expectedWar.toFixed(2)} WAR/yr × $${DOLLARS_PER_WAR_MM}M</div>
            </div>
            <div style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:${eaColor};font-variant-numeric:tabular-nums;" title="If the player hits their FV projection, this is what a comparable free agent would command per year at the prevailing $/WAR rate.">${fmtUsd(expectedAav)}/yr</div>
          </div>`;
@@ -19198,12 +19224,11 @@ function renderPlayerDetail(key) {
     const isPitcher = !!((p.statline || {}).is_pitcher
                         || (p.sabermetrics || {}).is_pitcher
                         || ["RHP","LHP","SP","RP","MIRP","SIRP","P"].includes((p.position||"").split("/")[0]));
-    // Half-grade rendering: "57.5" stays as ".5" when not an integer.
-    const fmt = v => v == null ? "—"
-      : (Number.isInteger(v) ? String(v) : v.toFixed(1));
+    // Hard-ceiling rounding for FV/tool grade displays — no decimals.
+    const fmt = v => v == null ? "—" : String(fvCeil(v));
     const badgeFor = v => v == null
       ? `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`
-      : `<span class="fv-badge ${fvClass(String(Math.round(v)))} size-sm">${fmt(v)}</span>`;
+      : `<span class="fv-badge ${fvClass(String(fvCeil(v)))} size-sm">${fmt(v)}</span>`;
     // Plus pill — used by FVStuff+ / Command / pStuff+, which remain on
     // the cohort-relative +/- scale (100 = mean, 10 pts = 1σ).
     const plusPill = (val) => {
@@ -19322,7 +19347,7 @@ function renderPlayerDetail(key) {
       const v = _fgExtras[extrasKey];
       if (v == null || isNaN(Number(v))) return "";
       const fgAttr = `<sup style="font-size:8px;letter-spacing:0.04em;color:var(--neon-violet);margin-left:2px;" title="Published by FanGraphs only — single-source grade">FG</sup>`;
-      const tip = `${label} · FanGraphs ${Math.round(v)} · single-source grade`;
+      const tip = `${label} · FanGraphs ${fvCeil(v)} · single-source grade`;
       return `<div class="tools-grade-cell" title="${escapeHtml(tip)}">
         <span class="tools-grade-name">${escapeHtml(label)}${fgAttr}</span>
         ${badgeFor(v)}
@@ -19676,7 +19701,7 @@ function renderPlayerDetail(key) {
           : "";
         const cells = presentKeys.map(k => {
           const v = resolveHist(e.grades, k);
-          return `<td style="padding:4px 8px;text-align:right;color:${dimColor};font-family:var(--font-mono);font-size:11px;">${v != null ? Math.round(v) : "—"}</td>`;
+          return `<td style="padding:4px 8px;text-align:right;color:${dimColor};font-family:var(--font-mono);font-size:11px;">${v != null ? fvCeil(v) : "—"}</td>`;
         }).join("");
         const intervalDisplay = fgPrettifyInterval(src, e.interval_label);
         return `<tr>
@@ -19752,7 +19777,7 @@ function renderPlayerDetail(key) {
       summary = `<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;">
         <strong style="color:${color};">${verb} projection by ${sign}${delta.toFixed(1)} WAR/yr</strong>
         over ${r.war_seasons_count} MLB season${r.war_seasons_count === 1 ? "" : "s"}.
-        <span style="color:var(--text-tertiary);">Actual ${r.war_per_yr.toFixed(2)} vs FV ${Math.round(fv)} baseline ${expected.toFixed(2)} WAR/yr.</span>
+        <span style="color:var(--text-tertiary);">Actual ${r.war_per_yr.toFixed(2)} vs FV ${fvCeil(fv)} baseline ${expected.toFixed(2)} WAR/yr.</span>
       </div>`;
     }
     return `<div class="detail-title"><span class="g-term" data-term="wag">Projection vs reality</span> <span class="detail-title-sub">per-season WAR vs FV-implied baseline</span></div>
@@ -20215,7 +20240,7 @@ function renderPlayerDetail(key) {
       // the Bayesian shrinkage in consensus.py. Once a second grade
       // update lands — even from the same source — the pull lifts.
       const rawTxt = latestPt.consensus_fv_pre_shrinkage != null
-        ? ` (raw ${latestPt.consensus_fv_pre_shrinkage.toFixed(1)})`
+        ? ` (raw ${fvCeil(latestPt.consensus_fv_pre_shrinkage)})`
         : "";
       disagreementLine = `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;">
         <span style="display:inline-block;padding:1px 6px;border:1px dashed var(--neon-amber);border-radius:10px;color:var(--neon-amber);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;">1 instance · pulled down</span>
@@ -20267,7 +20292,7 @@ function renderPlayerDetail(key) {
       // future grade per tool; present-grade pairs are not shown.
       const cellTool = (v) => v == null
         ? `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;color:var(--text-tertiary);font-size:10px;">—</td>`
-        : `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;"><span class="fv-badge ${fvClass(String(Math.round(v)))} size-xs">${Math.round(v)}</span></td>`;
+        : `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;"><span class="fv-badge ${fvClass(String(fvCeil(v)))} size-xs">${fvCeil(v)}</span></td>`;
       const _pmToFv3 = (pm) => {
         if (pm == null) return null;
         const v = parseInt(pm, 10);
@@ -21560,7 +21585,7 @@ function renderFarmDetail(orgCode) {
       .map(y => `${etaCounts[y]} in ${y}`).join(" · ");
     const rows = candidates.slice(0, 6).map(({ rp, fv, rpsPlus }) => {
       const sl = rp.statline || {};
-      const fvL = fv != null ? Math.round(fv) : "—";
+      const fvL = fv != null ? fvCeil(fv) : "—";
       const fvBadge = fvL !== "—"
         ? `<span class="fv-badge ${fvClass(String(fvL))} size-sm">${fvL}</span>`
         : `<span class="fv-badge size-sm" style="opacity:0.4;">—</span>`;
@@ -21670,7 +21695,7 @@ function renderFarmDetail(orgCode) {
   const gradsCard = `<div class="farm-side-card">
     <div class="side-title">Recent graduates <span class="side-count">${graduates.length}</span></div>
     ${sortedGrads.slice(0, 6).map(g => {
-      const fvAtGrad = g.fv_close != null ? Math.round(g.fv_close) : null;
+      const fvAtGrad = g.fv_close != null ? fvCeil(g.fv_close) : null;
       const fvBadge = fvAtGrad != null
         ? `<span class="fv-badge ${fvClass(String(fvAtGrad))} size-xs" style="flex-shrink:0;">${fvAtGrad}</span>`
         : `<span style="width:22px;flex-shrink:0;"></span>`;
@@ -21705,7 +21730,7 @@ function renderFarmDetail(orgCode) {
     ? `<div class="farm-side-card">
         <div class="side-title">Toolsiest <span class="side-count">Tool leaders</span></div>
         ${toolsLeaders.map(p => {
-          const fvL = p.fv_close != null ? Math.round(p.fv_close) : null;
+          const fvL = p.fv_close != null ? fvCeil(p.fv_close) : null;
           const fvBadge = fvL != null
             ? `<span class="fv-badge ${fvClass(String(fvL))} size-xs" style="flex-shrink:0;">${fvL}</span>`
             : `<span style="width:22px;flex-shrink:0;"></span>`;
@@ -23167,7 +23192,7 @@ function toolPlusPillHTML(p) {
   const t = p && p.tools;
   const raw = t && t.composite_overall;
   if (raw == null) return "";
-  const v = Math.round(raw);
+  const v = fvCeil(raw);
   const cls = v >= 60 ? "is-pos" : v >= 50 ? "is-neutral" : v >= 40 ? "is-amber" : "is-neg";
   // Build the per-tool breakdown line. Hitter / pitcher key order
   // mirrors the canonical tool grid; missing grades omitted from the
@@ -23182,7 +23207,7 @@ function toolPlusPillHTML(p) {
   const bits = keys
     .map(([label, k]) => {
       const g = grades[k];
-      return (g != null && !isNaN(Number(g))) ? `${label} ${Math.round(Number(g))}` : null;
+      return (g != null && !isNaN(Number(g))) ? `${label} ${fvCeil(g)}` : null;
     })
     .filter(Boolean);
   const breakdown = bits.length ? `\n${bits.join(' · ')}` : '';
@@ -23431,7 +23456,7 @@ function makeCompareStatTable(players) {
   const uniqSides = new Set(sides);
   const universal = [
     ["Age",          p => p.age != null ? p.age.toFixed(1) : null,    { hi: false, fmt: v => v.toFixed(1) }],
-    ["Current FV",   p => p.fv_close,                                 { hi: true,  fmt: v => String(Math.round(v)) }],
+    ["Current FV",   p => p.fv_close,                                 { hi: true,  fmt: v => String(fvCeil(v)) }],
     ["Level",        p => (p.statline || {}).level || null,           { categorical: true }],
     ["ETA",          p => (p.eta || {}).year || null,                 { hi: false, fmt: v => String(v) }],
     ["Games (PA/IP volume)", p => {
@@ -23518,7 +23543,7 @@ function makeCompareSideBySide(players) {
   const cols = `repeat(${players.length}, minmax(0, 1fr))`;
   const heads = players.map((p, i) => {
     const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
-    const fvLabel = p.fv_close != null ? Math.round(p.fv_close) : "—";
+    const fvLabel = p.fv_close != null ? fvCeil(p.fv_close) : "—";
     const sl = p.statline || {};
     const ageBits = [];
     if (p.age != null) ageBits.push(`${p.age.toFixed(1)}yo`);

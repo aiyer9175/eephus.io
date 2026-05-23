@@ -171,9 +171,15 @@ def _dedupe_source_aliases(day_snaps: list[Snapshot]) -> list[Snapshot]:
 # integer. An average of 58.75 becomes 59, not "60+".
 
 def snap_to_grade(raw_fv: float) -> tuple[float, str]:
-    """Round a raw averaged FV to the nearest whole number on the 20-80 scale."""
+    """Ceiling-round a raw averaged FV to a whole number on the 20-80 scale.
+
+    User preference is "hard round up": 50.2 reads as 51, not 50. FV
+    grades are conventionally integers and a fractional reading
+    shouldn't suppress to the lower tier when displayed.
+    """
+    import math
     raw_fv = max(20.0, min(80.0, raw_fv))
-    rounded = int(round(raw_fv))
+    rounded = int(math.ceil(raw_fv))
     return float(rounded), str(rounded)
 
 
