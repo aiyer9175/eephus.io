@@ -224,23 +224,26 @@ class TestExportedTreeShape:
             )
 
     def test_farm_score_is_weighted_blend(self):
-        # v5 — recompute from 4 main scores. Conviction-capped orgs are
-        # skipped: the post-process cap clamps farm_score to p75 when
-        # the org has no star-tier grad, breaking the linear blend
-        # relationship for those rows. The uncapped pre-cap value
-        # would equal the blend.
+        # v6 — recompute from 4 main scores, then apply the composite
+        # stretch (linear remap around mean=100, factor=1.35) that
+        # widens the spread before letter-grading. Conviction-capped
+        # orgs are skipped: the post-process cap clamps farm_score to
+        # p75 when the org has no star-tier grad, breaking the
+        # blend+stretch relationship for those rows.
+        from storage import _stretch_composite
         for o in self.orgs:
             if o.get("conviction_cap_applied"):
                 continue  # blend invariant doesn't hold for capped orgs
-            recomputed = (
+            blended = (
                 FARM_TREE_WEIGHT_ACQUISITION_STRATEGY * (o.get("acquisition_strategy_score") or 100.0)
               + FARM_TREE_WEIGHT_DEVELOPMENT          * (o.get("development_score")          or 100.0)
               + FARM_TREE_WEIGHT_FINANCIAL            * (o.get("financial_score")            or 100.0)
               + FARM_TREE_WEIGHT_MLB_PRODUCTION       * (o.get("mlb_production_score")       or 100.0)
             )
+            recomputed = _stretch_composite(round(blended, 1))
             assert abs(recomputed - o["farm_score"]) < 0.2, (
                 f"{o['org']} farm_score {o['farm_score']} doesn't match "
-                f"weighted blend {recomputed:.2f}"
+                f"blend+stretch {recomputed:.2f} (raw blend = {blended:.2f})"
             )
 
     def test_overall_letter_matches_farm_score_rank(self):

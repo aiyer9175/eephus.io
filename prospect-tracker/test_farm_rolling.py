@@ -293,11 +293,13 @@ class TestLetterGrade:
     def test_rank_one_is_a_plus(self):
         assert _letter_grade(1, 30) == "A+"
 
-    def test_last_is_d(self):
-        assert _letter_grade(30, 30) == "D"
+    def test_last_is_f(self):
+        # v6 — bottom rank in a 30-org pool is F (was D).
+        assert _letter_grade(30, 30) == "F"
 
-    def test_middle_is_b_or_b_minus(self):
-        # Rank 15 / 30 = pct 0.483 → "B-" per the bucket table.
+    def test_middle_is_b_minus_or_c_plus(self):
+        # Rank 15 / 30 = pct 0.483 → "B-" per the v6 bucket table
+        # (cutoff at 0.50). Pinned to the new curve.
         assert _letter_grade(15, 30) == "B-"
 
     def test_single_org_pool_is_a_plus(self):

@@ -2022,7 +2022,7 @@ FARM_GRAD_PIPELINE_MONTHS     = 12
 FARM_TRAJECTORY_WINDOWS = {
     "1y": 365,
     "3y": 365 * 3,
-    "5y": 365 * 5,
+    "6y": 365 * 6,
 }
 
 FARM_TOP_END_COUNT  = 5             # top N prospects feeding the "stars" score
@@ -2364,13 +2364,15 @@ def _compute_boom_bust(graduate_payload: dict) -> str:
 # spend table.
 
 # Conviction threshold: a "star-tier grad" is one with WAR/yr ≥ 4.0 in the
-# trailing 5 years OR career WAR ≥ 12 ever. The OR cuts both ways — a
+# trailing 6 years OR career WAR ≥ 12 ever. The OR cuts both ways — a
 # Skenes-style burst (huge WAR/yr, only 1-2 seasons) registers via the
 # WAR/yr branch; a long-career All-Star (Trout-tier, several 5+ WAR
-# seasons) registers via the career WAR branch.
+# seasons) registers via the career WAR branch. Bumped 5→6yr in v6 so
+# the recency window aligns with the org-level 6y DvM+ framing — every
+# "principal window" metric on the site lives on the same horizon.
 _CONVICTION_WAR_PER_YR_THRESHOLD = 4.0
 _CONVICTION_CAREER_WAR_THRESHOLD = 12.0
-_CONVICTION_RECENCY_YEARS        = 5
+_CONVICTION_RECENCY_YEARS        = 6   # was 5 (v6 — align with 6y DvM+)
 
 
 def _compute_top_grads_leaf(gagg: dict) -> dict:
@@ -2407,7 +2409,7 @@ def _top3_career_war(grads: list[dict], is_pitcher: bool | None) -> float | None
 def _compute_conviction_leaf(gagg: dict, today: date | None = None) -> dict:
     """Binary conviction flag (0 / 1). 1 when the org has produced AT
     LEAST ONE grad meeting either threshold:
-      * war_per_yr ≥ 4.0 AND last_mlb_year within the last 5 years, OR
+      * war_per_yr ≥ 4.0 AND last_mlb_year within the last 6 years, OR
       * career_war ≥ 12 (ever).
     Returns {conviction, peak_war_per_yr, peak_career_war} so the leaf
     can carry both the binary signal AND the supporting numbers (used
@@ -2475,15 +2477,17 @@ def _compute_draft_pool_efficiency(gagg: dict,
 
 
 def _compute_ifa_roi(gagg: dict, ifa_org_spending: dict) -> dict:
-    """Per-org WAR-per-$M-IFA over a 5-year rolling window. IFA needs
-    more time to develop than the draft; we look (T-8)…(T-3) for grads.
+    """Per-org WAR-per-$M-IFA over a 6-year rolling window. IFA needs
+    more time to develop than the draft; we look (T-9)…(T-3) for grads.
+    Bumped 5→6yr in v6 so the IFA ROI horizon aligns with the 6y DvM+
+    framing across the rest of the site.
     Numerator: career WAR sum across IFA-signed grads in the window.
     Denominator: IFA bonus spend across same years (sourced from
     Spotrac via the per-year `ifa_org_spending` dict).
     Gates at ≥2 contributing grads."""
     grads = gagg.get("_ifa_grads") or []
     today_year = date.today().year
-    start_year = today_year - 8
+    start_year = today_year - 9   # was -8 (v6 — align with 6y DvM+)
     end_year   = today_year - 3
 
     relevant = [g for g in grads
@@ -2521,14 +2525,34 @@ def _compute_ifa_roi(gagg: dict, ifa_org_spending: dict) -> dict:
 # concept (source variance, not trajectory).
 
 
-def _compute_tool_deltas(player_points: list[dict]) -> dict[str, dict]:
-    """Per-tool lifetime delta for one prospect.
+# Per-tool DvM+ window — earliest tool observation feeding the
+# (latest − earliest) delta is re-resolved to the oldest snapshot still
+# inside this window from `as_of`. Keeps per-tool dev signal consistent
+# with the org-level 6y DvM+ window. Tunable in one place; tests pin the
+# constant value.
+FARM_TOOL_DELTA_LOOKBACK_DAYS = 365 * 6
 
-    Walks `player_points[i].tools_consensus` across the prospect's full
-    history; for each tool with ≥2 observations, returns first/last
-    grade, delta (latest − earliest), the dates that bracket the window,
-    and the observation count. Tools with only one snapshot are skipped
-    (no delta computable).
+
+def _compute_tool_deltas(player_points: list[dict],
+                         as_of: str | None = None,
+                         lookback_days: int | None = None) -> dict[str, dict]:
+    """Per-tool delta for one prospect within a lookback window.
+
+    Walks `player_points[i].tools_consensus` across the prospect's
+    history; for each tool with ≥2 observations IN-WINDOW, returns
+    first/last grade, delta (latest − earliest), the dates that bracket
+    the window, and the observation count. Tools with <2 in-window
+    snapshots are skipped (no delta computable).
+
+    Args:
+      player_points: time-ordered (or not) snapshot list with each entry
+        carrying a `snapshot_date` (ISO `YYYY-MM-DD`) and a
+        `tools_consensus` dict.
+      as_of: ISO date anchor for the window (defaults to `today`).
+      lookback_days: window length. Defaults to
+        `FARM_TOOL_DELTA_LOOKBACK_DAYS` (6y). Pass `None` AND override
+        with a sentinel like 10_000 to opt out (callers that legitimately
+        need lifetime deltas — e.g. the per-prospect detail tooltip).
 
     Used downstream by:
       * `export_timeseries_json` → enrich each player payload with
@@ -2537,10 +2561,25 @@ def _compute_tool_deltas(player_points: list[dict]) -> dict[str, dict]:
       * `_per_org_tool_dev_aggregates` → feed the per-org DvM+ rollup
         (HitDvM+, PowerDvM+, …, ToolsDvM+).
     """
+    from datetime import date as _date, timedelta as _td
+    if lookback_days is None:
+        lookback_days = FARM_TOOL_DELTA_LOOKBACK_DAYS
+    try:
+        anchor = (_date.fromisoformat(as_of[:10]) if as_of
+                  else _date.today())
+    except (ValueError, TypeError):
+        anchor = _date.today()
+    cutoff = anchor - _td(days=lookback_days)
+    cutoff_iso = cutoff.isoformat()
     by_tool: dict[str, list[tuple[str, float]]] = {}
     for pt in player_points or []:
         tc = pt.get("tools_consensus") or {}
         date = pt.get("snapshot_date")
+        # Drop snapshots older than the window. Snapshots without a
+        # date sit at the very start of any sort order and would skew
+        # the earliest-grade pick, so they're also dropped here.
+        if not date or str(date)[:10] < cutoff_iso:
+            continue
         for k, v in tc.items():
             if v is None:
                 continue
@@ -2701,10 +2740,16 @@ def _normalize_to_100(values: list[float]) -> list[float]:
     return [round(max(0.0, min(100.0, (v - lo) / rng * 100.0)), 1) for v in values]
 
 
-# Letter-grade buckets calibrated for ~30 orgs. The skew is intentional —
-# A+ is reserved for the #1 farm, "A" tier covers the top ~20%, and the
-# bottom ~7% gets a D. We don't issue Fs (in a 30-team distribution it
-# feels punitive for what's just "the worst of the bunch").
+# Letter-grade buckets calibrated for ~30 orgs (v6 — harsher curve).
+# A+ is reserved for the #1 farm. The top of the scale is steeper
+# (A = top 7% vs the old top 10%) so an "A-tier" reads as genuinely
+# elite, not "above-average". The bottom adds a D- tier and an F at the
+# very floor — the user explicitly wants weak orgs to read as poor, not
+# just "below average". F lands at ~bottom 3% (~1 org in a 30-team
+# league); D- at ~bottom 10%. Combined with the `_stretch_composite`
+# remap below, weak orgs sit further below the mean BEFORE being
+# ranked, so the F isn't just a label — it reflects a real distance
+# from the league mean.
 def _letter_grade(rank: int, n: int) -> str:
     if n <= 0 or rank is None:
         return "—"
@@ -2713,15 +2758,42 @@ def _letter_grade(rank: int, n: int) -> str:
     if n == 1:
         return "A+"
     pct = (rank - 1) / (n - 1)
-    if pct < 0.10: return "A"
-    if pct < 0.20: return "A-"
-    if pct < 0.30: return "B+"
-    if pct < 0.45: return "B"
-    if pct < 0.60: return "B-"
-    if pct < 0.72: return "C+"
-    if pct < 0.85: return "C"
-    if pct < 0.95: return "C-"
-    return "D"
+    if pct < 0.07: return "A"      # top 7%   (was 10%)
+    if pct < 0.14: return "A-"     # 7–14%    (was 10–20%)
+    if pct < 0.24: return "B+"     # 14–24%   (was 20–30%)
+    if pct < 0.36: return "B"      # 24–36%   (was 30–45%)
+    if pct < 0.50: return "B-"     # 36–50%   (was 45–60%)
+    if pct < 0.62: return "C+"     # 50–62%   (was 60–72%)
+    if pct < 0.74: return "C"      # 62–74%   (was 72–85%)
+    if pct < 0.86: return "C-"     # 74–86%   (was 85–95%)
+    if pct < 0.93: return "D"      # 86–93%   (was bottom catch-all)
+    if pct < 0.97: return "D-"     # NEW — 93–97%
+    return "F"                     # NEW — bottom ~3% (~1 org in 30)
+
+
+def _stretch_composite(score: float, mean: float = 100.0,
+                       factor: float = 1.35) -> float:
+    """Linear remap that magnifies distance from the league mean.
+
+    `factor=1.35` widens the spread ~35% — strong orgs pull further
+    above the mean, weak orgs drop further below. Mean defaults to 100
+    because the farm-tree composite lives on the DvM+-style
+    100-anchored scale (each main branch z-rescaled to mean=100,
+    +10pts=1σ). Output is clamped only at 0 (composite can't be
+    negative) — the upper end is unbounded so a truly elite farm can
+    score >120, matching the pre-stretch headroom.
+
+    Math: stretched = mean + (score - mean) * factor
+
+    Rank order is preserved (monotonic) and the mean is a fixed point.
+    Pairs with `_letter_grade`: stretch increases the composite distance
+    between farms, then the steeper percentile cutoffs convert that into
+    an F at the bottom and a more selective A at the top.
+    """
+    if score is None:
+        return score
+    stretched = mean + (score - mean) * factor
+    return max(0.0, round(stretched, 1))
 
 
 def _rank_descending(values: list[float]) -> list[int]:
@@ -4803,7 +4875,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         if boom_label in {"boom", "bust", "settled"} and career_war_val is not None:
             yval = cw.get("war_per_yr")
             seasons = cw.get("war_seasons_count") or 0
-            # Find last MLB year for Conviction's 5-year recency window.
+            # Find last MLB year for Conviction's 6-year recency window.
             mlb_seasons = [int(r.get("season") or 0)
                            for r in career_rows
                            if (r.get("level") == "MLB" and r.get("season"))]
@@ -5367,17 +5439,25 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     for entry in org_summary:
         entry["top_end_points"] = _top_end_points(entry["prospects"])
         entry["depth_points"]   = _depth_points(entry["prospects"])
-        # Trajectory at each available window. The 1y value is also
-        # surfaced as `trajectory_score` so the report-card grading (which
-        # is intentionally anchored to 1y) keeps using it without having
-        # to know about the dict.
+        # Trajectory at each available window. The blended score (60% 6y
+        # + 30% 3y + 10% 1y) is also surfaced as `trajectory_score` so
+        # the report-card grading anchors on the principal multi-cycle
+        # signal — 6y dominates (sustained dev is the highest-conviction
+        # org tell), 3y smooths over the current draft cycle, and 1y
+        # still contributes so a hot current year isn't fully ignored.
         entry["trajectories"] = {
             key: _trajectory_score(
                 entry["fv_history"], lookback_days=days, as_of=today_iso,
             )
             for key, days in FARM_TRAJECTORY_WINDOWS.items()
         }
-        entry["trajectory_score"] = entry["trajectories"]["1y"]
+        _T = entry["trajectories"]
+        entry["trajectory_score"] = round(
+            0.60 * (_T.get("6y") or 0)
+            + 0.30 * (_T.get("3y") or 0)
+            + 0.10 * (_T.get("1y") or 0),
+            3,
+        )
         entry["grad_pipeline_score"] = _grad_pipeline_score(
             entry["fv_events"], as_of=today_iso,
         )
@@ -5754,7 +5834,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         for parent, w in weights.items():
             v = entry.get(f"{parent}_score")
             composite += w * (v if v is not None else 100.0)
-        entry["farm_score"] = round(composite, 1)
+        # Apply the v6 composite stretch — magnifies distance from the
+        # league mean BEFORE the cap + letter-grade pass, so weak orgs
+        # sit further below the mean and strong orgs further above.
+        # Monotonic (rank order preserved) but widens the spread by
+        # ~35% (factor=1.35). Pairs with the harsher _letter_grade
+        # below: stretch increases distance, then steeper percentile
+        # cutoffs turn that distance into D-/F letters at the bottom
+        # and a more selective A tier at the top.
+        # Anchored at mean=100 because each main-grade score lives on
+        # the DvM+-style 100-anchored scale (each branch z-rescaled to
+        # mean=100 across the 30 orgs).
+        entry["farm_score"] = _stretch_composite(round(composite, 1))
         entry["conviction_cap_applied"] = False
         # Back-compat: legacy field names (acquisitions_score,
         # transactions_score) resolve to the merged Acquisition Strategy
@@ -5768,7 +5859,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # acquisition strategy — they just can't claim the elite-overall
     # tier without a star ceiling. Frontend reads
     # `conviction_cap_applied` to show a tooltip ("No star-tier grad in
-    # last 5y — capped at 75th-percentile farm score").
+    # last 6y — capped at 75th-percentile farm score").
     scores = [e["farm_score"] for e in org_summary
               if e.get("farm_score") is not None]
     if scores:

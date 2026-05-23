@@ -182,9 +182,11 @@ class TestHealthBurdenInvertedRanking:
 
     def test_lowest_burden_gets_a_plus_in_letter_grade(self):
         # 5 orgs: burdens [10, 20, 30, 40, 50].
-        # Rank 1 (lowest burden, 10) → A+; rank 5 (highest, 50) → D.
+        # Rank 1 (lowest burden, 10) → A+; rank 5 (highest, 50) → F
+        # under the v6 letter scale (was D in v5 — but the new bottom
+        # tier is F in a 5-org pool because pct=(5-1)/(5-1)=1.0 ≥ 0.97).
         burdens = [10.0, 20.0, 30.0, 40.0, 50.0]
         ranks = _rank_descending([-b for b in burdens])
         letters = [_letter_grade(r, len(burdens)) for r in ranks]
         assert letters[0] == "A+"  # burden=10 (lowest)
-        assert letters[-1] == "D"  # burden=50 (highest)
+        assert letters[-1] == "F"  # burden=50 (highest)

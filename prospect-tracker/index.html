@@ -1439,6 +1439,42 @@
     }
     body.density-compact .player-row-summary { display: none; }
 
+    /* Tool-grade chip strip — sits where .player-row-summary used to,
+       under the player meta line. Replaces the qualitative "plus hit /
+       plus game power" prose with explicit numeric tool grades — one
+       compact color-coded pill per tool, FV-tier ramp. Wraps to a
+       second line on narrow viewports rather than truncating. */
+    .tool-grade-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 3px;
+      align-items: center;
+    }
+    .tool-grade-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 1px 5px;
+      border-radius: 2px;
+      font-family: var(--font-retro-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      line-height: 1.4;
+      border: 1px solid;
+      font-variant-numeric: tabular-nums;
+    }
+    .tool-grade-pill .tg-code {
+      font-weight: 600;
+      opacity: 0.85;
+    }
+    .tool-grade-pill .tg-val {
+      font-weight: 700;
+    }
+    body.density-compact .tool-grade-strip { display: none; }
+
+
     /* Mobile-only performance pill — keeps RPS+/wRC+/xFIP visible when
        the MiLB stats cell collapses out of the row at <900px. */
     .mobile-only-pill { display: none; }
@@ -5173,7 +5209,7 @@
              is selected in the right-hand "Development window" picker, so
              three chips (one per window) would just duplicate that control. -->
         <button class="chip" data-farm-sort="trajectory"
-                title="Sort by DvM+ for the currently selected development window (1y / 3y / 5y, picked on the right). Acquisitions + graduations are nullified — pure development of prospects already in the system.">Trajectory (DvM+)</button>
+                title="Sort by DvM+ for the currently selected development window (1y / 3y / 6y, picked on the right). 6y is the default and principal signal. Acquisitions + graduations are nullified — pure development of prospects already in the system.">Trajectory (DvM+)</button>
         <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted graduations in the trailing 12 months">Grad pipeline</button>
         <button class="chip" data-farm-sort="ifa_spend" title="International FA bonus dollars committed over the trailing 3 years (Spotrac)">IFA spend (3yr)</button>
         <button class="chip" data-farm-sort="surplus" title="Aggregate FV-implied surplus value ($M) across all active prospects in the org">Surplus value</button>
@@ -5193,10 +5229,10 @@
         <button class="chip" data-farm-sort="level_DSL">DSL</button>
       </div>
       <div class="filter-group" style="margin-left:auto;">
-        <span class="filter-label" title="Window used by the development sparkline + Trajectory sort. The line shows each org's prospect FV growth above (or below) the league mean over the same window, with incoming acquisitions (trades, draft, IFA) excluded so only true development counts.">Development window</span>
+        <span class="filter-label" title="Window used by the development sparkline + Trajectory sort. The line shows each org's prospect FV growth above (or below) the league mean over the same window, with incoming acquisitions (trades, draft, IFA) excluded so only true development counts. 6y is the principal signal.">Development window</span>
         <button class="chip"        data-form-window="1y">1y</button>
-        <button class="chip active" data-form-window="3y">3y</button>
-        <button class="chip"        data-form-window="5y">5y</button>
+        <button class="chip"        data-form-window="3y">3y</button>
+        <button class="chip active" data-form-window="6y">6y</button>
       </div>
       <div class="filter-group">
         <span class="filter-label">View</span>
@@ -6725,7 +6761,9 @@ function syncFromURL() {
   if (p.has("g"))     state.glossaryTerm   = p.get("g");
   if (p.has("formw")) {
     const v = p.get("formw");
-    if (v === "1y" || v === "3y" || v === "5y") state.formWindow = v;
+    if (v === "1y" || v === "3y" || v === "6y") state.formWindow = v;
+    // Back-compat: old URLs may still carry formw=5y. Map to 6y.
+    if (v === "5y") state.formWindow = "6y";
   }
   if (p.has("ftxk")) state.farmTxKind = p.get("ftxk");
   if (p.has("ftxd")) state.farmTxDir  = p.get("ftxd");
@@ -7214,8 +7252,9 @@ const state = {
   farmViewMode: "cards",
   // Active form-bar window. Controls the farm-list sparkline (which
   // plots growth above the league mean over the same window) and the
-  // value used when sorting by "Trajectory".
-  formWindow: "3y",
+  // value used when sorting by "Trajectory". Default 6y — the
+  // principal multi-cycle dev signal.
+  formWindow: "6y",
   spotlightBucket: "risers",
   // Farm-detail "Transaction history" filters. Persisted on the URL so a
   // shared link reopens the same filtered view. Default is "all".
@@ -11623,9 +11662,9 @@ const GLOSSARY = {
     name: "DvM+", aliases: ["DvM+", "Development vs Mean"], category: "custom-index",
     priority: 5,
     short: "Farm-system development index; 100 = league-mean FV growth. Drives the Development component of the farm report card.",
-    long: "wRC+-style index for organizational development. Measures each farm's cumulative FV growth over a window (1y / 3y / 5y) and scores it against the league-mean farm. Acquisitions are nullified (a trade-in adds zero to the source farm) and graduations don't subtract; pure development of prospects already in the system. 100 = league mean, 10 pts = 1 stdev across the 30 orgs. The 1y window drives the Development letter grade in the farm report card (replaced raw Trajectory in the blend).",
-    formula: "DvM+ = 100 + 10 · (org_growth − league_mean_growth) / league_stdev",
-    example: "An org with a 3yDvM+ of 130 has grown its prospects' aggregate FV 3 stdev faster than the average farm system over the last 3 years, after stripping out acquisitions.",
+    long: "wRC+-style index for organizational development. Measures each farm's cumulative FV growth over a window (1y / 3y / 6y) and scores it against the league-mean farm. Acquisitions are nullified (a trade-in adds zero to the source farm) and graduations don't subtract; pure development of prospects already in the system. 100 = league mean, 10 pts = 1 stdev across the 30 orgs. The blended trajectory_score that drives the farm letter grade weights the 6y window 60%, 3y 30%, and 1y 10% — 6y is the principal multi-cycle signal; shorter windows still react to the current cycle so a hot current year isn't fully ignored.",
+    formula: "DvM+ = 100 + 10 · (org_growth − league_mean_growth) / league_stdev\nblended trajectory_score = 0.60·6y + 0.30·3y + 0.10·1y",
+    example: "An org with a 6yDvM+ of 130 has grown its prospects' aggregate FV 3 stdev faster than the average farm system over the last 6 years, after stripping out acquisitions.",
     related: ["farm_rank", "farm_grade_talent_translation", "stock", "fv", "tools_dvm_plus"],
   },
   "tool_delta": {
@@ -12356,7 +12395,7 @@ const GLOSSARY = {
     name: "Farm grade tree", aliases: ["Farm grade", "Report card", "Grade tree"], category: "custom-index",
     priority: 50,
     short: "4-branch hierarchical farm grade (v5). Composite = weighted blend with Development at 40% (solo top), MLB Production at 30%, Acquisition Strategy + Financial tied at 15% each.",
-    long: "Grade tree v5 — Development-first thesis. Weights: Development 40% (solo top), MLB Production 30%, Acquisition Strategy 15% + Financial 15% (tied supporting columns). Development is the highest-conviction org signal — sustained per-tool growth is the one thing the org has the most direct control over and is least confounded by acquisition luck or upper-league hot/cold streaks. MLB Production stays heavily weighted at 30% (the boom%/top-3 WAR/Conviction leaves). FV_POINTS curve steepened so an 80-grade prospect is worth 2.5× the old curve and 250× a 40-grade org-filler — top-end orgs separate dramatically. Conviction cap: orgs without a star-tier grad (WAR/yr ≥ 4.0 last 5yr OR career WAR ≥ 12 ever) clamp at the 75th-percentile farm_score, preventing depth-only orgs from grading elite. Every leaf z-score normalized across the 30 orgs; sparse leaves get '—'.",
+    long: "Grade tree v6 — Development-first thesis. Weights: Development 40% (solo top), MLB Production 30%, Acquisition Strategy 15% + Financial 15% (tied supporting columns). Development is the highest-conviction org signal — sustained per-tool growth is the one thing the org has the most direct control over and is least confounded by acquisition luck or upper-league hot/cold streaks. MLB Production stays heavily weighted at 30% (the boom%/top-3 WAR/Conviction leaves). FV_POINTS curve steepened so an 80-grade prospect is worth 2.5× the old curve and 250× a 40-grade org-filler — top-end orgs separate dramatically. Conviction cap: orgs without a star-tier grad (WAR/yr ≥ 4.0 last 6yr OR career WAR ≥ 12 ever) clamp at the 75th-percentile farm_score, preventing depth-only orgs from grading elite. v6 also applies a non-linear composite stretch (alpha=1.35) that magnifies distance from the league mean before letter-grading, and widens the letter scale to include D- and F at the bottom so weak farms read as genuinely poor — A+ #1, A top 7%, F bottom ~3%. Every leaf z-score normalized across the 30 orgs; sparse leaves get '—'. The trajectory_score that feeds the Development letter grade is now a blended 60% 6y + 30% 3y + 10% 1y DvM+ — 6y is the principal multi-cycle signal.",
     formula: "farm_score = 0.15·Acquisition_Strategy + 0.40·Development + 0.15·Financial + 0.30·MLB_Production\n  Acquisition_Strategy = mean(Draft, IFA, Trade, Waiver)\n  Development          = mean(Hitter_Tools_DvM+, Pitcher_Tools_DvM+)\n  Financial            = mean(WAR_per_$M, Grad_contract_surplus, Draft_pool_efficiency, IFA_ROI)\n  MLB_Production       = mean(Hitter_3input, Pitcher_3input, Boom_rate, Top3_WAR_per_yr, Conviction)\n  if Conviction = 0 and farm_score > p75: farm_score = p75  (Conviction cap)",
     related: ["farm_grade_acquisition_strategy", "farm_grade_development", "farm_grade_financial", "farm_grade_mlb_production", "mlb_production_boom_pct", "mlb_production_top_grads", "mlb_production_conviction", "fin_draft_pool_efficiency", "fin_ifa_roi", "dvm_plus", "wag", "sur_plus"],
   },
@@ -12394,7 +12433,7 @@ const GLOSSARY = {
     name: "Financial / SUR+", aliases: ["Financial grade", "SUR+", "Surplus grade"], category: "custom-index",
     priority: 54,
     short: "Org's capital efficiency. 4 leaves (v4): WAR per $M, grad-contract surplus, draft-pool efficiency, IFA ROI.",
-    long: "Financial branch of the farm grade tree (15% of farm_score in v5; was 20% in v4). Tied with Acquisition Strategy as a supporting column behind Development (40%) and MLB Production (30%). Four sub-grades, equal weight: (a) WAR per $M — total career WAR yielded by graduates divided by total signing bonus paid, (b) Grad-Contract Surplus — for graduates with both Spotrac contract data and signing bonus, per-year surplus (current AAV minus bonus amortized over 6 years), (c) Draft Pool Efficiency — trailing-3yr rolling WAR per $M of draft-pool spend, (d) IFA ROI — trailing-5yr rolling WAR per $M of IFA bonus spend. SUR+ shape preserved at the composite level (100-anchored, +10 = 1σ).",
+    long: "Financial branch of the farm grade tree (15% of farm_score in v5; was 20% in v4). Tied with Acquisition Strategy as a supporting column behind Development (40%) and MLB Production (30%). Four sub-grades, equal weight: (a) WAR per $M — total career WAR yielded by graduates divided by total signing bonus paid, (b) Grad-Contract Surplus — for graduates with both Spotrac contract data and signing bonus, per-year surplus (current AAV minus bonus amortized over 6 years), (c) Draft Pool Efficiency — trailing-3yr rolling WAR per $M of draft-pool spend, (d) IFA ROI — trailing-6yr rolling WAR per $M of IFA bonus spend. SUR+ shape preserved at the composite level (100-anchored, +10 = 1σ).",
     formula: "Financial_score = mean of z-anchored (war_per_$M, mean grad surplus per yr, war_per_M_draft_pool, war_per_M_IFA)",
     related: ["wag", "war", "signing_bonus", "fin_draft_pool_efficiency", "fin_ifa_roi", "farm_report_card"],
   },
@@ -12402,7 +12441,7 @@ const GLOSSARY = {
     name: "MLB Production", aliases: ["MLB Production grade", "Production grade"], category: "custom-index",
     priority: 55,
     short: "Whether the org produces MLB players, especially top-end ones. 5 leaves (v4): hitter + pitcher 3-input composites, boom rate, top-3 grad WAR/yr, Conviction.",
-    long: "MLB Production branch (30% of farm_score; unchanged from v4 → v5; second-heaviest behind Development at 40%). Five sub-grades, equal weight: (a) Hitter MLB Production — equal-weighted z-blend of Hitter WAG + Hitter WAR-per-year + Top-3 Hitter Career WAR. (b) Pitcher MLB Production — same 3-input composite for pitchers. (c) Boom Rate — share of settled grads with career WAR ≥ +5 (min 5 settled). (d) Top-3 Grad WAR/yr — mean WAR/yr of the org's top-3 grads by rate (min 3 qualifying). (e) Conviction — binary flag: 1 if any grad has WAR/yr ≥ 4.0 in trailing 5yr OR career WAR ≥ 12 ever, else 0. Conviction additionally drives the farm-score cap: conviction=0 orgs clamp at the 75th-percentile farm_score regardless of branch grades, so depth-only orgs can't grade elite without a star.",
+    long: "MLB Production branch (30% of farm_score; unchanged through v4 → v6; second-heaviest behind Development at 40%). Five sub-grades, equal weight: (a) Hitter MLB Production — equal-weighted z-blend of Hitter WAG + Hitter WAR-per-year + Top-3 Hitter Career WAR. (b) Pitcher MLB Production — same 3-input composite for pitchers. (c) Boom Rate — share of settled grads with career WAR ≥ +5 (min 5 settled). (d) Top-3 Grad WAR/yr — mean WAR/yr of the org's top-3 grads by rate (min 3 qualifying). (e) Conviction — binary flag: 1 if any grad has WAR/yr ≥ 4.0 in trailing 6yr OR career WAR ≥ 12 ever, else 0. Conviction additionally drives the farm-score cap: conviction=0 orgs clamp at the 75th-percentile farm_score regardless of branch grades, so depth-only orgs can't grade elite without a star.",
     formula: "Production_score = mean of z-anchored (Hitter_3input, Pitcher_3input, boom_pct, top3_WAR_per_yr, conviction)\nConviction cap: if conviction = 0 and farm_score > p75 → farm_score = p75",
     related: ["wag", "war", "mlb_production_boom_pct", "mlb_production_top_grads", "mlb_production_conviction", "farm_report_card"],
   },
@@ -12423,8 +12462,8 @@ const GLOSSARY = {
   "mlb_production_conviction": {
     name: "Conviction", aliases: ["Conviction", "Star presence flag"], category: "custom-index",
     priority: 58,
-    short: "Binary 0/1 flag: org has produced at least one star-tier grad (WAR/yr ≥ 4.0 last 5yr OR career WAR ≥ 12 ever). Drives the farm-score cap.",
-    long: "Conviction leaf inside MLB Production v4. Fires (=1) if at least one graduate satisfies EITHER (a) WAR/yr ≥ 4.0 (All-Star tier) with last MLB year within the trailing 5 years, OR (b) career WAR ≥ 12 ever (high-end Hall-of-Very-Good output). Otherwise =0. PIT (Skenes) → 1; KCR (Witt Jr.) → 1; orgs without a recent star → 0. Beyond contributing as a leaf input, Conviction drives a post-process **farm-score cap**: conviction=0 orgs whose composite would exceed the 75th-percentile farm_score get clamped to that p75 value. This prevents depth-only orgs from grading elite without a star ceiling — they can still be A-tier in depth / acquisitions / development, but not the very top.",
+    short: "Binary 0/1 flag: org has produced at least one star-tier grad (WAR/yr ≥ 4.0 last 6yr OR career WAR ≥ 12 ever). Drives the farm-score cap.",
+    long: "Conviction leaf inside MLB Production v4. Fires (=1) if at least one graduate satisfies EITHER (a) WAR/yr ≥ 4.0 (All-Star tier) with last MLB year within the trailing 6 years, OR (b) career WAR ≥ 12 ever (high-end Hall-of-Very-Good output). Otherwise =0. PIT (Skenes) → 1; KCR (Witt Jr.) → 1; orgs without a recent star → 0. Beyond contributing as a leaf input, Conviction drives a post-process **farm-score cap**: conviction=0 orgs whose composite would exceed the 75th-percentile farm_score get clamped to that p75 value. This prevents depth-only orgs from grading elite without a star ceiling — they can still be A-tier in depth / acquisitions / development, but not the very top.",
     related: ["farm_grade_mlb_production", "mlb_production_top_grads", "mlb_production_boom_pct"],
   },
   "fin_draft_pool_efficiency": {
@@ -12437,8 +12476,8 @@ const GLOSSARY = {
   "fin_ifa_roi": {
     name: "IFA ROI", aliases: ["IFA ROI", "International FA ROI"], category: "custom-index",
     priority: 60,
-    short: "Trailing-5yr-window WAR per $M of IFA bonus spend. Captures whether the org's international signings translated to MLB production.",
-    long: "IFA ROI leaf inside Financial v4. Numerator: sum of career WAR for IFA-method grads signed in (T-8)…(T-3) — longer 6-year window because IFA prospects need more development time. Denominator: sum of org's total IFA bonus spending over those same signing years (from the per-year IFA spend table). Output: WAR/$M. Gated at ≥2 contributing grads with signed_year + bonus on file. Cubans / Asian-pro signings + bonus-pool-busting splash signings show up here as high-spend low-ROI; orgs that develop deep $200K–$500K signings (e.g. Cleveland's Latin America operation) show high ROI.",
+    short: "Trailing-6yr-window WAR per $M of IFA bonus spend. Captures whether the org's international signings translated to MLB production.",
+    long: "IFA ROI leaf inside Financial v6. Numerator: sum of career WAR for IFA-method grads signed in (T-9)…(T-3) — 6-year rolling window (bumped from 5yr in v6 to align with the 6y DvM+ horizon). IFA prospects need more development time than draft picks, so the window starts ~9 years out and ends ~3 years out. Denominator: sum of org's total IFA bonus spending over those same signing years (from the per-year IFA spend table). Output: WAR/$M. Gated at ≥2 contributing grads with signed_year + bonus on file. Cubans / Asian-pro signings + bonus-pool-busting splash signings show up here as high-spend low-ROI; orgs that develop deep $200K–$500K signings (e.g. Cleveland's Latin America operation) show high ROI.",
     related: ["farm_grade_financial", "fin_draft_pool_efficiency", "war", "signing_bonus", "ifa"],
   },
   "sur_plus": {
@@ -13403,11 +13442,79 @@ function makeQuickReadSummary(p) {
   return `<div class="quick-read" style="font-family:var(--font-sans);font-size:13px;color:var(--text-secondary);line-height:1.55;margin:10px 0 14px;padding:8px 12px;border-left:3px solid var(--neon-cyan);background:rgba(78,224,255,0.04);border-radius:0 var(--radius-sm) var(--radius-sm) 0;">${parts.join(" · ")}</div>`;
 }
 
-// List-row variant — same content as the detail-page quick-read but
-// renders without the cyan card chrome so it inherits the row's
-// typography. Drops to nothing when the summary is too sparse to add
-// value (< 2 parts), avoiding a 1-token blurb under thin profiles.
+// Tool-grade chip strip — replaces the prose "plus hit / plus game
+// power" subtitle on list rows with explicit numeric tool grades.
+// Color-coded by the FV-tier ramp via the existing `--fv-XX-bg/fg/bd`
+// CSS variables, so a 60-tool reads in the same orange as a 60-FV
+// badge. Tools missing from `p.tools.grades` are skipped (no empty
+// cells). Pitchers and hitters get different fixed display orders so
+// the position-appropriate tools land in the same column slot every
+// row.
+function _toolTier(g) {
+  // Snap a numeric grade to the nearest FV tier we have a color for.
+  // Matches the fvClass() conventions used by the FV badge.
+  if (g >= 78) return 80;
+  if (g >= 73) return 75;
+  if (g >= 68) return 70;
+  if (g >= 63) return 65;
+  if (g >= 58) return 60;
+  if (g >= 53) return 55;
+  if (g >= 48) return 50;
+  if (g >= 43) return 45;
+  return 40;
+}
+const _TOOL_PILL_LABELS = {
+  // Hitter tools
+  hit: "HIT", game_pwr: "GPWR", raw_pwr: "RPWR", speed: "SPD",
+  field: "FLD", throw: "ARM", pitch_sel: "PSEL", bat_ctrl: "BTCL",
+  // Pitcher tools
+  fb: "FB", sl: "SL", cb: "CB", ch: "CH", cmd: "CMD", ct: "CT", sp: "SP",
+};
+const _HITTER_TOOL_ORDER = ["hit", "game_pwr", "raw_pwr", "speed", "field", "throw"];
+const _PITCHER_TOOL_ORDER = ["fb", "sl", "cb", "ch", "ct", "sp", "cmd"];
+function makeToolGradeChips(p) {
+  if (!p) return "";
+  const tools = (p.tools && p.tools.grades) || {};
+  // Fall back to the latest snapshot's consensus dict if `tools.grades`
+  // isn't populated (older payloads, some sources).
+  let grades = tools;
+  if (!Object.keys(grades).length && p.points && p.points.length) {
+    const latest = p.points[p.points.length - 1];
+    grades = (latest && latest.tools_consensus) || {};
+  }
+  const sl = p.statline || {};
+  const isP = !!(sl.is_pitcher)
+    || /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(String(p.position || ""));
+  const order = isP ? _PITCHER_TOOL_ORDER : _HITTER_TOOL_ORDER;
+  const pills = [];
+  for (const k of order) {
+    const v = grades[k];
+    if (v == null) continue;
+    const n = Number(v);
+    if (!isFinite(n)) continue;
+    const tier = _toolTier(n);
+    const code = _TOOL_PILL_LABELS[k] || k.toUpperCase();
+    pills.push(
+      `<span class="tool-grade-pill"
+             style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);"
+             title="${escapeHtml(code)} grade ${n}">`
+      + `<span class="tg-code">${escapeHtml(code)}</span>`
+      + `<span class="tg-val">${n}</span>`
+      + `</span>`
+    );
+  }
+  if (!pills.length) return "";
+  return `<div class="tool-grade-strip">${pills.join("")}</div>`;
+}
+
+// List-row variant — replaces the prose "plus hit / plus game power"
+// subtitle with numeric tool-grade chips (FV-tier ramp). Falls back
+// to the prose summary when no tool grades are on file so a thin
+// profile still shows *something* under the meta line. Detail page
+// still calls makeQuickReadSummary for the full prose narrative.
 function makeListRowSummary(p) {
+  const chipStrip = makeToolGradeChips(p);
+  if (chipStrip) return chipStrip;
   // listMode=true trims segments whose data already shows on sibling
   // cells of the same row (age/pos/level, FV badge, stock arrow, ETA,
   // B/T chip) — see makeQuickReadSummaryParts for the gating.
@@ -13487,7 +13594,7 @@ const TIER_BUCKETS = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
 
 // Form bar — small sparkline on each farm row showing the org's
 // cumulative-FV growth above (or below) the league-mean farm system over
-// the active window (1y / 3y / 5y). We clip the series to the window,
+// the active window (1y / 3y / 6y). We clip the series to the window,
 // anchor every org's curve at zero on its first in-window point, then
 // subtract a linear baseline of `meanTrajectory * (t/windowDays)` so the
 // line represents "FV gained beyond what the average farm gained". A flat
@@ -13500,7 +13607,7 @@ const TIER_BUCKETS = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
 // what the sort chip and grade signal also key off.
 const FORM_BAR_W = 130;
 const FORM_BAR_H = 26;
-const FORM_WINDOW_DAYS = { "1y": 365, "3y": 365 * 3, "5y": 365 * 5 };
+const FORM_WINDOW_DAYS = { "1y": 365, "3y": 365 * 3, "6y": 365 * 6 };
 
 function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey) {
   const series = fvHistory || [];
@@ -13556,7 +13663,7 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey)
   // Color + arrow keyed off the precomputed delta-above-mean for the
   // window. The dead zone scales with the mean's magnitude so the
   // threshold for "essentially average" makes sense whether you're
-  // looking at 1y (mean ~ a few hundred FV-points) or 5y (mean in
+  // looking at 1y (mean ~ a few hundred FV-points) or 6y (mean in
   // the thousands). Falls back to a hard minimum of 5 so unconfigured
   // windows still get a coherent answer.
   const delta = deltaAboveMean || 0;
@@ -13644,7 +13751,9 @@ function makePosBreakdown(posGroups) {
   ).join('');
 }
 
-// Map letter grades to colors. A+/A tiers glow up, D dims down.
+// Map letter grades to colors. A+/A tiers glow up, D dims down, D-/F
+// hit deep crimson so a bottom-tier org reads as visually distinct
+// from "just below average" (the C/C- band).
 function gradeColor(letter) {
   if (!letter) return 'var(--text-tertiary)';
   if (letter === 'A+' || letter === 'A')             return 'var(--up)';
@@ -13652,6 +13761,8 @@ function gradeColor(letter) {
   if (letter === 'B'  || letter === 'B-')            return 'var(--text-primary)';
   if (letter === 'C+' || letter === 'C')             return '#C8A050';
   if (letter === 'C-' || letter === 'D')             return 'var(--down)';
+  if (letter === 'D-')                                return '#B83A2E';   // dark amber-red
+  if (letter === 'F')                                 return '#8B1A1A';   // deep crimson — bottom of the scale
   return 'var(--text-secondary)';
 }
 
@@ -13767,7 +13878,7 @@ function makeFarmReportCard(org) {
     : `Insufficient draft-pool data (needs ≥3 contributing grads with draft-pool spend on file).`;
   const ifaRoiLeaf = t.fin_ifa_roi || {};
   const ifaRoiTooltip = ifaRoiLeaf.war_per_m_ifa != null
-    ? `Trailing 5yr-window WAR per $M of IFA spend. ${ifaRoiLeaf.grad_count ?? 0} contributing grads, ${ifaRoiLeaf.spend_total_usd != null ? '$' + (ifaRoiLeaf.spend_total_usd / 1_000_000).toFixed(1) + 'M IFA spend' : 'spend data unavailable'}.`
+    ? `Trailing 6yr-window WAR per $M of IFA spend. ${ifaRoiLeaf.grad_count ?? 0} contributing grads, ${ifaRoiLeaf.spend_total_usd != null ? '$' + (ifaRoiLeaf.spend_total_usd / 1_000_000).toFixed(1) + 'M IFA spend' : 'spend data unavailable'}.`
     : `Insufficient IFA-spend data (needs ≥2 contributing grads with signed_year + bonus on file).`;
   const finSubs =
     subCell('WAR per $M',            'fin_war_per_m',              'fin_war_per_m',              fmtWarPerM,  (t.fin_war_per_m        || {}).value) +
@@ -13789,7 +13900,7 @@ function makeFarmReportCard(org) {
     : `Insufficient grads to compute top-3 mean (needs ≥3 qualifying graduates).`;
   const convTooltip = convLeaf.conviction != null
     ? (convLeaf.conviction === 1
-        ? `STAR PRESENT — at least one grad with WAR/yr ≥ 4.0 in trailing 5yr OR career WAR ≥ 12 ever. Peak ${convLeaf.peak_war_per_yr != null ? convLeaf.peak_war_per_yr.toFixed(1) + ' WAR/yr' : '—'} / ${convLeaf.peak_career_war != null ? convLeaf.peak_career_war.toFixed(1) + ' career WAR' : '—'}.`
+        ? `STAR PRESENT — at least one grad with WAR/yr ≥ 4.0 in trailing 6yr OR career WAR ≥ 12 ever. Peak ${convLeaf.peak_war_per_yr != null ? convLeaf.peak_war_per_yr.toFixed(1) + ' WAR/yr' : '—'} / ${convLeaf.peak_career_war != null ? convLeaf.peak_career_war.toFixed(1) + ' career WAR' : '—'}.`
         : `No star — peak grad ${convLeaf.peak_war_per_yr != null ? convLeaf.peak_war_per_yr.toFixed(1) + ' WAR/yr' : '—'} / ${convLeaf.peak_career_war != null ? convLeaf.peak_career_war.toFixed(1) + ' career WAR' : '—'}. Below WAR/yr ≥ 4.0 (recent) AND career WAR ≥ 12 thresholds.`)
     : `No graduate sample.`;
   const convFmt = v => v === 1 ? 'STAR ✓' : (v === 0 ? 'no star' : '—');
@@ -13808,7 +13919,7 @@ function makeFarmReportCard(org) {
   // didn't track the branch grades.
   const capped = org.conviction_cap_applied === true;
   const cappedBadge = capped
-    ? `<span class="gt-comp-cap" title="Conviction cap applied — no graduate with WAR/yr ≥ 4.0 (last 5yr) or career WAR ≥ 12 ever. Capped at the 75th-pctile farm_score (uncapped would be ${org.farm_score_uncapped != null ? org.farm_score_uncapped.toFixed(1) : '—'}).">CAPPED</span>`
+    ? `<span class="gt-comp-cap" title="Conviction cap applied — no graduate with WAR/yr ≥ 4.0 (last 6yr) or career WAR ≥ 12 ever. Capped at the 75th-pctile farm_score (uncapped would be ${org.farm_score_uncapped != null ? org.farm_score_uncapped.toFixed(1) : '—'}).">CAPPED</span>`
     : '';
 
   // ── Horizontal SVG decision tree ──
@@ -14088,7 +14199,7 @@ function makeFarmToolDevCard(org) {
 // minus a linear mean-baseline so the y-axis reads "growth above the
 // league mean"), drawn larger with gridlines, year markers, and an
 // explicit zero-line so the reader can pick up the magnitude and slope
-// without hovering. Reacts to state.formWindow (1y / 3y / 5y).
+// without hovering. Reacts to state.formWindow (1y / 3y / 6y).
 //
 // `chartWidth` is optional — defaults to 760 (the single-pane farm detail
 // page) but can be overridden by the side-by-side compare view, which
@@ -14724,7 +14835,7 @@ function makeGradCohortChart(grads, opts = {}) {
 }
 
 // Farm cross-org heatmap (Phase 3 P3-A). Renders all 30 orgs in a
-// vertical strip with three columns (1y / 3y / 5y DvM+). Each cell's
+// vertical strip with three columns (1y / 3y / 6y DvM+). Each cell's
 // hue + opacity encodes the org's deviation from league-mean (100):
 // green ↑ for above-mean development pace, red ↓ for below, opacity
 // scales with magnitude. The composite-ranked top orgs sit at the top
@@ -14734,7 +14845,7 @@ function makeGradCohortChart(grads, opts = {}) {
 //   orgs — array of org_summary entries (one per MLB org)
 // Returns: HTML string with a labelled SVG.
 function makeFarmHeatmap(orgs) {
-  const WINDOWS = ["1y", "3y", "5y"];
+  const WINDOWS = ["1y", "3y", "6y"];
   // Sort by composite farm_score descending so the top orgs land at
   // the top of the heatmap. Stable secondary by org name for ties.
   const sorted = [...(orgs || [])].sort((a, b) =>
@@ -15148,15 +15259,17 @@ function farmSortedOrgs() {
     // Explicit per-window trajectory sorts (the chip click handler
     // also flips state.formWindow so the line chart matches the sort
     // Trajectory sort reads the DvM+ for the currently active
-    // development window. The legacy trajectory_1y / _3y / _5y URL
-    // params still resolve here so old shared links keep working —
-    // they just pin the window before sorting.
-    if (s === "trajectory" || s === "trajectory_1y" || s === "trajectory_3y" || s === "trajectory_5y") {
+    // development window. The legacy trajectory_1y / _3y / _5y / _6y
+    // URL params still resolve here so old shared links keep working —
+    // they just pin the window before sorting. trajectory_5y is
+    // legacy-aliased to 6y now that the window has moved.
+    if (s === "trajectory" || s === "trajectory_1y" || s === "trajectory_3y"
+        || s === "trajectory_5y" || s === "trajectory_6y") {
       let w;
       if (s === "trajectory_1y") w = "1y";
       else if (s === "trajectory_3y") w = "3y";
-      else if (s === "trajectory_5y") w = "5y";
-      else w = state.formWindow || "3y";
+      else if (s === "trajectory_6y" || s === "trajectory_5y") w = "6y";
+      else w = state.formWindow || "6y";
       const ad = (a.dvm_plus || {})[w] ?? (a.delta_above_mean || {})[w] ?? a.trajectory_score ?? 0;
       const bd = (b.dvm_plus || {})[w] ?? (b.delta_above_mean || {})[w] ?? b.trajectory_score ?? 0;
       return bd - ad;
@@ -15452,10 +15565,10 @@ function renderFarmSystems() {
   // the same render cycle doesn't compare against itself.
   const lastVisitRanks = loadLastVisitFarmRanks();
 
-  const win = state.formWindow || "3y";
+  const win = state.formWindow || "6y";
   const means = (DATA.farm_trajectory_means || {});
   const meanBaseline = means[win] ?? 0;
-  const winLabel = win === "1y" ? "1-year" : win === "3y" ? "3-year" : "5-year";
+  const winLabel = win === "1y" ? "1-year" : win === "3y" ? "3-year" : "6-year";
 
   const header = `<div class="farm-header">
     <span style="text-align:center;">#</span>
@@ -19031,7 +19144,7 @@ function renderFarmDetail(orgCode) {
                      : farmSurplusBreakdown.total >= 200 ? "var(--neon-cyan)"
                      : "var(--text-primary)";
 
-  // DvM+ tile — prioritized 3-up stat showing 1y / 3y / 5y development
+  // DvM+ tile — prioritized 3-up stat showing 1y / 3y / 6y development
   // vs the league mean as a wRC+/OPS+-style index (100 = league mean,
   // 10 pts = 1 std-dev). Pure-development metric: graduations + acquisitions
   // are nullified, so only FV gained while the player was in the org counts.
@@ -19050,7 +19163,7 @@ function renderFarmDetail(orgCode) {
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-items:end;">
       ${dvmCell("1y", "1YDvM+")}
       ${dvmCell("3y", "3YDvM+")}
-      ${dvmCell("5y", "5YDvM+")}
+      ${dvmCell("6y", "6YDvM+")}
     </div>
   </div>`;
 
@@ -20063,14 +20176,14 @@ function renderFarmDetail(orgCode) {
     ${gradedSection}`;
 
   const devTabHtml = `
-    <div class="detail-title flush">${(state.formWindow || "3y")} development vs mean farm <span class="detail-title-sub">pure-development metric — graduations + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. DvM+ = wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev</span></div>
+    <div class="detail-title flush">${(state.formWindow || "6y")} development vs mean farm <span class="detail-title-sub">pure-development metric — graduations + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. DvM+ = wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. 6y is the principal signal.</span></div>
     <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
       <span class="filter-label">Window</span>
-      <button class="chip${(state.formWindow || "3y") === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
-      <button class="chip${(state.formWindow || "3y") === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
-      <button class="chip${(state.formWindow || "3y") === "5y" ? " active" : ""}" data-form-window="5y" type="button">5y</button>
+      <button class="chip${(state.formWindow || "6y") === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
+      <button class="chip${(state.formWindow || "6y") === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
+      <button class="chip${(state.formWindow || "6y") === "6y" ? " active" : ""}" data-form-window="6y" type="button">6y</button>
     </div>
-    ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || "3y"] ?? 0), state.formWindow || "3y")}`;
+    ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || "6y"] ?? 0), state.formWindow || "6y")}`;
 
   const financesTabHtml = `
     <div class="detail-title flush">Acquisition spending <span class="detail-title-sub">Bonus pool dollars — International FA vs Draft, 2021-present</span></div>
@@ -21278,8 +21391,8 @@ function makeFarmCompareSideBySide(farms) {
   // The window selector sits at the top and stays synced with the
   // farm-detail page via state.formWindow. DvM+ already appears in the
   // chart caption (see makeFarmGrowthChart), so no extra label here.
-  const win = state.formWindow || "3y";
-  const winLabel = win === "1y" ? "1-year" : win === "3y" ? "3-year" : "5-year";
+  const win = state.formWindow || "6y";
+  const winLabel = win === "1y" ? "1-year" : win === "3y" ? "3-year" : "6-year";
   const meanBaseline = (DATA.farm_trajectory_means || {})[win] ?? 0;
   // Heuristic responsive width: the compare-card viewport is ~880px on
   // a typical workspace; subtract per-cell gap then divide by N. Floor
@@ -21295,8 +21408,8 @@ function makeFarmCompareSideBySide(farms) {
       <span class="filter-label">${escapeHtml(winLabel)} development vs mean</span>
       <button class="chip${win === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
       <button class="chip${win === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
-      <button class="chip${win === "5y" ? " active" : ""}" data-form-window="5y" type="button">5y</button>
-      <span style="margin-left:auto;font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;">DvM+ · 100 = league mean · 10 pts = 1 std-dev · graduations + acquisitions nullified</span>
+      <button class="chip${win === "6y" ? " active" : ""}" data-form-window="6y" type="button">6y</button>
+      <span style="margin-left:auto;font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;">DvM+ · 100 = league mean · 10 pts = 1 std-dev · graduations + acquisitions nullified · 6y is the principal window</span>
     </div>
     <div style="display:grid;grid-template-columns:${cols};gap:10px;align-items:start;">${chartCells}</div>
   </div>`;
@@ -21334,7 +21447,7 @@ function makeFarmCompareSideBySide(farms) {
     // dev). Showing both is double counting and clutters the table.
     ["1YDvM+",            o => fmtDsPlus(o, "1y"), false],
     ["3YDvM+",            o => fmtDsPlus(o, "3y"), false],
-    ["5YDvM+",            o => fmtDsPlus(o, "5y"), false],
+    ["6YDvM+",            o => fmtDsPlus(o, "6y"), false],
   ];
   const tableRows = rows.map(([label, fn, escape]) =>
     `<tr><th>${label}</th>${farms.map(o => {
@@ -21968,20 +22081,21 @@ function attachHandlers() {
 
   // Farm sort chips. The unified "Trajectory" chip just sorts by the
   // current state.formWindow's DvM+; the right-side window selector is
-  // the one place the window gets changed. Legacy trajectory_(1|3|5)y
+  // the one place the window gets changed. Legacy trajectory_(1|3|5|6)y
   // URL params still flip the window here for backward compat with
-  // pre-Phase-3 shared links.
+  // pre-Phase-3 shared links. trajectory_5y is legacy-aliased to 6y.
   attachChipGroup("farm-sort", "farmSort", (key) => {
-    const trajMatch = /^trajectory_(1y|3y|5y)$/.exec(key);
+    const trajMatch = /^trajectory_(1y|3y|5y|6y)$/.exec(key);
     if (trajMatch) {
-      state.formWindow = trajMatch[1];
+      const w = trajMatch[1] === "5y" ? "6y" : trajMatch[1];
+      state.formWindow = w;
       document.querySelectorAll("[data-form-window]").forEach(b =>
         b.classList.toggle("active", b.dataset.formWindow === state.formWindow));
     }
     renderFarmSystems();
   });
 
-  // Form-window chips (1y / 3y / 5y). Drives the sparkline + trajectory
+  // Form-window chips (1y / 3y / 6y). Drives the sparkline + trajectory
   // delta-above-mean on the farm list, and the windowed trajectory
   // cell on the farm-detail report card. Re-renders both views so the
   // selector works whether the user is on the list or in a detail page.
