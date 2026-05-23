@@ -2822,6 +2822,19 @@
       display: flex; align-items: center; justify-content: space-between;
       gap: 4px; font-size: 11px; min-width: 0;
     }
+    .farm-top3-pos {
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      letter-spacing: 0.04em;
+      padding: 1px 4px;
+      border: 1px solid var(--border-light);
+      border-radius: 2px;
+      background: var(--bg-tertiary);
+      cursor: help;
+    }
     .farm-top3-name {
       color: var(--text-primary);
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -3141,29 +3154,29 @@
       display: inline-flex; flex-direction: column; align-items: center;
       line-height: 1; min-width: 0;
       position: relative;
-      padding: 2px 4px;
+      padding: 0;
     }
     .farm-dvm-hero::before,
     .farm-dvm-hero::after {
       content: "";
       position: absolute;
-      width: 6px;
-      height: 6px;
+      width: 4px;
+      height: 4px;
       pointer-events: none;
     }
     .farm-dvm-hero::before {
-      top: 0;
-      left: 0;
+      top: -1px;
+      left: 1px;
       border-top: 2px solid currentColor;
       border-left: 2px solid currentColor;
-      border-top-left-radius: 2px;
+      border-top-left-radius: 1px;
     }
     .farm-dvm-hero::after {
-      bottom: 0;
-      right: 0;
+      bottom: -1px;
+      right: 1px;
       border-bottom: 2px solid currentColor;
       border-right: 2px solid currentColor;
-      border-bottom-right-radius: 2px;
+      border-bottom-right-radius: 1px;
     }
     .farm-dvm-hero .fdh-value {
       font-family: var(--font-mono);
@@ -15210,7 +15223,67 @@ const FORM_BAR_W = 130;
 const FORM_BAR_H = 26;
 const FORM_WINDOW_DAYS = { "1y": 365, "3y": 365 * 3, "6y": 365 * 6 };
 
-function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey) {
+// === ToolDvM+ proxy aggregation (per-snapshot) ===
+// Backend doesn't export per-snapshot ToolDvM+ history — derive it at
+// render time by walking each org's prospects' tools_consensus arrays.
+// Caches are flushed when DATA reloads (rare). Numbers are PROXIES,
+// not the storage.py ToolsDvM+ z-score — they tell the "tools trending
+// vs league" shape, not absolute values comparable to other DvM+ tiles.
+const _orgPlayersByCode = new Map();
+function _playersForOrg(orgCode) {
+  if (_orgPlayersByCode.has(orgCode)) return _orgPlayersByCode.get(orgCode);
+  const list = (DATA.players || []).filter(p => p.org === orgCode);
+  _orgPlayersByCode.set(orgCode, list);
+  return list;
+}
+const _orgToolMeanCache = new Map();  // key: "ORG|YYYY-MM-DD" → mean grade
+function _orgToolMeanAtDate(orgCode, dateIso) {
+  const key = `${orgCode}|${dateIso}`;
+  if (_orgToolMeanCache.has(key)) return _orgToolMeanCache.get(key);
+  const players = _playersForOrg(orgCode);
+  const grades = [];
+  for (const p of players) {
+    const pts = p.points || [];
+    // Find the latest snapshot at or before dateIso
+    for (let i = pts.length - 1; i >= 0; i--) {
+      if (pts[i].snapshot_date <= dateIso) {
+        const tc = pts[i].tools_consensus;
+        if (tc) {
+          const vals = Object.values(tc)
+            .filter(v => v != null && !isNaN(Number(v)))
+            .map(Number);
+          if (vals.length) {
+            grades.push(vals.reduce((a, b) => a + b, 0) / vals.length);
+          }
+        }
+        break;
+      }
+    }
+  }
+  const result = grades.length
+    ? grades.reduce((a, b) => a + b, 0) / grades.length
+    : null;
+  _orgToolMeanCache.set(key, result);
+  return result;
+}
+const _leagueToolMeanCache = new Map();
+function _leagueToolMeanAtDate(dateIso) {
+  if (_leagueToolMeanCache.has(dateIso)) return _leagueToolMeanCache.get(dateIso);
+  const orgCodes = new Set();
+  for (const p of (DATA.players || [])) if (p.org) orgCodes.add(p.org);
+  const orgMeans = [];
+  for (const code of orgCodes) {
+    const m = _orgToolMeanAtDate(code, dateIso);
+    if (m != null) orgMeans.push(m);
+  }
+  const result = orgMeans.length
+    ? orgMeans.reduce((a, b) => a + b, 0) / orgMeans.length
+    : null;
+  _leagueToolMeanCache.set(dateIso, result);
+  return result;
+}
+
+function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey, orgCode) {
   const series = fvHistory || [];
   const windowDays = FORM_WINDOW_DAYS[windowKey] || 365;
   const baseline = meanTrajectory || 0;
@@ -15295,15 +15368,12 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey)
   const baseY = zeroY.toFixed(1);
   const fillPoints = `0,${baseY} ${points} ${lastX},${baseY}`;
 
-  // Per-segment Catmull-Rom Bezier curves with shared tangents at
-  // joints — smooth visual flow with per-segment color by direction
-  // (green up, red down, tertiary brown flat). Mirrors the FV-history
-  // chart pattern so the user gets one consistent reading language
-  // across prospect and farm charts. Strokes use vector-effect so
-  // they stay crisp regardless of sparkline scaling.
-  const segColor = d => d > 0 ? "var(--up)"
-                      : d < 0 ? "var(--down)"
-                              : "var(--text-tertiary)";
+  // Catmull-Rom Bezier curves with shared tangents at joints — smooth
+  // visual flow, single overall-trend color (no per-segment direction
+  // recoloring). Farm sparklines are a high-level summary; per-segment
+  // greens/reds end up overly noisy at the long 6y window where most
+  // orgs have multiple mid-window oscillations. The overall-trend
+  // stroke color is set above based on deltaAboveMean.
   const segments = [];
   for (let i = 0; i < coords.length - 1; i++) {
     const p0 = coords[i - 1] || coords[i];
@@ -15314,8 +15384,43 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey)
     const cp1y = p1.y + (p2.y - p0.y) / 6;
     const cp2x = p2.x - (p3.x - p1.x) / 6;
     const cp2y = p2.y - (p3.y - p1.y) / 6;
-    const c = segColor(p2.v - p1.v);
-    segments.push(`<path d="M ${p1.x.toFixed(1)},${p1.y.toFixed(1)} C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}" stroke="${c}" stroke-width="1.5" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"/>`);
+    segments.push(`<path d="M ${p1.x.toFixed(1)},${p1.y.toFixed(1)} C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}" stroke="${stroke}" stroke-width="1.5" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"/>`);
+  }
+
+  // ToolDvM+ proxy overlay — dashed violet polyline tracking the org's
+  // mean per-tool grade trajectory vs the league's mean per-tool grade
+  // trajectory. Tells whether FV moves are accompanied by tool moves
+  // (or scout-narrative-driven). Same X axis as the FV curve; Y axis
+  // normalized independently to fit the chart range since absolute
+  // tool deltas (1-5 grade points) are much smaller than FV deltas
+  // (hundreds of points). Skipped when no orgCode passed (older
+  // callers) or insufficient tool data on the org.
+  let toolOverlaySvg = "";
+  if (orgCode && recent.length >= 2) {
+    const startToolOrg = _orgToolMeanAtDate(orgCode, recent[0].date);
+    const startToolLeague = _leagueToolMeanAtDate(recent[0].date);
+    if (startToolOrg != null && startToolLeague != null) {
+      const toolPoints = [];
+      for (let i = 0; i < recent.length; i++) {
+        const orgMean = _orgToolMeanAtDate(orgCode, recent[i].date);
+        const leagueMean = _leagueToolMeanAtDate(recent[i].date);
+        if (orgMean == null || leagueMean == null) continue;
+        const dvm = (orgMean - startToolOrg) - (leagueMean - startToolLeague);
+        toolPoints.push({ x: rel[i].x * FORM_BAR_W, d: dvm });
+      }
+      if (toolPoints.length >= 2) {
+        // Independent y-scale for tool deltas so the dashed line is
+        // visible even when absolute magnitudes are tiny vs FV scale.
+        const toolAbsMax = Math.max(0.5, ...toolPoints.map(p => Math.abs(p.d)));
+        const toolY = d => zeroY - (d / toolAbsMax) * (innerH / 2);
+        const toolPolyPts = toolPoints
+          .map(p => `${p.x.toFixed(1)},${toolY(p.d).toFixed(1)}`)
+          .join(' ');
+        const lastD = toolPoints[toolPoints.length - 1].d;
+        const toolTip = `Tool grade trajectory vs league (proxy) · final ${lastD > 0 ? "+" : ""}${lastD.toFixed(2)}`;
+        toolOverlaySvg = `<polyline points="${toolPolyPts}" fill="none" stroke="var(--neon-violet)" stroke-width="1" stroke-dasharray="3,2" opacity="0.75" vector-effect="non-scaling-stroke"><title>${escapeHtml(toolTip)}</title></polyline>`;
+      }
+    }
   }
 
   const titleText = `${windowKey} development vs mean: ${sign}${delta.toFixed(1)} (mean Δ ${baseline.toFixed(1)}) · acquisitions excluded`;
@@ -15326,6 +15431,7 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey)
       ${baselineLine}
       <polygon points="${fillPoints}" fill="${stroke}" opacity="0.10"/>
       ${segments.join('')}
+      ${toolOverlaySvg}
     </svg>
     <span style="color:${stroke};font-size:11px;font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${deltaLabel}</span>
   </div>`;
@@ -15653,9 +15759,7 @@ function makeFarmReportCard(org) {
       <text x="${PAD_L + ROOT_W / 2}" y="${rootY + 8}" text-anchor="middle"
             style="font-family:var(--font-serif);font-size:36px;font-weight:700;fill:${rootColor};">${escapeHtml(g.overall || '—')}</text>
       <text x="${PAD_L + ROOT_W / 2}" y="${rootY + 28}" text-anchor="middle"
-            style="font-family:var(--font-mono);font-size:11px;fill:var(--text-secondary);">#${org.farm_rank ?? '—'} of ${n} · ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}</text>
-      ${capped ? `<text x="${PAD_L + ROOT_W / 2}" y="${rootY + 42}" text-anchor="middle"
-            style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;font-weight:700;fill:#d8643c;">CAPPED</text>` : ''}`;
+            style="font-family:var(--font-mono);font-size:11px;fill:var(--text-secondary);">#${org.farm_rank ?? '—'} of ${n} · ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}</text>`;
 
     // Branch circles + labels.
     const branchNodes = branchLayouts.map(b => {
@@ -17290,16 +17394,22 @@ function renderFarmSystems() {
     // Top-3 prospects strip (G16). Names are clickable — onclick fires
     // goToPlayer() with the player_key and stopPropagation prevents the
     // row's goToFarm() from also firing. Keyboard focus + Enter also
-    // routes to the player page for accessibility.
+    // routes to the player page for accessibility. Position shown
+    // inline before the name as a small tertiary chip.
     const top3 = (org.prospects || []).slice(0, 3);
     const topHtml = top3.length
       ? `<div class="farm-top3-stack">${top3.map(t => {
           const pkey = escapeHtml(t.player_key || "");
+          const primaryPos = (t.pos || t.position || "")
+            .toString().split("/")[0].trim().toUpperCase();
+          const posChip = primaryPos
+            ? `<span class="farm-top3-pos" title="${escapeHtml(t.pos || t.position || "")}">${escapeHtml(primaryPos)}</span>`
+            : "";
           const nameHtml = pkey
             ? `<span class="farm-top3-name is-link" data-key="${pkey}" tabindex="0" onclick="event.stopPropagation();goToPlayer('${pkey}');" onkeydown="if(event.key==='Enter'){event.stopPropagation();goToPlayer('${pkey}');}">${escapeHtml(t.name)}</span>`
             : `<span class="farm-top3-name">${escapeHtml(t.name)}</span>`;
           return `<div class="farm-top3-chip">
-            ${nameHtml}
+            ${posChip}${nameHtml}
             <span class="fv-badge ${fvClass(t.fv_label)} size-xs" style="flex-shrink:0;">${t.fv_label}</span>
           </div>`;
         }).join("")}</div>`
@@ -17384,7 +17494,7 @@ function renderFarmSystems() {
           return `<span class="fdh-value" style="color:${color};" title="${win.toUpperCase()}DvM+ ${v} · 100 = league mean · 10 pts = 1 std-dev · graduations + acquisitions nullified">${v}</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
         })()}</div>
         <div>${makeToolDvmCell(org)}</div>
-        <div title="${escapeHtml(pulseTooltip)}">${makeFarmSparkline(org.fv_history, deltaAbove, meanBaseline, win)}${pulseHtml}</div>
+        <div title="${escapeHtml(pulseTooltip)}">${makeFarmSparkline(org.fv_history, deltaAbove, meanBaseline, win, org.org)}${pulseHtml}</div>
         <div>${topHtml}</div>
         <div>${makePosBreakdown(org.pos_groups)}${makeOrgEtaWave(etaByOrg[org.org], currentYear)}</div>
         <div class="level-depth-cell">${makeLevelDepth(org.level_counts, activeLevel)}</div>
@@ -21225,15 +21335,21 @@ function renderFarmDetail(orgCode) {
   try {
     return _renderFarmDetailBody(orgCode, org, root);
   } catch (err) {
+    const msg = String(err && err.message || err);
+    const stack = String(err && err.stack || "");
     root.innerHTML = `<div class="state-message">
-      Render error on farm detail for <code>${escapeHtml(orgCode)}</code>.
-      <a href="#" onclick="goHome();return false;">Back to list</a>.
+      <strong style="color:var(--down);">Render error on farm detail for <code>${escapeHtml(orgCode)}</code>.</strong>
+      <a href="#" onclick="goHome();return false;" style="margin-left:8px;">← Back to list</a>
+      <div style="margin-top:12px;padding:10px;background:var(--bg-tertiary);border-left:3px solid var(--down);border-radius:2px;font-family:var(--font-mono);font-size:11px;color:var(--text-primary);">
+        ${escapeHtml(msg)}
+      </div>
       <details style="margin-top:8px;font-size:11px;color:var(--text-tertiary);">
-        <summary style="cursor:pointer;">${escapeHtml(String(err && err.message || err))}</summary>
-        <pre style="white-space:pre-wrap;font-size:10px;">${escapeHtml(String(err && err.stack || ""))}</pre>
+        <summary style="cursor:pointer;">Stack trace (click to expand · please share this when reporting)</summary>
+        <pre style="white-space:pre-wrap;font-size:10px;padding:8px;background:var(--bg-tertiary);">${escapeHtml(stack)}</pre>
       </details>
     </div>`;
-    console.error("renderFarmDetail failed:", err);
+    console.error("renderFarmDetail failed for", orgCode, ":", err);
+    console.error("Full stack:", stack);
   }
 }
 
@@ -21764,7 +21880,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
         ${fvBadge}
         <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}</span>
         ${rpsChip}
-        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;">${escapeHtml(sl.level)} · ${rp.age.toFixed(1)}y · ${etaTxt}</span>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;">${escapeHtml(sl.level ?? "?")} · ${rp.age != null ? rp.age.toFixed(1) + "y" : "?y"} · ${etaTxt}</span>
       </div>`;
     }).join("");
     return `<div class="farm-side-card">
