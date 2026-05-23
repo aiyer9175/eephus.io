@@ -133,6 +133,24 @@ SOURCE_ALIASES = {
     "mlb_pipeline_international": "mlb_pipeline",
 }
 
+PLAYER_KEY_ALIASES = {
+    "josh_kurodagrauer": {
+        "player_key": "joshua_kurodagrauer",
+        "player_name": "Joshua Kuroda-Grauer",
+    },
+}
+
+
+def _canonicalize_player_snapshot(s: Snapshot) -> Snapshot:
+    alias = PLAYER_KEY_ALIASES.get(s.player_key)
+    if not alias:
+        return s
+    return _dc_replace(
+        s,
+        player_key=alias["player_key"],
+        player_name=alias.get("player_name") or s.player_name,
+    )
+
 
 def _dedupe_source_aliases(day_snaps: list[Snapshot]) -> list[Snapshot]:
     """Collapse multi-list outlets (e.g. MLB Pipeline Top 100 + Pipeline
@@ -776,12 +794,12 @@ def build_timeseries(
     uniformly across every point. Pass `prior_mean_fv` to override the
     auto-computed prior (e.g. for unit tests).
     """
+    snapshots = [_canonicalize_player_snapshot(s) for s in snapshots]
     # v14 — drop-off detection runs ONCE across the full snapshot pool so
     # every player-level compute_consensus_point call shares the same view
     # of "which (player, source) pairs lost a Top-30 spot." Stays out of
     # the per-player loop to avoid O(N×M) recomputation.
     dropped_off = _dropped_off_pairs(snapshots)
-
     by_player: dict[str, list[Snapshot]] = defaultdict(list)
     for s in snapshots:
         by_player[s.player_key].append(s)
