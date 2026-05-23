@@ -82,6 +82,7 @@ only one update reads as "flat."
 
 from __future__ import annotations
 
+import re
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass, field, replace as _dc_replace
@@ -194,6 +195,13 @@ def implied_fv_from_rank(rank: int | None) -> float | None:
     if rank <= 200:
         return 45.0
     return 40.0
+
+
+# v18 — Match human-readable org-list interval labels like
+# "MLB Pipeline 2021 Nationals Top 30". The `\b` word-boundary +
+# end-of-string anchor lets "Top 30" / "Top 25" / "Top 20" / "Top 10"
+# match without false-positives on "Top 100" / "Top 200" / "Top 300".
+_ORG_LIST_LABEL_RE = re.compile(r"\bTop\s+(?:10|20|25|30)\b\s*$")
 
 
 # ---------------------------------------------------------------------------
@@ -372,15 +380,21 @@ def compute_consensus_point(
             explicit_fvs.append(fv_for_consensus)
             contributing_sources.add(s.source)
         if s.rank is not None:
-            # v15 — Exclude team-Top-30-list ranks from the consensus
-            # avg_rank + rank-implied FV computations. Org-specific lists
-            # rank "best in this org" not "best overall," so a #1 on the
-            # Marlins list isn't comparable to a #1 on a global Top-100
-            # list — including those ranks pulled the avg_rank toward
-            # the org-list extremes and inflated rank_implied_fv for
-            # prospects appearing only on org Top-30s.
-            is_org_list = bool(s.interval_label
-                               and "_org_" in s.interval_label)
+            # v15/v18 — Exclude team-Top-N ranks from the consensus
+            # avg_rank + rank-implied FV math. Org-specific lists rank
+            # "best in this org" not "best overall," so a #1 on the
+            # Marlins list isn't comparable to a #1 on a global Top-100.
+            # Two label formats to catch:
+            #   * internal slug: "..._org_..." (legacy)
+            #   * human-readable: "MLB Pipeline 2021 Nationals Top 30"
+            # The Top-N suffix uses end-of-string anchoring so "Top 30"
+            # matches but "Top 300" wouldn't, and "Top 100" / "Top 200"
+            # never trigger. Bryan Sanchez was the canary — his only
+            # signal was rank 30 on the 2021 Nationals Top-30, and the
+            # legacy check missed the label format → rank 30 inflated
+            # to FV 55 → he sorted #19 overall despite zero published FVs.
+            _lbl = s.interval_label or ""
+            is_org_list = ("_org_" in _lbl) or _ORG_LIST_LABEL_RE.search(_lbl) is not None
             if not is_org_list:
                 implied = implied_fv_from_rank(s.rank)
                 if implied is not None:
