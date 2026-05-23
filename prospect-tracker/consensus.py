@@ -492,6 +492,32 @@ def compute_consensus_point(
         elif r is not None:
             tools_consensus["pwr"] = r
 
+    # v17 — Fold FG physical grades (Frame / Athl / Delivery) into the
+    # consensus tools dict as 20-80 FV equivalents so the active-list
+    # chip strip and per-tool grid surface them alongside the 20-80
+    # scouted grades. FG publishes on a -2..+2 plus/minus scale; we map
+    # -2→30, -1→40, 0→50, +1→60, +2→70 so the chip-tier color ramp
+    # works without a special case. Only FG publishes these so we look
+    # only at the FG per-source _extras dict (other sources omit them).
+    def _pm_to_fv(pm):
+        if pm is None: return None
+        try: v = int(pm)
+        except (TypeError, ValueError): return None
+        if v < -2 or v > 2: return None
+        return float(50 + 10 * v)
+    for s in day_snaps:
+        if s.source != "fangraphs" or not s.tools:
+            continue
+        ex = s.tools.get("_extras") if isinstance(s.tools, dict) else None
+        if not isinstance(ex, dict):
+            continue
+        for phys_key in ("frame", "athl", "delivery"):
+            if phys_key in tools_consensus:
+                continue
+            fv = _pm_to_fv(ex.get(phys_key))
+            if fv is not None:
+                tools_consensus[phys_key] = fv
+
     return ConsensusPoint(
         snapshot_date=event_date,
         interval_label=event_label,

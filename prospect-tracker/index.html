@@ -5312,13 +5312,14 @@
         <option value="any">Any tool</option>
         <optgroup label="Hitter">
           <option value="hit">Hit</option>
-          <option value="game_pwr">Game pwr</option>
-          <option value="raw_pwr">Raw pwr</option>
+          <option value="pwr">Power</option>
           <option value="speed">Run</option>
           <option value="field">Field</option>
           <option value="throw">Throw</option>
           <option value="pitch_sel">Pitch Sel</option>
           <option value="bat_ctrl">Bat Ctrl</option>
+          <option value="frame">Frame</option>
+          <option value="athl">Athleticism</option>
         </optgroup>
         <optgroup label="Pitcher">
           <option value="fb">Fastball</option>
@@ -5327,6 +5328,9 @@
           <option value="ch">Changeup</option>
           <option value="cmd">Command</option>
           <option value="ct">Cutter</option>
+          <option value="frame">Frame</option>
+          <option value="athl">Athleticism</option>
+          <option value="delivery">Delivery</option>
         </optgroup>
       </select>
       <select class="chip" id="tool-filter-min">
@@ -6552,9 +6556,12 @@ function _toolGradeStripHTML(p) {
   const pos = String(p.position || '').toUpperCase();
   const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(pos)
                   || ((p.sabermetrics || {}).is_pitcher === true);
+  // v17 — Consolidated PWR replaces the legacy game_pwr surface;
+  // Frame / Athl pills surface FG physical grades (already mapped to
+  // 30/40/50/60/70 FV by the consensus layer).
   const keys = isPitcher
-    ? [['FB','fb'], ['SL','sl'], ['CB','cb'], ['CH','ch'], ['CMD','cmd']]
-    : [['HIT','hit'], ['POW','game_pwr'], ['SPD','speed'], ['FLD','field'], ['ARM','throw']];
+    ? [['FB','fb'], ['SL','sl'], ['CB','cb'], ['CH','ch'], ['CMD','cmd'], ['FRM','frame'], ['ATHL','athl'], ['DEL','delivery']]
+    : [['HIT','hit'], ['PWR','pwr'], ['SPD','speed'], ['FLD','field'], ['ARM','throw'], ['FRM','frame'], ['ATHL','athl']];
   const pills = keys.map(([label, k]) => {
     const v = get(k);
     if (v == null) return null;
@@ -8981,12 +8988,14 @@ const CHART_AXES = {
     { key: "weight",         label: "Weight (lb)",        getter: p => parseInt(p.weight || (p.player_info && p.player_info.weight), 10) || null, fmt: v => v.toFixed(0) + "lb" },
     { key: "eta_year",       label: "ETA year",           getter: p => (p.eta && p.eta.year),                fmt: v => v.toString() },
     { key: "hit",            label: "Hit grade",          getter: p => _tcOf(p, "hit"),                     fmt: v => v.toFixed(0) },
-    { key: "game_pwr",       label: "Game power",         getter: p => _tcOf(p, "game_pwr"),                fmt: v => v.toFixed(0) },
-    { key: "raw_pwr",        label: "Raw power",          getter: p => _tcOf(p, "raw_pwr"),                 fmt: v => v.toFixed(0) },
+    { key: "pwr",            label: "Power",              getter: p => _tcOf(p, "pwr"),                     fmt: v => v.toFixed(0) },
     { key: "speed",          label: "Run",                getter: p => _tcOf(p, "speed"),                   fmt: v => v.toFixed(0) },
     { key: "field",          label: "Fielding",           getter: p => _tcOf(p, "field"),                   fmt: v => v.toFixed(0) },
+    { key: "frame",          label: "Frame (FG, FV)",     getter: p => _tcOf(p, "frame"),                   fmt: v => v.toFixed(0) },
+    { key: "athl",           label: "Athleticism (FG, FV)", getter: p => _tcOf(p, "athl"),                  fmt: v => v.toFixed(0) },
     { key: "fb",             label: "Fastball",           getter: p => _tcOf(p, "fb"),                      fmt: v => v.toFixed(0) },
     { key: "cmd",            label: "Command",            getter: p => _tcOf(p, "cmd"),                     fmt: v => v.toFixed(0) },
+    { key: "delivery",       label: "Delivery (FG, FV)",  getter: p => _tcOf(p, "delivery"),                fmt: v => v.toFixed(0) },
   ],
   farms: [
     { key: "farm_rank",      label: "Farm rank",          getter: o => o.farm_rank,                          fmt: v => "#" + v },
@@ -10785,22 +10794,48 @@ function _renderDraftLeaderboard(host, cls) {
   }).join("");
 
   // Per-tool bests — scan tool_grades and find the top in each canonical tool.
+  // v17 — game_pwr + raw_pwr collapsed to a single PWR entry (per-source mean);
+  // frame / athl / delivery folded in from _extras (-2..+2 → 30..70 FV).
+  const _pmToFvDR = (pm) => {
+    if (pm == null) return null;
+    const v = parseInt(pm, 10);
+    if (!isFinite(v) || v < -2 || v > 2) return null;
+    return 50 + 10 * v;
+  };
   const toolBest = {};
   for (const p of prospects) {
     for (const src in (p.tool_grades || {})) {
       const tg = p.tool_grades[src] || {};
+      const ex = tg._extras || {};
+      // Synthesized PWR per source.
+      const g = tg.game_pwr, r = tg.raw_pwr;
+      let pwr = null;
+      if (tg.pwr != null) pwr = tg.pwr;
+      else if (g != null && r != null) pwr = (g + r) / 2;
+      else if (g != null) pwr = g;
+      else if (r != null) pwr = r;
+      if (pwr != null && (!toolBest.pwr || pwr > toolBest.pwr.grade)) {
+        toolBest.pwr = { player: p, grade: pwr };
+      }
       for (const k in tg) {
-        if (k === "_extras") continue;
+        if (k === "_extras" || k === "game_pwr" || k === "raw_pwr" || k === "pwr") continue;
         const v = tg[k];
         if (!isFinite(v)) continue;
         if (!toolBest[k] || v > toolBest[k].grade) {
           toolBest[k] = { player: p, grade: v };
         }
       }
+      for (const physKey of ["frame", "athl", "delivery"]) {
+        const fv = _pmToFvDR(ex[physKey]);
+        if (fv != null && (!toolBest[physKey] || fv > toolBest[physKey].grade)) {
+          toolBest[physKey] = { player: p, grade: fv };
+        }
+      }
     }
   }
-  const toolOrder = ["hit","game_pwr","raw_pwr","speed","field","throw",
-                     "pitch_sel","bat_ctrl","fb","sl","cb","ch","cmd","ct"];
+  const toolOrder = ["hit","pwr","speed","field","throw",
+                     "pitch_sel","bat_ctrl","frame","athl",
+                     "fb","sl","cb","ch","cmd","ct","delivery"];
   const toolRows = toolOrder
     .filter(k => toolBest[k])
     .map(k => {
@@ -11276,22 +11311,55 @@ function _statTileHTML(label, value, opts) {
 // Per-tool grade grid — reads tool_grades[source] aggregating the
 // highest grade per canonical tool across sources, then renders a
 // per-tool row showing each source's grade alongside the consensus.
+// v17 — game_pwr + raw_pwr collapsed to a single PWR row (per-source
+// mean) so the grid mirrors the chip strip's consolidated power
+// display. Frame / Athl / Delivery rows pulled from per-source
+// _extras (-2..+2 plus-minus mapped to 30/40/50/60/70 FV).
 function _renderProspectToolsGrid(p) {
   const tg = p.tool_grades || {};
   const sources = Object.keys(tg);
   if (!sources.length) {
     return `<div style="color:var(--text-tertiary);font-size:12px;padding:8px 0;">No tool grades on file from any source.</div>`;
   }
-  // Collect the set of tool keys across all sources, preserving the
-  // canonical hitter / pitcher ordering when possible.
-  const HITTER_ORDER = ["hit", "game_pwr", "raw_pwr", "speed", "field", "throw", "pitch_sel", "bat_ctrl"];
-  const PITCHER_ORDER = ["fb", "sl", "cb", "ch", "cmd", "ct", "sp"];
+  // PWR replaces game_pwr + raw_pwr in the canonical orderings.
+  const HITTER_ORDER = ["hit", "pwr", "speed", "field", "throw", "pitch_sel", "bat_ctrl", "frame", "athl"];
+  const PITCHER_ORDER = ["fb", "sl", "cb", "ch", "cmd", "ct", "sp", "frame", "athl", "delivery"];
+
+  // FG physical -2..+2 → 30..70 FV (matches consensus.py mapping).
+  const _pmToFv = (pm) => {
+    if (pm == null) return null;
+    const v = parseInt(pm, 10);
+    if (!isFinite(v) || v < -2 || v > 2) return null;
+    return 50 + 10 * v;
+  };
+  // Per-source effective grades: collapse game_pwr+raw_pwr → pwr,
+  // hide the underlying split entirely. Promote frame/athl/delivery
+  // from _extras into the per-source grades.
+  const effective = {};
+  for (const src of sources) {
+    const raw = tg[src] || {};
+    const ex = raw._extras || {};
+    const eff = {};
+    for (const k in raw) {
+      if (k === "_extras" || k === "game_pwr" || k === "raw_pwr") continue;
+      eff[k] = raw[k];
+    }
+    if (eff.pwr == null) {
+      const g = raw.game_pwr, r = raw.raw_pwr;
+      if (g != null && r != null) eff.pwr = Math.round((g + r) / 2);
+      else if (g != null) eff.pwr = g;
+      else if (r != null) eff.pwr = r;
+    }
+    for (const physKey of ["frame", "athl", "delivery"]) {
+      if (eff[physKey] != null) continue;
+      const fv = _pmToFv(ex[physKey]);
+      if (fv != null) eff[physKey] = fv;
+    }
+    effective[src] = eff;
+  }
   const seen = new Set();
   for (const src of sources) {
-    for (const k of Object.keys(tg[src] || {})) {
-      if (k === "_extras") continue;
-      seen.add(k);
-    }
+    for (const k of Object.keys(effective[src])) seen.add(k);
   }
   const isPit = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || ""));
   const order = isPit ? PITCHER_ORDER : HITTER_ORDER;
@@ -11307,6 +11375,7 @@ function _renderProspectToolsGrid(p) {
                        : v >= 50 ? "var(--text-primary)"
                        : v >= 45 ? "var(--neon-amber)"
                        :           "var(--down)";
+  const labelFor = k => (typeof toolAbbrev === "function" ? toolAbbrev(k) : k.toUpperCase());
   const headerRow = `<tr>
     <th style="text-align:left;color:var(--text-tertiary);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;padding:6px 8px;">Tool</th>
     ${sources.map(src => `<th style="text-align:center;color:var(--text-tertiary);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;padding:6px 8px;">${escapeHtml(src)}</th>`).join("")}
@@ -11315,13 +11384,13 @@ function _renderProspectToolsGrid(p) {
   const rows = toolKeys.map(k => {
     let bestVal = null;
     const cells = sources.map(src => {
-      const v = (tg[src] || {})[k];
+      const v = effective[src][k];
       if (v == null) return `<td style="text-align:center;color:var(--text-tertiary);padding:4px 8px;">—</td>`;
       if (bestVal == null || v > bestVal) bestVal = v;
       return `<td style="text-align:center;padding:4px 8px;font-family:var(--font-mono);font-weight:700;color:${tierColor(v)};">${v}</td>`;
     }).join("");
     return `<tr>
-      <td style="padding:4px 8px;color:var(--text-secondary);font-size:12px;">${escapeHtml(k.toUpperCase())}</td>
+      <td style="padding:4px 8px;color:var(--text-secondary);font-size:12px;">${escapeHtml(labelFor(k))}</td>
       ${cells}
       <td style="text-align:center;padding:4px 8px;font-family:var(--font-mono);font-weight:700;color:${tierColor(bestVal)};background:rgba(255,255,255,0.04);">${bestVal != null ? bestVal : "—"}</td>
     </tr>`;
@@ -11923,22 +11992,46 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
     </span></li>`).join("");
 
   // Best tool grades across leagues
+  // v17 — PWR consolidates game_pwr+raw_pwr; frame/athl/delivery from _extras.
+  const _pmToFvOS = (pm) => {
+    if (pm == null) return null;
+    const v = parseInt(pm, 10);
+    if (!isFinite(v) || v < -2 || v > 2) return null;
+    return 50 + 10 * v;
+  };
   const toolBest = {};
   for (const p of prospects) {
     for (const src in (p.tool_grades || {})) {
       const tg = p.tool_grades[src] || {};
+      const ex = tg._extras || {};
+      const g = tg.game_pwr, r = tg.raw_pwr;
+      let pwr = null;
+      if (tg.pwr != null) pwr = tg.pwr;
+      else if (g != null && r != null) pwr = (g + r) / 2;
+      else if (g != null) pwr = g;
+      else if (r != null) pwr = r;
+      if (pwr != null && (!toolBest.pwr || pwr > toolBest.pwr.grade)) {
+        toolBest.pwr = { player: p, grade: pwr };
+      }
       for (const k in tg) {
-        if (k === "_extras") continue;
+        if (k === "_extras" || k === "game_pwr" || k === "raw_pwr" || k === "pwr") continue;
         const v = tg[k];
         if (!isFinite(v)) continue;
         if (!toolBest[k] || v > toolBest[k].grade) {
           toolBest[k] = { player: p, grade: v };
         }
       }
+      for (const physKey of ["frame", "athl", "delivery"]) {
+        const fv = _pmToFvOS(ex[physKey]);
+        if (fv != null && (!toolBest[physKey] || fv > toolBest[physKey].grade)) {
+          toolBest[physKey] = { player: p, grade: fv };
+        }
+      }
     }
   }
-  const toolOrder = ["hit","game_pwr","raw_pwr","speed","field","throw",
-                     "pitch_sel","bat_ctrl","fb","sl","cb","ch","cmd"];
+  const toolOrder = ["hit","pwr","speed","field","throw",
+                     "pitch_sel","bat_ctrl","frame","athl",
+                     "fb","sl","cb","ch","cmd","delivery"];
   const toolRows = toolOrder.filter(k => toolBest[k]).map(k => {
     const { player, grade } = toolBest[k];
     return `<li><strong>${escapeHtml(k.toUpperCase())}</strong>
@@ -14214,8 +14307,10 @@ function makeQuickReadSummaryParts(p, opts = {}) {
   const TOOL_LABELS = isP
     ? { fb: "fastball", sl: "slider", cb: "curveball", ch: "changeup",
         cmd: "command", ct: "cutter", sp: "splitter" }
-    : { hit: "hit",   game_pwr: "game power", raw_pwr: "raw power",
-        speed: "speed", field: "defense", throw: "arm" };
+    : { hit: "hit",   pwr: "power",
+        speed: "speed", field: "defense", throw: "arm",
+        pitch_sel: "plate discipline", bat_ctrl: "bat control",
+        frame: "frame", athl: "athleticism" };
   const _gradeLabel = (g) => {
     if (g >= 70) return "plus-plus";
     if (g >= 60) return "plus";
@@ -14404,8 +14499,11 @@ function _toolTier(g) {
 // game_pwr + raw_pwr) instead of surfacing both raw entries. The
 // hitter order also reflects the v12 tool renames (Defense, Arm,
 // Pitch Selection, Bat Control with their canonical abbrevs).
-const _HITTER_TOOL_ORDER = ["hit", "pwr", "speed", "field", "throw"];
-const _PITCHER_TOOL_ORDER = ["fb", "sl", "cb", "ch", "ct", "sp", "cmd"];
+// v17 — Frame / Athleticism / Delivery FG physical grades (mapped
+// from -2..+2 to 30..70 FV in consensus.py) are now first-class
+// tool chips. Hitters get frame+athl; pitchers get all three.
+const _HITTER_TOOL_ORDER = ["hit", "pwr", "speed", "field", "throw", "frame", "athl"];
+const _PITCHER_TOOL_ORDER = ["fb", "sl", "cb", "ch", "ct", "sp", "cmd", "frame", "athl", "delivery"];
 
 // Resolve the unified PWR grade from a tool dict — prefers a
 // pre-computed `pwr` key (set at ingest), else takes the mean of
@@ -18612,10 +18710,28 @@ function renderPlayerDetail(key) {
       lines.push(consensusVal != null
         ? `Consensus ${Number.isInteger(consensusVal) ? consensusVal : consensusVal.toFixed(1)}`
         : "Consensus —");
+      // v17 — resolve pwr per-source from game_pwr+raw_pwr when the
+      // source didn't pre-compute it; resolve frame/athl/delivery from
+      // the FG _extras dict (mapped from -2..+2 to 30..70 FV).
+      const _pmToFv4 = (pm) => {
+        if (pm == null) return null;
+        const v = parseInt(pm, 10);
+        if (!isFinite(v) || v < -2 || v > 2) return null;
+        return 50 + 10 * v;
+      };
       const entries = Object.entries(_latestPerSource)
         .map(([src, info]) => {
           const tools = (info && info.tools) || {};
-          const fut = tools[key];
+          let fut = tools[key];
+          if (fut == null && key === "pwr") {
+            const g = tools.game_pwr, r = tools.raw_pwr;
+            if (g != null && r != null) fut = (g + r) / 2;
+            else fut = (g != null ? g : r);
+          }
+          if (fut == null && (key === "frame" || key === "athl" || key === "delivery")) {
+            const ex = tools._extras || {};
+            fut = _pmToFv4(ex[key]);
+          }
           if (fut == null) return null;
           return { src, fut };
         })
@@ -18656,7 +18772,7 @@ function renderPlayerDetail(key) {
     // .g-term span makes it click-to-open the glossary popover with the
     // matching definition — one-click definitions for every grade name.
     const TOOL_TO_GLOSSARY = {
-      hit: "hit_tool", game_pwr: "game_power", raw_pwr: "raw_power",
+      hit: "hit_tool", pwr: "game_power",
       speed: "speed_tool", field: "field_tool", throw: "throw_tool",
       pitch_sel: "pitch_sel", bat_ctrl: "bat_ctrl",
       fb: "fastball_grade", sl: "slider_grade", cb: "curveball_grade",
@@ -18746,9 +18862,12 @@ function renderPlayerDetail(key) {
       // even though it contributes to both composites. Order mirrors the
       // scouting convention: hit / power / speed / field / throw, with
       // pitch_sel + bat_ctrl appended as offensive plate-discipline tools.
-      const hitterOrder = ["hit","game_pwr","raw_pwr","speed","field","throw",
+      // v17 — Consolidated PWR replaces game_pwr + raw_pwr. The
+      // underlying split lives in t.grades.game_pwr / raw_pwr if a
+      // tooltip ever needs the breakdown.
+      const hitterOrder = ["hit","pwr","speed","field","throw",
                            "pitch_sel","bat_ctrl"];
-      const labels = {hit:"Hit", game_pwr:"Game pwr", raw_pwr:"Raw pwr",
+      const labels = {hit:"Hit", pwr:"Power",
                       speed:"Run", field:"Field", throw:"Throw",
                       pitch_sel:"Pitch Sel", bat_ctrl:"Bat Ctrl"};
       const cells = hitterOrder
@@ -18889,12 +19008,13 @@ function renderPlayerDetail(key) {
                 ${badgeFor(v)}
               </div>`;
             }).join("")
-        : ["hit","game_pwr","raw_pwr","speed","field","throw","pitch_sel","bat_ctrl"]
+        : ["hit","pwr","speed","field","throw","pitch_sel","bat_ctrl","frame","athl"]
             .filter(k => (op.grades || {})[k] != null)
             .map(k => {
-              const lab = ({hit:"Hit", game_pwr:"Game pwr", raw_pwr:"Raw pwr",
+              const lab = ({hit:"Hit", pwr:"Power",
                             speed:"Run", field:"Field", throw:"Throw",
-                            pitch_sel:"Pitch Sel", bat_ctrl:"Bat Ctrl"})[k];
+                            pitch_sel:"Pitch Sel", bat_ctrl:"Bat Ctrl",
+                            frame:"Frame", athl:"Athleticism"})[k];
               const v = op.grades[k];
               return `<div class="tools-grade-cell">
                 <span class="tools-grade-name">${escapeHtml(lab)}</span>
@@ -18946,11 +19066,15 @@ function renderPlayerDetail(key) {
       return db.localeCompare(da);
     });
     // Per-source table: header row + one row per publication.
-    const HITTER_KEYS = ["hit","game_pwr","raw_pwr","speed","field","throw","pitch_sel","bat_ctrl"];
-    const PITCHER_KEYS = ["fb","sl","cb","ch","cmd","ct"];
-    const HITTER_LABELS = {hit:"Hit", game_pwr:"GP", raw_pwr:"RP", speed:"Spd",
-                           field:"Fld", throw:"Thr", pitch_sel:"PSel", bat_ctrl:"BC"};
-    const PITCHER_LABELS = {fb:"FB", sl:"SL", cb:"CB", ch:"CH", cmd:"Cmd", ct:"CT"};
+    // v17 — PWR replaces GPWR / RPWR; Frame / Athl / Delivery columns surface
+    // when historical entries carried them.
+    const HITTER_KEYS = ["hit","pwr","speed","field","throw","pitch_sel","bat_ctrl","frame","athl"];
+    const PITCHER_KEYS = ["fb","sl","cb","ch","cmd","ct","frame","athl","delivery"];
+    const HITTER_LABELS = {hit:"Hit", pwr:"Pwr", speed:"Spd",
+                           field:"Fld", throw:"Thr", pitch_sel:"PSel", bat_ctrl:"BC",
+                           frame:"Frm", athl:"Athl"};
+    const PITCHER_LABELS = {fb:"FB", sl:"SL", cb:"CB", ch:"CH", cmd:"Cmd", ct:"CT",
+                            frame:"Frm", athl:"Athl", delivery:"Del"};
     const renderTable = (src, entries) => {
       // Figure out which key set to use (whichever appears in latest entry).
       const latest = entries[0] || {};
@@ -18958,7 +19082,30 @@ function renderPlayerDetail(key) {
       const isPitTab = PITCHER_KEYS.some(k => latestGrades[k] != null);
       const keys = isPitTab ? PITCHER_KEYS : HITTER_KEYS;
       const labels = isPitTab ? PITCHER_LABELS : HITTER_LABELS;
-      const presentKeys = keys.filter(k => entries.some(e => (e.grades || {})[k] != null));
+      // v17 — resolve PWR / Frame / Athl / Delivery on the fly so the
+      // historical table mirrors the consolidated consensus surface.
+      const _pmToFv5 = (pm) => {
+        if (pm == null) return null;
+        const v = parseInt(pm, 10);
+        if (!isFinite(v) || v < -2 || v > 2) return null;
+        return 50 + 10 * v;
+      };
+      const resolveHist = (gr, k) => {
+        if (!gr) return null;
+        if (k === "pwr") {
+          if (gr.pwr != null) return gr.pwr;
+          const g = gr.game_pwr, r = gr.raw_pwr;
+          if (g != null && r != null) return (g + r) / 2;
+          return g != null ? g : (r != null ? r : null);
+        }
+        if (k === "frame" || k === "athl" || k === "delivery") {
+          if (gr[k] != null) return gr[k];
+          const ex = gr._extras || {};
+          return _pmToFv5(ex[k]);
+        }
+        return gr[k];
+      };
+      const presentKeys = keys.filter(k => entries.some(e => resolveHist(e.grades, k) != null));
       const headerCells = presentKeys.map(k => `<th style="padding:4px 8px;font-size:10px;color:var(--text-tertiary);text-align:right;">${escapeHtml(labels[k])}</th>`).join("");
       const rows = entries.map((e, idx) => {
         const isLatest = idx === 0;
@@ -18967,7 +19114,7 @@ function renderPlayerDetail(key) {
           ? `<span style="display:inline-block;margin-left:6px;padding:1px 5px;font-size:9px;letter-spacing:0.04em;background:var(--neon-cyan);color:var(--bg-primary);border-radius:2px;">LATEST</span>`
           : "";
         const cells = presentKeys.map(k => {
-          const v = (e.grades || {})[k];
+          const v = resolveHist(e.grades, k);
           return `<td style="padding:4px 8px;text-align:right;color:${dimColor};font-family:var(--font-mono);font-size:11px;">${v != null ? Math.round(v) : "—"}</td>`;
         }).join("");
         const intervalDisplay = fgPrettifyInterval(src, e.interval_label);
@@ -19281,8 +19428,10 @@ function renderPlayerDetail(key) {
   // Acquisition info: drafted prospects show pick + bonus; IFAs show
   // "International FA" + (when known) signing details. Section omitted
   // when we don't have an acquisition record (rare — only prospects whose
-  // MLBAM ID couldn't be resolved at all).
-  const acqSection = (() => {
+  // MLBAM ID couldn't be resolved at all). Returns just the inner body
+  // (no detail-title) so it can be composed into the combined Acquisition
+  // Timeline panel alongside currentAcqBody below.
+  const acqBody = (() => {
     const a = p.acquisition;
     if (!a) return "";
     const fmtBonus = b => b == null ? "—" : `$${b.toLocaleString("en-US")}`;
@@ -19292,25 +19441,16 @@ function renderPlayerDetail(key) {
         : `Round ${escapeHtml(a.round_label || "?")}`;
       const team = a.team_name ? ` by ${escapeHtml(a.team_name)}` : "";
       const school = a.school ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">From ${escapeHtml(a.school)}</div>` : "";
-      return `<div class="detail-title">Acquisition · MLB Draft</div>
-        <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
+      return `<div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
+          <div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Original entry · MLB Draft</div>
           <div style="font-size:14px;color:var(--text-primary);">${a.year} · ${pick}${team}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Signing bonus: <span style="color:var(--neon-cyan);font-variant-numeric:tabular-nums;">${fmtBonus(a.bonus_usd)}</span></div>
           ${school}
         </div>`;
     }
     if (a.method === "international_fa") {
-      // Headline mirrors the draft block: "<year> · Signed by <team>".
-      // Falls through gracefully when partial fields are missing — we
-      // always have at least one of (year, team, generic label).
       const team = a.team_name ? `Signed by ${escapeHtml(a.team_name)}` : "Signed as an international amateur free agent";
-      const headline = a.year
-        ? `${a.year} · ${team}`
-        : team;
-      // Render the precise signing date on its own line when present.
-      // Date arrives as ISO (YYYY-MM-DD); format to "Jul 2, 2019" for
-      // readability. Skip the line when only the year is known (it'd
-      // duplicate the headline).
+      const headline = a.year ? `${a.year} · ${team}` : team;
       let dateLine = "";
       if (a.signing_date) {
         const d = new Date(a.signing_date + "T00:00:00");
@@ -19322,8 +19462,8 @@ function renderPlayerDetail(key) {
       const bonusLine = a.bonus_usd != null
         ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">Signing bonus: <span style="color:var(--neon-cyan);font-variant-numeric:tabular-nums;">${fmtBonus(a.bonus_usd)}</span></div>`
         : `<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">Signing-bonus data not on file.</div>`;
-      return `<div class="detail-title">Acquisition · International FA</div>
-        <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
+      return `<div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
+          <div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Original entry · International FA</div>
           <div style="font-size:14px;color:var(--text-primary);">${headline}</div>
           ${bonusLine}
           ${dateLine}
@@ -19532,12 +19672,15 @@ function renderPlayerDetail(key) {
       // FG-only extras (Pitch Sel, Bat Ctrl, Arm) when at least one
       // source in this row's pool publishes them — the columns are
       // tagged with "(FG)" so the reader knows the attribution.
+      // v17 — game_pwr + raw_pwr collapsed to a single PWR column.
+      // Frame / Athl / Delivery FG physical grades surfaced as first-
+      // class columns (sourced from _extras with -2..+2 → 30..70 FV).
       const baseKeys = isPitcherTab
         ? [["fb","FB"],["sl","SL"],["cb","CB"],["ch","CH"],["cmd","CMD"]]
-        : [["hit","HIT"],["game_pwr","GPWR"],["raw_pwr","RPWR"],["speed","SPD"],["field","FLD"],["throw","ARM"]];
+        : [["hit","HIT"],["pwr","PWR"],["speed","SPD"],["field","FLD"],["throw","ARM"]];
       const _extrasKeys = isPitcherTab
-        ? []
-        : [["pitch_sel", "PS"], ["bat_ctrl", "BC"]];  // arm already in throw column
+        ? [["frame", "FRM"], ["athl", "ATHL"], ["delivery", "DEL"]]
+        : [["pitch_sel", "PS"], ["bat_ctrl", "BC"], ["frame", "FRM"], ["athl", "ATHL"]];
       const _anyExtra = (eKey) => toolEntries.some(([, info]) => {
         const ex = info && info.tools && info.tools._extras;
         return ex && ex[eKey] != null;
@@ -19553,14 +19696,35 @@ function renderPlayerDetail(key) {
       const cellTool = (v) => v == null
         ? `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;color:var(--text-tertiary);font-size:10px;">—</td>`
         : `<td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;"><span class="fv-badge ${fvClass(String(Math.round(v)))} size-xs">${Math.round(v)}</span></td>`;
+      const _pmToFv3 = (pm) => {
+        if (pm == null) return null;
+        const v = parseInt(pm, 10);
+        if (!isFinite(v) || v < -2 || v > 2) return null;
+        return 50 + 10 * v;
+      };
       const toolRows = toolEntries.map(([src, info]) => {
         const lbl = SOURCE_LABELS[src] || src;
         const tools = info.tools || {};
         const extras = (tools._extras) || {};
         const cells = keys.map(([k]) => {
-          // Synthetic key for FG-only extras lives under tools._extras.
           if (k.startsWith("__extras_")) {
-            return cellTool(extras[k.slice("__extras_".length)]);
+            const ek = k.slice("__extras_".length);
+            // Frame / Athl / Delivery arrive as -2..+2 plus-minus —
+            // map to 30..70 FV so the FV badge renderer ramps right.
+            if (ek === "frame" || ek === "athl" || ek === "delivery") {
+              return cellTool(_pmToFv3(extras[ek]));
+            }
+            return cellTool(extras[ek]);
+          }
+          // PWR consolidation — prefer pre-computed `pwr`, else mean of
+          // game_pwr + raw_pwr, else whichever single one is set.
+          if (k === "pwr") {
+            if (tools.pwr != null) return cellTool(tools.pwr);
+            const g = tools.game_pwr, r = tools.raw_pwr;
+            if (g != null && r != null) return cellTool(Math.round((g + r) / 2));
+            if (g != null) return cellTool(g);
+            if (r != null) return cellTool(r);
+            return cellTool(null);
           }
           return cellTool(tools[k]);
         }).join("");
@@ -19572,7 +19736,7 @@ function renderPlayerDetail(key) {
       // Footer caption documenting the * attribution.
       const _hasExtras = extrasKeys.length > 0;
       const extrasCaption = _hasExtras
-        ? `<div style="margin-top:4px;font-size:10px;color:var(--text-tertiary);letter-spacing:0.02em;">* = FanGraphs-only grade (PS = Pitch Sel, BC = Bat Ctrl).</div>`
+        ? `<div style="margin-top:4px;font-size:10px;color:var(--text-tertiary);letter-spacing:0.02em;">* = FanGraphs-only grade (PS=Pitch Sel, BC=Bat Ctrl, FRM=Frame, ATHL=Athleticism, DEL=Delivery). Physical grades mapped from FG -2..+2 to 30/40/50/60/70 FV.</div>`
         : "";
       const spread = latestPt.tools_spread || {};
       const widest = Object.entries(spread).reduce(
@@ -19628,18 +19792,43 @@ function renderPlayerDetail(key) {
     if (!srcs.length) return "";
     const sl = p.statline || {};
     const isP = !!(sl.is_pitcher) || /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(String(p.position || ""));
+    // v17 — PWR replaces GPWR / RPWR (per-source mean when both present).
+    // Frame / Athl / Delivery surfaced from FG _extras (-2..+2 → 30..70 FV).
     const order = isP
-      ? ["fb", "sl", "cb", "ch", "cmd", "ct", "sp"]
-      : ["hit", "game_pwr", "raw_pwr", "speed", "field", "throw"];
+      ? ["fb", "sl", "cb", "ch", "cmd", "ct", "sp", "frame", "athl", "delivery"]
+      : ["hit", "pwr", "speed", "field", "throw", "frame", "athl"];
     const labels = {
       fb: "FB", sl: "SL", cb: "CB", ch: "CH", cmd: "CMD", ct: "CT", sp: "SP",
-      hit: "HIT", game_pwr: "GPWR", raw_pwr: "RPWR", speed: "SPD",
+      hit: "HIT", pwr: "PWR", speed: "SPD",
       field: "FLD", throw: "ARM",
+      frame: "FRM", athl: "ATHL", delivery: "DEL",
+    };
+    const _pmToFv2 = (pm) => {
+      if (pm == null) return null;
+      const v = parseInt(pm, 10);
+      if (!isFinite(v) || v < -2 || v > 2) return null;
+      return 50 + 10 * v;
+    };
+    const resolveCell = (tools, k) => {
+      if (k === "pwr") {
+        if (tools.pwr != null) return tools.pwr;
+        const g = tools.game_pwr, r = tools.raw_pwr;
+        if (g != null && r != null) return Math.round((g + r) / 2);
+        if (g != null) return g;
+        if (r != null) return r;
+        return null;
+      }
+      if (k === "frame" || k === "athl" || k === "delivery") {
+        if (tools[k] != null) return tools[k];
+        const ex = tools._extras || {};
+        return _pmToFv2(ex[k]);
+      }
+      return tools[k];
     };
     const hdrCells = order.map(k => `<th style="text-align:center;">${labels[k]}</th>`).join("");
     const rows = srcs.map(([src, info]) => {
       const cells = order.map(k => {
-        const v = info.tools[k];
+        const v = resolveCell(info.tools, k);
         return `<td style="text-align:center;font-variant-numeric:tabular-nums;">${v != null ? v : "—"}</td>`;
       }).join("");
       return `<tr><td><span class="src-tag">${escapeHtml(SOURCE_LABELS[src] || src)}</span></td>${cells}</tr>`;
@@ -19743,12 +19932,14 @@ function renderPlayerDetail(key) {
     contract_purchase: "Contract purchase",
     unknown:           "Unknown",
   };
-  const currentAcqSection = (() => {
+  // Current-org acquisition body — renders ONLY when the player's current
+  // org acquired them via something OTHER than their original draft/IFA
+  // path. Returns just the inner card body so it can be composed under the
+  // combined "Acquisition timeline" header alongside acqBody above.
+  const currentAcqBody = (() => {
     const ca = p.current_acquisition;
     if (!ca) return "";
     const m = ca.method;
-    // Skip when the current acquisition is just the original draft/IFA —
-    // already rendered by the acqSection above. Also skip "unknown".
     if (m === "draft" || m === "international_fa" || m === "unknown") return "";
     const ev = ca.event || {};
     const label = ACQUISITION_LABELS[m] || m;
@@ -19765,21 +19956,32 @@ function renderPlayerDetail(key) {
     const desc = ev.description
       ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;line-height:1.4;">${escapeHtml(ev.description)}</div>`
       : "";
-    // Bounce-via line: when an intermediary org held the player briefly
-    // (TOR → SFG → MIA collapses to TOR → MIA in the headline; SFG
-    // surfaces here as a "via" annotation so the full path stays
-    // reconstructable from the UI).
     const bounceVia = Array.isArray(ev.bounce_via) ? ev.bounce_via : [];
     const bounceLine = bounceVia.length
       ? `<div style="font-size:11px;color:var(--neon-violet);margin-top:4px;font-family:var(--font-mono);letter-spacing:0.02em;" title="Intermediate stops collapsed into the headline trade">${bounceVia.map(b => `via ${escapeHtml(b.org)} (${b.days} day${b.days === 1 ? "" : "s"})`).join(" · ")}</div>`
       : "";
-    return `<div class="detail-title">Acquired by current org · ${escapeHtml(label)}</div>
-      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
+    return `<div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
+        <div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Current org · ${escapeHtml(label)}</div>
         <div style="font-size:14px;color:var(--text-primary);">From ${from} <span style="color:var(--neon-violet);">→</span> ${to}</div>
         ${bounceLine}
         ${dateLine}
         ${desc}
       </div>`;
+  })();
+
+  // Combined "Acquisition timeline" panel — emits the Original Entry +
+  // Current Org subsections under one header. Replaces the prior pair of
+  // standalone acqSection / currentAcqSection blocks so the timeline reads
+  // as a single coherent provenance trail. When current_acquisition mirrors
+  // the original (no inter-org movement), only the Original Entry card
+  // renders and the subtitle reflects that.
+  const acquisitionTimelineSection = (() => {
+    if (!acqBody && !currentAcqBody) return "";
+    const sub = currentAcqBody
+      ? `<span class="detail-title-sub" title="How the player entered pro ball, plus how the current org acquired them">entered pro ball + how current org acquired them</span>`
+      : `<span class="detail-title-sub" title="How the player entered pro ball — they have not been moved between orgs since">how the player entered pro ball</span>`;
+    const cards = [acqBody, currentAcqBody].filter(Boolean).join('<div style="height:8px;"></div>');
+    return `<div class="detail-title">Acquisition timeline ${sub}</div>${cards}`;
   })();
 
   const etaRows = (() => {
@@ -20004,13 +20206,16 @@ function renderPlayerDetail(key) {
   })();
   const _ovTopTools = (() => {
     const tools = (p.tools && p.tools.grades) || {};
+    // v17 — exclude the legacy game_pwr / raw_pwr split so the top-3
+    // ribbon doesn't double-count power (use the consolidated PWR instead).
     const entries = Object.entries(tools)
-      .filter(([k, v]) => v != null)
+      .filter(([k, v]) => v != null && k !== "game_pwr" && k !== "raw_pwr")
       .sort(([, a], [, b]) => b - a)
       .slice(0, 3);
     if (!entries.length) return null;
-    const labels = { hit: "HIT", game_pwr: "GPWR", raw_pwr: "RPWR", speed: "SPD", field: "FLD", throw: "ARM",
-                     fb: "FB", sl: "SL", cb: "CB", ch: "CH", cmd: "CMD", ct: "CT" };
+    const labels = { hit: "HIT", pwr: "PWR", speed: "SPD", field: "FLD", throw: "ARM",
+                     fb: "FB", sl: "SL", cb: "CB", ch: "CH", cmd: "CMD", ct: "CT",
+                     pitch_sel: "PS", bat_ctrl: "BC", frame: "FRM", athl: "ATHL", delivery: "DEL" };
     return entries.map(([k, v]) => `${labels[k] || k.toUpperCase()} ${v}`).join(" · ");
   })();
   const _ovHealth = (() => {
@@ -20099,7 +20304,7 @@ function renderPlayerDetail(key) {
     .filter(Boolean).join("");
   const contextHtml = [
     surplusValueSection,
-    acqSection, currentAcqSection, tradesSection, etaRows,
+    acquisitionTimelineSection, tradesSection, etaRows,
     rosterStatusSection, perSourceTabbedSection,
     sameFarmSection, similarProspectsSection,
   ].filter(Boolean).join("");
