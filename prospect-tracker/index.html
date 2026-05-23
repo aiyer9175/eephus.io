@@ -2827,6 +2827,16 @@
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
       flex: 1; min-width: 0;
     }
+    .farm-top3-name.is-link {
+      cursor: pointer;
+      transition: color 0.1s;
+    }
+    .farm-top3-name.is-link:hover,
+    .farm-top3-name.is-link:focus {
+      color: var(--neon-cyan);
+      text-decoration: underline;
+      outline: none;
+    }
     /* 30-day pulse chip stacked under the sparkline */
     .farm-pulse {
       font-family: var(--font-mono);
@@ -2837,14 +2847,31 @@
       display: flex; gap: 6px; justify-content: center;
     }
     .farm-pulse .pulse-acq { color: var(--neon-cyan); font-weight: 700; }
-    /* Last-visit rank delta — small chip next to the rank number. */
+    /* Last-visit rank delta — pill next to the rank number. Larger
+       than before so the up/down change reads at-a-glance instead of
+       being dismissed as small numeric chrome. */
     .farm-rank-delta {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 1px;
       font-family: var(--font-mono);
-      font-size: 9px;
+      font-size: 11px;
       font-weight: 700;
-      margin-top: 2px;
+      margin-top: 4px;
+      padding: 1px 5px;
+      border-radius: 3px;
       letter-spacing: 0.02em;
+      line-height: 1;
+    }
+    .farm-rank-delta.stock-up {
+      color: var(--up);
+      background: rgba(31, 122, 58, 0.15);
+      border: 1px solid rgba(31, 122, 58, 0.30);
+    }
+    .farm-rank-delta.stock-down {
+      color: var(--down);
+      background: rgba(185, 28, 28, 0.12);
+      border: 1px solid rgba(185, 28, 28, 0.30);
     }
     /* Recent-grad alumni badge — small chip next to the org code. */
     .farm-alumni-badge {
@@ -3088,16 +3115,55 @@
       gap: 0; line-height: 1.05;
     }
     .farm-grade-cell .fg-letter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
       font-family: var(--font-serif);
-      font-size: 30px; font-weight: 700;
+      font-size: 18px; font-weight: 700;
       letter-spacing: -0.02em;
+      line-height: 1;
+      margin-bottom: 3px;
     }
     /* Farm DvM+ hero cell — pairs with the grade letter as the second
-       headline number per row. Larger mono digit so a 110 reads as
-       confidently as the grade letter does. */
+       headline number per row. Wrapped in a hex-corner-bracketed badge
+       (visible top-left + bottom-right corners only) so the DvM+
+       number reads as a distinct token, visually different from the
+       grade letter's circle. The "corners" effect comes from a
+       narrow inset border on opposite corners only. */
     .farm-dvm-hero {
-      display: flex; flex-direction: column; align-items: center;
+      display: inline-flex; flex-direction: column; align-items: center;
       line-height: 1; min-width: 0;
+      position: relative;
+      padding: 2px 4px;
+    }
+    .farm-dvm-hero::before,
+    .farm-dvm-hero::after {
+      content: "";
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      pointer-events: none;
+    }
+    .farm-dvm-hero::before {
+      top: 0;
+      left: 0;
+      border-top: 2px solid currentColor;
+      border-left: 2px solid currentColor;
+      border-top-left-radius: 2px;
+    }
+    .farm-dvm-hero::after {
+      bottom: 0;
+      right: 0;
+      border-bottom: 2px solid currentColor;
+      border-right: 2px solid currentColor;
+      border-bottom-right-radius: 2px;
     }
     .farm-dvm-hero .fdh-value {
       font-family: var(--font-mono);
@@ -5319,12 +5385,14 @@
       .compare-stat-table th, .compare-stat-table td { padding: 3px 5px; }
     }
 
-    /* === Mobile filter toggle ====================================
-       Desktop: button hidden, filter-bar shown.
-       Mobile (<720px): button visible; filter-bar hidden until the
-       user opens it. Saves ~120px of vertical space on phones. */
+    /* === Filter accordion ======================================
+       Filter chips are collapsed by default on EVERY screen size —
+       the toggle button is the entry point. Click to expand the
+       chip rows; click again to collapse. Saves vertical space on
+       every page (lists, farms, leaderboards, etc.) and keeps the
+       sort/filter chrome out of the way until the user wants it. */
     .filter-toggle {
-      display: none;
+      display: inline-flex;
       align-items: center;
       gap: 6px;
       font-family: var(--font-sans);
@@ -5340,6 +5408,10 @@
       border-radius: var(--radius-sm);
       cursor: pointer;
     }
+    .filter-toggle:hover {
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+    }
     .filter-toggle .filter-toggle-count {
       font-family: var(--font-mono);
       font-size: 10px;
@@ -5348,11 +5420,8 @@
     }
     .filter-toggle[aria-expanded="true"] .filter-toggle-arrow { transform: rotate(180deg); }
     .filter-toggle-arrow { transition: transform 0.15s; display: inline-block; }
-    @media (max-width: 720px) {
-      .filter-toggle { display: inline-flex; }
-      #filter-bar { display: none; }
-      #filter-bar.is-open { display: flex; }
-    }
+    #filter-bar { display: none; }
+    #filter-bar.is-open { display: flex; }
 
     /* Watchlist star — inline button on prospect rows + the detail-page
        header. Filled gold when starred, hollow gray otherwise. Click +
@@ -5866,7 +5935,9 @@
         <button class="chip" data-farm-sort="trajectory"
                 title="Sort by DvM+ for the currently selected development window (1y / 3y / 6y, picked on the right). 6y is the default and principal signal. Acquisitions + graduations are nullified — pure development of prospects already in the system.">Trajectory (DvM+)</button>
         <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted graduations in the trailing 12 months">Grad pipeline</button>
-        <button class="chip" data-farm-sort="ifa_spend" title="International FA bonus dollars committed over the trailing 3 years (Spotrac)">IFA spend (3yr)</button>
+        <button class="chip" data-farm-sort="ifa_spend_pct" title="IFA's share of total Draft+IFA spending over the trailing 3 years — orgs that allocate the highest percentage of their amateur-acquisition dollars to international free agents rise to the top">IFA Spending %</button>
+        <button class="chip" data-farm-sort="draft_spend_pct" title="Draft's share of total Draft+IFA spending over the trailing 3 years — orgs that allocate the highest percentage of their amateur-acquisition dollars to the draft rise to the top">Draft Spending %</button>
+        <button class="chip" data-farm-sort="roi" title="Financial ROI — career WAR per million USD spent on signing bonuses (draft + IFA). Higher = more efficient development per dollar.">ROI</button>
         <button class="chip" data-farm-sort="surplus" title="Aggregate FV-implied surplus value ($M) across all active prospects in the org">Surplus value</button>
         <button class="chip" data-farm-sort="total_fv">Total FV</button>
         <button class="chip" data-farm-sort="count">Count</button>
@@ -8158,11 +8229,11 @@ const state = {
   // still shows the precise published position.
   posFilter: "all",
   sort: "fv",
-  // v18 — Default sort is now Trajectory (6yr DvM+), which surfaces the
-  // farms with the strongest recent tool-grade improvement. Farm rank is
-  // a one-click switch via the chip row. Trajectory's window comes from
-  // formWindow below (defaults to 6y per the sort-key handler).
-  farmSort: "trajectory",
+  // Default sort is Farm Rank — orgs ordered by overall farm_score
+  // (the composite letter grade). Users wanting the "trajectory" view
+  // (DvM+ for the current window) flip with a chip click; Farm Rank
+  // is the canonical entry-point view.
+  farmSort: "farm_rank",
   // Per-farm-detail roster sort: FV (default) / avg_rank / age / eta /
   // tool / surplus. Persisted in the URL so a sort choice survives
   // reloads + shared links.
@@ -15186,9 +15257,14 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey)
   const innerH = FORM_BAR_H - 2 * padY;
   const zeroY = padY + innerH / 2;
   const yFor = v => zeroY - (v / absMax) * (innerH / 2);
-  const points = rel.map(p =>
-    `${(p.x * FORM_BAR_W).toFixed(1)},${yFor(p.v).toFixed(1)}`
-  ).join(' ');
+  // Pixel coords per point — used by both the segmented Bezier curve
+  // (per-segment color by direction) and the filled wedge polygon.
+  const coords = rel.map(p => ({
+    x: p.x * FORM_BAR_W,
+    y: yFor(p.v),
+    v: p.v,
+  }));
+  const points = coords.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
 
   // Color + arrow keyed off the precomputed delta-above-mean for the
   // window. The dead zone scales with the mean's magnitude so the
@@ -15210,7 +15286,7 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey)
   // Mean baseline reference at y=0. A faint dashed line gives the eye
   // an anchor to compare each org's curve against.
   const baselineLine = `<line x1="0" y1="${zeroY.toFixed(1)}" x2="${FORM_BAR_W}" y2="${zeroY.toFixed(1)}"
-        stroke="var(--text-tertiary)" stroke-width="0.7" stroke-dasharray="2,2" opacity="0.55"/>`;
+        stroke="var(--text-tertiary)" stroke-width="0.7" stroke-dasharray="2,2" opacity="0.55" vector-effect="non-scaling-stroke"/>`;
 
   // Filled wedge between the line and the mean baseline so eye picks
   // up sign-and-magnitude in one glance: above-mean orgs get a green
@@ -15219,6 +15295,29 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey)
   const baseY = zeroY.toFixed(1);
   const fillPoints = `0,${baseY} ${points} ${lastX},${baseY}`;
 
+  // Per-segment Catmull-Rom Bezier curves with shared tangents at
+  // joints — smooth visual flow with per-segment color by direction
+  // (green up, red down, tertiary brown flat). Mirrors the FV-history
+  // chart pattern so the user gets one consistent reading language
+  // across prospect and farm charts. Strokes use vector-effect so
+  // they stay crisp regardless of sparkline scaling.
+  const segColor = d => d > 0 ? "var(--up)"
+                      : d < 0 ? "var(--down)"
+                              : "var(--text-tertiary)";
+  const segments = [];
+  for (let i = 0; i < coords.length - 1; i++) {
+    const p0 = coords[i - 1] || coords[i];
+    const p1 = coords[i];
+    const p2 = coords[i + 1];
+    const p3 = coords[i + 2] || coords[i + 1];
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    const c = segColor(p2.v - p1.v);
+    segments.push(`<path d="M ${p1.x.toFixed(1)},${p1.y.toFixed(1)} C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}" stroke="${c}" stroke-width="1.5" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"/>`);
+  }
+
   const titleText = `${windowKey} development vs mean: ${sign}${delta.toFixed(1)} (mean Δ ${baseline.toFixed(1)}) · acquisitions excluded`;
 
   return `<div class="tier-bar" style="gap:8px;">
@@ -15226,8 +15325,7 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey)
          aria-label="${escapeHtml(titleText)}"><title>${escapeHtml(titleText)}</title>
       ${baselineLine}
       <polygon points="${fillPoints}" fill="${stroke}" opacity="0.10"/>
-      <polyline points="${points}" fill="none" stroke="${stroke}"
-                stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+      ${segments.join('')}
     </svg>
     <span style="color:${stroke};font-size:11px;font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${deltaLabel}</span>
   </div>`;
@@ -16761,15 +16859,26 @@ function farmSortedOrgs() {
       || b.total_fv - a.total_fv);
     return orgs;
   }
-  // IFA-spend sort: 3yr cumulative dollars from Spotrac data on org.ifa_spending.
-  // Spotrac coverage starts in 2021; this slice keeps the comparison apples-to-apples
-  // with the spending breakdown rendered on the farm-detail page.
-  const ifaSpend3yr = (o) => {
-    const spend = o.ifa_spending || {};
+  // 3yr cumulative-dollar helper — used by both the IFA and Draft
+  // percentage comparators below. Spotrac coverage starts in 2021;
+  // the 3y cutoff matches the spending breakdown rendered on the
+  // farm-detail page.
+  const sum3yr = (bucket) => {
+    if (!bucket) return 0;
     const cutoff = new Date().getUTCFullYear() - 3;
-    return Object.entries(spend)
+    return Object.entries(bucket)
       .filter(([y]) => +y >= cutoff)
       .reduce((sum, [, v]) => sum + ((v && v.total_usd) || 0), 0);
+  };
+  // Share-of-spend split: what % of total Draft+IFA dollars went to
+  // each bucket over the trailing 3 years. Orgs with no recorded
+  // spend in either bucket sink to 0% (tied at the bottom).
+  const spendSplit = (o) => {
+    const ifaTotal   = sum3yr(o.ifa_spending);
+    const draftTotal = sum3yr(o.draft_spending);
+    const grand      = ifaTotal + draftTotal;
+    if (grand <= 0) return { ifaPct: 0, draftPct: 0, grand: 0 };
+    return { ifaPct: ifaTotal / grand, draftPct: draftTotal / grand, grand };
   };
   // Aggregate surplus value per org for the "surplus" sort — same
   // computation as renderFarmSystems but built lazily and only when needed.
@@ -16789,7 +16898,14 @@ function farmSortedOrgs() {
     return _surplusMemo[orgCode] || 0;
   };
   orgs.sort((a, b) => {
-    if (s === "ifa_spend")     return ifaSpend3yr(b) - ifaSpend3yr(a);
+    if (s === "ifa_spend_pct" || s === "ifa_spend") {
+      // ifa_spend kept as a back-compat alias for any stored URL state
+      // pointing at the old key — both routes now sort by IFA share.
+      return spendSplit(b).ifaPct - spendSplit(a).ifaPct;
+    }
+    if (s === "draft_spend_pct") {
+      return spendSplit(b).draftPct - spendSplit(a).draftPct;
+    }
     if (s === "surplus")       return surplusForOrg(b.org) - surplusForOrg(a.org)
                                    || (a.farm_rank - b.farm_rank);
     if (s === "total_fv")      return b.total_fv  - a.total_fv;
@@ -17171,13 +17287,22 @@ function renderFarmSystems() {
     const deltaChip = (rankDelta == null || rankDelta === 0)
       ? ""
       : `<div class="farm-rank-delta ${rankDelta > 0 ? 'stock-up' : 'stock-down'}" title="Was #${prev} on your last visit">${rankDelta > 0 ? '+' : ''}${rankDelta}${rankDelta > 0 ? '↑' : '↓'}</div>`;
-    // Top-3 prospects strip (G16).
+    // Top-3 prospects strip (G16). Names are clickable — onclick fires
+    // goToPlayer() with the player_key and stopPropagation prevents the
+    // row's goToFarm() from also firing. Keyboard focus + Enter also
+    // routes to the player page for accessibility.
     const top3 = (org.prospects || []).slice(0, 3);
     const topHtml = top3.length
-      ? `<div class="farm-top3-stack">${top3.map(t => `<div class="farm-top3-chip">
-           <span class="farm-top3-name">${escapeHtml(t.name)}</span>
-           <span class="fv-badge ${fvClass(t.fv_label)} size-xs" style="flex-shrink:0;">${t.fv_label}</span>
-         </div>`).join("")}</div>`
+      ? `<div class="farm-top3-stack">${top3.map(t => {
+          const pkey = escapeHtml(t.player_key || "");
+          const nameHtml = pkey
+            ? `<span class="farm-top3-name is-link" data-key="${pkey}" tabindex="0" onclick="event.stopPropagation();goToPlayer('${pkey}');" onkeydown="if(event.key==='Enter'){event.stopPropagation();goToPlayer('${pkey}');}">${escapeHtml(t.name)}</span>`
+            : `<span class="farm-top3-name">${escapeHtml(t.name)}</span>`;
+          return `<div class="farm-top3-chip">
+            ${nameHtml}
+            <span class="fv-badge ${fvClass(t.fv_label)} size-xs" style="flex-shrink:0;">${t.fv_label}</span>
+          </div>`;
+        }).join("")}</div>`
       : '<span style="color:var(--text-tertiary);">—</span>';
     // Recent-grad alumni badge (G22).
     const alumni = alumniByOrg[org.org] || [];
@@ -17238,7 +17363,7 @@ function renderFarmSystems() {
     return `
       <div class="farm-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)}">
         ${heroHtml}
-        <div class="farm-rank table-only-cell">${displayRank}${deltaChip}</div>
+        <div class="farm-rank table-only-cell">#${displayRank}${deltaChip}</div>
         <div class="table-only-cell">${teamLogoHTML(org.org, "md", fullOrgName(org.org))}</div>
         <div class="farm-org-cell table-only-cell">
           <div class="farm-org-name">
@@ -21079,10 +21204,40 @@ function renderFarmDetail(orgCode) {
   const org = findOrg(orgCode);
   const root = document.getElementById("farm-detail-body");
   if (!org) {
-    root.innerHTML = `<div class="state-message">Unknown organization: ${escapeHtml(orgCode)}. <a href="#" onclick="goHome();return false;">Back to list</a>.</div>`;
+    // Diagnostic: surface the actual data state in-page so failures
+    // are debuggable without dropping into devtools.
+    const summary = DATA.org_summary || [];
+    const knownOrgs = summary.slice(0, 5).map(o => o.org).join(", ");
+    root.innerHTML = `<div class="state-message">
+      Unknown organization: <code>${escapeHtml(orgCode)}</code>.
+      <a href="#" onclick="goHome();return false;">Back to list</a>.
+      <details style="margin-top:8px;font-size:11px;color:var(--text-tertiary);">
+        <summary style="cursor:pointer;">Diagnostic</summary>
+        DATA.org_summary length: ${summary.length}${knownOrgs ? ` · first orgs: ${escapeHtml(knownOrgs)}` : ""}
+      </details>
+    </div>`;
     return;
   }
+  // Wrap the render body in try/catch so an exception accessing an
+  // optional org field (tool_dev / financial_breakdown / etc.) doesn't
+  // leave the user stranded on a half-rendered page — surface the
+  // actual error string so the next debug session has the cause pinned.
+  try {
+    return _renderFarmDetailBody(orgCode, org, root);
+  } catch (err) {
+    root.innerHTML = `<div class="state-message">
+      Render error on farm detail for <code>${escapeHtml(orgCode)}</code>.
+      <a href="#" onclick="goHome();return false;">Back to list</a>.
+      <details style="margin-top:8px;font-size:11px;color:var(--text-tertiary);">
+        <summary style="cursor:pointer;">${escapeHtml(String(err && err.message || err))}</summary>
+        <pre style="white-space:pre-wrap;font-size:10px;">${escapeHtml(String(err && err.stack || ""))}</pre>
+      </details>
+    </div>`;
+    console.error("renderFarmDetail failed:", err);
+  }
+}
 
+function _renderFarmDetailBody(orgCode, org, root) {
   // Resolve full player objects so we can render each roster line with its
   // FV trajectory chart inline. The acquisition, level, and position
   // filters all share state with the main prospect list so toggling
@@ -21107,13 +21262,17 @@ function renderFarmDetail(orgCode) {
   // the bottom (sort key isn't applicable means "doesn't qualify").
   const ROSTER_SORTERS = {
     fv: (a, b) => {
-      const fa = a.points.length ? a.points[a.points.length - 1].consensus_fv_raw : -1;
-      const fb = b.points.length ? b.points[b.points.length - 1].consensus_fv_raw : -1;
+      const ap = (a && a.points) || [];
+      const bp = (b && b.points) || [];
+      const fa = ap.length ? ap[ap.length - 1].consensus_fv_raw : -1;
+      const fb = bp.length ? bp[bp.length - 1].consensus_fv_raw : -1;
       return fb - fa;
     },
     avg_rank: (a, b) => {
-      const ar = (a.points.slice(-1)[0] || {}).avg_rank;
-      const br = (b.points.slice(-1)[0] || {}).avg_rank;
+      const ap = (a && a.points) || [];
+      const bp = (b && b.points) || [];
+      const ar = (ap.slice(-1)[0] || {}).avg_rank;
+      const br = (bp.slice(-1)[0] || {}).avg_rank;
       return (ar == null ? 9999 : ar) - (br == null ? 9999 : br);
     },
     age: (a, b) => (a.age == null ? 99 : a.age) - (b.age == null ? 99 : b.age),
@@ -21376,8 +21535,16 @@ function renderFarmDetail(orgCode) {
   const _rosterRankOffset = (_rosterCurPage - 1) * _rosterPageSize;
   const rosterPaginationStrip = renderPaginationStrip(_rosterCurPage, _rosterTotalItems, _rosterPageSize, "farmRoster");
   const rosterRows = _rosterPaged.map((p, i) => {
-    const latest = p.points[p.points.length - 1];
-    const chart = p.points.length >= 2
+    // Guard against players with empty / missing points arrays —
+    // legacy data or edge-case entries can lack `points` entirely,
+    // which used to throw on `p.points[length-1]` and abort the
+    // entire farm-detail render. Now those rows show "—" cells.
+    const pts = (p && p.points) || [];
+    const latest = pts.length ? pts[pts.length - 1] : null;
+    const fvLabel = latest && latest.consensus_fv_label != null
+      ? latest.consensus_fv_label
+      : "—";
+    const chart = pts.length >= 2
       ? lazyLineChartHTML(p)
       : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
     return `
@@ -21391,7 +21558,7 @@ function renderFarmDetail(orgCode) {
             <div class="player-stat-line" style="margin-top:3px;font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rosterStatLine(p)}${rpsPlusPillHTML(p)}${scoutRatesHTML(p)}</div>
           </div>
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span></div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(fvLabel)}">${fvLabel}</span></div>
         <div class="rank-cell">${p.overall_rank != null ? "#" + p.overall_rank : (p.org_rank != null ? "#" + p.org_rank + " org" : "—")}</div>
         <div style="text-align:center;font-size:11px;color:var(--text-secondary);font-variant-numeric:tabular-nums;" title="${p.eta && p.eta.confidence ? p.eta.confidence + ' confidence' : 'ETA estimate'}">${(p.eta && p.eta.year != null) ? p.eta.year : "—"}</div>
         <div class="line-chart-cell">${chart}</div>
@@ -22611,6 +22778,16 @@ function render() {
       && Object.keys(DATA.rosters_by_org).length === 0) {
     showLoading("Loading farm rosters…");
     loadSlice("rosters_by_org").then(render);
+    return;
+  }
+  // Org_summary gate — farm detail render dereferences each org's
+  // grades / financial / tool_dev blocks. If the main DATA payload
+  // hasn't hydrated yet (or org_summary somehow shipped empty), bail
+  // with a loading message rather than rendering the "Unknown
+  // organization" error branch. Re-fires when DATA populates.
+  if (active === "farmDetail"
+      && (!Array.isArray(DATA.org_summary) || DATA.org_summary.length === 0)) {
+    showLoading("Loading farm data…");
     return;
   }
 

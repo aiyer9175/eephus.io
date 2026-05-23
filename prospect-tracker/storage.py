@@ -2520,17 +2520,18 @@ MLB_30_ORGS: set[str] = {
     "PHI", "PIT", "SDP", "SEA", "SFG",
     "STL", "TBR", "TEX", "TOR", "WSN",
 }
-# v7 weights — Development is the clear majority. Sustained per-tool
-# growth (Hitter / Pitcher Tools DvM+) carries 50% of the composite
-# because it's the one thing the org has the most direct control over
-# and is least confounded by acquisition luck or upper-league hot/cold
-# streaks. MLB Production stays second-heaviest at 25%. Acquisition
-# Strategy + Financial drop to a tied 12.5% supporting role. Weights
-# sum to 1.00.
-FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.125   # was 0.15
-FARM_TREE_WEIGHT_DEVELOPMENT          = 0.50    # was 0.40 — clear majority
-FARM_TREE_WEIGHT_FINANCIAL            = 0.125   # was 0.15
-FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.25    # was 0.30
+# v8 weights — Financial is now a tier-2 pillar (was a tier-3 supporting
+# role at 12.5%). Per-user: ROI + surplus value matter as much as MLB
+# production for evaluating how well an org converts prospect dollars
+# into MLB value. Financial DOUBLED from 12.5% → 25%; redistributed
+# proportionally out of Acquisition Strategy and MLB Production.
+# Development stays the clear majority since per-tool growth remains
+# the metric the org has the most direct control over.
+# Weights sum to 1.00.
+FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.10    # v7: 0.125 — slimmed
+FARM_TREE_WEIGHT_DEVELOPMENT          = 0.45    # v7: 0.50  — still majority
+FARM_TREE_WEIGHT_FINANCIAL            = 0.25    # v7: 0.125 — DOUBLED (ROI + surplus tier 2)
+FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.20    # v7: 0.25  — slimmed
 # Back-compat aliases — anything that imported the v2 constants still
 # works. The composite blend below uses the v3 names exclusively.
 FARM_TREE_WEIGHT_ACQUISITIONS = FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
