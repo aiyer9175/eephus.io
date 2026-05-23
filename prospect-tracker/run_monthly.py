@@ -168,6 +168,31 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
         log.warning("rebuild_only: no existing rosters_by_org.json — farm-detail "
                     "pages will be blank until a full `python run_monthly.py` runs")
 
+    # IFA spending + per-key bonus merge — mirrors the main() pipeline
+    # at run_monthly.py:521-539 but reads from the spotrac HTML cache so
+    # rebuild_only stays offline. Without the bonus merge, IFA grads
+    # don't enter the `_ifa_grads` bucket (gated on `bonus_usd`) and
+    # `_compute_ifa_roi` returns None for every org.
+    ifa_spending_by_org = _load_ifa_spending_from_cache()
+    acquisitions = load_acquisitions()
+    try:
+        from spotrac import scrape_spotrac_ifa_range, build_ifa_bonus_by_key
+        from datetime import date as _date
+        _ifa_rows = scrape_spotrac_ifa_range(
+            list(range(2021, _date.today().year + 1)), force=False,
+        )
+        _ifa_bonus_by_key = build_ifa_bonus_by_key(_ifa_rows)
+        _n_merged = 0
+        for _key, _bonus in _ifa_bonus_by_key.items():
+            _rec = acquisitions.get(_key)
+            if _rec and _rec.get("method") == "international_fa" and _rec.get("bonus_usd") is None:
+                _rec["bonus_usd"] = _bonus
+                _n_merged += 1
+        log.info("rebuild_only: merged %d IFA bonuses into acquisitions (%d total rows)",
+                 _n_merged, len(_ifa_bonus_by_key))
+    except Exception:
+        log.exception("rebuild_only: IFA bonus merge failed — fin_ifa_roi will be sparse")
+
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / "timeseries.json"
     export_timeseries_json(
@@ -179,12 +204,12 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
         transactions_by_player=_derive_all_transactions(),
         career_stats=load_career_stats(),
         career_war=load_career_war(),
-        acquisitions=load_acquisitions(),
+        acquisitions=acquisitions,
         il_status=load_il_status(),
         rosters_by_org=existing_rosters,
         level_changes=_derive_all_level_changes(),
         roster_status={},
-        ifa_spending_by_org={},
+        ifa_spending_by_org=ifa_spending_by_org,
         contracts_by_key={},
         draft_pools={},
         player_ids={},
@@ -234,6 +259,36 @@ def _derive_all_level_changes() -> dict:
             continue
     _log.info("rebuilt level_changes for %d players (from %d tx-cache keys)",
               len(out), len(tx_cache))
+    return out
+
+
+def _load_ifa_spending_from_cache() -> dict:
+    """Helper: rebuild ifa_spending_by_org from the cached Spotrac HTML
+    pages. Mirrors the main() pipeline at line ~530 but skips the
+    network when the per-year HTML cache is warm.
+
+    Bug fix: rebuild_only() previously passed an empty dict here, which
+    crushed the IFA-share % display to 0% for every org AND made
+    `_compute_ifa_roi` div-by-zero into None for every org. This loader
+    re-runs the scrape against the on-disk HTML cache so the IFA
+    pipeline survives a rebuild.
+    """
+    _log = logging.getLogger("load_ifa_spending")
+    try:
+        from spotrac import scrape_spotrac_ifa_range, build_org_ifa_spending
+    except Exception as e:
+        _log.warning("spotrac import failed (%s) — IFA spending unavailable", e)
+        return {}
+    from datetime import date as _date
+    years = list(range(2021, _date.today().year + 1))
+    try:
+        rows = scrape_spotrac_ifa_range(years, force=False)
+    except Exception as e:
+        _log.warning("spotrac IFA scrape failed (%s) — IFA spending unavailable", e)
+        return {}
+    out = build_org_ifa_spending(rows)
+    _log.info("rebuilt IFA spending: %d signings, %d orgs with totals",
+              len(rows), len(out))
     return out
 
 

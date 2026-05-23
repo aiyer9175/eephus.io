@@ -603,18 +603,16 @@ def _level_repeat(p: dict) -> bool:
 # purpose). The static baselines below match the scouting convention
 # (FanGraphs primer):
 #   A=21, A+=22, AA=23, AAA=24, MLB=26
-# Caps (years above the baseline, INCLUSIVE on the threshold so the
-# user's named boundary cases — Griff McGarry at 27.0/AAA pitcher,
-# diff exactly +3.0 — also get cut):
-#   hitters  → disqualified when (age − baseline) >= +2.0
-#   pitchers → disqualified when (age − baseline) >= +3.0  (later debut)
+# Caps (years above the baseline, INCLUSIVE on the threshold) — v6
+# tightened these from the original 2.0 / 3.0 to drop more journeymen:
+#   hitters  → disqualified when (age − baseline) >= +1.5
+#   pitchers → disqualified when (age − baseline) >= +2.0  (later debut)
+# The complement is _LEVEL_TIER_BOOST below — surviving upper-level
+# prospects get a smaller score boost than sub-AAA breakouts, so the
+# net effect is "fewer journeymen AND lower-level prospects rank higher".
 # Players at rookie levels (DSL / CPX / ROK) or with missing age/level
 # pass through (cap doesn't fire) — those levels don't have a clean
 # prospect-aspirational anchor.
-# Filters out journeymen (Maverick Handley at 28/MLB → diff +2.2 → cut;
-# Cal Conley at 26.8/AAA → +2.8 → cut; Griff McGarry at 27/AAA pitcher
-# → +3.0 — at the boundary, passes through as marginal) without
-# disqualifying legitimate 23-yo AAA prospects (Kristian Campbell → -1).
 _SPOTLIGHT_AGE_BASELINES: dict[str, float] = {
     "A":   21.0,
     "A+":  22.0,
@@ -622,8 +620,106 @@ _SPOTLIGHT_AGE_BASELINES: dict[str, float] = {
     "AAA": 24.0,
     "MLB": 26.0,
 }
-_AGE_CAP_HITTER = 2.0
-_AGE_CAP_PITCHER = 3.0
+# Tightened in v6 (was 2.0 / 3.0) — more journeymen now drop out. The
+# complement is the new _LEVEL_TIER_BOOST below, which surfaces true
+# sub-AAA prospects above marginal upper-level survivors.
+_AGE_CAP_HITTER = 1.5
+_AGE_CAP_PITCHER = 2.0
+
+# Per-level scoring boost. Surfaces lower-level prospects above marginal
+# upper-level ones with similar performance — a real A+ breakout should
+# outrank a borderline AAA depth-piece rebound. Applied to RISER +
+# REBOUND paths only; fallers stay level-agnostic so the decline
+# ranking remains clean.
+_LEVEL_TIER_BOOST: dict[str, float] = {
+    "A":   1.5,
+    "A+":  1.5,
+    "AA":  1.0,
+    "AAA": 0.5,
+    "MLB": 0.0,
+}
+
+
+def _level_score_boost(level: str | None) -> float:
+    """Per-level score adjustment applied to risers + rebounders."""
+    if not level:
+        return 0.0
+    return _LEVEL_TIER_BOOST.get(level, 0.0)
+
+
+# Pitcher role classification — derived from the position string the
+# consensus pipeline lands on. Position tokens come from FanGraphs +
+# MLB Pipeline + others; SP / SIRP / MIRP are the role-tagged values
+# we trust, RP is a generic relief tag, RHP / LHP / P are
+# role-agnostic. Role-agnostic strings count as "unknown" so they
+# don't accidentally trigger RP-specific gates (e.g., the tighter
+# rebounder age cap for relievers).
+_PITCHER_RELIEF_TOKENS = {"SIRP", "MIRP", "RP"}
+_PITCHER_START_TOKENS  = {"SP"}
+
+
+def _pitcher_role(position: str | None) -> str | None:
+    """Return 'SP' | 'RP' | None (unknown / role-agnostic). Splits on
+    '/' so 'SP/RP' resolves to 'SP' (primary listed first). Used by
+    the new spotlights gates + the site-wide position filter."""
+    if not position:
+        return None
+    head = str(position).split("/")[0].strip().upper()
+    if head in _PITCHER_RELIEF_TOKENS:
+        return "RP"
+    if head in _PITCHER_START_TOKENS:
+        return "SP"
+    return None  # RHP / LHP / P — role-agnostic, treat as unknown
+
+
+def _player_consensus_fv(p: dict) -> float | None:
+    """Resolve a player's latest consensus FV from the points list.
+    Used by the new faller FV floor + the Bayesian rebound prior.
+    Tolerates either `consensus_fv` (numeric) or `consensus_fv_raw`
+    on the most recent snapshot. Returns None when nothing is on file."""
+    pts = p.get("points") or []
+    if not pts:
+        return None
+    latest = pts[-1] or {}
+    v = latest.get("consensus_fv")
+    if v is None:
+        v = latest.get("consensus_fv_raw")
+    try:
+        return float(v) if v is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _fv_rebound_prior(fv: float | None) -> float:
+    """Normalized 0-1 prior — 'how likely is this player a real prospect
+    whose rebound is meaningful?' Anchored to the standard 20-80 scale:
+      FV 40 → 0.00  (org-filler, weak prior)
+      FV 45 → 0.25
+      FV 50 → 0.50  (MLB regular projection, neutral prior)
+      FV 55 → 0.75
+      FV 60 → 1.00  (plus prospect — full prior weight)
+    Linear interpolation between anchors; clipped at endpoints. Returns
+    0.0 for missing FV (no prior signal → observation alone)."""
+    if fv is None or fv <= 40.0:
+        return 0.0
+    if fv >= 60.0:
+        return 1.0
+    if fv <= 50.0:
+        return (fv - 40.0) / 10.0 * 0.5
+    return 0.5 + (fv - 50.0) / 10.0 * 0.5
+
+
+def _faller_fv_multiplier(fv: float) -> float:
+    """Steeper decline weighting for higher-FV prospects — a plus
+    prospect falling off is a much bigger signal than a 45-FV depth
+    piece declining at the same rate. Pairs with the FV-45 floor."""
+    if fv >= 60.0:
+        return 2.0
+    if fv >= 55.0:
+        return 1.5
+    if fv >= 50.0:
+        return 1.25
+    return 1.0
 
 
 def _exceeds_age_cap(age, level, is_pitcher: bool) -> bool:
@@ -665,6 +761,28 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     # faller / rebound paths.
     if _exceeds_age_cap(p.get("age"), sl.get("level"), is_pitcher):
         return ("none", 0.0, drivers)
+
+    # ── Shared bucket filters (v6.1) ──
+    # The user wants risers + rebounders + fallers to all carry the
+    # same journeymen / RP / FV filter set so the three buckets
+    # surface consistently. Two gates apply uniformly here:
+    #   (1) FV ≥ 45 hard floor — drops org-fillers across the board
+    #       (no FV-40 riser breakout, no FV-40 comeback story, no
+    #       FV-40 collapse — bucket is reserved for graded prospects)
+    #   (2) RP age < 23 — SIRP / MIRP / bare-RP must be very young to
+    #       appear in ANY bucket (used to only gate rebounders;
+    #       extended to risers + fallers per user ask). The
+    #       "prospect-evolution" narrative only fits very young
+    #       relief arms; older RPs are bullpen volatility, not
+    #       prospect movement.
+    _fv_for_floor = _player_consensus_fv(p)
+    if _fv_for_floor is None or _fv_for_floor < 45.0:
+        return ("none", 0.0, drivers)
+    age_val_shared = p.get("age")
+    pitcher_role_shared = _pitcher_role(p.get("position")) if is_pitcher else None
+    if pitcher_role_shared == "RP" and age_val_shared is not None and age_val_shared >= 23.0:
+        return ("none", 0.0, drivers)
+
     young_for_level = tier in {"very-young", "young"}
     very_young = tier == "very-young"
     ped_pts = pedigree or 0.0
@@ -696,9 +814,8 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     # prior) keeps us from rewarding pure BABIP rebounds. The level-
     # repeat path used to be a hard gate but excluded the Cunningham
     # case (advancing levels + huge jump) — kept as a tie-breaker bonus.
-    # Age cap at 25: a 25+yo on a "comeback" is no longer a meaningful
-    # prospect-development narrative; surface them via the Riser bucket
-    # if they truly leapt, but not Rebounders.
+    # Hitter / SP age cap stays at 25 here (the shared RP age<23 gate
+    # above already excludes older relievers from every bucket).
     age_val = p.get("age")
     age_ok_for_rebound = age_val is None or age_val < 25
     if (perf_delta is not None and perf >= 0.080 and ped_pts >= 1.5
@@ -734,12 +851,35 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
         )
         skills_ok = (skills_delta is None) or (skills >= 0)
         if weak_prior and skills_ok and not stable_top100:
-            score = 3.0 + min(5.0, perf * 20.0)
+            # Bayesian rebound score — weighted blend of FV prior
+            # (pedigree) and the current observation (perf + skills
+            # uptick). Higher-FV prospects get pulled up as stronger
+            # rebound candidates even at the same observed bump,
+            # mirroring the per-tool DvM+ shrinkage frame. PRIOR_WEIGHT
+            # of 0.40 keeps observation dominant (60%) but lets pedigree
+            # break the tie between two prospects with the same surface
+            # rebound.
+            PRIOR_WEIGHT = 0.40
+            _fv = _player_consensus_fv(p)
+            prior_score = _fv_rebound_prior(_fv) * 8.0   # peaks at 8.0 (FV 60+)
+            obs_score = min(5.0, perf * 20.0)
             if skills_delta is not None:
-                score += min(2.0, max(0.0, skills * 0.5))
+                obs_score += min(2.0, max(0.0, skills * 0.5))
+            posterior = (PRIOR_WEIGHT * prior_score
+                         + (1.0 - PRIOR_WEIGHT) * obs_score)
+            score = 3.0 + posterior  # 3.0 floor — rebounders are events
             if _level_repeat(p):
                 score += 1.0
                 drivers.append("repeating level + improving")
+            # Sub-AAA level boost — same complement to the tighter age
+            # cap that applies on the riser path. Surfaces real low-level
+            # rebound narratives above marginal AAA ones.
+            lvl_boost = _level_score_boost(sl.get("level"))
+            if lvl_boost > 0:
+                score += lvl_boost
+                drivers.append(f"sub-AAA prospect ({sl.get('level')})")
+            if _fv is not None and _fv >= 55.0:
+                drivers.append(f"high-FV pedigree ({int(_fv)})")
             drivers.append("pedigree comeback")
             return ("rebound", score, drivers)
 
@@ -781,9 +921,19 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             drivers.append("young for level")
         if skills_delta is not None and skills > 0:
             score += min(2.0, skills * 0.4)
+        # Sub-AAA level boost — complements the tighter age cap so true
+        # low-level breakouts outrank marginal upper-level survivors.
+        lvl_boost = _level_score_boost(sl.get("level"))
+        if lvl_boost > 0:
+            score += lvl_boost
+            drivers.append(f"sub-AAA prospect ({sl.get('level')})")
         return ("riser", max(0.0, score), drivers)
 
     # --- Faller: perf declined meaningfully ---
+    # FV floor is enforced at the shared-filter block at the top of
+    # this function (FV >= 45 applies to every bucket). The faller-
+    # specific scoring still uses _fv_for_floor for the per-tier
+    # multiplier below.
     # Disqualify gates:
     #   - very-young: ALWAYS disqualified, NO rescue path. The user's
     #     Lombard Jr / Florentino examples — very-young + (often)
@@ -843,10 +993,17 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
         if not skills_crater and not melton_path:
             return ("none", 0.0, drivers)
 
-    # Faller path.
+    # Faller path. Decline magnitude is weighted by the prospect's FV
+    # tier (FV 60+ ×2.0, 55 ×1.5, 50 ×1.25, 45 ×1.0) so a plus prospect
+    # falling off is a much bigger signal than a 45-FV depth piece
+    # declining at the same rate. Structural-breakdown penalties
+    # (skills crater, age, K-rate spike) stay unweighted — they're
+    # categorical red flags, not pure performance decline.
+    fv_mult = _faller_fv_multiplier(_fv_for_floor)
     score = 0.0
     if perf_delta is not None and perf <= 0:
-        score += max(-6.0, perf * (10.0 if is_pitcher else 30.0))
+        raw_decline = max(-6.0, perf * (10.0 if is_pitcher else 30.0))
+        score += raw_decline * fv_mult
     if skills_delta is not None and skills < 0:
         score += max(-4.0, skills * 0.5)
     if skills_crater:
@@ -864,6 +1021,8 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     if melton_path:
         score -= 2.0
         drivers.append("skills broken at upper levels")
+    if _fv_for_floor >= 55.0:
+        drivers.append(f"high-FV decline ({int(_fv_for_floor)})")
     return ("faller", score, drivers)
 
 

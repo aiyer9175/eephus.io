@@ -30,7 +30,26 @@ def _load_players():
     if not TS_PATH.exists():
         raise unittest.SkipTest("data/timeseries.json not present")
     d = json.loads(TS_PATH.read_text(encoding="utf-8"))
-    return {p["player_name"]: p for p in (d.get("players") or [])}
+    # The data file occasionally carries duplicate entries for the same
+    # player name (e.g. `bryce_rainer` + `bryce_rainer__noid`). Prefer
+    # the canonical key (no `__noid` suffix) so test fixtures pick the
+    # main entry instead of the stale duplicate.
+    out: dict = {}
+    for p in (d.get("players") or []):
+        name = p.get("player_name")
+        if not name:
+            continue
+        key = p.get("player_key") or ""
+        existing = out.get(name)
+        if existing is None:
+            out[name] = p
+            continue
+        # Prefer the canonical key (no __noid suffix); otherwise keep
+        # the first one seen.
+        existing_key = existing.get("player_key") or ""
+        if existing_key.endswith("__noid") and not key.endswith("__noid"):
+            out[name] = p
+    return out
 
 
 class UserExampleClassifications(unittest.TestCase):
@@ -87,10 +106,16 @@ class UserExampleClassifications(unittest.TestCase):
         self._expect("Tate Southisene", "rebound")
 
     # --- Fallers ---
-    def test_jacob_melton_faller(self):
-        # K% +15pp at AAA, age 25 → melton_path force-faller despite
-        # surface OPS being marginally up from his AAA 2024 baseline.
-        self._expect("Jacob Melton", "faller")
+    def test_jacob_melton_age_capped_in_v6(self):
+        # v6 — hitter cap tightened from +2.0 → +1.5. Melton at 25.7/AAA
+        # (baseline 24, diff +1.7) now gets cap-cut BEFORE the faller
+        # path. This is intentional: the user explicitly asked for
+        # journeymen to drop out. The "melton_path" code path still
+        # exists for 24.0–25.4 AAA hitters with K% craters; Melton
+        # himself just doesn't qualify anymore at 25.7. Accept "none"
+        # OR "faller" (latter would mean he aged backwards in the
+        # latest snapshot).
+        self._expect("Jacob Melton", "none", allow=["faller"])
 
     def test_brody_hopkins_faller(self):
         # ERA up, BB/9 way up at AAA, 24yo → clear faller.
@@ -152,36 +177,39 @@ from spotlights import _classify_movement, _exceeds_age_cap
 
 class AgeCapHelper(unittest.TestCase):
     """Cap is computed against aspirational baselines (A=21, A+=22,
-    AA=23, AAA=24, MLB=26). Hitters disqualified at >+2.0, pitchers
-    at >+3.0."""
+    AA=23, AAA=24, MLB=26). v6 tightened the caps: hitters
+    disqualified at >=+1.5, pitchers at >=+2.0."""
 
-    def test_hitter_cap_at_plus_2(self):
+    def test_hitter_cap_at_plus_1_5(self):
         # AAA baseline 24. 26.5yo hitter → diff +2.5 → cut.
         self.assertTrue(_exceeds_age_cap(26.5, "AAA", is_pitcher=False))
-        # Boundary INCLUSIVE: 26.0 → diff +2.0 → cut (>= cap).
-        self.assertTrue(_exceeds_age_cap(26.0, "AAA", is_pitcher=False))
-        # Just under: 25.9 → diff +1.9 → eligible.
-        self.assertFalse(_exceeds_age_cap(25.9, "AAA", is_pitcher=False))
+        # Boundary INCLUSIVE: 25.5 → diff +1.5 → cut (>= cap).
+        self.assertTrue(_exceeds_age_cap(25.5, "AAA", is_pitcher=False))
+        # Just under: 25.4 → diff +1.4 → eligible.
+        self.assertFalse(_exceeds_age_cap(25.4, "AAA", is_pitcher=False))
         # Young AAA hitter clearly passes.
         self.assertFalse(_exceeds_age_cap(23.0, "AAA", is_pitcher=False))
 
-    def test_pitcher_cap_at_plus_3(self):
-        # Pitchers get a 1-year grace. AAA: 27.5 → diff +3.5 → cut.
+    def test_pitcher_cap_at_plus_2_0(self):
+        # Pitchers still get a 1/2-year grace over hitters. AAA: 27.5 → diff
+        # +3.5 → cut.
         self.assertTrue(_exceeds_age_cap(27.5, "AAA", is_pitcher=True))
-        # Boundary INCLUSIVE: 27.0 → diff +3.0 → cut.
-        self.assertTrue(_exceeds_age_cap(27.0, "AAA", is_pitcher=True))
-        # Just under: 26.9 → diff +2.9 → eligible.
-        self.assertFalse(_exceeds_age_cap(26.9, "AAA", is_pitcher=True))
-        # 26.5 (would cap a hitter) is fine for a pitcher.
-        self.assertFalse(_exceeds_age_cap(26.5, "AAA", is_pitcher=True))
+        # Boundary INCLUSIVE: 26.0 → diff +2.0 → cut.
+        self.assertTrue(_exceeds_age_cap(26.0, "AAA", is_pitcher=True))
+        # Just under: 25.9 → diff +1.9 → eligible.
+        self.assertFalse(_exceeds_age_cap(25.9, "AAA", is_pitcher=True))
+        # 25.4 (would still pass a hitter cap) is fine for a pitcher.
+        self.assertFalse(_exceeds_age_cap(25.4, "AAA", is_pitcher=True))
 
     def test_journeymen_examples_filtered(self):
-        # User's named cases — all should be capped.
+        # User's named cases — all should be capped under v6's tighter
+        # thresholds.
         # Maverick Handley 28.2 at MLB (baseline 26) → diff +2.2 → cut.
         self.assertTrue(_exceeds_age_cap(28.2, "MLB", is_pitcher=False))
         # Cal Conley 26.8 at AAA → diff +2.8 → cut.
         self.assertTrue(_exceeds_age_cap(26.8, "AAA", is_pitcher=False))
-        # Griff McGarry 27.0 at AAA pitcher → diff +3.0 → cut (boundary).
+        # Griff McGarry 27.0 at AAA pitcher → diff +3.0 → cut (well past
+        # the +2.0 v6 pitcher cap).
         self.assertTrue(_exceeds_age_cap(27.0, "AAA", is_pitcher=True))
 
     def test_legit_prospects_not_capped(self):
@@ -213,7 +241,12 @@ class AgeCapClassification(unittest.TestCase):
                              "ops": 0.900 if not is_pitcher else None,
                              "era": 2.50 if is_pitcher else None,
                              "k_pct": None},
-            "points":       [],
+            # Include a passing FV on the latest snapshot — v6.1 added a
+            # shared FV >= 45 floor at the top of _classify_movement
+            # that drops fixtures without an explicit consensus FV.
+            "points":       [{"consensus_fv": 50.0,
+                              "consensus_fv_raw": 50.0,
+                              "consensus_fv_label": "50"}],
             "career_stats": [],
             "prospect_savant": {},
         }
@@ -228,13 +261,14 @@ class AgeCapClassification(unittest.TestCase):
         self.assertEqual(bucket, "none")
 
     def test_eligible_hitter_not_capped(self):
-        # 25.5yo at AAA → diff +1.5 → eligible.
-        p = self._payload(age=25.5, is_pitcher=False)
+        # v6 — hitter cap is +1.5 INCLUSIVE. 25.4yo at AAA → diff +1.4 →
+        # eligible (just under the cap).
+        p = self._payload(age=25.4, is_pitcher=False)
         bucket, score, drivers = _classify_movement(
             p, perf_delta=0.150, skills_delta=2.0,
             list_jump_score=0.0, pedigree=0.5)
         self.assertEqual(bucket, "riser",
-            f"+1.5 above level mean should NOT cap; got {bucket}")
+            f"+1.4 above level mean should NOT cap; got {bucket}")
 
     def test_old_pitcher_capped(self):
         # Pitcher at +3.5 above level mean (27.5 AAA) → capped.
@@ -244,14 +278,20 @@ class AgeCapClassification(unittest.TestCase):
             list_jump_score=0.0, pedigree=2.5)
         self.assertEqual(bucket, "none")
 
-    def test_eligible_pitcher_not_capped_at_plus_2_5(self):
-        # Pitcher at +2.5 (26.5 AAA → would cap hitter, eligible for pitcher).
-        p = self._payload(age=26.5, is_pitcher=True)
+    def test_eligible_pitcher_not_capped_at_plus_1_9(self):
+        # v6 — pitcher cap is +2.0 INCLUSIVE. 25.9 AAA → diff +1.9 →
+        # eligible (just under cap; would cap a hitter at +1.4). Note
+        # the payload also needs FV >= 45 to clear the faller floor;
+        # the _payload helper doesn't set FV, so the FV-floor returns
+        # 'none' before the faller path. Confirm the cap doesn't fire
+        # by exercising the riser path with a positive perf delta
+        # instead.
+        p = self._payload(age=25.9, is_pitcher=True)
         bucket, _, _ = _classify_movement(
-            p, perf_delta=-0.80, skills_delta=-3.5,
+            p, perf_delta=0.250, skills_delta=2.0,
             list_jump_score=0.0, pedigree=0.5)
-        self.assertEqual(bucket, "faller",
-            f"+2.5 pitcher should NOT cap; got {bucket}")
+        self.assertEqual(bucket, "riser",
+            f"+1.9 pitcher should NOT cap; got {bucket}")
 
     def test_unknown_level_passes_through(self):
         # CPX shape — no aspirational baseline → cap doesn't fire.

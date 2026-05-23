@@ -2060,19 +2060,17 @@ FARM_WEIGHT_TRAJECTORY  = FARM_WEIGHT_DVM_PLUS
 # real but small-sample. See `farm_report_card` glossary entry for the
 # full tree shape.
 # ────────────────────────────────────────────────────────────────────────
-# v5 weights (post-2026-05) — Development-first thesis. Sustained
-# per-tool growth (Hitter / Pitcher Tools DvM+) is the highest-
-# conviction org signal — it's the one thing the org has the most
-# direct control over and is least confounded by acquisition luck or
-# upper-league hot/cold streaks. MLB Production stays the second-
-# heaviest at 0.30 since the user's primary ask remains "produce MLB
-# players, especially top-end". Acquisition Strategy + Financial drop
-# to a tied 0.15 supporting role — they're still in the composite but
-# subordinated to dev. Weights sum to 1.00.
-FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.15    # was 0.20
-FARM_TREE_WEIGHT_DEVELOPMENT          = 0.40    # was 0.30 — solo top
-FARM_TREE_WEIGHT_FINANCIAL            = 0.15    # was 0.20
-FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.30    # unchanged
+# v7 weights — Development is the clear majority. Sustained per-tool
+# growth (Hitter / Pitcher Tools DvM+) carries 50% of the composite
+# because it's the one thing the org has the most direct control over
+# and is least confounded by acquisition luck or upper-league hot/cold
+# streaks. MLB Production stays second-heaviest at 25%. Acquisition
+# Strategy + Financial drop to a tied 12.5% supporting role. Weights
+# sum to 1.00.
+FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.125   # was 0.15
+FARM_TREE_WEIGHT_DEVELOPMENT          = 0.50    # was 0.40 — clear majority
+FARM_TREE_WEIGHT_FINANCIAL            = 0.125   # was 0.15
+FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.25    # was 0.30
 # Back-compat aliases — anything that imported the v2 constants still
 # works. The composite blend below uses the v3 names exclusively.
 FARM_TREE_WEIGHT_ACQUISITIONS = FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
@@ -2477,34 +2475,38 @@ def _compute_draft_pool_efficiency(gagg: dict,
 
 
 def _compute_ifa_roi(gagg: dict, ifa_org_spending: dict) -> dict:
-    """Per-org WAR-per-$M-IFA over a 6-year rolling window. IFA needs
-    more time to develop than the draft; we look (T-9)…(T-3) for grads.
-    Bumped 5→6yr in v6 so the IFA ROI horizon aligns with the 6y DvM+
-    framing across the rest of the site.
+    """Per-org WAR-per-$M-IFA over an 11-year rolling window. IFA needs
+    a lot of time to develop; we look (T-12)…(T-2) for grads. v7
+    widened the window from 6yr→11yr because the spotrac bonus
+    coverage caps useful data to roughly 2015+ signings, leaving the
+    older T-9→T-3 window painfully sparse (1-2 orgs out of 30 had
+    enough grads under the prior gate).
     Numerator: career WAR sum across IFA-signed grads in the window.
     Denominator: IFA bonus spend across same years (sourced from
     Spotrac via the per-year `ifa_org_spending` dict).
-    Gates at ≥2 contributing grads."""
+    Gates at ≥1 contributing grad (v7 — loosened from 2 to match the
+    realistic data density)."""
     grads = gagg.get("_ifa_grads") or []
     today_year = date.today().year
-    start_year = today_year - 9   # was -8 (v6 — align with 6y DvM+)
-    end_year   = today_year - 3
+    start_year = today_year - 12   # was -9 — wider window for v7
+    end_year   = today_year - 2    # was -3 — include slightly more recent
 
     relevant = [g for g in grads
                 if start_year <= g["signed_year"] <= end_year]
-    if len(relevant) < 2:
+    if len(relevant) < 1:           # was < 2 — v7 loosened gate
         return {"war_per_m_ifa": None, "grad_count": len(relevant),
                 "war_total": 0.0, "ifa_total_usd": 0}
     war_total = sum(g["career_war"] for g in relevant)
-    # ifa_org_spending shape varies: {year: {total_usd: ...}} or
-    # {year: amount}. Tolerate both.
-    ifa_total = 0
-    for y in range(start_year, end_year + 1):
-        v = ifa_org_spending.get(y) or ifa_org_spending.get(str(y))
-        if isinstance(v, dict):
-            ifa_total += int(v.get("total_usd") or v.get("total") or 0)
-        elif isinstance(v, (int, float)):
-            ifa_total += int(v)
+    # v7 — use the actual per-grad bonus_usd as the denominator (sum
+    # over the same grads we counted in the numerator). This keeps
+    # numerator and denominator aligned — even when the upstream
+    # `ifa_org_spending` table is sparse (Spotrac only covers 2021+),
+    # the contributing grads bring their own bonus number. The prior
+    # implementation summed the org's TOTAL IFA spend across the
+    # window, which produced artificially high WAR/$M when older
+    # grads (with WAR) were counted but their bonus dollars weren't
+    # in the spend table.
+    ifa_total = sum(int(g.get("bonus_usd") or 0) for g in relevant)
     if ifa_total <= 0:
         return {"war_per_m_ifa": None, "grad_count": len(relevant),
                 "war_total": round(war_total, 2), "ifa_total_usd": 0}
@@ -2624,6 +2626,56 @@ TOOL_GROUPS: dict[str, list[str]] = {
     "cmd":       ["cmd"],
     "ct":        ["ct"],
 }
+
+
+# Statcast pitch-type code → TOOL_GROUPS pitcher-tool key. Used by the
+# league-pitch-usage aggregator to roll per-prospect arsenal usage_pct
+# rows into a single per-tool weight. Pitch codes that don't have a
+# scouting analog (knuckle, sweeper variants) are mapped to the closest
+# tool group; anything still unmapped is silently dropped (it doesn't
+# affect the weighted mean since its weight ends up 0).
+_PITCH_TYPE_TO_TOOL = {
+    # Fastball family
+    "FF": "fb", "FT": "fb", "SI": "fb", "FA": "fb",
+    # Slider family (incl. sweeper)
+    "SL": "sl", "ST": "sl", "SV": "sl",
+    # Curveball family
+    "CU": "cb", "KC": "cb", "CS": "cb",
+    # Changeup
+    "CH": "ch",
+    # Cutter
+    "FC": "ct",
+}
+
+
+def _league_pitch_usage(pitch_arsenals: dict[str, dict]) -> dict[str, float]:
+    """Aggregate per-prospect pitch_arsenal usage_pct into a league-wide
+    {tool_key: usage_share} map. Used to weight the pitcher-side
+    Development composite so a heavily-thrown pitch's DvM+ counts more
+    than a sparse pitch's DvM+ in the rollup.
+
+    Input shape: `{player_key: {pitches: [{pitch_type, usage_pct, ...}], ...}}`
+    Output: normalized weights summing to 1.0 across the mapped tool
+    keys. Pitch codes not in `_PITCH_TYPE_TO_TOOL` are skipped.
+    """
+    if not pitch_arsenals:
+        return {}
+    raw: dict[str, float] = {}
+    for arsenal in pitch_arsenals.values():
+        for px in (arsenal.get("pitches") or []):
+            code = (px.get("pitch_type") or "").upper()
+            tool = _PITCH_TYPE_TO_TOOL.get(code)
+            if not tool:
+                continue
+            try:
+                usage = float(px.get("usage_pct") or 0.0)
+            except (TypeError, ValueError):
+                continue
+            raw[tool] = raw.get(tool, 0.0) + usage
+    total = sum(raw.values())
+    if total <= 0:
+        return {}
+    return {k: round(v / total, 4) for k, v in raw.items()}
 
 
 def _top_end_points(prospects: list[dict], n: int = FARM_TOP_END_COUNT) -> float:
@@ -5127,6 +5179,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "boom_pct":      boom_pct,
                 "settled_count": settled_count,
             },
+            # v7 — bust_pct leaf parallel to boom_pct. Enters the MLB
+            # Production composite as a NEGATIVE input (the LEAF_SPECS
+            # getter below negates the value so higher bust% pulls the
+            # composite DOWN). bust_count already computed by
+            # _compute_boom_bust at the per-grad level.
+            "mlb_production_bust_pct": {
+                "bust_pct":      bust_pct,
+                "settled_count": settled_count,
+            },
             "mlb_production_top_grads":  _compute_top_grads_leaf(gagg),
             "mlb_production_conviction": _compute_conviction_leaf(gagg),
             # Financial: draft-pool efficiency + IFA ROI. Both pull the
@@ -5204,7 +5265,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 weight = n / (n + _DVM_SHRINK_K) if n > 0 else 0.0
                 shrunk_v = weight * v + (1 - weight) * mu
                 z = (shrunk_v - mu) / sd
-                _entry["tool_dev"]["per_tool_dvm_plus"][grp_name] = int(round(100 + 10 * z))
+                # v7 — apply the composite stretch (factor=1.35) per-tool
+                # too. Same monotonic remap as the org-level composite:
+                # widens the spread so a 60→80 PowerDvM+ jump is worth
+                # more than a 40→60 jump, matching the user's
+                # exponential-FV-value ask.
+                raw = 100 + 10 * z
+                stretched = _stretch_composite(raw)
+                _entry["tool_dev"]["per_tool_dvm_plus"][grp_name] = int(round(stretched))
 
     # Composite ToolsDvM+ — unweighted mean of the per-group DvM+ values
     # an org actually has. Orgs missing every group entry get None.
@@ -5237,6 +5305,40 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     _HITTER_TOOL_DVM_KEYS = {"hit", "power", "speed", "field", "arm",
                              "pitch_sel", "bat_ctrl"}
     _PITCHER_TOOL_DVM_KEYS = {"fb", "sl", "cb", "ch", "cmd", "ct"}
+
+    # v7 — league-avg pitch usage weights. Aggregate across every
+    # pitcher's pitch_arsenal so a heavily-thrown pitch's DvM+ counts
+    # more than a sparse pitch's DvM+ when rolling up the pitcher
+    # composite. `cmd` (command, not a thrown pitch) keeps its default
+    # weight via the unweighted fallback. Returns {fb, sl, cb, ch, ct,
+    # sp: usage_share}.
+    pitch_usage_weights = _league_pitch_usage(pitch_arsenals)
+
+    def _weighted_pitcher_dvm(per_grp: dict) -> float | None:
+        """Usage-weighted mean of present pitcher tool DvM+ values.
+        Each tool weighted by league-wide usage share; unknown-weight
+        tools (like `cmd`) get the cohort-average weight so they're
+        not zeroed out. Falls back to plain unweighted mean when no
+        usage data is on file."""
+        present = [(k, v) for k, v in per_grp.items()
+                   if k in _PITCHER_TOOL_DVM_KEYS and v is not None]
+        if not present:
+            return None
+        if not pitch_usage_weights:
+            return sum(v for _, v in present) / len(present)
+        # Default weight for tools without a pitch-usage anchor (cmd):
+        # the mean usage across known-pitch tools, so cmd contributes
+        # proportionally rather than being silently dropped.
+        known_ws = [w for w in pitch_usage_weights.values() if w > 0]
+        default_w = (sum(known_ws) / len(known_ws)) if known_ws else 1.0
+        num = 0.0
+        denom = 0.0
+        for k, v in present:
+            w = pitch_usage_weights.get(k, default_w)
+            num += w * v
+            denom += w
+        return num / denom if denom > 0 else None
+
     for entry in org_summary:
         per_grp = entry["tool_dev"].get("per_tool_dvm_plus") or {}
         h_vals = [v for k, v in per_grp.items()
@@ -5245,7 +5347,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                   if k in _PITCHER_TOOL_DVM_KEYS and v is not None]
         entry["tree"]["dev_hitter"]["dvm_plus"]  = int(round(sum(h_vals) / len(h_vals))) if h_vals else None
         entry["tree"]["dev_hitter"]["n_groups"]  = len(h_vals)
-        entry["tree"]["dev_pitcher"]["dvm_plus"] = int(round(sum(p_vals) / len(p_vals))) if p_vals else None
+        _pitcher_wm = _weighted_pitcher_dvm(per_grp)
+        entry["tree"]["dev_pitcher"]["dvm_plus"] = int(round(_pitcher_wm)) if _pitcher_wm is not None else None
         entry["tree"]["dev_pitcher"]["n_groups"] = len(p_vals)
 
     # Per-level graded prospect counts, sourced from the affiliate-roster
@@ -5704,11 +5807,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # present sub-input scores per org. Single-input leaves use the
     # existing 1-input z-score path.
     LEAF_SPECS: dict[str, list[tuple[str, callable]]] = {
-        # IFA Performance — 3 inputs (WAG / WAR-per-year / cumulative WAR)
+        # IFA Performance — v7: single-input ROI signal (war_per_m_ifa
+        # from the financial branch). WAG was tracking "did our scouts
+        # find IFA guys who outperformed expectations" — useful but
+        # noisy with the small IFA cohort size. ROI directly captures
+        # "how much MLB production did we get per dollar of IFA spend"
+        # which is the cleanest acquisition-skill signal for this lane.
         "acq_ifa": [
-            ("wag",        lambda e: (e["tree"]["acq_ifa"] or {}).get("wag_mean")),
-            ("war_per_yr", lambda e: (e["tree"]["acq_ifa"] or {}).get("war_per_yr_mean")),
-            ("cum_war",    lambda e: (e["tree"]["acq_ifa"] or {}).get("career_war_mean")),
+            ("war_per_m_ifa", lambda e: (e["tree"]["fin_ifa_roi"] or {}).get("war_per_m_ifa")),
         ],
         # Draft Performance — pick-slot-adjusted value + ceiling-hits %
         "acq_draft": [
@@ -5732,24 +5838,33 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Financial — single-input each
         "fin_war_per_m":        [("war_per_m", lambda e: (e["tree"]["fin_war_per_m"]        or {}).get("value"))],
         "fin_contract_surplus": [("surplus",   lambda e: (e["tree"]["fin_contract_surplus"] or {}).get("mean_usd_per_yr"))],
-        # MLB Production — 3 inputs each (WAG / WAR-per-year / TOP-3
-        # cumulative WAR). v4 swap: cumulative-WAR-mean → top-3-cum-WAR.
-        # The mean was getting dragged down by the long tail of org-
-        # filler grads; top-3 captures the org's actual ceiling output
-        # within its hitter / pitcher cohort.
+        # MLB Production — v7: dropped WAG from the composite (WAG now
+        # lives only under Acquisition Strategy as the talent-translation
+        # signal, where it belongs). MLB Production composite uses
+        # WAR-per-year + TOP-3 cumulative WAR — both pure-output metrics
+        # tied to graduates' actual MLB production, not the WAG
+        # delta-vs-FV-expectation frame.
         "mlb_hitter_wag": [
-            ("wag",        lambda e: (e["tree"]["mlb_hitter_wag"] or {}).get("wag_mean")),
             ("war_per_yr", lambda e: (e["tree"]["mlb_hitter_wag"] or {}).get("war_per_yr_mean")),
             ("top3_cum_war", lambda e: (e["tree"]["mlb_hitter_wag"] or {}).get("top3_career_war")),
         ],
         "mlb_pitcher_wag": [
-            ("wag",        lambda e: (e["tree"]["mlb_pitcher_wag"] or {}).get("wag_mean")),
             ("war_per_yr", lambda e: (e["tree"]["mlb_pitcher_wag"] or {}).get("war_per_yr_mean")),
             ("top3_cum_war", lambda e: (e["tree"]["mlb_pitcher_wag"] or {}).get("top3_career_war")),
         ],
         # v4 NEW leaves under MLB Production.
         "mlb_production_boom_pct": [
             ("boom_pct", lambda e: (e["tree"]["mlb_production_boom_pct"] or {}).get("boom_pct")),
+        ],
+        # v7 NEW — bust_pct leaf, negated so higher bust% pulls the
+        # composite DOWN. Same magnitude weight as boom_pct (equal
+        # leaves under the parent), opposite direction.
+        "mlb_production_bust_pct": [
+            ("bust_pct_neg", lambda e: (
+                -(e["tree"]["mlb_production_bust_pct"] or {}).get("bust_pct")
+                if (e["tree"]["mlb_production_bust_pct"] or {}).get("bust_pct") is not None
+                else None
+            )),
         ],
         "mlb_production_top_grads": [
             ("top3_war_per_yr", lambda e: (e["tree"]["mlb_production_top_grads"] or {}).get("top3_war_per_yr")),
@@ -5809,6 +5924,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                                   "fin_draft_pool_efficiency", "fin_ifa_roi"],
         "mlb_production":       ["mlb_hitter_wag", "mlb_pitcher_wag",
                                   "mlb_production_boom_pct",
+                                  "mlb_production_bust_pct",   # v7 — negative-direction leaf
                                   "mlb_production_top_grads",
                                   "mlb_production_conviction"],
     }

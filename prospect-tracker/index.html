@@ -54,8 +54,8 @@
          which made the legend swatches nearly invisible against the
          global nav. Saddle/parchment is unused elsewhere in the palette
          and reads as "old-school baseball card" against the warm paper. */
-      --spend-ifa:        var(--neon-amber);
-      --spend-draft:      #8E6E47;     /* warm saddle/parchment    */
+      --spend-ifa:        #F5A623;     /* amber — IFA */
+      --spend-draft:      #E040A0;     /* magenta — Draft (v7 — was warm saddle, too close to amber) */
 
       /* FV tier badges — sequential heat ramp. Warmth + saturation
          decrease monotonically as FV drops so a glance at the farm
@@ -244,8 +244,8 @@
       --neon-cyan:        #00D9FF;   /* refractor cyan */
       --neon-amber:       #FFD700;   /* refractor gold */
       --neon-violet:      #B47CFF;   /* refractor purple */
-      --spend-ifa:        var(--neon-amber);
-      --spend-draft:      #4FD9FF;
+      --spend-ifa:        #F5A623;     /* amber — IFA */
+      --spend-draft:      #E040A0;     /* magenta — Draft (v7 — was cyan, conflicted with neon-cyan accent) */
 
       --up:    #4FFF9E;
       --down:  #FF6B7A;
@@ -1249,6 +1249,22 @@
     .row-tag.health-chronic::before { background: var(--neon-amber); }
     .row-tag.health-watch::before   { background: var(--neon-cyan); }
     .row-tag.health-healthy::before { background: var(--up); }
+    /* v7 — dot-only Healthy chip. The green dot speaks for itself;
+       drop the word "Healthy" so the chip becomes a compact indicator.
+       Kept tooltip + aria-label intact for accessibility. */
+    .row-tag.health-healthy.is-dot-only {
+      padding: 4px;
+      width: 14px; height: 14px;
+      box-sizing: border-box;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .row-tag.health-healthy.is-dot-only::before {
+      width: 7px; height: 7px;
+      margin-right: 0;
+    }
     .row-tag.acq-trade      { color: var(--neon-cyan);  border-color: var(--neon-cyan);  background: rgba(74,200,224,0.10); }
     .row-tag.acq-rule5,
     .row-tag.acq-waiver     { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.06); }
@@ -1669,6 +1685,51 @@
       font-style: italic;
       color: var(--text-tertiary);
       margin-left: 6px;
+    }
+    /* v7 — Overview-tab summary tile grid. 6 tiles auto-fit into a
+       responsive grid (min-cell width ~150px). Each tile is the
+       compact summary of one section that has a deep view elsewhere
+       on the detail page; clicking jumps to that tab. */
+    .overview-tile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+      gap: 10px;
+      margin: 8px 0 18px;
+    }
+    .overview-tile {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      transition: border-color 0.12s, background 0.12s, transform 0.08s;
+    }
+    .overview-tile[onclick]:hover {
+      border-color: var(--neon-cyan);
+      background: var(--bg-tertiary);
+      transform: translateY(-1px);
+    }
+    .overview-tile .ov-tile-label {
+      font-family: var(--font-retro);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .overview-tile .ov-tile-val {
+      font-family: var(--font-retro-mono);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+    }
+    .overview-tile .ov-tile-sub {
+      font-family: var(--font-sans);
+      font-size: 10.5px;
+      color: var(--text-tertiary);
+      margin-top: 3px;
+      letter-spacing: 0.01em;
     }
     /* Reusable card chrome — every sidebar-style card opts into this
        class to inherit consistent border + background + padding +
@@ -2893,8 +2954,8 @@
       height: 100%;
       transition: width 0.18s ease;
     }
-    .spending-bar.sb-ifa   .sb-label { color: var(--neon-amber); }
-    .spending-bar.sb-ifa   .sb-fill  { background: var(--neon-amber); }
+    .spending-bar.sb-ifa   .sb-label { color: var(--spend-ifa); }
+    .spending-bar.sb-ifa   .sb-fill  { background: var(--spend-ifa); }
     .spending-bar.sb-draft .sb-label { color: var(--spend-draft); }
     .spending-bar.sb-draft .sb-fill  { background: var(--spend-draft); }
     .spending-bar .sb-amt {
@@ -2954,7 +3015,7 @@
       border-radius: var(--radius-sm);
       padding: 8px 10px;
     }
-    .spending-totals .st-cell.st-ifa   { border-left: 3px solid var(--neon-amber); }
+    .spending-totals .st-cell.st-ifa   { border-left: 3px solid var(--spend-ifa); }
     .spending-totals .st-cell.st-draft { border-left: 3px solid var(--spend-draft); }
     .spending-totals .st-label {
       font-size: 9px;
@@ -3740,6 +3801,54 @@
     @keyframes holo-shift {
       from { background-position: 0% 0%, 0% 0%; }
       to   { background-position: 0% 0%, 300% 100%; }
+    }
+    /* v7 — additional rarity tiers (50+ foil, 45+ shine, 70+ legendary).
+       Shifted ramp anchors the average at FV 40 (no treatment); every
+       tier above 40 picks up a progressively richer border treatment.
+       See the `fv_rarity` glossary entry for the visual legend. */
+    .card-rarity-foil {
+      border: 2px solid transparent;
+      background:
+        linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+        linear-gradient(135deg,
+          rgba(200,200,210,0.55) 0%,
+          rgba(240,240,250,0.7) 50%,
+          rgba(200,200,210,0.55) 100%) border-box;
+      background-size: 100% 100%, 200% 200%;
+      animation: foil-shift 8s linear infinite;
+    }
+    @keyframes foil-shift {
+      from { background-position: 0% 0%, 0% 0%; }
+      to   { background-position: 0% 0%, 200% 0%; }
+    }
+    .card-rarity-shine {
+      /* Faint gold tint — lowest visible rarity tier. No animation;
+         a single warm static foil suggests "above-average" without
+         competing with the chromed treatments above. */
+      border: 1.5px solid transparent;
+      background:
+        linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+        linear-gradient(135deg, #C9A85A, #E5C77B, #C9A85A) border-box;
+    }
+    .card-rarity-legendary {
+      /* Animated rainbow + chrome accent — only fires on FV 70+
+         prospects. Combines the holo rainbow with a faster shift
+         cycle so the difference between chrome (60+) and legendary
+         (70+) is visually obvious. */
+      border: 2.5px solid transparent;
+      background:
+        linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+        linear-gradient(135deg,
+          #ff5fa2 0%, #ffd45a 14%, #4ee0ff 28%,
+          #b455ff 42%, #ff5fa2 56%, #ffd45a 70%,
+          #4ee0ff 84%, #b455ff 100%) border-box;
+      background-size: 100% 100%, 400% 400%;
+      animation: legendary-shift 3s linear infinite;
+      box-shadow: 0 0 8px rgba(180,85,255,0.35);
+    }
+    @keyframes legendary-shift {
+      from { background-position: 0% 0%, 0% 0%; }
+      to   { background-position: 0% 0%, 400% 0%; }
     }
     /* FV-tier ring around any headshot / silhouette wrapper. Border
        width slimmer than the detail-page card-rarity so the ring stays
@@ -5076,7 +5185,11 @@
       <button class="chip" data-filter-pos="LF">LF</button>
       <button class="chip" data-filter-pos="RF">RF</button>
       <button class="chip" data-filter-pos="OF" title="Any outfielder (CF, LF, RF, unspecified)">OF</button>
-      <button class="chip" data-filter-pos="P" title="SP / RP / RHP / LHP">P</button>
+      <button class="chip" data-filter-pos="P" title="Any pitcher — SP / RP / SIRP / MIRP / RHP / LHP">P</button>
+      <button class="chip" data-filter-pos="SP" title="Starting pitcher">SP</button>
+      <button class="chip" data-filter-pos="RP" title="Relief pitcher — rolls up SIRP + MIRP + bare RP">RP</button>
+      <button class="chip" data-filter-pos="SIRP" title="Single-Inning Relief Pitcher — closer / setup role">SIRP</button>
+      <button class="chip" data-filter-pos="MIRP" title="Multi-Inning Relief Pitcher — long-relief / bulk follower">MIRP</button>
     </div>
   </div>
 
@@ -5282,7 +5395,11 @@
       <button class="chip"        data-lb-pos="LF">LF</button>
       <button class="chip"        data-lb-pos="RF">RF</button>
       <button class="chip"        data-lb-pos="OF" title="Any outfielder">OF</button>
-      <button class="chip"        data-lb-pos="P">P</button>
+      <button class="chip"        data-lb-pos="P" title="Any pitcher — SP / RP / SIRP / MIRP / RHP / LHP">P</button>
+      <button class="chip"        data-lb-pos="SP" title="Starting pitcher">SP</button>
+      <button class="chip"        data-lb-pos="RP" title="Relief pitcher — rolls up SIRP + MIRP + bare RP">RP</button>
+      <button class="chip"        data-lb-pos="SIRP" title="Single-Inning Relief Pitcher — closer / setup role">SIRP</button>
+      <button class="chip"        data-lb-pos="MIRP" title="Multi-Inning Relief Pitcher — long-relief / bulk follower">MIRP</button>
 
       <span class="filter-label" style="margin-left:10px;">Org</span>
       <select class="chip" id="lb-org-filter">
@@ -5843,12 +5960,11 @@ function healthBadgeHTML(p) {
   if (stints >= 1 || ildays >= 30) {
     return `<span class="row-tag health-watch" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12 months — recent injury history">Recent Injury</span>`;
   }
-  // No reported IL activity in the past 12 months — surface explicitly
-  // as "Healthy" so the lack of a chip doesn't get confused with missing
-  // data. Only fires when we have an `health_profile` object on the
-  // record at all; pre-injury-tracking inactives stay silent.
+  // No reported IL activity in the past 12 months — render a compact
+  // dot-only chip (green dot speaks for itself; tooltip explains).
+  // Pre-injury-tracking inactives stay silent.
   if (hp && Object.keys(hp).length) {
-    return `<span class="row-tag health-healthy" title="No IL activity in the past 12 months">Healthy</span>`;
+    return `<span class="row-tag health-healthy is-dot-only" title="Healthy — no IL activity in the past 12 months" aria-label="Healthy"></span>`;
   }
   return "";
 }
@@ -6780,6 +6896,9 @@ function syncFromURL() {
   // Detail-page tab + pagination state. Reset to defaults when missing
   // so back-navigating to a list doesn't carry stale page numbers.
   state.playerTab = p.has("ptab") ? p.get("ptab") : "overview";
+  // Back-compat: the "context" tab was renamed to "details" — map old
+  // shared URLs forward so they still land on the right panel.
+  if (state.playerTab === "context") state.playerTab = "details";
   state.farmTab   = p.has("ftab") ? p.get("ftab") : "overview";
   if (!state.pages) state.pages = {};
   const _readPage = (k, key) => { state.pages[key] = p.has(k) ? Math.max(1, parseInt(p.get(k), 10) || 1) : 1; };
@@ -7347,20 +7466,34 @@ function positionBucket(pos) {
   if (head === "LF") return "LF";
   if (head === "RF") return "RF";
   if (head === "OF") return "OF";
-  if (/^(RHP|LHP|SP|RP|MIRP|SIRP|P)$/.test(head)) return "P";
+  // Pitcher buckets — return the role-tagged value when one is
+  // present so SP / SIRP / MIRP can be filtered individually. Bare
+  // RHP / LHP / P (role-agnostic) collapses to "P".
+  if (head === "SIRP") return "SIRP";
+  if (head === "MIRP") return "MIRP";
+  if (head === "SP")   return "SP";
+  if (head === "RP")   return "RP";
+  if (/^(RHP|LHP|P)$/.test(head)) return "P";
   return null;
 }
 
 // Coarse → fine match: "INF" still wants to include 2B/SS/3B players,
-// "OF" still wants CF/LF/RF. Single-precise filters (e.g. "SS") match
-// only that bucket. Filter callers (active list, leaderboards, farm
-// detail) all go through this helper to preserve old behavior.
+// "OF" still wants CF/LF/RF. Pitcher rollups: "P" matches every pitcher
+// bucket (back-compat), "RP" matches SIRP + MIRP + bare-RP. SP / SIRP /
+// MIRP filters only match their exact bucket. Filter callers (active
+// list, leaderboards, farm detail) all go through this helper.
 function positionMatches(playerBucket, filterVal) {
   if (!filterVal || filterVal === "all") return true;
   if (!playerBucket) return false;
   if (playerBucket === filterVal) return true;
   if (filterVal === "INF" && ["2B", "SS", "3B", "INF"].includes(playerBucket)) return true;
   if (filterVal === "OF"  && ["CF", "LF", "RF", "OF"].includes(playerBucket)) return true;
+  // "P" filter matches every pitcher bucket — back-compat with the
+  // pre-v6 single-bucket world where all pitchers collapsed to "P".
+  if (filterVal === "P"  && ["P", "SP", "RP", "SIRP", "MIRP"].includes(playerBucket)) return true;
+  // "RP" rolls up the three relief sub-types (SIRP one-inning, MIRP
+  // multi-inning, bare RP unspecified-relief).
+  if (filterVal === "RP" && ["RP", "SIRP", "MIRP"].includes(playerBucket)) return true;
   return false;
 }
 let DATA = null;
@@ -11748,6 +11881,35 @@ const GLOSSARY = {
     example: "Bobby Witt Jr. graduated as a 60 FV (expected ~3.4 WAR/yr) and has averaged ~6 WAR/yr in his MLB time, posting a WAG of +2.6, a major outperformance.",
     related: ["fv", "war", "fv_war_table"],
   },
+  // ---- Pitcher roles (SP / RP / SIRP / MIRP) ----
+  "sp": {
+    name: "SP", aliases: ["SP", "Starting pitcher", "Starter"], category: "definition",
+    priority: 9,
+    short: "Starting pitcher — projects to start games (typically 5+ innings per outing).",
+    long: "Starting Pitcher. Carries the bulk of the workload — 5+ innings per outing in a 5-man rotation. Projection requires 3+ quality offerings (arsenal depth) AND command good enough to face a lineup multiple times. SP-projected prospects typically receive higher FV grades than relief-projected arms of similar raw stuff because innings count more than leverage on the WAR ledger. Filter chip `SP` matches only SP-tagged prospects (excludes SIRP / MIRP / bare RP).",
+    related: ["rp", "sirp", "mirp", "fv"],
+  },
+  "rp": {
+    name: "RP", aliases: ["RP", "Relief pitcher", "Reliever", "Bullpen"], category: "definition",
+    priority: 10,
+    short: "Relief pitcher — generic relief role. Rolls up SIRP + MIRP + bare RP for filtering.",
+    long: "Relief Pitcher. The 'RP' filter chip is a rollup: it matches single-inning relievers (SIRP — closer / setup), multi-inning relievers (MIRP — bulk / long-relief), and bare-RP prospects whose role isn't yet specified. Useful when you want every relief-role pitcher in the same view without caring about leverage tier. Use the SIRP / MIRP chips directly when the high-leverage vs bulk distinction matters.",
+    related: ["sirp", "mirp", "sp"],
+  },
+  "sirp": {
+    name: "SIRP", aliases: ["SIRP", "Single-inning reliever", "Closer / setup"], category: "definition",
+    priority: 11,
+    short: "Single-Inning Relief Pitcher — closer or high-leverage setup role (~1 inning per outing).",
+    long: "Single-Inning Relief Pitcher. FanGraphs designates a pitcher SIRP when their projected role is one-inning, high-leverage relief — closer, setup, fireman. Typically prospects with above-average fastball velocity + at least one plus secondary offering, but lacking the arsenal depth or command to face a lineup multiple times as a starter. SIRPs carry the most leverage per inning of any pitcher role; the trade-off is they cover the fewest innings, so even an elite SIRP rarely projects above FV 50-55. Higher leverage than MIRP, fewer innings.",
+    related: ["mirp", "rp", "sp", "fv"],
+  },
+  "mirp": {
+    name: "MIRP", aliases: ["MIRP", "Multi-inning reliever", "Long relief", "Swingman"], category: "definition",
+    priority: 12,
+    short: "Multi-Inning Relief Pitcher — long relief, bulk follower, or swingman (~2+ innings per outing).",
+    long: "Multi-Inning Relief Pitcher. FanGraphs designates a pitcher MIRP when their projected role is 2+ innings per outing — long-relief, bulk follower behind an opener, or true swingman. Typically prospects with starter-quality stuff but a command profile or arsenal depth issue that pushes them out of the rotation. MIRPs cover more innings than SIRPs but carry less leverage per inning; their FV ceiling sits between a true SP (deeper arsenal) and a SIRP (more leverage). The 'opener' phenomenon expanded the MIRP role's prominence over the last decade.",
+    related: ["sirp", "rp", "sp", "fv"],
+  },
   // ---- Scouting ----
   "fv": {
     name: "FV", aliases: ["FV", "Future Value", "Consensus FV"], category: "scouting",
@@ -12294,8 +12456,23 @@ const GLOSSARY = {
     name: "FV badge", aliases: ["FV chip", "FV pill"], category: "indicators",
     priority: 10,
     short: "Color-coded chip showing the player's consensus Future Value. Red = elite (70+), orange = high (60-65), yellow = mid (50-55), grey = lower (40-45).",
-    related: ["fv", "consensus_fv"],
+    related: ["fv", "consensus_fv", "fv_rarity"],
     visual_html: '<span class="fv-badge fv-70">70</span><span class="fv-badge fv-60">60</span><span class="fv-badge fv-50">50</span><span class="fv-badge fv-45">45</span>',
+  },
+  "fv_rarity": {
+    name: "FV Rarity", aliases: ["Rarity ring", "Card rarity"], category: "indicators",
+    priority: 11,
+    short: "Animated border treatment around player headshots / cards. Anchored at FV 40 (average prospect — no treatment); every tier above 40 picks up a richer foil/holo/chrome shimmer.",
+    long: "v7 — rarity ramp re-anchored to FV 40 as the baseline. The system used to start chrome at 70+ and holo at 60+ only; v7 fills the middle tiers with foil + shine so the visual gradient matches the actual FV distribution (the median active prospect sits around 40, not 50). Five rarity bands above the baseline, mirroring the Topps Chrome / refractor aesthetic the dark-mode theme leans into:\\n  • FV 70+ → LEGENDARY · animated rainbow with chrome accent + violet glow (top ~1%)\\n  • FV 60-69 → CHROME · silver shimmer (plus prospect)\\n  • FV 55-59 → HOLO · subtle rainbow shift (above-average regular)\\n  • FV 50-54 → FOIL · faint silver foil (MLB-regular projection)\\n  • FV 45-49 → SHINE · static gold tint (above-average org piece)\\n  • FV 40 → baseline, no treatment (average prospect)\\n  • FV < 40 → no treatment\\nApplied everywhere a player headshot or card renders — list rows, spotlight cards, the prospect detail page header, compare view.",
+    related: ["fv", "fv_badge"],
+    visual_html: '<div style="display:flex;gap:12px;align-items:flex-end;font-size:10px;color:var(--text-tertiary);">' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span class="fv-headshot-ring card-rarity-legendary" style="width:24px;height:30px;border-radius:3px;display:inline-block;"></span><span>70+ Legendary</span></div>' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span class="fv-headshot-ring card-rarity-chrome" style="width:24px;height:30px;border-radius:3px;display:inline-block;"></span><span>60+ Chrome</span></div>' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span class="fv-headshot-ring card-rarity-holo" style="width:24px;height:30px;border-radius:3px;display:inline-block;"></span><span>55+ Holo</span></div>' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span class="fv-headshot-ring card-rarity-foil" style="width:24px;height:30px;border-radius:3px;display:inline-block;"></span><span>50+ Foil</span></div>' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span class="fv-headshot-ring card-rarity-shine" style="width:24px;height:30px;border-radius:3px;display:inline-block;"></span><span>45+ Shine</span></div>' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="width:24px;height:30px;border-radius:3px;display:inline-block;background:var(--bg-secondary);border:1px solid var(--border);"></span><span>40 Avg</span></div>' +
+      '</div>',
   },
   "tools_plus_pill": {
     name: "Tools+ pill", aliases: ["T+ pill", "Tools+ chip"], category: "indicators",
@@ -12394,9 +12571,9 @@ const GLOSSARY = {
   "farm_report_card": {
     name: "Farm grade tree", aliases: ["Farm grade", "Report card", "Grade tree"], category: "custom-index",
     priority: 50,
-    short: "4-branch hierarchical farm grade (v5). Composite = weighted blend with Development at 40% (solo top), MLB Production at 30%, Acquisition Strategy + Financial tied at 15% each.",
-    long: "Grade tree v6 — Development-first thesis. Weights: Development 40% (solo top), MLB Production 30%, Acquisition Strategy 15% + Financial 15% (tied supporting columns). Development is the highest-conviction org signal — sustained per-tool growth is the one thing the org has the most direct control over and is least confounded by acquisition luck or upper-league hot/cold streaks. MLB Production stays heavily weighted at 30% (the boom%/top-3 WAR/Conviction leaves). FV_POINTS curve steepened so an 80-grade prospect is worth 2.5× the old curve and 250× a 40-grade org-filler — top-end orgs separate dramatically. Conviction cap: orgs without a star-tier grad (WAR/yr ≥ 4.0 last 6yr OR career WAR ≥ 12 ever) clamp at the 75th-percentile farm_score, preventing depth-only orgs from grading elite. v6 also applies a non-linear composite stretch (alpha=1.35) that magnifies distance from the league mean before letter-grading, and widens the letter scale to include D- and F at the bottom so weak farms read as genuinely poor — A+ #1, A top 7%, F bottom ~3%. Every leaf z-score normalized across the 30 orgs; sparse leaves get '—'. The trajectory_score that feeds the Development letter grade is now a blended 60% 6y + 30% 3y + 10% 1y DvM+ — 6y is the principal multi-cycle signal.",
-    formula: "farm_score = 0.15·Acquisition_Strategy + 0.40·Development + 0.15·Financial + 0.30·MLB_Production\n  Acquisition_Strategy = mean(Draft, IFA, Trade, Waiver)\n  Development          = mean(Hitter_Tools_DvM+, Pitcher_Tools_DvM+)\n  Financial            = mean(WAR_per_$M, Grad_contract_surplus, Draft_pool_efficiency, IFA_ROI)\n  MLB_Production       = mean(Hitter_3input, Pitcher_3input, Boom_rate, Top3_WAR_per_yr, Conviction)\n  if Conviction = 0 and farm_score > p75: farm_score = p75  (Conviction cap)",
+    short: "4-branch hierarchical farm grade (v7). Composite = Development 50% (clear majority) · MLB Production 25% · Acquisition Strategy 12.5% · Financial 12.5%.",
+    long: "Grade tree v7 — Development is the clear majority influence. Weights: Development 50% / MLB Production 25% / Acquisition Strategy 12.5% / Financial 12.5%. Development is the highest-conviction org signal — sustained per-tool growth is the one thing the org has the most direct control over and is least confounded by acquisition luck or upper-league hot/cold streaks. v7 also: (1) drops WAG from the MLB Production composite (WAG now lives only in Acquisition Strategy as the talent-translation signal) — MLB Production uses WAR/yr + Top-3 cumulative WAR for both hitter/pitcher leaves. (2) Adds a bust_pct leaf as a NEGATIVE input to MLB Production (parallel to boom_pct but pulls the score DOWN), so bust-heavy orgs get penalized cleanly. (3) Applies the v6 composite stretch (factor=1.35) per-tool too, magnifying high-end tool growth (60→80 PowerDvM+ jump worth more than 40→60). (4) Pitch DvM+ is league-frequency-weighted via per-pitcher arsenal usage_pct aggregation — heavily-thrown pitches (fastball) carry more weight than rare ones in the pitcher composite. Conviction cap: orgs without a star-tier grad (WAR/yr ≥ 4.0 last 6yr OR career WAR ≥ 12 ever) clamp at the 75th-percentile farm_score, preventing depth-only orgs from grading elite. Letter scale: A+ #1, A top 7%, F bottom ~3%. Every leaf z-score normalized across the 30 orgs; sparse leaves get '—'. The trajectory_score that feeds the Development letter grade is a blended 60% 6y + 30% 3y + 10% 1y DvM+.",
+    formula: "farm_score = 0.125·Acquisition_Strategy + 0.50·Development + 0.125·Financial + 0.25·MLB_Production\n  Acquisition_Strategy = mean(Draft, IFA-ROI, Trade, Waiver)\n  Development          = mean(Hitter_Tools_DvM+, Pitcher_Tools_DvM+_usage_weighted)\n  Financial            = mean(WAR_per_$M, Grad_contract_surplus, Draft_pool_efficiency, IFA_ROI)\n  MLB_Production       = mean(Hitter_WAR/yr+Top3, Pitcher_WAR/yr+Top3, Boom%, -Bust%, Top3_WAR/yr, Conviction)\n  if Conviction = 0 and farm_score > p75: farm_score = p75  (Conviction cap)",
     related: ["farm_grade_acquisition_strategy", "farm_grade_development", "farm_grade_financial", "farm_grade_mlb_production", "mlb_production_boom_pct", "mlb_production_top_grads", "mlb_production_conviction", "fin_draft_pool_efficiency", "fin_ifa_roi", "dvm_plus", "wag", "sur_plus"],
   },
   "farm_grade_acquisition_strategy": {
@@ -12440,17 +12617,24 @@ const GLOSSARY = {
   "farm_grade_mlb_production": {
     name: "MLB Production", aliases: ["MLB Production grade", "Production grade"], category: "custom-index",
     priority: 55,
-    short: "Whether the org produces MLB players, especially top-end ones. 5 leaves (v4): hitter + pitcher 3-input composites, boom rate, top-3 grad WAR/yr, Conviction.",
-    long: "MLB Production branch (30% of farm_score; unchanged through v4 → v6; second-heaviest behind Development at 40%). Five sub-grades, equal weight: (a) Hitter MLB Production — equal-weighted z-blend of Hitter WAG + Hitter WAR-per-year + Top-3 Hitter Career WAR. (b) Pitcher MLB Production — same 3-input composite for pitchers. (c) Boom Rate — share of settled grads with career WAR ≥ +5 (min 5 settled). (d) Top-3 Grad WAR/yr — mean WAR/yr of the org's top-3 grads by rate (min 3 qualifying). (e) Conviction — binary flag: 1 if any grad has WAR/yr ≥ 4.0 in trailing 6yr OR career WAR ≥ 12 ever, else 0. Conviction additionally drives the farm-score cap: conviction=0 orgs clamp at the 75th-percentile farm_score regardless of branch grades, so depth-only orgs can't grade elite without a star.",
-    formula: "Production_score = mean of z-anchored (Hitter_3input, Pitcher_3input, boom_pct, top3_WAR_per_yr, conviction)\nConviction cap: if conviction = 0 and farm_score > p75 → farm_score = p75",
-    related: ["wag", "war", "mlb_production_boom_pct", "mlb_production_top_grads", "mlb_production_conviction", "farm_report_card"],
+    short: "Whether the org produces MLB players, especially top-end ones. v7 leaves (6): hitter + pitcher WAR/yr + Top-3, boom rate, BUST rate, top-3 grad WAR/yr, Conviction.",
+    long: "MLB Production branch (25% of farm_score in v7; was 30% in v6 — Development absorbed the freed weight). Six sub-grades, equal weight: (a) Hitter MLB Production — z-blend of Hitter WAR-per-year + Top-3 Hitter Career WAR (v7 dropped WAG — WAG now lives in Acquisition Strategy as the talent-translation signal). (b) Pitcher MLB Production — same 2-input composite for pitchers. (c) Boom Rate — share of settled grads with career WAR ≥ +5 (min 5 settled). (d) BUST Rate — NEW v7 — share of settled grads with career WAR ≤ +1, entered as a NEGATIVE-direction input so bust-heavy orgs get penalized. (e) Top-3 Grad WAR/yr — mean WAR/yr of the org's top-3 grads by rate (min 3 qualifying). (f) Conviction — binary flag: 1 if any grad has WAR/yr ≥ 4.0 in trailing 6yr OR career WAR ≥ 12 ever, else 0. Conviction additionally drives the farm-score cap: conviction=0 orgs clamp at the 75th-percentile farm_score regardless of branch grades.",
+    formula: "Production_score = mean of z-anchored (Hitter_WAR/yr+Top3, Pitcher_WAR/yr+Top3, boom_pct, -bust_pct, top3_WAR_per_yr, conviction)\nConviction cap: if conviction = 0 and farm_score > p75 → farm_score = p75",
+    related: ["wag", "war", "mlb_production_boom_pct", "mlb_production_bust_pct", "mlb_production_top_grads", "mlb_production_conviction", "farm_report_card"],
   },
   "mlb_production_boom_pct": {
     name: "Boom Rate", aliases: ["Boom Rate", "Boom %", "Boom percentage"], category: "custom-index",
     priority: 56,
     short: "Share of an org's settled MLB graduates with career WAR ≥ +5 (true 'boom' outcomes).",
-    long: "Boom Rate leaf inside MLB Production v4. For each graduate the org produced, classify as boom / settled / bust once the player meets a sample floor (800 PA / 200 IP / ≥2 MLB seasons). Boom = career WAR ≥ +5 (well above replacement, regular-to-star outcome). Boom Rate = boom_count / settled_count. Min 5 settled grads or the leaf returns '—'. Complements WAG-based metrics by giving direct credit for star outcomes rather than smoothing them through expectation deltas.",
-    related: ["farm_grade_mlb_production", "mlb_production_top_grads", "mlb_production_conviction", "boom_bust", "wag"],
+    long: "Boom Rate leaf inside MLB Production. For each graduate the org produced, classify as boom / settled / bust once the player meets a sample floor (800 PA / 200 IP / ≥2 MLB seasons). Boom = career WAR ≥ +5 (well above replacement, regular-to-star outcome). Boom Rate = boom_count / settled_count. Min 5 settled grads or the leaf returns '—'. Pairs with `mlb_production_bust_pct` (negative-direction leaf) to give the composite both 'reward for hits' and 'penalty for misses'.",
+    related: ["farm_grade_mlb_production", "mlb_production_bust_pct", "mlb_production_top_grads", "mlb_production_conviction", "boom_bust", "wag"],
+  },
+  "mlb_production_bust_pct": {
+    name: "Bust Rate", aliases: ["Bust Rate", "Bust %", "Bust percentage"], category: "custom-index",
+    priority: 56,
+    short: "Share of an org's settled MLB graduates with career WAR ≤ +1 (bust outcomes). NEGATIVE-direction input to MLB Production.",
+    long: "Bust Rate leaf inside MLB Production (v7 — new). Mirror of Boom Rate using the same sample floor (800 PA / 200 IP / ≥2 MLB seasons): bust = career WAR ≤ +1 (replacement-or-below outcome). Bust Rate = bust_count / settled_count. Min 5 settled grads or the leaf returns '—'. Enters the MLB Production composite as a NEGATIVE input — higher bust % pulls the parent grade DOWN, opposite to Boom Rate. The user-facing 'fix' on the report card: a system that produces 30% busts no longer looks the same as one that produces 30% booms.",
+    related: ["farm_grade_mlb_production", "mlb_production_boom_pct", "boom_bust"],
   },
   "mlb_production_top_grads": {
     name: "Top-3 Grad WAR/yr", aliases: ["Top-3 Grad WAR/yr", "Top-3 Grad WAR per Year"], category: "custom-index",
@@ -13093,11 +13277,26 @@ function _playerFvTier(player) {
 // 60+/70+ tiers) wraps the picture itself. Empty string when no FV
 // is known.
 function _fvHeadshotRingClass(player) {
+  // v7 — rarity ramp shifted DOWN. The mean prospect anchor is now
+  // FV 40 (was implicitly FV 50), so 45+ already qualifies for a
+  // visible rarity treatment and 70+ unlocks the rainbow legendary
+  // shimmer. Old ramp: chrome at 70+, holo at 60+. New ramp:
+  //   70+  → legendary (rainbow holo + chrome accent)
+  //   60+  → chrome
+  //   55+  → holo
+  //   50+  → foil (subtle silver shimmer)
+  //   45+  → shine (faint gold tint)
+  //    40  → average (no treatment — this is the baseline)
+  //   <40  → muted (no treatment, falls through)
+  // See the `fv_rarity` glossary entry for the visual legend.
   const tier = _playerFvTier(player);
   if (tier == null) return "";
   let cls = `fv-headshot-ring fv-tier-${tier}`;
-  if (tier >= 70) cls += " card-rarity-chrome";
-  else if (tier >= 60) cls += " card-rarity-holo";
+  if (tier >= 70) cls += " card-rarity-legendary";
+  else if (tier >= 60) cls += " card-rarity-chrome";
+  else if (tier >= 55) cls += " card-rarity-holo";
+  else if (tier >= 50) cls += " card-rarity-foil";
+  else if (tier >= 45) cls += " card-rarity-shine";
   return cls;
 }
 
@@ -13789,7 +13988,7 @@ function makeFarmReportCard(org) {
   // Display weights (must match storage.FARM_TREE_WEIGHT_*).
   // v5: Development solo-top at 40%, MLB Production second at 30%,
   // Acquisition + Financial tied as supporting columns at 15% each.
-  const W = { acquisition_strategy: 15, development: 40, financial: 15, mlb_production: 30 };
+  const W = { acquisition_strategy: 12.5, development: 50, financial: 12.5, mlb_production: 25 };
 
   // Format helpers for leaf score values.
   const fmtSignedWag = v => v != null ? `WAG ${v >= 0 ? '+' : ''}${v.toFixed(2)}` : '—';
@@ -14131,10 +14330,12 @@ function makeRosterSnapshotTile(org) {
         <div class="rs-stat" title="FV-weighted graduations in trailing 12 months"><span class="rs-stat-label">Grad pipe</span><span class="rs-stat-val">${num(org.grad_pipeline_score)}</span></div>
         <div class="rs-stat" title="Top-10 mean of composite_overall (20-80 power mean)"><span class="rs-stat-label">Tools+ top10</span><span class="rs-stat-val">${num(tq.top10_mean)}</span></div>
         <div class="rs-stat" title="(very-young − very-old) / total actives"><span class="rs-stat-label">Readiness</span><span class="rs-stat-val">${pct(rdy.pct_signal)}</span></div>
-        <div class="rs-stat" title="100·post-TJ% + IL-days mean (lower is better)"><span class="rs-stat-label">Health burden</span><span class="rs-stat-val">${num(hb.score)}</span></div>
-        <div class="rs-stat${hb.il_pct_current >= 0.10 ? ' is-warn' : ''}" title="${hb.il_current_count != null ? hb.il_current_count : '—'} of ${hb.active_count != null ? hb.active_count : '—'} tracked actives currently on the IL. Highlighted red when ≥10%.">
-          <span class="rs-stat-label">On IL now</span>
-          <span class="rs-stat-val">${hb.il_pct_current != null ? (hb.il_pct_current * 100).toFixed(0) + '%' : '—'}${hb.il_current_count != null ? ` <span style="font-size:10px;color:var(--text-tertiary);font-weight:400;">(${hb.il_current_count}/${hb.active_count})</span>` : ''}</span>
+        <div class="rs-stat rs-stat-health${hb.il_pct_current >= 0.10 ? ' is-warn' : ''}" title="Combined health view. Burden = 100·post-TJ% + IL-days mean (lower is better, ranks to letter-grade in the Farm Report Card). On IL now = ${hb.il_current_count != null ? hb.il_current_count : '—'} of ${hb.active_count != null ? hb.active_count : '—'} tracked actives currently sidelined; highlighted red when ≥10%.">
+          <span class="rs-stat-label">Health</span>
+          <span class="rs-stat-val" style="display:flex;flex-direction:column;gap:2px;line-height:1.15;">
+            <span style="font-size:14px;">${num(hb.score)} <span style="font-size:9px;color:var(--text-tertiary);font-weight:400;letter-spacing:0.04em;text-transform:uppercase;">burden</span></span>
+            <span style="font-size:12px;font-weight:600;color:${hb.il_pct_current >= 0.10 ? 'var(--down)' : 'var(--text-secondary)'};">${hb.il_pct_current != null ? (hb.il_pct_current * 100).toFixed(0) + '%' : '—'} <span style="font-size:9px;color:var(--text-tertiary);font-weight:400;letter-spacing:0.04em;text-transform:uppercase;">on IL${hb.il_current_count != null ? ` · ${hb.il_current_count}/${hb.active_count}` : ''}</span></span>
+          </span>
         </div>
       </div>
     </div>`;
@@ -14483,7 +14684,7 @@ function makeSpendingBlock(org) {
   const ifaAvg   = ifaSign   ? ifaTotal   / ifaSign   : 0;
   const draftAvg = draftSign ? draftTotal / draftSign : 0;
   const donutLegend = `<div style="display:flex;gap:12px;justify-content:center;margin-top:6px;font-family:var(--font-sans);font-size:10px;color:var(--text-secondary);letter-spacing:0.04em;">
-    <span style="display:inline-flex;align-items:center;gap:5px;"><span aria-hidden="true" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--neon-amber);"></span>IFA</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;"><span aria-hidden="true" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--spend-ifa);"></span>IFA</span>
     <span style="display:inline-flex;align-items:center;gap:5px;"><span aria-hidden="true" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--spend-draft);"></span>Draft</span>
   </div>`;
   // Draft-pool utilization caption — surfaces the most-recent year on
@@ -15338,7 +15539,7 @@ function makeSpendingDonut(org, size = 48) {
   return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;" title="${escapeHtml(tooltip)}">
     <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;">
       <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--bg-tertiary)" stroke-width="6"/>
-      <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--neon-amber)" stroke-width="6"
+      <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--spend-ifa)" stroke-width="6"
               stroke-dasharray="${ifaArc.toFixed(2)} ${(circumference - ifaArc).toFixed(2)}"
               stroke-dashoffset="0" transform="rotate(-90 ${cx} ${cx})" stroke-linecap="butt"/>
       <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--spend-draft)" stroke-width="6"
@@ -15584,7 +15785,7 @@ function renderFarmSystems() {
     <span style="text-align:center;">Avg age</span>
     <span style="text-align:center;" title="IFA vs Draft bonus-dollar mix over the last 3 years. Hover a donut for exact dollar totals.">Spend mix
       <span style="display:flex;gap:8px;justify-content:center;margin-top:3px;font-weight:400;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;">
-        <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--neon-amber);"></span>IFA</span>
+        <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--spend-ifa);"></span>IFA</span>
         <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--spend-draft);"></span>Draft</span>
       </span>
     </span>
@@ -16758,7 +16959,26 @@ function renderPlayerDetail(key) {
         <div style="min-width:0;">
           <div class="player-display-name">${escapeHtml(p.player_name)}</div>
           <div class="player-display-meta">
-            <strong style="font-weight:600;color:var(--text-primary);">${escapeHtml(p.position ?? "—")}</strong> · ${orgLink}${p.age != null ? ` · age ${p.age.toFixed(1)}` : ""}${p.birth_date ? ` · born ${p.birth_date}` : ""}
+            <strong style="font-weight:600;color:var(--text-primary);">${escapeHtml(p.position ?? "—")}</strong>${(() => {
+              // Versa chips — FG's forward-projected positional eligibility
+              // (e.g. a primary-SS who can play 2B/3B). Surface on the
+              // header so users see the full position profile, not just
+              // the primary tag. Pulled from the latest FG snapshot's
+              // _extras.versa.
+              for (let i = ((p && p.points) || []).length - 1; i >= 0; i--) {
+                const fg = p.points[i] && p.points[i].per_source && p.points[i].per_source.fangraphs;
+                const ex = fg && fg.tools && fg.tools._extras;
+                if (!ex || !ex.versa) continue;
+                const parts = String(ex.versa).split(/[\/,]/).map(s => s.trim()).filter(Boolean);
+                const primary = String(p.position || "").split("/")[0].toUpperCase();
+                const others = parts.filter(x => x.toUpperCase() !== primary);
+                if (!others.length) return "";
+                return " " + others.map(pos =>
+                  `<span class="row-tag" style="margin-left:4px;font-size:10px;color:var(--text-tertiary);border-color:var(--border-light);background:transparent;" title="FanGraphs positional eligibility: ${escapeHtml(ex.versa)}">+${escapeHtml(pos)}</span>`
+                ).join("");
+              }
+              return "";
+            })()} · ${orgLink}${p.age != null ? ` · age ${p.age.toFixed(1)}` : ""}${p.birth_date ? ` · born ${p.birth_date}` : ""}
           </div>
           ${(() => {
             // Physical line — Ht · Wt · BMI from the latest FG snapshot.
@@ -17101,29 +17321,40 @@ function renderPlayerDetail(key) {
        ${transactionLegend()}`
     : `<div style="color:var(--text-tertiary);font-size:12px;">Not enough FV updates yet for a chart.</div>`;
 
-  // Consolidated career table — was two adjacent tables (raw "Stats by
-  // season" + colored "Age & level-relative performance"). The toggle
-  // chip above flips between the two: ON (default) shows the colored
-  // delta-vs-level table; OFF strips the deltas and renders raw cells.
-  // State is ephemeral — re-render starts on deltas-ON. Title pill row
-  // mirrors the old "Age & level-relative" header (RPS+ / scout rates).
+  // Career section — v7 renders BOTH raw stats AND level-relative
+  // deltas stacked (was a toggle chip; the user explicitly asked for
+  // both at once on the Performance tab so the comparison is one
+  // glance, not a click). Headings disambiguate.
   const careerRawTableHTML = makeCareerTable(p.career_stats);
   const consolidatedCareerSection = (p.career_stats && p.career_stats.length)
     ? `<div class="detail-title">Career by season
-         <span class="detail-title-sub">colored delta vs. level mean when "show level deltas" is on</span>
+         <span class="detail-title-sub">raw stats + colored delta-vs-level-mean stacked</span>
          <span style="margin-left:8px;vertical-align:middle;display:inline-flex;gap:4px;flex-wrap:wrap;">${rpsPlusPillHTML(p)}${scoutRatesHTML(p)}</span>
        </div>
        ${makeCareerTrendStrip(p.career_stats)}
-       <div style="margin-bottom:6px;">
-         <button type="button" class="chip active" data-career-toggle="deltas" style="font-size:10px;padding:3px 10px;">Show level deltas</button>
-       </div>
-       <div class="career-by-season" data-career-mode="deltas">
-         <div data-career-panel="deltas">${levelBenchmarkSection || careerRawTableHTML}</div>
-         <div data-career-panel="raw" style="display:none;">${careerRawTableHTML}</div>
+       <div class="career-by-season">
+         <div class="detail-title" style="margin-top:14px;font-size:13px;">Raw career stats</div>
+         ${careerRawTableHTML}
+         ${levelBenchmarkSection ? `
+           <div class="detail-title" style="margin-top:14px;font-size:13px;">Stats vs level mean
+             <span class="detail-title-sub">color-coded delta against the per-level cohort</span>
+           </div>
+           ${levelBenchmarkSection}` : ""}
        </div>`
     : "";
 
-  const sourceSection = `<div class="detail-title">Source-by-source FV history</div>${makePerSourceHistory(p.points || [])}`;
+  // v7 — FV history is verbose; collapse into a <details> accordion so
+  // the Overview reads at a glance and the user can expand for the
+  // full table on demand. Summary line shows the update count for
+  // context. <details> renders without JS so it survives if the
+  // inline-handler observers fail.
+  const _fvHistoryCount = (p.points && p.points.length) || 0;
+  const sourceSection = _fvHistoryCount
+    ? `<details style="margin:14px 0 6px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
+         <summary style="cursor:pointer;padding:8px 12px;font-family:var(--font-retro);font-size:13px;font-weight:600;color:var(--text-primary);user-select:none;list-style:revert;">Source-by-source FV history <span style="color:var(--text-tertiary);font-weight:400;">· ${_fvHistoryCount} update interval${_fvHistoryCount !== 1 ? "s" : ""}</span></summary>
+         <div style="padding:0 12px 12px;">${makePerSourceHistory(p.points || [])}</div>
+       </details>`
+    : "";
 
   // Sabermetrics block — wRC+/xFIP for MLB players, level-relative
   // proxies (OPS+ / ERA-) otherwise. Title flexes with what's shown
@@ -18409,16 +18640,61 @@ function renderPlayerDetail(key) {
         </table>
         ${extrasCaption}`;
     }
-    const toolsTabAvailable = !!toolsPanelHTML;
-    const tabStrip = `<div class="per-source-tabs">
-        <button type="button" class="chip active" data-per-source-tab="fv">FV</button>
-        ${toolsTabAvailable ? `<button type="button" class="chip" data-per-source-tab="tools">Tools</button>` : ""}
-      </div>`;
-    return `<div class="detail-title">Source consensus <span class="detail-title-sub">latest per source · FV + tool grades</span></div>
+    // v7 — Source consensus on the Details tab now shows ONLY the FV
+    // panel (no tab strip). The Tools breakdown ported to a separate
+    // section on Scouting & Tools (see `perSourceToolsSection` below).
+    // Eliminates the awkward tabs-within-tabs nesting.
+    return `<div class="detail-title">Source consensus <span class="detail-title-sub">latest per source · FV grades</span></div>
       <div class="per-source-card" style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">
-        ${tabStrip}
-        <div class="per-source-panel" data-per-source-panel="fv">${fvPanelHTML}</div>
-        ${toolsTabAvailable ? `<div class="per-source-panel" data-per-source-panel="tools" style="display:none;">${toolsPanelHTML}</div>` : ""}
+        ${fvPanelHTML}
+      </div>`;
+  })();
+  // v7 — port the per-source Tools panel to its own standalone section
+  // on the Scouting & Tools tab. Re-derives the same HTML the inner
+  // sub-tab used by piggybacking on the renderer above.
+  const perSourceToolsSection = (() => {
+    // Re-run just the tools panel build by calling perSourceTabbedSection's
+    // tools branch. Since toolsPanelHTML is scoped inside that IIFE, we
+    // wrap a thin helper here that builds the same content from p.points.
+    if (!p || !p.points || !p.points.length) return "";
+    // Walk p.points latest snapshot per source and emit a per-source
+    // tool grades table — mirrors the inner tools panel from above.
+    const latestBySource = {};
+    for (const pt of p.points) {
+      const ps = pt.per_source || {};
+      for (const [src, payload] of Object.entries(ps)) {
+        if (!payload || !payload.tools) continue;
+        const existing = latestBySource[src];
+        if (!existing || (pt.snapshot_date || "") > (existing.date || "")) {
+          latestBySource[src] = { date: pt.snapshot_date, tools: payload.tools };
+        }
+      }
+    }
+    const srcs = Object.entries(latestBySource);
+    if (!srcs.length) return "";
+    const sl = p.statline || {};
+    const isP = !!(sl.is_pitcher) || /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(String(p.position || ""));
+    const order = isP
+      ? ["fb", "sl", "cb", "ch", "cmd", "ct", "sp"]
+      : ["hit", "game_pwr", "raw_pwr", "speed", "field", "throw"];
+    const labels = {
+      fb: "FB", sl: "SL", cb: "CB", ch: "CH", cmd: "CMD", ct: "CT", sp: "SP",
+      hit: "HIT", game_pwr: "GPWR", raw_pwr: "RPWR", speed: "SPD",
+      field: "FLD", throw: "ARM",
+    };
+    const hdrCells = order.map(k => `<th style="text-align:center;">${labels[k]}</th>`).join("");
+    const rows = srcs.map(([src, info]) => {
+      const cells = order.map(k => {
+        const v = info.tools[k];
+        return `<td style="text-align:center;font-variant-numeric:tabular-nums;">${v != null ? v : "—"}</td>`;
+      }).join("");
+      return `<tr><td><span class="src-tag">${escapeHtml(SOURCE_LABELS[src] || src)}</span></td>${cells}</tr>`;
+    }).join("");
+    return `<div class="detail-title" style="margin-top:14px;">Per-source tool grades <span class="detail-title-sub">latest published grade per source</span></div>
+      <div style="overflow-x:auto;">
+        <table class="detail-table"><thead><tr><th>Source</th>${hdrCells}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>`;
   })();
 
@@ -18756,7 +19032,90 @@ function renderPlayerDetail(key) {
   // is the join of the relevant section snippets — empty strings drop
   // out cleanly. The active tab comes from state.playerTab and is
   // URL-round-tripped via ?ptab=...
-  const overviewHtml = [chartSection, sourceSection, surplusValueSection, noteSection]
+  // v7 — Overview tab: 6-tile summary card grid that surfaces the
+  // "version of the prospect" at a glance, then the FV chart + FV
+  // history accordion + notes. Tiles deliberately repeat info
+  // available on deeper tabs (user wanted Overview to be a true
+  // summary even at the cost of redundancy). Each tile is clickable
+  // and jumps to the relevant deep view.
+  const _ovSlash = (() => {
+    const sl = p.statline || {};
+    if (sl.is_pitcher) {
+      if (sl.era == null) return null;
+      const ip = sl.ip != null ? `${sl.ip} IP` : "";
+      return { label: "ERA", value: sl.era, sub: `${ip}${sl.k_per_9 != null ? ` · ${sl.k_per_9} K/9` : ""}`, level: sl.level };
+    }
+    if (!sl.avg && !sl.ops) return null;
+    return { label: "Slash", value: `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"}`, sub: `${sl.ops ? sl.ops + " OPS" : ""}${sl.hr != null ? ` · ${sl.hr} HR` : ""}${sl.sb != null ? ` · ${sl.sb} SB` : ""}`, level: sl.level };
+  })();
+  const _ovTopTools = (() => {
+    const tools = (p.tools && p.tools.grades) || {};
+    const entries = Object.entries(tools)
+      .filter(([k, v]) => v != null)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3);
+    if (!entries.length) return null;
+    const labels = { hit: "HIT", game_pwr: "GPWR", raw_pwr: "RPWR", speed: "SPD", field: "FLD", throw: "ARM",
+                     fb: "FB", sl: "SL", cb: "CB", ch: "CH", cmd: "CMD", ct: "CT" };
+    return entries.map(([k, v]) => `${labels[k] || k.toUpperCase()} ${v}`).join(" · ");
+  })();
+  const _ovHealth = (() => {
+    const il = p.il_status || {};
+    if (il.is_on_il) return { label: "Health", value: `On IL${il.days_on_il != null ? ` · ${il.days_on_il}d` : ""}`, tone: "down" };
+    const hp = p.health_profile || {};
+    if (hp.is_post_tj) return { label: "Health", value: "Post-TJ", tone: "warn" };
+    const stints = hp.il_stints_12mo || 0;
+    if (stints >= 3) return { label: "Health", value: `${stints} IL stints (12mo)`, tone: "warn" };
+    if (stints >= 1) return { label: "Health", value: "Recent injury", tone: "watch" };
+    return { label: "Health", value: "Healthy", tone: "up" };
+  })();
+  const _ovEta = (() => {
+    const eta = p.eta || {};
+    if (!eta.year) return null;
+    return { label: "ETA", value: eta.year, sub: eta.confidence ? `${eta.confidence} conf` : "" };
+  })();
+  const _ovSurplus = (() => {
+    const fv = p.fv_close;
+    if (fv == null) return null;
+    const isP = !!(p.statline || {}).is_pitcher;
+    const sv = estimateSurplusValueMM(fv, isP, p.position);
+    if (sv == null) return null;
+    return { label: "Surplus", value: sv >= 1 ? `$${sv.toFixed(1)}M` : `$${(sv * 1000).toFixed(0)}k` };
+  })();
+  const _ovStock = (() => {
+    const s = p.stock || {};
+    if (s.delta == null) return null;
+    const arrow = s.delta > 0 ? "▲" : s.delta < 0 ? "▼" : "■";
+    const color = s.delta > 0 ? "var(--up)" : s.delta < 0 ? "var(--down)" : "var(--text-tertiary)";
+    return { label: "Stock", value: `${arrow} ${s.delta > 0 ? "+" : ""}${s.delta.toFixed(1)}`, color };
+  })();
+  const _ovTile = (cfg, anchor) => {
+    if (!cfg) return "";
+    const tone = cfg.tone === "down" ? "var(--down)"
+              : cfg.tone === "warn"  ? "var(--neon-amber)"
+              : cfg.tone === "watch" ? "var(--neon-cyan)"
+              : cfg.tone === "up"    ? "var(--up)"
+              : (cfg.color || "var(--text-primary)");
+    const clickAttr = anchor
+      ? ` onclick="document.querySelector('[data-player-tab=\\'${anchor}\\']')?.click();" style="cursor:pointer;"`
+      : "";
+    return `<div class="overview-tile"${clickAttr} title="${anchor ? `Click for ${anchor} tab` : ""}">
+      <div class="ov-tile-label">${cfg.label}</div>
+      <div class="ov-tile-val" style="color:${tone};">${cfg.value}${cfg.level ? ` <span style="font-size:10px;color:var(--text-tertiary);">@${cfg.level}</span>` : ""}</div>
+      ${cfg.sub ? `<div class="ov-tile-sub">${cfg.sub}</div>` : ""}
+    </div>`;
+  };
+  const summaryGridHtml = `
+    <div class="detail-title flush">Summary</div>
+    <div class="overview-tile-grid">
+      ${_ovTile(_ovSlash,     "performance")}
+      ${_ovTile(_ovTopTools ? { label: "Top tools", value: _ovTopTools } : null, "scouting")}
+      ${_ovTile(_ovHealth,    "health")}
+      ${_ovTile(_ovEta,       "details")}
+      ${_ovTile(_ovSurplus,   "details")}
+      ${_ovTile(_ovStock,     null)}
+    </div>`;
+  const overviewHtml = [summaryGridHtml, chartSection, sourceSection, noteSection]
     .filter(Boolean).join("");
   const performanceHtml = [consolidatedCareerSection, sabermetricsSection,
                            savantSection, arsenalSection, projectionArcSection]
@@ -18764,13 +19123,18 @@ function renderPlayerDetail(key) {
   // Tools card pulls its per-source publication history alongside,
   // matching the original layout. Scouting reports keeps its inner
   // source-tab picker intact — that lives inside scoutingReportsSection.
+  // v7 — fgScoutNotesSection removed: its data (height/weight/BMI in
+  // the header, Hard-Hit/EV in Statcast panel, versa now in the
+  // header chips) is already surfaced elsewhere. Keeping it was pure
+  // redundancy.
   const scoutingHtml = [
     toolsSection + (sourceHistorySection || ""),
-    toolDevSection, fgScoutNotesSection, scoutingReportsSection,
+    toolDevSection, perSourceToolsSection, scoutingReportsSection,
   ].filter(s => s && s.trim()).join("");
   const healthHtml = [ilSection, healthSection, contractDetailsSection]
     .filter(Boolean).join("");
   const contextHtml = [
+    surplusValueSection,
     acqSection, currentAcqSection, tradesSection, etaRows,
     rosterStatusSection, perSourceTabbedSection,
     sameFarmSection, similarProspectsSection,
@@ -18781,7 +19145,7 @@ function renderPlayerDetail(key) {
     { key: "performance", label: "Performance",     html: performanceHtml },
     { key: "scouting",    label: "Scouting & Tools", html: scoutingHtml },
     { key: "health",      label: "Health & Status", html: healthHtml },
-    { key: "context",     label: "Context",         html: contextHtml },
+    { key: "details",     label: "Details",         html: contextHtml },
   ];
   const tabBar = renderDetailTabs(tabs, state.playerTab, "player");
 
@@ -20185,9 +20549,95 @@ function renderFarmDetail(orgCode) {
     </div>
     ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || "6y"] ?? 0), state.formWindow || "6y")}`;
 
+  // v7 — Finances tab expanded with Surplus + ROI sections beneath
+  // the existing Spending block. Surplus pulls per-prospect FV-implied
+  // trade value via estimateSurplusValueMM; ROI surfaces the per-leaf
+  // financial inputs (WAR/$M, Draft Pool Eff, IFA ROI) that feed the
+  // Financial grade.
+  const _activeForOrg = (DATA.players || []).filter(pp => pp.org === orgCode);
+  const _surplusByProspect = _activeForOrg.map(pp => {
+    const _fv = pp.fv_close ?? null;
+    if (_fv == null) return null;
+    const _isPit = !!(pp.statline || {}).is_pitcher
+      || /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(String(pp.position || ""));
+    const sv = estimateSurplusValueMM(_fv, _isPit, pp.position);
+    return sv != null && sv > 0 ? { p: pp, fv: _fv, surplus: sv } : null;
+  }).filter(Boolean).sort((a, b) => b.surplus - a.surplus);
+  const _surplusTotal = _surplusByProspect.reduce((s, r) => s + r.surplus, 0);
+  const _surplusByTier = { "60+": 0, "55": 0, "50": 0, "45": 0, "<45": 0 };
+  for (const r of _surplusByProspect) {
+    if (r.fv >= 60) _surplusByTier["60+"] += r.surplus;
+    else if (r.fv >= 55) _surplusByTier["55"] += r.surplus;
+    else if (r.fv >= 50) _surplusByTier["50"] += r.surplus;
+    else if (r.fv >= 45) _surplusByTier["45"] += r.surplus;
+    else _surplusByTier["<45"] += r.surplus;
+  }
+  const _fmtM = v => v >= 1 ? `$${v.toFixed(1)}M` : `$${(v * 1000).toFixed(0)}k`;
+  const surplusSection = _surplusByProspect.length
+    ? `<div class="detail-title" style="margin-top:18px;">Surplus details <span class="detail-title-sub">FV-implied trade value across the active roster · ${_fmtM(_surplusTotal)} total</span></div>
+       <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px;align-items:start;">
+         <div>
+           <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Top-5 surplus contributors</div>
+           <table class="detail-table" style="width:100%;">
+             <thead><tr><th>Player</th><th style="text-align:center;">FV</th><th style="text-align:right;">Surplus</th></tr></thead>
+             <tbody>
+               ${_surplusByProspect.slice(0, 5).map(r => `<tr>
+                 <td><a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(r.p.player_key)}');" style="color:var(--text-primary);">${escapeHtml(r.p.player_name)}</a></td>
+                 <td style="text-align:center;"><span class="fv-badge ${fvClass(String(Math.round(r.fv)))} size-sm">${Math.round(r.fv)}</span></td>
+                 <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_fmtM(r.surplus)}</td>
+               </tr>`).join("")}
+             </tbody>
+           </table>
+         </div>
+         <div>
+           <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Surplus by FV tier</div>
+           <table class="detail-table" style="width:100%;">
+             <thead><tr><th>Tier</th><th style="text-align:right;">$ Total</th><th style="text-align:right;">% of Org</th></tr></thead>
+             <tbody>
+               ${Object.entries(_surplusByTier).map(([tier, v]) => v > 0 ? `<tr>
+                 <td>FV ${tier}</td>
+                 <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_fmtM(v)}</td>
+                 <td style="text-align:right;font-variant-numeric:tabular-nums;color:var(--text-tertiary);">${_surplusTotal > 0 ? (100 * v / _surplusTotal).toFixed(0) + '%' : '—'}</td>
+               </tr>` : "").join("")}
+             </tbody>
+           </table>
+         </div>
+       </div>`
+    : "";
+
+  const _tree = org.tree || {};
+  const _warPerM = (_tree.fin_war_per_m || {}).value;
+  const _draftPoolEff = (_tree.fin_draft_pool_efficiency || {}).war_per_m_pool;
+  const _ifaRoi = (_tree.fin_ifa_roi || {}).war_per_m_ifa;
+  const _surplusLeaf = (_tree.fin_contract_surplus || {}).mean_usd_per_yr;
+  const _roiHasAny = [_warPerM, _draftPoolEff, _ifaRoi, _surplusLeaf].some(v => v != null);
+  const _fmtRoi = v => v == null ? '—' : v.toFixed(2) + ' WAR/$M';
+  const roiSection = _roiHasAny
+    ? `<div class="detail-title" style="margin-top:18px;">ROI details <span class="detail-title-sub">Per-leaf financial inputs feeding the Financial grade</span></div>
+       <table class="detail-table" style="width:100%;">
+         <thead><tr><th>Leaf</th><th style="text-align:right;">Value</th><th>Context</th></tr></thead>
+         <tbody>
+           <tr><td>WAR per $M (bonus)</td>
+             <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_fmtRoi(_warPerM)}</td>
+             <td style="color:var(--text-tertiary);font-size:11px;">Career WAR per $M signing bonus across all graduates with bonus on file</td></tr>
+           <tr><td>Draft Pool Efficiency</td>
+             <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_fmtRoi(_draftPoolEff)}</td>
+             <td style="color:var(--text-tertiary);font-size:11px;">Trailing-3yr WAR per $M of MLB-published draft pool</td></tr>
+           <tr><td>IFA ROI (v7)</td>
+             <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_fmtRoi(_ifaRoi)}</td>
+             <td style="color:var(--text-tertiary);font-size:11px;">11yr window · per-grad bonus sum (T-12 to T-2)</td></tr>
+           <tr><td>Grad-Contract Surplus</td>
+             <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_surplusLeaf != null ? '$' + (_surplusLeaf / 1_000_000).toFixed(1) + 'M/yr' : '—'}</td>
+             <td style="color:var(--text-tertiary);font-size:11px;">Mean per-year cost-controlled surplus across qualifying graduates</td></tr>
+         </tbody>
+       </table>`
+    : "";
+
   const financesTabHtml = `
     <div class="detail-title flush">Acquisition spending <span class="detail-title-sub">Bonus pool dollars — International FA vs Draft, 2021-present</span></div>
-    ${makeSpendingBlock(org)}`;
+    ${makeSpendingBlock(org)}
+    ${surplusSection}
+    ${roiSection}`;
 
   const transactionsTabHtml = `
     ${affiliateSection}
@@ -21458,7 +21908,7 @@ function makeFarmCompareSideBySide(farms) {
   const table = `<table class="compare-stat-table" style="grid-template-columns:120px ${cols.replace("repeat(", "").replace(", minmax(0, 1fr))", "")};margin-top:8px;width:100%;border-collapse:collapse;">
     <tbody>${tableRows}</tbody></table>`;
   const donutLegend = `<div style="display:flex;gap:8px;justify-content:center;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;">
-      <span style="display:inline-flex;align-items:center;gap:3px;"><i style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--neon-amber);"></i>IFA</span>
+      <span style="display:inline-flex;align-items:center;gap:3px;"><i style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--spend-ifa);"></i>IFA</span>
       <span style="display:inline-flex;align-items:center;gap:3px;"><i style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--spend-draft);"></i>Draft</span>
     </div>`;
   const donutRow = `<div style="display:grid;grid-template-columns:${cols};gap:10px;margin-top:10px;">

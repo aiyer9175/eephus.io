@@ -558,9 +558,19 @@ def compute_prior_mean_fv(
 
 def _latest_meta(snaps: list[Snapshot]) -> tuple[str, str | None, str | None]:
     snaps_sorted = sorted(snaps, key=lambda s: s.snapshot_date, reverse=True)
+    # FanGraphs forward-projects positions — they publish where a
+    # prospect is *expected* to land long-term (incl. SP / SIRP / MIRP
+    # role designations), not just the current MiLB roster slot. Prefer
+    # FG when present; fall back to latest-non-null from any source
+    # otherwise. The team-org and player-name resolution stay on the
+    # latest-non-null heuristic (no source has a meaningful claim to be
+    # more authoritative on org/name).
+    fg_pos = next((s.position for s in snaps_sorted
+                   if s.source == "fangraphs" and s.position), None)
+    any_pos = next((s.position for s in snaps_sorted if s.position), None)
     return (
         snaps_sorted[0].player_name,
-        next((s.position for s in snaps_sorted if s.position), None),
+        fg_pos or any_pos,
         next((s.org for s in snaps_sorted if s.org), None),
     )
 
