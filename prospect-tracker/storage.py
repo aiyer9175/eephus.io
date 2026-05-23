@@ -2060,6 +2060,21 @@ FARM_WEIGHT_TRAJECTORY  = FARM_WEIGHT_DVM_PLUS
 # real but small-sample. See `farm_report_card` glossary entry for the
 # full tree shape.
 # ────────────────────────────────────────────────────────────────────────
+
+# Canonical 30-MLB-org allowlist. Anything outside this set is dropped
+# from org_summary at export time. Phantom orgs like "Office of the
+# Commissioner", null/empty orgs, or stray minor-league affiliate codes
+# that leak through transactions/rosters get filtered so the farm page
+# always shows exactly 30 orgs. Keep alphabetical so visual diff is
+# easy when MLB ever adds an expansion team.
+MLB_30_ORGS: set[str] = {
+    "ARI", "ATH", "ATL", "BAL", "BOS",
+    "CHC", "CHW", "CIN", "CLE", "COL",
+    "DET", "HOU", "KCR", "LAA", "LAD",
+    "MIA", "MIL", "MIN", "NYM", "NYY",
+    "PHI", "PIT", "SDP", "SEA", "SFG",
+    "STL", "TBR", "TEX", "TOR", "WSN",
+}
 # v7 weights — Development is the clear majority. Sustained per-tool
 # growth (Hitter / Pitcher Tools DvM+) carries 50% of the composite
 # because it's the one thing the org has the most direct control over
@@ -3265,9 +3280,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             if (api_d and api_d.month >= 10
                     and mlb_years and mlb_years[0] > api_d.year):
                 first_year = mlb_years[0]
-                if first_year == date.today().year:
-                    return date.today().isoformat()
-                return f"{first_year}-07-01"
+                return _safe_in_year_placeholder(p.player_key, first_year, rows)
             return api_debut
 
         if not mlb_years:
@@ -3275,9 +3288,46 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         first_year = mlb_years[0]
         if p.graduation_date and p.graduation_date.startswith(f"{first_year}-"):
             return p.graduation_date
-        if first_year == date.today().year:
-            return date.today().isoformat()
-        return f"{first_year}-07-01"
+        return _safe_in_year_placeholder(p.player_key, first_year, rows)
+
+    def _safe_in_year_placeholder(player_key: str, year: int,
+                                  rows: list[dict]) -> str:
+        """v7 bug fix — Chase DeLauter and others were getting
+        today.isoformat() pinned as their graduation date whenever the
+        API was missing and `mlb_years[0] == today.year`. That's wrong
+        for anyone who has REAL current-year MLB activity (a row with
+        PA≥1 or IP≥0.1) — those players already debuted, just not
+        today. Use a sensible {year}-07-01 placeholder when activity
+        exists; only fall through to today() for the rare "truly
+        debuting this very moment" case (zero PA and zero IP).
+        """
+        if year != date.today().year:
+            return f"{year}-07-01"
+        mlb_row = next(
+            (r for r in rows
+             if r.get("level") == "MLB" and r.get("season") == year),
+            None,
+        )
+        if mlb_row:
+            try:
+                pa = float(mlb_row.get("pa") or mlb_row.get("ab") or 0)
+            except (TypeError, ValueError):
+                pa = 0.0
+            try:
+                ip = float(mlb_row.get("ip") or 0)
+            except (TypeError, ValueError):
+                ip = 0.0
+            if pa >= 1 or ip >= 0.1:
+                # Already debuted this season — use season placeholder
+                # rather than pinning to today (which slides every day
+                # the data is rebuilt and looks wrong on the UI).
+                return f"{year}-07-01"
+        log.warning(
+            "_safe_in_year_placeholder: %s falling back to today() "
+            "(no PA/IP detected for %d MLB row); investigate API "
+            "debut date.", player_key, year,
+        )
+        return date.today().isoformat()
 
     def _display_graduation_date(p: PlayerTimeseries) -> str | None:
         """
@@ -3913,6 +3963,51 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         bd = birth_dates.get(p.player_key)
         age = compute_age_decimal(bd)
         sl = statlines.get(p.player_key)
+        # v7 — statline freshness gate for MLB graduates. The statline
+        # dict carries the player's latest single row (typically MiLB);
+        # for a player who graduated mid-season, that row sits stale
+        # while their actual current-season stats live on the MLB row
+        # in career_stats. Swap to the MLB row when present so Colt
+        # Emerson-style "displayed as AAA despite being on MLB roster"
+        # bugs stop. Only swaps if the MLB row has real activity
+        # (PA≥1 or IP≥0.1) — a 0-PA call-up doesn't beat the AAA
+        # workload row.
+        _cy = date.today().year
+        _rows_for_p = (career_stats or {}).get(p.player_key, []) or []
+        _mlb_row = next(
+            (r for r in _rows_for_p
+             if r.get("season") == _cy and r.get("level") == "MLB"),
+            None,
+        )
+        if _mlb_row:
+            try:
+                _pa = float(_mlb_row.get("pa") or _mlb_row.get("ab") or 0)
+            except (TypeError, ValueError):
+                _pa = 0.0
+            try:
+                _ip = float(_mlb_row.get("ip") or 0)
+            except (TypeError, ValueError):
+                _ip = 0.0
+            if _pa >= 1 or _ip >= 0.1:
+                # Build a statline-shaped dict from the career_stats
+                # MLB row, falling back through existing fields so all
+                # downstream consumers (ETA, level-plus, RPS+) keep
+                # working. Carry forward mlbam_id + is_pitcher from
+                # the original statline since those don't change.
+                _sl_existing = sl or {}
+                sl = {
+                    **_sl_existing,
+                    **_mlb_row,
+                    "level": "MLB",
+                    "season": _cy,
+                    "is_prior_season": False,
+                    # Preserve mlbam_id / is_pitcher from the prior
+                    # statline if the career row lacks them.
+                    "mlbam_id": _mlb_row.get("mlbam_id") or _sl_existing.get("mlbam_id"),
+                    "is_pitcher": _mlb_row.get("is_pitcher")
+                                  if "is_pitcher" in _mlb_row
+                                  else _sl_existing.get("is_pitcher"),
+                }
         level = sl.get("level") if sl else None
         avl = score_age_vs_level(age, level, baselines=age_baselines)
         pa = pitch_arsenals.get(p.player_key)
@@ -5201,6 +5296,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
         # _active_keys stays for the Tools+ second pass; popped later.
         org_summary.append(m)
+
+    # v7 — drop any phantom orgs (canonical 30-MLB allowlist). Without
+    # this filter, prospects with no resolved org (or with strings like
+    # "Office of the Commissioner" coming through trades/transactions)
+    # land in their own bucket and show up as a 31st phantom org on
+    # the farm page. The filter happens BEFORE every downstream
+    # tree-grade / DvM+ pass so the math anchors on exactly 30 orgs.
+    org_summary = [m for m in org_summary if m.get("org") in MLB_30_ORGS]
 
     # Stable sort by total_fv for the moment — the composite farm_rank
     # below overwrites this ordering once the rolling-window signals are

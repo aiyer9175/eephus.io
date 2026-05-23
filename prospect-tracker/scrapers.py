@@ -1124,7 +1124,7 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
         ))
 
     log.info("espn %s -> %d players%s", label, len(rows),
-             " (TIER B working)" if rows else " (TIER B FAILED — selectors stale)")
+             "" if rows else " (parser returned 0 rows — page structure may have changed; check cached HTML)")
     return rows
 
 
@@ -1316,7 +1316,7 @@ def scrape_just_baseball(url: str, label: str, snap_date: str,
             tools=tools,
         ))
     log.info("just_baseball %s -> %d players (%d with tools)%s", label, len(rows), n_with_tools,
-             " (TIER B working)" if rows else " (TIER B FAILED — selectors stale)")
+             "" if rows else " (parser returned 0 rows — page structure may have changed; check cached HTML)")
     return rows
 
 
@@ -1575,7 +1575,7 @@ def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
         ))
 
     log.info("mlb_pipeline %s -> %d players%s", label, len(rows),
-             " (TIER B working)" if rows else " (TIER B FAILED — selectors stale)")
+             "" if rows else " (parser returned 0 rows — page structure may have changed; check cached HTML)")
     return rows
 
 
@@ -1942,7 +1942,7 @@ def scrape_espn_draft(url: str, label: str, snap_date: str, draft_year: int,
         ))
 
     log.info("espn_draft %s -> %d players%s", label, len(rows),
-             " (TIER B working)" if rows else " (TIER B FAILED — selectors stale)")
+             "" if rows else " (parser returned 0 rows — page structure may have changed; check cached HTML)")
     return rows
 
 
@@ -2088,7 +2088,7 @@ def scrape_mlb_pipeline_draft(url: str, label: str, snap_date: str,
         ))
 
     log.info("mlb_pipeline_draft %s -> %d players%s", label, len(rows),
-             " (TIER B working)" if rows else " (TIER B FAILED — selectors stale)")
+             "" if rows else " (parser returned 0 rows — page structure may have changed; check cached HTML)")
     return rows
 
 

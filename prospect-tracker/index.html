@@ -1168,11 +1168,25 @@
       position: relative;
       overflow: visible;
     }
-    /* When both fire (rare — would require a 1-source consensus with
-       ≥10 spread, which is mathematically impossible today, but the
-       CSS is defensive) the solid violet wide outline wins visually. */
+    /* v7 — when both wide-spread AND single-instance indicators apply,
+       render a split-color border: violet (wide) on the top half +
+       amber (single) on the bottom half. We drop the outline-based
+       approach (outline can't split mid-shape) and use box-shadow
+       with two inset wedges to fake the half-and-half effect. The
+       single-indicator rules above still drive the look when only one
+       applies; this overrides for the combined case. */
     .fv-badge.is-wide.is-single-source {
-      outline-style: solid;
+      outline: none;
+      box-shadow:
+        /* top half: violet */
+        inset 0 2px 0 0 var(--neon-violet),
+        /* bottom half: amber */
+        inset 0 -2px 0 0 var(--neon-amber),
+        /* left + right edges share the colors at their halves */
+        inset 2px 0 0 0 var(--neon-violet),
+        inset -2px 0 0 0 var(--neon-amber);
+      position: relative;
+      overflow: visible;
     }
     .fv-wide-mark,
     .fv-single-mark {
@@ -1249,10 +1263,12 @@
     .row-tag.health-chronic::before { background: var(--neon-amber); }
     .row-tag.health-watch::before   { background: var(--neon-cyan); }
     .row-tag.health-healthy::before { background: var(--up); }
-    /* v7 — dot-only Healthy chip. The green dot speaks for itself;
-       drop the word "Healthy" so the chip becomes a compact indicator.
-       Kept tooltip + aria-label intact for accessibility. */
-    .row-tag.health-healthy.is-dot-only {
+    /* v7 — universal dot-only health indicator. Three semantic colors:
+       green (healthy), yellow (any injury history / post-TJ), red (on
+       IL right now). No pill, no text — tooltip carries the detail.
+       Same 14×14 chip layout shared with the legacy healthy-dot rule
+       so spacing stays consistent across cards / rows. */
+    .row-tag.health-dot {
       padding: 4px;
       width: 14px; height: 14px;
       box-sizing: border-box;
@@ -1260,11 +1276,23 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      border: 1px solid transparent;
+      background: transparent;
     }
-    .row-tag.health-healthy.is-dot-only::before {
+    .row-tag.health-dot::before {
+      content: "";
+      display: inline-block;
       width: 7px; height: 7px;
+      border-radius: 50%;
       margin-right: 0;
+      flex: 0 0 auto;
     }
+    .row-tag.health-dot.is-green  { border-color: var(--up); background: rgba(31,122,58,0.10); }
+    .row-tag.health-dot.is-green::before  { background: var(--up); }
+    .row-tag.health-dot.is-yellow { border-color: var(--neon-amber); background: rgba(232,165,31,0.14); }
+    .row-tag.health-dot.is-yellow::before { background: var(--neon-amber); }
+    .row-tag.health-dot.is-red    { border-color: var(--down); background: rgba(203,55,55,0.14); }
+    .row-tag.health-dot.is-red::before    { background: var(--down); }
     .row-tag.acq-trade      { color: var(--neon-cyan);  border-color: var(--neon-cyan);  background: rgba(74,200,224,0.10); }
     .row-tag.acq-rule5,
     .row-tag.acq-waiver     { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.06); }
@@ -5933,38 +5961,37 @@ function computeFgFlags(p) {
 
 // Single inline chip surfacing the most-concerning health signal:
 //   On IL > Post-TJ > chronic-IL (≥3 stints or ≥200 IL days last 12mo).
-// Mutually exclusive — only one chip ever shows per row. Healthy
-// prospects render nothing.
+// v7 — health indicators collapsed to dot-only chips (green/yellow/red).
+// Per user ask: no pills, no text — just a colored dot with hover details.
+// Severity collapse:
+//   GREEN  → Healthy (no IL activity in trailing 12mo)
+//   YELLOW → Recent injury / Frequently injured / Post-TJ (any history)
+//   RED    → Currently on IL
 function healthBadgeHTML(p) {
-  // Severity tiers (top-down): On IL > Post-TJ > Chronic > Watch > Healthy.
-  // Each tier renders a chip with a colored dot prefix and a distinct
-  // background so a scout can read severity at a glance. Healthy is
-  // also surfaced (small green chip) so the absence of a chip never
-  // means "we don't know" — it always means "no health data on file".
   const il = p.il_status || {};
   if (il.is_on_il) {
     const days = il.days_on_il;
     const what = il.description ? il.description : "On IL";
-    return `<span class="row-tag health-il" title="${escapeHtml(what)}">IL${days != null ? ` ${days}d` : ""}</span>`;
+    const tip = `On IL · ${escapeHtml(what)}${days != null ? ` (${days}d)` : ""}`;
+    return `<span class="row-tag health-dot is-red" title="${tip}" aria-label="On IL"></span>`;
   }
   const hp = p.health_profile || {};
   if (hp.is_post_tj) {
-    const d = hp.tj_surgery_date ? ` (${hp.tj_surgery_date})` : "";
-    return `<span class="row-tag health-tj" title="Post-Tommy John surgery${d}">TJ</span>`;
+    const d = hp.tj_surgery_date ? ` (surgery ${hp.tj_surgery_date})` : "";
+    return `<span class="row-tag health-dot is-yellow" title="Post-Tommy John surgery${d}" aria-label="Post-TJ"></span>`;
   }
   const stints = hp.il_stints_12mo || 0;
   const ildays = hp.il_days_12mo || 0;
   if (stints >= 3 || ildays >= 200) {
-    return `<span class="row-tag health-chronic" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12 months — high recurrence. Different from being currently on IL (the IL chip surfaces that state separately).">Freq. Injured</span>`;
+    const tip = `Frequently injured · ${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12 months`;
+    return `<span class="row-tag health-dot is-yellow" title="${tip}" aria-label="Frequently injured"></span>`;
   }
   if (stints >= 1 || ildays >= 30) {
-    return `<span class="row-tag health-watch" title="${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12 months — recent injury history">Recent Injury</span>`;
+    const tip = `Recent injury · ${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12 months`;
+    return `<span class="row-tag health-dot is-yellow" title="${tip}" aria-label="Recent injury"></span>`;
   }
-  // No reported IL activity in the past 12 months — render a compact
-  // dot-only chip (green dot speaks for itself; tooltip explains).
-  // Pre-injury-tracking inactives stay silent.
   if (hp && Object.keys(hp).length) {
-    return `<span class="row-tag health-healthy is-dot-only" title="Healthy — no IL activity in the past 12 months" aria-label="Healthy"></span>`;
+    return `<span class="row-tag health-dot is-green" title="Healthy — no IL activity in the past 12 months" aria-label="Healthy"></span>`;
   }
   return "";
 }
@@ -8431,7 +8458,7 @@ function renderWatchlist() {
 const CHART_AXES = {
   prospects: [
     { key: "age",            label: "Age",                getter: p => p.age,                                fmt: v => v.toFixed(1) },
-    { key: "fv",             label: "Consensus FV",       getter: p => (p.points && p.points.length) ? p.points[p.points.length-1].consensus_fv_raw : null, fmt: v => v.toFixed(1) },
+    { key: "fv",             label: "Consensus FV",       getter: p => (p.points && p.points.length) ? p.points[p.points.length-1].consensus_fv_raw : null, fmt: v => Math.round(v).toString() },
     { key: "overall_rank",   label: "Overall rank",       getter: p => p.overall_rank,                       fmt: v => "#" + v },
     { key: "rps_plus",       label: "RPS+",               getter: p => (p.statline && p.statline.rps_plus), fmt: v => Math.round(v).toString() },
     { key: "tools_plus",     label: "Tools+",             getter: p => p.tools_plus,                         fmt: v => Math.round(v).toString() },
@@ -8532,22 +8559,36 @@ function renderCharts() {
   const yAxis = axes.find(a => a.key === state.chartY);
 
   // Build the entity list.
+  // v7 — DATA.players is an Array, not an object. Object.values worked
+  // by accident; iterating directly is clearer and avoids the array→
+  // object→array round trip. We also pass through `injured_list`
+  // status here since they're still tracked prospects (just sidelined).
   let entities = [];
   if (mode === "prospects") {
-    entities = Object.values(DATA.players || {}).filter(p => p && p.status === "active");
+    entities = (DATA.players || []).filter(p => p && p.status !== "graduated");
   } else {
     entities = (DATA.org_summary || []).filter(o => o && o.org);
   }
+  // v7 — track WHY each entity was dropped so the chart-meta line can
+  // surface "N of M prospects plotted" with the missing-axis breakdown.
+  let nMissingX = 0, nMissingY = 0;
   const dots = [];
   for (const e of entities) {
     const xv = xAxis.getter(e);
     const yv = yAxis.getter(e);
-    if (xv == null || yv == null || !isFinite(xv) || !isFinite(yv)) continue;
+    const xOK = xv != null && isFinite(xv);
+    const yOK = yv != null && isFinite(yv);
+    if (!xOK) nMissingX++;
+    if (!yOK) nMissingY++;
+    if (!xOK || !yOK) continue;
     dots.push({
       x: Number(xv), y: Number(yv),
       label: e.player_name || e.org,
       key: e.player_key || e.org,
       org: e.org,
+      // v7 — pin the full entity to the dot so hover/click handlers can
+      // O(1)-resolve the prospect without re-scanning DATA.players.
+      _entity: e,
     });
   }
 
@@ -8647,8 +8688,14 @@ function renderCharts() {
           transform="rotate(-90 14 ${(MT+innerH/2).toFixed(1)})">${escapeHtml(yAxis.label)}</text>
     ${r2Chip}
   `;
+  // v7 — surface coverage diagnostics so the user sees when an axis is
+  // sparse (e.g., "1842 of 2804 prospects plotted; 712 missing X, 250
+  // missing Y"). Helps explain why some prospects don't appear.
+  const _coverageNote = (nMissingX || nMissingY)
+    ? ` · <span style="color:var(--text-tertiary);">(${nMissingX} missing X${nMissingY ? `, ${nMissingY} missing Y` : ""})</span>`
+    : "";
   document.getElementById("chart-meta").innerHTML =
-    `${dots.length} ${mode} plotted · ${escapeHtml(xAxis.label)} vs ${escapeHtml(yAxis.label)}`;
+    `${dots.length} of ${entities.length} ${mode} plotted · ${escapeHtml(xAxis.label)} vs ${escapeHtml(yAxis.label)}${_coverageNote}`;
   document.getElementById("chart-stats").innerHTML = trend
     ? `Trendline: y = ${trend.m.toFixed(3)}x + ${trend.b.toFixed(2)} · R² = ${trend.r2.toFixed(3)}`
     : "Trendline disabled";
@@ -9994,7 +10041,7 @@ function _renderDraftCard(p) {
             background:${fvColor}22;color:${fvColor};font-weight:700;"
             title="Consensus future value${p.consensus_fv_raw != null && p.consensus_fv_raw !== p.consensus_fv
               ? ` (raw avg ${p.consensus_fv_raw.toFixed(1)})` : ''}">
-        FV ${p.consensus_fv != null ? p.consensus_fv : "—"}
+        FV ${p.consensus_fv != null ? Math.round(p.consensus_fv) : "—"}
       </span>
     </div>
     <div style="display:flex;align-items:center;gap:8px;font-size:11px;
@@ -10204,7 +10251,7 @@ function _renderDraftLeaderboard(host, cls) {
     <td>${escapeHtml(p.position || "?")}</td>
     <td>${escapeHtml(p.school || "?")}</td>
     <td style="color:${_stockPlusColor(p.draft_stock_plus)};">${p.draft_stock_plus || "—"}</td>
-    <td>${p.consensus_fv != null ? p.consensus_fv : "—"}</td>
+    <td>${p.consensus_fv != null ? Math.round(p.consensus_fv) : "—"}</td>
     <td>${p.projected_round ? "R" + p.projected_round : "—"}</td>
   </tr>`).join("");
 
@@ -11251,7 +11298,13 @@ function _renderOverseasSigned(host, prospects) {
 
 function _renderOverseasLeaderboard(host, prospects, allLeagues) {
   prospects.sort((a, b) => (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0));
-  const top = prospects.slice(0, 30);
+  // v7 — bumped from top 30 → top 50 so high-tool-low-FV prospects
+  // (Julian Tima FV 35 with raw_pwr 70) surface alongside the FV-50+
+  // headliners. The Best-Tool-Grades panel below was already iterating
+  // every prospect — bumping the FV table to 50 keeps the two sections
+  // consistent in scope. min sample gate added on tool-grades section
+  // so 0-AB cameos don't grab the leaderboard.
+  const top = prospects.slice(0, 50);
 
   // Per-position bests
   const byPos = {};
@@ -11266,7 +11319,7 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
     return `<li><strong>${escapeHtml(pos)}</strong> —
       ${escapeHtml(p.player_name)} <small>${_flagImg(p.country_flag_svg, p.country_flag, p.country)} ${escapeHtml(p.league)}</small>
       <span style="float:right;color:${_draftFvBucketColor(p.consensus_fv)};">
-        FV ${p.consensus_fv ?? "—"}</span></li>`;
+        FV ${p.consensus_fv != null ? Math.round(p.consensus_fv) : "—"}</span></li>`;
   }).join("");
 
   // Biggest projected bonuses
@@ -11312,7 +11365,7 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
     <td>${escapeHtml(p.position || "?")}</td>
     <td><span style="color:${_leagueBadgeColor(p.league)};font-weight:600;">${escapeHtml(p.league)}</span></td>
     <td>${escapeHtml(p.current_team || "?")}</td>
-    <td style="font-weight:600;color:${_draftFvBucketColor(p.consensus_fv)};">FV ${p.consensus_fv ?? "—"}</td>
+    <td style="font-weight:600;color:${_draftFvBucketColor(p.consensus_fv)};">FV ${p.consensus_fv != null ? Math.round(p.consensus_fv) : "—"}</td>
     <td>${p.eta_year || "—"}</td>
   </tr>`).join("");
 
@@ -11729,16 +11782,39 @@ function _fgGradeLabel(n) {
 // recognises the FG slug pattern by content — those slugs don't collide
 // with the manual_rankings labels used by other sources.
 const _FG_INTERVAL_RE = /^(\d{4})[-_]?(report|updated|graduated|graduates)$/i;
+// v7 — also recognize team-specific FG slugs like "bos2026may"
+// (Boston Red Sox top-prospects article, published May 2026). Maps the
+// team prefix to the org's full team name.
+const _FG_TEAM_INTERVAL_RE = /^([a-z]{2,4})(\d{4})(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)$/i;
+const _FG_TEAM_PREFIX_TO_NAME = {
+  ari: "Diamondbacks", ath: "Athletics", atl: "Braves", bal: "Orioles",
+  bos: "Red Sox",      chc: "Cubs",      chw: "White Sox", cin: "Reds",
+  cle: "Guardians",    col: "Rockies",   det: "Tigers",   hou: "Astros",
+  kcr: "Royals",       laa: "Angels",    lad: "Dodgers",  mia: "Marlins",
+  mil: "Brewers",      min: "Twins",     nym: "Mets",     nyy: "Yankees",
+  phi: "Phillies",     pit: "Pirates",   sdp: "Padres",   sea: "Mariners",
+  sfg: "Giants",       stl: "Cardinals", tbr: "Rays",     tex: "Rangers",
+  tor: "Blue Jays",    wsn: "Nationals",
+};
 function fgPrettifyInterval(source, intervalLabel) {
   if (!intervalLabel) return intervalLabel || "";
   // Explicit non-FG source: pass through.
   if (source && source !== "fangraphs") return intervalLabel;
+  // Standard `2026report` / `2026updated` / etc.
   const m = String(intervalLabel).match(_FG_INTERVAL_RE);
-  if (!m) return intervalLabel;
-  let kind = m[2].toLowerCase();
-  if (kind === "graduates") kind = "graduated";
-  const cap = kind.charAt(0).toUpperCase() + kind.slice(1);
-  return `FanGraphs ${m[1]} ${cap}`;
+  if (m) {
+    let kind = m[2].toLowerCase();
+    if (kind === "graduates") kind = "graduated";
+    const cap = kind.charAt(0).toUpperCase() + kind.slice(1);
+    return `FanGraphs ${m[1]} ${cap}`;
+  }
+  // Team-specific format `bos2026may` → "FanGraphs Red Sox 2026".
+  const tm = String(intervalLabel).match(_FG_TEAM_INTERVAL_RE);
+  if (tm) {
+    const team = _FG_TEAM_PREFIX_TO_NAME[tm[1].toLowerCase()];
+    if (team) return `FanGraphs ${team} ${tm[2]}`;
+  }
+  return intervalLabel;
 }
 
 // =============================================================================
@@ -14972,10 +15048,16 @@ function makeGradCohortChart(grads, opts = {}) {
   const maxTotal = Math.max(1, ...totals);
 
   const W = 600;
-  const H = 140;
+  const H = 150;
   const PAD_L = 32;
   const PAD_R = 16;
-  const PAD_T = 8;
+  // v7 — bumped 8 → 18 so the per-bar total label (rendered at
+  // yCursor-4) doesn't get cut off when a bar reaches maxTotal.
+  // Previously the label landed at y=4 (above the SVG top edge);
+  // with PAD_T=18 the worst case is y=14, comfortably inside the
+  // viewBox. H bumped 140 → 150 so the chart body stays the same
+  // size despite the extra top padding.
+  const PAD_T = 18;
   const PAD_B = 24;
   const chartW = W - PAD_L - PAD_R;
   const chartH = H - PAD_T - PAD_B;
@@ -16325,6 +16407,101 @@ function makeCareerTable(career) {
   return `<table class="detail-table"><thead>${strip}${head}</thead><tbody>${rows}</tbody></table>`;
 }
 
+// v7 — per-level aggregation. Groups career rows by level and emits a
+// table with the same column shape as makeCareerTable, but each row is
+// the rollup across all seasons spent at that level. Counting stats
+// sum directly; rate stats use a workload-weighted average (AB for
+// hitters, IP for pitchers) since the rows don't carry the raw H/ER
+// numerators we'd need for a perfect recompute.
+const _LEVEL_SORT = ["MLB","AAA","AA","A+","A","CPX","DSL","ROK"];
+function makeCareerByLevelTable(career) {
+  if (!career || !career.length) return "";
+  const isP = career[0].is_pitcher;
+  const byLevel = {};
+  for (const s of career) {
+    const lv = s.level || "?";
+    if (!byLevel[lv]) byLevel[lv] = [];
+    byLevel[lv].push(s);
+  }
+  const levels = Object.keys(byLevel).sort((a, b) => {
+    const ai = _LEVEL_SORT.indexOf(a); const bi = _LEVEL_SORT.indexOf(b);
+    return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
+  });
+  const num = v => v != null && !isNaN(parseFloat(v)) ? parseFloat(v) : 0;
+  const wmean = (rows, key, weightKey) => {
+    let num_ = 0, den = 0;
+    for (const r of rows) {
+      const v = num(r[key]);
+      const w = num(r[weightKey]);
+      if (w > 0) { num_ += v * w; den += w; }
+    }
+    return den > 0 ? num_ / den : null;
+  };
+  const sum = (rows, key) => rows.reduce((s, r) => s + num(r[key]), 0);
+  const seasonRange = rows => {
+    const ys = rows.map(r => r.season).filter(y => y != null).sort();
+    return ys.length === 0 ? "—" : ys.length === 1 ? `${ys[0]}` : `${ys[0]}–${ys[ys.length-1]}`;
+  };
+  if (isP) {
+    const rows = levels.map(lv => {
+      const rs = byLevel[lv];
+      const ip = sum(rs, "ip"), g = sum(rs, "games");
+      const era = wmean(rs, "era", "ip");
+      const whip = wmean(rs, "whip", "ip");
+      const k9 = wmean(rs, "k_per_9", "ip");
+      const bb9 = wmean(rs, "bb_per_9", "ip");
+      const hr9 = wmean(rs, "hr_per_9", "ip");
+      return `<tr style="background:var(--bg-tertiary);">
+        <td style="font-size:11px;color:var(--text-tertiary);">${seasonRange(rs)}</td>
+        <td><span class="level-pill level-neutral">${lv}</span></td>
+        <td>${g || "—"}</td>
+        <td>${ip ? ip.toFixed(1) : "—"}</td>
+        <td>${sum(rs, "wins") || "—"}-${sum(rs, "losses") || "—"}</td>
+        <td>${era != null ? era.toFixed(2) : "—"}</td>
+        <td>${whip != null ? whip.toFixed(2) : "—"}</td>
+        <td>${k9 != null ? k9.toFixed(2) : "—"}</td>
+        <td>${bb9 != null ? bb9.toFixed(2) : "—"}</td>
+        <td>${hr9 != null ? hr9.toFixed(2) : "—"}</td>
+      </tr>`;
+    }).join("");
+    return `<table class="detail-table"><thead><tr>
+      <th>Years</th><th>Level</th><th>G</th><th>IP</th><th>W-L</th>
+      <th>ERA</th><th>WHIP</th><th>K/9</th><th>BB/9</th><th>HR/9</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  const rows = levels.map(lv => {
+    const rs = byLevel[lv];
+    const ab = sum(rs, "ab"), g = sum(rs, "games");
+    const avg = wmean(rs, "avg", "ab");
+    const obp = wmean(rs, "obp", "ab");
+    const slg = wmean(rs, "slg", "ab");
+    const ops = (obp != null && slg != null) ? obp + slg : null;
+    const iso = (slg != null && avg != null) ? slg - avg : null;
+    const bbp = wmean(rs, "bb_pct", "ab");
+    const kp  = wmean(rs, "k_pct", "ab");
+    const fmt3 = v => v != null ? v.toFixed(3).replace(/^0/, "") : "—";
+    return `<tr style="background:var(--bg-tertiary);">
+      <td style="font-size:11px;color:var(--text-tertiary);">${seasonRange(rs)}</td>
+      <td><span class="level-pill level-neutral">${lv}</span></td>
+      <td>${g || "—"}</td>
+      <td>${ab || "—"}</td>
+      <td>${sum(rs, "hr") || "—"}</td>
+      <td>${sum(rs, "sb") || "—"}</td>
+      <td>${fmt3(avg)}</td>
+      <td>${fmt3(obp)}</td>
+      <td>${fmt3(slg)}</td>
+      <td>${fmt3(ops)}</td>
+      <td>${fmt3(iso)}</td>
+      <td>${bbp != null ? bbp.toFixed(1) : "—"}</td>
+      <td>${kp  != null ? kp.toFixed(1)  : "—"}</td>
+    </tr>`;
+  }).join("");
+  return `<table class="detail-table"><thead><tr>
+    <th>Years</th><th>Level</th><th>G</th><th>AB</th><th>HR</th><th>SB</th>
+    <th>AVG</th><th>OBP</th><th>SLG</th><th>OPS</th><th>ISO</th><th>BB%</th><th>K%</th>
+  </tr></thead><tbody>${rows}</tbody></table>`;
+}
+
 // Scouting flags previously rendered as their own standalone block; the
 // data now lives inline as ▲/▼ tags inside the quick-read summary
 // (see `makeQuickReadSummaryParts`) and the colored cells of the career
@@ -17334,11 +17511,15 @@ function renderPlayerDetail(key) {
        ${makeCareerTrendStrip(p.career_stats)}
        <div class="career-by-season">
          <div class="detail-title" style="margin-top:14px;font-size:13px;">Raw career stats</div>
+         <div class="detail-title-sub" style="display:block;margin:0 0 4px;font-style:italic;">By season</div>
          ${careerRawTableHTML}
+         <div class="detail-title-sub" style="display:block;margin:10px 0 4px;font-style:italic;">By level <span style="color:var(--text-tertiary);font-style:normal;">(workload-weighted rate aggregation)</span></div>
+         ${makeCareerByLevelTable(p.career_stats)}
          ${levelBenchmarkSection ? `
            <div class="detail-title" style="margin-top:14px;font-size:13px;">Stats vs level mean
              <span class="detail-title-sub">color-coded delta against the per-level cohort</span>
            </div>
+           <div class="detail-title-sub" style="display:block;margin:0 0 4px;font-style:italic;">By season</div>
            ${levelBenchmarkSection}` : ""}
        </div>`
     : "";

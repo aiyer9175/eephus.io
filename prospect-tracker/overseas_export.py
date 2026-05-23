@@ -336,11 +336,36 @@ def _build_league(league: str,
 
     prospects: list[dict] = []
     fv_dist: dict[str, int] = defaultdict(int)
+    n_filtered_promoted = 0
+    n_filtered_mlb_active = 0
 
     for pk, plist in by_player.items():
         latest = _latest_per_source(plist)
         any_snap = sorted(plist, key=lambda r: r.get("snapshot_date") or "")[-1]
         player_meta = players_by_key.get(pk) or {}
+
+        # v7 — drop players who have already signed-and-promoted to MLB
+        # affiliated ball. Two filter layers:
+        # 1) Per-record status flagged mlb_promoted (the promotion
+        #    pipeline flips this when the player joins a MiLB roster).
+        # 2) Catch-up: even when the per-record status didn't get
+        #    flipped (Anthony Kay-style name-normalization miss),
+        #    drop the player if they have MLB activity on file via
+        #    the imported career_stats / roster_status sources.
+        _statuses = {s.get("status") for s in plist}
+        if "mlb_promoted" in _statuses:
+            n_filtered_promoted += 1
+            continue
+        # Catch-up: drop if player has any MLB-level stat row this season
+        _raw_stats = stats_by_player.get(pk) or []
+        _has_mlb_activity = any(
+            (row.get("league") in {"MLB", "AL", "NL"})
+            or (row.get("payload") or {}).get("level") == "MLB"
+            for row in _raw_stats
+        )
+        if _has_mlb_activity:
+            n_filtered_mlb_active += 1
+            continue
 
         fv = _consensus(plist, "fv")
         bucket = _fv_bucket(fv)
@@ -435,6 +460,11 @@ def _build_league(league: str,
 
     prospects.sort(key=lambda p: (p.get("consensus_fv") is None,
                                   -(p.get("consensus_fv") or 0)))
+
+    if n_filtered_promoted or n_filtered_mlb_active:
+        log.info("overseas %s: filtered %d MLB-promoted + %d MLB-active "
+                 "records from overseas pool",
+                 league, n_filtered_promoted, n_filtered_mlb_active)
 
     return {
         "league":          league,

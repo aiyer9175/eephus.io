@@ -703,6 +703,55 @@ def build_timeseries(
             fv_total_instances=total_fv_instances,
         ))
 
+    # v7 — collapse duplicate (player_name) entries. FanGraphs CSV
+    # ingest synthesizes `__noid`-suffixed player_keys whenever two
+    # players collide on the FG id field; the result here ends up with
+    # two PlayerTimeseries rows for the same person (e.g. Travis
+    # Sykora, Chase DeLauter, Bryce Rainer). Merge them by preferring
+    # the canonical (no-suffix) key and pooling points + graduation
+    # state. Future: a `_SAME_NAME_NOT_DUPES` allowlist can carve out
+    # legit same-name pairs if any surface.
+    by_name: dict[str, PlayerTimeseries] = {}
+    for p in result:
+        canon = by_name.get(p.player_name)
+        if canon is None:
+            by_name[p.player_name] = p
+            continue
+        # Prefer the entry whose key does NOT end with __noid.
+        if not canon.player_key.endswith("__noid"):
+            keep, drop = canon, p
+        else:
+            keep, drop = p, canon
+        # Merge points — dedupe by (snapshot_date, interval_label) so
+        # the same source-snap doesn't get double-counted.
+        seen: set[tuple[str, str]] = set()
+        merged: list = []
+        for pt in (keep.points + drop.points):
+            key = (pt.snapshot_date, getattr(pt, "interval_label", ""))
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(pt)
+        merged.sort(key=lambda pt: pt.snapshot_date)
+        keep.points = merged
+        # Pull through the more authoritative status / graduation_date.
+        if keep.status != "graduated" and drop.status == "graduated":
+            keep.status = drop.status
+            keep.graduation_date = drop.graduation_date
+        # Pool the per-snapshot FV-instance count so the "n instances"
+        # badge reflects the full publication history.
+        keep.fv_total_instances = (
+            (keep.fv_total_instances or 0) + (drop.fv_total_instances or 0)
+        )
+        # Position / org — prefer the canonical entry's value but fill
+        # in from the duplicate if canon is missing.
+        if not keep.position and drop.position:
+            keep.position = drop.position
+        if not keep.org and drop.org:
+            keep.org = drop.org
+        by_name[p.player_name] = keep
+    result = list(by_name.values())
+
     # Population-prior Bayesian shrinkage was removed (2026-05): the
     # pull-toward-prior was compressing single-source prospects (90% of
     # actives) into a giant 40-FV cluster. compute_consensus_point now
