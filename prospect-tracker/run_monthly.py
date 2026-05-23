@@ -193,6 +193,21 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     except Exception:
         log.exception("rebuild_only: IFA bonus merge failed — fin_ifa_roi will be sparse")
 
+    # v17 — Spotrac contracts (player-level AAV / salary_by_year). Was
+    # previously gated to the full pipeline, leaving rebuild_only without
+    # contract data. Loads from the cache (force=False) so rebuild stays
+    # offline. Manual overrides in data/contract_overrides.json layer on
+    # top of this inside storage.py.
+    contracts_by_key: dict = {}
+    try:
+        from spotrac import scrape_all_spotrac_contracts, build_contracts_by_key
+        _contract_rows = scrape_all_spotrac_contracts(force=False)
+        contracts_by_key = build_contracts_by_key(_contract_rows)
+        log.info("rebuild_only: spotrac contracts loaded — %d rows, %d unique players",
+                 len(_contract_rows), len(contracts_by_key))
+    except Exception:
+        log.exception("rebuild_only: spotrac contracts load failed — falling back to manual overrides only")
+
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / "timeseries.json"
     export_timeseries_json(
@@ -210,7 +225,7 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
         level_changes=_derive_all_level_changes(),
         roster_status={},
         ifa_spending_by_org=ifa_spending_by_org,
-        contracts_by_key={},
+        contracts_by_key=contracts_by_key,
         draft_pools={},
         player_ids={},
     )

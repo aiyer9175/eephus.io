@@ -5366,7 +5366,7 @@
       <span class="filter-label">Sort</span>
       <select class="chip" id="sort-select">
         <option value="fv">Consensus FV</option>
-        <option value="avg_rank">Average rank (across sources)</option>
+        <!-- v17 — `avg_rank` sort dropped; we rank by FV. -->
         <option value="age_asc">Youngest first</option>
         <option value="age_vs_level">Most young-for-level</option>
         <option value="eta">ETA (earliest first)</option>
@@ -5612,6 +5612,9 @@
       <button class="chip"        data-lb-stat="hr"      title="Home runs">HR</button>
       <button class="chip"        data-lb-stat="sb"      title="Stolen bases">SB</button>
       <button class="chip"        data-lb-stat="hit_level_plus" title="OPS vs level mean — surfaces hitters whose OPS is great BECAUSE the level is hard">OPS+ lvl</button>
+      <!-- v17 — RPS+ leaderboard sort. Active-prospect rate-performance
+           score (100 = cohort mean, +10 = +1σ). Hitters only. -->
+      <button class="chip"        data-lb-stat="rps_plus" title="RPS+ — level-anchored rate performance score (100 = mean, +10 = +1σ). Hitters only.">RPS+</button>
       <button class="chip"        data-lb-stat="era"     title="Earned-run average (lower is better)">ERA</button>
       <button class="chip"        data-lb-stat="whip"    title="Walks + hits / IP (lower is better)">WHIP</button>
       <button class="chip"        data-lb-stat="fip"     title="Fielding Independent Pitching (lower is better)">FIP</button>
@@ -5808,6 +5811,12 @@ const TOOL_DISPLAY_NAMES = {
   cmd:       ["Command",        "CMD"],
   ct:        ["Cutter",         "CT"],
   sp:        ["Splitter",       "SP"],
+  // v17 — FG physical/development grades. Published on -2..+2 plus-minus
+  // scale; we map to 30/40/50/60/70 FV equivalents at render time so they
+  // can be shown alongside scouted 20-80 grades on draft/overseas chips.
+  frame:     ["Frame",          "FRM"],
+  athl:      ["Athleticism",    "ATHL"],
+  delivery:  ["Delivery",       "DEL"],
 };
 function toolFullName(key) {
   const e = TOOL_DISPLAY_NAMES[key];
@@ -8368,7 +8377,10 @@ function renderActives() {
     <span style="text-align:center;">#</span>
     <span>Player · pos · org · age</span>
     <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="Consensus Future Value · stock delta + direction below · click to sort">FV · stock</span>
-    <span class="sort-header" style="text-align:center;" data-sort-key="avg_rank" title="Average rank across sources · click to sort">Rank</span>
+    <!-- v17 - Rank column shows our own FV-derived rank (overall_rank)
+         rather than the cross-source avg_rank. avg_rank inherited each
+         outlet's ordering quirks; ranking by consensus FV is cleaner. -->
+    <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="FV-derived rank — our sequential ordering of prospects by consensus FV. Click to sort.">Rank</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline — hover for OHLC open / high / low / close">FV history</span>
     <span class="desktop-only">MiLB · age vs. level</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="Physical: Height · Weight · BMI (from FanGraphs). Click to sort by BMI highest first; click again for lowest.">Ht · Wt · BMI</span>
@@ -8399,7 +8411,8 @@ function renderActives() {
           <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>${fvTrendHTML(p)}</div>
-        <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
+        <!-- v17 — Show our FV-sorted overall rank (#N) instead of avg_rank. -->
+        <div class="rank-cell">${p.overall_rank != null ? "#" + p.overall_rank : "—"}</div>
         <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${lazyLineChartHTML(p)}</div>
         ${makeMilbCell(p)}
         ${physClusterHTML(p)}
@@ -8808,6 +8821,11 @@ const LB_STATS = {
                     fmt: v => v != null ? (v > 0 ? "+" : "") + Number(v).toFixed(0) + "%" : "—",
                     minAB: 50, support: _lbHitterSupport, side: "hit",
                     field: "level_plus_pct" },
+  // v17 — RPS+ leaderboard. Sort by site's Rate Performance Score
+  // (level-anchored, 100 = mean, +10 = +1σ). Hitters only.
+  rps_plus: { label: "RPS+", hi: true,
+              fmt: v => v != null ? Math.round(Number(v)).toString() : "—",
+              minAB: 50, support: _lbHitterSupport, side: "hit" },
   // ── Pitcher ──
   era:     { label: "ERA",     hi: false, fmt: v => v != null ? Number(v).toFixed(2) : "—",
              minIP: 15, support: _lbPitcherSupport, side: "pit" },
@@ -8898,7 +8916,7 @@ function renderWatchlist() {
             <button class="watch-btn is-in" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="Remove from watchlist">★</button>
           </div>
           <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>${fvTrendHTML(p)}` : "—"}</div>
-          <div class="rank-cell">${latest && latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
+          <div class="rank-cell">${p.overall_rank != null ? "#" + p.overall_rank : "—"}</div>
           <div class="line-chart-cell">${p.points && p.points.length >= 2 ? lazyLineChartHTML(p) : ""}</div>
           ${makeMilbCell(p)}
           ${makeEtaCell(p)}
@@ -10423,17 +10441,23 @@ function _renderDraftLottery(host, cls) {
 }
 
 function _renderDraftRankings(host, cls) {
-  // FLAT consensus-rank order. Prior versions grouped by FV tier;
-  // user dropped that — FV now reads off the per-card badge only.
+  // v17 — Sort BY CONSENSUS FV (highest first). Previously sorted by
+  // sequential consensus rank, which inherited each source's pick order
+  // (sometimes idiosyncratic to that outlet's preferences). FV is the
+  // shared currency across sources, so sorting by it produces our own
+  // canonical "best prospect" ranking. Consensus rank stays available
+  // as a tiebreaker when two prospects share an FV. Also reassign
+  // sequential pick numbers AFTER the FV sort so the visible #N matches
+  // the new order rather than the inherited source order.
   const prospects = (cls.prospects || []).slice();
-  const rankKey = p => {
-    const k = p.consensus_pick != null ? p.consensus_pick
-            : p.consensus_rank != null ? p.consensus_rank
-            : 9999;
-    return Number(k);
-  };
-  prospects.sort((a, b) => rankKey(a) - rankKey(b)
-                          || (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0));
+  prospects.sort((a, b) => {
+    const fvDelta = (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0);
+    if (fvDelta !== 0) return fvDelta;
+    const aRank = a.consensus_rank != null ? a.consensus_rank : 9999;
+    const bRank = b.consensus_rank != null ? b.consensus_rank : 9999;
+    return Number(aRank) - Number(bRank);
+  });
+  prospects.forEach((p, i) => { p._fvSortRank = i + 1; });
 
   // Header strip
   let html = `<div style="padding:12px 14px;background:var(--bg-secondary);
@@ -10477,15 +10501,40 @@ function _renderDraftCard(p) {
       if (tools[k] == null || tg[k] > tools[k]) tools[k] = tg[k];
     }
   }
+  // v17 — Physical FG grades (Frame / Athl / Delivery) folded into the
+  // tool-chip row when present. FG publishes them on a -2..+2 plus-minus
+  // scale; map to 30/40/50/60/70 FV via _fg_pm_to_fv-equivalent so the
+  // chips render on the same color ramp as the scouted 20-80 grades.
+  const _fgPmToFv = (pm) => {
+    if (pm == null) return null;
+    const v = parseInt(pm, 10);
+    if (!isFinite(v) || v < -2 || v > 2) return null;
+    return 50 + 10 * v;
+  };
+  for (const src in (p.tool_grades || {})) {
+    const ex = (p.tool_grades[src] || {})._extras || {};
+    for (const physKey of ["frame", "athl", "delivery"]) {
+      const fv = _fgPmToFv(ex[physKey]);
+      if (fv != null && (tools[physKey] == null || fv > tools[physKey])) {
+        tools[physKey] = fv;
+      }
+    }
+  }
   const toolKeys = Object.keys(tools).sort();
+  // v17 — Use toolAbbrev so chips read HIT / PWR / RUN / DEF / ARM (was
+  // HIT / GAME_PWR / SPEED / FIELD / THROW). Matches the active-list
+  // density-mode tool grids.
   const toolPills = toolKeys.length
     ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">
-        ${toolKeys.map(k =>
-          `<span title="${escapeHtml(k.toUpperCase())}: ${tools[k]}"
+        ${toolKeys.map(k => {
+          const label = (typeof toolAbbrev === "function" ? toolAbbrev(k) : k.toUpperCase());
+          const full = (typeof toolFullName === "function" ? toolFullName(k) : k);
+          return `<span title="${escapeHtml(full)}: ${tools[k]}"
                  style="font-size:10px;padding:1px 5px;border-radius:3px;
                  background:var(--bg-tertiary);color:var(--text-secondary);">
-            ${escapeHtml(k.toUpperCase())} <strong style="color:${_draftFvBucketColor(tools[k])};">${tools[k]}</strong>
-          </span>`).join("")}
+            ${escapeHtml(label)} <strong style="color:${_draftFvBucketColor(tools[k])};">${tools[k]}</strong>
+          </span>`;
+        }).join("")}
       </div>` : "";
 
   // Status badge (post-draft picks get the team + pick number).
@@ -10526,14 +10575,19 @@ function _renderDraftCard(p) {
           max-height:60px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 50%,transparent);">
         ${escapeHtml(report.slice(0, 400))}…</div>` : "";
 
-  const pickDisplay = p.consensus_pick != null
-    ? p.consensus_pick
+  // v17 — Display sequential rank from the new FV-sort order (the parent
+  // _renderDraftRankings stamps _fvSortRank after sorting). Falls back to
+  // consensus_pick / consensus_rank for non-flat-list contexts (per-team
+  // group views, etc. — they don't re-stamp).
+  const pickDisplay = p._fvSortRank != null ? p._fvSortRank
+    : p.consensus_pick != null ? p.consensus_pick
     : (p.consensus_rank != null ? Math.round(p.consensus_rank) : "?");
-  // Tooltip surfaces the raw averaged rank so users can see where the
-  // sequential rank came from without polluting the visible value.
-  const pickTitle = p.consensus_rank != null
-    ? `Consensus sequential rank · raw avg ${p.consensus_rank.toFixed(2)}`
-    : "Consensus rank";
+  const pickTitle = p._fvSortRank != null
+    ? `Sequential rank by consensus FV${p.consensus_rank != null
+        ? ` (source-consensus rank was #${Math.round(p.consensus_rank)})` : ''}`
+    : (p.consensus_rank != null
+        ? `Consensus sequential rank · raw avg ${p.consensus_rank.toFixed(2)}`
+        : "Consensus rank");
 
   return `<div class="draft-card" style="position:relative;cursor:pointer;" onclick="if(event.target.closest('a,button'))return;goToDraftee('${escapeHtml(p.player_key)}');">
     <button class="share-as-image share-inline"
@@ -10557,7 +10611,8 @@ function _renderDraftCard(p) {
     </div>
     <div style="display:flex;align-items:center;gap:8px;font-size:11px;
          color:var(--text-secondary);margin-top:4px;">
-      <span>${escapeHtml(p.position || "?")}</span>
+      <!-- v17 — Primary position bolded for consistency with active-list versa display. -->
+      <span><b>${escapeHtml(p.position || "?")}</b></span>
       <span style="color:var(--text-tertiary);">·</span>
       <span title="HS = High School, COL = College; h=hitter, p=pitcher">
         ${escapeHtml(p.player_type || "?")}</span>
@@ -11019,15 +11074,37 @@ function _renderOverseasCard(p) {
       if (tools[k] == null || tg[k] > tools[k]) tools[k] = tg[k];
     }
   }
+  // v17 — Physical FG grades (Frame / Athl / Delivery) folded into the
+  // tool-chip row when present (-2..+2 plus-minus → 30/40/50/60/70 FV).
+  const _fgPmToFv = (pm) => {
+    if (pm == null) return null;
+    const v = parseInt(pm, 10);
+    if (!isFinite(v) || v < -2 || v > 2) return null;
+    return 50 + 10 * v;
+  };
+  for (const src in (p.tool_grades || {})) {
+    const ex = (p.tool_grades[src] || {})._extras || {};
+    for (const physKey of ["frame", "athl", "delivery"]) {
+      const fv = _fgPmToFv(ex[physKey]);
+      if (fv != null && (tools[physKey] == null || fv > tools[physKey])) {
+        tools[physKey] = fv;
+      }
+    }
+  }
   const toolKeys = Object.keys(tools).sort();
+  // v17 — Use toolAbbrev for consistent labels (HIT / PWR / RUN / DEF
+  // / ARM) matching the active-list density-mode tool grids.
   const toolPills = toolKeys.length
     ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">
-        ${toolKeys.map(k =>
-          `<span title="${escapeHtml(k.toUpperCase())}: ${tools[k]}"
+        ${toolKeys.map(k => {
+          const label = (typeof toolAbbrev === "function" ? toolAbbrev(k) : k.toUpperCase());
+          const full = (typeof toolFullName === "function" ? toolFullName(k) : k);
+          return `<span title="${escapeHtml(full)}: ${tools[k]}"
                  style="font-size:10px;padding:1px 5px;border-radius:3px;
                  background:var(--bg-tertiary);color:var(--text-secondary);">
-            ${escapeHtml(k.toUpperCase())} <strong style="color:${_draftFvBucketColor(tools[k])};">${tools[k]}</strong>
-          </span>`).join("")}
+            ${escapeHtml(label)} <strong style="color:${_draftFvBucketColor(tools[k])};">${tools[k]}</strong>
+          </span>`;
+        }).join("")}
       </div>` : "";
 
   // Career arc mini-sparkline (last few seasons of the primary metric).
@@ -11137,7 +11214,8 @@ function _renderOverseasCard(p) {
     </div>
     <div style="display:flex;align-items:center;gap:8px;font-size:11px;
          color:var(--text-secondary);margin-top:4px;flex-wrap:wrap;">
-      <span>${escapeHtml(p.position || "?")}</span>
+      <!-- v17 — Primary position bolded for consistency with active-list versa display. -->
+      <span><b>${escapeHtml(p.position || "?")}</b></span>
       <span style="color:var(--text-tertiary);">·</span>
       <span>${escapeHtml(p.current_team || "?")} <span style="color:var(--text-tertiary);font-size:10px;">(${escapeHtml(p.league || "?")})</span></span>
       ${p.eta_year ? `<span style="color:var(--text-tertiary);">·</span><span title="MLB ETA">ETA ${p.eta_year}</span>` : ""}
@@ -12087,7 +12165,14 @@ function renderGraduates() {
           <button class="compare-add-btn is-compact${compareHas(g.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(g.player_key)}" type="button" title="${compareHas(g.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(g.player_key) ? "✓" : "+"}</button>
         </div>
         <div class="grad-graduation-cell">
-          <span class="${pillClass}">${g.graduation_date}</span>
+          <span class="${pillClass}" title="${escapeHtml(
+            g.mlb_debut_date && g.mlb_debut_date !== g.graduation_date
+              ? `Graduated from prospect status on ${g.graduation_date} (MLB debut: ${g.mlb_debut_date})`
+              : `Graduated from prospect status on ${g.graduation_date}`
+          )}">${g.graduation_date}</span>
+          ${g.mlb_debut_date && g.mlb_debut_date !== g.graduation_date
+            ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;" title="MLB debut">debut ${g.mlb_debut_date}</span>`
+            : ""}
           ${sublabel || (isRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : "")}
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(g)}${fvBadgeSingleClass(g)}" title="${escapeHtml(fvBadgeTooltip(g))}">${fvLabel}${fvBadgeWideMarkHTML(g)}${fvBadgeSingleMarkHTML(g)}</span></div>
@@ -20506,7 +20591,7 @@ function renderFarmDetail(orgCode) {
           </div>
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}">${latest.consensus_fv_label}</span></div>
-        <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
+        <div class="rank-cell">${p.overall_rank != null ? "#" + p.overall_rank : (p.org_rank != null ? "#" + p.org_rank + " org" : "—")}</div>
         <div style="text-align:center;font-size:11px;color:var(--text-secondary);font-variant-numeric:tabular-nums;" title="${p.eta && p.eta.confidence ? p.eta.confidence + ' confidence' : 'ETA estimate'}">${(p.eta && p.eta.year != null) ? p.eta.year : "—"}</div>
         <div class="line-chart-cell">${chart}</div>
         <div class="candle-cell">${makeCandle(p)}</div>
