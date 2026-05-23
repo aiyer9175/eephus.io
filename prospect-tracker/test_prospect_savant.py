@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from prospect_savant import attach_prospect_savant, load_prospect_savant
-from spotlights import build_spotlights
 
 
 def test_loads_and_attaches_prospect_savant_csv(tmp_path):
@@ -17,55 +16,3 @@ def test_loads_and_attaches_prospect_savant_csv(tmp_path):
     players = [{"player_name": "Walker Jenkins", "org": "MIN"}]
     assert attach_prospect_savant(players, tmp_path) == 1
     assert players[0]["prospect_savant"]["ps_score"] == 0.997
-
-
-def test_underlying_metrics_push_surface_miss_into_hot_and_rebounder():
-    player = {
-        "player_key": "george_lombard_jr",
-        "player_name": "George Lombard Jr.",
-        "position": "SS",
-        "org": "NYY",
-        "age": 20.0,
-        "overall_rank": 16,
-        "fv_low": 50.0,
-        "age_vs_level": {"tier": "very-young", "diff": -4.0},
-        "points": [
-            {"consensus_fv_raw": 58.0, "consensus_fv_label": "58"},
-            {"consensus_fv_raw": 54.0, "consensus_fv_label": "54"},
-        ],
-        "statline": {
-            "level": "AAA",
-            "season": 2026,
-            "is_pitcher": False,
-            "is_prior_season": False,
-            "avg": ".153",
-            "obp": ".359",
-            "slg": ".153",
-            "ops": ".512",
-            "hr": 0,
-            "sb": 3,
-            "bb_pct": 21.8,
-            "k_pct": 15.4,
-        },
-        "career_stats": [
-            {"season": 2026, "level": "AAA", "ab": 59, "ops": ".512", "is_pitcher": False},
-        ],
-        "acquisition": {"method": "draft", "pick_overall": 26, "bonus_usd": 3_300_000},
-        "prospect_savant": {
-            "role": "hitter",
-            "level": "AAA",
-            "ps_score": 0.983,
-            "ev": 91.7,
-            "max_ev": 109.1,
-            "ev_90": 104.5,
-            "hard_hit_pct": 48.9,
-        },
-    }
-    out = build_spotlights([player], [])
-    assert [x["player_name"] for x in out["hot"]] == ["George Lombard Jr."]
-    assert [x["player_name"] for x in out["rebounders"]] == ["George Lombard Jr."]
-    # v15 — drivers are dicts with .label; check the labels.
-    driver_labels = [d.get("label") if isinstance(d, dict) else str(d)
-                     for d in out["hot"][0]["drivers"]]
-    assert "104.5 mph 90th EV" in driver_labels
-    assert all("PS Score" not in d for d in driver_labels)

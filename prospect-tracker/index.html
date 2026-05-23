@@ -3512,6 +3512,43 @@
       margin-top: 2px;
       font-variant-numeric: tabular-nums;
     }
+    .zone-battery {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      font-variant-numeric: tabular-nums;
+    }
+    .zone-battery-body {
+      position: relative;
+      width: 46px;
+      height: 14px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background: var(--bg-primary);
+      overflow: hidden;
+    }
+    .zone-battery-body::after {
+      content: "";
+      position: absolute;
+      right: -5px;
+      top: 4px;
+      width: 4px;
+      height: 6px;
+      border: 1px solid var(--border);
+      border-left: 0;
+      border-radius: 0 2px 2px 0;
+      background: var(--bg-primary);
+    }
+    .zone-battery-fill {
+      display: block;
+      height: 100%;
+      background: var(--neon-cyan);
+      opacity: 0.85;
+    }
 
     /* === Per-org acquisition spending ============================== */
     /* Stacks a row per year with two side-by-side horizontal bars
@@ -6210,6 +6247,38 @@
       <button class="chip"        data-lb-stat="pitcher_k_pct" title="Pitcher K% — strikeouts as % of batters faced">K% (P)</button>
       <button class="chip"        data-lb-stat="pitcher_bb_pct" title="Pitcher BB% — walks as % of batters faced (lower is better)">BB% (P)</button>
       <button class="chip"        data-lb-stat="pit_level_plus" title="ERA vs level mean — surfaces pitchers whose ERA is dominant relative to the level cohort">ERA- lvl</button>
+      <span class="filter-label">Board</span>
+      <button class="chip active" data-lb-side="all">All</button>
+      <button class="chip"        data-lb-side="hit">Hitters</button>
+      <button class="chip"        data-lb-side="pit">Pitchers</button>
+
+      <span class="filter-label" style="margin-left:10px;">Hitter stats</span>
+      <button class="chip active" data-lb-stat="ops"     data-lb-stat-side="hit" title="On-base + slugging">OPS</button>
+      <button class="chip"        data-lb-stat="iso"     data-lb-stat-side="hit" title="Isolated power (SLG − AVG)">ISO</button>
+      <button class="chip"        data-lb-stat="bb_pct"  data-lb-stat-side="hit" title="Walk rate">BB%</button>
+      <button class="chip"        data-lb-stat="k_pct"   data-lb-stat-side="hit" title="Strikeout rate (lower is better)">K%</button>
+      <button class="chip"        data-lb-stat="hr"      data-lb-stat-side="hit" title="Home runs">HR</button>
+      <button class="chip"        data-lb-stat="sb"      data-lb-stat-side="hit" title="Stolen bases">SB</button>
+      <button class="chip"        data-lb-stat="zone_z_contact" data-lb-stat-side="hit" title="Hitter zone contact percent">Z-Con%</button>
+      <button class="chip"        data-lb-stat="zone_chase" data-lb-stat-side="hit" title="Hitter chase rate; lower is better">Chase%</button>
+      <button class="chip"        data-lb-stat="avg_ev" data-lb-stat-side="hit" title="Average exit velocity">Avg EV</button>
+      <button class="chip"        data-lb-stat="max_ev" data-lb-stat-side="hit" title="Maximum exit velocity">Max EV</button>
+      <button class="chip"        data-lb-stat="hard_hit_pct" data-lb-stat-side="hit" title="95+ mph batted-ball rate">Hard%</button>
+      <button class="chip"        data-lb-stat="barrel_pct" data-lb-stat-side="hit" title="Approximate barrel rate from exit velocity and launch angle">Brl%</button>
+
+      <span class="filter-label" style="margin-left:10px;">Pitcher stats</span>
+      <button class="chip"        data-lb-stat="era"     data-lb-stat-side="pit" title="Earned-run average (lower is better)">ERA</button>
+      <button class="chip"        data-lb-stat="whip"    data-lb-stat-side="pit" title="Walks + hits / IP (lower is better)">WHIP</button>
+      <button class="chip"        data-lb-stat="pitcher_k_pct" data-lb-stat-side="pit" title="Pitcher K% — strikeouts as % of batters faced">K%</button>
+      <button class="chip"        data-lb-stat="pitcher_bb_pct" data-lb-stat-side="pit" title="Pitcher BB% — walks as % of batters faced (lower is better)">BB%</button>
+      <button class="chip"        data-lb-stat="pitcher_zone_whiff" data-lb-stat-side="pit" title="Pitcher whiffs per swing">Whiff%</button>
+      <button class="chip"        data-lb-stat="pitcher_zone_chase" data-lb-stat-side="pit" title="Pitcher chase rate induced; higher is better">Chase%</button>
+      <button class="chip"        data-lb-stat="pitcher_zone_z_contact" data-lb-stat-side="pit" title="Pitcher in-zone contact allowed; lower is better">Z-Con%</button>
+      <button class="chip"        data-lb-stat="fb_velo_feed" data-lb-stat-side="pit" title="Average velocity of the highest-usage fastball-like pitch from pitch feeds">FB velo</button>
+      <button class="chip"        data-lb-stat="fb_ivb_feed" data-lb-stat-side="pit" title="Average induced vertical break on the highest-usage fastball-like pitch from pitch feeds">FB IVB</button>
+      <button class="chip"        data-lb-stat="pitcher_avg_ev_allowed" data-lb-stat-side="pit" title="Average exit velocity allowed from tracked batted balls; lower is better">Avg EVa</button>
+      <button class="chip"        data-lb-stat="pitcher_hard_hit_allowed" data-lb-stat-side="pit" title="95+ mph batted-ball rate allowed; lower is better">HardA%</button>
+      <button class="chip"        data-lb-stat="pitcher_barrel_allowed" data-lb-stat-side="pit" title="Approximate barrel rate allowed; lower is better">BrlA%</button>
 
       <span class="filter-label" style="margin-left:10px;" title="Prospect leaderboard — MiLB levels only. Graduates and MLB-level rows are excluded.">Level</span>
       <button class="chip active" data-lb-level="all">All MiLB</button>
@@ -6990,7 +7059,7 @@ function savantInlinePillHTML(p) {
 // Renders the compact pitch-type code + usage %; tooltip carries the
 // full mix with velos.
 function arsenalMiniHTML(p) {
-  const pa = p && p.pitch_arsenal;
+  const pa = p && (p.pitch_arsenal || statcastArsenalPayload(p));
   const pitches = pa && pa.pitches;
   if (!pitches || !pitches.length) return "";
   // Defensive: re-sort desc by usage_pct in case the upstream order
@@ -6999,21 +7068,16 @@ function arsenalMiniHTML(p) {
   const sorted = pitches.slice().sort((a, b) =>
     (Number(b.usage_pct) || 0) - (Number(a.usage_pct) || 0));
   const top = sorted.slice(0, 3);
-  const toPct = u => {
-    const n = Number(u);
-    if (!isFinite(n)) return null;
-    return n <= 1 ? Math.round(n * 100) : Math.round(n);
-  };
   const labelBits = top.map(pi => {
-    const pct = toPct(pi.usage_pct);
+    const pct = _pitchUsagePercent(pi);
     if (pct == null) return null;
-    return `${pi.pitch_type || pi.pitch_name || "?"} ${pct}`;
+    return `${pi.pitch_type || pi.pitch_name || "?"} ${Math.round(pct)}`;
   }).filter(Boolean);
   if (!labelBits.length) return "";
   const tipBits = sorted.map(pi => {
-    const pct = toPct(pi.usage_pct);
+    const pct = _pitchUsagePercent(pi);
     const velo = pi.avg_speed != null ? ` @ ${Number(pi.avg_speed).toFixed(1)} mph` : "";
-    return `${pi.pitch_name || pi.pitch_type || "?"} ${pct != null ? pct + "%" : "?"}${velo}`;
+    return `${pi.pitch_name || pi.pitch_type || "?"} ${pct != null ? pct.toFixed(1) + "%" : "?"}${velo}`;
   });
   return `<span class="row-tag arsenal-mini" title="${escapeHtml("Pitch mix: " + tipBits.join(" · "))}">${escapeHtml(labelBits.join(" · "))}</span>`;
 }
@@ -7908,6 +7972,7 @@ function syncToURL() {
   if (state.sidebarTopTool && state.sidebarTopTool !== "hit") p.set("stt",   state.sidebarTopTool);
   if (state.spotlightBucket !== "risers") p.set("bucket", state.spotlightBucket);
   if (state.lbStat      !== "ops")        p.set("lbstat",  state.lbStat);
+  if (state.lbSide      !== "all")        p.set("lbside",  state.lbSide);
   if (state.lbLevel     !== "all")        p.set("lblvl",   state.lbLevel);
   if (state.lbPos       !== "all")        p.set("lbpos",   state.lbPos);
   if (state.lbOrg       !== "all")        p.set("lborg",   state.lbOrg);
@@ -7998,6 +8063,7 @@ function syncFromURL() {
   // Leaderboards filters — round-tripped so org pre-fill from
   // farm-detail's "View org leaderboards →" link sticks.
   if (p.has("lbstat"))   state.lbStat   = p.get("lbstat");
+  if (p.has("lbside"))   state.lbSide   = p.get("lbside");
   if (p.has("lblvl"))    state.lbLevel  = p.get("lblvl");
   if (p.has("lbpos"))    state.lbPos    = p.get("lbpos");
   if (p.has("lborg"))    state.lbOrg    = p.get("lborg");
@@ -8123,6 +8189,8 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.spotlightBucket === state.spotlightBucket));
   document.querySelectorAll("[data-lb-stat]").forEach(b =>
     b.classList.toggle("active", b.dataset.lbStat === state.lbStat));
+  document.querySelectorAll("[data-lb-side]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbSide === state.lbSide));
   document.querySelectorAll("[data-lb-level]").forEach(b =>
     b.classList.toggle("active", b.dataset.lbLevel === state.lbLevel));
   document.querySelectorAll("[data-lb-pos]").forEach(b =>
@@ -8604,6 +8672,7 @@ const state = {
   // historical seasons work. The stat key matches a field on the
   // career_stats row (ops, era, k_per_9, ...).
   lbStat:   "ops",
+  lbSide:   "all",
   lbLevel:  "all",
   lbPos:    "all",
   lbOrg:    "all",
@@ -9713,6 +9782,24 @@ const _lbPitcherSupport = r => {
   ].filter(Boolean).join(" · ");
   return `<div>${top}</div><div style="color:var(--text-tertiary);margin-top:2px;">${bottom}</div>`;
 };
+const _lbZoneSupport = row => {
+  const z = row._zone || row;
+  const p = z.pitches != null ? `${z.pitches} pitches` : "—";
+  const g = z.games != null ? `${z.games}G` : "";
+  const q = z.qualified ? `percentile cohort ${z.percentile_sample_size || "?"}` : `below ${z.qualifier_min_pitches || 200}-pitch qualifier`;
+  return `<div>${escapeHtml(z.level || "—")} · ${p}${g ? ` · ${g}` : ""}</div><div style="color:var(--text-tertiary);margin-top:2px;">${escapeHtml(q)}</div>`;
+};
+const _lbStatcastSupport = row => {
+  const sc = row._statcast || row;
+  const cq = sc.contact_quality || {};
+  const pm = sc.pitch_movement || {};
+  const venues = (((sc.coverage || {}).venues || []).map(v => v.name).filter(Boolean).slice(0, 2).join(" / "));
+  const top = sc.is_pitcher
+    ? `${pm.tracked_pitches || 0} tracked pitches`
+    : `${cq.batted_balls || 0} batted balls`;
+  const bottom = [sc.level, venues || null, sc.source || "MLB Stats API"].filter(Boolean).join(" · ");
+  return `<div>${escapeHtml(top)}</div><div style="color:var(--text-tertiary);margin-top:2px;">${escapeHtml(bottom)}</div>`;
+};
 
 // Cell heat color — maps a numeric value into a red-violet-cyan ramp
 // anchored at the LEAGUE MEAN of the full qualified pool (not just the
@@ -9856,6 +9943,36 @@ const LB_STATS = {
                     fmt: v => v != null ? (v > 0 ? "+" : "") + Number(v).toFixed(0) + "%" : "—",
                     minIP: 15, support: _lbPitcherSupport, side: "pit",
                     field: "level_plus_pct" },
+  zone_z_contact: { label: "Z-Con%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+                    source: "zone", side: "hit", field: "z_contact_pct", minPitches: 200, support: _lbZoneSupport },
+  zone_chase: { label: "Chase%", hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+                source: "zone", side: "hit", field: "o_swing_pct", minPitches: 200, support: _lbZoneSupport },
+  pitcher_zone_whiff: { label: "Whiff%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+                        source: "zone", side: "pit", field: "whiff_pct", minPitches: 200, support: _lbZoneSupport },
+  pitcher_zone_chase: { label: "Chase%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+                        source: "zone", side: "pit", field: "o_swing_pct", minPitches: 200, support: _lbZoneSupport },
+  pitcher_zone_z_contact: { label: "Z-Con%", hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+                            source: "zone", side: "pit", field: "z_contact_pct", minPitches: 200, support: _lbZoneSupport },
+  avg_ev: { label: "Avg EV", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : "—",
+            source: "statcast", side: "hit", field: "avg_ev", minBBE: 10, support: _lbStatcastSupport },
+  max_ev: { label: "Max EV", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : "—",
+            source: "statcast", side: "hit", field: "max_ev", minBBE: 5, support: _lbStatcastSupport },
+  hard_hit_pct: { label: "Hard%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+                  source: "statcast", side: "hit", field: "hard_hit_pct", minBBE: 10, support: _lbStatcastSupport },
+  barrel_pct: { label: "Brl%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+                source: "statcast", side: "hit", field: "barrel_pct", minBBE: 10, support: _lbStatcastSupport },
+  fb_velo_feed: { label: "FB velo", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : "—",
+                  source: "statcast", side: "pit", field: "fb_velo_feed", minTrackedPitches: 20, support: _lbStatcastSupport },
+  ivb_ff: { label: "FF IVB", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : "—",
+            source: "statcast", side: "pit", field: "ivb_ff", minTrackedPitches: 20, support: _lbStatcastSupport },
+  fb_ivb_feed: { label: "FB IVB", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : "—",
+                 source: "statcast", side: "pit", field: "fb_ivb_feed", minTrackedPitches: 20, support: _lbStatcastSupport },
+  pitcher_avg_ev_allowed: { label: "Avg EVa", hi: false, fmt: v => v != null ? Number(v).toFixed(1) : "—",
+                            source: "statcast", side: "pit", field: "avg_ev", minBBE: 10, support: _lbStatcastSupport },
+  pitcher_hard_hit_allowed: { label: "HardA%", hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+                              source: "statcast", side: "pit", field: "hard_hit_pct", minBBE: 10, support: _lbStatcastSupport },
+  pitcher_barrel_allowed: { label: "BrlA%", hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+                            source: "statcast", side: "pit", field: "barrel_pct", minBBE: 10, support: _lbStatcastSupport },
 };
 
 // Watchlist tab — renders the starred prospects using the same row
@@ -10231,10 +10348,47 @@ function renderCharts() {
 function renderLeaderboards() {
   const statKey = state.lbStat   || "ops";
   const cfg = LB_STATS[statKey]   || LB_STATS.ops;
+  const boardSide = state.lbSide || "all";
   const lvl    = state.lbLevel    || "all";
   const pos    = state.lbPos      || "all";
   const org    = state.lbOrg      || "all";
   const season = Number(state.lbSeason || new Date().getUTCFullYear());
+  if (boardSide !== "all" && cfg.side !== boardSide) {
+    state.lbStat = boardSide === "pit" ? "era" : "ops";
+    return renderLeaderboards();
+  }
+  document.querySelectorAll("[data-lb-stat]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbStat === state.lbStat));
+  document.querySelectorAll("[data-lb-side]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbSide === state.lbSide));
+  document.querySelectorAll("[data-lb-stat-side]").forEach(btn => {
+    const side = btn.dataset.lbStatSide;
+    btn.style.display = (boardSide === "all" || side === boardSide) ? "" : "none";
+  });
+
+  const statcastValue = (sc, field) => {
+    if (!sc) return null;
+    const cq = sc.contact_quality || {};
+    const pm = sc.pitch_movement || {};
+    if (field in cq) return cq[field];
+    if (field === "fb_velo_feed") {
+      const hard = (pm.pitch_summary || []).filter(p => ["FF", "SI", "FT", "FC"].includes(p.pitch_type) && p.avg_velo != null);
+      if (!hard.length) return null;
+      hard.sort((a, b) => (b.count || 0) - (a.count || 0));
+      return hard[0].avg_velo;
+    }
+    if (field === "fb_ivb_feed") {
+      const hard = (pm.pitch_summary || []).filter(p => ["FF", "SI", "FT", "FC"].includes(p.pitch_type) && p.avg_ivb != null);
+      if (!hard.length) return null;
+      hard.sort((a, b) => (b.count || 0) - (a.count || 0));
+      return hard[0].avg_ivb;
+    }
+    if (field === "ivb_ff") {
+      const ff = (pm.pitch_summary || []).find(p => p.pitch_type === "FF");
+      return ff ? ff.avg_ivb : null;
+    }
+    return null;
+  };
 
   // Walk every (player, career_stats row) for the selected season.
   // Restricted to ACTIVE PROSPECTS — graduates are excluded since they're
@@ -10245,14 +10399,52 @@ function renderLeaderboards() {
   // so a Jesús Made AA-then-AAA year would land in both AAA and AA boards.
   const pool = [];
   for (const p of (DATA.players || [])) {
+    const bucket = positionBucket(p.position);
+      if (pos !== "all" && !positionMatches(bucket, pos)) continue;
+      if (org !== "all" && p.org !== org) continue;
+      if (boardSide !== "all" && cfg.side !== boardSide) continue;
+    if (cfg.source === "zone") {
+      const splits = (p.zone_metrics && Array.isArray(p.zone_metrics.level_splits) && p.zone_metrics.level_splits.length)
+        ? p.zone_metrics.level_splits
+        : (p.zone_metrics ? [p.zone_metrics] : []);
+      for (const z of splits) {
+        if (!z || z.season !== season) continue;
+        if (lvl !== "all" && z.level !== lvl) continue;
+        if (cfg.side === "hit" && z.is_pitcher) continue;
+        if (cfg.side === "pit" && !z.is_pitcher) continue;
+        if (cfg.minPitches && Number(z.pitches || 0) < cfg.minPitches) continue;
+        const v = z[cfg.field || statKey];
+        if (v == null) continue;
+        pool.push({ p, r: { _zone: z, level: z.level, season: z.season, is_pitcher: z.is_pitcher }, v: Number(v) });
+      }
+      continue;
+    }
+    if (cfg.source === "statcast") {
+      const sc = p.statcast_metrics;
+      if (!sc || sc.season !== season) continue;
+      const splits = (Array.isArray(sc.level_splits) && sc.level_splits.length)
+        ? sc.level_splits
+        : [sc];
+      for (const split of splits) {
+        if (!split || split.season !== season) continue;
+        if (lvl !== "all" && split.level !== lvl) continue;
+        if (cfg.side === "hit" && split.is_pitcher) continue;
+        if (cfg.side === "pit" && !split.is_pitcher) continue;
+        const cq = split.contact_quality || {};
+        const pm = split.pitch_movement || {};
+        if (cfg.minBBE && Number(cq.batted_balls || 0) < cfg.minBBE) continue;
+        if (cfg.minTrackedPitches && Number(pm.tracked_pitches || 0) < cfg.minTrackedPitches) continue;
+        const v = statcastValue(split, cfg.field || statKey);
+        if (v == null) continue;
+        pool.push({ p, r: { _statcast: split, level: split.level, season: split.season, is_pitcher: split.is_pitcher }, v: Number(v) });
+      }
+      continue;
+    }
     const career = p.career_stats || [];
     if (!career.length) continue;
     // Wrong-side gate at the player level — `p.position` is the most
     // current designation. is_pitcher on the row is authoritative
     // when present.
-    const bucket = positionBucket(p.position);
-    if (pos !== "all" && !positionMatches(bucket, pos)) continue;
-    if (org !== "all" && p.org !== org) continue;
     for (const r of career) {
       if (r.season !== season) continue;
       if (r.level === "MLB") continue;  // prospect leaderboard — MiLB only
@@ -10303,7 +10495,12 @@ function renderLeaderboards() {
   </div>`;
 
   if (!ranked.length) {
-    const minLabel = cfg.minAB ? `${cfg.minAB} AB` : `${cfg.minIP || 0} IP`;
+    const minLabel = cfg.minAB ? `${cfg.minAB} AB`
+      : cfg.minIP ? `${cfg.minIP} IP`
+      : cfg.minPitches ? `${cfg.minPitches} pitches`
+      : cfg.minBBE ? `${cfg.minBBE} BBE`
+      : cfg.minTrackedPitches ? `${cfg.minTrackedPitches} tracked pitches`
+      : "available sample";
     document.getElementById("leaderboard-rows").innerHTML =
       header + `<div class="state-message">No active MiLB ${cfg.side === "hit" ? "hitters" : "pitchers"} qualify for the ${season} ${escapeHtml(cfg.label)} board under these filters (min ${minLabel}).</div>`;
     return;
@@ -10327,6 +10524,7 @@ function renderLeaderboards() {
     // one prior data point — keep it if it's the only one.
     const trendVals = (p.career_stats || [])
       .filter(row =>
+        !cfg.source &&
         (cfg.side !== "hit" || !row.is_pitcher) &&
         (cfg.side !== "pit" || row.is_pitcher) &&
         row.level !== "MLB" &&
@@ -18937,6 +19135,306 @@ function makeSavantBlock(s) {
   return `<div class="stat-groups">${groups.map(renderGroup).join("")}</div>${sampleNote}`;
 }
 
+// Approximate MiLB zone-discipline metrics. Built from MLB Stats API
+// Gameday x/y coordinates using an MLB-trained random-forest zone
+// classifier, then aggregated by hitter.
+function makeZoneMetricsBlock(z) {
+  if (!z) return "";
+  const goodC = "var(--up)", badC = "var(--down)", neutralC = "var(--text-primary)";
+  const colorize = (good, bad) => good ? goodC : bad ? badC : neutralC;
+  const fmtPct = v => v == null ? null : `${v.toFixed(1)}%`;
+  const battery = (pct, qualified, n, isPitcher, key) => {
+    if (pct == null) {
+      return `<div class="zone-battery" title="Percentile unavailable: sample below qualifier or no level cohort.">unq</div>`;
+    }
+    const p = Math.max(0, Math.min(100, Number(pct) || 0));
+    const ambiguous = key === "zone_rate" || key === "z_swing_pct";
+    const color = ambiguous ? "var(--neon-cyan)" : p >= 75 ? "var(--up)" : p <= 25 ? "var(--down)" : "var(--neon-cyan)";
+    return `<div class="zone-battery" title="Level-relative percentile among qualified ${isPitcher ? "pitchers" : "hitters"}${n ? ` (n=${n})` : ""}. Battery fill = percentile.">
+      <span class="zone-battery-body"><span class="zone-battery-fill" style="width:${p.toFixed(1)}%;background:${color};"></span></span>
+      <span>${Math.round(p)}th</span>
+    </div>`;
+  };
+  const metricRead = (key, row) => {
+    const v = row[key];
+    if (v == null) return "";
+    const isPitcher = !!row.is_pitcher;
+    const pct = (row.percentiles || {})[key];
+    const band = pct == null ? "unknown"
+      : pct >= 80 ? "excellent"
+      : pct >= 60 ? "above"
+      : pct >= 40 ? "average"
+      : "below";
+    if (!isPitcher) {
+      if (key === "zone_rate") {
+        if (band === "excellent") return "Very high zone diet; pitchers are comfortable challenging him.";
+        if (band === "above") return "Strong above-average zone diet; gets challenged in-zone.";
+        if (band === "below") return "Lower zone diet; pitched around more than peers.";
+        return "Typical zone diet for the level.";
+      }
+      if (key === "z_swing_pct") {
+        if (band === "excellent") return "Very aggressive on strikes.";
+        if (band === "above") return "Strong above-average in-zone aggression.";
+        if (band === "below") return "Passive/selective in-zone; may be waiting for his pitch.";
+        return "Balanced in-zone swing decisions.";
+      }
+      if (key === "o_swing_pct") {
+        if (band === "excellent") return "Excellent chase discipline.";
+        if (band === "above") return "Strong above-average chase discipline.";
+        if (band === "below") return "Expands the zone more than peers.";
+        return "Average chase tendency.";
+      }
+      if (key === "z_contact_pct") {
+        if (band === "excellent") return "Excellent contact rate on strikes.";
+        if (band === "above") return "Strong above-average contact on strikes.";
+        if (band === "below") return "Miss risk on strikes.";
+        return "Level-average in-zone contact.";
+      }
+      if (key === "o_contact_pct") {
+        if (band === "excellent") return "Excellent ability to spoil chase swings.";
+        if (band === "above") return "Strong above-average chase-contact ability.";
+        if (band === "below") return "Chase swings often turn into empty swings.";
+        return "Average chase-contact profile.";
+      }
+      if (key === "whiff_pct") {
+        if (band === "excellent") return "Excellent swing-and-miss avoidance.";
+        if (band === "above") return "Strong above-average whiff avoidance.";
+        if (band === "below") return "Elevated swing-and-miss.";
+        return "Average whiff profile.";
+      }
+    } else {
+      if (key === "zone_rate") {
+        if (band === "excellent") return "Very high zone rate; attacks the plate.";
+        if (band === "above") return "Strong above-average strike-zone rate.";
+        if (band === "below") return "Lives off the plate more than peers.";
+        return "Typical zone rate for the level.";
+      }
+      if (key === "z_swing_pct") {
+        if (band === "excellent") return "Excellent in-zone take/called-strike tendency.";
+        if (band === "above") return "Strong above-average in-zone take tendency.";
+        if (band === "below") return "Hitters swing at strikes often.";
+        return "Average in-zone take profile.";
+      }
+      if (key === "o_swing_pct") {
+        if (band === "excellent") return "Excellent chase generation.";
+        if (band === "above") return "Strong above-average chase generation.";
+        if (band === "below") return "Limited chase draw.";
+        return "Average chase-inducing profile.";
+      }
+      if (key === "z_contact_pct") {
+        if (band === "excellent") return "Excellent contact suppression on strikes.";
+        if (band === "above") return "Strong above-average contact suppression on strikes.";
+        if (band === "below") return "Hitters handle strikes against him.";
+        return "Average in-zone contact allowed.";
+      }
+      if (key === "o_contact_pct") {
+        if (band === "excellent") return "Excellent off-zone contact suppression.";
+        if (band === "above") return "Strong above-average off-zone contact suppression.";
+        if (band === "below") return "Hitters can spoil off-zone pitches.";
+        return "Average chase-contact allowed.";
+      }
+      if (key === "whiff_pct") {
+        if (band === "excellent") return "Excellent bat-missing profile.";
+        if (band === "above") return "Strong above-average bat-missing profile.";
+        if (band === "below") return "More contact-oriented profile.";
+        return "Average whiff generation.";
+      }
+    }
+    return "";
+  };
+  const tile = (label, val, color, title, key, row) => val == null ? "" : `
+    <div class="stat-tile" title="${escapeHtml(title)}">
+      <div class="stat-label">${escapeHtml(label)}</div>
+      <div class="stat-value" style="color:${color};font-family:var(--font-mono);">${escapeHtml(val)}</div>
+      ${key ? battery((row.percentiles || {})[key], row.qualified, row.percentile_sample_size, !!row.is_pitcher, key) : ""}
+      ${key ? `<div class="stat-sub">${escapeHtml(metricRead(key, row))}</div>` : ""}
+    </div>`;
+  const renderRow = (row) => {
+    const isPitcher = !!row.is_pitcher;
+    const zSwingTitle = isPitcher
+      ? "Swings by hitters on estimated in-zone pitches. Lower ranks better for pitchers as a rough called-strike/zone-deception proxy."
+      : "Swings on estimated in-zone pitches";
+    const chaseTitle = isPitcher
+      ? "Swings induced on estimated out-of-zone pitches. Higher ranks better for pitchers."
+      : "Swings on estimated out-of-zone pitches. Lower values rank better.";
+    const zContactTitle = isPitcher
+      ? "Contact allowed on swings at estimated in-zone pitches. Lower ranks better for pitchers."
+      : "Contact on swings at estimated in-zone pitches";
+    const oContactTitle = isPitcher
+      ? "Contact allowed on swings at estimated out-of-zone pitches. Lower ranks better for pitchers."
+      : "Contact on swings at estimated out-of-zone pitches";
+    const whiffTitle = isPitcher
+      ? "Whiffs induced per swing. Higher ranks better for pitchers."
+      : "Whiffs per swing. Lower values rank better.";
+    const discipline = [
+      tile("Z-Swing%", fmtPct(row.z_swing_pct), colorize(isPitcher ? row.z_swing_pct <= 55 : row.z_swing_pct >= 62, isPitcher ? row.z_swing_pct >= 68 : row.z_swing_pct <= 50), zSwingTitle, "z_swing_pct", row),
+      tile("Chase%", fmtPct(row.o_swing_pct), colorize(isPitcher ? row.o_swing_pct >= 32 : row.o_swing_pct <= 24, isPitcher ? row.o_swing_pct <= 22 : row.o_swing_pct >= 32), chaseTitle, "o_swing_pct", row),
+      tile("Zone%", fmtPct(row.zone_rate), neutralC, isPitcher ? "Estimated share of pitches thrown in the strike zone" : "Estimated share of pitches seen in the strike zone", "zone_rate", row),
+    ].join("");
+    const contact = [
+      tile("Z-Con%", fmtPct(row.z_contact_pct), colorize(isPitcher ? row.z_contact_pct <= 76 : row.z_contact_pct >= 86, isPitcher ? row.z_contact_pct >= 86 : row.z_contact_pct <= 76), zContactTitle, "z_contact_pct", row),
+      tile("O-Con%", fmtPct(row.o_contact_pct), colorize(isPitcher ? row.o_contact_pct <= 50 : row.o_contact_pct >= 66, isPitcher ? row.o_contact_pct >= 66 : row.o_contact_pct <= 50), oContactTitle, "o_contact_pct", row),
+      tile("Whiff%", fmtPct(row.whiff_pct), colorize(isPitcher ? row.whiff_pct >= 32 : row.whiff_pct <= 22, isPitcher ? row.whiff_pct <= 22 : row.whiff_pct >= 32), whiffTitle, "whiff_pct", row),
+    ].join("");
+    const accuracy = row.actual_in_zone_accuracy != null
+      ? tile("I/O check", fmtPct(row.actual_in_zone_accuracy), colorize(row.actual_in_zone_accuracy >= 95, row.actual_in_zone_accuracy <= 90), "Agreement with feed zone labels when available", null, row)
+      : "";
+    const leagueTxt = Array.isArray(row.leagues) && row.leagues.length
+      ? ` · ${row.leagues.map(x => escapeHtml(x)).join(" / ")}`
+      : "";
+    const qualTxt = row.qualified
+      ? ` · percentile rankings against ${row.percentile_sample_size || "?"} qualified ${isPitcher ? "pitchers" : "hitters"}`
+      : ` · below ${row.qualifier_min_pitches || 200}-pitch percentile qualifier`;
+    const groups = [
+      discipline ? ["Approach", discipline] : null,
+      contact ? ["Contact", contact] : null,
+      accuracy ? ["Validation", accuracy] : null,
+    ].filter(Boolean);
+    return `<div class="stat-group">
+      <div class="stat-group-label">${escapeHtml(row.level || "")}<span style="font-weight:500;color:var(--text-tertiary);letter-spacing:0;text-transform:none;"> · ${row.pitches || 0} pitches · ${row.games || 0} games${leagueTxt}${qualTxt}</span></div>
+      <div class="stat-groups" style="gap:8px;">${groups.map(([title, tiles]) => `
+        <div class="stat-group">
+          <div class="stat-group-label">${escapeHtml(title)}</div>
+          <div class="stat-group-tiles">${tiles}</div>
+        </div>`).join("")}</div>
+    </div>`;
+  };
+  const splits = Array.isArray(z.level_splits) && z.level_splits.length ? z.level_splits : [z];
+  return `<div class="stat-groups">${splits.map(renderRow).join("")}</div>`;
+}
+
+const PITCH_COLORS = {
+  FF: "#00B7FF", SI: "#00A86B", FT: "#00856F", FC: "#FF8A00",
+  SL: "#D81B60", ST: "#8E24AA", CU: "#3949AB", KC: "#5E35B1",
+  CH: "#2E7D32", FS: "#7CB342", SV: "#FDD835", KN: "#6D4C41",
+  EP: "#90A4AE", FO: "#EF5350", SC: "#26A69A",
+};
+
+function _pitchColor(code) {
+  return PITCH_COLORS[code] || "#CBD5E1";
+}
+
+function updatePitchMovementPlot(id, gamePk) {
+  const root = document.getElementById(id);
+  if (!root) return;
+  root.querySelectorAll("[data-pitch-point]").forEach(el => {
+    el.style.display = (gamePk === "season" || el.dataset.gamePk === gamePk) ? "" : "none";
+  });
+  root.querySelectorAll("[data-outing-note]").forEach(el => {
+    el.style.display = (gamePk === "season" || el.dataset.gamePk === gamePk) ? "" : "none";
+  });
+}
+
+function makePitchMovementPlot(sc, playerKey) {
+  const plot = sc && sc.pitch_plot;
+  const points = (plot && plot.points) || [];
+  if (!points.length) return "";
+  const rootId = `pitch-plot-${String(playerKey || "player").replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const W = 520, H = 340, ML = 48, MR = 18, MT = 16, MB = 38;
+  const xs = points.map(p => Number(p.hb)).filter(Number.isFinite);
+  const ys = points.map(p => Number(p.ivb)).filter(Number.isFinite);
+  if (!xs.length || !ys.length) return "";
+  const pad = (lo, hi) => Math.max(2, (hi - lo) * 0.08);
+  const xMin0 = Math.min(...xs), xMax0 = Math.max(...xs);
+  const yMin0 = Math.min(...ys), yMax0 = Math.max(...ys);
+  const xPad = pad(xMin0, xMax0), yPad = pad(yMin0, yMax0);
+  const xMin = xMin0 - xPad, xMax = xMax0 + xPad;
+  const yMin = yMin0 - yPad, yMax = yMax0 + yPad;
+  const sx = x => ML + ((x - xMin) / (xMax - xMin || 1)) * (W - ML - MR);
+  const sy = y => MT + (H - MT - MB) - ((y - yMin) / (yMax - yMin || 1)) * (H - MT - MB);
+  const ticks = n => Array.from({ length: 5 }, (_, i) => n[0] + ((n[1] - n[0]) * i) / 4);
+  const xTicks = ticks([xMin, xMax]);
+  const yTicks = ticks([yMin, yMax]);
+  const grid = [
+    ...xTicks.map(x => `<line x1="${sx(x).toFixed(1)}" x2="${sx(x).toFixed(1)}" y1="${MT}" y2="${H-MB}" stroke="var(--border)" stroke-width="0.5"/>`),
+    ...yTicks.map(y => `<line x1="${ML}" x2="${W-MR}" y1="${sy(y).toFixed(1)}" y2="${sy(y).toFixed(1)}" stroke="var(--border)" stroke-width="0.5"/>`),
+  ].join("");
+  const circles = points.map(p => {
+    const hb = Number(p.hb), ivb = Number(p.ivb);
+    if (!isFinite(hb) || !isFinite(ivb)) return "";
+    const code = p.pitch_type || "?";
+    const title = `${p.date || ""} · ${p.pitch_name || code} · HB ${hb.toFixed(1)} · IVB ${ivb.toFixed(1)}${p.velo != null ? ` · ${Number(p.velo).toFixed(1)} mph` : ""}`;
+    return `<circle data-pitch-point data-game-pk="${escapeHtml(String(p.game_pk || ""))}" cx="${sx(hb).toFixed(1)}" cy="${sy(ivb).toFixed(1)}" r="3.4" fill="${_pitchColor(code)}" fill-opacity="0.78" stroke="var(--bg-primary)" stroke-width="0.5"><title>${escapeHtml(title)}</title></circle>`;
+  }).join("");
+  const byType = {};
+  points.forEach(p => {
+    const code = p.pitch_type || "?";
+    if (!byType[code]) byType[code] = p.pitch_name || code;
+  });
+  const legend = Object.entries(byType).map(([code, name]) =>
+    `<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--text-secondary);margin-right:10px;"><span style="width:8px;height:8px;border-radius:50%;background:${_pitchColor(code)};"></span>${escapeHtml(code)} <span style="color:var(--text-tertiary);">${escapeHtml(name)}</span></span>`
+  ).join("");
+  const outings = ((sc.pitch_movement || {}).outings || []).filter(o => o.tracked_pitches);
+  const options = [`<option value="season">Season</option>`].concat(outings.map(o =>
+    `<option value="${escapeHtml(String(o.game_pk))}">${escapeHtml(o.date || String(o.game_pk))} · ${o.tracked_pitches} tracked</option>`
+  )).join("");
+  const notes = outings.map(o =>
+    `<div data-outing-note data-game-pk="${escapeHtml(String(o.game_pk))}" style="display:none;color:var(--text-tertiary);font-size:11px;margin-top:4px;">${escapeHtml(o.date || "")} · ${escapeHtml(o.venue_name || "unknown park")} · ${o.tracked_pitches}/${o.pitches} tracked pitches</div>`
+  ).join("");
+  return `<div class="detail-card" id="${rootId}">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+      <div class="stat-group-label" style="margin:0;">Pitch movement</div>
+      <select class="chip" onchange="updatePitchMovementPlot('${rootId}', this.value)" title="Filter plot to one outing or the full season">${options}</select>
+      <span style="font-size:11px;color:var(--text-tertiary);">${points.length} tracked pitches · HB x IVB</span>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-height:380px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;">
+      ${grid}
+      <line x1="${ML}" x2="${W-MR}" y1="${H-MB}" y2="${H-MB}" stroke="var(--text-secondary)" stroke-width="1"/>
+      <line x1="${ML}" x2="${ML}" y1="${MT}" y2="${H-MB}" stroke="var(--text-secondary)" stroke-width="1"/>
+      ${xTicks.map(x => `<text x="${sx(x).toFixed(1)}" y="${H-16}" text-anchor="middle" font-size="10" fill="var(--text-secondary)">${x.toFixed(0)}</text>`).join("")}
+      ${yTicks.map(y => `<text x="${ML-7}" y="${(sy(y)+3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--text-secondary)">${y.toFixed(0)}</text>`).join("")}
+      ${circles}
+      <text x="${W/2}" y="${H-4}" text-anchor="middle" font-size="10" fill="var(--text-primary)">Horizontal break</text>
+      <text x="13" y="${H/2}" text-anchor="middle" font-size="10" fill="var(--text-primary)" transform="rotate(-90 13 ${H/2})">Induced vertical break</text>
+    </svg>
+    <div style="margin-top:8px;">${legend}</div>
+    ${notes}
+  </div>`;
+}
+
+function makeStatcastApiBlock(sc, player) {
+  if (!sc) return "";
+  const cq = sc.contact_quality || {};
+  const pm = sc.pitch_movement || {};
+  const fmt = (v, suffix = "") => v == null ? "—" : `${Number(v).toFixed(1)}${suffix}`;
+  const tiles = [];
+  if (cq.batted_balls) {
+    tiles.push(["BBE", cq.batted_balls, "Batted balls with launch data"]);
+    tiles.push(["Avg EV", fmt(cq.avg_ev), "Average exit velocity"]);
+    tiles.push(["Max EV", fmt(cq.max_ev), "Maximum exit velocity"]);
+    tiles.push(["Hard-hit", fmt(cq.hard_hit_pct, "%"), "95+ mph batted-ball rate"]);
+    tiles.push(["Barrel", fmt(cq.barrel_pct, "%"), "Approximate barrel rate from EV/LA"]);
+  }
+  if (pm.tracked_pitches) {
+    tiles.push(["Tracked", pm.tracked_pitches, "Pitches with pitch type, HB, and IVB"]);
+  }
+  const tileHtml = tiles.length ? `<div class="stat-group-tiles">${tiles.map(([label, val, title]) => `
+    <div class="stat-tile" title="${escapeHtml(title)}">
+      <div class="stat-label">${escapeHtml(label)}</div>
+      <div class="stat-value" style="font-family:var(--font-mono);">${escapeHtml(String(val))}</div>
+    </div>`).join("")}</div>` : "";
+  const pitchSummary = (pm.pitch_summary || []).length ? `<table class="detail-table" style="margin-top:8px;"><thead><tr>
+    <th>Pitch</th><th>Usage</th><th>Velo</th><th>HB</th><th>IVB</th><th>Spin</th>
+  </tr></thead><tbody>${pm.pitch_summary.map(p => `<tr>
+    <td><span style="color:${_pitchColor(p.pitch_type)};font-weight:700;">${escapeHtml(p.pitch_type || "?")}</span> ${escapeHtml(p.pitch_name || "")}</td>
+    <td>${p.usage_pct != null ? Number(p.usage_pct).toFixed(1) + "%" : "—"}</td>
+    <td>${p.avg_velo != null ? Number(p.avg_velo).toFixed(1) : "—"}</td>
+    <td>${p.avg_hb != null ? Number(p.avg_hb).toFixed(1) : "—"}</td>
+    <td>${p.avg_ivb != null ? Number(p.avg_ivb).toFixed(1) : "—"}</td>
+    <td>${p.avg_spin != null ? Math.round(Number(p.avg_spin)) : "—"}</td>
+  </tr>`).join("")}</tbody></table>` : "";
+  const venues = (((sc.coverage || {}).venues || []).map(v => v.name).filter(Boolean).slice(0, 3).join(" / "));
+  const plotHtml = player && player.statcast_metrics ? makePitchMovementPlot(player.statcast_metrics, player.player_key) : "";
+  return `<div class="stat-groups">
+    <div class="stat-group">
+      <div class="stat-group-label">${escapeHtml(sc.level || "")}<span style="font-weight:500;color:var(--text-tertiary);letter-spacing:0;text-transform:none;"> · MLB Stats API game feed${venues ? ` · ${escapeHtml(venues)}` : ""}</span></div>
+      ${tileHtml}
+      ${pitchSummary}
+    </div>
+    ${plotHtml}
+  </div>`;
+}
+
 // Pitch arsenal block — pitch type × usage % × avg velo.
 // Coverage: MLB Stats API only exposes pitch-tracking data for MLB
 // games, so this is populated for graduates and the rare MiLB prospect
@@ -18975,13 +19473,15 @@ function makeArsenalRadar(pa) {
   // the detail without cluttering the chart.
   const pts = sorted.map((p, i) => {
     const a = angleFor(i);
-    const r = Math.max(0.05, (p.usage_pct || 0)) * maxR;
+    const usage01 = (_pitchUsagePercent(p) || 0) / 100;
+    const r = Math.max(0.05, usage01) * maxR;
     return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
   });
   const polyPoints = pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
   const vertices = sorted.map((p, i) => {
     const [x, y] = pts[i];
-    const tooltip = `${p.pitch_name} · ${(p.usage_pct * 100).toFixed(1)}%${p.avg_speed != null ? ` · ${p.avg_speed.toFixed(1)} mph` : ""}`;
+    const pct = _pitchUsagePercent(p) || 0;
+    const tooltip = `${p.pitch_name} · ${pct.toFixed(1)}%${p.avg_speed != null ? ` · ${p.avg_speed.toFixed(1)} mph` : ""}`;
     return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="var(--neon-cyan)" stroke="var(--bg-secondary)" stroke-width="1.5"><title>${escapeHtml(tooltip)}</title></circle>`;
   }).join("");
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="Pitch arsenal mix" style="max-width:240px;">
@@ -19022,6 +19522,43 @@ function extractVeloHistory(p) {
   return out;
 }
 
+function statcastArsenalPayload(p) {
+  const sc = p && p.statcast_metrics;
+  const summary = sc && sc.pitch_movement && sc.pitch_movement.pitch_summary;
+  if (!summary || !summary.length) return null;
+  const pitches = summary.map(s => ({
+    pitch_type: s.pitch_type,
+    pitch_name: s.pitch_name || s.pitch_type,
+    avg_speed: s.avg_velo,
+    usage_pct: s.usage_pct,
+    count: s.count,
+    avg_hb: s.avg_hb,
+    avg_ivb: s.avg_ivb,
+    avg_spin: s.avg_spin,
+    usage_by_batter_side: s.usage_by_batter_side || {},
+    source: "statcast_feed",
+  })).filter(s => s.pitch_type);
+  if (!pitches.length) return null;
+  const hard = pitches.filter(pi => ["FF", "SI", "FT", "FC"].includes(pi.pitch_type) && pi.avg_speed != null);
+  hard.sort((a, b) => (Number(b.usage_pct) || 0) - (Number(a.usage_pct) || 0));
+  return {
+    player_key: p.player_key,
+    mlbam_id: p.mlbam_id,
+    season: sc.season,
+    pitches,
+    fb_velo: hard.length ? hard[0].avg_speed : null,
+    source: "MLB Stats API game feed",
+    tracked_pitches: (sc.pitch_movement || {}).tracked_pitches,
+  };
+}
+
+function _pitchUsagePercent(p) {
+  if (!p || p.usage_pct == null) return null;
+  const n = Number(p.usage_pct);
+  if (!isFinite(n)) return null;
+  return p.source === "statcast_feed" ? n : (n <= 1 ? n * 100 : n);
+}
+
 function makeArsenalBlock(pa, p) {
   // FanGraphs arsenal profile line (Sits / Tops / FB Type / RPM FB /
   // RPM Break) — pulled from the latest FG snapshot's _extras. Renders
@@ -19060,18 +19597,18 @@ function makeArsenalBlock(pa, p) {
       </div>`;
     }
   }
-  if (!pa || !(pa.pitches || []).length) {
-    // Even without Statcast arsenal data, surface the FG line if present.
-    if (fgArsenalLine) {
-      return fgArsenalLine + `<div style="color:var(--text-tertiary);font-size:12px;line-height:1.5;">No Statcast pitch-tracking data on file. MLB Stats API only carries pitch arsenal for MLB games; MiLB-only pitchers don't yet have this exposed publicly.</div>`;
-    }
-    return `<div style="color:var(--text-tertiary);font-size:12px;line-height:1.5;">No pitch-tracking data on file. MLB Stats API only carries pitch arsenal for MLB games; MiLB-only pitchers don't yet have this exposed publicly.</div>`;
-  }
+  const feedPa = statcastArsenalPayload(p);
+  const sourceLabel = pa && (pa.pitches || []).length ? "Pitch arsenal endpoint" : (feedPa ? "Pitch feed" : "");
+  pa = (pa && (pa.pitches || []).length) ? pa : feedPa;
+  if (!pa || !(pa.pitches || []).length) return fgArsenalLine;
   // Sort pitches descending by usage for clear primary-vs-secondary read.
   const sorted = [...pa.pitches].sort((a, b) => (b.usage_pct || 0) - (a.usage_pct || 0));
   const rows = sorted.map(p => {
     // Visual usage bar: 100% of column width = ~highest usage in arsenal.
-    const pct = p.usage_pct != null ? p.usage_pct * 100 : 0;
+    const pct = _pitchUsagePercent(p) || 0;
+    const side = p.usage_by_batter_side || {};
+    const lhh = side.L && side.L.usage_pct != null ? Number(side.L.usage_pct).toFixed(1) + "%" : "—";
+    const rhh = side.R && side.R.usage_pct != null ? Number(side.R.usage_pct).toFixed(1) + "%" : "—";
     const bar = `<div style="display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums;">
       <div style="flex:1;height:6px;background:var(--bg-tertiary);border:1px solid var(--border-light);border-radius:2px;overflow:hidden;">
         <div style="width:${Math.min(100, pct).toFixed(1)}%;height:100%;background:var(--neon-cyan);"></div>
@@ -19082,16 +19619,18 @@ function makeArsenalBlock(pa, p) {
       <td><span class="src-tag">${escapeHtml(p.pitch_type)}</span> ${escapeHtml(p.pitch_name)}</td>
       <td style="text-align:right;font-variant-numeric:tabular-nums;">${p.avg_speed != null ? p.avg_speed.toFixed(1) + " mph" : "—"}</td>
       <td>${bar}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;">${lhh}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;">${rhh}</td>
     </tr>`;
   }).join("");
   const fb = pa.fb_velo != null
-    ? `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-family:var(--font-sans);">Primary fastball velo: <span style="color:var(--neon-green);font-family:var(--font-mono);font-weight:700;">${pa.fb_velo.toFixed(1)} mph</span></div>`
+    ? `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-family:var(--font-sans);">${escapeHtml(sourceLabel)}${pa.tracked_pitches ? ` · ${pa.tracked_pitches} tracked pitches` : ""} · Primary fastball velo: <span style="color:var(--neon-green);font-family:var(--font-mono);font-weight:700;">${pa.fb_velo.toFixed(1)} mph</span></div>`
     : "";
   // Polar arsenal radar sits next to the per-pitch table on wider
   // screens — pure visual at-a-glance summary of pitch mix. Collapses
   // below the table on narrow viewports via flex-wrap.
   const radar = makeArsenalRadar(pa);
-  const tableHtml = `<table class="detail-table"><thead><tr><th>Pitch</th><th title="Average velocity in mph">Velo (mph)</th><th>Usage</th></tr></thead><tbody>${rows}</tbody></table>`;
+  const tableHtml = `<table class="detail-table"><thead><tr><th>Pitch</th><th title="Average velocity in mph">Velo</th><th>Usage</th><th title="Usage rate against left-handed hitters, when pitch feed batter-side data is available">vs LHH</th><th title="Usage rate against right-handed hitters, when pitch feed batter-side data is available">vs RHH</th></tr></thead><tbody>${rows}</tbody></table>`;
   if (!radar) return fgArsenalLine + fb + tableHtml;
   return fgArsenalLine + fb + `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
     <div style="flex:1;min-width:200px;">${tableHtml}</div>
@@ -20697,6 +21236,14 @@ function renderPlayerDetail(key) {
     ? `<div class="detail-title">Statcast / Savant <span class="detail-title-sub">${escapeHtml(p.prospect_savant.level || "")} ${escapeHtml(p.prospect_savant.role || "")} · prospect-savant export</span></div>${makeSavantBlock(p.prospect_savant)}`
     : "";
 
+  const zoneMetricsSection = (p.zone_metrics && Object.keys(p.zone_metrics).length)
+    ? `<div class="detail-title">${p.zone_metrics.is_pitcher ? "Zone profile" : "Zone discipline"} <span class="detail-title-sub">${escapeHtml(p.zone_metrics.level || "")} · MLB Stats API approximation</span></div>${makeZoneMetricsBlock(p.zone_metrics)}`
+    : "";
+
+  const statcastApiSection = (p.statcast_metrics && Object.keys(p.statcast_metrics).length)
+    ? `<div class="detail-title">Statcast feed <span class="detail-title-sub">${escapeHtml(p.statcast_metrics.level || "")} · MLB Stats API game feed</span></div>${makeStatcastApiBlock(p.statcast_metrics, p)}`
+    : "";
+
   const arsenalSection = isPitcher
     ? `<div class="detail-title">Pitch arsenal</div>${makeArsenalBlock(p.pitch_arsenal, p)}`
     : "";
@@ -21828,7 +22375,8 @@ function renderPlayerDetail(key) {
   const overviewHtml = [summaryGridHtml, chartSection, scoutReportsOnOverview, sourceSection, noteSection]
     .filter(Boolean).join("");
   const performanceHtml = [consolidatedCareerSection, sabermetricsSection,
-                           savantSection, arsenalSection, projectionArcSection]
+                           savantSection, zoneMetricsSection, statcastApiSection, arsenalSection,
+                           projectionArcSection]
     .filter(Boolean).join("");
   // Tools card pulls its per-source publication history alongside,
   // matching the original layout. Scouting reports keeps its inner
@@ -25262,6 +25810,7 @@ function attachHandlers() {
   // is sorted by; level/pos chips narrow the qualifying pool. All three
   // re-render the leaderboard but don't touch other tabs.
   attachChipGroup("lb-stat",   "lbStat",   () => { resetPage("leaderboard"); renderLeaderboards(); });
+  attachChipGroup("lb-side",   "lbSide",   () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-level",  "lbLevel",  () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-pos",    "lbPos",    () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-season", "lbSeason", () => { resetPage("leaderboard"); renderLeaderboards(); });

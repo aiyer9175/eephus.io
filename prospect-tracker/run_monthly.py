@@ -37,6 +37,8 @@ from storage import (
     upsert_birth_date, load_birth_dates,
     auto_graduate_player, revalidate_auto_graduations,
     upsert_pitch_arsenals, load_pitch_arsenals,
+    upsert_zone_metrics, load_zone_metrics,
+    upsert_statcast_metrics, load_statcast_metrics,
     upsert_sabermetrics, load_sabermetrics,
     upsert_career_war, load_career_war, load_career_war_meta,
     upsert_career_stats, load_career_stats, load_career_stats_meta,
@@ -214,6 +216,8 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
         timeseries, out_path,
         statlines=load_statlines(),
         pitch_arsenals=load_pitch_arsenals(),
+        zone_metrics=load_zone_metrics(),
+        statcast_metrics=load_statcast_metrics(),
         sabermetrics=load_sabermetrics(),
         trades_by_player=load_trades(),
         transactions_by_player=_derive_all_transactions(),
@@ -921,6 +925,8 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # detail page for a graduate gets wRC+/xFIP/arsenal from these
         # calls. --fast skips both for dev iteration.
         arsenals = load_pitch_arsenals()
+        zone_metric_cache = load_zone_metrics()
+        statcast_metric_cache = load_statcast_metrics()
         sabermetrics = load_sabermetrics()
         if not skip_stats:
             if fast:
@@ -1054,6 +1060,83 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                         except Exception as e:
                             log.warning("career WAR fetch failed: %s", e)
 
+        # --- 3d-bis. Approximate zone metrics for MiLB hitters.
+        # Train once on MLB Gameday x/y + official zone labels, then apply
+        # the classifier to tracked hitters at AAA/AA/A+/A. We run the same
+        # MLB Stats API methodology at every supported level, including AAA
+        # and Carolina League, so the site has one internally consistent
+        # source instead of mixing in Prospect Savant exports.
+        if not skip_stats:
+            if fast:
+                log.info("--fast: skipping approximate MiLB zone metrics")
+            else:
+                try:
+                    from zone_metrics import fetch_zone_metrics_for_players
+                    zone_players = []
+                    for p in timeseries:
+                        sl = statlines.get(p.player_key) or {}
+                        zone_players.append((
+                            p.player_key,
+                            p.player_name,
+                            ids_by_key.get(p.player_key),
+                            sl.get("level"),
+                            bool(sl.get("is_pitcher")) or _is_pitcher(p.position),
+                        ))
+                    new_zone_metrics = fetch_zone_metrics_for_players(
+                        zone_players,
+                        season,
+                        train_games=30,
+                        train_start_date=f"{season}-05-15",
+                    )
+                    if new_zone_metrics:
+                        upsert_zone_metrics(new_zone_metrics, season)
+                        from dataclasses import asdict
+                        zone_metric_cache.update({
+                            key: asdict(value)
+                            for key, value in new_zone_metrics.items()
+                        })
+                    log.info("fetched approximate zone metrics for %d hitters",
+                             len(new_zone_metrics))
+                except Exception:
+                    log.exception("approximate zone metrics failed — continuing")
+
+        # --- 3d-ter. Statcast-style pitch movement + contact quality.
+        # Coverage is park/feed dependent. The fetcher emits rows only when
+        # game feeds expose actual movement or launch-speed fields, which
+        # covers AAA and some lower-level parks such as spring-training
+        # complex venues.
+        if not skip_stats:
+            if fast:
+                log.info("--fast: skipping Statcast-style pitch/contact metrics")
+            else:
+                try:
+                    from statcast_metrics import fetch_statcast_metrics_for_players
+                    statcast_players = []
+                    for p in timeseries:
+                        sl = statlines.get(p.player_key) or {}
+                        statcast_players.append((
+                            p.player_key,
+                            p.player_name,
+                            ids_by_key.get(p.player_key),
+                            sl.get("level"),
+                            bool(sl.get("is_pitcher")) or _is_pitcher(p.position),
+                        ))
+                    new_statcast_metrics = fetch_statcast_metrics_for_players(
+                        statcast_players,
+                        season,
+                        workers=workers or 10,
+                    )
+                    if new_statcast_metrics:
+                        upsert_statcast_metrics(new_statcast_metrics, season)
+                        from dataclasses import asdict
+                        statcast_metric_cache.update({
+                            key: asdict(value)
+                            for key, value in new_statcast_metrics.items()
+                        })
+                    log.info("fetched Statcast-style metrics for %d players",
+                             len(new_statcast_metrics))
+                except Exception:
+                    log.exception("Statcast-style metrics failed — continuing")
 
         # --- 3e. Per-player transactions cache + within-season level changes.
         # The /transactions?playerId=X endpoint returns every affiliate
@@ -1253,6 +1336,8 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         export_timeseries_json(timeseries, out_path,
                                statlines=statlines,
                                pitch_arsenals=arsenals,
+                               zone_metrics=zone_metric_cache,
+                               statcast_metrics=statcast_metric_cache,
                                sabermetrics=sabermetrics,
                                trades_by_player=trades_by_player,
                                transactions_by_player=transactions_by_key,

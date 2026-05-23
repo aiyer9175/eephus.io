@@ -815,6 +815,20 @@ CREATE TABLE IF NOT EXISTS sabermetrics (
     fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS zone_metrics (
+    player_key   TEXT PRIMARY KEY,
+    season       INTEGER NOT NULL,
+    payload_json TEXT NOT NULL,       -- serialized ZoneMetricRow dataclass
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS statcast_metrics (
+    player_key   TEXT PRIMARY KEY,
+    season       INTEGER NOT NULL,
+    payload_json TEXT NOT NULL,       -- serialized StatcastMetricRow dataclass
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS career_stats (
     player_key   TEXT PRIMARY KEY,
     payload_json TEXT NOT NULL,       -- list of per-season stat rows (most recent first)
@@ -1489,6 +1503,70 @@ def load_pitch_arsenals() -> dict[str, dict]:
         with connect() as con:
             rows = con.execute(
                 "SELECT player_key, payload_json FROM pitch_arsenals"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
+
+
+def upsert_zone_metrics(metrics: dict[str, object], season: int) -> int:
+    """Upsert approximate zone-discipline metrics. One row per hitter."""
+    n = 0
+    with connect() as con:
+        for key, metric in metrics.items():
+            payload = asdict(metric) if hasattr(metric, "__dataclass_fields__") else dict(metric)
+            fetched_at = payload.get("fetched_at") or datetime.utcnow().isoformat(timespec="seconds")
+            con.execute(
+                """INSERT INTO zone_metrics (player_key, season, payload_json, fetched_at)
+                   VALUES (?, ?, ?, ?)
+                   ON CONFLICT(player_key) DO UPDATE SET
+                     season=excluded.season,
+                     payload_json=excluded.payload_json,
+                     fetched_at=excluded.fetched_at""",
+                (key, season, json.dumps(payload), fetched_at),
+            )
+            n += 1
+    return n
+
+
+def load_zone_metrics() -> dict[str, dict]:
+    """Return {player_key: zone_metric_dict} for all stored zone metrics."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, payload_json FROM zone_metrics"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
+
+
+def upsert_statcast_metrics(metrics: dict[str, object], season: int) -> int:
+    """Upsert opportunistic pitch-movement/contact-quality metrics."""
+    n = 0
+    with connect() as con:
+        for key, metric in metrics.items():
+            payload = asdict(metric) if hasattr(metric, "__dataclass_fields__") else dict(metric)
+            fetched_at = payload.get("fetched_at") or datetime.utcnow().isoformat(timespec="seconds")
+            con.execute(
+                """INSERT INTO statcast_metrics (player_key, season, payload_json, fetched_at)
+                   VALUES (?, ?, ?, ?)
+                   ON CONFLICT(player_key) DO UPDATE SET
+                     season=excluded.season,
+                     payload_json=excluded.payload_json,
+                     fetched_at=excluded.fetched_at""",
+                (key, season, json.dumps(payload), fetched_at),
+            )
+            n += 1
+    return n
+
+
+def load_statcast_metrics() -> dict[str, dict]:
+    """Return {player_key: statcast_metric_dict} for stored metric rows."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, payload_json FROM statcast_metrics"
             ).fetchall()
     except sqlite3.OperationalError:
         return {}
@@ -3754,6 +3832,8 @@ def _build_org_fv_history(
 def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           statlines: dict[str, dict] | None = None,
                           pitch_arsenals: dict[str, dict] | None = None,
+                          zone_metrics: dict[str, dict] | None = None,
+                          statcast_metrics: dict[str, dict] | None = None,
                           sabermetrics: dict[str, dict] | None = None,
                           trades_by_player: dict[str, list[dict]] | None = None,
                           transactions_by_player: dict[str, list[dict]] | None = None,
@@ -3790,6 +3870,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     """
     statlines = statlines or {}
     pitch_arsenals = pitch_arsenals or {}
+    zone_metrics = zone_metrics or {}
+    statcast_metrics = statcast_metrics or {}
     sabermetrics = sabermetrics or {}
     trades_by_player = trades_by_player or {}
     transactions_by_player = transactions_by_player or {}
@@ -4738,6 +4820,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         level = sl.get("level") if sl else None
         avl = score_age_vs_level(age, level, baselines=age_baselines)
         pa = pitch_arsenals.get(p.player_key)
+        zm = zone_metrics.get(p.player_key)
+        scm = statcast_metrics.get(p.player_key)
         sm = sabermetrics.get(p.player_key)
         is_pitcher = bool(p.position and p.position.split("/")[0] in PITCHER_POS_SET)
         latest_fv = p.points[-1].consensus_fv_raw if p.points else None
@@ -5166,6 +5250,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 for tx in transactions_by_player.get(p.player_key, [])
             ],
             "pitch_arsenal": pa,
+            "zone_metrics": zm,
+            "statcast_metrics": scm,
             "sabermetrics": sm,
             "trades": filtered_trades,
             "career_stats": career_stats.get(p.player_key, []),
