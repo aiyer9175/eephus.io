@@ -350,7 +350,7 @@ class TestCompositeWeights:
 
     def test_big_four_still_majority(self):
         # The original 4-component report card should still control
-        # most of the score; new components (WAG / ROI / Tools+ /
+        # most of the score; new components (WAG / ROI / Tool Quality /
         # IFA / Readiness / Health) augment, don't dominate.
         big_four = (FARM_WEIGHT_TOP_END + FARM_WEIGHT_DEPTH
                     + FARM_WEIGHT_DVM_PLUS + FARM_WEIGHT_GRAD)

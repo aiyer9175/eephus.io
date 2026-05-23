@@ -1533,7 +1533,7 @@
     body.density-expanded .player-row { row-gap: 4px; }
     body.density-expanded .player-row .expand-savant { color: var(--text-secondary); }
     /* Mini-stats strip (Expanded mode v2) — tertiary line under the
-       Savant micro-tile. Shows current-season perf, Tools+ composite,
+       Savant micro-tile. Shows current-season perf, Tool composite,
        and the recent FV-cycle trail. */
     body.density-expanded .player-row .expand-mini-strip {
       color: var(--text-tertiary);
@@ -2459,6 +2459,12 @@
     .headshot.fv-headshot-ring[class*="fv-tier-"] {
       border-top: 4px solid var(--org-color, var(--neon-cyan)) !important;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    }
+    /* Compact-density: trim the team-color top edge so the thicker
+       frame doesn't dominate the tighter 28×34 headshot. Covers the
+       legendary tier too since it also carries the fv-tier-NN class. */
+    body.density-compact .headshot.fv-headshot-ring[class*="fv-tier-"] {
+      border-top-width: 3px !important;
     }
     /* Elite-tier rarity rings — gradient border-image painted around
        the headshot, identical motion to detail-page .card-rarity-XX.
@@ -3792,7 +3798,7 @@
     }
 
     /* Roster Snapshot — displaced-metric tiles (Top-End, Depth, Grad
-       Pipeline, Tools+ Quality, Readiness, Health). Ungraded — just
+       Pipeline, Tool Quality, Readiness, Health). Ungraded — just
        raw numbers for context next to the tree. */
     .roster-snapshot {
       border: 1px solid var(--border-light);
@@ -4934,10 +4940,12 @@
     .rps-plus-pill.is-neutral { background: rgba(167, 100, 252, 0.10); color: var(--neon-violet); }
     .rps-plus-pill.is-null { background: var(--bg-tertiary); color: var(--text-tertiary); border-style: dashed; }
 
-    /* ToolGrade+ pill — same shape as RPS+ but a half-step smaller so
-       it can ride inline next to a player name in list rows without
-       crowding. The numeric value is anchored at 100 = cohort mean tool
-       composite; ≥110 reads green, ≤90 reads red. */
+    /* Tool composite pill — same shape as RPS+ but a half-step smaller
+       so it can ride inline next to a player name in list rows without
+       crowding. Now on the 20-80 scouting scale (50 = average):
+       ≥60 green (Plus tier), ≥50 cyan (avg), ≥40 amber (Below-Avg),
+       <40 red (Poor). Matches the per-tool grade palette used by
+       _toolGradeStripHTML so a Tool 60 reads the same way as a HIT 60. */
     .tool-pill {
       display: inline-block;
       font-family: var(--font-mono);
@@ -4954,12 +4962,13 @@
     .tool-pill.is-pos     { background: rgba(31, 122, 58, 0.15); color: var(--up); border-color: var(--up); }
     .tool-pill.is-neg     { background: rgba(185, 28, 28, 0.12); color: var(--down); border-color: var(--down); }
     .tool-pill.is-neutral { background: rgba(74, 200, 224, 0.10); color: var(--neon-cyan); }
+    .tool-pill.is-amber   { background: rgba(255, 176, 32, 0.12); color: var(--neon-amber); border-color: var(--neon-amber); }
 
     /* WAG (WAR Above Grade) pill — graduate-only inline delta showing
        career WAR/yr vs the FV-grade-implied WAR/yr (FanGraphs primer,
        lower-bound, hitter/pitcher split, linearly interpolated). Same
        shape as .tool-pill, amber accent on the neutral state to mark it
-       as a graduate-only signal vs. the universal ToolGrade+ pill. */
+       as a graduate-only signal vs. the universal Tool pill. */
     .wag-pill {
       display: inline-block;
       font-family: var(--font-mono);
@@ -5524,7 +5533,7 @@
         <option value="age_vs_level">Most young-for-level</option>
         <option value="eta">ETA (earliest first)</option>
         <option value="stock_movers">Biggest movers (|ΔFV|)</option>
-        <option value="t_plus">Tools+ (toolsiest)</option>
+        <option value="t_plus">Tool (toolsiest)</option>
         <option value="source_confidence">Source confidence (most sources first)</option>
         <option value="ht_desc">Tallest first</option>
         <option value="ht_asc">Shortest first</option>
@@ -6672,7 +6681,7 @@ function _inlineBadgeStrip(p, max = 3) {
   // list-row inline strip per beta-cleanup plan. Acquisition method is
   // still surfaced on the detail-page tile + accordion; on the list it
   // was either redundant (method also shown elsewhere) or visual noise.
-  // Tools+ pill removed here — it lived twice (inline strip AND the
+  // Tool pill removed here — it lived twice (inline strip AND the
   // expanded-row footer). The expanded row owns it now; this strip
   // keeps the higher-signal pills (boom/bust, health, Savant, arsenal).
   // v15 — Suppress the Savant inline pill in expanded mode since the
@@ -6827,7 +6836,8 @@ function playerExpandedMetaHTML(p) {
   const writeup = expandedWriteupHTML(p);
   if (writeup) parts.push(writeup);
   // Per-tool 20-80 grade pills — primary signal we want surfaced on
-  // expanded rows since the inline strip no longer carries Tools+.
+  // expanded rows since the inline strip no longer carries the Tool
+  // composite pill.
   const toolStrip = _toolGradeStripHTML(p);
   if (toolStrip) parts.push(toolStrip);
   // v15 — Last 3 seasons career trail.
@@ -6858,11 +6868,11 @@ function playerExpandedMetaHTML(p) {
     if (bits.length) parts.push(`<span class="expand-savant">${bits.join(" · ")}</span>`);
   }
   // Mini-stats strip (Expanded mode richer fold) — surfaces tertiary
-  // signals not already on the row: current-season perf, Tools+
+  // signals not already on the row: current-season perf, Tool
   // composite, and the FV-cycle trail. Only renders when at least one
   // piece is populated so prospects with thin profiles don't carry an
   // empty line.
-  const tpComp = p.tools && p.tools.composite_overall_plus;
+  const tpComp = p.tools && p.tools.composite_overall;
   const milbStat = (() => {
     const sl = p.statline || {};
     if (sl.is_pitcher) return sl.era != null ? `ERA ${sl.era}${sl.level ? ` · ${sl.level}` : ''}` : null;
@@ -6873,7 +6883,7 @@ function playerExpandedMetaHTML(p) {
     .join(' → ');
   const stripBits = [
     milbStat,
-    tpComp != null ? `Tools+ ${tpComp}` : null,
+    tpComp != null ? `Tool ${Math.round(tpComp)}` : null,
     trail || null,
   ].filter(Boolean);
   if (stripBits.length) {
@@ -7968,8 +7978,8 @@ const state = {
   // formWindow below (defaults to 6y per the sort-key handler).
   farmSort: "trajectory",
   // Per-farm-detail roster sort: FV (default) / avg_rank / age / eta /
-  // tools_plus / surplus. Persisted in the URL so a sort choice
-  // survives reloads + shared links.
+  // tool / surplus. Persisted in the URL so a sort choice survives
+  // reloads + shared links.
   rosterSort: "fv",
   // Glossary state — active category filter + search query + per-load
   // term-to-scroll-to slug. Term-to-scroll-to clears after being
@@ -8240,12 +8250,12 @@ function getFilteredActives() {
       return db - da;
     });
   } else if (state.sort === "t_plus") {
-    // ToolGrade+ desc, nulls (no tool data) sink to the bottom. Tie-
-    // break on consensus FV so a 60 FV with T+ 110 beats a 50 FV with
-    // T+ 110.
+    // Tool composite desc, nulls (no tool data) sink to the bottom.
+    // Tie-break on consensus FV so a 60 FV with Tool 60 beats a 50 FV
+    // with Tool 60.
     pool.sort((a, b) => {
-      const av = (a.tools || {}).composite_overall_plus;
-      const bv = (b.tools || {}).composite_overall_plus;
+      const av = (a.tools || {}).composite_overall;
+      const bv = (b.tools || {}).composite_overall;
       if (av == null && bv == null) return (b.fv_close ?? -1) - (a.fv_close ?? -1);
       if (av == null) return 1;
       if (bv == null) return -1;
@@ -9189,7 +9199,7 @@ const CHART_AXES = {
     { key: "fv",             label: "Consensus FV",       getter: p => (p.points && p.points.length) ? p.points[p.points.length-1].consensus_fv_raw : null, fmt: v => Math.round(v).toString() },
     { key: "overall_rank",   label: "Overall rank",       getter: p => p.overall_rank,                       fmt: v => "#" + v },
     { key: "rps_plus",       label: "RPS+",               getter: p => (p.statline && p.statline.rps_plus), fmt: v => Math.round(v).toString() },
-    { key: "tools_plus",     label: "Tools+",             getter: p => p.tools_plus,                         fmt: v => Math.round(v).toString() },
+    { key: "tool",           label: "Tool",               getter: p => p.tool,                               fmt: v => Math.round(v).toString() },
     { key: "height_in",      label: "Height (in)",        getter: p => _heightToInches(p.height || (p.player_info && p.player_info.height)),  fmt: v => v.toFixed(0) + '"' },
     { key: "weight",         label: "Weight (lb)",        getter: p => parseInt(p.weight || (p.player_info && p.player_info.weight), 10) || null, fmt: v => v.toFixed(0) + "lb" },
     { key: "eta_year",       label: "ETA year",           getter: p => (p.eta && p.eta.year),                fmt: v => v.toString() },
@@ -12751,7 +12761,7 @@ function fgPrettifyInterval(source, intervalLabel) {
 // across the site, with a short definition for the click-to-define popover
 // and a longer entry for the Glossary page. Each key is the canonical slug
 // referenced by `data-term` on inline `.g-term` spans. `aliases` lets a
-// display variant ("T+", "ToolGrade+") resolve to the same entry.
+// display variant ("Tools+", "T+", "Tool grade") resolve to the same entry.
 // Categories: custom-index, scouting, hitter-stat, pitcher-stat,
 // general-stat, methodology, financial, level, status.
 // =============================================================================
@@ -12770,7 +12780,7 @@ const GLOSSARY_CATEGORIES = [
   // "status" (per-player conditions) — these are universal MLB concepts.
   ["mlb-rules",    "MLB Jargon"],
   // Visual indicators / badges / chips used across the site (Stock arrow,
-  // FV badge, Tools+ pill, RPS+ pill, IL chip, LATEST/STALE source pills).
+  // FV badge, Tool pill, RPS+ pill, IL chip, LATEST/STALE source pills).
   // Each entry carries a `visual_html` field that renders an inline
   // example of the actual UI element in the glossary card.
   ["indicators",   "Indicators & badges"],
@@ -12778,31 +12788,32 @@ const GLOSSARY_CATEGORIES = [
 
 const GLOSSARY = {
   // ---- Arkmetrics (site-built custom indices) ----
-  "tools_plus": {
-    name: "Tools+", aliases: ["Tools+", "T+", "ToolGrade+"], category: "custom-index",
+  "tool": {
+    name: "Tool", aliases: ["Tool", "Tool grade", "ToolComposite", "Tools+", "T+"], category: "custom-index",
     priority: 10,
-    short: "Equally-weighted, tail-weighted composite of every scouted tool a prospect carries, plus FG physical grades.",
-    long: "v14 — Tools+ is the equally-weighted power-mean (p=4) of every 20-80 tool grade a hitter carries (hit, pwr, run, field, arm, pitch_sel, bat_ctrl) PLUS the FG -2..+2 physical grades (Frame, Athleticism) mapped to the FV scale (-2→30, -1→40, 0→50, +1→60, +2→70). For pitchers the physicals (Frame, Athleticism, Delivery) join the stuff power-mean (p=3) alongside fb/sl/cb/ch, then overall = 0.65·stuff + 0.35·cmd. The p=4 exponent (steeper than the p=3 used by O-Tools+ and Stuff+) rewards extreme tools more aggressively: a 70 PWR + 45 HIT prospect (arith mean 57.5) posts ~62 here vs ~60.6 under p=3. Captures the 'one elite tool defines the profile' intuition. Then z-score-normalized across the active-prospect cohort: 100 = cohort mean, 10 pts = 1σ.",
-    formula: "Tools+ = 100 + 10 · (composite − μ) / σ\nwhere composite = (Σ tool_grade^4 / n)^(1/4)\nhitter inputs: hit, pwr, run, field, arm, pitch_sel, bat_ctrl, frame_fv, athl_fv\npitcher inputs: power-mean(fb, sl, cb, ch, frame_fv, athl_fv, delivery_fv) p=3 → blended 0.65/0.35 with cmd",
-    example: "A 70 PWR / 45 HIT prospect with otherwise-50 tools posts a Tools+ around 110+ — the p=4 power-mean lifts the composite above what an arithmetic mean would yield because PWR skews the result.",
-    related: ["fv", "tools_plus_offensive", "tools_plus_defensive", "tools_dvm_plus"],
+    short: "Equally-weighted, tail-weighted composite of every scouted tool a prospect carries, plus FG physical grades. Expressed on the 20-80 scouting scale.",
+    long: "Tool is the equally-weighted power-mean (p=4) of every 20-80 tool grade a hitter carries (hit, pwr, run, field, arm, pitch_sel, bat_ctrl) PLUS the FG -2..+2 physical grades (Frame, Athleticism) mapped to the FV scale (-2→30, -1→40, 0→50, +1→60, +2→70). For pitchers the physicals (Frame, Athleticism, Delivery) join the stuff power-mean (p=3) alongside fb/sl/cb/ch, then overall = 0.65·stuff + 0.35·cmd. The p=4 exponent (steeper than the p=3 used by O-Tool and pStuff+) rewards extreme tools more aggressively: a 70 PWR + 45 HIT prospect (arith mean 57.5) posts ~58 here vs ~57.6 under p=3. Captures the 'one elite tool defines the profile' intuition. The output is the raw power-mean on the 20-80 scouting scale — 50 = average, 60 = Plus, 70 = elite (no z-scoring step).",
+    formula: "Tool = (Σ tool_grade^4 / n)^(1/4)\nhitter inputs: hit, pwr, run, field, arm, pitch_sel, bat_ctrl, frame_fv, athl_fv\npitcher: Tool = 0.65 · power-mean(fb, sl, cb, ch, frame_fv, athl_fv, delivery_fv; p=3) + 0.35 · cmd",
+    example: "A 70 PWR / 45 HIT prospect with otherwise-50 tools posts a Tool around 58 — the p=4 power-mean lifts the composite above the 57.5 arithmetic mean because PWR skews the result.",
+    related: ["fv", "o_tool", "d_tool", "tools_dvm_plus"],
   },
-  "tools_plus_offensive": {
-    name: "O-Tools+", aliases: ["O-Tools+", "Offensive Tools+", "OTools+"], category: "custom-index",
+  "o_tool": {
+    name: "O-Tool", aliases: ["O-Tool", "Offensive Tool", "OTool", "O-Tools+"], category: "custom-index",
     priority: 11,
-    short: "Weighted offensive composite: HIT 40 / PWR 40 / BCTRL 10 / PSEL 6 / RUN 4.",
-    long: "O-Tools+ is the weighted mean of the hitter's offensive 20-80 grades, then z-score-normalized against the active-prospect cohort. Weights reflect the heavy bats-matter-most tilt — HIT and PWR are co-dominant at 40% each; bat-control and pitch-selection round out the offensive profile; speed is a small tiebreaker contributor. Defensive tools (field, arm) live in D-Tools+ (separate index). 100 = cohort mean, 10 pts = 1σ.",
-    formula: "O-Tools+ = 100 + 10 · (composite − μ) / σ\nwhere composite = Σ w_i · grade_i / Σ w_i\nweights: HIT 0.40, PWR 0.40, BCTRL 0.10, PSEL 0.06, RUN 0.04",
-    related: ["tools_plus", "tools_plus_defensive", "hit", "power", "speed_tool"],
+    short: "Weighted offensive composite on the 20-80 scale: HIT 40 / PWR 40 / BCTRL 10 / PSEL 6 / RUN 4.",
+    long: "O-Tool is the weighted mean of the hitter's offensive 20-80 grades, output directly on the 20-80 scouting scale (50 = avg, 60 = Plus, 70 = elite). Weights reflect the heavy bats-matter-most tilt — HIT and PWR are co-dominant at 40% each; bat-control and pitch-selection round out the offensive profile; speed is a small tiebreaker contributor. Defensive tools (field, arm) live in D-Tool (separate index).",
+    formula: "O-Tool = Σ w_i · grade_i / Σ w_i\nweights: HIT 0.40, PWR 0.40, BCTRL 0.10, PSEL 0.06, RUN 0.04",
+    example: "A 60 HIT / 60 PWR / 50-elsewhere hitter posts an O-Tool of 58 — both top weights at Plus pull the composite well above average.",
+    related: ["tool", "d_tool", "hit", "power", "speed_tool"],
   },
-  "tools_plus_defensive": {
-    name: "D-Tools+", aliases: ["D-Tools+", "Defensive Tools+", "DTools+"], category: "custom-index",
+  "d_tool": {
+    name: "D-Tool", aliases: ["D-Tool", "Defensive Tool", "DTool", "D-Tools+"], category: "custom-index",
     priority: 12,
-    short: "Weighted defensive composite (p=3 power-mean): DEF 60 / ARM 30 / RUN 10 — catchers DEF 70 / ARM 30.",
-    long: "D-Tools+ is the weighted power-mean (Lₚ with p=3) of the position player's defensive 20-80 grades, then z-score-normalized against the active-prospect cohort. Defense overwhelmingly drives the composite at 60%; arm strength matters but second-order at 30%; baserunning speed contributes a small 10% (it folds into range/jumps via the field grade already, this is a tiebreaker contributor). Catchers drop speed (irrelevant) and bump field to 70%, since the field grade for catchers absorbs framing/blocking/receiving. The p=3 power-mean rewards elite-glove standouts more sharply than a simple weighted mean. 100 = cohort mean, 10 pts = 1σ.",
-    formula: "D-Tools+ = 100 + 10 · (composite − μ) / σ\nwhere composite = (Σ w_i · grade_i^3 / Σ w_i)^(1/3)\nnon-catcher weights: DEF 0.60, ARM 0.30, RUN 0.10\ncatcher weights:    DEF 0.70, ARM 0.30 (RUN dropped)",
-    example: "A 70 DEF / 50 ARM / 50 RUN center fielder posts a D-Tools+ near 115; a 50/50/50 baseline lands at 100.",
-    related: ["tools_plus", "tools_plus_offensive", "field_tool", "throw_tool", "speed_tool"],
+    short: "Weighted defensive composite (p=3 power-mean) on the 20-80 scale: DEF 60 / ARM 30 / RUN 10 — catchers DEF 70 / ARM 30.",
+    long: "D-Tool is the weighted power-mean (Lₚ with p=3) of the position player's defensive 20-80 grades, output directly on the 20-80 scouting scale (50 = avg, 60 = Plus, 70 = elite). Defense overwhelmingly drives the composite at 60%; arm strength matters but second-order at 30%; baserunning speed contributes a small 10% (it folds into range/jumps via the field grade already, this is a tiebreaker contributor). Catchers drop speed (irrelevant) and bump field to 70%, since the field grade for catchers absorbs framing/blocking/receiving. The p=3 power-mean rewards elite-glove standouts more sharply than a simple weighted mean.",
+    formula: "D-Tool = (Σ w_i · grade_i^3 / Σ w_i)^(1/3)\nnon-catcher weights: DEF 0.60, ARM 0.30, RUN 0.10\ncatcher weights:    DEF 0.70, ARM 0.30 (RUN dropped)",
+    example: "A 70 DEF / 50 ARM / 50 RUN center fielder posts a D-Tool near 62; a 50/50/50 baseline lands at 50.",
+    related: ["tool", "o_tool", "field_tool", "throw_tool", "speed_tool"],
   },
   "breakout_indicator": {
     name: "Breakout Indicator", aliases: ["Breakout", "★ mark"], category: "custom-index",
@@ -12837,7 +12848,7 @@ const GLOSSARY = {
     long: "Per-tool lifetime delta computed across a prospect's full consensus history. For each tool with ≥2 published consensus snapshots, we record first_grade, last_grade, and delta = (last − first). Powers the +N / -N chip beside each tool grade in the prospect-detail Tools section, the Tool development table on the same page, and the org-level rollups (HitDvM+, PowerDvM+, …, ToolsDvM+) on the farm-detail page. Tools observed only once produce no delta — that's a 'not enough signal' state, not a 'no change' state.",
     formula: "tool_delta(tool) = consensus_grade_latest(tool) − consensus_grade_first(tool)",
     example: "Jesús Made's game-power tool was 30 in the FG 2024 pre-season and 60 by the 2026 pre-season report — a +30 lifetime delta over 12 observations.",
-    related: ["tools_dvm_plus", "fv", "tools_plus"],
+    related: ["tools_dvm_plus", "fv", "tool"],
   },
   "tools_dvm_plus": {
     name: "ToolsDvM+", aliases: ["ToolsDvM+", "Tools Development vs Mean"], category: "custom-index",
@@ -12846,7 +12857,7 @@ const GLOSSARY = {
     long: "Composite of every per-tool DvM+ an org has populated (HitDvM+, PowerDvM+, SpeedDvM+, FieldDvM+, ArmDvM+, PitchSelDvM+, BatCtrlDvM+ for hitters; FBDvM+, SLDvM+, CBDvM+, CHDvM+, CmdDvM+, CtDvM+ for pitchers). v14 — PowerDvM+ reads from the consolidated `pwr` key (synthesized at consensus time from game_pwr + raw_pwr) instead of double-counting the two power keys. FG physical grades (Frame, Athleticism, Delivery) are NOT included — they're static published values without the multi-snapshot longitudinal history that DvM+ velocity requires. Each per-tool DvM+ is computed by taking every active prospect's lifetime tool delta, averaging within the org, then scoring that mean against the league: 100 + 10·z. Orgs with too few multi-cycle prospects on a given tool get '—' for that cell rather than a noisy 1-prospect mean. Attribution: current org — trade-acquired prospects bring their full lifetime delta with them (mixes acquisition + development skill, same convention as Financial ROI). Standalone display metric for now; not yet folded into farm_score.",
     formula: "ToolsDvM+ = mean over tools of (100 + 10·(org_mean_delta − league_mean) / league_stdev)",
     example: "NYM ToolsDvM+ = 106 (rank 1 of 30) — Mets actives have grown across the toolset roughly 0.6σ faster than the league-mean farm over their tracked careers. NYY ToolsDvM+ = 91 (rank 30) — Yankees actives have grown ~0.9σ slower.",
-    related: ["dvm_plus", "tool_delta", "tools_plus", "farm_rank"],
+    related: ["dvm_plus", "tool_delta", "tool", "farm_rank"],
   },
   "tool_specific_dvm_plus": {
     name: "HitDvM+ / PowerDvM+ / …", aliases: ["HitDvM+", "PowerDvM+", "SpeedDvM+", "FieldDvM+", "ArmDvM+", "PitchSelDvM+", "BatCtrlDvM+", "FBDvM+", "SLDvM+", "CBDvM+", "CHDvM+", "CmdDvM+", "CtDvM+"], category: "custom-index",
@@ -12855,7 +12866,7 @@ const GLOSSARY = {
     long: "Same wRC+ shape as DvM+ and ToolsDvM+ but scoped to a single tool. For each tool group (Hit, Power = mean of game_pwr + raw_pwr, Speed, Field, Arm, PitchSel, BatCtrl, FB, SL, CB, CH, Cmd, Ct), we compute every org's mean lifetime delta across its actives that have ≥2 consensus observations of that tool, then anchor the league at 100 + 10·z. Cell renders '—' for orgs with fewer than 3 prospects contributing — not enough signal to compare. Read these to find a farm's development specialties: HitDvM+ 115 means this org grows the hit tool 1.5σ better than the typical farm.",
     formula: "ToolDvM+ = 100 + 10 · (org_mean_lifetime_delta − league_mean) / league_stdev",
     example: "MIL HitDvM+ 119 + PowerDvM+ 124 = a power-bat development specialist; their hitters add ~2σ more game power across their org tenure than the league mean.",
-    related: ["tools_dvm_plus", "tool_delta", "dvm_plus", "tools_plus"],
+    related: ["tools_dvm_plus", "tool_delta", "dvm_plus", "tool"],
   },
   "pwr_plus": {
     name: "PWR+", aliases: ["PWR+", "Power Index"], category: "custom-index",
@@ -12864,7 +12875,7 @@ const GLOSSARY = {
     long: "Composite of isolated power (SLG minus AVG) and home-run rate, both normalized against the player's current level. Weighted 60% ISO and 40% HR-rate to reflect that ISO is a more stable single-year power signal than raw HR totals (sample-noise dampens). Hitters only, 40-game minimum.",
     formula: "PWR+ = 100 · (0.6 · ISO_ratio + 0.4 · HR_rate_ratio)\nwhere ratios are player ÷ level_mean",
     example: "A AA hitter with a .240 ISO at a level where the mean is .140 posts a PWR+ of ~145, about 45% more power than the typical AA bat.",
-    related: ["iso", "tools_plus", "rps_plus"],
+    related: ["iso", "tool", "rps_plus"],
   },
   "pd_plus": {
     name: "Disci+", aliases: ["Disci+", "PD+", "Plate Discipline+", "Plate Discipline"], category: "custom-index",
@@ -12891,7 +12902,7 @@ const GLOSSARY = {
     long: "Outlier-biased composite (Lₚ with p=3) of the pitcher's 20-80 grades on Fastball + Slider + Curveball + Changeup, then z-scored across the active-prospect cohort. 100 = cohort mean, 10 pts = 1 stdev. Different from pStuff+, which measures results (K%, BB%, HR/9) against level peers; FVStuff+ measures projected stuff from scouting reports. The two can diverge when results outrun (or lag) the underlying scouting view. (Renamed from 'Stuff grade+' — the 'FV' prefix signals it's anchored to the FV-grade scale, contrasting with pStuff+'s peripheral-stats anchoring.)",
     formula: "FVStuff+ = 100 + 10 · (composite_stuff − μ) / σ\nwhere composite_stuff = (Σ pitch_grade^3 / n)^(1/3)",
     example: "A pitcher with 70 fastball / 60 slider / 55 curve / 50 change posts a composite around 62; if the prospect-cohort mean is 55 and σ is 6, FVStuff+ ≈ 112.",
-    related: ["stf_plus", "tools_plus", "fv"],
+    related: ["stf_plus", "tool", "fv"],
   },
   "tvi": {
     name: "SUR+", aliases: ["SUR+", "TVI", "Surplus Plus", "Trade Value Index"], category: "custom-index",
@@ -12957,7 +12968,7 @@ const GLOSSARY = {
     long: "Every tracked source (FanGraphs, MLB Pipeline, ESPN, Just Baseball, TJStats, Baseball America, The Athletic) publishes a 20-80 grade per prospect. The site averages them into a consensus FV, with Bayesian shrinkage applied to single-instance grades. FV 50 is a projected MLB regular, FV 60 is a first-division regular or future star, FV 70+ is perennial all-star ceiling.",
     formula: "consensus_fv = mean(published_fvs) + shrinkage_pull · (FV_35 − mean) when only 1 instance exists",
     example: "Jackson Holliday's FV 65 means scouts collectively see him as a future star, one tier above an everyday regular but below a perennial all-star.",
-    related: ["tools_plus", "wag", "tvi", "shrinkage"],
+    related: ["tool", "wag", "tvi", "shrinkage"],
   },
   "twenty_eighty": {
     name: "20-80 scale", aliases: ["20-80 scale", "Scouting scale"], category: "scouting",
@@ -12965,13 +12976,13 @@ const GLOSSARY = {
     short: "The standard scouting ladder. 20 = far below MLB, 50 = MLB average, 80 = elite.",
     long: "Scouting grades have been built on this scale since the 1950s. 50 is an MLB-average bench or role player, 60 is a first-division regular or All-Star, 70 is a perennial All-Star, 80 is a Hall-of-Fame ceiling. Used for individual tools (Hit, Power, Speed, Field, Throw, Fastball) and for overall Future Value.",
     example: "A 70-grade fastball means top ~5% of MLB starters. A 70-grade hit tool means batting-title contender.",
-    related: ["fv", "tools_plus"],
+    related: ["fv", "tool"],
   },
   "hit_tool": {
     name: "Hit tool", aliases: ["Hit", "Hit tool"], category: "scouting",
     short: "20-80 grade for bat-to-ball ability and projected batting average.",
     long: "Contact rate, plate coverage, pitch recognition, and projected batting average against MLB pitching. 50 ≈ .260 BA, 60 ≈ .290, 70 ≈ .320 ceiling.",
-    related: ["game_power", "tools_plus"],
+    related: ["game_power", "tool"],
   },
   "game_power": {
     name: "Game Power", aliases: ["Game pwr", "Game Power"], category: "scouting",
@@ -12988,8 +12999,8 @@ const GLOSSARY = {
   "speed_tool": {
     name: "Run", aliases: ["Run", "Speed", "RUN", "SPD"], category: "scouting",
     short: "20-80 grade for foot speed. 60-yard dash, home-to-first time, baserunning instincts. Displayed as RUN across the site (the legacy abbreviation SPD also resolves).",
-    long: "Plays on both sides of the ball: offense (baserunning, BABIP, extra bases) and defense (range, jumps, recovery). Run contributes to both the offensive (O-Tools+, 4% weight) and defensive (D-Tools+, 10% weight for non-catchers) composites for hitters.",
-    related: ["tools_plus", "tools_plus_offensive", "tools_plus_defensive"],
+    long: "Plays on both sides of the ball: offense (baserunning, BABIP, extra bases) and defense (range, jumps, recovery). Run contributes to both the offensive (O-Tool, 4% weight) and defensive (D-Tool, 10% weight for non-catchers) composites for hitters.",
+    related: ["tool", "o_tool", "d_tool"],
   },
   "field_tool": {
     name: "Field", aliases: ["Field", "FLD"], category: "scouting",
@@ -13513,12 +13524,12 @@ const GLOSSARY = {
       '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span style="width:24px;height:30px;border-radius:3px;display:inline-block;background:var(--bg-secondary);border:1px solid var(--border);"></span><span>40 Avg</span></div>' +
       '</div>',
   },
-  "tools_plus_pill": {
-    name: "Tools+ pill", aliases: ["T+ pill", "Tools+ chip"], category: "indicators",
+  "tool_pill": {
+    name: "Tool pill", aliases: ["Tool pill", "Tool chip", "Tools+ pill", "T+ pill"], category: "indicators",
     priority: 12,
-    short: "Pill on the row showing Tools+ index. Green ≥110, red ≤90, neutral 91-109. 100 = cohort mean.",
-    related: ["tools_plus"],
-    visual_html: '<span class="tool-pill is-pos">Tools+ 118</span><span class="tool-pill is-neutral">Tools+ 102</span><span class="tool-pill is-neg">Tools+ 88</span>',
+    short: "Pill on the row showing Tool composite. Green ≥60 (Plus), neutral ≥50 (avg), amber ≥40 (below avg), red <40. 20-80 scouting scale.",
+    related: ["tool"],
+    visual_html: '<span class="tool-pill is-pos">Tool 65</span><span class="tool-pill is-neutral">Tool 52</span><span class="tool-pill is-amber">Tool 45</span><span class="tool-pill is-neg">Tool 38</span>',
   },
   "rps_plus_pill": {
     name: "RPS+ pill", aliases: ["RPS+ chip"], category: "indicators",
@@ -13558,9 +13569,9 @@ const GLOSSARY = {
   "latest_pill": {
     name: "LATEST pill", aliases: ["LATEST source"], category: "indicators",
     priority: 30,
-    short: "Cyan pill in the 'Source-by-source tool history' dropdown marking the row that feeds Tools+. One per source.",
-    long: "Tools+ uses each source's MOST RECENT publication only — forward-fill picks the latest per source. Older rows are dimmed and don't count toward the consensus math.",
-    related: ["tools_plus"],
+    short: "Cyan pill in the 'Source-by-source tool history' dropdown marking the row that feeds the Tool composite. One per source.",
+    long: "Tool uses each source's MOST RECENT publication only — forward-fill picks the latest per source. Older rows are dimmed and don't count toward the consensus math.",
+    related: ["tool"],
     visual_html: '<span style="font-size:11px;color:var(--text-primary);font-family:var(--font-mono);">2025-07-31</span><span style="display:inline-block;padding:1px 5px;font-size:9px;letter-spacing:0.04em;background:var(--neon-cyan);color:var(--bg-primary);border-radius:2px;font-weight:700;">LATEST</span><span style="font-size:11px;color:var(--text-tertiary);">FanGraphs 2025 Updated</span>',
   },
   "stale_pill": {
@@ -13761,11 +13772,11 @@ const GLOSSARY = {
     related: ["wag", "signing_bonus", "farm_report_card"],
   },
   "farm_grade_tools_quality": {
-    name: "Tools+ Quality", aliases: ["Tools+ Quality", "Farm Tools+"], category: "custom-index",
+    name: "Tool Quality", aliases: ["Tool Quality", "Farm Tool", "Tools+ Quality", "Farm Tools+"], category: "custom-index",
     priority: 57,
-    short: "Top-10 mean of composite_overall across active prospects. Raw scouting quality, orthogonal to FV consensus.",
-    long: "We rank an org's actives by composite_overall (the 20-80 power-mean of their per-tool grades) and take the top 10. Top-10 (not all-active mean) so a top-heavy farm with raw-tools stars isn't dragged down by un-graded depth. A '60 raw power' system grades higher than a '50 across the board' system, even if their FV consensus is the same.",
-    related: ["tools_plus", "farm_report_card"],
+    short: "Top-10 mean of composite_overall (the org's Tool composite) across active prospects. Raw scouting quality, orthogonal to FV consensus.",
+    long: "We rank an org's actives by composite_overall (the 20-80 power-mean of their per-tool grades that drives Tool / O-Tool / D-Tool) and take the top 10. Top-10 (not all-active mean) so a top-heavy farm with raw-tools stars isn't dragged down by un-graded depth. A '60 raw power' system grades higher than a '50 across the board' system, even if their FV consensus is the same.",
+    related: ["tool", "farm_report_card"],
   },
   "farm_grade_intl_depth": {
     name: "International Depth", aliases: ["IFA depth", "Intl depth"], category: "custom-index",
@@ -13825,8 +13836,8 @@ const GLOSSARY = {
   },
 };
 
-// Alias lookup — maps display variants ("T+", "ToolGrade+") to canonical
-// slugs ("tools_plus") so `data-term` can use either form.
+// Alias lookup — maps display variants ("Tools+", "T+", "Tool grade") to
+// canonical slugs ("tool") so `data-term` can use either form.
 const _GLOSSARY_ALIAS_TO_SLUG = (() => {
   const out = {};
   for (const [slug, entry] of Object.entries(GLOSSARY)) {
@@ -15376,7 +15387,7 @@ function makeFarmReportCard(org) {
 }
 
 // Roster Snapshot — ungraded informational tiles for the 6 displaced
-// metrics (Top-End / Depth / Grad Pipeline / Tools+ Quality / Readiness
+// metrics (Top-End / Depth / Grad Pipeline / Tool Quality / Readiness
 // / Health). The grade tree absorbed these axes by routing their data
 // into the new leaves; the tiles preserve the raw numbers as context.
 function makeRosterSnapshotTile(org) {
@@ -15393,7 +15404,7 @@ function makeRosterSnapshotTile(org) {
         <div class="rs-stat" title="Tiered-FV sum of the org's top 5 prospects"><span class="rs-stat-label">Top-end FV</span><span class="rs-stat-val">${num(org.top_end_points)}</span></div>
         <div class="rs-stat" title="Tiered-FV sum of prospects #6-25"><span class="rs-stat-label">Depth FV</span><span class="rs-stat-val">${num(org.depth_points)}</span></div>
         <div class="rs-stat" title="FV-weighted graduations in trailing 12 months"><span class="rs-stat-label">Grad pipe</span><span class="rs-stat-val">${num(org.grad_pipeline_score)}</span></div>
-        <div class="rs-stat" title="Top-10 mean of composite_overall (20-80 power mean)"><span class="rs-stat-label">Tools+ top10</span><span class="rs-stat-val">${num(tq.top10_mean)}</span></div>
+        <div class="rs-stat" title="Top-10 mean of composite_overall (20-80 power mean)"><span class="rs-stat-label">Tool top10</span><span class="rs-stat-val">${num(tq.top10_mean)}</span></div>
         <div class="rs-stat" title="(very-young − very-old) / total actives"><span class="rs-stat-label">Readiness</span><span class="rs-stat-val">${pct(rdy.pct_signal)}</span></div>
         <div class="rs-stat rs-stat-health${hb.il_pct_current >= 0.10 ? ' is-warn' : ''}" title="Combined health view. Burden = 100·post-TJ% + IL-days mean (lower is better, ranks to letter-grade in the Farm Report Card). On IL now = ${hb.il_current_count != null ? hb.il_current_count : '—'} of ${hb.active_count != null ? hb.active_count : '—'} tracked actives currently sidelined; highlighted red when ≥10%.">
           <span class="rs-stat-label">Health</span>
@@ -15869,8 +15880,8 @@ const FV_TIER_COLORS = {
 };
 // Age-vs-FV scatter for farm detail (Phase 3 P3-B). Visualizes the
 // org's roster as a 2D distribution of age × FV, with point size
-// scaled by composite Tools+ when available (bigger dot = more polish
-// for the age). Position-bucket hue: hitters cyan, pitchers amber,
+// scaled by composite Tool grade when available (bigger dot = more
+// polish for the age). Position-bucket hue: hitters cyan, pitchers amber,
 // catchers violet. Surfaces shape of the pipeline at a glance — a
 // young/high-FV cluster is a deep system; a wide spray across older
 // ages with mid FV is mostly org filler.
@@ -15896,11 +15907,11 @@ function makeAgeFvScatter(prospects) {
     const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
     const fv = latest ? latest.consensus_fv_raw : null;
     if (age == null || fv == null) return null;
-    const toolsPlus = (p.tools || {}).composite_overall_plus;
+    const toolGrade = (p.tools || {}).composite_overall;
     return {
       age, fv,
       color: colorFor(p.position),
-      tools_plus: toolsPlus,
+      tool: toolGrade,
       name: p.player_name || p.player_key,
       position: p.position || "?",
       level: (p.statline || {}).level || "?",
@@ -15928,10 +15939,12 @@ function makeAgeFvScatter(prospects) {
   const xFor = age => PAD_L + ((age - ageMin) / ageSpan) * chartW;
   const yFor = fv => PAD_T + chartH - ((fv - fvMin) / fvSpan) * chartH;
 
-  // Point radius: 3px baseline + scale 0-4px from Tools+ (or default).
+  // Point radius: 3px baseline + scale 0-4px from Tool grade (or
+  // default). 40 = below-avg floor → smallest dots; 70 = elite tools
+  // → largest dots (30-pt span covers the meaningful prospect range).
   const rFor = tp => {
     if (tp == null) return 3.5;
-    const norm = Math.max(0, Math.min(1, (tp - 90) / 30));
+    const norm = Math.max(0, Math.min(1, (tp - 40) / 30));
     return 3 + norm * 4;
   };
 
@@ -15952,12 +15965,12 @@ function makeAgeFvScatter(prospects) {
 
   // Points sorted so smaller circles render LAST → big polished
   // prospects don't get hidden behind a noisy 40-tier cluster.
-  const sortedPts = [...points].sort((a, b) => rFor(a.tools_plus) - rFor(b.tools_plus));
+  const sortedPts = [...points].sort((a, b) => rFor(a.tool) - rFor(b.tool));
   const dots = sortedPts.map(p => {
     const cx = xFor(p.age);
     const cy = yFor(p.fv);
-    const r = rFor(p.tools_plus);
-    const tip = `${p.name} · ${p.position} · age ${p.age.toFixed(1)} · FV ${p.fv.toFixed(1)}${p.tools_plus != null ? ` · Tools+ ${p.tools_plus}` : ""}`;
+    const r = rFor(p.tool);
+    const tip = `${p.name} · ${p.position} · age ${p.age.toFixed(1)} · FV ${p.fv.toFixed(1)}${p.tool != null ? ` · Tool ${Math.round(p.tool)}` : ""}`;
     return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}"
                     fill="${p.color}" opacity="0.65" stroke="${p.color}" stroke-width="0.5">
       <title>${escapeHtml(tip)}</title>
@@ -17302,7 +17315,7 @@ function makeCareerTrendStrip(career) {
   return `<div class="detail-card" style="display:flex;flex-wrap:wrap;padding:0;margin-bottom:10px;overflow-x:auto;">${tiles}</div>`;
 }
 
-function makeCareerTable(career) {
+function makeCareerTable(career, birthDate) {
   if (!career || !career.length) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No multi-season stats available.</div>`;
   }
@@ -17310,6 +17323,16 @@ function makeCareerTable(career) {
 
   // Sort descending by season so the most recent year is up top.
   const sorted = [...career].sort((a, b) => (b.season || 0) - (a.season || 0));
+
+  // Age at July 1 of the season — matches the convention used by the
+  // Stats-vs-level-mean benchmark section so all "age" displays agree.
+  const ageFor = (season) => {
+    if (!birthDate || season == null) return "—";
+    const seasonMid = new Date(`${season}-07-01`).getTime();
+    const birthT = new Date(birthDate).getTime();
+    if (!isFinite(seasonMid) || !isFinite(birthT)) return "—";
+    return ((seasonMid - birthT) / (365.25 * 86400000)).toFixed(1);
+  };
 
   // A "category strip" sits above the column headers. Each cell spans
   // its category and is tinted lightly so groups read at a glance.
@@ -17334,13 +17357,15 @@ function makeCareerTable(career) {
     // the pitcher fully owns" stat, alongside strikeouts and walks
     // (FIP is built from K/9 + BB/9 + HR/9 for exactly that reason).
     const strip = `<tr>
-      <th colspan="2" style="${stripStyle(META_COLOR)}">Meta</th>
+      <th colspan="3" style="${stripStyle(META_COLOR)}">Meta</th>
       <th colspan="3" style="${stripStyle(COUNT_COLOR)}">Counting</th>
       <th colspan="2" style="${stripStyle(SLASH_COLOR)}">Run prevention</th>
       <th colspan="3" style="${stripStyle(PERIPH_COLOR)}">Peripherals</th>
     </tr>`;
     const head = `<tr>
-      <th>Season</th><th>Level</th>
+      <th>Season</th>
+      <th title="Age at July 1 of season">Age</th>
+      <th>Level</th>
       <th title="Games appeared">G</th>
       <th title="Innings pitched">IP</th>
       <th title="Wins–Losses">W-L</th>
@@ -17352,6 +17377,7 @@ function makeCareerTable(career) {
     </tr>`;
     const rows = sorted.map(s => `<tr>
       <td>${s.season}</td>
+      <td>${ageFor(s.season)}</td>
       <td><span class="level-pill level-neutral">${s.level}</span></td>
       <td>${s.games ?? "—"}</td>
       <td>${s.ip ?? "—"}</td>
@@ -17373,14 +17399,16 @@ function makeCareerTable(career) {
   // Single-column groups stay readable as long as the strip-cell color
   // is distinct from its neighbors — which the POWER_COLOR ensures.
   const strip = `<tr>
-    <th colspan="2" style="${stripStyle(META_COLOR)}">Meta</th>
+    <th colspan="3" style="${stripStyle(META_COLOR)}">Meta</th>
     <th colspan="4" style="${stripStyle(COUNT_COLOR)}">Counting</th>
     <th colspan="4" style="${stripStyle(SLASH_COLOR)}">Slash</th>
     <th colspan="1" style="${stripStyle(POWER_COLOR)}">Power</th>
     <th colspan="2" style="${stripStyle(DISC_COLOR)}">Plate discipline</th>
   </tr>`;
   const head = `<tr>
-    <th>Season</th><th>Level</th>
+    <th>Season</th>
+    <th title="Age at July 1 of season">Age</th>
+    <th>Level</th>
     <th title="Games">G</th>
     <th title="At-Bats">AB</th>
     <th title="Home Runs">HR</th>
@@ -17404,6 +17432,7 @@ function makeCareerTable(career) {
   };
   const rows = sorted.map(s => `<tr>
     <td>${s.season}</td>
+    <td>${ageFor(s.season)}</td>
     <td><span class="level-pill level-neutral">${s.level}</span></td>
     <td>${s.games ?? "—"}</td>
     <td>${s.ab ?? "—"}</td>
@@ -17427,7 +17456,7 @@ function makeCareerTable(career) {
 // hitters, IP for pitchers) since the rows don't carry the raw H/ER
 // numerators we'd need for a perfect recompute.
 const _LEVEL_SORT = ["MLB","AAA","AA","A+","A","CPX","DSL","ROK"];
-function makeCareerByLevelTable(career) {
+function makeCareerByLevelTable(career, birthDate) {
   if (!career || !career.length) return "";
   const isP = career[0].is_pitcher;
   const byLevel = {};
@@ -17455,6 +17484,23 @@ function makeCareerByLevelTable(career) {
     const ys = rows.map(r => r.season).filter(y => y != null).sort();
     return ys.length === 0 ? "—" : ys.length === 1 ? `${ys[0]}` : `${ys[0]}–${ys[ys.length-1]}`;
   };
+  // Age range across the seasons at a given level, using July 1 of
+  // each season as the anchor (matches makeCareerTable + the
+  // Stats-vs-level-mean benchmark section).
+  const ageRange = rows => {
+    if (!birthDate) return "—";
+    const birthT = new Date(birthDate).getTime();
+    if (!isFinite(birthT)) return "—";
+    const ages = rows
+      .map(r => r.season)
+      .filter(y => y != null)
+      .map(y => (new Date(`${y}-07-01`).getTime() - birthT) / (365.25 * 86400000))
+      .filter(isFinite)
+      .sort((a, b) => a - b);
+    if (ages.length === 0) return "—";
+    if (ages.length === 1) return ages[0].toFixed(1);
+    return `${ages[0].toFixed(1)}–${ages[ages.length-1].toFixed(1)}`;
+  };
   if (isP) {
     const rows = levels.map(lv => {
       const rs = byLevel[lv];
@@ -17466,6 +17512,7 @@ function makeCareerByLevelTable(career) {
       const hr9 = wmean(rs, "hr_per_9", "ip");
       return `<tr style="background:var(--bg-tertiary);">
         <td style="font-size:11px;color:var(--text-tertiary);">${seasonRange(rs)}</td>
+        <td style="font-size:11px;color:var(--text-tertiary);">${ageRange(rs)}</td>
         <td><span class="level-pill level-neutral">${lv}</span></td>
         <td>${g || "—"}</td>
         <td>${ip ? ip.toFixed(1) : "—"}</td>
@@ -17478,7 +17525,7 @@ function makeCareerByLevelTable(career) {
       </tr>`;
     }).join("");
     return `<table class="detail-table"><thead><tr>
-      <th>Years</th><th>Level</th><th>G</th><th>IP</th><th>W-L</th>
+      <th>Years</th><th title="Age range during seasons at this level (July 1 of each season)">Age</th><th>Level</th><th>G</th><th>IP</th><th>W-L</th>
       <th>ERA</th><th>WHIP</th><th>K/9</th><th>BB/9</th><th>HR/9</th>
     </tr></thead><tbody>${rows}</tbody></table>`;
   }
@@ -17495,6 +17542,7 @@ function makeCareerByLevelTable(career) {
     const fmt3 = v => v != null ? v.toFixed(3).replace(/^0/, "") : "—";
     return `<tr style="background:var(--bg-tertiary);">
       <td style="font-size:11px;color:var(--text-tertiary);">${seasonRange(rs)}</td>
+      <td style="font-size:11px;color:var(--text-tertiary);">${ageRange(rs)}</td>
       <td><span class="level-pill level-neutral">${lv}</span></td>
       <td>${g || "—"}</td>
       <td>${ab || "—"}</td>
@@ -17510,7 +17558,7 @@ function makeCareerByLevelTable(career) {
     </tr>`;
   }).join("");
   return `<table class="detail-table"><thead><tr>
-    <th>Years</th><th>Level</th><th>G</th><th>AB</th><th>HR</th><th>SB</th>
+    <th>Years</th><th title="Age range during seasons at this level (July 1 of each season)">Age</th><th>Level</th><th>G</th><th>AB</th><th>HR</th><th>SB</th>
     <th>AVG</th><th>OBP</th><th>SLG</th><th>OPS</th><th>ISO</th><th>BB%</th><th>K%</th>
   </tr></thead><tbody>${rows}</tbody></table>`;
 }
@@ -18515,7 +18563,7 @@ function renderPlayerDetail(key) {
   // deltas stacked (was a toggle chip; the user explicitly asked for
   // both at once on the Performance tab so the comparison is one
   // glance, not a click). Headings disambiguate.
-  const careerRawTableHTML = makeCareerTable(p.career_stats);
+  const careerRawTableHTML = makeCareerTable(p.career_stats, p.birth_date);
   const consolidatedCareerSection = (p.career_stats && p.career_stats.length)
     ? `<div class="detail-title">Career by season
          <span class="detail-title-sub">raw stats + colored delta-vs-level-mean stacked</span>
@@ -18527,7 +18575,7 @@ function renderPlayerDetail(key) {
          <div class="detail-title-sub" style="display:block;margin:0 0 4px;font-style:italic;">By season</div>
          ${careerRawTableHTML}
          <div class="detail-title-sub" style="display:block;margin:10px 0 4px;font-style:italic;">By level <span style="color:var(--text-tertiary);font-style:normal;">(workload-weighted rate aggregation)</span></div>
-         ${makeCareerByLevelTable(p.career_stats)}
+         ${makeCareerByLevelTable(p.career_stats, p.birth_date)}
          ${levelBenchmarkSection ? `
            <div class="detail-title" style="margin-top:14px;font-size:13px;">Stats vs level mean
              <span class="detail-title-sub">color-coded delta against the per-level cohort</span>
@@ -18851,11 +18899,12 @@ function renderPlayerDetail(key) {
       </div>`;
   })();
 
-  // Scouting tools card — per-tool 20-80 grades + the three composites
-  // (Offensive/Defensive/Overall for hitters; Stuff/Command/Overall for
-  // pitchers). Composites also carry a ToolGrade+ index (100 = cohort
-  // mean, 10 pts = 1 stdev) so a "57 overall" reads in relation to the
-  // active prospect pool. Skipped when no source has graded this player.
+  // Scouting tools card — per-tool 20-80 grades + the three composites.
+  // Hitters: Tool (overall, p=4 power-mean), O-Tool (offensive blend),
+  // D-Tool (defensive blend) — all on the 20-80 scouting scale.
+  // Pitchers: Tool (0.65·stuff + 0.35·cmd, 20-80 scale), plus FVStuff+
+  // and Command which remain on the cohort +/- scale.
+  // Skipped when no source has graded this player.
   const toolsSection = (() => {
     const t = p.tools;
     if (!t || !t.grades || !Object.keys(t.grades).length) return "";
@@ -18868,39 +18917,52 @@ function renderPlayerDetail(key) {
     const badgeFor = v => v == null
       ? `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`
       : `<span class="fv-badge ${fvClass(String(Math.round(v)))} size-sm">${fmt(v)}</span>`;
+    // Plus pill — used by FVStuff+ / Command / pStuff+, which remain on
+    // the cohort-relative +/- scale (100 = mean, 10 pts = 1σ).
     const plusPill = (val) => {
       if (val == null) return "";
       const cls = val >= 110 ? "is-pos" : val <= 90 ? "is-neg" : "is-neutral";
-      return `<span class="tool-pill ${cls}" title="Tools+ ${val} · 100 = cohort mean composite (outlier-biased, power-3 mean), 10 pts = 1 stdev">Tools+${val}</span>`;
+      return `<span class="tool-pill ${cls}" title="${val} · 100 = cohort mean, 10 pts = 1 stdev">${val}</span>`;
     };
-    // Composite chip — vertical stack: label · (grade badge + T+ pill).
-    // The headline (Overall) gets a slightly stronger background to
-    // anchor the eye; Off/Def/Stuff/Cmd are equally-weighted slots.
-    const compositeChip = (label, raw, plus, tip, headline) => {
+    // Grade pill — Tool / O-Tool / D-Tool render on the raw 20-80
+    // scouting scale (50 = avg, 60 = Plus, 70 = elite). Color buckets
+    // mirror the per-tool grade palette used by _toolGradeStripHTML.
+    const gradePill = (val, label) => {
+      if (val == null) return "";
+      const v = Math.round(val);
+      const cls = v >= 60 ? "is-pos" : v >= 50 ? "is-neutral" : v >= 40 ? "is-amber" : "is-neg";
+      return `<span class="tool-pill ${cls}" title="${escapeHtml(label)} ${v} · 20-80 scouting scale, 50 = average">${v}</span>`;
+    };
+    // Composite chip — vertical stack: label · pill (Tool family) OR
+    // label · (grade badge + plus pill) for the legacy +/- composites.
+    // The headline (Tool / Overall) gets a slightly stronger background
+    // to anchor the eye; the rest are equally-weighted slots.
+    const COMPOSITE_TO_GLOSSARY = {
+      "Tool":            "tool",
+      "O-Tool":          "o_tool",
+      "D-Tool":          "d_tool",
+      "FVStuff+":        "stuff_grade_plus",
+      "Stuff grade+":    "stuff_grade_plus",  // back-compat lookup
+      "Command":         "command_grade",
+      "pStuff+":         "stf_plus",
+      "STF+":            "stf_plus",          // back-compat
+    };
+    // scale: 'grade' (raw 20-80) or 'plus' (cohort +/-). Default 'plus'.
+    const compositeChip = (label, raw, plus, tip, headline, scale) => {
+      const sc = scale || 'plus';
       if (raw == null && plus == null) return "";
       const titleAttr = tip ? ` title="${escapeHtml(tip)}"` : "";
       const cls = headline ? "tools-composite-chip is-headline" : "tools-composite-chip";
-      // Composite label → glossary slug. Wraps known composite names
-      // (Overall, Stuff grade+, STF+, etc.) so the click opens the
-      // glossary popover with the matching definition.
-      const COMPOSITE_TO_GLOSSARY = {
-        "Overall":         "tools_plus",
-        "Offensive":       "tools_plus",
-        "Defensive":       "tools_plus",
-        "FVStuff+":        "stuff_grade_plus",  // renamed from "Stuff grade+"
-        "Stuff grade+":    "stuff_grade_plus",  // kept for back-compat tooltip lookup
-        "Command":         "command_grade",
-        "pStuff+":         "stf_plus",          // renamed from "STF+"
-        "STF+":            "stf_plus",          // kept for back-compat
-        "Tools+":          "tools_plus",
-      };
       const slug = COMPOSITE_TO_GLOSSARY[label];
       const labelHtml = slug
         ? `<span class="g-term" data-term="${escapeHtml(slug)}">${escapeHtml(label)}</span>`
         : escapeHtml(label);
+      const valueHtml = sc === 'grade'
+        ? gradePill(raw, label)
+        : `${badgeFor(raw)} ${plusPill(plus)}`;
       return `<div class="${cls}"${titleAttr}>
         <div class="tools-composite-chip-label">${labelHtml}</div>
-        <div class="tools-composite-chip-value">${badgeFor(raw)} ${plusPill(plus)}</div>
+        <div class="tools-composite-chip-value">${valueHtml}</div>
       </div>`;
     };
     const dualMarkerHTML = `<span class="tool-dual-marker" title="Run contributes to BOTH offensive (baserunning, BABIP, extra bases) and defensive (range, jumps) composites.">◆</span>`;
@@ -19028,8 +19090,8 @@ function renderPlayerDetail(key) {
     let groupBlocks = "";
     let hasSpeedMarker = false;
     if (isPitcher) {
-      const overallChip = compositeChip("Overall", t.composite_overall, t.composite_overall_plus,
-        "Weighted composite: 65% stuff + 35% command", true);
+      const overallChip = compositeChip("Tool", t.composite_overall, null,
+        "Tool: 65% stuff + 35% command, expressed on the 20-80 scouting scale (50 = average)", true, 'grade');
       const stuffGradeChip = compositeChip("FVStuff+", t.composite_stuff, t.composite_stuff_plus,
         "Scouting composite: power-mean of fastball + secondaries, z-scored vs prospect cohort (renamed from 'Stuff grade+')", false);
       const cmdChip = compositeChip("Command", t.composite_cmd, t.composite_cmd_plus,
@@ -19054,18 +19116,19 @@ function renderPlayerDetail(key) {
         ${cmdGrid ? `<div class="tools-grade-grid">${cmdGrid}</div>` : ""}
       `;
     } else {
-      // v14 — Overall = equally-weighted p=4 power-mean of every scouted tool
-      // (hit/pwr/run/field/arm/pitch_sel/bat_ctrl) + FG physical grades (Frame,
-      // Athleticism mapped from -2..+2 → 30..70 FV). O-Tools+ is the weighted
-      // offensive composite (HIT 40 / PWR 40 / BCTRL 10 / PSEL 6 / RUN 4).
-      // D-Tools+ is the weighted defensive composite (DEF 60 / ARM 30 / RUN 10,
-      // catchers DEF 70 / ARM 30), p=3 power-mean.
-      const overallChip = compositeChip("Overall", t.composite_overall, t.composite_overall_plus,
-        "Tools+: equally-weighted p=4 power-mean of every tool incl. Frame/Athl FG grades", true);
-      const offChip = compositeChip("O-Tools+", t.composite_off, t.composite_off_plus,
-        "O-Tools+: weighted offensive composite — HIT 40 · PWR 40 · BCTRL 10 · PSEL 6 · RUN 4", false);
-      const defChip = compositeChip("D-Tools+", t.composite_def, t.composite_def_plus,
-        "D-Tools+: weighted power-mean (p=3) — DEF 60 · ARM 30 · RUN 10 (catchers: DEF 70 · ARM 30)", false);
+      // Tool = equally-weighted p=4 power-mean of every scouted tool
+      // (hit/pwr/run/field/arm/pitch_sel/bat_ctrl) + FG physical grades
+      // (Frame, Athleticism mapped from -2..+2 → 30..70 FV). O-Tool is
+      // the weighted offensive composite (HIT 40 / PWR 40 / BCTRL 10 /
+      // PSEL 6 / RUN 4). D-Tool is the weighted defensive composite
+      // (DEF 60 / ARM 30 / RUN 10, catchers DEF 70 / ARM 30), p=3
+      // power-mean. All three on the 20-80 scouting scale (50 = avg).
+      const overallChip = compositeChip("Tool", t.composite_overall, null,
+        "Tool: equally-weighted p=4 power-mean of every tool incl. Frame/Athl FG grades. 20-80 scouting scale.", true, 'grade');
+      const offChip = compositeChip("O-Tool", t.composite_off, null,
+        "O-Tool: weighted offensive composite — HIT 40 · PWR 40 · BCTRL 10 · PSEL 6 · RUN 4. 20-80 scouting scale.", false, 'grade');
+      const defChip = compositeChip("D-Tool", t.composite_def, null,
+        "D-Tool: weighted power-mean (p=3) — DEF 60 · ARM 30 · RUN 10 (catchers: DEF 70 · ARM 30). 20-80 scouting scale.", false, 'grade');
       compositeBar = (overallChip || offChip || defChip)
         ? `<div class="tools-composite-bar">${overallChip}${offChip}${defChip}</div>`
         : "";
@@ -19172,15 +19235,15 @@ function renderPlayerDetail(key) {
       const badgeWeight = sourceCount >= 3 ? "600" : "500";
       sourceBadge = `<span class="tool-pill" style="background:transparent;border:1px solid ${badgeColor};color:${badgeColor};font-weight:${badgeWeight};margin-right:6px;" title="${sourceCount} source${sourceCount === 1 ? '' : 's'} published tool grades for this prospect">${badgeLabel}</span>`;
     }
-    // "Tools+ uses latest" disclosure — only renders when source_history
+    // "Tool uses latest" disclosure — only renders when source_history
     // has at least one source with ≥2 publications (i.e., older grades
-    // exist that aren't feeding Tools+). Makes the latest-only rule
-    // visible without changing behavior.
+    // exist that aren't feeding the Tool composite). Makes the
+    // latest-only rule visible without changing behavior.
     let toolsPlusDisclosure = "";
     const sh = t.source_history || {};
     const hasHistorical = Object.values(sh).some(arr => Array.isArray(arr) && arr.length >= 2);
     if (hasHistorical) {
-      toolsPlusDisclosure = `<span style="color:var(--text-tertiary);font-size:11px;">Tools+ uses each source's most recent publication. See history below.</span>`;
+      toolsPlusDisclosure = `<span style="color:var(--text-tertiary);font-size:11px;">Tool uses each source's most recent publication. See history below.</span>`;
     }
     const footerParts = [];
     if (hasSpeedMarker) {
@@ -19232,10 +19295,10 @@ function renderPlayerDetail(key) {
                 ${badgeFor(v)}
               </div>`;
             }).join("");
-      const otherOverall = compositeChip("Overall",
-        op.composite_overall, op.composite_overall_plus,
-        otherIsPitcher ? "Weighted composite: 65% stuff + 35% command"
-                       : "Weighted composite: 70% offensive + 30% defensive", true);
+      const otherOverall = compositeChip("Tool",
+        op.composite_overall, null,
+        otherIsPitcher ? "Tool: 65% stuff + 35% command, 20-80 scouting scale"
+                       : "Tool: equally-weighted p=4 power-mean of every tool, 20-80 scouting scale", true, 'grade');
       const otherCompositeBar = otherOverall
         ? `<div class="tools-composite-bar">${otherOverall}</div>`
         : "";
@@ -19259,9 +19322,9 @@ function renderPlayerDetail(key) {
   // Source-by-source tool history dropdown. Lists every publication
   // each source has issued for this prospect, newest-first. The top
   // row in each source's table gets a "LATEST" pill — that's the row
-  // feeding Tools+. Older rows are visually de-emphasized so the
-  // most-recent-only consensus rule is legible. Hidden when no source
-  // has ≥2 publications (no history to show).
+  // feeding the Tool composite. Older rows are visually de-emphasized
+  // so the most-recent-only consensus rule is legible. Hidden when no
+  // source has ≥2 publications (no history to show).
   const sourceHistorySection = (() => {
     const t = p.tools;
     if (!t || !t.source_history) return "";
@@ -20255,15 +20318,15 @@ function renderPlayerDetail(key) {
     const myIsPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP)$/.test(String(p.position || "").split("/")[0].toUpperCase());
 
     // Composite-similarity scorer — sums weighted, normalized deltas
-    // across FV, age, Tools+, key rate stats, and player-vs-level RPS+
-    // (when present). Each axis has a reference unit so the deltas land
-    // on comparable scales; the weighted sum is then a Euclidean
+    // across FV, age, Tool grade, key rate stats, and player-vs-level
+    // RPS+ (when present). Each axis has a reference unit so the deltas
+    // land on comparable scales; the weighted sum is then a Euclidean
     // distance where SMALLER = more similar. Same position bucket is
     // a hard filter so a SS doesn't match a 1B regardless of stats.
     //
-    // Weight emphasis: FV (1.5x) > position-stats (1.0x) > Tools+ (0.9x)
+    // Weight emphasis: FV (1.5x) > position-stats (1.0x) > Tool (0.9x)
     // > age (0.7x). FV is the loudest scouting signal, stats reflect
-    // current performance, Tools+ captures scouting-tool shape, age
+    // current performance, Tool captures scouting-tool shape, age
     // contextualizes development.
     const W_FV = 1.5, W_AGE = 0.7, W_TOOLS = 0.9, W_STATS = 1.0;
     const norm = (delta, scale) => Math.abs(delta) / scale;
@@ -20282,11 +20345,11 @@ function renderPlayerDetail(key) {
         s += W_AGE * Math.pow(norm(a.age - b.age, 2), 2);
         weights += W_AGE;
       }
-      // Tools+ — 15 plus points = 1 unit.
-      const aT = a.tools && a.tools.composite_overall_plus;
-      const bT = b.tools && b.tools.composite_overall_plus;
+      // Tool — 5 grade points = 1 unit (one tier on the 20-80 scale).
+      const aT = a.tools && a.tools.composite_overall;
+      const bT = b.tools && b.tools.composite_overall;
       if (aT != null && bT != null) {
-        s += W_TOOLS * Math.pow(norm(aT - bT, 15), 2);
+        s += W_TOOLS * Math.pow(norm(aT - bT, 5), 2);
         weights += W_TOOLS;
       }
       // Stats — OPS for hitters, ERA for pitchers. Reference scales
@@ -20342,13 +20405,13 @@ function renderPlayerDetail(key) {
                        : s < 0.45 ? "close"
                        : s < 0.70 ? "similar"
                        : "loose";
-      const matchTip = `Composite similarity score: ${s.toFixed(2)} (smaller = closer). Match across FV, age, Tools+, and current-season rate stats.`;
+      const matchTip = `Composite similarity score: ${s.toFixed(2)} (smaller = closer). Match across FV, age, Tool grade, and current-season rate stats.`;
       return `<div data-key="${escapeHtml(t.player_key)}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-light);cursor:pointer;font-size:12px;" title="${escapeHtml(matchTip)}">
         <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;">${escapeHtml(t.player_name)} <span style="color:var(--text-tertiary);font-size:10px;">${escapeHtml(t.position || "—")} · ${t.age != null ? t.age.toFixed(1) + "y" : "—"} · ${matchLabel}</span>${orgTag}</span>
         <span class="fv-badge ${fvClass(String(Math.round(tFv)))} size-sm">${Math.round(tFv)}</span>
       </div>`;
     }).join("");
-    return `<div class="detail-title">Similar prospects <span class="detail-title-sub">composite match — position, FV, age, Tools+, stats</span></div>
+    return `<div class="detail-title">Similar prospects <span class="detail-title-sub">composite match — position, FV, age, Tool grade, stats</span></div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">${rows}</div>`;
   })();
 
@@ -20752,9 +20815,9 @@ function renderFarmDetail(orgCode) {
       const by = b.eta && b.eta.year != null ? b.eta.year : 9999;
       return ay - by;
     },
-    tools_plus: (a, b) => {
-      const av = a.tools && a.tools.composite_overall_plus;
-      const bv = b.tools && b.tools.composite_overall_plus;
+    tool: (a, b) => {
+      const av = a.tools && a.tools.composite_overall;
+      const bv = b.tools && b.tools.composite_overall;
       return (bv == null ? -1 : bv) - (av == null ? -1 : av);
     },
     surplus: (a, b) => {
@@ -21349,16 +21412,16 @@ function renderFarmDetail(orgCode) {
     }).join("") || '<span style="color:var(--text-tertiary);font-size:11.5px;">None</span>'}
   </div>`;
 
-  // Tools+ leaderboard — top 3 toolsiest prospects in the org by the
-  // outlier-biased composite overall index. Card hidden when no
-  // prospects have published tool grades.
+  // Tool leaderboard — top 3 toolsiest prospects in the org by the
+  // outlier-biased composite overall (20-80) grade. Card hidden when
+  // no prospects have published tool grades.
   const toolsLeaders = rosterPlayersAll
-    .filter(p => p.tools && p.tools.composite_overall_plus != null)
-    .sort((a, b) => b.tools.composite_overall_plus - a.tools.composite_overall_plus)
+    .filter(p => p.tools && p.tools.composite_overall != null)
+    .sort((a, b) => b.tools.composite_overall - a.tools.composite_overall)
     .slice(0, 3);
   const toolsLeaderboardCard = toolsLeaders.length
     ? `<div class="farm-side-card">
-        <div class="side-title">Toolsiest <span class="side-count">Tools+ leaders</span></div>
+        <div class="side-title">Toolsiest <span class="side-count">Tool leaders</span></div>
         ${toolsLeaders.map(p => {
           const fvL = p.fv_close != null ? Math.round(p.fv_close) : null;
           const fvBadge = fvL != null
@@ -21916,7 +21979,7 @@ function renderFarmDetail(orgCode) {
         <button class="chip${state.rosterSort === "avg_rank" ? " active" : ""}" data-roster-sort="avg_rank" type="button" title="Average rank across sources">Avg rank</button>
         <button class="chip${state.rosterSort === "age" ? " active" : ""}" data-roster-sort="age" type="button" title="Youngest first">Age</button>
         <button class="chip${state.rosterSort === "eta" ? " active" : ""}" data-roster-sort="eta" type="button" title="Soonest ETA first">ETA</button>
-        <button class="chip${state.rosterSort === "tools_plus" ? " active" : ""}" data-roster-sort="tools_plus" type="button" title="Toolsiest first — Tools+ index">Tools+</button>
+        <button class="chip${state.rosterSort === "tool" ? " active" : ""}" data-roster-sort="tool" type="button" title="Toolsiest first — Tool grade (20-80 scouting scale)">Tool</button>
         <button class="chip${state.rosterSort === "surplus" ? " active" : ""}" data-roster-sort="surplus" type="button" title="Per-prospect FV-implied surplus value, highest first">Surplus</button>
       </div>
     </div>
@@ -21930,7 +21993,7 @@ function renderFarmDetail(orgCode) {
       <button class="chip${state.depthSort === "eta" ? " active" : ""}" data-depth-sort="eta" type="button" title="Soonest ETA first, FV as tiebreaker. Prospects without an ETA sink to the bottom.">ETA</button>
     </div>
     ${makePositionDepthChart(rosterPlayersAll, state.depthSort || "fv")}
-    <div class="detail-title">Age vs FV scatter <span class="detail-title-sub">Each dot is one prospect — point size scales with composite Tools+ when published, hue encodes position bucket</span></div>
+    <div class="detail-title">Age vs FV scatter <span class="detail-title-sub">Each dot is one prospect — point size scales with composite Tool grade when published, hue encodes position bucket</span></div>
     ${makeAgeFvScatter(rosterPlayersAll)}
     ${gradedSection}`;
 
@@ -22084,7 +22147,7 @@ function renderFarmDetail(orgCode) {
       renderFarmDetail(orgCode);
     });
   });
-  // Roster sort chips (FV / avg_rank / age / ETA / tools_plus / surplus).
+  // Roster sort chips (FV / avg_rank / age / ETA / tool / surplus).
   // Re-render the farm detail so the roster table re-orders + the chip
   // active class flips. Persists to the URL via syncToURL.
   document.querySelectorAll("#farm-detail-body [data-roster-sort]").forEach(btn => {
@@ -22812,19 +22875,18 @@ function rpsPlusPillHTML(p) {
   return `<span class="rps-plus-pill ${cls}" title="${escapeHtml(title)}"><span class="g-term" data-term="rps_plus">RPS+</span> ${rp.plus}</span>`;
 }
 
-// ToolGrade+ pill — small inline composite-overall index. Anchored at
-// 100 = cohort-mean tool composite, 10 pts = 1 stdev (computed at
-// storage time over every serialized prospect). Returns "" when the
-// player has no tool grades — list rows skip the pill silently rather
-// than rendering an empty "T+ —" that adds noise.
+// Tool pill — small inline composite-overall grade on the 20-80
+// scouting scale (50 = avg, 60 = Plus, 70 = elite). Returns "" when
+// the player has no tool grades — list rows skip the pill silently
+// rather than rendering an empty "Tool —" that adds noise.
 function toolPlusPillHTML(p) {
   const t = p && p.tools;
-  if (!t || t.composite_overall_plus == null) return "";
-  const v = t.composite_overall_plus;
-  const cls = v >= 110 ? "is-pos" : v <= 90 ? "is-neg" : "is-neutral";
-  const raw = t.composite_overall != null ? t.composite_overall.toFixed(1) : "—";
-  const title = `Tools+ ${v} · overall composite ${raw} (100 = cohort mean tool composite, outlier-biased power-3 mean, 10 pts = 1 stdev)`;
-  return `<span class="tool-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(title)}"><span class="g-term" data-term="tools_plus">Tools+</span>${v}</span>`;
+  const raw = t && t.composite_overall;
+  if (raw == null) return "";
+  const v = Math.round(raw);
+  const cls = v >= 60 ? "is-pos" : v >= 50 ? "is-neutral" : v >= 40 ? "is-amber" : "is-neg";
+  const title = `Tool ${v} · 20-80 scouting scale composite (50 = average, 60 = Plus, 70 = Elite). Equally-weighted p=4 power-mean of every tool grade.`;
+  return `<span class="tool-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(title)}"><span class="g-term" data-term="tool">Tool</span> ${v}</span>`;
 }
 
 // =============================================================================

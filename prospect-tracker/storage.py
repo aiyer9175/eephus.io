@@ -33,13 +33,13 @@ INACTIVE_MONTHS = 18
 # After this many days since a source's most recent tool publication,
 # we flag that source as "stale" in tools.source_recency. The UI uses
 # the flag to visually de-emphasize the source in the history dropdown
-# without removing it from Tools+ (Tools+ always uses each source's
-# latest publication regardless of age).
+# without removing it from the Tool composite (Tool always uses each
+# source's latest publication regardless of age).
 TOOL_FRESHNESS_DAYS = 365
 
 
 def _index_plus(value: float | None, mean: float | None, stdev: float | None) -> int | None:
-    """Generic 'X+' normalization shared by RPS+, DvM+, and ToolGrade+.
+    """Generic 'X+' normalization shared by RPS+, DvM+, Stuff+, Cmd+.
 
     Returns `100 + 10 * (value - mean) / stdev`, rounded to int and
     clamped to [0, 250] so a perverse one-prospect cohort never produces
@@ -208,7 +208,7 @@ def _compute_tool_composites(grades: dict[str, float] | None,
                               is_pitcher: bool,
                               player_extras: dict | None = None,
                               position_bucket: str | None = None) -> dict | None:
-    """Build the raw (pre-Tools+) tools sub-object from per-tool consensus grades.
+    """Build the raw 20-80 tools sub-object from per-tool consensus grades.
 
     Returns a dict with `grades` (the input, copied + rounded to 0.5),
     the composites (off/def for hitters, stuff/cmd for pitchers, and
@@ -274,14 +274,12 @@ def _compute_tool_composites(grades: dict[str, float] | None,
             out["composite_overall"] = stuff if stuff is not None else cmd
         out["composite_off"] = None
     else:
-        # v12 — O-Tools+ weighted blend: HIT 40 / PWR 40 / BCTRL 10 /
-        # PSEL 6 / SPD 4. Heavy "bats matter most" tilt — speed is a
-        # tiebreaker contributor, plate discipline rounds out the
-        # offense profile. PWR uses the consolidated `pwr` key if
-        # present, else falls back to the mean of game_pwr + raw_pwr.
-        # Defensive composite DROPPED in v12 — field + throw grades
-        # still display in the per-source / per-tool tables but no
-        # longer get their own composite index.
+        # O-Tool weighted blend: HIT 40 / PWR 40 / BCTRL 10 / PSEL 6 /
+        # SPD 4. Heavy "bats matter most" tilt — speed is a tiebreaker
+        # contributor, plate discipline rounds out the offense profile.
+        # PWR uses the consolidated `pwr` key if present, else falls
+        # back to the mean of game_pwr + raw_pwr. Output is the raw
+        # weighted mean on the 20-80 scouting scale (50 = average).
         def _pwr_value():
             if "pwr" in cleaned:
                 return cleaned["pwr"]
@@ -313,36 +311,38 @@ def _compute_tool_composites(grades: dict[str, float] | None,
             out["composite_off"] = round(off, 2)
         else:
             out["composite_off"] = None
-        # v14 — Tools+ overall is the EQUALLY-WEIGHTED power-mean (p=4)
-        # of every tool the prospect carries, including DEF/Field +
-        # Frame/Athl FG physical grades (mapped from -2..+2 to 30..70).
-        # The p=4 power-mean rewards extreme tools more sharply than
-        # the p=3 used elsewhere — a 70 PWR + 45 HIT prospect (arithmetic
-        # mean 57.5) scores ~62 here. Captures "elite-tool ceiling"
+        # Tool (overall) is the EQUALLY-WEIGHTED power-mean (p=4) of
+        # every tool the prospect carries, including DEF/Field + Frame/
+        # Athl FG physical grades (mapped from -2..+2 to 30..70). The
+        # p=4 power-mean rewards extreme tools more sharply than the
+        # p=3 used elsewhere — a 70 PWR + 45 HIT prospect (arithmetic
+        # mean 57.5) scores ~58 here. Captures "elite-tool ceiling"
         # profiles cleanly. A neutral 0/5 physical sits at FV 50 and
         # pulls the mean toward 50, which is the right behavior.
-        TOOLS_PLUS_KEYS = ("hit", "speed", "field", "throw",
-                           "pitch_sel", "bat_ctrl")
-        tools_plus_vals = [cleaned[k] for k in TOOLS_PLUS_KEYS if k in cleaned]
-        pwr_for_overall = _pwr_value()  # same consolidated PWR as O-Tools+
+        # Output is on the raw 20-80 scouting scale (50 = average).
+        TOOL_KEYS = ("hit", "speed", "field", "throw",
+                     "pitch_sel", "bat_ctrl")
+        tool_vals = [cleaned[k] for k in TOOL_KEYS if k in cleaned]
+        pwr_for_overall = _pwr_value()  # same consolidated PWR as O-Tool
         if pwr_for_overall is not None:
-            tools_plus_vals.append(pwr_for_overall)
+            tool_vals.append(pwr_for_overall)
         for fv in (frame_fv, athl_fv):
             if fv is not None:
-                tools_plus_vals.append(fv)
-        if tools_plus_vals:
+                tool_vals.append(fv)
+        if tool_vals:
             out["composite_overall"] = round(
-                _power_mean(tools_plus_vals, p=4), 2
+                _power_mean(tool_vals, p=4), 2
             )
         else:
             out["composite_overall"] = None
         out["composite_stuff"] = None
         out["composite_cmd"] = None
 
-        # v14 — D-Tools+ (composite_def): weighted power-mean (p=3) of
+        # D-Tool (composite_def): weighted power-mean (p=3) of
         # defensive tools. Catchers drop speed (irrelevant) and bump
         # field — receiving/framing/blocking lives inside the field
         # grade already. Non-catchers use field 60 / arm 30 / run 10.
+        # Output is on the raw 20-80 scouting scale (50 = average).
         if position_bucket == "C":
             DEF_WEIGHTS = {"field": 0.70, "throw": 0.30}
         else:
@@ -351,8 +351,8 @@ def _compute_tool_composites(grades: dict[str, float] | None,
         def_present = {k: v for k, v in def_inputs.items() if v is not None}
         if def_present:
             total_w = sum(DEF_WEIGHTS[k] for k in def_present)
-            # Weighted power-mean (p=3) — same outlier bias as O-Tools+,
-            # so an elite-glove 70 DEF jumps off the page.
+            # Weighted power-mean (p=3) — outlier-biased so an
+            # elite-glove 70 DEF jumps off the page.
             weighted_cube = sum(DEF_WEIGHTS[k] * (v ** 3)
                                 for k, v in def_present.items())
             out["composite_def"] = round(
@@ -366,31 +366,27 @@ def _compute_tool_composites(grades: dict[str, float] | None,
 def _attach_tool_plus_indices(payloads: list[dict]) -> None:
     """Second-pass population normalization for tool composites.
 
-    Iterates over every serialized prospect once to compute per-composite
-    mean/stdev (across all prospects that have a non-None value for that
-    composite), then back-fills `composite_*_plus` on each tools dict
-    in-place. Mirrors how RPS+ buckets are built in the frontend, but at
-    storage time so the JSON ships with the indices baked in.
-
-    Hitter and pitcher composites use the SAME cohort norms — every
-    prospect in the comparison, regardless of role — so a 60-grade hit
-    tool reads the same way relative to peers as a 60-grade fastball
-    reads relative to pitchers. (If a future iteration wants role-split
-    norms, this is the one place to change.)
+    Two jobs:
+      1. Expose Tool / O-Tool / D-Tool at the top level of each payload
+         (sourced directly from the raw 20-80 power-mean composites; the
+         frontend reads `pl["tool"]` for row pills and sorting).
+      2. Compute Stuff+ / Cmd+ cohort-relative indices on the tools dict
+         (these stay z-scored at 100±10σ — only the Tool family migrated
+         off the +/- scale).
+      3. Emit composite-driven green/red tool flags using the new 20-80
+         thresholds (≥60 = elite, ≤40 = below).
     """
-    # v14 — composite_def reactivated as D-Tools+ (hitters only). The
-    # cohort norm is computed across every hitter who has a composite_def
-    # value, mirroring the O-Tools+ pattern. Pitchers don't emit it
-    # (None on the tools dict), so they don't contribute to the cohort
-    # and they don't get a composite_def_plus stamped.
-    composite_keys = ("composite_off", "composite_def",
-                      "composite_stuff", "composite_cmd", "composite_overall")
-    samples: dict[str, list[float]] = {k: [] for k in composite_keys}
+    # Tool / O-Tool / D-Tool now ship as raw 20-80 power-means — no
+    # cohort z-scoring. Stuff+ / Cmd+ keep the +/- treatment because
+    # they're a separate pitcher-only family that the user did not
+    # migrate in this pass.
+    plus_keys = ("composite_stuff", "composite_cmd")
+    samples: dict[str, list[float]] = {k: [] for k in plus_keys}
     for pl in payloads:
         t = pl.get("tools")
         if not t:
             continue
-        for k in composite_keys:
+        for k in plus_keys:
             v = t.get(k)
             if v is not None:
                 samples[k].append(float(v))
@@ -406,62 +402,79 @@ def _attach_tool_plus_indices(payloads: list[dict]) -> None:
         t = pl.get("tools")
         if not t:
             continue
-        for k in composite_keys:
+        for k in plus_keys:
             mean, stdev = cohort_stats[k]
             t[f"{k}_plus"] = _index_plus(t.get(k), mean, stdev)
-        # Two-way players: stamp the same indices on hitter_payload /
-        # pitcher_payload sub-dicts so each Tools card renders its own
-        # Tools+ numbers against the shared cohort norms.
+        # Top-level convenience field for row pills + sort. Sourced
+        # from the raw 20-80 composite_overall power-mean, rounded to
+        # an integer (the row pill renders with no decimal).
+        overall_raw = t.get("composite_overall")
+        pl["tool"] = round(overall_raw) if overall_raw is not None else None
+        # Two-way players: stamp Stuff+ / Cmd+ on hitter_payload /
+        # pitcher_payload sub-dicts using the shared cohort norms.
         for sub_key in ("hitter_payload", "pitcher_payload"):
             sub = t.get(sub_key)
             if not sub:
                 continue
-            for k in composite_keys:
+            for k in plus_keys:
                 mean, stdev = cohort_stats[k]
                 sub[f"{k}_plus"] = _index_plus(sub.get(k), mean, stdev)
-        # Composite-driven green/red flags piggyback on the X+ pass —
-        # the per-tool compute_tool_flags call inside _serialize ran
-        # before X+ values existed, so we append composite flags here.
-        overall_plus = t.get("composite_overall_plus")
-        off_plus = t.get("composite_off_plus")
-        def_plus = t.get("composite_def_plus")
+        # Composite-driven green/red flags use the new 20-80 thresholds:
+        # ≥60 (Plus tier) earns a green flag; ≤40 (Below-Average) earns
+        # a red flag. Stuff+ stays on its +/- scale (≥115 / ≤85).
+        overall_raw = t.get("composite_overall")
+        off_raw = t.get("composite_off")
+        def_raw = t.get("composite_def")
         stuff_plus = t.get("composite_stuff_plus")
         tool_flags = pl.setdefault("tool_flags", [])
-        for plus_key, plus_val, label in (
-            ("composite_overall_plus", overall_plus, "Overall tools"),
-            ("composite_off_plus",     off_plus,     "Offensive tools"),
-            ("composite_def_plus",     def_plus,     "Defensive tools"),
-            ("composite_stuff_plus",   stuff_plus,   "Stuff"),
+        for raw_val, label, slug in (
+            (overall_raw, "Tool",   "Tool"),
+            (off_raw,     "O-Tool", "O-Tool"),
+            (def_raw,     "D-Tool", "D-Tool"),
         ):
-            if plus_val is None:
+            if raw_val is None:
                 continue
-            if plus_val >= 115:
+            if raw_val >= 60:
                 tool_flags.append({
                     "stat": label,
                     "direction": "green",
-                    "value": plus_val,
-                    "value_display": f"{label} {plus_val:+d}",
+                    "value": raw_val,
+                    "value_display": f"{label} {raw_val:.1f}",
                     "level": None,
-                    "level_avg": 100,
-                    "delta": plus_val - 100,
-                    "delta_display": f"{plus_val - 100:+d}",
+                    "level_avg": 50,
+                    "delta": round(raw_val - 50, 1),
+                    "delta_display": f"{raw_val - 50:+.1f}",
                     "category": "composite",
                     "polarity": "above_good",
-                    "note": f"{label} index {plus_val} — above-cohort toolset.",
+                    "note": f"{label} {raw_val:.1f} — Plus tier (60+) composite toolset.",
                 })
-        if overall_plus is not None and overall_plus <= 85:
+        if stuff_plus is not None and stuff_plus >= 115:
             tool_flags.append({
-                "stat": "Overall tools",
-                "direction": "red",
-                "value": overall_plus,
-                "value_display": f"Overall tools {overall_plus:+d}",
+                "stat": "Stuff",
+                "direction": "green",
+                "value": stuff_plus,
+                "value_display": f"Stuff {stuff_plus:+d}",
                 "level": None,
                 "level_avg": 100,
-                "delta": overall_plus - 100,
-                "delta_display": f"{overall_plus - 100:+d}",
+                "delta": stuff_plus - 100,
+                "delta_display": f"{stuff_plus - 100:+d}",
+                "category": "composite",
+                "polarity": "above_good",
+                "note": f"Stuff index {stuff_plus} — above-cohort arsenal.",
+            })
+        if overall_raw is not None and overall_raw <= 40:
+            tool_flags.append({
+                "stat": "Tool",
+                "direction": "red",
+                "value": overall_raw,
+                "value_display": f"Tool {overall_raw:.1f}",
+                "level": None,
+                "level_avg": 50,
+                "delta": round(overall_raw - 50, 1),
+                "delta_display": f"{overall_raw - 50:+.1f}",
                 "category": "composite",
                 "polarity": "below_good",
-                "note": f"Overall tools index {overall_plus} — below-cohort toolset.",
+                "note": f"Tool {overall_raw:.1f} — Below-Average tier composite toolset.",
             })
 
 
@@ -1424,7 +1437,7 @@ def load_all_snapshots() -> list[Snapshot]:
                 # historically stored under _extras; they are now
                 # canonical hitter tools. Pull them up so legacy DB rows
                 # don't need a re-ingest to participate in consensus
-                # aggregation and composite_off / Tools+.
+                # aggregation and composite_off / Tool composites.
                 extras = tools.get("_extras") if isinstance(tools.get("_extras"), dict) else None
                 if extras:
                     for lifted_key in ("pitch_sel", "bat_ctrl"):
@@ -2456,7 +2469,7 @@ FARM_DEPTH_END      = 25            # ... through #25 feed the "depth" score
 # Farm-score blend weights — 10 components, sum to 1.0. The "big-4"
 # (Top-End + Depth + DvM+ + Grad Pipeline) still control ~70%; WAG and
 # Financial ROI add the MLB-impact lens (~18%); the three "Profile"
-# components (Tools+ / IFA depth / Readiness / Health) provide
+# components (Tool Quality / IFA depth / Readiness / Health) provide
 # secondary signal worth a combined ~12%. DvM+ REPLACED the raw
 # Trajectory weight (DvM+ is the z-scored, league-mean-anchored
 # version of the same delta — strictly more informative).
@@ -4842,9 +4855,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             if latest_point and latest_point.tools_consensus
             else None
         )
-        # v14 — extras (frame/athl/delivery FG -2..+2 grades) and the
-        # position bucket (catcher vs non-catcher) both feed the v14
-        # Tools+ / D-Tools+ math, so consolidate once and pass through.
+        # extras (frame/athl/delivery FG -2..+2 grades) and the
+        # position bucket (catcher vs non-catcher) both feed the Tool /
+        # D-Tool composite math, so consolidate once and pass through.
         _player_extras = _extract_player_extras(latest_point)
         _pos_bucket = _position_bucket(p.position)
         tools_payload = _compute_tool_composites(
@@ -4886,8 +4899,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                         tools_payload["pitcher_payload"] = pitcher_payload
             # Time-series + per-source history. The UI uses these to
             # render the "Source-by-source tool history" dropdown and to
-            # disclose that Tools+ uses each source's most recent
-            # publication (older rows are kept for context, not math).
+            # disclose that the Tool composite uses each source's most
+            # recent publication (older rows are kept for context, not math).
             #
             # `history`: consensus tool grades at each snapshot date.
             # `source_history`: per-source publication timeline.
@@ -5554,13 +5567,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         elif avl.tier == "very-old":
             m["very_old_count"] += 1
 
-        # Tools+ Quality accumulator — composite_overall (raw 20-80
-        # power-mean of per-tool grades). Computed directly from the
-        # latest consensus tools dict so it's available BEFORE the X+
-        # cohort normalization pass. We aggregate the raw composite,
-        # which is the right axis for "how good are the prospects'
-        # tools?" — the X+ normalization is for peer comparison, not
-        # cross-org quality.
+        # Tool Quality accumulator — composite_overall (raw 20-80
+        # power-mean of per-tool grades, same value as the prospect's
+        # Tool composite). Computed directly from the latest consensus
+        # tools dict so it's available even if a future re-ordering
+        # moves the post-serialization passes around.
         is_pitcher_p = bool(p.position and p.position.split("/")[0] in PITCHER_POS_SET)
         _farm_extras = _extract_player_extras(p.points[-1] if p.points else None)
         _farm_pos_bucket = _position_bucket(p.position)
@@ -5919,12 +5930,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "total_bonus_usd":   bonus_sum,
             "grad_count_with_bonus": gagg.get("bonus_count") or 0,
         }
-        # Tools+ Quality — top-10 mean of raw composite_overall (the
-        # 20-80 power-mean of per-tool grades). Top-10 (not all) so a
-        # top-heavy farm with raw-tools stars isn't dragged down by
-        # un-graded depth. NOTE: the value here is on the 20-80 scale,
-        # NOT the X+ (z-scored 100-anchored) scale — see Tools+ Quality
-        # glossary entry for why.
+        # Tool Quality — top-10 mean of raw composite_overall (the
+        # 20-80 power-mean of per-tool grades, identical to the per-
+        # prospect Tool composite). Top-10 (not all) so a top-heavy
+        # farm with raw-tools stars isn't dragged down by un-graded
+        # depth. The value is on the 20-80 scale — see Tool Quality
+        # glossary entry for why this beats a z-scored aggregate.
         _comp_overalls = sorted(m.pop("_tools_comp_overall", []) or [], reverse=True)
         m["tools_quality"] = {
             "top10_mean":  round(sum(_comp_overalls[:10]) / len(_comp_overalls[:10]), 2)
@@ -6143,7 +6154,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # Stamp the fallback inline so LEAF_SPECS can read it.
                 _ifa_leaf["war_per_yr_fallback"] = _wp
 
-        # _active_keys stays for the Tools+ second pass; popped later.
+        # _active_keys stays for the second-pass index attachment; popped later.
         org_summary.append(m)
 
     # v7 — drop any phantom orgs (canonical 30-MLB allowlist). Without
@@ -6702,7 +6713,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "health_burden":      hl_r,
         }
         # Letter grades. None ranks → "—" (insufficient data). Small
-        # samples for WAG / ROI / Tools+ also get "—" via the same
+        # samples for WAG / ROI / Tool Quality also get "—" via the same
         # gate so a 1-graduate org doesn't get an A or D off a single
         # data point.
         entry["grades"] = {
@@ -7124,9 +7135,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     _attach_breakout_flags(active_payload)
 
     # Cleanup: `_active_keys` was retained on org_summary entries for
-    # potential post-serialization joins (now unused after Tools+ moved
-    # into the actives loop). Drop the field so the JSON doesn't carry
-    # an internal-only key.
+    # potential post-serialization joins (now unused after Tool Quality
+    # moved into the actives loop). Drop the field so the JSON doesn't
+    # carry an internal-only key.
     for entry in org_summary:
         entry.pop("_active_keys", None)
 

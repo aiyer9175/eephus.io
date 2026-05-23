@@ -141,7 +141,7 @@ class DraftSnapshot:
 # per-scraper translation tables (e.g. PIPELINE_TOOL_KEY below).
 # pitch_sel and bat_ctrl are FG-published 20-80 grades treated as
 # first-class hitter tools so they aggregate cross-source and feed
-# composite_off / Tools+ rather than living in _extras.
+# composite_off / Tool composites rather than living in _extras.
 HITTER_TOOL_KEYS = ("hit", "game_pwr", "raw_pwr", "speed", "field", "throw",
                     "pitch_sel", "bat_ctrl")
 # `ct` (cutter) is a distinct pitch family Just Baseball grades separately.

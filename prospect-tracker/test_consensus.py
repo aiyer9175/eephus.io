@@ -863,9 +863,9 @@ class TestCutterCanonical:
 
 
 # ---------------------------------------------------------------------------
-# Forward-fill verification — Tools+ uses each source's MOST RECENT
-# publication. This is the latest-only rule the UI source-history
-# dropdown discloses.
+# Forward-fill verification — the Tool composite uses each source's
+# MOST RECENT publication. This is the latest-only rule the UI source-
+# history dropdown discloses.
 # ---------------------------------------------------------------------------
 
 class TestConsensusForwardFill:
