@@ -7687,6 +7687,11 @@ function syncToURL() {
   if (state.farmTxDir   !== "all")        p.set("ftxd",  state.farmTxDir);
   if (state.gradSort    !== "date")       p.set("gsort", state.gradSort);
   if (state.ilSort      !== "days_asc")   p.set("ilsort", state.ilSort);
+  if (state.tradedSort  && state.tradedSort   !== "date")    p.set("tsort",  state.tradedSort);
+  if (state.spotlightSort && state.spotlightSort !== "rank") p.set("ssort",  state.spotlightSort);
+  if (state.careerSort  && state.careerSort   !== "season")  p.set("csort",  state.careerSort);
+  if (state.sourceFvSort && state.sourceFvSort !== "source") p.set("sfsort", state.sourceFvSort);
+  if (state.depthSort   && state.depthSort    !== "fv")      p.set("dsort",  state.depthSort);
   if (state.spotlightBucket !== "risers") p.set("bucket", state.spotlightBucket);
   if (state.lbStat      !== "ops")        p.set("lbstat",  state.lbStat);
   if (state.lbLevel     !== "all")        p.set("lblvl",   state.lbLevel);
@@ -7768,6 +7773,11 @@ function syncFromURL() {
   if (p.has("ftxd")) state.farmTxDir  = p.get("ftxd");
   if (p.has("gsort")) state.gradSort  = p.get("gsort");
   if (p.has("ilsort")) state.ilSort    = p.get("ilsort");
+  if (p.has("tsort"))  state.tradedSort   = p.get("tsort");
+  if (p.has("ssort"))  state.spotlightSort = p.get("ssort");
+  if (p.has("csort"))  state.careerSort   = p.get("csort");
+  if (p.has("sfsort")) state.sourceFvSort = p.get("sfsort");
+  if (p.has("dsort"))  state.depthSort    = p.get("dsort");
   if (p.has("bucket")) state.spotlightBucket = p.get("bucket");
   // Leaderboards filters — round-tripped so org pre-fill from
   // farm-detail's "View org leaderboards →" link sticks.
@@ -7921,23 +7931,50 @@ function restoreUIFromState() {
   syncSortHeaderActive();
 }
 
-// Stamp .is-active on the header cell whose data-sort-key matches the
-// current state.sort. Direction-paired keys (ht_asc / ht_desc) both
-// resolve to the same physical column, so an asc/desc toggle still
-// keeps the cell highlighted.
+// Universal sort-header routing. Each entry maps a dataset attribute
+// (camelCase form, e.g. dataset.farmSort comes from data-farm-sort) to
+// the state field that drives that table's sort. Used by:
+//   - the delegated click handler (sets state[stateField] from
+//     dataset[datasetKey] and re-renders the matching view)
+//   - syncSortHeaderActive (walks every column-header span and stamps
+//     .is-active on the one whose key matches its state field)
+// Adding a new sortable table = add a row here + a default in `state`
+// + a `.sort-header[data-…-sort]` span in the renderer.
+const SORT_HEADER_MAP = [
+  { datasetKey: "sortKey",       stateField: "sort",          rerender: () => { resetListPages(); render(); } },
+  { datasetKey: "farmSort",      stateField: "farmSort",      rerender: () => renderFarmSystems() },
+  { datasetKey: "gradSort",      stateField: "gradSort",      rerender: () => renderGraduates() },
+  { datasetKey: "ilSort",        stateField: "ilSort",        rerender: () => renderInjured() },
+  { datasetKey: "rosterSort",    stateField: "rosterSort",    rerender: () => { if (state.view && state.view.type === "farm") renderFarmDetail(state.view.org); } },
+  { datasetKey: "spotlightSort", stateField: "spotlightSort", rerender: () => renderSpotlights() },
+  { datasetKey: "tradedSort",    stateField: "tradedSort",    rerender: () => renderRecentlyTraded() },
+  { datasetKey: "depthSort",     stateField: "depthSort",     rerender: () => { if (state.view && state.view.type === "farm") renderFarmDetail(state.view.org); } },
+  { datasetKey: "careerSort",    stateField: "careerSort",    rerender: () => { if (state.view && state.view.type === "player") renderPlayerDetail(state.view.key); } },
+  { datasetKey: "sourceFvSort",  stateField: "sourceFvSort",  rerender: () => { if (state.view && state.view.type === "player") renderPlayerDetail(state.view.key); } },
+];
+
+// Stamp .is-active on the header cell whose data-*-sort matches the
+// current state for that sort family. Direction-paired keys
+// (ht_asc / ht_desc) both resolve to the same physical column, so an
+// asc/desc toggle still keeps the cell highlighted.
 function syncSortHeaderActive() {
-  const headers = document.querySelectorAll(".col-header .sort-header[data-sort-key]");
-  if (!headers.length) return;
   // Normalize direction-paired keys to their column base ("ht" / "wt" /
   // "bmi") so toggling asc/desc keeps the highlight on the column.
-  const base = (k) => k.endsWith("_asc") ? k.slice(0, -4)
-                : k.endsWith("_desc") ? k.slice(0, -5)
-                : k;
-  const activeBase = base(state.sort);
-  headers.forEach(h => {
-    const hBase = base(h.dataset.sortKey);
-    h.classList.toggle("is-active", hBase === activeBase);
-  });
+  const base = (k) => typeof k === "string"
+    ? (k.endsWith("_asc") ? k.slice(0, -4)
+       : k.endsWith("_desc") ? k.slice(0, -5)
+       : k)
+    : k;
+  for (const cfg of SORT_HEADER_MAP) {
+    const attr = cfg.datasetKey.replace(/[A-Z]/g, c => "-" + c.toLowerCase());
+    const headers = document.querySelectorAll(`.sort-header[data-${attr}]`);
+    if (!headers.length) continue;
+    const activeBase = base(state[cfg.stateField]);
+    headers.forEach(h => {
+      const hBase = base(h.dataset[cfg.datasetKey]);
+      h.classList.toggle("is-active", hBase === activeBase);
+    });
+  }
 }
 
 function makeEtaCell(p) {
@@ -8251,6 +8288,20 @@ const state = {
   // tool / surplus. Persisted in the URL so a sort choice survives
   // reloads + shared links.
   rosterSort: "fv",
+  // Recently-Acquired list sort: date (default — newest first), name
+  // (A-Z), or fv (high-to-low). Click-routed via SORT_HEADER_MAP.
+  tradedSort: "date",
+  // Spotlights list sort: rank (default — backend bucket order), name,
+  // fv. Click-routed via SORT_HEADER_MAP.
+  spotlightSort: "rank",
+  // Player-detail Career Stats table sort: season (default — newest
+  // first), then league/team/g/avg/ops/era/whip/war. Click-routed.
+  careerSort: "season",
+  // Player-detail Per-Source FV table sort: source (default), then
+  // fv / date.
+  sourceFvSort: "source",
+  // Depth-chart (farm detail) sort: fv (default), age, eta.
+  depthSort: "fv",
   // Glossary state — active category filter + search query + per-load
   // term-to-scroll-to slug. Term-to-scroll-to clears after being
   // consumed once so a subsequent re-render doesn't re-scroll.
@@ -8940,6 +8991,23 @@ function renderSpotlights() {
   document.querySelectorAll("[data-spotlight-bucket]").forEach(b =>
     b.classList.toggle("active", b.dataset.spotlightBucket === bucket));
 
+  // Optional client-side sort over the bucket's pre-sorted rows.
+  // Default "rank" preserves the backend's bucket order; alternatives
+  // are name (A-Z), fv (high-to-low), and level (alphabetical).
+  // Applied before pagination so the sort spans pages, not just the
+  // visible window.
+  const spotMode = state.spotlightSort || "rank";
+  if (spotMode === "name") {
+    rowsData = rowsData.slice().sort((a, b) =>
+      (a.player_name || "").localeCompare(b.player_name || ""));
+  } else if (spotMode === "fv") {
+    rowsData = rowsData.slice().sort((a, b) =>
+      (Number(b.fv) || 0) - (Number(a.fv) || 0));
+  } else if (spotMode === "level") {
+    rowsData = rowsData.slice().sort((a, b) =>
+      (a.level || "").localeCompare(b.level || ""));
+  }
+
   const pageSize = state.pageSizes.spotlights || 25;
   const totalItems = rowsData.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -8963,11 +9031,12 @@ function renderSpotlights() {
 
   // v18 — Spotlight header titles align with the active-list header:
   // explicit "Rank" + "Consensus FV" labels instead of bare "#" / "FV".
+  // Rank / Player / FV / Level headers are click-sortable.
   const header = `<div class="spotlight-header">
-    <span style="text-align:center;" title="Spotlight rank within this bucket">Rank</span>
-    <span>Player · pos · org · age</span>
-    <span style="text-align:center;" title="Consensus Future Value">Consensus FV</span>
-    <span>Level · line</span>
+    <span class="sort-header" data-spotlight-sort="rank" style="text-align:center;" title="Sort by spotlight rank within this bucket (default)">Rank</span>
+    <span class="sort-header" data-spotlight-sort="name" title="Sort by player name (A-Z)">Player · pos · org · age</span>
+    <span class="sort-header" data-spotlight-sort="fv" style="text-align:center;" title="Sort by Consensus Future Value (high to low)">Consensus FV</span>
+    <span class="sort-header" data-spotlight-sort="level" title="Sort by level (A-Z)">Level · line</span>
     <span style="text-align:center;">FV history</span>
     <span>Drivers</span>
   </div>`;
@@ -9023,6 +9092,7 @@ function renderSpotlights() {
     : ageCapNote + (state.search
         ? `<div class="state-message">No ${escapeHtml(bucket)} spotlights match "${escapeHtml(state.search)}".</div>`
         : `<div class="state-message">No ${escapeHtml(bucket)} spotlights available from the current data.</div>`);
+  syncSortHeaderActive();
 }
 
 // Resolve a prospect's most-recent inbound acquisition into their
@@ -10150,14 +10220,15 @@ function renderInjured() {
   }
 
   // Sort. Default is days_asc — shortest current IL stints first, so
-  // the players closest to returning rise to the top. "days" is the
-  // legacy descending variant.
+  // the players closest to returning rise to the top. "days" + the
+  // newer "days_desc" both flip to longest-first (the latter is what
+  // the column-header asc/desc toggle emits).
   const mode = state.ilSort || "days_asc";
   if (mode === "fv") {
     filtered.sort((a, b) => (b.fv || 0) - (a.fv || 0) || (a.days - b.days));
   } else if (mode === "since") {
     filtered.sort((a, b) => (b.since || "").localeCompare(a.since || ""));
-  } else if (mode === "days") {
+  } else if (mode === "days" || mode === "days_desc") {
     // Longest stints first.
     filtered.sort((a, b) => (b.days - a.days) || (b.fv - a.fv));
   } else {
@@ -10166,13 +10237,16 @@ function renderInjured() {
   }
 
   // Grid columns live on `.col-header.is-injured` / `.player-row.is-injured`.
+  // Days / Since / FV headers are click-sortable; the active chip stays
+  // in sync via the shared SORT_HEADER_MAP routing. Days toggles between
+  // asc (shortest first) and desc (longest first) on repeat clicks.
   const header = `<div class="col-header is-injured">
     <span style="text-align:center;">#</span>
     <span>Player · pos · org</span>
     <span>IL type</span>
-    <span>Since</span>
-    <span style="text-align:right;">Days</span>
-    <span style="text-align:center;">FV</span>
+    <span class="sort-header" data-il-sort="since" title="Sort by IL placement date">Since</span>
+    <span class="sort-header" data-il-sort="days_asc" title="Sort by IL days — click to toggle asc/desc" style="text-align:right;">Days</span>
+    <span class="sort-header" data-il-sort="fv" title="Sort by FV (high to low)" style="text-align:center;">FV</span>
     <span>Reason</span>
   </div>`;
 
@@ -10208,6 +10282,7 @@ function renderInjured() {
     : (state.search
         ? `<div class="state-message">No injured prospects match "${escapeHtml(state.search)}".</div>`
         : `<div class="state-message">No tracked prospects are currently on the IL.</div>`);
+  syncSortHeaderActive();
 }
 
 function renderRecentlyTraded() {
@@ -10217,13 +10292,31 @@ function renderRecentlyTraded() {
   renderWhatsNew("whats-new-traded", kind => kind === "trade");
   const filtered = getFilteredAcquired();
 
+  // Client-side sort over the filtered list. Default "date" preserves
+  // the existing newest-first ordering from getFilteredAcquired().
+  const tradedMode = state.tradedSort || "date";
+  const _fvNum = (row) => {
+    const pts = (row.p && row.p.points) || [];
+    const last = pts[pts.length - 1];
+    return last ? (last.consensus_fv_raw ?? parseFloat(last.consensus_fv_label) ?? 0) : 0;
+  };
+  if (tradedMode === "name") {
+    filtered.sort((a, b) => (a.p.player_name || "").localeCompare(b.p.player_name || ""));
+  } else if (tradedMode === "fv") {
+    filtered.sort((a, b) => _fvNum(b) - _fvNum(a));
+  }
+  // "date" (default) leaves the upstream order intact — getFilteredAcquired
+  // already returns newest-first.
+
   // Grid columns live on `.col-header.is-traded` / `.player-row.is-traded`.
+  // Player / Acquisition date / FV headers are click-sortable via the
+  // shared SORT_HEADER_MAP routing.
   const header = `<div class="col-header is-traded">
     <span style="text-align:center;">#</span>
-    <span>Player · pos · org · age</span>
-    <span>Acquisition date</span>
+    <span class="sort-header" data-traded-sort="name" title="Sort by player name (A-Z)">Player · pos · org · age</span>
+    <span class="sort-header" data-traded-sort="date" title="Sort by acquisition date (newest first)">Acquisition date</span>
     <span>Method · context</span>
-    <span style="text-align:center;" title="Consensus Future Value · stock delta + direction below">FV · stock</span>
+    <span class="sort-header" data-traded-sort="fv" style="text-align:center;" title="Sort by Consensus Future Value (high to low) · stock delta + direction below">FV · stock</span>
     <span class="desktop-only" style="text-align:center;">FV history</span>
     <span class="desktop-only" style="text-align:center;" title="FV open/high/low/close for the current month, candlestick style">Candle</span>
   </div>`;
@@ -10297,6 +10390,7 @@ function renderRecentlyTraded() {
   document.getElementById("traded-rows").innerHTML = filtered.length
     ? header + rows
     : `<div class="state-message">No acquired prospects match these filters.</div>`;
+  syncSortHeaderActive();
 }
 
 // FanGraphs scouting-primer lower-bound WAR/yr by FV grade.
@@ -12619,15 +12713,17 @@ function renderGraduates() {
   };
 
   // Grid columns live on `.grad-header` / `.grad-row` in the CSS block.
+  // Graduation / FV / WAG headers are click-sortable; routes through
+  // SORT_HEADER_MAP and stays in sync with the chip dropdown.
   const header = `<div class="grad-header">
     <span style="text-align:center;">#</span>
     <span>Player · pos · org · age</span>
-    <span class="grad-graduation-cell">Graduation</span>
-    <span style="text-align:center;">FV</span>
-    <span class="desktop-only" style="text-align:center;" title="Per-season bars vs FV-implied baseline — green when the season's WAR exceeded their grade, red when it fell short. The full FV-trajectory chart lives on each graduate's detail page.">WAG by season</span>
+    <span class="grad-graduation-cell sort-header" data-grad-sort="date" title="Sort by graduation date (newest first)">Graduation</span>
+    <span class="sort-header" data-grad-sort="fv_close" title="Sort by FV at graduation (high to low)" style="text-align:center;">FV</span>
+    <span class="desktop-only sort-header" data-grad-sort="vs_fv_proj" title="Sort by WAG — WAR Above Grade · click to toggle high-to-low / low-to-high" style="text-align:center;">WAG by season</span>
     <span class="desktop-only" style="text-align:center;">Candle</span>
     <span class="grad-level-cell">Level</span>
-    <span>MLB stats</span>
+    <span class="sort-header" data-grad-sort="war" title="Sort by current-season fWAR (high to low)">MLB stats</span>
   </div>`;
 
   // Build the iteration order based on the active sort.
@@ -12901,6 +12997,7 @@ function renderGraduates() {
   document.getElementById("grad-rows").innerHTML = filtered.length
     ? banner + body
     : `<div class="state-message">No graduates match these filters.</div>`;
+  syncSortHeaderActive();
 }
 
 const SOURCE_LABELS = {
@@ -17867,8 +17964,71 @@ function makeCareerTable(career, birthDate) {
   }
   const isP = career[0].is_pitcher;
 
-  // Sort descending by season so the most recent year is up top.
-  const sorted = [...career].sort((a, b) => (b.season || 0) - (a.season || 0));
+  // Click-to-sort over career rows. Default "season" descending (most
+  // recent on top). Other modes pull a numeric field with a null sink
+  // so rows without that stat fall to the bottom regardless of direction.
+  // Repeat-click toggles via the universal handler's _asc / _desc
+  // suffix convention — see SORT_HEADER_MAP routing.
+  const sortMode = state.careerSort || "season";
+  const FIELD_BY_KEY = {
+    season: s => s.season,
+    age: s => {
+      if (!birthDate || s.season == null) return null;
+      const seasonMid = new Date(`${s.season}-07-01`).getTime();
+      const birthT = new Date(birthDate).getTime();
+      if (!isFinite(seasonMid) || !isFinite(birthT)) return null;
+      return (seasonMid - birthT);
+    },
+    level: s => s.level,
+    g:   s => s.games,
+    ip:  s => parseFloat(s.ip),
+    ab:  s => s.ab,
+    hr:  s => s.hr,
+    sb:  s => s.sb,
+    avg: s => parseFloat(s.avg),
+    obp: s => parseFloat(s.obp),
+    slg: s => parseFloat(s.slg),
+    ops: s => parseFloat(s.ops),
+    iso: s => (s.iso != null ? s.iso : (isFinite(parseFloat(s.slg)) && isFinite(parseFloat(s.avg)) ? parseFloat(s.slg) - parseFloat(s.avg) : null)),
+    bb_pct: s => s.bb_pct,
+    k_pct:  s => s.k_pct,
+    wins: s => s.wins,
+    era:  s => parseFloat(s.era),
+    whip: s => parseFloat(s.whip),
+    k9:   s => s.k_per_9,
+    bb9:  s => s.bb_per_9,
+    hr9:  s => s.hr_per_9,
+  };
+  const baseKey = sortMode.endsWith("_asc") ? sortMode.slice(0, -4)
+                : sortMode.endsWith("_desc") ? sortMode.slice(0, -5)
+                : sortMode;
+  // Most stats want descending by default ("best first"). ERA, WHIP, K%
+  // (for pitchers' BB%/HR-rate flavor), and BB/9 / HR/9 are "lower is
+  // better" — they get a flipped default direction. Season is also
+  // descending (newest first) which matches the prior behavior.
+  const LOWER_IS_BETTER = new Set(["era", "whip", "bb9", "hr9", "k_pct"]);
+  const defaultDesc = !(LOWER_IS_BETTER.has(baseKey));
+  const desc = sortMode.endsWith("_asc") ? false
+             : sortMode.endsWith("_desc") ? true
+             : defaultDesc;
+  const extract = FIELD_BY_KEY[baseKey] || FIELD_BY_KEY.season;
+  const sorted = [...career].sort((a, b) => {
+    const av = extract(a);
+    const bv = extract(b);
+    const aNull = av == null || (typeof av === "number" && isNaN(av));
+    const bNull = bv == null || (typeof bv === "number" && isNaN(bv));
+    if (aNull && bNull) return (b.season || 0) - (a.season || 0);
+    if (aNull) return 1;
+    if (bNull) return -1;
+    if (typeof av === "number" && typeof bv === "number") {
+      return desc ? (bv - av) : (av - bv);
+    }
+    return desc ? String(bv).localeCompare(String(av)) : String(av).localeCompare(String(bv));
+  });
+  const _sh = (key, label, attrs = "") => {
+    const isActive = baseKey === key;
+    return `<th class="sort-header${isActive ? " is-active" : ""}" data-career-sort="${key}" ${attrs}>${label}</th>`;
+  };
 
   // Age at July 1 of the season — matches the convention used by the
   // Stats-vs-level-mean benchmark section so all "age" displays agree.
@@ -17909,17 +18069,17 @@ function makeCareerTable(career, birthDate) {
       <th colspan="3" style="${stripStyle(PERIPH_COLOR)}">Peripherals</th>
     </tr>`;
     const head = `<tr>
-      <th>Season</th>
-      <th title="Age at July 1 of season">Age</th>
-      <th>Level</th>
-      <th title="Games appeared">G</th>
-      <th title="Innings pitched">IP</th>
-      <th title="Wins–Losses">W-L</th>
-      <th title="Earned Run Average">ERA</th>
-      <th title="Walks + Hits per Inning Pitched">WHIP</th>
-      <th title="Strikeouts per 9 innings">K/9</th>
-      <th title="Walks per 9 innings">BB/9</th>
-      <th title="Home runs allowed per 9 innings — pitcher's contact-quality red-flag stat (one of the three FIP inputs)">HR/9</th>
+      ${_sh("season", "Season")}
+      ${_sh("age", "Age", 'title="Age at July 1 of season"')}
+      ${_sh("level", "Level")}
+      ${_sh("g", "G", 'title="Games appeared"')}
+      ${_sh("ip", "IP", 'title="Innings pitched"')}
+      ${_sh("wins", "W-L", 'title="Wins–Losses (sorts by wins)"')}
+      ${_sh("era", "ERA", 'title="Earned Run Average (lower is better)"')}
+      ${_sh("whip", "WHIP", 'title="Walks + Hits per Inning Pitched (lower is better)"')}
+      ${_sh("k9", "K/9", 'title="Strikeouts per 9 innings"')}
+      ${_sh("bb9", "BB/9", 'title="Walks per 9 innings (lower is better)"')}
+      ${_sh("hr9", "HR/9", 'title="Home runs allowed per 9 innings — pitcher\'s contact-quality red-flag stat (one of the three FIP inputs); lower is better"')}
     </tr>`;
     const rows = sorted.map(s => `<tr>
       <td>${s.season}</td>
@@ -17952,20 +18112,20 @@ function makeCareerTable(career, birthDate) {
     <th colspan="2" style="${stripStyle(DISC_COLOR)}">Plate discipline</th>
   </tr>`;
   const head = `<tr>
-    <th>Season</th>
-    <th title="Age at July 1 of season">Age</th>
-    <th>Level</th>
-    <th title="Games">G</th>
-    <th title="At-Bats">AB</th>
-    <th title="Home Runs">HR</th>
-    <th title="Stolen Bases">SB</th>
-    <th title="Batting Average">AVG</th>
-    <th title="On-Base Percentage">OBP</th>
-    <th title="Slugging Percentage">SLG</th>
-    <th title="OBP + SLG">OPS</th>
-    <th title="Isolated power = SLG − AVG. Pure power signal — strips the batting-average contribution out of slugging.">ISO</th>
-    <th title="Walk rate">BB%</th>
-    <th title="Strikeout rate">K%</th>
+    ${_sh("season", "Season")}
+    ${_sh("age", "Age", 'title="Age at July 1 of season"')}
+    ${_sh("level", "Level")}
+    ${_sh("g", "G", 'title="Games"')}
+    ${_sh("ab", "AB", 'title="At-Bats"')}
+    ${_sh("hr", "HR", 'title="Home Runs"')}
+    ${_sh("sb", "SB", 'title="Stolen Bases"')}
+    ${_sh("avg", "AVG", 'title="Batting Average"')}
+    ${_sh("obp", "OBP", 'title="On-Base Percentage"')}
+    ${_sh("slg", "SLG", 'title="Slugging Percentage"')}
+    ${_sh("ops", "OPS", 'title="OBP + SLG"')}
+    ${_sh("iso", "ISO", 'title="Isolated power = SLG − AVG. Pure power signal — strips the batting-average contribution out of slugging."')}
+    ${_sh("bb_pct", "BB%", 'title="Walk rate"')}
+    ${_sh("k_pct", "K%", 'title="Strikeout rate (lower is better)"')}
   </tr>`;
   const isoCell = (s) => {
     // Prefer the precomputed ISO from the fetcher; recompute on the fly
@@ -18606,8 +18766,52 @@ function makePerSourceHistory(points) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No per-source breakdown available.</div>`;
   }
   const sortedSources = [...sources].sort();
-  const head = `<tr><th>Date</th><th>Update</th>${sortedSources.map(s => `<th>${escapeHtml(SOURCE_LABELS[s] || s)}</th>`).join("")}<th>Consensus</th></tr>`;
-  const body = points.map(pt => {
+
+  // Click-to-sort. Default "date" descending (newest snapshot first).
+  // "consensus" sorts by consensus FV; "src:<source>" sorts by that
+  // source's published FV with rows missing the source sinking. The
+  // SORT_HEADER_MAP routing handles _asc / _desc toggling.
+  const sortMode = state.sourceFvSort || "date";
+  const baseKey = sortMode.endsWith("_asc") ? sortMode.slice(0, -4)
+                : sortMode.endsWith("_desc") ? sortMode.slice(0, -5)
+                : sortMode;
+  // Date defaults descending (newest first). Other modes default
+  // descending too (high FV first) — every column is "more is better"
+  // on this table.
+  const desc = sortMode.endsWith("_asc") ? false
+             : sortMode.endsWith("_desc") ? true
+             : true;
+  const extract = (pt) => {
+    if (baseKey === "date") return pt.snapshot_date || "";
+    if (baseKey === "consensus") return parseFloat(pt.consensus_fv_label);
+    if (baseKey.startsWith("src:")) {
+      const src = baseKey.slice(4);
+      const d = (pt.per_source || {})[src];
+      return d ? d.fv_published : null;
+    }
+    if (baseKey === "update") return pt.interval_label || "";
+    return pt.snapshot_date || "";
+  };
+  const sortedPoints = [...points].sort((a, b) => {
+    const av = extract(a);
+    const bv = extract(b);
+    const aNull = av == null || (typeof av === "number" && isNaN(av));
+    const bNull = bv == null || (typeof bv === "number" && isNaN(bv));
+    if (aNull && bNull) return (b.snapshot_date || "").localeCompare(a.snapshot_date || "");
+    if (aNull) return 1;
+    if (bNull) return -1;
+    if (typeof av === "number" && typeof bv === "number") {
+      return desc ? (bv - av) : (av - bv);
+    }
+    return desc ? String(bv).localeCompare(String(av)) : String(av).localeCompare(String(bv));
+  });
+  const _sh = (key, label) => {
+    const isActive = baseKey === key;
+    return `<th class="sort-header${isActive ? " is-active" : ""}" data-source-fv-sort="${key}">${label}</th>`;
+  };
+
+  const head = `<tr>${_sh("date", "Date")}${_sh("update", "Update")}${sortedSources.map(s => _sh(`src:${s}`, escapeHtml(SOURCE_LABELS[s] || s))).join("")}${_sh("consensus", "Consensus")}</tr>`;
+  const body = sortedPoints.map(pt => {
     const perSrc = pt.per_source || {};
     return `<tr>
       <td>${pt.snapshot_date}</td>
@@ -21151,6 +21355,7 @@ function renderPlayerDetail(key) {
 
   const quickReadHtml = makeQuickReadSummary(p);
   root.innerHTML = header + quickReadHtml + tilesHtml + tabBar;
+  syncSortHeaderActive();
 }
 
 // ---------------------------------------------------------------------------
@@ -21685,9 +21890,9 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const rosterHeader = `<div class="col-header is-farm-roster">
     <span style="text-align:center;">#</span>
     <span>Player · current stats</span>
-    <span style="text-align:center;">FV</span>
-    <span style="text-align:center;">Rank</span>
-    <span style="text-align:center;" title="Estimated MLB arrival year">ETA</span>
+    <span class="sort-header" data-roster-sort="fv" title="Sort by consensus FV (high to low)" style="text-align:center;">FV</span>
+    <span class="sort-header" data-roster-sort="avg_rank" title="Sort by average rank across sources" style="text-align:center;">Rank</span>
+    <span class="sort-header" data-roster-sort="eta" title="Sort by estimated MLB arrival year (soonest first)" style="text-align:center;">ETA</span>
     <span style="text-align:center;">FV history</span>
     <span style="text-align:center;">Candle</span>
   </div>`;
@@ -22700,6 +22905,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   ];
   const tabBar = renderDetailTabs(tabs, state.farmTab, "farm");
   root.innerHTML = header + tilesHtml + tabBar;
+  syncSortHeaderActive();
 
   // Wire affiliate level tabs (vanilla — toggle visibility, no re-render).
   document.querySelectorAll("#farm-detail-body .level-tab").forEach(btn => {
@@ -24565,26 +24771,47 @@ function attachHandlers() {
   });
   // Column-click sort — delegated handler on the document so it picks up
   // .sort-header cells inside any current OR future-rendered col-header.
-  // Clicking the same header twice toggles asc/desc when the data-sort-key
-  // ends in _desc / _asc (the Ht/Wt/BMI headers do; FV / Rank / ETA do not).
+  // Routes through SORT_HEADER_MAP so every table with a data-*-sort
+  // attribute on its header spans (actives, farm, graduates, injured,
+  // farm-roster, spotlights, recently-acquired, depth-chart, career,
+  // per-source-fv) gets click-to-sort with no per-table wiring.
+  // Clicking the same header twice toggles asc/desc when the key ends
+  // in _desc / _asc (the Ht/Wt/BMI headers do; most others don't).
   document.addEventListener("click", (e) => {
-    const hdr = e.target.closest && e.target.closest(".sort-header[data-sort-key]");
-    if (!hdr) return;
-    const key = hdr.dataset.sortKey;
-    if (state.sort === key && key.endsWith("_desc")) {
-      state.sort = key.slice(0, -5) + "_asc";
-    } else if (state.sort === key && key.endsWith("_asc")) {
-      state.sort = key.slice(0, -4) + "_desc";
-    } else {
-      state.sort = key;
+    if (!e.target.closest) return;
+    for (const cfg of SORT_HEADER_MAP) {
+      const attr = cfg.datasetKey.replace(/[A-Z]/g, c => "-" + c.toLowerCase());
+      const hdr = e.target.closest(`.sort-header[data-${attr}]`);
+      if (!hdr) continue;
+      const key = hdr.dataset[cfg.datasetKey];
+      const cur = state[cfg.stateField];
+      if (cur === key && typeof key === "string" && key.endsWith("_desc")) {
+        state[cfg.stateField] = key.slice(0, -5) + "_asc";
+      } else if (cur === key && typeof key === "string" && key.endsWith("_asc")) {
+        state[cfg.stateField] = key.slice(0, -4) + "_desc";
+      } else {
+        state[cfg.stateField] = key;
+      }
+      // Mirror the actives-list change back into the sort dropdown so
+      // chip and header stay in sync. Only applies to the main sort.
+      if (cfg.stateField === "sort") {
+        const sortSel = document.getElementById("sort-select");
+        if (sortSel) sortSel.value = state.sort;
+      }
+      // Sync the chip-group active state if one exists for this family
+      // (e.g. clicking the IL Days header should also light up the
+      // "Days" chip in the il-sort chip row).
+      const chipAttr = `data-${attr}`;
+      document.querySelectorAll(`[${chipAttr}]`).forEach(b => {
+        if (!b.classList.contains("sort-header")) {
+          b.classList.toggle("active", b.getAttribute(chipAttr) === state[cfg.stateField]);
+        }
+      });
+      syncSortHeaderActive();
+      cfg.rerender();
+      syncToURL();
+      return;
     }
-    // Mirror into the sort dropdown so the chip and the header stay
-    // visually in sync.
-    const sortSel = document.getElementById("sort-select");
-    if (sortSel) sortSel.value = state.sort;
-    syncSortHeaderActive();
-    resetListPages();
-    render();
   });
   // Tool-grade filter — two selects (key + min threshold). Either changing
   // re-runs render(); the filter passes when toolFilterKey != "off" AND
