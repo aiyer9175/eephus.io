@@ -19,6 +19,169 @@ from statistics import mean
 
 
 TOP_N = 60
+MAX_DRIVERS_PER_CARD = 8   # v15 — was 4 (cycle 14)
+
+
+# v15 — Per-stat polarity table. "up_good" means the stat is better when it
+# goes UP (OPS, K% for pitchers, wRC+); "down_good" means better when it goes
+# DOWN (ERA, FIP-, K% for hitters, BB% for pitchers). Stats not listed default
+# to "up_good" since most numeric stats follow that convention.
+_STAT_POLARITY = {
+    # hitter rate stats — higher = better
+    "ops": "up_good", "ops_plus": "up_good", "wrc_plus": "up_good",
+    "iso": "up_good", "babip": "up_good", "avg": "up_good",
+    "obp": "up_good", "slg": "up_good", "hard_hit_pct": "up_good",
+    "barrel_pct": "up_good", "exit_velo": "up_good", "max_ev": "up_good",
+    "ev_90": "up_good", "ps_score": "up_good", "max_velo": "up_good",
+    "fb_velo": "up_good", "hr": "up_good", "sb": "up_good",
+    "bb_pct_hitter": "up_good",
+    # hitter rate stats — lower = better
+    "k_pct_hitter": "down_good", "whiff_pct_hitter": "down_good",
+    "chase_pct": "down_good",
+    # pitcher rate stats — higher = better
+    "k_pct_pitcher": "up_good", "whiff_pct_pitcher": "up_good",
+    "stf_plus": "up_good", "stf_plus_periph": "up_good",
+    "k_per_9": "up_good", "gb_pct": "up_good", "swstr_pct": "up_good",
+    # pitcher rate stats — lower = better
+    "era": "down_good", "era_minus": "down_good", "fip": "down_good",
+    "fip_minus": "down_good", "xfip": "down_good", "whip": "down_good",
+    "bb_pct_pitcher": "down_good", "bb_per_9": "down_good",
+    "hr_per_9": "down_good", "hard_hit_pct_allowed": "down_good",
+}
+
+
+def _stat_valence(stat_key: str, delta: float | None) -> str:
+    """Return "good" / "bad" / "neutral" based on the polarity table.
+    The polarity decides whether a positive delta is good or bad — e.g. a
+    pitcher's ERA going down (negative delta) is "good"."""
+    if delta is None or delta == 0:
+        return "neutral"
+    polarity = _STAT_POLARITY.get(stat_key, "up_good")
+    if polarity == "up_good":
+        return "good" if delta > 0 else "bad"
+    return "good" if delta < 0 else "bad"
+
+
+# v15 — back-compat parser for legacy string-shaped drivers. Walks the
+# label looking for known stat tokens and a directional verb (up/down) so
+# we can stamp a valence even without a full _mk_driver call. Keeps the
+# entire driver-emission codebase (50+ append sites) functional with a
+# single normalization step at the entry serialization layer.
+_DRIVER_TOKEN_POLARITY = {
+    # token (lowercased substring) -> stat polarity key
+    "ops":  "ops",
+    "wrc+": "wrc_plus",
+    "iso":  "iso",
+    "babip": "babip",
+    "exit velo": "exit_velo",
+    "max ev": "max_ev",
+    "ev_90": "ev_90", "90th ev": "ev_90",
+    "hard-hit": "hard_hit_pct",
+    "barrel": "barrel_pct",
+    "fastball": "fb_velo", "fb": "fb_velo",
+    "max velo": "max_velo",
+    "k/9": "k_per_9",
+    "bb/9": "bb_per_9",
+    "hr/9": "hr_per_9",
+    "era": "era",
+    "fip": "fip",
+    "whip": "whip",
+    "stf+": "stf_plus", "stf plus": "stf_plus", "pstuff+": "stf_plus_periph",
+}
+
+
+def _infer_polarity_key(label: str, *, is_pitcher_context: bool = False) -> str | None:
+    """Scan a driver label for known stat tokens; return polarity key."""
+    lc = label.lower()
+    for token, key in _DRIVER_TOKEN_POLARITY.items():
+        if token in lc:
+            return key
+    # K% / BB% — polarity depends on hitter vs pitcher context.
+    if "k%" in lc or "k pct" in lc:
+        return "k_pct_pitcher" if is_pitcher_context else "k_pct_hitter"
+    if "bb%" in lc or "bb pct" in lc:
+        return "bb_pct_pitcher" if is_pitcher_context else "bb_pct_hitter"
+    return None
+
+
+def _normalize_driver(d, *, is_pitcher_context: bool = False) -> dict:
+    """Accept either a string driver (legacy) or a dict driver (v15 native).
+    Return the canonical dict shape with label/direction/valence/tooltip."""
+    if isinstance(d, dict):
+        # Trust the caller's structure but fill in missing fields.
+        out = dict(d)
+        if "label" not in out:
+            out["label"] = str(out.get("stat") or "")
+        if "valence" not in out:
+            out["valence"] = _stat_valence(out.get("stat") or "", out.get("delta"))
+        if "tooltip" not in out:
+            out["tooltip"] = out["label"]
+        return out
+    # String driver — infer everything from the label.
+    label = str(d)
+    lc = label.lower()
+    polarity_key = _infer_polarity_key(label, is_pitcher_context=is_pitcher_context)
+    # Direction inferred from "up" / "down" verbs or sign of any embedded number.
+    direction: str | None = None
+    if " up " in lc or lc.endswith(" up"):
+        direction = "up"
+    elif " down " in lc or lc.endswith(" down"):
+        direction = "down"
+    valence = "neutral"
+    if direction and polarity_key:
+        # Treat "up" as a positive delta, "down" as negative for valence calc.
+        valence = _stat_valence(polarity_key, +1.0 if direction == "up" else -1.0)
+    return {
+        "label": label,
+        "stat": polarity_key,
+        "current": None,
+        "baseline": None,
+        "delta": None,
+        "baseline_label": None,
+        "direction": direction,
+        "valence": valence,
+        "tooltip": label,
+    }
+
+
+def _mk_driver(label: str, *, stat: str | None = None,
+               current: float | None = None, baseline: float | None = None,
+               delta: float | None = None,
+               baseline_label: str | None = None) -> dict:
+    """Build the v15 driver dict with valence + tooltip.
+
+    If `delta` is None and both `current`+`baseline` are given, derive it.
+    Tooltip surfaces current value, baseline value, and delta in compact form.
+    """
+    if delta is None and current is not None and baseline is not None:
+        delta = current - baseline
+    direction = None
+    if delta is not None and delta != 0:
+        direction = "up" if delta > 0 else "down"
+    valence = _stat_valence(stat or "", delta) if stat else "neutral"
+    tooltip_lines: list[str] = []
+    if current is not None:
+        tooltip_lines.append(f"Current: {current:.3f}".rstrip("0").rstrip(".")
+                             if abs(current) < 10 else f"Current: {current:.1f}")
+    if baseline is not None:
+        lbl = baseline_label or "baseline"
+        tooltip_lines.append(f"{lbl}: {baseline:.3f}".rstrip("0").rstrip(".")
+                             if abs(baseline) < 10 else f"{lbl}: {baseline:.1f}")
+    if delta is not None and delta != 0:
+        sign = "+" if delta > 0 else "−"
+        tooltip_lines.append(f"Δ: {sign}{abs(delta):.3f}".rstrip("0").rstrip(".")
+                             if abs(delta) < 10 else f"Δ: {sign}{abs(delta):.1f}")
+    return {
+        "label": label,
+        "stat": stat,
+        "current": current,
+        "baseline": baseline,
+        "delta": delta,
+        "baseline_label": baseline_label,
+        "direction": direction,
+        "valence": valence,
+        "tooltip": "\n".join(tooltip_lines) if tooltip_lines else label,
+    }
 
 
 def _num(v, default: float | None = None) -> float | None:
@@ -334,10 +497,17 @@ def _change_drivers(p: dict) -> list[str]:
     return drivers
 
 
-def _entry(bucket: str, p: dict, score: float, drivers: list[str]) -> dict:
+def _entry(bucket: str, p: dict, score: float, drivers: list) -> dict:
     sl = p.get("statline") or {}
     pts = p.get("points") or []
     latest = pts[-1] if pts else {}
+    # v15 — Normalize drivers (strings → dict) and cap at 8. The pitcher-vs-
+    # hitter context helps the K%/BB% polarity resolution: if the sl flags
+    # is_pitcher, K% UP is good (and BB% DOWN is good); for hitters it's
+    # inverted.
+    is_pitcher_ctx = bool(sl.get("is_pitcher"))
+    normalized = [_normalize_driver(d, is_pitcher_context=is_pitcher_ctx)
+                  for d in (drivers or [])]
     return {
         "bucket": bucket,
         "player_key": p.get("player_key"),
@@ -351,7 +521,7 @@ def _entry(bucket: str, p: dict, score: float, drivers: list[str]) -> dict:
         "score": round(score, 2),
         "why": "Breakout" if bucket == "hot" else "Rebound",
         "line": _line_text(sl),
-        "drivers": drivers[:4],
+        "drivers": normalized[:MAX_DRIVERS_PER_CARD],
     }
 
 
@@ -1228,13 +1398,18 @@ def compute_movement(p: dict) -> dict:
     drivers.extend(skills_drivers or [])
     drivers.extend(list_jump_drivers or [])
     drivers.extend(gate_drivers)
-    # Dedup while preserving order.
+    # Dedup while preserving order (strings still — dicts not yet wrapped).
     seen = set()
     drivers = [d for d in drivers if not (d in seen or seen.add(d))]
 
     pts = p.get("points") or []
     latest = pts[-1] if pts else {}
     prior_pt = pts[-2] if len(pts) >= 2 else latest
+    # v15 — Normalize to dict shape + bump cap to 8 (was 5).
+    sl_for_ctx = p.get("statline") or {}
+    is_pitcher_ctx = bool(sl_for_ctx.get("is_pitcher"))
+    normalized = [_normalize_driver(d, is_pitcher_context=is_pitcher_ctx)
+                  for d in drivers]
     return {
         "direction": _direction_from_delta(score),
         "delta": round(score, 2),
@@ -1244,7 +1419,7 @@ def compute_movement(p: dict) -> dict:
         "to_date":   latest.get("snapshot_date") or "",
         "perf_delta": round(perf, 3) if perf is not None else None,
         "skills_delta": round(skills, 2) if skills is not None else None,
-        "drivers": drivers[:5],
+        "drivers": normalized[:MAX_DRIVERS_PER_CARD],
         "bucket": bucket,
     }
 

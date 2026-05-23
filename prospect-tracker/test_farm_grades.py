@@ -130,7 +130,7 @@ class TestGradWagRate:
             "career_war": {"career_war": 4.0},
             "fv_close_raw": 50.0,
             "position": "SS",
-            "career_stats": [{"pa": 800}],
+            "career_stats": [{"level": "MLB", "pa": 800}],
         }
         v = _grad_wag(grad)
         assert v is not None and v > 1.0
@@ -142,7 +142,7 @@ class TestGradWagRate:
             "career_war": {"career_war": 6.0},
             "fv_close_raw": 60.0,
             "position": "SP",
-            "career_stats": [{"ip": 350}],
+            "career_stats": [{"level": "MLB", "ip": 350}],
         }
         v = _grad_wag(grad)
         assert v is not None
@@ -156,7 +156,7 @@ class TestGradWagRate:
             "career_war": {"career_war": 2.0},
             "fv_close_raw": 65.0,
             "position": "OF",
-            "career_stats": [{"pa": 800}],
+            "career_stats": [{"level": "MLB", "pa": 800}],
         }
         v = _grad_wag(grad)
         assert v is not None and v < -1.5
@@ -171,7 +171,7 @@ class TestGradWagRate:
             "career_war": {"career_war": 2.0},
             "fv_close_raw": 50.0,
             "position": "SS",
-            "career_stats": [{"pa": 100}],
+            "career_stats": [{"level": "MLB", "pa": 100}],
         }
         assert _grad_wag(grad) is None
 
@@ -182,7 +182,7 @@ class TestGradWagRate:
         # Bump to 32 WAR (5 MVP-tier seasons) → 6.53 full-season → +3.13 → BOOM.
         witt = {
             "career_war": {"career_war": 32.0, "war_seasons_count": 5},
-            "career_stats": [{"pa": 600}] * 5,
+            "career_stats": [{"level": "MLB", "pa": 600}] * 5,
             "fv_close_raw": 60.0,
             "position": "SS",
         }
@@ -196,7 +196,7 @@ class TestGradWagRate:
         # full-season = (4.6/510)*612 = 5.52, expected = 2.5, WAG ≈ +3.0.
         caminero = {
             "career_war": {"career_war": 4.6, "war_seasons_count": 1},
-            "career_stats": [{"pa": 510}],
+            "career_stats": [{"level": "MLB", "pa": 510}],
             "fv_close_raw": 55.0,
             "position": "3B",
         }

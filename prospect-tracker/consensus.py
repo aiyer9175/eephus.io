@@ -372,11 +372,21 @@ def compute_consensus_point(
             explicit_fvs.append(fv_for_consensus)
             contributing_sources.add(s.source)
         if s.rank is not None:
-            implied = implied_fv_from_rank(s.rank)
-            if implied is not None:
-                ranks.append(s.rank)
-                rank_implied_fvs.append(implied)
-                contributing_sources.add(s.source)
+            # v15 — Exclude team-Top-30-list ranks from the consensus
+            # avg_rank + rank-implied FV computations. Org-specific lists
+            # rank "best in this org" not "best overall," so a #1 on the
+            # Marlins list isn't comparable to a #1 on a global Top-100
+            # list — including those ranks pulled the avg_rank toward
+            # the org-list extremes and inflated rank_implied_fv for
+            # prospects appearing only on org Top-30s.
+            is_org_list = bool(s.interval_label
+                               and "_org_" in s.interval_label)
+            if not is_org_list:
+                implied = implied_fv_from_rank(s.rank)
+                if implied is not None:
+                    ranks.append(s.rank)
+                    rank_implied_fvs.append(implied)
+                    contributing_sources.add(s.source)
         if s.tools:
             for k, v in s.tools.items():
                 # `_extras` is a sibling metadata dict, not a tool grade —

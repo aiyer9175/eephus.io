@@ -87,7 +87,13 @@ class TestRosterStatusGraduationGates:
 
     def test_options_exhausted_with_debut_graduates(self):
         """Out of MiLB options + has debuted → the team has committed the
-        roster spot. Treat as graduated even with no AB/IP threshold hit."""
+        roster spot. Treat as graduated even with no AB/IP threshold hit.
+
+        v15 — the new active_days_threshold gate may fire first if the
+        player has accumulated >45 days on the active roster. Both gates
+        are valid "this player is graduated" signals; the test just
+        verifies that SOMETHING triggers (options is the legacy proxy
+        but the new days gate is more faithful to the MLB rule)."""
         txs = [
             self._select_contract_tx("2024-09-01"),
             self._option_tx("2024-05-05"),
@@ -99,7 +105,8 @@ class TestRosterStatusGraduationGates:
         rs = derive_roster_status(txs, career)
         assert rs["options_used"] == DEFAULT_OPTIONS
         assert rs["rookie_exhausted"] is True
-        assert rs["graduation_reason"] == "options_exhausted"
+        assert rs["graduation_reason"] in ("options_exhausted",
+                                           "active_days_threshold")
 
     def test_options_exhausted_without_debut_does_not_graduate(self):
         """A prospect with three option years but no MLB debut hasn't
@@ -167,6 +174,104 @@ class TestRosterStatusGraduationGates:
                    "ab": ROOKIE_AB_THRESHOLD + 50, "games": 80}]
         rs = derive_roster_status(txs, career)
         assert rs["graduation_reason"] == "ab_threshold"
+
+
+# ---------------------------------------------------------------------------
+# v15 — 45-day active-roster gate (official MLB rule, third OR-gate)
+# ---------------------------------------------------------------------------
+
+class TestActiveDaysGate:
+    def _activate(self, date_iso, verb="Recalled"):
+        return {"date": date_iso, "type_code": "ACT",
+                "description": f"{verb} from AAA"}
+
+    def _option(self, date_iso):
+        return {"date": date_iso, "type_code": "OPT",
+                "description": "Optioned to AAA"}
+
+    def _il(self, date_iso, kind="10-day"):
+        return {"date": date_iso, "type_code": "ILS",
+                "description": f"Placed on the {kind} IL"}
+
+    def _activate_il(self, date_iso):
+        return {"date": date_iso, "type_code": "ACT",
+                "description": "Activated from the 10-day IL"}
+
+    def _select(self, date_iso):
+        return {"date": date_iso, "type_code": "SE",
+                "description": "Selected the contract of Player"}
+
+    def test_45_day_active_roster_graduates(self):
+        """Player active for 60 days (no AB threshold hit) should graduate
+        via the new active_days_threshold gate."""
+        txs = [
+            self._select("2026-03-01"),  # Apr 1 → Apr 30 = 30 days, May 1 → end = ...
+            self._option("2026-05-30"),
+        ]
+        # 2026-03-01 → 2026-05-30 = 91 days, all before Sept 1 → counts
+        career = [{"season": 2026, "level": "MLB", "is_pitcher": False,
+                   "ab": 50, "games": 25}]
+        rs = derive_roster_status(txs, career)
+        assert rs["active_roster_days"] >= 45
+        assert rs["rookie_exhausted"] is True
+        assert rs["graduation_reason"] == "active_days_threshold"
+
+    def test_under_45_active_days_stays_active(self):
+        """30 active days, well below 45 → still a prospect."""
+        txs = [
+            self._select("2026-04-01"),
+            self._option("2026-04-29"),  # ~29 days active
+        ]
+        career = [{"season": 2026, "level": "MLB", "is_pitcher": False,
+                   "ab": 30, "games": 12}]
+        rs = derive_roster_status(txs, career)
+        assert rs["active_roster_days"] < 45
+        assert rs["graduation_reason"] is None
+
+    def test_il_days_excluded_from_45_day_count(self):
+        """A player who was active 20 days, then went on IL for 30 days,
+        then was activated for 15 more days has 35 active days (not 65)."""
+        txs = [
+            self._select("2026-04-01"),
+            self._il("2026-04-21"),               # 20 active days
+            self._activate_il("2026-05-21"),      # IL gap: 30 days (NOT counted)
+            self._option("2026-06-05"),           # +15 active days = 35 total
+        ]
+        career = [{"season": 2026, "level": "MLB", "is_pitcher": False,
+                   "ab": 50, "games": 25}]
+        rs = derive_roster_status(txs, career)
+        assert rs["active_roster_days"] < 45  # 20 + 15 = 35
+        assert rs["graduation_reason"] is None
+
+    def test_september_callup_excluded_from_45_day_count(self):
+        """Post-Sept-1 active days don't count (roster expansion). A player
+        called up Aug 15, on roster through end of season, has only 17 days
+        (Aug 15 → Sept 1) that count toward the gate."""
+        txs = [
+            self._select("2026-08-15"),
+            # Never optioned — currently active through end of year.
+        ]
+        career = [{"season": 2026, "level": "MLB", "is_pitcher": False,
+                   "ab": 60, "games": 30}]
+        # Mock today = end of season to simulate the rollover.
+        from datetime import date as _date
+        rs = derive_roster_status(txs, career, today=_date(2026, 10, 5))
+        # Aug 15 → Sept 1 = 18 days inclusive; everything after Sept 1 dropped.
+        assert rs["active_roster_days"] < 30
+        assert rs["graduation_reason"] is None
+
+    def test_active_days_requires_mlb_activity(self):
+        """Active-days gate doesn't fire without actual MLB activity —
+        a Rule 5 add who never played isn't a rookie burn."""
+        txs = [
+            self._select("2025-11-18"),  # Rule 5 protection
+            # Optioned next April but never played
+            self._option("2026-04-15"),
+        ]
+        # No MLB career row → has_mlb_activity is False
+        rs = derive_roster_status(txs, [])
+        # Even though active_days might exceed 45, no MLB activity → not graduated
+        assert rs["graduation_reason"] != "active_days_threshold"
 
 
 # ---------------------------------------------------------------------------

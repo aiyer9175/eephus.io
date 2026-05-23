@@ -885,13 +885,12 @@
        custom property is set inline per row by the render JS. */
     .col-header, .player-row {
       display: grid;
-      /* 10 cols: # | Player | FV (+stock under) | Rank | History | MiLB | Ht | Wt | BMI | ETA
-         Ht/Wt/BMI added as compact desktop-only mono cells. The candle
-         column is gone — OHLC surfaces via hover on the FV-history
-         sparkline. Reclaimed width split between MiLB and the three
-         physical cells. */
-      grid-template-columns: 32px 1.6fr 0.55fr 0.4fr 1.0fr 1.3fr 0.4fr 0.4fr 0.4fr 0.6fr;
-      gap: 10px;
+      /* v15 — 8 cols: # | Player | FV (+stock) | Rank | History | MiLB
+         | Phys cluster (Ht·Wt·BMI merged) | ETA. The candle column
+         is gone — OHLC surfaces via hover on the FV-history sparkline.
+         Standard density uses 16px col gap (was 10) for breathing room. */
+      grid-template-columns: 32px 1.6fr 0.55fr 0.4fr 1.0fr 1.3fr 0.85fr 0.6fr;
+      gap: 16px;
       align-items: center;
     }
     /* Compact mono cells for Ht/Wt/BMI. Tertiary-color text keeps
@@ -903,6 +902,23 @@
       color: var(--text-secondary);
       font-family: var(--font-mono);
       text-align: center;
+    }
+    /* v15 — Phys cluster: HT · WT · BMI merged into one cell with bullet
+       separators. Reduces column noise; the cluster header reads as
+       "Phys" with a hover tooltip explaining the three values. */
+    .phys-cluster {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .phys-cluster .phys-sep {
+      color: var(--text-tertiary);
+      opacity: 0.5;
     }
     .sort-header {
       cursor: pointer;
@@ -1408,20 +1424,28 @@
        prospect row is. Compact strips chart / milb / eta cells and
        shrinks the headshot; Expanded reveals a second meta line below
        the name with Savant micro-tile + flag detail. Standard = today. */
-    body.density-compact .player-row > .line-chart-cell,
-    body.density-compact .player-row > .milb-cell,
-    body.density-compact .player-row > .phys-cell,
-    body.density-compact .player-row > .eta-cell { display: none !important; }
-    /* Compact density v2 — tighter than the previous 36px headshot
-       baseline. Shrinks headshot to 28px, drops player-name to 12px
-       and meta to 10px, collapses row padding so a compact list reads
-       as a true lookup table. */
-    body.density-compact .player-row { padding-top: 4px; padding-bottom: 4px; }
+    /* v15 — Compact density now KEEPS every signal visible (FV history,
+       MiLB, physicals, ETA) but mini'd. The mini sparkline shrinks to
+       50×20 (was 200×56); the phys cluster, MiLB, and ETA fonts drop
+       to 9-10px; the headshot stays small at 28px; row padding 4/4.
+       Target: ~40px tall (was ~48px) with every signal present. */
+    body.density-compact .player-row { padding-top: 4px; padding-bottom: 4px; gap: 8px; }
     body.density-compact .player-row .headshot,
     body.density-compact .player-row .headshot-img,
     body.density-compact .player-row img.headshot { width: 28px !important; height: 28px !important; }
     body.density-compact .player-name { font-size: 12px; }
     body.density-compact .player-meta  { font-size: 10px; line-height: 1.2; }
+    /* Mini sparkline — replaces the full chart cell in compact mode. */
+    body.density-compact .line-chart-cell { width: 50px; max-width: 50px; }
+    body.density-compact .line-chart-cell svg { width: 50px !important; height: 20px !important; }
+    /* Tighter cells — phys, milb, eta all read smaller. */
+    body.density-compact .phys-cluster { font-size: 9px; gap: 3px; }
+    body.density-compact .milb-cell { font-size: 9.5px; line-height: 1.2; }
+    body.density-compact .eta-cell { font-size: 10px; }
+    /* Hide the row-summary stats line in compact (still on standard/expanded). */
+    body.density-compact .player-row-summary { display: none !important; }
+    /* Compact header column gap matches the row gap. */
+    body.density-compact .player-header { gap: 8px; }
 
     .player-row-expand {
       grid-column: 2 / -1;
@@ -1478,6 +1502,66 @@
       font-weight: 700;
       font-variant-numeric: tabular-nums;
     }
+    /* v15 — Expanded extras: FG writeup, career trail, per-source FVs. */
+    body.density-expanded .player-row .expand-writeup {
+      display: block;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      line-height: 1.45;
+      color: var(--text-secondary);
+      letter-spacing: 0;
+      padding: 4px 0;
+      max-width: 100%;
+    }
+    body.density-expanded .player-row .expand-writeup-source {
+      font-weight: 700;
+      color: var(--text-tertiary);
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    body.density-expanded .player-row .expand-writeup-more {
+      color: var(--neon-cyan);
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+    body.density-expanded .player-row .expand-writeup-more:hover { text-decoration: underline; }
+    body.density-expanded .player-row .expand-career-trail {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      padding: 2px 0;
+    }
+    body.density-expanded .player-row .expand-career-trail .trail-level {
+      color: var(--text-tertiary);
+      font-weight: 600;
+      margin: 0 4px;
+    }
+    body.density-expanded .player-row .expand-source-fvs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-tertiary);
+      padding: 2px 0;
+    }
+    body.density-expanded .player-row .expand-source-fv {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    body.density-expanded .player-row .expand-source-fv .src-name {
+      text-transform: capitalize;
+      color: var(--text-tertiary);
+    }
+    body.density-expanded .player-row .expand-source-fv .src-delta.is-pos { color: var(--up); font-weight: 700; }
+    body.density-expanded .player-row .expand-source-fv .src-delta.is-neg { color: var(--down); font-weight: 700; }
+    body.density-expanded .player-row .expand-source-fv .src-delta.is-neutral { color: var(--text-tertiary); }
 
     /* One-line auto-narrative under each list row's player name —
        absorbs the green/red flag content that used to render as a
@@ -1997,7 +2081,22 @@
       color: var(--text-secondary);
       letter-spacing: 0.02em;
       font-weight: 500;
+      cursor: help;
     }
+    /* v15 — driver valence coloring. Good = green, bad = red, neutral
+       inherits the base styling above. Tooltip surfaces the stat
+       breakdown (current / baseline / delta). */
+    .driver-tag.is-good {
+      background: rgba(31, 122, 58, 0.15);
+      color: var(--up);
+      border-color: var(--up);
+    }
+    .driver-tag.is-bad {
+      background: rgba(185, 28, 28, 0.12);
+      color: var(--down);
+      border-color: var(--down);
+    }
+    .driver-tag.is-neutral { /* inherits base */ }
 
     /* === Graduates ================================================
        8-column grid: # | Player | Graduation | FV | Trajectory chart |
@@ -6321,10 +6420,17 @@ function _inlineBadgeStrip(p, max = 3) {
   // Tools+ pill removed here — it lived twice (inline strip AND the
   // expanded-row footer). The expanded row owns it now; this strip
   // keeps the higher-signal pills (boom/bust, health, Savant, arsenal).
+  // v15 — Suppress the Savant inline pill in expanded mode since the
+  // expanded second-line Savant micro-tile already surfaces the same
+  // metrics (xwOBA / barrel% / whiff%). Keeps the inline strip from
+  // duplicating signals the expanded view owns.
+  const isExpanded = typeof document !== "undefined"
+    && document.body
+    && document.body.classList.contains("density-expanded");
   const builders = [
     typeof boomBustPillHTML       === "function" ? boomBustPillHTML       : null,
     typeof healthBadgeHTML        === "function" ? healthBadgeHTML        : null,
-    typeof savantInlinePillHTML   === "function" ? savantInlinePillHTML   : null,
+    (!isExpanded && typeof savantInlinePillHTML === "function") ? savantInlinePillHTML : null,
     typeof arsenalMiniHTML        === "function" ? arsenalMiniHTML        : null,
   ].filter(Boolean);
   const all = builders.map(fn => fn(p) || "").filter(Boolean);
@@ -6379,12 +6485,99 @@ function _toolGradeStripHTML(p) {
   return `<span class="expand-tools">${pills.join('')}</span>`;
 }
 
+// v15 — Pulls the FanGraphs prospect writeup (when available via the
+// lazy-loaded scout_reports sidecar) and truncates to ~3 lines for the
+// expanded row. Appends a "More →" link that navigates to the prospect
+// detail page anchored at the writeup section. Returns "" if no FG
+// writeup is on file.
+function expandedWriteupHTML(p) {
+  const reports = (typeof DATA !== "undefined" && DATA.scout_reports) || {};
+  const entry = reports[p.player_key];
+  const fg = entry && entry.fangraphs;
+  const writeup = fg && (fg.writeup || fg.report || fg.summary);
+  if (!writeup || typeof writeup !== "string") return "";
+  const TRUNC = 280;
+  let body = writeup.trim();
+  if (body.length > TRUNC) {
+    const cut = body.lastIndexOf(" ", TRUNC - 1);
+    body = body.slice(0, cut > 0 ? cut : TRUNC - 1).trimEnd() + "…";
+  }
+  return `<div class="expand-writeup" title="${escapeHtml(writeup)}">`
+       + `<span class="expand-writeup-source">FanGraphs:</span> `
+       + `${escapeHtml(body)} `
+       + `<a class="expand-writeup-more" href="#prospect/${escapeHtml(p.player_key)}/scouting" data-detail-key="${escapeHtml(p.player_key)}">More →</a>`
+       + `</div>`;
+}
+
+// v15 — Last 3 seasons of career stats stacked as a single row. Hitters
+// show season · level · PA · slash · wRC+; pitchers show season · level
+// · IP · ERA · K%. Renders "" when career_stats is empty.
+function expandedCareerTrailHTML(p) {
+  const rows = (p.career_stats || []).filter(Boolean);
+  if (!rows.length) return "";
+  // career_stats is typically newest-first; take the most recent 3.
+  const recent = rows.slice(0, 3);
+  const isPit = (p.sabermetrics || {}).is_pitcher
+              || ((p.statline || {}).is_pitcher);
+  const tiles = recent.map(r => {
+    const season = r.season || "—";
+    const level  = r.level || "—";
+    if (isPit) {
+      const ip   = r.ip   != null ? `${r.ip} IP`    : "";
+      const era  = r.era  != null ? `${r.era} ERA`  : "";
+      const kpct = r.k_pct != null ? `${r.k_pct}% K` : "";
+      return `<span class="expand-trail-cell"><b>${escapeHtml(String(season))}</b> <span class="trail-level">${escapeHtml(level)}</span> ${escapeHtml([ip, era, kpct].filter(Boolean).join(" · "))}</span>`;
+    }
+    const ab   = r.ab   != null ? `${r.ab} AB` : "";
+    const slash = (r.avg && r.obp && r.slg) ? `${r.avg}/${r.obp}/${r.slg}` : "";
+    const hr   = r.hr   != null ? `${r.hr} HR` : "";
+    return `<span class="expand-trail-cell"><b>${escapeHtml(String(season))}</b> <span class="trail-level">${escapeHtml(level)}</span> ${escapeHtml([ab, slash, hr].filter(Boolean).join(" · "))}</span>`;
+  });
+  return `<div class="expand-career-trail">${tiles.join("")}</div>`;
+}
+
+// v15 — Per-source FV mini-table: each source name + its current FV +
+// delta vs the consensus. Reads from the latest point's per_source dict.
+// Skips sources without a published FV. Color-codes delta by direction.
+function expandedPerSourceFvHTML(p) {
+  const pts = p.points || [];
+  if (!pts.length) return "";
+  const latest = pts[pts.length - 1];
+  const per = latest.per_source || {};
+  const consensus = latest.consensus_fv != null ? Number(latest.consensus_fv) : null;
+  const entries = [];
+  for (const [src, info] of Object.entries(per)) {
+    const fv = info && (info.fv_adjusted != null ? info.fv_adjusted : info.fv_published);
+    if (fv == null) continue;
+    const delta = consensus != null ? Math.round(Number(fv) - consensus) : null;
+    const deltaClass = delta == null || delta === 0 ? "is-neutral"
+                     : delta > 0 ? "is-pos" : "is-neg";
+    const deltaStr = delta == null || delta === 0 ? "="
+                   : (delta > 0 ? `+${delta}` : `${delta}`);
+    const srcLbl = src.replace(/_/g, " ").replace(/\bmlb\b/i, "MLB");
+    entries.push(`<span class="expand-source-fv"><span class="src-name">${escapeHtml(srcLbl)}</span> <b>${Math.round(Number(fv))}</b> <span class="src-delta ${deltaClass}">${escapeHtml(deltaStr)}</span></span>`);
+  }
+  if (!entries.length) return "";
+  return `<div class="expand-source-fvs">${entries.join("")}</div>`;
+}
+
+
 function playerExpandedMetaHTML(p) {
   const parts = [];
+  // v15 — FG writeup (when available) at the top of the expanded block.
+  // First because it's the highest-context signal for a prospect.
+  const writeup = expandedWriteupHTML(p);
+  if (writeup) parts.push(writeup);
   // Per-tool 20-80 grade pills — primary signal we want surfaced on
   // expanded rows since the inline strip no longer carries Tools+.
   const toolStrip = _toolGradeStripHTML(p);
   if (toolStrip) parts.push(toolStrip);
+  // v15 — Last 3 seasons career trail.
+  const careerTrail = expandedCareerTrailHTML(p);
+  if (careerTrail) parts.push(careerTrail);
+  // v15 — Per-source FV breakdown.
+  const sourceFvs = expandedPerSourceFvHTML(p);
+  if (sourceFvs) parts.push(sourceFvs);
   // Flag content moved into the always-visible row summary (see
   // `makeListRowSummary`). The expanded-meta row now only carries
   // Savant tiles unique to expanded density.
@@ -8102,9 +8295,7 @@ function renderActives() {
     <span class="sort-header" style="text-align:center;" data-sort-key="avg_rank" title="Average rank across sources · click to sort">Rank</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline — hover for OHLC open / high / low / close">FV history</span>
     <span class="desktop-only">MiLB · age vs. level</span>
-    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="ht_desc" title="Height (from FanGraphs) · click to sort tallest first; click again for shortest">Ht</span>
-    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="wt_desc" title="Weight in lbs (from FanGraphs) · click to sort heaviest first; click again for lightest">Wt</span>
-    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="BMI calculated from Ht/Wt · click to sort highest first; click again for lowest">BMI</span>
+    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="Physical: Height · Weight · BMI (from FanGraphs). Click to sort by BMI highest first; click again for lowest.">Ht · Wt · BMI</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
   </div>`;
 
@@ -8121,10 +8312,10 @@ function renderActives() {
       <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
         <div class="rank-num">${rankOffset + i + 1}</div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-          ${headshotHTML(p, 50)}
+          ${headshotHTML(p, 56)}
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
-            ${playerMetaHTML(p)}<span class="mobile-only-pill">${rpsPlusPillHTML(p)}</span>
+            ${playerMetaHTML(p)}
             ${makeListRowSummary(p)}
           </div>
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
@@ -8135,21 +8326,7 @@ function renderActives() {
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
         <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${lazyLineChartHTML(p)}</div>
         ${makeMilbCell(p)}
-        ${(() => {
-          // Ht / Wt / BMI cells — pulled from the latest FG snapshot's
-          // _extras via _getPhysicalProfile. Shows em dashes when FG hasn't
-          // published a height or weight for this prospect.
-          const phys = _getPhysicalProfile(p);
-          const ht  = phys.height_display
-                      || (phys.height_in
-                          ? `${Math.floor(phys.height_in/12)}'${phys.height_in%12}"`
-                          : "—");
-          const wt  = phys.weight_lb != null ? String(Math.round(phys.weight_lb)) : "—";
-          const bmi = phys.bmi != null ? phys.bmi.toFixed(1) : "—";
-          return `<div class="phys-cell desktop-only">${escapeHtml(ht)}</div>
-                  <div class="phys-cell desktop-only">${escapeHtml(wt)}</div>
-                  <div class="phys-cell desktop-only">${escapeHtml(bmi)}</div>`;
-        })()}
+        ${physClusterHTML(p)}
         ${makeEtaCell(p)}
         ${playerExpandedMetaHTML(p)}
       </div>
@@ -8239,7 +8416,18 @@ function renderSpotlights() {
       <div style="text-align:center;"><span class="fv-badge ${fvClass(s.fv || "40")}">${escapeHtml(s.fv ?? "—")}</span></div>
       <div class="milb-cell"><span class="level-pill level-neutral">${escapeHtml(s.level ?? "—")}</span>${escapeHtml(s.line ?? "—")}</div>
       <div class="stock-cell stock-up" style="text-align:left;">${Number(s.score || 0).toFixed(1)}</div>
-      <div class="driver-list">${(s.drivers || []).map(d => `<span class="driver-tag">${escapeHtml(d)}</span>`).join("")}</div>
+      <div class="driver-list">${(s.drivers || []).map(d => {
+        // v15 — drivers are dicts {label, valence, tooltip}; legacy
+        // string drivers fall back to neutral coloring.
+        if (typeof d === "string") {
+          return `<span class="driver-tag" title="${escapeHtml(d)}">${escapeHtml(d)}</span>`;
+        }
+        const valenceClass = d.valence === "good" ? "is-good"
+                          : d.valence === "bad"  ? "is-bad"
+                          : "is-neutral";
+        const tip = d.tooltip || d.label || "";
+        return `<span class="driver-tag ${valenceClass}" title="${escapeHtml(tip)}">${escapeHtml(d.label || "")}</span>`;
+      }).join("")}</div>
     </div>
   `;}).join("");
 
@@ -9435,7 +9623,12 @@ function renderRecentlyTraded() {
       // nested .event fields when only those are populated (legacy payloads).
       const _fromOrg = acq.from_org ?? acq.event?.from_org ?? "?";
       const _toOrg = acq.to_org ?? acq.event?.to_org ?? "?";
-      const headLine = `<span style="color:var(--text-tertiary);">${escapeHtml(_fromOrg)}</span> <span style="color:var(--neon-violet);">→</span> <span style="color:var(--text-primary);">${escapeHtml(_toOrg)}</span>`;
+      // v15 — 20px logo before each abbreviation. Logos load from ESPN CDN
+      // via teamLogoHTML; fall back to a styled abbreviation chip if the
+      // image fails. Keeps the "BOS → WSN" text affordance for scanning.
+      const _fromLogo = _fromOrg !== "?" ? teamLogoHTML(_fromOrg, "sm", _fromOrg) : "";
+      const _toLogo   = _toOrg   !== "?" ? teamLogoHTML(_toOrg,   "sm", _toOrg)   : "";
+      const headLine = `<span style="color:var(--text-tertiary);display:inline-flex;align-items:center;gap:4px;">${_fromLogo}${escapeHtml(_fromOrg)}</span> <span style="color:var(--neon-violet);">→</span> <span style="color:var(--text-primary);display:inline-flex;align-items:center;gap:4px;">${_toLogo}${escapeHtml(_toOrg)}</span>`;
       const desc = (acq.description || "").trim();
       const TRUNC = 90;
       const subLine = desc
@@ -10017,10 +10210,13 @@ async function renderDraft() {
     return;
   }
 
-  // Pick the current class. Defaults to the most recent (first in the list,
-  // since classes are emitted year-DESC by draft_export.py).
+  // v15 — Prefer 2026 as the default landing year (most actively-scouted
+  // class). Falls back to the most recent available class if 2026 isn't
+  // in the export (e.g. mid-February before the next draft data lands).
+  const PREFERRED_DRAFT_YEAR = 2026;
   if (!state.draftYear || !classes.find(c => c.year === state.draftYear)) {
-    state.draftYear = classes[0].year;
+    const preferred = classes.find(c => c.year === PREFERRED_DRAFT_YEAR);
+    state.draftYear = preferred ? preferred.year : classes[0].year;
   }
   if (!state.draftView) state.draftView = "rankings";
 
@@ -11959,6 +12155,30 @@ function _computeBmi(heightInches, weightLb) {
 
 // Pull (height_in, weight_lb, bmi, height_display) from the most
 // recent FG snapshot's _extras blob, or all-null when not available.
+// v15 — Renders the merged HT · WT · BMI cluster cell. Replaces the
+// three separate .phys-cell divs from prior versions. Shows em dashes
+// for individual missing fields; the cluster itself always renders so
+// the grid column doesn't collapse. Used by the standard / expanded
+// density row renderers. Compact density has its own minified version.
+function physClusterHTML(p) {
+  const phys = _getPhysicalProfile(p);
+  const ht  = phys.height_display
+              || (phys.height_in
+                  ? `${Math.floor(phys.height_in/12)}'${phys.height_in%12}"`
+                  : "—");
+  const wt  = phys.weight_lb != null ? String(Math.round(phys.weight_lb)) : "—";
+  const bmi = phys.bmi != null ? phys.bmi.toFixed(1) : "—";
+  const tip = `Height: ${ht} · Weight: ${wt} lbs · BMI: ${bmi}`;
+  return `<div class="phys-cluster desktop-only" title="${escapeHtml(tip)}">`
+       + `<span>${escapeHtml(ht)}</span>`
+       + `<span class="phys-sep">·</span>`
+       + `<span>${escapeHtml(wt)}</span>`
+       + `<span class="phys-sep">·</span>`
+       + `<span>${escapeHtml(bmi)}</span>`
+       + `</div>`;
+}
+
+
 function _getPhysicalProfile(p) {
   const pts = (p && p.points) || [];
   for (let i = pts.length - 1; i >= 0; i--) {
@@ -12120,9 +12340,9 @@ const GLOSSARY = {
   "breakout_indicator": {
     name: "Breakout Indicator", aliases: ["Breakout", "★ mark"], category: "custom-index",
     priority: 14,
-    short: "Rare active-prospect flag: tool/FV velocity AND strong performance gate over the trailing 6 months / 4 source updates.",
-    long: "v14 — An active prospect flags as Breakout when BOTH of the following hold over the window max(last 6 months, last 4 source updates): (a) consensus FV upgraded by ≥ +5 grade points OR mean tool-grade composite improved by ≥ +3; AND (b) a strong performance gate fires — RPS+ ≥ 120 (hitters), OR Peripheral Stuff+ ≥ 105 or FIP- ≤ 90 (pitchers). Designed to surface ~10-40 prospects league-wide — rare but not impossible. The badge gets a green pulsing ★ mark with a tooltip explaining which signal fired and which performance gate passed.",
-    formula: "breakout = (fv_upgrade ≥ +5 OR tool_velocity ≥ +3) AND perf_gate_pass",
+    short: "Rare active-prospect flag: tool/FV velocity AND strong performance gate, with an age cap.",
+    long: "An active prospect flags as Breakout when ALL of the following hold over the window max(last 6 months, last 4 source updates): (a) consensus FV upgraded by ≥ +5 grade points OR mean tool-grade composite improved by ≥ +3; (b) a strong performance gate fires — hitters: RPS+ ≥ 110 or wRC+ ≥ 130; pitchers: Peripheral Stuff+ ≥ 105 or FIP- ≤ 90; (c) v15 age cap — position players and SPs through age 24; relievers (RP / MIRP / SIRP / CL) through age 25 (relievers peak earlier in their development arc, so an aging-relief hot stretch shouldn't read as a prospect breakout). Designed to surface ~10-40 prospects league-wide — rare but not impossible. The badge gets a green pulsing ★ mark with a tooltip explaining which signal fired and which gate passed.",
+    formula: "breakout = (fv_upgrade ≥ +5 OR tool_velocity ≥ +3)\n         AND perf_gate_pass\n         AND (age ≤ 24 starters/hitters, age ≤ 25 relievers)",
     related: ["tools_dvm_plus", "fv", "rps_plus"],
   },
   "rps_plus": {
@@ -12254,6 +12474,15 @@ const GLOSSARY = {
     related: ["sirp", "rp", "sp", "fv"],
   },
   // ---- Scouting ----
+  "graduation": {
+    name: "Graduation", aliases: ["Graduation", "Rookie Eligibility", "Prospect Status"],
+    category: "definition",
+    priority: 2,
+    short: "A prospect loses rookie eligibility (graduates) when ANY of three thresholds fire.",
+    long: "Per MLB's official rookie-eligibility rule (https://www.mlb.com/glossary/rules/rookie-eligibility), a player is no longer a rookie once they cross any of: (1) more than 130 career MLB at-bats (hitters), (2) more than 50 career MLB innings pitched (pitchers), (3) more than 45 days on the active MLB roster excluding IL time and excluding post-September-1 days (roster expansion). The site applies all three gates as an OR; the field `graduation_reason` reports which one fired first. The 45-day active-roster count is estimated from the public transactions log — IL placements end an active segment and reinstatements re-open one; post-Sept-1 days are clipped at the season cap. As a backstop, players who exhaust all 3 MiLB options AND have debuted in MLB also graduate (a no-options player can't be sent down without clearing waivers, so the team has effectively committed the roster spot).",
+    formula: "graduates if ANY:\n  career_ab > 130\n  career_ip > 50\n  active_roster_days > 45 (excl. IL, post-Sept-1)\n  options_exhausted AND debuted",
+    related: ["fv", "wag", "boom_bust_label"],
+  },
   "fv": {
     name: "FV", aliases: ["FV", "Future Value", "Consensus FV"], category: "scouting",
     priority: 1,

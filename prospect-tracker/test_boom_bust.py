@@ -32,7 +32,7 @@ class V14WAGFormula(unittest.TestCase):
             "fv_close_raw": fv,
             "fv_close":     fv,
             "position":     position,
-            "career_stats": [{"pa": pa, "ip": ip}],
+            "career_stats": [{"level": "MLB", "pa": pa, "ip": ip}],
         }
 
     def test_caminero_shape_positive_wag(self):
@@ -69,7 +69,7 @@ class V14BoomBustThresholds(unittest.TestCase):
             "fv_close_raw": fv,
             "fv_close":     fv,
             "position":     position,
-            "career_stats": [{"pa": pa, "ip": ip}],
+            "career_stats": [{"level": "MLB", "pa": pa, "ip": ip}],
         }
 
     def test_clear_boom(self):

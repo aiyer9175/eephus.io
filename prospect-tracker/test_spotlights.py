@@ -157,7 +157,9 @@ def test_back_of_top100_to_middle_top100_can_rebound():
     out = build_spotlights([p], [])
     names = [x["player_name"] for x in out["rebounders"]]
     assert "Ethan Salas" in names
-    assert any("rank up" in d for d in out["rebounders"][0]["drivers"])
+    # v15 — drivers now dicts with .label, not raw strings.
+    assert any("rank up" in (d.get("label") if isinstance(d, dict) else str(d))
+               for d in out["rebounders"][0]["drivers"])
 
 
 def test_age_25_plus_player_is_not_rebounder():

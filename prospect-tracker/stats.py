@@ -2149,19 +2149,130 @@ def derive_transactions(transactions: list[dict]) -> list[dict]:
 # "options remaining" on each prospect card.
 # ---------------------------------------------------------------------------
 
-# Rookie-status exhaustion thresholds (current MLB rules):
-#   - Position players: 130 MLB at-bats
-#   - Pitchers: 50 MLB innings pitched
-# A player who crosses either threshold loses rookie eligibility and is
-# considered "graduated" by every consensus prospect-tracking source.
+# Rookie-status exhaustion thresholds (current MLB rules per
+# https://www.mlb.com/glossary/rules/rookie-eligibility):
+#   - Position players: more than 130 MLB at-bats
+#   - Pitchers: more than 50 MLB innings pitched
+#   - Either: more than 45 days on the active MLB roster, EXCLUDING days
+#     on the IL and EXCLUDING days after September 1 (rosters expand).
+# A player who crosses ANY of these loses rookie eligibility.
 ROOKIE_AB_THRESHOLD = 130
 ROOKIE_IP_THRESHOLD = 50.0
+ROOKIE_ACTIVE_DAYS_THRESHOLD = 45   # v15 — official third rule
 
 # Standard MLB option allotment. Players added to a 40-man get three
 # option YEARS — distinct seasons in which they spend >20 days on an
 # optional MiLB assignment. A small subset of players get a fourth
 # option granted; we don't try to detect that case automatically.
 DEFAULT_OPTIONS = 3
+
+
+# v15 — Transaction descriptors that move a player ONTO the active MLB
+# roster. We treat each as the START of an "active" segment.
+_ACTIVATING_DESCRIPTORS = (
+    "selected the contract",
+    "purchased the contract",
+    "recalled",
+    "reinstated",
+    "activated",
+)
+# Transaction descriptors that move a player OFF the active MLB roster.
+# Each ENDS an "active" segment.
+_DEACTIVATING_DESCRIPTORS = (
+    "optioned",
+    "sent outright",
+    "designated for assignment",
+    "placed on the 10-day il",
+    "placed on the 15-day il",
+    "placed on the 60-day il",
+    "placed on the injured list",
+    "released",
+    "traded",            # ends segment with current org; new org's add starts a fresh one
+    "claimed off waivers",
+    "removed from the 40-man",
+    "elected free agency",
+    "suspended",
+    "retired",
+)
+
+
+def _count_active_roster_days(transactions: list[dict],
+                              today: date | None = None) -> int:
+    """Estimate days a player has been on the active MLB roster, summed
+    across all stints, EXCLUDING days on the injured list and EXCLUDING
+    any days after Sept 1 of each season (active-roster expansion).
+
+    Walks transactions chronologically. Maintains a simple state machine
+    with an "active_since" date that gets set on activating events and
+    accumulated-then-cleared on deactivating events. If a player is
+    currently active (last event activated them) we accumulate through
+    today's date.
+
+    Heuristic and imperfect, but captures the spirit of the official
+    rookie-eligibility rule for the common case. Cup-of-coffee callups
+    that bounce in and out across IL stints are handled correctly; the
+    main gap is players whose transactions log doesn't reflect a real
+    activation event (rare since the API exposes SE / Active codes).
+    """
+    today = today or date.today()
+    rows: list[tuple[str, str, str]] = []  # (date, kind, lowercased description)
+    for tx in transactions or []:
+        d_iso = (tx.get("date") or "").strip()
+        if not d_iso:
+            continue
+        desc = (tx.get("description") or "").lower()
+        kind: str | None = None
+        if any(p in desc for p in _ACTIVATING_DESCRIPTORS):
+            kind = "activate"
+        elif any(p in desc for p in _DEACTIVATING_DESCRIPTORS):
+            kind = "deactivate"
+        if kind is None:
+            continue
+        rows.append((d_iso, kind, desc))
+    rows.sort(key=lambda r: r[0])
+
+    total_days = 0
+    active_since: date | None = None
+
+    def _clip_to_window(start: date, end: date) -> int:
+        """Return the number of days in [start, end] that fall ON or BEFORE
+        Sept 1 of each year (excluding the post-expansion window)."""
+        if end < start:
+            return 0
+        days = 0
+        cursor = start
+        while cursor <= end:
+            year = cursor.year
+            season_cap = date(year, 9, 1)
+            if cursor > season_cap:
+                # Jump to Jan 1 of next year (skip the post-expansion days)
+                next_jan = date(year + 1, 1, 1)
+                if next_jan > end:
+                    break
+                cursor = next_jan
+                continue
+            # Add days from cursor up to min(end, season_cap), then jump past
+            segment_end = min(end, season_cap)
+            days += (segment_end - cursor).days + 1
+            cursor = segment_end + (date(year, 9, 2) - segment_end)
+        return days
+
+    for d_iso, kind, _desc in rows:
+        try:
+            d = date.fromisoformat(d_iso[:10])
+        except (ValueError, TypeError):
+            continue
+        if kind == "activate":
+            if active_since is None:
+                active_since = d
+        else:  # deactivate
+            if active_since is not None:
+                total_days += _clip_to_window(active_since, d)
+                active_since = None
+    # If the player is currently on the active roster, accumulate through today.
+    if active_since is not None:
+        total_days += _clip_to_window(active_since, today)
+    return total_days
 
 
 def derive_roster_status(transactions: list[dict],
@@ -2288,20 +2399,25 @@ def derive_roster_status(transactions: list[dict],
         debut_date = None
 
     # Rookie / prospect status is lost when the player crosses any of:
-    #   * 130 career MLB at-bats         (hitters)
-    #   * 50  career MLB innings pitched (pitchers)
-    #   * has burned all minor-league options AND has at least debuted
-    #     in MLB — a player with no options left can't be sent down
-    #     without clearing waivers, so the team has effectively committed
-    #     the roster spot. The 45-day active-roster MLB rule from the
-    #     official rookie definition isn't tractable via the public API,
-    #     so options-exhaustion is the practical proxy.
+    #   * 130 career MLB at-bats          (hitters)
+    #   * 50  career MLB innings pitched  (pitchers)
+    #   * 45 days on the active MLB roster excluding IL + post-Sept-1
+    #     (v15 — third official gate from MLB rookie-eligibility rule)
+    #   * has burned all minor-league options AND has at least debuted in
+    #     MLB — a player with no options left can't be sent down without
+    #     clearing waivers, so the team has effectively committed the
+    #     roster spot. Kept as a backstop proxy for the 45-day rule when
+    #     the transactions log is incomplete.
     options_exhausted = (len(options_seasons) >= DEFAULT_OPTIONS
                          and debut_date is not None)
+    # v15 — Active-roster day count from transactions.
+    active_roster_days = _count_active_roster_days(transactions or [], today)
     if mlb_ab_total > ROOKIE_AB_THRESHOLD:
         graduation_reason: str | None = "ab_threshold"
     elif mlb_ip_total > ROOKIE_IP_THRESHOLD:
         graduation_reason = "ip_threshold"
+    elif active_roster_days > ROOKIE_ACTIVE_DAYS_THRESHOLD and has_mlb_activity:
+        graduation_reason = "active_days_threshold"
     elif options_exhausted:
         graduation_reason = "options_exhausted"
     else:
@@ -2327,18 +2443,19 @@ def derive_roster_status(transactions: list[dict],
     options_remaining = max(0, DEFAULT_OPTIONS - options_used)
 
     return {
-        "mlb_debut_date":     debut_date,
-        "on_40_man":          bool(on_40_man),
-        "options_used":       options_used,
-        "options_used_years": sorted(options_seasons),
-        "options_remaining":  options_remaining,
-        "mlb_seasons":        mlb_seasons,
-        "career_mlb_ab":      mlb_ab_total,
-        "career_mlb_ip":      round(mlb_ip_total, 1),
-        "rookie_exhausted":   bool(rookie_exhausted),
-        "graduation_reason":  graduation_reason,
-        "service_phase":      service_phase,
-        "injury_history":     derive_injury_history(transactions or []),
+        "mlb_debut_date":         debut_date,
+        "on_40_man":              bool(on_40_man),
+        "options_used":           options_used,
+        "options_used_years":     sorted(options_seasons),
+        "options_remaining":      options_remaining,
+        "mlb_seasons":            mlb_seasons,
+        "career_mlb_ab":          mlb_ab_total,
+        "career_mlb_ip":          round(mlb_ip_total, 1),
+        "active_roster_days":     int(active_roster_days),    # v15 — third rookie gate
+        "rookie_exhausted":       bool(rookie_exhausted),
+        "graduation_reason":      graduation_reason,
+        "service_phase":          service_phase,
+        "injury_history":         derive_injury_history(transactions or []),
     }
 
 

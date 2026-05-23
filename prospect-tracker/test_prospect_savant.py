@@ -64,5 +64,8 @@ def test_underlying_metrics_push_surface_miss_into_hot_and_rebounder():
     out = build_spotlights([player], [])
     assert [x["player_name"] for x in out["hot"]] == ["George Lombard Jr."]
     assert [x["player_name"] for x in out["rebounders"]] == ["George Lombard Jr."]
-    assert "104.5 mph 90th EV" in out["hot"][0]["drivers"]
-    assert all("PS Score" not in d for d in out["hot"][0]["drivers"])
+    # v15 — drivers are dicts with .label; check the labels.
+    driver_labels = [d.get("label") if isinstance(d, dict) else str(d)
+                     for d in out["hot"][0]["drivers"]]
+    assert "104.5 mph 90th EV" in driver_labels
+    assert all("PS Score" not in d for d in driver_labels)

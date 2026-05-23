@@ -469,9 +469,22 @@ _BREAKOUT_WINDOW_DAYS = 180          # 6 months
 _BREAKOUT_WINDOW_MIN_UPDATES = 4     # at least 4 consensus points
 _BREAKOUT_FV_UPGRADE_THRESHOLD = 5.0
 _BREAKOUT_TOOL_VELOCITY_THRESHOLD = 3.0  # avg tool grade improvement
-_BREAKOUT_HITTER_RPS_PLUS_GATE = 120
+# v15 — Loosen hitter RPS+ gate from 120 → 110 (was producing zero hitter
+# breakouts league-wide). 110 ≈ 1 stdev above cohort mean; still exclusive
+# but allows truly-emerging bats through. Also accept a strong wRC+ proxy
+# for graduated-statline hitters (≥130 wRC+).
+_BREAKOUT_HITTER_RPS_PLUS_GATE = 110
+_BREAKOUT_HITTER_WRC_PLUS_GATE = 130
 _BREAKOUT_PITCHER_STF_PLUS_GATE = 105
 _BREAKOUT_PITCHER_FIP_MINUS_GATE = 90
+# v15 — Age caps. Breakouts are forward-looking signals; aging relievers
+# putting up a hot 90-day stretch aren't really "breaking out" in the
+# prospect-development sense. Caps below align with typical prospect-window
+# age boundaries: SP / position-player prospects through age 24; relievers
+# (RP / MIRP / SIRP / CL) through age 25 since they typically peak younger.
+_BREAKOUT_MAX_AGE_STARTER = 24.0
+_BREAKOUT_MAX_AGE_RELIEVER = 25.0
+_BREAKOUT_RELIEVER_POSITIONS = {"RP", "MIRP", "SIRP", "CL", "CP"}
 
 
 def _compute_breakout_flag(payload: dict) -> dict | None:
@@ -496,6 +509,19 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
     points = payload.get("points") or []
     if len(points) < _BREAKOUT_WINDOW_MIN_UPDATES:
         return None
+    # v15 — Age cap: position players + SPs through 24; relievers (RP /
+    # MIRP / SIRP / CL) through 25. Aging-relief hot-streak players
+    # aren't "prospect breakouts" in the development sense.
+    try:
+        age = float(payload.get("age")) if payload.get("age") is not None else None
+    except (TypeError, ValueError):
+        age = None
+    if age is not None:
+        pos_head = (payload.get("position") or "").split("/")[0].upper().strip()
+        is_reliever = pos_head in _BREAKOUT_RELIEVER_POSITIONS
+        cap = _BREAKOUT_MAX_AGE_RELIEVER if is_reliever else _BREAKOUT_MAX_AGE_STARTER
+        if age > cap:
+            return None
     # Window start = the older of (today - 180d, the 4th-most-recent point's
     # date). Both shrinking points yield "the older anchor wins."
     try:
@@ -566,6 +592,16 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
             perf_gate_passed = "rps_plus"
     except (TypeError, ValueError):
         pass
+
+    # v15 — wRC+ alternative for hitters (graduates / MLB-experienced
+    # prospects who carry wRC+ in sabermetrics rather than RPS+).
+    if perf_gate_passed is None:
+        wrc = saberm.get("wrc_plus")
+        try:
+            if wrc is not None and float(wrc) >= _BREAKOUT_HITTER_WRC_PLUS_GATE:
+                perf_gate_passed = "wrc_plus"
+        except (TypeError, ValueError):
+            pass
 
     if perf_gate_passed is None:
         stf = statline.get("stf_plus_periph")
@@ -2650,16 +2686,37 @@ def _is_pitcher_graduate(graduate_payload: dict) -> bool:
 
 
 def _career_pa_ip(graduate_payload: dict) -> tuple[int, float]:
-    """Sum career_stats rows for total PA + IP. Used by the WAG sample
-    floor + the full-season-rate denominator."""
+    """Sum career_stats rows for total MLB PA + IP.
+
+    v15 — Restricts to MLB-level rows only (was: all levels, which
+    inflated the denominator and broke per-graduate WAG calc for orgs
+    whose grads have lots of MiLB time). Also falls back to AB×1.13
+    (typical PA:AB ratio) when PA is missing — the public stats payload
+    sometimes ships AB without PA, especially for graduate exports.
+    Used by both the WAG sample floor and the full-season-rate denom.
+    """
     rows = graduate_payload.get("career_stats") or []
     total_pa = 0
     total_ip = 0.0
     for s in rows:
+        # Only MLB rows count toward the MLB-rate-based WAG.
+        if s.get("level") != "MLB":
+            continue
         try:
-            total_pa += int(s.get("pa") or 0)
+            pa = int(s.get("pa") or 0)
         except (TypeError, ValueError):
-            pass
+            pa = 0
+        if pa == 0:
+            # Fall back to AB × ~1.13 (league-wide PA:AB ratio is ~1.135 —
+            # walks + HBP + sacrifices push PA above AB). Better than
+            # dropping the row entirely when PA isn't on file.
+            try:
+                ab = int(s.get("ab") or 0)
+            except (TypeError, ValueError):
+                ab = 0
+            if ab > 0:
+                pa = int(round(ab * 1.13))
+        total_pa += pa
         try:
             total_ip += float(s.get("ip") or 0)
         except (TypeError, ValueError):
@@ -2701,22 +2758,44 @@ def _grad_wag(graduate_payload: dict) -> float | None:
     is_pitcher = _is_pitcher_graduate(graduate_payload)
     total_pa, total_ip = _career_pa_ip(graduate_payload)
 
+    # v15 — When the MLB PA/IP denominator is below the sample floor (e.g.
+    # because the public stats payload didn't surface PA for this graduate,
+    # or because the player has only a partial cup-of-coffee), fall back to
+    # the cached `war_per_yr` rate. That field uses the same WAR pool and
+    # the per-graduate season count, so it produces a clean rate-based
+    # comparison. The fallback still gates on having war_per_yr available.
+    war_per_yr = None
+    try:
+        if cw.get("war_per_yr") is not None:
+            war_per_yr = float(cw.get("war_per_yr"))
+    except (TypeError, ValueError):
+        war_per_yr = None
+
+    full_season_war: float | None = None
     if is_pitcher:
-        if total_ip < 50.0:
-            return None
         role = _pitcher_role(graduate_payload)
         target = _ROLE_BASELINES.get(f"{role}_ip_target",
                                      _ROLE_BASELINES["mirp_ip_target"])
         if target <= 0:
             return None
-        full_season_war = (career_war / total_ip) * target
+        if total_ip >= 50.0:
+            full_season_war = (career_war / total_ip) * target
+        elif war_per_yr is not None:
+            # Pitcher full-season fallback: use war_per_yr as the projected
+            # season rate. (Equivalent to treating one rate-season as a
+            # full-target-IP season.)
+            full_season_war = war_per_yr
     else:
-        if total_pa < 150:
-            return None
         target = _ROLE_BASELINES.get("hitter_pa_target", 612.0)
         if target <= 0:
             return None
-        full_season_war = (career_war / total_pa) * target
+        if total_pa >= 150:
+            full_season_war = (career_war / total_pa) * target
+        elif war_per_yr is not None:
+            full_season_war = war_per_yr
+
+    if full_season_war is None:
+        return None
 
     expected = _fv_to_expected_war_per_yr(fv_close, is_pitcher=is_pitcher)
     if expected is None:
@@ -5472,9 +5551,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
         # v4 — top-end / financial lists.
         # Top-3 grad list: only grads that clear the boom_bust sample
-        # floor (≥800 PA / ≥200 IP / ≥2 MLB seasons). career_war + war/yr
-        # carry through so the leaf can pick max-N.
-        if boom_label in {"boom", "bust", "settled"} and career_war_val is not None:
+        # v15 — Relax the gate. Previously required boom/bust/settled label
+        # (which itself requires 800 PA / 200 IP / 2 seasons floor — most
+        # recent graduates won't clear that). Now any graduate with a
+        # populated career_war qualifies for _top_grads; the leaf still
+        # gates on ≥3 grads to produce a meaningful top-3 statistic.
+        if career_war_val is not None:
             yval = cw.get("war_per_yr")
             seasons = cw.get("war_seasons_count") or 0
             # Find last MLB year for Conviction's 6-year recency window.
