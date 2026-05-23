@@ -7,6 +7,7 @@ Schema is append-only for snapshots; stat lines are upserted monthly.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from contextlib import contextmanager
 from dataclasses import asdict
@@ -3102,6 +3103,94 @@ def _compute_ifa_roi(gagg: dict, ifa_org_spending: dict) -> dict:
     }
 
 
+# v18 — FV-implied 6yr surplus value table ($M). Mirrors the frontend
+# SURPLUS_VALUE_MM at index.html:10100 so backend and UI agree on the
+# per-FV cost-controlled surplus estimate. Anchored to the FanGraphs /
+# Craig Edwards 2019 framework (hitters carry more than pitchers at
+# equal FV because pitchers face higher injury / role-conversion risk).
+_SURPLUS_VALUE_MM_HITTER  = {80: 200, 75: 130, 70: 80, 65: 50, 60: 35,
+                             55: 20,  50: 10,  45: 5,  40: 2,  35: 1}
+_SURPLUS_VALUE_MM_PITCHER = {80: 100, 75: 80,  70: 55, 65: 35, 60: 25,
+                             55: 12,  50: 7,   45: 4,  40: 1.5, 35: 1}
+
+# Position multipliers — up-the-middle defenders carry a premium, bat-
+# only positions / fungible relievers carry a discount. Mirrors
+# SURPLUS_POSITION_MULT at index.html:10112.
+_SURPLUS_POSITION_MULT = {
+    "C":    1.05, "SS":   1.10, "2B":   1.00, "3B":   0.95,
+    "1B":   0.90, "CF":   1.05, "LF":   0.95, "RF":   0.95,
+    "OF":   0.97, "DH":   0.85,
+    "SP":   1.00, "RHP":  1.00, "LHP":  1.00,
+    "RP":   0.70, "MIRP": 0.85, "SIRP": 0.75,
+}
+
+_PITCHER_POS_RE = re.compile(r"^(RHP|LHP|SP|RP|MIRP|SIRP|P)")
+
+
+def _estimate_surplus_mm(fv: float | None, is_pitcher: bool,
+                          position: str | None = None) -> float | None:
+    """FV → estimated 6yr cost-controlled surplus value in $M.
+
+    Linear-interpolated between the 5-grade anchors above; clamped to
+    $0.5M below FV 35, capped at the elite-tier value above FV 80.
+    Multiplied by the position-scarcity factor (1.0 default).
+    """
+    if fv is None:
+        return None
+    try:
+        fv_f = float(fv)
+    except (TypeError, ValueError):
+        return None
+    table = _SURPLUS_VALUE_MM_PITCHER if is_pitcher else _SURPLUS_VALUE_MM_HITTER
+    if fv_f >= 80:
+        base = table[80]
+    elif fv_f <= 35:
+        base = 0.5
+    else:
+        lo = int(fv_f // 5) * 5
+        hi = lo + 5
+        t = (fv_f - lo) / 5.0
+        base = table[lo] * (1 - t) + table[hi] * t
+    mult = 1.0
+    if position:
+        primary = str(position).split("/")[0].strip().upper()
+        mult = _SURPLUS_POSITION_MULT.get(primary, 1.0)
+    return round(base * mult, 1)
+
+
+def _finalize_active_surplus_leaf(m: dict) -> dict:
+    """v18 — New financial leaf: sum of FV-implied surplus value across
+    the org's active prospects (graduates excluded — they belong to the
+    existing fin_contract_surplus / mlb_production_* family) minus the
+    amortized acquisition bonus paid. Spreads the bonus over the 6yr
+    cost-controlled window so a $5M signing bonus reads as ~$0.83M/yr
+    of cost. Result = surplus_total_mm, surplus_per_prospect_mm, and a
+    contributor count so a Cleveland-style depth org doesn't look the
+    same as a top-loaded LAD without per-head normalization. Gates at
+    ≥5 contributing actives so a tiny system doesn't anchor on a single
+    70-FV signing.
+
+    Reads the per-org `_active_surplus_*` accumulators populated in the
+    per-prospect loop (see the build_org_summary main pass).
+    """
+    n = m.get("_active_surplus_count") or 0
+    total_surplus = m.get("_active_surplus_net_mm") or 0.0
+    cost_basis = m.get("_active_surplus_cost_mm") or 0.0
+    if n < 5:
+        return {
+            "surplus_total_mm":        None,
+            "surplus_per_prospect_mm": None,
+            "active_count":            n,
+            "cost_basis_mm":           round(cost_basis, 1) if n else None,
+        }
+    return {
+        "surplus_total_mm":        round(total_surplus, 1),
+        "surplus_per_prospect_mm": round(total_surplus / n, 2),
+        "active_count":            n,
+        "cost_basis_mm":           round(cost_basis, 1),
+    }
+
+
 # REMOVED 2026-05: `_compute_breakout_score` was an active-prospect
 # composite that conflated "rising" with "high-FV" and rendered as a
 # vague BREAKOUT pill. Replaced by the WAG-anchored BOOM / BUST graduate
@@ -5423,6 +5512,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # sub-input (50/50 z-blend with pick-slot-adjusted WAR).
                 "_draft_actives_count": 0,
                 "_draft_ceiling_hits":  0,
+                # v18 — Active-surplus accumulators feeding the new
+                # `fin_active_surplus` leaf. _net = sum of (FV-implied
+                # 6yr surplus $M) − (acquisition bonus $M, NOT amortized
+                # since we want full cost basis vs the full window
+                # surplus). _cost tracks the bonus dollars alone for
+                # tooltip / debug.
+                "_active_surplus_net_mm":  0.0,
+                "_active_surplus_cost_mm": 0.0,
+                "_active_surplus_count":   0,
             }
         m = org_map[org]
         m["prospects"].append({
@@ -5501,6 +5599,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             y = acq_rec.get("year")
             if y is not None:
                 m["_ifa_years"].append(y)
+        # v18 — Active-surplus contribution. Each active prospect's
+        # FV-implied 6yr surplus value ($M) minus their acquisition
+        # bonus (full amount, since the 6yr surplus is the gross figure).
+        # Feeds the new fin_active_surplus leaf. Skip players without a
+        # usable FV or position (the table requires both).
+        _surplus_mm = _estimate_surplus_mm(fv_raw, is_pitcher_p, p.position)
+        if _surplus_mm is not None:
+            _bonus_mm = (float(acq_rec.get("bonus_usd") or 0) / 1_000_000.0)
+            m["_active_surplus_net_mm"]  += (_surplus_mm - _bonus_mm)
+            m["_active_surplus_cost_mm"] += _bonus_mm
+            m["_active_surplus_count"]   += 1
         # Tree v3 — Draft Ceiling Hits: count drafted actives whose
         # current consensus FV ≥ 60 and whose draft year is within the
         # last 3 years. Captures whether the org's recent draft classes
@@ -6009,6 +6118,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 gagg, draft_pools, org),
             "fin_ifa_roi": _compute_ifa_roi(
                 gagg, ifa_spending_by_org.get(org) or {}),
+            # v18 — Active-surplus leaf. Sum of FV-implied 6yr surplus
+            # value across the org's actives, minus the acquisition
+            # bonus paid. Surfaces orgs whose current crop projects to
+            # generate more cost-controlled WAR than they spent.
+            "fin_active_surplus": _finalize_active_surplus_leaf(m),
         }
 
         # v17 — Back-compat aliases for the rename. Old code paths that
@@ -6691,9 +6805,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             ("six_y_dvm_b", lambda e: (e.get("dvm_plus") or {}).get("6y")),
             ("dvm_plus", lambda e: (e["tree"]["dev_pitcher"] or {}).get("dvm_plus")),
         ],
-        # Financial — single-input each
+        # Financial — single-input each (v18 + active-surplus leaf below)
         "fin_war_per_m":        [("war_per_m", lambda e: (e["tree"]["fin_war_per_m"]        or {}).get("value"))],
         "fin_contract_surplus": [("surplus",   lambda e: (e["tree"]["fin_contract_surplus"] or {}).get("mean_usd_per_yr"))],
+        # v18 — Active-surplus: per-prospect normalized so big-system
+        # orgs don't auto-win on raw aggregate (they DO win on raw
+        # totals, but per-prospect surfaces "this org's actives are
+        # net-profitable signings" as a distinct signal from "this org
+        # has lots of actives"). Falls back to the raw total if per-
+        # prospect is None and total is present (transitional cases).
+        "fin_active_surplus": [
+            ("per_prospect", lambda e: (e["tree"]["fin_active_surplus"] or {}).get("surplus_per_prospect_mm")),
+        ],
         # MLB Production — v17: renamed mlb_hitter_wag/mlb_pitcher_wag
         # leaves to mlb_hitter_production/mlb_pitcher_production. Primary
         # surfaced stat is WAR/yr (was WAG); WAG moves to a separate
@@ -6786,7 +6909,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     TREE_PARENTS = {
         "acquisition_strategy": ["acq_ifa", "acq_draft", "tx_trades", "tx_waivers"],
         "development":          ["dev_hitter", "dev_pitcher"],
+        # v18 — Financial now carries fin_active_surplus alongside the
+        # existing leaves. fin_contract_surplus measures graduates'
+        # realized contract surplus; fin_active_surplus measures the
+        # current actives' EXPECTED surplus net of acquisition cost.
+        # Together they cover the full pipeline rather than only the
+        # historical grad side.
         "financial":            ["fin_war_per_m", "fin_contract_surplus",
+                                  "fin_active_surplus",
                                   "fin_draft_pool_efficiency", "fin_ifa_roi"],
         "mlb_production":       ["mlb_hitter_production",   # v17 renamed (was mlb_hitter_wag)
                                   "mlb_pitcher_production",  # v17 renamed (was mlb_pitcher_wag)
@@ -6830,31 +6960,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # the DvM+-style 100-anchored scale (each branch z-rescaled to
         # mean=100 across the 30 orgs).
         entry["farm_score"] = _stretch_composite(round(composite, 1))
-        entry["conviction_cap_applied"] = False
         # Back-compat: legacy field names (acquisitions_score,
         # transactions_score) resolve to the merged Acquisition Strategy
         # value so any UI reading the old keys still gets a number.
         entry["acquisitions_score"] = entry.get("acquisition_strategy_score")
         entry["transactions_score"] = entry.get("acquisition_strategy_score")
 
-    # ── v4 Conviction cap ──
-    # Orgs without a star-tier grad (conviction=0) cap at the 75th-pctile
-    # farm_score across all orgs. They can still grade A in depth or
-    # acquisition strategy — they just can't claim the elite-overall
-    # tier without a star ceiling. Frontend reads
-    # `conviction_cap_applied` to show a tooltip ("No star-tier grad in
-    # last 6y — capped at 75th-percentile farm score").
-    scores = [e["farm_score"] for e in org_summary
-              if e.get("farm_score") is not None]
-    if scores:
-        cap = sorted(scores)[int(len(scores) * 0.75)]
-        for entry in org_summary:
-            conv = ((entry["tree"].get("mlb_production_conviction") or {})
-                    .get("conviction"))
-            if conv == 0 and entry["farm_score"] is not None and entry["farm_score"] > cap:
-                entry["farm_score_uncapped"] = entry["farm_score"]
-                entry["farm_score"] = cap
-                entry["conviction_cap_applied"] = True
+    # v18 — Conviction cap removed. The 75th-percentile farm_score cap
+    # for orgs without a star-tier graduate in the last 6 years was a
+    # hard ceiling that punished young, talent-loaded systems for not
+    # yet having a star MLB return. The conviction leaf itself still
+    # contributes to the parent rollup (it's just one of the
+    # MLB-Production sub-grades now), so the signal isn't lost — but
+    # the orgs aren't artificially clamped to the upper-quartile mark.
+    # (Was: clamped farm_score to sorted[p75] when conviction==0 +
+    # farm_score>cap, and wrote farm_score_uncapped + conviction_cap_applied.)
 
     # Letter grades for the 11 leaves + 5 main + composite (17 total).
     # Sparse-data leaves get "—"; sparse parents and composite always grade
@@ -6875,28 +6995,50 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     composite_rank = _rank_list([e["farm_score"] for e in org_summary])
 
     n_orgs_tree = len(org_summary)
+    # v18 — Sparse / missing subgrades render as a neutral "C" (the
+    # average-tier letter) instead of "—". The dash communicated
+    # "we don't have data" but read as "missing/broken" to most users;
+    # defaulting to C preserves that the org is unmeasured-on-this-leaf
+    # without leaving a literal gap in the tree visualization. Each
+    # sparse leaf also gets a `sparse: true` marker on entry["grades_sparse"]
+    # so any future tooltip / UI can dim or annotate the C accordingly.
+    _SPARSE_FALLBACK = "C"
     for i, entry in enumerate(org_summary):
         # Update entry["grades"] with the v3 tree grades. Existing legacy
         # grades stay so the report-card glossary references still resolve.
         g = entry.get("grades") or {}
+        gs = entry.get("grades_sparse") or {}
         # 4 main grades + back-compat aliases for the old 5-branch names
         for parent in TREE_PARENTS:
             r = parent_ranks[parent][i]
             present_n = sum(1 for x in parent_ranks[parent] if x is not None)
-            g[parent] = _letter_grade(r, present_n) if r is not None else "—"
+            if r is not None:
+                g[parent] = _letter_grade(r, present_n)
+            else:
+                g[parent] = _SPARSE_FALLBACK
+                gs[parent] = True
         # Back-compat: legacy keys still readable by old UI code paths.
-        g["acquisitions"] = g.get("acquisition_strategy", "—")
-        g["transactions"] = g.get("acquisition_strategy", "—")
+        g["acquisitions"] = g.get("acquisition_strategy", _SPARSE_FALLBACK)
+        g["transactions"] = g.get("acquisition_strategy", _SPARSE_FALLBACK)
         # 10 sub-grades — keyed identically to leaf_raw
         for k in leaf_raw:
             r = leaf_ranks[k][i]
             present_n = sum(1 for x in leaf_ranks[k] if x is not None)
-            g[k] = _letter_grade(r, present_n) if r is not None else "—"
+            if r is not None:
+                g[k] = _letter_grade(r, present_n)
+            else:
+                g[k] = _SPARSE_FALLBACK
+                gs[k] = True
         # Composite (overwrites the legacy `overall` letter so the
         # displayed grade matches the displayed farm_score).
         r = composite_rank[i]
-        g["overall"] = _letter_grade(r, n_orgs_tree) if r is not None else "—"
+        if r is not None:
+            g["overall"] = _letter_grade(r, n_orgs_tree)
+        else:
+            g["overall"] = _SPARSE_FALLBACK
+            gs["overall"] = True
         entry["grades"] = g
+        entry["grades_sparse"] = gs
         # Also stamp the ranks so the UI can read off them directly.
         cr = entry.get("component_ranks") or {}
         for parent in TREE_PARENTS:

@@ -37,19 +37,22 @@ from datetime import date
 
 
 # ── Base years remaining by current level ──────────────────────────────────
-# Calibrated to approximate median time from each level to MLB debut based on
-# common scout / front-office rules of thumb.  Expressed in fractional years.
+# v18 — widened the per-level gaps so the proximity signal materially
+# dominates the ±0.75y perf/age/FV adjustments. Previously a AAA prospect
+# was only 3.0y closer to MLB than a Single-A prospect; one good performance
+# season at A could easily collapse the rest of the gap. The new spacing
+# leaves a 4.5y AAA→A gap, so level dominates as the user expects.
 # CPX absorbs what used to be the generic "Rk" bucket — those leagues are
 # the same thing post-2021 — and DSL stays separate because foreign-rookie
 # prospects average a longer development arc.
 BASE_YEARS: dict[str, float] = {
     "MLB": 0.0,
     "AAA": 0.5,
-    "AA":  1.5,
-    "A+":  2.5,
-    "A":   3.5,
-    "CPX": 4.8,
-    "DSL": 5.5,
+    "AA":  2.0,
+    "A+":  3.5,
+    "A":   5.0,
+    "CPX": 6.5,
+    "DSL": 7.5,
 }
 
 # ── Static fallback expected ages — only used when the caller does not

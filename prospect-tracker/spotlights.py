@@ -111,6 +111,70 @@ def _infer_polarity_key(label: str, *, is_pitcher_context: bool = False) -> str 
     return None
 
 
+# v18 — Intrinsic-polarity table for narrative drivers (no numeric delta,
+# no up/down verb, but the phrase itself carries clear positive/negative
+# meaning). Without this, legacy string drivers like "first-round pedigree"
+# or "major skills decline" fall through to neutral → yellow chip. Match by
+# lowercase substring so the embedded round number / FV / level doesn't
+# break the lookup. Order is irrelevant since we just return on first hit.
+_INTRINSIC_DRIVER_POLARITY: dict[str, str] = {
+    # — positive narratives (drivers.append sites in this file) —
+    "first-round pedigree":          "good",
+    "top-100 pick pedigree":         "good",
+    "draft pedigree":                "good",
+    "international signing pedigree": "good",
+    "high-fv pedigree":              "good",
+    "m bonus":                       "good",   # "$5.5M bonus", "$1.2M bonus"
+    "x-metrics verified":            "good",
+    "young for level":               "good",
+    "continuing high performance":   "good",
+    "continuing strong arm":         "good",
+    "pedigree comeback":             "good",
+    "rank jump":                     "good",
+    "rank up":                       "good",
+    "repeating level + improving":   "good",
+    "vs level mean":                 "good",   # signed-by-direction; positive default — overridden below for "-" prefix
+    # — negative narratives —
+    "major skills decline":          "bad",
+    "underlying data weak":          "bad",
+    "limited runway":                "bad",
+    "regressed while repeating":     "bad",
+    "skills broken":                 "bad",
+    "high-fv decline":               "bad",
+    "unsupported by x-metrics":      "bad",
+    "sub-aaa prospect":              "neutral",  # informational, not a leaning
+    "mlb seasons":                   "neutral",  # informational
+    "mlb games":                     "neutral",  # informational
+    "milb":                          "neutral",  # historical stat citation
+}
+
+
+def _infer_intrinsic_polarity(label: str) -> str | None:
+    """Match a narrative driver label to an intrinsic valence. Returns
+    None when the label doesn't match a known phrase (caller falls back
+    to direction/polarity inference). Handles the "+X% vs level mean"
+    sign by overriding the table's "good" default for negative-signed
+    deltas."""
+    lc = label.lower()
+    # Special-case the signed "X% vs level mean" driver: positive sign
+    # is good, negative is bad. Default to "good" (table value) if we
+    # can't read the sign.
+    if "vs level mean" in lc:
+        # Look for the leading sign on the percentage.
+        try:
+            pct_part = lc.split("%", 1)[0].strip()
+            num_str = pct_part.lstrip("+").lstrip()
+            if num_str.startswith("-"):
+                return "bad"
+        except (IndexError, ValueError):
+            pass
+        return "good"
+    for token, val in _INTRINSIC_DRIVER_POLARITY.items():
+        if token in lc:
+            return val
+    return None
+
+
 def _normalize_driver(d, *, is_pitcher_context: bool = False) -> dict:
     """Accept either a string driver (legacy) or a dict driver (v15 native).
     Return the canonical dict shape with label/direction/valence/tooltip."""
@@ -134,10 +198,15 @@ def _normalize_driver(d, *, is_pitcher_context: bool = False) -> dict:
         direction = "up"
     elif " down " in lc or lc.endswith(" down"):
         direction = "down"
-    valence = "neutral"
-    if direction and polarity_key:
-        # Treat "up" as a positive delta, "down" as negative for valence calc.
+    # v18 — intrinsic polarity wins when present; otherwise fall back to
+    # direction + stat-polarity inference (the original v15/v17 path).
+    intrinsic = _infer_intrinsic_polarity(label)
+    if intrinsic is not None:
+        valence = intrinsic
+    elif direction and polarity_key:
         valence = _stat_valence(polarity_key, +1.0 if direction == "up" else -1.0)
+    else:
+        valence = "neutral"
     return {
         "label": label,
         "stat": polarity_key,

@@ -817,6 +817,21 @@
       border-color: var(--bg-header);
       font-weight: 600;
     }
+    /* v18 — Reset chip: muted neutral by default with a clear hover
+       cue. Doesn't accept .active state — clicking it triggers a state
+       reset and re-render, no toggle semantics. */
+    button.chip.reset-chip {
+      color: var(--text-tertiary);
+      border-color: var(--border);
+      background: transparent;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+    button.chip.reset-chip:hover {
+      color: var(--down);
+      border-color: var(--down);
+      background: rgba(185, 28, 28, 0.06);
+    }
     select.chip {
       font-family: var(--font-sans);
       font-size: 11px;
@@ -1019,13 +1034,57 @@
       outline: 2px solid var(--neon-cyan);
       outline-offset: 2px;
     }
+    /* v18 — Rank cell is now a circled chip so the ordinal position
+       reads at a glance instead of blending into the row gutter. The
+       circle border picks up the FV tier color via the .player-row's
+       data-fv-tier (set on the row root); top-FV ranks get the gold
+       ring, mid-tier get the cyan/violet ring, lower-tier stay neutral.
+       Fall back: plain border when no tier set. */
     .rank-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--bg-tertiary);
       font-family: var(--font-mono);
       font-size: 13px;
       color: var(--text-primary);
       text-align: center;
       font-variant-numeric: tabular-nums;
-      font-weight: 700;
+      font-weight: 800;
+      margin: 0 auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    /* FV-tier tint for the rank circle — top tiers pop visually. The
+       data-fv-tier attribute is set on the row root for both active list
+       and spotlight rows, so the circle inside picks it up via the
+       descendant selector. Mirrors the FV badge border-color ramp. */
+    .player-row[data-fv-tier="80"] .rank-num,
+    .spotlight-row[data-fv-tier="80"] .rank-num { border-color: var(--fv-80-bd); border-width: 2px; }
+    .player-row[data-fv-tier="75"] .rank-num,
+    .spotlight-row[data-fv-tier="75"] .rank-num { border-color: var(--fv-75-bd); border-width: 2px; }
+    .player-row[data-fv-tier="70"] .rank-num,
+    .spotlight-row[data-fv-tier="70"] .rank-num { border-color: var(--fv-70-bd); border-width: 2px; }
+    .player-row[data-fv-tier="65"] .rank-num,
+    .spotlight-row[data-fv-tier="65"] .rank-num { border-color: var(--fv-65-bd); border-width: 2px; }
+    .player-row[data-fv-tier="60"] .rank-num,
+    .spotlight-row[data-fv-tier="60"] .rank-num { border-color: var(--fv-60-bd); border-width: 2px; }
+    .player-row[data-fv-tier="55"] .rank-num,
+    .spotlight-row[data-fv-tier="55"] .rank-num { border-color: var(--fv-55-bd); }
+    .player-row[data-fv-tier="50"] .rank-num,
+    .spotlight-row[data-fv-tier="50"] .rank-num { border-color: var(--fv-50-bd); }
+    .player-row[data-fv-tier="45"] .rank-num,
+    .spotlight-row[data-fv-tier="45"] .rank-num { border-color: var(--fv-45-bd); }
+    .player-row[data-fv-tier="40"] .rank-num,
+    .spotlight-row[data-fv-tier="40"] .rank-num { border-color: var(--fv-40-bd); }
+    /* Compact-density: shrink the circle so it doesn't dominate the
+       tight row. Same family of treatments as the other compact tweaks. */
+    body.density-compact .rank-num {
+      width: 24px; height: 24px;
+      font-size: 11px;
+      border-width: 1px !important;
     }
     .player-name {
       font-family: var(--font-retro);
@@ -1295,16 +1354,27 @@
        IL right now). No pill, no text — tooltip carries the detail.
        Same 14×14 chip layout shared with the legacy healthy-dot rule
        so spacing stays consistent across cards / rows. */
+    /* v18 — Pill now carries the literal "Health" text next to the
+       colored dot. Switched from a fixed-square (14×14) chip to an
+       auto-width pill with the dot ::before + the text after. The
+       colored dot still encodes the severity tier. Font-size + family
+       inherit from the parent .row-tag rule above (9.5px mono). */
     .row-tag.health-dot {
-      padding: 4px;
-      width: 14px; height: 14px;
+      padding: 2px 7px 2px 5px;
+      width: auto;
+      height: auto;
       box-sizing: border-box;
-      border-radius: 50%;
+      border-radius: 999px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 5px;
       border: 1px solid transparent;
       background: transparent;
+      color: var(--text-secondary);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      line-height: 1.2;
     }
     .row-tag.health-dot::before {
       content: "";
@@ -2362,15 +2432,21 @@
       background: var(--bg-tertiary);
       flex-shrink: 0;
     }
-    /* v16 — Headshot animated borders. The .card-rarity-* classes
+    /* v18 — Headshot animated borders. The .card-rarity-* classes
        already exist for detail-page cards, but on the small headshot
        wrappers the static `border: 1px solid` (inline) clobbered the
-       2px gradient border. Override per-tier so the shimmer/holo
-       animations run on the small player thumbnails too. */
-    .headshot.card-rarity-chrome,
-    .headshot.card-rarity-holo,
-    .headshot.card-rarity-foil,
-    .headshot.card-rarity-legendary {
+       2px gradient border. We also need to outrank the
+       `.fv-headshot-ring.fv-tier-XX { border: 2px solid !important }`
+       rule defined later in the stylesheet — same specificity wins by
+       source-order, so without the extra `.fv-headshot-ring` qualifier
+       below the higher FV tiers (60+/70+) showed a flat solid border
+       and the chrome/holo/legendary gradient never rendered. The
+       added `.fv-headshot-ring` lifts each rarity rule to 3 classes
+       so it wins the cascade for the elite tiers too. */
+    .headshot.fv-headshot-ring.card-rarity-chrome,
+    .headshot.fv-headshot-ring.card-rarity-holo,
+    .headshot.fv-headshot-ring.card-rarity-foil,
+    .headshot.fv-headshot-ring.card-rarity-legendary {
       border-width: 2px !important;
       border-style: solid !important;
       border-color: transparent !important;
@@ -2379,7 +2455,7 @@
     /* Make sure the animated background gradient kicks through the
        headshot wrap. The padding-box layer matches the headshot's
        background-color so the inner area still reads as a card face. */
-    .headshot.card-rarity-chrome {
+    .headshot.fv-headshot-ring.card-rarity-chrome {
       background:
         linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
         linear-gradient(135deg,
@@ -2391,7 +2467,7 @@
       background-size: 100% 100%, 300% 300% !important;
       animation: chrome-shimmer 4.2s linear infinite;
     }
-    .headshot.card-rarity-holo {
+    .headshot.fv-headshot-ring.card-rarity-holo {
       background:
         linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
         linear-gradient(135deg,
@@ -2400,7 +2476,7 @@
       background-size: 100% 100%, 300% 300% !important;
       animation: holo-shift 6s linear infinite;
     }
-    .headshot.card-rarity-foil {
+    .headshot.fv-headshot-ring.card-rarity-foil {
       background:
         linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
         linear-gradient(135deg,
@@ -2410,7 +2486,7 @@
       background-size: 100% 100%, 200% 200% !important;
       animation: foil-shift 8s linear infinite;
     }
-    .headshot.card-rarity-legendary {
+    .headshot.fv-headshot-ring.card-rarity-legendary {
       background:
         linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
         linear-gradient(120deg,
@@ -2418,22 +2494,35 @@
           #4ee0ff 40%, #b455ff 60%,
           #ff5fa2 80%, #ffd45a 100%) border-box !important;
       background-size: 100% 100%, 400% 400% !important;
-      animation: holo-shift 3.5s linear infinite;
+      /* v18 — pulse the box-shadow halo on the legendary tier so the
+         elite ring "breathes" between two highlight colors, matching the
+         feel of @keyframes fvBreakoutPulse on the breakout outlines.
+         Combined with the existing holo-shift gradient animation. */
+      animation: holo-shift 3.5s linear infinite,
+                 legendary-glow-pulse 2s ease-in-out infinite;
     }
-    .headshot.card-rarity-shine {
+    .headshot.fv-headshot-ring.card-rarity-shine {
       border-width: 1.5px !important;
       border-style: solid !important;
       border-color: #C9A85A !important;
       box-shadow: 0 0 4px rgba(229, 199, 123, 0.45);
     }
-    /* v17 — Glow halos around the animated rarity borders. Each tier
-       gets a soft drop-shadow tinted to its rarity color so the
-       elite-tier headshots read as "premium card" thumbnails. Combines
-       with the cycle-16 border animations for full Topps-chrome effect. */
-    .headshot.card-rarity-chrome    { box-shadow: 0 0 6px rgba(220, 220, 235, 0.45); }
-    .headshot.card-rarity-holo      { box-shadow: 0 0 8px rgba(180, 85, 255, 0.55); }
-    .headshot.card-rarity-foil      { box-shadow: 0 0 4px rgba(200, 200, 210, 0.35); }
-    .headshot.card-rarity-legendary { box-shadow: 0 0 12px rgba(255, 95, 162, 0.65); }
+    /* v17/v18 — Glow halos around the animated rarity borders. Each
+       tier gets a soft drop-shadow tinted to its rarity color so the
+       elite-tier headshots read as "premium card" thumbnails. The
+       legendary halo pulses (see @keyframes legendary-glow-pulse) to
+       scale "coolness" with FV. Specificity boosted to outrank the
+       fv-tier border rules below. */
+    .headshot.fv-headshot-ring.card-rarity-chrome    { box-shadow: 0 0 6px rgba(220, 220, 235, 0.55); }
+    .headshot.fv-headshot-ring.card-rarity-holo      { box-shadow: 0 0 8px rgba(180, 85, 255, 0.60); }
+    .headshot.fv-headshot-ring.card-rarity-foil      { box-shadow: 0 0 4px rgba(200, 200, 210, 0.40); }
+    /* legendary box-shadow gets animated by legendary-glow-pulse below */
+    @keyframes legendary-glow-pulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(255, 95, 162, 0.55),
+                             0 0 18px rgba(255, 212, 90, 0.25); }
+      50%      { box-shadow: 0 0 16px rgba(180, 85, 255, 0.75),
+                             0 0 26px rgba(78, 224, 255, 0.40); }
+    }
     /* Wrapper around draft/overseas headshots. Hosts the optional
        FV-tier ring + chrome/holo treatment for elite-tier prospects
        (matches the MiLB headshotHTML wrapper). Keeps the image at
@@ -5423,6 +5512,12 @@
       <button class="chip" data-filter-pos="SIRP" title="Single-Inning Relief Pitcher — closer / setup role">SIRP</button>
       <button class="chip" data-filter-pos="MIRP" title="Multi-Inning Relief Pitcher — long-relief / bulk follower">MIRP</button>
     </div>
+    <!-- v18 — Reset chip clears all active-list filters / search / sort
+         back to defaults. Sits in its own group at the end of the bar so
+         it doesn't blend in with the per-attribute chips. -->
+    <div class="filter-group">
+      <button class="chip reset-chip" type="button" data-reset-page="actives" title="Reset all filters, search, sort, and density on the prospect list">↺ Reset filters</button>
+    </div>
   </div>
 
   <div id="active-section">
@@ -5446,6 +5541,8 @@
               title="Pedigree-comeback narrative: previously hyped (first-round pick / IFA / $1M+ bonus) prospects whose prior season was weak but who have bounced back this year with improved skills.">Rebounders</button>
       <button class="chip" data-spotlight-bucket="fallers"
               title="Prospects whose 2026 performance has materially deteriorated. Very-young and young+pedigreed prospects are filtered out unless their K-rate has cratered (Bryce Rainer-style).">Fallers</button>
+      <!-- v18 — Reset chip for spotlights -->
+      <button class="chip reset-chip" type="button" data-reset-page="spotlights" title="Reset spotlight bucket back to default (Risers)" style="margin-left:12px;">↺ Reset</button>
     </div>
     <div id="spotlight-rows"></div>
   </div>
@@ -5595,6 +5692,10 @@
         <button class="chip active" data-farm-view="table">Table</button>
         <button class="chip"        data-farm-view="cards">Cards</button>
       </div>
+      <!-- v18 — Reset chip for the farm page -->
+      <div class="filter-group">
+        <button class="chip reset-chip" type="button" data-reset-page="farm" title="Reset farm sort, development window, and view back to defaults">↺ Reset filters</button>
+      </div>
     </div>
     <div id="farm-rows"></div>
   </div>
@@ -5668,6 +5769,8 @@
       <button class="chip"        data-lb-season="2023">2023</button>
       <button class="chip"        data-lb-season="2022">2022</button>
       <button class="chip"        data-lb-season="2021">2021</button>
+      <!-- v18 — Reset chip for the leaderboards page -->
+      <button class="chip reset-chip" type="button" data-reset-page="leaderboard" title="Reset stat / level / position / org / season back to defaults" style="margin-left:12px;">↺ Reset</button>
     </div>
     <!-- Cohort histogram + top-10 sparklines land here in Phase 3.
          Empty container today; renderLeaderboards fills it in once the
@@ -6262,12 +6365,16 @@ function computeFgFlags(p) {
 // totaling 14 days is more concerning than 1 fluke 30-day stint, regardless
 // of when the latest IL return was.
 function healthBadgeHTML(p) {
+  // v18 — chip now carries the literal "Health" word next to the colored
+  // dot so the indicator's meaning is legible without hover. The dot
+  // alone read as decoration to first-time users; the word + dot reads
+  // as a status pill (the dot color still encodes the severity).
   const il = p.il_status || {};
   if (il.is_on_il) {
     const days = il.days_on_il;
     const what = il.description ? il.description : "On IL";
     const tip = `On IL · ${escapeHtml(what)}${days != null ? ` (${days}d)` : ""}`;
-    return `<span class="row-tag health-dot is-red" title="${tip}" aria-label="On IL"></span>`;
+    return `<span class="row-tag health-dot is-red" title="${tip}" aria-label="On IL">Health</span>`;
   }
   const hp = p.health_profile || {};
   const stints = hp.il_stints_12mo || 0;
@@ -6288,21 +6395,21 @@ function healthBadgeHTML(p) {
     const tone = within12mo ? "is-orange" : "is-yellow";
     const d = hp.tj_surgery_date ? ` (surgery ${hp.tj_surgery_date})` : "";
     const tip = `Post-Tommy John surgery${d}${daysSinceTj != null ? ` · ${daysSinceTj}d since` : ""}`;
-    return `<span class="row-tag health-dot ${tone}" title="${tip}" aria-label="Post-TJ"></span>`;
+    return `<span class="row-tag health-dot ${tone}" title="${tip}" aria-label="Post-TJ">Health</span>`;
   }
 
   // Severity-based IL history tier — chronic (2+ stints) or long (≥30d)
   // gets orange; one short stint gets yellow.
   if (stints >= 2 || ildays >= 30) {
     const tip = `IL history · ${stints} stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12mo`;
-    return `<span class="row-tag health-dot is-orange" title="${tip}" aria-label="IL history (heavy)"></span>`;
+    return `<span class="row-tag health-dot is-orange" title="${tip}" aria-label="IL history (heavy)">Health</span>`;
   }
   if (stints >= 1 || ildays > 0) {
     const tip = `IL history · ${stints} stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12mo`;
-    return `<span class="row-tag health-dot is-yellow" title="${tip}" aria-label="IL history (light)"></span>`;
+    return `<span class="row-tag health-dot is-yellow" title="${tip}" aria-label="IL history (light)">Health</span>`;
   }
   if (hp && Object.keys(hp).length) {
-    return `<span class="row-tag health-dot is-green" title="Healthy — no IL activity in the past 12 months" aria-label="Healthy"></span>`;
+    return `<span class="row-tag health-dot is-green" title="Healthy — no IL activity in the past 12 months" aria-label="Healthy">Health</span>`;
   }
   return "";
 }
@@ -7230,7 +7337,7 @@ function syncToURL() {
   if (state.spreadFilter && state.spreadFilter !== "all") p.set("spread", state.spreadFilter);
   if (state.density     && state.density !== "standard") p.set("density", state.density);
   if (state.search)                       p.set("q",     state.search);
-  if (state.farmSort    !== "farm_rank")  p.set("farm",  state.farmSort);
+  if (state.farmSort    !== "trajectory") p.set("farm",  state.farmSort);
   if (state.farmViewMode && state.farmViewMode !== "table") p.set("farmview", state.farmViewMode);
   if (state.rosterSort  && state.rosterSort  !== "fv")    p.set("rsort", state.rosterSort);
   if (state.glossaryCat && state.glossaryCat !== "all")    p.set("gcat", state.glossaryCat);
@@ -7795,10 +7902,11 @@ const state = {
   // still shows the precise published position.
   posFilter: "all",
   sort: "fv",
-  // Default sort is the overall Farm rank — the closest analog to a
-  // Top-30-organizations leaderboard. The Trajectory (DvM+) chip is
-  // still a one-click option; its window comes from formWindow below.
-  farmSort: "farm_rank",
+  // v18 — Default sort is now Trajectory (6yr DvM+), which surfaces the
+  // farms with the strongest recent tool-grade improvement. Farm rank is
+  // a one-click switch via the chip row. Trajectory's window comes from
+  // formWindow below (defaults to 6y per the sort-key handler).
+  farmSort: "trajectory",
   // Per-farm-detail roster sort: FV (default) / avg_rank / age / eta /
   // tools_plus / surplus. Persisted in the URL so a sort choice
   // survives reloads + shared links.
@@ -8142,6 +8250,33 @@ function getFilteredActives() {
       if (bb == null) return -1;
       return (ab - bb) * dir;
     });
+  } else if (state.sort === "name_asc" || state.sort === "name_desc") {
+    // v18 — Click the Player column header to alpha-sort.
+    const dir = state.sort === "name_asc" ? 1 : -1;
+    pool.sort((a, b) => (a.player_name || "").localeCompare(b.player_name || "") * dir);
+  } else if (state.sort === "org_asc" || state.sort === "org_desc") {
+    // v18 — Sort by organization code (alphabetical) so the list groups
+    // by team for quick scanning.
+    const dir = state.sort === "org_asc" ? 1 : -1;
+    pool.sort((a, b) => (a.org || "").localeCompare(b.org || "") * dir);
+  } else if (state.sort === "level_asc" || state.sort === "level_desc") {
+    // v18 — Sort by current MiLB level. Uses the ladder ordering
+    // (MLB > AAA > AA > A+ > A > CPX > DSL) so "asc" = furthest from
+    // MLB → MLB, "desc" = MLB → furthest. Null levels sink.
+    const LEVEL_ORDER = { "MLB": 0, "AAA": 1, "AA": 2, "A+": 3, "A": 4, "CPX": 5, "DSL": 6 };
+    const dir = state.sort === "level_asc" ? -1 : 1;  // asc = away from MLB first
+    pool.sort((a, b) => {
+      const al = LEVEL_ORDER[(a.statline || {}).level];
+      const bl = LEVEL_ORDER[(b.statline || {}).level];
+      if (al == null && bl == null) return 0;
+      if (al == null) return 1;
+      if (bl == null) return -1;
+      return (al - bl) * dir;
+    });
+  } else if (state.sort === "age_desc") {
+    // v18 — companion to the existing "age_asc" branch so the Age column
+    // header can toggle direction. Oldest-first.
+    pool.sort((a, b) => (b.age ?? -1) - (a.age ?? -1));
   }
   return pool;
 }
@@ -8380,16 +8515,21 @@ function renderActives() {
   const rankOffset = (curPage - 1) * pageSize;
   const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "actives");
 
+  // v18 — Header titles: the leading "#" column now carries a "Rank"
+  // label (was just "#" which read as decoration); the FV column now
+  // says "Consensus FV · stock" so the source of the value is explicit.
+  // Both still click-to-sort by FV (FV-derived rank == consensus FV).
+  // Every column is now click-to-sort — Player (alpha), MiLB level, etc.
   const header = `<div class="col-header">
-    <span style="text-align:center;">#</span>
-    <span>Player · pos · org · age</span>
-    <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="Consensus Future Value · stock delta + direction below · click to sort">FV · stock</span>
+    <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="Prospect rank (1 = highest consensus FV). Click to sort.">Rank</span>
+    <span class="sort-header" data-sort-key="name_asc" title="Player name · pos · org · age. Click to sort alphabetically.">Player · pos · org · age</span>
+    <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="Consensus Future Value · stock delta + direction below · click to sort">Consensus FV · stock</span>
     <!-- v17 - Rank column shows our own FV-derived rank (overall_rank)
          rather than the cross-source avg_rank. avg_rank inherited each
          outlet's ordering quirks; ranking by consensus FV is cleaner. -->
-    <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="FV-derived rank — our sequential ordering of prospects by consensus FV. Click to sort.">Rank</span>
+    <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="FV-derived overall rank — our sequential ordering of all active prospects by consensus FV. Click to sort.">FV Rank</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline — hover for OHLC open / high / low / close">FV history</span>
-    <span class="desktop-only">MiLB · age vs. level</span>
+    <span class="desktop-only sort-header" data-sort-key="level_desc" title="MiLB level + age vs level. Click to sort by closeness to MLB (MLB → DSL); click again for the reverse.">MiLB · age vs. level</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="Physical: Height · Weight · BMI (from FanGraphs). Click to sort by BMI highest first; click again for lowest.">Ht · Wt · BMI</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
   </div>`;
@@ -8480,10 +8620,12 @@ function renderSpotlights() {
     their prospect window are dropped from every bucket.
   </div>`;
 
+  // v18 — Spotlight header titles align with the active-list header:
+  // explicit "Rank" + "Consensus FV" labels instead of bare "#" / "FV".
   const header = `<div class="spotlight-header">
-    <span style="text-align:center;">#</span>
+    <span style="text-align:center;" title="Spotlight rank within this bucket">Rank</span>
     <span>Player · pos · org · age</span>
-    <span style="text-align:center;">FV</span>
+    <span style="text-align:center;" title="Consensus Future Value">Consensus FV</span>
     <span>Level · line</span>
     <span style="text-align:center;">FV history</span>
     <span>Drivers</span>
@@ -8499,8 +8641,12 @@ function renderSpotlights() {
 
   const rows = pagedRows.map((s, i) => {
     const _full = _spotPlayerByKey[s.player_key] || s;
+    // v18 — Tier-tagged row so the .rank-num circle inherits the FV-color
+    // border treatment shared with the active list.
+    const _fvNum = Number(s.fv);
+    const _fvTier = Number.isFinite(_fvNum) ? String(Math.round(_fvNum / 5) * 5) : "";
     return `
-    <div class="spotlight-row" data-key="${escapeHtml(s.player_key)}" style="${orgStripe(s.org)}">
+    <div class="spotlight-row" data-key="${escapeHtml(s.player_key)}" data-fv-tier="${_fvTier}" style="${orgStripe(s.org)}">
       <div class="rank-num">${rankOffset + i + 1}</div>
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
         ${headshotHTML(_full, 42)}
@@ -14970,14 +15116,10 @@ function makeFarmReportCard(org) {
     subCell('Top-3 Grad WAR/yr',      'mlb_production_top_grads',    'mlb_production_top_grads',    v => v != null ? v.toFixed(2) + ' WAR/yr' : '—', topGrads.top3_war_per_yr, topGradsTooltip) +
     subCell('Conviction',             'mlb_production_conviction',   'mlb_production_conviction',   convFmt,      convLeaf.conviction, convTooltip);
 
-  // Conviction cap: depth-only orgs without a star-tier grad clamp at
-  // the 75th-percentile farm_score. Surface as a small badge + tooltip
-  // on the composite score so the user understands why the number
-  // didn't track the branch grades.
-  const capped = org.conviction_cap_applied === true;
-  const cappedBadge = capped
-    ? `<span class="gt-comp-cap" title="Conviction cap applied — no graduate with WAR/yr ≥ 4.0 (last 6yr) or career WAR ≥ 12 ever. Capped at the 75th-pctile farm_score (uncapped would be ${org.farm_score_uncapped != null ? org.farm_score_uncapped.toFixed(1) : '—'}).">CAPPED</span>`
-    : '';
+  // v18 — Conviction cap removed from storage.py so the badge no longer
+  // applies. Kept the variable as an empty string to avoid disturbing
+  // the downstream template literal that interpolates ${cappedBadge}.
+  const cappedBadge = '';
 
   // ── Horizontal SVG decision tree ──
   // Root rectangle (left) → 4 branch circles (middle) → leaf bars (right).
@@ -16647,17 +16789,21 @@ function renderFarmSystems() {
   const meanBaseline = means[win] ?? 0;
   const winLabel = win === "1y" ? "1-year" : win === "3y" ? "3-year" : "6-year";
 
+  // v18 — every column header is now clickable to sort by that column
+  // (Grade, DvM+, Tool DvM+, trajectory, Top prospects, etc.). Reuses
+  // the existing farm-sort key vocabulary; attachChipGroup picks up
+  // any element with data-farm-sort regardless of element type.
   const header = `<div class="farm-header">
-    <span style="text-align:center;">#</span>
+    <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Farm rank (1 = #1 system). Click to sort by overall grade.">Rank</span>
     <span></span>
     <span>Org</span>
-    <span style="text-align:center;" title="Overall farm-system letter grade. A+ = #1 org; tiers descend by farm_score (45% top-end · 25% depth · 15% trajectory · 15% grad pipeline).">Grade</span>
-    <span style="text-align:center;" title="${winLabel} ${win.toUpperCase()}DvM+ — wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. Acquisitions contribute zero on arrival; graduations don't subtract — pure-development metric.">${win.toUpperCase()}DvM+</span>
-    <span style="text-align:center;" title="Tool development pace vs league mean (100 = league mean, +10 = 1σ). Composite + hitter + pitcher rows.">Tool DvM+</span>
-    <span style="text-align:center;">${escapeHtml(winLabel)} trajectory</span>
-    <span>Top prospects</span>
-    <span>Positions</span>
-    <span>Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
+    <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Overall farm-system letter grade. A+ = #1 org; tiers descend by farm_score (45% top-end · 25% depth · 15% trajectory · 15% grad pipeline). Click to sort.">Grade</span>
+    <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+ — wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. Acquisitions contribute zero on arrival; graduations don't subtract — pure-development metric. Click to sort.">${win.toUpperCase()}DvM+</span>
+    <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="Tool development pace vs league mean (100 = league mean, +10 = 1σ). Composite + hitter + pitcher rows. Click to sort.">Tool DvM+</span>
+    <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${escapeHtml(winLabel)} trajectory chart. Click to sort by ${escapeHtml(winLabel)} DvM+.">${escapeHtml(winLabel)} trajectory</span>
+    <span class="sort-header" data-farm-sort="top_end" title="Top prospects in the org. Click to sort by top-end talent (tiered FV sum of the top 5 prospects).">Top prospects</span>
+    <span class="sort-header" data-farm-sort="depth" title="Position spread. Click to sort by depth (tiered FV sum of prospects #6-25).">Positions</span>
+    <span class="sort-header" data-farm-sort="count" title="Level depth. Click to sort by total active prospect count.">Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="avg_age" title="Average age of the org's active prospects. Click to sort youngest first.">Avg age</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="roi" title="Financial ROI — career WAR per million USD spent on signing bonuses (draft + IFA). Higher = more efficient development per dollar.">ROI</span>
     <span style="text-align:center;" title="IFA vs Draft bonus-dollar mix over the last 3 years. Hover a donut for exact dollar totals.">Spend mix
@@ -19249,18 +19395,29 @@ function renderPlayerDetail(key) {
     const _hasPhysicalDescriptors = _hasAny("levers", "arm", "delivery");
     const _hasHandedness = !!(hand.bats || hand.throws);
     if (physical.height_in || physical.weight_lb || _hasPhysicalDescriptors || _hasHandedness) {
+      // v18 — Bats/Throws lifted out of the compact tile grid into a
+      // labeled chip row beneath the HT/WT/BMI tiles. The bare "B/T"
+      // tile blended with the height/weight cells; the labeled chip
+      // reads as a distinct attribute ("Bats/Throws: R/R") rather than
+      // a cryptic two-letter abbreviation.
       const tiles = [
         _tile("Ht",  physical.height_display || (physical.height_in ? `${Math.floor(physical.height_in/12)}' ${physical.height_in%12}"` : null)),
         _tile("Wt",  physical.weight_lb != null ? `${physical.weight_lb} lb` : null),
         _tile("BMI", physical.bmi != null ? physical.bmi.toFixed(1) : null),
-        _tile("B/T", (hand.bats || hand.throws) ? `${hand.bats || "—"}/${hand.throws || "—"}` : null),
         _tile("Levers", _fmt(ex.levers)),
         _tile("Arm",   _fmt(ex.arm)),
         _tile("Delivery", _fmt(ex.delivery)),
       ].filter(Boolean).join("");
+      const handChipRow = _hasHandedness
+        ? `<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11px;color:var(--text-secondary);">
+             <span style="font-weight:600;letter-spacing:0.02em;">Bats/Throws:</span>
+             <span style="font-family:var(--font-mono);font-weight:700;color:var(--text-primary);padding:2px 8px;border:1px solid var(--border);border-radius:3px;background:var(--bg-tertiary);font-variant-numeric:tabular-nums;letter-spacing:0.04em;">${escapeHtml(`${hand.bats || "—"}/${hand.throws || "—"}`)}</span>
+           </div>`
+        : "";
       rows.push(`<div style="margin-bottom:8px;">
         <div class="t-section-title" style="margin-bottom:4px;">Physical</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px 12px;">${tiles}</div>
+        ${handChipRow}
       </div>`);
     }
 
@@ -20300,10 +20457,14 @@ function renderPlayerDetail(key) {
     toolsSection + (sourceHistorySection || ""),
     toolDevSection, perSourceToolsSection, scoutingReportsSection,
   ].filter(s => s && s.trim()).join("");
-  const healthHtml = [ilSection, healthSection, contractDetailsSection]
+  const healthHtml = [ilSection, healthSection]
     .filter(Boolean).join("");
+  // v18 — contractDetailsSection moved from Health & Status tab to the
+  // Details tab so it sits next to surplusValueSection. The two financial
+  // cards belong together — readers expect contract info alongside the
+  // surplus / ROI math, not buried under injury status.
   const contextHtml = [
-    surplusValueSection,
+    surplusValueSection, contractDetailsSection,
     acquisitionTimelineSection, tradesSection, etaRows,
     rosterStatusSection, perSourceTabbedSection,
     sameFarmSection, similarProspectsSection,
@@ -23742,6 +23903,60 @@ function attachHandlers() {
   });
   // Farm view-mode toggle (table / cards) — flips state + re-renders.
   attachChipGroup("farm-view", "farmViewMode", () => renderFarmSystems());
+
+  // v18 — Reset filters chip. Per-page scope — each chip carries
+  // `data-reset-page` and clears only the state keys relevant to that
+  // page back to their defaults, then re-renders and pushes the new
+  // (empty) state to the URL so refresh / share-link reproduces the
+  // reset view. Chip lives in each page's filter bar.
+  document.querySelectorAll("[data-reset-page]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const page = btn.dataset.resetPage;
+      _resetPageFilters(page);
+      restoreUIFromState();
+      render();
+      syncToURL();
+    });
+  });
+}
+
+// v18 — Per-page filter reset. Mutates `state` in place to restore the
+// default chip / dropdown / search values for the named page. Pages
+// share some controls (Org, Density), but each page lists exactly the
+// keys it owns so resetting one page doesn't clobber another's choice.
+function _resetPageFilters(page) {
+  if (page === "actives") {
+    state.orgFilter      = "all";
+    state.acqFilter      = "all";
+    state.classFilter    = "all";
+    state.levelFilter    = "all";
+    state.posFilter      = "all";
+    state.sort           = "fv";
+    state.stockFilter    = "all";
+    state.spreadFilter   = "all";
+    state.healthFilter   = "all";
+    state.fvIndicators   = new Set();
+    state.toolFilterKey  = "off";
+    state.toolFilterMin  = 0;
+    state.search         = "";
+    state.density        = "standard";
+    document.body.classList.remove("density-compact", "density-expanded");
+    document.body.classList.add("density-standard");
+    try { localStorage.setItem("prospect-tracker.density", "standard"); } catch {}
+    resetListPages();
+  } else if (page === "farm") {
+    state.farmSort      = "trajectory";
+    state.formWindow    = "6y";
+    state.farmViewMode  = "table";
+  } else if (page === "spotlights") {
+    state.spotlightBucket = "risers";
+  } else if (page === "leaderboard") {
+    state.lbStat   = "ops";
+    state.lbLevel  = "all";
+    state.lbPos    = "all";
+    state.lbOrg    = "all";
+    state.lbSeason = String(new Date().getUTCFullYear());
+  }
 }
 
 // Command palette wiring — single keyboard surface that jumps the user

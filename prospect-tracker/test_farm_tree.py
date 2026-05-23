@@ -277,13 +277,14 @@ class TestExportedTreeShape:
         for o in candidates:
             assert o["tree"]["acq_draft"]["pick_value_count"] >= 3
 
-    def test_sparse_subgrade_renders_dash(self):
-        # The dash-rendering pipeline must work for at least one leaf
-        # somewhere in the cohort. Originally pinned to
-        # fin_contract_surplus, but Spotrac coverage filled in enough
-        # that all orgs grade. Generalized: walk every leaf, every org;
-        # require ≥1 dash somewhere. Reverts to a real failure if the
-        # sparse-data gating accidentally gets removed everywhere.
+    def test_sparse_subgrade_renders_neutral_C(self):
+        # v18 — sparse leaves used to render "—" (em-dash) which read as
+        # "missing/broken" to most users. They now render as a neutral
+        # "C" (the average-band letter) and also get marked sparse in
+        # `grades_sparse` so UI can dim/annotate without leaving a dash.
+        # The pipeline must still produce SOME letter — verify no leaf
+        # comes back as "—" anywhere in the 10-leaf × 30-org matrix, and
+        # that at least one leaf carries the sparse marker.
         leaves = ["acq_ifa", "acq_draft", "dev_hitter", "dev_pitcher",
                   "tx_trades", "tx_waivers", "fin_war_per_m",
                   "fin_contract_surplus", "mlb_hitter_production",
@@ -292,10 +293,19 @@ class TestExportedTreeShape:
             1 for o in self.orgs for leaf in leaves
             if o["grades"].get(leaf) == "—"
         )
-        assert n_dash > 0, (
-            "expected at least some '—' grades for sparse leaves across "
-            "the 10 leaf×30 org matrix"
+        assert n_dash == 0, (
+            f"v18 regression: {n_dash} leaf×org combinations still render "
+            f"'—' instead of the neutral C fallback"
         )
+        # Every leaf must carry an A-F letter grade somewhere on the org.
+        valid_letters = {"A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-",
+                          "D+", "D", "D-", "F"}
+        for o in self.orgs:
+            for leaf in leaves:
+                g = o["grades"].get(leaf)
+                assert g in valid_letters, (
+                    f"org {o['org']} leaf {leaf} has invalid grade '{g}'"
+                )
 
     # ── v3 new-feature tests ──
 

@@ -876,3 +876,64 @@ class TestTwoWayPlayerComposites:
         # should not over-claim offense.
         assert hitter["composite_stuff"] is None
         assert pitcher["composite_off"] is None
+
+
+# ---------------------------------------------------------------------------
+# v18 — FG board year coverage audit
+# ---------------------------------------------------------------------------
+
+class TestFanGraphsYearCoverage:
+    """Audit that the timeseries.json carries FG snapshots across the
+    full 2021-2026 window. Catches regressions where a year's CSV drop
+    silently disappears between rebuilds (the parser silently ignores
+    missing files; without this assertion, a gap year goes unnoticed).
+    """
+
+    @classmethod
+    def setup_class(cls):
+        import json
+        ts_path = Path(__file__).parent / "data" / "timeseries.json"
+        with open(ts_path, "r", encoding="utf-8") as fh:
+            cls.payload = json.load(fh)
+
+    def _fg_labels(self):
+        labels = set()
+        for p in self.payload.get("players", []):
+            for pt in p.get("points", []):
+                fg = (pt.get("per_source") or {}).get("fangraphs")
+                if fg and fg.get("interval_label"):
+                    labels.add(fg["interval_label"])
+        return labels
+
+    def test_report_cycle_every_year_2021_2026(self):
+        labels = self._fg_labels()
+        missing = []
+        for y in range(2021, 2027):
+            if f"{y}report" not in labels:
+                missing.append(f"{y}report")
+        assert not missing, (
+            f"FG report cycle missing for years: {missing}. "
+            f"Re-drop the corresponding CSV set into data/fangraphs_imports/."
+        )
+
+    def test_updated_cycle_every_year_2021_2025(self):
+        # 2026 updated drops in late July (post-deadline) — exclude until
+        # the current calendar year is past the drop window.
+        labels = self._fg_labels()
+        missing = [f"{y}updated" for y in range(2021, 2026)
+                    if f"{y}updated" not in labels]
+        assert not missing, (
+            f"FG updated cycle missing for years: {missing}. "
+            f"Re-drop the corresponding CSV set into data/fangraphs_imports/."
+        )
+
+    def test_draft_cycle_present_for_recent_years(self):
+        labels = self._fg_labels()
+        # Draft cycle is a separate FG product (the draft-prospect
+        # boards). Coverage exists for 2021-2025; 2026 lands closer to
+        # the actual draft date.
+        missing = [f"{y}draft" for y in range(2021, 2026)
+                    if f"{y}draft" not in labels]
+        assert not missing, (
+            f"FG draft board missing for years: {missing}."
+        )
