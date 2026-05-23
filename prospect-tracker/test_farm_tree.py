@@ -56,17 +56,21 @@ class TestTreeWeights:
             f"Main weights must sum to 1.0; got {total}"
         )
 
-    def test_development_and_mlb_production_are_top_weighted(self):
-        # v4 weights (2026-05): Development + MLB Production tie at 0.30
-        # as the joint top-weighted main grades. The user's focus on
-        # "producing top-end MLB talent" promoted MLB Production from
-        # 0.25 → 0.30 to match Development. Acquisition Strategy and
-        # Financial both sit at 0.20 below them.
-        assert FARM_TREE_WEIGHT_DEVELOPMENT == FARM_TREE_WEIGHT_MLB_PRODUCTION, (
-            "v4: Development and MLB Production tie as the top main grades"
+    def test_development_is_solo_top_weighted(self):
+        # v5 weights — Development is the SOLO top-weighted main grade
+        # at 0.40. MLB Production is alone at 0.30 (second). Acquisition
+        # Strategy and Financial tie at 0.15 as supporting columns.
+        # The "development-first" thesis: sustained per-tool growth is
+        # the highest-conviction org signal, least confounded by
+        # acquisition luck or upper-league streaks.
+        assert FARM_TREE_WEIGHT_DEVELOPMENT > FARM_TREE_WEIGHT_MLB_PRODUCTION, (
+            "v5: Development is solo top, MLB Production is second"
         )
         assert FARM_TREE_WEIGHT_DEVELOPMENT > FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
         assert FARM_TREE_WEIGHT_DEVELOPMENT > FARM_TREE_WEIGHT_FINANCIAL
+        assert FARM_TREE_WEIGHT_ACQUISITION_STRATEGY == FARM_TREE_WEIGHT_FINANCIAL, (
+            "v5: Acquisition Strategy and Financial tie at 0.15"
+        )
 
     def test_sub_weight_is_50_percent(self):
         assert FARM_TREE_SUB_WEIGHT_EQUAL == 0.5
@@ -220,8 +224,14 @@ class TestExportedTreeShape:
             )
 
     def test_farm_score_is_weighted_blend(self):
-        # v3 — recompute from 4 main scores.
+        # v5 — recompute from 4 main scores. Conviction-capped orgs are
+        # skipped: the post-process cap clamps farm_score to p75 when
+        # the org has no star-tier grad, breaking the linear blend
+        # relationship for those rows. The uncapped pre-cap value
+        # would equal the blend.
         for o in self.orgs:
+            if o.get("conviction_cap_applied"):
+                continue  # blend invariant doesn't hold for capped orgs
             recomputed = (
                 FARM_TREE_WEIGHT_ACQUISITION_STRATEGY * (o.get("acquisition_strategy_score") or 100.0)
               + FARM_TREE_WEIGHT_DEVELOPMENT          * (o.get("development_score")          or 100.0)

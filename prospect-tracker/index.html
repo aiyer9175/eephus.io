@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:wght@500;600;700&display=swap">
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:wght@500;600;700&family=VT323&family=Press+Start+2P&family=Roboto+Mono:wght@400;500;700&display=swap">
 
   <style>
     /* === Baseball card / sportsbook theme ============================
@@ -127,12 +127,39 @@
       --shadow-card: 0 1px 0 rgba(15, 27, 45, 0.05), 0 1px 2px rgba(15, 27, 45, 0.04);
       --shadow-card-hover: 0 2px 6px rgba(15, 27, 45, 0.12), 0 0 0 1px rgba(14, 43, 77, 0.10);
 
-      --font-serif: "Source Serif Pro", "Source Serif 4", "Libre Caslon Text",
-                    "Lora", Georgia, "Times New Roman", serif;
-      --font-sans:  "Inter", "IBM Plex Sans", -apple-system, BlinkMacSystemFont,
-                    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      --font-mono:  "JetBrains Mono", "IBM Plex Mono", ui-monospace,
-                    "SF Mono", Menlo, Consolas, monospace;
+      /* Retro / baseball-card font stack — applied site-wide.
+         Stack order is LEGIBILITY-FIRST:
+           1. MS UI Gothic — Windows' proportional retro font; the
+              most readable Latin glyph set in the family. First
+              choice for body text + UI labels.
+           2. MS Gothic    — the iconic blocky monospace; falls in
+              when MS UI Gothic isn't installed (rare on Windows,
+              common elsewhere) and used directly on the explicitly-
+              chrome elements via `--font-retro-mono`.
+           3. Osaka        — macOS analog of MS UI Gothic.
+           4. Roboto Mono  — Google Font fallback for non-Windows /
+              non-Mac platforms; readable monospace with a slight
+              retro feel. Loaded above.
+           5. VT323 / Press Start 2P — pixel-art fallbacks for the
+              "vintage card" vibe when nothing else is available.
+           6. Generic monospace ladder for the bottom of the stack.
+         The site-wide ask: apply this EVERYWHERE — so `--font-sans`,
+         `--font-serif`, AND `--font-mono` all point at this stack.
+         Long-form prose (scouting reports, glossary entries) keeps
+         its readability tuning via per-element line-height + size
+         tokens rather than a separate font family. */
+      --font-retro: "MS UI Gothic", "MS Gothic", "Osaka", "Roboto Mono",
+                    "VT323", "Courier Prime", "Press Start 2P",
+                    ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      /* Blockier monospace variant — used on the iconic chrome
+         elements (FV badges, farm-grade letters) where the strict
+         monospace baseball-card look is the point. */
+      --font-retro-mono: "MS Gothic", "Osaka-Mono", "Roboto Mono",
+                         "VT323", "Press Start 2P", "Courier Prime",
+                         ui-monospace, "SF Mono", Consolas, monospace;
+      --font-serif: var(--font-retro);
+      --font-sans:  var(--font-retro);
+      --font-mono:  var(--font-retro-mono);
 
       /* ── Design system primitives (Phase 1 of the UI restructure) ──
          Spacing + type + neutral interaction tokens. Replaces the prior
@@ -148,11 +175,18 @@
       --space-5: 24px;      /* section gap */
       --space-6: 32px;      /* page gutter */
 
-      --fs-xs:    10px;     /* badges, micro-labels */
-      --fs-sm:    11px;     /* dense table cell */
-      --fs-base:  12px;     /* row body */
-      --fs-md:    13px;     /* card body, detail body */
-      --fs-lg:    14px;     /* section sub-head */
+      /* Retro-font typography scale. Sizes were bumped 1px across the
+         small end (xs/sm/base) when we switched the site-wide stack to
+         MS UI Gothic / MS Gothic. The Japanese-Latin fonts render
+         slightly tighter than Inter at the same nominal px; a 1px lift
+         restores the prior optical density without losing the
+         retro-card feel. xl/xxl are unchanged — large headings already
+         carry plenty of weight. */
+      --fs-xs:    11px;     /* badges, micro-labels (was 10) */
+      --fs-sm:    12px;     /* dense table cell (was 11) */
+      --fs-base:  13px;     /* row body (was 12) */
+      --fs-md:    14px;     /* card body, detail body (was 13) */
+      --fs-lg:    15px;     /* section sub-head (was 14) */
       --fs-xl:    18px;     /* page heading */
       --fs-xxl:   24px;     /* hero stat */
 
@@ -542,10 +576,11 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
     .detail-tab {
-      font-family: var(--font-sans);
-      font-size: 11.5px;
+      font-family: var(--font-retro);
+      font-size: 12px;
       font-weight: 600;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       padding: 6px 14px;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
@@ -638,10 +673,18 @@
       background-size: 26px 26px, 13px 13px;
       background-position: 0 0, 13px 13px;
       color: var(--text-primary);
-      line-height: 1.5;
+      /* Bumped 1.5 → 1.55 for the MS Gothic stack — Japanese-Latin
+         fonts pack tighter vertically and benefit from slightly more
+         line breathing room. */
+      line-height: 1.55;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
       font-feature-settings: "tnum" on, "ss01" on;
+      /* Disable browser-synthesized bold/italic — MS Gothic / MS UI
+         Gothic don't ship italic variants and synthesized italics
+         render as smeared garbage. Skip the synthesis fallback. */
+      font-synthesis: none;
     }
     .container {
       max-width: 1680px;
@@ -649,13 +692,43 @@
       padding: 1.75rem 1.5rem 4rem;
     }
     h1 {
-      font-family: var(--font-serif);
+      /* Site-title "MLB Prospect Portal" uses the blocky MS Gothic
+         variant explicitly — preserves the iconic baseball-card
+         look on the highest-prominence label on every page. */
+      font-family: var(--font-retro-mono);
       font-size: 2.1rem;
       margin: 0 0 0.35rem;
       font-weight: 700;
-      letter-spacing: -0.005em;
+      letter-spacing: 0.04em;  /* breathe the blocky monospace on big text */
       color: var(--text-primary);
       line-height: 1.1;
+    }
+    /* Build / version banner — sits above the page H1 on every view.
+       Small, lilac, single-line. Survives content overwrites because
+       it lives in the persistent <header> shell, not the per-section
+       templates that get blown away on detail-page renders. */
+    .build-banner {
+      display: inline-block;
+      font-family: var(--font-retro);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #C8A2C8;  /* lilac */
+      /* Thin neon-green hairline border — pops the banner off the
+         newsprint background without competing with the lilac text. */
+      border: 1px solid rgba(57, 255, 20, 0.55);
+      border-radius: 3px;
+      padding: 2px 7px;
+      margin: 0 0 8px;
+      opacity: 0.95;
+      font-weight: 600;
+      user-select: text;  /* allow easy copy of the byline */
+    }
+    [data-theme="dark"] .build-banner {
+      color: #D9B8E8;  /* slightly lifted lilac for dark mode */
+      /* Punchier neon-green border in dark mode so the chip reads
+         clearly against the deep navy header background. */
+      border-color: rgba(57, 255, 20, 0.7);
     }
     h1 .h1-rule {
       display: block;
@@ -946,12 +1019,12 @@
       font-weight: 700;
     }
     .player-name {
-      font-family: var(--font-serif);
+      font-family: var(--font-retro);
       font-weight: 600;
-      font-size: 16px;
+      font-size: 15px;
       color: var(--text-primary);
-      letter-spacing: -0.005em;
-      line-height: 1.15;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
     }
     .player-meta {
       font-family: var(--font-sans);
@@ -1009,7 +1082,7 @@
     .team-logo-fallback {
       display: inline-flex; align-items: center; justify-content: center;
       font-family: var(--font-mono);
-      font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
       color: var(--text-primary);
       background: var(--bg-tertiary);
       border: 1px solid var(--border);
@@ -1038,7 +1111,7 @@
        use a slight inner shadow to give them depth. */
     .fv-badge {
       display: inline-block;
-      font-family: var(--font-mono);
+      font-family: var(--font-retro-mono);  /* blocky tabular look */
       padding: 3px 10px;
       border-radius: var(--radius-sm);
       font-size: 13px;
@@ -1047,7 +1120,7 @@
       min-width: 40px;
       border: 1px solid var(--border);
       font-variant-numeric: tabular-nums;
-      letter-spacing: 0;
+      letter-spacing: 0.02em;
     }
     /* Three named badge sizes — replaces the inline padding/font-size
        overrides that previously varied across ~12 call sites. */
@@ -1330,7 +1403,7 @@
       line-height: 1.3;
     }
     body.density-expanded .player-row .etp-label {
-      font-size: 9px;
+      font-size: 10px;
       letter-spacing: 0.06em;
       color: var(--text-tertiary);
       font-weight: 600;
@@ -3137,8 +3210,9 @@
       display: flex; align-items: baseline; gap: 14px; margin-top: 4px;
     }
     .gt-comp-letter {
-      font-family: var(--font-serif); font-size: 40px;
+      font-family: var(--font-retro-mono); font-size: 40px;
       line-height: 1; font-weight: 700;
+      letter-spacing: 0.04em;  /* breathe the blocky monospace */
     }
     .gt-comp-rank {
       font-family: var(--font-mono); font-size: 12px;
@@ -3283,8 +3357,9 @@
       color: var(--text-tertiary);
     }
     .rs-stat-val {
-      font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+      font-family: var(--font-retro-mono); font-size: 14px; font-weight: 600;
       color: var(--text-primary); margin-top: 2px;
+      letter-spacing: 0.02em;
     }
 
     /* Scouting reports card (sidebar, prospect detail). Tab strip
@@ -3694,12 +3769,12 @@
       padding: 6px 8px;
     }
     .detail-page-header .player-display-name {
-      font-family: var(--font-serif);
+      font-family: var(--font-retro);
       font-size: 30px;
       font-weight: 700;
-      letter-spacing: -0.01em;
+      letter-spacing: 0.02em;  /* breathe the blocky monospace on headers */
       color: var(--text-primary);
-      line-height: 1.05;
+      line-height: 1.1;
     }
     .detail-page-header .player-display-meta {
       font-family: var(--font-sans);
@@ -3980,9 +4055,11 @@
     }
     .pos-depth-card:hover { background: var(--bg-primary); }
     .pos-depth-card .pdc-name {
+      font-family: var(--font-retro);
       font-weight: 600; color: var(--text-primary);
       max-width: 110px;
       overflow: hidden; text-overflow: ellipsis;
+      letter-spacing: 0.02em;
     }
     .pos-depth-card .pdc-fv { flex-shrink: 0; }
     .pos-depth-card .pdc-sub {
@@ -4253,7 +4330,7 @@
     }
     .glossary-popover.is-open { display: block; }
     .glossary-popover .gp-term {
-      font-family: var(--font-mono);
+      font-family: var(--font-retro-mono);
       font-size: 15px;
       font-weight: 700;
       color: var(--neon-cyan);
@@ -4740,6 +4817,7 @@
 <div class="container">
 
   <header class="header">
+    <div class="build-banner" aria-label="Build version">Alpha v0.1 — Noah J. Dengler / @ARKNDJL</div>
     <h1>MLB Prospect Portal<span class="h1-rule" aria-hidden="true"></span></h1>
     <div class="meta-line" id="meta-line">Loading…</div>
     <!-- Persistent global controls — these survive content overwrites
@@ -7763,19 +7841,32 @@ function renderSpotlights() {
     <span>Drivers</span>
   </div>`;
 
-  const rows = pagedRows.map((s, i) => `
+  // Headshot lookup — spotlights entries don't carry mlbam_id, so we
+  // resolve the full player record by key to feed headshotHTML(). Built
+  // once per render; cheap relative to the per-row work.
+  const _spotPlayerByKey = {};
+  for (const _p of (DATA.players || [])) {
+    if (_p.player_key) _spotPlayerByKey[_p.player_key] = _p;
+  }
+
+  const rows = pagedRows.map((s, i) => {
+    const _full = _spotPlayerByKey[s.player_key] || s;
+    return `
     <div class="spotlight-row" data-key="${escapeHtml(s.player_key)}" style="${orgStripe(s.org)}">
       <div class="rank-num">${rankOffset + i + 1}</div>
-      <div>
-        <div class="player-name">${escapeHtml(s.player_name)}</div>
-        ${playerMetaHTML(s)}
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+        ${headshotHTML(_full, 42)}
+        <div style="min-width:0;">
+          <div class="player-name">${escapeHtml(s.player_name)}</div>
+          ${playerMetaHTML(s)}
+        </div>
       </div>
       <div style="text-align:center;"><span class="fv-badge ${fvClass(s.fv || "40")}">${escapeHtml(s.fv ?? "—")}</span></div>
       <div class="milb-cell"><span class="level-pill level-neutral">${escapeHtml(s.level ?? "—")}</span>${escapeHtml(s.line ?? "—")}</div>
       <div class="stock-cell stock-up" style="text-align:left;">${Number(s.score || 0).toFixed(1)}</div>
       <div class="driver-list">${(s.drivers || []).map(d => `<span class="driver-tag">${escapeHtml(d)}</span>`).join("")}</div>
     </div>
-  `).join("");
+  `;}).join("");
 
   document.getElementById("spotlight-rows").innerHTML = rowsData.length
     ? ageCapNote + header + rows + paginationStrip
@@ -8499,6 +8590,7 @@ function renderLeaderboards() {
       <div class="player-row is-leaderboard" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
         <div class="rank-num">${rankOffset + i + 1}</div>
         <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
+          ${headshotHTML(p, 40)}
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}</div>
             ${playerMetaHTML(p)}
@@ -12263,16 +12355,16 @@ const GLOSSARY = {
   "farm_report_card": {
     name: "Farm grade tree", aliases: ["Farm grade", "Report card", "Grade tree"], category: "custom-index",
     priority: 50,
-    short: "4-branch hierarchical farm grade (v4). Composite = weighted blend of Acquisition Strategy + Development + Financial + MLB Production. Star-tier focus + financial ROI emphasis.",
-    long: "Grade tree v4 — rebalanced to emphasize star-tier production and financial ROI. Weights: MLB Production 30% + Development 30% (tied top), Financial 20% + Acquisition Strategy 20% (tied bottom). MLB Production grew from 2 to 5 leaves (added Boom Rate, Top-3 Grad WAR/yr, Conviction). Financial grew from 2 to 4 leaves (added Draft Pool Efficiency, IFA ROI). FV_POINTS curve steepened so an 80-grade prospect is worth 2.5× the old curve and 250× a 40-grade org-filler — top-end orgs separate dramatically. Conviction cap: orgs without a star-tier grad (WAR/yr ≥ 4.0 last 5yr OR career WAR ≥ 12 ever) clamp at the 75th-percentile farm_score, preventing depth-only orgs from grading elite. Every leaf z-score normalized across the 30 orgs; sparse leaves get '—'.",
-    formula: "farm_score = 0.20·Acquisition_Strategy + 0.30·Development + 0.20·Financial + 0.30·MLB_Production\n  Acquisition_Strategy = mean(Draft, IFA, Trade, Waiver)\n  Development          = mean(Hitter_Tools_DvM+, Pitcher_Tools_DvM+)\n  Financial            = mean(WAR_per_$M, Grad_contract_surplus, Draft_pool_efficiency, IFA_ROI)\n  MLB_Production       = mean(Hitter_3input, Pitcher_3input, Boom_rate, Top3_WAR_per_yr, Conviction)\n  if Conviction = 0 and farm_score > p75: farm_score = p75  (Conviction cap)",
+    short: "4-branch hierarchical farm grade (v5). Composite = weighted blend with Development at 40% (solo top), MLB Production at 30%, Acquisition Strategy + Financial tied at 15% each.",
+    long: "Grade tree v5 — Development-first thesis. Weights: Development 40% (solo top), MLB Production 30%, Acquisition Strategy 15% + Financial 15% (tied supporting columns). Development is the highest-conviction org signal — sustained per-tool growth is the one thing the org has the most direct control over and is least confounded by acquisition luck or upper-league hot/cold streaks. MLB Production stays heavily weighted at 30% (the boom%/top-3 WAR/Conviction leaves). FV_POINTS curve steepened so an 80-grade prospect is worth 2.5× the old curve and 250× a 40-grade org-filler — top-end orgs separate dramatically. Conviction cap: orgs without a star-tier grad (WAR/yr ≥ 4.0 last 5yr OR career WAR ≥ 12 ever) clamp at the 75th-percentile farm_score, preventing depth-only orgs from grading elite. Every leaf z-score normalized across the 30 orgs; sparse leaves get '—'.",
+    formula: "farm_score = 0.15·Acquisition_Strategy + 0.40·Development + 0.15·Financial + 0.30·MLB_Production\n  Acquisition_Strategy = mean(Draft, IFA, Trade, Waiver)\n  Development          = mean(Hitter_Tools_DvM+, Pitcher_Tools_DvM+)\n  Financial            = mean(WAR_per_$M, Grad_contract_surplus, Draft_pool_efficiency, IFA_ROI)\n  MLB_Production       = mean(Hitter_3input, Pitcher_3input, Boom_rate, Top3_WAR_per_yr, Conviction)\n  if Conviction = 0 and farm_score > p75: farm_score = p75  (Conviction cap)",
     related: ["farm_grade_acquisition_strategy", "farm_grade_development", "farm_grade_financial", "farm_grade_mlb_production", "mlb_production_boom_pct", "mlb_production_top_grads", "mlb_production_conviction", "fin_draft_pool_efficiency", "fin_ifa_roi", "dvm_plus", "wag", "sur_plus"],
   },
   "farm_grade_acquisition_strategy": {
     name: "Acquisition Strategy", aliases: ["Acquisition Strategy", "Acquisitions", "Acq Strategy"], category: "custom-index",
     priority: 51,
     short: "Outcome quality of how this org acquires prospects across all 4 channels: Draft, IFA, Trade, Waiver.",
-    long: "Acquisition Strategy branch of the farm grade tree (25% of farm_score) — merges what were Acquisitions + Transactions in v2. Four sub-leaves, equal weight: (a) Draft Performance — 50/50 blend of pick-slot-adjusted WAR (career WAR vs. historical expectation at that pick slot) + Draft Ceiling Hits % (recent drafted actives at FV ≥ 60 within 3yr of draft). (b) IFA Performance — 3-input composite of WAG + WAR-per-year + Cumulative WAR across IFA-method graduates. (c) Trade Acumen — net FV gained vs lost at trade dates + Trade WAR Delta (career WAR of acquired grads − career WAR of traded-away grads). (d) Waiver Claims — net FV from non-trade cross-org events + Waiver Hit Rate (% of claims who reached MLB). Each leaf z-scored across orgs; sparse leaves get '—'.",
+    long: "Acquisition Strategy branch of the farm grade tree (15% of farm_score in v5; was 20% in v4; merged what were Acquisitions + Transactions in v2). Four sub-leaves, equal weight: (a) Draft Performance — 50/50 blend of pick-slot-adjusted WAR (career WAR vs. historical expectation at that pick slot) + Draft Ceiling Hits % (recent drafted actives at FV ≥ 60 within 3yr of draft). (b) IFA Performance — 3-input composite of WAG + WAR-per-year + Cumulative WAR across IFA-method graduates. (c) Trade Acumen — net FV gained vs lost at trade dates + Trade WAR Delta (career WAR of acquired grads − career WAR of traded-away grads). (d) Waiver Claims — net FV from non-trade cross-org events + Waiver Hit Rate (% of claims who reached MLB). Each leaf z-scored across orgs; sparse leaves get '—'.",
     related: ["wag", "farm_report_card", "draft_ceiling_hits", "trade_war_delta", "waiver_hit_rate"],
   },
   // Back-compat: old "farm_grade_acquisitions" + "farm_grade_transactions"
@@ -12287,7 +12379,7 @@ const GLOSSARY = {
   "farm_grade_development": {
     name: "Development", aliases: ["Development grade", "Dev grade"], category: "custom-index",
     priority: 52,
-    short: "Per-tool dev pace of the org's prospects vs the league. TOP-WEIGHTED branch (30%, tied with MLB Production in v4) — the single biggest controllable skill.",
+    short: "Per-tool dev pace of the org's prospects vs the league. SOLO TOP-WEIGHTED branch (v5: 40%) — the single biggest controllable skill the org has direct hands on.",
     long: "Development branch of the farm grade tree. Two sub-grades, equal weight: (a) Hitter Tools DvM+ — mean of HitDvM+ / PowerDvM+ / SpeedDvM+ / FieldDvM+ / ArmDvM+ / PitchSelDvM+ / BatCtrlDvM+ for this org's actives, (b) Pitcher Tools DvM+ — mean of FB / SL / CB / CH / Cmd / CtDvM+. Both 100-anchored (100 = league mean dev pace, +10 = 1σ). Measures pure tool growth in-org, independent of raw FV — a 40-grade hit tool that grew to 55 over 2 cycles signals development skill regardless of where the prospect started.",
     related: ["dvm_plus", "tools_dvm_plus", "tool_delta", "farm_report_card"],
   },
@@ -12302,7 +12394,7 @@ const GLOSSARY = {
     name: "Financial / SUR+", aliases: ["Financial grade", "SUR+", "Surplus grade"], category: "custom-index",
     priority: 54,
     short: "Org's capital efficiency. 4 leaves (v4): WAR per $M, grad-contract surplus, draft-pool efficiency, IFA ROI.",
-    long: "Financial branch of the farm grade tree (20% of farm_score in v4, up from 15% in v3 to reflect the explicit financial-ROI emphasis). Four sub-grades, equal weight: (a) WAR per $M — total career WAR yielded by graduates divided by total signing bonus paid, (b) Grad-Contract Surplus — for graduates with both Spotrac contract data and signing bonus, per-year surplus (current AAV minus bonus amortized over 6 years), (c) Draft Pool Efficiency — trailing-3yr rolling WAR per $M of draft-pool spend, (d) IFA ROI — trailing-5yr rolling WAR per $M of IFA bonus spend. SUR+ shape preserved at the composite level (100-anchored, +10 = 1σ).",
+    long: "Financial branch of the farm grade tree (15% of farm_score in v5; was 20% in v4). Tied with Acquisition Strategy as a supporting column behind Development (40%) and MLB Production (30%). Four sub-grades, equal weight: (a) WAR per $M — total career WAR yielded by graduates divided by total signing bonus paid, (b) Grad-Contract Surplus — for graduates with both Spotrac contract data and signing bonus, per-year surplus (current AAV minus bonus amortized over 6 years), (c) Draft Pool Efficiency — trailing-3yr rolling WAR per $M of draft-pool spend, (d) IFA ROI — trailing-5yr rolling WAR per $M of IFA bonus spend. SUR+ shape preserved at the composite level (100-anchored, +10 = 1σ).",
     formula: "Financial_score = mean of z-anchored (war_per_$M, mean grad surplus per yr, war_per_M_draft_pool, war_per_M_IFA)",
     related: ["wag", "war", "signing_bonus", "fin_draft_pool_efficiency", "fin_ifa_roi", "farm_report_card"],
   },
@@ -12310,7 +12402,7 @@ const GLOSSARY = {
     name: "MLB Production", aliases: ["MLB Production grade", "Production grade"], category: "custom-index",
     priority: 55,
     short: "Whether the org produces MLB players, especially top-end ones. 5 leaves (v4): hitter + pitcher 3-input composites, boom rate, top-3 grad WAR/yr, Conviction.",
-    long: "MLB Production branch (30% of farm_score in v4, up from 25%, tied for top weight with Development). Five sub-grades, equal weight: (a) Hitter MLB Production — equal-weighted z-blend of Hitter WAG + Hitter WAR-per-year + Top-3 Hitter Career WAR. (b) Pitcher MLB Production — same 3-input composite for pitchers. (c) Boom Rate — share of settled grads with career WAR ≥ +5 (min 5 settled). (d) Top-3 Grad WAR/yr — mean WAR/yr of the org's top-3 grads by rate (min 3 qualifying). (e) Conviction — binary flag: 1 if any grad has WAR/yr ≥ 4.0 in trailing 5yr OR career WAR ≥ 12 ever, else 0. Conviction additionally drives the farm-score cap: conviction=0 orgs clamp at the 75th-percentile farm_score regardless of branch grades, so depth-only orgs can't grade elite without a star.",
+    long: "MLB Production branch (30% of farm_score; unchanged from v4 → v5; second-heaviest behind Development at 40%). Five sub-grades, equal weight: (a) Hitter MLB Production — equal-weighted z-blend of Hitter WAG + Hitter WAR-per-year + Top-3 Hitter Career WAR. (b) Pitcher MLB Production — same 3-input composite for pitchers. (c) Boom Rate — share of settled grads with career WAR ≥ +5 (min 5 settled). (d) Top-3 Grad WAR/yr — mean WAR/yr of the org's top-3 grads by rate (min 3 qualifying). (e) Conviction — binary flag: 1 if any grad has WAR/yr ≥ 4.0 in trailing 5yr OR career WAR ≥ 12 ever, else 0. Conviction additionally drives the farm-score cap: conviction=0 orgs clamp at the 75th-percentile farm_score regardless of branch grades, so depth-only orgs can't grade elite without a star.",
     formula: "Production_score = mean of z-anchored (Hitter_3input, Pitcher_3input, boom_pct, top3_WAR_per_yr, conviction)\nConviction cap: if conviction = 0 and farm_score > p75 → farm_score = p75",
     related: ["wag", "war", "mlb_production_boom_pct", "mlb_production_top_grads", "mlb_production_conviction", "farm_report_card"],
   },
@@ -12455,6 +12547,13 @@ const GLOSSARY = {
     long: "Eligible clubs are the 6 smallest-revenue + 6 smallest-market teams. Round 1A picks are slotted after the regular first round (pick 31-36); Round 1B picks land after the regular second round. They're TRADEABLE — comp picks are the only draft slots a team may swap. Tankathon's projection assigns these by current eligibility; the lottery view surfaces them at the bottom with a 1A / 1B label.",
     related: ["draft_slot", "draft_pool", "draft_order"],
   },
+  "eta_half_season": {
+    name: "ETA half-season adjustment", aliases: ["Half-season elapsed", "H1/H2 ETA", "Post-break ETA"], category: "methodology",
+    priority: 65,
+    short: "Post-All-Star-break snapshots subtract 0.25 years from the ETA — scaled by the org's historical H1/H2 promotion tendency (H2-heavy orgs get a stronger pull-in).",
+    long: "MLB's All-Star break (anchored to July 15 as a stable midpoint) cleaves the season into pre-break (H1) and post-break (H2) halves. By H2, a AAA prospect has already burned roughly half their AAA year, so the level-baseline travel time to MLB should shrink correspondingly. The baseline adjustment subtracts 0.25 years when the snapshot is post-break. ORG TENDENCY then scales: each org's last 3 years of promotions are bucketed H1/H2. Orgs with h2_rate ≥ 60% (TBR / OAK-types that bank Sept call-ups) get a stronger ×1.4 pull-in; orgs with h1_rate ≥ 70% (front-loaded promoters) get a softer ×0.6 since they've already done most of their calling. H2-heavy orgs during pre-break add a small +0.10 push-back (their prospect is even LESS likely to debut before the break). Offseason snapshots (Nov-Feb) and balanced orgs (40-60 split) get no adjustment. Surfaced via a 'Snapshot: post-All-Star break' eyebrow + an 'Org promotes X% H1 / Y% H2' line on the ETA panel. Implemented in eta.py · see `season_phase`, `HALF_SEASON_ADJ`, `_org_promotion_phase_weight`.",
+    related: ["fv", "age_vs_level"],
+  },
   "spotlight_age_cap": {
     name: "Spotlight age cap", aliases: ["Age cap", "Spotlight age filter"], category: "methodology",
     priority: 64,
@@ -12532,8 +12631,99 @@ function detailTable(p) {
       ["Age vs. level",  eta.age_adj   > 0 ? `+${eta.age_adj}`  : eta.age_adj  < 0 ? `${eta.age_adj}`  : "±0"],
       ["FV grade",       eta.fv_adj    > 0 ? `+${eta.fv_adj}`   : eta.fv_adj   < 0 ? `${eta.fv_adj}`   : "±0"],
     ];
+    // H1/H2 half-season adjustment row — only renders when the snapshot
+    // was post-All-Star-break AND the player isn't already at MLB.
+    if (eta.half_season_adj != null && eta.half_season_adj !== 0) {
+      const half_label = (eta.org_promo_weight != null && eta.org_promo_weight !== 1.0)
+        ? `Half-season elapsed (org-weighted ×${eta.org_promo_weight})`
+        : "Half-season elapsed";
+      rows.push([
+        half_label,
+        `${eta.half_season_adj > 0 ? "+" : ""}${eta.half_season_adj}`,
+      ]);
+    }
+    // Phase eyebrow — small text above the breakdown so users see
+    // WHICH part of the season this projection was made in.
+    const PHASE_LABEL = {
+      pre_break:  { label: "pre-All-Star break", color: "var(--neon-cyan)" },
+      post_break: { label: "post-All-Star break", color: "var(--neon-orange)" },
+      offseason:  { label: "offseason", color: "var(--text-tertiary)" },
+    };
+    const phaseInfo = PHASE_LABEL[eta.season_phase] || PHASE_LABEL.pre_break;
+    // Org promotion-phase tendency line — shows the org's historical
+    // H1/H2 split and how it shifted the half-season adjustment.
+    let orgPromoLine = "";
+    if (eta.org_promo_h1_rate != null && eta.org_promo_h2_rate != null) {
+      const h1pct = Math.round(eta.org_promo_h1_rate * 100);
+      const h2pct = Math.round(eta.org_promo_h2_rate * 100);
+      const weight = eta.org_promo_weight ?? 1.0;
+      const weightTag = weight === 1.0 ? ""
+                     : weight > 1.0 ? ` <span style="color:var(--neon-orange);">(pull-in ×${weight})</span>`
+                     :                ` <span style="color:var(--text-tertiary);">(softened ×${weight})</span>`;
+      orgPromoLine = `<div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.04em;margin-top:2px;">
+        Org promotes <strong style="color:var(--text-secondary);">${h1pct}% H1 / ${h2pct}% H2</strong>${weightTag}
+      </div>`;
+    }
+    const phaseEyebrow = `<div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;margin-top:2px;">
+      Snapshot: <span style="color:${phaseInfo.color};font-weight:600;">${phaseInfo.label}</span>${eta.season_phase === "post_break" ? ` <span class="g-term" data-term="eta_half_season" style="color:var(--text-tertiary);cursor:help;">(half-season adj applied)</span>` : ""}
+    </div>${orgPromoLine}`;
+
+    // H1 / H2 side-by-side projection panel — always visible.
+    // Shows what the ETA is from the current snapshot vs. what it WOULD
+    // be from a post-break snapshot, so the user can see both halves
+    // at a glance. The post-break projection always applies the
+    // org-weighted half-season adjustment (h2-baseline × org weight) on
+    // top of the base+perf+age+fv stack. Currently-MLB players get a
+    // dash (no future projection makes sense). Offseason rolls into
+    // next year's pre-break (no adjustment).
+    let h1h2Panel = "";
+    if (eta.year != null && eta.base_years != null) {
+      // Recompute the non-half-season subtotal from the breakdown
+      // pieces — this is what gets added to the current year's
+      // remaining time to land on eta.year.
+      const subtotal = (eta.base_years || 0)
+                     + (eta.perf_adj  || 0)
+                     + (eta.age_adj   || 0)
+                     + (eta.fv_adj    || 0)
+                     + (eta.health_adj|| 0);
+      // For H1 (pre-break) projection: no half-season elapsed.
+      const h1Years = subtotal;
+      // For H2 (post-break) projection: apply the league baseline
+      // -0.25 scaled by the org's promo weight (default 1.0).
+      const orgWeight = eta.org_promo_weight ?? 1.0;
+      const h2HalfAdj = -0.25 * orgWeight;
+      const h2Years = subtotal + h2HalfAdj;
+      // Convert "years from now" to absolute ETA year. eta.year
+      // already reflects the snapshot phase, so we use the breakdown
+      // pieces to project forward from THIS year.
+      const thisYear = new Date().getFullYear();
+      const h1Eta = Math.max(thisYear, Math.round(thisYear + h1Years));
+      const h2Eta = Math.max(thisYear, Math.round(thisYear + h2Years));
+      // Color: highlight whichever matches the CURRENT projection
+      const isPre = eta.season_phase !== "post_break";
+      const h1Color  = isPre  ? "var(--neon-cyan)"   : "var(--text-tertiary)";
+      const h2Color  = !isPre ? "var(--neon-orange)" : "var(--text-tertiary)";
+      const h1Border = isPre  ? "1px solid var(--neon-cyan)"   : "1px solid var(--border-light)";
+      const h2Border = !isPre ? "1px solid var(--neon-orange)" : "1px solid var(--border-light)";
+      h1h2Panel = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px;">
+        <div style="border:${h1Border};border-radius:4px;padding:6px 10px;background:var(--bg-secondary);">
+          <div style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);">H1 · pre-break</div>
+          <div style="font-size:18px;font-family:var(--font-retro-mono);font-weight:700;color:${h1Color};line-height:1.1;margin-top:2px;">${h1Eta}</div>
+          <div style="font-size:10px;color:var(--text-tertiary);margin-top:1px;">${h1Years >= 0 ? `+${h1Years.toFixed(1)}` : h1Years.toFixed(1)} yrs · no half-season adj</div>
+        </div>
+        <div style="border:${h2Border};border-radius:4px;padding:6px 10px;background:var(--bg-secondary);">
+          <div style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);">H2 · post-break</div>
+          <div style="font-size:18px;font-family:var(--font-retro-mono);font-weight:700;color:${h2Color};line-height:1.1;margin-top:2px;">${h2Eta}</div>
+          <div style="font-size:10px;color:var(--text-tertiary);margin-top:1px;">${h2Years >= 0 ? `+${h2Years.toFixed(1)}` : h2Years.toFixed(1)} yrs · ${h2HalfAdj.toFixed(2)} half-adj${orgWeight !== 1.0 ? ` (×${orgWeight})` : ""}</div>
+        </div>
+      </div>`;
+    }
+
     return `
     <div class="detail-title" style="margin-top:14px;">ETA projection · <span style="font-weight:400;">${eta.year}</span></div>
+    ${phaseEyebrow}
+    ${h1h2Panel}
     <table class="detail-table">
       <tbody>
         ${rows.map(([label, val]) => `<tr><td>${label}</td><td style="text-align:right;">${val}</td></tr>`).join("")}
@@ -13470,7 +13660,10 @@ function gradeColor(letter) {
 // what's actually driving the org's rank (e.g. "A on top-end, D on
 // trajectory" tells a very different story than just "B+ overall").
 function makeFarmReportCard(org) {
-  // v4 grade tree — 4 main branches. MLB Production grew from 2 leaves
+  // v5 grade tree — 4 main branches; Development solo-top at 40%.
+  // (Originally v4 had MLB Production + Development tied at 30%; v5
+  // promotes Development to 40% and drops Acq + Fin to 15% each.)
+  // v4 historical note: MLB Production grew from 2 leaves
   // to 5 (added Boom%, Top-3 grad WAR, Conviction); Financial grew from
   // 2 to 4 (added Draft Pool Efficiency, IFA ROI). FV_POINTS curve
   // steepened so star-tier grads dominate. Conviction cap: orgs with no
@@ -13483,7 +13676,9 @@ function makeFarmReportCard(org) {
   const n = (DATA.org_summary || []).length || 30;
 
   // Display weights (must match storage.FARM_TREE_WEIGHT_*).
-  const W = { acquisition_strategy: 20, development: 30, financial: 20, mlb_production: 30 };
+  // v5: Development solo-top at 40%, MLB Production second at 30%,
+  // Acquisition + Financial tied as supporting columns at 15% each.
+  const W = { acquisition_strategy: 15, development: 40, financial: 15, mlb_production: 30 };
 
   // Format helpers for leaf score values.
   const fmtSignedWag = v => v != null ? `WAG ${v >= 0 ? '+' : ''}${v.toFixed(2)}` : '—';
@@ -15114,13 +15309,13 @@ function makeComponentGrades(org) {
   // A / D / F / M instead of the old A / D / T / F / M.
   const items = [
     ["A", grades.acquisition_strategy, ranks.acquisition_strategy,
-      "Acquisition Strategy — Draft + IFA + Trade + Waiver outcomes (25% of farm_score)"],
+      "Acquisition Strategy — Draft + IFA + Trade + Waiver outcomes (15% of farm_score)"],
     ["D", grades.development,          ranks.development,
-      "Development — hitter + pitcher Tools DvM+ composite (35% of farm_score · top-weighted)"],
+      "Development — hitter + pitcher Tools DvM+ composite (40% of farm_score · SOLO TOP-WEIGHTED)"],
     ["F", grades.financial,            ranks.financial,
       "Financial / SUR+ — WAR per $1M + grad-contract surplus (15% of farm_score)"],
     ["M", grades.mlb_production,       ranks.mlb_production,
-      "MLB Production — 3-input composite (WAG + WAR/yr + cumulative WAR) per position (25% of farm_score)"],
+      "MLB Production — 5-leaf composite incl. boom%, top-3 WAR/yr, Conviction (30% of farm_score)"],
   ];
   const anyGrade = items.some(([, g]) => g != null);
   if (!anyGrade) return "";

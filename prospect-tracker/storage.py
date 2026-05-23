@@ -2060,16 +2060,19 @@ FARM_WEIGHT_TRAJECTORY  = FARM_WEIGHT_DVM_PLUS
 # real but small-sample. See `farm_report_card` glossary entry for the
 # full tree shape.
 # ────────────────────────────────────────────────────────────────────────
-# v4 weights (2026-05) — explicit top-end + financial emphasis. MLB
-# Production grows because the user's primary ask is "produce MLB
-# players, especially top-end" — and the new boom% / top-3 WAR /
-# Conviction leaves live here. Financial bumps to reflect the explicit
-# cost/ROI ask. Development drops slightly to make room (still second-
-# heaviest — controllable-skill signal is real). Weights sum to 1.00.
-FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.20    # was 0.25
-FARM_TREE_WEIGHT_DEVELOPMENT          = 0.30    # was 0.35
-FARM_TREE_WEIGHT_FINANCIAL            = 0.20    # was 0.15
-FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.30    # was 0.25
+# v5 weights (post-2026-05) — Development-first thesis. Sustained
+# per-tool growth (Hitter / Pitcher Tools DvM+) is the highest-
+# conviction org signal — it's the one thing the org has the most
+# direct control over and is least confounded by acquisition luck or
+# upper-league hot/cold streaks. MLB Production stays the second-
+# heaviest at 0.30 since the user's primary ask remains "produce MLB
+# players, especially top-end". Acquisition Strategy + Financial drop
+# to a tied 0.15 supporting role — they're still in the composite but
+# subordinated to dev. Weights sum to 1.00.
+FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.15    # was 0.20
+FARM_TREE_WEIGHT_DEVELOPMENT          = 0.40    # was 0.30 — solo top
+FARM_TREE_WEIGHT_FINANCIAL            = 0.15    # was 0.20
+FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.30    # unchanged
 # Back-compat aliases — anything that imported the v2 constants still
 # works. The composite blend below uses the v3 names exclusively.
 FARM_TREE_WEIGHT_ACQUISITIONS = FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
@@ -3027,6 +3030,72 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 if key and key not in roster_org_by_key:
                     roster_org_by_key[key] = org_code
 
+    # ── Per-org promotion-phase tendency (H1 vs H2) ───────────────────────
+    # Walks every promotion event across every prospect (active +
+    # graduated) and buckets by which half of the season the
+    # promotion occurred in. The resulting per-org rate feeds into
+    # each player's ETA half-season adjustment — orgs that
+    # historically promote heavily post-ASB nudge the half-season-
+    # elapsed adjustment downward (more debut risk this year);
+    # H1-heavy orgs pull it back toward zero.
+    #
+    # Source of truth: `level_changes[player_key]` rows with
+    # `kind in {"promotion", "debut"}`. We look at the trailing
+    # 3 calendar years of events so the tendency reflects current
+    # front-office behavior, not a decade-old pattern.
+    def _compute_org_promotion_tendencies() -> dict[str, dict]:
+        from datetime import date as _date
+        from eta import ALL_STAR_BREAK_MONTH, ALL_STAR_BREAK_DAY
+        today = _date.today()
+        min_year = today.year - 3  # rolling 3-year window
+        # player_key → org resolution. Prefer the player's current org
+        # (roster_org_by_key) since most level changes happen at their
+        # current org; graduates that crossed orgs are rare.
+        org_h1: dict[str, int] = {}
+        org_h2: dict[str, int] = {}
+        for key, events in level_changes.items():
+            org = roster_org_by_key.get(key)
+            if not org:
+                continue
+            for ev in events or []:
+                if ev.get("kind") not in {"promotion", "debut"}:
+                    continue
+                date_str = ev.get("date") or ""
+                if len(date_str) < 10:
+                    continue
+                try:
+                    d = _date.fromisoformat(date_str[:10])
+                except ValueError:
+                    continue
+                if d.year < min_year:
+                    continue
+                # Bucket by H1 / H2 of the season the event landed in.
+                # Off-season events (Nov-Feb) are skipped — they're
+                # offseason adds, not in-season call-ups.
+                if d.month in {11, 12, 1, 2}:
+                    continue
+                if (d.month, d.day) >= (ALL_STAR_BREAK_MONTH, ALL_STAR_BREAK_DAY):
+                    org_h2[org] = org_h2.get(org, 0) + 1
+                else:
+                    org_h1[org] = org_h1.get(org, 0) + 1
+        out: dict[str, dict] = {}
+        for org in set(list(org_h1) + list(org_h2)):
+            h1 = org_h1.get(org, 0)
+            h2 = org_h2.get(org, 0)
+            n = h1 + h2
+            if n < 5:
+                # Too few events to anchor a rate; skip — the player's
+                # ETA falls back to the league-default half-season adj.
+                continue
+            out[org] = {
+                "h1_rate":   round(h1 / n, 3),
+                "h2_rate":   round(h2 / n, 3),
+                "sample_n":  n,
+            }
+        return out
+
+    org_promotion_tendencies = _compute_org_promotion_tendencies()
+
     def _derived_graduation_date(p: PlayerTimeseries) -> str | None:
         """
         Resolve a graduate's displayed graduation date.
@@ -3732,12 +3801,30 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # chip) can pull from one dict instead of re-parsing dates.
         rs = roster_status.get(p.player_key) or {}
         health = _derive_health_profile(rs.get("injury_history") or [])
+        # Resolve the player's CURRENT org for the promotion-tendency
+        # lookup. Falls back gracefully if the player doesn't have an
+        # org on file (rare — usually amateur/IFA pre-resolution).
+        _player_org = canonical_org(
+            roster_org_by_key.get(p.player_key) or p.org
+        )
+        _org_tendency = org_promotion_tendencies.get(_player_org) if _player_org else None
         eta = estimate_eta(
             level, age, is_pitcher, latest_fv, sl,
             expected_ages=age_baselines,
             ops_norm=ops_norms,
             era_norm=era_norms,
             health=health,
+            # Pipe through today's date so estimate_eta resolves the
+            # season_phase (pre-break / post-break / offseason) and
+            # applies the half-season-elapsed adjustment when the
+            # snapshot lands after the All-Star break.
+            snapshot_date=date.today(),
+            # Per-org H1/H2 promotion tendency (computed once at top
+            # of export). Scales the half-season adjustment — H2-heavy
+            # orgs get a stronger post-break pull-in; H1-heavy orgs
+            # get a softer one. None for orgs with <5 historical
+            # promotions on file in the 3-year window.
+            org_promotion_tendency=_org_tendency,
         )
         # Performance-vs-level-median enrichment. wRC+/xFIP aren't on the
         # MLB Stats API, so we compute their conceptual cousins from the
@@ -4142,6 +4229,22 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "age_adj": eta.age_adj,
                 "fv_adj": eta.fv_adj,
                 "health_adj": eta.health_adj,
+                # H1/H2 split — `season_phase` is one of "pre_break",
+                # "post_break", "offseason"; `half_season_adj` is the
+                # actual year-adjustment applied (scaled by org-promo
+                # tendency when on file, else the league-baseline -0.25
+                # in post_break). All surface on the ETA panel.
+                "half_season_adj": eta.half_season_adj,
+                "season_phase": eta.season_phase,
+                # Per-org promotion-phase tendency context. h1_rate +
+                # h2_rate are floats in [0, 1] showing the org's
+                # historical promotion split; org_promo_weight is the
+                # multiplier applied to the league-baseline H1/H2
+                # adjustment (1.0 = neutral). None when the org has
+                # <5 historical promotions in the rolling 3yr window.
+                "org_promo_h1_rate": eta.org_promo_h1_rate,
+                "org_promo_h2_rate": eta.org_promo_h2_rate,
+                "org_promo_weight":  eta.org_promo_weight,
             },
             # Per-tool lifetime delta map (first observation → latest).
             # `{hit: {delta, first, last, first_date, last_date, n_obs}, ...}`

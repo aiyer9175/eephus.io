@@ -197,26 +197,43 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
 
 def _derive_all_level_changes() -> dict:
     """Helper: rebuild level_changes_by_key from the cached transactions
-    table without firing any HTTP calls. Mirrors the per-player loop in
-    main(). Used by rebuild_only()."""
+    table. Mirrors the per-player loop in main(). Used by rebuild_only().
+
+    Team-affiliation map comes from fetch_team_affiliations(), which has
+    its own 7-day on-disk cache — a warm cache returns instantly with no
+    network, a cold cache does ~6 HTTP calls. The previous version of
+    this function tried to import a nonexistent `team_affil` module and
+    silently returned {} on every rebuild, killing the per-org H1/H2
+    promotion-tendency data feeding the ETA model.
+    """
+    _log = logging.getLogger("derive_level_changes")
     try:
-        from stats import derive_level_changes
-        from team_affil import load_team_affil
-    except Exception:
+        from stats import derive_level_changes, fetch_team_affiliations
+    except Exception as e:
+        _log.warning("stats import failed (%s) — skipping", e)
         return {}
     tx_cache = load_player_transactions()
+    if not tx_cache:
+        return {}
+    from datetime import date as _date
+    season = _date.today().year
     try:
-        team_affil = load_team_affil()
-    except Exception:
+        team_affil = fetch_team_affiliations(season)
+    except Exception as e:
+        _log.warning("team_affil fetch failed (%s) — promotions will be "
+                     "unlabeled by level", e)
         team_affil = {}
     out: dict = {}
-    for key, tx_rows in (tx_cache or {}).items():
+    for key, tx_rows in tx_cache.items():
         try:
             evs = derive_level_changes(tx_rows, team_affil)
             if evs:
                 out[key] = evs
-        except Exception:
+        except Exception as e:
+            _log.debug("derive_level_changes failed for %s: %s", key, e)
             continue
+    _log.info("rebuilt level_changes for %d players (from %d tx-cache keys)",
+              len(out), len(tx_cache))
     return out
 
 

@@ -70,6 +70,44 @@ LEVEL_ERA_NORM: dict[str, float] = {
     "DSL": 4.40, "CPX": 4.30, "A": 4.00, "A+": 3.80, "AA": 3.70, "AAA": 4.00,
 }
 
+# ── All-Star Break — anchor for the "half-season elapsed" ETA tweak ────────
+# MLB's actual ASG date floats year-to-year (~Jul 11-17 across recent
+# seasons). Using a stable Jul 15 cutoff for the H1/H2 split. A snapshot
+# taken on or after this date is treated as "post-break" — the prospect
+# has effectively consumed half of their current level's season already,
+# so their ETA gets a small pull-forward (see `HALF_SEASON_ADJ` below).
+# Nov-Feb fall into "offseason" because the MLB calendar doesn't have an
+# H1/H2 split in that window — the natural level cycle rolls into the
+# next regular season regardless.
+ALL_STAR_BREAK_MONTH = 7
+ALL_STAR_BREAK_DAY = 15
+# How much to subtract from base_years when post-break. Calibrated so a
+# AAA prospect (base_years=0.5) gets pulled in roughly half a level-cycle
+# — i.e., a late-July AAA player projects for a Sep call-up window or an
+# early-next-year debut, not a full-year-from-now debut.
+HALF_SEASON_ADJ = -0.25
+
+
+def season_phase(snapshot_date) -> str:
+    """Return one of 'pre_break' | 'post_break' | 'offseason' for a
+    given date. None / empty → 'pre_break' (conservative default —
+    treats unknown timing as start-of-season, so the H1/H2 adjustment
+    doesn't fire spuriously)."""
+    if not snapshot_date:
+        return "pre_break"
+    try:
+        if hasattr(snapshot_date, "month") and hasattr(snapshot_date, "day"):
+            d = snapshot_date
+        else:
+            d = date.fromisoformat(str(snapshot_date)[:10])
+    except (TypeError, ValueError):
+        return "pre_break"
+    if d.month in {11, 12, 1, 2}:
+        return "offseason"
+    if (d.month, d.day) >= (ALL_STAR_BREAK_MONTH, ALL_STAR_BREAK_DAY):
+        return "post_break"
+    return "pre_break"
+
 
 @dataclass
 class ETAResult:
@@ -82,6 +120,55 @@ class ETAResult:
     # Health adjustment in years. Positive = ETA pushed back due to
     # recent injuries / post-TJ recovery; 0 = no impact.
     health_adj: float = 0.0
+    # H1/H2 adjustment in years. Post-All-Star-break snapshots subtract
+    # ~0.25 years from base — a AA prospect in late July has burned
+    # roughly half their AA year already. Org-promotion tendency
+    # (when available) scales the magnitude — see
+    # `_org_promotion_phase_weight`. 0.0 in pre-break / offseason for
+    # neutral orgs.
+    half_season_adj: float = 0.0
+    # Which half of the season the snapshot was taken in:
+    # "pre_break" | "post_break" | "offseason". Surfaced on the ETA
+    # breakdown panel so users see why an in-season ETA differs from
+    # a preseason one.
+    season_phase: str = "pre_break"
+    # Org promotion-phase tendency context (only set when the caller
+    # passed `org_promotion_tendency` AND the multiplier deviated from
+    # 1.0). Surfaced on the ETA panel so users can see e.g. "TBR
+    # promotes 72% in H2 → ETA pulled in harder". None when no data.
+    org_promo_h1_rate: float | None = None
+    org_promo_h2_rate: float | None = None
+    org_promo_weight:  float = 1.0   # 1.0 = neutral / no adjustment
+
+
+def _org_promotion_phase_weight(phase: str, org_tendency: dict | None) -> float:
+    """Compute the H1/H2 adjustment MULTIPLIER for a given org based on
+    its historical promotion-phase tendency. Returns 1.0 (neutral) when
+    no tendency on file or sample too thin.
+
+      h2_rate ≥ 0.60 (clearly H2-heavy):
+        post-break  → 1.4   (pull ETA in harder — org loves H2 calls)
+        pre-break   → 0.5   (org rarely promotes in H1; weak adjustment)
+      h1_rate ≥ 0.70 (clearly H1-heavy):
+        post-break  → 0.6   (org already did most of its calls; soft adj)
+        pre-break   → 1.0   (neutral — H1-leaning org may still call up)
+      otherwise (balanced ~40-60 split):
+        always → 1.0 (no tweak from the baseline adjustment)
+    """
+    if not org_tendency or org_tendency.get("sample_n", 0) < 5:
+        return 1.0
+    h1 = float(org_tendency.get("h1_rate") or 0.0)
+    h2 = float(org_tendency.get("h2_rate") or 0.0)
+    if phase == "post_break":
+        if h2 >= 0.60:
+            return 1.4
+        if h1 >= 0.70:
+            return 0.6
+        return 1.0
+    # pre-break
+    if h2 >= 0.60:
+        return 0.5
+    return 1.0
 
 
 def estimate_eta(
@@ -94,6 +181,8 @@ def estimate_eta(
     ops_norm: dict[str, float] | None = None,
     era_norm: dict[str, float] | None = None,
     health: dict | None = None,
+    snapshot_date=None,
+    org_promotion_tendency: dict | None = None,
 ) -> ETAResult:
     """
     Return an ETAResult for the given prospect attributes.
@@ -120,10 +209,19 @@ def estimate_eta(
     ops_n    = ops_norm     if ops_norm     is not None else LEVEL_OPS_NORM
     era_n    = era_norm     if era_norm     is not None else LEVEL_ERA_NORM
 
+    # Determine which half of the season we're in (drives the H1/H2 ETA
+    # adjustment below). Defaults to "pre_break" when snapshot_date is
+    # missing so old callers get the conservative baseline behavior.
+    phase = season_phase(snapshot_date)
+
     # ── Already in the majors ───────────────────────────────────────────────
     if current_level == "MLB":
         return ETAResult(eta_year=today_year, confidence="high",
-                         base_years=0.0, perf_adj=0.0, age_adj=0.0, fv_adj=0.0)
+                         base_years=0.0, perf_adj=0.0, age_adj=0.0, fv_adj=0.0,
+                         half_season_adj=0.0, season_phase=phase,
+                         org_promo_h1_rate=(org_promotion_tendency or {}).get("h1_rate"),
+                         org_promo_h2_rate=(org_promotion_tendency or {}).get("h2_rate"),
+                         org_promo_weight=1.0)
 
     perf_adj = 0.0
     age_adj  = 0.0
@@ -262,8 +360,32 @@ def estimate_eta(
         if health_adj > 0:
             signals += 1  # contributes to confidence-tier counting
 
+    # ── Half-season-elapsed adjustment ─────────────────────────────────────
+    # Post-All-Star-break snapshots: the prospect has effectively burned
+    # roughly half of their current level's season already, so their
+    # ETA should pull in by ~0.25 years. Doesn't fire in pre-break or
+    # offseason (the level cycle naturally rolls into the next regular
+    # season either way). When the player's ORG has a clear historical
+    # promotion-phase tendency, we scale this baseline adjustment:
+    # H2-heavy orgs (TBR, OAK-types that bank Sept call-ups) get a
+    # stronger pull-in; H1-heavy orgs (front-loaded promoters) get a
+    # weaker one. See `_org_promotion_phase_weight` for the table.
+    org_weight = _org_promotion_phase_weight(phase, org_promotion_tendency)
+    if phase == "post_break":
+        half_season_adj = HALF_SEASON_ADJ * org_weight
+    elif phase == "pre_break" and org_weight != 1.0:
+        # H2-heavy org during the pre-break window — the baseline H1
+        # adjustment is 0, but the org's tendency to call up POST-ASB
+        # tells us a pre-ASB prospect is even less likely to debut
+        # before the break. Apply a small forward push (positive adj)
+        # by inverting the multiplier interpretation: a 0.5 weight
+        # under pre-break means "lean toward later debut" → +0.10y.
+        half_season_adj = +0.10 if org_weight < 1.0 else 0.0
+    else:
+        half_season_adj = 0.0
+
     # ── Combine and clamp ──────────────────────────────────────────────────
-    total = base + perf_adj + age_adj + fv_adj + health_adj
+    total = base + perf_adj + age_adj + fv_adj + health_adj + half_season_adj
     total = max(0.0, total)                 # can't arrive in the past
     eta_year = today_year + round(total)
 
@@ -282,4 +404,9 @@ def estimate_eta(
         age_adj=round(age_adj, 2),
         fv_adj=round(fv_adj, 2),
         health_adj=round(health_adj, 2),
+        half_season_adj=round(half_season_adj, 2),
+        season_phase=phase,
+        org_promo_h1_rate=(org_promotion_tendency or {}).get("h1_rate"),
+        org_promo_h2_rate=(org_promotion_tendency or {}).get("h2_rate"),
+        org_promo_weight=round(org_weight, 2),
     )
