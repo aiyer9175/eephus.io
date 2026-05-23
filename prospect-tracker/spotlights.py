@@ -53,8 +53,15 @@ _STAT_POLARITY = {
 def _stat_valence(stat_key: str, delta: float | None) -> str:
     """Return "good" / "bad" / "neutral" based on the polarity table.
     The polarity decides whether a positive delta is good or bad — e.g. a
-    pitcher's ERA going down (negative delta) is "good"."""
-    if delta is None or delta == 0:
+    pitcher's ERA going down (negative delta) is "good".
+
+    v17 — Neutral is now reserved only for null/exactly-zero deltas.
+    Any directional delta (positive or negative) gets polarized to
+    good or bad. This widens the green/red coverage so neutral becomes
+    rare (only triggered when we genuinely don't know the direction)."""
+    if delta is None:
+        return "neutral"
+    if delta == 0:
         return "neutral"
     polarity = _STAT_POLARITY.get(stat_key, "up_good")
     if polarity == "up_good":
@@ -1101,9 +1108,14 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     # case (advancing levels + huge jump) — kept as a tie-breaker bonus.
     # Hitter / SP age cap stays at 25 here (the shared RP age<23 gate
     # above already excludes older relievers from every bucket).
+    # v17 — Loosened from prior cycles: weak_prior thresholds eased
+    # (4.50→3.80 ERA / 0.700→0.770 OPS), perf_delta floor 0.080→0.045,
+    # pedigree floor 1.5→0.8, age cap 25→26 for hitters. Previously only
+    # ~9 rebounders surfaced league-wide; target is now ~25-40.
     age_val = p.get("age")
-    age_ok_for_rebound = age_val is None or age_val < 25
-    if (perf_delta is not None and perf >= 0.080 and ped_pts >= 1.5
+    age_ok_for_rebound = age_val is None or age_val < 26
+    perf_floor = 0.045 if not is_pitcher else 0.045
+    if (perf_delta is not None and perf >= perf_floor and ped_pts >= 0.8
             and age_ok_for_rebound):
         priors = _prior_rows(p)
         weak_prior = False
@@ -1114,7 +1126,7 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             prior_eras = [v for v in prior_eras if v is not None]
             if prior_eras:
                 m_era = mean(prior_eras)
-                weak_prior = m_era >= 4.50
+                weak_prior = m_era >= 3.80
                 very_weak_prior = m_era >= 5.00
         else:
             prior_ops = [_ops(r) for r in priors
@@ -1122,7 +1134,7 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             prior_ops = [v for v in prior_ops if v is not None]
             if prior_ops:
                 m_ops = mean(prior_ops)
-                weak_prior = m_ops <= 0.700
+                weak_prior = m_ops <= 0.770
                 very_weak_prior = m_ops <= 0.600
         # Stable multi-source top-100 player is NOT a rebounder UNLESS
         # the prior season was VERY weak (Southisene .539 OPS) OR there

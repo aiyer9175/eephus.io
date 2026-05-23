@@ -1,0 +1,21 @@
+{
+  "_note": "Manual contract overrides. Used when Spotrac coverage is missing (typically for recently-signed extensions). Loaded by storage.py and merged into the player payload's `current_contract` field, taking precedence over Spotrac data when both exist. Add entries as { player_key: { aav_usd, total_usd, years, salary_by_year, extension_signed, source: 'manual' } }. The player_key matches the canonical key used in data/timeseries.json.",
+  "colt_emerson": {
+    "aav_usd": 7500000,
+    "total_usd": 52500000,
+    "years": 7,
+    "years_remaining": 7,
+    "signed_through": 2032,
+    "salary_by_year": {
+      "2026": 1000000,
+      "2027": 3000000,
+      "2028": 6000000,
+      "2029": 8000000,
+      "2030": 11000000,
+      "2031": 11000000,
+      "2032": 12500000
+    },
+    "extension_signed": "2026-03-15",
+    "source": "manual"
+  }
+}

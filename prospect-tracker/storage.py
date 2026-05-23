@@ -486,6 +486,22 @@ _BREAKOUT_MAX_AGE_STARTER = 24.0
 _BREAKOUT_MAX_AGE_RELIEVER = 25.0
 _BREAKOUT_RELIEVER_POSITIONS = {"RP", "MIRP", "SIRP", "CL", "CP"}
 
+# v17 — Stat-only gate: a young hitter posting elite wRC+ or a young
+# pitcher posting elite peripheral stuff qualifies as Breakout even
+# without tool/FV velocity (scouts often lag the underlying performance
+# by 1-2 cycles, so this lets statistically-emerging prospects break
+# out before the consensus catches up). Age caps are tighter for the
+# stat-only path: hitter ≤22, pitcher ≤23.
+_BREAKOUT_STAT_WRC_PLUS_GATE = 130
+_BREAKOUT_STAT_STF_PLUS_GATE = 115
+_BREAKOUT_STAT_HITTER_MAX_AGE = 22.0
+_BREAKOUT_STAT_PITCHER_MAX_AGE = 23.0
+# v17 — Active-prospect cohort (most don't carry wRC+/RPS+; we use
+# ops_plus_level instead). This is a level-anchored OPS+ where 100 = level
+# mean. The threshold is higher than the wRC+/RPS+ gate because level-
+# anchored stats compress harder (rare to clear +50% of level mean).
+_BREAKOUT_STAT_OPS_PLUS_LEVEL_GATE = 150
+
 
 def _compute_breakout_flag(payload: dict) -> dict | None:
     """v14 — Active-prospect Breakout indicator.
@@ -506,12 +522,8 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
     """
     if payload.get("status") != "active":
         return None
-    points = payload.get("points") or []
-    if len(points) < _BREAKOUT_WINDOW_MIN_UPDATES:
-        return None
     # v15 — Age cap: position players + SPs through 24; relievers (RP /
-    # MIRP / SIRP / CL) through 25. Aging-relief hot-streak players
-    # aren't "prospect breakouts" in the development sense.
+    # MIRP / SIRP / CL) through 25.
     try:
         age = float(payload.get("age")) if payload.get("age") is not None else None
     except (TypeError, ValueError):
@@ -522,6 +534,86 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
         cap = _BREAKOUT_MAX_AGE_RELIEVER if is_reliever else _BREAKOUT_MAX_AGE_STARTER
         if age > cap:
             return None
+
+    # v17 — Stat-only gate (NEW). A young hitter posting elite wRC+ or a
+    # young pitcher posting elite peripheral stuff qualifies as Breakout
+    # without ANY tool/FV velocity. Scouts often lag the underlying
+    # statistical breakout by 1-2 cycles, so this path lets statistically-
+    # emerging prospects flag before the consensus catches up. Stat-only
+    # gate has tighter age caps (hitter ≤22, pitcher ≤23) than the
+    # velocity path's caps so it stays exclusive.
+    statline = payload.get("statline") or {}
+    saberm = payload.get("sabermetrics") or {}
+    is_pitcher_ctx = bool(statline.get("is_pitcher")
+                          or saberm.get("is_pitcher"))
+    if age is not None:
+        if not is_pitcher_ctx and age <= _BREAKOUT_STAT_HITTER_MAX_AGE:
+            # v17 — Accept either wRC+ (MLB-experienced cohort) OR RPS+
+            # (active-prospect cohort) as the hitter stat-only signal.
+            # wRC+ is only on graduates/MLB-experienced players; RPS+ is
+            # the equivalent metric on active MiLB prospects. RPS+ gate
+            # mirrors the wRC+ gate's percentile (130 ≈ +2σ on each).
+            wrc = saberm.get("wrc_plus")
+            try:
+                if wrc is not None and float(wrc) >= _BREAKOUT_STAT_WRC_PLUS_GATE:
+                    return {
+                        "flag": True,
+                        "reason": "stats",
+                        "perf_gate": "wrc_plus",
+                        "fv_upgrade": None,
+                        "tool_velocity": None,
+                        "window_anchor_date": None,
+                    }
+            except (TypeError, ValueError):
+                pass
+            rps = statline.get("rps_plus")
+            try:
+                if rps is not None and float(rps) >= _BREAKOUT_STAT_WRC_PLUS_GATE:
+                    return {
+                        "flag": True,
+                        "reason": "stats",
+                        "perf_gate": "rps_plus",
+                        "fv_upgrade": None,
+                        "tool_velocity": None,
+                        "window_anchor_date": None,
+                    }
+            except (TypeError, ValueError):
+                pass
+            # v17 — Active-prospect MiLB hitters mostly don't have wRC+
+            # OR RPS+ populated; their level-anchored equivalent is
+            # `statline.ops_plus_level` (100 = level mean). Accept ≥130
+            # at the same gate threshold for the stat-only breakout path.
+            ops_plus = statline.get("ops_plus_level")
+            try:
+                if ops_plus is not None and float(ops_plus) >= _BREAKOUT_STAT_OPS_PLUS_LEVEL_GATE:
+                    return {
+                        "flag": True,
+                        "reason": "stats",
+                        "perf_gate": "ops_plus_level",
+                        "fv_upgrade": None,
+                        "tool_velocity": None,
+                        "window_anchor_date": None,
+                    }
+            except (TypeError, ValueError):
+                pass
+        if is_pitcher_ctx and age <= _BREAKOUT_STAT_PITCHER_MAX_AGE:
+            stf = statline.get("stf_plus_periph")
+            try:
+                if stf is not None and float(stf) >= _BREAKOUT_STAT_STF_PLUS_GATE:
+                    return {
+                        "flag": True,
+                        "reason": "stats",
+                        "perf_gate": "stf_plus_periph",
+                        "fv_upgrade": None,
+                        "tool_velocity": None,
+                        "window_anchor_date": None,
+                    }
+            except (TypeError, ValueError):
+                pass
+
+    points = payload.get("points") or []
+    if len(points) < _BREAKOUT_WINDOW_MIN_UPDATES:
+        return None
     # Window start = the older of (today - 180d, the 4th-most-recent point's
     # date). Both shrinking points yield "the older anchor wins."
     try:
@@ -581,9 +673,8 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
         return None
 
     # Performance gate — check hitter RPS+, then pitcher stf_plus_periph
-    # or fip_minus. Two-way passes if either side passes.
-    statline = payload.get("statline") or {}
-    saberm = payload.get("sabermetrics") or {}
+    # or fip_minus. Two-way passes if either side passes. `statline` and
+    # `saberm` already defined above for the stat-only gate path.
     perf_gate_passed = None
 
     rps = statline.get("rps_plus")
@@ -3607,7 +3698,32 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     level_changes = level_changes or {}
     roster_status = roster_status or {}
     ifa_spending_by_org = ifa_spending_by_org or {}
-    contracts_by_key = contracts_by_key or {}
+    contracts_by_key = dict(contracts_by_key or {})
+
+    # v17 — Merge in manual contract overrides from
+    # data/contract_overrides.json. These take precedence over Spotrac
+    # when both exist (Spotrac coverage lags for recent extensions). The
+    # file is keyed by player_key and supports the same shape as the
+    # Spotrac-derived dict plus an `extension_signed` ISO date.
+    try:
+        _overrides_path = Path(__file__).parent / "data" / "contract_overrides.json"
+        if _overrides_path.exists():
+            with open(_overrides_path, "r", encoding="utf-8") as _fh:
+                _overrides = json.load(_fh) or {}
+            for _ok, _ov in _overrides.items():
+                if _ok.startswith("_"):  # skip _note metadata
+                    continue
+                if not isinstance(_ov, dict):
+                    continue
+                # Merge over the Spotrac entry (or seed if absent).
+                base = dict(contracts_by_key.get(_ok) or {})
+                base.update(_ov)
+                base.setdefault("source", "manual")
+                contracts_by_key[_ok] = base
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        # Silently no-op if the override file is missing or unparseable —
+        # Spotrac coverage remains the fallback.
+        pass
     draft_pools = draft_pools or {}
     player_ids = player_ids or {}
     birth_dates = load_birth_dates()
@@ -4288,11 +4404,22 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # match is fine because the API descriptions are verbose ("recovery
     # from Tommy John surgery", "Left UCL surgery", etc.). "UCL sprain"
     # is intentionally NOT in this set — a sprain isn't a confirmed TJ.
+    # v17 — Expanded TJ phrase list. The original 5 phrases missed many
+    # IL descriptions like "elbow surgery" or "flexor tendon repair" that
+    # in practice indicate TJ-class procedures. We accept some false
+    # positives (a generic "elbow surgery" might be a non-TJ cleanup) in
+    # exchange for catching the long tail of TJ pitchers the prior list
+    # missed entirely. Combined with the FG `_extras.tj_date` integration
+    # below this should flag the vast majority of post-TJ prospects.
     _TJ_PHRASES = (
         "tommy john",
-        "ucl surgery",
-        "ulnar collateral ligament surgery",
-        "internal brace",          # often the modern hybrid UCL repair
+        "ucl",                     # catches "UCL surgery", "UCL reconstruction",
+                                   # "ulnar collateral ligament" all
+        "ulnar collateral",
+        "internal brace",          # modern hybrid UCL repair
+        "elbow surgery",
+        "elbow reconstruction",
+        "flexor tendon",
         "ucl reconstruction",
     )
 
@@ -4517,6 +4644,25 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # chip) can pull from one dict instead of re-parsing dates.
         rs = roster_status.get(p.player_key) or {}
         health = _derive_health_profile(rs.get("injury_history") or [])
+        # v17 — Integrate FG `_extras.tj_date` from any per-source snapshot.
+        # Amateur prospects (pre-MLB) often have no IL transactions but
+        # FanGraphs publishes a tj_date in their amateur scouting blob.
+        # Set is_post_tj from FG's date even when the transactions log is
+        # silent. Prefer the existing IL-derived date when present (more
+        # authoritative for current-pro prospects).
+        if not health.get("is_post_tj"):
+            _fg_tj_date = None
+            for _pt in (p.points or []):
+                _fg = ((_pt.per_source or {}).get("fangraphs") or {})
+                _ex = ((_fg.get("tools") or {}).get("_extras") or {})
+                _td = _ex.get("tj_date")
+                if _td:
+                    if _fg_tj_date is None or str(_td) > _fg_tj_date:
+                        _fg_tj_date = str(_td)
+            if _fg_tj_date:
+                health["is_post_tj"] = True
+                health["tj_surgery_date"] = _fg_tj_date
+                health["tj_source"] = "fangraphs_extras"
         # Resolve the player's CURRENT org for the promotion-tendency
         # lookup. Falls back gracefully if the player doesn't have an
         # org on file (rare — usually amateur/IFA pre-resolution).
@@ -4839,6 +4985,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "org": display_org,
             "status": p.status,
             "graduation_date": _display_graduation_date(p) if p.status == "graduated" else p.graduation_date,
+            # v17 — Distinct top-level mlb_debut_date field separated from
+            # graduation_date. Earlier, the UI conflated the two because the
+            # graduates page rendered `g.graduation_date` directly without
+            # consulting the roster-status debut date. They're related but
+            # distinct: a player can graduate prospect status (cross the
+            # 130 AB / 50 IP / 45 active-roster-day threshold) on a date
+            # different from their MLB debut. Stamp both so the UI can show
+            # them separately.
+            "mlb_debut_date": (roster_status.get(p.player_key) or {}).get("mlb_debut_date"),
             "birth_date": bd,
             "age": age,
             # Position in the FV-sorted active list, plus position within
@@ -4957,9 +5112,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "salary_usd":      _ct.get("salary_usd"),
                 "total_usd":       _ct.get("total_usd"),
                 "salary_by_year":  _ct.get("salary_by_year"),
+                "years":           _ct.get("years"),
                 "years_remaining": _ct.get("years_remaining"),
                 "signed_through":  _ct.get("signed_through"),
                 "spotrac_id":      _ct.get("spotrac_id"),
+                # v17 — new fields supporting the detail-page Contract panel.
+                "extension_signed": _ct.get("extension_signed"),
+                "source":          _ct.get("source") or "spotrac",
             }} if (_ct := contracts_by_key.get(p.player_key)) else {}),
             # Current IL stint, if any. Powers the IL badge on prospect
             # cards + the injury duration line on the detail page.
@@ -5791,26 +5950,40 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             },
             # MLB PRODUCTION branch — 3-input composites per position.
             # Hitter MLB Production blends Hitter WAG + Hitter WAR/yr +
-            # Hitter Cumulative WAR across hitter graduates. Same shape
-            # for the pitcher leaf with pitcher grads.
-            "mlb_hitter_wag": {
-                "wag_mean":        _gated_mean("hit_wag_sum",        "hit_wag_count"),
+            # v17 — Renamed mlb_hitter_wag → mlb_hitter_production and
+            # mlb_pitcher_wag → mlb_pitcher_production. Primary surfaced
+            # stat is now WAR/yr (was WAG). WAG moves out to a separate
+            # talent_translation leaf under the same MLB Production parent.
+            "mlb_hitter_production": {
                 "war_per_yr_mean": _gated_mean("hit_war_per_yr_sum", "hit_war_per_yr_count"),
-                # v4: top-3 career WAR (hitter subset) replaces the mean
-                # in the leaf composite — preserves the mean too for any
-                # tooltip / debug consumer.
                 "career_war_mean": _gated_mean("hit_career_war_sum", "hit_career_war_count"),
                 "top3_career_war": _top3_career_war(gagg.get("_top_grads") or [], is_pitcher=False),
+                # WAG kept on the leaf for tooltip / back-compat consumers
+                # but NO longer the headline stat.
+                "wag_mean":        _gated_mean("hit_wag_sum",        "hit_wag_count"),
                 "wag_sum":  round(gagg.get("hit_wag_sum") or 0.0, 2),
                 "grad_count": gagg.get("hit_wag_count") or 0,
             },
-            "mlb_pitcher_wag": {
-                "wag_mean":        _gated_mean("pit_wag_sum",        "pit_wag_count"),
+            "mlb_pitcher_production": {
                 "war_per_yr_mean": _gated_mean("pit_war_per_yr_sum", "pit_war_per_yr_count"),
                 "career_war_mean": _gated_mean("pit_career_war_sum", "pit_career_war_count"),
                 "top3_career_war": _top3_career_war(gagg.get("_top_grads") or [], is_pitcher=True),
+                "wag_mean":        _gated_mean("pit_wag_sum",        "pit_wag_count"),
                 "wag_sum":  round(gagg.get("pit_wag_sum") or 0.0, 2),
                 "grad_count": gagg.get("pit_wag_count") or 0,
+            },
+            # Back-compat aliases (one rebuild cycle) — frontends + tests
+            # reading the old key names still resolve to the same data.
+            "mlb_hitter_wag":  None,  # filled below from mlb_hitter_production
+            "mlb_pitcher_wag": None,  # filled below from mlb_pitcher_production
+            # v17 — NEW Talent Translation leaf under MLB Production. WAG-
+            # based — measures how a graduate's actual MLB output compares
+            # to their FV-implied baseline. Separate from raw production
+            # (WAR/yr) so the two signals don't blur.
+            "talent_translation": {
+                "wag_mean":   _gated_mean("wag_sum",   "wag_count"),
+                "wag_sum":    round(gagg.get("wag_sum") or 0.0, 2),
+                "grad_count": gagg.get("wag_count") or 0,
             },
             # ── v4 new leaves ────────────────────────────────────────
             # MLB Production: top-end grads, boom%, Conviction.
@@ -5837,6 +6010,24 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "fin_ifa_roi": _compute_ifa_roi(
                 gagg, ifa_spending_by_org.get(org) or {}),
         }
+
+        # v17 — Back-compat aliases for the rename. Old code paths that
+        # read `tree["mlb_hitter_wag"]` / `tree["mlb_pitcher_wag"]` get
+        # the same dict as the new production leaves.
+        m["tree"]["mlb_hitter_wag"]  = m["tree"]["mlb_hitter_production"]
+        m["tree"]["mlb_pitcher_wag"] = m["tree"]["mlb_pitcher_production"]
+
+        # v17 — IFA ROI fallback. When the leaf's primary metric
+        # (`war_per_m_ifa`, requires bonus dollars on file) is None, fall
+        # back to the IFA acq leaf's WAR/yr signal so the cell still
+        # produces a score in LEAF_SPECS instead of rendering "—".
+        _ifa_leaf = m["tree"].get("fin_ifa_roi") or {}
+        if _ifa_leaf.get("war_per_m_ifa") is None:
+            _ifa_acq = m["tree"].get("acq_ifa") or {}
+            _wp = _ifa_acq.get("war_per_yr_mean")
+            if _wp is not None:
+                # Stamp the fallback inline so LEAF_SPECS can read it.
+                _ifa_leaf["war_per_yr_fallback"] = _wp
 
         # _active_keys stays for the Tools+ second pass; popped later.
         org_summary.append(m)
@@ -6457,14 +6648,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # present sub-input scores per org. Single-input leaves use the
     # existing 1-input z-score path.
     LEAF_SPECS: dict[str, list[tuple[str, callable]]] = {
-        # IFA Performance — v7: single-input ROI signal (war_per_m_ifa
-        # from the financial branch). WAG was tracking "did our scouts
-        # find IFA guys who outperformed expectations" — useful but
-        # noisy with the small IFA cohort size. ROI directly captures
-        # "how much MLB production did we get per dollar of IFA spend"
-        # which is the cleanest acquisition-skill signal for this lane.
+        # IFA Performance — v17: use WAR-based signals only. Primary input
+        # is WAR/yr across IFA grads (raw production proxy); secondary is
+        # cumulative WAR across the same cohort (total impact proxy).
+        # WAG was previously layered in but the user wants WAG isolated to
+        # the talent_translation leaf so it doesn't confound raw-production
+        # signals.
         "acq_ifa": [
-            ("war_per_m_ifa", lambda e: (e["tree"]["fin_ifa_roi"] or {}).get("war_per_m_ifa")),
+            ("war_per_yr_mean", lambda e: (e["tree"]["acq_ifa"] or {}).get("war_per_yr_mean")),
+            ("career_war_mean", lambda e: (e["tree"]["acq_ifa"] or {}).get("career_war_mean")),
         ],
         # Draft Performance — pick-slot-adjusted value + ceiling-hits %
         "acq_draft": [
@@ -6502,19 +6694,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Financial — single-input each
         "fin_war_per_m":        [("war_per_m", lambda e: (e["tree"]["fin_war_per_m"]        or {}).get("value"))],
         "fin_contract_surplus": [("surplus",   lambda e: (e["tree"]["fin_contract_surplus"] or {}).get("mean_usd_per_yr"))],
-        # MLB Production — v7: dropped WAG from the composite (WAG now
-        # lives only under Acquisition Strategy as the talent-translation
-        # signal, where it belongs). MLB Production composite uses
-        # WAR-per-year + TOP-3 cumulative WAR — both pure-output metrics
-        # tied to graduates' actual MLB production, not the WAG
-        # delta-vs-FV-expectation frame.
-        "mlb_hitter_wag": [
-            ("war_per_yr", lambda e: (e["tree"]["mlb_hitter_wag"] or {}).get("war_per_yr_mean")),
-            ("top3_cum_war", lambda e: (e["tree"]["mlb_hitter_wag"] or {}).get("top3_career_war")),
+        # MLB Production — v17: renamed mlb_hitter_wag/mlb_pitcher_wag
+        # leaves to mlb_hitter_production/mlb_pitcher_production. Primary
+        # surfaced stat is WAR/yr (was WAG); WAG moves to a separate
+        # talent_translation leaf below. Old key names kept as aliases.
+        "mlb_hitter_production": [
+            ("war_per_yr", lambda e: (e["tree"]["mlb_hitter_production"] or {}).get("war_per_yr_mean")),
+            ("top3_cum_war", lambda e: (e["tree"]["mlb_hitter_production"] or {}).get("top3_career_war")),
         ],
-        "mlb_pitcher_wag": [
-            ("war_per_yr", lambda e: (e["tree"]["mlb_pitcher_wag"] or {}).get("war_per_yr_mean")),
-            ("top3_cum_war", lambda e: (e["tree"]["mlb_pitcher_wag"] or {}).get("top3_career_war")),
+        "mlb_pitcher_production": [
+            ("war_per_yr", lambda e: (e["tree"]["mlb_pitcher_production"] or {}).get("war_per_yr_mean")),
+            ("top3_cum_war", lambda e: (e["tree"]["mlb_pitcher_production"] or {}).get("top3_career_war")),
+        ],
+        # v17 — NEW Talent Translation leaf. WAG-based — measures whether
+        # graduates outperformed their FV-implied baseline. Sibling to
+        # mlb_*_production under the MLB Production parent.
+        "talent_translation": [
+            ("wag_mean", lambda e: (e["tree"]["talent_translation"] or {}).get("wag_mean")),
         ],
         # v4 NEW leaves under MLB Production.
         "mlb_production_boom_pct": [
@@ -6540,8 +6736,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "fin_draft_pool_efficiency": [
             ("war_per_m_pool", lambda e: (e["tree"]["fin_draft_pool_efficiency"] or {}).get("war_per_m_pool")),
         ],
+        # v17 — IFA ROI: primary input still WAR/$M IFA spend, but with a
+        # fallback to acq_ifa's WAR/yr signal when no bonus dollars are on
+        # file. Without the fallback, orgs whose IFA grads pre-date Spotrac
+        # bonus coverage rendered "—" and contributed nothing to the
+        # financial branch.
         "fin_ifa_roi": [
             ("war_per_m_ifa", lambda e: (e["tree"]["fin_ifa_roi"] or {}).get("war_per_m_ifa")),
+            ("war_per_yr_fallback", lambda e: (e["tree"]["fin_ifa_roi"] or {}).get("war_per_yr_fallback")),
         ],
     }
     # Compute each leaf's 100-anchored per-org list. Multi-input leaves
@@ -6586,9 +6788,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "development":          ["dev_hitter", "dev_pitcher"],
         "financial":            ["fin_war_per_m", "fin_contract_surplus",
                                   "fin_draft_pool_efficiency", "fin_ifa_roi"],
-        "mlb_production":       ["mlb_hitter_wag", "mlb_pitcher_wag",
+        "mlb_production":       ["mlb_hitter_production",   # v17 renamed (was mlb_hitter_wag)
+                                  "mlb_pitcher_production",  # v17 renamed (was mlb_pitcher_wag)
+                                  "talent_translation",      # v17 NEW — WAG-based sibling leaf
                                   "mlb_production_boom_pct",
-                                  "mlb_production_bust_pct",   # v7 — negative-direction leaf
+                                  "mlb_production_bust_pct",
                                   "mlb_production_top_grads",
                                   "mlb_production_conviction"],
     }

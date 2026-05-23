@@ -189,8 +189,8 @@ class TestExportedTreeShape:
             assert "tree" in o, f"{o['org']} missing tree field"
             for leaf in ["acq_ifa", "acq_draft", "dev_hitter", "dev_pitcher",
                          "tx_trades", "tx_waivers", "fin_war_per_m",
-                         "fin_contract_surplus", "mlb_hitter_wag",
-                         "mlb_pitcher_wag"]:
+                         "fin_contract_surplus", "mlb_hitter_production",
+                         "mlb_pitcher_production", "talent_translation"]:
                 assert leaf in o["tree"], f"{o['org']} missing tree.{leaf}"
 
     def test_every_org_has_4_main_grades(self):
@@ -208,8 +208,8 @@ class TestExportedTreeShape:
         for o in self.orgs:
             for leaf in ["acq_ifa", "acq_draft", "dev_hitter", "dev_pitcher",
                          "tx_trades", "tx_waivers", "fin_war_per_m",
-                         "fin_contract_surplus", "mlb_hitter_wag",
-                         "mlb_pitcher_wag"]:
+                         "fin_contract_surplus", "mlb_hitter_production",
+                         "mlb_pitcher_production", "talent_translation"]:
                 assert leaf in o["grades"], f"{o['org']} grades missing {leaf}"
 
     def test_main_scores_centered_near_100(self):
@@ -286,8 +286,8 @@ class TestExportedTreeShape:
         # sparse-data gating accidentally gets removed everywhere.
         leaves = ["acq_ifa", "acq_draft", "dev_hitter", "dev_pitcher",
                   "tx_trades", "tx_waivers", "fin_war_per_m",
-                  "fin_contract_surplus", "mlb_hitter_wag",
-                  "mlb_pitcher_wag"]
+                  "fin_contract_surplus", "mlb_hitter_production",
+                  "mlb_pitcher_production"]
         n_dash = sum(
             1 for o in self.orgs for leaf in leaves
             if o["grades"].get(leaf) == "—"
@@ -331,7 +331,7 @@ class TestExportedTreeShape:
         # v3 — Hitter + Pitcher MLB Production each carry WAG, WAR/yr,
         # Cumulative WAR. Verify at least one org has all three on at
         # least one position side.
-        for side in ("mlb_hitter_wag", "mlb_pitcher_wag"):
+        for side in ("mlb_hitter_production", "mlb_pitcher_production"):
             candidates = [
                 o for o in self.orgs
                 if (o["tree"][side] or {}).get("wag_mean")        is not None

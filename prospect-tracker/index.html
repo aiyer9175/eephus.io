@@ -2091,7 +2091,16 @@
       color: var(--down);
       border-color: var(--down);
     }
-    .driver-tag.is-neutral { /* inherits base */ }
+    /* v17 — Neutral driver tier reads YELLOW (amber). Per user direction,
+       drivers should grade exclusively green / red / yellow — neutral
+       was previously a plain gray which read as "no opinion." Yellow
+       reads as "noted but not directional," and is now rare (only
+       triggers when delta is exactly zero or unknown). */
+    .driver-tag.is-neutral {
+      background: rgba(255, 215, 0, 0.15);
+      color: var(--neon-amber);
+      border-color: var(--neon-amber);
+    }
 
     /* === Graduates ================================================
        8-column grid: # | Player | Graduation | FV | Trajectory chart |
@@ -2417,6 +2426,14 @@
       border-color: #C9A85A !important;
       box-shadow: 0 0 4px rgba(229, 199, 123, 0.45);
     }
+    /* v17 — Glow halos around the animated rarity borders. Each tier
+       gets a soft drop-shadow tinted to its rarity color so the
+       elite-tier headshots read as "premium card" thumbnails. Combines
+       with the cycle-16 border animations for full Topps-chrome effect. */
+    .headshot.card-rarity-chrome    { box-shadow: 0 0 6px rgba(220, 220, 235, 0.45); }
+    .headshot.card-rarity-holo      { box-shadow: 0 0 8px rgba(180, 85, 255, 0.55); }
+    .headshot.card-rarity-foil      { box-shadow: 0 0 4px rgba(200, 200, 210, 0.35); }
+    .headshot.card-rarity-legendary { box-shadow: 0 0 12px rgba(255, 95, 162, 0.65); }
     /* Wrapper around draft/overseas headshots. Hosts the optional
        FV-tier ring + chrome/holo treatment for elite-tier prospects
        (matches the MiLB headshotHTML wrapper). Keeps the image at
@@ -5231,20 +5248,20 @@
 
 <template id="main-template">
   <div class="section-tabs" id="section-tabs">
-    <!-- v16 — Nav reorder: Active first (the headline page), then Farms
-         (org-level rollups), Spotlights (editorial movement feed),
-         Recently Acquired, IL, Graduates, Draft, Overseas. Leaderboards
-         + Glossary + Watchlist on the right as tool tabs. Charts section
-         removed (was not working). -->
+    <!-- v17 — Nav reorder: Graduates moved between Leaderboards and Glossary
+         (per-graduate analysis is a deeper tool, not part of the live-prospect
+         scan). Active list remains the headline; Farm Systems + Spotlights
+         + transactional pages first; Leaderboards/Graduates/Glossary/Watchlist
+         are tool tabs on the right. -->
     <button class="section-tab active" data-section="active">Active</button>
     <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="spotlights">Spotlights</button>
     <button class="section-tab" data-section="traded">Recently Acquired</button>
     <button class="section-tab" data-section="injured">Injured List</button>
-    <button class="section-tab" data-section="graduates">Graduates</button>
     <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">Draft</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
+    <button class="section-tab" data-section="graduates">Graduates</button>
     <button class="section-tab" data-section="glossary" title="Stats, indices, scouting concepts, and methodology — every term used on the site">Glossary</button>
     <button class="section-tab" data-section="watchlist" title="Your starred prospects and farm systems — private to this browser">Watchlist<span class="section-tab-count" id="watchlist-tab-count"></span></button>
     <span class="section-count" id="section-count"></span>
@@ -5519,6 +5536,17 @@
       <button class="chip" data-grad-sort="vs_fv_proj_low"
               title="WAG (WAR Above Grade) — same metric as 'WAG (high)' but inverted: lowest delta first, so graduates UNDERPERFORMING their FV grade most heavily surface at the top. Playing-time-weighted; requires ≥1 full-season equivalent of MLB playing time (thin-debut graduates sink to the bottom).">WAG (low)</button>
     </div>
+    <!-- v17 — Boom/Bust filter chips. Reads boom_label stamped by
+         storage.py:_compute_boom_bust. Default "All". Selecting a chip
+         narrows the graduates list to just that label tier. -->
+    <div class="filter-bar" style="margin-bottom:8px;">
+      <span class="filter-label">Boom / Bust</span>
+      <button class="chip active" data-grad-boom="all" title="Show every graduate">All</button>
+      <button class="chip" data-grad-boom="boom" title="Outperformed FV-implied WAR projection (WAG ≥ +2.5)">BOOM</button>
+      <button class="chip" data-grad-boom="bust" title="Fell short of FV-implied WAR projection (WAG ≤ −1.5)">BUST</button>
+      <button class="chip" data-grad-boom="settled" title="In the middle band — settled at roughly the FV-implied baseline">SETTLED</button>
+      <button class="chip" data-grad-boom="unsettled" title="Sample too thin to call (cup-of-coffee debuts)">UNSETTLED</button>
+    </div>
     <div id="grad-rows"></div>
   </div>
 
@@ -5560,8 +5588,8 @@
       </div>
       <div class="filter-group">
         <span class="filter-label">View</span>
-        <button class="chip"        data-farm-view="table">Table</button>
-        <button class="chip active" data-farm-view="cards">Cards</button>
+        <button class="chip active" data-farm-view="table">Table</button>
+        <button class="chip"        data-farm-view="cards">Cards</button>
       </div>
     </div>
     <div id="farm-rows"></div>
@@ -7187,7 +7215,7 @@ function syncToURL() {
   if (state.density     && state.density !== "standard") p.set("density", state.density);
   if (state.search)                       p.set("q",     state.search);
   if (state.farmSort    !== "farm_rank")  p.set("farm",  state.farmSort);
-  if (state.farmViewMode && state.farmViewMode !== "cards") p.set("farmview", state.farmViewMode);
+  if (state.farmViewMode && state.farmViewMode !== "table") p.set("farmview", state.farmViewMode);
   if (state.rosterSort  && state.rosterSort  !== "fv")    p.set("rsort", state.rosterSort);
   if (state.glossaryCat && state.glossaryCat !== "all")    p.set("gcat", state.glossaryCat);
   if (state.glossarySearch)                                 p.set("gq",   state.glossarySearch);
@@ -7467,24 +7495,11 @@ function makeEtaCell(p) {
   //   "pre_break"  → H1 chip (cyan)
   //   "post_break" → H2 chip (orange)
   //   "offseason"  → no chip (the cycle naturally rolls into next year)
-  // Tooltip carries the phase + half-season-adj value so the user can
-  // see how much the H2 gate pulled the ETA in.
-  let phaseChip = "";
-  if (eta.season_phase === "pre_break" || eta.season_phase === "post_break") {
-    const isH1 = eta.season_phase === "pre_break";
-    const label = isH1 ? "H1" : "H2";
-    const color = isH1 ? "var(--neon-cyan)" : "var(--neon-orange)";
-    const adj = eta.half_season_adj;
-    const adjBit = adj != null && adj !== 0
-      ? ` · half-season adj ${adj > 0 ? "+" : ""}${adj}y`
-      : "";
-    const tip = isH1
-      ? `Pre-All-Star-break snapshot${adjBit}`
-      : `Post-All-Star-break snapshot${adjBit}`;
-    phaseChip = ` <span style="display:inline-block;margin-left:3px;padding:1px 4px;font-family:var(--font-retro-mono);font-size:9px;font-weight:700;letter-spacing:0.04em;color:${color};border:1px solid ${color};border-radius:2px;line-height:1;cursor:help;" title="${escapeHtml(tip)}">${label}</span>`;
-  }
+  // v17 — H1/H2 phase chip removed. The pre/post All-Star-break
+  // distinction didn't communicate anything actionable to readers; ETA
+  // is now displayed as the year alone.
   return `<div class="eta-cell">
-    <span class="eta-year ${cls}">${eta.year}</span>${phaseChip}
+    <span class="eta-year ${cls}">${eta.year}</span>
   </div>`;
 }
 
@@ -7781,7 +7796,9 @@ const state = {
   // View mode for the farm system list — "table" (default) or "cards".
   // Cards mode flips the row layout into a grid of vertical stacks
   // (auto-fit columns), better for narrow viewports + visual scan.
-  farmViewMode: "cards",
+  // v17 — Default farm-list view back to table (was cards). Table is the
+  // info-dense view; cards are an alternative for quick browsing.
+  farmViewMode: "table",
   // Active form-bar window. Controls the farm-list sparkline (which
   // plots growth above the league mean over the same window) and the
   // value used when sorting by "Trajectory". Default 6y — the
@@ -7801,6 +7818,8 @@ const state = {
   // graduates. Sort by graduation date is still one click away via
   // the "Date" chip on the graduates page.
   gradSort: "vs_fv_proj",
+  // v17 — Boom/Bust filter for the graduates page. "all" passes everyone.
+  gradBoomFilter: "all",
   // Injured-list sort. "days_asc" (default) sorts by elapsed IL days
   // ascending so the players closest to returning surface first.
   // "days" sorts descending (longest-out first); "fv" puts high-FV
@@ -8120,6 +8139,11 @@ function getFilteredGrads() {
   if (state.orgFilter !== "all") {
     pool = pool.filter(p => p.org === state.orgFilter);
   }
+  // v17 — Boom/Bust filter (state.gradBoomFilter). Empty / "all" passes
+  // every graduate; any other value narrows to just that boom_label tier.
+  if (state.gradBoomFilter && state.gradBoomFilter !== "all") {
+    pool = pool.filter(p => (p.boom_label || "") === state.gradBoomFilter);
+  }
   // Already sorted by graduation_date desc from the back-end; preserve that.
   return pool;
 }
@@ -8247,13 +8271,22 @@ function renderActiveContextRail() {
     const d = p.stock.delta;
     const cls = d > 0 ? "stock-up" : "stock-down";
     const arrow = d > 0 ? "▲" : "▼";
-    const driver = (p.stock.drivers && p.stock.drivers[0]) || "";
-    const driverHtml = driver
-      ? `<div style="font-size:10px;color:var(--text-tertiary);margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(driver)}</div>`
+    // v17 — drivers are dicts {label, valence, ...} since cycle 15. The
+    // prior `escapeHtml(driver)` was toString'ing the object and
+    // rendering "[object Object]". Extract .label (with legacy-string
+    // fallback) for the caption.
+    const driverRaw = (p.stock.drivers && p.stock.drivers[0]);
+    const driverLabel = driverRaw == null ? ""
+                      : (typeof driverRaw === "string" ? driverRaw : (driverRaw.label || ""));
+    const driverHtml = driverLabel
+      ? `<div style="font-size:10px;color:var(--text-tertiary);margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(driverLabel)}</div>`
       : "";
+    // v17 — Team logo inline before the player name (matches the
+    // Recently-Acquired pattern from cycle 15).
+    const teamLogo = p.org ? teamLogoHTML(p.org, "sm", p.org) : "";
     return `<div class="ctx-row" data-key="${escapeHtml(p.player_key)}">
       <div style="flex:1;min-width:0;">
-        <div style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(p.player_name)}</div>
+        <div style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:4px;">${teamLogo}<span>${escapeHtml(p.player_name)}</span></div>
         ${driverHtml}
       </div>
       <span class="${cls}" style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;">${arrow} ${d > 0 ? "+" : ""}${d.toFixed(1)}</span>
@@ -8432,7 +8465,7 @@ function renderSpotlights() {
     <span>Player · pos · org · age</span>
     <span style="text-align:center;">FV</span>
     <span>Level · line</span>
-    <span>Strength</span>
+    <span style="text-align:center;">FV history</span>
     <span>Drivers</span>
   </div>`;
 
@@ -8451,14 +8484,18 @@ function renderSpotlights() {
       <div class="rank-num">${rankOffset + i + 1}</div>
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
         ${headshotHTML(_full, 42)}
-        <div style="min-width:0;">
+        <div style="min-width:0;flex:1;">
           <div class="player-name">${escapeHtml(s.player_name)}</div>
           ${playerMetaHTML(s)}
         </div>
+        <!-- v17 — Compare + Watchlist on spotlight rows. -->
+        <button class="watch-btn${watchlistHas(s.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(s.player_key)}" type="button" title="${watchlistHas(s.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(s.player_key) ? "★" : "☆"}</button>
+        <button class="compare-add-btn is-compact${compareHas(s.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(s.player_key)}" type="button" title="${compareHas(s.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(s.player_key) ? "✓" : "+"}</button>
       </div>
       <div style="text-align:center;"><span class="fv-badge ${fvClass(s.fv || "40")}">${escapeHtml(s.fv ?? "—")}</span></div>
       <div class="milb-cell"><span class="level-pill level-neutral">${escapeHtml(s.level ?? "—")}</span>${escapeHtml(s.line ?? "—")}</div>
-      <div class="stock-cell stock-up" style="text-align:left;">${Number(s.score || 0).toFixed(1)}</div>
+      <!-- v17 — Strength score column replaced with mini FV sparkline. -->
+      <div class="line-chart-cell" style="text-align:center;" title="${escapeHtml(_ohlcTooltip(_full))}">${lazyLineChartHTML(_full)}</div>
       <div class="driver-list">${(s.drivers || []).map(d => {
         // v15 — drivers are dicts {label, valence, tooltip}; legacy
         // string drivers fall back to neutral coloring.
@@ -9615,6 +9652,8 @@ function renderInjured() {
             <div class="player-name">${escapeHtml(p.player_name)}${tjBadge}</div>
             ${playerMetaHTML(p, { showIL: false, showRoster: false })}
           </div>
+          <!-- v17 — Add Watchlist alongside the existing Compare button on IL rows. -->
+          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
         <div><span class="grad-pill" style="background:var(--accent-il-soft);color:var(--accent-il);border:1px solid var(--accent-il-border);">${escapeHtml(il.type || "?")} IL</span></div>
@@ -12043,6 +12082,9 @@ function renderGraduates() {
             <div class="player-name">${escapeHtml(g.player_name)}${typeof boomBustPillHTML === "function" ? boomBustPillHTML(g) : ""}${wagPill}${warTag}${gradWriteupPill}</div>
             ${playerMetaHTML(g, { showIL: false, showRoster: false })}
           </div>
+          <!-- v17 — Compare + Watchlist on graduate rows. -->
+          <button class="watch-btn${watchlistHas(g.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(g.player_key)}" type="button" title="${watchlistHas(g.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(g.player_key) ? "★" : "☆"}</button>
+          <button class="compare-add-btn is-compact${compareHas(g.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(g.player_key)}" type="button" title="${compareHas(g.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(g.player_key) ? "✓" : "+"}</button>
         </div>
         <div class="grad-graduation-cell">
           <span class="${pillClass}">${g.graduation_date}</span>
@@ -12157,9 +12199,12 @@ function renderGraduates() {
     </div>`;
   })();
 
+  // v17 — Graduate classes bar chart + class strength strip removed
+  // (both were redundant with the per-row data and the existing date-
+  // grouped layout). The list now leads directly with the date-banner.
   document.getElementById("grad-rows").innerHTML = filtered.length
-    ? classStrengthStrip + cohortChart + banner + body
-    : classStrengthStrip + cohortChart + `<div class="state-message">No graduates match these filters.</div>`;
+    ? banner + body
+    : `<div class="state-message">No graduates match these filters.</div>`;
 }
 
 const SOURCE_LABELS = {
@@ -14017,39 +14062,41 @@ function playerMetaHTML(p, opts = {}) {
     : "";
   const ilTag = showIL ? ilTagHTML(p) : "";
   const rosterTag = showRoster ? rosterTagHTML(p) : "";
-  // Versa chip cluster — when FG publishes a multi-position eligibility
-  // string (e.g. "SS/CF" or "2B/SS/3B"), show the secondary positions
-  // as small inline chips after the primary position. The primary
-  // position is whatever the player payload already carries; the
-  // FG Versa adds the others. Filtered to positions that aren't the
-  // primary so we don't double-print.
-  let versaChips = "";
-  for (let i = ((p && p.points) || []).length - 1; i >= 0; i--) {
-    const fg = p.points[i] && p.points[i].per_source && p.points[i].per_source.fangraphs;
-    const ex = fg && fg.tools && fg.tools._extras;
-    if (!ex || !ex.versa) continue;
-    const parts = String(ex.versa).split(/[\/,]/).map(s => s.trim()).filter(Boolean);
-    const primary = String(p.position || "").split("/")[0].toUpperCase();
-    const others = parts.filter(x => x.toUpperCase() !== primary);
-    if (others.length) {
-      versaChips = others.map(pos =>
-        `<span class="row-tag" style="margin-left:4px;font-size:9px;color:var(--text-tertiary);border-color:var(--border-light);background:transparent;" title="FanGraphs positional eligibility: ${escapeHtml(ex.versa)}">+${escapeHtml(pos)}</span>`
-      ).join("");
+  // v17 — Position display: full slash list with primary bolded.
+  // Previously rendered the primary position alone with `+POS` chips
+  // for secondaries. Now: `**SS** / 2B / 3B` — primary bolded,
+  // secondaries in FG's published order. The chip approach added
+  // visual noise; the slash list reads more naturally and keeps the
+  // hierarchy (primary first, bolded) clear.
+  const positionLabel = (() => {
+    const primary = String(p.position || "").split("/")[0].toUpperCase().trim();
+    let versaStr = null;
+    for (let i = ((p && p.points) || []).length - 1; i >= 0; i--) {
+      const fg = p.points[i] && p.points[i].per_source && p.points[i].per_source.fangraphs;
+      const ex = fg && fg.tools && fg.tools._extras;
+      if (ex && ex.versa) { versaStr = String(ex.versa); break; }
     }
-    break;
-  }
-  // B/T handedness chip — small monospace pill from FG _extras. Only
-  // renders when FG published either bats or throws for this prospect.
+    if (!primary) return escapeHtml(p.position ?? "—");
+    const parts = versaStr
+      ? versaStr.split(/[\/,]/).map(s => s.trim().toUpperCase()).filter(Boolean)
+      : [primary];
+    // Ensure primary appears first; preserve FG order for the rest.
+    const ordered = [primary, ...parts.filter(x => x !== primary)];
+    if (ordered.length === 1) return `<b>${escapeHtml(ordered[0])}</b>`;
+    return `<b>${escapeHtml(ordered[0])}</b> / ${ordered.slice(1).map(escapeHtml).join(" / ")}`;
+  })();
+  // v17 — Handedness chip without B/T prefix. The slash separator
+  // already implies "bats / throws"; the prefix was redundant noise.
   let btChip = "";
   const _hand = _getHandedness(p);
   if (_hand.bats || _hand.throws) {
     const _bt = `${_hand.bats || "—"}/${_hand.throws || "—"}`;
-    btChip = `<span class="row-tag" style="margin-left:6px;font-size:9px;color:var(--text-tertiary);border-color:var(--border-light);background:transparent;font-family:var(--font-mono);" title="Bats ${_hand.bats || "?"} / Throws ${_hand.throws || "?"} (FanGraphs)">B/T ${escapeHtml(_bt)}</span>`;
+    btChip = `<span class="row-tag" style="margin-left:6px;font-size:9px;color:var(--text-tertiary);border-color:var(--border-light);background:transparent;font-family:var(--font-mono);" title="Bats ${_hand.bats || "?"} / Throws ${_hand.throws || "?"} (FanGraphs)">${escapeHtml(_bt)}</span>`;
   }
   // ilTag dropped from the meta line — same signal renders as the
   // healthBadgeHTML inline pill (in _inlineBadgeStrip). Showing both
   // duplicated IL state per row. The pill is more glanceable.
-  return `<div class="player-meta">${escapeHtml(p.position ?? "—")}${versaChips} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${ageTag}${btChip}${rosterTag}</div>`;
+  return `<div class="player-meta">${positionLabel} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${ageTag}${btChip}${rosterTag}</div>`;
 }
 
 // One-line auto-generated "Quick read" summary for a player. Surfaces
@@ -15004,7 +15051,7 @@ function makeFarmToolDevCard(org) {
       <div class="tooldev-section-label">Hitter tools</div>
       <div class="tooldev-grid">
         ${cellHtml("Hit",      "hit")}
-        ${cellHtml("Power",    "power")}
+        ${cellHtml("Power",    "pwr")}
         ${cellHtml("Run",      "speed")}
         ${cellHtml("Field",    "field")}
         ${cellHtml("Arm",      "arm")}
@@ -15950,7 +15997,10 @@ const FARM_DEPTH_VISIBLE_CAP = 4;
 // levels stay muted slate. Reads from the roster's own player objects
 // (so FV-tint computation matches the rest of the page) instead of the
 // pre-aggregated level_counts dict.
-const FARM_LADDER_LEVELS = ["MLB", "AAA", "AA", "A+", "A", "CPX", "DSL"];
+// v17 — MLB level removed from the promotion ladder. The MLB row was
+// redundant since the ladder visualizes the path TO MLB; graduates leave
+// the cohort entirely on promotion. AAA → DSL only.
+const FARM_LADDER_LEVELS = ["AAA", "AA", "A+", "A", "CPX", "DSL"];
 function makePromotionLadder(rosterPlayersAll, org) {
   if (!rosterPlayersAll || !rosterPlayersAll.length) {
     return `<div style="color:var(--text-tertiary);font-size:11px;">No tracked prospects to ladder.</div>`;
@@ -16598,17 +16648,12 @@ function renderFarmSystems() {
     ? `<div class="farm-divider">All farms</div>`
     : "";
   // Phase 3 P3-A — cross-org DvM+ heatmap at the top of the section.
-  // Hidden when the user has filtered down to a small subset (the
-  // heatmap is a "league-wide context" tool; a 3-org view doesn't
-  // benefit from one). Pinned + rest combined here so search-filtered
-  // sub-views still see the league snapshot.
-  const heatmapHtml = (orgs.length >= 12)
-    ? makeFarmHeatmap(DATA.org_summary
-        ? (Array.isArray(DATA.org_summary) ? DATA.org_summary : Object.values(DATA.org_summary))
-        : [])
-    : "";
+  // v17 — League-wide development pace heatmap removed (was taking too
+  // much vertical space and cluttering both card + table views). The
+  // makeFarmHeatmap function is retained for back-compat with anyone
+  // else who imports it, just not invoked from the farm list.
   document.getElementById("farm-rows").innerHTML =
-    heatmapHtml + header + pinnedRows + dividerRow + restRows;
+    header + pinnedRows + dividerRow + restRows;
 
   // Snapshot the current ranks AFTER the DOM lands — defer via rAF so a
   // subsequent re-render still has the previous-visit values to compare
@@ -18359,22 +18404,52 @@ function renderPlayerDetail(key) {
     const spotracLink = c.spotrac_id
       ? `<a href="https://www.spotrac.com/mlb/player/_/id/${escapeHtml(c.spotrac_id)}/" target="_blank" rel="noopener" style="font-size:10px;color:var(--neon-cyan);text-decoration:none;letter-spacing:0.02em;">Spotrac page →</a>`
       : "";
+    // v17 — Extension badge (manual-override + Spotrac-tagged extensions).
+    const extBadge = c.extension_signed
+      ? `<span style="display:inline-block;padding:2px 7px;background:rgba(180,85,255,0.15);color:var(--neon-violet);border:1px solid var(--neon-violet);border-radius:3px;font-size:9px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-left:8px;" title="Extension signed ${escapeHtml(c.extension_signed)}">EXT · ${escapeHtml(c.extension_signed)}</span>`
+      : "";
+    // v17 — Implied AAV via the existing estimateMarketAavMM helper. Reads
+    // the prospect's career WAR/yr (graduate) or a war_per_yr proxy from
+    // sabermetrics.war (active). Falls back to "—" when no rate signal.
+    const _cwYr = ((p.career_war || {}).war_per_yr)
+                ?? ((p.sabermetrics || {}).war_per_yr)
+                ?? null;
+    const impliedMM = (typeof estimateMarketAavMM === "function")
+                    ? estimateMarketAavMM(_cwYr)
+                    : null;
+    const actualMM = c.aav_usd != null ? c.aav_usd / 1_000_000 : null;
+    let aavCompareRow = "";
+    if (impliedMM != null && actualMM != null) {
+      const surplusMM = impliedMM - actualMM;
+      const cls = surplusMM > 0.5 ? "var(--up)"
+                : surplusMM < -0.5 ? "var(--down)"
+                : "var(--text-tertiary)";
+      const surplusSign = surplusMM > 0 ? "+" : "";
+      aavCompareRow = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--border-light);margin-top:8px;font-size:11px;color:var(--text-secondary);" title="Implied AAV = career WAR/yr × $9.5M (FanGraphs market multiplier). Surplus = team's gain (positive) or overpay (negative) per year.">
+        <span>Implied: <strong style="color:var(--text-primary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">$${impliedMM.toFixed(1)}M</strong></span>
+        <span>Surplus: <strong style="color:${cls};font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${surplusSign}$${surplusMM.toFixed(1)}M/yr</strong></span>
+      </div>`;
+    }
     const headlineRow = `
       <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:10px;border-bottom:1px solid var(--border-light);margin-bottom:10px;gap:10px;">
         <div>
-          <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;"><span class="g-term" data-term="aav">AAV</span></div>
-          <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${c.years_remaining || "?"} yr · signed thru ${c.signed_through || "?"}</div>
+          <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;"><span class="g-term" data-term="aav">AAV</span>${extBadge}</div>
+          <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${c.years_remaining || c.years || "?"} yr · signed thru ${c.signed_through || "?"}</div>
         </div>
         <div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;" title="${escapeHtml("Average Annual Value — total contract / years remaining (present-value adjusted by Spotrac for deferral-heavy deals)")}">${fmtUsd(c.aav_usd)}</div>
       </div>`;
+    const sourceTag = c.source === "manual"
+      ? `<span style="font-size:9px;color:var(--text-tertiary);font-style:italic;">manual override</span>`
+      : `<span style="font-size:9px;color:var(--text-tertiary);font-style:italic;">Spotrac</span>`;
     const totalsRow = `
       <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;margin-top:6px;border-top:1px solid var(--border-light);font-size:11px;color:var(--text-secondary);">
         <span>Total value: <strong style="color:var(--text-primary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${fmtUsd(c.total_usd)}</strong></span>
-        ${spotracLink}
+        <span style="display:flex;gap:8px;align-items:center;">${sourceTag}${spotracLink}</span>
       </div>`;
-    return `<div class="detail-title">Contract details <span class="detail-title-sub">Spotrac · active deal</span></div>
+    return `<div class="detail-title">Contract details <span class="detail-title-sub">${c.source === "manual" ? "manual override" : "Spotrac · active deal"}</span></div>
       <div class="detail-card">
         ${headlineRow}
+        ${aavCompareRow}
         <table style="width:100%;border-collapse:collapse;">
           <tbody>${yearRows}</tbody>
         </table>
@@ -23240,6 +23315,8 @@ function attachHandlers() {
   // (who graduated most recently / who's been the best MLB performer /
   // who graduated at the highest FV) and benefits from chip toggles.
   attachChipGroup("grad-sort", "gradSort", () => renderGraduates());
+  // v17 — Boom/Bust filter chips on the graduates page.
+  attachChipGroup("grad-boom", "gradBoomFilter", () => renderGraduates());
   // IL sort chips.
   attachChipGroup("il-sort", "ilSort", () => renderInjured());
 

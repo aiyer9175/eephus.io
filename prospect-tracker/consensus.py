@@ -827,13 +827,38 @@ def build_timeseries(
     # two PlayerTimeseries rows for the same person (e.g. Travis
     # Sykora, Chase DeLauter, Bryce Rainer). Merge them by preferring
     # the canonical (no-suffix) key and pooling points + graduation
-    # state. Future: a `_SAME_NAME_NOT_DUPES` allowlist can carve out
-    # legit same-name pairs if any surface.
+    # state.
+    #
+    # v17 — Normalize names before dedup so "Homer Bush Jr." and
+    # "Homer Bush, Jr." collapse to the same key. Common variants:
+    # comma-separated suffix, period/no-period on suffix, smart-quote
+    # apostrophes. Suffix variants (Jr/Sr/II/III) are preserved on the
+    # kept entry; only the lookup key is normalized.
+    def _normalize_name_for_dedup(name: str) -> str:
+        if not name:
+            return ""
+        # Lowercase, strip commas + periods, collapse whitespace.
+        cleaned = name.lower().replace(",", "").replace(".", "")
+        # Normalize smart quotes to ascii.
+        cleaned = cleaned.replace("’", "'").replace("‘", "'")
+        return " ".join(cleaned.split())
+
+    # Future: a `_SAME_NAME_NOT_DUPES` allowlist can carve out legit
+    # same-name pairs if any surface. Empty for now.
+    _SAME_NAME_NOT_DUPES: set[tuple[str, str]] = set()
+
     by_name: dict[str, PlayerTimeseries] = {}
     for p in result:
-        canon = by_name.get(p.player_name)
+        norm_key = _normalize_name_for_dedup(p.player_name)
+        canon = by_name.get(norm_key)
         if canon is None:
-            by_name[p.player_name] = p
+            by_name[norm_key] = p
+            continue
+        # Allowlist escape — same name BUT confirmed-distinct via
+        # different player_keys (rare; not currently populated).
+        if (canon.player_key, p.player_key) in _SAME_NAME_NOT_DUPES \
+                or (p.player_key, canon.player_key) in _SAME_NAME_NOT_DUPES:
+            by_name[f"{norm_key}#{p.player_key}"] = p
             continue
         # Prefer the entry whose key does NOT end with __noid.
         if not canon.player_key.endswith("__noid"):
@@ -867,7 +892,7 @@ def build_timeseries(
             keep.position = drop.position
         if not keep.org and drop.org:
             keep.org = drop.org
-        by_name[p.player_name] = keep
+        by_name[norm_key] = keep
     result = list(by_name.values())
 
     # Population-prior Bayesian shrinkage was removed (2026-05): the
