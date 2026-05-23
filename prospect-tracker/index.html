@@ -661,6 +661,26 @@
       color: var(--text-tertiary);
       font-variant-numeric: tabular-nums;
     }
+    /* Compact top-of-list strip — slimmer padding, no top border, no
+       right-anchored count. Pinned BELOW the column header by the
+       calling renderer (strip is prepended to rows). */
+    .pg-strip-compact {
+      padding: 6px 0 8px;
+      margin-top: 0;
+      margin-bottom: 4px;
+      border-top: none;
+      border-bottom: 1px solid var(--border-light);
+      justify-content: flex-start;
+    }
+    .pg-strip-compact .pg-count {
+      margin-left: 0;
+      margin-right: auto;
+      padding: 0 8px;
+    }
+    .pg-strip-compact .pg-nav {
+      padding: 3px 8px;
+      font-size: 11px;
+    }
     body {
       margin: 0;
       font-family: var(--font-sans);
@@ -727,7 +747,8 @@
       display: block;
       width: 64px; height: 3px;
       background: var(--iridescent);
-      margin-top: 8px;
+      margin-top: 4px;
+      margin-bottom: 0;
       border-radius: 2px;
     }
     code, .num, .mono {
@@ -745,12 +766,12 @@
     a { color: var(--neon-cyan); }
 
     /* === Header ==================================================== */
-    .header { margin-bottom: 1.4rem; }
+    .header { margin-bottom: 0.7rem; }
     .meta-line {
       font-family: var(--font-mono);
       font-size: 11px;
       color: var(--text-secondary);
-      margin-top: 0.85rem;
+      margin-top: 0.4rem;
       letter-spacing: 0.02em;
     }
     .meta-line code {
@@ -865,6 +886,14 @@
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-card);
       align-items: center;
+      /* v19 — Sticky-pin the section tabs to the viewport top so the
+         primary nav stays reachable while scrolling long lists. z-index
+         keeps the bar above row content but below tooltips/modals.
+         An opaque background (set via .section-tabs above) prevents
+         row content from bleeding through the bar. */
+      position: sticky;
+      top: 0;
+      z-index: 50;
     }
     .section-tab {
       padding: 8px 16px;
@@ -938,6 +967,43 @@
     .phys-cluster .phys-sep {
       color: var(--text-tertiary);
       opacity: 0.5;
+    }
+    /* Handedness glyph pair — small "B" + "T" labels with the side
+       letter (L/R/S) appended, colored by side. Reads as a chip pair
+       sitting at the end of the Ht·Wt·BMI cluster; tooltip on each
+       glyph explains which side. */
+    .phys-cluster .phys-hand-pair {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-left: 4px;
+      padding-left: 6px;
+      border-left: 1px solid var(--border-light);
+    }
+    .phys-cluster .phys-hand-glyph {
+      display: inline-flex;
+      align-items: center;
+      gap: 1px;
+      font-family: var(--font-sans);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 1px 3px;
+      border: 1px solid currentColor;
+      border-radius: 2px;
+      line-height: 1;
+    }
+    .phys-cluster .phys-hand-side {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      margin-left: 1px;
+    }
+    body.density-compact .phys-cluster .phys-hand-glyph {
+      font-size: 8px;
+      padding: 0 2px;
+    }
+    body.density-compact .phys-cluster .phys-hand-side {
+      font-size: 9px;
     }
     .sort-header {
       cursor: pointer;
@@ -2807,7 +2873,11 @@
     /* Updated for the v4 tab refactor — the new .detail-tabs strip
        is ~52px tall (padding + chip + border-bottom), so other sticky
        elements need to park beneath it instead of behind it. */
-    :root { --sticky-top: 64px; }
+    /* v19 — Section-tabs bar itself is now sticky (~48px tall incl.
+       border + padding). Nested sticky elements (.farm-header,
+       .detail-tabs, etc.) need to pin BELOW the section-tabs bar, so
+       the offset is tuned to clear it. */
+    :root { --sticky-top: 56px; }
     .farm-header {
       position: sticky;
       top: var(--sticky-top, 60px);
@@ -4597,9 +4667,77 @@
       cursor: pointer;
     }
     .active-context-rail .ctx-row:last-child { border-bottom: 0; }
+    /* Inline pos·level tag next to a ctx-row name — small, tertiary,
+       sits right after the name without crowding the right-side delta. */
+    .active-context-rail .ctx-row-tag {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-left: 6px;
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+    }
+    /* Movers card chip toggle — 3 small chips at the top of the card. */
+    .active-context-rail .ctx-mover-chips {
+      display: inline-flex;
+      gap: 3px;
+      margin-bottom: 6px;
+    }
+    .active-context-rail .ctx-mover-chips .chip {
+      font-size: 9px;
+      padding: 2px 6px;
+      letter-spacing: 0.04em;
+    }
+    /* Sidebar Top-by-Tool dropdown sits in the card title row. */
+    .active-context-rail .ctx-tool-select {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 1px 4px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      margin-left: auto;
+    }
+    .active-context-rail .ctx-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .active-context-rail .ctx-title-row .ctx-title { margin-bottom: 0; flex: 1; }
+    /* Tool-grade pill at the right of a Top-by-Tool row. */
+    .active-context-rail .ctx-tool-grade {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 1px 5px;
+      border-radius: 2px;
+      border: 1px solid currentColor;
+    }
+    /* "View all →" link in spotlight peek card. */
+    .active-context-rail .ctx-card-link {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: var(--neon-cyan);
+      text-decoration: none;
+      margin-left: auto;
+      cursor: pointer;
+    }
+    .active-context-rail .ctx-card-link:hover { text-decoration: underline; }
+    /* Sub-strip header (e.g. "Risers" / "Rebounders" inside Spotlight peek). */
+    .active-context-rail .ctx-substrip-title {
+      font-family: var(--font-sans);
+      font-size: 9px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 6px 0 2px;
+    }
     @media (min-width: 1500px) {
       .active-grid { grid-template-columns: minmax(0, 1fr) 240px; }
-      .active-context-rail { display: block; position: sticky; top: 12px; }
+      .active-context-rail { display: block; position: sticky; top: calc(var(--sticky-top, 56px) + 12px); max-height: calc(100vh - var(--sticky-top, 56px) - 24px); overflow-y: auto; }
     }
 
     /* === Player detail layout =====================================
@@ -5433,6 +5571,58 @@
     .filter-toggle-arrow { transition: transform 0.15s; display: inline-block; }
     #filter-bar { display: none; }
     #filter-bar.is-open { display: flex; }
+    /* Filter toggle + active filters strip — share a row so the chip
+       strip sits inline next to the accordion button regardless of
+       whether the bar is open. Wraps on narrow viewports. */
+    .filter-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .filter-toggle-row .filter-toggle { margin-bottom: 0; }
+    .active-filters-strip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .active-filters-strip:empty { display: none; }
+    .active-filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      padding: 2px 6px 2px 8px;
+      border-radius: 2px;
+      border: 1px solid var(--neon-cyan);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      line-height: 1.3;
+    }
+    .active-filter-chip:hover {
+      background: var(--neon-cyan);
+      color: var(--bg-primary);
+    }
+    .active-filter-chip .afc-axis {
+      color: var(--text-tertiary);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+    }
+    .active-filter-chip:hover .afc-axis { color: var(--bg-primary); opacity: 0.7; }
+    .active-filter-chip .afc-x {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      opacity: 0.6;
+      margin-left: 2px;
+    }
+    .active-filter-chip:hover .afc-x { opacity: 1; }
 
     /* Watchlist star — inline button on prospect rows + the detail-page
        header. Filled gold when starred, hollow gray otherwise. Click +
@@ -5636,7 +5826,6 @@
     <button class="section-tab" data-section="graduates">Graduates</button>
     <button class="section-tab" data-section="glossary" title="Stats, indices, scouting concepts, and methodology — every term used on the site">Glossary</button>
     <button class="section-tab" data-section="watchlist" title="Your starred prospects and farm systems — private to this browser">Watchlist<span class="section-tab-count" id="watchlist-tab-count"></span></button>
-    <span class="section-count" id="section-count"></span>
     <button class="compare-toggle is-empty-hidden" id="compare-toggle" type="button" aria-label="Open compare panel" title="Open compare panel (c)">
       <span>Compare</span><span class="compare-count" id="compare-count">0</span>
     </button>
@@ -5653,11 +5842,19 @@
   <!-- Mobile filter toggle. At <720px the filter chips collapse behind
        this button so the user lands on the list without scrolling past
        80px of filter chrome. Hidden on desktop via CSS. -->
-  <button class="filter-toggle" id="filter-toggle" type="button" aria-expanded="false">
-    <span class="filter-toggle-label">Filters</span>
-    <span class="filter-toggle-count" id="filter-toggle-count"></span>
-    <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
-  </button>
+  <div class="filter-toggle-row">
+    <button class="filter-toggle" id="filter-toggle" type="button" aria-expanded="false">
+      <span class="filter-toggle-label">Filters</span>
+      <span class="filter-toggle-count" id="filter-toggle-count"></span>
+      <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
+    </button>
+    <!-- v19 — Active filters chip strip. Always visible (whether the
+         filter bar accordion is open or closed) so the user can see at
+         a glance what's narrowing the list. Each chip clears that
+         specific filter when clicked. Populated by updateMeta() →
+         renderActiveFiltersStrip(). -->
+    <div class="active-filters-strip" id="active-filters-strip"></div>
+  </div>
 
   <div class="filter-bar" id="filter-bar">
     <div class="filter-group">
@@ -5747,7 +5944,7 @@
         <option value="age_vs_level">Most young-for-level</option>
         <option value="eta">ETA (earliest first)</option>
         <option value="stock_movers">Biggest movers (|ΔFV|)</option>
-        <option value="t_plus">Tool (toolsiest)</option>
+        <option value="tool">Tool grade (toolsiest)</option>
         <option value="source_confidence">Source confidence (most sources first)</option>
         <option value="ht_desc">Tallest first</option>
         <option value="ht_asc">Shortest first</option>
@@ -7638,6 +7835,23 @@ function renderPaginationStrip(currentPage, totalItems, pageSize, dataKey) {
     </div>`;
 }
 
+// Compact pagination strip — duplicated at the TOP of each paginated
+// list so the user doesn't have to scroll to the bottom to flip pages.
+// Just prev / next + "Page X of Y" label, no full page-number chips and
+// no count strip. Click handlers reuse the same data-{dataKey}-page
+// attribute as the full strip below, so no new wiring needed.
+function renderPaginationStripCompact(currentPage, totalItems, pageSize, dataKey) {
+  const total = Math.ceil(totalItems / Math.max(1, pageSize));
+  if (total <= 1) return "";
+  const cur = Math.min(Math.max(1, currentPage), total);
+  return `
+    <div class="pg-strip pg-strip-compact">
+      <button class="pg-nav" data-${dataKey}-page="${Math.max(1, cur - 1)}" type="button"${cur === 1 ? " disabled" : ""}>◀ Prev</button>
+      <span class="pg-count">Page ${cur} of ${total}</span>
+      <button class="pg-nav" data-${dataKey}-page="${Math.min(total, cur + 1)}" type="button"${cur === total ? " disabled" : ""}>Next ▶</button>
+    </div>`;
+}
+
 // Detail-page tab bar. tabs = [{ key, label, html }, ...]. activeKey
 // selects which tab's html actually renders (others are off-DOM). The
 // data-detail-tab attribute drives the click delegate that mutates the
@@ -7690,6 +7904,8 @@ function syncToURL() {
   if (state.careerSort  && state.careerSort   !== "season")  p.set("csort",  state.careerSort);
   if (state.sourceFvSort && state.sourceFvSort !== "source") p.set("sfsort", state.sourceFvSort);
   if (state.depthSort   && state.depthSort    !== "fv")      p.set("dsort",  state.depthSort);
+  if (state.moverFilter && state.moverFilter !== "all")      p.set("mvf",    state.moverFilter);
+  if (state.sidebarTopTool && state.sidebarTopTool !== "hit") p.set("stt",   state.sidebarTopTool);
   if (state.spotlightBucket !== "risers") p.set("bucket", state.spotlightBucket);
   if (state.lbStat      !== "ops")        p.set("lbstat",  state.lbStat);
   if (state.lbLevel     !== "all")        p.set("lblvl",   state.lbLevel);
@@ -7776,6 +7992,8 @@ function syncFromURL() {
   if (p.has("csort"))  state.careerSort   = p.get("csort");
   if (p.has("sfsort")) state.sourceFvSort = p.get("sfsort");
   if (p.has("dsort"))  state.depthSort    = p.get("dsort");
+  if (p.has("mvf"))    state.moverFilter  = p.get("mvf");
+  if (p.has("stt"))    state.sidebarTopTool = p.get("stt");
   if (p.has("bucket")) state.spotlightBucket = p.get("bucket");
   // Leaderboards filters — round-tripped so org pre-fill from
   // farm-detail's "View org leaderboards →" link sticks.
@@ -8300,6 +8518,12 @@ const state = {
   sourceFvSort: "source",
   // Depth-chart (farm detail) sort: fv (default), age, eta.
   depthSort: "fv",
+  // v19 — Active-list sidebar state.
+  // Biggest movers chip toggle: "all" | "up" | "down". Default "all"
+  // mirrors the legacy |delta|-sorted behavior.
+  moverFilter: "all",
+  // Sidebar Top-by-Tool dropdown — defaults to Hit tool.
+  sidebarTopTool: "hit",
   // Glossary state — active category filter + search query + per-load
   // term-to-scroll-to slug. Term-to-scroll-to clears after being
   // consumed once so a subsequent re-render doesn't re-scroll.
@@ -8575,10 +8799,12 @@ function getFilteredActives() {
       const db = (b.fv_close != null && b.fv_open != null) ? Math.abs(b.fv_close - b.fv_open) : -1;
       return db - da;
     });
-  } else if (state.sort === "t_plus") {
+  } else if (state.sort === "tool" || state.sort === "t_plus") {
     // Tool composite desc, nulls (no tool data) sink to the bottom.
     // Tie-break on consensus FV so a 60 FV with Tool 60 beats a 50 FV
     // with Tool 60.
+    // `t_plus` is the back-compat alias for legacy share-links that
+    // predate the Tools+ → Tool grade rename. New canonical key is `tool`.
     pool.sort((a, b) => {
       const av = (a.tools || {}).composite_overall;
       const bv = (b.tools || {}).composite_overall;
@@ -8797,63 +9023,219 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
 }
 
 // Active-list right context rail — only visible on ≥1500px viewports
-// via CSS. Builds three small cards: top movers (FV stock surging /
-// dropping), FV distribution histogram across the active pool, and
-// recent graduations. All click-throughs route to existing surfaces.
+// via CSS. v19 expanded card set:
+//   1. Top movers (chip toggle: All / Risers / Fallers; inline pos·level)
+//   2. Top by Tool (dropdown picks a tool; top 5 actives by that grade)
+//   3. Recent IL returnees (prospects off IL within trailing 21 days)
+//   4. Spotlight peek (top 3 risers + top 3 rebounders, links to tab)
+//   5. FV distribution histogram
+//   6. Recent graduations
+// All click-throughs on prospects route to player detail via the
+// existing [data-key] delegated handler.
 function renderActiveContextRail() {
   const rail = document.getElementById("active-context-rail");
   if (!rail) return;
   const players = DATA.players || [];
 
-  // Top movers: largest |delta| from the performance-anchored stock
-  // signal (compute_movement). Cap at 6. Each row now carries a small
-  // caption with the dominant driver string ("OPS +.270 vs '25" or
-  // "K% +21.6pp") so users see WHY this player surfaced.
-  const movers = players
-    .filter(p => p.stock && p.stock.delta != null && Math.abs(p.stock.delta) >= 2.0)
-    .slice()
-    .sort((a, b) => Math.abs(b.stock.delta) - Math.abs(a.stock.delta))
-    .slice(0, 6);
+  // Shared row factory — consistent geometry across all cards.
+  // rightHTML sits flush right (delta / FV / tool grade / days-back chip).
+  const _ctxRow = ({ key, name, pos, level, rightHTML, subline, teamLogoHTML: tlh }) => {
+    const tagBits = [];
+    if (pos)   tagBits.push(escapeHtml(pos));
+    if (level) tagBits.push(escapeHtml(level));
+    const tag = tagBits.length
+      ? `<span class="ctx-row-tag">${tagBits.join(" · ")}</span>`
+      : "";
+    return `<div class="ctx-row" data-key="${escapeHtml(key)}">
+      <div style="flex:1;min-width:0;">
+        <div style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:4px;">${tlh || ""}<span>${escapeHtml(name)}</span>${tag}</div>
+        ${subline || ""}
+      </div>
+      ${rightHTML || ""}
+    </div>`;
+  };
+
+  // -------- Top movers card --------
+  // Chip toggle: All (|delta| sort) / Risers (delta desc) / Fallers (delta asc).
+  const moverMode = state.moverFilter || "all";
+  let moverPool = players.filter(p => p.stock && p.stock.delta != null);
+  if (moverMode === "up") {
+    moverPool = moverPool.filter(p => p.stock.delta >= 2.0)
+      .sort((a, b) => b.stock.delta - a.stock.delta);
+  } else if (moverMode === "down") {
+    moverPool = moverPool.filter(p => p.stock.delta <= -2.0)
+      .sort((a, b) => a.stock.delta - b.stock.delta);
+  } else {
+    moverPool = moverPool.filter(p => Math.abs(p.stock.delta) >= 2.0)
+      .sort((a, b) => Math.abs(b.stock.delta) - Math.abs(a.stock.delta));
+  }
+  const movers = moverPool.slice(0, 6);
+  const _moverChip = (val, label) =>
+    `<button class="chip${moverMode === val ? " active" : ""}" data-mover-filter="${val}" type="button">${label}</button>`;
+  const moverChips = `<div class="ctx-mover-chips">
+    ${_moverChip("all", "All")}${_moverChip("up", "Risers")}${_moverChip("down", "Fallers")}
+  </div>`;
   const moverRows = movers.map(p => {
     const d = p.stock.delta;
     const cls = d > 0 ? "stock-up" : "stock-down";
     const arrow = d > 0 ? "▲" : "▼";
-    // v17 — drivers are dicts {label, valence, ...} since cycle 15. The
-    // prior `escapeHtml(driver)` was toString'ing the object and
-    // rendering "[object Object]". Extract .label (with legacy-string
-    // fallback) for the caption.
     const driverRaw = (p.stock.drivers && p.stock.drivers[0]);
     const driverLabel = driverRaw == null ? ""
                       : (typeof driverRaw === "string" ? driverRaw : (driverRaw.label || ""));
-    const driverHtml = driverLabel
+    const subline = driverLabel
       ? `<div style="font-size:10px;color:var(--text-tertiary);margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(driverLabel)}</div>`
       : "";
-    // v17 — Team logo inline before the player name (matches the
-    // Recently-Acquired pattern from cycle 15).
-    const teamLogo = p.org ? teamLogoHTML(p.org, "sm", p.org) : "";
-    return `<div class="ctx-row" data-key="${escapeHtml(p.player_key)}">
-      <div style="flex:1;min-width:0;">
-        <div style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:4px;">${teamLogo}<span>${escapeHtml(p.player_name)}</span></div>
-        ${driverHtml}
-      </div>
-      <span class="${cls}" style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;">${arrow} ${d > 0 ? "+" : ""}${d.toFixed(1)}</span>
-    </div>`;
+    const _level = (p.statline && p.statline.level) || null;
+    return _ctxRow({
+      key: p.player_key,
+      name: p.player_name,
+      pos: p.position ? String(p.position).split("/")[0] : null,
+      level: _level,
+      subline,
+      teamLogoHTML: p.org ? teamLogoHTML(p.org, "sm", p.org) : "",
+      rightHTML: `<span class="${cls}" style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;">${arrow} ${d > 0 ? "+" : ""}${d.toFixed(1)}</span>`,
+    });
   }).join("");
-  const moversCard = movers.length
+  const moversCard = `<div class="ctx-card">
+    <div class="ctx-title">Top movers · this update</div>
+    ${moverChips}
+    ${movers.length ? moverRows : `<div style="color:var(--text-tertiary);font-size:11px;padding:6px 0;">No ${moverMode === "up" ? "risers" : moverMode === "down" ? "fallers" : "movers"} this cycle.</div>`}
+  </div>`;
+
+  // -------- Top by Tool card --------
+  // Dropdown of tool keys → top 5 actives by tools_consensus[key].
+  const TOOL_OPTS = [
+    { key: "hit",       label: "Hit" },
+    { key: "game_pwr",  label: "Game Pwr" },
+    { key: "raw_pwr",   label: "Raw Pwr" },
+    { key: "speed",     label: "Speed" },
+    { key: "field",     label: "Field" },
+    { key: "throw",     label: "Throw" },
+    { key: "pitch_sel", label: "Pitch Sel" },
+    { key: "bat_ctrl",  label: "Bat Ctrl" },
+    { key: "fb",        label: "Fastball" },
+    { key: "sl",        label: "Slider" },
+    { key: "cb",        label: "Curve" },
+    { key: "ch",        label: "Change" },
+    { key: "cmd",       label: "Command" },
+    { key: "ct",        label: "Cutter" },
+  ];
+  const _toolKey = state.sidebarTopTool || "hit";
+  const toolPool = players.map(p => {
+    // Resolve tool grade — first the explicit tools.grades dict, fall
+    // back to the most-recent snapshot's tools_consensus.
+    const tg = (p.tools && p.tools.grades) || {};
+    let v = tg[_toolKey];
+    if (v == null && p.points && p.points.length) {
+      const latest = p.points[p.points.length - 1];
+      const tc = (latest && latest.tools_consensus) || {};
+      v = tc[_toolKey];
+    }
+    return { p, v: Number(v) };
+  }).filter(x => isFinite(x.v) && x.v > 0)
+    .sort((a, b) => b.v - a.v)
+    .slice(0, 5);
+  const toolRows = toolPool.map(({ p, v }) => {
+    const rounded = Math.round(v);
+    const tier = Math.max(20, Math.min(80, Math.floor(rounded / 5) * 5));
+    const _level = (p.statline && p.statline.level) || null;
+    return _ctxRow({
+      key: p.player_key,
+      name: p.player_name,
+      pos: p.position ? String(p.position).split("/")[0] : null,
+      level: _level,
+      teamLogoHTML: p.org ? teamLogoHTML(p.org, "sm", p.org) : "",
+      rightHTML: `<span class="ctx-tool-grade" style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);">${rounded}</span>`,
+    });
+  }).join("");
+  const toolSelectOptions = TOOL_OPTS.map(o =>
+    `<option value="${o.key}"${o.key === _toolKey ? " selected" : ""}>${o.label}</option>`
+  ).join("");
+  const toolCard = `<div class="ctx-card">
+    <div class="ctx-title-row">
+      <div class="ctx-title">Top by tool</div>
+      <select class="ctx-tool-select" id="sidebar-tool-select">${toolSelectOptions}</select>
+    </div>
+    ${toolPool.length ? toolRows : `<div style="color:var(--text-tertiary);font-size:11px;padding:6px 0;">No graded prospects for this tool.</div>`}
+  </div>`;
+
+  // -------- Recent IL returnees card --------
+  // Walks (actives + graduates) for IL stints with an end_date within
+  // the trailing 21 days. Falls back to `il_status.last_returned_date`
+  // when available; otherwise scans il_stints[*].end_date.
+  const _now = Date.now();
+  const _ilWindow = 21 * 86400000;
+  const ilReturnees = [];
+  for (const p of [...(players || []), ...(DATA.graduates || [])]) {
+    // Skip players currently still on IL — we want RETURNED, not on.
+    if (p.il_status && p.il_status.is_on_il) continue;
+    let endDate = null;
+    if (p.il_status && p.il_status.last_returned_date) {
+      endDate = p.il_status.last_returned_date;
+    } else if (p.il_stints && p.il_stints.length) {
+      // Most-recent stint that has an end_date.
+      for (let i = p.il_stints.length - 1; i >= 0; i--) {
+        const s = p.il_stints[i];
+        if (s && s.end_date) { endDate = s.end_date; break; }
+      }
+    }
+    if (!endDate) continue;
+    const ts = new Date(endDate + "T00:00:00").getTime();
+    if (!isFinite(ts)) continue;
+    const days = Math.floor((_now - ts) / 86400000);
+    if (days < 0 || days > _ilWindow / 86400000) continue;
+    ilReturnees.push({ p, days });
+  }
+  ilReturnees.sort((a, b) => a.days - b.days || (b.p.fv_close ?? 0) - (a.p.fv_close ?? 0));
+  const ilRows = ilReturnees.slice(0, 5).map(({ p, days }) => {
+    const _level = (p.statline && p.statline.level) || null;
+    return _ctxRow({
+      key: p.player_key,
+      name: p.player_name,
+      pos: p.position ? String(p.position).split("/")[0] : null,
+      level: _level,
+      teamLogoHTML: p.org ? teamLogoHTML(p.org, "sm", p.org) : "",
+      rightHTML: `<span style="font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);padding:1px 5px;border:1px solid var(--neon-cyan);border-radius:2px;">${days}d back</span>`,
+    });
+  }).join("");
+  const ilCard = ilReturnees.length
     ? `<div class="ctx-card">
-        <div class="ctx-title">Top movers · this update</div>
-        ${moverRows}
+        <div class="ctx-title">Recent IL returnees · last 21d</div>
+        ${ilRows}
       </div>`
     : "";
 
-  // FV distribution — histogram across the active pool, reuse the
-  // tier-bar palette via fvClass-derived fg colors. Bin by 5-FV step.
+  // -------- Spotlight peek card --------
+  // Top 3 risers + top 3 rebounders from DATA.spotlights. Click → Spotlights tab.
+  const _spotlights = DATA.spotlights || {};
+  const _spotRow = (s) => {
+    const fv = s.fv != null ? fvCeil(Number(s.fv)) : null;
+    return _ctxRow({
+      key: s.player_key,
+      name: s.player_name,
+      pos: s.pos || (s.position ? String(s.position).split("/")[0] : null),
+      level: s.level || null,
+      teamLogoHTML: s.org ? teamLogoHTML(s.org, "sm", s.org) : "",
+      rightHTML: fv != null ? `<span class="fv-badge ${fvClass(String(fv))} size-sm">${fv}</span>` : "",
+    });
+  };
+  const _risers     = (_spotlights.risers     || []).slice(0, 3);
+  const _rebounders = (_spotlights.rebounders || []).slice(0, 3);
+  const spotPeekCard = (_risers.length || _rebounders.length) ? `<div class="ctx-card">
+    <div class="ctx-title-row">
+      <div class="ctx-title">Spotlight peek</div>
+      <a class="ctx-card-link" data-go-section="spotlights">View all →</a>
+    </div>
+    ${_risers.length ? `<div class="ctx-substrip-title">Risers</div>${_risers.map(_spotRow).join("")}` : ""}
+    ${_rebounders.length ? `<div class="ctx-substrip-title">Rebounders</div>${_rebounders.map(_spotRow).join("")}` : ""}
+  </div>` : "";
+
+  // -------- FV distribution histogram --------
   const tiers = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
   const counts = {};
   for (const t of tiers) counts[t] = 0;
   for (const p of players) {
     if (p.fv_close == null) continue;
-    // round down to nearest 5
     const t = Math.max(20, Math.min(80, Math.floor(p.fv_close / 5) * 5));
     counts[t] = (counts[t] || 0) + 1;
   }
@@ -8874,7 +9256,7 @@ function renderActiveContextRail() {
     ${distRows}
   </div>`;
 
-  // Recent graduations — last 3, click → Graduates tab.
+  // -------- Recent graduations --------
   const grads = (DATA.graduates || [])
     .filter(g => g.graduation_date)
     .slice()
@@ -8895,7 +9277,38 @@ function renderActiveContextRail() {
       </div>`
     : "";
 
-  rail.innerHTML = moversCard + distCard + gradsCard;
+  rail.innerHTML = moversCard + toolCard + ilCard + spotPeekCard + distCard + gradsCard;
+
+  // Wire the chip toggle + tool-select dropdown. Each click only
+  // re-renders the rail (cheap), not the whole actives list.
+  rail.querySelectorAll("[data-mover-filter]").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      state.moverFilter = btn.dataset.moverFilter;
+      syncToURL();
+      renderActiveContextRail();
+    });
+  });
+  const toolSel = rail.querySelector("#sidebar-tool-select");
+  if (toolSel) {
+    toolSel.addEventListener("change", () => {
+      state.sidebarTopTool = toolSel.value;
+      syncToURL();
+      renderActiveContextRail();
+    });
+  }
+  // "View all →" link routes to Spotlights tab.
+  const viewAll = rail.querySelector("[data-go-section]");
+  if (viewAll) {
+    viewAll.addEventListener("click", (e) => {
+      e.stopPropagation();
+      state.section = viewAll.dataset.goSection;
+      syncToURL();
+      restoreUIFromState();
+      render();
+      window.scrollTo({ top: 0, behavior: "instant" });
+    });
+  }
 }
 
 function renderActives() {
@@ -8910,6 +9323,7 @@ function renderActives() {
   const pagedRows = pageSlice(filtered, curPage, pageSize);
   const rankOffset = (curPage - 1) * pageSize;
   const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "actives");
+  const paginationStripTop = renderPaginationStripCompact(curPage, totalItems, pageSize, "actives");
 
   // v18 — Header titles: the leading "#" column now carries a "Rank"
   // label (was just "#" which read as decoration); the FV column now
@@ -8922,7 +9336,7 @@ function renderActives() {
     <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="Consensus Future Value · stock delta + direction below · click to sort">FV Grade</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline — hover for OHLC open / high / low / close">FV history</span>
     <span class="desktop-only sort-header" data-sort-key="level_desc" title="MiLB level + age vs level. Click to sort by closeness to MLB (MLB → DSL); click again for the reverse.">MiLB · age vs. level</span>
-    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="Physical: Height · Weight · BMI (from FanGraphs). Click to sort by BMI highest first; click again for lowest.">Ht · Wt · BMI</span>
+    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="Physical: Height · Weight · BMI · Bats/Throws (from FanGraphs). Click to sort by BMI highest first; click again for lowest.">Ht · Wt · BMI · B/T</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
   </div>`;
 
@@ -8941,7 +9355,7 @@ function renderActives() {
           <span class="headshot-stack">${headshotHTML(p, 56)}${optionsDotsHTML(p)}</span>
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
-            ${playerMetaHTML(p)}
+            ${playerMetaHTML(p, { suppressHandedness: true })}
             ${makeListRowSummary(p)}
           </div>
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
@@ -8960,7 +9374,7 @@ function renderActives() {
   }).join("");
 
   document.getElementById("rows").innerHTML = filtered.length
-    ? header + rows + paginationStrip
+    ? paginationStripTop + header + rows + paginationStrip
     : `<div class="state-message">No active prospects match these filters.</div>`;
   // Highlight the active sort column in the fresh header.
   syncSortHeaderActive();
@@ -9014,6 +9428,7 @@ function renderSpotlights() {
   const pagedRows = pageSlice(rowsData, curPage, pageSize);
   const rankOffset = (curPage - 1) * pageSize;
   const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "spotlights");
+  const paginationStripTop = renderPaginationStripCompact(curPage, totalItems, pageSize, "spotlights");
 
   // Age-cap subtitle — small note explaining the per-level / per-side
   // age threshold so users know why the lists are shorter than the
@@ -9055,7 +9470,7 @@ function renderSpotlights() {
     const _fvTier = Number.isFinite(_fvNum) ? String(Math.round(_fvNum / 5) * 5) : "";
     return `
     <div class="spotlight-row" data-key="${escapeHtml(s.player_key)}" data-fv-tier="${_fvTier}" style="${orgStripe(s.org)}">
-      <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(_full)}"><span class="rank-num-inner">#${_full.overall_rank ?? (rankOffset + i + 1)}</span></div>${rankTrendHTML(_full)}</div>
+      <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(_full)}"><span class="rank-num-inner">#${_full.overall_rank ?? (rankOffset + i + 1)}</span></div></div>
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
         <span class="headshot-stack">${headshotHTML(_full, 42)}${optionsDotsHTML(_full)}</span>
         <div style="min-width:0;flex:1;">
@@ -9086,7 +9501,7 @@ function renderSpotlights() {
   `;}).join("");
 
   document.getElementById("spotlight-rows").innerHTML = rowsData.length
-    ? ageCapNote + header + rows + paginationStrip
+    ? ageCapNote + paginationStripTop + header + rows + paginationStrip
     : ageCapNote + (state.search
         ? `<div class="state-message">No ${escapeHtml(bucket)} spotlights match "${escapeHtml(state.search)}".</div>`
         : `<div class="state-message">No ${escapeHtml(bucket)} spotlights available from the current data.</div>`);
@@ -9448,6 +9863,13 @@ const LB_STATS = {
 // pointer to the star button. localStorage-backed; never flows into
 // the shareable URL.
 function renderWatchlist() {
+  // Watchlist always renders compact regardless of the actives-list
+  // density preference (state.density). Force the body class here;
+  // when the user navigates back to actives, applySectionStateToFilterBar
+  // re-applies their saved density on the next render() call.
+  document.body.classList.remove("density-standard", "density-expanded");
+  document.body.classList.add("density-compact");
+
   const activeTab = state.watchlistTab || "prospects";
   // Toggle panel visibility based on the active sub-tab. Both panels are
   // rendered (cheap) so flipping the chip is instant — no re-render.
@@ -9480,6 +9902,7 @@ function renderWatchlist() {
     const pagedPlayers = pageSlice(players, curPage, pageSize);
     const rankOffset = (curPage - 1) * pageSize;
     const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "watchlist");
+    const paginationStripTop = renderPaginationStripCompact(curPage, totalItems, pageSize, "watchlist");
     const pHeader = `<div class="col-header">
       <span style="text-align:center;">#</span>
       <span>Player · pos · org · age</span>
@@ -9510,7 +9933,7 @@ function renderWatchlist() {
         </div>
       `;
     }).join("");
-    if (rowsEl) rowsEl.innerHTML = pHeader + pRows + paginationStrip;
+    if (rowsEl) rowsEl.innerHTML = paginationStripTop + pHeader + pRows + paginationStrip;
   }
 
   // ----- Starred farm systems -----
@@ -9850,6 +10273,14 @@ function renderLeaderboards() {
       pool.push({ p, r, v: Number(v) });
     }
   }
+  // Top-level search bar applies here too — narrows the pool to
+  // entries whose player name matches the query. Other list views
+  // (actives, spotlights, traded, graduates, injured) already honor
+  // state.search; leaderboards was the lone holdout.
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    pool = pool.filter(({ p }) => (p.player_name || "").toLowerCase().includes(q));
+  }
   pool.sort((a, b) => cfg.hi ? (b.v - a.v) : (a.v - b.v));
   const pageSize = state.pageSizes.leaderboard || 25;
   const totalItems = pool.length;
@@ -9859,6 +10290,7 @@ function renderLeaderboards() {
   const ranked = pageSlice(pool, curPage, pageSize);
   const rankOffset = (curPage - 1) * pageSize;
   const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "leaderboard");
+  const paginationStripTop = renderPaginationStripCompact(curPage, totalItems, pageSize, "leaderboard");
 
   const header = `<div class="col-header is-leaderboard">
     <span style="text-align:center;">#</span>
@@ -9928,7 +10360,7 @@ function renderLeaderboards() {
       </div>`;
   }).join("");
 
-  document.getElementById("leaderboard-rows").innerHTML = header + rows + paginationStrip;
+  document.getElementById("leaderboard-rows").innerHTML = paginationStripTop + header + rows + paginationStrip;
   // Phase 3 viz: cohort histogram showing where the top-10 sits in the
   // full qualifying-prospect distribution. The vertical dashed line +
   // cyan highlight bin makes the percentile context obvious.
@@ -10011,6 +10443,7 @@ function renderGlossary() {
   const curPage = state.pages.glossary || 1;
   const pagedItems = pageSlice(flat, curPage, pageSize);
   const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "glossary");
+  const paginationStripTop = renderPaginationStripCompact(curPage, totalItems, pageSize, "glossary");
 
   // Render: emit a category header whenever this page's catKey shifts.
   const parts = [];
@@ -10079,7 +10512,7 @@ function renderGlossary() {
     root.innerHTML = `<div class="state-message">No glossary terms match these filters.</div>`;
     return;
   }
-  root.innerHTML = parts.join("") + paginationStrip;
+  root.innerHTML = paginationStripTop + parts.join("") + paginationStrip;
 
   // If a specific term was requested (via state.glossaryTerm / URL g=),
   // scroll to it + add the highlight pulse class. Defer one frame so the
@@ -10256,7 +10689,7 @@ function renderInjured() {
     const reason = il.reason || il.description || "—";
     return `
       <div class="player-row is-injured" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div>${rankTrendHTML(p)}</div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div></div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           <span class="headshot-stack">${headshotHTML(p, 50)}${optionsDotsHTML(p)}</span>
           <div style="min-width:0;flex:1;">
@@ -10362,7 +10795,7 @@ function renderRecentlyTraded() {
     const methodPill = `<span class="grad-pill" style="background:var(--bg-tertiary);color:${meta.color};border:1px solid var(--border);">${escapeHtml(meta.label)}</span>`;
     return `
       <div class="player-row is-traded" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div>${rankTrendHTML(p)}</div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div></div>
         <div style="display:flex;align-items:center;gap:8px;min-width:0;">
           <span class="headshot-stack">${headshotHTML(p, 50)}${optionsDotsHTML(p)}</span>
           <div style="min-width:0;flex:1;">
@@ -11095,13 +11528,14 @@ function _renderDraftRankings(host, cls) {
   const curPage = state.pages.draft || 1;
   const pagedItems = pageSlice(prospects, curPage, pageSize);
   const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "draft");
+  const paginationStripTop = renderPaginationStripCompact(curPage, totalItems, pageSize, "draft");
 
   html += `<div class="draft-grid">`;
   for (const p of pagedItems) {
     html += _renderDraftCard(p);
   }
   html += `</div>`;
-  host.innerHTML = html + paginationStrip;
+  host.innerHTML = paginationStripTop + html + paginationStrip;
 }
 
 function _renderDraftCard(p) {
@@ -11685,6 +12119,7 @@ function _renderOverseasRankings(host, leagues) {
   const curPage = state.pages.overseas || 1;
   const pagedItems = pageSlice(flat, curPage, pageSize);
   const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "overseas");
+  const paginationStripTop = renderPaginationStripCompact(curPage, totalItems, pageSize, "overseas");
 
   // Header summary so the user sees what the filter resolved to.
   const leagueList = leagues.length === 1
@@ -11702,7 +12137,7 @@ function _renderOverseasRankings(host, leagues) {
     html += _renderOverseasCard(p);
   }
   html += `</div>`;
-  host.innerHTML = html + paginationStrip;
+  host.innerHTML = paginationStripTop + html + paginationStrip;
 }
 
 function _renderOverseasCard(p) {
@@ -13047,13 +13482,30 @@ function physClusterHTML(p) {
                   : "—");
   const wt  = phys.weight_lb != null ? String(Math.round(phys.weight_lb)) : "—";
   const bmi = phys.bmi != null ? phys.bmi.toFixed(1) : "—";
-  const tip = `Height: ${ht} · Weight: ${wt} lbs · BMI: ${bmi}`;
+  // Handedness — color-coded glyph pair (B = bats, T = throws). Each
+  // letter is colored by side so the user can scan vertically and pick
+  // out lefties / switch-hitters without reading text:
+  //   L → var(--down) (red — visually distinctive minority side)
+  //   R → var(--up) (green — majority side; reads as neutral baseline)
+  //   S → var(--neon-violet) (switch — clearly distinct, premium signal)
+  const hand = _getHandedness(p);
+  const _handColor = side =>
+    side === "L" ? "var(--down)" :
+    side === "R" ? "var(--up)" :
+    side === "S" ? "var(--neon-violet)" : "var(--text-tertiary)";
+  const _handGlyph = (label, side) => {
+    const c = _handColor(side);
+    const v = side || "—";
+    return `<span class="phys-hand-glyph" style="color:${c};border-color:${c}66;" title="${label} ${side || '?'}">${label}<span class="phys-hand-side">${escapeHtml(v)}</span></span>`;
+  };
+  const tip = `Height: ${ht} · Weight: ${wt} lbs · BMI: ${bmi} · Bats ${hand.bats || "?"} / Throws ${hand.throws || "?"}`;
   return `<div class="phys-cluster desktop-only" title="${escapeHtml(tip)}">`
        + `<span>${escapeHtml(ht)}</span>`
        + `<span class="phys-sep">·</span>`
        + `<span>${escapeHtml(wt)}</span>`
        + `<span class="phys-sep">·</span>`
        + `<span>${escapeHtml(bmi)}</span>`
+       + `<span class="phys-hand-pair">${_handGlyph("B", hand.bats)}${_handGlyph("T", hand.throws)}</span>`
        + `</div>`;
 }
 
@@ -14566,6 +15018,47 @@ document.addEventListener("click", (e) => {
   }
 });
 
+// Delegated click handler for the active-filters chip strip. Each
+// chip carries data-clear-filter="<key>"; clicking resets that filter
+// to its default and re-renders. Mirrors the chip-group + select-input
+// "reset to all" behavior so the chip strip is a one-click escape
+// hatch alongside the existing per-filter UI.
+document.addEventListener("click", (e) => {
+  const chip = e.target && e.target.closest && e.target.closest(".active-filter-chip[data-clear-filter]");
+  if (!chip) return;
+  const key = chip.dataset.clearFilter;
+  let needsListPagesReset = true;
+  switch (true) {
+    case key === "search":
+      state.search = "";
+      const inp = document.getElementById("search-input");
+      if (inp) inp.value = "";
+      break;
+    case key === "org":    state.orgFilter   = "all"; break;
+    case key === "pos":    state.posFilter   = "all"; break;
+    case key === "level":  state.levelFilter = "all"; break;
+    case key === "acq":    state.acqFilter   = "all"; break;
+    case key === "class":  state.classFilter = "all"; break;
+    case key === "stock":  state.stockFilter = "all"; break;
+    case key === "health": state.healthFilter = "all"; break;
+    case key === "spread": state.spreadFilter = "all"; break;
+    case key === "tool":
+      state.toolFilterKey = "off";
+      state.toolFilterMin = 0;
+      break;
+    case key === "sort":   state.sort = "fv"; break;
+    case key.startsWith("fv:"):
+      if (state.fvIndicators && state.fvIndicators.delete) {
+        state.fvIndicators.delete(key.slice(3));
+      }
+      break;
+  }
+  if (needsListPagesReset) resetListPages();
+  restoreUIFromState();
+  syncToURL();
+  render();
+});
+
 // Reset a paginated view's page back to 1. Call from any filter /
 // search / sort mutation so the user doesn't end up on an empty page.
 function resetPage(key) {
@@ -14881,7 +15374,7 @@ function rosterTagHTML(p) {
 // Graduates, and farm-detail rosters. Flex layout lives on `.player-meta`
 // in the CSS block — opts control which tail badges appear.
 function playerMetaHTML(p, opts = {}) {
-  const { showIL = true, showRoster = true } = opts;
+  const { showIL = true, showRoster = true, suppressHandedness = false } = opts;
   const ageNum = p.age != null ? Number(p.age) : null;
   const ageTag = ageNum != null && !isNaN(ageNum)
     ? `<span class="age-tag">age ${ageNum.toFixed(1)}</span>`
@@ -14917,11 +15410,17 @@ function playerMetaHTML(p, opts = {}) {
   })();
   // v17 — Handedness chip without B/T prefix. The slash separator
   // already implies "bats / throws"; the prefix was redundant noise.
+  // v19 — suppressHandedness opt-in for list rows that surface B/T
+  // via the Ht·Wt·BMI column (handedness now lives there for actives,
+  // watchlist, injured, recently acquired). Detail pages and
+  // farm-roster keep showing it in the meta line.
   let btChip = "";
-  const _hand = _getHandedness(p);
-  if (_hand.bats || _hand.throws) {
-    const _bt = `${_hand.bats || "—"}/${_hand.throws || "—"}`;
-    btChip = `<span class="row-tag" style="margin-left:6px;font-size:9px;color:var(--text-tertiary);border-color:var(--border-light);background:transparent;font-family:var(--font-mono);" title="Bats ${_hand.bats || "?"} / Throws ${_hand.throws || "?"} (FanGraphs)">${escapeHtml(_bt)}</span>`;
+  if (!suppressHandedness) {
+    const _hand = _getHandedness(p);
+    if (_hand.bats || _hand.throws) {
+      const _bt = `${_hand.bats || "—"}/${_hand.throws || "—"}`;
+      btChip = `<span class="row-tag" style="margin-left:6px;font-size:9px;color:var(--text-tertiary);border-color:var(--border-light);background:transparent;font-family:var(--font-mono);" title="Bats ${_hand.bats || "?"} / Throws ${_hand.throws || "?"} (FanGraphs)">${escapeHtml(_bt)}</span>`;
+    }
   }
   // ilTag dropped from the meta line — same signal renders as the
   // healthBadgeHTML inline pill (in _inlineBadgeStrip). Showing both
@@ -15262,7 +15761,49 @@ function activeFilterCount() {
   if (state.levelFilter   !== "all")     n++;
   if (state.posFilter     !== "all")     n++;
   if (state.toolFilterKey && state.toolFilterKey !== "off" && state.toolFilterMin > 0) n++;
+  // v19 — fvIndicators (multi-select) + global search both narrow the
+  // active list; both deserve counting + a chip in the active-filters
+  // strip. Each selected FV indicator counts individually.
+  if (state.fvIndicators && state.fvIndicators.size) n += state.fvIndicators.size;
+  if (state.search) n++;
   return n;
+}
+
+// Build the inline "active filters" chip strip that sits next to the
+// Filters accordion toggle. Each chip names an axis + its current
+// value; clicking the chip resets that filter to default and
+// re-renders. Returns "" when nothing is filtered (CSS hides the
+// empty container via :empty).
+function renderActiveFiltersStrip() {
+  const chips = [];
+  const chip = (axis, value, key) => {
+    chips.push(
+      `<span class="active-filter-chip" data-clear-filter="${escapeHtml(key)}" title="Clear this filter">`
+      + `<span class="afc-axis">${escapeHtml(axis)}:</span>`
+      + `<span>${escapeHtml(value)}</span>`
+      + `<span class="afc-x">×</span>`
+      + `</span>`
+    );
+  };
+  if (state.search)                              chip("Search",  state.search, "search");
+  if (state.orgFilter   !== "all")               chip("Org",     state.orgFilter, "org");
+  if (state.posFilter   !== "all")               chip("Pos",     state.posFilter, "pos");
+  if (state.levelFilter !== "all")               chip("Level",   state.levelFilter, "level");
+  if (state.acqFilter   !== "all")               chip("Acq",     state.acqFilter, "acq");
+  if (state.classFilter && state.classFilter !== "all") chip("Class", state.classFilter, "class");
+  if (state.stockFilter !== "all")               chip("Stock",   state.stockFilter, "stock");
+  if (state.healthFilter !== "all")              chip("Health",  state.healthFilter, "health");
+  if (state.spreadFilter && state.spreadFilter !== "all") chip("Spread", state.spreadFilter, "spread");
+  if (state.fvIndicators && state.fvIndicators.size) {
+    for (const ind of state.fvIndicators) chip("FV", ind, `fv:${ind}`);
+  }
+  if (state.toolFilterKey && state.toolFilterKey !== "off" && state.toolFilterMin > 0) {
+    const label = toolAbbrev ? toolAbbrev(state.toolFilterKey).toUpperCase() : state.toolFilterKey;
+    chip("Tool", `${label} ≥ ${state.toolFilterMin}`, "tool");
+  }
+  if (state.sort && state.sort !== "fv") chip("Sort", state.sort, "sort");
+  const el = document.getElementById("active-filters-strip");
+  if (el) el.innerHTML = chips.join("");
 }
 
 function updateMeta() {
@@ -15271,27 +15812,26 @@ function updateMeta() {
     const n = activeFilterCount();
     filterCountEl.textContent = n ? `· ${n} active` : "";
   }
+  renderActiveFiltersStrip();
   const refreshedAt = DATA.generated_at ? DATA.generated_at.split("T")[0] : "—";
   const meta = document.getElementById("meta-line");
+  // Cohort counts — MiLB / Draft / Overseas / Graduates. Draft and
+  // overseas are lazy-loaded JSON; show "…" until each resolves, then
+  // updateMeta() is re-invoked once each fetch completes.
+  const draftCount = (DATA.draft && DATA.draft.classes)
+    ? DATA.draft.classes.reduce((n, c) => n + ((c.prospects || []).length), 0)
+    : null;
+  const overseasCount = (DATA.overseas && DATA.overseas.leagues)
+    ? DATA.overseas.leagues.reduce((n, l) => n + ((l.players || []).length), 0)
+    : null;
   meta.innerHTML = `Last refresh: <code>${refreshedAt}</code>` +
-    `<span class="dot">·</span>${DATA.total_tracked ?? (DATA.players.length + DATA.graduates.length)} prospects tracked` +
-    `<span class="dot">·</span>${DATA.active_count} active` +
+    `<span class="dot">·</span>${DATA.active_count} MiLB prospects` +
+    `<span class="dot">·</span>${draftCount != null ? draftCount : "…"} draft prospects` +
+    `<span class="dot">·</span>${overseasCount != null ? overseasCount : "…"} overseas` +
     `<span class="dot">·</span>${DATA.graduate_count} graduates`;
-  // "Acquired" pool size = every active prospect for whom we can
-  // resolve a most-recent inbound move (trade / waiver / draft / IFA /
-  // etc.). Practically that's nearly every active player; the section
-  // count surfaces how many match the active filters.
-  const tradedCount = (DATA.players || []).reduce((n, p) => n + (latestAcquisition(p) ? 1 : 0), 0);
-  const spotlightCount = ((DATA.spotlights || {})[state.spotlightBucket] || []).length;
-  const countMap = {
-    active:       `${getFilteredActives().length} of ${DATA.active_count}`,
-    spotlights:   `${spotlightCount} ${state.spotlightBucket.replace("_", " ")}`,
-    traded:       `${getFilteredTraded().length} of ${tradedCount}`,
-    graduates:    `${getFilteredGrads().length} of ${DATA.graduate_count}`,
-    farm:         `${(DATA.org_summary || []).length} organizations`,
-    leaderboards: `top 25 ${state.lbSeason || new Date().getUTCFullYear()} by ${(LB_STATS[state.lbStat] || LB_STATS.ops).label}`,
-  };
-  document.getElementById("section-count").textContent = countMap[state.section] || "";
+  // v19 — Section flavor-text element removed; the per-section count
+  // strip was unnecessary chrome cluttering the tabs row. The active
+  // filters chip strip (below) now carries the per-page status info.
 }
 
 // =============================================================================
@@ -15442,18 +15982,13 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey,
   // windows still get a coherent answer.
   const delta = deltaAboveMean || 0;
   const deadZone = Math.max(5, Math.abs(baseline) * 0.05);
+  // Stroke color carries the up/neutral/down signal — no separate
+  // arrow/number badge alongside the chart (the color is sufficient).
+  // The trend stays available in the title tooltip below via `sign`+`delta`.
   const stroke = delta >  deadZone ? 'var(--up)'
               : delta < -deadZone ? 'var(--down)'
               :                     'var(--text-tertiary)';
-  const arrow  = delta >  deadZone ? '▲'
-              : delta < -deadZone ? '▼'
-              :                     '·';
   const sign   = delta > 0 ? '+' : '';
-  // Just the arrow — the numeric delta was getting clipped by the
-  // adjacent Top Prospects column and wasn't communicating much beyond
-  // the directional signal the arrow already gives. Full magnitude is
-  // still available via the sparkline's title tooltip.
-  const deltaLabel = arrow;
 
   // Mean baseline reference at y=0. A faint dashed line gives the eye
   // an anchor to compare each org's curve against.
@@ -15550,7 +16085,6 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey,
       ${segments.join('')}
       ${toolOverlaySvg}
     </svg>
-    <span style="color:${stroke};font-size:11px;font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${deltaLabel}</span>
   </div>`;
 }
 
@@ -16228,6 +16762,7 @@ function makeFarmTransactionsSection(allEvents, orgCode) {
   const curPage = state.pages.farmTx || 1;
   const shown = pageSlice(evs, curPage, pageSize);
   const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "farmTx");
+  const paginationStripTop = renderPaginationStripCompact(curPage, totalItems, pageSize, "farmTx");
 
   return `<div class="detail-title">Farm-system transactions
       <span class="detail-title-sub">${allEvents.length} total across tracked prospects</span>
@@ -16238,6 +16773,7 @@ function makeFarmTransactionsSection(allEvents, orgCode) {
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;">
       <span class="filter-label" style="min-width:50px;">Direction</span>${dirChips}
     </div>
+    ${paginationStripTop}
     <table class="detail-table"><thead><tr>
       <th>Date</th><th>Type</th><th>Prospect</th><th>Move</th><th>Detail</th>
     </tr></thead><tbody>${shown.map(rowHtml).join("")}</tbody></table>
@@ -18000,14 +18536,16 @@ function makeCareerTable(career, birthDate) {
     return `<th class="sort-header${isActive ? " is-active" : ""}" data-career-sort="${key}" ${attrs}>${label}</th>`;
   };
 
-  // Age at July 1 of the season — matches the convention used by the
-  // Stats-vs-level-mean benchmark section so all "age" displays agree.
+  // Age at July 1 of the season — floored to a whole-integer year so
+  // the raw career stats column reads as "24" instead of "24.3". The
+  // by-level aggregate table renders age RANGES via its own helper
+  // (ageRange) and is unaffected.
   const ageFor = (season) => {
     if (!birthDate || season == null) return "—";
     const seasonMid = new Date(`${season}-07-01`).getTime();
     const birthT = new Date(birthDate).getTime();
     if (!isFinite(seasonMid) || !isFinite(birthT)) return "—";
-    return ((seasonMid - birthT) / (365.25 * 86400000)).toFixed(1);
+    return Math.floor((seasonMid - birthT) / (365.25 * 86400000));
   };
 
   // A "category strip" sits above the column headers. Each cell spans
@@ -18170,12 +18708,14 @@ function makeCareerByLevelTable(career, birthDate) {
     const ages = rows
       .map(r => r.season)
       .filter(y => y != null)
-      .map(y => (new Date(`${y}-07-01`).getTime() - birthT) / (365.25 * 86400000))
-      .filter(isFinite)
+      .map(y => Math.floor((new Date(`${y}-07-01`).getTime() - birthT) / (365.25 * 86400000)))
+      .filter(Number.isFinite)
       .sort((a, b) => a - b);
     if (ages.length === 0) return "—";
-    if (ages.length === 1) return ages[0].toFixed(1);
-    return `${ages[0].toFixed(1)}–${ages[ages.length-1].toFixed(1)}`;
+    if (ages.length === 1) return `${ages[0]}`;
+    return ages[0] === ages[ages.length-1]
+      ? `${ages[0]}`
+      : `${ages[0]}–${ages[ages.length-1]}`;
   };
   if (isP) {
     const rows = levels.map(lv => {
@@ -21824,6 +22364,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const _rosterPaged = pageSlice(rosterPlayers, _rosterCurPage, _rosterPageSize);
   const _rosterRankOffset = (_rosterCurPage - 1) * _rosterPageSize;
   const rosterPaginationStrip = renderPaginationStrip(_rosterCurPage, _rosterTotalItems, _rosterPageSize, "farmRoster");
+  const rosterPaginationStripTop = renderPaginationStripCompact(_rosterCurPage, _rosterTotalItems, _rosterPageSize, "farmRoster");
   const rosterRows = _rosterPaged.map((p, i) => {
     // Guard against players with empty / missing points arrays —
     // legacy data or edge-case entries can lack `points` entirely,
@@ -22743,6 +23284,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
         <button class="chip${state.rosterSort === "surplus" ? " active" : ""}" data-roster-sort="surplus" type="button" title="Per-prospect FV-implied surplus value, highest first">Surplus</button>
       </div>
     </div>
+    ${rosterPaginationStripTop}
     ${rosterHeader}${rosterRows}
     ${rosterPaginationStrip}
     <div class="detail-title">Position depth chart <span class="detail-title-sub">Tracked prospects bucketed by primary position · 10 columns (C / 1B / 2B / SS / 3B / LF / CF / RF / SP / RP)</span></div>
@@ -23200,15 +23742,43 @@ function decorateA11yRows() {
 // the chip's value to `state[stateKey]`, runs `onChange(value, btn)`,
 // and syncs the URL. Spotlights also clears the detail view, hence the
 // `clearView` option.
+//
+// Click-to-deselect: clicking the chip that's already active resets
+// the state field to its canonical "no filter" value (see
+// CHIP_GROUP_DEFAULTS below; falls back to "all"). Pass
+// `{ allowDeselect: false }` to keep the legacy "exactly one always
+// selected" behavior on chip groups where deselecting wouldn't make
+// sense (sort dimensions, form windows — these need *some* value).
+const CHIP_GROUP_DEFAULTS = {
+  "filter-pos":    "all",
+  "filter-level":  "all",
+  "filter-stock":  "all",
+  "filter-health": "all",
+  "filter-spread": "all",
+  "grad-boom":     "all",
+  "farm-acq":      "all",
+};
 function attachChipGroup(attr, stateKey, onChange, opts = {}) {
-  const { clearView = false } = opts;
+  const { clearView = false, allowDeselect = true } = opts;
   const sel = `[data-${attr}]`;
   const dsKey = attr.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
   document.querySelectorAll(sel).forEach(btn => {
     btn.addEventListener("click", () => {
+      const wasActive = btn.classList.contains("active");
       document.querySelectorAll(sel).forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      state[stateKey] = btn.dataset[dsKey];
+      if (wasActive && allowDeselect && CHIP_GROUP_DEFAULTS[attr] != null) {
+        // Toggle off — reset to canonical "no filter" value. Re-stamp
+        // .active on whichever sibling chip carries that default value
+        // so the visual state still reflects the underlying state.
+        const def = CHIP_GROUP_DEFAULTS[attr];
+        state[stateKey] = def;
+        document.querySelectorAll(sel).forEach(b => {
+          if (b.dataset[dsKey] === def) b.classList.add("active");
+        });
+      } else {
+        btn.classList.add("active");
+        state[stateKey] = btn.dataset[dsKey];
+      }
       if (clearView) state.view = null;
       onChange(state[stateKey], btn);
       syncToURL();
@@ -25064,6 +25634,26 @@ function populateOrgFilter() {
   restoreUIFromState();
   attachHandlers();
   render();
+  // Eager prefetch of draft + overseas JSON so the cohort counts in the
+  // header meta line can render real numbers instead of "…". These
+  // payloads are otherwise lazy-loaded on tab visit; doing it on boot
+  // in the background trades a small initial bandwidth bump for a
+  // populated header within ~1-2s of page load. Errors are swallowed
+  // — if a payload fails to load, the meta line keeps showing "…" and
+  // the tab still works (it'll re-fetch on visit).
+  const _dataBase = DATA_URL.replace(/[^/]+$/, "");
+  (async () => {
+    try {
+      const resp = await fetch(_dataBase + "draft_timeseries.json", { cache: "no-cache" });
+      if (resp.ok) { DATA.draft = await resp.json(); updateMeta(); }
+    } catch {}
+  })();
+  (async () => {
+    try {
+      const resp = await fetch(_dataBase + "overseas_timeseries.json", { cache: "no-cache" });
+      if (resp.ok) { DATA.overseas = await resp.json(); updateMeta(); }
+    } catch {}
+  })();
   // Cart state lives in localStorage — populate the floating button +
   // any in-page "+ Compare" buttons on first paint, then again after
   // every section render (renderCompareCart re-syncs button visuals).
