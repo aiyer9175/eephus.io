@@ -900,12 +900,16 @@
        custom property is set inline per row by the render JS. */
     .col-header, .player-row {
       display: grid;
-      /* v15 — 8 cols: # | Player | FV (+stock) | Rank | History | MiLB
-         | Phys cluster (Ht·Wt·BMI merged) | ETA. The candle column
-         is gone — OHLC surfaces via hover on the FV-history sparkline.
-         Standard density uses 16px col gap (was 10) for breathing room. */
-      grid-template-columns: 32px 1.6fr 0.55fr 0.4fr 1.0fr 1.3fr 0.85fr 0.6fr;
-      gap: 16px;
+      /* 7 cols: Player | Rank (diamond) | FV Grade | History | MiLB
+         | Phys cluster (Ht·Wt·BMI merged) | ETA. Rank sits LEFT of
+         the FV badge so the FV badge ends up adjacent to the FV
+         history chart on its right — reads as a pair ("60 FV trending
+         up" vs the separate "#12 rank" tag on the left). Rank column
+         widened to 50px so the "RANK" header label has room next to
+         the diamond chip. FV history bumped to 1.8fr so the sparkline
+         fills more of the available horizontal space. */
+      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr;
+      gap: 14px;
       align-items: center;
     }
     /* Compact mono cells for Ht/Wt/BMI. Tertiary-color text keeps
@@ -984,6 +988,15 @@
       letter-spacing: 0.10em;
       font-weight: 600;
     }
+    /* Force every column header span to render as a block-level grid
+       item so text-align / letter-spacing apply predictably, and use
+       a brighter color than the default --text-on-dark-muted so short
+       labels like "RANK" and "FV GRADE" don't recede into the dark
+       header bar. */
+    .col-header > span {
+      display: block;
+      color: var(--text-secondary);
+    }
     .player-row {
       position: relative;
       padding: 12px 14px 12px 18px;
@@ -1044,18 +1057,33 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 30px; height: 30px;
-      border-radius: 50%;
+      width: 32px; height: 32px;
+      border-radius: 4px;
+      transform: rotate(45deg);
       border: 1.5px solid var(--border);
       background: var(--bg-tertiary);
       font-family: var(--font-mono);
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-primary);
       text-align: center;
       font-variant-numeric: tabular-nums;
       font-weight: 800;
       margin: 0 auto;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .rank-num > .rank-num-inner {
+      display: inline-block;
+      transform: rotate(-45deg);
+      line-height: 1;
+    }
+    /* Wrapper that stacks the rank diamond + the rank-trend chip
+       vertically in a single grid cell. Mirrors the FV badge cell
+       which also stacks badge + .fv-stock-line. */
+    .rank-cell-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
     }
     /* FV-tier tint for the rank circle — top tiers pop visually. The
        data-fv-tier attribute is set on the row root for both active list
@@ -1079,12 +1107,55 @@
     .spotlight-row[data-fv-tier="45"] .rank-num { border-color: var(--fv-45-bd); }
     .player-row[data-fv-tier="40"] .rank-num,
     .spotlight-row[data-fv-tier="40"] .rank-num { border-color: var(--fv-40-bd); }
-    /* Compact-density: shrink the circle so it doesn't dominate the
+    /* Rarity-tier border on the rank diamond — mirrors the headshot
+       ring treatment so each player's diamond and picture carry the
+       same FV-tier signal. Static gradients (no animation) so the
+       small diamond doesn't compete with the headshot ring's motion. */
+    .rank-num.card-rarity-shine {
+      border-color: #C9A85A !important;
+      border-width: 2px !important;
+    }
+    .rank-num.card-rarity-foil {
+      border: 2px solid transparent !important;
+      background:
+        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
+        linear-gradient(135deg,
+          rgba(200,200,210,0.65) 0%,
+          rgba(240,240,250,0.85) 50%,
+          rgba(200,200,210,0.65) 100%) border-box !important;
+    }
+    .rank-num.card-rarity-chrome {
+      border: 2px solid transparent !important;
+      background:
+        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
+        linear-gradient(135deg,
+          rgba(220,220,235,0.85) 0%,
+          rgba(255,255,255,0.95) 50%,
+          rgba(220,220,235,0.85) 100%) border-box !important;
+    }
+    .rank-num.card-rarity-holo {
+      border: 2px solid transparent !important;
+      background:
+        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
+        linear-gradient(135deg,
+          #4ee0ff 0%, #b455ff 25%,
+          #ff5fa2 50%, #ffd45a 75%, #4ee0ff 100%) border-box !important;
+    }
+    .rank-num.card-rarity-legendary {
+      border: 2.5px solid transparent !important;
+      background:
+        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
+        linear-gradient(120deg,
+          #ff5fa2 0%, #ffd45a 18%, #4ee0ff 36%,
+          #b455ff 54%, #ff5fa2 72%, #ffd45a 90%,
+          #4ee0ff 100%) border-box !important;
+      box-shadow: 0 0 6px rgba(180,85,255,0.35), 0 1px 3px rgba(0,0,0,0.15) !important;
+    }
+    /* Compact-density: shrink the diamond so it doesn't dominate the
        tight row. Same family of treatments as the other compact tweaks. */
     body.density-compact .rank-num {
-      width: 24px; height: 24px;
-      font-size: 11px;
-      border-width: 1px !important;
+      width: 26px; height: 26px;
+      font-size: 10px;
     }
     .player-name {
       font-family: var(--font-retro);
@@ -1509,8 +1580,17 @@
        v18.2 — width/height bumped (was 50×20) so it's actually legible.
        Earlier sizing left the line as a 1-2 pixel squiggle on most
        prospects. 88×30 keeps the row tight but the trend is readable. */
-    body.density-compact .line-chart-cell { width: 88px; max-width: 88px; }
-    body.density-compact .line-chart-cell svg { width: 88px !important; height: 30px !important; }
+    /* Let the FV history sparkline fill its grid column instead of
+       being capped at a fixed width — the SVG uses preserveAspectRatio=
+       "none" and viewBox scaling so it stretches cleanly to whatever
+       width the grid hands it. Height bumped to 60px so the line
+       breathes vertically inside the row (was 40px). */
+    body.density-compact .line-chart-cell { width: 100%; max-width: none; }
+    body.density-compact .line-chart-cell svg { width: 100% !important; height: 60px !important; }
+    /* Same treatment for the lazy-chart placeholder div (rendered
+       before the chart hydrates) so the slot's reserved area matches
+       the eventual svg dimensions. */
+    body.density-compact .line-chart-cell > [data-lazy-chart] { width: 100% !important; height: 60px !important; }
     /* Tighter cells — phys, milb, eta all read smaller. */
     body.density-compact .phys-cluster { font-size: 9px; gap: 3px; }
     body.density-compact .milb-cell { font-size: 9.5px; line-height: 1.2; }
@@ -1519,6 +1599,62 @@
     body.density-compact .player-row-summary { display: none !important; }
     /* Compact header column gap matches the row gap. */
     body.density-compact .player-header { gap: 8px; }
+
+    /* Compact-density unification — applies the same shrunk-row
+       treatment to spotlights, injured, recently acquired, and
+       graduates so all five list views feel like the same surface.
+       Each row variant keeps its own grid-template-columns (different
+       column counts per list); we only normalize the internals
+       (headshot, name, meta, minichart, padding). */
+    body.density-compact .spotlight-row,
+    body.density-compact .player-row.is-injured,
+    body.density-compact .player-row.is-traded,
+    body.density-compact .grad-row {
+      padding-top: 4px;
+      padding-bottom: 4px;
+      gap: 8px;
+    }
+    body.density-compact .spotlight-row .headshot,
+    body.density-compact .player-row.is-injured .headshot,
+    body.density-compact .player-row.is-traded .headshot,
+    body.density-compact .grad-row .headshot {
+      width: 28px !important;
+      height: 34px !important;
+    }
+    body.density-compact .spotlight-row .player-name,
+    body.density-compact .player-row.is-injured .player-name,
+    body.density-compact .player-row.is-traded .player-name,
+    body.density-compact .grad-row .player-name {
+      font-size: 12px;
+    }
+    body.density-compact .spotlight-row .player-meta,
+    body.density-compact .player-row.is-injured .player-meta,
+    body.density-compact .player-row.is-traded .player-meta,
+    body.density-compact .grad-row .player-meta {
+      font-size: 10px;
+      line-height: 1.2;
+    }
+    /* Spotlight / traded / grad list rows mirror the active list:
+       sparkline fills its grid column instead of being capped. The
+       cell's grid-template-columns slot is what bounds the width now. */
+    body.density-compact .spotlight-row .line-chart-cell,
+    body.density-compact .player-row.is-traded .line-chart-cell,
+    body.density-compact .grad-row .line-chart-cell {
+      width: 100%;
+      max-width: none;
+    }
+    body.density-compact .spotlight-row .line-chart-cell svg,
+    body.density-compact .player-row.is-traded .line-chart-cell svg,
+    body.density-compact .grad-row .line-chart-cell svg {
+      width: 100% !important;
+      height: 60px !important;
+    }
+    body.density-compact .spotlight-row .line-chart-cell > [data-lazy-chart],
+    body.density-compact .player-row.is-traded .line-chart-cell > [data-lazy-chart],
+    body.density-compact .grad-row .line-chart-cell > [data-lazy-chart] {
+      width: 100% !important;
+      height: 60px !important;
+    }
 
     .player-row-expand {
       grid-column: 2 / -1;
@@ -1531,31 +1667,23 @@
     }
     body.density-expanded .player-row-expand { display: block; }
     body.density-expanded .player-row { row-gap: 4px; }
-    body.density-expanded .player-row .expand-savant { color: var(--text-secondary); }
-    /* Mini-stats strip (Expanded mode v2) — tertiary line under the
-       Savant micro-tile. Shows current-season perf, Tool composite,
-       and the recent FV-cycle trail. */
-    body.density-expanded .player-row .expand-mini-strip {
-      color: var(--text-tertiary);
-      font-size: 10px;
-      letter-spacing: 0.02em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: inline-block;
-    }
-    /* Per-tool 20-80 grade pills (5 tools, hitter or pitcher set).
-       Compact "HIT 55" pairs so a row can show all 5 in ~150px. */
-    body.density-expanded .player-row .expand-tools {
-      display: inline-flex;
-      flex-wrap: wrap;
+    /* Per-tool 20-80 grade strip on the new Expanded density. Fixed
+       7-column grid (hitter slot count) so every row's chips align
+       column-for-column — empty slots are reserved invisibly rather
+       than letting flex squish the remaining pills leftward. Pitcher
+       rows use the same grid; their 5 used slots populate the first
+       five columns and the last two render empty. */
+    .expand-tools {
+      display: inline-grid;
+      grid-template-columns: repeat(7, minmax(54px, 1fr));
       gap: 4px;
       align-items: center;
       margin-right: 6px;
     }
-    body.density-expanded .player-row .expand-tool-pill {
+    .expand-tool-pill {
       display: inline-flex;
       align-items: baseline;
+      justify-content: center;
       gap: 3px;
       padding: 1px 6px;
       border: 1px solid var(--border-light);
@@ -1564,77 +1692,19 @@
       font-family: var(--font-mono);
       font-size: 10px;
       line-height: 1.3;
+      text-align: center;
     }
-    body.density-expanded .player-row .etp-label {
+    .expand-tool-pill.is-empty { visibility: hidden; }
+    .etp-label {
       font-size: 10px;
       letter-spacing: 0.06em;
       color: var(--text-tertiary);
       font-weight: 600;
     }
-    body.density-expanded .player-row .etp-val {
+    .etp-val {
       font-weight: 700;
       font-variant-numeric: tabular-nums;
     }
-    /* v15 — Expanded extras: FG writeup, career trail, per-source FVs. */
-    body.density-expanded .player-row .expand-writeup {
-      display: block;
-      font-family: var(--font-sans);
-      font-size: 11px;
-      line-height: 1.45;
-      color: var(--text-secondary);
-      letter-spacing: 0;
-      padding: 4px 0;
-      max-width: 100%;
-    }
-    body.density-expanded .player-row .expand-writeup-source {
-      font-weight: 700;
-      color: var(--text-tertiary);
-      font-size: 10px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    body.density-expanded .player-row .expand-writeup-more {
-      color: var(--neon-cyan);
-      text-decoration: none;
-      font-weight: 600;
-      margin-left: 4px;
-    }
-    body.density-expanded .player-row .expand-writeup-more:hover { text-decoration: underline; }
-    body.density-expanded .player-row .expand-career-trail {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--text-secondary);
-      padding: 2px 0;
-    }
-    body.density-expanded .player-row .expand-career-trail .trail-level {
-      color: var(--text-tertiary);
-      font-weight: 600;
-      margin: 0 4px;
-    }
-    body.density-expanded .player-row .expand-source-fvs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      color: var(--text-tertiary);
-      padding: 2px 0;
-    }
-    body.density-expanded .player-row .expand-source-fv {
-      display: inline-flex;
-      align-items: baseline;
-      gap: 4px;
-    }
-    body.density-expanded .player-row .expand-source-fv .src-name {
-      text-transform: capitalize;
-      color: var(--text-tertiary);
-    }
-    body.density-expanded .player-row .expand-source-fv .src-delta.is-pos { color: var(--up); font-weight: 700; }
-    body.density-expanded .player-row .expand-source-fv .src-delta.is-neg { color: var(--down); font-weight: 700; }
-    body.density-expanded .player-row .expand-source-fv .src-delta.is-neutral { color: var(--text-tertiary); }
 
     /* One-line auto-narrative under each list row's player name —
        absorbs the green/red flag content that used to render as a
@@ -4322,7 +4392,12 @@
       h1 { font-size: 1.7rem; }
       .container { padding: 1rem 0.85rem 3rem; }
       .col-header, .player-row {
-        grid-template-columns: 28px 1fr 0.4fr 0.7fr;
+        /* 3-col mobile collapse: player block | rank diamond | FV badge.
+           Mirrors the desktop column order (Rank → FV reads as a pair on
+           the right side of the player block). History, MiLB, phys, ETA
+           hidden via the .desktop-only / per-cell display:none rules.
+           Rank column at 44px so "RANK" header fits without wrapping. */
+        grid-template-columns: 1fr 44px 0.5fr;
       }
       .player-row .line-chart-cell,
       .player-row .candle-cell,
@@ -4964,6 +5039,98 @@
     .tool-pill.is-neutral { background: rgba(74, 200, 224, 0.10); color: var(--neon-cyan); }
     .tool-pill.is-amber   { background: rgba(255, 176, 32, 0.12); color: var(--neon-amber); border-color: var(--neon-amber); }
 
+    /* Headshot stack — wraps the player picture + the options dots in
+       a vertical column so the dots ride directly under the picture.
+       Used by every list row that renders a headshot. */
+    .headshot-stack {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    /* Options dots — 3-pip indicator under the player picture. Each
+       pip is hollow cyan when remaining, solid cyan when used. The
+       dot color shifts amber at 1-left and red at 0-left as a
+       last-line at-a-glance signal. */
+    .options-dots {
+      display: inline-flex;
+      gap: 3px;
+      align-items: center;
+      cursor: help;
+      line-height: 1;
+    }
+    .options-pip {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      border: 1px solid var(--neon-cyan);
+      background: transparent;
+      box-sizing: border-box;
+    }
+    .options-pip.is-filled { background: var(--neon-cyan); }
+    .options-dots[data-remaining="1"] .options-pip { border-color: var(--neon-amber); }
+    .options-dots[data-remaining="1"] .options-pip.is-filled { background: var(--neon-amber); }
+    .options-dots[data-remaining="0"] .options-pip { border-color: var(--down); }
+    .options-dots[data-remaining="0"] .options-pip.is-filled { background: var(--down); }
+
+    /* Tool hover popup — appears above the Tool pill on hover or
+       keyboard focus. Lists each per-tool grade as a colored mini-cell
+       so you can see the underlying numbers without clicking through
+       to the prospect detail page. The wrap is inline-block; the
+       popup is an absolutely-positioned span so the parent <span>
+       chain stays HTML-valid (no block-in-inline auto-closing). */
+    .tool-pill-hover-wrap { position: relative; display: inline-block; }
+    .tool-pill-popup {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      z-index: 1000;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.55);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .tool-pill-hover-wrap:hover .tool-pill-popup,
+    .tool-pill-hover-wrap:focus-within .tool-pill-popup {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    /* On Expanded density the per-tool strip already renders all
+       individual grades under the player block — the inline Tool chip
+       + hover popup would be a duplicate of that exact information.
+       Hide the inline Tool chip on expanded to keep one canonical
+       surface per density mode. */
+    body.density-expanded .tool-pill-hover-wrap { display: none; }
+    .tool-popup-cell {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      font-family: var(--font-mono);
+      min-width: 26px;
+    }
+    .tool-popup-cell.is-empty .tool-popup-val { color: var(--text-tertiary); }
+    .tool-popup-label {
+      font-size: 8px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .tool-popup-val {
+      font-weight: 700;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
     /* WAG (WAR Above Grade) pill — graduate-only inline delta showing
        career WAR/yr vs the FV-grade-implied WAR/yr (FanGraphs primer,
        lower-bound, hitter/pitcher split, linearly interpolated). Same
@@ -5546,9 +5713,8 @@
     <div class="filter-group">
       <span class="filter-label">Density</span>
       <div class="density-toggle">
-        <button class="chip" data-density="compact" type="button" title="Strip the FV chart, MiLB stats, and ETA columns — just name + FV + rank. Half-height rows.">Compact</button>
-        <button class="chip active" data-density="standard" type="button" title="Default row layout — name, FV, rank, FV history chart, MiLB stats, ETA.">Standard</button>
-        <button class="chip" data-density="expanded" type="button" title="Adds a second meta line under each name with flag detail, Statcast micro-tile (when available), and recent FV history (open/high/low/close).">Expanded</button>
+        <button class="chip active" data-density="compact" type="button" title="Default tight row layout — name, FV diamond, FV history minichart, MiLB stats, ETA. Most rows visible at once.">Compact</button>
+        <button class="chip" data-density="expanded" type="button" title="Adds the per-tool grade strip + row summary line under each prospect. Same columns as Compact, taller rows for more detail.">Expanded</button>
       </div>
     </div>
     <div class="filter-group">
@@ -6464,21 +6630,21 @@ function healthBadgeHTML(p) {
     const tone = within12mo ? "is-orange" : "is-yellow";
     const d = hp.tj_surgery_date ? ` (surgery ${hp.tj_surgery_date})` : "";
     const tip = `Post-Tommy John surgery${d}${daysSinceTj != null ? ` · ${daysSinceTj}d since` : ""}`;
-    return `<span class="row-tag health-dot ${tone}" title="${tip}" aria-label="Post-TJ">Health</span>`;
+    return `<span class="row-tag health-dot ${tone}" title="${tip}" aria-label="Post-TJ"></span>`;
   }
 
   // Severity-based IL history tier — chronic (2+ stints) or long (≥30d)
   // gets orange; one short stint gets yellow.
   if (stints >= 2 || ildays >= 30) {
     const tip = `IL history · ${stints} stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12mo`;
-    return `<span class="row-tag health-dot is-orange" title="${tip}" aria-label="IL history (heavy)">Health</span>`;
+    return `<span class="row-tag health-dot is-orange" title="${tip}" aria-label="IL history (heavy)"></span>`;
   }
   if (stints >= 1 || ildays > 0) {
     const tip = `IL history · ${stints} stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12mo`;
-    return `<span class="row-tag health-dot is-yellow" title="${tip}" aria-label="IL history (light)">Health</span>`;
+    return `<span class="row-tag health-dot is-yellow" title="${tip}" aria-label="IL history (light)"></span>`;
   }
   if (hp && Object.keys(hp).length) {
-    return `<span class="row-tag health-dot is-green" title="Healthy — no IL activity in the past 12 months" aria-label="Healthy">Health</span>`;
+    return `<span class="row-tag health-dot is-green" title="Healthy — no IL activity in the past 12 months" aria-label="Healthy"></span>`;
   }
   return "";
 }
@@ -6677,24 +6843,15 @@ function _inlineBadgeStrip(p, max = 3) {
   // `flagCounterPillHTML` removed — flag content now lives inline as
   // ▲/▼ tags in the row-summary line (see `makeListRowSummary`), so a
   // separate ▲N▼N counter pill would be redundant noise.
-  // v3 cleanup — acqPillHTML + recentAcqBadgeHTML dropped from the
-  // list-row inline strip per beta-cleanup plan. Acquisition method is
-  // still surfaced on the detail-page tile + accordion; on the list it
-  // was either redundant (method also shown elsewhere) or visual noise.
-  // Tool pill removed here — it lived twice (inline strip AND the
-  // expanded-row footer). The expanded row owns it now; this strip
-  // keeps the higher-signal pills (boom/bust, health, Savant, arsenal).
-  // v15 — Suppress the Savant inline pill in expanded mode since the
-  // expanded second-line Savant micro-tile already surfaces the same
-  // metrics (xwOBA / barrel% / whiff%). Keeps the inline strip from
-  // duplicating signals the expanded view owns.
-  const isExpanded = typeof document !== "undefined"
-    && document.body
-    && document.body.classList.contains("density-expanded");
+  // Tool pill re-added: now the only place the Tool composite renders
+  // on Compact density rows (the old "Expanded extras" block was the
+  // previous home but got deleted in the density overhaul). Hover
+  // surfaces per-tool breakdown via toolHoverPopupHTML.
   const builders = [
     typeof boomBustPillHTML       === "function" ? boomBustPillHTML       : null,
     typeof healthBadgeHTML        === "function" ? healthBadgeHTML        : null,
-    (!isExpanded && typeof savantInlinePillHTML === "function") ? savantInlinePillHTML : null,
+    typeof toolPlusPillHTML       === "function" ? toolPlusPillHTML       : null,
+    typeof savantInlinePillHTML   === "function" ? savantInlinePillHTML   : null,
     typeof arsenalMiniHTML        === "function" ? arsenalMiniHTML        : null,
   ].filter(Boolean);
   const all = builders.map(fn => fn(p) || "").filter(Boolean);
@@ -6732,23 +6889,33 @@ function _toolGradeStripHTML(p) {
   const pos = String(p.position || '').toUpperCase();
   const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(pos)
                   || ((p.sabermetrics || {}).is_pitcher === true);
-  // v17 — Consolidated PWR replaces the legacy game_pwr surface;
-  // Frame / Athl pills surface FG physical grades (already mapped to
-  // 30/40/50/60/70 FV by the consensus layer).
+  // Consolidated PWR replaces the legacy game_pwr surface; Frame /
+  // Athl pills surface FG physical grades (already mapped to 30/40/50/
+  // 60/70 FV by the consensus layer). Slot count is fixed at 7 for
+  // both roles so the grid aligns column-for-column across rows —
+  // hitters fill all 7, pitchers fill 7 of their 8 (DEL truncated to
+  // keep the grid uniform).
   const keys = isPitcher
-    ? [['FB','fb'], ['SL','sl'], ['CB','cb'], ['CH','ch'], ['CMD','cmd'], ['FRM','frame'], ['ATHL','athl'], ['DEL','delivery']]
+    ? [['FB','fb'], ['SL','sl'], ['CB','cb'], ['CH','ch'], ['CMD','cmd'], ['FRM','frame'], ['ATHL','athl']]
     : [['HIT','hit'], ['PWR','pwr'], ['SPD','speed'], ['FLD','field'], ['ARM','throw'], ['FRM','frame'], ['ATHL','athl']];
   const pills = keys.map(([label, k]) => {
     const v = get(k);
-    if (v == null) return null;
+    if (v == null) {
+      // Empty-slot placeholder — keeps the grid column reserved so
+      // populated chips in this position align with the same chip on
+      // neighboring rows.
+      return `<span class="expand-tool-pill is-empty" aria-hidden="true"></span>`;
+    }
     // Color by 20-80 tier — 60+ green, 50 neutral, 40 orange, ≤35 red.
     const c = v >= 60 ? 'var(--up)'
             : v >= 50 ? 'var(--text-primary)'
             : v >= 40 ? 'var(--neon-amber)'
             :           'var(--down)';
     return `<span class="expand-tool-pill" title="${label} ${v} / 80"><span class="etp-label">${label}</span><span class="etp-val" style="color:${c};">${Math.round(v)}</span></span>`;
-  }).filter(Boolean);
-  if (!pills.length) return '';
+  });
+  // At least one populated pill required — pure-placeholder rows show
+  // nothing rather than a row of invisible slots.
+  if (!pills.some(s => !s.includes('is-empty'))) return '';
   return `<span class="expand-tools">${pills.join('')}</span>`;
 }
 
@@ -6830,71 +6997,15 @@ function expandedPerSourceFvHTML(p) {
 
 
 function playerExpandedMetaHTML(p) {
-  const parts = [];
-  // v15 — FG writeup (when available) at the top of the expanded block.
-  // First because it's the highest-context signal for a prospect.
-  const writeup = expandedWriteupHTML(p);
-  if (writeup) parts.push(writeup);
-  // Per-tool 20-80 grade pills — primary signal we want surfaced on
-  // expanded rows since the inline strip no longer carries the Tool
-  // composite pill.
+  // The new Expanded density adds ONE thing under each player row: the
+  // per-tool 20-80 grade strip, aligned in a fixed-slot grid so every
+  // row's chips line up column-for-column. Writeup / career trail /
+  // per-source FVs / Savant micro-tile / mini-stats strip all retired
+  // — the rich-extras version felt cluttered and the data lives on the
+  // prospect detail page anyway.
   const toolStrip = _toolGradeStripHTML(p);
-  if (toolStrip) parts.push(toolStrip);
-  // v15 — Last 3 seasons career trail.
-  const careerTrail = expandedCareerTrailHTML(p);
-  if (careerTrail) parts.push(careerTrail);
-  // v15 — Per-source FV breakdown.
-  const sourceFvs = expandedPerSourceFvHTML(p);
-  if (sourceFvs) parts.push(sourceFvs);
-  // Flag content moved into the always-visible row summary (see
-  // `makeListRowSummary`). The expanded-meta row now only carries
-  // Savant tiles unique to expanded density.
-  const sv = p.prospect_savant;
-  if (sv && Object.keys(sv).length) {
-    // v3 dedupe — savantInlinePillHTML already shows the "headline"
-    // Savant metric in the inline badge strip (xwOBA + barrel% for
-    // hitters; whiff% + max velo for pitchers). The expanded mini-tile
-    // here adds only fields NOT in the inline pill: hard-hit %, K%, BB%.
-    // This avoids the previous duplicate where xwOBA / barrel% / whiff%
-    // appeared in BOTH places on expanded rows.
-    const role = (sv.role || "").toLowerCase();
-    const isPit = role === "pitcher"
-               || (!role && (p.sabermetrics || {}).is_pitcher);
-    const bits = [];
-    if (sv.hard_hit_pct != null) bits.push(`HardHit ${Number(sv.hard_hit_pct).toFixed(0)}%`);
-    if (sv.k_pct != null)        bits.push(`K ${Number(sv.k_pct).toFixed(0)}%`);
-    if (sv.bb_pct != null)       bits.push(`BB ${Number(sv.bb_pct).toFixed(0)}%`);
-    if (isPit && sv.avg_velo != null) bits.push(`avg ${Number(sv.avg_velo).toFixed(1)} mph`);
-    if (bits.length) parts.push(`<span class="expand-savant">${bits.join(" · ")}</span>`);
-  }
-  // Mini-stats strip (Expanded mode richer fold) — surfaces tertiary
-  // signals not already on the row: current-season perf, Tool
-  // composite, and the FV-cycle trail. Only renders when at least one
-  // piece is populated so prospects with thin profiles don't carry an
-  // empty line.
-  const tpComp = p.tools && p.tools.composite_overall;
-  const milbStat = (() => {
-    const sl = p.statline || {};
-    if (sl.is_pitcher) return sl.era != null ? `ERA ${sl.era}${sl.level ? ` · ${sl.level}` : ''}` : null;
-    return sl.ops != null ? `OPS ${sl.ops}${sl.level ? ` · ${sl.level}` : ''}` : null;
-  })();
-  const trail = (p.points || []).slice(-5)
-    .map(pt => `${(pt.snapshot_date || '').slice(0, 7)} (${pt.consensus_fv_label || '—'})`)
-    .join(' → ');
-  const stripBits = [
-    milbStat,
-    tpComp != null ? `Tool ${Math.round(tpComp)}` : null,
-    trail || null,
-  ].filter(Boolean);
-  if (stripBits.length) {
-    parts.push(`<span class="expand-mini-strip">${escapeHtml(stripBits.join('   ·   '))}</span>`);
-  }
-  // OHLC text was previously rendered here, but it duplicated what the
-  // stock chart in the row already visualizes. The same numbers now
-  // surface on hover of the candle cell (see makeCandle) so the
-  // expanded meta stays focused on stats unique to this row.
-  if (!parts.length) return "";
-  return `<div class="player-row-expand">${parts.join("   ·   ")}</div>`;
+  if (!toolStrip) return "";
+  return `<div class="player-row-expand">${toolStrip}</div>`;
 }
 
 const fvClass = label => {
@@ -7157,12 +7268,16 @@ function transactionEvents(player) {
 // =============================================================================
 // SVG CHARTS
 // =============================================================================
-// Y-axis is anchored to the full 20-80 FV scale across both line charts and
-// candles so a 50 FV always sits in the same vertical position regardless of
-// prospect. The X-axis is per-prospect: starts at the player's first recorded
-// FV grade and ends at graduation_date (for graduates) or the last snapshot
-// (for active / inactive prospects).
-const FV_MIN = 20, FV_MAX = 80;
+// Y-axis is anchored to the published-prospect FV range (35-75) across both
+// line charts and candles so a 50 FV always sits in the same vertical
+// position regardless of prospect. The 35 floor + 75 ceiling reflect the
+// band where prospects actually get published — sub-35 grades don't make
+// it onto lists, and FV 80 is a once-in-a-generation grade that doesn't
+// occur in practice. Trimming both ends gives roughly 1.7× more vertical
+// resolution for the meaningful 35-75 range.
+// The X-axis is per-prospect: starts at the player's first recorded FV
+// grade and ends at graduation_date (for graduates) or the last snapshot.
+const FV_MIN = 35, FV_MAX = 75;
 
 function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   if (!points || points.length === 0) return "";
@@ -7189,12 +7304,43 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   const xScale = d => X_LEFT + ((new Date(d).getTime() - minT) / timeSpan) * (W - X_LEFT - PAD);
   const yScale = fv => CHART_BOTTOM - ((fv - FV_MIN) / (FV_MAX - FV_MIN)) * (CHART_BOTTOM - PAD);
 
-  const isUp = fvClose > fvOpen, isDown = fvClose < fvOpen;
-  const stroke = isUp ? "var(--up)" : isDown ? "var(--down)" : "var(--text-tertiary)";
-  const pts = points.map(pt => `${xScale(pt.snapshot_date).toFixed(1)},${yScale(pt.consensus_fv_raw).toFixed(1)}`).join(" ");
-  const circles = points.map(pt =>
-    `<circle cx="${xScale(pt.snapshot_date).toFixed(1)}" cy="${yScale(pt.consensus_fv_raw).toFixed(1)}" r="2" fill="${stroke}"><title>${pt.snapshot_date} · ${fgPrettifyInterval(null, pt.interval_label)} · FV ${pt.consensus_fv_label}</title></circle>`
-  ).join("");
+  // Per-segment direction coloring — each consecutive pair of points
+  // gets its own colored Catmull-Rom Bezier curve so the line reads as
+  // a smooth trajectory with growth/decay/flat intervals shown by
+  // color (green / red / tertiary brown). Mid-window dips render as
+  // red curves even if the overall fvOpen→fvClose is flat or up.
+  // Strokes use vector-effect="non-scaling-stroke" so they stay crisp
+  // pixel-width regardless of how CSS sizes the SVG.
+  const segColor = delta => delta > 0 ? "var(--up)"
+                          : delta < 0 ? "var(--down)"
+                                      : "var(--text-tertiary)";
+  const coords = points.map(pt => ({
+    x: xScale(pt.snapshot_date),
+    y: yScale(pt.consensus_fv_raw),
+    fv: pt.consensus_fv_raw,
+    pt,
+  }));
+  const segments = [];
+  for (let i = 0; i < coords.length - 1; i++) {
+    const p0 = coords[i - 1] || coords[i];           // prev (or self at start)
+    const p1 = coords[i];                            // segment start
+    const p2 = coords[i + 1];                        // segment end
+    const p3 = coords[i + 2] || coords[i + 1];       // next (or self at end)
+    // Catmull-Rom → cubic Bezier control points (tension 0.5 baked
+    // into the /6 divisor). The two tangents are derived from the
+    // neighbors on each side, so neighboring segments share tangents
+    // at the joints and the visual curve flows smoothly across the
+    // color change.
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    const c = segColor(p2.fv - p1.fv);
+    segments.push(`<path d="M ${p1.x.toFixed(1)},${p1.y.toFixed(1)} C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}" stroke="${c}" stroke-width="1.5" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"><title>${p1.pt.snapshot_date} → ${p2.pt.snapshot_date} · FV ${p1.pt.consensus_fv_label} → ${p2.pt.consensus_fv_label}</title></path>`);
+  }
+  // Data-point markers retired per user — the curve color is the
+  // only visual the user needs; dots added clutter.
+  const circles = "";
   // Reference line at FV 50 — the "MLB-regular" threshold. Anyone
   // hovering above this line projects as an above-average MLB player;
   // below is a complementary/backup profile. The previous mark at FV
@@ -7202,13 +7348,13 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   // be useful as a constant reference on a per-prospect chart.
   const yRef = yScale(50);
 
-  // Y-axis labels — 20 at the bottom, 80 at the top. Mini chart, so
-  // we keep them small and dim. They anchor the line's vertical range
-  // so the reader can immediately tell what a flat-near-the-top vs
-  // flat-near-the-bottom curve means.
+  // Y-axis labels — FV_MIN at the bottom, FV_MAX at the top. Mini
+  // chart, so we keep them small and dim. They anchor the line's
+  // vertical range so the reader can immediately tell what a flat-
+  // near-the-top vs flat-near-the-bottom curve means.
   const yLabels = `
-    <text x="${(PAD).toFixed(1)}" y="${(yScale(80) + 3).toFixed(1)}" font-size="6.5" fill="var(--text-tertiary)" font-family="var(--font-mono)">80</text>
-    <text x="${(PAD).toFixed(1)}" y="${(yScale(20) + 3).toFixed(1)}" font-size="6.5" fill="var(--text-tertiary)" font-family="var(--font-mono)">20</text>`;
+    <text x="${(PAD).toFixed(1)}" y="${(yScale(FV_MAX) + 3).toFixed(1)}" font-size="6.5" fill="var(--text-tertiary)" font-family="var(--font-mono)">${FV_MAX}</text>
+    <text x="${(PAD).toFixed(1)}" y="${(yScale(FV_MIN) + 3).toFixed(1)}" font-size="6.5" fill="var(--text-tertiary)" font-family="var(--font-mono)">${FV_MIN}</text>`;
 
   // Year boundary lines + labels
   const yearSvg = [];
@@ -7219,7 +7365,7 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
     if (yrT <= minT || yrT >= maxT) continue;
     const x = (X_LEFT + ((yrT - minT) / timeSpan) * (W - X_LEFT - PAD)).toFixed(1);
     yearSvg.push(
-      `<line x1="${x}" y1="${PAD}" x2="${x}" y2="${CHART_BOTTOM}" stroke="var(--border)" stroke-width="0.4" stroke-dasharray="2,3"/>`,
+      `<line x1="${x}" y1="${PAD}" x2="${x}" y2="${CHART_BOTTOM}" stroke="var(--border)" stroke-width="0.4" stroke-dasharray="2,3" vector-effect="non-scaling-stroke"/>`,
       `<text x="${x}" y="${H - 1}" font-size="6.5" fill="var(--text-tertiary)" text-anchor="middle">${yr}</text>`
     );
   }
@@ -7251,17 +7397,17 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
     const glyphY = top ? PAD + 4 : H - LABEL_H - 1;
     const fontSize = 6.5;
     eventSvg.push(
-      `<line x1="${x}" y1="${PAD}" x2="${x}" y2="${CHART_BOTTOM}" stroke="${cfg.color}" stroke-width="0.9" stroke-dasharray="${cfg.dash}" opacity="0.75"><title>${label}</title></line>`,
+      `<line x1="${x}" y1="${PAD}" x2="${x}" y2="${CHART_BOTTOM}" stroke="${cfg.color}" stroke-width="0.9" stroke-dasharray="${cfg.dash}" opacity="0.75" vector-effect="non-scaling-stroke"><title>${label}</title></line>`,
       `<text x="${x}" y="${glyphY.toFixed(1)}" font-size="${fontSize}" fill="${cfg.color}" text-anchor="middle"><title>${label}</title>${cfg.glyph}</text>`
     );
   }
 
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" role="img" aria-label="FV trajectory">
     ${yearSvg.join("")}
-    <line x1="${X_LEFT}" y1="${yRef.toFixed(1)}" x2="${W - PAD}" y2="${yRef.toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,2" />
+    <line x1="${X_LEFT}" y1="${yRef.toFixed(1)}" x2="${W - PAD}" y2="${yRef.toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,2" vector-effect="non-scaling-stroke" />
     ${yLabels}
     ${eventSvg.join("")}
-    <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+    ${segments.join("")}
     ${circles}
   </svg>`;
 }
@@ -7321,6 +7467,26 @@ function fvTrendHTML(p) {
   const s = p.stock;
   if (!s) return "";
   return `<div class="fv-stock-line">${stockInnerHTML(s)}</div>`;
+}
+
+// Rank trend — ▲/▼/— under the rank diamond. Matches the visual
+// language of fvTrendHTML but inverted: a LOWER rank number is BETTER
+// (rank #5 beats #50), so delta = prev - cur. Positive delta → green
+// up arrow (improved), negative → red down arrow (declined), 0 → flat.
+// Returns "" when prev or current rank is unknown so the chip just
+// renders nothing for new-to-list prospects.
+function rankTrendHTML(p) {
+  if (!p) return "";
+  const cur = p.overall_rank, prev = p.prev_overall_rank;
+  if (cur == null || prev == null) return "";
+  const delta = prev - cur;  // positive = improved
+  if (delta === 0) {
+    return `<div class="fv-stock-line"><span class="stock-flat">— flat</span></div>`;
+  }
+  if (delta > 0) {
+    return `<div class="fv-stock-line"><span class="stock-up">▲ +${delta}</span></div>`;
+  }
+  return `<div class="fv-stock-line"><span class="stock-down">▼ ${delta}</span></div>`;
 }
 
 // Pagination helpers — used by every list/leaderboard/glossary view to
@@ -7607,10 +7773,10 @@ function restoreUIFromState() {
   document.querySelectorAll("[data-filter-health]").forEach(b =>
     b.classList.toggle("active", b.dataset.filterHealth === (state.healthFilter || "all")));
   document.querySelectorAll("[data-density]").forEach(b =>
-    b.classList.toggle("active", b.dataset.density === (state.density || "standard")));
+    b.classList.toggle("active", b.dataset.density === (state.density || "compact")));
   // Body class mirrors state.density so the CSS rules can target it.
   document.body.classList.remove("density-compact", "density-standard", "density-expanded");
-  document.body.classList.add(`density-${state.density || "standard"}`);
+  document.body.classList.add(`density-${state.density || "compact"}`);
   document.querySelectorAll("[data-filter-level]").forEach(b =>
     b.classList.toggle("active", b.dataset.filterLevel === state.levelFilter));
   document.querySelectorAll("[data-filter-pos]").forEach(b =>
@@ -8041,14 +8207,21 @@ const state = {
   // is 0 (no threshold) or 50/55/60/65/70.
   toolFilterKey: "off",
   toolFilterMin: 0,
-  // Row density — "compact" / "standard" / "expanded". Picked up from
-  // URL > localStorage > default on boot. Drives a body-level class
-  // and (for Expanded) the per-row second meta line. Defaults to
-  // "expanded" so a fresh visitor lands on the densest row layout
-  // (Statcast micro-tile + flag detail + FV history caption visible);
-  // any user with a saved preference in localStorage keeps it.
-  density: (typeof localStorage !== "undefined"
-            && localStorage.getItem("prospect-tracker.density")) || "expanded",
+  // Row density — "compact" (default) / "expanded". Picked up from
+  // URL > localStorage > default on boot. Drives a body-level class.
+  // Defaults to "compact" so a fresh visitor lands on the cleanest row
+  // layout (28×34 headshot, 12px name, 120×38 minichart). Migration:
+  // legacy "standard" stored values map to the new "expanded" (which
+  // is the renamed-Standard, mid-density layout); any other unknown
+  // stored value also collapses to "expanded" so weird state never
+  // leaves the user staring at a blank density.
+  density: (() => {
+    if (typeof localStorage === "undefined") return "compact";
+    const saved = localStorage.getItem("prospect-tracker.density");
+    if (!saved) return "compact";
+    if (saved === "compact") return "compact";
+    return "expanded";  // "standard", old "expanded", or anything else
+  })(),
   // Leaderboards tab — stat × season × level × position-group × org
   // selection. Pulls from career_stats (year-by-year per-level rows) so
   // historical seasons work. The stat key matches a field on the
@@ -8591,13 +8764,9 @@ function renderActives() {
   // Both still click-to-sort by FV (FV-derived rank == consensus FV).
   // Every column is now click-to-sort — Player (alpha), MiLB level, etc.
   const header = `<div class="col-header">
-    <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="Prospect rank (1 = highest consensus FV). Click to sort.">Rank</span>
     <span class="sort-header" data-sort-key="name_asc" title="Player name · pos · org · age. Click to sort alphabetically.">Player · pos · org · age</span>
-    <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="Consensus Future Value · stock delta + direction below · click to sort">Consensus FV · stock</span>
-    <!-- v17 - Rank column shows our own FV-derived rank (overall_rank)
-         rather than the cross-source avg_rank. avg_rank inherited each
-         outlet's ordering quirks; ranking by consensus FV is cleaner. -->
-    <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="FV-derived overall rank — our sequential ordering of all active prospects by consensus FV. Click to sort.">FV Rank</span>
+    <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="FV-derived overall rank — diamond border matches the prospect's rarity tier (same color as the headshot ring). Click to sort.">Rank</span>
+    <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="Consensus Future Value · stock delta + direction below · click to sort">FV Grade</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline — hover for OHLC open / high / low / close">FV history</span>
     <span class="desktop-only sort-header" data-sort-key="level_desc" title="MiLB level + age vs level. Click to sort by closeness to MLB (MLB → DSL); click again for the reverse.">MiLB · age vs. level</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="Physical: Height · Weight · BMI (from FanGraphs). Click to sort by BMI highest first; click again for lowest.">Ht · Wt · BMI</span>
@@ -8615,9 +8784,8 @@ function renderActives() {
       : "";
     return `
       <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
-        <div class="rank-num">${rankOffset + i + 1}</div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-          ${headshotHTML(p, 56)}
+          <span class="headshot-stack">${headshotHTML(p, 56)}${optionsDotsHTML(p)}</span>
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
             ${playerMetaHTML(p)}
@@ -8627,9 +8795,8 @@ function renderActives() {
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
           <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
         </div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${p.overall_rank != null ? "#" + p.overall_rank : "—"}</span></div>${rankTrendHTML(p)}</div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>${fvTrendHTML(p)}</div>
-        <!-- v17 — Show our FV-sorted overall rank (#N) instead of avg_rank. -->
-        <div class="rank-cell">${p.overall_rank != null ? "#" + p.overall_rank : "—"}</div>
         <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${lazyLineChartHTML(p)}</div>
         ${makeMilbCell(p)}
         ${physClusterHTML(p)}
@@ -8717,9 +8884,9 @@ function renderSpotlights() {
     const _fvTier = Number.isFinite(_fvNum) ? String(Math.round(_fvNum / 5) * 5) : "";
     return `
     <div class="spotlight-row" data-key="${escapeHtml(s.player_key)}" data-fv-tier="${_fvTier}" style="${orgStripe(s.org)}">
-      <div class="rank-num">${rankOffset + i + 1}</div>
+      <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(_full)}"><span class="rank-num-inner">#${_full.overall_rank ?? (rankOffset + i + 1)}</span></div>${rankTrendHTML(_full)}</div>
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-        ${headshotHTML(_full, 42)}
+        <span class="headshot-stack">${headshotHTML(_full, 42)}${optionsDotsHTML(_full)}</span>
         <div style="min-width:0;flex:1;">
           <div class="player-name">${escapeHtml(s.player_name)}</div>
           ${playerMetaHTML(s)}
@@ -8963,6 +9130,31 @@ const _lbPitcherSupport = r => {
 // Cell heat color — maps a numeric value into a red-violet-cyan ramp
 // anchored at the LEAGUE MEAN of the full qualified pool (not just the
 // displayed top-N). Values are z-scored against the pool's mean/stdev
+// Rank diamond rarity class — mirrors the FV tier ramp used by the
+// headshot ring so the rank diamond and the player picture share the
+// same rarity signal. Returns "" when no FV is available; the diamond
+// then falls back to the plain --border color.
+function rankNumRarityClass(player) {
+  if (!player) return "";
+  let fv = player.fv_close;
+  if (fv == null) fv = player.consensus_fv;
+  if (fv == null) {
+    const pts = player.points || [];
+    const last = pts.length ? pts[pts.length - 1] : null;
+    if (last) fv = last.consensus_fv_raw != null ? last.consensus_fv_raw : last.consensus_fv;
+  }
+  if (fv == null || !isFinite(fv)) return "";
+  // Holo cutoff is FV ≥ 61 so the exact-60 prospects drop to chrome —
+  // 60 is the first-division floor, 61+ reads as "rare upside" which
+  // is the right semantic for the rainbow holo treatment.
+  if (fv >= 70) return "card-rarity-legendary";
+  if (fv >= 61) return "card-rarity-holo";
+  if (fv >= 55) return "card-rarity-chrome";
+  if (fv >= 50) return "card-rarity-foil";
+  if (fv >= 45) return "card-rarity-shine";
+  return "";
+}
+
 // so the spectrum spreads cleanly across the leaderboard: the top of
 // the board reads as several stdevs above mean, the bottom as the
 // quasi-league-average tail.
@@ -9129,7 +9321,7 @@ function renderWatchlist() {
       const latest = p.points && p.points.length ? p.points[p.points.length - 1] : null;
       return `
         <div class="player-row" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-          <div class="rank-num">${rankOffset + i + 1}</div>
+          <div class="rank-num"><span class="rank-num-inner">#${rankOffset + i + 1}</span></div>
           <div style="display:flex;align-items:center;gap:10px;min-width:0;">
             ${headshotHTML(p, 50)}
             <div style="min-width:0;flex:1;">
@@ -9172,7 +9364,7 @@ function renderWatchlist() {
     const dvm = (org.dvm_plus || {})[win];
     return `
       <div class="player-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)};display:flex;align-items:center;gap:12px;cursor:pointer;">
-        <div class="rank-num" style="min-width:32px;text-align:center;">${i + 1}</div>
+        <div class="rank-num" style="min-width:32px;text-align:center;"><span class="rank-num-inner">#${i + 1}</span></div>
         ${teamLogoHTML(org.org, "md", fullOrgName(org.org))}
         <div style="flex:1;min-width:0;">
           <div style="font-weight:600;font-size:14px;color:var(--text-primary);">${escapeHtml(fullOrgName(org.org))}</div>
@@ -9547,7 +9739,7 @@ function renderLeaderboards() {
       : `<span style="color:var(--text-tertiary);font-size:10px;">—</span>`;
     return `
       <div class="player-row is-leaderboard" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-num">${rankOffset + i + 1}</div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (rankOffset + i + 1)}</span></div>${rankTrendHTML(p)}</div>
         <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
           ${headshotHTML(p, 40)}
           <div style="min-width:0;flex:1;">
@@ -9888,9 +10080,9 @@ function renderInjured() {
     const reason = il.reason || il.description || "—";
     return `
       <div class="player-row is-injured" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-num">${i + 1}</div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div>${rankTrendHTML(p)}</div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-          ${headshotHTML(p, 50)}
+          <span class="headshot-stack">${headshotHTML(p, 50)}${optionsDotsHTML(p)}</span>
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}${tjBadge}</div>
             ${playerMetaHTML(p, { showIL: false, showRoster: false })}
@@ -9975,8 +10167,9 @@ function renderRecentlyTraded() {
     const methodPill = `<span class="grad-pill" style="background:var(--bg-tertiary);color:${meta.color};border:1px solid var(--border);">${escapeHtml(meta.label)}</span>`;
     return `
       <div class="player-row is-traded" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-num">${i + 1}</div>
-        <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div>${rankTrendHTML(p)}</div>
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+          <span class="headshot-stack">${headshotHTML(p, 50)}${optionsDotsHTML(p)}</span>
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}</div>
             ${playerMetaHTML(p)}
@@ -10448,13 +10641,14 @@ function _headshotImg(url, name, opts) {
     const tiers = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
     let tier = 20;
     for (const t of tiers) { if (opts.fv >= t - 2.5) { tier = t; break; } }
-    // v18.3 — Match the active-list ramp: holo is now above chrome
-    // (rare > premium). Draft/overseas only get the top two tiers here
-    // since lower tiers fall through to plain border.
+    // Holo cutoff is FV ≥ 61 (raw, not snapped tier) so the exact-60
+    // prospects drop to chrome. Match the active-list ramp: holo is
+    // above chrome (rare > premium). Draft/overseas only get the top
+    // tiers here; lower tiers fall through to plain border.
     ringClass = `fv-headshot-ring fv-tier-${tier}`;
-    if (tier >= 70)      ringClass += " card-rarity-legendary";
-    else if (tier >= 60) ringClass += " card-rarity-holo";
-    else if (tier >= 55) ringClass += " card-rarity-chrome";
+    if (opts.fv >= 70)      ringClass += " card-rarity-legendary";
+    else if (opts.fv >= 61) ringClass += " card-rarity-holo";
+    else if (opts.fv >= 55) ringClass += " card-rarity-chrome";
   }
   const wrapCls = `prospect-headshot-wrap${ringClass ? " " + ringClass : ""}`;
   if (!url) {
@@ -12466,9 +12660,9 @@ function renderGraduates() {
       : "";
     return `
       <div class="grad-row" data-key="${escapeHtml(g.player_key)}" style="${orgStripe(g.org)}">
-        <div class="rank-num">${rank}</div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(g)}"><span class="rank-num-inner">#${rank}</span></div>${rankTrendHTML(g)}</div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-          ${headshotHTML(g, 50)}
+          <span class="headshot-stack">${headshotHTML(g, 50)}${optionsDotsHTML(g)}</span>
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(g.player_name)}${typeof boomBustPillHTML === "function" ? boomBustPillHTML(g) : ""}${wagPill}${warTag}${gradWriteupPill}</div>
             ${playerMetaHTML(g, { showIL: false, showRoster: false })}
@@ -13513,11 +13707,11 @@ const GLOSSARY = {
     name: "FV Rarity", aliases: ["Rarity ring", "Card rarity"], category: "indicators",
     priority: 11,
     short: "Animated border treatment around player headshots / cards. Anchored at FV 40 (average prospect — no treatment); every tier above 40 picks up a richer foil/chrome/holo shimmer.",
-    long: "v18.3 — rarity ramp re-anchored to FV 40 as the baseline with HOLO above CHROME (chrome is static silver; holo carries the rainbow shift, so the rainbow tier reads as rarer). Five rarity bands above the baseline, mirroring the Topps Chrome / refractor aesthetic:\\n  • FV 70+ → LEGENDARY · animated rainbow with pulsing outline glow (top ~1%)\\n  • FV 60-69 → HOLO · full rainbow shift (plus prospect)\\n  • FV 55-59 → CHROME · silver shimmer (above-average regular)\\n  • FV 50-54 → FOIL · faint silver foil (MLB-regular projection)\\n  • FV 45-49 → SHINE · static gold ring (above-average org piece)\\n  • FV 40 → baseline, no treatment (average prospect)\\n  • FV < 40 → no treatment\\nApplied everywhere a player headshot or card renders — list rows, spotlight cards, the prospect detail page header, compare view.",
+    long: "Rarity ramp anchored at FV 40 (baseline) with HOLO above CHROME (chrome is static silver; holo carries the rainbow shift, so the rainbow tier reads as rarer). Five rarity bands above the baseline, mirroring the Topps Chrome / refractor aesthetic:\\n  • FV 70+ → LEGENDARY · animated rainbow with pulsing outline glow (top ~1%)\\n  • FV 61-69 → HOLO · full rainbow shift (plus prospect, above first-division floor)\\n  • FV 55-60 → CHROME · silver shimmer (FV 60 first-division floor lives here)\\n  • FV 50-54 → FOIL · faint silver foil (MLB-regular projection)\\n  • FV 45-49 → SHINE · static gold ring (above-average org piece)\\n  • FV 40 → baseline, no treatment (average prospect)\\n  • FV < 40 → no treatment\\nApplied everywhere a player headshot or card renders — list rows, spotlight cards, the prospect detail page header, compare view.",
     related: ["fv", "fv_badge"],
     visual_html: '<div style="display:flex;gap:12px;align-items:flex-end;font-size:10px;color:var(--text-tertiary);">' +
       '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span class="fv-headshot-ring card-rarity-legendary" style="width:24px;height:30px;border-radius:3px;display:inline-block;"></span><span>70+ Legendary</span></div>' +
-      '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span class="fv-headshot-ring card-rarity-holo" style="width:24px;height:30px;border-radius:3px;display:inline-block;"></span><span>60+ Holo</span></div>' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span class="fv-headshot-ring card-rarity-holo" style="width:24px;height:30px;border-radius:3px;display:inline-block;"></span><span>61+ Holo</span></div>' +
       '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span class="fv-headshot-ring card-rarity-chrome" style="width:24px;height:30px;border-radius:3px;display:inline-block;"></span><span>55+ Chrome</span></div>' +
       '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span class="fv-headshot-ring card-rarity-foil" style="width:24px;height:30px;border-radius:3px;display:inline-block;"></span><span>50+ Foil</span></div>' +
       '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;"><span class="fv-headshot-ring card-rarity-shine" style="width:24px;height:30px;border-radius:3px;display:inline-block;"></span><span>45+ Shine</span></div>' +
@@ -14327,14 +14521,14 @@ function _playerFvTier(player) {
 // 60+/70+ tiers) wraps the picture itself. Empty string when no FV
 // is known.
 function _fvHeadshotRingClass(player) {
-  // v18.3 — Holo moved above chrome in the rarity ramp per user
-  // re-tiering. Chrome is silver/static and reads as "premium" while
-  // holo carries the rainbow shift and reads as "rare" — so holo
-  // sitting above chrome maps to user expectations better.
-  // Final ramp (high → low):
+  // Holo carries the rainbow shift and reads as "rare" — chrome is
+  // silver/static and reads as "premium". Holo sits above chrome in
+  // the ramp so the rainbow is the rarer signal.
+  // Final ramp (high → low, by RAW FV not snapped tier so the holo
+  // cutoff can sit at an exact integer):
   //   70+  → legendary (rainbow + animated outline pulse)
-  //   60+  → holo      (full rainbow shift)
-  //   55+  → chrome    (silver shimmer)
+  //   61+  → holo      (full rainbow shift)
+  //   55+  → chrome    (silver shimmer; FV 60 first-division floor lives here)
   //   50+  → foil      (subtle silver shimmer)
   //   45+  → shine     (faint gold tint)
   //    40  → average (no treatment — this is the baseline)
@@ -14342,12 +14536,18 @@ function _fvHeadshotRingClass(player) {
   // See the `fv_rarity` glossary entry for the visual legend.
   const tier = _playerFvTier(player);
   if (tier == null) return "";
+  // Pull raw FV separately so the holo cutoff is precise. The tier
+  // var stays snapped (for the fv-tier-NN palette class).
+  const points = player.points || [];
+  const fv = (points.length
+    ? (points[points.length - 1].consensus_fv_raw ?? points[points.length - 1].consensus_fv)
+    : null) ?? player.fv_close ?? player.consensus_fv;
   let cls = `fv-headshot-ring fv-tier-${tier}`;
-  if (tier >= 70) cls += " card-rarity-legendary";
-  else if (tier >= 60) cls += " card-rarity-holo";
-  else if (tier >= 55) cls += " card-rarity-chrome";
-  else if (tier >= 50) cls += " card-rarity-foil";
-  else if (tier >= 45) cls += " card-rarity-shine";
+  if (fv >= 70) cls += " card-rarity-legendary";
+  else if (fv >= 61) cls += " card-rarity-holo";
+  else if (fv >= 55) cls += " card-rarity-chrome";
+  else if (fv >= 50) cls += " card-rarity-foil";
+  else if (fv >= 45) cls += " card-rarity-shine";
   return cls;
 }
 
@@ -14414,10 +14614,37 @@ function levelPlusHTML(sl) {
   return `<span class="lvl-plus ${cls}" title="${title}">${sign}% vs lvl</span>`;
 }
 
-// MLB roster / options chip for the player-meta line. Only renders for
-// prospects on the 40-man or with options already burned — non-40-man
-// minor leaguers haven't entered the options system yet, so the chip
-// would be visual noise. Tooltip carries debut date + service phase.
+// Options dots — minimalist 3-pip indicator for the 40-man options
+// system. Each pip is filled cyan when that option year has been used,
+// hollow when remaining. No numeric text — the pip count IS the count.
+// Returns "" for players with no roster status (most prospects); the
+// caller decides whether to render placeholder space or nothing.
+function optionsDotsHTML(p) {
+  const rs = p && p.roster_status;
+  if (!rs) return "";
+  const usedYrs = rs.options_used_years || [];
+  if (!rs.on_40_man && usedYrs.length === 0) return "";
+  const total = 3;
+  const used = Math.min(total, Math.max(0, rs.options_used | 0));
+  const remaining = (rs.options_remaining != null)
+    ? rs.options_remaining
+    : Math.max(0, total - used);
+  const tip = [
+    rs.on_40_man ? "On 40-man" : "Off 40-man",
+    `Options: ${used} of ${total} used${usedYrs.length ? ` (${usedYrs.join(", ")})` : ""}`,
+    rs.service_phase ? `Service: ${rs.service_phase}` : null,
+    rs.mlb_debut_date ? `MLB debut ${rs.mlb_debut_date}` : null,
+  ].filter(Boolean).join(" · ");
+  const pips = Array.from({length: total}, (_, i) =>
+    `<span class="options-pip${i < used ? " is-filled" : ""}"></span>`
+  ).join("");
+  return `<span class="options-dots" title="${escapeHtml(tip)}" data-remaining="${remaining}">${pips}</span>`;
+}
+
+// Legacy MLB roster / options chip for the player-meta line. Kept for
+// the farm-roster table which still surfaces the numeric "X/3" pill
+// inline. New list rows use optionsDotsHTML above + .headshot-stack
+// to put the dots under the player picture instead.
 function rosterTagHTML(p) {
   const rs = p && p.roster_status;
   if (!rs) return "";
@@ -14461,7 +14688,11 @@ function playerMetaHTML(p, opts = {}) {
     ? `<span class="age-tag">age ${ageNum.toFixed(1)}</span>`
     : "";
   const ilTag = showIL ? ilTagHTML(p) : "";
-  const rosterTag = showRoster ? rosterTagHTML(p) : "";
+  // Options indicator moved under the player picture (.headshot-stack
+  // + optionsDotsHTML) in the density-overhaul pass. The numeric
+  // "X/3" pill no longer renders in the meta line; the dots-only
+  // visual under the headshot is the canonical surface.
+  const rosterTag = "";
   // v17 — Position display: full slash list with primary bolded.
   // Previously rendered the primary position alone with `+POS` chips
   // for secondaries. Now: `**SS** / 2B / 3B` — primary bolded,
@@ -17103,15 +17334,21 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
   const xScale = d => PAD_L + ((new Date(d).getTime() - minT) / timeSpan) * innerW;
   const yScale = fv => PAD_T + innerH - ((fv - FV_MIN) / (FV_MAX - FV_MIN)) * innerH;
 
-  const isUp = fvClose > fvOpen, isDown = fvClose < fvOpen;
-  const stroke = isUp ? "var(--up)" : isDown ? "var(--down)" : "var(--text-tertiary)";
+  // Per-segment direction coloring + non-scaling strokes — same
+  // pattern as the minichart. Each consecutive pair of points gets
+  // its own colored line so mid-window dips show up. Strokes stay
+  // crisp pixel-width regardless of how CSS sizes the SVG.
+  const segColor = delta => delta > 0 ? "var(--up)"
+                          : delta < 0 ? "var(--down)"
+                                      : "var(--text-tertiary)";
 
-  // Y-axis ticks every 5 FV
+  // Y-axis ticks every 5 FV. Starts at FV_MIN (35) since prospects
+  // graded below that don't make it onto the lists/rankings.
   const yTicks = [];
-  for (let fv = 20; fv <= 80; fv += 5) {
+  for (let fv = FV_MIN; fv <= FV_MAX; fv += 5) {
     const y = yScale(fv).toFixed(1);
     yTicks.push(
-      `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="var(--border-light)" stroke-width="0.4" stroke-dasharray="2,3"/>`,
+      `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="var(--border-light)" stroke-width="0.4" stroke-dasharray="2,3" vector-effect="non-scaling-stroke"/>`,
       `<text x="${PAD_L - 4}" y="${y}" dy="3" font-size="9" fill="var(--text-tertiary)" text-anchor="end">${fv}</text>`,
     );
   }
@@ -17119,7 +17356,7 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
   // FV-60 highlight because 50 is the meaningful "this projects as a
   // major leaguer" line; 60 was a star-tier marker that didn't help
   // the typical prospect chart.
-  yTicks.push(`<line x1="${PAD_L}" y1="${yScale(50).toFixed(1)}" x2="${W - PAD_R}" y2="${yScale(50).toFixed(1)}" stroke="var(--neon-amber)" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.5"/>`);
+  yTicks.push(`<line x1="${PAD_L}" y1="${yScale(50).toFixed(1)}" x2="${W - PAD_R}" y2="${yScale(50).toFixed(1)}" stroke="var(--neon-amber)" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.5" vector-effect="non-scaling-stroke"/>`);
 
   // Year boundaries
   const yearSvg = [];
@@ -17130,7 +17367,7 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
     if (yrT <= minT || yrT >= maxT) continue;
     const x = xScale(new Date(yrT).toISOString().slice(0, 10)).toFixed(1);
     yearSvg.push(
-      `<line x1="${x}" y1="${PAD_T}" x2="${x}" y2="${H - PAD_B}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3,3"/>`,
+      `<line x1="${x}" y1="${PAD_T}" x2="${x}" y2="${H - PAD_B}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3,3" vector-effect="non-scaling-stroke"/>`,
       `<text x="${x}" y="${H - PAD_B + 14}" font-size="10" fill="var(--text-tertiary)" text-anchor="middle">${yr}</text>`,
     );
   }
@@ -17177,12 +17414,11 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
     const yBase = H - PAD_B;
     const glyphY = top ? PAD_T + 6 : yBase - 2;
     eventSvg.push(
-      `<line x1="${x}" y1="${PAD_T}" x2="${x}" y2="${yBase}" stroke="${cfg.color}" stroke-width="1.2" stroke-dasharray="${cfg.dash}" opacity="0.8"><title>${label}</title></line>`,
+      `<line x1="${x}" y1="${PAD_T}" x2="${x}" y2="${yBase}" stroke="${cfg.color}" stroke-width="1.2" stroke-dasharray="${cfg.dash}" opacity="0.8" vector-effect="non-scaling-stroke"><title>${label}</title></line>`,
       `<text x="${x}" y="${glyphY.toFixed(1)}" font-size="11" fill="${cfg.color}" text-anchor="middle"><title>${label}</title>${cfg.glyph}</text>`,
     );
   }
 
-  const pts = points.map(pt => `${xScale(pt.snapshot_date).toFixed(1)},${yScale(pt.consensus_fv_raw).toFixed(1)}`).join(" ");
   // Build a hover tooltip that surfaces the consensus FV plus the
   // per-source breakdown at that snapshot. Sources sorted highest FV
   // first; sources with rank-only (no FV) appended at the end so the
@@ -17208,15 +17444,44 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
       : "";
     return `${head}\n── ${sources}${spreadTail}`;
   };
-  const circles = points.map(pt =>
-    `<circle cx="${xScale(pt.snapshot_date).toFixed(1)}" cy="${yScale(pt.consensus_fv_raw).toFixed(1)}" r="3" fill="${stroke}"><title>${escapeHtml(buildPointTitle(pt))}</title></circle>`
-  ).join("");
+
+  // Per-segment Catmull-Rom Bezier curves with shared tangents at
+  // joints — smooth visual flow even where the segment color changes.
+  // Tension 0.5 (the /6 divisor) gives a natural-looking curve
+  // without overshoot at sharp direction changes. Tooltip on each
+  // segment lists both endpoints (replaces the per-point circle
+  // tooltips that the retired dots used to carry).
+  const coords = points.map(pt => ({
+    x: xScale(pt.snapshot_date),
+    y: yScale(pt.consensus_fv_raw),
+    fv: pt.consensus_fv_raw,
+    pt,
+  }));
+  const segments = [];
+  for (let i = 0; i < coords.length - 1; i++) {
+    const p0 = coords[i - 1] || coords[i];
+    const p1 = coords[i];
+    const p2 = coords[i + 1];
+    const p3 = coords[i + 2] || coords[i + 1];
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    const c = segColor(p2.fv - p1.fv);
+    const segTip = escapeHtml(buildPointTitle(p1.pt) + "\n→ " + buildPointTitle(p2.pt));
+    segments.push(`<path d="M ${p1.x.toFixed(1)},${p1.y.toFixed(1)} C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}" stroke="${c}" stroke-width="2" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"><title>${segTip}</title></path>`);
+  }
+
+  // Data-point markers retired per user — curve color is the only
+  // visual the user needs; dots added clutter. Per-snapshot detail
+  // still surfaces via the per-segment <title> tooltips above.
+  const circles = "";
 
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="FV trajectory">
     ${yTicks.join("")}
     ${yearSvg.join("")}
     ${eventSvg.join("")}
-    <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${segments.join("")}
     ${circles}
   </svg>`;
 }
@@ -18183,8 +18448,10 @@ function renderPlayerDetail(key) {
     for (const b of buckets) {
       if (fv >= b - 2.5) { pick = b; break; }
     }
+    // Holo cutoff is FV ≥ 61 so the exact-60 first-division-floor
+    // prospects drop into chrome territory.
     const rarity = fv >= 70 ? "card-rarity-chrome"
-                 : fv >= 60 ? "card-rarity-holo"
+                 : fv >= 61 ? "card-rarity-holo"
                  : "";
     return `fv-tier-${pick}${rarity ? " " + rarity : ""}`;
   })();
@@ -18195,7 +18462,7 @@ function renderPlayerDetail(key) {
         <div class="headshot-frame">${headshotHTML(p, 130)}</div>
         ${teamLogoHTML(p.org, "lg", p.org ? fullOrgName(p.org) : "")}
         <div style="min-width:0;">
-          <div class="player-display-name">${escapeHtml(p.player_name)}</div>
+          <div class="player-display-name">${escapeHtml(p.player_name)}${optionsDotsHTML(p) ? `<span style="margin-left:10px;display:inline-flex;align-items:center;vertical-align:middle;">${optionsDotsHTML(p)}</span>` : ""}</div>
           <div class="player-display-meta">
             <strong style="font-weight:600;color:var(--text-primary);">${escapeHtml(p.position ?? "—")}</strong>${(() => {
               // Versa chips — FG's forward-projected positional eligibility
@@ -20149,16 +20416,11 @@ function renderPlayerDetail(key) {
       arb_eligible: "var(--neon-amber)",
       post_arb:     "var(--neon-violet)",
     }[rs.service_phase] || "var(--text-tertiary)";
-    const optionsTotal = 3;
-    const used = Math.min(optionsTotal, rs.options_used || 0);
-    const remaining = (rs.options_remaining != null)
-      ? rs.options_remaining
-      : Math.max(0, optionsTotal - used);
-    // Visual: three pips, filled = used, hollow = remaining. Matches the
-    // "options pill" pattern most baseball-front-office UIs use.
-    const pip = filled => `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;border:1.5px solid var(--neon-cyan);background:${filled ? "var(--neon-cyan)" : "transparent"};margin-right:3px;vertical-align:middle;"></span>`;
-    const pips = Array.from({length: optionsTotal}, (_, i) => pip(i < used)).join("");
     const yearList = (rs.options_used_years || []).join(", ");
+    // Reuse the unified optionsDotsHTML helper so the detail card and
+    // the under-headshot indicator stay in lockstep. Bump the dots
+    // visually larger by sizing via a wrapper class (.is-detail).
+    const dots = optionsDotsHTML(p);
     const debutLine = rs.mlb_debut_date
       ? `<div style="font-size:12px;color:var(--text-secondary);">
             <span style="color:var(--text-tertiary);">MLB debut:</span>
@@ -20193,8 +20455,8 @@ function renderPlayerDetail(key) {
         </div>
         <div style="display:flex;align-items:center;gap:8px;padding-top:6px;border-top:1px dashed var(--border-light);">
           <span style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.04em;text-transform:uppercase;font-weight:600;">MiLB options</span>
-          <span style="display:inline-flex;align-items:center;">${pips}</span>
-          <span style="font-size:12px;color:var(--text-primary);font-variant-numeric:tabular-nums;">${remaining} of ${optionsTotal} left${yearList ? ` <span style="color:var(--text-tertiary);">· used ${escapeHtml(yearList)}</span>` : ""}</span>
+          ${dots || "<span style=\"font-size:12px;color:var(--text-tertiary);\">no options used</span>"}
+          ${yearList ? `<span style="font-size:11px;color:var(--text-tertiary);">years used: ${escapeHtml(yearList)}</span>` : ""}
         </div>
         ${rs.rookie_exhausted
           ? `<div style="font-size:11px;color:var(--text-tertiary);font-style:italic;">Rookie eligibility exhausted (${rs.career_mlb_ab > 0 ? rs.career_mlb_ab + " AB" : rs.career_mlb_ip + " IP"} career).</div>`
@@ -21075,7 +21337,7 @@ function renderFarmDetail(orgCode) {
       : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
     return `
       <div class="player-row is-farm-roster" style="${orgStripe(p.org)}" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
-        <div class="rank-num">${_rosterRankOffset + i + 1}</div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (_rosterRankOffset + i + 1)}</span></div>${rankTrendHTML(p)}</div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           ${headshotHTML(p, 56)}
           <div style="min-width:0;flex:1;">
@@ -22879,14 +23141,46 @@ function rpsPlusPillHTML(p) {
 // scouting scale (50 = avg, 60 = Plus, 70 = elite). Returns "" when
 // the player has no tool grades — list rows skip the pill silently
 // rather than rendering an empty "Tool —" that adds noise.
+// Wrapped in a hover container so the per-tool breakdown popup
+// (toolHoverPopupHTML) appears on hover or keyboard focus.
 function toolPlusPillHTML(p) {
   const t = p && p.tools;
   const raw = t && t.composite_overall;
   if (raw == null) return "";
   const v = Math.round(raw);
   const cls = v >= 60 ? "is-pos" : v >= 50 ? "is-neutral" : v >= 40 ? "is-amber" : "is-neg";
-  const title = `Tool ${v} · 20-80 scouting scale composite (50 = average, 60 = Plus, 70 = Elite). Equally-weighted p=4 power-mean of every tool grade.`;
-  return `<span class="tool-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(title)}"><span class="g-term" data-term="tool">Tool</span> ${v}</span>`;
+  const title = `Tool ${v} · 20-80 scouting scale composite (50 = average, 60 = Plus, 70 = Elite). Hover for per-tool breakdown.`;
+  const popup = toolHoverPopupHTML(p);
+  const pill = `<span class="tool-pill ${cls}" tabindex="0" title="${escapeHtml(title)}"><span class="g-term" data-term="tool">Tool</span> ${v}</span>`;
+  return `<span class="tool-pill-hover-wrap" style="margin-left:6px;">${pill}${popup}</span>`;
+}
+
+// Tool popup — rich hover panel listing each per-tool grade as a
+// colored mini-cell. Built off the same palette as _toolGradeStripHTML
+// so colors stay consistent with the expanded-row tool strip. Renders
+// empty cells too so the popup width stays stable across prospects.
+function toolHoverPopupHTML(p) {
+  const grades = (p && p.tools && p.tools.grades) || {};
+  if (!Object.keys(grades).length) return "";
+  const pos = String((p || {}).position || '').toUpperCase();
+  const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(pos)
+                 || ((p && p.sabermetrics || {}).is_pitcher === true);
+  const keys = isPitcher
+    ? [['FB','fb'], ['SL','sl'], ['CB','cb'], ['CH','ch'], ['CMD','cmd'], ['FRM','frame'], ['ATHL','athl']]
+    : [['HIT','hit'], ['PWR','pwr'], ['SPD','speed'], ['FLD','field'], ['ARM','throw'], ['FRM','frame'], ['ATHL','athl']];
+  const cells = keys.map(([label, k]) => {
+    const v = grades[k];
+    if (v == null || isNaN(Number(v))) {
+      return `<span class="tool-popup-cell is-empty"><span class="tool-popup-label">${label}</span><span class="tool-popup-val">—</span></span>`;
+    }
+    const n = Number(v);
+    const color = n >= 60 ? 'var(--up)'
+                : n >= 50 ? 'var(--text-primary)'
+                : n >= 40 ? 'var(--neon-amber)'
+                :           'var(--down)';
+    return `<span class="tool-popup-cell"><span class="tool-popup-label">${label}</span><span class="tool-popup-val" style="color:${color};">${Math.round(n)}</span></span>`;
+  }).join("");
+  return `<span class="tool-pill-popup">${cells}</span>`;
 }
 
 // =============================================================================
@@ -23854,7 +24148,7 @@ function attachHandlers() {
   // syncToURL/syncFromURL above.
   document.querySelectorAll("[data-density]").forEach(btn => {
     btn.addEventListener("click", () => {
-      const prev = state.density || "standard";
+      const prev = state.density || "compact";
       const next = btn.dataset.density;
       document.body.classList.remove(`density-${prev}`);
       state.density = next;

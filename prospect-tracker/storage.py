@@ -5102,6 +5102,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # the player's org. None for graduated/inactive (the maps below
             # only carry actives). Drives the rank pills on prospect detail.
             "overall_rank": overall_rank_by_key.get(p.player_key),
+            # Position in the same FV-sorted list, but computed off the
+            # second-to-last snapshot. Drives the rank-trend ▲/▼/—
+            # under the diamond on list rows. None for players with
+            # only one snapshot (new to the list — no prior position).
+            "prev_overall_rank": prev_overall_rank_by_key.get(p.player_key),
             "org_rank": org_rank_by_key.get(p.player_key),
             "org_rank_total": org_size_by_key.get(p.player_key),
             "age_vs_level": {"tier": avl.tier, "diff": avl.diff},
@@ -5431,6 +5436,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         org_counters[org_key] = org_counters.get(org_key, 0) + 1
         org_rank_by_key[p.player_key] = org_counters[org_key]
         org_size_by_key[p.player_key] = org_totals[org_key]
+
+    # Compute prev_overall_rank by re-sorting actives with the second-
+    # to-last snapshot's consensus_fv instead of the latest, so the
+    # frontend can render a rank-delta arrow (▲ +12 / ▼ -7 / — flat)
+    # under each prospect's rank diamond. Players with only one
+    # snapshot in history get no prior rank (they're new to the list).
+    def _prior_key(p: PlayerTimeseries):
+        pts = p.points or []
+        if len(pts) < 2:
+            return (999, 999)
+        prior = pts[-2]
+        prior_fv = prior.consensus_fv_raw if prior.consensus_fv_raw is not None else None
+        prior_rank = prior.avg_rank if prior.avg_rank is not None else 999
+        return (-prior_fv if prior_fv is not None else 999, prior_rank)
+    prior_actives = sorted(
+        [p for p in actives if (p.points or []) and len(p.points) >= 2],
+        key=_prior_key,
+    )
+    prev_overall_rank_by_key: dict[str, int] = {
+        p.player_key: i for i, p in enumerate(prior_actives, start=1)
+    }
 
     # Inactives: most recently seen first
     inactives.sort(key=lambda p: p.points[-1].snapshot_date if p.points else "", reverse=True)
