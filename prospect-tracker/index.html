@@ -2453,9 +2453,11 @@
        holo reading as the rarer tier makes intuitive sense.) */
 
     /* Base frame on every list-page headshot — team color top edge +
-       subtle inset highlight. No drop shadow. */
-    .headshot.fv-headshot-ring {
-      border-top: 3px solid var(--org-color, var(--neon-cyan)) !important;
+       subtle inset highlight. No drop shadow. [class*="fv-tier-"]
+       boosts specificity over .fv-headshot-ring.fv-tier-NN so the
+       team-color top wins over the FV-tier border color. */
+    .headshot.fv-headshot-ring[class*="fv-tier-"] {
+      border-top: 4px solid var(--org-color, var(--neon-cyan)) !important;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
     }
     /* Elite-tier rarity rings — gradient border-image painted around
@@ -2507,7 +2509,8 @@
           rgba(160,170,200,0.45) 65%,
           rgba(220,220,235,0.85) 100%) border-box !important;
       background-size: 100% 100%, 300% 300% !important;
-      animation: chrome-shimmer 4.2s linear infinite;
+      animation: chrome-shimmer 4.2s linear infinite,
+                 chrome-headshot-pulse 2s ease-in-out infinite;
     }
     /* Holo (FV 60) — full rainbow shift. Higher tier than chrome per
        v18.3 user re-tiering. */
@@ -2518,13 +2521,14 @@
           #4ee0ff 0%, #b455ff 25%,
           #ff5fa2 50%, #ffd45a 75%, #4ee0ff 100%) border-box !important;
       background-size: 100% 100%, 300% 300% !important;
-      animation: holo-shift 5s linear infinite;
+      animation: holo-shift 5s linear infinite,
+                 holo-headshot-pulse 2s ease-in-out infinite;
     }
     /* Legendary (FV 70+) — rainbow + chrome accent, FASTER animation,
        plus the breakout-style pulsing outline glow (matches
        @keyframes fvBreakoutPulse cadence) so the rarest tier breathes. */
     .headshot.fv-headshot-ring.card-rarity-legendary {
-      border-top-width:    3.5px !important;
+      border-top-width:    4px !important;
       border-right-width:  2.5px !important;
       border-bottom-width: 2.5px !important;
       border-left-width:   2.5px !important;
@@ -2542,6 +2546,42 @@
       0%, 100% { outline: 1px solid rgba(127, 255, 212, 0.60); outline-offset: 1px; }
       50%      { outline: 1px solid rgba(180, 85, 255, 0.80); outline-offset: 2px; }
     }
+    /* Holo (FV 60-69) outline pulse — same 2s ease-in-out cadence as
+       fvBreakoutPulse / legendary-headshot-pulse for system coherence,
+       but lower-alpha colors and a static outline-offset so the
+       legendary tier still reads as the brighter, breathing-outward
+       (rarer) ring. */
+    @keyframes holo-headshot-pulse {
+      0%, 100% { outline: 1px solid rgba(127, 255, 212, 0.35); outline-offset: 1px; }
+      50%      { outline: 1px solid rgba(180, 85, 255, 0.45); outline-offset: 1px; }
+    }
+    /* Chrome (FV 55-59) outline pulse — silver-toned to match the
+       chrome palette (cyan/violet would clash with the silver shimmer
+       and read as a CSS bug). Same cadence as holo + legendary. */
+    @keyframes chrome-headshot-pulse {
+      0%, 100% { outline: 1px solid rgba(220, 220, 235, 0.30); outline-offset: 1px; }
+      50%      { outline: 1px solid rgba(255, 255, 255, 0.45); outline-offset: 1px; }
+    }
+    /* Draft / overseas list wrapper variant. Mirrors the .headshot
+       rules above and forces overflow: visible so the outline pulse
+       isn't clipped by the wrapper's default overflow: hidden. */
+    .prospect-headshot-wrap.fv-headshot-ring.card-rarity-holo {
+      overflow: visible !important;
+      animation: holo-shift 5s linear infinite,
+                 holo-headshot-pulse 2s ease-in-out infinite;
+    }
+    .prospect-headshot-wrap.fv-headshot-ring.card-rarity-chrome {
+      overflow: visible !important;
+      animation: chrome-shimmer 4.2s linear infinite,
+                 chrome-headshot-pulse 2s ease-in-out infinite;
+    }
+    /* FV-ringed draft/overseas wrappers — specificity boost so the
+       team-color top wins over .fv-headshot-ring.fv-tier-NN, same
+       pattern as the .headshot.fv-headshot-ring[class*="fv-tier-"]
+       rule above. */
+    .prospect-headshot-wrap.fv-headshot-ring[class*="fv-tier-"] {
+      border-top: 4px solid var(--org-color, var(--neon-cyan)) !important;
+    }
     /* Wrapper around draft/overseas headshots. Hosts the optional
        FV-tier ring + chrome/holo treatment for elite-tier prospects
        (matches the MiLB headshotHTML wrapper). Keeps the image at
@@ -2553,6 +2593,7 @@
       border-radius: 4px;
       background: var(--bg-tertiary);
       border: 1px solid var(--border);
+      border-top: 4px solid var(--org-color, var(--neon-cyan));
       overflow: hidden;
       vertical-align: middle;
       flex-shrink: 0;
@@ -10767,7 +10808,7 @@ function _renderDraftCard(p) {
         ? `Consensus sequential rank · raw avg ${p.consensus_rank.toFixed(2)}`
         : "Consensus rank");
 
-  return `<div class="draft-card" style="position:relative;cursor:pointer;" onclick="if(event.target.closest('a,button'))return;goToDraftee('${escapeHtml(p.player_key)}');">
+  return `<div class="draft-card" style="position:relative;cursor:pointer;${p.org ? orgStripe(p.org) : ''}" onclick="if(event.target.closest('a,button'))return;goToDraftee('${escapeHtml(p.player_key)}');">
     <button class="share-as-image share-inline"
             data-share-target=".draft-card"
             data-share-filename="draft-${escapeHtml(p.player_key)}"
@@ -11394,7 +11435,7 @@ function _renderOverseasCard(p) {
   // _flagImg returns an <img> or emoji span; we shrink it with the
   // {small:true} mode so it tucks neatly next to the league chip.
   const leagueFlag = _flagImg(p.country_flag_svg, p.country_flag, p.country, { small: true });
-  return `<div class="draft-card" style="position:relative;cursor:pointer;" onclick="if(event.target.closest('a,button'))return;goToOverseas('${escapeHtml(p.player_key)}');">
+  return `<div class="draft-card" style="position:relative;cursor:pointer;${p.org ? orgStripe(p.org) : ''}" onclick="if(event.target.closest('a,button'))return;goToOverseas('${escapeHtml(p.player_key)}');">
     <button class="share-as-image share-inline"
             data-share-target=".draft-card"
             data-share-filename="overseas-${escapeHtml(p.player_key)}"
