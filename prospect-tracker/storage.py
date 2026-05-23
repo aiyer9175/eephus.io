@@ -5467,7 +5467,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     # ── Org farm summary ────────────────────────────────────────────────────
     # Build per-org aggregate stats from the active list only (not graduates).
-    # Position groups: C, 1B, 2B/SS/3B (INF), OF, SP/RP (P).
+    # Position groups: C, INF (1B/2B/SS/3B/UTIL), OF, P (SP/RP).
+    # v9 — 1B folded into INF. The standalone 1B bucket was a holdover
+    # from when first-base depth was treated as a distinct positional
+    # archetype, but in practice it produced a noisy 5-chip strip on
+    # the farm list with 1B = INF for every scouting purpose. INF now
+    # covers every non-pitcher non-catcher non-outfielder.
     PITCHER_POS = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP"}
 
     def _pos_group(pos: str | None) -> str:
@@ -5478,11 +5483,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             return "P"
         if p0 == "C":
             return "C"
-        if p0 in {"1B"}:
-            return "1B"
         if p0 in {"OF", "CF", "LF", "RF"}:
             return "OF"
-        # SS, 2B, 3B, UTIL
+        # 1B, SS, 2B, 3B, UTIL, MI, IF, DH
         return "INF"
 
     org_map: dict[str, dict] = {}

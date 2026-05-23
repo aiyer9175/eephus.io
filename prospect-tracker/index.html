@@ -3153,35 +3153,21 @@
     .farm-dvm-hero {
       display: inline-flex; flex-direction: column; align-items: center;
       line-height: 1; min-width: 0;
-      position: relative;
       padding: 0;
     }
-    .farm-dvm-hero::before,
-    .farm-dvm-hero::after {
-      content: "";
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      pointer-events: none;
-    }
-    .farm-dvm-hero::before {
-      top: -1px;
-      left: 1px;
-      border-top: 2px solid currentColor;
-      border-left: 2px solid currentColor;
-      border-top-left-radius: 1px;
-    }
-    .farm-dvm-hero::after {
-      bottom: -1px;
-      right: 1px;
-      border-bottom: 2px solid currentColor;
-      border-right: 2px solid currentColor;
-      border-bottom-right-radius: 1px;
-    }
+    /* Box sits tightly around the numeric grade only. Border color
+       follows currentColor on the inner .fdh-value (set per-row from
+       the up/neutral/down palette), so a strong DvM+ glows green at
+       the box edge while a weak one reads red — same color signal as
+       the number itself, just framed. */
     .farm-dvm-hero .fdh-value {
       font-family: var(--font-mono);
       font-size: 22px; font-weight: 700;
       font-variant-numeric: tabular-nums;
+      display: inline-block;
+      padding: 1px 6px;
+      border: 1.5px solid currentColor;
+      border-radius: 3px;
     }
     .farm-dvm-hero .fdh-label {
       font-family: var(--font-sans);
@@ -3371,14 +3357,26 @@
     }
     .farm-detail.open { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
     .pos-pill {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
       font-family: var(--font-mono);
-      font-size: 11px;
-      padding: 2px 7px;
+      font-size: 10.5px;
+      padding: 1px 5px;
       border-radius: 2px;
-      margin: 1px;
+      margin: 0;
       font-variant-numeric: tabular-nums;
       font-weight: 700;
+      line-height: 1.35;
+      white-space: nowrap;
+    }
+    /* Pos-chip strip on farm rows — tight horizontal flow, no wrapping
+       gaps, consistent left-alignment regardless of which buckets are
+       present. The 4-chip max (C / INF / OF / P) means we don't need
+       flex-wrap; everything fits the cell at standard zoom. */
+    .farm-pos-strip {
+      display: inline-flex;
+      gap: 3px;
+      align-items: center;
     }
     .tier-bar { display: flex; align-items: center; gap: 6px; }
     .tier-bar > span {
@@ -15451,7 +15449,11 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey,
               : delta < -deadZone ? '▼'
               :                     '·';
   const sign   = delta > 0 ? '+' : '';
-  const deltaLabel = `${arrow}${sign}${delta.toFixed(1)}`;
+  // Just the arrow — the numeric delta was getting clipped by the
+  // adjacent Top Prospects column and wasn't communicating much beyond
+  // the directional signal the arrow already gives. Full magnitude is
+  // still available via the sparkline's title tooltip.
+  const deltaLabel = arrow;
 
   // Mean baseline reference at y=0. A faint dashed line gives the eye
   // an anchor to compare each org's curve against.
@@ -15494,11 +15496,29 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey,
   // callers) or insufficient tool data on the org.
   let toolOverlaySvg = "";
   if (orgCode && recent.length >= 2) {
-    const startToolOrg = _orgToolMeanAtDate(orgCode, recent[0].date);
-    const startToolLeague = _leagueToolMeanAtDate(recent[0].date);
-    if (startToolOrg != null && startToolLeague != null) {
+    // Walk forward to find the FIRST snapshot where both the org AND
+    // the league have tool data, then anchor there. Prior versions
+    // anchored at recent[0] strictly, which silently dropped every org
+    // whose oldest in-window snapshot pre-dated tools_consensus being
+    // populated (the field is newer than fv_history) — the only org
+    // that consistently had it was MIL, which is why the dashed line
+    // only rendered for one team.
+    let anchorIdx = -1;
+    let startToolOrg = null;
+    let startToolLeague = null;
+    for (let i = 0; i < recent.length; i++) {
+      const om = _orgToolMeanAtDate(orgCode, recent[i].date);
+      const lm = _leagueToolMeanAtDate(recent[i].date);
+      if (om != null && lm != null) {
+        anchorIdx = i;
+        startToolOrg = om;
+        startToolLeague = lm;
+        break;
+      }
+    }
+    if (anchorIdx >= 0) {
       const toolPoints = [];
-      for (let i = 0; i < recent.length; i++) {
+      for (let i = anchorIdx; i < recent.length; i++) {
         const orgMean = _orgToolMeanAtDate(orgCode, recent[i].date);
         const leagueMean = _leagueToolMeanAtDate(recent[i].date);
         if (orgMean == null || leagueMean == null) continue;
@@ -15514,7 +15534,7 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey,
           .map(p => `${p.x.toFixed(1)},${toolY(p.d).toFixed(1)}`)
           .join(' ');
         const lastD = toolPoints[toolPoints.length - 1].d;
-        const toolTip = `Tool grade trajectory vs league (proxy) · final ${lastD > 0 ? "+" : ""}${lastD.toFixed(2)}`;
+        const toolTip = `Tool grade trajectory vs league (proxy) · anchored at ${recent[anchorIdx].date} · final ${lastD > 0 ? "+" : ""}${lastD.toFixed(2)}`;
         toolOverlaySvg = `<polyline points="${toolPolyPts}" fill="none" stroke="var(--neon-violet)" stroke-width="1" stroke-dasharray="3,2" opacity="0.75" vector-effect="non-scaling-stroke"><title>${escapeHtml(toolTip)}</title></polyline>`;
       }
     }
@@ -15535,51 +15555,35 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey,
 }
 
 function makeTierBar(prospects) {
-  const total = (prospects || []).length;
-  if (!total) return '<span style="color:var(--text-tertiary);font-size:11px;">—</span>';
-
-  const counts = Object.fromEntries(TIER_BUCKETS.map(t => [t, 0]));
-  prospects.forEach(p => {
-    const n = parseInt(p.fv_label, 10);
-    const tier = TIER_BUCKETS.find(t => n >= t) ?? 20;
-    counts[tier]++;
-  });
-
-  const W = 110;
-  let x = 0;
-  // SVG `fill` as an attribute (fill="var(--…)") doesn't reliably
-  // resolve CSS custom properties across browsers — Safari in
-  // particular renders the rect transparent. The inline `style="fill:
-  // var(--…)"` form goes through the CSS pipeline and honors the var
-  // everywhere we care about.
-  const segments = TIER_BUCKETS.filter(t => counts[t] > 0).map(t => {
-    const w = (counts[t] / total) * W;
-    const rect = `<rect x="${x.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="10" style="fill:var(--fv-${t}-fg);" opacity="0.9"><title>${counts[t]} × FV ${t}${t === 60 ? '+' : ''}</title></rect>`;
-    x += w;
-    return rect;
-  }).join('');
-
-  // Labels: show counts for the meaningful tiers (≥40), capped to 4.
-  const labels = TIER_BUCKETS
-    .filter(t => t >= 40 && counts[t] > 0)
-    .slice(0, 4)
-    .map(t => `<span style="color:var(--fv-${t}-fg);font-size:10px;">${counts[t]}×${t}</span>`)
-    .join(' ');
-
-  return `<div class="tier-bar">
-    <svg width="${W}" height="10" style="border-radius:2px;overflow:hidden;flex-shrink:0">
-      ${segments}
-    </svg>
-    <span>${labels}</span>
-  </div>`;
+  // FV distribution bar removed per UX feedback — the stacked-segment
+  // breakdown was clutter alongside the Top Prospects column and the
+  // dedicated tier-count tiles. Kept as an empty stub so the two
+  // remaining callers (farm-detail header, Tier breakdown side card)
+  // collapse cleanly without a render error.
+  return "";
 }
 
 function makePosBreakdown(posGroups) {
-  const ORDER = ["C","1B","INF","OF","P","?"];
-  const COLORS = { C:"#E8A020", "1B":"#C8A050", INF:"#3DBF7A", OF:"#5090E0", P:"var(--down)", "?":"var(--text-tertiary)" };
-  return ORDER.filter(k => posGroups && posGroups[k]).map(k =>
-    `<span class="pos-pill" style="background:${COLORS[k]}1a;color:${COLORS[k]};border:1px solid ${COLORS[k]}44;">${k}&nbsp;${posGroups[k]}</span>`
+  // 4 canonical buckets: C / INF / OF / P. 1B was folded into INF
+  // backend-side (v9 farm export), and the legacy "?" "unknown"
+  // bucket is no longer surfaced as a chip — if data quality issues
+  // leave a player ungrouped they still feed the org count but don't
+  // produce a confusing standalone "?" pill.
+  //
+  // Front-end fold: a stale export that still ships a separate `1B`
+  // count gets merged into INF here so the chip strip looks correct
+  // whether or not storage.py has been re-run.
+  const merged = { ...(posGroups || {}) };
+  if (merged["1B"]) {
+    merged.INF = (merged.INF || 0) + merged["1B"];
+    delete merged["1B"];
+  }
+  const ORDER  = ["C","INF","OF","P"];
+  const COLORS = { C:"#E8A020", INF:"#3DBF7A", OF:"#5090E0", P:"var(--down)" };
+  const pills = ORDER.filter(k => merged[k]).map(k =>
+    `<span class="pos-pill" style="background:${COLORS[k]}1a;color:${COLORS[k]};border:1px solid ${COLORS[k]}44;">${k}&nbsp;${merged[k]}</span>`
   ).join('');
+  return pills ? `<div class="farm-pos-strip">${pills}</div>` : '';
 }
 
 // Map letter grades to colors. A+/A tiers glow up, D dims down, D-/F
@@ -17218,27 +17222,10 @@ function makeSpendingDonut(org, size = 48) {
 // proportional to tier_60_plus / tier_55 / tier_50 / sub-50 counts.
 // Hover each segment for `N × FV bucket` context.
 function makeOrgTierBar(org) {
-  const sixty  = org.tier_60_plus || 0;
-  const fifty5 = org.tier_55 || 0;
-  const fifty  = org.tier_50 || 0;
-  const sub    = Math.max(0, (org.count || 0) - sixty - fifty5 - fifty);
-  const total  = sixty + fifty5 + fifty + sub;
-  if (!total) return "";
-  const W = 64, H = 4;
-  let x = 0;
-  const seg = (cnt, fillVar, label) => {
-    if (!cnt) return "";
-    const w = (cnt / total) * W;
-    const rect = `<rect x="${x.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="${H}" style="fill:var(${fillVar});"><title>${cnt} × FV ${label}</title></rect>`;
-    x += w;
-    return rect;
-  };
-  return `<svg width="${W}" height="${H}" style="border-radius:1px;margin-top:4px;" aria-hidden="true">
-    ${seg(sixty,  "--fv-60-fg", "60+")}
-    ${seg(fifty5, "--fv-55-fg", "55")}
-    ${seg(fifty,  "--fv-50-fg", "50")}
-    ${seg(sub,    "--fv-40-fg", "<50")}
-  </svg>`;
+  // FV distribution bar removed per UX feedback — the tier-count info
+  // duplicates what the Top Prospects + Pos Breakdown columns already
+  // convey. Kept the stub so callers don't break.
+  return "";
 }
 
 // ETA wave bar histogram — counts at Y / Y+1 / Y+2 / Y+3+ relative to
@@ -17280,28 +17267,11 @@ function snapshotCurrentFarmRanks(orgs) {
 }
 
 function makeComponentGrades(org) {
-  const grades = (org && org.grades) || {};
-  const ranks  = (org && org.component_ranks) || {};
-  // v3 4-letter strip mirrors the new tree's four main branches.
-  // Acquisition Strategy absorbed Transactions, so the strip is now
-  // A / D / F / M instead of the old A / D / T / F / M.
-  const items = [
-    ["A", grades.acquisition_strategy, ranks.acquisition_strategy,
-      "Acquisition Strategy — Draft + IFA + Trade + Waiver outcomes (15% of farm_score)"],
-    ["D", grades.development,          ranks.development,
-      "Development — hitter + pitcher Tools DvM+ composite (40% of farm_score · SOLO TOP-WEIGHTED)"],
-    ["F", grades.financial,            ranks.financial,
-      "Financial / SUR+ — WAR per $1M + grad-contract surplus (15% of farm_score)"],
-    ["M", grades.mlb_production,       ranks.mlb_production,
-      "MLB Production — 5-leaf composite incl. boom%, top-3 WAR/yr, Conviction (30% of farm_score)"],
-  ];
-  const anyGrade = items.some(([, g]) => g != null);
-  if (!anyGrade) return "";
-  const stripTitle = "Farm grade tree — 4 main branches. Click the row to open the full hierarchical breakdown.";
-  return `<div class="fg-components" title="${escapeHtml(stripTitle)}">${items.map(([k, g, r, title]) => `
-    <span class="fg-comp" title="${escapeHtml(title)}${r != null ? ` · rank ${r}/30` : ""}">
-      <span class="fg-comp-label">${k}</span>${escapeHtml(g || "—")}
-    </span>`).join("")}</div>`;
+  // Sub-grade chip strip (A/D/F/M letters) removed — the full breakdown
+  // lives on the farm-detail report card, and the strip was creating
+  // visual clutter under the overall grade letter without adding info
+  // a row scan needed. Kept the function stub so callers don't break.
+  return "";
 }
 
 // Compact Tool DvM+ cell for each farm-list row. Three stacked numerical
@@ -21698,7 +21668,6 @@ function _renderFarmDetailBody(orgCode, org, root) {
           </div>
         </div>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">${makeTierBar(org.prospects)}</div>
       <button class="share-as-image" data-share-target="#farm-detail-body"
               data-share-filename="farm-${escapeHtml(org.org)}-detail"
               style="position:absolute;top:12px;right:12px;"
@@ -22561,10 +22530,6 @@ function _renderFarmDetailBody(orgCode, org, root) {
       <div class="farm-side-card">
         <div class="side-title">Promotion ladder</div>
         ${makePromotionLadder(rosterPlayersAll, org)}
-      </div>
-      <div class="farm-side-card">
-        <div class="side-title">Tier breakdown</div>
-        <div style="margin-top:6px;">${makeTierBar(org.prospects)}</div>
       </div>
     </div>`;
 
