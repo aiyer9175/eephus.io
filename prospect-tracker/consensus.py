@@ -443,6 +443,18 @@ def compute_consensus_point(
         tools_consensus[k] = round(mean * 2) / 2
         if len(grades) >= 2:
             tools_spread[k] = round(max(grades) - min(grades), 2)
+    # v12 — synthesize a unified `pwr` consensus from game_pwr + raw_pwr
+    # so downstream displays only show ONE power grade per prospect.
+    # Mean when both are present; pass-through when only one is.
+    if "pwr" not in tools_consensus:
+        g = tools_consensus.get("game_pwr")
+        r = tools_consensus.get("raw_pwr")
+        if g is not None and r is not None:
+            tools_consensus["pwr"] = round(((g + r) / 2) * 2) / 2
+        elif g is not None:
+            tools_consensus["pwr"] = g
+        elif r is not None:
+            tools_consensus["pwr"] = r
 
     return ConsensusPoint(
         snapshot_date=event_date,

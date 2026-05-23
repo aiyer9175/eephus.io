@@ -3883,10 +3883,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # org because the FV-ranking sources usually lag those moves by
         # weeks; trusting the MLB transactions record keeps the team
         # logo on the player card pointing at where they actually play.
+        # v12 — the tx override can return non-MLB-30 strings (Office
+        # of the Commissioner = released to FA). Only use it when it
+        # resolves to one of the 30 canonical orgs; otherwise fall
+        # through to the roster/snapshot org.
         tx_override = _latest_cross_org_transaction(p)
-        if tx_override:
+        if tx_override and tx_override in MLB_30_ORGS:
             return tx_override
-        return canonical_org(p.org or roster_org_by_key.get(p.player_key))
+        return canonical_org(roster_org_by_key.get(p.player_key) or p.org)
 
     def _display_org(p: PlayerTimeseries,
                      filtered_trades: list[dict]) -> str | None:
@@ -4571,6 +4575,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             inactives.append(p)
             continue
 
+        # v12 — MLB-affiliation gate applies to EVERY active candidate,
+        # including IL'd players. Without this, "Office of the
+        # Commissioner"-bucket players bypass the filter via the IL
+        # short-circuit below. Uses the same resolver the display layer
+        # uses so a player whose displayed org would be "Office of the
+        # Commissioner" can't sneak through.
+        _resolved_org = _active_display_org(p)
+        if _resolved_org not in MLB_30_ORGS:
+            inactives.append(p)
+            continue
+
         # On IL → stay active no matter how stale the FV is. The IL badge
         # on the player card explains the absence of recent updates and
         # avoids dumping injured-but-real prospects into the inactive bin.
@@ -4602,8 +4617,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # p.status == "graduated" and was peeled off above.
         if fv_stale and play_stale:
             inactives.append(p)
-        else:
-            actives.append(p)
+            continue
+        actives.append(p)
 
     # Sort actives by latest consensus_fv_raw (smoother than the snapped value
     # for tiebreaking), then by latest avg_rank ascending as secondary key.

@@ -714,11 +714,7 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: #C8A2C8;  /* lilac */
-      /* Thin neon-green hairline border — pops the banner off the
-         newsprint background without competing with the lilac text. */
-      border: 1px solid rgba(57, 255, 20, 0.55);
-      border-radius: 3px;
-      padding: 2px 7px;
+      /* v12 — outline removed per user ask; plain lilac text now. */
       margin: 0 0 8px;
       opacity: 0.95;
       font-weight: 600;
@@ -726,9 +722,6 @@
     }
     [data-theme="dark"] .build-banner {
       color: #D9B8E8;  /* slightly lifted lilac for dark mode */
-      /* Punchier neon-green border in dark mode so the chip reads
-         clearly against the deep navy header background. */
-      border-color: rgba(57, 255, 20, 0.7);
     }
     h1 .h1-rule {
       display: block;
@@ -1291,6 +1284,12 @@
     .row-tag.health-dot.is-green::before  { background: var(--up); }
     .row-tag.health-dot.is-yellow { border-color: var(--neon-amber); background: rgba(232,165,31,0.14); }
     .row-tag.health-dot.is-yellow::before { background: var(--neon-amber); }
+    /* v12 — Orange tier: "Healthy but recently returned from IL"
+       (within the last 90 days). Sits between yellow (any 12mo history)
+       and red (currently on IL) so the user sees the urgency gradient
+       at a glance. */
+    .row-tag.health-dot.is-orange { border-color: #FF8C42; background: rgba(255,140,66,0.14); }
+    .row-tag.health-dot.is-orange::before { background: #FF8C42; }
     .row-tag.health-dot.is-red    { border-color: var(--down); background: rgba(203,55,55,0.14); }
     .row-tag.health-dot.is-red::before    { background: var(--down); }
     .row-tag.acq-trade      { color: var(--neon-cyan);  border-color: var(--neon-cyan);  background: rgba(74,200,224,0.10); }
@@ -5565,15 +5564,38 @@
   document.documentElement.setAttribute("data-theme", theme);
 })();
 
-// Canonical tool key → human-friendly display label. Used by the
-// prospect-detail Tool Development card, the list-row summary's
-// gainer tag, and the farm-detail Tool Development grid.
+// Canonical tool key → [full display name, compact abbreviation].
+// v12 — unified source of truth for tool labels. Use toolFullName(key)
+// or toolAbbrev(key) instead of indexing this map directly. Renames:
+//   throw → "Arm" (ARM), field → "Defense" (DEF), speed → SPD,
+//   pitch_sel → "Pitch Selection" (PSEL), bat_ctrl → "Bat Control" (BCTRL),
+//   game_pwr+raw_pwr collapsed → pwr → "Power" (PWR).
 const TOOL_DISPLAY_NAMES = {
-  hit: "Hit", game_pwr: "Game Pwr", raw_pwr: "Raw Pwr",
-  speed: "Speed", field: "Field", throw: "Arm",
-  pitch_sel: "Pitch Sel", bat_ctrl: "Bat Ctrl",
-  fb: "FB", sl: "SL", cb: "CB", ch: "CH", cmd: "Cmd", ct: "CT", sp: "SP",
+  hit:       ["Hit",            "HIT"],
+  pwr:       ["Power",          "PWR"],
+  game_pwr:  ["Game Power",     "GPWR"],   // legacy — kept for back-compat raw display
+  raw_pwr:   ["Raw Power",      "RPWR"],   // legacy — kept for back-compat raw display
+  speed:     ["Speed",          "SPD"],
+  field:     ["Defense",        "DEF"],
+  throw:     ["Arm",            "ARM"],
+  pitch_sel: ["Pitch Selection","PSEL"],
+  bat_ctrl:  ["Bat Control",    "BCTRL"],
+  fb:        ["Fastball",       "FB"],
+  sl:        ["Slider",         "SL"],
+  cb:        ["Curveball",      "CB"],
+  ch:        ["Changeup",       "CH"],
+  cmd:       ["Command",        "CMD"],
+  ct:        ["Cutter",         "CT"],
+  sp:        ["Splitter",       "SP"],
 };
+function toolFullName(key) {
+  const e = TOOL_DISPLAY_NAMES[key];
+  return Array.isArray(e) ? e[0] : (typeof e === "string" ? e : key);
+}
+function toolAbbrev(key) {
+  const e = TOOL_DISPLAY_NAMES[key];
+  return Array.isArray(e) ? e[1] : (typeof e === "string" ? e.toUpperCase() : key.toUpperCase());
+}
 
 // =============================================================================
 // CONFIG
@@ -5961,12 +5983,12 @@ function computeFgFlags(p) {
 
 // Single inline chip surfacing the most-concerning health signal:
 //   On IL > Post-TJ > chronic-IL (≥3 stints or ≥200 IL days last 12mo).
-// v7 — health indicators collapsed to dot-only chips (green/yellow/red).
-// Per user ask: no pills, no text — just a colored dot with hover details.
-// Severity collapse:
-//   GREEN  → Healthy (no IL activity in trailing 12mo)
-//   YELLOW → Recent injury / Frequently injured / Post-TJ (any history)
+// v12 — 4-tier health indicator (green/yellow/orange/red).
+//   GREEN  → Healthy, no IL in last year
+//   YELLOW → Healthy, IL stint in last year (but > 3 months ago)
+//   ORANGE → Healthy, IL stint within last 3 months
 //   RED    → Currently on IL
+// Tooltip always carries the detail context.
 function healthBadgeHTML(p) {
   const il = p.il_status || {};
   if (il.is_on_il) {
@@ -5976,19 +5998,34 @@ function healthBadgeHTML(p) {
     return `<span class="row-tag health-dot is-red" title="${tip}" aria-label="On IL"></span>`;
   }
   const hp = p.health_profile || {};
-  if (hp.is_post_tj) {
-    const d = hp.tj_surgery_date ? ` (surgery ${hp.tj_surgery_date})` : "";
-    return `<span class="row-tag health-dot is-yellow" title="Post-Tommy John surgery${d}" aria-label="Post-TJ"></span>`;
+  // Most-recent IL stint end date (or surgery date for TJ). If within
+  // ~90 days we treat it as a recent return; further out and the user
+  // is past the immediate concern window.
+  const lastEndStr = hp.last_il_end_date || hp.tj_surgery_date || null;
+  let daysSinceLast = null;
+  if (lastEndStr) {
+    try {
+      const lastEnd = new Date(lastEndStr + "T00:00:00Z");
+      daysSinceLast = Math.floor((Date.now() - lastEnd.getTime()) / 86400000);
+    } catch (e) { daysSinceLast = null; }
   }
   const stints = hp.il_stints_12mo || 0;
   const ildays = hp.il_days_12mo || 0;
-  if (stints >= 3 || ildays >= 200) {
-    const tip = `Frequently injured · ${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12 months`;
-    return `<span class="row-tag health-dot is-yellow" title="${tip}" aria-label="Frequently injured"></span>`;
+  if (hp.is_post_tj) {
+    const d = hp.tj_surgery_date ? ` (surgery ${hp.tj_surgery_date})` : "";
+    const recent = daysSinceLast != null && daysSinceLast <= 90;
+    const tone = recent ? "is-orange" : "is-yellow";
+    const tip = `Post-Tommy John surgery${d}${daysSinceLast != null ? ` · ${daysSinceLast}d since` : ""}`;
+    return `<span class="row-tag health-dot ${tone}" title="${tip}" aria-label="Post-TJ"></span>`;
   }
   if (stints >= 1 || ildays >= 30) {
-    const tip = `Recent injury · ${stints} IL stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12 months`;
-    return `<span class="row-tag health-dot is-yellow" title="${tip}" aria-label="Recent injury"></span>`;
+    const recent = daysSinceLast != null && daysSinceLast <= 90;
+    const label = recent ? "Healthy · IL stint in last 3 months"
+                         : "Healthy · IL stint in last year";
+    const tip = `${label} · ${stints} stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12mo`
+              + (daysSinceLast != null ? ` · last return ${daysSinceLast}d ago` : "");
+    const tone = recent ? "is-orange" : "is-yellow";
+    return `<span class="row-tag health-dot ${tone}" title="${tip}" aria-label="${escapeHtml(label)}"></span>`;
   }
   if (hp && Object.keys(hp).length) {
     return `<span class="row-tag health-dot is-green" title="Healthy — no IL activity in the past 12 months" aria-label="Healthy"></span>`;
@@ -10040,7 +10077,7 @@ function _renderDraftCard(p) {
       <span style="font-size:11px;padding:2px 6px;border-radius:4px;
             background:${fvColor}22;color:${fvColor};font-weight:700;"
             title="Consensus future value${p.consensus_fv_raw != null && p.consensus_fv_raw !== p.consensus_fv
-              ? ` (raw avg ${p.consensus_fv_raw.toFixed(1)})` : ''}">
+              ? ` (raw avg ${Math.round(p.consensus_fv_raw)})` : ''}">
         FV ${p.consensus_fv != null ? Math.round(p.consensus_fv) : "—"}
       </span>
     </div>
@@ -13700,7 +13737,7 @@ function makeQuickReadSummaryParts(p, opts = {}) {
     .sort(([, a], [, b]) => b.delta - a.delta)
     .slice(0, 2)
     .map(([k, info]) => ({
-      label: (typeof TOOL_DISPLAY_NAMES === "object" && TOOL_DISPLAY_NAMES[k]) || k,
+      label: toolFullName(k),
       delta: info.delta,
     }));
   if (gainers.length) {
@@ -13738,15 +13775,27 @@ function _toolTier(g) {
   if (g >= 43) return 45;
   return 40;
 }
-const _TOOL_PILL_LABELS = {
-  // Hitter tools
-  hit: "HIT", game_pwr: "GPWR", raw_pwr: "RPWR", speed: "SPD",
-  field: "FLD", throw: "ARM", pitch_sel: "PSEL", bat_ctrl: "BTCL",
-  // Pitcher tools
-  fb: "FB", sl: "SL", cb: "CB", ch: "CH", cmd: "CMD", ct: "CT", sp: "SP",
-};
-const _HITTER_TOOL_ORDER = ["hit", "game_pwr", "raw_pwr", "speed", "field", "throw"];
+// v12 — tool display order uses the consolidated PWR (mean of
+// game_pwr + raw_pwr) instead of surfacing both raw entries. The
+// hitter order also reflects the v12 tool renames (Defense, Arm,
+// Pitch Selection, Bat Control with their canonical abbrevs).
+const _HITTER_TOOL_ORDER = ["hit", "pwr", "speed", "field", "throw"];
 const _PITCHER_TOOL_ORDER = ["fb", "sl", "cb", "ch", "ct", "sp", "cmd"];
+
+// Resolve the unified PWR grade from a tool dict — prefers a
+// pre-computed `pwr` key (set at ingest), else takes the mean of
+// game_pwr + raw_pwr, else falls back to whichever single one is set.
+function _resolvePwr(grades) {
+  if (!grades) return null;
+  if (grades.pwr != null) return Number(grades.pwr);
+  const g = Number(grades.game_pwr), r = Number(grades.raw_pwr);
+  const gOK = isFinite(g), rOK = isFinite(r);
+  if (gOK && rOK) return (g + r) / 2;
+  if (gOK) return g;
+  if (rOK) return r;
+  return null;
+}
+
 function makeToolGradeChips(p) {
   if (!p) return "";
   const tools = (p.tools && p.tools.grades) || {};
@@ -13763,18 +13812,28 @@ function makeToolGradeChips(p) {
   const order = isP ? _PITCHER_TOOL_ORDER : _HITTER_TOOL_ORDER;
   const pills = [];
   for (const k of order) {
-    const v = grades[k];
+    // PWR uses the consolidated helper; everything else reads directly.
+    const v = k === "pwr" ? _resolvePwr(grades) : grades[k];
     if (v == null) continue;
     const n = Number(v);
     if (!isFinite(n)) continue;
-    const tier = _toolTier(n);
-    const code = _TOOL_PILL_LABELS[k] || k.toUpperCase();
+    const rounded = Math.round(n);
+    const tier = _toolTier(rounded);
+    const code = toolAbbrev(k);
+    const full = toolFullName(k);
+    // Tooltip surfaces the underlying split when PWR was computed
+    // from game+raw so the user sees the math.
+    let tip = `${full} grade ${rounded}`;
+    if (k === "pwr" && grades.game_pwr != null && grades.raw_pwr != null
+        && grades.pwr == null) {
+      tip = `${full} ${rounded} · Game ${grades.game_pwr} · Raw ${grades.raw_pwr} (mean)`;
+    }
     pills.push(
       `<span class="tool-grade-pill"
              style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);"
-             title="${escapeHtml(code)} grade ${n}">`
+             title="${escapeHtml(tip)}">`
       + `<span class="tg-code">${escapeHtml(code)}</span>`
-      + `<span class="tg-val">${n}</span>`
+      + `<span class="tg-val">${rounded}</span>`
       + `</span>`
     );
   }
@@ -19170,7 +19229,7 @@ function renderPlayerDetail(key) {
       .sort((a, b) => Math.abs(td[b].delta) - Math.abs(td[a].delta))
       .map(k => {
         const info = td[k];
-        const label = TOOL_DISPLAY_NAMES[k] || k;
+        const label = toolFullName(k);
         const dir = info.delta > 0 ? "is-pos" : info.delta < 0 ? "is-neg" : "is-flat";
         const arrow = info.delta > 0 ? "▲" : info.delta < 0 ? "▼" : "·";
         return `<tr>
