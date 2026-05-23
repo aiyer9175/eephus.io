@@ -183,6 +183,7 @@ def estimate_eta(
     health: dict | None = None,
     snapshot_date=None,
     org_promotion_tendency: dict | None = None,
+    il_status: dict | None = None,
 ) -> ETAResult:
     """
     Return an ETAResult for the given prospect attributes.
@@ -359,6 +360,35 @@ def estimate_eta(
         health_adj = min(1.5, health_adj)
         if health_adj > 0:
             signals += 1  # contributes to confidence-tier counting
+
+    # v12 — CURRENT IL push-out. The Sebastian Walcott case: out for
+    # the season but ETA still shows the current year because the
+    # health profile only tracks rolling-12mo signals, not the
+    # immediate "off the field right now" state. Read il_status and
+    # add an explicit ETA pushback for active IL stints.
+    #   * 60+ days on IL OR season-ending description → +1.0y
+    #     (lost the year; ETA pushes to next season minimum)
+    #   * 30–59 days → +0.5y (significant chunk of season gone)
+    #   * Active IL with unknown duration → +0.5y conservative
+    # Stacks on top of `health_adj` but the COMBINED cap stays 2.5y
+    # so a chronically-injured-AND-currently-IL prospect doesn't get
+    # an absurd forecast.
+    if il_status and il_status.get("is_on_il"):
+        days = il_status.get("days_on_il")
+        desc = (il_status.get("description") or "").lower()
+        season_ending = any(kw in desc for kw in (
+            "season-ending", "season ending", "out for the season",
+            "out for season", "torn acl", "torn ucl", "lis franc",
+            "lisfranc",
+        ))
+        if season_ending or (days is not None and days >= 60):
+            health_adj += 1.0
+        elif days is not None and days >= 30:
+            health_adj += 0.5
+        else:
+            health_adj += 0.5  # conservative default when duration unknown
+        signals += 1
+    health_adj = min(2.5, health_adj)
 
     # ── Half-season-elapsed adjustment ─────────────────────────────────────
     # Post-All-Star-break snapshots: the prospect has effectively burned

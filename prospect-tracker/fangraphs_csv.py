@@ -375,7 +375,6 @@ def _parse_physical_row(raw: dict) -> dict | None:
         "athl":         _to_int(row.get("athl")),
         "levers":       _str_or_none(row.get("levers")),
         "arm":          _to_grade(row.get("arm")),
-        "perf":         _to_int(row.get("perf")),
         "delivery":     _str_or_none(row.get("delivery")),
     }
 
@@ -668,7 +667,7 @@ def _build_snapshot(merged: dict, slug: str, snapshot_date: str) -> Snapshot:
             extras[k] = v
 
     # Physical-block extras.
-    for k in ("frame", "athl", "levers", "arm", "perf", "delivery"):
+    for k in ("frame", "athl", "levers", "arm", "delivery"):
         v = phys_block.get(k)
         if v is not None and v != "":
             extras[k] = v

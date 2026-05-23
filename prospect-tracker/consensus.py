@@ -251,6 +251,13 @@ class ConsensusPoint:
     # disagreement read. Only populated when ≥2 sources graded the tool.
     tools_spread: dict = field(default_factory=dict)
 
+    # v14 — Sources whose published FV was Bayesian-pulled toward 30 on this
+    # point because the player dropped off the source's most recent team
+    # Top-30 list (e.g. MLB Pipeline Angels 2026 omits a player it graded
+    # 55 on the 2025 list). The shrinkage is `new_fv = (prior_fv + 30) / 2`.
+    # The UI surfaces a ↓ mark on those source's FV badge.
+    dropped_off_sources: list[str] = field(default_factory=list)
+
 
 @dataclass
 class PlayerTimeseries:
@@ -292,6 +299,7 @@ def compute_consensus_point(
     event_label: str | None = None,
     single_source_k: float = SINGLE_SOURCE_K,
     total_fv_instances: int | None = None,
+    dropped_off_pairs: set[tuple[str, str]] | None = None,
 ) -> ConsensusPoint | None:
     """
     Aggregate one player's snapshots into a ConsensusPoint.
@@ -325,6 +333,7 @@ def compute_consensus_point(
 
     per_source: dict[str, dict] = {}
     contributing_sources: set[str] = set()
+    dropped_off_in_point: list[str] = []
 
     # Per-tool aggregation across sources. tools_by_key[key] is a list
     # of (source, grade) pairs; we never average values across multiple
@@ -333,17 +342,34 @@ def compute_consensus_point(
     # latest), so duplicates are impossible at this layer.
     tools_by_key: dict[str, list[float]] = {}
 
+    pairs = dropped_off_pairs or set()
     for s in day_snaps:
+        # v14 — if (player_key, source) appears in dropped_off_pairs, the
+        # source's published FV is Bayesian-shrunk halfway to 30 BEFORE it
+        # enters the consensus average. The penalty is k=1 (equal weight on
+        # the negative observation), so a 55 → 42.5 and a 70 → 50. The
+        # original published value is preserved on per_source.fv_published
+        # for transparency; per_source.fv_adjusted carries the post-shrink
+        # value, and per_source.dropped_off flags the source.
+        source_dropped = (s.player_key, s.source) in pairs
+        fv_for_consensus = s.fv
+        fv_adjusted = None
+        if source_dropped and s.fv is not None:
+            fv_adjusted = (float(s.fv) + 30.0) / 2.0
+            fv_for_consensus = fv_adjusted
+            dropped_off_in_point.append(s.source)
         per_source[s.source] = {
             "rank": s.rank,
             "fv_published": s.fv,
+            "fv_adjusted": fv_adjusted,
+            "dropped_off": source_dropped,
             "interval_label": s.interval_label,
             "status": s.status,
             "snapshot_date": s.snapshot_date,
             "tools": dict(s.tools) if s.tools else None,
         }
-        if s.fv is not None:
-            explicit_fvs.append(s.fv)
+        if fv_for_consensus is not None:
+            explicit_fvs.append(fv_for_consensus)
             contributing_sources.add(s.source)
         if s.rank is not None:
             implied = implied_fv_from_rank(s.rank)
@@ -477,6 +503,7 @@ def compute_consensus_point(
         fv_stddev=fv_stddev,
         tools_consensus=tools_consensus,
         tools_spread=tools_spread,
+        dropped_off_sources=sorted(set(dropped_off_in_point)),
     )
 
 
@@ -568,6 +595,68 @@ def compute_prior_mean_fv(
 # Time-series & candlestick assembly
 # ---------------------------------------------------------------------------
 
+def _dropped_off_pairs(snapshots: list[Snapshot]) -> set[tuple[str, str]]:
+    """Detect (player_key, source) pairs that fell off a source's most recent
+    team-Top-30 list relative to that source's prior team-Top-30 list.
+
+    Only team-specific lists (interval_label contains '_org_') are scoped —
+    a global Top 100 dropping a player isn't an "off the org list" event
+    and is captured by the existing single-source / freshness signals.
+
+    Algorithm:
+      1. Group snapshots by (source, org-slug-from-interval-label).
+      2. Within each group, take the two most-recent distinct
+         interval_label values by max(snapshot_date).
+      3. The diff "in prior list but not in latest list" is the
+         dropped-off set for that (source, org).
+      4. Union across all (source, org) groups → returned set.
+
+    Edge cases:
+      - Source has only ever published one team Top-30 list: no pairs.
+      - Player appears in both lists: not flagged.
+      - Player was traded between lists (org A → org B): treated as
+        dropped-off from source's org-A list. Acceptable — the trade is
+        independent signal and the shrinkage is mild (k=1).
+    """
+    if not snapshots:
+        return set()
+    # group: {(source, org_slug): {interval_label: (latest_date, set(player_keys))}}
+    grouped: dict[tuple[str, str], dict[str, tuple[str, set[str]]]] = {}
+    for s in snapshots:
+        if not s.interval_label or "_org_" not in s.interval_label:
+            continue
+        # interval_label shape: "<source>_<year>_org_<slug>" — take the slug.
+        try:
+            org_slug = s.interval_label.split("_org_", 1)[1]
+        except IndexError:
+            continue
+        key = (s.source, org_slug)
+        bucket = grouped.setdefault(key, {})
+        prev = bucket.get(s.interval_label)
+        if prev is None:
+            bucket[s.interval_label] = (s.snapshot_date, {s.player_key})
+        else:
+            latest_date, players = prev
+            players.add(s.player_key)
+            if s.snapshot_date > latest_date:
+                latest_date = s.snapshot_date
+            bucket[s.interval_label] = (latest_date, players)
+
+    pairs: set[tuple[str, str]] = set()
+    for (source, _org_slug), labels in grouped.items():
+        if len(labels) < 2:
+            continue
+        # Sort interval_labels by their latest snapshot_date descending —
+        # the top 2 are the latest & prior lists for this (source, org).
+        sorted_labels = sorted(labels.items(),
+                               key=lambda kv: kv[1][0], reverse=True)
+        latest_players = sorted_labels[0][1][1]
+        prior_players = sorted_labels[1][1][1]
+        for pk in prior_players - latest_players:
+            pairs.add((pk, source))
+    return pairs
+
+
 def _latest_meta(snaps: list[Snapshot]) -> tuple[str, str | None, str | None]:
     snaps_sorted = sorted(snaps, key=lambda s: s.snapshot_date, reverse=True)
     # FanGraphs forward-projects positions — they publish where a
@@ -631,6 +720,12 @@ def build_timeseries(
     uniformly across every point. Pass `prior_mean_fv` to override the
     auto-computed prior (e.g. for unit tests).
     """
+    # v14 — drop-off detection runs ONCE across the full snapshot pool so
+    # every player-level compute_consensus_point call shares the same view
+    # of "which (player, source) pairs lost a Top-30 spot." Stays out of
+    # the per-player loop to avoid O(N×M) recomputation.
+    dropped_off = _dropped_off_pairs(snapshots)
+
     by_player: dict[str, list[Snapshot]] = defaultdict(list)
     for s in snapshots:
         by_player[s.player_key].append(s)
@@ -682,6 +777,7 @@ def build_timeseries(
                 event_label=event_label,
                 single_source_k=single_source_k,
                 total_fv_instances=total_fv_instances,
+                dropped_off_pairs=dropped_off,
             )
             if pt is not None:
                 points.append(pt)
@@ -788,13 +884,21 @@ def build_timeseries(
 # ---------------------------------------------------------------------------
 
 def stock_movement(player: PlayerTimeseries) -> dict:
-    """
+    """v12 — Top movers calculated over the **trailing 1-year window**
+    instead of the single most-recent update.
+
+    Anchor: the latest snapshot's consensus_fv_raw.
+    Prior:  the snapshot nearest to (latest_date − 365 days) that
+            actually exists in the player's history. Falls back to the
+            EARLIEST snapshot when the player has <1y of history so a
+            recent debut still surfaces.
+
     Returns:
         {
             "direction": "up_strong" | "up" | "flat" | "down" | "down_strong" | "graduated",
-            "delta": float,         # consensus_fv_raw delta (latest minus prior)
-            "from_label": str,      # consensus_fv_label at the prior update
-            "to_label": str,        # consensus_fv_label at the latest update
+            "delta": float,         # consensus_fv_raw delta (1y window)
+            "from_label": str,      # consensus_fv_label at the anchor prior
+            "to_label": str,        # consensus_fv_label at the latest
             "from_date": str,
             "to_date": str,
         }
@@ -811,8 +915,33 @@ def stock_movement(player: PlayerTimeseries) -> dict:
             "delta": 0.0, "from_label": "—", "to_label": "—",
             "from_date": "", "to_date": "",
         }
+    from datetime import date, timedelta
     latest = player.points[-1]
-    prior  = player.points[-2]
+    try:
+        latest_d = date.fromisoformat(latest.snapshot_date)
+    except (ValueError, TypeError):
+        # Date parse failure → fall back to the prior-snapshot behavior.
+        prior = player.points[-2]
+    else:
+        cutoff = latest_d - timedelta(days=365)
+        # Pick the snapshot whose date is the CLOSEST to (latest - 365)
+        # without going past `latest`. Iterate from oldest forward; the
+        # first snap >= cutoff is the one we want (anything earlier
+        # would over-extend the window). Falls back to the earliest
+        # snapshot when no snap clears the cutoff.
+        prior = player.points[0]
+        for pt in player.points[:-1]:
+            try:
+                pt_d = date.fromisoformat(pt.snapshot_date)
+            except (ValueError, TypeError):
+                continue
+            if pt_d <= cutoff:
+                prior = pt   # keep walking forward while still ≤ cutoff
+            else:
+                # First snap past the cutoff: keep `prior` as the last
+                # one that was AT-OR-BEFORE the cutoff (anchor closest
+                # to 1y back from current). Stop walking.
+                break
     delta = latest.consensus_fv_raw - prior.consensus_fv_raw
     if delta >= 4:
         direction = "up_strong"

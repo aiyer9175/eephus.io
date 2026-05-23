@@ -1182,7 +1182,9 @@
       overflow: visible;
     }
     .fv-wide-mark,
-    .fv-single-mark {
+    .fv-single-mark,
+    .fv-dropped-off-mark,
+    .fv-breakout-mark {
       position: absolute;
       font-family: var(--font-mono);
       font-size: var(--fs-xs);
@@ -1195,8 +1197,29 @@
       cursor: help;
       z-index: 1;
     }
-    .fv-wide-mark   { top: -5px; right: -7px; background: var(--neon-violet); }
-    .fv-single-mark { top: -5px; left: -6px;  background: var(--neon-amber); }
+    .fv-wide-mark        { top: -5px;   right: -7px; background: var(--neon-violet); }
+    .fv-single-mark      { top: -5px;   left: -6px;  background: var(--neon-amber); }
+    /* v14 — dropped-off ↓ at bottom-right, breakout ★ at bottom-left.
+       Stacks naturally with the existing wide/single marks above. */
+    .fv-dropped-off-mark { bottom: -5px; right: -7px; background: #FF8C42; }
+    .fv-breakout-mark    { bottom: -5px; left: -6px;  background: var(--up); }
+    .fv-badge.is-dropped-off {
+      outline: 2px dashed #FF8C42;
+      outline-offset: 1px;
+      position: relative;
+      overflow: visible;
+    }
+    .fv-badge.is-breakout {
+      outline: 2px solid var(--up);
+      outline-offset: 1px;
+      position: relative;
+      overflow: visible;
+      animation: fvBreakoutPulse 2s ease-in-out infinite;
+    }
+    @keyframes fvBreakoutPulse {
+      0%, 100% { outline-color: var(--up); }
+      50%      { outline-color: var(--neon-violet); }
+    }
 
     /* Row tag pills — shared shape for the flag counter, health,
        acquisition, and other small inline indicators sitting next to
@@ -5100,9 +5123,11 @@
       <button class="chip" data-filter-health="healthy" title="Hide players currently on the IL">Healthy only</button>
     </div>
     <div class="filter-group">
-      <span class="filter-label">FV agreement</span>
-      <button class="chip active" data-filter-spread="all" title="Show every active prospect regardless of source spread">All</button>
-      <button class="chip" data-filter-spread="wide" title="Only show prospects where ≥2 sources disagree by at least 10 grade points — useful for finding consensus-split players">Wide FV spread</button>
+      <span class="filter-label" title="Toggle one or more FV-badge indicators. Empty = show all. Multiple selected = OR (union).">FV indicators</span>
+      <button class="chip is-multi" data-filter-fvind="wide" title="Wide FV spread — ≥2 sources disagree by at least 10 grade points">W spread</button>
+      <button class="chip is-multi" data-filter-fvind="single" title="Single-source FV — only one outlet has graded this prospect">Single src</button>
+      <button class="chip is-multi" data-filter-fvind="dropped_off" title="Dropped-Off — Bayesian pull toward FV-30 because the player fell off a source's most recent team Top-30 list">Dropped off</button>
+      <button class="chip is-multi" data-filter-fvind="breakout" title="Breakout — DvM+ / FV velocity ≥ threshold AND a strong performance gate (RPS+ ≥ 120 for hitters, Stuff+ ≥ 105 or FIP- ≤ 90 for pitchers)">Breakout</button>
     </div>
     <div class="filter-group">
       <span class="filter-label" title="Filter prospects by a specific tool grade meeting a minimum threshold. 'Any tool' matches when any one canonical 20-80 grade meets the threshold; pick a specific tool to isolate it.">Tool grade</span>
@@ -5113,7 +5138,7 @@
           <option value="hit">Hit</option>
           <option value="game_pwr">Game pwr</option>
           <option value="raw_pwr">Raw pwr</option>
-          <option value="speed">Speed</option>
+          <option value="speed">Run</option>
           <option value="field">Field</option>
           <option value="throw">Throw</option>
           <option value="pitch_sel">Pitch Sel</option>
@@ -5241,6 +5266,8 @@
               title="Pedigree-comeback narrative: previously hyped (first-round pick / IFA / $1M+ bonus) prospects whose prior season was weak but who have bounced back this year with improved skills.">Rebounders</button>
       <button class="chip" data-spotlight-bucket="fallers"
               title="Prospects whose 2026 performance has materially deteriorated. Very-young and young+pedigreed prospects are filtered out unless their K-rate has cratered (Bryce Rainer-style).">Fallers</button>
+      <button class="chip" data-spotlight-bucket="possible_regressors"
+              title="AAA over-performers flagged by Statcast: hitters with wOBA outpacing xWOBA by ≥40 points, or pitchers with xFIP exceeding ERA by ≥0.80. Their surface stats are great but the underlying contact / quality metrics suggest regression.">Possible Regressors</button>
     </div>
     <div id="spotlight-rows"></div>
   </div>
@@ -5391,15 +5418,24 @@
     <div class="filter-bar" id="leaderboard-bar" style="flex-wrap:wrap;gap:6px;">
       <span class="filter-label">Stat</span>
       <button class="chip active" data-lb-stat="ops"     title="On-base + slugging">OPS</button>
+      <button class="chip"        data-lb-stat="avg"     title="Batting average">AVG</button>
+      <button class="chip"        data-lb-stat="obp"     title="On-base percentage">OBP</button>
+      <button class="chip"        data-lb-stat="slg"     title="Slugging percentage">SLG</button>
       <button class="chip"        data-lb-stat="iso"     title="Isolated power (SLG − AVG)">ISO</button>
       <button class="chip"        data-lb-stat="bb_pct"  title="Walk rate">BB%</button>
       <button class="chip"        data-lb-stat="k_pct"   title="Strikeout rate (lower is better)">K%</button>
       <button class="chip"        data-lb-stat="hr"      title="Home runs">HR</button>
       <button class="chip"        data-lb-stat="sb"      title="Stolen bases">SB</button>
+      <button class="chip"        data-lb-stat="hit_level_plus" title="OPS vs level mean — surfaces hitters whose OPS is great BECAUSE the level is hard">OPS+ lvl</button>
       <button class="chip"        data-lb-stat="era"     title="Earned-run average (lower is better)">ERA</button>
       <button class="chip"        data-lb-stat="whip"    title="Walks + hits / IP (lower is better)">WHIP</button>
-      <button class="chip"        data-lb-stat="pitcher_k_pct" title="Pitcher K% — strikeouts as % of batters faced">K%</button>
-      <button class="chip"        data-lb-stat="pitcher_bb_pct" title="Pitcher BB% — walks as % of batters faced (lower is better)">BB%</button>
+      <button class="chip"        data-lb-stat="fip"     title="Fielding Independent Pitching (lower is better)">FIP</button>
+      <button class="chip"        data-lb-stat="k_per_9" title="Strikeouts per 9 innings">K/9</button>
+      <button class="chip"        data-lb-stat="bb_per_9" title="Walks per 9 innings (lower is better)">BB/9</button>
+      <button class="chip"        data-lb-stat="hr_per_9" title="Home runs allowed per 9 (lower is better)">HR/9</button>
+      <button class="chip"        data-lb-stat="pitcher_k_pct" title="Pitcher K% — strikeouts as % of batters faced">K% (P)</button>
+      <button class="chip"        data-lb-stat="pitcher_bb_pct" title="Pitcher BB% — walks as % of batters faced (lower is better)">BB% (P)</button>
+      <button class="chip"        data-lb-stat="pit_level_plus" title="ERA vs level mean — surfaces pitchers whose ERA is dominant relative to the level cohort">ERA- lvl</button>
 
       <span class="filter-label" style="margin-left:10px;" title="Prospect leaderboard — MiLB levels only. Graduates and MLB-level rows are excluded.">Level</span>
       <button class="chip active" data-lb-level="all">All MiLB</button>
@@ -5575,7 +5611,7 @@ const TOOL_DISPLAY_NAMES = {
   pwr:       ["Power",          "PWR"],
   game_pwr:  ["Game Power",     "GPWR"],   // legacy — kept for back-compat raw display
   raw_pwr:   ["Raw Power",      "RPWR"],   // legacy — kept for back-compat raw display
-  speed:     ["Speed",          "SPD"],
+  speed:     ["Run",            "RUN"],
   field:     ["Defense",        "DEF"],
   throw:     ["Arm",            "ARM"],
   pitch_sel: ["Pitch Selection","PSEL"],
@@ -5833,6 +5869,46 @@ function fvBadgeSingleMarkHTML(player) {
   return `<span class="fv-single-mark" title="Single observation — only one published grade across this player's history. Pulled 1/3 toward FV 35 (Bayesian shrinkage, k=0.5); the pull lifts as soon as a second grade update lands, even from the same source.">1</span>`;
 }
 
+// v14 — Returns " is-dropped-off" when any source's FV was Bayesian-pulled
+// toward 30 because the player fell off that source's most recent team
+// Top-30 list. Orange dashed outline via CSS.
+function fvBadgeDroppedOffClass(player) {
+  const pts = player && player.points;
+  const last = pts && pts.length ? pts[pts.length - 1] : null;
+  if (!last) return "";
+  const off = last.dropped_off_sources;
+  if (Array.isArray(off) && off.length > 0) return " is-dropped-off";
+  return "";
+}
+
+function fvBadgeDroppedOffMarkHTML(player) {
+  if (!fvBadgeDroppedOffClass(player)) return "";
+  const pts = player.points;
+  const last = pts[pts.length - 1];
+  const sources = (last.dropped_off_sources || []).join(", ");
+  return `<span class="fv-dropped-off-mark" title="Dropped off — fell off the most recent team Top-30 list from ${escapeHtml(sources)}. FV pulled halfway toward 30 via Bayesian shrinkage.">↓</span>`;
+}
+
+// v14 — Returns " is-breakout" when the prospect carries the active-
+// prospect breakout flag (DvM+ velocity OR FV upgrade AND a strong perf
+// gate). Green pulsing outline via CSS.
+function fvBadgeBreakoutClass(player) {
+  return player && player.breakout_flag ? " is-breakout" : "";
+}
+
+function fvBadgeBreakoutMarkHTML(player) {
+  if (!fvBadgeBreakoutClass(player)) return "";
+  const meta = player.breakout_meta || {};
+  const why = meta.reason === "fv"
+    ? `FV upgraded ${meta.fv_upgrade > 0 ? "+" : ""}${meta.fv_upgrade ?? "?"} grade points over the window`
+    : `tool grades up ${meta.tool_velocity > 0 ? "+" : ""}${meta.tool_velocity ?? "?"} on average over the window`;
+  const gate = meta.perf_gate === "rps_plus" ? "RPS+ ≥ 120"
+             : meta.perf_gate === "stf_plus_periph" ? "Peripheral Stuff+ ≥ 105"
+             : meta.perf_gate === "fip_minus" ? "FIP- ≤ 90"
+             : "performance gate";
+  return `<span class="fv-breakout-mark" title="Breakout — ${why}, plus ${gate} this season.">★</span>`;
+}
+
 // Acquisition-method tooltip helper — builds the per-method context
 // string for acqPillHTML. Lifted out so it can stay readable.
 function acqTooltip(p, method) {
@@ -5989,6 +6065,15 @@ function computeFgFlags(p) {
 //   ORANGE → Healthy, IL stint within last 3 months
 //   RED    → Currently on IL
 // Tooltip always carries the detail context.
+// v14 — Severity-based tiers (replaces v13 recency-based):
+//   RED    → currently on IL
+//   ORANGE → Post-TJ (within 12mo of surgery) OR 2+ IL stints OR ≥30 days on IL
+//   YELLOW → 1 IL stint AND <30 days on IL
+//   GREEN  → has health_profile data but no recent IL activity
+//   ""     → no health profile at all
+// Severity better reflects how risky the player's health is: 2 hammy stints
+// totaling 14 days is more concerning than 1 fluke 30-day stint, regardless
+// of when the latest IL return was.
 function healthBadgeHTML(p) {
   const il = p.il_status || {};
   if (il.is_on_il) {
@@ -5998,34 +6083,36 @@ function healthBadgeHTML(p) {
     return `<span class="row-tag health-dot is-red" title="${tip}" aria-label="On IL"></span>`;
   }
   const hp = p.health_profile || {};
-  // Most-recent IL stint end date (or surgery date for TJ). If within
-  // ~90 days we treat it as a recent return; further out and the user
-  // is past the immediate concern window.
-  const lastEndStr = hp.last_il_end_date || hp.tj_surgery_date || null;
-  let daysSinceLast = null;
-  if (lastEndStr) {
-    try {
-      const lastEnd = new Date(lastEndStr + "T00:00:00Z");
-      daysSinceLast = Math.floor((Date.now() - lastEnd.getTime()) / 86400000);
-    } catch (e) { daysSinceLast = null; }
-  }
   const stints = hp.il_stints_12mo || 0;
   const ildays = hp.il_days_12mo || 0;
+
+  // Post-TJ: orange for the full first year post-surgery (recovery
+  // window where re-injury risk is highest), then yellow until the
+  // surgery scrolls out of the trailing window.
   if (hp.is_post_tj) {
+    let daysSinceTj = null;
+    if (hp.tj_surgery_date) {
+      try {
+        const surg = new Date(hp.tj_surgery_date + "T00:00:00Z");
+        daysSinceTj = Math.floor((Date.now() - surg.getTime()) / 86400000);
+      } catch (e) { daysSinceTj = null; }
+    }
+    const within12mo = daysSinceTj != null && daysSinceTj <= 365;
+    const tone = within12mo ? "is-orange" : "is-yellow";
     const d = hp.tj_surgery_date ? ` (surgery ${hp.tj_surgery_date})` : "";
-    const recent = daysSinceLast != null && daysSinceLast <= 90;
-    const tone = recent ? "is-orange" : "is-yellow";
-    const tip = `Post-Tommy John surgery${d}${daysSinceLast != null ? ` · ${daysSinceLast}d since` : ""}`;
+    const tip = `Post-Tommy John surgery${d}${daysSinceTj != null ? ` · ${daysSinceTj}d since` : ""}`;
     return `<span class="row-tag health-dot ${tone}" title="${tip}" aria-label="Post-TJ"></span>`;
   }
-  if (stints >= 1 || ildays >= 30) {
-    const recent = daysSinceLast != null && daysSinceLast <= 90;
-    const label = recent ? "Healthy · IL stint in last 3 months"
-                         : "Healthy · IL stint in last year";
-    const tip = `${label} · ${stints} stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12mo`
-              + (daysSinceLast != null ? ` · last return ${daysSinceLast}d ago` : "");
-    const tone = recent ? "is-orange" : "is-yellow";
-    return `<span class="row-tag health-dot ${tone}" title="${tip}" aria-label="${escapeHtml(label)}"></span>`;
+
+  // Severity-based IL history tier — chronic (2+ stints) or long (≥30d)
+  // gets orange; one short stint gets yellow.
+  if (stints >= 2 || ildays >= 30) {
+    const tip = `IL history · ${stints} stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12mo`;
+    return `<span class="row-tag health-dot is-orange" title="${tip}" aria-label="IL history (heavy)"></span>`;
+  }
+  if (stints >= 1 || ildays > 0) {
+    const tip = `IL history · ${stints} stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12mo`;
+    return `<span class="row-tag health-dot is-yellow" title="${tip}" aria-label="IL history (light)"></span>`;
   }
   if (hp && Object.keys(hp).length) {
     return `<span class="row-tag health-dot is-green" title="Healthy — no IL activity in the past 12 months" aria-label="Healthy"></span>`;
@@ -6216,9 +6303,10 @@ function boomBustPillHTML(p) {
   if (lab !== "boom" && lab !== "bust") return "";
   const cw = (p.career_war || {}).career_war;
   const cwSummary = (cw != null) ? `${cw.toFixed ? cw.toFixed(1) : cw} career WAR` : "career WAR";
+  // v14 — Updated thresholds for the new full-season-equivalent WAG.
   const tip = lab === "boom"
-    ? `BOOM — outperformed FV-implied WAR projection (${cwSummary}). WAG ≥ +5.`
-    : `BUST — fell short of FV-implied WAR projection (${cwSummary}). WAG ≤ −2.`;
+    ? `BOOM — outperformed FV-implied WAR projection (${cwSummary}). WAG ≥ +2.5 (full-season-equivalent).`
+    : `BUST — fell short of FV-implied WAR projection (${cwSummary}). WAG ≤ −1.5 (full-season-equivalent).`;
   return `<span class="row-tag boom-bust-pill tier-${lab}" title="${escapeHtml(tip)}">${lab.toUpperCase()}</span>`;
 }
 
@@ -7134,8 +7222,29 @@ function makeEtaCell(p) {
              : diff === 3 ? "eta-mid"
              : diff === 4 ? "eta-far"
              : "eta-very-far";
+  // v12 — surface H1/H2 indicator inline with the ETA year. Phase
+  // values come from estimate_eta:
+  //   "pre_break"  → H1 chip (cyan)
+  //   "post_break" → H2 chip (orange)
+  //   "offseason"  → no chip (the cycle naturally rolls into next year)
+  // Tooltip carries the phase + half-season-adj value so the user can
+  // see how much the H2 gate pulled the ETA in.
+  let phaseChip = "";
+  if (eta.season_phase === "pre_break" || eta.season_phase === "post_break") {
+    const isH1 = eta.season_phase === "pre_break";
+    const label = isH1 ? "H1" : "H2";
+    const color = isH1 ? "var(--neon-cyan)" : "var(--neon-orange)";
+    const adj = eta.half_season_adj;
+    const adjBit = adj != null && adj !== 0
+      ? ` · half-season adj ${adj > 0 ? "+" : ""}${adj}y`
+      : "";
+    const tip = isH1
+      ? `Pre-All-Star-break snapshot${adjBit}`
+      : `Post-All-Star-break snapshot${adjBit}`;
+    phaseChip = ` <span style="display:inline-block;margin-left:3px;padding:1px 4px;font-family:var(--font-retro-mono);font-size:9px;font-weight:700;letter-spacing:0.04em;color:${color};border:1px solid ${color};border-radius:2px;line-height:1;cursor:help;" title="${escapeHtml(tip)}">${label}</span>`;
+  }
   return `<div class="eta-cell">
-    <span class="eta-year ${cls}">${eta.year}</span>
+    <span class="eta-year ${cls}">${eta.year}</span>${phaseChip}
   </div>`;
 }
 
@@ -7463,8 +7572,14 @@ const state = {
   healthFilter: "all",
   // FV-agreement lens — "wide" filters down to prospects whose latest
   // point shows ≥10 grade-points of disagreement between explicit-FV
-  // sources. Default "all" passes everyone through.
+  // sources. Default "all" passes everyone through. v14 kept for back-
+  // compat URL-share permalinks; the chip group is replaced by
+  // fvIndicators (multi-select).
   spreadFilter: "all",
+  // v14 — FV badge indicator filter. Set of strings: "wide", "single",
+  // "dropped_off", "breakout". Empty set means no filter. Multiple
+  // selections use OR semantics (union).
+  fvIndicators: new Set(),
   // Tool-grade filter — restrict to prospects whose specified tool
   // grade meets a minimum threshold. `toolFilterKey` is "off" (default),
   // "any" (matches the threshold across any single tool), or a canonical
@@ -7517,27 +7632,35 @@ const state = {
 // the finest filter bucket we can resolve: C / 1B / 2B / SS / 3B / INF
 // (ambiguous infield) / CF / LF / RF / OF (ambiguous outfield) / P.
 // Returns null when the position is missing or doesn't classify.
+//
+// v14 — Scan ALL slash-delimited entries (not just the head) and prefer
+// the most informative bucket. A "OF/SS" prospect was previously bucketed
+// as OF because the head split picked OF first; now infield wins over OF
+// (Xavier Edwards bug). Priority: C > {SS,2B,3B,1B} > {CF,LF,RF,OF} > DH/UT.
 function positionBucket(pos) {
   if (!pos) return null;
-  const head = String(pos).split("/")[0].toUpperCase();
-  if (head === "C")  return "C";
-  if (head === "1B") return "1B";
-  if (head === "2B") return "2B";
-  if (head === "3B") return "3B";
-  if (head === "SS" || head === "MI") return "SS";
-  if (head === "INF" || head === "IF" || head === "UTIL") return "INF";
-  if (head === "CF") return "CF";
-  if (head === "LF") return "LF";
-  if (head === "RF") return "RF";
-  if (head === "OF") return "OF";
-  // Pitcher buckets — return the role-tagged value when one is
-  // present so SP / SIRP / MIRP can be filtered individually. Bare
-  // RHP / LHP / P (role-agnostic) collapses to "P".
-  if (head === "SIRP") return "SIRP";
-  if (head === "MIRP") return "MIRP";
-  if (head === "SP")   return "SP";
-  if (head === "RP")   return "RP";
-  if (/^(RHP|LHP|P)$/.test(head)) return "P";
+  const tokens = String(pos).split("/").map(t => t.trim().toUpperCase()).filter(Boolean);
+  if (!tokens.length) return null;
+  // Pitcher roles first — if any pitcher role appears, the player is a
+  // pitcher regardless of any other tokens.
+  if (tokens.some(t => t === "SIRP")) return "SIRP";
+  if (tokens.some(t => t === "MIRP")) return "MIRP";
+  if (tokens.some(t => t === "SP"))   return "SP";
+  if (tokens.some(t => t === "RP"))   return "RP";
+  if (tokens.some(t => /^(RHP|LHP|P)$/.test(t))) return "P";
+  // Catcher always wins over other position-player buckets.
+  if (tokens.some(t => t === "C")) return "C";
+  // Infield priority — SS > 2B > 3B > 1B, then ambiguous INF/MI/UTIL.
+  for (const wanted of ["SS", "2B", "3B", "1B"]) {
+    if (tokens.some(t => t === wanted)) return wanted;
+  }
+  if (tokens.some(t => ["INF", "IF", "MI", "UTIL"].includes(t))) return "INF";
+  // Outfield only AFTER all infield checks (the Edwards fix).
+  for (const wanted of ["CF", "LF", "RF"]) {
+    if (tokens.some(t => t === wanted)) return wanted;
+  }
+  if (tokens.some(t => t === "OF")) return "OF";
+  if (tokens.some(t => t === "DH")) return "DH";
   return null;
 }
 
@@ -7616,13 +7739,29 @@ function getFilteredActives() {
   if (state.posFilter !== "all") {
     pool = pool.filter(p => positionMatches(positionBucket(p.position), state.posFilter));
   }
-  // FV agreement lens — only show prospects with ≥10-point disagreement
-  // between explicit-FV sources at the latest point. Useful for finding
-  // contested/breakout candidates without scanning the per-source block.
-  if (state.spreadFilter === "wide") {
+  // v14 — FV indicator multi-select. OR semantics — a prospect passes if
+  // ANY selected indicator fires. Legacy spreadFilter=wide still works for
+  // back-compat permalinks (mapped onto the wide indicator).
+  if (state.spreadFilter === "wide" && (!state.fvIndicators || !state.fvIndicators.size)) {
+    state.fvIndicators = new Set(["wide"]);
+  }
+  if (state.fvIndicators && state.fvIndicators.size) {
     pool = pool.filter(p => {
       const last = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
-      return last && last.fv_spread != null && last.fv_spread >= 10;
+      if (state.fvIndicators.has("wide")) {
+        if (last && last.fv_spread != null && last.fv_spread >= 10) return true;
+      }
+      if (state.fvIndicators.has("single")) {
+        if ((p.fv_total_instances || 0) === 1) return true;
+      }
+      if (state.fvIndicators.has("dropped_off")) {
+        if (last && Array.isArray(last.dropped_off_sources)
+            && last.dropped_off_sources.length > 0) return true;
+      }
+      if (state.fvIndicators.has("breakout")) {
+        if (p.breakout_flag) return true;
+      }
+      return false;
     });
   }
   // Tool-grade filter — restrict to prospects whose chosen tool meets
@@ -7992,7 +8131,7 @@ function renderActives() {
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
           <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>${fvTrendHTML(p)}</div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>${fvTrendHTML(p)}</div>
         <div class="rank-cell">${latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
         <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${lazyLineChartHTML(p)}</div>
         ${makeMilbCell(p)}
@@ -8188,7 +8327,33 @@ function latestAcquisition(p) {
       });
     }
   }
-  if (!events.length) return null;
+  if (!events.length) {
+    // v14 — Fallback: if neither p.trades[] nor p.transactions[] yielded a
+    // matching event, but the backend has stamped current_acquisition.event
+    // (or hoisted fields onto current_acquisition top-level), reconstruct
+    // the event from there. Fixes the Perales/Bennett bug where one side
+    // of the swap had trades[] populated and the other only had
+    // current_acquisition.event populated.
+    const ca = p.current_acquisition;
+    if (ca && ca.method) {
+      const ev = ca.event || {};
+      const date     = ca.date     ?? ev.date     ?? null;
+      const fromOrg  = ca.from_org ?? ev.from_org ?? null;
+      const toOrg    = ca.to_org   ?? ev.to_org   ?? p.org;
+      const desc     = ca.description ?? ev.description ?? "";
+      if (date && ca.method) {
+        return {
+          date,
+          method: ca.method,
+          from_org: fromOrg,
+          to_org: toOrg,
+          description: desc,
+          sort_key: date,
+        };
+      }
+    }
+    return null;
+  }
   events.sort((a, b) => b.sort_key.localeCompare(a.sort_key));
   return events[0];
 }
@@ -8348,7 +8513,14 @@ function cellHeatColor(value, values, hi = true) {
 }
 
 const LB_STATS = {
+  // ── Hitter ──
   ops:     { label: "OPS",     hi: true,  fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : "—",
+             minAB: 50, support: _lbHitterSupport, side: "hit" },
+  avg:     { label: "AVG",     hi: true,  fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : "—",
+             minAB: 50, support: _lbHitterSupport, side: "hit" },
+  obp:     { label: "OBP",     hi: true,  fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : "—",
+             minAB: 50, support: _lbHitterSupport, side: "hit" },
+  slg:     { label: "SLG",     hi: true,  fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : "—",
              minAB: 50, support: _lbHitterSupport, side: "hit" },
   iso:     { label: "ISO",     hi: true,  fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : "—",
              minAB: 50, support: _lbHitterSupport, side: "hit" },
@@ -8360,6 +8532,15 @@ const LB_STATS = {
              minAB: 20, support: _lbHitterSupport, side: "hit" },
   sb:      { label: "SB",      hi: true,  fmt: v => v != null ? String(v) : "—",
              minAB: 20, support: _lbHitterSupport, side: "hit" },
+  // v12 — level-relative offense. Sort by how far the OPS sits above
+  // the level-cohort mean (signed %). Surfaces players whose surface
+  // OPS is great BECAUSE the level is hard, not because the level is
+  // soft. Field name is `level_plus_pct` (positive = better than mean).
+  hit_level_plus: { label: "OPS+ vs lvl", hi: true,
+                    fmt: v => v != null ? (v > 0 ? "+" : "") + Number(v).toFixed(0) + "%" : "—",
+                    minAB: 50, support: _lbHitterSupport, side: "hit",
+                    field: "level_plus_pct" },
+  // ── Pitcher ──
   era:     { label: "ERA",     hi: false, fmt: v => v != null ? Number(v).toFixed(2) : "—",
              minIP: 15, support: _lbPitcherSupport, side: "pit" },
   whip:    { label: "WHIP",    hi: false, fmt: v => v != null ? Number(v).toFixed(2) : "—",
@@ -8367,6 +8548,10 @@ const LB_STATS = {
   k_per_9: { label: "K/9",     hi: true,  fmt: v => v != null ? Number(v).toFixed(2) : "—",
              minIP: 15, support: _lbPitcherSupport, side: "pit" },
   bb_per_9:{ label: "BB/9",    hi: false, fmt: v => v != null ? Number(v).toFixed(2) : "—",
+             minIP: 15, support: _lbPitcherSupport, side: "pit" },
+  hr_per_9:{ label: "HR/9",    hi: false, fmt: v => v != null ? Number(v).toFixed(2) : "—",
+             minIP: 15, support: _lbPitcherSupport, side: "pit" },
+  fip:     { label: "FIP",     hi: false, fmt: v => v != null ? Number(v).toFixed(2) : "—",
              minIP: 15, support: _lbPitcherSupport, side: "pit" },
   // Pitcher K% / BB% — strikeouts and walks as % of batters faced.
   // The lb-stat sort keys for the leaderboard chips use these
@@ -8376,6 +8561,13 @@ const LB_STATS = {
                     minIP: 15, support: _lbPitcherSupport, side: "pit", field: "k_pct" },
   pitcher_bb_pct: { label: "BB%", hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
                     minIP: 15, support: _lbPitcherSupport, side: "pit", field: "bb_pct" },
+  // v12 — level-relative run prevention. Sort by ERA's gap to the
+  // level-cohort mean. Same `level_plus_pct` field but inverted-
+  // direction since lower ERA = better.
+  pit_level_plus: { label: "ERA- vs lvl", hi: true,
+                    fmt: v => v != null ? (v > 0 ? "+" : "") + Number(v).toFixed(0) + "%" : "—",
+                    minIP: 15, support: _lbPitcherSupport, side: "pit",
+                    field: "level_plus_pct" },
 };
 
 // Watchlist tab — renders the starred prospects using the same row
@@ -8437,7 +8629,7 @@ function renderWatchlist() {
             </div>
             <button class="watch-btn is-in" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="Remove from watchlist">★</button>
           </div>
-          <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>${fvTrendHTML(p)}` : "—"}</div>
+          <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>${fvTrendHTML(p)}` : "—"}</div>
           <div class="rank-cell">${latest && latest.avg_rank != null ? latest.avg_rank.toFixed(1) : "—"}</div>
           <div class="line-chart-cell">${p.points && p.points.length >= 2 ? lazyLineChartHTML(p) : ""}</div>
           ${makeMilbCell(p)}
@@ -8505,7 +8697,7 @@ const CHART_AXES = {
     { key: "hit",            label: "Hit grade",          getter: p => _tcOf(p, "hit"),                     fmt: v => v.toFixed(0) },
     { key: "game_pwr",       label: "Game power",         getter: p => _tcOf(p, "game_pwr"),                fmt: v => v.toFixed(0) },
     { key: "raw_pwr",        label: "Raw power",          getter: p => _tcOf(p, "raw_pwr"),                 fmt: v => v.toFixed(0) },
-    { key: "speed",          label: "Speed",              getter: p => _tcOf(p, "speed"),                   fmt: v => v.toFixed(0) },
+    { key: "speed",          label: "Run",                getter: p => _tcOf(p, "speed"),                   fmt: v => v.toFixed(0) },
     { key: "field",          label: "Fielding",           getter: p => _tcOf(p, "field"),                   fmt: v => v.toFixed(0) },
     { key: "fb",             label: "Fastball",           getter: p => _tcOf(p, "fb"),                      fmt: v => v.toFixed(0) },
     { key: "cmd",            label: "Command",            getter: p => _tcOf(p, "cmd"),                     fmt: v => v.toFixed(0) },
@@ -8854,7 +9046,7 @@ function renderLeaderboards() {
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
         <div><span class="level-pill ${r.level === "MLB" ? "level-mlb" : "level-neutral"}">${escapeHtml(r.level || "—")}</span></div>
-        <div style="text-align:center;">${fvLabel !== "—" ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+        <div style="text-align:center;">${fvLabel !== "—" ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div style="text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:700;color:${heat.fg};background:${heat.bg};padding:4px 8px;border-radius:var(--radius-sm);">${cfg.fmt(v)}</div>
         <div style="text-align:center;" title="${trendVals.length} season${trendVals.length === 1 ? "" : "s"} of ${escapeHtml(cfg.label)} data">${trendCell}</div>
         <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${cfg.support(r)}</div>
@@ -9197,7 +9389,7 @@ function renderInjured() {
         <div><span class="grad-pill" style="background:var(--accent-il-soft);color:var(--accent-il);border:1px solid var(--accent-il-border);">${escapeHtml(il.type || "?")} IL</span></div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12px;color:var(--text-secondary);">${escapeHtml(since || "—")}</div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;color:${days > 60 ? 'var(--down)' : days > 14 ? 'var(--neon-amber)' : 'var(--text-secondary)'};font-weight:600;" title="${days > 60 ? 'Long-term IL (60+ days)' : days > 14 ? '15-60 day stint' : 'Short stint (≤14 days)'}">${days}d</div>
-        <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+        <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.3;">${escapeHtml(reason)}</div>
       </div>`;
   }).join("");
@@ -9239,7 +9431,11 @@ function renderRecentlyTraded() {
       // (e.g. "Twins traded ... to Marlins for ..."). Truncated to keep
       // the cell from blowing the row height; the full string is
       // available on hover via the title attribute.
-      const headLine = `<span style="color:var(--text-tertiary);">${escapeHtml(acq.from_org ?? "?")}</span> <span style="color:var(--neon-violet);">→</span> <span style="color:var(--text-primary);">${escapeHtml(acq.to_org ?? "?")}</span>`;
+      // v14 — Defensive read: prefer top-level from/to_org but fall back to
+      // nested .event fields when only those are populated (legacy payloads).
+      const _fromOrg = acq.from_org ?? acq.event?.from_org ?? "?";
+      const _toOrg = acq.to_org ?? acq.event?.to_org ?? "?";
+      const headLine = `<span style="color:var(--text-tertiary);">${escapeHtml(_fromOrg)}</span> <span style="color:var(--neon-violet);">→</span> <span style="color:var(--text-primary);">${escapeHtml(_toOrg)}</span>`;
       const desc = (acq.description || "").trim();
       const TRUNC = 90;
       const subLine = desc
@@ -9276,7 +9472,7 @@ function renderRecentlyTraded() {
           ${methodPill}
           <span style="font-size:11px;">${contextLine}</span>
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>${fvTrendHTML(p)}</div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>${fvTrendHTML(p)}</div>
         <div class="line-chart-cell desktop-only">${lazyLineChartHTML(p)}</div>
         <div class="candle-cell desktop-only">${makeCandle(p)}</div>
       </div>
@@ -11889,11 +12085,45 @@ const GLOSSARY = {
   "tools_plus": {
     name: "Tools+", aliases: ["Tools+", "T+", "ToolGrade+"], category: "custom-index",
     priority: 10,
-    short: "Outlier-biased composite of scouting tool grades, anchored at 100 = cohort mean.",
-    long: "Power-mean (Lₚ with p=3) of the player's per-tool 20-80 grades, then z-score-normalized across the active-prospect cohort. 10 points = 1 stdev, so a Tools+ of 115 reads as ~1.5 stdev above the prospect-pool average. The power-mean (vs simple arithmetic mean) emphasizes outlier tools, since a 70-grade power tool moves the composite more than evenly-distributed 55s would, capturing the 'toolsy' intuition that one elite tool defines the profile.",
-    formula: "Tools+ = 100 + 10 · (composite − μ) / σ\nwhere composite = (Σ tool_grade^3 / n)^(1/3)",
-    example: "A 70-grade Game Power + 50-grade Hit + 50-grade Speed + 50-grade Field hitter posts a Tools+ around 115; the power-mean lifts the composite above what a simple-mean of 55 would produce because power skews the result.",
-    related: ["fv", "pwr_plus", "pd_plus", "stf_plus"],
+    short: "Equally-weighted, tail-weighted composite of every scouted tool a prospect carries, plus FG physical grades.",
+    long: "v14 — Tools+ is the equally-weighted power-mean (p=4) of every 20-80 tool grade a hitter carries (hit, pwr, run, field, arm, pitch_sel, bat_ctrl) PLUS the FG -2..+2 physical grades (Frame, Athleticism) mapped to the FV scale (-2→30, -1→40, 0→50, +1→60, +2→70). For pitchers the physicals (Frame, Athleticism, Delivery) join the stuff power-mean (p=3) alongside fb/sl/cb/ch, then overall = 0.65·stuff + 0.35·cmd. The p=4 exponent (steeper than the p=3 used by O-Tools+ and Stuff+) rewards extreme tools more aggressively: a 70 PWR + 45 HIT prospect (arith mean 57.5) posts ~62 here vs ~60.6 under p=3. Captures the 'one elite tool defines the profile' intuition. Then z-score-normalized across the active-prospect cohort: 100 = cohort mean, 10 pts = 1σ.",
+    formula: "Tools+ = 100 + 10 · (composite − μ) / σ\nwhere composite = (Σ tool_grade^4 / n)^(1/4)\nhitter inputs: hit, pwr, run, field, arm, pitch_sel, bat_ctrl, frame_fv, athl_fv\npitcher inputs: power-mean(fb, sl, cb, ch, frame_fv, athl_fv, delivery_fv) p=3 → blended 0.65/0.35 with cmd",
+    example: "A 70 PWR / 45 HIT prospect with otherwise-50 tools posts a Tools+ around 110+ — the p=4 power-mean lifts the composite above what an arithmetic mean would yield because PWR skews the result.",
+    related: ["fv", "tools_plus_offensive", "tools_plus_defensive", "tools_dvm_plus"],
+  },
+  "tools_plus_offensive": {
+    name: "O-Tools+", aliases: ["O-Tools+", "Offensive Tools+", "OTools+"], category: "custom-index",
+    priority: 11,
+    short: "Weighted offensive composite: HIT 40 / PWR 40 / BCTRL 10 / PSEL 6 / RUN 4.",
+    long: "O-Tools+ is the weighted mean of the hitter's offensive 20-80 grades, then z-score-normalized against the active-prospect cohort. Weights reflect the heavy bats-matter-most tilt — HIT and PWR are co-dominant at 40% each; bat-control and pitch-selection round out the offensive profile; speed is a small tiebreaker contributor. Defensive tools (field, arm) live in D-Tools+ (separate index). 100 = cohort mean, 10 pts = 1σ.",
+    formula: "O-Tools+ = 100 + 10 · (composite − μ) / σ\nwhere composite = Σ w_i · grade_i / Σ w_i\nweights: HIT 0.40, PWR 0.40, BCTRL 0.10, PSEL 0.06, RUN 0.04",
+    related: ["tools_plus", "tools_plus_defensive", "hit", "power", "speed_tool"],
+  },
+  "tools_plus_defensive": {
+    name: "D-Tools+", aliases: ["D-Tools+", "Defensive Tools+", "DTools+"], category: "custom-index",
+    priority: 12,
+    short: "Weighted defensive composite (p=3 power-mean): DEF 60 / ARM 30 / RUN 10 — catchers DEF 70 / ARM 30.",
+    long: "D-Tools+ is the weighted power-mean (Lₚ with p=3) of the position player's defensive 20-80 grades, then z-score-normalized against the active-prospect cohort. Defense overwhelmingly drives the composite at 60%; arm strength matters but second-order at 30%; baserunning speed contributes a small 10% (it folds into range/jumps via the field grade already, this is a tiebreaker contributor). Catchers drop speed (irrelevant) and bump field to 70%, since the field grade for catchers absorbs framing/blocking/receiving. The p=3 power-mean rewards elite-glove standouts more sharply than a simple weighted mean. 100 = cohort mean, 10 pts = 1σ.",
+    formula: "D-Tools+ = 100 + 10 · (composite − μ) / σ\nwhere composite = (Σ w_i · grade_i^3 / Σ w_i)^(1/3)\nnon-catcher weights: DEF 0.60, ARM 0.30, RUN 0.10\ncatcher weights:    DEF 0.70, ARM 0.30 (RUN dropped)",
+    example: "A 70 DEF / 50 ARM / 50 RUN center fielder posts a D-Tools+ near 115; a 50/50/50 baseline lands at 100.",
+    related: ["tools_plus", "tools_plus_offensive", "field_tool", "throw_tool", "speed_tool"],
+  },
+  "dropped_off_penalty": {
+    name: "Dropped-Off Penalty", aliases: ["Dropped off", "Off-list penalty", "↓ mark"], category: "custom-index",
+    priority: 13,
+    short: "Bayesian half-shrinkage toward FV-30 when a player fell off a source's most recent team Top-30 list.",
+    long: "v14 — When a player appeared in a source's PRIOR team Top-30 list (e.g. MLB Pipeline Angels 2025) but does NOT appear in the LATEST list from the same source for the same team, the source's published FV is Bayesian-shrunk toward 30: new_FV = (prior_FV + 30) / 2. This is k=1.0 — the negative observation (off the list) is weighted equally with the prior FV. Only triggers for team-specific lists (`interval_label` contains `_org_`); global Top-100 lists aren't org-scoped. The badge gets an ↓ mark with a tooltip naming the source(s).",
+    formula: "if (player_key, source) dropped off → new_fv = (prior_fv + 30) / 2.0",
+    example: "Ryan Johnson was graded 55 on MLB Pipeline's 2025 Angels Top-30 and dropped off the 2026 list entirely. The 2026 consensus uses 42.5 (=(55+30)/2) for Pipeline, pulling his overall FV down accordingly.",
+    related: ["fv", "consensus_fv"],
+  },
+  "breakout_indicator": {
+    name: "Breakout Indicator", aliases: ["Breakout", "★ mark"], category: "custom-index",
+    priority: 14,
+    short: "Rare active-prospect flag: tool/FV velocity AND strong performance gate over the trailing 6 months / 4 source updates.",
+    long: "v14 — An active prospect flags as Breakout when BOTH of the following hold over the window max(last 6 months, last 4 source updates): (a) consensus FV upgraded by ≥ +5 grade points OR mean tool-grade composite improved by ≥ +3; AND (b) a strong performance gate fires — RPS+ ≥ 120 (hitters), OR Peripheral Stuff+ ≥ 105 or FIP- ≤ 90 (pitchers). Designed to surface ~10-40 prospects league-wide — rare but not impossible. The badge gets a green pulsing ★ mark with a tooltip explaining which signal fired and which performance gate passed.",
+    formula: "breakout = (fv_upgrade ≥ +5 OR tool_velocity ≥ +3) AND perf_gate_pass",
+    related: ["tools_dvm_plus", "fv", "rps_plus"],
   },
   "rps_plus": {
     name: "RPS+", aliases: ["RPS+", "Rate Performance Score"], category: "custom-index",
@@ -11926,7 +12156,7 @@ const GLOSSARY = {
     name: "ToolsDvM+", aliases: ["ToolsDvM+", "Tools Development vs Mean"], category: "custom-index",
     priority: 7,
     short: "Org-level tool development composite. 100 = league-mean dev pace across all tools; +10 = 1σ above.",
-    long: "Composite of every per-tool DvM+ an org has populated (HitDvM+, PowerDvM+, SpeedDvM+, FieldDvM+, ArmDvM+, PitchSelDvM+, BatCtrlDvM+ for hitters; FBDvM+, SLDvM+, CBDvM+, CHDvM+, CmdDvM+, CtDvM+ for pitchers). Each per-tool DvM+ is computed by taking every active prospect's lifetime tool delta, averaging within the org, then scoring that mean against the league: 100 + 10·z. Orgs with too few multi-cycle prospects on a given tool get '—' for that cell rather than a noisy 1-prospect mean. Attribution: current org — trade-acquired prospects bring their full lifetime delta with them (mixes acquisition + development skill, same convention as Financial ROI). Standalone display metric for now; not yet folded into farm_score.",
+    long: "Composite of every per-tool DvM+ an org has populated (HitDvM+, PowerDvM+, SpeedDvM+, FieldDvM+, ArmDvM+, PitchSelDvM+, BatCtrlDvM+ for hitters; FBDvM+, SLDvM+, CBDvM+, CHDvM+, CmdDvM+, CtDvM+ for pitchers). v14 — PowerDvM+ reads from the consolidated `pwr` key (synthesized at consensus time from game_pwr + raw_pwr) instead of double-counting the two power keys. FG physical grades (Frame, Athleticism, Delivery) are NOT included — they're static published values without the multi-snapshot longitudinal history that DvM+ velocity requires. Each per-tool DvM+ is computed by taking every active prospect's lifetime tool delta, averaging within the org, then scoring that mean against the league: 100 + 10·z. Orgs with too few multi-cycle prospects on a given tool get '—' for that cell rather than a noisy 1-prospect mean. Attribution: current org — trade-acquired prospects bring their full lifetime delta with them (mixes acquisition + development skill, same convention as Financial ROI). Standalone display metric for now; not yet folded into farm_score.",
     formula: "ToolsDvM+ = mean over tools of (100 + 10·(org_mean_delta − league_mean) / league_stdev)",
     example: "NYM ToolsDvM+ = 106 (rank 1 of 30) — Mets actives have grown across the toolset roughly 0.6σ faster than the league-mean farm over their tracked careers. NYY ToolsDvM+ = 91 (rank 30) — Yankees actives have grown ~0.9σ slower.",
     related: ["dvm_plus", "tool_delta", "tools_plus", "farm_rank"],
@@ -11988,11 +12218,11 @@ const GLOSSARY = {
   "wag": {
     name: "WAG", aliases: ["WAG", "WAR Above Grade"], category: "custom-index",
     priority: 8,
-    short: "Graduate-only metric; playing-time-weighted MLB WAR/yr minus FV-grade-implied baseline.",
-    long: "Measures whether a graduated prospect has out- or under-performed their final FV grade. WAR/yr is computed playing-time-weighted (per-graduate PA or IP, with a minimum-sample gate of ≥1 full-season equivalent of MLB time so a thin-debut Ben Rice isn't punished). Subtracted against the FV→WAR primer table (FanGraphs lower-bound, hitter/pitcher split, linearly interpolated). Positive = beat the bet, negative = missed.",
-    formula: "WAG = (Σ season_WAR × PA_share) / season_count − expected_WAR(FV)",
-    example: "Bobby Witt Jr. graduated as a 60 FV (expected ~3.4 WAR/yr) and has averaged ~6 WAR/yr in his MLB time, posting a WAG of +2.6, a major outperformance.",
-    related: ["fv", "war", "fv_war_table"],
+    short: "Graduate metric: full-season-equivalent WAR (rate × role workload target) minus FV-grade-implied baseline.",
+    long: "v14 — WAG is the player's career WAR/(PA|IP) rate projected to a role-typical full-season workload, minus the FV-implied per-season WAR baseline. Hitters use a 612 PA target; pitchers use role-specific IP targets (SP 175 / MIRP 65 / SIRP 50 / CL 60). The full-season projection fixes the cycle-13 bug where mid-career grads with elite rates (e.g. Junior Caminero, 4.6 WAR over ~510 PA at FV 55) read as negative WAG simply because they hadn't accumulated a full season's WAR yet. Sample floor: hitters need ≥150 career PA, pitchers need ≥50 career IP — below that, WAG returns None and no BOOM/BUST pill renders. Targets are loaded from data/role_full_season_baselines.json (MLB qualifier medians, refreshed annually).",
+    formula: "WAG = (career_war / career_pa or ip) × full_season_target − expected_war(FV)\nhitter target: 612 PA · SP: 175 IP · MIRP: 65 IP · SIRP: 50 IP · CL: 60 IP",
+    example: "Junior Caminero: 4.6 WAR / 510 PA × 612 ≈ 5.5 full-season WAR. FV 55 expects 2.5. WAG = +3.0 → BOOM.",
+    related: ["fv", "war", "boom_bust_label", "fv_war_table"],
   },
   // ---- Pitcher roles (SP / RP / SIRP / MIRP) ----
   "sp": {
@@ -12060,10 +12290,10 @@ const GLOSSARY = {
     related: ["game_power"],
   },
   "speed_tool": {
-    name: "Speed", aliases: ["Speed", "Run", "SPD"], category: "scouting",
-    short: "20-80 grade for foot speed. 60-yard dash, home-to-first time, baserunning instincts.",
-    long: "Plays on both sides of the ball: offense (baserunning, BABIP, extra bases) and defense (range, jumps, recovery). Speed contributes to both the offensive and defensive composites for hitters.",
-    related: ["tools_plus"],
+    name: "Run", aliases: ["Run", "Speed", "RUN", "SPD"], category: "scouting",
+    short: "20-80 grade for foot speed. 60-yard dash, home-to-first time, baserunning instincts. Displayed as RUN across the site (the legacy abbreviation SPD also resolves).",
+    long: "Plays on both sides of the ball: offense (baserunning, BABIP, extra bases) and defense (range, jumps, recovery). Run contributes to both the offensive (O-Tools+, 4% weight) and defensive (D-Tools+, 10% weight for non-catchers) composites for hitters.",
+    related: ["tools_plus", "tools_plus_offensive", "tools_plus_defensive"],
   },
   "field_tool": {
     name: "Field", aliases: ["Field", "FLD"], category: "scouting",
@@ -14512,7 +14742,7 @@ function makeFarmToolDevCard(org) {
       <div class="tooldev-grid">
         ${cellHtml("Hit",      "hit")}
         ${cellHtml("Power",    "power")}
-        ${cellHtml("Speed",    "speed")}
+        ${cellHtml("Run",      "speed")}
         ${cellHtml("Field",    "field")}
         ${cellHtml("Arm",      "arm")}
         ${cellHtml("PitchSel", "pitch_sel")}
@@ -16021,8 +16251,8 @@ function renderFarmSystems() {
         <div class="metric-cell"><span class="metric-label">${win.toUpperCase()}DvM+</span><span class="metric-value">${dvm != null ? dvm : "—"}</span></div>
         <div class="metric-cell"><span class="metric-label">Top-End</span><span class="metric-value">${org.top_end_points != null ? org.top_end_points.toFixed(0) : "—"}</span></div>
         <div class="metric-cell"><span class="metric-label">Depth</span><span class="metric-value">${org.depth_points != null ? org.depth_points.toFixed(0) : "—"}</span></div>
-        <div class="metric-cell" title="Per-org graduate boom % — % of settled grads with WAG ≥ +5"><span class="metric-label">Boom%</span><span class="metric-value tier-boom">${boomPct != null ? boomPct + "%" : "—"}</span></div>
-        <div class="metric-cell" title="Per-org graduate bust % — % of settled grads with WAG ≤ −2"><span class="metric-label">Bust%</span><span class="metric-value tier-bust">${bustPct != null ? bustPct + "%" : "—"}</span></div>
+        <div class="metric-cell" title="Per-org graduate boom % — % of settled grads with WAG ≥ +2.5 (full-season-equivalent)"><span class="metric-label">Boom%</span><span class="metric-value tier-boom">${boomPct != null ? boomPct + "%" : "—"}</span></div>
+        <div class="metric-cell" title="Per-org graduate bust % — % of settled grads with WAG ≤ −1.5 (full-season-equivalent)"><span class="metric-label">Bust%</span><span class="metric-value tier-bust">${bustPct != null ? bustPct + "%" : "—"}</span></div>
       </div>`;
     return `
       <div class="farm-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)}">
@@ -17128,7 +17358,7 @@ function renderPlayerDetail(key) {
   const avl = p.age_vs_level || {};
   const fvLabel = latest ? latest.consensus_fv_label : "—";
   const fvBadge = latest
-    ? `<span class="fv-badge ${fvClass(fvLabel)} size-lg${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}" style="margin-top:4px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}</span>`
+    ? `<span class="fv-badge ${fvClass(fvLabel)} size-lg${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}" style="margin-top:4px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>`
     : "";
 
   // Rank pills — overall position in the FV-sorted active list, plus org
@@ -17919,7 +18149,7 @@ function renderPlayerDetail(key) {
         <div class="tools-composite-chip-value">${badgeFor(raw)} ${plusPill(plus)}</div>
       </div>`;
     };
-    const dualMarkerHTML = `<span class="tool-dual-marker" title="Speed contributes to BOTH offensive (baserunning, BABIP, extra bases) and defensive (range, jumps) composites.">◆</span>`;
+    const dualMarkerHTML = `<span class="tool-dual-marker" title="Run contributes to BOTH offensive (baserunning, BABIP, extra bases) and defensive (range, jumps) composites.">◆</span>`;
     // Per-source tooltip builder. Reads from the latest snapshot's
     // per_source dict; lists each source that published this tool with
     // its grade. FanGraphs gets a "present/future" pair when both
@@ -18052,12 +18282,18 @@ function renderPlayerDetail(key) {
         ${cmdGrid ? `<div class="tools-grade-grid">${cmdGrid}</div>` : ""}
       `;
     } else {
+      // v14 — Overall = equally-weighted p=4 power-mean of every scouted tool
+      // (hit/pwr/run/field/arm/pitch_sel/bat_ctrl) + FG physical grades (Frame,
+      // Athleticism mapped from -2..+2 → 30..70 FV). O-Tools+ is the weighted
+      // offensive composite (HIT 40 / PWR 40 / BCTRL 10 / PSEL 6 / RUN 4).
+      // D-Tools+ is the weighted defensive composite (DEF 60 / ARM 30 / RUN 10,
+      // catchers DEF 70 / ARM 30), p=3 power-mean.
       const overallChip = compositeChip("Overall", t.composite_overall, t.composite_overall_plus,
-        "Weighted composite: 70% offensive + 30% defensive", true);
-      const offChip = compositeChip("Offensive", t.composite_off, t.composite_off_plus,
-        "Power-mean of hit · game power · raw power · speed · pitch selection · bat control", false);
-      const defChip = compositeChip("Defensive", t.composite_def, t.composite_def_plus,
-        "Average of field · throw · speed", false);
+        "Tools+: equally-weighted p=4 power-mean of every tool incl. Frame/Athl FG grades", true);
+      const offChip = compositeChip("O-Tools+", t.composite_off, t.composite_off_plus,
+        "O-Tools+: weighted offensive composite — HIT 40 · PWR 40 · BCTRL 10 · PSEL 6 · RUN 4", false);
+      const defChip = compositeChip("D-Tools+", t.composite_def, t.composite_def_plus,
+        "D-Tools+: weighted power-mean (p=3) — DEF 60 · ARM 30 · RUN 10 (catchers: DEF 70 · ARM 30)", false);
       compositeBar = (overallChip || offChip || defChip)
         ? `<div class="tools-composite-bar">${overallChip}${offChip}${defChip}</div>`
         : "";
@@ -18068,7 +18304,7 @@ function renderPlayerDetail(key) {
       const hitterOrder = ["hit","game_pwr","raw_pwr","speed","field","throw",
                            "pitch_sel","bat_ctrl"];
       const labels = {hit:"Hit", game_pwr:"Game pwr", raw_pwr:"Raw pwr",
-                      speed:"Speed", field:"Field", throw:"Throw",
+                      speed:"Run", field:"Field", throw:"Throw",
                       pitch_sel:"Pitch Sel", bat_ctrl:"Bat Ctrl"};
       const cells = hitterOrder
         .filter(k => (t.grades || {})[k] != null)
@@ -18084,30 +18320,63 @@ function renderPlayerDetail(key) {
       const allCells = cells + fgExtraCells;
       groupBlocks = allCells ? `<div class="tools-grade-grid">${allCells}</div>` : "";
     }
-    // Development row — FG's 1-5 dev grades (Frame / Athl / Perf).
-    // These live in _extras (1-5 scale, NOT 20-80) so they get their
-    // own row beneath the canonical grade grid rather than mixing
-    // scales. Renders for both hitters and pitchers when published.
+    // v14 — Physical profile row: Build (Ht/Wt/BMI) + FG plus/minus
+    // dev grades (Frame + Athleticism). FG publishes these on a -2..+2
+    // scale that maps to scouting plus/minus + an implied 20-80 FV:
+    //   -2 = MINUS-MINUS  (~30 FV)
+    //   -1 = MINUS        (~40 FV)
+    //    0 = neutral      (50 FV  — no penalty / no boost)
+    //   +1 = PLUS         (~60 FV)
+    //   +2 = PLUS-PLUS    (~70 FV)
+    // The legacy "Perf" grade is dropped per user ask — we already
+    // capture statistical performance elsewhere (RPS+ / wRC+ / OPS+
+    // vs level mean), no need to surface it as a physical tool.
+    // "Athl" renamed to "Athleticism" (display) / ATHL (abbrev).
     {
       const ex = _getFgExtras(p);
-      if (ex && (ex.frame != null || ex.athl != null || ex.perf != null)) {
-        const fg15Cell = (key, label) => {
-          const v = ex[key];
-          if (v == null || v === "") return "";
-          const desc = _fgGradeLabel(v);
-          return `<div class="tools-grade-cell" title="FanGraphs ${label} grade · 1-5 scale${desc ? ' · ' + desc : ''}">
-            <span class="tools-grade-name">${escapeHtml(label)}<sup style="font-size:8px;letter-spacing:0.04em;color:var(--neon-violet);margin-left:2px;" title="FanGraphs-only developmental grade (1-5 scale)">FG</sup></span>
-            <span style="font-family:var(--font-mono);font-weight:600;color:var(--text-primary);">${v}/5</span>
+      const phys = _getPhysicalProfile(p) || {};
+      const hasFG = ex && (ex.frame != null || ex.athl != null);
+      const hasPhys = phys.height_in || phys.weight_lb;
+      if (hasFG || hasPhys) {
+        // v14 — convert FG's -2..+2 grade into a 20-80 FV equivalent +
+        // a plus/minus label. Linear: fv = 50 + grade * 10.
+        const _PLUS_MINUS_LABELS = {
+          [-2]: "MINUS-MINUS", [-1]: "MINUS", [0]: "average",
+          [1]: "PLUS", [2]: "PLUS-PLUS",
+        };
+        const fgPmCell = (key, label, tooltip) => {
+          const raw = ex && ex[key];
+          if (raw == null || raw === "") return "";
+          const g = Number(raw);
+          if (!isFinite(g)) return "";
+          const fv = 50 + g * 10;
+          const tier = fv >= 65 ? 65 : fv >= 55 ? 55 : fv >= 45 ? 50 : 40;
+          const pmLbl = _PLUS_MINUS_LABELS[g] || `${g > 0 ? "+" : ""}${g}`;
+          const tip = `${tooltip} · ${g > 0 ? "+" : ""}${g} (${pmLbl}) → ${fv} FV equivalent`;
+          return `<div class="tools-grade-cell" title="${escapeHtml(tip)}">
+            <span class="tools-grade-name">${escapeHtml(label)}<sup style="font-size:8px;letter-spacing:0.04em;color:var(--neon-violet);margin-left:2px;" title="FanGraphs plus/minus dev grade">FG</sup></span>
+            <span style="font-family:var(--font-mono);font-weight:600;color:var(--fv-${tier}-bd, var(--text-primary));">${fv}</span>
           </div>`;
         };
+        // Ht/Wt/BMI combined into one cell (cycle 12).
+        const physBits = [];
+        if (phys.height_display) physBits.push(escapeHtml(phys.height_display));
+        if (phys.weight_lb != null) physBits.push(`${phys.weight_lb} lb`);
+        if (phys.bmi != null) physBits.push(`BMI ${phys.bmi.toFixed(1)}`);
+        const physCells = physBits.length
+          ? `<div class="tools-grade-cell" style="grid-column:span 2;" title="Height · Weight · BMI (FanGraphs)">
+               <span class="tools-grade-name">Build</span>
+               <span style="font-family:var(--font-mono);font-weight:600;color:var(--text-primary);">${physBits.join(" · ")}</span>
+             </div>`
+          : "";
         const devCells = [
-          fg15Cell("frame", "Frame"),
-          fg15Cell("athl",  "Athl"),
-          fg15Cell("perf",  "Perf"),
+          fgPmCell("frame", "Frame",        "Physical projection / future build"),
+          fgPmCell("athl",  "Athleticism",  "Athleticism / movement quality"),
         ].filter(Boolean).join("");
-        if (devCells) {
-          groupBlocks += `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;margin:10px 0 4px;">Development (FanGraphs · 1-5 scale)</div>
-            <div class="tools-grade-grid">${devCells}</div>`;
+        const allPhys = physCells + devCells;
+        if (allPhys) {
+          groupBlocks += `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;margin:10px 0 4px;">Physical <span style="font-style:italic;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-tertiary);">· Build + FG plus/minus dev grades (-2 to +2 → 30-70 FV)</span></div>
+            <div class="tools-grade-grid">${allPhys}</div>`;
         }
       }
     }
@@ -18140,7 +18409,7 @@ function renderPlayerDetail(key) {
     }
     const footerParts = [];
     if (hasSpeedMarker) {
-      footerParts.push(`<span class="tools-footer-legend">◆</span> Speed counts toward both composites`);
+      footerParts.push(`<span class="tools-footer-legend">◆</span> Run counts toward both composites`);
     }
     if (sourceBadge || sources) {
       const publishingTxt = sources ? `Publishing: ${escapeHtml(sources)}` : "";
@@ -18179,7 +18448,7 @@ function renderPlayerDetail(key) {
             .filter(k => (op.grades || {})[k] != null)
             .map(k => {
               const lab = ({hit:"Hit", game_pwr:"Game pwr", raw_pwr:"Raw pwr",
-                            speed:"Speed", field:"Field", throw:"Throw",
+                            speed:"Run", field:"Field", throw:"Throw",
                             pitch_sel:"Pitch Sel", bat_ctrl:"Bat Ctrl"})[k];
               const v = op.grades[k];
               return `<div class="tools-grade-cell">
@@ -19355,7 +19624,17 @@ function renderPlayerDetail(key) {
       ${_ovTile(_ovSurplus,   "details")}
       ${_ovTile(_ovStock,     null)}
     </div>`;
-  const overviewHtml = [summaryGridHtml, chartSection, sourceSection, noteSection]
+  // v12 — scouting reports also surface on the Overview tab so users
+  // see them up-front. Same section still renders on Scouting & Tools
+  // (per user redundancy ask). Wrapped in <details open> here so the
+  // Overview can collapse it without losing the content entirely.
+  const scoutReportsOnOverview = scoutingReportsSection
+    ? `<details open style="margin:14px 0 6px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
+         <summary style="cursor:pointer;padding:8px 12px;font-family:var(--font-retro);font-size:13px;font-weight:600;color:var(--text-primary);user-select:none;list-style:revert;">Scouting reports</summary>
+         <div style="padding:0 12px 12px;">${scoutingReportsSection}</div>
+       </details>`
+    : "";
+  const overviewHtml = [summaryGridHtml, chartSection, scoutReportsOnOverview, sourceSection, noteSection]
     .filter(Boolean).join("");
   const performanceHtml = [consolidatedCareerSection, sabermetricsSection,
                            savantSection, arsenalSection, projectionArcSection]
@@ -22618,7 +22897,20 @@ function attachHandlers() {
     });
   });
   attachChipGroup("filter-health", "healthFilter", () => { resetListPages(); render(); });
-  attachChipGroup("filter-spread", "spreadFilter", () => { resetListPages(); render(); });
+  // v14 — Multi-select FV indicator chips. Each chip independently toggles
+  // its key in state.fvIndicators (Set). OR semantics across selections.
+  document.querySelectorAll("[data-filter-fvind]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.filterFvind;
+      if (!key) return;
+      if (!state.fvIndicators) state.fvIndicators = new Set();
+      if (state.fvIndicators.has(key)) state.fvIndicators.delete(key);
+      else state.fvIndicators.add(key);
+      btn.classList.toggle("active", state.fvIndicators.has(key));
+      resetListPages();
+      render();
+    });
+  });
   wireThemeToggle();
   // Density toggle chips — body class + localStorage so the choice
   // survives across sessions and reloads. URL also persists via

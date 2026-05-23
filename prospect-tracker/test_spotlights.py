@@ -94,11 +94,12 @@ def test_ethan_salas_style_profile_can_rebound_despite_top100_rank():
 
 
 def test_spotlights_export_keys():
-    """Spotlights now exports three buckets (risers + rebounders +
-    fallers) plus a legacy `hot` alias kept for one rebuild cycle so
-    older cached frontends still render."""
+    """Spotlights v12 exports four buckets (risers / rebounders /
+    fallers / possible_regressors) plus a legacy `hot` alias kept
+    for one rebuild cycle so older cached frontends still render."""
     out = build_spotlights([], [])
-    assert set(out) == {"risers", "rebounders", "fallers", "hot"}
+    assert set(out) == {"risers", "rebounders", "fallers",
+                        "possible_regressors", "hot"}
 
 
 def test_stable_multi_source_top100_player_is_not_rebounder():

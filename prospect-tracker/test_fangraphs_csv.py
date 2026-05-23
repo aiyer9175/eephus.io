@@ -191,7 +191,8 @@ class TestPhysicalRow:
         assert r["athl"] == 2
         assert r["levers"] == "Long"
         assert r["arm"] == 55
-        assert r["perf"] == 1
+        # v14 — perf no longer parsed; key is absent from the row dict.
+        assert "perf" not in r
         assert r["delivery"] is None
 
 
@@ -282,7 +283,9 @@ class TestBuildSnapshot:
         assert extras["athl"] == 2
         assert extras["levers"] == "Long"
         assert extras["arm"] == 55
-        assert extras["perf"] == 1
+        # v14 — perf grade no longer ingested (statistical performance
+        # surfaces elsewhere via wRC+ / xFIP-).
+        assert "perf" not in extras
         assert extras["report"] == "Best in baseball."
         assert extras["present"]["hit"] == 20
 

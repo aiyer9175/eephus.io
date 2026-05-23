@@ -740,13 +740,128 @@ def _exceeds_age_cap(age, level, is_pitcher: bool) -> bool:
     return diff >= cap
 
 
+# v12 — xMetric verification gate. AAA prospects have Statcast data on
+# file (via prospect_savant CSVs at prospect_savant.py:101-131). Use
+# wOBA-vs-xWOBA gap (hitters) and xFIP-vs-ERA gap (pitchers) to verify
+# whether the surface signal is supported by the underlying contact /
+# quality metrics. Returns one of "verified" / "unsupported" / "unknown".
+# "unknown" = no Statcast on file → skip the gate, keep current behavior.
+_XMETRIC_HITTER_WOBA_GAP_HOT  =  0.040   # wOBA exceeds xWOBA by 40 pts → over-performing
+_XMETRIC_HITTER_WOBA_GAP_COLD = -0.040   # wOBA lags xWOBA by 40 pts → bad luck
+_XMETRIC_PITCHER_XFIP_GAP_HOT =  0.80    # xFIP > ERA by 0.80 → lucky ERA suppression
+_XMETRIC_PITCHER_XFIP_GAP_COLD = -0.80   # xFIP < ERA by 0.80 → unlucky ERA inflation
+
+
+def _xmetric_verification(p: dict, direction: str) -> str:
+    """Verify the surface signal against Statcast x-metrics.
+
+    Args:
+      p: player payload with `statline` + `prospect_savant`.
+      direction: "up" (riser/rebound) or "down" (faller).
+
+    Returns: "verified" | "unsupported" | "unknown".
+    Only fires for AAA prospects with prospect_savant data; everything
+    else returns "unknown" so the gate becomes a no-op (preserves the
+    pre-v12 behavior for lower-level prospects).
+    """
+    sl = p.get("statline") or {}
+    if (sl.get("level") or "") != "AAA":
+        return "unknown"
+    ps = p.get("prospect_savant") or {}
+    if not ps:
+        return "unknown"
+    is_pitcher = bool(sl.get("is_pitcher"))
+    if is_pitcher:
+        era = _num(sl.get("era"))
+        xfip = _num(ps.get("xfip"))
+        if era is None or xfip is None:
+            return "unknown"
+        gap = xfip - era
+        if direction == "up":
+            # Riser/rebound for pitchers means ERA dropped. If xFIP is
+            # much higher than ERA, the surface improvement isn't real.
+            if gap >= _XMETRIC_PITCHER_XFIP_GAP_HOT:
+                return "unsupported"
+            return "verified"
+        # Faller — ERA rose. If xFIP is much lower, the bad ERA is luck.
+        if gap <= _XMETRIC_PITCHER_XFIP_GAP_COLD:
+            return "unsupported"
+        return "verified"
+    # Hitter path.
+    woba = _num(ps.get("woba"))
+    xwoba = _num(ps.get("xwoba"))
+    if woba is None or xwoba is None:
+        return "unknown"
+    gap = woba - xwoba
+    if direction == "up":
+        if gap >= _XMETRIC_HITTER_WOBA_GAP_HOT:
+            return "unsupported"
+        return "verified"
+    if gap <= _XMETRIC_HITTER_WOBA_GAP_COLD:
+        return "unsupported"
+    return "verified"
+
+
+def _check_possible_regressor(p: dict) -> tuple[float, list[str]] | None:
+    """Classify a player as a Possible Regressor (over-performer due
+    for regression). Returns (score, drivers) when triggered, else
+    None.
+
+    Triggers:
+      - AAA hitter with wOBA ≥ 0.330 AND wOBA - xWOBA ≥ 0.040, OR
+      - AAA pitcher with ERA ≤ 3.50 AND xFIP - ERA ≥ 0.80.
+
+    The score is the absolute Statcast gap (larger gap = stronger
+    regression candidate). Driver strings expose the math so the user
+    sees the wOBA/xWOBA or ERA/xFIP pair.
+    """
+    sl = p.get("statline") or {}
+    if (sl.get("level") or "") != "AAA":
+        return None
+    ps = p.get("prospect_savant") or {}
+    if not ps:
+        return None
+    is_pitcher = bool(sl.get("is_pitcher"))
+    if is_pitcher:
+        era = _num(sl.get("era"))
+        xfip = _num(ps.get("xfip"))
+        if era is None or xfip is None:
+            return None
+        if era > 3.50:
+            return None
+        gap = xfip - era
+        if gap < _XMETRIC_PITCHER_XFIP_GAP_HOT:
+            return None
+        drivers = [
+            f"ERA {era:.2f} / xFIP {xfip:.2f} (gap +{gap:.2f})",
+            "xFIP above ERA — unsustainable run prevention",
+        ]
+        return (round(gap, 2), drivers)
+    # Hitter path.
+    woba = _num(ps.get("woba"))
+    xwoba = _num(ps.get("xwoba"))
+    if woba is None or xwoba is None:
+        return None
+    if woba < 0.330:
+        return None
+    gap = woba - xwoba
+    if gap < _XMETRIC_HITTER_WOBA_GAP_HOT:
+        return None
+    drivers = [
+        f"wOBA {woba:.3f} / xWOBA {xwoba:.3f} (gap +{gap:.3f})",
+        "wOBA over xWOBA — unsustainable production",
+    ]
+    return (round(gap, 3), drivers)
+
+
 def _classify_movement(p: dict, perf_delta, skills_delta,
                        list_jump_score, pedigree) -> tuple[str, float, list[str]]:
     """Return (bucket, composite_score, drivers). Bucket is one of:
-      'riser'    — broad surface-jump cases
-      'rebound'  — pedigree-comeback narrative (Southisene)
-      'faller'   — decline cases (with tight disqualify gates)
-      'none'     — uneventful / insufficient data
+      'riser'              — broad surface-jump cases
+      'rebound'            — pedigree-comeback narrative (Southisene)
+      'faller'             — decline cases (with tight disqualify gates)
+      'possible_regressor' — AAA over-performer flagged by xMetric gap
+      'none'               — uneventful / insufficient data
     """
     drivers: list[str] = []
     sl = p.get("statline") or {}
@@ -881,6 +996,16 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             if _fv is not None and _fv >= 55.0:
                 drivers.append(f"high-FV pedigree ({int(_fv)})")
             drivers.append("pedigree comeback")
+            # v12 — same xMetric gate as risers. AAA-only.
+            verif = _xmetric_verification(p, "up")
+            if verif == "unsupported":
+                reg_signal = _check_possible_regressor(p)
+                if reg_signal is not None:
+                    reg_score, reg_drivers = reg_signal
+                    drivers.append("unsupported by x-metrics")
+                    return ("possible_regressor", reg_score, drivers + reg_drivers)
+            elif verif == "verified":
+                drivers.append("x-metrics verified")
             return ("rebound", score, drivers)
 
     # --- Riser: perf jumped meaningfully OR list-jump fired ---
@@ -927,6 +1052,29 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
         if lvl_boost > 0:
             score += lvl_boost
             drivers.append(f"sub-AAA prospect ({sl.get('level')})")
+        # v12 — current-season vs level-mean amplifier. statline carries
+        # `level_plus_pct` (signed: positive = better than the level's
+        # cohort mean). Strong above-mean performance lifts the riser
+        # score; near-mean performance leaves it alone. Caps at ±3.0
+        # points so it can break ties without dominating the score.
+        lp = _num(sl.get("level_plus_pct"))
+        if lp is not None and lp >= 15:
+            bonus = min(3.0, (lp - 15) / 10.0 + 1.0)  # 15%→1.0, 25%→2.0, 35%→3.0
+            score += bonus
+            drivers.append(f"+{lp:.0f}% vs level mean")
+        # v12 — xMetric verification gate for AAA risers. If the
+        # surface jump isn't supported by underlying Statcast (wOBA
+        # over xWOBA, ERA under xFIP), demote to Possible Regressor
+        # rather than letting the unsustainable surge headline Risers.
+        verif = _xmetric_verification(p, "up")
+        if verif == "unsupported":
+            reg_signal = _check_possible_regressor(p)
+            if reg_signal is not None:
+                reg_score, reg_drivers = reg_signal
+                drivers.append("unsupported by x-metrics")
+                return ("possible_regressor", reg_score, drivers + reg_drivers)
+        elif verif == "verified":
+            drivers.append("x-metrics verified")
         return ("riser", max(0.0, score), drivers)
 
     # --- Faller: perf declined meaningfully ---
@@ -1023,6 +1171,24 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
         drivers.append("skills broken at upper levels")
     if _fv_for_floor >= 55.0:
         drivers.append(f"high-FV decline ({int(_fv_for_floor)})")
+    # v12 — current-season vs level-mean amplifier. Strong below-mean
+    # performance deepens the faller score. Caps at -3.0 points.
+    lp = _num(sl.get("level_plus_pct"))
+    if lp is not None and lp <= -15:
+        penalty = max(-3.0, (lp + 15) / 10.0 - 1.0)  # -15→-1.0, -25→-2.0, -35→-3.0
+        score += penalty
+        drivers.append(f"{lp:.0f}% vs level mean")
+    # v12 — xMetric verification gate for AAA fallers. If the surface
+    # dip isn't supported by underlying Statcast (wOBA under xWOBA,
+    # ERA over xFIP), demote to "none" — the cold streak is bad luck
+    # rather than a real prospect drop. Drivers stay so the next
+    # rebuild can revisit the call.
+    verif = _xmetric_verification(p, "down")
+    if verif == "unsupported":
+        drivers.append("unsupported by x-metrics (likely bad luck)")
+        return ("none", 0.0, drivers)
+    if verif == "verified":
+        drivers.append("x-metrics verified")
     return ("faller", score, drivers)
 
 
@@ -1084,41 +1250,50 @@ def compute_movement(p: dict) -> dict:
 
 
 def build_spotlights(players: list[dict], graduates: list[dict]) -> dict:
-    """Three-bucket spotlight output: Risers, Rebounders, Fallers.
+    """Four-bucket spotlight output: Risers, Rebounders, Fallers, Possible
+    Regressors.
 
-    All three feed off the centralized compute_movement engine. The legacy
+    All buckets feed off the centralized compute_movement engine. The legacy
     `hot` key is aliased to `risers` for one release so cached payloads
-    still render."""
+    still render. v12 adds `possible_regressors` for AAA over-performers
+    whose surface stats aren't supported by their x-metrics."""
     risers: list[dict] = []
     rebounders: list[dict] = []
     fallers: list[dict] = []
+    regressors: list[dict] = []
 
     for p in players:
         m = compute_movement(p)
         bucket = m.get("bucket")
-        if bucket not in {"riser", "rebound", "faller"}:
+        if bucket not in {"riser", "rebound", "faller", "possible_regressor"}:
             continue
         entry = _entry(
             "hot" if bucket == "riser" else
-            ("rebounder" if bucket == "rebound" else "faller"),
+            ("rebounder" if bucket == "rebound" else
+             ("regressor" if bucket == "possible_regressor" else "faller")),
             p, m["delta"], m["drivers"],
         )
         entry["bucket"] = bucket
         entry["perf_delta"] = m.get("perf_delta")
         entry["skills_delta"] = m.get("skills_delta")
-        if bucket == "riser":     risers.append(entry)
-        elif bucket == "rebound": rebounders.append(entry)
-        elif bucket == "faller":  fallers.append(entry)
+        if bucket == "riser":               risers.append(entry)
+        elif bucket == "rebound":           rebounders.append(entry)
+        elif bucket == "faller":            fallers.append(entry)
+        elif bucket == "possible_regressor": regressors.append(entry)
 
     risers_sorted = sorted(risers, key=lambda x: -x["score"])[:TOP_N]
     rebounders_sorted = sorted(rebounders, key=lambda x: -x["score"])[:TOP_N]
     # Fallers sort ASCENDING (most-negative first).
     fallers_sorted = sorted(fallers, key=lambda x: x["score"])[:TOP_N]
+    # Regressors sort DESCENDING by gap magnitude — biggest over-
+    # performers (largest wOBA-xWOBA / xFIP-ERA gap) appear first.
+    regressors_sorted = sorted(regressors, key=lambda x: -x["score"])[:TOP_N]
 
     return {
         "risers":     risers_sorted,
         "rebounders": rebounders_sorted,
         "fallers":    fallers_sorted,
+        "possible_regressors": regressors_sorted,
         # Back-compat alias — older cached payloads / pre-rebuild frontends
         # read `.hot`. Drop after one rebuild cycle.
         "hot":        risers_sorted,

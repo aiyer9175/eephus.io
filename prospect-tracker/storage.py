@@ -146,8 +146,67 @@ def _power_mean(vals: list[float], p: float = _TOOLS_POWER_MEAN_P) -> float | No
     return (sum(v ** p for v in vals) / n) ** (1.0 / p)
 
 
+def _fg_pm_to_fv(pm: int | float | None) -> float | None:
+    # FG publishes Frame / Athl / Delivery on a -2..+2 plus/minus scale.
+    # Map to 20-80 FV space: -2→30, -1→40, 0→50, +1→60, +2→70.
+    if pm is None:
+        return None
+    try:
+        v = int(pm)
+    except (TypeError, ValueError):
+        return None
+    if v < -2 or v > 2:
+        return None
+    return 50.0 + 10.0 * v
+
+
+# Order matters: catcher first, then infield slots, then OF, then DH/UT.
+# Mirrors the JS positionBucket() priority used in the UI.
+_POS_BUCKET_C  = frozenset({"C"})
+_POS_BUCKET_IF = frozenset({"SS", "2B", "3B", "1B"})
+_POS_BUCKET_OF = frozenset({"LF", "CF", "RF", "OF"})
+
+
+def _position_bucket(position_str: str | None) -> str | None:
+    if not position_str:
+        return None
+    tokens = [t.strip().upper() for t in str(position_str).split("/") if t.strip()]
+    if any(t in _POS_BUCKET_C  for t in tokens): return "C"
+    if any(t in _POS_BUCKET_IF for t in tokens): return "IF"
+    if any(t in _POS_BUCKET_OF for t in tokens): return "OF"
+    if "DH" in tokens: return "DH"
+    return "UT"
+
+
+def _extract_player_extras(latest_point) -> dict:
+    # Consolidate per-source `tools._extras` into a single player-level dict.
+    # FG is the canonical publisher of frame/athl/delivery so we prefer its
+    # values when multiple sources publish (they basically never do for
+    # these keys, but the FG-first preference future-proofs the merge).
+    out: dict = {}
+    if not latest_point or not getattr(latest_point, "per_source", None):
+        return out
+    per_src = latest_point.per_source or {}
+    source_order = list(per_src.keys())
+    if "fangraphs" in source_order:
+        source_order.remove("fangraphs")
+        source_order.insert(0, "fangraphs")
+    for src in source_order:
+        info = per_src.get(src) or {}
+        tools = info.get("tools") or {}
+        extras = tools.get("_extras") if isinstance(tools, dict) else None
+        if not isinstance(extras, dict):
+            continue
+        for k, v in extras.items():
+            if k not in out and v is not None and v != "":
+                out[k] = v
+    return out
+
+
 def _compute_tool_composites(grades: dict[str, float] | None,
-                              is_pitcher: bool) -> dict | None:
+                              is_pitcher: bool,
+                              player_extras: dict | None = None,
+                              position_bucket: str | None = None) -> dict | None:
     """Build the raw (pre-Tools+) tools sub-object from per-tool consensus grades.
 
     Returns a dict with `grades` (the input, copied + rounded to 0.5),
@@ -184,9 +243,25 @@ def _compute_tool_composites(grades: dict[str, float] | None,
         result = _power_mean(vals)
         return round(result, 2) if result is not None else None
 
+    extras = player_extras or {}
+    frame_fv    = _fg_pm_to_fv(extras.get("frame"))
+    athl_fv     = _fg_pm_to_fv(extras.get("athl"))
+    delivery_fv = _fg_pm_to_fv(extras.get("delivery"))
+
     out: dict = {"grades": cleaned}
     if is_pitcher:
-        stuff = _avg(("fb", "sl", "cb", "ch"))
+        # v14 — Frame/Athl/Delivery FG plus-minus grades enter the stuff
+        # power-mean (p=3) as equal-weight inputs alongside fb/sl/cb/ch.
+        # A +2 delivery prospect now out-stuffs an identical pitch
+        # arsenal with a 0/5 (neutral) delivery, capturing the
+        # mechanics-quality axis of pitcher development.
+        stuff_inputs = [cleaned[k] for k in ("fb", "sl", "cb", "ch") if k in cleaned]
+        for fv in (frame_fv, athl_fv, delivery_fv):
+            if fv is not None:
+                stuff_inputs.append(fv)
+        stuff = _power_mean(stuff_inputs) if stuff_inputs else None
+        if stuff is not None:
+            stuff = round(stuff, 2)
         cmd = cleaned.get("cmd")
         out["composite_stuff"] = stuff
         out["composite_cmd"] = cmd
@@ -197,26 +272,93 @@ def _compute_tool_composites(grades: dict[str, float] | None,
         else:
             out["composite_overall"] = stuff if stuff is not None else cmd
         out["composite_off"] = None
-        out["composite_def"] = None
     else:
-        # Speed counts toward BOTH composites — it shapes offense (range
-        # on the bases, BABIP, taking the extra base) and defense (range
-        # in the field, jumps, recovery). Including it on both sides
-        # avoids penalizing burner CFs whose defensive value is range-
-        # driven rather than arm-driven.
-        # pitch_sel + bat_ctrl are plate-discipline / barrel-control
-        # tools (FG-published); they belong on the offensive side.
-        off = _avg(("hit", "game_pwr", "raw_pwr", "speed",
-                    "pitch_sel", "bat_ctrl"))
-        deff = _avg(("field", "throw", "speed"))
-        out["composite_off"] = off
-        out["composite_def"] = deff
-        if off is not None and deff is not None:
-            out["composite_overall"] = round(0.7 * off + 0.3 * deff, 2)
+        # v12 — O-Tools+ weighted blend: HIT 40 / PWR 40 / BCTRL 10 /
+        # PSEL 6 / SPD 4. Heavy "bats matter most" tilt — speed is a
+        # tiebreaker contributor, plate discipline rounds out the
+        # offense profile. PWR uses the consolidated `pwr` key if
+        # present, else falls back to the mean of game_pwr + raw_pwr.
+        # Defensive composite DROPPED in v12 — field + throw grades
+        # still display in the per-source / per-tool tables but no
+        # longer get their own composite index.
+        def _pwr_value():
+            if "pwr" in cleaned:
+                return cleaned["pwr"]
+            g = cleaned.get("game_pwr")
+            r = cleaned.get("raw_pwr")
+            if g is not None and r is not None:
+                return (g + r) / 2.0
+            if g is not None:
+                return g
+            return r  # may be None
+        OFF_WEIGHTS = {
+            "hit":       0.40,
+            "pwr":       0.40,
+            "bat_ctrl":  0.10,
+            "pitch_sel": 0.06,
+            "speed":     0.04,
+        }
+        off_inputs = {
+            "hit":       cleaned.get("hit"),
+            "pwr":       _pwr_value(),
+            "bat_ctrl":  cleaned.get("bat_ctrl"),
+            "pitch_sel": cleaned.get("pitch_sel"),
+            "speed":     cleaned.get("speed"),
+        }
+        present = {k: v for k, v in off_inputs.items() if v is not None}
+        if present:
+            total_w = sum(OFF_WEIGHTS[k] for k in present)
+            off = sum(OFF_WEIGHTS[k] * v for k, v in present.items()) / total_w
+            out["composite_off"] = round(off, 2)
         else:
-            out["composite_overall"] = off if off is not None else deff
+            out["composite_off"] = None
+        # v14 — Tools+ overall is the EQUALLY-WEIGHTED power-mean (p=4)
+        # of every tool the prospect carries, including DEF/Field +
+        # Frame/Athl FG physical grades (mapped from -2..+2 to 30..70).
+        # The p=4 power-mean rewards extreme tools more sharply than
+        # the p=3 used elsewhere — a 70 PWR + 45 HIT prospect (arithmetic
+        # mean 57.5) scores ~62 here. Captures "elite-tool ceiling"
+        # profiles cleanly. A neutral 0/5 physical sits at FV 50 and
+        # pulls the mean toward 50, which is the right behavior.
+        TOOLS_PLUS_KEYS = ("hit", "speed", "field", "throw",
+                           "pitch_sel", "bat_ctrl")
+        tools_plus_vals = [cleaned[k] for k in TOOLS_PLUS_KEYS if k in cleaned]
+        pwr_for_overall = _pwr_value()  # same consolidated PWR as O-Tools+
+        if pwr_for_overall is not None:
+            tools_plus_vals.append(pwr_for_overall)
+        for fv in (frame_fv, athl_fv):
+            if fv is not None:
+                tools_plus_vals.append(fv)
+        if tools_plus_vals:
+            out["composite_overall"] = round(
+                _power_mean(tools_plus_vals, p=4), 2
+            )
+        else:
+            out["composite_overall"] = None
         out["composite_stuff"] = None
         out["composite_cmd"] = None
+
+        # v14 — D-Tools+ (composite_def): weighted power-mean (p=3) of
+        # defensive tools. Catchers drop speed (irrelevant) and bump
+        # field — receiving/framing/blocking lives inside the field
+        # grade already. Non-catchers use field 60 / arm 30 / run 10.
+        if position_bucket == "C":
+            DEF_WEIGHTS = {"field": 0.70, "throw": 0.30}
+        else:
+            DEF_WEIGHTS = {"field": 0.60, "throw": 0.30, "speed": 0.10}
+        def_inputs = {k: cleaned.get(k) for k in DEF_WEIGHTS}
+        def_present = {k: v for k, v in def_inputs.items() if v is not None}
+        if def_present:
+            total_w = sum(DEF_WEIGHTS[k] for k in def_present)
+            # Weighted power-mean (p=3) — same outlier bias as O-Tools+,
+            # so an elite-glove 70 DEF jumps off the page.
+            weighted_cube = sum(DEF_WEIGHTS[k] * (v ** 3)
+                                for k, v in def_present.items())
+            out["composite_def"] = round(
+                (weighted_cube / total_w) ** (1.0 / 3.0), 2
+            )
+        else:
+            out["composite_def"] = None
     return out
 
 
@@ -235,6 +377,11 @@ def _attach_tool_plus_indices(payloads: list[dict]) -> None:
     reads relative to pitchers. (If a future iteration wants role-split
     norms, this is the one place to change.)
     """
+    # v14 — composite_def reactivated as D-Tools+ (hitters only). The
+    # cohort norm is computed across every hitter who has a composite_def
+    # value, mirroring the O-Tools+ pattern. Pitchers don't emit it
+    # (None on the tools dict), so they don't contribute to the cohort
+    # and they don't get a composite_def_plus stamped.
     composite_keys = ("composite_off", "composite_def",
                       "composite_stuff", "composite_cmd", "composite_overall")
     samples: dict[str, list[float]] = {k: [] for k in composite_keys}
@@ -276,11 +423,13 @@ def _attach_tool_plus_indices(payloads: list[dict]) -> None:
         # before X+ values existed, so we append composite flags here.
         overall_plus = t.get("composite_overall_plus")
         off_plus = t.get("composite_off_plus")
+        def_plus = t.get("composite_def_plus")
         stuff_plus = t.get("composite_stuff_plus")
         tool_flags = pl.setdefault("tool_flags", [])
         for plus_key, plus_val, label in (
             ("composite_overall_plus", overall_plus, "Overall tools"),
             ("composite_off_plus",     off_plus,     "Offensive tools"),
+            ("composite_def_plus",     def_plus,     "Defensive tools"),
             ("composite_stuff_plus",   stuff_plus,   "Stuff"),
         ):
             if plus_val is None:
@@ -313,6 +462,153 @@ def _attach_tool_plus_indices(payloads: list[dict]) -> None:
                 "polarity": "below_good",
                 "note": f"Overall tools index {overall_plus} — below-cohort toolset.",
             })
+
+
+# v14 — Breakout indicator constants.
+_BREAKOUT_WINDOW_DAYS = 180          # 6 months
+_BREAKOUT_WINDOW_MIN_UPDATES = 4     # at least 4 consensus points
+_BREAKOUT_FV_UPGRADE_THRESHOLD = 5.0
+_BREAKOUT_TOOL_VELOCITY_THRESHOLD = 3.0  # avg tool grade improvement
+_BREAKOUT_HITTER_RPS_PLUS_GATE = 120
+_BREAKOUT_PITCHER_STF_PLUS_GATE = 105
+_BREAKOUT_PITCHER_FIP_MINUS_GATE = 90
+
+
+def _compute_breakout_flag(payload: dict) -> dict | None:
+    """v14 — Active-prospect Breakout indicator.
+
+    A prospect flags as Breakout when:
+      - Window: at least 4 consensus points spanning ≥6 months (whichever
+        is longer in time).
+      - Tool signal: EITHER consensus FV climbed ≥ +5 over the window
+        OR mean tool-grade composite climbed ≥ +3.
+      - Perf gate: hitters need RPS+ ≥ 120; pitchers need
+        stf_plus_periph ≥ 105 OR fip_minus ≤ 90 (lower better). Two-way
+        prospects pass if either gate passes.
+
+    Returns a dict {flag, reason, perf_gate} suitable for stamping on
+    the payload, or None if the prospect doesn't qualify.
+    Graduated / inactive players are skipped (Breakout is an
+    active-prospect signal only).
+    """
+    if payload.get("status") != "active":
+        return None
+    points = payload.get("points") or []
+    if len(points) < _BREAKOUT_WINDOW_MIN_UPDATES:
+        return None
+    # Window start = the older of (today - 180d, the 4th-most-recent point's
+    # date). Both shrinking points yield "the older anchor wins."
+    try:
+        latest_date = date.fromisoformat(points[-1]["snapshot_date"])
+    except (ValueError, TypeError, KeyError):
+        return None
+    earliest_allowed = latest_date - timedelta(days=_BREAKOUT_WINDOW_DAYS)
+    fourth_recent_idx = len(points) - _BREAKOUT_WINDOW_MIN_UPDATES
+    try:
+        fourth_recent_date = date.fromisoformat(
+            points[fourth_recent_idx]["snapshot_date"])
+    except (ValueError, TypeError, KeyError):
+        return None
+    window_anchor_date = min(earliest_allowed, fourth_recent_date)
+
+    # Find the consensus point closest to (but not after) the window anchor.
+    # The earliest qualifying point is points[fourth_recent_idx] at worst.
+    anchor_pt = None
+    for pt in points:
+        try:
+            d = date.fromisoformat(pt["snapshot_date"])
+        except (ValueError, TypeError, KeyError):
+            continue
+        if d <= window_anchor_date:
+            anchor_pt = pt
+        else:
+            break
+    if anchor_pt is None:
+        anchor_pt = points[0]
+    latest_pt = points[-1]
+
+    # FV upgrade signal
+    fv_upgrade = None
+    try:
+        anchor_fv = float(anchor_pt.get("consensus_fv"))
+        latest_fv = float(latest_pt.get("consensus_fv"))
+        fv_upgrade = latest_fv - anchor_fv
+    except (TypeError, ValueError):
+        pass
+
+    # Tool-velocity signal — mean tool-grade composite delta. Iterate
+    # tool_consensus on the latest and anchor points; for each tool present
+    # at BOTH, compute (latest_grade - anchor_grade); average across tools.
+    anchor_tools = anchor_pt.get("tools_consensus") or {}
+    latest_tools = latest_pt.get("tools_consensus") or {}
+    shared = [k for k in latest_tools.keys()
+              if k in anchor_tools and isinstance(anchor_tools[k], (int, float))
+              and isinstance(latest_tools[k], (int, float))]
+    tool_velocity = None
+    if shared:
+        deltas = [float(latest_tools[k]) - float(anchor_tools[k]) for k in shared]
+        tool_velocity = sum(deltas) / len(deltas)
+
+    fv_signal = fv_upgrade is not None and fv_upgrade >= _BREAKOUT_FV_UPGRADE_THRESHOLD
+    tool_signal = tool_velocity is not None and tool_velocity >= _BREAKOUT_TOOL_VELOCITY_THRESHOLD
+    if not (fv_signal or tool_signal):
+        return None
+
+    # Performance gate — check hitter RPS+, then pitcher stf_plus_periph
+    # or fip_minus. Two-way passes if either side passes.
+    statline = payload.get("statline") or {}
+    saberm = payload.get("sabermetrics") or {}
+    perf_gate_passed = None
+
+    rps = statline.get("rps_plus")
+    try:
+        if rps is not None and float(rps) >= _BREAKOUT_HITTER_RPS_PLUS_GATE:
+            perf_gate_passed = "rps_plus"
+    except (TypeError, ValueError):
+        pass
+
+    if perf_gate_passed is None:
+        stf = statline.get("stf_plus_periph")
+        try:
+            if stf is not None and float(stf) >= _BREAKOUT_PITCHER_STF_PLUS_GATE:
+                perf_gate_passed = "stf_plus_periph"
+        except (TypeError, ValueError):
+            pass
+
+    if perf_gate_passed is None:
+        fipm = saberm.get("fip_minus")
+        try:
+            if fipm is not None and float(fipm) <= _BREAKOUT_PITCHER_FIP_MINUS_GATE:
+                perf_gate_passed = "fip_minus"
+        except (TypeError, ValueError):
+            pass
+
+    if perf_gate_passed is None:
+        return None
+
+    # Prefer FV-upgrade reason when both signals fire (scouts noticed is the
+    # cleaner story); otherwise tool velocity.
+    reason = "fv" if fv_signal else "tools"
+    return {
+        "flag": True,
+        "reason": reason,
+        "perf_gate": perf_gate_passed,
+        "fv_upgrade": round(fv_upgrade, 2) if fv_upgrade is not None else None,
+        "tool_velocity": round(tool_velocity, 2) if tool_velocity is not None else None,
+        "window_anchor_date": window_anchor_date.isoformat(),
+    }
+
+
+def _attach_breakout_flags(payloads: list[dict]) -> None:
+    """Stamp `breakout_flag` (bool) + `breakout_meta` (dict) on each active
+    payload after _attach_tool_plus_indices has populated everything else."""
+    for pl in payloads:
+        meta = _compute_breakout_flag(pl)
+        if meta is None:
+            pl["breakout_flag"] = False
+        else:
+            pl["breakout_flag"] = True
+            pl["breakout_meta"] = meta
 
 
 def _inactive_cutoff() -> date:
@@ -2036,16 +2332,17 @@ FARM_DEPTH_END      = 25            # ... through #25 feed the "depth" score
 # secondary signal worth a combined ~12%. DvM+ REPLACED the raw
 # Trajectory weight (DvM+ is the z-scored, league-mean-anchored
 # version of the same delta — strictly more informative).
-FARM_WEIGHT_TOP_END             = 0.28
-FARM_WEIGHT_DEPTH               = 0.18
-FARM_WEIGHT_DVM_PLUS            = 0.12   # was FARM_WEIGHT_TRAJECTORY
+FARM_WEIGHT_TOP_END             = 0.24   # v14 — was 0.28; trimmed 4pt to give DvM+
+FARM_WEIGHT_DEPTH               = 0.16   # v14 — was 0.18; trimmed 2pt to keep sum=1.0
+FARM_WEIGHT_DVM_PLUS            = 0.18   # v14 — was 0.12; bumped 6pt (TBR audit:
+                                         # high-DvM+ orgs were under-credited)
 FARM_WEIGHT_GRAD                = 0.12
-FARM_WEIGHT_TALENT_TRANSLATION  = 0.10   # NEW — per-org WAG mean
-FARM_WEIGHT_FINANCIAL_ROI       = 0.08   # NEW — WAR per million spent
-FARM_WEIGHT_TOOLS_QUALITY       = 0.06   # NEW — top-10 mean composite_overall
-FARM_WEIGHT_INTL_DEPTH          = 0.03   # NEW — IFA % + multi-year span
-FARM_WEIGHT_READINESS           = 0.02   # NEW — (very_young - very_old) %
-FARM_WEIGHT_HEALTH              = 0.01   # NEW — INVERSE (lower burden = better)
+FARM_WEIGHT_TALENT_TRANSLATION  = 0.10
+FARM_WEIGHT_FINANCIAL_ROI       = 0.08
+FARM_WEIGHT_TOOLS_QUALITY       = 0.06
+FARM_WEIGHT_INTL_DEPTH          = 0.03
+FARM_WEIGHT_READINESS           = 0.02
+FARM_WEIGHT_HEALTH              = 0.01
 # Back-compat alias — kept so external imports don't break. The blend
 # no longer uses FARM_WEIGHT_TRAJECTORY directly; DvM+ took its slot.
 FARM_WEIGHT_TRAJECTORY  = FARM_WEIGHT_DVM_PLUS
@@ -2287,69 +2584,78 @@ def _grad_wag_cumulative(graduate_payload: dict) -> float | None:
     return round(float(total_war) - expected, 2)
 
 
-def _grad_wag(graduate_payload: dict) -> float | None:
-    """WAG (WAR Above Grade) for one graduate, rate-based:
-    (career WAR/yr) − (FV-implied WAR/yr).
+# v14 — Role-typical full-season workload targets. Loaded once on module
+# import; the JSON file is a static lookup refreshed annually from the
+# offline aggregator. Falls back to hardcoded MLB qualifier defaults if
+# the file is missing or malformed.
+_ROLE_BASELINE_DEFAULTS = {
+    "hitter_pa_target": 612.0,
+    "sp_ip_target":     175.0,
+    "mirp_ip_target":    65.0,
+    "sirp_ip_target":    50.0,
+    "cl_ip_target":      60.0,
+}
 
-      WAG > 0 → graduate is producing ABOVE their FV-implied rate.
-      WAG < 0 → graduate is producing BELOW.
-      WAG = 0 → tracking the FV-implied trajectory.
 
-    Source of truth — boom/bust label + per-org talent_translation
-    rollups both read this. Mirrors the frontend `gradVsFvProjection`
-    helper so the WAG pill on every graduate detail page matches what
-    the backend stamps. Returns None when career_war.war_per_yr is
-    missing OR when fv_close is missing (player never publicly graded).
-    Distinct from 'returned a 0' — None means 'no projection possible'."""
-    cw = graduate_payload.get("career_war") or {}
-    war_per_yr = cw.get("war_per_yr")
-    fv_close = graduate_payload.get("fv_close_raw")
-    if fv_close is None:
-        fv_close = graduate_payload.get("fv_close")
-    if war_per_yr is None or fv_close is None:
-        return None
-    # Pitcher vs hitter table — pulled from the player's position when
-    # available; falls back to hitter table when unknown.
-    _PITCHER_POS_LOCAL = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP", "P"}
-    is_pitcher = False
+def _load_role_full_season_baselines() -> dict[str, float]:
+    path = Path(__file__).parent / "data" / "role_full_season_baselines.json"
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            raw = json.load(fh)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return dict(_ROLE_BASELINE_DEFAULTS)
+    out = dict(_ROLE_BASELINE_DEFAULTS)
+    for k in _ROLE_BASELINE_DEFAULTS:
+        v = raw.get(k)
+        try:
+            f = float(v)
+        except (TypeError, ValueError):
+            continue
+        if f > 0:
+            out[k] = f
+    return out
+
+
+_ROLE_BASELINES = _load_role_full_season_baselines()
+
+
+def _pitcher_role(graduate_payload: dict) -> str:
+    """Bucket a pitcher into SP / MIRP / SIRP / CL using the position
+    string. Saves/games-started signal isn't reliably surfaced on the
+    payload, so this defers to the consensus position (FG-driven, which
+    already breaks out SP/MIRP/SIRP/CL when it can). Falls back to MIRP
+    when the position is just RHP/LHP/P/RP without role detail."""
+    pos = (graduate_payload.get("position") or "").upper()
+    # Split on "/" — a "MIRP/SIRP" prospect leans MIRP.
+    tokens = [t.strip() for t in pos.split("/") if t.strip()]
+    if any(t in ("CL", "CP") for t in tokens):
+        return "cl"
+    if any(t == "SP" for t in tokens):
+        return "sp"
+    if any(t == "SIRP" for t in tokens):
+        return "sirp"
+    if any(t == "MIRP" for t in tokens):
+        return "mirp"
+    # Generic RP / RHP / LHP / P → assume multi-inning fallback.
+    return "mirp"
+
+
+def _is_pitcher_graduate(graduate_payload: dict) -> bool:
+    _PITCHER_POS_LOCAL = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP", "CL", "CP", "P"}
     pos = (graduate_payload.get("position") or "").upper().split("/")[0]
     if pos in _PITCHER_POS_LOCAL:
-        is_pitcher = True
+        return True
     saberm = graduate_payload.get("sabermetrics") or {}
-    if saberm.get("is_pitcher") is True:
-        is_pitcher = True
-    expected = _fv_to_expected_war_per_yr(fv_close, is_pitcher=is_pitcher)
-    if expected is None:
-        return None
-    return round(float(war_per_yr) - expected, 2)
+    return saberm.get("is_pitcher") is True
 
 
-def _compute_boom_bust(graduate_payload: dict) -> str:
-    """Categorize a graduate as boom / bust / settled / unsettled,
-    anchored on RATE-BASED WAG (WAR/yr above the FV-implied WAR/yr)
-    with a sample-size floor.
-
-    Returns one of:
-      "boom"      — WAG ≥ +1.5 WAR/yr, meets sample floor
-      "bust"      — WAG ≤ −0.7 WAR/yr, meets sample floor
-      "settled"   — meets sample floor but landed in the middle band
-      "unsettled" — no WAG, or sample too small to call
-
-    Sample-size floor: ≥2 MLB seasons OR ≥800 career PA OR ≥200 career IP.
-    Cup-of-coffee debuts stay 'unsettled' so we don't mislabel them on
-    light samples.
-
-    Thresholds re-anchored from cumulative (+5 / −2 career WAR) to
-    rate (+1.5 / −0.7 WAR/yr) so mid-career grads — a 2-yr Yamamoto
-    producing 2.4 WAR/yr vs FV 65's 3.5 implied — get the fair label.
-    Matches the frontend `gradVsFvProjection` pill."""
-    wag = _grad_wag(graduate_payload)
-    cw = graduate_payload.get("career_war") or {}
-    seasons = cw.get("war_seasons_count") or 0
-    career_rows = graduate_payload.get("career_stats") or []
+def _career_pa_ip(graduate_payload: dict) -> tuple[int, float]:
+    """Sum career_stats rows for total PA + IP. Used by the WAG sample
+    floor + the full-season-rate denominator."""
+    rows = graduate_payload.get("career_stats") or []
     total_pa = 0
     total_ip = 0.0
-    for s in career_rows:
+    for s in rows:
         try:
             total_pa += int(s.get("pa") or 0)
         except (TypeError, ValueError):
@@ -2358,12 +2664,97 @@ def _compute_boom_bust(graduate_payload: dict) -> str:
             total_ip += float(s.get("ip") or 0)
         except (TypeError, ValueError):
             pass
+    return total_pa, total_ip
+
+
+def _grad_wag(graduate_payload: dict) -> float | None:
+    """v14 WAG (WAR Above Grade) — role-adjusted full-season-equivalent.
+
+    Computes WAR-per-(PA|IP) from career totals, projects to a
+    full-season workload baseline for the player's role, then subtracts
+    the FV-implied per-season WAR. The full-season projection corrects
+    the cycle-13 bug where mid-career grads with elite rates (e.g.
+    Junior Caminero, 4.6 WAR over ~510 PA at FV 55) read as negative
+    WAG simply because they hadn't accumulated a full season yet.
+
+    Sample-size floor:
+      - Hitters: career_pa ≥ 150
+      - Pitchers: career_ip ≥ 50
+    Below the floor, returns None (avoids cup-of-coffee noise driving
+    BOOM/BUST pills).
+
+    Full-season targets come from `data/role_full_season_baselines.json`
+    (MLB qualifier medians, refreshed annually).
+    """
+    cw = graduate_payload.get("career_war") or {}
+    total_war = cw.get("career_war")
+    fv_close = graduate_payload.get("fv_close_raw")
+    if fv_close is None:
+        fv_close = graduate_payload.get("fv_close")
+    if total_war is None or fv_close is None:
+        return None
+    try:
+        career_war = float(total_war)
+    except (TypeError, ValueError):
+        return None
+
+    is_pitcher = _is_pitcher_graduate(graduate_payload)
+    total_pa, total_ip = _career_pa_ip(graduate_payload)
+
+    if is_pitcher:
+        if total_ip < 50.0:
+            return None
+        role = _pitcher_role(graduate_payload)
+        target = _ROLE_BASELINES.get(f"{role}_ip_target",
+                                     _ROLE_BASELINES["mirp_ip_target"])
+        if target <= 0:
+            return None
+        full_season_war = (career_war / total_ip) * target
+    else:
+        if total_pa < 150:
+            return None
+        target = _ROLE_BASELINES.get("hitter_pa_target", 612.0)
+        if target <= 0:
+            return None
+        full_season_war = (career_war / total_pa) * target
+
+    expected = _fv_to_expected_war_per_yr(fv_close, is_pitcher=is_pitcher)
+    if expected is None:
+        return None
+    return round(full_season_war - expected, 2)
+
+
+def _compute_boom_bust(graduate_payload: dict) -> str:
+    """Categorize a graduate as boom / bust / settled / unsettled,
+    anchored on the v14 full-season-equivalent WAG.
+
+    Returns one of:
+      "boom"      — WAG ≥ +2.5, meets sample floor
+      "bust"      — WAG ≤ −1.5, meets sample floor
+      "settled"   — meets sample floor but landed in the middle band
+      "unsettled" — no WAG, or sample too small to call
+
+    Sample-size floor: ≥2 MLB seasons OR ≥800 career PA OR ≥200 career IP.
+    Cup-of-coffee debuts stay 'unsettled' so we don't mislabel them on
+    light samples.
+
+    Thresholds re-tuned for the v14 full-season-equivalent WAG (which
+    has a wider spread than the v13 per-year rate, because mid-career
+    grads' rates project up to a full season instead of being penalized
+    for partial accumulation). BOOM at +2.5 ≈ "outperformed FV by half
+    a tier across a projected full season"; BUST at −1.5 ≈ "fell short
+    by similar magnitude". Matches the frontend boomBustPillHTML
+    threshold."""
+    wag = _grad_wag(graduate_payload)
+    cw = graduate_payload.get("career_war") or {}
+    seasons = cw.get("war_seasons_count") or 0
+    total_pa, total_ip = _career_pa_ip(graduate_payload)
     meets_floor = (seasons >= 2) or (total_pa >= 800) or (total_ip >= 200)
     if wag is None or not meets_floor:
         return "unsettled"
-    if wag >= 1.5:
+    if wag >= 2.5:
         return "boom"
-    if wag <= -0.7:
+    if wag <= -1.5:
         return "bust"
     return "settled"
 
@@ -2624,11 +3015,13 @@ def _compute_tool_deltas(player_points: list[dict],
 
 
 # Per-tool DvM+ grouping. Most keys are 1:1 to a canonical tool from
-# scrapers.HITTER_TOOL_KEYS / PITCHER_TOOL_KEYS; "power" averages
-# game_pwr + raw_pwr for a single Power index that doesn't double-count.
+# scrapers.HITTER_TOOL_KEYS / PITCHER_TOOL_KEYS. v14 — `pwr` reads the
+# pre-consolidated `pwr` key (mean of game_pwr + raw_pwr at consensus
+# time, from cycle 12). The legacy `power` key remains as an alias so
+# pre-rebuild payloads still resolve, but new payloads only carry pwr.
 TOOL_GROUPS: dict[str, list[str]] = {
     "hit":       ["hit"],
-    "power":     ["game_pwr", "raw_pwr"],
+    "pwr":       ["pwr"],
     "speed":     ["speed"],
     "field":     ["field"],
     "arm":       ["throw"],
@@ -3292,14 +3685,26 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     def _safe_in_year_placeholder(player_key: str, year: int,
                                   rows: list[dict]) -> str:
-        """v7 bug fix — Chase DeLauter and others were getting
-        today.isoformat() pinned as their graduation date whenever the
-        API was missing and `mlb_years[0] == today.year`. That's wrong
-        for anyone who has REAL current-year MLB activity (a row with
-        PA≥1 or IP≥0.1) — those players already debuted, just not
-        today. Use a sensible {year}-07-01 placeholder when activity
-        exists; only fall through to today() for the rare "truly
-        debuting this very moment" case (zero PA and zero IP).
+        """v14 — pick a graduation-date placeholder that NEVER lands in
+        the future. The cycle-11 fix returned `{year}-07-01` for
+        current-year debuts; that broke on May rebuilds (DeLauter
+        showed July 1 as his grad date despite already debuting in
+        April). Now we clamp the placeholder to TODAY when {year}-07-01
+        would be in the future.
+
+        Priority chain:
+          1. Non-current year → `{year}-07-01` (mid-season anchor —
+             always in the past for prior years).
+          2. Current year + MLB activity + today >= {year}-07-01 →
+             `{year}-07-01` (debut happened earlier this season,
+             July-1 marker reads as "during the season" not "next
+             month").
+          3. Current year + MLB activity + today < {year}-07-01 →
+             TODAY (the debut already happened recently; pinning to
+             today is the safest non-future guess we can make).
+          4. Current year + zero MLB activity → TODAY + warning (the
+             player technically shouldn't be in this codepath; log so
+             we surface the data inconsistency).
         """
         if year != date.today().year:
             return f"{year}-07-01"
@@ -3308,6 +3713,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
              if r.get("level") == "MLB" and r.get("season") == year),
             None,
         )
+        today_iso = date.today().isoformat()
+        midyear_iso = f"{year}-07-01"
         if mlb_row:
             try:
                 pa = float(mlb_row.get("pa") or mlb_row.get("ab") or 0)
@@ -3318,16 +3725,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             except (TypeError, ValueError):
                 ip = 0.0
             if pa >= 1 or ip >= 0.1:
-                # Already debuted this season — use season placeholder
-                # rather than pinning to today (which slides every day
-                # the data is rebuilt and looks wrong on the UI).
-                return f"{year}-07-01"
+                # v14 — clamp to today when {year}-07-01 lands in the
+                # future. Picks the EARLIER of mid-year and today, so
+                # we never claim a graduate's debut date is tomorrow.
+                return midyear_iso if midyear_iso <= today_iso else today_iso
         log.warning(
             "_safe_in_year_placeholder: %s falling back to today() "
             "(no PA/IP detected for %d MLB row); investigate API "
             "debut date.", player_key, year,
         )
-        return date.today().isoformat()
+        return today_iso
 
     def _display_graduation_date(p: PlayerTimeseries) -> str | None:
         """
@@ -4048,6 +4455,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # get a softer one. None for orgs with <5 historical
             # promotions on file in the 3-year window.
             org_promotion_tendency=_org_tendency,
+            # v12 — current IL status pushes ETA out. Season-ending
+            # injury (or 60+ days on IL) adds +1.0y; 30-59 days adds
+            # +0.5y. Fixes "Sebastian Walcott ETA 2026 despite being
+            # out for the year" — without this, the ETA model only
+            # tracked rolling-12mo health signals, not active IL.
+            il_status=il_status.get(p.player_key) or {},
         )
         # Performance-vs-level-median enrichment. wRC+/xFIP aren't on the
         # MLB Stats API, so we compute their conceptual cousins from the
@@ -4108,7 +4521,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             if latest_point and latest_point.tools_consensus
             else None
         )
-        tools_payload = _compute_tool_composites(tool_consensus_grades, is_pitcher)
+        # v14 — extras (frame/athl/delivery FG -2..+2 grades) and the
+        # position bucket (catcher vs non-catcher) both feed the v14
+        # Tools+ / D-Tools+ math, so consolidate once and pass through.
+        _player_extras = _extract_player_extras(latest_point)
+        _pos_bucket = _position_bucket(p.position)
+        tools_payload = _compute_tool_composites(
+            tool_consensus_grades, is_pitcher,
+            player_extras=_player_extras,
+            position_bucket=_pos_bucket,
+        )
         if tools_payload is not None:
             publishing = []
             if latest_point:
@@ -4130,9 +4552,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 has_pitcher = any(k in tool_consensus_grades for k in PITCHER_TOOL_KEYS)
                 if has_hitter and has_pitcher:
                     hitter_payload = _compute_tool_composites(
-                        tool_consensus_grades, is_pitcher=False)
+                        tool_consensus_grades, is_pitcher=False,
+                        player_extras=_player_extras,
+                        position_bucket=_pos_bucket)
                     pitcher_payload = _compute_tool_composites(
-                        tool_consensus_grades, is_pitcher=True)
+                        tool_consensus_grades, is_pitcher=True,
+                        player_extras=_player_extras,
+                        position_bucket=_pos_bucket)
                     if hitter_payload is not None:
                         tools_payload["hitter_payload"] = hitter_payload
                     if pitcher_payload is not None:
@@ -4418,9 +4844,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # detail roster, and the "Acquired by <ORG>" line on the
             # prospect detail page when distinct from the original
             # acquisition.
+            # v14 — Hoist event fields (date, from_org, to_org) up to
+            # current_acquisition top-level so the Acquisitions PAGE
+            # rendering doesn't have to dig through `.event` to find
+            # them. Fixes the Perales/Bennett bug where one side's
+            # trade rendered correctly but the other (whose fields
+            # only existed under `.event`) showed "?".
             "current_acquisition": {
-                "method": current_acq_method,
-                "event":  current_acq_event,
+                "method":      current_acq_method,
+                "event":       current_acq_event,
+                "date":        (current_acq_event or {}).get("date"),
+                "from_org":    (current_acq_event or {}).get("from_org"),
+                "to_org":      (current_acq_event or {}).get("to_org"),
+                "description": (current_acq_event or {}).get("description"),
             },
             # Spotrac-sourced active contract. Populated only when the
             # player has a current MLB contract on file (active roster /
@@ -4783,9 +5219,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # tools?" — the X+ normalization is for peer comparison, not
         # cross-org quality.
         is_pitcher_p = bool(p.position and p.position.split("/")[0] in PITCHER_POS_SET)
+        _farm_extras = _extract_player_extras(p.points[-1] if p.points else None)
+        _farm_pos_bucket = _position_bucket(p.position)
         _comp = _compute_tool_composites(
             dict(p.points[-1].tools_consensus) if p.points[-1].tools_consensus else None,
             is_pitcher_p,
+            player_extras=_farm_extras,
+            position_bucket=_farm_pos_bucket,
         )
         if _comp and _comp.get("composite_overall") is not None:
             m.setdefault("_tools_comp_overall", []).append(float(_comp["composite_overall"]))
@@ -5420,7 +5860,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # Filter the per_tool_dvm_plus dict (just computed) into hitter-only
     # and pitcher-only groupings, average within each. These feed the
     # Development branch of the grade tree.
-    _HITTER_TOOL_DVM_KEYS = {"hit", "power", "speed", "field", "arm",
+    # v14 — `power` → `pwr` to match TOOL_GROUPS consolidation. The
+    # consensus layer (consensus.py) writes a unified `pwr` value per
+    # snapshot; the per-tool DvM+ aggregator reads it through this set.
+    _HITTER_TOOL_DVM_KEYS = {"hit", "pwr", "speed", "field", "arm",
                              "pitch_sel", "bat_ctrl"}
     _PITCHER_TOOL_DVM_KEYS = {"fb", "sl", "cb", "ch", "cmd", "ct"}
 
@@ -6222,6 +6665,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # he graduated. Single call ensures every payload's composite_*_plus
     # references the same baseline.
     _attach_tool_plus_indices(active_payload + inactive_payload + graduate_payload)
+
+    # v14 — Breakout indicator pass. Walks active prospects only and
+    # stamps `breakout_flag` based on tool / FV velocity over the last
+    # 6 months (or last 4 source updates, whichever spans more time) +
+    # a performance gate (RPS+ for hitters, stf_plus_periph / fip_minus
+    # for pitchers). Rare-but-possible — expects ~10-40 prospects to
+    # qualify league-wide.
+    _attach_breakout_flags(active_payload)
 
     # Cleanup: `_active_keys` was retained on org_summary entries for
     # potential post-serialization joins (now unused after Tools+ moved

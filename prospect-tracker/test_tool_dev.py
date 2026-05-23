@@ -105,25 +105,27 @@ class TestComputeToolDeltas:
 # ---------------------------------------------------------------------------
 
 class TestToolGroups:
-    def test_power_groups_both_power_tools(self):
-        # PowerDvM+ averages game_pwr + raw_pwr so an org doesn't get
-        # double-counted for developing both.
-        assert set(TOOL_GROUPS["power"]) == {"game_pwr", "raw_pwr"}
+    def test_pwr_group_uses_consolidated_key(self):
+        # v14 — PowerDvM+ reads the consolidated `pwr` key, which is
+        # synthesized at the consensus layer from game_pwr + raw_pwr.
+        # The legacy "power" group key was renamed to "pwr" to match the
+        # per-source per-tool consolidation.
+        assert TOOL_GROUPS["pwr"] == ["pwr"]
 
     def test_arm_maps_to_throw_canonical_key(self):
         # Display name "Arm" is fed by the canonical "throw" key.
         assert TOOL_GROUPS["arm"] == ["throw"]
 
     def test_all_canonical_keys_covered(self):
-        # Every canonical tool key from scrapers should appear in at
-        # least one TOOL_GROUPS bucket.
+        # Every TOOL_GROUPS bucket must reference canonical tool keys.
+        # v14 — `pwr` is now a canonical synthesized key (from game_pwr +
+        # raw_pwr at consensus time), but isn't in HITTER_TOOL_KEYS yet
+        # (which still lists the source-published keys). Allow it.
         from scrapers import HITTER_TOOL_KEYS, PITCHER_TOOL_KEYS
-        all_canonical = set(HITTER_TOOL_KEYS) | set(PITCHER_TOOL_KEYS)
+        all_canonical = set(HITTER_TOOL_KEYS) | set(PITCHER_TOOL_KEYS) | {"pwr"}
         all_grouped: set[str] = set()
         for keys in TOOL_GROUPS.values():
             all_grouped.update(keys)
-        # Allow scrapers to declare more keys than we group (forward-
-        # compatible) but every group key must be canonical.
         assert all_grouped <= all_canonical
 
 

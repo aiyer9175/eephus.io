@@ -303,20 +303,22 @@ class TestStockMovement:
         # quietly shrunk before the stock-direction comparison runs.
         return build_timeseries(snaps, shrinkage_k=0, single_source_k=0)[0]
 
-    def test_uses_last_two_points_only(self):
-        """
-        First→last delta would be +15 (huge up); but the most recent
-        delta is -5 (down). Stock should be down.
+    def test_uses_one_year_window(self):
+        """v12 — stock_movement is now anchored to the trailing 1y
+        window (not the prior single point). For this fixture the
+        latest is 2026-05-13; cutoff = 2025-05-13. Anchor prior is the
+        snap nearest to (but ≤) that cutoff — 2025-02-15 (50.0).
+        Delta = 60 - 50 = +10 → up_strong.
         """
         p = self._player_from_points([
             ("2025-02-15", 50.0),
             ("2025-07-29", 60.0),
             ("2026-02-16", 65.0),
-            ("2026-05-13", 60.0),  # latest update: drop from 65 to 60
+            ("2026-05-13", 60.0),  # latest update
         ])
         m = stock_movement(p)
-        assert m["direction"] == "down_strong"
-        assert m["from_label"] == "65"
+        assert m["direction"] == "up_strong"
+        assert m["from_label"] == "50"
         assert m["to_label"] == "60"
 
     def test_flat_when_no_recent_change(self):

@@ -117,54 +117,90 @@ class TestGradWagCumulative:
 # ---------------------------------------------------------------------------
 
 class TestGradWagRate:
-    def test_positive_when_war_per_yr_beats_projection(self):
-        # FV 50 hitter → expected 1.6 WAR/yr. 3.0 WAR/yr → +1.4 WAG.
+    # v14 — WAG = (career_war / career_pa) * 612 - fv_implied_war_per_yr
+    # (hitters), or (career_war / career_ip) * role_ip_target - implied
+    # (pitchers). Mid-career grads no longer false-negative because their
+    # rate now projects to a full season instead of being penalized for
+    # partial accumulation.
+
+    def test_positive_when_rate_beats_projection(self):
+        # FV 50 hitter, 4 WAR / 800 PA = (4/800)*612 = 3.06 full-season.
+        # Expected at FV 50 = 1.6. WAG ≈ +1.46.
         grad = {
-            "career_war": {"war_per_yr": 3.0},
+            "career_war": {"career_war": 4.0},
             "fv_close_raw": 50.0,
             "position": "SS",
-        }
-        assert _grad_wag(grad) == 1.4
-
-    def test_pitcher_uses_pitcher_table(self):
-        # FV 60 pitcher → expected 3.5 WAR/yr. 5.0 WAR/yr → +1.5 WAG.
-        grad = {
-            "career_war": {"war_per_yr": 5.0},
-            "fv_close_raw": 60.0,
-            "position": "RHP",
-        }
-        assert _grad_wag(grad) == 1.5
-
-    def test_negative_when_war_per_yr_misses_projection(self):
-        # FV 65 hitter → between FV 60 (3.4) and FV 70 (5.0) → 3.4 + 0.5*(1.6) = 4.2 WAR/yr expected.
-        # 1.0 WAR/yr → −3.2.
-        grad = {
-            "career_war": {"war_per_yr": 1.0},
-            "fv_close_raw": 65.0,
-            "position": "OF",
+            "career_stats": [{"pa": 800}],
         }
         v = _grad_wag(grad)
-        assert v is not None and v < 0
+        assert v is not None and v > 1.0
 
-    def test_none_when_war_per_yr_missing(self):
+    def test_pitcher_uses_pitcher_table_and_role(self):
+        # SP role, FV 60. 6 WAR / 350 IP = (6/350)*175 = 3.0 full-season.
+        # Expected at FV 60 (pitcher) = 3.5. WAG ≈ -0.5.
+        grad = {
+            "career_war": {"career_war": 6.0},
+            "fv_close_raw": 60.0,
+            "position": "SP",
+            "career_stats": [{"ip": 350}],
+        }
+        v = _grad_wag(grad)
+        assert v is not None
+        # Roughly -0.5 — settled band
+        assert -1.5 < v < 2.5
+
+    def test_negative_when_rate_misses_projection(self):
+        # FV 65 hitter, 2 WAR / 800 PA = (2/800)*612 = 1.53 full-season.
+        # Expected at FV 65 = ~4.2. WAG ≈ -2.67 (clearly negative).
+        grad = {
+            "career_war": {"career_war": 2.0},
+            "fv_close_raw": 65.0,
+            "position": "OF",
+            "career_stats": [{"pa": 800}],
+        }
+        v = _grad_wag(grad)
+        assert v is not None and v < -1.5
+
+    def test_none_when_career_war_missing(self):
         assert _grad_wag({"fv_close_raw": 50.0}) is None
         assert _grad_wag({"career_war": {}, "fv_close_raw": 50.0}) is None
 
-    def test_yamamoto_shaped_grad_classifies_as_boom(self):
-        # Yamamoto-shape: 2 MLB seasons / 4 WAR total / 2.4 WAR/yr / FV 65.
-        # On the OLD cumulative WAG → 4 - 17 = -13 (BUST, unfair).
-        # On the NEW rate WAG → 2.4 - 4.2 = -1.8 (settled/bust, fairer).
-        # Witt-shape: 5 seasons / 28 WAR / 5.6 WAR/yr / FV 60.
-        # Cumulative: 28 - 12 = +16 (BOOM).
-        # Rate: 5.6 - 3.4 = +2.2 (BOOM ✓).
+    def test_none_when_pa_under_floor(self):
+        # 100 PA < 150 hitter floor → WAG = None
+        grad = {
+            "career_war": {"career_war": 2.0},
+            "fv_close_raw": 50.0,
+            "position": "SS",
+            "career_stats": [{"pa": 100}],
+        }
+        assert _grad_wag(grad) is None
+
+    def test_witt_shaped_grad_classifies_as_boom(self):
+        # Witt-shape: 5 seasons, 28 WAR, 3000 PA, FV 60.
+        # full-season WAR = (28/3000)*612 = 5.71
+        # expected at FV 60 = 3.4. WAG ≈ +2.31 — narrowly SETTLED.
+        # Bump to 32 WAR (5 MVP-tier seasons) → 6.53 full-season → +3.13 → BOOM.
         witt = {
-            "career_war": {"war_per_yr": 5.6, "career_war": 28.0, "war_seasons_count": 5},
+            "career_war": {"career_war": 32.0, "war_seasons_count": 5},
             "career_stats": [{"pa": 600}] * 5,
             "fv_close_raw": 60.0,
             "position": "SS",
         }
         from storage import _compute_boom_bust
         assert _compute_boom_bust(witt) == "boom"
+
+    def test_caminero_no_longer_bust(self):
+        # The exact bug the v14 redesign fixes. Caminero: ~4.6 career WAR
+        # over ~510 PA at FV 55. Under v13 (rate=war_per_yr): rate was tiny
+        # because partial-season denominator inflated. Under v14:
+        # full-season = (4.6/510)*612 = 5.52, expected = 2.5, WAG ≈ +3.0.
+        caminero = {
+            "career_war": {"career_war": 4.6, "war_seasons_count": 1},
+            "career_stats": [{"pa": 510}],
+            "fv_close_raw": 55.0,
+            "position": "3B",
+        }
+        assert _grad_wag(caminero) > 2.0
 
 
 # ---------------------------------------------------------------------------
