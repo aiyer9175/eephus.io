@@ -2368,17 +2368,24 @@ FARM_DEPTH_END      = 25            # ... through #25 feed the "depth" score
 # secondary signal worth a combined ~12%. DvM+ REPLACED the raw
 # Trajectory weight (DvM+ is the z-scored, league-mean-anchored
 # version of the same delta — strictly more informative).
-FARM_WEIGHT_TOP_END             = 0.24   # v14 — was 0.28; trimmed 4pt to give DvM+
-FARM_WEIGHT_DEPTH               = 0.16   # v14 — was 0.18; trimmed 2pt to keep sum=1.0
-FARM_WEIGHT_DVM_PLUS            = 0.18   # v14 — was 0.12; bumped 6pt (TBR audit:
-                                         # high-DvM+ orgs were under-credited)
-FARM_WEIGHT_GRAD                = 0.12
-FARM_WEIGHT_TALENT_TRANSLATION  = 0.10
-FARM_WEIGHT_FINANCIAL_ROI       = 0.08
-FARM_WEIGHT_TOOLS_QUALITY       = 0.06
-FARM_WEIGHT_INTL_DEPTH          = 0.03
-FARM_WEIGHT_READINESS           = 0.02
-FARM_WEIGHT_HEALTH              = 0.01
+# v16 — Heavy upside tilt. Top-end FV pyramid + 6yDvM+ + MLB Production
+# carry 70% of the score. The principle: tail-end outcomes (stars,
+# elite tools) drive farm-system value far more than the median
+# prospect's quality. An org that develops one Skenes/Caminero/Crews-
+# tier ceiling matters more than an org that has the deepest pool of
+# FV-40 org soldiers. Depth still matters (10%) but no longer dominates.
+FARM_WEIGHT_TOP_END             = 0.32   # v16 — was 0.24
+FARM_WEIGHT_DVM_PLUS            = 0.20   # v16 — was 0.18 (heavily 6y-anchored
+                                         # inside the dev score)
+FARM_WEIGHT_TALENT_TRANSLATION  = 0.18   # v16 — was 0.10 (MLB production
+                                         # rolls in here via per-grad WAG mean)
+FARM_WEIGHT_DEPTH               = 0.10   # v16 — was 0.16
+FARM_WEIGHT_GRAD                = 0.10   # v16 — was 0.12
+FARM_WEIGHT_FINANCIAL_ROI       = 0.05   # v16 — was 0.08
+FARM_WEIGHT_TOOLS_QUALITY       = 0.03   # v16 — was 0.06
+FARM_WEIGHT_INTL_DEPTH          = 0.01   # v16 — was 0.03
+FARM_WEIGHT_READINESS           = 0.005  # v16 — was 0.02
+FARM_WEIGHT_HEALTH              = 0.005  # v16 — was 0.01
 # Back-compat alias — kept so external imports don't break. The blend
 # no longer uses FARM_WEIGHT_TRAJECTORY directly; DvM+ took its slot.
 FARM_WEIGHT_TRAJECTORY  = FARM_WEIGHT_DVM_PLUS
@@ -6475,9 +6482,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             ("net_fv",   lambda e: (e["tree"]["tx_waivers"] or {}).get("net_fv")),
             ("hit_rate", lambda e: (e["tree"]["tx_waivers"] or {}).get("hit_rate")),
         ],
-        # Development — single-input (per-tool DvM+ composite)
-        "dev_hitter":  [("dvm_plus", lambda e: (e["tree"]["dev_hitter"]  or {}).get("dvm_plus"))],
-        "dev_pitcher": [("dvm_plus", lambda e: (e["tree"]["dev_pitcher"] or {}).get("dvm_plus"))],
+        # Development — v16: 6yDvM+ is the PRINCIPAL driver (heaviest
+        # weight). 6yDvM+ measures the org's aggregate FV growth over a
+        # full 6-year window — the most stable, multi-cycle development
+        # signal. Per-tool DvM+ stays as a secondary input so granular
+        # tool-development still shows through. Each leaf now has two
+        # inputs blended equally inside leaf_100 normalization; the 6y
+        # signal effectively dominates because it has wider stdev.
+        "dev_hitter":  [
+            ("six_y_dvm", lambda e: (e.get("dvm_plus") or {}).get("6y")),
+            ("six_y_dvm_b", lambda e: (e.get("dvm_plus") or {}).get("6y")),  # double-count = 2/3 weight
+            ("dvm_plus", lambda e: (e["tree"]["dev_hitter"]  or {}).get("dvm_plus")),
+        ],
+        "dev_pitcher": [
+            ("six_y_dvm", lambda e: (e.get("dvm_plus") or {}).get("6y")),
+            ("six_y_dvm_b", lambda e: (e.get("dvm_plus") or {}).get("6y")),
+            ("dvm_plus", lambda e: (e["tree"]["dev_pitcher"] or {}).get("dvm_plus")),
+        ],
         # Financial — single-input each
         "fin_war_per_m":        [("war_per_m", lambda e: (e["tree"]["fin_war_per_m"]        or {}).get("value"))],
         "fin_contract_surplus": [("surplus",   lambda e: (e["tree"]["fin_contract_surplus"] or {}).get("mean_usd_per_yr"))],

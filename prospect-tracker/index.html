@@ -1215,25 +1215,20 @@
     }
     .fv-wide-mark        { top: -5px;   right: -7px; background: var(--neon-violet); }
     .fv-single-mark      { top: -5px;   left: -6px;  background: var(--neon-amber); }
-    /* v14 — dropped-off ↓ at bottom-right, breakout ★ at bottom-left.
-       Stacks naturally with the existing wide/single marks above. */
-    .fv-dropped-off-mark { bottom: -5px; right: -7px; background: #FF8C42; }
-    .fv-breakout-mark    { bottom: -5px; left: -6px;  background: var(--up); }
-    .fv-badge.is-dropped-off {
-      outline: 2px dashed #FF8C42;
-      outline-offset: 1px;
-      position: relative;
-      overflow: visible;
-    }
+    /* v16 — Breakout ★ in aquamarine (was green). Aquamarine reads more
+       distinct from the green "up" stock chips elsewhere on the page,
+       and matches the "rare emerging talent" semantic without being
+       confused for a positive-stock trend. */
+    .fv-breakout-mark    { bottom: -5px; left: -6px;  background: #7FFFD4; color: #002a25; }
     .fv-badge.is-breakout {
-      outline: 2px solid var(--up);
+      outline: 2px solid #7FFFD4;
       outline-offset: 1px;
       position: relative;
       overflow: visible;
       animation: fvBreakoutPulse 2s ease-in-out infinite;
     }
     @keyframes fvBreakoutPulse {
-      0%, 100% { outline-color: var(--up); }
+      0%, 100% { outline-color: #7FFFD4; }
       50%      { outline-color: var(--neon-violet); }
     }
 
@@ -2358,6 +2353,70 @@
       background: var(--bg-tertiary);
       flex-shrink: 0;
     }
+    /* v16 — Headshot animated borders. The .card-rarity-* classes
+       already exist for detail-page cards, but on the small headshot
+       wrappers the static `border: 1px solid` (inline) clobbered the
+       2px gradient border. Override per-tier so the shimmer/holo
+       animations run on the small player thumbnails too. */
+    .headshot.card-rarity-chrome,
+    .headshot.card-rarity-holo,
+    .headshot.card-rarity-foil,
+    .headshot.card-rarity-legendary {
+      border-width: 2px !important;
+      border-style: solid !important;
+      border-color: transparent !important;
+      box-sizing: border-box !important;
+    }
+    /* Make sure the animated background gradient kicks through the
+       headshot wrap. The padding-box layer matches the headshot's
+       background-color so the inner area still reads as a card face. */
+    .headshot.card-rarity-chrome {
+      background:
+        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
+        linear-gradient(135deg,
+          rgba(220,220,235,0.85) 0%,
+          rgba(160,170,200,0.45) 35%,
+          rgba(255,255,255,0.85) 50%,
+          rgba(160,170,200,0.45) 65%,
+          rgba(220,220,235,0.85) 100%) border-box !important;
+      background-size: 100% 100%, 300% 300% !important;
+      animation: chrome-shimmer 4.2s linear infinite;
+    }
+    .headshot.card-rarity-holo {
+      background:
+        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
+        linear-gradient(135deg,
+          #4ee0ff 0%, #b455ff 25%,
+          #ff5fa2 50%, #ffd45a 75%, #4ee0ff 100%) border-box !important;
+      background-size: 100% 100%, 300% 300% !important;
+      animation: holo-shift 6s linear infinite;
+    }
+    .headshot.card-rarity-foil {
+      background:
+        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
+        linear-gradient(135deg,
+          rgba(200,200,210,0.55) 0%,
+          rgba(240,240,250,0.7) 50%,
+          rgba(200,200,210,0.55) 100%) border-box !important;
+      background-size: 100% 100%, 200% 200% !important;
+      animation: foil-shift 8s linear infinite;
+    }
+    .headshot.card-rarity-legendary {
+      background:
+        linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
+        linear-gradient(120deg,
+          #ff5fa2 0%, #ffd45a 20%,
+          #4ee0ff 40%, #b455ff 60%,
+          #ff5fa2 80%, #ffd45a 100%) border-box !important;
+      background-size: 100% 100%, 400% 400% !important;
+      animation: holo-shift 3.5s linear infinite;
+    }
+    .headshot.card-rarity-shine {
+      border-width: 1.5px !important;
+      border-style: solid !important;
+      border-color: #C9A85A !important;
+      box-shadow: 0 0 4px rgba(229, 199, 123, 0.45);
+    }
     /* Wrapper around draft/overseas headshots. Hosts the optional
        FV-tier ring + chrome/holo treatment for elite-tier prospects
        (matches the MiLB headshotHTML wrapper). Keeps the image at
@@ -2437,16 +2496,14 @@
     /* === Farm systems ============================================= */
     .farm-header, .farm-row {
       display: grid;
-      /* Columns (in order):
-           # · logo · org · grade (hero) · DvM+ (hero) · tool DvM+ ·
-           sparkline · top prospect · positions · level depth · avg age ·
-           spend · stock · arrow
-         Grade + DvM+ are the visual anchors per row — each gets a wider
-         dedicated column with larger typography so the eye locks onto
-         them before the secondary cells. The Tool DvM+ cell sits next
-         to the org DvM+ since both measure development pace from
-         different angles. */
-      grid-template-columns: 32px 40px 180px 80px 110px 76px 160px 1fr 110px 1fr 56px 64px 64px 60px 56px;
+      /* v16 — 16 columns:
+           # · logo · org · grade · DvM+ · tool DvM+ · sparkline ·
+           top prospect · positions · level depth · avg age · ROI ·
+           spend · surplus · stock · arrow
+         ROI added between avg age and spend so the value-per-dollar
+         lens reads adjacent to the spending donut for natural eye
+         flow. */
+      grid-template-columns: 32px 40px 180px 80px 110px 76px 160px 1fr 110px 1fr 56px 60px 64px 64px 60px 56px;
       gap: 10px;
       align-items: center;
     }
@@ -5174,16 +5231,20 @@
 
 <template id="main-template">
   <div class="section-tabs" id="section-tabs">
+    <!-- v16 — Nav reorder: Active first (the headline page), then Farms
+         (org-level rollups), Spotlights (editorial movement feed),
+         Recently Acquired, IL, Graduates, Draft, Overseas. Leaderboards
+         + Glossary + Watchlist on the right as tool tabs. Charts section
+         removed (was not working). -->
     <button class="section-tab active" data-section="active">Active</button>
+    <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="spotlights">Spotlights</button>
     <button class="section-tab" data-section="traded">Recently Acquired</button>
     <button class="section-tab" data-section="injured">Injured List</button>
+    <button class="section-tab" data-section="graduates">Graduates</button>
     <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">Draft</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
-    <button class="section-tab" data-section="graduates">Graduates</button>
-    <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
-    <button class="section-tab" data-section="charts" title="Build custom scatter plots: pick X/Y axes from age, height, FV, tools, and per-org metrics. Optional trendline with R².">Charts</button>
     <button class="section-tab" data-section="glossary" title="Stats, indices, scouting concepts, and methodology — every term used on the site">Glossary</button>
     <button class="section-tab" data-section="watchlist" title="Your starred prospects and farm systems — private to this browser">Watchlist<span class="section-tab-count" id="watchlist-tab-count"></span></button>
     <span class="section-count" id="section-count"></span>
@@ -5225,8 +5286,7 @@
       <span class="filter-label" title="Toggle one or more FV-badge indicators. Empty = show all. Multiple selected = OR (union).">FV indicators</span>
       <button class="chip is-multi" data-filter-fvind="wide" title="Wide FV spread — ≥2 sources disagree by at least 10 grade points">W spread</button>
       <button class="chip is-multi" data-filter-fvind="single" title="Single-source FV — only one outlet has graded this prospect">Single src</button>
-      <button class="chip is-multi" data-filter-fvind="dropped_off" title="Dropped-Off — Bayesian pull toward FV-30 because the player fell off a source's most recent team Top-30 list">Dropped off</button>
-      <button class="chip is-multi" data-filter-fvind="breakout" title="Breakout — DvM+ / FV velocity ≥ threshold AND a strong performance gate (RPS+ ≥ 120 for hitters, Stuff+ ≥ 105 or FIP- ≤ 90 for pitchers)">Breakout</button>
+      <button class="chip is-multi" data-filter-fvind="breakout" title="Breakout — DvM+ / FV velocity ≥ threshold AND a strong performance gate (RPS+ ≥ 110 for hitters, Stuff+ ≥ 105 or FIP- ≤ 90 for pitchers)">Breakout</button>
     </div>
     <div class="filter-group">
       <span class="filter-label" title="Filter prospects by a specific tool grade meeting a minimum threshold. 'Any tool' matches when any one canonical 20-80 grade meets the threshold; pick a specific tool to isolate it.">Tool grade</span>
@@ -5365,8 +5425,6 @@
               title="Pedigree-comeback narrative: previously hyped (first-round pick / IFA / $1M+ bonus) prospects whose prior season was weak but who have bounced back this year with improved skills.">Rebounders</button>
       <button class="chip" data-spotlight-bucket="fallers"
               title="Prospects whose 2026 performance has materially deteriorated. Very-young and young+pedigreed prospects are filtered out unless their K-rate has cratered (Bryce Rainer-style).">Fallers</button>
-      <button class="chip" data-spotlight-bucket="possible_regressors"
-              title="AAA over-performers flagged by Statcast: hitters with wOBA outpacing xWOBA by ≥40 points, or pitchers with xFIP exceeding ERA by ≥0.80. Their surface stats are great but the underlying contact / quality metrics suggest regression.">Possible Regressors</button>
     </div>
     <div id="spotlight-rows"></div>
   </div>
@@ -5968,25 +6026,14 @@ function fvBadgeSingleMarkHTML(player) {
   return `<span class="fv-single-mark" title="Single observation — only one published grade across this player's history. Pulled 1/3 toward FV 35 (Bayesian shrinkage, k=0.5); the pull lifts as soon as a second grade update lands, even from the same source.">1</span>`;
 }
 
-// v14 — Returns " is-dropped-off" when any source's FV was Bayesian-pulled
-// toward 30 because the player fell off that source's most recent team
-// Top-30 list. Orange dashed outline via CSS.
-function fvBadgeDroppedOffClass(player) {
-  const pts = player && player.points;
-  const last = pts && pts.length ? pts[pts.length - 1] : null;
-  if (!last) return "";
-  const off = last.dropped_off_sources;
-  if (Array.isArray(off) && off.length > 0) return " is-dropped-off";
-  return "";
-}
-
-function fvBadgeDroppedOffMarkHTML(player) {
-  if (!fvBadgeDroppedOffClass(player)) return "";
-  const pts = player.points;
-  const last = pts[pts.length - 1];
-  const sources = (last.dropped_off_sources || []).join(", ");
-  return `<span class="fv-dropped-off-mark" title="Dropped off — fell off the most recent team Top-30 list from ${escapeHtml(sources)}. FV pulled halfway toward 30 via Bayesian shrinkage.">↓</span>`;
-}
+// v16 — Dropped-Off indicator UI removed. The Bayesian shrinkage logic
+// still runs on the backend (consensus.py) so FV pulls happen for stale
+// team-Top-30 ranks, but the visual ↓ badge mark was redundant: any
+// prospect who actually drops off a recent list also drops off the
+// active list. These stubs preserve the call signature so the existing
+// FV-badge templates compile without changes; they return "".
+function fvBadgeDroppedOffClass()    { return ""; }
+function fvBadgeDroppedOffMarkHTML() { return ""; }
 
 // v14 — Returns " is-breakout" when the prospect carries the active-
 // prospect breakout flag (DvM+ velocity OR FV upgrade AND a strong perf
@@ -7946,10 +7993,6 @@ function getFilteredActives() {
       }
       if (state.fvIndicators.has("single")) {
         if ((p.fv_total_instances || 0) === 1) return true;
-      }
-      if (state.fvIndicators.has("dropped_off")) {
-        if (last && Array.isArray(last.dropped_off_sources)
-            && last.dropped_off_sources.length > 0) return true;
       }
       if (state.fvIndicators.has("breakout")) {
         if (p.breakout_flag) return true;
@@ -11997,7 +12040,7 @@ function renderGraduates() {
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           ${headshotHTML(g, 50)}
           <div style="min-width:0;flex:1;">
-            <div class="player-name">${escapeHtml(g.player_name)}${wagPill}${warTag}${gradWriteupPill}</div>
+            <div class="player-name">${escapeHtml(g.player_name)}${typeof boomBustPillHTML === "function" ? boomBustPillHTML(g) : ""}${wagPill}${warTag}${gradWriteupPill}</div>
             ${playerMetaHTML(g, { showIL: false, showRoster: false })}
           </div>
         </div>
@@ -12327,15 +12370,6 @@ const GLOSSARY = {
     formula: "D-Tools+ = 100 + 10 · (composite − μ) / σ\nwhere composite = (Σ w_i · grade_i^3 / Σ w_i)^(1/3)\nnon-catcher weights: DEF 0.60, ARM 0.30, RUN 0.10\ncatcher weights:    DEF 0.70, ARM 0.30 (RUN dropped)",
     example: "A 70 DEF / 50 ARM / 50 RUN center fielder posts a D-Tools+ near 115; a 50/50/50 baseline lands at 100.",
     related: ["tools_plus", "tools_plus_offensive", "field_tool", "throw_tool", "speed_tool"],
-  },
-  "dropped_off_penalty": {
-    name: "Dropped-Off Penalty", aliases: ["Dropped off", "Off-list penalty", "↓ mark"], category: "custom-index",
-    priority: 13,
-    short: "Bayesian half-shrinkage toward FV-30 when a player fell off a source's most recent team Top-30 list.",
-    long: "v14 — When a player appeared in a source's PRIOR team Top-30 list (e.g. MLB Pipeline Angels 2025) but does NOT appear in the LATEST list from the same source for the same team, the source's published FV is Bayesian-shrunk toward 30: new_FV = (prior_FV + 30) / 2. This is k=1.0 — the negative observation (off the list) is weighted equally with the prior FV. Only triggers for team-specific lists (`interval_label` contains `_org_`); global Top-100 lists aren't org-scoped. The badge gets an ↓ mark with a tooltip naming the source(s).",
-    formula: "if (player_key, source) dropped off → new_fv = (prior_fv + 30) / 2.0",
-    example: "Ryan Johnson was graded 55 on MLB Pipeline's 2025 Angels Top-30 and dropped off the 2026 list entirely. The 2026 consensus uses 42.5 (=(55+30)/2) for Pipeline, pulling his overall FV down accordingly.",
-    related: ["fv", "consensus_fv"],
   },
   "breakout_indicator": {
     name: "Breakout Indicator", aliases: ["Breakout", "★ mark"], category: "custom-index",
@@ -13894,16 +13928,16 @@ function headshotHTML(player, sizePx = 36) {
     return `<span class="headshot ${ringClass}" style="${placeholderWrap}">${sil}</span>`;
   }
   const url = headshotURL(id, h);
-  // The silhouette renders behind the img; onerror hides the img so the
-  // silhouette shows through if Cloudinary 404s (rare).
-  // Lazy: data-src → src swap is performed by `_lazyImageObserver` when
-  // the row enters the viewport (with rootMargin 400px so the swap fires
-  // ~400px ahead of scroll, masking the request latency). Native
-  // loading="lazy" stays as a fallback for environments where the
-  // observer never runs (no-JS, browser without IO support, etc).
+  // v16 — Use native `loading="lazy"` directly via `src` (was: data-src
+  // + IntersectionObserver swap). The IO-based approach added a noticeable
+  // delay on graduate-list rows because the observer callback only fires
+  // ASYNC after layout — by the time it swapped, the user already saw a
+  // blank silhouette. Native lazy-load is browser-managed, kicks in as
+  // soon as the row is layout-visible, and avoids the observer roundtrip.
+  // The silhouette behind the img still shows through if Cloudinary 404s.
   return `<span class="headshot ${ringClass}" style="${wrap}">
     ${sil}
-    <img data-src="${url}" alt="" loading="lazy"
+    <img src="${url}" alt="" loading="lazy" decoding="async"
          style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;"
          onerror="this.style.display='none'"/>
   </span>`;
@@ -16080,6 +16114,15 @@ function farmSortedOrgs() {
     if (s === "count")         return b.count     - a.count;
     if (s === "tier_60")       return b.tier_60_plus - a.tier_60_plus;
     if (s === "avg_age")       return (a.avg_age ?? 99) - (b.avg_age ?? 99);
+    // v16 — Financial ROI sort. Higher WAR/$M signing-bonus = better.
+    if (s === "roi") {
+      const ar = ((a.financial_roi || {}).war_per_million);
+      const br = ((b.financial_roi || {}).war_per_million);
+      if (ar == null && br == null) return 0;
+      if (ar == null) return 1;
+      if (br == null) return -1;
+      return br - ar;
+    }
     if (s === "stock_up")      return b.stock_up  - a.stock_up;
     // Tree v3 main-grade sorts. Each reads off the 100-anchored
     // composite stamped onto the org payload by storage._zscore_to_100.
@@ -16382,7 +16425,8 @@ function renderFarmSystems() {
     <span>Top prospects</span>
     <span>Positions</span>
     <span>Level depth${activeLevel ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(activeLevel)}</span>` : ""}</span>
-    <span style="text-align:center;">Avg age</span>
+    <span class="sort-header" style="text-align:center;" data-farm-sort="avg_age" title="Average age of the org's active prospects. Click to sort youngest first.">Avg age</span>
+    <span class="sort-header" style="text-align:center;" data-farm-sort="roi" title="Financial ROI — career WAR per million USD spent on signing bonuses (draft + IFA). Higher = more efficient development per dollar.">ROI</span>
     <span style="text-align:center;" title="IFA vs Draft bonus-dollar mix over the last 3 years. Hover a donut for exact dollar totals.">Spend mix
       <span style="display:flex;gap:8px;justify-content:center;margin-top:3px;font-weight:400;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;">
         <span style="display:inline-flex;align-items:center;gap:3px;"><span aria-hidden="true" style="display:inline-block;width:7px;height:7px;background:var(--spend-ifa);"></span>IFA</span>
@@ -16512,6 +16556,18 @@ function renderFarmSystems() {
         <div>${makePosBreakdown(org.pos_groups)}${makeOrgEtaWave(etaByOrg[org.org], currentYear)}</div>
         <div class="level-depth-cell">${makeLevelDepth(org.level_counts, activeLevel)}</div>
         <div style="text-align:center;font-size:12px;color:var(--text-secondary);font-variant-numeric:tabular-nums;">${org.avg_age != null ? org.avg_age.toFixed(1) : "—"}</div>
+        ${(() => {
+          // v16 — Financial ROI: career WAR per million USD spent on
+          // signing bonuses (draft + IFA). Pulled from financial_roi.
+          const fr = org.financial_roi || {};
+          const v = fr.war_per_million;
+          if (v == null) {
+            return `<div style="text-align:center;color:var(--text-tertiary);font-size:12px;">—</div>`;
+          }
+          const cls = v >= 4 ? "var(--up)" : v <= 1 ? "var(--down)" : "var(--text-secondary)";
+          const tip = `${(v).toFixed(2)} WAR / $1M signing-bonus spent (${fr.grad_count_with_bonus || 0} grads)`;
+          return `<div style="text-align:center;font-family:var(--font-mono);font-size:12px;color:${cls};font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">${v.toFixed(1)}</div>`;
+        })()}
         <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
           ${makeSpendingDonut(org)}
         </div>
@@ -21610,7 +21666,6 @@ function render() {
   else if (active === "graduates")  renderGraduates();
   else if (active === "farm")       renderFarmSystems();
   else if (active === "leaderboards") renderLeaderboards();
-  else if (active === "charts")       renderCharts();
   else if (active === "glossary")   renderGlossary();
   else if (active === "watchlist")  renderWatchlist();
   decorateA11yRows();

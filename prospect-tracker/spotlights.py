@@ -1425,50 +1425,42 @@ def compute_movement(p: dict) -> dict:
 
 
 def build_spotlights(players: list[dict], graduates: list[dict]) -> dict:
-    """Four-bucket spotlight output: Risers, Rebounders, Fallers, Possible
-    Regressors.
+    """Three-bucket spotlight output: Risers, Rebounders, Fallers.
 
-    All buckets feed off the centralized compute_movement engine. The legacy
-    `hot` key is aliased to `risers` for one release so cached payloads
-    still render. v12 adds `possible_regressors` for AAA over-performers
-    whose surface stats aren't supported by their x-metrics."""
+    All buckets feed off the centralized compute_movement engine. The
+    legacy `hot` key is aliased to `risers` for one release so cached
+    payloads still render. v16 dropped `possible_regressors` — it never
+    populated meaningfully and was just empty noise on the UI."""
     risers: list[dict] = []
     rebounders: list[dict] = []
     fallers: list[dict] = []
-    regressors: list[dict] = []
 
     for p in players:
         m = compute_movement(p)
         bucket = m.get("bucket")
-        if bucket not in {"riser", "rebound", "faller", "possible_regressor"}:
+        if bucket not in {"riser", "rebound", "faller"}:
             continue
         entry = _entry(
             "hot" if bucket == "riser" else
-            ("rebounder" if bucket == "rebound" else
-             ("regressor" if bucket == "possible_regressor" else "faller")),
+            ("rebounder" if bucket == "rebound" else "faller"),
             p, m["delta"], m["drivers"],
         )
         entry["bucket"] = bucket
         entry["perf_delta"] = m.get("perf_delta")
         entry["skills_delta"] = m.get("skills_delta")
-        if bucket == "riser":               risers.append(entry)
-        elif bucket == "rebound":           rebounders.append(entry)
-        elif bucket == "faller":            fallers.append(entry)
-        elif bucket == "possible_regressor": regressors.append(entry)
+        if bucket == "riser":     risers.append(entry)
+        elif bucket == "rebound": rebounders.append(entry)
+        elif bucket == "faller":  fallers.append(entry)
 
     risers_sorted = sorted(risers, key=lambda x: -x["score"])[:TOP_N]
     rebounders_sorted = sorted(rebounders, key=lambda x: -x["score"])[:TOP_N]
     # Fallers sort ASCENDING (most-negative first).
     fallers_sorted = sorted(fallers, key=lambda x: x["score"])[:TOP_N]
-    # Regressors sort DESCENDING by gap magnitude — biggest over-
-    # performers (largest wOBA-xWOBA / xFIP-ERA gap) appear first.
-    regressors_sorted = sorted(regressors, key=lambda x: -x["score"])[:TOP_N]
 
     return {
         "risers":     risers_sorted,
         "rebounders": rebounders_sorted,
         "fallers":    fallers_sorted,
-        "possible_regressors": regressors_sorted,
         # Back-compat alias — older cached payloads / pre-rebuild frontends
         # read `.hot`. Drop after one rebuild cycle.
         "hot":        risers_sorted,
