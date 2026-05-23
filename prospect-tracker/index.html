@@ -978,10 +978,9 @@
     .col-header {
       font-family: var(--font-sans);
       font-size: 10px;
-      color: var(--text-tertiary);
       padding: 9px 14px 9px 18px;
       background: var(--bg-header);
-      color: var(--text-on-dark-muted);
+      color: #F5EBDC;
       border-radius: var(--radius-sm);
       margin-bottom: 8px;
       text-transform: uppercase;
@@ -989,13 +988,22 @@
       font-weight: 600;
     }
     /* Force every column header span to render as a block-level grid
-       item so text-align / letter-spacing apply predictably, and use
-       a brighter color than the default --text-on-dark-muted so short
-       labels like "RANK" and "FV GRADE" don't recede into the dark
-       header bar. */
+       item so text-align / letter-spacing apply predictably. Cream
+       color (#F5EBDC) with !important so the .sort-header.is-active
+       cyan override doesn't blank the active sort column — short
+       labels like "RANK" and "FV GRADE" stay readable in cream even
+       when the column is the active sort target. */
     .col-header > span {
       display: block;
-      color: var(--text-secondary);
+      color: #F5EBDC !important;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.10em;
+    }
+    .col-header > span.is-active::after {
+      /* Keep the chevron but in cream — the default is-active color
+         override is bypassed here, so the indicator inherits cleanly. */
+      color: #F5EBDC;
     }
     .player-row {
       position: relative;
@@ -5074,63 +5082,10 @@
     .options-dots[data-remaining="0"] .options-pip { border-color: var(--down); }
     .options-dots[data-remaining="0"] .options-pip.is-filled { background: var(--down); }
 
-    /* Tool hover popup — appears above the Tool pill on hover or
-       keyboard focus. Lists each per-tool grade as a colored mini-cell
-       so you can see the underlying numbers without clicking through
-       to the prospect detail page. The wrap is inline-block; the
-       popup is an absolutely-positioned span so the parent <span>
-       chain stays HTML-valid (no block-in-inline auto-closing). */
-    .tool-pill-hover-wrap { position: relative; display: inline-block; }
-    .tool-pill-popup {
-      position: absolute;
-      bottom: calc(100% + 6px);
-      left: 50%;
-      transform: translateX(-50%);
-      display: none;
-      z-index: 1000;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 6px 10px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.55);
-      white-space: nowrap;
-      pointer-events: none;
-    }
-    .tool-pill-hover-wrap:hover .tool-pill-popup,
-    .tool-pill-hover-wrap:focus-within .tool-pill-popup {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    /* On Expanded density the per-tool strip already renders all
-       individual grades under the player block — the inline Tool chip
-       + hover popup would be a duplicate of that exact information.
-       Hide the inline Tool chip on expanded to keep one canonical
-       surface per density mode. */
-    body.density-expanded .tool-pill-hover-wrap { display: none; }
-    .tool-popup-cell {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1px;
-      font-family: var(--font-mono);
-      min-width: 26px;
-    }
-    .tool-popup-cell.is-empty .tool-popup-val { color: var(--text-tertiary); }
-    .tool-popup-label {
-      font-size: 8px;
-      color: var(--text-tertiary);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-    .tool-popup-val {
-      font-weight: 700;
-      font-size: 13px;
-      font-variant-numeric: tabular-nums;
-      line-height: 1;
-    }
-
+    /* The custom Tool popup component was removed — the chip now uses
+       the native title= attribute with an inline plain-text per-tool
+       breakdown (more reliable across density / row contexts than the
+       CSS absolute-positioned popup, which had clipping issues). */
     /* WAG (WAR Above Grade) pill — graduate-only inline delta showing
        career WAR/yr vs the FV-grade-implied WAR/yr (FanGraphs primer,
        lower-bound, hitter/pitcher split, linearly interpolated). Same
@@ -7341,6 +7296,37 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   // Data-point markers retired per user — the curve color is the
   // only visual the user needs; dots added clutter.
   const circles = "";
+
+  // Tool-change markers — small glyph above the chart at each
+  // snapshot where the mean tool grade shifted ≥3 points vs the prior
+  // snapshot. Tells the story of whether FV moves are accompanied by
+  // tool-grade moves (or whether FV climbed without tool support, etc.)
+  // without doubling the chart's line count.
+  const toolMean = (tc) => {
+    if (!tc) return null;
+    const vals = [];
+    for (const k of Object.keys(tc)) {
+      const v = tc[k];
+      if (v != null && !isNaN(Number(v))) vals.push(Number(v));
+    }
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  };
+  const toolMarkerSvg = [];
+  for (let i = 1; i < points.length; i++) {
+    const prev = toolMean(points[i - 1].tools_consensus);
+    const cur = toolMean(points[i].tools_consensus);
+    if (prev == null || cur == null) continue;
+    const delta = cur - prev;
+    if (Math.abs(delta) < 3) continue;
+    const x = xScale(points[i].snapshot_date).toFixed(1);
+    const glyph = delta > 0 ? "▲" : "▼";
+    const color = delta > 0 ? "var(--up)" : "var(--down)";
+    const sign = delta > 0 ? "+" : "";
+    const tip = `${points[i].snapshot_date} · Tool ${sign}${delta.toFixed(1)} (mean grade ${prev.toFixed(1)} → ${cur.toFixed(1)})`;
+    toolMarkerSvg.push(
+      `<text x="${x}" y="${(PAD + 5).toFixed(1)}" font-size="6" fill="${color}" text-anchor="middle" font-family="var(--font-mono)"><title>${escapeHtml(tip)}</title>${glyph}</text>`
+    );
+  }
   // Reference line at FV 50 — the "MLB-regular" threshold. Anyone
   // hovering above this line projects as an above-average MLB player;
   // below is a complementary/backup profile. The previous mark at FV
@@ -7409,6 +7395,7 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
     ${eventSvg.join("")}
     ${segments.join("")}
     ${circles}
+    ${toolMarkerSvg.join("")}
   </svg>`;
 }
 
@@ -17477,12 +17464,45 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
   // still surfaces via the per-segment <title> tooltips above.
   const circles = "";
 
+  // Tool-change markers — small glyph above the chart at each snapshot
+  // where the mean tool grade shifted ≥3 points vs the prior snapshot.
+  // Tells whether FV moves are accompanied by tool-grade moves (or
+  // FV climbed without tool support, etc.) without adding a second
+  // line to the chart.
+  const toolMean = (tc) => {
+    if (!tc) return null;
+    const vals = [];
+    for (const k of Object.keys(tc)) {
+      const v = tc[k];
+      if (v != null && !isNaN(Number(v))) vals.push(Number(v));
+    }
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  };
+  const toolMarkerSvg = [];
+  for (let i = 1; i < points.length; i++) {
+    const prev = toolMean(points[i - 1].tools_consensus);
+    const cur = toolMean(points[i].tools_consensus);
+    if (prev == null || cur == null) continue;
+    const delta = cur - prev;
+    if (Math.abs(delta) < 3) continue;
+    const x = xScale(points[i].snapshot_date).toFixed(1);
+    const glyph = delta > 0 ? "▲" : "▼";
+    const color = delta > 0 ? "var(--up)" : "var(--down)";
+    const sign = delta > 0 ? "+" : "";
+    const tip = `${points[i].snapshot_date} · Tool ${sign}${delta.toFixed(1)} (mean tool grade ${prev.toFixed(1)} → ${cur.toFixed(1)})`;
+    toolMarkerSvg.push(
+      `<text x="${x}" y="${(PAD_T + 9).toFixed(1)}" font-size="11" fill="${color}" text-anchor="middle" font-family="var(--font-mono)" font-weight="700"><title>${escapeHtml(tip)}</title>${glyph}</text>`,
+      `<text x="${x}" y="${(PAD_T + 19).toFixed(1)}" font-size="8" fill="${color}" text-anchor="middle" font-family="var(--font-mono)" opacity="0.85"><title>${escapeHtml(tip)}</title>${sign}${delta.toFixed(1)}</text>`
+    );
+  }
+
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="FV trajectory">
     ${yTicks.join("")}
     ${yearSvg.join("")}
     ${eventSvg.join("")}
     ${segments.join("")}
     ${circles}
+    ${toolMarkerSvg.join("")}
   </svg>`;
 }
 
@@ -23138,49 +23158,36 @@ function rpsPlusPillHTML(p) {
 }
 
 // Tool pill — small inline composite-overall grade on the 20-80
-// scouting scale (50 = avg, 60 = Plus, 70 = elite). Returns "" when
-// the player has no tool grades — list rows skip the pill silently
-// rather than rendering an empty "Tool —" that adds noise.
-// Wrapped in a hover container so the per-tool breakdown popup
-// (toolHoverPopupHTML) appears on hover or keyboard focus.
+// scouting scale (50 = avg, 60 = Plus, 70 = elite). Hover shows a
+// plain-text breakdown of every per-tool grade via native title=
+// attribute (replaced the custom CSS popup that wasn't rendering
+// reliably across all list contexts). Returns "" when the player
+// has no tool grades — list rows skip the pill silently.
 function toolPlusPillHTML(p) {
   const t = p && p.tools;
   const raw = t && t.composite_overall;
   if (raw == null) return "";
   const v = Math.round(raw);
   const cls = v >= 60 ? "is-pos" : v >= 50 ? "is-neutral" : v >= 40 ? "is-amber" : "is-neg";
-  const title = `Tool ${v} · 20-80 scouting scale composite (50 = average, 60 = Plus, 70 = Elite). Hover for per-tool breakdown.`;
-  const popup = toolHoverPopupHTML(p);
-  const pill = `<span class="tool-pill ${cls}" tabindex="0" title="${escapeHtml(title)}"><span class="g-term" data-term="tool">Tool</span> ${v}</span>`;
-  return `<span class="tool-pill-hover-wrap" style="margin-left:6px;">${pill}${popup}</span>`;
-}
-
-// Tool popup — rich hover panel listing each per-tool grade as a
-// colored mini-cell. Built off the same palette as _toolGradeStripHTML
-// so colors stay consistent with the expanded-row tool strip. Renders
-// empty cells too so the popup width stays stable across prospects.
-function toolHoverPopupHTML(p) {
-  const grades = (p && p.tools && p.tools.grades) || {};
-  if (!Object.keys(grades).length) return "";
+  // Build the per-tool breakdown line. Hitter / pitcher key order
+  // mirrors the canonical tool grid; missing grades omitted from the
+  // tooltip so the line stays readable.
+  const grades = (t.grades) || {};
   const pos = String((p || {}).position || '').toUpperCase();
   const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(pos)
                  || ((p && p.sabermetrics || {}).is_pitcher === true);
   const keys = isPitcher
     ? [['FB','fb'], ['SL','sl'], ['CB','cb'], ['CH','ch'], ['CMD','cmd'], ['FRM','frame'], ['ATHL','athl']]
     : [['HIT','hit'], ['PWR','pwr'], ['SPD','speed'], ['FLD','field'], ['ARM','throw'], ['FRM','frame'], ['ATHL','athl']];
-  const cells = keys.map(([label, k]) => {
-    const v = grades[k];
-    if (v == null || isNaN(Number(v))) {
-      return `<span class="tool-popup-cell is-empty"><span class="tool-popup-label">${label}</span><span class="tool-popup-val">—</span></span>`;
-    }
-    const n = Number(v);
-    const color = n >= 60 ? 'var(--up)'
-                : n >= 50 ? 'var(--text-primary)'
-                : n >= 40 ? 'var(--neon-amber)'
-                :           'var(--down)';
-    return `<span class="tool-popup-cell"><span class="tool-popup-label">${label}</span><span class="tool-popup-val" style="color:${color};">${Math.round(n)}</span></span>`;
-  }).join("");
-  return `<span class="tool-pill-popup">${cells}</span>`;
+  const bits = keys
+    .map(([label, k]) => {
+      const g = grades[k];
+      return (g != null && !isNaN(Number(g))) ? `${label} ${Math.round(Number(g))}` : null;
+    })
+    .filter(Boolean);
+  const breakdown = bits.length ? `\n${bits.join(' · ')}` : '';
+  const title = `Tool ${v} · 20-80 scouting scale composite (50 = avg, 60 = Plus, 70 = Elite)${breakdown}`;
+  return `<span class="tool-pill ${cls}" style="margin-left:6px;" title="${escapeHtml(title)}"><span class="g-term" data-term="tool">Tool</span> ${v}</span>`;
 }
 
 // =============================================================================
