@@ -39,7 +39,14 @@ CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 IN_ZONE = {1, 2, 3, 4, 5, 6, 7, 8, 9}
 OUT_ZONE = {11, 12, 13, 14}
-ZONE_LEVELS = ("AAA", "AA", "A+", "A")
+# v20 — MLB added so debuted prospects with both AAA + MLB experience
+# get level_splits for both. The pixel-coordinate zone classifier was
+# trained on MLB pitches in the first place, so applying it to MLB
+# games is more accurate than the MiLB approximation. Frontend already
+# iterates level_splits with per-level chips, so adding MLB here
+# surfaces it automatically on the player detail page once the
+# pipeline re-runs.
+ZONE_LEVELS = ("MLB", "AAA", "AA", "A+", "A")
 PERCENTILE_MIN_PITCHES = 200
 HITTER_PERCENTILE_METRICS = {
     "zone_rate": True,

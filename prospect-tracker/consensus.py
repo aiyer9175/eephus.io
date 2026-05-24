@@ -740,6 +740,23 @@ def _latest_meta(snaps: list[Snapshot]) -> tuple[str, str | None, str | None]:
     # otherwise. The team-org and player-name resolution stay on the
     # latest-non-null heuristic (no source has a meaningful claim to be
     # more authoritative on org/name).
+    #
+    # EXCEPTION — graduated players: once a player reaches MLB the
+    # forward-projection rationale flips. FG's prospect-era guess (e.g.
+    # Xavier Edwards "CF" in 2023) gets out-of-date against the actual
+    # major-league role. For grads, prefer the latest non-FG position
+    # (MLB Pipeline / Baseball America), which tracks the depth-chart
+    # slot rather than the long-term role projection.
+    is_graduated = any(s.status == "graduated" for s in snaps)
+    if is_graduated:
+        non_fg_pos = next((s.position for s in snaps_sorted
+                           if s.source != "fangraphs" and s.position), None)
+        if non_fg_pos:
+            return (
+                snaps_sorted[0].player_name,
+                non_fg_pos,
+                next((s.org for s in snaps_sorted if s.org), None),
+            )
     fg_pos = next((s.position for s in snaps_sorted
                    if s.source == "fangraphs" and s.position), None)
     any_pos = next((s.position for s in snaps_sorted if s.position), None)

@@ -3085,9 +3085,27 @@
       /* v19 — Logo column widened 40 → 56px so the bumped `lg` (52px)
          team logo fits cleanly; row height is driven by the sparkline
          (~70px), so the logo bump doesn't change card height. */
-      grid-template-columns: 32px 56px 180px 80px 110px 76px 160px 1fr 110px 1fr 56px 60px 64px 64px 60px 56px;
+      /* v20 — Positions column bumped 110px → 156px so the four mono
+         pills (C/INF/OF/P with counts) fit on one row at 9.5px font
+         without spilling into the adjacent level-depth column.
+         Previously the pills measured ~170px against a 110px slot and
+         overflowed across the grid-track boundary, visually colliding
+         with the level-depth chips. Level-depth stays 1fr (the +N
+         overflow pill already handles narrow widths gracefully). */
+      grid-template-columns: 32px 56px 180px 80px 110px 76px 160px 1fr 156px 1fr 56px 60px 64px 64px 60px 56px;
       gap: 10px;
       align-items: center;
+    }
+    /* Hard-clip positions + level-depth cells so any residual chip
+       overflow stays inside the grid track instead of painting over
+       neighbors. min-width:0 is required for grid children before
+       overflow takes effect. Cell content is single-line + a small
+       wave below, so clipping never hides primary info. */
+    .farm-row > div:nth-child(9),
+    .farm-row > div:nth-child(10),
+    .farm-row .level-depth-cell {
+      min-width: 0;
+      overflow: hidden;
     }
     /* Constrain the lg logo inside the farm-list cell so an unusually
        wide team mark (some org logos overflow square) can't push the
@@ -3704,8 +3722,11 @@
       display: inline-flex;
       align-items: center;
       font-family: var(--font-mono);
-      font-size: 10.5px;
-      padding: 1px 5px;
+      /* v20 — Tightened from 10.5px / padding 1px 5px so 4 chips
+         (C/INF/OF/P with counts) fit in the new 156px positions
+         column without overflowing into level-depth. */
+      font-size: 10px;
+      padding: 1px 4px;
       border-radius: 2px;
       margin: 0;
       font-variant-numeric: tabular-nums;
@@ -6142,12 +6163,12 @@
     <button class="section-tab active" data-section="active">MiLB Prospects</button>
     <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="spotlights">Spotlights</button>
-    <button class="section-tab" data-section="traded">Prospect Transactions</button>
-    <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL">Prospect IL</button>
+    <button class="section-tab" data-section="traded">Transactions</button>
+    <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL">Injured List</button>
     <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">MLB Draft</button>
-    <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas Prospects</button>
+    <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
-    <button class="section-tab" data-section="graduates">Graduates</button>
+    <button class="section-tab" data-section="graduates">Debuted</button>
     <button class="section-tab" data-section="glossary" title="Stats, indices, scouting concepts, and methodology — every term used on the site">Glossary</button>
     <button class="section-tab" data-section="watchlist" title="Your starred prospects and farm systems — private to this browser">Watchlist<span class="section-tab-count" id="watchlist-tab-count"></span></button>
     <button class="compare-toggle is-empty-hidden" id="compare-toggle" type="button" aria-label="Open compare panel" title="Open compare panel (c)">
@@ -6450,11 +6471,11 @@
     <div class="filter-bar" style="margin-bottom:8px;">
       <span class="filter-label">Sort</span>
       <button class="chip active" data-grad-sort="date"
-              title="Most recent graduation first">Graduation date</button>
+              title="Most recent debut first">Debut date</button>
       <button class="chip" data-grad-sort="war"
-              title="Current MLB-season WAR, highest first. Graduates without a current-season WAR sink to the bottom.">Current-season WAR</button>
+              title="Current MLB-season WAR, highest first. Debuted players without a current-season WAR sink to the bottom.">Current-season WAR</button>
       <button class="chip" data-grad-sort="career_war"
-              title="Cumulative career WAR (BBref), highest first. Graduates with no MLB time sink to the bottom.">Career WAR</button>
+              title="Cumulative career WAR (BBref), highest first. Debuted players with no MLB time sink to the bottom.">Career WAR</button>
       <button class="chip" data-grad-sort="war_per_yr"
               title="WAR per MLB season (career WAR ÷ seasons played), highest first. Rate stat — favors graduates with a strong sample-size-adjusted track record.">WAR/year</button>
       <button class="chip" data-grad-sort="fv_close"
@@ -6583,7 +6604,7 @@
       <button class="chip"        data-lb-stat="pitcher_hard_hit_allowed" data-lb-stat-side="pit" title="95+ mph batted-ball rate allowed; lower is better">HardA%</button>
       <button class="chip"        data-lb-stat="pitcher_barrel_allowed" data-lb-stat-side="pit" title="Approximate barrel rate allowed; lower is better">BrlA%</button>
 
-      <span class="filter-label" style="margin-left:10px;" title="Prospect leaderboard — MiLB levels only. Graduates and MLB-level rows are excluded.">Level</span>
+      <span class="filter-label" style="margin-left:10px;" title="Prospect leaderboard — MiLB levels only. Debuted players and MLB-level rows are excluded.">Level</span>
       <button class="chip active" data-lb-level="all">All MiLB</button>
       <button class="chip"        data-lb-level="AAA">AAA</button>
       <button class="chip"        data-lb-level="AA">AA</button>
@@ -7668,7 +7689,7 @@ const fvClass = label => {
 // `wrapperClass` arg lets fvTrendHTML reuse this without duplicating.
 const stockInnerHTML = s => {
   if (!s) return `<span class="stock-flat">—</span>`;
-  if (s.direction === "graduated") return `<span class="stock-grad">GRAD</span>`;
+  if (s.direction === "graduated") return `<span class="stock-grad">DEBUT</span>`;
   if (s.direction === "flat" || s.delta == null || Math.abs(s.delta) < 1.5) {
     return `<span class="stock-flat">— flat</span>`;
   }
@@ -7771,7 +7792,7 @@ const TRANSACTION_KINDS = {
   // chip label tells the reader exactly how the player arrived.
   signing:             { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Signed" },
   drafted:             { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Drafted" },
-  signed_ifa:          { glyph: "●", color: "var(--neon-amber)", dash: "1,2",   pos: "bottom", label: "Signed (IFA)" },
+  signed_ifa:          { glyph: "●", color: "var(--neon-amber)", dash: "1,2",   pos: "bottom", label: "Signed (Intl Amateur FA)" },
   debut:               { glyph: "★", color: "var(--neon-amber)", dash: "2,1.5", pos: "top",    label: "MLB debut" },
   graduation:          { glyph: "✦", color: "var(--neon-violet)",dash: "2,1.5", pos: "top",    label: "Graduation" },
   // Non-trade transactions (sourced from player.transactions). Same
@@ -7796,19 +7817,35 @@ const TRANSACTION_KINDS = {
 function reclassifyAcquisitionSigning(player, tx) {
   if (tx.kind !== "signed_free_agent") return tx.kind;
   const acq = player && player.acquisition;
-  if (!acq || !acq.method || !acq.signing_date) return tx.kind;
+  if (!acq || !acq.method) return tx.kind;
   if (acq.method !== "draft" && acq.method !== "international_fa") return tx.kind;
-  // Date-match: allow a ±90-day window. Spotrac/MLB IFA dates often
-  // don't perfectly line up with the official signing date the
-  // transactions endpoint records (intl signings sometimes post weeks
-  // after the agreement is announced). The window keeps the mapping
-  // accurate without false positives — a late-career FA signing won't
-  // land within 90 days of an IFA's amateur signing.
-  const a = new Date(acq.signing_date + "T00:00:00").getTime();
-  const b = new Date((tx.date || "") + "T00:00:00").getTime();
-  if (isNaN(a) || isNaN(b)) return tx.kind;
-  if (Math.abs(a - b) > 90 * 86400 * 1000) return tx.kind;
-  return acq.method === "draft" ? "drafted" : "signed_ifa";
+  const toLabel = (acq.method === "draft") ? "drafted" : "signed_ifa";
+  // Primary match: ±90 days from the recorded signing_date. Spotrac/MLB
+  // IFA dates often don't perfectly line up with the official signing
+  // date the transactions endpoint records; the window keeps the
+  // mapping accurate without false positives.
+  if (acq.signing_date) {
+    const a = new Date(acq.signing_date + "T00:00:00").getTime();
+    const b = new Date((tx.date || "") + "T00:00:00").getTime();
+    if (!isNaN(a) && !isNaN(b) && Math.abs(a - b) <= 90 * 86400 * 1000) {
+      return toLabel;
+    }
+  }
+  // Fallback: signing_date is missing (common for older draft years).
+  // Match if the SFA tx is to the same team that drafted/signed them
+  // AND the tx year is within ±1 year of the acquisition year. Catches
+  // Thomas White (2023 MIA draft pick, SFA row dated 2023-07-23, no
+  // signing_date on file) without false-positiving a same-org FA
+  // re-signing years later.
+  const txToTeam = (tx.to_team_name || tx.to_team || "").trim().toLowerCase();
+  const acqTeam = (acq.team_name || "").trim().toLowerCase();
+  if (txToTeam && acqTeam && txToTeam === acqTeam) {
+    const txYear = (tx.date || "").slice(0, 4);
+    if (acq.year && txYear && Math.abs(Number(txYear) - Number(acq.year)) <= 1) {
+      return toLabel;
+    }
+  }
+  return tx.kind;
 }
 // Only the high-signal events get rendered on the FV trajectory line so
 // the chart doesn't turn into a curtain of glyphs for journeyman-y
@@ -7906,7 +7943,7 @@ function transactionEvents(player) {
     out.push({
       date: player.graduation_date,
       kind: "graduation",
-      label: `${player.graduation_date}: Graduated to MLB`,
+      label: `${player.graduation_date}: MLB debut`,
     });
   }
   out.sort((a, b) => a.date.localeCompare(b.date));
@@ -9712,7 +9749,7 @@ function renderActiveContextRail() {
   }).join("");
   const gradsCard = grads.length
     ? `<div class="ctx-card">
-        <div class="ctx-title">Recent graduations</div>
+        <div class="ctx-title">Recent debuts</div>
         ${gradRows}
       </div>`
     : "";
@@ -13961,7 +13998,7 @@ function renderGraduates() {
   const header = `<div class="grad-header">
     <span style="text-align:center;">#</span>
     <span>Player · pos · org · age</span>
-    <span class="grad-graduation-cell sort-header" data-grad-sort="date" title="Sort by graduation date (newest first)">Graduation</span>
+    <span class="grad-graduation-cell sort-header" data-grad-sort="date" title="Sort by debut date (newest first)">Debut</span>
     <span class="sort-header" data-grad-sort="fv_close" title="Sort by FV at graduation (high to low)" style="text-align:center;">FV</span>
     <span class="desktop-only sort-header" data-grad-sort="vs_fv_proj" title="Sort by WAG — WAR Above Grade · click to toggle high-to-low / low-to-high" style="text-align:center;">WAG by season</span>
     <span class="desktop-only" style="text-align:center;">Candle</span>
@@ -14095,14 +14132,7 @@ function renderGraduates() {
           <button class="compare-add-btn is-compact${compareHas(g.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(g.player_key)}" type="button" title="${compareHas(g.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(g.player_key) ? "✓" : "+"}</button>
         </div>
         <div class="grad-graduation-cell">
-          <span class="${pillClass}" title="${escapeHtml(
-            g.mlb_debut_date && g.mlb_debut_date !== g.graduation_date
-              ? `Graduated from prospect status on ${g.graduation_date} (MLB debut: ${g.mlb_debut_date})`
-              : `Graduated from prospect status on ${g.graduation_date}`
-          )}">${g.graduation_date}</span>
-          ${g.mlb_debut_date && g.mlb_debut_date !== g.graduation_date
-            ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;" title="MLB debut">debut ${g.mlb_debut_date}</span>`
-            : ""}
+          <span class="${pillClass}" title="${escapeHtml(`MLB debut on ${g.graduation_date}`)}">${g.graduation_date}</span>
           ${sublabel || (isRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : "")}
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(g)}${fvBadgeSingleClass(g)}" title="${escapeHtml(fvBadgeTooltip(g))}">${fvLabel}${fvBadgeWideMarkHTML(g)}${fvBadgeSingleMarkHTML(g)}</span></div>
@@ -14139,7 +14169,7 @@ function renderGraduates() {
     if (recentCount > 0) {
       banner = `<div class="grad-recent-banner" role="status">
         <span class="grb-dot"></span>
-        <span class="grb-text"><strong>${recentCount}</strong> new graduate${recentCount === 1 ? "" : "s"} in the past 14 days</span>
+        <span class="grb-text"><strong>${recentCount}</strong> new debut${recentCount === 1 ? "" : "s"} in the past 14 days</span>
       </div>`;
     }
   }
@@ -14650,9 +14680,9 @@ const GLOSSARY = {
     related: ["field_tool"],
   },
   "graduation_rule": {
-    name: "Graduation rule", aliases: ["Graduation", "Graduated"], category: "scouting",
-    short: "A prospect graduates from rookie status after 130 MLB at-bats, 50 IP, or 45 days on the active roster.",
-    long: "MLB's official rookie limits: 130 at-bats (hitters), 50 innings (pitchers), or 45 days on the 26-man roster (excluding September). Once any threshold is crossed, the player drops off prospect rankings and shows up on the Graduates tab here.",
+    name: "Debut rule", aliases: ["Debut", "Debuted", "Graduation", "Graduated"], category: "scouting",
+    short: "A prospect is considered debuted as soon as MLB records their first MLB game (mlbDebutDate).",
+    long: "We previously tracked graduation via MLB's official rookie limits (130 AB / 50 IP / 45 active-roster days), but that produced unreliable dates whenever any input was stale. Current rule: if the MLB API has an mlbDebutDate on file, the player is treated as debuted and shown on the Debuted tab; otherwise they stay active. This trades a small population (any player MLB hasn't stamped yet) for a clean, reliable signal.",
     related: ["wag"],
   },
   // ---- Hitter stats ----
@@ -18070,7 +18100,7 @@ function makeGradCohortChart(grads, opts = {}) {
 
   return `<div class="grad-cohort-chart" style="margin: var(--space-3) 0;max-width:720px;">
     <div style="font-family: var(--font-sans); font-size: var(--fs-sm); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-bottom: var(--space-1);">
-      Graduate classes — last ${yearsN} years, stacked by FV at graduation
+      Debut classes — last ${yearsN} years, stacked by FV at debut
     </div>
     <svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;max-height:${H * 1.4}px;">
       ${bars}
@@ -20388,6 +20418,7 @@ function makeTransactionHistoryBlock(player) {
   // DFA, outright, Rule 5 selection/return, FA signing. Each row's
   // `move` summarizes the from/to teams (when applicable) so the table
   // reads like a roster diff regardless of the underlying kind.
+  const acq = player && player.acquisition;
   for (const tx of otherTx) {
     const kind = reclassifyAcquisitionSigning(player, tx);
     if (!TRANSACTION_KINDS[kind]) continue;
@@ -20401,13 +20432,39 @@ function makeTransactionHistoryBlock(player) {
     } else {
       movePart = `<span style="color:var(--text-tertiary);">—</span>`;
     }
+    // For rows we've relabeled into the original-acquisition kind
+    // (drafted / signed_ifa), prepend pick # + bonus from `acq` so
+    // the detail column reads "Drafted by MIA · CB-A, pick 35 ·
+    // bonus $4.10M" instead of just echoing the MLB feed's terse
+    // "Miami Marlins signed LHP Thomas White."
+    let detailHtml = highlightTrackedNamesInText(tx.description || "", focalKey);
+    if (kind === "drafted" && acq) {
+      const parts = [];
+      if (acq.pick_overall != null) {
+        parts.push(`${acq.round_label ? escapeHtml(acq.round_label) + ", " : ""}pick ${acq.pick_overall}`);
+      } else if (acq.round_label) {
+        parts.push(escapeHtml(acq.round_label));
+      }
+      if (acq.bonus_usd != null && isFinite(acq.bonus_usd)) {
+        parts.push(`bonus $${(acq.bonus_usd / 1e6).toFixed(2)}M`);
+      }
+      if (acq.school) parts.push(`from ${escapeHtml(acq.school)}`);
+      const head = `Drafted by ${escapeHtml(acq.team_name || tx.to_team || "?")}${parts.length ? " · " + parts.join(" · ") : ""}.`;
+      detailHtml = `<div>${head}</div>${detailHtml ? `<div style="margin-top:3px;color:var(--text-tertiary);font-size:10.5px;">${detailHtml}</div>` : ""}`;
+    } else if (kind === "signed_ifa" && acq) {
+      const parts = [];
+      if (acq.bonus_usd != null && isFinite(acq.bonus_usd)) {
+        parts.push(`bonus $${(acq.bonus_usd / 1e6).toFixed(2)}M`);
+      }
+      if (acq.year) parts.push(`${acq.year} IFA class`);
+      const head = `Signed as International Amateur Free Agent by ${escapeHtml(acq.team_name || tx.to_team || "?")}${parts.length ? " · " + parts.join(" · ") : ""}.`;
+      detailHtml = `<div>${head}</div>${detailHtml ? `<div style="margin-top:3px;color:var(--text-tertiary);font-size:10.5px;">${detailHtml}</div>` : ""}`;
+    }
     rows.push({
       kind: kind,
       date: tx.date,
       move: movePart,
-      // Link any tracked prospects mentioned (e.g. multi-player trades
-      // where the other party shows up in the description).
-      detail: highlightTrackedNamesInText(tx.description || "", focalKey),
+      detail: detailHtml,
     });
   }
   rows.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
@@ -20603,7 +20660,7 @@ function renderPlayerDetail(key) {
     if (!isNaN(ms) && ms > 0) ilDays = Math.floor(ms / 86400000);
   }
   const statusPill = p.status === "graduated"
-    ? `<span class="grad-pill" style="background:var(--bg-tertiary);color:var(--grad);">Graduated ${p.graduation_date || ""}</span>`
+    ? `<span class="grad-pill" style="background:var(--bg-tertiary);color:var(--grad);">Debuted ${p.graduation_date || ""}</span>`
     : ilNow
       ? `<span class="grad-pill" style="background:var(--accent-il-soft);color:var(--accent-il);border-color:var(--accent-il);">${escapeHtml(ilNow.type || "?")} IL${ilDays != null ? ` · ${ilDays}d` : ""}</span>`
       : "";
@@ -20770,7 +20827,7 @@ function renderPlayerDetail(key) {
           else if (s.from_date) tipParts.push(`since ${s.from_date}`);
           const tip = tipParts.join(" · ");
           if (s.direction === "graduated") {
-            return `<div><span class="detail-stock-chip stock-chip-grad" title="${escapeHtml(tip || "Graduated")}">GRAD</span></div>`;
+            return `<div><span class="detail-stock-chip stock-chip-grad" title="${escapeHtml(tip || "Debuted")}">DEBUT</span></div>`;
           }
           if (s.direction === "flat" || s.delta == null || Math.abs(s.delta) < 1.5) {
             return `<div><span class="detail-stock-chip stock-chip-flat" title="${escapeHtml(tip || "No meaningful FV movement")}">— flat</span></div>`;
@@ -22727,6 +22784,26 @@ function renderPlayerDetail(key) {
     if (!ca) return "";
     const m = ca.method;
     if (m === "draft" || m === "international_fa" || m === "unknown") return "";
+    // Defensive suppression: when the "current org" event is just the
+    // post-draft / post-IFA contract signing back to the original
+    // drafting team, the original-acquisition card already captures
+    // it. The backend (storage.py _all_acq_events loop) suppresses
+    // these starting next pipeline run, but this guard keeps the
+    // current JSON export clean too.
+    const acq = p.acquisition;
+    if (m === "free_agent" && acq
+        && (acq.method === "draft" || acq.method === "international_fa")
+        && acq.team_name && ca.to_org) {
+      const acqTeamLc = String(acq.team_name).trim().toLowerCase();
+      const evTeamLc  = String((ca.event && (ca.event.to_team_name || ca.event.to_team)) || "").trim().toLowerCase();
+      const sameTeamByName = evTeamLc && acqTeamLc && evTeamLc === acqTeamLc;
+      // Org-code comparison: ca.to_org is already canonicalized; map
+      // acq.team_name via the small subset of org names we'll actually
+      // hit in practice (the full canonical map lives in Python).
+      const sameOrgByCode = p.org && ca.to_org === p.org && acq.year
+        && (ca.date || "").slice(0, 4) && Math.abs(Number((ca.date || "").slice(0, 4)) - Number(acq.year)) <= 1;
+      if (sameTeamByName || sameOrgByCode) return "";
+    }
     const ev = ca.event || {};
     const label = ACQUISITION_LABELS[m] || m;
     const from = ev.from_org ? escapeHtml(ev.from_org) : "?";
@@ -23882,7 +23959,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       : `<span style="color:var(--down);font-weight:700;">→</span>`;
     const other = inbound ? ev.from_org : ev.to_org;
     const gradTag = ev.graduate
-      ? `<span style="font-size:9px;color:var(--text-tertiary);margin-left:4px;letter-spacing:0.04em;">GRAD</span>`
+      ? `<span style="font-size:9px;color:var(--text-tertiary);margin-left:4px;letter-spacing:0.04em;">DEBUT</span>`
       : "";
     const cfg = TRANSACTION_KINDS[ev.kind] || {};
     const chip = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${cfg.color || 'var(--text-tertiary)'};vertical-align:middle;" title="${escapeHtml(cfg.label || ev.kind)}"></span>`;
@@ -23937,7 +24014,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     (a, b) => (b.graduation_date || "").localeCompare(a.graduation_date || "")
   );
   const gradsCard = `<div class="farm-side-card">
-    <div class="side-title">Recent graduates <span class="side-count">${graduates.length}</span></div>
+    <div class="side-title">Recent debuts <span class="side-count">${graduates.length}</span></div>
     ${sortedGrads.slice(0, 6).map(g => {
       const fvAtGrad = g.fv_close != null ? fvCeil(g.fv_close) : null;
       const fvBadge = fvAtGrad != null

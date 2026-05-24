@@ -1180,7 +1180,12 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 # including CPX/DSL and statline-less prospects, which
                 # diluted the pool and kept the gate below 90% even
                 # when every reachable hitter was fresh.
-                _zone_tracked_levels = {"AAA", "AA", "A+", "A"}
+                # v20 — MLB added so debuted hitters who have both AAA
+                # + MLB tape get level_splits for both levels. The
+                # eligibility check trusts the statline's `level` field,
+                # which is set to "MLB" for debuted players once their
+                # roster status flips.
+                _zone_tracked_levels = {"MLB", "AAA", "AA", "A+", "A"}
                 _zone_meta = load_zone_metrics_meta()
                 _zone_eligible_keys = [
                     p.player_key for p in timeseries
@@ -1248,10 +1253,10 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 # the per-player game-feed fetch loop runs 10+ minutes
                 # on cold cache, so skip the whole step when 90%+ of
                 # the tracked pool already has a fresh row. Eligibility
-                # mirrors the fetcher: only TRACKED_LEVELS (AAA/AA/A+/A/CPX)
-                # and only players who currently have a statline row at
-                # one of those levels.
-                _sc_tracked_levels = {"AAA", "AA", "A+", "A", "CPX"}
+                # mirrors the fetcher: TRACKED_LEVELS now includes MLB
+                # (v20) so debuted players who have both AAA + MLB tape
+                # get level_splits for both.
+                _sc_tracked_levels = {"MLB", "AAA", "AA", "A+", "A", "CPX"}
                 _sc_meta = load_statcast_metrics_meta()
                 _sc_eligible_keys = [
                     p.player_key for p in timeseries

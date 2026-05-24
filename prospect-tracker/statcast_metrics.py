@@ -27,6 +27,7 @@ CACHE_DIR = Path(__file__).parent / ".cache" / "statcast_metrics"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 SPORT_LEVELS = {
+    1:  "MLB",
     11: "AAA",
     12: "AA",
     13: "A+",
@@ -34,7 +35,12 @@ SPORT_LEVELS = {
     16: "CPX",
     17: "DSL",
 }
-TRACKED_LEVELS = {"AAA", "AA", "A+", "A", "CPX"}
+# v20 — MLB added so debuted prospects who played both AAA and the
+# majors get level_splits for both. Statcast feed structure is the
+# same; only the sport-ID lookup changes. Frontend already iterates
+# level_splits with per-level labels, so the addition surfaces
+# automatically once the pipeline re-runs.
+TRACKED_LEVELS = {"MLB", "AAA", "AA", "A+", "A", "CPX"}
 PITCH_PLOT_LIMIT = 900
 
 SESSION = requests.Session()

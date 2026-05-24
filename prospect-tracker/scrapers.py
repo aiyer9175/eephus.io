@@ -1377,19 +1377,40 @@ MLB_INTERNATIONAL_INTERVALS = [
 # multi-source consensus opportunity.
 MLB_PIPELINE_ORG_SLUGS = (
     # AL East / Central / West
-    "yankees", "red-sox", "blue-jays", "orioles", "rays",
-    "white-sox", "guardians", "tigers", "royals", "twins",
+    # NOTE — MLB.com's org-page slugs are NOT all hyphenated: `red-sox`,
+    # `blue-jays`, `white-sox`, `diamondbacks` all 200 but return zero
+    # Apollo entities (silent 404 SPA). The correct slugs for those are
+    # the concatenated short forms `redsox`, `bluejays`, `whitesox`,
+    # `dbacks`. Verified empirically Nov 2026 across all six year-keyed
+    # /prospects/{year}/{slug} pages.
+    "yankees", "redsox", "bluejays", "orioles", "rays",
+    "whitesox", "guardians", "tigers", "royals", "twins",
     "astros", "athletics", "angels", "mariners", "rangers",
     # NL East / Central / West
     "braves", "marlins", "mets", "phillies", "nationals",
     "cubs", "reds", "brewers", "pirates", "cardinals",
-    "diamondbacks", "rockies", "dodgers", "padres", "giants",
+    "dbacks", "rockies", "dodgers", "padres", "giants",
 )
 MLB_PIPELINE_ORG_YEARS = (2021, 2022, 2023, 2024, 2025, 2026)
 
+# Display labels — concatenated slugs (dbacks/redsox/bluejays/whitesox)
+# need explicit pretty names so interval_label still reads "Diamondbacks"
+# / "Red Sox" / etc. for downstream auditing + UI consumers.
+MLB_PIPELINE_ORG_LABELS = {
+    "dbacks":    "Diamondbacks",
+    "redsox":    "Red Sox",
+    "bluejays":  "Blue Jays",
+    "whitesox":  "White Sox",
+}
+
+def _slug_to_label(slug: str) -> str:
+    if slug in MLB_PIPELINE_ORG_LABELS:
+        return MLB_PIPELINE_ORG_LABELS[slug]
+    return slug.replace("-", " ").title()
+
 MLB_PIPELINE_ORG_INTERVALS = [
     (f"https://www.mlb.com/prospects/{y}/{slug}",
-     f"MLB Pipeline {y} {slug.replace('-', ' ').title()} Top 30",
+     f"MLB Pipeline {y} {_slug_to_label(slug)} Top 30",
      f"{y}-01-22",
      y,
      f"mlb_pipeline_{y}_org_{slug.replace('-', '_')}")
