@@ -517,6 +517,33 @@
        other in-page anchors are the section headers in the watchlist
        picker which already use scrollIntoView with the same behavior. */
     html { scroll-behavior: smooth; }
+    /* === Themed scrollbars — retro baseball-card / newspaper aesthetic ===
+       Paper-tan track with bracket-style end borders (echoes the
+       section banner double-rule); navy thumb with a thin off-white
+       inner "stitching" line for the baseball-leather feel. Hovers to
+       a stitching-red. Firefox parity via scrollbar-width/color. */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--bg-header) var(--bg-secondary);
+    }
+    *::-webkit-scrollbar { width: 12px; height: 12px; }
+    *::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+    *::-webkit-scrollbar-thumb {
+      background: var(--bg-header);
+      border: 2px solid var(--bg-secondary);
+      border-radius: 6px;
+      box-shadow: inset 0 0 0 1px rgba(245, 235, 220, 0.35);
+    }
+    *::-webkit-scrollbar-thumb:hover { background: var(--down); }
+    *::-webkit-scrollbar-corner { background: var(--bg-secondary); }
+    /* Horizontal-scroll strips (news ticker, comparison cart, etc.)
+       get a slimmer variant so the chrome doesn't dominate the row. */
+    .news-ticker-strip::-webkit-scrollbar { height: 8px; }
+    .news-ticker-strip::-webkit-scrollbar-thumb { border-width: 1px; }
     /* Section anchors offset by a sticky header height (~60px) so a
        jump lands the section heading below the global nav, not under
        it. Mirrors the offset used by IDE goto-line behavior. */
@@ -870,6 +897,84 @@
     }
     select.chip:focus { outline: none; border-color: var(--neon-cyan); }
 
+    /* === Prospect news ticker (newspaper-section style) ============
+       Title sits left of a horizontal-scrolling chip strip, both wrapped
+       in a paper-toned card with double top/bottom rules — the
+       baseball-newspaper section banner. Replaces the prior stacked
+       "Title \n Strip" layout for ~18px vertical savings. */
+    .news-ticker {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      margin-bottom: 10px;
+      border: 1px solid var(--border);
+      border-top: 3px double var(--border);
+      border-bottom: 3px double var(--border);
+      background: var(--bg-secondary);
+      padding: 4px 8px;
+    }
+    .news-ticker-headline {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex-shrink: 0;
+      padding-right: 10px;
+      border-right: 1px solid var(--border);
+      min-width: 140px;
+      /* v19 — Now a <button> that routes to Recently Acquired. Strip
+         the default button chrome so it visually matches the prior
+         div headline; keep cursor + focus state for affordance. */
+      background: transparent;
+      border-top: none; border-bottom: none; border-left: none;
+      cursor: pointer;
+      text-align: left;
+      padding-top: 0; padding-bottom: 0;
+      font: inherit;
+      color: inherit;
+      transition: opacity 0.12s;
+    }
+    .news-ticker-headline:hover .ntk-subline {
+      color: var(--neon-cyan);
+      text-decoration: underline;
+    }
+    .news-ticker-headline:focus-visible {
+      outline: 2px solid var(--neon-cyan);
+      outline-offset: 2px;
+    }
+    .ntk-masthead {
+      font-family: var(--font-retro);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.01em;
+      color: var(--text-primary);
+      text-transform: uppercase;
+    }
+    .ntk-subline {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+      letter-spacing: 0.02em;
+    }
+    .news-ticker-strip {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      align-items: center;
+      padding: 0;
+    }
+    /* Restyle chips inside the ticker — typewriter mono + tan paper bg
+       so they read as newspaper teasers, not navigation buttons. */
+    .news-ticker-strip .chip {
+      font-family: var(--font-mono);
+      background: var(--bg-tertiary);
+      border-style: solid;
+      flex-shrink: 0;
+    }
+
     /* === Section toggle =========================================== */
     /* Renders as a navy banner of pill-style tabs sitting on the paper,
        evoking a printed scoreboard. Active tab is filled navy with cream
@@ -938,9 +1043,25 @@
          the diamond chip. FV history bumped to 1.8fr so the sparkline
          fills more of the available horizontal space. */
       grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr;
+      grid-template-rows: auto auto;  /* v19 — row 1 = existing cells; row 2 = tool strip */
       gap: 14px;
+      column-gap: 14px;
+      row-gap: 2px;
       align-items: center;
     }
+    /* v19 — Tool-grade-strip relocated out of column 1 into its own
+       grid item that spans Player + Rank + FV columns. Reads as a
+       flush horizontal band of color-coded chips along the bottom of
+       the row, ending at the FV-grade column's right edge. */
+    .player-row > .player-row-toolstrip,
+    .col-header > .player-row-toolstrip {
+      grid-column: 1 / span 3;
+      grid-row: 2;
+      min-width: 0;
+      align-self: end;
+    }
+    .player-row > *:not(.player-row-toolstrip),
+    .col-header > *:not(.player-row-toolstrip) { grid-row: 1; }
     /* Compact mono cells for Ht/Wt/BMI. Tertiary-color text keeps
        these from competing with FV / Rank for visual attention.
        .sort-header makes any header clickable to set state.sort —
@@ -1238,6 +1359,14 @@
       color: var(--text-primary);
       letter-spacing: 0.02em;
       line-height: 1.2;
+      /* v19 — Inline-flex so the inline badge strip (health glyph, Tool
+         pill, etc.) aligns with the text baseline rather than floating
+         high or low. wrap allows pills to flow to a second line on
+         narrow viewports instead of pushing the row width. */
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
     }
     .player-meta {
       font-family: var(--font-sans);
@@ -1504,43 +1633,41 @@
        auto-width pill with the dot ::before + the text after. The
        colored dot still encodes the severity tier. Font-size + family
        inherit from the parent .row-tag rule above (9.5px mono). */
-    .row-tag.health-dot {
-      padding: 2px 7px 2px 5px;
-      width: auto;
-      height: auto;
-      box-sizing: border-box;
-      border-radius: 999px;
+    /* v19 — Health glyph: small filled colored circle with a white "+"
+       centered inside. Fill + outer ring color match the severity tier
+       (green/yellow/orange/red). Inner border separates the glyph from
+       the row background; outer box-shadow ring shows the tier color. */
+    .health-glyph {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
-      border: 1px solid transparent;
-      background: transparent;
-      color: var(--text-secondary);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      line-height: 1.2;
-    }
-    .row-tag.health-dot::before {
-      content: "";
-      display: inline-block;
-      width: 7px; height: 7px;
+      width: 14px; height: 14px;
       border-radius: 50%;
-      margin-right: 0;
+      border: 1.5px solid var(--bg-primary);
+      box-shadow: 0 0 0 1px currentColor;
+      background: currentColor;
+      vertical-align: middle;
+      margin-left: 4px;
       flex: 0 0 auto;
     }
-    .row-tag.health-dot.is-green  { border-color: var(--up); background: rgba(31,122,58,0.10); }
-    .row-tag.health-dot.is-green::before  { background: var(--up); }
-    .row-tag.health-dot.is-yellow { border-color: var(--neon-amber); background: rgba(232,165,31,0.14); }
-    .row-tag.health-dot.is-yellow::before { background: var(--neon-amber); }
-    /* v12 — Orange tier: "Healthy but recently returned from IL"
-       (within the last 90 days). Sits between yellow (any 12mo history)
-       and red (currently on IL) so the user sees the urgency gradient
-       at a glance. */
-    .row-tag.health-dot.is-orange { border-color: #FF8C42; background: rgba(255,140,66,0.14); }
-    .row-tag.health-dot.is-orange::before { background: #FF8C42; }
-    .row-tag.health-dot.is-red    { border-color: var(--down); background: rgba(203,55,55,0.14); }
-    .row-tag.health-dot.is-red::before    { background: var(--down); }
+    /* Use SVG-style centering via flex container + zero-height glyph.
+       The "+" character has uneven ascender/descender metrics that
+       throw off optical center when sized small. Setting line-height
+       to 0 and removing margins lets the flex parent's align/justify
+       center the glyph by its true bounding box. */
+    .health-glyph-plus {
+      color: #fff;
+      font-family: var(--font-sans);
+      font-weight: 900;
+      font-size: 11px;
+      line-height: 0;
+      display: block;
+      transform: translateY(-0.5px);
+    }
+    .health-glyph.is-red    { color: var(--down); }
+    .health-glyph.is-orange { color: #FF8C42; }
+    .health-glyph.is-yellow { color: var(--neon-amber); }
+    .health-glyph.is-green  { color: var(--up); }
     .row-tag.acq-trade      { color: var(--neon-cyan);  border-color: var(--neon-cyan);  background: rgba(74,200,224,0.10); }
     .row-tag.acq-rule5,
     .row-tag.acq-waiver     { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.06); }
@@ -1811,12 +1938,22 @@
        plus game power" prose with explicit numeric tool grades — one
        compact color-coded pill per tool, FV-tier ramp. Wraps to a
        second line on narrow viewports rather than truncating. */
+    /* v19 — Tool strip now sits in its own grid item (.player-row-toolstrip)
+       spanning columns 1-3 below the player meta line, with the row's
+       grid-template-rows: auto auto reserving space. Width is the
+       container's full span so chips can be sized for legibility. */
+    .player-row-toolstrip {
+      display: block;
+      padding-top: 2px;
+    }
     .tool-grade-strip {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 4px;
-      margin-top: 3px;
+      margin: 0;
       align-items: center;
+      width: 100%;
+      overflow: hidden;
     }
     .tool-grade-pill {
       display: inline-flex;
@@ -1825,12 +1962,13 @@
       padding: 1px 5px;
       border-radius: 2px;
       font-family: var(--font-retro-mono);
-      font-size: 10px;
+      font-size: 10.5px;
       font-weight: 700;
       letter-spacing: 0.04em;
       line-height: 1.4;
       border: 1px solid;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
     .tool-grade-pill .tg-code {
       font-weight: 600;
@@ -1839,7 +1977,25 @@
     .tool-grade-pill .tg-val {
       font-weight: 700;
     }
-    body.density-compact .tool-grade-strip { display: none; }
+    /* Composite "TOOL" chip leads the per-tool strip with a heavier
+       border so it reads as the headline of the band. */
+    .tool-grade-pill.tg-total {
+      font-weight: 800;
+      border-width: 1.5px;
+    }
+    /* Compact density — tighten slightly but keep legibility. The new
+       grid-row geometry already bounds the strip height; the smaller
+       chip just keeps the strip flush within the row's natural envelope. */
+    body.density-compact .tool-grade-strip {
+      gap: 3px;
+    }
+    body.density-compact .tool-grade-pill {
+      font-size: 10px;
+      padding: 0 4px;
+    }
+    body.density-compact .player-row-toolstrip {
+      padding-top: 1px;
+    }
 
 
     /* Mobile-only performance pill — keeps RPS+/wRC+/xFIP visible when
@@ -1914,16 +2070,30 @@
       line-height: 1.4;
     }
     .milb-cell .lvl-plus { margin-right: 2px; }
+    /* v19 — Flex row that holds Level + OPS+/ERA- + RPS+ + headline.
+       gap:4px replaces the old margin-right:6px on .level-pill so
+       sibling pills (.stat-pill, .rps-plus-pill) inherit consistent
+       inter-chip spacing. */
+    .milb-pill-row {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+      line-height: 1.4;
+    }
     .level-pill {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
       font-family: var(--font-sans);
       font-size: 10px;
       padding: 2px 6px;
       border-radius: 2px;
-      margin-right: 6px;
+      margin: 0;
       font-weight: 700;
       border: 1px solid currentColor;
       letter-spacing: 0.06em;
+      line-height: 1;
+      white-space: nowrap;
     }
     .level-very-young { background: var(--level-very-young-bg); color: var(--level-very-young-fg); border-color: var(--level-very-young-fg); }
     .level-young      { background: var(--level-young-bg);      color: var(--level-young-fg);      border-color: var(--level-young-fg); }
@@ -5269,18 +5439,31 @@
       border-bottom: 1px solid var(--border-light);
     }
 
-    .rps-plus-pill {
-      display: inline-block;
+    /* v19 — Normalized stat-chip geometry. .rps-plus-pill + the new
+       .stat-pill (for wRC+/OPS+) match .level-pill's font-size/padding
+       so all three render at identical size when laid inline on the
+       MiLB cell's first row. */
+    .rps-plus-pill, .stat-pill {
+      display: inline-flex;
+      align-items: center;
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 999px;
+      padding: 2px 6px;
+      border-radius: 2px;
       font-variant-numeric: tabular-nums;
-      margin-top: 4px;
+      margin: 0;
       letter-spacing: 0;
       cursor: help;
       border: 1px solid var(--neon-violet);
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .stat-pill {
+      border-color: var(--border);
+      color: var(--text-secondary);
+      background: var(--bg-tertiary);
+      cursor: default;
     }
     .rps-plus-pill.is-pos { background: rgba(31, 122, 58, 0.15); color: var(--up); border-color: var(--up); }
     .rps-plus-pill.is-neg { background: rgba(185, 28, 28, 0.12); color: var(--down); border-color: var(--down); }
@@ -5856,7 +6039,7 @@
     <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="spotlights">Spotlights</button>
     <button class="section-tab" data-section="traded">Recently Acquired</button>
-    <button class="section-tab" data-section="injured">Injured List</button>
+    <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL">Prospect IL</button>
     <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">Draft</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
@@ -5989,6 +6172,30 @@
         <option value="wt_asc">Lightest first</option>
         <option value="bmi_desc">Highest BMI</option>
         <option value="bmi_asc">Lowest BMI</option>
+      </select>
+    </div>
+    <!-- v19 — Per-tool sort selector. Independent of the main sort
+         dropdown so the user can flip "show me top fastballs" without
+         losing their FV / age / BMI sort context. When set to anything
+         other than "off" it overrides the main sort dimension. -->
+    <div class="filter-group">
+      <span class="filter-label">Sort by tool</span>
+      <select class="chip" id="tool-sort-select">
+        <option value="off">— off —</option>
+        <option value="hit">Hit</option>
+        <option value="game_pwr">Game Pwr</option>
+        <option value="raw_pwr">Raw Pwr</option>
+        <option value="speed">Speed</option>
+        <option value="field">Field</option>
+        <option value="throw">Throw</option>
+        <option value="pitch_sel">Pitch Sel</option>
+        <option value="bat_ctrl">Bat Ctrl</option>
+        <option value="fb">Fastball</option>
+        <option value="sl">Slider</option>
+        <option value="cb">Curve</option>
+        <option value="ch">Change</option>
+        <option value="cmd">Command</option>
+        <option value="ct">Cutter</option>
       </select>
     </div>
     <div class="filter-group">
@@ -6153,17 +6360,9 @@
       <button class="chip" data-grad-sort="vs_fv_proj_low"
               title="WAG (WAR Above Grade) — same metric as 'WAG (high)' but inverted: lowest delta first, so graduates UNDERPERFORMING their FV grade most heavily surface at the top. Playing-time-weighted; requires ≥1 full-season equivalent of MLB playing time (thin-debut graduates sink to the bottom).">WAG (low)</button>
     </div>
-    <!-- v17 — Boom/Bust filter chips. Reads boom_label stamped by
-         storage.py:_compute_boom_bust. Default "All". Selecting a chip
-         narrows the graduates list to just that label tier. -->
-    <div class="filter-bar" style="margin-bottom:8px;">
-      <span class="filter-label">Boom / Bust</span>
-      <button class="chip active" data-grad-boom="all" title="Show every graduate">All</button>
-      <button class="chip" data-grad-boom="boom" title="Outperformed FV-implied WAR projection (WAG ≥ +2.5)">BOOM</button>
-      <button class="chip" data-grad-boom="bust" title="Fell short of FV-implied WAR projection (WAG ≤ −1.5)">BUST</button>
-      <button class="chip" data-grad-boom="settled" title="In the middle band — settled at roughly the FV-implied baseline">SETTLED</button>
-      <button class="chip" data-grad-boom="unsettled" title="Sample too thin to call (cup-of-coffee debuts)">UNSETTLED</button>
-    </div>
+    <!-- v19 — Boom/Bust filter strip retired. The chip noise on the
+         graduate list duplicated the WAG sort dimension and added
+         clutter; WAG (high/low) sort still surfaces over/underperformers. -->
     <div id="grad-rows"></div>
   </div>
 
@@ -6915,16 +7114,20 @@ function computeFgFlags(p) {
 // totaling 14 days is more concerning than 1 fluke 30-day stint, regardless
 // of when the latest IL return was.
 function healthBadgeHTML(p) {
-  // v18 — chip now carries the literal "Health" word next to the colored
-  // dot so the indicator's meaning is legible without hover. The dot
-  // alone read as decoration to first-time users; the word + dot reads
-  // as a status pill (the dot color still encodes the severity).
+  // v19 — Replaced the row-tag "● Health" pill with a small filled
+  // colored circle + centered white "+" glyph (medical chip aesthetic).
+  // Severity tiers + tooltip copy unchanged; only the rendered chrome
+  // is smaller / more dense so the indicator can live inline with the
+  // player name + Tool grade pill without crowding.
+  const _glyph = (tier, tip, aria) =>
+    `<span class="health-glyph is-${tier}" title="${tip}" aria-label="${aria}"><span class="health-glyph-plus">+</span></span>`;
+
   const il = p.il_status || {};
   if (il.is_on_il) {
     const days = il.days_on_il;
     const what = il.description ? il.description : "On IL";
     const tip = `On IL · ${escapeHtml(what)}${days != null ? ` (${days}d)` : ""}`;
-    return `<span class="row-tag health-dot is-red" title="${tip}" aria-label="On IL"></span>`;
+    return _glyph("red", tip, "On IL");
   }
   const hp = p.health_profile || {};
   const stints = hp.il_stints_12mo || 0;
@@ -6942,24 +7145,24 @@ function healthBadgeHTML(p) {
       } catch (e) { daysSinceTj = null; }
     }
     const within12mo = daysSinceTj != null && daysSinceTj <= 365;
-    const tone = within12mo ? "is-orange" : "is-yellow";
+    const tone = within12mo ? "orange" : "yellow";
     const d = hp.tj_surgery_date ? ` (surgery ${hp.tj_surgery_date})` : "";
     const tip = `Post-Tommy John surgery${d}${daysSinceTj != null ? ` · ${daysSinceTj}d since` : ""}`;
-    return `<span class="row-tag health-dot ${tone}" title="${tip}" aria-label="Post-TJ"></span>`;
+    return _glyph(tone, tip, "Post-TJ");
   }
 
   // Severity-based IL history tier — chronic (2+ stints) or long (≥30d)
   // gets orange; one short stint gets yellow.
   if (stints >= 2 || ildays >= 30) {
     const tip = `IL history · ${stints} stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12mo`;
-    return `<span class="row-tag health-dot is-orange" title="${tip}" aria-label="IL history (heavy)"></span>`;
+    return _glyph("orange", tip, "IL history (heavy)");
   }
   if (stints >= 1 || ildays > 0) {
     const tip = `IL history · ${stints} stint${stints === 1 ? "" : "s"} · ${ildays}d on IL last 12mo`;
-    return `<span class="row-tag health-dot is-yellow" title="${tip}" aria-label="IL history (light)"></span>`;
+    return _glyph("yellow", tip, "IL history (light)");
   }
   if (hp && Object.keys(hp).length) {
-    return `<span class="row-tag health-dot is-green" title="Healthy — no IL activity in the past 12 months" aria-label="Healthy"></span>`;
+    return _glyph("green", "Healthy — no IL activity in the past 12 months", "Healthy");
   }
   return "";
 }
@@ -7132,35 +7335,19 @@ function recentAcqBadgeHTML(p) {
 // WAG-anchored BOOM / BUST graduate pills (boomBustPillHTML below) and
 // the per-org boom%/bust% rollups on farm cards.
 
-// BOOM / BUST pill — surfaces only on graduates whose career WAG +
-// sample-size floor place them clearly above (+5 WAR) or below (−2 WAR)
-// their final FV grade's expected WAR. Sub-floor graduates (cup of
-// coffee, <800 PA / <200 IP / <2 seasons) carry no pill; the floor
-// keeps light-sample debuts from being mislabeled.
-function boomBustPillHTML(p) {
-  const lab = p && p.boom_label;
-  if (lab !== "boom" && lab !== "bust") return "";
-  const cw = (p.career_war || {}).career_war;
-  const cwSummary = (cw != null) ? `${cw.toFixed ? cw.toFixed(1) : cw} career WAR` : "career WAR";
-  // v14 — Updated thresholds for the new full-season-equivalent WAG.
-  const tip = lab === "boom"
-    ? `BOOM — outperformed FV-implied WAR projection (${cwSummary}). WAG ≥ +2.5 (full-season-equivalent).`
-    : `BUST — fell short of FV-implied WAR projection (${cwSummary}). WAG ≤ −1.5 (full-season-equivalent).`;
-  return `<span class="row-tag boom-bust-pill tier-${lab}" title="${escapeHtml(tip)}">${lab.toUpperCase()}</span>`;
-}
+// v19 — BOOM / BUST pill retired. The WAG sort dimensions on the
+// graduates page (WAG high / WAG low) surface over/underperformers
+// in a clearer way than the chip noise. boomBustPillHTML stub left
+// in place returning "" so any stale caller fails open.
+function boomBustPillHTML(p) { return ""; }
 
 function _inlineBadgeStrip(p, max = 3) {
-  // `flagCounterPillHTML` removed — flag content now lives inline as
-  // ▲/▼ tags in the row-summary line (see `makeListRowSummary`), so a
-  // separate ▲N▼N counter pill would be redundant noise.
-  // Tool pill re-added: now the only place the Tool composite renders
-  // on Compact density rows (the old "Expanded extras" block was the
-  // previous home but got deleted in the density overhaul). Hover
-  // surfaces per-tool breakdown via toolHoverPopupHTML.
+  // v19 — boomBustPillHTML dropped (retired). Tool composite pill also
+  // moved OUT of the inline strip — it now leads the per-tool tool-
+  // grade-strip rendered under the player meta line via makeListRowSummary.
+  // Health glyph + (optional) Savant/Arsenal extras are all that's left.
   const builders = [
-    typeof boomBustPillHTML       === "function" ? boomBustPillHTML       : null,
     typeof healthBadgeHTML        === "function" ? healthBadgeHTML        : null,
-    typeof toolPlusPillHTML       === "function" ? toolPlusPillHTML       : null,
     typeof savantInlinePillHTML   === "function" ? savantInlinePillHTML   : null,
     typeof arsenalMiniHTML        === "function" ? arsenalMiniHTML        : null,
   ].filter(Boolean);
@@ -7970,6 +8157,7 @@ function syncToURL() {
   if (state.depthSort   && state.depthSort    !== "fv")      p.set("dsort",  state.depthSort);
   if (state.moverFilter && state.moverFilter !== "all")      p.set("mvf",    state.moverFilter);
   if (state.sidebarTopTool && state.sidebarTopTool !== "hit") p.set("stt",   state.sidebarTopTool);
+  if (state.toolSortKey && state.toolSortKey !== "off") p.set("tsk", state.toolSortKey);
   if (state.spotlightBucket !== "risers") p.set("bucket", state.spotlightBucket);
   if (state.lbStat      !== "ops")        p.set("lbstat",  state.lbStat);
   if (state.lbSide      !== "all")        p.set("lbside",  state.lbSide);
@@ -8059,6 +8247,7 @@ function syncFromURL() {
   if (p.has("dsort"))  state.depthSort    = p.get("dsort");
   if (p.has("mvf"))    state.moverFilter  = p.get("mvf");
   if (p.has("stt"))    state.sidebarTopTool = p.get("stt");
+  if (p.has("tsk"))    state.toolSortKey   = p.get("tsk");
   if (p.has("bucket")) state.spotlightBucket = p.get("bucket");
   // Leaderboards filters — round-tripped so org pre-fill from
   // farm-detail's "View org leaderboards →" link sticks.
@@ -8209,6 +8398,8 @@ function restoreUIFromState() {
   if (tfKeySel) tfKeySel.value = state.toolFilterKey || "off";
   const tfMinSel = document.getElementById("tool-filter-min");
   if (tfMinSel) tfMinSel.value = String(state.toolFilterMin || 0);
+  const tsKeySel = document.getElementById("tool-sort-select");
+  if (tsKeySel) tsKeySel.value = state.toolSortKey || "off";
   const searchIn = document.getElementById("search-input");
   if (searchIn) searchIn.value = state.search || "";
   // Header-cell .is-active sync runs after the header is rendered too.
@@ -8415,23 +8606,19 @@ function makeMilbCell(p) {
         sl.ip != null ? `${sl.ip} IP` : null,
       ].filter(Boolean).join(" · ") || "—"
     : `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"}`;
-  // Key-stat detail line: OPS+/ERA- vs level + K%/BB%, plus HR/9 (P) or
-  // ISO (H). Falls back gracefully when a field is missing.
+  // Key-stat detail line: K%/BB% + HR/9 (P) or ISO/HR/HH (H). OPS+/ERA-
+  // were promoted to a pill on the top row (next to Level + RPS+), so
+  // they're no longer in this prose detail line.
   const detail = isPitcher
     ? [
-        sl.era_minus_level != null ? `ERA- ${Math.round(sl.era_minus_level)}` : null,
         sl.k_pct != null ? `K% ${sl.k_pct.toFixed(1)}` : null,
         sl.bb_pct != null ? `BB% ${sl.bb_pct.toFixed(1)}` : null,
         sl.hr_per_9 != null ? `HR/9 ${sl.hr_per_9.toFixed(2)}` : null,
       ].filter(Boolean).join(" · ")
     : (() => {
-        // Pull Hard Hit% from FG _extras (decimal 0.0-1.0, displayed as %).
-        // Sits alongside the in-season rate stats so a scout-derived
-        // signal lives next to the statline-derived ones.
         const _ex = _getFgExtras(p);
         const _hh = _ex && _ex.hard_hit_pct != null ? (_ex.hard_hit_pct * 100).toFixed(0) + "%" : null;
         return [
-          sl.ops_plus_level != null ? `OPS+ ${Math.round(sl.ops_plus_level)}` : null,
           sl.hr != null ? `${sl.hr} HR` : null,
           sl.iso != null ? `ISO ${fmtRate3(sl.iso)}` : null,
           sl.bb_pct != null ? `BB% ${sl.bb_pct.toFixed(1)}` : null,
@@ -8447,10 +8634,18 @@ function makeMilbCell(p) {
   const tipAttr = normTip ? ` title="${escapeHtml(normTip)}"` : "";
   // Skip the RPS+ pill at MLB level since the headline already carries
   // the league-relative (wRC+ / xFIP) read.
-  const supplementaryPill = sl.level === "MLB" ? "" : rpsPlusPillHTML(p);
+  const rpsPill = sl.level === "MLB" ? "" : rpsPlusPillHTML(p);
+  // OPS+ / ERA- promoted from prose-detail-line to a sibling pill so it
+  // sits inline with Level + RPS+ at the same chip geometry.
+  const plusPill = isPitcher
+    ? (sl.era_minus_level != null
+        ? `<span class="stat-pill" title="ERA- vs level (lower is better)">ERA- ${Math.round(sl.era_minus_level)}</span>`
+        : "")
+    : (sl.ops_plus_level != null
+        ? `<span class="stat-pill" title="OPS+ vs level (higher is better)">OPS+ ${Math.round(sl.ops_plus_level)}</span>`
+        : "");
   return `<div class="milb-cell milb-cell-wrap"${tipAttr}>
-    <span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${headline}
-    ${supplementaryPill}
+    <span class="milb-pill-row"><span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${plusPill}${rpsPill}${headline}</span>
     <br/><span style="color: var(--text-primary);">${slashLine}</span>
     <br/><span style="color: var(--text-tertiary);">${detail}</span>
   </div>`;
@@ -8623,8 +8818,6 @@ const state = {
   // graduates. Sort by graduation date is still one click away via
   // the "Date" chip on the graduates page.
   gradSort: "vs_fv_proj",
-  // v17 — Boom/Bust filter for the graduates page. "all" passes everyone.
-  gradBoomFilter: "all",
   // Injured-list sort. "days_asc" (default) sorts by elapsed IL days
   // ascending so the players closest to returning surface first.
   // "days" sorts descending (longest-out first); "fv" puts high-FV
@@ -8652,6 +8845,10 @@ const state = {
   // is 0 (no threshold) or 50/55/60/65/70.
   toolFilterKey: "off",
   toolFilterMin: 0,
+  // v19 — Per-tool sort. When set to a tool key (hit, speed, fb, etc.)
+  // overrides state.sort and sorts the active list by that tool grade
+  // descending. "off" = no override, main sort applies.
+  toolSortKey: "off",
   // Row density — "compact" (default) / "expanded". Picked up from
   // URL > localStorage > default on boot. Drives a body-level class.
   // Defaults to "compact" so a fresh visitor lands on the cleanest row
@@ -8847,6 +9044,31 @@ function getFilteredActives() {
       return typeof v === "number" && v >= state.toolFilterMin;
     });
   }
+  // v19 — Per-tool sort override. When toolSortKey is set, it wins
+  // over state.sort and orders the pool by that specific tool grade
+  // descending (nulls sink to the bottom). FV is the tiebreaker so a
+  // 60 FV with 65 SPD beats a 50 FV with 65 SPD.
+  if (state.toolSortKey && state.toolSortKey !== "off") {
+    const tk = state.toolSortKey;
+    const _toolVal = (p) => {
+      const tg = (p.tools && p.tools.grades) || {};
+      let v = tg[tk];
+      if (v == null && p.points && p.points.length) {
+        const latest = p.points[p.points.length - 1];
+        const tc = (latest && latest.tools_consensus) || {};
+        v = tc[tk];
+      }
+      return typeof v === "number" && isFinite(v) ? v : null;
+    };
+    pool.sort((a, b) => {
+      const av = _toolVal(a), bv = _toolVal(b);
+      if (av == null && bv == null) return (b.fv_close ?? -1) - (a.fv_close ?? -1);
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return bv - av || (b.fv_close ?? -1) - (a.fv_close ?? -1);
+    });
+    return pool;  // skip the main-sort branch below
+  }
   if (state.sort === "age_asc") {
     pool.sort((a, b) => (a.age ?? 99) - (b.age ?? 99));
   } else if (state.sort === "age_vs_level") {
@@ -8981,11 +9203,6 @@ function getFilteredGrads() {
   if (state.orgFilter !== "all") {
     pool = pool.filter(p => p.org === state.orgFilter);
   }
-  // v17 — Boom/Bust filter (state.gradBoomFilter). Empty / "all" passes
-  // every graduate; any other value narrows to just that boom_label tier.
-  if (state.gradBoomFilter && state.gradBoomFilter !== "all") {
-    pool = pool.filter(p => (p.boom_label || "") === state.gradBoomFilter);
-  }
   // Already sorted by graduation_date desc from the back-end; preserve that.
   return pool;
 }
@@ -9085,9 +9302,22 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
       <span style="color:var(--text-tertiary);margin-left:5px;font-size:9px;">${dateStr}</span>
     </button>`;
   }).join("");
-  root.innerHTML = `<div style="margin-bottom:12px;">
-    <div style="font-family:var(--font-sans);font-size:11px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Prospect news this week <span class="detail-title-sub" style="text-transform:none;letter-spacing:0.02em;">last 7 days · ${filteredEvents.length} event${filteredEvents.length === 1 ? "" : "s"}</span></div>
-    <div style="display:flex;gap:6px;overflow-x:auto;padding:4px 0;">${chips}</div>
+  // v19 — Newspaper-section layout: title sits LEFT of the chip strip
+  // (single row instead of stacked), wrapped in a paper-bordered chrome
+  // (double top/bottom rules in the FV-tier border color). Saves a row
+  // of vertical real estate above every list page.
+  // v19 — Masthead is a clickable button that routes to Recently
+  // Acquired (the section that lists every news event in full). Chips
+  // keep their own data-key click → player detail. The delegated
+  // handler on `.news-ticker-headline[data-go-section]` lives near
+  // other navigation handlers below.
+  root.innerHTML = `<div class="news-ticker">
+    <button class="news-ticker-headline" data-go-section="traded" type="button"
+            title="View all recently acquired prospects →">
+      <span class="ntk-masthead">Prospect news</span>
+      <span class="ntk-subline">this week · ${filteredEvents.length} event${filteredEvents.length === 1 ? "" : "s"} · view all →</span>
+    </button>
+    <div class="news-ticker-strip">${chips}</div>
   </div>`;
 }
 
@@ -9425,7 +9655,6 @@ function renderActives() {
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
             ${playerMetaHTML(p, { suppressHandedness: true })}
-            ${makeListRowSummary(p)}
           </div>
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
@@ -9438,6 +9667,7 @@ function renderActives() {
         ${physClusterHTML(p)}
         ${makeEtaCell(p)}
         ${playerExpandedMetaHTML(p)}
+        ${makeListRowSummary(p) ? `<div class="player-row-toolstrip">${makeListRowSummary(p)}</div>` : ""}
       </div>
     `;
   }).join("");
@@ -10814,12 +11044,15 @@ function openGlossaryPopover(anchorEl) {
 function renderInjured() {
   renderWhatsNew("whats-new-injured", kind => kind === "il");
   const today = new Date();
-  // Build the list from every player array — actives + graduates
-  // (graduates can also be on the MLB IL) + inactives — so a hurt
-  // post-grad still shows up here rather than disappearing into the
-  // graduates view.
+  // v19 — Active prospects only. Graduates + inactives were included
+  // historically so a post-grad MLB IL stint would still surface here,
+  // but stale `il.since` dates on closed-yet-not-cleared graduate
+  // payloads were producing the "1000+ days on IL" rows that cluttered
+  // the page. Graduates on the MLB IL still get the il_status badge on
+  // their own detail page; they just don't pollute the prospect-tracker
+  // IL roll-up.
   const pool = [];
-  for (const arr of ["players", "graduates", "inactive"]) {
+  for (const arr of ["players"]) {
     for (const p of (DATA[arr] || [])) {
       const il = p.il_status || {};
       if (!il.is_on_il) continue;
@@ -10879,12 +11112,24 @@ function renderInjured() {
     <span>Reason</span>
   </div>`;
 
+  // v19 — Traffic-light palette by IL type so severity reads at a
+  // glance: 7-day green (mild) → 10-day light amber → 15-day amber →
+  // 60-day red. Anything else (MLB IL etc.) falls back to neutral gray.
+  const _ilTypePalette = (type) => {
+    const t = String(type || "").toLowerCase();
+    if (t.startsWith("7"))  return { bg: "rgba(31,122,58,0.12)",  fg: "var(--up)",         bd: "var(--up)" };
+    if (t.startsWith("10")) return { bg: "rgba(232,165,31,0.10)", fg: "#d9b14b",           bd: "#d9b14b" };
+    if (t.startsWith("15")) return { bg: "rgba(232,165,31,0.16)", fg: "var(--neon-amber)", bd: "var(--neon-amber)" };
+    if (t.startsWith("60")) return { bg: "rgba(203,55,55,0.14)",  fg: "var(--down)",       bd: "var(--down)" };
+    return { bg: "var(--bg-tertiary)", fg: "var(--text-secondary)", bd: "var(--border)" };
+  };
   const rows = filtered.map(({ p, il, days, since, fv }, i) => {
     const tjBadge = (p.health_profile || {}).is_post_tj
       ? `<span style="font-size:9px;color:var(--accent-tj);background:var(--accent-tj-soft);border:1px solid var(--accent-tj-border);padding:1px 5px;border-radius:2px;letter-spacing:0.04em;text-transform:uppercase;font-weight:700;margin-left:4px;">Post-TJ</span>`
       : "";
     const fvLabel = fv ? fvCeil(fv) : "—";
     const reason = il.reason || il.description || "—";
+    const _pal = _ilTypePalette(il.type);
     return `
       <div class="player-row is-injured" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
         <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div></div>
@@ -10898,7 +11143,7 @@ function renderInjured() {
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
-        <div><span class="grad-pill" style="background:var(--accent-il-soft);color:var(--accent-il);border:1px solid var(--accent-il-border);">${escapeHtml(il.type || "?")} IL</span></div>
+        <div><span class="grad-pill" style="background:${_pal.bg};color:${_pal.fg};border:1px solid ${_pal.bd};">${escapeHtml(il.type || "?")} IL</span></div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12px;color:var(--text-secondary);">${escapeHtml(since || "—")}</div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;color:${days > 60 ? 'var(--down)' : days > 14 ? 'var(--neon-amber)' : 'var(--text-secondary)'};font-weight:600;" title="${days > 60 ? 'Long-term IL (60+ days)' : days > 14 ? '15-60 day stint' : 'Short stint (≤14 days)'}">${days}d</div>
         <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
@@ -13466,36 +13711,16 @@ function renderGraduates() {
         warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="WAR/year — total MLB WAR ÷ ${r.war_seasons_count} season${r.war_seasons_count === 1 ? "" : "s"} weighted by playing time (1 season = ${denomTag}). Requires ≥1 full-season equivalent of MLB time.">${r.war_per_yr > 0 ? '+' : ''}${r.war_per_yr.toFixed(2)} WAR/yr</span>`;
       }
     }
-    // "FG writeup" pill — only shows when FanGraphs published a
-    // graduate-year writeup for this player. Reads from the
-    // scout_reports sidecar (lazy-loaded; the pill silently no-ops
-    // until the sidecar arrives). Multi-cycle shape (2026-05): the
-    // sidecar entry per source is a LIST of {date, label, text, hash}.
-    // Scan the list for any cycle whose label mentions "graduat".
-    const fgEntries = ((DATA.scout_reports || {})[g.player_key] || {}).fangraphs;
-    const fgGradReport = (() => {
-      if (!fgEntries) return null;
-      if (Array.isArray(fgEntries)) {
-        return fgEntries.find(e => ((e.label || "").toLowerCase().includes("graduat")));
-      }
-      // Legacy single-entry shape (pre-2026-05 sidecars).
-      if (typeof fgEntries === "object"
-          && (fgEntries.label || "").toLowerCase().includes("graduat")) {
-        return fgEntries;
-      }
-      return null;
-    })();
-    const hasGradWriteup = !!fgGradReport;
-    const gradWriteupPill = hasGradWriteup
-      ? `<span class="grad-pill grad-writeup-pill" title="FanGraphs published a graduate-year writeup — open the detail page to read it (${escapeHtml(fgGradReport.label || "")} · ${escapeHtml(fgGradReport.date || "")})">FG writeup</span>`
-      : "";
+    // v19 — FG writeup chip removed from the grad list; the full writeup
+    // still renders on each grad's detail page (renderPlayerDetail
+    // scouting section reads the same DATA.scout_reports sidecar).
     return `
       <div class="grad-row" data-key="${escapeHtml(g.player_key)}" style="${orgStripe(g.org)}">
         <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(g)}"><span class="rank-num-inner">#${rank}</span></div>${rankTrendHTML(g)}</div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           <span class="headshot-stack">${headshotHTML(g, 50)}${optionsDotsHTML(g)}</span>
           <div style="min-width:0;flex:1;">
-            <div class="player-name">${escapeHtml(g.player_name)}${typeof boomBustPillHTML === "function" ? boomBustPillHTML(g) : ""}${wagPill}${warTag}${gradWriteupPill}</div>
+            <div class="player-name">${escapeHtml(g.player_name)}${wagPill}${warTag}</div>
             ${playerMetaHTML(g, { showIL: false, showRoster: false })}
           </div>
           <!-- v17 — Compare + Watchlist on graduate rows. -->
@@ -13868,7 +14093,7 @@ const GLOSSARY = {
   },
   "rps_plus": {
     name: "RPS+", aliases: ["RPS+", "Rate Performance Score"], category: "custom-index",
-    priority: 20,
+    priority: 3,
     short: "Level-anchored rate index normalized by age cohort AND position group. 100 = mean of same-age, same-position-group prospects.",
     long: "RPS+ converts a player's level-relative rate stats (OPS+ for hitters, ERA- for pitchers) into a single index. The cohort it normalizes against is now (age × position group), so a 21yo catcher is compared to other 21yo catchers, not the global 21yo pool. Falls back to age-only when the per-position cell has <30 prospects. A small position multiplier (C ×1.08, MI ×1.05, CF ×1.04, CI ×1.00, COF ×0.97, 1B ×0.95, DH ×0.92, P ×1.00) is applied AFTER the cohort normalization so the catcher-vs-1B distinction survives the per-bucket renormalization. MLB-level prospects substitute the canonical wRC+ (hitters) or xFIP/FIP- (pitchers) since those are already MLB-anchored. Weighting priority: LEVEL anchor (highest, via the OPS+ / ERA- input) → AGE cohort → POSITION multiplier.",
     formula: "RPS+ = 100 × (player_score + 100) / (cohort_mean + 100) × position_multiplier · clamped [0, 250]",
@@ -13877,7 +14102,7 @@ const GLOSSARY = {
   },
   "dvm_plus": {
     name: "DvM+", aliases: ["DvM+", "Development vs Mean"], category: "custom-index",
-    priority: 5,
+    priority: 1,
     short: "Farm-system development index; 100 = league-mean FV growth. Drives the Development component of the farm report card.",
     long: "wRC+-style index for organizational development. Measures each farm's cumulative FV growth over a window (1y / 3y / 6y) and scores it against the league-mean farm. Acquisitions are nullified (a trade-in adds zero to the source farm) and graduations don't subtract; pure development of prospects already in the system. 100 = league mean, 10 pts = 1 stdev across the 30 orgs. The blended trajectory_score that drives the farm letter grade weights the 6y window 60%, 3y 30%, and 1y 10% — 6y is the principal multi-cycle signal; shorter windows still react to the current cycle so a hot current year isn't fully ignored.",
     formula: "DvM+ = 100 + 10 · (org_growth − league_mean_growth) / league_stdev\nblended trajectory_score = 0.60·6y + 0.30·3y + 0.10·1y",
@@ -13958,7 +14183,7 @@ const GLOSSARY = {
   },
   "wag": {
     name: "WAG", aliases: ["WAG", "WAR Above Grade"], category: "custom-index",
-    priority: 8,
+    priority: 2,
     short: "Graduate metric: full-season-equivalent WAR (rate × role workload target) minus FV-grade-implied baseline.",
     long: "v14 — WAG is the player's career WAR/(PA|IP) rate projected to a role-typical full-season workload, minus the FV-implied per-season WAR baseline. Hitters use a 612 PA target; pitchers use role-specific IP targets (SP 175 / MIRP 65 / SIRP 50 / CL 60). The full-season projection fixes the cycle-13 bug where mid-career grads with elite rates (e.g. Junior Caminero, 4.6 WAR over ~510 PA at FV 55) read as negative WAG simply because they hadn't accumulated a full season's WAR yet. Sample floor: hitters need ≥150 career PA, pitchers need ≥50 career IP — below that, WAG returns None and no BOOM/BUST pill renders. Targets are loaded from data/role_full_season_baselines.json (MLB qualifier medians, refreshed annually).",
     formula: "WAG = (career_war / career_pa or ip) × full_season_target − expected_war(FV)\nhitter target: 612 PA · SP: 175 IP · MIRP: 65 IP · SIRP: 50 IP · CL: 60 IP",
@@ -13998,7 +14223,7 @@ const GLOSSARY = {
   "graduation": {
     name: "Graduation", aliases: ["Graduation", "Rookie Eligibility", "Prospect Status"],
     category: "definition",
-    priority: 2,
+    priority: 4,
     short: "A prospect loses rookie eligibility (graduates) when ANY of three thresholds fire.",
     long: "Per MLB's official rookie-eligibility rule (https://www.mlb.com/glossary/rules/rookie-eligibility), a player is no longer a rookie once they cross any of: (1) more than 130 career MLB at-bats (hitters), (2) more than 50 career MLB innings pitched (pitchers), (3) more than 45 days on the active MLB roster excluding IL time and excluding post-September-1 days (roster expansion). The site applies all three gates as an OR; the field `graduation_reason` reports which one fired first. The 45-day active-roster count is estimated from the public transactions log — IL placements end an active segment and reinstatements re-open one; post-Sept-1 days are clipped at the season cap. As a backstop, players who exhaust all 3 MiLB options AND have debuted in MLB also graduate (a no-options player can't be sent down without clearing waivers, so the team has effectively committed the roster spot).",
     formula: "graduates if ANY:\n  career_ab > 130\n  career_ip > 50\n  active_roster_days > 45 (excl. IL, post-Sept-1)\n  options_exhausted AND debuted",
@@ -14006,7 +14231,7 @@ const GLOSSARY = {
   },
   "fv": {
     name: "FV", aliases: ["FV", "Future Value", "Consensus FV"], category: "scouting",
-    priority: 1,
+    priority: 4,
     short: "Future Value, the 20-80 scouting grade for a prospect's projected MLB ceiling.",
     long: "Every tracked source (FanGraphs, MLB Pipeline, ESPN, Just Baseball, TJStats, Baseball America, The Athletic) publishes a 20-80 grade per prospect. The site averages them into a consensus FV, with Bayesian shrinkage applied to single-instance grades. FV 50 is a projected MLB regular, FV 60 is a first-division regular or future star, FV 70+ is perennial all-star ceiling.",
     formula: "consensus_fv = mean(published_fvs) + shrinkage_pull · (FV_35 − mean) when only 1 instance exists",
@@ -15219,6 +15444,30 @@ document.addEventListener("click", (e) => {
 // Delegated click handler for the active-filters chip strip. Each
 // chip carries data-clear-filter="<key>"; clicking resets that filter
 // to its default and re-renders. Mirrors the chip-group + select-input
+// v19 — Global delegated handler for "go to section" links scattered
+// outside the main section-tabs row (e.g. the prospect-news masthead
+// "view all" link, the sidebar "Spotlight peek" → Spotlights link).
+// Each element carries data-go-section="<section-id>"; clicking routes
+// to that section without bouncing through the section-tabs row.
+document.addEventListener("click", (e) => {
+  const navEl = e.target && e.target.closest && e.target.closest("[data-go-section]");
+  if (!navEl) return;
+  // Skip the sidebar's own scoped wiring at renderActiveContextRail —
+  // that handler runs first via inner-element stopPropagation if needed.
+  // The check below ensures we don't double-fire: the rail's link uses
+  // class .ctx-card-link which already has a scoped click handler that
+  // calls render() itself. Only handle elements NOT inside the rail.
+  if (navEl.closest && navEl.closest(".active-context-rail")) return;
+  const target = navEl.dataset.goSection;
+  if (!target) return;
+  e.preventDefault();
+  state.section = target;
+  syncToURL();
+  restoreUIFromState();
+  render();
+  window.scrollTo({ top: 0, behavior: "instant" });
+});
+
 // "reset to all" behavior so the chip strip is a one-click escape
 // hatch alongside the existing per-filter UI.
 document.addEventListener("click", (e) => {
@@ -15564,6 +15813,33 @@ function rosterTagHTML(p) {
   </span>`;
 }
 
+// Pool-wide mean age + heat-gradient color for the age tag. The mean
+// is computed once per render() (cleared at the top of render); the
+// color ramp maps (age − mean) ∈ [-3, +3] to cool→neutral→warm so a
+// row scan picks out the young/old prospects against the typical
+// active-pool baseline. Falls back to 22 when the pool is empty.
+let _ageMeanCache = null;
+function _resetAgeMeanCache() { _ageMeanCache = null; }
+function _poolMeanAge() {
+  if (_ageMeanCache != null) return _ageMeanCache;
+  const ages = (DATA.players || [])
+    .map(p => p && p.age)
+    .filter(a => a != null && isFinite(a));
+  _ageMeanCache = ages.length
+    ? ages.reduce((s, a) => s + a, 0) / ages.length
+    : 22;
+  return _ageMeanCache;
+}
+function _ageHeatColor(age) {
+  if (age == null || !isFinite(age)) return "var(--text-tertiary)";
+  const delta = age - _poolMeanAge();
+  if (delta <= -1.5) return "var(--neon-cyan)";       // very young — cool blue
+  if (delta <  -0.4) return "#5b9fd1";                 // young-ish — tan-blue
+  if (delta <   0.4) return "var(--text-secondary)";  // neutral
+  if (delta <=  1.5) return "var(--neon-amber)";      // older-ish — warm amber
+  return "var(--down)";                                 // very old — red
+}
+
 // IL badge for the player-meta line. Returns an empty string when the
 // player isn't on IL; otherwise an amber pill showing the list type and
 // duration in days. Tooltip carries the placement description.
@@ -15574,9 +15850,15 @@ function rosterTagHTML(p) {
 function playerMetaHTML(p, opts = {}) {
   const { showIL = true, showRoster = true, suppressHandedness = false } = opts;
   const ageNum = p.age != null ? Number(p.age) : null;
-  const ageTag = ageNum != null && !isNaN(ageNum)
-    ? `<span class="age-tag">age ${ageNum.toFixed(1)}</span>`
-    : "";
+  let ageTag = "";
+  if (ageNum != null && !isNaN(ageNum)) {
+    const ageColor = _ageHeatColor(ageNum);
+    const mean = _poolMeanAge();
+    const delta = ageNum - mean;
+    const sign = delta > 0 ? "+" : "";
+    const tip = `Age ${ageNum.toFixed(1)} · ${sign}${delta.toFixed(1)} vs pool mean ${mean.toFixed(1)}`;
+    ageTag = `<span class="age-tag" style="color:${ageColor};border-color:${ageColor};" title="${escapeHtml(tip)}">${ageNum.toFixed(1)}yo</span>`;
+  }
   const ilTag = showIL ? ilTagHTML(p) : "";
   // Options indicator moved under the player picture (.headshot-stack
   // + optionsDotsHTML) in the density-overhaul pass. The numeric
@@ -15883,6 +16165,23 @@ function makeToolGradeChips(p) {
     || /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(String(p.position || ""));
   const order = isP ? _PITCHER_TOOL_ORDER : _HITTER_TOOL_ORDER;
   const pills = [];
+  // v19 — Composite Tool chip leads the strip (was previously the
+  // inline `Tool 61` pill next to the player name). Same FV-tier color
+  // ramp as the individual tool pills so the whole strip reads as a
+  // single gradient band.
+  const composite = (p.tools && p.tools.composite_overall);
+  if (composite != null && isFinite(Number(composite))) {
+    const cv = Math.round(Number(composite));
+    const ct = _toolTier(cv);
+    pills.push(
+      `<span class="tool-grade-pill tg-total"
+             style="background:var(--fv-${ct}-bg);color:var(--fv-${ct}-fg);border-color:var(--fv-${ct}-bd);"
+             title="Tool composite grade ${cv} (mean of published 20-80 tool grades)">`
+      + `<span class="tg-code">TOOL</span>`
+      + `<span class="tg-val">${cv}</span>`
+      + `</span>`
+    );
+  }
   for (const k of order) {
     // PWR uses the consolidated helper; everything else reads directly.
     const v = k === "pwr" ? _resolvePwr(grades) : grades[k];
@@ -16011,21 +16310,22 @@ function updateMeta() {
     filterCountEl.textContent = n ? `· ${n} active` : "";
   }
   renderActiveFiltersStrip();
-  const refreshedAt = DATA.generated_at ? DATA.generated_at.split("T")[0] : "—";
   const meta = document.getElementById("meta-line");
-  // Cohort counts — MiLB / Draft / Overseas / Graduates. Draft and
-  // overseas are lazy-loaded JSON; show "…" until each resolves, then
-  // updateMeta() is re-invoked once each fetch completes.
+  // Collapsed meta line — single combined prospect total + graduate count.
+  // The MiLB/draft/overseas split was retired; the all-up total is the
+  // most-useful header signal, and detail is one tab-click away.
+  // Draft + overseas are lazy-loaded — show "…" for the total until
+  // BOTH resolve so the displayed number isn't misleadingly low.
   const draftCount = (DATA.draft && DATA.draft.classes)
     ? DATA.draft.classes.reduce((n, c) => n + ((c.prospects || []).length), 0)
     : null;
   const overseasCount = (DATA.overseas && DATA.overseas.leagues)
     ? DATA.overseas.leagues.reduce((n, l) => n + ((l.players || []).length), 0)
     : null;
-  meta.innerHTML = `Last refresh: <code>${refreshedAt}</code>` +
-    `<span class="dot">·</span>${DATA.active_count} MiLB prospects` +
-    `<span class="dot">·</span>${draftCount != null ? draftCount : "…"} draft prospects` +
-    `<span class="dot">·</span>${overseasCount != null ? overseasCount : "…"} overseas` +
+  const totalProspects = (draftCount != null && overseasCount != null)
+    ? DATA.active_count + draftCount + overseasCount
+    : null;
+  meta.innerHTML = `${totalProspects != null ? totalProspects : "…"} prospects` +
     `<span class="dot">·</span>${DATA.graduate_count} graduates`;
   // v19 — Section flavor-text element removed; the per-section count
   // strip was unnecessary chrome cluttering the tabs row. The active
@@ -19792,11 +20092,23 @@ function makeInjuryHistoryBlock(history) {
     const typeColor = s.active
       ? "var(--neon-amber)"
       : (s.type === "60-day" ? "var(--down)" : "var(--text-tertiary)");
+    // v19 — Diagnosis fallback chain: prefer the parsed `reason` field;
+    // when missing (upstream API description had no diagnosis clause),
+    // fall back to a truncated raw description, then to a derived
+    // "<type> IL placement" placeholder so the cell is never blank.
+    const _diagText = s.reason
+      || (s.description
+          ? (s.description.length > 60 ? s.description.slice(0, 57) + "…" : s.description)
+          : "")
+      || (s.type ? `${s.type} IL placement` : "—");
+    const _diagTip = s.description && s.description !== _diagText
+      ? ` title="${escapeHtml(s.description)}"`
+      : "";
     return `<tr>
       <td style="white-space:nowrap;font-variant-numeric:tabular-nums;">${sinceFmt} → ${untilFmt}</td>
       <td style="white-space:nowrap;color:${typeColor};font-weight:${s.active ? 600 : 500};">${escapeHtml(s.type || "?")} IL</td>
       <td style="white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--text-primary);">${days}</td>
-      <td style="color:var(--text-secondary);font-size:11px;line-height:1.45;">${escapeHtml(s.reason || "")}</td>
+      <td style="color:var(--text-secondary);font-size:11px;line-height:1.45;"${_diagTip}>${escapeHtml(_diagText)}</td>
     </tr>`;
   }).join("");
   return `<table class="detail-table"><thead><tr><th>Stint</th><th>List</th><th>Length</th><th>Diagnosis</th></tr></thead><tbody>${rows}</tbody></table>`;
@@ -21603,10 +21915,16 @@ function renderPlayerDetail(key) {
   // durability risk without scrolling to the Injury history table.
   const healthSection = (() => {
     const hp = p.health_profile || {};
-    const stints = hp.il_stints_12mo || 0;
-    const days = hp.il_days_12mo || 0;
     const history = ((p.roster_status || {}).injury_history) || [];
-    const hasAnySignal = stints > 0 || days > 0 || hp.is_post_tj || history.length > 0;
+    // v19 — Aggregates derived from the same injury_history array the
+    // table below renders, so the header always matches the rows.
+    // Was: trailing-12mo from hp.il_stints_12mo / hp.il_days_12mo, which
+    // read 0 for any player whose stints are >12 months old even when
+    // the on-record table showed multiple stints. Now: full on-record
+    // count + total days summed from the array.
+    const stints = history.length;
+    const days = history.reduce((s, h) => s + (h.days || 0), 0);
+    const hasAnySignal = stints > 0 || days > 0 || hp.is_post_tj;
     if (!hasAnySignal) return "";
     // Pick a color for the headline number — green if clean, amber for
     // mild concern, red for chronic / TJ recovery.
@@ -21647,7 +21965,7 @@ function renderPlayerDetail(key) {
           </details>`;
         })()
       : "";
-    return `<div class="detail-title">Health profile <span class="detail-title-sub">trailing 12 months</span></div>
+    return `<div class="detail-title">Health profile <span class="detail-title-sub">${stints} stint${stints === 1 ? "" : "s"} on record</span></div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:var(--radius-sm);">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div>
@@ -22406,7 +22724,7 @@ function renderPlayerDetail(key) {
     { key: "overview",    label: "Overview",        html: overviewHtml },
     { key: "performance", label: "Performance",     html: performanceHtml },
     { key: "scouting",    label: "Scouting & Tools", html: scoutingHtml },
-    { key: "health",      label: "Health & Status", html: healthHtml },
+    { key: "health",      label: "Health", html: healthHtml },
     { key: "details",     label: "Details",         html: contextHtml },
   ];
   const tabBar = renderDetailTabs(tabs, state.playerTab, "player");
@@ -22933,7 +23251,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
           ${headshotHTML(p, 56)}
           <div style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}</div>
-            <div class="player-meta">${escapeHtml(p.position ?? "—")}${p.age != null ? `<span class="age-tag">age ${p.age.toFixed(1)}</span>` : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
+            <div class="player-meta">${escapeHtml(p.position ?? "—")}${p.age != null ? (() => { const _c = _ageHeatColor(p.age); return `<span class="age-tag" style="color:${_c};border-color:${_c};">${p.age.toFixed(1)}yo</span>`; })() : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
             <div class="player-stat-line" style="margin-top:3px;font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rosterStatLine(p)}${rpsPlusPillHTML(p)}${scoutRatesHTML(p)}</div>
           </div>
         </div>
@@ -24060,6 +24378,9 @@ function _renderFarmDetailBody(orgCode, org, root) {
 }
 
 function render() {
+  // Clear per-render memo caches so derived values (e.g. pool mean age)
+  // re-compute against any DATA that hydrated since the last paint.
+  _resetAgeMeanCache();
   const sections = {
     active:       "active-section",
     spotlights:   "spotlights-section",
@@ -24303,7 +24624,6 @@ const CHIP_GROUP_DEFAULTS = {
   "filter-stock":  "all",
   "filter-health": "all",
   "filter-spread": "all",
-  "grad-boom":     "all",
   "farm-acq":      "all",
 };
 function attachChipGroup(attr, stateKey, onChange, opts = {}) {
@@ -25801,8 +26121,6 @@ function attachHandlers() {
   // (who graduated most recently / who's been the best MLB performer /
   // who graduated at the highest FV) and benefits from chip toggles.
   attachChipGroup("grad-sort", "gradSort", () => renderGraduates());
-  // v17 — Boom/Bust filter chips on the graduates page.
-  attachChipGroup("grad-boom", "gradBoomFilter", () => renderGraduates());
   // IL sort chips.
   attachChipGroup("il-sort", "ilSort", () => renderInjured());
 
@@ -25910,6 +26228,16 @@ function attachHandlers() {
   if (tfMinEl) tfMinEl.addEventListener("change", e => {
     state.toolFilterMin = parseInt(e.target.value, 10) || 0;
     resetListPages();
+    render();
+  });
+  // v19 — Per-tool sort selector. Picking a tool flips the actives
+  // list to sort by that tool grade descending (overrides state.sort).
+  // Picking "off" hands sort back to the main Sort dropdown.
+  const tsKeyEl = document.getElementById("tool-sort-select");
+  if (tsKeyEl) tsKeyEl.addEventListener("change", e => {
+    state.toolSortKey = e.target.value;
+    resetListPages();
+    syncToURL();
     render();
   });
 
