@@ -5690,6 +5690,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             _audit_low_fv += 1
             continue
 
+        # v23 — Age-cap gate. A player aged ≥30 with sub-prospect FV
+        # (<45) is almost always a same-name MLB-veteran shadow or a
+        # AAA journeyman whose stale FG snapshot keeps surviving the
+        # other gates. Cayne Ueckert / Julian Garcia / Curtis Taylor /
+        # Tanner Kiest were the canaries — all FV 38-39, age 30-32, no
+        # current MLB time → quad-A depth, not prospects. The 45-FV
+        # threshold is high enough to preserve legitimate aged
+        # late-bloomers (KBO transfers etc.) since those typically
+        # publish at FV 45-50.
+        _bd_for_age = birth_dates.get(p.player_key)
+        _age_for_gate = compute_age_decimal(_bd_for_age) if _bd_for_age else None
+        if (_age_for_gate is not None and _age_for_gate >= 30
+                and latest_fv > 0 and latest_fv < 45):
+            inactives.append(p)
+            _audit_low_fv += 1   # roll into low-FV bucket
+            continue
+
         # v19 — Stale-IL force-inactive. Don't trust `is_on_il=true` when
         # the placement date is ancient (Scott Moss-style ghosts).
         _il = il_status.get(p.player_key) or {}

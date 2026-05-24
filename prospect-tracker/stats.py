@@ -657,10 +657,29 @@ class Sabermetrics:
 # ID resolution
 # ---------------------------------------------------------------------------
 
+# v23 — mlbam_id cache TTL. Previously the cache was permanent: a
+# wrong same-name resolution (Fernando Cruz → MLB-veteran pitcher)
+# stayed cached forever. Now stale entries get re-resolved every 30
+# days so the PlayerIndex scoring gets another chance to pick the
+# right candidate as it sees new prospect data. Cache mtime is the
+# proxy for entry age — the whole file is re-written on every save,
+# but that's fine: a stale entry forces a fresh re-resolve at most
+# every 30 days, which is cheap compared to the resolution cost.
+ID_CACHE_TTL_DAYS = 30
+
 def _load_id_cache() -> dict[str, int | None]:
-    if ID_CACHE_FILE.exists():
-        return json.loads(ID_CACHE_FILE.read_text())
-    return {}
+    if not ID_CACHE_FILE.exists():
+        return {}
+    age_days = (time.time() - ID_CACHE_FILE.stat().st_mtime) / 86400.0
+    if age_days > ID_CACHE_TTL_DAYS:
+        log.info("mlbam_id cache stale (%.0f days > %d-day TTL) — clearing for re-resolution",
+                 age_days, ID_CACHE_TTL_DAYS)
+        try:
+            ID_CACHE_FILE.unlink()
+        except OSError:
+            pass
+        return {}
+    return json.loads(ID_CACHE_FILE.read_text())
 
 
 def _save_id_cache(cache: dict[str, int | None]):
