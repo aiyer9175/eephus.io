@@ -14689,7 +14689,7 @@ const GLOSSARY = {
     priority: 4,
     short: "A prospect loses rookie eligibility (graduates) when ANY of three thresholds fire.",
     long: "Per MLB's official rookie-eligibility rule (https://www.mlb.com/glossary/rules/rookie-eligibility), a player is no longer a rookie once they cross any of: (1) more than 130 career MLB at-bats (hitters), (2) more than 50 career MLB innings pitched (pitchers), (3) more than 45 days on the active MLB roster excluding IL time and excluding post-September-1 days (roster expansion). The site applies all three gates as an OR; the field `graduation_reason` reports which one fired first. The 45-day active-roster count is estimated from the public transactions log — IL placements end an active segment and reinstatements re-open one; post-Sept-1 days are clipped at the season cap. As a backstop, players who exhaust all 3 MiLB options AND have debuted in MLB also graduate (a no-options player can't be sent down without clearing waivers, so the team has effectively committed the roster spot).",
-    formula: "graduates if ANY:\n  career_ab > 130\n  career_ip > 50\n  active_roster_days > 45 (excl. IL, post-Sept-1)\n  options_exhausted AND debuted",
+    formula: "debuted iff: mlbDebutDate is set on the MLB API record (v21 — no AB/IP/roster-day rookie thresholds)",
     related: ["fv", "wag", "boom_bust_label"],
   },
   "fv": {
@@ -25125,7 +25125,7 @@ function render() {
   };
 
   if (needsGrad && DATA._slices && DATA._slices.debuts && !DATA.debuts.length) {
-    showLoading("Loading graduates…");
+    showLoading("Loading debuted players…");
     loadSlice("debuts").then(render);
     return;
   }

@@ -225,12 +225,41 @@ def _normalize_driver(d, *, is_pitcher_context: bool = False) -> dict:
     label = str(d)
     lc = label.lower()
     polarity_key = _infer_polarity_key(label, is_pitcher_context=is_pitcher_context)
-    # Direction inferred from "up" / "down" verbs or sign of any embedded number.
+    # Direction inferred from (in priority order):
+    #   1. "up" / "down" verbs in the label
+    #   2. Signed delta "+0.245" or "-1.5" anywhere in the label
+    #   3. "X.XX vs Y.YY prior" comparison — current vs prior
+    # The sign/comparison branch fixes drivers like
+    #   "OPS +0.245 vs '24-25"   (sign → up)
+    #   "ERA 0.81 vs 3.25 prior" (comparison → 0.81 < 3.25 → down)
+    # that previously fell through to neutral → yellow chip even though
+    # the polarity_key was set correctly.
+    import re as _re
     direction: str | None = None
     if " up " in lc or lc.endswith(" up"):
         direction = "up"
     elif " down " in lc or lc.endswith(" down"):
         direction = "down"
+    if direction is None:
+        # Signed delta: "+0.245", " +5.5pp", "(-1.5 ERA)", etc.
+        m_sign = _re.search(r"(?:^|\s|\()([+−-])(\d+(?:\.\d+)?)", label)
+        if m_sign:
+            direction = "up" if m_sign.group(1) == "+" else "down"
+    if direction is None:
+        # Comparison: "0.81 vs 3.25 prior" — current first, prior second.
+        m_cmp = _re.search(
+            r"(\d+(?:\.\d+)?)\s+vs\s+(\d+(?:\.\d+)?)\s*(?:prior|recent\s+prior|recent\s+seasons?)",
+            lc,
+        )
+        if m_cmp:
+            try:
+                cur, prior = float(m_cmp.group(1)), float(m_cmp.group(2))
+                if cur > prior:
+                    direction = "up"
+                elif cur < prior:
+                    direction = "down"
+            except ValueError:
+                pass
     # v18 — intrinsic polarity wins when present; otherwise fall back to
     # direction + stat-polarity inference (the original v15/v17 path).
     intrinsic = _infer_intrinsic_polarity(label)
