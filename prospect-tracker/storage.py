@@ -3276,19 +3276,16 @@ def _compute_draft_pool_efficiency(gagg: dict,
 def _compute_ifa_roi(gagg: dict, ifa_org_spending: dict) -> dict:
     """Per-org WAR-per-$M-IFA over a rolling window.
 
-    v8 — Window shrunk from 11yr (today−12…today−2) to **6yr**
-    (today−7…today−2). At 11yr the metric was returning None for
-    nearly every org because the per-grad bonus_usd gate eliminates
-    older IFAs (Spotrac coverage is shallow pre-2021); widening only
-    inflated the empty-bucket count. The 6yr window matches the
-    Spotrac-coverage era and keeps grad samples meaningful.
+    v9 — Window settled at **8yr** (today−8…today−2). Tradeoff vs
+    coverage: 6yr left ~4 orgs without IFA debuts in window; 10yr+
+    started picking up older signings whose ROI no longer reflects
+    current scouting decisions. 8yr gives 30 of 31 orgs a value while
+    keeping the window responsive to recent signing cycles.
 
-    v8 also switches the denominator to `ifa_org_spending` (org-level
-    bonus pool sum across the same window). Per-grad bonus_usd
-    coverage caps the metric at ~23 debuted IFAs sitewide; org-level
-    IFA spend is available for every org. Mild noise from year-vs-
-    grad-signing-year alignment is the tradeoff, but the metric
-    actually returns a number now.
+    v8 lineage: dropped per-grad `bonus_usd` gate (was the real
+    bottleneck — only 23 of 492 debuted IFAs sitewide had bonus on
+    file), switched denominator to `ifa_org_spending` (org-level
+    Spotrac bonus pool sum).
 
     Numerator: career WAR sum across IFA-signed grads in the window
     (no per-grad bonus required — career WAR alone qualifies).
@@ -3297,7 +3294,7 @@ def _compute_ifa_roi(gagg: dict, ifa_org_spending: dict) -> dict:
     Gates at ≥1 contributing grad AND ≥$1M IFA spend in window."""
     grads = gagg.get("_ifa_grads") or []
     today_year = date.today().year
-    start_year = today_year - 7    # v8 — was -12
+    start_year = today_year - 8    # v9 — was -7
     end_year   = today_year - 2
 
     relevant = [g for g in grads
@@ -6324,14 +6321,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     "career_war": float(career_war_val),
                 })
         # IFA ROI: grads signed via IFA, tagged with their signing year
-        # + bonus + career WAR. Bonus-less IFAs (rare on file) skipped
-        # since we can't compute spend-side ROI without it.
-        if gp_method == "international_fa" and career_war_val is not None and bonus_usd:
+        # + (optional) bonus + career WAR.
+        # v22 — Dropped the per-grad `bonus_usd` requirement. The
+        # downstream `_compute_ifa_roi` uses org-level IFA spend from
+        # `ifa_org_spending` as the denominator (Spotrac), not per-grad
+        # bonus sums. Filtering grads out for missing bonus_usd was the
+        # real bottleneck — only 23 of 492 debuted IFAs had bonus on
+        # file, leaving 18 orgs with zero contributors. Now every IFA
+        # debut with career WAR + signing year counts toward the
+        # numerator.
+        if gp_method == "international_fa" and career_war_val is not None:
             sy = gp_acq.get("year")
             if sy is not None:
                 bucket["_ifa_grads"].append({
                     "signed_year": int(sy),
-                    "bonus_usd":   int(bonus_usd),
+                    "bonus_usd":   int(bonus_usd) if bonus_usd else 0,
                     "career_war":  float(career_war_val),
                 })
 

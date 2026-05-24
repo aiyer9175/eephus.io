@@ -20922,9 +20922,39 @@ function makePerSourceHistory(points) {
   const head = `<tr>${_sh("date", "Date")}${_sh("update", "Update")}${sortedSources.map(s => _sh(`src:${s}`, escapeHtml(SOURCE_LABELS[s] || s))).join("")}${_sh("consensus", "Consensus")}</tr>`;
   const body = sortedPoints.map(pt => {
     const perSrc = pt.per_source || {};
+    // v23 — Update column lists EVERY source publication on this date,
+    // not just `pt.interval_label` (which is whichever source happened
+    // to publish last on the date). For 2026-01-22 Jesus Made: MLB
+    // Pipeline drops Top 100 + Brewers Top 30 + TJStats Pre-Season all
+    // share that date — the user wants to see all three labels in the
+    // Update column, not just "TJ Pre-Season 2026". Walks per_source +
+    // its `extras` to gather every distinct (source, label) publication
+    // dated to this point; renders one src-tag chip per publication.
+    const updatePills = (() => {
+      const labels = [];
+      const seen = new Set();
+      for (const [src, info] of Object.entries(perSrc)) {
+        if (!info) continue;
+        const publications = [info].concat(info.extras || []);
+        for (const pub of publications) {
+          if (pub.snapshot_date !== pt.snapshot_date) continue;
+          const lbl = fgPrettifyInterval(src, pub.interval_label || pt.interval_label);
+          const key = `${src}|${lbl}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          labels.push(lbl);
+        }
+      }
+      if (!labels.length) {
+        labels.push(fgPrettifyInterval(null, pt.interval_label));
+      }
+      return labels.map(l =>
+        `<span class="src-tag" style="display:inline-block;margin:1px 2px;">${escapeHtml(l)}</span>`
+      ).join("");
+    })();
     return `<tr>
       <td>${pt.snapshot_date}</td>
-      <td><span class="src-tag">${escapeHtml(fgPrettifyInterval(null, pt.interval_label))}</span></td>
+      <td>${updatePills}</td>
       ${sortedSources.map(s => {
         const d = perSrc[s];
         if (!d) return `<td style="color:var(--text-tertiary);">—</td>`;
@@ -23523,8 +23553,8 @@ function renderPlayerDetail(key) {
 
   const tabs = [
     { key: "overview",    label: "Overview",        html: overviewHtml },
-    { key: "performance", label: "Performance",     html: performanceHtml },
-    { key: "scouting",    label: "Scouting & Tools", html: scoutingHtml },
+    { key: "performance", label: "Stats / Statcast", html: performanceHtml },
+    { key: "scouting",    label: "Scouting / Tools", html: scoutingHtml },
     { key: "health",      label: "Health", html: healthHtml },
     { key: "details",     label: "Details",         html: contextHtml },
   ];

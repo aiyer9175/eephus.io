@@ -2974,6 +2974,25 @@ def derive_statline_from_career(
                             _bbpct = round(100 * int(_bb) / _tbf_i, 1)
                         except (TypeError, ValueError, ZeroDivisionError):
                             pass
+        # v22 — Per-9 → per-batter approximation when TBF + so/bb counts
+        # are both missing (the common case in MiLB-only career rows).
+        # Uses the standard ~4.3 batters/inning league average: a 9 K/9
+        # pitcher faces ~38.7 batters per 9, so K% ≈ K/9 ÷ 4.3 × 100/100
+        # → K% ≈ K/9 × 100/38.7. Small marginal error vs direct K/TBF
+        # (rate of opposite-side baserunners) but better than no value
+        # at all. Tagged as approximate via the `_pct_approx` flag the
+        # frontend can read to render with a small caveat tooltip.
+        _kpct_approx = False
+        _bbpct_approx = False
+        _k9 = _safe_float(chosen.get("k_per_9"))
+        _bb9 = _safe_float(chosen.get("bb_per_9"))
+        BATTERS_PER_9 = 38.7
+        if _kpct is None and _k9 is not None:
+            _kpct = round(_k9 * 100 / BATTERS_PER_9, 1)
+            _kpct_approx = True
+        if _bbpct is None and _bb9 is not None:
+            _bbpct = round(_bb9 * 100 / BATTERS_PER_9, 1)
+            _bbpct_approx = True
         return StatLine(
             player_key=player_key, mlbam_id=mlbam_id,
             level=level, games=int(chosen.get("games", 0) or 0),

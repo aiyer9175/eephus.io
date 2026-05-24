@@ -644,7 +644,7 @@ def _change_drivers(p: dict) -> list[str]:
         if current_kpct is not None and prior_kpct:
             diff = current_kpct - mean(prior_kpct)
             if diff >= 4.0:
-                drivers.append(f"K% up {diff:.1f}pp")
+                drivers.append(f"K% up {diff:.1f}%")
         else:
             current_k9 = _num(latest.get("k_per_9"))
             prior_k9 = [_num(r.get("k_per_9")) for r in priors if r.get("is_pitcher") and _ip(r) >= 10]
@@ -659,7 +659,7 @@ def _change_drivers(p: dict) -> list[str]:
         if current_bbpct is not None and prior_bbpct:
             diff = mean(prior_bbpct) - current_bbpct
             if diff >= 2.0:
-                drivers.append(f"BB% down {diff:.1f}pp")
+                drivers.append(f"BB% down {diff:.1f}%")
         else:
             current_bb9 = _num(latest.get("bb_per_9"))
             prior_bb9 = [_num(r.get("bb_per_9")) for r in priors if r.get("is_pitcher") and _ip(r) >= 10]
@@ -884,8 +884,8 @@ def _skills_delta(p: dict) -> tuple[float | None, list[str]]:
         # the per-batter scale: 3pp K% jump (was 1.5 K/9), 2pp BB% drop
         # (was 0.8 BB/9). Same ±3-point cap.
         per_batter_specs = (
-            ("k_pct", "K%", "pp", False, 3.0),
-            ("bb_pct", "BB%", "pp", True, 2.0),
+            ("k_pct", "K%", "%", False, 3.0),
+            ("bb_pct", "BB%", "%", True, 2.0),
         )
         per_9_specs = (
             ("k_per_9", "K/9", "", False, 1.5),
@@ -947,7 +947,7 @@ def _skills_delta(p: dict) -> tuple[float | None, list[str]]:
             pts = max(-6.0, min(6.0, improvement / threshold))
             score += pts
             direction = "down" if diff < 0 else "up"
-            drivers.append(f"{label} {direction} {abs(diff):.1f}pp")
+            drivers.append(f"{label} {direction} {abs(diff):.1f}%")
     return (score, drivers)
 
 
