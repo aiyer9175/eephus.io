@@ -15,6 +15,12 @@
     DATA_URL at the bottom of this file.
   -->
 
+  <!-- v19 — Preload the primary data payload so the browser starts
+       fetching it as soon as the HTML is parsed, in parallel with the
+       webfont + CSS work below. Saves the round-trip cost of waiting
+       for the JS boot IIFE to run before kicking off the fetch. -->
+  <link rel="preload" href="data/timeseries.json" as="fetch" crossorigin="anonymous">
+
   <!-- Webfonts: Source Serif for headlines, Inter for UI, JetBrains Mono
        for numerics. System fallbacks (Georgia / -apple-system / Menlo)
        keep the page readable offline if the CDN is blocked. -->
@@ -6841,8 +6847,40 @@ function wireThemeToggle() {
 // arrays with [] so first-paint render code that walks DATA.graduates
 // etc. doesn't crash before a slice arrives.
 async function loadData() {
+  // v19 — Two-step fetch. First a HEAD-or-tiny probe to grab the
+  // generated_at version stamp; then a cacheable GET of the main
+  // payload keyed by that stamp via `?v=`. This lets the browser /
+  // CDN serve the 32 MB payload from cache when nothing has changed
+  // (vs the previous `cache: "no-cache"` which forced a fresh download
+  // on every page refresh).
+  //
+  // The probe is the main file with `Range: bytes=0-2048` — sqlite
+  // / GitHub Pages both honor partial range requests for static JSON.
+  // The first ~2KB carries `"generated_at": "..."` near the top of the
+  // payload. If the range fetch fails (server doesn't honor Range),
+  // we fall through to a plain no-cache fetch (the prior behavior).
+  let cacheVersion = "";
   try {
-    const resp = await fetch(DATA_URL, { cache: "no-cache" });
+    const probeResp = await fetch(DATA_URL, {
+      headers: { Range: "bytes=0-2048" },
+      cache: "no-cache",
+    });
+    if (probeResp.ok || probeResp.status === 206) {
+      const head = await probeResp.text();
+      const m = head.match(/"generated_at"\s*:\s*"([^"]+)"/);
+      if (m) cacheVersion = m[1];
+    }
+  } catch (e) {
+    // Probe failed; cacheVersion stays empty and we'll fall back to no-cache.
+  }
+  try {
+    const url = cacheVersion
+      ? `${DATA_URL}?v=${encodeURIComponent(cacheVersion)}`
+      : DATA_URL;
+    const fetchOpts = cacheVersion
+      ? { cache: "force-cache" }    // browser may serve from cache when ?v matches
+      : { cache: "no-cache" };       // legacy path
+    const resp = await fetch(url, fetchOpts);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const d = await resp.json();
     // Back-compat: a monolithic timeseries.json may still carry these
@@ -6876,8 +6914,13 @@ function loadSlice(name) {
   // data dir from DATA_URL ourselves. Without this prefix the fetch
   // 404s silently and the gate loops on the loading state.
   const base = DATA_URL.replace(/[^/]+$/, "");
-  const url = base + DATA._slices[name];
-  _sliceInFlight[name] = fetch(url, { cache: "no-cache" })
+  // v19 — Add ?v=<generated_at> for browser-cacheable slice fetches.
+  // Bumping the data version invalidates the cached file automatically.
+  const versionParam = DATA.generated_at
+    ? `?v=${encodeURIComponent(DATA.generated_at)}`
+    : "";
+  const url = base + DATA._slices[name] + versionParam;
+  _sliceInFlight[name] = fetch(url, { cache: versionParam ? "force-cache" : "no-cache" })
     .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
     .then(payload => { DATA[name] = payload; })
     .catch(err => {
@@ -26856,15 +26899,22 @@ function populateOrgFilter() {
   // — if a payload fails to load, the meta line keeps showing "…" and
   // the tab still works (it'll re-fetch on visit).
   const _dataBase = DATA_URL.replace(/[^/]+$/, "");
+  // v19 — Same ?v=<generated_at> cache-bust pattern as the main
+  // payload + loadSlice. Browser will serve from cache on repeat
+  // visits as long as the version stamp matches.
+  const _versionParam = DATA.generated_at
+    ? `?v=${encodeURIComponent(DATA.generated_at)}`
+    : "";
+  const _cacheOpt = _versionParam ? "force-cache" : "no-cache";
   (async () => {
     try {
-      const resp = await fetch(_dataBase + "draft_timeseries.json", { cache: "no-cache" });
+      const resp = await fetch(_dataBase + "draft_timeseries.json" + _versionParam, { cache: _cacheOpt });
       if (resp.ok) { DATA.draft = await resp.json(); updateMeta(); }
     } catch {}
   })();
   (async () => {
     try {
-      const resp = await fetch(_dataBase + "overseas_timeseries.json", { cache: "no-cache" });
+      const resp = await fetch(_dataBase + "overseas_timeseries.json" + _versionParam, { cache: _cacheOpt });
       if (resp.ok) { DATA.overseas = await resp.json(); updateMeta(); }
     } catch {}
   })();

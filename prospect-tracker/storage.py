@@ -1136,6 +1136,22 @@ CREATE INDEX IF NOT EXISTS idx_overseas_canon_milb ON overseas_canonical_keys(mi
 def connect():
     con = sqlite3.connect(DB_PATH)
     con.row_factory = sqlite3.Row
+    # v19 — Performance pragmas. WAL mode gives 2-5x faster writes plus
+    # concurrent readers (the prior rollback-journal mode serialized
+    # every reader/writer). synchronous=NORMAL keeps durability against
+    # process crashes (full data integrity) while letting OS-level
+    # fsync batch — saves a per-statement fsync on every commit. These
+    # pragmas only need to fire once per connection; they persist on
+    # the DB file (journal_mode) or just the connection (synchronous).
+    try:
+        con.execute("PRAGMA journal_mode=WAL")
+        con.execute("PRAGMA synchronous=NORMAL")
+        con.execute("PRAGMA temp_store=MEMORY")
+        con.execute("PRAGMA cache_size=-65536")  # 64 MB page cache (negative = KB)
+    except sqlite3.OperationalError:
+        # Pragmas can fail on a corrupt / read-only DB; that's surfaced
+        # downstream by the actual query. Don't block connection here.
+        pass
     try:
         yield con
         con.commit()
@@ -1544,6 +1560,20 @@ def load_zone_metrics() -> dict[str, dict]:
     return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
 
 
+def load_zone_metrics_meta() -> dict[str, str]:
+    """Return {player_key: fetched_at_iso} for zone metric freshness checks.
+    Mirrors load_career_stats_meta — caller skips per-player refetch when
+    the cached row is recent enough."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, fetched_at FROM zone_metrics"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: r["fetched_at"] for r in rows if r["fetched_at"]}
+
+
 def upsert_statcast_metrics(metrics: dict[str, object], season: int) -> int:
     """Upsert opportunistic pitch-movement/contact-quality metrics."""
     n = 0
@@ -1574,6 +1604,18 @@ def load_statcast_metrics() -> dict[str, dict]:
     except sqlite3.OperationalError:
         return {}
     return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
+
+
+def load_statcast_metrics_meta() -> dict[str, str]:
+    """Return {player_key: fetched_at_iso} for statcast metric freshness."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, fetched_at FROM statcast_metrics"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["player_key"]: r["fetched_at"] for r in rows if r["fetched_at"]}
 
 
 def upsert_sabermetrics(metrics: dict[str, "Sabermetrics"], season: int) -> int:
@@ -1608,21 +1650,26 @@ def load_sabermetrics() -> dict[str, dict]:
 
 def upsert_career_stats(career_by_player: dict[str, list[dict]]) -> int:
     """Upsert year-by-year career stats. One row per player."""
-    n = 0
+    # v19 — executemany() with a pre-materialized payload list. Saves
+    # the per-row Python/C round-trip; ~3000 players collapses from 3000
+    # discrete .execute() calls to a single C-level batch insert.
+    payload = [
+        (key, json.dumps(rows))
+        for key, rows in career_by_player.items()
+        if rows
+    ]
+    if not payload:
+        return 0
     with connect() as con:
-        for key, rows in career_by_player.items():
-            if not rows:
-                continue
-            con.execute(
-                """INSERT INTO career_stats (player_key, payload_json, fetched_at)
-                   VALUES (?, ?, datetime('now'))
-                   ON CONFLICT(player_key) DO UPDATE SET
-                     payload_json=excluded.payload_json,
-                     fetched_at=excluded.fetched_at""",
-                (key, json.dumps(rows)),
-            )
-            n += 1
-    return n
+        con.executemany(
+            """INSERT INTO career_stats (player_key, payload_json, fetched_at)
+               VALUES (?, ?, datetime('now'))
+               ON CONFLICT(player_key) DO UPDATE SET
+                 payload_json=excluded.payload_json,
+                 fetched_at=excluded.fetched_at""",
+            payload,
+        )
+    return len(payload)
 
 
 def load_career_stats() -> dict[str, list[dict]]:

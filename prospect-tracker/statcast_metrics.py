@@ -279,7 +279,20 @@ def fetch_statcast_metrics_for_player(
     season: int,
     level_hint: str | None,
     is_pitcher: bool,
+    feed_cache: dict[int, dict] | None = None,
 ) -> StatcastMetricRow | None:
+    """Build the Statcast metric row for one player.
+
+    v19 — Optional `feed_cache` arg: when provided, game-feed lookups
+    come from the in-memory dict instead of firing fresh `_get_json`
+    calls. The bulk entry point (`fetch_statcast_metrics_for_players`)
+    pre-fetches every unique game_pk across the cohort exactly once and
+    threads the cache in here, so each game feed is parsed at most
+    once per run instead of once per (player × game). Cuts the
+    Statcast step's wall time roughly in half on rosters with heavy
+    same-game overlap (AAA/AA where every prospect plays the same
+    handful of teams).
+    """
     if not mlbam_id:
         return None
     logs = _game_logs(int(mlbam_id), season, is_pitcher=is_pitcher)
@@ -313,7 +326,11 @@ def fetch_statcast_metrics_for_player(
             continue
         games_checked += 1
         level_bucket["games_checked"] += 1
-        data = _get_json(f"{MLB_GAME_FEED_API}/{game_pk}/feed/live", ttl_seconds=86400)
+        # v19 — Prefer in-memory cache when bulk caller pre-fetched.
+        if feed_cache is not None and game_pk in feed_cache:
+            data = feed_cache[game_pk]
+        else:
+            data = _get_json(f"{MLB_GAME_FEED_API}/{game_pk}/feed/live", ttl_seconds=86400)
         game_data = data.get("gameData") or {}
         venue = game_data.get("venue") or {}
         venue_key = str(venue.get("id") or venue.get("name") or "")
@@ -458,10 +475,86 @@ def fetch_statcast_metrics_for_players(
     out: dict[str, StatcastMetricRow] = {}
     if not targets:
         return out
+    import logging, time as _time
+    _log = logging.getLogger(__name__)
     max_workers = max(1, min(workers, len(targets)))
+    # ============================================================
+    # v19 — Three-pass bulk fetch with cross-player game-feed dedup.
+    # Previous version made one /feed/live call per (player × game),
+    # so two prospects in the same AAA game each fetched the same
+    # 200 KB game feed. Now: pass 1 hydrates game logs (one /people
+    # lookup per (player, sport_id), already cached); pass 2 collects
+    # the UNIQUE set of game_pks across the whole cohort and fetches
+    # each /feed/live exactly once into an in-memory dict; pass 3
+    # processes each player using the cached feeds (CPU only, no HTTP).
+    # ============================================================
+
+    # ---- PASS 1: game logs per player (parallel, cached) ----
+    logs_by_key: dict[str, list[dict]] = {}
+    _p1_start = _time.monotonic()
+    _log.info("statcast pass 1/3: fetching game logs for %d players (%d workers)",
+              len(targets), max_workers)
+    def _fetch_logs(item):
+        key, _name, mlbam, _level, is_p = item
+        try:
+            return key, _game_logs(int(mlbam), season, is_pitcher=is_p)
+        except Exception as e:
+            _log.debug("statcast logs failed for %s: %s", key, e)
+            return key, []
+    _p1_done = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
+        for key, logs in ex.map(_fetch_logs, targets):
+            logs_by_key[key] = logs
+            _p1_done += 1
+            if _p1_done % 250 == 0 or _p1_done == len(targets):
+                _log.info("statcast pass 1/3: %d/%d game-log fetches done (%.0fs)",
+                          _p1_done, len(targets), _time.monotonic() - _p1_start)
+
+    # ---- PASS 2: unique game-feed fetch (parallel, cached) ----
+    game_pks: set[int] = set()
+    for logs in logs_by_key.values():
+        for split in logs:
+            gpk = int((split.get("game") or {}).get("gamePk") or 0)
+            if gpk:
+                game_pks.add(gpk)
+    feed_cache: dict[int, dict] = {}
+    if game_pks:
+        _p2_start = _time.monotonic()
+        _log.info("statcast pass 2/3: fetching %d unique game feeds (deduped from %d player×game lookups)",
+                  len(game_pks), sum(len(v) for v in logs_by_key.values()))
+        def _fetch_feed(gpk):
+            try:
+                return gpk, _get_json(f"{MLB_GAME_FEED_API}/{gpk}/feed/live", ttl_seconds=86400)
+            except Exception as e:
+                _log.debug("statcast feed failed for game %s: %s", gpk, e)
+                return gpk, {}
+        _p2_done = 0
+        # Feeds are large; cap workers so we don't slam the API.
+        feed_workers = max(1, min(max_workers, 12))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=feed_workers) as ex:
+            for gpk, feed in ex.map(_fetch_feed, sorted(game_pks)):
+                feed_cache[gpk] = feed
+                _p2_done += 1
+                if _p2_done % 500 == 0 or _p2_done == len(game_pks):
+                    elapsed = _time.monotonic() - _p2_start
+                    rate = _p2_done / max(elapsed, 0.001)
+                    eta = (len(game_pks) - _p2_done) / rate if rate > 0 else 0
+                    _log.info("statcast pass 2/3: %d/%d feeds (%.0fs elapsed · ~%.0fs left)",
+                              _p2_done, len(game_pks), elapsed, eta)
+
+    # ---- PASS 3: per-player processing using the cached feeds ----
+    _p3_start = _time.monotonic()
+    _log.info("statcast pass 3/3: processing %d players against cached feeds", len(targets))
+    _p3_done = 0
+    # Parallel because _finalize_pitch / contact has noticeable CPU work
+    # for pitchers with many tracked pitches.
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
         future_to_key = {
-            ex.submit(fetch_statcast_metrics_for_player, key, name, mlbam, season, level, is_pitcher): key
+            ex.submit(
+                fetch_statcast_metrics_for_player,
+                key, name, mlbam, season, level, is_pitcher,
+                feed_cache,
+            ): key
             for key, name, mlbam, level, is_pitcher in targets
         }
         for fut in concurrent.futures.as_completed(future_to_key):
@@ -472,4 +565,8 @@ def fetch_statcast_metrics_for_players(
                 row = None
             if row:
                 out[key] = row
+            _p3_done += 1
+            if _p3_done % 500 == 0 or _p3_done == len(targets):
+                _log.info("statcast pass 3/3: %d/%d processed (%d with data, %.0fs elapsed)",
+                          _p3_done, len(targets), len(out), _time.monotonic() - _p3_start)
     return out

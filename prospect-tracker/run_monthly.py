@@ -25,9 +25,69 @@ import json
 import logging
 import os
 import sys
+import time
+from contextlib import contextmanager
 from datetime import date
 import concurrent.futures
 from pathlib import Path
+
+
+# v19 — Step timing infrastructure. Each major phase wraps itself in
+# `with _step("name"):` which logs the duration on exit and records it
+# in `_STEP_TIMES` for the end-of-run summary. The summary table sorts
+# by duration so the slowest steps surface at the top — actionable
+# perf intel for the next optimization pass.
+_STEP_TIMES: list[tuple[str, float]] = []
+
+
+@contextmanager
+def _step(name: str, log: logging.Logger | None = None):
+    """Context manager that logs + records the duration of a pipeline step."""
+    start = time.monotonic()
+    if log:
+        # v19 — ASCII-only step markers. The prior ▶/● glyphs blew up
+        # Windows cp1252 consoles with UnicodeEncodeError on every log
+        # line (data still captured to _STEP_TIMES, but the per-step
+        # progress messages were swallowed in noisy tracebacks).
+        log.info("[step start] %s", name)
+    try:
+        yield
+    finally:
+        dur = time.monotonic() - start
+        _STEP_TIMES.append((name, dur))
+        if log:
+            log.info("[step done ] %s in %s", name, _fmt_duration(dur))
+
+
+def _fmt_duration(seconds: float) -> str:
+    if seconds < 1.0:
+        return f"{int(seconds * 1000)}ms"
+    if seconds < 60:
+        return f"{seconds:.1f}s"
+    mins = int(seconds // 60)
+    secs = seconds - mins * 60
+    return f"{mins}m{int(secs):02d}s"
+
+
+def _log_step_summary(log: logging.Logger, total_runtime: float) -> None:
+    """Print the per-step duration table + a `% of total` column.
+    Steps are listed by descending duration so the worst hogs lead.
+    """
+    if not _STEP_TIMES:
+        log.info("step summary: no timed steps recorded")
+        return
+    ranked = sorted(_STEP_TIMES, key=lambda x: x[1], reverse=True)
+    total = max(total_runtime, sum(d for _, d in ranked))
+    log.info("=" * 64)
+    log.info("RUN STEP SUMMARY — sorted by duration")
+    log.info("%-44s %10s %8s", "step", "duration", "% total")
+    log.info("-" * 64)
+    for name, dur in ranked:
+        pct = (dur / total * 100) if total > 0 else 0
+        log.info("%-44s %10s %7.1f%%", name[:44], _fmt_duration(dur), pct)
+    log.info("-" * 64)
+    log.info("%-44s %10s %7.1f%%", "TOTAL", _fmt_duration(total), 100.0)
+    log.info("=" * 64)
 
 from scrapers import scrape_all, probe
 from storage import (
@@ -37,8 +97,8 @@ from storage import (
     upsert_birth_date, load_birth_dates,
     auto_graduate_player, revalidate_auto_graduations,
     upsert_pitch_arsenals, load_pitch_arsenals,
-    upsert_zone_metrics, load_zone_metrics,
-    upsert_statcast_metrics, load_statcast_metrics,
+    upsert_zone_metrics, load_zone_metrics, load_zone_metrics_meta,
+    upsert_statcast_metrics, load_statcast_metrics, load_statcast_metrics_meta,
     upsert_sabermetrics, load_sabermetrics,
     upsert_career_war, load_career_war, load_career_war_meta,
     upsert_career_stats, load_career_stats, load_career_stats_meta,
@@ -74,6 +134,12 @@ from trades import detect_trades
 # next run. Monthly cadence + 7-day window means a normal monthly run
 # always refetches, while dev iterations within a week reuse the cache.
 CAREER_STATS_FRESH_DAYS = 7
+# v19 — Zone + Statcast freshness windows. Both are very expensive
+# (thousands of game-feed fetches), so the freshness window is wider
+# than career stats — a normal monthly run still refetches, but a
+# re-run within ~2 weeks skips entirely. --force bypasses.
+ZONE_METRICS_FRESH_DAYS = 14
+STATCAST_METRICS_FRESH_DAYS = 14
 
 
 def _is_pitcher(position: str | None) -> bool:
@@ -343,8 +409,9 @@ def _post_export_summary(out_path: Path, all_snaps, log) -> None:
         fg_count = src_counter.get("fangraphs", 0)
         n_total = sum(src_counter.values())
         n_sources = len(src_counter)
+        # v19 — ASCII arrow so Windows cp1252 console doesn't error.
         log.info("timeseries.json refreshed: %d snapshots across %d sources "
-                 "(latest %s, fangraphs rows: %d) → %s",
+                 "(latest %s, fangraphs rows: %d) -> %s",
                  n_total, n_sources, latest_date or "n/a", fg_count, out_path)
     except Exception:
         log.exception("post-export summary failed (non-fatal)")
@@ -372,16 +439,20 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
 
     new_count = 0
     stat_count = 0
+    # v19 — Reset step timer for this run (don't accumulate across calls).
+    _STEP_TIMES.clear()
+    _run_start = time.monotonic()
 
     try:
         # --- 0. Fix encoding in CSV ----------------------------------------
-        import subprocess
-        result = subprocess.run([sys.executable, "fix_encoding.py"],
-                              capture_output=True, text=True, cwd=Path(__file__).parent)
-        if result.returncode == 0:
-            log.info(result.stdout.strip())
-        else:
-            log.warning("encoding fix script failed: %s", result.stderr)
+        with _step("0. CSV encoding fix", log):
+            import subprocess
+            result = subprocess.run([sys.executable, "fix_encoding.py"],
+                                  capture_output=True, text=True, cwd=Path(__file__).parent)
+            if result.returncode == 0:
+                log.info(result.stdout.strip())
+            else:
+                log.warning("encoding fix script failed: %s", result.stderr)
 
         # --- 0b. Auto-ingest FanGraphs CSV drops --------------------------
         # Files dropped into data/fangraphs_imports/ matching
@@ -389,18 +460,19 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # the snapshots DB before the rest of the run picks them up.
         # Wrapped in try/except so a malformed file never blocks the
         # downstream pipeline.
-        try:
-            from fangraphs_csv import ingest_drops as _fg_ingest_drops
-            # called_from_run_monthly=True so the function knows the
-            # full pipeline will refresh timeseries.json downstream and
-            # suppresses the standalone-rebuild hint.
-            fg_inserted, fg_files = _fg_ingest_drops(called_from_run_monthly=True)
-            if fg_files:
-                log.info("fangraphs_csv: ingested %d snapshots from %d report-set(s)",
-                         fg_inserted, fg_files)
-        except Exception:
-            log.exception("fangraphs_csv: drop-folder ingest failed — "
-                          "continuing with the rest of the pipeline")
+        with _step("0b. FanGraphs CSV drops", log):
+            try:
+                from fangraphs_csv import ingest_drops as _fg_ingest_drops
+                # called_from_run_monthly=True so the function knows the
+                # full pipeline will refresh timeseries.json downstream and
+                # suppresses the standalone-rebuild hint.
+                fg_inserted, fg_files = _fg_ingest_drops(called_from_run_monthly=True)
+                if fg_files:
+                    log.info("fangraphs_csv: ingested %d snapshots from %d report-set(s)",
+                             fg_inserted, fg_files)
+            except Exception:
+                log.exception("fangraphs_csv: drop-folder ingest failed — "
+                              "continuing with the rest of the pipeline")
 
         # --- 0c. Draft pipeline (scrape + promote + export) -------------
         # Scrapes the amateur sources (ESPN draft Top 150 + MLB Pipeline
@@ -409,79 +481,83 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # to data/draft_timeseries.json, completely separate from the
         # MiLB pipeline that follows. Failures here never block the MiLB
         # run.
-        try:
-            from scrapers import scrape_all_draft, scrape_mlb_draft_tracker
-            from storage import insert_draft_snapshots, upsert_draft_results
-            from draft_promotion import promote_drafted_players
-            from draft_export import export_draft_json
+        with _step("0c. Draft pipeline (scrape + promote + export)", log):
+            try:
+                from scrapers import scrape_all_draft, scrape_mlb_draft_tracker
+                from storage import insert_draft_snapshots, upsert_draft_results
+                from draft_promotion import promote_drafted_players
+                from draft_export import export_draft_json
 
-            draft_snaps = scrape_all_draft(force=force_refetch)
-            if draft_snaps:
-                n_d = insert_draft_snapshots(draft_snaps)
-                log.info("inserted %d draft snapshot rows", n_d)
-            # Refresh draft results from the MLB Stats API (cheap, cached).
-            this_year = date.today().year
-            for y in range(2021, this_year + 1):
-                rows = scrape_mlb_draft_tracker(y, force=force_refetch)
-                if rows:
-                    upsert_draft_results(rows)
-            # Spotrac per-pick slot values + Tankathon lottery odds.
-            # Both feed downstream into draft_order / draft_lottery_odds.
-            from scrapers import scrape_spotrac_draft_order, scrape_tankathon_lottery
-            from storage import upsert_draft_order, upsert_draft_lottery_odds
-            this_year = date.today().year
-            for y in (this_year, this_year + 1):
-                so_rows = scrape_spotrac_draft_order(y, force=force_refetch)
-                if so_rows:
-                    upsert_draft_order(so_rows)
-            # Tankathon publishes odds for the *next* draft class (e.g.,
-            # during the 2026 season → 2027 lottery). Stamp those rows
-            # with the next-year draft.
-            tk_rows = scrape_tankathon_lottery(this_year + 1, force=force_refetch)
-            if tk_rows:
-                upsert_draft_lottery_odds(tk_rows)
+                draft_snaps = scrape_all_draft(force=force_refetch)
+                if draft_snaps:
+                    n_d = insert_draft_snapshots(draft_snaps)
+                    log.info("inserted %d draft snapshot rows", n_d)
+                # Refresh draft results from the MLB Stats API (cheap, cached).
+                this_year = date.today().year
+                for y in range(2021, this_year + 1):
+                    rows = scrape_mlb_draft_tracker(y, force=force_refetch)
+                    if rows:
+                        upsert_draft_results(rows)
+                # Spotrac per-pick slot values + Tankathon lottery odds.
+                # Both feed downstream into draft_order / draft_lottery_odds.
+                from scrapers import scrape_spotrac_draft_order, scrape_tankathon_lottery
+                from storage import upsert_draft_order, upsert_draft_lottery_odds
+                this_year = date.today().year
+                for y in (this_year, this_year + 1):
+                    so_rows = scrape_spotrac_draft_order(y, force=force_refetch)
+                    if so_rows:
+                        upsert_draft_order(so_rows)
+                # Tankathon publishes odds for the *next* draft class (e.g.,
+                # during the 2026 season → 2027 lottery). Stamp those rows
+                # with the next-year draft.
+                tk_rows = scrape_tankathon_lottery(this_year + 1, force=force_refetch)
+                if tk_rows:
+                    upsert_draft_lottery_odds(tk_rows)
 
-            promote_drafted_players()
-            n_draft = export_draft_json(out_dir / "draft_timeseries.json")
-            log.info("draft pipeline: exported %d prospects across all classes",
-                     n_draft)
-        except Exception:
-            log.exception("draft pipeline crashed — continuing with MiLB run")
+                promote_drafted_players()
+                n_draft = export_draft_json(out_dir / "draft_timeseries.json")
+                log.info("draft pipeline: exported %d prospects across all classes",
+                         n_draft)
+            except Exception:
+                log.exception("draft pipeline crashed — continuing with MiLB run")
 
         # --- 0d. Overseas pipeline (refresh FG stats + promote + export) -
         # KBO/NPB stat refresh is HTTP-heavy (one fetch per overseas
         # prospect, ~50 fetches/run). Wrap in its own try/except so a
         # single bad FG page never blocks the MiLB run.
-        try:
-            from overseas_stats import refresh_overseas_stats
-            from overseas_promotion import promote_signed_players, ingest_postings
-            from overseas_export import export_overseas_json
+        with _step("0d. Overseas pipeline (refresh + promote + export)", log):
+            try:
+                from overseas_stats import refresh_overseas_stats
+                from overseas_promotion import promote_signed_players, ingest_postings
+                from overseas_export import export_overseas_json
 
-            refresh_overseas_stats(force=force_refetch)
-            ingest_postings()
-            promote_signed_players()
-            n_ov = export_overseas_json(out_dir / "overseas_timeseries.json")
-            log.info("overseas pipeline: exported %d prospects", n_ov)
-        except Exception:
-            log.exception("overseas pipeline crashed — continuing with MiLB run")
+                refresh_overseas_stats(force=force_refetch)
+                ingest_postings()
+                promote_signed_players()
+                n_ov = export_overseas_json(out_dir / "overseas_timeseries.json")
+                log.info("overseas pipeline: exported %d prospects", n_ov)
+            except Exception:
+                log.exception("overseas pipeline crashed — continuing with MiLB run")
 
         # --- 1. Scrape & store rankings ---------------------------------
-        snapshots, csv_birth_dates = scrape_all(force=force_refetch)
-        log.info("scraped %d total snapshot rows", len(snapshots))
-        new_count = insert_snapshots(snapshots)
-        log.info("inserted %d new snapshot rows", new_count)
+        with _step("1. Scrape MiLB rankings + insert snapshots", log):
+            snapshots, csv_birth_dates = scrape_all(force=force_refetch)
+            log.info("scraped %d total snapshot rows", len(snapshots))
+            new_count = insert_snapshots(snapshots)
+            log.info("inserted %d new snapshot rows", new_count)
 
-        # Persist any birth dates supplied directly via the CSV. These win
-        # over API-fetched dates for any player they cover.
-        for key, bd in csv_birth_dates.items():
-            upsert_birth_date(key, bd)
-        if csv_birth_dates:
-            log.info("upserted %d birth dates from CSV", len(csv_birth_dates))
+            # Persist any birth dates supplied directly via the CSV. These win
+            # over API-fetched dates for any player they cover.
+            for key, bd in csv_birth_dates.items():
+                upsert_birth_date(key, bd)
+            if csv_birth_dates:
+                log.info("upserted %d birth dates from CSV", len(csv_birth_dates))
 
         # --- 2. Build consensus ----------------------------------------
-        all_snaps = load_all_snapshots()
-        timeseries = build_timeseries(all_snaps)
-        log.info("built timeseries for %d players", len(timeseries))
+        with _step("2. Build consensus timeseries", log):
+            all_snaps = load_all_snapshots()
+            timeseries = build_timeseries(all_snaps)
+            log.info("built timeseries for %d players", len(timeseries))
 
         # --- 2a. Bulk resolve IDs + birth dates for every prospect -----
         # Single bulk pass that:
@@ -491,24 +567,25 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # Replaces ~300ms-per-prospect sequential people-search calls and the
         # per-prospect birth-date fetch loop with one parallel pass.
         season = date.today().year
-        all_prospects_for_resolve = [
-            (p.player_key, p.player_name, p.position)
-            for p in timeseries
-        ]
-        log.info("bulk resolving IDs + birth dates for %d prospects",
-                 len(all_prospects_for_resolve))
-        ids_by_key, bds_from_index, player_index = bulk_resolve_ids(
-            all_prospects_for_resolve,
-            season=season,
-            force_rebuild_index=force_refetch,
-        )
-        # overwrite=True because these dates are tied to a freshly-resolved
-        # MLBAM ID; any pre-existing date in the DB may correspond to a
-        # previously-cached wrong ID and is now stale.
-        for key, bd in bds_from_index.items():
-            upsert_birth_date(key, bd, overwrite=True)
-        if bds_from_index:
-            log.info("upserted %d birth dates from PlayerIndex", len(bds_from_index))
+        with _step("2a. Bulk resolve IDs + birth dates", log):
+            all_prospects_for_resolve = [
+                (p.player_key, p.player_name, p.position)
+                for p in timeseries
+            ]
+            log.info("bulk resolving IDs + birth dates for %d prospects",
+                     len(all_prospects_for_resolve))
+            ids_by_key, bds_from_index, player_index = bulk_resolve_ids(
+                all_prospects_for_resolve,
+                season=season,
+                force_rebuild_index=force_refetch,
+            )
+            # overwrite=True because these dates are tied to a freshly-resolved
+            # MLBAM ID; any pre-existing date in the DB may correspond to a
+            # previously-cached wrong ID and is now stale.
+            for key, bd in bds_from_index.items():
+                upsert_birth_date(key, bd, overwrite=True)
+            if bds_from_index:
+                log.info("upserted %d birth dates from PlayerIndex", len(bds_from_index))
 
         # --- 2b. Bulk fetch draft data for the rolling window of years a
         # current prospect could plausibly have been drafted in. One call
@@ -518,9 +595,10 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # convention is to treat undrafted prospects as IFA signings.
         # /draft/{year} payloads are cached on disk for 30 days, so reruns
         # within a month cost nothing beyond reading the local cache.
-        draft_years = list(range(season - 9, season + 1))
-        log.info("fetching draft picks for years %s", draft_years)
-        draft_by_id = bulk_fetch_drafts(draft_years)
+        with _step("2b. Bulk fetch draft data (10-year window)", log):
+            draft_years = list(range(season - 9, season + 1))
+            log.info("fetching draft picks for years %s", draft_years)
+            draft_by_id = bulk_fetch_drafts(draft_years)
 
         acquisitions: dict[str, dict] = {}
         ifa_mids_by_key: dict[str, int] = {}
@@ -562,22 +640,23 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # that records the signing team + date. The MLB Stats API doesn't
         # publish signing-bonus dollars; we layer in Spotrac (below) to
         # fill the bonus_usd field where they have a row for the player.
-        if ifa_mids_by_key:
-            log.info("fetching IFA signing info for %d prospects",
-                     len(ifa_mids_by_key))
-            ifa_by_id = bulk_fetch_ifa_signings(ifa_mids_by_key.values())
-            n_enriched = 0
-            for key, mid in ifa_mids_by_key.items():
-                sig = ifa_by_id.get(mid)
-                if not sig:
-                    continue
-                rec = acquisitions[key]
-                rec["year"]         = sig.get("year")
-                rec["team_name"]    = sig.get("team_name")
-                rec["signing_date"] = sig.get("signing_date")
-                n_enriched += 1
-            log.info("IFA enrichment: %d/%d signings resolved",
-                     n_enriched, len(ifa_mids_by_key))
+        with _step("2b.ii. IFA signing enrichment (MLB transactions)", log):
+            if ifa_mids_by_key:
+                log.info("fetching IFA signing info for %d prospects",
+                         len(ifa_mids_by_key))
+                ifa_by_id = bulk_fetch_ifa_signings(ifa_mids_by_key.values())
+                n_enriched = 0
+                for key, mid in ifa_mids_by_key.items():
+                    sig = ifa_by_id.get(mid)
+                    if not sig:
+                        continue
+                    rec = acquisitions[key]
+                    rec["year"]         = sig.get("year")
+                    rec["team_name"]    = sig.get("team_name")
+                    rec["signing_date"] = sig.get("signing_date")
+                    n_enriched += 1
+                log.info("IFA enrichment: %d/%d signings resolved",
+                         n_enriched, len(ifa_mids_by_key))
 
         # --- 2b.iii Spotrac IFA tracker — bonus dollars + per-org cycle
         # spending. Scrapes 2021-current; cached per year on disk so
@@ -592,27 +671,28 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         #     just the slice that bled into our tracker.
         ifa_bonus_by_key: dict[str, int] = {}
         ifa_spending_by_org: dict[str, dict[int, dict]] = {}
-        try:
-            from spotrac import (
-                scrape_spotrac_ifa_range,
-                build_ifa_bonus_by_key,
-                build_org_ifa_spending,
-            )
-            ifa_years = list(range(2021, date.today().year + 1))
-            spotrac_rows = scrape_spotrac_ifa_range(ifa_years, force=force_refetch)
-            ifa_bonus_by_key = build_ifa_bonus_by_key(spotrac_rows)
-            ifa_spending_by_org = build_org_ifa_spending(spotrac_rows)
-            n_merged = 0
-            for key, bonus in ifa_bonus_by_key.items():
-                rec = acquisitions.get(key)
-                if rec and rec["method"] == "international_fa" and rec.get("bonus_usd") is None:
-                    rec["bonus_usd"] = bonus
-                    n_merged += 1
-            log.info("spotrac IFA: %d rows fetched, %d bonuses merged into acquisitions, "
-                     "%d orgs with spending totals", len(spotrac_rows), n_merged,
-                     len(ifa_spending_by_org))
-        except Exception:
-            log.exception("spotrac IFA scrape failed — continuing without bonus data")
+        with _step("2b.iii. Spotrac IFA scrape + merge", log):
+            try:
+                from spotrac import (
+                    scrape_spotrac_ifa_range,
+                    build_ifa_bonus_by_key,
+                    build_org_ifa_spending,
+                )
+                ifa_years = list(range(2021, date.today().year + 1))
+                spotrac_rows = scrape_spotrac_ifa_range(ifa_years, force=force_refetch)
+                ifa_bonus_by_key = build_ifa_bonus_by_key(spotrac_rows)
+                ifa_spending_by_org = build_org_ifa_spending(spotrac_rows)
+                n_merged = 0
+                for key, bonus in ifa_bonus_by_key.items():
+                    rec = acquisitions.get(key)
+                    if rec and rec["method"] == "international_fa" and rec.get("bonus_usd") is None:
+                        rec["bonus_usd"] = bonus
+                        n_merged += 1
+                log.info("spotrac IFA: %d rows fetched, %d bonuses merged into acquisitions, "
+                         "%d orgs with spending totals", len(spotrac_rows), n_merged,
+                         len(ifa_spending_by_org))
+            except Exception:
+                log.exception("spotrac IFA scrape failed — continuing without bonus data")
 
         # Spotrac team contract pages — pulls current-year salary + AAV +
         # remaining contract years for every active MLB roster player.
@@ -621,14 +701,15 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # per regen (cached); failure is non-fatal so the rest of the
         # pipeline keeps running with the synthesized salary model.
         contracts_by_key: dict[str, dict] = {}
-        try:
-            from spotrac import scrape_all_spotrac_contracts, build_contracts_by_key
-            contract_rows = scrape_all_spotrac_contracts(force=force_refetch)
-            contracts_by_key = build_contracts_by_key(contract_rows)
-            log.info("spotrac contracts: %d player-rows fetched, %d unique players",
-                     len(contract_rows), len(contracts_by_key))
-        except Exception:
-            log.exception("spotrac contracts scrape failed — continuing without contract data")
+        with _step("2b.iv. Spotrac contracts scrape", log):
+            try:
+                from spotrac import scrape_all_spotrac_contracts, build_contracts_by_key
+                contract_rows = scrape_all_spotrac_contracts(force=force_refetch)
+                contracts_by_key = build_contracts_by_key(contract_rows)
+                log.info("spotrac contracts: %d player-rows fetched, %d unique players",
+                         len(contract_rows), len(contracts_by_key))
+            except Exception:
+                log.exception("spotrac contracts scrape failed — continuing without contract data")
 
         # MLB Draft bonus-pool back-fill — fetches per-year articles
         # for 2021-current and consolidates the per-team pool + per-pick
@@ -637,41 +718,44 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # 2024-2026 articles parse to full 30-team coverage; 2021-2023
         # have partial coverage (top teams only) per the article format.
         draft_pools: dict = {}
-        try:
-            from scrapers import build_draft_pools
-            draft_pools = build_draft_pools(
-                range(2021, date.today().year + 1),
-                force=force_refetch,
-            )
-            covered = sorted(draft_pools.keys())
-            log.info("MLB draft pools: %d years on file (%s)",
-                     len(draft_pools), ", ".join(str(y) for y in covered))
-        except Exception:
-            log.exception("MLB draft pool scrape failed — continuing without pool data")
+        with _step("2b.v. MLB draft bonus-pool back-fill", log):
+            try:
+                from scrapers import build_draft_pools
+                draft_pools = build_draft_pools(
+                    range(2021, date.today().year + 1),
+                    force=force_refetch,
+                )
+                covered = sorted(draft_pools.keys())
+                log.info("MLB draft pools: %d years on file (%s)",
+                         len(draft_pools), ", ".join(str(y) for y in covered))
+            except Exception:
+                log.exception("MLB draft pool scrape failed — continuing without pool data")
 
-        if acquisitions:
-            upsert_acquisitions(acquisitions)
-            n_draft = sum(1 for a in acquisitions.values() if a["method"] == "draft")
-            log.info("acquisitions: %d draft, %d IFA",
-                     n_draft, len(acquisitions) - n_draft)
+        with _step("2b.vi. Upsert acquisitions", log):
+            if acquisitions:
+                upsert_acquisitions(acquisitions)
+                n_draft = sum(1 for a in acquisitions.values() if a["method"] == "draft")
+                log.info("acquisitions: %d draft, %d IFA",
+                         n_draft, len(acquisitions) - n_draft)
 
         # --- 2b.iii Detect current IL stints. Same /transactions endpoint
         # as IFA + trade discovery, so we share its 30-day disk cache.
         # Returns only players currently on IL; everyone else gets cleared
         # so a prior IL badge doesn't linger after activation.
-        il_mids_by_key = {p.player_key: ids_by_key.get(p.player_key)
-                          for p in timeseries
-                          if ids_by_key.get(p.player_key) is not None
-                          and p.status != "graduated"}
-        log.info("checking IL status for %d active prospects",
-                 len(il_mids_by_key))
-        il_by_mid = bulk_fetch_il_status(il_mids_by_key.values())
-        il_updates: dict[str, dict | None] = {}
-        for key, mid in il_mids_by_key.items():
-            il_updates[key] = il_by_mid.get(mid)
-        upsert_il_status(il_updates)
-        log.info("IL: %d prospects currently on IL",
-                 sum(1 for v in il_updates.values() if v))
+        with _step("2b.vii. IL status check", log):
+            il_mids_by_key = {p.player_key: ids_by_key.get(p.player_key)
+                              for p in timeseries
+                              if ids_by_key.get(p.player_key) is not None
+                              and p.status != "graduated"}
+            log.info("checking IL status for %d active prospects",
+                     len(il_mids_by_key))
+            il_by_mid = bulk_fetch_il_status(il_mids_by_key.values())
+            il_updates: dict[str, dict | None] = {}
+            for key, mid in il_mids_by_key.items():
+                il_updates[key] = il_by_mid.get(mid)
+            upsert_il_status(il_updates)
+            log.info("IL: %d prospects currently on IL",
+                     sum(1 for v in il_updates.values() if v))
 
         # --- 2c. Affiliate roster map. ~6 HTTP calls (one per sport level)
         # returns every MLB + MiLB team with its parent_org_id, which lets
@@ -679,8 +763,10 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # full affiliate rosters for the farm-system page. Builds the
         # roster structure here so storage.export_timeseries_json stays a
         # pure serializer.
+        _team_affil_start = time.monotonic()
         log.info("fetching team affiliations for season %d", season)
         team_affil = fetch_team_affiliations(season)
+        _STEP_TIMES.append(("2c. Team affiliations fetch", time.monotonic() - _team_affil_start))
 
         # Map of MLBAM ID -> {player_key, fv_label, fv_raw} for our tracked
         # prospects. The roster builder uses this to flag and grade matches.
@@ -714,6 +800,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # canonical codes (ARI, KCR, SDP, SFG, TBR, CHW). Normalize via
         # canonical_org so the rosters keyed here line up with the codes
         # the front-end uses on the farm list / detail pages.
+        _rosters_start = time.monotonic()
         from trades import canonical_org
         rosters_by_org: dict[str, dict[str, list[dict]]] = {}
         for rec in player_index.players:
@@ -751,6 +838,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         log.info("built rosters for %d orgs across %d affiliate levels",
                  len(rosters_by_org), len(set(
                      lvl for levels in rosters_by_org.values() for lvl in levels)))
+        _STEP_TIMES.append(("2c-ii. Build rosters_by_org structure", time.monotonic() - _rosters_start))
 
         # --- 3a. Fetch career year-by-year stats.
         # Two-pass design:
@@ -776,6 +864,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         non_grad_keys: set[str] = {p.player_key for p in timeseries
                                    if p.status != "graduated"}
         keys_with_bulk_2026: set[str] = set()
+        _step_3a_bulk_start = time.monotonic() if not skip_stats else None
         if not skip_stats:
             # (1) Bulk pass — hitting + pitching across MLB + 5 MiLB levels.
             bulk_hitting  = bulk_fetch_season_stats(season, group="hitting")
@@ -805,6 +894,8 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 keys_with_bulk_2026 = set(bulk_updates.keys())
             log.info("merged bulk season-stats into career_cache for %d players",
                      len(bulk_updates))
+            _STEP_TIMES.append(("3a-i. Bulk season-stats fetch + merge", time.monotonic() - _step_3a_bulk_start))
+        _step_3a_per_start = time.monotonic() if not skip_stats else None
         if not skip_stats:
             non_grad_players = [
                 (p.player_key, p.player_name, _is_pitcher(p.position))
@@ -863,6 +954,8 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 upsert_career_stats(new_career)
                 career_cache.update(new_career)
             log.info("fetched career stats for %d players", len(new_career))
+            if _step_3a_per_start is not None:
+                _STEP_TIMES.append(("3a-ii. Per-player career stats fetch (parallel)", time.monotonic() - _step_3a_per_start))
 
         # --- 3b. Derive current-season stat lines (top-level digest) ------
         # Skips already-graduated prospects since their graduation snapshot
@@ -873,24 +966,25 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # HTTP call — even for the "no 2026 stats — using 2025" fallback
         # case which previously fired 4–8 per-player requests during the
         # year walkback.
-        if not skip_stats:
-            non_grad_for_statlines = [
-                (p.player_key, p.player_name, _is_pitcher(p.position))
-                for p in timeseries if p.status != "graduated"
-            ]
-            log.info("deriving stat lines for %d non-graduated prospects from career cache",
-                     len(non_grad_for_statlines))
-            new_statlines = derive_statlines_from_career(
-                non_grad_for_statlines, career_cache, season,
-                id_cache=ids_by_key,
-            )
-            stat_count = upsert_statlines(new_statlines, season)
-            log.info("upserted %d stat lines", stat_count)
-            for k, sl in new_statlines.items():
-                from dataclasses import asdict
-                statlines[k] = asdict(sl)
-        else:
-            new_statlines = {}
+        with _step("3b. Derive statlines from career cache", log):
+            if not skip_stats:
+                non_grad_for_statlines = [
+                    (p.player_key, p.player_name, _is_pitcher(p.position))
+                    for p in timeseries if p.status != "graduated"
+                ]
+                log.info("deriving stat lines for %d non-graduated prospects from career cache",
+                         len(non_grad_for_statlines))
+                new_statlines = derive_statlines_from_career(
+                    non_grad_for_statlines, career_cache, season,
+                    id_cache=ids_by_key,
+                )
+                stat_count = upsert_statlines(new_statlines, season)
+                log.info("upserted %d stat lines", stat_count)
+                for k, sl in new_statlines.items():
+                    from dataclasses import asdict
+                    statlines[k] = asdict(sl)
+            else:
+                new_statlines = {}
 
         # --- 3c. Single graduation pass: career-threshold + current-season
         # MLB-statline, both in-memory. Merges the prior per-player auto-grad
@@ -898,25 +992,26 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # candidates by PlayerIndex.mlbDebutDate so we only run the
         # threshold sum on prospects who actually have an MLB debut on
         # record (typically <50 of ~3000 active players).
-        active_for_grad = [
-            (p.player_key, p.player_name, _is_pitcher(p.position))
-            for p in timeseries if p.status != "graduated"
-        ]
-        graduates_found = detect_graduations_from_career(
-            career_cache, active_for_grad,
-            player_index=player_index,
-            id_cache=ids_by_key,
-            statlines=new_statlines or None,
-        )
-        if graduates_found:
-            for pkey, debut_date in graduates_found.items():
-                auto_graduate_player(pkey, grad_date=debut_date)
-            log.info("auto-graduated %d players (career-threshold + MLB statline)",
-                     len(graduates_found))
-            # Rebuild timeseries once so subsequent steps + export see the
-            # correct statuses.
-            all_snaps = load_all_snapshots()
-            timeseries = build_timeseries(all_snaps)
+        with _step("3c. Auto-graduation detection", log):
+            active_for_grad = [
+                (p.player_key, p.player_name, _is_pitcher(p.position))
+                for p in timeseries if p.status != "graduated"
+            ]
+            graduates_found = detect_graduations_from_career(
+                career_cache, active_for_grad,
+                player_index=player_index,
+                id_cache=ids_by_key,
+                statlines=new_statlines or None,
+            )
+            if graduates_found:
+                for pkey, debut_date in graduates_found.items():
+                    auto_graduate_player(pkey, grad_date=debut_date)
+                log.info("auto-graduated %d players (career-threshold + MLB statline)",
+                         len(graduates_found))
+                # Rebuild timeseries once so subsequent steps + export see the
+                # correct statuses.
+                all_snaps = load_all_snapshots()
+                timeseries = build_timeseries(all_snaps)
 
         # --- 3d. Pitch arsenals (pitchers) + sabermetrics (everyone).
         # The MLB Stats API only carries this data for MLB seasons, so most
@@ -924,6 +1019,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # because that's where the data actually exists — the prospect
         # detail page for a graduate gets wRC+/xFIP/arsenal from these
         # calls. --fast skips both for dev iteration.
+        _step_3d_start = time.monotonic()
         arsenals = load_pitch_arsenals()
         zone_metric_cache = load_zone_metrics()
         statcast_metric_cache = load_statcast_metrics()
@@ -1059,7 +1155,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                          len(war_data))
                         except Exception as e:
                             log.warning("career WAR fetch failed: %s", e)
+        _STEP_TIMES.append(("3d. Arsenals + sabermetrics + career WAR", time.monotonic() - _step_3d_start))
 
+        _step_3d_bis_start = time.monotonic()
         # --- 3d-bis. Approximate zone metrics for MiLB hitters.
         # Train once on MLB Gameday x/y + official zone labels, then apply
         # the classifier to tracked hitters at AAA/AA/A+/A. We run the same
@@ -1070,36 +1168,73 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             if fast:
                 log.info("--fast: skipping approximate MiLB zone metrics")
             else:
-                try:
-                    from zone_metrics import fetch_zone_metrics_for_players
-                    zone_players = []
-                    for p in timeseries:
-                        sl = statlines.get(p.player_key) or {}
-                        zone_players.append((
-                            p.player_key,
-                            p.player_name,
-                            ids_by_key.get(p.player_key),
-                            sl.get("level"),
-                            bool(sl.get("is_pitcher")) or _is_pitcher(p.position),
-                        ))
-                    new_zone_metrics = fetch_zone_metrics_for_players(
-                        zone_players,
-                        season,
-                        train_games=30,
-                        train_start_date=f"{season}-05-15",
-                    )
-                    if new_zone_metrics:
-                        upsert_zone_metrics(new_zone_metrics, season)
-                        from dataclasses import asdict
-                        zone_metric_cache.update({
-                            key: asdict(value)
-                            for key, value in new_zone_metrics.items()
-                        })
-                    log.info("fetched approximate zone metrics for %d hitters",
-                             len(new_zone_metrics))
-                except Exception:
-                    log.exception("approximate zone metrics failed — continuing")
+                # v19 — Freshness gate. If a meaningful fraction of the
+                # active hitter pool already has a recent zone-metric
+                # row (within ZONE_METRICS_FRESH_DAYS), skip the whole
+                # step. Avoids a ~2-3 minute rebuild on weekly re-runs
+                # when nothing material has changed. --force overrides.
+                #
+                # Eligibility set MUST mirror what the fetcher actually
+                # processes — non-pitchers at AAA/AA/A+/A. The prior
+                # version counted every non-pitcher with an mlbam_id
+                # including CPX/DSL and statline-less prospects, which
+                # diluted the pool and kept the gate below 90% even
+                # when every reachable hitter was fresh.
+                _zone_tracked_levels = {"AAA", "AA", "A+", "A"}
+                _zone_meta = load_zone_metrics_meta()
+                _zone_eligible_keys = [
+                    p.player_key for p in timeseries
+                    if not _is_pitcher(p.position)
+                       and ids_by_key.get(p.player_key) is not None
+                       and (statlines.get(p.player_key) or {}).get("level") in _zone_tracked_levels
+                ]
+                _zone_fresh_count = sum(
+                    1 for k in _zone_eligible_keys
+                    if _is_career_fresh(_zone_meta.get(k), ZONE_METRICS_FRESH_DAYS)
+                )
+                _zone_fresh_pct = (_zone_fresh_count / max(1, len(_zone_eligible_keys))) * 100
+                _zone_should_skip = (
+                    not force_refetch
+                    and _zone_eligible_keys
+                    and _zone_fresh_pct >= 90
+                )
+                if _zone_should_skip:
+                    log.info("zone metrics: SKIP (%d/%d eligible hitters fresh within %dd, %.0f%%)",
+                             _zone_fresh_count, len(_zone_eligible_keys),
+                             ZONE_METRICS_FRESH_DAYS, _zone_fresh_pct)
+                else:
+                    try:
+                        from zone_metrics import fetch_zone_metrics_for_players
+                        zone_players = []
+                        for p in timeseries:
+                            sl = statlines.get(p.player_key) or {}
+                            zone_players.append((
+                                p.player_key,
+                                p.player_name,
+                                ids_by_key.get(p.player_key),
+                                sl.get("level"),
+                                bool(sl.get("is_pitcher")) or _is_pitcher(p.position),
+                            ))
+                        new_zone_metrics = fetch_zone_metrics_for_players(
+                            zone_players,
+                            season,
+                            train_games=30,
+                            train_start_date=f"{season}-05-15",
+                        )
+                        if new_zone_metrics:
+                            upsert_zone_metrics(new_zone_metrics, season)
+                            from dataclasses import asdict
+                            zone_metric_cache.update({
+                                key: asdict(value)
+                                for key, value in new_zone_metrics.items()
+                            })
+                        log.info("fetched approximate zone metrics for %d hitters",
+                                 len(new_zone_metrics))
+                    except Exception:
+                        log.exception("approximate zone metrics failed — continuing")
+        _STEP_TIMES.append(("3d-bis. Approximate zone metrics", time.monotonic() - _step_3d_bis_start))
 
+        _step_3d_ter_start = time.monotonic()
         # --- 3d-ter. Statcast-style pitch movement + contact quality.
         # Coverage is park/feed dependent. The fetcher emits rows only when
         # game feeds expose actual movement or launch-speed fields, which
@@ -1109,35 +1244,66 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             if fast:
                 log.info("--fast: skipping Statcast-style pitch/contact metrics")
             else:
-                try:
-                    from statcast_metrics import fetch_statcast_metrics_for_players
-                    statcast_players = []
-                    for p in timeseries:
-                        sl = statlines.get(p.player_key) or {}
-                        statcast_players.append((
-                            p.player_key,
-                            p.player_name,
-                            ids_by_key.get(p.player_key),
-                            sl.get("level"),
-                            bool(sl.get("is_pitcher")) or _is_pitcher(p.position),
-                        ))
-                    new_statcast_metrics = fetch_statcast_metrics_for_players(
-                        statcast_players,
-                        season,
-                        workers=workers or 10,
-                    )
-                    if new_statcast_metrics:
-                        upsert_statcast_metrics(new_statcast_metrics, season)
-                        from dataclasses import asdict
-                        statcast_metric_cache.update({
-                            key: asdict(value)
-                            for key, value in new_statcast_metrics.items()
-                        })
-                    log.info("fetched Statcast-style metrics for %d players",
-                             len(new_statcast_metrics))
-                except Exception:
-                    log.exception("Statcast-style metrics failed — continuing")
+                # v19 — Freshness gate. Same logic as zone metrics —
+                # the per-player game-feed fetch loop runs 10+ minutes
+                # on cold cache, so skip the whole step when 90%+ of
+                # the tracked pool already has a fresh row. Eligibility
+                # mirrors the fetcher: only TRACKED_LEVELS (AAA/AA/A+/A/CPX)
+                # and only players who currently have a statline row at
+                # one of those levels.
+                _sc_tracked_levels = {"AAA", "AA", "A+", "A", "CPX"}
+                _sc_meta = load_statcast_metrics_meta()
+                _sc_eligible_keys = [
+                    p.player_key for p in timeseries
+                    if ids_by_key.get(p.player_key) is not None
+                       and (statlines.get(p.player_key) or {}).get("level") in _sc_tracked_levels
+                ]
+                _sc_fresh_count = sum(
+                    1 for k in _sc_eligible_keys
+                    if _is_career_fresh(_sc_meta.get(k), STATCAST_METRICS_FRESH_DAYS)
+                )
+                _sc_fresh_pct = (_sc_fresh_count / max(1, len(_sc_eligible_keys))) * 100
+                _sc_should_skip = (
+                    not force_refetch
+                    and _sc_eligible_keys
+                    and _sc_fresh_pct >= 90
+                )
+                if _sc_should_skip:
+                    log.info("statcast metrics: SKIP (%d/%d eligible players fresh within %dd, %.0f%%)",
+                             _sc_fresh_count, len(_sc_eligible_keys),
+                             STATCAST_METRICS_FRESH_DAYS, _sc_fresh_pct)
+                else:
+                    try:
+                        from statcast_metrics import fetch_statcast_metrics_for_players
+                        statcast_players = []
+                        for p in timeseries:
+                            sl = statlines.get(p.player_key) or {}
+                            statcast_players.append((
+                                p.player_key,
+                                p.player_name,
+                                ids_by_key.get(p.player_key),
+                                sl.get("level"),
+                                bool(sl.get("is_pitcher")) or _is_pitcher(p.position),
+                            ))
+                        new_statcast_metrics = fetch_statcast_metrics_for_players(
+                            statcast_players,
+                            season,
+                            workers=workers or 10,
+                        )
+                        if new_statcast_metrics:
+                            upsert_statcast_metrics(new_statcast_metrics, season)
+                            from dataclasses import asdict
+                            statcast_metric_cache.update({
+                                key: asdict(value)
+                                for key, value in new_statcast_metrics.items()
+                            })
+                        log.info("fetched Statcast-style metrics for %d players",
+                                 len(new_statcast_metrics))
+                    except Exception:
+                        log.exception("Statcast-style metrics failed — continuing")
+        _STEP_TIMES.append(("3d-ter. Statcast pitch movement / contact quality", time.monotonic() - _step_3d_ter_start))
 
+        _step_3e_start = time.monotonic()
         # --- 3e. Per-player transactions cache + within-season level changes.
         # The /transactions?playerId=X endpoint returns every affiliate
         # assignment, contract selection, recall, etc. for one player —
@@ -1210,7 +1376,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         log.info("derived level_changes for %d players, "
                  "non-trade transactions for %d players",
                  len(level_changes_by_key), len(transactions_by_key))
+        _STEP_TIMES.append(("3e. Transactions cache + level changes", time.monotonic() - _step_3e_start))
 
+        _step_3f_start = time.monotonic()
         # --- 3f. MLB roster-status derivation (debut, 40-man, options,
         # service phase). Combines the transactions cache with career_stats
         # rows we already loaded for the stat-line derivation. Pure CPU
@@ -1311,26 +1479,29 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                      newly_graduated)
             all_snaps = load_all_snapshots()
             timeseries = build_timeseries(all_snaps)
+        _STEP_TIMES.append(("3f-g. Roster status + revalidate + rookie-exhaustion grads", time.monotonic() - _step_3f_start))
 
         # Trade detection. The org-change inference always runs (just walks
         # snapshots we already have); the MLB API path is skipped under
         # --skip-stats. tracked_players is built directly from ids_by_key,
         # avoiding the per-player resolve_mlbam_id loop the previous version
         # ran here.
-        tracked = {}
-        if not skip_stats:
-            for p in timeseries:
-                tracked[p.player_key] = (p.player_name, ids_by_key.get(p.player_key))
-        new_trades = detect_trades(all_snaps, tracked_players=tracked,
-                                    skip_api=skip_stats)
-        trade_count = insert_trades(new_trades)
-        log.info("detected %d trades (%d new)", len(new_trades), trade_count)
-        trades_by_player = load_trades()
+        with _step("4. Trade detection", log):
+            tracked = {}
+            if not skip_stats:
+                for p in timeseries:
+                    tracked[p.player_key] = (p.player_name, ids_by_key.get(p.player_key))
+            new_trades = detect_trades(all_snaps, tracked_players=tracked,
+                                        skip_api=skip_stats)
+            trade_count = insert_trades(new_trades)
+            log.info("detected %d trades (%d new)", len(new_trades), trade_count)
+            trades_by_player = load_trades()
 
-        # Career WAR — loaded once here and reused by the JSON export.
-        career_war_all = load_career_war()
+            # Career WAR — loaded once here and reused by the JSON export.
+            career_war_all = load_career_war()
 
         # --- 5. Export -------------------------------------------------
+        _step_5_start = time.monotonic()
         out_dir.mkdir(parents=True, exist_ok=True)
         out_path = out_dir / "timeseries.json"
         export_timeseries_json(timeseries, out_path,
@@ -1354,13 +1525,20 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                player_ids=ids_by_key)
         log.info("wrote %s", out_path)
         _post_export_summary(out_path, all_snaps, log)
+        _STEP_TIMES.append(("5. Export timeseries.json + summary", time.monotonic() - _step_5_start))
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
                    notes=f"{len(timeseries)} players, {len(new_trades)} trades")
+        # v19 — Per-step duration table. Sorted by slowest first so the
+        # biggest wall-time culprits surface at the top of the log.
+        _log_step_summary(log, time.monotonic() - _run_start)
     except Exception:
         log.exception("run failed")
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
                    notes="FAILED — see logs")
+        # Still print the partial step summary on crash — useful for
+        # debugging which phase blew up.
+        _log_step_summary(log, time.monotonic() - _run_start)
         raise
 
 

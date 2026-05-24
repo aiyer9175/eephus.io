@@ -509,10 +509,31 @@ def fetch_zone_metrics_for_players_with_model(
             return game_pk, []
 
     game_pks = sorted(set(game_to_batters) | set(game_to_pitchers))
+    # v19 — Per-batch progress logging so this step doesn't go silent
+    # when the cache is cold. Each game-feed fetch is sequential per
+    # worker (MLB API doesn't batch), so a 3000-game cohort can run
+    # several minutes without any signal of life. Logs every 200 games.
+    import logging, time as _time
+    _log = logging.getLogger(__name__)
+    _zone_start = _time.monotonic()
+    _zone_done = 0
+    _ZONE_PROGRESS_EVERY = 200
     if game_pks:
         workers = max(1, min(max_workers, len(game_pks)))
+        _log.info("zone metrics: fetching %d game feeds (%d workers)",
+                  len(game_pks), workers)
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
             for game_pk, rows in ex.map(fetch_game_rows, game_pks):
+                _zone_done += 1
+                if _zone_done % _ZONE_PROGRESS_EVERY == 0 or _zone_done == len(game_pks):
+                    elapsed = _time.monotonic() - _zone_start
+                    rate = _zone_done / max(elapsed, 0.001)
+                    remaining = len(game_pks) - _zone_done
+                    eta = remaining / rate if rate > 0 else 0
+                    _log.info(
+                        "zone metrics: %d/%d game feeds done · %.0fs elapsed · ~%.0fs left",
+                        _zone_done, len(game_pks), elapsed, eta,
+                    )
                 player_levels = game_to_player_levels.get(game_pk, set())
                 for row in rows:
                     for key, split_level, is_pitcher in player_levels:
