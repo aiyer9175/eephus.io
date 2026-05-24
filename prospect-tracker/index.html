@@ -7181,13 +7181,15 @@ function acqTooltip(p, method) {
   const orig = p.acquisition || {};
   if (method === "draft") {
     const yr = orig.year ? `, ${orig.year}` : "";
+    const team = orig.team_name ? ` by ${orig.team_name}` : "";
     return orig.pick_overall != null
-      ? `Drafted pick #${orig.pick_overall}${yr}`
-      : `Drafted${yr}`;
+      ? `Drafted and signed${team} — pick #${orig.pick_overall}${yr}`
+      : `Drafted and signed${team}${yr}`;
   }
   if (method === "international_fa") {
     const yr = orig.year ? ` ${orig.year}` : "";
-    return `International FA signing${yr}`;
+    const team = orig.team_name ? ` by ${orig.team_name}` : "";
+    return `Signed from international FA${team}${yr}`;
   }
   if (method === "trade") {
     const date = evt.date || "?";
@@ -10159,12 +10161,13 @@ function latestAcquisition(p) {
 // Pretty label + chip color for each acquisition method. Method keys
 // match the global `#acq-filter` <select> values.
 const ACQ_LABELS = {
-  trade:             { label: "Trade",             color: "var(--accent-traded)" },
-  waiver:            { label: "Waiver claim",      color: "var(--neon-amber)" },
-  rule_5:            { label: "Rule 5",            color: "var(--neon-cyan)" },
-  contract_purchase: { label: "Contract purchase", color: "var(--text-secondary)" },
-  international_fa:  { label: "International FA",  color: "var(--neon-violet)" },
-  draft:             { label: "MLB Draft",         color: "var(--up)" },
+  trade:             { label: "Trade",                       color: "var(--accent-traded)" },
+  waiver:            { label: "Waiver claim",                color: "var(--neon-amber)" },
+  rule_5:            { label: "Rule 5",                      color: "var(--neon-cyan)" },
+  contract_purchase: { label: "Contract purchase",           color: "var(--text-secondary)" },
+  international_fa:  { label: "Signed from international FA",color: "var(--neon-violet)" },
+  draft:             { label: "Drafted and signed",          color: "var(--up)" },
+  free_agent:        { label: "Free-agent signing",          color: "var(--neon-cyan)" },
 };
 
 function getFilteredAcquired() {
@@ -21480,12 +21483,12 @@ function renderPlayerDetail(key) {
       const pickTxt = a.pick_overall != null
         ? `Round ${escapeHtml(a.round_label || "?")} · Pick #${a.pick_overall}${a.year ? " · " + a.year : ""}`
         : `Round ${escapeHtml(a.round_label || "?")}${a.year ? " · " + a.year : ""}`;
-      acqLabel = "Drafted";
+      acqLabel = "Drafted and signed";
       acqSub = pickTxt;
       acqBonus = a.bonus_usd;
     } else if (a.method === "international_fa") {
-      acqLabel = "International FA";
-      acqSub = a.year ? `Signed ${a.year}` : "Signed as IFA";
+      acqLabel = "Signed from international FA";
+      acqSub = a.year ? `${a.year} class` : "IFA";
       acqBonus = a.bonus_usd;
     }
     // v3 cleanup — the Acquired/method header was removed from the
@@ -22564,9 +22567,13 @@ function renderPlayerDetail(key) {
       : (fgTjDate
         ? `<div style="font-size:12px;color:var(--neon-violet);font-weight:600;margin-top:6px;" title="MLB IL feed didn't surface the surgery; FanGraphs published it.">Post-TJ · FG record ${escapeHtml(fgTjDate)}</div>`
         : "");
-    // Collapsible full injury history sits inside the same card so all
-    // health information stays together. Active stints flag in amber on
-    // the summary so the user spots an open IL without expanding.
+    // v9 — Injury history is now ALWAYS visible (was a closed accordion
+    // by default, which hid the table entirely on first paint). The
+    // collapse was confusing readers into thinking the Health tab had
+    // no injury data when the table was just behind one click. The
+    // <details> wrapper is dropped — a simple in-card section header
+    // + the table renders straight through. Currently-on-IL is still
+    // flagged in the header.
     const injuryDetails = history.length
       ? (() => {
           const active = history.some(s => s.active);
@@ -22574,10 +22581,10 @@ function renderPlayerDetail(key) {
           const activeTag = active
             ? ` <span style="color:var(--neon-amber);font-weight:600;">· currently on IL</span>`
             : "";
-          return `<details style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
-            <summary style="cursor:pointer;font-size:11px;color:var(--text-secondary);letter-spacing:0.04em;text-transform:uppercase;">Injury history · ${stintLabel}${activeTag}</summary>
-            <div style="margin-top:8px;">${makeInjuryHistoryBlock(history)}</div>
-          </details>`;
+          return `<div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
+            <div style="font-size:11px;color:var(--text-secondary);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Injury history · ${stintLabel}${activeTag}</div>
+            ${makeInjuryHistoryBlock(history)}
+          </div>`;
         })()
       : "";
     return `<div class="detail-title">Health profile <span class="detail-title-sub">${stints} stint${stints === 1 ? "" : "s"} on record</span></div>
@@ -22943,9 +22950,14 @@ function renderPlayerDetail(key) {
   // (i.e. they've been moved between orgs at least once). Pairs with the
   // original-acquisition block above to give a complete provenance: where
   // they entered pro ball AND how their current org got them.
+  // v9 — Acquisition labels standardized so drafted/IFA prospects
+  // never read as "free-agent signing" anywhere. "Drafted and signed"
+  // makes the draft + contract event one phrase; "Signed from
+  // international FA" is the explicit IFA wording. free_agent stays
+  // for genuine MLB-FA acquisitions on the current-org path.
   const ACQUISITION_LABELS = {
-    draft:             "MLB Draft",
-    international_fa:  "International FA",
+    draft:             "Drafted and signed",
+    international_fa:  "Signed from international FA",
     trade:             "Trade",
     waiver:            "Waiver claim",
     rule_5:            "Rule 5",
@@ -26657,6 +26669,38 @@ function attachHandlers() {
       state.section = btn.dataset.section;
       // Tab switch always returns to the list — drop any detail view.
       state.view = null;
+      // v9 — auto-reset filters on section switch. Filters carried
+      // across sections (e.g. you filter Active by org=ATL then click
+      // Debuted) used to silently apply to the new pool, often hiding
+      // most rows with no visible "why empty?" cue. Reset to the
+      // defaults so each section opens with the full population, then
+      // re-paint the chip-active classes to match.
+      const FILTER_DEFAULTS = {
+        orgFilter:    "all",
+        posFilter:    "all",
+        levelFilter:  "all",
+        stockFilter:  "all",
+        spreadFilter: "all",
+        healthFilter: "all",
+        acqFilter:    "all",
+        classFilter:  "all",
+        sort:         "fv",
+        search:       "",
+      };
+      Object.assign(state, FILTER_DEFAULTS);
+      // Sync the chip-bar active classes to the reset values.
+      document.querySelectorAll("[data-filter-pos], [data-filter-level], [data-filter-stock], [data-filter-spread], [data-filter-health], [data-farm-acq]").forEach(b => {
+        const dsKeys = Object.keys(b.dataset);
+        for (const k of dsKeys) {
+          if (k.startsWith("filter") || k === "farmAcq") {
+            b.classList.toggle("active", b.dataset[k] === "all");
+          }
+        }
+      });
+      // Clear the search input chrome if it's currently mounted.
+      const searchInput = document.getElementById("search-input");
+      if (searchInput) searchInput.value = "";
+      syncToURL();
       render();
     });
   });

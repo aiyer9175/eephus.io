@@ -138,6 +138,16 @@ PLAYER_KEY_ALIASES = {
         "player_key": "joshua_kurodagrauer",
         "player_name": "Joshua Kuroda-Grauer",
     },
+    # v9 — FanGraphs published this player as "Yeremi Cabrera" in 2024,
+    # then switched to the "Yeremy" spelling starting Feb 2025. MLB
+    # Pipeline also uses "Yeremy". Same player (same DOB / Nats CF/OF
+    # via TEX→WSN), just a spelling change that fragmented the history
+    # into two cards (one stale-inactive on TEX, one active on WSN).
+    # Collapse to the current "Yeremy" key.
+    "yeremi_cabrera": {
+        "player_key": "yeremy_cabrera",
+        "player_name": "Yeremy Cabrera",
+    },
 }
 
 
