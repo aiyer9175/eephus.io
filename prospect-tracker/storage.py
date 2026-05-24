@@ -3274,38 +3274,47 @@ def _compute_draft_pool_efficiency(gagg: dict,
 
 
 def _compute_ifa_roi(gagg: dict, ifa_org_spending: dict) -> dict:
-    """Per-org WAR-per-$M-IFA over an 11-year rolling window. IFA needs
-    a lot of time to develop; we look (T-12)…(T-2) for grads. v7
-    widened the window from 6yr→11yr because the spotrac bonus
-    coverage caps useful data to roughly 2015+ signings, leaving the
-    older T-9→T-3 window painfully sparse (1-2 orgs out of 30 had
-    enough grads under the prior gate).
-    Numerator: career WAR sum across IFA-signed grads in the window.
-    Denominator: IFA bonus spend across same years (sourced from
-    Spotrac via the per-year `ifa_org_spending` dict).
-    Gates at ≥1 contributing grad (v7 — loosened from 2 to match the
-    realistic data density)."""
+    """Per-org WAR-per-$M-IFA over a rolling window.
+
+    v8 — Window shrunk from 11yr (today−12…today−2) to **6yr**
+    (today−7…today−2). At 11yr the metric was returning None for
+    nearly every org because the per-grad bonus_usd gate eliminates
+    older IFAs (Spotrac coverage is shallow pre-2021); widening only
+    inflated the empty-bucket count. The 6yr window matches the
+    Spotrac-coverage era and keeps grad samples meaningful.
+
+    v8 also switches the denominator to `ifa_org_spending` (org-level
+    bonus pool sum across the same window). Per-grad bonus_usd
+    coverage caps the metric at ~23 debuted IFAs sitewide; org-level
+    IFA spend is available for every org. Mild noise from year-vs-
+    grad-signing-year alignment is the tradeoff, but the metric
+    actually returns a number now.
+
+    Numerator: career WAR sum across IFA-signed grads in the window
+    (no per-grad bonus required — career WAR alone qualifies).
+    Denominator: org's IFA bonus spend across the same window from
+    `ifa_org_spending` (Spotrac).
+    Gates at ≥1 contributing grad AND ≥$1M IFA spend in window."""
     grads = gagg.get("_ifa_grads") or []
     today_year = date.today().year
-    start_year = today_year - 12   # was -9 — wider window for v7
-    end_year   = today_year - 2    # was -3 — include slightly more recent
+    start_year = today_year - 7    # v8 — was -12
+    end_year   = today_year - 2
 
     relevant = [g for g in grads
                 if start_year <= g["signed_year"] <= end_year]
-    if len(relevant) < 1:           # was < 2 — v7 loosened gate
-        return {"war_per_m_ifa": None, "grad_count": len(relevant),
+    if not relevant:
+        return {"war_per_m_ifa": None, "grad_count": 0,
                 "war_total": 0.0, "ifa_total_usd": 0}
     war_total = sum(g["career_war"] for g in relevant)
-    # v7 — use the actual per-grad bonus_usd as the denominator (sum
-    # over the same grads we counted in the numerator). This keeps
-    # numerator and denominator aligned — even when the upstream
-    # `ifa_org_spending` table is sparse (Spotrac only covers 2021+),
-    # the contributing grads bring their own bonus number. The prior
-    # implementation summed the org's TOTAL IFA spend across the
-    # window, which produced artificially high WAR/$M when older
-    # grads (with WAR) were counted but their bonus dollars weren't
-    # in the spend table.
-    ifa_total = sum(int(g.get("bonus_usd") or 0) for g in relevant)
+    # v8 — Sum the org's TOTAL IFA spend across the same year window
+    # from Spotrac. Falls back to per-grad bonus sum when org-level
+    # data is missing.
+    ifa_total = 0
+    by_year = (ifa_org_spending or {})
+    for yr in range(start_year, end_year + 1):
+        ifa_total += int((by_year.get(yr) or {}).get("total_usd") or 0)
+    if ifa_total <= 0:
+        ifa_total = sum(int(g.get("bonus_usd") or 0) for g in relevant)
     if ifa_total <= 0:
         return {"war_per_m_ifa": None, "grad_count": len(relevant),
                 "war_total": round(war_total, 2), "ifa_total_usd": 0}

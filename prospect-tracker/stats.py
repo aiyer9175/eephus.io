@@ -2943,11 +2943,42 @@ def derive_statline_from_career(
     level = chosen.get("level") or "?"
 
     if is_p:
+        # v22 — Pass through k_pct / bb_pct on pitchers (was dropped to
+        # None, which forced the UI to fall back to K/9 / BB/9 even
+        # when the underlying career row had the per-batter rates).
+        # The bulk season-stats fetcher writes k_pct/bb_pct/tbf into
+        # the career row at fetch time; here we just thread them
+        # through. As a fallback, when the row lacks k_pct but carries
+        # the raw `so` + `tbf` (or `bf`) counts, derive on the fly so
+        # legacy cached rows still surface the better metric.
+        _kpct = _safe_float(chosen.get("k_pct"))
+        _bbpct = _safe_float(chosen.get("bb_pct"))
+        if _kpct is None or _bbpct is None:
+            _tbf = chosen.get("tbf") or chosen.get("bf") or chosen.get("battersFaced")
+            try:
+                _tbf_i = int(_tbf) if _tbf else 0
+            except (TypeError, ValueError):
+                _tbf_i = 0
+            if _tbf_i > 0:
+                if _kpct is None:
+                    _so = chosen.get("so") or chosen.get("strikeOuts") or chosen.get("k")
+                    if _so is not None:
+                        try:
+                            _kpct = round(100 * int(_so) / _tbf_i, 1)
+                        except (TypeError, ValueError, ZeroDivisionError):
+                            pass
+                if _bbpct is None:
+                    _bb = chosen.get("bb") or chosen.get("baseOnBalls") or chosen.get("walks")
+                    if _bb is not None:
+                        try:
+                            _bbpct = round(100 * int(_bb) / _tbf_i, 1)
+                        except (TypeError, ValueError, ZeroDivisionError):
+                            pass
         return StatLine(
             player_key=player_key, mlbam_id=mlbam_id,
             level=level, games=int(chosen.get("games", 0) or 0),
             avg=None, obp=None, slg=None, ops=None, hr=None, sb=None,
-            bb_pct=None, k_pct=None,
+            bb_pct=_bbpct, k_pct=_kpct,
             era=str(chosen["era"]) if chosen.get("era") is not None else None,
             fip=None,
             ip=_safe_float(chosen.get("ip")),

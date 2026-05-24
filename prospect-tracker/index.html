@@ -6599,11 +6599,9 @@
       <button class="chip"        data-lb-stat="era"     title="Earned-run average (lower is better)">ERA</button>
       <button class="chip"        data-lb-stat="whip"    title="Walks + hits / IP (lower is better)">WHIP</button>
       <button class="chip"        data-lb-stat="fip"     title="Fielding Independent Pitching (lower is better)">FIP</button>
-      <button class="chip"        data-lb-stat="k_per_9" title="Strikeouts per 9 innings">K/9</button>
-      <button class="chip"        data-lb-stat="bb_per_9" title="Walks per 9 innings (lower is better)">BB/9</button>
+      <button class="chip"        data-lb-stat="pitcher_k_pct" title="Pitcher K% — strikeouts as % of batters faced">K%</button>
+      <button class="chip"        data-lb-stat="pitcher_bb_pct" title="Pitcher BB% — walks as % of batters faced (lower is better)">BB%</button>
       <button class="chip"        data-lb-stat="hr_per_9" title="Home runs allowed per 9 (lower is better)">HR/9</button>
-      <button class="chip"        data-lb-stat="pitcher_k_pct" title="Pitcher K% — strikeouts as % of batters faced">K% (P)</button>
-      <button class="chip"        data-lb-stat="pitcher_bb_pct" title="Pitcher BB% — walks as % of batters faced (lower is better)">BB% (P)</button>
       <button class="chip"        data-lb-stat="pit_level_plus" title="ERA vs level mean — surfaces pitchers whose ERA is dominant relative to the level cohort">ERA- lvl</button>
       <span class="filter-label">Board</span>
       <button class="chip active" data-lb-side="all">All</button>
@@ -10248,9 +10246,17 @@ const _lbPitcherSupport = r => {
     r.era != null ? `${r.era} ERA` : null,
     r.whip != null ? `${r.whip} WHIP` : null,
   ].filter(Boolean).join(" · ") || "—";
+  // v22 — Prefer per-batter rates (K% / BB%) over per-9 rates. Falls
+  // back to K/9 / BB/9 only when the per-batter rate is unavailable.
+  const _kRate = r.k_pct != null
+    ? `K% ${Number(r.k_pct).toFixed(1)}%`
+    : (r.k_per_9 != null ? `K/9 ${r.k_per_9}` : null);
+  const _bbRate = r.bb_pct != null
+    ? `BB% ${Number(r.bb_pct).toFixed(1)}%`
+    : (r.bb_per_9 != null ? `BB/9 ${r.bb_per_9}` : null);
   const bottom = [
-    r.k_per_9 != null ? `K/9 ${r.k_per_9}` : null,
-    r.bb_per_9 != null ? `BB/9 ${r.bb_per_9}` : null,
+    _kRate,
+    _bbRate,
     (wins != null || losses != null) ? `${wins ?? 0}-${losses ?? 0}` : null,
     r.games != null ? `${r.games}G` : null,
   ].filter(Boolean).join(" · ");
@@ -13691,10 +13697,8 @@ function _renderOverseasStats(host, prospects, leagues) {
                    title="MLB-equivalent ERA — league-raw × ${(p._ctx?.pitcher_era_factor || 1).toFixed(2)}">
             ${s.payload.era_mlbe} MLBe</small>` : ""}</td>
     <td style="text-align:right;">${s.payload?.fip ?? "—"}</td>
-    <td style="text-align:right;">${s.payload?.k_per_9 ?? "—"}</td>
-    <td style="text-align:right;">${s.payload?.bb_per_9 ?? "—"}</td>
-    <td style="text-align:right;">${s.payload?.k_pct != null ? (s.payload.k_pct*100).toFixed(1)+"%" : "—"}</td>
-    <td style="text-align:right;">${s.payload?.bb_pct != null ? (s.payload.bb_pct*100).toFixed(1)+"%" : "—"}</td>
+    <td style="text-align:right;">${s.payload?.k_pct != null ? (s.payload.k_pct*100).toFixed(1)+"%" : (s.payload?.k_per_9 ?? "—")}</td>
+    <td style="text-align:right;">${s.payload?.bb_pct != null ? (s.payload.bb_pct*100).toFixed(1)+"%" : (s.payload?.bb_per_9 ?? "—")}</td>
     <td style="text-align:right;">${s.payload?.war ?? "—"}</td>
   </tr>`).join("");
 
@@ -13725,8 +13729,6 @@ function _renderOverseasStats(host, prospects, leagues) {
           <th style="text-align:right;">IP</th>
           <th style="text-align:right;">ERA</th>
           <th style="text-align:right;">FIP</th>
-          <th style="text-align:right;">K/9</th>
-          <th style="text-align:right;">BB/9</th>
           <th style="text-align:right;">K%</th>
           <th style="text-align:right;">BB%</th>
           <th style="text-align:right;">WAR</th>
@@ -17678,11 +17680,55 @@ function makeFarmGrowthChart(org, meanTrajectory, windowKey, chartWidth) {
     ? `${windowKey.toUpperCase()}DvM+ ${org.dvm_plus[windowKey]}` : null;
   const labelTxt = `${windowKey} development vs mean: ${finalV >= 0 ? '+' : ''}${finalV.toFixed(1)}${dsPlus ? ` · ${dsPlus}` : ''}`;
 
+  // v22 — ToolDvM+ dashed-violet overlay, mirroring the sparkline.
+  // Walks recent[] forward to find the first snapshot where both this
+  // org and the league have a tool composite, then plots
+  //   (org_tool_mean − anchor_org) − (league_tool_mean − anchor_league)
+  // for each subsequent snapshot. Y-axis is independently scaled so
+  // the small per-tool deltas read against the FV-scale curve.
+  let toolOverlaySvg = "";
+  const orgCode = org && org.org;
+  if (orgCode && recent.length >= 2
+      && typeof _orgToolMeanAtDate === "function"
+      && typeof _leagueToolMeanAtDate === "function") {
+    let anchorIdx = -1;
+    let startToolOrg = null, startToolLeague = null;
+    for (let i = 0; i < recent.length; i++) {
+      const om = _orgToolMeanAtDate(orgCode, recent[i].date);
+      const lm = _leagueToolMeanAtDate(recent[i].date);
+      if (om != null && lm != null) {
+        anchorIdx = i; startToolOrg = om; startToolLeague = lm; break;
+      }
+    }
+    if (anchorIdx >= 0) {
+      const toolPoints = [];
+      for (let i = anchorIdx; i < recent.length; i++) {
+        const om = _orgToolMeanAtDate(orgCode, recent[i].date);
+        const lm = _leagueToolMeanAtDate(recent[i].date);
+        if (om == null || lm == null) continue;
+        const dvm = (om - startToolOrg) - (lm - startToolLeague);
+        toolPoints.push({ x: rel[i].x, d: dvm });
+      }
+      if (toolPoints.length >= 2) {
+        const toolAbsMax = Math.max(0.5, ...toolPoints.map(p => Math.abs(p.d)));
+        const toolY = d => zeroY - (d / toolAbsMax) * (innerH / 2.4);
+        const toolPolyPts = toolPoints
+          .map(p => `${xFor(p.x).toFixed(1)},${toolY(p.d).toFixed(1)}`)
+          .join(' ');
+        const lastD = toolPoints[toolPoints.length - 1].d;
+        const toolTip = `Tool grade trajectory vs league (proxy) · anchored at ${recent[anchorIdx].date} · final ${lastD > 0 ? "+" : ""}${lastD.toFixed(2)}`;
+        toolOverlaySvg = `<polyline points="${toolPolyPts}" fill="none" stroke="var(--neon-violet)" stroke-width="1.4" stroke-dasharray="4,3" opacity="0.85" vector-effect="non-scaling-stroke"><title>${escapeHtml(toolTip)}</title></polyline>
+          <text x="${(W - PAD_R - 4).toFixed(1)}" y="${PAD_T + 26}" font-size="9" fill="var(--neon-violet)" text-anchor="end" font-style="italic">Tool DvM+ trajectory</text>`;
+      }
+    }
+  }
+
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="${escapeHtml(labelTxt)}">
     ${yTicks.join("")}
     ${xMarks.join("")}
     <polygon points="${polyTop}" fill="${stroke}" opacity="0.10"/>
     <polyline points="${points}" fill="none" stroke="${stroke}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${toolOverlaySvg}
     ${baselineTag}
     <text x="${(W - PAD_R - 4).toFixed(1)}" y="${PAD_T + 12}" font-size="11" fill="${stroke}" text-anchor="end" font-family="var(--font-mono)" font-weight="700">${escapeHtml(labelTxt)}</text>
   </svg>`;
@@ -17847,8 +17893,14 @@ function makeSpendingBlock(org) {
   const C = 2 * Math.PI * R;
   const ifaArc   = (C * ifaPct)   / 100;
   const draftArc = (C * draftPct) / 100;
-  const ifaColor   = "var(--neon-amber)";
-  const draftColor = "var(--neon-cyan)";
+  // v22 — Use the same --spend-ifa / --spend-draft palette as the
+  // legend swatches + the spending bars + farm-list mini-donut. Was
+  // --neon-amber / --neon-cyan, which left the donut painted in
+  // colors that didn't match the key (Draft especially: cyan donut
+  // arc vs magenta key swatch). Now donut, legend, bars all share
+  // the same two tokens.
+  const ifaColor   = "var(--spend-ifa)";
+  const draftColor = "var(--spend-draft)";
   const donutSvg = `<svg viewBox="0 0 120 120" width="140" height="140" role="img" aria-label="IFA vs Draft spending mix">
     <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="var(--bg-tertiary)" stroke-width="${STROKE}"/>
     <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${draftColor}" stroke-width="${STROKE}"
@@ -20450,6 +20502,84 @@ function withLevelTabs(primary, blockFn, keySlug) {
   </div>`;
 }
 
+// v22 — Merged Statcast section. Combines the old Zone profile +
+// Statcast feed cards into one card with a single level-tabs strip
+// driving BOTH halves. The shared tab set is the UNION of zone and
+// statcast level_splits, so a level with data on only one side still
+// appears (with a "no data at this level" note for the missing half).
+function makeMergedStatcastSection(p) {
+  const zone = p.zone_metrics || null;
+  const sc   = p.statcast_metrics || null;
+  const zoneSplits = (zone && Array.isArray(zone.level_splits) && zone.level_splits.length)
+    ? zone.level_splits : (zone && Object.keys(zone).length ? [zone] : []);
+  const scSplits = (sc && Array.isArray(sc.level_splits) && sc.level_splits.length)
+    ? sc.level_splits : (sc && Object.keys(sc).length ? [sc] : []);
+  if (!zoneSplits.length && !scSplits.length) return "";
+
+  const LVL_ORDER = ["MLB", "AAA", "AA", "A+", "A", "CPX", "DSL"];
+  // Build the union of available levels.
+  const levelSet = new Set();
+  for (const s of zoneSplits) if (s.level) levelSet.add(s.level);
+  for (const s of scSplits)   if (s.level) levelSet.add(s.level);
+  const levels = Array.from(levelSet).sort((a, b) => {
+    const ai = LVL_ORDER.indexOf(a), bi = LVL_ORDER.indexOf(b);
+    return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
+  });
+  if (!levels.length) return "";
+  const zoneByLevel = Object.fromEntries(zoneSplits.map(s => [s.level, s]));
+  const scByLevel   = Object.fromEntries(scSplits.map(s => [s.level, s]));
+
+  const isPitcher = !!((zone && zone.is_pitcher) || (sc && sc.is_pitcher));
+  const groupId = `statcast-${p.player_key || "_"}`;
+
+  // Tab strip — show each level + a tiny pitch/games sample chip so
+  // the user can tell which level has the deeper dataset at a glance.
+  const tabs = levels.map((lvl, i) => {
+    const z = zoneByLevel[lvl], s = scByLevel[lvl];
+    const pitches = (z && z.pitches) || (s && (s.pitch_movement || {}).tracked_pitches) || null;
+    const sample = pitches ? `${pitches} pitches` : lvl;
+    return `<button class="level-tab${i === 0 ? " is-active" : ""}"
+              data-lvl-group="${escapeHtml(groupId)}" data-lvl-idx="${i}"
+              title="${escapeHtml(sample)}" type="button"
+              onclick="switchLevelTab(this)">${escapeHtml(lvl)}</button>`;
+  }).join("");
+
+  // Panel per level — Zone block on top, Statcast block below, each
+  // with its own subhead. Missing-side renders a quiet hint.
+  const zoneTitle = isPitcher ? "Zone profile" : "Zone discipline";
+  const panels = levels.map((lvl, i) => {
+    const z = zoneByLevel[lvl];
+    const s = scByLevel[lvl];
+    const zoneHtml = z
+      ? makeZoneMetricsBlock(z)
+      : `<div style="color:var(--text-tertiary);font-size:11px;font-style:italic;padding:6px 0;">No zone data at ${escapeHtml(lvl)}.</div>`;
+    const scHtml = s
+      ? makeStatcastApiBlock(s, p)
+      : `<div style="color:var(--text-tertiary);font-size:11px;font-style:italic;padding:6px 0;">No Statcast feed data at ${escapeHtml(lvl)}.</div>`;
+    return `<div class="level-tab-panel${i === 0 ? " is-active" : ""}"
+              data-lvl-group="${escapeHtml(groupId)}" data-lvl-idx="${i}">
+      <div style="margin-top:6px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">${escapeHtml(zoneTitle)} <span style="color:var(--text-tertiary);font-weight:400;text-transform:none;letter-spacing:0;">· MLB Stats API zone approximation</span></div>
+        ${zoneHtml}
+      </div>
+      <div style="margin-top:14px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-secondary);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Statcast feed <span style="color:var(--text-tertiary);font-weight:400;text-transform:none;letter-spacing:0;">· per-game pitch + batted-ball tracking</span></div>
+        ${scHtml}
+      </div>
+    </div>`;
+  }).join("");
+
+  const subtitle = levels.length > 1
+    ? `switch level → ${levels.join(" / ")}`
+    : levels[0];
+
+  return `<div class="detail-title">Statcast <span class="detail-title-sub">${escapeHtml(subtitle)}</span></div>
+    <div class="level-tabs-wrap">
+      <div class="level-tabs">${tabs}</div>
+      ${panels}
+    </div>`;
+}
+
 function makeArsenalBlock(pa, p) {
   // FanGraphs arsenal profile line (Sits / Tops / FB Type / RPM FB /
   // RPM Break) — pulled from the latest FG snapshot's _extras. Renders
@@ -22182,13 +22312,21 @@ function renderPlayerDetail(key) {
     ? `<div class="detail-title">Statcast / Savant <span class="detail-title-sub">${escapeHtml(p.prospect_savant.level || "")} ${escapeHtml(p.prospect_savant.role || "")} · prospect-savant export</span></div>${makeSavantBlock(p.prospect_savant)}`
     : "";
 
-  const zoneMetricsSection = (p.zone_metrics && Object.keys(p.zone_metrics).length)
-    ? `<div class="detail-title">${p.zone_metrics.is_pitcher ? "Zone profile" : "Zone discipline"} <span class="detail-title-sub">MLB Stats API approximation${Array.isArray(p.zone_metrics.level_splits) && p.zone_metrics.level_splits.length > 1 ? " · switch level →" : " · " + escapeHtml(p.zone_metrics.level || "")}</span></div>${withLevelTabs(p.zone_metrics, m => makeZoneMetricsBlock(m), `zone-${p.player_key || ""}`)}`
+  // v22 — Merged Statcast section. Zone profile + Statcast feed used
+  // to live as two separate cards with independent level tabs (often
+  // showing the same MLB/AAA pair twice). The merged card has ONE
+  // level-tabs strip at the top driving BOTH sub-blocks underneath,
+  // so a reader can flip MLB ↔ AAA once and see both halves update.
+  // The shared tab set is the UNION of zone.level_splits and
+  // statcast.level_splits — a level with data on only one side still
+  // surfaces, with a small "no data at this level" note replacing
+  // the missing half.
+  const statcastSection = ((p.zone_metrics && Object.keys(p.zone_metrics).length)
+                           || (p.statcast_metrics && Object.keys(p.statcast_metrics).length))
+    ? makeMergedStatcastSection(p)
     : "";
-
-  const statcastApiSection = (p.statcast_metrics && Object.keys(p.statcast_metrics).length)
-    ? `<div class="detail-title">Statcast feed <span class="detail-title-sub">MLB Stats API game feed${Array.isArray(p.statcast_metrics.level_splits) && p.statcast_metrics.level_splits.length > 1 ? " · switch level →" : " · " + escapeHtml(p.statcast_metrics.level || "")}</span></div>${withLevelTabs(p.statcast_metrics, m => makeStatcastApiBlock(m, p), `sc-${p.player_key || ""}`)}`
-    : "";
+  const zoneMetricsSection = "";   // back-compat: merged into statcastSection above
+  const statcastApiSection = "";   // back-compat: merged into statcastSection above
 
   const arsenalSection = isPitcher
     ? `<div class="detail-title">Pitch arsenal</div>${makeArsenalBlock(p.pitch_arsenal, p)}`
@@ -23356,7 +23494,7 @@ function renderPlayerDetail(key) {
   const overviewHtml = [summaryGridHtml, chartSection, scoutReportsOnOverview, sourceSection, noteSection]
     .filter(Boolean).join("");
   const performanceHtml = [consolidatedCareerSection, sabermetricsSection,
-                           savantSection, zoneMetricsSection, statcastApiSection, arsenalSection,
+                           savantSection, statcastSection, arsenalSection,
                            projectionArcSection]
     .filter(Boolean).join("");
   // Tools card pulls its per-source publication history alongside,

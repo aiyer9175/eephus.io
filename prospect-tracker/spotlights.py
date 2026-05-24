@@ -467,19 +467,34 @@ def _surface_score(p: dict) -> tuple[float, list[str]]:
     row = _career_row(p, sl.get("season"))
     drivers: list[str] = []
     if sl.get("is_pitcher"):
-        k9 = _num(sl.get("k_per_9"), 0.0) or 0.0
-        bb9 = _num(sl.get("bb_per_9"), 9.0) or 9.0
+        # v22 — Prefer K% / BB% (per-batter rates) over K/9 / BB/9
+        # (per-inning). MLB-equivalent benchmarks: ~23% K is league
+        # average, 30%+ elite; 8% BB is average, sub-6% elite. Fall
+        # back to per-9 when per-batter rate is missing.
+        kpct = _num(sl.get("k_pct"))
+        bbpct = _num(sl.get("bb_pct"))
         era = _num(sl.get("era"), 9.0) or 9.0
         ip = _num(sl.get("ip"), _ip(row)) or 0.0
         if ip < 12:
             return 0.0, []
-        score = max(0.0, k9 - 8.0) * 0.7 + max(0.0, 4.25 - era) * 1.4
-        score += max(0.0, 3.0 - bb9) * 0.6
-        drivers.append(f"{k9:.1f} K/9")
-        if era < 3.5:
-            drivers.append(f"{era:.2f} ERA")
-        if bb9 < 3.0:
-            drivers.append(f"{bb9:.1f} BB/9")
+        if kpct is not None and bbpct is not None:
+            score = max(0.0, kpct - 22.0) * 0.20 + max(0.0, 4.25 - era) * 1.4
+            score += max(0.0, 8.0 - bbpct) * 0.18
+            drivers.append(f"{kpct:.1f}% K")
+            if era < 3.5:
+                drivers.append(f"{era:.2f} ERA")
+            if bbpct < 8.0:
+                drivers.append(f"{bbpct:.1f}% BB")
+        else:
+            k9 = _num(sl.get("k_per_9"), 0.0) or 0.0
+            bb9 = _num(sl.get("bb_per_9"), 9.0) or 9.0
+            score = max(0.0, k9 - 8.0) * 0.7 + max(0.0, 4.25 - era) * 1.4
+            score += max(0.0, 3.0 - bb9) * 0.6
+            drivers.append(f"{k9:.1f} K/9")
+            if era < 3.5:
+                drivers.append(f"{era:.2f} ERA")
+            if bb9 < 3.0:
+                drivers.append(f"{bb9:.1f} BB/9")
         return score, drivers
 
     ops = _num(sl.get("ops"), 0.0) or 0.0
@@ -618,20 +633,41 @@ def _change_drivers(p: dict) -> list[str]:
             diff = mean(prior_eras) - current_era
             if diff >= 0.50:
                 drivers.append(f"ERA down {diff:.2f} vs recent prior seasons")
-        current_k9 = _num(latest.get("k_per_9"))
-        prior_k9 = [_num(r.get("k_per_9")) for r in priors if r.get("is_pitcher") and _ip(r) >= 10]
-        prior_k9 = [v for v in prior_k9 if v is not None]
-        if current_k9 is not None and prior_k9:
-            diff = current_k9 - mean(prior_k9)
-            if diff >= 1.5:
-                drivers.append(f"K/9 up {diff:.1f}")
-        current_bb9 = _num(latest.get("bb_per_9"))
-        prior_bb9 = [_num(r.get("bb_per_9")) for r in priors if r.get("is_pitcher") and _ip(r) >= 10]
-        prior_bb9 = [v for v in prior_bb9 if v is not None]
-        if current_bb9 is not None and prior_bb9:
-            diff = mean(prior_bb9) - current_bb9
-            if diff >= 1.0:
-                drivers.append(f"BB/9 down {diff:.1f}")
+        # v22 — Prefer K% / BB% deltas (per-batter rates) over K/9 / BB/9
+        # (per-inning). Sensitivity reset: K% jumps of 4pp / BB% drops of
+        # 2pp are the per-batter equivalents of the old 1.5 K/9 / 1.0
+        # BB/9 thresholds. Fall back to per-9 deltas when neither prior
+        # nor current carries k_pct (legacy career rows).
+        current_kpct = _num(latest.get("k_pct"))
+        prior_kpct = [_num(r.get("k_pct")) for r in priors if r.get("is_pitcher") and _ip(r) >= 10]
+        prior_kpct = [v for v in prior_kpct if v is not None]
+        if current_kpct is not None and prior_kpct:
+            diff = current_kpct - mean(prior_kpct)
+            if diff >= 4.0:
+                drivers.append(f"K% up {diff:.1f}pp")
+        else:
+            current_k9 = _num(latest.get("k_per_9"))
+            prior_k9 = [_num(r.get("k_per_9")) for r in priors if r.get("is_pitcher") and _ip(r) >= 10]
+            prior_k9 = [v for v in prior_k9 if v is not None]
+            if current_k9 is not None and prior_k9:
+                diff = current_k9 - mean(prior_k9)
+                if diff >= 1.5:
+                    drivers.append(f"K/9 up {diff:.1f}")
+        current_bbpct = _num(latest.get("bb_pct"))
+        prior_bbpct = [_num(r.get("bb_pct")) for r in priors if r.get("is_pitcher") and _ip(r) >= 10]
+        prior_bbpct = [v for v in prior_bbpct if v is not None]
+        if current_bbpct is not None and prior_bbpct:
+            diff = mean(prior_bbpct) - current_bbpct
+            if diff >= 2.0:
+                drivers.append(f"BB% down {diff:.1f}pp")
+        else:
+            current_bb9 = _num(latest.get("bb_per_9"))
+            prior_bb9 = [_num(r.get("bb_per_9")) for r in priors if r.get("is_pitcher") and _ip(r) >= 10]
+            prior_bb9 = [v for v in prior_bb9 if v is not None]
+            if current_bb9 is not None and prior_bb9:
+                diff = mean(prior_bb9) - current_bb9
+                if diff >= 1.0:
+                    drivers.append(f"BB/9 down {diff:.1f}")
     return drivers
 
 
@@ -667,7 +703,11 @@ def _line_text(sl: dict) -> str:
     if not sl:
         return "No current line"
     if sl.get("is_pitcher"):
-        return f"{sl.get('era', '—')} ERA, {sl.get('ip', '—')} IP, {sl.get('k_per_9', '—')} K/9"
+        # v22 — Prefer K% when present; fall back to K/9 only when it isn't.
+        kpct = sl.get("k_pct")
+        k_str = (f"{float(kpct):.1f}% K" if kpct is not None
+                 else f"{sl.get('k_per_9', '—')} K/9")
+        return f"{sl.get('era', '—')} ERA, {sl.get('ip', '—')} IP, {k_str}"
     return f"{sl.get('avg', '—')}/{sl.get('obp', '—')}/{sl.get('slg', '—')}, {sl.get('hr') or 0} HR, {sl.get('sb') or 0} SB"
 
 
@@ -697,10 +737,16 @@ def _has_minor_rebound_case(p: dict, sc_score: float) -> tuple[bool, list[str]]:
         if r.get("is_pitcher"):
             era = _era(r)
             ip = _ip(r)
+            kpct = _num(r.get("k_pct"))
             k9 = _num(r.get("k_per_9"))
-            if ip >= 20 and ((era is not None and era <= 3.75) or (k9 is not None and k9 >= 10.5)):
+            # v22 — Trigger on either K% ≥ 28 (elite per-batter) or K/9 ≥ 10.5
+            # (legacy threshold). Driver label prefers the K% form.
+            k_qual = (kpct is not None and kpct >= 28.0) or (k9 is not None and k9 >= 10.5)
+            if ip >= 20 and ((era is not None and era <= 3.75) or k_qual):
                 if era is not None and era <= 3.75:
                     drivers.append(f"{r.get('season')} MiLB {era:.2f} ERA")
+                elif kpct is not None:
+                    drivers.append(f"{r.get('season')} MiLB {kpct:.1f}% K")
                 elif k9 is not None:
                     drivers.append(f"{r.get('season')} MiLB {k9:.1f} K/9")
                 return True, drivers
@@ -833,10 +879,40 @@ def _skills_delta(p: dict) -> tuple[float | None, list[str]]:
     score = 0.0
     drivers: list[str] = []
     if sl.get("is_pitcher"):
-        for key, label, lower_better in (
-            ("k_per_9", "K/9", False),
-            ("bb_per_9", "BB/9", True),
-        ):
+        # v22 — Per-batter rates (K% / BB%) preferred; fall back to per-9
+        # rates when the per-batter value is missing. Thresholds reset to
+        # the per-batter scale: 3pp K% jump (was 1.5 K/9), 2pp BB% drop
+        # (was 0.8 BB/9). Same ±3-point cap.
+        per_batter_specs = (
+            ("k_pct", "K%", "pp", False, 3.0),
+            ("bb_pct", "BB%", "pp", True, 2.0),
+        )
+        per_9_specs = (
+            ("k_per_9", "K/9", "", False, 1.5),
+            ("bb_per_9", "BB/9", "", True, 0.8),
+        )
+        used_keys: set[str] = set()
+        for key, label, suffix, lower_better, threshold in per_batter_specs:
+            cur = _num(sl.get(key))
+            prior_vals = [_num(r.get(key)) for r in priors
+                          if r.get("is_pitcher") and _ip(r) >= 15]
+            prior_vals = [v for v in prior_vals if v is not None]
+            if cur is None or not prior_vals:
+                continue
+            used_keys.add(key)
+            diff = cur - mean(prior_vals)
+            improvement = -diff if lower_better else diff
+            if abs(diff) >= threshold:
+                pts = max(-3.0, min(3.0, improvement / threshold))
+                score += pts
+                direction = "down" if diff < 0 else "up"
+                drivers.append(f"{label} {direction} {abs(diff):.1f}{suffix}")
+        # Per-9 fallback runs only for rates that the per-batter loop
+        # didn't see (rare — legacy career rows without TBF).
+        for key, label, _, lower_better, threshold in per_9_specs:
+            sibling_key = "k_pct" if key == "k_per_9" else "bb_pct"
+            if sibling_key in used_keys:
+                continue
             cur = _num(sl.get(key))
             prior_vals = [_num(r.get(key)) for r in priors
                           if r.get("is_pitcher") and _ip(r) >= 15]
@@ -845,11 +921,7 @@ def _skills_delta(p: dict) -> tuple[float | None, list[str]]:
                 continue
             diff = cur - mean(prior_vals)
             improvement = -diff if lower_better else diff
-            threshold = 0.8 if lower_better else 1.5
             if abs(diff) >= threshold:
-                # Each (threshold) unit of movement = 1 score point,
-                # capped at ±3 per category so a single freak move can't
-                # dominate the composite.
                 pts = max(-3.0, min(3.0, improvement / threshold))
                 score += pts
                 direction = "down" if diff < 0 else "up"
