@@ -20798,11 +20798,27 @@ function makePerSourceHistory(points) {
       ${sortedSources.map(s => {
         const d = perSrc[s];
         if (!d) return `<td style="color:var(--text-tertiary);">—</td>`;
-        const fv = d.fv_published != null
-          ? `<span class="fv-badge ${fvClass(String(d.fv_published))} size-sm">${d.fv_published}</span>`
-          : "—";
-        const rank = d.rank != null ? `<span style="font-size:10px;color:var(--text-tertiary);"> #${d.rank}</span>` : "";
-        return `<td>${fv}${rank}</td>`;
+        // v10 — Primary publication + any same-date `extras` (e.g.
+        // MLB Pipeline drops Top 100 + Org Top 30 same day; both
+        // surface here so the user can see the org-specific rank).
+        // Extras render as compact secondary lines below the primary
+        // with a short "(Org list)" / parsed label suffix.
+        const renderOne = (entry, isExtra) => {
+          const fv = entry.fv_published != null
+            ? `<span class="fv-badge ${fvClass(String(entry.fv_published))} size-sm">${entry.fv_published}</span>`
+            : "—";
+          const rank = entry.rank != null
+            ? `<span style="font-size:10px;color:var(--text-tertiary);"> #${entry.rank}</span>`
+            : "";
+          if (!isExtra) return `${fv}${rank}`;
+          // Extras include a small label tag so it's clear which list
+          // this rank/grade came from (vs the primary publication).
+          const lblShort = ((entry.interval_label || "").match(/(\w+\s+Top\s+\d+)/i) || [, "Org list"])[1];
+          return `<div style="margin-top:3px;font-size:10px;line-height:1.2;" title="${escapeHtml(entry.interval_label || "")}">${fv}${rank} <span style="color:var(--text-tertiary);">${escapeHtml(lblShort)}</span></div>`;
+        };
+        const primary = renderOne(d, false);
+        const extras = (d.extras || []).map(e => renderOne(e, true)).join("");
+        return `<td>${primary}${extras}</td>`;
       }).join("")}
       <td><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-secondary);font-weight:600;" title="Consensus FV at this snapshot">${pt.consensus_fv_label}</span></td>
     </tr>`;
@@ -21323,7 +21339,7 @@ function renderPlayerDetail(key) {
   // inline-handler observers fail.
   const _fvHistoryCount = (p.points && p.points.length) || 0;
   const sourceSection = _fvHistoryCount
-    ? `<details style="margin:14px 0 6px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
+    ? `<details open style="margin:14px 0 6px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
          <summary style="cursor:pointer;padding:8px 12px;font-family:var(--font-retro);font-size:13px;font-weight:600;color:var(--text-primary);user-select:none;list-style:revert;">Source-by-source FV history <span style="color:var(--text-tertiary);font-weight:400;">· ${_fvHistoryCount} update interval${_fvHistoryCount !== 1 ? "s" : ""}</span></summary>
          <div style="padding:0 12px 12px;">${makePerSourceHistory(p.points || [])}</div>
        </details>`

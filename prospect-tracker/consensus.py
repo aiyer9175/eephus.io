@@ -404,7 +404,16 @@ def compute_consensus_point(
             fv_adjusted = (float(s.fv) + 30.0) / 2.0
             fv_for_consensus = fv_adjusted
             dropped_off_in_point.append(s.source)
-        per_source[s.source] = {
+        # v10 — When the same source publishes MULTIPLE lists with the
+        # same date (e.g. MLB Pipeline drops Top 100 + Org Top 30 both
+        # dated 2026-01-22 — Theo Gillen is #1 on Rays Top 30, #43 on
+        # Top 100, both at FV 55), keep the FIRST one as the primary
+        # per_source entry and append the rest to `extras`. The source-
+        # by-source FV history UI walks primary + extras so both
+        # publications surface; the FV stays in `explicit_fvs` exactly
+        # once because both entries carry the same FV from the same
+        # outlet (averaging the same value twice doesn't help).
+        entry = {
             "rank": s.rank,
             "fv_published": s.fv,
             "fv_adjusted": fv_adjusted,
@@ -414,9 +423,17 @@ def compute_consensus_point(
             "snapshot_date": s.snapshot_date,
             "tools": dict(s.tools) if s.tools else None,
         }
-        if fv_for_consensus is not None:
-            explicit_fvs.append(fv_for_consensus)
-            contributing_sources.add(s.source)
+        already = per_source.get(s.source)
+        if already is None:
+            per_source[s.source] = entry
+            if fv_for_consensus is not None:
+                explicit_fvs.append(fv_for_consensus)
+                contributing_sources.add(s.source)
+        else:
+            # Same-date same-source duplicate. Surface in `extras` so
+            # the UI can render it as a second publication row; do NOT
+            # contribute another vote to the consensus FV.
+            already.setdefault("extras", []).append(entry)
         if s.rank is not None:
             # v15/v18 — Exclude team-Top-N ranks from the consensus
             # avg_rank + rank-implied FV math. Org-specific lists rank
@@ -863,26 +880,46 @@ def build_timeseries(
         total_fv_instances = len(seen_fv_keys)
 
         # Walk event dates chronologically, forward-filling per source.
-        # `latest_by_source` holds the most recent Snapshot seen from each
-        # source up to (and including) the current event date.
+        # `latest_by_source` holds the most recent Snapshot(s) seen from
+        # each source up to (and including) the current event date.
+        #
+        # v10 — Value is a LIST so multiple same-date publications from
+        # the same source survive (e.g. MLB Pipeline drops Top 100 +
+        # Org Top 30 both dated 2026-01-22). When a NEWER date arrives,
+        # the list is replaced wholesale (the new date's set is the
+        # most-recent for that source). compute_consensus_point handles
+        # the duplicates by surfacing them as `extras` in per_source
+        # without re-counting the FV.
         points: list[ConsensusPoint] = []
-        latest_by_source: dict[str, Snapshot] = {}
+        latest_by_source: dict[str, list[Snapshot]] = {}
         for snap_date in sorted(by_date):
             for s in by_date[snap_date]:
-                prev = latest_by_source.get(s.source)
-                # Multiple snapshots from the same source on the same date
-                # (rare): keep the one with the most information — prefer
-                # an explicit FV over a rank-only update from the same day.
-                if (
-                    prev is None
-                    or s.snapshot_date > prev.snapshot_date
-                    or (prev.fv is None and s.fv is not None)
-                ):
-                    latest_by_source[s.source] = s
+                prev_list = latest_by_source.get(s.source)
+                if not prev_list:
+                    latest_by_source[s.source] = [s]
+                    continue
+                prev_date = prev_list[0].snapshot_date
+                if s.snapshot_date > prev_date:
+                    # Strictly newer snapshot — replace the list.
+                    latest_by_source[s.source] = [s]
+                elif s.snapshot_date == prev_date:
+                    # Same date — append as supplementary publication.
+                    # Skip if it's identical to one already in the list
+                    # (forward-fill repeats the same snapshot many times).
+                    already = any(
+                        (e.interval_label == s.interval_label and e.fv == s.fv
+                         and e.rank == s.rank)
+                        for e in prev_list
+                    )
+                    if not already:
+                        latest_by_source[s.source].append(s)
+                # Older snapshot than the latest — ignore.
 
             event_label = by_date[snap_date][-1].interval_label
+            # Flatten the lists for compute_consensus_point's day_snaps.
+            day_snaps_flat = [s for lst in latest_by_source.values() for s in lst]
             pt = compute_consensus_point(
-                list(latest_by_source.values()),
+                day_snaps_flat,
                 event_date=snap_date,
                 event_label=event_label,
                 single_source_k=single_source_k,

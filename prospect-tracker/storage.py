@@ -1306,18 +1306,29 @@ def revalidate_auto_graduations(qualified_keys: set[str]) -> int:
         return len(to_delete)
 
 
-def auto_graduate_player(player_key: str, grad_date: str | None = None) -> None:
+def auto_debut_player(player_key: str, debut_date: str | None = None) -> None:
     """
-    Mark a player as graduated by inserting a synthetic snapshot.
+    Mark a player as debuted by inserting a synthetic snapshot.
 
-    grad_date — ISO date string for the graduation event (mlbDebutDate
-                from the API). Falls back to today if not supplied.
+    debut_date — ISO date string for the MLB debut (mlbDebutDate from
+                 the API). When not supplied, falls back to the player's
+                 earliest MLB-level career-stats season as
+                 {season}-04-01 (Opening Day, the closest signal to
+                 "first MLB game" we can derive without a per-game
+                 lookup). Today's date is NEVER used as the fallback —
+                 that creates a flood of synthetic "debuted today"
+                 entries every pipeline run for players whose actual
+                 first MLB game was years ago.
 
-    The pipeline uses the EARLIEST graduation-date snapshot it finds,
-    so an accurate debut date here prevents spurious "graduated today"
-    entries every run.
+    The pipeline uses the EARLIEST debut snapshot it finds, so a
+    fallback grounded in the player's first MLB season prevents
+    spurious "debuted on rebuild date" entries across runs.
     """
-    snap_date = grad_date or date.today().isoformat()
+    snap_date = debut_date or _resolve_first_mlb_game_date(player_key)
+    if not snap_date:
+        # No debut date and no MLB career row to anchor to. Skip rather
+        # than stamping today() — the caller can retry once data lands.
+        return
     with connect() as con:
         # Pull most recent metadata for this player
         row = con.execute(
@@ -1328,7 +1339,10 @@ def auto_graduate_player(player_key: str, grad_date: str | None = None) -> None:
         ).fetchone()
         if not row:
             return
-        # Insert the graduation snapshot; ignore if this exact row exists
+        # Insert the debut snapshot; ignore if this exact row exists.
+        # status='graduated' is kept as the internal enum (renaming it
+        # would invalidate every cached DB row + force a schema migration);
+        # the user-facing label is "Debuted" wherever this surfaces.
         con.execute(
             """INSERT OR IGNORE INTO snapshots
                (player_key, player_name, source, snapshot_date, interval_label,
@@ -1338,6 +1352,43 @@ def auto_graduate_player(player_key: str, grad_date: str | None = None) -> None:
             (player_key, row["player_name"], snap_date,
              row["position"], row["org"]),
         )
+
+
+def _resolve_first_mlb_game_date(player_key: str) -> str | None:
+    """Look up the player's earliest MLB season in career_stats and
+    return `{season}-04-01` (Opening Day) as the best stand-in for
+    "first MLB game date" when the API hasn't supplied an mlbDebutDate.
+    Returns None when the player has no MLB-level career rows on file.
+    """
+    try:
+        with connect() as con:
+            row = con.execute(
+                """SELECT payload_json FROM career_stats
+                   WHERE player_key = ? LIMIT 1""",
+                (player_key,),
+            ).fetchone()
+    except sqlite3.OperationalError:
+        return None
+    if not row:
+        return None
+    try:
+        rows = json.loads(row["payload_json"])
+    except (TypeError, ValueError):
+        return None
+    mlb_seasons = [
+        int(r["season"]) for r in rows
+        if isinstance(r, dict) and r.get("level") == "MLB" and r.get("season")
+    ]
+    if not mlb_seasons:
+        return None
+    return f"{min(mlb_seasons)}-04-01"
+
+
+# Back-compat alias — keeps old callers (and any external scripts)
+# working. New code should use `auto_debut_player`. The keyword arg
+# `grad_date` is also accepted for symmetry with the old signature.
+def auto_graduate_player(player_key: str, grad_date: str | None = None) -> None:
+    return auto_debut_player(player_key, debut_date=grad_date)
 
 
 def upsert_birth_date(player_key: str, birth_date: str,
@@ -4176,12 +4227,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # future. Picks the EARLIER of mid-year and today, so
                 # we never claim a graduate's debut date is tomorrow.
                 return midyear_iso if midyear_iso <= today_iso else today_iso
+        # v21 — Fallback when the current-year MLB row has zero PA/IP.
+        # The user requested debut date NEVER fall back to today; use
+        # the season's Opening Day approximation ({year}-04-01) instead
+        # so the date at least lands inside the player's first MLB
+        # season window rather than the rebuild timestamp.
         log.warning(
-            "_safe_in_year_placeholder: %s falling back to today() "
+            "_safe_in_year_placeholder: %s using Opening Day %s "
             "(no PA/IP detected for %d MLB row); investigate API "
-            "debut date.", player_key, year,
+            "debut date.", player_key, f"{year}-04-01", year,
         )
-        return today_iso
+        opening_day = f"{year}-04-01"
+        return opening_day if opening_day <= today_iso else today_iso
 
     def _display_graduation_date(p: PlayerTimeseries) -> str | None:
         """
@@ -5062,31 +5119,37 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 for src, info in pt_per_src.items():
                     if not info:
                         continue
-                    src_tools = info.get("tools") or {}
-                    if not isinstance(src_tools, dict):
-                        continue
-                    # Filter out _extras + non-numeric junk.
-                    numeric = {k: v for k, v in src_tools.items()
-                               if k != "_extras" and isinstance(v, (int, float))}
-                    if not numeric:
-                        continue
-                    # Use the SOURCE's actual publication date (info.snapshot_date),
-                    # not the consensus-point date (pt.snapshot_date). Forward-fill
-                    # carries each source's latest snapshot into every later
-                    # consensus point — without this, a stale source would appear
-                    # to have published at every consensus date after its last
-                    # real update, corrupting the LATEST/STALE logic.
-                    src_snapshot_date = info.get("snapshot_date") or pt.snapshot_date
-                    source_history.setdefault(src, []).append({
-                        "snapshot_date": src_snapshot_date,
-                        "interval_label": info.get("interval_label")
-                                          or pt.interval_label,
-                        "grades": numeric,
-                        "extras_present": bool(
-                            isinstance(src_tools.get("_extras"), dict)
-                            and src_tools["_extras"]
-                        ),
-                    })
+                    # v10 — Walk primary + extras (same-date same-source
+                    # supplementary publications, e.g. MLB Pipeline Top
+                    # 100 + Org Top 30 both dated 2026-01-22). Each
+                    # surfaces as a distinct source_history row, deduped
+                    # downstream by (date, interval_label).
+                    publications = [info] + (info.get("extras") or [])
+                    for pub in publications:
+                        src_tools = pub.get("tools") or {}
+                        if not isinstance(src_tools, dict):
+                            continue
+                        numeric = {k: v for k, v in src_tools.items()
+                                   if k != "_extras" and isinstance(v, (int, float))}
+                        if not numeric:
+                            continue
+                        # Use the SOURCE's actual publication date (pub.snapshot_date),
+                        # not the consensus-point date (pt.snapshot_date). Forward-fill
+                        # carries each source's latest snapshot into every later
+                        # consensus point — without this, a stale source would appear
+                        # to have published at every consensus date after its last
+                        # real update, corrupting the LATEST/STALE logic.
+                        src_snapshot_date = pub.get("snapshot_date") or pt.snapshot_date
+                        source_history.setdefault(src, []).append({
+                            "snapshot_date": src_snapshot_date,
+                            "interval_label": pub.get("interval_label")
+                                              or pt.interval_label,
+                            "grades": numeric,
+                            "extras_present": bool(
+                                isinstance(src_tools.get("_extras"), dict)
+                                and src_tools["_extras"]
+                            ),
+                        })
                 # Consensus snapshot — append once per point that produced
                 # any tool consensus.
                 if pt_consensus:

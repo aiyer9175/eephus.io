@@ -95,7 +95,7 @@ from storage import (
     load_all_snapshots, load_statlines, upsert_statlines,
     insert_trades, load_trades,
     upsert_birth_date, load_birth_dates,
-    auto_graduate_player, revalidate_auto_graduations,
+    auto_debut_player,
     upsert_pitch_arsenals, load_pitch_arsenals,
     upsert_zone_metrics, load_zone_metrics, load_zone_metrics_meta,
     upsert_statcast_metrics, load_statcast_metrics, load_statcast_metrics_meta,
@@ -118,7 +118,7 @@ from stats import (fetch_statlines_for, derive_statlines_from_career, fetch_birt
                    bulk_fetch_season_stats, merge_bulk_into_career_cache,
                    bulk_resolve_ids,
                    bulk_fetch_mlb_debut_dates,
-                   detect_graduations_from_career,
+                   detect_debuts_from_index,
                    bulk_fetch_drafts,
                    bulk_fetch_ifa_signings,
                    bulk_fetch_il_status,
@@ -986,28 +986,26 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             else:
                 new_statlines = {}
 
-        # --- 3c. Single graduation pass: career-threshold + current-season
-        # MLB-statline, both in-memory. Merges the prior per-player auto-grad
-        # loop into one detect_graduations_from_career call. Pre-filters
-        # candidates by PlayerIndex.mlbDebutDate so we only run the
-        # threshold sum on prospects who actually have an MLB debut on
-        # record (typically <50 of ~3000 active players).
-        with _step("3c. Auto-graduation detection", log):
-            active_for_grad = [
+        # --- 3c. Single debut-detection pass. v21: every prospect whose
+        # MLB API record carries an mlbDebutDate is moved to the Debuted
+        # section. No rookie-threshold AB/IP gate — debut date is the
+        # source of truth.
+        with _step("3c. Auto-debut detection", log):
+            active_for_debut = [
                 (p.player_key, p.player_name, _is_pitcher(p.position))
                 for p in timeseries if p.status != "graduated"
             ]
-            graduates_found = detect_graduations_from_career(
-                career_cache, active_for_grad,
+            debuts_found = detect_debuts_from_index(
+                career_cache, active_for_debut,
                 player_index=player_index,
                 id_cache=ids_by_key,
                 statlines=new_statlines or None,
             )
-            if graduates_found:
-                for pkey, debut_date in graduates_found.items():
-                    auto_graduate_player(pkey, grad_date=debut_date)
-                log.info("auto-graduated %d players (career-threshold + MLB statline)",
-                         len(graduates_found))
+            if debuts_found:
+                for pkey, debut_date in debuts_found.items():
+                    auto_debut_player(pkey, debut_date=debut_date)
+                log.info("auto-debuted %d players (mlbDebutDate on file)",
+                         len(debuts_found))
                 # Rebuild timeseries once so subsequent steps + export see the
                 # correct statuses.
                 all_snaps = load_all_snapshots()
@@ -1450,41 +1448,14 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                  sum(1 for v in roster_status_by_key.values() if v.get("on_40_man")),
                  len(rookie_exhausted_grads))
 
-        # Strip legacy auto_detect graduation snapshots for players who
-        # don't currently meet the rookie-eligibility rules. Older runs
-        # of the pipeline graduated anyone with an MLB debut date and
-        # that sticky DB state survives across runs — without this
-        # pass, a cup-of-coffee prospect from last month still shows
-        # graduated even after we tightened the gates. FG-sourced
-        # graduations are left alone (external authority).
-        cleared = revalidate_auto_graduations(set(rookie_exhausted_grads))
-        if cleared:
-            log.info("revalidated graduations: cleared %d stale auto_detect rows "
-                     "(players who no longer qualify under current rules)",
-                     cleared)
-            # Rebuild timeseries so the rest of the pipeline + export sees
-            # the corrected statuses.
-            all_snaps = load_all_snapshots()
-            timeseries = build_timeseries(all_snaps)
-
-        # --- 3g. Auto-graduate any prospect who has crossed the rookie-
-        # eligibility threshold (130 MLB AB / 50 MLB IP) but is still
-        # marked active. Belt-and-suspenders alongside detect_graduations_from_career,
-        # which already catches the FanGraphs-flagged path.
-        timeseries_by_key = {p.player_key: p for p in timeseries}
-        newly_graduated = 0
-        for pkey, debut in rookie_exhausted_grads.items():
-            p = timeseries_by_key.get(pkey)
-            if not p or p.status == "graduated":
-                continue
-            auto_graduate_player(pkey, grad_date=debut)
-            newly_graduated += 1
-        if newly_graduated:
-            log.info("auto-graduated %d players via rookie-exhaustion threshold",
-                     newly_graduated)
-            all_snaps = load_all_snapshots()
-            timeseries = build_timeseries(all_snaps)
-        _STEP_TIMES.append(("3f-g. Roster status + revalidate + rookie-exhaustion grads", time.monotonic() - _step_3f_start))
+        # v21 — Rookie-threshold revalidation removed. Debut-date is the
+        # sole gate now (per `detect_debuts_from_index` in step 3c); a
+        # player's auto_detect row stays as long as MLB API has an
+        # mlbDebutDate on file for them. The previous belt-and-
+        # suspenders rookie-exhaustion auto-graduate pass is also gone —
+        # `detect_debuts_from_index` already catches everyone the
+        # rookie-threshold pass would have caught (and more).
+        _STEP_TIMES.append(("3f-g. Roster status + rookie-exhaustion compute", time.monotonic() - _step_3f_start))
 
         # Trade detection. The org-change inference always runs (just walks
         # snapshots we already have); the MLB API path is skipped under

@@ -518,7 +518,7 @@ def export_overseas_json(out_path: Path) -> int:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
-    log.info("overseas_export: wrote %d prospects across %d leagues → %s",
+    log.info("overseas_export: wrote %d prospects across %d leagues -> %s",
              n, len(payload["leagues"]), out_path)
     return n
 

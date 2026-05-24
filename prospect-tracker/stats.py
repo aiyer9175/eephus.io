@@ -3186,7 +3186,7 @@ def check_rookie_threshold(mlbam_id: int, is_pitcher: bool) -> tuple[bool, str |
     return False, None
 
 
-def detect_graduations_from_career(
+def detect_debuts_from_index(
     career_stats: dict[str, list[dict]],
     active_players: list[tuple[str, str, bool]],
     player_index: "PlayerIndex | None" = None,
@@ -3194,60 +3194,42 @@ def detect_graduations_from_career(
     statlines: dict[str, "StatLine"] | dict[str, dict] | None = None,
 ) -> dict[str, str | None]:
     """
-    Identify graduated prospects by checking career MLB stats against the
-    MLB rookie-eligibility thresholds.
+    Identify debuted prospects — players who should move from the active
+    pool to the Debuted section.
 
-    A player has lost rookie / prospect status (and is therefore graduated)
-    when their CAREER MLB totals exceed either:
+    v21 rule (definitive): ANY active prospect whose MLB API record
+    carries an `mlbDebutDate` is treated as debuted. Period. No AB/IP
+    rookie-eligibility math. A player who pitched 1 inning of MLB ball
+    is no longer a prospect; the same goes for a hitter with 0 ABs but
+    an active-roster cup of coffee.
 
-        - Position player: > 130 at-bats
-        - Pitcher        : > 50 innings pitched
-
-    (The third official criterion — > 45 days on an active MLB roster
-    outside September — requires day-by-day transaction data that the
-    public API doesn't expose cleanly, so we approximate by AB/IP only.)
-
-    A player who has *debuted* in MLB but not yet crossed either threshold
-    remains an active prospect. Their `mlb_debut_date` is still surfaced
-    by `collect_mlb_debut_dates` so the UI can pin it on the transaction
-    timeline as its own marker.
-
-    Pre-filter: when `player_index` is supplied, we restrict the candidate
-    set to prospects whose index record has a non-empty `mlbDebutDate`. A
-    prospect without an MLB debut date cannot have crossed the rookie
-    threshold by definition, so we skip the threshold sum for them. This
-    typically narrows ~3000 active prospects down to <50 candidates.
+    Why we ripped out the 130-AB / 50-IP / 45-roster-day rookie
+    thresholds: the multi-criterion gate was producing wrong "still
+    active" classifications whenever any input was stale — the API
+    cache, the career-stats cache, or the statline derivation. Players
+    were sitting in the active pool with `mlb_debut_date` set, which
+    confused readers. The user explicitly opted for the simpler signal:
+    debut date is the source of truth.
 
     Args:
-        career_stats : {player_key: [season_row, ...]} from `load_career_stats`.
-                       Each season_row should include `level`, `is_pitcher`,
-                       and either `ab` (hitters) or `ip` (pitchers).
-        active_players: (player_key, player_name, is_pitcher_hint). The hint
-                       fills in if a career_stats row has no `is_pitcher` flag.
-        player_index : optional `PlayerIndex` used to look up an accurate
-                       `mlbDebutDate` for the graduation_date AND to
-                       pre-filter the candidate set. Falls back to
-                       "{earliest-MLB-season}-07-01" when the index has no
-                       debut date for this player.
-        id_cache     : optional MLBAM ID cache so we can find the prospect's
-                       record in `player_index`. Defaults to disk cache.
-        statlines    : optional {player_key: StatLine | dict} of current-season
-                       statlines. When provided, a prospect whose statline
-                       level == "MLB" is also flagged graduated, mirroring the
-                       previous per-player auto-grad pass in run_monthly.
+        career_stats : kept for API back-compat (no longer read in the
+                       primary path — debut date alone gates).
+        active_players: (player_key, player_name, is_pitcher_hint).
+        player_index : `PlayerIndex` for MLB-API debut dates.
+        id_cache     : optional MLBAM ID cache.
+        statlines    : kept for back-compat (no longer read in the
+                       primary path either).
 
     Returns:
-        {player_key: debut_date_or_None}
+        {player_key: debut_date_iso} for every active prospect whose
+        MLB-API record has an mlbDebutDate; players without one are
+        omitted from the result (still active).
     """
     if id_cache is None:
         id_cache = _load_id_cache()
-    pitcher_by_key = {key: bool(pit) for key, _, pit in active_players}
-    active_keys = set(pitcher_by_key)
+    active_keys = {key for key, _, _ in active_players}
 
-    # Pre-filter: when we have a PlayerIndex, restrict to prospects with an
-    # mlbDebutDate. The pre-filter is the bulk-equivalent of "did this player
-    # ever play in MLB?" — no debut date means no possible graduation.
-    debut_by_key: dict[str, str] = {}
+    debuts: dict[str, str | None] = {}
     if player_index is not None:
         for key in active_keys:
             mid = id_cache.get(key)
@@ -3255,113 +3237,30 @@ def detect_graduations_from_career(
                 continue
             debut = player_index.get_debut_date(mid)
             if debut:
-                debut_by_key[key] = debut
-        candidate_keys = set(debut_by_key)
+                debuts[key] = debut
         log.info(
-            "graduation pre-filter: %d/%d active prospects have an mlbDebutDate",
-            len(candidate_keys), len(active_keys),
+            "debut detection: %d/%d active prospects have an mlbDebutDate",
+            len(debuts), len(active_keys),
         )
-    else:
-        candidate_keys = active_keys
 
-    graduates: dict[str, str | None] = {}
-
-    def _resolve_debut(player_key: str, mlb_rows: list[dict] | None) -> str:
-        """Pick the best graduation_date: index → earliest MLB season → today-ish."""
-        debut = debut_by_key.get(player_key)
-        if debut:
-            return debut
-        if player_index is not None:
-            mid = id_cache.get(player_key)
-            if mid is not None:
-                idx_debut = player_index.get_debut_date(mid)
-                if idx_debut:
-                    return idx_debut
-        if mlb_rows:
-            earliest_season = min(r["season"] for r in mlb_rows)
-            return f"{earliest_season}-07-01"
-        return date.today().isoformat()
-
-    debuted_below_threshold = 0
-    for player_key in candidate_keys:
-        rows = career_stats.get(player_key) or []
-        if not rows:
-            continue
-        # Per-row is_pitcher is set by fetch_career_stats based on whether
-        # we hit the hitting or pitching endpoint; fall back to the hint.
-        is_pitcher = bool(rows[0].get("is_pitcher", pitcher_by_key[player_key]))
-        mlb_rows = [r for r in rows if r.get("level") == "MLB"]
-        if not mlb_rows:
-            continue
-
-        # Sum career MLB AB / IP and compare to the rookie thresholds.
-        if is_pitcher:
-            career_total = sum(_safe_float(r.get("ip")) or 0.0 for r in mlb_rows)
-            crossed = career_total > ROOKIE_IP_THRESHOLD
-            metric_label = f"{career_total:.1f} IP"
-        else:
-            career_total = sum(int(r.get("ab") or 0) for r in mlb_rows)
-            crossed = career_total > ROOKIE_AB_THRESHOLD
-            metric_label = f"{career_total} AB"
-
-        if not crossed:
-            debuted_below_threshold += 1
-            continue
-
-        debut = _resolve_debut(player_key, mlb_rows)
-        graduates[player_key] = debut
-        log.info("GRADUATED (rookie threshold passed: %s): %s  debut=%s",
-                 metric_label, player_key, debut)
-
-    # Second pass: current-season statline at MLB level. Catches the
-    # recently-called-up case the career-threshold sum misses (career
-    # cache might be slightly stale for this very current season). Runs
-    # over all active prospects (not just candidate_keys) because a
-    # prospect whose PlayerIndex record lacks a debut date but who shows
-    # up with an MLB statline this season is also a candidate. Still
-    # subject to the rookie threshold — a player with 1 MLB AB does NOT
-    # graduate.
-    if statlines:
-        for player_key in active_keys:
-            if player_key in graduates:
-                continue
-            sl = statlines.get(player_key)
-            if sl is None:
-                continue
-            level = sl.level if hasattr(sl, "level") else sl.get("level")
-            if level != "MLB":
-                continue
-            # Threshold check from the statline. StatLine doesn't carry
-            # AB directly; use career_stats MLB sum if available, else
-            # fall back to "must have at least the threshold worth of
-            # games" as a conservative proxy.
-            rows = career_stats.get(player_key) or []
+    # Fallback when no player_index supplied: any prospect with a
+    # career MLB row at all (any AB/IP) is a debut signal. v21 — Use
+    # the earliest MLB season's Opening Day ({season}-04-01) as the
+    # debut-date approximation, NOT today(). Per user: debut date
+    # should fall back to the first MLB game date, never to the
+    # rebuild timestamp.
+    if player_index is None:
+        for key in active_keys:
+            rows = career_stats.get(key) or []
             mlb_rows = [r for r in rows if r.get("level") == "MLB"]
-            is_pitcher = bool(
-                rows[0].get("is_pitcher", pitcher_by_key.get(player_key, False))
-                if rows else pitcher_by_key.get(player_key, False)
-            )
-            if is_pitcher:
-                career_total = sum(_safe_float(r.get("ip")) or 0.0 for r in mlb_rows)
-                crossed = career_total > ROOKIE_IP_THRESHOLD
-            else:
-                career_total = sum(int(r.get("ab") or 0) for r in mlb_rows)
-                crossed = career_total > ROOKIE_AB_THRESHOLD
-            if not crossed:
-                continue
-            debut = _resolve_debut(player_key, mlb_rows or None)
-            graduates[player_key] = debut
-            log.info("GRADUATED (current-statline MLB + threshold): %s  debut=%s",
-                     player_key, debut)
+            if mlb_rows:
+                debuts[key] = f"{min(r['season'] for r in mlb_rows)}-04-01"
+    return debuts
 
-    if debuted_below_threshold:
-        log.info(
-            "%d prospects debuted in MLB but remain below the rookie threshold "
-            "(>%d AB or >%g IP); kept as active",
-            debuted_below_threshold, ROOKIE_AB_THRESHOLD, ROOKIE_IP_THRESHOLD,
-        )
 
-    return graduates
+# Back-compat alias — callers that still import the old name keep
+# working. New code should use `detect_debuts_from_index`.
+detect_graduations_from_career = detect_debuts_from_index
 
 
 def collect_mlb_debut_dates(
