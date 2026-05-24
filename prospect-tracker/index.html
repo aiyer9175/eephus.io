@@ -404,7 +404,7 @@
       --bg-row-hover: #353C4D;
     }
     [data-theme="dark"] .player-row:hover,
-    [data-theme="dark"] .grad-row:hover,
+    [data-theme="dark"] .debut-row:hover,
     [data-theme="dark"] .farm-row:hover,
     [data-theme="dark"] .spotlight-row:hover {
       background: var(--bg-row-hover);
@@ -1307,7 +1307,7 @@
        is off-screen. `contain-intrinsic-size` gives the layout engine an
        estimate so the scrollbar stays well-behaved even when 2000+ rows
        are nominally in the DOM. Applies to all row variants. */
-    .player-row, .spotlight-row, .grad-row, .farm-row {
+    .player-row, .spotlight-row, .debut-row, .farm-row {
       content-visibility: auto;
       contain-intrinsic-size: auto 80px;
     }
@@ -1316,7 +1316,7 @@
        tab-stepping through the list is unambiguous. Phase 4 a11y. */
     .player-row:focus-visible,
     .spotlight-row:focus-visible,
-    .grad-row:focus-visible,
+    .debut-row:focus-visible,
     .farm-row:focus-visible,
     .pos-depth-card:focus-visible {
       outline: 2px solid var(--neon-cyan);
@@ -1919,7 +1919,7 @@
     body.density-compact .spotlight-row,
     body.density-compact .player-row.is-injured,
     body.density-compact .player-row.is-traded,
-    body.density-compact .grad-row {
+    body.density-compact .debut-row {
       padding-top: 4px;
       padding-bottom: 4px;
       gap: 8px;
@@ -1927,20 +1927,20 @@
     body.density-compact .spotlight-row .headshot,
     body.density-compact .player-row.is-injured .headshot,
     body.density-compact .player-row.is-traded .headshot,
-    body.density-compact .grad-row .headshot {
+    body.density-compact .debut-row .headshot {
       width: 28px !important;
       height: 34px !important;
     }
     body.density-compact .spotlight-row .player-name,
     body.density-compact .player-row.is-injured .player-name,
     body.density-compact .player-row.is-traded .player-name,
-    body.density-compact .grad-row .player-name {
+    body.density-compact .debut-row .player-name {
       font-size: 12px;
     }
     body.density-compact .spotlight-row .player-meta,
     body.density-compact .player-row.is-injured .player-meta,
     body.density-compact .player-row.is-traded .player-meta,
-    body.density-compact .grad-row .player-meta {
+    body.density-compact .debut-row .player-meta {
       font-size: 10px;
       line-height: 1.2;
     }
@@ -1949,19 +1949,19 @@
        cell's grid-template-columns slot is what bounds the width now. */
     body.density-compact .spotlight-row .line-chart-cell,
     body.density-compact .player-row.is-traded .line-chart-cell,
-    body.density-compact .grad-row .line-chart-cell {
+    body.density-compact .debut-row .line-chart-cell {
       width: 100%;
       max-width: none;
     }
     body.density-compact .spotlight-row .line-chart-cell svg,
     body.density-compact .player-row.is-traded .line-chart-cell svg,
-    body.density-compact .grad-row .line-chart-cell svg {
+    body.density-compact .debut-row .line-chart-cell svg {
       width: 100% !important;
       height: 60px !important;
     }
     body.density-compact .spotlight-row .line-chart-cell > [data-lazy-chart],
     body.density-compact .player-row.is-traded .line-chart-cell > [data-lazy-chart],
-    body.density-compact .grad-row .line-chart-cell > [data-lazy-chart] {
+    body.density-compact .debut-row .line-chart-cell > [data-lazy-chart] {
       width: 100% !important;
       height: 60px !important;
     }
@@ -2616,13 +2616,13 @@
     /* === Graduates ================================================
        8-column grid: # | Player | Graduation | FV | Trajectory chart |
        Candle | MLB level | MLB stats. */
-    .grad-header, .grad-row {
+    .debut-header, .debut-row {
       display: grid;
       grid-template-columns: 32px 1.3fr 1fr 0.45fr 1.1fr 0.6fr 0.7fr 1.1fr;
       gap: 10px;
       align-items: center;
     }
-    .grad-header {
+    .debut-header {
       font-family: var(--font-sans);
       font-size: 10px;
       color: #F5EBDC;
@@ -2634,11 +2634,11 @@
       letter-spacing: 0.10em;
       font-weight: 600;
     }
-    .grad-header > span {
+    .debut-header > span {
       display: block;
       color: #F5EBDC !important;
     }
-    .grad-row {
+    .debut-row {
       position: relative;
       padding: 12px 14px 12px 18px;
       margin-bottom: 6px;
@@ -2649,7 +2649,7 @@
       cursor: pointer;
       transition: box-shadow 0.12s, transform 0.12s;
     }
-    .grad-row::before {
+    .debut-row::before {
       content: "";
       position: absolute;
       left: 0; top: 0; bottom: 0;
@@ -2658,11 +2658,11 @@
       border-top-left-radius: var(--radius-sm);
       border-bottom-left-radius: var(--radius-sm);
     }
-    .grad-row:hover {
+    .debut-row:hover {
       box-shadow: var(--shadow-card-hover);
       transform: translateY(-1px);
     }
-    .grad-pill {
+    .debut-pill {
       display: inline-block;
       font-family: var(--font-mono);
       font-size: 11px;
@@ -2675,7 +2675,7 @@
       letter-spacing: 0;
       font-variant-numeric: tabular-nums;
     }
-    .grad-pill.most-recent {
+    .debut-pill.most-recent {
       background: rgba(31, 122, 58, 0.10);
       color: var(--neon-green);
       border-color: var(--neon-green);
@@ -2683,7 +2683,7 @@
     /* "FG writeup" indicator on graduate-list rows. Flags that the
        prospect has a FanGraphs graduate-year scouting writeup on file.
        Cyan to match the FanGraphs source-tab styling elsewhere. */
-    .grad-pill.grad-writeup-pill {
+    .debut-pill.debut-writeup-pill {
       background: rgba(78, 224, 255, 0.12);
       color: var(--neon-cyan);
       border-color: var(--neon-cyan);
@@ -2716,11 +2716,11 @@
     }
 
     /* Sticky "what just graduated" banner. Sits above the date-grouped
-       rows in renderGraduates when at least one graduate's date is
+       rows in renderDebuts when at least one graduate's date is
        within the past 14 days. Pulsing green dot signals freshness;
        the row-level `most-recent` pill on each date band still flags
        the specific class. */
-    .grad-recent-banner {
+    .debut-recent-banner {
       display: flex;
       align-items: center;
       gap: var(--space-2);
@@ -2734,7 +2734,7 @@
       font-size: var(--fs-md);
       color: var(--text-primary);
     }
-    .grad-recent-banner .grb-dot {
+    .debut-recent-banner .grb-dot {
       width: 8px; height: 8px;
       border-radius: 50%;
       background: var(--neon-green);
@@ -2748,9 +2748,9 @@
       100% { box-shadow: 0 0 0 0   rgba(31, 122, 58, 0); }
     }
     @media (prefers-reduced-motion: reduce) {
-      .grad-recent-banner .grb-dot { animation: none; }
+      .debut-recent-banner .grb-dot { animation: none; }
     }
-    .grad-recent-banner .grb-text strong {
+    .debut-recent-banner .grb-text strong {
       color: var(--neon-green);
       font-weight: 700;
     }
@@ -3492,7 +3492,7 @@
     .farm-row:hover .share-as-image.share-inline,
     .player-row:hover .share-as-image.share-inline,
     .draft-card:hover .share-as-image.share-inline,
-    .grad-row:hover .share-as-image.share-inline {
+    .debut-row:hover .share-as-image.share-inline {
       opacity: 1;
     }
     /* In card mode, reveal the .card-only elements (they ship with
@@ -4960,11 +4960,11 @@
       }
       .col-header.is-leaderboard > span:nth-child(n+5),
       .player-row.is-leaderboard > div:nth-child(n+5) { display: none; }
-      .grad-header, .grad-row {
+      .debut-header, .debut-row {
         grid-template-columns: 28px 1.2fr 0.5fr 1fr;
       }
-      .grad-header .desktop-only, .grad-row .grad-graduation-cell,
-      .grad-row .grad-level-cell { display: none; }
+      .debut-header .desktop-only, .debut-row .debut-date-cell,
+      .debut-row .debut-level-cell { display: none; }
       .spotlight-header, .spotlight-row {
         grid-template-columns: 28px 1fr 0.45fr;
       }
@@ -6202,7 +6202,7 @@
     <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">MLB Draft</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
-    <button class="section-tab" data-section="graduates">Debuted</button>
+    <button class="section-tab" data-section="debuts">Debuted</button>
     <button class="section-tab" data-section="glossary" title="Stats, indices, scouting concepts, and methodology — every term used on the site">Glossary</button>
     <button class="section-tab" data-section="watchlist" title="Your starred prospects and farm systems — private to this browser">Watchlist<span class="section-tab-count" id="watchlist-tab-count"></span></button>
     <button class="compare-toggle is-empty-hidden" id="compare-toggle" type="button" aria-label="Open compare panel" title="Open compare panel (c)">
@@ -6500,29 +6500,29 @@
     <div id="overseas-rows"></div>
   </div>
 
-  <div id="graduates-section" style="display: none;">
-    <div id="whats-new-graduates"></div>
+  <div id="debuts-section" style="display: none;">
+    <div id="whats-new-debuts"></div>
     <div class="filter-bar" style="margin-bottom:8px;">
       <span class="filter-label">Sort</span>
-      <button class="chip active" data-grad-sort="date"
+      <button class="chip active" data-debut-sort="date"
               title="Most recent debut first">Debut date</button>
-      <button class="chip" data-grad-sort="war"
+      <button class="chip" data-debut-sort="war"
               title="Current MLB-season WAR, highest first. Debuted players without a current-season WAR sink to the bottom.">Current-season WAR</button>
-      <button class="chip" data-grad-sort="career_war"
+      <button class="chip" data-debut-sort="career_war"
               title="Cumulative career WAR (BBref), highest first. Debuted players with no MLB time sink to the bottom.">Career WAR</button>
-      <button class="chip" data-grad-sort="war_per_yr"
+      <button class="chip" data-debut-sort="war_per_yr"
               title="WAR per MLB season (career WAR ÷ seasons played), highest first. Rate stat — favors debuts with a strong sample-size-adjusted track record.">WAR/year</button>
-      <button class="chip" data-grad-sort="fv_close"
+      <button class="chip" data-debut-sort="fv_close"
               title="Highest final consensus FV (the FV when the player debuted) first">Final FV</button>
-      <button class="chip" data-grad-sort="vs_fv_proj"
+      <button class="chip" data-debut-sort="vs_fv_proj"
               title="WAG (WAR Above Grade) — playing-time-weighted MLB WAR/year (PA for hitters / IP for pitchers) minus the FV-grade-implied WAR/year (FanGraphs primer, lower-bound; linearly interpolated; hitter/pitcher tables split). Requires ≥1 full-season equivalent of MLB playing time. Highest outperformance first.">WAG (high)</button>
-      <button class="chip" data-grad-sort="vs_fv_proj_low"
+      <button class="chip" data-debut-sort="vs_fv_proj_low"
               title="WAG (WAR Above Grade) — same metric as 'WAG (high)' but inverted: lowest delta first, so debuts UNDERPERFORMING their FV grade most heavily surface at the top. Playing-time-weighted; requires ≥1 full-season equivalent of MLB playing time (thin-debut players sink to the bottom).">WAG (low)</button>
     </div>
     <!-- v19 — Boom/Bust filter strip retired. The chip noise on the
          graduate list duplicated the WAG sort dimension and added
          clutter; WAG (high/low) sort still surfaces over/underperformers. -->
-    <div id="grad-rows"></div>
+    <div id="debut-rows"></div>
   </div>
 
   <div id="farm-section" style="display:none;">
@@ -6894,12 +6894,12 @@ function wireThemeToggle() {
 // timeseries.json is the boot-critical payload (~24MB) carrying the
 // active-prospect list, spotlights, org summaries, and norms tables.
 // Three sidecar JSONs are fetched on demand:
-//   - graduates.json     (~14MB) when the user opens the Graduates tab
+//   - debuts.json     (~14MB) when the user opens the Graduates tab
 //   - inactive.json      (~4MB)  when the user opens the Inactive view
 //   - rosters_by_org.json (~2MB)  when the user opens any farm-detail page
 //
 // The boot file advertises sidecars via `_slices`. We default-fill the
-// arrays with [] so first-paint render code that walks DATA.graduates
+// arrays with [] so first-paint render code that walks DATA.debuts
 // etc. doesn't crash before a slice arrives.
 async function loadData() {
   // v19 — Two-step fetch. First a HEAD-or-tiny probe to grab the
@@ -6940,7 +6940,7 @@ async function loadData() {
     const d = await resp.json();
     // Back-compat: a monolithic timeseries.json may still carry these
     // arrays inline. The boot path tolerates either shape.
-    if (!Array.isArray(d.graduates))  d.graduates = [];
+    if (!Array.isArray(d.debuts))     d.debuts = [];
     if (!Array.isArray(d.inactive))   d.inactive = [];
     if (!d.rosters_by_org)            d.rosters_by_org = {};
     return d;
@@ -6963,7 +6963,7 @@ function loadSlice(name) {
                                          : (cur && Object.keys(cur).length > 0);
   if (isPopulated) return Promise.resolve();
   if (_sliceInFlight[name]) return _sliceInFlight[name];
-  // Slice URLs in _slices are bare filenames (e.g. "graduates.json"),
+  // Slice URLs in _slices are bare filenames (e.g. "debuts.json"),
   // emitted alongside timeseries.json. Browsers resolve them relative
   // to the *page* URL, not the data file — so we have to splice in the
   // data dir from DATA_URL ourselves. Without this prefix the fetch
@@ -7900,7 +7900,7 @@ const CHART_HIDDEN_KINDS = new Set([
 //   trades         → kind:'trade'
 //   career_stats   → kind:'promotion' | 'demotion'
 //   acquisition    → kind:'signing'   (if signing_date is on file)
-//   graduation_date→ kind:'graduation'(graduates only)
+//   debut_date→ kind:'graduation'(graduates only)
 //
 // Each event has: { date, kind, label } where `label` is the hover-text
 // content. Sorted ascending by date so renderers can iterate in order.
@@ -7973,11 +7973,11 @@ function transactionEvents(player) {
       label: `${acq.signing_date}: ${verb}${team}`,
     });
   }
-  if (player.graduation_date) {
+  if (player.debut_date) {
     out.push({
-      date: player.graduation_date,
+      date: player.debut_date,
       kind: "graduation",
-      label: `${player.graduation_date}: MLB debut`,
+      label: `${player.debut_date}: MLB debut`,
     });
   }
   out.sort((a, b) => a.date.localeCompare(b.date));
@@ -7995,7 +7995,7 @@ function transactionEvents(player) {
 // occur in practice. Trimming both ends gives roughly 1.7× more vertical
 // resolution for the meaningful 35-75 range.
 // The X-axis is per-prospect: starts at the player's first recorded FV
-// grade and ends at graduation_date (for graduates) or the last snapshot.
+// grade and ends at debut_date (for graduates) or the last snapshot.
 const FV_MIN = 35, FV_MAX = 75;
 
 // Ceiling-round any FV-style decimal value to an integer. User
@@ -8020,7 +8020,7 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   const W = 200, H = 56, PAD = 4, LABEL_H = 9, Y_LABEL_W = 9;
   // Chart area: y from PAD to H-LABEL_H-PAD. Bottom LABEL_H px reserved for year labels.
   const CHART_BOTTOM = H - LABEL_H - PAD;
-  // Per-prospect time domain: first recorded FV → graduation_date (if graduated)
+  // Per-prospect time domain: first recorded FV → debut_date (if graduated)
   // or last recorded FV (otherwise). Falls back to the points' own range if no
   // graduation date is supplied.
   const firstDate = points[0].snapshot_date;
@@ -8360,7 +8360,7 @@ function syncToURL() {
   if (state.formWindow  !== "1y")         p.set("formw", state.formWindow);
   if (state.farmTxKind  !== "all")        p.set("ftxk",  state.farmTxKind);
   if (state.farmTxDir   !== "all")        p.set("ftxd",  state.farmTxDir);
-  if (state.gradSort    !== "date")       p.set("gsort", state.gradSort);
+  if (state.debutSort    !== "date")       p.set("gsort", state.debutSort);
   if (state.ilSort      !== "days_asc")   p.set("ilsort", state.ilSort);
   if (state.tradedSort  && state.tradedSort   !== "date")    p.set("tsort",  state.tradedSort);
   if (state.spotlightSort && state.spotlightSort !== "rank") p.set("ssort",  state.spotlightSort);
@@ -8450,7 +8450,7 @@ function syncFromURL() {
   }
   if (p.has("ftxk")) state.farmTxKind = p.get("ftxk");
   if (p.has("ftxd")) state.farmTxDir  = p.get("ftxd");
-  if (p.has("gsort")) state.gradSort  = p.get("gsort");
+  if (p.has("gsort")) state.debutSort  = p.get("gsort");
   if (p.has("ilsort")) state.ilSort    = p.get("ilsort");
   if (p.has("tsort"))  state.tradedSort   = p.get("tsort");
   if (p.has("ssort"))  state.spotlightSort = p.get("ssort");
@@ -8578,8 +8578,8 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.filterLevel === state.levelFilter));
   document.querySelectorAll("[data-filter-pos]").forEach(b =>
     b.classList.toggle("active", b.dataset.filterPos === state.posFilter));
-  document.querySelectorAll("[data-grad-sort]").forEach(b =>
-    b.classList.toggle("active", b.dataset.gradSort === state.gradSort));
+  document.querySelectorAll("[data-debut-sort]").forEach(b =>
+    b.classList.toggle("active", b.dataset.debutSort === state.debutSort));
   document.querySelectorAll("[data-il-sort]").forEach(b =>
     b.classList.toggle("active", b.dataset.ilSort === state.ilSort));
   document.querySelectorAll("[data-farm-sort]").forEach(b =>
@@ -8630,7 +8630,7 @@ function restoreUIFromState() {
 const SORT_HEADER_MAP = [
   { datasetKey: "sortKey",       stateField: "sort",          rerender: () => { resetListPages(); render(); } },
   { datasetKey: "farmSort",      stateField: "farmSort",      rerender: () => renderFarmSystems() },
-  { datasetKey: "gradSort",      stateField: "gradSort",      rerender: () => renderGraduates() },
+  { datasetKey: "debutSort",      stateField: "debutSort",      rerender: () => renderDebuts() },
   { datasetKey: "ilSort",        stateField: "ilSort",        rerender: () => renderInjured() },
   { datasetKey: "rosterSort",    stateField: "rosterSort",    rerender: () => { if (state.view && state.view.type === "farm") renderFarmDetail(state.view.org); } },
   { datasetKey: "spotlightSort", stateField: "spotlightSort", rerender: () => renderSpotlights() },
@@ -9029,7 +9029,7 @@ const state = {
   // Default sort is WAG (vs_fv_proj) — the headline metric for
   // graduates. Sort by graduation date is still one click away via
   // the "Date" chip on the graduates page.
-  gradSort: "vs_fv_proj",
+  debutSort: "vs_fv_proj",
   // Injured-list sort. "days_asc" (default) sorts by elapsed IL days
   // ascending so the players closest to returning surface first.
   // "days" sorts descending (longest-out first); "fv" puts high-FV
@@ -9169,7 +9169,7 @@ let DATA = null;
 function getAllOrgs() {
   const orgs = new Set();
   for (const p of DATA.players) if (p.org) orgs.add(p.org);
-  for (const p of DATA.graduates) if (p.org) orgs.add(p.org);
+  for (const p of DATA.debuts) if (p.org) orgs.add(p.org);
   for (const p of (DATA.inactive || [])) if (p.org) orgs.add(p.org);
   return [...orgs].sort();
 }
@@ -9407,7 +9407,7 @@ function getFilteredActives() {
 }
 
 function getFilteredGrads() {
-  let pool = DATA.graduates.slice();
+  let pool = DATA.debuts.slice();
   if (state.search) {
     const q = state.search.toLowerCase();
     pool = pool.filter(p => p.player_name.toLowerCase().includes(q));
@@ -9415,7 +9415,7 @@ function getFilteredGrads() {
   if (state.orgFilter !== "all") {
     pool = pool.filter(p => p.org === state.orgFilter);
   }
-  // Already sorted by graduation_date desc from the back-end; preserve that.
+  // Already sorted by debut_date desc from the back-end; preserve that.
   return pool;
 }
 
@@ -9437,7 +9437,7 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
   const events = [];
   const allPlayers = [
     ...(DATA.players || []),
-    ...(DATA.graduates || []),
+    ...(DATA.debuts || []),
   ];
   for (const p of allPlayers) {
     // Trades.
@@ -9469,8 +9469,8 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
       }
     }
     // Graduation events.
-    if (p.graduation_date) {
-      const ts = new Date(p.graduation_date + "T00:00:00").getTime();
+    if (p.debut_date) {
+      const ts = new Date(p.debut_date + "T00:00:00").getTime();
       if (!isNaN(ts) && ts >= cutoff) {
         events.push({ ts, kind: "graduated", p, label: "debuted in MLB" });
       }
@@ -9677,7 +9677,7 @@ function renderActiveContextRail() {
   const _now = Date.now();
   const _ilWindow = 21 * 86400000;
   const ilReturnees = [];
-  for (const p of [...(players || []), ...(DATA.graduates || [])]) {
+  for (const p of [...(players || []), ...(DATA.debuts || [])]) {
     // Skip players currently still on IL — we want RETURNED, not on.
     if (p.il_status && p.il_status.is_on_il) continue;
     let endDate = null;
@@ -9768,16 +9768,16 @@ function renderActiveContextRail() {
   </div>`;
 
   // -------- Recent graduations --------
-  const grads = (DATA.graduates || [])
-    .filter(g => g.graduation_date)
+  const grads = (DATA.debuts || [])
+    .filter(g => g.debut_date)
     .slice()
-    .sort((a, b) => (b.graduation_date || "").localeCompare(a.graduation_date || ""))
+    .sort((a, b) => (b.debut_date || "").localeCompare(a.debut_date || ""))
     .slice(0, 3);
   const gradRows = grads.map(g => {
     const fv = g.fv_close != null ? fvCeil(g.fv_close) : null;
     return `<div class="ctx-row" data-key="${escapeHtml(g.player_key)}">
       <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(g.player_name)}</span>
-      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;">${g.graduation_date}</span>
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;">${g.debut_date}</span>
       ${fv != null ? `<span class="fv-badge ${fvClass(String(fv))} size-sm">${fv}</span>` : ""}
     </div>`;
   }).join("");
@@ -11366,7 +11366,7 @@ function renderInjured() {
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
-        <div><span class="grad-pill" style="background:${_pal.bg};color:${_pal.fg};border:1px solid ${_pal.bd};">${escapeHtml(il.type || "?")} IL</span></div>
+        <div><span class="debut-pill" style="background:${_pal.bg};color:${_pal.fg};border:1px solid ${_pal.bd};">${escapeHtml(il.type || "?")} IL</span></div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12px;color:var(--text-secondary);">${escapeHtml(since || "—")}</div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;color:${days > 60 ? 'var(--down)' : days > 14 ? 'var(--neon-amber)' : 'var(--text-secondary)'};font-weight:600;" title="${days > 60 ? 'Long-term IL (60+ days)' : days > 14 ? '15-60 day stint' : 'Short stint (≤14 days)'}">${days}d</div>
         <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
@@ -11458,7 +11458,7 @@ function renderRecentlyTraded() {
     } else {
       contextLine = `<span style="color:var(--text-tertiary);">${escapeHtml(acq.description || "—")}</span>`;
     }
-    const methodPill = `<span class="grad-pill" style="background:var(--bg-tertiary);color:${meta.color};border:1px solid var(--border);">${escapeHtml(meta.label)}</span>`;
+    const methodPill = `<span class="debut-pill" style="background:var(--bg-tertiary);color:${meta.color};border:1px solid var(--border);">${escapeHtml(meta.label)}</span>`;
     return `
       <div class="player-row is-traded" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
         <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div></div>
@@ -11471,7 +11471,7 @@ function renderRecentlyTraded() {
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
         <div>
-          <span class="grad-pill" style="background:var(--bg-tertiary);color:${meta.color};border:1px solid var(--border);">${escapeHtml(acq.date)}</span>
+          <span class="debut-pill" style="background:var(--bg-tertiary);color:${meta.color};border:1px solid var(--border);">${escapeHtml(acq.date)}</span>
         </div>
         <div style="font-size:12px;display:flex;flex-direction:column;gap:3px;">
           ${methodPill}
@@ -11892,7 +11892,7 @@ function makeWagChart(g) {
 // Renders the Draft panel: per-class chip selector + sub-view (Rankings /
 // Order & Slots / Results & Bonuses / Leaderboard / Class Strength).
 // Reads from `DATA.draft` (loaded lazily from data/draft_timeseries.json).
-// Never touches DATA.prospects / DATA.graduates / DATA.farms — the schema
+// Never touches DATA.prospects / DATA.debuts / DATA.farms — the schema
 // firewall is on the Python side; this is just the rendering counterpart.
 // =============================================================================
 
@@ -13497,11 +13497,11 @@ async function renderOverseasDetail(key) {
   const headshotBig = _headshotImg(p.headshot_url, p.player_name,
     { fv: p.consensus_fv });
   const statusPill = p.status === "mlb_promoted"
-    ? `<span class="grad-pill" style="background:var(--bg-tertiary);color:var(--neon-green);">MLB-promoted${p.signed_team ? ` · ${escapeHtml(p.signed_team)}` : ""}</span>`
+    ? `<span class="debut-pill" style="background:var(--bg-tertiary);color:var(--neon-green);">MLB-promoted${p.signed_team ? ` · ${escapeHtml(p.signed_team)}` : ""}</span>`
     : p.status === "signed" || (p.status === "posted" && p.signed_team)
-      ? `<span class="grad-pill" style="background:var(--accent-il-soft);color:var(--neon-cyan);">Signed${p.signed_team ? ` · ${escapeHtml(p.signed_team)}` : ""}</span>`
+      ? `<span class="debut-pill" style="background:var(--accent-il-soft);color:var(--neon-cyan);">Signed${p.signed_team ? ` · ${escapeHtml(p.signed_team)}` : ""}</span>`
       : p.status === "posted"
-        ? `<span class="grad-pill" style="background:var(--accent-il-soft);color:var(--neon-orange);">POSTED${p.posting_days_remaining != null ? ` · ${p.posting_days_remaining}d remaining` : ""}</span>`
+        ? `<span class="debut-pill" style="background:var(--accent-il-soft);color:var(--neon-orange);">POSTED${p.posting_days_remaining != null ? ` · ${p.posting_days_remaining}d remaining` : ""}</span>`
         : "";
   const headerHtml = `
     <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
@@ -13764,10 +13764,10 @@ function _renderOverseasSigned(host, prospects) {
     return;
   }
 
-  // Lookup table from milb_key → graduate object. DATA.graduates is the
+  // Lookup table from milb_key → graduate object. DATA.debuts is the
   // canonical source for career WAR + boom-label metrics.
   const gradsByKey = {};
-  for (const g of (DATA.graduates || [])) {
+  for (const g of (DATA.debuts || [])) {
     if (g.player_key) gradsByKey[g.player_key] = g;
   }
   // Active players (not yet graduated) also carry career_war for the
@@ -14002,21 +14002,21 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
     </div>`;
 }
 
-function renderGraduates() {
-  renderWhatsNew("whats-new-graduates", kind => kind === "graduated");
+function renderDebuts() {
+  renderWhatsNew("whats-new-debuts", kind => kind === "graduated");
   const filtered = getFilteredGrads();
 
   // Build a render order based on the active sort. For date-sort we keep
   // the legacy group-by-date layout (each class together, recency
   // banner) so a "who just graduated" scan still works. For WAR / FV
   // sorts the rows go flat, since grouping by date wouldn't help.
-  const sortMode = state.gradSort || "date";
+  const sortMode = state.debutSort || "date";
 
   // Group by date so the most-recent class can be visually flagged
   const byDate = {};
-  for (const g of filtered) (byDate[g.graduation_date] = byDate[g.graduation_date] || []).push(g);
+  for (const g of filtered) (byDate[g.debut_date] = byDate[g.debut_date] || []).push(g);
   const sortedDates = Object.keys(byDate).sort().reverse();
-  const isRecentGradDate = dateStr => {
+  const isRecentDebutDate = dateStr => {
     if (!dateStr) return false;
     const d = new Date(`${dateStr}T00:00:00`);
     if (Number.isNaN(d.getTime())) return false;
@@ -14026,18 +14026,18 @@ function renderGraduates() {
     return diffDays >= 0 && diffDays <= 14;
   };
 
-  // Grid columns live on `.grad-header` / `.grad-row` in the CSS block.
+  // Grid columns live on `.debut-header` / `.debut-row` in the CSS block.
   // Graduation / FV / WAG headers are click-sortable; routes through
   // SORT_HEADER_MAP and stays in sync with the chip dropdown.
-  const header = `<div class="grad-header">
+  const header = `<div class="debut-header">
     <span style="text-align:center;">#</span>
     <span>Player · pos · org · age</span>
-    <span class="grad-graduation-cell sort-header" data-grad-sort="date" title="Sort by debut date (newest first)">Debut</span>
-    <span class="sort-header" data-grad-sort="fv_close" title="Sort by FV at debut (high to low)" style="text-align:center;">FV</span>
-    <span class="desktop-only sort-header" data-grad-sort="vs_fv_proj" title="Sort by WAG — WAR Above Grade · click to toggle high-to-low / low-to-high" style="text-align:center;">WAG by season</span>
+    <span class="debut-date-cell sort-header" data-debut-sort="date" title="Sort by debut date (newest first)">Debut</span>
+    <span class="sort-header" data-debut-sort="fv_close" title="Sort by FV at debut (high to low)" style="text-align:center;">FV</span>
+    <span class="desktop-only sort-header" data-debut-sort="vs_fv_proj" title="Sort by WAG — WAR Above Grade · click to toggle high-to-low / low-to-high" style="text-align:center;">WAG by season</span>
     <span class="desktop-only" style="text-align:center;">Candle</span>
-    <span class="grad-level-cell">Level</span>
-    <span class="sort-header" data-grad-sort="war" title="Sort by current-season fWAR (high to low)">MLB stats</span>
+    <span class="debut-level-cell">Level</span>
+    <span class="sort-header" data-debut-sort="war" title="Sort by current-season fWAR (high to low)">MLB stats</span>
   </div>`;
 
   // Build the iteration order based on the active sort.
@@ -14067,7 +14067,7 @@ function renderGraduates() {
   } else if (sortMode === "fv_close") {
     orderedGrads = filtered.slice().sort((a, b) =>
       ((b.fv_close ?? -1) - (a.fv_close ?? -1))
-      || (b.graduation_date || "").localeCompare(a.graduation_date || "")
+      || (b.debut_date || "").localeCompare(a.debut_date || "")
     );
   } else if (sortMode === "vs_fv_proj") {
     orderedGrads = filtered.slice().sort(sortByWarField(g => gradVsFvProjection(g)));
@@ -14085,8 +14085,8 @@ function renderGraduates() {
   }
 
   const renderRow = (g, rank, pillClassOverride, sublabel) => {
-    const isRecent = isRecentGradDate(g.graduation_date);
-    const pillClass = pillClassOverride || (isRecent ? "grad-pill most-recent" : "grad-pill");
+    const isRecent = isRecentDebutDate(g.debut_date);
+    const pillClass = pillClassOverride || (isRecent ? "debut-pill most-recent" : "debut-pill");
     // WAG-by-season sparkline replaces the older FV-trajectory chart on
     // the graduate LIST page — the WAG signal is more useful for
     // ranking graduates by realized output vs their grade. The full
@@ -14153,7 +14153,7 @@ function renderGraduates() {
     // still renders on each grad's detail page (renderPlayerDetail
     // scouting section reads the same DATA.scout_reports sidecar).
     return `
-      <div class="grad-row" data-key="${escapeHtml(g.player_key)}" style="${orgStripe(g.org)}">
+      <div class="debut-row" data-key="${escapeHtml(g.player_key)}" style="${orgStripe(g.org)}">
         <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(g)}"><span class="rank-num-inner">#${rank}</span></div>${rankTrendHTML(g)}</div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           <span class="headshot-stack">${headshotHTML(g, 50)}${optionsDotsHTML(g)}</span>
@@ -14165,14 +14165,14 @@ function renderGraduates() {
           <button class="watch-btn${watchlistHas(g.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(g.player_key)}" type="button" title="${watchlistHas(g.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(g.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(g.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(g.player_key)}" type="button" title="${compareHas(g.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(g.player_key) ? "✓" : "+"}</button>
         </div>
-        <div class="grad-graduation-cell">
-          <span class="${pillClass}" title="${escapeHtml(`MLB debut on ${g.graduation_date}`)}">${g.graduation_date}</span>
+        <div class="debut-date-cell">
+          <span class="${pillClass}" title="${escapeHtml(`MLB debut on ${g.debut_date}`)}">${g.debut_date}</span>
           ${sublabel || (isRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : "")}
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(g)}${fvBadgeSingleClass(g)}" title="${escapeHtml(fvBadgeTooltip(g))}">${fvLabel}${fvBadgeWideMarkHTML(g)}${fvBadgeSingleMarkHTML(g)}</span></div>
         <div class="desktop-only" style="padding-right:6px;">${chartHtml}</div>
         <div class="desktop-only">${makeCandle(g)}</div>
-        <div class="grad-level-cell milb-cell"><span class="level-pill level-mlb">MLB</span></div>
+        <div class="debut-level-cell milb-cell"><span class="level-pill level-mlb">MLB</span></div>
         ${makeGradMilbCell(g)}
       </div>`;
   };
@@ -14199,9 +14199,9 @@ function renderGraduates() {
   // date band still calls out the specific class.
   let banner = "";
   if (sortMode === "date") {
-    const recentCount = filtered.filter(g => isRecentGradDate(g.graduation_date)).length;
+    const recentCount = filtered.filter(g => isRecentDebutDate(g.debut_date)).length;
     if (recentCount > 0) {
-      banner = `<div class="grad-recent-banner" role="status">
+      banner = `<div class="debut-recent-banner" role="status">
         <span class="grb-dot"></span>
         <span class="grb-text"><strong>${recentCount}</strong> new debut${recentCount === 1 ? "" : "s"} in the past 14 days</span>
       </div>`;
@@ -14213,14 +14213,14 @@ function renderGraduates() {
   // weak-class context the date-grouped scroll can't reveal. Sourced
   // from the UNFILTERED graduates pool so the chart isn't deceptive
   // when the user has narrowed the table.
-  const cohortChart = makeGradCohortChart(DATA.graduates || [], { years: 6 });
+  const cohortChart = makeDebutCohortChart(DATA.debuts || [], { years: 6 });
 
   // Phase B4 — Class Strength Index. For each graduation year, compute
   // median FV-at-graduation across all that year's grads; rank against
   // the all-time median. Surfaces "good draft classes" vs "weak" ones.
   // Strip appears ABOVE the cohort chart.
   const classStrengthStrip = (() => {
-    const all = DATA.graduates || [];
+    const all = DATA.debuts || [];
     if (all.length < 30) return "";  // not enough cross-year data
     // Bucket all grads by year + collect FV-at-grad
     const byYear = {};
@@ -14230,8 +14230,8 @@ function renderGraduates() {
       // Fall back through both for resilience.
       const rawFv = g.fv_close != null ? g.fv_close : g.fv_label;
       const fv = Math.round(parseFloat(rawFv));
-      if (!g.graduation_date || isNaN(fv)) continue;
-      const y = parseInt(g.graduation_date.slice(0, 4), 10);
+      if (!g.debut_date || isNaN(fv)) continue;
+      const y = parseInt(g.debut_date.slice(0, 4), 10);
       if (isNaN(y)) continue;
       (byYear[y] = byYear[y] || []).push(fv);
       allFvs.push(fv);
@@ -14281,7 +14281,7 @@ function renderGraduates() {
   // v17 — Graduate classes bar chart + class strength strip removed
   // (both were redundant with the per-row data and the existing date-
   // grouped layout). The list now leads directly with the date-banner.
-  document.getElementById("grad-rows").innerHTML = filtered.length
+  document.getElementById("debut-rows").innerHTML = filtered.length
     ? banner + body
     : `<div class="state-message">No debuts match these filters.</div>`;
   syncSortHeaderActive();
@@ -16004,7 +16004,7 @@ let _NAME_INDEX = null;
 function _buildNameIndex() {
   const map = new Map();          // lower-name → player_key (longest-name-first wins)
   const all = [];
-  for (const arr of ["players", "graduates", "inactive"]) {
+  for (const arr of ["players", "debuts", "inactive"]) {
     for (const p of (DATA[arr] || [])) {
       if (p.player_name && p.player_key) all.push(p);
     }
@@ -16814,7 +16814,7 @@ function updateMeta() {
   meta.innerHTML = `Last refresh: <code>${refreshedAt}</code>` +
     `<span class="dot">·</span>${totalProspects != null ? totalProspects : "…"} prospects` +
     `<span class="dot">·</span>${DATA.active_count} active` +
-    `<span class="dot">·</span>${DATA.graduate_count} debuts`;
+    `<span class="dot">·</span>${DATA.debut_count} debuts`;
   // v19 — Section flavor-text element removed; the per-section count
   // strip was unnecessary chrome cluttering the tabs row. The active
   // filters chip strip (below) now carries the per-page status info.
@@ -18093,10 +18093,10 @@ function makeAgeFvScatter(prospects) {
 // the visual reads as "more 60+ orange = better class."
 //
 // Args:
-//   grads — full array of graduates from DATA.graduates
+//   grads — full array of graduates from DATA.debuts
 //   opts.years — number of recent years to include (default 6)
 // Returns: HTML string with SVG, or "" if too few grads to chart.
-function makeGradCohortChart(grads, opts = {}) {
+function makeDebutCohortChart(grads, opts = {}) {
   const yearsN = opts.years || 6;
   const buckets = {}; // year → tier → count
   const TIERS = [60, 55, 50, 45, 40];  // 60 is "60+"
@@ -18110,8 +18110,8 @@ function makeGradCohortChart(grads, opts = {}) {
     return 40;
   };
   for (const g of (grads || [])) {
-    if (!g.graduation_date) continue;
-    const y = parseInt(g.graduation_date.slice(0, 4), 10);
+    if (!g.debut_date) continue;
+    const y = parseInt(g.debut_date.slice(0, 4), 10);
     if (isNaN(y)) continue;
     const tier = tierOf(g.fv_close ?? g.fv_label);
     buckets[y] = buckets[y] || Object.fromEntries(TIERS.map(t => [t, 0]));
@@ -18892,16 +18892,16 @@ function renderFarmSystems() {
     }
   }
   const alumniByOrg = {};
-  for (const g of (DATA.graduates || [])) {
-    if (!g.org || !g.graduation_date) continue;
-    const t = new Date(g.graduation_date + "T00:00:00").getTime();
+  for (const g of (DATA.debuts || [])) {
+    if (!g.org || !g.debut_date) continue;
+    const t = new Date(g.debut_date + "T00:00:00").getTime();
     if (isNaN(t) || t < cutoffMs12mo) continue;
     const fv = g.fv_close ?? g.fv_close_raw;
     if (fv == null || fv < 55) continue;
     (alumniByOrg[g.org] ||= []).push({
       name: g.player_name,
       fv: fvCeil(fv),
-      date: g.graduation_date,
+      date: g.debut_date,
     });
   }
   // Aggregate surplus value per org — sum each active prospect's FV-implied
@@ -19157,7 +19157,7 @@ function renderFarmSystems() {
 // Find a player (active, graduate, or inactive) by key.
 function findPlayer(key) {
   return (DATA.players || []).find(p => p.player_key === key)
-      || (DATA.graduates || []).find(g => g.player_key === key)
+      || (DATA.debuts || []).find(g => g.player_key === key)
       || (DATA.inactive || []).find(p => p.player_key === key)
       || null;
 }
@@ -20809,9 +20809,9 @@ function renderPlayerDetail(key) {
     if (!isNaN(ms) && ms > 0) ilDays = Math.floor(ms / 86400000);
   }
   const statusPill = p.status === "graduated"
-    ? `<span class="grad-pill" style="background:var(--bg-tertiary);color:var(--grad);">Debuted ${p.graduation_date || ""}</span>`
+    ? `<span class="debut-pill" style="background:var(--bg-tertiary);color:var(--grad);">Debuted ${p.debut_date || ""}</span>`
     : ilNow
-      ? `<span class="grad-pill" style="background:var(--accent-il-soft);color:var(--accent-il);border-color:var(--accent-il);">${escapeHtml(ilNow.type || "?")} IL${ilDays != null ? ` · ${ilDays}d` : ""}</span>`
+      ? `<span class="debut-pill" style="background:var(--accent-il-soft);color:var(--accent-il);border-color:var(--accent-il);">${escapeHtml(ilNow.type || "?")} IL${ilDays != null ? ` · ${ilDays}d` : ""}</span>`
       : "";
 
   // Post-Tommy John chip. The health_profile.tj_surgery_date is set
@@ -20821,7 +20821,7 @@ function renderPlayerDetail(key) {
   // post-surgery development arc.
   const hp = p.health_profile || {};
   const tjPill = hp.is_post_tj
-    ? `<span class="grad-pill" style="background:var(--accent-tj-soft);color:var(--accent-tj);border:1px solid var(--accent-tj-border);">Post-TJ${hp.tj_surgery_date ? ` · ${escapeHtml(hp.tj_surgery_date)}` : ""}</span>`
+    ? `<span class="debut-pill" style="background:var(--accent-tj-soft);color:var(--accent-tj);border:1px solid var(--accent-tj-border);">Post-TJ${hp.tj_surgery_date ? ` · ${escapeHtml(hp.tj_surgery_date)}` : ""}</span>`
     : "";
 
   const avl = p.age_vs_level || {};
@@ -20838,10 +20838,10 @@ function renderPlayerDetail(key) {
   // first-class signal on graduate detail pages (alongside the WAG
   // tile in the stat-tile row).
   let wagRankPill = "";
-  if (p.status === "graduated" && typeof DATA !== "undefined" && Array.isArray(DATA.graduates)) {
+  if (p.status === "graduated" && typeof DATA !== "undefined" && Array.isArray(DATA.debuts)) {
     const myWag = gradVsFvProjection(p);
     if (myWag != null) {
-      const pool = DATA.graduates
+      const pool = DATA.debuts
         .map(g => ({ key: g.player_key, wag: gradVsFvProjection(g) }))
         .filter(x => x.wag != null);
       pool.sort((a, b) => b.wag - a.wag);
@@ -21254,7 +21254,7 @@ function renderPlayerDetail(key) {
   })();
 
   const chartSection = (p.points && p.points.length >= 2)
-    ? `<div class="detail-title">FV history</div>${makeBigLineChart(p.points, p.fv_open, p.fv_close, p.graduation_date, p.trades, p.career_stats, p)}
+    ? `<div class="detail-title">FV history</div>${makeBigLineChart(p.points, p.fv_open, p.fv_close, p.debut_date, p.trades, p.career_stats, p)}
        ${transactionLegend()}`
     : `<div style="color:var(--text-tertiary);font-size:12px;">Not enough FV updates yet for a chart.</div>`;
 
@@ -23600,7 +23600,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   };
   rosterPlayers.sort(ROSTER_SORTERS[state.rosterSort] || ROSTER_SORTERS.fv);
 
-  const graduates = (DATA.graduates || []).filter(g => g.org === orgCode);
+  const graduates = (DATA.debuts || []).filter(g => g.org === orgCode);
 
   // Build a unified list of every event involving this org — trades,
   // waiver claims, releases, DFAs, contract purchases, Rule 5 moves,
@@ -24160,7 +24160,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // Sorted by graduation date desc so the most-recent dev output
   // surfaces first. Click navigates to the graduate's detail page.
   const sortedGrads = graduates.slice().sort(
-    (a, b) => (b.graduation_date || "").localeCompare(a.graduation_date || "")
+    (a, b) => (b.debut_date || "").localeCompare(a.debut_date || "")
   );
   const gradsCard = `<div class="farm-side-card">
     <div class="side-title">Recent debuts <span class="side-count">${graduates.length}</span></div>
@@ -24184,7 +24184,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(g.player_key)}');">
         ${fvBadge}
         <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(g.player_name)}${aavLine}</span>
-        <span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:10px;white-space:nowrap;">${g.graduation_date || "—"}</span>
+        <span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:10px;white-space:nowrap;">${g.debut_date || "—"}</span>
       </div>`;
     }).join("") || '<span style="color:var(--text-tertiary);font-size:11.5px;">None</span>'}
   </div>`;
@@ -24994,7 +24994,7 @@ function render() {
     injured:      "injured-section",
     draft:        "draft-section",
     overseas:     "overseas-section",
-    graduates:    "graduates-section",
+    graduates:    "debuts-section",
     farm:         "farm-section",
     leaderboards: "leaderboards-section",
     charts:       "charts-section",
@@ -25044,7 +25044,7 @@ function render() {
   // render functions also write to) — NEVER the section root, because
   // overwriting the section root destroys the filter-bar / rows-div
   // template that the next render() call expects to find.
-  const needsGrad = active === "graduates"
+  const needsGrad = active === "debuts"
       || active === "injured"       // injured rolls graduates + inactive into the pool
       || (active === "player" && !(DATA.players || []).some(p => p.player_key === state.view.key));
   const needsRosters = active === "farmDetail";
@@ -25053,7 +25053,7 @@ function render() {
   // Inner body element per section — must match where the per-section
   // render function writes its main content.
   const SECTION_BODY = {
-    graduates:      "grad-rows",
+    graduates:      "debut-rows",
     injured:        "injured-rows",
     farmDetail:     "farm-detail-body",
     player:         "player-detail-body",
@@ -25067,9 +25067,9 @@ function render() {
     if (target) target.innerHTML = `<div class="state-message">${msg}</div>`;
   };
 
-  if (needsGrad && DATA._slices && DATA._slices.graduates && !DATA.graduates.length) {
+  if (needsGrad && DATA._slices && DATA._slices.debuts && !DATA.debuts.length) {
     showLoading("Loading graduates…");
-    loadSlice("graduates").then(render);
+    loadSlice("debuts").then(render);
     return;
   }
   if (needsInactive && DATA._slices && DATA._slices.inactive
@@ -25105,7 +25105,7 @@ function render() {
   else if (active === "injured")    renderInjured();
   else if (active === "draft")      renderDraft();
   else if (active === "overseas")   renderOverseas();
-  else if (active === "graduates")  renderGraduates();
+  else if (active === "debuts")  renderDebuts();
   else if (active === "farm")       renderFarmSystems();
   else if (active === "leaderboards") renderLeaderboards();
   else if (active === "glossary")   renderGlossary();
@@ -25179,14 +25179,14 @@ function lazyLineChartHTML(p) {
   if (!p || !p.points || p.points.length === 0) return "";
   if (!_lazyChartObserver) {
     return makeLineChart(p.points, p.fv_open, p.fv_close,
-                         p.graduation_date, p.trades, p);
+                         p.debut_date, p.trades, p);
   }
   const id = "lc_" + (++_lazyChartCounter);
   _lazyChartArgs.set(id, {
     points: p.points,
     fvOpen: p.fv_open,
     fvClose: p.fv_close,
-    gradDate: p.graduation_date,
+    gradDate: p.debut_date,
     trades: p.trades,
     player: p,
   });
@@ -25205,7 +25205,7 @@ function observeLazyCharts() {
 // this in one DOM walk after each render rather than threading the
 // attrs through every renderXxx() function.
 function decorateA11yRows() {
-  document.querySelectorAll(".player-row[data-key], .spotlight-row[data-key], .grad-row[data-key], .farm-row[data-org], .pos-depth-card[data-key]").forEach(row => {
+  document.querySelectorAll(".player-row[data-key], .spotlight-row[data-key], .debut-row[data-key], .farm-row[data-org], .pos-depth-card[data-key]").forEach(row => {
     if (!row.hasAttribute("tabindex")) row.setAttribute("tabindex", "0");
     if (!row.hasAttribute("role"))     row.setAttribute("role", "button");
   });
@@ -26726,7 +26726,7 @@ function attachHandlers() {
   // prospect sort dropdown — the graduates list has its own questions
   // (who graduated most recently / who's been the best MLB performer /
   // who graduated at the highest FV) and benefits from chip toggles.
-  attachChipGroup("grad-sort", "gradSort", () => renderGraduates());
+  attachChipGroup("debut-sort", "debutSort", () => renderDebuts());
   // IL sort chips.
   attachChipGroup("il-sort", "ilSort", () => renderInjured());
 
@@ -27189,7 +27189,7 @@ function populateOrgFilter() {
   // once the slice arrives.
   if (DATA && DATA._slices) {
     setTimeout(() => {
-      loadSlice("graduates");
+      loadSlice("debuts");
       loadSlice("rosters_by_org");
       loadSlice("inactive");
       loadSlice("scout_reports");

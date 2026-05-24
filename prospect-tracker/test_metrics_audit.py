@@ -212,7 +212,7 @@ class TestPhaseB4ClassStrength:
             # fv_close which is what's actually populated.
             try:
                 fv = int(round(float(grad.get("fv_close"))))
-                y = int(grad.get("graduation_date", "")[:4])
+                y = int(grad.get("debut_date", "")[:4])
             except (TypeError, ValueError):
                 continue
             by_year[y].append(fv)

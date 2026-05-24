@@ -79,7 +79,7 @@ SECTION_TABS = [
     "spotlights",
     "traded",
     "injured",
-    "graduates",
+    "debuts",
     "farm",
     "leaderboards",
     "glossary",
@@ -197,11 +197,11 @@ def test_graduates_page_shows_fg_writeup_pills(server):
         page.on("pageerror", lambda err: page_errors.append(err.message))
         page.goto(server, wait_until="load", timeout=15_000)
         page.wait_for_timeout(3000)
-        # Navigate to Graduates + wait for the slice + sidecar to settle.
-        page.click('.section-tab[data-section="graduates"]')
+        # Navigate to Debuts + wait for the slice + sidecar to settle.
+        page.click('.section-tab[data-section="debuts"]')
         page.wait_for_timeout(2500)
         n_pills = page.evaluate(
-            "document.querySelectorAll('.grad-writeup-pill').length"
+            "document.querySelectorAll('.debut-writeup-pill').length"
         )
         browser.close()
 

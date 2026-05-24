@@ -310,7 +310,7 @@ class TestSubThresholdMlbStaysActive:
         export_timeseries_json(ts, out, career_stats=career)
         from storage import load_export_unified as _leu; payload = _leu(out)
         names_active = {p["player_name"] for p in payload["players"]}
-        names_grad   = {p["player_name"] for p in payload["graduates"]}
+        names_grad   = {p["player_name"] for p in payload["debuts"]}
         names_inact  = {p["player_name"] for p in payload.get("inactives", [])}
         # The pre-fix behavior pushed this player into graduates because
         # the FV was stale AND any MLB row was present. Post-fix they
@@ -591,7 +591,7 @@ class TestGraduationDateDerivation:
             roster_status=roster_status,
         )
         from storage import load_export_unified as _leu; payload = _leu(out)
-        return next(g for g in payload["graduates"] if g["player_name"] == name)
+        return next(g for g in payload["debuts"] if g["player_name"] == name)
 
     def test_api_debut_overrides_stored_grad_date(self, tmp_path):
         """The classic clump-dissolving case: stored snapshot says
@@ -603,7 +603,7 @@ class TestGraduationDateDerivation:
             api_debut="2022-08-17",
             mlb_seasons=[2022, 2023],
         )
-        assert g["graduation_date"] == "2022-08-17"
+        assert g["debut_date"] == "2022-08-17"
 
     def test_rule5_protection_rolls_forward_to_first_real_season(self, tmp_path):
         """Rule 5 protection adds land on the Nov 18-20 deadline and the
@@ -618,7 +618,7 @@ class TestGraduationDateDerivation:
             mlb_seasons=[2020],         # actually played in 2020
         )
         # Should display 2020 mid-season, not 2019-07-01.
-        assert g["graduation_date"] == "2020-07-01"
+        assert g["debut_date"] == "2020-07-01"
 
     def test_late_season_debut_kept_when_career_agrees(self, tmp_path):
         """A regular-season-end debut (Oct 1-5 is the last week of the
@@ -632,7 +632,7 @@ class TestGraduationDateDerivation:
             mlb_seasons=[2024],
         )
         # career_stats confirms 2024 MLB activity → keep the API date.
-        assert g["graduation_date"] == "2024-10-05"
+        assert g["debut_date"] == "2024-10-05"
 
     def test_offseason_api_debut_with_no_career_collapses(self, tmp_path):
         """If the API says Nov 15 AND career_stats has NO record of MLB
@@ -646,7 +646,7 @@ class TestGraduationDateDerivation:
             mlb_seasons=[],
         )
         # No MLB games on file → don't trust the November date.
-        assert g["graduation_date"] == "2024-07-01"
+        assert g["debut_date"] == "2024-07-01"
 
     def test_falls_back_to_career_year_when_no_api_debut(self, tmp_path):
         """No api_debut available — use the player's first MLB season
@@ -662,7 +662,7 @@ class TestGraduationDateDerivation:
         # First MLB season is 2023; no api_debut to take precedence.
         # Stored grad_date starts with "2025-", not "2023-", so
         # fallback returns "2023-07-01".
-        assert g["graduation_date"] == "2023-07-01"
+        assert g["debut_date"] == "2023-07-01"
 
     def test_stored_date_kept_when_inside_debut_year(self, tmp_path):
         """When we don't have an api_debut but the stored snapshot date
@@ -675,7 +675,7 @@ class TestGraduationDateDerivation:
             api_debut=None,
             mlb_seasons=[2024],
         )
-        assert g["graduation_date"] == "2024-06-15"
+        assert g["debut_date"] == "2024-06-15"
 
     def test_no_clumps_for_diverse_api_debuts(self, tmp_path):
         """Sanity sweep: a handful of graduates with distinct API debut
@@ -701,7 +701,7 @@ class TestGraduationDateDerivation:
         out = tmp_path / "out.json"
         export_timeseries_json(ts, out, roster_status=roster_status)
         from storage import load_export_unified as _leu; payload = _leu(out)
-        by_name = {g["player_name"]: g for g in payload["graduates"]}
-        dates = sorted(by_name[n]["graduation_date"] for n, _, _ in cohort)
+        by_name = {g["player_name"]: g for g in payload["debuts"]}
+        dates = sorted(by_name[n]["debut_date"] for n, _, _ in cohort)
         # All four distinct — no clump on 2022-07-01.
         assert dates == ["2022-06-04", "2022-08-17", "2022-09-04", "2022-09-22"]

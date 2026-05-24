@@ -117,8 +117,8 @@ class TestAutoGraduation:
         from storage import load_export_unified as _leu; payload = _leu(out)
 
         assert payload["active_count"] == 0
-        assert payload["graduate_count"] == 1
-        assert payload["graduates"][0]["player_name"] == "MLB Guy"
+        assert payload["debut_count"] == 1
+        assert payload["debuts"][0]["player_name"] == "MLB Guy"
 
     def test_missing_player_does_not_crash(self, tmp_path, monkeypatch):
         """auto_graduate_player with an unknown key should silently do nothing."""

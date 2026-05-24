@@ -3782,8 +3782,8 @@ def _build_org_fv_history(
             stream.append((pt.snapshot_date, "snapshot", pt.consensus_fv_raw))
         for t in trades:
             stream.append((t["date"], "trade", t["from"], t["to"]))
-        if p.status == "graduated" and p.graduation_date:
-            stream.append((p.graduation_date, "graduation"))
+        if p.status == "graduated" and p.debut_date:
+            stream.append((p.debut_date, "graduation"))
         # Stable sort: ties resolved by index in `stream` (snapshots first
         # because they're appended before trades).
         stream.sort(key=lambda x: x[0])
@@ -4434,7 +4434,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         only briefly belonged to (< 90 days), surface the stable origin
         instead. Otto's chain becomes TOR → MIA rather than SFG → MIA.
         """
-        grad = _display_graduation_date(p) or p.graduation_date
+        grad = _display_graduation_date(p) or p.debut_date
         if not grad:
             return None
         events: list[tuple[str, str, str]] = []  # (date, from_org, to_org)
@@ -5228,16 +5228,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "position": p.position,
             "org": display_org,
             "status": p.status,
-            "graduation_date": _display_graduation_date(p) if p.status == "graduated" else p.graduation_date,
-            # v17 — Distinct top-level mlb_debut_date field separated from
-            # graduation_date. Earlier, the UI conflated the two because the
-            # graduates page rendered `g.graduation_date` directly without
-            # consulting the roster-status debut date. They're related but
-            # distinct: a player can graduate prospect status (cross the
-            # 130 AB / 50 IP / 45 active-roster-day threshold) on a date
-            # different from their MLB debut. Stamp both so the UI can show
-            # them separately.
-            "mlb_debut_date": (roster_status.get(p.player_key) or {}).get("mlb_debut_date"),
+            # v20 — Consolidated to a single `debut_date` field. Was a
+            # pair (graduation_date + mlb_debut_date) under the old
+            # threshold-based graduation model. With debut_date now
+            # sourced entirely from mlb_debut_date (per the v20
+            # simplification), the two fields carried the same value
+            # for every player, so the second one is gone. Frontend
+            # reads `debut_date` exclusively.
+            "debut_date": _display_graduation_date(p) if p.status == "graduated" else p.debut_date,
             "birth_date": bd,
             "age": age,
             # Position in the FV-sorted active list, plus position within
@@ -5534,7 +5532,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _api_debut = _rs_for_debut.get("mlb_debut_date")
         if _api_debut and p.status != "graduated":
             p.status = "graduated"
-            p.graduation_date = _api_debut
+            p.debut_date = _api_debut
         if p.status == "graduated":
             grads.append(p)
             continue
@@ -5746,8 +5744,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # Inactives: most recently seen first
     inactives.sort(key=lambda p: p.points[-1].snapshot_date if p.points else "", reverse=True)
 
-    # Sort graduates by graduation_date desc (most recent first)
-    grads.sort(key=lambda p: p.graduation_date or "", reverse=True)
+    # Sort debuts by debut_date desc (most recent first)
+    grads.sort(key=lambda p: p.debut_date or "", reverse=True)
 
     # ── Org farm summary ────────────────────────────────────────────────────
     # Build per-org aggregate stats from the active list only (not graduates).
@@ -5772,6 +5770,22 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # 1B, SS, 2B, 3B, UTIL, MI, IF, DH
         return "INF"
 
+    # ── FARM-GRADE INPUT POOL CONTRACT (v20) ────────────────────────────
+    # The org_map below is fed exclusively from `actives` — the list that
+    # excludes any player with `status == "graduated"`, which under the
+    # v20 definitive-debut rule means any player whose roster_status has
+    # an mlb_debut_date. Every grade derived from `m["prospects"]` or
+    # its accumulators (top_end / depth / tools_quality / international_
+    # depth / readiness / health_burden / tool_dev / draft_ceiling_hits
+    # / active_surplus) therefore sees CURRENT-FARM prospects only.
+    #
+    # The grad_agg loop further down handles the inverse pool — it walks
+    # `grads` to feed talent_translation / financial_roi / boom/bust %.
+    # Together these two passes implement the user's rule:
+    #   "development / current farm system EXCLUDES debuted players;
+    #    talent_translation / MLB production / WAG / WAR-per-year ONLY
+    #    counts debuted players."
+    # ────────────────────────────────────────────────────────────────────
     org_map: dict[str, dict] = {}
     for idx, p in enumerate(actives):
         # Skip prospects with no resolved org — they fall through every source
@@ -7430,7 +7444,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     active_payload = [_serialize(p) for p in actives]
     inactive_payload = [_serialize(p) for p in inactives]
     graduate_payload = [_serialize(p) for p in grads]
-    graduate_payload.sort(key=lambda p: p.get("graduation_date") or "", reverse=True)
+    graduate_payload.sort(key=lambda p: p.get("debut_date") or "", reverse=True)
 
     # X+ tool composites need cohort mean/stdev. Use the union of all
     # serialized prospects so a single norm anchors actives / inactives /
@@ -7541,7 +7555,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "total_tracked": len(timeseries),
         "active_count": len(actives),
         "inactive_count": len(inactives),
-        "graduate_count": len(grads),
+        "debut_count": len(grads),
         "inactive_cutoff": cutoff.isoformat(),
         "prospect_savant_count": savant_matched,
         "players":    active_payload,
@@ -7555,7 +7569,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # spending-block utilization caption on the farm detail page.
         "mlb_draft_pools": draft_pools,
         "_slices": {
-            "graduates":      "graduates.json",
+            "debuts":         "debuts.json",
             "inactive":       "inactive.json",
             "rosters_by_org": "rosters_by_org.json",
             "scout_reports":  "scout_reports.json",
@@ -7568,7 +7582,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # you need to inspect interactively.
     _compact = {"separators": (",", ":")}
     out_path.write_text(json.dumps(boot, **_compact))
-    (out_dir / "graduates.json").write_text(json.dumps(graduate_payload, **_compact))
+    (out_dir / "debuts.json").write_text(json.dumps(graduate_payload, **_compact))
     (out_dir / "inactive.json").write_text(json.dumps(inactive_payload, **_compact))
     (out_dir / "rosters_by_org.json").write_text(json.dumps(rosters_by_org, **_compact))
     (out_dir / "scout_reports.json").write_text(json.dumps(scout_reports_sidecar, **_compact))
@@ -7577,7 +7591,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
 def load_export_unified(boot_path: Path) -> dict:
     """Inverse of `export_timeseries_json`'s split — reads the boot JSON
-    and inlines `graduates` / `inactive` / `rosters_by_org` /
+    and inlines `debuts` / `inactive` / `rosters_by_org` /
     `scout_reports` from the sidecar files (if they exist) so callers
     (mostly tests) can work with a single dict.
 
@@ -7587,7 +7601,7 @@ def load_export_unified(boot_path: Path) -> dict:
     boot_path = Path(boot_path)
     payload = json.loads(boot_path.read_text())
     out_dir = boot_path.parent
-    for slice_name in ("graduates", "inactive", "rosters_by_org", "scout_reports"):
+    for slice_name in ("debuts", "inactive", "rosters_by_org", "scout_reports"):
         if slice_name in payload:
             continue
         sidecar = out_dir / f"{slice_name}.json"
@@ -7595,7 +7609,7 @@ def load_export_unified(boot_path: Path) -> dict:
             payload[slice_name] = json.loads(sidecar.read_text())
         else:
             # Empty default keeps test assertions like `for g in
-            # payload["graduates"]` from raising KeyError when the slice
+            # payload["debuts"]` from raising KeyError when the slice
             # is genuinely empty for this run.
-            payload[slice_name] = [] if slice_name == "graduates" or slice_name == "inactive" else {}
+            payload[slice_name] = [] if slice_name == "debuts" or slice_name == "inactive" else {}
     return payload

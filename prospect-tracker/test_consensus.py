@@ -347,7 +347,7 @@ class TestStockMovement:
         ]
         p = build_timeseries(snaps)[0]
         assert p.status == "graduated"
-        assert p.graduation_date == "2026-05-14"
+        assert p.debut_date == "2026-05-14"
         assert stock_movement(p)["direction"] == "graduated"
 
 
@@ -383,13 +383,13 @@ class TestExportSplit:
         names = [p["player_name"] for p in payload["players"]]
         assert names == ["Active 0", "Active 1", "Active 2"]  # 70, 65, 60
 
-        # Graduates list separate, sorted by graduation_date desc
-        assert payload["graduate_count"] == 2
-        grad_names = [p["player_name"] for p in payload["graduates"]]
+        # Graduates list separate, sorted by debut_date desc
+        assert payload["debut_count"] == 2
+        grad_names = [p["player_name"] for p in payload["debuts"]]
         assert grad_names == ["Grad B", "Grad A"]  # 2026 before 2025
-        assert all(p["status"] == "graduated" for p in payload["graduates"])
-        grad_a = next(p for p in payload["graduates"] if p["player_name"] == "Grad A")
-        assert grad_a["graduation_date"] == "2025-07-01"
+        assert all(p["status"] == "graduated" for p in payload["debuts"])
+        grad_a = next(p for p in payload["debuts"] if p["player_name"] == "Grad A")
+        assert grad_a["debut_date"] == "2025-07-01"
 
     def test_graduate_org_uses_post_graduation_trade(self, tmp_path):
         import json
@@ -425,7 +425,7 @@ class TestExportSplit:
         )
 
         from storage import load_export_unified as _leu; payload = _leu(out)
-        fitts = payload["graduates"][0]
+        fitts = payload["debuts"][0]
         assert fitts["org"] == "STL"
 
     def test_active_no_org_uses_roster_org(self, tmp_path):

@@ -394,14 +394,14 @@ class TestRankPercentile:
 # org, the receiving org starts fresh at baseline.
 # ---------------------------------------------------------------------------
 
-def _mk_player(key, name, org, points, status="active", graduation_date=None):
+def _mk_player(key, name, org, points, status="active", debut_date=None):
     """Build a minimal PlayerTimeseries stand-in. `_build_org_fv_history`
     only reads .points, .player_key, .player_name, .org, .status, and
-    .graduation_date — SimpleNamespace covers all of that without forcing
+    .debut_date — SimpleNamespace covers all of that without forcing
     us to populate the candlestick/shrinkage fields."""
     return SimpleNamespace(
         player_key=key, player_name=name, org=org, status=status,
-        graduation_date=graduation_date,
+        debut_date=debut_date,
         points=[SimpleNamespace(snapshot_date=d, consensus_fv_raw=fv) for d, fv in points],
     )
 
@@ -415,7 +415,7 @@ class TestBuildOrgFvHistoryGraduations:
         player = _mk_player(
             "p1", "Prospect One", "ATL",
             [("2025-04-01", 60.0)],
-            status="graduated", graduation_date="2025-08-15",
+            status="graduated", debut_date="2025-08-15",
         )
         out = _build_org_fv_history([player], lambda trades: [], {})
         series = out["ATL"]["series"]
@@ -431,7 +431,7 @@ class TestBuildOrgFvHistoryGraduations:
         player = _mk_player(
             "p1", "Prospect One", "ATL",
             [("2025-01-15", 60.0)],
-            status="graduated", graduation_date="2025-09-01",
+            status="graduated", debut_date="2025-09-01",
         )
         out = _build_org_fv_history([player], lambda trades: [], {})
         series = out["ATL"]["series"]

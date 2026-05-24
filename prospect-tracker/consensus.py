@@ -316,8 +316,12 @@ class PlayerTimeseries:
     # trigger and the frontend "1" mark on the FV badge.
     fv_total_instances: int = 0
 
-    # Set when status == "graduated"; date of the first source's grad signal.
-    graduation_date: str | None = None
+    # Set when status == "graduated". Renamed graduation_date → debut_date
+    # (v20) — the field's semantics are now "MLB debut date", driven by
+    # roster_status.mlb_debut_date in storage._derived_graduation_date.
+    # The old name leaked the AB/IP-threshold-based graduation concept that
+    # we no longer use.
+    debut_date: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -883,12 +887,12 @@ def build_timeseries(
         # set, the status sticks — we don't "ungraduate" them if a stale
         # rank-only source still has them on a midseason list.
         status = "active"
-        graduation_date = None
+        debut_date = None
         for s in sorted(player_snaps, key=lambda x: x.snapshot_date):
             if s.status == "graduated":
                 status = "graduated"
-                graduation_date = s.snapshot_date
-                break  # earliest graduation date wins
+                debut_date = s.snapshot_date
+                break  # earliest debut signal wins
         if status != "graduated" and points and by_date:
             latest_day = sorted(by_date)[-1]
             statuses = [s.status for s in by_date[latest_day]]
@@ -900,7 +904,7 @@ def build_timeseries(
             player_key=player_key, player_name=name,
             position=pos, org=org,
             points=points, status=status,
-            graduation_date=graduation_date,
+            debut_date=debut_date,
             fv_high=0.0, fv_high_label="—", fv_high_date="",
             fv_low=0.0,  fv_low_label="—",  fv_low_date="",
             fv_open=0.0, fv_close=0.0,
@@ -963,10 +967,10 @@ def build_timeseries(
             merged.append(pt)
         merged.sort(key=lambda pt: pt.snapshot_date)
         keep.points = merged
-        # Pull through the more authoritative status / graduation_date.
+        # Pull through the more authoritative status / debut_date.
         if keep.status != "graduated" and drop.status == "graduated":
             keep.status = drop.status
-            keep.graduation_date = drop.graduation_date
+            keep.debut_date = drop.debut_date
         # Pool the per-snapshot FV-instance count so the "n instances"
         # badge reflects the full publication history.
         keep.fv_total_instances = (
