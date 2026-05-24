@@ -132,8 +132,24 @@ _INTRINSIC_DRIVER_POLARITY: dict[str, str] = {
     "pedigree comeback":             "good",
     "rank jump":                     "good",
     "rank up":                       "good",
+    "rank rising":                   "good",
     "repeating level + improving":   "good",
     "vs level mean":                 "good",   # signed-by-direction; positive default — overridden below for "-" prefix
+    # v19 — additional positive narratives surfaced in cycles 16-19.
+    "breakout":                      "good",
+    "elite":                         "good",
+    "plus tool":                     "good",
+    "plus-plus":                     "good",
+    "promotion":                     "good",
+    "promoted":                      "good",
+    "called up":                     "good",
+    "debut":                         "good",
+    "no-hitter":                     "good",
+    "perfect game":                  "good",
+    "comeback":                      "good",
+    "returns from il":               "good",
+    "off the il":                    "good",
+    "off il":                        "good",
     # — negative narratives —
     "major skills decline":          "bad",
     "underlying data weak":          "bad",
@@ -142,6 +158,23 @@ _INTRINSIC_DRIVER_POLARITY: dict[str, str] = {
     "skills broken":                 "bad",
     "high-fv decline":               "bad",
     "unsupported by x-metrics":      "bad",
+    # v19 — additional negative narratives.
+    "demotion":                      "bad",
+    "demoted":                       "bad",
+    "sent down":                     "bad",
+    "released":                      "bad",
+    "designated for assignment":     "bad",
+    "dfa":                           "bad",
+    "placed on il":                  "bad",
+    "on il":                         "bad",
+    "tommy john":                    "bad",
+    "ucl":                           "bad",
+    "fractured":                     "bad",
+    "torn":                          "bad",
+    "season-ending":                 "bad",
+    "rank drop":                     "bad",
+    "rank falling":                  "bad",
+    "dropped from":                  "bad",
     "sub-aaa prospect":              "neutral",  # informational, not a leaning
     "mlb seasons":                   "neutral",  # informational
     "mlb games":                     "neutral",  # informational

@@ -7,6 +7,7 @@ Schema is append-only for snapshots; stat lines are upserted monthly.
 from __future__ import annotations
 
 import json
+import logging
 import re
 import sqlite3
 from contextlib import contextmanager
@@ -14,6 +15,8 @@ from dataclasses import asdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Iterable
+
+log = logging.getLogger(__name__)
 
 from scrapers import (
     Snapshot, canonical_player_key,
@@ -4573,14 +4576,22 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         latest_date = latest_tx.get("date") or ""
         if not latest_date:
             return None
-        # Only override when the transaction is newer than EVERY snapshot
-        # we have on file. If the rankings already moved the player, we
-        # trust them (they may have caught a subsequent trade).
-        latest_snap_date = max(
-            (pt.snapshot_date for pt in p.points if pt.snapshot_date),
-            default="",
-        )
-        if latest_date <= latest_snap_date:
+        # v19 — Relaxed override window. The previous "only override
+        # when tx is newer than every snapshot" gate was too restrictive
+        # — Rule 5 Draft picks (RJ Petit → Rockies, Dec 2025) were
+        # losing the override when a stale-cached snapshot post-dated
+        # the transaction. The MLB transactions feed is the
+        # authoritative source of truth for cross-org moves; the
+        # ranking sources are weeks-to-months behind on team changes.
+        # Trust the latest cross-org tx within the past 365 days
+        # unconditionally; only skip when the tx is older than that
+        # (stale move that the rankings have had ample time to catch).
+        try:
+            tx_dt = date.fromisoformat(latest_date)
+            tx_age_days = (date.today() - tx_dt).days
+        except (ValueError, TypeError):
+            tx_age_days = 9999
+        if tx_age_days > 365:
             return None
         return latest_code
 
@@ -4695,6 +4706,29 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         tx_override = _latest_cross_org_transaction(p)
         if tx_override and tx_override in MLB_30_ORGS:
             return tx_override
+        # v19 — Trade-based override. _latest_cross_org_transaction only
+        # looks at the MLB transactions feed (waiver/rule-5/etc.) and
+        # excludes plain trades. Walk p's recorded trades; trust the
+        # most-recent trade within the past 365 days as the canonical
+        # current org. Stale trades >1yr old fall through to the
+        # snapshot/roster org.
+        trades = (trades_by_player or {}).get(p.player_key) or []
+        if trades:
+            sorted_trades = sorted(
+                (t for t in trades if t.get("trade_date") and t.get("to_org")),
+                key=lambda t: t["trade_date"],
+            )
+            if sorted_trades:
+                latest_trade = sorted_trades[-1]
+                trade_to = canonical_org(latest_trade.get("to_org"))
+                trade_date = latest_trade.get("trade_date") or ""
+                try:
+                    trade_age_days = (date.today() - date.fromisoformat(trade_date)).days
+                except (ValueError, TypeError):
+                    trade_age_days = 9999
+                if (trade_to and trade_to in MLB_30_ORGS
+                        and trade_age_days <= 365):
+                    return trade_to
         return canonical_org(roster_org_by_key.get(p.player_key) or p.org)
 
     def _display_org(p: PlayerTimeseries,
@@ -5432,10 +5466,36 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # for example) would tumble into inactive — defeating the IL badge.
     today = date.today()
     play_cutoff_year = today.year - 1  # must have played current OR last year
+    # v19 — Two-season stale-play threshold. Independent of FV staleness:
+    # any prospect who has played professionally before AND hasn't
+    # appeared in a stat line for 2+ calendar seasons is inactive
+    # REGARDLESS of whether a ranking source updated their FV recently.
+    # Single-source rankers continuing to grade an effectively-retired
+    # 2023 prospect won't keep them in the active pool.
+    TWO_SEASON_INACTIVE_YEARS = 2
+    # v19 — Stale-IL threshold. The MLB API sometimes leaves
+    # `is_on_il=true` after a quiet reinstatement; an IL placement older
+    # than ~18 months is presumed stale and forces inactive regardless
+    # of the IL flag. 540 days is conservative — even the longest
+    # legitimate chained 60-day stints rarely cross that.
+    STALE_IL_DAYS = 540
+    # v19 — Minimum-FV floor for the active pool. Wilmer Flores et al.
+    # were leaking through with FV 21 (likely upstream data noise from
+    # a single ranking source). Real prospects publish at FV ≥ 35; we
+    # set the floor at 30 to give a small buffer for grade-rounding /
+    # source-noise but still excise the obvious garbage. Players below
+    # this floor fall into `inactives` and stay out of farm rollups.
+    MIN_PROSPECT_FV = 30
 
     actives: list[PlayerTimeseries] = []
     inactives: list[PlayerTimeseries] = []
     grads: list[PlayerTimeseries] = []
+    # v19 — Audit counters surfaced via a one-line summary log after the
+    # cascade completes so each rebuild reports cleanup magnitude.
+    _audit_play2yr = 0
+    _audit_stale_il = 0
+    _audit_fv_play_stale = 0
+    _audit_low_fv = 0
 
     for p in timeseries:
         if p.status == "graduated":
@@ -5461,20 +5521,66 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             inactives.append(p)
             continue
 
-        # On IL → stay active no matter how stale the FV is. The IL badge
-        # on the player card explains the absence of recent updates and
-        # avoids dumping injured-but-real prospects into the inactive bin.
-        if (il_status.get(p.player_key) or {}).get("is_on_il"):
-            actives.append(p)
-            continue
-
-        fv_stale = latest_date < cutoff
+        # v19 — Compute play-staleness up front so the new gates can use
+        # it (was previously computed AFTER the IL bypass, which let
+        # 2-year-inactive IL holdouts slip through).
         career = (career_stats or {}).get(p.player_key, []) or []
         last_played_year = max(
             (int(row.get("season") or 0) for row in career),
             default=0,
         )
         play_stale = last_played_year < play_cutoff_year
+        play_2yr_stale = (
+            last_played_year > 0
+            and (today.year - last_played_year) >= TWO_SEASON_INACTIVE_YEARS
+        )
+
+        # v19 — Minimum-FV floor. Anything below MIN_PROSPECT_FV is
+        # almost certainly upstream data noise (single ranking source
+        # mis-parsing a non-prospect like Wilmer Flores at FV 21).
+        # The latest snapshot's consensus_fv_raw is the canonical
+        # current grade. Players below the floor are inactives.
+        try:
+            latest_fv = float(p.points[-1].consensus_fv_raw or 0)
+        except (AttributeError, TypeError, ValueError):
+            latest_fv = 0.0
+        if latest_fv > 0 and latest_fv < MIN_PROSPECT_FV:
+            inactives.append(p)
+            _audit_low_fv += 1
+            continue
+
+        # v19 — Stale-IL force-inactive. Don't trust `is_on_il=true` when
+        # the placement date is ancient (Scott Moss-style ghosts).
+        _il = il_status.get(p.player_key) or {}
+        il_force_inactive = False
+        if _il.get("is_on_il") and _il.get("since"):
+            try:
+                since_dt = datetime.fromisoformat(_il["since"]).date()
+                if (today - since_dt).days > STALE_IL_DAYS:
+                    il_force_inactive = True
+            except (ValueError, TypeError):
+                pass
+        if il_force_inactive:
+            inactives.append(p)
+            _audit_stale_il += 1
+            continue
+
+        # v19 — Two-season stale-play gate. Fires BEFORE the IL bypass:
+        # a player who hasn't appeared in a box score in 2+ years is
+        # effectively retired regardless of an "active IL" badge.
+        if play_2yr_stale:
+            inactives.append(p)
+            _audit_play2yr += 1
+            continue
+
+        # On IL → stay active no matter how stale the FV is. The IL badge
+        # on the player card explains the absence of recent updates and
+        # avoids dumping injured-but-real prospects into the inactive bin.
+        if _il.get("is_on_il"):
+            actives.append(p)
+            continue
+
+        fv_stale = latest_date < cutoff
 
         # Stale + not playing → inactive. We do NOT treat "any MLB time
         # this year" as automatic graduation anymore — that flipped
@@ -5492,8 +5598,63 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # p.status == "graduated" and was peeled off above.
         if fv_stale and play_stale:
             inactives.append(p)
+            _audit_fv_play_stale += 1
             continue
         actives.append(p)
+
+    # v19 — Active-pool cleanup audit summary. Surfaces in the rebuild
+    # log so the magnitude of each gate's contribution is visible at a
+    # glance. Pre-dedup counts (mlbam_id dedup runs below).
+    log.info(
+        "active-pool cleanup: %d low-FV (<%d), %d play-2yr-stale, %d stale-IL, %d FV+play stale "
+        "→ actives=%d, graduates=%d, inactives=%d (pre-dedup)",
+        _audit_low_fv, MIN_PROSPECT_FV, _audit_play2yr, _audit_stale_il, _audit_fv_play_stale,
+        len(actives), len(grads), len(inactives),
+    )
+
+    # v19 — mlbam_id dedup pass. The pipeline never deduped on
+    # canonical id, so prospects with spelling-variant player_keys
+    # (e.g. accent vs no-accent, "Jr." sometimes present) could occupy
+    # two slots in the active pool. Collapse any pair sharing an
+    # mlbam_id; tiebreaker = most-recent snapshot date wins. Players
+    # without an mlbam_id (rare — pre-debut IFAs, scout-only entries)
+    # bypass dedup via a unique sentinel key. mlbam_id lookup comes
+    # from the player_ids dict (caller-supplied) since PlayerTimeseries
+    # itself doesn't carry the id.
+    def _dedup_by_mlbam(bucket: list[PlayerTimeseries], label: str) -> list[PlayerTimeseries]:
+        by_mlbid: dict = {}
+        drop_count = 0
+        for cand in bucket:
+            mid = player_ids.get(cand.player_key) if player_ids else None
+            if not mid:
+                by_mlbid[("nokey", cand.player_key)] = cand
+                continue
+            existing = by_mlbid.get(mid)
+            if existing is None:
+                by_mlbid[mid] = cand
+                continue
+            ex_latest = max((s.snapshot_date for s in (existing.points or [])), default="")
+            new_latest = max((s.snapshot_date for s in (cand.points or [])), default="")
+            if new_latest > ex_latest:
+                keep, drop = cand, existing
+            else:
+                keep, drop = existing, cand
+            by_mlbid[mid] = keep
+            log.info(
+                "dedup[%s]: mlbam_id=%s — keep %s (latest %s), drop %s (latest %s)",
+                label, mid, keep.player_key,
+                max((s.snapshot_date for s in (keep.points or [])), default=""),
+                drop.player_key,
+                max((s.snapshot_date for s in (drop.points or [])), default=""),
+            )
+            drop_count += 1
+        if drop_count:
+            log.info("dedup[%s]: dropped %d duplicate entries", label, drop_count)
+        return list(by_mlbid.values())
+
+    actives = _dedup_by_mlbam(actives, "actives")
+    grads = _dedup_by_mlbam(grads, "graduates")
+    inactives = _dedup_by_mlbam(inactives, "inactives")
 
     # Sort actives by latest consensus_fv_raw (smoother than the snapped value
     # for tiebreaking), then by latest avg_rank ascending as secondary key.
