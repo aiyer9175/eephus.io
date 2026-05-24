@@ -9816,12 +9816,14 @@ function renderActiveContextRail() {
       ${fv != null ? `<span class="fv-badge ${fvClass(String(fv))} size-sm">${fv}</span>` : ""}
     </div>`;
   }).join("");
-  const gradsCard = grads.length
-    ? `<div class="ctx-card">
-        <div class="ctx-title">Recent debuts</div>
-        ${gradRows}
-      </div>`
-    : "";
+  // Card always renders so the rail stays anchored even when the debut
+  // pipeline has no recent rows (boot-up, dev, or end-of-offseason lulls).
+  const gradsCard = `<div class="ctx-card">
+    <div class="ctx-title">Recent debuts</div>
+    ${grads.length
+      ? gradRows
+      : `<div style="font-size:11px;color:var(--text-tertiary);padding:4px 2px;">No recent debuts on file.</div>`}
+  </div>`;
 
   rail.innerHTML = moversCard + toolCard + ilCard + spotPeekCard + distCard + gradsCard;
 
@@ -12253,6 +12255,19 @@ function _renderDraftCard(p) {
   const spColor = _stockPlusColor(sp);
   const fvColor = _draftFvBucketColor(p.consensus_fv);
   const pRound = p.projected_round ? `R${p.projected_round}` : "—";
+  // v24 — Projected-round chip color. R1 is gold (premium), R2 silver,
+  // R3-5 bronze, R6+ neutral; comp-balance rounds (1A/1B) ride R1's
+  // gold treatment. Undrafted (— / null) stays in the neutral track.
+  const _pRoundColor = (() => {
+    const r = String(p.projected_round || "").toUpperCase();
+    if (!r || r === "—") return { bg: "var(--bg-tertiary)", fg: "var(--text-secondary)" };
+    if (r === "1" || r === "1A" || r === "1B")
+      return { bg: "rgba(245, 200, 66, 0.18)",  fg: "#E8A020" };  // gold
+    if (r === "2") return { bg: "rgba(190, 195, 205, 0.20)", fg: "#A8ADB8" };  // silver
+    if (r === "3" || r === "4" || r === "5")
+      return { bg: "rgba(184, 115, 51, 0.18)", fg: "#C28250" };  // bronze
+    return { bg: "var(--bg-tertiary)", fg: "var(--text-tertiary)" };  // late rounds
+  })();
 
   // Tools: latest per source, merged into a single display tier.
   // Show the highest grade per canonical tool across sources.
@@ -12359,9 +12374,12 @@ function _renderDraftCard(p) {
             style="position:absolute;top:4px;right:4px;"
             title="Save this draft card as a PNG image">⤴</button>
     <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+      <span class="rank-num ${typeof rankNumRarityClass === 'function' ? rankNumRarityClass(p) : ''}"
+            style="width:24px;height:24px;flex-shrink:0;"
+            title="${escapeHtml(pickTitle)}">
+        <span class="rank-num-inner" style="font-size:10px;">#${pickDisplay}</span>
+      </span>
       ${_headshotImg(p.headshot_url, p.player_name, { fv: p.consensus_fv })}
-      <span style="font-size:14px;font-weight:700;color:var(--text-primary);flex-shrink:0;"
-            title="${escapeHtml(pickTitle)}">#${pickDisplay}</span>
       <span style="font-size:13px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
         ${escapeHtml(p.player_name)}${milbLink}
       </span>
@@ -12377,16 +12395,14 @@ function _renderDraftCard(p) {
          truncates with ellipsis when the card is at min-width. -->
     <div class="draft-card-meta" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-size:10.5px;color:var(--text-secondary);margin-top:4px;min-width:0;">
       <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-weight:700;"><b>${escapeHtml(p.position || "?")}</b></span>
-      <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);color:var(--text-tertiary);"
-            title="HS = High School, COL = College; h=hitter, p=pitcher">${escapeHtml(p.player_type || "?")}</span>
       <span style="display:inline-flex;align-items:center;gap:3px;min-width:0;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_collegeLogoImg(p.school_logo_url, p.school)}${schoolLine}</span>
       <span style="margin-left:auto;display:inline-flex;gap:4px;flex-shrink:0;">
         <span style="padding:1px 5px;border-radius:3px;background:${spColor}22;
               color:${spColor};font-weight:700;"
               title="Draft Stock+ — class-normalized index (100 = class median, +30 ≈ top decile)">
           DS+ ${sp != null ? sp : "—"}</span>
-        <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);
-              color:var(--text-secondary);"
+        <span style="padding:1px 5px;border-radius:3px;background:${_pRoundColor.bg};
+              color:${_pRoundColor.fg};font-weight:700;"
               title="Projected round derived from sequential rank">
           ${pRound}</span>
       </span>
@@ -14753,11 +14769,12 @@ const GLOSSARY = {
     long: "Critical for OF, SS, 3B, C; less weighted at 1B and 2B. 60+ is a legitimate plus arm, 70+ is elite (Andruw Jones, Yadier Molina caliber).",
     related: ["field_tool"],
   },
-  "graduation_rule": {
-    name: "Debut rule", aliases: ["Debut", "Debuted", "Graduation", "Graduated"], category: "scouting",
-    short: "A prospect is considered debuted as soon as MLB records their first MLB game (mlbDebutDate).",
-    long: "We previously tracked graduation via MLB's official rookie limits (130 AB / 50 IP / 45 active-roster days), but that produced unreliable dates whenever any input was stale. Current rule: if the MLB API has an mlbDebutDate on file, the player is treated as debuted and shown on the Debuted tab; otherwise they stay active. This trades a small population (any player MLB hasn't stamped yet) for a clean, reliable signal.",
-    related: ["wag"],
+  "debut_rule": {
+    name: "Debut rule", aliases: ["Debut", "Debuted", "Graduation", "Graduated", "debut_rule", "graduation_rule"], category: "scouting",
+    short: "A prospect becomes 'Debuted' the moment MLB records their first MLB game.",
+    long: "The MLB API's mlbDebutDate is the source of truth — when that field is set on a prospect's record, they move out of the active prospect pool and onto the Debuted tab. The site additionally promotes any prospect who has been outrighted (cleared waivers off the 40-man) since being on the 40-man already makes them a non-prospect. When neither signal is available, debut date falls back to the player's earliest MLB-season Opening Day from career stats. The rookie-eligibility thresholds (130 AB / 50 IP / 45 active-roster days) are NOT used — they produced unreliable dates whenever any upstream input was stale.",
+    formula: "debuted iff mlbDebutDate is set OR an outright transaction is on file",
+    related: ["debut_date"],
   },
   // ---- Hitter stats ----
   "wrc_plus": {
@@ -17213,16 +17230,28 @@ function makeFarmReportCard(org) {
   // Sub-grade cell: label · letter · rank · raw value.
   const subCell = (label, letterKey, rankKey, scoreFmt, scoreVal, extraTooltip) => {
     // v23 — default ungraded leaves to neutral 'C' instead of '—' so
-    // every leaf in the tree displays a letter. Sparse-data leaves
-    // (which previously rendered as '—' with no color) now read as
-    // 'C / no data' — present and color-coded as neutral.
+    // every leaf in the tree displays a letter.
+    // v24 — When the score is missing the 'C' is a placeholder, not a
+    // real grade. Dim the letter (opacity 0.55) and append a tooltip
+    // line so the reader knows that "C" means "no data on file" rather
+    // than a measured average. Real C grades stay full-opacity.
+    const hasLetter = !!g[letterKey];
     const letter = g[letterKey] || 'C';
     const rank = r[rankKey];
-    const titleAttr = extraTooltip ? ` title="${escapeHtml(extraTooltip)}"` : '';
+    const isMissing = !hasLetter;
+    const baseTip = extraTooltip || '';
+    const fullTip = isMissing
+      ? (baseTip ? `${baseTip} — no data on file (default neutral "C")`
+                 : `No data on file for this leaf — default neutral "C"`)
+      : baseTip;
+    const titleAttr = fullTip ? ` title="${escapeHtml(fullTip)}"` : '';
+    const letterStyle = isMissing
+      ? `color:${gradeColor(letter)};opacity:0.55;`
+      : `color:${gradeColor(letter)};`;
     return `
     <div class="gt-sub-cell" style="border-color:${gradeColor(letter)}33;"${titleAttr}>
       <span class="gt-sub-label">${escapeHtml(label)}</span>
-      <span class="gt-sub-letter" style="color:${gradeColor(letter)};">${escapeHtml(letter)}</span>
+      <span class="gt-sub-letter" style="${letterStyle}">${escapeHtml(letter)}</span>
       <span class="gt-sub-rank">#${rank ?? '—'}</span>
       <span class="gt-sub-meta">${typeof scoreFmt === 'function' ? scoreFmt(scoreVal) : scoreFmt}</span>
     </div>`;
@@ -23654,7 +23683,7 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
   for (const k of Object.keys(buckets)) buckets[k].sort(cmp);
   const totalPlayers = Object.values(buckets).reduce((n, arr) => n + arr.length, 0);
   if (!totalPlayers) {
-    return `<div style="color:var(--text-tertiary);font-size:12px;">No tracked prospects to chart.</div>`;
+    return `<div class="state-message" style="padding:24px 16px;text-align:center;color:var(--text-tertiary);font-size:13px;border:1px dashed var(--border-light);border-radius:6px;">No tracked prospects on this farm to chart.</div>`;
   }
   // Compact name format: "F. Lastname" when full first+last would exceed
   // 12 chars; otherwise full last name only.
@@ -24116,7 +24145,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const _rosterRankOffset = (_rosterCurPage - 1) * _rosterPageSize;
   const rosterPaginationStrip = renderPaginationStrip(_rosterCurPage, _rosterTotalItems, _rosterPageSize, "farmRoster");
   const rosterPaginationStripTop = renderPaginationStripCompact(_rosterCurPage, _rosterTotalItems, _rosterPageSize, "farmRoster");
-  const rosterRows = _rosterPaged.map((p, i) => {
+  let rosterRows = _rosterPaged.map((p, i) => {
     // Guard against players with empty / missing points arrays —
     // legacy data or edge-case entries can lack `points` entirely,
     // which used to throw on `p.points[length-1]` and abort the
@@ -24147,6 +24176,19 @@ function _renderFarmDetailBody(orgCode, org, root) {
         <div class="candle-cell">${makeCandle(p)}</div>
       </div>`;
   }).join("");
+
+  // Empty state — when filters narrow the roster to zero matches the
+  // header dims but the body would otherwise be a blank gap. Render an
+  // explanation + reset CTA so the user can recover without hunting for
+  // the right chip combo.
+  const _rosterFiltersActive = state.acqFilter !== "all" || state.levelFilter !== "all" || state.posFilter !== "all";
+  if (_rosterTotalItems === 0) {
+    rosterRows = `<div class="state-message" style="padding:32px 16px;text-align:center;color:var(--text-tertiary);font-size:13px;border:1px dashed var(--border-light);border-radius:6px;margin-top:6px;">
+      ${_rosterFiltersActive
+        ? `No prospects match the current filters.<br><button class="chip" style="margin-top:10px;" onclick="state.acqFilter='all';state.levelFilter='all';state.posFilter='all';render();" type="button">Reset filters</button>`
+        : `No tracked prospects on this farm.`}
+    </div>`;
+  }
 
   const rosterHeader = `<div class="col-header is-farm-roster">
     <span style="text-align:center;">#</span>
@@ -25036,7 +25078,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       </div>
     </div>
     ${rosterPaginationStripTop}
-    ${rosterHeader}${rosterRows}
+    ${_rosterTotalItems > 0 ? rosterHeader : ""}${rosterRows}
     ${rosterPaginationStrip}
     <div class="detail-title">Position depth chart <span class="detail-title-sub">Tracked prospects bucketed by primary position · 10 columns (C / 1B / 2B / SS / 3B / LF / CF / RF / SP / RP)</span></div>
     <div class="filter-bar" style="margin:6px 0 4px;padding:6px 10px;">

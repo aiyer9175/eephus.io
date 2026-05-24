@@ -388,7 +388,7 @@ def _process_one_set(grp: dict,
     snap_payloads = [_merged_to_snapshot_dict(m, snap_date, interval_label)
                      for m in merged]
     n = insert_overseas_snapshots(snap_payloads)
-    log.info("overseas_csv: '%s' → %d snapshots (year=%d, date=%s)",
+    log.info("overseas_csv: '%s' -> %d snapshots (year=%d, date=%s)",
              slug, n, year, snap_date)
 
     if processed_dir and grp.get("_folder"):

@@ -4148,44 +4148,64 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         """
         Resolve a player's debut date (formerly "graduation_date").
 
-        v20 — Simplified to mlb_debut_date-only. The prior cascade
-        (snapshot.graduation_date / first-MLB-season placeholder /
-        mid-season fallback) papered over upstream gaps with synthetic
-        dates that were often wrong. The user opted for the simpler
-        rule: "if the MLB API has a debut date, that's the date; if
-        not, we don't have one." The Rule-5-protection rollforward
-        (API stamps the Nov 18 protection day as mlbDebutDate for
-        players who didn't actually play until the following season)
-        stays because that's an actual API bug we need to compensate
-        for, not a missing-data fallback.
+        v24 — Restores the fallback chain that v21 ripped out (which
+        had collapsed to mlb_debut_date-only and left 48 FG-flagged
+        debuts with null debut_date). The cascade is anchored to
+        "first MLB game" at every step — today() is NEVER used.
+
+        Priority:
+          1. roster_status.mlb_debut_date (with Nov/Dec Rule-5-
+             protection-day rollforward to mid-season of the actual
+             first MLB season — Chase DeLauter case)
+          2. Earliest outright-transaction date (player off the 40-man
+             cleared waivers; treated as a debut-equivalent per the
+             v23 outright-→-debut rule)
+          3. consensus.py's p.debut_date (the snapshot-date that
+             triggered the FG "graduates" status flag — close enough
+             to the actual debut for legacy grads)
+          4. Earliest MLB-season Opening Day from career_stats
+             ({earliest_mlb_season}-04-01)
+          5. None — player should not be in the debuted bucket
         """
         rs = roster_status.get(p.player_key) or {}
         api_debut = rs.get("mlb_debut_date")
-        if not api_debut:
-            return None
-        try:
-            api_d = date.fromisoformat(api_debut)
-        except ValueError:
-            return api_debut
         rows = career_stats.get(p.player_key, []) or []
         mlb_years = sorted(
             int(r["season"]) for r in rows
             if r.get("level") == "MLB" and r.get("season")
         )
-        # Rule 5 protection trap — narrowed to Nov/Dec only (v20).
-        # The previous Oct-inclusive gate misfired on legitimate late-
-        # season call-ups: Chase DeLauter debuted 2025-10-01 (regular
-        # season's last week) and then played his first full season in
-        # 2026; the API debut date was correct but the rollforward
-        # stamped today's date onto his graduation_date because
-        # career_stats only had a 2026 MLB row. Rule-5 protection
-        # always happens in mid/late November after the World Series,
-        # so restricting the trap to months 11-12 catches that quirk
-        # without trampling October call-ups.
-        if (api_d.month >= 11
-                and mlb_years and mlb_years[0] > api_d.year):
-            return _safe_in_year_placeholder(p.player_key, mlb_years[0], rows)
-        return api_debut
+
+        # 1. Trust mlbDebutDate, with the Rule 5 protection rollforward.
+        if api_debut:
+            try:
+                api_d = date.fromisoformat(api_debut)
+            except ValueError:
+                return api_debut
+            if (api_d.month >= 11
+                    and mlb_years and mlb_years[0] > api_d.year):
+                return _safe_in_year_placeholder(
+                    p.player_key, mlb_years[0], rows)
+            return api_debut
+
+        # 2. Earliest outright transaction date.
+        _tx_rows = (transactions_by_player or {}).get(p.player_key) or []
+        _outrights = sorted([
+            tx.get("date") for tx in _tx_rows
+            if (tx.get("kind") or "").lower() == "outrighted"
+            and tx.get("date")
+        ])
+        if _outrights:
+            return _outrights[0]
+
+        # 3. consensus.py's snapshot-derived debut_date (FG-flagged path).
+        if getattr(p, "debut_date", None):
+            return p.debut_date
+
+        # 4. Opening Day of the earliest MLB season we have on file.
+        if mlb_years:
+            return f"{min(mlb_years)}-04-01"
+
+        return None
 
     def _safe_in_year_placeholder(player_key: str, year: int,
                                   rows: list[dict]) -> str:

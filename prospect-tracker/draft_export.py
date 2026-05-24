@@ -401,7 +401,7 @@ def export_draft_json(out_path: Path) -> int:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
-    log.info("draft_export: wrote %d prospects across %d classes → %s",
+    log.info("draft_export: wrote %d prospects across %d classes -> %s",
              n, len(payload["classes"]), out_path)
     return n
 

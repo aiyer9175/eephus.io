@@ -413,7 +413,7 @@ def _process_one_set(grp: dict,
     n_snap = insert_draft_snapshots(snap_payloads)
     n_res  = upsert_draft_results(result_payloads) if result_payloads else 0
 
-    log.info("draft_csv: '%s' → %d snapshots, %d results (year=%d, date=%s)",
+    log.info("draft_csv: '%s' -> %d snapshots, %d results (year=%d, date=%s)",
              slug, n_snap, n_res, year, snap_date)
 
     if processed_dir and grp.get("_folder"):
