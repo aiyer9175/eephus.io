@@ -7042,6 +7042,35 @@ function fvBadgeTooltip(player) {
 }
 
 // Returns the count of explicit-FV sources at the player's latest
+// Canonical consensus-FV sort comparator (DESC). When two prospects
+// land on EXACTLY the same fv_close (down to the decimal — common in
+// the post-shrinkage clusters around FV 35/40/45), tiebreak by
+// consensus tools composite_overall (DESC), then by player_name
+// (ASC) as a stable final separator. Returns a number suitable for
+// Array.prototype.sort. Use `fvCmpDesc(a, b)` everywhere a list is
+// sorted by FV; legacy `(b.fv_close ?? -1) - (a.fv_close ?? -1)`
+// patterns should route through this so the tiebreak is consistent
+// across every ranked surface.
+function _toolComposite(p) {
+  const v = (p && p.tools || {}).composite_overall;
+  return typeof v === "number" && isFinite(v) ? v : null;
+}
+function fvCmpDesc(a, b) {
+  const af = (a && a.fv_close != null) ? a.fv_close : -1;
+  const bf = (b && b.fv_close != null) ? b.fv_close : -1;
+  if (bf !== af) return bf - af;
+  // FVs tie — tools composite breaks it (ungraded sinks).
+  const at = _toolComposite(a);
+  const bt = _toolComposite(b);
+  if (bt != null && at != null && bt !== at) return bt - at;
+  if (at == null && bt != null) return 1;
+  if (bt == null && at != null) return -1;
+  // Tools also tie — alphabetical for stability.
+  const an = (a && a.player_name) || "";
+  const bn = (b && b.player_name) || "";
+  return an.localeCompare(bn);
+}
+
 // point. Used inside the wide-spread "W" mark tooltip (how many sources
 // are currently grading the player). Falls back to recounting per_source
 // for cached payloads that pre-date avg_fv_n.
@@ -9274,10 +9303,10 @@ function getFilteredActives() {
     };
     pool.sort((a, b) => {
       const av = _toolVal(a), bv = _toolVal(b);
-      if (av == null && bv == null) return (b.fv_close ?? -1) - (a.fv_close ?? -1);
+      if (av == null && bv == null) return fvCmpDesc(a, b);
       if (av == null) return 1;
       if (bv == null) return -1;
-      return bv - av || (b.fv_close ?? -1) - (a.fv_close ?? -1);
+      return bv - av || fvCmpDesc(a, b);
     });
     return pool;  // skip the main-sort branch below
   }
@@ -9311,10 +9340,10 @@ function getFilteredActives() {
     pool.sort((a, b) => {
       const av = (a.tools || {}).composite_overall;
       const bv = (b.tools || {}).composite_overall;
-      if (av == null && bv == null) return (b.fv_close ?? -1) - (a.fv_close ?? -1);
+      if (av == null && bv == null) return fvCmpDesc(a, b);
       if (av == null) return 1;
       if (bv == null) return -1;
-      return bv - av || (b.fv_close ?? -1) - (a.fv_close ?? -1);
+      return bv - av || fvCmpDesc(a, b);
     });
   } else if (state.sort === "source_confidence") {
     // Most-corroborated FVs first — multi-source consensus floats above
@@ -9325,7 +9354,7 @@ function getFilteredActives() {
       const lastB = (b.points && b.points.length) ? b.points[b.points.length - 1] : null;
       const an = (lastA && lastA.avg_fv_n) || 0;
       const bn = (lastB && lastB.avg_fv_n) || 0;
-      return bn - an || (b.fv_close ?? -1) - (a.fv_close ?? -1);
+      return bn - an || fvCmpDesc(a, b);
     });
   } else if (state.sort === "avg_rank") {
     // Average rank across sources — useful tie-breaker when two
@@ -10452,7 +10481,7 @@ function renderWatchlist() {
     if (rowsEl) rowsEl.innerHTML = "";
   } else {
     if (empty) empty.style.display = "none";
-    players.sort((a, b) => (b.fv_close ?? -1) - (a.fv_close ?? -1) || a.player_name.localeCompare(b.player_name));
+    players.sort((a, b) => fvCmpDesc(a, b) || a.player_name.localeCompare(b.player_name));
     const pageSize = state.pageSizes.watchlist || 25;
     const totalItems = players.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -14066,7 +14095,7 @@ function renderDebuts() {
     }));
   } else if (sortMode === "fv_close") {
     orderedGrads = filtered.slice().sort((a, b) =>
-      ((b.fv_close ?? -1) - (a.fv_close ?? -1))
+      (fvCmpDesc(a, b))
       || (b.debut_date || "").localeCompare(a.debut_date || "")
     );
   } else if (sortMode === "vs_fv_proj") {
@@ -18512,7 +18541,7 @@ function makePromotionLadder(rosterPlayersAll, org) {
     const pct = (n / maxCount) * 100;
     const color = rowColor(players);
     const titleNames = players
-      .sort((a, b) => (b.fv_close || 0) - (a.fv_close || 0))
+      .sort(fvCmpDesc)
       .slice(0, 6)
       .map(p => `${p.player_name} (${p.fv_close ?? "?"})`)
       .join(" · ");
@@ -23022,7 +23051,7 @@ function renderPlayerDetail(key) {
     const teammates = (DATA.players || [])
       .filter(t => t.org === p.org && t.player_key !== p.player_key)
       .filter(t => t.fv_close != null)
-      .sort((a, b) => (b.fv_close || 0) - (a.fv_close || 0))
+      .sort(fvCmpDesc)
       .slice(0, 4);
     if (!teammates.length) return "";
     const rows = teammates.map(t => `
@@ -24389,7 +24418,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // reader can drill into the injury history.
   const ilPlayers = rosterPlayersAll
     .filter(rp => (rp.il_status || {}).is_on_il)
-    .sort((a, b) => (b.fv_close || 0) - (a.fv_close || 0));
+    .sort(fvCmpDesc);
   const ilCard = `<div class="farm-side-card">
     <div class="side-title">On the IL <span class="side-count">${ilPlayers.length}</span></div>
     ${ilPlayers.length
@@ -24994,7 +25023,7 @@ function render() {
     injured:      "injured-section",
     draft:        "draft-section",
     overseas:     "overseas-section",
-    graduates:    "debuts-section",
+    debuts:       "debuts-section",
     farm:         "farm-section",
     leaderboards: "leaderboards-section",
     charts:       "charts-section",
@@ -25053,7 +25082,7 @@ function render() {
   // Inner body element per section — must match where the per-section
   // render function writes its main content.
   const SECTION_BODY = {
-    graduates:      "debut-rows",
+    debuts:         "debut-rows",
     injured:        "injured-rows",
     farmDetail:     "farm-detail-body",
     player:         "player-detail-body",

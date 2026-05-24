@@ -2648,24 +2648,46 @@ MLB_30_ORGS: set[str] = {
     "PHI", "PIT", "SDP", "SEA", "SFG",
     "STL", "TBR", "TEX", "TOR", "WSN",
 }
-# v8 weights — Financial is now a tier-2 pillar (was a tier-3 supporting
-# role at 12.5%). Per-user: ROI + surplus value matter as much as MLB
-# production for evaluating how well an org converts prospect dollars
-# into MLB value. Financial DOUBLED from 12.5% → 25%; redistributed
-# proportionally out of Acquisition Strategy and MLB Production.
-# Development stays the clear majority since per-tool growth remains
-# the metric the org has the most direct control over.
+# v9 weights — Development promoted to clear majority (55%); MLB
+# Production trimmed (20% → 15%) to free that room. Per-user: a strong
+# 6yDvM+ + Tool DvM+ profile should win the rank even when an org has
+# weaker realized MLB production. The Rays' 6yDvM+ 129 + 120.3 dev
+# branch score wasn't beating the Mariners' 100.6 dev + 114.8 mlb-prod
+# at the old 45/20 split — flipping that requires shifting weight TO
+# the axis the org controls and AWAY from the lagging-indicator axis.
+# Financial drops 25% → 20% to absorb the rest of the shift;
+# Acquisition Strategy unchanged.
 # Weights sum to 1.00.
-FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.10    # v7: 0.125 — slimmed
-FARM_TREE_WEIGHT_DEVELOPMENT          = 0.45    # v7: 0.50  — still majority
-FARM_TREE_WEIGHT_FINANCIAL            = 0.25    # v7: 0.125 — DOUBLED (ROI + surplus tier 2)
-FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.20    # v7: 0.25  — slimmed
+FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.10    # v8: 0.10  — unchanged
+FARM_TREE_WEIGHT_DEVELOPMENT          = 0.55    # v8: 0.45  — bumped (current-farm signal)
+FARM_TREE_WEIGHT_FINANCIAL            = 0.20    # v8: 0.25  — slimmed (still tier-2)
+FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.15    # v8: 0.20  — slimmed (lagging indicator)
 # Back-compat aliases — anything that imported the v2 constants still
 # works. The composite blend below uses the v3 names exclusively.
 FARM_TREE_WEIGHT_ACQUISITIONS = FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
 FARM_TREE_WEIGHT_TRANSACTIONS = 0.0   # rolled into Acquisition Strategy
 # Sub-grades inside each parent — 50/50 for all parents in v1.
 FARM_TREE_SUB_WEIGHT_EQUAL = 0.5
+
+# v9 — Per-leaf weights for the Financial branch. Surplus dominant:
+# fin_active_surplus (current actives' FV-implied surplus) carries the
+# biggest single chunk because it's the most forward-looking metric on
+# this axis. fin_contract_surplus (grad realized surplus vs cost) is
+# the historical companion. Pure-ROI leaves (war_per_m, draft_pool,
+# IFA_roi) are noisy small-sample ratios that overpenalize orgs whose
+# grads got high signing bonuses BUT have outperformed already; they
+# stay in the blend but at reduced weight. Weights normalize to 1.0
+# across present leaves at compute time, so a sparse-data org just
+# weighted-means whatever leaves it has.
+FARM_LEAF_WEIGHTS = {
+    "financial": {
+        "fin_active_surplus":        0.35,
+        "fin_contract_surplus":      0.25,
+        "fin_war_per_m":             0.10,
+        "fin_draft_pool_efficiency": 0.15,
+        "fin_ifa_roi":               0.15,
+    },
+}
 
 # Tiered FV → points. v4 (2026-05) steepened curve — each tier above 50
 # is ~1.7-2× the previous, so an 80 is worth ~250 org-fillers and a 70
@@ -5691,12 +5713,33 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     grads = _dedup_by_mlbam(grads, "graduates")
     inactives = _dedup_by_mlbam(inactives, "inactives")
 
-    # Sort actives by latest consensus_fv_raw (smoother than the snapped value
-    # for tiebreaking), then by latest avg_rank ascending as secondary key.
+    # Sort actives by latest consensus_fv_raw (smoother than the snapped
+    # value for tiebreaking). When two prospects are literally identical
+    # on consensus FV (down to the decimal — happens with single-source
+    # shrinkage clusters and the Bayesian pull-to-35), tiebreak first
+    # by consensus Tools composite_overall (DESC), then by avg_rank
+    # (ASC) as the final separator. Tools-grade tiebreak: a 40/40 FV
+    # cluster with one player carrying a 55 composite_overall and
+    # another carrying a 45 ranks the toolsier player higher — a more
+    # informative answer than alphabetical or arbitrary order.
+    def _tool_overall(p: PlayerTimeseries) -> float:
+        latest = p.points[-1]
+        tools = getattr(latest, "tools_consensus", None) or {}
+        is_pitcher = bool(p.position
+                          and p.position.split("/")[0] in PITCHER_POS_SET)
+        comp = _compute_tool_composites(dict(tools), is_pitcher)
+        if comp and comp.get("composite_overall") is not None:
+            return float(comp["composite_overall"])
+        return 0.0  # ungraded sinks below any graded tiebreaker
+
     def _active_key(p: PlayerTimeseries):
         latest = p.points[-1]
         rank_key = latest.avg_rank if latest.avg_rank is not None else 999
-        return (-latest.consensus_fv_raw, rank_key)
+        return (
+            -latest.consensus_fv_raw,   # FV desc — primary
+            -_tool_overall(p),          # Tools desc — FV tiebreaker
+            rank_key,                   # avg_rank asc — final separator
+        )
     actives.sort(key=_active_key)
     if top_n_active is not None:
         actives = actives[:top_n_active]
@@ -5728,11 +5771,24 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     def _prior_key(p: PlayerTimeseries):
         pts = p.points or []
         if len(pts) < 2:
-            return (999, 999)
+            return (999, 999, 999)
         prior = pts[-2]
         prior_fv = prior.consensus_fv_raw if prior.consensus_fv_raw is not None else None
         prior_rank = prior.avg_rank if prior.avg_rank is not None else 999
-        return (-prior_fv if prior_fv is not None else 999, prior_rank)
+        # Same FV-then-Tools-then-rank tiebreak the current snapshot
+        # uses, but reading the prior snapshot's tools_consensus so the
+        # rank-delta arrow stays stable across snapshots with identical
+        # FV but different tool grades.
+        prior_tools = getattr(prior, "tools_consensus", None) or {}
+        is_pitcher = bool(p.position
+                          and p.position.split("/")[0] in PITCHER_POS_SET)
+        comp = _compute_tool_composites(dict(prior_tools), is_pitcher)
+        prior_tool = float(comp["composite_overall"]) if (comp and comp.get("composite_overall") is not None) else 0.0
+        return (
+            -prior_fv if prior_fv is not None else 999,
+            -prior_tool,
+            prior_rank,
+        )
     prior_actives = sorted(
         [p for p in actives if (p.points or []) and len(p.points) >= 2],
         key=_prior_key,
@@ -7270,10 +7326,29 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # resolves to a sensible value (the parent's score, or None).
     for i, entry in enumerate(org_summary):
         for parent, leaves in TREE_PARENTS.items():
-            vs = [leaf_100[k][i] for k in leaves if leaf_100[k][i] is not None]
-            entry[f"{parent}_score"] = (
-                round(sum(vs) / len(vs), 1) if vs else None
-            )
+            # v9 — per-leaf weights inside a parent when FARM_LEAF_WEIGHTS
+            # declares them (currently only Financial). Falls back to
+            # equal-weight mean for parents without an entry. Either way
+            # weights renormalize across PRESENT leaves so a sparse-data
+            # leaf doesn't drag the parent toward 0 — it just drops out
+            # and the others split the full 1.0.
+            leaf_w = FARM_LEAF_WEIGHTS.get(parent)
+            if leaf_w:
+                present = [(k, leaf_100[k][i], leaf_w[k])
+                           for k in leaves
+                           if leaf_100[k][i] is not None and leaf_w.get(k)]
+                total_w = sum(w for _, _, w in present)
+                if total_w > 0:
+                    entry[f"{parent}_score"] = round(
+                        sum(v * w for _, v, w in present) / total_w, 1
+                    )
+                else:
+                    entry[f"{parent}_score"] = None
+            else:
+                vs = [leaf_100[k][i] for k in leaves if leaf_100[k][i] is not None]
+                entry[f"{parent}_score"] = (
+                    round(sum(vs) / len(vs), 1) if vs else None
+                )
         # Composite farm_score from the 4 main grades (v3), weighted.
         # Orgs missing a main grade contribute its weight at 100 (league
         # mean) so the overall doesn't get crushed by data-sparse axes.
