@@ -5624,6 +5624,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         if _api_debut and p.status != "graduated":
             p.status = "graduated"
             p.debut_date = _api_debut
+        # v23 — Outrighted prospects are also marked debuted (per user
+        # directive). An outright requires the player to have been on
+        # the 40-man roster, which makes them a non-prospect even if
+        # they never played an MLB game. The debut_date falls back to
+        # the outright date when no mlbDebutDate is on file.
+        if p.status != "graduated":
+            _tx_rows = (transactions_by_player or {}).get(p.player_key) or []
+            _outright_dates = [tx.get("date") for tx in _tx_rows
+                               if (tx.get("kind") or "").lower() == "outrighted"
+                               and tx.get("date")]
+            if _outright_dates:
+                p.status = "graduated"
+                # Use the EARLIEST outright (when player first cleared
+                # waivers off the 40-man) as the debut-equivalent date.
+                p.debut_date = p.debut_date or min(_outright_dates)
         if p.status == "graduated":
             grads.append(p)
             continue

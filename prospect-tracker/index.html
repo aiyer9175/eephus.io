@@ -5218,7 +5218,13 @@
       align-items: center;
     }
     .pos-depth-row-prospects > .pos-depth-card.is-overflow { display: none; }
-    .pos-depth-row.is-expanded .pos-depth-row-prospects > .pos-depth-card.is-overflow {
+    /* v23 — Selector must match the actual DOM: the same <div> carries
+       BOTH `.pos-depth-row-prospects` and `.pos-depth-row` classes (see
+       rowCls in makePositionDepthChart). The previous descendant-style
+       selector never matched, so toggling `.is-expanded` on the cards
+       container didn't reveal the overflow cards. Now uses a compound
+       selector on the same element. */
+    .pos-depth-row-prospects.is-expanded > .pos-depth-card.is-overflow {
       display: inline-flex;
     }
     .pos-depth-row-expand {
@@ -17204,7 +17210,11 @@ function makeFarmReportCard(org) {
 
   // Sub-grade cell: label · letter · rank · raw value.
   const subCell = (label, letterKey, rankKey, scoreFmt, scoreVal, extraTooltip) => {
-    const letter = g[letterKey] || '—';
+    // v23 — default ungraded leaves to neutral 'C' instead of '—' so
+    // every leaf in the tree displays a letter. Sparse-data leaves
+    // (which previously rendered as '—' with no color) now read as
+    // 'C / no data' — present and color-coded as neutral.
+    const letter = g[letterKey] || 'C';
     const rank = r[rankKey];
     const titleAttr = extraTooltip ? ` title="${escapeHtml(extraTooltip)}"` : '';
     return `
@@ -17218,7 +17228,7 @@ function makeFarmReportCard(org) {
 
   // Main-grade branch (<details>) with sub-cells inside.
   const branch = (label, parentKey, weightPct, subsHtml, tooltip) => {
-    const letter = g[parentKey] || '—';
+    const letter = g[parentKey] || 'C';
     const rank = r[parentKey];
     return `
     <details class="gt-branch" open>
@@ -17293,11 +17303,20 @@ function makeFarmReportCard(org) {
         : `No star — peak grad ${convLeaf.peak_war_per_yr != null ? convLeaf.peak_war_per_yr.toFixed(1) + ' WAR/yr' : '—'} / ${convLeaf.peak_career_war != null ? convLeaf.peak_career_war.toFixed(1) + ' career WAR' : '—'}. Below WAR/yr ≥ 4.0 (recent) AND career WAR ≥ 12 thresholds.`)
     : `No graduate sample.`;
   const convFmt = v => v === 1 ? 'STAR ✓' : (v === 0 ? 'no star' : '—');
+  // v23 — Hitter / Pitcher MLB Production: read v17-renamed leaf keys
+  // (`mlb_hitter_production` / `mlb_pitcher_production`, not the legacy
+  // `_wag` names) and surface WAR/yr as the headline metric instead of
+  // WAG. WAR/yr is the raw production rate (what the grade is built
+  // on); WAG was the FV-baseline delta which the user found confusing
+  // on this surface.
+  const fmtWarPerYr = v => v != null ? `${v.toFixed(2)} WAR/yr` : '—';
+  const _hitProd = t.mlb_hitter_production  || t.mlb_hitter_wag  || {};
+  const _pitProd = t.mlb_pitcher_production || t.mlb_pitcher_wag || {};
   const mlbSubs =
-    subCell('Hitter MLB Production',  'mlb_hitter_wag',              'mlb_hitter_wag',              fmtSignedWag, (t.mlb_hitter_wag  || {}).wag_mean,
-            `3-input composite. ${fmt3input('mlb_hitter_wag')}`) +
-    subCell('Pitcher MLB Production', 'mlb_pitcher_wag',             'mlb_pitcher_wag',             fmtSignedWag, (t.mlb_pitcher_wag || {}).wag_mean,
-            `3-input composite. ${fmt3input('mlb_pitcher_wag')}`) +
+    subCell('Hitter MLB Production',  'mlb_hitter_production',  'mlb_hitter_production',  fmtWarPerYr, _hitProd.war_per_yr_mean,
+            `WAR/yr across debuted hitters. ${fmt3input('mlb_hitter_wag')}`) +
+    subCell('Pitcher MLB Production', 'mlb_pitcher_production', 'mlb_pitcher_production', fmtWarPerYr, _pitProd.war_per_yr_mean,
+            `WAR/yr across debuted pitchers. ${fmt3input('mlb_pitcher_wag')}`) +
     subCell('Boom Rate',              'mlb_production_boom_pct',     'mlb_production_boom_pct',     fmtPct,       boomLeaf.boom_pct, boomTooltip) +
     subCell('Top-3 Grad WAR/yr',      'mlb_production_top_grads',    'mlb_production_top_grads',    v => v != null ? v.toFixed(2) + ' WAR/yr' : '—', topGrads.top3_war_per_yr, topGradsTooltip) +
     subCell('Conviction',             'mlb_production_conviction',   'mlb_production_conviction',   convFmt,      convLeaf.conviction, convTooltip);
@@ -17346,8 +17365,8 @@ function makeFarmReportCard(org) {
       {
         key: 'mlb_production', label: 'MLB Production', weight: W.mlb_production,
         leaves: [
-          { label: 'Hitter Production',  letterKey: 'mlb_hitter_wag',            metric: fmtSignedWag((t.mlb_hitter_wag  || {}).wag_mean) },
-          { label: 'Pitcher Production', letterKey: 'mlb_pitcher_wag',           metric: fmtSignedWag((t.mlb_pitcher_wag || {}).wag_mean) },
+          { label: 'Hitter Production',  letterKey: 'mlb_hitter_production',  metric: fmtWarPerYr(_hitProd.war_per_yr_mean) },
+          { label: 'Pitcher Production', letterKey: 'mlb_pitcher_production', metric: fmtWarPerYr(_pitProd.war_per_yr_mean) },
           { label: 'Boom Rate',          letterKey: 'mlb_production_boom_pct',   metric: fmtPct(boomLeaf.boom_pct) },
           { label: 'Top-3 Grad WAR/yr',  letterKey: 'mlb_production_top_grads',  metric: topGrads.top3_war_per_yr != null ? topGrads.top3_war_per_yr.toFixed(2) + ' WAR/yr' : '—' },
           { label: 'Conviction',         letterKey: 'mlb_production_conviction', metric: convFmt(convLeaf.conviction) },
@@ -17765,6 +17784,8 @@ function makeFarmTransactionsSection(allEvents, orgCode) {
   const FARM_TX_KINDS = [
     ["all",                "All"],
     ["trade",              "Trades"],
+    ["drafted",            "Draft"],
+    ["signed_ifa",         "IFA Signings"],
     ["waiver_claim",       "Waiver claims"],
     ["signed_free_agent",  "FA signings"],
     ["released",           "Releases"],
@@ -23611,12 +23632,23 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
   const fvOf = p => p.points.length ? p.points[p.points.length - 1].consensus_fv_raw : 0;
   const etaOf = p => (p.eta && p.eta.year != null) ? p.eta.year : 9999;
   const ageOf = p => p.age ?? 99;
-  const comparators = {
-    fv:  (a, b) => fvOf(b) - fvOf(a) || ageOf(a) - ageOf(b),
-    age: (a, b) => ageOf(a) - ageOf(b) || fvOf(b) - fvOf(a),
-    eta: (a, b) => etaOf(a) - etaOf(b) || fvOf(b) - fvOf(a),
+  // v23 — Level sort: AAA → AA → A+ → A → CPX → DSL → unknown. Mirrors
+  // a real org depth chart: highest-level (closest-to-the-majors)
+  // players sit at the left of each row. FV is the tiebreaker so two
+  // AAA prospects still sort highest-FV first within the level group.
+  const LEVEL_ORDER = ["MLB", "AAA", "AA", "A+", "A", "CPX", "DSL"];
+  const levelIdxOf = p => {
+    const lvl = (p.statline || {}).level;
+    const i = LEVEL_ORDER.indexOf(lvl);
+    return i < 0 ? 99 : i;
   };
-  const cmp = comparators[sortMode] || comparators.fv;
+  const comparators = {
+    level: (a, b) => levelIdxOf(a) - levelIdxOf(b) || fvOf(b) - fvOf(a),
+    fv:    (a, b) => fvOf(b) - fvOf(a) || ageOf(a) - ageOf(b),
+    age:   (a, b) => ageOf(a) - ageOf(b) || fvOf(b) - fvOf(a),
+    eta:   (a, b) => etaOf(a) - etaOf(b) || fvOf(b) - fvOf(a),
+  };
+  const cmp = comparators[sortMode] || comparators.level;
   for (const k of Object.keys(buckets)) buckets[k].sort(cmp);
   const totalPlayers = Object.values(buckets).reduce((n, arr) => n + arr.length, 0);
   if (!totalPlayers) {
@@ -23693,19 +23725,18 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
       const fvLabel = latest ? latest.consensus_fv_label : "—";
       const sl = p.statline || {};
       const lvl = sl.level || "—";
-      const actualPos = String(p.position || "").split("/")[0].toUpperCase();
-      const posGlyph = actualPos && actualPos !== key
-        ? `<span class="pdc-pos">${escapeHtml(actualPos)}</span>`
-        : "";
+      const overflow = idx >= TOP_N ? " is-overflow" : "";
+      // v23 — Chip stripped to FV + name + level only. Removed
+      // posGlyph (cross-position note), ETA pill, and iconsHTML
+      // (acquisition / health / TJ badges). Tooltip still carries the
+      // full context (position / age / FV / ETA) for hover detail.
       const ageTxt = p.age != null ? `${p.age.toFixed(1)}y` : "?";
       const etaYear = p.eta && p.eta.year != null ? p.eta.year : null;
       const titleEta = etaYear ? ` · ETA ${etaYear}` : "";
-      const overflow = idx >= TOP_N ? " is-overflow" : "";
       return `<div class="pos-depth-card${overflow}" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}" title="${escapeHtml(p.player_name)} · ${escapeHtml(p.position || "—")} · ${escapeHtml(lvl)} · age ${ageTxt} · FV ${fvLabel}${titleEta}">
         <span class="pdc-fv"><span class="fv-badge ${fvClass(fvLabel)} size-xs">${fvLabel}</span></span>
         <span class="pdc-name">${escapeHtml(shortName(p.player_name))}</span>
-        <span class="pdc-sub">${posGlyph}${escapeHtml(lvl)}${yearTag(etaYear)}</span>
-        ${iconsHTML(p)}
+        <span class="pdc-sub">${escapeHtml(lvl)}</span>
       </div>`;
     }).join("");
     const count = players.length;
@@ -23865,15 +23896,36 @@ function _renderFarmDetailBody(orgCode, org, root) {
       });
     }
     for (const tx of (p.transactions || [])) {
-      if (tx.from_org !== orgCode && tx.to_org !== orgCode) continue;
-      const k = `${p.player_key}|${tx.kind}|${tx.date}|${tx.from_org}|${tx.to_org}`;
+      // v23 — Releases / DFA / outrights / FA signings inherently
+      // belong to ONE org (no opposite party). Treat them as touching
+      // the player's current org so they can never be filtered out
+      // just because tx.from_org/to_org are null. For non-org-bound
+      // kinds (trades, waiver claims), require an org match as before.
+      const touchedByOrg = (tx.from_org === orgCode || tx.to_org === orgCode
+                            || (p.org === orgCode &&
+                                /^(released|dfa|outrighted|signed_free_agent|rule_5_selection|rule_5_return)$/.test(tx.kind || "")));
+      if (!touchedByOrg) continue;
+      // v23 — Re-classify signed_free_agent into drafted / signed_ifa
+      // when the player's acquisition record matches, so draft + IFA
+      // signings get their own type chip in the farm-tx UI (previously
+      // they all lumped under "FA signings").
+      const kindResolved = (typeof reclassifyAcquisitionSigning === "function")
+        ? reclassifyAcquisitionSigning(p, tx)
+        : tx.kind;
+      const k = `${p.player_key}|${kindResolved}|${tx.date}|${tx.from_org}|${tx.to_org}`;
       if (seenEvent.has(k)) continue;
       seenEvent.add(k);
+      // For releases/DFA/outright the player IS the org's, so synthesize
+      // from_org=orgCode so the "out" direction filter catches them.
+      const synthFromOrg = tx.from_org
+        || (/^(released|dfa|outrighted)$/.test(kindResolved) ? orgCode : null);
+      const synthToOrg = tx.to_org
+        || (/^(drafted|signed_ifa|signed_free_agent|rule_5_selection)$/.test(kindResolved) ? orgCode : null);
       allEventsForOrg.push({
         player: p, graduate,
-        kind: tx.kind,
+        kind: kindResolved,
         date: tx.date,
-        from_org: tx.from_org, to_org: tx.to_org,
+        from_org: synthFromOrg, to_org: synthToOrg,
         description: tx.description || "",
       });
     }
@@ -24959,8 +25011,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
     <div class="farm-detail-grid">
       ${leftRailHtml}
       <div class="farm-overview-main">
-        <div class="detail-title flush">Organization snapshot <span class="detail-title-sub">stock balance, pos mix, promotion ladder, tier shape — all at a glance. Drill into the other tabs for roster / dev / finance / transactions detail.</span></div>
-        ${makePositionDepthChart(rosterPlayersAll, state.depthSort || "fv")}
+        <div class="detail-title flush">Farm System Depth Chart <span class="detail-title-sub">prospects bucketed by position, sorted by current level (AAA leftmost → DSL rightmost) so the closest-to-the-majors players sit at the front of each row.</span></div>
+        ${makePositionDepthChart(rosterPlayersAll, state.depthSort || "level")}
       </div>
       <div class="farm-side">${sidebarHtml}</div>
     </div>`;
@@ -24987,11 +25039,12 @@ function _renderFarmDetailBody(orgCode, org, root) {
     <div class="detail-title">Position depth chart <span class="detail-title-sub">Tracked prospects bucketed by primary position · 10 columns (C / 1B / 2B / SS / 3B / LF / CF / RF / SP / RP)</span></div>
     <div class="filter-bar" style="margin:6px 0 4px;padding:6px 10px;">
       <span class="filter-label">Sort</span>
-      <button class="chip${(state.depthSort || "fv") === "fv" ? " active" : ""}" data-depth-sort="fv" type="button" title="Highest FV first, age as tiebreaker. Dashed dividers separate the 50+, 40-tier, and sub-40 groups.">FV</button>
+      <button class="chip${(state.depthSort || "level") === "level" ? " active" : ""}" data-depth-sort="level" type="button" title="Highest level first (AAA → AA → A+ → A → CPX → DSL), FV as tiebreaker. Mirrors a real org depth chart — closest-to-the-majors players on the left.">Level</button>
+      <button class="chip${state.depthSort === "fv" ? " active" : ""}" data-depth-sort="fv" type="button" title="Highest FV first, age as tiebreaker. Dashed dividers separate the 50+, 40-tier, and sub-40 groups.">FV</button>
       <button class="chip${state.depthSort === "age" ? " active" : ""}" data-depth-sort="age" type="button" title="Youngest first, FV as tiebreaker.">Age</button>
       <button class="chip${state.depthSort === "eta" ? " active" : ""}" data-depth-sort="eta" type="button" title="Soonest ETA first, FV as tiebreaker. Prospects without an ETA sink to the bottom.">ETA</button>
     </div>
-    ${makePositionDepthChart(rosterPlayersAll, state.depthSort || "fv")}
+    ${makePositionDepthChart(rosterPlayersAll, state.depthSort || "level")}
     <div class="detail-title">Age vs FV scatter <span class="detail-title-sub">Each dot is one prospect — point size scales with composite Tool grade when published, hue encodes position bucket</span></div>
     ${makeAgeFvScatter(rosterPlayersAll)}
     ${gradedSection}`;
@@ -25097,8 +25150,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
     ${roiSection}`;
 
   const transactionsTabHtml = `
-    ${affiliateSection}
-    ${makeFarmTransactionsSection(allEventsForOrg, orgCode)}`;
+    ${makeFarmTransactionsSection(allEventsForOrg, orgCode)}
+    ${affiliateSection}`;
 
   const tabs = [
     { key: "overview",     label: "Overview",     html: overviewHtml },

@@ -821,14 +821,56 @@ class FetchResult:
                 f"bytes={self.bytes}, cached={self.from_cache})")
 
 
+_SCRAPER_CURRENT_YEAR_TTL_SECONDS = 24 * 3600  # 24h — current-year pages
+_SCRAPER_PRIOR_YEAR_TTL_SECONDS   = 30 * 24 * 3600  # 30d — historical pages
+
+def _cache_ttl_for_key(cache_key: str) -> int:
+    """v23 — Year-aware TTL for scout-ranking cache entries.
+
+    Prior-year pages (MLB Pipeline 2024 Top 100, FG 2024report) carry
+    historical data that doesn't change → keep their disk-cache fresh
+    for 30 days (basically permanent within a run).
+
+    Current-year pages (MLB Pipeline 2026 Top 100, FG 2026updated)
+    actively re-publish mid-season — the user wants the most-recent
+    grades surfaced every run. 24h TTL means a daily run always
+    refreshes; a same-day re-run reuses cache.
+
+    Falls back to current-year TTL (24h) when the cache_key doesn't
+    encode a year token — safer to over-refresh than to serve stale.
+    """
+    import re as _re_local
+    from datetime import date as _date_local
+    m = _re_local.search(r"(20\d{2})", cache_key)
+    if m:
+        try:
+            yr = int(m.group(1))
+            return _SCRAPER_CURRENT_YEAR_TTL_SECONDS if yr >= _date_local.today().year \
+                   else _SCRAPER_PRIOR_YEAR_TTL_SECONDS
+        except ValueError:
+            pass
+    return _SCRAPER_CURRENT_YEAR_TTL_SECONDS
+
+
 def _fetch(url: str, cache_key: str, force: bool = False,
            accept_json: bool = False) -> FetchResult:
     """Fetch a URL with on-disk caching and rate limiting."""
     cache_path = CACHE_DIR / f"{cache_key}.{'json' if accept_json else 'html'}"
     if cache_path.exists() and not force:
-        body = cache_path.read_text(encoding="utf-8")
-        log.info("cache hit: %s (%d bytes)", cache_key, len(body))
-        return FetchResult(body=body, status=200, from_cache=True, url=url)
+        # v23 — Year-aware TTL gate. Prior to v23 these caches were
+        # infinite-lived, so mid-season FV / scout updates would sit
+        # in the disk cache forever and never re-fetch. Now a stale
+        # cache (older than TTL for its year) falls through to a
+        # network refetch.
+        age_seconds = time.time() - cache_path.stat().st_mtime
+        ttl = _cache_ttl_for_key(cache_key)
+        if age_seconds <= ttl:
+            body = cache_path.read_text(encoding="utf-8")
+            log.info("cache hit: %s (%d bytes, age %.0fh, ttl %.0fh)",
+                     cache_key, len(body), age_seconds / 3600, ttl / 3600)
+            return FetchResult(body=body, status=200, from_cache=True, url=url)
+        log.info("cache stale: %s (age %.0fh > ttl %.0fh) — refetching",
+                 cache_key, age_seconds / 3600, ttl / 3600)
 
     log.info("fetching: %s", url)
     time.sleep(RATE_LIMIT_SECONDS)
@@ -958,12 +1000,20 @@ def scrape_espn_top100(url: str, label: str, snap_date: str,
 
     # Custom-UA fetch — _fetch() uses the project UA which CloudFront
     # rejects for ESPN. Inline the cache-aware path here rather than
-    # complicate _fetch's signature.
+    # complicate _fetch's signature. v23 — year-aware TTL gate.
+    fr = None
     if cache_path.exists() and not force:
-        body = cache_path.read_text(encoding="utf-8")
-        log.info("cache hit: %s (%d bytes)", cache_key, len(body))
-        fr = FetchResult(body=body, status=200, from_cache=True, url=url)
-    else:
+        age_seconds = time.time() - cache_path.stat().st_mtime
+        ttl = _cache_ttl_for_key(cache_key)
+        if age_seconds <= ttl:
+            body = cache_path.read_text(encoding="utf-8")
+            log.info("cache hit: %s (%d bytes, age %.0fh, ttl %.0fh)",
+                     cache_key, len(body), age_seconds / 3600, ttl / 3600)
+            fr = FetchResult(body=body, status=200, from_cache=True, url=url)
+        else:
+            log.info("cache stale: %s (age %.0fh > ttl %.0fh) — refetching",
+                     cache_key, age_seconds / 3600, ttl / 3600)
+    if fr is None:
         log.info("fetching: %s", url)
         time.sleep(RATE_LIMIT_SECONDS)
         try:
@@ -1468,10 +1518,20 @@ def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
     if cache_key is None:
         cache_key = f"mlb_pipeline_{year}_top100"
     cache_path = CACHE_DIR / f"{cache_key}.html"
+    # v23 — Year-aware TTL gate (shared with _fetch). Current-year
+    # pages refresh every 24h; prior-year pages stay cached 30d.
+    body = None
     if cache_path.exists() and not force:
-        body = cache_path.read_text(encoding="utf-8")
-        log.info("cache hit: %s (%d bytes)", cache_key, len(body))
-    else:
+        age_seconds = time.time() - cache_path.stat().st_mtime
+        ttl = _cache_ttl_for_key(cache_key)
+        if age_seconds <= ttl:
+            body = cache_path.read_text(encoding="utf-8")
+            log.info("cache hit: %s (%d bytes, age %.0fh, ttl %.0fh)",
+                     cache_key, len(body), age_seconds / 3600, ttl / 3600)
+        else:
+            log.info("cache stale: %s (age %.0fh > ttl %.0fh) — refetching",
+                     cache_key, age_seconds / 3600, ttl / 3600)
+    if body is None:
         log.info("fetching: %s", url)
         time.sleep(RATE_LIMIT_SECONDS)
         try:
@@ -1821,10 +1881,19 @@ def scrape_espn_draft(url: str, label: str, snap_date: str, draft_year: int,
     cache_key = "espn_draft_" + re.sub(r"[^a-z0-9]+", "_", label.lower())
     cache_path = CACHE_DIR / f"{cache_key}.html"
 
+    # v23 — year-aware TTL gate.
+    body = None
     if cache_path.exists() and not force:
-        body = cache_path.read_text(encoding="utf-8")
-        log.info("cache hit: %s (%d bytes)", cache_key, len(body))
-    else:
+        age_seconds = time.time() - cache_path.stat().st_mtime
+        ttl = _cache_ttl_for_key(cache_key)
+        if age_seconds <= ttl:
+            body = cache_path.read_text(encoding="utf-8")
+            log.info("cache hit: %s (%d bytes, age %.0fh, ttl %.0fh)",
+                     cache_key, len(body), age_seconds / 3600, ttl / 3600)
+        else:
+            log.info("cache stale: %s (age %.0fh > ttl %.0fh) — refetching",
+                     cache_key, age_seconds / 3600, ttl / 3600)
+    if body is None:
         log.info("fetching: %s", url)
         time.sleep(RATE_LIMIT_SECONDS)
         try:
@@ -1989,10 +2058,19 @@ def scrape_mlb_pipeline_draft(url: str, label: str, snap_date: str,
 
     cache_key = f"mlb_pipeline_draft_{draft_year}"
     cache_path = CACHE_DIR / f"{cache_key}.html"
+    # v23 — year-aware TTL gate.
+    body = None
     if cache_path.exists() and not force:
-        body = cache_path.read_text(encoding="utf-8")
-        log.info("cache hit: %s (%d bytes)", cache_key, len(body))
-    else:
+        age_seconds = time.time() - cache_path.stat().st_mtime
+        ttl = _cache_ttl_for_key(cache_key)
+        if age_seconds <= ttl:
+            body = cache_path.read_text(encoding="utf-8")
+            log.info("cache hit: %s (%d bytes, age %.0fh, ttl %.0fh)",
+                     cache_key, len(body), age_seconds / 3600, ttl / 3600)
+        else:
+            log.info("cache stale: %s (age %.0fh > ttl %.0fh) — refetching",
+                     cache_key, age_seconds / 3600, ttl / 3600)
+    if body is None:
         log.info("fetching: %s", url)
         time.sleep(RATE_LIMIT_SECONDS)
         try:
@@ -2402,10 +2480,20 @@ def scrape_tankathon_lottery(year: int, force: bool = False) -> list[dict]:
 
     cache_key = "tankathon_mlb"
     cache_path = CACHE_DIR / f"{cache_key}.html"
+    # v23 — TTL gate. Tankathon's lottery projection changes daily as
+    # standings move, so the default 24h TTL keeps it fresh.
+    body = None
     if cache_path.exists() and not force:
-        body = cache_path.read_text(encoding="utf-8")
-        log.info("cache hit: %s (%d bytes)", cache_key, len(body))
-    else:
+        age_seconds = time.time() - cache_path.stat().st_mtime
+        ttl = _cache_ttl_for_key(cache_key)
+        if age_seconds <= ttl:
+            body = cache_path.read_text(encoding="utf-8")
+            log.info("cache hit: %s (%d bytes, age %.0fh, ttl %.0fh)",
+                     cache_key, len(body), age_seconds / 3600, ttl / 3600)
+        else:
+            log.info("cache stale: %s (age %.0fh > ttl %.0fh) — refetching",
+                     cache_key, age_seconds / 3600, ttl / 3600)
+    if body is None:
         log.info("fetching: %s", TANKATHON_URL)
         time.sleep(RATE_LIMIT_SECONDS)
         try:
