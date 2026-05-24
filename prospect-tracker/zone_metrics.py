@@ -179,13 +179,19 @@ def game_log(player_id: int, season: int, level: str = "AAA", is_pitcher: bool =
 
 def all_game_logs(player_id: int, season: int, is_pitcher: bool = False) -> list[dict]:
     group = "pitching" if is_pitcher else "hitting"
+    # v20 — Drop the `leagueListId=milb_full` filter so MLB game logs
+    # come back alongside MiLB ones. The per-split `split.sport.abbreviation`
+    # check downstream already gates which levels actually enter the
+    # classifier (ZONE_LEVELS now includes MLB), so this just unlocks
+    # the MLB rows that the prior filter excluded. Without this, debuted
+    # players never picked up MLB zone metrics regardless of any other
+    # change.
     data = _get_json(
         f"{MLB_STATS_API}/people/{player_id}/stats",
         {
             "stats": "gameLog",
             "group": group,
             "season": str(season),
-            "leagueListId": "milb_full",
         },
         ttl_seconds=86400,
     )

@@ -744,13 +744,18 @@ def _latest_meta(snaps: list[Snapshot]) -> tuple[str, str | None, str | None]:
     # EXCEPTION — graduated players: once a player reaches MLB the
     # forward-projection rationale flips. FG's prospect-era guess (e.g.
     # Xavier Edwards "CF" in 2023) gets out-of-date against the actual
-    # major-league role. For grads, prefer the latest non-FG position
-    # (MLB Pipeline / Baseball America), which tracks the depth-chart
-    # slot rather than the long-term role projection.
+    # major-league role. For grads, prefer the latest snapshot from a
+    # depth-chart-faithful source (MLB Pipeline / Baseball America /
+    # ESPN). FanGraphs is excluded because it forward-projects; the
+    # `auto_detect` source is excluded because it inherits whichever
+    # source flagged graduation (which on Edwards' record was the same
+    # FG snapshot that pegged him at CF), so trusting auto_detect would
+    # just relaunder the FG projection.
     is_graduated = any(s.status == "graduated" for s in snaps)
     if is_graduated:
+        _EXCLUDED_FOR_GRAD_POS = {"fangraphs", "auto_detect"}
         non_fg_pos = next((s.position for s in snaps_sorted
-                           if s.source != "fangraphs" and s.position), None)
+                           if s.source not in _EXCLUDED_FOR_GRAD_POS and s.position), None)
         if non_fg_pos:
             return (
                 snaps_sorted[0].player_name,

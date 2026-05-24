@@ -608,6 +608,40 @@
       -webkit-backdrop-filter: blur(8px);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
+    /* Level tabs — small chip strip at the top of metric blocks that
+       carry per-level splits (Zone profile / Statcast feed / Pitch
+       movement chart). Lets a debuted player's panel toggle between
+       MLB and AAA without doubling the page height. */
+    .level-tabs-wrap { margin-top: 4px; }
+    .level-tabs {
+      display: inline-flex;
+      gap: 2px;
+      margin-bottom: 8px;
+      padding: 2px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+    }
+    .level-tab {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      padding: 3px 10px;
+      border: 0;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 2px;
+      transition: background 0.10s, color 0.10s;
+    }
+    .level-tab:hover { color: var(--text-primary); }
+    .level-tab.is-active {
+      background: var(--neon-cyan);
+      color: var(--text-on-accent, #0d1f33);
+    }
+    .level-tab-panel { display: none; }
+    .level-tab-panel.is-active { display: block; }
     .detail-tab {
       font-family: var(--font-retro);
       font-size: 12px;
@@ -6477,13 +6511,13 @@
       <button class="chip" data-grad-sort="career_war"
               title="Cumulative career WAR (BBref), highest first. Debuted players with no MLB time sink to the bottom.">Career WAR</button>
       <button class="chip" data-grad-sort="war_per_yr"
-              title="WAR per MLB season (career WAR ÷ seasons played), highest first. Rate stat — favors graduates with a strong sample-size-adjusted track record.">WAR/year</button>
+              title="WAR per MLB season (career WAR ÷ seasons played), highest first. Rate stat — favors debuts with a strong sample-size-adjusted track record.">WAR/year</button>
       <button class="chip" data-grad-sort="fv_close"
-              title="Highest final consensus FV (the FV when the player graduated) first">Final FV</button>
+              title="Highest final consensus FV (the FV when the player debuted) first">Final FV</button>
       <button class="chip" data-grad-sort="vs_fv_proj"
               title="WAG (WAR Above Grade) — playing-time-weighted MLB WAR/year (PA for hitters / IP for pitchers) minus the FV-grade-implied WAR/year (FanGraphs primer, lower-bound; linearly interpolated; hitter/pitcher tables split). Requires ≥1 full-season equivalent of MLB playing time. Highest outperformance first.">WAG (high)</button>
       <button class="chip" data-grad-sort="vs_fv_proj_low"
-              title="WAG (WAR Above Grade) — same metric as 'WAG (high)' but inverted: lowest delta first, so graduates UNDERPERFORMING their FV grade most heavily surface at the top. Playing-time-weighted; requires ≥1 full-season equivalent of MLB playing time (thin-debut graduates sink to the bottom).">WAG (low)</button>
+              title="WAG (WAR Above Grade) — same metric as 'WAG (high)' but inverted: lowest delta first, so debuts UNDERPERFORMING their FV grade most heavily surface at the top. Playing-time-weighted; requires ≥1 full-season equivalent of MLB playing time (thin-debut players sink to the bottom).">WAG (low)</button>
     </div>
     <!-- v19 — Boom/Bust filter strip retired. The chip noise on the
          graduate list duplicated the WAG sort dimension and added
@@ -6495,15 +6529,15 @@
     <div class="filter-bar" id="farm-sort-bar" style="flex-wrap:wrap;gap:6px;">
       <div class="filter-group">
         <span class="filter-label">Sort by</span>
-        <button class="chip active" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% graduation pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
+        <button class="chip active" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% debut pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
         <button class="chip" data-farm-sort="top_end" title="Tiered-FV sum of the org's top 5 prospects — an 80 is worth ~100x a 40">Top-end</button>
         <button class="chip" data-farm-sort="depth" title="Tiered-FV sum of prospects #6-25">Depth</button>
         <!-- Single Trajectory chip — sorts by DvM+ for whichever window
              is selected in the right-hand "Development window" picker, so
              three chips (one per window) would just duplicate that control. -->
         <button class="chip" data-farm-sort="trajectory"
-                title="Sort by DvM+ for the currently selected development window (1y / 3y / 6y, picked on the right). 6y is the default and principal signal. Acquisitions + graduations are nullified — pure development of prospects already in the system.">Trajectory (DvM+)</button>
-        <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted graduations in the trailing 12 months">Grad pipeline</button>
+                title="Sort by DvM+ for the currently selected development window (1y / 3y / 6y, picked on the right). 6y is the default and principal signal. Acquisitions + debuts are nullified — pure development of prospects already in the system.">Trajectory (DvM+)</button>
+        <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted debuts in the trailing 12 months">Grad pipeline</button>
         <button class="chip" data-farm-sort="ifa_spend_pct" title="IFA's share of total Draft+IFA spending over the trailing 3 years — orgs that allocate the highest percentage of their amateur-acquisition dollars to international free agents rise to the top">IFA Spending %</button>
         <button class="chip" data-farm-sort="draft_spend_pct" title="Draft's share of total Draft+IFA spending over the trailing 3 years — orgs that allocate the highest percentage of their amateur-acquisition dollars to the draft rise to the top">Draft Spending %</button>
         <button class="chip" data-farm-sort="roi" title="Financial ROI — career WAR per million USD spent on signing bonuses (draft + IFA). Higher = more efficient development per dollar.">ROI</button>
@@ -7794,7 +7828,7 @@ const TRANSACTION_KINDS = {
   drafted:             { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Drafted" },
   signed_ifa:          { glyph: "●", color: "var(--neon-amber)", dash: "1,2",   pos: "bottom", label: "Signed (Intl Amateur FA)" },
   debut:               { glyph: "★", color: "var(--neon-amber)", dash: "2,1.5", pos: "top",    label: "MLB debut" },
-  graduation:          { glyph: "✦", color: "var(--neon-violet)",dash: "2,1.5", pos: "top",    label: "Graduation" },
+  graduation:          { glyph: "✦", color: "var(--neon-violet)",dash: "2,1.5", pos: "top",    label: "MLB debut" },
   // Non-trade transactions (sourced from player.transactions). Same
   // shape so makeTransactionHistoryBlock can render them with one code
   // path; the chart filter (TRANSACTION_LEGEND_ORDER) leaves them out.
@@ -9438,7 +9472,7 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
     if (p.graduation_date) {
       const ts = new Date(p.graduation_date + "T00:00:00").getTime();
       if (!isNaN(ts) && ts >= cutoff) {
-        events.push({ ts, kind: "graduated", p, label: "graduated to MLB" });
+        events.push({ ts, kind: "graduated", p, label: "debuted in MLB" });
       }
     }
   }
@@ -13999,7 +14033,7 @@ function renderGraduates() {
     <span style="text-align:center;">#</span>
     <span>Player · pos · org · age</span>
     <span class="grad-graduation-cell sort-header" data-grad-sort="date" title="Sort by debut date (newest first)">Debut</span>
-    <span class="sort-header" data-grad-sort="fv_close" title="Sort by FV at graduation (high to low)" style="text-align:center;">FV</span>
+    <span class="sort-header" data-grad-sort="fv_close" title="Sort by FV at debut (high to low)" style="text-align:center;">FV</span>
     <span class="desktop-only sort-header" data-grad-sort="vs_fv_proj" title="Sort by WAG — WAR Above Grade · click to toggle high-to-low / low-to-high" style="text-align:center;">WAG by season</span>
     <span class="desktop-only" style="text-align:center;">Candle</span>
     <span class="grad-level-cell">Level</span>
@@ -14249,7 +14283,7 @@ function renderGraduates() {
   // grouped layout). The list now leads directly with the date-banner.
   document.getElementById("grad-rows").innerHTML = filtered.length
     ? banner + body
-    : `<div class="state-message">No graduates match these filters.</div>`;
+    : `<div class="state-message">No debuts match these filters.</div>`;
   syncSortHeaderActive();
 }
 
@@ -14843,7 +14877,7 @@ const GLOSSARY = {
     name: "Farm rank", category: "methodology",
     priority: 15,
     short: "Composite rank of all 30 MLB farm systems. 45% top-end + 25% depth + 15% trajectory + 15% grad pipeline.",
-    long: "Each component scored 0-100 across the 30 orgs, then blended. Top-end is a tiered FV-points sum of the top 5 prospects (an FV 80 worth ~100× an FV 40). Depth is the same sum for prospects 6 through 25. Trajectory is 1y DvM+. Grad pipeline is FV-weighted graduations in the trailing 12 months.",
+    long: "Each component scored 0-100 across the 30 orgs, then blended. Top-end is a tiered FV-points sum of the top 5 prospects (an FV 80 worth ~100× an FV 40). Depth is the same sum for prospects 6 through 25. Trajectory is 1y DvM+. Grad pipeline is FV-weighted debuts in the trailing 12 months.",
     formula: "farm_score = 0.45·top_end + 0.25·depth + 0.15·trajectory + 0.15·grad_pipeline",
     related: ["dvm_plus", "fv"],
   },
@@ -16270,11 +16304,20 @@ function playerMetaHTML(p, opts = {}) {
   // hierarchy (primary first, bolded) clear.
   const positionLabel = (() => {
     const primary = String(p.position || "").split("/")[0].toUpperCase().trim();
+    // v20 — For debuted players the FG versa list (e.g. Edwards "CF
+    // / 2B / SS") is a prospect-era projection that doesn't reflect
+    // the actual MLB depth-chart slot. Show ONLY the primary position
+    // — which by v20 grad-position logic is the non-FG / non-auto-detect
+    // latest snapshot, i.e. the most recent MLB Pipeline / BA / ESPN
+    // position. No slash list for grads.
+    const isDebuted = p && p.status === "graduated";
     let versaStr = null;
-    for (let i = ((p && p.points) || []).length - 1; i >= 0; i--) {
-      const fg = p.points[i] && p.points[i].per_source && p.points[i].per_source.fangraphs;
-      const ex = fg && fg.tools && fg.tools._extras;
-      if (ex && ex.versa) { versaStr = String(ex.versa); break; }
+    if (!isDebuted) {
+      for (let i = ((p && p.points) || []).length - 1; i >= 0; i--) {
+        const fg = p.points[i] && p.points[i].per_source && p.points[i].per_source.fangraphs;
+        const ex = fg && fg.tools && fg.tools._extras;
+        if (ex && ex.versa) { versaStr = String(ex.versa); break; }
+      }
     }
     if (!primary) return escapeHtml(p.position ?? "—");
     const parts = versaStr
@@ -16303,6 +16346,37 @@ function playerMetaHTML(p, opts = {}) {
   // healthBadgeHTML inline pill (in _inlineBadgeStrip). Showing both
   // duplicated IL state per row. The pill is more glanceable.
   return `<div class="player-meta">${positionLabel} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${ageTag}${btChip}${rosterTag}</div>`;
+}
+
+// "Current level" resolver — returns the player's most-recent assignment
+// level for prose / summary display. Walks level_changes backwards from
+// the most recent and returns the first promotion/demotion's to_level.
+// Falls back to the most recent debut event (some debuted players have
+// only the debut entry on file), then to null. CALLERS still want to
+// chain `|| sl.level` for the season-aggregate fallback when the player
+// has no level_changes at all (most non-graduates).
+//
+// Why not just trust statline.level? A graduate's season statline
+// aggregates the WHOLE season at their highest level reached — Jake
+// Bennett's 2026 statline is MLB-flavored (10.1 IP) even though his
+// current assignment is AAA Worcester after a post-debut demotion.
+// Latest level_change is closer to "where is he RIGHT NOW".
+function currentLevelForSummary(p) {
+  const lc = (p && p.level_changes) || [];
+  if (!lc.length) return null;
+  // Latest-first scan. Promotions/demotions are definitive movement.
+  for (let i = lc.length - 1; i >= 0; i--) {
+    const ev = lc[i];
+    if (ev && ev.to_level && (ev.kind === "promotion" || ev.kind === "demotion")) {
+      return ev.to_level;
+    }
+  }
+  // Fall back to the latest debut entry if no real movement event exists.
+  for (let i = lc.length - 1; i >= 0; i--) {
+    const ev = lc[i];
+    if (ev && ev.to_level && ev.kind === "debut") return ev.to_level;
+  }
+  return null;
 }
 
 // One-line auto-generated "Quick read" summary for a player. Surfaces
@@ -16358,13 +16432,24 @@ function makeQuickReadSummaryParts(p, opts = {}) {
     .filter(Boolean);
 
   const parts = [];
-  // Age + position + current level. "21yo SS at AA" style.
+  // Age + position + current level. "21-year-old SS at AA" style.
   // Skipped on list rows: playerMetaHTML already shows position + age;
   // level lives in the MiLB stats cell.
   if (!listMode) {
-    const agePart = ageNum != null && !isNaN(ageNum) ? `${Math.round(ageNum)}-year-old` : "";
+    // v20 — Age in the WRITTEN summary always hard-rounds DOWN (25.5
+    // → 25-year-old, 25.9 → 25-year-old). A player isn't 26 until
+    // their 26th birthday. The chip-level rendering (e.g. "25.5yo"
+    // in playerMetaHTML) keeps the decimal — only the prose form
+    // collapses to whole years.
+    const agePart = ageNum != null && !isNaN(ageNum) ? `${Math.floor(ageNum)}-year-old` : "";
     const posPart = p.position ? p.position.split("/")[0] : "";
-    const levelPart = sl.level ? ` at ${sl.level}` : "";
+    // v20 — Prefer the most recent level_change.to_level over the
+    // season-aggregate statline.level. Bennett (and any prospect
+    // recently sent down post-debut) was showing "at MLB" because
+    // his season-aggregate statline is MLB-flavored, even when
+    // his actual current assignment is AAA. Latest movement wins.
+    const curLvl = currentLevelForSummary(p) || sl.level;
+    const levelPart = curLvl ? ` at ${curLvl}` : "";
     if (agePart || posPart) {
       parts.push(`${agePart}${posPart ? ` ${escapeHtml(posPart)}` : ""}${levelPart}`);
     }
@@ -16729,7 +16814,7 @@ function updateMeta() {
   meta.innerHTML = `Last refresh: <code>${refreshedAt}</code>` +
     `<span class="dot">·</span>${totalProspects != null ? totalProspects : "…"} prospects` +
     `<span class="dot">·</span>${DATA.active_count} active` +
-    `<span class="dot">·</span>${DATA.graduate_count} graduates`;
+    `<span class="dot">·</span>${DATA.graduate_count} debuts`;
   // v19 — Section flavor-text element removed; the per-section count
   // strip was unnecessary chrome cluttering the tabs row. The active
   // filters chip strip (below) now carries the per-page status info.
@@ -17392,7 +17477,7 @@ function makeRosterSnapshotTile(org) {
       <div class="rs-grid">
         <div class="rs-stat" title="Tiered-FV sum of the org's top 5 prospects"><span class="rs-stat-label">Top-end FV</span><span class="rs-stat-val">${num(org.top_end_points)}</span></div>
         <div class="rs-stat" title="Tiered-FV sum of prospects #6-25"><span class="rs-stat-label">Depth FV</span><span class="rs-stat-val">${num(org.depth_points)}</span></div>
-        <div class="rs-stat" title="FV-weighted graduations in trailing 12 months"><span class="rs-stat-label">Grad pipe</span><span class="rs-stat-val">${num(org.grad_pipeline_score)}</span></div>
+        <div class="rs-stat" title="FV-weighted debuts in trailing 12 months"><span class="rs-stat-label">Debut pipe</span><span class="rs-stat-val">${num(org.grad_pipeline_score)}</span></div>
         <div class="rs-stat" title="Top-10 mean of composite_overall (20-80 power mean)"><span class="rs-stat-label">Tool top10</span><span class="rs-stat-val">${num(tq.top10_mean)}</span></div>
         <div class="rs-stat" title="(very-young − very-old) / total actives"><span class="rs-stat-label">Readiness</span><span class="rs-stat-val">${pct(rdy.pct_signal)}</span></div>
         <div class="rs-stat rs-stat-health${hb.il_pct_current >= 0.10 ? ' is-warn' : ''}" title="Combined health view. Burden = 100·post-TJ% + IL-days mean (lower is better, ranks to letter-grade in the Farm Report Card). On IL now = ${hb.il_current_count != null ? hb.il_current_count : '—'} of ${hb.active_count != null ? hb.active_count : '—'} tracked actives currently sidelined; highlighted red when ≥10%.">
@@ -18072,7 +18157,7 @@ function makeGradCohortChart(grads, opts = {}) {
       return `<rect x="${x.toFixed(1)}" y="${yCursor.toFixed(1)}"
                     width="${bw.toFixed(1)}" height="${segH.toFixed(1)}"
                     fill="${cssVarForTier(tier)}" stroke="var(--border-light)" stroke-width="0.5">
-        <title>${year}: ${c} graduate${c === 1 ? "" : "s"} at FV ${tier}${tier === 60 ? "+" : ""}</title>
+        <title>${year}: ${c} debut${c === 1 ? "" : "s"} at FV ${tier}${tier === 60 ? "+" : ""}</title>
       </rect>`;
     }).join("");
     const xLabel = `<text x="${(x + bw / 2).toFixed(1)}" y="${(H - 8)}" text-anchor="middle"
@@ -18851,7 +18936,7 @@ function renderFarmSystems() {
     <span></span>
     <span>Org</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Overall farm-system letter grade. A+ = #1 org; tiers descend by farm_score (45% top-end · 25% depth · 15% trajectory · 15% grad pipeline). Click to sort.">Grade</span>
-    <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+ — wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. Acquisitions contribute zero on arrival; graduations don't subtract — pure-development metric. Click to sort.">${win.toUpperCase()}DvM+</span>
+    <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+ — wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. Acquisitions contribute zero on arrival; debuts don't subtract — pure-development metric. Click to sort.">${win.toUpperCase()}DvM+</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="Tool development pace vs league mean (100 = league mean, +10 = 1σ). Composite + hitter + pitcher rows. Click to sort.">Tool DvM+</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${escapeHtml(winLabel)} trajectory chart. Click to sort by ${escapeHtml(winLabel)} DvM+.">${escapeHtml(winLabel)} trajectory</span>
     <span class="sort-header" data-farm-sort="top_end" title="Top prospects in the org. Click to sort by top-end talent (tiered FV sum of the top 5 prospects).">Top prospects</span>
@@ -18928,7 +19013,7 @@ function renderFarmSystems() {
     // Recent-grad alumni badge (G22).
     const alumni = alumniByOrg[org.org] || [];
     const alumniBadge = alumni.length
-      ? ` <span class="farm-alumni-badge" title="${escapeHtml(alumni.map(a => `${a.name} · FV ${a.fv} · graduated ${a.date}`).join(" · "))}">✦ ${alumni.length}</span>`
+      ? ` <span class="farm-alumni-badge" title="${escapeHtml(alumni.map(a => `${a.name} · FV ${a.fv} · debuted ${a.date}`).join(" · "))}">✦ ${alumni.length}</span>`
       : "";
     // Confidence dot (G26) — green/amber/red based on multi-instance share.
     const conf = confByOrg[org.org];
@@ -18978,8 +19063,8 @@ function renderFarmSystems() {
         <div class="metric-cell"><span class="metric-label">${win.toUpperCase()}DvM+</span><span class="metric-value">${dvm != null ? dvm : "—"}</span></div>
         <div class="metric-cell"><span class="metric-label">Top-End</span><span class="metric-value">${org.top_end_points != null ? org.top_end_points.toFixed(0) : "—"}</span></div>
         <div class="metric-cell"><span class="metric-label">Depth</span><span class="metric-value">${org.depth_points != null ? org.depth_points.toFixed(0) : "—"}</span></div>
-        <div class="metric-cell" title="Per-org graduate boom % — % of settled grads with WAG ≥ +2.5 (full-season-equivalent)"><span class="metric-label">Boom%</span><span class="metric-value tier-boom">${boomPct != null ? boomPct + "%" : "—"}</span></div>
-        <div class="metric-cell" title="Per-org graduate bust % — % of settled grads with WAG ≤ −1.5 (full-season-equivalent)"><span class="metric-label">Bust%</span><span class="metric-value tier-bust">${bustPct != null ? bustPct + "%" : "—"}</span></div>
+        <div class="metric-cell" title="Per-org debut boom % — % of settled debuts with WAG ≥ +2.5 (full-season-equivalent)"><span class="metric-label">Boom%</span><span class="metric-value tier-boom">${boomPct != null ? boomPct + "%" : "—"}</span></div>
+        <div class="metric-cell" title="Per-org debut bust % — % of settled debuts with WAG ≤ −1.5 (full-season-equivalent)"><span class="metric-label">Bust%</span><span class="metric-value tier-bust">${bustPct != null ? bustPct + "%" : "—"}</span></div>
       </div>`;
     return `
       <div class="farm-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)}">
@@ -19002,7 +19087,7 @@ function renderFarmSystems() {
           const v = (org.dvm_plus || {})[win];
           if (v == null) return `<span class="fdh-value" style="color:var(--text-tertiary);">—</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
           const color = v >= 110 ? 'var(--up)' : v <= 90 ? 'var(--down)' : 'var(--neon-violet)';
-          return `<span class="fdh-value" style="color:${color};" title="${win.toUpperCase()}DvM+ ${v} · 100 = league mean · 10 pts = 1 std-dev · graduations + acquisitions nullified">${v}</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
+          return `<span class="fdh-value" style="color:${color};" title="${win.toUpperCase()}DvM+ ${v} · 100 = league mean · 10 pts = 1 std-dev · debuts + acquisitions nullified">${v}</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
         })()}</div>
         <div>${makeToolDvmCell(org)}</div>
         <div title="${escapeHtml(pulseTooltip)}">${makeFarmSparkline(org.fv_history, deltaAbove, meanBaseline, win, org.org)}${pulseHtml}</div>
@@ -20134,7 +20219,10 @@ function makeStatcastApiBlock(sc, player) {
     <td>${p.avg_spin != null ? Math.round(Number(p.avg_spin)) : "—"}</td>
   </tr>`).join("")}</tbody></table>` : "";
   const venues = (((sc.coverage || {}).venues || []).map(v => v.name).filter(Boolean).slice(0, 3).join(" / "));
-  const plotHtml = player && player.statcast_metrics ? makePitchMovementPlot(player.statcast_metrics, player.player_key) : "";
+  // v20 — Use the per-level `sc` payload so the pitch-movement plot
+  // tracks whichever level-tab is active. Previously this read
+  // `player.statcast_metrics` (the primary) and ignored the tab.
+  const plotHtml = sc ? makePitchMovementPlot(sc, (player && player.player_key) + "-" + (sc.level || "main")) : "";
   return `<div class="stat-groups">
     <div class="stat-group">
       <div class="stat-group-label">${escapeHtml(sc.level || "")}<span style="font-weight:500;color:var(--text-tertiary);letter-spacing:0;text-transform:none;"> · MLB Stats API game feed${venues ? ` · ${escapeHtml(venues)}` : ""}</span></div>
@@ -20267,6 +20355,67 @@ function _pitchUsagePercent(p) {
   const n = Number(p.usage_pct);
   if (!isFinite(n)) return null;
   return p.source === "statcast_feed" ? n : (n <= 1 ? n * 100 : n);
+}
+
+// Global click handler for level-tab chips. Toggles `.is-active` on
+// sibling tabs + corresponding panels by matching data-lvl-group +
+// data-lvl-idx. Inline onclick (not delegation) so this works even
+// before the page's main click delegate is bound.
+function switchLevelTab(btn) {
+  if (!btn) return;
+  const group = btn.getAttribute("data-lvl-group");
+  const idx = btn.getAttribute("data-lvl-idx");
+  if (!group || idx == null) return;
+  const root = btn.closest(".level-tabs-wrap");
+  if (!root) return;
+  root.querySelectorAll(`.level-tab[data-lvl-group="${group}"]`)
+      .forEach(t => t.classList.toggle("is-active", t.getAttribute("data-lvl-idx") === idx));
+  root.querySelectorAll(`.level-tab-panel[data-lvl-group="${group}"]`)
+      .forEach(p => p.classList.toggle("is-active", p.getAttribute("data-lvl-idx") === idx));
+}
+
+// Level-tabs wrapper for metric blocks that carry per-level splits.
+// Used by the Zone / Statcast / Pitch movement sections so a debuted
+// player whose payload contains both AAA + MLB level_splits gets a
+// tab strip to switch between them. Falls through to plain block
+// rendering when only one level exists.
+//
+// Signature:
+//   primary  — the canonical payload (also level_splits[0] when present)
+//   blockFn  — (payload) => HTML for that level's block
+//   keySlug  — unique id segment (e.g. "zone-thomas_white") so multiple
+//              tabbed sections on the same page don't collide on click
+function withLevelTabs(primary, blockFn, keySlug) {
+  if (!primary) return "";
+  const splits = Array.isArray(primary.level_splits) && primary.level_splits.length
+    ? primary.level_splits
+    : [primary];
+  if (splits.length <= 1) return blockFn(primary);
+  // Tab order: MLB first if present, then AAA, AA, A+, A, CPX. Keeps
+  // the "current/highest level" on the left so the default tab on
+  // open matches the user's "where are they NOW" expectation.
+  const LVL_ORDER = ["MLB", "AAA", "AA", "A+", "A", "CPX", "DSL"];
+  const ordered = splits.slice().sort((a, b) => {
+    const ai = LVL_ORDER.indexOf(a.level);
+    const bi = LVL_ORDER.indexOf(b.level);
+    return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
+  });
+  const groupId = `lvltabs-${keySlug}`;
+  const tabs = ordered.map((s, i) => {
+    const lvl = s.level || "—";
+    const sample = s.pitches != null ? `${s.pitches} pitches`
+                 : s.games != null ? `${s.games} G`
+                 : "";
+    const tip = sample ? `${lvl} · ${sample}` : lvl;
+    return `<button class="level-tab${i === 0 ? " is-active" : ""}" data-lvl-group="${escapeHtml(groupId)}" data-lvl-idx="${i}" title="${escapeHtml(tip)}" type="button" onclick="switchLevelTab(this)">${escapeHtml(lvl)}</button>`;
+  }).join("");
+  const panels = ordered.map((s, i) => {
+    return `<div class="level-tab-panel${i === 0 ? " is-active" : ""}" data-lvl-group="${escapeHtml(groupId)}" data-lvl-idx="${i}">${blockFn(s)}</div>`;
+  }).join("");
+  return `<div class="level-tabs-wrap">
+    <div class="level-tabs">${tabs}</div>
+    ${panels}
+  </div>`;
 }
 
 function makeArsenalBlock(pa, p) {
@@ -20701,7 +20850,7 @@ function renderPlayerDetail(key) {
         const n = pool.length;
         const rank = idx + 1;
         const pct = ((n - rank) / Math.max(1, n - 1)) * 100;
-        const tip = `Among ${n} graduates with enough MLB playing time, ranked #${rank} by WAG (top ${(100 - pct).toFixed(0)}% if pct lower). Higher WAG = outperformed the FV-implied WAR/yr expectation.`;
+        const tip = `Among ${n} debuted players with enough MLB playing time, ranked #${rank} by WAG (top ${(100 - pct).toFixed(0)}% if pct lower). Higher WAG = outperformed the FV-implied WAR/yr expectation.`;
         const color = pct >= 75 ? "var(--up)"
                     : pct >= 25 ? "var(--neon-cyan)"
                     : "var(--down)";
@@ -21263,7 +21412,7 @@ function renderPlayerDetail(key) {
                    : "var(--text-tertiary)";
       const dSign = realizedDelta > 0 ? "+" : "";
       surplusDeltaRow = `<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
-         <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;" title="Realized surplus minus expected (FV-implied) surplus. Positive = the graduate has outperformed the bet implied by their final prospect grade.">Δ vs expected</div>
+         <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;" title="Realized surplus minus expected (FV-implied) surplus. Positive = the debuted player has outperformed the bet implied by their final prospect grade.">Δ vs expected</div>
          <div style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:${dColor};font-variant-numeric:tabular-nums;">${dSign}${fmtUsd(Math.abs(realizedDelta)).replace("$", realizedDelta < 0 ? "−$" : "$")}</div>
        </div>`;
     }
@@ -21286,7 +21435,7 @@ function renderPlayerDetail(key) {
              <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Realized market AAV</div>
              <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${warRate.war_per_yr.toFixed(2)} WAR/yr × $${DOLLARS_PER_WAR_MM}M · ${warRate.war_seasons_count} season${warRate.war_seasons_count === 1 ? "" : "s"}</div>
            </div>
-           <div style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:${aavColor};font-variant-numeric:tabular-nums;" title="Market-equivalent Average Annual Value. Multiplies the graduate's playing-time-weighted WAR/yr by the prevailing $/WAR market rate (~$${DOLLARS_PER_WAR_MM}M, the recent free-agent winter average). What a comparable free agent would command per year on the open market.">${fmtUsd(aav)}/yr</div>
+           <div style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:${aavColor};font-variant-numeric:tabular-nums;" title="Market-equivalent Average Annual Value. Multiplies the debuted player's playing-time-weighted WAR/yr by the prevailing $/WAR market rate (~$${DOLLARS_PER_WAR_MM}M, the recent free-agent winter average). What a comparable free agent would command per year on the open market.">${fmtUsd(aav)}/yr</div>
          </div>`;
       }
     }
@@ -21986,11 +22135,11 @@ function renderPlayerDetail(key) {
     : "";
 
   const zoneMetricsSection = (p.zone_metrics && Object.keys(p.zone_metrics).length)
-    ? `<div class="detail-title">${p.zone_metrics.is_pitcher ? "Zone profile" : "Zone discipline"} <span class="detail-title-sub">${escapeHtml(p.zone_metrics.level || "")} · MLB Stats API approximation</span></div>${makeZoneMetricsBlock(p.zone_metrics)}`
+    ? `<div class="detail-title">${p.zone_metrics.is_pitcher ? "Zone profile" : "Zone discipline"} <span class="detail-title-sub">MLB Stats API approximation${Array.isArray(p.zone_metrics.level_splits) && p.zone_metrics.level_splits.length > 1 ? " · switch level →" : " · " + escapeHtml(p.zone_metrics.level || "")}</span></div>${withLevelTabs(p.zone_metrics, m => makeZoneMetricsBlock(m), `zone-${p.player_key || ""}`)}`
     : "";
 
   const statcastApiSection = (p.statcast_metrics && Object.keys(p.statcast_metrics).length)
-    ? `<div class="detail-title">Statcast feed <span class="detail-title-sub">${escapeHtml(p.statcast_metrics.level || "")} · MLB Stats API game feed</span></div>${makeStatcastApiBlock(p.statcast_metrics, p)}`
+    ? `<div class="detail-title">Statcast feed <span class="detail-title-sub">MLB Stats API game feed${Array.isArray(p.statcast_metrics.level_splits) && p.statcast_metrics.level_splits.length > 1 ? " · switch level →" : " · " + escapeHtml(p.statcast_metrics.level || "")}</span></div>${withLevelTabs(p.statcast_metrics, m => makeStatcastApiBlock(m, p), `sc-${p.player_key || ""}`)}`
     : "";
 
   const arsenalSection = isPitcher
@@ -23527,7 +23676,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
           <div class="player-display-name">${escapeHtml(fullOrgName(org.org))}</div>
           <div class="player-display-meta">
             <span style="font-family:var(--font-mono);color:var(--text-tertiary);letter-spacing:0.08em;margin-right:8px;font-weight:600;">${escapeHtml(org.org)}</span>
-            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="45% top-end talent · 25% depth · 15% trajectory · 15% graduation pipeline (each rescaled 0-100 across the 30 orgs)">#${org.farm_rank}</strong> of 30 · ${org.count} prospects tracked · Total FV <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : "—"}</strong>
+            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="45% top-end talent · 25% depth · 15% trajectory · 15% debut pipeline (each rescaled 0-100 across the 30 orgs)">#${org.farm_rank}</strong> of 30 · ${org.count} prospects tracked · Total FV <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : "—"}</strong>
           </div>
         </div>
       </div>
@@ -23577,7 +23726,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     if (m >= 10)   return `$${m.toFixed(0)}M`;
     return `$${m.toFixed(1)}M`;
   };
-  const surplusTip = `Sum of FV-implied surplus value across this org's ${farmSurplusBreakdown.n} active prospects (graduates excluded). Each prospect's value derives from the FanGraphs / Craig Edwards 2019 framework (hitter/pitcher split). Real surplus depends on health, performance variance, and changes in $/WAR market rate.${farmSurplusBreakdown.topContributor ? ` Top contributor: ${farmSurplusBreakdown.topContributor.player_name} (${fmtSurplusUsd(farmSurplusBreakdown.topShare)}).` : ""}`;
+  const surplusTip = `Sum of FV-implied surplus value across this org's ${farmSurplusBreakdown.n} active prospects (debuts excluded). Each prospect's value derives from the FanGraphs / Craig Edwards 2019 framework (hitter/pitcher split). Real surplus depends on health, performance variance, and changes in $/WAR market rate.${farmSurplusBreakdown.topContributor ? ` Top contributor: ${farmSurplusBreakdown.topContributor.player_name} (${fmtSurplusUsd(farmSurplusBreakdown.topShare)}).` : ""}`;
   const surplusValue = farmSurplusBreakdown.total > 0
     ? fmtSurplusUsd(farmSurplusBreakdown.total)
     : "—";
@@ -23589,7 +23738,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // vs the league mean as a wRC+/OPS+-style index (100 = league mean,
   // 10 pts = 1 std-dev). Pure-development metric: graduations + acquisitions
   // are nullified, so only FV gained while the player was in the org counts.
-  const dvmTip = "100 = league mean · 10 pts = 1 std-dev · graduations + acquisitions nullified";
+  const dvmTip = "100 = league mean · 10 pts = 1 std-dev · debuts + acquisitions nullified";
   const dvmCell = (winKey, label) => {
     const v = (org.dvm_plus || {})[winKey];
     if (v == null) return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><div style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--text-tertiary);">—</div><div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;">${label}</div></div>`;
@@ -23625,7 +23774,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const healthValue = healthOnIL || healthPostTJ
     ? `${healthOnIL} IL · ${healthPostTJ} TJ`
     : "Clean";
-  const healthTip = `${healthOnIL} prospect${healthOnIL === 1 ? "" : "s"} currently on IL · ${healthPostTJ} post-Tommy John (active roster only; graduates excluded).`;
+  const healthTip = `${healthOnIL} prospect${healthOnIL === 1 ? "" : "s"} currently on IL · ${healthPostTJ} post-Tommy John (active roster only; debuts excluded).`;
 
   // DvM+ tile takes 2x width — it's the primary headline statistic for
   // the farm detail page (per the design call: "DvM+ tile + report card
@@ -23636,7 +23785,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     <div class="stat-tile" title="${escapeHtml(surplusTip)}" style="cursor:help;">
       <div class="stat-label">Surplus value</div>
       <div class="stat-value" style="color:${surplusColor};font-variant-numeric:tabular-nums;">${surplusValue}</div>
-      <div class="stat-sub">${farmSurplusBreakdown.n} active prospects · graduates excluded</div>
+      <div class="stat-sub">${farmSurplusBreakdown.n} active prospects · debuts excluded</div>
     </div>
     <div class="stat-tile">
       <div class="stat-label">Avg age</div>
@@ -24623,7 +24772,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     ${gradedSection}`;
 
   const devTabHtml = `
-    <div class="detail-title flush">${(state.formWindow || "6y")} development vs mean farm <span class="detail-title-sub">pure-development metric — graduations + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. DvM+ = wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. 6y is the principal signal.</span></div>
+    <div class="detail-title flush">${(state.formWindow || "6y")} development vs mean farm <span class="detail-title-sub">pure-development metric — debuts + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. DvM+ = wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. 6y is the principal signal.</span></div>
     <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
       <span class="filter-label">Window</span>
       <button class="chip${(state.formWindow || "6y") === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
@@ -24702,7 +24851,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
          <tbody>
            <tr><td>WAR per $M (bonus)</td>
              <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_fmtRoi(_warPerM)}</td>
-             <td style="color:var(--text-tertiary);font-size:11px;">Career WAR per $M signing bonus across all graduates with bonus on file</td></tr>
+             <td style="color:var(--text-tertiary);font-size:11px;">Career WAR per $M signing bonus across all debuts with bonus on file</td></tr>
            <tr><td>Draft Pool Efficiency</td>
              <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_fmtRoi(_draftPoolEff)}</td>
              <td style="color:var(--text-tertiary);font-size:11px;">Trailing-3yr WAR per $M of MLB-published draft pool</td></tr>
@@ -24711,7 +24860,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
              <td style="color:var(--text-tertiary);font-size:11px;">11yr window · per-grad bonus sum (T-12 to T-2)</td></tr>
            <tr><td>Grad-Contract Surplus</td>
              <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_surplusLeaf != null ? '$' + (_surplusLeaf / 1_000_000).toFixed(1) + 'M/yr' : '—'}</td>
-             <td style="color:var(--text-tertiary);font-size:11px;">Mean per-year cost-controlled surplus across qualifying graduates</td></tr>
+             <td style="color:var(--text-tertiary);font-size:11px;">Mean per-year cost-controlled surplus across qualifying debuts</td></tr>
          </tbody>
        </table>`
     : "";
@@ -26000,7 +26149,7 @@ function makeFarmCompareSideBySide(farms) {
       <button class="chip${win === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
       <button class="chip${win === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
       <button class="chip${win === "6y" ? " active" : ""}" data-form-window="6y" type="button">6y</button>
-      <span style="margin-left:auto;font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;">DvM+ · 100 = league mean · 10 pts = 1 std-dev · graduations + acquisitions nullified · 6y is the principal window</span>
+      <span style="margin-left:auto;font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;">DvM+ · 100 = league mean · 10 pts = 1 std-dev · debuts + acquisitions nullified · 6y is the principal window</span>
     </div>
     <div style="display:grid;grid-template-columns:${cols};gap:10px;align-items:start;">${chartCells}</div>
   </div>`;

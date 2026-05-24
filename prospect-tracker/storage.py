@@ -4093,12 +4093,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             int(r["season"]) for r in rows
             if r.get("level") == "MLB" and r.get("season")
         )
-        # Rule 5 protection trap — see compensating logic above. Same
-        # condition (offseason API date + first real MLB season is
-        # later) rolls forward to a mid-season placeholder in the
-        # actual debut year. Other offseason dates (real Sep/Oct
-        # debuts) are kept as-is.
-        if (api_d.month >= 10
+        # Rule 5 protection trap — narrowed to Nov/Dec only (v20).
+        # The previous Oct-inclusive gate misfired on legitimate late-
+        # season call-ups: Chase DeLauter debuted 2025-10-01 (regular
+        # season's last week) and then played his first full season in
+        # 2026; the API debut date was correct but the rollforward
+        # stamped today's date onto his graduation_date because
+        # career_stats only had a 2026 MLB row. Rule-5 protection
+        # always happens in mid/late November after the World Series,
+        # so restricting the trap to months 11-12 catches that quirk
+        # without trampling October call-ups.
+        if (api_d.month >= 11
                 and mlb_years and mlb_years[0] > api_d.year):
             return _safe_in_year_placeholder(p.player_key, mlb_years[0], rows)
         return api_debut
@@ -5516,6 +5521,20 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     _audit_low_fv = 0
 
     for p in timeseries:
+        # v20 — Definitive debut detection. If the MLB API has stamped
+        # an mlbDebutDate on the player's roster_status, they're treated
+        # as debuted regardless of whether any consensus snapshot has
+        # flagged status='graduated'. This was the Waldschmidt bug —
+        # he debuted 2026-05-08 (career_mlb_ab=0 because he was a
+        # pinch-runner / late-inning sub) but no FG snapshot had marked
+        # him as a graduate, so the actives pool kept him. mlb_debut_date
+        # is the authoritative signal; AB/IP/active-roster-day thresholds
+        # are no longer used.
+        _rs_for_debut = (roster_status.get(p.player_key) or {})
+        _api_debut = _rs_for_debut.get("mlb_debut_date")
+        if _api_debut and p.status != "graduated":
+            p.status = "graduated"
+            p.graduation_date = _api_debut
         if p.status == "graduated":
             grads.append(p)
             continue
@@ -5625,7 +5644,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # glance. Pre-dedup counts (mlbam_id dedup runs below).
     log.info(
         "active-pool cleanup: %d low-FV (<%d), %d play-2yr-stale, %d stale-IL, %d FV+play stale "
-        "→ actives=%d, graduates=%d, inactives=%d (pre-dedup)",
+        "-> actives=%d, graduates=%d, inactives=%d (pre-dedup)",
         _audit_low_fv, MIN_PROSPECT_FV, _audit_play2yr, _audit_stale_il, _audit_fv_play_stale,
         len(actives), len(grads), len(inactives),
     )
