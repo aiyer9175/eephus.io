@@ -2756,8 +2756,12 @@
        mobile and wide displays.                                       */
     .draft-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-      gap: 10px;
+      /* v19 — Condensed from 360px → 280px min-width + 10 → 8px gap so
+         5 cards fit per row at typical desktop widths (1440px). The
+         per-card chip rows below were tightened in parallel to keep
+         the new narrower width legible. */
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 8px;
     }
     .draft-card {
       background: var(--bg-secondary);
@@ -3148,6 +3152,14 @@
       display: flex; align-items: center; justify-content: space-between;
       gap: 4px; font-size: 11px; min-width: 0;
     }
+    /* v19 — Chip-sized rank diamond inside the farm top-3 strip.
+       Shares the .rank-num rotation + rarity classes but sized down to
+       18px square so it reads as an inline accent. */
+    .farm-top3-chip .rank-num {
+      width: 18px; height: 18px;
+      flex-shrink: 0;
+    }
+    .farm-top3-chip .rank-num-inner { font-size: 8px; }
     .farm-top3-pos {
       flex-shrink: 0;
       font-family: var(--font-mono);
@@ -12118,12 +12130,12 @@ function _renderDraftCard(p) {
   // HIT / GAME_PWR / SPEED / FIELD / THROW). Matches the active-list
   // density-mode tool grids.
   const toolPills = toolKeys.length
-    ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">
+    ? `<div style="display:flex;flex-wrap:nowrap;gap:3px;margin-top:4px;overflow:hidden;">
         ${toolKeys.map(k => {
           const label = (typeof toolAbbrev === "function" ? toolAbbrev(k) : k.toUpperCase());
           const full = (typeof toolFullName === "function" ? toolFullName(k) : k);
           return `<span title="${escapeHtml(full)}: ${tools[k]}"
-                 style="font-size:10px;padding:1px 5px;border-radius:3px;
+                 style="font-size:9px;padding:0 4px;border-radius:2px;white-space:nowrap;
                  background:var(--bg-tertiary);color:var(--text-secondary);">
             ${escapeHtml(label)} <strong style="color:${_draftFvBucketColor(tools[k])};">${tools[k]}</strong>
           </span>`;
@@ -12163,10 +12175,10 @@ function _renderDraftCard(p) {
     if (ext.report) { report = ext.report; break; }
   }
   const reportLine = report
-    ? `<div class="draft-report" style="margin-top:8px;font-size:11px;
-          color:var(--text-secondary);line-height:1.4;
-          max-height:60px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 50%,transparent);">
-        ${escapeHtml(report.slice(0, 400))}…</div>` : "";
+    ? `<div class="draft-report" style="margin-top:6px;font-size:10.5px;
+          color:var(--text-secondary);line-height:1.35;
+          max-height:40px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 60%,transparent);">
+        ${escapeHtml(report.slice(0, 260))}…</div>` : "";
 
   // v17 — Display sequential rank from the new FV-sort order (the parent
   // _renderDraftRankings stamps _fvSortRank after sorting). Falls back to
@@ -12186,37 +12198,36 @@ function _renderDraftCard(p) {
     <button class="share-as-image share-inline"
             data-share-target=".draft-card"
             data-share-filename="draft-${escapeHtml(p.player_key)}"
-            style="position:absolute;top:6px;right:6px;"
+            style="position:absolute;top:4px;right:4px;"
             title="Save this draft card as a PNG image">⤴</button>
-    <div style="display:flex;align-items:center;gap:8px;">
+    <div style="display:flex;align-items:center;gap:6px;min-width:0;">
       ${_headshotImg(p.headshot_url, p.player_name, { fv: p.consensus_fv })}
-      <span style="font-size:16px;font-weight:700;color:var(--text-primary);"
+      <span style="font-size:14px;font-weight:700;color:var(--text-primary);flex-shrink:0;"
             title="${escapeHtml(pickTitle)}">#${pickDisplay}</span>
-      <span style="font-size:14px;font-weight:600;flex:1;">
+      <span style="font-size:13px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
         ${escapeHtml(p.player_name)}${milbLink}
       </span>
-      <span style="font-size:11px;padding:2px 6px;border-radius:4px;
-            background:${fvColor}22;color:${fvColor};font-weight:700;"
+      <span style="font-size:10.5px;padding:2px 5px;border-radius:3px;
+            background:${fvColor}22;color:${fvColor};font-weight:700;flex-shrink:0;"
             title="Consensus future value${p.consensus_fv_raw != null && p.consensus_fv_raw !== p.consensus_fv
               ? ` (raw avg ${fvCeil(p.consensus_fv_raw)})` : ''}">
         FV ${p.consensus_fv != null ? fvCeil(p.consensus_fv) : "—"}
       </span>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;font-size:11px;
-         color:var(--text-secondary);margin-top:4px;">
-      <!-- v17 — Primary position bolded for consistency with active-list versa display. -->
-      <span><b>${escapeHtml(p.position || "?")}</b></span>
-      <span style="color:var(--text-tertiary);">·</span>
-      <span title="HS = High School, COL = College; h=hitter, p=pitcher">
-        ${escapeHtml(p.player_type || "?")}</span>
-      <span style="color:var(--text-tertiary);">·</span>
-      <span>${_collegeLogoImg(p.school_logo_url, p.school)}${schoolLine}</span>
-      <span style="margin-left:auto;display:flex;gap:6px;">
-        <span style="padding:1px 6px;border-radius:3px;background:${spColor}22;
+    <!-- v19 — Single wrap-flex meta strip: no middot separators, chip
+         backgrounds + gap visually divide entries. School name
+         truncates with ellipsis when the card is at min-width. -->
+    <div class="draft-card-meta" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-size:10.5px;color:var(--text-secondary);margin-top:4px;min-width:0;">
+      <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-weight:700;"><b>${escapeHtml(p.position || "?")}</b></span>
+      <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);color:var(--text-tertiary);"
+            title="HS = High School, COL = College; h=hitter, p=pitcher">${escapeHtml(p.player_type || "?")}</span>
+      <span style="display:inline-flex;align-items:center;gap:3px;min-width:0;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_collegeLogoImg(p.school_logo_url, p.school)}${schoolLine}</span>
+      <span style="margin-left:auto;display:inline-flex;gap:4px;flex-shrink:0;">
+        <span style="padding:1px 5px;border-radius:3px;background:${spColor}22;
               color:${spColor};font-weight:700;"
               title="Draft Stock+ — class-normalized index (100 = class median, +30 ≈ top decile)">
           DS+ ${sp != null ? sp : "—"}</span>
-        <span style="padding:1px 6px;border-radius:3px;background:var(--bg-tertiary);
+        <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);
               color:var(--text-secondary);"
               title="Projected round derived from sequential rank">
           ${pRound}</span>
@@ -12651,6 +12662,10 @@ function _renderOverseasRankings(host, leagues) {
     if (ra !== rb) return ra - rb;
     return (a.player_name || "").localeCompare(b.player_name || "");
   });
+  // v19 — Stamp global-overseas rank (1-N by FV desc) onto each card
+  // so _renderOverseasCard can render a rank diamond matching the
+  // active-list / draft-card visual treatment.
+  flat.forEach((p, i) => { p._overseasRank = i + 1; });
 
   const pageSize = state.pageSizes.overseas || 50;
   const totalItems = flat.length;
@@ -12715,12 +12730,12 @@ function _renderOverseasCard(p) {
   // v17 — Use toolAbbrev for consistent labels (HIT / PWR / RUN / DEF
   // / ARM) matching the active-list density-mode tool grids.
   const toolPills = toolKeys.length
-    ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">
+    ? `<div style="display:flex;flex-wrap:nowrap;gap:3px;margin-top:4px;overflow:hidden;">
         ${toolKeys.map(k => {
           const label = (typeof toolAbbrev === "function" ? toolAbbrev(k) : k.toUpperCase());
           const full = (typeof toolFullName === "function" ? toolFullName(k) : k);
           return `<span title="${escapeHtml(full)}: ${tools[k]}"
-                 style="font-size:10px;padding:1px 5px;border-radius:3px;
+                 style="font-size:9px;padding:0 4px;border-radius:2px;white-space:nowrap;
                  background:var(--bg-tertiary);color:var(--text-secondary);">
             ${escapeHtml(label)} <strong style="color:${_draftFvBucketColor(tools[k])};">${tools[k]}</strong>
           </span>`;
@@ -12788,10 +12803,10 @@ function _renderOverseasCard(p) {
     if (ext.report) { report = ext.report; break; }
   }
   const reportLine = report
-    ? `<div class="draft-report" style="margin-top:8px;font-size:11px;
-          color:var(--text-secondary);line-height:1.4;
-          max-height:60px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 50%,transparent);">
-        ${escapeHtml(report.slice(0, 400))}…</div>` : "";
+    ? `<div class="draft-report" style="margin-top:6px;font-size:10.5px;
+          color:var(--text-secondary);line-height:1.35;
+          max-height:40px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 60%,transparent);">
+        ${escapeHtml(report.slice(0, 260))}…</div>` : "";
 
   // Bonus pill (projected or signed).
   const bonus = p.signed_bonus_usd || p.proj_bonus_usd;
@@ -12816,30 +12831,33 @@ function _renderOverseasCard(p) {
             data-share-filename="overseas-${escapeHtml(p.player_key)}"
             style="position:absolute;top:6px;right:6px;"
             title="Save this overseas card as a PNG image">⤴</button>
-    <div style="display:flex;align-items:center;gap:8px;">
+    <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+      ${p._overseasRank != null
+        ? `<span class="rank-num ${typeof rankNumRarityClass === 'function' ? rankNumRarityClass({ fv_close: p.consensus_fv }) : ''}" style="width:22px;height:22px;flex-shrink:0;"><span class="rank-num-inner" style="font-size:9px;">#${p._overseasRank}</span></span>`
+        : ''}
       ${_headshotImg(p.headshot_url, p.player_name, { fv: p.consensus_fv })}
-      <span style="font-size:14px;font-weight:600;flex:1;">
+      <span style="font-size:13px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
         ${escapeHtml(p.player_name)}${milbLink}
       </span>
-      <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 6px;border-radius:4px;
-            background:${leagueColor}22;color:${leagueColor};font-weight:700;"
+      <span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;padding:1px 5px;border-radius:3px;
+            background:${leagueColor}22;color:${leagueColor};font-weight:700;flex-shrink:0;"
             title="${escapeHtml(p.country || p.league || '')} — country of the league">
         ${escapeHtml(p.league || "?")}${leagueFlag ? ` ${leagueFlag}` : ""}
       </span>
-      <span style="font-size:11px;padding:2px 6px;border-radius:4px;
-            background:${fvColor}22;color:${fvColor};font-weight:700;"
+      <span style="font-size:10.5px;padding:2px 5px;border-radius:3px;
+            background:${fvColor}22;color:${fvColor};font-weight:700;flex-shrink:0;"
             title="Consensus future value">
         FV ${fvInt != null ? fvInt : "—"}
       </span>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;font-size:11px;
-         color:var(--text-secondary);margin-top:4px;flex-wrap:wrap;">
-      <!-- v17 — Primary position bolded for consistency with active-list versa display. -->
-      <span><b>${escapeHtml(p.position || "?")}</b></span>
-      <span style="color:var(--text-tertiary);">·</span>
-      <span>${escapeHtml(p.current_team || "?")} <span style="color:var(--text-tertiary);font-size:10px;">(${escapeHtml(p.league || "?")})</span></span>
-      ${p.eta_year ? `<span style="color:var(--text-tertiary);">·</span><span title="MLB ETA">ETA ${p.eta_year}</span>` : ""}
-      <span style="margin-left:auto;display:flex;gap:6px;">${bonusPill}</span>
+    <!-- v19 — Tightened meta strip: no middot separators, chip-style
+         backgrounds + 4px flex gap visually divide entries. Wraps if
+         narrow but truncates current_team first to keep height stable. -->
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-size:10.5px;color:var(--text-secondary);margin-top:4px;min-width:0;">
+      <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-weight:700;"><b>${escapeHtml(p.position || "?")}</b></span>
+      <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);min-width:0;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(p.current_team || "?")}</span>
+      ${p.eta_year ? `<span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);" title="MLB ETA">ETA ${p.eta_year}</span>` : ""}
+      <span style="margin-left:auto;display:inline-flex;gap:4px;flex-shrink:0;">${bonusPill}</span>
     </div>
     ${toolPills}
     ${arc}
@@ -13033,6 +13051,29 @@ async function renderDraftDetail(key) {
   const fvColor = _draftFvBucketColor(p.consensus_fv);
   const stockColor = _stockPlusColor(p.draft_stock_plus);
 
+  // v19 — Class-context computation: rank within this draft class by
+  // consensus FV desc, plus a 5-FV-bin distribution for the histogram
+  // mini-chart. Used by the Overview tab's new Class Context card +
+  // the hero header's rank-in-class badge.
+  const classProspects = (cls && cls.prospects) || [];
+  const classSorted = classProspects.slice()
+    .filter(cp => cp.consensus_fv != null)
+    .sort((a, b) => (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0)
+                    || (a.player_key || "").localeCompare(b.player_key || ""));
+  const classRank = classSorted.findIndex(x => x.player_key === p.player_key) + 1 || null;
+  const classTotal = classSorted.length;
+  const classPct = (classRank && classTotal)
+    ? Math.max(1, Math.round(((classTotal - classRank + 1) / classTotal) * 100))
+    : null;
+
+  // v19 — School logo in the hero (was fetched in data but unrendered).
+  // Falls back to text-only when missing/404.
+  const schoolLogoHero = p.school_logo_url
+    ? `<img src="${escapeHtml(p.school_logo_url)}" alt="" loading="lazy"
+           onerror="this.style.display='none'"
+           style="height:22px;width:auto;vertical-align:middle;margin-right:5px;">`
+    : "";
+
   // Header — back link, name + FV badge, draft-year + school chip,
   // FV-tier ring around the headshot (matches MiLB detail page).
   const headshotBig = _headshotImg(p.headshot_url, p.player_name,
@@ -13046,7 +13087,7 @@ async function renderDraftDetail(key) {
           <div class="player-display-name">${escapeHtml(p.player_name)}</div>
           <div class="player-display-meta">
             <strong style="font-weight:600;color:var(--text-primary);">${escapeHtml(p.position || "—")}</strong>
-            ${p.school ? ` · ${escapeHtml(p.school)}` : ""}
+            ${p.school ? ` · ${schoolLogoHero}${escapeHtml(p.school)}` : ""}
             ${p.college_commit ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(p.college_commit)} commit</span>` : ""}
           </div>
           <div class="player-display-meta" style="margin-top:4px;font-size:11px;color:var(--text-tertiary);">
@@ -13061,7 +13102,7 @@ async function renderDraftDetail(key) {
         <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Current FV</div>
         <span class="fv-badge ${fvClass(String(fvInt || "40"))} size-lg" style="margin-top:4px;">${fvInt != null ? fvInt : "—"}</span>
         ${p.draft_stock_plus != null ? `<div style="margin-top:8px;font-family:var(--font-mono);font-size:11px;color:${stockColor};font-weight:700;" title="Draft Stock+ — z-normalized within the ${cls.year} class">DS+ ${p.draft_stock_plus}</div>` : ""}
-        ${p.consensus_pick != null || p.consensus_rank != null ? `<div style="margin-top:4px;font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">Consensus #${p.consensus_pick || Math.round(p.consensus_rank || 0)}</div>` : ""}
+        ${classRank ? `<div style="margin-top:4px;font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);" title="Rank within the ${cls.year} class by consensus FV">#${classRank} of ${classTotal}</div>` : ""}
       </div>
     </div>`;
 
@@ -13073,31 +13114,219 @@ async function renderDraftDetail(key) {
        </div>`
     : "";
 
-  // Stat-tile grid for the overview.
+  // v19 — Overview stat tiles slimmed: financial data moved into a
+  // dedicated card on the Acquisition tab, so the Overview tiles now
+  // focus on identity/class/projection signal.
   const overviewTiles = `<div class="rs-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));">
     ${_statTileHTML("Class", String(cls.year))}
     ${_statTileHTML("Position", escapeHtml(p.position || "—"))}
     ${_statTileHTML("Proj round", p.projected_round ? `R${p.projected_round}` : "—")}
     ${p.draft_stock_plus != null ? _statTileHTML("Draft Stock+", `<span style="color:${stockColor};">${p.draft_stock_plus}</span>`,
       { title: "Z-normalized within this draft class. 100 = class median." }) : ""}
-    ${p.signing_bonus ? _statTileHTML("Signing $", _fmtUSD(p.signing_bonus)) : ""}
-    ${p.slot_value ? _statTileHTML("Slot $", _fmtUSD(p.slot_value)) : ""}
-    ${p.over_slot_pct != null ? _statTileHTML("vs slot", `${p.over_slot_pct > 0 ? '+' : ''}${p.over_slot_pct}%`,
-      { tone: p.over_slot_pct > 0 ? "pos" : (p.over_slot_pct < 0 ? "warn" : "") }) : ""}
+    ${classRank ? _statTileHTML("Class rank", `#${classRank} of ${classTotal}`,
+      { title: `Rank within the ${cls.year} class by consensus FV (top ${classPct}%)` }) : ""}
     ${statusBadge}
   </div>`;
+
+  // v19 — Class Context card: rank chip + horizontal FV distribution
+  // histogram with this player's bin highlighted in their FV-tier color.
+  // Helps the reader see where the prospect sits in their class shape.
+  const classContextCard = (() => {
+    if (!classRank || classTotal < 3) return "";
+    const tiers = [70, 65, 60, 55, 50, 45, 40, 35, 30];
+    const counts = Object.fromEntries(tiers.map(t => [t, 0]));
+    for (const cp of classProspects) {
+      const f = cp.consensus_fv;
+      if (f == null) continue;
+      const tier = Math.max(30, Math.min(70, Math.floor(f / 5) * 5));
+      counts[tier] = (counts[tier] || 0) + 1;
+    }
+    const maxC = Math.max(1, ...Object.values(counts));
+    const myBin = p.consensus_fv != null
+      ? Math.max(30, Math.min(70, Math.floor(p.consensus_fv / 5) * 5))
+      : null;
+    const bars = tiers.slice().reverse().map(t => {
+      const c = counts[t] || 0;
+      const heightPct = Math.round((c / maxC) * 100);
+      const isMe = t === myBin;
+      const barColor = isMe ? fvColor : "var(--bg-tertiary)";
+      const labelColor = isMe ? fvColor : "var(--text-tertiary)";
+      const fontWeight = isMe ? 700 : 400;
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:0;">
+        <div style="width:100%;height:48px;display:flex;align-items:flex-end;justify-content:center;">
+          <div style="width:18px;height:${Math.max(2, heightPct * 0.48)}px;background:${barColor};border-radius:1px;" title="${c} prospect${c === 1 ? '' : 's'} at FV ${t}"></div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:${labelColor};font-weight:${fontWeight};">${t}</div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);">${c}</div>
+      </div>`;
+    }).join("");
+    return `<div class="detail-title">Class Context</div>
+    <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 14px;border-radius:6px;">
+      <div style="display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
+        <span style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--text-primary);">#${classRank} of ${classTotal}</span>
+        <span>·</span>
+        <span style="color:${fvColor};font-weight:600;">Top ${classPct}%</span>
+        <span style="margin-left:auto;color:var(--text-tertiary);font-size:10px;">${cls.year} class FV distribution</span>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:3px;">${bars}</div>
+    </div>`;
+  })();
 
   // Overview tab content.
   const overviewHtml = `
     <div class="detail-title flush">Overview</div>
-    ${overviewTiles}`;
+    ${overviewTiles}
+    ${classContextCard}`;
 
-  // Tools & Scouting tab content.
+  // v19 — Per-tool consensus chip strip (matches MiLB pattern).
+  // Mean across published sources per tool. FV-tier color ramp via
+  // _toolTier + var(--fv-{N}-{bg|fg|bd}).
+  const _consensusToolGrade = (key) => {
+    const vals = [];
+    for (const src in (p.tool_grades || {})) {
+      const grades = p.tool_grades[src] || {};
+      if (grades[key] != null && isFinite(grades[key])) {
+        vals.push(Number(grades[key]));
+      }
+    }
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  };
+  const _isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position || "");
+  const _toolOrder = _isPitcher
+    ? ["fb", "sl", "cb", "ch", "cmd", "ct"]
+    : ["hit", "game_pwr", "raw_pwr", "speed", "field", "throw"];
+  const consensusToolStrip = (() => {
+    const pills = [];
+    for (const k of _toolOrder) {
+      const v = _consensusToolGrade(k);
+      if (v == null) continue;
+      const rounded = Math.round(v);
+      const tier = _toolTier(rounded);
+      const code = (typeof toolAbbrev === "function" ? toolAbbrev(k) : k.toUpperCase());
+      pills.push(`<span class="tool-grade-pill tg-total"
+        style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);font-size:12px;padding:3px 8px;"
+        title="${escapeHtml(code)} consensus grade ${rounded}">
+        <span class="tg-code">${escapeHtml(code)}</span><span class="tg-val">${rounded}</span>
+      </span>`);
+    }
+    if (!pills.length) return "";
+    return `<div class="detail-title flush">Consensus tools</div>
+      <div class="tool-grade-strip" style="margin-bottom:12px;gap:5px;">${pills.join("")}</div>`;
+  })();
+
+  // v19 — FV-by-source timeseries chart. Each source gets its own line
+  // (FV vs snapshot_date). When fewer than 2 distinct dates per source,
+  // renders a single dot. When < 2 sources OR < 2 total points, shows
+  // a placeholder note.
+  const fvTimeseriesChart = (() => {
+    const pts = (p.points || []).filter(pt => pt.fv != null && isFinite(pt.fv) && pt.snapshot_date);
+    if (pts.length < 2) {
+      return `<div class="detail-title">FV trajectory</div>
+        <div style="font-size:12px;color:var(--text-tertiary);padding:8px 0;">
+          Insufficient projection history to chart (need ≥2 snapshots).
+        </div>`;
+    }
+    // Group by source
+    const bySource = {};
+    for (const pt of pts) {
+      const src = pt.source || "unknown";
+      (bySource[src] = bySource[src] || []).push({ d: pt.snapshot_date, fv: Number(pt.fv) });
+    }
+    for (const src in bySource) bySource[src].sort((a, b) => a.d.localeCompare(b.d));
+    const allDates = pts.map(pt => pt.snapshot_date).sort();
+    const minD = allDates[0];
+    const maxD = allDates[allDates.length - 1];
+    const W = 320, H = 90, padL = 28, padR = 8, padT = 8, padB = 18;
+    const x = (d) => {
+      if (minD === maxD) return padL + (W - padL - padR) / 2;
+      const t0 = new Date(minD).getTime();
+      const t1 = new Date(maxD).getTime();
+      const tx = new Date(d).getTime();
+      return padL + ((tx - t0) / (t1 - t0)) * (W - padL - padR);
+    };
+    const FV_MIN = 35, FV_MAX = 75;
+    const y = (fv) => padT + ((FV_MAX - fv) / (FV_MAX - FV_MIN)) * (H - padT - padB);
+    const palette = ["#4AC8E0", "#A764FC", "#7EC880", "#E8A52F", "#D04A4A", "#7BA6CC", "#C99B6E"];
+    const lines = Object.entries(bySource).map(([src, series], i) => {
+      const color = palette[i % palette.length];
+      const pts2 = series.map(s => `${x(s.d).toFixed(1)},${y(s.fv).toFixed(1)}`).join(" ");
+      const line = series.length >= 2
+        ? `<polyline points="${pts2}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`
+        : "";
+      const dots = series.map(s => `<circle cx="${x(s.d).toFixed(1)}" cy="${y(s.fv).toFixed(1)}" r="2.5" fill="${color}"><title>${escapeHtml(src)}: FV ${s.fv} on ${s.d}</title></circle>`).join("");
+      return line + dots;
+    }).join("");
+    // Y-axis ticks
+    const yTicks = [35, 50, 65, 75].map(t =>
+      `<text x="${padL - 4}" y="${y(t) + 3}" text-anchor="end" style="font-family:var(--font-mono);font-size:8px;fill:var(--text-tertiary);">${t}</text>
+       <line x1="${padL}" x2="${W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,2"/>`
+    ).join("");
+    // Source legend
+    const legend = Object.keys(bySource).map((src, i) => {
+      const color = palette[i % palette.length];
+      return `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--text-secondary);"><span style="width:8px;height:2px;background:${color};display:inline-block;"></span>${escapeHtml(src)}</span>`;
+    }).join('<span style="color:var(--text-tertiary);">·</span>');
+    return `<div class="detail-title">FV trajectory · per source</div>
+      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 10px;border-radius:6px;">
+        <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block;" preserveAspectRatio="xMidYMid meet">
+          ${yTicks}
+          ${lines}
+        </svg>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;font-family:var(--font-sans);">${legend}</div>
+      </div>`;
+  })();
+
+  // Tools & Scouting tab content. v19 — Consensus chip strip leads,
+  // then FV timeseries, then per-source breakdown, then scouting reports.
   const toolsScoutingHtml = `
-    <div class="detail-title flush">Tool grades · per source</div>
+    ${consensusToolStrip}
+    ${fvTimeseriesChart}
+    <div class="detail-title">Tool grades · per source</div>
     ${_renderProspectToolsGrid(p)}
     <div class="detail-title">Scouting reports</div>
     ${_renderProspectScoutingReports(p)}`;
+
+  // v19 — Consolidated Financial card (replaces the scattered prose
+  // version + duplicated stat-tile fields). Surfaces every available
+  // bonus / slot / over-slot / lottery-odds signal in a single card.
+  const financialCard = (() => {
+    const rows = [];
+    if (p.signing_bonus) {
+      rows.push(`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--border-light);">
+        <span style="color:var(--text-secondary);">Signing bonus</span>
+        <strong style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary);">${_fmtUSD(p.signing_bonus)}</strong>
+      </div>`);
+    }
+    if (p.slot_value) {
+      rows.push(`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--border-light);">
+        <span style="color:var(--text-secondary);">Slot value</span>
+        <strong style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-secondary);">${_fmtUSD(p.slot_value)}</strong>
+      </div>`);
+    }
+    if (p.over_slot_usd != null || p.over_slot_pct != null) {
+      const overColor = (p.over_slot_pct || 0) > 0 ? "var(--up)"
+                      : (p.over_slot_pct || 0) < 0 ? "var(--down)"
+                      : "var(--text-secondary)";
+      const sign = (p.over_slot_pct || 0) > 0 ? "+" : "";
+      const amt = p.over_slot_usd != null ? `${sign}${_fmtUSD(p.over_slot_usd)}` : "";
+      const pct = p.over_slot_pct != null ? `${sign}${p.over_slot_pct}%` : "";
+      rows.push(`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--border-light);">
+        <span style="color:var(--text-secondary);">Over slot</span>
+        <strong style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:${overColor};">${amt}${amt && pct ? '  ' : ''}${pct ? `(${pct})` : ''}</strong>
+      </div>`);
+    }
+    if (p.lottery_odds != null) {
+      rows.push(`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--border-light);">
+        <span style="color:var(--text-secondary);">Lottery odds</span>
+        <strong style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--neon-cyan);">${(p.lottery_odds * 100).toFixed(1)}%</strong>
+      </div>`);
+    }
+    if (!rows.length) return "";
+    return `<div class="detail-title">Financial</div>
+      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 14px;border-radius:6px;font-size:13px;">
+        ${rows.join("")}
+      </div>`;
+  })();
 
   // Acquisition tab content.
   const milbLinkHtml = p.milb_key
@@ -13112,11 +13341,9 @@ async function renderDraftDetail(key) {
            of the ${cls.year} MLB Draft.`
         : `Projected for round <strong style="color:var(--text-primary);">${p.projected_round || "?"}</strong> in the ${cls.year} MLB Draft.`}
     </div>
-    ${p.signing_bonus ? `<div style="margin-top:10px;font-size:13px;">
-        Signing bonus: <strong>${_fmtUSD(p.signing_bonus)}</strong>${p.slot_value ? ` · Slot value: ${_fmtUSD(p.slot_value)}` : ""}${p.over_slot_pct != null ? ` (<span style="color:${p.over_slot_pct > 0 ? 'var(--neon-orange)' : 'var(--text-tertiary)'};">${p.over_slot_pct > 0 ? '+' : ''}${p.over_slot_pct}% vs slot</span>)` : ""}
-      </div>` : ""}
+    ${financialCard}
     ${p.college_commit ? `<div style="margin-top:10px;font-size:13px;color:var(--text-secondary);">College commit: <strong style="color:var(--neon-cyan);">${escapeHtml(p.college_commit)}</strong></div>` : ""}
-    ${p.school ? `<div style="margin-top:6px;font-size:12px;color:var(--text-tertiary);">School: ${escapeHtml(p.school)}</div>` : ""}
+    ${p.school ? `<div style="margin-top:6px;font-size:12px;color:var(--text-tertiary);">School: ${schoolLogoHero}${escapeHtml(p.school)}</div>` : ""}
     ${milbLinkHtml}`;
 
   const tabs = [
@@ -18612,8 +18839,15 @@ function renderFarmSystems() {
           const nameHtml = pkey
             ? `<span class="farm-top3-name is-link" data-key="${pkey}" tabindex="0" onclick="event.stopPropagation();goToPlayer('${pkey}');" onkeydown="if(event.key==='Enter'){event.stopPropagation();goToPlayer('${pkey}');}">${escapeHtml(t.name)}</span>`
             : `<span class="farm-top3-name">${escapeHtml(t.name)}</span>`;
+          // v19 — Rank diamond LEFT of pos chip, matching active-list
+          // treatment. Reuses rankNumRarityClass for the FV-tier border.
+          // `t.overall_rank` is the top-prospect's site-wide MiLB rank
+          // (populated by storage.py when building org.prospects).
+          const rankDiamond = t.overall_rank != null
+            ? `<span class="rank-num ${typeof rankNumRarityClass === 'function' ? rankNumRarityClass({ fv_close: Number(t.fv_label) }) : ''}" style="width:18px;height:18px;flex-shrink:0;"><span class="rank-num-inner" style="font-size:8px;">${t.overall_rank}</span></span>`
+            : "";
           return `<div class="farm-top3-chip">
-            ${posChip}${nameHtml}
+            ${rankDiamond}${posChip}${nameHtml}
             <span class="fv-badge ${fvClass(t.fv_label)} size-xs" style="flex-shrink:0;">${t.fv_label}</span>
           </div>`;
         }).join("")}</div>`
