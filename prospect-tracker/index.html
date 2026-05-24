@@ -981,13 +981,18 @@
        text; inactive tabs are paper with navy text. */
     .section-tabs {
       display: flex;
-      gap: 4px;
+      gap: 0;                                /* dividers handled by per-tab border, not flex gap */
       /* Phase C4 — tightened from 1.1rem + 6px padding to var(--space-2) +
          4px padding. Saves ~6px vertical on the persistent top chrome. */
       margin-bottom: var(--space-2);
-      padding: 4px;
+      padding: 4px 6px;
       background: var(--bg-secondary);
       border: 1px solid var(--border);
+      /* v19 — Newspaper-section chrome: double rule top + bottom evokes
+         the news-ticker masthead and pairs the bar visually with the
+         "Prospect news" headline. */
+      border-top: 3px double var(--border);
+      border-bottom: 3px double var(--border);
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-card);
       align-items: center;
@@ -1001,7 +1006,7 @@
       z-index: 50;
     }
     .section-tab {
-      padding: 8px 16px;
+      padding: 8px 14px;
       font-family: var(--font-sans);
       font-size: 12px;
       font-weight: 600;
@@ -1012,12 +1017,21 @@
       cursor: pointer;
       letter-spacing: 0.04em;
       transition: background 0.12s, color 0.12s;
+      /* v19 — Vertical hairline divider between adjacent tabs.
+         Reads like a scoreboard / newspaper column separator. The
+         first tab has no left border (the bar's outer border carries
+         that edge), and the active tab suppresses its own divider
+         to avoid a visible seam against the filled background. */
+      border-left: 1px solid var(--border-light);
     }
+    .section-tabs > .section-tab:first-of-type { border-left: none; }
     .section-tab:hover { background: var(--bg-tertiary); color: var(--text-primary); }
     .section-tab.active {
       color: var(--bg-secondary);
       background: var(--bg-header);
+      border-left-color: transparent;
     }
+    .section-tab.active + .section-tab { border-left-color: transparent; }
     .section-count {
       margin-left: auto;
       padding-right: 6px;
@@ -1046,7 +1060,7 @@
       grid-template-rows: auto auto;  /* v19 — row 1 = existing cells; row 2 = tool strip */
       gap: 14px;
       column-gap: 14px;
-      row-gap: 2px;
+      row-gap: 0;                      /* tightened so toolstrip sits flush below meta */
       align-items: center;
     }
     /* v19 — Tool-grade-strip relocated out of column 1 into its own
@@ -1058,10 +1072,22 @@
       grid-column: 1 / span 3;
       grid-row: 2;
       min-width: 0;
-      align-self: end;
+      align-self: start;
     }
     .player-row > *:not(.player-row-toolstrip),
     .col-header > *:not(.player-row-toolstrip) { grid-row: 1; }
+    /* v19 — Anchor the name + meta block to the BOTTOM of column 1
+       so the meta line touches the toolstrip below with no centered-
+       headshot padding. Headshot stays centered (outer flex's
+       align-items: center applies); only this column flexes its
+       own height + bottom-aligns its children. */
+    .player-row .player-name-stack {
+      align-self: stretch;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 1px;
+    }
     /* Compact mono cells for Ht/Wt/BMI. Tertiary-color text keeps
        these from competing with FV / Rank for visual attention.
        .sort-header makes any header clickable to set state.sort —
@@ -1944,7 +1970,8 @@
        container's full span so chips can be sized for legibility. */
     .player-row-toolstrip {
       display: block;
-      padding-top: 2px;
+      padding-top: 0;
+      margin-top: 0;
     }
     .tool-grade-strip {
       display: flex;
@@ -2997,9 +3024,20 @@
          ROI added between avg age and spend so the value-per-dollar
          lens reads adjacent to the spending donut for natural eye
          flow. */
-      grid-template-columns: 32px 40px 180px 80px 110px 76px 160px 1fr 110px 1fr 56px 60px 64px 64px 60px 56px;
+      /* v19 — Logo column widened 40 → 56px so the bumped `lg` (52px)
+         team logo fits cleanly; row height is driven by the sparkline
+         (~70px), so the logo bump doesn't change card height. */
+      grid-template-columns: 32px 56px 180px 80px 110px 76px 160px 1fr 110px 1fr 56px 60px 64px 64px 60px 56px;
       gap: 10px;
       align-items: center;
+    }
+    /* Constrain the lg logo inside the farm-list cell so an unusually
+       wide team mark (some org logos overflow square) can't push the
+       adjacent name column. */
+    .farm-row .farm-logo-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* Farm-list Surplus cell — promoted out of the Spend-mix cell into
@@ -6035,13 +6073,13 @@
          scan). Active list remains the headline; Farm Systems + Spotlights
          + transactional pages first; Leaderboards/Graduates/Glossary/Watchlist
          are tool tabs on the right. -->
-    <button class="section-tab active" data-section="active">Active</button>
+    <button class="section-tab active" data-section="active">MiLB Prospects</button>
     <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="spotlights">Spotlights</button>
-    <button class="section-tab" data-section="traded">Recently Acquired</button>
+    <button class="section-tab" data-section="traded">Prospect Transactions</button>
     <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL">Prospect IL</button>
-    <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">Draft</button>
-    <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
+    <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">MLB Draft</button>
+    <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas Prospects</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
     <button class="section-tab" data-section="graduates">Graduates</button>
     <button class="section-tab" data-section="glossary" title="Stats, indices, scouting concepts, and methodology — every term used on the site">Glossary</button>
@@ -9650,9 +9688,9 @@ function renderActives() {
       : "";
     return `
       <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
-        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+        <div class="player-row-col1" style="display:flex;align-items:center;gap:10px;min-width:0;">
           <span class="headshot-stack">${headshotHTML(p, 56)}${optionsDotsHTML(p)}</span>
-          <div style="min-width:0;flex:1;">
+          <div class="player-name-stack" style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
             ${playerMetaHTML(p, { suppressHandedness: true })}
           </div>
@@ -11052,6 +11090,16 @@ function renderInjured() {
   // their own detail page; they just don't pollute the prospect-tracker
   // IL roll-up.
   const pool = [];
+  // v19 — Stale-IL sanity filter. A legitimate IL stint shouldn't
+  // exceed ~1 year (longest IL list is 60-day; even chained 60-day
+  // placements rarely cross 365 days continuous). Anything beyond
+  // that means the upstream `il_status.is_on_il=true` flag was never
+  // cleared after the player was reinstated (Scott Moss et al.).
+  // Filter those out so the page only shows currently-injured active
+  // prospects. Threshold is conservative — 540 days catches the
+  // worst stale cases while preserving genuine multi-year IL grinds
+  // that exist on the periphery (catastrophic ACL + TJ combos).
+  const STALE_IL_DAYS = 540;
   for (const arr of ["players"]) {
     for (const p of (DATA[arr] || [])) {
       const il = p.il_status || {};
@@ -11064,6 +11112,7 @@ function renderInjured() {
         const t = new Date(il.since + "T00:00:00").getTime();
         if (!isNaN(t)) days = Math.max(0, Math.floor((today.getTime() - t) / 86400000));
       }
+      if (days != null && days > STALE_IL_DAYS) continue;  // skip stale flags
       pool.push({
         p, il,
         days: days || 0,
@@ -18575,7 +18624,7 @@ function renderFarmSystems() {
       <div class="farm-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)}">
         ${heroHtml}
         <div class="farm-rank table-only-cell">#${displayRank}${deltaChip}</div>
-        <div class="table-only-cell">${teamLogoHTML(org.org, "md", fullOrgName(org.org))}</div>
+        <div class="table-only-cell farm-logo-cell">${teamLogoHTML(org.org, "lg", fullOrgName(org.org))}</div>
         <div class="farm-org-cell table-only-cell">
           <div class="farm-org-name">
             <div class="farm-org">${escapeHtml(fullOrgName(org.org))}</div>
