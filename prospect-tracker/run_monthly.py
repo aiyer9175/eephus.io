@@ -145,12 +145,13 @@ def _is_career_fresh(fetched_at: str | None, max_age_days: int) -> bool:
     if not fetched_at:
         return False
     try:
-        from datetime import datetime as _dt
+        from datetime import datetime as _dt, timezone as _tz
         # storage writes via datetime('now') which produces 'YYYY-MM-DD HH:MM:SS'.
         ts = _dt.fromisoformat(fetched_at.replace(" ", "T"))
     except ValueError:
         return False
-    return (_dt.utcnow() - ts).days < max_age_days
+    # Naive UTC subtraction — both sides are naive UTC timestamps.
+    return (_dt.now(_tz.utc).replace(tzinfo=None) - ts).days < max_age_days
 
 
 def rebuild_only(out_dir: Path = Path("data")) -> None:
@@ -477,84 +478,84 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.exception("fangraphs_csv: drop-folder ingest failed — "
                               "continuing with the rest of the pipeline")
 
-        # --- 0c. Draft pipeline (scrape + promote + export) -------------
-        # Scrapes the amateur sources (ESPN draft Top 150 + MLB Pipeline
-        # draft) and refreshes the per-year results table from the MLB
-        # Stats API. All draft data lives in draft_* tables and exports
-        # to data/draft_timeseries.json, completely separate from the
-        # MiLB pipeline that follows. Failures here never block the MiLB
-        # run.
-        with _step("0c. Draft pipeline (scrape + promote + export)", log):
-            try:
-                from scrapers import scrape_all_draft, scrape_mlb_draft_tracker
-                from storage import insert_draft_snapshots, upsert_draft_results
-                from draft_promotion import promote_drafted_players
-                from draft_export import export_draft_json
+        # --- 0c / 0d / 1 in parallel ----------------------------------
+        # These three phases write to disjoint tables (draft_*, overseas_*,
+        # snapshots) and never read each other's output during this block.
+        # Running them concurrently overlaps their HTTP work (~30-60s
+        # wall-clock savings on cold runs). SQLite WAL mode + per-call
+        # connect() in storage.py makes concurrent writes safe; failures
+        # in any one phase log + continue without blocking the others.
 
-                draft_snaps = scrape_all_draft(force=force_refetch)
-                if draft_snaps:
-                    n_d = insert_draft_snapshots(draft_snaps)
-                    log.info("inserted %d draft snapshot rows", n_d)
-                # Refresh draft results from the MLB Stats API (cheap, cached).
-                this_year = date.today().year
-                for y in range(2021, this_year + 1):
-                    rows = scrape_mlb_draft_tracker(y, force=force_refetch)
-                    if rows:
-                        upsert_draft_results(rows)
-                # Spotrac per-pick slot values + Tankathon lottery odds.
-                # Both feed downstream into draft_order / draft_lottery_odds.
-                from scrapers import scrape_spotrac_draft_order, scrape_tankathon_lottery
-                from storage import upsert_draft_order, upsert_draft_lottery_odds
-                this_year = date.today().year
-                for y in (this_year, this_year + 1):
-                    so_rows = scrape_spotrac_draft_order(y, force=force_refetch)
-                    if so_rows:
-                        upsert_draft_order(so_rows)
-                # Tankathon publishes odds for the *next* draft class (e.g.,
-                # during the 2026 season → 2027 lottery). Stamp those rows
-                # with the next-year draft.
-                tk_rows = scrape_tankathon_lottery(this_year + 1, force=force_refetch)
-                if tk_rows:
-                    upsert_draft_lottery_odds(tk_rows)
+        def _run_draft_pipeline():
+            with _step("0c. Draft pipeline (scrape + promote + export)", log):
+                try:
+                    from scrapers import scrape_all_draft, scrape_mlb_draft_tracker
+                    from storage import insert_draft_snapshots, upsert_draft_results
+                    from draft_promotion import promote_drafted_players
+                    from draft_export import export_draft_json
 
-                promote_drafted_players()
-                n_draft = export_draft_json(out_dir / "draft_timeseries.json")
-                log.info("draft pipeline: exported %d prospects across all classes",
-                         n_draft)
-            except Exception:
-                log.exception("draft pipeline crashed — continuing with MiLB run")
+                    draft_snaps = scrape_all_draft(force=force_refetch)
+                    if draft_snaps:
+                        n_d = insert_draft_snapshots(draft_snaps)
+                        log.info("inserted %d draft snapshot rows", n_d)
+                    this_year = date.today().year
+                    for y in range(2021, this_year + 1):
+                        rows = scrape_mlb_draft_tracker(y, force=force_refetch)
+                        if rows:
+                            upsert_draft_results(rows)
+                    from scrapers import scrape_spotrac_draft_order, scrape_tankathon_lottery
+                    from storage import upsert_draft_order, upsert_draft_lottery_odds
+                    for y in (this_year, this_year + 1):
+                        so_rows = scrape_spotrac_draft_order(y, force=force_refetch)
+                        if so_rows:
+                            upsert_draft_order(so_rows)
+                    tk_rows = scrape_tankathon_lottery(this_year + 1, force=force_refetch)
+                    if tk_rows:
+                        upsert_draft_lottery_odds(tk_rows)
+                    promote_drafted_players()
+                    n_draft = export_draft_json(out_dir / "draft_timeseries.json")
+                    log.info("draft pipeline: exported %d prospects across all classes",
+                             n_draft)
+                except Exception:
+                    log.exception("draft pipeline crashed — continuing with MiLB run")
 
-        # --- 0d. Overseas pipeline (refresh FG stats + promote + export) -
-        # KBO/NPB stat refresh is HTTP-heavy (one fetch per overseas
-        # prospect, ~50 fetches/run). Wrap in its own try/except so a
-        # single bad FG page never blocks the MiLB run.
-        with _step("0d. Overseas pipeline (refresh + promote + export)", log):
-            try:
-                from overseas_stats import refresh_overseas_stats
-                from overseas_promotion import promote_signed_players, ingest_postings
-                from overseas_export import export_overseas_json
+        def _run_overseas_pipeline():
+            with _step("0d. Overseas pipeline (refresh + promote + export)", log):
+                try:
+                    from overseas_stats import refresh_overseas_stats
+                    from overseas_promotion import promote_signed_players, ingest_postings
+                    from overseas_export import export_overseas_json
+                    refresh_overseas_stats(force=force_refetch)
+                    ingest_postings()
+                    promote_signed_players()
+                    n_ov = export_overseas_json(out_dir / "overseas_timeseries.json")
+                    log.info("overseas pipeline: exported %d prospects", n_ov)
+                except Exception:
+                    log.exception("overseas pipeline crashed — continuing with MiLB run")
 
-                refresh_overseas_stats(force=force_refetch)
-                ingest_postings()
-                promote_signed_players()
-                n_ov = export_overseas_json(out_dir / "overseas_timeseries.json")
-                log.info("overseas pipeline: exported %d prospects", n_ov)
-            except Exception:
-                log.exception("overseas pipeline crashed — continuing with MiLB run")
+        def _run_milb_scrape() -> tuple[int, dict]:
+            with _step("1. Scrape MiLB rankings + insert snapshots", log):
+                snapshots, csv_birth_dates = scrape_all(force=force_refetch)
+                log.info("scraped %d total snapshot rows", len(snapshots))
+                _new = insert_snapshots(snapshots)
+                log.info("inserted %d new snapshot rows", _new)
+                for key, bd in csv_birth_dates.items():
+                    upsert_birth_date(key, bd)
+                if csv_birth_dates:
+                    log.info("upserted %d birth dates from CSV", len(csv_birth_dates))
+                return _new, csv_birth_dates
 
-        # --- 1. Scrape & store rankings ---------------------------------
-        with _step("1. Scrape MiLB rankings + insert snapshots", log):
-            snapshots, csv_birth_dates = scrape_all(force=force_refetch)
-            log.info("scraped %d total snapshot rows", len(snapshots))
-            new_count = insert_snapshots(snapshots)
-            log.info("inserted %d new snapshot rows", new_count)
-
-            # Persist any birth dates supplied directly via the CSV. These win
-            # over API-fetched dates for any player they cover.
-            for key, bd in csv_birth_dates.items():
-                upsert_birth_date(key, bd)
-            if csv_birth_dates:
-                log.info("upserted %d birth dates from CSV", len(csv_birth_dates))
+        with _step("0c/0d/1 parallel block", log):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=3) as _ex_0:
+                _f_draft = _ex_0.submit(_run_draft_pipeline)
+                _f_overseas = _ex_0.submit(_run_overseas_pipeline)
+                _f_milb = _ex_0.submit(_run_milb_scrape)
+                # MiLB scrape result is needed by downstream steps; wait
+                # for it explicitly. The other two are fire-and-forget
+                # (their exceptions are logged internally).
+                new_count, _ = _f_milb.result()
+                for _f in (_f_draft, _f_overseas):
+                    _f.result()  # propagate any unexpected exception
 
         # --- 2. Build consensus ----------------------------------------
         with _step("2. Build consensus timeseries", log):
@@ -728,7 +729,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             il_mids_by_key = {p.player_key: ids_by_key.get(p.player_key)
                               for p in timeseries
                               if ids_by_key.get(p.player_key) is not None
-                              and p.status != "graduated"}
+                              and p.status != "debuted"}
             log.info("checking IL status for %d active prospects",
                      len(il_mids_by_key))
             il_by_mid = bulk_fetch_il_status(il_mids_by_key.values())
@@ -844,7 +845,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         career_meta = load_career_stats_meta()
         statlines = load_statlines()
         non_grad_keys: set[str] = {p.player_key for p in timeseries
-                                   if p.status != "graduated"}
+                                   if p.status != "debuted"}
         keys_with_bulk_2026: set[str] = set()
         _step_3a_bulk_start = time.monotonic() if not skip_stats else None
         if not skip_stats:
@@ -881,7 +882,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         if not skip_stats:
             non_grad_players = [
                 (p.player_key, p.player_name, _is_pitcher(p.position))
-                for p in timeseries if p.status != "graduated"
+                for p in timeseries if p.status != "debuted"
             ]
             cs_tasks: list[tuple[str, int, bool]] = []
             skipped_fresh = 0
@@ -918,7 +919,10 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 if workers is not None:
                     max_workers = max(1, min(workers, len(cs_tasks)))
                 else:
-                    max_workers = min(16, max(1, len(cs_tasks)))
+                    # v25 — Bumped 16 → 24. MLB Stats API tolerates this
+                    # comfortably; reduces wall time on the per-player
+                    # career-stats fetch when freshness gates miss.
+                    max_workers = min(24, max(1, len(cs_tasks)))
                 with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
                     future_to_key = {
                         ex.submit(fetch_career_stats, key, mlbam, is_pitcher=is_p): key
@@ -952,7 +956,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             if not skip_stats:
                 non_grad_for_statlines = [
                     (p.player_key, p.player_name, _is_pitcher(p.position))
-                    for p in timeseries if p.status != "graduated"
+                    for p in timeseries if p.status != "debuted"
                 ]
                 log.info("deriving stat lines for %d non-graduated prospects from career cache",
                          len(non_grad_for_statlines))
@@ -975,7 +979,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         with _step("3c. Auto-debut detection", log):
             active_for_debut = [
                 (p.player_key, p.player_name, _is_pitcher(p.position))
-                for p in timeseries if p.status != "graduated"
+                for p in timeseries if p.status != "debuted"
             ]
             debuts_found = detect_debuts_from_index(
                 career_cache, active_for_debut,
@@ -1024,7 +1028,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     if workers is not None:
                         max_workers = max(1, min(workers, len(pa_tasks)))
                     else:
-                        max_workers = min(10, max(1, len(pa_tasks)))
+                        # v25 — 10 → 16. Pitch-arsenal endpoint is light
+                        # per-call; the prior cap left throughput on the table.
+                        max_workers = min(16, max(1, len(pa_tasks)))
                     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
                         future_to_key = {
                             ex.submit(fetch_pitch_arsenal, key, mlbam, season): key
@@ -1061,7 +1067,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     if workers is not None:
                         max_workers = max(1, min(workers, len(sm_tasks)))
                     else:
-                        max_workers = min(16, max(1, len(sm_tasks)))
+                        # v25 — 16 → 24. Matches the career-stats cap;
+                        # sabermetrics endpoint has similar per-call cost.
+                        max_workers = min(24, max(1, len(sm_tasks)))
                     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
                         future_to_key = {
                             ex.submit(fetch_sabermetrics, key, mlbam, season, is_pitcher=is_p): key
@@ -1273,7 +1281,10 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                         new_statcast_metrics = fetch_statcast_metrics_for_players(
                             statcast_players,
                             season,
-                            workers=workers or 10,
+                            # v25 — 10 → 16. Statcast is the longest-running
+                            # step in a cold full run (~56s); more workers
+                            # cuts it materially.
+                            workers=workers or 16,
                         )
                         if new_statcast_metrics:
                             upsert_statcast_metrics(new_statcast_metrics, season)
@@ -1318,9 +1329,11 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                      len(tx_tasks),
                      len(all_for_tx) - len(tx_tasks))
             if tx_tasks:
+                # v25 — 16 → 24. The /transactions endpoint is also light
+                # and parallelizes well.
                 max_w = (max(1, min(workers, len(tx_tasks)))
                          if workers is not None
-                         else min(16, max(1, len(tx_tasks))))
+                         else min(24, max(1, len(tx_tasks))))
                 new_tx = bulk_fetch_player_transactions(tx_tasks, max_workers=max_w)
                 if new_tx:
                     upsert_player_transactions(new_tx)
@@ -1341,23 +1354,18 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         from stats import derive_transactions
         level_changes_by_key: dict[str, list[dict]] = {}
         transactions_by_key:  dict[str, list[dict]] = {}
-        # Per-player CPU pass with no shared mutable state. ThreadPool
-        # over a fixed worker count recoups its overhead at ~3000-player
-        # scale and trims a second or two off the run.
-        def _derive_one(item):
-            key, tx_rows = item
+        # v25 — Plain loop. The prior ThreadPoolExecutor wrapper hurt
+        # this step: both derive_* helpers are pure CPU (dict + list
+        # work, no I/O), and Python's GIL serializes thread execution
+        # anyway. Removing the pool eliminates the per-task submit /
+        # collect overhead and the worker startup cost.
+        for key, tx_rows in tx_cache.items():
             evs = derive_level_changes(tx_rows, team_affil)
             txs = derive_transactions(tx_rows)
-            return key, evs, txs
-        items = list(tx_cache.items())
-        if items:
-            max_w = max(2, min(8, len(items)))
-            with concurrent.futures.ThreadPoolExecutor(max_workers=max_w) as ex:
-                for key, evs, txs in ex.map(_derive_one, items):
-                    if evs:
-                        level_changes_by_key[key] = evs
-                    if txs:
-                        transactions_by_key[key] = txs
+            if evs:
+                level_changes_by_key[key] = evs
+            if txs:
+                transactions_by_key[key] = txs
         log.info("derived level_changes for %d players, "
                  "non-trade transactions for %d players",
                  len(level_changes_by_key), len(transactions_by_key))
@@ -1399,7 +1407,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             if not mid:
                 continue
             needs_lookup = (
-                p.status == "graduated"
+                p.status == "debuted"
                 or (rs.get("career_mlb_ab", 0) or 0) > 0
                 or (rs.get("career_mlb_ip", 0) or 0) > 0
                 or bool(rs.get("mlb_seasons"))

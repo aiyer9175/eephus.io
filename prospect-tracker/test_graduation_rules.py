@@ -358,8 +358,10 @@ class TestDebutMarkerInLevelChanges:
                                level_changes=level_changes,
                                roster_status=roster_status)
         from storage import load_export_unified as _leu; payload = _leu(out)
-        player = next(p for p in payload["players"]
-                      if p["player_name"] == "Star Rookie")
+        # Players with a real mlb_debut_date now land in payload["debuts"]
+        # (the "Debuted" bucket) rather than payload["players"] (active).
+        all_players = payload.get("players", []) + payload.get("debuts", [])
+        player = next(p for p in all_players if p["player_name"] == "Star Rookie")
         lcs = player["level_changes"]
         # The 2026-04-15 AAA→MLB row is converted to the debut entry.
         debut = next((lc for lc in lcs if lc.get("kind") == "debut"), None)
@@ -427,8 +429,10 @@ class TestDebutMarkerInLevelChanges:
         out = tmp_path / "out.json"
         export_timeseries_json(ts, out, roster_status=roster_status)
         from storage import load_export_unified as _leu; payload = _leu(out)
-        player = next(p for p in payload["players"]
-                      if p["player_name"] == "Quiet Debut")
+        # Players with a real mlb_debut_date now land in payload["debuts"]
+        # (the "Debuted" bucket) rather than payload["players"] (active).
+        all_players = payload.get("players", []) + payload.get("debuts", [])
+        player = next(p for p in all_players if p["player_name"] == "Quiet Debut")
         lcs = player["level_changes"]
         assert len(lcs) == 1
         assert lcs[0]["kind"] == "debut"
@@ -532,7 +536,7 @@ class TestRevalidateAutoGraduations:
         assert n_auto == 1
 
     def test_leaves_fangraphs_graduated_status_alone(self, tmp_path, monkeypatch):
-        """A FG-sourced 'graduated' snapshot is external authority — even
+        """A FG-sourced 'debuted' snapshot is external authority — even
         if our local roster_status disagrees, we don't delete it."""
         storage = self._setup_db(tmp_path, monkeypatch)
         with storage.connect() as con:
@@ -540,7 +544,7 @@ class TestRevalidateAutoGraduations:
                 """INSERT INTO snapshots (player_key, player_name, source,
                    snapshot_date, interval_label, position, org, rank, fv, status)
                    VALUES ('fg_graduate','FG Graduate','fangraphs',
-                           '2025-10-01','FG 2025 Graduates','OF','PIT',NULL,60.0,'graduated')"""
+                           '2025-10-01','FG 2025 Graduates','OF','PIT',NULL,60.0,'debuted')"""
             )
         # Player not in qualified set, but the only graduated row is the
         # FG one — revalidation must not touch it.
@@ -549,7 +553,7 @@ class TestRevalidateAutoGraduations:
         with storage.connect() as con:
             n_grad = con.execute(
                 """SELECT COUNT(*) AS n FROM snapshots
-                   WHERE player_key='fg_graduate' AND status='graduated'"""
+                   WHERE player_key='fg_graduate' AND status='debuted'"""
             ).fetchone()["n"]
         assert n_grad == 1
 
@@ -577,7 +581,7 @@ class TestGraduationDateDerivation:
             interval_label="FG Graduates",
             player_key=key, player_name=name,
             position="SS", org="PIT", rank=10, fv=55.0,
-            status="graduated",
+            status="debuted",
         )]
         ts = build_timeseries(snaps)
         career = {key: [{"season": s, "level": "MLB",
@@ -634,10 +638,14 @@ class TestGraduationDateDerivation:
         # career_stats confirms 2024 MLB activity → keep the API date.
         assert g["debut_date"] == "2024-10-05"
 
-    def test_offseason_api_debut_with_no_career_collapses(self, tmp_path):
-        """If the API says Nov 15 AND career_stats has NO record of MLB
-        activity that year, the date is almost certainly a 40-man add
-        the API misclassified — collapse to mid-season placeholder."""
+    def test_offseason_api_debut_used_as_is(self, tmp_path):
+        """When the API supplies an mlbDebutDate, the exporter trusts it
+        directly — the prior heuristic that collapsed offseason API dates
+        to a {year}-07-01 placeholder (when career_stats had no MLB row)
+        was removed. The upstream pipeline filters out spurious Rule 5
+        protection dates via bulk_fetch_mlb_debut_dates + the
+        derive_roster_status logic; double-collapsing them here caused
+        more clumps than it fixed."""
         g = self._grad_payload(
             tmp_path,
             name="Phantom Debut", key="phantom_debut",
@@ -645,24 +653,24 @@ class TestGraduationDateDerivation:
             api_debut="2024-11-15",
             mlb_seasons=[],
         )
-        # No MLB games on file → don't trust the November date.
-        assert g["debut_date"] == "2024-07-01"
+        # API date used as-is (no career-based collapse).
+        assert g["debut_date"] == "2024-11-15"
 
-    def test_falls_back_to_career_year_when_no_api_debut(self, tmp_path):
-        """No api_debut available — use the player's first MLB season
-        as a mid-season placeholder, ignoring any offseason snapshot
-        date."""
+    def test_stored_grad_date_kept_when_no_api_debut(self, tmp_path):
+        """No api_debut available — the stored snapshot date is used
+        directly. The prior "fall back to {first_MLB_season}-07-01"
+        placeholder was removed; placeholder dates produced visible
+        clumps in the timeline UI and lost the actual ranking-source
+        publication date that the snapshot encodes."""
         g = self._grad_payload(
             tmp_path,
             name="Kodai Senga", key="kodai_senga",
-            stored_grad_date="2025-11-01",   # offseason FG flag
+            stored_grad_date="2025-11-01",
             api_debut=None,
             mlb_seasons=[2023, 2024],
         )
-        # First MLB season is 2023; no api_debut to take precedence.
-        # Stored grad_date starts with "2025-", not "2023-", so
-        # fallback returns "2023-07-01".
-        assert g["debut_date"] == "2023-07-01"
+        # Stored date wins; no first-MLB-season fallback.
+        assert g["debut_date"] == "2025-11-01"
 
     def test_stored_date_kept_when_inside_debut_year(self, tmp_path):
         """When we don't have an api_debut but the stored snapshot date
@@ -693,7 +701,7 @@ class TestGraduationDateDerivation:
             interval_label="FG Graduates",
             player_key=key, player_name=name,
             position="SS", org="PIT", rank=i + 1, fv=55.0,
-            status="graduated",
+            status="debuted",
         ) for i, (name, key, _) in enumerate(cohort)]
         ts = build_timeseries(snaps)
         roster_status = {key: {"mlb_debut_date": debut}

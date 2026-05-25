@@ -164,9 +164,9 @@ class CompositeShape(unittest.TestCase):
             self.assertIsInstance(m["drivers"], list)
 
     def test_graduated_returns_stub(self):
-        p = {"status": "graduated", "points": []}
+        p = {"status": "debuted", "points": []}
         m = compute_movement(p)
-        self.assertEqual(m["direction"], "graduated")
+        self.assertEqual(m["direction"], "debuted")
         self.assertEqual(m["bucket"], "none")
 
 

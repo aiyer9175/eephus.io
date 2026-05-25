@@ -46,7 +46,11 @@ class PromotionIdempotency(unittest.TestCase):
                          f"expected 0 new links on re-run, got {second['linked']}")
 
     def test_all_promoted_have_acquisition_records(self):
-        with sqlite3.connect(DB_PATH) as con:
+        # contextlib.closing — sqlite3's own `with` doesn't close the
+        # connection (it only manages the transaction). Closing leaks
+        # otherwise surface as GC-time ResourceWarnings.
+        from contextlib import closing
+        with closing(sqlite3.connect(DB_PATH)) as con:
             con.row_factory = sqlite3.Row
             linked = con.execute(
                 "SELECT milb_key FROM draft_canonical_keys"

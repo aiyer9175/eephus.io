@@ -51,6 +51,11 @@ class TestLevelOrder:
 
 class TestAutoGraduation:
     def test_auto_graduate_inserts_snapshot(self, tmp_path, monkeypatch):
+        # v21: auto_graduate_player is a back-compat alias for
+        # auto_debut_player, which requires either an explicit debut_date
+        # or a career_stats MLB row to anchor the snapshot. The pipeline
+        # always passes one (from PlayerIndex.mlbDebutDate); the test
+        # mirrors that contract.
         monkeypatch.setattr(storage, "DB_PATH", tmp_path / "test.db")
         storage.init_db()
 
@@ -64,14 +69,14 @@ class TestAutoGraduation:
 
         # Before graduation: player is active
         ts = build_timeseries(storage.load_all_snapshots())
-        assert len([p for p in ts if p.status == "graduated"]) == 0
+        assert len([p for p in ts if p.status == "debuted"]) == 0
 
-        # Trigger auto-graduation
-        storage.auto_graduate_player("test_guy")
+        # Trigger auto-graduation (debut_date required post-v21)
+        storage.auto_graduate_player("test_guy", grad_date="2026-04-15")
 
         # After graduation: player should have a graduated snapshot
         ts2 = build_timeseries(storage.load_all_snapshots())
-        grads = [p for p in ts2 if p.status == "graduated"]
+        grads = [p for p in ts2 if p.status == "debuted"]
         assert len(grads) == 1
         assert grads[0].player_key == "test_guy"
 
@@ -88,11 +93,11 @@ class TestAutoGraduation:
         )
         storage.insert_snapshots([snap])
 
-        storage.auto_graduate_player("test_guy2")
-        storage.auto_graduate_player("test_guy2")  # second call — should be ignored
+        storage.auto_graduate_player("test_guy2", grad_date="2026-04-15")
+        storage.auto_graduate_player("test_guy2", grad_date="2026-04-15")  # second call — should be ignored
 
         ts = build_timeseries(storage.load_all_snapshots())
-        grads = [p for p in ts if p.player_key == "test_guy2" and p.status == "graduated"]
+        grads = [p for p in ts if p.player_key == "test_guy2" and p.status == "debuted"]
         assert len(grads) == 1  # still just one graduate
 
     def test_auto_graduate_moves_to_grad_section_in_export(self, tmp_path, monkeypatch):
@@ -109,7 +114,7 @@ class TestAutoGraduation:
         )
         storage.insert_snapshots([snap])
 
-        storage.auto_graduate_player("mlb_guy")
+        storage.auto_graduate_player("mlb_guy", grad_date="2026-04-15")
 
         ts = build_timeseries(storage.load_all_snapshots())
         out = tmp_path / "out.json"

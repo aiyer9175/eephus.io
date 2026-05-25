@@ -1188,7 +1188,10 @@ def backfill_publish_dates(db_path: Path | None = None) -> list[tuple[str, str, 
     path = db_path or DB_PATH
 
     changes: list[tuple[str, str, str, int]] = []
-    with sqlite3.connect(str(path)) as con:
+    # contextlib.closing because sqlite3.connect's own `with` only
+    # commits/rollbacks the transaction; it doesn't close the connection.
+    from contextlib import closing
+    with closing(sqlite3.connect(str(path))) as con:
         con.row_factory = sqlite3.Row
         rows = con.execute(
             "SELECT DISTINCT interval_label, snapshot_date "

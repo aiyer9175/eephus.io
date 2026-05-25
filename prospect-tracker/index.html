@@ -7620,7 +7620,7 @@ const fvClass = label => {
 // `wrapperClass` arg lets fvTrendHTML reuse this without duplicating.
 const stockInnerHTML = s => {
   if (!s) return `<span class="stock-flat">—</span>`;
-  if (s.direction === "graduated") return `<span class="stock-grad">DEBUT</span>`;
+  if (s.direction === "debuted") return `<span class="stock-grad">DEBUT</span>`;
   if (s.direction === "flat" || s.delta == null || Math.abs(s.delta) < 1.5) {
     return `<span class="stock-flat">— flat</span>`;
   }
@@ -7725,7 +7725,7 @@ const TRANSACTION_KINDS = {
   drafted:             { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Drafted" },
   signed_ifa:          { glyph: "●", color: "var(--neon-amber)", dash: "1,2",   pos: "bottom", label: "Signed (Intl Amateur FA)" },
   debut:               { glyph: "★", color: "var(--neon-amber)", dash: "2,1.5", pos: "top",    label: "MLB debut" },
-  graduation:          { glyph: "✦", color: "var(--neon-violet)",dash: "2,1.5", pos: "top",    label: "MLB debut" },
+  debut_marker:        { glyph: "✦", color: "var(--neon-violet)",dash: "2,1.5", pos: "top",    label: "MLB debut" },
   // Non-trade transactions (sourced from player.transactions). Same
   // shape so makeTransactionHistoryBlock can render them with one code
   // path; the chart filter (TRANSACTION_LEGEND_ORDER) leaves them out.
@@ -7781,7 +7781,7 @@ function reclassifyAcquisitionSigning(player, tx) {
 // Only the high-signal events get rendered on the FV trajectory line so
 // the chart doesn't turn into a curtain of glyphs for journeyman-y
 // prospects who've been claimed off waivers six times.
-const TRANSACTION_LEGEND_ORDER = ["trade", "promotion", "demotion", "debut", "graduation"];
+const TRANSACTION_LEGEND_ORDER = ["trade", "promotion", "demotion", "debut", "debut_marker"];
 
 // Event kinds that DON'T render as FV-chart markers. The chart's
 // X-axis starts at the player's first FV grade — which for drafted /
@@ -7797,7 +7797,7 @@ const CHART_HIDDEN_KINDS = new Set([
 //   trades         → kind:'trade'
 //   career_stats   → kind:'promotion' | 'demotion'
 //   acquisition    → kind:'signing'   (if signing_date is on file)
-//   debut_date→ kind:'graduation'(graduates only)
+//   debut_date    → kind:'debut_marker' (debuted only)
 //
 // Each event has: { date, kind, label } where `label` is the hover-text
 // content. Sorted ascending by date so renderers can iterate in order.
@@ -7873,7 +7873,7 @@ function transactionEvents(player) {
   if (player.debut_date) {
     out.push({
       date: player.debut_date,
-      kind: "graduation",
+      kind: "debut_marker",
       label: `${player.debut_date}: MLB debut`,
     });
   }
@@ -9369,7 +9369,7 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
     if (p.debut_date) {
       const ts = new Date(p.debut_date + "T00:00:00").getTime();
       if (!isNaN(ts) && ts >= cutoff) {
-        events.push({ ts, kind: "graduated", p, label: "debuted in MLB" });
+        events.push({ ts, kind: "debuted", p, label: "debuted in MLB" });
       }
     }
   }
@@ -10559,7 +10559,7 @@ function renderCharts() {
   // status here since they're still tracked prospects (just sidelined).
   let entities = [];
   if (mode === "prospects") {
-    entities = (DATA.players || []).filter(p => p && p.status !== "graduated");
+    entities = (DATA.players || []).filter(p => p && p.status !== "debuted");
   } else {
     entities = (DATA.org_summary || []).filter(o => o && o.org);
   }
@@ -13921,7 +13921,7 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
 }
 
 function renderDebuts() {
-  renderWhatsNew("whats-new-debuts", kind => kind === "graduated");
+  renderWhatsNew("whats-new-debuts", kind => kind === "debuted");
   const filtered = getFilteredGrads();
 
   // Build a render order based on the active sort. For date-sort we keep
@@ -14352,7 +14352,7 @@ function fgPrettifyInterval(source, intervalLabel) {
   const m = String(intervalLabel).match(_FG_INTERVAL_RE);
   if (m) {
     let kind = m[2].toLowerCase();
-    if (kind === "graduates") kind = "graduated";
+    if (kind === "graduates") kind = "debuted";
     const cap = kind.charAt(0).toUpperCase() + kind.slice(1);
     return `FanGraphs ${m[1]} ${cap}`;
   }
@@ -14561,15 +14561,10 @@ const GLOSSARY = {
     related: ["sirp", "rp", "sp", "fv"],
   },
   // ---- Scouting ----
-  "graduation": {
-    name: "Graduation", aliases: ["Graduation", "Rookie Eligibility", "Prospect Status"],
-    category: "definition",
-    priority: 4,
-    short: "A prospect loses rookie eligibility (graduates) when ANY of three thresholds fire.",
-    long: "Per MLB's official rookie-eligibility rule (https://www.mlb.com/glossary/rules/rookie-eligibility), a player is no longer a rookie once they cross any of: (1) more than 130 career MLB at-bats (hitters), (2) more than 50 career MLB innings pitched (pitchers), (3) more than 45 days on the active MLB roster excluding IL time and excluding post-September-1 days (roster expansion). The site applies all three gates as an OR; the field `graduation_reason` reports which one fired first. The 45-day active-roster count is estimated from the public transactions log — IL placements end an active segment and reinstatements re-open one; post-Sept-1 days are clipped at the season cap. As a backstop, players who exhaust all 3 MiLB options AND have debuted in MLB also graduate (a no-options player can't be sent down without clearing waivers, so the team has effectively committed the roster spot).",
-    formula: "debuted iff: mlbDebutDate is set on the MLB API record (v21 — no AB/IP/roster-day rookie thresholds)",
-    related: ["fv", "wag", "boom_bust_label"],
-  },
+  // (Legacy "graduation" glossary entry removed in v25 — superseded by
+  // the canonical "debut_rule" entry below, which describes the current
+  // mlbDebutDate-based gate. The old entry documented the retired
+  // 130-AB / 50-IP / 45-roster-day rookie-eligibility thresholds.)
   "fv": {
     name: "FV", aliases: ["FV", "Future Value", "Consensus FV"], category: "scouting",
     priority: 4,
@@ -15056,9 +15051,9 @@ const GLOSSARY = {
   "mlb_debut": {
     name: "MLB debut", aliases: ["MLB Debut", "Major League debut"], category: "mlb-rules",
     priority: 25,
-    short: "First MLB appearance. Triggers the rookie-eligibility clock (130 AB / 50 IP / 45 active-roster days) for losing prospect status.",
-    long: "We mark MLB debuts with a ★ chip on the transaction-history table. Pre-debut, a prospect's value is theoretical; post-debut, the FV starts converting to (or away from) real MLB performance. Graduation removes a player from prospect lists.",
-    related: ["graduation_rule"],
+    short: "First MLB appearance. Per the v21 debut rule, mlbDebutDate being set moves a prospect to the Debuted tab.",
+    long: "We mark MLB debuts with a ★ chip on the transaction-history table. Pre-debut, a prospect's value is theoretical; post-debut, the FV starts converting to (or away from) real MLB performance. Debut removes a player from the active prospect lists and surfaces them on the Debuted tab.",
+    related: ["debut_rule"],
   },
   "signing_bonus": {
     name: "Signing bonus", aliases: ["Signing bonus", "Draft bonus", "IFA bonus"], category: "mlb-rules",
@@ -16059,7 +16054,7 @@ function playerMetaHTML(p, opts = {}) {
     // — which by v20 grad-position logic is the non-FG / non-auto-detect
     // latest snapshot, i.e. the most recent MLB Pipeline / BA / ESPN
     // position. No slash list for grads.
-    const isDebuted = p && p.status === "graduated";
+    const isDebuted = p && p.status === "debuted";
     let versaStr = null;
     if (!isDebuted) {
       for (let i = ((p && p.points) || []).length - 1; i >= 0; i--) {
@@ -16219,7 +16214,7 @@ function makeQuickReadSummaryParts(p, opts = {}) {
   // FV badge shows the same arrow + delta).
   if (!listMode) {
     const s = p.stock;
-    if (s && s.delta != null && Math.abs(s.delta) >= 1.5 && s.direction !== "graduated") {
+    if (s && s.delta != null && Math.abs(s.delta) >= 1.5 && s.direction !== "debuted") {
       const arrow = s.delta > 0 ? "▲" : "▼";
       const sign = s.delta > 0 ? "+" : "";
       const color = s.delta > 0 ? "var(--up)" : "var(--down)";
@@ -20623,7 +20618,7 @@ function renderPlayerDetail(key) {
     const ms = Date.now() - new Date(ilNow.since + "T00:00:00").getTime();
     if (!isNaN(ms) && ms > 0) ilDays = Math.floor(ms / 86400000);
   }
-  const statusPill = p.status === "graduated"
+  const statusPill = p.status === "debuted"
     ? `<span class="debut-pill" style="background:var(--bg-tertiary);color:var(--grad);">Debuted ${p.debut_date || ""}</span>`
     : ilNow
       ? `<span class="debut-pill" style="background:var(--accent-il-soft);color:var(--accent-il);border-color:var(--accent-il);">${escapeHtml(ilNow.type || "?")} IL${ilDays != null ? ` · ${ilDays}d` : ""}</span>`
@@ -20653,7 +20648,7 @@ function renderPlayerDetail(key) {
   // first-class signal on graduate detail pages (alongside the WAG
   // tile in the stat-tile row).
   let wagRankPill = "";
-  if (p.status === "graduated" && typeof DATA !== "undefined" && Array.isArray(DATA.debuts)) {
+  if (p.status === "debuted" && typeof DATA !== "undefined" && Array.isArray(DATA.debuts)) {
     const myWag = gradVsFvProjection(p);
     if (myWag != null) {
       const pool = DATA.debuts
@@ -20790,7 +20785,7 @@ function renderPlayerDetail(key) {
           if (s.from_date && s.to_date) tipParts.push(`${s.from_date} → ${s.to_date}`);
           else if (s.from_date) tipParts.push(`since ${s.from_date}`);
           const tip = tipParts.join(" · ");
-          if (s.direction === "graduated") {
+          if (s.direction === "debuted") {
             return `<div><span class="detail-stock-chip stock-chip-grad" title="${escapeHtml(tip || "Debuted")}">DEBUT</span></div>`;
           }
           if (s.direction === "flat" || s.delta == null || Math.abs(s.delta) < 1.5) {
@@ -21158,10 +21153,10 @@ function renderPlayerDetail(key) {
     const surplusRow = surplus != null
       ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
            <div>
-             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${p.status === "graduated" ? "Expected surplus (FV)" : "Surplus value"}${scarcityChip}</div>
+             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${p.status === "debuted" ? "Expected surplus (FV)" : "Surplus value"}${scarcityChip}</div>
              <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">FV ${fvCeil(fv)} ${_isPit ? "pitcher" : "hitter"} · 6yr cost-controlled</div>
            </div>
-           <div style="font-family:var(--font-mono);font-size:${p.status === "graduated" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="Estimated MLB surplus value over the player's 6-year cost-controlled window. Derived from FV ${fvCeil(fv)} via the FanGraphs / Craig Edwards 2019 framework (hitter/pitcher split), then adjusted by position scarcity multiplier. Real surplus depends on health, performance variance, and changes in $/WAR market rate.">${fmtUsd(surplus)}</div>
+           <div style="font-family:var(--font-mono);font-size:${p.status === "debuted" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="Estimated MLB surplus value over the player's 6-year cost-controlled window. Derived from FV ${fvCeil(fv)} via the FanGraphs / Craig Edwards 2019 framework (hitter/pitcher split), then adjusted by position scarcity multiplier. Real surplus depends on health, performance variance, and changes in $/WAR market rate.">${fmtUsd(surplus)}</div>
          </div>`
       : "";
     // Expected market AAV — FV-derived WAR/yr × $/WAR market rate.
@@ -21195,7 +21190,7 @@ function renderPlayerDetail(key) {
     // wave that will replace the salary estimate with exact AAV.
     let realizedRow = "";
     let realizedDelta = null;
-    if (p.status === "graduated") {
+    if (p.status === "debuted") {
       const realized = estimateRealizedSurplusValueMM(p);
       if (realized) {
         const rColor = realized.realized_surplus >= 50 ? "var(--up)"
@@ -21237,7 +21232,7 @@ function renderPlayerDetail(key) {
     // multiplying by the $/WAR anchor gives the annual contract value
     // a comparable free agent would command on the open market.
     let aavRow = "";
-    if (p.status === "graduated") {
+    if (p.status === "debuted") {
       const warRate = gradWarPerYr(p);
       if (warRate && warRate.war_per_yr != null) {
         const aav = estimateMarketAavMM(warRate.war_per_yr);
@@ -21305,7 +21300,7 @@ function renderPlayerDetail(key) {
     // $/WAR) minus the all-in cost (signing bonus + salary paid so
     // far). Negative when the team paid more than they got back.
     let actualRoiRow = "";
-    if (p.status === "graduated") {
+    if (p.status === "debuted") {
       const realized = (typeof estimateRealizedSurplusValueMM === "function")
         ? estimateRealizedSurplusValueMM(p) : null;
       if (realized && realized.total_value != null && realized.total_salary != null) {
@@ -21974,7 +21969,7 @@ function renderPlayerDetail(key) {
   // summary so the graduate detail page tells the full performance-vs-
   // projection story above the fold.
   const projectionArcSection = (() => {
-    if (p.status !== "graduated") return "";
+    if (p.status !== "debuted") return "";
     const wagChart = makeWagChart(p);
     if (!wagChart) return "";
     const delta = gradVsFvProjection(p);
@@ -22170,7 +22165,7 @@ function renderPlayerDetail(key) {
     }
     // Default-active tab pick: same logic as before but on latestBySrc.
     let defaultSrc = null;
-    const isGrad = p && p.status === "graduated";
+    const isGrad = p && p.status === "debuted";
     const fgEntry = latestBySrc.fangraphs;
     if (isGrad && fgEntry
         && (fgEntry.label || "").toLowerCase().includes("graduat")) {
@@ -23019,7 +23014,7 @@ function renderPlayerDetail(key) {
   // textarea slots into the right sidebar so the main column stays
   // dedicated to chart + career + sources. Hidden on graduates because
   // a note on a graduated prospect rarely matters going forward.
-  const noteSection = p.status === "graduated" ? "" : (() => {
+  const noteSection = p.status === "debuted" ? "" : (() => {
     const existing = noteLoad(p.player_key);
     return `<div class="detail-title">Notes <span class="detail-title-sub">private to this browser</span></div>
       <textarea class="player-note-area" data-note-key="${escapeHtml(p.player_key)}" placeholder="Scouting notes, follow-up reminders, links — saved as you type.">${escapeHtml(existing)}</textarea>`;

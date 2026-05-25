@@ -20,10 +20,20 @@ import pytest
 DB_PATH = Path(__file__).parent / "prospects.db"
 
 
+from contextlib import contextmanager
+
+
+@contextmanager
 def _conn():
+    """Yields a sqlite3 connection that's properly closed (sqlite3's own
+    `with` only manages the transaction, not the connection lifetime)."""
     if not DB_PATH.exists():
         pytest.skip(f"no prospects.db at {DB_PATH}")
-    return sqlite3.connect(DB_PATH)
+    con = sqlite3.connect(DB_PATH)
+    try:
+        yield con
+    finally:
+        con.close()
 
 
 def test_no_overseas_keys_in_snapshots():

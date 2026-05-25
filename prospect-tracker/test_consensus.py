@@ -124,11 +124,13 @@ class TestSnapToGrade:
             fv, label = snap_to_grade(float(g))
             assert label == str(g)
 
-    def test_rounds_to_nearest_int(self):
+    def test_ceils_to_next_int(self):
+        # snap_to_grade hard-ceils per user preference (consensus.py:201-211)
+        # — "50.2 reads as 51, not 50". Anything fractional bumps up.
         assert snap_to_grade(57.5)[1] == "58"
-        assert snap_to_grade(57.4)[1] == "57"
-        assert snap_to_grade(46.25)[1] == "46"
-        assert snap_to_grade(63.3)[1] == "63"
+        assert snap_to_grade(57.4)[1] == "58"
+        assert snap_to_grade(46.25)[1] == "47"
+        assert snap_to_grade(63.3)[1] == "64"
 
     def test_clamps(self):
         assert snap_to_grade(15.0)[0] == 20.0
@@ -343,12 +345,12 @@ class TestStockMovement:
             # Other sources still rank the player (stale):
             _snap("baseball_america", "X", rank=15, date_="2026-05-13", label="BA May"),
             # FG graduates page picks them up:
-            _snap("fangraphs", "X", fv=65.0, date_="2026-05-14", label="FG 2026 Graduates", status="graduated"),
+            _snap("fangraphs", "X", fv=65.0, date_="2026-05-14", label="FG 2026 Graduates", status="debuted"),
         ]
         p = build_timeseries(snaps)[0]
-        assert p.status == "graduated"
+        assert p.status == "debuted"
         assert p.debut_date == "2026-05-14"
-        assert stock_movement(p)["direction"] == "graduated"
+        assert stock_movement(p)["direction"] == "debuted"
 
 
 class TestExportSplit:
@@ -367,10 +369,10 @@ class TestExportSplit:
         # Two graduates
         snaps.append(_snap("fangraphs", "Grad A",
                           fv=60.0, date_="2025-10-15",
-                          label="FG 2025 Graduates", status="graduated"))
+                          label="FG 2025 Graduates", status="debuted"))
         snaps.append(_snap("fangraphs", "Grad B",
                           fv=65.0, date_="2026-05-14",
-                          label="FG 2026 Graduates", status="graduated"))
+                          label="FG 2026 Graduates", status="debuted"))
 
         ts = build_timeseries(snaps)
         out = tmp_path / "out.json"
@@ -387,9 +389,11 @@ class TestExportSplit:
         assert payload["debut_count"] == 2
         grad_names = [p["player_name"] for p in payload["debuts"]]
         assert grad_names == ["Grad B", "Grad A"]  # 2026 before 2025
-        assert all(p["status"] == "graduated" for p in payload["debuts"])
+        assert all(p["status"] == "debuted" for p in payload["debuts"])
         grad_a = next(p for p in payload["debuts"] if p["player_name"] == "Grad A")
-        assert grad_a["debut_date"] == "2025-07-01"
+        # debut_date now reflects the actual graduation-snapshot date,
+        # not a mid-season default derived from the interval_label year.
+        assert grad_a["debut_date"] == "2025-10-15"
 
     def test_graduate_org_uses_post_graduation_trade(self, tmp_path):
         import json
@@ -401,7 +405,7 @@ class TestExportSplit:
                      74, 50.0, "active"),
             Snapshot("fangraphs", "2025-10-15", "FG 2025 Graduates",
                      "richard_fitts", "Richard Fitts", "SP", "BOS",
-                     74, 50.0, "graduated"),
+                     74, 50.0, "debuted"),
         ]
         ts = build_timeseries(snaps)
         out = tmp_path / "out.json"
@@ -496,7 +500,7 @@ class TestForwardFill:
             "fangraphs", "mlb_pipeline"
         }
         # And the candle close reflects the averaged value, not 65 alone.
-        assert p.fv_close == 56.0  # 56.25 → snaps to 56
+        assert p.fv_close == 57.0  # 56.25 → ceils to 57
 
     def test_later_snapshot_from_same_source_overwrites_earlier(self):
         """A second FG snapshot at a later date replaces the first — the
@@ -541,14 +545,14 @@ class TestConsensusIsSourceMean:
 
     def test_single_source_consensus_pulled_toward_prior(self):
         # 1-source prospect at FV 70 is pulled toward the FV-35 prior:
-        #   adjusted = (2/3 · 70) + (1/3 · 35) = 58.33 → snaps to FV 58.
+        #   adjusted = (2/3 · 70) + (1/3 · 35) = 58.33 → ceils to FV 59.
         # The pre-shrinkage value is preserved on the point so the UI
         # can show "raw 70" in tooltips.
         snaps = [_snap("fangraphs", "X", fv=70.0)]
         p = build_timeseries(snaps)[0]
         pt = p.points[-1]
         assert pt.consensus_fv_pre_shrinkage == 70.0
-        assert pt.consensus_fv == 58.0
+        assert pt.consensus_fv == 59.0
         assert abs(pt.consensus_fv_raw - 58.33) < 0.05
         assert abs(pt.shrinkage_weight - (2.0 / 3.0)) < 1e-9
         assert pt.avg_fv_n == 1
@@ -596,9 +600,9 @@ class TestConsensusIsSourceMean:
 
     def test_jesus_made_case_no_more_drift(self):
         # 4 explicit grades averaging 62.5 + 1 rank-only source.
-        # snap_to_grade(62.5) → 62 (banker's rounding). The motivating
+        # snap_to_grade(62.5) → 63 (hard ceil). The motivating
         # regression: with shrinkage, this collapsed below 61; now the
-        # consensus exactly matches the raw arithmetic mean.
+        # consensus exactly matches the raw arithmetic mean (post-ceil).
         snaps = [
             _snap("fangraphs",     "Made", fv=65.0),
             _snap("mlb_pipeline",  "Made", fv=65.0),
@@ -609,7 +613,7 @@ class TestConsensusIsSourceMean:
         p = build_timeseries(snaps)[0]
         pt = p.points[-1]
         assert pt.consensus_fv_pre_shrinkage == 62.5
-        assert pt.consensus_fv == 62.0
+        assert pt.consensus_fv == 63.0
         assert pt.shrinkage_weight == 1.0
 
     def test_partial_coverage_no_pull(self):

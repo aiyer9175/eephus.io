@@ -12,7 +12,17 @@ import re
 import sqlite3
 from contextlib import contextmanager
 from dataclasses import asdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
+
+
+def _utcnow_iso(timespec: str = "seconds") -> str:
+    """Timezone-aware UTC 'now' ISO string, naive-style.
+
+    datetime.utcnow() was deprecated in 3.12 / removed in 3.14. The
+    aware-then-naive shape preserves the legacy string form ("YYYY-MM-DD
+    HH:MM:SS") that downstream parsers + the DB schema expect.
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat(timespec=timespec)
 from pathlib import Path
 from typing import Iterable
 
@@ -1265,7 +1275,7 @@ def insert_snapshots(snapshots: Iterable[Snapshot]) -> int:
 
 
 def revalidate_auto_graduations(qualified_keys: set[str]) -> int:
-    """Delete `auto_detect` 'graduated' snapshots for players who don't
+    """Delete `auto_detect` 'debuted' snapshots for players who don't
     currently meet the rookie-eligibility rules.
 
     Earlier versions of the pipeline auto-graduated any prospect with an
@@ -1286,7 +1296,7 @@ def revalidate_auto_graduations(qualified_keys: set[str]) -> int:
     with connect() as con:
         rows = con.execute(
             """SELECT player_key FROM snapshots
-               WHERE source = 'auto_detect' AND status = 'graduated'"""
+               WHERE source = 'auto_detect' AND status = 'debuted'"""
         ).fetchall()
         if not rows:
             return 0
@@ -1299,7 +1309,7 @@ def revalidate_auto_graduations(qualified_keys: set[str]) -> int:
         # rows need to clear.
         con.executemany(
             """DELETE FROM snapshots
-               WHERE source = 'auto_detect' AND status = 'graduated'
+               WHERE source = 'auto_detect' AND status = 'debuted'
                  AND player_key = ?""",
             [(k,) for k in to_delete],
         )
@@ -1340,7 +1350,7 @@ def auto_debut_player(player_key: str, debut_date: str | None = None) -> None:
         if not row:
             return
         # Insert the debut snapshot; ignore if this exact row exists.
-        # status='graduated' is kept as the internal enum (renaming it
+        # status='debuted' is kept as the internal enum (renaming it
         # would invalidate every cached DB row + force a schema migration);
         # the user-facing label is "Debuted" wherever this surfaces.
         con.execute(
@@ -1348,7 +1358,7 @@ def auto_debut_player(player_key: str, debut_date: str | None = None) -> None:
                (player_key, player_name, source, snapshot_date, interval_label,
                 position, org, rank, fv, status)
                VALUES (?, ?, 'auto_detect', ?, 'Auto-detected MLB debut',
-                       ?, ?, NULL, NULL, 'graduated')""",
+                       ?, ?, NULL, NULL, 'debuted')""",
             (player_key, row["player_name"], snap_date,
              row["position"], row["org"]),
         )
@@ -1585,7 +1595,7 @@ def upsert_zone_metrics(metrics: dict[str, object], season: int) -> int:
     with connect() as con:
         for key, metric in metrics.items():
             payload = asdict(metric) if hasattr(metric, "__dataclass_fields__") else dict(metric)
-            fetched_at = payload.get("fetched_at") or datetime.utcnow().isoformat(timespec="seconds")
+            fetched_at = payload.get("fetched_at") or _utcnow_iso()
             con.execute(
                 """INSERT INTO zone_metrics (player_key, season, payload_json, fetched_at)
                    VALUES (?, ?, ?, ?)
@@ -1631,7 +1641,7 @@ def upsert_statcast_metrics(metrics: dict[str, object], season: int) -> int:
     with connect() as con:
         for key, metric in metrics.items():
             payload = asdict(metric) if hasattr(metric, "__dataclass_fields__") else dict(metric)
-            fetched_at = payload.get("fetched_at") or datetime.utcnow().isoformat(timespec="seconds")
+            fetched_at = payload.get("fetched_at") or _utcnow_iso()
             con.execute(
                 """INSERT INTO statcast_metrics (player_key, season, payload_json, fetched_at)
                    VALUES (?, ?, ?, ?)
@@ -2571,7 +2581,7 @@ def start_run() -> int:
     with connect() as con:
         cur = con.execute(
             "INSERT INTO runs (started_at) VALUES (?)",
-            (datetime.utcnow().isoformat(timespec="seconds"),),
+            (_utcnow_iso(),),
         )
         return cur.lastrowid
 
@@ -2581,7 +2591,7 @@ def finish_run(run_id: int, new_snapshots: int, stat_lines: int, notes: str = ""
         con.execute(
             """UPDATE runs SET finished_at = ?, new_snapshots = ?, stat_lines = ?, notes = ?
                WHERE id = ?""",
-            (datetime.utcnow().isoformat(timespec="seconds"),
+            (_utcnow_iso(),
              new_snapshots, stat_lines, notes, run_id),
         )
 
@@ -3628,7 +3638,7 @@ def _grad_pipeline_score(fv_events: list[dict],
     cutoff = (today - timedelta(days=months * 30)).isoformat()
     total = 0.0
     for e in fv_events:
-        if e.get("kind") != "graduation":
+        if e.get("kind") != "debut_marker":
             continue
         if (e.get("date") or "") < cutoff:
             continue
@@ -3799,7 +3809,7 @@ def _build_org_fv_history(
           "series": [{"date": "2024-01-04", "total_fv": 0.0}, ...],
           "events": [{"date": "2024-07-30", "kind": "trade", "player_name":
                       "Drew Jones", "fv": 50.0, "other_org": "MIA"},
-                     {"date": "2025-04-01", "kind": "graduation",
+                     {"date": "2025-04-01", "kind": "debut_marker",
                       "player_name": "Spencer Schwellenbach", "fv": 55.0},
                       ...],
         },
@@ -3860,8 +3870,8 @@ def _build_org_fv_history(
             stream.append((pt.snapshot_date, "snapshot", pt.consensus_fv_raw))
         for t in trades:
             stream.append((t["date"], "trade", t["from"], t["to"]))
-        if p.status == "graduated" and p.debut_date:
-            stream.append((p.debut_date, "graduation"))
+        if p.status == "debuted" and p.debut_date:
+            stream.append((p.debut_date, "debut_marker"))
         # Stable sort: ties resolved by index in `stream` (snapshots first
         # because they're appended before trades).
         stream.sort(key=lambda x: x[0])
@@ -3929,12 +3939,12 @@ def _build_org_fv_history(
                 # the trade itself sets the baseline (fv_now), and the
                 # next snapshot will credit only growth above it.
                 baselined.add(to_org)
-            elif kind == "graduation":
+            elif kind == "debut_marker":
                 # Graduation is a successful exit — the org keeps the
                 # development credit they earned, the line stays flat
                 # through the event. Marker is annotated for the chart.
                 events_by_org[org_now].append({
-                    "date": d, "kind": "graduation",
+                    "date": d, "kind": "debut_marker",
                     "player_name": p.player_name,
                     "player_key": p.player_key, "fv": round(fv_now, 1),
                 })
@@ -4844,7 +4854,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     def _display_org(p: PlayerTimeseries,
                      filtered_trades: list[dict]) -> str | None:
-        if p.status == "graduated":
+        if p.status == "debuted":
             return canonical_org(
                 _latest_post_graduation_org(p, filtered_trades)
                 or graduate_mlb_org_by_key.get(p.player_key)
@@ -5345,7 +5355,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # simplification), the two fields carried the same value
             # for every player, so the second one is gone. Frontend
             # reads `debut_date` exclusively.
-            "debut_date": _display_graduation_date(p) if p.status == "graduated" else p.debut_date,
+            "debut_date": _display_graduation_date(p) if p.status == "debuted" else p.debut_date,
             "birth_date": bd,
             "age": age,
             # Position in the FV-sorted active list, plus position within
@@ -5558,7 +5568,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # that were just stamped on the dict. Active prospects get None
         # (label only meaningful after the prospect has graduated AND
         # cleared the sample floor).
-        if p.status == "graduated":
+        if p.status == "debuted":
             try:
                 payload["boom_label"] = _compute_boom_bust(payload)
             except Exception:
@@ -5584,7 +5594,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     cutoff = _inactive_cutoff()
 
     # Reclassification rules:
-    #   1. Status='graduated' from snapshots or auto-graduation → grads.
+    #   1. Status='debuted' from snapshots or auto-graduation → grads.
     #   2. On IL right now → stays active (badge tells the story).
     #   3. Both signals stale (FV cutoff + no games in current/previous
     #      calendar year):
@@ -5632,7 +5642,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # v20 — Definitive debut detection. If the MLB API has stamped
         # an mlbDebutDate on the player's roster_status, they're treated
         # as debuted regardless of whether any consensus snapshot has
-        # flagged status='graduated'. This was the Waldschmidt bug —
+        # flagged status='debuted'. This was the Waldschmidt bug —
         # he debuted 2026-05-08 (career_mlb_ab=0 because he was a
         # pinch-runner / late-inning sub) but no FG snapshot had marked
         # him as a graduate, so the actives pool kept him. mlb_debut_date
@@ -5640,25 +5650,25 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # are no longer used.
         _rs_for_debut = (roster_status.get(p.player_key) or {})
         _api_debut = _rs_for_debut.get("mlb_debut_date")
-        if _api_debut and p.status != "graduated":
-            p.status = "graduated"
+        if _api_debut and p.status != "debuted":
+            p.status = "debuted"
             p.debut_date = _api_debut
         # v23 — Outrighted prospects are also marked debuted (per user
         # directive). An outright requires the player to have been on
         # the 40-man roster, which makes them a non-prospect even if
         # they never played an MLB game. The debut_date falls back to
         # the outright date when no mlbDebutDate is on file.
-        if p.status != "graduated":
+        if p.status != "debuted":
             _tx_rows = (transactions_by_player or {}).get(p.player_key) or []
             _outright_dates = [tx.get("date") for tx in _tx_rows
                                if (tx.get("kind") or "").lower() == "outrighted"
                                and tx.get("date")]
             if _outright_dates:
-                p.status = "graduated"
+                p.status = "debuted"
                 # Use the EARLIEST outright (when player first cleared
                 # waivers off the 40-man) as the debut-equivalent date.
                 p.debut_date = p.debut_date or min(_outright_dates)
-        if p.status == "graduated":
+        if p.status == "debuted":
             grads.append(p)
             continue
         if not p.points:
@@ -5772,7 +5782,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         #     against the cached career payload.
         # Both feed auto_graduate_player in run_monthly, so by the time
         # we get here a legitimately graduated player already has
-        # p.status == "graduated" and was peeled off above.
+        # p.status == "debuted" and was peeled off above.
         if fv_stale and play_stale:
             inactives.append(p)
             _audit_fv_play_stale += 1
@@ -5784,7 +5794,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # glance. Pre-dedup counts (mlbam_id dedup runs below).
     log.info(
         "active-pool cleanup: %d low-FV (<%d), %d play-2yr-stale, %d stale-IL, %d FV+play stale "
-        "-> actives=%d, graduates=%d, inactives=%d (pre-dedup)",
+        "-> actives=%d, debuts=%d, inactives=%d (pre-dedup)",
         _audit_low_fv, MIN_PROSPECT_FV, _audit_play2yr, _audit_stale_il, _audit_fv_play_stale,
         len(actives), len(grads), len(inactives),
     )
@@ -5948,7 +5958,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     # ── FARM-GRADE INPUT POOL CONTRACT (v20) ────────────────────────────
     # The org_map below is fed exclusively from `actives` — the list that
-    # excludes any player with `status == "graduated"`, which under the
+    # excludes any player with `status == "debuted"`, which under the
     # v20 definitive-debut rule means any player whose roster_status has
     # an mlb_debut_date. Every grade derived from `m["prospects"]` or
     # its accumulators (top_end / depth / tools_quality / international_
@@ -7752,7 +7762,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _harvest_and_strip_reports(p)
 
     boot = {
-        "generated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "generated_at": _utcnow_iso() + "Z",
         "run": latest_run_summary(),
         "total_tracked": len(timeseries),
         "active_count": len(actives),
@@ -7782,12 +7792,25 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # payload roughly in half. The files are still valid JSON, just not
     # human-readable. Open in a browser DevTools console + JSON.parse if
     # you need to inspect interactively.
-    _compact = {"separators": (",", ":")}
-    out_path.write_text(json.dumps(boot, **_compact))
-    (out_dir / "debuts.json").write_text(json.dumps(graduate_payload, **_compact))
-    (out_dir / "inactive.json").write_text(json.dumps(inactive_payload, **_compact))
-    (out_dir / "rosters_by_org.json").write_text(json.dumps(rosters_by_org, **_compact))
-    (out_dir / "scout_reports.json").write_text(json.dumps(scout_reports_sidecar, **_compact))
+    # v25 — orjson serializer (3-5x faster than stdlib json for our
+    # payload shape). Output is byte-equivalent compact JSON. Falls back
+    # to stdlib if orjson isn't installed (CI without the optional dep).
+    try:
+        import orjson as _orjson
+        # OPT_NON_STR_KEYS allows int keys (mlbam_id maps); orjson refuses
+        # them by default. No SORT or INDENT — match the prior compact mode.
+        _opts = _orjson.OPT_NON_STR_KEYS
+        def _dump(obj, path):
+            path.write_bytes(_orjson.dumps(obj, option=_opts))
+    except ImportError:
+        _compact = {"separators": (",", ":")}
+        def _dump(obj, path):
+            path.write_text(json.dumps(obj, **_compact))
+    _dump(boot, out_path)
+    _dump(graduate_payload, out_dir / "debuts.json")
+    _dump(inactive_payload, out_dir / "inactive.json")
+    _dump(rosters_by_org, out_dir / "rosters_by_org.json")
+    _dump(scout_reports_sidecar, out_dir / "scout_reports.json")
     return out_path
 
 

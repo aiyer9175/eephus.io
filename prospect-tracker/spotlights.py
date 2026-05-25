@@ -1591,9 +1591,9 @@ def compute_movement(p: dict) -> dict:
     Drives both the spotlights buckets (via _classify_movement) and the
     main-list "Top movers" / stockFilter chips (via the same {direction,
     delta, drivers} shape stock_movement used to emit on its own)."""
-    if (p.get("status") or "") == "graduated":
+    if (p.get("status") or "") == "debuted":
         return {
-            "direction": "graduated", "delta": 0.0,
+            "direction": "debuted", "delta": 0.0,
             "from_label": "—", "to_label": "—",
             "from_date": "", "to_date": "",
             "perf_delta": None, "skills_delta": None,

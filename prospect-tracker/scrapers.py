@@ -100,7 +100,7 @@ class Snapshot:
     org: str | None
     rank: int | None
     fv: float | None
-    status: str  # active | graduated | injured_list | off_list
+    status: str  # active | debuted | injured_list | off_list
     # Per-source 20-80 tool grades. Canonical keys (any subset of):
     # hit, game_pwr, raw_pwr, speed, field, throw, pitch_sel, bat_ctrl (hitters)
     # fb, sl, cb, ch, cmd (pitchers). Missing tools stay absent so we
@@ -2895,7 +2895,8 @@ def load_manual_rankings(csv_path: Path = MANUAL_CSV) -> tuple[list[Snapshot], d
     # Try UTF-8 first; fall back to latin-1 (common Windows export encoding).
     for enc in ("utf-8-sig", "utf-8", "latin-1", "cp1252"):
         try:
-            csv_path.open(encoding=enc).read()
+            with csv_path.open(encoding=enc) as _probe:
+                _probe.read()
             break
         except UnicodeDecodeError:
             continue

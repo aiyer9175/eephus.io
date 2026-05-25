@@ -21,10 +21,24 @@ import pytest
 DB_PATH = Path(__file__).parent / "prospects.db"
 
 
+from contextlib import contextmanager
+
+
+@contextmanager
 def _conn():
+    """Yields a sqlite3 connection that's properly closed after use.
+
+    NOTE: `with sqlite3.connect(...) as con` only manages the TRANSACTION
+    (commit/rollback) — it does NOT close the connection. Using a custom
+    contextmanager so the connection is released after each test,
+    silencing the ResourceWarning that GC otherwise raises later."""
     if not DB_PATH.exists():
         pytest.skip(f"no prospects.db at {DB_PATH}; run `python -c \"from storage import init_db; init_db()\"`")
-    return sqlite3.connect(DB_PATH)
+    con = sqlite3.connect(DB_PATH)
+    try:
+        yield con
+    finally:
+        con.close()
 
 
 def test_no_draft_keys_in_snapshots():

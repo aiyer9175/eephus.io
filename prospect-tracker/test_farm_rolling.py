@@ -203,21 +203,21 @@ class TestGradPipelineScore:
         """One 60 FV grad should be worth more than four 40 FV grads —
         that's the whole point of switching from count to FV-weighted."""
         today = date(2026, 5, 19)
-        one_60 = [{"kind": "graduation", "fv": 60.0,
+        one_60 = [{"kind": "debut_marker", "fv": 60.0,
                    "date": _iso_days_ago(30, today)}]
         four_40 = [
-            {"kind": "graduation", "fv": 40.0, "date": _iso_days_ago(10, today)},
-            {"kind": "graduation", "fv": 40.0, "date": _iso_days_ago(20, today)},
-            {"kind": "graduation", "fv": 40.0, "date": _iso_days_ago(30, today)},
-            {"kind": "graduation", "fv": 40.0, "date": _iso_days_ago(40, today)},
+            {"kind": "debut_marker", "fv": 40.0, "date": _iso_days_ago(10, today)},
+            {"kind": "debut_marker", "fv": 40.0, "date": _iso_days_ago(20, today)},
+            {"kind": "debut_marker", "fv": 40.0, "date": _iso_days_ago(30, today)},
+            {"kind": "debut_marker", "fv": 40.0, "date": _iso_days_ago(40, today)},
         ]
         assert _grad_pipeline_score(one_60, as_of=today) > _grad_pipeline_score(four_40, as_of=today)
 
     def test_only_counts_window(self):
         today = date(2026, 5, 19)
         events = [
-            {"kind": "graduation", "fv": 55, "date": _iso_days_ago(400, today)},  # outside
-            {"kind": "graduation", "fv": 50, "date": _iso_days_ago(100, today)},  # inside
+            {"kind": "debut_marker", "fv": 55, "date": _iso_days_ago(400, today)},  # outside
+            {"kind": "debut_marker", "fv": 50, "date": _iso_days_ago(100, today)},  # inside
         ]
         # Only the 100-days-ago grad counts — score = points(50) = 8.0
         # under the v4 FV_POINTS curve (was 5.0 pre-v4).
@@ -227,7 +227,7 @@ class TestGradPipelineScore:
         today = date(2026, 5, 19)
         events = [
             {"kind": "trade",      "fv": 60, "date": _iso_days_ago(20, today)},
-            {"kind": "graduation", "fv": 45, "date": _iso_days_ago(30, today)},
+            {"kind": "debut_marker", "fv": 45, "date": _iso_days_ago(30, today)},
         ]
         # Only the graduation contributes — points(45) = 3.5 under
         # the v4 FV_POINTS curve (was 2.5 pre-v4).
@@ -415,7 +415,7 @@ class TestBuildOrgFvHistoryGraduations:
         player = _mk_player(
             "p1", "Prospect One", "ATL",
             [("2025-04-01", 60.0)],
-            status="graduated", debut_date="2025-08-15",
+            status="debuted", debut_date="2025-08-15",
         )
         out = _build_org_fv_history([player], lambda trades: [], {})
         series = out["ATL"]["series"]
@@ -423,7 +423,7 @@ class TestBuildOrgFvHistoryGraduations:
         # The graduation event is still recorded so grad_pipeline_score and
         # chart annotations can use it.
         events = out["ATL"]["events"]
-        assert any(e["kind"] == "graduation" and e["fv"] == 60.0 for e in events)
+        assert any(e["kind"] == "debut_marker" and e["fv"] == 60.0 for e in events)
 
     def test_trajectory_neutral_through_graduation(self):
         # Org has one prospect that never changes FV before graduation.
@@ -431,7 +431,7 @@ class TestBuildOrgFvHistoryGraduations:
         player = _mk_player(
             "p1", "Prospect One", "ATL",
             [("2025-01-15", 60.0)],
-            status="graduated", debut_date="2025-09-01",
+            status="debuted", debut_date="2025-09-01",
         )
         out = _build_org_fv_history([player], lambda trades: [], {})
         series = out["ATL"]["series"]

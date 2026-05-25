@@ -57,19 +57,20 @@ class TestTreeWeights:
         )
 
     def test_development_is_solo_top_weighted(self):
-        # v5 weights — Development is the SOLO top-weighted main grade
-        # at 0.40. MLB Production is alone at 0.30 (second). Acquisition
-        # Strategy and Financial tie at 0.15 as supporting columns.
-        # The "development-first" thesis: sustained per-tool growth is
-        # the highest-conviction org signal, least confounded by
-        # acquisition luck or upper-league streaks.
+        # v8 weights — Development bumped to 0.55 (solo top, current-farm
+        # signal). MLB Production at 0.15. Financial at 0.20 (tier-2 input,
+        # outweighs Acquisition Strategy). Acquisition Strategy at 0.10
+        # (smallest input — acquisition luck distorts year-over-year).
+        # The "development-first" thesis: sustained per-tool growth is the
+        # highest-conviction org signal, least confounded by acquisition
+        # luck or upper-league streaks.
         assert FARM_TREE_WEIGHT_DEVELOPMENT > FARM_TREE_WEIGHT_MLB_PRODUCTION, (
-            "v5: Development is solo top, MLB Production is second"
+            "v8: Development is solo top, MLB Production is below Financial"
         )
         assert FARM_TREE_WEIGHT_DEVELOPMENT > FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
         assert FARM_TREE_WEIGHT_DEVELOPMENT > FARM_TREE_WEIGHT_FINANCIAL
-        assert FARM_TREE_WEIGHT_ACQUISITION_STRATEGY == FARM_TREE_WEIGHT_FINANCIAL, (
-            "v5: Acquisition Strategy and Financial tie at 0.15"
+        assert FARM_TREE_WEIGHT_FINANCIAL > FARM_TREE_WEIGHT_ACQUISITION_STRATEGY, (
+            "v8: Financial outweighs Acquisition Strategy (0.20 > 0.10)"
         )
 
     def test_sub_weight_is_50_percent(self):
@@ -226,14 +227,13 @@ class TestExportedTreeShape:
     def test_farm_score_is_weighted_blend(self):
         # v6 — recompute from 4 main scores, then apply the composite
         # stretch (linear remap around mean=100, factor=1.35) that
-        # widens the spread before letter-grading. Conviction-capped
-        # orgs are skipped: the post-process cap clamps farm_score to
-        # p75 when the org has no star-tier grad, breaking the
-        # blend+stretch relationship for those rows.
+        # widens the spread before letter-grading. (v18: conviction-cap
+        # skip removed since the cap itself was retired; the .get()
+        # guard below is a defensive no-op kept for safety.)
         from storage import _stretch_composite
         for o in self.orgs:
             if o.get("conviction_cap_applied"):
-                continue  # blend invariant doesn't hold for capped orgs
+                continue  # defensive: v18 removed the cap, no-op now
             blended = (
                 FARM_TREE_WEIGHT_ACQUISITION_STRATEGY * (o.get("acquisition_strategy_score") or 100.0)
               + FARM_TREE_WEIGHT_DEVELOPMENT          * (o.get("development_score")          or 100.0)

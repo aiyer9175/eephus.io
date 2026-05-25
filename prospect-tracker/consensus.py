@@ -326,7 +326,7 @@ class PlayerTimeseries:
     # trigger and the frontend "1" mark on the FV badge.
     fv_total_instances: int = 0
 
-    # Set when status == "graduated". Renamed graduation_date → debut_date
+    # Set when status == "debuted". Renamed graduation_date → debut_date
     # (v20) — the field's semantics are now "MLB debut date", driven by
     # roster_status.mlb_debut_date in storage._derived_graduation_date.
     # The old name leaked the AB/IP-threshold-based graduation concept that
@@ -782,7 +782,7 @@ def _latest_meta(snaps: list[Snapshot]) -> tuple[str, str | None, str | None]:
     # source flagged graduation (which on Edwards' record was the same
     # FG snapshot that pegged him at CF), so trusting auto_detect would
     # just relaunder the FG projection.
-    is_graduated = any(s.status == "graduated" for s in snaps)
+    is_graduated = any(s.status == "debuted" for s in snaps)
     if is_graduated:
         _EXCLUDED_FOR_GRAD_POS = {"fangraphs", "auto_detect"}
         non_fg_pos = next((s.position for s in snaps_sorted
@@ -936,11 +936,11 @@ def build_timeseries(
         status = "active"
         debut_date = None
         for s in sorted(player_snaps, key=lambda x: x.snapshot_date):
-            if s.status == "graduated":
-                status = "graduated"
+            if s.status == "debuted":
+                status = "debuted"
                 debut_date = s.snapshot_date
                 break  # earliest debut signal wins
-        if status != "graduated" and points and by_date:
+        if status != "debuted" and points and by_date:
             latest_day = sorted(by_date)[-1]
             statuses = [s.status for s in by_date[latest_day]]
             if "injured_list" in statuses:
@@ -1015,7 +1015,7 @@ def build_timeseries(
         merged.sort(key=lambda pt: pt.snapshot_date)
         keep.points = merged
         # Pull through the more authoritative status / debut_date.
-        if keep.status != "graduated" and drop.status == "graduated":
+        if keep.status != "debuted" and drop.status == "debuted":
             keep.status = drop.status
             keep.debut_date = drop.debut_date
         # Pool the per-snapshot FV-instance count so the "n instances"
@@ -1067,7 +1067,7 @@ def stock_movement(player: PlayerTimeseries) -> dict:
 
     Returns:
         {
-            "direction": "up_strong" | "up" | "flat" | "down" | "down_strong" | "graduated",
+            "direction": "up_strong" | "up" | "flat" | "down" | "down_strong" | "debuted",
             "delta": float,         # consensus_fv_raw delta (1y window)
             "from_label": str,      # consensus_fv_label at the anchor prior
             "to_label": str,        # consensus_fv_label at the latest
@@ -1075,9 +1075,9 @@ def stock_movement(player: PlayerTimeseries) -> dict:
             "to_date": str,
         }
     """
-    if player.status == "graduated":
+    if player.status == "debuted":
         return {
-            "direction": "graduated",
+            "direction": "debuted",
             "delta": 0.0, "from_label": "—", "to_label": "—",
             "from_date": "", "to_date": "",
         }

@@ -244,26 +244,20 @@ class IntegrationSmoke(unittest.TestCase):
         self.assertGreaterEqual(n_conv, 5,
             f"only {n_conv} orgs with conviction=1; expected ≥5")
 
-    def test_top_5_conviction_zero_orgs_are_all_capped(self):
-        # Top-5 by farm_score: any conviction=0 org in the top 5 must
-        # have been conviction-capped (the cap clamps them to p75). v7
-        # weights + composite stretch can cluster multiple capped orgs
-        # at the same p75 value, so the prior "all top-5 must have
-        # conviction=1" assertion is too strict — what matters is the
-        # cap mechanism fired. A non-capped conviction-0 org in the
-        # top 5 WOULD be the bug.
-        top5 = sorted(self.orgs,
-                      key=lambda o: -(o.get("farm_score") or 0))[:5]
-        for o in top5:
-            c = ((o.get("tree") or {}).get("mlb_production_conviction") or {}).get("conviction")
-            if c == 0:
-                self.assertTrue(o.get("conviction_cap_applied"),
-                    f"{o['org']} ranked top-5 with conviction=0 but NOT capped — cap should have fired")
-
-    def test_conviction_cap_field_present(self):
+    def test_conviction_cap_removed_v18(self):
+        # v18 — Conviction cap removed (storage.py:7510-7518). The
+        # 75th-percentile clamp punished young, talent-loaded systems
+        # for not yet having a star MLB return. The conviction leaf
+        # still contributes via mlb_production rollup; the artificial
+        # ceiling is gone. Guard against accidental reintroduction.
         for o in self.orgs:
-            self.assertIn("conviction_cap_applied", o)
-            self.assertIsInstance(o["conviction_cap_applied"], bool)
+            self.assertNotIn("conviction_cap_applied", o,
+                f"{o.get('org')}: conviction_cap_applied field present — "
+                f"v18 retired this clamp; if re-added, the field schema "
+                f"and this test should be reconsidered together")
+            self.assertNotIn("farm_score_uncapped", o,
+                f"{o.get('org')}: farm_score_uncapped present — paired "
+                f"with conviction_cap_applied; both retired in v18")
 
 
 if __name__ == "__main__":
