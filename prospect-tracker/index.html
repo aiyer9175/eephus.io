@@ -11349,9 +11349,39 @@ function renderRecentlyTraded() {
       const _toLogo   = _toOrg   !== "?" ? teamLogoHTML(_toOrg,   "sm", _toOrg)   : "";
       const headLine = `<span style="color:var(--text-tertiary);display:inline-flex;align-items:center;gap:4px;">${_fromLogo}${escapeHtml(_fromOrg)}</span> <span style="color:var(--neon-violet);">→</span> <span style="color:var(--text-primary);display:inline-flex;align-items:center;gap:4px;">${_toLogo}${escapeHtml(_toOrg)}</span>`;
       const desc = (acq.description || "").trim();
-      const TRUNC = 90;
+      // The narrative from the MLB API reads "{TeamA} traded X to {TeamB}
+      // for Y." — but the from→to is already encoded in the head line
+      // above, so the team names are redundant. Strip them so the visible
+      // sub-line is just "X for Y" — leaves room for the actual player
+      // names (the part that scanners care about) without the truncation
+      // ellipsis lopping off the trailing name. Falls back to the raw
+      // description when the pattern doesn't match (Rule 5 picks, waiver
+      // claims phrased differently, etc.).
+      const _compressTrade = (text) => {
+        if (!text) return "";
+        const m = text.match(/^.+?\s+traded\s+(.+?)\s+to\s+.+?\s+for\s+(.+?)\.?\s*$/i);
+        return m ? `${m[1]} for ${m[2]}` : text;
+      };
+      // Smart word-boundary truncation. Prefers breaking at " and ",
+      // " for ", or ", " so we never cut mid-name like "Wilkinso…".
+      const _smartTrunc = (text, maxLen) => {
+        if (text.length <= maxLen) return text;
+        const slice = text.slice(0, maxLen);
+        const breaks = [
+          slice.lastIndexOf(", "),
+          slice.lastIndexOf(" and "),
+          slice.lastIndexOf(" for "),
+        ].filter((i) => i > Math.floor(maxLen * 0.5));
+        const cut = breaks.length ? Math.max(...breaks) : slice.lastIndexOf(" ");
+        return (cut > 0 ? slice.slice(0, cut) : slice).trimEnd() + "…";
+      };
+      const compressed = _compressTrade(desc);
+      // Cell width fits ~70 chars of the 11px sub-line. Past that the
+      // tail gets visually clipped before our JS truncation fires;
+      // 70 stays inside the visible width on the typical layout.
+      const TRUNC = 70;
       const subLine = desc
-        ? `<span style="display:block;color:var(--text-tertiary);font-size:11px;margin-top:2px;line-height:1.35;" title="${escapeHtml(desc)}">${escapeHtml(desc.length > TRUNC ? desc.slice(0, TRUNC - 1).trimEnd() + "…" : desc)}</span>`
+        ? `<span style="display:block;color:var(--text-tertiary);font-size:11px;margin-top:2px;line-height:1.35;" title="${escapeHtml(desc)}">${escapeHtml(_smartTrunc(compressed, TRUNC))}</span>`
         : "";
       contextLine = headLine + subLine;
     } else if (acq.method === "draft" && acq.pick_overall) {
