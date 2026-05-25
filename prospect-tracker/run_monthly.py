@@ -110,8 +110,7 @@ from storage import (
     export_timeseries_json,
 )
 from consensus import build_timeseries
-from stats import (fetch_statlines_for, derive_statlines_from_career, fetch_birth_date,
-                   fetch_birth_date_by_name,
+from stats import (fetch_statlines_for, derive_statlines_from_career,
                    fetch_pitch_arsenal, fetch_sabermetrics,
                    fetch_career_war_bulk,
                    fetch_career_stats,
@@ -128,6 +127,7 @@ from stats import (fetch_statlines_for, derive_statlines_from_career, fetch_birt
                    fetch_team_affiliations,
                    PlayerIndex)
 from trades import detect_trades
+from stat_flags import is_pitcher as _is_pitcher
 
 
 # v24 — Freshness gates dropped to 0 so every run refetches stats,
@@ -138,12 +138,6 @@ from trades import detect_trades
 CAREER_STATS_FRESH_DAYS = 0
 ZONE_METRICS_FRESH_DAYS = 0
 STATCAST_METRICS_FRESH_DAYS = 0
-
-
-def _is_pitcher(position: str | None) -> bool:
-    if not position:
-        return False
-    return any(p in position.upper() for p in ("RHP", "LHP", "SP", "RP"))
 
 
 def _is_career_fresh(fetched_at: str | None, max_age_days: int) -> bool:
@@ -234,45 +228,23 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
         log.warning("rebuild_only: no existing rosters_by_org.json — farm-detail "
                     "pages will be blank until a full `python run_monthly.py` runs")
 
-    # IFA spending + per-key bonus merge — mirrors the main() pipeline
-    # at run_monthly.py:521-539 but reads from the spotrac HTML cache so
-    # rebuild_only stays offline. Without the bonus merge, IFA grads
-    # don't enter the `_ifa_grads` bucket (gated on `bonus_usd`) and
-    # `_compute_ifa_roi` returns None for every org.
-    ifa_spending_by_org = _load_ifa_spending_from_cache()
+    # IFA scrape feeds both ifa_spending_by_org (per-org cycle totals) and
+    # ifa_bonus_by_key (per-player bonus merge). Spotrac HTML cache keeps
+    # this offline on warm runs.
     acquisitions = load_acquisitions()
-    try:
-        from spotrac import scrape_spotrac_ifa_range, build_ifa_bonus_by_key
-        from datetime import date as _date
-        _ifa_rows = scrape_spotrac_ifa_range(
-            list(range(2021, _date.today().year + 1)), force=False,
-        )
-        _ifa_bonus_by_key = build_ifa_bonus_by_key(_ifa_rows)
-        _n_merged = 0
-        for _key, _bonus in _ifa_bonus_by_key.items():
-            _rec = acquisitions.get(_key)
-            if _rec and _rec.get("method") == "international_fa" and _rec.get("bonus_usd") is None:
-                _rec["bonus_usd"] = _bonus
-                _n_merged += 1
-        log.info("rebuild_only: merged %d IFA bonuses into acquisitions (%d total rows)",
-                 _n_merged, len(_ifa_bonus_by_key))
-    except Exception:
-        log.exception("rebuild_only: IFA bonus merge failed — fin_ifa_roi will be sparse")
+    ifa_bonus_by_key, ifa_spending_by_org = _load_spotrac_ifa(
+        force=False, log=log, label="rebuild_only IFA",
+    )
+    _merge_ifa_bonuses_into_acquisitions(
+        acquisitions, ifa_bonus_by_key, log, label="rebuild_only",
+    )
 
-    # v17 — Spotrac contracts (player-level AAV / salary_by_year). Was
-    # previously gated to the full pipeline, leaving rebuild_only without
-    # contract data. Loads from the cache (force=False) so rebuild stays
-    # offline. Manual overrides in data/contract_overrides.json layer on
+    # Spotrac per-team contracts. Loaded offline from the per-team HTML
+    # cache; manual overrides in data/contract_overrides.json layer on
     # top of this inside storage.py.
-    contracts_by_key: dict = {}
-    try:
-        from spotrac import scrape_all_spotrac_contracts, build_contracts_by_key
-        _contract_rows = scrape_all_spotrac_contracts(force=False)
-        contracts_by_key = build_contracts_by_key(_contract_rows)
-        log.info("rebuild_only: spotrac contracts loaded — %d rows, %d unique players",
-                 len(_contract_rows), len(contracts_by_key))
-    except Exception:
-        log.exception("rebuild_only: spotrac contracts load failed — falling back to manual overrides only")
+    contracts_by_key = _load_spotrac_contracts(
+        force=False, log=log, label="rebuild_only contracts",
+    )
 
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / "timeseries.json"
@@ -345,34 +317,67 @@ def _derive_all_level_changes() -> dict:
     return out
 
 
-def _load_ifa_spending_from_cache() -> dict:
-    """Helper: rebuild ifa_spending_by_org from the cached Spotrac HTML
-    pages. Mirrors the main() pipeline at line ~530 but skips the
-    network when the per-year HTML cache is warm.
+def _load_spotrac_ifa(force: bool, log, label: str) -> tuple[dict, dict]:
+    """Scrape Spotrac IFA tracker once and return both downstream views.
 
-    Bug fix: rebuild_only() previously passed an empty dict here, which
-    crushed the IFA-share % display to 0% for every org AND made
-    `_compute_ifa_roi` div-by-zero into None for every org. This loader
-    re-runs the scrape against the on-disk HTML cache so the IFA
-    pipeline survives a rebuild.
+    Returns `(ifa_bonus_by_key, ifa_spending_by_org)`. On any failure both
+    halves are returned as empty dicts and the exception is logged at
+    EXCEPTION level — the rest of the pipeline degrades gracefully.
+
+    Shared between `main()` (force=force_refetch, label="spotrac IFA")
+    and `rebuild_only()` (force=False, label="rebuild_only").
     """
-    _log = logging.getLogger("load_ifa_spending")
     try:
-        from spotrac import scrape_spotrac_ifa_range, build_org_ifa_spending
-    except Exception as e:
-        _log.warning("spotrac import failed (%s) — IFA spending unavailable", e)
-        return {}
-    from datetime import date as _date
-    years = list(range(2021, _date.today().year + 1))
+        from spotrac import (
+            scrape_spotrac_ifa_range,
+            build_ifa_bonus_by_key,
+            build_org_ifa_spending,
+        )
+        years = list(range(2021, date.today().year + 1))
+        rows = scrape_spotrac_ifa_range(years, force=force)
+        bonus_by_key = build_ifa_bonus_by_key(rows)
+        spending_by_org = build_org_ifa_spending(rows)
+        log.info("%s: %d signings, %d players with bonus, %d orgs with totals",
+                 label, len(rows), len(bonus_by_key), len(spending_by_org))
+        return bonus_by_key, spending_by_org
+    except Exception:
+        log.exception("%s: spotrac IFA scrape failed — continuing without bonus data", label)
+        return {}, {}
+
+
+def _merge_ifa_bonuses_into_acquisitions(
+    acquisitions: dict, ifa_bonus_by_key: dict, log, label: str,
+) -> int:
+    """Fill in `acquisitions[key].bonus_usd` from the Spotrac IFA payload.
+
+    Only IFA-method records with an existing None bonus are touched.
+    Returns the count of records updated.
+    """
+    n_merged = 0
+    for key, bonus in ifa_bonus_by_key.items():
+        rec = acquisitions.get(key)
+        if rec and rec.get("method") == "international_fa" and rec.get("bonus_usd") is None:
+            rec["bonus_usd"] = bonus
+            n_merged += 1
+    log.info("%s: merged %d IFA bonuses into acquisitions", label, n_merged)
+    return n_merged
+
+
+def _load_spotrac_contracts(force: bool, log, label: str) -> dict:
+    """Scrape Spotrac per-team contract pages once; return contracts_by_key.
+
+    On any failure returns {} and logs the exception — surplus calcs fall
+    back to the league-min+arb salary estimate.
+    """
     try:
-        rows = scrape_spotrac_ifa_range(years, force=False)
-    except Exception as e:
-        _log.warning("spotrac IFA scrape failed (%s) — IFA spending unavailable", e)
+        from spotrac import scrape_all_spotrac_contracts, build_contracts_by_key
+        rows = scrape_all_spotrac_contracts(force=force)
+        out = build_contracts_by_key(rows)
+        log.info("%s: %d player-rows fetched, %d unique players", label, len(rows), len(out))
+        return out
+    except Exception:
+        log.exception("%s: spotrac contracts scrape failed — falling back to manual overrides only", label)
         return {}
-    out = build_org_ifa_spending(rows)
-    _log.info("rebuilt IFA spending: %d signings, %d orgs with totals",
-              len(rows), len(out))
-    return out
 
 
 def _derive_all_transactions() -> dict:
@@ -670,27 +675,12 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         ifa_bonus_by_key: dict[str, int] = {}
         ifa_spending_by_org: dict[str, dict[int, dict]] = {}
         with _step("2b.iii. Spotrac IFA scrape + merge", log):
-            try:
-                from spotrac import (
-                    scrape_spotrac_ifa_range,
-                    build_ifa_bonus_by_key,
-                    build_org_ifa_spending,
-                )
-                ifa_years = list(range(2021, date.today().year + 1))
-                spotrac_rows = scrape_spotrac_ifa_range(ifa_years, force=force_refetch)
-                ifa_bonus_by_key = build_ifa_bonus_by_key(spotrac_rows)
-                ifa_spending_by_org = build_org_ifa_spending(spotrac_rows)
-                n_merged = 0
-                for key, bonus in ifa_bonus_by_key.items():
-                    rec = acquisitions.get(key)
-                    if rec and rec["method"] == "international_fa" and rec.get("bonus_usd") is None:
-                        rec["bonus_usd"] = bonus
-                        n_merged += 1
-                log.info("spotrac IFA: %d rows fetched, %d bonuses merged into acquisitions, "
-                         "%d orgs with spending totals", len(spotrac_rows), n_merged,
-                         len(ifa_spending_by_org))
-            except Exception:
-                log.exception("spotrac IFA scrape failed — continuing without bonus data")
+            ifa_bonus_by_key, ifa_spending_by_org = _load_spotrac_ifa(
+                force=force_refetch, log=log, label="spotrac IFA",
+            )
+            _merge_ifa_bonuses_into_acquisitions(
+                acquisitions, ifa_bonus_by_key, log, label="spotrac IFA",
+            )
 
         # Spotrac team contract pages — pulls current-year salary + AAV +
         # remaining contract years for every active MLB roster player.
@@ -698,16 +688,10 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # in the realized-surplus calc for graduates. ~30 HTTP requests
         # per regen (cached); failure is non-fatal so the rest of the
         # pipeline keeps running with the synthesized salary model.
-        contracts_by_key: dict[str, dict] = {}
         with _step("2b.iv. Spotrac contracts scrape", log):
-            try:
-                from spotrac import scrape_all_spotrac_contracts, build_contracts_by_key
-                contract_rows = scrape_all_spotrac_contracts(force=force_refetch)
-                contracts_by_key = build_contracts_by_key(contract_rows)
-                log.info("spotrac contracts: %d player-rows fetched, %d unique players",
-                         len(contract_rows), len(contracts_by_key))
-            except Exception:
-                log.exception("spotrac contracts scrape failed — continuing without contract data")
+            contracts_by_key = _load_spotrac_contracts(
+                force=force_refetch, log=log, label="spotrac contracts",
+            )
 
         # MLB Draft bonus-pool back-fill — fetches per-year articles
         # for 2021-current and consolidates the per-team pool + per-pick
@@ -1544,34 +1528,9 @@ if __name__ == "__main__":
                          "data/timeseries.json from the current DB state. "
                          "Use after dropping new FG CSVs to push the data "
                          "to the website without rerunning the full pipeline.")
-    ap.add_argument("--rebackdate-fangraphs", action="store_true",
-                    help="One-shot migration: walk every fangraphs "
-                         "interval_label, recompute publish date via the "
-                         "FG calendar table, UPDATE matching snapshots. "
-                         "Idempotent. After running, follow with "
-                         "--rebuild-only to push the corrected dates to "
-                         "data/timeseries.json.")
     args = ap.parse_args()
     if args.dry_run:
         probe(force=args.force)
-        sys.exit(0)
-    if args.rebackdate_fangraphs:
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-            stream=sys.stdout,
-        )
-        _log = logging.getLogger("rebackdate")
-        from fangraphs_csv import backfill_publish_dates
-        changes = backfill_publish_dates()
-        if not changes:
-            _log.info("rebackdate: no changes needed — every fangraphs slug "
-                      "already maps to its calendar date")
-        for slug, old, new, n in changes:
-            _log.info("rebackdate: %s: %s -> %s (%d rows)", slug, old, new, n)
-        _log.info("rebackdate: %d slug(s) updated. Run "
-                  "'python run_monthly.py --rebuild-only' to push the "
-                  "corrected dates to data/timeseries.json.", len(changes))
         sys.exit(0)
     if args.rebuild_only:
         rebuild_only(out_dir=args.out_dir)

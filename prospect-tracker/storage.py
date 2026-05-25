@@ -2991,9 +2991,8 @@ def _pitcher_role(graduate_payload: dict) -> str:
 
 
 def _is_pitcher_graduate(graduate_payload: dict) -> bool:
-    _PITCHER_POS_LOCAL = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP", "CL", "CP", "P"}
-    pos = (graduate_payload.get("position") or "").upper().split("/")[0]
-    if pos in _PITCHER_POS_LOCAL:
+    from stat_flags import is_pitcher
+    if is_pitcher(graduate_payload.get("position")):
         return True
     saberm = graduate_payload.get("sabermetrics") or {}
     return saberm.get("is_pitcher") is True

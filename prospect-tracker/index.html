@@ -1072,14 +1072,6 @@
       border-left-color: transparent;
     }
     .section-tab.active + .section-tab { border-left-color: transparent; }
-    .section-count {
-      margin-left: auto;
-      padding-right: 6px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--text-tertiary);
-      letter-spacing: 0.02em;
-    }
 
     /* === Player rows (active) =====================================
        Each row renders as a baseball-card-style strip: paper background,
@@ -3344,19 +3336,6 @@
       font-size: 7.5px; color: var(--text-tertiary);
       font-family: var(--font-mono); letter-spacing: 0;
     }
-    /* Inline expand-on-row panel for farm rows. */
-    .farm-row-expand {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 22px; height: 22px;
-      border: 1px solid var(--border);
-      background: var(--bg-secondary);
-      color: var(--text-secondary);
-      border-radius: 999px;
-      cursor: pointer;
-      font-size: 10px;
-      transition: background 0.12s, color 0.12s;
-    }
-    .farm-row-expand:hover { background: var(--bg-tertiary); color: var(--text-primary); }
     .farm-row.is-expanded .farm-row-panel {
       grid-column: 1 / -1;
       margin-top: 10px;
@@ -4230,43 +4209,6 @@
       font-weight: 500;
     }
 
-    /* Compact 4-component report card strip (used under the big overall
-       grade). Each cell is letter + label + rank, side-by-side. */
-    .report-strip {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 6px;
-      margin-top: 8px;
-    }
-    .report-strip-cell {
-      display: flex; flex-direction: column;
-      padding: 6px 8px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--bg-primary);
-    }
-    .report-strip-cell .rs-letter {
-      font-family: var(--font-serif);
-      font-size: 20px;
-      font-weight: 700;
-      line-height: 1;
-    }
-    .report-strip-cell .rs-label {
-      font-family: var(--font-sans);
-      font-size: 9px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-tertiary);
-      font-weight: 600;
-      margin-top: 4px;
-    }
-    .report-strip-cell .rs-meta {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      color: var(--text-secondary);
-      margin-top: 1px;
-      font-variant-numeric: tabular-nums;
-    }
 
     /* ─── Farm Grade Tree v2 ─── 5-branch hierarchical grade with
        collapsible <details> per main branch. Composite headline tile
@@ -7148,15 +7090,6 @@ function fvBadgeSingleMarkHTML(player) {
   return `<span class="fv-single-mark" title="Single observation — only one published grade across this player's history. Pulled 1/3 toward FV 35 (Bayesian shrinkage, k=0.5); the pull lifts as soon as a second grade update lands, even from the same source.">1</span>`;
 }
 
-// v16 — Dropped-Off indicator UI removed. The Bayesian shrinkage logic
-// still runs on the backend (consensus.py) so FV pulls happen for stale
-// team-Top-30 ranks, but the visual ↓ badge mark was redundant: any
-// prospect who actually drops off a recent list also drops off the
-// active list. These stubs preserve the call signature so the existing
-// FV-badge templates compile without changes; they return "".
-function fvBadgeDroppedOffClass()    { return ""; }
-function fvBadgeDroppedOffMarkHTML() { return ""; }
-
 // v14 — Returns " is-breakout" when the prospect carries the active-
 // prospect breakout flag (DvM+ velocity OR FV upgrade AND a strong perf
 // gate). Green pulsing outline via CSS.
@@ -7175,6 +7108,22 @@ function fvBadgeBreakoutMarkHTML(player) {
              : meta.perf_gate === "fip_minus" ? "FIP- ≤ 90"
              : "performance gate";
   return `<span class="fv-breakout-mark" title="Breakout — ${why}, plus ${gate} this season.">★</span>`;
+}
+
+// FV badge chain combiners — collapse the wide/single/breakout per-flag
+// pairs into one call per template. Templates were repeating
+// `${fvBadgeChainClasses(p)}`
+// in 6 places; using these combiners means adding a future badge is a
+// single-place change inside the chain helpers instead of N template edits.
+function fvBadgeChainClasses(player) {
+  return fvBadgeWideClass(player)
+       + fvBadgeSingleClass(player)
+       + fvBadgeBreakoutClass(player);
+}
+function fvBadgeChainMarks(player) {
+  return fvBadgeWideMarkHTML(player)
+       + fvBadgeSingleMarkHTML(player)
+       + fvBadgeBreakoutMarkHTML(player);
 }
 
 // Acquisition-method tooltip helper — builds the per-method context
@@ -7561,22 +7510,12 @@ function recentAcqBadgeHTML(p) {
 // can each produce a pill. When 7 pills appear inline the row gets
 // noisy; this helper renders at most `max` visible pills + an "+N"
 // overflow chip that surfaces the rest via a native `title=` tooltip.
-// REMOVED 2026-05: breakoutPillHTML was an active-prospect "trajectory"
-// composite that conflated FV growth with high FV. Replaced by the
-// WAG-anchored BOOM / BUST graduate pills (boomBustPillHTML below) and
-// the per-org boom%/bust% rollups on farm cards.
-
-// v19 — BOOM / BUST pill retired. The WAG sort dimensions on the
-// graduates page (WAG high / WAG low) surface over/underperformers
-// in a clearer way than the chip noise. boomBustPillHTML stub left
-// in place returning "" so any stale caller fails open.
-function boomBustPillHTML(p) { return ""; }
 
 function _inlineBadgeStrip(p, max = 3) {
-  // v19 — boomBustPillHTML dropped (retired). Tool composite pill also
-  // moved OUT of the inline strip — it now leads the per-tool tool-
-  // grade-strip rendered under the player meta line via makeListRowSummary.
-  // Health glyph + (optional) Savant/Arsenal extras are all that's left.
+  // Tool composite pill moved OUT of the inline strip — it now leads
+  // the per-tool tool-grade-strip rendered under the player meta line
+  // via makeListRowSummary. Health glyph + (optional) Savant/Arsenal
+  // extras are all that's left.
   const builders = [
     typeof healthBadgeHTML        === "function" ? healthBadgeHTML        : null,
     typeof savantInlinePillHTML   === "function" ? savantInlinePillHTML   : null,
@@ -7646,83 +7585,6 @@ function _toolGradeStripHTML(p) {
   if (!pills.some(s => !s.includes('is-empty'))) return '';
   return `<span class="expand-tools">${pills.join('')}</span>`;
 }
-
-// v15 — Pulls the FanGraphs prospect writeup (when available via the
-// lazy-loaded scout_reports sidecar) and truncates to ~3 lines for the
-// expanded row. Appends a "More →" link that navigates to the prospect
-// detail page anchored at the writeup section. Returns "" if no FG
-// writeup is on file.
-function expandedWriteupHTML(p) {
-  const reports = (typeof DATA !== "undefined" && DATA.scout_reports) || {};
-  const entry = reports[p.player_key];
-  const fg = entry && entry.fangraphs;
-  const writeup = fg && (fg.writeup || fg.report || fg.summary);
-  if (!writeup || typeof writeup !== "string") return "";
-  const TRUNC = 280;
-  let body = writeup.trim();
-  if (body.length > TRUNC) {
-    const cut = body.lastIndexOf(" ", TRUNC - 1);
-    body = body.slice(0, cut > 0 ? cut : TRUNC - 1).trimEnd() + "…";
-  }
-  return `<div class="expand-writeup" title="${escapeHtml(writeup)}">`
-       + `<span class="expand-writeup-source">FanGraphs:</span> `
-       + `${escapeHtml(body)} `
-       + `<a class="expand-writeup-more" href="#prospect/${escapeHtml(p.player_key)}/scouting" data-detail-key="${escapeHtml(p.player_key)}">More →</a>`
-       + `</div>`;
-}
-
-// v15 — Last 3 seasons of career stats stacked as a single row. Hitters
-// show season · level · PA · slash · wRC+; pitchers show season · level
-// · IP · ERA · K%. Renders "" when career_stats is empty.
-function expandedCareerTrailHTML(p) {
-  const rows = (p.career_stats || []).filter(Boolean);
-  if (!rows.length) return "";
-  // career_stats is typically newest-first; take the most recent 3.
-  const recent = rows.slice(0, 3);
-  const isPit = (p.sabermetrics || {}).is_pitcher
-              || ((p.statline || {}).is_pitcher);
-  const tiles = recent.map(r => {
-    const season = r.season || "—";
-    const level  = r.level || "—";
-    if (isPit) {
-      const ip   = r.ip   != null ? `${r.ip} IP`    : "";
-      const era  = r.era  != null ? `${r.era} ERA`  : "";
-      const kpct = r.k_pct != null ? `${r.k_pct}% K` : "";
-      return `<span class="expand-trail-cell"><b>${escapeHtml(String(season))}</b> <span class="trail-level">${escapeHtml(level)}</span> ${escapeHtml([ip, era, kpct].filter(Boolean).join(" · "))}</span>`;
-    }
-    const ab   = r.ab   != null ? `${r.ab} AB` : "";
-    const slash = (r.avg && r.obp && r.slg) ? `${r.avg}/${r.obp}/${r.slg}` : "";
-    const hr   = r.hr   != null ? `${r.hr} HR` : "";
-    return `<span class="expand-trail-cell"><b>${escapeHtml(String(season))}</b> <span class="trail-level">${escapeHtml(level)}</span> ${escapeHtml([ab, slash, hr].filter(Boolean).join(" · "))}</span>`;
-  });
-  return `<div class="expand-career-trail">${tiles.join("")}</div>`;
-}
-
-// v15 — Per-source FV mini-table: each source name + its current FV +
-// delta vs the consensus. Reads from the latest point's per_source dict.
-// Skips sources without a published FV. Color-codes delta by direction.
-function expandedPerSourceFvHTML(p) {
-  const pts = p.points || [];
-  if (!pts.length) return "";
-  const latest = pts[pts.length - 1];
-  const per = latest.per_source || {};
-  const consensus = latest.consensus_fv != null ? Number(latest.consensus_fv) : null;
-  const entries = [];
-  for (const [src, info] of Object.entries(per)) {
-    const fv = info && (info.fv_adjusted != null ? info.fv_adjusted : info.fv_published);
-    if (fv == null) continue;
-    const delta = consensus != null ? Math.round(Number(fv) - consensus) : null;
-    const deltaClass = delta == null || delta === 0 ? "is-neutral"
-                     : delta > 0 ? "is-pos" : "is-neg";
-    const deltaStr = delta == null || delta === 0 ? "="
-                   : (delta > 0 ? `+${delta}` : `${delta}`);
-    const srcLbl = src.replace(/_/g, " ").replace(/\bmlb\b/i, "MLB");
-    entries.push(`<span class="expand-source-fv"><span class="src-name">${escapeHtml(srcLbl)}</span> <b>${fvCeil(fv)}</b> <span class="src-delta ${deltaClass}">${escapeHtml(deltaStr)}</span></span>`);
-  }
-  if (!entries.length) return "";
-  return `<div class="expand-source-fvs">${entries.join("")}</div>`;
-}
-
 
 function playerExpandedMetaHTML(p) {
   // The new Expanded density adds ONE thing under each player row: the
@@ -9910,7 +9772,7 @@ function renderActives() {
           <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
         </div>
         <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${p.overall_rank != null ? "#" + p.overall_rank : "—"}</span></div>${rankTrendHTML(p)}</div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>${fvTrendHTML(p)}</div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}</div>
         <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${lazyLineChartHTML(p)}</div>
         ${makeMilbCell(p)}
         ${physClusterHTML(p)}
@@ -10530,7 +10392,7 @@ function renderWatchlist() {
             </div>
             <button class="watch-btn is-in" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="Remove from watchlist">★</button>
           </div>
-          <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>${fvTrendHTML(p)}` : "—"}</div>
+          <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}` : "—"}</div>
           <div class="rank-cell">${p.overall_rank != null ? "#" + p.overall_rank : "—"}</div>
           <div class="line-chart-cell">${p.points && p.points.length >= 2 ? lazyLineChartHTML(p) : ""}</div>
           ${makeMilbCell(p)}
@@ -11039,7 +10901,7 @@ function renderLeaderboards() {
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
         <div><span class="level-pill ${r.level === "MLB" ? "level-mlb" : "level-neutral"}">${escapeHtml(r.level || "—")}</span></div>
-        <div style="text-align:center;">${fvLabel !== "—" ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+        <div style="text-align:center;">${fvLabel !== "—" ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeChainMarks(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div style="text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:700;color:${heat.fg};background:${heat.bg};padding:4px 8px;border-radius:var(--radius-sm);">${cfg.fmt(v)}</div>
         <div style="text-align:center;" title="${trendVals.length} season${trendVals.length === 1 ? "" : "s"} of ${escapeHtml(cfg.label)} data">${trendCell}</div>
         <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${cfg.support(r)}</div>
@@ -11415,7 +11277,7 @@ function renderInjured() {
         <div><span class="debut-pill" style="background:${_pal.bg};color:${_pal.fg};border:1px solid ${_pal.bd};">${escapeHtml(il.type || "?")} IL</span></div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12px;color:var(--text-secondary);">${escapeHtml(since || "—")}</div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;color:${days > 60 ? 'var(--down)' : days > 14 ? 'var(--neon-amber)' : 'var(--text-secondary)'};font-weight:600;" title="${days > 60 ? 'Long-term IL (60+ days)' : days > 14 ? '15-60 day stint' : 'Short stint (≤14 days)'}">${days}d</div>
-        <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+        <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeChainMarks(p)}</span>` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.3;">${escapeHtml(reason)}</div>
       </div>`;
   }).join("");
@@ -11523,7 +11385,7 @@ function renderRecentlyTraded() {
           ${methodPill}
           <span style="font-size:11px;">${contextLine}</span>
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>${fvTrendHTML(p)}</div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}</div>
         <div class="line-chart-cell desktop-only">${lazyLineChartHTML(p)}</div>
         <div class="candle-cell desktop-only">${makeCandle(p)}</div>
       </div>
@@ -14459,14 +14321,6 @@ function _getHandedness(p) {
   return { bats: ex.bats || null, throws: ex.throws || null };
 }
 
-// FG ships developmental grades on a 1-5 scale (Frame, Athl, Perf).
-// Map to a readable descriptor for the Physical & Developmental block.
-const _FG_15_LABELS = ["", "Below avg", "Avg", "Above avg", "Plus", "Plus-plus"];
-function _fgGradeLabel(n) {
-  const i = Math.max(0, Math.min(5, Number(n) | 0));
-  return _FG_15_LABELS[i] || "";
-}
-
 // Prettify a FanGraphs interval_label slug for display.
 // Slugs in the DB look like "2024report" / "2025-updated" / "2023_Graduated";
 // the UI shows them as "FanGraphs 2024 Report" / "FanGraphs 2025 Updated"
@@ -15629,156 +15483,6 @@ const ORG_NAMES = {
 };
 const fullOrgName = code => ORG_NAMES[code] || code || "—";
 
-function detailTable(p) {
-  // Per-source breakdown for the most recent snapshot
-  const latest = p.points.length ? p.points[p.points.length - 1] : null;
-  const perSrc = (latest && latest.per_source) ? latest.per_source : {};
-  const srcEntries = Object.entries(perSrc);
-
-  const sourceSection = srcEntries.length ? `
-    <div class="detail-title" style="margin-top: 14px; margin-bottom: 6px;">
-      Source breakdown · <span style="font-weight:400">${latest.snapshot_date}</span>
-      <span style="font-weight:400; color:var(--text-tertiary);"> · consensus = ${latest.consensus_fv_label}</span>
-    </div>
-    <table class="detail-table">
-      <thead><tr><th style="text-align:left;">Source</th><th>FV grade</th><th>Rank</th></tr></thead>
-      <tbody>
-        ${srcEntries.map(([src, d]) => `<tr>
-          <td><span class="src-tag">${escapeHtml(SOURCE_LABELS[src] || src)}</span></td>
-          <td>${d.fv_published != null
-            ? `<span class="fv-badge ${fvClass(String(d.fv_published))} size-sm">${d.fv_published}</span>`
-            : `<span style="color:var(--text-tertiary)">—</span>`}</td>
-          <td>${d.rank != null ? `#${d.rank}` : "—"}</td>
-        </tr>`).join("")}
-      </tbody>
-    </table>` : "";
-
-  const etaSection = (() => {
-    const eta = p.eta;
-    if (!eta || eta.year == null) return "";
-    const rows = [
-      ["Level baseline", eta.base_years != null ? `${eta.base_years.toFixed(1)} yrs` : "—"],
-      ["Performance",    eta.perf_adj  > 0 ? `+${eta.perf_adj}` : eta.perf_adj < 0 ? `${eta.perf_adj}` : "±0"],
-      ["Age vs. level",  eta.age_adj   > 0 ? `+${eta.age_adj}`  : eta.age_adj  < 0 ? `${eta.age_adj}`  : "±0"],
-      ["FV grade",       eta.fv_adj    > 0 ? `+${eta.fv_adj}`   : eta.fv_adj   < 0 ? `${eta.fv_adj}`   : "±0"],
-    ];
-    // H1/H2 half-season adjustment row — only renders when the snapshot
-    // was post-All-Star-break AND the player isn't already at MLB.
-    if (eta.half_season_adj != null && eta.half_season_adj !== 0) {
-      const half_label = (eta.org_promo_weight != null && eta.org_promo_weight !== 1.0)
-        ? `Half-season elapsed (org-weighted ×${eta.org_promo_weight})`
-        : "Half-season elapsed";
-      rows.push([
-        half_label,
-        `${eta.half_season_adj > 0 ? "+" : ""}${eta.half_season_adj}`,
-      ]);
-    }
-    // Phase eyebrow — small text above the breakdown so users see
-    // WHICH part of the season this projection was made in.
-    const PHASE_LABEL = {
-      pre_break:  { label: "pre-All-Star break", color: "var(--neon-cyan)" },
-      post_break: { label: "post-All-Star break", color: "var(--neon-orange)" },
-      offseason:  { label: "offseason", color: "var(--text-tertiary)" },
-    };
-    const phaseInfo = PHASE_LABEL[eta.season_phase] || PHASE_LABEL.pre_break;
-    // Org promotion-phase tendency line — shows the org's historical
-    // H1/H2 split and how it shifted the half-season adjustment.
-    let orgPromoLine = "";
-    if (eta.org_promo_h1_rate != null && eta.org_promo_h2_rate != null) {
-      const h1pct = Math.round(eta.org_promo_h1_rate * 100);
-      const h2pct = Math.round(eta.org_promo_h2_rate * 100);
-      const weight = eta.org_promo_weight ?? 1.0;
-      const weightTag = weight === 1.0 ? ""
-                     : weight > 1.0 ? ` <span style="color:var(--neon-orange);">(pull-in ×${weight})</span>`
-                     :                ` <span style="color:var(--text-tertiary);">(softened ×${weight})</span>`;
-      orgPromoLine = `<div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.04em;margin-top:2px;">
-        Org promotes <strong style="color:var(--text-secondary);">${h1pct}% H1 / ${h2pct}% H2</strong>${weightTag}
-      </div>`;
-    }
-    const phaseEyebrow = `<div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;margin-top:2px;">
-      Snapshot: <span style="color:${phaseInfo.color};font-weight:600;">${phaseInfo.label}</span>${eta.season_phase === "post_break" ? ` <span class="g-term" data-term="eta_half_season" style="color:var(--text-tertiary);cursor:help;">(half-season adj applied)</span>` : ""}
-    </div>${orgPromoLine}`;
-
-    // H1 / H2 side-by-side projection panel — always visible.
-    // Shows what the ETA is from the current snapshot vs. what it WOULD
-    // be from a post-break snapshot, so the user can see both halves
-    // at a glance. The post-break projection always applies the
-    // org-weighted half-season adjustment (h2-baseline × org weight) on
-    // top of the base+perf+age+fv stack. Currently-MLB players get a
-    // dash (no future projection makes sense). Offseason rolls into
-    // next year's pre-break (no adjustment).
-    let h1h2Panel = "";
-    if (eta.year != null && eta.base_years != null) {
-      // Recompute the non-half-season subtotal from the breakdown
-      // pieces — this is what gets added to the current year's
-      // remaining time to land on eta.year.
-      const subtotal = (eta.base_years || 0)
-                     + (eta.perf_adj  || 0)
-                     + (eta.age_adj   || 0)
-                     + (eta.fv_adj    || 0)
-                     + (eta.health_adj|| 0);
-      // For H1 (pre-break) projection: no half-season elapsed.
-      const h1Years = subtotal;
-      // For H2 (post-break) projection: apply the league baseline
-      // -0.25 scaled by the org's promo weight (default 1.0).
-      const orgWeight = eta.org_promo_weight ?? 1.0;
-      const h2HalfAdj = -0.25 * orgWeight;
-      const h2Years = subtotal + h2HalfAdj;
-      // Convert "years from now" to absolute ETA year. eta.year
-      // already reflects the snapshot phase, so we use the breakdown
-      // pieces to project forward from THIS year.
-      const thisYear = new Date().getFullYear();
-      const h1Eta = Math.max(thisYear, Math.round(thisYear + h1Years));
-      const h2Eta = Math.max(thisYear, Math.round(thisYear + h2Years));
-      // Color: highlight whichever matches the CURRENT projection
-      const isPre = eta.season_phase !== "post_break";
-      const h1Color  = isPre  ? "var(--neon-cyan)"   : "var(--text-tertiary)";
-      const h2Color  = !isPre ? "var(--neon-orange)" : "var(--text-tertiary)";
-      const h1Border = isPre  ? "1px solid var(--neon-cyan)"   : "1px solid var(--border-light)";
-      const h2Border = !isPre ? "1px solid var(--neon-orange)" : "1px solid var(--border-light)";
-      h1h2Panel = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px;">
-        <div style="border:${h1Border};border-radius:4px;padding:6px 10px;background:var(--bg-secondary);">
-          <div style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);">H1 · pre-break</div>
-          <div style="font-size:18px;font-family:var(--font-retro-mono);font-weight:700;color:${h1Color};line-height:1.1;margin-top:2px;">${h1Eta}</div>
-          <div style="font-size:10px;color:var(--text-tertiary);margin-top:1px;">${h1Years >= 0 ? `+${h1Years.toFixed(1)}` : h1Years.toFixed(1)} yrs · no half-season adj</div>
-        </div>
-        <div style="border:${h2Border};border-radius:4px;padding:6px 10px;background:var(--bg-secondary);">
-          <div style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);">H2 · post-break</div>
-          <div style="font-size:18px;font-family:var(--font-retro-mono);font-weight:700;color:${h2Color};line-height:1.1;margin-top:2px;">${h2Eta}</div>
-          <div style="font-size:10px;color:var(--text-tertiary);margin-top:1px;">${h2Years >= 0 ? `+${h2Years.toFixed(1)}` : h2Years.toFixed(1)} yrs · ${h2HalfAdj.toFixed(2)} half-adj${orgWeight !== 1.0 ? ` (×${orgWeight})` : ""}</div>
-        </div>
-      </div>`;
-    }
-
-    return `
-    <div class="detail-title" style="margin-top:14px;">ETA projection · <span style="font-weight:400;">${eta.year}</span></div>
-    ${phaseEyebrow}
-    ${h1h2Panel}
-    <table class="detail-table">
-      <tbody>
-        ${rows.map(([label, val]) => `<tr><td>${label}</td><td style="text-align:right;">${val}</td></tr>`).join("")}
-      </tbody>
-    </table>`;
-  })();
-
-  return `
-    <div class="detail-title">FV history · ${p.points.length} update interval${p.points.length !== 1 ? "s" : ""}</div>
-    <table class="detail-table">
-      <thead><tr><th>Date</th><th>Update</th><th>Consensus FV</th><th>Avg rank</th></tr></thead>
-      <tbody>
-        ${p.points.map(pt => `<tr>
-          <td>${pt.snapshot_date}</td>
-          <td><span class="src-tag">${escapeHtml(fgPrettifyInterval(null, pt.interval_label))}</span></td>
-          <td><span class="fv-badge ${fvClass(pt.consensus_fv_label)} size-sm">${pt.consensus_fv_label}</span></td>
-          <td>${pt.avg_rank != null ? pt.avg_rank.toFixed(1) : "—"}</td>
-        </tr>`).join("")}
-      </tbody>
-    </table>
-    ${sourceSection}
-    ${etaSection}
-  `;
-}
 
 function escapeHtml(s) {
   if (s == null) return "";
@@ -16228,20 +15932,6 @@ function teamLogoHTML(org, size = "sm", title = null) {
   return `<img class="team-logo team-logo-${size}" src="${url}" alt="${escapeHtml(org)}" title="${escapeHtml(t)}" loading="lazy" onerror="this.outerHTML='<span class=&quot;team-logo team-logo-${size} team-logo-fallback&quot;>${escapeHtml(org)}</span>';">`;
 }
 
-// Performance-vs-level pill. Reads sl.level_plus_pct, sl.ops_plus_level
-// (hitters) or sl.era_minus_level (pitchers). Returns "" when stats
-// aren't yet available — the pill should never show as a question mark.
-function levelPlusHTML(sl) {
-  if (!sl || sl.level_plus_pct == null) return "";
-  const pct = sl.level_plus_pct;
-  const stat = sl.is_pitcher ? "ERA-" : "OPS+";
-  const baseValue = sl.is_pitcher ? sl.era_minus_level : sl.ops_plus_level;
-  // Threshold ±5% as the "okay" band so noise doesn't flip the color.
-  const cls = pct >= 5 ? "lvl-good" : pct <= -5 ? "lvl-bad" : "lvl-okay";
-  const sign = pct > 0 ? `+${pct}` : `${pct}`;
-  const title = `${stat} ${baseValue} (${sign}% vs ${escapeHtml(sl.level || "?")} mean)`;
-  return `<span class="lvl-plus ${cls}" title="${title}">${sign}% vs lvl</span>`;
-}
 
 // Options dots — minimalist 3-pip indicator for the 40-man options
 // system. Each pip is filled cyan when that option year has been used,
@@ -17133,14 +16823,6 @@ function makeFarmSparkline(fvHistory, deltaAboveMean, meanTrajectory, windowKey,
   </div>`;
 }
 
-function makeTierBar(prospects) {
-  // FV distribution bar removed per UX feedback — the stacked-segment
-  // breakdown was clutter alongside the Top Prospects column and the
-  // dedicated tier-count tiles. Kept as an empty stub so the two
-  // remaining callers (farm-detail header, Tier breakdown side card)
-  // collapse cleanly without a render error.
-  return "";
-}
 
 function makePosBreakdown(posGroups) {
   // 4 canonical buckets: C / INF / OF / P. 1B was folded into INF
@@ -18332,85 +18014,6 @@ function makeDebutCohortChart(grads, opts = {}) {
 }
 
 // Farm cross-org heatmap (Phase 3 P3-A). Renders all 30 orgs in a
-// vertical strip with three columns (1y / 3y / 6y DvM+). Each cell's
-// hue + opacity encodes the org's deviation from league-mean (100):
-// green ↑ for above-mean development pace, red ↓ for below, opacity
-// scales with magnitude. The composite-ranked top orgs sit at the top
-// of the strip so a glance ranks the league.
-//
-// Args:
-//   orgs — array of org_summary entries (one per MLB org)
-// Returns: HTML string with a labelled SVG.
-function makeFarmHeatmap(orgs) {
-  const WINDOWS = ["1y", "3y", "6y"];
-  // Sort by composite farm_score descending so the top orgs land at
-  // the top of the heatmap. Stable secondary by org name for ties.
-  const sorted = [...(orgs || [])].sort((a, b) =>
-    ((b.farm_score ?? -999) - (a.farm_score ?? -999)) ||
-    (a.org || "").localeCompare(b.org || ""));
-  if (sorted.length < 5) return "";
-  // Layout constants: row height 16px, label column 56px, cell w 78px.
-  const ROW_H = 16;
-  const LABEL_W = 56;
-  const CELL_W = 78;
-  const HEADER_H = 22;
-  const W = LABEL_W + CELL_W * WINDOWS.length;
-  const H = HEADER_H + sorted.length * ROW_H;
-
-  // Cell shading: clamp DvM+ deviation to ±20 (one standard dev ~10).
-  // Use --up / --down tokens so theme flips automatically.
-  const cellFill = (dvm) => {
-    if (dvm == null) return { color: "var(--bg-tertiary)", opacity: 0.30 };
-    const delta = dvm - 100;
-    const mag = Math.min(1, Math.abs(delta) / 20);
-    const color = delta >= 0 ? "var(--up)" : "var(--down)";
-    // Min 0.10 opacity so empty/zero cells still register; max 0.85.
-    const opacity = 0.10 + mag * 0.75;
-    return { color, opacity };
-  };
-
-  // Header row — window labels.
-  const labelStyle = `font-family: var(--font-sans); font-size: 10px; fill: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;`;
-  const header = WINDOWS.map((w, i) => {
-    const x = LABEL_W + i * CELL_W + CELL_W / 2;
-    return `<text x="${x}" y="14" text-anchor="middle" style="${labelStyle}">${w} DvM+</text>`;
-  }).join("");
-
-  // One <g> per org row: label + 3 cells + cell-text.
-  const rowsSvg = sorted.map((org, idx) => {
-    const y = HEADER_H + idx * ROW_H;
-    const orgLabel = `<text x="${LABEL_W - 6}" y="${y + ROW_H / 2 + 3}" text-anchor="end" style="font-family: var(--font-mono); font-size: 10px; fill: var(--text-secondary); font-weight: 600;">${escapeHtml(org.org || "?")}</text>`;
-    const cells = WINDOWS.map((w, i) => {
-      const dvm = (org.dvm_plus || {})[w];
-      const { color, opacity } = cellFill(dvm);
-      const cx = LABEL_W + i * CELL_W;
-      const valText = dvm == null
-        ? "—"
-        : String(Math.round(dvm));
-      const valColor = dvm == null
-        ? "var(--text-tertiary)"
-        : (Math.abs(dvm - 100) >= 12 ? "var(--text-on-accent)" : "var(--text-primary)");
-      const tip = `${org.org}: ${w} DvM+ ${dvm == null ? "no data" : `= ${dvm} (${dvm > 100 ? "+" : ""}${dvm - 100} vs league)`}`;
-      return `<g>
-        <rect x="${cx}" y="${y + 1}" width="${CELL_W - 2}" height="${ROW_H - 2}" fill="${color}" opacity="${opacity.toFixed(2)}" rx="2"/>
-        <text x="${cx + CELL_W / 2}" y="${y + ROW_H / 2 + 3}" text-anchor="middle"
-              style="font-family: var(--font-mono); font-size: 10px; font-weight: 700; fill: ${valColor}; pointer-events: none;">${valText}</text>
-        <title>${tip}</title>
-      </g>`;
-    }).join("");
-    return orgLabel + cells;
-  }).join("");
-
-  return `<div class="farm-heatmap" style="margin: var(--space-3) 0;">
-    <div style="font-family: var(--font-sans); font-size: var(--fs-sm); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-bottom: var(--space-1);">
-      League-wide development pace (DvM+ vs window — 100 = league mean)
-    </div>
-    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMinYMin meet" style="display:block;max-width:${W}px;">
-      ${header}
-      ${rowsSvg}
-    </svg>
-  </div>`;
-}
 
 // Cohort histogram (Phase 3 P3-D). Bins a stat's full distribution
 // across the qualifying-prospects pool into ~20 buckets, then renders
@@ -19272,11 +18875,6 @@ function renderFarmSystems() {
   const dividerRow = (pinned.length && rest.length)
     ? `<div class="farm-divider">All farms</div>`
     : "";
-  // Phase 3 P3-A — cross-org DvM+ heatmap at the top of the section.
-  // v17 — League-wide development pace heatmap removed (was taking too
-  // much vertical space and cluttering both card + table views). The
-  // makeFarmHeatmap function is retained for back-compat with anyone
-  // else who imports it, just not invoked from the farm list.
   document.getElementById("farm-rows").innerHTML =
     header + pinnedRows + dividerRow + restRows;
 
@@ -20510,49 +20108,6 @@ function switchLevelTab(btn) {
       .forEach(p => p.classList.toggle("is-active", p.getAttribute("data-lvl-idx") === idx));
 }
 
-// Level-tabs wrapper for metric blocks that carry per-level splits.
-// Used by the Zone / Statcast / Pitch movement sections so a debuted
-// player whose payload contains both AAA + MLB level_splits gets a
-// tab strip to switch between them. Falls through to plain block
-// rendering when only one level exists.
-//
-// Signature:
-//   primary  — the canonical payload (also level_splits[0] when present)
-//   blockFn  — (payload) => HTML for that level's block
-//   keySlug  — unique id segment (e.g. "zone-thomas_white") so multiple
-//              tabbed sections on the same page don't collide on click
-function withLevelTabs(primary, blockFn, keySlug) {
-  if (!primary) return "";
-  const splits = Array.isArray(primary.level_splits) && primary.level_splits.length
-    ? primary.level_splits
-    : [primary];
-  if (splits.length <= 1) return blockFn(primary);
-  // Tab order: MLB first if present, then AAA, AA, A+, A, CPX. Keeps
-  // the "current/highest level" on the left so the default tab on
-  // open matches the user's "where are they NOW" expectation.
-  const LVL_ORDER = ["MLB", "AAA", "AA", "A+", "A", "CPX", "DSL"];
-  const ordered = splits.slice().sort((a, b) => {
-    const ai = LVL_ORDER.indexOf(a.level);
-    const bi = LVL_ORDER.indexOf(b.level);
-    return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
-  });
-  const groupId = `lvltabs-${keySlug}`;
-  const tabs = ordered.map((s, i) => {
-    const lvl = s.level || "—";
-    const sample = s.pitches != null ? `${s.pitches} pitches`
-                 : s.games != null ? `${s.games} G`
-                 : "";
-    const tip = sample ? `${lvl} · ${sample}` : lvl;
-    return `<button class="level-tab${i === 0 ? " is-active" : ""}" data-lvl-group="${escapeHtml(groupId)}" data-lvl-idx="${i}" title="${escapeHtml(tip)}" type="button" onclick="switchLevelTab(this)">${escapeHtml(lvl)}</button>`;
-  }).join("");
-  const panels = ordered.map((s, i) => {
-    return `<div class="level-tab-panel${i === 0 ? " is-active" : ""}" data-lvl-group="${escapeHtml(groupId)}" data-lvl-idx="${i}">${blockFn(s)}</div>`;
-  }).join("");
-  return `<div class="level-tabs-wrap">
-    <div class="level-tabs">${tabs}</div>
-    ${panels}
-  </div>`;
-}
 
 // v22 — Merged Statcast section. Combines the old Zone profile +
 // Statcast feed cards into one card with a single level-tabs strip
@@ -21087,7 +20642,7 @@ function renderPlayerDetail(key) {
   const avl = p.age_vs_level || {};
   const fvLabel = latest ? latest.consensus_fv_label : "—";
   const fvBadge = latest
-    ? `<span class="fv-badge ${fvClass(fvLabel)} size-lg${fvBadgeWideClass(p)}${fvBadgeSingleClass(p)}${fvBadgeDroppedOffClass(p)}${fvBadgeBreakoutClass(p)}" style="margin-top:4px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeWideMarkHTML(p)}${fvBadgeSingleMarkHTML(p)}${fvBadgeDroppedOffMarkHTML(p)}${fvBadgeBreakoutMarkHTML(p)}</span>`
+    ? `<span class="fv-badge ${fvClass(fvLabel)} size-lg${fvBadgeChainClasses(p)}" style="margin-top:4px;" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeChainMarks(p)}</span>`
     : "";
 
   // Rank pills — overall position in the FV-sorted active list, plus org

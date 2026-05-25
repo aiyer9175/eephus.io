@@ -2958,8 +2958,9 @@ def scrape_all(force: bool = False) -> tuple[list[Snapshot], dict[str, str]]:
       - Manual CSV (Tier C, user-maintained) — FanGraphs, TJStats, others
 
     Snapshots come from all sources. birth_dates come only from the manual
-    CSV (Tier C) — automated scrapers don't surface DOB. The API path
-    (stats.fetch_birth_date) fills in the rest at run_monthly time.
+    CSV (Tier C) — automated scrapers don't surface DOB. The bulk
+    PlayerIndex resolve in run_monthly (stats.bulk_resolve_ids) fills in
+    the rest from the MLB Stats API people-index payload.
     """
     snapshots: list[Snapshot] = []
     counts: dict[str, int] = {}

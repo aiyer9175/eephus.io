@@ -50,6 +50,27 @@ MIN_GAMES_HITTER = 15
 MIN_IP_PITCHER   = 15.0
 
 
+# Canonical pitcher-position vocabulary. Covers MLB/MiLB-source position
+# codes including FG's MIRP/SIRP split and the generic CL/CP/P labels
+# storage occasionally sees on graduate payloads. Two-way slash variants
+# ("RHP/1B", "SS/SIRP") are handled by `is_pitcher` via the split below.
+_PITCHER_POSITION_TOKENS = frozenset({
+    "RHP", "LHP", "SP", "RP", "MIRP", "SIRP", "CL", "CP", "P",
+})
+
+
+def is_pitcher(position: str | None) -> bool:
+    """Return True if any '/'-separated token in `position` is a pitcher code.
+
+    Accepts None, empty strings, plain codes ('RHP', 'SP'), and two-way
+    slash variants ('RHP/1B', 'SS/SIRP'). Case-insensitive.
+    """
+    if not position:
+        return False
+    return any(t.strip() in _PITCHER_POSITION_TOKENS
+               for t in position.upper().split("/"))
+
+
 @dataclass(frozen=True)
 class _HitterRule:
     stat: str

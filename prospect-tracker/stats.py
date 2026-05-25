@@ -1025,44 +1025,6 @@ def _highest_level(splits: list[dict]) -> dict | None:
     return min(by_level.values(), key=lambda s: LEVEL_ORDER.index(s["_level"]))
 
 
-def fetch_birth_date_by_name(player_name: str) -> tuple[int | None, str | None]:
-    """
-    One-shot: search for a player by name and return (mlbam_id, birth_date).
-
-    This is the fallback path used by run_monthly when pybaseball can't
-    resolve an ID. The MLB Stats API people-search endpoint often returns
-    birthDate directly in the search result, so we can skip the second
-    /people/{id} call entirely.
-    """
-    return _search_mlbam_via_api(player_name)
-
-
-def fetch_birth_date(mlbam_id: int) -> str | None:
-    """
-    Fetch a player's birth date from the MLB Stats API people endpoint.
-    Returns ISO date string ('YYYY-MM-DD') or None if unavailable.
-
-    This is a separate call from fetch_statline because:
-      - Birth date is immutable — fetch once, cache forever in the DB
-      - Some players will have a birth date but no current stat line
-        (graduated, on the 60-day IL, etc.)
-    """
-    url = f"{MLB_STATS_API}/people/{mlbam_id}"
-    time.sleep(RATE_LIMIT_SECONDS)
-    try:
-        resp = requests.get(url, timeout=15)
-        resp.raise_for_status()
-        data = resp.json()
-    except Exception as e:
-        log.warning("birth date fetch failed for %s: %s", mlbam_id, e)
-        return None
-
-    people = data.get("people", [])
-    if not people:
-        return None
-    return people[0].get("birthDate")  # e.g. "2006-05-03"
-
-
 def bulk_fetch_mlb_debut_dates(
     mlbam_ids: "Iterable[int]",
     max_workers: int = 8,

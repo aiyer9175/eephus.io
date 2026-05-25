@@ -44,10 +44,14 @@ def test_no_breakout_pill_function_active():
     assert not matches, "breakoutPillHTML still defined (active) in index.html"
 
 
-def test_boom_bust_pill_html_present():
-    """Replacement function should be present."""
+def test_no_boom_bust_pill_function_active():
+    """boomBustPillHTML was the replacement for breakoutPillHTML but was
+    itself retired in v19 (graduates page now surfaces over/underperformers
+    via WAG-high / WAG-low sort dimensions instead of a chip). Guard
+    against accidental reintroduction."""
     src = (REPO / "index.html").read_text(encoding="utf-8")
-    assert "boomBustPillHTML" in src, "boomBustPillHTML (replacement) not found"
+    matches = re.findall(r"^\s*function\s+boomBustPillHTML\s*\(", src, re.MULTILINE)
+    assert not matches, "boomBustPillHTML still defined (active) in index.html"
 
 
 if __name__ == "__main__":
