@@ -130,18 +130,14 @@ from stats import (fetch_statlines_for, derive_statlines_from_career, fetch_birt
 from trades import detect_trades
 
 
-# How long a cached career_stats row stays fresh before we refetch on
-# the next run. v23 — Tightened from 7d → 2d so debut info / transactions /
-# active level / promotion + demotion data are always at most 2 days
-# stale. Same-day re-runs still reuse cache (cheap dev iteration), but
-# any back-to-back-day run pulls fresh from MLB Stats API.
-CAREER_STATS_FRESH_DAYS = 2
-# v23 — Zone + Statcast freshness tightened 14d → 7d. Still wide enough
-# to skip thousands of game-feed fetches on a same-week re-run, but
-# matches the rule of thumb that the underlying game data is updated
-# daily. --force bypasses.
-ZONE_METRICS_FRESH_DAYS = 7
-STATCAST_METRICS_FRESH_DAYS = 7
+# v24 — Freshness gates dropped to 0 so every run refetches stats,
+# debuts, zone metrics, and statcast metrics. The 24h HTTP cache in
+# stats.py still absorbs duplicate-payload cost on same-day re-runs;
+# this just stops the per-player skip from short-circuiting the API
+# pass. --force is now a no-op for these gates (kept for HTTP cache).
+CAREER_STATS_FRESH_DAYS = 0
+ZONE_METRICS_FRESH_DAYS = 0
+STATCAST_METRICS_FRESH_DAYS = 0
 
 
 def _is_pitcher(position: str | None) -> bool:

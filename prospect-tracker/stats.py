@@ -159,7 +159,10 @@ CACHE_DIR = Path(__file__).parent / ".cache"
 CACHE_DIR.mkdir(exist_ok=True)
 ID_CACHE_FILE = CACHE_DIR / "mlbam_ids.json"
 PLAYER_INDEX_CACHE_FILE = CACHE_DIR / "player_index.json"
-PLAYER_INDEX_TTL_SECONDS = 24 * 3600
+# v24 — Shortened from 24h → 1h so freshly-posted mlbDebutDates are
+# picked up on any same-day re-run (debut detection in run_monthly.py
+# step 3c reads from this index). Cold/cross-day runs still rebuild.
+PLAYER_INDEX_TTL_SECONDS = 3600
 
 MLB_STATS_API = "https://statsapi.mlb.com/api/v1"
 RATE_LIMIT_SECONDS = 0.1
