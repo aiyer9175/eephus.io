@@ -55,7 +55,7 @@
       --neon-cyan:        #0E2B4D;     /* navy — link / accent     */
       --neon-amber:       #C9A227;     /* card gold — highlight    */
       --neon-violet:      #6B4FA8;     /* royal purple — graduates */
-      --upside-pink:      #FF1493;     /* v27 — hot pink: '+' upside chip + chart dot */
+      --upside-pink:      #F4A6C8;     /* v29 — soft pink (lightened from #FF1493): '+' upside chip + chart dot. Hot pink read too aggressive/"warning" at a glance. */
       /* Dedicated tokens for the IFA / Draft spend-mix visualizations.
          Draft was previously sharing --neon-cyan with the header blue
          which made the legend swatches nearly invisible against the
@@ -251,7 +251,7 @@
       --neon-cyan:        #00D9FF;   /* refractor cyan */
       --neon-amber:       #FFD700;   /* refractor gold */
       --neon-violet:      #B47CFF;   /* refractor purple */
-      --upside-pink:      #FF3DA0;   /* v27 — neon hot pink for dark theme '+' upside */
+      --upside-pink:      #F8B4D2;   /* v29 — soft pink for dark theme '+' upside (lightened from #FF3DA0 to read as supportive, not warning) */
       --spend-ifa:        #F5A623;     /* amber — IFA */
       --spend-draft:      #E040A0;     /* magenta — Draft (v7 — was cyan, conflicted with neon-cyan accent) */
 
@@ -1163,6 +1163,28 @@
       color: var(--text-tertiary);
       opacity: 0.5;
     }
+    /* v29 — HT / WT / BMI chips. Same chip geometry family as B/T
+       glyphs above — outlined pill with currentColor border and
+       per-chip color sourced from pool z-score (green = ≥+1σ above
+       pool, orange = ≤-1σ below, otherwise neutral). Compact density
+       scales the font down (see media block below). */
+    .phys-cluster .phys-chip {
+      display: inline-flex;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 1px 5px;
+      border: 1px solid currentColor;
+      border-radius: 3px;
+      line-height: 1.2;
+      background: transparent;
+    }
+    body.density-compact .phys-cluster .phys-chip {
+      font-size: 9px;
+      padding: 0 4px;
+    }
     /* Handedness glyph pair — small "B" + "T" labels with the side
        letter (L/R/S) appended, colored by side. Reads as a chip pair
        sitting at the end of the Ht·Wt·BMI cluster; tooltip on each
@@ -1208,14 +1230,20 @@
     }
     .sort-header:hover { color: var(--neon-cyan); }
     .sort-header.is-active { color: var(--neon-cyan); }
-    /* Visible chevron next to the active sort column so users know
-       which one is driving order without hovering. Direction-agnostic
-       (▾) — toggle order is per-column-state, exposing a v2 hook for
-       per-direction arrows if needed. */
+    /* v29 — Active sort column shows a direction-specific arrow (▲ asc
+       / ▼ desc) sourced from the `data-sort-dir` attribute that
+       syncSortHeaderActive() stamps onto the active header. Lets the
+       user see at a glance whether a second click will flip them up or
+       down, matching the universal-sort-toggle feature added in v29.
+       Falls back to ▼ when the attribute hasn't been set yet (first
+       paint before syncSortHeaderActive runs). */
     .sort-header.is-active::after {
-      content: " ▾";
+      content: " " attr(data-sort-dir);
       font-size: 0.8em;
       opacity: 0.7;
+    }
+    .sort-header.is-active:not([data-sort-dir])::after {
+      content: " ▼";
     }
     /* Row variants — each section's per-render `grid-template-columns`
        lived inline before; centralizing here keeps the renderers terse
@@ -1576,38 +1604,87 @@
        size and adjacent pills don't shift. The corner marks are real
        DOM spans (not ::after pseudos) so they can carry their own
        `title` tooltips explaining the indicator. */
-    .fv-badge.is-wide {
-      outline: 2px solid var(--neon-violet);
-      outline-offset: 1px;
+    /* v29 — Per-edge multi-indicator outline + glow. Each of the four
+       FV indicators owns one EDGE of the badge so a prospect carrying
+       multiple flags shows all colors at once. v29.1 — wide and upside
+       swapped per user request; v29.2 — every indicator now glows
+       (was only breakout). Mapping:
+         top edge    = upside (soft pink)
+         left edge   = single-source (amber)
+         bottom edge = breakout (aquamarine, pulses with violet)
+         right edge  = wide (violet)
+       Corner glyphs follow the same axis: upside (+) top-right, wide
+       (W) bottom-right, single-source (1) top-left, breakout (★)
+       bottom-left.
+       Implementation: each indicator class sets its own --edge-* CSS
+       custom property to a color; the shared .fv-badge box-shadow rule
+       composes all four insets + a low-blur outer glow per edge into
+       one declaration. Combinations work automatically because the
+       box-shadow lives on the base class. Each indicator with a color
+       set also gets an outer glow at the matching edge. */
+    @property --edge-top    { syntax: "<color>"; inherits: false; initial-value: transparent; }
+    @property --edge-right  { syntax: "<color>"; inherits: false; initial-value: transparent; }
+    @property --edge-left   { syntax: "<color>"; inherits: false; initial-value: transparent; }
+    @property --edge-bottom { syntax: "<color>"; inherits: false; initial-value: transparent; }
+    .fv-badge.is-wide,
+    .fv-badge.is-single-source,
+    .fv-badge.is-breakout,
+    .fv-badge.is-upside {
       position: relative;
       overflow: visible;
-    }
-    .fv-badge.is-single-source {
-      outline: 2px dashed var(--neon-amber);
-      outline-offset: 1px;
-      position: relative;
-      overflow: visible;
-    }
-    /* v7 — when both wide-spread AND single-instance indicators apply,
-       render a split-color border: violet (wide) on the top half +
-       amber (single) on the bottom half. We drop the outline-based
-       approach (outline can't split mid-shape) and use box-shadow
-       with two inset wedges to fake the half-and-half effect. The
-       single-indicator rules above still drive the look when only one
-       applies; this overrides for the combined case. */
-    .fv-badge.is-wide.is-single-source {
-      outline: none;
+      padding-left: calc(var(--space-1, 2px) + 2px);
+      padding-right: calc(var(--space-1, 2px) + 2px);
+      /* Composite shadow: four crisp inset edges + four soft outer
+         glow halos. Transparent --edge-* vars stay invisible so a
+         badge carrying only one indicator only paints one edge + glow. */
       box-shadow:
-        /* top half: violet */
-        inset 0 2px 0 0 var(--neon-violet),
-        /* bottom half: amber */
-        inset 0 -2px 0 0 var(--neon-amber),
-        /* left + right edges share the colors at their halves */
-        inset 2px 0 0 0 var(--neon-violet),
-        inset -2px 0 0 0 var(--neon-amber);
-      position: relative;
-      overflow: visible;
+        inset 0  2px 0 0 var(--edge-top),
+        inset -2px 0 0 0 var(--edge-right),
+        inset  2px 0 0 0 var(--edge-left),
+        inset 0 -2px 0 0 var(--edge-bottom),
+        0 -3px 6px -2px var(--edge-top),
+        3px  0 6px -2px var(--edge-right),
+        -3px 0 6px -2px var(--edge-left),
+        0  3px 6px -2px var(--edge-bottom);
+      animation: fvIndicatorGlow 2.4s ease-in-out infinite;
     }
+    .fv-badge.is-upside        { --edge-top: var(--upside-pink); }
+    .fv-badge.is-wide          { --edge-right: var(--neon-violet); }
+    .fv-badge.is-single-source { --edge-left: var(--neon-amber); }
+    /* Universal glow pulse — the outer halo blur radius cycles via a
+       custom property so the badge "breathes" without re-running the
+       layout. All four edges share the cadence; combined indicators
+       all pulse in lockstep. Independent per-edge cadences felt
+       chaotic in testing. */
+    @property --indicator-glow-spread { syntax: "<length>"; inherits: false; initial-value: 6px; }
+    @keyframes fvIndicatorGlow {
+      0%, 100% { --indicator-glow-spread: 4px; }
+      50%      { --indicator-glow-spread: 10px; }
+    }
+    /* Re-emit the shadow stack using the animated spread variable so
+       the outer halo grows / shrinks every cycle. The inset edges
+       stay fixed (those are the crisp identity marks). */
+    .fv-badge.is-wide,
+    .fv-badge.is-single-source,
+    .fv-badge.is-breakout,
+    .fv-badge.is-upside {
+      box-shadow:
+        inset 0  2px 0 0 var(--edge-top),
+        inset -2px 0 0 0 var(--edge-right),
+        inset  2px 0 0 0 var(--edge-left),
+        inset 0 -2px 0 0 var(--edge-bottom),
+        0 -3px var(--indicator-glow-spread) -2px var(--edge-top),
+        3px  0 var(--indicator-glow-spread) -2px var(--edge-right),
+        -3px 0 var(--indicator-glow-spread) -2px var(--edge-left),
+        0  3px var(--indicator-glow-spread) -2px var(--edge-bottom);
+    }
+    /* v7 / v29 — Wide+single combined rendering is now defined as part
+       of the per-edge multi-indicator block above (top edge violet for
+       wide, left edge amber for single). The old half-and-half wedge
+       treatment was retired so wide+single mixes consistently with
+       wide+breakout, single+upside, etc. — every combination follows
+       the same edge-per-indicator mapping instead of having a unique
+       layout for one pair. */
     .fv-wide-mark,
     .fv-single-mark,
     .fv-dropped-off-mark,
@@ -1625,37 +1702,39 @@
       cursor: help;
       z-index: 1;
     }
-    .fv-wide-mark        { top: -5px;   right: -7px; background: var(--neon-violet); }
+    /* v29.1 — Corner mapping after the wide/upside swap:
+         top-right    = upside (+)        — premium reads first
+         top-left     = single-source (1)
+         bottom-right = wide (W)          — paired with its right-edge
+         bottom-left  = breakout (★)
+       Each glyph color matches the edge color so the eye links corner
+       to edge without learning a separate palette. */
     .fv-single-mark      { top: -5px;   left: -6px;  background: var(--neon-amber); }
+    .fv-upside-mark      { top: -5px;   right: -7px; background: var(--upside-pink); color: #2a0014; }
+    .fv-wide-mark        { bottom: -5px; right: -7px; background: var(--neon-violet); }
     /* v16 — Breakout ★ in aquamarine (was green). Aquamarine reads more
        distinct from the green "up" stock chips elsewhere on the page,
        and matches the "rare emerging talent" semantic without being
        confused for a positive-stock trend. */
     .fv-breakout-mark    { bottom: -5px; left: -6px;  background: #7FFFD4; color: #002a25; }
-    /* v27 — Upside "+" mark: hot pink, sits opposite-corner from the
-       breakout ★ so both can co-exist without overlap. Matched by the
-       hot-pink dot markers on the FV history chart so the eye links
-       chip indicator <-> chart event. */
-    .fv-upside-mark      { bottom: -5px; right: -7px; background: var(--upside-pink); color: #2a0014; }
+    /* v29 — Breakout owns the BOTTOM edge. The color cycles between
+       aquamarine and violet to give breakout an extra-strong "rare
+       emerging talent" pulse on top of the universal glow that every
+       indicator gets. The bottom-edge cycle runs in parallel with the
+       shared fvIndicatorGlow halo, so breakout reads as the most-
+       attention-grabbing indicator without overshadowing the others. */
+    @property --breakout-edge {
+      syntax: "<color>";
+      inherits: false;
+      initial-value: #7FFFD4;
+    }
+    @keyframes fvBreakoutColor {
+      0%, 100% { --breakout-edge: #7FFFD4; }
+      50%      { --breakout-edge: var(--neon-violet); }
+    }
     .fv-badge.is-breakout {
-      outline: 2px solid #7FFFD4;
-      outline-offset: 1px;
-      position: relative;
-      overflow: visible;
-      animation: fvBreakoutPulse 2s ease-in-out infinite;
-    }
-    @keyframes fvBreakoutPulse {
-      0%, 100% { outline-color: #7FFFD4; }
-      50%      { outline-color: var(--neon-violet); }
-    }
-    /* v27 — Upside chip variant: thin hot-pink outline matches the dot
-       color. Subtler than breakout (no pulse) since "+" is a per-source
-       upside note, not a "this prospect is emerging" composite signal. */
-    .fv-badge.is-upside {
-      outline: 2px solid var(--upside-pink);
-      outline-offset: 1px;
-      position: relative;
-      overflow: visible;
+      --edge-bottom: var(--breakout-edge);
+      animation: fvIndicatorGlow 2.4s ease-in-out infinite, fvBreakoutColor 2s ease-in-out infinite;
     }
 
     /* Row tag pills — shared shape for the flag counter, health,
@@ -2025,6 +2104,42 @@
       font-weight: 600;
     }
     .etp-val {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    /* v29 — Advanced Statcast strip. Sits on a SECOND line under the
+       tool-grade strip in expanded density. Flex-wrap so it gracefully
+       collapses on narrow viewports; chips reuse the same outlined-
+       pill geometry as .expand-tool-pill but auto-size to content (no
+       7-column grid) since the chip count varies per side (hitter vs
+       pitcher) and per data availability. */
+    .sc-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+      align-items: center;
+    }
+    .sc-chip {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 3px;
+      padding: 1px 6px;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      background: var(--bg-tertiary);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.3;
+    }
+    .sc-chip-lbl {
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .sc-chip-val {
       font-weight: 700;
       font-variant-numeric: tabular-nums;
     }
@@ -6239,6 +6354,9 @@
            filter only surfaces sub-50 grades the sources have tagged
            with publishable upside. -->
       <button class="chip is-multi" data-filter-fvind="upside" title="Upside (+) — at least one source published a '+' on the latest snapshot (capped at FV ≤ 50; 55+/60+ are suppressed since those tiers have already realized their upside)">Upside +</button>
+      <!-- v29 — Statcast+ ≥ 115 (pool top quintile). Players with no
+           tracked Statcast data don't qualify. -->
+      <button class="chip is-multi" data-filter-fvind="scplus" title="Statcast+ ≥ 115 — composite of contact quality (EV/HH/Brl) + zone signals (Z-Con%/Whiff/Chase) for hitters; pitch velo + induced whiffs + contact suppression for pitchers. Pool-anchored at 100; ≥115 ≈ top quintile.">Statcast+</button>
     </div>
     <div class="filter-group">
       <span class="filter-label" title="Filter prospects by a specific tool grade meeting a minimum threshold. 'Any tool' matches when any one canonical 20-80 grade meets the threshold; pick a specific tool to isolate it.">Tool grade</span>
@@ -6311,6 +6429,10 @@
                46). Useful for scanning the sub-50 grades scouts have
                tagged with publishable upside. -->
           <option value="upside">Upside (+) first</option>
+          <!-- v29 — Statcast+ composite. Surfaces top hit-tool +
+               contact-quality / pitch-quality combos regardless of
+               consensus FV ordering. -->
+          <option value="statcast_plus">Statcast+ (highest)</option>
           <option value="source_confidence">Source confidence (most sources first)</option>
           <option value="tool">Tool grade (toolsiest)</option>
           <option value="stock_movers">Biggest movers (|ΔFV|)</option>
@@ -6436,7 +6558,16 @@
 
   <div id="injured-section" style="display: none;">
     <div id="whats-new-injured"></div>
-    <div class="filter-bar" style="margin-bottom:8px;">
+    <!-- v29 — Collapsed-by-default sort accordion for IL list. -->
+    <div class="filter-toggle-row">
+      <button class="filter-toggle" type="button"
+              data-collapse-target="injured-filter-bar" aria-expanded="false"
+              title="Show / hide sort options for the IL list">
+        <span class="filter-toggle-label">Sort</span>
+        <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
+      </button>
+    </div>
+    <div id="injured-filter-bar" class="filter-bar collapsible-filter-bar">
       <span class="filter-label">Sort</span>
       <button class="chip active" data-il-sort="days_asc"
               title="Shortest current IL stints first — players closest to returning">Days on IL (shortest)</button>
@@ -6444,6 +6575,8 @@
               title="Longest current IL stints first">Days on IL (longest)</button>
       <button class="chip" data-il-sort="fv"
               title="Highest-FV injured prospects first">FV</button>
+      <button class="chip" data-il-sort="since"
+              title="Most recently placed on IL first">Since (newest)</button>
     </div>
     <div id="injured-rows"></div>
   </div>
@@ -6626,7 +6759,18 @@
 
   <div id="debuts-section" style="display: none;">
     <div id="whats-new-debuts"></div>
-    <div class="filter-bar" style="margin-bottom:8px;">
+    <!-- v29 — Collapsed-by-default sort accordion mirroring the
+         draft/overseas pages. Toggle reuses the generic
+         data-collapse-target handler. -->
+    <div class="filter-toggle-row">
+      <button class="filter-toggle" type="button"
+              data-collapse-target="debuts-filter-bar" aria-expanded="false"
+              title="Show / hide sort options for the debuts list">
+        <span class="filter-toggle-label">Sort</span>
+        <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
+      </button>
+    </div>
+    <div id="debuts-filter-bar" class="filter-bar collapsible-filter-bar">
       <span class="filter-label">Sort</span>
       <button class="chip active" data-debut-sort="date"
               title="Most recent debut first">Debut date</button>
@@ -6650,7 +6794,16 @@
   </div>
 
   <div id="farm-section" style="display:none;">
-    <div class="filter-bar" id="farm-sort-bar" style="flex-wrap:wrap;gap:6px;">
+    <!-- v29 — Collapsed-by-default filter accordion for farm system. -->
+    <div class="filter-toggle-row">
+      <button class="filter-toggle" type="button"
+              data-collapse-target="farm-sort-bar" aria-expanded="false"
+              title="Show / hide farm-system sort options, development window, and view mode">
+        <span class="filter-toggle-label">Filters &amp; sort</span>
+        <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
+      </button>
+    </div>
+    <div class="filter-bar collapsible-filter-bar" id="farm-sort-bar" style="flex-wrap:wrap;gap:6px;">
       <div class="filter-group">
         <span class="filter-label">Sort by</span>
         <button class="chip" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% debut pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
@@ -6671,6 +6824,18 @@
         <button class="chip" data-farm-sort="tier_60">60+ prospects</button>
         <button class="chip" data-farm-sort="avg_age">Youngest system</button>
         <button class="chip" data-farm-sort="stock_up">Rising prospects</button>
+        <!-- v29 — Indicator-based + Statcast+ farm rollups. Computed
+             client-side from each org's active-prospect set (counts of
+             upside-flagged / breakout-flagged prospects; mean Statcast+
+             across all prospects with tracked data). Surfaces an extra
+             development-pace lens the server-side composite score
+             doesn't capture today. -->
+        <button class="chip" data-farm-sort="upside_count"
+                title="Count of prospects on this farm whose latest FV grade carries a published '+' upside marker (capped at FV ≤ 50). Higher = more sub-50 prospects with scout-published upside.">Upside count</button>
+        <button class="chip" data-farm-sort="breakout_count"
+                title="Count of prospects on this farm flagged as breakout (DvM+/FV velocity ≥ threshold AND a strong performance gate). Higher = more emerging-talent depth.">Breakout count</button>
+        <button class="chip" data-farm-sort="statcast_plus_avg"
+                title="Mean Statcast+ across this farm's active prospects with tracked Statcast data. 100 = pool average; higher = a system whose top prospects' tracked contact / pitch quality grades out better than the league.">Statcast+ avg</button>
       </div>
       <div class="filter-group">
         <span class="filter-label">Depth at level</span>
@@ -6705,7 +6870,16 @@
        that stat. Min-sample thresholds default per-stat so a 12-PA
        hitter can't top wOBA. -->
   <div id="leaderboards-section" style="display: none;">
-    <div class="filter-bar" id="leaderboard-bar" style="flex-wrap:wrap;gap:6px;">
+    <!-- v29 — Collapsed-by-default filter accordion for leaderboards. -->
+    <div class="filter-toggle-row">
+      <button class="filter-toggle" type="button"
+              data-collapse-target="leaderboard-bar" aria-expanded="false"
+              title="Show / hide leaderboard stat / level / position / org / season filters">
+        <span class="filter-toggle-label">Filters &amp; stat picker</span>
+        <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
+      </button>
+    </div>
+    <div class="filter-bar collapsible-filter-bar" id="leaderboard-bar" style="flex-wrap:wrap;gap:6px;">
       <span class="filter-label">Stat</span>
       <button class="chip active" data-lb-stat="ops"     title="On-base + slugging">OPS</button>
       <button class="chip"        data-lb-stat="avg"     title="Batting average">AVG</button>
@@ -7186,6 +7360,16 @@ function fvCmpDesc(a, b) {
   const ap = (a && a.fv_close_plus) ? 1 : 0;
   const bp = (b && b.fv_close_plus) ? 1 : 0;
   if (bp !== ap) return bp - ap;
+  // v29 — Statcast+ supplemental tiebreaker. When two prospects share
+  // the same FV + upside flag, the one with the better Statcast+
+  // composite ranks first. Players without tracked Statcast data
+  // (Stats API didn't cover their games) sink — this is intentional
+  // since the tiebreaker only fires inside an already-equal tier.
+  const as = getStatcastPlus(a);
+  const bs = getStatcastPlus(b);
+  if (as != null && bs != null && as !== bs) return bs - as;
+  if (as != null && bs == null) return -1;
+  if (bs != null && as == null) return 1;
   // FVs tie — tools composite breaks it (ungraded sinks).
   const at = _toolComposite(a);
   const bt = _toolComposite(b);
@@ -7546,8 +7730,13 @@ function healthBadgeHTML(p) {
   const ildays = hp.il_days_12mo || 0;
 
   // Post-TJ: orange for the full first year post-surgery (recovery
-  // window where re-injury risk is highest), then yellow until the
-  // surgery scrolls out of the trailing window.
+  // window where re-injury risk is highest). v29 — Past the 12-month
+  // window the surgery STOPS driving the health glyph: it falls
+  // through to the IL-history logic below so the player isn't stuck
+  // with a permanent yellow flag years after they've returned. The
+  // surgery date is still preserved in p.health_profile for the
+  // detail-page health card and the player-meta "Post-TJ" pill that
+  // marks the surgical event itself.
   if (hp.is_post_tj) {
     let daysSinceTj = null;
     if (hp.tj_surgery_date) {
@@ -7557,10 +7746,13 @@ function healthBadgeHTML(p) {
       } catch (e) { daysSinceTj = null; }
     }
     const within12mo = daysSinceTj != null && daysSinceTj <= 365;
-    const tone = within12mo ? "orange" : "yellow";
-    const d = hp.tj_surgery_date ? ` (surgery ${hp.tj_surgery_date})` : "";
-    const tip = `Post-Tommy John surgery${d}${daysSinceTj != null ? ` · ${daysSinceTj}d since` : ""}`;
-    return _glyph(tone, tip, "Post-TJ");
+    if (within12mo) {
+      const d = hp.tj_surgery_date ? ` (surgery ${hp.tj_surgery_date})` : "";
+      const tip = `Post-Tommy John surgery${d}${daysSinceTj != null ? ` · ${daysSinceTj}d since` : ""}`;
+      return _glyph("orange", tip, "Post-TJ");
+    }
+    // Past 12 months: don't short-circuit; let real recent IL data
+    // (the stint / day counters below) determine the glyph.
   }
 
   // Severity-based IL history tier — chronic (2+ stints) or long (≥30d)
@@ -7818,16 +8010,91 @@ function _toolGradeStripHTML(p) {
   return `<span class="expand-tools">${pills.join('')}</span>`;
 }
 
+// v29 — Advanced Statcast strip for expanded-density rows. Surfaces
+// the metrics the user can't see on Compact: HH% / EV / Barrel% (from
+// statcast_metrics.contact_quality) and Z-Contact% / Whiff% / Chase%
+// (from zone_metrics) for hitters; pitch-mix top-3 with velo + Whiff%
+// / Chase% for pitchers. Each chip color-codes by tier so a fast
+// horizontal scan picks out outliers. Returns "" when neither feed
+// has data on this player so the strip never paints an empty row.
+function _statcastStripHTML(p) {
+  if (!p) return "";
+  const isP = !!(p.statline && p.statline.is_pitcher);
+  const cq = (p.statcast_metrics && p.statcast_metrics.contact_quality) || {};
+  // Pick the freshest tracked zone-metrics split (prefer current year /
+  // current level). zone_metrics may live as either a single dict or a
+  // .level_splits array; the array form holds per-level rows.
+  const zRow = (() => {
+    const z = p.zone_metrics;
+    if (!z) return null;
+    const arr = (z.level_splits && z.level_splits.length) ? z.level_splits : (Object.keys(z).length ? [z] : []);
+    if (!arr.length) return null;
+    // Prefer the row at the player's current level; fall back to the
+    // largest-pitch-sample row otherwise.
+    const cur = (p.statline && p.statline.level) || null;
+    if (cur) {
+      const match = arr.find(s => s && s.level === cur);
+      if (match) return match;
+    }
+    return arr.slice().sort((a, b) => (b.pitches || 0) - (a.pitches || 0))[0] || null;
+  })();
+  const chips = [];
+  const tone = (v, hi, lo, inv = false) => {
+    if (v == null || !isFinite(v)) return "var(--text-tertiary)";
+    if (inv) return v <= hi ? "var(--up)" : v >= lo ? "var(--down)" : "var(--text-primary)";
+    return v >= hi ? "var(--up)" : v <= lo ? "var(--down)" : "var(--text-primary)";
+  };
+  const chip = (label, value, color, tip) =>
+    `<span class="sc-chip" title="${escapeHtml(tip || label)}"><span class="sc-chip-lbl">${label}</span><span class="sc-chip-val" style="color:${color};">${value}</span></span>`;
+  if (!isP) {
+    // Contact quality (hitters: more is better for EV/HH/Barrel).
+    if (cq.avg_ev      != null) chips.push(chip("EV",     cq.avg_ev.toFixed(1),     tone(cq.avg_ev, 92, 86),      `Avg exit velocity · ${cq.batted_balls || "?"} BBE`));
+    if (cq.max_ev      != null) chips.push(chip("MaxEV",  cq.max_ev.toFixed(1),     tone(cq.max_ev, 110, 100),    `Peak exit velocity`));
+    if (cq.hard_hit_pct!= null) chips.push(chip("HH%",    cq.hard_hit_pct.toFixed(1) + "%", tone(cq.hard_hit_pct, 42, 32), `Hard-hit rate (EV ≥ 95)`));
+    if (cq.barrel_pct  != null) chips.push(chip("Brl%",   cq.barrel_pct.toFixed(1)  + "%", tone(cq.barrel_pct,  10, 5),  `Barrel rate`));
+    if (zRow && zRow.z_contact_pct != null) chips.push(chip("Z-Con%", zRow.z_contact_pct.toFixed(1) + "%", tone(zRow.z_contact_pct, 86, 76), `Contact rate on in-zone swings`));
+    if (zRow && zRow.whiff_pct     != null) chips.push(chip("Whiff%", zRow.whiff_pct.toFixed(1)     + "%", tone(zRow.whiff_pct, 22, 32, true), `Swings-and-misses per swing · lower is better`));
+    if (zRow && zRow.chase_pct     != null) chips.push(chip("Chase%", zRow.chase_pct.toFixed(1)     + "%", tone(zRow.chase_pct, 24, 32, true), `Out-of-zone swing rate · lower is better`));
+  } else {
+    // Pitchers: top-3 pitches with avg velo; Whiff% (induced) higher is
+    // better; Chase% (induced) higher is better; HH% (allowed) lower.
+    const pm = (p.statcast_metrics && p.statcast_metrics.pitch_movement) || {};
+    const summary = (pm.pitch_summary || []).slice(0, 3);
+    for (const ps of summary) {
+      const velo = ps.avg_velo != null ? `${ps.avg_velo.toFixed(1)} mph` : "—";
+      const usage = ps.usage_pct != null ? ` · ${ps.usage_pct.toFixed(1)}%` : "";
+      chips.push(chip(ps.pitch_type, velo, "var(--text-primary)", `${ps.pitch_name || ps.pitch_type} · avg velo${usage}`));
+    }
+    if (zRow && zRow.whiff_pct     != null) chips.push(chip("Whiff%", zRow.whiff_pct.toFixed(1)     + "%", tone(zRow.whiff_pct, 28, 18), `Induced whiffs per swing · higher is better`));
+    if (zRow && zRow.chase_pct     != null) chips.push(chip("Chase%", zRow.chase_pct.toFixed(1)     + "%", tone(zRow.chase_pct, 32, 24), `Induced out-of-zone swing rate · higher is better`));
+    if (cq.hard_hit_pct!= null) chips.push(chip("HH% (a)", cq.hard_hit_pct.toFixed(1) + "%", tone(cq.hard_hit_pct, 32, 42, true), `Hard-hit rate ALLOWED · lower is better`));
+    if (cq.barrel_pct  != null) chips.push(chip("Brl% (a)", cq.barrel_pct.toFixed(1)  + "%", tone(cq.barrel_pct,  5, 10, true),  `Barrel rate ALLOWED · lower is better`));
+  }
+  // v29 — Statcast+ headline chip leads the strip so the user sees the
+  // composite first, then the contributing components. 100 = pool
+  // average; ≥115 reads green, ≤85 reads orange.
+  const sPlus = getStatcastPlus(p);
+  if (sPlus != null) {
+    const sPlusColor = sPlus >= 115 ? "var(--up)" : sPlus <= 85 ? "var(--down)" : "var(--text-primary)";
+    chips.unshift(chip("SC+", String(sPlus), sPlusColor, `Statcast+ composite (${isP ? "pitcher" : "hitter"} blend) · pool-anchored at 100 (~σ × 15)`));
+  }
+  if (!chips.length) return "";
+  return `<div class="sc-strip" title="Advanced Statcast / zone signals — only populated when MLB Stats API tracked the prospect's games this season">${chips.join("")}</div>`;
+}
+
 function playerExpandedMetaHTML(p) {
-  // The new Expanded density adds ONE thing under each player row: the
-  // per-tool 20-80 grade strip, aligned in a fixed-slot grid so every
-  // row's chips line up column-for-column. Writeup / career trail /
-  // per-source FVs / Savant micro-tile / mini-stats strip all retired
-  // — the rich-extras version felt cluttered and the data lives on the
-  // prospect detail page anyway.
+  // v29 — Expanded density now adds TWO chip strips: the tool grade
+  // strip (20-80 scout grades, retained from prior versions) AND a
+  // Statcast strip surfacing the advanced metrics that don't fit on
+  // Compact rows (EV, HH%, Barrel%, Z-Contact%, Whiff%, Chase% for
+  // hitters; pitch mix + velo + Whiff% for pitchers). Both strips are
+  // null-safe and collapse independently when their data is missing,
+  // so a prospect with tools-only or Statcast-only data still shows
+  // the populated half cleanly.
   const toolStrip = _toolGradeStripHTML(p);
-  if (!toolStrip) return "";
-  return `<div class="player-row-expand">${toolStrip}</div>`;
+  const scStrip   = _statcastStripHTML(p);
+  if (!toolStrip && !scStrip) return "";
+  return `<div class="player-row-expand">${toolStrip}${scStrip}</div>`;
 }
 
 const fvClass = label => {
@@ -8283,17 +8550,37 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   // vertical range so the reader can immediately tell what a flat-
   // near-the-top vs flat-near-the-bottom curve means.
   // v27 — Player-specific H/L chips replace the candle column the user
-  // retired. Top-right shows H:<value>, bottom-right shows L:<value>.
-  // Tiny font + tertiary color so they read as annotations, not chart
-  // furniture. Only render when at least 2 points exist (otherwise H/L
-  // are identical and the labels are noise).
-  const _pHigh = (player && player.fv_high != null) ? Math.round(player.fv_high) : null;
-  const _pLow  = (player && player.fv_low  != null) ? Math.round(player.fv_low)  : null;
-  const _hasHL = points && points.length >= 2 && _pHigh != null && _pLow != null && _pHigh !== _pLow;
-  const hlLabels = _hasHL
-    ? `<text x="${(W - PAD).toFixed(1)}" y="${(PAD + 6).toFixed(1)}" font-size="7" fill="var(--text-tertiary)" font-family="var(--font-mono)" text-anchor="end" font-weight="600"><title>FV high across history</title>H:${_pHigh}</text>
-       <text x="${(W - PAD).toFixed(1)}" y="${(CHART_BOTTOM - 2).toFixed(1)}" font-size="7" fill="var(--text-tertiary)" font-family="var(--font-mono)" text-anchor="end" font-weight="600"><title>FV low across history</title>L:${_pLow}</text>`
-    : "";
+  // retired.
+  // v29 — Position the H / L tags directly over the actual high / low
+  // points in the trajectory (was: pinned to the top-right + bottom-
+  // right corners regardless of where the extreme occurred). Shrunk
+  // font (7 → 5) so they read as annotations, not chart furniture.
+  // Clamp x toward the chart interior when the extreme sits at an edge
+  // so the label text doesn't overflow the SVG.
+  let hlLabels = "";
+  if (points && points.length >= 2 && coords.length) {
+    let hiIdx = 0, loIdx = 0;
+    for (let i = 1; i < coords.length; i++) {
+      if (coords[i].fv > coords[hiIdx].fv) hiIdx = i;
+      if (coords[i].fv < coords[loIdx].fv) loIdx = i;
+    }
+    const hi = coords[hiIdx], lo = coords[loIdx];
+    const hiFv = Math.round(hi.fv), loFv = Math.round(lo.fv);
+    if (hiFv !== loFv) {
+      // Clamp x position so end-aligned text near the chart edges still
+      // fits inside the SVG; gives the label ~12 SVG-units of breathing
+      // room on each side.
+      const clamp = (v) => Math.max(X_LEFT + 6, Math.min(W - PAD - 1, v));
+      const hiX = clamp(hi.x).toFixed(1);
+      const loX = clamp(lo.x).toFixed(1);
+      // Place H label 2 SVG-units above the high point, L label 6 below
+      // the low point (font baseline math). Both centered on the point.
+      const hiY = Math.max(PAD + 4, hi.y - 1.5).toFixed(1);
+      const loY = Math.min(CHART_BOTTOM - 0.5, lo.y + 5).toFixed(1);
+      hlLabels = `<text x="${hiX}" y="${hiY}" font-size="5" fill="var(--text-tertiary)" font-family="var(--font-mono)" text-anchor="middle" font-weight="600"><title>FV high · ${hi.pt.snapshot_date}</title>H:${hiFv}</text>
+       <text x="${loX}" y="${loY}" font-size="5" fill="var(--text-tertiary)" font-family="var(--font-mono)" text-anchor="middle" font-weight="600"><title>FV low · ${lo.pt.snapshot_date}</title>L:${loFv}</text>`;
+    }
+  }
   const yLabels = `
     <text x="${(PAD).toFixed(1)}" y="${(yScale(FV_MAX) + 3).toFixed(1)}" font-size="6.5" fill="var(--text-tertiary)" font-family="var(--font-mono)">${FV_MAX}</text>
     <text x="${(PAD).toFixed(1)}" y="${(yScale(FV_MIN) + 3).toFixed(1)}" font-size="6.5" fill="var(--text-tertiary)" font-family="var(--font-mono)">${FV_MIN}</text>
@@ -8453,21 +8740,15 @@ function renderPaginationStrip(currentPage, totalItems, pageSize, dataKey) {
     </div>`;
 }
 
-// Compact pagination strip — duplicated at the TOP of each paginated
-// list so the user doesn't have to scroll to the bottom to flip pages.
-// Just prev / next + "Page X of Y" label, no full page-number chips and
-// no count strip. Click handlers reuse the same data-{dataKey}-page
-// attribute as the full strip below, so no new wiring needed.
+// v29 — Top + bottom pagination strips are now IDENTICAL. The earlier
+// compact variant (just prev/next + "Page X of Y") had two problems:
+// (1) it didn't surface the page-number chips a quick page-skip needs,
+// (2) the post-render scroll-to-active-chip logic landed on the BOTTOM
+// strip's number chip because the compact top strip didn't carry one
+// — feeling like a snap-to-bottom every time the user paged from the
+// top. Aliasing the compact variant to the full strip fixes both.
 function renderPaginationStripCompact(currentPage, totalItems, pageSize, dataKey) {
-  const total = Math.ceil(totalItems / Math.max(1, pageSize));
-  if (total <= 1) return "";
-  const cur = Math.min(Math.max(1, currentPage), total);
-  return `
-    <div class="pg-strip pg-strip-compact">
-      <button class="pg-nav" data-${dataKey}-page="${Math.max(1, cur - 1)}" type="button"${cur === 1 ? " disabled" : ""}>◀ Prev</button>
-      <span class="pg-count">Page ${cur} of ${total}</span>
-      <button class="pg-nav" data-${dataKey}-page="${Math.min(total, cur + 1)}" type="button"${cur === total ? " disabled" : ""}>Next ▶</button>
-    </div>`;
+  return renderPaginationStrip(currentPage, totalItems, pageSize, dataKey);
 }
 
 // Detail-page tab bar. tabs = [{ key, label, html }, ...]. activeKey
@@ -8505,7 +8786,7 @@ function syncToURL() {
   if (state.sort        !== "fv")         p.set("sort",  state.sort);
   if (state.stockFilter !== "all")        p.set("stock", state.stockFilter);
   if (state.spreadFilter && state.spreadFilter !== "all") p.set("spread", state.spreadFilter);
-  if (state.density     && state.density !== "standard") p.set("density", state.density);
+  if (state.density     && state.density !== "compact") p.set("density", state.density);
   if (state.search)                       p.set("q",     state.search);
   if (state.farmSort    !== "trajectory") p.set("farm",  state.farmSort);
   if (state.farmViewMode && state.farmViewMode !== "table") p.set("farmview", state.farmViewMode);
@@ -8534,6 +8815,13 @@ function syncToURL() {
   // NOTE: dsort is already taken by depthSort; ostab by overseas
   // detail tab. Using prefixed `dft*` / `ovs*` keys keeps the
   // namespace clear.
+  // v29 — Persist the universal sort-direction flip state. Encoded as
+  // a comma-separated list of stateField names whose reverse flag is
+  // true; absent param = no reversals.
+  if (state.sortRev) {
+    const reversed = Object.keys(state.sortRev).filter(k => state.sortRev[k]);
+    if (reversed.length) p.set("srev", reversed.join(","));
+  }
   if (state.draftPool   && state.draftPool   !== "all") p.set("dftpool",   state.draftPool);
   if (state.draftSide   && state.draftSide   !== "all") p.set("dftside",   state.draftSide);
   if (state.draftPos    && state.draftPos    !== "all") p.set("dftpos",    state.draftPos);
@@ -8634,6 +8922,11 @@ function syncFromURL() {
   if (p.has("tsk"))    state.toolSortKey   = p.get("tsk");
   if (p.has("bucket")) state.spotlightBucket = p.get("bucket");
   // v28 — Draft + Overseas filter/sort URL keys (see syncToURL).
+  // v29 — Restore the sort-direction flip set.
+  state.sortRev = {};
+  if (p.has("srev")) {
+    for (const k of p.get("srev").split(",").filter(Boolean)) state.sortRev[k] = true;
+  }
   if (p.has("dftpool"))   state.draftPool     = p.get("dftpool");
   if (p.has("dftside"))   state.draftSide     = p.get("dftside");
   if (p.has("dftpos"))    state.draftPos      = p.get("dftpos");
@@ -8857,26 +9150,76 @@ const SORT_HEADER_MAP = [
   { datasetKey: "sourceFvSort",  stateField: "sourceFvSort",  rerender: () => { if (state.view && state.view.type === "player") renderPlayerDetail(state.view.key); } },
 ];
 
+// v29 — Custom direction-pair map for sort keys that don't use the
+// _asc / _desc suffix convention. Clicking a header whose key is
+// listed here flips between the two paired keys (e.g. WAG sort cycles
+// vs_fv_proj ↔ vs_fv_proj_low). Keys NOT listed here fall through to
+// state.sortRev[stateField] toggling — the comparator runs in its
+// natural order and the renderer reverses the array if the flag is
+// set (via _applySortDir).
+const REVERSE_SORT_PAIRS = {
+  vs_fv_proj:     "vs_fv_proj_low",
+  vs_fv_proj_low: "vs_fv_proj",
+};
+
+// v29 — Universal post-sort direction helper. Each renderer that owns
+// a sort family calls _applySortDir(pool, stateField) AFTER its
+// comparator has run. If state.sortRev[stateField] is true, the pool
+// is reversed in place (note: this also flips the tiebreak ordering,
+// which is an acceptable trade since the primary signal — the sort
+// dimension — is the user-visible thing being reversed). No-op for
+// families that haven't been toggled.
+function _applySortDir(pool, stateField) {
+  if (!Array.isArray(pool) || !pool.length) return pool;
+  if (state.sortRev && state.sortRev[stateField]) pool.reverse();
+  return pool;
+}
+
+// v29 — Direction arrow for the active sort header. Returns "▼" when
+// the natural (un-reversed) direction is in effect, "▲" when the
+// per-field reverse flag is set. Used by syncSortHeaderActive so the
+// active header carries a visible direction cue.
+function _sortDirArrow(stateField, key) {
+  // _asc / _desc keys carry direction in the key itself.
+  if (typeof key === "string") {
+    if (key.endsWith("_asc")) return "▲";
+    if (key.endsWith("_desc")) return "▼";
+    if (key === "vs_fv_proj_low") return "▲";
+  }
+  // Otherwise consult the reverse flag.
+  return (state.sortRev && state.sortRev[stateField]) ? "▲" : "▼";
+}
+
 // Stamp .is-active on the header cell whose data-*-sort matches the
 // current state for that sort family. Direction-paired keys
 // (ht_asc / ht_desc) both resolve to the same physical column, so an
 // asc/desc toggle still keeps the cell highlighted.
+// v29 — Also attach a ▲ / ▼ arrow via the data-sort-dir attribute on
+// the active header so the user can see which direction is in effect
+// without remembering whether they clicked once or twice. The CSS
+// pseudo-element on .sort-header.is-active reads the attribute.
 function syncSortHeaderActive() {
   // Normalize direction-paired keys to their column base ("ht" / "wt" /
   // "bmi") so toggling asc/desc keeps the highlight on the column.
   const base = (k) => typeof k === "string"
     ? (k.endsWith("_asc") ? k.slice(0, -4)
        : k.endsWith("_desc") ? k.slice(0, -5)
+       : k === "vs_fv_proj_low" ? "vs_fv_proj"
        : k)
     : k;
   for (const cfg of SORT_HEADER_MAP) {
     const attr = cfg.datasetKey.replace(/[A-Z]/g, c => "-" + c.toLowerCase());
     const headers = document.querySelectorAll(`.sort-header[data-${attr}]`);
     if (!headers.length) continue;
-    const activeBase = base(state[cfg.stateField]);
+    const curKey = state[cfg.stateField];
+    const activeBase = base(curKey);
+    const arrow = _sortDirArrow(cfg.stateField, curKey);
     headers.forEach(h => {
       const hBase = base(h.dataset[cfg.datasetKey]);
-      h.classList.toggle("is-active", hBase === activeBase);
+      const isActive = hBase === activeBase;
+      h.classList.toggle("is-active", isActive);
+      if (isActive) h.setAttribute("data-sort-dir", arrow);
+      else h.removeAttribute("data-sort-dir");
     });
   }
 }
@@ -8924,34 +9267,26 @@ function headlineStatHTML(player, opts = {}) {
   const chipPad = size === "md" ? "3px 9px" : "2px 7px";
   const chipFz  = size === "md" ? "13px"    : "11px";
 
-  // Choose primary metric in priority: real sabermetric → level-relative proxy.
+  // Choose primary metric in priority: real MLB sabermetric only. The
+  // level-relative OPS+ / ERA- proxies used to fall through here for
+  // MiLB players, but those proxies ALSO render as the inline
+  // `plusPill` next to the Level chip — surfacing them twice on the
+  // same row was redundant. The plusPill is the canonical OPS+/ERA-
+  // surface for MiLB; this chip stays MLB-only (wRC+ / xFIP).
   let label, value, color, source;
   if (isPitcher) {
     if (sm.xfip != null) {
       label = "xFIP"; value = sm.xfip.toFixed(2);
-      // xFIP under 3.50 is excellent; over 4.50 is below avg.
       color = sm.xfip <= 3.50 ? "var(--up)" : sm.xfip >= 4.50 ? "var(--down)" : "var(--text-primary)";
       source = "MLB · FanGraphs xFIP";
-    } else if (sl.era_minus_level != null) {
-      label = "ERA-";
-      value = sl.era_minus_level;
-      // ERA- under 100 = better than league avg at that level.
-      color = sl.era_minus_level <= 90 ? "var(--up)" : sl.era_minus_level >= 110 ? "var(--down)" : "var(--text-primary)";
-      source = `vs ${sl.level || "level"} mean`;
     } else {
       return "";
     }
   } else {
     if (sm.wrc_plus != null) {
       label = "wRC+"; value = Math.round(sm.wrc_plus);
-      // 100 = league avg. >=140 elite, <=80 below avg.
       color = sm.wrc_plus >= 110 ? "var(--up)" : sm.wrc_plus <= 90 ? "var(--down)" : "var(--text-primary)";
       source = "MLB · FanGraphs wRC+";
-    } else if (sl.ops_plus_level != null) {
-      label = "OPS+";
-      value = sl.ops_plus_level;
-      color = sl.ops_plus_level >= 110 ? "var(--up)" : sl.ops_plus_level <= 90 ? "var(--down)" : "var(--text-primary)";
-      source = `vs ${sl.level || "level"} mean`;
     } else {
       return "";
     }
@@ -9336,7 +9671,15 @@ const state = {
     leaderboard: 25, actives: 50, glossary: 30, draft: 50, overseas: 50,
     spotlights: 25, watchlist: 25, farmRoster: 50, farmTx: 50,
   },
-  view: null
+  view: null,
+  // v29 — Universal column-sort direction toggle. For sort families
+  // whose keys DON'T use the legacy `_asc` / `_desc` suffix convention
+  // (e.g. `fv`, `eta`, `tool`, `vs_fv_proj`), clicking the column
+  // header a second time flips this per-family boolean. Renderers
+  // honor it via _applySortDir() — the comparator runs normally, then
+  // the array is reversed when sortRev[stateField] is true. Defaults
+  // empty; per-key entries created on first toggle.
+  sortRev: {},
 };
 
 // Map a player's `position` string ("RHP", "SS/2B", "OF", "1B", "C") to
@@ -9481,6 +9824,13 @@ function getFilteredActives() {
       if (state.fvIndicators.has("upside")) {
         if (fvBadgeUpsideClass(p)) return true;
       }
+      // v29 — Statcast+ ≥ 115 (top-quintile composite vs the
+      // side-matched pool). Mirrors the new SC+ chip on expanded
+      // density. Players without tracked Statcast data fall out.
+      if (state.fvIndicators.has("scplus")) {
+        const sp = getStatcastPlus(p);
+        if (sp != null && sp >= 115) return true;
+      }
       return false;
     });
   }
@@ -9537,6 +9887,18 @@ function getFilteredActives() {
       const bu = fvBadgeUpsideClass(b) ? 1 : 0;
       if (bu !== au) return bu - au;
       return fvCmpDesc(a, b);
+    });
+  } else if (state.sort === "statcast_plus") {
+    // v29 — Statcast+ composite, descending. Prospects without any
+    // tracked Statcast data sink (their SC+ is null). Tiebreak via
+    // fvCmpDesc so within a tied SC+ tier, FV order still applies.
+    pool.sort((a, b) => {
+      const as = getStatcastPlus(a);
+      const bs = getStatcastPlus(b);
+      if (as == null && bs == null) return fvCmpDesc(a, b);
+      if (as == null) return 1;
+      if (bs == null) return -1;
+      return (bs - as) || fvCmpDesc(a, b);
     });
   } else if (state.sort === "age_asc") {
     pool.sort((a, b) => (a.age ?? 99) - (b.age ?? 99));
@@ -9660,6 +10022,9 @@ function getFilteredActives() {
     // header can toggle direction. Oldest-first.
     pool.sort((a, b) => (b.age ?? -1) - (a.age ?? -1));
   }
+  // v29 — Honor the universal column-sort direction flag (set when the
+  // user clicks the same header twice for a non-_asc/_desc key).
+  _applySortDir(pool, "sort");
   return pool;
 }
 
@@ -10201,6 +10566,8 @@ function renderSpotlights() {
     rowsData = rowsData.slice().sort((a, b) =>
       (a.level || "").localeCompare(b.level || ""));
   }
+  // v29 — Universal direction-flip honored after sort.
+  _applySortDir(rowsData, "spotlightSort");
 
   const pageSize = state.pageSizes.spotlights || 25;
   const totalItems = rowsData.length;
@@ -10263,7 +10630,7 @@ function renderSpotlights() {
         <button class="watch-btn${watchlistHas(s.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(s.player_key)}" type="button" title="${watchlistHas(s.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(s.player_key) ? "★" : "☆"}</button>
         <button class="compare-add-btn is-compact${compareHas(s.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(s.player_key)}" type="button" title="${compareHas(s.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(s.player_key) ? "✓" : "+"}</button>
       </div>
-      <div style="text-align:center;"><span class="fv-badge ${fvClass(s.fv || "40")}">${escapeHtml(s.fv ?? "—")}</span></div>
+      <div style="text-align:center;"><span class="fv-badge ${fvClass(s.fv || "40")}${fvBadgeChainClasses(_full)}" title="${escapeHtml(fvBadgeTooltip(_full))}">${escapeHtml(s.fv ?? "—")}${fvBadgeChainMarks(_full)}</span></div>
       <div class="milb-cell"><span class="level-pill level-neutral">${escapeHtml(s.level ?? "—")}</span>${escapeHtml(s.line ?? "—")}</div>
       <!-- v17 — Strength score column replaced with mini FV sparkline. -->
       <div class="line-chart-cell" style="text-align:center;" title="${escapeHtml(_ohlcTooltip(_full))}">${lazyLineChartHTML(_full)}</div>
@@ -11600,6 +11967,8 @@ function renderInjured() {
     // days_asc (default): shortest stints first.
     filtered.sort((a, b) => (a.days - b.days) || (b.fv - a.fv));
   }
+  // v29 — Universal direction-flip honored after sort.
+  _applySortDir(filtered, "ilSort");
 
   // Grid columns live on `.col-header.is-injured` / `.player-row.is-injured`.
   // Days / Since / FV headers are click-sortable; the active chip stays
@@ -11684,6 +12053,8 @@ function renderRecentlyTraded() {
   }
   // "date" (default) leaves the upstream order intact — getFilteredAcquired
   // already returns newest-first.
+  // v29 — Universal direction-flip honored after sort.
+  _applySortDir(filtered, "tradedSort");
 
   // Grid columns live on `.col-header.is-traded` / `.player-row.is-traded`.
   // Player / Acquisition date / FV headers are click-sortable via the
@@ -12566,6 +12937,7 @@ function _applyDraftFilters(prospects) {
 }
 
 // v28 — Apply the per-page sort to a draft-prospect array in place.
+// v29 — Honors state.sortRev.draftSort for second-click direction flip.
 function _applyDraftSort(prospects) {
   const mode = state.draftSort || "fv";
   if (mode === "upside") {
@@ -12602,6 +12974,8 @@ function _applyDraftSort(prospects) {
       return Number(aRank) - Number(bRank);
     });
   }
+  // v29 — Universal direction-flip honored after sort.
+  _applySortDir(prospects, "draftSort");
 }
 
 function _renderDraftRankings(host, cls) {
@@ -13292,6 +13666,8 @@ function _applyOverseasSort(prospects) {
       return (a.player_name || "").localeCompare(b.player_name || "");
     });
   }
+  // v29 — Universal direction-flip honored after sort.
+  _applySortDir(prospects, "overseasSort");
 }
 
 function _renderOverseasRankings(host, leagues) {
@@ -14652,6 +15028,8 @@ function renderDebuts() {
     // Date sort: preserve the group-by-date pass below.
     orderedGrads = null;
   }
+  // v29 — Universal direction-flip honored on the flat-list path.
+  if (orderedGrads) _applySortDir(orderedGrads, "debutSort");
 
   const renderRow = (g, rank, pillClassOverride, sublabel) => {
     const isRecent = isRecentDebutDate(g.debut_date);
@@ -14912,6 +15290,133 @@ function _computeBmi(heightInches, weightLb) {
 // for individual missing fields; the cluster itself always renders so
 // the grid column doesn't collapse. Used by the standard / expanded
 // density row renderers. Compact density has its own minified version.
+// v29 — Statcast+ composite. A single 0-200 index (100 = pool average)
+// summarizing each prospect's tracked Statcast / zone signals. For
+// hitters it blends contact quality (EV / HH% / Barrel%) with plate-
+// discipline / contact-ability (Z-Contact%, Whiff% inverted, Chase%
+// inverted). For pitchers it blends pitch quality (top-pitch velo)
+// with induced swing-and-miss (Whiff%, Chase%) and contact suppression
+// (HH%/Barrel% allowed, both inverted). Each component is z-scored
+// against the side-matched active pool, averaged, and rescaled to a
+// 100-anchored index. Returns null when the prospect has no tracked
+// data on any component. Cached per render via _resetStatcastPlusCache.
+let _scPoolCache = null;
+function _resetStatcastPlusCache() { _scPoolCache = null; }
+function _scExtractHitter(p) {
+  const cq = (p.statcast_metrics && p.statcast_metrics.contact_quality) || {};
+  const z = (() => {
+    const zm = p.zone_metrics;
+    if (!zm) return null;
+    const arr = (zm.level_splits && zm.level_splits.length) ? zm.level_splits : (Object.keys(zm).length ? [zm] : []);
+    if (!arr.length) return null;
+    return arr.slice().sort((a, b) => (b.pitches || 0) - (a.pitches || 0))[0] || null;
+  })();
+  return {
+    avg_ev:       cq.avg_ev != null ? cq.avg_ev : null,
+    hard_hit_pct: cq.hard_hit_pct != null ? cq.hard_hit_pct : null,
+    barrel_pct:   cq.barrel_pct != null ? cq.barrel_pct : null,
+    z_contact:    z && z.z_contact_pct != null ? z.z_contact_pct : null,
+    whiff_inv:    z && z.whiff_pct != null ? -z.whiff_pct : null,
+    chase_inv:    z && z.chase_pct != null ? -z.chase_pct : null,
+  };
+}
+function _scExtractPitcher(p) {
+  const cq = (p.statcast_metrics && p.statcast_metrics.contact_quality) || {};
+  const pm = (p.statcast_metrics && p.statcast_metrics.pitch_movement) || {};
+  const top = (pm.pitch_summary || [])[0] || {};
+  const z = (() => {
+    const zm = p.zone_metrics;
+    if (!zm) return null;
+    const arr = (zm.level_splits && zm.level_splits.length) ? zm.level_splits : (Object.keys(zm).length ? [zm] : []);
+    if (!arr.length) return null;
+    return arr.slice().sort((a, b) => (b.pitches || 0) - (a.pitches || 0))[0] || null;
+  })();
+  return {
+    top_velo:    top.avg_velo != null ? top.avg_velo : null,
+    whiff:       z && z.whiff_pct != null ? z.whiff_pct : null,
+    chase:       z && z.chase_pct != null ? z.chase_pct : null,
+    hh_inv:      cq.hard_hit_pct != null ? -cq.hard_hit_pct : null,
+    barrel_inv:  cq.barrel_pct != null ? -cq.barrel_pct : null,
+  };
+}
+function _scPool() {
+  if (_scPoolCache) return _scPoolCache;
+  const hitters = [], pitchers = [];
+  for (const p of (DATA.players || [])) {
+    const isP = !!(p.statline && p.statline.is_pitcher);
+    if (isP) pitchers.push(_scExtractPitcher(p));
+    else     hitters.push(_scExtractHitter(p));
+  }
+  const stats = (rows) => {
+    const out = {};
+    if (!rows.length) return out;
+    for (const k of Object.keys(rows[0])) {
+      const vals = rows.map(r => r[k]).filter(v => v != null && isFinite(v));
+      if (!vals.length) { out[k] = { mean: null, sd: 1 }; continue; }
+      const m = vals.reduce((s, v) => s + v, 0) / vals.length;
+      const variance = vals.reduce((s, v) => s + (v - m) * (v - m), 0) / vals.length;
+      out[k] = { mean: m, sd: Math.sqrt(variance) || 1 };
+    }
+    return out;
+  };
+  _scPoolCache = { hit: stats(hitters), pit: stats(pitchers) };
+  return _scPoolCache;
+}
+function getStatcastPlus(p) {
+  if (!p) return null;
+  const isP = !!(p.statline && p.statline.is_pitcher);
+  const row = isP ? _scExtractPitcher(p) : _scExtractHitter(p);
+  const pool = isP ? _scPool().pit : _scPool().hit;
+  const zs = [];
+  for (const k of Object.keys(row)) {
+    const v = row[k];
+    const ps = pool[k];
+    if (v == null || !isFinite(v) || !ps || ps.mean == null) continue;
+    zs.push((v - ps.mean) / (ps.sd || 1));
+  }
+  if (!zs.length) return null;
+  const avgZ = zs.reduce((s, v) => s + v, 0) / zs.length;
+  // Anchor at 100; each σ moves 15 points (wRC+/OPS+ family scaling).
+  return Math.round(100 + avgZ * 15);
+}
+
+// v29 — Pool-wide stats for the physical-profile (HT/WT/BMI) chips.
+// Caches mean + stddev across active prospects so each phys chip can
+// color-code by z-score vs the pool: ≥+1σ above mean = neon-green (a
+// notable + value); ≤-1σ below = neon-orange (a notable - value);
+// within ±1σ = tertiary. Same heuristic as B/T glyphs so HT/WT/BMI
+// read consistently. Cache cleared at the top of render() via
+// _resetPhysPoolCache.
+let _physPoolCache = null;
+function _resetPhysPoolCache() { _physPoolCache = null; }
+function _physPool() {
+  if (_physPoolCache) return _physPoolCache;
+  const hts = [], wts = [], bms = [];
+  for (const p of (DATA.players || [])) {
+    const phys = _getPhysicalProfile(p);
+    if (phys.height_in != null && isFinite(phys.height_in)) hts.push(Number(phys.height_in));
+    if (phys.weight_lb != null && isFinite(phys.weight_lb)) wts.push(Number(phys.weight_lb));
+    if (phys.bmi != null && isFinite(phys.bmi))             bms.push(Number(phys.bmi));
+  }
+  const stat = (arr) => {
+    if (!arr.length) return { mean: null, sd: null };
+    const m = arr.reduce((s, v) => s + v, 0) / arr.length;
+    const variance = arr.reduce((s, v) => s + (v - m) * (v - m), 0) / arr.length;
+    return { mean: m, sd: Math.sqrt(variance) || 1 };
+  };
+  _physPoolCache = { ht: stat(hts), wt: stat(wts), bmi: stat(bms) };
+  return _physPoolCache;
+}
+function _physChipColor(value, poolStat) {
+  if (value == null || !isFinite(value) || !poolStat || poolStat.mean == null) {
+    return { fg: "var(--text-tertiary)", bd: "var(--border)" };
+  }
+  const z = (value - poolStat.mean) / (poolStat.sd || 1);
+  if (z >= 1)  return { fg: "var(--up)",   bd: "var(--up)" };
+  if (z <= -1) return { fg: "var(--down)", bd: "var(--down)" };
+  return { fg: "var(--text-secondary)", bd: "var(--border)" };
+}
+
 function physClusterHTML(p) {
   const phys = _getPhysicalProfile(p);
   const ht  = phys.height_display
@@ -14920,12 +15425,7 @@ function physClusterHTML(p) {
                   : "—");
   const wt  = phys.weight_lb != null ? String(Math.round(phys.weight_lb)) : "—";
   const bmi = phys.bmi != null ? phys.bmi.toFixed(1) : "—";
-  // Handedness — color-coded glyph pair (B = bats, T = throws). Each
-  // letter is colored by side so the user can scan vertically and pick
-  // out lefties / switch-hitters without reading text:
-  //   L → var(--down) (red — visually distinctive minority side)
-  //   R → var(--up) (green — majority side; reads as neutral baseline)
-  //   S → var(--neon-violet) (switch — clearly distinct, premium signal)
+  // Handedness — color-coded glyph pair (B = bats, T = throws).
   const hand = _getHandedness(p);
   const _handColor = side =>
     side === "L" ? "var(--down)" :
@@ -14936,13 +15436,30 @@ function physClusterHTML(p) {
     const v = side || "—";
     return `<span class="phys-hand-glyph" style="color:${c};border-color:${c}66;" title="${label} ${side || '?'}">${label}<span class="phys-hand-side">${escapeHtml(v)}</span></span>`;
   };
+  // v29 — Render HT/WT/BMI as color-coded chips (matching the B/T
+  // chip family) so each measurement reads as an outlier-vs-pool
+  // signal at a glance. Pool means/stddevs are computed once per
+  // render via _physPool(); a z ≥ +1 reads green (notably high), z ≤
+  // -1 reads orange (notably low), otherwise neutral.
+  const pool = _physPool();
+  const htCol = _physChipColor(phys.height_in,  pool.ht);
+  const wtCol = _physChipColor(phys.weight_lb,  pool.wt);
+  const bmCol = _physChipColor(phys.bmi,        pool.bmi);
+  const _fmt = (v, m) => (v == null || !isFinite(v) || m == null) ? "—" : `${v >= m ? "+" : ""}${(v - m).toFixed(1)}σ?`;
+  const _zStr = (val, ps) => {
+    if (val == null || !isFinite(val) || !ps || ps.mean == null) return "—";
+    return `z=${((val - ps.mean) / (ps.sd || 1)).toFixed(2)} vs pool mean ${ps.mean.toFixed(1)}`;
+  };
+  const htTip = `Height ${ht}${ht !== "—" ? " · " : ""}${_zStr(phys.height_in, pool.ht)}`;
+  const wtTip = `Weight ${wt} lbs · ${_zStr(phys.weight_lb, pool.wt)}`;
+  const bmTip = `BMI ${bmi} · ${_zStr(phys.bmi, pool.bmi)}`;
+  const chip = (val, col, tip) =>
+    `<span class="phys-chip" style="color:${col.fg};border-color:${col.bd};" title="${escapeHtml(tip)}">${escapeHtml(val)}</span>`;
   const tip = `Height: ${ht} · Weight: ${wt} lbs · BMI: ${bmi} · Bats ${hand.bats || "?"} / Throws ${hand.throws || "?"}`;
   return `<div class="phys-cluster desktop-only" title="${escapeHtml(tip)}">`
-       + `<span>${escapeHtml(ht)}</span>`
-       + `<span class="phys-sep">·</span>`
-       + `<span>${escapeHtml(wt)}</span>`
-       + `<span class="phys-sep">·</span>`
-       + `<span>${escapeHtml(bmi)}</span>`
+       + chip(ht, htCol, htTip)
+       + chip(wt, wtCol, wtTip)
+       + chip(bmi, bmCol, bmTip)
        + `<span class="phys-hand-pair">${_handGlyph("B", hand.bats)}${_handGlyph("T", hand.throws)}</span>`
        + `</div>`;
 }
@@ -16282,14 +16799,25 @@ document.addEventListener("click", (e) => {
     if (v != null) {
       const n = Math.max(1, parseInt(v, 10) || 1);
       if ((state.pages[k] || 1) === n) return;
+      // v29 — Remember whether the click came from the TOP or BOTTOM
+      // strip BEFORE the re-render replaces the DOM. After the re-
+      // render, scroll the matching strip back into view so the user's
+      // cursor stays over the same control they just clicked instead
+      // of teleporting to the other strip (the old behavior felt like
+      // a snap-to-bottom whenever the user paged from the top).
+      const clickedStrip = btn.closest(".pg-strip");
+      const allStripsBefore = Array.from(document.querySelectorAll(".pg-strip"));
+      const stripIdx = clickedStrip ? allStripsBefore.indexOf(clickedStrip) : -1;
       state.pages[k] = n;
       syncToURL(); render();
-      // After re-render, scroll the active pagination strip into view
-      // so the new chip selection sits where the cursor expected it.
       requestAnimationFrame(() => {
-        const sel = `[data-${k}-page="${n}"]`;
-        const node = document.querySelector(sel);
-        if (node && node.scrollIntoView) node.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        const stripsAfter = document.querySelectorAll(".pg-strip");
+        const target = (stripIdx >= 0 && stripIdx < stripsAfter.length)
+          ? stripsAfter[stripIdx]
+          : stripsAfter[0];
+        if (target && target.scrollIntoView) {
+          target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
       });
       return;
     }
@@ -19599,6 +20127,31 @@ function farmSortedOrgs() {
     }
     return _surplusMemo[orgCode] || 0;
   };
+  // v29 — Per-org indicator + Statcast+ aggregates. Walks the active
+  // prospect pool once and builds three maps: upside count, breakout
+  // count, Statcast+ mean. All three plug into the new farm-sort
+  // chips. Built lazily — no overhead unless one of the sort keys
+  // below requests it.
+  let _farmIndicatorMemo = null;
+  const ensureFarmIndicatorMemo = () => {
+    if (_farmIndicatorMemo) return _farmIndicatorMemo;
+    const upside = {}, breakout = {}, scSum = {}, scN = {};
+    for (const pl of (DATA.players || [])) {
+      if (!pl.org) continue;
+      if (fvBadgeUpsideClass(pl)) upside[pl.org] = (upside[pl.org] || 0) + 1;
+      if (pl.breakout_flag)       breakout[pl.org] = (breakout[pl.org] || 0) + 1;
+      const sp = getStatcastPlus(pl);
+      if (sp != null) {
+        scSum[pl.org] = (scSum[pl.org] || 0) + sp;
+        scN[pl.org]   = (scN[pl.org]   || 0) + 1;
+      }
+    }
+    _farmIndicatorMemo = { upside, breakout, scAvg: {} };
+    for (const org of Object.keys(scSum)) {
+      _farmIndicatorMemo.scAvg[org] = scSum[org] / scN[org];
+    }
+    return _farmIndicatorMemo;
+  };
   orgs.sort((a, b) => {
     if (s === "ifa_spend_pct" || s === "ifa_spend") {
       // ifa_spend kept as a back-compat alias for any stored URL state
@@ -19646,6 +20199,22 @@ function farmSortedOrgs() {
       return br - ar;
     }
     if (s === "stock_up")      return b.stock_up  - a.stock_up;
+    if (s === "upside_count") {
+      const m = ensureFarmIndicatorMemo().upside;
+      return (m[b.org] ?? 0) - (m[a.org] ?? 0) || (a.farm_rank - b.farm_rank);
+    }
+    if (s === "breakout_count") {
+      const m = ensureFarmIndicatorMemo().breakout;
+      return (m[b.org] ?? 0) - (m[a.org] ?? 0) || (a.farm_rank - b.farm_rank);
+    }
+    if (s === "statcast_plus_avg") {
+      const m = ensureFarmIndicatorMemo().scAvg;
+      const av = m[a.org], bv = m[b.org];
+      if (av == null && bv == null) return a.farm_rank - b.farm_rank;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return bv - av || (a.farm_rank - b.farm_rank);
+    }
     // Tree v3 main-grade sorts. Each reads off the 100-anchored
     // composite stamped onto the org payload by storage._zscore_to_100.
     // 'acquisitions' + 'transactions' keys preserved (back-compat) and
@@ -19662,6 +20231,8 @@ function farmSortedOrgs() {
     if (s === "pitcher_dvm_plus")return ((b.tree?.dev_pitcher?.dvm_plus ?? -1) - (a.tree?.dev_pitcher?.dvm_plus ?? -1));
     return a.farm_rank - b.farm_rank; // default (farm_score-derived server-side)
   });
+  // v29 — Universal direction-flip honored after sort.
+  _applySortDir(orgs, "farmSort");
   return orgs;
 }
 
@@ -24714,6 +25285,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
     },
   };
   rosterPlayers.sort(ROSTER_SORTERS[state.rosterSort] || ROSTER_SORTERS.fv);
+  // v29 — Universal direction-flip honored after sort.
+  _applySortDir(rosterPlayers, "rosterSort");
 
   const graduates = (DATA.debuts || []).filter(g => g.org === orgCode);
 
@@ -25000,7 +25573,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
             <div class="player-stat-line" style="margin-top:3px;font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rosterStatLine(p)}${rpsPlusPillHTML(p)}${scoutRatesHTML(p)}</div>
           </div>
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(fvLabel)}">${fvLabel}</span></div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(fvLabel)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeChainMarks(p)}</span></div>
         <div class="rank-cell">${p.overall_rank != null ? "#" + p.overall_rank : (p.org_rank != null ? "#" + p.org_rank + " org" : "—")}</div>
         <div style="text-align:center;font-size:11px;color:var(--text-secondary);font-variant-numeric:tabular-nums;" title="${p.eta && p.eta.confidence ? p.eta.confidence + ' confidence' : 'ETA estimate'}">${(p.eta && p.eta.year != null) ? p.eta.year : "—"}</div>
         <div class="line-chart-cell">${chart}</div>
@@ -26151,9 +26724,12 @@ function _renderFarmDetailBody(orgCode, org, root) {
 }
 
 function render() {
-  // Clear per-render memo caches so derived values (e.g. pool mean age)
-  // re-compute against any DATA that hydrated since the last paint.
+  // Clear per-render memo caches so derived values (e.g. pool mean age,
+  // pool HT/WT/BMI stats) re-compute against any DATA that hydrated
+  // since the last paint.
   _resetAgeMeanCache();
+  _resetPhysPoolCache();
+  _resetStatcastPlusCache();
   const sections = {
     active:       "active-section",
     spotlights:   "spotlights-section",
@@ -28101,8 +28677,14 @@ function attachHandlers() {
   // attribute on its header spans (actives, farm, graduates, injured,
   // farm-roster, spotlights, recently-acquired, depth-chart, career,
   // per-source-fv) gets click-to-sort with no per-table wiring.
-  // Clicking the same header twice toggles asc/desc when the key ends
-  // in _desc / _asc (the Ht/Wt/BMI headers do; most others don't).
+  // v29 — Click the same header twice to reverse the sort direction.
+  // Three resolution paths so every header gets toggle behavior:
+  //   1. Legacy `_asc` / `_desc` suffix pairs (Ht/Wt/BMI/age/name/org/
+  //      level) — swap suffix in place.
+  //   2. Custom paired keys mapped via REVERSE_SORT_PAIRS (e.g. WAG
+  //      vs_fv_proj ↔ vs_fv_proj_low).
+  //   3. Anything else — toggle state.sortRev[stateField]; the
+  //      renderer calls _applySortDir() to reverse the post-sort array.
   document.addEventListener("click", (e) => {
     if (!e.target.closest) return;
     for (const cfg of SORT_HEADER_MAP) {
@@ -28111,12 +28693,25 @@ function attachHandlers() {
       if (!hdr) continue;
       const key = hdr.dataset[cfg.datasetKey];
       const cur = state[cfg.stateField];
-      if (cur === key && typeof key === "string" && key.endsWith("_desc")) {
+      const sameKey = (cur === key);
+      const pair = REVERSE_SORT_PAIRS[key];
+      const pairReverse = sameKey && pair ? pair : null;
+      if (sameKey && typeof key === "string" && key.endsWith("_desc")) {
         state[cfg.stateField] = key.slice(0, -5) + "_asc";
-      } else if (cur === key && typeof key === "string" && key.endsWith("_asc")) {
+      } else if (sameKey && typeof key === "string" && key.endsWith("_asc")) {
         state[cfg.stateField] = key.slice(0, -4) + "_desc";
+      } else if (pairReverse) {
+        state[cfg.stateField] = pairReverse;
+      } else if (sameKey) {
+        // No paired key — toggle the per-field reverse flag instead.
+        // Renderer applies the flag via _applySortDir().
+        if (!state.sortRev) state.sortRev = {};
+        state.sortRev[cfg.stateField] = !state.sortRev[cfg.stateField];
       } else {
+        // New sort key — clear any prior reverse flag for this family
+        // so the first click always picks the natural direction.
         state[cfg.stateField] = key;
+        if (state.sortRev) state.sortRev[cfg.stateField] = false;
       }
       // Mirror the actives-list change back into the sort dropdown so
       // chip and header stay in sync. Only applies to the main sort.
@@ -28248,10 +28843,14 @@ function _resetPageFilters(page) {
     state.toolFilterKey  = "off";
     state.toolFilterMin  = 0;
     state.search         = "";
-    state.density        = "standard";
-    document.body.classList.remove("density-compact", "density-expanded");
-    document.body.classList.add("density-standard");
-    try { localStorage.setItem("prospect-tracker.density", "standard"); } catch {}
+    // v29 — Default density is "compact" everywhere (was inconsistently
+    // resetting to the retired "standard" tier here, which left users
+    // staring at a blank density when they hit Reset). Compact is the
+    // canonical landing layout — watchlist forces it too.
+    state.density        = "compact";
+    document.body.classList.remove("density-standard", "density-expanded");
+    document.body.classList.add("density-compact");
+    try { localStorage.setItem("prospect-tracker.density", "compact"); } catch {}
     resetListPages();
   } else if (page === "farm") {
     state.farmSort      = "trajectory";
