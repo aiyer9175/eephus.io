@@ -11595,10 +11595,13 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
     // Debut events — kept for both pools. For active players this is a
     // no-op (they have no debut_date); for debuted players it's the
     // one event that DOES belong in the prospect news feed.
+    // v30.8 — Star prefix + level-tag for visual punch; debuts are the
+    // most-significant "prospect graduates" event on the feed and
+    // deserve to stand out from routine transactions.
     if (p.debut_date) {
       const ts = new Date(p.debut_date + "T00:00:00").getTime();
       if (!isNaN(ts) && ts >= cutoff) {
-        events.push({ ts, kind: "debuted", p, label: "debuted in MLB" });
+        events.push({ ts, kind: "debuted", p, label: "★ MLB DEBUT" });
       }
     }
   }
@@ -11620,6 +11623,11 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
     demotion: "var(--down)",
     il: "var(--accent-il)",
     graduated: "var(--accent-graduated)",
+    // v30.8 — Debut events use the same graduate accent color (they
+    // ARE graduate events, just keyed differently in the events list).
+    // Without this the "★ MLB DEBUT" chips were rendering with the
+    // muted text-secondary fallback.
+    debuted: "var(--accent-graduated)",
     waivers: "var(--text-secondary)",
     release: "var(--down)",
     dfa: "var(--down)",
@@ -11692,11 +11700,21 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
       games.push({ p, g });
     }
   }
-  // FV-weighted composite scoring.
+  // v30.8 — FV-weighted composite scoring with diversity caps.
+  // Three improvements over the prior version:
+  //   1. FV weight reduced (was 10× → now 6×) so truly insane games
+  //      from low-FV prospects can still surface above a stale game
+  //      from a top-FV prospect.
+  //   2. Exceptional-game bonus added — game scores ≥9 get +25 pts,
+  //      ≥7 get +15 pts. A jaw-dropping 4-HR night from a 40-FV
+  //      now outranks a routine 2-hit game from a 60-FV.
+  //   3. Per-player cap of 2 games keeps any one prospect from
+  //      dominating the ticker (the prior version showed all Max
+  //      Clark games because his FV-tier baseline crushed everyone).
   const _nowMs = Date.now();
   const _fvWeight = (fv) => {
     if (fv == null) return 0.5;
-    if (fv >= 60) return 4.0;   // elite prospects dominate the ticker
+    if (fv >= 60) return 4.0;
     if (fv >= 55) return 2.5;
     if (fv >= 50) return 1.5;
     if (fv >= 45) return 0.9;
@@ -11710,20 +11728,41 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
       : 14;
     // Recency points: 14 days = 0 pts, today = 14 pts, linear.
     const recencyPts = Math.max(0, 14 - daysAgo);
-    const gamePts = Math.min(10, item.g.score || 0);
-    // FV dominates: tier 60+ contributes 40pts baseline vs ~5pts for
-    // a sub-45 — even before recency / game-score adjustments. A
-    // 60+ FV game from 2 weeks ago beats a sub-45 game from today
-    // (40 vs ~5+14 = 19). A mid-FV game from today can still beat
-    // a stale top-FV game (45 vs 1.5*10 + 14 = ~29 — close).
-    item._composite = (fvW * 10) + recencyPts + (gamePts * 0.5);
+    // Raw game score (from _extract_standout_games — 5+ for a strong
+    // 3-hit game, 10+ for a 4-hit / multi-HR night, 13+ for elite).
+    const gameScore = item.g.score || 0;
+    const gamePts = Math.min(15, gameScore);
+    // Exceptional-game bonus — big additive jump so a truly insane
+    // game from a low-FV prospect can outrank a routine top-FV game.
+    const exceptionalBonus = gameScore >= 9 ? 25
+                           : gameScore >= 7 ? 15
+                           : gameScore >= 5 ? 5
+                           : 0;
+    // FV gets 24 pts for 60+ down to 3 pts for sub-45. Combined with
+    // recency (0-14) + game (0-15) + exceptional (0-25), a 60+ FV
+    // routine game ≈ 24+14+5+5 = 48; a sub-45 INSANE recent game
+    // ≈ 3+14+12+25 = 54 — the truly exceptional low-FV game wins,
+    // but a 60+ FV with even a mildly-better game still dominates.
+    item._composite = (fvW * 6) + recencyPts + gamePts + exceptionalBonus;
   }
   games.sort((a, b) => {
-    // Composite desc; recency as final tiebreak.
     if (a._composite !== b._composite) return b._composite - a._composite;
     return a.g.date < b.g.date ? 1 : -1;
   });
-  const top = games.slice(0, 12);
+  // Per-player cap so the ticker doesn't show 5 games from the same
+  // prospect just because their FV-tier baseline is high. Walk in
+  // composite-desc order and keep up to 2 per player; stop at 12 total.
+  const perPlayerCap = 2;
+  const perPlayer = new Map();
+  const top = [];
+  for (const item of games) {
+    const k = item.p.player_key;
+    const n = perPlayer.get(k) || 0;
+    if (n >= perPlayerCap) continue;
+    top.push(item);
+    perPlayer.set(k, n + 1);
+    if (top.length >= 12) break;
+  }
   if (!top.length) {
     // Fallback: when standout_games hasn't been populated (a freshly-
     // updated UI on top of older cached statcast_metrics rows), fall
@@ -14398,10 +14437,14 @@ function renderInjured() {
 }
 
 function renderRecentlyTraded() {
-  // Keep the news feed scoped to trade events on this tab (still the
-  // most user-relevant signal even now that the section also covers
-  // waivers / FA / Rule 5).
-  renderWhatsNew("whats-new-traded", kind => kind === "trade");
+  // v30.8 — Now surfaces trades AND debut events. Debuts are the
+  // canonical "prospect → MLB" transaction; previously they were
+  // siloed in the Debuted section only. Both kinds are first-class
+  // signals on this tab (a trade brings a prospect IN, a debut
+  // takes one OUT of the prospect pool). Other tx kinds (waivers,
+  // releases, DFAs, Rule-5) stay out of the chrome news strip — they
+  // already render in the section's main event list below.
+  renderWhatsNew("whats-new-traded", kind => kind === "trade" || kind === "debuted");
   const filtered = getFilteredAcquired();
 
   // Client-side sort over the filtered list. Default "date" preserves
@@ -22221,6 +22264,76 @@ function makeFarmDevCohortSplit(org) {
         ${cell("Hitter",  dh)}
         ${cell("Pitcher", dp)}
       </div>
+    </div>`;
+}
+
+// v30.8 — Position-bucket DvM+ grid for the Development tab.
+// Surfaces the per-position-bucket evaluations the user wants
+// always-visible (was only inside the leaf accordion expander on the
+// Overview tab). Each bucket gets its own tile showing the blended
+// DvM+ value at the active window + an FV/Tool/SC breakdown + the
+// bucket's weight in the side blend + active-prospect count.
+// Buckets with <3 actives are dimmed (sparse-cohort dropped from
+// the headline blend per the redistribution rule).
+function makeFarmPosBucketGrades(org) {
+  const t = (org && org.tree) || {};
+  const dh = t.dev_hitter  || {};
+  const dp = t.dev_pitcher || {};
+  const hitBuckets = dh.pos_buckets || {};
+  const pitBuckets = dp.pos_buckets || {};
+  if (!Object.keys(hitBuckets).length && !Object.keys(pitBuckets).length) return "";
+  const win = state.formWindow || "6y";
+  const _cell = (bucket, v, side) => {
+    const blend = (v.blend_by_window || {})[win];
+    const fv    = (v.fv_dvm_plus_by_window || {})[win];
+    const tool  = v.tool_dvm_plus;
+    const sc    = v.statcast_dvm_plus;
+    const cnt   = v.active_count || 0;
+    const wt    = v.weight || 0;
+    const dimmed = cnt < 3;
+    const tone = blend == null ? "is-empty"
+              : blend >= 110 ? "is-strong"
+              : blend >= 100 ? "is-pos"
+              : blend >= 90  ? "is-neg"
+              : "is-weak";
+    const parts = [];
+    if (fv   != null) parts.push(`FV ${fv}`);
+    if (tool != null) parts.push(`T ${Math.round(tool)}`);
+    if (sc   != null) parts.push(`SC ${sc}`);
+    const breakdown = parts.length ? parts.join(" · ") : "—";
+    const tip = `${bucket} bucket (${side}) · weight ${(wt*100).toFixed(0)}% of ${side.toLowerCase()} blend at ${win} · ${cnt} active prospect${cnt === 1 ? "" : "s"}${dimmed ? " (sparse — dropped from blend)" : ""}. FV/Tool/Statcast: ${breakdown}.`;
+    return `<div class="tooldev-cell ${tone}" style="${dimmed ? "opacity:0.55;" : ""}" title="${escapeHtml(tip)}">
+      <div class="td-label" style="display:flex;justify-content:space-between;align-items:baseline;">
+        <span>${escapeHtml(bucket)}</span>
+        <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);letter-spacing:0.02em;">${(wt*100).toFixed(0)}% · n=${cnt}</span>
+      </div>
+      <div class="td-val">${blend ?? "—"}</div>
+      <div style="font-size:9px;color:var(--text-tertiary);font-family:var(--font-mono);margin-top:2px;letter-spacing:0.02em;">${breakdown}</div>
+    </div>`;
+  };
+  const _row = (side, leaf, order) => {
+    const cells = order
+      .filter(b => leaf.pos_buckets && leaf.pos_buckets[b])
+      .map(b => _cell(b, leaf.pos_buckets[b], side))
+      .join("");
+    if (!cells) return "";
+    const sideBlend = (leaf.dvm_plus_by_window || {})[win] ?? leaf.dvm_plus;
+    return `<div style="margin-top:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+        <span style="font-family:var(--font-sans);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);font-weight:700;">${side} DvM+ · by position</span>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);">side blend: <strong style="color:var(--text-primary);font-size:11px;">${sideBlend ?? "—"}</strong></span>
+      </div>
+      <div class="tooldev-grid" style="grid-template-columns:repeat(${order.length}, 1fr);">${cells}</div>
+    </div>`;
+  };
+  const hitRow = _row("Hitter",  dh, ["C", "INF", "OF"]);
+  const pitRow = _row("Pitcher", dp, ["SP", "RP"]);
+  if (!hitRow && !pitRow) return "";
+  return `<div class="detail-title">Position-bucket grades
+    <span class="detail-title-sub">3-axis blend (FV 50% / Tool 30% / Statcast 20%) per position bucket at ${win} window. Bucket cells dim when active &lt; 3 (dropped from the side's blend; remaining buckets renormalize).</span></div>
+    <div class="tooldev-card">
+      ${hitRow}
+      ${pitRow}
     </div>`;
 }
 
@@ -30305,6 +30418,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const devTabHtml = `
     ${makeFarmDvmMultiWindowPanel(org)}
     ${makeFarmDevCohortSplit(org)}
+    ${makeFarmPosBucketGrades(org)}
     <div class="detail-title">${(state.formWindow || "6y")} development vs mean farm <span class="detail-title-sub">pure-development metric — debuts + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. 6y is the principal signal.</span></div>
     <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
       <span class="filter-label">Window</span>
