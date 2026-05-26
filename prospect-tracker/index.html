@@ -1225,12 +1225,16 @@
       grid-template-columns: 32px 1.6fr 0.65fr 0.85fr 0.5fr 0.45fr 1.4fr;
     }
     .col-header.is-traded, .player-row.is-traded {
-      /* # | Player | Trade date | From → To | FV (+stock under) | History | Candle */
-      grid-template-columns: 32px 1.3fr 0.7fr 1fr 0.55fr 1.1fr 0.6fr;
+      /* v27 — Candle column dropped (redundant with the FV history
+         sparkline). Freed space redistributed to History so the line
+         chart breathes. # | Player | Trade date | From → To | FV (+stock) | History */
+      grid-template-columns: 32px 1.3fr 0.7fr 1fr 0.55fr 1.5fr;
     }
     .col-header.is-farm-roster, .player-row.is-farm-roster {
-      /* # | Player+stats | FV | Rank | ETA | FV history | Candle */
-      grid-template-columns: 32px 1.6fr 0.45fr 0.4fr 0.4fr 1.0fr 0.6fr;
+      /* v27 — Candle column dropped (redundant with FV history sparkline
+         alongside it). Freed space redistributed to FV history.
+         # | Player+stats | FV | Rank | ETA | FV history */
+      grid-template-columns: 32px 1.6fr 0.45fr 0.4fr 0.4fr 1.4fr;
     }
     .col-header.is-leaderboard, .player-row.is-leaderboard {
       /* # | Player | Level | FV | Stat value | Trend | Supporting line */
@@ -2622,13 +2626,16 @@
       border-color: var(--neon-amber);
     }
 
-    /* === Graduates ================================================
-       8-column grid: # | Player | Graduation | FV | Trajectory chart |
-       Candle | MLB level | MLB stats. */
+    /* === Debuted ==================================================
+       v27 — Candle column repurposed as WAR / season. Same 8-column
+       count, just different chart in the sixth slot. Gap tightened
+       8px (was 10px) to give the WAG/WAR sparklines a touch more
+       breathing room without changing card height/width.
+       # | Player | Debut | FV | WAG / season | WAR / season | MLB level | MLB stats */
     .debut-header, .debut-row {
       display: grid;
-      grid-template-columns: 32px 1.3fr 1fr 0.45fr 1.1fr 0.6fr 0.7fr 1.1fr;
-      gap: 10px;
+      grid-template-columns: 32px 1.3fr 1fr 0.45fr 1.1fr 1.1fr 0.7fr 1.1fr;
+      gap: 8px;
       align-items: center;
     }
     .debut-header {
@@ -4892,7 +4899,6 @@
         grid-template-columns: 1fr 44px 0.5fr;
       }
       .player-row .line-chart-cell,
-      .player-row .candle-cell,
       .player-row .milb-cell-wrap,
       .player-row .eta-cell,
       .player-row .phys-cell,
@@ -8099,9 +8105,22 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   // chart, so we keep them small and dim. They anchor the line's
   // vertical range so the reader can immediately tell what a flat-
   // near-the-top vs flat-near-the-bottom curve means.
+  // v27 — Player-specific H/L chips replace the candle column the user
+  // retired. Top-right shows H:<value>, bottom-right shows L:<value>.
+  // Tiny font + tertiary color so they read as annotations, not chart
+  // furniture. Only render when at least 2 points exist (otherwise H/L
+  // are identical and the labels are noise).
+  const _pHigh = (player && player.fv_high != null) ? Math.round(player.fv_high) : null;
+  const _pLow  = (player && player.fv_low  != null) ? Math.round(player.fv_low)  : null;
+  const _hasHL = points && points.length >= 2 && _pHigh != null && _pLow != null && _pHigh !== _pLow;
+  const hlLabels = _hasHL
+    ? `<text x="${(W - PAD).toFixed(1)}" y="${(PAD + 6).toFixed(1)}" font-size="7" fill="var(--text-tertiary)" font-family="var(--font-mono)" text-anchor="end" font-weight="600"><title>FV high across history</title>H:${_pHigh}</text>
+       <text x="${(W - PAD).toFixed(1)}" y="${(CHART_BOTTOM - 2).toFixed(1)}" font-size="7" fill="var(--text-tertiary)" font-family="var(--font-mono)" text-anchor="end" font-weight="600"><title>FV low across history</title>L:${_pLow}</text>`
+    : "";
   const yLabels = `
     <text x="${(PAD).toFixed(1)}" y="${(yScale(FV_MAX) + 3).toFixed(1)}" font-size="6.5" fill="var(--text-tertiary)" font-family="var(--font-mono)">${FV_MAX}</text>
-    <text x="${(PAD).toFixed(1)}" y="${(yScale(FV_MIN) + 3).toFixed(1)}" font-size="6.5" fill="var(--text-tertiary)" font-family="var(--font-mono)">${FV_MIN}</text>`;
+    <text x="${(PAD).toFixed(1)}" y="${(yScale(FV_MIN) + 3).toFixed(1)}" font-size="6.5" fill="var(--text-tertiary)" font-family="var(--font-mono)">${FV_MIN}</text>
+    ${hlLabels}`;
 
   // Year boundary lines + labels
   const yearSvg = [];
@@ -8160,51 +8179,24 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   </svg>`;
 }
 
-// OHLC tooltip text — the four FV anchor values for the player's
-// current-period candle, formatted for use as a native `title=` on
-// the FV-history sparkline cell. Replaces the dedicated Candle column
-// (the column was redundant with the sparkline immediately to its
-// left; hover gives the same OHLC read without burning real estate).
+// v27 — Compact H/L hover for the FV sparkline cell. Was a 4-value
+// OHLC tooltip (Open/High/Low/Close); now reads as plain H/L since the
+// candle visualization was retired (redundant with the line chart).
+// Open/Close are still inferrable from the chart endpoints; H/L stay
+// here for screen-reader users and as a fallback when the in-chart
+// H:/L: chip labels are obscured.
 function _ohlcTooltip(p) {
   if (!p) return "";
-  const o = p.fv_open  != null ? p.fv_open  : "—";
   const h = p.fv_high  != null ? p.fv_high  : "—";
   const l = p.fv_low   != null ? p.fv_low   : "—";
-  const c = p.fv_close != null ? p.fv_close : "—";
-  return `Open ${o} · High ${h} · Low ${l} · Close ${c}`;
+  if (h === "—" && l === "—") return "";
+  return `FV history · High ${h} · Low ${l}`;
 }
 
-function makeCandle(p) {
-  const W = 70, H = 50, PAD = 4, FONT = 8;
-  const yScale = fv => H - PAD - ((fv - FV_MIN) / (FV_MAX - FV_MIN)) * (H - 2 * PAD);
-  const isUp = p.fv_close > p.fv_open, isDown = p.fv_close < p.fv_open;
-  const color = isUp ? "var(--up)" : isDown ? "var(--down)" : "var(--text-tertiary)";
-  const fill  = isUp ? "var(--up)" : isDown ? "var(--down)" : "transparent";
-  const yH = yScale(p.fv_high), yL = yScale(p.fv_low);
-  const yO = yScale(p.fv_open), yC = yScale(p.fv_close);
-  const bodyTop = Math.min(yO, yC), bodyHt = Math.max(2, Math.abs(yC - yO));
-
-  // High label sits ABOVE its tick; low label sits BELOW its tick.
-  // Clamp each so the text stays inside the viewBox regardless of FV range.
-  const highLabelY = Math.max(FONT,     yH - 2);        // above high tick, min y=8
-  const lowLabelY  = Math.min(H - 1,   yL + FONT + 1); // below low tick,  max y=H-1
-
-  // When high == low there is only one point — show a single centered label.
-  const sameHL = p.fv_high === p.fv_low;
-  const labels = sameHL
-    ? `<text x="${W - 2}" y="${(yH + FONT / 2).toFixed(1)}" font-size="${FONT}" fill="var(--text-tertiary)" text-anchor="end">${p.fv_high_label ?? p.fv_high}</text>`
-    : `<text x="${W - 2}" y="${highLabelY.toFixed(1)}" font-size="${FONT}" fill="var(--text-tertiary)" text-anchor="end">${p.fv_high_label ?? p.fv_high}</text>
-       <text x="${W - 2}" y="${lowLabelY.toFixed(1)}"  font-size="${FONT}" fill="var(--text-tertiary)" text-anchor="end">${p.fv_low_label  ?? p.fv_low}</text>`;
-
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="FV candlestick">
-    <title>${p.player_name}: O=${p.fv_open} H=${p.fv_high} L=${p.fv_low} C=${p.fv_close}</title>
-    <line x1="${W/2}" y1="${yH.toFixed(1)}" x2="${W/2}" y2="${yL.toFixed(1)}" stroke="${color}" stroke-width="1" />
-    <line x1="${W/2 - 3}" y1="${yH.toFixed(1)}" x2="${W/2 + 3}" y2="${yH.toFixed(1)}" stroke="${color}" stroke-width="1" />
-    <line x1="${W/2 - 3}" y1="${yL.toFixed(1)}" x2="${W/2 + 3}" y2="${yL.toFixed(1)}" stroke="${color}" stroke-width="1" />
-    <rect x="${W/2 - 7}" y="${bodyTop.toFixed(1)}" width="14" height="${bodyHt.toFixed(1)}" fill="${fill}" stroke="${color}" stroke-width="1" />
-    ${labels}
-  </svg>`;
-}
+// makeCandle removed in v27 — the candlestick visualization was
+// redundant with the FV trajectory chart immediately next to it. H/L
+// values are now surfaced inline on the FV sparkline (H:<n>/L:<n> in
+// the chart corners) and via the _ohlcTooltip hover above.
 
 // FV trend: compare last two snapshot points (not all-time open/close)
 // Compact "stock under FV" indicator — replaces the dedicated Stock
@@ -11413,7 +11405,6 @@ function renderRecentlyTraded() {
     <span>Method · context</span>
     <span class="sort-header" data-traded-sort="fv" style="text-align:center;" title="Sort by Consensus Future Value (high to low) · stock delta + direction below">FV · stock</span>
     <span class="desktop-only" style="text-align:center;">FV history</span>
-    <span class="desktop-only" style="text-align:center;" title="FV open/high/low/close for the current month, candlestick style">Candle</span>
   </div>`;
 
   const rows = filtered.map(({ p, acq }, i) => {
@@ -11507,7 +11498,6 @@ function renderRecentlyTraded() {
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}</div>
         <div class="line-chart-cell desktop-only">${lazyLineChartHTML(p)}</div>
-        <div class="candle-cell desktop-only">${makeCandle(p)}</div>
       </div>
     `;
   }).join("");
@@ -11909,6 +11899,41 @@ function makeWagChart(g) {
     return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(1, barH).toFixed(1)}" fill="${fill}"><title>${escapeHtml(tip)}</title></rect>`;
   }).join("");
   return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="WAG by season">
+    <line x1="0" y1="${mid}" x2="${W}" y2="${mid}" stroke="var(--text-tertiary)" stroke-width="0.6" stroke-dasharray="2,2" opacity="0.7"/>
+    ${bars}
+  </svg>`;
+}
+
+// v27 — Per-season WAR sparkline. Same visual shape as makeWagChart but
+// plots RAW WAR (not deltas vs FV-baseline). Replaces the OHLC candle
+// column on the Debuts list — the candle was redundant with the FV
+// trajectory chart next to it; WAR/season tells a story the trajectory
+// can't (career-arc volatility, breakout seasons).
+//
+// Positive WAR sits ABOVE the midline (green), negative below (red),
+// zero stays on the midline. Y-scale is the player's own max-abs WAR
+// so the chart self-normalizes — a 4.0 WAR season fills the top of
+// THIS chart, not a hardcoded league max.
+function makeWarChart(g) {
+  const seasons = (g.career_war || {}).seasons || {};
+  const years = Object.keys(seasons).filter(y => seasons[y] != null).sort();
+  if (years.length === 0) return "";
+  const wars = years.map(y => Number(seasons[y]));
+  const maxAbs = Math.max(0.5, ...wars.map(v => Math.abs(v)));
+  const W = 70, H = 32, PAD = 2;
+  const mid = H / 2;
+  const innerH = (H - 2 * PAD) / 2;
+  const barW = Math.max(3, Math.floor((W - 2 * PAD) / years.length) - 1);
+  const bars = wars.map((v, i) => {
+    const barH = Math.abs(v) / maxAbs * innerH;
+    const x = PAD + i * (barW + 1);
+    const y = v >= 0 ? mid - barH : mid;
+    const fill = v >= 0 ? "var(--up)" : "var(--down)";
+    const sign = v >= 0 ? "+" : "";
+    const tip = `${years[i]}: ${sign}${v.toFixed(1)} WAR`;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(1, barH).toFixed(1)}" fill="${fill}"><title>${escapeHtml(tip)}</title></rect>`;
+  }).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="WAR by season">
     <line x1="0" y1="${mid}" x2="${W}" y2="${mid}" stroke="var(--text-tertiary)" stroke-width="0.6" stroke-dasharray="2,2" opacity="0.7"/>
     ${bars}
   </svg>`;
@@ -14077,8 +14102,8 @@ function renderDebuts() {
     <span>Player · pos · org · age</span>
     <span class="debut-date-cell sort-header" data-debut-sort="date" title="Sort by debut date (newest first)">Debut</span>
     <span class="sort-header" data-debut-sort="fv_close" title="Sort by FV at debut (high to low)" style="text-align:center;">FV</span>
-    <span class="desktop-only sort-header" data-debut-sort="vs_fv_proj" title="Sort by WAG — WAR Above Grade · click to toggle high-to-low / low-to-high" style="text-align:center;">WAG by season</span>
-    <span class="desktop-only" style="text-align:center;">Candle</span>
+    <span class="desktop-only sort-header" data-debut-sort="vs_fv_proj" title="Sort by WAG — WAR Above Grade · click to toggle high-to-low / low-to-high" style="text-align:center;">WAG / season</span>
+    <span class="desktop-only" style="text-align:center;" title="Raw fWAR per MLB season — hover any bar for the year-by-year value">WAR / season</span>
     <span class="debut-level-cell">Level</span>
     <span class="sort-header" data-debut-sort="war" title="Sort by current-season fWAR (high to low)">MLB stats</span>
   </div>`;
@@ -14214,7 +14239,10 @@ function renderDebuts() {
         </div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(g)}${fvBadgeSingleClass(g)}" title="${escapeHtml(fvBadgeTooltip(g))}">${fvLabel}${fvBadgeWideMarkHTML(g)}${fvBadgeSingleMarkHTML(g)}</span></div>
         <div class="desktop-only" style="padding-right:6px;">${chartHtml}</div>
-        <div class="desktop-only">${makeCandle(g)}</div>
+        <div class="desktop-only" style="text-align:center;">${(function(){
+          const warSpark = makeWarChart(g);
+          return warSpark ? warSpark : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
+        })()}</div>
         <div class="debut-level-cell milb-cell"><span class="level-pill level-mlb">MLB</span></div>
         ${makeGradMilbCell(g)}
       </div>`;
@@ -23881,7 +23909,6 @@ function _renderFarmDetailBody(orgCode, org, root) {
         <div class="rank-cell">${p.overall_rank != null ? "#" + p.overall_rank : (p.org_rank != null ? "#" + p.org_rank + " org" : "—")}</div>
         <div style="text-align:center;font-size:11px;color:var(--text-secondary);font-variant-numeric:tabular-nums;" title="${p.eta && p.eta.confidence ? p.eta.confidence + ' confidence' : 'ETA estimate'}">${(p.eta && p.eta.year != null) ? p.eta.year : "—"}</div>
         <div class="line-chart-cell">${chart}</div>
-        <div class="candle-cell">${makeCandle(p)}</div>
       </div>`;
   }).join("");
 
@@ -23905,7 +23932,6 @@ function _renderFarmDetailBody(orgCode, org, root) {
     <span class="sort-header" data-roster-sort="avg_rank" title="Sort by average rank across sources" style="text-align:center;">Rank</span>
     <span class="sort-header" data-roster-sort="eta" title="Sort by estimated MLB arrival year (soonest first)" style="text-align:center;">ETA</span>
     <span style="text-align:center;">FV history</span>
-    <span style="text-align:center;">Candle</span>
   </div>`;
 
   // Stats leaderboards — top current-season hitters (by OPS, min 80 PA) and
