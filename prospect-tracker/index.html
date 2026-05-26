@@ -14571,13 +14571,13 @@ const GLOSSARY = {
     related: ["stf_plus", "tool", "fv"],
   },
   "tvi": {
-    name: "SUR+", aliases: ["SUR+", "TVI", "Surplus Plus", "Trade Value Index"], category: "custom-index",
+    name: "Sur+", aliases: ["Sur+", "SUR+", "TVI", "Surplus Plus", "Trade Value Index"], category: "custom-index",
     priority: 15,
-    short: "Cleveland-derived expected MLB surplus value ($M) interpolated from consensus FV.",
-    long: "Maps consensus FV to estimated total surplus value across a prospect's 6-year cost-controlled MLB window using a published industry table (FanGraphs / Craig Edwards 2019 framework). Linearly interpolated between half-grade ticks. Higher FV = exponentially higher SUR+ because of the WAR distribution at the upper tail.",
-    formula: "SUR+ ≈ piecewise-linear interp on (FV, $M) anchor points: 80→$145M, 70→$60M, 60→$25M, 50→$9M, 40→$1.5M",
-    example: "A 55-FV prospect has a SUR+ of ~$15M; the team is sitting on ~$15M of surplus value above league-min cost over the 6yr window if the player hits his projection.",
-    related: ["fv", "surplus_value", "war"],
+    short: "Per-prospect Cleveland-derived expected MLB surplus value ($M) interpolated from consensus FV.",
+    long: "Maps a single prospect's consensus FV to estimated total surplus value across their 6-year cost-controlled MLB window using a published industry table (FanGraphs / Craig Edwards 2019 framework). Linearly interpolated between half-grade ticks. Higher FV = exponentially higher Sur+ because of the WAR distribution at the upper tail. NOTE: distinct from OrgSur+, which is a farm-level capital-efficiency index — Sur+ is a $-denominated per-player projection.",
+    formula: "Sur+ ≈ piecewise-linear interp on (FV, $M) anchor points: 80→$145M, 70→$60M, 60→$25M, 50→$9M, 40→$1.5M",
+    example: "A 55-FV prospect has a Sur+ of ~$15M; the team is sitting on ~$15M of surplus value above league-min cost over the 6yr window if the player hits his projection.",
+    related: ["fv", "surplus_value", "war", "sur_plus"],
   },
   "wag": {
     name: "WAG", aliases: ["WAG", "WAR Above Grade"], category: "custom-index",
@@ -14871,7 +14871,7 @@ const GLOSSARY = {
     name: "Surplus value", category: "financial",
     priority: 10,
     short: "Total $M of MLB value above cost-controlled salary across a prospect's 6yr team-control window.",
-    long: "Expected: FV-derived (SUR+ table). Realized: actual career WAR × $9.5M/WAR market rate minus actual or estimated salaries paid. Positive means the team beat the bet implied by the player's grade, negative means they paid more than the realized value.",
+    long: "Expected: FV-derived (Sur+ table). Realized: actual career WAR × $9.5M/WAR market rate minus actual or estimated salaries paid. Positive means the team beat the bet implied by the player's grade, negative means they paid more than the realized value.",
     related: ["tvi", "war", "aav", "wag"],
   },
   "aav": {
@@ -15321,7 +15321,7 @@ const GLOSSARY = {
     related: ["farm_grade_acquisition_strategy"],
   },
   "farm_grade_financial": {
-    name: "Financial / SUR+", aliases: ["Financial grade", "SUR+", "Surplus grade"], category: "custom-index",
+    name: "Financial / OrgSur+", aliases: ["Financial grade", "OrgSur+", "SUR+", "Surplus grade"], category: "custom-index",
     priority: 54,
     short: "Org's capital efficiency. 4 leaves (v4): WAR per $M, grad-contract surplus, draft-pool efficiency, IFA ROI.",
     long: "Financial branch of the farm grade tree (15% of farm_score in v5; was 20% in v4). Tied with Acquisition Strategy as a supporting column behind Development (40%) and MLB Production (30%). Four sub-grades, equal weight: (a) WAR per $M — total career WAR yielded by graduates divided by total signing bonus paid, (b) Grad-Contract Surplus — for graduates with both Spotrac contract data and signing bonus, per-year surplus (current AAV minus bonus amortized over 6 years), (c) Draft Pool Efficiency — trailing-3yr rolling WAR per $M of draft-pool spend, (d) IFA ROI — trailing-6yr rolling WAR per $M of IFA bonus spend. SUR+ shape preserved at the composite level (100-anchored, +10 = 1σ).",
@@ -15379,11 +15379,11 @@ const GLOSSARY = {
     related: ["farm_grade_financial", "fin_draft_pool_efficiency", "war", "signing_bonus", "ifa"],
   },
   "sur_plus": {
-    name: "SUR+", aliases: ["SUR+", "Surplus index"], category: "custom-index",
+    name: "OrgSur+", aliases: ["OrgSur+", "Org SUR+", "SUR+", "Surplus index", "Org surplus index"], category: "custom-index",
     priority: 56,
     short: "Capital-efficiency index for farm systems. 100 = league mean, +10 = 1σ.",
-    long: "Composite of WAR/$M (existing Financial ROI) and Grad-Contract Surplus (current AAV − amortized bonus per year). Each input z-scored across the 30 orgs and anchored at 100. Designed to mirror the wRC+/OPS+ shape so the reader can compare it against DvM+ + ToolsDvM+ on the same dial. Powers the Financial branch of the farm grade tree.",
-    related: ["farm_grade_financial", "wag", "farm_report_card"],
+    long: "Org-level composite of WAR/$M (existing Financial ROI) and Grad-Contract Surplus (current AAV − amortized bonus per year). Each input z-scored across the 30 orgs and anchored at 100. Designed to mirror the wRC+/OPS+ shape so the reader can compare it against DvM+ + ToolsDvM+ on the same dial. Powers the Financial branch of the farm grade tree. NOTE: distinct from Sur+, which is the per-prospect $M surplus-value projection.",
+    related: ["farm_grade_financial", "wag", "farm_report_card", "tvi"],
   },
   "draft_ceiling_hits": {
     name: "Draft Ceiling Hits", aliases: ["Draft Ceiling Hits", "Draft ceiling %"], category: "custom-index",
@@ -18696,7 +18696,7 @@ function renderFarmSystems() {
     });
   }
   // Aggregate surplus value per org — sum each active prospect's FV-implied
-  // SUR+ table value, split hitter / pitcher. Same call powering the per-org
+  // Sur+ table value, split hitter / pitcher. Same call powering the per-org
   // Surplus tile on renderFarmDetail.
   const PITCHER_RE = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/;
   const surplusByOrg = {};
@@ -18725,7 +18725,7 @@ function renderFarmSystems() {
   const header = `<div class="farm-header">
     <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Farm rank (1 = #1 system). Click to sort by overall grade.">Rank</span>
     <span></span>
-    <span>Org</span>
+    <span>Organization</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Overall farm-system letter grade. A+ = #1 org; tiers descend by farm_score (45% top-end · 25% depth · 15% trajectory · 15% grad pipeline). Click to sort.">Grade</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+ — wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. Acquisitions contribute zero on arrival; debuts don't subtract — pure-development metric. Click to sort.">${win.toUpperCase()}DvM+</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="Tool development pace vs league mean (100 = league mean, +10 = 1σ). Composite + hitter + pitcher rows. Click to sort.">Tool DvM+</span>
@@ -18906,7 +18906,7 @@ function renderFarmSystems() {
             const n = countByOrg[org.org];
             if (s == null || !n) return '<span style="color:var(--text-tertiary);">—</span>';
             const fmt = s >= 100 ? s.toFixed(0) : s.toFixed(1);
-            return `<span class="g-term farm-surplus-amt" data-term="surplus_value" title="Total surplus value across ${n} active prospects · sum of FV-implied SUR+">$${fmt}M</span><div class="farm-surplus-count">${n}p</div>`;
+            return `<span class="g-term farm-surplus-amt" data-term="surplus_value" title="Total surplus value across ${n} active prospects · sum of FV-implied Sur+">$${fmt}M</span><div class="farm-surplus-count">${n}p</div>`;
           })()}</div>
         <div class="stock-cell" style="font-size:12px;">${stockHtml}</div>
         <div style="text-align:right;display:flex;gap:4px;justify-content:flex-end;align-items:center;">
@@ -24948,10 +24948,14 @@ function render() {
     overseasDetail: "overseas-detail-section",
   };
 
-  // Detail view takes over: hide tabs, filter bar, search; show one section.
+  // Detail view takes over: hide filter bar and search; keep section
+  // tabs visible so users can jump back to a list without going through
+  // the back button. v26 — Was hiding the section-tabs strip on detail
+  // pages; restored to always-visible per user feedback ("makes it
+  // easier to navigate the site").
   const isDetail = !!state.view;
   const sectionTabs = document.getElementById("section-tabs");
-  if (sectionTabs) sectionTabs.style.display = isDetail ? "none" : "";
+  if (sectionTabs) sectionTabs.style.display = "";
   const searchBar = document.querySelector(".search-bar");
   if (searchBar) searchBar.style.display = isDetail ? "none" : "";
   const filterBar = document.getElementById("filter-bar");
@@ -25744,9 +25748,11 @@ function computeStuffPlus(p) {
   return _clampPlus(100 + 10 * (zk - zw - zh));
 }
 
-// Surplus Plus (SUR+) — Cleveland-derived expected MLB surplus value
-// in $M for a prospect at a given consensus FV. Linearly interpolated
-// between half-grade ticks. Returns null when consensus FV is missing.
+// Sur+ (formerly SUR+) — Cleveland-derived expected MLB surplus value
+// in $M for a single prospect at a given consensus FV. Linearly
+// interpolated between half-grade ticks. Returns null when consensus FV
+// is missing. NOTE: per-prospect metric; distinct from OrgSur+ which is
+// the farm-level capital-efficiency index.
 const _SUR_TABLE = [
   [80, 145], [75, 90], [70, 60], [65, 40], [60, 25],
   [55, 15], [50,  9], [45,  4], [40, 1.5], [35, 0.5], [30, 0],
@@ -25807,12 +25813,12 @@ function tradeValuePillHTML(p) {
   const v = computeTradeValue(p);
   if (v == null) return "";
   const formatted = v >= 100 ? `$${v.toFixed(0)}M` : v >= 10 ? `$${v.toFixed(1)}M` : `$${v.toFixed(1)}M`;
-  return `<span class="rps-plus-pill is-neutral g-term" data-term="tvi" style="color:var(--card-gold);border-color:var(--card-gold);background:rgba(201,162,39,0.10);" title="${escapeHtml(`Estimated MLB surplus value (Cleveland-derived FV→$ table) at consensus FV ${(p.points && p.points.length ? p.points[p.points.length - 1].consensus_fv_label : "?")}`)}">SUR+ ${formatted}</span>`;
+  return `<span class="rps-plus-pill is-neutral g-term" data-term="tvi" style="color:var(--card-gold);border-color:var(--card-gold);background:rgba(201,162,39,0.10);" title="${escapeHtml(`Estimated MLB surplus value (Cleveland-derived FV→$ table) at consensus FV ${(p.points && p.points.length ? p.points[p.points.length - 1].consensus_fv_label : "?")}`)}">Sur+ ${formatted}</span>`;
 }
 
 // Composite helper for the prospect detail stat strip / rows — renders
 // all available "+" pills inline so a hitter shows PWR+/PD+, a pitcher
-// shows STF+, every player shows SUR+. Omits pills whose underlying
+// shows STF+, every player shows Sur+. Omits pills whose underlying
 // metric returned null so the row doesn't fill with "—" placeholders.
 function scoutRatesHTML(p) {
   return [
