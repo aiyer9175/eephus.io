@@ -2740,6 +2740,15 @@
       color: var(--neon-amber);
       border-color: var(--neon-amber);
     }
+    /* v29 — Upside driver chip ("+ upside" on spotlight rows when a
+       source published a new "+" mark in the window). Soft pink so it
+       reads as the SAME signal family as the upside chip indicator on
+       FV badges + the upside event dots on the FV history chart. */
+    .driver-tag.is-upside {
+      background: color-mix(in srgb, var(--upside-pink) 18%, transparent);
+      color: var(--upside-pink);
+      border-color: var(--upside-pink);
+    }
 
     /* === Debuted ==================================================
        v27 — Candle column repurposed as WAR / season. Same 8-column
@@ -10640,8 +10649,13 @@ function renderSpotlights() {
         if (typeof d === "string") {
           return `<span class="driver-tag" title="${escapeHtml(d)}">${escapeHtml(d)}</span>`;
         }
+        // v29 — Added "upside" valence so the spotlight "+ upside"
+        // driver renders in the soft-pink color family that matches
+        // the upside chip indicator used elsewhere on the site (FV
+        // badge top-edge, chart event dots).
         const valenceClass = d.valence === "good" ? "is-good"
                           : d.valence === "bad"  ? "is-bad"
+                          : d.valence === "upside" ? "is-upside"
                           : "is-neutral";
         const tip = d.tooltip || d.label || "";
         return `<span class="driver-tag ${valenceClass}" title="${escapeHtml(tip)}">${escapeHtml(d.label || "")}</span>`;

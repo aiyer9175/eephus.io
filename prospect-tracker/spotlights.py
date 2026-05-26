@@ -1470,11 +1470,19 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             # ("+ added" from FG AND BA) is a stronger signal that
             # outranks a single-source "+ added" without breakout-class
             # FV velocity.
+            # v29 — Driver chip simplified to a "+ upside" pink pill that
+            # matches the upside indicator color used everywhere else on
+            # the site. The source list moves to the tooltip so the chip
+            # stays compact + the dict-driver shape lets the UI key off
+            # `valence: "upside"` for the pink coloring.
             score += min(4.5, 1.5 * len(upside_riser_sources or [None]))
-            drivers.append(
-                "+ upside added by " + ", ".join(upside_riser_sources)
-                if upside_riser_sources else "+ upside added"
-            )
+            _src_tip = (", ".join(upside_riser_sources)
+                        if upside_riser_sources else "at least one source")
+            drivers.append({
+                "label":   "+ upside",
+                "valence": "upside",
+                "tooltip": f"+ upside added by {_src_tip}",
+            })
         if young_for_level:
             score += 1.0
             drivers.append("young for level")
