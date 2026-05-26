@@ -5921,6 +5921,17 @@
     .filter-toggle-arrow { transition: transform 0.15s; display: inline-block; }
     #filter-bar { display: none; }
     #filter-bar.is-open { display: flex; }
+    /* v28 — Shared collapsible filter/sort container for non-active
+       pages (Draft, Overseas, Debuts). Default-collapsed so each page
+       lands on its list without the filter chrome eating vertical
+       space; the page-local Filters button reveals the chip rows. */
+    .collapsible-filter-bar { display: none; }
+    .collapsible-filter-bar.is-open {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
     /* Filter toggle + active filters strip — share a row so the chip
        strip sits inline next to the accordion button regardless of
        whether the bar is open. Wraps on narrow viewports. */
@@ -6223,6 +6234,11 @@
       <button class="chip is-multi" data-filter-fvind="wide" title="Wide FV spread — ≥2 sources disagree by at least 10 grade points">W spread</button>
       <button class="chip is-multi" data-filter-fvind="single" title="Single-source FV — only one outlet has graded this prospect">Single src</button>
       <button class="chip is-multi" data-filter-fvind="breakout" title="Breakout — DvM+ / FV velocity ≥ threshold AND a strong performance gate (RPS+ ≥ 110 for hitters, Stuff+ ≥ 105 or FIP- ≤ 90 for pitchers)">Breakout</button>
+      <!-- v28 — Upside (+) indicator filter. Mirrors the hot-pink "+"
+           corner mark on FV badges. Suppressed for FVs > 50 so the
+           filter only surfaces sub-50 grades the sources have tagged
+           with publishable upside. -->
+      <button class="chip is-multi" data-filter-fvind="upside" title="Upside (+) — at least one source published a '+' on the latest snapshot (capped at FV ≤ 50; 55+/60+ are suppressed since those tiers have already realized their upside)">Upside +</button>
     </div>
     <div class="filter-group">
       <span class="filter-label" title="Filter prospects by a specific tool grade meeting a minimum threshold. 'Any tool' matches when any one canonical 20-80 grade meets the threshold; pick a specific tool to isolate it.">Tool grade</span>
@@ -6288,20 +6304,38 @@
     <div class="filter-group">
       <span class="filter-label">Sort</span>
       <select class="chip" id="sort-select">
-        <option value="fv">Consensus FV</option>
-        <!-- v17 — `avg_rank` sort dropped; we rank by FV. -->
-        <option value="age_asc">Youngest first</option>
-        <option value="age_vs_level">Most young-for-level</option>
-        <option value="eta">ETA (earliest first)</option>
-        <option value="stock_movers">Biggest movers (|ΔFV|)</option>
-        <option value="tool">Tool grade (toolsiest)</option>
-        <option value="source_confidence">Source confidence (most sources first)</option>
-        <option value="ht_desc">Tallest first</option>
-        <option value="ht_asc">Shortest first</option>
-        <option value="wt_desc">Heaviest first</option>
-        <option value="wt_asc">Lightest first</option>
-        <option value="bmi_desc">Highest BMI</option>
-        <option value="bmi_asc">Lowest BMI</option>
+        <optgroup label="Grade">
+          <option value="fv">Consensus FV</option>
+          <!-- v28 — Upside-first sort. Floats the "+" prospects to the
+               top within each FV tier (so 45+ ranks above 45 but below
+               46). Useful for scanning the sub-50 grades scouts have
+               tagged with publishable upside. -->
+          <option value="upside">Upside (+) first</option>
+          <option value="source_confidence">Source confidence (most sources first)</option>
+          <option value="tool">Tool grade (toolsiest)</option>
+          <option value="stock_movers">Biggest movers (|ΔFV|)</option>
+        </optgroup>
+        <optgroup label="Age &amp; ETA">
+          <option value="age_asc">Youngest first</option>
+          <option value="age_desc">Oldest first</option>
+          <option value="age_vs_level">Most young-for-level</option>
+          <option value="eta">ETA (earliest first)</option>
+        </optgroup>
+        <optgroup label="Physical profile">
+          <option value="ht_desc">Tallest first</option>
+          <option value="ht_asc">Shortest first</option>
+          <option value="wt_desc">Heaviest first</option>
+          <option value="wt_asc">Lightest first</option>
+          <option value="bmi_desc">Highest BMI</option>
+          <option value="bmi_asc">Lowest BMI</option>
+        </optgroup>
+        <optgroup label="Alphabetical">
+          <option value="name_asc">Name (A → Z)</option>
+          <option value="name_desc">Name (Z → A)</option>
+          <option value="org_asc">Org (A → Z)</option>
+          <option value="level_asc">Level (furthest from MLB first)</option>
+          <option value="level_desc">Level (MLB first)</option>
+        </optgroup>
       </select>
     </div>
     <!-- v19 — Per-tool sort selector. Independent of the main sort
@@ -6441,6 +6475,69 @@
       <button class="chip" data-draft-view="class-strength"
               title="FV distribution per class (60 FV count, 55 FV count, etc.) side-by-side across years">Class Strength</button>
     </div>
+    <!-- v28 — Draft filter / sort accordion. Collapsed by default; the
+         toggle button mirrors the actives page's pattern. Filters only
+         apply to the Rankings view (the other sub-views are rendered
+         independently from cls.draft_order / lottery_odds / etc.). -->
+    <div id="draft-filter-toggle-row" class="filter-toggle-row">
+      <button class="filter-toggle" id="draft-filter-toggle" type="button"
+              data-collapse-target="draft-filter-bar" aria-expanded="false"
+              title="Show / hide filters and sort options for the Rankings view">
+        <span class="filter-toggle-label">Filters &amp; sort</span>
+        <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
+      </button>
+      <div class="active-filters-strip" id="draft-active-filters-strip"></div>
+    </div>
+    <div id="draft-filter-bar" class="filter-bar collapsible-filter-bar">
+      <div class="filter-group">
+        <span class="filter-label" title="Limit to HS or college prospects. Source: player_type from FanGraphs (HSh / HSp / COLh / COLp).">Pool</span>
+        <button class="chip active" data-filter-draft-pool="all">All</button>
+        <button class="chip" data-filter-draft-pool="HS" title="High school prospects">HS</button>
+        <button class="chip" data-filter-draft-pool="COL" title="College / JC prospects">College</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label" title="Limit to hitters or pitchers.">Side</span>
+        <button class="chip active" data-filter-draft-side="all">All</button>
+        <button class="chip" data-filter-draft-side="h">Hitters</button>
+        <button class="chip" data-filter-draft-side="p">Pitchers</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label" title="Filter by position. INF rolls 2B/3B/SS/multi-pos; OF rolls CF/LF/RF/multi-OF; P rolls RHP/LHP.">Position</span>
+        <button class="chip active" data-filter-draft-pos="all">All</button>
+        <button class="chip" data-filter-draft-pos="C">C</button>
+        <button class="chip" data-filter-draft-pos="SS">SS</button>
+        <button class="chip" data-filter-draft-pos="INF" title="2B / 3B / 1B / multi-infield">INF</button>
+        <button class="chip" data-filter-draft-pos="OF">OF</button>
+        <button class="chip" data-filter-draft-pos="SP">SP</button>
+        <button class="chip" data-filter-draft-pos="RP">RP</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label" title="Signing status. Post-draft only — pre-draft classes carry one value (draft_active).">Status</span>
+        <button class="chip active" data-filter-draft-status="all">All</button>
+        <button class="chip" data-filter-draft-status="drafted">Drafted</button>
+        <button class="chip" data-filter-draft-status="unsigned">Unsigned</button>
+        <button class="chip" data-filter-draft-status="draft_active" title="Pre-draft (not yet selected)">Pre-draft</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label" title="Show only prospects whose latest FV grade carries a published '+' upside marker (capped at FV ≤ 50).">FV indicators</span>
+        <button class="chip is-multi" data-filter-draft-fvind="upside" title="Upside (+) — at least one source published a '+' on this prospect, capped at FV ≤ 50">Upside +</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Sort</span>
+        <select class="chip" id="draft-sort-select">
+          <option value="fv">Consensus FV (default)</option>
+          <option value="upside">Upside (+) first</option>
+          <option value="stock_plus">Draft Stock+ (highest)</option>
+          <option value="proj_round">Projected round (1 → late)</option>
+          <option value="name_asc">Name (A → Z)</option>
+          <option value="name_desc">Name (Z → A)</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <button class="chip reset-chip" type="button" data-reset-page="draft"
+                title="Reset draft filters and sort back to defaults">↺ Reset</button>
+      </div>
+    </div>
     <div id="draft-rows"></div>
   </div>
 
@@ -6467,6 +6564,62 @@
               title="Recently signed overseas free agents and where they landed">Recently Signed</button>
       <button class="chip" data-overseas-view="leaderboard"
               title="Top by FV + per-position bests + biggest projected bonuses">Leaderboard</button>
+    </div>
+    <!-- v28 — Overseas filter / sort accordion. Same shape as the draft
+         page — collapsed by default. Filters target the Rankings view. -->
+    <div id="overseas-filter-toggle-row" class="filter-toggle-row">
+      <button class="filter-toggle" id="overseas-filter-toggle" type="button"
+              data-collapse-target="overseas-filter-bar" aria-expanded="false"
+              title="Show / hide filters and sort options for the Rankings view">
+        <span class="filter-toggle-label">Filters &amp; sort</span>
+        <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
+      </button>
+      <div class="active-filters-strip" id="overseas-active-filters-strip"></div>
+    </div>
+    <div id="overseas-filter-bar" class="filter-bar collapsible-filter-bar">
+      <div class="filter-group">
+        <span class="filter-label" title="Limit to hitters or pitchers (derived from position).">Side</span>
+        <button class="chip active" data-filter-overseas-side="all">All</button>
+        <button class="chip" data-filter-overseas-side="h">Hitters</button>
+        <button class="chip" data-filter-overseas-side="p">Pitchers</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label" title="Filter by position. INF rolls 2B/3B/SS/1B; OF rolls CF/LF/RF.">Position</span>
+        <button class="chip active" data-filter-overseas-pos="all">All</button>
+        <button class="chip" data-filter-overseas-pos="C">C</button>
+        <button class="chip" data-filter-overseas-pos="INF">INF</button>
+        <button class="chip" data-filter-overseas-pos="OF">OF</button>
+        <button class="chip" data-filter-overseas-pos="SP">SP</button>
+        <button class="chip" data-filter-overseas-pos="RP" title="SIRP + MIRP + bare RP">RP</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label" title="Posting / signing status.">Status</span>
+        <button class="chip active" data-filter-overseas-status="all">All</button>
+        <button class="chip" data-filter-overseas-status="overseas_active" title="Still in their home league">Available</button>
+        <button class="chip" data-filter-overseas-status="posted" title="Currently posted (in negotiation window)">Posted</button>
+        <button class="chip" data-filter-overseas-status="signed" title="Agreement reached but not yet on MLB roster">Signed</button>
+        <button class="chip" data-filter-overseas-status="mlb_promoted" title="Now on an MLB org's roster">MLB-signed</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label" title="Show only prospects whose latest FV carries a published '+' upside marker (capped at FV ≤ 50).">FV indicators</span>
+        <button class="chip is-multi" data-filter-overseas-fvind="upside" title="Upside (+) — at least one source published a '+' on this prospect, capped at FV ≤ 50">Upside +</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Sort</span>
+        <select class="chip" id="overseas-sort-select">
+          <option value="fv">Consensus FV (default)</option>
+          <option value="upside">Upside (+) first</option>
+          <option value="age_asc">Youngest first</option>
+          <option value="age_desc">Oldest first</option>
+          <option value="bonus_desc">Bonus (highest, sign/proj)</option>
+          <option value="name_asc">Name (A → Z)</option>
+          <option value="team">Team (A → Z)</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <button class="chip reset-chip" type="button" data-reset-page="overseas"
+                title="Reset overseas filters and sort back to defaults">↺ Reset</button>
+      </div>
     </div>
     <div id="overseas-rows"></div>
   </div>
@@ -7144,20 +7297,42 @@ function fvBadgeBreakoutMarkHTML(player) {
 // surface the same semantic. The chip variant gets a hot-pink outline
 // + corner "+" mark in the same visual family as wide/single/breakout
 // (paired with hot-pink dots on the FV history chart).
+// v28 — Cap by FV tier. The "+" upside marker is suppressed for grades
+// OVER 50 (55+, 60+, etc.). 50+, 49+, 45+, 40+, 35+ all keep the
+// indicator — those tiers haven't realized their upside, so the "+"
+// signal still carries information. Per user directive (refined): cap
+// is `fv > 50` suppressed; `fv ≤ 50` allowed. Applies everywhere the
+// marker appears: badges, FV chart dots, per-source FV labels, compare
+// overlay.
+function _fvQualifiesForPlus(fvNumeric) {
+  if (fvNumeric == null) return false;
+  const n = Number(fvNumeric);
+  return isFinite(n) && n <= 50;
+}
 function fvBadgeUpsideClass(player) {
   if (!player) return "";
-  return (player.fv_close_plus || player.consensus_fv_plus) ? " is-upside" : "";
+  if (!(player.fv_close_plus || player.consensus_fv_plus)) return "";
+  // Cap: only apply the chip when the player's current FV is ≤ 50.
+  // fv_close drives MiLB / debuted prospects; consensus_fv drives
+  // Draft / Overseas. fv_label fallback covers legacy payloads.
+  const fv = player.fv_close != null ? player.fv_close
+           : player.consensus_fv != null ? player.consensus_fv
+           : player.fv_label != null ? parseFloat(player.fv_label)
+           : null;
+  return _fvQualifiesForPlus(fv) ? " is-upside" : "";
 }
 function fvBadgeUpsideMarkHTML(player) {
   if (!fvBadgeUpsideClass(player)) return "";
   // Tooltip describes WHICH sources drove the upside flag, when we can
   // see them on the latest point's per_source map. Falls back to a
-  // generic explanation when per_source data is unavailable.
+  // generic explanation when per_source data is unavailable. Sources
+  // whose own FV at the snapshot was 50+ are filtered out — those "+"
+  // grades are suppressed per the v28 cap.
   const pts = player.points || [];
   const last = pts.length ? pts[pts.length - 1] : null;
   const ps = (last && last.per_source) || {};
   const plusSrcs = Object.entries(ps)
-    .filter(([, v]) => v && v.fv_plus)
+    .filter(([, v]) => v && v.fv_plus && _fvQualifiesForPlus(v.fv_published))
     .map(([src]) => SOURCE_LABELS[src] || src);
   const reason = plusSrcs.length
     ? `Upside grade — published "+" by ${plusSrcs.join(", ")}.`
@@ -8042,15 +8217,17 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   // Walks the points in chronological order and tracks each source's
   // most-recent fv_plus state; the dot fires on every false→true
   // transition.
-  const _prevSrcPlus = {};  // src -> last seen fv_plus boolean
+  // v28 — Cap: only count a "+" event as upside when the source's own
+  // FV at that snapshot was ≤ 50. A source publishing "55+" or "60+"
+  // gets suppressed — those tiers have realized their upside.
+  const _prevSrcPlus = {};  // src -> last seen qualifying fv_plus boolean
   const upsideDots = [];
   for (const c of coords) {
     const ps = (c.pt && c.pt.per_source) || {};
     for (const [src, info] of Object.entries(ps)) {
       if (!info) continue;
-      const cur = !!info.fv_plus;
+      const cur = !!(info.fv_plus && _fvQualifiesForPlus(info.fv_published));
       const prev = _prevSrcPlus[src];
-      // Transition: undefined→true OR false→true → new "+" run from this source.
       if (cur && prev !== true) {
         upsideDots.push({
           x: c.x, y: c.y,
@@ -8349,6 +8526,23 @@ function syncToURL() {
   if (state.sidebarTopTool && state.sidebarTopTool !== "hit") p.set("stt",   state.sidebarTopTool);
   if (state.toolSortKey && state.toolSortKey !== "off") p.set("tsk", state.toolSortKey);
   if (state.spotlightBucket !== "risers") p.set("bucket", state.spotlightBucket);
+  // v28 — Draft + Overseas filter/sort URL keys. Single-select chips +
+  // the sort dropdown round-trip; the FV-indicator Set follows the
+  // active-list pattern (not URL-persisted) since one extra param per
+  // page covers the common 'I want only upside +' case via a quick
+  // re-toggle and avoids URL bloat.
+  // NOTE: dsort is already taken by depthSort; ostab by overseas
+  // detail tab. Using prefixed `dft*` / `ovs*` keys keeps the
+  // namespace clear.
+  if (state.draftPool   && state.draftPool   !== "all") p.set("dftpool",   state.draftPool);
+  if (state.draftSide   && state.draftSide   !== "all") p.set("dftside",   state.draftSide);
+  if (state.draftPos    && state.draftPos    !== "all") p.set("dftpos",    state.draftPos);
+  if (state.draftStatus && state.draftStatus !== "all") p.set("dftstatus", state.draftStatus);
+  if (state.draftSort   && state.draftSort   !== "fv")  p.set("dftsort",   state.draftSort);
+  if (state.overseasSide   && state.overseasSide   !== "all") p.set("ovsside",   state.overseasSide);
+  if (state.overseasPos    && state.overseasPos    !== "all") p.set("ovspos",    state.overseasPos);
+  if (state.overseasStatus && state.overseasStatus !== "all") p.set("ovsstatus", state.overseasStatus);
+  if (state.overseasSort   && state.overseasSort   !== "fv")  p.set("ovssort",   state.overseasSort);
   if (state.lbStat      !== "ops")        p.set("lbstat",  state.lbStat);
   if (state.lbSide      !== "all")        p.set("lbside",  state.lbSide);
   if (state.lbLevel     !== "all")        p.set("lblvl",   state.lbLevel);
@@ -8439,6 +8633,16 @@ function syncFromURL() {
   if (p.has("stt"))    state.sidebarTopTool = p.get("stt");
   if (p.has("tsk"))    state.toolSortKey   = p.get("tsk");
   if (p.has("bucket")) state.spotlightBucket = p.get("bucket");
+  // v28 — Draft + Overseas filter/sort URL keys (see syncToURL).
+  if (p.has("dftpool"))   state.draftPool     = p.get("dftpool");
+  if (p.has("dftside"))   state.draftSide     = p.get("dftside");
+  if (p.has("dftpos"))    state.draftPos      = p.get("dftpos");
+  if (p.has("dftstatus")) state.draftStatus   = p.get("dftstatus");
+  if (p.has("dftsort"))   state.draftSort     = p.get("dftsort");
+  if (p.has("ovsside"))   state.overseasSide  = p.get("ovsside");
+  if (p.has("ovspos"))    state.overseasPos   = p.get("ovspos");
+  if (p.has("ovsstatus")) state.overseasStatus = p.get("ovsstatus");
+  if (p.has("ovssort"))   state.overseasSort  = p.get("ovssort");
   // Leaderboards filters — round-tripped so org pre-fill from
   // farm-detail's "View org leaderboards →" link sticks.
   if (p.has("lbstat"))   state.lbStat   = p.get("lbstat");
@@ -8592,6 +8796,41 @@ function restoreUIFromState() {
   if (tsKeySel) tsKeySel.value = state.toolSortKey || "off";
   const searchIn = document.getElementById("search-input");
   if (searchIn) searchIn.value = state.search || "";
+  // v14 — FV indicator multi-select chip state (active list).
+  document.querySelectorAll("[data-filter-fvind]").forEach(b => {
+    const k = b.dataset.filterFvind;
+    b.classList.toggle("active", !!(state.fvIndicators && state.fvIndicators.has(k)));
+  });
+  // v28 — Draft + Overseas chip / select state. Chips read from
+  // state.draftPool / state.draftSide / etc.; the FV-indicator multi-
+  // selects walk the Set; the sort <select>s mirror state.draftSort /
+  // state.overseasSort.
+  document.querySelectorAll("[data-filter-draft-pool]").forEach(b =>
+    b.classList.toggle("active", b.dataset.filterDraftPool === (state.draftPool || "all")));
+  document.querySelectorAll("[data-filter-draft-side]").forEach(b =>
+    b.classList.toggle("active", b.dataset.filterDraftSide === (state.draftSide || "all")));
+  document.querySelectorAll("[data-filter-draft-pos]").forEach(b =>
+    b.classList.toggle("active", b.dataset.filterDraftPos === (state.draftPos || "all")));
+  document.querySelectorAll("[data-filter-draft-status]").forEach(b =>
+    b.classList.toggle("active", b.dataset.filterDraftStatus === (state.draftStatus || "all")));
+  document.querySelectorAll("[data-filter-draft-fvind]").forEach(b => {
+    const k = b.dataset.filterDraftFvind;
+    b.classList.toggle("active", !!(state.draftFvIndicators && state.draftFvIndicators.has(k)));
+  });
+  const draftSortSel = document.getElementById("draft-sort-select");
+  if (draftSortSel) draftSortSel.value = state.draftSort || "fv";
+  document.querySelectorAll("[data-filter-overseas-side]").forEach(b =>
+    b.classList.toggle("active", b.dataset.filterOverseasSide === (state.overseasSide || "all")));
+  document.querySelectorAll("[data-filter-overseas-pos]").forEach(b =>
+    b.classList.toggle("active", b.dataset.filterOverseasPos === (state.overseasPos || "all")));
+  document.querySelectorAll("[data-filter-overseas-status]").forEach(b =>
+    b.classList.toggle("active", b.dataset.filterOverseasStatus === (state.overseasStatus || "all")));
+  document.querySelectorAll("[data-filter-overseas-fvind]").forEach(b => {
+    const k = b.dataset.filterOverseasFvind;
+    b.classList.toggle("active", !!(state.overseasFvIndicators && state.overseasFvIndicators.has(k)));
+  });
+  const overseasSortSel = document.getElementById("overseas-sort-select");
+  if (overseasSortSel) overseasSortSel.value = state.overseasSort || "fv";
   // Header-cell .is-active sync runs after the header is rendered too.
   syncSortHeaderActive();
 }
@@ -8927,6 +9166,20 @@ const state = {
   // Leaderboard inside the Overseas panel.
   overseasLeague: "all",
   overseasView: "rankings",
+  // v28 — Draft + Overseas filter/sort state. All default to wide-open
+  // so the chip strips read as "no filter" on first load. Sort defaults
+  // mirror the page's main render-order: consensus FV desc.
+  draftPool: "all",       // all / HS / COL
+  draftSide: "all",       // all / h / p
+  draftPos:  "all",       // all / C / SS / INF / OF / SP / RP
+  draftStatus: "all",     // all / drafted / unsigned / draft_active
+  draftFvIndicators: new Set(),   // empty = no filter
+  draftSort: "fv",
+  overseasSide: "all",    // all / h / p
+  overseasPos:  "all",    // all / C / INF / OF / SP / RP
+  overseasStatus: "all",  // all / overseas_active / posted / signed / mlb_promoted
+  overseasFvIndicators: new Set(),
+  overseasSort: "fv",
   // Charts tab sub-state. chartMode = "prospects" | "farms"; chartX /
   // chartY default to the first two entries of the active mode's axis
   // list (set lazily inside renderCharts).
@@ -9152,7 +9405,15 @@ function getAllOrgs() {
 }
 
 function getFilteredActives() {
-  let pool = DATA.players.slice();
+  // v28 — Defensive safety filter: any player whose status is "debuted"
+  // OR who has a debut_date on file gets peeled off the active pool
+  // regardless of where they ended up in DATA.players. Storage.py
+  // already does the canonical split, but a demotion back to AAA after
+  // an MLB cup-of-coffee used to risk re-classifying the player; this
+  // guarantees the actives list never carries someone who has played
+  // in MLB.
+  let pool = (DATA.players || []).filter(p =>
+    p && p.status !== "debuted" && !p.debut_date);
   if (state.search) {
     const q = state.search.toLowerCase();
     pool = pool.filter(p => p.player_name.toLowerCase().includes(q));
@@ -9215,6 +9476,11 @@ function getFilteredActives() {
       if (state.fvIndicators.has("breakout")) {
         if (p.breakout_flag) return true;
       }
+      // v28 — Upside (+) indicator. Mirrors the badge cap: only fires
+      // when the player carries the upside flag AND their FV is ≤ 50.
+      if (state.fvIndicators.has("upside")) {
+        if (fvBadgeUpsideClass(p)) return true;
+      }
       return false;
     });
   }
@@ -9258,7 +9524,21 @@ function getFilteredActives() {
     });
     return pool;  // skip the main-sort branch below
   }
-  if (state.sort === "age_asc") {
+  if (state.sort === "upside") {
+    // v28 — Float "+" prospects to the top of each FV tier. Within a
+    // single FV tier: upside-flagged first, then by FV desc, then by
+    // tool composite (matches fvCmpDesc's tiebreak). Sort key is
+    // (qualifies-for-+ bool, fv_close, tools composite); the boolean
+    // dominates so a 40+ ranks above a 45 even though 45 has the
+    // higher numeric FV. Useful for surfacing the sub-50 grades scouts
+    // have publicly tagged with upside.
+    pool.sort((a, b) => {
+      const au = fvBadgeUpsideClass(a) ? 1 : 0;
+      const bu = fvBadgeUpsideClass(b) ? 1 : 0;
+      if (bu !== au) return bu - au;
+      return fvCmpDesc(a, b);
+    });
+  } else if (state.sort === "age_asc") {
     pool.sort((a, b) => (a.age ?? 99) - (b.age ?? 99));
   } else if (state.sort === "age_vs_level") {
     const score = p => p.age_vs_level && p.age_vs_level.diff != null ? p.age_vs_level.diff : 99;
@@ -9417,35 +9697,46 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
     ...(DATA.debuts || []),
   ];
   for (const p of allPlayers) {
-    // Trades.
-    for (const t of (p.trades || [])) {
-      const ts = new Date(t.trade_date + "T00:00:00").getTime();
-      if (!isNaN(ts) && ts >= cutoff) {
-        events.push({ ts, kind: "trade", p, label: `traded ${escapeHtml(t.from_org || "?")} → ${escapeHtml(t.to_org || "?")}` });
+    // v28 — Debuted players are non-prospects. Their trades, promotions,
+    // IL stints, etc. don't belong in the PROSPECT news feed (Kelenic
+    // case — he's been an MLB veteran for years, his trade to ATL is
+    // not prospect news). The only event we still surface for them is
+    // their actual debut transition, which IS prospect news because it
+    // marks the moment they stopped being a prospect.
+    const isDebuted = p && p.status === "debuted";
+    if (!isDebuted) {
+      // Trades.
+      for (const t of (p.trades || [])) {
+        const ts = new Date(t.trade_date + "T00:00:00").getTime();
+        if (!isNaN(ts) && ts >= cutoff) {
+          events.push({ ts, kind: "trade", p, label: `traded ${escapeHtml(t.from_org || "?")} → ${escapeHtml(t.to_org || "?")}` });
+        }
+      }
+      // Level changes (promotions / demotions) + roster moves. Stored on
+      // p.transactions with kind set by storage.derive_level_changes.
+      for (const tx of (p.transactions || [])) {
+        const ts = new Date((tx.date || "") + "T00:00:00").getTime();
+        if (isNaN(ts) || ts < cutoff) continue;
+        if (tx.kind === "promotion" || tx.kind === "demotion") {
+          const arrow = tx.kind === "promotion" ? "↑ promoted" : "↓ demoted";
+          const tail = tx.to_level ? ` to ${escapeHtml(tx.to_level)}` : "";
+          events.push({ ts, kind: tx.kind, p, label: `${arrow}${tail}` });
+        } else if (["waivers", "release", "dfa", "rule_5"].includes(tx.kind)) {
+          events.push({ ts, kind: tx.kind, p, label: escapeHtml(tx.kind.toUpperCase().replace("_", " ")) });
+        }
+      }
+      // IL placement (only the current open stint — no per-stint date history).
+      const il = p.il_status;
+      if (il && il.is_on_il && il.since) {
+        const ts = new Date(il.since + "T00:00:00").getTime();
+        if (!isNaN(ts) && ts >= cutoff) {
+          events.push({ ts, kind: "il", p, label: `→ ${escapeHtml(il.type || "IL")} (${escapeHtml(il.description || "no detail")})` });
+        }
       }
     }
-    // Level changes (promotions / demotions) + roster moves. Stored on
-    // p.transactions with kind set by storage.derive_level_changes.
-    for (const tx of (p.transactions || [])) {
-      const ts = new Date((tx.date || "") + "T00:00:00").getTime();
-      if (isNaN(ts) || ts < cutoff) continue;
-      if (tx.kind === "promotion" || tx.kind === "demotion") {
-        const arrow = tx.kind === "promotion" ? "↑ promoted" : "↓ demoted";
-        const tail = tx.to_level ? ` to ${escapeHtml(tx.to_level)}` : "";
-        events.push({ ts, kind: tx.kind, p, label: `${arrow}${tail}` });
-      } else if (["waivers", "release", "dfa", "rule_5"].includes(tx.kind)) {
-        events.push({ ts, kind: tx.kind, p, label: escapeHtml(tx.kind.toUpperCase().replace("_", " ")) });
-      }
-    }
-    // IL placement (only the current open stint — no per-stint date history).
-    const il = p.il_status;
-    if (il && il.is_on_il && il.since) {
-      const ts = new Date(il.since + "T00:00:00").getTime();
-      if (!isNaN(ts) && ts >= cutoff) {
-        events.push({ ts, kind: "il", p, label: `→ ${escapeHtml(il.type || "IL")} (${escapeHtml(il.description || "no detail")})` });
-      }
-    }
-    // Graduation events.
+    // Debut events — kept for both pools. For active players this is a
+    // no-op (they have no debut_date); for debuted players it's the
+    // one event that DOES belong in the prospect news feed.
     if (p.debut_date) {
       const ts = new Date(p.debut_date + "T00:00:00").getTime();
       if (!isNaN(ts) && ts >= cutoff) {
@@ -12135,6 +12426,16 @@ async function renderDraft() {
     return;
   }
 
+  // v28 — Hide the filter / sort accordion on non-Rankings sub-views.
+  // The filter state only affects _renderDraftRankings; Order / Lottery
+  // / Class Strength / Leaderboard render from different upstream
+  // structures that filters wouldn't influence.
+  const draftFilterRow = document.getElementById("draft-filter-toggle-row");
+  const draftFilterBar = document.getElementById("draft-filter-bar");
+  const showDraftFilters = (state.draftView || "rankings") === "rankings";
+  if (draftFilterRow) draftFilterRow.style.display = showDraftFilters ? "" : "none";
+  if (draftFilterBar && !showDraftFilters) draftFilterBar.classList.remove("is-open");
+
   switch (state.draftView) {
     case "order":          return _renderDraftOrder(host, cls);
     case "results":        return _renderDraftResults(host, cls);
@@ -12210,30 +12511,120 @@ function _renderDraftLottery(host, cls) {
     </div>`;
 }
 
+// v28 — Position bucket for draft prospects. Mirrors positionBucket()
+// from the actives page but lighter — draft cards split into 5 buckets:
+// C / SS / INF / OF / SP / RP. The chip filter rolls everything else
+// into the matching coarse bucket.
+function _draftPosBucket(pos) {
+  if (!pos) return null;
+  const tokens = String(pos).split(/[\/,]/).map(t => t.trim().toUpperCase()).filter(Boolean);
+  if (!tokens.length) return null;
+  if (tokens.some(t => t === "SP" || t === "RHP" || t === "LHP")) return "SP";
+  if (tokens.some(t => /^(RP|SIRP|MIRP)$/.test(t))) return "RP";
+  if (tokens.some(t => t === "P")) return "SP";  // bare "P" defaults to SP
+  if (tokens.some(t => t === "C")) return "C";
+  if (tokens.some(t => t === "SS")) return "SS";
+  if (tokens.some(t => /^(2B|3B|1B|INF|MI|IF|UTIL)$/.test(t))) return "INF";
+  if (tokens.some(t => /^(CF|LF|RF|OF)$/.test(t))) return "OF";
+  return null;
+}
+
+// v28 — Apply the per-page filter state to a draft-prospect array.
+// Returns a new filtered array; never mutates the input.
+function _applyDraftFilters(prospects) {
+  let pool = prospects.slice();
+  if (state.draftPool && state.draftPool !== "all") {
+    pool = pool.filter(p => {
+      const pt = (p.player_type || "").toUpperCase();
+      return pt.startsWith(state.draftPool);
+    });
+  }
+  if (state.draftSide && state.draftSide !== "all") {
+    pool = pool.filter(p => {
+      const pt = (p.player_type || "").toLowerCase();
+      return pt.endsWith(state.draftSide);
+    });
+  }
+  if (state.draftPos && state.draftPos !== "all") {
+    pool = pool.filter(p => {
+      const b = _draftPosBucket(p.position);
+      if (state.draftPos === "INF") return b === "INF" || b === "SS";
+      if (state.draftPos === "OF")  return b === "OF";
+      return b === state.draftPos;
+    });
+  }
+  if (state.draftStatus && state.draftStatus !== "all") {
+    pool = pool.filter(p => p.status === state.draftStatus);
+  }
+  if (state.draftFvIndicators && state.draftFvIndicators.size) {
+    pool = pool.filter(p => {
+      if (state.draftFvIndicators.has("upside") && fvBadgeUpsideClass(p)) return true;
+      return false;
+    });
+  }
+  return pool;
+}
+
+// v28 — Apply the per-page sort to a draft-prospect array in place.
+function _applyDraftSort(prospects) {
+  const mode = state.draftSort || "fv";
+  if (mode === "upside") {
+    prospects.sort((a, b) => {
+      const au = fvBadgeUpsideClass(a) ? 1 : 0;
+      const bu = fvBadgeUpsideClass(b) ? 1 : 0;
+      if (bu !== au) return bu - au;
+      return (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0);
+    });
+  } else if (mode === "stock_plus") {
+    prospects.sort((a, b) =>
+      (b.draft_stock_plus ?? -Infinity) - (a.draft_stock_plus ?? -Infinity));
+  } else if (mode === "proj_round") {
+    // Lower projected_round (1 = top) comes first; null projected_round
+    // sinks. Tiebreak on consensus FV desc so within a round the top
+    // grades surface first.
+    prospects.sort((a, b) => {
+      const ar = a.projected_round != null ? Number(a.projected_round) : 999;
+      const br = b.projected_round != null ? Number(b.projected_round) : 999;
+      if (ar !== br) return ar - br;
+      return (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0);
+    });
+  } else if (mode === "name_asc" || mode === "name_desc") {
+    const dir = mode === "name_asc" ? 1 : -1;
+    prospects.sort((a, b) =>
+      (a.player_name || "").localeCompare(b.player_name || "") * dir);
+  } else {
+    // Default: consensus FV desc, then consensus rank asc.
+    prospects.sort((a, b) => {
+      const fvDelta = (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0);
+      if (fvDelta !== 0) return fvDelta;
+      const aRank = a.consensus_rank != null ? a.consensus_rank : 9999;
+      const bRank = b.consensus_rank != null ? b.consensus_rank : 9999;
+      return Number(aRank) - Number(bRank);
+    });
+  }
+}
+
 function _renderDraftRankings(host, cls) {
   // v17 — Sort BY CONSENSUS FV (highest first). Previously sorted by
   // sequential consensus rank, which inherited each source's pick order
   // (sometimes idiosyncratic to that outlet's preferences). FV is the
   // shared currency across sources, so sorting by it produces our own
-  // canonical "best prospect" ranking. Consensus rank stays available
-  // as a tiebreaker when two prospects share an FV. Also reassign
-  // sequential pick numbers AFTER the FV sort so the visible #N matches
-  // the new order rather than the inherited source order.
-  const prospects = (cls.prospects || []).slice();
-  prospects.sort((a, b) => {
-    const fvDelta = (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0);
-    if (fvDelta !== 0) return fvDelta;
-    const aRank = a.consensus_rank != null ? a.consensus_rank : 9999;
-    const bRank = b.consensus_rank != null ? b.consensus_rank : 9999;
-    return Number(aRank) - Number(bRank);
-  });
+  // canonical "best prospect" ranking.
+  // v28 — Apply page-local filters / sort. Pool (HS / COL) and Side
+  // (h / p) read off the player_type code (HSh / HSp / COLh / COLp);
+  // Position uses _draftPosBucket; Status matches p.status; FV
+  // indicators read the upside flag via fvBadgeUpsideClass (which also
+  // honors the FV-tier cap). Sort branches in _applyDraftSort.
+  const totalUnfiltered = (cls.prospects || []).length;
+  const prospects = _applyDraftFilters((cls.prospects || []).slice());
+  _applyDraftSort(prospects);
   prospects.forEach((p, i) => { p._fvSortRank = i + 1; });
 
   // Header strip
   let html = `<div style="padding:12px 14px;background:var(--bg-secondary);
        border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
     <strong style="color:var(--text-primary);">${cls.year} draft class —
-    ${prospects.length} ranked prospects</strong>
+    ${prospects.length}${prospects.length !== totalUnfiltered ? ` of ${totalUnfiltered}` : ""} ranked prospects</strong>
     ${cls.is_current ? " · still pre-draft" : " · drafted"}
     · sources: FanGraphs, ESPN draft, MLB Pipeline draft.
     Draft Stock+ is normalized within this class only (100 = class median).
@@ -12812,6 +13203,15 @@ async function renderOverseas() {
   // Merged prospect list for views that don't care about league grouping.
   const prospects = selectedLeagues.flatMap(l => l.prospects.map(p => ({...p, _ctx: l.league_context})));
 
+  // v28 — Hide the filter / sort accordion on non-Rankings sub-views,
+  // matching the draft page's pattern. The chip filters only affect
+  // _renderOverseasRankings.
+  const overseasFilterRow = document.getElementById("overseas-filter-toggle-row");
+  const overseasFilterBar = document.getElementById("overseas-filter-bar");
+  const showOverseasFilters = (state.overseasView || "rankings") === "rankings";
+  if (overseasFilterRow) overseasFilterRow.style.display = showOverseasFilters ? "" : "none";
+  if (overseasFilterBar && !showOverseasFilters) overseasFilterBar.classList.remove("is-open");
+
   switch (state.overseasView) {
     case "stats":       return _renderOverseasStats(host, prospects, selectedLeagues);
     case "posting":     return _renderOverseasPosting(host, prospects);
@@ -12822,27 +13222,93 @@ async function renderOverseas() {
   }
 }
 
+// v28 — Apply per-page filters to an overseas-prospect array. Returns a
+// new filtered array.
+function _applyOverseasFilters(prospects) {
+  let pool = prospects.slice();
+  if (state.overseasSide && state.overseasSide !== "all") {
+    pool = pool.filter(p => {
+      const b = _draftPosBucket(p.position);
+      const isPit = b === "SP" || b === "RP";
+      return state.overseasSide === "p" ? isPit : !isPit;
+    });
+  }
+  if (state.overseasPos && state.overseasPos !== "all") {
+    pool = pool.filter(p => {
+      const b = _draftPosBucket(p.position);
+      if (state.overseasPos === "INF") return b === "INF" || b === "SS";
+      if (state.overseasPos === "OF")  return b === "OF";
+      return b === state.overseasPos;
+    });
+  }
+  if (state.overseasStatus && state.overseasStatus !== "all") {
+    pool = pool.filter(p => p.status === state.overseasStatus);
+  }
+  if (state.overseasFvIndicators && state.overseasFvIndicators.size) {
+    pool = pool.filter(p => {
+      if (state.overseasFvIndicators.has("upside") && fvBadgeUpsideClass(p)) return true;
+      return false;
+    });
+  }
+  return pool;
+}
+
+// v28 — Apply the per-page sort to an overseas-prospect array in place.
+function _applyOverseasSort(prospects) {
+  const mode = state.overseasSort || "fv";
+  if (mode === "upside") {
+    prospects.sort((a, b) => {
+      const au = fvBadgeUpsideClass(a) ? 1 : 0;
+      const bu = fvBadgeUpsideClass(b) ? 1 : 0;
+      if (bu !== au) return bu - au;
+      return (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0);
+    });
+  } else if (mode === "age_asc" || mode === "age_desc") {
+    const dir = mode === "age_asc" ? 1 : -1;
+    prospects.sort((a, b) => {
+      const aa = a.age != null ? a.age : 999;
+      const ba = b.age != null ? b.age : 999;
+      return (aa - ba) * dir;
+    });
+  } else if (mode === "bonus_desc") {
+    prospects.sort((a, b) => {
+      const av = (a.signed_bonus_usd || a.proj_bonus_usd || -Infinity);
+      const bv = (b.signed_bonus_usd || b.proj_bonus_usd || -Infinity);
+      return bv - av;
+    });
+  } else if (mode === "name_asc") {
+    prospects.sort((a, b) => (a.player_name || "").localeCompare(b.player_name || ""));
+  } else if (mode === "team") {
+    prospects.sort((a, b) => (a.current_team || "").localeCompare(b.current_team || ""));
+  } else {
+    // Default: consensus FV desc, then consensus rank asc, then name.
+    prospects.sort((a, b) => {
+      const fa = a.consensus_fv != null ? a.consensus_fv : -1;
+      const fb = b.consensus_fv != null ? b.consensus_fv : -1;
+      if (fa !== fb) return fb - fa;
+      const ra = a.consensus_rank != null ? a.consensus_rank : 9999;
+      const rb = b.consensus_rank != null ? b.consensus_rank : 9999;
+      if (ra !== rb) return ra - rb;
+      return (a.player_name || "").localeCompare(b.player_name || "");
+    });
+  }
+}
+
 function _renderOverseasRankings(host, leagues) {
   // FLAT sort by FV (descending). Prior versions grouped by league
   // and then by FV tier; user dropped both groupings — the league
   // chip strip still filters upstream, and each card surfaces its
   // own league badge + flag inline with the team.
-  const flat = [];
+  // v28 — Apply page-local filters before sort/pagination.
+  let flat = [];
   for (const l of leagues) {
     for (const p of l.prospects) {
-      // Attach league context to the prospect so the card has it.
       flat.push({ ...p, _league_obj: l });
     }
   }
-  flat.sort((a, b) => {
-    const fa = a.consensus_fv != null ? a.consensus_fv : -1;
-    const fb = b.consensus_fv != null ? b.consensus_fv : -1;
-    if (fa !== fb) return fb - fa;
-    const ra = a.consensus_rank != null ? a.consensus_rank : 9999;
-    const rb = b.consensus_rank != null ? b.consensus_rank : 9999;
-    if (ra !== rb) return ra - rb;
-    return (a.player_name || "").localeCompare(b.player_name || "");
-  });
+  const totalUnfiltered = flat.length;
+  flat = _applyOverseasFilters(flat);
+  _applyOverseasSort(flat);
   // v19 — Stamp global-overseas rank (1-N by FV desc) onto each card
   // so _renderOverseasCard can render a rank diamond matching the
   // active-list / draft-card visual treatment.
@@ -12861,10 +13327,12 @@ function _renderOverseasRankings(host, leagues) {
   const leagueList = leagues.length === 1
     ? `${leagues[0].league_context?.name || leagues[0].league}`
     : `${leagues.length} leagues`;
+  const countFragment = totalItems !== totalUnfiltered
+    ? `${totalItems} of ${totalUnfiltered}` : `${totalItems}`;
   const head = `<div style="padding:12px 14px;background:var(--bg-secondary);
        border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
     <strong style="color:var(--text-primary);">${escapeHtml(leagueList)} —
-    ${totalItems} prospects</strong>, sorted by consensus FV.
+    ${countFragment} prospects</strong>, sorted by consensus FV.
     Each card shows its league + country flag inline next to the team.
   </div>`;
 
@@ -14069,6 +14537,40 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
     </div>`;
 }
 
+// v28 — Roster-based current-level lookup for debuted players. The
+// debut row's level cell used to hardcode "MLB" for everyone; this
+// helper resolves each player's ACTUAL current level by scanning
+// DATA.rosters_by_org (which the boot path lazy-loads when the user
+// hits the debuts tab). Cached after first build; the cache is
+// invalidated when a fresh rosters slice lands.
+let _rosterLevelCache = null;
+function _buildRosterLevelCache() {
+  const out = {};
+  const orgs = (DATA && DATA.rosters_by_org) || {};
+  // MLB wins ties so a player listed on multiple affiliates (e.g.,
+  // shuttling between MLB and AAA) is reported at their highest level.
+  const LEVEL_RANK = { MLB: 0, AAA: 1, AA: 2, "A+": 3, A: 4, CPX: 5, DSL: 6 };
+  for (const orgCode of Object.keys(orgs)) {
+    const levels = orgs[orgCode] || {};
+    for (const level of Object.keys(levels)) {
+      for (const p of (levels[level] || [])) {
+        const key = p && p.player_key;
+        if (!key) continue;
+        const prev = out[key];
+        const prevRank = prev ? (LEVEL_RANK[prev] ?? 99) : 99;
+        const curRank = LEVEL_RANK[level] ?? 99;
+        if (curRank < prevRank) out[key] = level;
+      }
+    }
+  }
+  return out;
+}
+function getCurrentLevelForDebut(player) {
+  if (!player || !player.player_key) return null;
+  if (!_rosterLevelCache) _rosterLevelCache = _buildRosterLevelCache();
+  return _rosterLevelCache[player.player_key] || null;
+}
+
 function renderDebuts() {
   renderWhatsNew("whats-new-debuts", kind => kind === "debuted");
   const filtered = getFilteredGrads();
@@ -14236,13 +14738,25 @@ function renderDebuts() {
           <span class="${pillClass}" title="${escapeHtml(`MLB debut on ${g.debut_date}`)}">${g.debut_date}</span>
           ${sublabel || (isRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : "")}
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeWideClass(g)}${fvBadgeSingleClass(g)}" title="${escapeHtml(fvBadgeTooltip(g))}">${fvLabel}${fvBadgeWideMarkHTML(g)}${fvBadgeSingleMarkHTML(g)}</span></div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeChainClasses(g)}" title="${escapeHtml(fvBadgeTooltip(g))}">${fvLabel}${fvBadgeChainMarks(g)}</span></div>
         <div class="desktop-only" style="padding-right:6px;">${chartHtml}</div>
         <div class="desktop-only" style="text-align:center;">${(function(){
           const warSpark = makeWarChart(g);
           return warSpark ? warSpark : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
         })()}</div>
-        <div class="debut-level-cell milb-cell"><span class="level-pill level-mlb">MLB</span></div>
+        <div class="debut-level-cell milb-cell">${(() => {
+          // v28 — Resolve the debut's CURRENT level from rosters_by_org;
+          // fall back to MLB when no roster entry is found (player not
+          // currently on a 30-org affiliate — released / NPB / KBO).
+          // Carlson case: debuted 2020 but currently in AAA — row used
+          // to hardcode "MLB"; now reflects the real spot.
+          const lvl = getCurrentLevelForDebut(g) || "MLB";
+          const cls = lvl === "MLB" ? "level-mlb" : "level-neutral";
+          const tip = lvl === "MLB"
+            ? "Currently on an MLB 40-man roster"
+            : `Currently at ${lvl} per affiliate rosters (originally debuted in MLB)`;
+          return `<span class="level-pill ${cls}" title="${escapeHtml(tip)}">${escapeHtml(lvl)}</span>`;
+        })()}</div>
         ${makeGradMilbCell(g)}
       </div>`;
   };
@@ -19741,7 +20255,8 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
     const parts = withFv.map(([src, v]) => {
       const lbl = SOURCE_LABELS[src] || src;
       const fvNum = Number.isInteger(v.fv_published) ? v.fv_published : v.fv_published.toFixed(1);
-      const fvShown = `${fvNum}${v.fv_plus ? "+" : ""}`;  // v26
+      // v28 — Suppress "+" suffix when the source's own FV > 50.
+      const fvShown = `${fvNum}${v.fv_plus && _fvQualifiesForPlus(v.fv_published) ? "+" : ""}`;
       const rk = v.rank != null ? ` (#${v.rank})` : "";
       return `${lbl} ${fvShown}${rk}`;
     });
@@ -19784,13 +20299,14 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
   // FV chart. Deduped per source per "+" run, matching the sparkline
   // renderer in makeLineChart and the compare overlay chart. A source
   // toggling "+" on/off/on produces two distinct dots.
+  // v28 — Cap by per-source FV ≤ 50; see _fvQualifiesForPlus.
   const _detailPrevSrcPlus = {};
   const _detailUpsideDots = [];
   for (const c of coords) {
     const ps = (c.pt && c.pt.per_source) || {};
     for (const [src, info] of Object.entries(ps)) {
       if (!info) continue;
-      const cur = !!info.fv_plus;
+      const cur = !!(info.fv_plus && _fvQualifiesForPlus(info.fv_published));
       const prev = _detailPrevSrcPlus[src];
       if (cur && prev !== true) {
         _detailUpsideDots.push({
@@ -21319,8 +21835,9 @@ function makePerSourceHistory(points) {
           // v26 — Per-source FV displays carry the source's own '+'
           // marker. e.g., FG published "55+" → renders "55+" on the
           // per-source badge regardless of consensus value.
+          // v28 — Suppress "+" when the per-source FV > 50.
           const fvLabel = entry.fv_published != null
-            ? `${entry.fv_published}${entry.fv_plus ? "+" : ""}`
+            ? `${entry.fv_published}${entry.fv_plus && _fvQualifiesForPlus(entry.fv_published) ? "+" : ""}`
             : null;
           const fv = fvLabel != null
             ? `<span class="fv-badge ${fvClass(String(entry.fv_published))} size-sm">${fvLabel}</span>`
@@ -23173,8 +23690,9 @@ function renderPlayerDetail(key) {
       const rank = info.rank;
       const lbl = SOURCE_LABELS[src] || src;
       // v26 — Per-source FV displays carry the source's own '+' marker.
+      // v28 — Suppress "+" when the per-source FV > 50.
       const fvText = fvNum != null
-        ? `${Math.round(fvNum)}${info.fv_plus ? "+" : ""}`
+        ? `${Math.round(fvNum)}${info.fv_plus && _fvQualifiesForPlus(fvNum) ? "+" : ""}`
         : null;
       const fvCell = fvText != null
         ? `<span class="fv-badge ${fvClass(String(Math.round(fvNum)))} size-sm">${fvText}</span>`
@@ -25700,7 +26218,11 @@ function render() {
   const needsGrad = active === "debuts"
       || active === "injured"       // injured rolls graduates + inactive into the pool
       || (active === "player" && !(DATA.players || []).some(p => p.player_key === state.view.key));
-  const needsRosters = active === "farmDetail";
+  // v28 — Debuts page resolves each debuted player's CURRENT level
+  // (AAA / AA / MLB / etc.) by scanning DATA.rosters_by_org. Carlson
+  // case: he debuted in 2020 but is currently in AAA — the row used to
+  // hardcode "MLB" for every debut; now it shows the real spot.
+  const needsRosters = active === "farmDetail" || active === "debuts";
   const needsInactive = active === "injured"
       || (active === "player" && !(DATA.players || []).some(p => p.player_key === state.view.key));
   // Inner body element per section — must match where the per-section
@@ -25733,9 +26255,20 @@ function render() {
   }
   if (needsRosters && DATA._slices && DATA._slices.rosters_by_org
       && Object.keys(DATA.rosters_by_org).length === 0) {
-    showLoading("Loading farm rosters…");
-    loadSlice("rosters_by_org").then(render);
-    return;
+    // For debuts, rosters are an enrichment (current-level lookup),
+    // not the primary data — fire the load but DON'T block the render
+    // so the table appears immediately. The level cell falls back to
+    // "MLB" until rosters land, then re-renders.
+    if (active === "debuts") {
+      loadSlice("rosters_by_org").then(() => {
+        _rosterLevelCache = null;  // invalidate so next render rebuilds
+        render();
+      });
+    } else {
+      showLoading("Loading farm rosters…");
+      loadSlice("rosters_by_org").then(render);
+      return;
+    }
   }
   // Org_summary gate — farm detail render dereferences each org's
   // grades / financial / tool_dev blocks. If the main DATA payload
@@ -25884,6 +26417,14 @@ const CHIP_GROUP_DEFAULTS = {
   "filter-health": "all",
   "filter-spread": "all",
   "farm-acq":      "all",
+  // v28 — Draft + Overseas filter chip-group defaults.
+  "filter-draft-pool":     "all",
+  "filter-draft-side":     "all",
+  "filter-draft-pos":      "all",
+  "filter-draft-status":   "all",
+  "filter-overseas-side":  "all",
+  "filter-overseas-pos":   "all",
+  "filter-overseas-status":"all",
 };
 function attachChipGroup(attr, stateKey, onChange, opts = {}) {
   const { clearView = false, allowDeselect = true } = opts;
@@ -26598,13 +27139,14 @@ function makeFvOverlayChart(players) {
       ? `<circle cx="${xScale(last.snapshot_date).toFixed(1)}" cy="${yScale(last.consensus_fv_raw).toFixed(1)}" r="3.5" fill="${color}"><title>${escapeHtml(p.player_name)}: FV ${last.consensus_fv_label} (${last.snapshot_date})</title></circle>`
       : "";
     // Upside-event dots — walk per_source per-point chronologically,
-    // dot the FIRST snapshot where each source introduces "+".
+    // dot the FIRST snapshot where each source introduces "+". v28 —
+    // suppress dots for sources whose own FV at that snapshot was > 50.
     const upsidePts = [];
     const _seen = {};
     for (const pt of (p.points || [])) {
       const ps = pt.per_source || {};
       for (const [src, info] of Object.entries(ps)) {
-        const cur = !!(info && info.fv_plus);
+        const cur = !!(info && info.fv_plus && _fvQualifiesForPlus(info.fv_published));
         if (cur && _seen[src] !== true) {
           upsidePts.push({
             x: xScale(pt.snapshot_date),
@@ -27394,6 +27936,70 @@ function attachHandlers() {
       render();
     });
   });
+
+  // v28 — Generic collapsible-bar toggle. Any element with
+  // data-collapse-target="<id>" flips the target's .is-open class +
+  // aria-expanded attribute. Powers the draft + overseas (and any
+  // future page-local) filter accordions without per-page wiring.
+  document.querySelectorAll("[data-collapse-target]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.collapseTarget;
+      const bar = id ? document.getElementById(id) : null;
+      if (!bar) return;
+      const isOpen = bar.classList.toggle("is-open");
+      btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
+  });
+
+  // v28 — Draft filter chips. attachChipGroup handles the
+  // single-select state + chip-active toggling; we re-render the draft
+  // page on change so the rankings reflect the new filter.
+  attachChipGroup("filter-draft-pool",   "draftPool",   () => { resetPage("draft"); renderDraft(); });
+  attachChipGroup("filter-draft-side",   "draftSide",   () => { resetPage("draft"); renderDraft(); });
+  attachChipGroup("filter-draft-pos",    "draftPos",    () => { resetPage("draft"); renderDraft(); });
+  attachChipGroup("filter-draft-status", "draftStatus", () => { resetPage("draft"); renderDraft(); });
+  // Multi-select FV indicators for draft (currently just upside).
+  document.querySelectorAll("[data-filter-draft-fvind]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.filterDraftFvind;
+      if (!key) return;
+      if (!state.draftFvIndicators) state.draftFvIndicators = new Set();
+      if (state.draftFvIndicators.has(key)) state.draftFvIndicators.delete(key);
+      else state.draftFvIndicators.add(key);
+      btn.classList.toggle("active", state.draftFvIndicators.has(key));
+      resetPage("draft");
+      renderDraft();
+    });
+  });
+  const draftSortEl = document.getElementById("draft-sort-select");
+  if (draftSortEl) draftSortEl.addEventListener("change", e => {
+    state.draftSort = e.target.value;
+    resetPage("draft");
+    renderDraft();
+  });
+
+  // v28 — Overseas filter chips. Same pattern as draft.
+  attachChipGroup("filter-overseas-side",   "overseasSide",   () => { resetPage("overseas"); renderOverseas(); });
+  attachChipGroup("filter-overseas-pos",    "overseasPos",    () => { resetPage("overseas"); renderOverseas(); });
+  attachChipGroup("filter-overseas-status", "overseasStatus", () => { resetPage("overseas"); renderOverseas(); });
+  document.querySelectorAll("[data-filter-overseas-fvind]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.filterOverseasFvind;
+      if (!key) return;
+      if (!state.overseasFvIndicators) state.overseasFvIndicators = new Set();
+      if (state.overseasFvIndicators.has(key)) state.overseasFvIndicators.delete(key);
+      else state.overseasFvIndicators.add(key);
+      btn.classList.toggle("active", state.overseasFvIndicators.has(key));
+      resetPage("overseas");
+      renderOverseas();
+    });
+  });
+  const overseasSortEl = document.getElementById("overseas-sort-select");
+  if (overseasSortEl) overseasSortEl.addEventListener("change", e => {
+    state.overseasSort = e.target.value;
+    resetPage("overseas");
+    renderOverseas();
+  });
   wireThemeToggle();
   // Density toggle chips — body class + localStorage so the choice
   // survives across sessions and reloads. URL also persists via
@@ -27659,6 +28265,21 @@ function _resetPageFilters(page) {
     state.lbPos    = "all";
     state.lbOrg    = "all";
     state.lbSeason = String(new Date().getUTCFullYear());
+  } else if (page === "draft") {
+    state.draftPool          = "all";
+    state.draftSide          = "all";
+    state.draftPos           = "all";
+    state.draftStatus        = "all";
+    state.draftFvIndicators  = new Set();
+    state.draftSort          = "fv";
+    state.pages.draft        = 1;
+  } else if (page === "overseas") {
+    state.overseasSide          = "all";
+    state.overseasPos           = "all";
+    state.overseasStatus        = "all";
+    state.overseasFvIndicators  = new Set();
+    state.overseasSort          = "fv";
+    state.pages.overseas        = 1;
   }
 }
 
