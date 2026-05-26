@@ -22330,7 +22330,7 @@ function makeFarmPosBucketGrades(org) {
   const pitRow = _row("Pitcher", dp, ["SP", "RP"]);
   if (!hitRow && !pitRow) return "";
   return `<div class="detail-title">Position-bucket grades
-    <span class="detail-title-sub">3-axis blend (FV 50% / Tool 30% / Statcast 20%) per position bucket at ${win} window. Bucket cells dim when active &lt; 3 (dropped from the side's blend; remaining buckets renormalize).</span></div>
+    <span class="detail-title-sub">3-axis blend (FV 50% / Tool 30% / Statcast 20%) per position bucket at ${win} window. Each bucket now uses its OWN per-bucket Tool DvM+ (position-weighted aggregate of per-tool deltas restricted to that bucket); when bucket cohort is too sparse for its own aggregation, falls back to org-side-wide. Bucket cells dim when active &lt; 3 (dropped from the side's blend; remaining buckets renormalize).</span></div>
     <div class="tooldev-card">
       ${hitRow}
       ${pitRow}

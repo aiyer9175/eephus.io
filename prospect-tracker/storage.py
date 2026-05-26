@@ -6288,6 +6288,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # tool, then league-normalized into HitDvM+ / PowerDvM+
                 # / etc. in `_attach_per_tool_dvm_plus`.
                 "_tool_dev_sums": {},
+                # v30.8 — Per-position-bucket tool-development accumulator.
+                # Parallel structure to _tool_dev_sums above, keyed by
+                # pos bucket (C / INF / OF / SP / RP) then tool. Powers
+                # the per-bucket Tool DvM+ that replaces the org-side-
+                # wide tool value previously applied uniformly to every
+                # bucket. Cells with <3 contributing prospects fall
+                # back to the org-side-wide tool DvM+ (hybrid policy).
+                "_tool_dev_sums_by_bucket": {},
                 # Tree v3 — Draft Ceiling Hits accumulator. Counter of
                 # drafted actives whose FV ≥ 60 within 3yr of draft.
                 # Pulled into the Draft Pick Performance leaf's 2nd
@@ -6384,11 +6392,22 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
              "tools_consensus": pt.tools_consensus}
             for pt in p.points
         ])
+        # v30.8 — Compute the prospect's pos bucket ONCE outside the
+        # per-tool loop. We route each tool's delta into both the
+        # org-wide accumulator (existing) AND the bucket-specific
+        # accumulator (new) so per-bucket Tool DvM+ can be computed
+        # without re-walking the per-prospect data.
+        _prospect_bucket = _pos_bucket_v2(p.position)
         for _tk, _info in _td.items():
             first_war = _fv_to_expected_war(_info.get("first")) or 0.0
             last_war  = _fv_to_expected_war(_info.get("last"))  or 0.0
             delta_war = last_war - first_war
             m["_tool_dev_sums"].setdefault(_tk, []).append(delta_war)
+            if _prospect_bucket is not None:
+                m["_tool_dev_sums_by_bucket"] \
+                    .setdefault(_prospect_bucket, {}) \
+                    .setdefault(_tk, []) \
+                    .append(delta_war)
 
         # Extended report-card accumulators (Farm Overhaul Step 5/6/7).
         m["_active_keys"].append(p.player_key)
@@ -6863,10 +6882,33 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "mean_delta":  round(sum(_deltas) / len(_deltas), 2),
                 "n_prospects": len(_deltas),
             }
+        # v30.8 — Per-bucket per-tool aggregates. Same n≥3 gate as the
+        # org-wide aggregator above so sparse cells stay None (the
+        # downstream hybrid policy falls back to org-side-wide tool
+        # DvM+ for those cells, so dropping a noisy bucket here doesn't
+        # leave the UI blank).
+        _tool_sums_by_bucket = m.pop("_tool_dev_sums_by_bucket") or {}
+        per_tool_by_bucket: dict[str, dict[str, dict]] = {}
+        for _bucket, _tool_dict in _tool_sums_by_bucket.items():
+            _bucket_pertool: dict[str, dict] = {}
+            for _tk, _deltas in _tool_dict.items():
+                if len(_deltas) < 3:
+                    continue
+                _bucket_pertool[_tk] = {
+                    "mean_delta":  round(sum(_deltas) / len(_deltas), 2),
+                    "n_prospects": len(_deltas),
+                }
+            if _bucket_pertool:
+                per_tool_by_bucket[_bucket] = _bucket_pertool
         m["tool_dev"] = {
             "per_tool":          per_tool,
             "per_tool_dvm_plus": {},   # filled in the league pass below
             "tools_dvm_plus":    None,
+            # v30.8 — Per-bucket structures populated in a parallel
+            # league pass below; the bucket Tool DvM+ aggregate lands
+            # on the dev_hitter / dev_pitcher pos_buckets node.
+            "per_tool_by_bucket":         per_tool_by_bucket,
+            "per_tool_dvm_plus_by_bucket": {},  # filled in the league pass below
         }
 
         # ── Farm Grade Tree v2 sub-grades — leaf-level metrics ──
@@ -7105,6 +7147,51 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 raw = 100 + 10 * z
                 stretched = _stretch_composite(raw)
                 _entry["tool_dev"]["per_tool_dvm_plus"][grp_name] = int(round(stretched))
+
+    # v30.8 — Per-bucket per-tool DvM+ league pass. Same Bayesian
+    # shrinkage + composite stretch as the org-wide pass above, but
+    # the population for each (bucket × tool_group) is restricted to
+    # the prospects that play in that bucket. Cells with <2 orgs
+    # reporting are skipped (no statistical anchor); cells with
+    # <3 prospects in this org's bucket were already dropped at the
+    # per-tool aggregation step above. The downstream consumer
+    # falls back to org-side-wide tool DvM+ when a bucket cell is
+    # None (hybrid policy per user direction).
+    _ALL_BUCKETS = ("C", "INF", "OF", "SP", "RP")
+    for bucket in _ALL_BUCKETS:
+        for grp_name, tool_keys in TOOL_GROUPS.items():
+            # Gather every org's (bucket, tool_group) mean_delta. Reuses
+            # the same _group_mean_delta_for_org helper but reads from
+            # per_tool_by_bucket[bucket] instead of per_tool.
+            org_vals: list[tuple[str, float | None, int]] = []
+            for e in org_summary:
+                bucket_pertool = (e["tool_dev"].get("per_tool_by_bucket") or {}).get(bucket) or {}
+                v, n = _group_mean_delta_for_org(bucket_pertool, tool_keys)
+                org_vals.append((e["org"], v, n))
+            populated = [v for _, v, _ in org_vals if v is not None]
+            # Same ≥2-org floor as the org-wide pass.
+            if len(populated) < 2:
+                for org_code, _, _ in org_vals:
+                    _entry = next(e for e in org_summary if e["org"] == org_code)
+                    _entry["tool_dev"]["per_tool_dvm_plus_by_bucket"] \
+                        .setdefault(bucket, {})[grp_name] = None
+                continue
+            mu_b = sum(populated) / len(populated)
+            var_b = sum((v - mu_b) ** 2 for v in populated) / len(populated)
+            sd_b = var_b ** 0.5
+            for org_code, v, n in org_vals:
+                _entry = next(e for e in org_summary if e["org"] == org_code)
+                if v is None or sd_b < 1e-6:
+                    _entry["tool_dev"]["per_tool_dvm_plus_by_bucket"] \
+                        .setdefault(bucket, {})[grp_name] = None
+                else:
+                    weight = n / (n + _DVM_SHRINK_K) if n > 0 else 0.0
+                    shrunk_v = weight * v + (1 - weight) * mu_b
+                    z_b = (shrunk_v - mu_b) / sd_b
+                    raw_b = 100 + 10 * z_b
+                    stretched_b = _stretch_composite(raw_b)
+                    _entry["tool_dev"]["per_tool_dvm_plus_by_bucket"] \
+                        .setdefault(bucket, {})[grp_name] = int(round(stretched_b))
 
     # Composite ToolsDvM+ — unweighted mean of the per-group DvM+ values
     # an org actually has. Orgs missing every group entry get None.
@@ -7799,6 +7886,53 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     _POS_WEIGHTS_HIT = {"C": 0.35, "INF": 0.40, "OF": 0.25}
     _POS_WEIGHTS_PIT = {"SP": 0.80, "RP": 0.20}
 
+    # v30.8 — Per-bucket tool importance weights for the per-bucket
+    # Tool DvM+ aggregator. The keys must match TOOL_GROUPS names
+    # ("hit", "pwr", "speed", "field", "arm", "pitch_sel",
+    # "bat_ctrl", "fb", "sl", "cb", "ch", "cmd", "ct"). Within each
+    # bucket the weights sum to 1.0; missing tools renormalize the
+    # remaining weights at aggregation time, so an org without bat_ctrl
+    # data on (say) its INF bucket still gets a defensible bucket
+    # Tool DvM+ from the tools that DO have data.
+    #
+    # Reasoning:
+    #  C: throw + frame/field carry premium-defense value at the position;
+    #     hit/pwr still matter for the bat. (frame folds into field here.)
+    #  INF: hit + pwr lead — bat carries the position; field/arm secondary.
+    #  OF: hit + speed + pwr lead — speed is part of the OF profile.
+    #  SP: FB + CMD + diversified arsenal; CT/CB ranked lower (less common).
+    #  RP: FB + SL dominate; CMD important; CB/CH/CT marginal.
+    _BUCKET_TOOL_WEIGHTS: dict[str, dict[str, float]] = {
+        "C":   {"hit": 0.18, "pwr": 0.12, "speed": 0.05,
+                "field": 0.18, "arm": 0.25,
+                "pitch_sel": 0.10, "bat_ctrl": 0.12},
+        "INF": {"hit": 0.25, "pwr": 0.20, "speed": 0.10,
+                "field": 0.18, "arm": 0.12,
+                "pitch_sel": 0.08, "bat_ctrl": 0.07},
+        "OF":  {"hit": 0.25, "pwr": 0.20, "speed": 0.18,
+                "field": 0.12, "arm": 0.10,
+                "pitch_sel": 0.08, "bat_ctrl": 0.07},
+        "SP":  {"fb": 0.25, "sl": 0.15, "cb": 0.12, "ch": 0.15,
+                "cmd": 0.25, "ct": 0.08},
+        "RP":  {"fb": 0.30, "sl": 0.25, "cb": 0.10, "ch": 0.10,
+                "cmd": 0.20, "ct": 0.05},
+    }
+
+    def _bucket_tool_dvm_plus(per_tool_dvm: dict, bucket: str) -> float | None:
+        """Position-weighted mean of per-bucket per-tool DvM+ values.
+        Renormalizes weights across present tools so partial data
+        still produces a defensible composite. Returns None when no
+        tool in this bucket has a value."""
+        weights = _BUCKET_TOOL_WEIGHTS.get(bucket) or {}
+        present = [(k, w) for k, w in weights.items()
+                   if per_tool_dvm.get(k) is not None]
+        if not present:
+            return None
+        total_w = sum(w for _, w in present)
+        if total_w <= 0:
+            return None
+        return sum(per_tool_dvm[k] * (w / total_w) for k, w in present)
+
     def _pos_weighted_blend(bucket_vals: dict[str, int | None],
                             weights: dict[str, float]) -> int | None:
         """Sum bucket values weighted by `weights`, with sparse-cohort
@@ -7827,22 +7961,38 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         pit_sc = _pit_sc_dvm.get(entry["org"])
 
         # v30.7 — Per-position-bucket 3-way blend. Each bucket gets
-        # its own (FV_b + Tool_side + SC_b) blend; the side-level
+        # its own (FV_b + Tool_b + SC_b) blend; the side-level
         # DvM+ becomes the weighted average across buckets (35/40/25
         # for hitter C/INF/OF; 80/20 for SP/RP).
-        # ToolDvM+ is currently org-side-wide — applying it uniformly
-        # to each bucket is a v1 compromise. A future per-bucket tool
-        # delta would refine this; the org-wide tool DvM+ is the most
-        # stable signal available without retracing the per-tool
-        # aggregation per position.
+        # v30.8 — Tool DvM+ is now PER-BUCKET (was org-side-wide v1
+        # placeholder applied uniformly to every bucket). The
+        # position-weighted aggregator uses per-bucket per-tool DvM+
+        # values from _attach_per_tool_dvm_plus's bucket-aware league
+        # pass. Hybrid fallback: when a bucket's tool aggregate is
+        # None (insufficient prospects), we fall back to the org-side-
+        # wide tool DvM+ so the cell stays defensible.
         bucket_fv_by_win  = entry["_pos_bucket_fv_dvm_plus"]   # {bucket: {win: int|None}}
         bucket_sc         = {b: _bucket_sc_dvm[b].get(entry["org"])
                              for b in _HIT_BUCKETS + _PIT_BUCKETS}
+        # Per-bucket Tool DvM+ aggregation (position-weighted mean of
+        # per-(bucket × tool) values, with fallback to org-wide tool
+        # DvM+ when no bucket data exists).
+        per_tool_dvm_buckets = (entry.get("tool_dev") or {}).get("per_tool_dvm_plus_by_bucket") or {}
+        bucket_tool: dict[str, float | None] = {}
+        for bucket in _HIT_BUCKETS + _PIT_BUCKETS:
+            bucket_pertool = per_tool_dvm_buckets.get(bucket) or {}
+            v = _bucket_tool_dvm_plus(bucket_pertool, bucket)
+            if v is None:
+                # Hybrid fallback — use the org-side-wide value so the
+                # bucket cell isn't blank when the bucket cohort is too
+                # thin to support its own per-tool aggregation.
+                v = tool_hit if bucket in _HIT_BUCKETS else tool_pit
+            bucket_tool[bucket] = v
         # Per-bucket per-window blend.
         bucket_blend_by_win: dict[str, dict[str, int | None]] = {}
         for bucket in _HIT_BUCKETS + _PIT_BUCKETS:
             bucket_blend_by_win[bucket] = {}
-            tool_for_bucket = tool_hit if bucket in _HIT_BUCKETS else tool_pit
+            tool_for_bucket = bucket_tool.get(bucket)
             for win in FARM_TRAJECTORY_WINDOWS:
                 fv_b  = bucket_fv_by_win.get(bucket, {}).get(win)
                 sc_b  = bucket_sc.get(bucket)
@@ -7866,10 +8016,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         entry["tree"]["dev_hitter"]["overall_dvm_plus"]    = dict(hit_overall)
         entry["tree"]["dev_hitter"]["statcast_dvm_plus"]   = hit_sc
         entry["tree"]["dev_hitter"]["disparity_by_window"] = _disparity_report(hit_overall, tool_hit)
+        # v30.8 — Per-bucket Tool DvM+ now reflects the bucket-specific
+        # aggregate from _attach_per_tool_dvm_plus's bucket-aware
+        # league pass (with hybrid fallback to org-side-wide when the
+        # bucket cohort is too sparse for its own aggregation).
         entry["tree"]["dev_hitter"]["pos_buckets"] = {
             bucket: {
                 "fv_dvm_plus_by_window": bucket_fv_by_win.get(bucket, {}),
-                "tool_dvm_plus":         tool_hit,   # org-side-wide for v1
+                "tool_dvm_plus":         int(round(bucket_tool[bucket])) if bucket_tool.get(bucket) is not None else None,
+                "tool_dvm_plus_is_bucket_specific": (per_tool_dvm_buckets.get(bucket) and
+                                                     any(v is not None for v in (per_tool_dvm_buckets.get(bucket) or {}).values())),
                 "statcast_dvm_plus":     bucket_sc.get(bucket),
                 "blend_by_window":       bucket_blend_by_win[bucket],
                 "active_count":          (entry.get("_pos_bucket_active_count") or {}).get(bucket, 0),
@@ -7885,7 +8041,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         entry["tree"]["dev_pitcher"]["pos_buckets"] = {
             bucket: {
                 "fv_dvm_plus_by_window": bucket_fv_by_win.get(bucket, {}),
-                "tool_dvm_plus":         tool_pit,
+                "tool_dvm_plus":         int(round(bucket_tool[bucket])) if bucket_tool.get(bucket) is not None else None,
+                "tool_dvm_plus_is_bucket_specific": (per_tool_dvm_buckets.get(bucket) and
+                                                     any(v is not None for v in (per_tool_dvm_buckets.get(bucket) or {}).values())),
                 "statcast_dvm_plus":     bucket_sc.get(bucket),
                 "blend_by_window":       bucket_blend_by_win[bucket],
                 "active_count":          (entry.get("_pos_bucket_active_count") or {}).get(bucket, 0),
