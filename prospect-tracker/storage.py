@@ -7413,6 +7413,31 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # principal sustained-development signal. `dvm_plus_by_window`
     # exposes the full {1y, 3y, 6y} blend dict for window-reactive
     # frontend display.
+    # v30 — Asymmetric over-grading penalty. When the overall (FV-based)
+    # DvM+ outruns the tool-based DvM+ by a wide margin, the farm is
+    # likely receiving FV upgrades the underlying tool grades haven't
+    # caught up to — the canonical "overgraded farm" signature (the
+    # Orioles / Red Sox case the user flagged: high FV trajectory +
+    # much lower tool trajectory). The penalty SHIFTS the blend toward
+    # the tool side; the reverse case (tools ahead of FV) is left
+    # alone since that reads as a lagging scout upgrade, not
+    # overgrading.
+    #
+    # Tool-weight schedule (gap = overall - tool):
+    #   gap < 15   → 30%  (existing baseline, no penalty)
+    #   gap 15-35  → ramps 40% → 60% (linear, 1pp per gap unit)
+    #   gap ≥ 35   → 60%  (cap — even at extreme disparities, tools
+    #                       never outweigh overall by more than 60/40)
+    def _adaptive_tool_weight(overall, tool):
+        if overall is None or tool is None:
+            return 0.30
+        gap = overall - tool
+        if gap < 15:
+            return 0.30
+        if gap >= 35:
+            return 0.60
+        return 0.40 + (gap - 15) * 0.01
+
     def _blend_dvm(overall, tool):
         if overall is None and tool is None:
             return None
@@ -7420,7 +7445,41 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             return int(round(tool))
         if tool is None:
             return int(round(overall))
-        return int(round(0.7 * overall + 0.3 * tool))
+        tool_w = _adaptive_tool_weight(overall, tool)
+        return int(round((1 - tool_w) * overall + tool_w * tool))
+    # v30 — Build a per-window disparity report so the UI can explain
+    # whenever the over-grading penalty kicked in (Orioles / Red Sox-
+    # style: FV trajectory well ahead of tool trajectory). Fields:
+    #   overall_dvm_plus     — original FV-based DvM+ per window
+    #   tool_dvm_plus_used   — tool DvM+ value passed into the blend
+    #   gap                  — overall - tool per window (positive
+    #                          when FV is ahead — direction we penalize)
+    #   tool_weight_applied  — what fraction of the blend the tool
+    #                          side actually got (≥ 0.30 baseline;
+    #                          ≥ 0.40 means the penalty fired)
+    #   penalty_pts          — base_blend - penalized_blend per window
+    #                          (positive = farm got dinged; 0 = no
+    #                          penalty)
+    def _disparity_report(overall_map, tool_val):
+        out = {}
+        for win in FARM_TRAJECTORY_WINDOWS:
+            ov = overall_map.get(win)
+            if ov is None or tool_val is None:
+                out[win] = {"overall_dvm_plus": ov, "tool_dvm_plus_used": tool_val,
+                            "gap": None, "tool_weight_applied": None, "penalty_pts": 0}
+                continue
+            tw = _adaptive_tool_weight(ov, tool_val)
+            base = int(round(0.7 * ov + 0.3 * tool_val))
+            penal = int(round((1 - tw) * ov + tw * tool_val))
+            out[win] = {
+                "overall_dvm_plus": ov,
+                "tool_dvm_plus_used": tool_val,
+                "gap": round(ov - tool_val, 1),
+                "tool_weight_applied": round(tw, 2),
+                "penalty_pts": max(0, base - penal),
+            }
+        return out
+
     for entry in org_summary:
         tool_hit = entry.pop("_tool_hit_raw", None)
         tool_pit = entry.pop("_tool_pit_raw", None)
@@ -7431,9 +7490,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         entry["tree"]["dev_hitter"]["dvm_plus"]            = hit_by_window.get("6y")
         entry["tree"]["dev_hitter"]["dvm_plus_by_window"]  = hit_by_window
         entry["tree"]["dev_hitter"]["overall_dvm_plus"]    = dict(hit_overall)
+        entry["tree"]["dev_hitter"]["disparity_by_window"] = _disparity_report(hit_overall, tool_hit)
         entry["tree"]["dev_pitcher"]["dvm_plus"]           = pit_by_window.get("6y")
         entry["tree"]["dev_pitcher"]["dvm_plus_by_window"] = pit_by_window
         entry["tree"]["dev_pitcher"]["overall_dvm_plus"]   = dict(pit_overall)
+        entry["tree"]["dev_pitcher"]["disparity_by_window"] = _disparity_report(pit_overall, tool_pit)
 
     # Helper: normalize a list where some entries may be None (small-
     # sample orgs without enough data). None values get the cohort
