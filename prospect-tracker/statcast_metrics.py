@@ -65,6 +65,12 @@ class StatcastMetricRow:
     pitch_movement: dict = field(default_factory=dict)
     pitch_plot: dict = field(default_factory=dict)
     level_splits: list[dict] = field(default_factory=list)
+    # v30.7 — Top recent standout single-game performances. Populated
+    # from the same /people/{id}/stats?type=gameLog feed the bulk
+    # pipeline already consumes; surfaced in the UI under "Standout
+    # performances" on the Spotlights page. Up to 5 entries newest-
+    # first; each carries date, opponent, raw box-line, and score.
+    standout_games: list[dict] = field(default_factory=list)
 
 
 def _get_json(url: str, params: dict | None = None, ttl_seconds: int = 7 * 86400) -> dict:
@@ -154,6 +160,132 @@ def _game_logs(player_id: int, season: int, is_pitcher: bool) -> list[dict]:
             split["_level"] = _level_from_split(split) or level
             out.append(split)
     return out
+
+
+def _extract_standout_games(
+    logs: list[dict],
+    is_pitcher: bool,
+    limit: int = 5,
+) -> list[dict]:
+    """Pick the player's top standout single-game performances from the
+    raw `_game_logs` output. Score each game on raw box-line achievement
+    (hitters: hits + HR + XBH; pitchers: K + scoreless IP + low hits) and
+    return the top `limit`, sorted newest-first. v30.7 — feeds the
+    'Standout performances' widget on the Spotlights page.
+    """
+    scored: list[tuple[float, dict]] = []
+    for split in logs:
+        st = split.get("stat") or {}
+        game = split.get("game") or {}
+        opp = split.get("opponent") or {}
+        date = split.get("date") or (game.get("officialDate"))
+        if not date:
+            continue
+        level = split.get("_level")
+        score = 0.0
+        # Hitter scoring — raw counting stats from gameLog. Higher is
+        # better; 3+H game is the baseline standout floor (score ≥ 3.0).
+        if not is_pitcher:
+            h    = _safe_int(st.get("hits"))
+            ab   = _safe_int(st.get("atBats"))
+            hr   = _safe_int(st.get("homeRuns"))
+            doub = _safe_int(st.get("doubles"))
+            trip = _safe_int(st.get("triples"))
+            rbi  = _safe_int(st.get("rbi"))
+            bb   = _safe_int(st.get("baseOnBalls"))
+            sb   = _safe_int(st.get("stolenBases"))
+            so   = _safe_int(st.get("strikeOuts"))
+            if h is None or ab is None or ab == 0:
+                continue
+            score = (
+                (h or 0) * 1.0
+                + (hr or 0) * 2.0
+                + (trip or 0) * 1.0
+                + (doub or 0) * 0.5
+                + (rbi or 0) * 0.3
+                + (bb or 0) * 0.4
+                + (sb or 0) * 0.5
+                - (so or 0) * 0.2
+            )
+            # 3-hit game floor (or 1 HR floor) before we even consider it.
+            if (h or 0) < 3 and (hr or 0) < 1 and (rbi or 0) < 3:
+                continue
+            line_parts = []
+            line_parts.append(f"{h}-for-{ab}")
+            if hr:  line_parts.append(f"{hr} HR")
+            if doub: line_parts.append(f"{doub} 2B")
+            if trip: line_parts.append(f"{trip} 3B")
+            if rbi:  line_parts.append(f"{rbi} RBI")
+            if bb:   line_parts.append(f"{bb} BB")
+            if sb:   line_parts.append(f"{sb} SB")
+            line = " · ".join(line_parts)
+        else:
+            # Pitcher scoring — IP, K, scoreless game, low H, no BB.
+            # 5+ IP shutout or 8+ K outing is the floor for inclusion.
+            ip   = _safe_float(st.get("inningsPitched"))
+            k    = _safe_int(st.get("strikeOuts"))
+            er   = _safe_int(st.get("earnedRuns"))
+            h    = _safe_int(st.get("hits"))
+            bb   = _safe_int(st.get("baseOnBalls"))
+            r    = _safe_int(st.get("runs"))
+            hra  = _safe_int(st.get("homeRuns"))
+            if ip is None or ip < 2.0:
+                continue
+            # Standout floors:
+            #   * 8+ K outing
+            #   * 5+ IP with 0 ER
+            #   * 7+ IP with ≤1 ER
+            qualifies = (
+                (k is not None and k >= 8)
+                or (ip >= 5.0 and (er or 0) == 0)
+                or (ip >= 7.0 and (er or 0) <= 1)
+            )
+            if not qualifies:
+                continue
+            score = (
+                ip * 1.5
+                + (k or 0) * 0.8
+                - (er or 0) * 1.0
+                - (bb or 0) * 0.3
+                - (h or 0) * 0.2
+                - (hra or 0) * 1.0
+            )
+            line_parts = [f"{ip} IP", f"{k or 0} K"]
+            if (h is not None):  line_parts.append(f"{h} H")
+            if (er is not None): line_parts.append(f"{er} ER")
+            if bb:               line_parts.append(f"{bb} BB")
+            if hra:              line_parts.append(f"{hra} HR")
+            line = " · ".join(line_parts)
+        entry = {
+            "date": date,
+            "level": level,
+            "opponent": opp.get("name") or opp.get("abbreviation") or "?",
+            "is_home": bool((split.get("isHome") if isinstance(split.get("isHome"), bool)
+                             else (split.get("game") or {}).get("isHome"))),
+            "line": line,
+            "score": round(score, 2),
+            "is_pitcher": is_pitcher,
+        }
+        scored.append((score, entry))
+    # Sort by score DESC to pick the top N, then resort by date DESC
+    # so the rendered list reads newest-first.
+    scored.sort(key=lambda x: -x[0])
+    top = [e for _, e in scored[:limit]]
+    top.sort(key=lambda e: e["date"], reverse=True)
+    return top
+
+
+def _safe_int(v) -> int | None:
+    if v is None:
+        return None
+    try:
+        # gameLog returns hits/abs as int already; inningsPitched is str.
+        return int(v)
+    except (TypeError, ValueError):
+        try:
+            return int(float(v))
+        except (TypeError, ValueError):
+            return None
 
 
 def _is_barrel(ev: float | None, la: float | None) -> bool:
@@ -466,6 +598,10 @@ def fetch_statcast_metrics_for_player(
         pitch_movement=pitch_movement,
         pitch_plot=pitch_plot,
         level_splits=level_splits,
+        # v30.7 — Pull top 5 standout single-game performances off the
+        # same `logs` we already walked above. Free piggyback — no
+        # extra HTTP, just an extra pass over the per-game stat dicts.
+        standout_games=_extract_standout_games(logs, is_pitcher, limit=5),
     )
 
 

@@ -1542,6 +1542,12 @@
       display: inline-block;
       font-family: var(--font-mono);
       font-size: 10px;
+      /* v30.7 — Bold text to match the bolded glyph weight on the
+         B/T chips that sit immediately to the right inside the
+         .age-hand-cluster. Without this the age chip's number reads
+         visually lighter than its B/T neighbors at the same chip
+         geometry, breaking the "one cluster, one weight" effect. */
+      font-weight: 700;
       padding: 1px 6px;
       border-radius: 2px;
       background: var(--bg-tertiary);
@@ -1605,6 +1611,31 @@
       white-space: nowrap;
     }
     body.density-compact .milb-sc-chip {
+      font-size: 9px;
+      padding: 0 3px;
+    }
+    /* v30.7 — Baseline EV chips. Same geometry as the SC outlier chips
+       so they fit on the same detail line. */
+    .milb-ev-chip-strip {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .milb-ev-chip {
+      display: inline-flex;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 0 4px;
+      border: 1px solid currentColor;
+      border-radius: 2px;
+      line-height: 1.2;
+    }
+    body.density-compact .milb-ev-chip {
       font-size: 9px;
       padding: 0 3px;
     }
@@ -1760,11 +1791,19 @@
        an animated percentage. Pulses ONLY the colored inset edges,
        not the FV number / corner glyphs / chip body. Single shared
        animation so combined indicators pulse in lockstep (independent
-       per-edge cadences were noisy). */
+       per-edge cadences were noisy).
+       v30.7 — Pulse depth widened from 100→55 to 100→30. The shallow
+       55 floor made the alpha cycle nearly invisible against the
+       chip background — only the breakout indicator (which also
+       cycles its COLOR) read as a pulse. Dropping the floor to 30%
+       makes the alpha breathe clearly enough that wide / single-
+       source / upside all read as pulsing-on-their-edge too,
+       matching the breakout-style pulse the user already
+       associates with the system. */
     @property --edge-pulse  { syntax: "<percentage>"; inherits: false; initial-value: 100%; }
     @keyframes fvIndicatorPulse {
       0%, 100% { --edge-pulse: 100%; }
-      50%      { --edge-pulse: 55%; }
+      50%      { --edge-pulse: 30%; }
     }
     .fv-badge.is-wide,
     .fv-badge.is-single-source,
@@ -2899,6 +2938,16 @@
       background: color-mix(in srgb, var(--upside-pink) 18%, transparent);
       color: var(--upside-pink);
       border-color: var(--upside-pink);
+    }
+    /* v30.7 — Breakout driver chip ("★ breakout" on spotlight rows for
+       risers / rebounders carrying breakout_flag). Aquamarine to match
+       the ★ chip indicator on the FV badge + the breakout edge pulse.
+       Reads as the SAME signal family as the indicator the user
+       already associates with breakout. */
+    .driver-tag.is-breakout {
+      background: color-mix(in srgb, #7FFFD4 18%, transparent);
+      color: #7FFFD4;
+      border-color: #7FFFD4;
     }
 
     /* === Debuted ==================================================
@@ -6572,18 +6621,12 @@
 </aside>
 
 <template id="main-template">
-  <!-- v30.6 — Prospect news ribbon promoted ABOVE the section-tabs
-       bar so it persists across every list page (was: lived inside
-       #active-section only). Two stacked rows:
-         1. transactions / debuts / IL events (existing renderWhatsNew)
-         2. standout 7-day performances (new renderStandoutPerformances)
-       Both rebuild on every render() so the data stays fresh. The
-       container is intentionally outside any per-section wrapper so
-       a section swap doesn't blow it away. -->
-  <div id="news-ribbon" class="news-ribbon">
-    <div id="whats-new" class="news-row"></div>
-    <div id="whats-standout" class="news-row news-row-standout"></div>
-  </div>
+  <!-- v30.7 — News + standout ribbons moved OUT of the global header
+       and INTO their owning sections (whats-new-traded → Transactions,
+       whats-standout-spotlights → Spotlights). The previous global
+       ribbon above the section-tabs was duplicating the same content
+       the section-internal containers already showed; collapsed to a
+       single home for each. -->
   <div class="section-tabs" id="section-tabs">
     <!-- v17 — Nav reorder: Graduates moved between Leaderboards and Glossary
          (per-graduate analysis is a deeper tool, not part of the live-prospect
@@ -6863,6 +6906,10 @@
   </div>
 
   <div id="spotlights-section" style="display: none;">
+    <!-- v30.7 — Standout-performances ribbon lives inside the
+         Spotlights section (no longer above the global header).
+         renderSpotlights paints into this div on every render. -->
+    <div id="whats-standout-spotlights" class="news-row news-row-standout"></div>
     <div class="spotlight-subtabs">
       <button class="chip active" data-spotlight-bucket="risers"
               title="Prospects whose 2026-season performance has been a clear leap from prior seasons. Includes broad surface-stat jumps, young-for-level breakouts, and continued high performers.">Risers</button>
@@ -9889,12 +9936,62 @@ function makeMilbCell(p) {
   // collapses back to the prior layout exactly (no card-height
   // change). At most 2 chips per row.
   const scOutlierChips = _milbStatcastOutlierChips(p);
-  const detailWithSc = detail + (scOutlierChips ? `<span class="milb-sc-chip-strip">${scOutlierChips}</span>` : "");
+  // v30.7 — SC+ pill always surfaced when the prospect carries the
+  // composite. Color tier mirrors the SC+ color convention: ≥120
+  // cyan (elite), ≥105 green (above pool), ≤95 red (below), else
+  // neutral. Lives in the top pill row so the user gets the
+  // Statcast read at a glance.
+  const scPlusPill = (() => {
+    const sp = getStatcastPlus(p);
+    if (sp == null) return "";
+    const color = sp >= 120 ? "var(--neon-cyan)"
+                : sp >= 105 ? "var(--up)"
+                : sp <= 95  ? "var(--down)"
+                :             "var(--text-secondary)";
+    return `<span class="stat-pill" style="color:${color};border-color:${color};" title="Statcast+ composite (100 = pool average; ≥105 above, ≤95 below, ≥120 elite)">SC+ ${sp}</span>`;
+  })();
+  // v30.7 — Baseline EV chips (hitters with tracked contact_quality).
+  // Always-on whenever statcast_metrics has data — not gated on
+  // outlier ±1σ tiers — so the user always sees raw avg / max EV
+  // when on file. Layered into the detail line alongside the
+  // existing outlier chips (which still surface when ±1σ trips).
+  const evChips = _milbBaselineEvChips(p);
+  const detailWithSc = detail
+    + (evChips        ? `<span class="milb-ev-chip-strip">${evChips}</span>` : "")
+    + (scOutlierChips ? `<span class="milb-sc-chip-strip">${scOutlierChips}</span>` : "");
   return `<div class="milb-cell milb-cell-wrap"${tipAttr}>
-    <span class="milb-pill-row"><span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${plusPill}${rpsPill}${headline}</span>
+    <span class="milb-pill-row"><span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${plusPill}${rpsPill}${scPlusPill}${headline}</span>
     <br/><span style="color: var(--text-primary);">${slashLine}</span>
     <br/><span style="color: var(--text-tertiary);">${detailWithSc}</span>
   </div>`;
+}
+
+// v30.7 — Baseline EV chips for hitters with tracked
+// statcast_metrics.contact_quality. Always renders avg + max EV when
+// data exists; tier color picks MLB-pool ramps so the chip reads
+// "elite for MLB" not "elite for MiLB only."
+function _milbBaselineEvChips(p) {
+  if (!p) return "";
+  const sl = p.statline || {};
+  if (sl.is_pitcher) return "";
+  const cq = ((p.statcast_metrics || {}).contact_quality || {});
+  const avg = cq.avg_ev, mx = cq.max_ev;
+  if (avg == null && mx == null) return "";
+  const _color = (v, eliteAt, weakAt) =>
+    v == null ? "var(--text-tertiary)"
+    : v >= eliteAt ? "var(--up)"
+    : v <= weakAt  ? "var(--down)"
+    : "var(--text-secondary)";
+  const chips = [];
+  if (avg != null) {
+    const c = _color(avg, 90, 84);
+    chips.push(`<span class="milb-ev-chip" style="color:${c};border-color:${c};" title="Avg exit velocity over ${cq.batted_balls || "tracked"} batted balls (MLB elite ≥90, weak ≤84)">EV ${avg.toFixed(1)}</span>`);
+  }
+  if (mx != null) {
+    const c = _color(mx, 112, 102);
+    chips.push(`<span class="milb-ev-chip" style="color:${c};border-color:${c};" title="Maximum exit velocity (MLB elite ≥112, weak ≤102)">Max ${mx.toFixed(1)}</span>`);
+  }
+  return chips.join("");
 }
 
 // FanGraphs-flavored WAR aggregate. Returns a small mono block with
@@ -10680,28 +10777,89 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
 // Falls back to the prospect's full-season stats vs level mean when
 // rolling 7d aggregates aren't on the payload (most rows today). Hidden
 // when no candidates qualify.
-function renderStandoutPerformances(rootId = "whats-standout") {
+function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
   const root = document.getElementById(rootId);
   if (!root) return;
   const players = DATA.players || [];
-  // Each candidate: {p, score, headline} — headline is the human-
-  // readable strap for the chip body.
+  // v30.7 — Specific single-game standout performances pulled from
+  // statcast_metrics.standout_games (populated by the per-player
+  // gameLog pass). Each entry: {date, level, opponent, line, score,
+  // is_pitcher}. We collect every game from every prospect, sort by
+  // date DESC (most-recent first per the user ask), and show the top
+  // 12. The headline reads as a specific game ("Jesús Made — 4-for-5
+  // · 2 HR · 5 RBI · @SOM · 2026-05-21"), not a season aggregate.
+  const games = [];
+  for (const p of players) {
+    const sg = ((p.statcast_metrics || {}).standout_games) || [];
+    if (!Array.isArray(sg) || !sg.length) continue;
+    for (const g of sg) {
+      if (!g || !g.date || !g.line) continue;
+      games.push({ p, g });
+    }
+  }
+  // Newest games first; tie-broken by score desc so the "best" of any
+  // same-day collision leads.
+  games.sort((a, b) => {
+    if (a.g.date !== b.g.date) return a.g.date < b.g.date ? 1 : -1;
+    return (b.g.score || 0) - (a.g.score || 0);
+  });
+  const top = games.slice(0, 12);
+  if (!top.length) {
+    // Fallback: when standout_games hasn't been populated (a freshly-
+    // updated UI on top of older cached statcast_metrics rows), fall
+    // back to the previous season-aggregate signal so the strip never
+    // disappears entirely.
+    return _renderStandoutPerformancesFallback(root);
+  }
+  const chips = top.map(({ p, g }) => {
+    const fvLbl = p.fv_close != null ? Math.round(p.fv_close) : null;
+    const fvChip = fvLbl != null
+      ? `<span class="fv-badge ${fvClass(String(fvLbl))} size-xs" style="margin-right:5px;">${fvLbl}</span>`
+      : "";
+    const lvl = g.level
+      ? `<span style="color:var(--text-tertiary);margin-left:4px;">${escapeHtml(g.level)}</span>`
+      : "";
+    const dateShort = g.date.length >= 10 ? g.date.slice(5) : g.date;
+    const opp = g.opponent && g.opponent !== "?"
+      ? ` ${g.is_home ? "vs" : "@"} ${escapeHtml(g.opponent)}`
+      : "";
+    const subTitle = `${p.player_name} · ${g.line}${opp} on ${g.date}`;
+    return `<button class="chip" data-key="${escapeHtml(p.player_key)}" type="button"
+                    style="border-color:var(--up);color:var(--up);white-space:nowrap;"
+                    title="${escapeHtml(subTitle)}">
+      ${fvChip}<span style="font-weight:700;">${escapeHtml(p.player_name)}</span>${lvl}
+      <span style="color:var(--text-primary);margin-left:6px;">${escapeHtml(g.line)}</span>
+      <span style="color:var(--text-tertiary);margin-left:5px;font-family:var(--font-mono);font-size:10px;">${escapeHtml(dateShort)}${escapeHtml(opp)}</span>
+    </button>`;
+  }).join("");
+  root.innerHTML = `<div class="news-ticker">
+    <button class="news-ticker-headline" data-go-section="spotlights" type="button"
+            title="Recent single-game standouts from MiLB gameLogs">
+      <span class="ntk-masthead">Standout performances</span>
+      <span class="ntk-subline">most recent · ${top.length} game${top.length === 1 ? "" : "s"} · raw box-line</span>
+    </button>
+    <div class="news-ticker-strip">${chips}</div>
+  </div>`;
+}
+
+// Fallback when standout_games isn't yet on the payload (cached
+// statcast_metrics from before the gameLog standout pass landed).
+// Surfaces the old season-aggregate composite so the strip stays
+// populated until the next full Statcast refresh writes per-game rows.
+function _renderStandoutPerformancesFallback(root) {
+  const players = DATA.players || [];
   const candidates = [];
   for (const p of players) {
     const sl = p.statline;
     if (!sl) continue;
     const isPit = !!sl.is_pitcher;
-    // Use level-relative percentile signals where available.
     let score = 0;
     const parts = [];
     if (!isPit) {
-      // Hitter — composite of OPS / wRC+-equivalent / HR-pace / SB.
-      // Level_plus_pct + ops_plus_level are the canonical scaled
-      // signals (100 = level mean for ops_plus_level).
       const opsPlus = sl.ops_plus_level;
       const lp = sl.level_plus_pct;
       if (typeof opsPlus === "number" && isFinite(opsPlus)) {
-        score += Math.abs(opsPlus - 100) / 10;     // 10 pts above mean ≈ 1.0
+        score += Math.abs(opsPlus - 100) / 10;
         if (opsPlus >= 110 && sl.ops) parts.push(`${sl.ops} OPS`);
       }
       if (typeof lp === "number" && isFinite(lp) && lp >= 15) {
@@ -10712,65 +10870,39 @@ function renderStandoutPerformances(rootId = "whats-standout") {
         score += sl.hr / 4;
         parts.push(`${sl.hr} HR`);
       }
-      if (typeof sl.iso === "number" && sl.iso >= 0.200) {
-        score += (sl.iso - 0.150) * 10;
-        parts.push(`ISO ${sl.iso.toFixed(3).replace(/^0/, "")}`);
-      }
     } else {
-      // Pitcher — composite of ERA / K% / IP-volume / FIP.
       const eraMinus = sl.era_minus_level;
-      const lp = sl.level_plus_pct;
       if (typeof eraMinus === "number" && isFinite(eraMinus)) {
-        // ERA- under 100 is good; outlier score is the distance from 100.
         score += Math.abs(eraMinus - 100) / 10;
         if (eraMinus <= 80 && sl.era != null) parts.push(`${sl.era} ERA`);
-      }
-      if (typeof lp === "number" && isFinite(lp) && lp <= -15) {
-        score += Math.abs(lp) / 10;
-        parts.push(`${lp.toFixed(0)}% vs lvl`);
       }
       if (typeof sl.k_pct === "number" && sl.k_pct >= 28) {
         score += sl.k_pct / 10;
         parts.push(`K% ${sl.k_pct.toFixed(0)}`);
       }
-      if (typeof sl.ip === "number" && sl.ip >= 25) {
-        score += sl.ip / 50;
-        parts.push(`${sl.ip} IP`);
-      }
-    }
-    // v30.6 — Statcast+ bonus: an elite SC+ on top of strong surface
-    // performance is the cleanest "real standout" signature.
-    const scp = getStatcastPlus(p);
-    if (scp != null && scp >= 115) {
-      score += (scp - 100) / 10;
-      parts.push(`SC+ ${scp}`);
     }
     if (score < 2.5 || !parts.length) continue;
     candidates.push({ p, score, headline: parts.slice(0, 3).join(" · ") });
   }
-  if (!candidates.length) {
-    root.innerHTML = "";
-    return;
-  }
+  if (!candidates.length) { root.innerHTML = ""; return; }
   candidates.sort((a, b) => b.score - a.score);
   const top = candidates.slice(0, 8);
-  const chips = top.map(({ p, headline, score }) => {
+  const chips = top.map(({ p, headline }) => {
     const fvLbl = p.fv_close != null ? Math.round(p.fv_close) : null;
     const fvChip = fvLbl != null
       ? `<span class="fv-badge ${fvClass(String(fvLbl))} size-xs" style="margin-right:5px;">${fvLbl}</span>`
       : "";
     return `<button class="chip" data-key="${escapeHtml(p.player_key)}" type="button"
-                    style="border-color:var(--up);color:var(--up);white-space:nowrap;"
-                    title="${escapeHtml(`${p.player_name} — composite outlier score ${score.toFixed(1)} based on the season's level-relative metrics`)}">
+                    style="border-color:var(--up);color:var(--up);white-space:nowrap;">
       ${fvChip}<span style="font-weight:700;">${escapeHtml(p.player_name)}</span>
       <span style="color:var(--text-tertiary);margin-left:5px;">${escapeHtml(headline)}</span>
     </button>`;
   }).join("");
   root.innerHTML = `<div class="news-ticker">
     <button class="news-ticker-headline" data-go-section="spotlights" type="button"
-            title="View the full Spotlights bucket for risers / rebounders / fallers →">
+            title="Awaiting per-game gameLog refresh — showing season-aggregate composites">
       <span class="ntk-masthead">Standout performances</span>
-      <span class="ntk-subline">recent · ${top.length} prospect${top.length === 1 ? "" : "s"} · view spotlights →</span>
+      <span class="ntk-subline">season aggregate (refresh pending) · ${top.length} prospect${top.length === 1 ? "" : "s"}</span>
     </button>
     <div class="news-ticker-strip">${chips}</div>
   </div>`;
@@ -11718,7 +11850,10 @@ function renderActiveContextRail() {
 }
 
 function renderActives() {
-  renderWhatsNew();
+  // v30.7 — News widget moved out of the global header into the
+  // Transactions section (where it's the natural fit). MiLB Prospects
+  // landing page now leads with the rail / filters / rows directly,
+  // no prepended news ribbon.
   renderActiveContextRail();
   const filtered = getFilteredActives();
   const pageSize = state.pageSizes.actives || 50;
@@ -11787,6 +11922,10 @@ function renderActives() {
 }
 
 function renderSpotlights() {
+  // v30.7 — Standout-performances ribbon. Was in the global header;
+  // now lives inside the spotlights section so it shows in context
+  // and only when the user has come to look at movement signals.
+  try { renderStandoutPerformances("whats-standout-spotlights"); } catch (e) { /* silent */ }
   const buckets = DATA.spotlights || {};
   // Spotlights now ship three buckets: risers / rebounders / fallers.
   // Legacy `hot` is still aliased to `risers` in the export for one
@@ -11906,6 +12045,7 @@ function renderSpotlights() {
         const valenceClass = d.valence === "good" ? "is-good"
                           : d.valence === "bad"  ? "is-bad"
                           : d.valence === "upside" ? "is-upside"
+                          : d.valence === "breakout" ? "is-breakout"
                           : "is-neutral";
         const tip = d.tooltip || d.label || "";
         return `<span class="driver-tag ${valenceClass}" title="${escapeHtml(tip)}">${escapeHtml(d.label || "")}</span>`;
@@ -17375,17 +17515,27 @@ function physClusterHTML(p) {
 // with the OTHER side (T R / T L for hitters; B R / B L / B S for
 // pitchers). Lives next to the age chip in playerMetaHTML so the
 // "role + handedness" read sits in one line, freeing the phys cluster
-// for HT/WT/BMI alone. Neutral palette (violet / amber / cyan) so
-// handedness doesn't read as positive / negative.
-function handednessChipPairHTML(p) {
+// for HT/WT/BMI alone.
+// v30.7 — Per user direction, handedness no longer carries its own
+// color encoding (the violet/amber/cyan per-side palette was reading
+// as a semantic distinction it isn't). When `overrideColor` is
+// passed in, both chips paint in that single color — meant to be
+// piped in as the prospect's age-heat color so the [age + B + T]
+// cluster reads as one color-coded unit driven by age (the dominant
+// signal). Falls back to the prior neutral palette only when no
+// override is supplied (defensive — callers should always pass one).
+function handednessChipPairHTML(p, overrideColor = null) {
   const hand = _getHandedness(p);
   if (!hand.bats && !hand.throws) return "";
   const isPitcherP = !!(p.statline && p.statline.is_pitcher)
                     || ["SP","RP","SIRP","MIRP","P"].includes(positionBucket(p.position));
-  const handColor = side =>
-    side === "L" ? "var(--neon-violet)" :
-    side === "R" ? "var(--neon-amber)"  :
-    side === "S" ? "var(--neon-cyan)"   : "var(--text-tertiary)";
+  const handColor = side => {
+    if (overrideColor) return overrideColor;
+    return side === "L" ? "var(--neon-violet)"
+         : side === "R" ? "var(--neon-amber)"
+         : side === "S" ? "var(--neon-cyan)"
+         : "var(--text-tertiary)";
+  };
   const primaryChip = (() => {
     let side, suffix, longLabel;
     if (isPitcherP) {
@@ -19256,7 +19406,14 @@ function playerMetaHTML(p, opts = {}) {
   // (the wrapper owns the gap to pos/org now) so age + B/T sit at
   // identical x-positions across every row regardless of position
   // string length.
-  const btChip = suppressHandedness ? "" : handednessChipPairHTML(p);
+  // v30.7 — Hand off the age-heat color to the handedness chips so
+  // the [age + B + T] trio reads as one unified color cluster (age
+  // is the driving signal; B/T inherit the same color so handedness
+  // stops carrying its own semantic palette). Falls back to a neutral
+  // when the prospect has no age on file.
+  const _btColor = (ageNum != null && !isNaN(ageNum))
+    ? _ageHeatColor(ageNum) : "var(--text-tertiary)";
+  const btChip = suppressHandedness ? "" : handednessChipPairHTML(p, _btColor);
   const ageHand = (ageTag || btChip)
     ? `<span class="age-hand-cluster">${ageTag}${btChip}</span>`
     : "";
@@ -28862,13 +29019,12 @@ function render() {
   _resetAgeMeanCache();
   _resetPhysPoolCache();
   _resetStatcastPlusCache();
-  // v30.6 — Global prospect-news ribbon rebuilds on every render so
-  // the strip stays current as the user navigates tabs and as data
-  // hydrates. The ribbon lives ABOVE the section-tabs bar so it
-  // persists across pages (was: only painted on the Active list).
-  // Both rows fail-soft when the rendering helpers find no events.
-  try { renderWhatsNew("whats-new"); } catch (e) { /* silent */ }
-  try { renderStandoutPerformances("whats-standout"); } catch (e) { /* silent */ }
+  // v30.7 — Per-section ribbons replace the global header ribbon.
+  // Transactions section owns its own renderWhatsNew("whats-new-traded")
+  // call; Spotlights section calls renderStandoutPerformances against
+  // an in-section div. Each lives BELOW the section-tabs bar inside
+  // the owning section body, so they appear in context, never as a
+  // floating header strip on unrelated pages.
   const sections = {
     active:       "active-section",
     spotlights:   "spotlights-section",

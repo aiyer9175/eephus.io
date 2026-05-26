@@ -595,6 +595,19 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
     """
     if payload.get("status") != "active":
         return None
+    # v30.7 — Breakout / Faller mutual-exclusion gate. A prospect whose
+    # CURRENT stock movement is a faller (or strong faller) is, by
+    # definition, not breaking out — even if a stale FV/tool jump in
+    # the breakout window would otherwise qualify them. The Mejia case
+    # (FV up 5 over the year + ERA 7.71 / K% -7.9 right now) was
+    # flagging as both breakout AND faller. Stock is already attached
+    # to the payload by compute_movement before _attach_breakout_flags
+    # runs, so we can read it directly here.
+    stock = payload.get("stock") or {}
+    if stock.get("bucket") == "faller":
+        return None
+    if stock.get("direction") in ("down", "down_strong"):
+        return None
     # v15 — Age cap: position players + SPs through 24; relievers (RP /
     # MIRP / SIRP / CL) through 25.
     try:
@@ -7737,9 +7750,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             ("net_fv",    lambda e: (e["tree"]["tx_trades"] or {}).get("net_fv")),
             ("war_delta", lambda e: (e["tree"]["tx_trades"] or {}).get("war_delta")),
         ],
-        # Waiver Claims — net FV + reach-MLB hit rate
+        # v30.7 — Waiver Claims is now a pure hit-rate leaf. The prior
+        # 50/50 blend of net_fv + hit_rate let big-system orgs win on
+        # raw aggregate (more bodies in = more FV in) without
+        # rewarding actual claim quality. Hit-rate ("share of claims
+        # that reached MLB") measures org judgment about WHO to claim,
+        # independent of volume, which is the signal Waiver Claims is
+        # meant to capture. net_fv still ships on the tree node for
+        # users who want to inspect the underlying totals.
         "tx_waivers": [
-            ("net_fv",   lambda e: (e["tree"]["tx_waivers"] or {}).get("net_fv")),
             ("hit_rate", lambda e: (e["tree"]["tx_waivers"] or {}).get("hit_rate")),
         ],
         # Development — v16: 6yDvM+ is the PRINCIPAL driver (heaviest
@@ -8101,6 +8120,58 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # qualify league-wide. v29 — Statcast+ ≥ 115 also passes the perf
     # gate now (see _compute_breakout_flag).
     _attach_breakout_flags(active_payload)
+
+    # v30.7 — Surface the breakout flag as a driver chip on the
+    # spotlights row. Stock was computed before breakout_flag existed
+    # on the payload, so we splice the driver in here once the flag is
+    # stamped. Only fires for risers / rebounders (fallers are already
+    # gated out of the breakout flag itself by the mutual-exclusion
+    # check at the top of _compute_breakout_flag).
+    for _pl in active_payload:
+        if not _pl.get("breakout_flag"):
+            continue
+        _stk = _pl.get("stock") or {}
+        if _stk.get("bucket") not in ("riser", "rebound"):
+            continue
+        _meta = _pl.get("breakout_meta") or {}
+        _reason = _meta.get("reason")
+        _gate = _meta.get("perf_gate")
+        # Build a one-line tooltip explaining WHY breakout fired —
+        # mirrors the breakdown the user gets if they hover the ★
+        # indicator on the FV badge.
+        _why_bits = []
+        if _reason == "fv" and _meta.get("fv_upgrade") is not None:
+            _why_bits.append(f"FV +{_meta['fv_upgrade']:.0f} over breakout window")
+        elif _reason == "tools" and _meta.get("tool_velocity") is not None:
+            _why_bits.append(f"tool composite +{_meta['tool_velocity']:.1f}")
+        elif _reason == "upside":
+            _src = ", ".join(_meta.get("upside_sources") or []) or "scout source"
+            _why_bits.append(f"+ upside added by {_src}")
+        elif _reason == "stats":
+            _why_bits.append("elite stat-only path")
+        if _gate:
+            _why_bits.append(f"perf gate: {_gate}")
+        _tip = "; ".join(_why_bits) if _why_bits else "Flagged as a breakout candidate"
+        _drv = {
+            "label": "★ breakout",
+            "valence": "breakout",
+            "tooltip": _tip,
+        }
+        # Front-load the chip so it's the lead driver on the card
+        # (matches how the ★ indicator already steals visual focus on
+        # the FV badge — same signal, same priority in the driver row).
+        _drivers_list = list(_stk.get("drivers") or [])
+        # Skip if somehow already present (idempotency on re-export).
+        if not any(
+            (isinstance(_d, dict) and _d.get("label") == _drv["label"])
+            for _d in _drivers_list
+        ):
+            _drivers_list.insert(0, _drv)
+            # MAX_DRIVERS_PER_CARD = 8 in spotlights.py — hardcoded
+            # here rather than importing to keep storage.py's
+            # downstream-only role clean (no circular nip).
+            _stk["drivers"] = _drivers_list[:8]
+            _pl["stock"] = _stk
 
     # v29 — Fill the per-org breakout_count now that flags are stamped.
     # The per-prospect org loop ran before breakout was computed (the

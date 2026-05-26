@@ -1855,6 +1855,40 @@ def compute_movement(p: dict) -> dict:
         seen.add(key)
         _deduped.append(d)
     drivers = _deduped
+    # v30.7 — SC+ chip dedup. The bucket-specific path (faller /
+    # rebound) emits a contextual SC+ chip like "SC+ 105 counters
+    # decline" / "SC+ 110 confirms rebound" that already names the
+    # composite. _statcast_drivers then emits the plain "SC+ 105"
+    # chip on every bucket. Fallers were showing BOTH side-by-side
+    # ("SC+ 105 · SC+ 105 counters decline"). Drop the plain chip
+    # when a contextual one carrying the same SC+ value is present —
+    # they say the same thing.
+    import re as _scre
+    _contextual_sc_vals: set[int] = set()
+    for d in drivers:
+        lbl = d.get("label") if isinstance(d, dict) else d
+        if not isinstance(lbl, str):
+            continue
+        m = _scre.match(r"^SC\+\s+(\d+)\s+", lbl)
+        if m:
+            try:
+                _contextual_sc_vals.add(int(m.group(1)))
+            except ValueError:
+                pass
+    if _contextual_sc_vals:
+        _kept: list = []
+        for d in drivers:
+            lbl = d.get("label") if isinstance(d, dict) else d
+            if isinstance(lbl, str):
+                m = _scre.fullmatch(r"SC\+\s+(\d+)", lbl)
+                if m:
+                    try:
+                        if int(m.group(1)) in _contextual_sc_vals:
+                            continue
+                    except ValueError:
+                        pass
+            _kept.append(d)
+        drivers = _kept
 
     pts = p.get("points") or []
     latest = pts[-1] if pts else {}
