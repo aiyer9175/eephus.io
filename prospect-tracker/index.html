@@ -1538,6 +1538,48 @@
       font-variant-numeric: tabular-nums;
       letter-spacing: 0;
     }
+    /* v30.4 — Handedness chip pair lives inline with the age chip in
+       the player-meta line. Matched to .age-tag's font-size /
+       padding / radius so the pair reads as part of the same chip
+       family. The "pair" wrapper bundles the two chips with a tight
+       inner gap; the chips themselves use currentColor for the
+       border so the per-side palette (violet/amber/cyan) carries
+       cleanly without extra rules.
+       v30.5 — Pair sits inside an .age-hand-cluster wrapper that
+       also contains the age chip; both wrap together when the meta
+       line breaks (was: age stayed inline while B/T fell to the next
+       line on narrower rows). The cluster owns the gap to org so
+       individual chips no longer need their own margin-left. */
+    .age-hand-cluster {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 6px;
+    }
+    .age-hand-cluster .age-tag { margin-left: 0; }
+    .hand-chip-pair {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .hand-chip {
+      display: inline-flex;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 1px 5px;
+      border-radius: 2px;
+      line-height: 1.2;
+      background: transparent;
+      border: 1px solid currentColor;
+      white-space: nowrap;
+    }
+    .hand-chip .hand-chip-side {
+      font-family: var(--font-mono);
+      margin-left: 2px;
+    }
     /* IL badge — amber so it pops on the paper background without
        competing with FV badges (which use red/gold for top tiers). */
     .il-tag {
@@ -6452,9 +6494,16 @@
            filter only surfaces sub-50 grades the sources have tagged
            with publishable upside. -->
       <button class="chip is-multi" data-filter-fvind="upside" title="Upside (^) — at least one source published a '+' upside mark on the latest snapshot (capped at FV ≤ 50; 55+/60+ are suppressed since those tiers have already realized their upside). Rendered on the FV chip as a ^ glyph so it doesn't collide with the health '+' pill.">Upside ^</button>
-      <!-- v29 — Statcast+ ≥ 115 (pool top quintile). Players with no
-           tracked Statcast data don't qualify. -->
-      <button class="chip is-multi" data-filter-fvind="scplus" title="Statcast+ ≥ 115 — composite of contact quality (EV/HH/Brl) + zone signals (Z-Con%/Whiff/Chase) for hitters; pitch velo + induced whiffs + contact suppression for pitchers. Pool-anchored at 100; ≥115 ≈ top quintile.">Statcast+</button>
+    </div>
+    <!-- v30.4 — Statcast+ promoted out of the FV-indicators group
+         (it's a STATS-derived signal, not an FV-grade modifier) into
+         its own filter group. Sits alongside the other tool / stat
+         filters so the user reads "FV indicators = scout-side
+         consensus signals" vs "Statcast = tracked-data signals". -->
+    <div class="filter-group">
+      <span class="filter-label" title="Statcast composite (100 = pool mean, σ × 15). Filter for prospects with elite tracked-data signal.">Statcast</span>
+      <button class="chip is-multi" data-filter-statcast="elite" title="Statcast+ ≥ 130 — elite tier (≈ top 2.5%)">SC+ elite</button>
+      <button class="chip is-multi" data-filter-statcast="above" title="Statcast+ ≥ 115 — above-pool (≈ top quintile). Composite of contact quality (EV/HH/Brl) + zone signals (Z-Con%/Whiff/Chase) for hitters; pitch velo + induced whiffs + contact suppression for pitchers.">SC+ above</button>
     </div>
     <div class="filter-group">
       <span class="filter-label" title="Filter prospects by a specific tool grade meeting a minimum threshold. 'Any tool' matches when any one canonical 20-80 grade meets the threshold; pick a specific tool to isolate it.">Tool grade</span>
@@ -6566,20 +6615,32 @@
       <span class="filter-label">Sort by tool</span>
       <select class="chip" id="tool-sort-select">
         <option value="off">— off —</option>
-        <option value="hit">Hit</option>
-        <option value="game_pwr">Game Pwr</option>
-        <option value="raw_pwr">Raw Pwr</option>
-        <option value="speed">Speed</option>
-        <option value="field">Field</option>
-        <option value="throw">Throw</option>
-        <option value="pitch_sel">Pitch Sel</option>
-        <option value="bat_ctrl">Bat Ctrl</option>
-        <option value="fb">Fastball</option>
-        <option value="sl">Slider</option>
-        <option value="cb">Curve</option>
-        <option value="ch">Change</option>
-        <option value="cmd">Command</option>
-        <option value="ct">Cutter</option>
+        <!-- v30.4 — "Tool composite" lifted to the top of the menu
+             so a quick scan ranks the toolsiest prospects across
+             BOTH hitter and pitcher pools using the 20-80 power-mean
+             across every per-tool grade. Maps to the existing main-
+             sort `tool` branch under the hood, then routes through
+             the toolSortKey override so the dropdown picker drives
+             it like any per-tool key. -->
+        <option value="composite_overall">Tool composite (all tools)</option>
+        <optgroup label="Hitter">
+          <option value="hit">Hit</option>
+          <option value="game_pwr">Game Pwr</option>
+          <option value="raw_pwr">Raw Pwr</option>
+          <option value="speed">Speed</option>
+          <option value="field">Field</option>
+          <option value="throw">Throw</option>
+          <option value="pitch_sel">Pitch Sel</option>
+          <option value="bat_ctrl">Bat Ctrl</option>
+        </optgroup>
+        <optgroup label="Pitcher">
+          <option value="fb">Fastball</option>
+          <option value="sl">Slider</option>
+          <option value="cb">Curve</option>
+          <option value="ch">Change</option>
+          <option value="cmd">Command</option>
+          <option value="ct">Cutter</option>
+        </optgroup>
       </select>
     </div>
     <div class="filter-group">
@@ -6757,7 +6818,7 @@
         <span class="filter-label">Sort</span>
         <select class="chip" id="draft-sort-select">
           <option value="fv">Consensus FV (default)</option>
-          <option value="upside">Upside (+) first</option>
+          <option value="upside">Upside (^) first</option>
           <option value="stock_plus">Draft Stock+ (highest)</option>
           <option value="proj_round">Projected round (1 → late)</option>
           <option value="name_asc">Name (A → Z)</option>
@@ -6833,13 +6894,13 @@
       </div>
       <div class="filter-group">
         <span class="filter-label" title="Show only prospects whose latest FV carries a published '+' upside marker (capped at FV ≤ 50).">FV indicators</span>
-        <button class="chip is-multi" data-filter-overseas-fvind="upside" title="Upside (+) — at least one source published a '+' on this prospect, capped at FV ≤ 50">Upside +</button>
+        <button class="chip is-multi" data-filter-overseas-fvind="upside" title="Upside (^) — at least one source published a '+' upside mark on this prospect, capped at FV ≤ 50">Upside ^</button>
       </div>
       <div class="filter-group">
         <span class="filter-label">Sort</span>
         <select class="chip" id="overseas-sort-select">
           <option value="fv">Consensus FV (default)</option>
-          <option value="upside">Upside (+) first</option>
+          <option value="upside">Upside (^) first</option>
           <option value="age_asc">Youngest first</option>
           <option value="age_desc">Oldest first</option>
           <option value="bonus_desc">Bonus (highest, sign/proj)</option>
@@ -9209,6 +9270,11 @@ function restoreUIFromState() {
     const k = b.dataset.filterFvind;
     b.classList.toggle("active", !!(state.fvIndicators && state.fvIndicators.has(k)));
   });
+  // v30.4 — Statcast filter chip state (separate from fvIndicators).
+  document.querySelectorAll("[data-filter-statcast]").forEach(b => {
+    const k = b.dataset.filterStatcast;
+    b.classList.toggle("active", !!(state.statcastFilter && state.statcastFilter.has(k)));
+  });
   // v28 — Draft + Overseas chip / select state. Chips read from
   // state.draftPool / state.draftSide / etc.; the FV-indicator multi-
   // selects walk the Set; the sort <select>s mirror state.draftSort /
@@ -9729,6 +9795,10 @@ const state = {
   // "dropped_off", "breakout". Empty set means no filter. Multiple
   // selections use OR semantics (union).
   fvIndicators: new Set(),
+  // v30.4 — Statcast filter (set of tier keys: "elite" | "above").
+  // Independent of fvIndicators so the user reads scout-side signals
+  // (FV indicators) separately from stats-derived signals (Statcast).
+  statcastFilter: new Set(),
   // Tool-grade filter — restrict to prospects whose specified tool
   // grade meets a minimum threshold. `toolFilterKey` is "off" (default),
   // "any" (matches the threshold across any single tool), or a canonical
@@ -9939,13 +10009,19 @@ function getFilteredActives() {
       if (state.fvIndicators.has("upside")) {
         if (fvBadgeUpsideClass(p)) return true;
       }
-      // v29 — Statcast+ ≥ 115 (top-quintile composite vs the
-      // side-matched pool). Mirrors the new SC+ chip on expanded
-      // density. Players without tracked Statcast data fall out.
-      if (state.fvIndicators.has("scplus")) {
-        const sp = getStatcastPlus(p);
-        if (sp != null && sp >= 115) return true;
-      }
+      return false;
+    });
+  }
+  // v30.4 — Statcast filter moved out of fvIndicators. Stats-derived
+  // signals get their own chip group. OR semantics across multiple
+  // SC+ tiers (elite | above) so "show me anything elite OR above"
+  // is one click.
+  if (state.statcastFilter && state.statcastFilter.size) {
+    pool = pool.filter(p => {
+      const sp = getStatcastPlus(p);
+      if (sp == null) return false;
+      if (state.statcastFilter.has("elite") && sp >= 130) return true;
+      if (state.statcastFilter.has("above") && sp >= 115) return true;
       return false;
     });
   }
@@ -9970,7 +10046,17 @@ function getFilteredActives() {
   // 60 FV with 65 SPD beats a 50 FV with 65 SPD.
   if (state.toolSortKey && state.toolSortKey !== "off") {
     const tk = state.toolSortKey;
+    // v30.4 — "composite_overall" key reads the 20-80 power-mean
+    // composite that the per-prospect cards already display in the
+    // expanded-density tool strip. Lets the user rank by overall
+    // toolsiness directly from this dropdown without flipping the
+    // main sort to "tool". Other keys still read off the per-tool
+    // grade map / per-snapshot tools_consensus as before.
     const _toolVal = (p) => {
+      if (tk === "composite_overall") {
+        const v = (p.tools || {}).composite_overall;
+        return typeof v === "number" && isFinite(v) ? v : null;
+      }
       const tg = (p.tools && p.tools.grades) || {};
       let v = tg[tk];
       if (v == null && p.points && p.points.length) {
@@ -10617,7 +10703,7 @@ function renderActives() {
           <span class="headshot-stack">${headshotHTML(p, 64)}${optionsDotsHTML(p)}</span>
           <div class="player-name-stack" style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
-            ${playerMetaHTML(p, { suppressHandedness: true })}
+            ${playerMetaHTML(p)}
           </div>
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
@@ -15576,7 +15662,14 @@ function _physChipColor(value, poolStat) {
 
 function physClusterHTML(p) {
   const phys = _getPhysicalProfile(p);
-  const ht  = phys.height_display
+  // v30.3 — FanGraphs ships height_display in the form "6' 1" with a
+  // literal space between the feet and the inches; rendered inside
+  // the nowrap chip the space reads as an awkward 6'   1 gap. Strip
+  // the internal whitespace so the value reads as a single token
+  // ("6'1"). The formatted-from-inches fallback already lacks the
+  // space; this just normalizes the scraped form to match.
+  const _normHt = (s) => typeof s === "string" ? s.replace(/\s+/g, "") : s;
+  const ht  = _normHt(phys.height_display)
               || (phys.height_in
                   ? `${Math.floor(phys.height_in/12)}'${phys.height_in%12}"`
                   : "—");
@@ -15604,16 +15697,32 @@ function physClusterHTML(p) {
   const chip = (val, col, tip) =>
     `<span class="phys-chip" style="color:${col.fg};border-color:${col.bd};" title="${escapeHtml(tip)}">${escapeHtml(val)}</span>`;
 
-  // v30 — B/T chip redesign. Role-specific primary chip (LHB/RHB/SHB
-  // for hitters, LHP/RHP for pitchers) plus a secondary chip with the
-  // OTHER side (T R / T L for hitters; B R / B L / B S for pitchers).
-  // The primary chip surfaces the role+handedness in one read — "LHP"
-  // is more informative than "B L T L" for a pitcher who matters
-  // mostly for his arm. Neutral palette (no red/green) so handedness
-  // doesn't read as a positive / negative indicator.
+  // v30.4 — B/T chip pair lifted out of the phys cluster into
+  // handednessChipPairHTML so the same renderer can be placed inline
+  // with the age chip in playerMetaHTML (the meta line is the right
+  // home for handedness — it belongs with role/age, not with
+  // height/weight). The cluster no longer renders B/T at all; if
+  // both sides happen to be missing data we just paint HT/WT/BMI.
   const hand = _getHandedness(p);
+  const tip = `Height: ${ht} · Weight: ${wt} lbs · BMI: ${bmi} · Bats ${hand.bats || "?"} / Throws ${hand.throws || "?"} · phys vs ${_bucketLabel}`;
+  return `<div class="phys-cluster desktop-only" title="${escapeHtml(tip)}">`
+       + chip(ht, htCol, htTip)
+       + chip(wt, wtCol, wtTip)
+       + chip(bmi, bmCol, bmTip)
+       + `</div>`;
+}
+
+// v30.4 — Shared handedness chip pair. Role-specific primary chip
+// (LHB/RHB/SHB for hitters; LHP/RHP for pitchers) + secondary chip
+// with the OTHER side (T R / T L for hitters; B R / B L / B S for
+// pitchers). Lives next to the age chip in playerMetaHTML so the
+// "role + handedness" read sits in one line, freeing the phys cluster
+// for HT/WT/BMI alone. Neutral palette (violet / amber / cyan) so
+// handedness doesn't read as positive / negative.
+function handednessChipPairHTML(p) {
+  const hand = _getHandedness(p);
+  if (!hand.bats && !hand.throws) return "";
   const isPitcherP = !!(p.statline && p.statline.is_pitcher)
-                    || (positionBucket(p.position) || "").endsWith("P")
                     || ["SP","RP","SIRP","MIRP","P"].includes(positionBucket(p.position));
   const handColor = side =>
     side === "L" ? "var(--neon-violet)" :
@@ -15634,7 +15743,7 @@ function physClusterHTML(p) {
     }
     const c = handColor(side);
     const sideGlyph = side || "?";
-    return `<span class="phys-hand-glyph" style="color:${c};border-color:${c}66;" title="${escapeHtml(longLabel)}">${sideGlyph}${suffix}</span>`;
+    return `<span class="hand-chip" style="color:${c};border-color:${c}66;" title="${escapeHtml(longLabel)}">${sideGlyph}${suffix}</span>`;
   })();
   const secondaryChip = (() => {
     let label, side, tip;
@@ -15647,16 +15756,9 @@ function physClusterHTML(p) {
     }
     const c = handColor(side);
     const v = side || "—";
-    return `<span class="phys-hand-glyph" style="color:${c};border-color:${c}66;" title="${escapeHtml(tip)}">${label}<span class="phys-hand-side">${escapeHtml(v)}</span></span>`;
+    return `<span class="hand-chip" style="color:${c};border-color:${c}66;" title="${escapeHtml(tip)}">${label}<span class="hand-chip-side">${escapeHtml(v)}</span></span>`;
   })();
-
-  const tip = `Height: ${ht} · Weight: ${wt} lbs · BMI: ${bmi} · Bats ${hand.bats || "?"} / Throws ${hand.throws || "?"} · phys vs ${_bucketLabel}`;
-  return `<div class="phys-cluster desktop-only" title="${escapeHtml(tip)}">`
-       + chip(ht, htCol, htTip)
-       + chip(wt, wtCol, wtTip)
-       + chip(bmi, bmCol, bmTip)
-       + `<span class="phys-hand-pair">${primaryChip}${secondaryChip}</span>`
-       + `</div>`;
+  return `<span class="hand-chip-pair">${primaryChip}${secondaryChip}</span>`;
 }
 
 
@@ -17077,6 +17179,11 @@ document.addEventListener("click", (e) => {
         state.fvIndicators.delete(key.slice(3));
       }
       break;
+    case key.startsWith("sc:"):
+      if (state.statcastFilter && state.statcastFilter.delete) {
+        state.statcastFilter.delete(key.slice(3));
+      }
+      break;
   }
   if (needsListPagesReset) resetListPages();
   restoreUIFromState();
@@ -17461,24 +17568,23 @@ function playerMetaHTML(p, opts = {}) {
     if (ordered.length === 1) return `<b>${escapeHtml(ordered[0])}</b>`;
     return `<b>${escapeHtml(ordered[0])}</b> / ${ordered.slice(1).map(escapeHtml).join(" / ")}`;
   })();
-  // v17 — Handedness chip without B/T prefix. The slash separator
-  // already implies "bats / throws"; the prefix was redundant noise.
-  // v19 — suppressHandedness opt-in for list rows that surface B/T
-  // via the Ht·Wt·BMI column (handedness now lives there for actives,
-  // watchlist, injured, recently acquired). Detail pages and
-  // farm-roster keep showing it in the meta line.
-  let btChip = "";
-  if (!suppressHandedness) {
-    const _hand = _getHandedness(p);
-    if (_hand.bats || _hand.throws) {
-      const _bt = `${_hand.bats || "—"}/${_hand.throws || "—"}`;
-      btChip = `<span class="row-tag" style="margin-left:6px;font-size:9px;color:var(--text-tertiary);border-color:var(--border-light);background:transparent;font-family:var(--font-mono);" title="Bats ${_hand.bats || "?"} / Throws ${_hand.throws || "?"} (FanGraphs)">${escapeHtml(_bt)}</span>`;
-    }
-  }
+  // v30.4 — B/T chips moved INLINE with the age chip on every row.
+  // v30.5 — Age + B/T wrapped in ONE .age-hand-cluster inline-flex
+  // wrapper so they stay glued together when the meta line wraps:
+  // previously, narrower-position rows kept age on line 1 with
+  // pos/org while B/T fell to line 2, splitting the lockup. The
+  // cluster also drops the legacy `margin-left` off the .age-tag
+  // (the wrapper owns the gap to pos/org now) so age + B/T sit at
+  // identical x-positions across every row regardless of position
+  // string length.
+  const btChip = suppressHandedness ? "" : handednessChipPairHTML(p);
+  const ageHand = (ageTag || btChip)
+    ? `<span class="age-hand-cluster">${ageTag}${btChip}</span>`
+    : "";
   // ilTag dropped from the meta line — same signal renders as the
   // healthBadgeHTML inline pill (in _inlineBadgeStrip). Showing both
   // duplicated IL state per row. The pill is more glanceable.
-  return `<div class="player-meta">${positionLabel} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${ageTag}${btChip}${rosterTag}</div>`;
+  return `<div class="player-meta">${positionLabel} · ${teamLogoHTML(p.org, "sm")}<span>${escapeHtml(p.org ?? "—")}</span>${ageHand}${rosterTag}</div>`;
 }
 
 // "Current level" resolver — returns the player's most-recent assignment
@@ -17877,6 +17983,7 @@ function activeFilterCount() {
   // active list; both deserve counting + a chip in the active-filters
   // strip. Each selected FV indicator counts individually.
   if (state.fvIndicators && state.fvIndicators.size) n += state.fvIndicators.size;
+  if (state.statcastFilter && state.statcastFilter.size) n += state.statcastFilter.size;
   if (state.search) n++;
   return n;
 }
@@ -17908,6 +18015,9 @@ function renderActiveFiltersStrip() {
   if (state.spreadFilter && state.spreadFilter !== "all") chip("Spread", state.spreadFilter, "spread");
   if (state.fvIndicators && state.fvIndicators.size) {
     for (const ind of state.fvIndicators) chip("FV", ind, `fv:${ind}`);
+  }
+  if (state.statcastFilter && state.statcastFilter.size) {
+    for (const tier of state.statcastFilter) chip("Statcast", `SC+ ${tier}`, `sc:${tier}`);
   }
   if (state.toolFilterKey && state.toolFilterKey !== "off" && state.toolFilterMin > 0) {
     const label = toolAbbrev ? toolAbbrev(state.toolFilterKey).toUpperCase() : state.toolFilterKey;
@@ -28749,6 +28859,21 @@ function attachHandlers() {
       render();
     });
   });
+  // v30.4 — Statcast filter chip group (multi-select, OR semantics).
+  // Same shape as the FV-indicator handler above but stored on its
+  // own state slot so the two filter families don't interfere.
+  document.querySelectorAll("[data-filter-statcast]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.filterStatcast;
+      if (!key) return;
+      if (!state.statcastFilter) state.statcastFilter = new Set();
+      if (state.statcastFilter.has(key)) state.statcastFilter.delete(key);
+      else state.statcastFilter.add(key);
+      btn.classList.toggle("active", state.statcastFilter.has(key));
+      resetListPages();
+      render();
+    });
+  });
 
   // v28 — Generic collapsible-bar toggle. Any element with
   // data-collapse-target="<id>" flips the target's .is-open class +
@@ -29077,6 +29202,7 @@ function _resetPageFilters(page) {
     state.spreadFilter   = "all";
     state.healthFilter   = "all";
     state.fvIndicators   = new Set();
+    state.statcastFilter = new Set();
     state.toolFilterKey  = "off";
     state.toolFilterMin  = 0;
     state.search         = "";

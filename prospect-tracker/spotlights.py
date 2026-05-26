@@ -1413,7 +1413,18 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     # take over. Tunable; sized to admit "the bat slumped a little but
     # scout still likes the upside" while rejecting "perf collapsed."
     _upside_perf_floor = -0.04
-    if (perf_delta is None) or (perf >= _upside_perf_floor):
+    # v30.5 — FV ≤ 50 cap (matches the upside-indicator behavior on
+    # FV badges). The "+" upside marker only signals untapped potential
+    # for sub-50 grades; 55+ / 60+ tiers have already realized their
+    # upside, so flagging a "+ upside" driver on a 52-FV prospect
+    # (Ethan Holliday case) reads as a false positive. Driver fires
+    # only when the prospect's current consensus FV is at or below the
+    # cap; the underlying source events are still preserved on the
+    # payload for tooltips elsewhere.
+    _UPSIDE_FV_CAP = 50.0
+    _fv_for_upside = _fv_for_floor  # already resolved earlier in this fn
+    _fv_under_cap = (_fv_for_upside is not None and _fv_for_upside <= _UPSIDE_FV_CAP)
+    if _fv_under_cap and ((perf_delta is None) or (perf >= _upside_perf_floor)):
         try:
             _pts = p.get("points") or []
             from storage import _detect_upside_added_events as _detect_upside
