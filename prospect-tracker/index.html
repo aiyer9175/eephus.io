@@ -7662,13 +7662,13 @@
     <div class="filter-bar collapsible-filter-bar" id="farm-sort-bar" style="flex-wrap:wrap;gap:6px;">
       <div class="filter-group">
         <span class="filter-label">Sort by</span>
-        <button class="chip" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% debut pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
+        <button class="chip active" data-farm-sort="farm_rank" title="Composite farm grade (v31 tree): 12% Acquisition Strategy + 50% Development + 18% Financial + 20% MLB Production — letter-graded across the 30 orgs. Default sort.">Farm grade</button>
         <button class="chip" data-farm-sort="top_end" title="Tiered-FV sum of the org's top 5 prospects — an 80 is worth ~100x a 40">Top-end</button>
         <button class="chip" data-farm-sort="depth" title="Tiered-FV sum of prospects #6-25">Depth</button>
         <!-- Single Trajectory chip — sorts by DvM+ for whichever window
              is selected in the right-hand "Development window" picker, so
              three chips (one per window) would just duplicate that control. -->
-        <button class="chip active" data-farm-sort="trajectory"
+        <button class="chip" data-farm-sort="trajectory"
                 title="Sort by DvM+ for the currently selected development window (1y / 3y / 6y, picked on the right). 6y is the default and principal signal. Acquisitions + debuts are nullified — pure development of prospects already in the system.">Trajectory (DvM+)</button>
         <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted debuts in the trailing 12 months">Grad pipeline</button>
         <button class="chip" data-farm-sort="ifa_spend_pct" title="IFA's share of total Draft+IFA spending over the trailing 3 years — orgs that allocate the highest percentage of their amateur-acquisition dollars to international free agents rise to the top">IFA Spending %</button>
@@ -9844,7 +9844,7 @@ function syncToURL() {
   if (state.spreadFilter && state.spreadFilter !== "all") p.set("spread", state.spreadFilter);
   if (state.density     && state.density !== "compact") p.set("density", state.density);
   if (state.search)                       p.set("q",     state.search);
-  if (state.farmSort    !== "trajectory") p.set("farm",  state.farmSort);
+  if (state.farmSort    !== "farm_rank") p.set("farm",  state.farmSort);
   if (state.farmViewMode && state.farmViewMode !== "table") p.set("farmview", state.farmViewMode);
   if (state.rosterSort  && state.rosterSort  !== "fv")    p.set("rsort", state.rosterSort);
   if (state.glossaryCat && state.glossaryCat !== "all")    p.set("gcat", state.glossaryCat);
@@ -10092,7 +10092,7 @@ function goHome() {
   if (state.sort !== "fv")        p.set("sort", state.sort);
   if (state.stockFilter !== "all") p.set("stock", state.stockFilter);
   if (state.search)               p.set("q", state.search);
-  if (state.farmSort !== "trajectory") p.set("farm", state.farmSort);
+  if (state.farmSort !== "farm_rank") p.set("farm", state.farmSort);
   if (state.formWindow !== "3y")          p.set("formw", state.formWindow);
   if (state.spotlightBucket !== "hot") p.set("bucket", state.spotlightBucket);
   _pushHash(p);
@@ -11085,10 +11085,12 @@ const state = {
   // still shows the precise published position.
   posFilter: "all",
   sort: "fv",
-  // v27 — Default sort is DvM+ (trajectory). The user prefers the
-  // development-pace lens as the canonical entry-point view; Farm Rank
-  // is still one click away via the chip strip.
-  farmSort: "trajectory",
+  // v31 — Default sort flipped back to Farm Rank now that the v31 tree
+  // overhaul gives the grade a richer signal mix (Health Mgmt + HOF-
+  // track + Statcast Quality leaves added). The composite letter is
+  // the canonical entry-point lens; DvM+/trajectory is still one click
+  // away on the chip strip for users who want the development-pace view.
+  farmSort: "farm_rank",
   // Per-farm-detail roster sort: FV (default) / avg_rank / age / eta /
   // tool / surplus. Persisted in the URL so a sort choice survives
   // reloads + shared links.
@@ -21931,9 +21933,12 @@ function makeFarmReportCard(org) {
   const n = (DATA.org_summary || []).length || 30;
 
   // Display weights (must match storage.FARM_TREE_WEIGHT_*).
-  // v5: Development solo-top at 40%, MLB Production second at 30%,
-  // Acquisition + Financial tied as supporting columns at 15% each.
-  const W = { acquisition_strategy: 12.5, development: 50, financial: 12.5, mlb_production: 25 };
+  // v31: Acquisition 12 / Development 50 / Financial 18 / MLB Prod 20.
+  // Development trimmed 55→50 to make room for new Health Mgmt leaf;
+  // MLB Production bumped 15→20 now that HOF-track joins (forward-
+  // looking ceiling signal). Acquisition + Financial nudged slightly
+  // to balance.
+  const W = { acquisition_strategy: 12, development: 50, financial: 18, mlb_production: 20 };
 
   // Format helpers for leaf score values.
   const fmtSignedWag = v => v != null ? `WAG ${v >= 0 ? '+' : ''}${v.toFixed(2)}` : '—';
@@ -22200,11 +22205,62 @@ function makeFarmReportCard(org) {
       ${bar('StatcastDvM+', 20, sc)}
     </div>${_posBucketGrid}`;
   };
+  // v31 — Health Management leaf under Development. Captures how
+  // well the org keeps prospects healthy / available — composite of
+  // IL%-current, avg 12-month IL days, and post-TJ rate (all inverted
+  // so LOWER burden = HIGHER grade). Data feeds straight off the
+  // org's existing health_burden roll-up.
+  const _healthLeaf = t.dev_health_mgmt || {};
+  const _healthFmt = leaf => {
+    const ilPct = leaf.il_pct_current;
+    const tj    = leaf.post_tj_pct;
+    const days  = leaf.il_days_mean;
+    if (ilPct == null && tj == null && days == null) return '—';
+    const parts = [];
+    if (ilPct != null) parts.push(`${(ilPct * 100).toFixed(0)}% IL`);
+    if (days  != null) parts.push(`${days.toFixed(0)}d avg`);
+    if (tj    != null) parts.push(`${(tj * 100).toFixed(0)}% TJ`);
+    return parts.join(' · ');
+  };
+  const _healthTooltip = (() => {
+    const ilPct = _healthLeaf.il_pct_current;
+    const tj    = _healthLeaf.post_tj_pct;
+    const days  = _healthLeaf.il_days_mean;
+    const n     = _healthLeaf.active_count;
+    if (n == null) return 'Insufficient roster sample to score health management.';
+    return `Roster health composite (LOWER burden = HIGHER grade). Across ${n} active prospect${n === 1 ? '' : 's'}: ` +
+           `${_healthLeaf.il_current_count ?? 0} currently on IL (${ilPct != null ? (ilPct * 100).toFixed(1) + '%' : '—'}), ` +
+           `${days != null ? days.toFixed(1) + ' avg IL days / active over trailing 12mo' : '— avg IL days'}, ` +
+           `${_healthLeaf.post_tj_count ?? 0} with prior Tommy John (${tj != null ? (tj * 100).toFixed(1) + '%' : '—'}). ` +
+           `All three inputs are inverted before z-scoring; the leaf grade reflects how clean the org's pipeline reads on injury exposure.`;
+  })();
+  // v31 — Statcast Quality leaf under Development. Org-wide
+  // aggregate SC+ across graded actives, as a standalone signal
+  // sibling to Hitter / Pitcher DvM+ (whose SC+ input is per-bucket
+  // and weighted at 20% of their internal blend). The standalone
+  // leaf gives SC+-strong systems distinct credit in the parent
+  // Development grade instead of compressing the signal into the
+  // DvM+ leaves only.
+  const _scqLeaf = t.dev_statcast_quality || {};
+  const _scqFmt = leaf => {
+    const m = leaf.mean;
+    if (m == null) return '—';
+    const h = leaf.hitter_mean, p = leaf.pitcher_mean;
+    const parts = [`${Math.round(m)} all`];
+    if (h != null) parts.push(`${Math.round(h)} hit`);
+    if (p != null) parts.push(`${Math.round(p)} pit`);
+    return parts.join(' · ');
+  };
+  const _scqTooltip = _scqLeaf.mean != null
+    ? `Aggregate Statcast+ across ${_scqLeaf.graded_count ?? 0} graded actives (${_scqLeaf.hitter_count ?? 0} hitters / ${_scqLeaf.pitcher_count ?? 0} pitchers). 100 = league mean, +10 = 1σ. The same SC+ signal flows into Hitter/Pitcher DvM+ at the per-bucket level (20% of those leaves' internal blend); this leaf surfaces it as a standalone voice so SC+-strong systems get distinct credit in the Development parent.`
+    : `Insufficient graded actives (needs ≥5 with Statcast+ on file).`;
   const devSubs =
     subCell('Hitter DvM+',  'dev_hitter',  'dev_hitter',  fmtDvm, _devHitterValue,  _devTooltip(_devHitterLeaf,  'Hitter')) +
     _devNestedBars(_devHitterLeaf, 'Hitter') +
     subCell('Pitcher DvM+', 'dev_pitcher', 'dev_pitcher', fmtDvm, _devPitcherValue, _devTooltip(_devPitcherLeaf, 'Pitcher')) +
-    _devNestedBars(_devPitcherLeaf, 'Pitcher');
+    _devNestedBars(_devPitcherLeaf, 'Pitcher') +
+    subCell('Statcast Quality', 'dev_statcast_quality', 'dev_statcast_quality', _scqFmt, _scqLeaf, _scqTooltip) +
+    subCell('Health Mgmt',  'dev_health_mgmt', 'dev_health_mgmt', _healthFmt, _healthLeaf, _healthTooltip);
 
   // v28 — Financial branch: 5 leaves, each measuring a distinct $-
   // efficiency lens (no overlap with Acquisition Performance leaves,
@@ -22286,6 +22342,21 @@ function makeFarmReportCard(org) {
   const _hitProd = t.mlb_hitter_production  || t.mlb_hitter_wag  || {};
   const _pitProd = t.mlb_pitcher_production || t.mlb_pitcher_wag || {};
   const fmtWag = v => v != null ? `${v >= 0 ? '+' : ''}${v.toFixed(2)} WAG` : '—';
+  // v31 — HOF-track leaf. Sibling ceiling signal to Conviction —
+  // counts grads whose peak single season WAR ≥ 5 (the loose
+  // "All-Star season" threshold). A 2-HOF-track org reads as having
+  // demonstrated more ceiling than a 5-Conviction-only org.
+  const hofTrackLeaf = t.mlb_production_hof_track || {};
+  const _hofCount = hofTrackLeaf.hof_count;
+  const _hofNames = (hofTrackLeaf.hof_names || []).slice(0, 5);
+  const hofTooltip = _hofCount != null
+    ? (_hofCount > 0
+        ? `${_hofCount} HOF-track grad${_hofCount === 1 ? '' : 's'} — graduates the org developed who logged a single season ≥${hofTrackLeaf.threshold ?? 5} WAR (≈All-Star-season threshold). ${_hofNames.length ? `Top: ${_hofNames.join(', ')}.` : ''} Peak season recorded: ${hofTrackLeaf.peak_season_war != null ? hofTrackLeaf.peak_season_war.toFixed(1) + ' WAR' : '—'}.`
+        : `No HOF-track grads yet (none with a single season ≥${hofTrackLeaf.threshold ?? 5} WAR). Stronger ceiling signal than Conviction's 3-WAR threshold; many orgs have one without the other.`)
+    : `No graduate sample.`;
+  const hofFmt = v => v == null ? '—'
+    : v === 0 ? '0 HOF-track'
+    : `${v} HOF-track`;
   const mlbSubs =
     subCell('Hitter Production',      'mlb_hitter_production',     'mlb_hitter_production',     fmtWarPerYr, _hitProd.war_per_yr_mean,
             `WAR/yr across debuted hitters. ${fmt3input('mlb_hitter_wag')}`) +
@@ -22295,82 +22366,153 @@ function makeFarmReportCard(org) {
     subCell('Boom Rate',              'mlb_production_boom_pct',   'mlb_production_boom_pct',   fmtPctRaw,   boomLeaf.boom_pct, boomTooltip) +
     subCell('Bust Rate',              'mlb_production_bust_pct',   'mlb_production_bust_pct',   fmtPctRaw,   bustLeaf.bust_pct, bustTooltip) +
     subCell('Top-3 Grad WAR/yr',      'mlb_production_top_grads',  'mlb_production_top_grads',  v => v != null ? v.toFixed(2) + ' WAR/yr' : '—', topGrads.top3_war_per_yr, topGradsTooltip) +
-    subCell('Conviction',             'mlb_production_conviction', 'mlb_production_conviction', convFmt,     _starCount, convTooltip);
+    subCell('Conviction',             'mlb_production_conviction', 'mlb_production_conviction', convFmt,     _starCount, convTooltip) +
+    subCell('HOF-track Grads',        'mlb_production_hof_track',  'mlb_production_hof_track',  hofFmt,      _hofCount, hofTooltip);
 
   // v18 — Conviction cap removed from storage.py so the badge no longer
   // applies. Kept the variable as an empty string to avoid disturbing
   // the downstream template literal that interpolates ${cappedBadge}.
   const cappedBadge = '';
 
-  // ── Horizontal SVG decision tree ──
-  // Root rectangle (left) → 4 branch circles (middle) → leaf bars (right).
-  // Each leaf displays: name · letter grade · metric value as the
-  // "payoff" of that path. Mirrors a probability/decision-tree
-  // visualization. At narrow viewports (<860px) CSS hides the SVG and
-  // falls back to the accordion below.
+  // ── Horizontal SVG decision tree (v31 — 3-column with sub-leaves) ──
+  // Root rectangle (left) → 4 branch circles → leaf bars → sub-leaf
+  // chips. Each leaf now expands to fit its sub_leaves (1-3 sub-rows
+  // per leaf) so the third column shows WHAT the leaf is made of —
+  // pos-bucket DvM+ values under Hitter/Pitcher Dev, WAR-in / WAR-out
+  // under Trade Acumen, the IL%/TJ%/days breakdown under Health Mgmt,
+  // etc. Layout uses the full horizontal page real estate (was capped
+  // at ~830px; now stretches to ~1200px). At narrow viewports CSS
+  // still hides the SVG and the accordion fallback takes over.
   const svgTree = (() => {
-    // Each branch declares its leaves up front so geometry computes from
-    // a single source of truth. `metric` is the short value shown next to
-    // each leaf bar.
+    // Format helpers for sub-leaf values. Mirror the kind enum in
+    // storage._attach_sub_leaves: dvm, war, pct, usd, count.
+    const _fmtSub = (s) => {
+      if (!s || s.value == null) return '—';
+      switch (s.kind) {
+        case 'dvm':   return String(Math.round(s.value));
+        case 'war':   return (s.value >= 0 ? '+' : '') + Number(s.value).toFixed(2) + ' WAR';
+        case 'pct':   return (Number(s.value) * 100).toFixed(1) + '%';
+        case 'usd':   return '$' + Number(s.value).toFixed(2) + 'M';
+        case 'count': return String(Math.round(s.value));
+        case 'warpm': return Number(s.value).toFixed(2) + ' WAR/$M';
+        default:      return String(s.value);
+      }
+    };
+    // Tone color for sub-leaf based on kind + value:
+    //   - dvm: green if ≥100, red below
+    //   - pct/count (burden context): neutral (no tinting)
+    //   - war: green if positive, red if negative
+    //   - everything else: neutral secondary
+    const _toneSub = (s) => {
+      if (!s || s.value == null) return 'var(--text-tertiary)';
+      if (s.kind === 'dvm') {
+        return s.value >= 100 ? 'var(--up)' : 'var(--down)';
+      }
+      if (s.kind === 'war') {
+        return s.value > 0 ? 'var(--up)' : s.value < 0 ? 'var(--down)' : 'var(--text-secondary)';
+      }
+      return 'var(--text-secondary)';
+    };
+    // Each branch declares its leaves up front so geometry computes
+    // from a single source of truth. `metric` = short value shown
+    // next to each leaf bar; `subLeaves` = sub-leaf array pulled from
+    // storage's _attach_sub_leaves emission (informational, doesn't
+    // change parent grade).
     const branchSpecs = [
       {
         key: 'acquisition_strategy', label: 'Acquisition', weight: W.acquisition_strategy,
         leaves: [
-          { label: 'Draft Performance',  letterKey: 'acq_draft',  metric: draftFmt(draftMetric) },
-          { label: 'IFA Performance',    letterKey: 'acq_ifa',    metric: fmtWarPerYr((t.acq_ifa || {}).war_per_yr_mean) },
-          { label: 'Trade Acumen',       letterKey: 'tx_trades',  metric: fmtTradeWarDelta(tradeLeaf.war_delta) },
-          { label: 'Waiver Claims',      letterKey: 'tx_waivers', metric: fmtWaiverHitRate(waiverLeaf.hit_rate) },
+          { label: 'Draft Performance',  letterKey: 'acq_draft',  metric: draftFmt(draftMetric),
+            subLeaves: (t.acq_draft || {}).sub_leaves || [] },
+          { label: 'IFA Performance',    letterKey: 'acq_ifa',    metric: fmtWarPerYr((t.acq_ifa || {}).war_per_yr_mean),
+            subLeaves: (t.acq_ifa || {}).sub_leaves || [] },
+          { label: 'Trade Acumen',       letterKey: 'tx_trades',  metric: fmtTradeWarDelta(tradeLeaf.war_delta),
+            subLeaves: (t.tx_trades || {}).sub_leaves || [] },
+          { label: 'Waiver Claims',      letterKey: 'tx_waivers', metric: fmtWaiverHitRate(waiverLeaf.hit_rate),
+            subLeaves: (t.tx_waivers || {}).sub_leaves || [] },
         ],
       },
       {
         key: 'development', label: 'Development', weight: W.development,
         leaves: [
-          { label: 'Hitter DvM+',  letterKey: 'dev_hitter',  metric: fmtDvm(_devHitterValue) },
-          { label: 'Pitcher DvM+', letterKey: 'dev_pitcher', metric: fmtDvm(_devPitcherValue) },
+          { label: 'Hitter DvM+',  letterKey: 'dev_hitter',  metric: fmtDvm(_devHitterValue),
+            subLeaves: (t.dev_hitter || {}).sub_leaves || [] },
+          { label: 'Pitcher DvM+', letterKey: 'dev_pitcher', metric: fmtDvm(_devPitcherValue),
+            subLeaves: (t.dev_pitcher || {}).sub_leaves || [] },
+          { label: 'Statcast Quality', letterKey: 'dev_statcast_quality', metric: _scqFmt(_scqLeaf),
+            subLeaves: (t.dev_statcast_quality || {}).sub_leaves || [] },
+          { label: 'Health Mgmt',  letterKey: 'dev_health_mgmt', metric: _healthFmt(_healthLeaf),
+            subLeaves: (t.dev_health_mgmt || {}).sub_leaves || [] },
         ],
       },
       {
         key: 'financial', label: 'Financial', weight: W.financial,
         leaves: [
-          { label: 'Active Surplus',        letterKey: 'fin_active_surplus',        metric: fmtSurplusPerProspect(_surplusPerProspect) },
-          { label: 'Grad-Contract Surplus', letterKey: 'fin_contract_surplus',      metric: fmtUsdPerYr((t.fin_contract_surplus || {}).mean_usd_per_yr) },
-          { label: 'WAR per $M',            letterKey: 'fin_war_per_m',             metric: fmtWarPerM(finWarLeaf.value) },
-          { label: 'Draft Pool Efficiency', letterKey: 'fin_draft_pool_efficiency', metric: fmtWarPerM(draftEffLeaf.war_per_m_pool) },
-          { label: 'IFA ROI',               letterKey: 'fin_ifa_roi',               metric: fmtWarPerM(ifaRoiLeaf.war_per_m_ifa) },
+          { label: 'Active Surplus',        letterKey: 'fin_active_surplus',        metric: fmtSurplusPerProspect(_surplusPerProspect),
+            subLeaves: (t.fin_active_surplus || {}).sub_leaves || [] },
+          { label: 'Grad-Contract Surplus', letterKey: 'fin_contract_surplus',      metric: fmtUsdPerYr((t.fin_contract_surplus || {}).mean_usd_per_yr), subLeaves: [] },
+          { label: 'WAR per $M',            letterKey: 'fin_war_per_m',             metric: fmtWarPerM(finWarLeaf.value), subLeaves: [] },
+          { label: 'Draft Pool Efficiency', letterKey: 'fin_draft_pool_efficiency', metric: fmtWarPerM(draftEffLeaf.war_per_m_pool), subLeaves: [] },
+          { label: 'IFA ROI',               letterKey: 'fin_ifa_roi',               metric: fmtWarPerM(ifaRoiLeaf.war_per_m_ifa), subLeaves: [] },
         ],
       },
       {
         key: 'mlb_production', label: 'MLB Production', weight: W.mlb_production,
         leaves: [
-          { label: 'Hitter Production',   letterKey: 'mlb_hitter_production',   metric: fmtWarPerYr(_hitProd.war_per_yr_mean) },
-          { label: 'Pitcher Production',  letterKey: 'mlb_pitcher_production',  metric: fmtWarPerYr(_pitProd.war_per_yr_mean) },
-          { label: 'Talent Translation',  letterKey: 'talent_translation',      metric: fmtWag(talentTransLeaf.wag_mean) },
-          { label: 'Boom Rate',           letterKey: 'mlb_production_boom_pct', metric: fmtPctRaw(boomLeaf.boom_pct) },
-          { label: 'Bust Rate',           letterKey: 'mlb_production_bust_pct', metric: fmtPctRaw(bustLeaf.bust_pct) },
-          { label: 'Top-3 Grad WAR/yr',   letterKey: 'mlb_production_top_grads',  metric: topGrads.top3_war_per_yr != null ? topGrads.top3_war_per_yr.toFixed(2) + ' WAR/yr' : '—' },
-          { label: 'Conviction',          letterKey: 'mlb_production_conviction', metric: convFmt(_starCount) },
+          { label: 'Hitter Production',   letterKey: 'mlb_hitter_production',   metric: fmtWarPerYr(_hitProd.war_per_yr_mean),
+            subLeaves: (t.mlb_hitter_production || {}).sub_leaves || [] },
+          { label: 'Pitcher Production',  letterKey: 'mlb_pitcher_production',  metric: fmtWarPerYr(_pitProd.war_per_yr_mean),
+            subLeaves: (t.mlb_pitcher_production || {}).sub_leaves || [] },
+          { label: 'Talent Translation',  letterKey: 'talent_translation',      metric: fmtWag(talentTransLeaf.wag_mean), subLeaves: [] },
+          { label: 'Boom Rate',           letterKey: 'mlb_production_boom_pct', metric: fmtPctRaw(boomLeaf.boom_pct), subLeaves: [] },
+          { label: 'Bust Rate',           letterKey: 'mlb_production_bust_pct', metric: fmtPctRaw(bustLeaf.bust_pct), subLeaves: [] },
+          { label: 'Top-3 Grad WAR/yr',   letterKey: 'mlb_production_top_grads',  metric: topGrads.top3_war_per_yr != null ? topGrads.top3_war_per_yr.toFixed(2) + ' WAR/yr' : '—',
+            subLeaves: (t.mlb_production_top_grads || {}).sub_leaves || [] },
+          { label: 'Conviction',          letterKey: 'mlb_production_conviction', metric: convFmt(_starCount),
+            subLeaves: (t.mlb_production_conviction || {}).sub_leaves || [] },
+          { label: 'HOF-track Grads',     letterKey: 'mlb_production_hof_track',  metric: hofFmt(_hofCount),
+            subLeaves: (t.mlb_production_hof_track || {}).sub_leaves || [] },
         ],
       },
     ];
 
-    // Geometry. Leaves stack vertically; branches sit at the midpoint
-    // of their leaf group. Root sits at canvas midpoint.
-    const LEAF_H = 26, LEAF_GAP = 4, GROUP_GAP = 18;
-    const LEAF_W = 280;
+    // Geometry. v31 — each leaf row height grows to fit its sub-leaf
+    // stack so the third column doesn't overflow. Sub-leaves render
+    // as small chips to the right of the parent leaf bar.
+    const LEAF_H_BASE = 30;     // base leaf bar height (no subs)
+    const SUB_H = 16;           // per sub-leaf chip height
+    const SUB_GAP = 2;          // vertical gap between sub-chips
+    const ROW_PAD = 6;          // top + bottom padding inside row
+    const LEAF_GAP = 4;         // gap between sibling leaves
+    const GROUP_GAP = 18;       // gap between branch groups
+    const LEAF_W = 240;         // leaf bar width
+    const SUB_W = 340;          // sub-leaf column width
     const BRANCH_R = 32;
-    const ROOT_W = 156, ROOT_H = 92;
+    const ROOT_W = 152, ROOT_H = 92;
     const PAD_T = 18, PAD_L = 12;
-    const COL_ROOT_RIGHT = PAD_L + ROOT_W;       // 168
-    const COL_BRANCH_X = 360;                    // branch center x
-    const COL_LEAF_LEFT = 540;                   // leaf left edge
+    const COL_ROOT_RIGHT = PAD_L + ROOT_W;       // 164
+    const COL_BRANCH_X = 290;                    // branch center x
+    const COL_LEAF_LEFT = 410;                   // leaf left edge
+    const COL_SUB_LEFT = COL_LEAF_LEFT + LEAF_W + 22;  // sub-leaf left edge
 
-    // Layout leaves + compute branch centers
+    // Compute per-leaf row heights then walk vertically.
+    const rowHeight = (leaf) => {
+      const nSub = (leaf.subLeaves || []).length;
+      if (nSub === 0) return LEAF_H_BASE;
+      // Stack of nSub sub-chips needs SUB_H * nSub + SUB_GAP * (nSub-1)
+      // pixels; the row also keeps the LEAF_H_BASE minimum so single-
+      // sub-leaf leaves still read as a row, not a chip line.
+      return Math.max(LEAF_H_BASE,
+                       nSub * SUB_H + (nSub - 1) * SUB_GAP + ROW_PAD);
+    };
     let yCursor = PAD_T;
     const branchLayouts = branchSpecs.map(b => {
       const leafLayouts = b.leaves.map(leaf => {
-        const ly = yCursor + LEAF_H / 2;
-        yCursor += LEAF_H + LEAF_GAP;
-        return { ...leaf, y: ly };
+        const h = rowHeight(leaf);
+        const yTop = yCursor;
+        const ly = yCursor + h / 2;
+        yCursor += h + LEAF_GAP;
+        return { ...leaf, y: ly, yTop, h };
       });
       const branchY = (leafLayouts[0].y + leafLayouts[leafLayouts.length - 1].y) / 2;
       yCursor += GROUP_GAP;
@@ -22378,7 +22520,7 @@ function makeFarmReportCard(org) {
     });
 
     const svgH = yCursor - GROUP_GAP + PAD_T;
-    const svgW = COL_LEAF_LEFT + LEAF_W + PAD_L;
+    const svgW = COL_SUB_LEFT + SUB_W + PAD_L;
     const rootY = svgH / 2;
 
     const rootColor = gradeColor(g.overall);
@@ -22403,6 +22545,26 @@ function makeFarmReportCard(org) {
       }).join('');
     }).join('');
 
+    // Leaf → sub-leaf connector lines (thin, only when subs present).
+    const leafSubPaths = branchLayouts.map(b => {
+      const c = gradeColor(g[b.key] || '—');
+      return b.leafLayouts.map(leaf => {
+        const subs = leaf.subLeaves || [];
+        if (!subs.length) return '';
+        // One short horizontal line from the right edge of the leaf
+        // bar to the left edge of the sub-column at each sub's y.
+        const subYs = subs.map((_, i) => {
+          const stackH = subs.length * SUB_H + (subs.length - 1) * SUB_GAP;
+          const stackTop = leaf.y - stackH / 2;
+          return stackTop + i * (SUB_H + SUB_GAP) + SUB_H / 2;
+        });
+        return subYs.map(sy =>
+          `<path d="M ${COL_LEAF_LEFT + LEAF_W} ${leaf.y} L ${(COL_LEAF_LEFT + LEAF_W + COL_SUB_LEFT) / 2} ${leaf.y} L ${(COL_LEAF_LEFT + LEAF_W + COL_SUB_LEFT) / 2} ${sy} L ${COL_SUB_LEFT} ${sy}"
+                  fill="none" stroke="${c}" stroke-width="1" opacity="0.30"/>`
+        ).join('');
+      }).join('');
+    }).join('');
+
     // Root rectangle + label.
     const rootRect = `
       <rect x="${PAD_L}" y="${rootY - ROOT_H / 2}" width="${ROOT_W}" height="${ROOT_H}"
@@ -22415,9 +22577,6 @@ function makeFarmReportCard(org) {
             style="font-family:var(--font-mono);font-size:11px;fill:var(--text-secondary);">#${org.farm_rank ?? '—'} of ${n} · ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}</text>`;
 
     // Branch circles + labels.
-    // v27 — Branch label centered ABOVE the bubble (was anchored to the
-    // right of the circle, which crowded the topmost leaf bar of each
-    // group). text-anchor=middle at the bubble's center x.
     const branchNodes = branchLayouts.map(b => {
       const branchLetter = g[b.key] || '—';
       const branchRank = r[b.key];
@@ -22433,43 +22592,102 @@ function makeFarmReportCard(org) {
               style="font-family:var(--font-sans);font-size:11px;letter-spacing:0.04em;font-weight:600;fill:var(--text-primary);">${escapeHtml(b.label)}</text>`;
     }).join('');
 
-    // Leaf bars.
+    // Leaf bars (with the same height as the row band so they're
+    // visually proportional to their sub-leaf stack).
     const leafBars = branchLayouts.map(b => {
       return b.leafLayouts.map(leaf => {
         const letter = g[leaf.letterKey] || '—';
         const c = gradeColor(letter);
-        const yTop = leaf.y - LEAF_H / 2;
         return `
-          <rect x="${COL_LEAF_LEFT}" y="${yTop}" width="${LEAF_W}" height="${LEAF_H}"
+          <rect x="${COL_LEAF_LEFT}" y="${leaf.yTop}" width="${LEAF_W}" height="${leaf.h}"
                 rx="3" fill="var(--bg-secondary)" stroke="${c}" stroke-width="1" opacity="0.95"/>
-          <rect x="${COL_LEAF_LEFT}" y="${yTop}" width="4" height="${LEAF_H}"
+          <rect x="${COL_LEAF_LEFT}" y="${leaf.yTop}" width="4" height="${leaf.h}"
                 fill="${c}" opacity="0.9"/>
-          <text x="${COL_LEAF_LEFT + 12}" y="${leaf.y + 4}" text-anchor="start"
+          <text x="${COL_LEAF_LEFT + 12}" y="${leaf.y - 4}" text-anchor="start"
                 style="font-family:var(--font-sans);font-size:11px;font-weight:600;fill:var(--text-primary);">${escapeHtml(leaf.label)}</text>
-          <text x="${COL_LEAF_LEFT + LEAF_W - 8}" y="${leaf.y + 4}" text-anchor="end"
-                style="font-family:var(--font-mono);font-size:10.5px;fill:var(--text-secondary);">
+          <text x="${COL_LEAF_LEFT + 12}" y="${leaf.y + 10}" text-anchor="start"
+                style="font-family:var(--font-mono);font-size:10px;fill:var(--text-secondary);">
             <tspan style="fill:${c};font-weight:700;">${escapeHtml(letter)}</tspan>
             <tspan dx="6">${escapeHtml(leaf.metric)}</tspan>
           </text>`;
       }).join('');
     }).join('');
 
+    // Sub-leaf chips. One small bar per sub-leaf, stacked vertically
+    // centered on the parent leaf's y. Each chip shows: label · value.
+    // Color: kind-aware tone via _toneSub (dvm uses 100-anchor green/
+    // red; war signed; pct/count neutral).
+    const subChips = branchLayouts.map(b => {
+      return b.leafLayouts.map(leaf => {
+        const subs = leaf.subLeaves || [];
+        if (!subs.length) return '';
+        const stackH = subs.length * SUB_H + (subs.length - 1) * SUB_GAP;
+        const stackTop = leaf.y - stackH / 2;
+        return subs.map((s, i) => {
+          const cy = stackTop + i * (SUB_H + SUB_GAP);
+          const tone = _toneSub(s);
+          const dim = s.sparse ? 0.55 : 1;
+          const valStr = _fmtSub(s);
+          // Tooltip merges label + value + n + raw context line.
+          const tipParts = [s.label, valStr];
+          if (s.n != null) tipParts.push(`n=${s.n}`);
+          if (s.weight != null) tipParts.push(`weight ${(s.weight * 100).toFixed(0)}%`);
+          if (s.raw) tipParts.push(s.raw);
+          if (s.sparse) tipParts.push('sparse — redistributed out of headline blend');
+          const tip = tipParts.join(' · ');
+          return `
+            <g opacity="${dim}">
+              <title>${escapeHtml(tip)}</title>
+              <rect x="${COL_SUB_LEFT}" y="${cy}" width="${SUB_W}" height="${SUB_H - 1}"
+                    rx="2" fill="var(--bg-secondary)" stroke="${tone}" stroke-width="0.8" opacity="0.85"/>
+              <rect x="${COL_SUB_LEFT}" y="${cy}" width="3" height="${SUB_H - 1}"
+                    fill="${tone}" opacity="0.85"/>
+              <text x="${COL_SUB_LEFT + 8}" y="${cy + SUB_H / 2 + 3}" text-anchor="start"
+                    style="font-family:var(--font-sans);font-size:9.5px;fill:var(--text-secondary);">${escapeHtml(s.label)}</text>
+              <text x="${COL_SUB_LEFT + SUB_W - 6}" y="${cy + SUB_H / 2 + 3}" text-anchor="end"
+                    style="font-family:var(--font-mono);font-size:10px;font-weight:700;fill:${tone};">${escapeHtml(valStr)}</text>
+            </g>`;
+        }).join('');
+      }).join('');
+    }).join('');
+
     return `
       <svg class="grade-tree-svg" viewBox="0 0 ${svgW} ${svgH}" width="100%"
            preserveAspectRatio="xMidYMid meet"
-           style="display:block;max-width:${svgW}px;margin:0 auto;">
+           style="display:block;width:100%;margin:0;">
         ${rootBranchPaths}
         ${branchLeafPaths}
+        ${leafSubPaths}
         ${rootRect}
         ${branchNodes}
         ${leafBars}
+        ${subChips}
       </svg>`;
   })();
 
+  // v31 — Development window selector on the report card itself.
+  // Shares state.formWindow with the Farm-list chip strip + the
+  // existing per-leaf reactivity (Hitter / Pitcher DvM+, plus their
+  // sub-leaf bucket values, all key off `state.formWindow`). Clicking
+  // here triggers a re-render of the farm-detail page (wired in the
+  // existing `#farm-detail-body [data-form-window]` listener).
+  // Health Mgmt, HOF-track, etc. are window-agnostic (they measure
+  // historical roll-ups, not windowed development trajectories), so
+  // changing the window only affects the DvM+ family of leaves.
+  const _winActive = state.formWindow || '6y';
+  const _winChip = (lbl, val) =>
+    `<button class="chip${_winActive === val ? ' active' : ''}" data-form-window="${val}" style="font-size:10px;padding:2px 7px;letter-spacing:0.04em;">${lbl}</button>`;
+  const _windowSelector = `
+    <div style="display:flex;align-items:center;gap:6px;margin-left:auto;font-size:10px;color:var(--text-tertiary);" title="Development window — applies to Hitter DvM+, Pitcher DvM+, and their per-bucket sub-leaves. Other leaves (Health, Production, Acquisition, Financial) are window-agnostic.">
+      <span style="letter-spacing:0.06em;text-transform:uppercase;font-weight:600;">DvM+ window</span>
+      ${_winChip('1y', '1y')}${_winChip('3y', '3y')}${_winChip('6y', '6y')}
+    </div>`;
   return `
     <div class="grade-tree">
       <div class="grade-tree-composite" style="border-color:${gradeColor(g.overall)}66;background:linear-gradient(135deg, ${gradeColor(g.overall)}12, transparent);">
-        <div class="gt-comp-eyebrow">Overall farm grade · weighted composite of the 4 branches below</div>
+        <div class="gt-comp-eyebrow" style="display:flex;align-items:center;gap:8px;">Overall farm grade · weighted composite of the 4 branches below
+          ${_windowSelector}
+        </div>
         <div class="gt-comp-row">
           <span class="gt-comp-letter" style="color:${gradeColor(g.overall)};">${escapeHtml(g.overall || '—')}</span>
           <span class="gt-comp-rank">#${org.farm_rank ?? '—'} of ${n}</span>
@@ -30466,34 +30684,40 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const _rosterRankOffset = (_rosterCurPage - 1) * _rosterPageSize;
   const rosterPaginationStrip = renderPaginationStrip(_rosterCurPage, _rosterTotalItems, _rosterPageSize, "farmRoster");
   const rosterPaginationStripTop = renderPaginationStripCompact(_rosterCurPage, _rosterTotalItems, _rosterPageSize, "farmRoster");
+  // v31 — Roster row layout now matches the Active Prospects list
+  // exactly. Uses the same 7-col grid (Player+name | Rank | FV |
+  // History | MiLB | Phys cluster | ETA) plus the inline expand
+  // meta + tool strip. Click navigation handled by the global row-
+  // click delegate (looks for data-key) so no inline onclick needed.
+  // is-farm-roster grid override removed — we want exact parity.
   let rosterRows = _rosterPaged.map((p, i) => {
-    // Guard against players with empty / missing points arrays —
-    // legacy data or edge-case entries can lack `points` entirely,
-    // which used to throw on `p.points[length-1]` and abort the
-    // entire farm-detail render. Now those rows show "—" cells.
     const pts = (p && p.points) || [];
     const latest = pts.length ? pts[pts.length - 1] : null;
-    const fvLabel = latest && latest.consensus_fv_label != null
-      ? latest.consensus_fv_label
-      : "—";
-    const chart = pts.length >= 2
-      ? lazyLineChartHTML(p)
-      : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
+    const fvTier = latest && latest.consensus_fv != null
+      ? String(Math.round(latest.consensus_fv / 5) * 5)
+      : "";
+    const fvLabel = (latest && latest.consensus_fv_label != null)
+      ? latest.consensus_fv_label : "—";
     return `
-      <div class="player-row is-farm-roster" style="${orgStripe(p.org)}" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (_rosterRankOffset + i + 1)}</span></div>${rankTrendHTML(p)}</div>
-        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-          ${headshotHTML(p, 56)}
-          <div style="min-width:0;flex:1;">
-            <div class="player-name">${escapeHtml(p.player_name)}</div>
-            <div class="player-meta">${escapeHtml(p.position ?? "—")}${p.age != null ? (() => { const _c = _ageHeatColor(p.age); return `<span class="age-tag" style="color:${_c};border-color:${_c};">${p.age.toFixed(1)}yo</span>`; })() : ""}${ilTagHTML(p)}${rosterTagHTML(p)}</div>
-            <div class="player-stat-line" style="margin-top:3px;font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${rosterStatLine(p)}${rpsPlusPillHTML(p)}${scoutRatesHTML(p)}</div>
+      <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
+        <div class="player-row-col1" style="display:flex;align-items:center;gap:10px;min-width:0;">
+          <span class="headshot-stack">${headshotHTML(p, 64)}${optionsDotsHTML(p)}</span>
+          <div class="player-name-stack" style="min-width:0;flex:1;">
+            <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
+            ${playerMetaHTML(p)}
           </div>
+          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
+          <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
+          <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(fvLabel)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeChainMarks(p)}</span></div>
-        <div class="rank-cell">${p.overall_rank != null ? "#" + p.overall_rank : (p.org_rank != null ? "#" + p.org_rank + " org" : "—")}</div>
-        <div style="text-align:center;font-size:11px;color:var(--text-secondary);font-variant-numeric:tabular-nums;" title="${p.eta && p.eta.confidence ? p.eta.confidence + ' confidence' : 'ETA estimate'}">${(p.eta && p.eta.year != null) ? p.eta.year : "—"}</div>
-        <div class="line-chart-cell">${chart}</div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${p.overall_rank != null ? "#" + p.overall_rank : (p.org_rank != null ? "#" + p.org_rank : "—")}</span></div>${rankTrendHTML(p)}</div>
+        <div style="text-align:center;">${latest && latest.consensus_fv_label != null ? `<span class="fv-badge ${fvClass(fvLabel)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+        <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${pts.length >= 2 ? lazyLineChartHTML(p) : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`}</div>
+        ${makeMilbCell(p)}
+        ${physClusterHTML(p)}
+        ${makeEtaCell(p)}
+        ${playerExpandedMetaHTML(p)}
+        ${makeListRowSummary(p) ? `<div class="player-row-toolstrip">${makeListRowSummary(p)}</div>` : ""}
       </div>`;
   }).join("");
 
@@ -30510,13 +30734,16 @@ function _renderFarmDetailBody(orgCode, org, root) {
     </div>`;
   }
 
-  const rosterHeader = `<div class="col-header is-farm-roster">
-    <span style="text-align:center;">#</span>
-    <span>Player · current stats</span>
-    <span class="sort-header" data-roster-sort="fv" title="Sort by consensus FV (high to low)" style="text-align:center;">FV</span>
-    <span class="sort-header" data-roster-sort="avg_rank" title="Sort by average rank across sources" style="text-align:center;">Rank</span>
-    <span class="sort-header" data-roster-sort="eta" title="Sort by estimated MLB arrival year (soonest first)" style="text-align:center;">ETA</span>
-    <span style="text-align:center;">FV history</span>
+  // v31 — Header mirrors the Active Prospects column layout (7 cols)
+  // so the Roster tab reads as a per-org slice of the global list.
+  const rosterHeader = `<div class="col-header">
+    <span class="sort-header" data-roster-sort="name" title="Player name + meta · click to sort">Player · pos · age · B/T</span>
+    <span class="sort-header" data-roster-sort="avg_rank" title="Sort by rank" style="text-align:center;">Rank</span>
+    <span class="sort-header" data-roster-sort="fv" title="Sort by consensus FV (high to low)" style="text-align:center;">FV Grade</span>
+    <span class="desktop-only" style="text-align:center;" title="FV history sparkline">FV history</span>
+    <span class="desktop-only" style="text-align:center;">MiLB · age vs. level</span>
+    <span class="desktop-only" style="text-align:center;">Ht · Wt · BMI</span>
+    <span class="desktop-only sort-header" data-roster-sort="eta" title="Sort by estimated MLB arrival year (soonest first)" style="text-align:center;">ETA</span>
   </div>`;
 
   // Stats leaderboards — top current-season hitters (by OPS, min 80 PA) and
@@ -33937,7 +34164,7 @@ function _resetPageFilters(page) {
     try { localStorage.setItem("prospect-tracker.density", "compact"); } catch {}
     resetListPages();
   } else if (page === "farm") {
-    state.farmSort      = "trajectory";
+    state.farmSort      = "farm_rank";
     state.formWindow    = "6y";
     state.farmViewMode  = "table";
     state.farmCompareOrg = "";

@@ -225,11 +225,12 @@ class TestExportedTreeShape:
             )
 
     def test_farm_score_is_weighted_blend(self):
-        # v6 — recompute from 4 main scores, then apply the composite
-        # stretch (linear remap around mean=100, factor=1.35) that
-        # widens the spread before letter-grading. (v18: conviction-cap
-        # skip removed since the cap itself was retired; the .get()
-        # guard below is a defensive no-op kept for safety.)
+        # v31 — recompute from 4 main scores, then apply the composite
+        # stretch (linear remap around mean=100, factor=1.20 as of v31;
+        # relaxed from 1.35 once the deeper leaf granularity made the
+        # natural distribution wider). (v18: conviction-cap skip removed
+        # since the cap itself was retired; the .get() guard below is a
+        # defensive no-op kept for safety.)
         from storage import _stretch_composite
         for o in self.orgs:
             if o.get("conviction_cap_applied"):
@@ -240,7 +241,7 @@ class TestExportedTreeShape:
               + FARM_TREE_WEIGHT_FINANCIAL            * (o.get("financial_score")            or 100.0)
               + FARM_TREE_WEIGHT_MLB_PRODUCTION       * (o.get("mlb_production_score")       or 100.0)
             )
-            recomputed = _stretch_composite(round(blended, 1))
+            recomputed = _stretch_composite(round(blended, 1), factor=1.20)
             assert abs(recomputed - o["farm_score"]) < 0.2, (
                 f"{o['org']} farm_score {o['farm_score']} doesn't match "
                 f"blend+stretch {recomputed:.2f} (raw blend = {blended:.2f})"

@@ -2860,10 +2860,10 @@ MLB_30_ORGS: set[str] = {
 # Financial drops 25% → 20% to absorb the rest of the shift;
 # Acquisition Strategy unchanged.
 # Weights sum to 1.00.
-FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.10    # v8: 0.10  — unchanged
-FARM_TREE_WEIGHT_DEVELOPMENT          = 0.55    # v8: 0.45  — bumped (current-farm signal)
-FARM_TREE_WEIGHT_FINANCIAL            = 0.20    # v8: 0.25  — slimmed (still tier-2)
-FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.15    # v8: 0.20  — slimmed (lagging indicator)
+FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.12    # v31: 0.10 → 0.12 (deeper acq tree)
+FARM_TREE_WEIGHT_DEVELOPMENT          = 0.50    # v31: 0.55 → 0.50 (Health Mgmt joins; share spread)
+FARM_TREE_WEIGHT_FINANCIAL            = 0.18    # v31: 0.20 → 0.18 (small trim)
+FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.20    # v31: 0.15 → 0.20 (HOF-track adds forward signal)
 # Back-compat aliases — anything that imported the v2 constants still
 # works. The composite blend below uses the v3 names exclusively.
 FARM_TREE_WEIGHT_ACQUISITIONS = FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
@@ -3452,6 +3452,349 @@ def _compute_conviction_leaf(gagg: dict, today: date | None = None) -> dict:
         "conviction":      1 if star_count >= 1 else 0,
         "grad_count_qualifying": len(grads),
     }
+
+
+# v31 — Ceiling threshold for HOF-track count. A graduate counts when
+# any single season recorded WAR ≥ 5.0 (the standard "All-Star season"
+# threshold; a 5-WAR season puts a player in roughly the top 25 of
+# position players or top 15 of pitchers MLB-wide for that year).
+# Stronger ceiling signal than Conviction's stars (which fires at
+# career WAR/yr ≥ 3.0 OR season ≥ 3.5).
+_HOF_TRACK_SEASON_WAR_THRESHOLD = 5.0
+
+
+def _compute_hof_track_leaf(gagg: dict) -> dict:
+    """v31 — HOF-track count. Counts grads whose peak single season
+    recorded WAR ≥ 5.0. Sibling to Conviction (the broader star count
+    leaf) — surfaces the "did this org develop legitimate All-Star-
+    ceiling players, not just useful regulars" signal.
+
+    Reads the same `_top_grads` per-grad records `_compute_conviction
+    _leaf` uses; the peak-season extraction is identical (handles the
+    {year: war} dict + list + scalar shapes defensively).
+    """
+    grads = gagg.get("_top_grads") or []
+    hof_grads: list[dict] = []
+    for g in grads:
+        season_peak = 0.0
+        seasons = g.get("seasons")
+        try:
+            if isinstance(seasons, dict):
+                vals = [float(v) for v in seasons.values()
+                        if v is not None and float(v) == float(v)]
+                if vals:
+                    season_peak = max(vals)
+            elif isinstance(seasons, (list, tuple)):
+                vals = [float(v) for v in seasons
+                        if v is not None and float(v) == float(v)]
+                if vals:
+                    season_peak = max(vals)
+        except (TypeError, ValueError):
+            season_peak = 0.0
+        if season_peak >= _HOF_TRACK_SEASON_WAR_THRESHOLD:
+            hof_grads.append({
+                "name":        g.get("player_name"),
+                "season_peak": round(season_peak, 2),
+                "career_war":  round(g.get("career_war") or 0.0, 2),
+            })
+    hof_grads.sort(key=lambda s: s["season_peak"], reverse=True)
+    return {
+        "hof_count":         len(hof_grads),
+        "hof_names":         [h["name"] for h in hof_grads[:5] if h.get("name")],
+        "hof_grads":         hof_grads[:5],
+        "peak_season_war":   max((h["season_peak"] for h in hof_grads), default=None),
+        "threshold":         _HOF_TRACK_SEASON_WAR_THRESHOLD,
+        "grad_count_qualifying": len(grads),
+    }
+
+
+# v31 — Sub-leaf payload emitter. Walks the org's tree after every
+# leaf has been stamped + scored and attaches a `sub_leaves` list to
+# each leaf node that has a meaningful breakdown. The list is purely
+# INFORMATIONAL — it doesn't feed back into the leaf score (the leaf
+# score is already locked in by LEAF_SPECS). Renderer consumes the
+# list to populate the third tree column ("what this leaf is made
+# of"). Items are dicts of the form:
+#   {label, kind, value, raw?, n?, weight?, sparse?}
+# - label : human-readable sub-leaf name
+# - kind  : "dvm" | "war" | "pct" | "usd" | "count" | "warpm" — drives
+#           renderer formatting (e.g. "108" vs "32%" vs "+1.4 WAR")
+# - value : the headline numeric (formatted by the renderer)
+# - raw   : optional raw signal for tooltip use (e.g. underlying $)
+# - n     : sample size (active count / grad count / etc.)
+# - weight: optional bucket weight when the sub-leaf is one of N
+#           weighted parts of the parent (e.g. C bucket = 0.35 of
+#           hitter DvM+)
+# - sparse: optional True when the sub-leaf is below sample floor
+#           (renderer dims accordingly)
+def _attach_sub_leaves(entry: dict) -> None:
+    """Attach a `sub_leaves` array onto each tree node that has a
+    natural breakdown. Idempotent — safe to call multiple times; the
+    list is rebuilt from current tree state on every call."""
+    tree = entry.get("tree") or {}
+
+    # ── Development → Hitter / Pitcher DvM+ — pos-bucket sub-leaves ──
+    # Pulled straight from the existing pos_buckets payload so the
+    # sub-leaf values match the by-position-bucket grid that the
+    # Dev tab already renders. Renderer treats "kind=dvm" as a
+    # 100-anchored value (centered at league mean).
+    for dev_key in ("dev_hitter", "dev_pitcher"):
+        node = tree.get(dev_key) or {}
+        pb = node.get("pos_buckets") or {}
+        if pb:
+            subs = []
+            for bucket, v in pb.items():
+                blend = (v.get("blend_by_window") or {}).get("6y")
+                n     = v.get("active_count") or 0
+                subs.append({
+                    "label":  f"{bucket} bucket",
+                    "kind":   "dvm",
+                    "value":  blend,
+                    "n":      n,
+                    "weight": v.get("weight"),
+                    "sparse": (n < 3),
+                })
+            node["sub_leaves"] = subs
+
+    # ── Acquisition → Draft Performance — two scoring inputs ──
+    draft = tree.get("acq_draft") or {}
+    if draft:
+        subs = []
+        pv = draft.get("pick_value_mean") if draft.get("pick_value_mean") is not None \
+             else draft.get("wag_mean")
+        ch = draft.get("ceiling_hits_pct")
+        if pv is not None:
+            subs.append({
+                "label": "Pick value vs slot",
+                "kind":  "war",
+                "value": round(pv, 2),
+                "n":     draft.get("pick_value_count") or draft.get("grad_count"),
+            })
+        if ch is not None:
+            subs.append({
+                "label": "Ceiling hits",
+                "kind":  "pct",
+                "value": round(ch, 3),
+                "n":     draft.get("draft_actives_count"),
+                "raw":   f"{draft.get('ceiling_hits_count', 0)} of {draft.get('draft_actives_count', 0)} at FV ≥60",
+            })
+        if subs:
+            draft["sub_leaves"] = subs
+
+    # ── Acquisition → IFA Performance — WAR/yr + Career WAR ──
+    ifa = tree.get("acq_ifa") or {}
+    if ifa:
+        subs = []
+        if ifa.get("war_per_yr_mean") is not None:
+            subs.append({
+                "label": "WAR/yr mean",
+                "kind":  "war",
+                "value": round(ifa["war_per_yr_mean"], 2),
+                "n":     ifa.get("grad_count"),
+            })
+        if ifa.get("career_war_mean") is not None:
+            subs.append({
+                "label": "Career WAR mean",
+                "kind":  "war",
+                "value": round(ifa["career_war_mean"], 1),
+                "n":     ifa.get("grad_count"),
+            })
+        if subs:
+            ifa["sub_leaves"] = subs
+
+    # ── Acquisition → Trade Acumen — inbound/outbound WAR split ──
+    tx = tree.get("tx_trades") or {}
+    if tx:
+        subs = []
+        if tx.get("war_in") is not None:
+            subs.append({
+                "label": "Inbound WAR",
+                "kind":  "war",
+                "value": round(tx["war_in"], 1),
+                "n":     tx.get("in_count") or 0,
+            })
+        if tx.get("war_out") is not None:
+            subs.append({
+                "label": "Outbound WAR",
+                "kind":  "war",
+                "value": round(tx["war_out"], 1),
+                "n":     tx.get("out_count") or 0,
+            })
+        if tx.get("war_delta_unweighted") is not None:
+            subs.append({
+                "label": "Unweighted Δ",
+                "kind":  "war",
+                "value": round(tx["war_delta_unweighted"], 1),
+                "raw":   "Net WAR delta without recency decay",
+            })
+        if subs:
+            tx["sub_leaves"] = subs
+
+    # ── Acquisition → Waiver Claims — hit rate + volume context ──
+    wv = tree.get("tx_waivers") or {}
+    if wv:
+        subs = []
+        if wv.get("hit_rate") is not None:
+            subs.append({
+                "label": "Hit rate",
+                "kind":  "pct",
+                "value": round(wv["hit_rate"], 3),
+                "n":     wv.get("claims_total") or 0,
+                "raw":   f"{wv.get('claims_with_mlb', 0)} of {wv.get('claims_total', 0)} reached MLB",
+            })
+        if subs:
+            wv["sub_leaves"] = subs
+
+    # ── Development → Statcast Quality — org-wide + side split ──
+    scq = tree.get("dev_statcast_quality") or {}
+    if scq and scq.get("mean") is not None:
+        subs = []
+        if scq.get("hitter_mean") is not None:
+            subs.append({
+                "label": "Hitter SC+ mean",
+                "kind":  "dvm",
+                "value": round(scq["hitter_mean"], 0),
+                "n":     scq.get("hitter_count"),
+            })
+        if scq.get("pitcher_mean") is not None:
+            subs.append({
+                "label": "Pitcher SC+ mean",
+                "kind":  "dvm",
+                "value": round(scq["pitcher_mean"], 0),
+                "n":     scq.get("pitcher_count"),
+            })
+        subs.append({
+            "label": "All graded actives",
+            "kind":  "dvm",
+            "value": round(scq["mean"], 0),
+            "n":     scq.get("graded_count"),
+        })
+        scq["sub_leaves"] = subs
+
+    # ── Development → Health Mgmt — three inverted inputs surfaced ──
+    hm = tree.get("dev_health_mgmt") or {}
+    if hm and hm.get("active_count"):
+        subs = []
+        if hm.get("il_pct_current") is not None:
+            subs.append({
+                "label": "Currently on IL",
+                "kind":  "pct",
+                "value": round(hm["il_pct_current"], 3),
+                "n":     hm.get("active_count"),
+                "raw":   f"{hm.get('il_current_count', 0)} of {hm.get('active_count', 0)} sidelined",
+            })
+        if hm.get("il_days_mean") is not None:
+            subs.append({
+                "label": "Avg IL days / active (12mo)",
+                "kind":  "count",
+                "value": round(hm["il_days_mean"], 1),
+                "n":     hm.get("active_count"),
+            })
+        if hm.get("post_tj_pct") is not None:
+            subs.append({
+                "label": "Post-TJ share",
+                "kind":  "pct",
+                "value": round(hm["post_tj_pct"], 3),
+                "n":     hm.get("active_count"),
+                "raw":   f"{hm.get('post_tj_count', 0)} of {hm.get('active_count', 0)} with prior TJ",
+            })
+        if subs:
+            hm["sub_leaves"] = subs
+
+    # ── MLB Production → Hitter / Pitcher Production — 3 input split ──
+    for prod_key in ("mlb_hitter_production", "mlb_pitcher_production"):
+        prod = tree.get(prod_key) or {}
+        if not prod:
+            continue
+        subs = []
+        if prod.get("war_per_yr_mean") is not None:
+            subs.append({
+                "label": "WAR/yr mean",
+                "kind":  "war",
+                "value": round(prod["war_per_yr_mean"], 2),
+                "n":     prod.get("grad_count"),
+            })
+        if prod.get("top3_career_war") is not None:
+            subs.append({
+                "label": "Top-3 cum WAR",
+                "kind":  "war",
+                "value": round(prod["top3_career_war"], 1),
+            })
+        if prod.get("wag_mean") is not None:
+            subs.append({
+                "label": "WAG mean",
+                "kind":  "war",
+                "value": round(prod["wag_mean"], 2),
+                "raw":   "vs FV-implied baseline",
+                "n":     prod.get("grad_count"),
+            })
+        if subs:
+            prod["sub_leaves"] = subs
+
+    # ── MLB Production → Top Grads — top 3 names + WAR/yr ──
+    top_grads = tree.get("mlb_production_top_grads") or {}
+    if top_grads and top_grads.get("top3_war_per_yr") is not None:
+        subs = [{
+            "label": "Top-3 mean WAR/yr",
+            "kind":  "war",
+            "value": round(top_grads["top3_war_per_yr"], 2),
+            "n":     top_grads.get("grad_count_qualifying"),
+        }]
+        top_grads["sub_leaves"] = subs
+
+    # ── MLB Production → Conviction — star count + top star names ──
+    conv = tree.get("mlb_production_conviction") or {}
+    if conv and conv.get("star_count") is not None:
+        subs = [{
+            "label": "Star count",
+            "kind":  "count",
+            "value": conv["star_count"],
+            "raw":   (", ".join(conv.get("star_names") or [])) or "no stars yet",
+        }]
+        peak = conv.get("peak_war_per_yr")
+        if peak is not None:
+            subs.append({
+                "label": "Peak career WAR/yr",
+                "kind":  "war",
+                "value": round(peak, 2),
+            })
+        conv["sub_leaves"] = subs
+
+    # ── MLB Production → HOF-track — count + top names ──
+    hof = tree.get("mlb_production_hof_track") or {}
+    if hof and hof.get("hof_count") is not None:
+        subs = [{
+            "label": f"Seasons ≥{int(hof.get('threshold', 5))} WAR",
+            "kind":  "count",
+            "value": hof["hof_count"],
+            "raw":   (", ".join(hof.get("hof_names") or [])) or "none yet",
+        }]
+        peak = hof.get("peak_season_war")
+        if peak is not None:
+            subs.append({
+                "label": "Peak season WAR",
+                "kind":  "war",
+                "value": round(peak, 1),
+            })
+        hof["sub_leaves"] = subs
+
+    # ── Financial → Active Surplus — per-prospect + total ──
+    asurp = tree.get("fin_active_surplus") or {}
+    if asurp and asurp.get("surplus_per_prospect_mm") is not None:
+        subs = [{
+            "label": "$ / prospect",
+            "kind":  "usd",
+            "value": round(asurp["surplus_per_prospect_mm"], 2),
+            "n":     asurp.get("active_count"),
+        }]
+        if asurp.get("cost_basis_mm") is not None:
+            subs.append({
+                "label": "Cost basis",
+                "kind":  "usd",
+                "value": round(asurp["cost_basis_mm"], 1),
+                "raw":   "total bonus $ paid for actives",
+            })
+        asurp["sub_leaves"] = subs
 
 
 def _compute_draft_pool_efficiency(gagg: dict,
@@ -7141,6 +7484,55 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # bonus paid. Surfaces orgs whose current crop projects to
             # generate more cost-controlled WAR than they spent.
             "fin_active_surplus": _finalize_active_surplus_leaf(m),
+            # v31 — Health Management leaf under Development. Captures
+            # how well the org keeps prospects healthy / available —
+            # composite of IL%-current (share of actives sidelined
+            # right now), avg 12-month IL days per active, and post-
+            # TJ rate (share of actives with a Tommy John in their
+            # history). All three are inverted in LEAF_SPECS so a
+            # LOWER burden produces a HIGHER score. Data sourced
+            # straight off the org's existing health_burden roll-up
+            # (computed above in the actives loop). Sparse-gated to
+            # orgs with ≥10 actives so a thin-system org's single
+            # IL stint doesn't dominate.
+            "dev_health_mgmt": (lambda hb=m.get("health_burden") or {}: {
+                "il_pct_current": hb.get("il_pct_current"),
+                "post_tj_pct":    hb.get("post_tj_pct"),
+                "il_days_mean":   hb.get("il_days_mean"),
+                "active_count":   hb.get("active_count"),
+                "il_current_count": hb.get("il_current_count"),
+                "post_tj_count":    hb.get("post_tj_count"),
+                # Composite burden score (higher = worse) preserved
+                # for back-compat; the leaf score uses the inverted
+                # individual signals below.
+                "burden_score":   hb.get("score"),
+            })(),
+            # v31 — HOF-track count leaf. Sibling of Conviction; counts
+            # graduates whose PEAK single season WAR ≥5 (the loose
+            # threshold for "MVP-track" / "Cy Young-track" season).
+            # Stronger ceiling signal than Conviction's 3/3.5 star
+            # threshold — an org with 2 HOF-track grads has more
+            # demonstrated ceiling than one with 6 mere "stars".
+            "mlb_production_hof_track": _compute_hof_track_leaf(gagg),
+            # v31 — Standalone Statcast Quality leaf under Development.
+            # The Hitter/Pitcher DvM+ leaves ALREADY include Statcast+
+            # as their 20% input (per-bucket SC+ from the bucket's
+            # prospects). This leaf adds a SEPARATE signal voice —
+            # the org's aggregate Statcast+ across all graded actives —
+            # so orgs with SC+-strong pipelines get distinct credit
+            # in the tree instead of having that signal compressed
+            # into the DvM+ leaves only. The two surfaces complement:
+            # DvM+ measures Statcast in development context (per
+            # position bucket); this leaf measures Statcast as a
+            # pure quality signal (org-wide pool).
+            "dev_statcast_quality": (lambda scq=m.get("statcast_quality") or {}: {
+                "mean":         scq.get("mean"),
+                "hitter_mean":  scq.get("hitter_mean"),
+                "pitcher_mean": scq.get("pitcher_mean"),
+                "graded_count": scq.get("graded_count"),
+                "hitter_count": scq.get("hitter_count"),
+                "pitcher_count": scq.get("pitcher_count"),
+            })(),
         }
 
         # v17 — Back-compat aliases for the rename. Old code paths that
@@ -8566,6 +8958,45 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             ("war_per_m_ifa", lambda e: (e["tree"]["fin_ifa_roi"] or {}).get("war_per_m_ifa")),
             ("war_per_yr_fallback", lambda e: (e["tree"]["fin_ifa_roi"] or {}).get("war_per_yr_fallback")),
         ],
+        # v31 — Health Management leaf under Development. Three NEGATED
+        # inputs (LOWER burden = HIGHER score):
+        #   * il_pct_current  — share of actives currently on IL
+        #   * il_days_mean    — avg trailing 12mo IL days per active
+        #   * post_tj_pct     — share of actives with a Tommy John in
+        #                       their history
+        # Each input z-blends independently then averages, mirroring
+        # the other multi-input leaves. Sparse-gated downstream by
+        # `_zscore_to_100`'s n≥3 floor.
+        "dev_health_mgmt": [
+            ("il_pct_current_neg", lambda e: (
+                -(e["tree"]["dev_health_mgmt"] or {}).get("il_pct_current")
+                if (e["tree"]["dev_health_mgmt"] or {}).get("il_pct_current") is not None
+                else None
+            )),
+            ("il_days_mean_neg", lambda e: (
+                -(e["tree"]["dev_health_mgmt"] or {}).get("il_days_mean")
+                if (e["tree"]["dev_health_mgmt"] or {}).get("il_days_mean") is not None
+                else None
+            )),
+            ("post_tj_pct_neg", lambda e: (
+                -(e["tree"]["dev_health_mgmt"] or {}).get("post_tj_pct")
+                if (e["tree"]["dev_health_mgmt"] or {}).get("post_tj_pct") is not None
+                else None
+            )),
+        ],
+        # v31 — HOF-track leaf. Single input (count of grads w/ season
+        # WAR ≥5). Treated as a higher-is-better scalar so a deeper
+        # HOF-track grad list lifts the leaf.
+        "mlb_production_hof_track": [
+            ("hof_count", lambda e: (e["tree"]["mlb_production_hof_track"] or {}).get("hof_count")),
+        ],
+        # v31 — Statcast Quality leaf (Development). Single input from
+        # the org's aggregate active-prospect Statcast+ mean. Sparse-
+        # gated at ≥5 graded prospects (gate enforced upstream in the
+        # statcast_quality aggregator).
+        "dev_statcast_quality": [
+            ("sc_mean", lambda e: (e["tree"]["dev_statcast_quality"] or {}).get("mean")),
+        ],
     }
     # Compute each leaf's 100-anchored per-org list. Multi-input leaves
     # z-score each sub-input independently then average the present
@@ -8606,7 +9037,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # 13 leaves total across 4 parents.
     TREE_PARENTS = {
         "acquisition_strategy": ["acq_ifa", "acq_draft", "tx_trades", "tx_waivers"],
-        "development":          ["dev_hitter", "dev_pitcher"],
+        # v31 — Development picks up Health Management + Statcast
+        # Quality leaves alongside the two DvM+ leaves. Health is part
+        # of "are prospects progressing on schedule" — a chronically-
+        # injured pipeline IS a development outcome, not a separate
+        # axis. Statcast Quality surfaces the org's aggregate SC+ as
+        # a standalone signal voice (the DvM+ leaves already carry
+        # SC+ as their 20% input per-bucket; this leaf adds the
+        # org-wide aggregate as a separate axis).
+        "development":          ["dev_hitter", "dev_pitcher",
+                                  "dev_health_mgmt", "dev_statcast_quality"],
         # v18 — Financial now carries fin_active_surplus alongside the
         # existing leaves. fin_contract_surplus measures graduates'
         # realized contract surplus; fin_active_surplus measures the
@@ -8616,13 +9056,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "financial":            ["fin_war_per_m", "fin_contract_surplus",
                                   "fin_active_surplus",
                                   "fin_draft_pool_efficiency", "fin_ifa_roi"],
+        # v31 — HOF-track count joins MLB Production. Ceiling signal
+        # complement to Conviction (which fires on the lower star
+        # threshold).
         "mlb_production":       ["mlb_hitter_production",   # v17 renamed (was mlb_hitter_wag)
                                   "mlb_pitcher_production",  # v17 renamed (was mlb_pitcher_wag)
                                   "talent_translation",      # v17 NEW — WAG-based sibling leaf
                                   "mlb_production_boom_pct",
                                   "mlb_production_bust_pct",
                                   "mlb_production_top_grads",
-                                  "mlb_production_conviction"],
+                                  "mlb_production_conviction",
+                                  "mlb_production_hof_track"],
     }
     # Legacy parent aliases — kept so any UI or test still reading
     # entry["acquisitions_score"] / entry["transactions_score"]
@@ -8668,15 +9112,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Apply the v6 composite stretch — magnifies distance from the
         # league mean BEFORE the cap + letter-grade pass, so weak orgs
         # sit further below the mean and strong orgs further above.
-        # Monotonic (rank order preserved) but widens the spread by
-        # ~35% (factor=1.35). Pairs with the harsher _letter_grade
-        # below: stretch increases distance, then steeper percentile
-        # cutoffs turn that distance into D-/F letters at the bottom
-        # and a more selective A tier at the top.
+        # v31 — Stretch factor relaxed 1.35 → 1.20 now that the tree
+        # carries deeper leaf granularity (Health Mgmt + HOF-track
+        # added; sub-leaves expose internal breakdown). The richer
+        # signal mix already spreads distributions wider naturally,
+        # so the artificial stretch can ease back. Monotonic (rank
+        # order preserved) and the mean is a fixed point.
         # Anchored at mean=100 because each main-grade score lives on
         # the DvM+-style 100-anchored scale (each branch z-rescaled to
         # mean=100 across the 30 orgs).
-        entry["farm_score"] = _stretch_composite(round(composite, 1))
+        entry["farm_score"] = _stretch_composite(round(composite, 1), factor=1.20)
         # Back-compat: legacy field names (acquisitions_score,
         # transactions_score) resolve to the merged Acquisition Strategy
         # value so any UI reading the old keys still gets a number.
@@ -8772,6 +9217,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     org_summary.sort(key=lambda x: (-x["farm_score"], -x["top_end_points"]))
     for rank_i, entry in enumerate(org_summary, start=1):
         entry["farm_rank"] = rank_i
+
+    # v31 — Attach sub_leaves payload to every tree leaf node so the
+    # renderer's third column can show "what this leaf is made of".
+    # Runs AFTER farm_rank assignment so the helper has the final tree
+    # state to walk; sub_leaves are purely informational (they don't
+    # feed leaf scores).
+    for entry in org_summary:
+        _attach_sub_leaves(entry)
     # ────────────────────────────────────────────────────────────────────────
 
     # ── Per-org draft spending (computed from our acquisitions table) ──
