@@ -17042,6 +17042,10 @@ function makeFarmReportCard(org) {
   const fmtWarPerYr  = v => v != null ? `${v.toFixed(2)} WAR/yr` : '—';
   const fmtUsdPerYr  = v => v != null ? `$${(v / 1_000_000).toFixed(1)}M / yr` : '—';
   const fmtPct       = v => v != null ? `${(v * 100).toFixed(0)}%` : '—';
+  // v28 — boom/bust pct is stored as 0-100 already (rounded percent),
+  // not 0-1 fraction. fmtPctRaw renders the raw value without the *100
+  // step so boom_pct=3.4 reads as "3%" not "340%".
+  const fmtPctRaw    = v => v != null ? `${Number(v).toFixed(1)}%` : '—';
 
   // Three-input composite leaves (IFA / Hitter MLB Prod / Pitcher MLB
   // Prod) format their primary metric as the WAG mean, with a tooltip
@@ -17114,12 +17118,15 @@ function makeFarmReportCard(org) {
   const draftFmt = draftLeaf.pick_value_mean != null
     ? (v => v != null ? `${v >= 0 ? '+' : ''}${v.toFixed(2)} WAR vs slot` : '—')
     : fmtSignedWag;
-  const draftTooltip = `Pick-slot-adjusted draft value (50%) + Draft Ceiling Hits (50%). Ceiling Hits = ${draftLeaf.ceiling_hits_count ?? 0}/${draftLeaf.draft_actives_count ?? 0} (${fmtPct(draftLeaf.ceiling_hits_pct)}) recent drafted actives at FV ≥ 60.`;
-  const ifaTooltip = `3-input composite: WAG + WAR-per-year + Cumulative WAR across IFA-method graduates. ${fmt3input('acq_ifa')}`;
+  // v28 — Acquisition tooltips clarified to frame each leaf as a
+  // talent-yield signal. Counterpart $-efficiency leaves live under
+  // the Financial branch; the two perspectives stay distinct.
+  const draftTooltip = `TALENT YIELD from the draft pipeline. Pick-slot-adjusted draft value (50%) + Draft Ceiling Hits (50%). Ceiling Hits = ${draftLeaf.ceiling_hits_count ?? 0}/${draftLeaf.draft_actives_count ?? 0} (${fmtPct(draftLeaf.ceiling_hits_pct)}) recent drafted actives at FV ≥ 60. The $-efficiency counterpart is Financial → Draft Pool Efficiency.`;
+  const ifaTooltip = `TALENT YIELD from the IFA pipeline. WAR-per-year + Cumulative WAR across IFA-method graduates (no $ involvement). The $-efficiency counterpart is Financial → IFA ROI. ${fmt3input('acq_ifa')}`;
   const tradeLeaf = t.tx_trades || {};
-  const tradeTooltip = `Net FV (${tradeLeaf.in_count ?? 0} in / ${tradeLeaf.out_count ?? 0} out) + Trade WAR Delta (in ${(tradeLeaf.war_in ?? 0).toFixed(1)} − out ${(tradeLeaf.war_out ?? 0).toFixed(1)} = ${tradeLeaf.war_delta != null ? tradeLeaf.war_delta.toFixed(1) : '—'}).`;
+  const tradeTooltip = `TALENT YIELD from trades. Net FV (${tradeLeaf.in_count ?? 0} in / ${tradeLeaf.out_count ?? 0} out) + Trade WAR Delta (in ${(tradeLeaf.war_in ?? 0).toFixed(1)} − out ${(tradeLeaf.war_out ?? 0).toFixed(1)} = ${tradeLeaf.war_delta != null ? tradeLeaf.war_delta.toFixed(1) : '—'}).`;
   const waiverLeaf = t.tx_waivers || {};
-  const waiverTooltip = `Net FV (${waiverLeaf.in_count ?? 0} in / ${waiverLeaf.out_count ?? 0} out) + Hit Rate (${waiverLeaf.claims_with_mlb ?? 0}/${waiverLeaf.claims_total ?? 0} reached MLB = ${fmtPct(waiverLeaf.hit_rate)}).`;
+  const waiverTooltip = `TALENT YIELD from waiver / Rule-5 / contract-purchase / FA-signing claims. Net FV (${waiverLeaf.in_count ?? 0} in / ${waiverLeaf.out_count ?? 0} out) + Hit Rate (${waiverLeaf.claims_with_mlb ?? 0}/${waiverLeaf.claims_total ?? 0} reached MLB = ${fmtPct(waiverLeaf.hit_rate)}).`;
   const acqSubs =
     subCell('Draft Performance', 'acq_draft',  'acq_draft',  draftFmt,     draftMetric, draftTooltip) +
     // v27 — IFA Performance now surfaces WAR/yr (the metric the leaf
@@ -17129,43 +17136,85 @@ function makeFarmReportCard(org) {
     subCell('Trade Acumen',      'tx_trades',  'tx_trades',  fmtNetFv,     tradeLeaf.net_fv, tradeTooltip) +
     subCell('Waiver Claims',     'tx_waivers', 'tx_waivers', fmtNetFv,     waiverLeaf.net_fv, waiverTooltip);
 
-  // v27 — Labels renamed from "Hitter Tools DvM+" / "Pitcher Tools DvM+"
-  // to "Hitter DvM+" / "Pitcher DvM+". The underlying metric is still
-  // the tool-grade-based DvM+ (computed from per-tool deltas across the
-  // org's hitter/pitcher cohort) — the rename anchors the leaf name on
-  // the COHORT (hitter vs pitcher) rather than the SIGNAL TYPE (tool
-  // velocity). A full per-cohort overall-DvM+ (cumulative FV growth
-  // restricted to hitters / pitchers) is on the roadmap; until then,
-  // the tool-based value is the best available cohort-level signal.
+  // v28 — Hitter / Pitcher DvM+ is a 70/30 blend of cohort-restricted
+  // Overall DvM+ (FV-growth scoped to the cohort) + Tool-grade-based
+  // DvM+ (weighted mean of per-tool deltas across the cohort). Display
+  // is window-reactive (reads `dvm_plus_by_window[active]` keyed off
+  // state.formWindow); tooltip shows the breakdown of overall vs tool
+  // so the reader can see WHY the blended value lands where it does.
+  // Missing-signal: when one side is None the other takes 100%
+  // weight (matches the backend `_blend_dvm`).
+  const _devActiveWindow = state.formWindow || "6y";
+  const _devHitterLeaf  = t.dev_hitter  || {};
+  const _devPitcherLeaf = t.dev_pitcher || {};
+  const _devHitterValue  = (_devHitterLeaf.dvm_plus_by_window  || {})[_devActiveWindow]  ?? _devHitterLeaf.dvm_plus;
+  const _devPitcherValue = (_devPitcherLeaf.dvm_plus_by_window || {})[_devActiveWindow] ?? _devPitcherLeaf.dvm_plus;
+  const _devTooltip = (leaf, side) => {
+    const overall = (leaf.overall_dvm_plus || {})[_devActiveWindow];
+    const tool    = leaf.tool_dvm_plus;
+    const parts = [];
+    if (overall != null) parts.push(`Overall ${overall}`);
+    if (tool    != null) parts.push(`Tool ${tool}`);
+    return `${side} DvM+ · 70% cohort Overall DvM+ + 30% Tool DvM+ at ${_devActiveWindow}. ${parts.join(' · ')}. Leaf letter grades anchor on 6y.`;
+  };
   const devSubs =
-    subCell('Hitter DvM+',  'dev_hitter',  'dev_hitter',  fmtDvm, (t.dev_hitter  || {}).dvm_plus) +
-    subCell('Pitcher DvM+', 'dev_pitcher', 'dev_pitcher', fmtDvm, (t.dev_pitcher || {}).dvm_plus);
+    subCell('Hitter DvM+',  'dev_hitter',  'dev_hitter',  fmtDvm, _devHitterValue,  _devTooltip(_devHitterLeaf,  'Hitter')) +
+    subCell('Pitcher DvM+', 'dev_pitcher', 'dev_pitcher', fmtDvm, _devPitcherValue, _devTooltip(_devPitcherLeaf, 'Pitcher'));
 
-  // Financial v4 — 4 leaves. Legacy WAR/$M + grad-contract surplus
-  // plus two new ROI rollups (draft pool efficiency, IFA spend ROI).
+  // v28 — Financial branch: 5 leaves, each measuring a distinct $-
+  // efficiency lens (no overlap with Acquisition Performance leaves,
+  // which measure raw talent yield). Surplus-side leaves dominate
+  // (Active Surplus 35%, Grad-Contract Surplus 25%) per FARM_LEAF_
+  // WEIGHTS — they're the most direct $-value metrics. WAR/$M leaves
+  // (overall + per-method) sit at lower weight as supporting ratios.
+  // Active Surplus was previously missing from the frontend report
+  // card even though it's the highest-weight leaf — v28 surfaces it.
+  const activeSurplusLeaf = t.fin_active_surplus || {};
+  const _surplusPerProspect = activeSurplusLeaf.surplus_per_prospect_mm;
+  const fmtSurplusPerProspect = v => v != null ? `$${v.toFixed(2)}M / prospect` : '—';
+  const activeSurplusTooltip = _surplusPerProspect != null
+    ? `FV-implied 6yr surplus value across the org's ${activeSurplusLeaf.active_count ?? '—'} active prospects, divided by active count. Net of acquisition bonus cost basis ($${activeSurplusLeaf.cost_basis_mm != null ? activeSurplusLeaf.cost_basis_mm.toFixed(1) : '—'}M). Most forward-looking signal — captures the dollar value the current pipeline projects to generate.`
+    : `Insufficient active-roster surplus data on file.`;
   const draftEffLeaf = t.fin_draft_pool_efficiency || {};
   const draftEffTooltip = draftEffLeaf.war_per_m_pool != null
-    ? `Trailing 3yr-window WAR per $M of draft-pool spend. ${draftEffLeaf.grad_count ?? 0} contributing grads, ${draftEffLeaf.pool_total_usd != null ? '$' + (draftEffLeaf.pool_total_usd / 1_000_000).toFixed(1) + 'M pool' : 'pool data unavailable'}.`
+    ? `Trailing 3yr-window WAR per $M of draft-pool spend (efficiency of draft dollars). ${draftEffLeaf.grad_count ?? 0} contributing grads, ${draftEffLeaf.pool_total_usd != null ? '$' + (draftEffLeaf.pool_total_usd / 1_000_000).toFixed(1) + 'M pool' : 'pool data unavailable'}. Distinct from Acquisition's Draft Performance leaf — that measures raw pick-slot-adjusted WAR (talent), this measures WAR per $ spent (efficiency).`
     : `Insufficient draft-pool data (needs ≥3 contributing grads with draft-pool spend on file).`;
   const ifaRoiLeaf = t.fin_ifa_roi || {};
   const ifaRoiTooltip = ifaRoiLeaf.war_per_m_ifa != null
-    ? `Trailing 6yr-window WAR per $M of IFA spend. ${ifaRoiLeaf.grad_count ?? 0} contributing grads, ${ifaRoiLeaf.spend_total_usd != null ? '$' + (ifaRoiLeaf.spend_total_usd / 1_000_000).toFixed(1) + 'M IFA spend' : 'spend data unavailable'}.`
+    ? `Trailing 6yr-window WAR per $M of IFA spend (efficiency of IFA dollars). ${ifaRoiLeaf.grad_count ?? 0} contributing grads, ${ifaRoiLeaf.spend_total_usd != null ? '$' + (ifaRoiLeaf.spend_total_usd / 1_000_000).toFixed(1) + 'M IFA spend' : 'spend data unavailable'}. Distinct from Acquisition's IFA Performance leaf — that measures WAR/yr + cumulative WAR (talent), this measures WAR per $ spent.`
     : `Insufficient IFA-spend data (needs ≥2 contributing grads with signed_year + bonus on file).`;
+  const finWarLeaf = t.fin_war_per_m || {};
+  const finWarTooltip = finWarLeaf.value != null
+    ? `Overall career WAR per $M of signing bonus across ALL debuted method-types (draft + IFA + other bonuses). ${finWarLeaf.grad_count ?? 0} grads with bonus on file. Complements the per-method efficiency leaves by capturing aggregate $-deployment across the full pipeline.`
+    : `Insufficient bonus data (needs ≥$1M total bonus across grads).`;
+  const finContractTooltip = (t.fin_contract_surplus || {}).mean_usd_per_yr != null
+    ? `Mean per-year cost-controlled surplus across qualifying graduates. ${(t.fin_contract_surplus || {}).grad_count ?? 0} grads with AAV + bonus on file. Captures the realized $-value of CBA cost-control years (pre-FA) — orthogonal to spend efficiency since it measures dollars saved post-debut rather than $ spent at acquisition.`
+    : `Insufficient grad-contract data on file.`;
   const finSubs =
-    subCell('WAR per $M',            'fin_war_per_m',              'fin_war_per_m',              fmtWarPerM,  (t.fin_war_per_m        || {}).value) +
-    subCell('Grad-Contract Surplus', 'fin_contract_surplus',       'fin_contract_surplus',       fmtUsdPerYr, (t.fin_contract_surplus || {}).mean_usd_per_yr) +
-    subCell('Draft Pool Efficiency', 'fin_draft_pool_efficiency',  'fin_draft_pool_efficiency',  fmtWarPerM,  draftEffLeaf.war_per_m_pool, draftEffTooltip) +
-    subCell('IFA ROI',               'fin_ifa_roi',                'fin_ifa_roi',                fmtWarPerM,  ifaRoiLeaf.war_per_m_ifa,    ifaRoiTooltip);
+    subCell('Active Surplus',        'fin_active_surplus',         'fin_active_surplus',         fmtSurplusPerProspect, _surplusPerProspect,                            activeSurplusTooltip) +
+    subCell('Grad-Contract Surplus', 'fin_contract_surplus',       'fin_contract_surplus',       fmtUsdPerYr,           (t.fin_contract_surplus || {}).mean_usd_per_yr, finContractTooltip) +
+    subCell('WAR per $M',            'fin_war_per_m',              'fin_war_per_m',              fmtWarPerM,            finWarLeaf.value,                               finWarTooltip) +
+    subCell('Draft Pool Efficiency', 'fin_draft_pool_efficiency',  'fin_draft_pool_efficiency',  fmtWarPerM,            draftEffLeaf.war_per_m_pool,                    draftEffTooltip) +
+    subCell('IFA ROI',               'fin_ifa_roi',                'fin_ifa_roi',                fmtWarPerM,            ifaRoiLeaf.war_per_m_ifa,                       ifaRoiTooltip);
 
-  // MLB Production v4 — 5 leaves. The two 3-input WAG composites per
-  // position group, plus boom% rate + top-3 grad WAR/yr + binary
-  // Conviction (star-tier grad present).
-  const boomLeaf  = t.mlb_production_boom_pct  || {};
-  const topGrads  = t.mlb_production_top_grads || {};
-  const convLeaf  = t.mlb_production_conviction || {};
+  // v28 — MLB Production: 7 leaves total. v4 backend wired bust_pct +
+  // talent_translation into the composite scoring but the report card
+  // tree only showed 5 of the 7. v28 surfaces the missing two so the
+  // tree reflects what's actually feeding the parent letter grade.
+  const boomLeaf      = t.mlb_production_boom_pct  || {};
+  const bustLeaf      = t.mlb_production_bust_pct  || {};
+  const topGrads      = t.mlb_production_top_grads || {};
+  const convLeaf      = t.mlb_production_conviction || {};
+  const talentTransLeaf = t.talent_translation || {};
   const boomTooltip = boomLeaf.boom_pct != null
     ? `Share of settled graduates with career WAR ≥ +5. ${boomLeaf.settled_count ?? 0} settled grads (min 5).`
     : `Insufficient settled grads (needs ≥5 with 800 PA / 200 IP / 2+ MLB seasons).`;
+  const bustTooltip = bustLeaf.bust_pct != null
+    ? `Share of settled graduates with poor MLB outcomes (negative input — higher bust% pulls the composite DOWN). ${bustLeaf.settled_count ?? 0} settled grads (min 5).`
+    : `Insufficient settled grads to compute bust rate.`;
+  const talentTransTooltip = talentTransLeaf.wag_mean != null
+    ? `Mean WAR-above-graduation (WAG) across all grads — how each grad's actual MLB output compared to their FV-implied baseline. Sign indicates over/under-performance vs FV. ${talentTransLeaf.grad_count ?? 0} grads.`
+    : `Insufficient grads with WAG on file (needs ≥3).`;
   const topGradsTooltip = topGrads.top3_war_per_yr != null
     ? `Mean WAR/yr across the org's top-3 graduates by rate. Captures peak star-tier production. ${topGrads.grad_count_qualifying ?? 0} qualifying grads (min 3).`
     : `Insufficient grads to compute top-3 mean (needs ≥3 qualifying graduates).`;
@@ -17183,14 +17232,17 @@ function makeFarmReportCard(org) {
   // on this surface. fmtWarPerYr is declared in the helpers block above.
   const _hitProd = t.mlb_hitter_production  || t.mlb_hitter_wag  || {};
   const _pitProd = t.mlb_pitcher_production || t.mlb_pitcher_wag || {};
+  const fmtWag = v => v != null ? `${v >= 0 ? '+' : ''}${v.toFixed(2)} WAG` : '—';
   const mlbSubs =
-    subCell('Hitter MLB Production',  'mlb_hitter_production',  'mlb_hitter_production',  fmtWarPerYr, _hitProd.war_per_yr_mean,
+    subCell('Hitter Production',      'mlb_hitter_production',     'mlb_hitter_production',     fmtWarPerYr, _hitProd.war_per_yr_mean,
             `WAR/yr across debuted hitters. ${fmt3input('mlb_hitter_wag')}`) +
-    subCell('Pitcher MLB Production', 'mlb_pitcher_production', 'mlb_pitcher_production', fmtWarPerYr, _pitProd.war_per_yr_mean,
+    subCell('Pitcher Production',     'mlb_pitcher_production',    'mlb_pitcher_production',    fmtWarPerYr, _pitProd.war_per_yr_mean,
             `WAR/yr across debuted pitchers. ${fmt3input('mlb_pitcher_wag')}`) +
-    subCell('Boom Rate',              'mlb_production_boom_pct',     'mlb_production_boom_pct',     fmtPct,       boomLeaf.boom_pct, boomTooltip) +
-    subCell('Top-3 Grad WAR/yr',      'mlb_production_top_grads',    'mlb_production_top_grads',    v => v != null ? v.toFixed(2) + ' WAR/yr' : '—', topGrads.top3_war_per_yr, topGradsTooltip) +
-    subCell('Conviction',             'mlb_production_conviction',   'mlb_production_conviction',   convFmt,      convLeaf.conviction, convTooltip);
+    subCell('Talent Translation',     'talent_translation',        'talent_translation',        fmtWag,      talentTransLeaf.wag_mean, talentTransTooltip) +
+    subCell('Boom Rate',              'mlb_production_boom_pct',   'mlb_production_boom_pct',   fmtPctRaw,   boomLeaf.boom_pct, boomTooltip) +
+    subCell('Bust Rate',              'mlb_production_bust_pct',   'mlb_production_bust_pct',   fmtPctRaw,   bustLeaf.bust_pct, bustTooltip) +
+    subCell('Top-3 Grad WAR/yr',      'mlb_production_top_grads',  'mlb_production_top_grads',  v => v != null ? v.toFixed(2) + ' WAR/yr' : '—', topGrads.top3_war_per_yr, topGradsTooltip) +
+    subCell('Conviction',             'mlb_production_conviction', 'mlb_production_conviction', convFmt,     convLeaf.conviction, convTooltip);
 
   // v18 — Conviction cap removed from storage.py so the badge no longer
   // applies. Kept the variable as an empty string to avoid disturbing
@@ -17220,15 +17272,16 @@ function makeFarmReportCard(org) {
       {
         key: 'development', label: 'Development', weight: W.development,
         leaves: [
-          { label: 'Hitter Tools DvM+',  letterKey: 'dev_hitter',  metric: fmtDvm((t.dev_hitter  || {}).dvm_plus) },
-          { label: 'Pitcher Tools DvM+', letterKey: 'dev_pitcher', metric: fmtDvm((t.dev_pitcher || {}).dvm_plus) },
+          { label: 'Hitter DvM+',  letterKey: 'dev_hitter',  metric: fmtDvm(_devHitterValue) },
+          { label: 'Pitcher DvM+', letterKey: 'dev_pitcher', metric: fmtDvm(_devPitcherValue) },
         ],
       },
       {
         key: 'financial', label: 'Financial', weight: W.financial,
         leaves: [
-          { label: 'WAR per $M',            letterKey: 'fin_war_per_m',             metric: fmtWarPerM((t.fin_war_per_m        || {}).value) },
+          { label: 'Active Surplus',        letterKey: 'fin_active_surplus',        metric: fmtSurplusPerProspect(_surplusPerProspect) },
           { label: 'Grad-Contract Surplus', letterKey: 'fin_contract_surplus',      metric: fmtUsdPerYr((t.fin_contract_surplus || {}).mean_usd_per_yr) },
+          { label: 'WAR per $M',            letterKey: 'fin_war_per_m',             metric: fmtWarPerM(finWarLeaf.value) },
           { label: 'Draft Pool Efficiency', letterKey: 'fin_draft_pool_efficiency', metric: fmtWarPerM(draftEffLeaf.war_per_m_pool) },
           { label: 'IFA ROI',               letterKey: 'fin_ifa_roi',               metric: fmtWarPerM(ifaRoiLeaf.war_per_m_ifa) },
         ],
@@ -17236,11 +17289,13 @@ function makeFarmReportCard(org) {
       {
         key: 'mlb_production', label: 'MLB Production', weight: W.mlb_production,
         leaves: [
-          { label: 'Hitter Production',  letterKey: 'mlb_hitter_production',  metric: fmtWarPerYr(_hitProd.war_per_yr_mean) },
-          { label: 'Pitcher Production', letterKey: 'mlb_pitcher_production', metric: fmtWarPerYr(_pitProd.war_per_yr_mean) },
-          { label: 'Boom Rate',          letterKey: 'mlb_production_boom_pct',   metric: fmtPct(boomLeaf.boom_pct) },
-          { label: 'Top-3 Grad WAR/yr',  letterKey: 'mlb_production_top_grads',  metric: topGrads.top3_war_per_yr != null ? topGrads.top3_war_per_yr.toFixed(2) + ' WAR/yr' : '—' },
-          { label: 'Conviction',         letterKey: 'mlb_production_conviction', metric: convFmt(convLeaf.conviction) },
+          { label: 'Hitter Production',   letterKey: 'mlb_hitter_production',   metric: fmtWarPerYr(_hitProd.war_per_yr_mean) },
+          { label: 'Pitcher Production',  letterKey: 'mlb_pitcher_production',  metric: fmtWarPerYr(_pitProd.war_per_yr_mean) },
+          { label: 'Talent Translation',  letterKey: 'talent_translation',      metric: fmtWag(talentTransLeaf.wag_mean) },
+          { label: 'Boom Rate',           letterKey: 'mlb_production_boom_pct', metric: fmtPctRaw(boomLeaf.boom_pct) },
+          { label: 'Bust Rate',           letterKey: 'mlb_production_bust_pct', metric: fmtPctRaw(bustLeaf.bust_pct) },
+          { label: 'Top-3 Grad WAR/yr',   letterKey: 'mlb_production_top_grads',  metric: topGrads.top3_war_per_yr != null ? topGrads.top3_war_per_yr.toFixed(2) + ' WAR/yr' : '—' },
+          { label: 'Conviction',          letterKey: 'mlb_production_conviction', metric: convFmt(convLeaf.conviction) },
         ],
       },
     ];
@@ -17506,30 +17561,38 @@ function makeFarmDvmMultiWindowPanel(org) {
     </div>`;
 }
 
-// v27 — Hitter vs Pitcher Development split card. Pulls the existing
-// dev_hitter / dev_pitcher leaf values (tool-grade-based DvM+, the
-// closest available cohort-level signal until per-cohort overall DvM+
-// is computed) so the reader sees which side of the org is driving
-// the headline number.
+// v28 — Hitter vs Pitcher Development split card. Reads the 70/30
+// blend (cohort Overall DvM+ + Tool DvM+) from `dvm_plus_by_window`
+// at the active window chip; falls back to the 6y headline if the
+// window key is absent. Each cell exposes the Overall + Tool
+// breakdown so the reader can attribute the blended score.
 function makeFarmDevCohortSplit(org) {
   const t = (org && org.tree) || {};
   const dh = t.dev_hitter  || {};
   const dp = t.dev_pitcher || {};
-  if (dh.dvm_plus == null && dp.dvm_plus == null) return "";
+  const win = state.formWindow || "6y";
+  const valOf = leaf => (leaf.dvm_plus_by_window || {})[win] ?? leaf.dvm_plus;
+  if (valOf(dh) == null && valOf(dp) == null) return "";
   const cell = (label, leaf) => {
-    const v = leaf.dvm_plus;
+    const v = valOf(leaf);
     const n = leaf.n_groups || 0;
+    const overall = (leaf.overall_dvm_plus || {})[win];
+    const tool    = leaf.tool_dvm_plus;
     const tone = v == null ? "is-empty" :
                  v >= 110 ? "is-strong" :
                  v >= 100 ? "is-pos" :
                  v >= 90  ? "is-neg" : "is-weak";
-    return `<div class="tooldev-cell ${tone}" title="${label} DvM+ ${v ?? '—'} · weighted mean of per-tool DvM+ across the org's ${label.toLowerCase()} cohort">
+    const parts = [];
+    if (overall != null) parts.push(`Overall ${overall}`);
+    if (tool    != null) parts.push(`Tool ${tool}`);
+    const breakdown = parts.length ? parts.join(' · ') : '—';
+    return `<div class="tooldev-cell ${tone}" title="${label} DvM+ ${v ?? '—'} at ${win} · 70% cohort Overall DvM+ (FV growth restricted to ${label.toLowerCase()}s) + 30% Tool DvM+ (per-tool deltas). ${breakdown}.">
       <div class="td-label">${label}</div>
       <div class="td-val">${v ?? "—"}</div>
-      <div style="font-size:9px;color:var(--text-tertiary);font-family:var(--font-mono);margin-top:2px;letter-spacing:0.02em;">${n} tool group${n === 1 ? "" : "s"}</div>
+      <div style="font-size:9px;color:var(--text-tertiary);font-family:var(--font-mono);margin-top:2px;letter-spacing:0.02em;">${breakdown}</div>
     </div>`;
   };
-  return `<div class="detail-title">Cohort split <span class="detail-title-sub">Hitter vs Pitcher DvM+ · weighted mean of per-tool DvM+ across each side. Surfaces which cohort is driving the org's headline dev pace.</span></div>
+  return `<div class="detail-title">Cohort split <span class="detail-title-sub">Hitter vs Pitcher DvM+ at ${win} window · 70% cohort Overall DvM+ + 30% Tool DvM+. Surfaces which cohort is driving the org's headline dev pace.</span></div>
     <div class="tooldev-card">
       <div class="tooldev-grid" style="grid-template-columns:repeat(2,1fr);">
         ${cell("Hitter",  dh)}

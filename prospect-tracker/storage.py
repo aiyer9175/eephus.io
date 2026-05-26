@@ -6912,17 +6912,28 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             denom += w
         return num / denom if denom > 0 else None
 
+    # v28 — Tool-based DvM+ pass. Writes the cohort-mean tool DvM+
+    # values onto the dev_hitter / dev_pitcher leaves. The final
+    # `dvm_plus` headline blends these with the cohort-restricted
+    # Overall DvM+ in a later pass once the league-wide cohort means
+    # / stdevs are known.
     for entry in org_summary:
         per_grp = entry["tool_dev"].get("per_tool_dvm_plus") or {}
         h_vals = [v for k, v in per_grp.items()
                   if k in _HITTER_TOOL_DVM_KEYS and v is not None]
         p_vals = [v for k, v in per_grp.items()
                   if k in _PITCHER_TOOL_DVM_KEYS and v is not None]
-        entry["tree"]["dev_hitter"]["dvm_plus"]  = int(round(sum(h_vals) / len(h_vals))) if h_vals else None
-        entry["tree"]["dev_hitter"]["n_groups"]  = len(h_vals)
+        tool_hit = (sum(h_vals) / len(h_vals)) if h_vals else None
         _pitcher_wm = _weighted_pitcher_dvm(per_grp)
-        entry["tree"]["dev_pitcher"]["dvm_plus"] = int(round(_pitcher_wm)) if _pitcher_wm is not None else None
-        entry["tree"]["dev_pitcher"]["n_groups"] = len(p_vals)
+        tool_pit = _pitcher_wm if _pitcher_wm is not None else None
+        entry["tree"]["dev_hitter"]["tool_dvm_plus"]  = int(round(tool_hit)) if tool_hit is not None else None
+        entry["tree"]["dev_hitter"]["n_groups"]       = len(h_vals)
+        entry["tree"]["dev_pitcher"]["tool_dvm_plus"] = int(round(tool_pit)) if tool_pit is not None else None
+        entry["tree"]["dev_pitcher"]["n_groups"]      = len(p_vals)
+        # Stash raw floats so the later blend pass can use the full
+        # precision rather than the rounded int.
+        entry["_tool_hit_raw"] = tool_hit
+        entry["_tool_pit_raw"] = tool_pit
 
     # Per-level graded prospect counts, sourced from the affiliate-roster
     # map. Drives both the "sort farms by depth at level X" chips on the
@@ -6950,6 +6961,28 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         hist = org_fv_history.get(entry["org"], {})
         entry["fv_history"] = hist.get("series", [])
         entry["fv_events"]  = hist.get("events", [])
+
+    # v28 — Cohort-restricted dev-FV series for the Hitter / Pitcher
+    # Development sub-grades. Splits the active+grad+inactive pool by
+    # the player's primary position (`position.split('/')[0]` — strict
+    # first-token, mirrors `_is_pitcher_graduate`'s two-way handling),
+    # then runs the same dev-FV aggregator over each subset. The result
+    # is a per-cohort cumulative dev-FV series we can score against the
+    # league's cohort-mean at any window. Pairs with the tool-based
+    # Tools DvM+ for a 70/30 blend on the parent leaf.
+    _PITCHER_POS_SET_COHORT = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP"}
+    def _primary_is_pitcher(pos: str | None) -> bool:
+        if not pos:
+            return False
+        return pos.upper().split("/")[0].strip() in _PITCHER_POS_SET_COHORT
+    all_players_for_cohort = actives + grads + inactives
+    hitter_players  = [p for p in all_players_for_cohort if not _primary_is_pitcher(p.position)]
+    pitcher_players = [p for p in all_players_for_cohort if     _primary_is_pitcher(p.position)]
+    hitter_fv_history  = _build_org_fv_history(hitter_players,  _filter_real_trades, trades_by_player)
+    pitcher_fv_history = _build_org_fv_history(pitcher_players, _filter_real_trades, trades_by_player)
+    for entry in org_summary:
+        entry["hitter_fv_history"]  = hitter_fv_history.get(entry["org"],  {}).get("series", [])
+        entry["pitcher_fv_history"] = pitcher_fv_history.get(entry["org"], {}).get("series", [])
 
     # ── Tree v3: Trade Acumen scoreboard (FV + WAR delta) ──
     # Two co-equal sub-inputs feed this leaf:
@@ -7185,6 +7218,94 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 entry["dvm_plus"][key] = round(100 + 10 * (delta / sd))
             else:
                 entry["dvm_plus"][key] = 100
+
+    # v28 — Cohort-restricted Hitter / Pitcher trajectory + DvM+ per
+    # window. Same algorithm as the org-wide trajectory above, but
+    # scored against the cohort-only league pool (so a strong-pitcher
+    # org gets credit even if its hitter pipeline is mediocre, and
+    # vice-versa). Each entry gets:
+    #   hitter_trajectories  / pitcher_trajectories  : raw smoothed dev
+    #   hitter_delta_above_mean / pitcher_…          : delta vs cohort mean
+    #   hitter_dvm_plus      / pitcher_dvm_plus      : 100-anchored index
+    # Sparse-cohort orgs (no qualifying hitter / pitcher) yield None
+    # for that side at that window — they read as "no data" in the
+    # blend below, not as a zero.
+    for entry in org_summary:
+        entry["hitter_trajectories"]  = {
+            key: _trajectory_score(entry["hitter_fv_history"],
+                                   lookback_days=days, as_of=today_iso)
+            for key, days in FARM_TRAJECTORY_WINDOWS.items()
+        }
+        entry["pitcher_trajectories"] = {
+            key: _trajectory_score(entry["pitcher_fv_history"],
+                                   lookback_days=days, as_of=today_iso)
+            for key, days in FARM_TRAJECTORY_WINDOWS.items()
+        }
+    hitter_traj_means = {
+        key: round(_mean([e["hitter_trajectories"][key] for e in org_summary]), 2)
+        for key in FARM_TRAJECTORY_WINDOWS
+    }
+    hitter_traj_stdevs = {
+        key: round(_stdev([e["hitter_trajectories"][key] for e in org_summary],
+                          hitter_traj_means[key]), 4)
+        for key in FARM_TRAJECTORY_WINDOWS
+    }
+    pitcher_traj_means = {
+        key: round(_mean([e["pitcher_trajectories"][key] for e in org_summary]), 2)
+        for key in FARM_TRAJECTORY_WINDOWS
+    }
+    pitcher_traj_stdevs = {
+        key: round(_stdev([e["pitcher_trajectories"][key] for e in org_summary],
+                          pitcher_traj_means[key]), 4)
+        for key in FARM_TRAJECTORY_WINDOWS
+    }
+    for entry in org_summary:
+        entry["hitter_delta_above_mean"]  = {
+            key: round(entry["hitter_trajectories"][key]  - hitter_traj_means[key], 2)
+            for key in FARM_TRAJECTORY_WINDOWS
+        }
+        entry["pitcher_delta_above_mean"] = {
+            key: round(entry["pitcher_trajectories"][key] - pitcher_traj_means[key], 2)
+            for key in FARM_TRAJECTORY_WINDOWS
+        }
+        entry["hitter_dvm_plus"]  = {}
+        entry["pitcher_dvm_plus"] = {}
+        for key in FARM_TRAJECTORY_WINDOWS:
+            sdh = hitter_traj_stdevs[key]
+            sdp = pitcher_traj_stdevs[key]
+            dh  = entry["hitter_delta_above_mean"][key]
+            dp  = entry["pitcher_delta_above_mean"][key]
+            entry["hitter_dvm_plus"][key]  = (round(100 + 10 * (dh / sdh)) if sdh > 1e-6 else 100)
+            entry["pitcher_dvm_plus"][key] = (round(100 + 10 * (dp / sdp)) if sdp > 1e-6 else 100)
+
+    # v28 — Final blend pass. 70% cohort-restricted Overall DvM+ +
+    # 30% tool-grade-based DvM+. Missing-signal: if one side is
+    # absent the other takes 100%. Headline `dvm_plus` (which feeds
+    # LEAF_SPECS letter grading) anchors on the 6y window — the
+    # principal sustained-development signal. `dvm_plus_by_window`
+    # exposes the full {1y, 3y, 6y} blend dict for window-reactive
+    # frontend display.
+    def _blend_dvm(overall, tool):
+        if overall is None and tool is None:
+            return None
+        if overall is None:
+            return int(round(tool))
+        if tool is None:
+            return int(round(overall))
+        return int(round(0.7 * overall + 0.3 * tool))
+    for entry in org_summary:
+        tool_hit = entry.pop("_tool_hit_raw", None)
+        tool_pit = entry.pop("_tool_pit_raw", None)
+        hit_overall = entry["hitter_dvm_plus"]    # {window: int}
+        pit_overall = entry["pitcher_dvm_plus"]
+        hit_by_window = {k: _blend_dvm(hit_overall.get(k), tool_hit) for k in FARM_TRAJECTORY_WINDOWS}
+        pit_by_window = {k: _blend_dvm(pit_overall.get(k), tool_pit) for k in FARM_TRAJECTORY_WINDOWS}
+        entry["tree"]["dev_hitter"]["dvm_plus"]            = hit_by_window.get("6y")
+        entry["tree"]["dev_hitter"]["dvm_plus_by_window"]  = hit_by_window
+        entry["tree"]["dev_hitter"]["overall_dvm_plus"]    = dict(hit_overall)
+        entry["tree"]["dev_pitcher"]["dvm_plus"]           = pit_by_window.get("6y")
+        entry["tree"]["dev_pitcher"]["dvm_plus_by_window"] = pit_by_window
+        entry["tree"]["dev_pitcher"]["overall_dvm_plus"]   = dict(pit_overall)
 
     # Helper: normalize a list where some entries may be None (small-
     # sample orgs without enough data). None values get the cohort
@@ -7861,6 +7982,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "org_summary": org_summary,
         "farm_trajectory_means": farm_trajectory_means,
         "farm_trajectory_stdevs": farm_trajectory_stdevs,
+        # v28 — cohort-restricted (hitter / pitcher) league means + stdevs
+        # per window. Mirror of the org-wide pair above; lets the frontend
+        # render a cohort-only growth chart with the same baseline-removal
+        # math used for the all-prospects chart.
+        "farm_hitter_trajectory_means":   hitter_traj_means,
+        "farm_hitter_trajectory_stdevs":  hitter_traj_stdevs,
+        "farm_pitcher_trajectory_means":  pitcher_traj_means,
+        "farm_pitcher_trajectory_stdevs": pitcher_traj_stdevs,
         "level_norms": level_norms,
         # MLB Draft bonus-pool ceilings + per-pick slot values, scraped
         # from MLB.com per year. Keyed by year (int). Drives the
