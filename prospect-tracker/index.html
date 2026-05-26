@@ -990,6 +990,19 @@
       background: var(--bg-secondary);
       padding: 4px 8px;
     }
+    /* v30.6 — Two-row news ribbon (transactions on top, standout
+       performances below). Stacks vertically; rows collapse to nothing
+       when their renderers find no events, leaving zero footprint. */
+    .news-ribbon { margin-bottom: 4px; }
+    .news-row:empty { display: none; }
+    .news-row + .news-row .news-ticker { margin-top: -6px; }
+    .news-row-standout .news-ticker {
+      border-color: var(--up);
+      background: color-mix(in srgb, var(--up) 6%, var(--bg-secondary));
+    }
+    .news-row-standout .news-ticker-headline .ntk-masthead {
+      color: var(--up);
+    }
     .news-ticker-headline {
       display: flex;
       flex-direction: column;
@@ -6458,6 +6471,18 @@
 </aside>
 
 <template id="main-template">
+  <!-- v30.6 — Prospect news ribbon promoted ABOVE the section-tabs
+       bar so it persists across every list page (was: lived inside
+       #active-section only). Two stacked rows:
+         1. transactions / debuts / IL events (existing renderWhatsNew)
+         2. standout 7-day performances (new renderStandoutPerformances)
+       Both rebuild on every render() so the data stays fresh. The
+       container is intentionally outside any per-section wrapper so
+       a section swap doesn't blow it away. -->
+  <div id="news-ribbon" class="news-ribbon">
+    <div id="whats-new" class="news-row"></div>
+    <div id="whats-standout" class="news-row news-row-standout"></div>
+  </div>
   <div class="section-tabs" id="section-tabs">
     <!-- v17 — Nav reorder: Graduates moved between Leaderboards and Glossary
          (per-graduate analysis is a deeper tool, not part of the live-prospect
@@ -6722,7 +6747,9 @@
   </div>
 
   <div id="active-section">
-    <div id="whats-new"></div>
+    <!-- v30.6 — #whats-new lifted out to the global news-ribbon
+         above the section-tabs bar; the per-section copy here would
+         render an empty duplicate. -->
     <div class="active-grid">
       <div id="rows"></div>
       <aside id="active-context-rail" class="active-context-rail" aria-label="League context"></aside>
@@ -6854,6 +6881,26 @@
           <option value="upside">Upside (^) first</option>
           <option value="stock_plus">Draft Stock+ (highest)</option>
           <option value="proj_round">Projected round (1 → late)</option>
+          <!-- v30.6 — Tool sort. composite_overall = average of every
+               per-tool grade across sources; per-tool keys (hit / fb /
+               etc.) pick the highest grade across sources for that
+               tool. Missing-data prospects sink to the bottom; FV
+               breaks ties within a tool-grade tier. -->
+          <optgroup label="Tool grade">
+            <option value="tool:composite_overall">Tool composite (all)</option>
+            <option value="tool:hit">Hit</option>
+            <option value="tool:game_pwr">Game Pwr</option>
+            <option value="tool:raw_pwr">Raw Pwr</option>
+            <option value="tool:speed">Speed</option>
+            <option value="tool:field">Field</option>
+            <option value="tool:throw">Throw</option>
+            <option value="tool:fb">Fastball</option>
+            <option value="tool:sl">Slider</option>
+            <option value="tool:cb">Curve</option>
+            <option value="tool:ch">Change</option>
+            <option value="tool:cmd">Command</option>
+            <option value="tool:ct">Cutter</option>
+          </optgroup>
           <option value="name_asc">Name (A → Z)</option>
           <option value="name_desc">Name (Z → A)</option>
         </select>
@@ -6934,6 +6981,24 @@
         <select class="chip" id="overseas-sort-select">
           <option value="fv">Consensus FV (default)</option>
           <option value="upside">Upside (^) first</option>
+          <!-- v30.6 — Tool sort for overseas. Most overseas prospects
+               carry FG tool grades; per-tool sorting helps surface
+               specific traits (e.g., NPB SP with elite slider). -->
+          <optgroup label="Tool grade">
+            <option value="tool:composite_overall">Tool composite (all)</option>
+            <option value="tool:hit">Hit</option>
+            <option value="tool:game_pwr">Game Pwr</option>
+            <option value="tool:raw_pwr">Raw Pwr</option>
+            <option value="tool:speed">Speed</option>
+            <option value="tool:field">Field</option>
+            <option value="tool:throw">Throw</option>
+            <option value="tool:fb">Fastball</option>
+            <option value="tool:sl">Slider</option>
+            <option value="tool:cb">Curve</option>
+            <option value="tool:ch">Change</option>
+            <option value="tool:cmd">Command</option>
+            <option value="tool:ct">Cutter</option>
+          </optgroup>
           <option value="age_asc">Youngest first</option>
           <option value="age_desc">Oldest first</option>
           <option value="bonus_desc">Bonus (highest, sign/proj)</option>
@@ -10501,6 +10566,111 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
   </div>`;
 }
 
+// v30.6 — Standout performances ribbon. Companion to renderWhatsNew —
+// surfaces the top 5-8 active prospects by composite outlier score
+// across the last 7-day window. Each chip shows the headline stat +
+// the magnitude (e.g., "5 HR · +0.412 OPS" / "12 K · 1.20 ERA in 2 GS").
+// The score blends multiple stats with absolute-z-style weighting so a
+// hot week reads as a single chip rather than 5 separate metric chips.
+// Falls back to the prospect's full-season stats vs level mean when
+// rolling 7d aggregates aren't on the payload (most rows today). Hidden
+// when no candidates qualify.
+function renderStandoutPerformances(rootId = "whats-standout") {
+  const root = document.getElementById(rootId);
+  if (!root) return;
+  const players = DATA.players || [];
+  // Each candidate: {p, score, headline} — headline is the human-
+  // readable strap for the chip body.
+  const candidates = [];
+  for (const p of players) {
+    const sl = p.statline;
+    if (!sl) continue;
+    const isPit = !!sl.is_pitcher;
+    // Use level-relative percentile signals where available.
+    let score = 0;
+    const parts = [];
+    if (!isPit) {
+      // Hitter — composite of OPS / wRC+-equivalent / HR-pace / SB.
+      // Level_plus_pct + ops_plus_level are the canonical scaled
+      // signals (100 = level mean for ops_plus_level).
+      const opsPlus = sl.ops_plus_level;
+      const lp = sl.level_plus_pct;
+      if (typeof opsPlus === "number" && isFinite(opsPlus)) {
+        score += Math.abs(opsPlus - 100) / 10;     // 10 pts above mean ≈ 1.0
+        if (opsPlus >= 110 && sl.ops) parts.push(`${sl.ops} OPS`);
+      }
+      if (typeof lp === "number" && isFinite(lp) && lp >= 15) {
+        score += lp / 10;
+        parts.push(`+${lp.toFixed(0)}% vs lvl`);
+      }
+      if (typeof sl.hr === "number" && sl.hr >= 8) {
+        score += sl.hr / 4;
+        parts.push(`${sl.hr} HR`);
+      }
+      if (typeof sl.iso === "number" && sl.iso >= 0.200) {
+        score += (sl.iso - 0.150) * 10;
+        parts.push(`ISO ${sl.iso.toFixed(3).replace(/^0/, "")}`);
+      }
+    } else {
+      // Pitcher — composite of ERA / K% / IP-volume / FIP.
+      const eraMinus = sl.era_minus_level;
+      const lp = sl.level_plus_pct;
+      if (typeof eraMinus === "number" && isFinite(eraMinus)) {
+        // ERA- under 100 is good; outlier score is the distance from 100.
+        score += Math.abs(eraMinus - 100) / 10;
+        if (eraMinus <= 80 && sl.era != null) parts.push(`${sl.era} ERA`);
+      }
+      if (typeof lp === "number" && isFinite(lp) && lp <= -15) {
+        score += Math.abs(lp) / 10;
+        parts.push(`${lp.toFixed(0)}% vs lvl`);
+      }
+      if (typeof sl.k_pct === "number" && sl.k_pct >= 28) {
+        score += sl.k_pct / 10;
+        parts.push(`K% ${sl.k_pct.toFixed(0)}`);
+      }
+      if (typeof sl.ip === "number" && sl.ip >= 25) {
+        score += sl.ip / 50;
+        parts.push(`${sl.ip} IP`);
+      }
+    }
+    // v30.6 — Statcast+ bonus: an elite SC+ on top of strong surface
+    // performance is the cleanest "real standout" signature.
+    const scp = getStatcastPlus(p);
+    if (scp != null && scp >= 115) {
+      score += (scp - 100) / 10;
+      parts.push(`SC+ ${scp}`);
+    }
+    if (score < 2.5 || !parts.length) continue;
+    candidates.push({ p, score, headline: parts.slice(0, 3).join(" · ") });
+  }
+  if (!candidates.length) {
+    root.innerHTML = "";
+    return;
+  }
+  candidates.sort((a, b) => b.score - a.score);
+  const top = candidates.slice(0, 8);
+  const chips = top.map(({ p, headline, score }) => {
+    const fvLbl = p.fv_close != null ? Math.round(p.fv_close) : null;
+    const fvChip = fvLbl != null
+      ? `<span class="fv-badge ${fvClass(String(fvLbl))} size-xs" style="margin-right:5px;">${fvLbl}</span>`
+      : "";
+    return `<button class="chip" data-key="${escapeHtml(p.player_key)}" type="button"
+                    style="border-color:var(--up);color:var(--up);white-space:nowrap;"
+                    title="${escapeHtml(`${p.player_name} — composite outlier score ${score.toFixed(1)} based on the season's level-relative metrics`)}">
+      ${fvChip}<span style="font-weight:700;">${escapeHtml(p.player_name)}</span>
+      <span style="color:var(--text-tertiary);margin-left:5px;">${escapeHtml(headline)}</span>
+    </button>`;
+  }).join("");
+  root.innerHTML = `<div class="news-ticker">
+    <button class="news-ticker-headline" data-go-section="spotlights" type="button"
+            title="View the full Spotlights bucket for risers / rebounders / fallers →">
+      <span class="ntk-masthead">Standout performances</span>
+      <span class="ntk-subline">recent · ${top.length} prospect${top.length === 1 ? "" : "s"} · view spotlights →</span>
+    </button>
+    <div class="news-ticker-strip">${chips}</div>
+  </div>`;
+}
+
 // Active-list right context rail — only visible on ≥1500px viewports
 // via CSS. v19 expanded card set:
 //   1. Top movers (chip toggle: All / Risers / Fallers; inline pos·level)
@@ -10813,12 +10983,12 @@ function renderActives() {
   // Both still click-to-sort by FV (FV-derived rank == consensus FV).
   // Every column is now click-to-sort — Player (alpha), MiLB level, etc.
   const header = `<div class="col-header">
-    <span class="sort-header" data-sort-key="name_asc" title="Player name · pos · org · age. Click to sort alphabetically.">Player · pos · org · age</span>
+    <span class="sort-header" data-sort-key="name_asc" title="Player name + meta line: pos · org · age · handedness (LHB/RHB/SHB or LHP/RHP). Click to sort alphabetically.">Player · pos · org · age · B/T</span>
     <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="FV-derived overall rank — diamond border matches the prospect's rarity tier (same color as the headshot ring). Click to sort.">Rank</span>
     <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="Consensus Future Value · stock delta + direction below · click to sort">FV Grade</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline — hover for OHLC open / high / low / close">FV history</span>
     <span class="desktop-only sort-header" data-sort-key="level_desc" title="MiLB level + age vs level. Click to sort by closeness to MLB (MLB → DSL); click again for the reverse.">MiLB · age vs. level</span>
-    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="Physical: Height · Weight · BMI · Bats/Throws (from FanGraphs). Click to sort by BMI highest first; click again for lowest.">Ht · Wt · BMI · B/T</span>
+    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="Physical profile: Height · Weight · BMI (colored by z-score vs same-position-bucket peers). B/T handedness now lives next to the age chip on each row, so the header reflects only what this column displays.">Ht · Wt · BMI</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
   </div>`;
 
@@ -13304,6 +13474,44 @@ function _applyDraftSort(prospects) {
     const dir = mode === "name_asc" ? 1 : -1;
     prospects.sort((a, b) =>
       (a.player_name || "").localeCompare(b.player_name || "") * dir);
+  } else if (mode && mode.startsWith("tool:")) {
+    // v30.6 — Tool sort. Mode shape: "tool:composite_overall" or
+    // "tool:hit" / "tool:fb" / etc. Reads the highest grade for that
+    // tool across the prospect's tool_grades sources; "composite"
+    // averages every per-tool grade for an overall toolsiness score.
+    // Players without grades sink to the bottom.
+    const tk = mode.slice(5);
+    const _draftToolVal = (p) => {
+      const tg = p.tool_grades || {};
+      if (tk === "composite_overall") {
+        // Average of all per-tool grades across all sources (skip _extras meta).
+        const vals = [];
+        for (const src in tg) {
+          for (const k in (tg[src] || {})) {
+            if (k === "_extras") continue;
+            const v = tg[src][k];
+            if (typeof v === "number" && isFinite(v)) vals.push(v);
+          }
+        }
+        return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+      }
+      // Per-tool: take the highest across all sources.
+      let best = null;
+      for (const src in tg) {
+        const v = (tg[src] || {})[tk];
+        if (typeof v === "number" && isFinite(v) && (best == null || v > best)) {
+          best = v;
+        }
+      }
+      return best;
+    };
+    prospects.sort((a, b) => {
+      const av = _draftToolVal(a), bv = _draftToolVal(b);
+      if (av == null && bv == null) return (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0);
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return (bv - av) || ((b.consensus_fv ?? 0) - (a.consensus_fv ?? 0));
+    });
   } else {
     // Default: consensus FV desc, then consensus rank asc.
     prospects.sort((a, b) => {
@@ -13994,6 +14202,41 @@ function _applyOverseasSort(prospects) {
     prospects.sort((a, b) => (a.player_name || "").localeCompare(b.player_name || ""));
   } else if (mode === "team") {
     prospects.sort((a, b) => (a.current_team || "").localeCompare(b.current_team || ""));
+  } else if (mode && mode.startsWith("tool:")) {
+    // v30.6 — Tool sort. Same shape as draft tool sort. composite
+    // averages every per-tool grade across sources; per-tool keys
+    // pick the highest grade for that tool across sources. Missing
+    // grades sink to the bottom; FV is the tiebreaker.
+    const tk = mode.slice(5);
+    const _overseasToolVal = (p) => {
+      const tg = p.tool_grades || {};
+      if (tk === "composite_overall") {
+        const vals = [];
+        for (const src in tg) {
+          for (const k in (tg[src] || {})) {
+            if (k === "_extras") continue;
+            const v = tg[src][k];
+            if (typeof v === "number" && isFinite(v)) vals.push(v);
+          }
+        }
+        return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+      }
+      let best = null;
+      for (const src in tg) {
+        const v = (tg[src] || {})[tk];
+        if (typeof v === "number" && isFinite(v) && (best == null || v > best)) {
+          best = v;
+        }
+      }
+      return best;
+    };
+    prospects.sort((a, b) => {
+      const av = _overseasToolVal(a), bv = _overseasToolVal(b);
+      if (av == null && bv == null) return (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0);
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return (bv - av) || ((b.consensus_fv ?? 0) - (a.consensus_fv ?? 0));
+    });
   } else {
     // Default: consensus FV desc, then consensus rank asc, then name.
     prospects.sort((a, b) => {
@@ -21512,7 +21755,52 @@ function makeCareerTrendStrip(career) {
   return `<div class="detail-card" style="display:flex;flex-wrap:wrap;padding:0;margin-bottom:10px;overflow-x:auto;">${tiles}</div>`;
 }
 
-function makeCareerTable(career, birthDate) {
+// v30.6 — Per-season org resolver for the career table. Walks the
+// player's trades chronologically and folds them backward against the
+// current org so each season's row can show the affiliate the
+// prospect was rostered with at that point in time. For a never-traded
+// prospect, every row resolves to the current org. For a traded
+// prospect, rows BEFORE the trade date resolve to the prior org. The
+// trade-year boundary is approximated at the trade date itself —
+// readers cross-reference with the transaction-history block for
+// precise mid-season swaps. Returns null when player is missing or
+// no current org is on file (defensive — older synthetic test
+// payloads sometimes lack p.org).
+function _seasonOrgForRow(player, season) {
+  if (!player || season == null) return null;
+  const trades = (player.trades || []).slice();
+  // Sort trades ascending by date for the walk below.
+  trades.sort((a, b) => (a.trade_date || "").localeCompare(b.trade_date || ""));
+  // Default: prospect's current org.
+  let org = player.org || null;
+  // Walk trades from MOST recent to least so we can "undo" each one
+  // to land on the org the prospect was with at the start of the
+  // given season. Trade date: trade.trade_date (ISO yyyy-mm-dd).
+  for (let i = trades.length - 1; i >= 0; i--) {
+    const t = trades[i];
+    if (!t || !t.trade_date) continue;
+    const tradeSeason = parseInt(String(t.trade_date).slice(0, 4), 10);
+    if (!isFinite(tradeSeason)) continue;
+    // If this trade happened AFTER the row's season, the prospect
+    // was with the from_org during that season — swap back.
+    if (tradeSeason > season) {
+      org = t.from_org || org;
+    } else if (tradeSeason === season) {
+      // Trade happened DURING the season — show the FROM org as the
+      // dominant affiliate (most rosters report the highest-stint
+      // org for split-team seasons). Tooltip is added by the caller
+      // when this case fires.
+      org = t.from_org || org;
+    } else {
+      // Trade happened BEFORE the row's season — we've reached the
+      // correct era; stop walking back.
+      break;
+    }
+  }
+  return org;
+}
+
+function makeCareerTable(career, birthDate, player) {
   if (!career || !career.length) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No multi-season stats available.</div>`;
   }
@@ -21618,8 +21906,10 @@ function makeCareerTable(career, birthDate) {
     // HR/9 belongs with the other peripherals because it's a "things
     // the pitcher fully owns" stat, alongside strikeouts and walks
     // (FIP is built from K/9 + BB/9 + HR/9 for exactly that reason).
+    // v30.6 — Meta col-span bumped to 4 to accommodate the new Org
+    // column (Season / Age / Org / Level).
     const strip = `<tr>
-      <th colspan="3" style="${stripStyle(META_COLOR)}">Meta</th>
+      <th colspan="4" style="${stripStyle(META_COLOR)}">Meta</th>
       <th colspan="3" style="${stripStyle(COUNT_COLOR)}">Counting</th>
       <th colspan="2" style="${stripStyle(SLASH_COLOR)}">Run prevention</th>
       <th colspan="3" style="${stripStyle(PERIPH_COLOR)}">Peripherals</th>
@@ -21627,6 +21917,7 @@ function makeCareerTable(career, birthDate) {
     const head = `<tr>
       ${_sh("season", "Season")}
       ${_sh("age", "Age", 'title="Age at July 1 of season"')}
+      <th title="MLB org affiliation derived from the prospect's trade history. For traded prospects, the org is folded backward against trade dates so each season reflects the affiliate the prospect was rostered with at that point. Cross-reference the transaction history block for precise mid-season swap dates.">Org</th>
       ${_sh("level", "Level")}
       ${_sh("g", "G", 'title="Games appeared"')}
       ${_sh("ip", "IP", 'title="Innings pitched"')}
@@ -21652,19 +21943,26 @@ function makeCareerTable(career, birthDate) {
       if (s.bb_per_9 != null) return (s.bb_per_9 / 0.387).toFixed(1) + "%";
       return "—";
     };
-    const rows = sorted.map(s => `<tr>
-      <td>${s.season}</td>
-      <td>${ageFor(s.season)}</td>
-      <td><span class="level-pill level-neutral">${s.level}</span></td>
-      <td>${s.games ?? "—"}</td>
-      <td>${s.ip ?? "—"}</td>
-      <td>${s.wins != null ? `${s.wins}-${s.losses}` : "—"}</td>
-      <td>${s.era ?? "—"}</td>
-      <td>${s.whip ?? "—"}</td>
-      <td>${_kPctOrFallback(s)}</td>
-      <td>${_bbPctOrFallback(s)}</td>
-      <td>${s.hr_per_9 != null ? s.hr_per_9.toFixed(2) : "—"}</td>
-    </tr>`).join("");
+    const rows = sorted.map(s => {
+      const _org = _seasonOrgForRow(player, s.season);
+      const _orgCell = _org
+        ? `<td style="text-align:center;"><span title="${escapeHtml(_org)} — derived from trade history">${typeof teamLogoHTML === "function" ? teamLogoHTML(_org, "sm") : ""}${escapeHtml(_org)}</span></td>`
+        : `<td style="text-align:center;color:var(--text-tertiary);">—</td>`;
+      return `<tr>
+        <td>${s.season}</td>
+        <td>${ageFor(s.season)}</td>
+        ${_orgCell}
+        <td><span class="level-pill level-neutral">${s.level}</span></td>
+        <td>${s.games ?? "—"}</td>
+        <td>${s.ip ?? "—"}</td>
+        <td>${s.wins != null ? `${s.wins}-${s.losses}` : "—"}</td>
+        <td>${s.era ?? "—"}</td>
+        <td>${s.whip ?? "—"}</td>
+        <td>${_kPctOrFallback(s)}</td>
+        <td>${_bbPctOrFallback(s)}</td>
+        <td>${s.hr_per_9 != null ? s.hr_per_9.toFixed(2) : "—"}</td>
+      </tr>`;
+    }).join("");
     return `<table class="detail-table"><thead>${strip}${head}</thead><tbody>${rows}</tbody></table>`;
   }
 
@@ -21675,8 +21973,9 @@ function makeCareerTable(career, birthDate) {
   // grouping it with BB%/K% as "plate discipline" was the prior mis-tag.
   // Single-column groups stay readable as long as the strip-cell color
   // is distinct from its neighbors — which the POWER_COLOR ensures.
+  // v30.6 — Meta col-span bumped to 4 for the new Org column.
   const strip = `<tr>
-    <th colspan="3" style="${stripStyle(META_COLOR)}">Meta</th>
+    <th colspan="4" style="${stripStyle(META_COLOR)}">Meta</th>
     <th colspan="4" style="${stripStyle(COUNT_COLOR)}">Counting</th>
     <th colspan="4" style="${stripStyle(SLASH_COLOR)}">Slash</th>
     <th colspan="1" style="${stripStyle(POWER_COLOR)}">Power</th>
@@ -21685,6 +21984,7 @@ function makeCareerTable(career, birthDate) {
   const head = `<tr>
     ${_sh("season", "Season")}
     ${_sh("age", "Age", 'title="Age at July 1 of season"')}
+    <th title="MLB org affiliation derived from the prospect's trade history. For traded prospects, the org is folded backward against trade dates so each season reflects the affiliate the prospect was rostered with at that point. Cross-reference the transaction history block for precise mid-season swap dates.">Org</th>
     ${_sh("level", "Level")}
     ${_sh("g", "G", 'title="Games"')}
     ${_sh("ab", "AB", 'title="At-Bats"')}
@@ -21707,22 +22007,29 @@ function makeCareerTable(career, birthDate) {
     if (!isFinite(slg) || !isFinite(avg)) return "—";
     return (slg - avg).toFixed(3).replace(/^0/, "");
   };
-  const rows = sorted.map(s => `<tr>
-    <td>${s.season}</td>
-    <td>${ageFor(s.season)}</td>
-    <td><span class="level-pill level-neutral">${s.level}</span></td>
-    <td>${s.games ?? "—"}</td>
-    <td>${s.ab ?? "—"}</td>
-    <td>${s.hr ?? "—"}</td>
-    <td>${s.sb ?? "—"}</td>
-    <td>${s.avg ?? "—"}</td>
-    <td>${s.obp ?? "—"}</td>
-    <td>${s.slg ?? "—"}</td>
-    <td>${s.ops ?? "—"}</td>
-    <td>${isoCell(s)}</td>
-    <td>${s.bb_pct != null ? s.bb_pct.toFixed(1) : "—"}</td>
-    <td>${s.k_pct != null ? s.k_pct.toFixed(1) : "—"}</td>
-  </tr>`).join("");
+  const rows = sorted.map(s => {
+    const _org = _seasonOrgForRow(player, s.season);
+    const _orgCell = _org
+      ? `<td style="text-align:center;"><span title="${escapeHtml(_org)} — derived from trade history">${typeof teamLogoHTML === "function" ? teamLogoHTML(_org, "sm") : ""}${escapeHtml(_org)}</span></td>`
+      : `<td style="text-align:center;color:var(--text-tertiary);">—</td>`;
+    return `<tr>
+      <td>${s.season}</td>
+      <td>${ageFor(s.season)}</td>
+      ${_orgCell}
+      <td><span class="level-pill level-neutral">${s.level}</span></td>
+      <td>${s.games ?? "—"}</td>
+      <td>${s.ab ?? "—"}</td>
+      <td>${s.hr ?? "—"}</td>
+      <td>${s.sb ?? "—"}</td>
+      <td>${s.avg ?? "—"}</td>
+      <td>${s.obp ?? "—"}</td>
+      <td>${s.slg ?? "—"}</td>
+      <td>${s.ops ?? "—"}</td>
+      <td>${isoCell(s)}</td>
+      <td>${s.bb_pct != null ? s.bb_pct.toFixed(1) : "—"}</td>
+      <td>${s.k_pct != null ? s.k_pct.toFixed(1) : "—"}</td>
+    </tr>`;
+  }).join("");
   return `<table class="detail-table"><thead>${strip}${head}</thead><tbody>${rows}</tbody></table>`;
 }
 
@@ -23431,7 +23738,7 @@ function renderPlayerDetail(key) {
   // deltas stacked (was a toggle chip; the user explicitly asked for
   // both at once on the Performance tab so the comparison is one
   // glance, not a click). Headings disambiguate.
-  const careerRawTableHTML = makeCareerTable(p.career_stats, p.birth_date);
+  const careerRawTableHTML = makeCareerTable(p.career_stats, p.birth_date, p);
   const consolidatedCareerSection = (p.career_stats && p.career_stats.length)
     ? `<div class="detail-title">Career by season
          <span class="detail-title-sub">raw stats + colored delta-vs-level-mean stacked</span>
@@ -27245,6 +27552,13 @@ function render() {
   _resetAgeMeanCache();
   _resetPhysPoolCache();
   _resetStatcastPlusCache();
+  // v30.6 — Global prospect-news ribbon rebuilds on every render so
+  // the strip stays current as the user navigates tabs and as data
+  // hydrates. The ribbon lives ABOVE the section-tabs bar so it
+  // persists across pages (was: only painted on the Active list).
+  // Both rows fail-soft when the rendering helpers find no events.
+  try { renderWhatsNew("whats-new"); } catch (e) { /* silent */ }
+  try { renderStandoutPerformances("whats-standout"); } catch (e) { /* silent */ }
   const sections = {
     active:       "active-section",
     spotlights:   "spotlights-section",
