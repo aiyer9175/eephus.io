@@ -9900,6 +9900,7 @@ function syncToURL() {
   // matching detail page so other views don't carry an unused param.
   if (state.view && state.view.type === "player" && state.playerTab && state.playerTab !== "overview") p.set("ptab", state.playerTab);
   if (state.view && state.view.type === "farm"   && state.farmTab   && state.farmTab   !== "overview") p.set("ftab", state.farmTab);
+  if (state.view && state.view.type === "farm"   && state.farmCompareOrg) p.set("fcmp", state.farmCompareOrg);
   if (state.view && state.view.type === "draftee" && state.prospectTab && state.prospectTab !== "overview") p.set("dttab", state.prospectTab);
   if (state.view && state.view.type === "overseas_player" && state.prospectTab && state.prospectTab !== "overview") p.set("ostab", state.prospectTab);
   // Pagination — only encoded when on a non-default page (page 1 = no
@@ -10013,6 +10014,7 @@ function syncFromURL() {
   // shared URLs forward so they still land on the right panel.
   if (state.playerTab === "context") state.playerTab = "details";
   state.farmTab   = p.has("ftab") ? p.get("ftab") : "overview";
+  state.farmCompareOrg = p.has("fcmp") ? p.get("fcmp") : "";
   if (!state.pages) state.pages = {};
   const _readPage = (k, key) => { state.pages[key] = p.has(k) ? Math.max(1, parseInt(p.get(k), 10) || 1) : 1; };
   _readPage("lbpage",  "leaderboard");
@@ -11225,6 +11227,10 @@ const state = {
   // land on the requested tab.
   playerTab: "overview",
   farmTab:   "overview",
+  // v30.8 — Org-vs-org farm comparison. When set to another org code,
+  // the farm Overview tab renders a head-to-head comparison block
+  // above the existing league rank bar. Defaults to "" (no compare).
+  farmCompareOrg: "",
   // Shared by both draft + overseas detail pages. Both pages use the
   // same 3-tab schema (Overview / Tools & Scouting / Acquisition).
   prospectTab: "overview",
@@ -22743,6 +22749,137 @@ function makeFarmDevTopMovers(rosterPlayersAll) {
 // bars across the 30-org cohort. Designed to sit in the main column
 // next to the depth chart so the reader gets an immediate "what does
 // this org look like" snapshot before drilling into the branch tabs.
+// v30.8 — Org-vs-org head-to-head comparison block. Walks both orgs'
+// component grades + per-branch ranks and renders twin tiles per
+// branch with a delta chip when the gap is ≥5pts (color-coded green
+// to the favored side). Renders nothing when no comparison is set
+// or the picked org can't be resolved.
+function makeFarmCompareBlock(currentOrg) {
+  if (!currentOrg || !state.farmCompareOrg
+      || state.farmCompareOrg === currentOrg.org) return "";
+  const otherOrg = ((DATA && DATA.org_summary) || [])
+    .find(o => o && o.org === state.farmCompareOrg);
+  if (!otherOrg) return "";
+  const ranksA = currentOrg.component_ranks || {};
+  const ranksB = otherOrg.component_ranks || {};
+  const gradesA = currentOrg.grades || {};
+  const gradesB = otherOrg.grades || {};
+  const n = (DATA.org_summary || []).length || 30;
+  const branches = [
+    { key: "acquisition_strategy", label: "Acquisition" },
+    { key: "development",          label: "Development" },
+    { key: "financial",            label: "Financial" },
+    { key: "mlb_production",       label: "MLB Production" },
+  ];
+  const _row = ({ key, label }) => {
+    const rA = ranksA[key], rB = ranksB[key];
+    const gA = gradesA[key] || "—", gB = gradesB[key] || "—";
+    // Convert ranks to "percentile points" (100-anchored: rank 1 = 100,
+    // rank 30 = 0) so we can compare two orgs on the same scale.
+    const pctA = rA != null ? Math.round(100 * (n - rA + 1) / n) : null;
+    const pctB = rB != null ? Math.round(100 * (n - rB + 1) / n) : null;
+    const delta = pctA != null && pctB != null ? pctA - pctB : null;
+    const _toneA = gA === "—" ? "var(--text-tertiary)" : gradeColor(gA);
+    const _toneB = gB === "—" ? "var(--text-tertiary)" : gradeColor(gB);
+    let deltaChip = "";
+    if (delta != null && Math.abs(delta) >= 5) {
+      // 5pt threshold per user direction. Color = the favored side.
+      // Positive = currentOrg leads; negative = otherOrg leads.
+      const sign = delta > 0 ? "+" : "";
+      const winColor = delta > 0 ? "var(--up)" : "var(--down)";
+      deltaChip = `<span style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:${winColor};letter-spacing:0.02em;">${sign}${delta} pp</span>`;
+    } else if (delta != null) {
+      deltaChip = `<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);letter-spacing:0.02em;">${delta >= 0 ? "+" : ""}${delta} pp</span>`;
+    }
+    return `<div style="display:grid;grid-template-columns:110px 1fr 50px 1fr;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border-light);font-size:12px;">
+      <span style="color:var(--text-secondary);font-weight:600;">${escapeHtml(label)}</span>
+      <div style="display:flex;align-items:baseline;gap:6px;justify-content:flex-end;">
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">#${rA ?? "—"}</span>
+        <span style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:${_toneA};">${gA}</span>
+      </div>
+      <div style="text-align:center;">${deltaChip}</div>
+      <div style="display:flex;align-items:baseline;gap:6px;">
+        <span style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:${_toneB};">${gB}</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">#${rB ?? "—"}</span>
+      </div>
+    </div>`;
+  };
+  // Header row.
+  const overallRowA = ranksA.overall ?? currentOrg.farm_rank;
+  const overallRowB = ranksB.overall ?? otherOrg.farm_rank;
+  const overallGA = gradesA.overall || "—";
+  const overallGB = gradesB.overall || "—";
+  const _overallRow = (() => {
+    const pctA = overallRowA != null ? Math.round(100 * (n - overallRowA + 1) / n) : null;
+    const pctB = overallRowB != null ? Math.round(100 * (n - overallRowB + 1) / n) : null;
+    const delta = pctA != null && pctB != null ? pctA - pctB : null;
+    const toneA = overallGA === "—" ? "var(--text-tertiary)" : gradeColor(overallGA);
+    const toneB = overallGB === "—" ? "var(--text-tertiary)" : gradeColor(overallGB);
+    let chip = "";
+    if (delta != null && Math.abs(delta) >= 5) {
+      const sign = delta > 0 ? "+" : "";
+      const color = delta > 0 ? "var(--up)" : "var(--down)";
+      chip = `<span style="font-family:var(--font-mono);font-size:13px;font-weight:800;color:${color};letter-spacing:0.02em;">${sign}${delta} pp</span>`;
+    } else if (delta != null) {
+      chip = `<span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">${delta >= 0 ? "+" : ""}${delta} pp</span>`;
+    }
+    return `<div style="display:grid;grid-template-columns:110px 1fr 50px 1fr;gap:10px;align-items:center;padding:8px 0 10px;border-bottom:1px solid var(--border);font-size:13px;">
+      <span style="color:var(--text-primary);font-weight:800;text-transform:uppercase;letter-spacing:0.04em;font-size:11px;">Overall</span>
+      <div style="display:flex;align-items:baseline;gap:6px;justify-content:flex-end;">
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">#${overallRowA ?? "—"}</span>
+        <span style="font-family:var(--font-mono);font-size:18px;font-weight:800;color:${toneA};">${overallGA}</span>
+      </div>
+      <div style="text-align:center;">${chip}</div>
+      <div style="display:flex;align-items:baseline;gap:6px;">
+        <span style="font-family:var(--font-mono);font-size:18px;font-weight:800;color:${toneB};">${overallGB}</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">#${overallRowB ?? "—"}</span>
+      </div>
+    </div>`;
+  })();
+  return `<div class="detail-title">Head-to-head · ${escapeHtml(currentOrg.org)} vs ${escapeHtml(otherOrg.org)}
+    <span class="detail-title-sub">Per-branch grades + percentile delta. Δ chip lights when the gap is ≥5pp on the 100-anchored scale (green = leader).</span></div>
+    <div style="padding:6px 12px 10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:110px 1fr 50px 1fr;gap:10px;align-items:baseline;padding:4px 0 6px;border-bottom:1px dashed var(--border-light);">
+        <span></span>
+        <span style="text-align:right;font-size:11px;color:var(--text-tertiary);letter-spacing:0.04em;text-transform:uppercase;font-weight:700;">${escapeHtml(currentOrg.org)}</span>
+        <span style="text-align:center;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;text-transform:uppercase;font-weight:700;">Δ</span>
+        <span style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.04em;text-transform:uppercase;font-weight:700;">${escapeHtml(otherOrg.org)}</span>
+      </div>
+      ${_overallRow}
+      ${branches.map(_row).join("")}
+    </div>`;
+}
+
+// v30.8 — Org-vs-org farm comparison. Renders right above the league
+// rank bar on the Overview tab; surfaces a picker that lets the user
+// select any of the other 29 orgs for side-by-side comparison. When
+// active, the comparison block shows twin grade tiles per branch +
+// per-leaf for the most-asked leaves with delta chips highlighting
+// gaps of ≥5pts on the 100-anchored scale. Fail-soft when the picked
+// org isn't on file or no comparison is requested.
+function makeFarmComparePicker(currentOrg) {
+  if (!currentOrg) return "";
+  const others = ((DATA && DATA.org_summary) || [])
+    .filter(o => o && o.org && o.org !== currentOrg.org)
+    .map(o => ({ org: o.org, rank: o.farm_rank ?? "—" }))
+    .sort((a, b) => (a.rank === "—" ? 99 : a.rank) - (b.rank === "—" ? 99 : b.rank));
+  if (!others.length) return "";
+  const opts = others.map(o =>
+    `<option value="${escapeHtml(o.org)}"${state.farmCompareOrg === o.org ? " selected" : ""}>${escapeHtml(o.org)} (farm #${o.rank})</option>`
+  ).join("");
+  const cleared = state.farmCompareOrg && state.farmCompareOrg !== currentOrg.org
+    ? `<button class="chip" type="button" data-farm-compare-clear="1" style="margin-left:6px;" title="Clear comparison">×</button>`
+    : "";
+  return `<div class="filter-bar" style="margin-bottom:10px;padding:8px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;">
+    <span class="filter-label" style="margin-right:8px;">Compare ${escapeHtml(currentOrg.org)} to</span>
+    <select id="farm-compare-select" class="chip" style="min-width:160px;">
+      <option value="">— pick an org —</option>
+      ${opts}
+    </select>
+    ${cleared}
+  </div>`;
+}
+
 function makeFarmLeagueRankBar(org) {
   if (!org) return "";
   const ranks = org.component_ranks || {};
@@ -30952,6 +31089,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
     <div class="farm-detail-grid">
       ${leftRailHtml}
       <div class="farm-overview-main">
+        ${makeFarmComparePicker(org)}
+        ${makeFarmCompareBlock(org)}
         ${makeFarmLeagueRankBar(org)}
         <div class="detail-title">Farm System Depth Chart <span class="detail-title-sub">prospects bucketed by position, sorted by current level (AAA leftmost → DSL rightmost) so the closest-to-the-majors players sit at the front of each row.</span></div>
         ${makePositionDepthChart(rosterPlayersAll, state.depthSort || "level")}
@@ -31208,6 +31347,22 @@ function _renderFarmDetailBody(orgCode, org, root) {
     if (btn.disabled) return;
     btn.addEventListener("click", () => {
       state.posFilter = btn.dataset.farmPos;
+      renderFarmDetail(orgCode);
+      syncToURL();
+    });
+  });
+  // v30.8 — Farm comparison picker + clear button. The dropdown
+  // change sets state.farmCompareOrg and re-renders the detail page;
+  // the clear button (×) resets to no-comparison.
+  const _cmpSel = document.getElementById("farm-compare-select");
+  if (_cmpSel) _cmpSel.addEventListener("change", () => {
+    state.farmCompareOrg = _cmpSel.value || "";
+    renderFarmDetail(orgCode);
+    syncToURL();
+  });
+  document.querySelectorAll("#farm-detail-body [data-farm-compare-clear]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.farmCompareOrg = "";
       renderFarmDetail(orgCode);
       syncToURL();
     });
@@ -33418,6 +33573,7 @@ function _resetPageFilters(page) {
     state.farmSort      = "trajectory";
     state.formWindow    = "6y";
     state.farmViewMode  = "table";
+    state.farmCompareOrg = "";
   } else if (page === "spotlights") {
     state.spotlightBucket = "risers";
   } else if (page === "leaderboard") {
