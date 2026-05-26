@@ -1381,6 +1381,30 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             if _fv is not None and _fv >= 55.0:
                 drivers.append(f"high-FV pedigree ({int(_fv)})")
             drivers.append("pedigree comeback")
+            # v30.5 — Statcast+ rebounder confirmation. Tier breakpoints
+            # match the _statcast_drivers schedule so the score effect
+            # tracks the chip color the user sees.
+            _scp_r = p.get("statcast_plus")
+            try:
+                _scpv_r = float(_scp_r) if _scp_r is not None else None
+            except (TypeError, ValueError):
+                _scpv_r = None
+            if _scpv_r is not None:
+                if _scpv_r >= 120:
+                    score += 2.0
+                    drivers.append({"label": f"SC+ {int(_scpv_r)} confirms rebound",
+                                    "valence": "good",
+                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≥120, elite) strongly supports the rebound — underlying contact / pitch quality is back to peak."})
+                elif _scpv_r >= 105:
+                    score += 1.0
+                    drivers.append({"label": f"SC+ {int(_scpv_r)} supports rebound",
+                                    "valence": "good",
+                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≥105, above pool) supports the rebound narrative."})
+                elif _scpv_r <= 95:
+                    score -= 1.5
+                    drivers.append({"label": f"SC+ {int(_scpv_r)} undercuts rebound",
+                                    "valence": "bad",
+                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≤95, below pool) undercuts the rebound — surface bounce isn't backed by tracked data."})
             # v12 — same xMetric gate as risers. AAA-only.
             verif = _xmetric_verification(p, "up")
             if verif == "unsupported":
@@ -1647,6 +1671,31 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
         penalty = max(-3.0, (lp + 15) / 10.0 - 1.0)  # -15→-1.0, -25→-2.0, -35→-3.0
         score += penalty
         drivers.append(f"{lp:.0f}% vs level mean")
+    # v30.5 — Statcast+ adjustment on the faller path. Tracked-data
+    # signal either CONFIRMS or COUNTERS the surface decline:
+    #   - SC+ ≤ 95 (below pool): underlying contact / pitch quality is
+    #     also below mean → deepen the faller score (decline is real).
+    #   - SC+ ≥ 105 (above pool): tracked data contradicts the surface
+    #     dip → soften the faller score (slump is likely BABIP /
+    #     sequencing noise; underlying tools still strong).
+    # Mirrors the _statcast_drivers tier breakpoints so the score
+    # nudge is consistent with the color the user sees on the chip.
+    _scp_f = p.get("statcast_plus")
+    try:
+        _scpv_f = float(_scp_f) if _scp_f is not None else None
+    except (TypeError, ValueError):
+        _scpv_f = None
+    if _scpv_f is not None:
+        if _scpv_f <= 95:
+            score -= 1.0
+            drivers.append({"label": f"SC+ {int(_scpv_f)} confirms decline",
+                            "valence": "bad",
+                            "tooltip": f"Statcast+ {int(_scpv_f)} (≤95, below pool mean) reinforces the surface decline — underlying contact / pitch quality is below pool too."})
+        elif _scpv_f >= 105:
+            score += 1.5
+            drivers.append({"label": f"SC+ {int(_scpv_f)} counters decline",
+                            "valence": "good",
+                            "tooltip": f"Statcast+ {int(_scpv_f)} (≥105, above pool mean) counters the surface dip — tracked-data signal suggests the slump is BABIP / sequencing noise rather than a real decline."})
     # v12 — xMetric verification gate for AAA fallers. If the surface
     # dip isn't supported by underlying Statcast (wOBA under xWOBA,
     # ERA over xFIP), demote to "none" — the cold streak is bad luck
@@ -1683,11 +1732,18 @@ def _statcast_drivers(p: dict) -> list[dict]:
     if sc_plus is not None:
         try:
             v = int(sc_plus)
-            if v >= 130:
+            # v30.5 — Tighter color thresholds per user feedback: even
+            # mild above-pool / below-pool values should read green /
+            # red instead of falling into the neutral band. Anything
+            # ≥ 105 is meaningfully above mean (the user's example:
+            # SC+ 110 should clearly read as a positive signal), and
+            # ≤ 95 is meaningfully below. Elite tier promoted up to
+            # 120 so it stays an exclusive call-out.
+            if v >= 120:
                 valence, tone = "good", "elite"
-            elif v >= 115:
+            elif v >= 105:
                 valence, tone = "good", "above pool"
-            elif v <= 85:
+            elif v <= 95:
                 valence, tone = "bad", "below pool"
             else:
                 valence, tone = "neutral", "near pool"

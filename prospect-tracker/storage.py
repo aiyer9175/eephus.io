@@ -6227,6 +6227,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # against `breakout_flag` after serialization in the
                 # second pass).
                 "_sc_plus":         [],
+                # v30.5 — Per-side SC+ buckets so the farm leaf can
+                # surface hitter vs pitcher tracked-data quality
+                # separately. Useful for the strong-bats-thin-arms
+                # (or vice versa) case where the org-wide mean blurs
+                # the diagnostic signal.
+                "_sc_plus_hit":     [],
+                "_sc_plus_pit":     [],
                 "_upside_count":     0,
                 "_breakout_count":   0,
             }
@@ -6346,9 +6353,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
         # v29 — Statcast+ contribution. None values are skipped (the
         # prospect has no tracked Statcast / zone data).
+        # v30.5 — Also route into the per-side bucket so the farm
+        # leaf can surface hitter vs pitcher SC+ separately.
         _sc_p = _sc_plus_map.get(p.player_key)
         if _sc_p is not None:
             m["_sc_plus"].append(int(_sc_p))
+            if is_pitcher_p:
+                m["_sc_plus_pit"].append(int(_sc_p))
+            else:
+                m["_sc_plus_hit"].append(int(_sc_p))
         # v29 — Upside-indicator count. Uses consensus_fv_plus on the
         # latest point AND honors the same FV ≤ 50 cap the UI applies
         # (sub-50 grades are the canonical upside surface; 55+/60+ are
@@ -6670,10 +6683,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # tooltip on indicator depth without re-deriving from the
         # active payload.
         _sc_vals = m.pop("_sc_plus", []) or []
+        _sc_hit_vals = m.pop("_sc_plus_hit", []) or []
+        _sc_pit_vals = m.pop("_sc_plus_pit", []) or []
         _scq_graded = len(_sc_vals)
+        # v30.5 — Per-side aggregates ride alongside the all-prospects
+        # mean. Same ≥5 graded-prospects gate per side so a 1-pitcher
+        # outlier doesn't dominate the pitcher mean (gate is per-side,
+        # not org-wide). hitter_count / pitcher_count expose the
+        # sample size so the UI can dim a side with thin coverage.
+        _scq_hit = len(_sc_hit_vals)
+        _scq_pit = len(_sc_pit_vals)
         m["statcast_quality"] = {
             "mean":          round(sum(_sc_vals) / _scq_graded, 2) if _scq_graded >= 5 else None,
             "graded_count":  _scq_graded,
+            "hitter_mean":   round(sum(_sc_hit_vals) / _scq_hit, 2) if _scq_hit >= 5 else None,
+            "hitter_count":  _scq_hit,
+            "pitcher_mean":  round(sum(_sc_pit_vals) / _scq_pit, 2) if _scq_pit >= 5 else None,
+            "pitcher_count": _scq_pit,
             "upside_count":  m.pop("_upside_count", 0),
             # breakout_count gets filled in the post-serialization
             # second pass below (the flag is computed there).

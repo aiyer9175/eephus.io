@@ -1562,6 +1562,39 @@
       align-items: center;
       gap: 2px;
     }
+    /* v30.5 — Tailored Statcast outlier chip in the MiLB cell detail
+       line. Sits inline at the end of the existing K%/BB%/HR/ISO
+       prose so card height is unchanged. Smaller font + tight padding
+       so it reads as an annotation, not a new row. Color comes from
+       inline styles (per-tier green / red); the class only owns
+       geometry. The strip wrapper adds a small left-margin so the
+       chips don't collide with the prose `· ` separators when no
+       outlier renders. */
+    .milb-sc-chip-strip {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .milb-sc-chip {
+      display: inline-flex;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 0 4px;
+      border: 1px solid currentColor;
+      border-radius: 2px;
+      line-height: 1.2;
+      background: transparent;
+      white-space: nowrap;
+    }
+    body.density-compact .milb-sc-chip {
+      font-size: 9px;
+      padding: 0 3px;
+    }
     .hand-chip {
       display: inline-flex;
       align-items: center;
@@ -6502,8 +6535,8 @@
          consensus signals" vs "Statcast = tracked-data signals". -->
     <div class="filter-group">
       <span class="filter-label" title="Statcast composite (100 = pool mean, σ × 15). Filter for prospects with elite tracked-data signal.">Statcast</span>
-      <button class="chip is-multi" data-filter-statcast="elite" title="Statcast+ ≥ 130 — elite tier (≈ top 2.5%)">SC+ elite</button>
-      <button class="chip is-multi" data-filter-statcast="above" title="Statcast+ ≥ 115 — above-pool (≈ top quintile). Composite of contact quality (EV/HH/Brl) + zone signals (Z-Con%/Whiff/Chase) for hitters; pitch velo + induced whiffs + contact suppression for pitchers.">SC+ above</button>
+      <button class="chip is-multi" data-filter-statcast="elite" title="Statcast+ ≥ 120 — elite tier. Composite of contact quality + zone discipline for hitters; pitch velo + induced whiffs + contact suppression for pitchers.">SC+ elite</button>
+      <button class="chip is-multi" data-filter-statcast="above" title="Statcast+ ≥ 105 — above pool mean. Even a modest +5 vs pool is a real signal: tracked-data contact quality / pitch quality clears the league baseline.">SC+ above</button>
     </div>
     <div class="filter-group">
       <span class="filter-label" title="Filter prospects by a specific tool grade meeting a minimum threshold. 'Any tool' matches when any one canonical 20-80 grade meets the threshold; pick a specific tool to isolate it.">Tool grade</span>
@@ -6995,6 +7028,16 @@
                 title="Count of prospects on this farm flagged as breakout (DvM+/FV velocity ≥ threshold AND a strong performance gate). Higher = more emerging-talent depth.">Breakout count</button>
         <button class="chip" data-farm-sort="statcast_plus_avg"
                 title="Mean Statcast+ across this farm's active prospects with tracked Statcast data. 100 = pool average; higher = a system whose top prospects' tracked contact / pitch quality grades out better than the league.">Statcast+ avg</button>
+        <!-- v30.5 — Per-side Statcast+ rollups. Separates hitter
+             contact-quality-driven SC+ from pitcher pitch-quality-
+             driven SC+ so an org with strong bats + thin arms (or
+             vice versa) shows up cleanly instead of blending. Both
+             gates at ≥5 graded prospects per side; orgs below the
+             gate sink to the bottom of the sort. -->
+        <button class="chip" data-farm-sort="statcast_plus_hit"
+                title="Mean Statcast+ across the farm's HITTERS with tracked data (EV / HH% / Brl% / Z-Con% / Whiff% / Chase% composite). 100 = pool average. Gated at ≥5 graded hitters per org.">SC+ hitters</button>
+        <button class="chip" data-farm-sort="statcast_plus_pit"
+                title="Mean Statcast+ across the farm's PITCHERS with tracked data (top-pitch velo / Whiff% / Chase% / HH%-allowed / Brl%-allowed composite). 100 = pool average. Gated at ≥5 graded pitchers per org.">SC+ pitchers</button>
       </div>
       <div class="filter-group">
         <span class="filter-label">Depth at level</span>
@@ -8238,7 +8281,10 @@ function _statcastStripHTML(p) {
   // average; ≥115 reads green, ≤85 reads orange.
   const sPlus = getStatcastPlus(p);
   if (sPlus != null) {
-    const sPlusColor = sPlus >= 115 ? "var(--up)" : sPlus <= 85 ? "var(--down)" : "var(--text-primary)";
+    // v30.5 — Match the spotlights-driver tier breakpoints (≥105
+    // above pool reads green; ≤95 below pool reads red). Even a
+    // modest +5 vs pool mean is a real signal worth surfacing.
+    const sPlusColor = sPlus >= 105 ? "var(--up)" : sPlus <= 95 ? "var(--down)" : "var(--text-primary)";
     chips.unshift(chip("SC+", String(sPlus), sPlusColor, `Statcast+ composite (${isP ? "pitcher" : "hitter"} blend) · pool-anchored at 100 (~σ × 15)`));
   }
   if (!chips.length) return "";
@@ -9528,6 +9574,84 @@ function levelNormTooltip(sl) {
   return lines.join("\n");
 }
 
+// v30.5 — Per-prospect "tailored outlier" chip for the MiLB cell.
+// Surfaces the single most-extreme tracked-data signal (per side)
+// when it crosses the ≥+1σ above / ≤-1σ below pool threshold. Falls
+// back to a small SC+ composite chip when no individual component
+// is an outlier but SC+ itself is notable (≥110 or ≤90). Returns ""
+// when the prospect has no tracked Statcast / zone data OR all
+// components are middle-band. Stays on the existing detail line via
+// inline-block — no row-height growth.
+function _milbStatcastOutlierChips(p) {
+  if (!p) return "";
+  const sl = p.statline || {};
+  const isPit = !!sl.is_pitcher;
+  const cq = ((p.statcast_metrics || {}).contact_quality || {});
+  const pm = ((p.statcast_metrics || {}).pitch_movement || {});
+  const zRoot = p.zone_metrics || {};
+  // Freshest split (largest pitch sample wins).
+  let z = zRoot;
+  if (zRoot && Array.isArray(zRoot.level_splits) && zRoot.level_splits.length) {
+    z = zRoot.level_splits.reduce((a, b) => (a && (a.pitches || 0) >= (b.pitches || 0)) ? a : b, null);
+  }
+  z = z || {};
+  // Build a list of candidates: {label, val, fmt, tier} where tier
+  // is one of "elite" (≥+1σ from pool), "weak" (≤-1σ), or null.
+  // Thresholds mirror the Spotlights driver bars for direct
+  // visual continuity.
+  const candidates = [];
+  const _push = (label, val, fmt, hiElite, hiAbove, loWeak, loBelow, inv) => {
+    if (val == null || !isFinite(val)) return;
+    let tier = null;
+    if (!inv) {
+      if (val >= hiElite) tier = "elite";
+      else if (val <= loBelow) tier = "weak";
+    } else {
+      if (val <= hiElite) tier = "elite";   // for inverted (whiff% allowed etc.), low is good
+      else if (val >= loBelow) tier = "weak";
+    }
+    if (tier) candidates.push({ label, val, fmt, tier });
+  };
+  if (!isPit) {
+    _push("EV",     cq.avg_ev,       v => v.toFixed(1),         92, 89,  84, 82);
+    _push("HH%",    cq.hard_hit_pct, v => v.toFixed(0) + "%",   42, 38,  28, 25);
+    _push("Brl%",   cq.barrel_pct,   v => v.toFixed(0) + "%",   10,  7,   3,  2);
+    _push("Z-Con%", z.z_contact_pct, v => v.toFixed(0) + "%",   86, 82,  74, 71);
+    _push("Whiff%", z.whiff_pct,     v => v.toFixed(0) + "%",   20, 23,  32, 35, true);
+    _push("Chase%", z.chase_pct,     v => v.toFixed(0) + "%",   22, 25,  32, 35, true);
+  } else {
+    const topVelo = ((pm.pitch_summary || [])[0] || {}).avg_velo;
+    _push("FB",     topVelo,         v => v.toFixed(1),         96, 94,  90, 88);
+    _push("Whiff%", z.whiff_pct,     v => v.toFixed(0) + "%",   28, 25,  18, 15);
+    _push("Chase%", z.chase_pct,     v => v.toFixed(0) + "%",   32, 28,  22, 19);
+    _push("HHa",    cq.hard_hit_pct, v => v.toFixed(0) + "%",   32, 36,  46, 50, true);
+    _push("Brla",   cq.barrel_pct,   v => v.toFixed(0) + "%",    5,  7,  11, 14, true);
+  }
+  // Sort: elite first (descending magnitude), then weak. Cap at 2 chips
+  // so the detail line stays one row even on narrow viewports.
+  candidates.sort((a, b) => {
+    const ta = a.tier === "elite" ? 0 : 1;
+    const tb = b.tier === "elite" ? 0 : 1;
+    return ta - tb;
+  });
+  const picks = candidates.slice(0, 2);
+  // No component outliers? Fall back to a single SC+ chip when the
+  // composite itself is notable (≥110 or ≤90).
+  if (!picks.length) {
+    const sp = getStatcastPlus(p);
+    if (sp != null && (sp >= 110 || sp <= 90)) {
+      const color = sp >= 110 ? "var(--up)" : "var(--down)";
+      return `<span class="milb-sc-chip" style="color:${color};border-color:${color};" title="Statcast+ composite — ${sp} (100 = pool average)">SC+ ${sp}</span>`;
+    }
+    return "";
+  }
+  return picks.map(c => {
+    const color = c.tier === "elite" ? "var(--up)" : "var(--down)";
+    const tip = `${c.label} ${c.fmt(c.val)} — ${c.tier === "elite" ? "elite" : "below pool"} vs pool mean (tracked Statcast)`;
+    return `<span class="milb-sc-chip" style="color:${color};border-color:${color};" title="${escapeHtml(tip)}">${c.label} ${c.fmt(c.val)}</span>`;
+  }).join("");
+}
+
 function makeMilbCell(p) {
   const sl = p.statline;
   const avl = p.age_vs_level;
@@ -9589,10 +9713,17 @@ function makeMilbCell(p) {
     : (sl.ops_plus_level != null
         ? `<span class="stat-pill" title="OPS+ vs level (higher is better)">OPS+ ${Math.round(sl.ops_plus_level)}</span>`
         : "");
+  // v30.5 — Tailored Statcast outlier chips appended INLINE to the
+  // existing detail line. Stays on the same row via inline-block;
+  // when no outlier qualifies, the chip is empty and the cell
+  // collapses back to the prior layout exactly (no card-height
+  // change). At most 2 chips per row.
+  const scOutlierChips = _milbStatcastOutlierChips(p);
+  const detailWithSc = detail + (scOutlierChips ? `<span class="milb-sc-chip-strip">${scOutlierChips}</span>` : "");
   return `<div class="milb-cell milb-cell-wrap"${tipAttr}>
     <span class="milb-pill-row"><span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${plusPill}${rpsPill}${headline}</span>
     <br/><span style="color: var(--text-primary);">${slashLine}</span>
-    <br/><span style="color: var(--text-tertiary);">${detail}</span>
+    <br/><span style="color: var(--text-tertiary);">${detailWithSc}</span>
   </div>`;
 }
 
@@ -10020,8 +10151,11 @@ function getFilteredActives() {
     pool = pool.filter(p => {
       const sp = getStatcastPlus(p);
       if (sp == null) return false;
-      if (state.statcastFilter.has("elite") && sp >= 130) return true;
-      if (state.statcastFilter.has("above") && sp >= 115) return true;
+      // v30.5 — Match the spotlights tier breakpoints (elite ≥ 120,
+      // above pool ≥ 105). User feedback: SC+ 110 is meaningfully
+      // above mean and should qualify for the "above pool" chip.
+      if (state.statcastFilter.has("elite") && sp >= 120) return true;
+      if (state.statcastFilter.has("above") && sp >= 105) return true;
       return false;
     });
   }
@@ -15908,9 +16042,28 @@ const GLOSSARY = {
     name: "Breakout Indicator", aliases: ["Breakout", "★ mark"], category: "custom-index",
     priority: 14,
     short: "Rare active-prospect flag: tool/FV velocity AND strong performance gate, with an age cap.",
-    long: "An active prospect flags as Breakout when ALL of the following hold over the window max(last 6 months, last 4 source updates): (a) consensus FV upgraded by ≥ +5 grade points OR mean tool-grade composite improved by ≥ +3; (b) a strong performance gate fires — hitters: RPS+ ≥ 110 or wRC+ ≥ 130; pitchers: Peripheral Stuff+ ≥ 105 or FIP- ≤ 90; (c) v15 age cap — position players and SPs through age 24; relievers (RP / MIRP / SIRP / CL) through age 25 (relievers peak earlier in their development arc, so an aging-relief hot stretch shouldn't read as a prospect breakout). Designed to surface ~10-40 prospects league-wide — rare but not impossible. The badge gets a green pulsing ★ mark with a tooltip explaining which signal fired and which gate passed.",
+    long: "An active prospect flags as Breakout when ALL of the following hold over the window max(last 6 months, last 4 source updates): (a) consensus FV upgraded by ≥ +5 grade points OR mean tool-grade composite improved by ≥ +3; (b) a strong performance gate fires — hitters: RPS+ ≥ 110 or wRC+ ≥ 130; pitchers: Peripheral Stuff+ ≥ 105 or FIP- ≤ 90 (v29 — Statcast+ ≥ 115 also passes as an alternative gate); (c) v15 age cap — position players and SPs through age 24; relievers (RP / MIRP / SIRP / CL) through age 25 (relievers peak earlier in their development arc, so an aging-relief hot stretch shouldn't read as a prospect breakout). Designed to surface ~10-40 prospects league-wide — rare but not impossible. The badge gets an aquamarine pulsing ★ mark (bottom-left corner) with a tooltip explaining which signal fired and which gate passed.",
     formula: "breakout = (fv_upgrade ≥ +5 OR tool_velocity ≥ +3)\n         AND perf_gate_pass\n         AND (age ≤ 24 starters/hitters, age ≤ 25 relievers)",
-    related: ["tools_dvm_plus", "fv", "rps_plus"],
+    related: ["tools_dvm_plus", "fv", "rps_plus", "statcast_plus"],
+    visual_html: '<span class="fv-badge fv-50 is-breakout" style="position:relative;display:inline-block;padding:3px 8px;">50<span class="fv-breakout-mark" title="Breakout">★</span></span><span style="font-size:11px;color:var(--text-tertiary);margin-left:24px;">→ aquamarine ★ + pulsing bottom edge</span>',
+  },
+  "upside_indicator": {
+    name: "Upside Indicator", aliases: ["Upside ^", "^ mark", "+ upside"], category: "custom-index",
+    priority: 15,
+    short: "Soft-pink ^ mark in the top-right corner of an FV badge — at least one source published a published '+' upside marker on the latest snapshot.",
+    long: "Source-side upside note: when an outlet publishes a grade like 45+ / 40+ / 35+, the player carries an Upside indicator. Capped at FV ≤ 50 because 50+ / 55+ / 60+ tiers have already realized their upside (the mark is meant to flag sub-50 prospects with publishable room to climb). The badge gets a soft-pink ^ glyph (top-right corner) plus a pink top-edge accent; tooltip lists which sources added the '+' grade. Surfaces as a 'pink pill' driver chip on the Spotlights page when a source added a '+' in the trailing 6 months. Glyph is ^ (circumflex) so it doesn't visually collide with the health '+' row pill.",
+    related: ["consensus_fv", "fv"],
+    visual_html: '<span class="fv-badge fv-45 is-upside" style="position:relative;display:inline-block;padding:3px 8px;">45<span class="fv-upside-mark" title="Upside"><span>^</span></span></span><span style="font-size:11px;color:var(--text-tertiary);margin-left:24px;">→ soft-pink ^ + pink top edge</span>',
+  },
+  "statcast_plus": {
+    name: "Statcast+ (SC+)", aliases: ["SC+", "Statcast+", "Statcast composite"], category: "custom-index",
+    priority: 16,
+    short: "Pool-anchored composite of tracked Statcast / zone signals. 100 = pool mean; ≥105 reads as above-pool, ≤95 below-pool, ≥120 elite.",
+    long: "Side-aware blend of the per-prospect tracked-data signal. Hitters: contact quality (avg exit velocity / hard-hit% / barrel%) + zone discipline (z-contact% / -whiff% / -chase%). Pitchers: top-pitch avg velocity + induced whiffs + induced chase + (inverted) hard-hit allowed + barrel allowed. Each component is z-scored against the side-matched active pool, averaged, then rescaled so 100 = pool mean and one population stddev moves the index 15 points (wRC+/OPS+ family). Powers: (a) the SC+ filter chip on the Active list, (b) a colored 'SC+' driver chip on the Spotlights page (green ≥105 / red ≤95 / yellow neutral), (c) a tiebreak inside fvCmpDesc when two prospects share an FV + upside flag, (d) faller + rebounder confirmation/contradiction in the Spotlights bucket scoring, (e) a per-side hitter/pitcher SC+ aggregate on each farm-system page. None when the player has no tracked Statcast / zone data on any component.",
+    formula: "SC+ = 100 + 15 × avg(z-scored components vs side-matched pool)",
+    example: "A hitter with EV 92 (+1σ), HH% 45 (+1σ), Z-Con% 88 (+0.5σ) lands around SC+ 113 — solidly above-pool, reads green in driver chips.",
+    related: ["statcast", "rps_plus", "breakout_indicator"],
+    visual_html: '<span class="driver-tag is-good" style="font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--up);background:rgba(31,122,58,0.15);color:var(--up);font-family:var(--font-mono);">SC+ 122</span><span class="driver-tag is-neutral" style="font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--neon-amber);background:rgba(255,215,0,0.15);color:var(--neon-amber);font-family:var(--font-mono);margin-left:4px;">SC+ 101</span><span class="driver-tag is-bad" style="font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--down);background:rgba(185,28,28,0.12);color:var(--down);font-family:var(--font-mono);margin-left:4px;">SC+ 84</span>',
   },
   "rps_plus": {
     name: "RPS+", aliases: ["RPS+", "Rate Performance Score"], category: "custom-index",
@@ -16628,16 +16781,18 @@ const GLOSSARY = {
   "wide_spread_mark": {
     name: "Wide-spread mark (W)", aliases: ["W mark", "Wide spread"], category: "indicators",
     priority: 18,
-    short: "Small 'W' on the FV badge — at least two FV-publishing sources disagree by ≥10 grade-points on the latest update.",
+    short: "Violet 'W' in the bottom-right corner of an FV badge — at least two FV-publishing sources disagree by ≥10 grade-points on the latest update.",
+    long: "Visual signature: a 14×14 violet circle with a white 'W' glyph plus a matching violet right-edge accent on the FV badge. Hover the chip for the exact spread and source count. The mark is a 'wide read' warning — the consensus FV is averaging meaningfully disagreeing views rather than a tight bundle.",
     related: ["wide_spread", "fv"],
-    visual_html: '<span class="fv-badge fv-60">60<sup style="font-size:8px;margin-left:1px;color:var(--neon-amber);font-weight:700;">W</sup></span><span style="font-size:11px;color:var(--text-tertiary);">→ sources disagree by 10+ grade points</span>',
+    visual_html: '<span class="fv-badge fv-60 is-wide" style="position:relative;display:inline-block;padding:3px 8px;">60<span class="fv-wide-mark" title="Wide spread">W</span></span><span style="font-size:11px;color:var(--text-tertiary);margin-left:24px;">→ violet W + violet right edge</span>',
   },
   "single_source_mark": {
     name: "Single-source mark (1)", aliases: ["1 mark", "Single source"], category: "indicators",
     priority: 20,
-    short: "Small '1' on the FV badge — only one source has ever published an explicit FV for this player. Consensus is Bayesian-shrunk.",
+    short: "Amber '1' in the top-left corner of an FV badge — only one source has ever published an explicit FV for this player. Consensus is Bayesian-shrunk.",
+    long: "Visual signature: a 14×14 amber circle with a white '1' glyph plus a matching amber left-edge accent on the FV badge. Single-source players are pulled toward FV 35 (Bayesian shrinkage, k=0.5) until a second source confirms the grade.",
     related: ["consensus_fv", "shrinkage"],
-    visual_html: '<span class="fv-badge fv-55">55<sup style="font-size:8px;margin-left:1px;color:var(--text-tertiary);font-weight:700;">1</sup></span><span style="font-size:11px;color:var(--text-tertiary);">→ only one source has graded this player</span>',
+    visual_html: '<span class="fv-badge fv-55 is-single-source" style="position:relative;display:inline-block;padding:3px 8px;">55<span class="fv-single-mark" title="Single source">1</span></span><span style="font-size:11px;color:var(--text-tertiary);margin-left:24px;">→ amber 1 + amber left edge</span>',
   },
   "il_chip": {
     name: "IL chip", aliases: ["IL tag"], category: "indicators",
@@ -20531,6 +20686,19 @@ function farmSortedOrgs() {
                   ? sq_a.mean : ensureFarmIndicatorMemo().scAvg[a.org];
       const bv = sq_b && sq_b.mean != null
                   ? sq_b.mean : ensureFarmIndicatorMemo().scAvg[b.org];
+      if (av == null && bv == null) return a.farm_rank - b.farm_rank;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return bv - av || (a.farm_rank - b.farm_rank);
+    }
+    // v30.5 — Per-side SC+ sorts. Reads the new
+    // statcast_quality.hitter_mean / pitcher_mean fields (server-
+    // computed, ≥5 graded prospects per side gate). Orgs without a
+    // per-side mean sink to the bottom of the sort.
+    if (s === "statcast_plus_hit" || s === "statcast_plus_pit") {
+      const field = s === "statcast_plus_hit" ? "hitter_mean" : "pitcher_mean";
+      const av = (a.statcast_quality || {})[field];
+      const bv = (b.statcast_quality || {})[field];
       if (av == null && bv == null) return a.farm_rank - b.farm_rank;
       if (av == null) return 1;
       if (bv == null) return -1;
