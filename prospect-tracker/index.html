@@ -20309,7 +20309,15 @@ function makeFarmReportCard(org) {
   const tradeLeaf = t.tx_trades || {};
   const tradeTooltip = `TALENT YIELD from trades. Net FV (${tradeLeaf.in_count ?? 0} in / ${tradeLeaf.out_count ?? 0} out) + Trade WAR Delta (in ${(tradeLeaf.war_in ?? 0).toFixed(1)} − out ${(tradeLeaf.war_out ?? 0).toFixed(1)} = ${tradeLeaf.war_delta != null ? tradeLeaf.war_delta.toFixed(1) : '—'}).`;
   const waiverLeaf = t.tx_waivers || {};
-  const waiverTooltip = `TALENT YIELD from waiver / Rule-5 / contract-purchase / FA-signing claims. Net FV (${waiverLeaf.in_count ?? 0} in / ${waiverLeaf.out_count ?? 0} out) + Hit Rate (${waiverLeaf.claims_with_mlb ?? 0}/${waiverLeaf.claims_total ?? 0} reached MLB = ${fmtPct(waiverLeaf.hit_rate)}).`;
+  // v30.7 — Waiver Claims leaf scores PURELY on hit rate (share of
+  // claims that reached MLB). The headline metric must match the
+  // grading signal so the chip the user reads matches the letter
+  // grade next to it; previously surfaced net_fv (the prior 50/50
+  // blend partner) which no longer participates in the score.
+  const waiverTooltip = `TALENT YIELD from waiver / Rule-5 / contract-purchase / FA-signing claims. Leaf is graded on Hit Rate alone: ${waiverLeaf.claims_with_mlb ?? 0} of ${waiverLeaf.claims_total ?? 0} claims reached MLB (${fmtPct(waiverLeaf.hit_rate)}). Net FV context: ${waiverLeaf.in_count ?? 0} in / ${waiverLeaf.out_count ?? 0} out (${fmtNetFv(waiverLeaf.net_fv)}).`;
+  // Match formatter: fmtPct returns null on missing so we wrap with
+  // a "—" fallback to keep the column readable.
+  const fmtWaiverHitRate = v => fmtPct(v) ?? "—";
   const acqSubs =
     subCell('Draft Performance', 'acq_draft',  'acq_draft',  draftFmt,     draftMetric, draftTooltip) +
     // v27 — IFA Performance now surfaces WAR/yr (the metric the leaf
@@ -20317,7 +20325,7 @@ function makeFarmReportCard(org) {
     // WAG-only was misleading: the leaf's scoring already uses WAR/yr.
     subCell('IFA Performance',   'acq_ifa',    'acq_ifa',    fmtWarPerYr,  (t.acq_ifa || {}).war_per_yr_mean, ifaTooltip) +
     subCell('Trade Acumen',      'tx_trades',  'tx_trades',  fmtNetFv,     tradeLeaf.net_fv, tradeTooltip) +
-    subCell('Waiver Claims',     'tx_waivers', 'tx_waivers', fmtNetFv,     waiverLeaf.net_fv, waiverTooltip);
+    subCell('Waiver Claims',     'tx_waivers', 'tx_waivers', fmtWaiverHitRate, waiverLeaf.hit_rate, waiverTooltip);
 
   // v28 — Hitter / Pitcher DvM+ is a 70/30 blend of cohort-restricted
   // Overall DvM+ (FV-growth scoped to the cohort) + Tool-grade-based
@@ -20489,7 +20497,7 @@ function makeFarmReportCard(org) {
           { label: 'Draft Performance',  letterKey: 'acq_draft',  metric: draftFmt(draftMetric) },
           { label: 'IFA Performance',    letterKey: 'acq_ifa',    metric: fmtWarPerYr((t.acq_ifa || {}).war_per_yr_mean) },
           { label: 'Trade Acumen',       letterKey: 'tx_trades',  metric: fmtNetFv(tradeLeaf.net_fv) },
-          { label: 'Waiver Claims',      letterKey: 'tx_waivers', metric: fmtNetFv(waiverLeaf.net_fv) },
+          { label: 'Waiver Claims',      letterKey: 'tx_waivers', metric: fmtWaiverHitRate(waiverLeaf.hit_rate) },
         ],
       },
       {
