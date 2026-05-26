@@ -6500,13 +6500,13 @@
     <div class="filter-bar" id="farm-sort-bar" style="flex-wrap:wrap;gap:6px;">
       <div class="filter-group">
         <span class="filter-label">Sort by</span>
-        <button class="chip active" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% debut pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
+        <button class="chip" data-farm-sort="farm_rank" title="45% top-end talent · 25% depth · 15% trajectory · 15% debut pipeline (each rescaled 0-100 across the 30 orgs)">Farm rank</button>
         <button class="chip" data-farm-sort="top_end" title="Tiered-FV sum of the org's top 5 prospects — an 80 is worth ~100x a 40">Top-end</button>
         <button class="chip" data-farm-sort="depth" title="Tiered-FV sum of prospects #6-25">Depth</button>
         <!-- Single Trajectory chip — sorts by DvM+ for whichever window
              is selected in the right-hand "Development window" picker, so
              three chips (one per window) would just duplicate that control. -->
-        <button class="chip" data-farm-sort="trajectory"
+        <button class="chip active" data-farm-sort="trajectory"
                 title="Sort by DvM+ for the currently selected development window (1y / 3y / 6y, picked on the right). 6y is the default and principal signal. Acquisitions + debuts are nullified — pure development of prospects already in the system.">Trajectory (DvM+)</button>
         <button class="chip" data-farm-sort="grad_pipeline" title="FV-weighted debuts in the trailing 12 months">Grad pipeline</button>
         <button class="chip" data-farm-sort="ifa_spend_pct" title="IFA's share of total Draft+IFA spending over the trailing 3 years — orgs that allocate the highest percentage of their amateur-acquisition dollars to international free agents rise to the top">IFA Spending %</button>
@@ -8948,11 +8948,10 @@ const state = {
   // still shows the precise published position.
   posFilter: "all",
   sort: "fv",
-  // Default sort is Farm Rank — orgs ordered by overall farm_score
-  // (the composite letter grade). Users wanting the "trajectory" view
-  // (DvM+ for the current window) flip with a chip click; Farm Rank
-  // is the canonical entry-point view.
-  farmSort: "farm_rank",
+  // v27 — Default sort is DvM+ (trajectory). The user prefers the
+  // development-pace lens as the canonical entry-point view; Farm Rank
+  // is still one click away via the chip strip.
+  farmSort: "trajectory",
   // Per-farm-detail roster sort: FV (default) / avg_rank / age / eta /
   // tool / surplus. Persisted in the URL so a sort choice survives
   // reloads + shared links.
@@ -17040,6 +17039,7 @@ function makeFarmReportCard(org) {
   const fmtDvm       = v => v != null ? `${v}` : '—';
   const fmtNetFv     = v => v != null ? `${v >= 0 ? '+' : ''}${v.toFixed(0)} FV` : '—';
   const fmtWarPerM   = v => v != null ? `${v.toFixed(2)} WAR/$M` : '—';
+  const fmtWarPerYr  = v => v != null ? `${v.toFixed(2)} WAR/yr` : '—';
   const fmtUsdPerYr  = v => v != null ? `$${(v / 1_000_000).toFixed(1)}M / yr` : '—';
   const fmtPct       = v => v != null ? `${(v * 100).toFixed(0)}%` : '—';
 
@@ -17122,13 +17122,24 @@ function makeFarmReportCard(org) {
   const waiverTooltip = `Net FV (${waiverLeaf.in_count ?? 0} in / ${waiverLeaf.out_count ?? 0} out) + Hit Rate (${waiverLeaf.claims_with_mlb ?? 0}/${waiverLeaf.claims_total ?? 0} reached MLB = ${fmtPct(waiverLeaf.hit_rate)}).`;
   const acqSubs =
     subCell('Draft Performance', 'acq_draft',  'acq_draft',  draftFmt,     draftMetric, draftTooltip) +
-    subCell('IFA Performance',   'acq_ifa',    'acq_ifa',    fmtSignedWag, (t.acq_ifa || {}).wag_mean, ifaTooltip) +
+    // v27 — IFA Performance now surfaces WAR/yr (the metric the leaf
+    // letter-grade is actually scored on per LEAF_SPECS) instead of WAG.
+    // WAG-only was misleading: the leaf's scoring already uses WAR/yr.
+    subCell('IFA Performance',   'acq_ifa',    'acq_ifa',    fmtWarPerYr,  (t.acq_ifa || {}).war_per_yr_mean, ifaTooltip) +
     subCell('Trade Acumen',      'tx_trades',  'tx_trades',  fmtNetFv,     tradeLeaf.net_fv, tradeTooltip) +
     subCell('Waiver Claims',     'tx_waivers', 'tx_waivers', fmtNetFv,     waiverLeaf.net_fv, waiverTooltip);
 
+  // v27 — Labels renamed from "Hitter Tools DvM+" / "Pitcher Tools DvM+"
+  // to "Hitter DvM+" / "Pitcher DvM+". The underlying metric is still
+  // the tool-grade-based DvM+ (computed from per-tool deltas across the
+  // org's hitter/pitcher cohort) — the rename anchors the leaf name on
+  // the COHORT (hitter vs pitcher) rather than the SIGNAL TYPE (tool
+  // velocity). A full per-cohort overall-DvM+ (cumulative FV growth
+  // restricted to hitters / pitchers) is on the roadmap; until then,
+  // the tool-based value is the best available cohort-level signal.
   const devSubs =
-    subCell('Hitter Tools DvM+',  'dev_hitter',  'dev_hitter',  fmtDvm, (t.dev_hitter  || {}).dvm_plus) +
-    subCell('Pitcher Tools DvM+', 'dev_pitcher', 'dev_pitcher', fmtDvm, (t.dev_pitcher || {}).dvm_plus);
+    subCell('Hitter DvM+',  'dev_hitter',  'dev_hitter',  fmtDvm, (t.dev_hitter  || {}).dvm_plus) +
+    subCell('Pitcher DvM+', 'dev_pitcher', 'dev_pitcher', fmtDvm, (t.dev_pitcher || {}).dvm_plus);
 
   // Financial v4 — 4 leaves. Legacy WAR/$M + grad-contract surplus
   // plus two new ROI rollups (draft pool efficiency, IFA spend ROI).
@@ -17169,8 +17180,7 @@ function makeFarmReportCard(org) {
   // `_wag` names) and surface WAR/yr as the headline metric instead of
   // WAG. WAR/yr is the raw production rate (what the grade is built
   // on); WAG was the FV-baseline delta which the user found confusing
-  // on this surface.
-  const fmtWarPerYr = v => v != null ? `${v.toFixed(2)} WAR/yr` : '—';
+  // on this surface. fmtWarPerYr is declared in the helpers block above.
   const _hitProd = t.mlb_hitter_production  || t.mlb_hitter_wag  || {};
   const _pitProd = t.mlb_pitcher_production || t.mlb_pitcher_wag || {};
   const mlbSubs =
@@ -17202,7 +17212,7 @@ function makeFarmReportCard(org) {
         key: 'acquisition_strategy', label: 'Acquisition', weight: W.acquisition_strategy,
         leaves: [
           { label: 'Draft Performance',  letterKey: 'acq_draft',  metric: draftFmt(draftMetric) },
-          { label: 'IFA Performance',    letterKey: 'acq_ifa',    metric: fmtSignedWag((t.acq_ifa || {}).wag_mean) },
+          { label: 'IFA Performance',    letterKey: 'acq_ifa',    metric: fmtWarPerYr((t.acq_ifa || {}).war_per_yr_mean) },
           { label: 'Trade Acumen',       letterKey: 'tx_trades',  metric: fmtNetFv(tradeLeaf.net_fv) },
           { label: 'Waiver Claims',      letterKey: 'tx_waivers', metric: fmtNetFv(waiverLeaf.net_fv) },
         ],
@@ -17297,6 +17307,9 @@ function makeFarmReportCard(org) {
             style="font-family:var(--font-mono);font-size:11px;fill:var(--text-secondary);">#${org.farm_rank ?? '—'} of ${n} · ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}</text>`;
 
     // Branch circles + labels.
+    // v27 — Branch label centered ABOVE the bubble (was anchored to the
+    // right of the circle, which crowded the topmost leaf bar of each
+    // group). text-anchor=middle at the bubble's center x.
     const branchNodes = branchLayouts.map(b => {
       const branchLetter = g[b.key] || '—';
       const branchRank = r[b.key];
@@ -17308,7 +17321,7 @@ function makeFarmReportCard(org) {
               style="font-family:var(--font-serif);font-size:20px;font-weight:700;fill:${c};">${escapeHtml(branchLetter)}</text>
         <text x="${COL_BRANCH_X}" y="${b.branchY + 12}" text-anchor="middle"
               style="font-family:var(--font-mono);font-size:9px;fill:var(--text-tertiary);">${b.weight}%${branchRank ? ` · #${branchRank}` : ''}</text>
-        <text x="${COL_BRANCH_X + BRANCH_R + 8}" y="${b.branchY - BRANCH_R - 4}" text-anchor="start"
+        <text x="${COL_BRANCH_X}" y="${b.branchY - BRANCH_R - 6}" text-anchor="middle"
               style="font-family:var(--font-sans);font-size:11px;letter-spacing:0.04em;font-weight:600;fill:var(--text-primary);">${escapeHtml(b.label)}</text>`;
     }).join('');
 
@@ -17455,6 +17468,118 @@ function makeFarmToolDevCard(org) {
         ${cellHtml("CH",  "ch")}
         ${cellHtml("Cmd", "cmd")}
         ${cellHtml("CT",  "ct")}
+      </div>
+    </div>`;
+}
+
+// v27 — Multi-window DvM+ panel for the Development tab. Shows 1y / 3y /
+// 6y DvM+ side-by-side with delta vs league mean, org rank, and a tone
+// class that mirrors makeFarmToolDevCard (≥110 strong / ≥100 pos /
+// ≥90 neg / <90 weak). Lets the user see the full dev arc at a glance
+// instead of having to flip the window chip three times.
+function makeFarmDvmMultiWindowPanel(org) {
+  const dvm   = (org && org.dvm_plus) || {};
+  const delta = (org && org.delta_above_mean) || {};
+  const rank  = (org && org.component_ranks && org.component_ranks.dvm_plus) || null;
+  const cell = (label, key) => {
+    const v = dvm[key];
+    const d = delta[key];
+    const tone = v == null ? "is-empty" :
+                 v >= 110 ? "is-strong" :
+                 v >= 100 ? "is-pos" :
+                 v >= 90  ? "is-neg" : "is-weak";
+    const deltaStr = d != null ? `${d >= 0 ? '+' : ''}${d.toFixed(2)} vs mean` : "—";
+    return `<div class="tooldev-cell ${tone}" title="${label} DvM+ ${v ?? '—'} · ${deltaStr} · 100 = league mean dev pace, +10 = 1σ">
+      <div class="td-label">${label}</div>
+      <div class="td-val">${v ?? "—"}</div>
+      <div style="font-size:9px;color:var(--text-tertiary);font-family:var(--font-mono);margin-top:2px;letter-spacing:0.02em;">${deltaStr}</div>
+    </div>`;
+  };
+  return `<div class="detail-title flush">Development arc <span class="detail-title-sub">DvM+ across three windows · 100 = league mean · +10 = 1σ above. 1y is the current pace, 3y smooths over the current draft cycle, 6y is the principal sustained-development signal.</span></div>
+    <div class="tooldev-card">
+      <div class="tooldev-grid" style="grid-template-columns:repeat(3,1fr);">
+        ${cell("1y", "1y")}
+        ${cell("3y", "3y")}
+        ${cell("6y", "6y")}
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text-tertiary);text-align:right;">1y rank #${rank ?? "—"} of 30 orgs</div>
+    </div>`;
+}
+
+// v27 — Hitter vs Pitcher Development split card. Pulls the existing
+// dev_hitter / dev_pitcher leaf values (tool-grade-based DvM+, the
+// closest available cohort-level signal until per-cohort overall DvM+
+// is computed) so the reader sees which side of the org is driving
+// the headline number.
+function makeFarmDevCohortSplit(org) {
+  const t = (org && org.tree) || {};
+  const dh = t.dev_hitter  || {};
+  const dp = t.dev_pitcher || {};
+  if (dh.dvm_plus == null && dp.dvm_plus == null) return "";
+  const cell = (label, leaf) => {
+    const v = leaf.dvm_plus;
+    const n = leaf.n_groups || 0;
+    const tone = v == null ? "is-empty" :
+                 v >= 110 ? "is-strong" :
+                 v >= 100 ? "is-pos" :
+                 v >= 90  ? "is-neg" : "is-weak";
+    return `<div class="tooldev-cell ${tone}" title="${label} DvM+ ${v ?? '—'} · weighted mean of per-tool DvM+ across the org's ${label.toLowerCase()} cohort">
+      <div class="td-label">${label}</div>
+      <div class="td-val">${v ?? "—"}</div>
+      <div style="font-size:9px;color:var(--text-tertiary);font-family:var(--font-mono);margin-top:2px;letter-spacing:0.02em;">${n} tool group${n === 1 ? "" : "s"}</div>
+    </div>`;
+  };
+  return `<div class="detail-title">Cohort split <span class="detail-title-sub">Hitter vs Pitcher DvM+ · weighted mean of per-tool DvM+ across each side. Surfaces which cohort is driving the org's headline dev pace.</span></div>
+    <div class="tooldev-card">
+      <div class="tooldev-grid" style="grid-template-columns:repeat(2,1fr);">
+        ${cell("Hitter",  dh)}
+        ${cell("Pitcher", dp)}
+      </div>
+    </div>`;
+}
+
+// v27 — Top movers on the org's active roster (trailing 1y FV delta).
+// Pulls `stock.delta` (consensus_fv_raw delta over the last ~365d) from
+// each player and ranks both directions so the reader can see who's
+// driving the gain and who's regressing. Mirrors the homepage Top Movers
+// strip, but scoped to a single org.
+function makeFarmDevTopMovers(rosterPlayersAll) {
+  if (!rosterPlayersAll || !rosterPlayersAll.length) return "";
+  const withDelta = rosterPlayersAll
+    .map(p => ({ p, d: (p.stock && typeof p.stock.delta === "number") ? p.stock.delta : 0 }))
+    .filter(r => Math.abs(r.d) > 0.01);
+  if (!withDelta.length) return "";
+  const risers   = withDelta.filter(r => r.d > 0).sort((a, b) => b.d - a.d).slice(0, 5);
+  const fallers  = withDelta.filter(r => r.d < 0).sort((a, b) => a.d - b.d).slice(0, 5);
+  if (!risers.length && !fallers.length) return "";
+  const fmtDelta = d => `${d >= 0 ? '+' : ''}${d.toFixed(1)}`;
+  const row = r => {
+    const p = r.p;
+    const fvNow = p.fv_close != null ? Math.round(p.fv_close) : "—";
+    const tone = r.d >= 0 ? "var(--up)" : "var(--down)";
+    return `<tr>
+      <td><a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(p.player_key)}');" style="color:var(--text-primary);">${escapeHtml(p.player_name)}</a></td>
+      <td style="text-align:center;color:var(--text-tertiary);font-size:11px;">${escapeHtml(p.position || "—")}</td>
+      <td style="text-align:center;"><span class="fv-badge ${fvClass(String(fvNow))} size-sm">${fvNow}</span></td>
+      <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;color:${tone};font-weight:600;">${fmtDelta(r.d)}</td>
+    </tr>`;
+  };
+  const empty = `<tr><td colspan="4" style="text-align:center;color:var(--text-tertiary);font-size:11px;padding:8px;">— none —</td></tr>`;
+  return `<div class="detail-title">Top movers <span class="detail-title-sub">Trailing 1-year FV delta on the active roster · per-prospect growth that's powering (or dragging) the org's DvM+. Anchor is the latest consensus FV; prior is the snapshot nearest 365d back.</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;">
+      <div>
+        <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Top risers</div>
+        <table class="detail-table" style="width:100%;">
+          <thead><tr><th>Player</th><th style="text-align:center;">Pos</th><th style="text-align:center;">FV</th><th style="text-align:right;">Δ 1y</th></tr></thead>
+          <tbody>${risers.length ? risers.map(row).join("") : empty}</tbody>
+        </table>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Top decliners</div>
+        <table class="detail-table" style="width:100%;">
+          <thead><tr><th>Player</th><th style="text-align:center;">Pos</th><th style="text-align:center;">FV</th><th style="text-align:right;">Δ 1y</th></tr></thead>
+          <tbody>${fallers.length ? fallers.map(row).join("") : empty}</tbody>
+        </table>
       </div>
     </div>`;
 }
@@ -18822,8 +18947,8 @@ function renderFarmSystems() {
     <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Farm rank (1 = #1 system). Click to sort by overall grade.">Rank</span>
     <span></span>
     <span>Organization</span>
+    <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+ — wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. Acquisitions contribute zero on arrival; debuts don't subtract — pure-development metric. Click to sort. v27 — DvM+ is now the default sort + lead column; grade sits to its right.">${win.toUpperCase()}DvM+</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Overall farm-system letter grade. A+ = #1 org; tiers descend by farm_score (45% top-end · 25% depth · 15% trajectory · 15% grad pipeline). Click to sort.">Grade</span>
-    <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+ — wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. Acquisitions contribute zero on arrival; debuts don't subtract — pure-development metric. Click to sort.">${win.toUpperCase()}DvM+</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="Tool development pace vs league mean (100 = league mean, +10 = 1σ). Composite + hitter + pitcher rows. Click to sort.">Tool DvM+</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${escapeHtml(winLabel)} trajectory chart. Click to sort by ${escapeHtml(winLabel)} DvM+.">${escapeHtml(winLabel)} trajectory</span>
     <span class="sort-header" data-farm-sort="top_end" title="Top prospects in the org. Click to sort by top-end talent (tiered FV sum of the top 5 prospects).">Top prospects</span>
@@ -18964,18 +19089,18 @@ function renderFarmSystems() {
             <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}${alumniBadge}</div>
           </div>
         </div>
-        <div class="farm-grade-cell" title="Overall grade · farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}/100">
-          <span class="fg-letter" style="color:${gradeColorVal};">${escapeHtml(overall)}</span>
-          <span class="fg-score">${org.farm_score != null ? org.farm_score.toFixed(0) : '—'}${confDot}</span>
-          ${makeComponentGrades(org)}
-          ${makeOrgTierBar(org)}
-        </div>
         <div class="farm-dvm-hero">${(() => {
           const v = (org.dvm_plus || {})[win];
           if (v == null) return `<span class="fdh-value" style="color:var(--text-tertiary);">—</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
           const color = v >= 110 ? 'var(--up)' : v <= 90 ? 'var(--down)' : 'var(--neon-violet)';
           return `<span class="fdh-value" style="color:${color};" title="${win.toUpperCase()}DvM+ ${v} · 100 = league mean · 10 pts = 1 std-dev · debuts + acquisitions nullified">${v}</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
         })()}</div>
+        <div class="farm-grade-cell" title="Overall grade · farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}/100">
+          <span class="fg-letter" style="color:${gradeColorVal};">${escapeHtml(overall)}</span>
+          <span class="fg-score">${org.farm_score != null ? org.farm_score.toFixed(0) : '—'}${confDot}</span>
+          ${makeComponentGrades(org)}
+          ${makeOrgTierBar(org)}
+        </div>
         <div>${makeToolDvmCell(org)}</div>
         <div title="${escapeHtml(pulseTooltip)}">${makeFarmSparkline(org.fv_history, deltaAbove, meanBaseline, win, org.org)}${pulseHtml}</div>
         <div>${topHtml}</div>
@@ -23730,8 +23855,11 @@ function _renderFarmDetailBody(orgCode, org, root) {
               title="Save this farm profile as a PNG image">⤴ Share</button>
     </div>
     ${makeFarmReportCard(org)}
-    ${makeRosterSnapshotTile(org)}
-    ${makeFarmToolDevCard(org)}`;
+    ${makeRosterSnapshotTile(org)}`;
+  // v27 — Tool Development card moved from the persistent header into
+  // the Development tab so the always-on header stays compact (report
+  // card + roster snapshot) and the per-tool DvM+ matrix sits with the
+  // other dev signals it belongs with.
 
   // Per-tier counts live in the tier-bar in the header; tiles cover the
   // remaining at-a-glance facts (age, stock direction, young-for-level)
@@ -24829,15 +24957,25 @@ function _renderFarmDetailBody(orgCode, org, root) {
     ${makeAgeFvScatter(rosterPlayersAll)}
     ${gradedSection}`;
 
+  // v27 — Development tab fleshed out with multi-window DvM+ panel,
+  // Hitter/Pitcher cohort split, growth chart (window-chip driven), the
+  // existing per-tool DvM+ matrix, and a top-movers table for the org's
+  // active roster. Mirrors the "back of a baseball card" layout — every
+  // dev signal on one page so the reader doesn't have to bounce between
+  // the report card, the header tool-dev card, and the growth chart.
   const devTabHtml = `
-    <div class="detail-title flush">${(state.formWindow || "6y")} development vs mean farm <span class="detail-title-sub">pure-development metric — debuts + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. DvM+ = wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. 6y is the principal signal.</span></div>
+    ${makeFarmDvmMultiWindowPanel(org)}
+    ${makeFarmDevCohortSplit(org)}
+    <div class="detail-title">${(state.formWindow || "6y")} development vs mean farm <span class="detail-title-sub">pure-development metric — debuts + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. 6y is the principal signal.</span></div>
     <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
       <span class="filter-label">Window</span>
       <button class="chip${(state.formWindow || "6y") === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
       <button class="chip${(state.formWindow || "6y") === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
       <button class="chip${(state.formWindow || "6y") === "6y" ? " active" : ""}" data-form-window="6y" type="button">6y</button>
     </div>
-    ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || "6y"] ?? 0), state.formWindow || "6y")}`;
+    ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || "6y"] ?? 0), state.formWindow || "6y")}
+    ${makeFarmToolDevCard(org)}
+    ${makeFarmDevTopMovers(rosterPlayersAll)}`;
 
   // v7 — Finances tab expanded with Surplus + ROI sections beneath
   // the existing Spending block. Surplus pulls per-prospect FV-implied
