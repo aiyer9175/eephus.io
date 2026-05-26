@@ -530,6 +530,39 @@ _BREAKOUT_STAT_PITCHER_MAX_AGE = 23.0
 _BREAKOUT_STAT_OPS_PLUS_LEVEL_GATE = 150
 
 
+def _detect_upside_added_events(points: list[dict]) -> list[dict]:
+    """v27 — Walk points chronologically; return events where a source
+    INTRODUCED a "+" upside marker that it didn't have on its prior
+    snapshot. Pairs with the hot-pink chart dots: each event is the
+    "first +" transition for that source in this player's history.
+
+    Returns: list of {date, source, fv_label} dicts, ordered by date.
+    Dedup is per-source per-run (a source dropping "+" then re-adding
+    later produces a second event).
+    """
+    if not points:
+        return []
+    out: list[dict] = []
+    seen_plus: dict[str, bool] = {}
+    for pt in points:
+        ps = pt.get("per_source") or {}
+        if not isinstance(ps, dict):
+            continue
+        for src, info in ps.items():
+            if not isinstance(info, dict):
+                continue
+            cur = bool(info.get("fv_plus"))
+            prev = seen_plus.get(src)
+            if cur and prev is not True:
+                out.append({
+                    "date":      pt.get("snapshot_date"),
+                    "source":    src,
+                    "fv_label":  pt.get("consensus_fv_label"),
+                })
+            seen_plus[src] = cur
+    return out
+
+
 def _compute_breakout_flag(payload: dict) -> dict | None:
     """v14 — Active-prospect Breakout indicator.
 
@@ -696,7 +729,22 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
 
     fv_signal = fv_upgrade is not None and fv_upgrade >= _BREAKOUT_FV_UPGRADE_THRESHOLD
     tool_signal = tool_velocity is not None and tool_velocity >= _BREAKOUT_TOOL_VELOCITY_THRESHOLD
-    if not (fv_signal or tool_signal):
+
+    # v27 — '+' upside signal: any source ADDED a '+' upside marker
+    # within the breakout window (anchor date → latest). A source
+    # changing a 50 → 50+ grade is a real "scout-noted upside" event,
+    # qualitatively similar to a 50 → 55 FV upgrade even though the
+    # numeric FV didn't move. Counts as a third path to the perf-gated
+    # breakout classification.
+    upside_events = _detect_upside_added_events(points)
+    upside_in_window = [
+        e for e in upside_events
+        if e.get("date") and e["date"] >= window_anchor_date.isoformat()
+    ]
+    upside_signal = bool(upside_in_window)
+    upside_sources = sorted({e["source"] for e in upside_in_window})
+
+    if not (fv_signal or tool_signal or upside_signal):
         return None
 
     # Performance gate — check hitter RPS+, then pitcher stf_plus_periph
@@ -740,15 +788,23 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
     if perf_gate_passed is None:
         return None
 
-    # Prefer FV-upgrade reason when both signals fire (scouts noticed is the
-    # cleaner story); otherwise tool velocity.
-    reason = "fv" if fv_signal else "tools"
+    # v27 — Reason priority: FV upgrade > upside ("+ added") > tools.
+    # The FV upgrade is the loudest scout signal; "+ added" is a direct
+    # qualitative upside statement; tool velocity is the quietest of the
+    # three (a half-point average bump across multiple tools).
+    if fv_signal:
+        reason = "fv"
+    elif upside_signal:
+        reason = "upside"
+    else:
+        reason = "tools"
     return {
         "flag": True,
         "reason": reason,
         "perf_gate": perf_gate_passed,
         "fv_upgrade": round(fv_upgrade, 2) if fv_upgrade is not None else None,
         "tool_velocity": round(tool_velocity, 2) if tool_velocity is not None else None,
+        "upside_sources": upside_sources or None,
         "window_anchor_date": window_anchor_date.isoformat(),
     }
 

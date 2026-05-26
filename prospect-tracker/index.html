@@ -55,6 +55,7 @@
       --neon-cyan:        #0E2B4D;     /* navy — link / accent     */
       --neon-amber:       #C9A227;     /* card gold — highlight    */
       --neon-violet:      #6B4FA8;     /* royal purple — graduates */
+      --upside-pink:      #FF1493;     /* v27 — hot pink: '+' upside chip + chart dot */
       /* Dedicated tokens for the IFA / Draft spend-mix visualizations.
          Draft was previously sharing --neon-cyan with the header blue
          which made the legend swatches nearly invisible against the
@@ -250,6 +251,7 @@
       --neon-cyan:        #00D9FF;   /* refractor cyan */
       --neon-amber:       #FFD700;   /* refractor gold */
       --neon-violet:      #B47CFF;   /* refractor purple */
+      --upside-pink:      #FF3DA0;   /* v27 — neon hot pink for dark theme '+' upside */
       --spend-ifa:        #F5A623;     /* amber — IFA */
       --spend-draft:      #E040A0;     /* magenta — Draft (v7 — was cyan, conflicted with neon-cyan accent) */
 
@@ -1605,7 +1607,8 @@
     .fv-wide-mark,
     .fv-single-mark,
     .fv-dropped-off-mark,
-    .fv-breakout-mark {
+    .fv-breakout-mark,
+    .fv-upside-mark {
       position: absolute;
       font-family: var(--font-mono);
       font-size: var(--fs-xs);
@@ -1625,6 +1628,11 @@
        and matches the "rare emerging talent" semantic without being
        confused for a positive-stock trend. */
     .fv-breakout-mark    { bottom: -5px; left: -6px;  background: #7FFFD4; color: #002a25; }
+    /* v27 — Upside "+" mark: hot pink, sits opposite-corner from the
+       breakout ★ so both can co-exist without overlap. Matched by the
+       hot-pink dot markers on the FV history chart so the eye links
+       chip indicator <-> chart event. */
+    .fv-upside-mark      { bottom: -5px; right: -7px; background: var(--upside-pink); color: #2a0014; }
     .fv-badge.is-breakout {
       outline: 2px solid #7FFFD4;
       outline-offset: 1px;
@@ -1635,6 +1643,15 @@
     @keyframes fvBreakoutPulse {
       0%, 100% { outline-color: #7FFFD4; }
       50%      { outline-color: var(--neon-violet); }
+    }
+    /* v27 — Upside chip variant: thin hot-pink outline matches the dot
+       color. Subtler than breakout (no pulse) since "+" is a per-source
+       upside note, not a "this prospect is emerging" composite signal. */
+    .fv-badge.is-upside {
+      outline: 2px solid var(--upside-pink);
+      outline-offset: 1px;
+      position: relative;
+      overflow: visible;
     }
 
     /* Row tag pills — shared shape for the flag counter, health,
@@ -7115,20 +7132,49 @@ function fvBadgeBreakoutMarkHTML(player) {
   return `<span class="fv-breakout-mark" title="Breakout — ${why}, plus ${gate} this season.">★</span>`;
 }
 
-// FV badge chain combiners — collapse the wide/single/breakout per-flag
-// pairs into one call per template. Templates were repeating
-// `${fvBadgeChainClasses(p)}`
-// in 6 places; using these combiners means adding a future badge is a
-// single-place change inside the chain helpers instead of N template edits.
+// v27 — Upside (+) indicator. Per-source "+" upside marker rolls up into
+// `fv_close_plus` (MiLB-pool latest-observation flag) OR
+// `consensus_fv_plus` (Draft + Overseas prospect payloads) — both
+// surface the same semantic. The chip variant gets a hot-pink outline
+// + corner "+" mark in the same visual family as wide/single/breakout
+// (paired with hot-pink dots on the FV history chart).
+function fvBadgeUpsideClass(player) {
+  if (!player) return "";
+  return (player.fv_close_plus || player.consensus_fv_plus) ? " is-upside" : "";
+}
+function fvBadgeUpsideMarkHTML(player) {
+  if (!fvBadgeUpsideClass(player)) return "";
+  // Tooltip describes WHICH sources drove the upside flag, when we can
+  // see them on the latest point's per_source map. Falls back to a
+  // generic explanation when per_source data is unavailable.
+  const pts = player.points || [];
+  const last = pts.length ? pts[pts.length - 1] : null;
+  const ps = (last && last.per_source) || {};
+  const plusSrcs = Object.entries(ps)
+    .filter(([, v]) => v && v.fv_plus)
+    .map(([src]) => SOURCE_LABELS[src] || src);
+  const reason = plusSrcs.length
+    ? `Upside grade — published "+" by ${plusSrcs.join(", ")}.`
+    : `Upside grade — at least one contributing source published a "+" on the latest snapshot.`;
+  return `<span class="fv-upside-mark" title="${escapeHtml(reason)}">+</span>`;
+}
+
+// FV badge chain combiners — collapse the wide/single/breakout/upside
+// per-flag pairs into one call per template. Templates were repeating
+// `${fvBadgeChainClasses(p)}` in 6 places; using these combiners means
+// adding a future badge is a single-place change inside the chain
+// helpers instead of N template edits.
 function fvBadgeChainClasses(player) {
   return fvBadgeWideClass(player)
        + fvBadgeSingleClass(player)
-       + fvBadgeBreakoutClass(player);
+       + fvBadgeBreakoutClass(player)
+       + fvBadgeUpsideClass(player);
 }
 function fvBadgeChainMarks(player) {
   return fvBadgeWideMarkHTML(player)
        + fvBadgeSingleMarkHTML(player)
-       + fvBadgeBreakoutMarkHTML(player);
+       + fvBadgeBreakoutMarkHTML(player)
+       + fvBadgeUpsideMarkHTML(player);
 }
 
 // Acquisition-method tooltip helper — builds the per-method context
@@ -7913,15 +7959,15 @@ function fvCeil(v) {
   return Math.ceil(n);
 }
 
-// v26 — Display helper: returns the player's fv_close as a label string
-// with the "+" upside suffix appended when fv_close_plus is set. Use this
-// anywhere a raw `fvCeil(p.fv_close)` was being inlined for display so
-// the "+" upside marker rides along. Returns "—" for missing FVs.
+// v27 — Display helper: returns the player's fv_close as a clean integer
+// label. The "+" upside marker is now a hot-pink chip indicator (via
+// fvBadgeUpsideMarkHTML), NOT a label suffix — so this helper returns
+// the bare number ("55", not "55+"). Returns "—" for missing FVs.
 function fvCloseLabel(p) {
   if (!p || p.fv_close == null) return "—";
   const n = fvCeil(p.fv_close);
   if (n == null) return "—";
-  return `${n}${p.fv_close_plus ? "+" : ""}`;
+  return `${n}`;
 }
 
 function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
@@ -7983,15 +8029,35 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
     const c = segColor(p2.fv - p1.fv);
     segments.push(`<path d="M ${p1.x.toFixed(1)},${p1.y.toFixed(1)} C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}" stroke="${c}" stroke-width="1.5" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"><title>${p1.pt.snapshot_date} → ${p2.pt.snapshot_date} · FV ${p1.pt.consensus_fv_label} → ${p2.pt.consensus_fv_label}</title></path>`);
   }
-  // v26 — Dot markers ONLY for points where the consensus inherited a
-  // "+" upside flag from a contributing source. Per the user spec:
-  // "add dot indicators on FV history charts ONLY for when a prospect
-  // was graded with a '+'". Other points stay clean — the curve color
-  // does the heavy lifting; dots add visual noise unless they're
-  // signaling something specific (here: scout-noted upside).
-  const circles = coords
-    .filter(c => c.pt && c.pt.consensus_fv_plus)
-    .map(c => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="2.2" fill="var(--neon-amber)" stroke="var(--bg-primary)" stroke-width="0.6" vector-effect="non-scaling-stroke"><title>${c.pt.snapshot_date} · FV ${c.pt.consensus_fv_label} (with + upside)</title></circle>`)
+  // v27 — Hot-pink dot markers for "+" upside events. Deduped per source
+  // per "+" run: one dot at the FIRST snapshot where each source
+  // INTRODUCED "+" (transition from no-+ or no-publication to +). A
+  // source that drops "+" and later re-adds it produces a second dot.
+  // Walks the points in chronological order and tracks each source's
+  // most-recent fv_plus state; the dot fires on every false→true
+  // transition.
+  const _prevSrcPlus = {};  // src -> last seen fv_plus boolean
+  const upsideDots = [];
+  for (const c of coords) {
+    const ps = (c.pt && c.pt.per_source) || {};
+    for (const [src, info] of Object.entries(ps)) {
+      if (!info) continue;
+      const cur = !!info.fv_plus;
+      const prev = _prevSrcPlus[src];
+      // Transition: undefined→true OR false→true → new "+" run from this source.
+      if (cur && prev !== true) {
+        upsideDots.push({
+          x: c.x, y: c.y,
+          date: c.pt.snapshot_date,
+          src: SOURCE_LABELS[src] || src,
+          label: c.pt.consensus_fv_label,
+        });
+      }
+      _prevSrcPlus[src] = cur;
+    }
+  }
+  const circles = upsideDots
+    .map(d => `<circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="1.5" fill="var(--upside-pink)" stroke="var(--bg-primary)" stroke-width="0.4" vector-effect="non-scaling-stroke"><title>${escapeHtml(`${d.src} added "+" upside on ${d.date} (FV ${d.label})`)}</title></circle>`)
     .join("");
 
   // Tool composite trajectory — dashed violet line tracking the mean
@@ -9695,7 +9761,7 @@ function renderActiveContextRail() {
     .slice(0, 3);
   const gradRows = grads.map(g => {
     const fv = g.fv_close != null ? fvCeil(g.fv_close) : null;
-    const fvLbl = fv != null ? `${fv}${g.fv_close_plus ? "+" : ""}` : null;  // v26
+    const fvLbl = fv != null ? `${fv}` : null;  // v26
     return `<div class="ctx-row" data-key="${escapeHtml(g.player_key)}">
       <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(g.player_name)}</span>
       <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;">${g.debut_date}</span>
@@ -12296,14 +12362,15 @@ function _renderDraftCard(p) {
         <span class="rank-num-inner" style="font-size:10px;">#${pickDisplay}</span>
       </span>
       ${_headshotImg(p.headshot_url, p.player_name, { fv: p.consensus_fv })}
-      <span style="font-size:13px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+      <span style="font-size:${(p.player_name || '').length > 18 ? 11 : (p.player_name || '').length > 15 ? 12 : 13}px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.25;" title="${escapeHtml(p.player_name || '')}">
         ${escapeHtml(p.player_name)}${milbLink}
       </span>
-      <span style="font-size:10.5px;padding:2px 5px;border-radius:3px;
-            background:${fvColor}22;color:${fvColor};font-weight:700;flex-shrink:0;"
+      <span class="fv-badge${fvBadgeChainClasses(p)}" style="font-size:10.5px;padding:2px 5px;border-radius:3px;
+            border:none;min-width:0;font-family:inherit;letter-spacing:0;
+            background:${fvColor}22;color:${fvColor};font-weight:700;flex-shrink:0;position:relative;overflow:visible;"
             title="Consensus future value${p.consensus_fv_raw != null && p.consensus_fv_raw !== p.consensus_fv
               ? ` (raw avg ${fvCeil(p.consensus_fv_raw)})` : ''}">
-        FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}${p.consensus_fv_plus ? "+" : ""}` : "—"}
+        FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : "—"}${fvBadgeChainMarks(p)}
       </span>
     </div>
     <!-- v19 — Single wrap-flex meta strip: no middot separators, chip
@@ -12537,7 +12604,7 @@ function _renderDraftLeaderboard(host, cls) {
     <td>${escapeHtml(p.position || "?")}</td>
     <td>${escapeHtml(p.school || "?")}</td>
     <td style="color:${_stockPlusColor(p.draft_stock_plus)};">${p.draft_stock_plus || "—"}</td>
-    <td>${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}${p.consensus_fv_plus ? "+" : ""}` : "—"}</td>
+    <td>${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : "—"}</td>
     <td>${p.projected_round ? "R" + p.projected_round : "—"}</td>
   </tr>`).join("");
 
@@ -12910,7 +12977,7 @@ function _renderOverseasCard(p) {
   // FV displays as a rounded integer even if stale exports stored a
   // decimal (defensive — overseas_export.py now rounds on write).
   const fvInt = p.consensus_fv != null ? fvCeil(p.consensus_fv) : null;
-  const fvLbl = fvInt != null ? `${fvInt}${p.consensus_fv_plus ? "+" : ""}` : null;  // v26
+  const fvLbl = fvInt != null ? `${fvInt}` : null;  // v26
   // Country flag now lives INLINE with the league badge (it represents
   // the country whose LEAGUE this is, not the player's nationality).
   // _flagImg returns an <img> or emoji span; we shrink it with the
@@ -12927,7 +12994,7 @@ function _renderOverseasCard(p) {
         ? `<span class="rank-num ${typeof rankNumRarityClass === 'function' ? rankNumRarityClass({ fv_close: p.consensus_fv }) : ''}" style="width:22px;height:22px;flex-shrink:0;"><span class="rank-num-inner" style="font-size:9px;">#${p._overseasRank}</span></span>`
         : ''}
       ${_headshotImg(p.headshot_url, p.player_name, { fv: p.consensus_fv })}
-      <span style="font-size:13px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+      <span style="font-size:${(p.player_name || '').length > 18 ? 11 : (p.player_name || '').length > 15 ? 12 : 13}px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.25;" title="${escapeHtml(p.player_name || '')}">
         ${escapeHtml(p.player_name)}${milbLink}
       </span>
       <span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;padding:1px 5px;border-radius:3px;
@@ -12935,10 +13002,11 @@ function _renderOverseasCard(p) {
             title="${escapeHtml(p.country || p.league || '')} — country of the league">
         ${escapeHtml(p.league || "?")}${leagueFlag ? ` ${leagueFlag}` : ""}
       </span>
-      <span style="font-size:10.5px;padding:2px 5px;border-radius:3px;
-            background:${fvColor}22;color:${fvColor};font-weight:700;flex-shrink:0;"
+      <span class="fv-badge${fvBadgeChainClasses(p)}" style="font-size:10.5px;padding:2px 5px;border-radius:3px;
+            border:none;min-width:0;font-family:inherit;letter-spacing:0;
+            background:${fvColor}22;color:${fvColor};font-weight:700;flex-shrink:0;position:relative;overflow:visible;"
             title="Consensus future value">
-        FV ${fvLbl != null ? fvLbl : "—"}
+        FV ${fvLbl != null ? fvLbl : "—"}${fvBadgeChainMarks(p)}
       </span>
     </div>
     <!-- v19 — Tightened meta strip: no middot separators, chip-style
@@ -13139,7 +13207,7 @@ async function renderDraftDetail(key) {
   }
   const { p, cls } = hit;
   const fvInt = p.consensus_fv != null ? fvCeil(p.consensus_fv) : null;
-  const fvLbl = fvInt != null ? `${fvInt}${p.consensus_fv_plus ? "+" : ""}` : null;  // v26
+  const fvLbl = fvInt != null ? `${fvInt}` : null;  // v26
   const fvColor = _draftFvBucketColor(p.consensus_fv);
   const stockColor = _stockPlusColor(p.draft_stock_plus);
 
@@ -13468,7 +13536,7 @@ async function renderOverseasDetail(key) {
   }
   const { p, league } = hit;
   const fvInt = p.consensus_fv != null ? fvCeil(p.consensus_fv) : null;
-  const fvLbl = fvInt != null ? `${fvInt}${p.consensus_fv_plus ? "+" : ""}` : null;  // v26
+  const fvLbl = fvInt != null ? `${fvInt}` : null;  // v26
   const fvColor = _draftFvBucketColor(p.consensus_fv);
   const leagueColor = _leagueBadgeColor(p.league);
   const leagueFlag = _flagImg(p.country_flag_svg, p.country_flag, p.country, { small: true });
@@ -13878,7 +13946,7 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
     return `<li><strong>${escapeHtml(pos)}</strong> —
       ${escapeHtml(p.player_name)} <small>${_flagImg(p.country_flag_svg, p.country_flag, p.country)} ${escapeHtml(p.league)}</small>
       <span style="float:right;color:${_draftFvBucketColor(p.consensus_fv)};">
-        FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}${p.consensus_fv_plus ? "+" : ""}` : "—"}</span></li>`;
+        FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : "—"}</span></li>`;
   }).join("");
 
   // Biggest projected bonuses
@@ -13948,7 +14016,7 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
     <td>${escapeHtml(p.position || "?")}</td>
     <td><span style="color:${_leagueBadgeColor(p.league)};font-weight:600;">${escapeHtml(p.league)}</span></td>
     <td>${escapeHtml(p.current_team || "?")}</td>
-    <td style="font-weight:600;color:${_draftFvBucketColor(p.consensus_fv)};">FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}${p.consensus_fv_plus ? "+" : ""}` : "—"}</td>
+    <td style="font-weight:600;color:${_draftFvBucketColor(p.consensus_fv)};">FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : "—"}</td>
     <td>${p.eta_year || "—"}</td>
   </tr>`).join("");
 
@@ -19110,10 +19178,32 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
     segments.push(`<path d="M ${p1.x.toFixed(1)},${p1.y.toFixed(1)} C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}" stroke="${c}" stroke-width="2" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"><title>${segTip}</title></path>`);
   }
 
-  // Data-point markers retired per user — curve color is the only
-  // visual the user needs; dots added clutter. Per-snapshot detail
-  // still surfaces via the per-segment <title> tooltips above.
-  const circles = "";
+  // v27 — Hot-pink dot markers for "+" upside events on the detail-page
+  // FV chart. Deduped per source per "+" run, matching the sparkline
+  // renderer in makeLineChart and the compare overlay chart. A source
+  // toggling "+" on/off/on produces two distinct dots.
+  const _detailPrevSrcPlus = {};
+  const _detailUpsideDots = [];
+  for (const c of coords) {
+    const ps = (c.pt && c.pt.per_source) || {};
+    for (const [src, info] of Object.entries(ps)) {
+      if (!info) continue;
+      const cur = !!info.fv_plus;
+      const prev = _detailPrevSrcPlus[src];
+      if (cur && prev !== true) {
+        _detailUpsideDots.push({
+          x: c.x, y: c.y,
+          date: c.pt.snapshot_date,
+          src: SOURCE_LABELS[src] || src,
+          label: c.pt.consensus_fv_label,
+        });
+      }
+      _detailPrevSrcPlus[src] = cur;
+    }
+  }
+  const circles = _detailUpsideDots
+    .map(d => `<circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="2.5" fill="var(--upside-pink)" stroke="var(--bg-primary)" stroke-width="0.6" vector-effect="non-scaling-stroke"><title>${escapeHtml(`${d.src} added "+" upside on ${d.date} (FV ${d.label})`)}</title></circle>`)
+    .join("");
 
   // Tool composite trajectory — dashed violet line tracking the mean
   // per-tool grade at each snapshot, plotted on the same FV scale.
@@ -24105,7 +24195,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     <div class="side-title">Recent debuts <span class="side-count">${graduates.length}</span></div>
     ${sortedGrads.slice(0, 6).map(g => {
       const fvAtGrad = g.fv_close != null ? fvCeil(g.fv_close) : null;
-      const fvLbl = fvAtGrad != null ? `${fvAtGrad}${g.fv_close_plus ? "+" : ""}` : null;  // v26
+      const fvLbl = fvAtGrad != null ? `${fvAtGrad}` : null;  // v26
       const fvBadge = fvLbl != null
         ? `<span class="fv-badge ${fvClass(String(fvAtGrad))} size-xs" style="flex-shrink:0;">${fvLbl}</span>`
         : `<span style="width:22px;flex-shrink:0;"></span>`;
@@ -24141,7 +24231,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
         <div class="side-title">Toolsiest <span class="side-count">Tool leaders</span></div>
         ${toolsLeaders.map(p => {
           const fvL = p.fv_close != null ? fvCeil(p.fv_close) : null;
-          const fvLbl = fvL != null ? `${fvL}${p.fv_close_plus ? "+" : ""}` : null;  // v26
+          const fvLbl = fvL != null ? `${fvL}` : null;  // v26
           const fvBadge = fvLbl != null
             ? `<span class="fv-badge ${fvClass(String(fvL))} size-xs" style="flex-shrink:0;">${fvLbl}</span>`
             : `<span style="width:22px;flex-shrink:0;"></span>`;
@@ -25880,7 +25970,9 @@ function makeFvOverlayChart(players) {
     );
   }
 
-  // One polyline + endpoint dots per player.
+  // One polyline + endpoint dots per player. v27 — also overlay hot-pink
+  // dots at any per-source "+" upside transitions so the compare view
+  // matches the player-row sparkline + the player-detail chart.
   const lines = players.map((p, i) => {
     const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
     const pts = (p.points || []).map(pt => `${xScale(pt.snapshot_date).toFixed(1)},${yScale(pt.consensus_fv_raw).toFixed(1)}`).join(" ");
@@ -25888,7 +25980,30 @@ function makeFvOverlayChart(players) {
     const endDot = last
       ? `<circle cx="${xScale(last.snapshot_date).toFixed(1)}" cy="${yScale(last.consensus_fv_raw).toFixed(1)}" r="3.5" fill="${color}"><title>${escapeHtml(p.player_name)}: FV ${last.consensus_fv_label} (${last.snapshot_date})</title></circle>`
       : "";
-    return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6"/>${endDot}`;
+    // Upside-event dots — walk per_source per-point chronologically,
+    // dot the FIRST snapshot where each source introduces "+".
+    const upsidePts = [];
+    const _seen = {};
+    for (const pt of (p.points || [])) {
+      const ps = pt.per_source || {};
+      for (const [src, info] of Object.entries(ps)) {
+        const cur = !!(info && info.fv_plus);
+        if (cur && _seen[src] !== true) {
+          upsidePts.push({
+            x: xScale(pt.snapshot_date),
+            y: yScale(pt.consensus_fv_raw),
+            date: pt.snapshot_date,
+            src: SOURCE_LABELS[src] || src,
+            label: pt.consensus_fv_label,
+          });
+        }
+        _seen[src] = cur;
+      }
+    }
+    const upsideDotsSvg = upsidePts
+      .map(d => `<circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="1.8" fill="var(--upside-pink)" stroke="var(--bg-primary)" stroke-width="0.5"><title>${escapeHtml(`${p.player_name}: ${d.src} added "+" upside on ${d.date} (FV ${d.label})`)}</title></circle>`)
+      .join("");
+    return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6"/>${upsideDotsSvg}${endDot}`;
   }).join("");
 
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;overflow:visible;">

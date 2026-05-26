@@ -1396,6 +1396,43 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     # --- Riser: perf jumped meaningfully OR list-jump fired ---
     is_riser_perf = perf_delta is not None and perf >= PERF_RISER_BAR
     is_riser_jump = list_jump_score >= 2.0
+    # v27 — "+" upside added: any source ADDED a "+" upside marker in
+    # the player's recent history (within the last 6 months, matching
+    # the breakout window). A "55 → 55+" event is a real scout-noted
+    # upside note even without a numeric FV change.
+    #
+    # Gate: perf must not be in collapse. The upside path BOOSTS a
+    # borderline riser case (perf flat-to-slightly-positive); it does
+    # NOT override a strong faller signal. A player whose K% spiked
+    # 20pp and whose perf cratered (negative perf_delta past the
+    # faller bar) stays in the faller path even if a source added "+".
+    is_riser_upside = False
+    upside_riser_sources: list[str] = []
+    # Perf floor: must be at least near-flat (-0.04 for hitter OPS,
+    # -0.04 for pitcher xFIP-ish). Below this we let the faller logic
+    # take over. Tunable; sized to admit "the bat slumped a little but
+    # scout still likes the upside" while rejecting "perf collapsed."
+    _upside_perf_floor = -0.04
+    if (perf_delta is None) or (perf >= _upside_perf_floor):
+        try:
+            _pts = p.get("points") or []
+            from storage import _detect_upside_added_events as _detect_upside
+            from datetime import date as _d, timedelta as _td
+            _upside_events = _detect_upside(_pts)
+            if _pts:
+                _last_date_str = _pts[-1].get("snapshot_date")
+                if _last_date_str:
+                    try:
+                        _last_d = _d.fromisoformat(_last_date_str)
+                        _cutoff = (_last_d - _td(days=180)).isoformat()
+                        _recent = [e for e in _upside_events if e.get("date") and e["date"] >= _cutoff]
+                        if _recent:
+                            is_riser_upside = True
+                            upside_riser_sources = sorted({e["source"] for e in _recent})
+                    except (ValueError, TypeError):
+                        pass
+        except ImportError:
+            pass
     # Continuing-high-performance Kepley case: prior ≥ .800, current ≥ .850
     # (hitter; pitcher analog: prior ERA ≤ 3.50 + current ≤ 3.25), and
     # not "old" for level.
@@ -1417,7 +1454,7 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             is_riser_continuing = True
             drivers.append(f"continuing strong arm ({cur_era:.2f} ERA)")
 
-    if is_riser_perf or is_riser_jump or is_riser_continuing:
+    if is_riser_perf or is_riser_jump or is_riser_continuing or is_riser_upside:
         score = 0.0
         if is_riser_perf:
             score += min(6.0, perf * (8.0 if is_pitcher else 25.0))
@@ -1426,6 +1463,18 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             drivers.append("rank jump on baseline lists")
         if is_riser_continuing:
             score += 2.5
+        if is_riser_upside:
+            # v27 — Each added "+" event contributes 1.5 score (capped
+            # at 4.5 across multiple sources). A single FG "+ added" is
+            # a real qualitative upside note; multiple sources agreeing
+            # ("+ added" from FG AND BA) is a stronger signal that
+            # outranks a single-source "+ added" without breakout-class
+            # FV velocity.
+            score += min(4.5, 1.5 * len(upside_riser_sources or [None]))
+            drivers.append(
+                "+ upside added by " + ", ".join(upside_riser_sources)
+                if upside_riser_sources else "+ upside added"
+            )
         if young_for_level:
             score += 1.0
             drivers.append("young for level")

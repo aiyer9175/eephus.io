@@ -603,17 +603,16 @@ def compute_consensus_point(
             if fv is not None:
                 tools_consensus[phys_key] = fv
 
-    # v26 — Aggregate '+' upside flag: if ANY source contributing to this
+    # v27 — Aggregate '+' upside flag: if ANY source contributing to this
     # point published a "+" grade (e.g. one source said "55+"), the
-    # consensus point inherits the flag so its displayed label gets a
-    # "+" suffix and sort comparators can use it as a tiebreaker.
+    # consensus point inherits the flag. The flag drives a hot-pink chip
+    # indicator (matched by chart dots) on the frontend; the displayed
+    # label itself stays a plain integer (e.g. "55") — no "+" suffix on
+    # the text, since the visual mark carries the signal.
     consensus_fv_plus = any(
         bool(getattr(s, "fv_plus", False))
         for s in day_snaps if s.source in contributing_sources
     )
-    # Append the "+" to the displayed label when the flag is set; the
-    # numeric `consensus_fv` stays a plain float (no .5 inflation).
-    consensus_label_with_plus = consensus_label + ("+" if consensus_fv_plus else "")
     return ConsensusPoint(
         snapshot_date=event_date,
         interval_label=event_label,
@@ -623,7 +622,7 @@ def compute_consensus_point(
         rank_implied_fv=rank_implied_fv,
         avg_rank_n=len(ranks),
         consensus_fv=consensus_fv,
-        consensus_fv_label=consensus_label_with_plus,
+        consensus_fv_label=consensus_label,
         consensus_fv_raw=round(consensus_fv_raw_value, 2),
         consensus_fv_pre_shrinkage=round(pre_shrinkage, 2),
         shrinkage_weight=shrinkage_weight_val,
