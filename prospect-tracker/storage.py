@@ -504,6 +504,19 @@ _BREAKOUT_HITTER_RPS_PLUS_GATE = 110
 _BREAKOUT_HITTER_WRC_PLUS_GATE = 130
 _BREAKOUT_PITCHER_STF_PLUS_GATE = 105
 _BREAKOUT_PITCHER_FIP_MINUS_GATE = 90
+# v29 — Statcast+ as a perf gate. ≥115 is the top-quintile threshold
+# both sides agree on (mirrors the JS filter chip). It picks up
+# prospects whose contact-quality + zone discipline (or pitch-quality
+# + induced whiffs) is elite even when the scout-published indices
+# (Stuff+, wRC+, RPS+) haven't been computed yet. Same gate for
+# hitters and pitchers since Statcast+ is already side-aware.
+_BREAKOUT_STATCAST_PLUS_GATE = 115
+# v29 — Stat-only Statcast+ bar. Higher than the perf-gate (115) since
+# the stat-only path bypasses the tool/FV velocity requirement: only
+# elite-tier Statcast composites should trigger breakout without ANY
+# scout-side movement signal. 130 mirrors the wRC+ / RPS+ stat-only
+# bar (≈+2σ on each metric's pool).
+_BREAKOUT_STAT_STATCAST_PLUS_GATE = 130
 # v15 — Age caps. Breakouts are forward-looking signals; aging relievers
 # putting up a hot 90-day stretch aren't really "breaking out" in the
 # prospect-development sense. Caps below align with typical prospect-window
@@ -670,6 +683,29 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
                     }
             except (TypeError, ValueError):
                 pass
+        # v29 — Statcast+ stat-only path (both sides, same age caps).
+        # Elite Statcast composite triggers breakout without ANY scout-
+        # side movement signal — useful for the under-tracked-by-scouts
+        # prospects (low-A, indy-league lifers, NPB transitions) whose
+        # game feeds DO carry Statcast but whose RPS+/wRC+/Stuff+ aren't
+        # yet on file.
+        sc_plus = payload.get("statcast_plus")
+        sc_age_cap = (_BREAKOUT_STAT_PITCHER_MAX_AGE if is_pitcher_ctx
+                      else _BREAKOUT_STAT_HITTER_MAX_AGE)
+        try:
+            if (sc_plus is not None
+                    and float(sc_plus) >= _BREAKOUT_STAT_STATCAST_PLUS_GATE
+                    and age <= sc_age_cap):
+                return {
+                    "flag": True,
+                    "reason": "stats",
+                    "perf_gate": "statcast_plus",
+                    "fv_upgrade": None,
+                    "tool_velocity": None,
+                    "window_anchor_date": None,
+                }
+        except (TypeError, ValueError):
+            pass
 
     points = payload.get("points") or []
     if len(points) < _BREAKOUT_WINDOW_MIN_UPDATES:
@@ -782,6 +818,20 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
         try:
             if fipm is not None and float(fipm) <= _BREAKOUT_PITCHER_FIP_MINUS_GATE:
                 perf_gate_passed = "fip_minus"
+        except (TypeError, ValueError):
+            pass
+
+    # v29 — Statcast+ perf gate. Catches prospects whose tracked
+    # Statcast / zone signals indicate elite performance even when the
+    # scout-published indices (RPS+, Stuff+, wRC+, FIP-) aren't on
+    # file — common for under-tracked MiLB venues with partial Statcast
+    # coverage but full game feeds. Side-agnostic since the composite
+    # is built per-side already.
+    if perf_gate_passed is None:
+        sc_plus = payload.get("statcast_plus")
+        try:
+            if sc_plus is not None and float(sc_plus) >= _BREAKOUT_STATCAST_PLUS_GATE:
+                perf_gate_passed = "statcast_plus"
         except (TypeError, ValueError):
             pass
 
@@ -5096,6 +5146,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             ops_norm=ops_norms,
             era_norm=era_norms,
             health=health,
+            # v29 — Statcast+ ETA modifier. None when the player has no
+            # tracked Statcast / zone data; estimate_eta then leaves
+            # statcast_plus_adj at 0.0 (no signal).
+            statcast_plus=_sc_plus_map.get(p.player_key),
             # Pipe through today's date so estimate_eta resolves the
             # season_phase (pre-break / post-break / offseason) and
             # applies the half-season-elapsed adjustment when the
@@ -5929,6 +5983,35 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     grads = _dedup_by_mlbam(grads, "graduates")
     inactives = _dedup_by_mlbam(inactives, "inactives")
 
+    # v29 — Statcast+ map: per-player composite indexed by player_key,
+    # populated from the active prospect set (the side-aware pool). Has
+    # to land here (post-dedup, pre-org-aggregation, pre-_serialize) so
+    # downstream readers all see the same value:
+    #   - estimate_eta inside _serialize → +/- 0.25y ETA nudge
+    #   - _compute_breakout_flag → SC+ ≥ 115 perf gate / ≥ 130 stat-only
+    #   - org_map per-prospect loop → per-org SC+ aggregate (+ indicator
+    #     counts) for the new farm-grade leaf
+    # Players without tracked Statcast data are absent from the map →
+    # .get() returns None, which downstream consumers treat as "no
+    # signal" (no gate pass, no nudge).
+    from statcast_plus import (
+        build_pool as _sc_build_pool,
+        compute_statcast_plus as _sc_compute,
+    )
+    def _sc_mini(p):
+        return {
+            "statline":         statlines.get(p.player_key),
+            "zone_metrics":     zone_metrics.get(p.player_key),
+            "statcast_metrics": statcast_metrics.get(p.player_key),
+            "sabermetrics":     sabermetrics.get(p.player_key),
+        }
+    _sc_pool = _sc_build_pool(_sc_mini(p) for p in actives)
+    _sc_plus_map: dict[str, int | None] = {}
+    for _p in actives:
+        _sc_plus_map[_p.player_key] = _sc_compute(_sc_mini(_p), _sc_pool)
+    for _p in grads:
+        _sc_plus_map[_p.player_key] = _sc_compute(_sc_mini(_p), _sc_pool)
+
     # Sort actives by latest consensus_fv_raw (smoother than the snapped
     # value for tiebreaking). When two prospects are literally identical
     # on consensus FV (down to the decimal — happens with single-source
@@ -6134,6 +6217,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "_active_surplus_net_mm":  0.0,
                 "_active_surplus_cost_mm": 0.0,
                 "_active_surplus_count":   0,
+                # v29 — Statcast+ + indicator-count accumulators feeding
+                # the new `statcast_quality` farm-grade leaf. _sc_plus
+                # collects every active prospect's SC+ when tracked;
+                # _upside_count / _breakout_count tally indicator-flagged
+                # prospects (computed inline below since the per-payload
+                # breakout pass runs after this loop, so we recompute the
+                # upside boolean from points + cap the breakout count
+                # against `breakout_flag` after serialization in the
+                # second pass).
+                "_sc_plus":         [],
+                "_upside_count":     0,
+                "_breakout_count":   0,
             }
         m = org_map[org]
         m["prospects"].append({
@@ -6248,6 +6343,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # `il_status` (dict keyed by player_key).
         if (il_status or {}).get(p.player_key, {}).get("is_on_il"):
             m["_il_current_count"] = m.get("_il_current_count", 0) + 1
+
+        # v29 — Statcast+ contribution. None values are skipped (the
+        # prospect has no tracked Statcast / zone data).
+        _sc_p = _sc_plus_map.get(p.player_key)
+        if _sc_p is not None:
+            m["_sc_plus"].append(int(_sc_p))
+        # v29 — Upside-indicator count. Uses consensus_fv_plus on the
+        # latest point AND honors the same FV ≤ 50 cap the UI applies
+        # (sub-50 grades are the canonical upside surface; 55+/60+ are
+        # ignored because those tiers have already realized their upside).
+        _latest_pt = p.points[-1] if p.points else None
+        if (_latest_pt
+                and getattr(_latest_pt, "consensus_fv_plus", False)
+                and fv_raw is not None and float(fv_raw) <= 50.0):
+            m["_upside_count"] += 1
 
     # ── Per-org graduate aggregates (Farm Overhaul Steps 2 & 3) ──
     # Walk graduates ONCE to compute:
@@ -6550,6 +6660,24 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "mean":        round(sum(_comp_overalls) / len(_comp_overalls), 2)
                             if _comp_overalls else None,
             "graded_count": len(_comp_overalls),
+        }
+        # v29 — Statcast Quality leaf. Mean Statcast+ across the farm's
+        # active prospects who have tracked Statcast/zone data, plus
+        # raw counts (graded_count = how many contributed to the mean;
+        # min 5 graded prospects required before the org-mean shows so
+        # tiny samples don't surface as outliers). The accompanying
+        # upside / breakout counts ride alongside so the UI can sort or
+        # tooltip on indicator depth without re-deriving from the
+        # active payload.
+        _sc_vals = m.pop("_sc_plus", []) or []
+        _scq_graded = len(_sc_vals)
+        m["statcast_quality"] = {
+            "mean":          round(sum(_sc_vals) / _scq_graded, 2) if _scq_graded >= 5 else None,
+            "graded_count":  _scq_graded,
+            "upside_count":  m.pop("_upside_count", 0),
+            # breakout_count gets filled in the post-serialization
+            # second pass below (the flag is computed there).
+            "breakout_count": 0,
         }
         # International Depth — IFA % and year-span across actives.
         n_actives = len(m["prospects"]) or 1
@@ -7864,6 +7992,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     inactive_payload = [_serialize(p) for p in inactives]
     graduate_payload = [_serialize(p) for p in grads]
     graduate_payload.sort(key=lambda p: p.get("debut_date") or "", reverse=True)
+    # Stamp the precomputed Statcast+ onto each payload so downstream
+    # consumers (UI badge, breakout gate, farm-grade rollup) can pull
+    # one field instead of re-deriving from the raw maps.
+    for _pl in active_payload + graduate_payload:
+        _pl["statcast_plus"] = _sc_plus_map.get(_pl["player_key"])
 
     # X+ tool composites need cohort mean/stdev. Use the union of all
     # serialized prospects so a single norm anchors actives / inactives /
@@ -7878,8 +8011,29 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # 6 months (or last 4 source updates, whichever spans more time) +
     # a performance gate (RPS+ for hitters, stf_plus_periph / fip_minus
     # for pitchers). Rare-but-possible — expects ~10-40 prospects to
-    # qualify league-wide.
+    # qualify league-wide. v29 — Statcast+ ≥ 115 also passes the perf
+    # gate now (see _compute_breakout_flag).
     _attach_breakout_flags(active_payload)
+
+    # v29 — Fill the per-org breakout_count now that flags are stamped.
+    # The per-prospect org loop ran before breakout was computed (the
+    # flag uses fields populated by _attach_tool_plus_indices), so the
+    # count gets backfilled here. Same for the breakout-indicator count
+    # used by the new statcast_quality leaf. Builds an org→count map in
+    # one pass then writes into each org_summary entry.
+    _breakout_by_org: dict[str, int] = {}
+    _org_by_key = {p.player_key: _active_display_org(p) for p in actives}
+    for _pl in active_payload:
+        if not _pl.get("breakout_flag"):
+            continue
+        _org_code = _org_by_key.get(_pl.get("player_key"))
+        if not _org_code:
+            continue
+        _breakout_by_org[_org_code] = _breakout_by_org.get(_org_code, 0) + 1
+    for _entry in org_summary:
+        _scq = _entry.get("statcast_quality")
+        if _scq is not None:
+            _scq["breakout_count"] = _breakout_by_org.get(_entry.get("org"), 0)
 
     # Cleanup: `_active_keys` was retained on org_summary entries for
     # potential post-serialization joins (now unused after Tool Quality

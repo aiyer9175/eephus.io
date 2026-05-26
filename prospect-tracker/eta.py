@@ -120,6 +120,10 @@ class ETAResult:
     perf_adj: float           # performance adjustment applied
     age_adj: float            # age-for-level adjustment applied
     fv_adj: float             # FV grade adjustment applied
+    # v29 — Statcast+ adjustment in years. Top-quintile (≥115) shaves
+    # 0.25; elite-tier (≥130) shaves 0.5; bottom-quintile (≤85) adds
+    # 0.25. 0.0 when the prospect has no tracked Statcast data.
+    statcast_plus_adj: float = 0.0
     # Health adjustment in years. Positive = ETA pushed back due to
     # recent injuries / post-TJ recovery; 0 = no impact.
     health_adj: float = 0.0
@@ -187,6 +191,7 @@ def estimate_eta(
     snapshot_date=None,
     org_promotion_tendency: dict | None = None,
     il_status: dict | None = None,
+    statcast_plus: int | None = None,
 ) -> ETAResult:
     """
     Return an ETAResult for the given prospect attributes.
@@ -230,6 +235,7 @@ def estimate_eta(
     perf_adj = 0.0
     age_adj  = 0.0
     fv_adj   = 0.0
+    statcast_plus_adj = 0.0
     signals  = 0          # track how many signals we have for confidence
 
     # ── Base years from level ───────────────────────────────────────────────
@@ -332,6 +338,26 @@ def estimate_eta(
             fv_adj = +0.25
         signals += 1
 
+    # ── Statcast+ adjustment ───────────────────────────────────────────────
+    # v29 — Statcast+ as a soft ETA modifier. Top-quintile (≥115) shaves
+    # 0.25y off the forecast; elite-tier (≥130) shaves a full 0.5y;
+    # bottom-quintile (≤85) adds 0.25y. Capped so the modifier never
+    # dominates the FV / age signals — it's a tiebreaker, not a re-write.
+    # Players without tracked Statcast data get no nudge (a None
+    # statcast_plus is treated as "no signal").
+    if statcast_plus is not None:
+        try:
+            sc = float(statcast_plus)
+            if sc >= 130:
+                statcast_plus_adj = -0.50
+            elif sc >= 115:
+                statcast_plus_adj = -0.25
+            elif sc <= 85:
+                statcast_plus_adj = +0.25
+            signals += 1
+        except (TypeError, ValueError):
+            pass
+
     # ── Health adjustment ──────────────────────────────────────────────────
     # Post-TJ recovery typically costs a pitcher 12-18 months of game
     # time, and chronic-injury prospects miss enough playing time that
@@ -418,7 +444,8 @@ def estimate_eta(
         half_season_adj = 0.0
 
     # ── Combine and clamp ──────────────────────────────────────────────────
-    total = base + perf_adj + age_adj + fv_adj + health_adj + half_season_adj
+    total = (base + perf_adj + age_adj + fv_adj + statcast_plus_adj
+             + health_adj + half_season_adj)
     total = max(0.0, total)                 # can't arrive in the past
     eta_year = today_year + round(total)
 
@@ -436,6 +463,7 @@ def estimate_eta(
         perf_adj=round(perf_adj, 2),
         age_adj=round(age_adj, 2),
         fv_adj=round(fv_adj, 2),
+        statcast_plus_adj=round(statcast_plus_adj, 2),
         health_adj=round(health_adj, 2),
         half_season_adj=round(half_season_adj, 2),
         season_phase=phase,

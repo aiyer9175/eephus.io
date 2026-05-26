@@ -1496,6 +1496,23 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             bonus = min(3.0, (lp - 15) / 10.0 + 1.0)  # 15%→1.0, 25%→2.0, 35%→3.0
             score += bonus
             drivers.append(f"+{lp:.0f}% vs level mean")
+        # v29 — Statcast+ riser amplifier. Top-quintile composite
+        # (≥115) adds 1.0; elite-tier (≥130) adds 2.0. Caps at 2.0 so
+        # it can break ties between two surface-comparable risers
+        # without dominating the score. Players without tracked
+        # Statcast data get no nudge.
+        _scp = p.get("statcast_plus")
+        try:
+            _scpv = float(_scp) if _scp is not None else None
+        except (TypeError, ValueError):
+            _scpv = None
+        if _scpv is not None:
+            if _scpv >= 130:
+                score += 2.0
+                drivers.append(f"Statcast+ {int(_scpv)} (elite)")
+            elif _scpv >= 115:
+                score += 1.0
+                drivers.append(f"Statcast+ {int(_scpv)} (above pool)")
         # v12 — xMetric verification gate for AAA risers. If the
         # surface jump isn't supported by underlying Statcast (wOBA
         # over xWOBA, ERA under xFIP), demote to Possible Regressor

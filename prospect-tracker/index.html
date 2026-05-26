@@ -15364,6 +15364,13 @@ function _scPool() {
 }
 function getStatcastPlus(p) {
   if (!p) return null;
+  // v29 — Prefer the server-computed Statcast+ when present. Storage
+  // attaches it to every active + graduate payload via statcast_plus.py;
+  // the JS path below stays as a fallback for legacy exports (or for
+  // synthetic test payloads) that ship without the field.
+  if (p.statcast_plus !== undefined && p.statcast_plus !== null) {
+    return Number(p.statcast_plus);
+  }
   const isP = !!(p.statline && p.statline.is_pitcher);
   const row = isP ? _scExtractPitcher(p) : _scExtractHitter(p);
   const pool = isP ? _scPool().pit : _scPool().hit;
@@ -20200,16 +20207,32 @@ function farmSortedOrgs() {
     }
     if (s === "stock_up")      return b.stock_up  - a.stock_up;
     if (s === "upside_count") {
-      const m = ensureFarmIndicatorMemo().upside;
-      return (m[b.org] ?? 0) - (m[a.org] ?? 0) || (a.farm_rank - b.farm_rank);
+      // v29 — Prefer server-computed statcast_quality.upside_count when
+      // present (matches the FV ≤ 50 cap the UI applies); fall back to
+      // the client-side derive for legacy exports.
+      const sq_a = a.statcast_quality, sq_b = b.statcast_quality;
+      const av = sq_a && sq_a.upside_count != null
+                  ? sq_a.upside_count : (ensureFarmIndicatorMemo().upside[a.org] ?? 0);
+      const bv = sq_b && sq_b.upside_count != null
+                  ? sq_b.upside_count : (ensureFarmIndicatorMemo().upside[b.org] ?? 0);
+      return bv - av || (a.farm_rank - b.farm_rank);
     }
     if (s === "breakout_count") {
-      const m = ensureFarmIndicatorMemo().breakout;
-      return (m[b.org] ?? 0) - (m[a.org] ?? 0) || (a.farm_rank - b.farm_rank);
+      const sq_a = a.statcast_quality, sq_b = b.statcast_quality;
+      const av = sq_a && sq_a.breakout_count != null
+                  ? sq_a.breakout_count : (ensureFarmIndicatorMemo().breakout[a.org] ?? 0);
+      const bv = sq_b && sq_b.breakout_count != null
+                  ? sq_b.breakout_count : (ensureFarmIndicatorMemo().breakout[b.org] ?? 0);
+      return bv - av || (a.farm_rank - b.farm_rank);
     }
     if (s === "statcast_plus_avg") {
-      const m = ensureFarmIndicatorMemo().scAvg;
-      const av = m[a.org], bv = m[b.org];
+      // Prefer server-computed statcast_quality.mean (gated at ≥5
+      // graded prospects); fall back to the client-side derive.
+      const sq_a = a.statcast_quality, sq_b = b.statcast_quality;
+      const av = sq_a && sq_a.mean != null
+                  ? sq_a.mean : ensureFarmIndicatorMemo().scAvg[a.org];
+      const bv = sq_b && sq_b.mean != null
+                  ? sq_b.mean : ensureFarmIndicatorMemo().scAvg[b.org];
       if (av == null && bv == null) return a.farm_rank - b.farm_rank;
       if (av == null) return 1;
       if (bv == null) return -1;
