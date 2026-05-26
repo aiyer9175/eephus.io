@@ -437,6 +437,27 @@
       border-color: var(--border);
       color: var(--text-secondary);
     }
+    /* v30.7 — Compare toggle pill (header right-side "Compare" CTA).
+       Light mode uses dark-navy bg + cream text via the bg-secondary
+       var, but in dark mode bg-secondary IS dark slate so the label
+       collapsed to dark-on-dark. Same fix as the section-tab.active
+       inversion above: paint with the cream text + dark border. */
+    [data-theme="dark"] .compare-toggle {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-color: var(--border);
+    }
+    [data-theme="dark"] .compare-toggle:hover {
+      box-shadow: 0 0 0 1px var(--neon-cyan), 0 2px 8px rgba(0, 217, 255, 0.20);
+    }
+    /* The count badge inside the compare toggle uses neon-amber bg in
+       both themes; the original color: var(--text-primary) reads as
+       cream-on-gold (contrast ≈ 1.2) in dark mode. Pin to dark text
+       so the count stays readable on the gold pill regardless of
+       theme. */
+    [data-theme="dark"] .compare-toggle .compare-count {
+      color: var(--text-on-accent);
+    }
     /* Sparkline baselines + chart gridlines — the dashed gray reference
      * lines lose visibility against the warmer slate background. Bump
      * the dashed-stroke opacity at the SVG level so any chart inheriting
@@ -2334,6 +2355,144 @@
       font-variant-numeric: tabular-nums;
     }
 
+    /* v30.7 — Expanded-density block geometry. The old expanded
+       layout was a single horizontal strip; the new layout stacks a
+       Statcast strip on top, then up to two two-column rows below
+       (standout games + sources / career + arsenal). Each block has
+       a small uppercase label so the user can identify what they're
+       reading without hovering for tooltips. */
+    .expand-row-pair {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 6px;
+      align-items: flex-start;
+    }
+    .expand-block {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1 1 280px;
+      min-width: 0;
+    }
+    .expand-block-label {
+      font-family: var(--font-sans);
+      font-size: 9px;
+      letter-spacing: 0.10em;
+      color: var(--text-tertiary);
+      font-weight: 700;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .expand-block-body {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+    }
+    /* Recent standout game pills. Each pill carries a date, level,
+       and raw box-line ("3-for-4 · 2 HR"). Tinted slightly toward
+       up so the eye picks them out as positive events. */
+    .expand-game-pill {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      padding: 1px 6px;
+      border: 1px solid color-mix(in srgb, var(--up) 45%, var(--border-light));
+      background: color-mix(in srgb, var(--up) 8%, transparent);
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.3;
+    }
+    .expand-game-date {
+      color: var(--text-tertiary);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .expand-game-lvl {
+      color: var(--text-secondary);
+      font-weight: 700;
+      font-size: 9px;
+      letter-spacing: 0.04em;
+    }
+    .expand-game-line {
+      color: var(--text-primary);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    /* Per-source FV chip (FG 60, BA 60, MLB 55, etc.). Color tier
+       follows the same FV ramp so a glance at the row tells the user
+       both WHO published and WHAT they published. */
+    .expand-src-pill {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      padding: 1px 6px;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.3;
+    }
+    .esp-code {
+      font-size: 9px;
+      letter-spacing: 0.04em;
+      font-weight: 700;
+      opacity: 0.85;
+    }
+    .esp-val { font-weight: 800; font-variant-numeric: tabular-nums; }
+    .expand-spread {
+      display: inline-flex;
+      align-items: center;
+      padding: 0 4px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      margin-left: 4px;
+    }
+    .expand-spread.is-wide {
+      color: var(--neon-violet);
+      border-color: var(--neon-violet);
+    }
+    /* Career history pills (one per prior season). */
+    .expand-career-pill {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      padding: 1px 6px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.3;
+    }
+    .ecp-yr { color: var(--text-tertiary); font-weight: 600; font-size: 9px; letter-spacing: 0.04em; }
+    .ecp-lvl { color: var(--text-secondary); font-weight: 700; font-size: 9px; letter-spacing: 0.04em; }
+    .ecp-line { color: var(--text-primary); font-weight: 700; font-variant-numeric: tabular-nums; }
+    /* Pitch arsenal pills (pitchers only). Type / velo / usage%. */
+    .expand-pitch-pill {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      padding: 1px 6px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.3;
+    }
+    .epp-type { font-weight: 800; color: var(--text-primary); letter-spacing: 0.04em; font-size: 9.5px; }
+    .epp-velo { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .epp-usage { color: var(--text-tertiary); font-size: 9px; font-weight: 600; }
+
     /* One-line auto-narrative under each list row's player name —
        absorbs the green/red flag content that used to render as a
        separate row pill + detail-page summary block. Wraps to 2 lines
@@ -4065,7 +4224,13 @@
     .farm-rank {
       font-family: var(--font-mono);
       font-size: 16px;
-      color: var(--bg-header);
+      /* v30.7 — Was hardcoded to var(--bg-header) (deep navy). That
+         reads fine on the cream light-mode row but in dark mode
+         --bg-header is near-black on a dark-slate row, dropping
+         contrast to near-zero (the rank numerals disappeared). Use
+         --text-primary so the rank picks up the per-theme readable
+         color: deep navy in light mode, cream in dark mode. */
+      color: var(--text-primary);
       font-variant-numeric: tabular-nums;
       font-weight: 700;
       text-align: center;
@@ -8509,18 +8674,188 @@ function _statcastStripHTML(p) {
 }
 
 function playerExpandedMetaHTML(p) {
-  // v29 — Expanded density now adds TWO chip strips: the tool grade
-  // strip (20-80 scout grades, retained from prior versions) AND a
-  // Statcast strip surfacing the advanced metrics that don't fit on
-  // Compact rows (EV, HH%, Barrel%, Z-Contact%, Whiff%, Chase% for
-  // hitters; pitch mix + velo + Whiff% for pitchers). Both strips are
-  // null-safe and collapse independently when their data is missing,
-  // so a prospect with tools-only or Statcast-only data still shows
-  // the populated half cleanly.
-  const toolStrip = _toolGradeStripHTML(p);
-  const scStrip   = _statcastStripHTML(p);
-  if (!toolStrip && !scStrip) return "";
-  return `<div class="player-row-expand">${toolStrip}${scStrip}</div>`;
+  // v30.7 — Expanded density used to render TWO redundant tool strips
+  // (the gold FV-tier chips from makeToolGradeChips PLUS this
+  // function's _toolGradeStripHTML). Compact view already shows the
+  // gold strip via .player-row-toolstrip; expanded view dropped the
+  // duplicate and instead reuses the freed vertical real estate to
+  // surface signal the user can ONLY see in expanded density:
+  //   Row 1: Statcast strip (SC+ composite + component outliers)
+  //   Row 2: Recent standout single games + scout source agreement
+  //   Row 3: Career stats compact + (pitchers only) pitch arsenal
+  // Each block is null-safe and collapses individually when its data
+  // isn't on the payload, so a prospect with no statcast / no career
+  // history still renders the populated blocks cleanly without
+  // leaving empty rows.
+  const scStrip      = _statcastStripHTML(p);
+  const standoutBlk  = _standoutGamesBlock(p);
+  const sourceBlk    = _sourceAgreementBlock(p);
+  const careerBlk    = _careerHistoryBlock(p);
+  const arsenalBlk   = _pitchArsenalBlock(p);
+  const rowA = scStrip || "";
+  const rowB = (standoutBlk || sourceBlk)
+    ? `<div class="expand-row-pair">${standoutBlk}${sourceBlk}</div>`
+    : "";
+  const rowC = (careerBlk || arsenalBlk)
+    ? `<div class="expand-row-pair">${careerBlk}${arsenalBlk}</div>`
+    : "";
+  if (!rowA && !rowB && !rowC) return "";
+  return `<div class="player-row-expand">${rowA}${rowB}${rowC}</div>`;
+}
+
+// v30.7 — Recent standout single-game performances for this prospect.
+// Pulls from statcast_metrics.standout_games (populated by the
+// gameLog pass). Shows up to 3 most-recent; each entry as a tight
+// pill with date + raw line. Empty string when no data.
+function _standoutGamesBlock(p) {
+  const sg = ((p && p.statcast_metrics) || {}).standout_games || [];
+  if (!Array.isArray(sg) || !sg.length) return "";
+  const games = sg.slice(0, 3);
+  const items = games.map(g => {
+    const date = g.date && g.date.length >= 10 ? g.date.slice(5) : g.date || "?";
+    const opp = g.opponent && g.opponent !== "?"
+      ? ` ${g.is_home ? "vs" : "@"} ${escapeHtml(g.opponent)}`
+      : "";
+    const lvl = g.level
+      ? `<span class="expand-game-lvl">${escapeHtml(g.level)}</span>`
+      : "";
+    return `<span class="expand-game-pill" title="${escapeHtml(g.line + opp + " on " + g.date)}">
+      <span class="expand-game-date">${escapeHtml(date)}</span>
+      ${lvl}
+      <span class="expand-game-line">${escapeHtml(g.line)}</span>
+    </span>`;
+  }).join("");
+  return `<div class="expand-block">
+    <span class="expand-block-label">RECENT STANDOUT GAMES</span>
+    <div class="expand-block-body">${items}</div>
+  </div>`;
+}
+
+// v30.7 — Per-source FV agreement / disagreement. Surfaces the
+// per-source FV that scouts published so the user can see WHO drove
+// the consensus. Each source gets a tiny chip with its 2-letter code
+// + the FV it published. Highlights spread when sources diverge.
+function _sourceAgreementBlock(p) {
+  const pts = (p && p.points) || [];
+  if (!pts.length) return "";
+  const last = pts[pts.length - 1] || {};
+  const ps = last.per_source || {};
+  // Source code → 2-letter mnemonic (matches FV badge data-quality
+  // outlines + the source-breakdown chart on the detail page).
+  const codeMap = {
+    fangraphs: "FG", baseball_america: "BA", mlb_pipeline: "MLB",
+    espn: "ESPN", baseball_prospectus: "BP", keith_law: "Law",
+    just_baseball: "JB", prospects_live: "PL", prospects365: "P365",
+  };
+  const rows = [];
+  for (const src in ps) {
+    const sd = ps[src] || {};
+    const fv = sd.fv_published;
+    if (fv == null || !isFinite(fv)) continue;
+    rows.push({
+      src,
+      code: codeMap[src] || src.slice(0, 3).toUpperCase(),
+      fv: Math.round(fv),
+    });
+  }
+  if (!rows.length) return "";
+  rows.sort((a, b) => b.fv - a.fv);
+  const spread = last.fv_spread != null ? last.fv_spread : null;
+  const spreadTag = spread != null
+    ? `<span class="expand-spread${spread >= 10 ? " is-wide" : ""}" title="FV spread across sources (high − low)">Δ${spread.toFixed(1)}</span>`
+    : "";
+  const items = rows.map(r => {
+    const tier = Math.max(20, Math.min(80, Math.floor(r.fv / 5) * 5));
+    return `<span class="expand-src-pill" style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);" title="${escapeHtml(r.src)} published FV ${r.fv}">
+      <span class="esp-code">${escapeHtml(r.code)}</span>
+      <span class="esp-val">${r.fv}</span>
+    </span>`;
+  }).join("");
+  return `<div class="expand-block">
+    <span class="expand-block-label">SOURCES (${rows.length})${spreadTag}</span>
+    <div class="expand-block-body">${items}</div>
+  </div>`;
+}
+
+// v30.7 — Prior-season career stats summary. Shows up to 3 prior
+// seasons as `[YEAR LVL slash]` so the user can read trajectory at a
+// glance without opening the detail page.
+function _careerHistoryBlock(p) {
+  const cs = (p && p.career_stats) || [];
+  const sl = (p && p.statline) || {};
+  const isP = !!sl.is_pitcher;
+  if (!Array.isArray(cs) || cs.length < 1) return "";
+  // De-dup by (season, level) keeping the row with most playing time;
+  // FG occasionally emits multiple rows per season+level when a player
+  // moved between affiliates of the same level mid-season.
+  const byKey = new Map();
+  for (const r of cs) {
+    const key = `${r.season}|${r.level || ""}`;
+    const prev = byKey.get(key);
+    const vol = isP ? Number(r.ip || 0) : Number(r.pa || r.ab || 0);
+    if (!prev || vol > prev._vol) byKey.set(key, { ...r, _vol: vol });
+  }
+  // Most-recent seasons first; cap at 4 rows.
+  const rows = Array.from(byKey.values())
+    .filter(r => r.season != null)
+    .sort((a, b) => (b.season - a.season))
+    .slice(0, 4);
+  if (!rows.length) return "";
+  const items = rows.map(r => {
+    const lvl = r.level || "?";
+    const line = isP
+      ? [
+          r.era != null ? `${Number(r.era).toFixed(2)} ERA` : null,
+          r.ip  != null ? `${Number(r.ip).toFixed(1)} IP`  : null,
+          r.k_per_9 != null ? `${Number(r.k_per_9).toFixed(1)} K/9` : null,
+        ].filter(Boolean).join(" · ")
+      : [
+          r.avg != null ? `.${(Number(r.avg)*1000).toFixed(0).padStart(3,"0")}` : null,
+          r.obp != null ? `.${(Number(r.obp)*1000).toFixed(0).padStart(3,"0")}` : null,
+          r.slg != null ? `.${(Number(r.slg)*1000).toFixed(0).padStart(3,"0")}` : null,
+          r.hr != null ? `${r.hr} HR` : null,
+        ].filter(Boolean).join("/").replace(/^([^/]+\/[^/]+\/[^/]+)/, "$1");
+    return `<span class="expand-career-pill" title="${escapeHtml(r.season + " " + lvl + " — " + (line || "(no rate stats on file)"))}">
+      <span class="ecp-yr">${r.season}</span>
+      <span class="ecp-lvl">${escapeHtml(lvl)}</span>
+      <span class="ecp-line">${escapeHtml(line || "—")}</span>
+    </span>`;
+  }).join("");
+  return `<div class="expand-block">
+    <span class="expand-block-label">CAREER SAMPLE (${rows.length} season${rows.length === 1 ? "" : "s"})</span>
+    <div class="expand-block-body">${items}</div>
+  </div>`;
+}
+
+// v30.7 — Pitch arsenal mini-chart (pitchers only). Top pitches with
+// avg velo + usage %; color-tiered by velocity. Shows up to 5 pitch
+// types. Falls back to "" when no statcast pitch_movement data is on
+// file or when the prospect isn't a pitcher.
+function _pitchArsenalBlock(p) {
+  if (!p) return "";
+  const sl = p.statline || {};
+  if (!sl.is_pitcher) return "";
+  const pm = (p.statcast_metrics || {}).pitch_movement || {};
+  const summary = pm.pitch_summary || [];
+  if (!summary.length) return "";
+  const sorted = summary.slice().sort((a, b) => (b.usage_pct || 0) - (a.usage_pct || 0)).slice(0, 5);
+  const items = sorted.map(ps => {
+    const velo = ps.avg_velo != null ? `${Number(ps.avg_velo).toFixed(1)}` : "—";
+    const usage = ps.usage_pct != null ? `${Number(ps.usage_pct).toFixed(0)}%` : "—";
+    const veloColor = ps.avg_velo == null ? "var(--text-tertiary)"
+                    : ps.avg_velo >= 96 ? "var(--up)"
+                    : ps.avg_velo >= 92 ? "var(--text-primary)"
+                    : "var(--text-secondary)";
+    return `<span class="expand-pitch-pill" title="${escapeHtml((ps.pitch_name || ps.pitch_type) + " · " + velo + " mph · " + usage + " usage")}">
+      <span class="epp-type">${escapeHtml(ps.pitch_type || "?")}</span>
+      <span class="epp-velo" style="color:${veloColor};">${velo}</span>
+      <span class="epp-usage">${usage}</span>
+    </span>`;
+  }).join("");
+  return `<div class="expand-block">
+    <span class="expand-block-label">PITCH ARSENAL</span>
+    <div class="expand-block-body">${items}</div>
+  </div>`;
 }
 
 const fvClass = label => {
@@ -23337,7 +23672,12 @@ function makeCareerTable(career, birthDate, player) {
   // power = "the boom"), discipline (slate purple), pitcher peripherals
   // (the sabermetric trio gets the warm color since FIP/HR-9 are the
   // saber-friendly piece of pitching).
-  const stripStyle = (color) => `padding:5px 8px;background:${color};color:var(--bg-secondary);text-align:center;font-family:var(--font-sans);font-size:9px;letter-spacing:0.10em;text-transform:uppercase;font-weight:600;border-right:1px solid var(--bg-primary);`;
+  // v30.7 — Pin label color to a fixed light (#E8EEF5 = cream). The
+  // strip backgrounds are saturated muted colors regardless of theme,
+  // so the label needs a theme-INVARIANT light text. Was previously
+  // var(--bg-secondary), which in dark mode IS dark slate → the
+  // header text disappeared into the bg.
+  const stripStyle = (color) => `padding:5px 8px;background:${color};color:#E8EEF5;text-align:center;font-family:var(--font-sans);font-size:9px;letter-spacing:0.10em;text-transform:uppercase;font-weight:600;border-right:1px solid var(--bg-primary);`;
   const META_COLOR  = "#3D4A5C";   // slate, season/level
   const COUNT_COLOR = "#5B6E7E";   // muted blue, counting stats
   const SLASH_COLOR = "#3F6F47";   // forest, slash line (AVG/OBP/SLG/OPS)
