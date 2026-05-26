@@ -5250,6 +5250,106 @@
       .detail-chip-ribbon .ribbon-row-stats { gap: 8px; }
     }
 
+    /* v30.8 — Roster pyramid card on the farm-detail Roster tab.
+       Stacked horizontal bars per level, segmented by FV tier. The
+       FV-tier colors come from the existing .fv-NN palette so this
+       viz reads in the same color language as FV badges everywhere. */
+    .rp-card {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px 14px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-card);
+      margin-bottom: 18px;
+    }
+    .rp-row {
+      display: grid;
+      grid-template-columns: 44px 1fr 36px;
+      gap: 10px;
+      align-items: center;
+      min-height: 22px;
+    }
+    .rp-level {
+      font-family: var(--font-mono);
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-align: right;
+      letter-spacing: 0.04em;
+    }
+    .rp-bar-wrap {
+      display: block;
+      min-width: 0;
+    }
+    .rp-bar {
+      display: flex;
+      height: 18px;
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid var(--border-light);
+      transition: width 0.25s ease;
+    }
+    .rp-seg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2px;
+      position: relative;
+      cursor: help;
+      transition: filter 0.12s;
+      border-right: 1px solid rgba(0,0,0,0.08);
+    }
+    .rp-seg:last-child { border-right: 0; }
+    .rp-seg:hover { filter: brightness(1.12); }
+    .rp-seg-count {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      pointer-events: none;
+    }
+    /* FV-tier colors INSIDE the bar reuse the palette but force the
+       fg color to apply to the segment count text. */
+    .rp-seg.fv-60 { background: var(--fv-60-bg); color: var(--fv-60-fg); }
+    .rp-seg.fv-55 { background: var(--fv-55-bg); color: var(--fv-55-fg); }
+    .rp-seg.fv-50 { background: var(--fv-50-bg); color: var(--fv-50-fg); }
+    .rp-seg.fv-45 { background: var(--fv-45-bg); color: var(--fv-45-fg); }
+    .rp-seg.fv-40 { background: var(--fv-40-bg); color: var(--fv-40-fg); }
+    .rp-total {
+      font-family: var(--font-mono);
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: left;
+      font-variant-numeric: tabular-nums;
+    }
+    .rp-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border-light);
+      justify-content: flex-end;
+    }
+    .rp-legend-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+    .rp-legend-swatch {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border-radius: 2px;
+      border: 1px solid var(--border-light);
+    }
+
     /* Detail-page header (player + farm). Uses a paper-card with the
        team-color accent stripe on the left so it reads as a baseball card. */
     .detail-page-header {
@@ -21672,7 +21772,16 @@ function makeFarmReportCard(org) {
   // (in-WAR minus out-WAR across all trades). Net FV was the prior
   // co-input but is biased toward high-volume traders — WAR closes
   // the outcome loop. Net FV is kept on the tree node for context.
-  const tradeTooltip = `TALENT YIELD from trades. Leaf is graded on Trade WAR Delta alone: in ${(tradeLeaf.war_in ?? 0).toFixed(1)} − out ${(tradeLeaf.war_out ?? 0).toFixed(1)} = ${tradeLeaf.war_delta != null ? (tradeLeaf.war_delta >= 0 ? '+' : '') + tradeLeaf.war_delta.toFixed(1) : '—'} WAR. Volume context: ${tradeLeaf.in_count ?? 0} in / ${tradeLeaf.out_count ?? 0} out (${tradeLeaf.net_fv != null ? (tradeLeaf.net_fv >= 0 ? '+' : '') + tradeLeaf.net_fv.toFixed(1) + ' FV' : '— FV'}).`;
+  // v30.8 — Trade Acumen tooltip now surfaces the recency-weighted
+  // delta + the unweighted figure for transparency. Weight schedule:
+  // trades ≤3yrs old count at 1.0×; linear decay to 0.2× at 13+yrs.
+  // The leaf grade keys off the WEIGHTED delta — recent trades
+  // speak to the current FO's acumen, while old trades from prior
+  // regimes shouldn't dominate the score.
+  const _twDelta  = tradeLeaf.war_delta;
+  const _twDeltaU = tradeLeaf.war_delta_unweighted;
+  const _twTip = `TALENT YIELD from trades. Leaf is graded on RECENCY-WEIGHTED WAR Delta (trades ≤3yr × 1.0; linear decay to ×0.2 at 13+yr): ${_twDelta != null ? (_twDelta >= 0 ? '+' : '') + _twDelta.toFixed(1) : '—'} WAR weighted. Unweighted total: ${_twDeltaU != null ? (_twDeltaU >= 0 ? '+' : '') + _twDeltaU.toFixed(1) : '—'} WAR. Volume context: ${tradeLeaf.in_count ?? 0} in / ${tradeLeaf.out_count ?? 0} out${tradeLeaf.net_fv != null ? ` (${(tradeLeaf.net_fv >= 0 ? '+' : '') + tradeLeaf.net_fv.toFixed(1)} FV)` : ''}.`;
+  const tradeTooltip = _twTip;
   const fmtTradeWarDelta = v => v == null ? '—'
     : (v >= 0 ? '+' : '') + Number(v).toFixed(1) + ' WAR';
   const waiverLeaf = t.tx_waivers || {};
@@ -23637,6 +23746,86 @@ const FARM_DEPTH_VISIBLE_CAP = 4;
 // redundant since the ladder visualizes the path TO MLB; graduates leave
 // the cohort entirely on promotion. AAA → DSL only.
 const FARM_LADDER_LEVELS = ["AAA", "AA", "A+", "A", "CPX", "DSL"];
+// v30.8 — Farm Roster Pyramid. Horizontal stacked-bar viz of the
+// org's tracked prospects bucketed by level (MLB → DSL top-to-bottom)
+// and colored by FV tier within each row. Lets the reader see at a
+// glance where the depth lives — wide bars near the top = MLB-ready
+// pipeline; wide bars at the bottom = long-term development. Tiers
+// roll into 5 bands: FV 60+ (elite), 55, 50, 45, <45. Each segment
+// width is proportional to the player count in that (level × tier)
+// cell so the org's strongest tiers visually dominate.
+function makeFarmRosterPyramid(rosterPlayersAll) {
+  if (!rosterPlayersAll || !rosterPlayersAll.length) return "";
+  const LEVELS = ["MLB", "AAA", "AA", "A+", "A", "CPX", "DSL"];
+  // Tier bands (label, lower-bound, FV-tier class for color matching).
+  // Mirrors the FV-badge palette so colors here match badges everywhere.
+  const TIERS = [
+    { label: "60+",  lo: 60, fvClass: "60" },
+    { label: "55",   lo: 55, fvClass: "55" },
+    { label: "50",   lo: 50, fvClass: "50" },
+    { label: "45",   lo: 45, fvClass: "45" },
+    { label: "<45",  lo: 0,  fvClass: "40" },
+  ];
+  // Build counts: counts[level][tierIdx] = N
+  const counts = {};
+  for (const lvl of LEVELS) counts[lvl] = TIERS.map(() => 0);
+  for (const p of rosterPlayersAll) {
+    const lvl = (p.statline && p.statline.level) || null;
+    if (!lvl || !LEVELS.includes(lvl)) continue;
+    const fv = p.fv_close;
+    if (fv == null) continue;
+    for (let i = 0; i < TIERS.length; i++) {
+      if (fv >= TIERS[i].lo) { counts[lvl][i]++; break; }
+    }
+  }
+  // Drop levels with zero tracked prospects so empty rows don't pad
+  // the chart out.
+  const levelsWithData = LEVELS.filter(lvl => counts[lvl].some(n => n > 0));
+  if (!levelsWithData.length) return "";
+  // Find the max total across levels so bar widths scale to it.
+  const maxTotal = Math.max(...levelsWithData.map(lvl =>
+    counts[lvl].reduce((s, n) => s + n, 0)));
+  if (maxTotal === 0) return "";
+
+  // Render one row per level.
+  const rows = levelsWithData.map(lvl => {
+    const row = counts[lvl];
+    const total = row.reduce((s, n) => s + n, 0);
+    // Each tier's % of THIS level (drives segment width on the bar).
+    // We use total / maxTotal for the bar's TOTAL width so deeper
+    // levels read as longer bars than thinner ones.
+    const rowWidthPct = (total / maxTotal) * 100;
+    const segs = TIERS.map((t, i) => {
+      if (row[i] === 0) return "";
+      const segPctOfRow = (row[i] / total) * 100;
+      return `<div class="rp-seg fv-${t.fvClass}"
+        style="flex:${row[i]};"
+        title="${row[i]} prospect${row[i] === 1 ? '' : 's'} at FV ${t.label}, ${lvl}">
+        ${row[i] >= 2 ? `<span class="rp-seg-count">${row[i]}</span>` : ""}
+      </div>`;
+    }).join("");
+    return `<div class="rp-row">
+      <div class="rp-level">${escapeHtml(lvl)}</div>
+      <div class="rp-bar-wrap">
+        <div class="rp-bar" style="width:${rowWidthPct.toFixed(1)}%;">${segs}</div>
+      </div>
+      <div class="rp-total">${total}</div>
+    </div>`;
+  }).join("");
+
+  // Legend — small chips showing the tier color → label mapping.
+  const legend = TIERS.map(t =>
+    `<span class="rp-legend-chip"><span class="rp-legend-swatch fv-${t.fvClass}"></span>${t.label}</span>`
+  ).join("");
+
+  return `<div class="detail-title">Roster pyramid
+    <span class="detail-title-sub">Tracked prospects per level, colored by FV tier. Bar width scales to the deepest level (so the org's biggest concentration reads as the widest bar). Hover a segment for the count.</span></div>
+    <div class="rp-card">
+      ${rows}
+      <div class="rp-legend">${legend}</div>
+    </div>`;
+}
+
 function makePromotionLadder(rosterPlayersAll, org) {
   if (!rosterPlayersAll || !rosterPlayersAll.length) {
     return `<div style="color:var(--text-tertiary);font-size:11px;">No tracked prospects to ladder.</div>`;
@@ -26017,6 +26206,141 @@ function makeTradeHistoryBlock(trades) {
 // transferred from 15-day to 60-day collapse into one row showing the
 // longest IL type the player landed on. The currently-active stint
 // renders with an open `present` end-cap.
+// v30.8 — Horizontal IL timeline SVG. Renders each injury stint as
+// a horizontal bar positioned on a year-by-year timeline. Active
+// stints (no `until`) render to the current date. Tommy John surgery
+// (when on file) renders as a vertical violet marker. The timeline
+// spans the years that actually have stints (no padding) so the
+// detail reads clearly even when an org's history is short. Returns
+// "" when there's nothing to draw.
+function _makeIlTimelineSvg(history, healthProfile) {
+  if (!Array.isArray(history) || !history.length) return "";
+  const hp = healthProfile || {};
+  // Parse each stint's start/end dates. Active stints (`until` null)
+  // extend to today. Drop stints with no `since` date.
+  const today = new Date();
+  const stints = [];
+  for (const h of history) {
+    if (!h.since) continue;
+    const startMs = Date.parse(h.since + "T00:00:00");
+    if (isNaN(startMs)) continue;
+    const endMs = h.until
+      ? Date.parse(h.until + "T00:00:00")
+      : today.getTime();
+    if (isNaN(endMs) || endMs < startMs) continue;
+    stints.push({
+      startMs, endMs,
+      active: !!h.active,
+      type:   h.type || "IL",
+      reason: h.reason || "",
+      days:   h.days,
+      description: h.description || "",
+    });
+  }
+  if (!stints.length) return "";
+
+  // Optional TJ surgery marker — use FG date as a backup when
+  // health_profile didn't capture it.
+  let tjMs = null;
+  if (hp.tj_surgery_date) tjMs = Date.parse(hp.tj_surgery_date + "T00:00:00");
+  if (tjMs != null && isNaN(tjMs)) tjMs = null;
+
+  // Timeline range — earliest stint start to "now" (or latest stint
+  // end, whichever is later). Pad 2 weeks each side so the boundary
+  // bars don't clip against the SVG edge.
+  const minMs = Math.min(...stints.map(s => s.startMs),
+                         tjMs != null ? tjMs : Infinity);
+  const maxMs = Math.max(...stints.map(s => s.endMs), today.getTime());
+  const padMs = 14 * 86400 * 1000;
+  const t0 = minMs - padMs;
+  const t1 = maxMs + padMs;
+  const span = Math.max(1, t1 - t0);
+
+  // SVG dimensions.
+  const W = 560, H = 56;
+  const padTop = 14, padBot = 16, padL = 4, padR = 4;
+  const innerW = W - padL - padR;
+  const _x = ms => padL + ((ms - t0) / span) * innerW;
+  const barY = padTop;
+  const barH = H - padTop - padBot;
+
+  // Build year tick marks across the spanned years.
+  const ticks = [];
+  const firstYear = new Date(t0).getFullYear();
+  const lastYear  = new Date(t1).getFullYear();
+  for (let y = firstYear; y <= lastYear + 1; y++) {
+    const tickMs = Date.parse(`${y}-01-01T00:00:00`);
+    if (tickMs < t0 || tickMs > t1) continue;
+    const tx = _x(tickMs);
+    ticks.push(`<line x1="${tx.toFixed(1)}" x2="${tx.toFixed(1)}"
+      y1="${padTop - 4}" y2="${H - padBot + 2}"
+      stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,3"/>
+      <text x="${tx.toFixed(1)}" y="${(H - 4).toFixed(1)}"
+        text-anchor="middle" font-family="var(--font-mono)" font-size="9"
+        fill="var(--text-tertiary)">${y}</text>`);
+  }
+
+  // Stint bars — color by active/historic + length.
+  const bars = stints.map(s => {
+    const x1 = _x(s.startMs);
+    const x2 = _x(s.endMs);
+    const w = Math.max(2, x2 - x1);
+    const color = s.active ? "var(--down)"
+                : (s.days != null && s.days >= 60) ? "var(--neon-amber)"
+                : "var(--text-secondary)";
+    const dStr = s.days != null
+      ? `${s.days}d`
+      : (s.active ? "active" : "?d");
+    const startStr = new Date(s.startMs).toISOString().slice(0, 10);
+    const endStr   = s.active
+      ? "ongoing"
+      : new Date(s.endMs).toISOString().slice(0, 10);
+    const tip = `${s.type} · ${dStr} (${startStr} → ${endStr})${s.reason ? "\n" + s.reason : ""}`;
+    return `<rect x="${x1.toFixed(1)}" y="${barY}" width="${w.toFixed(1)}"
+      height="${barH}" fill="${color}" opacity="0.85" rx="2">
+      <title>${escapeHtml(tip)}</title></rect>`;
+  }).join("");
+
+  // Tommy John surgery marker.
+  const tjMark = tjMs != null
+    ? `<line x1="${_x(tjMs).toFixed(1)}" x2="${_x(tjMs).toFixed(1)}"
+        y1="${padTop - 3}" y2="${H - padBot + 1}"
+        stroke="var(--neon-violet)" stroke-width="2">
+        <title>Tommy John surgery · ${escapeHtml(hp.tj_surgery_date || "date on file")}</title>
+       </line>
+       <circle cx="${_x(tjMs).toFixed(1)}" cy="${padTop - 5}" r="3"
+        fill="var(--neon-violet)">
+        <title>Tommy John surgery</title></circle>`
+    : "";
+
+  // "Today" marker.
+  const todayMark = `<line x1="${_x(today.getTime()).toFixed(1)}"
+    x2="${_x(today.getTime()).toFixed(1)}"
+    y1="${padTop - 3}" y2="${H - padBot + 1}"
+    stroke="var(--neon-cyan)" stroke-width="1" stroke-dasharray="2,2" opacity="0.6">
+    <title>Today</title></line>`;
+
+  // Legend.
+  const legend = `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;font-size:9px;color:var(--text-tertiary);font-family:var(--font-sans);">
+    <span><span style="display:inline-block;width:10px;height:6px;background:var(--down);vertical-align:middle;border-radius:1px;"></span> active</span>
+    <span><span style="display:inline-block;width:10px;height:6px;background:var(--neon-amber);vertical-align:middle;border-radius:1px;"></span> 60+ day stint</span>
+    <span><span style="display:inline-block;width:10px;height:6px;background:var(--text-secondary);vertical-align:middle;border-radius:1px;"></span> short stint</span>
+    ${tjMs != null ? `<span><span style="display:inline-block;width:2px;height:10px;background:var(--neon-violet);vertical-align:middle;"></span> TJ surgery</span>` : ""}
+    <span><span style="display:inline-block;width:2px;height:10px;background:var(--neon-cyan);vertical-align:middle;opacity:0.6;"></span> today</span>
+  </div>`;
+
+  return `<div style="margin-bottom:8px;padding:8px 10px 6px;background:var(--bg-tertiary);border:1px solid var(--border-light);border-radius:var(--radius-sm);">
+    <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:4px;">Timeline</div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;">
+      ${ticks.join("")}
+      ${bars}
+      ${tjMark}
+      ${todayMark}
+    </svg>
+    ${legend}
+  </div>`;
+}
+
 function makeInjuryHistoryBlock(history) {
   if (!history || !history.length) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No IL stints on record.</div>`;
@@ -28104,6 +28428,7 @@ function renderPlayerDetail(key) {
             : "";
           return `<div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
             <div style="font-size:11px;color:var(--text-secondary);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Injury history · ${stintLabel}${activeTag}</div>
+            ${_makeIlTimelineSvg(history, hp)}
             ${makeInjuryHistoryBlock(history)}
           </div>`;
         })()
@@ -30378,6 +30703,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     </div>`;
 
   const rosterTabHtml = `
+    ${makeFarmRosterPyramid(rosterPlayersAll)}
     <div class="detail-title flush">Tracked prospects (${rosterPlayers.length}${_filterSuffix})</div>
     <div class="farm-roster-filters">
       ${acqFilterBar}

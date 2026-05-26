@@ -7392,35 +7392,93 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     #   2. Trade WAR Delta (career WAR of acquired grads − career WAR
     #      of traded-away grads). Captures retrospective trade value,
     #      not just the league's FV consensus at the trade moment.
+    #
+    # v30.8 — Trade WAR Delta is now RECENCY-WEIGHTED. Recent trades
+    # speak to the CURRENT front office's acumen; a 2015 trade that
+    # blew up tells you about a regime two GMs ago. Weight schedule:
+    #   ≤ 3 years old:    1.0× (full credit, current FO)
+    #   linear decay to:  0.2× at 13+ years (long-tail floor)
+    # The legacy unweighted `war_delta_unweighted` is preserved on the
+    # tree node for transparency / users who want the raw signal.
+    _today = date.today()
+    def _trade_recency_weight(trade_date_iso: str | None) -> float:
+        """Linear decay: 1.0 for trades ≤3 years old, fading to 0.2
+        at ≥13 years old. Floor of 0.2 — old trades still count, just
+        much less."""
+        if not trade_date_iso:
+            return 0.5  # unknown date — moderate weight (don't drop, don't dominate)
+        try:
+            d = date.fromisoformat(trade_date_iso[:10])
+        except (ValueError, TypeError):
+            return 0.5
+        years = (_today - d).days / 365.25
+        if years <= 3.0:
+            return 1.0
+        if years >= 13.0:
+            return 0.2
+        # Linear from (3yr, 1.0) → (13yr, 0.2): slope -0.08/yr
+        return max(0.2, 1.0 - 0.08 * (years - 3.0))
+
     for entry in org_summary:
         in_fv = 0.0;  out_fv = 0.0
         in_n  = 0;    out_n  = 0
-        in_war = 0.0; out_war = 0.0
-        in_war_n = 0; out_war_n = 0
+        # Unweighted (legacy) sums kept for transparency on the tree.
+        in_war_raw = 0.0;  out_war_raw = 0.0
+        in_war_n = 0;      out_war_n = 0
+        # Recency-weighted sums (drive leaf scoring).
+        in_war_w  = 0.0;   out_war_w   = 0.0
+        # Top weighted-contributor trades for the tooltip story.
+        weighted_trades: list[dict] = []
         for ev in (entry["fv_events"] or []):
             if ev.get("kind") != "trade":
                 continue
             fv = ev.get("fv") or 0.0
             pkey = ev.get("player_key")
             cw = ((career_war or {}).get(pkey) or {}).get("career_war")
+            w = _trade_recency_weight(ev.get("date"))
             if ev.get("direction") == "in":
                 in_fv += fv; in_n += 1
                 if cw is not None:
-                    in_war += float(cw); in_war_n += 1
+                    in_war_raw += float(cw); in_war_n += 1
+                    in_war_w   += float(cw) * w
+                    weighted_trades.append({
+                        "player_key": pkey, "direction": "in",
+                        "date": ev.get("date"), "weight": round(w, 2),
+                        "career_war": float(cw),
+                        "weighted_war": round(float(cw) * w, 2),
+                    })
             elif ev.get("direction") == "out":
                 out_fv += fv; out_n += 1
                 if cw is not None:
-                    out_war += float(cw); out_war_n += 1
+                    out_war_raw += float(cw); out_war_n += 1
+                    out_war_w   += float(cw) * w
+                    weighted_trades.append({
+                        "player_key": pkey, "direction": "out",
+                        "date": ev.get("date"), "weight": round(w, 2),
+                        "career_war": float(cw),
+                        "weighted_war": round(float(cw) * w, 2),
+                    })
         entry["tree"]["tx_trades"] = {
             "net_fv":    round(in_fv - out_fv, 1) if (in_n + out_n) else None,
             "fv_in":     round(in_fv, 1),
             "fv_out":    round(out_fv, 1),
             "in_count":  in_n,
             "out_count": out_n,
-            # WAR-delta enhancer (only meaningful with ≥1 grad each side).
-            "war_delta": round(in_war - out_war, 2) if (in_war_n + out_war_n) >= 3 else None,
-            "war_in":    round(in_war, 2),
-            "war_out":   round(out_war, 2),
+            # Recency-weighted WAR delta drives leaf scoring (≥3 grads
+            # combined to anchor; mirrors the prior gate).
+            "war_delta": round(in_war_w - out_war_w, 2) if (in_war_n + out_war_n) >= 3 else None,
+            "war_in":    round(in_war_w, 2),
+            "war_out":   round(out_war_w, 2),
+            # Unweighted figures kept on tree for transparency.
+            "war_delta_unweighted": round(in_war_raw - out_war_raw, 2) if (in_war_n + out_war_n) >= 3 else None,
+            "war_in_unweighted":    round(in_war_raw, 2),
+            "war_out_unweighted":   round(out_war_raw, 2),
+            # Top weighted contributors for the tooltip (sorted by
+            # absolute weighted_war desc, max 5).
+            "top_weighted_trades": sorted(
+                weighted_trades,
+                key=lambda t: -abs(t["weighted_war"]),
+            )[:5],
         }
 
     # Waivers sub-grade — walk transactions_by_player for non-trade
