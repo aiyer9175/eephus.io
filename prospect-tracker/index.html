@@ -32461,11 +32461,91 @@ function makeCompareStatTable(players) {
     ["BB/9", p => (p.statline || {}).bb_per_9,{ hi: false, fmt: v => (typeof v === "number" ? v.toFixed(2) : v) }],
     ["ERA- (vs level)", p => (p.statline || {}).era_minus_level, { hi: false, fmt: v => String(Math.round(v)) }],
   ];
+  // v30.8 — Tool grade rows. Pulls the consensus tool grade from
+  // p.tools.grades (mean across sources) with a power fallback for
+  // game_pwr / raw_pwr. Higher = better for every tool.
+  const _tg = p => (p && p.tools && p.tools.grades) || {};
+  const _toolVal = (tg, k) => {
+    if (tg[k] != null && isFinite(tg[k])) return Number(tg[k]);
+    if (k === "pwr") {
+      const g = tg.game_pwr, r = tg.raw_pwr;
+      if (g != null && r != null) return (Number(g) + Number(r)) / 2;
+      if (g != null) return Number(g);
+      if (r != null) return Number(r);
+    }
+    return null;
+  };
+  const _toolRow = (label, k) => [label, p => _toolVal(_tg(p), k),
+    { hi: true, fmt: v => String(Math.round(v)) }];
+  const _toolCompositeRow = [
+    "Tool composite",
+    p => (p.tools || {}).composite_overall,
+    { hi: true, fmt: v => String(Math.round(v)) },
+  ];
+  const hitToolRows = [
+    _toolCompositeRow,
+    _toolRow("HIT", "hit"),
+    _toolRow("PWR", "pwr"),
+    _toolRow("SPD", "speed"),
+    _toolRow("FLD", "field"),
+    _toolRow("ARM", "throw"),
+    _toolRow("PSEL", "pitch_sel"),
+    _toolRow("BAT_CTRL", "bat_ctrl"),
+  ];
+  const pitToolRows = [
+    _toolCompositeRow,
+    _toolRow("FB",  "fb"),
+    _toolRow("SL",  "sl"),
+    _toolRow("CB",  "cb"),
+    _toolRow("CH",  "ch"),
+    _toolRow("CMD", "cmd"),
+    _toolRow("CT",  "ct"),
+  ];
+  // v30.8 — Statcast rows. Statcast direction is metric-specific
+  // (whiff%/chase% lower is better for hitters; higher for pitchers).
+  // Mixed-pinning groups skip these (direction would conflict).
+  const _cq = p => ((p.statcast_metrics || {}).contact_quality) || {};
+  const _zRow = p => {
+    const z = p.zone_metrics || {};
+    if (Array.isArray(z.level_splits) && z.level_splits.length) {
+      return z.level_splits.reduce((a, b) =>
+        (a && (a.pitches || 0) >= (b.pitches || 0)) ? a : b, null) || {};
+    }
+    return z;
+  };
+  const _pm = p => ((p.statcast_metrics || {}).pitch_movement) || {};
+  const _scPlusRow = ["SC+ composite", p => getStatcastPlus(p),
+    { hi: true, fmt: v => String(v) }];
+  const hitStatcastRows = [
+    _scPlusRow,
+    ["Avg EV",     p => _cq(p).avg_ev,        { hi: true,  fmt: v => v.toFixed(1) + " mph" }],
+    ["Max EV",     p => _cq(p).max_ev,        { hi: true,  fmt: v => v.toFixed(1) + " mph" }],
+    ["Hard-hit %", p => _cq(p).hard_hit_pct,  { hi: true,  fmt: v => v.toFixed(0) + "%" }],
+    ["Barrel %",   p => _cq(p).barrel_pct,    { hi: true,  fmt: v => v.toFixed(0) + "%" }],
+    ["Z-Contact %",p => _zRow(p).z_contact_pct, { hi: true, fmt: v => v.toFixed(0) + "%" }],
+    ["Whiff %",    p => _zRow(p).whiff_pct,   { hi: false, fmt: v => v.toFixed(0) + "%" }],
+    ["Chase %",    p => _zRow(p).chase_pct,   { hi: false, fmt: v => v.toFixed(0) + "%" }],
+  ];
+  const pitStatcastRows = [
+    _scPlusRow,
+    ["FB velo",       p => {
+      const top = (_pm(p).pitch_summary || [])[0];
+      return top ? top.avg_velo : null;
+    }, { hi: true, fmt: v => v.toFixed(1) + " mph" }],
+    ["Induced Whiff%", p => _zRow(p).whiff_pct, { hi: true, fmt: v => v.toFixed(0) + "%" }],
+    ["Induced Chase%", p => _zRow(p).chase_pct, { hi: true, fmt: v => v.toFixed(0) + "%" }],
+    ["HH% allowed",   p => _cq(p).hard_hit_pct, { hi: false, fmt: v => v.toFixed(0) + "%" }],
+    ["Brl% allowed",  p => _cq(p).barrel_pct,   { hi: false, fmt: v => v.toFixed(0) + "%" }],
+  ];
   // Group headers.
   const sections = [];
   sections.push(["Identity / FV", universal]);
   if (uniqSides.size === 1) {
     sections.push(sides[0] === "pit" ? ["Pitching", pitRows] : ["Hitting", hitRows]);
+    sections.push(["Scout tool grades (20-80)",
+      sides[0] === "pit" ? pitToolRows : hitToolRows]);
+    sections.push(["Statcast",
+      sides[0] === "pit" ? pitStatcastRows : hitStatcastRows]);
   } else {
     sections.push(["Stats", []]);  // mixed pinning — no comparable stat rows
   }
