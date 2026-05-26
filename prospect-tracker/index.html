@@ -8276,9 +8276,22 @@ function reclassifyAcquisitionSigning(player, tx) {
   // Thomas White (2023 MIA draft pick, SFA row dated 2023-07-23, no
   // signing_date on file) without false-positiving a same-org FA
   // re-signing years later.
+  // v29 — Also match on the 3-letter org code (tx.to_org vs
+  // acq.team_name) because the draft-results feed stores team_name in
+  // 3-letter form ("ATH") while the transactions feed stores
+  // to_team_name as the display club name ("Athletics"). Without this
+  // dual check, the post-draft signing for re-drafted college players
+  // (Gage Jump 2024 ATH after unsigned 2021 SDP HS draft) kept reading
+  // as "Signed (MLB FA)" instead of "Drafted" in the transaction table.
   const txToTeam = (tx.to_team_name || tx.to_team || "").trim().toLowerCase();
-  const acqTeam = (acq.team_name || "").trim().toLowerCase();
-  if (txToTeam && acqTeam && txToTeam === acqTeam) {
+  const txToOrg  = (tx.to_org || "").trim().toUpperCase();
+  const acqTeamLow = (acq.team_name || "").trim().toLowerCase();
+  const acqTeamUp  = (acq.team_name || "").trim().toUpperCase();
+  const teamMatch = (
+    (txToTeam && acqTeamLow && txToTeam === acqTeamLow)
+    || (txToOrg && acqTeamUp && txToOrg === acqTeamUp)
+  );
+  if (teamMatch) {
     const txYear = (tx.date || "").slice(0, 4);
     if (acq.year && txYear && Math.abs(Number(txYear) - Number(acq.year)) <= 1) {
       return toLabel;

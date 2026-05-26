@@ -1687,9 +1687,20 @@ def compute_movement(p: dict) -> dict:
     drivers.extend(skills_drivers or [])
     drivers.extend(list_jump_drivers or [])
     drivers.extend(gate_drivers)
-    # Dedup while preserving order (strings still — dicts not yet wrapped).
-    seen = set()
-    drivers = [d for d in drivers if not (d in seen or seen.add(d))]
+    # Dedup while preserving order. v29 — drivers now mix strings AND
+    # dicts (the "+ upside" pink-pill driver is appended as a dict so
+    # the UI can color it by valence); both shapes have to dedup. Key
+    # by the dict's "label" when it's a dict, otherwise by the string
+    # itself.
+    seen: set = set()
+    _deduped: list = []
+    for d in drivers:
+        key = d.get("label") if isinstance(d, dict) else d
+        if key in seen:
+            continue
+        seen.add(key)
+        _deduped.append(d)
+    drivers = _deduped
 
     pts = p.get("points") or []
     latest = pts[-1] if pts else {}

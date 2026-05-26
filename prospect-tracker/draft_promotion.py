@@ -47,6 +47,28 @@ def _milb_key_from_name(name: str) -> str:
     return normalize_key(name)
 
 
+def _better_draft_record(a: dict, b: dict) -> dict:
+    """Pick the canonical draft record between two candidates for the
+    same MiLB key.
+
+    SIGNED beats UNSIGNED unconditionally — an HS prospect who didn't
+    sign and was re-drafted out of college should always read as
+    "drafted by the college team" because that's how they actually
+    entered pro ball.
+
+    Among same-signed records, the NEWER draft year wins. (A re-signed
+    player who was drafted twice but signed both times is rare — the
+    canonical entry should still be the latest.)
+    """
+    a_signed = bool(a.get("_signed"))
+    b_signed = bool(b.get("_signed"))
+    if a_signed != b_signed:
+        return a if a_signed else b
+    a_year = a.get("year") or 0
+    b_year = b.get("year") or 0
+    return a if a_year >= b_year else b
+
+
 def promote_drafted_players(year: int | None = None) -> dict:
     """Promote every draft_results row whose team is known.
 
@@ -87,6 +109,10 @@ def promote_drafted_players(year: int | None = None) -> dict:
             links.append((draft_key, milb_key))
 
         school = r.get("school") or (by_key.get(draft_key) or {}).get("school")
+        # `_signed` is an internal flag used by the merge logic below;
+        # stripped before upsert (the acquisitions table doesn't carry
+        # a signed column — a non-null bonus_usd or downstream
+        # transaction inference covers that).
         rec = {
             "method":       "draft",
             "year":         r.get("draft_year"),
@@ -97,17 +123,24 @@ def promote_drafted_players(year: int | None = None) -> dict:
             "team_name":    r.get("team"),
             "school":       school,
             "signing_date": None,
+            "_signed":      bool(r.get("signed")),
+            "_draft_key":   draft_key,
         }
-        # Highest-priority record wins per MiLB key — the MLB Stats API
-        # has bonus + slot, the FG CSV doesn't. Newer source overwrites.
+        # Multi-draft prospects (HS draft → didn't sign → re-drafted out
+        # of college, e.g. Gage Jump 2021 SDP → 2024 ATH) used to land
+        # here with a field-by-field merge that produced a frankenstein
+        # record: 2024's bonus stitched onto 2021's team / round / year
+        # because non-null fields from the LATER iteration overwrote
+        # the earlier ones blindly. New rule:
+        #   1. SIGNED record always wins over UNSIGNED.
+        #   2. Among same-signed records, NEWER year wins.
+        # Each draft entry is a distinct event — never field-merge them.
         existing = acquisitions.get(milb_key)
         if existing is None:
             acquisitions[milb_key] = rec
         else:
-            # Merge: prefer non-null fields from `rec` when present.
-            for k, v in rec.items():
-                if v is not None:
-                    existing[k] = v
+            if _better_draft_record(rec, existing) is rec:
+                acquisitions[milb_key] = rec
 
     n_link = 0
     for dk, mk in links:
@@ -117,6 +150,13 @@ def promote_drafted_players(year: int | None = None) -> dict:
         except sqlite3.Error as e:
             log.warning("promote: link %s -> %s failed: %s", dk, mk, e)
 
+    # Strip the internal `_signed` / `_draft_key` keys before persisting —
+    # the acquisitions table schema doesn't carry them and upsert would
+    # silently drop them anyway, but cleaning up here keeps the
+    # intermediate shape obviously canonical.
+    for _rec in acquisitions.values():
+        _rec.pop("_signed", None)
+        _rec.pop("_draft_key", None)
     n_ac = upsert_acquisitions(acquisitions) if acquisitions else 0
 
     # Flip status on draft_snapshots for any draft_key we now have linked.
