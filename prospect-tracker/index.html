@@ -21314,9 +21314,11 @@ function _toolHistoryChart(p) {
   const maxMs = Date.parse(maxD + "T00:00:00");
   if (!isFinite(minMs) || !isFinite(maxMs) || maxMs <= minMs) return "";
 
-  // Geometry.
+  // Geometry. padR widened from 6 → 26 to fit the per-tool end-of-line
+  // value labels (so the latest grade reads off the chart inline,
+  // rather than only via the legend chip strip below).
   const W = 480, H = 130;
-  const padL = 28, padR = 6, padT = 8, padB = 22;
+  const padL = 28, padR = 26, padT = 8, padB = 22;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
   const _x = (dStr) => {
@@ -21351,6 +21353,9 @@ function _toolHistoryChart(p) {
   // a rare 75+ grade doesn't extend past the chart edge.
   const _clamp = v => Math.max(YMIN, Math.min(YMAX, v));
   const lines = [];
+  // Collect end-of-line labels for greedy vertical de-conflict so two
+  // tools at the same final grade don't render on top of each other.
+  const endLabels = [];
   for (const [tk, lbl, color] of TOOLS) {
     if (!series[tk]) continue;
     const pts = series[tk].slice().sort((a, b) => a.d.localeCompare(b.d));
@@ -21364,8 +21369,29 @@ function _toolHistoryChart(p) {
       fill="none" stroke="${color}" stroke-width="1.6"
       stroke-linecap="round" stroke-linejoin="round"
       vector-effect="non-scaling-stroke" opacity="0.92"/>${dots}`);
+    const last = pts[pts.length - 1];
+    endLabels.push({ tk, lbl, color, v: last.v, y: _y(_clamp(last.v)) });
   }
   if (!lines.length) return "";
+
+  // Greedy vertical de-conflict: sort by y, then nudge each next
+  // label down until it's ≥10px below the previous so the latest-
+  // value chips stack instead of overlap when tools share a grade.
+  endLabels.sort((a, b) => a.y - b.y);
+  const MIN_SPACING = 10;
+  for (let i = 1; i < endLabels.length; i++) {
+    if (endLabels[i].y - endLabels[i - 1].y < MIN_SPACING) {
+      endLabels[i].y = endLabels[i - 1].y + MIN_SPACING;
+    }
+  }
+  // Render the end-of-line value chips: value text in the tool's
+  // color at the right of the chart, anchored to the polyline's last
+  // y (or its de-conflicted offset).
+  const endLabelSvg = endLabels.map(e =>
+    `<text x="${(W - padR + 3).toFixed(1)}" y="${(e.y + 3).toFixed(1)}"
+       font-family="var(--font-mono)" font-size="9" font-weight="700"
+       fill="${e.color}" text-anchor="start">${e.v}</text>`
+  ).join("");
 
   // Legend — chip per tool, showing current value.
   const legendItems = TOOLS.filter(([tk]) => series[tk]).map(([tk, lbl, color]) => {
@@ -21384,6 +21410,7 @@ function _toolHistoryChart(p) {
         style="display:block;max-width:${W}px;">
         ${yTicks}
         ${lines.join("")}
+        ${endLabelSvg}
         ${xAxisLabels}
       </svg>
       <div style="margin-top:6px;display:flex;flex-wrap:wrap;">${legendItems}</div>
@@ -22764,6 +22791,8 @@ function makeFarmCompareBlock(currentOrg) {
   const ranksB = otherOrg.component_ranks || {};
   const gradesA = currentOrg.grades || {};
   const gradesB = otherOrg.grades || {};
+  const treeA = currentOrg.tree || {};
+  const treeB = otherOrg.tree || {};
   const n = (DATA.org_summary || []).length || 30;
   const branches = [
     { key: "acquisition_strategy", label: "Acquisition" },
@@ -22771,6 +22800,38 @@ function makeFarmCompareBlock(currentOrg) {
     { key: "financial",            label: "Financial" },
     { key: "mlb_production",       label: "MLB Production" },
   ];
+  // v30.9 — Per-leaf breakdown maps each parent branch to its leaves.
+  // Drives the second-tier comparison table so users can see WHICH
+  // leaves under each branch drive the org-vs-org gap. Order matches
+  // the report-card tree.
+  const leavesByBranch = {
+    acquisition_strategy: [
+      { key: "acq_draft",                 label: "Draft" },
+      { key: "acq_ifa",                   label: "IFA" },
+      { key: "tx_trades",                 label: "Trades" },
+      { key: "tx_waivers",                label: "Waivers" },
+    ],
+    development: [
+      { key: "dev_hitter",                label: "Hitter DvM+" },
+      { key: "dev_pitcher",               label: "Pitcher DvM+" },
+    ],
+    financial: [
+      { key: "fin_war_per_m",             label: "WAR/$M" },
+      { key: "fin_contract_surplus",      label: "Grad Surplus" },
+      { key: "fin_active_surplus",        label: "Active Surplus" },
+      { key: "fin_draft_pool_efficiency", label: "Draft Pool" },
+      { key: "fin_ifa_roi",               label: "IFA ROI" },
+    ],
+    mlb_production: [
+      { key: "mlb_hitter_production",     label: "Hitter Prod" },
+      { key: "mlb_pitcher_production",    label: "Pitcher Prod" },
+      { key: "talent_translation",        label: "Talent Trans" },
+      { key: "mlb_production_boom_pct",   label: "Boom %" },
+      { key: "mlb_production_bust_pct",   label: "Bust %" },
+      { key: "mlb_production_top_grads",  label: "Top Grads" },
+      { key: "mlb_production_conviction", label: "Conviction" },
+    ],
+  };
   const _row = ({ key, label }) => {
     const rA = ranksA[key], rB = ranksB[key];
     const gA = gradesA[key] || "—", gB = gradesB[key] || "—";
@@ -22804,6 +22865,188 @@ function makeFarmCompareBlock(currentOrg) {
       </div>
     </div>`;
   };
+  // Per-leaf stat tooltip. Each branch leaf carries its own underlying
+  // signals on the tree node — the letter grade obscures them. The
+  // tooltip surfaces the raw side-by-side values so a user hovering
+  // "Draft B vs A-" sees the actual pick_value / ceiling % numbers
+  // behind the gap. Lines are stat-name + org-vs-org pair, separated
+  // by \n which native browser tooltips render multi-line.
+  const _fmtN  = (v, d = 1) => v == null ? "—" : Number(v).toFixed(d);
+  const _fmtPc = v => v == null ? "—" : `${(v * 100).toFixed(0)}%`;
+  const _fmtUsd = v => v == null ? "—" : v >= 1_000_000
+    ? `$${(v / 1_000_000).toFixed(2)}M`
+    : `$${Math.round(v).toLocaleString()}`;
+  const _fmtInt = v => v == null ? "—" : Math.round(v).toString();
+  // Map each leaf key → ordered list of {label, fmt, get(node)} so the
+  // tooltip composer can walk the leaf's signals against both orgs'
+  // tree nodes uniformly. Buckets/windows pulled from the same tree
+  // shape storage.py writes.
+  const _LEAF_SIGNALS = {
+    acq_draft: [
+      { lbl: "Pick value",   fmt: _fmtN,   g: n => (n.pick_value_mean ?? n.wag_mean) },
+      { lbl: "Ceiling hits", fmt: _fmtPc,  g: n => n.ceiling_hits_pct },
+    ],
+    acq_ifa: [
+      { lbl: "WAR/yr",     fmt: v => _fmtN(v, 2), g: n => n.war_per_yr_mean },
+      { lbl: "Career WAR", fmt: v => _fmtN(v, 1), g: n => n.career_war_mean },
+    ],
+    tx_trades: [
+      { lbl: "Net WAR Δ",          fmt: v => _fmtN(v, 1), g: n => n.war_delta },
+      { lbl: "Unweighted WAR Δ",   fmt: v => _fmtN(v, 1), g: n => n.war_delta_unweighted },
+    ],
+    tx_waivers: [
+      { lbl: "Hit rate", fmt: _fmtPc, g: n => n.hit_rate },
+    ],
+    dev_hitter: [
+      { lbl: "6yr FV DvM+", fmt: _fmtInt, g: n => (n.overall_dvm_plus || {})["6y"] },
+      { lbl: "Tool DvM+",   fmt: _fmtInt, g: n => n.dvm_plus },
+    ],
+    dev_pitcher: [
+      { lbl: "6yr FV DvM+", fmt: _fmtInt, g: n => (n.overall_dvm_plus || {})["6y"] },
+      { lbl: "Tool DvM+",   fmt: _fmtInt, g: n => n.dvm_plus },
+    ],
+    fin_war_per_m: [
+      { lbl: "WAR / $M", fmt: v => _fmtN(v, 2), g: n => n.value },
+    ],
+    fin_contract_surplus: [
+      { lbl: "Surplus / yr (grads)", fmt: _fmtUsd, g: n => n.mean_usd_per_yr },
+    ],
+    fin_active_surplus: [
+      { lbl: "Surplus / prospect", fmt: v => v == null ? "—" : `$${v.toFixed(2)}M`,
+        g: n => n.surplus_per_prospect_mm },
+      { lbl: "Active count", fmt: _fmtInt, g: n => n.active_count },
+    ],
+    fin_draft_pool_efficiency: [
+      { lbl: "WAR / $M pool", fmt: v => _fmtN(v, 2), g: n => n.war_per_m_pool },
+    ],
+    fin_ifa_roi: [
+      { lbl: "WAR / $M IFA", fmt: v => _fmtN(v, 2), g: n => n.war_per_m_ifa },
+    ],
+    mlb_hitter_production: [
+      { lbl: "WAR/yr",       fmt: v => _fmtN(v, 2), g: n => n.war_per_yr_mean },
+      { lbl: "Top-3 career WAR", fmt: v => _fmtN(v, 1), g: n => n.top3_career_war },
+    ],
+    mlb_pitcher_production: [
+      { lbl: "WAR/yr",       fmt: v => _fmtN(v, 2), g: n => n.war_per_yr_mean },
+      { lbl: "Top-3 career WAR", fmt: v => _fmtN(v, 1), g: n => n.top3_career_war },
+    ],
+    talent_translation: [
+      { lbl: "WAG mean", fmt: v => _fmtN(v, 2), g: n => n.wag_mean },
+    ],
+    mlb_production_boom_pct: [
+      { lbl: "Boom %", fmt: _fmtPc, g: n => n.boom_pct },
+    ],
+    mlb_production_bust_pct: [
+      { lbl: "Bust %", fmt: _fmtPc, g: n => n.bust_pct },
+    ],
+    mlb_production_top_grads: [
+      { lbl: "Top-3 WAR/yr", fmt: v => _fmtN(v, 2), g: n => n.top3_war_per_yr },
+    ],
+    mlb_production_conviction: [
+      { lbl: "Star graduates", fmt: _fmtInt, g: n => n.star_count },
+    ],
+  };
+  const _leafTitle = (key, label) => {
+    const sigs = _LEAF_SIGNALS[key];
+    if (!sigs) return `${label} — ${escapeHtml(currentOrg.org)} vs ${escapeHtml(otherOrg.org)}`;
+    const nodeA = treeA[key] || {};
+    const nodeB = treeB[key] || {};
+    const oA = currentOrg.org, oB = otherOrg.org;
+    const lines = [`${label} · ${oA} vs ${oB}`];
+    sigs.forEach(s => {
+      const a = s.g(nodeA), b = s.g(nodeB);
+      if (a == null && b == null) return;
+      lines.push(`  ${s.lbl} · ${oA}: ${s.fmt(a)} / ${oB}: ${s.fmt(b)}`);
+    });
+    return lines.join("\n");
+  };
+  // Leaf row — same shape as parent row but smaller / dimmer so it
+  // reads as a sub-detail under the branch label. Reuses the leaf
+  // grade + leaf rank that storage.py already stamps on each org.
+  // Hover surfaces underlying-stat side-by-side via _leafTitle.
+  const _leafRow = ({ key, label }) => {
+    const rA = ranksA[key], rB = ranksB[key];
+    const gA = gradesA[key] || "—", gB = gradesB[key] || "—";
+    const pctA = rA != null ? Math.round(100 * (n - rA + 1) / n) : null;
+    const pctB = rB != null ? Math.round(100 * (n - rB + 1) / n) : null;
+    const delta = pctA != null && pctB != null ? pctA - pctB : null;
+    const toneA = gA === "—" ? "var(--text-tertiary)" : gradeColor(gA);
+    const toneB = gB === "—" ? "var(--text-tertiary)" : gradeColor(gB);
+    let chip = "";
+    if (delta != null && Math.abs(delta) >= 5) {
+      const sign = delta > 0 ? "+" : "";
+      const color = delta > 0 ? "var(--up)" : "var(--down)";
+      chip = `<span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:${color};letter-spacing:0.02em;">${sign}${delta}</span>`;
+    } else if (delta != null) {
+      chip = `<span style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);">${delta >= 0 ? "+" : ""}${delta}</span>`;
+    }
+    const tip = _leafTitle(key, label);
+    return `<div title="${escapeHtml(tip)}" style="display:grid;grid-template-columns:110px 1fr 40px 1fr;gap:10px;align-items:center;padding:3px 0 3px 12px;font-size:11px;cursor:help;">
+      <span style="color:var(--text-tertiary);">${escapeHtml(label)}</span>
+      <div style="display:flex;align-items:baseline;gap:5px;justify-content:flex-end;">
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);opacity:0.7;">#${rA ?? "—"}</span>
+        <span style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:${toneA};">${gA}</span>
+      </div>
+      <div style="text-align:center;">${chip}</div>
+      <div style="display:flex;align-items:baseline;gap:5px;">
+        <span style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:${toneB};">${gB}</span>
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);opacity:0.7;">#${rB ?? "—"}</span>
+      </div>
+    </div>`;
+  };
+  // Per-bucket DvM+ row — buckets aren't graded with letters; they
+  // carry blended DvM+ pts (100 = league avg). Compare the 6y blend
+  // directly. Chip threshold = 5 DvM+ pts, mirroring the leaf logic.
+  // Tooltip surfaces the full FV / Tool / SC trio + active count for
+  // each org, plus a marker when the bucket cohort is too thin (n<3)
+  // and was redistributed out of the headline blend.
+  const _bucketRow = (branch, bucket) => {
+    const aBucket = ((treeA[branch] || {}).pos_buckets || {})[bucket] || {};
+    const bBucket = ((treeB[branch] || {}).pos_buckets || {})[bucket] || {};
+    const aVal = (aBucket.blend_by_window || {})["6y"];
+    const bVal = (bBucket.blend_by_window || {})["6y"];
+    const aTxt = aVal == null ? "—" : String(aVal);
+    const bTxt = bVal == null ? "—" : String(bVal);
+    const delta = (aVal != null && bVal != null) ? Math.round(aVal - bVal) : null;
+    let chip = "";
+    if (delta != null && Math.abs(delta) >= 5) {
+      const sign = delta > 0 ? "+" : "";
+      const color = delta > 0 ? "var(--up)" : "var(--down)";
+      chip = `<span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:${color};letter-spacing:0.02em;">${sign}${delta}</span>`;
+    } else if (delta != null) {
+      chip = `<span style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);">${delta >= 0 ? "+" : ""}${delta}</span>`;
+    }
+    // Build comparison tooltip: FV (6y), Tool, SC, Blend(6y), n=count.
+    // Pull from each bucket's snapshot — matches the same fields the
+    // dev-tab per-bucket grid uses, just oriented for side-by-side.
+    const oA = currentOrg.org, oB = otherOrg.org;
+    const _fmtBval = v => v == null ? "—" : String(v);
+    const _fvA = (aBucket.fv_dvm_plus_by_window || {})["6y"];
+    const _fvB = (bBucket.fv_dvm_plus_by_window || {})["6y"];
+    const _tlA = aBucket.tool_dvm_plus, _tlB = bBucket.tool_dvm_plus;
+    const _scA = aBucket.statcast_dvm_plus, _scB = bBucket.statcast_dvm_plus;
+    const _nA  = aBucket.active_count ?? 0, _nB = bBucket.active_count ?? 0;
+    const _wA  = aBucket.weight, _wB = bBucket.weight;
+    const _sparseA = _nA > 0 && _nA < 3, _sparseB = _nB > 0 && _nB < 3;
+    const tipLines = [
+      `${bucket} bucket · ${oA} vs ${oB}`,
+      `  FV DvM+ (6y) · ${oA}: ${_fmtBval(_fvA)} / ${oB}: ${_fmtBval(_fvB)}`,
+      `  Tool DvM+    · ${oA}: ${_fmtBval(_tlA)} / ${oB}: ${_fmtBval(_tlB)}`,
+      `  Statcast+    · ${oA}: ${_fmtBval(_scA)} / ${oB}: ${_fmtBval(_scB)}`,
+      `  Blend (6y)   · ${oA}: ${_fmtBval(aVal)} / ${oB}: ${_fmtBval(bVal)}`,
+      `  Active count · ${oA}: ${_nA}${_sparseA ? " (sparse → redistributed)" : ""} / ${oB}: ${_nB}${_sparseB ? " (sparse → redistributed)" : ""}`,
+    ];
+    if (_wA != null) tipLines.push(`  Bucket weight in branch blend · ${(_wA * 100).toFixed(0)}%`);
+    const tip = tipLines.join("\n");
+    return `<div title="${escapeHtml(tip)}" style="display:grid;grid-template-columns:110px 1fr 40px 1fr;gap:10px;align-items:center;padding:2px 0 2px 24px;font-size:10px;cursor:help;">
+      <span style="color:var(--text-tertiary);font-family:var(--font-mono);letter-spacing:0.04em;">${escapeHtml(bucket)} bucket</span>
+      <div style="text-align:right;font-family:var(--font-mono);color:var(--text-secondary);">${aTxt}</div>
+      <div style="text-align:center;">${chip}</div>
+      <div style="font-family:var(--font-mono);color:var(--text-secondary);">${bTxt}</div>
+    </div>`;
+  };
+  const _HIT_BKTS = ["C", "INF", "OF"];
+  const _PIT_BKTS = ["SP", "RP"];
   // Header row.
   const overallRowA = ranksA.overall ?? currentOrg.farm_rank;
   const overallRowB = ranksB.overall ?? otherOrg.farm_rank;
@@ -22836,8 +23079,27 @@ function makeFarmCompareBlock(currentOrg) {
       </div>
     </div>`;
   })();
+  // Per-leaf breakdown — for each branch render the branch row + the
+  // collapsed leaf rows underneath, dimmed and indented so the parent
+  // branch row stays the visual anchor. Development gets per-bucket
+  // DvM+ sub-rows under each leaf so users can see whether the gap
+  // comes from a specific position group (C/INF/OF for hitters, SP/RP
+  // for pitchers).
+  const _branchGroup = (branch) => {
+    const leaves = leavesByBranch[branch.key] || [];
+    const leafRows = leaves.map(leaf => {
+      let s = _leafRow(leaf);
+      if (branch.key === "development" && leaf.key === "dev_hitter") {
+        s += _HIT_BKTS.map(b => _bucketRow("dev_hitter", b)).join("");
+      } else if (branch.key === "development" && leaf.key === "dev_pitcher") {
+        s += _PIT_BKTS.map(b => _bucketRow("dev_pitcher", b)).join("");
+      }
+      return s;
+    }).join("");
+    return `${_row(branch)}<div style="padding:4px 0 8px;background:var(--bg-tertiary);border-bottom:1px solid var(--border-light);">${leafRows}</div>`;
+  };
   return `<div class="detail-title">Head-to-head · ${escapeHtml(currentOrg.org)} vs ${escapeHtml(otherOrg.org)}
-    <span class="detail-title-sub">Per-branch grades + percentile delta. Δ chip lights when the gap is ≥5pp on the 100-anchored scale (green = leader).</span></div>
+    <span class="detail-title-sub">Per-branch grades + percentile delta. Δ chip lights when the gap is ≥5pp on the 100-anchored scale (green = leader). Leaves dim under each branch; Development carries per-bucket DvM+ sub-rows.</span></div>
     <div style="padding:6px 12px 10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;margin-bottom:12px;">
       <div style="display:grid;grid-template-columns:110px 1fr 50px 1fr;gap:10px;align-items:baseline;padding:4px 0 6px;border-bottom:1px dashed var(--border-light);">
         <span></span>
@@ -22846,7 +23108,7 @@ function makeFarmCompareBlock(currentOrg) {
         <span style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.04em;text-transform:uppercase;font-weight:700;">${escapeHtml(otherOrg.org)}</span>
       </div>
       ${_overallRow}
-      ${branches.map(_row).join("")}
+      ${branches.map(_branchGroup).join("")}
     </div>`;
 }
 
@@ -24149,15 +24411,27 @@ function makeFarmRosterPyramid(rosterPlayersAll) {
     { label: "<45",  lo: 0,  fvClass: "40" },
   ];
   // Build counts: counts[level][tierIdx] = N
+  // Also stash the prospect list per cell so the segment tooltip can
+  // surface WHO (top 6 names sorted by FV desc) — most actionable
+  // detail when scanning the pyramid is "which players are stacked
+  // at level X, tier Y".
   const counts = {};
-  for (const lvl of LEVELS) counts[lvl] = TIERS.map(() => 0);
+  const names  = {};
+  for (const lvl of LEVELS) {
+    counts[lvl] = TIERS.map(() => 0);
+    names[lvl]  = TIERS.map(() => []);
+  }
   for (const p of rosterPlayersAll) {
     const lvl = (p.statline && p.statline.level) || null;
     if (!lvl || !LEVELS.includes(lvl)) continue;
     const fv = p.fv_close;
     if (fv == null) continue;
     for (let i = 0; i < TIERS.length; i++) {
-      if (fv >= TIERS[i].lo) { counts[lvl][i]++; break; }
+      if (fv >= TIERS[i].lo) {
+        counts[lvl][i]++;
+        names[lvl][i].push({ name: p.player_name || "?", fv });
+        break;
+      }
     }
   }
   // Drop levels with zero tracked prospects so empty rows don't pad
@@ -24179,19 +24453,32 @@ function makeFarmRosterPyramid(rosterPlayersAll) {
     const rowWidthPct = (total / maxTotal) * 100;
     const segs = TIERS.map((t, i) => {
       if (row[i] === 0) return "";
-      const segPctOfRow = (row[i] / total) * 100;
+      // Sort the bucket's prospects by FV descending and grab the top
+      // 6 names for the tooltip. Beyond 6 we append "...+N more" so
+      // the tooltip stays bounded for deep cells.
+      const ranked = names[lvl][i].slice().sort((a, b) => b.fv - a.fv);
+      const TOP_N = 6;
+      const top = ranked.slice(0, TOP_N).map(n => `${n.name} (${n.fv})`);
+      const more = ranked.length > TOP_N ? `\n…+${ranked.length - TOP_N} more` : "";
+      const tip = `${row[i]} prospect${row[i] === 1 ? "" : "s"} at FV ${t.label}, ${lvl}\n${top.join("\n")}${more}`;
       return `<div class="rp-seg fv-${t.fvClass}"
-        style="flex:${row[i]};"
-        title="${row[i]} prospect${row[i] === 1 ? '' : 's'} at FV ${t.label}, ${lvl}">
+        style="flex:${row[i]};cursor:help;"
+        title="${escapeHtml(tip)}">
         ${row[i] >= 2 ? `<span class="rp-seg-count">${row[i]}</span>` : ""}
       </div>`;
     }).join("");
-    return `<div class="rp-row">
-      <div class="rp-level">${escapeHtml(lvl)}</div>
+    // Row-level total tooltip: per-tier breakdown so user can read
+    // the level mix without hovering each segment individually.
+    const lvlTip = TIERS.map((t, i) =>
+      row[i] === 0 ? null : `FV ${t.label}: ${row[i]}`
+    ).filter(Boolean).join("\n");
+    const lvlTitle = `${lvl} · ${total} prospect${total === 1 ? "" : "s"}\n${lvlTip}`;
+    return `<div class="rp-row" title="${escapeHtml(lvlTitle)}">
+      <div class="rp-level" style="cursor:help;">${escapeHtml(lvl)}</div>
       <div class="rp-bar-wrap">
         <div class="rp-bar" style="width:${rowWidthPct.toFixed(1)}%;">${segs}</div>
       </div>
-      <div class="rp-total">${total}</div>
+      <div class="rp-total" style="cursor:help;">${total}</div>
     </div>`;
   }).join("");
 
