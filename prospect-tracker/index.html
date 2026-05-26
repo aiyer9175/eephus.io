@@ -930,6 +930,39 @@
       padding-left: 12px;
       border-left: 1px solid var(--border-light);
     }
+    /* v30.8 — Three-cluster filter layout. The active-list filter bar
+       used to be 13 flat groups; now they're organized into WHO /
+       WHAT / HOW clusters that render as stacked rows separated by a
+       thin divider. Each cluster gets a small uppercase label on the
+       left so the reader can scan for the dimension they want. The
+       in-cluster .filter-group divider continues to separate
+       individual groups within a cluster. */
+    .filter-cluster {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      flex: 1 1 100%;
+      padding: 4px 0;
+    }
+    .filter-cluster + .filter-cluster {
+      border-top: 1px dashed var(--border-light);
+    }
+    .filter-cluster .filter-group:first-of-type {
+      padding-left: 0;
+      border-left: 0;
+    }
+    .filter-cluster-label {
+      font-family: var(--font-sans);
+      font-size: 9px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-weight: 800;
+      width: 38px;
+      flex-shrink: 0;
+      opacity: 0.7;
+    }
     .filter-label {
       font-family: var(--font-sans);
       font-size: 10px;
@@ -6840,218 +6873,255 @@
   </div>
 
   <div class="filter-bar" id="filter-bar">
-    <div class="filter-group">
-      <span class="filter-label">Stock</span>
-      <button class="chip active" data-filter-stock="all">All</button>
-      <button class="chip" data-filter-stock="up">Up</button>
-      <button class="chip" data-filter-stock="down">Down</button>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label">Health</span>
-      <button class="chip active" data-filter-health="all" title="Show every active prospect, IL or otherwise">All</button>
-      <button class="chip" data-filter-health="healthy" title="Hide players currently on the IL">Healthy only</button>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label" title="Toggle one or more FV-badge indicators. Empty = show all. Multiple selected = OR (union).">FV indicators</span>
-      <button class="chip is-multi" data-filter-fvind="wide" title="Wide FV spread — ≥2 sources disagree by at least 10 grade points">W spread</button>
-      <button class="chip is-multi" data-filter-fvind="single" title="Single-source FV — only one outlet has graded this prospect">Single src</button>
-      <button class="chip is-multi" data-filter-fvind="breakout" title="Breakout — DvM+ / FV velocity ≥ threshold AND a strong performance gate (RPS+ ≥ 110 for hitters, Stuff+ ≥ 105 or FIP- ≤ 90 for pitchers)">Breakout</button>
-      <!-- v28 — Upside (+) indicator filter. Mirrors the hot-pink "+"
-           corner mark on FV badges. Suppressed for FVs > 50 so the
-           filter only surfaces sub-50 grades the sources have tagged
-           with publishable upside. -->
-      <button class="chip is-multi" data-filter-fvind="upside" title="Upside (^) — at least one source published a '+' upside mark on the latest snapshot (capped at FV ≤ 50; 55+/60+ are suppressed since those tiers have already realized their upside). Rendered on the FV chip as a ^ glyph so it doesn't collide with the health '+' pill.">Upside ^</button>
-    </div>
-    <!-- v30.4 — Statcast+ promoted out of the FV-indicators group
-         (it's a STATS-derived signal, not an FV-grade modifier) into
-         its own filter group. Sits alongside the other tool / stat
-         filters so the user reads "FV indicators = scout-side
-         consensus signals" vs "Statcast = tracked-data signals". -->
-    <div class="filter-group">
-      <span class="filter-label" title="Statcast composite (100 = pool mean, σ × 15). Filter for prospects with elite tracked-data signal.">Statcast</span>
-      <button class="chip is-multi" data-filter-statcast="elite" title="Statcast+ ≥ 120 — elite tier. Composite of contact quality + zone discipline for hitters; pitch velo + induced whiffs + contact suppression for pitchers.">SC+ elite</button>
-      <button class="chip is-multi" data-filter-statcast="above" title="Statcast+ ≥ 105 — above pool mean. Even a modest +5 vs pool is a real signal: tracked-data contact quality / pitch quality clears the league baseline.">SC+ above</button>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label" title="Filter prospects by a specific tool grade meeting a minimum threshold. 'Any tool' matches when any one canonical 20-80 grade meets the threshold; pick a specific tool to isolate it.">Tool grade</span>
-      <select class="chip" id="tool-filter-key">
-        <option value="off">— off —</option>
-        <option value="any">Any tool</option>
-        <optgroup label="Hitter">
-          <option value="hit">Hit</option>
-          <option value="pwr">Power</option>
-          <option value="speed">Run</option>
-          <option value="field">Field</option>
-          <option value="throw">Throw</option>
-          <option value="pitch_sel">Pitch Sel</option>
-          <option value="bat_ctrl">Bat Ctrl</option>
-          <option value="frame">Frame</option>
-          <option value="athl">Athleticism</option>
-        </optgroup>
-        <optgroup label="Pitcher">
-          <option value="fb">Fastball</option>
-          <option value="sl">Slider</option>
-          <option value="cb">Curveball</option>
-          <option value="ch">Changeup</option>
-          <option value="cmd">Command</option>
-          <option value="ct">Cutter</option>
-          <option value="frame">Frame</option>
-          <option value="athl">Athleticism</option>
-          <option value="delivery">Delivery</option>
-        </optgroup>
-      </select>
-      <select class="chip" id="tool-filter-min">
-        <option value="0">≥ any</option>
-        <option value="50">≥ 50</option>
-        <option value="55">≥ 55</option>
-        <option value="60">≥ 60</option>
-        <option value="65">≥ 65</option>
-        <option value="70">≥ 70</option>
-      </select>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label">Org</span>
-      <select class="chip" id="org-filter">
-        <option value="all">All organizations</option>
-      </select>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label">Acquired via</span>
-      <select class="chip" id="acq-filter">
-        <option value="all">All methods</option>
-        <option value="draft">Draft</option>
-        <option value="international_fa">International FA</option>
-        <option value="trade">Trade</option>
-        <option value="waiver">Waiver claim</option>
-        <option value="rule_5">Rule 5</option>
-        <option value="contract_purchase">Contract purchase</option>
-      </select>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label" title="Filter by draft year (drafted prospects) or IFA signing year. 'Class of YYYY' equivalent — pick a year to see everyone the league acquired that year.">Class of</span>
-      <select class="chip" id="class-filter">
-        <option value="all">All classes</option>
-      </select>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label">Sort</span>
-      <select class="chip" id="sort-select">
-        <optgroup label="Grade">
-          <option value="fv">Consensus FV</option>
-          <!-- v28 — Upside-first sort. Floats the "+" prospects to the
-               top within each FV tier (so 45+ ranks above 45 but below
-               46). Useful for scanning the sub-50 grades scouts have
-               tagged with publishable upside. -->
-          <option value="upside">Upside (^) first</option>
-          <!-- v29 — Statcast+ composite. Surfaces top hit-tool +
-               contact-quality / pitch-quality combos regardless of
-               consensus FV ordering. -->
-          <option value="statcast_plus">Statcast+ (highest)</option>
-          <option value="source_confidence">Source confidence (most sources first)</option>
-          <option value="tool">Tool grade (toolsiest)</option>
-          <option value="stock_movers">Biggest movers (|ΔFV|)</option>
-        </optgroup>
-        <optgroup label="Age &amp; ETA">
-          <option value="age_asc">Youngest first</option>
-          <option value="age_desc">Oldest first</option>
-          <option value="age_vs_level">Most young-for-level</option>
-          <option value="eta">ETA (earliest first)</option>
-        </optgroup>
-        <optgroup label="Physical profile">
-          <option value="ht_desc">Tallest first</option>
-          <option value="ht_asc">Shortest first</option>
-          <option value="wt_desc">Heaviest first</option>
-          <option value="wt_asc">Lightest first</option>
-          <option value="bmi_desc">Highest BMI</option>
-          <option value="bmi_asc">Lowest BMI</option>
-        </optgroup>
-        <optgroup label="Alphabetical">
-          <option value="name_asc">Name (A → Z)</option>
-          <option value="name_desc">Name (Z → A)</option>
-          <option value="org_asc">Org (A → Z)</option>
-          <option value="level_asc">Level (furthest from MLB first)</option>
-          <option value="level_desc">Level (MLB first)</option>
-        </optgroup>
-      </select>
-    </div>
-    <!-- v19 — Per-tool sort selector. Independent of the main sort
-         dropdown so the user can flip "show me top fastballs" without
-         losing their FV / age / BMI sort context. When set to anything
-         other than "off" it overrides the main sort dimension. -->
-    <div class="filter-group">
-      <span class="filter-label">Sort by tool</span>
-      <select class="chip" id="tool-sort-select">
-        <option value="off">— off —</option>
-        <!-- v30.4 — "Tool composite" lifted to the top of the menu
-             so a quick scan ranks the toolsiest prospects across
-             BOTH hitter and pitcher pools using the 20-80 power-mean
-             across every per-tool grade. Maps to the existing main-
-             sort `tool` branch under the hood, then routes through
-             the toolSortKey override so the dropdown picker drives
-             it like any per-tool key. -->
-        <option value="composite_overall">Tool composite (all tools)</option>
-        <optgroup label="Hitter">
-          <option value="hit">Hit</option>
-          <option value="game_pwr">Game Pwr</option>
-          <option value="raw_pwr">Raw Pwr</option>
-          <option value="speed">Speed</option>
-          <option value="field">Field</option>
-          <option value="throw">Throw</option>
-          <option value="pitch_sel">Pitch Sel</option>
-          <option value="bat_ctrl">Bat Ctrl</option>
-        </optgroup>
-        <optgroup label="Pitcher">
-          <option value="fb">Fastball</option>
-          <option value="sl">Slider</option>
-          <option value="cb">Curve</option>
-          <option value="ch">Change</option>
-          <option value="cmd">Command</option>
-          <option value="ct">Cutter</option>
-        </optgroup>
-      </select>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label">Density</span>
-      <div class="density-toggle">
-        <button class="chip active" data-density="compact" type="button" title="Default tight row layout — name, FV diamond, FV history minichart, MiLB stats, ETA. Most rows visible at once.">Compact</button>
-        <button class="chip" data-density="expanded" type="button" title="Adds the per-tool grade strip + row summary line under each prospect. Same columns as Compact, taller rows for more detail.">Expanded</button>
+    <!-- v30.8 — Reorganized into 3 logical clusters per user direction:
+         WHO  = Identity-side filters (Org / Acquired via / Class /
+                Position / Level) — narrow the POOL.
+         WHAT = Performance & signal filters (Stock / Health / FV
+                indicators / Statcast / Tools) — narrow by SIGNAL.
+         HOW  = Display & ordering (Sort / Sort by tool / Sort by
+                Statcast / Density) — control PRESENTATION.
+         Cluster rows wrap independently and read like a header
+         (WHO/WHAT/HOW small caps on the left). The flat-group
+         dividers still separate individual filter groups within a
+         cluster. -->
+    <!-- ============================== WHO ============================= -->
+    <div class="filter-cluster">
+      <span class="filter-cluster-label">WHO</span>
+      <div class="filter-group">
+        <span class="filter-label">Org</span>
+        <select class="chip" id="org-filter">
+          <option value="all">All organizations</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Acquired via</span>
+        <select class="chip" id="acq-filter">
+          <option value="all">All methods</option>
+          <option value="draft">Draft</option>
+          <option value="international_fa">International FA</option>
+          <option value="trade">Trade</option>
+          <option value="waiver">Waiver claim</option>
+          <option value="rule_5">Rule 5</option>
+          <option value="contract_purchase">Contract purchase</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label" title="Filter by draft year (drafted prospects) or IFA signing year. 'Class of YYYY' equivalent — pick a year to see everyone the league acquired that year.">Class of</span>
+        <select class="chip" id="class-filter">
+          <option value="all">All classes</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Level</span>
+        <button class="chip active" data-filter-level="all">All</button>
+        <button class="chip" data-filter-level="MLB">MLB</button>
+        <button class="chip" data-filter-level="AAA">AAA</button>
+        <button class="chip" data-filter-level="AA">AA</button>
+        <button class="chip" data-filter-level="A+">A+</button>
+        <button class="chip" data-filter-level="A">A</button>
+        <button class="chip" data-filter-level="CPX" title="Rookie complex leagues (FCL + ACL)">CPX</button>
+        <button class="chip" data-filter-level="DSL" title="Dominican Summer League">DSL</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Position</span>
+        <button class="chip active" data-filter-pos="all">All</button>
+        <button class="chip" data-filter-pos="C">C</button>
+        <button class="chip" data-filter-pos="1B">1B</button>
+        <button class="chip" data-filter-pos="2B">2B</button>
+        <button class="chip" data-filter-pos="SS" title="Shortstops + middle-infield switchers">SS</button>
+        <button class="chip" data-filter-pos="3B">3B</button>
+        <button class="chip" data-filter-pos="INF" title="Any infielder (2B, SS, 3B, multi-position)">INF</button>
+        <button class="chip" data-filter-pos="CF">CF</button>
+        <button class="chip" data-filter-pos="LF">LF</button>
+        <button class="chip" data-filter-pos="RF">RF</button>
+        <button class="chip" data-filter-pos="OF" title="Any outfielder (CF, LF, RF, unspecified)">OF</button>
+        <button class="chip" data-filter-pos="P" title="Any pitcher — SP / RP / SIRP / MIRP / RHP / LHP">P</button>
+        <button class="chip" data-filter-pos="SP" title="Starting pitcher">SP</button>
+        <button class="chip" data-filter-pos="RP" title="Relief pitcher — rolls up SIRP + MIRP + bare RP">RP</button>
+        <button class="chip" data-filter-pos="SIRP" title="Single-Inning Relief Pitcher — closer / setup role">SIRP</button>
+        <button class="chip" data-filter-pos="MIRP" title="Multi-Inning Relief Pitcher — long-relief / bulk follower">MIRP</button>
       </div>
     </div>
-    <div class="filter-group">
-      <span class="filter-label">Level</span>
-      <button class="chip active" data-filter-level="all">All</button>
-      <button class="chip" data-filter-level="MLB">MLB</button>
-      <button class="chip" data-filter-level="AAA">AAA</button>
-      <button class="chip" data-filter-level="AA">AA</button>
-      <button class="chip" data-filter-level="A+">A+</button>
-      <button class="chip" data-filter-level="A">A</button>
-      <button class="chip" data-filter-level="CPX" title="Rookie complex leagues (FCL + ACL)">CPX</button>
-      <button class="chip" data-filter-level="DSL" title="Dominican Summer League">DSL</button>
+    <!-- ============================== WHAT ============================ -->
+    <div class="filter-cluster">
+      <span class="filter-cluster-label">WHAT</span>
+      <div class="filter-group">
+        <span class="filter-label">Stock</span>
+        <button class="chip active" data-filter-stock="all">All</button>
+        <button class="chip" data-filter-stock="up">Up</button>
+        <button class="chip" data-filter-stock="down">Down</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Health</span>
+        <button class="chip active" data-filter-health="all" title="Show every active prospect, IL or otherwise">All</button>
+        <button class="chip" data-filter-health="healthy" title="Hide players currently on the IL">Healthy only</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label" title="Toggle one or more FV-badge indicators. Empty = show all. Multiple selected = OR (union).">FV indicators</span>
+        <button class="chip is-multi" data-filter-fvind="wide" title="Wide FV spread — ≥2 sources disagree by at least 10 grade points">W spread</button>
+        <button class="chip is-multi" data-filter-fvind="single" title="Single-source FV — only one outlet has graded this prospect">Single src</button>
+        <button class="chip is-multi" data-filter-fvind="breakout" title="Breakout — DvM+ / FV velocity ≥ threshold AND a strong performance gate (RPS+ ≥ 110 for hitters, Stuff+ ≥ 105 or FIP- ≤ 90 for pitchers)">Breakout ★</button>
+        <button class="chip is-multi" data-filter-fvind="upside" title="Upside (^) — at least one source published a '+' upside mark on the latest snapshot (capped at FV ≤ 50; 55+/60+ are suppressed since those tiers have already realized their upside). Rendered on the FV chip as a ^ glyph so it doesn't collide with the health '+' pill.">Upside ^</button>
+      </div>
+      <!-- v30.8 — Statcast filter chips now span all 3 SC+ tiers
+           (elite ≥120 / above ≥105 / below ≤95). The below-tier
+           chip surfaces prospects whose tracked-data signal lags
+           the surface stats — useful for finding regression
+           candidates the FV consensus hasn't caught up to yet. -->
+      <div class="filter-group">
+        <span class="filter-label" title="Statcast composite (100 = pool mean, σ × 15). Filter for prospects with elite, above-mean, or below-mean tracked-data signal.">Statcast</span>
+        <button class="chip is-multi" data-filter-statcast="elite" title="Statcast+ ≥ 120 — elite tier. Composite of contact quality + zone discipline for hitters; pitch velo + induced whiffs + contact suppression for pitchers.">SC+ elite</button>
+        <button class="chip is-multi" data-filter-statcast="above" title="Statcast+ ≥ 105 — above pool mean. Even a modest +5 vs pool is a real signal: tracked-data contact quality / pitch quality clears the league baseline.">SC+ above</button>
+        <button class="chip is-multi" data-filter-statcast="below" title="Statcast+ ≤ 95 — below pool mean. Surfaces prospects whose tracked data lags the surface stats; useful for regression-watch.">SC+ below</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label" title="Filter prospects by a specific tool grade meeting a minimum threshold. 'Any tool' matches when any one canonical 20-80 grade meets the threshold; pick a specific tool to isolate it.">Tool grade</span>
+        <select class="chip" id="tool-filter-key">
+          <option value="off">— off —</option>
+          <option value="any">Any tool</option>
+          <optgroup label="Hitter">
+            <option value="hit">Hit</option>
+            <option value="pwr">Power</option>
+            <option value="speed">Run</option>
+            <option value="field">Field</option>
+            <option value="throw">Throw</option>
+            <option value="pitch_sel">Pitch Sel</option>
+            <option value="bat_ctrl">Bat Ctrl</option>
+            <option value="frame">Frame</option>
+            <option value="athl">Athleticism</option>
+          </optgroup>
+          <optgroup label="Pitcher">
+            <option value="fb">Fastball</option>
+            <option value="sl">Slider</option>
+            <option value="cb">Curveball</option>
+            <option value="ch">Changeup</option>
+            <option value="cmd">Command</option>
+            <option value="ct">Cutter</option>
+            <option value="frame">Frame</option>
+            <option value="athl">Athleticism</option>
+            <option value="delivery">Delivery</option>
+          </optgroup>
+        </select>
+        <select class="chip" id="tool-filter-min">
+          <option value="0">≥ any</option>
+          <option value="50">≥ 50</option>
+          <option value="55">≥ 55</option>
+          <option value="60">≥ 60</option>
+          <option value="65">≥ 65</option>
+          <option value="70">≥ 70</option>
+        </select>
+      </div>
     </div>
-    <div class="filter-group">
-      <span class="filter-label">Position</span>
-      <button class="chip active" data-filter-pos="all">All</button>
-      <button class="chip" data-filter-pos="C">C</button>
-      <button class="chip" data-filter-pos="1B">1B</button>
-      <button class="chip" data-filter-pos="2B">2B</button>
-      <button class="chip" data-filter-pos="SS" title="Shortstops + middle-infield switchers">SS</button>
-      <button class="chip" data-filter-pos="3B">3B</button>
-      <button class="chip" data-filter-pos="INF" title="Any infielder (2B, SS, 3B, multi-position)">INF</button>
-      <button class="chip" data-filter-pos="CF">CF</button>
-      <button class="chip" data-filter-pos="LF">LF</button>
-      <button class="chip" data-filter-pos="RF">RF</button>
-      <button class="chip" data-filter-pos="OF" title="Any outfielder (CF, LF, RF, unspecified)">OF</button>
-      <button class="chip" data-filter-pos="P" title="Any pitcher — SP / RP / SIRP / MIRP / RHP / LHP">P</button>
-      <button class="chip" data-filter-pos="SP" title="Starting pitcher">SP</button>
-      <button class="chip" data-filter-pos="RP" title="Relief pitcher — rolls up SIRP + MIRP + bare RP">RP</button>
-      <button class="chip" data-filter-pos="SIRP" title="Single-Inning Relief Pitcher — closer / setup role">SIRP</button>
-      <button class="chip" data-filter-pos="MIRP" title="Multi-Inning Relief Pitcher — long-relief / bulk follower">MIRP</button>
-    </div>
-    <!-- v18 — Reset chip clears all active-list filters / search / sort
-         back to defaults. Sits in its own group at the end of the bar so
-         it doesn't blend in with the per-attribute chips. -->
-    <div class="filter-group">
-      <button class="chip reset-chip" type="button" data-reset-page="actives" title="Reset all filters, search, sort, and density on the prospect list">↺ Reset filters</button>
+    <!-- ============================== HOW ============================= -->
+    <div class="filter-cluster">
+      <span class="filter-cluster-label">HOW</span>
+      <div class="filter-group">
+        <span class="filter-label">Sort</span>
+        <select class="chip" id="sort-select">
+          <optgroup label="Grade">
+            <option value="fv">Consensus FV</option>
+            <option value="upside">Upside (^) first</option>
+            <option value="statcast_plus">Statcast+ (highest)</option>
+            <option value="source_confidence">Source confidence (most sources first)</option>
+            <option value="tool">Tool grade (toolsiest)</option>
+            <option value="stock_movers">Biggest movers (|ΔFV|)</option>
+          </optgroup>
+          <optgroup label="Age &amp; ETA">
+            <option value="age_asc">Youngest first</option>
+            <option value="age_desc">Oldest first</option>
+            <option value="age_vs_level">Most young-for-level</option>
+            <option value="eta">ETA (earliest first)</option>
+          </optgroup>
+          <optgroup label="Physical profile">
+            <option value="ht_desc">Tallest first</option>
+            <option value="ht_asc">Shortest first</option>
+            <option value="wt_desc">Heaviest first</option>
+            <option value="wt_asc">Lightest first</option>
+            <option value="bmi_desc">Highest BMI</option>
+            <option value="bmi_asc">Lowest BMI</option>
+          </optgroup>
+          <optgroup label="Alphabetical">
+            <option value="name_asc">Name (A → Z)</option>
+            <option value="name_desc">Name (Z → A)</option>
+            <option value="org_asc">Org (A → Z)</option>
+            <option value="level_asc">Level (furthest from MLB first)</option>
+            <option value="level_desc">Level (MLB first)</option>
+          </optgroup>
+        </select>
+      </div>
+      <!-- v19 — Per-tool sort selector. Independent of the main sort
+           dropdown so the user can flip "show me top fastballs" without
+           losing their FV / age / BMI sort context. When set to anything
+           other than "off" it overrides the main sort dimension. -->
+      <div class="filter-group">
+        <span class="filter-label">Sort by tool</span>
+        <select class="chip" id="tool-sort-select">
+          <option value="off">— off —</option>
+          <option value="composite_overall">Tool composite (all tools)</option>
+          <optgroup label="Hitter">
+            <option value="hit">Hit</option>
+            <option value="game_pwr">Game Pwr</option>
+            <option value="raw_pwr">Raw Pwr</option>
+            <option value="speed">Speed</option>
+            <option value="field">Field</option>
+            <option value="throw">Throw</option>
+            <option value="pitch_sel">Pitch Sel</option>
+            <option value="bat_ctrl">Bat Ctrl</option>
+          </optgroup>
+          <optgroup label="Pitcher">
+            <option value="fb">Fastball</option>
+            <option value="sl">Slider</option>
+            <option value="cb">Curve</option>
+            <option value="ch">Change</option>
+            <option value="cmd">Command</option>
+            <option value="ct">Cutter</option>
+          </optgroup>
+        </select>
+      </div>
+      <!-- v30.8 — Per-Statcast-metric sort selector. Same pattern as
+           the per-tool sort above (independent of the main sort
+           dropdown); when set to anything other than "off" it
+           overrides the main sort dimension. Routes to the new
+           sort-by-statcast branch in getFilteredActives + applies
+           direction handling per-metric (low whiff% is good for
+           hitters → asc; high whiff% is good for pitchers → desc).
+           For metrics where direction depends on side (whiff/chase),
+           the sort puts hitters first vs pitchers in their own bands. -->
+      <div class="filter-group">
+        <span class="filter-label" title="Pick a single Statcast metric to sort the list by. Direction is metric-specific (high EV = good; low whiff% = good for hitters, etc.).">Sort by Statcast</span>
+        <select class="chip" id="statcast-sort-select">
+          <option value="off">— off —</option>
+          <option value="sc_plus">SC+ composite</option>
+          <optgroup label="Hitter contact">
+            <option value="avg_ev">Avg EV (mph)</option>
+            <option value="max_ev">Max EV (mph)</option>
+            <option value="hard_hit_pct">Hard-hit %</option>
+            <option value="barrel_pct">Barrel %</option>
+          </optgroup>
+          <optgroup label="Zone discipline">
+            <option value="z_contact_pct">Z-Contact % (high)</option>
+            <option value="whiff_pct">Whiff % (low = good for hitters)</option>
+            <option value="chase_pct">Chase % (low = good for hitters)</option>
+          </optgroup>
+          <optgroup label="Pitcher arsenal">
+            <option value="fb_velo">FB velo (mph)</option>
+            <option value="whiff_pct_pit">Induced whiff % (pitchers)</option>
+            <option value="chase_pct_pit">Induced chase % (pitchers)</option>
+            <option value="hh_pct_allowed">HH% allowed (low)</option>
+            <option value="barrel_pct_allowed">Barrel% allowed (low)</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Density</span>
+        <div class="density-toggle">
+          <button class="chip active" data-density="compact" type="button" title="Default tight row layout — name, FV diamond, FV history minichart, MiLB stats, ETA. Most rows visible at once.">Compact</button>
+          <button class="chip" data-density="expanded" type="button" title="Adds the per-tool grade strip + row summary line under each prospect. Same columns as Compact, taller rows for more detail.">Expanded</button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <button class="chip reset-chip" type="button" data-reset-page="actives" title="Reset all filters, search, sort, and density on the prospect list">↺ Reset filters</button>
+      </div>
     </div>
   </div>
 
@@ -7100,15 +7170,32 @@
       </button>
     </div>
     <div id="injured-filter-bar" class="filter-bar collapsible-filter-bar">
-      <span class="filter-label">Sort</span>
-      <button class="chip active" data-il-sort="days_asc"
-              title="Shortest current IL stints first — players closest to returning">Days on IL (shortest)</button>
-      <button class="chip" data-il-sort="days"
-              title="Longest current IL stints first">Days on IL (longest)</button>
-      <button class="chip" data-il-sort="fv"
-              title="Highest-FV injured prospects first">FV</button>
-      <button class="chip" data-il-sort="since"
-              title="Most recently placed on IL first">Since (newest)</button>
+      <div class="filter-group">
+        <span class="filter-label">Sort</span>
+        <button class="chip active" data-il-sort="days_asc"
+                title="Shortest current IL stints first — players closest to returning">Days on IL (shortest)</button>
+        <button class="chip" data-il-sort="days"
+                title="Longest current IL stints first">Days on IL (longest)</button>
+        <button class="chip" data-il-sort="fv"
+                title="Highest-FV injured prospects first">FV</button>
+        <button class="chip" data-il-sort="since"
+                title="Most recently placed on IL first">Since (newest)</button>
+      </div>
+      <!-- v30.8 — Statcast metric sort, IL list. The IL list often wants
+           to know which injured prospects were the strongest tracked-
+           data signal pre-injury (rehab-watch / acquisition-watch). -->
+      <div class="filter-group">
+        <span class="filter-label">Statcast</span>
+        <select class="chip" id="il-statcast-sort">
+          <option value="off">— off —</option>
+          <option value="sc_plus">SC+ composite</option>
+          <option value="avg_ev">Avg EV (mph)</option>
+          <option value="max_ev">Max EV (mph)</option>
+          <option value="hard_hit_pct">Hard-hit %</option>
+          <option value="barrel_pct">Barrel %</option>
+          <option value="fb_velo">FB velo (mph)</option>
+        </select>
+      </div>
     </div>
     <div id="injured-rows"></div>
   </div>
@@ -7345,21 +7432,39 @@
       </button>
     </div>
     <div id="debuts-filter-bar" class="filter-bar collapsible-filter-bar">
-      <span class="filter-label">Sort</span>
-      <button class="chip active" data-debut-sort="date"
-              title="Most recent debut first">Debut date</button>
-      <button class="chip" data-debut-sort="war"
-              title="Current MLB-season WAR, highest first. Debuted players without a current-season WAR sink to the bottom.">Current-season WAR</button>
-      <button class="chip" data-debut-sort="career_war"
-              title="Cumulative career WAR (BBref), highest first. Debuted players with no MLB time sink to the bottom.">Career WAR</button>
-      <button class="chip" data-debut-sort="war_per_yr"
-              title="WAR per MLB season (career WAR ÷ seasons played), highest first. Rate stat — favors debuts with a strong sample-size-adjusted track record.">WAR/year</button>
-      <button class="chip" data-debut-sort="fv_close"
-              title="Highest final consensus FV (the FV when the player debuted) first">Final FV</button>
-      <button class="chip" data-debut-sort="vs_fv_proj"
-              title="WAG (WAR Above Grade) — playing-time-weighted MLB WAR/year (PA for hitters / IP for pitchers) minus the FV-grade-implied WAR/year (FanGraphs primer, lower-bound; linearly interpolated; hitter/pitcher tables split). Requires ≥1 full-season equivalent of MLB playing time. Highest outperformance first.">WAG (high)</button>
-      <button class="chip" data-debut-sort="vs_fv_proj_low"
-              title="WAG (WAR Above Grade) — same metric as 'WAG (high)' but inverted: lowest delta first, so debuts UNDERPERFORMING their FV grade most heavily surface at the top. Playing-time-weighted; requires ≥1 full-season equivalent of MLB playing time (thin-debut players sink to the bottom).">WAG (low)</button>
+      <div class="filter-group">
+        <span class="filter-label">Sort</span>
+        <button class="chip active" data-debut-sort="date"
+                title="Most recent debut first">Debut date</button>
+        <button class="chip" data-debut-sort="war"
+                title="Current MLB-season WAR, highest first. Debuted players without a current-season WAR sink to the bottom.">Current-season WAR</button>
+        <button class="chip" data-debut-sort="career_war"
+                title="Cumulative career WAR (BBref), highest first. Debuted players with no MLB time sink to the bottom.">Career WAR</button>
+        <button class="chip" data-debut-sort="war_per_yr"
+                title="WAR per MLB season (career WAR ÷ seasons played), highest first. Rate stat — favors debuts with a strong sample-size-adjusted track record.">WAR/year</button>
+        <button class="chip" data-debut-sort="fv_close"
+                title="Highest final consensus FV (the FV when the player debuted) first">Final FV</button>
+        <button class="chip" data-debut-sort="vs_fv_proj"
+                title="WAG (WAR Above Grade) — playing-time-weighted MLB WAR/year (PA for hitters / IP for pitchers) minus the FV-grade-implied WAR/year (FanGraphs primer, lower-bound; linearly interpolated; hitter/pitcher tables split). Requires ≥1 full-season equivalent of MLB playing time. Highest outperformance first.">WAG (high)</button>
+        <button class="chip" data-debut-sort="vs_fv_proj_low"
+                title="WAG (WAR Above Grade) — same metric as 'WAG (high)' but inverted: lowest delta first, so debuts UNDERPERFORMING their FV grade most heavily surface at the top. Playing-time-weighted; requires ≥1 full-season equivalent of MLB playing time (thin-debut players sink to the bottom).">WAG (low)</button>
+      </div>
+      <!-- v30.8 — Statcast metric sort, Debuted list. Surfaces the
+           graduate Statcast signals (most relevant to evaluating
+           whether the debut's MLB performance is sustained by the
+           underlying tracked data). -->
+      <div class="filter-group">
+        <span class="filter-label">Statcast</span>
+        <select class="chip" id="debut-statcast-sort">
+          <option value="off">— off —</option>
+          <option value="sc_plus">SC+ composite</option>
+          <option value="avg_ev">Avg EV (mph)</option>
+          <option value="max_ev">Max EV (mph)</option>
+          <option value="hard_hit_pct">Hard-hit %</option>
+          <option value="barrel_pct">Barrel %</option>
+          <option value="fb_velo">FB velo (mph)</option>
+        </select>
+      </div>
     </div>
     <!-- v19 — Boom/Bust filter strip retired. The chip noise on the
          graduate list duplicated the WAG sort dimension and added
@@ -9572,6 +9677,8 @@ function syncToURL() {
   if (state.farmTxDir   !== "all")        p.set("ftxd",  state.farmTxDir);
   if (state.debutSort    !== "date")       p.set("gsort", state.debutSort);
   if (state.ilSort      !== "days_asc")   p.set("ilsort", state.ilSort);
+  if (state.ilStatcastSort && state.ilStatcastSort !== "off") p.set("ilssk", state.ilStatcastSort);
+  if (state.debutStatcastSort && state.debutStatcastSort !== "off") p.set("dssk", state.debutStatcastSort);
   if (state.tradedSort  && state.tradedSort   !== "date")    p.set("tsort",  state.tradedSort);
   if (state.spotlightSort && state.spotlightSort !== "rank") p.set("ssort",  state.spotlightSort);
   if (state.careerSort  && state.careerSort   !== "season")  p.set("csort",  state.careerSort);
@@ -9580,6 +9687,7 @@ function syncToURL() {
   if (state.moverFilter && state.moverFilter !== "all")      p.set("mvf",    state.moverFilter);
   if (state.sidebarTopTool && state.sidebarTopTool !== "hit") p.set("stt",   state.sidebarTopTool);
   if (state.toolSortKey && state.toolSortKey !== "off") p.set("tsk", state.toolSortKey);
+  if (state.statcastSortKey && state.statcastSortKey !== "off") p.set("ssk", state.statcastSortKey);
   if (state.spotlightBucket !== "risers") p.set("bucket", state.spotlightBucket);
   // v28 — Draft + Overseas filter/sort URL keys. Single-select chips +
   // the sort dropdown round-trip; the FV-indicator Set follows the
@@ -9686,6 +9794,8 @@ function syncFromURL() {
   if (p.has("ftxd")) state.farmTxDir  = p.get("ftxd");
   if (p.has("gsort")) state.debutSort  = p.get("gsort");
   if (p.has("ilsort")) state.ilSort    = p.get("ilsort");
+  if (p.has("ilssk")) state.ilStatcastSort    = p.get("ilssk");
+  if (p.has("dssk"))  state.debutStatcastSort = p.get("dssk");
   if (p.has("tsort"))  state.tradedSort   = p.get("tsort");
   if (p.has("ssort"))  state.spotlightSort = p.get("ssort");
   if (p.has("csort"))  state.careerSort   = p.get("csort");
@@ -9694,6 +9804,7 @@ function syncFromURL() {
   if (p.has("mvf"))    state.moverFilter  = p.get("mvf");
   if (p.has("stt"))    state.sidebarTopTool = p.get("stt");
   if (p.has("tsk"))    state.toolSortKey   = p.get("tsk");
+  if (p.has("ssk"))    state.statcastSortKey = p.get("ssk");
   if (p.has("bucket")) state.spotlightBucket = p.get("bucket");
   // v28 — Draft + Overseas filter/sort URL keys (see syncToURL).
   // v29 — Restore the sort-direction flip set.
@@ -9861,6 +9972,12 @@ function restoreUIFromState() {
   if (tfMinSel) tfMinSel.value = String(state.toolFilterMin || 0);
   const tsKeySel = document.getElementById("tool-sort-select");
   if (tsKeySel) tsKeySel.value = state.toolSortKey || "off";
+  const ssKeySel = document.getElementById("statcast-sort-select");
+  if (ssKeySel) ssKeySel.value = state.statcastSortKey || "off";
+  const ilSsel = document.getElementById("il-statcast-sort");
+  if (ilSsel) ilSsel.value = state.ilStatcastSort || "off";
+  const debutSsel = document.getElementById("debut-statcast-sort");
+  if (debutSsel) debutSsel.value = state.debutStatcastSort || "off";
   const searchIn = document.getElementById("search-input");
   if (searchIn) searchIn.value = state.search || "";
   // v14 — FV indicator multi-select chip state (active list).
@@ -10329,6 +10446,268 @@ function _milbBaselineEvChips(p) {
   return chips.join("");
 }
 
+// v30.8 — Statcast percentile-bars block for the MiLB detail page.
+// For each Statcast metric the prospect has, computes the
+// percentile vs the same-position same-level cohort across the
+// league and renders a horizontal bar. Hitters get contact (EV,
+// max EV, HH%, Barrel%) + zone (Z-Con%, Whiff%, Chase%); pitchers
+// get arsenal (top-pitch velo, induced Whiff%, Chase%, contact
+// suppression). Each metric carries a direction so "low = good"
+// metrics (whiff% allowed for hitters, HH% allowed for pitchers,
+// etc.) render the bar from the OTHER edge.
+//
+// Cohort: same primary position (uses positionBucket) AND same
+// level. Cohort floor: ≥10 peers, else falls back to same-level
+// cohort regardless of position. ≥5 peers needed to render the bar
+// at all.
+function _statcastPercentileBlock(p) {
+  if (!p) return "";
+  // Skip for debuted players — the MiLB-cohort percentile is no
+  // longer the relevant comparison once a player graduates. Their
+  // story is told by projectionArcSection (WAG / WAR-vs-FV) +
+  // career-stats blocks instead.
+  if (p.status === "debuted") return "";
+  const cq = ((p.statcast_metrics || {}).contact_quality) || {};
+  const pm = ((p.statcast_metrics || {}).pitch_movement) || {};
+  const zRoot = p.zone_metrics || {};
+  let z = zRoot;
+  if (zRoot && Array.isArray(zRoot.level_splits) && zRoot.level_splits.length) {
+    z = zRoot.level_splits.reduce((a, b) =>
+      (a && (a.pitches || 0) >= (b.pitches || 0)) ? a : b, null);
+  }
+  z = z || {};
+  const sl = p.statline || {};
+  const isPit = !!sl.is_pitcher;
+  const ourPos = positionBucket(p.position) || "?";
+  const ourLevel = sl.level || null;
+  // Build cohort.
+  const all = (DATA && DATA.players) || [];
+  let cohort = all.filter(q => q && q.player_key !== p.player_key
+    && (q.statline && q.statline.level === ourLevel)
+    && positionBucket(q.position) === ourPos);
+  if (cohort.length < 10) {
+    // Fall back to same-level only (across positions).
+    cohort = all.filter(q => q && q.player_key !== p.player_key
+      && (q.statline && q.statline.level === ourLevel));
+  }
+  if (cohort.length < 5) return "";
+  // Per-metric percentile.
+  const _percentileOf = (val, vals, lowerIsBetter = false) => {
+    if (val == null || !isFinite(val) || !vals.length) return null;
+    const sorted = vals.slice().sort((a, b) => a - b);
+    let below = 0;
+    for (const v of sorted) { if (lowerIsBetter ? v > val : v < val) below++; }
+    return Math.round((below / vals.length) * 100);
+  };
+  const _zRowOf = (q) => {
+    const zr = q.zone_metrics;
+    if (!zr) return {};
+    if (Array.isArray(zr.level_splits) && zr.level_splits.length) {
+      return zr.level_splits.reduce((a, b) =>
+        (a && (a.pitches || 0) >= (b.pitches || 0)) ? a : b, null) || {};
+    }
+    return zr;
+  };
+  const _gatherCohortVals = (extract) => cohort
+    .map(extract)
+    .filter(v => v != null && isFinite(v));
+  // Metric specs: {label, value, cohortVals, lowerIsBetter, format}
+  const specs = [];
+  const _push = (label, val, extract, lowerIsBetter, fmt) => {
+    if (val == null || !isFinite(val)) return;
+    const vals = _gatherCohortVals(extract);
+    if (vals.length < 5) return;
+    const pct = _percentileOf(val, vals, lowerIsBetter);
+    if (pct == null) return;
+    specs.push({ label, val, pct, fmt, lowerIsBetter });
+  };
+  if (!isPit) {
+    _push("Avg EV",   cq.avg_ev,
+      q => ((q.statcast_metrics || {}).contact_quality || {}).avg_ev,
+      false, v => v.toFixed(1) + " mph");
+    _push("Max EV",   cq.max_ev,
+      q => ((q.statcast_metrics || {}).contact_quality || {}).max_ev,
+      false, v => v.toFixed(1) + " mph");
+    _push("Hard-hit%", cq.hard_hit_pct,
+      q => ((q.statcast_metrics || {}).contact_quality || {}).hard_hit_pct,
+      false, v => v.toFixed(0) + "%");
+    _push("Barrel%",  cq.barrel_pct,
+      q => ((q.statcast_metrics || {}).contact_quality || {}).barrel_pct,
+      false, v => v.toFixed(0) + "%");
+    _push("Z-Contact%", z.z_contact_pct,
+      q => _zRowOf(q).z_contact_pct,
+      false, v => v.toFixed(0) + "%");
+    _push("Whiff%",   z.whiff_pct,
+      q => _zRowOf(q).whiff_pct,
+      true,  v => v.toFixed(0) + "%");
+    _push("Chase%",   z.chase_pct,
+      q => _zRowOf(q).chase_pct,
+      true,  v => v.toFixed(0) + "%");
+  } else {
+    const topPitch = (pm.pitch_summary || [])[0];
+    _push(`${(topPitch && topPitch.pitch_type) || "FB"} velo`,
+      topPitch ? topPitch.avg_velo : null,
+      q => {
+        const tp = (((q.statcast_metrics || {}).pitch_movement || {}).pitch_summary || [])[0];
+        return tp ? tp.avg_velo : null;
+      }, false, v => v.toFixed(1) + " mph");
+    _push("Induced Whiff%", z.whiff_pct,
+      q => _zRowOf(q).whiff_pct,
+      false, v => v.toFixed(0) + "%");
+    _push("Induced Chase%", z.chase_pct,
+      q => _zRowOf(q).chase_pct,
+      false, v => v.toFixed(0) + "%");
+    _push("HH% allowed", cq.hard_hit_pct,
+      q => ((q.statcast_metrics || {}).contact_quality || {}).hard_hit_pct,
+      true,  v => v.toFixed(0) + "%");
+    _push("Brl% allowed", cq.barrel_pct,
+      q => ((q.statcast_metrics || {}).contact_quality || {}).barrel_pct,
+      true,  v => v.toFixed(0) + "%");
+  }
+  if (!specs.length) return "";
+  // Render — bars + label + percentile tag.
+  const bars = specs.map(s => {
+    const tone = s.pct >= 75 ? "var(--up)"
+              : s.pct >= 50 ? "var(--neon-cyan)"
+              : s.pct >= 25 ? "var(--neon-amber)"
+              : "var(--down)";
+    const pctLabel = s.pct >= 90 ? `${s.pct}th · top ${100 - s.pct}%`
+                    : s.pct >= 50 ? `${s.pct}th percentile`
+                    : `${s.pct}th · bottom ${s.pct}%`;
+    const valStr = s.fmt(s.val);
+    return `<div style="display:grid;grid-template-columns:96px 1fr 70px 110px;gap:8px;align-items:center;font-size:11.5px;margin-bottom:4px;">
+      <span style="color:var(--text-secondary);font-weight:600;">${escapeHtml(s.label)}</span>
+      <div style="position:relative;height:8px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;border:1px solid var(--border-light);">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${s.pct}%;background:${tone};border-radius:4px;"></div>
+        <div style="position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--text-tertiary);opacity:0.5;"></div>
+      </div>
+      <span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary);font-weight:700;text-align:right;">${escapeHtml(valStr)}</span>
+      <span style="font-family:var(--font-mono);font-size:10px;color:${tone};text-align:right;font-weight:700;">${escapeHtml(pctLabel)}</span>
+    </div>`;
+  }).join("");
+  const cohortLabel = cohort.length >= 10
+    ? `${ourPos} · ${ourLevel} · ${cohort.length} peers`
+    : `${ourLevel} · ${cohort.length} peers (position cohort sparse)`;
+  return `<div class="detail-title">Statcast percentiles
+    <span class="detail-title-sub">vs ${escapeHtml(cohortLabel)}</span></div>
+    <div class="detail-card" style="padding:12px 14px;">
+      ${bars}
+      <div style="font-size:10px;color:var(--text-tertiary);margin-top:6px;line-height:1.5;border-top:1px dashed var(--border-light);padding-top:6px;">
+        Higher percentile = better for this metric (direction handled per-metric — Whiff%, Chase%, HH% allowed flip so "low value" = "high percentile"). Bars colored by tier: green 75+, cyan 50+, amber 25+, red &lt; 25.
+      </div>
+    </div>`;
+}
+
+// v30.8 — FV-tier debut cohort comparison block. Ranks a debuted
+// player against every other debut who entered with the same FV
+// tier (rounded to nearest 5: 40/45/50/55/60/65/70). Surfaces the
+// player's rank by career WAR, WAR/yr, and WAG within their tier,
+// plus a tier-distribution mini-chart. Only renders for status ===
+// "debuted" with a fv_close on file.
+function _debutFvCohortBlock(p) {
+  if (!p || p.status !== "debuted") return "";
+  const myFv = p.fv_close_raw ?? p.fv_close;
+  if (myFv == null) return "";
+  const myTier = Math.round(myFv / 5) * 5;
+  const debuts = (DATA && DATA.debuts) || [];
+  if (!debuts.length) return "";
+  // Build the tier cohort — same rounded FV bucket.
+  const cohort = debuts.filter(g => {
+    const f = g.fv_close_raw ?? g.fv_close;
+    if (f == null) return false;
+    return Math.round(f / 5) * 5 === myTier;
+  });
+  if (cohort.length < 3) return "";
+  // Extract WAR + WAG signals for each cohort member.
+  const withSignal = cohort.map(g => {
+    const cw = (g.career_war || {}).career_war;
+    const wpy = (() => {
+      const r = gradWarPerYr(g);
+      return r ? r.war_per_yr : null;
+    })();
+    const wag = gradVsFvProjection(g);
+    return { g, cw, wpy, wag };
+  });
+  const _rankBy = (key, dir = "desc") => {
+    const vals = withSignal.map(x => x[key]).filter(v => v != null);
+    if (!vals.length) return null;
+    const sorted = vals.slice().sort((a, b) => dir === "desc" ? b - a : a - b);
+    const myVal = withSignal.find(x => x.g.player_key === p.player_key);
+    if (!myVal || myVal[key] == null) return null;
+    const rank = sorted.indexOf(myVal[key]) + 1;
+    return { rank, total: vals.length, val: myVal[key] };
+  };
+  const careerRank = _rankBy("cw");
+  const wpyRank    = _rankBy("wpy");
+  const wagRank    = _rankBy("wag");
+  if (!careerRank && !wpyRank && !wagRank) return "";
+
+  const _rankColor = (rank, total) => {
+    if (rank == null) return "var(--text-tertiary)";
+    const pctile = ((total - rank + 1) / total) * 100;
+    if (pctile >= 75) return "var(--up)";
+    if (pctile >= 50) return "var(--neon-cyan)";
+    if (pctile >= 25) return "var(--neon-amber)";
+    return "var(--down)";
+  };
+  const _fmtRank = (label, r, fmt) => {
+    if (!r) return `<div style="font-size:11px;color:var(--text-tertiary);">${label}: insufficient cohort data</div>`;
+    const color = _rankColor(r.rank, r.total);
+    const pctile = Math.round(((r.total - r.rank + 1) / r.total) * 100);
+    return `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px dashed var(--border-light);">
+      <span style="color:var(--text-secondary);font-weight:600;font-size:12px;">${escapeHtml(label)}</span>
+      <span style="display:flex;align-items:baseline;gap:8px;">
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);">${escapeHtml(fmt(r.val))}</span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${color};font-variant-numeric:tabular-nums;">#${r.rank} of ${r.total}</span>
+        <span style="font-size:10px;color:${color};">(${pctile}th)</span>
+      </span>
+    </div>`;
+  };
+  // Tier distribution histogram — career WAR bands among the cohort.
+  const bands = [
+    { lo: -Infinity, hi: 0,  label: "<0", color: "var(--down)" },
+    { lo: 0,   hi: 2,  label: "0-2",  color: "var(--neon-amber)" },
+    { lo: 2,   hi: 5,  label: "2-5",  color: "var(--text-secondary)" },
+    { lo: 5,   hi: 10, label: "5-10", color: "var(--neon-cyan)" },
+    { lo: 10,  hi: 20, label: "10-20", color: "var(--up)" },
+    { lo: 20,  hi: Infinity, label: "20+", color: "var(--up)" },
+  ];
+  const bandCounts = bands.map(b => withSignal.filter(x =>
+    x.cw != null && x.cw >= b.lo && x.cw < b.hi).length);
+  const maxBand = Math.max(1, ...bandCounts);
+  const myBand = (() => {
+    if (careerRank == null || careerRank.val == null) return -1;
+    return bands.findIndex(b => careerRank.val >= b.lo && careerRank.val < b.hi);
+  })();
+  const histogram = bandCounts.map((c, i) => {
+    const isMe = i === myBand;
+    const heightPct = Math.round((c / maxBand) * 100);
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;">
+      <div style="width:100%;height:42px;display:flex;align-items:flex-end;justify-content:center;">
+        <div style="width:22px;height:${Math.max(2, heightPct * 0.42)}px;background:${bands[i].color};opacity:${isMe ? 1 : 0.55};border-radius:1px;${isMe ? "box-shadow:0 0 4px " + bands[i].color : ""}" title="${c} debut${c === 1 ? "" : "s"} with ${bands[i].label} career WAR"></div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:${isMe ? bands[i].color : "var(--text-tertiary)"};font-weight:${isMe ? 700 : 400};">${bands[i].label}</div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);">${c}</div>
+    </div>`;
+  }).join("");
+
+  const fmtFv = v => v != null ? v.toFixed(1) + " WAR" : "—";
+  const fmtRate = v => v != null ? (v >= 0 ? "+" : "") + v.toFixed(2) + " /yr" : "—";
+
+  return `<div class="detail-title">FV-${myTier} debut cohort
+    <span class="detail-title-sub">${cohort.length} debut${cohort.length === 1 ? "" : "s"} with the same FV tier</span></div>
+    <div class="detail-card" style="padding:12px 14px;">
+      ${_fmtRank("Career WAR rank",     careerRank, fmtFv)}
+      ${_fmtRank("WAR / yr rank",       wpyRank,    fmtRate)}
+      ${_fmtRank("WAG (vs FV proj) rank", wagRank,  fmtRate)}
+      <div style="margin-top:10px;">
+        <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">Career WAR distribution in FV-${myTier} cohort</div>
+        <div style="display:flex;align-items:flex-end;gap:3px;padding:4px 0;">${histogram}</div>
+        <div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;">Your band highlighted. Higher = better outcomes for this FV tier.</div>
+      </div>
+    </div>`;
+}
+
 // FanGraphs-flavored WAR aggregate. Returns a small mono block with
 // cumulative career WAR, the per-season average, and the underlying
 // season count so a reader can see how the average was built. The
@@ -10514,6 +10893,16 @@ const state = {
   // "days" sorts descending (longest-out first); "fv" puts high-FV
   // injured prospects on top; "since" sorts by most-recent placement.
   ilSort: "days_asc",
+  // v30.8 — Per-Statcast-metric sort for the IL list. Same keys as
+  // the actives statcastSortKey (sc_plus / avg_ev / max_ev /
+  // hard_hit_pct / barrel_pct / fb_velo). When set, overrides ilSort.
+  ilStatcastSort: "off",
+  // v30.8 — Same Statcast-sort dimension for the Debuted list. The
+  // debut payloads carry statcast_metrics on graduates with MiLB
+  // Statcast on file (sparse — many grads pre-date the Statcast era
+  // or weren't tracked in their MiLB time). Off by default; when
+  // set, overrides debutSort.
+  debutStatcastSort: "off",
   // Active list "Healthy only" toggle — hides players currently on
   // an IL stint when set to "healthy". They still appear in their
   // own Injured List tab.
@@ -10544,6 +10933,14 @@ const state = {
   // overrides state.sort and sorts the active list by that tool grade
   // descending. "off" = no override, main sort applies.
   toolSortKey: "off",
+  // v30.8 — Per-Statcast-metric sort. Independent of state.sort
+  // (same pattern as toolSortKey). When set to anything but "off",
+  // it wins over both state.sort AND state.toolSortKey. Keys map
+  // to the new sort dropdown: sc_plus / avg_ev / max_ev /
+  // hard_hit_pct / barrel_pct / z_contact_pct / whiff_pct /
+  // chase_pct / fb_velo / whiff_pct_pit / chase_pct_pit /
+  // hh_pct_allowed / barrel_pct_allowed.
+  statcastSortKey: "off",
   // Row density — "compact" (default) / "expanded". Picked up from
   // URL > localStorage > default on boot. Drives a body-level class.
   // Defaults to "compact" so a fresh visitor lands on the cleanest row
@@ -10756,8 +11153,11 @@ function getFilteredActives() {
       // v30.5 — Match the spotlights tier breakpoints (elite ≥ 120,
       // above pool ≥ 105). User feedback: SC+ 110 is meaningfully
       // above mean and should qualify for the "above pool" chip.
+      // v30.8 — Below-tier (SC+ ≤ 95) added so the filter can find
+      // tracked-data laggers (regression-watch candidates).
       if (state.statcastFilter.has("elite") && sp >= 120) return true;
       if (state.statcastFilter.has("above") && sp >= 105) return true;
+      if (state.statcastFilter.has("below") && sp <= 95)  return true;
       return false;
     });
   }
@@ -10775,6 +11175,85 @@ function getFilteredActives() {
       const v = grades[state.toolFilterKey];
       return typeof v === "number" && v >= state.toolFilterMin;
     });
+  }
+  // v30.8 — Per-Statcast-metric sort override. Wins over both
+  // toolSortKey and state.sort when active. Each metric extracts
+  // its value from statcast_metrics.contact_quality / pitch_movement
+  // / zone_metrics on the player payload + applies metric-specific
+  // direction (higher EV = better; lower whiff% = better for hitters;
+  // higher whiff% = better for pitchers).
+  if (state.statcastSortKey && state.statcastSortKey !== "off") {
+    const sk = state.statcastSortKey;
+    // Direction map: true = ascending (lower is better), false = descending.
+    // hh_pct_allowed / barrel_pct_allowed / whiff_pct / chase_pct read
+    // ascending (low = good); everything else descending (high = good).
+    const ascKeys = new Set([
+      "whiff_pct", "chase_pct",
+      "hh_pct_allowed", "barrel_pct_allowed",
+    ]);
+    const _zRow = (p) => {
+      const z = p.zone_metrics;
+      if (!z) return {};
+      if (Array.isArray(z.level_splits) && z.level_splits.length) {
+        return z.level_splits.reduce((a, b) =>
+          (a && (a.pitches || 0) >= (b.pitches || 0)) ? a : b, null) || {};
+      }
+      return z;
+    };
+    const _scVal = (p) => {
+      if (sk === "sc_plus") return getStatcastPlus(p);
+      const cq = ((p.statcast_metrics || {}).contact_quality) || {};
+      const pm = ((p.statcast_metrics || {}).pitch_movement) || {};
+      const z  = _zRow(p);
+      if (sk === "avg_ev")         return cq.avg_ev;
+      if (sk === "max_ev")         return cq.max_ev;
+      if (sk === "hard_hit_pct")   return cq.hard_hit_pct;
+      if (sk === "barrel_pct")     return cq.barrel_pct;
+      if (sk === "z_contact_pct")  return z.z_contact_pct;
+      if (sk === "whiff_pct")      return z.whiff_pct;
+      if (sk === "chase_pct")      return z.chase_pct;
+      if (sk === "fb_velo") {
+        const top = (pm.pitch_summary || [])[0];
+        return top ? top.avg_velo : null;
+      }
+      if (sk === "whiff_pct_pit") return z.whiff_pct;
+      if (sk === "chase_pct_pit") return z.chase_pct;
+      if (sk === "hh_pct_allowed")     return cq.hard_hit_pct;
+      if (sk === "barrel_pct_allowed") return cq.barrel_pct;
+      return null;
+    };
+    // For pitcher-only or hitter-only metrics, restrict the pool so
+    // the wrong side doesn't pollute the top. fb_velo / whiff_pct_pit
+    // / chase_pct_pit / hh_pct_allowed / barrel_pct_allowed → pitchers
+    // only. avg_ev / max_ev / hard_hit_pct / barrel_pct / whiff_pct /
+    // chase_pct → hitters only (zone-discipline metrics on hitters'
+    // own swings; pitcher-induced variants use the _pit suffix).
+    const pitcherOnly = new Set([
+      "fb_velo", "whiff_pct_pit", "chase_pct_pit",
+      "hh_pct_allowed", "barrel_pct_allowed",
+    ]);
+    const hitterOnly  = new Set([
+      "avg_ev", "max_ev", "hard_hit_pct", "barrel_pct",
+      "z_contact_pct", "whiff_pct", "chase_pct",
+    ]);
+    let scope = pool;
+    if (pitcherOnly.has(sk)) {
+      scope = pool.filter(p => p.statline && p.statline.is_pitcher);
+    } else if (hitterOnly.has(sk)) {
+      scope = pool.filter(p => p.statline && !p.statline.is_pitcher);
+    }
+    scope.sort((a, b) => {
+      const av = _scVal(a);
+      const bv = _scVal(b);
+      const aMissing = av == null || !isFinite(av);
+      const bMissing = bv == null || !isFinite(bv);
+      if (aMissing && bMissing) return fvCmpDesc(a, b);
+      if (aMissing) return 1;
+      if (bMissing) return -1;
+      const cmp = ascKeys.has(sk) ? (av - bv) : (bv - av);
+      return cmp || fvCmpDesc(a, b);
+    });
+    return scope;
   }
   // v19 — Per-tool sort override. When toolSortKey is set, it wins
   // over state.sort and orders the pool by that specific tool grade
@@ -13690,21 +14169,54 @@ function renderInjured() {
     filtered = filtered.filter(({ p }) => (p.player_name || "").toLowerCase().includes(q));
   }
 
-  // Sort. Default is days_asc — shortest current IL stints first, so
-  // the players closest to returning rise to the top. "days" + the
-  // newer "days_desc" both flip to longest-first (the latter is what
-  // the column-header asc/desc toggle emits).
-  const mode = state.ilSort || "days_asc";
-  if (mode === "fv") {
-    filtered.sort((a, b) => (b.fv || 0) - (a.fv || 0) || (a.days - b.days));
-  } else if (mode === "since") {
-    filtered.sort((a, b) => (b.since || "").localeCompare(a.since || ""));
-  } else if (mode === "days" || mode === "days_desc") {
-    // Longest stints first.
-    filtered.sort((a, b) => (b.days - a.days) || (b.fv - a.fv));
+  // v30.8 — Statcast sort wins over the standard IL sort dimensions.
+  // When ilStatcastSort is set, sort by the chosen metric desc;
+  // missing-data rows sink. Otherwise fall through to the original
+  // days/fv/since dimensions.
+  const _statcastSortVal = (player, key) => {
+    if (!player) return null;
+    if (key === "sc_plus") return getStatcastPlus(player);
+    const cq = ((player.statcast_metrics || {}).contact_quality) || {};
+    const pm = ((player.statcast_metrics || {}).pitch_movement) || {};
+    if (key === "avg_ev")       return cq.avg_ev;
+    if (key === "max_ev")       return cq.max_ev;
+    if (key === "hard_hit_pct") return cq.hard_hit_pct;
+    if (key === "barrel_pct")   return cq.barrel_pct;
+    if (key === "fb_velo") {
+      const top = (pm.pitch_summary || [])[0];
+      return top ? top.avg_velo : null;
+    }
+    return null;
+  };
+  if (state.ilStatcastSort && state.ilStatcastSort !== "off") {
+    const sk = state.ilStatcastSort;
+    filtered.sort((a, b) => {
+      const av = _statcastSortVal(a.p, sk);
+      const bv = _statcastSortVal(b.p, sk);
+      const aMissing = av == null || !isFinite(av);
+      const bMissing = bv == null || !isFinite(bv);
+      if (aMissing && bMissing) return (b.fv || 0) - (a.fv || 0);
+      if (aMissing) return 1;
+      if (bMissing) return -1;
+      return (bv - av) || (b.fv - a.fv);
+    });
   } else {
-    // days_asc (default): shortest stints first.
-    filtered.sort((a, b) => (a.days - b.days) || (b.fv - a.fv));
+    // Sort. Default is days_asc — shortest current IL stints first, so
+    // the players closest to returning rise to the top. "days" + the
+    // newer "days_desc" both flip to longest-first (the latter is what
+    // the column-header asc/desc toggle emits).
+    const mode = state.ilSort || "days_asc";
+    if (mode === "fv") {
+      filtered.sort((a, b) => (b.fv || 0) - (a.fv || 0) || (a.days - b.days));
+    } else if (mode === "since") {
+      filtered.sort((a, b) => (b.since || "").localeCompare(a.since || ""));
+    } else if (mode === "days" || mode === "days_desc") {
+      // Longest stints first.
+      filtered.sort((a, b) => (b.days - a.days) || (b.fv - a.fv));
+    } else {
+      // days_asc (default): shortest stints first.
+      filtered.sort((a, b) => (a.days - b.days) || (b.fv - a.fv));
+    }
   }
   // v29 — Universal direction-flip honored after sort.
   _applySortDir(filtered, "ilSort");
@@ -16375,13 +16887,90 @@ async function renderDraftDetail(key) {
       </div>`;
   })();
 
+  // v30.8 — Tools-vs-class-median deltas. For each tool the prospect
+  // has graded, compute the median grade across all OTHER prospects
+  // in the same class, then surface the delta as a horizontal bar.
+  // Lets the reader see at a glance which tools sit above / below
+  // class median + by how much.
+  const toolsVsClassSection = (() => {
+    if (!cls || !cls.prospects || cls.prospects.length < 5) return "";
+    const _toolMean = (q, key) => {
+      const vals = [];
+      for (const src in (q.tool_grades || {})) {
+        const tg = q.tool_grades[src] || {};
+        let v = tg[key];
+        if (key === "pwr" && v == null) {
+          const g = tg.game_pwr, r = tg.raw_pwr;
+          if (g != null && r != null) v = (g + r) / 2;
+          else if (g != null) v = g;
+          else if (r != null) v = r;
+        }
+        if (v != null && isFinite(v)) vals.push(+v);
+      }
+      return vals.length ? vals.reduce((s, x) => s + x, 0) / vals.length : null;
+    };
+    const isPitClass = /^(SP|RP|RHP|LHP|P)/i.test(p.position || "");
+    const keys = isPitClass
+      ? [["FB","fb"],["SL","sl"],["CB","cb"],["CH","ch"],["CMD","cmd"],["CT","ct"]]
+      : [["HIT","hit"],["PWR","pwr"],["SPD","speed"],["FLD","field"],["ARM","throw"],["PSEL","pitch_sel"]];
+    // Build per-tool median from peers (exclude self).
+    const _median = (arr) => {
+      if (!arr.length) return null;
+      const s = arr.slice().sort((a, b) => a - b);
+      const mid = Math.floor(s.length / 2);
+      return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+    };
+    const rows = keys.map(([label, k]) => {
+      const myV = _toolMean(p, k);
+      if (myV == null) return null;
+      const peerVals = cls.prospects
+        .filter(q => q.player_key !== p.player_key)
+        .map(q => _toolMean(q, k))
+        .filter(v => v != null);
+      if (peerVals.length < 3) return null;
+      const med = _median(peerVals);
+      if (med == null) return null;
+      const delta = myV - med;
+      return { label, myV, med, delta };
+    }).filter(Boolean);
+    if (!rows.length) return "";
+    const maxAbs = Math.max(5, ...rows.map(r => Math.abs(r.delta)));
+    const bars = rows.map(r => {
+      const tone = r.delta > 0 ? "var(--up)" : r.delta < 0 ? "var(--down)" : "var(--text-secondary)";
+      // Bar width as % of half (centered at midpoint).
+      const fillPct = Math.min(50, (Math.abs(r.delta) / maxAbs) * 50);
+      const fromLeft = r.delta >= 0 ? 50 : 50 - fillPct;
+      const sign = r.delta >= 0 ? "+" : "";
+      return `<div style="display:grid;grid-template-columns:54px 1fr 60px 60px;gap:8px;align-items:center;font-size:11.5px;margin-bottom:4px;">
+        <span style="color:var(--text-secondary);font-weight:700;letter-spacing:0.04em;font-family:var(--font-mono);">${escapeHtml(label)}</span>
+        <div style="position:relative;height:8px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;border:1px solid var(--border-light);">
+          <div style="position:absolute;left:${fromLeft}%;top:0;height:100%;width:${fillPct}%;background:${tone};border-radius:2px;"></div>
+          <div style="position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--text-tertiary);opacity:0.7;"></div>
+        </div>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-primary);font-weight:700;text-align:right;">${r.myV.toFixed(1)}</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:${tone};font-weight:700;text-align:right;">${sign}${r.delta.toFixed(1)} vs ${r.med.toFixed(0)}</span>
+      </div>`;
+    }).join("");
+    return `<div class="detail-title">Tools vs ${cls.year} class median
+      <span class="detail-title-sub">${cls.prospects.length} prospects in class</span></div>
+      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:12px 14px;border-radius:6px;">
+        ${bars}
+        <div style="font-size:10px;color:var(--text-tertiary);margin-top:6px;border-top:1px dashed var(--border-light);padding-top:6px;">
+          Bar extends right when above class median; left when below. Number on the right shows the delta + the class median value.
+        </div>
+      </div>`;
+  })();
+
   // Tools & Scouting tab content. v19 — Consensus chip strip leads,
   // then FV timeseries, then per-source breakdown, then scouting reports.
+  // v30.8 — Added tools-vs-class-median deltas right after the
+  // existing per-source breakdown.
   const toolsScoutingHtml = `
     ${consensusToolStrip}
     ${fvTimeseriesChart}
     <div class="detail-title">Tool grades · per source</div>
     ${_renderProspectToolsGrid(p)}
+    ${toolsVsClassSection}
     <div class="detail-title">Scouting reports</div>
     ${_renderProspectScoutingReports(p)}`;
 
@@ -16563,9 +17152,104 @@ async function renderOverseasDetail(key) {
     }
   }
 
+  // v30.8 — MLB translation card. Surfaces the league translation
+  // factors (hitter_wrc_factor / pitcher_era_factor / hitter_k_pct_delta
+  // / fb_velo_delta) as concrete "what your stats translate to in MLB"
+  // estimates. The factors live on league.league_context; we apply
+  // them to the prospect's most-recent stats payload when possible.
+  const mlbTranslationCard = (() => {
+    const ctx = (league && league.league_context) || {};
+    if (!ctx.hitter_wrc_factor && !ctx.pitcher_era_factor) return "";
+    const stats = (p.stats && p.stats.length) ? p.stats[p.stats.length - 1] : null;
+    const payload = stats ? (stats.payload || {}) : {};
+    const isPit = payload.era != null || payload.ip != null;
+    const rows = [];
+    if (!isPit && ctx.hitter_wrc_factor != null && payload.wrc_plus != null) {
+      const wrcRaw = payload.wrc_plus;
+      const wrcMlb = Math.round(wrcRaw * ctx.hitter_wrc_factor);
+      const tone = wrcMlb >= 120 ? "var(--up)"
+                : wrcMlb >= 100 ? "var(--neon-cyan)"
+                : wrcMlb >= 85  ? "var(--neon-amber)"
+                : "var(--down)";
+      rows.push(`<div style="display:grid;grid-template-columns:1fr 70px 70px 90px;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px dashed var(--border-light);">
+        <span style="font-size:12px;color:var(--text-secondary);font-weight:600;">wRC+ (${escapeHtml(p.league || "lg")})</span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text-primary);text-align:right;">${wrcRaw}</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);text-align:center;">×${ctx.hitter_wrc_factor.toFixed(2)}</span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${tone};text-align:right;">${wrcMlb} MLBe</span>
+      </div>`);
+    }
+    if (isPit && ctx.pitcher_era_factor != null && payload.era != null) {
+      const eraRaw = payload.era;
+      const eraMlb = (eraRaw * ctx.pitcher_era_factor).toFixed(2);
+      const tone = +eraMlb <= 3.50 ? "var(--up)"
+                : +eraMlb <= 4.20 ? "var(--neon-cyan)"
+                : +eraMlb <= 5.00 ? "var(--neon-amber)"
+                : "var(--down)";
+      rows.push(`<div style="display:grid;grid-template-columns:1fr 70px 70px 90px;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px dashed var(--border-light);">
+        <span style="font-size:12px;color:var(--text-secondary);font-weight:600;">ERA (${escapeHtml(p.league || "lg")})</span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text-primary);text-align:right;">${eraRaw}</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);text-align:center;">×${ctx.pitcher_era_factor.toFixed(2)}</span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${tone};text-align:right;">${eraMlb} MLBe</span>
+      </div>`);
+    }
+    if (!isPit && ctx.hitter_k_pct_delta != null && payload.k_pct != null) {
+      const kRaw = payload.k_pct;
+      const kMlb = ((kRaw + ctx.hitter_k_pct_delta) * 100).toFixed(1);
+      const tone = +kMlb <= 22 ? "var(--up)"
+                : +kMlb <= 28 ? "var(--neon-cyan)"
+                : +kMlb <= 32 ? "var(--neon-amber)"
+                : "var(--down)";
+      rows.push(`<div style="display:grid;grid-template-columns:1fr 70px 70px 90px;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px dashed var(--border-light);">
+        <span style="font-size:12px;color:var(--text-secondary);font-weight:600;">K% (${escapeHtml(p.league || "lg")})</span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text-primary);text-align:right;">${(kRaw * 100).toFixed(1)}%</span>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);text-align:center;">+${(ctx.hitter_k_pct_delta * 100).toFixed(1)}pp</span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${tone};text-align:right;">${kMlb}% MLBe</span>
+      </div>`);
+    }
+    if (isPit && ctx.fb_velo_delta != null) {
+      // Pull avg FB velo from tool_grades if no pitch-level data on file.
+      const tg = p.tool_grades || {};
+      let fbAvg = null;
+      // Look for FG-extras avg_fb_velo, otherwise fall back to nothing.
+      for (const src in tg) {
+        const ex = (tg[src] || {})._extras || {};
+        if (ex.avg_fb_velo != null) { fbAvg = +ex.avg_fb_velo; break; }
+      }
+      if (fbAvg != null) {
+        const fbMlb = (fbAvg + ctx.fb_velo_delta).toFixed(1);
+        const tone = +fbMlb >= 96 ? "var(--up)"
+                  : +fbMlb >= 93 ? "var(--neon-cyan)"
+                  : +fbMlb >= 90 ? "var(--neon-amber)"
+                  : "var(--down)";
+        rows.push(`<div style="display:grid;grid-template-columns:1fr 70px 70px 90px;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px dashed var(--border-light);">
+          <span style="font-size:12px;color:var(--text-secondary);font-weight:600;">FB velo (${escapeHtml(p.league || "lg")})</span>
+          <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text-primary);text-align:right;">${fbAvg.toFixed(1)}</span>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);text-align:center;">${ctx.fb_velo_delta >= 0 ? "+" : ""}${ctx.fb_velo_delta.toFixed(1)}</span>
+          <span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${tone};text-align:right;">${fbMlb} mph</span>
+        </div>`);
+      }
+    }
+    if (!rows.length) return "";
+    return `<div class="detail-title">MLB-equivalent translation
+      <span class="detail-title-sub">${escapeHtml(p.league || "league")} stats × translation factor</span></div>
+      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:12px 14px;border-radius:6px;">
+        <div style="display:grid;grid-template-columns:1fr 70px 70px 90px;gap:8px;font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;margin-bottom:4px;border-bottom:1px solid var(--border);padding-bottom:4px;">
+          <span>Metric</span>
+          <span style="text-align:right;">${escapeHtml(p.league || "Raw")}</span>
+          <span style="text-align:center;">Factor</span>
+          <span style="text-align:right;">→ MLBe</span>
+        </div>
+        ${rows.join("")}
+        <div style="font-size:10px;color:var(--text-tertiary);margin-top:8px;line-height:1.4;">
+          MLB-equivalent estimates use the league translation factors documented in the League Context tab. ${ctx.citation ? `Source: <em>${escapeHtml(ctx.citation)}</em>.` : ""}
+        </div>
+      </div>`;
+  })();
+
   const overviewHtml = `
     <div class="detail-title flush">Overview</div>
     ${overviewTiles}
+    ${mlbTranslationCard}
     ${arcHtml}`;
 
   const toolsScoutingHtml = `
@@ -17336,7 +18020,25 @@ function renderDebuts() {
     if (bw == null) return -1;
     return bw - aw;
   };
-  if (sortMode === "war") {
+  // v30.8 — Statcast sort wins over the base debutSort dimensions.
+  if (state.debutStatcastSort && state.debutStatcastSort !== "off") {
+    const sk = state.debutStatcastSort;
+    const _scVal = (player) => {
+      if (sk === "sc_plus") return getStatcastPlus(player);
+      const cq = ((player.statcast_metrics || {}).contact_quality) || {};
+      const pm = ((player.statcast_metrics || {}).pitch_movement) || {};
+      if (sk === "avg_ev")       return cq.avg_ev;
+      if (sk === "max_ev")       return cq.max_ev;
+      if (sk === "hard_hit_pct") return cq.hard_hit_pct;
+      if (sk === "barrel_pct")   return cq.barrel_pct;
+      if (sk === "fb_velo") {
+        const top = (pm.pitch_summary || [])[0];
+        return top ? top.avg_velo : null;
+      }
+      return null;
+    };
+    orderedGrads = filtered.slice().sort(sortByWarField(_scVal));
+  } else if (sortMode === "war") {
     orderedGrads = filtered.slice().sort(sortByWarField(g => (g.sabermetrics || {}).war));
   } else if (sortMode === "career_war") {
     orderedGrads = filtered.slice().sort(sortByWarField(g => (g.career_war || {}).career_war));
@@ -19337,6 +20039,8 @@ document.addEventListener("click", (e) => {
       state.toolFilterKey = "off";
       state.toolFilterMin = 0;
       break;
+    case key === "toolsort":     state.toolSortKey     = "off"; break;
+    case key === "statcastsort": state.statcastSortKey = "off"; break;
     case key === "sort":   state.sort = "fv"; break;
     case key.startsWith("fv:"):
       if (state.fvIndicators && state.fvIndicators.delete) {
@@ -20155,6 +20859,8 @@ function activeFilterCount() {
   // strip. Each selected FV indicator counts individually.
   if (state.fvIndicators && state.fvIndicators.size) n += state.fvIndicators.size;
   if (state.statcastFilter && state.statcastFilter.size) n += state.statcastFilter.size;
+  if (state.toolSortKey && state.toolSortKey !== "off") n++;
+  if (state.statcastSortKey && state.statcastSortKey !== "off") n++;
   if (state.search) n++;
   return n;
 }
@@ -20193,6 +20899,12 @@ function renderActiveFiltersStrip() {
   if (state.toolFilterKey && state.toolFilterKey !== "off" && state.toolFilterMin > 0) {
     const label = toolAbbrev ? toolAbbrev(state.toolFilterKey).toUpperCase() : state.toolFilterKey;
     chip("Tool", `${label} ≥ ${state.toolFilterMin}`, "tool");
+  }
+  if (state.toolSortKey && state.toolSortKey !== "off") {
+    chip("Sort by tool", state.toolSortKey, "toolsort");
+  }
+  if (state.statcastSortKey && state.statcastSortKey !== "off") {
+    chip("Sort by SC", state.statcastSortKey, "statcastsort");
   }
   if (state.sort && state.sort !== "fv") chip("Sort", state.sort, "sort");
   const el = document.getElementById("active-filters-strip");
@@ -26486,6 +27198,20 @@ function renderPlayerDetail(key) {
   const zoneMetricsSection = "";   // back-compat: merged into statcastSection above
   const statcastApiSection = "";   // back-compat: merged into statcastSection above
 
+  // v30.8 — Statcast percentile-bars block. Ranks this prospect on
+  // each tracked Statcast metric vs the same-position same-level
+  // cohort across the league. A hitter at AA with avg EV 92 might
+  // surface as "78th percentile · top 22% for SS at AA." This is
+  // the missing context layer between "EV 92" (a number) and
+  // "is that good?" (the user's actual question).
+  const statcastPercentilesSection = _statcastPercentileBlock(p);
+  // v30.8 — Debuted-specific viz: FV-tier debut comparison. Ranks
+  // the graduate against ALL graduates who entered with the same
+  // FV bucket. Surfaces "of the 38 FV-55 debuts since 2018, ranks
+  // 8th by career WAR" — useful for evaluating whether a debut
+  // is over- / under-performing their tier cohort.
+  const debutFvCohortSection = _debutFvCohortBlock(p);
+
   const arsenalSection = isPitcher
     ? `<div class="detail-title">Pitch arsenal</div>${makeArsenalBlock(p.pitch_arsenal, p)}`
     : "";
@@ -27657,8 +28383,8 @@ function renderPlayerDetail(key) {
   const overviewHtml = [summaryGridHtml, chartSection, scoutReportsOnOverview, sourceSection, noteSection]
     .filter(Boolean).join("");
   const performanceHtml = [consolidatedCareerSection, sabermetricsSection,
-                           savantSection, statcastSection, arsenalSection,
-                           projectionArcSection]
+                           savantSection, statcastSection, statcastPercentilesSection,
+                           arsenalSection, projectionArcSection, debutFvCohortSection]
     .filter(Boolean).join("");
   // Tools card pulls its per-source publication history alongside,
   // matching the original layout. Scouting reports keeps its inner
@@ -31491,6 +32217,34 @@ function attachHandlers() {
     syncToURL();
     render();
   });
+  // v30.8 — Per-Statcast-metric sort selector. Picking a metric flips
+  // the actives list to sort by that Statcast metric (overrides both
+  // state.sort and state.toolSortKey). Restricts the visible pool to
+  // hitters or pitchers when the metric is side-specific.
+  const ssKeyEl = document.getElementById("statcast-sort-select");
+  if (ssKeyEl) ssKeyEl.addEventListener("change", e => {
+    state.statcastSortKey = e.target.value;
+    resetListPages();
+    syncToURL();
+    render();
+  });
+  // v30.8 — IL + Debuted per-Statcast-metric sorts. Same dropdown
+  // pattern as the actives statcast sort; each page has its own
+  // state key so cross-page sort context is preserved.
+  const ilSskEl = document.getElementById("il-statcast-sort");
+  if (ilSskEl) ilSskEl.addEventListener("change", e => {
+    state.ilStatcastSort = e.target.value;
+    resetListPages();
+    syncToURL();
+    render();
+  });
+  const debutSskEl = document.getElementById("debut-statcast-sort");
+  if (debutSskEl) debutSskEl.addEventListener("change", e => {
+    state.debutStatcastSort = e.target.value;
+    resetListPages();
+    syncToURL();
+    render();
+  });
 
   const searchInput = document.getElementById("search-input");
   if (searchInput) {
@@ -31575,6 +32329,8 @@ function _resetPageFilters(page) {
     state.statcastFilter = new Set();
     state.toolFilterKey  = "off";
     state.toolFilterMin  = 0;
+    state.toolSortKey    = "off";
+    state.statcastSortKey = "off";
     state.search         = "";
     // v29 — Default density is "compact" everywhere (was inconsistently
     // resetting to the retired "standard" tier here, which left users
