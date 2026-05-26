@@ -791,6 +791,41 @@
       letter-spacing: 0.04em;  /* breathe the blocky monospace on big text */
       color: var(--text-primary);
       line-height: 1.1;
+      /* v30 — Title becomes a flex lockup so the inline baseball
+         badge sits to the LEFT of the title text, vertically
+         centered with the title's optical center. */
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    /* v30 — Baseball badge logo for the site title. Cream-paper ball
+       face with the existing rainbow gradient bar reproduced as the
+       seam-stitching arc — ties the lockup to the gradient underline
+       below the title (same colors, same identity). Built as inline
+       SVG so it inherits the page's color tokens and stays crisp at
+       every zoom level. */
+    .h1-logo {
+      flex: 0 0 auto;
+      width: 44px;
+      height: 44px;
+      display: inline-block;
+      filter: drop-shadow(0 1px 2px rgba(15, 27, 45, 0.18));
+    }
+    [data-theme="dark"] .h1-logo {
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+    }
+    .h1-logo .ball-face   { fill: var(--bg-secondary); stroke: var(--text-primary); stroke-width: 2; }
+    .h1-logo .seam-arc    { fill: none; stroke-width: 3; stroke-linecap: round; }
+    .h1-logo .seam-stitch { stroke: var(--text-primary); stroke-width: 1.2; stroke-linecap: round; stroke-dasharray: 1.5 3; fill: none; }
+    /* v30 — Title text + underline rule stack vertically alongside
+       the badge. The .h1-rule sits inside .h1-title so the gradient
+       underline lands directly below the wordmark (not below the
+       badge), giving the lockup a clean masthead silhouette. */
+    .h1 .h1-title,
+    h1 .h1-title {
+      display: inline-flex;
+      flex-direction: column;
+      justify-content: center;
     }
     /* Build / version banner — sits above the page H1 on every view.
        Small, lilac, single-line. Survives content overwrites because
@@ -1180,6 +1215,11 @@
       border-radius: 3px;
       line-height: 1.2;
       background: transparent;
+      /* v30 — Prevent the height value (6'1") from wrapping into a
+         two-line stack when the column is narrow. The character
+         sequence  6  '  1  "  used to break between any two glyphs
+         on mid-density rows; nowrap pins the chip content together. */
+      white-space: nowrap;
     }
     body.density-compact .phys-cluster .phys-chip {
       font-size: 9px;
@@ -1604,11 +1644,9 @@
        size and adjacent pills don't shift. The corner marks are real
        DOM spans (not ::after pseudos) so they can carry their own
        `title` tooltips explaining the indicator. */
-    /* v29 — Per-edge multi-indicator outline + glow. Each of the four
-       FV indicators owns one EDGE of the badge so a prospect carrying
-       multiple flags shows all colors at once. v29.1 — wide and upside
-       swapped per user request; v29.2 — every indicator now glows
-       (was only breakout). Mapping:
+    /* v29 — Per-edge multi-indicator outline. Each of the four FV
+       indicators owns one EDGE of the badge so a prospect carrying
+       multiple flags shows all colors at once. Mapping:
          top edge    = upside (soft pink)
          left edge   = single-source (amber)
          bottom edge = breakout (aquamarine, pulses with violet)
@@ -1616,16 +1654,30 @@
        Corner glyphs follow the same axis: upside (+) top-right, wide
        (W) bottom-right, single-source (1) top-left, breakout (★)
        bottom-left.
-       Implementation: each indicator class sets its own --edge-* CSS
-       custom property to a color; the shared .fv-badge box-shadow rule
-       composes all four insets + a low-blur outer glow per edge into
-       one declaration. Combinations work automatically because the
-       box-shadow lives on the base class. Each indicator with a color
-       set also gets an outer glow at the matching edge. */
+       v30 — Removed the outer-glow halos that bled past the chip
+       outline (every chip carried 4 outset blur shadows that spilled
+       into neighboring layout). Indicators now glow ON the chip only,
+       matching the breakout-style edge pulse. The edge-color inset
+       still pulses opacity so the indicator family stays "alive"; the
+       blur halo is gone. Cleaner, less visual noise on dense lists. */
+    /* Each indicator class sets a per-edge color via custom property,
+       composed into one box-shadow on the shared base rule below.
+       Combinations work for free because every active edge has its
+       own variable. Edges that aren't set stay transparent. */
     @property --edge-top    { syntax: "<color>"; inherits: false; initial-value: transparent; }
     @property --edge-right  { syntax: "<color>"; inherits: false; initial-value: transparent; }
     @property --edge-left   { syntax: "<color>"; inherits: false; initial-value: transparent; }
     @property --edge-bottom { syntax: "<color>"; inherits: false; initial-value: transparent; }
+    /* v30 — Pulse cadence drives the edge-color alpha via color-mix on
+       an animated percentage. Pulses ONLY the colored inset edges,
+       not the FV number / corner glyphs / chip body. Single shared
+       animation so combined indicators pulse in lockstep (independent
+       per-edge cadences were noisy). */
+    @property --edge-pulse  { syntax: "<percentage>"; inherits: false; initial-value: 100%; }
+    @keyframes fvIndicatorPulse {
+      0%, 100% { --edge-pulse: 100%; }
+      50%      { --edge-pulse: 55%; }
+    }
     .fv-badge.is-wide,
     .fv-badge.is-single-source,
     .fv-badge.is-breakout,
@@ -1634,50 +1686,18 @@
       overflow: visible;
       padding-left: calc(var(--space-1, 2px) + 2px);
       padding-right: calc(var(--space-1, 2px) + 2px);
-      /* Composite shadow: four crisp inset edges + four soft outer
-         glow halos. Transparent --edge-* vars stay invisible so a
-         badge carrying only one indicator only paints one edge + glow. */
       box-shadow:
         inset 0  2px 0 0 var(--edge-top),
         inset -2px 0 0 0 var(--edge-right),
         inset  2px 0 0 0 var(--edge-left),
-        inset 0 -2px 0 0 var(--edge-bottom),
-        0 -3px 6px -2px var(--edge-top),
-        3px  0 6px -2px var(--edge-right),
-        -3px 0 6px -2px var(--edge-left),
-        0  3px 6px -2px var(--edge-bottom);
-      animation: fvIndicatorGlow 2.4s ease-in-out infinite;
+        inset 0 -2px 0 0 var(--edge-bottom);
+      animation: fvIndicatorPulse 2.4s ease-in-out infinite;
     }
-    .fv-badge.is-upside        { --edge-top: var(--upside-pink); }
-    .fv-badge.is-wide          { --edge-right: var(--neon-violet); }
-    .fv-badge.is-single-source { --edge-left: var(--neon-amber); }
-    /* Universal glow pulse — the outer halo blur radius cycles via a
-       custom property so the badge "breathes" without re-running the
-       layout. All four edges share the cadence; combined indicators
-       all pulse in lockstep. Independent per-edge cadences felt
-       chaotic in testing. */
-    @property --indicator-glow-spread { syntax: "<length>"; inherits: false; initial-value: 6px; }
-    @keyframes fvIndicatorGlow {
-      0%, 100% { --indicator-glow-spread: 4px; }
-      50%      { --indicator-glow-spread: 10px; }
-    }
-    /* Re-emit the shadow stack using the animated spread variable so
-       the outer halo grows / shrinks every cycle. The inset edges
-       stay fixed (those are the crisp identity marks). */
-    .fv-badge.is-wide,
-    .fv-badge.is-single-source,
-    .fv-badge.is-breakout,
-    .fv-badge.is-upside {
-      box-shadow:
-        inset 0  2px 0 0 var(--edge-top),
-        inset -2px 0 0 0 var(--edge-right),
-        inset  2px 0 0 0 var(--edge-left),
-        inset 0 -2px 0 0 var(--edge-bottom),
-        0 -3px var(--indicator-glow-spread) -2px var(--edge-top),
-        3px  0 var(--indicator-glow-spread) -2px var(--edge-right),
-        -3px 0 var(--indicator-glow-spread) -2px var(--edge-left),
-        0  3px var(--indicator-glow-spread) -2px var(--edge-bottom);
-    }
+    /* Per-indicator edge colors — wrapped in color-mix so the
+       animated --edge-pulse drives the visible alpha. */
+    .fv-badge.is-upside        { --edge-top:    color-mix(in srgb, var(--upside-pink) var(--edge-pulse), transparent); }
+    .fv-badge.is-wide          { --edge-right:  color-mix(in srgb, var(--neon-violet) var(--edge-pulse), transparent); }
+    .fv-badge.is-single-source { --edge-left:   color-mix(in srgb, var(--neon-amber)  var(--edge-pulse), transparent); }
     /* v7 / v29 — Wide+single combined rendering is now defined as part
        of the per-edge multi-indicator block above (top edge violet for
        wide, left edge amber for single). The old half-and-half wedge
@@ -1685,22 +1705,42 @@
        wide+breakout, single+upside, etc. — every combination follows
        the same edge-per-indicator mapping instead of having a unique
        layout for one pair. */
+    /* v30 — Corner glyph base. Every indicator glyph renders in a
+       uniform 14×14 circle so the four corners read as a balanced
+       set. Prior version used `padding` which let each glyph size
+       itself by content (the "+" was wider than "1" was wider than
+       "★"); fixed dimensions + flex-centering give every glyph the
+       same geometry regardless of its character width.
+       v30.1 — Sans-serif at 11px replaces the mono 9px because the
+       "+" glyph in mono fonts sits visibly above the typographic
+       center of its em-box (the cross-bar lines up with the lower-
+       case x-height, not the middle of the circle). Sans-serif fonts
+       like Inter render "+" closer to the visual center, plus the
+       extra 2px size gives the glyph more room to fill the chip
+       evenly. The 0 line-height + 14×14 box + flex-center stack now
+       keeps every glyph optically centered. */
     .fv-wide-mark,
     .fv-single-mark,
     .fv-dropped-off-mark,
     .fv-breakout-mark,
     .fv-upside-mark {
       position: absolute;
-      font-family: var(--font-mono);
-      font-size: var(--fs-xs);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      font-family: var(--font-sans);
+      font-size: 11px;
       font-weight: 800;
       color: var(--text-on-accent);
-      border-radius: 999px;
-      padding: 0 var(--space-1);
-      line-height: 1.4;
+      border-radius: 50%;
+      padding: 0;
+      line-height: 0;
       letter-spacing: 0;
       cursor: help;
       z-index: 1;
+      text-align: center;
     }
     /* v29.1 — Corner mapping after the wide/upside swap:
          top-right    = upside (+)        — premium reads first
@@ -1708,21 +1748,26 @@
          bottom-right = wide (W)          — paired with its right-edge
          bottom-left  = breakout (★)
        Each glyph color matches the edge color so the eye links corner
-       to edge without learning a separate palette. */
-    .fv-single-mark      { top: -5px;   left: -6px;  background: var(--neon-amber); }
-    .fv-upside-mark      { top: -5px;   right: -7px; background: var(--upside-pink); color: #2a0014; }
-    .fv-wide-mark        { bottom: -5px; right: -7px; background: var(--neon-violet); }
-    /* v16 — Breakout ★ in aquamarine (was green). Aquamarine reads more
-       distinct from the green "up" stock chips elsewhere on the page,
-       and matches the "rare emerging talent" semantic without being
-       confused for a positive-stock trend. */
-    .fv-breakout-mark    { bottom: -5px; left: -6px;  background: #7FFFD4; color: #002a25; }
-    /* v29 — Breakout owns the BOTTOM edge. The color cycles between
-       aquamarine and violet to give breakout an extra-strong "rare
-       emerging talent" pulse on top of the universal glow that every
-       indicator gets. The bottom-edge cycle runs in parallel with the
-       shared fvIndicatorGlow halo, so breakout reads as the most-
-       attention-grabbing indicator without overshadowing the others. */
+       to edge without learning a separate palette. All four corners
+       sit at the same -7px / -7px offset for visual symmetry.
+       v30.1 — Upside "+" overrides font-size so the glyph fills the
+       chip more confidently than the other characters do at their
+       default 11px (the "+" is a thin character; "1" / "W" / "★" all
+       have heavier visual mass at the same size). */
+    .fv-single-mark      { top: -7px;    left: -7px;  background: var(--neon-amber); }
+    .fv-upside-mark      { top: -7px;    right: -7px; background: var(--upside-pink); color: #2a0014; font-size: 13px; font-weight: 900; }
+    .fv-wide-mark        { bottom: -7px; right: -7px; background: var(--neon-violet); }
+    /* v16 — Breakout ★ in aquamarine (was green). v30.1 — Slightly
+       smaller font for the ★ so it doesn't dominate vs the other
+       glyphs (the star character carries a lot of optical weight). */
+    .fv-breakout-mark    { bottom: -7px; left: -7px;  background: #7FFFD4; color: #002a25; font-size: 9px; }
+    /* v29 / v30 — Breakout owns the BOTTOM edge. Two animations
+       stack: the shared fvIndicatorPulse drives the alpha cycle
+       through --edge-pulse (same cadence as every other indicator),
+       while fvBreakoutColor cycles the bottom-edge color between
+       aquamarine and violet for the extra "rare emerging talent"
+       signal. Together the bottom edge breathes through both color
+       and intensity without bleeding outside the chip. */
     @property --breakout-edge {
       syntax: "<color>";
       inherits: false;
@@ -1733,8 +1778,8 @@
       50%      { --breakout-edge: var(--neon-violet); }
     }
     .fv-badge.is-breakout {
-      --edge-bottom: var(--breakout-edge);
-      animation: fvIndicatorGlow 2.4s ease-in-out infinite, fvBreakoutColor 2s ease-in-out infinite;
+      --edge-bottom: color-mix(in srgb, var(--breakout-edge) var(--edge-pulse), transparent);
+      animation: fvIndicatorPulse 2.4s ease-in-out infinite, fvBreakoutColor 2s ease-in-out infinite;
     }
 
     /* Row tag pills — shared shape for the flag counter, health,
@@ -6233,7 +6278,33 @@
 
   <header class="header">
     <div class="build-banner" aria-label="Build version">Alpha v0.1 — Noah J. Dengler / @ARKNDJL</div>
-    <h1>MLB Prospect Portal<span class="h1-rule" aria-hidden="true"></span></h1>
+    <h1>
+      <!-- v30 — Baseball badge logo. Cream face + dark outline read as
+           a vintage Topps-card baseball; the seam arc is painted with
+           the same cardinal → gold → green → navy gradient used on the
+           title underline (defined inline via SVG <linearGradient> so
+           CSS gradients aren't required on `stroke`). The stitching
+           dashes overlay the seam to evoke a real ball without
+           cluttering the silhouette. -->
+      <svg class="h1-logo" viewBox="0 0 44 44" role="img" aria-label="MLB Prospect Portal baseball logo">
+        <defs>
+          <linearGradient id="ball-seam-gradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"   stop-color="#B91C1C"/>
+            <stop offset="35%"  stop-color="#C9A227"/>
+            <stop offset="65%"  stop-color="#1F7A3A"/>
+            <stop offset="100%" stop-color="#0E2B4D"/>
+          </linearGradient>
+        </defs>
+        <circle class="ball-face" cx="22" cy="22" r="19"/>
+        <!-- Right seam arc — curved from upper-right to lower-right. -->
+        <path class="seam-arc"    stroke="url(#ball-seam-gradient)" d="M 32 8 Q 40 22 32 36"/>
+        <path class="seam-stitch"                                  d="M 32 8 Q 40 22 32 36"/>
+        <!-- Left seam arc — mirror on the opposite side. -->
+        <path class="seam-arc"    stroke="url(#ball-seam-gradient)" d="M 12 8 Q 4 22 12 36"/>
+        <path class="seam-stitch"                                  d="M 12 8 Q 4 22 12 36"/>
+      </svg>
+      <span class="h1-title">MLB Prospect Portal<span class="h1-rule" aria-hidden="true"></span></span>
+    </h1>
     <div class="meta-line" id="meta-line">Loading…</div>
     <!-- Persistent global controls — these survive content overwrites
          on detail pages where the section-tabs strip in #main-template
@@ -15418,27 +15489,57 @@ function getStatcastPlus(p) {
 // Caches mean + stddev across active prospects so each phys chip can
 // color-code by z-score vs the pool: ≥+1σ above mean = neon-green (a
 // notable + value); ≤-1σ below = neon-orange (a notable - value);
-// within ±1σ = tertiary. Same heuristic as B/T glyphs so HT/WT/BMI
-// read consistently. Cache cleared at the top of render() via
+// within ±1σ = tertiary. Cache cleared at the top of render() via
 // _resetPhysPoolCache.
+// v30 — Pool now bucketed by COARSE position (C / IF / OF / P) so a
+// tall middle-infielder reads "+1σ vs IF peers" instead of getting
+// flagged by the league-wide pool that's biased toward pitchers.
+// Falls back to the pool aggregate when the player's bucket can't be
+// resolved (DH / position missing).
 let _physPoolCache = null;
 function _resetPhysPoolCache() { _physPoolCache = null; }
+// Map any positionBucket() return value to one of the four coarse
+// buckets used for phys-chip pool stats. Keeps the bucket roster big
+// enough per side (every org has many C / IF / OF / P) that z-scores
+// stay meaningful.
+function _coarsePosBucket(pos) {
+  const fine = positionBucket(pos);
+  if (!fine) return null;
+  if (["SP", "RP", "SIRP", "MIRP", "P"].includes(fine)) return "P";
+  if (fine === "C") return "C";
+  if (["SS", "2B", "3B", "1B", "INF"].includes(fine)) return "IF";
+  if (["CF", "LF", "RF", "OF"].includes(fine)) return "OF";
+  return null;
+}
 function _physPool() {
   if (_physPoolCache) return _physPoolCache;
-  const hts = [], wts = [], bms = [];
+  const buckets = { C: { hts: [], wts: [], bms: [] },
+                    IF: { hts: [], wts: [], bms: [] },
+                    OF: { hts: [], wts: [], bms: [] },
+                    P:  { hts: [], wts: [], bms: [] },
+                    ALL:{ hts: [], wts: [], bms: [] } };
   for (const p of (DATA.players || [])) {
     const phys = _getPhysicalProfile(p);
-    if (phys.height_in != null && isFinite(phys.height_in)) hts.push(Number(phys.height_in));
-    if (phys.weight_lb != null && isFinite(phys.weight_lb)) wts.push(Number(phys.weight_lb));
-    if (phys.bmi != null && isFinite(phys.bmi))             bms.push(Number(phys.bmi));
+    const bucket = _coarsePosBucket(p.position);
+    const sinks = bucket ? [buckets[bucket], buckets.ALL] : [buckets.ALL];
+    for (const sink of sinks) {
+      if (phys.height_in != null && isFinite(phys.height_in)) sink.hts.push(Number(phys.height_in));
+      if (phys.weight_lb != null && isFinite(phys.weight_lb)) sink.wts.push(Number(phys.weight_lb));
+      if (phys.bmi != null && isFinite(phys.bmi))             sink.bms.push(Number(phys.bmi));
+    }
   }
   const stat = (arr) => {
-    if (!arr.length) return { mean: null, sd: null };
+    if (!arr.length) return { mean: null, sd: 1 };
     const m = arr.reduce((s, v) => s + v, 0) / arr.length;
     const variance = arr.reduce((s, v) => s + (v - m) * (v - m), 0) / arr.length;
     return { mean: m, sd: Math.sqrt(variance) || 1 };
   };
-  _physPoolCache = { ht: stat(hts), wt: stat(wts), bmi: stat(bms) };
+  const out = {};
+  for (const k of Object.keys(buckets)) {
+    const b = buckets[k];
+    out[k] = { ht: stat(b.hts), wt: stat(b.wts), bmi: stat(b.bms) };
+  }
+  _physPoolCache = out;
   return _physPoolCache;
 }
 function _physChipColor(value, poolStat) {
@@ -15459,42 +15560,80 @@ function physClusterHTML(p) {
                   : "—");
   const wt  = phys.weight_lb != null ? String(Math.round(phys.weight_lb)) : "—";
   const bmi = phys.bmi != null ? phys.bmi.toFixed(1) : "—";
-  // Handedness — color-coded glyph pair (B = bats, T = throws).
-  const hand = _getHandedness(p);
-  const _handColor = side =>
-    side === "L" ? "var(--down)" :
-    side === "R" ? "var(--up)" :
-    side === "S" ? "var(--neon-violet)" : "var(--text-tertiary)";
-  const _handGlyph = (label, side) => {
-    const c = _handColor(side);
-    const v = side || "—";
-    return `<span class="phys-hand-glyph" style="color:${c};border-color:${c}66;" title="${label} ${side || '?'}">${label}<span class="phys-hand-side">${escapeHtml(v)}</span></span>`;
-  };
-  // v29 — Render HT/WT/BMI as color-coded chips (matching the B/T
-  // chip family) so each measurement reads as an outlier-vs-pool
-  // signal at a glance. Pool means/stddevs are computed once per
-  // render via _physPool(); a z ≥ +1 reads green (notably high), z ≤
-  // -1 reads orange (notably low), otherwise neutral.
+  // v29 — HT / WT / BMI chips color-coded by z-score vs the pool.
+  // v30 — Pool buckets by COARSE position (C / IF / OF / P) so a tall
+  // middle-infielder reads "+1σ vs IF peers" instead of being judged
+  // against a league mean biased by pitchers. Falls back to ALL when
+  // the player's position doesn't resolve to a bucket (e.g. DH only).
   const pool = _physPool();
-  const htCol = _physChipColor(phys.height_in,  pool.ht);
-  const wtCol = _physChipColor(phys.weight_lb,  pool.wt);
-  const bmCol = _physChipColor(phys.bmi,        pool.bmi);
-  const _fmt = (v, m) => (v == null || !isFinite(v) || m == null) ? "—" : `${v >= m ? "+" : ""}${(v - m).toFixed(1)}σ?`;
+  const bucketKey = _coarsePosBucket(p.position) || "ALL";
+  const bucket = pool[bucketKey] || pool.ALL;
+  const htCol = _physChipColor(phys.height_in,  bucket.ht);
+  const wtCol = _physChipColor(phys.weight_lb,  bucket.wt);
+  const bmCol = _physChipColor(phys.bmi,        bucket.bmi);
+  const _bucketLabel = ({C:"C peers", IF:"IF peers", OF:"OF peers", P:"P peers", ALL:"pool"})[bucketKey];
   const _zStr = (val, ps) => {
     if (val == null || !isFinite(val) || !ps || ps.mean == null) return "—";
-    return `z=${((val - ps.mean) / (ps.sd || 1)).toFixed(2)} vs pool mean ${ps.mean.toFixed(1)}`;
+    return `z=${((val - ps.mean) / (ps.sd || 1)).toFixed(2)} vs ${_bucketLabel} mean ${ps.mean.toFixed(1)}`;
   };
-  const htTip = `Height ${ht}${ht !== "—" ? " · " : ""}${_zStr(phys.height_in, pool.ht)}`;
-  const wtTip = `Weight ${wt} lbs · ${_zStr(phys.weight_lb, pool.wt)}`;
-  const bmTip = `BMI ${bmi} · ${_zStr(phys.bmi, pool.bmi)}`;
+  const htTip = `Height ${ht}${ht !== "—" ? " · " : ""}${_zStr(phys.height_in, bucket.ht)}`;
+  const wtTip = `Weight ${wt} lbs · ${_zStr(phys.weight_lb, bucket.wt)}`;
+  const bmTip = `BMI ${bmi} · ${_zStr(phys.bmi, bucket.bmi)}`;
   const chip = (val, col, tip) =>
     `<span class="phys-chip" style="color:${col.fg};border-color:${col.bd};" title="${escapeHtml(tip)}">${escapeHtml(val)}</span>`;
-  const tip = `Height: ${ht} · Weight: ${wt} lbs · BMI: ${bmi} · Bats ${hand.bats || "?"} / Throws ${hand.throws || "?"}`;
+
+  // v30 — B/T chip redesign. Role-specific primary chip (LHB/RHB/SHB
+  // for hitters, LHP/RHP for pitchers) plus a secondary chip with the
+  // OTHER side (T R / T L for hitters; B R / B L / B S for pitchers).
+  // The primary chip surfaces the role+handedness in one read — "LHP"
+  // is more informative than "B L T L" for a pitcher who matters
+  // mostly for his arm. Neutral palette (no red/green) so handedness
+  // doesn't read as a positive / negative indicator.
+  const hand = _getHandedness(p);
+  const isPitcherP = !!(p.statline && p.statline.is_pitcher)
+                    || (positionBucket(p.position) || "").endsWith("P")
+                    || ["SP","RP","SIRP","MIRP","P"].includes(positionBucket(p.position));
+  const handColor = side =>
+    side === "L" ? "var(--neon-violet)" :
+    side === "R" ? "var(--neon-amber)"  :
+    side === "S" ? "var(--neon-cyan)"   : "var(--text-tertiary)";
+  const primaryChip = (() => {
+    let side, suffix, longLabel;
+    if (isPitcherP) {
+      side = hand.throws;
+      suffix = "HP";
+      longLabel = side ? `${side === "L" ? "Left" : side === "R" ? "Right" : "Switch"}-handed pitcher` : "Pitcher (handedness unknown)";
+    } else {
+      side = hand.bats;
+      suffix = "HB";
+      longLabel = side
+        ? (side === "S" ? "Switch-hitter" : `${side === "L" ? "Left" : "Right"}-handed batter`)
+        : "Batter (handedness unknown)";
+    }
+    const c = handColor(side);
+    const sideGlyph = side || "?";
+    return `<span class="phys-hand-glyph" style="color:${c};border-color:${c}66;" title="${escapeHtml(longLabel)}">${sideGlyph}${suffix}</span>`;
+  })();
+  const secondaryChip = (() => {
+    let label, side, tip;
+    if (isPitcherP) {
+      label = "B"; side = hand.bats;
+      tip = side ? `Bats ${side === "S" ? "switch" : side === "L" ? "left" : "right"}` : "Bats unknown";
+    } else {
+      label = "T"; side = hand.throws;
+      tip = side ? `Throws ${side === "L" ? "left" : "right"}` : "Throws unknown";
+    }
+    const c = handColor(side);
+    const v = side || "—";
+    return `<span class="phys-hand-glyph" style="color:${c};border-color:${c}66;" title="${escapeHtml(tip)}">${label}<span class="phys-hand-side">${escapeHtml(v)}</span></span>`;
+  })();
+
+  const tip = `Height: ${ht} · Weight: ${wt} lbs · BMI: ${bmi} · Bats ${hand.bats || "?"} / Throws ${hand.throws || "?"} · phys vs ${_bucketLabel}`;
   return `<div class="phys-cluster desktop-only" title="${escapeHtml(tip)}">`
        + chip(ht, htCol, htTip)
        + chip(wt, wtCol, wtTip)
        + chip(bmi, bmCol, bmTip)
-       + `<span class="phys-hand-pair">${_handGlyph("B", hand.bats)}${_handGlyph("T", hand.throws)}</span>`
+       + `<span class="phys-hand-pair">${primaryChip}${secondaryChip}</span>`
        + `</div>`;
 }
 
@@ -21194,10 +21333,25 @@ function makeCareerTable(career, birthDate) {
       ${_sh("wins", "W-L", 'title="Wins–Losses (sorts by wins)"')}
       ${_sh("era", "ERA", 'title="Earned Run Average (lower is better)"')}
       ${_sh("whip", "WHIP", 'title="Walks + Hits per Inning Pitched (lower is better)"')}
-      ${_sh("k9", "K/9", 'title="Strikeouts per 9 innings"')}
-      ${_sh("bb9", "BB/9", 'title="Walks per 9 innings (lower is better)"')}
+      ${_sh("k_pct",  "K%",  'title="Strikeout rate (per batter faced) — preferred over K/9 because per-batter rate doesn\'t depend on starter vs reliever IP-per-appearance. Falls back to K/9 ÷ 0.387 when batters-faced isn\'t on file."')}
+      ${_sh("bb_pct", "BB%", 'title="Walk rate (per batter faced) — preferred over BB/9 for the same reason as K%. Lower is better. Falls back to BB/9 ÷ 0.387 when batters-faced isn\'t on file."')}
       ${_sh("hr9", "HR/9", 'title="Home runs allowed per 9 innings — pitcher\'s contact-quality red-flag stat (one of the three FIP inputs); lower is better"')}
     </tr>`;
+    // v30 — K/9 + BB/9 columns swapped for K% + BB%. Per-batter rate
+    // is the canonical pitcher walk/strikeout metric site-wide (see
+    // the K% / BB% glossary entries). K/9 still appears as a fallback
+    // approximation when the row doesn't carry k_pct (older career
+    // rows without TBF).
+    const _kPctOrFallback = (s) => {
+      if (s.k_pct != null) return s.k_pct.toFixed(1) + "%";
+      if (s.k_per_9 != null) return (s.k_per_9 / 0.387).toFixed(1) + "%";
+      return "—";
+    };
+    const _bbPctOrFallback = (s) => {
+      if (s.bb_pct != null) return s.bb_pct.toFixed(1) + "%";
+      if (s.bb_per_9 != null) return (s.bb_per_9 / 0.387).toFixed(1) + "%";
+      return "—";
+    };
     const rows = sorted.map(s => `<tr>
       <td>${s.season}</td>
       <td>${ageFor(s.season)}</td>
@@ -21207,8 +21361,8 @@ function makeCareerTable(career, birthDate) {
       <td>${s.wins != null ? `${s.wins}-${s.losses}` : "—"}</td>
       <td>${s.era ?? "—"}</td>
       <td>${s.whip ?? "—"}</td>
-      <td>${s.k_per_9 != null ? s.k_per_9.toFixed(2) : "—"}</td>
-      <td>${s.bb_per_9 != null ? s.bb_per_9.toFixed(2) : "—"}</td>
+      <td>${_kPctOrFallback(s)}</td>
+      <td>${_bbPctOrFallback(s)}</td>
       <td>${s.hr_per_9 != null ? s.hr_per_9.toFixed(2) : "—"}</td>
     </tr>`).join("");
     return `<table class="detail-table"><thead>${strip}${head}</thead><tbody>${rows}</tbody></table>`;
@@ -21332,8 +21486,19 @@ function makeCareerByLevelTable(career, birthDate) {
       const ip = sum(rs, "ip"), g = sum(rs, "games");
       const era = wmean(rs, "era", "ip");
       const whip = wmean(rs, "whip", "ip");
-      const k9 = wmean(rs, "k_per_9", "ip");
-      const bb9 = wmean(rs, "bb_per_9", "ip");
+      // v30 — K% / BB% replace K/9 / BB/9 in the by-level aggregate
+      // table (matches the by-season table above). Weighted-mean of
+      // the per-batter rate when present; falls back to K/9 ÷ 0.387
+      // when the level's career rows didn't carry tbf.
+      const _wmeanPct = (field, fallbackField) => {
+        // Weight by IP so a 1-game cameo doesn't sway the level mean.
+        const v = wmean(rs, field, "ip");
+        if (v != null) return v;
+        const f = wmean(rs, fallbackField, "ip");
+        return f != null ? f / 0.387 : null;
+      };
+      const kp  = _wmeanPct("k_pct",  "k_per_9");
+      const bbp = _wmeanPct("bb_pct", "bb_per_9");
       const hr9 = wmean(rs, "hr_per_9", "ip");
       return `<tr style="background:var(--bg-tertiary);">
         <td style="font-size:11px;color:var(--text-tertiary);">${seasonRange(rs)}</td>
@@ -21344,14 +21509,14 @@ function makeCareerByLevelTable(career, birthDate) {
         <td>${sum(rs, "wins") || "—"}-${sum(rs, "losses") || "—"}</td>
         <td>${era != null ? era.toFixed(2) : "—"}</td>
         <td>${whip != null ? whip.toFixed(2) : "—"}</td>
-        <td>${k9 != null ? k9.toFixed(2) : "—"}</td>
-        <td>${bb9 != null ? bb9.toFixed(2) : "—"}</td>
+        <td>${kp  != null ? kp.toFixed(1)  + "%" : "—"}</td>
+        <td>${bbp != null ? bbp.toFixed(1) + "%" : "—"}</td>
         <td>${hr9 != null ? hr9.toFixed(2) : "—"}</td>
       </tr>`;
     }).join("");
     return `<table class="detail-table"><thead><tr>
       <th>Years</th><th title="Age range during seasons at this level (July 1 of each season)">Age</th><th>Level</th><th>G</th><th>IP</th><th>W-L</th>
-      <th>ERA</th><th>WHIP</th><th>K/9</th><th>BB/9</th><th>HR/9</th>
+      <th>ERA</th><th>WHIP</th><th title="Strikeout rate per batter faced (preferred over K/9)">K%</th><th title="Walk rate per batter faced (preferred over BB/9; lower is better)">BB%</th><th>HR/9</th>
     </tr></thead><tbody>${rows}</tbody></table>`;
   }
   const rows = levels.map(lv => {
@@ -22891,7 +23056,7 @@ function renderPlayerDetail(key) {
       const isWorse  = lowerBetter ? delta > 0.1  : delta < -0.1;
       const color = isBetter ? "var(--up)" : isWorse ? "var(--down)" : "var(--text-tertiary)";
       const sign = delta > 0 ? "+" : "";
-      return `${val.toFixed(1)}% <span style="color:${color};font-size:11px;">(${sign}${delta.toFixed(1)}pp)</span>`;
+      return `${val.toFixed(1)}% <span style="color:${color};font-size:11px;">(${sign}${delta.toFixed(1)}%)</span>`;
     };
     const fmtNum = (val, avg, lowerBetter, digits = 2) => {
       if (val == null || isNaN(val) || avg == null) return "—";

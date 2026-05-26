@@ -1504,11 +1504,12 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             bonus = min(3.0, (lp - 15) / 10.0 + 1.0)  # 15%→1.0, 25%→2.0, 35%→3.0
             score += bonus
             drivers.append(f"+{lp:.0f}% vs level mean")
-        # v29 — Statcast+ riser amplifier. Top-quintile composite
+        # v29 / v30 — Statcast+ riser amplifier. Top-quintile composite
         # (≥115) adds 1.0; elite-tier (≥130) adds 2.0. Caps at 2.0 so
         # it can break ties between two surface-comparable risers
-        # without dominating the score. Players without tracked
-        # Statcast data get no nudge.
+        # without dominating the score. The actual driver CHIPS are
+        # appended uniformly in compute_movement via _statcast_drivers
+        # (every bucket gets them when data exists, not just risers).
         _scp = p.get("statcast_plus")
         try:
             _scpv = float(_scp) if _scp is not None else None
@@ -1517,10 +1518,8 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
         if _scpv is not None:
             if _scpv >= 130:
                 score += 2.0
-                drivers.append(f"Statcast+ {int(_scpv)} (elite)")
             elif _scpv >= 115:
                 score += 1.0
-                drivers.append(f"Statcast+ {int(_scpv)} (above pool)")
         # v12 — xMetric verification gate for AAA risers. If the
         # surface jump isn't supported by underlying Statcast (wOBA
         # over xWOBA, ERA under xFIP), demote to Possible Regressor
@@ -1659,6 +1658,89 @@ def _direction_from_delta(delta: float) -> str:
     return "flat"
 
 
+# v30 — Statcast drivers. Always emits the composite SC+ chip when the
+# prospect has tracked data, plus per-component standouts when an
+# individual metric reaches an "elite" bar. Surfaces ACROSS every
+# spotlight bucket (riser / rebound / faller / possible_regressor)
+# instead of being riser-only, so the user always sees WHY the
+# Statcast composite landed where it did. Returns a list of dict
+# drivers ready for the normal driver pipeline; empty when no tracked
+# data on file.
+def _statcast_drivers(p: dict) -> list[dict]:
+    out: list[dict] = []
+    sc_plus = p.get("statcast_plus")
+    if sc_plus is not None:
+        try:
+            v = int(sc_plus)
+            if v >= 130:
+                valence, tone = "good", "elite"
+            elif v >= 115:
+                valence, tone = "good", "above pool"
+            elif v <= 85:
+                valence, tone = "bad", "below pool"
+            else:
+                valence, tone = "neutral", "near pool"
+            out.append({
+                "label":   f"SC+ {v}",
+                "valence": valence,
+                "tooltip": f"Statcast+ {v} — {tone} mean (100 = pool average, σ × 15)",
+            })
+        except (TypeError, ValueError):
+            pass
+
+    sl = p.get("statline") or {}
+    is_pit = bool(sl.get("is_pitcher"))
+    cq = ((p.get("statcast_metrics") or {}).get("contact_quality") or {})
+    pm = ((p.get("statcast_metrics") or {}).get("pitch_movement") or {})
+    z_root = p.get("zone_metrics") or {}
+    # Freshest tracked zone row (largest pitch sample wins when the
+    # payload carries level_splits).
+    z = z_root
+    if isinstance(z_root, dict) and z_root.get("level_splits"):
+        rows = z_root["level_splits"]
+        if rows:
+            z = max(rows, key=lambda s: (s.get("pitches") or 0))
+
+    def _push(label, val, tip):
+        if val is None:
+            return
+        out.append({"label": label, "valence": "good", "tooltip": tip})
+
+    if not is_pit:
+        ev = cq.get("avg_ev")
+        hh = cq.get("hard_hit_pct")
+        brl = cq.get("barrel_pct")
+        z_con = (z or {}).get("z_contact_pct")
+        if ev is not None and ev >= 91:
+            _push(f"EV {ev:.1f}", ev,
+                  f"Avg exit velocity {ev:.1f} mph (elite ≥ 91)")
+        if hh is not None and hh >= 42:
+            _push(f"HH% {hh:.0f}", hh,
+                  f"Hard-hit rate {hh:.1f}% (elite ≥ 42)")
+        if brl is not None and brl >= 10:
+            _push(f"Brl% {brl:.0f}", brl,
+                  f"Barrel rate {brl:.1f}% (elite ≥ 10)")
+        if z_con is not None and z_con >= 86:
+            _push(f"Z-Con% {z_con:.0f}", z_con,
+                  f"In-zone contact {z_con:.1f}% (elite ≥ 86)")
+    else:
+        top = (pm.get("pitch_summary") or [{}])[0]
+        velo = top.get("avg_velo")
+        whiff = (z or {}).get("whiff_pct")
+        chase = (z or {}).get("chase_pct")
+        if velo is not None and velo >= 96:
+            pt = top.get("pitch_type") or "FB"
+            _push(f"{pt} {velo:.1f}", velo,
+                  f"{top.get('pitch_name') or pt} avg velocity {velo:.1f} mph (elite ≥ 96)")
+        if whiff is not None and whiff >= 28:
+            _push(f"Whiff% {whiff:.0f}", whiff,
+                  f"Induced whiff rate {whiff:.1f}% (elite ≥ 28)")
+        if chase is not None and chase >= 32:
+            _push(f"Chase% {chase:.0f}", chase,
+                  f"Induced chase rate {chase:.1f}% (elite ≥ 32)")
+    return out
+
+
 def compute_movement(p: dict) -> dict:
     """Centralized movement engine — performance-anchored composite.
 
@@ -1681,12 +1763,17 @@ def compute_movement(p: dict) -> dict:
     bucket, score, gate_drivers = _classify_movement(
         p, perf, skills, list_jump_score, pedigree,
     )
-    drivers: list[str] = []
+    drivers: list = []
     if perf_driver:
         drivers.append(perf_driver)
     drivers.extend(skills_drivers or [])
     drivers.extend(list_jump_drivers or [])
     drivers.extend(gate_drivers)
+    # v30 — Statcast drivers (composite SC+ + elite component standouts).
+    # Surface for every bucket so the user always sees the underlying
+    # tracked-data signal regardless of which way the prospect's
+    # surface stats moved.
+    drivers.extend(_statcast_drivers(p))
     # Dedup while preserving order. v29 — drivers now mix strings AND
     # dicts (the "+ upside" pink-pill driver is appended as a dict so
     # the UI can color it by valence); both shapes have to dedup. Key
