@@ -103,39 +103,63 @@ class TopGradsLeaf(unittest.TestCase):
 
 
 class ConvictionLeaf(unittest.TestCase):
+    """v30.7 — Conviction was reframed from a binary 0/1 ("does the
+    org have any 4-WAR/yr grad?") to a star-COUNT under tighter
+    thresholds: ≥3.0 WAR/yr OR ≥3.5 in a single season. Tests now
+    assert on `star_count` (the new leaf-scoring field) and treat
+    `conviction` as a back-compat 0/1 derived from star_count ≥ 1."""
+
     def test_fires_on_recent_war_per_yr(self):
         from datetime import date
         gagg = {"_top_grads": [
-            # 4.5 WAR/yr last MLB year was 2 years ago → recent star ✓
-            {"career_war": 9.0, "war_per_yr": 4.5,
-             "is_pitcher": False, "last_mlb_year": date.today().year - 1, "seasons": 2},
+            # 4.5 WAR/yr → clears the 3.0 career-WAR/yr star threshold
+            {"player_name": "Alpha", "career_war": 9.0, "war_per_yr": 4.5,
+             "is_pitcher": False, "last_mlb_year": date.today().year - 1, "seasons": {"2024": 4.5, "2025": 4.5}},
         ]}
         out = _compute_conviction_leaf(gagg)
-        self.assertEqual(out["conviction"], 1)
+        self.assertEqual(out["star_count"], 1)
+        self.assertEqual(out["conviction"], 1)  # back-compat
 
-    def test_fires_on_career_war_threshold(self):
+    def test_fires_on_single_season_threshold(self):
         from datetime import date
         gagg = {"_top_grads": [
-            # 15 career WAR but last MLB year was 10 years ago — career
-            # WAR branch still fires.
-            {"career_war": 15.0, "war_per_yr": 1.5,
-             "is_pitcher": False, "last_mlb_year": date.today().year - 10, "seasons": 8},
+            # 1.5 WAR/yr CAREER but a 4.0 single-season peak → ≥3.5 fires
+            {"player_name": "Bravo", "career_war": 6.0, "war_per_yr": 1.5,
+             "is_pitcher": False, "last_mlb_year": date.today().year - 1, "seasons": {"2023": 0.5, "2024": 4.0, "2025": 1.5}},
         ]}
         out = _compute_conviction_leaf(gagg)
-        self.assertEqual(out["conviction"], 1)
+        self.assertEqual(out["star_count"], 1)
+        self.assertEqual(out["peak_season_war"], 4.0)
 
     def test_clears_when_neither_threshold_met(self):
         from datetime import date
         gagg = {"_top_grads": [
-            # 3 WAR/yr (below 4.0) + 6 career WAR (below 12) → not a star
-            {"career_war": 6.0, "war_per_yr": 3.0,
-             "is_pitcher": False, "last_mlb_year": date.today().year - 1, "seasons": 2},
+            # 2.5 WAR/yr (below 3.0) + max season 2.8 (below 3.5) → not a star
+            {"player_name": "Charlie", "career_war": 6.0, "war_per_yr": 2.5,
+             "is_pitcher": False, "last_mlb_year": date.today().year - 1, "seasons": {"2024": 2.2, "2025": 2.8}},
         ]}
         out = _compute_conviction_leaf(gagg)
+        self.assertEqual(out["star_count"], 0)
         self.assertEqual(out["conviction"], 0)
+
+    def test_counts_multiple_stars(self):
+        from datetime import date
+        gagg = {"_top_grads": [
+            {"player_name": "Star1", "career_war": 12.0, "war_per_yr": 4.0,
+             "is_pitcher": False, "last_mlb_year": date.today().year, "seasons": {"2025": 4.0}},
+            {"player_name": "Star2", "career_war": 9.0,  "war_per_yr": 3.2,
+             "is_pitcher": True,  "last_mlb_year": date.today().year, "seasons": {"2025": 3.2}},
+            # Below threshold — should NOT count.
+            {"player_name": "Below", "career_war": 4.0,  "war_per_yr": 2.0,
+             "is_pitcher": False, "last_mlb_year": date.today().year, "seasons": {"2025": 2.0}},
+        ]}
+        out = _compute_conviction_leaf(gagg)
+        self.assertEqual(out["star_count"], 2)
+        self.assertEqual(set(out["star_names"]), {"Star1", "Star2"})
 
     def test_empty_returns_zero(self):
         out = _compute_conviction_leaf({"_top_grads": []})
+        self.assertEqual(out["star_count"], 0)
         self.assertEqual(out["conviction"], 0)
         self.assertIsNone(out["peak_war_per_yr"])
         self.assertIsNone(out["peak_career_war"])

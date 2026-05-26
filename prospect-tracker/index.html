@@ -20642,7 +20642,13 @@ function makeFarmReportCard(org) {
   const draftTooltip = `TALENT YIELD from the draft pipeline. Pick-slot-adjusted draft value (50%) + Draft Ceiling Hits (50%). Ceiling Hits = ${draftLeaf.ceiling_hits_count ?? 0}/${draftLeaf.draft_actives_count ?? 0} (${fmtPct(draftLeaf.ceiling_hits_pct)}) recent drafted actives at FV ≥ 60. The $-efficiency counterpart is Financial → Draft Pool Efficiency.`;
   const ifaTooltip = `TALENT YIELD from the IFA pipeline. WAR-per-year + Cumulative WAR across IFA-method graduates (no $ involvement). The $-efficiency counterpart is Financial → IFA ROI. ${fmt3input('acq_ifa')}`;
   const tradeLeaf = t.tx_trades || {};
-  const tradeTooltip = `TALENT YIELD from trades. Net FV (${tradeLeaf.in_count ?? 0} in / ${tradeLeaf.out_count ?? 0} out) + Trade WAR Delta (in ${(tradeLeaf.war_in ?? 0).toFixed(1)} − out ${(tradeLeaf.war_out ?? 0).toFixed(1)} = ${tradeLeaf.war_delta != null ? tradeLeaf.war_delta.toFixed(1) : '—'}).`;
+  // v30.7 — Trade Acumen leaf scores PURELY on realized WAR delta now
+  // (in-WAR minus out-WAR across all trades). Net FV was the prior
+  // co-input but is biased toward high-volume traders — WAR closes
+  // the outcome loop. Net FV is kept on the tree node for context.
+  const tradeTooltip = `TALENT YIELD from trades. Leaf is graded on Trade WAR Delta alone: in ${(tradeLeaf.war_in ?? 0).toFixed(1)} − out ${(tradeLeaf.war_out ?? 0).toFixed(1)} = ${tradeLeaf.war_delta != null ? (tradeLeaf.war_delta >= 0 ? '+' : '') + tradeLeaf.war_delta.toFixed(1) : '—'} WAR. Volume context: ${tradeLeaf.in_count ?? 0} in / ${tradeLeaf.out_count ?? 0} out (${tradeLeaf.net_fv != null ? (tradeLeaf.net_fv >= 0 ? '+' : '') + tradeLeaf.net_fv.toFixed(1) + ' FV' : '— FV'}).`;
+  const fmtTradeWarDelta = v => v == null ? '—'
+    : (v >= 0 ? '+' : '') + Number(v).toFixed(1) + ' WAR';
   const waiverLeaf = t.tx_waivers || {};
   // v30.7 — Waiver Claims leaf scores PURELY on hit rate (share of
   // claims that reached MLB). The headline metric must match the
@@ -20659,7 +20665,7 @@ function makeFarmReportCard(org) {
     // letter-grade is actually scored on per LEAF_SPECS) instead of WAG.
     // WAG-only was misleading: the leaf's scoring already uses WAR/yr.
     subCell('IFA Performance',   'acq_ifa',    'acq_ifa',    fmtWarPerYr,  (t.acq_ifa || {}).war_per_yr_mean, ifaTooltip) +
-    subCell('Trade Acumen',      'tx_trades',  'tx_trades',  fmtNetFv,     tradeLeaf.net_fv, tradeTooltip) +
+    subCell('Trade Acumen',      'tx_trades',  'tx_trades',  fmtTradeWarDelta, tradeLeaf.war_delta, tradeTooltip) +
     subCell('Waiver Claims',     'tx_waivers', 'tx_waivers', fmtWaiverHitRate, waiverLeaf.hit_rate, waiverTooltip);
 
   // v28 — Hitter / Pitcher DvM+ is a 70/30 blend of cohort-restricted
@@ -20678,36 +20684,40 @@ function makeFarmReportCard(org) {
   const _devTooltip = (leaf, side) => {
     const overall = (leaf.overall_dvm_plus || {})[_devActiveWindow];
     const tool    = leaf.tool_dvm_plus;
+    const sc      = leaf.statcast_dvm_plus;
     const parts = [];
-    if (overall != null) parts.push(`Overall ${overall}`);
+    if (overall != null) parts.push(`FV ${overall}`);
     if (tool    != null) parts.push(`Tool ${tool}`);
-    return `${side} DvM+ · 70% cohort Overall DvM+ + 30% Tool DvM+ at ${_devActiveWindow}. ${parts.join(' · ')}. Leaf letter grades anchor on 6y.`;
+    if (sc      != null) parts.push(`SC+ ${sc}`);
+    // v30.7 — 3-way blend (FV 50% / Tool 30% / Statcast 20%). FV+Tool
+    // sub-blend retains the adaptive over-grade penalty (Tool weight
+    // climbs to 60% of its 30% slice when FV outruns Tool by ≥15);
+    // Statcast layers on top at a fixed 20%.
+    return `${side} DvM+ · 50% FVDvM+ + 30% ToolDvM+ + 20% StatcastDvM+ at ${_devActiveWindow}. ${parts.join(' · ')}. Leaf letter grades anchor on 6y.`;
   };
-  // v28 — Sub-subgrade mini bars under each Dev leaf. Render Overall
-  // (70% weight) and Tool (30% weight) as twin horizontal bars so the
-  // reader can see the composition of the blended value visually. Each
-  // bar uses 100 as the league-mean anchor; deviation maps to bar width
-  // capped at ±30 (>110 fills past the midpoint, <90 sits empty). Color
-  // matches the cell's letter tone.
+  // v30.7 — Sub-subgrade mini bars under each Dev leaf. Renders THREE
+  // bars now (FV 50% / Tool 30% / Statcast 20%) so the reader sees the
+  // full composition of the blended value visually. Each bar uses 100
+  // as the league-mean anchor; deviation maps to bar width capped at
+  // ±30 (>110 fills past the midpoint, <90 sits empty). Color matches
+  // the cell's letter tone.
   const _devNestedBars = (leaf, side) => {
     const overall = (leaf.overall_dvm_plus || {})[_devActiveWindow];
     const tool    = leaf.tool_dvm_plus;
-    if (overall == null && tool == null) return '';
-    // 100 = midpoint; clamp range ±30 maps to bar fill 0-100%.
+    const sc      = leaf.statcast_dvm_plus;
+    if (overall == null && tool == null && sc == null) return '';
     const fillPct = v => {
       if (v == null) return 0;
       const clamped = Math.max(70, Math.min(130, v));
       return Math.round(((clamped - 70) / 60) * 100);
     };
     const barTone = v => v == null ? 'var(--text-tertiary)' :
-                        v >= 110 ? 'var(--up)' :
-                        v >= 100 ? 'var(--up)' :
-                        v >= 90  ? 'var(--down)' : 'var(--down)';
+                        v >= 100 ? 'var(--up)' : 'var(--down)';
     const bar = (label, weight, val) => {
       const fp = fillPct(val);
       const tone = barTone(val);
       const valStr = val == null ? '—' : val;
-      return `<div style="display:grid;grid-template-columns:54px 1fr 30px;gap:6px;align-items:center;font-size:9px;line-height:1.2;color:var(--text-tertiary);">
+      return `<div style="display:grid;grid-template-columns:64px 1fr 30px;gap:6px;align-items:center;font-size:9px;line-height:1.2;color:var(--text-tertiary);">
         <span style="font-family:var(--font-mono);letter-spacing:0.04em;text-transform:uppercase;">${label} <span style="opacity:0.6;">${weight}%</span></span>
         <div style="position:relative;height:6px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden;">
           <div style="position:absolute;left:0;top:0;height:100%;width:${fp}%;background:${tone};opacity:0.55;border-radius:3px;"></div>
@@ -20716,10 +20726,66 @@ function makeFarmReportCard(org) {
         <span style="font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;text-align:right;color:${val==null?'var(--text-tertiary)':'var(--text-secondary)'};font-weight:600;">${valStr}</span>
       </div>`;
     };
+    // v30.7 — Position-bucket expander. When pos_buckets is on the
+    // leaf, render a collapsed "▸ by position" toggle that opens a
+    // compact per-bucket grid showing each bucket's FV/Tool/SC
+    // values + weighted blend at the active window. Uses a vanilla
+    // <details> element so toggle state is browser-native and no JS
+    // wiring is required.
+    const _posBucketGrid = (() => {
+      const pb = leaf.pos_buckets || {};
+      const buckets = Object.keys(pb);
+      if (!buckets.length) return '';
+      const rows = buckets.map(b => {
+        const v = pb[b];
+        const fv = (v.fv_dvm_plus_by_window || {})[_devActiveWindow];
+        const tl = v.tool_dvm_plus;
+        const sc = v.statcast_dvm_plus;
+        const bld = (v.blend_by_window || {})[_devActiveWindow];
+        const cnt = v.active_count;
+        const wt  = v.weight;
+        const cell = (val) => {
+          const c = val == null ? 'var(--text-tertiary)'
+                  : val >= 110 ? 'var(--up)'
+                  : val >= 100 ? 'var(--up)'
+                  : 'var(--down)';
+          return `<span style="font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;color:${c};font-weight:700;text-align:center;">${val ?? '—'}</span>`;
+        };
+        // Dim rows with thin samples (<3) so the user knows the bucket
+        // was redistributed-out of the headline blend.
+        const dimmed = cnt < 3;
+        const opacity = dimmed ? 0.45 : 1;
+        return `<div style="display:grid;grid-template-columns:38px 28px 32px 36px 32px 32px 36px;gap:6px;align-items:center;font-size:9.5px;line-height:1.3;color:var(--text-secondary);opacity:${opacity};" title="${escapeHtml(b)} bucket · weight ${(wt*100).toFixed(0)}% · ${cnt} active prospect${cnt === 1 ? '' : 's'}${dimmed ? ' · sparse (dropped from blend)' : ''}">
+          <span style="font-family:var(--font-mono);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-secondary);">${b}</span>
+          <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);">${(wt*100).toFixed(0)}%</span>
+          <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);">${cnt}</span>
+          ${cell(fv)}
+          ${cell(tl)}
+          ${cell(sc)}
+          ${cell(bld)}
+        </div>`;
+      }).join('');
+      const header = `<div style="display:grid;grid-template-columns:38px 28px 32px 36px 32px 32px 36px;gap:6px;font-size:8.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:2px;">
+        <span>Pos</span>
+        <span>Wt</span>
+        <span>N</span>
+        <span style="text-align:center;">FV</span>
+        <span style="text-align:center;">Tool</span>
+        <span style="text-align:center;">SC+</span>
+        <span style="text-align:center;">Blend</span>
+      </div>`;
+      return `<details style="margin:6px 0 0 12px;font-size:9.5px;">
+        <summary style="cursor:pointer;color:var(--text-tertiary);font-family:var(--font-mono);letter-spacing:0.04em;text-transform:uppercase;font-size:9px;padding:2px 0;">▸ by position bucket</summary>
+        <div style="margin-top:4px;padding:6px 8px;background:var(--bg-secondary);border-left:2px solid var(--border-light);border-radius:0 4px 4px 0;">
+          ${header}${rows}
+        </div>
+      </details>`;
+    })();
     return `<div style="margin:4px 0 8px 12px;padding:6px 8px;background:var(--bg-secondary);border-left:2px solid var(--border-light);border-radius:0 4px 4px 0;display:flex;flex-direction:column;gap:3px;">
-      ${bar('Overall', 70, overall)}
-      ${bar('Tool',    30, tool)}
-    </div>`;
+      ${bar('FVDvM+',       50, overall)}
+      ${bar('ToolDvM+',     30, tool)}
+      ${bar('StatcastDvM+', 20, sc)}
+    </div>${_posBucketGrid}`;
   };
   const devSubs =
     subCell('Hitter DvM+',  'dev_hitter',  'dev_hitter',  fmtDvm, _devHitterValue,  _devTooltip(_devHitterLeaf,  'Hitter')) +
@@ -20784,12 +20850,20 @@ function makeFarmReportCard(org) {
   const topGradsTooltip = topGrads.top3_war_per_yr != null
     ? `Mean WAR/yr across the org's top-3 graduates by rate. Captures peak star-tier production. ${topGrads.grad_count_qualifying ?? 0} qualifying grads (min 3).`
     : `Insufficient grads to compute top-3 mean (needs ≥3 qualifying graduates).`;
-  const convTooltip = convLeaf.conviction != null
-    ? (convLeaf.conviction === 1
-        ? `STAR PRESENT — at least one grad with WAR/yr ≥ 4.0 in trailing 6yr OR career WAR ≥ 12 ever. Peak ${convLeaf.peak_war_per_yr != null ? convLeaf.peak_war_per_yr.toFixed(1) + ' WAR/yr' : '—'} / ${convLeaf.peak_career_war != null ? convLeaf.peak_career_war.toFixed(1) + ' career WAR' : '—'}.`
-        : `No star — peak grad ${convLeaf.peak_war_per_yr != null ? convLeaf.peak_war_per_yr.toFixed(1) + ' WAR/yr' : '—'} / ${convLeaf.peak_career_war != null ? convLeaf.peak_career_war.toFixed(1) + ' career WAR' : '—'}. Below WAR/yr ≥ 4.0 (recent) AND career WAR ≥ 12 thresholds.`)
+  // v30.7 — Conviction is now a STAR COUNT (was binary 0/1). A
+  // graduate qualifies as a "star" when their career WAR/yr ≥ 3.0 OR
+  // any single season recorded WAR ≥ 3.5. The leaf score keys on
+  // the count, so more stars = higher conviction grade.
+  const _starCount = convLeaf.star_count;
+  const _starNames = (convLeaf.star_names || []).slice(0, 5);
+  const convTooltip = _starCount != null
+    ? (_starCount > 0
+        ? `${_starCount} STAR${_starCount === 1 ? '' : 'S'} — graduates the org developed who hit ≥3.0 WAR/yr career OR a ≥3.5 WAR single season.${_starNames.length ? ` Top: ${_starNames.join(', ')}.` : ''} Peak ${convLeaf.peak_war_per_yr != null ? convLeaf.peak_war_per_yr.toFixed(1) + ' WAR/yr' : '—'} · ${convLeaf.peak_season_war != null ? convLeaf.peak_season_war.toFixed(1) + ' season WAR' : '—'}.`
+        : `No stars. Peak grad ${convLeaf.peak_war_per_yr != null ? convLeaf.peak_war_per_yr.toFixed(1) + ' WAR/yr' : '—'} / ${convLeaf.peak_season_war != null ? convLeaf.peak_season_war.toFixed(1) + ' season WAR' : '—'}. Below WAR/yr ≥ 3.0 AND season ≥ 3.5 thresholds.`)
     : `No graduate sample.`;
-  const convFmt = v => v === 1 ? 'STAR ✓' : (v === 0 ? 'no star' : '—');
+  const convFmt = v => v == null ? '—'
+    : v === 0 ? '0 stars'
+    : `${v} ★${v === 1 ? '' : 's'}`;
   // v23 — Hitter / Pitcher MLB Production: read v17-renamed leaf keys
   // (`mlb_hitter_production` / `mlb_pitcher_production`, not the legacy
   // `_wag` names) and surface WAR/yr as the headline metric instead of
@@ -20808,7 +20882,7 @@ function makeFarmReportCard(org) {
     subCell('Boom Rate',              'mlb_production_boom_pct',   'mlb_production_boom_pct',   fmtPctRaw,   boomLeaf.boom_pct, boomTooltip) +
     subCell('Bust Rate',              'mlb_production_bust_pct',   'mlb_production_bust_pct',   fmtPctRaw,   bustLeaf.bust_pct, bustTooltip) +
     subCell('Top-3 Grad WAR/yr',      'mlb_production_top_grads',  'mlb_production_top_grads',  v => v != null ? v.toFixed(2) + ' WAR/yr' : '—', topGrads.top3_war_per_yr, topGradsTooltip) +
-    subCell('Conviction',             'mlb_production_conviction', 'mlb_production_conviction', convFmt,     convLeaf.conviction, convTooltip);
+    subCell('Conviction',             'mlb_production_conviction', 'mlb_production_conviction', convFmt,     _starCount, convTooltip);
 
   // v18 — Conviction cap removed from storage.py so the badge no longer
   // applies. Kept the variable as an empty string to avoid disturbing
@@ -20831,7 +20905,7 @@ function makeFarmReportCard(org) {
         leaves: [
           { label: 'Draft Performance',  letterKey: 'acq_draft',  metric: draftFmt(draftMetric) },
           { label: 'IFA Performance',    letterKey: 'acq_ifa',    metric: fmtWarPerYr((t.acq_ifa || {}).war_per_yr_mean) },
-          { label: 'Trade Acumen',       letterKey: 'tx_trades',  metric: fmtNetFv(tradeLeaf.net_fv) },
+          { label: 'Trade Acumen',       letterKey: 'tx_trades',  metric: fmtTradeWarDelta(tradeLeaf.war_delta) },
           { label: 'Waiver Claims',      letterKey: 'tx_waivers', metric: fmtWaiverHitRate(waiverLeaf.hit_rate) },
         ],
       },
@@ -20861,7 +20935,7 @@ function makeFarmReportCard(org) {
           { label: 'Boom Rate',           letterKey: 'mlb_production_boom_pct', metric: fmtPctRaw(boomLeaf.boom_pct) },
           { label: 'Bust Rate',           letterKey: 'mlb_production_bust_pct', metric: fmtPctRaw(bustLeaf.bust_pct) },
           { label: 'Top-3 Grad WAR/yr',   letterKey: 'mlb_production_top_grads',  metric: topGrads.top3_war_per_yr != null ? topGrads.top3_war_per_yr.toFixed(2) + ' WAR/yr' : '—' },
-          { label: 'Conviction',          letterKey: 'mlb_production_conviction', metric: convFmt(convLeaf.conviction) },
+          { label: 'Conviction',          letterKey: 'mlb_production_conviction', metric: convFmt(_starCount) },
         ],
       },
     ];

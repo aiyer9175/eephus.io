@@ -3317,9 +3317,18 @@ def _compute_boom_bust(graduate_payload: dict) -> str:
 # seasons) registers via the career WAR branch. Bumped 5→6yr in v6 so
 # the recency window aligns with the org-level 6y DvM+ framing — every
 # "principal window" metric on the site lives on the same horizon.
-_CONVICTION_WAR_PER_YR_THRESHOLD = 4.0
-_CONVICTION_CAREER_WAR_THRESHOLD = 12.0
+_CONVICTION_WAR_PER_YR_THRESHOLD = 4.0   # legacy — superseded by STAR_*
+_CONVICTION_CAREER_WAR_THRESHOLD = 12.0  # legacy — superseded by STAR_*
 _CONVICTION_RECENCY_YEARS        = 6   # was 5 (v6 — align with 6y DvM+)
+# v30.7 — Conviction reframed as "star count." A graduate the org
+# developed qualifies as a STAR when EITHER:
+#   * career WAR/yr ≥ 3.0 (sustained above-average MLB regular), OR
+#   * any single season recorded WAR ≥ 3.5 (one-year breakout / peak)
+# The leaf score becomes the COUNT of qualifying stars (capped to a
+# reasonable ceiling at the leaf-100 normalization layer), not the
+# binary 0/1 it used to be. More stars = stronger conviction signal.
+_STAR_WAR_PER_YR_THRESHOLD = 3.0
+_STAR_SEASON_WAR_THRESHOLD = 3.5
 
 
 def _compute_top_grads_leaf(gagg: dict) -> dict:
@@ -3354,34 +3363,77 @@ def _top3_career_war(grads: list[dict], is_pitcher: bool | None) -> float | None
 
 
 def _compute_conviction_leaf(gagg: dict, today: date | None = None) -> dict:
-    """Binary conviction flag (0 / 1). 1 when the org has produced AT
-    LEAST ONE grad meeting either threshold:
-      * war_per_yr ≥ 4.0 AND last_mlb_year within the last 6 years, OR
-      * career_war ≥ 12 (ever).
-    Returns {conviction, peak_war_per_yr, peak_career_war} so the leaf
-    can carry both the binary signal AND the supporting numbers (used
-    for tooltip 'Skenes: 6.2 WAR/yr · 12.4 career')."""
+    """v30.7 — Star-count conviction leaf. Counts the org's developed
+    grads who hit EITHER:
+      * career WAR/yr ≥ 3.0 (sustained above-average MLB regular), OR
+      * any single season recorded WAR ≥ 3.5 (one-year peak)
+    Returns {star_count, star_names, conviction, ...} where
+    `star_count` is the leaf-scoring metric and `star_names` (top 5
+    by peak signal) drives the tooltip readout. The legacy `conviction`
+    field stays on the payload as a back-compat binary so older
+    cached frontends keep rendering, but the leaf scores on
+    star_count exclusively (see LEAF_SPECS)."""
     grads = gagg.get("_top_grads") or []
-    today = today or date.today()
-    recency_cutoff = today.year - _CONVICTION_RECENCY_YEARS
 
-    recent_war_per_yrs = [g.get("war_per_yr") or 0.0
-                          for g in grads
-                          if (g.get("last_mlb_year") or 0) >= recency_cutoff]
-    peak_war_per_yr = max(recent_war_per_yrs) if recent_war_per_yrs else None
+    stars: list[dict] = []
+    for g in grads:
+        wpy = g.get("war_per_yr") or 0.0
+        cwa = g.get("career_war") or 0.0
+        # Per-season peak — `seasons` may be either a {year: war} dict
+        # (FanGraphs career_war shape) or a list/scalar depending on
+        # the upstream aggregator. Be defensive: extract the maximum
+        # single-season value when present, else fall back to 0.
+        season_peak = 0.0
+        seasons = g.get("seasons")
+        try:
+            if isinstance(seasons, dict):
+                vals = [float(v) for v in seasons.values()
+                        if v is not None and float(v) == float(v)]
+                if vals:
+                    season_peak = max(vals)
+            elif isinstance(seasons, (list, tuple)):
+                vals = [float(v) for v in seasons
+                        if v is not None and float(v) == float(v)]
+                if vals:
+                    season_peak = max(vals)
+            elif isinstance(seasons, (int, float)):
+                # Legacy shape — a scalar season-count, not a per-year map.
+                # Can't extract peak; leave at 0 so only WAR/yr can fire.
+                season_peak = 0.0
+        except (TypeError, ValueError):
+            season_peak = 0.0
+        is_career_star = wpy >= _STAR_WAR_PER_YR_THRESHOLD
+        is_season_star = season_peak >= _STAR_SEASON_WAR_THRESHOLD
+        if is_career_star or is_season_star:
+            stars.append({
+                "name":         g.get("player_name"),
+                "war_per_yr":   round(wpy, 2),
+                "career_war":   round(cwa, 2),
+                "season_peak":  round(season_peak, 2),
+                "reason":       "career" if is_career_star else "season",
+            })
 
-    career_wars = [g.get("career_war") or 0.0 for g in grads]
-    peak_career_war = max(career_wars) if career_wars else None
-
-    has_star_recent  = (peak_war_per_yr is not None
-                        and peak_war_per_yr >= _CONVICTION_WAR_PER_YR_THRESHOLD)
-    has_career_star  = (peak_career_war is not None
-                        and peak_career_war >= _CONVICTION_CAREER_WAR_THRESHOLD)
-    conviction = 1 if (has_star_recent or has_career_star) else 0
+    # Order stars by descending signal magnitude so the top 5 tooltip
+    # surfaces the most-impressive contributors.
+    stars.sort(key=lambda s: max(s["war_per_yr"], s["season_peak"]),
+               reverse=True)
+    star_count = len(stars)
+    peak_war_per_yr = max((s["war_per_yr"] for s in stars), default=None)
+    peak_career_war = max((s["career_war"] for s in stars), default=None)
+    peak_season_war = max((s["season_peak"] for s in stars), default=None)
     return {
-        "conviction":      conviction,
-        "peak_war_per_yr": round(peak_war_per_yr, 2) if peak_war_per_yr is not None else None,
+        # NEW — leaf-scoring metric
+        "star_count":       star_count,
+        # Top 5 contributors for the tooltip (name + WAR/yr + season peak)
+        "star_names":       [s["name"] for s in stars[:5] if s.get("name")],
+        "stars":            stars[:5],
+        # Aggregate peak signals (back-compat + tooltip context)
+        "peak_war_per_yr":  round(peak_war_per_yr, 2) if peak_war_per_yr is not None else None,
         "peak_career_war": round(peak_career_war, 2) if peak_career_war is not None else None,
+        "peak_season_war": round(peak_season_war, 2) if peak_season_war is not None else None,
+        # Legacy binary conviction — kept so cached frontends keep
+        # rendering. New leaf scoring keys on star_count instead.
+        "conviction":      1 if star_count >= 1 else 0,
         "grad_count_qualifying": len(grads),
     }
 
@@ -6138,6 +6190,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # 1B, SS, 2B, 3B, UTIL, MI, IF, DH
         return "INF"
 
+    # v30.7 — Finer 5-bucket pos grouping for the position-bucketed
+    # DvM+ pass. Splits pitchers into SP / RP and surfaces C / INF /
+    # OF for hitters. SP bucket includes RHP/LHP (most unassigned-
+    # role arms are SP-track draftees / lower-minors before the role
+    # is set); RP bucket includes RP / MIRP / SIRP / CL / CP.
+    _HIT_POS_TO_BUCKET_V2 = {
+        "C": "C",
+        "1B": "INF", "2B": "INF", "3B": "INF", "SS": "INF",
+        "INF": "INF", "MI": "INF", "UTIL": "INF", "DH": "INF",
+        "OF": "OF", "LF": "OF", "CF": "OF", "RF": "OF",
+    }
+    _PIT_POS_TO_BUCKET_V2 = {
+        "SP": "SP", "RHP": "SP", "LHP": "SP",
+        "RP": "RP", "MIRP": "RP", "SIRP": "RP", "CL": "RP", "CP": "RP",
+    }
+    def _pos_bucket_v2(pos: str | None) -> str | None:
+        if not pos:
+            return None
+        first = pos.upper().split("/")[0].strip()
+        return _HIT_POS_TO_BUCKET_V2.get(first) or _PIT_POS_TO_BUCKET_V2.get(first)
+
     # ── FARM-GRADE INPUT POOL CONTRACT (v20) ────────────────────────────
     # The org_map below is fed exclusively from `actives` — the list that
     # excludes any player with `status == "debuted"`, which under the
@@ -6368,6 +6441,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # prospect has no tracked Statcast / zone data).
         # v30.5 — Also route into the per-side bucket so the farm
         # leaf can surface hitter vs pitcher SC+ separately.
+        # v30.7 — Also route into the per-position-bucket dict so the
+        # downstream per-bucket StatcastDvM+ can compute mean SC+ for
+        # each C/INF/OF/SP/RP bucket independently.
         _sc_p = _sc_plus_map.get(p.player_key)
         if _sc_p is not None:
             m["_sc_plus"].append(int(_sc_p))
@@ -6375,6 +6451,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 m["_sc_plus_pit"].append(int(_sc_p))
             else:
                 m["_sc_plus_hit"].append(int(_sc_p))
+            _pb = _pos_group(p.position)  # legacy 4-way grouping
+            # Use the finer 5-bucket helper (C / INF / OF / SP / RP)
+            # for the new per-bucket DvM+. Falls back silently when
+            # the position doesn't map (rare: DH-only stragglers etc.).
+            _pb_v2 = _pos_bucket_v2(p.position) if _pb is not None else None
+            if _pb_v2 is not None:
+                m.setdefault("_sc_plus_by_bucket", {}).setdefault(_pb_v2, []).append(int(_sc_p))
         # v29 — Upside-indicator count. Uses consensus_fv_plus on the
         # latest point AND honors the same FV ≤ 50 cap the UI applies
         # (sub-50 grades are the canonical upside surface; 55+/60+ are
@@ -6698,6 +6781,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _sc_vals = m.pop("_sc_plus", []) or []
         _sc_hit_vals = m.pop("_sc_plus_hit", []) or []
         _sc_pit_vals = m.pop("_sc_plus_pit", []) or []
+        # v30.7 — Per-bucket SC+ values for the position-bucketed
+        # StatcastDvM+. Pop here so the bucket dict makes the
+        # round-trip from m → entry. Min-3 gate on the bucket means
+        # before it gets a value (vs the ≥5 gate on the org-wide
+        # mean) — buckets are smaller cohorts so a tighter floor is
+        # appropriate, especially for catcher / RP slivers.
+        _sc_by_bucket = m.pop("_sc_plus_by_bucket", {}) or {}
+        m["_pos_bucket_sc_means"] = {
+            bucket: (round(sum(vals) / len(vals), 2) if len(vals) >= 3 else None)
+            for bucket, vals in _sc_by_bucket.items()
+        }
+        m["_pos_bucket_sc_counts"] = {bucket: len(vals) for bucket, vals in _sc_by_bucket.items()}
         _scq_graded = len(_sc_vals)
         # v30.5 — Per-side aggregates ride alongside the all-prospects
         # mean. Same ≥5 graded-prospects gate per side so a 1-pitcher
@@ -7151,6 +7246,59 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         entry["hitter_fv_history"]  = hitter_fv_history.get(entry["org"],  {}).get("series", [])
         entry["pitcher_fv_history"] = pitcher_fv_history.get(entry["org"], {}).get("series", [])
 
+    # v30.7 — Position-bucketed cohort DvM+. Same _build_org_fv_history
+    # / _trajectory_score machinery as the hitter/pitcher cohort split
+    # above, but with finer pos-bucket subsets so we can score each org
+    # at the C / INF / OF / SP / RP level. Bucket conventions:
+    #   C   = pure catchers (premium defensive pos)
+    #   INF = 1B, 2B, 3B, SS, INF, MI, UTIL, DH (corner + middle infield)
+    #   OF  = OF, LF, CF, RF
+    #   SP  = SP, RHP, LHP (unassigned-role arms default to SP track —
+    #         most are draftees / lower-minors before role is set)
+    #   RP  = RP, MIRP, SIRP, CL, CP (any reliever variant)
+    # User-confirmed bucket weights (WAR positional adjustment / SP-
+    # dominant) get applied at blend time below.
+    _HIT_BUCKETS = ("C", "INF", "OF")
+    _PIT_BUCKETS = ("SP", "RP")
+    _HIT_POS_TO_BUCKET = {
+        "C": "C",
+        "1B": "INF", "2B": "INF", "3B": "INF", "SS": "INF",
+        "INF": "INF", "MI": "INF", "UTIL": "INF", "DH": "INF",
+        "OF": "OF", "LF": "OF", "CF": "OF", "RF": "OF",
+    }
+    _PIT_POS_TO_BUCKET = {
+        "SP": "SP", "RHP": "SP", "LHP": "SP",  # unassigned-role arms → SP track
+        "RP": "RP", "MIRP": "RP", "SIRP": "RP", "CL": "RP", "CP": "RP",
+    }
+    def _pos_bucket_for(pos: str | None) -> str | None:
+        if not pos:
+            return None
+        first = pos.upper().split("/")[0].strip()
+        return _HIT_POS_TO_BUCKET.get(first) or _PIT_POS_TO_BUCKET.get(first)
+
+    _bucket_fv_history: dict[str, dict[str, dict]] = {}
+    for bucket in _HIT_BUCKETS + _PIT_BUCKETS:
+        sub = [p for p in all_players_for_cohort
+               if _pos_bucket_for(p.position) == bucket]
+        _bucket_fv_history[bucket] = _build_org_fv_history(
+            sub, _filter_real_trades, trades_by_player,
+        )
+    for entry in org_summary:
+        # Per-bucket series stays on the entry so the trajectory pass
+        # below can read it from the same shape as hitter_fv_history.
+        entry["_pos_bucket_fv_history"] = {
+            bucket: _bucket_fv_history[bucket].get(entry["org"], {}).get("series", [])
+            for bucket in _HIT_BUCKETS + _PIT_BUCKETS
+        }
+        # NOTE: prospect dicts use `pos` (not `position`) — see the
+        # m["prospects"].append() call further up. Reading the wrong
+        # field silently floors every count to 0.
+        entry["_pos_bucket_active_count"] = {
+            bucket: sum(1 for p in entry["prospects"]
+                        if _pos_bucket_for(p.get("pos")) == bucket)
+            for bucket in _HIT_BUCKETS + _PIT_BUCKETS
+        }
+
     # ── Tree v3: Trade Acumen scoreboard (FV + WAR delta) ──
     # Two co-equal sub-inputs feed this leaf:
     #   1. Net FV (sum of incoming FV − outgoing FV at trade date)
@@ -7445,6 +7593,55 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             entry["hitter_dvm_plus"][key]  = (round(100 + 10 * (dh / sdh)) if sdh > 1e-6 else 100)
             entry["pitcher_dvm_plus"][key] = (round(100 + 10 * (dp / sdp)) if sdp > 1e-6 else 100)
 
+    # v30.7 — Per-position-bucket FVDvM+ trajectory. Same
+    # _trajectory_score / league-mean / stdev pattern as the
+    # hitter/pitcher cohort math above, but applied independently to
+    # each bucket: C, INF, OF, SP, RP. The bucket league means use
+    # ONLY orgs that have a non-empty bucket so the league baseline
+    # isn't pulled by orgs with zero bodies in (e.g.) catching.
+    _bucket_traj: dict[str, dict[str, dict]] = {}    # bucket → {org → {win → score}}
+    _bucket_traj_mean: dict[str, dict[str, float]] = {}
+    _bucket_traj_stdev: dict[str, dict[str, float]] = {}
+    for bucket in _HIT_BUCKETS + _PIT_BUCKETS:
+        _bucket_traj[bucket] = {}
+        for entry in org_summary:
+            series = (entry.get("_pos_bucket_fv_history") or {}).get(bucket) or []
+            if not series:
+                _bucket_traj[bucket][entry["org"]] = {k: None for k in FARM_TRAJECTORY_WINDOWS}
+                continue
+            _bucket_traj[bucket][entry["org"]] = {
+                k: _trajectory_score(series, lookback_days=days, as_of=today_iso)
+                for k, days in FARM_TRAJECTORY_WINDOWS.items()
+            }
+        # League mean + stdev computed across orgs WITH data only.
+        _bucket_traj_mean[bucket] = {}
+        _bucket_traj_stdev[bucket] = {}
+        for win in FARM_TRAJECTORY_WINDOWS:
+            vals = [_bucket_traj[bucket][e["org"]][win] for e in org_summary
+                    if _bucket_traj[bucket][e["org"]][win] is not None]
+            if vals:
+                mu = sum(vals) / len(vals)
+                _bucket_traj_mean[bucket][win]  = mu
+                _bucket_traj_stdev[bucket][win] = (sum((v - mu)**2 for v in vals) / len(vals)) ** 0.5
+            else:
+                _bucket_traj_mean[bucket][win]  = 0.0
+                _bucket_traj_stdev[bucket][win] = 0.0
+    # Now stamp per-bucket FVDvM+ per org.
+    for entry in org_summary:
+        entry["_pos_bucket_fv_dvm_plus"] = {}
+        for bucket in _HIT_BUCKETS + _PIT_BUCKETS:
+            entry["_pos_bucket_fv_dvm_plus"][bucket] = {}
+            for win in FARM_TRAJECTORY_WINDOWS:
+                raw = _bucket_traj[bucket][entry["org"]][win]
+                sd  = _bucket_traj_stdev[bucket][win]
+                if raw is None:
+                    entry["_pos_bucket_fv_dvm_plus"][bucket][win] = None
+                elif sd < 1e-6:
+                    entry["_pos_bucket_fv_dvm_plus"][bucket][win] = 100
+                else:
+                    delta = raw - _bucket_traj_mean[bucket][win]
+                    entry["_pos_bucket_fv_dvm_plus"][bucket][win] = int(round(100 + 10 * (delta / sd)))
+
     # v28 — Final blend pass. 70% cohort-restricted Overall DvM+ +
     # 30% tool-grade-based DvM+. Missing-signal: if one side is
     # absent the other takes 100%. Headline `dvm_plus` (which feeds
@@ -7519,21 +7716,190 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             }
         return out
 
+    # v30.7 — StatcastDvM+ — a third dev sub-axis sitting alongside
+    # FVDvM+ (the existing overall DvM+) and ToolDvM+. Anchored on the
+    # org's per-side mean Statcast+ across actives; z-normalized
+    # across the 30 orgs to a 100-anchored scale (100 = league mean,
+    # 10pts = 1σ — same convention as the FV/Tool DvM+ scales). When
+    # an org has fewer than 5 graded prospects on a side, the side's
+    # SC+ DvM+ is None (treated as missing-axis in the 3-way blend).
+    # Only the 6y window is exposed — Statcast doesn't have meaningful
+    # 1y/3y windows in this dataset (the metric is a CURRENT snapshot,
+    # not a historical trajectory, so the same value applies to every
+    # window). The user direction was "incorporate SC+ avg into
+    # development grades"; this leaves room for a future per-window
+    # SC+ trajectory once historical SC+ values are tracked.
+    _hit_sc_raw = [(e["org"], ((e.get("statcast_quality") or {}).get("hitter_mean")))
+                   for e in org_summary]
+    _pit_sc_raw = [(e["org"], ((e.get("statcast_quality") or {}).get("pitcher_mean")))
+                   for e in org_summary]
+    def _sc_dvm_map(rows: list[tuple[str, float | None]]) -> dict[str, int | None]:
+        present = [(o, v) for o, v in rows if v is not None]
+        if len(present) < 2:
+            return {o: None for o, _ in rows}
+        vals = [v for _, v in present]
+        mu = sum(vals) / len(vals)
+        sd = (sum((v - mu) ** 2 for v in vals) / len(vals)) ** 0.5
+        if sd < 1e-6:
+            return {o: 100 if v is not None else None for o, v in rows}
+        return {o: (int(round(100 + 10 * ((v - mu) / sd))) if v is not None else None)
+                for o, v in rows}
+    _hit_sc_dvm = _sc_dvm_map(_hit_sc_raw)
+    _pit_sc_dvm = _sc_dvm_map(_pit_sc_raw)
+
+    # v30.7 — Per-bucket StatcastDvM+. Same z-norm pattern as the
+    # per-side version above, but partitioned by C/INF/OF/SP/RP.
+    # League mean + stdev computed across orgs that HAVE a value in
+    # this bucket (≥3 prospects gate set at aggregation time).
+    _bucket_sc_dvm: dict[str, dict[str, int | None]] = {}
+    for bucket in _HIT_BUCKETS + _PIT_BUCKETS:
+        rows = [(e["org"], (e.get("_pos_bucket_sc_means") or {}).get(bucket))
+                for e in org_summary]
+        _bucket_sc_dvm[bucket] = _sc_dvm_map(rows)
+
+    # v30.7 — 3-way DvM+ blend. Adds StatcastDvM+ as a 20% leg
+    # alongside the existing FVDvM+ (50%) + ToolDvM+ (30%). The
+    # FV+Tool sub-blend keeps its adaptive over-grade penalty (when
+    # FV outruns Tool by ≥15, Tool's share within its 30% slice ramps
+    # up to absorb the difference). Statcast layers on top at a
+    # fixed 20%.
+    def _blend_dvm_3way(fv_dvm, tool_dvm, sc_dvm):
+        """User-specified 50/30/20 weights (FV / Tool / Statcast).
+        Adaptive penalty fires only on the FV+Tool sub-blend so the
+        existing test suite (test_dvm_disparity_penalty.py) still
+        passes — `_blend_dvm` is untouched and re-used here."""
+        # All three present — apply the precise weight allocation.
+        if fv_dvm is not None and tool_dvm is not None and sc_dvm is not None:
+            tool_w_in_slice = _adaptive_tool_weight(fv_dvm, tool_dvm)
+            # FV + Tool combined = 80% of total; the existing
+            # tool-weight-in-slice (baseline 30%, up to 60% under
+            # penalty) governs how the 80% splits between FV and Tool.
+            tool_w_total = 0.80 * tool_w_in_slice
+            fv_w_total   = 0.80 - tool_w_total
+            return int(round(fv_w_total * fv_dvm
+                             + tool_w_total * tool_dvm
+                             + 0.20 * sc_dvm))
+        # Missing-axis fallbacks. SC missing → original 2-way blend.
+        if sc_dvm is None:
+            return _blend_dvm(fv_dvm, tool_dvm)
+        # Only SC present → use it directly.
+        if fv_dvm is None and tool_dvm is None:
+            return int(round(sc_dvm))
+        # FV + SC (tool missing) → 70/30 FV-heavy.
+        if tool_dvm is None:
+            return int(round(0.70 * fv_dvm + 0.30 * sc_dvm))
+        # Tool + SC (FV missing) → 60/40 Tool-heavy.
+        return int(round(0.60 * tool_dvm + 0.40 * sc_dvm))
+
+    # v30.7 — Position-bucket weights (user-confirmed). Hitters use
+    # the FanGraphs positional-adjustment family (C carries premium
+    # defensive value per body; INF heaviest by population × value;
+    # OF rounds out). Pitchers heavily favor SP — SP development is
+    # ~3-4× the WAR ceiling of RP.
+    _POS_WEIGHTS_HIT = {"C": 0.35, "INF": 0.40, "OF": 0.25}
+    _POS_WEIGHTS_PIT = {"SP": 0.80, "RP": 0.20}
+
+    def _pos_weighted_blend(bucket_vals: dict[str, int | None],
+                            weights: dict[str, float]) -> int | None:
+        """Sum bucket values weighted by `weights`, with sparse-cohort
+        redistribution: when a bucket has no value for this org, its
+        weight is removed and the remaining weights renormalize to sum
+        to 1.0 so the missing bucket doesn't drag the org down. Returns
+        None when every bucket is missing (e.g. an org with no graded
+        Statcast in any pos)."""
+        present = {b: v for b, v in bucket_vals.items() if v is not None}
+        if not present:
+            return None
+        total_w = sum(weights[b] for b in present if b in weights)
+        if total_w <= 0:
+            return None
+        weighted = sum(v * (weights[b] / total_w) for b, v in present.items() if b in weights)
+        return int(round(weighted))
+
     for entry in org_summary:
         tool_hit = entry.pop("_tool_hit_raw", None)
         tool_pit = entry.pop("_tool_pit_raw", None)
         hit_overall = entry["hitter_dvm_plus"]    # {window: int}
         pit_overall = entry["pitcher_dvm_plus"]
-        hit_by_window = {k: _blend_dvm(hit_overall.get(k), tool_hit) for k in FARM_TRAJECTORY_WINDOWS}
-        pit_by_window = {k: _blend_dvm(pit_overall.get(k), tool_pit) for k in FARM_TRAJECTORY_WINDOWS}
+        # SC DvM+ is window-invariant in v30.7 (a snapshot, not a
+        # history) — same value applies to 1y/3y/6y.
+        hit_sc = _hit_sc_dvm.get(entry["org"])
+        pit_sc = _pit_sc_dvm.get(entry["org"])
+
+        # v30.7 — Per-position-bucket 3-way blend. Each bucket gets
+        # its own (FV_b + Tool_side + SC_b) blend; the side-level
+        # DvM+ becomes the weighted average across buckets (35/40/25
+        # for hitter C/INF/OF; 80/20 for SP/RP).
+        # ToolDvM+ is currently org-side-wide — applying it uniformly
+        # to each bucket is a v1 compromise. A future per-bucket tool
+        # delta would refine this; the org-wide tool DvM+ is the most
+        # stable signal available without retracing the per-tool
+        # aggregation per position.
+        bucket_fv_by_win  = entry["_pos_bucket_fv_dvm_plus"]   # {bucket: {win: int|None}}
+        bucket_sc         = {b: _bucket_sc_dvm[b].get(entry["org"])
+                             for b in _HIT_BUCKETS + _PIT_BUCKETS}
+        # Per-bucket per-window blend.
+        bucket_blend_by_win: dict[str, dict[str, int | None]] = {}
+        for bucket in _HIT_BUCKETS + _PIT_BUCKETS:
+            bucket_blend_by_win[bucket] = {}
+            tool_for_bucket = tool_hit if bucket in _HIT_BUCKETS else tool_pit
+            for win in FARM_TRAJECTORY_WINDOWS:
+                fv_b  = bucket_fv_by_win.get(bucket, {}).get(win)
+                sc_b  = bucket_sc.get(bucket)
+                bucket_blend_by_win[bucket][win] = _blend_dvm_3way(fv_b, tool_for_bucket, sc_b)
+        # Side-level: weighted average across hitter / pitcher buckets.
+        hit_by_window: dict[str, int | None] = {}
+        pit_by_window: dict[str, int | None] = {}
+        for win in FARM_TRAJECTORY_WINDOWS:
+            hit_buckets_at_win = {b: bucket_blend_by_win[b][win] for b in _HIT_BUCKETS}
+            pit_buckets_at_win = {b: bucket_blend_by_win[b][win] for b in _PIT_BUCKETS}
+            hit_by_window[win] = _pos_weighted_blend(hit_buckets_at_win, _POS_WEIGHTS_HIT)
+            pit_by_window[win] = _pos_weighted_blend(pit_buckets_at_win, _POS_WEIGHTS_PIT)
+            # Fallback to the legacy org-wide blend if every bucket was sparse.
+            if hit_by_window[win] is None:
+                hit_by_window[win] = _blend_dvm_3way(hit_overall.get(win), tool_hit, hit_sc)
+            if pit_by_window[win] is None:
+                pit_by_window[win] = _blend_dvm_3way(pit_overall.get(win), tool_pit, pit_sc)
+        # Stamp tree node + new pos_buckets sub-payload for UI.
         entry["tree"]["dev_hitter"]["dvm_plus"]            = hit_by_window.get("6y")
         entry["tree"]["dev_hitter"]["dvm_plus_by_window"]  = hit_by_window
         entry["tree"]["dev_hitter"]["overall_dvm_plus"]    = dict(hit_overall)
+        entry["tree"]["dev_hitter"]["statcast_dvm_plus"]   = hit_sc
         entry["tree"]["dev_hitter"]["disparity_by_window"] = _disparity_report(hit_overall, tool_hit)
+        entry["tree"]["dev_hitter"]["pos_buckets"] = {
+            bucket: {
+                "fv_dvm_plus_by_window": bucket_fv_by_win.get(bucket, {}),
+                "tool_dvm_plus":         tool_hit,   # org-side-wide for v1
+                "statcast_dvm_plus":     bucket_sc.get(bucket),
+                "blend_by_window":       bucket_blend_by_win[bucket],
+                "active_count":          (entry.get("_pos_bucket_active_count") or {}).get(bucket, 0),
+                "weight":                _POS_WEIGHTS_HIT[bucket],
+            }
+            for bucket in _HIT_BUCKETS
+        }
         entry["tree"]["dev_pitcher"]["dvm_plus"]           = pit_by_window.get("6y")
         entry["tree"]["dev_pitcher"]["dvm_plus_by_window"] = pit_by_window
         entry["tree"]["dev_pitcher"]["overall_dvm_plus"]   = dict(pit_overall)
+        entry["tree"]["dev_pitcher"]["statcast_dvm_plus"]  = pit_sc
         entry["tree"]["dev_pitcher"]["disparity_by_window"] = _disparity_report(pit_overall, tool_pit)
+        entry["tree"]["dev_pitcher"]["pos_buckets"] = {
+            bucket: {
+                "fv_dvm_plus_by_window": bucket_fv_by_win.get(bucket, {}),
+                "tool_dvm_plus":         tool_pit,
+                "statcast_dvm_plus":     bucket_sc.get(bucket),
+                "blend_by_window":       bucket_blend_by_win[bucket],
+                "active_count":          (entry.get("_pos_bucket_active_count") or {}).get(bucket, 0),
+                "weight":                _POS_WEIGHTS_PIT[bucket],
+            }
+            for bucket in _PIT_BUCKETS
+        }
+        # Clean up the temporary _ scratch fields so they don't bloat
+        # the exported JSON payload.
+        entry.pop("_pos_bucket_fv_history", None)
+        entry.pop("_pos_bucket_fv_dvm_plus", None)
+        entry.pop("_pos_bucket_sc_means", None)
+        entry.pop("_pos_bucket_sc_counts", None)
+        entry.pop("_pos_bucket_active_count", None)
 
     # Helper: normalize a list where some entries may be None (small-
     # sample orgs without enough data). None values get the cohort
@@ -7745,9 +8111,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                                       or (e["tree"]["acq_draft"] or {}).get("wag_mean"))),
             ("ceiling_pct", lambda e: (e["tree"]["acq_draft"] or {}).get("ceiling_hits_pct")),
         ],
-        # Trade Acumen — net FV + retrospective WAR delta
+        # v30.7 — Trade Acumen now scores on REALIZED outcomes only —
+        # net WAR delta (in-WAR minus out-WAR across all trades).
+        # net_fv (the projection-side proxy) was the original signal
+        # but is biased toward high-volume traders: an org that ships
+        # 12 FV-40 lottery tickets for one FV-55 grades net-positive
+        # on FV but tells you nothing about whether the FV-55 panned
+        # out. WAR is the only signal that closes the outcome loop.
+        # net_fv stays on the tree node for context display.
         "tx_trades": [
-            ("net_fv",    lambda e: (e["tree"]["tx_trades"] or {}).get("net_fv")),
             ("war_delta", lambda e: (e["tree"]["tx_trades"] or {}).get("war_delta")),
         ],
         # v30.7 — Waiver Claims is now a pure hit-rate leaf. The prior
@@ -7825,8 +8197,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "mlb_production_top_grads": [
             ("top3_war_per_yr", lambda e: (e["tree"]["mlb_production_top_grads"] or {}).get("top3_war_per_yr")),
         ],
+        # v30.7 — Conviction now scored on STAR COUNT (graduates the
+        # org developed who hit ≥3 WAR/yr career OR a ≥3.5 WAR season
+        # peak). Was a binary 0/1; the count is a stronger signal —
+        # an org with 6 stars reads as more conviction-worthy than
+        # one with the single Skenes-equivalent. Cached payloads still
+        # carry `conviction` (0/1) as a back-compat field, but it no
+        # longer drives the leaf grade.
         "mlb_production_conviction": [
-            ("conviction", lambda e: (e["tree"]["mlb_production_conviction"] or {}).get("conviction")),
+            ("star_count", lambda e: (e["tree"]["mlb_production_conviction"] or {}).get("star_count")),
         ],
         # v4 NEW leaves under Financial.
         "fin_draft_pool_efficiency": [

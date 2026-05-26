@@ -267,13 +267,46 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
         roster_status=load_roster_status(),
         ifa_spending_by_org=ifa_spending_by_org,
         contracts_by_key=contracts_by_key,
-        draft_pools={},
+        # v30.7 — Rebuild-only was passing draft_pools={} (empty),
+        # which made fin_draft_pool_efficiency return None for every
+        # org → all 30 collapsed to a default 'C' grade. build_draft_pools
+        # hits a 7-day on-disk cache for any year already scraped, so
+        # the warm path is fast (no HTTP); cold years would scrape, but
+        # the 2021-current run normally lives on disk. Failure here is
+        # logged + swallowed to preserve the rebuild-doesn't-network
+        # contract — fin_draft_pool_efficiency falls back to None
+        # exactly as before.
+        draft_pools=_load_draft_pools_for_rebuild(),
         player_ids={},
     )
 
     # Post-export sanity: surface what landed in the JSON so the user
     # doesn't have to grep the file.
     _post_export_summary(out_path, all_snaps, log)
+
+
+def _load_draft_pools_for_rebuild() -> dict:
+    """Load MLB draft bonus pools for rebuild-only paths. Uses
+    build_draft_pools which hits the on-disk cache (7-day TTL) so a
+    warm rebuild stays HTTP-free. Errors are swallowed — the pool
+    leaf is opt-in, so a failed scrape just demotes it to None and
+    the rest of the pipeline keeps going."""
+    import logging
+    log = logging.getLogger("rebuild_only")
+    try:
+        from scrapers import build_draft_pools
+        pools = build_draft_pools(
+            range(2021, date.today().year + 1),
+            force=False,
+        )
+        covered = sorted(pools.keys()) if pools else []
+        log.info("rebuild_only draft pools: %d years on file (%s)",
+                 len(covered), ", ".join(str(y) for y in covered))
+        return pools or {}
+    except Exception:
+        log.exception("rebuild_only draft-pool load failed — "
+                      "fin_draft_pool_efficiency will be None")
+        return {}
 
 
 def _derive_all_level_changes() -> dict:
