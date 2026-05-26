@@ -3638,6 +3638,40 @@
       margin-right: 4px;
     }
 
+    /* === Newspaper / baseball-card eyebrow ===========================
+       v31.4 — Reusable section header in the same idiom as the
+       grade-tree ribbon. Two thin horizontal rules sandwich a small-
+       caps label on the left + an italic serif meta tag on the
+       right. Used above the farm list, farm-detail tab strip, etc.
+       so the site reads as a single sports-section publication. */
+    .newsprint-eyebrow {
+      display: flex; align-items: baseline; justify-content: space-between;
+      padding: 4px 10px 5px;
+      margin: 0 0 8px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, transparent, var(--bg-secondary));
+      gap: 12px;
+      position: relative;
+    }
+    .newsprint-eyebrow::before {
+      content: "";
+      position: absolute; left: 10px; right: 10px;
+      top: 4px; height: 1px;
+      background: var(--border-light); opacity: 0.5;
+    }
+    .newsprint-eyebrow-label {
+      font-family: var(--font-sans);
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+    .newsprint-eyebrow-meta {
+      font-family: var(--font-serif);
+      font-style: italic; font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
     /* === Farm systems ============================================= */
     .farm-header, .farm-row {
       display: grid;
@@ -4120,6 +4154,10 @@
       font-size: 7.5px; color: var(--text-tertiary);
       text-transform: uppercase; letter-spacing: 0.08em;
       margin-right: 2px;
+    }
+    .farm-grade-cell .fg-comp-letter {
+      font-family: var(--font-serif); font-weight: 700;
+      font-size: 10px;
     }
     /* Compact "Org · pos · age" headline so a wider Org column doesn't
        create dead whitespace when team names are short. */
@@ -4804,12 +4842,20 @@
     /* Horizontal decision-tree SVG. Default view on desktop; mobile
        drops back to the accordion fallback below. */
     .grade-tree-svg {
-      margin: 12px 0;
-      padding: 8px 0;
+      margin: 6px 0;
+      padding: 4px 0;
+    }
+    /* v31.3 — Grade tree wrapper. Tri-state via .gt-tree-toggle chip
+       strip (Hidden / Canopy / Full) at the top of the wrap; conditional
+       render of the SVG body below. The wrap is always present so the
+       chip strip remains accessible even when the tree is hidden. */
+    .grade-tree-wrap > .grade-tree-svg {
+      padding: 6px 8px 10px;
     }
     .grade-tree-fallback { display: none; }
     @media (max-width: 860px) {
       .grade-tree-svg { display: none; }
+      .grade-tree-wrap { display: none; }
       .grade-tree-fallback { display: block; }
       .grade-tree-fallback > summary { display: none; }
       .grade-tree-fallback > div { display: block; }
@@ -7650,6 +7696,14 @@
   </div>
 
   <div id="farm-section" style="display:none;">
+    <!-- v31.4 — Newspaper-style section eyebrow above the farm list.
+         Same double-rule treatment used on the canopy + full tree so
+         the site feels cohesive in its baseball-card / sports-section
+         idiom. -->
+    <div class="newsprint-eyebrow">
+      <span class="newsprint-eyebrow-label">League-wide Farm System Rankings · 30 Organizations</span>
+      <span class="newsprint-eyebrow-meta">v31 composite · grade-sorted</span>
+    </div>
     <!-- v29 — Collapsed-by-default filter accordion for farm system. -->
     <div class="filter-toggle-row">
       <button class="filter-toggle" type="button"
@@ -9850,6 +9904,7 @@ function syncToURL() {
   if (state.glossaryCat && state.glossaryCat !== "all")    p.set("gcat", state.glossaryCat);
   if (state.glossarySearch)                                 p.set("gq",   state.glossarySearch);
   if (state.formWindow  !== "1y")         p.set("formw", state.formWindow);
+  if (state.farmTreeView && state.farmTreeView !== "expanded") p.set("ftree", state.farmTreeView);
   if (state.farmTxKind  !== "all")        p.set("ftxk",  state.farmTxKind);
   if (state.farmTxDir   !== "all")        p.set("ftxd",  state.farmTxDir);
   if (state.debutSort    !== "date")       p.set("gsort", state.debutSort);
@@ -9967,6 +10022,10 @@ function syncFromURL() {
     if (v === "1y" || v === "3y" || v === "6y") state.formWindow = v;
     // Back-compat: old URLs may still carry formw=5y. Map to 6y.
     if (v === "5y") state.formWindow = "6y";
+  }
+  if (p.has("ftree")) {
+    const v = p.get("ftree");
+    if (v === "collapsed" || v === "simple" || v === "expanded") state.farmTreeView = v;
   }
   if (p.has("ftxk")) state.farmTxKind = p.get("ftxk");
   if (p.has("ftxd")) state.farmTxDir  = p.get("ftxd");
@@ -11132,6 +11191,14 @@ const state = {
   // value used when sorting by "Trajectory". Default 6y — the
   // principal multi-cycle dev signal.
   formWindow: "6y",
+  // v31.3 — Farm grade tree view mode: "collapsed" / "simple" / "expanded".
+  //   collapsed: tree hidden; only composite header + roster snapshot shown
+  //   simple:    canopy only (root + 4 branch circles), no leaves (default)
+  //   expanded:  full 3-column tree
+  // v31.4 — Default flipped from expanded → simple. The canopy view
+  // fits comfortably on a typical desktop without scrolling; users
+  // who want the full leaf breakdown opt in via the Full chip.
+  farmTreeView: "simple",
   spotlightBucket: "risers",
   // Farm-detail "Transaction history" filters. Persisted on the URL so a
   // shared link reopens the same filtered view. Default is "all".
@@ -21900,16 +21967,38 @@ function makePosBreakdown(posGroups) {
 // Map letter grades to colors. A+/A tiers glow up, D dims down, D-/F
 // hit deep crimson so a bottom-tier org reads as visually distinct
 // from "just below average" (the C/C- band).
+// v31.2 — Letter-grade color gradient. 13 distinct tints walking
+// hue 130° (deep green) → 50° (yellow at C) → 0° (deep red), so a
+// reader can scan the tree and instantly map color → grade without
+// reading the letter. Previously several grade tiers shared a color
+// (A+ and A both rendered as var(--up); B/B- collapsed to text-primary),
+// which made the report card hard to scan. The gradient is monotonic
+// with grade quality (better grade → cooler/greener; worse → warmer/
+// redder) and anchored at C as the neutral midpoint (yellow). Used
+// by every leaf bar, branch circle, sub-leaf chip, and grade pill
+// across the site — single source of truth.
+// v31.4 — Darkened + desaturated for legibility on the cream/dark
+// themes. Original v31.2 palette was too neon-bright at ~50% L; new
+// values sit at ~36-42% L which reads as muted-but-distinct on both
+// theme backgrounds. Hue gradient (green→yellow→red) preserved.
+const _GRADE_PALETTE = {
+  'A+': 'hsl(135, 55%, 36%)',   // deep green — top of scale
+  'A':  'hsl(125, 50%, 38%)',
+  'A-': 'hsl(110, 48%, 40%)',
+  'B+': 'hsl(95,  48%, 40%)',
+  'B':  'hsl(80,  52%, 40%)',
+  'B-': 'hsl(68,  55%, 40%)',
+  'C+': 'hsl(54,  60%, 40%)',
+  'C':  'hsl(48,  65%, 40%)',   // muted goldenrod — neutral midpoint
+  'C-': 'hsl(38,  65%, 40%)',
+  'D+': 'hsl(26,  62%, 42%)',
+  'D':  'hsl(16,  60%, 42%)',
+  'D-': 'hsl(6,   58%, 40%)',
+  'F':  'hsl(0,   60%, 36%)',   // deep red — bottom of scale
+};
 function gradeColor(letter) {
   if (!letter) return 'var(--text-tertiary)';
-  if (letter === 'A+' || letter === 'A')             return 'var(--up)';
-  if (letter === 'A-' || letter === 'B+')            return '#7EC880';
-  if (letter === 'B'  || letter === 'B-')            return 'var(--text-primary)';
-  if (letter === 'C+' || letter === 'C')             return '#C8A050';
-  if (letter === 'C-' || letter === 'D')             return 'var(--down)';
-  if (letter === 'D-')                                return '#B83A2E';   // dark amber-red
-  if (letter === 'F')                                 return '#8B1A1A';   // deep crimson — bottom of the scale
-  return 'var(--text-secondary)';
+  return _GRADE_PALETTE[letter] || 'var(--text-secondary)';
 }
 
 // Farm report card — four component grades + the overall. Renders on the
@@ -22420,7 +22509,7 @@ function makeFarmReportCard(org) {
     // change parent grade).
     const branchSpecs = [
       {
-        key: 'acquisition_strategy', label: 'Acquisition', weight: W.acquisition_strategy,
+        key: 'acquisition_strategy', label: 'ACQ', weight: W.acquisition_strategy,
         leaves: [
           { label: 'Draft Performance',  letterKey: 'acq_draft',  metric: draftFmt(draftMetric),
             subLeaves: (t.acq_draft || {}).sub_leaves || [] },
@@ -22433,7 +22522,7 @@ function makeFarmReportCard(org) {
         ],
       },
       {
-        key: 'development', label: 'Development', weight: W.development,
+        key: 'development', label: 'DEV', weight: W.development,
         leaves: [
           { label: 'Hitter DvM+',  letterKey: 'dev_hitter',  metric: fmtDvm(_devHitterValue),
             subLeaves: (t.dev_hitter || {}).sub_leaves || [] },
@@ -22446,7 +22535,7 @@ function makeFarmReportCard(org) {
         ],
       },
       {
-        key: 'financial', label: 'Financial', weight: W.financial,
+        key: 'financial', label: '$FIN', weight: W.financial,
         leaves: [
           { label: 'Active Surplus',        letterKey: 'fin_active_surplus',        metric: fmtSurplusPerProspect(_surplusPerProspect),
             subLeaves: (t.fin_active_surplus || {}).sub_leaves || [] },
@@ -22457,7 +22546,7 @@ function makeFarmReportCard(org) {
         ],
       },
       {
-        key: 'mlb_production', label: 'MLB Production', weight: W.mlb_production,
+        key: 'mlb_production', label: 'PROD', weight: W.mlb_production,
         leaves: [
           { label: 'Hitter Production',   letterKey: 'mlb_hitter_production',   metric: fmtWarPerYr(_hitProd.war_per_yr_mean),
             subLeaves: (t.mlb_hitter_production || {}).sub_leaves || [] },
@@ -22476,24 +22565,26 @@ function makeFarmReportCard(org) {
       },
     ];
 
-    // Geometry. v31 — each leaf row height grows to fit its sub-leaf
-    // stack so the third column doesn't overflow. Sub-leaves render
-    // as small chips to the right of the parent leaf bar.
-    const LEAF_H_BASE = 30;     // base leaf bar height (no subs)
-    const SUB_H = 16;           // per sub-leaf chip height
-    const SUB_GAP = 2;          // vertical gap between sub-chips
-    const ROW_PAD = 6;          // top + bottom padding inside row
-    const LEAF_GAP = 4;         // gap between sibling leaves
-    const GROUP_GAP = 18;       // gap between branch groups
-    const LEAF_W = 240;         // leaf bar width
-    const SUB_W = 340;          // sub-leaf column width
-    const BRANCH_R = 32;
-    const ROOT_W = 152, ROOT_H = 92;
-    const PAD_T = 18, PAD_L = 12;
-    const COL_ROOT_RIGHT = PAD_L + ROOT_W;       // 164
-    const COL_BRANCH_X = 290;                    // branch center x
-    const COL_LEAF_LEFT = 410;                   // leaf left edge
-    const COL_SUB_LEFT = COL_LEAF_LEFT + LEAF_W + 22;  // sub-leaf left edge
+    // Geometry. v31.3 — condensed dimensions so the full tree fits
+    // legibly on a typical desktop without zooming. Each leaf row
+    // height grows to fit its sub-leaf stack so the third column
+    // doesn't overflow. Sub-leaves render as small chips to the
+    // right of the parent leaf bar.
+    const LEAF_H_BASE = 24;     // base leaf bar height (no subs) — was 30
+    const SUB_H = 13;           // per sub-leaf chip height — was 16
+    const SUB_GAP = 1;          // vertical gap between sub-chips — was 2
+    const ROW_PAD = 4;          // top + bottom padding inside row — was 6
+    const LEAF_GAP = 2;         // gap between sibling leaves — was 4
+    const GROUP_GAP = 10;       // gap between branch groups — was 18
+    const LEAF_W = 210;         // leaf bar width — was 240
+    const SUB_W = 290;          // sub-leaf column width — was 340
+    const BRANCH_R = 26;        // was 32
+    const ROOT_W = 134, ROOT_H = 78;  // was 152, 92
+    const PAD_T = 14, PAD_L = 10;     // was 18, 12
+    const COL_ROOT_RIGHT = PAD_L + ROOT_W;       // 144
+    const COL_BRANCH_X = 252;                    // branch center x — was 290
+    const COL_LEAF_LEFT = 358;                   // leaf left edge — was 410
+    const COL_SUB_LEFT = COL_LEAF_LEFT + LEAF_W + 18;  // sub-leaf left edge — gap 18 (was 22)
 
     // Compute per-leaf row heights then walk vertically.
     const rowHeight = (leaf) => {
@@ -22565,58 +22656,74 @@ function makeFarmReportCard(org) {
       }).join('');
     }).join('');
 
-    // Root rectangle + label.
+    // Root rectangle + label (condensed v31.3).
     const rootRect = `
       <rect x="${PAD_L}" y="${rootY - ROOT_H / 2}" width="${ROOT_W}" height="${ROOT_H}"
-            rx="4" fill="var(--bg-secondary)" stroke="${rootColor}" stroke-width="2.5"/>
-      <text x="${PAD_L + ROOT_W / 2}" y="${rootY - 22}" text-anchor="middle"
-            style="font-family:var(--font-sans);font-size:10px;letter-spacing:0.10em;text-transform:uppercase;font-weight:600;fill:var(--text-tertiary);">FARM GRADE</text>
-      <text x="${PAD_L + ROOT_W / 2}" y="${rootY + 8}" text-anchor="middle"
-            style="font-family:var(--font-serif);font-size:36px;font-weight:700;fill:${rootColor};">${escapeHtml(g.overall || '—')}</text>
-      <text x="${PAD_L + ROOT_W / 2}" y="${rootY + 28}" text-anchor="middle"
-            style="font-family:var(--font-mono);font-size:11px;fill:var(--text-secondary);">#${org.farm_rank ?? '—'} of ${n} · ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}</text>`;
+            rx="3" fill="var(--bg-secondary)" stroke="${rootColor}" stroke-width="2.2"/>
+      <text x="${PAD_L + ROOT_W / 2}" y="${rootY - 18}" text-anchor="middle"
+            style="font-family:var(--font-sans);font-size:9px;letter-spacing:0.10em;text-transform:uppercase;font-weight:600;fill:var(--text-tertiary);">FARM GRADE</text>
+      <text x="${PAD_L + ROOT_W / 2}" y="${rootY + 7}" text-anchor="middle"
+            style="font-family:var(--font-serif);font-size:30px;font-weight:700;fill:${rootColor};">${escapeHtml(g.overall || '—')}</text>
+      <text x="${PAD_L + ROOT_W / 2}" y="${rootY + 24}" text-anchor="middle"
+            style="font-family:var(--font-mono);font-size:10px;fill:var(--text-secondary);">#${org.farm_rank ?? '—'} of ${n} · ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}</text>`;
 
-    // Branch circles + labels.
+    // Branch circles + labels (condensed v31.3).
     const branchNodes = branchLayouts.map(b => {
       const branchLetter = g[b.key] || '—';
       const branchRank = r[b.key];
       const c = gradeColor(branchLetter);
       return `
         <circle cx="${COL_BRANCH_X}" cy="${b.branchY}" r="${BRANCH_R}"
-                fill="var(--bg-secondary)" stroke="${c}" stroke-width="2.5"/>
-        <text x="${COL_BRANCH_X}" y="${b.branchY - 4}" text-anchor="middle"
-              style="font-family:var(--font-serif);font-size:20px;font-weight:700;fill:${c};">${escapeHtml(branchLetter)}</text>
-        <text x="${COL_BRANCH_X}" y="${b.branchY + 12}" text-anchor="middle"
+                fill="var(--bg-secondary)" stroke="${c}" stroke-width="2.2"/>
+        <text x="${COL_BRANCH_X}" y="${b.branchY - 3}" text-anchor="middle"
+              style="font-family:var(--font-serif);font-size:17px;font-weight:700;fill:${c};">${escapeHtml(branchLetter)}</text>
+        <text x="${COL_BRANCH_X}" y="${b.branchY + 10}" text-anchor="middle"
               style="font-family:var(--font-mono);font-size:9px;fill:var(--text-tertiary);">${b.weight}%${branchRank ? ` · #${branchRank}` : ''}</text>
-        <text x="${COL_BRANCH_X}" y="${b.branchY - BRANCH_R - 6}" text-anchor="middle"
-              style="font-family:var(--font-sans);font-size:11px;letter-spacing:0.04em;font-weight:600;fill:var(--text-primary);">${escapeHtml(b.label)}</text>`;
+        <text x="${COL_BRANCH_X}" y="${b.branchY - BRANCH_R - 4}" text-anchor="middle"
+              style="font-family:var(--font-sans);font-size:10px;letter-spacing:0.04em;font-weight:600;fill:var(--text-primary);">${escapeHtml(b.label)}</text>`;
     }).join('');
 
-    // Leaf bars (with the same height as the row band so they're
-    // visually proportional to their sub-leaf stack).
+    // Leaf bars (condensed v31.3). v31.2 — fill the bar with a faint
+    // tint of the grade color. v31.4 — Dev DvM+ leaves read the
+    // window-specific letter (state.formWindow) from grades_by_window
+    // when present, so flipping the window actually changes the
+    // displayed leaf grade — not just the value. Other leaves are
+    // window-agnostic.
+    const _gradesByWin = org.grades_by_window || {};
+    const _winLetter = (leafKey) =>
+      (_gradesByWin[_devActiveWindow] || {})[leafKey];
     const leafBars = branchLayouts.map(b => {
       return b.leafLayouts.map(leaf => {
-        const letter = g[leaf.letterKey] || '—';
+        const winLetter = (leaf.letterKey === 'dev_hitter' || leaf.letterKey === 'dev_pitcher')
+          ? _winLetter(leaf.letterKey) : null;
+        const letter = winLetter || g[leaf.letterKey] || '—';
         const c = gradeColor(letter);
+        // Faint background tint (8% opacity overlay on bg-secondary).
+        // Built as a second rect on top so the color reads through
+        // without losing the bg-secondary baseline.
         return `
           <rect x="${COL_LEAF_LEFT}" y="${leaf.yTop}" width="${LEAF_W}" height="${leaf.h}"
                 rx="3" fill="var(--bg-secondary)" stroke="${c}" stroke-width="1" opacity="0.95"/>
-          <rect x="${COL_LEAF_LEFT}" y="${leaf.yTop}" width="4" height="${leaf.h}"
-                fill="${c}" opacity="0.9"/>
-          <text x="${COL_LEAF_LEFT + 12}" y="${leaf.y - 4}" text-anchor="start"
-                style="font-family:var(--font-sans);font-size:11px;font-weight:600;fill:var(--text-primary);">${escapeHtml(leaf.label)}</text>
-          <text x="${COL_LEAF_LEFT + 12}" y="${leaf.y + 10}" text-anchor="start"
+          <rect x="${COL_LEAF_LEFT}" y="${leaf.yTop}" width="${LEAF_W}" height="${leaf.h}"
+                rx="3" fill="${c}" opacity="0.08"/>
+          <rect x="${COL_LEAF_LEFT}" y="${leaf.yTop}" width="3" height="${leaf.h}"
+                fill="${c}" opacity="0.95"/>
+          <text x="${COL_LEAF_LEFT + 10}" y="${leaf.y - 3}" text-anchor="start"
+                style="font-family:var(--font-sans);font-size:10px;font-weight:600;fill:var(--text-primary);">${escapeHtml(leaf.label)}</text>
+          <text x="${COL_LEAF_LEFT + 10}" y="${leaf.y + 9}" text-anchor="start"
                 style="font-family:var(--font-mono);font-size:10px;fill:var(--text-secondary);">
             <tspan style="fill:${c};font-weight:700;">${escapeHtml(letter)}</tspan>
-            <tspan dx="6">${escapeHtml(leaf.metric)}</tspan>
+            <tspan dx="5">${escapeHtml(leaf.metric)}</tspan>
           </text>`;
       }).join('');
     }).join('');
 
-    // Sub-leaf chips. One small bar per sub-leaf, stacked vertically
-    // centered on the parent leaf's y. Each chip shows: label · value.
-    // Color: kind-aware tone via _toneSub (dvm uses 100-anchor green/
-    // red; war signed; pct/count neutral).
+    // Sub-leaf chips (condensed + grade-colored v31.3). When a sub-
+    // leaf carries a `letter` field (set by storage's per-sub-leaf
+    // league grading pass), the WHOLE chip — stroke, left stripe,
+    // value text, and letter tag — uses the grade color. Ungraded
+    // sub-leaves (e.g. star name lists, peak season WAR context)
+    // fall back to value-based tone via _toneSub.
     const subChips = branchLayouts.map(b => {
       return b.leafLayouts.map(leaf => {
         const subs = leaf.subLeaves || [];
@@ -22625,36 +22732,67 @@ function makeFarmReportCard(org) {
         const stackTop = leaf.y - stackH / 2;
         return subs.map((s, i) => {
           const cy = stackTop + i * (SUB_H + SUB_GAP);
-          const tone = _toneSub(s);
+          const hasLetter = s.letter && s.letter !== "—";
+          // Color preference: grade-letter color when present, else
+          // fall back to kind-aware value-based tone.
+          const tone = hasLetter ? gradeColor(s.letter) : _toneSub(s);
           const dim = s.sparse ? 0.55 : 1;
           const valStr = _fmtSub(s);
-          // Tooltip merges label + value + n + raw context line.
+          const letterChip = s.letter
+            ? `<text x="${COL_SUB_LEFT + SUB_W - 5}" y="${cy + SUB_H / 2 + 3}" text-anchor="end"
+                     style="font-family:var(--font-serif);font-size:10px;font-weight:700;fill:${tone};">${escapeHtml(s.letter)}</text>`
+            : '';
+          const valueX = s.letter ? (COL_SUB_LEFT + SUB_W - 22) : (COL_SUB_LEFT + SUB_W - 5);
           const tipParts = [s.label, valStr];
+          if (s.letter && s.rank != null && s.rank_n) {
+            tipParts.push(`grade ${s.letter} (#${s.rank} of ${s.rank_n})`);
+          }
           if (s.n != null) tipParts.push(`n=${s.n}`);
           if (s.weight != null) tipParts.push(`weight ${(s.weight * 100).toFixed(0)}%`);
           if (s.raw) tipParts.push(s.raw);
-          if (s.sparse) tipParts.push('sparse — redistributed out of headline blend');
+          if (s.sparse) tipParts.push('sparse — excluded from grading');
           const tip = tipParts.join(' · ');
           return `
             <g opacity="${dim}">
               <title>${escapeHtml(tip)}</title>
               <rect x="${COL_SUB_LEFT}" y="${cy}" width="${SUB_W}" height="${SUB_H - 1}"
-                    rx="2" fill="var(--bg-secondary)" stroke="${tone}" stroke-width="0.8" opacity="0.85"/>
-              <rect x="${COL_SUB_LEFT}" y="${cy}" width="3" height="${SUB_H - 1}"
-                    fill="${tone}" opacity="0.85"/>
-              <text x="${COL_SUB_LEFT + 8}" y="${cy + SUB_H / 2 + 3}" text-anchor="start"
-                    style="font-family:var(--font-sans);font-size:9.5px;fill:var(--text-secondary);">${escapeHtml(s.label)}</text>
-              <text x="${COL_SUB_LEFT + SUB_W - 6}" y="${cy + SUB_H / 2 + 3}" text-anchor="end"
-                    style="font-family:var(--font-mono);font-size:10px;font-weight:700;fill:${tone};">${escapeHtml(valStr)}</text>
+                    rx="2" fill="var(--bg-secondary)" stroke="${tone}" stroke-width="0.7" opacity="0.85"/>
+              <rect x="${COL_SUB_LEFT}" y="${cy}" width="${SUB_W}" height="${SUB_H - 1}"
+                    rx="2" fill="${tone}" opacity="${hasLetter ? 0.08 : 0}"/>
+              <rect x="${COL_SUB_LEFT}" y="${cy}" width="2.5" height="${SUB_H - 1}"
+                    fill="${tone}" opacity="0.9"/>
+              <text x="${COL_SUB_LEFT + 6}" y="${cy + SUB_H / 2 + 3}" text-anchor="start"
+                    style="font-family:var(--font-sans);font-size:9px;fill:var(--text-secondary);">${escapeHtml(s.label)}</text>
+              <text x="${valueX}" y="${cy + SUB_H / 2 + 3}" text-anchor="end"
+                    style="font-family:var(--font-mono);font-size:9px;font-weight:700;fill:${tone};">${escapeHtml(valStr)}</text>
+              ${letterChip}
             </g>`;
         }).join('');
       }).join('');
     }).join('');
 
+    // v31.4 — Newspaper-style ribbon at the top of the full tree so
+    // it reads in the same idiom as the canopy. The ribbon labels
+    // the section + lists the column count and v31 weighting in an
+    // italic right-aligned tag.
+    const _ribbon = `
+      <line x1="${PAD_L}" y1="${PAD_T - 8.5}" x2="${svgW - PAD_L}" y2="${PAD_T - 8.5}"
+            stroke="var(--text-tertiary)" stroke-width="0.7" opacity="0.55"/>
+      <line x1="${PAD_L}" y1="${PAD_T - 4.5}" x2="${svgW - PAD_L}" y2="${PAD_T - 4.5}"
+            stroke="var(--text-tertiary)" stroke-width="0.35" opacity="0.35"/>
+      <text x="${PAD_L + 4}" y="${PAD_T - 13}" text-anchor="start"
+            style="font-family:var(--font-sans);font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;fill:var(--text-tertiary);">Composite Grade Tree · 4 Branches → 19 Leaves → Sub-Leaves</text>
+      <text x="${svgW - PAD_L - 4}" y="${PAD_T - 13}" text-anchor="end"
+            style="font-family:var(--font-serif);font-style:italic;font-size:10px;fill:var(--text-tertiary);">z-graded · league cohort = 30</text>`;
+    // Adjust svgH to account for the ribbon's negative offset (we
+    // shift the viewBox up by 22px so the ribbon fits above PAD_T).
+    const _svgYMin = -22;
+    const _svgHFinal = svgH + 22;
     return `
-      <svg class="grade-tree-svg" viewBox="0 0 ${svgW} ${svgH}" width="100%"
+      <svg class="grade-tree-svg" viewBox="0 ${_svgYMin} ${svgW} ${_svgHFinal}" width="100%"
            preserveAspectRatio="xMidYMid meet"
            style="display:block;width:100%;margin:0;">
+        ${_ribbon}
         ${rootBranchPaths}
         ${branchLeafPaths}
         ${leafSubPaths}
@@ -22662,6 +22800,134 @@ function makeFarmReportCard(org) {
         ${branchNodes}
         ${leafBars}
         ${subChips}
+      </svg>`;
+  })();
+
+  // v31.3 — Canopy (simple) view: root + 4 branch circles only.
+  // v31.4 — Stylized in the site's baseball-card / newspaper-box-
+  // score idiom. Top eyebrow ribbon labels the section like a
+  // sports-section header ("ORGANIZATIONAL REPORT CARD · COMPOSITE
+  // GRADE TREE"). Root rendered as a vintage scoreboard card with
+  // double-stroked frame + serif headline letter. Branches sit on
+  // a horizontal "lineup row" with nameplate banners above each
+  // bubble — same vibe as a lineup card with positions called out.
+  // Connector lines styled as thin double-rules instead of the
+  // dashed elbows the full tree uses.
+  const _canopySvg = (() => {
+    const ROOT_W = 180, ROOT_H = 116;
+    const BRANCH_R = 38;
+    const PAD_T = 22, PAD_L = 16;
+    const BRANCH_GAP = 38;          // wider gap so nameplates breathe
+    const NAMEPLATE_H = 22;
+    const NAMEPLATE_W = BRANCH_R * 2 + 36;
+    const COL_ROOT_RIGHT = PAD_L + ROOT_W;
+    const _branchOrder = ['acquisition_strategy', 'development', 'financial', 'mlb_production'];
+    const _branchLabels = {
+      'acquisition_strategy': 'ACQ',
+      'development':          'DEV',
+      'financial':            '$FIN',
+      'mlb_production':       'PROD',
+    };
+    // Vertical layout: top eyebrow ribbon (24px), then content row
+    // with branches + root vertically centered. Compute Y so the
+    // root is taller (116) than the branch bubbles (76 diameter) —
+    // root anchors the layout vertically.
+    const RIBBON_H = 26;
+    const contentY = PAD_T + RIBBON_H + 4;
+    const yMid = contentY + ROOT_H / 2 + 6;   // nameplate clearance above
+    const branchXs = _branchOrder.map((_, i) =>
+      COL_ROOT_RIGHT + 60 + BRANCH_R + i * (BRANCH_R * 2 + BRANCH_GAP)
+    );
+    const cSvgH = yMid + ROOT_H / 2 + PAD_T + 14;
+    const cSvgW = branchXs[branchXs.length - 1] + BRANCH_R + PAD_L + 8;
+    const cRootColor = gradeColor(g.overall);
+
+    // Top eyebrow ribbon — newspaper section header style.
+    const ribbon = `
+      <line x1="${PAD_L}" y1="${PAD_T + 0.5}" x2="${cSvgW - PAD_L}" y2="${PAD_T + 0.5}"
+            stroke="var(--text-tertiary)" stroke-width="0.8" opacity="0.6"/>
+      <line x1="${PAD_L}" y1="${PAD_T + 5.5}" x2="${cSvgW - PAD_L}" y2="${PAD_T + 5.5}"
+            stroke="var(--text-tertiary)" stroke-width="0.4" opacity="0.4"/>
+      <text x="${PAD_L + 4}" y="${PAD_T + 18}" text-anchor="start"
+            style="font-family:var(--font-sans);font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;fill:var(--text-tertiary);">Organizational Report Card · Composite Grade Tree</text>
+      <text x="${cSvgW - PAD_L - 4}" y="${PAD_T + 18}" text-anchor="end"
+            style="font-family:var(--font-serif);font-style:italic;font-size:10px;fill:var(--text-tertiary);">v31 weighting · 30-org cohort</text>
+      <line x1="${PAD_L}" y1="${PAD_T + RIBBON_H - 1}" x2="${cSvgW - PAD_L}" y2="${PAD_T + RIBBON_H - 1}"
+            stroke="var(--text-tertiary)" stroke-width="0.4" opacity="0.4"/>`;
+
+    // Root scoreboard card — double-rule frame, serif overall grade,
+    // small italic underline showing farm score.
+    const rootTopY = yMid - ROOT_H / 2;
+    const cRoot = `
+      <rect x="${PAD_L}" y="${rootTopY}" width="${ROOT_W}" height="${ROOT_H}"
+            rx="2" fill="var(--bg-secondary)" stroke="${cRootColor}" stroke-width="1"/>
+      <rect x="${PAD_L + 4}" y="${rootTopY + 4}" width="${ROOT_W - 8}" height="${ROOT_H - 8}"
+            rx="1" fill="none" stroke="${cRootColor}" stroke-width="0.6" opacity="0.55"/>
+      <text x="${PAD_L + ROOT_W / 2}" y="${rootTopY + 18}" text-anchor="middle"
+            style="font-family:var(--font-sans);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;fill:var(--text-tertiary);">Farm Grade</text>
+      <line x1="${PAD_L + 18}" y1="${rootTopY + 24}" x2="${PAD_L + ROOT_W - 18}" y2="${rootTopY + 24}"
+            stroke="${cRootColor}" stroke-width="0.5" opacity="0.5"/>
+      <text x="${PAD_L + ROOT_W / 2}" y="${rootTopY + 70}" text-anchor="middle"
+            style="font-family:var(--font-serif);font-size:54px;font-weight:700;fill:${cRootColor};">${escapeHtml(g.overall || '—')}</text>
+      <line x1="${PAD_L + 18}" y1="${rootTopY + 80}" x2="${PAD_L + ROOT_W - 18}" y2="${rootTopY + 80}"
+            stroke="${cRootColor}" stroke-width="0.5" opacity="0.5"/>
+      <text x="${PAD_L + ROOT_W / 2}" y="${rootTopY + 95}" text-anchor="middle"
+            style="font-family:var(--font-serif);font-style:italic;font-size:11px;fill:var(--text-secondary);">#${org.farm_rank ?? '—'} of ${n}</text>
+      <text x="${PAD_L + ROOT_W / 2}" y="${rootTopY + 108}" text-anchor="middle"
+            style="font-family:var(--font-mono);font-size:9px;fill:var(--text-tertiary);letter-spacing:0.06em;">farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}</text>`;
+
+    // Connector "double rule" lines from root to each branch.
+    const cPaths = _branchOrder.map((k, i) => {
+      const c = gradeColor(g[k] || '—');
+      const bx = branchXs[i];
+      const midX = (COL_ROOT_RIGHT + (bx - BRANCH_R)) / 2;
+      return `
+        <path d="M ${COL_ROOT_RIGHT} ${yMid - 1.5} L ${midX} ${yMid - 1.5} L ${midX} ${yMid - 1.5} L ${bx - BRANCH_R} ${yMid - 1.5}"
+              fill="none" stroke="${c}" stroke-width="1.2" opacity="0.6"/>
+        <path d="M ${COL_ROOT_RIGHT} ${yMid + 1.5} L ${midX} ${yMid + 1.5} L ${midX} ${yMid + 1.5} L ${bx - BRANCH_R} ${yMid + 1.5}"
+              fill="none" stroke="${c}" stroke-width="0.6" opacity="0.4"/>`;
+    }).join('');
+
+    // Branch nodes — nameplate above the bubble, letter centered,
+    // weight + rank below. Bubble has a faint inner ring like a
+    // vintage trading-card team badge.
+    const cNodes = _branchOrder.map((k, i) => {
+      const c = gradeColor(g[k] || '—');
+      const letter = g[k] || '—';
+      const rank = r[k];
+      const bx = branchXs[i];
+      const w = W[k];
+      const lbl = _branchLabels[k];
+      // Nameplate banner above the bubble
+      const npX = bx - NAMEPLATE_W / 2;
+      const npY = yMid - BRANCH_R - NAMEPLATE_H - 6;
+      return `
+        <rect x="${npX}" y="${npY}" width="${NAMEPLATE_W}" height="${NAMEPLATE_H}"
+              fill="var(--bg-tertiary)" stroke="${c}" stroke-width="0.8" rx="1"/>
+        <line x1="${npX + 4}" y1="${npY + NAMEPLATE_H - 3}" x2="${npX + NAMEPLATE_W - 4}" y2="${npY + NAMEPLATE_H - 3}"
+              stroke="${c}" stroke-width="0.4" opacity="0.5"/>
+        <text x="${bx}" y="${npY + 14}" text-anchor="middle"
+              style="font-family:var(--font-serif);font-size:11px;font-weight:700;fill:var(--text-primary);letter-spacing:0.04em;">${escapeHtml(lbl)}</text>
+        <circle cx="${bx}" cy="${yMid}" r="${BRANCH_R}"
+                fill="var(--bg-secondary)" stroke="${c}" stroke-width="2.4"/>
+        <circle cx="${bx}" cy="${yMid}" r="${BRANCH_R - 4}"
+                fill="none" stroke="${c}" stroke-width="0.5" opacity="0.45"/>
+        <text x="${bx}" y="${yMid + 9}" text-anchor="middle"
+              style="font-family:var(--font-serif);font-size:32px;font-weight:700;fill:${c};">${escapeHtml(letter)}</text>
+        <text x="${bx}" y="${yMid + BRANCH_R + 14}" text-anchor="middle"
+              style="font-family:var(--font-mono);font-size:9px;fill:var(--text-tertiary);letter-spacing:0.04em;">${w}% weight</text>
+        ${rank ? `<text x="${bx}" y="${yMid + BRANCH_R + 25}" text-anchor="middle"
+              style="font-family:var(--font-serif);font-style:italic;font-size:10px;fill:var(--text-secondary);">#${rank} of ${n}</text>` : ''}`;
+    }).join('');
+
+    return `
+      <svg class="grade-tree-svg" viewBox="0 0 ${cSvgW} ${cSvgH}" width="100%"
+           preserveAspectRatio="xMidYMid meet"
+           style="display:block;width:100%;margin:0;padding:10px 12px 14px;">
+        ${ribbon}
+        ${cPaths}
+        ${cRoot}
+        ${cNodes}
       </svg>`;
   })();
 
@@ -22694,9 +22960,29 @@ function makeFarmReportCard(org) {
           <span class="gt-comp-score">farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'} / 100</span>
           ${cappedBadge}
         </div>
-        <div class="gt-comp-foot">Acquisition Strategy ${W.acquisition_strategy}% · Development ${W.development}% · Financial ${W.financial}% · MLB Production ${W.mlb_production}%</div>
+        <div class="gt-comp-foot">ACQ ${W.acquisition_strategy}% · DEV ${W.development}% · $FIN ${W.financial}% · PROD ${W.mlb_production}%</div>
       </div>
-      ${svgTree}
+      ${(() => {
+        // v31.3 — Tri-state grade tree view. State.farmTreeView toggles
+        // between "collapsed" (no tree, just composite), "simple"
+        // (canopy only — root + 4 branch circles, no leaves) and
+        // "expanded" (full 3-column tree). Defaults to expanded.
+        const mode = state.farmTreeView || 'expanded';
+        const chip = (val, lbl, tip) => `<button class="chip${mode === val ? ' active' : ''}" data-farm-tree-view="${val}" type="button" title="${escapeHtml(tip)}" style="font-size:10px;padding:2px 8px;letter-spacing:0.04em;">${lbl}</button>`;
+        const _chipStrip = `<div class="gt-tree-toggle" style="display:flex;align-items:center;gap:6px;padding:4px 12px;border-bottom:1px solid var(--border-light);background:var(--bg-secondary);font-size:10px;color:var(--text-tertiary);">
+          <span style="letter-spacing:0.06em;text-transform:uppercase;font-weight:600;">Tree view</span>
+          ${chip('collapsed', 'Hidden', 'Hide the tree — show only the composite header above')}
+          ${chip('simple', 'Canopy',  'Show only the root + 4 branch circles (no leaves or sub-leaves)')}
+          ${chip('expanded', 'Full',  'Show the full 3-column tree with leaves and sub-leaves')}
+        </div>`;
+        let body = '';
+        if (mode === 'simple') body = _canopySvg;
+        else if (mode === 'expanded') body = svgTree;
+        return `<div class="grade-tree-wrap" style="margin:8px 0 0;border:1px solid var(--border-light);border-radius:var(--radius-sm);overflow:hidden;background:var(--bg-secondary);">
+          ${_chipStrip}
+          ${body}
+        </div>`;
+      })()}
       <details class="grade-tree-fallback" style="margin-top:12px;">
         <summary style="cursor:pointer;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;padding:6px 0;">Show as accordion (full tooltips + ranks)</summary>
         <div style="margin-top:8px;">
@@ -25094,11 +25380,27 @@ function snapshotCurrentFarmRanks(orgs) {
 }
 
 function makeComponentGrades(org) {
-  // Sub-grade chip strip (A/D/F/M letters) removed — the full breakdown
-  // lives on the farm-detail report card, and the strip was creating
-  // visual clutter under the overall grade letter without adding info
-  // a row scan needed. Kept the function stub so callers don't break.
-  return "";
+  // v31.4 — Revived as a 4-grade canopy strip under the main farm
+  // grade. Mirrors the report card's 4 parent branches so a row-
+  // scanner can read the org's per-branch profile without opening
+  // the detail page. Abbreviations: ACQ (Acquisition), DEV
+  // (Development), $FIN (Financial), PROD (MLB Production).
+  const g = org.grades || {};
+  const branches = [
+    { k: 'acquisition_strategy', lbl: 'ACQ'  },
+    { k: 'development',          lbl: 'DEV'  },
+    { k: 'financial',            lbl: '$FIN' },
+    { k: 'mlb_production',       lbl: 'PROD' },
+  ];
+  const chips = branches.map(({ k, lbl }) => {
+    const letter = g[k] || 'C';
+    const tone = gradeColor(letter);
+    return `<div class="fg-comp" title="${escapeHtml(lbl)} grade: ${escapeHtml(letter)}">
+      <span class="fg-comp-label">${escapeHtml(lbl)}</span>
+      <span class="fg-comp-letter" style="color:${tone};">${escapeHtml(letter)}</span>
+    </div>`;
+  }).join("");
+  return `<div class="fg-components">${chips}</div>`;
 }
 
 // Compact Tool DvM+ cell for each farm-list row. Three stacked numerical
@@ -25240,8 +25542,8 @@ function renderFarmSystems() {
     <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Farm rank (1 = #1 system). Click to sort by overall grade.">Rank</span>
     <span></span>
     <span>Organization</span>
-    <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+ — wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. Acquisitions contribute zero on arrival; debuts don't subtract — pure-development metric. Click to sort. v27 — DvM+ is now the default sort + lead column; grade sits to its right.">${win.toUpperCase()}DvM+</span>
-    <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Overall farm-system letter grade. A+ = #1 org; tiers descend by farm_score (45% top-end · 25% depth · 15% trajectory · 15% grad pipeline). Click to sort.">Grade</span>
+    <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Overall farm-system letter grade (v31 composite: 12% Acquisition · 50% Development · 18% Financial · 20% MLB Production). Click to sort.">Grade</span>
+    <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+ — wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. Acquisitions contribute zero on arrival; debuts don't subtract — pure-development metric. Click to sort.">${win.toUpperCase()}DvM+</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="Tool development pace vs league mean (100 = league mean, +10 = 1σ). Composite + hitter + pitcher rows. Click to sort.">Tool DvM+</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${escapeHtml(winLabel)} trajectory chart. Click to sort by ${escapeHtml(winLabel)} DvM+.">${escapeHtml(winLabel)} trajectory</span>
     <span class="sort-header" data-farm-sort="top_end" title="Top prospects in the org. Click to sort by top-end talent (tiered FV sum of the top 5 prospects).">Top prospects</span>
@@ -25382,18 +25684,18 @@ function renderFarmSystems() {
             <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;margin-top:2px;">${escapeHtml(org.org)}${alumniBadge}</div>
           </div>
         </div>
-        <div class="farm-dvm-hero">${(() => {
-          const v = (org.dvm_plus || {})[win];
-          if (v == null) return `<span class="fdh-value" style="color:var(--text-tertiary);">—</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
-          const color = v >= 110 ? 'var(--up)' : v <= 90 ? 'var(--down)' : 'var(--neon-violet)';
-          return `<span class="fdh-value" style="color:${color};" title="${win.toUpperCase()}DvM+ ${v} · 100 = league mean · 10 pts = 1 std-dev · debuts + acquisitions nullified">${v}</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
-        })()}</div>
         <div class="farm-grade-cell" title="Overall grade · farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}/100">
           <span class="fg-letter" style="color:${gradeColorVal};">${escapeHtml(overall)}</span>
           <span class="fg-score">${org.farm_score != null ? org.farm_score.toFixed(0) : '—'}${confDot}</span>
           ${makeComponentGrades(org)}
           ${makeOrgTierBar(org)}
         </div>
+        <div class="farm-dvm-hero">${(() => {
+          const v = (org.dvm_plus || {})[win];
+          if (v == null) return `<span class="fdh-value" style="color:var(--text-tertiary);">—</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
+          const color = v >= 110 ? 'var(--up)' : v <= 90 ? 'var(--down)' : 'var(--neon-violet)';
+          return `<span class="fdh-value" style="color:${color};" title="${win.toUpperCase()}DvM+ ${v} · 100 = league mean · 10 pts = 1 std-dev · debuts + acquisitions nullified">${v}</span><span class="fdh-label">${win.toUpperCase()}DvM+</span>`;
+        })()}</div>
         <div>${makeToolDvmCell(org)}</div>
         <div title="${escapeHtml(pulseTooltip)}">${makeFarmSparkline(org.fv_history, deltaAbove, meanBaseline, win, org.org)}${pulseHtml}</div>
         <div>${topHtml}</div>
@@ -27530,8 +27832,13 @@ function renderPlayerDetail(key) {
                  : "";
     return `fv-tier-${pick}${rarity ? " " + rarity : ""}`;
   })();
+  const _fvForEyebrow = p.fv_close;
   const header = `
     <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
+    <div class="newsprint-eyebrow">
+      <span class="newsprint-eyebrow-label">Prospect Card · ${escapeHtml(p.org || '—')} · ${escapeHtml(p.position || '—')}${p.overall_rank != null ? ` · #${p.overall_rank}` : ''}</span>
+      <span class="newsprint-eyebrow-meta">${_fvForEyebrow != null ? `Consensus FV ${_fvForEyebrow}` : 'Consensus FV unavailable'}</span>
+    </div>
     <div class="detail-page-header ${_fvTierClass}" style="${orgStripe(p.org)}">
       <div style="display:flex;align-items:flex-start;gap:16px;flex:1;min-width:0;">
         <div class="headshot-frame">${headshotHTML(p, 130)}</div>
@@ -30513,6 +30820,10 @@ function _renderFarmDetailBody(orgCode, org, root) {
 
   const header = `
     <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
+    <div class="newsprint-eyebrow">
+      <span class="newsprint-eyebrow-label">Farm System Report · ${escapeHtml(org.org)} · #${org.farm_rank ?? '—'} of 30</span>
+      <span class="newsprint-eyebrow-meta">${org.count} prospects tracked · ${org.total_fv != null ? org.total_fv.toFixed(0) + " total FV" : "—"}</span>
+    </div>
     <div class="detail-page-header" style="${orgStripe(org.org)}">
       <div style="display:flex;align-items:center;gap:16px;">
         ${teamLogoHTML(org.org, "xl", fullOrgName(org.org))}
@@ -30736,7 +31047,14 @@ function _renderFarmDetailBody(orgCode, org, root) {
 
   // v31 — Header mirrors the Active Prospects column layout (7 cols)
   // so the Roster tab reads as a per-org slice of the global list.
-  const rosterHeader = `<div class="col-header">
+  // v31.4 — Newspaper eyebrow above the rosterHeader (sets scene
+  // before the column header so the tab feels like a section page,
+  // not a raw table).
+  const rosterEyebrow = `<div class="newsprint-eyebrow" style="margin-top:0;">
+    <span class="newsprint-eyebrow-label">${escapeHtml(org.org)} · Tracked Prospects · ${_rosterTotalItems} on the roster</span>
+    <span class="newsprint-eyebrow-meta">${(state.acqFilter !== "all" || state.levelFilter !== "all" || state.posFilter !== "all") ? "filtered view" : "full roster"}</span>
+  </div>`;
+  const rosterHeader = rosterEyebrow + `<div class="col-header">
     <span class="sort-header" data-roster-sort="name" title="Player name + meta · click to sort">Player · pos · age · B/T</span>
     <span class="sort-header" data-roster-sort="avg_rank" title="Sort by rank" style="text-align:center;">Rank</span>
     <span class="sort-header" data-roster-sort="fv" title="Sort by consensus FV (high to low)" style="text-align:center;">FV Grade</span>
@@ -31812,6 +32130,17 @@ function _renderFarmDetailBody(orgCode, org, root) {
       // stays in sync if the user navigates back.
       document.querySelectorAll("[data-form-window]").forEach(b =>
         b.classList.toggle("active", b.dataset.formWindow === state.formWindow));
+      renderFarmDetail(orgCode);
+      syncToURL();
+    });
+  });
+  // v31.3 — Tri-state tree-view chip strip (Hidden / Canopy / Full).
+  // State.farmTreeView drives makeFarmReportCard's conditional render
+  // of the canopy vs full SVG. Re-render the detail page on click so
+  // the new view materializes.
+  document.querySelectorAll("#farm-detail-body [data-farm-tree-view]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.farmTreeView = btn.dataset.farmTreeView;
       renderFarmDetail(orgCode);
       syncToURL();
     });
@@ -34168,6 +34497,7 @@ function _resetPageFilters(page) {
     state.formWindow    = "6y";
     state.farmViewMode  = "table";
     state.farmCompareOrg = "";
+    state.farmTreeView  = "expanded";
   } else if (page === "spotlights") {
     state.spotlightBucket = "risers";
   } else if (page === "leaderboard") {

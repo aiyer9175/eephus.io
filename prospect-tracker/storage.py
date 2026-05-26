@@ -3556,10 +3556,28 @@ def _attach_sub_leaves(entry: dict) -> None:
                 })
             node["sub_leaves"] = subs
 
-    # ── Acquisition → Draft Performance — two scoring inputs ──
+    # ── Acquisition → Draft Performance — round-tier WAR/yr breakdown ──
+    # Sub-leaves now lead with the round-tier split (1st rd / Day 1 /
+    # Late) so the user sees WHERE the org's draft value comes from.
+    # Pick value + ceiling hits stay as supplementary signal lines.
     draft = tree.get("acq_draft") or {}
     if draft:
         subs = []
+        rt = draft.get("round_tiers") or {}
+        for tier_label, tier_data in rt.items():
+            v = tier_data.get("war_per_yr_mean")
+            n = tier_data.get("grad_count") or 0
+            sparse = n < 3
+            subs.append({
+                "label":  tier_label,
+                "kind":   "war",
+                "value":  round(v, 2) if v is not None else None,
+                "n":      n,
+                "sparse": sparse,
+                # Tier-style sub-leaf so the league pass can identify
+                # it for letter grading.
+                "tier":   "draft_round",
+            })
         pv = draft.get("pick_value_mean") if draft.get("pick_value_mean") is not None \
              else draft.get("wag_mean")
         ch = draft.get("ceiling_hits_pct")
@@ -3581,10 +3599,26 @@ def _attach_sub_leaves(entry: dict) -> None:
         if subs:
             draft["sub_leaves"] = subs
 
-    # ── Acquisition → IFA Performance — WAR/yr + Career WAR ──
+    # ── Acquisition → IFA Performance — bonus-tier WAR/yr breakdown ──
+    # Same shape as draft round-tiers: tier sub-leaves first (Top / Mid
+    # / Lower bonus bands), then the aggregate WAR/yr + Career WAR
+    # mean as supplementary signal lines.
     ifa = tree.get("acq_ifa") or {}
     if ifa:
         subs = []
+        bt = ifa.get("bonus_tiers") or {}
+        for tier_label, tier_data in bt.items():
+            v = tier_data.get("war_per_yr_mean")
+            n = tier_data.get("grad_count") or 0
+            sparse = n < 3
+            subs.append({
+                "label":  tier_label,
+                "kind":   "war",
+                "value":  round(v, 2) if v is not None else None,
+                "n":      n,
+                "sparse": sparse,
+                "tier":   "ifa_bonus",
+            })
         if ifa.get("war_per_yr_mean") is not None:
             subs.append({
                 "label": "WAR/yr mean",
@@ -3672,6 +3706,11 @@ def _attach_sub_leaves(entry: dict) -> None:
         scq["sub_leaves"] = subs
 
     # ── Development → Health Mgmt — three inverted inputs surfaced ──
+    # plus per-side splits (Pitcher / Hitter post-TJ + IL%) so the
+    # user can see arm-injury concentration. Per-side sub-leaves are
+    # marked with a "tier" so the league pass can letter-grade them
+    # across the cohort (lower % = better letter, mirroring the leaf
+    # itself — LOWER burden = HIGHER grade).
     hm = tree.get("dev_health_mgmt") or {}
     if hm and hm.get("active_count"):
         subs = []
@@ -3697,6 +3736,39 @@ def _attach_sub_leaves(entry: dict) -> None:
                 "value": round(hm["post_tj_pct"], 3),
                 "n":     hm.get("active_count"),
                 "raw":   f"{hm.get('post_tj_count', 0)} of {hm.get('active_count', 0)} with prior TJ",
+            })
+        # Per-side splits — only emit when that side has actives.
+        if hm.get("post_tj_pct_pit") is not None:
+            subs.append({
+                "label":  "Pitcher post-TJ %",
+                "kind":   "pct",
+                "value":  round(hm["post_tj_pct_pit"], 3),
+                "n":      hm.get("actives_pit_count"),
+                "tier":   "health_split",
+            })
+        if hm.get("il_pct_current_pit") is not None:
+            subs.append({
+                "label":  "Pitcher IL share",
+                "kind":   "pct",
+                "value":  round(hm["il_pct_current_pit"], 3),
+                "n":      hm.get("actives_pit_count"),
+                "tier":   "health_split",
+            })
+        if hm.get("post_tj_pct_hit") is not None:
+            subs.append({
+                "label":  "Hitter post-TJ %",
+                "kind":   "pct",
+                "value":  round(hm["post_tj_pct_hit"], 3),
+                "n":      hm.get("actives_hit_count"),
+                "tier":   "health_split",
+            })
+        if hm.get("il_pct_current_hit") is not None:
+            subs.append({
+                "label":  "Hitter IL share",
+                "kind":   "pct",
+                "value":  round(hm["il_pct_current_hit"], 3),
+                "n":      hm.get("actives_hit_count"),
+                "tier":   "health_split",
             })
         if subs:
             hm["sub_leaves"] = subs
@@ -6638,6 +6710,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # active total) so the farm card can flag orgs with a
                 # high share of the org sidelined right now.
                 "_il_current_count": 0,
+                # v31.1 — Per-side health splits (Hitter vs Pitcher).
+                # Surfaces side-specific injury exposure under the
+                # Health Mgmt leaf's sub-leaves so the user can see,
+                # e.g., a pitcher-heavy TJ rate even when the overall
+                # IL share is moderate (pitcher arms are the main
+                # injury risk in baseball; the side split makes that
+                # signal visible).
+                "_post_tj_count_pit":  0,
+                "_post_tj_count_hit":  0,
+                "_il_current_count_pit": 0,
+                "_il_current_count_hit": 0,
+                "_actives_pit_count":  0,
+                "_actives_hit_count":  0,
                 # Per-org tool-development accumulator (Step 3 of the
                 # ToolsDvM+ plan). Keyed by canonical tool name (hit,
                 # game_pwr, etc.) — each entry holds the per-prospect
@@ -6812,8 +6897,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Health profile (reuse the same helper the per-prospect path uses).
         rs_player = (roster_status or {}).get(p.player_key) or {}
         hp = _derive_health_profile(rs_player.get("injury_history") or [])
+        # v31.1 — Determine side once so per-side health counters can
+        # increment alongside the org-wide ones.
+        _is_pit_active = bool(p.position and p.position.split("/")[0] in PITCHER_POS)
+        if _is_pit_active:
+            m["_actives_pit_count"] += 1
+        else:
+            m["_actives_hit_count"] += 1
         if hp.get("is_post_tj"):
             m["_post_tj_count"] += 1
+            if _is_pit_active:
+                m["_post_tj_count_pit"] += 1
+            else:
+                m["_post_tj_count_hit"] += 1
         il_days = int(hp.get("il_days_12mo") or 0)
         m["_il_days_sum"]   += il_days
         m["_il_days_count"] += 1
@@ -6822,6 +6918,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # `il_status` (dict keyed by player_key).
         if (il_status or {}).get(p.player_key, {}).get("is_on_il"):
             m["_il_current_count"] = m.get("_il_current_count", 0) + 1
+            if _is_pit_active:
+                m["_il_current_count_pit"] += 1
+            else:
+                m["_il_current_count_hit"] += 1
 
         # v29 — Statcast+ contribution. None values are skipped (the
         # prospect has no tracked Statcast / zone data).
@@ -6955,6 +7055,24 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # thresholds, so the two grade signals stay aligned).
             "_method_grad_counts": {},
             "_method_star_counts": {},
+            # v31.1 — Draft round-tier + IFA bonus-tier accumulators.
+            # Feed the new sub-leaf league pass that letter-grades each
+            # tier's WAR/yr mean across the league. Tiers:
+            #   draft_r1     : pick_round == 1
+            #   draft_day1   : pick_round in 2..10 (Day 1 + early Day 2)
+            #   draft_late   : pick_round >= 11
+            #   ifa_top      : bonus_usd ≥ $2M
+            #   ifa_mid      : $500K ≤ bonus_usd < $2M
+            #   ifa_lower    : bonus_usd < $500K OR missing
+            # WAR/yr sums (and counts) are aggregated per grad whose
+            # acquisition method + tier criteria match. WAR/yr ≥ 0
+            # required so unsigned grads don't slip in.
+            "draft_r1_war_per_yr_sum":     0.0, "draft_r1_war_per_yr_count":     0,
+            "draft_day1_war_per_yr_sum":   0.0, "draft_day1_war_per_yr_count":   0,
+            "draft_late_war_per_yr_sum":   0.0, "draft_late_war_per_yr_count":   0,
+            "ifa_top_war_per_yr_sum":      0.0, "ifa_top_war_per_yr_count":      0,
+            "ifa_mid_war_per_yr_sum":      0.0, "ifa_mid_war_per_yr_count":      0,
+            "ifa_lower_war_per_yr_sum":    0.0, "ifa_lower_war_per_yr_count":    0,
         })
         # Boom/Bust classification for this graduate.
         career_rows = (career_stats or {}).get(gp.player_key, []) or []
@@ -7022,6 +7140,34 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 if yval is not None:
                     bucket["hit_war_per_yr_sum"]   += yval
                     bucket["hit_war_per_yr_count"] += 1
+            # v31.1 — Draft round-tier + IFA bonus-tier per-grad WAR/yr
+            # accumulators. Only fires when WAR/yr is on file (graduate
+            # has a non-empty MLB career). Tiers are mutually exclusive
+            # within method, so a grad lands in exactly one tier bucket.
+            if yval is not None and gp_method == "draft":
+                _round = gp_acq.get("pick_round")
+                if isinstance(_round, int) and _round >= 1:
+                    if _round == 1:
+                        bucket["draft_r1_war_per_yr_sum"]   += yval
+                        bucket["draft_r1_war_per_yr_count"] += 1
+                    elif _round <= 10:
+                        bucket["draft_day1_war_per_yr_sum"]   += yval
+                        bucket["draft_day1_war_per_yr_count"] += 1
+                    else:
+                        bucket["draft_late_war_per_yr_sum"]   += yval
+                        bucket["draft_late_war_per_yr_count"] += 1
+            if yval is not None and gp_method == "international_fa":
+                _bonus = gp_acq.get("bonus_usd")
+                _bonus_n = float(_bonus) if _bonus else 0.0
+                if _bonus_n >= 2_000_000:
+                    bucket["ifa_top_war_per_yr_sum"]   += yval
+                    bucket["ifa_top_war_per_yr_count"] += 1
+                elif _bonus_n >= 500_000:
+                    bucket["ifa_mid_war_per_yr_sum"]   += yval
+                    bucket["ifa_mid_war_per_yr_count"] += 1
+                else:
+                    bucket["ifa_lower_war_per_yr_sum"]   += yval
+                    bucket["ifa_lower_war_per_yr_count"] += 1
         if bonus_usd is not None:
             bucket["bonus_sum"] += int(bonus_usd)
             bucket["bonus_count"] += 1
@@ -7262,9 +7408,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         il_days_sum = m.pop("_il_days_sum") or 0
         il_days_count = m.pop("_il_days_count") or 0
         il_current_count = m.pop("_il_current_count") or 0
+        # v31.1 — Per-side health counters (pitcher vs hitter splits)
+        # so the Health Mgmt leaf's sub-leaves can show side-specific
+        # exposure. Pitcher arm issues are the bulk of injury risk in
+        # baseball; surfacing the split here makes that visible.
+        post_tj_count_pit = m.pop("_post_tj_count_pit") or 0
+        post_tj_count_hit = m.pop("_post_tj_count_hit") or 0
+        il_current_count_pit = m.pop("_il_current_count_pit") or 0
+        il_current_count_hit = m.pop("_il_current_count_hit") or 0
+        actives_pit_count = m.pop("_actives_pit_count") or 0
+        actives_hit_count = m.pop("_actives_hit_count") or 0
         post_tj_pct = post_tj_count / n_actives if n_actives else 0
         il_days_mean = (il_days_sum / il_days_count) if il_days_count else 0
         il_pct_current = (il_current_count / n_actives) if n_actives else 0
+        post_tj_pct_pit = (post_tj_count_pit / actives_pit_count) if actives_pit_count else None
+        post_tj_pct_hit = (post_tj_count_hit / actives_hit_count) if actives_hit_count else None
+        il_pct_current_pit = (il_current_count_pit / actives_pit_count) if actives_pit_count else None
+        il_pct_current_hit = (il_current_count_hit / actives_hit_count) if actives_hit_count else None
         m["health_burden"] = {
             "score":       round(100 * post_tj_pct + il_days_mean, 2),
             "post_tj_pct": round(post_tj_pct, 3),
@@ -7273,6 +7433,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "il_pct_current": round(il_pct_current, 3),
             "il_current_count": il_current_count,
             "active_count": n_actives,
+            # Per-side splits (None when that side has zero actives).
+            "post_tj_pct_pit":    round(post_tj_pct_pit, 3) if post_tj_pct_pit is not None else None,
+            "post_tj_pct_hit":    round(post_tj_pct_hit, 3) if post_tj_pct_hit is not None else None,
+            "il_pct_current_pit": round(il_pct_current_pit, 3) if il_pct_current_pit is not None else None,
+            "il_pct_current_hit": round(il_pct_current_hit, 3) if il_pct_current_hit is not None else None,
+            "actives_pit_count":  actives_pit_count,
+            "actives_hit_count":  actives_hit_count,
         }
         # Per-tool development — mean lifetime delta across actives that
         # have ≥2 consensus observations of each tool. Sparse-data gate:
@@ -7369,6 +7536,28 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "star_grad_count":     _ifa_grad_n,
                 "star_rate_deviation": None,   # filled in league pass
                 "star_rate_league_median": None,
+                # v31.1 — Bonus-tier breakdown. Same shape as
+                # acq_draft.round_tiers — per-tier WAR/yr mean grades
+                # the org's hit rate inside each bonus band. Letter-
+                # graded in the league pass. Note: Spotrac IFA bonus
+                # coverage starts in 2021, so most pre-2021 IFA grads
+                # fall into the "Lower / unknown" catchall regardless
+                # of their actual bonus. Top and Mid tiers reflect the
+                # subset with confirmed bonus dollars.
+                "bonus_tiers": {
+                    "Top (≥$2M)":               {
+                        "war_per_yr_mean": _gated_mean("ifa_top_war_per_yr_sum",   "ifa_top_war_per_yr_count"),
+                        "grad_count":      gagg.get("ifa_top_war_per_yr_count") or 0,
+                    },
+                    "Mid ($500K-$2M)":          {
+                        "war_per_yr_mean": _gated_mean("ifa_mid_war_per_yr_sum",   "ifa_mid_war_per_yr_count"),
+                        "grad_count":      gagg.get("ifa_mid_war_per_yr_count") or 0,
+                    },
+                    "Lower / unknown bonus":    {
+                        "war_per_yr_mean": _gated_mean("ifa_lower_war_per_yr_sum", "ifa_lower_war_per_yr_count"),
+                        "grad_count":      gagg.get("ifa_lower_war_per_yr_count") or 0,
+                    },
+                },
             },
             # Draft Performance — pick-slot-adjusted WAR (existing) + Draft
             # Ceiling Hits (new sub-input).
@@ -7392,6 +7581,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "star_grad_count":     _draft_grad_n,
                 "star_rate_deviation": None,   # filled in league pass
                 "star_rate_league_median": None,
+                # v31.1 — Round-tier breakdown. Each tier carries the
+                # per-org WAR/yr mean across grads acquired via that
+                # tier. Letter-graded in the league pass.
+                "round_tiers": {
+                    "1st round (R1)":      {
+                        "war_per_yr_mean": _gated_mean("draft_r1_war_per_yr_sum",   "draft_r1_war_per_yr_count"),
+                        "grad_count":      gagg.get("draft_r1_war_per_yr_count") or 0,
+                    },
+                    "Day 1 (R2-R10)":      {
+                        "war_per_yr_mean": _gated_mean("draft_day1_war_per_yr_sum", "draft_day1_war_per_yr_count"),
+                        "grad_count":      gagg.get("draft_day1_war_per_yr_count") or 0,
+                    },
+                    "Late (R11+)":         {
+                        "war_per_yr_mean": _gated_mean("draft_late_war_per_yr_sum", "draft_late_war_per_yr_count"),
+                        "grad_count":      gagg.get("draft_late_war_per_yr_count") or 0,
+                    },
+                },
             },
             # DEVELOPMENT branch — hitter/pitcher composites filled by
             # the per-tool DvM+ league pass below.
@@ -7502,6 +7708,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "active_count":   hb.get("active_count"),
                 "il_current_count": hb.get("il_current_count"),
                 "post_tj_count":    hb.get("post_tj_count"),
+                # v31.1 — Per-side health splits surfaced as sub-leaves
+                # of the Health Mgmt leaf. Pitcher arm risk dominates
+                # the baseline post-TJ rate; the side split makes the
+                # exposure asymmetry visible to the user.
+                "post_tj_pct_pit":    hb.get("post_tj_pct_pit"),
+                "post_tj_pct_hit":    hb.get("post_tj_pct_hit"),
+                "il_pct_current_pit": hb.get("il_pct_current_pit"),
+                "il_pct_current_hit": hb.get("il_pct_current_hit"),
+                "actives_pit_count":  hb.get("actives_pit_count"),
+                "actives_hit_count":  hb.get("actives_hit_count"),
                 # Composite burden score (higher = worse) preserved
                 # for back-compat; the leaf score uses the inverted
                 # individual signals below.
@@ -9221,10 +9437,207 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # v31 — Attach sub_leaves payload to every tree leaf node so the
     # renderer's third column can show "what this leaf is made of".
     # Runs AFTER farm_rank assignment so the helper has the final tree
-    # state to walk; sub_leaves are purely informational (they don't
-    # feed leaf scores).
+    # state to walk.
     for entry in org_summary:
         _attach_sub_leaves(entry)
+
+    # v31.1 — League pass that LETTER-GRADES selected sub-leaves so the
+    # third tree column reads as another grade layer, not just a value
+    # display. Currently grades:
+    #   * Hitter/Pitcher DvM+ pos-bucket sub-leaves (C/INF/OF, SP/RP)
+    #     — z-scores each bucket's 6y blend value across all 30 orgs,
+    #     then assigns a letter grade so the user sees, e.g., that
+    #     SEA grades A+ on their OF bucket development but C on
+    #     their C bucket.
+    # Sparse buckets (sub_leaves entry with sparse=true) are excluded
+    # from the league cohort and grade as "—". Output is a `letter`
+    # field on each sub_leaf dict (renderer renders it when present).
+    # Helper: z-score → letter grade. Anchored at C (mean) with
+    # symmetric stops at ±0.15σ (C+/C-), ±0.4σ (B-/D+), ±0.7σ (B/D),
+    # ±1.0σ (B+/D-), ±1.5σ (A-/F), ±2.0σ (A/F-tail), beyond +2.0σ (A+).
+    # Walks from the high side down so the most-extreme bucket fires
+    # first. Anchored at the league MEAN (z=0 → C) so grades read as
+    # "how far above/below league average is this org" rather than
+    # rank position (which is misleading when only 3-5 orgs have data).
+    def _z_to_letter(z: float) -> str:
+        if z >=  2.0: return "A+"
+        if z >=  1.5: return "A"
+        if z >=  1.0: return "A-"
+        if z >=  0.7: return "B+"
+        if z >=  0.4: return "B"
+        if z >=  0.15: return "B-"
+        if z >= -0.15: return "C"
+        if z >= -0.4: return "C-"
+        if z >= -0.7: return "D+"
+        if z >= -1.0: return "D"
+        if z >= -1.5: return "D-"
+        return "F"
+
+    # Grade one sub-leaf label across the league. Pulls each org's
+    # value, computes league mean + stdev across present values, then
+    # maps each org's z-score (sign-flipped for lower-is-better) to a
+    # letter via the schedule above. Missing / sparse entries default
+    # to "C" (the league-mean grade) instead of "—" so the tree never
+    # shows a literal gap.
+    def _grade_sub_leaf_across_league(leaf_key: str, sub_label: str,
+                                       higher_is_better: bool = True) -> None:
+        vals: list[float | None] = []
+        for entry in org_summary:
+            node = (entry.get("tree") or {}).get(leaf_key) or {}
+            subs = node.get("sub_leaves") or []
+            match = next((s for s in subs if s.get("label") == sub_label), None)
+            if not match or match.get("sparse") or match.get("value") is None:
+                vals.append(None)
+            else:
+                vals.append(float(match["value"]))
+        present_vals = [v for v in vals if v is not None]
+        n_present = len(present_vals)
+        # Need ≥3 present values to compute meaningful mean + stdev.
+        # Below that, default everyone to "C".
+        if n_present >= 3:
+            mu = sum(present_vals) / n_present
+            var = sum((v - mu) ** 2 for v in present_vals) / n_present
+            sd = var ** 0.5
+        else:
+            mu, sd = 0.0, 0.0
+        sign = 1.0 if higher_is_better else -1.0
+        for i, v in enumerate(vals):
+            entry = org_summary[i]
+            node = (entry.get("tree") or {}).get(leaf_key) or {}
+            subs = node.get("sub_leaves") or []
+            match = next((s for s in subs if s.get("label") == sub_label), None)
+            if match is None:
+                continue
+            if v is None or sd < 1e-9:
+                # Missing value or zero-variance cohort → default to C.
+                # Mark sparse_default so the renderer can show this is
+                # a placeholder grade (the value itself is sparse, so
+                # we're inferring it sits at the league mean).
+                match["letter"] = "C"
+                match["sparse_default"] = True
+                match["rank_n"] = n_present
+            else:
+                z = sign * (v - mu) / sd
+                match["letter"] = _z_to_letter(z)
+                match["z_score"] = round(z, 2)
+                match["rank_n"]  = n_present
+
+    # Pos-bucket DvM+ sub-leaves (Hitter C/INF/OF, Pitcher SP/RP).
+    _bucket_groups = [
+        ("dev_hitter",  ("C", "INF", "OF")),
+        ("dev_pitcher", ("SP", "RP")),
+    ]
+    for leaf_key, buckets in _bucket_groups:
+        for bucket in buckets:
+            _grade_sub_leaf_across_league(leaf_key, f"{bucket} bucket")
+
+    # Draft round-tier + IFA bonus-tier sub-leaves.
+    for tier_label in ("1st round (R1)", "Day 1 (R2-R10)", "Late (R11+)"):
+        _grade_sub_leaf_across_league("acq_draft", tier_label)
+    for tier_label in ("Top (≥$2M)", "Mid ($500K-$2M)", "Lower / unknown bonus"):
+        _grade_sub_leaf_across_league("acq_ifa", tier_label)
+
+    # Per-side health splits (LOWER IS BETTER — fewer TJ + fewer on IL
+    # = better letter). Mirrors the parent Health Mgmt leaf's grading
+    # direction.
+    for split_label in ("Pitcher post-TJ %", "Pitcher IL share",
+                         "Hitter post-TJ %", "Hitter IL share"):
+        _grade_sub_leaf_across_league("dev_health_mgmt", split_label,
+                                       higher_is_better=False)
+    # Org-wide health signals — same lower-is-better direction.
+    for hsig_label in ("Currently on IL", "Avg IL days / active (12mo)",
+                        "Post-TJ share"):
+        _grade_sub_leaf_across_league("dev_health_mgmt", hsig_label,
+                                       higher_is_better=False)
+
+    # Statcast Quality sub-leaves (higher SC+ = better).
+    for scq_label in ("Hitter SC+ mean", "Pitcher SC+ mean", "All graded actives"):
+        _grade_sub_leaf_across_league("dev_statcast_quality", scq_label)
+
+    # Acquisition aggregate sub-leaves (after tier-specific grading).
+    for d_label in ("Pick value vs slot", "Ceiling hits"):
+        _grade_sub_leaf_across_league("acq_draft", d_label)
+    for i_label in ("WAR/yr mean", "Career WAR mean"):
+        _grade_sub_leaf_across_league("acq_ifa", i_label)
+
+    # Trade Acumen splits (higher inbound better; lower outbound
+    # better — outbound WAR is "talent we gave up").
+    _grade_sub_leaf_across_league("tx_trades", "Inbound WAR")
+    _grade_sub_leaf_across_league("tx_trades", "Outbound WAR", higher_is_better=False)
+    _grade_sub_leaf_across_league("tx_trades", "Unweighted Δ")
+
+    # Waiver Claims hit rate.
+    _grade_sub_leaf_across_league("tx_waivers", "Hit rate")
+
+    # MLB Production hitter/pitcher splits.
+    for prod_label in ("WAR/yr mean", "Top-3 cum WAR", "WAG mean"):
+        _grade_sub_leaf_across_league("mlb_hitter_production", prod_label)
+        _grade_sub_leaf_across_league("mlb_pitcher_production", prod_label)
+
+    # Top Grads / Conviction / HOF sub-leaves.
+    _grade_sub_leaf_across_league("mlb_production_top_grads", "Top-3 mean WAR/yr")
+    _grade_sub_leaf_across_league("mlb_production_conviction", "Star count")
+    _grade_sub_leaf_across_league("mlb_production_conviction", "Peak career WAR/yr")
+    # HOF-track label uses the threshold inline; resolve dynamically.
+    for entry in org_summary:
+        hof = (entry.get("tree") or {}).get("mlb_production_hof_track") or {}
+        subs = hof.get("sub_leaves") or []
+        for s in subs:
+            # Mark the count + peak labels for grading.
+            if s.get("label", "").startswith("Seasons ≥") or s.get("label") == "Peak season WAR":
+                pass  # handled in the loop below
+    _grade_sub_leaf_across_league("mlb_production_hof_track", "Peak season WAR")
+    # The Seasons ≥N WAR label embeds the threshold (default 5); grade
+    # whatever the actual label happens to be on each org's payload.
+    _hof_count_label = None
+    for entry in org_summary:
+        hof = (entry.get("tree") or {}).get("mlb_production_hof_track") or {}
+        subs = hof.get("sub_leaves") or []
+        for s in subs:
+            if s.get("label", "").startswith("Seasons ≥"):
+                _hof_count_label = s["label"]
+                break
+        if _hof_count_label:
+            break
+    if _hof_count_label:
+        _grade_sub_leaf_across_league("mlb_production_hof_track", _hof_count_label)
+
+    # Active Surplus per-prospect (higher better; Cost basis is
+    # informational only — not graded).
+    _grade_sub_leaf_across_league("fin_active_surplus", "$ / prospect")
+
+    # v31.4 — Per-window letter grades for the DvM+ leaves. Lets the
+    # frontend's 1y/3y/6y window selector ACTUALLY change the leaf
+    # grade (not just the displayed DvM+ value). Stamps a
+    # `grades_by_window` dict on each org keyed by window → {leaf: letter}.
+    # Renderer reads this when state.formWindow changes; if absent it
+    # falls back to the canonical `grades[leaf]` (which anchors on 6y).
+    for entry in org_summary:
+        entry["grades_by_window"] = {}
+    for win in ("1y", "3y", "6y"):
+        for leaf_key in ("dev_hitter", "dev_pitcher"):
+            vals = []
+            for entry in org_summary:
+                node = (entry.get("tree") or {}).get(leaf_key) or {}
+                v = (node.get("dvm_plus_by_window") or {}).get(win)
+                vals.append(float(v) if v is not None else None)
+            present = [v for v in vals if v is not None]
+            n_p = len(present)
+            if n_p >= 3:
+                mu = sum(present) / n_p
+                var = sum((v - mu) ** 2 for v in present) / n_p
+                sd = var ** 0.5
+            else:
+                mu, sd = 0.0, 0.0
+            for i, v in enumerate(vals):
+                entry = org_summary[i]
+                gbw = entry.setdefault("grades_by_window", {})
+                wmap = gbw.setdefault(win, {})
+                if v is None or sd < 1e-9:
+                    wmap[leaf_key] = "C"
+                else:
+                    z = (v - mu) / sd
+                    wmap[leaf_key] = _z_to_letter(z)
     # ────────────────────────────────────────────────────────────────────────
 
     # ── Per-org draft spending (computed from our acquisitions table) ──
