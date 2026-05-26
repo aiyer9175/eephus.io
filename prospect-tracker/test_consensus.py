@@ -38,14 +38,24 @@ class TestParseFV:
         assert _parse_fv("60") == 60.0
 
     def test_plus_grade(self):
-        assert _parse_fv("55+") == 57.5
+        # v26 — '+' grades return the bare tier value (no more +2.5
+        # inflation). The upside flag is exposed via _parse_fv_full.
+        assert _parse_fv("55+") == 55.0
 
     def test_pvfv_format(self):
         # TJStats uses "PV/FV" format like "45/55"
         assert _parse_fv("45/55") == 55.0
 
     def test_pvfv_with_plus(self):
-        assert _parse_fv("45/55+") == 57.5
+        # v26 — '+' grades return the bare tier value (55, not 57.5).
+        assert _parse_fv("45/55+") == 55.0
+
+    def test_plus_grade_full(self):
+        from scrapers import _parse_fv_full
+        # v26 — _parse_fv_full surfaces the upside flag.
+        assert _parse_fv_full("55+") == (55.0, True)
+        assert _parse_fv_full("55") == (55.0, False)
+        assert _parse_fv_full("45/55+") == (55.0, True)
 
     def test_empty(self):
         assert _parse_fv("") is None
@@ -716,8 +726,9 @@ class TestParseJbToolTable:
           </tr>
         </tbody></table>
         """
-        tools, fv = _parse_jb_tool_table(html_block)
+        tools, fv, fv_plus = _parse_jb_tool_table(html_block)
         assert fv == 70.0
+        assert fv_plus is False
         assert tools["hit"] == 60.0
         assert tools["pitch_sel"] == 60.0   # Plate Disc → pitch_sel
         assert tools["game_pwr"] == 70.0
@@ -743,8 +754,9 @@ class TestParseJbToolTable:
           </tr>
         </tbody></table>
         """
-        tools, fv = _parse_jb_tool_table(html_block)
+        tools, fv, fv_plus = _parse_jb_tool_table(html_block)
         assert fv == 65.0
+        assert fv_plus is False
         assert tools["fb"] == 70.0
         # Both sweeper + slider map to sl; the later (slider) value
         # overwrites the earlier (sweeper) — both are real publications.
@@ -756,9 +768,10 @@ class TestParseJbToolTable:
 
     def test_no_table_returns_none(self):
         from scrapers import _parse_jb_tool_table
-        tools, fv = _parse_jb_tool_table("<p>No table here</p>")
+        tools, fv, fv_plus = _parse_jb_tool_table("<p>No table here</p>")
         assert tools is None
         assert fv is None
+        assert fv_plus is False
 
     def test_out_of_range_dropped(self):
         from scrapers import _parse_jb_tool_table
@@ -766,8 +779,9 @@ class TestParseJbToolTable:
         <table><tr><td>HIT</td><td>RUN</td><td>FV</td></tr>
         <tr><td>15/99</td><td>50/55</td><td>60</td></tr></table>
         """
-        tools, fv = _parse_jb_tool_table(html_block)
+        tools, fv, fv_plus = _parse_jb_tool_table(html_block)
         assert fv == 60.0
+        assert fv_plus is False
         assert "hit" not in (tools or {})  # 99 fails 20-80 gate
         assert tools["speed"] == 55.0
 

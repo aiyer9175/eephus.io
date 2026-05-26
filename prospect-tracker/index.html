@@ -7005,6 +7005,11 @@ function fvCmpDesc(a, b) {
   const af = (a && a.fv_close != null) ? a.fv_close : -1;
   const bf = (b && b.fv_close != null) ? b.fv_close : -1;
   if (bf !== af) return bf - af;
+  // v26 — '+' upside tiebreaker: 42+ ranks above 42 but below 43.
+  // Numeric FVs are tied at this point; the upside flag breaks first.
+  const ap = (a && a.fv_close_plus) ? 1 : 0;
+  const bp = (b && b.fv_close_plus) ? 1 : 0;
+  if (bp !== ap) return bp - ap;
   // FVs tie — tools composite breaks it (ungraded sinks).
   const at = _toolComposite(a);
   const bt = _toolComposite(b);
@@ -7908,6 +7913,17 @@ function fvCeil(v) {
   return Math.ceil(n);
 }
 
+// v26 — Display helper: returns the player's fv_close as a label string
+// with the "+" upside suffix appended when fv_close_plus is set. Use this
+// anywhere a raw `fvCeil(p.fv_close)` was being inlined for display so
+// the "+" upside marker rides along. Returns "—" for missing FVs.
+function fvCloseLabel(p) {
+  if (!p || p.fv_close == null) return "—";
+  const n = fvCeil(p.fv_close);
+  if (n == null) return "—";
+  return `${n}${p.fv_close_plus ? "+" : ""}`;
+}
+
 function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
   if (!points || points.length === 0) return "";
   // Reserve 9px of left margin for the 20/80 Y-axis labels so the chart
@@ -7967,9 +7983,16 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
     const c = segColor(p2.fv - p1.fv);
     segments.push(`<path d="M ${p1.x.toFixed(1)},${p1.y.toFixed(1)} C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}" stroke="${c}" stroke-width="1.5" stroke-linecap="round" fill="none" vector-effect="non-scaling-stroke"><title>${p1.pt.snapshot_date} → ${p2.pt.snapshot_date} · FV ${p1.pt.consensus_fv_label} → ${p2.pt.consensus_fv_label}</title></path>`);
   }
-  // Data-point markers retired per user — the curve color is the
-  // only visual the user needs; dots added clutter.
-  const circles = "";
+  // v26 — Dot markers ONLY for points where the consensus inherited a
+  // "+" upside flag from a contributing source. Per the user spec:
+  // "add dot indicators on FV history charts ONLY for when a prospect
+  // was graded with a '+'". Other points stay clean — the curve color
+  // does the heavy lifting; dots add visual noise unless they're
+  // signaling something specific (here: scout-noted upside).
+  const circles = coords
+    .filter(c => c.pt && c.pt.consensus_fv_plus)
+    .map(c => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="2.2" fill="var(--neon-amber)" stroke="var(--bg-primary)" stroke-width="0.6" vector-effect="non-scaling-stroke"><title>${c.pt.snapshot_date} · FV ${c.pt.consensus_fv_label} (with + upside)</title></circle>`)
+    .join("");
 
   // Tool composite trajectory — dashed violet line tracking the mean
   // per-tool grade at each snapshot, plotted on the same FV scale.
@@ -9672,10 +9695,11 @@ function renderActiveContextRail() {
     .slice(0, 3);
   const gradRows = grads.map(g => {
     const fv = g.fv_close != null ? fvCeil(g.fv_close) : null;
+    const fvLbl = fv != null ? `${fv}${g.fv_close_plus ? "+" : ""}` : null;  // v26
     return `<div class="ctx-row" data-key="${escapeHtml(g.player_key)}">
       <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(g.player_name)}</span>
       <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;">${g.debut_date}</span>
-      ${fv != null ? `<span class="fv-badge ${fvClass(String(fv))} size-sm">${fv}</span>` : ""}
+      ${fvLbl != null ? `<span class="fv-badge ${fvClass(String(fv))} size-sm">${fvLbl}</span>` : ""}
     </div>`;
   }).join("");
   // Card always renders so the rail stays anchored even when the debut
@@ -10867,7 +10891,7 @@ function renderLeaderboards() {
   // the prospect's arc, not just one year.
   const trendField = cfg.field || statKey;
   const rows = ranked.map(({ p, r, v }, i) => {
-    const fvLabel = p.fv_close != null ? fvCeil(p.fv_close) : "—";
+    const fvLabel = fvCloseLabel(p);  // v26 — includes "+" suffix
     const heat = cellHeatColor(v, _heatValues, !!cfg.hi);
     // Stat-side gate (hitter/pitcher) + same field-name fallback used
     // upstream. Skip the season being viewed only if there's at least
@@ -12279,7 +12303,7 @@ function _renderDraftCard(p) {
             background:${fvColor}22;color:${fvColor};font-weight:700;flex-shrink:0;"
             title="Consensus future value${p.consensus_fv_raw != null && p.consensus_fv_raw !== p.consensus_fv
               ? ` (raw avg ${fvCeil(p.consensus_fv_raw)})` : ''}">
-        FV ${p.consensus_fv != null ? fvCeil(p.consensus_fv) : "—"}
+        FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}${p.consensus_fv_plus ? "+" : ""}` : "—"}
       </span>
     </div>
     <!-- v19 — Single wrap-flex meta strip: no middot separators, chip
@@ -12513,7 +12537,7 @@ function _renderDraftLeaderboard(host, cls) {
     <td>${escapeHtml(p.position || "?")}</td>
     <td>${escapeHtml(p.school || "?")}</td>
     <td style="color:${_stockPlusColor(p.draft_stock_plus)};">${p.draft_stock_plus || "—"}</td>
-    <td>${p.consensus_fv != null ? fvCeil(p.consensus_fv) : "—"}</td>
+    <td>${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}${p.consensus_fv_plus ? "+" : ""}` : "—"}</td>
     <td>${p.projected_round ? "R" + p.projected_round : "—"}</td>
   </tr>`).join("");
 
@@ -12886,6 +12910,7 @@ function _renderOverseasCard(p) {
   // FV displays as a rounded integer even if stale exports stored a
   // decimal (defensive — overseas_export.py now rounds on write).
   const fvInt = p.consensus_fv != null ? fvCeil(p.consensus_fv) : null;
+  const fvLbl = fvInt != null ? `${fvInt}${p.consensus_fv_plus ? "+" : ""}` : null;  // v26
   // Country flag now lives INLINE with the league badge (it represents
   // the country whose LEAGUE this is, not the player's nationality).
   // _flagImg returns an <img> or emoji span; we shrink it with the
@@ -12913,7 +12938,7 @@ function _renderOverseasCard(p) {
       <span style="font-size:10.5px;padding:2px 5px;border-radius:3px;
             background:${fvColor}22;color:${fvColor};font-weight:700;flex-shrink:0;"
             title="Consensus future value">
-        FV ${fvInt != null ? fvInt : "—"}
+        FV ${fvLbl != null ? fvLbl : "—"}
       </span>
     </div>
     <!-- v19 — Tightened meta strip: no middot separators, chip-style
@@ -13114,6 +13139,7 @@ async function renderDraftDetail(key) {
   }
   const { p, cls } = hit;
   const fvInt = p.consensus_fv != null ? fvCeil(p.consensus_fv) : null;
+  const fvLbl = fvInt != null ? `${fvInt}${p.consensus_fv_plus ? "+" : ""}` : null;  // v26
   const fvColor = _draftFvBucketColor(p.consensus_fv);
   const stockColor = _stockPlusColor(p.draft_stock_plus);
 
@@ -13166,7 +13192,7 @@ async function renderDraftDetail(key) {
       </div>
       <div style="text-align:right;">
         <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Current FV</div>
-        <span class="fv-badge ${fvClass(String(fvInt || "40"))} size-lg" style="margin-top:4px;">${fvInt != null ? fvInt : "—"}</span>
+        <span class="fv-badge ${fvClass(String(fvInt || "40"))} size-lg" style="margin-top:4px;">${fvLbl != null ? fvLbl : "—"}</span>
         ${p.draft_stock_plus != null ? `<div style="margin-top:8px;font-family:var(--font-mono);font-size:11px;color:${stockColor};font-weight:700;" title="Draft Stock+ — z-normalized within the ${cls.year} class">DS+ ${p.draft_stock_plus}</div>` : ""}
         ${classRank ? `<div style="margin-top:4px;font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);" title="Rank within the ${cls.year} class by consensus FV">#${classRank} of ${classTotal}</div>` : ""}
       </div>
@@ -13442,6 +13468,7 @@ async function renderOverseasDetail(key) {
   }
   const { p, league } = hit;
   const fvInt = p.consensus_fv != null ? fvCeil(p.consensus_fv) : null;
+  const fvLbl = fvInt != null ? `${fvInt}${p.consensus_fv_plus ? "+" : ""}` : null;  // v26
   const fvColor = _draftFvBucketColor(p.consensus_fv);
   const leagueColor = _leagueBadgeColor(p.league);
   const leagueFlag = _flagImg(p.country_flag_svg, p.country_flag, p.country, { small: true });
@@ -13478,7 +13505,7 @@ async function renderOverseasDetail(key) {
       </div>
       <div style="text-align:right;">
         <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Current FV</div>
-        <span class="fv-badge ${fvClass(String(fvInt || "40"))} size-lg" style="margin-top:4px;">${fvInt != null ? fvInt : "—"}</span>
+        <span class="fv-badge ${fvClass(String(fvInt || "40"))} size-lg" style="margin-top:4px;">${fvLbl != null ? fvLbl : "—"}</span>
       </div>
     </div>`;
 
@@ -13851,7 +13878,7 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
     return `<li><strong>${escapeHtml(pos)}</strong> —
       ${escapeHtml(p.player_name)} <small>${_flagImg(p.country_flag_svg, p.country_flag, p.country)} ${escapeHtml(p.league)}</small>
       <span style="float:right;color:${_draftFvBucketColor(p.consensus_fv)};">
-        FV ${p.consensus_fv != null ? fvCeil(p.consensus_fv) : "—"}</span></li>`;
+        FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}${p.consensus_fv_plus ? "+" : ""}` : "—"}</span></li>`;
   }).join("");
 
   // Biggest projected bonuses
@@ -13921,7 +13948,7 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
     <td>${escapeHtml(p.position || "?")}</td>
     <td><span style="color:${_leagueBadgeColor(p.league)};font-weight:600;">${escapeHtml(p.league)}</span></td>
     <td>${escapeHtml(p.current_team || "?")}</td>
-    <td style="font-weight:600;color:${_draftFvBucketColor(p.consensus_fv)};">FV ${p.consensus_fv != null ? fvCeil(p.consensus_fv) : "—"}</td>
+    <td style="font-weight:600;color:${_draftFvBucketColor(p.consensus_fv)};">FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}${p.consensus_fv_plus ? "+" : ""}` : "—"}</td>
     <td>${p.eta_year || "—"}</td>
   </tr>`).join("");
 
@@ -14054,7 +14081,7 @@ function renderDebuts() {
     const chartHtml = wagSparkHtml
       ? `<span style="display:inline-flex;align-items:center;gap:4px;">${wagSparkHtml}${wagValueInline}</span>`
       : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
-    const fvLabel = g.fv_close != null ? fvCeil(g.fv_close) : "—";
+    const fvLabel = fvCloseLabel(g);  // v26 — includes "+" suffix
     const sm = g.sabermetrics || {};
     const cw = g.career_war || {};
     // WAG (WAR Above Grade) — always rendered when the graduate has the
@@ -19043,7 +19070,8 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
     withFv.sort(([, a], [, b]) => b.fv_published - a.fv_published);
     const parts = withFv.map(([src, v]) => {
       const lbl = SOURCE_LABELS[src] || src;
-      const fvShown = Number.isInteger(v.fv_published) ? v.fv_published : v.fv_published.toFixed(1);
+      const fvNum = Number.isInteger(v.fv_published) ? v.fv_published : v.fv_published.toFixed(1);
+      const fvShown = `${fvNum}${v.fv_plus ? "+" : ""}`;  // v26
       const rk = v.rank != null ? ` (#${v.rank})` : "";
       return `${lbl} ${fvShown}${rk}`;
     });
@@ -20596,8 +20624,14 @@ function makePerSourceHistory(points) {
         // Extras render as compact secondary lines below the primary
         // with a short "(Org list)" / parsed label suffix.
         const renderOne = (entry, isExtra) => {
-          const fv = entry.fv_published != null
-            ? `<span class="fv-badge ${fvClass(String(entry.fv_published))} size-sm">${entry.fv_published}</span>`
+          // v26 — Per-source FV displays carry the source's own '+'
+          // marker. e.g., FG published "55+" → renders "55+" on the
+          // per-source badge regardless of consensus value.
+          const fvLabel = entry.fv_published != null
+            ? `${entry.fv_published}${entry.fv_plus ? "+" : ""}`
+            : null;
+          const fv = fvLabel != null
+            ? `<span class="fv-badge ${fvClass(String(entry.fv_published))} size-sm">${fvLabel}</span>`
             : "—";
           const rank = entry.rank != null
             ? `<span style="font-size:10px;color:var(--text-tertiary);"> #${entry.rank}</span>`
@@ -22446,8 +22480,12 @@ function renderPlayerDetail(key) {
       const fvNum = info.fv_published;
       const rank = info.rank;
       const lbl = SOURCE_LABELS[src] || src;
-      const fvCell = fvNum != null
-        ? `<span class="fv-badge ${fvClass(String(Math.round(fvNum)))} size-sm">${Math.round(fvNum)}</span>`
+      // v26 — Per-source FV displays carry the source's own '+' marker.
+      const fvText = fvNum != null
+        ? `${Math.round(fvNum)}${info.fv_plus ? "+" : ""}`
+        : null;
+      const fvCell = fvText != null
+        ? `<span class="fv-badge ${fvClass(String(Math.round(fvNum)))} size-sm">${fvText}</span>`
         : `<span style="color:var(--text-tertiary);font-size:11px;">rank only</span>`;
       const rankCell = rank != null
         ? `<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-tertiary);font-size:10px;">#${rank}</span>`
@@ -24067,8 +24105,9 @@ function _renderFarmDetailBody(orgCode, org, root) {
     <div class="side-title">Recent debuts <span class="side-count">${graduates.length}</span></div>
     ${sortedGrads.slice(0, 6).map(g => {
       const fvAtGrad = g.fv_close != null ? fvCeil(g.fv_close) : null;
-      const fvBadge = fvAtGrad != null
-        ? `<span class="fv-badge ${fvClass(String(fvAtGrad))} size-xs" style="flex-shrink:0;">${fvAtGrad}</span>`
+      const fvLbl = fvAtGrad != null ? `${fvAtGrad}${g.fv_close_plus ? "+" : ""}` : null;  // v26
+      const fvBadge = fvLbl != null
+        ? `<span class="fv-badge ${fvClass(String(fvAtGrad))} size-xs" style="flex-shrink:0;">${fvLbl}</span>`
         : `<span style="width:22px;flex-shrink:0;"></span>`;
       // Realized Market AAV — multiply playing-time-weighted WAR/yr by
       // the $/WAR market anchor. Only renders when the graduate has
@@ -24102,8 +24141,9 @@ function _renderFarmDetailBody(orgCode, org, root) {
         <div class="side-title">Toolsiest <span class="side-count">Tool leaders</span></div>
         ${toolsLeaders.map(p => {
           const fvL = p.fv_close != null ? fvCeil(p.fv_close) : null;
-          const fvBadge = fvL != null
-            ? `<span class="fv-badge ${fvClass(String(fvL))} size-xs" style="flex-shrink:0;">${fvL}</span>`
+          const fvLbl = fvL != null ? `${fvL}${p.fv_close_plus ? "+" : ""}` : null;  // v26
+          const fvBadge = fvLbl != null
+            ? `<span class="fv-badge ${fvClass(String(fvL))} size-xs" style="flex-shrink:0;">${fvLbl}</span>`
             : `<span style="width:22px;flex-shrink:0;"></span>`;
           return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
             ${fvBadge}
@@ -25953,7 +25993,7 @@ function makeCompareSideBySide(players) {
   const cols = `repeat(${players.length}, minmax(0, 1fr))`;
   const heads = players.map((p, i) => {
     const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
-    const fvLabel = p.fv_close != null ? fvCeil(p.fv_close) : "—";
+    const fvLabel = fvCloseLabel(p);  // v26 — includes "+" suffix
     const sl = p.statline || {};
     const ageBits = [];
     if (p.age != null) ageBits.push(`${p.age.toFixed(1)}yo`);

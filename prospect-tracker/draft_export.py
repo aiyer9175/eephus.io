@@ -135,19 +135,34 @@ def _consensus(snaps: list[dict], field: str) -> float | None:
         return None
 
 
-def _fv_bucket(fv: float | None) -> str | None:
+def _consensus_fv_plus(snaps: list[dict]) -> bool:
+    """v26 — True if any latest-per-source snap for this player has
+    fv_plus=1. Mirrors the consensus.py aggregation rule (the upside
+    marker propagates to the consensus when any contributing source
+    carried it)."""
+    latest = _latest_per_source(snaps)
+    return any(bool(s.get("fv_plus")) for s in latest.values())
+
+
+def _fv_bucket(fv: float | None, fv_plus: bool = False) -> str | None:
+    """Map (integer FV, '+' flag) to a display bucket.
+
+    v26 — '+' is a separate flag, not a .5 numeric. Integer 45 with
+    fv_plus=True buckets to "45+"; integer 45 without buckets to "45".
+    The old `.5`-based bucketing went away with the 40+ → 42.5
+    interpolation removal.
+    """
     if fv is None:
         return None
-    if fv >= 70: return "70"
-    if fv >= 65: return "65"
-    if fv >= 60: return "60"
-    if fv >= 55: return "55"
-    if fv >= 52.5: return "50+"
-    if fv >= 50: return "50"
-    if fv >= 47.5: return "45+"
-    if fv >= 45: return "45"
-    if fv >= 42.5: return "40+"
-    if fv >= 40: return "40"
+    n = int(round(fv))
+    if n >= 70: return "70"
+    if n >= 65: return "65"
+    if n >= 60: return "60"
+    if n >= 55: return "55" + ("+" if fv_plus else "")
+    if n >= 50: return "50" + ("+" if fv_plus else "")
+    if n >= 45: return "45" + ("+" if fv_plus else "")
+    if n >= 40: return "40" + ("+" if fv_plus else "")
+    if n >= 35: return "35" + ("+" if fv_plus else "")
     return "<40"
 
 
@@ -193,13 +208,14 @@ def _build_class(year: int,
         # still see fractional resolution.
         fv_raw = _consensus(plist, "fv")
         fv = int(round(fv_raw)) if fv_raw is not None else None
+        # v26 — '+' upside flag: True if any source published "55+" etc.
+        fv_plus = _consensus_fv_plus(plist)
         rank = consensus_ranks.get(pk)
         sp = _stock_plus(rank, class_rank_list)
         if sp is not None:
             stock_plus_values.append(sp)
-        # Bucket from the raw value so the 47.5 → "45+" bucket survives
-        # even after we round display FV to 48.
-        bucket = _fv_bucket(fv_raw)
+        # Bucket from integer FV + the '+' flag (v26 — no more .5 inflation).
+        bucket = _fv_bucket(fv, fv_plus)
         if bucket:
             fv_dist[bucket] += 1
 
@@ -219,6 +235,7 @@ def _build_class(year: int,
                 "interval_label": snap.get("interval_label"),
                 "rank":          snap.get("rank"),
                 "fv":            snap.get("fv"),
+                "fv_plus":       bool(snap.get("fv_plus")),
                 "tools":         snap.get("tools"),
             })
 
@@ -249,6 +266,7 @@ def _build_class(year: int,
             "draft_year":     year,
             "consensus_fv":   fv,                # snapped integer (e.g. 48)
             "consensus_fv_raw": fv_raw,          # raw avg (e.g. 47.5) — for tooltips / analytics
+            "consensus_fv_plus": fv_plus,        # v26 — '+' upside flag
             "consensus_rank": rank,              # raw avg of per-source ranks
             "consensus_pick": None,              # populated post-sort (sequential 1, 2, 3, ...)
             "projected_round": None,             # populated post-sort from consensus_pick
@@ -283,6 +301,8 @@ def _build_class(year: int,
         p.get("consensus_rank") is None,
         p.get("consensus_rank") if p.get("consensus_rank") is not None else 9999,
         -(p.get("consensus_fv_raw") or 0),
+        # v26 — '+' tiebreaker: 42+ ranks above 42 when raw FVs tie.
+        -(1 if p.get("consensus_fv_plus") else 0),
         p.get("player_name") or "",
     ))
     for i, p in enumerate(prospects, start=1):

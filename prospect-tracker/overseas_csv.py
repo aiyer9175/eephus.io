@@ -38,7 +38,7 @@ from fangraphs_csv import (
     _to_float,
     _to_int,
 )
-from scrapers import _parse_fv, fix_mojibake, normalize_key
+from scrapers import _parse_fv, _parse_fv_full, fix_mojibake, normalize_key
 from storage import insert_overseas_snapshots
 
 log = logging.getLogger(__name__)
@@ -124,6 +124,7 @@ def _parse_overseas_summary_row(raw: dict, snapshot_year: int) -> dict | None:
         log.info("overseas_csv: unfamiliar league code '%s' for %s",
                  league_raw, name)
     pkey = overseas_player_key(league, name)
+    _fv_val, _fv_plus = _parse_fv_full(_str_or_none(row.get("fv")) or "")
     return {
         "player_key":     pkey,
         "player_name":    name,
@@ -136,7 +137,8 @@ def _parse_overseas_summary_row(raw: dict, snapshot_year: int) -> dict | None:
         "proj_bonus_usd": _to_usd(row.get("proj bonus")),
         "eta_year":       _to_int(row.get("eta")),
         "snapshot_year":  snapshot_year,
-        "fv":             _parse_fv(_str_or_none(row.get("fv")) or ""),
+        "fv":             _fv_val,
+        "fv_plus":        _fv_plus,
         "risk":           _str_or_none(row.get("risk")),
         "age":            _to_float(row.get("age")),
         "height":         _str_or_none(row.get("ht") or row.get("height")),
@@ -267,6 +269,7 @@ def _merged_to_snapshot_dict(m: dict,
         "proj_bonus_usd":  m.get("proj_bonus_usd"),
         "eta_year":        m.get("eta_year"),
         "fv":              m.get("fv"),
+        "fv_plus":         bool(m.get("fv_plus", False)),
         "risk":            m.get("risk"),
         "status":          status,
         "tools":           tools or None,

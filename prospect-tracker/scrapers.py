@@ -111,6 +111,11 @@ class Snapshot:
     # perf, levers, arm, delivery, contact_style, hard_hit_pct, etc.
     # under _extras so they ride per_source.tools._extras through to UI.
     tools: dict | None = None
+    # v26 — True when the source published a "+" upside marker on this FV
+    # (e.g., "55+"). Numeric `fv` is the bare tier value (55, not 57.5);
+    # the upside signal is preserved separately and aggregated into the
+    # consensus point so the displayed FV gets a "+" suffix.
+    fv_plus: bool = False
 
 
 @dataclass
@@ -134,6 +139,7 @@ class DraftSnapshot:
     risk: str | None
     status: str            # 'draft_active' | 'drafted' | 'unsigned' | 'transferred'
     tools: dict | None = None
+    fv_plus: bool = False  # v26 — "+" upside marker from source string
 
 
 # Tool taxonomy — canonical keys used everywhere downstream (consensus,
@@ -431,25 +437,44 @@ _CANONICAL_KEYS: dict[str, str] = {
 
 
 def _parse_fv(raw) -> float | None:
-    """Accepts '70', '55+', '50/55' (PV/FV), 70 (int/float). Returns float."""
+    """Accepts '70', '55+', '50/55' (PV/FV), 70 (int/float). Returns float.
+
+    v26 — '+' grades are now returned as the bare tier value (55+ → 55).
+    The earlier +2.5 interpolation inflated numeric FV in a way that
+    obscured tier boundaries. The upside signal is preserved separately
+    via `_parse_fv_full` (returns (value, has_plus)) for callers that
+    need to flag it on the snapshot.
+    """
+    fv, _plus = _parse_fv_full(raw)
+    return fv
+
+
+def _parse_fv_full(raw) -> tuple[float | None, bool]:
+    """Same parser as `_parse_fv` but also returns whether the source's
+    string carried a trailing '+' upside marker.
+
+    Used by FV (not tool-grade) call sites where we want to flag the
+    snapshot as having upside without inflating the numeric grade. A
+    '55+' returns (55.0, True); a '55' returns (55.0, False); a '50/55'
+    PV/FV string returns (55.0, False) — the slash is a published
+    pair, not an upside marker.
+    """
     if raw is None:
-        return None
+        return None, False
     if isinstance(raw, (int, float)):
-        return float(raw)
+        return float(raw), False
     raw = str(raw).strip()
     if not raw:
-        return None
-    if "/" in raw:  # PV/FV format
+        return None, False
+    if "/" in raw:  # PV/FV format — take the right side (the FV)
         raw = raw.split("/")[-1].strip()
-    if raw.endswith("+"):
-        try:
-            return float(raw[:-1]) + 2.5
-        except ValueError:
-            return None
+    has_plus = raw.endswith("+")
+    if has_plus:
+        raw = raw[:-1]
     try:
-        return float(raw)
+        return float(raw), has_plus
     except ValueError:
-        return None
+        return None, False
 
 
 # MLB Pipeline labels its tool grades with words/abbreviations that
@@ -1226,37 +1251,38 @@ JB_TOOL_KEY: dict[str, str] = {
 }
 
 
-def _parse_jb_tool_table(table_html) -> tuple[dict[str, float] | None, float | None]:
-    """Parse one JB wp-block-table into (tools_dict, fv).
+def _parse_jb_tool_table(table_html) -> tuple[dict[str, float] | None, float | None, bool]:
+    """Parse one JB wp-block-table into (tools_dict, fv, fv_plus).
 
     Header row → labels (lowercased, stripped). Value row → "pres/fut"
     grade pairs (or singletons). For each (header, value) pair we map
     header to canonical key via JB_TOOL_KEY and keep the future grade
     if it parses to a valid 20-80 number. The FV column is returned
-    separately (parsed as singleton, may carry "+" suffix).
+    separately along with an upside flag (True when source wrote "55+").
     """
     if table_html is None:
-        return None, None
+        return None, None, False
     if isinstance(table_html, str):
         sub = BeautifulSoup(table_html, "html.parser")
         table = sub.find("table")
     else:
         table = table_html if getattr(table_html, "name", None) == "table" else table_html.find("table")
     if not table:
-        return None, None
+        return None, None, False
     rows = table.find_all("tr")
     if len(rows) < 2:
-        return None, None
+        return None, None, False
     headers = [c.get_text(" ", strip=True).lower() for c in rows[0].find_all(["td", "th"])]
     values = [c.get_text(" ", strip=True) for c in rows[1].find_all(["td", "th"])]
     if not headers or len(values) < len(headers):
-        return None, None
+        return None, None, False
     tools: dict[str, float] = {}
     fv: float | None = None
+    fv_plus = False
     for hdr, raw in zip(headers, values):
         hdr_norm = hdr.strip().rstrip(".").rstrip()
         if hdr_norm in ("fv", "f.v.", "future value"):
-            fv = _parse_fv(raw)
+            fv, fv_plus = _parse_fv_full(raw)
             continue
         key = JB_TOOL_KEY.get(hdr_norm) or JB_TOOL_KEY.get(hdr.strip())
         if not key:
@@ -1273,7 +1299,7 @@ def _parse_jb_tool_table(table_html) -> tuple[dict[str, float] | None, float | N
         if grade < 20 or grade > 80:
             continue
         tools[key] = grade
-    return (tools or None), fv
+    return (tools or None), fv, fv_plus
 
 
 # Heading format example: "1. Konnor Griffin – SS – Pittsburgh Pirates"
@@ -1331,15 +1357,16 @@ def scrape_just_baseball(url: str, label: str, snap_date: str,
         # Tools + FV from the section's table.
         tools = None
         fv = None
+        fv_plus = False
         table = section.find("table")
         if table:
-            tools, fv = _parse_jb_tool_table(table)
+            tools, fv, fv_plus = _parse_jb_tool_table(table)
         # FV fallback — prose-style "Future Value: 55" if it ever returns.
         if fv is None:
             sect_text = section.get_text(" ", strip=True)
             fv_m = re.search(r"(?:Future Value|F\.V\.)[:\s]+([0-9]+\+?)", sect_text)
             if fv_m:
-                fv = _parse_fv(fv_m.group(1))
+                fv, fv_plus = _parse_fv_full(fv_m.group(1))
         if tools:
             n_with_tools += 1
         # Writeup — grab paragraph children only so we skip the heading
@@ -1363,7 +1390,7 @@ def scrape_just_baseball(url: str, label: str, snap_date: str,
             source="just_baseball", snapshot_date=snap_date, interval_label=label,
             player_key=normalize_key(name), player_name=name,
             position=position, org=org, rank=rank, fv=fv, status="active",
-            tools=tools,
+            tools=tools, fv_plus=fv_plus,
         ))
     log.info("just_baseball %s -> %d players (%d with tools)%s", label, len(rows), n_with_tools,
              "" if rows else " (parser returned 0 rows — page structure may have changed; check cached HTML)")
@@ -2923,6 +2950,7 @@ def load_manual_rankings(csv_path: Path = MANUAL_CSV) -> tuple[list[Snapshot], d
                 # treated as a typo and skipped (not clamped) so the user
                 # notices the error.
                 tools = _parse_csv_tools(r, line_no=i)
+                fv_val, fv_has_plus = _parse_fv_full(fv_raw)
                 rows.append(Snapshot(
                     source=(r.get("source") or "manual").strip(),
                     snapshot_date=(r.get("snapshot_date") or "").strip(),
@@ -2932,9 +2960,10 @@ def load_manual_rankings(csv_path: Path = MANUAL_CSV) -> tuple[list[Snapshot], d
                     position=(r.get("position") or "").strip() or None,
                     org=(r.get("org") or "").strip() or None,
                     rank=int(rank) if rank else None,
-                    fv=_parse_fv(fv_raw),
+                    fv=fv_val,
                     status=(r.get("status") or "active").strip(),
                     tools=tools,
+                    fv_plus=fv_has_plus,
                 ))
             except (ValueError, KeyError) as e:
                 log.warning("manual_rankings line %d: %s", i, e)

@@ -300,6 +300,13 @@ class ConsensusPoint:
     # The UI surfaces a ↓ mark on those source's FV badge.
     dropped_off_sources: list[str] = field(default_factory=list)
 
+    # v26 — True when any source contributing to THIS point published a
+    # "+" upside marker (e.g. one source gave "55+" while others gave 50).
+    # The numeric consensus_fv stays purely numeric; the boolean rides
+    # alongside so the displayed label gets a "+" suffix and sort
+    # comparators can break ties (42+ > 42).
+    consensus_fv_plus: bool = False
+
 
 @dataclass
 class PlayerTimeseries:
@@ -320,6 +327,12 @@ class PlayerTimeseries:
     fv_low_date: str
     fv_open: float           # consensus_fv at the FIRST observation (candle "open")
     fv_close: float          # consensus_fv at the LATEST observation (candle "close")
+    # v26 — '+' upside flag on the latest observation. Tracks whether the
+    # most recent consensus point inherits the upside marker from any of
+    # its contributing sources. Used by sort comparators to break ties
+    # (42+ ranks above 42 but below 43) and by the frontend to render
+    # "42+" on aggregate displays anchored on fv_close.
+    fv_close_plus: bool = False
 
     # Total (source, snapshot_date) pairs across the player's history where
     # an explicit FV was published. Drives the single-instance shrinkage
@@ -422,6 +435,9 @@ def compute_consensus_point(
             "status": s.status,
             "snapshot_date": s.snapshot_date,
             "tools": dict(s.tools) if s.tools else None,
+            # v26 — Per-source '+' upside marker. Carried through to the
+            # JSON export so per-source breakdown rows can render "FG: 55+".
+            "fv_plus": bool(getattr(s, "fv_plus", False)),
         }
         already = per_source.get(s.source)
         if already is None:
@@ -587,6 +603,17 @@ def compute_consensus_point(
             if fv is not None:
                 tools_consensus[phys_key] = fv
 
+    # v26 — Aggregate '+' upside flag: if ANY source contributing to this
+    # point published a "+" grade (e.g. one source said "55+"), the
+    # consensus point inherits the flag so its displayed label gets a
+    # "+" suffix and sort comparators can use it as a tiebreaker.
+    consensus_fv_plus = any(
+        bool(getattr(s, "fv_plus", False))
+        for s in day_snaps if s.source in contributing_sources
+    )
+    # Append the "+" to the displayed label when the flag is set; the
+    # numeric `consensus_fv` stays a plain float (no .5 inflation).
+    consensus_label_with_plus = consensus_label + ("+" if consensus_fv_plus else "")
     return ConsensusPoint(
         snapshot_date=event_date,
         interval_label=event_label,
@@ -596,7 +623,7 @@ def compute_consensus_point(
         rank_implied_fv=rank_implied_fv,
         avg_rank_n=len(ranks),
         consensus_fv=consensus_fv,
-        consensus_fv_label=consensus_label,
+        consensus_fv_label=consensus_label_with_plus,
         consensus_fv_raw=round(consensus_fv_raw_value, 2),
         consensus_fv_pre_shrinkage=round(pre_shrinkage, 2),
         shrinkage_weight=shrinkage_weight_val,
@@ -609,6 +636,7 @@ def compute_consensus_point(
         tools_consensus=tools_consensus,
         tools_spread=tools_spread,
         dropped_off_sources=sorted(set(dropped_off_in_point)),
+        consensus_fv_plus=consensus_fv_plus,
     )
 
 
@@ -810,6 +838,7 @@ def _candle_fields(points: list[ConsensusPoint]) -> dict:
             "fv_high": 0.0, "fv_high_label": "—", "fv_high_date": "",
             "fv_low":  0.0, "fv_low_label":  "—", "fv_low_date":  "",
             "fv_open": 0.0, "fv_close": 0.0,
+            "fv_close_plus": False,
         }
     high_pt = max(points, key=lambda p: p.consensus_fv)
     low_pt  = min(points, key=lambda p: p.consensus_fv)
@@ -822,6 +851,10 @@ def _candle_fields(points: list[ConsensusPoint]) -> dict:
         "fv_low_date":   low_pt.snapshot_date,
         "fv_open":       points[0].consensus_fv,
         "fv_close":      points[-1].consensus_fv,
+        # v26 — Track '+' on the latest observation so sort comparators
+        # can break ties (42+ > 42). consensus_fv_label already carries
+        # the suffix for label-based rendering.
+        "fv_close_plus": bool(getattr(points[-1], "consensus_fv_plus", False)),
     }
 
 
@@ -1044,8 +1077,13 @@ def build_timeseries(
         for attr, val in _candle_fields(p.points).items():
             setattr(p, attr, val)
 
+    # v26 — Sort by (numeric FV, '+' flag) so 42+ ranks above 42 but
+    # below 43. The '+' is the secondary key (only matters when FVs tie).
     result.sort(
-        key=lambda p: (p.points[-1].consensus_fv if p.points else 0),
+        key=lambda p: (
+            p.points[-1].consensus_fv if p.points else 0,
+            1 if (p.points and getattr(p.points[-1], "consensus_fv_plus", False)) else 0,
+        ),
         reverse=True,
     )
     return result

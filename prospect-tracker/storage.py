@@ -792,6 +792,10 @@ CREATE TABLE IF NOT EXISTS snapshots (
     fv              REAL,
     status          TEXT NOT NULL,
     inserted_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    -- v26 — '+' upside marker. 1 when the source string carried a trailing
+    -- '+' (e.g., "55+"). Numeric `fv` is the bare tier; this column lets
+    -- consensus carry the upside flag forward without inflating numbers.
+    fv_plus         INTEGER NOT NULL DEFAULT 0,
     UNIQUE(source, interval_label, player_key)
 );
 CREATE INDEX IF NOT EXISTS idx_snapshots_player ON snapshots(player_key);
@@ -956,6 +960,7 @@ CREATE TABLE IF NOT EXISTS draft_snapshots (
     risk            TEXT,
     status          TEXT NOT NULL,        -- 'draft_active' | 'drafted' | 'unsigned' | 'transferred'
     tools_json      TEXT,                 -- {tools_future, tools_present, report, video, ...}
+    fv_plus         INTEGER NOT NULL DEFAULT 0,  -- v26 — '+' upside marker
     inserted_at     TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(source, interval_label, player_key)
 );
@@ -1088,6 +1093,7 @@ CREATE TABLE IF NOT EXISTS overseas_snapshots (
     risk            TEXT,
     status          TEXT NOT NULL,           -- 'overseas_active'|'posted'|'signed'|'mlb_promoted'
     tools_json      TEXT,
+    fv_plus         INTEGER NOT NULL DEFAULT 0,  -- v26 — '+' upside marker
     inserted_at     TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(source, interval_label, player_key)
 );
@@ -1186,6 +1192,15 @@ def init_db():
             con.execute("ALTER TABLE snapshots ADD COLUMN tools_json TEXT")
         except sqlite3.OperationalError:
             pass  # column already exists
+        # v26 — Migration: add fv_plus column to snapshots / draft_snapshots
+        # / overseas_snapshots. Older rows default to 0 (no '+' on file).
+        # The one-shot tools/migrate_fv_plus_from_decimal.py back-fills
+        # rows whose .5 fv values came from a "+" parse.
+        for tbl in ("snapshots", "draft_snapshots", "overseas_snapshots"):
+            try:
+                con.execute(f"ALTER TABLE {tbl} ADD COLUMN fv_plus INTEGER NOT NULL DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass  # column already exists
         # Migration: add round_label to draft_lottery_odds so the table
         # can store comp picks (1A / 1B) alongside the regular first-round
         # projection. Old rows default to '1'.
@@ -1245,8 +1260,8 @@ def insert_snapshots(snapshots: Iterable[Snapshot]) -> int:
             cur = con.execute(
                 """INSERT INTO snapshots
                    (source, snapshot_date, interval_label, player_key,
-                    player_name, position, org, rank, fv, status, tools_json)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    player_name, position, org, rank, fv, status, tools_json, fv_plus)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                    ON CONFLICT(source, interval_label, player_key) DO UPDATE SET
                        snapshot_date = excluded.snapshot_date,
                        player_name   = excluded.player_name,
@@ -1255,10 +1270,11 @@ def insert_snapshots(snapshots: Iterable[Snapshot]) -> int:
                        rank          = excluded.rank,
                        fv            = excluded.fv,
                        status        = excluded.status,
-                       tools_json    = COALESCE(excluded.tools_json, snapshots.tools_json)""",
+                       tools_json    = COALESCE(excluded.tools_json, snapshots.tools_json),
+                       fv_plus       = excluded.fv_plus""",
                 (s.source, s.snapshot_date, s.interval_label, s.player_key,
                  s.player_name, s.position, s.org, s.rank, s.fv, s.status,
-                 tools_json),
+                 tools_json, 1 if getattr(s, "fv_plus", False) else 0),
             )
             count += cur.rowcount
             con.execute(
@@ -1495,13 +1511,15 @@ def load_all_snapshots() -> list[Snapshot]:
     with connect() as con:
         rows = con.execute(
             """SELECT source, snapshot_date, interval_label, player_key,
-                      player_name, position, org, rank, fv, status, tools_json
+                      player_name, position, org, rank, fv, status, tools_json,
+                      fv_plus
                FROM snapshots ORDER BY snapshot_date, source"""
         ).fetchall()
     snapshots: list[Snapshot] = []
     for r in rows:
         d = dict(r)
         d["player_key"] = canonical_player_key(d["player_key"])
+        d["fv_plus"] = bool(d.pop("fv_plus", 0) or 0)
         tools_json = d.pop("tools_json", None)
         tools = None
         if tools_json:
@@ -1872,8 +1890,8 @@ def insert_draft_snapshots(snapshots: Iterable) -> int:
                 """INSERT INTO draft_snapshots
                      (source, snapshot_date, interval_label, player_key,
                       player_name, position, school, college_commit, player_type,
-                      draft_year, rank, fv, risk, status, tools_json)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                      draft_year, rank, fv, risk, status, tools_json, fv_plus)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                    ON CONFLICT(source, interval_label, player_key) DO UPDATE SET
                        snapshot_date  = excluded.snapshot_date,
                        player_name    = excluded.player_name,
@@ -1886,12 +1904,14 @@ def insert_draft_snapshots(snapshots: Iterable) -> int:
                        fv             = excluded.fv,
                        risk           = COALESCE(excluded.risk, draft_snapshots.risk),
                        status         = excluded.status,
-                       tools_json     = COALESCE(excluded.tools_json, draft_snapshots.tools_json)""",
+                       tools_json     = COALESCE(excluded.tools_json, draft_snapshots.tools_json),
+                       fv_plus        = excluded.fv_plus""",
                 (d.get("source"), d.get("snapshot_date"), d.get("interval_label"),
                  d.get("player_key"), d.get("player_name"), d.get("position"),
                  d.get("school"), d.get("college_commit"), d.get("player_type"),
                  d.get("draft_year"), d.get("rank"), d.get("fv"),
-                 d.get("risk"), d.get("status", "draft_active"), tools_json),
+                 d.get("risk"), d.get("status", "draft_active"), tools_json,
+                 1 if d.get("fv_plus") else 0),
             )
             count += cur.rowcount
             con.execute(
@@ -1929,7 +1949,8 @@ def load_draft_snapshots(draft_year: int | None = None) -> list[dict]:
     """Return draft_snapshots rows. Filter by draft_year if given."""
     q = """SELECT id, source, snapshot_date, interval_label, player_key,
                   player_name, position, school, college_commit, player_type,
-                  draft_year, rank, fv, risk, status, tools_json, inserted_at
+                  draft_year, rank, fv, risk, status, tools_json, fv_plus,
+                  inserted_at
            FROM draft_snapshots"""
     params: tuple = ()
     if draft_year is not None:
@@ -2214,8 +2235,8 @@ def insert_overseas_snapshots(snapshots: Iterable) -> int:
                      (source, snapshot_date, interval_label, player_key,
                       player_name, position, league, country, current_team,
                       proj_team, proj_bonus_usd, eta_year, fv, risk,
-                      status, tools_json)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                      status, tools_json, fv_plus)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                    ON CONFLICT(source, interval_label, player_key) DO UPDATE SET
                      snapshot_date  = excluded.snapshot_date,
                      player_name    = excluded.player_name,
@@ -2229,13 +2250,14 @@ def insert_overseas_snapshots(snapshots: Iterable) -> int:
                      fv             = excluded.fv,
                      risk           = COALESCE(excluded.risk, overseas_snapshots.risk),
                      status         = excluded.status,
-                     tools_json     = COALESCE(excluded.tools_json, overseas_snapshots.tools_json)""",
+                     tools_json     = COALESCE(excluded.tools_json, overseas_snapshots.tools_json),
+                     fv_plus        = excluded.fv_plus""",
                 (d.get("source"), d.get("snapshot_date"), d.get("interval_label"),
                  d.get("player_key"), d.get("player_name"), d.get("position"),
                  d.get("league"), d.get("country"), d.get("current_team"),
                  d.get("proj_team"), d.get("proj_bonus_usd"), d.get("eta_year"),
                  d.get("fv"), d.get("risk"), d.get("status", "overseas_active"),
-                 tools_json),
+                 tools_json, 1 if d.get("fv_plus") else 0),
             )
             count += cur.rowcount
             con.execute(
@@ -2276,7 +2298,7 @@ def load_overseas_snapshots(league: str | None = None) -> list[dict]:
     q = """SELECT id, source, snapshot_date, interval_label, player_key,
                   player_name, position, league, country, current_team,
                   proj_team, proj_bonus_usd, eta_year, fv, risk, status,
-                  tools_json, inserted_at
+                  tools_json, fv_plus, inserted_at
            FROM overseas_snapshots"""
     params: tuple = ()
     if league is not None:
@@ -5378,6 +5400,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "fv_low_date": p.fv_low_date,
             "fv_open": p.fv_open,
             "fv_close": p.fv_close,
+            # v26 — '+' upside flag on the latest observation. Used by
+            # frontend sort comparators (42+ ranks above 42 < 43) and
+            # for rendering "42+" on aggregate displays anchored on fv_close.
+            "fv_close_plus": bool(getattr(p, "fv_close_plus", False)),
             # Unsnapped post-shrinkage FV at the latest snapshot. Lets the
             # UI distinguish a "high 40" (e.g. 42.3) from a "low 40"
             # (e.g. 37.8) — both round to the 40 tier label but the raw
@@ -5541,6 +5567,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     "consensus_fv_label": pt.consensus_fv_label,
                     "consensus_fv_raw": pt.consensus_fv_raw,
                     "consensus_fv_pre_shrinkage": pt.consensus_fv_pre_shrinkage,
+                    # v26 — '+' upside flag for this point. consensus_fv_label
+                    # already includes a "+" suffix when this is True; the
+                    # separate boolean lets sort comparators tie-break.
+                    "consensus_fv_plus": bool(getattr(pt, "consensus_fv_plus", False)),
                     "shrinkage_weight": pt.shrinkage_weight,
                     "avg_rank": pt.avg_rank,
                     "avg_fv": pt.avg_fv,

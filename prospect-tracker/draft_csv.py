@@ -42,7 +42,7 @@ from fangraphs_csv import (
     _to_grade,
     _to_int,
 )
-from scrapers import _parse_fv, fix_mojibake, normalize_key
+from scrapers import _parse_fv, _parse_fv_full, fix_mojibake, normalize_key
 from storage import (
     insert_draft_snapshots,
     upsert_draft_results,
@@ -116,6 +116,7 @@ def _parse_draft_summary_row(raw: dict, draft_year: int) -> dict | None:
     pkey = draft_player_key(draft_year, name)
     rank = _to_int(row.get("rank"))
     pick_overall, pick_team = _parse_pick_cell(row.get("pick"))
+    _fv_val, _fv_plus = _parse_fv_full(_str_or_none(row.get("fv")) or "")
     return {
         "player_key":    pkey,
         "player_name":   name,
@@ -127,7 +128,8 @@ def _parse_draft_summary_row(raw: dict, draft_year: int) -> dict | None:
         "draft_year":    draft_year,
         "rank":          rank,
         "top_100":       _to_int(row.get("top 100")),
-        "fv":            _parse_fv(_str_or_none(row.get("fv")) or ""),
+        "fv":            _fv_val,
+        "fv_plus":       _fv_plus,
         "risk":          _str_or_none(row.get("risk")),
         "age":           _to_float(row.get("age")),
         "height":        _str_or_none(row.get("ht") or row.get("height")),
@@ -258,6 +260,7 @@ def _merged_to_snapshot_dict(m: dict,
         "draft_year":      m["draft_year"],
         "rank":            m.get("rank"),
         "fv":              m.get("fv"),
+        "fv_plus":         bool(m.get("fv_plus", False)),
         "risk":            m.get("risk"),
         "status":          status,
         "tools":           tools or None,

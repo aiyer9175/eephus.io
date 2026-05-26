@@ -51,7 +51,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from statistics import median
 
-from scrapers import Snapshot, normalize_key, fix_mojibake, _parse_fv
+from scrapers import Snapshot, normalize_key, fix_mojibake, _parse_fv, _parse_fv_full
 
 log = logging.getLogger(__name__)
 
@@ -268,6 +268,7 @@ def _parse_summary_row(raw: dict) -> dict | None:
         return None
 
     name_clean = fix_mojibake(_str_or_none(row.get("name")) or "")
+    _fv_val, _fv_plus = _parse_fv_full(_str_or_none(row.get("fv")) or "")
     return {
         "player_key":   pkey,
         "fg_player_id": _to_int(fg_id) if fg_id else None,
@@ -280,7 +281,8 @@ def _parse_summary_row(raw: dict) -> dict | None:
         "org":          _str_or_none(row.get("org")),
         "rank":         _to_int(row.get("top 100")) or _to_int(row.get("rank")),
         "org_rank":     _to_int(row.get("org rk")),
-        "fv":           _parse_fv(_str_or_none(row.get("fv")) or ""),
+        "fv":           _fv_val,
+        "fv_plus":      _fv_plus,
         "current_level": _str_or_none(row.get("current level")),
         "eta_year":     _to_int(row.get("eta")),
         "risk":         _str_or_none(row.get("risk")),
@@ -693,6 +695,7 @@ def _build_snapshot(merged: dict, slug: str, snapshot_date: str) -> Snapshot:
         fv=merged.get("fv"),
         status="active",
         tools=tools_payload,
+        fv_plus=bool(merged.get("fv_plus", False)),
     )
 
 

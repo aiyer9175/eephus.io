@@ -255,15 +255,23 @@ def _consensus(snaps: list[dict], field: str) -> float | None:
         return None
 
 
-def _fv_bucket(fv: float | None) -> str | None:
+def _consensus_fv_plus(snaps: list[dict]) -> bool:
+    """v26 — True if any latest-per-source snap has fv_plus=1."""
+    latest = _latest_per_source(snaps)
+    return any(bool(s.get("fv_plus")) for s in latest.values())
+
+
+def _fv_bucket(fv: float | None, fv_plus: bool = False) -> str | None:
+    """v26 — Bucket from integer FV + '+' flag (no more .5 inflation).
+    Integer 45 with fv_plus=True → "45+"; without → "45"."""
     if fv is None:
         return None
-    if fv >= 60: return "60"
-    if fv >= 55: return "55"
-    if fv >= 50: return "50"
-    if fv >= 47.5: return "45+"
-    if fv >= 45: return "45"
-    if fv >= 40: return "40"
+    n = int(round(fv))
+    if n >= 60: return "60"
+    if n >= 55: return "55" + ("+" if fv_plus else "")
+    if n >= 50: return "50" + ("+" if fv_plus else "")
+    if n >= 45: return "45" + ("+" if fv_plus else "")
+    if n >= 40: return "40" + ("+" if fv_plus else "")
     return "<40"
 
 
@@ -368,7 +376,8 @@ def _build_league(league: str,
             continue
 
         fv = _consensus(plist, "fv")
-        bucket = _fv_bucket(fv)
+        fv_plus = _consensus_fv_plus(plist)  # v26
+        bucket = _fv_bucket(fv, fv_plus)
         if bucket:
             fv_dist[bucket] += 1
 
@@ -385,6 +394,7 @@ def _build_league(league: str,
                 "source":         snap.get("source"),
                 "interval_label": snap.get("interval_label"),
                 "fv":             snap.get("fv"),
+                "fv_plus":        bool(snap.get("fv_plus")),
                 "status":         snap.get("status"),
             })
 
@@ -444,6 +454,7 @@ def _build_league(league: str,
             # raw float internally for sort precision; only the export
             # surface gets coerced to int.
             "consensus_fv":    int(round(fv)) if fv is not None else None,
+            "consensus_fv_plus": fv_plus,  # v26 — '+' upside flag
             "risk":            any_snap.get("risk"),
             "status":          status,
             "posted_date":     posted_date,
@@ -458,8 +469,11 @@ def _build_league(league: str,
             "points":          points,
         })
 
+    # v26 — Sort by (FV desc, '+' tiebreaker desc) so 42+ ranks above
+    # 42 but below 43. None FVs sink to the bottom of the list.
     prospects.sort(key=lambda p: (p.get("consensus_fv") is None,
-                                  -(p.get("consensus_fv") or 0)))
+                                  -(p.get("consensus_fv") or 0),
+                                  -(1 if p.get("consensus_fv_plus") else 0)))
 
     if n_filtered_promoted or n_filtered_mlb_active:
         log.info("overseas %s: filtered %d MLB-promoted + %d MLB-active "
