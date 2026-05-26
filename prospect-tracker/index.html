@@ -5341,6 +5341,107 @@
       font-weight: 700;
       margin: 6px 0 2px;
     }
+    /* v30.7 — Reusable tab-aware sidebar for detail pages (player +
+       farm + per-prospect draft/overseas). Shares the `.ctx-card` /
+       `.ctx-title` / `.ctx-row` inner geometry with the existing
+       actives rail so the visual family is identical site-wide. The
+       wrapper class is distinct so each detail page can size + sticky-
+       position the rail independently of the actives grid. */
+    .detail-context-rail { display: none; }
+    .detail-context-rail .ctx-card,
+    .detail-context-rail .ctx-title,
+    .detail-context-rail .ctx-row,
+    .detail-context-rail .ctx-row-tag,
+    .detail-context-rail .ctx-card-link {
+      /* Inherit the actives-rail card geometry — same shadow, border,
+         padding, font sizes. Defined inline below so we don't depend
+         on the .active-context-rail selector cascading. */
+    }
+    .detail-context-rail .ctx-card {
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow-card);
+    }
+    .detail-context-rail .ctx-title {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .detail-context-rail .ctx-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 6px;
+      padding: 3px 0;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .detail-context-rail .ctx-row:last-child { border-bottom: 0; }
+    .detail-context-rail .ctx-row-tag {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-left: 6px;
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+    }
+    .detail-context-rail .ctx-card-link {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: var(--neon-cyan);
+      text-decoration: none;
+      margin-left: auto;
+      cursor: pointer;
+    }
+    .detail-context-rail .ctx-card-link:hover { text-decoration: underline; }
+    /* "Key signals" summary block — 3 max bullet-style rows per card. */
+    .detail-context-rail .ctx-signal {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 2px 0;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .detail-context-rail .ctx-signal-key {
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.04em;
+    }
+    .detail-context-rail .ctx-signal-val {
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+    /* Grid wrapper used by detail pages to lay out (main · sidebar).
+       Detail pages add `.detail-with-rail` to the body of their
+       section to flip from full-width to a 2-column grid at ≥1300px.
+       Below the breakpoint the sidebar hides (display:none above);
+       the main content takes the full width naturally. */
+    .detail-with-rail { display: block; }
+    @media (min-width: 1300px) {
+      .detail-with-rail {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 240px;
+        gap: 16px;
+        align-items: start;
+      }
+      .detail-context-rail {
+        display: block;
+        position: sticky;
+        top: calc(var(--sticky-top, 56px) + 12px);
+        max-height: calc(100vh - var(--sticky-top, 56px) - 24px);
+        overflow-y: auto;
+      }
+    }
+
     @media (min-width: 1500px) {
       .active-grid { grid-template-columns: minmax(0, 1fr) 240px; }
       .active-context-rail { display: block; position: sticky; top: calc(var(--sticky-top, 56px) + 12px); max-height: calc(100vh - var(--sticky-top, 56px) - 24px); overflow-y: auto; }
@@ -6826,6 +6927,8 @@
               title="Lottery odds for the next draft (top 6 picks). Scraped from Tankathon based on current standings.">Lottery Odds</button>
       <button class="chip" data-draft-view="class-strength"
               title="FV distribution per class (60 FV count, 55 FV count, etc.) side-by-side across years">Class Strength</button>
+      <button class="chip" data-draft-view="signing-trends"
+              title="Year-over-year signing patterns: pool vs spend, slot premiums, biggest bonuses, team spend leaders">Signing Trends</button>
     </div>
     <!-- v28 — Draft filter / sort accordion. Collapsed by default; the
          toggle button mirrors the actives page's pattern. Filters only
@@ -6936,6 +7039,8 @@
               title="Recently signed overseas free agents and where they landed">Recently Signed</button>
       <button class="chip" data-overseas-view="leaderboard"
               title="Top by FV + per-position bests + biggest projected bonuses">Leaderboard</button>
+      <button class="chip" data-overseas-view="league-context"
+              title="Per-league translation factors (wRC+ / ERA / FB velo deltas) + signing-track-record context">League Context</button>
     </div>
     <!-- v28 — Overseas filter / sort accordion. Same shape as the draft
          page — collapsed by default. Filters target the Rankings view. -->
@@ -10681,6 +10786,655 @@ function renderStandoutPerformances(rootId = "whats-standout") {
 //   6. Recent graduations
 // All click-throughs on prospects route to player detail via the
 // existing [data-key] delegated handler.
+// v30.7 — Reusable detail-page sidebar renderer. Takes a list of card
+// configs and returns the HTML for the right-rail. Each card is one
+// of three shapes:
+//   { type: "leaderboard", title, rows: [{key, name, tag, value}], link? }
+//   { type: "signals",     title, signals: [{key, value}], link? }
+//   { type: "link",        title, href?, label, onclick? }
+// Rows in leaderboards are clickable when they carry a `key` — the
+// shared row-click delegate (line ~28100) routes them to goToPlayer
+// via the player-row data-key path. The wrapper is `.ctx-card`; per-
+// row click flows live INSIDE the row template so the rail doesn't
+// need bespoke handlers.
+function renderDetailSidebar(cards) {
+  if (!Array.isArray(cards) || !cards.length) return "";
+  const html = cards.map(card => {
+    if (!card) return "";
+    if (card.type === "leaderboard") {
+      const rows = (card.rows || []).map(r => {
+        const dk = r.key ? ` data-key="${escapeHtml(r.key)}"` : "";
+        const tag = r.tag ? `<span class="ctx-row-tag">${escapeHtml(r.tag)}</span>` : "";
+        const val = r.value != null ? `<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary);font-weight:600;">${escapeHtml(String(r.value))}</span>` : "";
+        return `<div class="ctx-row"${dk}>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(r.name || "")}${tag}</span>
+          ${val}
+        </div>`;
+      }).join("");
+      const link = card.link
+        ? `<a class="ctx-card-link" href="${escapeHtml(card.link.href || "#")}" onclick="${card.link.onclick || ""}">${escapeHtml(card.link.label || "view all →")}</a>`
+        : "";
+      const titleRow = link
+        ? `<div class="ctx-title-row"><div class="ctx-title">${escapeHtml(card.title || "")}</div>${link}</div>`
+        : `<div class="ctx-title">${escapeHtml(card.title || "")}</div>`;
+      return `<div class="ctx-card">${titleRow}${rows || `<div style="color:var(--text-tertiary);font-size:11px;">No data yet.</div>`}</div>`;
+    }
+    if (card.type === "signals") {
+      const signals = (card.signals || []).map(s =>
+        `<div class="ctx-signal" title="${escapeHtml(s.tip || "")}">
+          <span class="ctx-signal-key">${escapeHtml(s.key || "")}</span>
+          <span class="ctx-signal-val" style="${s.valColor ? `color:${s.valColor};` : ""}">${escapeHtml(String(s.value ?? "—"))}</span>
+        </div>`
+      ).join("");
+      const link = card.link
+        ? `<a class="ctx-card-link" href="${escapeHtml(card.link.href || "#")}" onclick="${card.link.onclick || ""}">${escapeHtml(card.link.label || "")}</a>`
+        : "";
+      const titleRow = link
+        ? `<div class="ctx-title-row"><div class="ctx-title">${escapeHtml(card.title || "")}</div>${link}</div>`
+        : `<div class="ctx-title">${escapeHtml(card.title || "")}</div>`;
+      return `<div class="ctx-card">${titleRow}${signals || `<div style="color:var(--text-tertiary);font-size:11px;">No signals on file.</div>`}</div>`;
+    }
+    if (card.type === "link") {
+      return `<div class="ctx-card">
+        <div class="ctx-title">${escapeHtml(card.title || "")}</div>
+        <a class="ctx-card-link" href="${escapeHtml(card.href || "#")}" onclick="${card.onclick || ""}" style="margin-left:0;">${escapeHtml(card.label || "")}</a>
+      </div>`;
+    }
+    return "";
+  }).join("");
+  return `<aside class="detail-context-rail" aria-label="Context rail">${html}</aside>`;
+}
+
+// v30.7 — Build the per-tab sidebar config for the prospect detail
+// page. Returns an array of cards tailored to the currently-active
+// detail tab (state.playerTab). All cards fail-soft when source
+// data is missing — empty rows / signals render a placeholder string
+// rather than dropping the card entirely.
+function _prospectDetailSidebarCards(p, activeTab) {
+  if (!p) return [];
+  const isPit = !!(p.statline && p.statline.is_pitcher);
+  const fv = p.fv_close != null ? p.fv_close : null;
+  const pos = positionBucket(p.position) || "?";
+  // Helper — peer pool: same org, similar FV ±5, exclude self.
+  const _peers = (filterFn, maxRows = 5) => {
+    const pool = (DATA.players || []).filter(q =>
+      q && q.player_key !== p.player_key && filterFn(q));
+    return pool.slice(0, maxRows);
+  };
+  const _samePosLevel = q => {
+    const slQ = q.statline || {};
+    const slP = p.statline || {};
+    return positionBucket(q.position) === pos
+        && slQ.level === slP.level;
+  };
+  // Org card (always present) — quick jump to the prospect's org farm
+  // page. Lives in every tab.
+  const orgLinkCard = {
+    type: "link",
+    title: "Org farm system",
+    href: "#",
+    onclick: `event.preventDefault();state.section='farm';state.view={type:'farm',org:'${escapeHtml(p.org || "")}');`,
+    label: `View ${escapeHtml(p.org || "—")} farm →`,
+  };
+
+  if (activeTab === "performance" || activeTab === "stats") {
+    // Performance tab — surface top 5 same-pos same-level peers
+    // ranked by SC+, plus a signals card with RPS+/SC+/wRC+/FIP.
+    const peers = _peers(_samePosLevel)
+      .map(q => ({ q, sp: getStatcastPlus(q) }))
+      .filter(r => r.sp != null)
+      .sort((a, b) => b.sp - a.sp)
+      .slice(0, 5)
+      .map(r => ({
+        key: r.q.player_key,
+        name: r.q.player_name,
+        tag: `${positionBucket(r.q.position)} · ${(r.q.statline || {}).level || "—"}`,
+        value: `SC+ ${r.sp}`,
+      }));
+    const sl = p.statline || {};
+    const sm = p.sabermetrics || {};
+    const sp = getStatcastPlus(p);
+    const signals = [
+      sp != null ? { key: "SC+", value: sp, valColor: sp >= 105 ? "var(--up)" : sp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
+      sl.rps_plus != null ? { key: "RPS+", value: sl.rps_plus, valColor: sl.rps_plus >= 110 ? "var(--up)" : sl.rps_plus <= 90 ? "var(--down)" : "var(--text-primary)" } : null,
+      isPit && sl.stf_plus_periph != null ? { key: "Stuff+", value: sl.stf_plus_periph } : null,
+      !isPit && sl.ops_plus_level != null ? { key: "OPS+ lvl", value: sl.ops_plus_level } : null,
+      isPit && sl.era_minus_level != null ? { key: "ERA-", value: sl.era_minus_level } : null,
+      sm.wrc_plus != null ? { key: "wRC+", value: Math.round(sm.wrc_plus) } : null,
+    ].filter(Boolean);
+    return [
+      { type: "leaderboard", title: `Top SC+ · ${pos} · ${sl.level || "level"}`, rows: peers },
+      { type: "signals",     title: "Key signals", signals },
+      orgLinkCard,
+    ];
+  }
+  if (activeTab === "scouting" || activeTab === "tools") {
+    // Scouting tab — top 5 toolsiest same-pos peers + source agreement.
+    const peers = _peers(q => positionBucket(q.position) === pos)
+      .map(q => ({ q, tc: (q.tools || {}).composite_overall }))
+      .filter(r => r.tc != null)
+      .sort((a, b) => b.tc - a.tc)
+      .slice(0, 5)
+      .map(r => ({
+        key: r.q.player_key,
+        name: r.q.player_name,
+        tag: `${positionBucket(r.q.position)}`,
+        value: `Tool ${Math.round(r.tc)}`,
+      }));
+    const pts = p.points || [];
+    const last = pts.length ? pts[pts.length - 1] : null;
+    const sourceCount = last && last.avg_fv_n != null
+      ? last.avg_fv_n
+      : last ? Object.values(last.per_source || {}).filter(v => v && v.fv_published != null).length : 0;
+    const spread = last && last.fv_spread != null ? last.fv_spread : null;
+    const signals = [
+      { key: "FV sources", value: sourceCount || "—" },
+      spread != null ? { key: "FV spread", value: spread.toFixed(1), valColor: spread >= 10 ? "var(--neon-violet)" : "var(--text-primary)" } : null,
+      (p.tools || {}).composite_overall != null ? { key: "Tool comp", value: Math.round(p.tools.composite_overall) } : null,
+      fvBadgeBreakoutClass(p) ? { key: "Breakout", value: "★ flagged", valColor: "#7FFFD4" } : null,
+      fvBadgeUpsideClass(p) ? { key: "Upside", value: "^ flagged", valColor: "var(--upside-pink)" } : null,
+    ].filter(Boolean);
+    return [
+      { type: "leaderboard", title: `Toolsiest · ${pos} peers`, rows: peers },
+      { type: "signals",     title: "Source agreement", signals },
+      orgLinkCard,
+    ];
+  }
+  if (activeTab === "health") {
+    // Health tab — recent IL returnees in same org, same-org TJ peers.
+    const orgPeers = (DATA.players || []).filter(q =>
+      q && q.org === p.org && q.player_key !== p.player_key
+      && q.health_profile && (q.health_profile.is_post_tj || (q.il_status && q.il_status.is_on_il)));
+    const rows = orgPeers.slice(0, 5).map(q => ({
+      key: q.player_key,
+      name: q.player_name,
+      tag: (q.health_profile || {}).is_post_tj ? "TJ" : "IL",
+      value: (q.statline || {}).level || "—",
+    }));
+    const hp = p.health_profile || {};
+    const signals = [
+      { key: "IL stints 12mo", value: hp.il_stints_12mo ?? 0 },
+      { key: "IL days 12mo", value: hp.il_days_12mo ?? 0 },
+      hp.is_post_tj ? { key: "Post-TJ", value: hp.tj_surgery_date || "yes", valColor: "var(--neon-violet)" } : null,
+    ].filter(Boolean);
+    return [
+      { type: "leaderboard", title: `${p.org || "Org"} · recent health flags`, rows },
+      { type: "signals",     title: "Health profile (12mo)", signals },
+      orgLinkCard,
+    ];
+  }
+  if (activeTab === "details" || activeTab === "context") {
+    // Details tab — same draft class / acquisition cohort peers.
+    const acq = p.acquisition || {};
+    const cohortYear = acq.year;
+    const cohortMethod = acq.method;
+    const cohortPeers = cohortYear && cohortMethod
+      ? (DATA.players || []).filter(q =>
+          q && q.player_key !== p.player_key
+          && q.acquisition && q.acquisition.year === cohortYear
+          && q.acquisition.method === cohortMethod)
+        .sort((a, b) => (b.fv_close ?? 0) - (a.fv_close ?? 0))
+        .slice(0, 5)
+        .map(q => ({
+          key: q.player_key,
+          name: q.player_name,
+          tag: q.org || "—",
+          value: q.fv_close != null ? `FV ${Math.round(q.fv_close)}` : "—",
+        }))
+      : [];
+    const signals = [
+      { key: "Method", value: cohortMethod || "—" },
+      cohortYear ? { key: "Class", value: cohortYear } : null,
+      acq.pick_overall != null ? { key: "Pick", value: `#${acq.pick_overall}` } : null,
+      acq.bonus_usd != null ? { key: "Bonus", value: `$${(acq.bonus_usd/1_000_000).toFixed(2)}M` } : null,
+    ].filter(Boolean);
+    return [
+      { type: "leaderboard", title: cohortYear ? `${cohortYear} ${cohortMethod} cohort peers` : "Cohort peers", rows: cohortPeers },
+      { type: "signals",     title: "Acquisition", signals },
+      orgLinkCard,
+    ];
+  }
+  // Overview (default) — same-org top 5 by FV + key signals.
+  const orgPeers = (DATA.players || [])
+    .filter(q => q && q.org === p.org && q.player_key !== p.player_key)
+    .sort((a, b) => (b.fv_close ?? 0) - (a.fv_close ?? 0))
+    .slice(0, 5)
+    .map(q => ({
+      key: q.player_key,
+      name: q.player_name,
+      tag: positionBucket(q.position) || "",
+      value: q.fv_close != null ? `FV ${Math.round(q.fv_close)}` : "—",
+    }));
+  const sl = p.statline || {};
+  const signals = [
+    fv != null ? { key: "Consensus FV", value: Math.round(fv) } : null,
+    p.eta && p.eta.year != null ? { key: "ETA", value: p.eta.year } : null,
+    sl.level ? { key: "Level", value: sl.level } : null,
+    p.age != null ? { key: "Age", value: p.age.toFixed(1) } : null,
+  ].filter(Boolean);
+  return [
+    { type: "leaderboard", title: `${p.org || "Org"} · top 5 by FV`, rows: orgPeers },
+    { type: "signals",     title: "At a glance", signals },
+    orgLinkCard,
+  ];
+}
+
+// v30.7 — Per-tab sidebar config for the draft-prospect detail page.
+// Same shape as _prospectDetailSidebarCards but the peer pool here is
+// the rest of this draft class (not org-mates). Each tab surfaces the
+// comp set most useful for the current view: overview → FV-adjacent
+// peers, tools → same-position toolsiest in class, acquisition →
+// bonus / projected-round neighbors.
+function _draftDetailSidebarCards(p, cls, activeTab) {
+  if (!p || !cls) return [];
+  const classProspects = (cls.prospects || []).filter(q => q && q.player_key !== p.player_key);
+  const fv = p.consensus_fv;
+  const pos = p.position || "";
+  const isPit = /^(SP|RP|RHP|LHP|P)/i.test(pos);
+  // Convenience for tool grade lookup (mean across sources).
+  const _toolMean = (q, key) => {
+    const vals = [];
+    for (const src in (q.tool_grades || {})) {
+      const tg = q.tool_grades[src] || {};
+      let v = tg[key];
+      if (key === "pwr" && v == null) {
+        const g = tg.game_pwr, r = tg.raw_pwr;
+        if (g != null && r != null) v = (g + r) / 2;
+        else if (g != null) v = g;
+        else if (r != null) v = r;
+      }
+      if (v != null && isFinite(v)) vals.push(+v);
+    }
+    return vals.length ? vals.reduce((s, x) => s + x, 0) / vals.length : null;
+  };
+  // Jump helper — clicks on rows navigate to that draftee.
+  const _jump = (k) =>
+    `event.preventDefault();goToDraftee('${escapeHtml(k)}');`;
+
+  // Cross-link card — always present, takes user back to the rankings
+  // for this class.
+  const classRankCard = {
+    type: "link",
+    title: `${cls.year} draft class`,
+    href: "#",
+    onclick: `event.preventDefault();state.section='draft';state.draftYear=${cls.year};state.draftView='rankings';render();syncToURL();`,
+    label: `View all ${cls.n_prospects || classProspects.length + 1} ${cls.year} rankings →`,
+  };
+
+  if (activeTab === "scouting" || activeTab === "tools") {
+    // Pick the tool this prospect grades highest in (across sources),
+    // then surface the top 5 prospects in the class on that same tool.
+    const toolKeys = isPit
+      ? ["fb", "sl", "cb", "ch", "cmd", "ct"]
+      : ["hit", "pwr", "speed", "field", "throw"];
+    let topTool = null, topVal = -Infinity;
+    for (const k of toolKeys) {
+      const v = _toolMean(p, k);
+      if (v != null && v > topVal) { topVal = v; topTool = k; }
+    }
+    const peers = topTool
+      ? classProspects
+          .map(q => ({ q, v: _toolMean(q, topTool) }))
+          .filter(r => r.v != null)
+          .sort((a, b) => b.v - a.v)
+          .slice(0, 5)
+          .map(r => ({
+            key: r.q.player_key,
+            name: r.q.player_name,
+            tag: r.q.position || "",
+            value: Math.round(r.v),
+          }))
+      : [];
+    // Same-position peers in the class — independent of tool.
+    const posPeers = classProspects
+      .filter(q => q.position === pos)
+      .sort((a, b) => (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0))
+      .slice(0, 5)
+      .map(q => ({
+        key: q.player_key,
+        name: q.player_name,
+        tag: q.school || "—",
+        value: q.consensus_fv != null ? `FV ${fvCeil(q.consensus_fv)}` : "—",
+      }));
+    return [
+      topTool ? { type: "leaderboard",
+        title: `${cls.year} · top ${topTool.toUpperCase()} (you: ${Math.round(topVal)})`,
+        rows: peers } : null,
+      { type: "leaderboard", title: `${cls.year} · ${pos || "pos"} peers by FV`,
+        rows: posPeers },
+      classRankCard,
+    ].filter(Boolean);
+  }
+  if (activeTab === "acquisition") {
+    // Round-mates: if drafted, neighbors in the same round; if not,
+    // neighbors in the same projected round. Sorted by FV for context.
+    const rd = p.drafted_round ?? p.projected_round;
+    const rdLabel = p.drafted_round
+      ? `R${p.drafted_round} draftees`
+      : (p.projected_round ? `R${p.projected_round} projections` : "Round peers");
+    const roundPeers = rd != null ? classProspects
+      .filter(q => (p.drafted_round != null ? q.drafted_round : q.projected_round) === rd)
+      .sort((a, b) => (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0))
+      .slice(0, 5)
+      .map(q => ({
+        key: q.player_key,
+        name: q.player_name,
+        tag: q.drafted_team || q.position || "",
+        value: q.signing_bonus
+          ? `$${(q.signing_bonus/1_000_000).toFixed(1)}M`
+          : (q.consensus_fv != null ? `FV ${fvCeil(q.consensus_fv)}` : "—"),
+      })) : [];
+    // Bonus context: top 5 bonuses in class so the user can place the
+    // prospect's bonus on a relative scale.
+    const bonusContext = classProspects
+      .filter(q => q.signing_bonus != null)
+      .sort((a, b) => b.signing_bonus - a.signing_bonus)
+      .slice(0, 5)
+      .map(q => ({
+        key: q.player_key,
+        name: q.player_name,
+        tag: q.drafted_team || "",
+        value: `$${(q.signing_bonus/1_000_000).toFixed(1)}M`,
+      }));
+    return [
+      rd != null ? { type: "leaderboard", title: rdLabel, rows: roundPeers } : null,
+      bonusContext.length ? { type: "leaderboard", title: `${cls.year} · top bonuses`, rows: bonusContext,
+        link: { href: "#", onclick: `event.preventDefault();state.section='draft';state.draftYear=${cls.year};state.draftView='signing-trends';render();syncToURL();`, label: "all trends →" } } : null,
+      classRankCard,
+    ].filter(Boolean);
+  }
+  // Overview (default) — FV-adjacent peers in the class (±3 FV window).
+  const adjPeers = fv != null
+    ? classProspects
+        .filter(q => q.consensus_fv != null && Math.abs(q.consensus_fv - fv) <= 3)
+        .sort((a, b) => Math.abs(a.consensus_fv - fv) - Math.abs(b.consensus_fv - fv))
+        .slice(0, 6)
+        .map(q => ({
+          key: q.player_key,
+          name: q.player_name,
+          tag: q.position || "",
+          value: q.consensus_fv != null ? `FV ${fvCeil(q.consensus_fv)}` : "—",
+        }))
+    : [];
+  const signals = [
+    p.consensus_fv != null ? { key: "Consensus FV", value: fvCeil(p.consensus_fv) } : null,
+    p.draft_stock_plus != null ? { key: "Stock+", value: p.draft_stock_plus,
+      valColor: p.draft_stock_plus >= 110 ? "var(--up)" : p.draft_stock_plus <= 90 ? "var(--down)" : "var(--text-primary)" } : null,
+    p.projected_round ? { key: "Proj round", value: `R${p.projected_round}` } : null,
+    p.signing_bonus ? { key: "Bonus", value: `$${(p.signing_bonus/1_000_000).toFixed(2)}M` } : null,
+    p.over_slot_pct != null ? { key: "vs Slot",
+      value: (p.over_slot_pct > 0 ? "+" : "") + (p.over_slot_pct * 100).toFixed(0) + "%",
+      valColor: p.over_slot_pct > 0.05 ? "var(--neon-cyan)" : p.over_slot_pct < -0.05 ? "var(--neon-orange)" : "var(--text-primary)" } : null,
+  ].filter(Boolean);
+  return [
+    adjPeers.length ? { type: "leaderboard", title: `${cls.year} · FV neighbors`, rows: adjPeers } : null,
+    signals.length ? { type: "signals", title: "Key signals", signals } : null,
+    classRankCard,
+  ].filter(Boolean);
+}
+
+// v30.7 — Per-tab sidebar config for the overseas-prospect detail
+// page. Same shape contract. Peer pool is the rest of the same league,
+// since overseas prospects don't sit in cohorts the way draft classes
+// do — the league context (NPB vs KBO vs CPBL) is what most defines
+// the comp set.
+function _overseasDetailSidebarCards(p, league, activeTab) {
+  if (!p || !league) return [];
+  const leagueProspects = (league.prospects || []).filter(q => q && q.player_key !== p.player_key);
+  const fv = p.consensus_fv;
+  const pos = p.position || "";
+  const _toolMean = (q, key) => {
+    const vals = [];
+    for (const src in (q.tool_grades || {})) {
+      const tg = q.tool_grades[src] || {};
+      let v = tg[key];
+      if (key === "pwr" && v == null) {
+        const g = tg.game_pwr, r = tg.raw_pwr;
+        if (g != null && r != null) v = (g + r) / 2;
+        else if (g != null) v = g;
+        else if (r != null) v = r;
+      }
+      if (v != null && isFinite(v)) vals.push(+v);
+    }
+    return vals.length ? vals.reduce((s, x) => s + x, 0) / vals.length : null;
+  };
+
+  const lgRankCard = {
+    type: "link",
+    title: `${league.league} rankings`,
+    href: "#",
+    onclick: `event.preventDefault();state.section='overseas';state.overseasLeague='${escapeHtml(league.league)}';state.overseasView='rankings';render();syncToURL();`,
+    label: `View all ${league.n_prospects || leagueProspects.length + 1} ${league.league} rankings →`,
+  };
+
+  if (activeTab === "scouting" || activeTab === "tools") {
+    const isPit = /^(SP|RP|RHP|LHP|P)/i.test(pos);
+    const toolKeys = isPit ? ["fb", "sl", "cb", "ch", "cmd"]
+                           : ["hit", "pwr", "speed", "field", "throw"];
+    let topTool = null, topVal = -Infinity;
+    for (const k of toolKeys) {
+      const v = _toolMean(p, k);
+      if (v != null && v > topVal) { topVal = v; topTool = k; }
+    }
+    const peers = topTool ? leagueProspects
+      .map(q => ({ q, v: _toolMean(q, topTool) }))
+      .filter(r => r.v != null)
+      .sort((a, b) => b.v - a.v)
+      .slice(0, 5)
+      .map(r => ({
+        key: r.q.player_key,
+        name: r.q.player_name,
+        tag: r.q.position || "",
+        value: Math.round(r.v),
+      })) : [];
+    return [
+      topTool ? { type: "leaderboard",
+        title: `${league.league} · top ${topTool.toUpperCase()}`, rows: peers } : null,
+      lgRankCard,
+    ].filter(Boolean);
+  }
+  if (activeTab === "acquisition") {
+    // Compare to other recently-signed prospects from this league —
+    // those are the natural comps for what the market will pay.
+    const signedPeers = leagueProspects
+      .filter(q => (q.status === "mlb_promoted" || q.signed_team) && (q.signed_bonus_usd || q.proj_bonus_usd))
+      .sort((a, b) => (b.signed_bonus_usd || b.proj_bonus_usd || 0)
+                    - (a.signed_bonus_usd || a.proj_bonus_usd || 0))
+      .slice(0, 6)
+      .map(q => ({
+        key: q.player_key,
+        name: q.player_name,
+        tag: q.signed_team || q.proj_team || "",
+        value: q.signed_bonus_usd
+          ? `$${(q.signed_bonus_usd/1_000_000).toFixed(1)}M`
+          : `~$${((q.proj_bonus_usd || 0)/1_000_000).toFixed(1)}M`,
+      }));
+    const ctx = league.league_context || {};
+    const factorSignals = [
+      ctx.hitter_wrc_factor != null ? { key: "Hitter wRC+ factor", value: ctx.hitter_wrc_factor.toFixed(2) + "×",
+        valColor: ctx.hitter_wrc_factor < 0.85 ? "var(--neon-orange)" : "var(--text-primary)" } : null,
+      ctx.pitcher_era_factor != null ? { key: "Pitcher ERA factor", value: ctx.pitcher_era_factor.toFixed(2) + "×",
+        valColor: ctx.pitcher_era_factor >= 1.40 ? "var(--neon-orange)" : "var(--text-primary)" } : null,
+      ctx.fb_velo_delta != null ? { key: "FB velo Δ", value: ctx.fb_velo_delta.toFixed(1) + " mph" } : null,
+    ].filter(Boolean);
+    return [
+      signedPeers.length ? { type: "leaderboard", title: `${league.league} · signing comps`, rows: signedPeers,
+        link: { href: "#", onclick: `event.preventDefault();state.section='overseas';state.overseasLeague='${escapeHtml(league.league)}';state.overseasView='signed';render();syncToURL();`, label: "all signings →" } } : null,
+      factorSignals.length ? { type: "signals", title: `${league.league} translation`, signals: factorSignals,
+        link: { href: "#", onclick: `event.preventDefault();state.section='overseas';state.overseasView='league-context';render();syncToURL();`, label: "context →" } } : null,
+      lgRankCard,
+    ].filter(Boolean);
+  }
+  // Overview (default) — FV-adjacent league-mates + key signals.
+  const adjPeers = fv != null ? leagueProspects
+    .filter(q => q.consensus_fv != null && Math.abs(q.consensus_fv - fv) <= 5)
+    .sort((a, b) => Math.abs(a.consensus_fv - fv) - Math.abs(b.consensus_fv - fv))
+    .slice(0, 6)
+    .map(q => ({
+      key: q.player_key,
+      name: q.player_name,
+      tag: q.position || "",
+      value: q.consensus_fv != null ? `FV ${fvCeil(q.consensus_fv)}` : "—",
+    })) : [];
+  const signals = [
+    fv != null ? { key: "Consensus FV", value: fvCeil(fv) } : null,
+    p.eta_year ? { key: "ETA", value: p.eta_year } : null,
+    p.signed_team ? { key: "Signed by", value: p.signed_team, valColor: "var(--neon-cyan)" } : null,
+    p.posting_days_remaining != null && p.status === "posted"
+      ? { key: "Window left", value: p.posting_days_remaining + "d",
+          valColor: p.posting_days_remaining <= 7 ? "var(--neon-orange)" : "var(--text-primary)" } : null,
+  ].filter(Boolean);
+  return [
+    adjPeers.length ? { type: "leaderboard", title: `${league.league} · FV neighbors`, rows: adjPeers } : null,
+    signals.length ? { type: "signals", title: "Key signals", signals } : null,
+    lgRankCard,
+  ].filter(Boolean);
+}
+
+// v30.7 — Per-tab sidebar config for the farm-system detail page.
+// Same shape contract as _prospectDetailSidebarCards. Reads from the
+// org payload (org_summary entry) since most farm-page signals live
+// in tree.* / statcast_quality / aggregate fields rather than the
+// player set.
+function _farmDetailSidebarCards(org, activeTab) {
+  if (!org) return [];
+  const orgCode = org.org;
+  const sq = org.statcast_quality || {};
+  const tree = org.tree || {};
+  const dh = tree.dev_hitter || {};
+  const dp = tree.dev_pitcher || {};
+  // League peer-ranking helper: where does this org sit among the 30?
+  const _rankAmongOrgs = (field, lowerIsBetter) => {
+    const rows = (DATA.org_summary || []).map(e => ({
+      org: e.org, v: typeof field === "function" ? field(e) : e[field],
+    })).filter(r => r.v != null && isFinite(r.v));
+    if (!rows.length) return null;
+    rows.sort((a, b) => lowerIsBetter ? a.v - b.v : b.v - a.v);
+    const idx = rows.findIndex(r => r.org === orgCode);
+    return idx >= 0 ? { rank: idx + 1, total: rows.length } : null;
+  };
+
+  if (activeTab === "roster") {
+    // Roster tab — top 5 prospects on the org by FV (most-tradeable
+    // candidates), plus quick signals on roster depth.
+    const orgPlayers = (DATA.players || [])
+      .filter(p => p && p.org === orgCode)
+      .sort((a, b) => (b.fv_close ?? 0) - (a.fv_close ?? 0));
+    const rows = orgPlayers.slice(0, 5).map(p => ({
+      key: p.player_key,
+      name: p.player_name,
+      tag: positionBucket(p.position) || "",
+      value: p.fv_close != null ? `FV ${Math.round(p.fv_close)}` : "—",
+    }));
+    const signals = [
+      { key: "Active prospects", value: org.count ?? "—" },
+      { key: "60+ FV", value: org.tier_60_plus ?? 0 },
+      { key: "Avg age", value: org.avg_age != null ? org.avg_age.toFixed(1) : "—" },
+      { key: "Total FV", value: org.total_fv != null ? Math.round(org.total_fv) : "—" },
+    ];
+    return [
+      { type: "leaderboard", title: `${orgCode} · top by FV`, rows },
+      { type: "signals", title: "Roster summary", signals },
+    ];
+  }
+  if (activeTab === "development") {
+    // Development tab — DvM+ trajectory windows + top-tool development.
+    const signals = [
+      dh.dvm_plus != null ? { key: "Hitter DvM+", value: dh.dvm_plus, valColor: dh.dvm_plus >= 110 ? "var(--up)" : dh.dvm_plus <= 90 ? "var(--down)" : "var(--text-primary)" } : null,
+      dp.dvm_plus != null ? { key: "Pitcher DvM+", value: dp.dvm_plus, valColor: dp.dvm_plus >= 110 ? "var(--up)" : dp.dvm_plus <= 90 ? "var(--down)" : "var(--text-primary)" } : null,
+      dh.tool_dvm_plus != null ? { key: "Hit tools DvM+", value: dh.tool_dvm_plus } : null,
+      dp.tool_dvm_plus != null ? { key: "Pit tools DvM+", value: dp.tool_dvm_plus } : null,
+    ].filter(Boolean);
+    // Peer leaderboard — top 5 orgs by combined dev DvM+ this org's
+    // 6y window (gives the user a sense of the league reference).
+    const devCombined = (DATA.org_summary || []).map(e => {
+      const eh = ((e.tree || {}).dev_hitter || {}).dvm_plus;
+      const ep = ((e.tree || {}).dev_pitcher || {}).dvm_plus;
+      const both = (eh ?? 0) + (ep ?? 0);
+      return { org: e.org, v: both };
+    }).sort((a, b) => b.v - a.v).slice(0, 5).map(r => ({
+      key: r.org,
+      name: r.org,
+      value: r.v != null ? `DvM ${Math.round(r.v / 2)}` : "—",
+    }));
+    return [
+      { type: "signals", title: "Development index", signals },
+      { type: "leaderboard", title: "Top 5 development", rows: devCombined,
+        link: { href: "#", onclick: `event.preventDefault();state.section='farm';state.farmSort='development';render();syncToURL();`, label: "view rankings →" } },
+    ];
+  }
+  if (activeTab === "finances") {
+    // Finances tab — surplus / ROI signals + spending peers.
+    const fr = org.financial_roi || {};
+    const signals = [
+      org.financial_score != null ? { key: "Financial score", value: org.financial_score } : null,
+      fr.war_per_million != null ? { key: "WAR / $M", value: fr.war_per_million.toFixed(2) } : null,
+      org._active_surplus_net_mm != null ? { key: "Surplus $M", value: org._active_surplus_net_mm.toFixed(1) } : null,
+    ].filter(Boolean);
+    const fin_rank = _rankAmongOrgs("financial_score");
+    const link = { href: "#", onclick: `event.preventDefault();state.section='farm';state.farmSort='roi';render();syncToURL();`, label: "ROI leaderboard →" };
+    return [
+      { type: "signals", title: "Financial signals", signals,
+        link: fin_rank ? { href: "#", onclick: "", label: `rank ${fin_rank.rank}/${fin_rank.total}` } : null },
+      { type: "link", title: "League finances", href: "#",
+        onclick: `event.preventDefault();state.section='farm';state.farmSort='financial';render();syncToURL();`,
+        label: "View financial-score rankings →" },
+    ];
+  }
+  if (activeTab === "transactions") {
+    // Transactions tab — recent league-wide trade activity + cross-link.
+    const recentTrades = [];
+    const cutoff = Date.now() - 30 * 86400 * 1000;
+    for (const p of (DATA.players || [])) {
+      for (const t of (p.trades || [])) {
+        if (!t.trade_date) continue;
+        const ts = new Date(t.trade_date + "T00:00:00").getTime();
+        if (isNaN(ts) || ts < cutoff) continue;
+        recentTrades.push({ p, t, ts });
+      }
+    }
+    recentTrades.sort((a, b) => b.ts - a.ts);
+    const rows = recentTrades.slice(0, 5).map(({ p, t }) => ({
+      key: p.player_key,
+      name: p.player_name,
+      tag: `${t.from_org || "?"}→${t.to_org || "?"}`,
+      value: t.trade_date.slice(5),
+    }));
+    return [
+      { type: "leaderboard", title: "Recent league trades (30d)", rows,
+        link: { href: "#", onclick: `event.preventDefault();state.section='traded';render();syncToURL();`, label: "view all →" } },
+      { type: "link", title: "Org transaction history", href: "#",
+        onclick: `event.preventDefault();state.section='traded';state.orgFilter='${escapeHtml(orgCode)}';render();syncToURL();`,
+        label: `Filter Recently Acquired to ${escapeHtml(orgCode)} →` },
+    ];
+  }
+  // Overview (default) — composite signals + league peer ranks + SC+.
+  const signals = [
+    org.farm_rank != null ? { key: "Farm rank", value: `#${org.farm_rank}`, valColor: org.farm_rank <= 5 ? "var(--up)" : org.farm_rank >= 25 ? "var(--down)" : "var(--text-primary)" } : null,
+    org.acquisition_strategy_score != null ? { key: "Acquisition", value: org.acquisition_strategy_score } : null,
+    org.development_score != null ? { key: "Development", value: org.development_score } : null,
+    org.financial_score != null ? { key: "Financial", value: org.financial_score } : null,
+    org.mlb_production_score != null ? { key: "MLB Production", value: org.mlb_production_score } : null,
+    sq.mean != null ? { key: "SC+ avg", value: sq.mean, valColor: sq.mean >= 105 ? "var(--up)" : sq.mean <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
+  ].filter(Boolean);
+  // Top 5 farms by rank (so the user sees where they're being measured against).
+  const topFarms = (DATA.org_summary || [])
+    .slice()
+    .sort((a, b) => (a.farm_rank ?? 99) - (b.farm_rank ?? 99))
+    .slice(0, 5)
+    .map(e => ({
+      key: e.org,
+      name: e.org,
+      tag: "",
+      value: e.farm_rank != null ? `#${e.farm_rank}` : "—",
+    }));
+  return [
+    { type: "signals", title: "System grades", signals },
+    { type: "leaderboard", title: "Top 5 farms", rows: topFarms,
+      link: { href: "#", onclick: `event.preventDefault();state.section='farm';render();syncToURL();`, label: "all 30 →" } },
+  ];
+}
+
 function renderActiveContextRail() {
   const rail = document.getElementById("active-context-rail");
   if (!rail) return;
@@ -13323,6 +14077,7 @@ async function renderDraft() {
     case "leaderboard":    return _renderDraftLeaderboard(host, cls);
     case "lottery":        return _renderDraftLottery(host, cls);
     case "class-strength": return _renderClassStrength(host, classes);
+    case "signing-trends": return _renderSigningTrends(host, classes);
     case "rankings":
     default:               return _renderDraftRankings(host, cls);
   }
@@ -13649,7 +14404,7 @@ function _renderDraftCard(p) {
   }
 
   const milbLink = p.milb_key
-    ? `<a href="#tab=active" onclick="event.preventDefault();state.section='active';state.view={key:'${escapeHtml(p.milb_key)}'};render();syncToURL();"
+    ? `<a href="#tab=active" onclick="event.preventDefault();state.section='active';state.view={key:'${escapeHtml(p.milb_key)}');"
          style="font-size:10px;color:var(--neon-green);text-decoration:none;
          margin-left:6px;">→ MiLB profile</a>`
     : "";
@@ -13882,43 +14637,48 @@ function _renderDraftLeaderboard(host, cls) {
         DS+ ${p.draft_stock_plus || "—"}</span></li>`;
   }).join("");
 
-  // Per-tool bests — scan tool_grades and find the top in each canonical tool.
-  // v17 — game_pwr + raw_pwr collapsed to a single PWR entry (per-source mean);
-  // frame / athl / delivery folded in from _extras (-2..+2 → 30..70 FV).
+  // Per-tool bests — scan tool_grades and find the TOP 3 in each
+  // canonical tool. v17 collapsed game_pwr + raw_pwr to a single PWR
+  // entry; frame / athl / delivery folded in from _extras (-2..+2 → 30..70 FV).
+  // v30.7 — surface top 3 per tool so the user gets a real sense of
+  // depth-in-tool, not just who owns the single highest grade. Per-
+  // player dedup so the same prospect doesn't take 3 slots in one tool.
   const _pmToFvDR = (pm) => {
     if (pm == null) return null;
     const v = parseInt(pm, 10);
     if (!isFinite(v) || v < -2 || v > 2) return null;
     return 50 + 10 * v;
   };
-  const toolBest = {};
+  // Map tool key → per-player best grade for that tool (the source's
+  // single highest grade wins for each player, before we sort + pick top 3).
+  const toolByKey = {};
+  const _bump = (key, player, grade) => {
+    if (!toolByKey[key]) toolByKey[key] = new Map();
+    const cur = toolByKey[key].get(player.player_key);
+    if (cur == null || grade > cur.grade) {
+      toolByKey[key].set(player.player_key, { player, grade });
+    }
+  };
   for (const p of prospects) {
     for (const src in (p.tool_grades || {})) {
       const tg = p.tool_grades[src] || {};
       const ex = tg._extras || {};
-      // Synthesized PWR per source.
       const g = tg.game_pwr, r = tg.raw_pwr;
       let pwr = null;
       if (tg.pwr != null) pwr = tg.pwr;
       else if (g != null && r != null) pwr = (g + r) / 2;
       else if (g != null) pwr = g;
       else if (r != null) pwr = r;
-      if (pwr != null && (!toolBest.pwr || pwr > toolBest.pwr.grade)) {
-        toolBest.pwr = { player: p, grade: pwr };
-      }
+      if (pwr != null) _bump("pwr", p, pwr);
       for (const k in tg) {
         if (k === "_extras" || k === "game_pwr" || k === "raw_pwr" || k === "pwr") continue;
         const v = tg[k];
         if (!isFinite(v)) continue;
-        if (!toolBest[k] || v > toolBest[k].grade) {
-          toolBest[k] = { player: p, grade: v };
-        }
+        _bump(k, p, v);
       }
       for (const physKey of ["frame", "athl", "delivery"]) {
         const fv = _pmToFvDR(ex[physKey]);
-        if (fv != null && (!toolBest[physKey] || fv > toolBest[physKey].grade)) {
-          toolBest[physKey] = { player: p, grade: fv };
-        }
+        if (fv != null) _bump(physKey, p, fv);
       }
     }
   }
@@ -13926,13 +14686,22 @@ function _renderDraftLeaderboard(host, cls) {
                      "pitch_sel","bat_ctrl","frame","athl",
                      "fb","sl","cb","ch","cmd","ct","delivery"];
   const toolRows = toolOrder
-    .filter(k => toolBest[k])
+    .filter(k => toolByKey[k])
     .map(k => {
-      const { player, grade } = toolBest[k];
+      const top3 = Array.from(toolByKey[k].values())
+        .sort((a, b) => b.grade - a.grade)
+        .slice(0, 3);
+      const head = top3[0];
+      const restPills = top3.slice(1).map(({ player, grade }) => `
+        <span style="display:inline-block;margin-left:6px;font-size:10px;color:var(--text-secondary);">
+          <span style="color:${_draftFvBucketColor(grade)};font-family:var(--font-mono);">${grade}</span>
+          ${escapeHtml(player.player_name.split(" ").slice(-1)[0])}
+        </span>`).join("");
       return `<li><strong>${escapeHtml(k.toUpperCase())}</strong>
-        <span style="color:${_draftFvBucketColor(grade)};">${grade}</span> —
-        ${escapeHtml(player.player_name)}
-        <small>(${escapeHtml(player.school || "?")})</small></li>`;
+        <span style="color:${_draftFvBucketColor(head.grade)};">${head.grade}</span> —
+        ${escapeHtml(head.player.player_name)}
+        <small>(${escapeHtml(head.player.school || "?")})</small>
+        ${restPills}</li>`;
     }).join("");
 
   const topRows = top.map((p, i) => `<tr>
@@ -13960,16 +14729,18 @@ function _renderDraftLeaderboard(host, cls) {
         <ul class="draft-list">${posRows}</ul>
       </div>
       <div class="draft-panel">
-        <h3>Best tool grades in class</h3>
+        <h3>Top tools in class <small style="font-weight:400;color:var(--text-tertiary);">(top 3)</small></h3>
         <ul class="draft-list">${toolRows}</ul>
       </div>
     </div>`;
 }
 
 function _renderClassStrength(host, classes) {
-  // FV distribution bar chart side-by-side across years.
+  // FV distribution bar chart side-by-side across years + a comparison
+  // strip up top so the cross-class story (which year is deepest, which
+  // is top-heavy) reads at a glance instead of forcing the user to
+  // visually compare six histograms.
   const fvOrder = ["60","55","50+","50","45+","45","40+","40"];
-  // Find max bucket count for y-axis scale
   let max = 0;
   for (const c of classes) {
     for (const k of fvOrder) {
@@ -13981,6 +14752,57 @@ function _renderClassStrength(host, classes) {
   const barW = 18;
   const gap = 4;
   const groupW = fvOrder.length * (barW + gap);
+
+  // --- Comparison strip: per-class summary stats ---
+  // Walk prospects once per class to compute pitcher/hitter split, mean
+  // consensus FV, top-tier counts. Sorted by year DESC so the most
+  // recent class anchors the left edge (matches the chip strip ordering).
+  const summary = classes.slice().sort((a, b) => b.year - a.year).map(c => {
+    const ps = c.prospects || [];
+    let hit = 0, pit = 0, sumFv = 0, nFv = 0;
+    for (const p of ps) {
+      const pt = (p.player_type || "").toLowerCase();
+      const isPit = pt.includes("p") || /^(SP|RP|RHP|LHP|P)$/i.test(p.position || "");
+      if (isPit) pit++; else hit++;
+      if (p.consensus_fv != null) { sumFv += +p.consensus_fv; nFv++; }
+    }
+    const dist = c.fv_distribution || {};
+    const elite = (dist["60"] || 0) + (dist["55"] || 0);
+    const meanFv = nFv ? (sumFv / nFv).toFixed(1) : "—";
+    return { c, hit, pit, elite, meanFv };
+  });
+  // Color-code the max in each column so the strongest class per metric
+  // pops without requiring the user to mentally sort.
+  const _maxOf = (key) => Math.max(...summary.map(r => r[key] || 0));
+  const m_elite = _maxOf("elite"), m_n = _maxOf("hit") + _maxOf("pit");
+  const m_meanFv = Math.max(...summary.map(r => +r.meanFv || 0));
+  const summaryStrip = `
+    <div class="draft-panel" style="grid-column:1/-1;">
+      <h3>Class strength · summary</h3>
+      <table class="draft-table" style="margin-top:6px;">
+        <thead><tr>
+          <th>Year</th><th>Prospects</th><th>Hit / Pit</th>
+          <th>55+ FV</th><th>Mean FV</th><th>Stock+ mean</th>
+        </tr></thead>
+        <tbody>
+          ${summary.map(r => {
+            const totalN = r.hit + r.pit;
+            return `<tr style="cursor:pointer;" data-jump-year="${r.c.year}">
+              <td><strong>${r.c.year}${r.c.is_current ? " ⏳" : ""}</strong></td>
+              <td>${r.c.n_prospects}</td>
+              <td><span style="color:var(--text-secondary);">${r.hit}</span>
+                  / <span style="color:var(--neon-orange);">${r.pit}</span></td>
+              <td style="${r.elite === m_elite && m_elite > 0 ? "color:var(--neon-cyan);font-weight:600;" : ""}">${r.elite}</td>
+              <td style="${(+r.meanFv) === m_meanFv && m_meanFv > 0 ? "color:var(--neon-cyan);font-weight:600;" : ""}">${r.meanFv}</td>
+              <td>${r.c.stock_plus_mean ?? "—"}</td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;">
+        Click a row to jump to that class · best-in-set values in cyan.
+      </div>
+    </div>`;
 
   const charts = classes.map(c => {
     const dist = c.fv_distribution || {};
@@ -13997,7 +14819,7 @@ function _renderClassStrength(host, classes) {
               font-size="9" fill="var(--text-tertiary)">${k}</text>
       </g>`;
     }).join("");
-    return `<div class="draft-panel" style="text-align:center;">
+    return `<div class="draft-panel" style="text-align:center;cursor:pointer;" data-jump-year="${c.year}">
       <h3>${c.year}${c.is_current ? " ⏳" : ""}</h3>
       <svg width="${groupW}" height="${barH + 20}" style="display:block;margin:8px auto;">
         ${bars}
@@ -14008,7 +14830,197 @@ function _renderClassStrength(host, classes) {
     </div>`;
   }).join("");
 
-  host.innerHTML = `<div class="draft-results-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));">${charts}</div>`;
+  host.innerHTML = `
+    <div class="draft-results-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));">
+      ${summaryStrip}
+      ${charts}
+    </div>`;
+  // Wire row + tile clicks to jump to the class's Rankings view.
+  host.querySelectorAll("[data-jump-year]").forEach(el => {
+    el.addEventListener("click", () => {
+      state.draftYear = +el.dataset.jumpYear;
+      state.draftView = "rankings";
+      renderDraft();
+      syncToURL();
+    });
+  });
+}
+
+// v30.7 — Signing Trends sub-view. Surfaces the year-over-year story
+// behind the dollars: per-class pool vs spend (over-pool teams are
+// the aggressive spenders), team spend leaders for the selected year,
+// biggest bonuses for the selected class, and per-round slot premium
+// rate. All numbers come straight off the draft payload — no extra
+// fetch — so it's safe to render on any class.
+function _renderSigningTrends(host, classes) {
+  const usd = v => v == null ? "—" : (v >= 1_000_000
+    ? "$" + (v/1_000_000).toFixed(1) + "M"
+    : v >= 1_000 ? "$" + (v/1_000).toFixed(0) + "K" : "$" + v);
+
+  // --- Pool vs spend chart (per class) ---
+  // team_pool_usd / team_spend_usd are per-team dicts {ORG: $}. Sum to
+  // a single league-wide scalar per class. Pre-draft classes have empty
+  // dicts (no signings yet); we drop those from the chart series.
+  const _sumDict = (d) => {
+    if (!d || typeof d !== "object") return null;
+    const vals = Object.values(d);
+    if (!vals.length) return null;
+    return vals.reduce((s, v) => s + (+v || 0), 0);
+  };
+  const poolRows = classes.slice().sort((a, b) => a.year - b.year).map(c => {
+    const pool = _sumDict(c.team_pool_usd);
+    const spend = _sumDict(c.team_spend_usd);
+    return { year: c.year, pool, spend, over: pool && spend ? spend - pool : null };
+  });
+  const validPool = poolRows.filter(r => r.pool != null && r.spend != null && r.pool > 0 && r.spend > 0);
+  const maxPool = Math.max(1, ...validPool.map(r => Math.max(r.pool, r.spend)));
+  const chartW = 320, chartH = 140, leftPad = 40, botPad = 22;
+  const innerW = chartW - leftPad - 8, innerH = chartH - botPad - 8;
+  const _x = i => leftPad + (validPool.length > 1 ? i * innerW / (validPool.length - 1) : innerW / 2);
+  const _y = v => chartH - botPad - (v / maxPool) * innerH;
+  const poolLine = validPool.map((r, i) => `${_x(i)},${_y(r.pool)}`).join(" ");
+  const spendLine = validPool.map((r, i) => `${_x(i)},${_y(r.spend)}`).join(" ");
+  const _dots = (rows, color, key) => rows.map((r, i) => `
+    <circle cx="${_x(i)}" cy="${_y(r[key])}" r="2.5" fill="${color}">
+      <title>${r.year}: ${usd(r[key])}</title></circle>`).join("");
+  const _xLabels = validPool.map((r, i) => `
+    <text x="${_x(i)}" y="${chartH - 6}" text-anchor="middle"
+          font-size="9" fill="var(--text-tertiary)">${r.year}</text>`).join("");
+  const poolChart = validPool.length ? `
+    <div class="draft-panel">
+      <h3>League bonus pool vs spend</h3>
+      <svg width="${chartW}" height="${chartH}" style="display:block;margin:6px auto;">
+        <polyline points="${poolLine}" fill="none" stroke="var(--text-secondary)" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <polyline points="${spendLine}" fill="none" stroke="var(--neon-cyan)" stroke-width="1.8"/>
+        ${_dots(validPool, "var(--text-secondary)", "pool")}
+        ${_dots(validPool, "var(--neon-cyan)", "spend")}
+        ${_xLabels}
+        <text x="${leftPad - 4}" y="${_y(maxPool) + 4}" text-anchor="end"
+              font-size="9" fill="var(--text-tertiary)">${usd(maxPool)}</text>
+        <text x="${leftPad - 4}" y="${chartH - botPad}" text-anchor="end"
+              font-size="9" fill="var(--text-tertiary)">$0</text>
+      </svg>
+      <div style="font-size:11px;color:var(--text-tertiary);text-align:center;">
+        <span style="display:inline-block;width:8px;height:2px;background:var(--text-secondary);vertical-align:middle;border-radius:1px;"></span> Pool cap
+        &nbsp;·&nbsp;
+        <span style="display:inline-block;width:8px;height:2px;background:var(--neon-cyan);vertical-align:middle;border-radius:1px;"></span> Actual spend
+      </div>
+    </div>` : "";
+
+  // --- Selected-class context: top 10 bonuses + team spend leaders ---
+  const selYear = state.draftYear;
+  const selCls = classes.find(c => c.year === selYear);
+  const selProspects = (selCls && selCls.prospects) || [];
+
+  // Top 10 bonuses for this class.
+  const topBonuses = selProspects
+    .filter(p => p.signing_bonus != null)
+    .sort((a, b) => b.signing_bonus - a.signing_bonus)
+    .slice(0, 10);
+  const topBonusRows = topBonuses.length ? topBonuses.map((p, i) => {
+    const ov = p.over_slot_pct;
+    const ovColor = ov == null ? "var(--text-tertiary)"
+                  : ov > 0.10 ? "var(--neon-cyan)"
+                  : ov < -0.10 ? "var(--neon-orange)" : "var(--text-secondary)";
+    const ovTxt = ov == null ? "—" : (ov > 0 ? "+" : "") + (ov * 100).toFixed(0) + "%";
+    return `<tr>
+      <td>${i + 1}</td>
+      <td><a href="#" onclick="event.preventDefault();goToDraftee('${escapeHtml(p.player_key)}');">${escapeHtml(p.player_name)}</a></td>
+      <td>${escapeHtml(p.position || "?")}</td>
+      <td>${escapeHtml(p.drafted_team || "?")}</td>
+      <td style="font-family:var(--font-mono);">${usd(p.signing_bonus)}</td>
+      <td style="font-family:var(--font-mono);color:${ovColor};">${ovTxt}</td>
+    </tr>`;
+  }).join("") : "";
+
+  // Team-by-team spend for this class. Sum signing_bonus by drafted_team
+  // (post-draft only — pre-draft classes won't have signed=true rows).
+  const byTeam = {};
+  for (const p of selProspects) {
+    if (!p.drafted_team || p.signing_bonus == null) continue;
+    const t = p.drafted_team;
+    if (!byTeam[t]) byTeam[t] = { team: t, spend: 0, picks: 0 };
+    byTeam[t].spend += p.signing_bonus;
+    byTeam[t].picks += 1;
+  }
+  const teamRows = Object.values(byTeam)
+    .sort((a, b) => b.spend - a.spend)
+    .slice(0, 12)
+    .map((r, i) => `<tr>
+      <td>${i + 1}</td>
+      <td><strong>${escapeHtml(r.team)}</strong></td>
+      <td style="font-family:var(--font-mono);">${usd(r.spend)}</td>
+      <td>${r.picks}</td>
+    </tr>`).join("");
+
+  // --- Per-round signing rate + average over-slot ---
+  // Walk picks for this class and bucket by drafted_round; report the
+  // signed rate (how aggressive teams were below slot vs over) and the
+  // average over-slot %. Best for post-draft / mid-signing-window views.
+  const byRound = {};
+  for (const p of selProspects) {
+    const r = p.drafted_round;
+    if (r == null) continue;
+    if (!byRound[r]) byRound[r] = { round: r, signed: 0, unsigned: 0, ovs: [] };
+    if (p.signed) {
+      byRound[r].signed++;
+      if (p.over_slot_pct != null) byRound[r].ovs.push(p.over_slot_pct);
+    } else {
+      byRound[r].unsigned++;
+    }
+  }
+  const roundRows = Object.values(byRound)
+    .sort((a, b) => a.round - b.round)
+    .map(r => {
+      const total = r.signed + r.unsigned;
+      const meanOv = r.ovs.length ? r.ovs.reduce((s, v) => s + v, 0) / r.ovs.length : null;
+      const ovTxt = meanOv == null ? "—" : (meanOv > 0 ? "+" : "") + (meanOv * 100).toFixed(1) + "%";
+      const ovColor = meanOv == null ? "var(--text-tertiary)"
+                    : meanOv > 0.05 ? "var(--neon-cyan)"
+                    : meanOv < -0.05 ? "var(--neon-orange)" : "var(--text-secondary)";
+      return `<tr>
+        <td>R${r.round}</td>
+        <td>${r.signed} / ${total}</td>
+        <td style="color:${ovColor};font-family:var(--font-mono);">${ovTxt}</td>
+      </tr>`;
+    }).join("");
+
+  // Empty-state guard — pre-draft years won't have bonuses/teams.
+  const isPostDraft = topBonuses.length > 0 || Object.keys(byTeam).length > 0;
+  const preDraftNote = isPostDraft ? "" : `
+    <div class="draft-panel" style="grid-column:1/-1;color:var(--text-tertiary);font-size:13px;">
+      ${selYear} hasn't been drafted yet (or no signing data is on file).
+      Switch to a past class via the year chips to see signing patterns.
+    </div>`;
+
+  host.innerHTML = `
+    <div class="draft-results-grid">
+      ${poolChart}
+      ${preDraftNote}
+      ${isPostDraft ? `
+      <div class="draft-panel">
+        <h3>${selYear} · top 10 bonuses</h3>
+        <table class="draft-table">
+          <thead><tr><th>#</th><th>Name</th><th>Pos</th><th>Team</th>
+            <th>Bonus</th><th>vs Slot</th></tr></thead>
+          <tbody>${topBonusRows}</tbody>
+        </table>
+      </div>
+      <div class="draft-panel">
+        <h3>${selYear} · team spend leaders</h3>
+        <table class="draft-table">
+          <thead><tr><th>#</th><th>Team</th><th>Spend</th><th>Picks</th></tr></thead>
+          <tbody>${teamRows}</tbody>
+        </table>
+      </div>
+      <div class="draft-panel">
+        <h3>${selYear} · sign rate &amp; avg over-slot by round</h3>
+        <table class="draft-table">
+          <thead><tr><th>Round</th><th>Signed</th><th>Avg vs Slot</th></tr></thead>
+          <tbody>${roundRows}</tbody>
+        </table>
+      </div>` : ""}
+    </div>`;
 }
 
 // =============================================================================
@@ -14139,6 +15151,7 @@ async function renderOverseas() {
     case "posting":     return _renderOverseasPosting(host, prospects);
     case "signed":      return _renderOverseasSigned(host, prospects);
     case "leaderboard": return _renderOverseasLeaderboard(host, prospects, leagues);
+    case "league-context": return _renderOverseasLeagueContext(host, leagues, prospects);
     case "rankings":
     default:            return _renderOverseasRankings(host, selectedLeagues);
   }
@@ -14399,7 +15412,7 @@ function _renderOverseasCard(p) {
   }
 
   const milbLink = p.milb_key
-    ? `<a href="#tab=active" onclick="event.preventDefault();state.section='active';state.view={key:'${escapeHtml(p.milb_key)}'};render();syncToURL();"
+    ? `<a href="#tab=active" onclick="event.preventDefault();state.section='active';state.view={key:'${escapeHtml(p.milb_key)}');"
          style="font-size:10px;color:var(--neon-green);text-decoration:none;
          margin-left:6px;">→ MiLB profile</a>`
     : "";
@@ -14963,7 +15976,17 @@ async function renderDraftDetail(key) {
     { key: "acquisition", label: "Acquisition",        html: acquisitionHtml },
   ];
   const tabBar = renderDetailTabs(tabs, state.prospectTab, "prospect");
-  root.innerHTML = headerHtml + tabBar;
+  // v30.7 — Tab-aware sidebar with class-peer comparisons. Wraps the
+  // tab bar in the shared `.detail-with-rail` grid so cards sit to the
+  // right on ≥1300px viewports.
+  const sideHtml = renderDetailSidebar(
+    _draftDetailSidebarCards(p, cls, state.prospectTab || "overview")
+  );
+  const tabBarWithRail = `<div class="detail-with-rail">
+    <div class="detail-with-rail-main">${tabBar}</div>
+    ${sideHtml}
+  </div>`;
+  root.innerHTML = headerHtml + tabBarWithRail;
 }
 
 async function renderOverseasDetail(key) {
@@ -15101,7 +16124,16 @@ async function renderOverseasDetail(key) {
     { key: "acquisition", label: "Acquisition",        html: acquisitionHtml },
   ];
   const tabBar = renderDetailTabs(tabs, state.prospectTab, "prospect");
-  root.innerHTML = headerHtml + tabBar;
+  // v30.7 — Tab-aware sidebar with same-league peer comps + per-league
+  // translation factor signals on the acquisition tab.
+  const sideHtml = renderDetailSidebar(
+    _overseasDetailSidebarCards(p, league, state.prospectTab || "overview")
+  );
+  const tabBarWithRail = `<div class="detail-with-rail">
+    <div class="detail-with-rail-main">${tabBar}</div>
+    ${sideHtml}
+  </div>`;
+  root.innerHTML = headerHtml + tabBarWithRail;
 }
 
 function _renderOverseasStats(host, prospects, leagues) {
@@ -15200,43 +16232,102 @@ function _renderOverseasStats(host, prospects, leagues) {
 
 function _renderOverseasPosting(host, prospects) {
   const posted = prospects.filter(p => p.status === "posted" || p.posted_date);
-  if (!posted.length) {
-    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
-      No prospects currently in a posting window.
-      <br><br>
-      Posting events are tracked via <code>data/overseas_postings.csv</code>
-      (columns: <code>player_name, league, posted_date, posting_window_end</code>).
-      Drop a row when MLB Network confirms a posting; the next
-      <code>run_monthly</code> rebuild flips the status and starts the
-      countdown.</div>`;
-    return;
-  }
-  const rows = posted.sort((a, b) => (a.posting_days_remaining ?? 999) - (b.posting_days_remaining ?? 999))
-    .map(p => `<tr>
-      <td>${_flagImg(p.country_flag_svg, p.country_flag, p.country)}</td>
-      <td>${_headshotImg(p.headshot_url, p.player_name)} <strong>${escapeHtml(p.player_name)}</strong></td>
-      <td>${escapeHtml(p.league)}</td>
-      <td>${escapeHtml(p.position || "")}</td>
-      <td>${escapeHtml(p.current_team || "")}</td>
-      <td>${escapeHtml(p.posted_date || "—")}</td>
-      <td style="text-align:right;color:${(p.posting_days_remaining ?? 0) <= 7 ? "var(--neon-orange)" : "var(--text-primary)"};">
-        ${p.posting_days_remaining != null ? p.posting_days_remaining + " days" : "—"}
-      </td>
-      <td style="text-align:right;">${_fmtUSD(p.proj_bonus_usd)}</td>
-    </tr>`).join("");
+  // Recent posting outcomes (signed in the last ~3 years) — gives the
+  // user context on "what happens after a posting" even when no one is
+  // currently in their window. Pulls from the signed pool so we can
+  // show window-close → signing-team / bonus / current MLB performance.
+  const signedHistory = prospects
+    .filter(p => (p.status === "mlb_promoted" || p.signed_team) && p.posted_date)
+    .sort((a, b) => (b.posted_date || "").localeCompare(a.posted_date || ""))
+    .slice(0, 12);
 
-  host.innerHTML = `
+  // Empty active list → just show history + a hint.
+  const headerNote = `
+    <div style="padding:10px 14px;background:var(--bg-secondary);border-radius:6px;color:var(--text-secondary);font-size:12px;line-height:1.5;margin-bottom:14px;">
+      <strong style="color:var(--text-primary);">How postings work:</strong>
+      NPB &amp; KBO clubs can post a player to MLB in November–January.
+      The MLB negotiation window runs 45 days from the posting date.
+      Top-of-class postings command 9-figure totals (Yamamoto $325M, Imanaga $53M).
+      Track new postings via <code>data/overseas_postings.csv</code>.
+    </div>`;
+
+  let activeHtml;
+  if (!posted.length) {
+    activeHtml = `<div class="draft-panel" style="color:var(--text-tertiary);">
+      <h3>Active postings</h3>
+      <div style="padding:10px 0;font-size:13px;">
+        No prospects are currently inside their MLB negotiation window.
+      </div>
+    </div>`;
+  } else {
+    const rows = posted.sort((a, b) => (a.posting_days_remaining ?? 999) - (b.posting_days_remaining ?? 999))
+      .map(p => `<tr>
+        <td>${_flagImg(p.country_flag_svg, p.country_flag, p.country)}</td>
+        <td>${_headshotImg(p.headshot_url, p.player_name)} <strong>${escapeHtml(p.player_name)}</strong></td>
+        <td>${escapeHtml(p.league)}</td>
+        <td>${escapeHtml(p.position || "")}</td>
+        <td>${escapeHtml(p.current_team || "")}</td>
+        <td>${escapeHtml(p.posted_date || "—")}</td>
+        <td style="text-align:right;color:${(p.posting_days_remaining ?? 0) <= 7 ? "var(--neon-orange)" : "var(--text-primary)"};">
+          ${p.posting_days_remaining != null ? p.posting_days_remaining + " days" : "—"}
+        </td>
+        <td style="text-align:right;">${_fmtUSD(p.proj_bonus_usd)}</td>
+      </tr>`).join("");
+    activeHtml = `
+      <div class="draft-panel" style="margin-bottom:14px;">
+        <h3>Active postings — ${posted.length} player(s)</h3>
+        <table class="draft-table">
+          <thead><tr>
+            <th></th><th>Name</th><th>Lg</th><th>Pos</th><th>Current team</th>
+            <th>Posted</th><th style="text-align:right;">Window left</th>
+            <th style="text-align:right;">Proj bonus</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  // Recent history: who's been posted + where they landed.
+  const historyRows = signedHistory.length ? signedHistory.map(p => {
+    const proj = p.proj_bonus_usd, signed = p.signed_bonus_usd;
+    const delta = (proj && signed) ? signed - proj : null;
+    const deltaTxt = delta == null ? "—"
+      : (delta >= 0 ? "+" : "") + _fmtUSD(delta);
+    const deltaColor = delta == null ? "var(--text-tertiary)"
+      : delta > 0 ? "var(--neon-cyan)"
+      : delta < 0 ? "var(--neon-orange)" : "var(--text-secondary)";
+    const milbLink = p.milb_key
+      ? `<a href="#" onclick="event.preventDefault();state.section='active';state.view={type:'player',key:'${escapeHtml(p.milb_key)}');" style="color:var(--neon-green);text-decoration:none;font-size:10px;">→ MLB</a>`
+      : "";
+    return `<tr>
+      <td>${_flagImg(p.country_flag_svg, p.country_flag, p.country)}</td>
+      <td><strong>${escapeHtml(p.player_name)}</strong> ${milbLink}</td>
+      <td>${escapeHtml(p.league)}</td>
+      <td>${escapeHtml(p.posted_date || "—")}</td>
+      <td><strong>${escapeHtml(p.signed_team || "?")}</strong></td>
+      <td style="text-align:right;font-family:var(--font-mono);">${_fmtUSD(signed) || "—"}</td>
+      <td style="text-align:right;font-family:var(--font-mono);color:var(--text-tertiary);">${_fmtUSD(proj) || "—"}</td>
+      <td style="text-align:right;font-family:var(--font-mono);color:${deltaColor};">${deltaTxt}</td>
+    </tr>`;
+  }).join("") : "";
+  const historyHtml = signedHistory.length ? `
     <div class="draft-panel">
-      <h3>Posting Tracker — ${posted.length} player(s)</h3>
+      <h3>Recent posting outcomes <small style="font-weight:400;color:var(--text-tertiary);">(last ${signedHistory.length})</small></h3>
       <table class="draft-table">
         <thead><tr>
-          <th></th><th>Name</th><th>Lg</th><th>Pos</th><th>Current team</th>
-          <th>Posted</th><th style="text-align:right;">Window left</th>
-          <th style="text-align:right;">Proj bonus</th>
+          <th></th><th>Name</th><th>Lg</th><th>Posted</th><th>Signed by</th>
+          <th style="text-align:right;">Actual bonus</th>
+          <th style="text-align:right;">Projected</th>
+          <th style="text-align:right;" title="Actual signing minus prior projection">vs Proj</th>
         </tr></thead>
-        <tbody>${rows}</tbody>
+        <tbody>${historyRows}</tbody>
       </table>
-    </div>`;
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;">
+        Cyan vs Proj = market paid above what we projected; orange = paid below.
+      </div>
+    </div>` : "";
+
+  host.innerHTML = headerNote + activeHtml + historyHtml;
 }
 
 function _renderOverseasSigned(host, prospects) {
@@ -15307,6 +16398,53 @@ function _renderOverseasSigned(host, prospects) {
   const fmtSigned = v => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}`;
   const fmtWpy    = v => v == null ? "—" : `${v.toFixed(2)}`;
 
+  // v30.7 — Per-league summary roll-up. The year-by-year cohort view
+  // below tells the temporal story; this top strip tells the per-league
+  // story (which leagues' bets have actually panned out).
+  const byLeague = {};
+  for (const op of signed) {
+    const lg = op.league || "?";
+    (byLeague[lg] = byLeague[lg] || []).push(op);
+  }
+  const leagueSummary = Object.keys(byLeague).sort().map(lg => {
+    const ops = byLeague[lg];
+    const perfs = ops.map(perfFor);
+    const wags = perfs.map(x => x.wag).filter(v => v != null);
+    const wpys = perfs.map(x => x.war_per_yr).filter(v => v != null);
+    const meanWag = mean(wags);
+    const meanWpy = mean(wpys);
+    const hits = wags.filter(v => v >= 0).length;
+    const hitRate = wags.length ? hits / wags.length : null;
+    const totalSpend = ops.reduce((s, op) => s + (op.signed_bonus_usd || 0), 0);
+    const meanWagColor = meanWag == null ? "var(--text-tertiary)"
+      : meanWag >= 0 ? "var(--up)" : "var(--down)";
+    const hitColor = hitRate == null ? "var(--text-tertiary)"
+      : hitRate >= 0.55 ? "var(--up)"
+      : hitRate <= 0.35 ? "var(--down)"
+      : "var(--text-primary)";
+    return `<tr>
+      <td><span style="color:${_leagueBadgeColor(lg)};font-weight:700;">${escapeHtml(lg)}</span></td>
+      <td>${ops.length}</td>
+      <td style="font-variant-numeric:tabular-nums;">${_fmtUSD(totalSpend) || "—"}</td>
+      <td style="font-variant-numeric:tabular-nums;color:${meanWagColor};">${fmtSigned(meanWag)}</td>
+      <td style="font-variant-numeric:tabular-nums;">${fmtWpy(meanWpy)}</td>
+      <td style="font-variant-numeric:tabular-nums;color:${hitColor};">${hitRate == null ? "—" : (hitRate*100).toFixed(0) + "% (" + hits + "/" + wags.length + ")"}</td>
+    </tr>`;
+  }).join("");
+  const summaryStrip = leagueSummary ? `
+    <div class="draft-panel" style="margin-bottom:14px;">
+      <h3>By-league signing track record</h3>
+      <table class="draft-table">
+        <thead><tr>
+          <th>League</th><th>Signed</th><th>Total spend</th>
+          <th title="Mean WAR Above Grade — career WAR/yr minus FV-implied">Mean WAG</th>
+          <th title="Mean career WAR per season">WAR/yr</th>
+          <th title="Share of signed prospects whose career WAR/yr ≥ FV-implied">Hit rate</th>
+        </tr></thead>
+        <tbody>${leagueSummary}</tbody>
+      </table>
+    </div>` : "";
+
   const sections = years.map(yr => {
     const ops = byYear[yr].slice().sort((a, b) =>
       (b.signed_bonus_usd || b.proj_bonus_usd || 0)
@@ -15328,7 +16466,7 @@ function _renderOverseasSigned(host, prospects) {
                      : perf.war_per_yr >= 0.5  ? "var(--text-primary)"
                      :                            "var(--down)";
       const milbLink = op.milb_key
-        ? ` <a href="#" onclick="event.preventDefault();state.section='active';state.view={type:'player',key:'${escapeHtml(op.milb_key)}'};render();syncToURL();" style="font-size:10px;color:var(--neon-green);text-decoration:none;">→ MiLB</a>` : "";
+        ? ` <a href="#" onclick="event.preventDefault();state.section='active';state.view={type:'player',key:'${escapeHtml(op.milb_key)}');" style="font-size:10px;color:var(--neon-green);text-decoration:none;">→ MiLB</a>` : "";
       const leagueFlag = _flagImg(op.country_flag_svg, op.country_flag, op.country, { small: true });
       return `<tr>
         <td><strong>${escapeHtml(op.player_name)}</strong>${milbLink}</td>
@@ -15371,7 +16509,7 @@ function _renderOverseasSigned(host, prospects) {
       </div>`;
   }).join("");
 
-  host.innerHTML = sections;
+  host.innerHTML = summaryStrip + sections;
 }
 
 function _renderOverseasLeaderboard(host, prospects, allLeagues) {
@@ -15493,6 +16631,149 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
         <h3>Biggest projected bonuses</h3>
         <ul class="draft-list">${bonusRows || "<li style='color:var(--text-tertiary);'>No projected bonuses on file yet.</li>"}</ul>
       </div>
+    </div>`;
+}
+
+// v30.7 — League Context sub-view. Surfaces the per-league translation
+// factors (hitter_wrc_factor, pitcher_era_factor, fb_velo_delta, etc.)
+// that drive the MLBe stats on the Stats view, plus a per-league
+// signing-track-record summary computed live from the prospect set
+// (signed prospects + their grad WAG/WAR). Helps the user understand
+// WHY the same K% in NPB doesn't mean what it means in MLB.
+function _renderOverseasLeagueContext(host, leagues, prospects) {
+  // --- Lookup tables for the signing track-record block ---
+  const gradsByKey = {};
+  for (const g of (DATA.debuts || [])) {
+    if (g.player_key) gradsByKey[g.player_key] = g;
+  }
+  const playersByKey = {};
+  for (const p of (DATA.players || [])) {
+    if (p.player_key) playersByKey[p.player_key] = p;
+  }
+  const perfFor = (op) => {
+    if (!op.milb_key) return { wag: null, war_per_yr: null };
+    const g = gradsByKey[op.milb_key] || playersByKey[op.milb_key];
+    if (!g) return { wag: null, war_per_yr: null };
+    const wpyObj = (typeof gradWarPerYr === "function") ? gradWarPerYr(g) : null;
+    const wag = (typeof gradVsFvProjection === "function") ? gradVsFvProjection(g) : null;
+    return { wag, war_per_yr: wpyObj ? wpyObj.war_per_yr : null };
+  };
+
+  // Build per-league cards.
+  const cards = leagues.map(lg => {
+    const ctx = lg.league_context || {};
+    const lgProspects = (lg.prospects || []);
+    const signed = lgProspects.filter(p => p.status === "mlb_promoted" || p.signed_team);
+
+    // Signing track record.
+    const totalBonus = signed.reduce((s, op) => s + (op.signed_bonus_usd || 0), 0);
+    const perfs = signed.map(perfFor);
+    const wagVals = perfs.map(x => x.wag).filter(v => v != null);
+    const wpyVals = perfs.map(x => x.war_per_yr).filter(v => v != null);
+    const meanWag = wagVals.length ? wagVals.reduce((s, v) => s + v, 0) / wagVals.length : null;
+    const meanWpy = wpyVals.length ? wpyVals.reduce((s, v) => s + v, 0) / wpyVals.length : null;
+    const hits = wagVals.filter(v => v >= 0).length;
+    const hitRate = wagVals.length ? hits / wagVals.length : null;
+
+    // Tier counts in the active prospect pool — gives the user a sense
+    // of how deep the talent pipeline is right now per league.
+    const fvDist = lg.fv_distribution || {};
+    const elite = (fvDist["60"] || 0) + (fvDist["55"] || 0);
+    const solid = (fvDist["50+"] || 0) + (fvDist["50"] || 0) + (fvDist["45+"] || 0);
+
+    // Most recent notable signing — biggest bonus.
+    const topRecent = signed.slice().sort((a, b) =>
+      (b.signed_bonus_usd || 0) - (a.signed_bonus_usd || 0))[0];
+
+    // Translation factor color cue — factors << 1 mean stats deflate
+    // hard going to MLB (KBO/CPBL more than NPB).
+    const _factorColor = (v, lowAlert = 0.85) =>
+      v == null ? "var(--text-tertiary)"
+      : v < lowAlert ? "var(--neon-orange)"
+      : "var(--text-primary)";
+    const _eraColor = v => v == null ? "var(--text-tertiary)"
+      : v >= 1.40 ? "var(--neon-orange)"
+      : "var(--text-primary)";
+
+    const factorRow = (label, value, color, tip) => `
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-subtle);font-size:12px;">
+        <span style="color:var(--text-secondary);" title="${escapeHtml(tip || "")}">${label}</span>
+        <span style="font-family:var(--font-mono);color:${color};">${value}</span>
+      </div>`;
+
+    const hitRateColor = hitRate == null ? "var(--text-tertiary)"
+      : hitRate >= 0.55 ? "var(--up)"
+      : hitRate <= 0.35 ? "var(--down)"
+      : "var(--text-primary)";
+    const meanWagColor = meanWag == null ? "var(--text-tertiary)"
+      : meanWag >= 0 ? "var(--up)" : "var(--down)";
+
+    return `<div class="draft-panel" style="display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+        <h3 style="margin:0;">
+          <span style="color:${_leagueBadgeColor(lg.league)};font-weight:700;">${escapeHtml(lg.league)}</span>
+          <small style="color:var(--text-tertiary);font-weight:400;margin-left:6px;">${escapeHtml(ctx.name || lg.league)}</small>
+        </h3>
+        <span style="font-size:11px;color:var(--text-tertiary);">
+          ${lg.n_prospects || lgProspects.length} ranked
+          · ${elite} elite (55+)
+          · ${solid} solid (45-50)
+        </span>
+      </div>
+      ${ctx.split_note ? `<div style="font-size:12px;color:var(--text-secondary);line-height:1.4;">${escapeHtml(ctx.split_note)}</div>` : ""}
+      <div>
+        <div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">Translation factors → MLB</div>
+        ${factorRow("Hitter wRC+ factor",
+          ctx.hitter_wrc_factor != null ? ctx.hitter_wrc_factor.toFixed(2) + "×" : "—",
+          _factorColor(ctx.hitter_wrc_factor),
+          "League wRC+ × this factor estimates MLB-equivalent wRC+. <1.00 means MLB deflates the bat.")}
+        ${factorRow("Pitcher ERA factor",
+          ctx.pitcher_era_factor != null ? ctx.pitcher_era_factor.toFixed(2) + "×" : "—",
+          _eraColor(ctx.pitcher_era_factor),
+          "League ERA × this factor estimates MLB-equivalent ERA. >1.00 means MLB hitters drive up the run total.")}
+        ${factorRow("Hitter K% Δ → MLB",
+          ctx.hitter_k_pct_delta != null ? "+" + (ctx.hitter_k_pct_delta*100).toFixed(1) + " pts" : "—",
+          ctx.hitter_k_pct_delta != null && ctx.hitter_k_pct_delta >= 0.05 ? "var(--neon-orange)" : "var(--text-primary)",
+          "Expected jump in K% moving to MLB.")}
+        ${factorRow("FB velo Δ → MLB",
+          ctx.fb_velo_delta != null ? ctx.fb_velo_delta.toFixed(1) + " mph" : "—",
+          ctx.fb_velo_delta != null && ctx.fb_velo_delta <= -1.5 ? "var(--neon-orange)" : "var(--text-primary)",
+          "Average MPH loss on FB velo readings — partly slower league bullpens, partly different radar baselines.")}
+        ${factorRow("Season window",
+          escapeHtml(ctx.season_window || "—"),
+          "var(--text-primary)",
+          "Calendar window for this league's regular season.")}
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;margin-top:6px;margin-bottom:4px;">Signing track record</div>
+        ${factorRow("Signed → MLB",
+          signed.length || "0",
+          "var(--text-primary)",
+          "Total prospects from this league signed by an MLB club (any year).")}
+        ${factorRow("Mean WAG",
+          meanWag == null ? "—" : (meanWag >= 0 ? "+" : "") + meanWag.toFixed(2),
+          meanWagColor,
+          "Average WAR Above Grade — career WAR/yr vs FV-implied expectation. >0 = signings have outperformed.")}
+        ${factorRow("Mean WAR/yr",
+          meanWpy == null ? "—" : meanWpy.toFixed(2),
+          "var(--text-primary)",
+          "Average career WAR per season among signed prospects with ≥1 full MLB sample.")}
+        ${factorRow("Hit rate (WAG ≥ 0)",
+          hitRate == null ? "—" : (hitRate*100).toFixed(0) + "% (" + hits + "/" + wagVals.length + ")",
+          hitRateColor,
+          "Share of signed prospects whose career WAR/yr met or beat their FV-implied projection.")}
+      </div>
+      ${topRecent ? `<div style="font-size:11px;color:var(--text-tertiary);border-top:1px solid var(--border-subtle);padding-top:6px;">
+        Top bonus to date: <strong style="color:var(--text-primary);">${escapeHtml(topRecent.player_name)}</strong>
+        → ${escapeHtml(topRecent.signed_team || "?")} · ${_fmtUSD(topRecent.signed_bonus_usd) || "—"}
+      </div>` : ""}
+      ${ctx.citation ? `<div style="font-size:10px;color:var(--text-tertiary);font-style:italic;">Sources: ${escapeHtml(ctx.citation)}</div>` : ""}
+    </div>`;
+  }).join("");
+
+  host.innerHTML = `
+    <div class="draft-results-grid" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr));">
+      ${cards}
     </div>`;
 }
 
@@ -21321,7 +22602,7 @@ function renderFarmSystems() {
     const dvm = ((org.dvm_plus || {})[win]);
     const heroHtml = `
       <div class="farm-card-hero card-only" style="display:none;">
-        <a href="#tab=farm&farm=${escapeHtml(org.org)}" class="hero-logo-link" onclick="event.preventDefault();state.section='farm';state.view={type:'farm',org:'${escapeHtml(org.org)}'};render();syncToURL();">
+        <a href="#tab=farm&farm=${escapeHtml(org.org)}" class="hero-logo-link" onclick="event.preventDefault();state.section='farm';state.view={type:'farm',org:'${escapeHtml(org.org)}');">
           ${teamLogoHTML(org.org, "md", fullOrgName(org.org))}
         </a>
         <div class="hero-meta">
@@ -25834,7 +27115,21 @@ function renderPlayerDetail(key) {
   const tabBar = renderDetailTabs(tabs, state.playerTab, "player");
 
   const quickReadHtml = makeQuickReadSummary(p);
-  root.innerHTML = header + quickReadHtml + tilesHtml + tabBar;
+  // v30.7 — Tab-aware sidebar. Wraps the tabBar inside a 2-column
+  // grid (`.detail-with-rail`) so the cards sit to the RIGHT of the
+  // tab content on viewports ≥1300px. Below that breakpoint the
+  // sidebar hides and the tab content takes full width — no layout
+  // regression on smaller screens. Cards rebuild on each render
+  // (tab switch goes through render()), so per-tab content swaps
+  // cleanly without bespoke wiring.
+  const sidebarHtml = renderDetailSidebar(
+    _prospectDetailSidebarCards(p, state.playerTab || "overview")
+  );
+  const tabBarWithRail = `<div class="detail-with-rail">
+    <div class="detail-with-rail-main">${tabBar}</div>
+    ${sidebarHtml}
+  </div>`;
+  root.innerHTML = header + quickReadHtml + tilesHtml + tabBarWithRail;
   syncSortHeaderActive();
 }
 
@@ -27445,7 +28740,22 @@ function _renderFarmDetailBody(orgCode, org, root) {
     { key: "transactions", label: "Transactions & Pipeline", html: transactionsTabHtml },
   ];
   const tabBar = renderDetailTabs(tabs, state.farmTab, "farm");
-  root.innerHTML = header + tilesHtml + tabBar;
+  // v30.7 — Tab-aware sidebar for farm-detail. Wraps the tab bar in
+  // a 2-column grid (`.detail-with-rail`) so per-tab cards sit to
+  // the RIGHT on ≥1300px viewports. Cards rebuild on render so tab
+  // switches surface the right per-tab content.
+  // NOTE: `tabRailHtml` (not `sidebarHtml`) — the farm overview page
+  // already owns a `sidebarHtml` variable for its right-column cards
+  // (top prospect, recent trades, etc.) and ES const is function-scoped,
+  // so a same-name shadow throws "already declared" at parse time.
+  const tabRailHtml = renderDetailSidebar(
+    _farmDetailSidebarCards(org, state.farmTab || "overview")
+  );
+  const tabBarWithRail = `<div class="detail-with-rail">
+    <div class="detail-with-rail-main">${tabBar}</div>
+    ${tabRailHtml}
+  </div>`;
+  root.innerHTML = header + tilesHtml + tabBarWithRail;
   syncSortHeaderActive();
 
   // Wire affiliate level tabs (vanilla — toggle visibility, no re-render).
