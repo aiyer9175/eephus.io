@@ -3330,6 +3330,22 @@ _CONVICTION_RECENCY_YEARS        = 6   # was 5 (v6 — align with 6y DvM+)
 _STAR_WAR_PER_YR_THRESHOLD = 3.0
 _STAR_SEASON_WAR_THRESHOLD = 3.5
 
+# v30.8 — Level-confidence weights for the per-prospect Tool DvM+
+# aggregation. Each prospect's tool delta is multiplied by their
+# current level's weight before contributing to the org's per-tool
+# mean. AA peaks because that's the real-prospect filter; DSL/CPX
+# deflate because grades at those levels are heavy projection vs
+# realized signal. Unknown levels default to 1.0 (no effect).
+_TOOL_DEV_LEVEL_WEIGHTS: dict[str, float] = {
+    "DSL": 0.50,
+    "CPX": 0.60,
+    "A":   0.80,
+    "A+":  0.95,
+    "AA":  1.20,
+    "AAA": 1.10,
+    "MLB": 1.00,
+}
+
 
 def _compute_top_grads_leaf(gagg: dict) -> dict:
     """Top-3 grad WAR/yr mean — uses only grads that cleared the boom-
@@ -6398,10 +6414,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # accumulator (new) so per-bucket Tool DvM+ can be computed
         # without re-walking the per-prospect data.
         _prospect_bucket = _pos_bucket_v2(p.position)
+        # v30.8 — Level confidence weight. AA peaks (the real-prospect
+        # filter); DSL/CPX deflate (grades there are heavy projection
+        # vs realized signal); AAA slightly above MLB-grad cohort. The
+        # weight scales every per-prospect tool delta so an org loaded
+        # with high-tool DSL kids gets less credit than an org with
+        # similar tool grades at AA. Unknown level = 1.0 (no effect).
+        # `level` is already in scope from the statline lookup above.
+        _level_weight = _TOOL_DEV_LEVEL_WEIGHTS.get(level, 1.0)
         for _tk, _info in _td.items():
             first_war = _fv_to_expected_war(_info.get("first")) or 0.0
             last_war  = _fv_to_expected_war(_info.get("last"))  or 0.0
-            delta_war = last_war - first_war
+            delta_war = (last_war - first_war) * _level_weight
             m["_tool_dev_sums"].setdefault(_tk, []).append(delta_war)
             if _prospect_bucket is not None:
                 m["_tool_dev_sums_by_bucket"] \

@@ -22073,7 +22073,7 @@ function makeFarmReportCard(org) {
     // sub-blend retains the adaptive over-grade penalty (Tool weight
     // climbs to 60% of its 30% slice when FV outruns Tool by ≥15);
     // Statcast layers on top at a fixed 20%.
-    return `${side} DvM+ · 50% FVDvM+ + 30% ToolDvM+ + 20% StatcastDvM+ at ${_devActiveWindow}. ${parts.join(' · ')}. Leaf letter grades anchor on 6y.`;
+    return `${side} DvM+ · 50% FVDvM+ + 30% ToolDvM+ + 20% StatcastDvM+ at ${_devActiveWindow}. ${parts.join(' · ')}. Tool deltas are LEVEL-WEIGHTED (AA = 1.20×, AAA 1.10×, MLB 1.00×, A+ 0.95×, A 0.80×, CPX 0.60×, DSL 0.50×) so high-tool grades at AA count more than equivalent grades at DSL. Leaf letter grades anchor on 6y.`;
   };
   // v30.7 — Sub-subgrade mini bars under each Dev leaf. Renders THREE
   // bars now (FV 50% / Tool 30% / Statcast 20%) so the reader sees the
