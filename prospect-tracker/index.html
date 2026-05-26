@@ -17157,9 +17157,49 @@ function makeFarmReportCard(org) {
     if (tool    != null) parts.push(`Tool ${tool}`);
     return `${side} DvM+ · 70% cohort Overall DvM+ + 30% Tool DvM+ at ${_devActiveWindow}. ${parts.join(' · ')}. Leaf letter grades anchor on 6y.`;
   };
+  // v28 — Sub-subgrade mini bars under each Dev leaf. Render Overall
+  // (70% weight) and Tool (30% weight) as twin horizontal bars so the
+  // reader can see the composition of the blended value visually. Each
+  // bar uses 100 as the league-mean anchor; deviation maps to bar width
+  // capped at ±30 (>110 fills past the midpoint, <90 sits empty). Color
+  // matches the cell's letter tone.
+  const _devNestedBars = (leaf, side) => {
+    const overall = (leaf.overall_dvm_plus || {})[_devActiveWindow];
+    const tool    = leaf.tool_dvm_plus;
+    if (overall == null && tool == null) return '';
+    // 100 = midpoint; clamp range ±30 maps to bar fill 0-100%.
+    const fillPct = v => {
+      if (v == null) return 0;
+      const clamped = Math.max(70, Math.min(130, v));
+      return Math.round(((clamped - 70) / 60) * 100);
+    };
+    const barTone = v => v == null ? 'var(--text-tertiary)' :
+                        v >= 110 ? 'var(--up)' :
+                        v >= 100 ? 'var(--up)' :
+                        v >= 90  ? 'var(--down)' : 'var(--down)';
+    const bar = (label, weight, val) => {
+      const fp = fillPct(val);
+      const tone = barTone(val);
+      const valStr = val == null ? '—' : val;
+      return `<div style="display:grid;grid-template-columns:54px 1fr 30px;gap:6px;align-items:center;font-size:9px;line-height:1.2;color:var(--text-tertiary);">
+        <span style="font-family:var(--font-mono);letter-spacing:0.04em;text-transform:uppercase;">${label} <span style="opacity:0.6;">${weight}%</span></span>
+        <div style="position:relative;height:6px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden;">
+          <div style="position:absolute;left:0;top:0;height:100%;width:${fp}%;background:${tone};opacity:0.55;border-radius:3px;"></div>
+          <div style="position:absolute;left:50%;top:-1px;bottom:-1px;width:1px;background:var(--text-tertiary);opacity:0.45;"></div>
+        </div>
+        <span style="font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;text-align:right;color:${val==null?'var(--text-tertiary)':'var(--text-secondary)'};font-weight:600;">${valStr}</span>
+      </div>`;
+    };
+    return `<div style="margin:4px 0 8px 12px;padding:6px 8px;background:var(--bg-secondary);border-left:2px solid var(--border-light);border-radius:0 4px 4px 0;display:flex;flex-direction:column;gap:3px;">
+      ${bar('Overall', 70, overall)}
+      ${bar('Tool',    30, tool)}
+    </div>`;
+  };
   const devSubs =
     subCell('Hitter DvM+',  'dev_hitter',  'dev_hitter',  fmtDvm, _devHitterValue,  _devTooltip(_devHitterLeaf,  'Hitter')) +
-    subCell('Pitcher DvM+', 'dev_pitcher', 'dev_pitcher', fmtDvm, _devPitcherValue, _devTooltip(_devPitcherLeaf, 'Pitcher'));
+    _devNestedBars(_devHitterLeaf, 'Hitter') +
+    subCell('Pitcher DvM+', 'dev_pitcher', 'dev_pitcher', fmtDvm, _devPitcherValue, _devTooltip(_devPitcherLeaf, 'Pitcher')) +
+    _devNestedBars(_devPitcherLeaf, 'Pitcher');
 
   // v28 — Financial branch: 5 leaves, each measuring a distinct $-
   // efficiency lens (no overlap with Acquisition Performance leaves,
@@ -17644,6 +17684,352 @@ function makeFarmDevTopMovers(rosterPlayersAll) {
           <tbody>${fallers.length ? fallers.map(row).join("") : empty}</tbody>
         </table>
       </div>
+    </div>`;
+}
+
+// v28 — League-rank dashboard for the Overview tab. Visualizes where
+// this org sits on each of the four parent branches (Acquisition,
+// Development, Financial, MLB Production) plus overall, as percentile
+// bars across the 30-org cohort. Designed to sit in the main column
+// next to the depth chart so the reader gets an immediate "what does
+// this org look like" snapshot before drilling into the branch tabs.
+function makeFarmLeagueRankBar(org) {
+  if (!org) return "";
+  const ranks = org.component_ranks || {};
+  const grades = org.grades || {};
+  const n = (DATA.org_summary || []).length || 30;
+  // Each row: parent branch label, letter grade, percentile bar (rank
+  // inverted so #1 fills the bar), rank text. Order matches the report
+  // card tree.
+  const axes = [
+    { key: 'acquisition_strategy', label: 'Acquisition' },
+    { key: 'development',          label: 'Development' },
+    { key: 'financial',            label: 'Financial' },
+    { key: 'mlb_production',       label: 'MLB Production' },
+  ];
+  const row = ({ key, label }) => {
+    const rank = ranks[key];
+    const letter = grades[key] || '—';
+    const pct = rank != null ? Math.round(100 * (n - rank + 1) / n) : 0;
+    const tone = letter === '—' ? 'var(--text-tertiary)' : gradeColor(letter);
+    return `<div style="display:grid;grid-template-columns:120px 28px 1fr 70px;gap:10px;align-items:center;padding:5px 0;font-size:12px;">
+      <span style="color:var(--text-secondary);font-weight:500;">${label}</span>
+      <span style="font-family:var(--font-mono);color:${tone};font-weight:700;text-align:center;">${letter}</span>
+      <div style="position:relative;height:9px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${pct}%;background:${tone};opacity:0.65;border-radius:4px;"></div>
+      </div>
+      <span style="font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;color:var(--text-tertiary);text-align:right;font-size:11px;">#${rank ?? '—'} of ${n}</span>
+    </div>`;
+  };
+  const overallLetter = grades.overall || '—';
+  const overallRank = ranks.overall ?? org.farm_rank;
+  const overallPct = overallRank != null ? Math.round(100 * (n - overallRank + 1) / n) : 0;
+  const overallTone = overallLetter === '—' ? 'var(--text-tertiary)' : gradeColor(overallLetter);
+  return `<div class="detail-title">League rank vs the 30-org field <span class="detail-title-sub">Percentile bars across each branch grade. Longer bar = better rank. Click into a tab for the per-leaf breakdown.</span></div>
+    <div style="padding:10px 12px;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:4px;">
+      <div style="display:grid;grid-template-columns:120px 28px 1fr 70px;gap:10px;align-items:center;padding:6px 0 8px;font-size:13px;border-bottom:1px solid var(--border-light);margin-bottom:4px;">
+        <span style="color:var(--text-primary);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;">Overall</span>
+        <span style="font-family:var(--font-mono);color:${overallTone};font-weight:700;text-align:center;font-size:15px;">${overallLetter}</span>
+        <div style="position:relative;height:11px;background:var(--bg-tertiary);border-radius:5px;overflow:hidden;">
+          <div style="position:absolute;left:0;top:0;height:100%;width:${overallPct}%;background:${overallTone};opacity:0.75;border-radius:5px;"></div>
+        </div>
+        <span style="font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;color:var(--text-secondary);text-align:right;font-size:12px;font-weight:600;">#${overallRank ?? '—'} of ${n}</span>
+      </div>
+      ${axes.map(row).join('')}
+    </div>`;
+}
+
+// v28 — Transactions summary tile + trade hits/misses for the
+// Transactions tab. Pulls the tx_trades + tx_waivers leaves into
+// headline stats (FV in vs out, WAR delta, waiver hit rate) and walks
+// the event list to surface the org's best/worst individual trade
+// outcomes by inbound career WAR. Sits above the existing flat events
+// table so the user gets the story before scrolling the list.
+function makeFarmTransactionsSummary(allEvents, org, orgCode) {
+  if (!org) return "";
+  const t = org.tree || {};
+  const trades  = t.tx_trades  || {};
+  const waivers = t.tx_waivers || {};
+  const grades  = org.grades   || {};
+
+  // Pair each trade event with the player's career WAR (best proxy
+  // for the realized outcome of the trade). Career WAR sits on the
+  // player payload; orgs without grad data still show name + FV.
+  const tradeEvents = (allEvents || []).filter(e => e.kind === "trade");
+  const tradeRows = tradeEvents.map(e => {
+    const p = e.player || {};
+    const inbound = e.to_org === orgCode;
+    // career_war on debuts is nested: { career_war, war_per_yr, seasons,
+    // war_seasons_count, source }. Active prospects don't carry the
+    // field at all. Read the nested total when present so trade-outcome
+    // rankings reflect actual MLB realization.
+    const cwObj = p.career_war;
+    const careerWar = (cwObj && typeof cwObj === "object" && cwObj.career_war != null) ? Number(cwObj.career_war)
+                    : (typeof cwObj === "number" ? cwObj : null);
+    const fv = p.fv_close ?? null;
+    return {
+      name: p.player_name,
+      key: p.player_key,
+      date: e.date,
+      direction: inbound ? "in" : "out",
+      otherOrg: inbound ? e.from_org : e.to_org,
+      fv,
+      careerWar,
+    };
+  });
+  // Sort separately for in / out. Inbound: highest WAR first (best
+  // hits). Outbound: also highest WAR first (worst-misses — players
+  // we traded away who blew up).
+  const inboundHits = tradeRows.filter(r => r.direction === "in" && r.careerWar != null)
+    .sort((a, b) => b.careerWar - a.careerWar).slice(0, 5);
+  const outboundMisses = tradeRows.filter(r => r.direction === "out" && r.careerWar != null)
+    .sort((a, b) => b.careerWar - a.careerWar).slice(0, 5);
+
+  const fmtPct1 = v => v == null ? '—' : `${(v * 100).toFixed(0)}%`;
+  const fmtFv = v => v == null ? '—' : Math.round(v);
+
+  // Stat tiles for the headline numbers.
+  const tile = (label, value, sub, tone) => `
+    <div style="background:var(--bg-secondary);border:1px solid var(--border-light);border-left:3px solid ${tone || 'var(--border-light)'};border-radius:4px;padding:10px 14px;min-width:140px;">
+      <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;margin-bottom:3px;">${escapeHtml(label)}</div>
+      <div style="font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;font-size:17px;font-weight:600;color:var(--text-primary);line-height:1.1;">${value}</div>
+      ${sub ? `<div style="font-size:10px;color:var(--text-tertiary);margin-top:3px;">${sub}</div>` : ''}
+    </div>`;
+
+  const tradeNetFv  = trades.net_fv;
+  const tradeWarDelta = trades.war_delta;
+  const tradeTone = tradeNetFv == null ? 'var(--border-light)' : tradeNetFv >= 0 ? 'var(--up)' : 'var(--down)';
+  const waiverHitRate = waivers.hit_rate;
+  const waiverNetFv   = waivers.net_fv;
+  const waiverTone    = waiverNetFv == null ? 'var(--border-light)' : waiverNetFv >= 0 ? 'var(--up)' : 'var(--down)';
+
+  const summaryTiles = `
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 14px;">
+      ${tile('Trade FV Net',
+              tradeNetFv != null ? `${tradeNetFv >= 0 ? '+' : ''}${fmtFv(tradeNetFv)} FV` : '—',
+              `${trades.in_count ?? 0} in (${fmtFv(trades.fv_in)} FV) · ${trades.out_count ?? 0} out (${fmtFv(trades.fv_out)} FV)`,
+              tradeTone)}
+      ${tile('Trade WAR Delta',
+              tradeWarDelta != null ? `${tradeWarDelta >= 0 ? '+' : ''}${tradeWarDelta.toFixed(1)} WAR` : '—',
+              `Realized: in ${(trades.war_in ?? 0).toFixed(1)} − out ${(trades.war_out ?? 0).toFixed(1)} · ${grades.tx_trades ? `grade ${grades.tx_trades}` : ''}`,
+              tradeTone)}
+      ${tile('Waiver FV Net',
+              waiverNetFv != null ? `${waiverNetFv >= 0 ? '+' : ''}${fmtFv(waiverNetFv)} FV` : '—',
+              `${waivers.in_count ?? 0} in / ${waivers.out_count ?? 0} out`,
+              waiverTone)}
+      ${tile('Waiver Hit Rate',
+              fmtPct1(waiverHitRate),
+              `${waivers.claims_with_mlb ?? 0} of ${waivers.claims_total ?? 0} claims reached MLB`,
+              waiverHitRate != null && waiverHitRate >= 0.25 ? 'var(--up)' : 'var(--border-light)')}
+    </div>`;
+
+  const tradeRow = r => `<tr>
+      <td><a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(r.key)}');" style="color:var(--text-primary);">${escapeHtml(r.name)}</a></td>
+      <td style="text-align:center;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);">${r.date || '—'}</td>
+      <td style="text-align:center;font-family:var(--font-mono);font-size:11px;">${r.otherOrg ? `<a href="#farm-org=${escapeHtml(r.otherOrg)}" style="color:inherit;text-decoration:none;">${escapeHtml(r.otherOrg)}</a>` : '—'}</td>
+      <td style="text-align:center;"><span class="fv-badge ${fvClass(String(fmtFv(r.fv)))} size-sm">${fmtFv(r.fv)}</span></td>
+      <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;color:${r.careerWar >= 0 ? 'var(--up)' : 'var(--down)'};font-weight:600;">${r.careerWar != null ? (r.careerWar >= 0 ? '+' : '') + r.careerWar.toFixed(1) : '—'}</td>
+    </tr>`;
+  const emptyRow = `<tr><td colspan="5" style="text-align:center;color:var(--text-tertiary);font-size:11px;padding:8px;">— none with realized WAR on file —</td></tr>`;
+  const tradeHitsHtml = (inboundHits.length || outboundMisses.length)
+    ? `<div class="detail-title" style="margin-top:12px;">Trade outcomes <span class="detail-title-sub">Players ranked by realized career WAR · "Best inbound hits" = highest-WAR players acquired via trade · "Biggest outbound regrets" = highest-WAR players sent away. Anchor is career WAR (post-debut realization).</span></div>
+       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;">
+         <div>
+           <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Best inbound hits</div>
+           <table class="detail-table" style="width:100%;">
+             <thead><tr><th>Player</th><th style="text-align:center;">Date</th><th style="text-align:center;">From</th><th style="text-align:center;">FV</th><th style="text-align:right;">Career WAR</th></tr></thead>
+             <tbody>${inboundHits.length ? inboundHits.map(tradeRow).join('') : emptyRow}</tbody>
+           </table>
+         </div>
+         <div>
+           <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Biggest outbound regrets</div>
+           <table class="detail-table" style="width:100%;">
+             <thead><tr><th>Player</th><th style="text-align:center;">Date</th><th style="text-align:center;">To</th><th style="text-align:center;">FV</th><th style="text-align:right;">Career WAR</th></tr></thead>
+             <tbody>${outboundMisses.length ? outboundMisses.map(tradeRow).join('') : emptyRow}</tbody>
+           </table>
+         </div>
+       </div>`
+    : '';
+
+  return `<div class="detail-title flush">Trade & waiver scoreboard <span class="detail-title-sub">Aggregate inbound vs outbound talent flow at acquisition time (FV) and realized at the MLB level (WAR). Feeds the Acquisition Strategy branch grade.</span></div>
+    ${summaryTiles}
+    ${tradeHitsHtml}`;
+}
+
+// v28 — Financial branch composite header for the Finances tab. Pulls
+// the headline $-aggregates (active surplus net of cost basis, plus
+// the realized counterparts) into a single tile strip + a leaf
+// contribution chart so the reader can see WHICH financial leaf is
+// driving the parent grade. Designed to sit above the existing
+// spending / surplus / ROI sections.
+function makeFarmFinancialComposite(org) {
+  if (!org) return "";
+  const t = org.tree || {};
+  const grades = org.grades || {};
+  const activeSurplus = t.fin_active_surplus || {};
+  const contractSurplus = t.fin_contract_surplus || {};
+  const warPerM = t.fin_war_per_m || {};
+  const draftPool = t.fin_draft_pool_efficiency || {};
+  const ifaRoi = t.fin_ifa_roi || {};
+  const parentLetter = grades.financial || 'C';
+  const parentRank = (org.component_ranks || {}).financial;
+
+  const totalSurplus = activeSurplus.surplus_total_mm;
+  const costBasis    = activeSurplus.cost_basis_mm;
+  const netActive    = (totalSurplus != null && costBasis != null) ? (totalSurplus - costBasis) : null;
+  const perProspect  = activeSurplus.surplus_per_prospect_mm;
+
+  const fmtMM = v => v == null ? '—' : `$${v.toFixed(1)}M`;
+  const fmtPerProspect = v => v == null ? '—' : `$${v.toFixed(2)}M`;
+
+  // Leaf contribution chart. Each leaf carries `score_100` (the
+  // 100-anchored z-score that feeds the parent composite). Tone the
+  // bar tone by whether the leaf is above (>100) or below (<100)
+  // league mean. Bar width caps at ±30 so a 130 fills the bar
+  // entirely. Weight comes from FARM_LEAF_WEIGHTS.financial; weights
+  // shown so the reader sees the math behind the parent.
+  const LEAF_WEIGHTS_FIN = {
+    fin_active_surplus:        35,
+    fin_contract_surplus:      25,
+    fin_war_per_m:             10,
+    fin_draft_pool_efficiency: 15,
+    fin_ifa_roi:               15,
+  };
+  const LEAF_LABELS_FIN = {
+    fin_active_surplus:        'Active Surplus',
+    fin_contract_surplus:      'Grad-Contract Surplus',
+    fin_war_per_m:             'WAR per $M',
+    fin_draft_pool_efficiency: 'Draft Pool Efficiency',
+    fin_ifa_roi:               'IFA ROI',
+  };
+  const leafBar = (key) => {
+    const leaf = t[key] || {};
+    const s100 = leaf.score_100;
+    const letter = grades[key] || '—';
+    const weight = LEAF_WEIGHTS_FIN[key];
+    const fp = s100 == null ? 0 : Math.max(0, Math.min(100,
+      Math.round(((Math.max(70, Math.min(130, s100)) - 70) / 60) * 100)));
+    const tone = s100 == null ? 'var(--text-tertiary)' :
+                 s100 >= 100 ? 'var(--up)' : 'var(--down)';
+    return `<div style="display:grid;grid-template-columns:140px 32px 1fr 56px 36px;gap:8px;align-items:center;padding:4px 0;font-size:11px;">
+      <span style="color:var(--text-secondary);font-weight:500;">${LEAF_LABELS_FIN[key]}</span>
+      <span style="font-family:var(--font-mono);color:${gradeColor(letter)};font-weight:700;text-align:center;font-size:12px;">${letter}</span>
+      <div style="position:relative;height:8px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${fp}%;background:${tone};opacity:0.6;border-radius:4px;"></div>
+        <div style="position:absolute;left:50%;top:-1px;bottom:-1px;width:1px;background:var(--text-tertiary);opacity:0.4;"></div>
+      </div>
+      <span style="font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;text-align:right;color:${tone};font-weight:600;">${s100 != null ? s100.toFixed(1) : '—'}</span>
+      <span style="color:var(--text-tertiary);font-size:10px;text-align:right;">${weight}%</span>
+    </div>`;
+  };
+
+  // Top-line tile strip: parent letter, total surplus, net, per-prospect
+  const tile = (label, value, sub) => `
+    <div style="background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:4px;padding:10px 14px;min-width:120px;">
+      <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;margin-bottom:3px;">${escapeHtml(label)}</div>
+      <div style="font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;font-size:18px;font-weight:600;color:var(--text-primary);">${value}</div>
+      ${sub ? `<div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;">${sub}</div>` : ''}
+    </div>`;
+
+  return `<div class="detail-title flush">Financial composite <span class="detail-title-sub">Headline $-aggregates feeding the Financial branch grade. Parent letter is a weighted blend of the 5 leaves below; each leaf's bar shows its 100-anchored score (100 = league mean) and weight share of the parent.</span></div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      <div style="background:linear-gradient(135deg,${gradeColor(parentLetter)}22,${gradeColor(parentLetter)}08);border:1px solid ${gradeColor(parentLetter)}55;border-radius:6px;padding:10px 16px;display:flex;flex-direction:column;align-items:center;min-width:96px;">
+        <div style="font-size:9px;letter-spacing:0.10em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Financial</div>
+        <div style="font-family:var(--font-mono);font-size:36px;font-weight:700;line-height:1;color:${gradeColor(parentLetter)};margin:2px 0;">${parentLetter}</div>
+        <div style="font-size:10px;color:var(--text-tertiary);">#${parentRank ?? '—'} of 30</div>
+      </div>
+      ${tile('Active Surplus',    fmtMM(totalSurplus),  perProspect != null ? `${fmtPerProspect(perProspect)} / prospect · ${activeSurplus.active_count ?? '—'} actives` : '')}
+      ${tile('Cost Basis',        fmtMM(costBasis),     'Acquisition bonus paid for the active roster')}
+      ${tile('Net Surplus',       fmtMM(netActive),     netActive != null ? `${netActive >= 0 ? '+' : ''}${(100 * netActive / (costBasis || 1)).toFixed(0)}% over cost` : '')}
+      ${tile('Grad-Contract / yr', contractSurplus.mean_usd_per_yr != null ? `$${(contractSurplus.mean_usd_per_yr / 1_000_000).toFixed(2)}M` : '—', `${contractSurplus.grad_count ?? 0} qualifying grads`)}
+    </div>
+    <div style="margin-top:4px;padding:10px 12px;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:4px;">
+      <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Leaf contributions</div>
+      ${Object.keys(LEAF_WEIGHTS_FIN).map(leafBar).join('')}
+    </div>`;
+}
+
+// v28 — Side-by-side cohort growth charts. Renders Hitter + Pitcher
+// dev-FV-vs-cohort-mean panels under the org-wide chart so the reader
+// sees which side is driving the org-wide line. Each panel uses the
+// same dev-FV-vs-baseline math as `makeFarmGrowthChart`, but the
+// baseline is the cohort-only mean (exported as
+// `farm_hitter_trajectory_means` / `farm_pitcher_trajectory_means`).
+// Window reacts to state.formWindow.
+function makeFarmCohortGrowthPanel(org, windowKey) {
+  if (!org) return "";
+  const hitterSeries  = org.hitter_fv_history  || [];
+  const pitcherSeries = org.pitcher_fv_history || [];
+  if (hitterSeries.length < 2 && pitcherSeries.length < 2) return "";
+  const hitterMean  = (DATA.farm_hitter_trajectory_means  || {})[windowKey] ?? 0;
+  const pitcherMean = (DATA.farm_pitcher_trajectory_means || {})[windowKey] ?? 0;
+  // Mini growth chart for one cohort. Same algorithm as
+  // makeFarmGrowthChart but compact: smaller padding, single y-tick,
+  // no x-axis year markers. Color encodes cohort.
+  const miniChart = (series, baseline, label, accent) => {
+    const W = 360, H = 150;
+    if (series.length < 2) {
+      return `<div style="width:${W}px;height:${H}px;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);font-size:11px;border:1px dashed var(--border-light);border-radius:4px;">
+        ${label}: insufficient ${label.toLowerCase()} dev history
+      </div>`;
+    }
+    const windowDays = FORM_WINDOW_DAYS[windowKey] || 365;
+    const cutoffMs = Date.now() - windowDays * 24 * 60 * 60 * 1000;
+    const cutoffIso = new Date(cutoffMs).toISOString().slice(0, 10);
+    let recent = series.filter(s => s.date >= cutoffIso);
+    if (recent.length < 2) recent = series.slice(-2);
+    const startMs  = new Date(recent[0].date).getTime();
+    const endMs    = new Date(recent[recent.length - 1].date).getTime();
+    const spanMs   = Math.max(endMs - startMs, 1);
+    const startFv  = recent[0].total_fv;
+    const rel = recent.map(s => {
+      const t = (new Date(s.date).getTime() - startMs) / spanMs;
+      return { x: t, v: (s.total_fv - startFv) - (baseline * t) };
+    });
+    const vals  = rel.map(p => p.v);
+    const minV  = Math.min(0, ...vals);
+    const maxV  = Math.max(0, ...vals);
+    const padPct = 0.12;
+    const range  = Math.max(1, maxV - minV);
+    const yMin = minV - range * padPct;
+    const yMax = maxV + range * padPct;
+    const PAD_L = 32, PAD_R = 10, PAD_T = 18, PAD_B = 18;
+    const innerW = W - PAD_L - PAD_R;
+    const innerH = H - PAD_T - PAD_B;
+    const xFor = t => PAD_L + t * innerW;
+    const yFor = v => PAD_T + innerH - ((v - yMin) / (yMax - yMin)) * innerH;
+    const zeroY = yFor(0);
+    const endVal = rel[rel.length - 1].v;
+    const pathD = rel.map((p, i) => `${i === 0 ? 'M' : 'L'}${xFor(p.x).toFixed(1)},${yFor(p.v).toFixed(1)}`).join(' ');
+    const areaD = pathD + ` L${xFor(rel[rel.length - 1].x).toFixed(1)},${zeroY.toFixed(1)} L${xFor(rel[0].x).toFixed(1)},${zeroY.toFixed(1)} Z`;
+    // 3 y-ticks (min / 0 / max) for compactness
+    const yTickVals = [yMin, 0, yMax].sort((a, b) => a - b);
+    const yTicks = yTickVals.map(v => {
+      const y = yFor(v).toFixed(1);
+      const isZero = Math.abs(v) < 0.5;
+      return `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="${isZero ? 'var(--text-tertiary)' : 'var(--border-light)'}" stroke-width="${isZero ? 0.7 : 0.3}" stroke-dasharray="${isZero ? '3,2' : '2,3'}"/>
+              <text x="${PAD_L - 4}" y="${y}" dy="3" font-size="8" fill="var(--text-tertiary)" text-anchor="end" font-family="var(--font-mono)">${v >= 0 ? '+' : ''}${v.toFixed(0)}</text>`;
+    }).join('');
+    return `<div style="display:flex;flex-direction:column;gap:4px;">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;font-size:11px;">
+        <span style="color:var(--text-secondary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${accent};margin-right:5px;vertical-align:middle;"></span>${label}
+        </span>
+        <span style="color:${endVal >= 0 ? 'var(--up)' : 'var(--down)'};font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;font-weight:600;">
+          ${endVal >= 0 ? '+' : ''}${endVal.toFixed(1)}
+        </span>
+      </div>
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block;">
+        ${yTicks}
+        <path d="${areaD}" fill="${accent}" opacity="0.12"/>
+        <path d="${pathD}" stroke="${accent}" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>`;
+  };
+  return `<div class="detail-title">Cohort growth split <span class="detail-title-sub">Side-by-side dev-FV growth at ${windowKey} window, baselined against the cohort-only league mean (not the org-wide mean). Surfaces which side the org's dev pipeline is leaning on.</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;">
+      ${miniChart(hitterSeries,  hitterMean,  'Hitter',  '#3a7afe')}
+      ${miniChart(pitcherSeries, pitcherMean, 'Pitcher', '#ec5f73')}
     </div>`;
 }
 
@@ -24982,7 +25368,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
     <div class="farm-detail-grid">
       ${leftRailHtml}
       <div class="farm-overview-main">
-        <div class="detail-title flush">Farm System Depth Chart <span class="detail-title-sub">prospects bucketed by position, sorted by current level (AAA leftmost → DSL rightmost) so the closest-to-the-majors players sit at the front of each row.</span></div>
+        ${makeFarmLeagueRankBar(org)}
+        <div class="detail-title">Farm System Depth Chart <span class="detail-title-sub">prospects bucketed by position, sorted by current level (AAA leftmost → DSL rightmost) so the closest-to-the-majors players sit at the front of each row.</span></div>
         ${makePositionDepthChart(rosterPlayersAll, state.depthSort || "level")}
       </div>
       <div class="farm-side">${sidebarHtml}</div>
@@ -25037,6 +25424,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       <button class="chip${(state.formWindow || "6y") === "6y" ? " active" : ""}" data-form-window="6y" type="button">6y</button>
     </div>
     ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || "6y"] ?? 0), state.formWindow || "6y")}
+    ${makeFarmCohortGrowthPanel(org, state.formWindow || "6y")}
     ${makeFarmToolDevCard(org)}
     ${makeFarmDevTopMovers(rosterPlayersAll)}`;
 
@@ -25125,12 +25513,14 @@ function _renderFarmDetailBody(orgCode, org, root) {
     : "";
 
   const financesTabHtml = `
-    <div class="detail-title flush">Acquisition spending <span class="detail-title-sub">Bonus pool dollars — International FA vs Draft, 2021-present</span></div>
+    ${makeFarmFinancialComposite(org)}
+    <div class="detail-title">Acquisition spending <span class="detail-title-sub">Bonus pool dollars — International FA vs Draft, 2021-present</span></div>
     ${makeSpendingBlock(org)}
     ${surplusSection}
     ${roiSection}`;
 
   const transactionsTabHtml = `
+    ${makeFarmTransactionsSummary(allEventsForOrg, org, orgCode)}
     ${makeFarmTransactionsSection(allEventsForOrg, orgCode)}
     ${affiliateSection}`;
 
