@@ -1755,7 +1755,25 @@
        default 11px (the "+" is a thin character; "1" / "W" / "★" all
        have heavier visual mass at the same size). */
     .fv-single-mark      { top: -7px;    left: -7px;  background: var(--neon-amber); }
-    .fv-upside-mark      { top: -7px;    right: -7px; background: var(--upside-pink); color: #2a0014; font-size: 13px; font-weight: 900; }
+    /* v30.2 — Upside glyph is "^" (circumflex) instead of "+", so the
+       upside indicator doesn't visually collide with the health "+"
+       row-tag pill. v30.3 — The "^" character in most fonts sits HIGH
+       (its vertical center is near the cap-height of the em-box, not
+       the middle), so flex-centering puts it visibly above the
+       optical center of the pink circle. The wrapped inner span + an
+       absolute centerline anchor pin the glyph against the geometric
+       center of the chip regardless of how the font's metrics render
+       the character. Size bumped to 12 to fill the chip more
+       confidently. */
+    .fv-upside-mark      { top: -7px; right: -7px; background: var(--upside-pink); color: #2a0014; font-size: 12px; font-weight: 800; }
+    .fv-upside-mark > span,
+    .fv-upside-mark::before {
+      /* Wrapper glyph reset — used by the JS to wrap "^" in an inner
+         span so we can nudge it independently of the chip box. */
+      display: inline-block;
+      transform: translateY(2px);
+      line-height: 1;
+    }
     .fv-wide-mark        { bottom: -7px; right: -7px; background: var(--neon-violet); }
     /* v16 — Breakout ★ in aquamarine (was green). v30.1 — Slightly
        smaller font for the ★ so it doesn't dominate vs the other
@@ -6433,7 +6451,7 @@
            corner mark on FV badges. Suppressed for FVs > 50 so the
            filter only surfaces sub-50 grades the sources have tagged
            with publishable upside. -->
-      <button class="chip is-multi" data-filter-fvind="upside" title="Upside (+) — at least one source published a '+' on the latest snapshot (capped at FV ≤ 50; 55+/60+ are suppressed since those tiers have already realized their upside)">Upside +</button>
+      <button class="chip is-multi" data-filter-fvind="upside" title="Upside (^) — at least one source published a '+' upside mark on the latest snapshot (capped at FV ≤ 50; 55+/60+ are suppressed since those tiers have already realized their upside). Rendered on the FV chip as a ^ glyph so it doesn't collide with the health '+' pill.">Upside ^</button>
       <!-- v29 — Statcast+ ≥ 115 (pool top quintile). Players with no
            tracked Statcast data don't qualify. -->
       <button class="chip is-multi" data-filter-fvind="scplus" title="Statcast+ ≥ 115 — composite of contact quality (EV/HH/Brl) + zone signals (Z-Con%/Whiff/Chase) for hitters; pitch velo + induced whiffs + contact suppression for pitchers. Pool-anchored at 100; ≥115 ≈ top quintile.">Statcast+</button>
@@ -6508,7 +6526,7 @@
                top within each FV tier (so 45+ ranks above 45 but below
                46). Useful for scanning the sub-50 grades scouts have
                tagged with publishable upside. -->
-          <option value="upside">Upside (+) first</option>
+          <option value="upside">Upside (^) first</option>
           <!-- v29 — Statcast+ composite. Surfaces top hit-tool +
                contact-quality / pitch-quality combos regardless of
                consensus FV ordering. -->
@@ -6733,7 +6751,7 @@
       </div>
       <div class="filter-group">
         <span class="filter-label" title="Show only prospects whose latest FV grade carries a published '+' upside marker (capped at FV ≤ 50).">FV indicators</span>
-        <button class="chip is-multi" data-filter-draft-fvind="upside" title="Upside (+) — at least one source published a '+' on this prospect, capped at FV ≤ 50">Upside +</button>
+        <button class="chip is-multi" data-filter-draft-fvind="upside" title="Upside (^) — at least one source published a '+' upside mark on this prospect, capped at FV ≤ 50">Upside ^</button>
       </div>
       <div class="filter-group">
         <span class="filter-label">Sort</span>
@@ -7601,7 +7619,11 @@ function fvBadgeUpsideMarkHTML(player) {
   const reason = plusSrcs.length
     ? `Upside grade — published "+" by ${plusSrcs.join(", ")}.`
     : `Upside grade — at least one contributing source published a "+" on the latest snapshot.`;
-  return `<span class="fv-upside-mark" title="${escapeHtml(reason)}">+</span>`;
+  // v30.3 — Glyph wrapped in an inner <span> so the CSS rule
+  // .fv-upside-mark > span can translateY(2px) the caret independent
+  // of the chip box, fixing the "^ sits too high in its em-box"
+  // optical-center issue without changing chip geometry.
+  return `<span class="fv-upside-mark" title="${escapeHtml(reason)}"><span>^</span></span>`;
 }
 
 // FV badge chain combiners — collapse the wide/single/breakout/upside
