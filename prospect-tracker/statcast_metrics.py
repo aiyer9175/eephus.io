@@ -71,6 +71,11 @@ class StatcastMetricRow:
     # performances" on the Spotlights page. Up to 5 entries newest-
     # first; each carries date, opponent, raw box-line, and score.
     standout_games: list[dict] = field(default_factory=list)
+    # v30.8 — Most-recent N (default 15) game-by-game stat rows, raw
+    # box-line shape. Powers the "Recent gameLogs" viz on the
+    # prospect detail page. Newest-first; no quality filter applied
+    # so the table can show the full chronology (cold games + hot).
+    recent_games: list[dict] = field(default_factory=list)
 
 
 def _get_json(url: str, params: dict | None = None, ttl_seconds: int = 7 * 86400) -> dict:
@@ -273,6 +278,75 @@ def _extract_standout_games(
     top = [e for _, e in scored[:limit]]
     top.sort(key=lambda e: e["date"], reverse=True)
     return top
+
+
+def _extract_recent_games(
+    logs: list[dict],
+    is_pitcher: bool,
+    limit: int = 15,
+) -> list[dict]:
+    """Most-recent N games for the player, with raw box-line stats.
+    Sorted newest-first. Unlike _extract_standout_games this does NOT
+    filter on game quality — every game with ≥1 PA / ≥0.1 IP shows up
+    so the UI can render a chronological gamelog. v30.8 — feeds the
+    'Last N games' viz on the prospect detail page.
+    """
+    rows: list[dict] = []
+    for split in logs:
+        st = split.get("stat") or {}
+        game = split.get("game") or {}
+        opp = split.get("opponent") or {}
+        date = split.get("date") or (game.get("officialDate"))
+        if not date:
+            continue
+        level = split.get("_level")
+        if not is_pitcher:
+            h    = _safe_int(st.get("hits"))
+            ab   = _safe_int(st.get("atBats"))
+            pa   = _safe_int(st.get("plateAppearances"))
+            if (pa is None or pa < 1) and (ab is None or ab < 1):
+                continue
+            hr   = _safe_int(st.get("homeRuns")) or 0
+            doub = _safe_int(st.get("doubles")) or 0
+            trip = _safe_int(st.get("triples")) or 0
+            rbi  = _safe_int(st.get("rbi")) or 0
+            bb   = _safe_int(st.get("baseOnBalls")) or 0
+            so   = _safe_int(st.get("strikeOuts")) or 0
+            sb   = _safe_int(st.get("stolenBases")) or 0
+            r    = _safe_int(st.get("runs")) or 0
+            entry = {
+                "date": date,
+                "level": level,
+                "opponent": opp.get("name") or opp.get("abbreviation") or "?",
+                "is_home": bool(split.get("isHome") if isinstance(split.get("isHome"), bool)
+                                 else (split.get("game") or {}).get("isHome")),
+                "is_pitcher": False,
+                "pa":  pa, "ab":  ab, "h":  h, "hr": hr, "doub": doub, "trip": trip,
+                "rbi": rbi, "bb":  bb, "so":  so, "sb":  sb, "r":  r,
+            }
+        else:
+            ip   = _safe_float(st.get("inningsPitched"))
+            if ip is None or ip < 0.1:
+                continue
+            k    = _safe_int(st.get("strikeOuts")) or 0
+            er   = _safe_int(st.get("earnedRuns")) or 0
+            r    = _safe_int(st.get("runs")) or 0
+            h    = _safe_int(st.get("hits")) or 0
+            bb   = _safe_int(st.get("baseOnBalls")) or 0
+            hra  = _safe_int(st.get("homeRuns")) or 0
+            entry = {
+                "date": date,
+                "level": level,
+                "opponent": opp.get("name") or opp.get("abbreviation") or "?",
+                "is_home": bool(split.get("isHome") if isinstance(split.get("isHome"), bool)
+                                 else (split.get("game") or {}).get("isHome")),
+                "is_pitcher": True,
+                "ip": ip, "k": k, "er": er, "r": r, "h": h, "bb": bb, "hr": hra,
+            }
+        rows.append(entry)
+    # Newest first; take limit.
+    rows.sort(key=lambda e: e["date"], reverse=True)
+    return rows[:limit]
 
 
 def _safe_int(v) -> int | None:
@@ -602,6 +676,10 @@ def fetch_statcast_metrics_for_player(
         # same `logs` we already walked above. Free piggyback — no
         # extra HTTP, just an extra pass over the per-game stat dicts.
         standout_games=_extract_standout_games(logs, is_pitcher, limit=5),
+        # v30.8 — Last 15 game rows for the prospect-detail "Recent
+        # gameLogs" viz. Same `logs` we already walked above (free
+        # piggyback, no extra HTTP).
+        recent_games=_extract_recent_games(logs, is_pitcher, limit=15),
     )
 
 

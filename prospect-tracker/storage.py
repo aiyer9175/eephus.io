@@ -6580,6 +6580,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "_top_grads":         [],
             "_draft_pool_grads":  [],
             "_ifa_grads":         [],
+            # v30.8 — Per-method star/grad counters for the Acquisition
+            # Deviation league pass. Keyed by method (draft, international_fa,
+            # trade, waiver, rule_5, contract_purchase, free_agent). A "star"
+            # grad is one whose career WAR/yr ≥ 3.0 OR any single MLB
+            # season ≥ 3.5 WAR (mirrors the Conviction leaf's star
+            # thresholds, so the two grade signals stay aligned).
+            "_method_grad_counts": {},
+            "_method_star_counts": {},
         })
         # Boom/Bust classification for this graduate.
         career_rows = (career_stats or {}).get(gp.player_key, []) or []
@@ -6688,13 +6696,45 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                            for r in career_rows
                            if (r.get("level") == "MLB" and r.get("season"))]
             last_mlb_year = max(mlb_seasons) if mlb_seasons else None
+            # v30.8 — Peak single-season WAR for the star-evaluation
+            # path (Conviction + Acq Deviation use ≥3.5 single-season
+            # WAR as a star threshold). seasons may be a {year: war}
+            # dict (FanGraphs career_war shape) or sparser.
+            season_peak = 0.0
+            _seasons_dict = cw.get("seasons")
+            try:
+                if isinstance(_seasons_dict, dict):
+                    _vals = [float(v) for v in _seasons_dict.values()
+                             if v is not None and float(v) == float(v)]
+                    if _vals:
+                        season_peak = max(_vals)
+            except (TypeError, ValueError):
+                pass
             bucket["_top_grads"].append({
+                "player_name": gp.player_name,
+                "player_key":  gp.player_key,
                 "career_war":   float(career_war_val),
                 "war_per_yr":   float(yval) if yval is not None else None,
-                "seasons":      int(seasons),
+                "seasons":      _seasons_dict if isinstance(_seasons_dict, dict) else int(seasons),
+                "season_peak":  round(season_peak, 2),
                 "is_pitcher":   gp_is_pitcher,
                 "last_mlb_year": last_mlb_year,
+                # v30.8 — Acquisition method for per-method star-rate
+                # aggregation in the Acq Deviation league pass.
+                "method":       gp_method,
             })
+            # v30.8 — Per-method counters for Acquisition Deviation.
+            # Every grad with WAR data counts toward the method's
+            # grad_count denominator; grads who hit the star threshold
+            # add to the numerator.
+            if gp_method:
+                bucket["_method_grad_counts"][gp_method] = \
+                    bucket["_method_grad_counts"].get(gp_method, 0) + 1
+                _is_star = ((yval is not None and float(yval) >= _STAR_WAR_PER_YR_THRESHOLD)
+                            or (season_peak >= _STAR_SEASON_WAR_THRESHOLD))
+                if _is_star:
+                    bucket["_method_star_counts"][gp_method] = \
+                        bucket["_method_star_counts"].get(gp_method, 0) + 1
         # Draft-pool efficiency: grads drafted via the draft method,
         # tagged with their draft year + career WAR. The leaf-level
         # computation joins these to the per-year draft pool spend.
@@ -6927,6 +6967,22 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _draft_ceiling_n = m.pop("_draft_ceiling_hits",  0) or 0
         _draft_ceiling_pct = (round(_draft_ceiling_n / _draft_actives_n, 3)
                               if _draft_actives_n >= 3 else None)
+        # v30.8 — Per-method star rate for the Acquisition Deviation
+        # league pass. Stamped on each acq leaf below; the deviation
+        # vs league median is computed once all orgs are in hand.
+        _method_grad_cts = gagg.get("_method_grad_counts") or {}
+        _method_star_cts = gagg.get("_method_star_counts") or {}
+        def _method_star_rate(method: str) -> tuple[float | None, int, int]:
+            """Returns (star_rate, star_count, grad_count) for a method.
+            Returns (None, 0, 0) when the method has fewer than 3 grads
+            (below that the rate is too noisy to compare to peers)."""
+            gc = _method_grad_cts.get(method, 0)
+            sc = _method_star_cts.get(method, 0)
+            if gc < 3:
+                return (None, sc, gc)
+            return (round(sc / gc, 3), sc, gc)
+        _ifa_star_rate, _ifa_star_n, _ifa_grad_n = _method_star_rate("international_fa")
+        _draft_star_rate, _draft_star_n, _draft_grad_n = _method_star_rate("draft")
         m["tree"] = {
             # ACQUISITION STRATEGY branch (v3 — merged Acquisitions + Transactions).
             # IFA Performance — 3-input composite. WAG + WAR-per-year +
@@ -6938,6 +6994,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "career_war_mean":  _gated_mean("ifa_career_war_sum", "ifa_career_war_count"),
                 "wag_sum":   round(gagg.get("ifa_wag_sum") or 0.0, 2),
                 "grad_count": gagg.get("ifa_wag_count") or 0,
+                # v30.8 — Acquisition Deviation: per-method star rate +
+                # deviation from league median (populated in the league
+                # pass below once every org's star_rate is known).
+                "star_rate":           _ifa_star_rate,
+                "star_count":          _ifa_star_n,
+                "star_grad_count":     _ifa_grad_n,
+                "star_rate_deviation": None,   # filled in league pass
+                "star_rate_league_median": None,
             },
             # Draft Performance — pick-slot-adjusted WAR (existing) + Draft
             # Ceiling Hits (new sub-input).
@@ -6953,6 +7017,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "ceiling_hits_count": _draft_ceiling_n,
                 "draft_actives_count": _draft_actives_n,
                 "grad_count": gagg.get("draft_wag_count") or 0,
+                # v30.8 — Acquisition Deviation: per-method star rate +
+                # deviation from league median (populated in the league
+                # pass below once every org's star_rate is known).
+                "star_rate":           _draft_star_rate,
+                "star_count":          _draft_star_n,
+                "star_grad_count":     _draft_grad_n,
+                "star_rate_deviation": None,   # filled in league pass
+                "star_rate_league_median": None,
             },
             # DEVELOPMENT branch — hitter/pitcher composites filled by
             # the per-tool DvM+ league pass below.
@@ -7075,6 +7147,40 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # the farm page. The filter happens BEFORE every downstream
     # tree-grade / DvM+ pass so the math anchors on exactly 30 orgs.
     org_summary = [m for m in org_summary if m.get("org") in MLB_30_ORGS]
+
+    # v30.8 — Acquisition Deviation league pass. For each method (IFA,
+    # Draft), compute the league MEDIAN star_rate across orgs that
+    # have a value (≥3 grads in that method), then stamp each org's
+    # deviation from that median onto the acq leaf. Surfaces "this
+    # org's IFA pipeline produces stars at 1.4× the league median
+    # rate" as a context signal. Independent of the existing
+    # wag_mean / war_per_yr_mean / pick_value_mean scoring inputs —
+    # this is a NEW orthogonal signal, not a replacement.
+    def _median(vals: list[float]) -> float | None:
+        if not vals:
+            return None
+        s = sorted(vals)
+        mid = len(s) // 2
+        return s[mid] if len(s) % 2 else (s[mid - 1] + s[mid]) / 2
+    for _leaf_key, _method_label in (("acq_ifa", "international_fa"),
+                                     ("acq_draft", "draft")):
+        _present_rates = []
+        for e in org_summary:
+            r = ((e["tree"].get(_leaf_key) or {}).get("star_rate"))
+            if r is not None and isinstance(r, (int, float)):
+                _present_rates.append(float(r))
+        _league_median = _median(_present_rates)
+        for e in org_summary:
+            _leaf = e["tree"].get(_leaf_key) or {}
+            _rate = _leaf.get("star_rate")
+            _leaf["star_rate_league_median"] = (
+                round(_league_median, 3) if _league_median is not None else None
+            )
+            if _rate is not None and _league_median is not None:
+                _leaf["star_rate_deviation"] = round(_rate - _league_median, 3)
+            else:
+                _leaf["star_rate_deviation"] = None
+            e["tree"][_leaf_key] = _leaf
 
     # Stable sort by total_fv for the moment — the composite farm_rank
     # below overwrites this ordering once the rolling-window signals are
