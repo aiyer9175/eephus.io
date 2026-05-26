@@ -5173,6 +5173,83 @@
       color: var(--text-tertiary);
     }
 
+    /* v30.8 — Detail-page chip ribbon. Sits between the header card
+       and the quick-read summary, surfacing the same chip strip the
+       user sees on every prospect-list row (tool grades, SC+, EV,
+       zone discipline) plus the level + slash line + Statcast pills.
+       Wrapped in a tight card with a subtle background so it reads
+       as a coherent "scout signal" band the eye can scan in one pass.
+       Each .ribbon-row stacks; per-row chips wrap independently. */
+    .detail-chip-ribbon {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 10px 0 14px;
+      padding: 10px 14px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+    }
+    .detail-chip-ribbon .ribbon-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px;
+    }
+    .detail-chip-ribbon .ribbon-row .tool-grade-strip {
+      flex-wrap: wrap;
+    }
+    .detail-chip-ribbon .ribbon-row-stats {
+      gap: 12px;
+    }
+    .detail-chip-ribbon .ribbon-stat {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      font-family: var(--font-mono);
+      font-size: var(--fs-sm);
+      line-height: 1.3;
+    }
+    .detail-chip-ribbon .ribbon-stat-lbl {
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      font-weight: 700;
+    }
+    .detail-chip-ribbon .ribbon-stat-val {
+      color: var(--text-primary);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .detail-chip-ribbon .ribbon-sc-chip {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 3px;
+      padding: 1.5px 6px;
+      border: 1px solid currentColor;
+      border-radius: 9px;
+      font-family: var(--font-mono);
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      line-height: 1.3;
+      background: color-mix(in srgb, var(--bg-secondary) 85%, currentColor 15%);
+    }
+    .detail-chip-ribbon .ribbon-sc-lbl {
+      font-size: 9px;
+      letter-spacing: 0.04em;
+      opacity: 0.85;
+    }
+    .detail-chip-ribbon .ribbon-sc-val {
+      font-variant-numeric: tabular-nums;
+    }
+    /* Compact density mirror — keep the ribbon tight on small screens */
+    @media (max-width: 720px) {
+      .detail-chip-ribbon { padding: 8px 10px; gap: 6px; }
+      .detail-chip-ribbon .ribbon-row-stats { gap: 8px; }
+    }
+
     /* Detail-page header (player + farm). Uses a paper-card with the
        team-color accent stripe on the left so it reads as a baseball card. */
     .detail-page-header {
@@ -10575,7 +10652,7 @@ function _statcastPercentileBlock(p) {
                     : s.pct >= 50 ? `${s.pct}th percentile`
                     : `${s.pct}th · bottom ${s.pct}%`;
     const valStr = s.fmt(s.val);
-    return `<div style="display:grid;grid-template-columns:96px 1fr 70px 110px;gap:8px;align-items:center;font-size:11.5px;margin-bottom:4px;">
+    return `<div style="display:grid;grid-template-columns:96px 1fr 70px 110px;gap:8px;align-items:center;font-size:var(--fs-sm);margin-bottom:4px;">
       <span style="color:var(--text-secondary);font-weight:600;">${escapeHtml(s.label)}</span>
       <div style="position:relative;height:8px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;border:1px solid var(--border-light);">
         <div style="position:absolute;left:0;top:0;height:100%;width:${s.pct}%;background:${tone};border-radius:4px;"></div>
@@ -11598,10 +11675,14 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
   // v30.7 — Specific single-game standout performances pulled from
   // statcast_metrics.standout_games (populated by the per-player
   // gameLog pass). Each entry: {date, level, opponent, line, score,
-  // is_pitcher}. We collect every game from every prospect, sort by
-  // date DESC (most-recent first per the user ask), and show the top
-  // 12. The headline reads as a specific game ("Jesús Made — 4-for-5
-  // · 2 HR · 5 RBI · @SOM · 2026-05-21"), not a season aggregate.
+  // is_pitcher}.
+  // v30.8 — Sort now FV-WEIGHTED: top-FV prospects rise to the front
+  // so the ticker leads with the games that matter most. Composite
+  // score = (FV-tier weight × 10) + (recency points · ~14-day window)
+  // + (game raw-score · capped). Older games for high-FV prospects
+  // can still outrank a fresh game from a low-FV prospect, but a very
+  // recent strong game from a mid-FV prospect can still surface
+  // above a stale 60-FV game.
   const games = [];
   for (const p of players) {
     const sg = ((p.statcast_metrics || {}).standout_games) || [];
@@ -11611,11 +11692,36 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
       games.push({ p, g });
     }
   }
-  // Newest games first; tie-broken by score desc so the "best" of any
-  // same-day collision leads.
+  // FV-weighted composite scoring.
+  const _nowMs = Date.now();
+  const _fvWeight = (fv) => {
+    if (fv == null) return 0.5;
+    if (fv >= 60) return 4.0;   // elite prospects dominate the ticker
+    if (fv >= 55) return 2.5;
+    if (fv >= 50) return 1.5;
+    if (fv >= 45) return 0.9;
+    return 0.5;
+  };
+  for (const item of games) {
+    const fvW = _fvWeight(item.p.fv_close);
+    const dateMs = new Date(item.g.date + "T00:00:00").getTime();
+    const daysAgo = isFinite(dateMs)
+      ? Math.max(0, (_nowMs - dateMs) / 86400000)
+      : 14;
+    // Recency points: 14 days = 0 pts, today = 14 pts, linear.
+    const recencyPts = Math.max(0, 14 - daysAgo);
+    const gamePts = Math.min(10, item.g.score || 0);
+    // FV dominates: tier 60+ contributes 40pts baseline vs ~5pts for
+    // a sub-45 — even before recency / game-score adjustments. A
+    // 60+ FV game from 2 weeks ago beats a sub-45 game from today
+    // (40 vs ~5+14 = 19). A mid-FV game from today can still beat
+    // a stale top-FV game (45 vs 1.5*10 + 14 = ~29 — close).
+    item._composite = (fvW * 10) + recencyPts + (gamePts * 0.5);
+  }
   games.sort((a, b) => {
-    if (a.g.date !== b.g.date) return a.g.date < b.g.date ? 1 : -1;
-    return (b.g.score || 0) - (a.g.score || 0);
+    // Composite desc; recency as final tiebreak.
+    if (a._composite !== b._composite) return b._composite - a._composite;
+    return a.g.date < b.g.date ? 1 : -1;
   });
   const top = games.slice(0, 12);
   if (!top.length) {
@@ -11630,6 +11736,15 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
     const fvChip = fvLbl != null
       ? `<span class="fv-badge ${fvClass(String(fvLbl))} size-xs" style="margin-right:5px;">${fvLbl}</span>`
       : "";
+    // v30.8 — Border color now matches the FV tier so high-FV chips
+    // pop visually next to mid-FV neighbors. The user explicitly
+    // wanted top prospects to "lead" the ticker; coloring the chip
+    // border by FV reinforces that hierarchy in addition to the sort.
+    const borderColor = fvLbl == null ? "var(--up)"
+                      : fvLbl >= 60 ? "var(--neon-amber)"
+                      : fvLbl >= 55 ? "var(--neon-cyan)"
+                      : fvLbl >= 50 ? "var(--up)"
+                      : "var(--text-secondary)";
     const lvl = g.level
       ? `<span style="color:var(--text-tertiary);margin-left:4px;">${escapeHtml(g.level)}</span>`
       : "";
@@ -11637,9 +11752,9 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
     const opp = g.opponent && g.opponent !== "?"
       ? ` ${g.is_home ? "vs" : "@"} ${escapeHtml(g.opponent)}`
       : "";
-    const subTitle = `${p.player_name} · ${g.line}${opp} on ${g.date}`;
+    const subTitle = `${p.player_name} (FV ${fvLbl || "?"}) · ${g.line}${opp} on ${g.date}`;
     return `<button class="chip" data-key="${escapeHtml(p.player_key)}" type="button"
-                    style="border-color:var(--up);color:var(--up);white-space:nowrap;"
+                    style="border-color:${borderColor};color:${borderColor};white-space:nowrap;"
                     title="${escapeHtml(subTitle)}">
       ${fvChip}<span style="font-weight:700;">${escapeHtml(p.player_name)}</span>${lvl}
       <span style="color:var(--text-primary);margin-left:6px;">${escapeHtml(g.line)}</span>
@@ -11648,9 +11763,9 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
   }).join("");
   root.innerHTML = `<div class="news-ticker">
     <button class="news-ticker-headline" data-go-section="spotlights" type="button"
-            title="Recent single-game standouts from MiLB gameLogs">
+            title="Standout single-game performances from MiLB gameLogs, weighted toward higher-FV prospects">
       <span class="ntk-masthead">Standout performances</span>
-      <span class="ntk-subline">most recent · ${top.length} game${top.length === 1 ? "" : "s"} · raw box-line</span>
+      <span class="ntk-subline">top FV first · ${top.length} game${top.length === 1 ? "" : "s"} · raw box-line</span>
     </button>
     <div class="news-ticker-strip">${chips}</div>
   </div>`;
@@ -20698,7 +20813,163 @@ function makeQuickReadSummaryParts(p, opts = {}) {
 function makeQuickReadSummary(p) {
   const parts = makeQuickReadSummaryParts(p);
   if (parts.length < 2) return "";
-  return `<div class="quick-read" style="font-family:var(--font-sans);font-size:13px;color:var(--text-secondary);line-height:1.55;margin:10px 0 14px;padding:8px 12px;border-left:3px solid var(--neon-cyan);background:rgba(78,224,255,0.04);border-radius:0 var(--radius-sm) var(--radius-sm) 0;">${parts.join(" · ")}</div>`;
+  // v30.8 — Tightened margins so the quick-read sits flush under the
+  // chip ribbon. Reduced background opacity so the ribbon's denser
+  // signal stays the eye's primary anchor; the quick-read reads as
+  // a complementary prose summary rather than competing for focus.
+  return `<div class="quick-read" style="font-family:var(--font-sans);font-size:12.5px;color:var(--text-secondary);line-height:1.5;margin:0 0 12px;padding:6px 12px;border-left:3px solid var(--neon-cyan);background:rgba(78,224,255,0.025);border-radius:0 var(--radius-sm) var(--radius-sm) 0;">${parts.join(" · ")}</div>`;
+}
+
+// v30.8 — Detail-page chip ribbon. Mirrors the chip strip the user
+// sees on every prospect-list row (tool composite + per-tool grades,
+// SC+ composite, EV / max EV, zone Z-Con% / Whiff% / Chase%, level
+// pill + RPS+ / OPS+ / ERA- pills, current slash line for hitters or
+// ERA/IP/K-BB for pitchers, B/T handedness chips). Each sub-strip
+// fails-soft when its data is missing, so the ribbon never paints an
+// empty row. Sits between the header and the quick-read summary so
+// the detail page leads with the same dense at-a-glance signal the
+// list row gives.
+function _buildDetailChipRibbon(p) {
+  if (!p) return "";
+  const sl = p.statline || {};
+  const isPit = !!sl.is_pitcher;
+  const cq = ((p.statcast_metrics || {}).contact_quality) || {};
+  const pm = ((p.statcast_metrics || {}).pitch_movement) || {};
+  const zRoot = p.zone_metrics || {};
+  let z = zRoot;
+  if (zRoot && Array.isArray(zRoot.level_splits) && zRoot.level_splits.length) {
+    z = zRoot.level_splits.reduce((a, b) =>
+      (a && (a.pitches || 0) >= (b.pitches || 0)) ? a : b, null);
+  }
+  z = z || {};
+
+  // Row 1: level + handedness + season pills (mirrors makeMilbCell
+  // top pill row, scaled up for the detail page).
+  const levelPills = (() => {
+    if (!sl.level) return "";
+    const avl = p.age_vs_level || {};
+    const tier = (avl.tier && avl.tier !== "unknown") ? avl.tier : "neutral";
+    const levelClass = sl.level === "MLB" ? "level-mlb" : `level-${tier}`;
+    const bits = [
+      `<span class="level-pill ${levelClass}" style="font-size:11px;padding:3px 8px;">${escapeHtml(sl.level)}</span>`,
+    ];
+    if (sl.is_prior_season && sl.season) {
+      bits.push(`<span class="prior-season-tag" style="font-size:10px;">${escapeHtml(String(sl.season))}</span>`);
+    }
+    // RPS+ pill (sub-MLB only — MLB has wRC+).
+    if (sl.level !== "MLB" && sl.rps_plus != null) {
+      const c = sl.rps_plus >= 110 ? "var(--up)" : sl.rps_plus <= 90 ? "var(--down)" : "var(--text-secondary)";
+      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="Runs-Per-Sample+ (level-relative; 100 = level mean)">RPS+ ${sl.rps_plus}</span>`);
+    }
+    if (isPit && sl.era_minus_level != null) {
+      const v = Math.round(sl.era_minus_level);
+      const c = v <= 90 ? "var(--up)" : v >= 110 ? "var(--down)" : "var(--text-secondary)";
+      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="ERA- vs level (lower = better)">ERA- ${v}</span>`);
+    }
+    if (!isPit && sl.ops_plus_level != null) {
+      const v = Math.round(sl.ops_plus_level);
+      const c = v >= 110 ? "var(--up)" : v <= 90 ? "var(--down)" : "var(--text-secondary)";
+      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="OPS+ vs level (higher = better)">OPS+ ${v}</span>`);
+    }
+    // Statcast+ composite pill.
+    const sp = getStatcastPlus(p);
+    if (sp != null) {
+      const c = sp >= 120 ? "var(--neon-cyan)"
+              : sp >= 105 ? "var(--up)"
+              : sp <= 95  ? "var(--down)"
+              :             "var(--text-secondary)";
+      bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="Statcast+ composite (100 = pool average)">SC+ ${sp}</span>`);
+    }
+    return `<span class="ribbon-row">${bits.join("")}</span>`;
+  })();
+
+  // Row 2: tool grade chips (TOOL composite + per-tool, FV-tier colored).
+  // makeToolGradeChips returns the .tool-grade-strip div — bump font
+  // size a touch for the detail page via an inline override.
+  const toolStrip = (() => {
+    const html = makeToolGradeChips(p);
+    if (!html) return "";
+    // Wrap in a slightly-larger-font container so the chips read as
+    // "primary signal" on the detail page (vs the more compact list-row).
+    return `<span class="ribbon-row" style="font-size:var(--fs-sm);">${html}</span>`;
+  })();
+
+  // Row 3: stats line + Statcast chips (slash for hitters, ERA/IP/K
+  // for pitchers; then EV/maxEV/HH%/Brl% for hitters or top-pitch
+  // velo for pitchers; then zone discipline).
+  const statsLine = (() => {
+    if (!sl) return "";
+    const seg = (label, val, color) => `<span class="ribbon-stat" title="${escapeHtml(label)}">
+      <span class="ribbon-stat-lbl">${escapeHtml(label)}</span>
+      <span class="ribbon-stat-val"${color ? ` style="color:${color};"` : ""}>${escapeHtml(String(val))}</span>
+    </span>`;
+    const bits = [];
+    if (!isPit) {
+      const slash = `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"}`;
+      bits.push(seg("AVG/OBP/SLG", slash));
+      if (sl.hr  != null) bits.push(seg("HR", sl.hr));
+      if (sl.sb  != null) bits.push(seg("SB", sl.sb));
+      if (sl.iso != null) bits.push(seg("ISO", (Math.abs(sl.iso) < 1 ? (sl.iso >= 0 ? "" : "-") + Math.abs(sl.iso).toFixed(3).replace(/^0/, "") : sl.iso.toFixed(3))));
+      if (sl.bb_pct != null) bits.push(seg("BB%", sl.bb_pct.toFixed(1)));
+      if (sl.k_pct  != null) bits.push(seg("K%",  sl.k_pct.toFixed(1)));
+    } else {
+      if (sl.era  != null) bits.push(seg("ERA",  sl.era));
+      if (sl.whip != null) bits.push(seg("WHIP", sl.whip));
+      if (sl.ip   != null) bits.push(seg("IP",   sl.ip));
+      if (sl.k_pct  != null) bits.push(seg("K%",  sl.k_pct.toFixed(1)));
+      if (sl.bb_pct != null) bits.push(seg("BB%", sl.bb_pct.toFixed(1)));
+      if (sl.hr_per_9 != null) bits.push(seg("HR/9", sl.hr_per_9.toFixed(2)));
+    }
+    if (!bits.length) return "";
+    return `<span class="ribbon-row ribbon-row-stats">${bits.join("")}</span>`;
+  })();
+
+  // Row 4: Statcast contact + zone chips. Mirrors the list-row's
+  // baseline EV chips + outlier chips, with explicit color-tier
+  // coloring matched to MLB-pool ramps.
+  const statcastChips = (() => {
+    const _color = (v, eliteAt, weakAt, inv = false) => {
+      if (v == null || !isFinite(v)) return "var(--text-tertiary)";
+      if (!inv) {
+        if (v >= eliteAt) return "var(--up)";
+        if (v <= weakAt)  return "var(--down)";
+      } else {
+        if (v <= eliteAt) return "var(--up)";
+        if (v >= weakAt)  return "var(--down)";
+      }
+      return "var(--text-secondary)";
+    };
+    const chip = (label, val, c, tip) => `<span class="ribbon-sc-chip" style="color:${c};border-color:${c};" title="${escapeHtml(tip || label)}">
+      <span class="ribbon-sc-lbl">${label}</span><span class="ribbon-sc-val">${val}</span></span>`;
+    const bits = [];
+    if (!isPit) {
+      if (cq.avg_ev      != null) bits.push(chip("EV",     cq.avg_ev.toFixed(1),     _color(cq.avg_ev,      92, 84),  `Avg exit velocity over ${cq.batted_balls || "tracked"} BBE`));
+      if (cq.max_ev      != null) bits.push(chip("MaxEV",  cq.max_ev.toFixed(1),     _color(cq.max_ev,     112, 102),  `Max exit velocity`));
+      if (cq.hard_hit_pct!= null) bits.push(chip("HH%",    cq.hard_hit_pct.toFixed(0) + "%", _color(cq.hard_hit_pct, 42, 28), `Hard-hit rate (EV ≥ 95)`));
+      if (cq.barrel_pct  != null) bits.push(chip("Brl%",   cq.barrel_pct.toFixed(0)  + "%", _color(cq.barrel_pct,   10,  3), `Barrel rate`));
+      if (z.z_contact_pct != null) bits.push(chip("Z-Con%", z.z_contact_pct.toFixed(0) + "%", _color(z.z_contact_pct, 86, 74), `In-zone contact rate`));
+      if (z.whiff_pct     != null) bits.push(chip("Whiff%", z.whiff_pct.toFixed(0)     + "%", _color(z.whiff_pct,     22, 32, true), `Swings-and-misses per swing (lower = better)`));
+      if (z.chase_pct     != null) bits.push(chip("Chase%", z.chase_pct.toFixed(0)     + "%", _color(z.chase_pct,     24, 32, true), `Out-of-zone swing rate (lower = better)`));
+    } else {
+      const summary = (pm.pitch_summary || []).slice(0, 3);
+      for (const ps of summary) {
+        if (ps.avg_velo == null) continue;
+        const c = _color(ps.avg_velo, 96, 90);
+        bits.push(chip(escapeHtml(ps.pitch_type || "?"), ps.avg_velo.toFixed(1), c, `${escapeHtml(ps.pitch_name || ps.pitch_type || "?")} avg velo${ps.usage_pct != null ? ` · ${ps.usage_pct.toFixed(1)}% usage` : ""}`));
+      }
+      if (z.whiff_pct     != null) bits.push(chip("Whiff%", z.whiff_pct.toFixed(0)     + "%", _color(z.whiff_pct, 28, 18), `Induced whiff rate (higher = better)`));
+      if (z.chase_pct     != null) bits.push(chip("Chase%", z.chase_pct.toFixed(0)     + "%", _color(z.chase_pct, 32, 24), `Induced chase rate (higher = better)`));
+      if (cq.hard_hit_pct != null) bits.push(chip("HHa",    cq.hard_hit_pct.toFixed(0) + "%", _color(cq.hard_hit_pct, 32, 46, true), `Hard-hit rate ALLOWED (lower = better)`));
+      if (cq.barrel_pct   != null) bits.push(chip("Brla",   cq.barrel_pct.toFixed(0)   + "%", _color(cq.barrel_pct,    5, 11, true), `Barrel rate ALLOWED (lower = better)`));
+    }
+    if (!bits.length) return "";
+    return `<span class="ribbon-row ribbon-row-sc">${bits.join("")}</span>`;
+  })();
+
+  // Compose. Skip the whole ribbon when nothing populated.
+  const allRows = [levelPills, toolStrip, statsLine, statcastChips].filter(Boolean);
+  if (!allRows.length) return "";
+  return `<div class="detail-chip-ribbon">${allRows.join("")}</div>`;
 }
 
 // Tool-grade chip strip — replaces the prose "plus hit / plus game
@@ -26177,10 +26448,109 @@ function renderPlayerDetail(key) {
   // in the right sidebar carries the same signal with more depth
   // (post-TJ status, IL stints, IL days, full injury history). Tile
   // was a redundant headline.
+  // v30.8 — Top-tool tile. Finds the highest-graded tool across all
+  // published sources (mean across sources per tool, then the max).
+  // Pitchers get their best arsenal grade (FB/SL/CB/CH/CMD/CT);
+  // hitters get their best scouting tool (HIT/PWR/SPD/FLD/ARM/etc.).
+  // Sub-line lists the source count + a secondary tool if it grades
+  // within 5 points so the tile carries "what they're known for"
+  // rather than a single number in isolation.
+  const topToolTile = (() => {
+    const tg = p.tools && p.tools.grades;
+    if (!tg || !Object.keys(tg).length) return null;
+    const _label = k => (typeof toolAbbrev === "function" ? toolAbbrev(k) : k.toUpperCase());
+    const isPitcherT = !!(sl.is_pitcher)
+      || /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(String(p.position || ""));
+    const order = isPitcherT
+      ? ["fb", "sl", "cb", "ch", "cmd", "ct"]
+      : ["hit", "pwr", "speed", "field", "throw", "pitch_sel", "bat_ctrl"];
+    const entries = [];
+    for (const k of order) {
+      let v = tg[k];
+      if (k === "pwr" && v == null) {
+        const g = tg.game_pwr, r = tg.raw_pwr;
+        if (g != null && r != null) v = (g + r) / 2;
+        else if (g != null) v = g;
+        else if (r != null) v = r;
+      }
+      if (v == null || !isFinite(v)) continue;
+      entries.push({ k, v: Number(v) });
+    }
+    if (!entries.length) return null;
+    entries.sort((a, b) => b.v - a.v);
+    const top = entries[0];
+    const tier = _toolTier(Math.round(top.v));
+    const color = `var(--fv-${tier}-fg)`;
+    const bg    = `var(--fv-${tier}-bg)`;
+    const headlineV = `<span style="display:inline-block;padding:2px 10px;border-radius:4px;background:${bg};color:${color};font-weight:800;letter-spacing:0.02em;">${escapeHtml(_label(top.k))} ${Math.round(top.v)}</span>`;
+    // Secondary mention — second-best tool if within 5 points + a
+    // source count from p.tools.composite_overall context.
+    const second = entries[1] && Math.abs(entries[1].v - top.v) <= 5
+      ? `2nd: ${escapeHtml(_label(entries[1].k))} ${Math.round(entries[1].v)}`
+      : "";
+    const compositeNum = p.tools && p.tools.composite_overall != null
+      ? `composite ${Math.round(p.tools.composite_overall)}`
+      : "";
+    const subBits = [second, compositeNum].filter(Boolean);
+    return ["Top tool", headlineV, subBits.join(" · ")];
+  })();
+
+  // v30.8 — Key Statcast tile. Picks the prospect's most notable
+  // tracked-data metric and surfaces it with tier color. Hitters
+  // prefer Max EV / Avg EV when they meet the elite floor; pitchers
+  // prefer top-pitch velo. Falls back to SC+ composite when no
+  // component metric clears a notable tier.
+  const keyStatcastTile = (() => {
+    const cq = ((p.statcast_metrics || {}).contact_quality) || {};
+    const pm = ((p.statcast_metrics || {}).pitch_movement) || {};
+    const sp = getStatcastPlus(p);
+    let label = "Key Statcast", value = null, sub = "";
+    if (sl.is_pitcher) {
+      const topPitch = (pm.pitch_summary || [])[0];
+      if (topPitch && topPitch.avg_velo != null) {
+        const v = topPitch.avg_velo;
+        const c = v >= 96 ? "var(--up)" : v >= 93 ? "var(--neon-cyan)" : "var(--text-primary)";
+        label = `${escapeHtml(topPitch.pitch_type || "FB")} velo`;
+        value = `<span style="color:${c};font-weight:800;">${v.toFixed(1)} mph</span>`;
+        const max = topPitch.max_velo;
+        sub = `${escapeHtml(topPitch.pitch_name || topPitch.pitch_type || "")}${max != null ? ` · max ${max.toFixed(1)}` : ""}${sp != null ? ` · SC+ ${sp}` : ""}`;
+      } else if (sp != null) {
+        const c = sp >= 105 ? "var(--up)" : sp <= 95 ? "var(--down)" : "var(--text-primary)";
+        label = "SC+ composite";
+        value = `<span style="color:${c};font-weight:800;">${sp}</span>`;
+        sub = "100 = pool average";
+      }
+    } else {
+      // Hitter — surface Max EV if elite, else avg EV if available,
+      // else fall back to SC+.
+      if (cq.max_ev != null && cq.max_ev >= 105) {
+        const v = cq.max_ev;
+        const c = v >= 112 ? "var(--up)" : "var(--neon-cyan)";
+        label = "Max EV";
+        value = `<span style="color:${c};font-weight:800;">${v.toFixed(1)} mph</span>`;
+        sub = `avg ${cq.avg_ev != null ? cq.avg_ev.toFixed(1) + " mph" : "—"}${cq.batted_balls != null ? ` · ${cq.batted_balls} BBE` : ""}${sp != null ? ` · SC+ ${sp}` : ""}`;
+      } else if (cq.avg_ev != null) {
+        const v = cq.avg_ev;
+        const c = v >= 90 ? "var(--up)" : v <= 84 ? "var(--down)" : "var(--text-primary)";
+        label = "Avg EV";
+        value = `<span style="color:${c};font-weight:800;">${v.toFixed(1)} mph</span>`;
+        sub = `${cq.batted_balls != null ? `${cq.batted_balls} BBE` : ""}${cq.hard_hit_pct != null ? ` · ${cq.hard_hit_pct.toFixed(0)}% HH` : ""}${sp != null ? ` · SC+ ${sp}` : ""}`;
+      } else if (sp != null) {
+        const c = sp >= 105 ? "var(--up)" : sp <= 95 ? "var(--down)" : "var(--text-primary)";
+        label = "SC+ composite";
+        value = `<span style="color:${c};font-weight:800;">${sp}</span>`;
+        sub = "100 = pool average";
+      }
+    }
+    return value ? [label, value, sub] : null;
+  })();
+
   const tiles = [
     ["Age vs. level", ageTileValue, ageSub],
     [perfTileLabel,  perfTileValue, perfTileSub],
     ["ETA",          eta.year != null ? String(eta.year) : "—", eta.confidence ? `${eta.confidence} confidence` : ""],
+    topToolTile,
+    keyStatcastTile,
     wagTile,
     acqLabel ? ["Acquired via", acqLabel, acqSub] : null,
   ].filter(Boolean);
@@ -28420,6 +28790,12 @@ function renderPlayerDetail(key) {
   const tabBar = renderDetailTabs(tabs, state.playerTab, "player");
 
   const quickReadHtml = makeQuickReadSummary(p);
+  // v30.8 — Chip ribbon mirroring the prospect-list-row chips. Gives
+  // the detail page the same at-a-glance signal density users see on
+  // the list. Composed from the existing list-row helpers so the two
+  // surfaces stay visually consistent; the ribbon sits between the
+  // header and the quick-read narrative + stat tiles.
+  const detailChipRibbon = _buildDetailChipRibbon(p);
   // v30.7 — Tab-aware sidebar. Wraps the tabBar inside a 2-column
   // grid (`.detail-with-rail`) so the cards sit to the RIGHT of the
   // tab content on viewports ≥1300px. Below that breakpoint the
@@ -28434,7 +28810,7 @@ function renderPlayerDetail(key) {
     <div class="detail-with-rail-main">${tabBar}</div>
     ${sidebarHtml}
   </div>`;
-  root.innerHTML = header + quickReadHtml + tilesHtml + tabBarWithRail;
+  root.innerHTML = header + detailChipRibbon + quickReadHtml + tilesHtml + tabBarWithRail;
   syncSortHeaderActive();
 }
 
