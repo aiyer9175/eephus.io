@@ -28,7 +28,15 @@
       "Bash(node -e ' *)",
       "Bash(python -m pytest --collect-only -q)",
       "Bash(python -m pytest -v -rs)",
-      "Bash(python -m pytest test_graduation_rules.py -v)"
+      "Bash(python -m pytest test_graduation_rules.py -v)",
+      "Bash(git check-ignore *)",
+      "Bash(git status *)",
+      "Read(//tmp/**)",
+      "Bash(git reset *)",
+      "Bash(git restore *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
