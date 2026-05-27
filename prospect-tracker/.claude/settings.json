@@ -60,7 +60,26 @@
       "Bash(echo \"exit=$?\")",
       "Bash(python -c \"import playwright; print\\('ok', playwright.__version__\\)\")",
       "Bash(python -c \"from playwright.sync_api import sync_playwright; print\\('playwright import ok'\\)\")",
-      "Bash(python -m http.server 8000)"
+      "Bash(python -m http.server 8000)",
+      "Bash(python _verify.py)",
+      "Bash(python _inspect.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python _inspect.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python _inspect2.py)",
+      "Bash(cd \"c:\\\\Users\\\\noah\\\\baseball-projects\\\\BaseballR\\\\prospect-tracker\" && rm -f _verify.py _inspect.py _inspect2.py _verify_*.png _final_*.png && echo cleaned && git status --short)",
+      "Bash(git checkout *)",
+      "Bash(PYTHONIOENCODING=utf-8 python _tradeverify.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python _verify2.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python _ncaa_probe.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python -c ' *)",
+      "Bash(PYTHONIOENCODING=utf-8 python -m pytest test_college_stats.py -q)",
+      "Bash(python -c \"import college_stats, run_monthly, draft_stats; import storage; print\\('imports OK; backfill_draft_player_fields:', hasattr\\(storage,'backfill_draft_player_fields'\\)\\)\")",
+      "Bash(PYTHONIOENCODING=utf-8 python _draftverify.py)",
+      "Bash(grep -nE \"\\\\\\\\blabel\\\\\\\\b\" index.html)",
+      "Bash(rm -f _ncaa_probe.py _draftverify.py _draft_ncaa.png)",
+      "Bash(rm -rf _ncaa_fixtures)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker"
     ]
   }
 }

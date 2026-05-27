@@ -2341,6 +2341,30 @@ def link_draft_to_milb(draft_key: str, milb_key: str) -> None:
         )
 
 
+def backfill_draft_player_fields(rows: Iterable[dict]) -> int:
+    """COALESCE-merge identity fields onto existing draft_players rows
+    (used by the MLB-API identity backfill). Each row needs player_key plus
+    any of mlbam_id / fg_player_id / school; existing non-null values win.
+    Returns the number of rows touched."""
+    n = 0
+    with connect() as con:
+        for r in rows:
+            pk = r.get("player_key")
+            if not pk:
+                continue
+            cur = con.execute(
+                """UPDATE draft_players SET
+                     mlbam_id     = COALESCE(mlbam_id, ?),
+                     fg_player_id = COALESCE(fg_player_id, ?),
+                     school       = COALESCE(school, ?),
+                     updated_at   = datetime('now')
+                   WHERE player_key = ?""",
+                (r.get("mlbam_id"), r.get("fg_player_id"), r.get("school"), pk),
+            )
+            n += cur.rowcount or 0
+    return n
+
+
 def load_draft_canonical_keys() -> dict[str, str]:
     try:
         with connect() as con:

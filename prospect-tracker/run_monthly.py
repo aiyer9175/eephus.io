@@ -560,6 +560,16 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                         refresh_draft_stats(force=force_refetch, workers=8)
                     except Exception:
                         log.exception("draft_stats fetch crashed — continuing with draft export")
+                    # v33 — Second-source gap-fill for prospects FanGraphs can't
+                    # cover (the ~88% with no FG id). MLB-API identity backfill
+                    # then NCAA D-I box scores (headless render of stats.ncaa.org).
+                    # Best-effort: a source failing must not abort the export.
+                    try:
+                        from college_stats import refresh_college_fallback_stats
+                        counts = refresh_college_fallback_stats(force=force_refetch)
+                        log.info("college fallback stats: %s", counts)
+                    except Exception:
+                        log.exception("college fallback stats crashed — continuing with draft export")
                     n_draft = export_draft_json(out_dir / "draft_timeseries.json")
                     log.info("draft pipeline: exported %d prospects across all classes",
                              n_draft)

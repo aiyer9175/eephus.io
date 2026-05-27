@@ -10782,6 +10782,21 @@ function makeEtaCell(p) {
   </div>`;
 }
 
+// ─── ETA half-bucket labels ─────────────────────────────────────────────────
+// "early" → Apr-Jun (H1) debut window, "late" → Jul-Sep (H2). Shared so the
+// detail tiles, overview tile, and ETA breakdown all read consistently.
+function etaHalfWord(eta) {
+  if (!eta) return null;
+  return eta.half === "early" ? "Early" : eta.half === "late" ? "Late" : null;
+}
+// "Early 2027" / "Late 2027" / "2027" (falls back to the bare year when the
+// backend hasn't shipped a half bucket — older payloads).
+function etaDisplayYear(eta) {
+  if (!eta || eta.year == null) return "—";
+  const w = etaHalfWord(eta);
+  return w ? `${w} ${eta.year}` : String(eta.year);
+}
+
 // ─── Headline-stat helper ───────────────────────────────────────────────────
 // Returns the row-level "headline" statistic (wRC+ for hitters, xFIP for
 // pitchers) as a pre-styled HTML chip. The MLB Stats API only carries
@@ -15451,7 +15466,11 @@ function renderRecentlyTraded() {
   const _buildOrgMap = () => {
     if (Object.keys(_ORG_FROM_NAME).length) return;
     if (typeof fullOrgName !== "function") return;
-    const orgs = ["LAA","HOU","OAK","TOR","ATL","MIL","STL","CHC","ARI","LAD",
+    // ATH (Athletics) — this dataset codes them "ATH", not the legacy "OAK".
+    // fullOrgName("ATH") → "Athletics" so "Athletics traded …" narratives
+    // resolve; the endsWith() fallback below still catches the older
+    // "Oakland Athletics …" phrasing (ends with "athletics").
+    const orgs = ["LAA","HOU","ATH","TOR","ATL","MIL","STL","CHC","ARI","LAD",
                    "SFG","CLE","SEA","MIA","NYM","WSN","BAL","SDP","PHI","PIT",
                    "TEX","TBR","BOS","CIN","COL","KCR","DET","MIN","CHW","NYY"];
     for (const o of orgs) {
@@ -15784,10 +15803,13 @@ function renderRecentlyTraded() {
           ? `<span style="color:var(--text-secondary);">Balanced trade</span>`
           : `<span style="color:var(--up);font-weight:700;">${escapeHtml(g.winner)} +$${Math.abs(g.netDeltaA).toFixed(1)}M</span>`;
         const _tbsFor = (pp) => (pp ? (typeof tiebreakerScore === "function" ? tiebreakerScore(pp) : null) : null);
-        const sidePlayerChips = (orgCode) => {
+        const sidePlayerChips = (orgCode, highlightKey = null) => {
           const players = g.players.filter(e => e.to === orgCode);
           const chips = [];
           for (const e of players) {
+            // ★ + tint the chip for the prospect from the row directly above,
+            // so the audit card visibly ties back to its row.
+            const isRowPlayer = highlightKey && e.p.player_key === highlightKey;
             const v = e.val;
             const valStr = v.value != null ? `$${v.value.toFixed(1)}` : '—';
             const tbsHere = (v.kind === "fv") ? _tbsFor(e.p) : null;
@@ -15803,7 +15825,11 @@ function renderRecentlyTraded() {
             const nameMarkup = e.p.player_key
               ? `<a href="#player=${escapeHtml(e.p.player_key)}" onclick="event.preventDefault();event.stopPropagation();goToPlayer('${escapeHtml(e.p.player_key)}');" style="color:var(--text-primary);text-decoration:none;font-weight:600;">${escapeHtml(e.p.player_name)}</a>`
               : `<span style="color:${v.kind === 'unresolved' ? 'var(--text-tertiary)' : 'var(--text-primary)'};font-weight:600;">${escapeHtml(e.p.player_name)}</span>`;
-            chips.push(`<span style="display:inline-flex;align-items:baseline;gap:3px;font-size:10px;" title="${escapeHtml(kindLbl)}">${vetTag}${nameMarkup}<span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">${valStr}M</span></span>`);
+            const star = isRowPlayer ? `<span style="color:var(--neon-amber);font-size:9px;flex-shrink:0;" aria-label="this row's prospect">★</span>` : "";
+            const wrapStyle = isRowPlayer
+              ? `display:inline-flex;align-items:baseline;gap:3px;font-size:10px;background:var(--bg-tertiary);border:1px solid var(--neon-amber);border-radius:3px;padding:1px 5px;`
+              : `display:inline-flex;align-items:baseline;gap:3px;font-size:10px;`;
+            chips.push(`<span style="${wrapStyle}" title="${escapeHtml(kindLbl)}">${star}${vetTag}${nameMarkup}<span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">${valStr}M</span></span>`);
           }
           const ibp  = (orgCode === g.orgA) ? g.aIbp  : g.bIbp;
           const cash = (orgCode === g.orgA) ? g.aCash : g.bCash;
@@ -15854,25 +15880,34 @@ function renderRecentlyTraded() {
           }
           return parts.length ? " " + parts.join(" ") : "";
         };
-        // Single-row strip: ORG_A receives "[chips]" → $X.XM ↔ ORG_B
-        // receives "[chips]" → $Y.YM | Verdict
-        return `<div class="trade-audit-card is-traded" style="grid-column:1 / -1;margin:0;padding:5px 12px;background:var(--bg-secondary);border-left:2px solid ${winColor};border-radius:0;font-size:10px;display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;line-height:1.5;">
-          <span style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;flex-shrink:0;">Trade Audit</span>
-          <span style="display:inline-flex;align-items:baseline;gap:5px;flex:1;min-width:0;">
-            <span style="font-family:var(--font-serif);font-size:11px;font-weight:700;color:${aTone};">${escapeHtml(g.orgA)}</span>
-            <span style="color:var(--text-tertiary);font-size:9px;">←</span>
-            <span style="flex:1;min-width:0;">${sidePlayerChips(g.orgA)}</span>
-            <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;color:${aTone};white-space:nowrap;">$${g.aReceived.toFixed(1)}M${fvSuffix(aSplit)}</span>
-          </span>
-          <span style="color:var(--text-tertiary);">·</span>
-          <span style="display:inline-flex;align-items:baseline;gap:5px;flex:1;min-width:0;">
-            <span style="font-family:var(--font-serif);font-size:11px;font-weight:700;color:${bTone};">${escapeHtml(g.orgB)}</span>
-            <span style="color:var(--text-tertiary);font-size:9px;">←</span>
-            <span style="flex:1;min-width:0;">${sidePlayerChips(g.orgB)}</span>
-            <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;color:${bTone};white-space:nowrap;">$${g.bReceived.toFixed(1)}M${fvSuffix(bSplit)}</span>
-          </span>
-          <span style="color:var(--text-tertiary);">·</span>
-          <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;white-space:nowrap;">${verdictText}</span>
+        // Two-sided swap box: a header (TRADE AUDIT eyebrow + verdict) over
+        // one line per org — logo + code + "receives ▸" + the players that
+        // org got + the $ total (right-aligned). The row's own prospect is
+        // ★/tinted inside its side so the card ties back to the row above.
+        const _hl = p.player_key || null;
+        const orgLine = (orgCode, tone, received, split) => {
+          const logo = (typeof teamLogoHTML === "function" && orgCode)
+            ? teamLogoHTML(orgCode, "sm", (typeof fullOrgName === "function" ? fullOrgName(orgCode) : orgCode)) : "";
+          return `<div style="display:flex;align-items:baseline;gap:6px;width:100%;">
+            <span style="display:inline-flex;align-items:center;gap:4px;flex-shrink:0;min-width:52px;">${logo}<span style="font-family:var(--font-serif);font-size:11px;font-weight:700;color:${tone};">${escapeHtml(orgCode)}</span></span>
+            <span style="color:var(--text-tertiary);font-size:9px;flex-shrink:0;letter-spacing:0.04em;">receives ▸</span>
+            <span style="flex:1;min-width:0;display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:3px 6px;">${sidePlayerChips(orgCode, _hl)}</span>
+            <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;color:${tone};white-space:nowrap;margin-left:auto;flex-shrink:0;">$${received.toFixed(1)}M${fvSuffix(split)}</span>
+          </div>`;
+        };
+        // Nest the card under its prospect row: pull it flush against the
+        // row above (cancel the row's 6px margin), indent it, and run a left
+        // rail in the row's OWN org color so the eye follows the prospect
+        // row's stripe straight down into its audit. The ↳ + verdict-tinted
+        // top accent keep the "this belongs to the row above" read.
+        const _railColor = (typeof orgColor === "function" && p.org) ? orgColor(p.org) : "var(--border)";
+        return `<div class="trade-audit-card is-traded" style="grid-column:1 / -1;margin:-6px 0 8px 26px;padding:6px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-left:3px solid ${_railColor};border-top:2px solid ${winColor};border-radius:0 0 var(--radius-sm) var(--radius-sm);box-shadow:var(--shadow-card);font-size:10px;display:flex;flex-direction:column;gap:4px;line-height:1.5;">
+          <div style="display:flex;align-items:baseline;gap:8px;width:100%;">
+            <span style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;flex-shrink:0;">↳ Trade Audit</span>
+            <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;white-space:nowrap;margin-left:auto;flex-shrink:0;">${verdictText}</span>
+          </div>
+          ${orgLine(g.orgA, aTone, g.aReceived, aSplit)}
+          ${orgLine(g.orgB, bTone, g.bReceived, bSplit)}
         </div>`;
       })()}
     `;
@@ -18571,7 +18606,7 @@ async function renderDraftDetail(key) {
       const fromLeft = r.delta >= 0 ? 50 : 50 - fillPct;
       const sign = r.delta >= 0 ? "+" : "";
       return `<div style="display:grid;grid-template-columns:54px 1fr 60px 60px;gap:8px;align-items:center;font-size:11.5px;margin-bottom:4px;">
-        <span style="color:var(--text-secondary);font-weight:700;letter-spacing:0.04em;font-family:var(--font-mono);">${escapeHtml(label)}</span>
+        <span style="color:var(--text-secondary);font-weight:700;letter-spacing:0.04em;font-family:var(--font-mono);">${escapeHtml(r.label)}</span>
         <div style="position:relative;height:8px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;border:1px solid var(--border-light);">
           <div style="position:absolute;left:${fromLeft}%;top:0;height:100%;width:${fillPct}%;background:${tone};border-radius:2px;"></div>
           <div style="position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--text-tertiary);opacity:0.7;"></div>
@@ -18700,7 +18735,14 @@ async function renderDraftDetail(key) {
     const boostNote = (p.draft_stock_plus_college_boost != null && p.draft_stock_plus_college_boost !== 0)
       ? ` Currently nudging DS+ by ${p.draft_stock_plus_college_boost > 0 ? '+' : ''}${p.draft_stock_plus_college_boost}.`
       : '';
-    return `<div class="detail-title">College / amateur stats <span class="detail-title-sub">${cs.season_count || cs.trail.length} season${(cs.season_count || cs.trail.length) === 1 ? '' : 's'} on file from FanGraphs · ${isPit ? 'pitcher' : 'hitter'} view${boostNote}</span></div>
+    // Provenance — derive which source(s) the rows came from (FG / NCAA D-I /
+    // MLB Pipeline) rather than always claiming FanGraphs.
+    const _srcLabels = { fg: "FanGraphs", ncaa: "NCAA D-I", mlb_pipeline: "MLB Pipeline" };
+    const _sources = [...new Set(cs.trail.map(t => (t.payload || {}).source).filter(Boolean))];
+    const srcNote = _sources.length
+      ? _sources.map(s => _srcLabels[s] || s).join(" + ")
+      : "FanGraphs";
+    return `<div class="detail-title">College / amateur stats <span class="detail-title-sub">${cs.season_count || cs.trail.length} season${(cs.season_count || cs.trail.length) === 1 ? '' : 's'} on file from ${srcNote} · ${isPit ? 'pitcher' : 'hitter'} view${boostNote}</span></div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:6px 4px;border-radius:6px;overflow-x:auto;">
         <table style="width:100%;border-collapse:collapse;">
           <thead><tr>${ths}</tr></thead>
@@ -20496,23 +20538,32 @@ const GLOSSARY = {
     example: "MIL HitDvM+ 119 + PowerDvM+ 124 = a power-bat development specialist; their hitters add ~2σ more game power across their org tenure than the league mean.",
     related: ["tools_dvm_plus", "tool_delta", "dvm_plus", "tool"],
   },
+  "hit_plus": {
+    name: "HIT+", aliases: ["HIT+", "Hitting+", "Hit Index"], category: "custom-index",
+    priority: 28,
+    short: "Hit-tool index; batting average + contact vs level-mean blended 70/30 with the hit-tool grade (mean of Hit + Bat Control). 100 = average.",
+    long: "Isolates the hit-tool dimension (distinct from POW+ power and OPS+ overall). The raw component blends 0.6 · batting-average-vs-level and 0.4 · contact-vs-level (K%-avoidance — a lower K% than the level mean reads above 100). That raw index is then blended 70% / 30% with the player's hit-tool scouting grade — the mean of the Hit grade and Bat Control (BCTRL, FG's bat-to-ball contact tool), using whichever are on file — on the 20-80 scale (50 → 100, ±10 grade ≈ ±20 points). Hitters only, 40-game minimum. When a graded prospect is below the sample gate, HIT+ falls back to the tool grade alone; when no Hit/Bat-Control grade is on file, it uses the raw stats alone. Note: until level norms are regenerated with a batting-average baseline, the raw side runs on contact only.",
+    formula: "HIT+ = 0.7 · raw + 0.3 · tool+\nraw = 100 · (0.6 · AVG_ratio + 0.4 · contact_ratio)\ntool+ = 100 + (mean(Hit, BatControl) − 50) · 2",
+    example: "A AA hitter batting .300 (level .246) with a 16% K% (level 22.5%) carries a raw ~133; paired with a 55 Hit / 60 Bat Control (mean 57.5 → tool+ 115) the HIT+ lands ~128.",
+    related: ["bb_pct", "k_pct", "tool", "pwr_plus", "pd_plus", "ops_plus_level"],
+  },
   "pwr_plus": {
-    name: "PWR+", aliases: ["PWR+", "Power Index"], category: "custom-index",
+    name: "POW+", aliases: ["POW+", "PWR+", "Power Index", "Power+"], category: "custom-index",
     priority: 30,
-    short: "Hitter power index; ISO + HR-rate vs level-mean. 100 = league-average power.",
-    long: "Composite of isolated power (SLG minus AVG) and home-run rate, both normalized against the player's current level. Weighted 60% ISO and 40% HR-rate to reflect that ISO is a more stable single-year power signal than raw HR totals (sample-noise dampens). Hitters only, 40-game minimum.",
-    formula: "PWR+ = 100 · (0.6 · ISO_ratio + 0.4 · HR_rate_ratio)\nwhere ratios are player ÷ level_mean",
-    example: "A AA hitter with a .240 ISO at a level where the mean is .140 posts a PWR+ of ~145, about 45% more power than the typical AA bat.",
-    related: ["iso", "tool", "rps_plus"],
+    short: "Hitter power index; ISO + HR-rate vs level-mean blended 70/30 with the Power tool grade. 100 = average.",
+    long: "Composite of isolated power (SLG minus AVG) and home-run rate, both normalized against the player's current level (weighted 60% ISO / 40% HR-rate, since ISO is the more stable single-year power signal). That raw index is then blended 70% / 30% with the player's Power scouting grade on the 20-80 scale (50 → 100, ±10 grade ≈ ±20 points; Power uses the consolidated grade, else the mean of game/raw power). Hitters only, 40-game minimum. Below the sample gate a graded prospect gets the tool alone; with no grade on file the raw stats stand alone. (Renamed from PWR+.)",
+    formula: "POW+ = 0.7 · raw + 0.3 · tool+\nraw = 100 · (0.6 · ISO_ratio + 0.4 · HR_rate_ratio)\ntool+ = 100 + (Power_grade − 50) · 2",
+    example: "A AA hitter with a .240 ISO at a level where the mean is .140 posts a raw ~145; paired with a 60 Power grade (tool+ 120) the POW+ lands ~138.",
+    related: ["iso", "tool", "rps_plus", "hit_plus", "pd_plus"],
   },
   "pd_plus": {
-    name: "Disci+", aliases: ["Disci+", "PD+", "Plate Discipline+", "Plate Discipline"], category: "custom-index",
+    name: "PD+", aliases: ["PD+", "Disci+", "Plate Discipline+", "Plate Discipline"], category: "custom-index",
     priority: 35,
-    short: "Plate discipline index; BB% minus K% differential vs level-mean. 100 = average.",
-    long: "Additive shift on the BB% minus K% differential vs the player's level mean. Disci+ = 100 + (player_diff − level_diff). A hitter walking 10% and striking out 20% (−10 diff) at a level where the mean is +5% BB minus 22% K (−17 diff) posts a Disci+ of 107. Hitters only, 40-game minimum. (Renamed from PD+ for symmetry with the other plus-stats — the underlying metric is unchanged.)",
-    formula: "Disci+ = 100 + (BB%player − K%player) − (BB%level − K%level)",
-    example: "Juan Soto's career-prospect Disci+ would have been ~125 to 130, since his BB% minus K% differential was ~25 points above the typical bat at every level.",
-    related: ["bb_pct", "k_pct", "pwr_plus"],
+    short: "Plate-discipline index; BB% minus K% differential vs level-mean blended 70/30 with the Pitch-Selection (PSel) tool. 100 = average.",
+    long: "The raw component is an additive shift on the BB% minus K% differential vs the player's level mean: 100 + (player_diff − level_diff). A hitter walking 10% and striking out 20% (−10 diff) at a level where the mean is +5% BB minus 22% K (−17 diff) posts a raw 107. That raw index is then blended 70% / 30% with the player's Pitch-Selection (PSel) scouting grade — FanGraphs' plate-discipline tool — on the 20-80 scale (50 → 100, ±10 grade ≈ ±20 points). Hitters only, 40-game minimum. Below the sample gate a graded prospect gets the tool alone; with no PSel grade the raw stats stand alone. (Renamed from Disci+.)",
+    formula: "PD+ = 0.7 · raw + 0.3 · tool+\nraw = 100 + (BB%player − K%player) − (BB%level − K%level)\ntool+ = 100 + (PSel_grade − 50) · 2",
+    example: "Juan Soto's career-prospect raw PD+ would have been ~125-130 (BB%−K% ~25 points above the typical bat); paired with a plus PSel grade the blended PD+ holds in that same elite band.",
+    related: ["bb_pct", "k_pct", "pwr_plus", "hit_plus", "tool"],
   },
   "stf_plus": {
     name: "pStuff+", aliases: ["pStuff+", "STF+", "Pitcher Stuff+", "Peripheral Stuff"], category: "custom-index",
@@ -27539,6 +27590,17 @@ function _seasonOrgForRow(player, season) {
   return org;
 }
 
+// Per-season OPS+ vs the league average at that level (100 = level
+// average; higher is better). Shares the DATA.level_norms baseline used by
+// the statline-level ops_plus_level. Null when the level norm or OPS is
+// missing — e.g. MLB rows carry no MiLB level norm — so the cell shows "—".
+function _rowOpsPlus(s) {
+  const ops = parseFloat(s && s.ops);
+  const avgOps = (((DATA.level_norms || {})[s && s.level] || {}).perf || {}).avg_ops;
+  if (!isFinite(ops) || avgOps == null || avgOps <= 0) return null;
+  return Math.round(100 * ops / avgOps);
+}
+
 function makeCareerTable(career, birthDate, player) {
   if (!career || !career.length) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No multi-season stats available.</div>`;
@@ -27570,6 +27632,7 @@ function makeCareerTable(career, birthDate, player) {
     obp: s => parseFloat(s.obp),
     slg: s => parseFloat(s.slg),
     ops: s => parseFloat(s.ops),
+    ops_plus: s => _rowOpsPlus(s),
     iso: s => (s.iso != null ? s.iso : (isFinite(parseFloat(s.slg)) && isFinite(parseFloat(s.avg)) ? parseFloat(s.slg) - parseFloat(s.avg) : null)),
     bb_pct: s => s.bb_pct,
     k_pct:  s => s.k_pct,
@@ -27721,7 +27784,7 @@ function makeCareerTable(career, birthDate, player) {
   const strip = `<tr>
     <th colspan="4" style="${stripStyle(META_COLOR)}">Meta</th>
     <th colspan="4" style="${stripStyle(COUNT_COLOR)}">Counting</th>
-    <th colspan="4" style="${stripStyle(SLASH_COLOR)}">Slash</th>
+    <th colspan="5" style="${stripStyle(SLASH_COLOR)}">Slash</th>
     <th colspan="1" style="${stripStyle(POWER_COLOR)}">Power</th>
     <th colspan="2" style="${stripStyle(DISC_COLOR)}">Plate discipline</th>
   </tr>`;
@@ -27738,6 +27801,7 @@ function makeCareerTable(career, birthDate, player) {
     ${_sh("obp", "OBP", 'title="On-Base Percentage"')}
     ${_sh("slg", "SLG", 'title="Slugging Percentage"')}
     ${_sh("ops", "OPS", 'title="OBP + SLG"')}
+    ${_sh("ops_plus", "OPS+", 'title="OPS relative to the league average at that level: OPS ÷ level-average OPS × 100. 100 = level average, 130 = 30% better. Blank for rows without a level baseline (e.g. MLB seasons)."')}
     ${_sh("iso", "ISO", 'title="Isolated power = SLG − AVG. Pure power signal — strips the batting-average contribution out of slugging."')}
     ${_sh("bb_pct", "BB%", 'title="Walk rate"')}
     ${_sh("k_pct", "K%", 'title="Strikeout rate (lower is better)"')}
@@ -27769,6 +27833,7 @@ function makeCareerTable(career, birthDate, player) {
       <td>${s.obp ?? "—"}</td>
       <td>${s.slg ?? "—"}</td>
       <td>${s.ops ?? "—"}</td>
+      <td>${(() => { const v = _rowOpsPlus(s); return v == null ? "—" : `<span style="color:${v >= 110 ? "var(--up)" : v <= 90 ? "var(--down)" : "inherit"};">${v}</span>`; })()}</td>
       <td>${isoCell(s)}</td>
       <td>${s.bb_pct != null ? s.bb_pct.toFixed(1) : "—"}</td>
       <td>${s.k_pct != null ? s.k_pct.toFixed(1) : "—"}</td>
@@ -29638,7 +29703,7 @@ function renderPlayerDetail(key) {
   const tiles = [
     ["Age vs. level", ageTileValue, ageSub],
     [perfTileLabel,  perfTileValue, perfTileSub],
-    ["ETA",          eta.year != null ? String(eta.year) : "—", eta.confidence ? `${eta.confidence} confidence` : ""],
+    ["ETA",          etaDisplayYear(eta), eta.confidence ? `${eta.confidence} confidence` : ""],
     topToolTile,
     keyStatcastTile,
     wagTile,
@@ -31547,14 +31612,54 @@ function renderPlayerDetail(key) {
 
   const etaRows = (() => {
     if (!eta || eta.year == null) return "";
+    // Signed-year formatter: a NEGATIVE adjustment pulls the debut EARLIER
+    // (faster), a POSITIVE one pushes it LATER. Shows "±0" for no effect.
+    const adj = v => (v == null ? "±0" : v > 0 ? `+${v.toFixed ? v.toFixed(2) : v}y` : v < 0 ? `${v.toFixed ? v.toFixed(2) : v}y` : "±0");
+    // Each adjustment row carries a plain-language "why", sign-aware so the
+    // reader understands which direction it moved the estimate.
+    const dirFaster = "pulls debut earlier";
+    const dirSlower = "pushes debut later";
+    const reason = (v, fasterTxt, slowerTxt) =>
+      v == null || v === 0 ? "no effect" : v < 0 ? `${fasterTxt} (${dirFaster})` : `${slowerTxt} (${dirSlower})`;
     const r = [
-      ["Level baseline", eta.base_years != null ? `${eta.base_years.toFixed(1)} yrs` : "—"],
-      ["Performance",    eta.perf_adj > 0 ? `+${eta.perf_adj}` : eta.perf_adj < 0 ? `${eta.perf_adj}` : "±0"],
-      ["Age vs. level",  eta.age_adj  > 0 ? `+${eta.age_adj}`  : eta.age_adj  < 0 ? `${eta.age_adj}`  : "±0"],
-      ["FV grade",       eta.fv_adj   > 0 ? `+${eta.fv_adj}`   : eta.fv_adj   < 0 ? `${eta.fv_adj}`   : "±0"],
+      ["Level baseline", eta.base_years != null ? `${eta.base_years.toFixed(1)} yrs` : "—",
+        "Typical years-to-MLB from the player's current level, mid-season-adjusted."],
+      ["Performance", adj(eta.perf_adj),
+        reason(eta.perf_adj, "outperforming the level", "below the level line")],
+      ["Age vs. level", adj(eta.age_adj),
+        reason(eta.age_adj, "young for the level", "old for the level")],
+      ["FV grade", adj(eta.fv_adj),
+        reason(eta.fv_adj, "high grade → faster track", "lower grade → slower track")],
     ];
-    return `<div class="detail-title">ETA breakdown · ${eta.year}</div>
-      <table class="detail-table"><tbody>${r.map(([k, v]) => `<tr><td>${k}</td><td style="text-align:right;">${v}</td></tr>`).join("")}</tbody></table>`;
+    if (eta.statcast_plus_adj != null && eta.statcast_plus_adj !== 0)
+      r.push(["Statcast", adj(eta.statcast_plus_adj),
+        reason(eta.statcast_plus_adj, "elite batted-ball/stuff data", "soft underlying data")]);
+    if (eta.health_adj != null && eta.health_adj !== 0)
+      r.push(["Health", adj(eta.health_adj),
+        eta.health_adj > 0 ? "injury / IL time adds delay (pushes debut later)" : "clean health (pulls debut earlier)"]);
+    if (eta.half_season_adj != null && eta.half_season_adj !== 0)
+      r.push(["Half-season timing", adj(eta.half_season_adj),
+        reason(eta.half_season_adj, "tracking to an earlier-in-year call-up", "tracking to a later-in-year call-up")]);
+    // Early/Late projection + the inputs that produced it.
+    const halfWord = etaHalfWord(eta);
+    const orgBits = [];
+    if (eta.org_promo_h1_rate != null && eta.org_promo_h2_rate != null) {
+      const h1 = Math.round(eta.org_promo_h1_rate * 100);
+      const h2 = Math.round(eta.org_promo_h2_rate * 100);
+      orgBits.push(`org promotes ${h1}% H1 / ${h2}% H2`);
+    }
+    if (eta.season_phase) orgBits.push(`current phase: ${String(eta.season_phase).replace(/_/g, " ")}`);
+    const halfExplain = halfWord
+      ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;line-height:1.5;">
+           <strong style="color:var(--text-secondary);">${halfWord} ${eta.year}</strong> —
+           ${halfWord === "Early" ? "an Apr–Jun (first-half)" : "a Jul–Sep (second-half)"} debut window.
+           Blends how far into the year the fractional ETA lands, the org's H1/H2 promotion tendency, and a current-level bias (AAA leans early; A/A+ on a multi-year track lean late).${orgBits.length ? ` <span style="color:var(--text-tertiary);">(${orgBits.join(" · ")})</span>` : ""}
+         </div>`
+      : "";
+    const confLine = eta.confidence
+      ? `<span class="detail-title-sub">${escapeHtml(eta.confidence)} confidence</span>` : "";
+    return `<div class="detail-title">ETA breakdown · ${etaDisplayYear(eta)} ${confLine}</div>
+      <table class="detail-table"><tbody>${r.map(([k, v, why]) => `<tr><td>${k}</td><td style="text-align:right;font-variant-numeric:tabular-nums;">${v}</td><td style="color:var(--text-tertiary);font-size:11px;">${why || ""}</td></tr>`).join("")}</tbody></table>${halfExplain}`;
   })();
 
   // Scouting flags — green/red rate-stat indicators sit directly under
@@ -31792,7 +31897,7 @@ function renderPlayerDetail(key) {
   const _ovEta = (() => {
     const eta = p.eta || {};
     if (!eta.year) return null;
-    return { label: "ETA", value: eta.year, sub: eta.confidence ? `${eta.confidence} conf` : "" };
+    return { label: "ETA", value: etaDisplayYear(eta), sub: eta.confidence ? `${eta.confidence} conf` : "" };
   })();
   const _ovSurplus = (() => {
     const fv = p.fv_close;
@@ -34483,10 +34588,53 @@ function _clampPlus(v) {
   return Math.max(0, Math.min(250, Math.round(v)));
 }
 
-// Power Index (PWR+) — composite of ISO + HR-rate vs the player's level
-// average. 100 = level-average power; 130 = 30% more power than the
-// typical hitter at the same level. Hitters only; 40-game volume gate.
-function computePowerPlus(p) {
+// ── Tool-blended "+" metric helpers ─────────────────────────────────────────
+// POW+/PD+/HIT+ each blend a level-relative raw-stat index with a 20-80
+// scouting tool grade (70% performance / 30% scouting). The raw component
+// is "what the bat has done at the level"; the tool is "what scouts project."
+
+// Convert a 20-80 scouting grade to the 100-anchored "+" scale: 50 (avg)
+// → 100, and every 10 grade points ≈ 20 "+" points (60/Plus → 120,
+// 70/Elite → 140). Null for missing grades so the blend falls back to raw.
+function _toolToPlus(grade) {
+  const g = Number(grade);
+  if (grade == null || !isFinite(g)) return null;
+  return 100 + (g - 50) * 2;
+}
+
+// Blend raw-stat "+" with tool "+" at 70/30 (user-selected). When only one
+// side is present we return it alone — a graded prospect with too thin a
+// sample still gets a tool-only read, and a prospect with stats but no
+// grades keeps the prior stats-only behavior. Returns {value, raw, tool}
+// for tooltip transparency; null when neither input exists.
+function _blendPlus(rawPlus, toolPlus, wRaw = 0.7) {
+  const hasRaw  = rawPlus  != null && isFinite(rawPlus);
+  const hasTool = toolPlus != null && isFinite(toolPlus);
+  if (!hasRaw && !hasTool) return null;
+  const value = (hasRaw && hasTool) ? (wRaw * rawPlus + (1 - wRaw) * toolPlus)
+              : (hasRaw ? rawPlus : toolPlus);
+  return {
+    value: _clampPlus(value),
+    raw:   hasRaw  ? _clampPlus(rawPlus)  : null,
+    tool:  hasTool ? _clampPlus(toolPlus) : null,
+  };
+}
+
+// Consolidated Power tool grade — prefers the single `pwr` key, else the
+// mean of FG's game_pwr + raw_pwr (mirrors the backend O-Tool blend).
+function _pwrToolGrade(grades) {
+  if (grades.pwr != null) return grades.pwr;
+  const g = grades.game_pwr, r = grades.raw_pwr;
+  if (g != null && r != null) return (Number(g) + Number(r)) / 2;
+  if (g != null) return g;
+  if (r != null) return r;
+  return null;
+}
+
+// Raw power index — ISO + HR-rate vs the player's level average. 100 =
+// level-average power. Hitters only; 40-game volume gate. Null when the
+// gate fails or inputs are missing (the blend then leans on the tool).
+function _powerPlusRaw(p) {
   const sl = p && p.statline; if (!sl || sl.is_pitcher) return null;
   if ((Number(sl.games) || 0) < 40) return null;
   const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
@@ -34502,25 +34650,34 @@ function computePowerPlus(p) {
   const games = Number(sl.games) || 0;
   if (sl.pa != null && Number(sl.pa) > 0) {
     const playerRate = hr / Number(sl.pa);
-    // No PA-rate norm in level_norms — derive a quick league rate from
-    // ISO ≈ HR-driven SLG contribution. Calibration constant chosen so
-    // a league-average hitter at AA reads ~100.
+    // League HR/PA ≈ 0.18 × level ISO (puts a league-average AA bat at ~100).
     const leagueRate = (perf.avg_iso || 0.130) * 0.18;
     if (leagueRate > 0) hrRatio = playerRate / leagueRate;
   } else if (games > 0) {
     const playerRate = hr / games;
-    const leagueRate = (perf.avg_iso || 0.130) * 0.045;
+    // Most rows carry games, not PA, so convert the HR/PA baseline above to
+    // a per-game baseline using ~4 PA/game: league HR/game ≈ 0.18 × 4 ×
+    // level ISO ≈ 0.72 × ISO. (Earlier this used 0.045 — a ~16× too-low
+    // baseline that DIVIDED rather than multiplied by PA/game, which pinned
+    // every power hitter to the 250 clamp.)
+    const leagueRate = (perf.avg_iso || 0.130) * 0.72;
     if (leagueRate > 0) hrRatio = playerRate / leagueRate;
   }
   if (hrRatio == null) hrRatio = isoRatio;  // fall back to pure ISO
   return _clampPlus(100 * (isoRatio * 0.6 + hrRatio * 0.4));
 }
 
-// Plate Discipline+ (PD+) — additive shift on the BB% − K% differential
-// vs the level average. 100 = league-average discipline; 115 = the
-// player has a 15-point better BB-K differential than the typical hitter
-// at the same level. Hitters only; 40-game gate.
-function computeDisciplinePlus(p) {
+// POW+ — 70% raw power index / 30% Power tool grade.
+function computePowerPlus(p) {
+  if (!p || !p.statline || p.statline.is_pitcher) return null;
+  const grades = (p.tools && p.tools.grades) || {};
+  return _blendPlus(_powerPlusRaw(p), _toolToPlus(_pwrToolGrade(grades)));
+}
+
+// Raw plate-discipline index — additive shift on the BB% − K% differential
+// vs the level average. 100 = league-average discipline. Hitters only;
+// 40-game gate.
+function _disciplinePlusRaw(p) {
   const sl = p && p.statline; if (!sl || sl.is_pitcher) return null;
   if ((Number(sl.games) || 0) < 40) return null;
   const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
@@ -34528,6 +34685,57 @@ function computeDisciplinePlus(p) {
   const playerDiff = Number(sl.bb_pct) - Number(sl.k_pct);
   const levelDiff  = perf.avg_bb_pct - perf.avg_k_pct;
   return _clampPlus(100 + (playerDiff - levelDiff));
+}
+
+// PD+ — 70% raw BB%−K% index / 30% Pitch-Selection (PSel) tool grade.
+// PSel is FanGraphs' plate-discipline tool (FG maps "plate discipline" →
+// pitch_sel), so it is the natural scouting input for discipline.
+function computeDisciplinePlus(p) {
+  if (!p || !p.statline || p.statline.is_pitcher) return null;
+  const grades = (p.tools && p.tools.grades) || {};
+  return _blendPlus(_disciplinePlusRaw(p), _toolToPlus(grades.pitch_sel));
+}
+
+// Raw hit index — batting average + contact (K%-avoidance) vs the level
+// average, weighted 0.6 AVG / 0.4 contact. Distinct from OPS+ (overall)
+// and POW+ (power): this isolates the hit-tool dimension. When the level
+// batting-average baseline (avg_avg) hasn't been regenerated into
+// level_norms yet, falls back to contact-only so HIT+ stays defined.
+// Hitters only; 40-game gate.
+function _hittingPlusRaw(p) {
+  const sl = p && p.statline; if (!sl || sl.is_pitcher) return null;
+  if ((Number(sl.games) || 0) < 40) return null;
+  const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
+  // Contact: lower K% than the level mean reads above 100.
+  const kp = Number(sl.k_pct), avgK = perf.avg_k_pct;
+  const contactRatio = (isFinite(kp) && kp > 0 && avgK != null) ? avgK / kp : null;
+  // Batting average vs level mean (avg is a ".307"-style string).
+  const avg = sl.avg != null ? Number(sl.avg) : null;
+  const avgRatio = (avg != null && isFinite(avg) && perf.avg_avg != null && perf.avg_avg > 0)
+    ? avg / perf.avg_avg : null;
+  if (avgRatio != null && contactRatio != null) return _clampPlus(100 * (0.6 * avgRatio + 0.4 * contactRatio));
+  if (contactRatio != null) return _clampPlus(100 * contactRatio);  // fallback: contact only
+  if (avgRatio != null) return _clampPlus(100 * avgRatio);
+  return null;
+}
+
+// Hit-tool grade for HIT+ — the simple mean of the Hit grade and Bat
+// Control (BCTRL, FG's bat-to-ball contact tool), using whichever are on
+// file. Bat control is the pure-contact complement to the broader hit-tool
+// projection, so averaging them gives a fuller "hit-tool" scouting read.
+function _hitToolGrade(grades) {
+  const vals = [grades.hit, grades.bat_ctrl]
+    .map(Number)
+    .filter(v => v != null && isFinite(v));
+  if (!vals.length) return null;
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
+// HIT+ — 70% raw hit index / 30% hit-tool grade (mean of Hit + Bat Control).
+function computeHittingPlus(p) {
+  if (!p || !p.statline || p.statline.is_pitcher) return null;
+  const grades = (p.tools && p.tools.grades) || {};
+  return _blendPlus(_hittingPlusRaw(p), _toolToPlus(_hitToolGrade(grades)));
 }
 
 // Pitcher Stuff+ (STF+) — composite of K/9, BB/9, HR/9 normalized
@@ -34589,18 +34797,34 @@ function _plusPill(label, value, classFn, tooltip, slug) {
   const cls = classFn(value);
   return `<span class="rps-plus-pill ${cls}${gClass}"${gAttr} title="${escapeHtml(tooltip)}">${label} ${value}</span>`;
 }
+// Format the blend-composition suffix for a tool-blended {value,raw,tool}
+// result so the tooltip always shows how the number was built.
+function _blendTip(b) {
+  if (b.raw != null && b.tool != null) return ` · 70% performance (${b.raw}) + 30% scouting tool (${b.tool})`;
+  if (b.raw != null)  return ` · performance only (no tool grade on file)`;
+  if (b.tool != null) return ` · scouting tool only (sample below 40-game gate)`;
+  return "";
+}
+const _plusClass = n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral";
+function hittingPlusPillHTML(p) {
+  const b = computeHittingPlus(p);
+  if (b == null) return "";   // hitters only — silently omit for pitchers
+  return _plusPill("HIT+", b.value, _plusClass,
+    `HIT+ ${b.value} · batting average + contact (K%-avoidance) vs ${p.statline.level || "level"} mean blended with the hit-tool grade (mean of Hit + Bat Control) (100 = league-average hit tool)${_blendTip(b)}`,
+    "hit_plus");
+}
 function powerPlusPillHTML(p) {
-  const v = computePowerPlus(p);
-  if (v == null) return "";   // hitters only — silently omit for pitchers
-  return _plusPill("PWR+", v, n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral",
-    `PWR+ ${v} · ISO + HR-rate vs ${p.statline.level || "level"} mean (100 = league-average power)`,
+  const b = computePowerPlus(p);
+  if (b == null) return "";   // hitters only — silently omit for pitchers
+  return _plusPill("POW+", b.value, _plusClass,
+    `POW+ ${b.value} · ISO + HR-rate vs ${p.statline.level || "level"} mean blended with the Power tool grade (100 = league-average power)${_blendTip(b)}`,
     "pwr_plus");
 }
 function disciplinePlusPillHTML(p) {
-  const v = computeDisciplinePlus(p);
-  if (v == null) return "";
-  return _plusPill("Disci+", v, n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral",
-    `Disci+ ${v} · BB%−K% differential vs ${p.statline.level || "level"} mean (100 = league-average plate discipline). Renamed from PD+.`,
+  const b = computeDisciplinePlus(p);
+  if (b == null) return "";
+  return _plusPill("PD+", b.value, _plusClass,
+    `PD+ ${b.value} · BB%−K% differential vs ${p.statline.level || "level"} mean blended with the Pitch-Selection (PSel) tool grade (100 = league-average plate discipline)${_blendTip(b)}`,
     "pd_plus");
 }
 function stuffPlusPillHTML(p) {
@@ -34618,11 +34842,12 @@ function tradeValuePillHTML(p) {
 }
 
 // Composite helper for the prospect detail stat strip / rows — renders
-// all available "+" pills inline so a hitter shows PWR+/PD+, a pitcher
-// shows STF+, every player shows Sur+. Omits pills whose underlying
+// all available "+" pills inline so a hitter shows HIT+/POW+/PD+, a pitcher
+// shows pStuff+, every player shows Sur+. Omits pills whose underlying
 // metric returned null so the row doesn't fill with "—" placeholders.
 function scoutRatesHTML(p) {
   return [
+    hittingPlusPillHTML(p),
     powerPlusPillHTML(p),
     disciplinePlusPillHTML(p),
     stuffPlusPillHTML(p),
