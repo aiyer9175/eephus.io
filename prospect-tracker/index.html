@@ -8454,63 +8454,154 @@ function _overseasHeadline(p) {
   return { wrc: null, fip: null };
 }
 
+// v31.13 — TBS-enriching helpers.
+// All return numbers in [0, 1] where 1.0 = neutral / no signal so they
+// can be safely included as weighted parts with renorm-by-present-weight.
+// A NULL return drops the signal entirely (renormalization picks up the
+// slack from the remaining parts).
+function _ageVsLevelBoostTBS(p) {
+  // very-young = 1.0 (full lift), young = 0.75, neutral = 0.5,
+  // old = 0.25, too-old = 0.0. Maps tiers to 0-1 axis for additive
+  // contribution. Returns null when no tier on file.
+  const tier = (p && p.age_vs_level && p.age_vs_level.tier) || null;
+  if (!tier) return null;
+  const map = { "very-young": 1.0, "young": 0.75, "neutral": 0.5,
+                "old": 0.25, "too-old": 0.0 };
+  const v = map[tier];
+  return (v == null) ? null : v;
+}
+function _healthPenaltyTBS(p) {
+  // 1.0 = clean / no IL ever, 0.0 = on IL or post-TJ in recovery
+  // window. Active IL fully zeros it; post-TJ in first 18mo halves
+  // it. Returns null when there's no health profile at all (most
+  // amateur / pre-debut prospects).
+  const hp = (p && p.health_profile) || null;
+  const il = (p && p.il_status) || null;
+  if (!hp && !il) return null;
+  if (il && il.is_on_il) return 0.0;
+  if (hp && hp.is_post_tj) return 0.4;
+  const stints = (hp && hp.il_stints_12mo) || 0;
+  const days = (hp && hp.il_days_12mo) || 0;
+  if (stints >= 3 || days >= 90) return 0.5;
+  if (stints >= 1 || days >= 30) return 0.75;
+  return 1.0;
+}
+function _movementBoostTBS(p) {
+  // Riser/rebound = 1.0, flat / no signal = 0.5, faller = 0.0. Maps
+  // stock.direction onto the additive 0-1 axis. Returns null when no
+  // movement engine output on the payload.
+  const s = (p && p.stock) || null;
+  if (!s || !s.direction) return null;
+  const d = s.direction;
+  if (d === "up_strong") return 1.0;
+  if (d === "up") return 0.85;
+  if (d === "flat" || d === "debuted") return 0.5;
+  if (d === "down") return 0.15;
+  if (d === "down_strong") return 0.0;
+  return null;
+}
+function _stuffPlusTBS(p) {
+  // Pitcher Stuff+ from the latest statline. Returns the raw value
+  // (centered around 100) or null when not a pitcher / not present.
+  const sl = (p && p.statline) || null;
+  if (!sl || !sl.is_pitcher) return null;
+  const v = sl.stf_plus != null ? sl.stf_plus
+          : sl.stf_plus_periph != null ? sl.stf_plus_periph
+          : null;
+  return (typeof v === "number" && isFinite(v)) ? v : null;
+}
+function _translatedOverseasPerf(p) {
+  // Returns {wrc, fip} with the league's translation_pct applied to
+  // the wRC+ headline (the canonical haircut crossing to MLB —
+  // NPB ~-5%, KBO ~-10%, etc.). FIP isn't translated because the
+  // league-context factor is a hitter-side stat. Falls back to the
+  // raw values when no translation_pct is on file.
+  const { wrc, fip } = _overseasHeadline(p);
+  if (wrc == null && fip == null) return { wrc, fip };
+  // Locate translation_pct on the leagues meta when available.
+  let pct = 0;
+  try {
+    const lg = p && p.league;
+    const leagues = (DATA && DATA.overseas && DATA.overseas.leagues) || [];
+    const ctx = (leagues.find(l => l && l.league === lg) || {}).league_context || {};
+    if (typeof ctx.translation_pct === "number") pct = ctx.translation_pct;
+  } catch (e) { /* ignored */ }
+  const adj = (v) => (v == null) ? null : v * (1 + pct / 100);
+  return { wrc: adj(wrc), fip };  // fip pass-through (no hitter-style haircut)
+}
+
 function tiebreakerScore(p) {
   if (!p) return 0;
-  // v31.8 — Three tiebreaker variants depending on player context:
-  //   1. DRAFT  (has draft_stock_plus)  : Tool + Tool+ + per-tool max + DS+ + RPS+ (college)
-  //   2. OVERSEAS (NPB/KBO/CPBL stats) : Tool + Tool+ + per-tool max + RPS+ + raw wRC+/FIP
-  //   3. ACTIVE MiLB (default)          : Tool + RPS+ + SC+ + per-tool max
-  // Each path normalizes its inputs to 0-1, weights, then renormalizes
-  // by present weight so a player with some-but-not-all signals still
-  // produces a comparable 0-100 score.
+  // v31.13 — Three-cohort TBS tuned for MLB-SUCCESS PROJECTION. The
+  // weights lean on FV-anchored scout signals (Tool composite, DS+,
+  // Tool+) plus underlying-tools confirmation (SC+, Stuff+, RPS+),
+  // with secondary lift/penalty from age-vs-level, health, and
+  // movement direction. Per the user's product call, the model is
+  // optimized for "how likely is this prospect to become a useful MLB
+  // regular?" rather than current-season performance.
   //
-  // v31.12 — Draft + Overseas now read the cohort-normalized
-  // `tool_plus` and `rps_plus` fields that draft_export.py and
-  // overseas_export.py stamp at export time. They sit on the same
-  // 60-140 axis as RPS+/SC+ for MiLB, so two prospects with the same
-  // FV but very different cohort-relative tool quality / production
-  // can now be separated cleanly.
+  // Inputs absent from the payload simply drop out — the parts list
+  // is filtered by presence and the weights renormalize so a
+  // partial-signal player still gets a comparable 0-100 score.
   const tool = _toolComposite(p);                                  // 20-80
   const tmax = _perToolMax(p);                                     // 20-80
   const toolPlus = (p.tool_plus != null) ? p.tool_plus : null;
   const rpsPlusCohort = (p.rps_plus != null) ? p.rps_plus : null;
   const dsPlus = (p.draft_stock_plus != null) ? p.draft_stock_plus : null;
+  const ageBoost = _ageVsLevelBoostTBS(p);
+  const healthMod = _healthPenaltyTBS(p);
+  const moveBoost = _movementBoostTBS(p);
   let parts;
   if (dsPlus != null) {
-    // Draft TBS — DS+ (35%) is the primary rank-anchored signal.
-    // Tool+ (20%) + Tool (10%) capture scout grades. RPS+ (20%)
-    // captures college performance. Per-tool max (15%) rewards a
-    // single elite carrying tool.
+    // DRAFT TBS — DS+ anchors the rank-based projection; Tool+ and
+    // RPS+ (college perf) provide cohort-normalized confirmation;
+    // Tool / per-tool max round out the scouting picture; age,
+    // health, movement act as secondary modifiers.
     parts = [
-      [_tbsNorm(dsPlus,        70, 130), 0.35],
-      [_tbsNorm(toolPlus,      80, 130), 0.20],
-      [_tbsNorm(rpsPlusCohort, 80, 130), 0.20],
+      [_tbsNorm(dsPlus,        70, 130), 0.28],
+      [_tbsNorm(toolPlus,      80, 130), 0.18],
+      [_tbsNorm(rpsPlusCohort, 80, 130), 0.18],
       [_tbsNorm(tool,          40, 70),  0.10],
-      [_tbsNorm(tmax,          40, 70),  0.15],
+      [_tbsNorm(tmax,          40, 70),  0.10],
+      [ageBoost,                         0.08],
+      [healthMod,                        0.04],
+      [moveBoost,                        0.04],
     ];
   } else if (_isOverseasProspect(p)) {
-    const { wrc, fip } = _overseasHeadline(p);
+    const { wrc, fip } = _translatedOverseasPerf(p);
     const fipNorm = (fip != null) ? Math.max(0, Math.min(1, (4.50 - Number(fip)) / 2.00)) : null;
-    // Overseas TBS — Tool+ (25%) + RPS+ (25%) carry the cohort-
-    // normalized signals; raw wRC+ / FIP (25%) supplements as
-    // an absolute-scale anchor; per-tool max (15%) + Tool (10%)
-    // round it out.
+    // OVERSEAS TBS — Tool+ + cohort RPS+ + translation-adjusted
+    // wRC+/FIP carry the headline. Tool composite + per-tool max
+    // provide scout-grade depth. Age + movement act as modifiers.
+    // Health is usually null for overseas pros (no MLB IL records).
     parts = [
-      [_tbsNorm(toolPlus,      80, 130), 0.25],
-      [_tbsNorm(rpsPlusCohort, 80, 130), 0.25],
-      [_tbsNorm(wrc,           80, 160), 0.25],   // hitter perf
-      [fipNorm,                          0.25],   // pitcher perf (only one of wrc/fip will be present)
-      [_tbsNorm(tool,          40, 70),  0.10],
-      [_tbsNorm(tmax,          40, 70),  0.15],
+      [_tbsNorm(toolPlus,      80, 130), 0.22],
+      [_tbsNorm(rpsPlusCohort, 80, 130), 0.20],
+      [_tbsNorm(wrc,           80, 160), 0.18],   // translation-adjusted
+      [fipNorm,                          0.18],   // pitcher perf (only one of wrc/fip will be present)
+      [_tbsNorm(tool,          40, 70),  0.08],
+      [_tbsNorm(tmax,          40, 70),  0.10],
+      [ageBoost,                         0.04],
+      [moveBoost,                        0.04],
     ];
   } else {
+    // ACTIVE MiLB TBS — Tool composite + RPS+ (current rate-perf vs
+    // level) + SC+ (underlying tracked-data composite) carry the
+    // headline. Stuff+ adds pitcher-specific arsenal signal when
+    // present. Per-tool max + age-vs-level boost provide ceiling +
+    // developmental-curve hints. Health + movement modulate.
     const rps = (p.statline && p.statline.rps_plus) ?? null;
     const sc  = getStatcastPlus(p);
+    const stf = _stuffPlusTBS(p);
     parts = [
-      [_tbsNorm(tool, 40, 70), 0.35],
-      [_tbsNorm(rps,  80, 130), 0.25],
-      [_tbsNorm(sc,   80, 130), 0.25],
-      [_tbsNorm(tmax, 40, 70), 0.15],
+      [_tbsNorm(tool, 40, 70),   0.28],
+      [_tbsNorm(rps,  80, 130),  0.18],
+      [_tbsNorm(sc,   80, 130),  0.18],
+      [_tbsNorm(tmax, 40, 70),   0.10],
+      [_tbsNorm(stf,  80, 130),  0.08],
+      [ageBoost,                 0.08],
+      [healthMod,                0.05],
+      [moveBoost,                0.05],
     ];
   }
   let presentSum = 0, presentWeight = 0;
@@ -27946,14 +28037,39 @@ function updatePitchMovementPlot(id, gamePk) {
 
 // v31.12 — Resolve a player's pitch_plot. Reads first from the inline
 // statcast_metrics.pitch_plot (legacy / monolithic export), then falls
-// back to the lazy-loaded DATA.pitch_plots[playerKey].top sidecar entry.
-// Kicks off loadSlice("pitch_plots") on first miss so the next
-// render() picks up the data once it arrives.
-function _resolvePitchPlot(sc, playerKey) {
+// back to the lazy-loaded DATA.pitch_plots[playerKey] sidecar entry.
+// The sidecar shape is {playerKey: {top: {pitch_plot}, level_splits:
+// {AA: {pitch_plot}, AAA: {pitch_plot}, ...}}}. The compoundKey passed
+// in by makePitchMovementPlot is `${player_key}-${level || "main"}`,
+// so we split it back into raw key + level lookup. Kicks off
+// loadSlice("pitch_plots") on first miss so the next render() picks
+// up the data once it arrives.
+function _resolvePitchPlot(sc, compoundKey) {
   const inline = sc && sc.pitch_plot;
   if (inline && (inline.points || []).length) return inline;
-  const fromSidecar = (DATA && DATA.pitch_plots && DATA.pitch_plots[playerKey]) || null;
-  if (fromSidecar && fromSidecar.top) return fromSidecar.top;
+  // Strip the trailing -<level> or -main suffix to recover the raw
+  // player_key for sidecar lookup. Player keys themselves can contain
+  // hyphens, so split on the LAST hyphen only.
+  let rawKey = compoundKey;
+  let levelSuffix = "main";
+  if (typeof compoundKey === "string") {
+    const i = compoundKey.lastIndexOf("-");
+    if (i > 0) {
+      rawKey = compoundKey.slice(0, i);
+      levelSuffix = compoundKey.slice(i + 1);
+    }
+  }
+  const entry = (DATA && DATA.pitch_plots && DATA.pitch_plots[rawKey]) || null;
+  if (entry) {
+    // Level-specific lookup first (e.g. "AAA"), then fall back to the
+    // top-level pitch_plot when the level row had no per-level data.
+    if (levelSuffix && levelSuffix !== "main"
+        && entry.level_splits && entry.level_splits[levelSuffix]
+        && (entry.level_splits[levelSuffix].points || []).length) {
+      return entry.level_splits[levelSuffix];
+    }
+    if (entry.top && (entry.top.points || []).length) return entry.top;
+  }
   // Sidecar advertised but not loaded — fire the fetch.
   if (DATA && DATA._slices && DATA._slices.pitch_plots
       && !(DATA.pitch_plots && Object.keys(DATA.pitch_plots).length)) {
