@@ -3060,20 +3060,20 @@ FARM_TREE_WEIGHT_TRANSACTIONS = 0.0   # rolled into Acquisition Strategy
 # Sub-grades inside each parent — 50/50 for all parents in v1.
 FARM_TREE_SUB_WEIGHT_EQUAL = 0.5
 
-# v9 — Per-leaf weights for the Financial branch. Surplus dominant:
-# fin_active_surplus (current actives' FV-implied surplus) carries the
-# biggest single chunk because it's the most forward-looking metric on
-# this axis. fin_contract_surplus (grad realized surplus vs cost) is
-# the historical companion. Pure-ROI leaves (war_per_m, draft_pool,
-# IFA_roi) are noisy small-sample ratios that overpenalize orgs whose
-# grads got high signing bonuses BUT have outperformed already; they
-# stay in the blend but at reduced weight. Weights normalize to 1.0
-# across present leaves at compute time, so a sparse-data org just
-# weighted-means whatever leaves it has.
+# v32.1 — Per-leaf weights for the Financial branch. active_surplus
+# promoted 0.35 → 0.40 now that it's the most defensible signal on the
+# axis (re-derived through value_framework's transparent FV→WAR×$/WAR
+# formula, with fast-cycle surplus_per_fv_pt_mm joining as a graded
+# sub-input). contract_surplus trimmed 0.25 → 0.20 in exchange. The
+# pure-ROI leaves (war_per_m, draft_pool, IFA) hold the lower weights;
+# draft_pool itself now blends war_per_m_pool + fv_per_m_pool internally
+# so it's denser per-leaf without changing the leaf weight. Weights
+# normalize to 1.0 across present leaves at compute time, so a sparse-
+# data org just weighted-means whatever leaves it has.
 FARM_LEAF_WEIGHTS = {
     "financial": {
-        "fin_active_surplus":        0.35,
-        "fin_contract_surplus":      0.25,
+        "fin_active_surplus":        0.40,    # v32.1: 0.35 → 0.40
+        "fin_contract_surplus":      0.20,    # v32.1: 0.25 → 0.20
         "fin_war_per_m":             0.10,
         "fin_draft_pool_efficiency": 0.15,
         "fin_ifa_roi":               0.15,
@@ -4350,12 +4350,21 @@ def _finalize_active_surplus_leaf(m: dict) -> dict:
     n_pit = m.get("_active_surplus_count_pit") or 0
     surplus_hit = m.get("_active_surplus_net_mm_hit") or 0.0
     surplus_pit = m.get("_active_surplus_net_mm_pit") or 0.0
+    fv_total_hit = m.get("_active_surplus_fv_total_hit") or 0.0
+    fv_total_pit = m.get("_active_surplus_fv_total_pit") or 0.0
     per_prospect_hit = round(surplus_hit / n_hit, 2) if n_hit >= 3 else None
     per_prospect_pit = round(surplus_pit / n_pit, 2) if n_pit >= 3 else None
     # v32.0 — $ surplus per FV-point. Higher = star/premium-position
     # loaded; lower = depth-heavy. Gated at ≥5 prospects AND fv_total>0.
     surplus_per_fv_pt = (round(total_surplus / fv_total, 3)
                          if n >= 5 and fv_total > 0 else None)
+    # v32.1 — Per-side $/FV-pt asymmetry: orgs with strong-bats-thin-arms
+    # (or vice versa) read very differently when split by side. Gated
+    # ≥3 per side AND positive fv_total on that side.
+    per_fv_pt_hit_mm = (round(surplus_hit / fv_total_hit, 3)
+                       if n_hit >= 3 and fv_total_hit > 0 else None)
+    per_fv_pt_pit_mm = (round(surplus_pit / fv_total_pit, 3)
+                       if n_pit >= 3 and fv_total_pit > 0 else None)
     if n < 5:
         return {
             "surplus_total_mm":        None,
@@ -4367,8 +4376,41 @@ def _finalize_active_surplus_leaf(m: dict) -> dict:
             "active_count_hit":        n_hit,
             "active_count_pit":        n_pit,
             "surplus_per_fv_pt_mm":    None,
+            "per_fv_pt_hit_mm":        per_fv_pt_hit_mm,
+            "per_fv_pt_pit_mm":        per_fv_pt_pit_mm,
             "fv_total":                round(fv_total, 1) if fv_total else None,
+            "fv_total_hit":            round(fv_total_hit, 1) if fv_total_hit else None,
+            "fv_total_pit":            round(fv_total_pit, 1) if fv_total_pit else None,
         }
+    # v32.1 — Per-acquisition-method $/FV efficiency. Buckets accumulated
+    # in the per-prospect loop; we compute the per-method ratios here.
+    # Gated at ≥3 contributing actives per method (small-sample channels
+    # render '—' rather than a misleading single-prospect ratio).
+    method_eff: dict[str, dict] = {}
+    for label, bucket in (m.get("_method_surplus") or {}).items():
+        bn = bucket.get("count") or 0
+        bfv = bucket.get("fv_total") or 0.0
+        bnet = bucket.get("net_mm") or 0.0
+        bcost = bucket.get("cost_mm") or 0.0
+        if bn >= 3 and bfv > 0:
+            method_eff[label] = {
+                "surplus_per_fv_pt_mm": round(bnet / bfv, 3),
+                "surplus_total_mm":    round(bnet, 1),
+                "fv_total":            round(bfv, 1),
+                "count":               bn,
+                "cost_basis_mm":       round(bcost, 1),
+                "surplus_per_prospect_mm": round(bnet / bn, 2),
+            }
+        else:
+            method_eff[label] = {
+                "surplus_per_fv_pt_mm": None,
+                "surplus_total_mm":    round(bnet, 1) if bn else None,
+                "fv_total":            round(bfv, 1) if bn else None,
+                "count":               bn,
+                "cost_basis_mm":       round(bcost, 1) if bn else None,
+                "surplus_per_prospect_mm": None,
+            }
+
     return {
         "surplus_total_mm":        round(total_surplus, 1),
         "surplus_per_prospect_mm": round(total_surplus / n, 2),
@@ -4379,7 +4421,14 @@ def _finalize_active_surplus_leaf(m: dict) -> dict:
         "active_count_hit":        n_hit,
         "active_count_pit":        n_pit,
         "surplus_per_fv_pt_mm":    surplus_per_fv_pt,
+        "per_fv_pt_hit_mm":        per_fv_pt_hit_mm,
+        "per_fv_pt_pit_mm":        per_fv_pt_pit_mm,
         "fv_total":                round(fv_total, 1),
+        "fv_total_hit":            round(fv_total_hit, 1),
+        "fv_total_pit":            round(fv_total_pit, 1),
+        # v32.1 — Per-channel $/FV efficiency (draft / IFA / trade).
+        # Helps identify which acquisition pathway is best for an org.
+        "method_efficiency":       method_eff,
     }
 
 
@@ -7134,6 +7183,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # of active prospect capital). High = star-loaded /
                 # premium-position; low = depth-heavy but flat.
                 "_active_surplus_fv_total":  0.0,
+                # v32.1 — Per-side FV totals so the leaf can surface
+                # hitter $/FV-pt vs pitcher $/FV-pt. Pairs with the
+                # existing per-side surplus_net_mm_{hit,pit} totals.
+                "_active_surplus_fv_total_hit":  0.0,
+                "_active_surplus_fv_total_pit":  0.0,
+                # v32.1 — Per-acquisition-method buckets feeding the
+                # new acquisition_method_efficiency sub-leaf. Tracks
+                # which channel (draft / IFA / trade) is the most $-efficient
+                # at producing FV. Keyed by method label; each holds
+                # net surplus ($M), fv-pts, count, and cost basis ($M).
+                "_method_surplus": {
+                    "draft":             {"net_mm": 0.0, "fv_total": 0.0, "count": 0, "cost_mm": 0.0},
+                    "international_fa":  {"net_mm": 0.0, "fv_total": 0.0, "count": 0, "cost_mm": 0.0},
+                    "trade":             {"net_mm": 0.0, "fv_total": 0.0, "count": 0, "cost_mm": 0.0},
+                },
                 # v29 — Statcast+ + indicator-count accumulators feeding
                 # the new `statcast_quality` farm-grade leaf. _sc_plus
                 # collects every active prospect's SC+ when tracked;
@@ -7262,8 +7326,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             m["_active_surplus_count"]   += 1
             # v32.0 — Track FV-pts contributing to surplus_net so
             # surplus_per_fv_pt_mm can be computed in finalize.
+            # v32.1 — Per-side FV totals (hit / pit) for the asymmetry
+            # display in the active_surplus leaf.
             if fv_raw is not None:
                 m["_active_surplus_fv_total"] += float(fv_raw)
+                if is_pitcher_p:
+                    m["_active_surplus_fv_total_pit"] += float(fv_raw)
+                else:
+                    m["_active_surplus_fv_total_hit"] += float(fv_raw)
             # v31.5 — Per-side split.
             if is_pitcher_p:
                 m["_active_surplus_net_mm_pit"] += _net_mm
@@ -7271,6 +7341,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             else:
                 m["_active_surplus_net_mm_hit"] += _net_mm
                 m["_active_surplus_count_hit"]  += 1
+            # v32.1 — Per-acquisition-method tracking. `method` is one of
+            # "draft" / "international_fa" / "trade" / "rule_5" / "waiver"
+            # / "purchase" / "free_agent" / None. We only bucket the
+            # three major channels — the rest aggregate as 'other'.
+            _method = acq_rec.get("method")
+            _method_bucket = (_method if _method in ("draft", "international_fa", "trade")
+                              else None)
+            if _method_bucket is not None and fv_raw is not None:
+                _mb = m["_method_surplus"][_method_bucket]
+                _mb["net_mm"]    += _net_mm
+                _mb["cost_mm"]   += _bonus_mm
+                _mb["fv_total"]  += float(fv_raw)
+                _mb["count"]     += 1
         # Tree v3 — Draft Ceiling Hits: count drafted actives whose
         # current consensus FV ≥ 60 and whose draft year is within the
         # last 3 years. Captures whether the org's recent draft classes
@@ -8298,6 +8381,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         m["tree"]["mlb_hitter_wag"]  = m["tree"]["mlb_hitter_production"]
         m["tree"]["mlb_pitcher_wag"] = m["tree"]["mlb_pitcher_production"]
 
+        # v32.1 — Lift the active-roster $/FV-pt efficiency to the org
+        # top level so it's sortable on the farm leaderboard alongside
+        # `total_fv` / `surplus_total_mm`. Sourced from the active
+        # surplus leaf (gated at ≥5 contributing actives upstream).
+        # Reads as a portfolio-quality dial: high = star/premium-position
+        # loaded; low = depth-heavy but flat.
+        _asl = m["tree"].get("fin_active_surplus") or {}
+        m["dollars_per_fv_active"] = _asl.get("surplus_per_fv_pt_mm")
+        m["surplus_per_fv_pt_hit_mm"] = _asl.get("per_fv_pt_hit_mm")
+        m["surplus_per_fv_pt_pit_mm"] = _asl.get("per_fv_pt_pit_mm")
+
         # v17 — IFA ROI fallback. When the leaf's primary metric
         # (`war_per_m_ifa`, requires bonus dollars on file) is None, fall
         # back to the IFA acq leaf's WAR/yr signal so the cell still
@@ -8728,15 +8822,24 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 _is_pit = bool(_pos and _pos.split("/")[0] in PITCHER_POS)
                 _player_pos_by_key[_p.player_key] = (_is_pit, _pos)
 
-    def _trade_player_value(pkey: str, fv: float | None) -> float | None:
-        """Surplus $M value of one player in one trade. Debuted players
-        use realized WAR × $/WAR_overall (rolling 3yr avg $11.74M);
-        prospects use FV-anchored surplus (value_framework)."""
+    def _trade_player_value(pkey: str, fv: float | None) -> tuple[float | None, str | None]:
+        """Surplus $M value of one player in one trade, plus the kind.
+
+        v32.1 — Returns (value, kind) where kind is:
+          * "vet"      — debuted player, value = career_war × $/WAR_overall
+          * "prospect" — pre-debut, value = FV-anchored surplus from value_framework
+          * None       — no usable signal (returns (None, None))
+
+        Honors the project-wide principle: prospects flow through FV→
+        projected WAR→projected $, debutants/MLB players flow through
+        actual WAR→actual $.
+        """
         cw = ((career_war or {}).get(pkey) or {}).get("career_war")
         if cw is not None and float(cw) > 0:
-            return round(float(cw) * _WAR_DOLLAR_VALUE_M, 2)
+            return (round(float(cw) * _WAR_DOLLAR_VALUE_M, 2), "vet")
         is_pit, pos = _player_pos_by_key.get(pkey, (False, None))
-        return _estimate_surplus_mm(fv, is_pit, pos)
+        v = _estimate_surplus_mm(fv, is_pit, pos)
+        return (v, "prospect" if v is not None else None)
 
     for entry in org_summary:
         in_fv = 0.0;  out_fv = 0.0
@@ -8747,8 +8850,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Recency-weighted sums (drive leaf scoring).
         in_war_w  = 0.0;   out_war_w   = 0.0
         # v31.8 — Recency-weighted SURPLUS sums (parallel signal).
+        # Includes BOTH vet (career_war × $/WAR) AND prospect (FV→$)
+        # contributors — feeds the headline surplus_delta input.
         in_surplus_w  = 0.0;  out_surplus_w  = 0.0
         in_surplus_n  = 0;    out_surplus_n  = 0
+        # v32.1 — Prospect-only and vet-only surplus splits. Honors the
+        # site-wide principle that FV-projected $ (prospects) and
+        # realized-WAR $ (debutants/MLB) are different measurements
+        # and shouldn't be mixed in a $/FV-pt ratio. Prospect-side
+        # surplus pairs with prospect-side FV (which is meaningful);
+        # vet-side surplus is just realized $-value (no FV-pt rate).
+        in_surplus_w_prospect  = 0.0;  out_surplus_w_prospect  = 0.0
+        in_surplus_n_prospect  = 0;    out_surplus_n_prospect  = 0
+        in_fv_prospect = 0.0;          out_fv_prospect = 0.0
+        in_surplus_w_vet  = 0.0;       out_surplus_w_vet  = 0.0
+        in_surplus_n_vet  = 0;         out_surplus_n_vet  = 0
         # Top weighted-contributor trades for the tooltip story.
         weighted_trades: list[dict] = []
         for ev in (entry["fv_events"] or []):
@@ -8758,8 +8874,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             pkey = ev.get("player_key")
             cw = ((career_war or {}).get(pkey) or {}).get("career_war")
             w = _trade_recency_weight(ev.get("date"))
-            # v31.8 — Compute per-player surplus value.
-            psurplus = _trade_player_value(pkey, fv)
+            # v32.1 — Per-player surplus value + kind ("vet" / "prospect").
+            psurplus, ptype = _trade_player_value(pkey, fv)
             if ev.get("direction") == "in":
                 in_fv += fv; in_n += 1
                 if cw is not None:
@@ -8774,6 +8890,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 if psurplus is not None:
                     in_surplus_w += psurplus * w
                     in_surplus_n += 1
+                    if ptype == "prospect":
+                        in_surplus_w_prospect += psurplus * w
+                        in_surplus_n_prospect += 1
+                        in_fv_prospect += fv
+                    elif ptype == "vet":
+                        in_surplus_w_vet += psurplus * w
+                        in_surplus_n_vet += 1
             elif ev.get("direction") == "out":
                 out_fv += fv; out_n += 1
                 if cw is not None:
@@ -8788,6 +8911,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 if psurplus is not None:
                     out_surplus_w += psurplus * w
                     out_surplus_n += 1
+                    if ptype == "prospect":
+                        out_surplus_w_prospect += psurplus * w
+                        out_surplus_n_prospect += 1
+                        out_fv_prospect += fv
+                    elif ptype == "vet":
+                        out_surplus_w_vet += psurplus * w
+                        out_surplus_n_vet += 1
         entry["tree"]["tx_trades"] = {
             "net_fv":    round(in_fv - out_fv, 1) if (in_n + out_n) else None,
             "fv_in":     round(in_fv, 1),
@@ -8815,6 +8945,38 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "surplus_out":   round(out_surplus_w, 2),
             "surplus_in_count":  in_surplus_n,
             "surplus_out_count": out_surplus_n,
+            # v32.1 — Per-side $/FV-pt, PROSPECT-ONLY. Honors the
+            # principle that FV-projected $ (prospects) and realized-WAR
+            # $ (vets) can't share a $/FV-pt ratio: FV is a prospect-time
+            # grade with no direct vet analog. The ratio uses only the
+            # prospect contributors on each side. Vet $ is exposed
+            # separately as in_vet_value_mm / out_vet_value_mm so the
+            # trade audit can show both signals side-by-side.
+            "in_per_fv_mm":  (round(in_surplus_w_prospect  / in_fv_prospect, 3)
+                              if in_fv_prospect  > 0 and in_surplus_n_prospect  > 0 else None),
+            "out_per_fv_mm": (round(out_surplus_w_prospect / out_fv_prospect, 3)
+                              if out_fv_prospect > 0 and out_surplus_n_prospect > 0 else None),
+            "per_fv_delta_mm": (
+                round((in_surplus_w_prospect / in_fv_prospect if in_fv_prospect > 0 else 0)
+                      - (out_surplus_w_prospect / out_fv_prospect if out_fv_prospect > 0 else 0), 3)
+                if (in_fv_prospect > 0 and out_fv_prospect > 0
+                    and in_surplus_n_prospect > 0 and out_surplus_n_prospect > 0) else None),
+            # v32.1 — Prospect-side vs vet-side surplus splits exposed
+            # so the trade audit UI can show "X FV @ $Y/FV (prospects)
+            # + $Z (vet realized)" rather than a mixed apples/oranges
+            # ratio. fv_prospect totals are summed RAW (no recency
+            # weight) since FV is a snapshot grade; surplus totals are
+            # recency-weighted to match the headline surplus_delta.
+            "in_surplus_prospect_mm":  round(in_surplus_w_prospect, 2),
+            "out_surplus_prospect_mm": round(out_surplus_w_prospect, 2),
+            "in_fv_prospect":          round(in_fv_prospect, 1),
+            "out_fv_prospect":         round(out_fv_prospect, 1),
+            "in_vet_value_mm":         round(in_surplus_w_vet, 2),
+            "out_vet_value_mm":        round(out_surplus_w_vet, 2),
+            "in_vet_count":            in_surplus_n_vet,
+            "out_vet_count":           out_surplus_n_vet,
+            "in_prospect_count":       in_surplus_n_prospect,
+            "out_prospect_count":      out_surplus_n_prospect,
             # Top weighted contributors for the tooltip (sorted by
             # absolute weighted_war desc, max 5).
             "top_weighted_trades": sorted(
@@ -9725,10 +9887,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # orgs don't auto-win on raw aggregate (they DO win on raw
         # totals, but per-prospect surfaces "this org's actives are
         # net-profitable signings" as a distinct signal from "this org
-        # has lots of actives"). Falls back to the raw total if per-
-        # prospect is None and total is present (transitional cases).
+        # has lots of actives").
+        # v32.1 — Now 2-input blend with surplus_per_fv_pt_mm: $/prospect
+        # captures "average prospect is net-profitable" while $/FV-pt
+        # captures "FV is concentrated in high-leverage spots." Equal
+        # 50/50 weight inside the leaf z-blend (the framework averages
+        # the two z-scores), so both signals carry the leaf together.
         "fin_active_surplus": [
             ("per_prospect", lambda e: (e["tree"]["fin_active_surplus"] or {}).get("surplus_per_prospect_mm")),
+            ("per_fv_pt",    lambda e: (e["tree"]["fin_active_surplus"] or {}).get("surplus_per_fv_pt_mm")),
         ],
         # MLB Production — v17: renamed mlb_hitter_wag/mlb_pitcher_wag
         # leaves to mlb_hitter_production/mlb_pitcher_production. Primary
@@ -9775,9 +9942,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "mlb_production_conviction": [
             ("star_count", lambda e: (e["tree"]["mlb_production_conviction"] or {}).get("star_count")),
         ],
-        # v4 NEW leaves under Financial.
+        # v4 leaf, v32.1 — Now 2-input blend with fv_per_m_pool. The two
+        # signals share the same denominator (pool $) but have different
+        # numerators: WAR is lagging realized (grads), FV is fast-cycle
+        # current (actives from the same draft window). 50/50 weight
+        # inside the leaf z-blend so the leaf is responsive to recent
+        # drafts (FV side) AND anchored to realized outcomes (WAR side).
         "fin_draft_pool_efficiency": [
             ("war_per_m_pool", lambda e: (e["tree"]["fin_draft_pool_efficiency"] or {}).get("war_per_m_pool")),
+            ("fv_per_m_pool",  lambda e: (e["tree"]["fin_draft_pool_efficiency"] or {}).get("fv_per_m_pool")),
         ],
         # v17 — IFA ROI: primary input still WAR/$M IFA spend, but with a
         # fallback to acq_ifa's WAR/yr signal when no bonus dollars are on

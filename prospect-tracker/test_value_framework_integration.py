@@ -227,3 +227,173 @@ def test_mlb_vet_career_war_value() -> None:
     v = vf.career_war_value_mm(30.0)
     assert v is not None
     assert 300.0 <= v <= 400.0
+
+
+# =============================================================================
+# v32.1 — Per-side $/FV split + acquisition-method efficiency
+# =============================================================================
+def test_active_surplus_per_side_fv_split() -> None:
+    """fin_active_surplus should expose per_fv_pt_hit_mm and per_fv_pt_pit_mm
+    when both sides have ≥3 contributors with positive fv totals."""
+    import storage
+    m = {
+        "_active_surplus_count":         8,
+        "_active_surplus_net_mm":      120.0,
+        "_active_surplus_cost_mm":       3.0,
+        "_active_surplus_fv_total":    400.0,
+        # 5 hitters totaling 250 FV / $80M surplus
+        "_active_surplus_count_hit":     5,
+        "_active_surplus_net_mm_hit":   80.0,
+        "_active_surplus_fv_total_hit": 250.0,
+        # 3 pitchers totaling 150 FV / $40M surplus
+        "_active_surplus_count_pit":     3,
+        "_active_surplus_net_mm_pit":   40.0,
+        "_active_surplus_fv_total_pit": 150.0,
+    }
+    out = storage._finalize_active_surplus_leaf(m)
+    assert out["per_fv_pt_hit_mm"] == pytest.approx(80.0 / 250.0, abs=1e-3)
+    assert out["per_fv_pt_pit_mm"] == pytest.approx(40.0 / 150.0, abs=1e-3)
+    assert out["fv_total_hit"] == pytest.approx(250.0, abs=0.05)
+    assert out["fv_total_pit"] == pytest.approx(150.0, abs=0.05)
+
+
+def test_active_surplus_method_efficiency_populated() -> None:
+    """method_efficiency dict should expose draft/IFA/trade breakdowns
+    when each channel has ≥3 actives with positive fv."""
+    import storage
+    m = {
+        "_active_surplus_count":         9,
+        "_active_surplus_net_mm":      120.0,
+        "_active_surplus_cost_mm":       4.0,
+        "_active_surplus_fv_total":    450.0,
+        "_active_surplus_count_hit":     5,
+        "_active_surplus_count_pit":     4,
+        "_method_surplus": {
+            "draft":            {"net_mm": 60.0, "fv_total": 200.0, "count": 4, "cost_mm": 2.5},
+            "international_fa": {"net_mm": 40.0, "fv_total": 180.0, "count": 3, "cost_mm": 1.0},
+            "trade":            {"net_mm": 20.0, "fv_total":  70.0, "count": 2, "cost_mm": 0.5},
+        },
+    }
+    out = storage._finalize_active_surplus_leaf(m)
+    me = out["method_efficiency"]
+    # Draft + IFA: ≥3 contributors → populated
+    assert me["draft"]["surplus_per_fv_pt_mm"] == pytest.approx(60.0 / 200.0, abs=1e-3)
+    assert me["international_fa"]["surplus_per_fv_pt_mm"] == pytest.approx(40.0 / 180.0, abs=1e-3)
+    # Trade: only 2 contributors → ratio None, but count + raw sums on file
+    assert me["trade"]["surplus_per_fv_pt_mm"] is None
+    assert me["trade"]["count"] == 2
+    assert me["trade"]["surplus_total_mm"] == pytest.approx(20.0, abs=0.05)
+
+
+def test_tx_trades_per_fv_metrics_present() -> None:
+    """tx_trades should include both the prospect-only $/FV ratios AND
+    the separate vet-value fields so trade audit UI can render them
+    side-by-side per the project-wide FV→$ vs realized-$ split."""
+    src = (_ROOT / "storage.py").read_text(encoding="utf-8")
+    for field in ("in_per_fv_mm", "out_per_fv_mm", "per_fv_delta_mm",
+                  # v32.1 vet/prospect split
+                  "in_surplus_prospect_mm", "out_surplus_prospect_mm",
+                  "in_fv_prospect", "out_fv_prospect",
+                  "in_vet_value_mm", "out_vet_value_mm",
+                  "in_prospect_count", "out_prospect_count",
+                  "in_vet_count", "out_vet_count"):
+        assert f'"{field}"' in src, f"tx_trades schema missing {field}"
+
+
+def test_trade_player_value_returns_kind() -> None:
+    """_trade_player_value should return (value, kind) per v32.1, where
+    kind in {'vet', 'prospect', None}. This is the contract the tx_trades
+    loop relies on for the prospect/vet split."""
+    src = (_ROOT / "storage.py").read_text(encoding="utf-8")
+    # The function is nested; match with optional leading whitespace.
+    fn = re.search(r"def _trade_player_value\([^)]*\).*?(?=\n    [a-zA-Z_])",
+                   src, re.DOTALL)
+    assert fn is not None, "_trade_player_value not found"
+    body = fn.group(0)
+    assert '"vet"' in body, "vet kind not returned"
+    assert '"prospect"' in body, "prospect kind not returned"
+    # Tuple return shape declared
+    assert "tuple[float | None, str | None]" in body, "tuple return type missing"
+
+
+def test_surplus_granular_for_non_anchor_fv() -> None:
+    """value_framework.surplus_value_mm should produce a defensible
+    value for non-5pt FVs (e.g. 47) that is BELOW what naive linear-
+    interpolation between FV 45 and FV 50 anchor surpluses would give
+    -- because the $/WAR tier-rate jump from $8.76M (1-2 WAR) to
+    $13.63M (2+ WAR) happens BETWEEN FV 45 and FV 50 for hitters."""
+    s45 = vf.surplus_value_mm(45, is_pitcher=False, position=None,
+                              apply_position_mult=False)
+    s47 = vf.surplus_value_mm(47, is_pitcher=False, position=None,
+                              apply_position_mult=False)
+    s50 = vf.surplus_value_mm(50, is_pitcher=False, position=None,
+                              apply_position_mult=False)
+    naive_linear = s45 + (s50 - s45) * (47 - 45) / 5
+    # The real FV 47 surplus should be LESS than the linear interp
+    # because at FV 47 the WAR_peak is ~1.49 (< 2) so it still gets
+    # the 1-2 tier rate, not the 2+ tier rate that FV 50 enjoys.
+    assert s47 < naive_linear, (
+        f"FV 47 surplus {s47} not below naive linear interp {naive_linear:.2f}"
+    )
+    assert s47 > s45, "FV 47 surplus must exceed FV 45 surplus"
+
+
+def test_fv_to_war_peak_interpolates_at_one_point_granularity() -> None:
+    """fv_to_war_peak should produce distinct values for FV 47, 48, 49
+    (not bucket to FV 45 or FV 50)."""
+    vals = [vf.fv_to_war_peak(g, is_pitcher=False) for g in (45, 46, 47, 48, 49, 50)]
+    # All distinct (strictly monotonic between anchors)
+    for i in range(len(vals) - 1):
+        assert vals[i] < vals[i+1], f"non-monotonic at FV {45+i}->{46+i}"
+
+
+def test_dollars_per_fv_granular() -> None:
+    """$/FV should produce distinct values for non-5pt FVs."""
+    d47 = vf.dollars_per_fv(47, False, None)
+    d50 = vf.dollars_per_fv(50, False, None)
+    assert d47 is not None
+    assert d50 is not None
+    # Different magnitudes — the framework treats them differently.
+    assert abs(d47 - d50) > 0.01
+
+
+def test_financial_leaf_weights_v32_1() -> None:
+    """Leaf weights should reflect the v32.1 rebalance: active_surplus 0.40,
+    contract_surplus 0.20, others unchanged."""
+    import storage
+    fin = storage.FARM_LEAF_WEIGHTS["financial"]
+    assert fin["fin_active_surplus"]   == 0.40
+    assert fin["fin_contract_surplus"] == 0.20
+    assert fin["fin_war_per_m"]        == 0.10
+    assert fin["fin_draft_pool_efficiency"] == 0.15
+    assert fin["fin_ifa_roi"]          == 0.15
+    # Weights still sum to 1.0
+    assert pytest.approx(sum(fin.values()), abs=1e-9) == 1.0
+
+
+def test_draft_pool_efficiency_grades_both_metrics() -> None:
+    """The leaf grading spec should now include both war_per_m_pool AND
+    fv_per_m_pool as sub-inputs."""
+    src = (_ROOT / "storage.py").read_text(encoding="utf-8")
+    # Find the fin_draft_pool_efficiency lambda block by locating the
+    # opening key and walking to the matching `],` close.
+    start = src.find('"fin_draft_pool_efficiency": [')
+    assert start >= 0, "fin_draft_pool_efficiency block not found"
+    end = src.find("],", start)
+    assert end > start, "fin_draft_pool_efficiency block end not found"
+    block = src[start:end]
+    assert '"war_per_m_pool"' in block
+    assert '"fv_per_m_pool"'  in block
+
+
+def test_active_surplus_grades_both_metrics() -> None:
+    """The fin_active_surplus leaf grading spec should now grade BOTH
+    surplus_per_prospect_mm and surplus_per_fv_pt_mm."""
+    src = (_ROOT / "storage.py").read_text(encoding="utf-8")
+    start = src.find('"fin_active_surplus": [')
+    assert start >= 0, "fin_active_surplus block not found"
+    end = src.find("],", start)
+    assert end > start, "fin_active_surplus block end not found"
+    block = src[start:end]
+    assert "surplus_per_prospect_mm" in block
+    assert "surplus_per_fv_pt_mm"    in block
