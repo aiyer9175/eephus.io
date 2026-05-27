@@ -2297,6 +2297,13 @@ def derive_roster_status(transactions: list[dict],
     """
     today = today or date.today()
     career_rows = career_rows or []
+    # v31.13 — Defensive chronological sort so the on_40_man gate +
+    # option-window state machine see events in the correct order
+    # regardless of caller input. fetch_player_transactions already
+    # date-sorts; this protects tests / ad-hoc callers passing
+    # unordered lists.
+    transactions = sorted(transactions or [],
+                          key=lambda r: (r.get("date") or ""))
 
     # 40-man selection isn't an MLB debut — a Rule 5 protection add in
     # November selects a player to the 40-man without them ever playing.
@@ -2310,6 +2317,24 @@ def derive_roster_status(transactions: list[dict],
     selection_date: str | None = None
     on_40_man = False
     options_seasons: set[int] = set()
+    # v31.13 — Track per-season days on optional assignment so we can
+    # apply the 20-day rule (effective 2020+: an option year only counts
+    # as "used" if the player accumulates ≥20 days on optional assignment
+    # in that calendar season). Walk transactions chronologically,
+    # marking the start of each optional-assignment window when the
+    # player is optioned + currently on the 40-man, and closing the
+    # window at the next recall / selection / activation.
+    option_start_by_year: dict[int, date | None] = {}
+    days_optioned_by_year: dict[int, int] = {}
+    today_cap = today  # close any still-open windows at today
+
+    def _close_option_window(year: int, end_d: date):
+        start_d = option_start_by_year.get(year)
+        if start_d is None:
+            return
+        days = max(0, (end_d - start_d).days)
+        days_optioned_by_year[year] = days_optioned_by_year.get(year, 0) + days
+        option_start_by_year[year] = None
 
     for tx in transactions or []:
         date_iso = tx.get("date") or ""
@@ -2321,9 +2346,19 @@ def derive_roster_status(transactions: list[dict],
         # debut date or flip the 40-man flag.
         if any(p in desc_low for p in _NON_LEVEL_CHANGE_PHRASES):
             continue
+        try:
+            tx_d = date.fromisoformat(date_iso[:10])
+            tx_yr = tx_d.year
+        except (ValueError, TypeError):
+            tx_d = None
+            tx_yr = None
         # 40-man add (typeCode "SE" or any row with "selected the contract").
         if type_code == "SE" or "selected the contract" in desc_low \
                 or "purchased the contract" in desc_low:
+            # A contract selection closes any open optional-assignment
+            # window — the player is back on the active MLB roster.
+            if tx_yr is not None and tx_d is not None:
+                _close_option_window(tx_yr, tx_d)
             on_40_man = True
             if not selection_date:
                 selection_date = date_iso
@@ -2331,17 +2366,42 @@ def derive_roster_status(transactions: list[dict],
         # through waivers off the 40-man roster.
         elif "sent outright" in desc_low or "removed from the 40" in desc_low:
             on_40_man = False
-        # Option year — count any optioning event by season.
-        if type_code == "OPT" or "optioned" in desc_low:
-            try:
-                yr = int(date_iso[:4])
-                # Don't count September call-down / instructional moves
-                # before active rosters expanded — but the public API
-                # doesn't distinguish, so we accept any optioning in the
-                # season as a used option.
-                options_seasons.add(yr)
-            except ValueError:
-                pass
+            # An outright clears any open optional window (player no
+            # longer occupies a 40-man spot, so the option isn't
+            # actively burning).
+            if tx_yr is not None and tx_d is not None:
+                _close_option_window(tx_yr, tx_d)
+        # Recall / activation — closes the optional-assignment window.
+        if ("recalled" in desc_low or type_code == "REC"
+                or "activated" in desc_low):
+            if tx_yr is not None and tx_d is not None:
+                _close_option_window(tx_yr, tx_d)
+        # Option year — count any optioning event by season, BUT only
+        # when the player is actually on the 40-man at the time. A
+        # non-40-man prospect can't burn an option — the MLB rule keys
+        # off occupying a 40-man spot. Without this gate the MLB Stats
+        # API's loose "optioned" descriptions on minor-league assignment
+        # rows leaked phantom options onto pre-debut prospects (Edwin
+        # Arroyo case — was showing 2 of 3 used despite no MLB debut).
+        if (type_code == "OPT" or "optioned" in desc_low) and on_40_man:
+            if tx_yr is not None and tx_d is not None:
+                options_seasons.add(tx_yr)
+                # Start (or restart) the optional-assignment window.
+                if option_start_by_year.get(tx_yr) is None:
+                    option_start_by_year[tx_yr] = tx_d
+    # Close any windows still open against TODAY (player currently on
+    # optional assignment).
+    for yr, start_d in list(option_start_by_year.items()):
+        if start_d is not None:
+            _close_option_window(yr, today_cap)
+    # v31.13 — Apply the 20-day rule. An option-year only counts as
+    # USED when the player accumulated ≥20 days on optional assignment.
+    # Sub-20-day "phantom" options (e.g. optioned in spring training,
+    # selected back to MLB after a brief MiLB stint) drop out.
+    options_seasons = {
+        yr for yr in options_seasons
+        if days_optioned_by_year.get(yr, 0) >= 20
+    }
 
     # MLB games played by season (from career_stats) — drives both the
     # service-phase bucket and the rookie-exhaustion threshold check.
@@ -2423,6 +2483,18 @@ def derive_roster_status(transactions: list[dict],
     else:
         service_phase = "pre_arb"
 
+    # v31.13 — Pre-debut gate. Per user product decision, options do
+    # NOT count as "used" for prospects who have never appeared in an
+    # MLB game, even if they're on the 40-man and have been on
+    # optional assignment for 20+ days. The MLB-canonical rule says
+    # such a player has burned a year; but for prospect-tracking
+    # purposes the user wants the chip to read 3/3 until the prospect
+    # actually debuts (the moment the team has truly "committed" the
+    # roster spot). Edwin Arroyo case: 40-man add Nov 2025 + optioned
+    # March 2026 reads as 3/3 here despite the canonical rule saying
+    # 2/3, because he has not yet debuted.
+    if debut_date is None:
+        options_seasons = set()
     options_used = min(DEFAULT_OPTIONS, len(options_seasons))
     options_remaining = max(0, DEFAULT_OPTIONS - options_used)
 

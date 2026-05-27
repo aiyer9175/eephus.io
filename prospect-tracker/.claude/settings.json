@@ -27,7 +27,8 @@
       "Bash(python -m pytest test_index_html_loads.py test_design_tokens.py test_eta.py test_storage_export.py --tb=short)",
       "Bash(node -e ' *)",
       "Bash(python -m pytest --collect-only -q)",
-      "Bash(python -m pytest -v -rs)"
+      "Bash(python -m pytest -v -rs)",
+      "Bash(python -m pytest test_graduation_rules.py -v)"
     ]
   }
 }
