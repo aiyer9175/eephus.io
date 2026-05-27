@@ -210,10 +210,11 @@
       --text-on-accent: #FBF8F0;
       /* Text intended to sit on an always-dark surface (e.g. the page
          header band — `--bg-header` is deep navy/charcoal in BOTH
-         themes). Always cream; does NOT flip per theme. Carries
-         built-in alpha for caption-style usage so callers don't need
-         `opacity:` (which bleeds to children). */
-      --text-on-dark-muted: rgba(251, 248, 240, 0.78);
+         themes). v35 — `--text-on-dark-muted` retired: its sole consumer
+         (the old navy-filled active chip) moved to the gold + iridescent
+         brand treatment, so the token is gone rather than left as dead
+         weight. Use `--text-on-accent` for full-cream text over dark/accent
+         surfaces. */
       /* Subtle hover tint applied over interactive surfaces. Light
          theme darkens slightly; dark theme lifts slightly. */
       --bg-hover: rgba(15, 27, 45, 0.05);
@@ -417,13 +418,14 @@
     [data-theme="dark"] .spotlight-row:hover {
       background: var(--bg-row-hover);
     }
-    /* Active filter chip — invert the muddy bg-header/secondary pairing
-       to a lifted-cream surface so the selected state reads as live
-       rather than as a darkened-out chip. */
+    /* v35 — Active chip is now theme-aware (gold border + iridescent
+       underline, see button.chip.active below); dark mode just lifts the
+       fill a touch off the row background so the selected pill still reads
+       as raised. The gold border + gradient accent carry the brand cue. */
     [data-theme="dark"] button.chip.active {
-      background: var(--text-primary);
-      color: var(--bg-header);
-      border-color: var(--text-primary);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-color: var(--neon-amber);
     }
     /* v34 — Section-tab active styling is now the iridescent underline +
        bold --text-primary text (see .section-tab.active below), which is
@@ -1048,11 +1050,24 @@
         -webkit-overflow-scrolling: touch;
       }
     }
+    /* v35 — Active chips echo the section-bar brand: bold text, a gold
+       (--neon-amber) border, and a thin iridescent underline accent, so a
+       selected sub-view / sort / category chip reads as part of the brand
+       instead of a flat navy block. Theme-aware via tokens. */
     button.chip.active {
-      background: var(--bg-header);
-      color: var(--text-on-dark-muted);
-      border-color: var(--bg-header);
-      font-weight: 600;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--neon-amber);
+      font-weight: 700;
+      position: relative;
+      overflow: hidden;
+    }
+    button.chip.active::after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 2px;
+      background: var(--iridescent);
     }
     /* v18 — Reset chip: muted neutral by default with a clear hover
        cue. Doesn't accept .active state — clicking it triggers a state
@@ -3230,21 +3245,38 @@
     .driver-list {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 5px;
+      align-items: center;
     }
+    /* v34 — Bigger, more legible driver pills on Spotlights. */
     .driver-tag {
       display: inline-block;
       font-family: var(--font-sans);
-      font-size: 10px;
-      padding: 2px 7px;
+      font-size: 12px;
+      padding: 3px 9px;
       border-radius: 999px;
       border: 1px solid var(--border);
       background: var(--bg-tertiary);
       color: var(--text-secondary);
       letter-spacing: 0.02em;
-      font-weight: 500;
+      font-weight: 600;
       cursor: help;
     }
+    .driver-rest[hidden] { display: none; }
+    .driver-rest { display: contents; }
+    .driver-more-btn {
+      font-family: var(--font-sans);
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px dashed var(--border);
+      background: transparent;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      letter-spacing: 0.04em;
+    }
+    .driver-more-btn:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
     /* v15 — driver valence coloring. Good = green, bad = red, neutral
        inherits the base styling above. Tooltip surfaces the stat
        breakdown (current / baseline / delta). */
@@ -3461,6 +3493,19 @@
       margin: 0 auto 8px;
     }
     .state-message code { font-size: 12px; }
+    /* Optional two-line empty state: an emphasized headline + muted body.
+       Used for "future class not scouted yet"-style placeholders. */
+    .state-message-title {
+      font-weight: 700;
+      color: var(--text-primary);
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+    .state-message-body {
+      max-width: 460px;
+      margin: 0 auto;
+      color: var(--text-secondary);
+    }
     .state-error { color: var(--down); }
     @keyframes state-pulse {
       0%, 100% { opacity: 0.55; }
@@ -3813,6 +3858,16 @@
       position: absolute; left: 10px; right: 10px;
       top: 4px; height: 1px;
       background: var(--border-light); opacity: 0.5;
+    }
+    /* v36 — Iridescent masthead accent along the bottom edge, mirroring
+       the h1 rule + section-tab underline so every section header carries
+       the brand's signature gradient. */
+    .newsprint-eyebrow::after {
+      content: "";
+      position: absolute; left: 0; right: 0; bottom: -1px;
+      height: 2px;
+      background: var(--iridescent);
+      opacity: 0.85;
     }
     .newsprint-eyebrow-label {
       font-family: var(--font-sans);
@@ -7233,8 +7288,8 @@
          are tool tabs on the right. -->
     <div class="section-tabs-scroll">
     <button class="section-tab active" data-section="active">MiLB Prospects</button>
-    <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="spotlights">Spotlights</button>
+    <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="traded">Transactions</button>
     <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL">Injured List</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
@@ -7242,6 +7297,7 @@
     <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">MLB Draft</button>
     <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes — signing bonuses, signing teams, prospects signed, and org spending by year (2021–present).">International Amateurs</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
+    <button class="section-tab" data-section="charts" title="Build your own scatterplot — pick X/Y axes and a prospect group (MiLB, Debuted, Draft, International Amateurs, Overseas, or Farm systems).">Scatterplots</button>
     <button class="section-tab" data-section="glossary" title="Stats, indices, scouting concepts, and methodology — every term used on the site">Glossary</button>
     <button class="section-tab" data-section="watchlist" title="Your starred prospects and farm systems — private to this browser">Watchlist<span class="section-tab-count" id="watchlist-tab-count"></span></button>
     </div>
@@ -7255,7 +7311,7 @@
 
   <div class="search-bar">
     <input type="search" class="search-input" id="search-input"
-           placeholder="Search a player" autocomplete="off" spellcheck="false">
+           placeholder="Search" autocomplete="off" spellcheck="false">
   </div>
 
   <!-- Mobile filter toggle. At <720px the filter chips collapse behind
@@ -7545,6 +7601,10 @@
 
   <!-- v31.9 — Spotlights now ships the right-side context rail. -->
   <div id="spotlights-section" style="display: none;">
+    <div class="newsprint-eyebrow">
+      <span class="newsprint-eyebrow-label">Standout Performances</span>
+      <span class="newsprint-eyebrow-meta">risers · rebounders · fallers</span>
+    </div>
     <div id="whats-standout-spotlights" class="news-row news-row-standout"></div>
     <div class="spotlight-subtabs">
       <button class="chip active" data-spotlight-bucket="risers"
@@ -7614,6 +7674,10 @@
        (100 = class median). RPS+ never appears here — NCAA / HS
        environments don't share a cohort with MiLB. -->
   <div id="draft-section" style="display: none;">
+    <div class="newsprint-eyebrow">
+      <span class="newsprint-eyebrow-label">MLB Draft Prospects</span>
+      <span class="newsprint-eyebrow-meta">amateur pipeline · isolated from MiLB</span>
+    </div>
     <div id="draft-class-bar" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
       <span class="filter-label" title="Draft class year">Class</span>
       <!-- Year chips populate dynamically from DATA.draft.classes -->
@@ -7729,6 +7793,10 @@
        .draft-table styles. RPS+ never appears here — different league
        cohorts. -->
   <div id="overseas-section" style="display: none;">
+    <div class="newsprint-eyebrow">
+      <span class="newsprint-eyebrow-label">Overseas Professionals</span>
+      <span class="newsprint-eyebrow-meta">KBO · NPB · CPBL · MLB-eligible</span>
+    </div>
     <div id="overseas-league-bar" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
       <span class="filter-label" title="Source league">League</span>
       <span id="overseas-league-chips"></span>
@@ -7830,6 +7898,10 @@
        org-spending / trends sidebars. Signing TEAM (not current org) is the
        headline affordance. Data: data/ifa_timeseries.json (Spotrac tracker). -->
   <div id="ifa-section" style="display: none;">
+    <div class="newsprint-eyebrow">
+      <span class="newsprint-eyebrow-label">International Amateur Signings</span>
+      <span class="newsprint-eyebrow-meta">J2 classes · 2021–present</span>
+    </div>
     <div id="ifa-class-bar" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
       <span class="filter-label" title="IFA signing year (Jan 15 signing day opens each class)">Class</span>
       <span id="ifa-class-chips"></span>
@@ -7838,6 +7910,10 @@
   </div>
 
   <div id="debuts-section" style="display: none;">
+    <div class="newsprint-eyebrow">
+      <span class="newsprint-eyebrow-label">Graduated to the Majors</span>
+      <span class="newsprint-eyebrow-meta">tracked prospects who debuted</span>
+    </div>
     <div id="whats-new-debuts"></div>
     <!-- v29 — Collapsed-by-default sort accordion mirroring the
          draft/overseas pages. Toggle reuses the generic
@@ -7990,6 +8066,10 @@
        that stat. Min-sample thresholds default per-stat so a 12-PA
        hitter can't top wOBA. -->
   <div id="leaderboards-section" style="display: none;">
+    <div class="newsprint-eyebrow">
+      <span class="newsprint-eyebrow-label">Prospect Leaderboards</span>
+      <span class="newsprint-eyebrow-meta">by stat · level · position · org</span>
+    </div>
     <!-- v29 — Collapsed-by-default filter accordion for leaderboards. -->
     <div class="filter-toggle-row">
       <button class="filter-toggle" type="button"
@@ -8109,10 +8189,27 @@
        in JS so adding a new field = one entry. Share-as-image button
        below the chart. -->
   <div id="charts-section" style="display: none;">
+    <div class="newsprint-eyebrow">
+      <span class="newsprint-eyebrow-label">Build-Your-Own Scatterplot</span>
+      <span class="newsprint-eyebrow-meta">pick a group · pick two axes</span>
+    </div>
+    <p style="font-size:12px;color:var(--text-secondary);margin:0 0 10px;line-height:1.5;">
+      Pick a prospect group, then any two stats for the X / Y axes. Toggle the
+      least-squares trendline + R² to gauge how tightly the two move together.
+      Click any dot to open that player. Hover for exact values.
+    </p>
     <div id="charts-controls" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
-      <span class="filter-label">Mode</span>
+      <span class="filter-label">Group</span>
       <button class="chip active" data-chart-mode="prospects"
-              title="Each dot = one active prospect">Prospects</button>
+              title="Active MiLB prospects — each dot is one prospect">MiLB</button>
+      <button class="chip" data-chart-mode="debuted"
+              title="Graduated prospects — career WAR, WAG, WARWAG vs their prospect grade">Debuted</button>
+      <button class="chip" data-chart-mode="draft"
+              title="Amateur draft prospects — consensus FV, Draft Stock+, tools">MLB Draft</button>
+      <button class="chip" data-chart-mode="ifa"
+              title="International amateur (J2) signings — bonus, pool %, FV">Int'l Amateurs</button>
+      <button class="chip" data-chart-mode="overseas"
+              title="KBO / NPB / CPBL prospects — FV, age, bonus, tools">Overseas</button>
       <button class="chip" data-chart-mode="farms"
               title="Each dot = one MLB farm system">Farms</button>
       <span class="filter-label" style="margin-left:12px;">X axis</span>
@@ -8149,7 +8246,6 @@
       <button class="chip" data-glossary-cat="status" type="button">Status</button>
       <button class="chip" data-glossary-cat="mlb-rules" type="button">MLB Jargon</button>
       <button class="chip" data-glossary-cat="indicators" type="button">Indicators</button>
-      <input type="search" class="search-input" id="glossary-search" placeholder="Search the glossary…" style="margin-left:10px;max-width:260px;">
     </div>
     <div id="glossary-rows"></div>
   </div>
@@ -10656,6 +10752,23 @@ function goToFarm(org) {
   const p = new URLSearchParams();
   p.set("farm-org", org);
   _pushHash(p);
+}
+// Spotlights driver-pill expander. Toggles the hidden overflow pills and
+// swaps the button between "+N more" and "− less" so it expands AND
+// collapses (the prior version was one-way).
+function toggleDrivers(btn) {
+  const rest = btn.previousElementSibling;
+  if (!rest) return;
+  const collapsed = rest.hasAttribute("hidden");
+  if (collapsed) {
+    rest.removeAttribute("hidden");
+    btn.textContent = "− less";
+    btn.title = "Collapse drivers";
+  } else {
+    rest.setAttribute("hidden", "");
+    btn.textContent = `+${btn.dataset.more} more`;
+    btn.title = `Show all ${btn.dataset.all} drivers`;
+  }
 }
 function goHome() {
   // Preserve list-view filters when going home.
@@ -13807,24 +13920,35 @@ function renderSpotlights() {
       <div class="milb-cell"><span class="level-pill level-neutral">${escapeHtml(s.level ?? "—")}</span>${escapeHtml(s.line ?? "—")}</div>
       <!-- v17 — Strength score column replaced with mini FV sparkline. -->
       <div class="line-chart-cell" style="text-align:center;" title="${escapeHtml(_ohlcTooltip(_full))}">${lazyLineChartHTML(_full)}</div>
-      <div class="driver-list">${(s.drivers || []).map(d => {
-        // v15 — drivers are dicts {label, valence, tooltip}; legacy
-        // string drivers fall back to neutral coloring.
-        if (typeof d === "string") {
-          return `<span class="driver-tag" title="${escapeHtml(d)}">${escapeHtml(d)}</span>`;
-        }
-        // v29 — Added "upside" valence so the spotlight "+ upside"
-        // driver renders in the soft-pink color family that matches
-        // the upside chip indicator used elsewhere on the site (FV
-        // badge top-edge, chart event dots).
-        const valenceClass = d.valence === "good" ? "is-good"
-                          : d.valence === "bad"  ? "is-bad"
-                          : d.valence === "upside" ? "is-upside"
-                          : d.valence === "breakout" ? "is-breakout"
-                          : "is-neutral";
-        const tip = d.tooltip || d.label || "";
-        return `<span class="driver-tag ${valenceClass}" title="${escapeHtml(tip)}">${escapeHtml(d.label || "")}</span>`;
-      }).join("")}</div>
+      <div class="driver-list">${(() => {
+        // v34 — Render one driver pill. Drivers are dicts {label, valence,
+        // tooltip}; legacy string drivers fall back to neutral coloring.
+        const _tag = (d) => {
+          if (typeof d === "string")
+            return `<span class="driver-tag" title="${escapeHtml(d)}">${escapeHtml(d)}</span>`;
+          const valenceClass = d.valence === "good" ? "is-good"
+                            : d.valence === "bad"  ? "is-bad"
+                            : d.valence === "upside" ? "is-upside"
+                            : d.valence === "breakout" ? "is-breakout"
+                            : "is-neutral";
+          const tip = d.tooltip || d.label || "";
+          return `<span class="driver-tag ${valenceClass}" title="${escapeHtml(tip)}">${escapeHtml(d.label || "")}</span>`;
+        };
+        // v34 — Most-impactful drivers first (breakout → good/bad signals →
+        // upside → neutral context), then cap the row and tuck the rest
+        // behind a "+N more" expander to keep rows scannable.
+        const _vPrio = { breakout: 0, good: 1, bad: 2, upside: 3, neutral: 4 };
+        const _val = d => typeof d === "string" ? "neutral" : (d.valence || "neutral");
+        const sorted = (s.drivers || []).slice()
+          .sort((a, b) => (_vPrio[_val(a)] ?? 9) - (_vPrio[_val(b)] ?? 9));
+        const CAP = 4;
+        const head = sorted.slice(0, CAP), rest = sorted.slice(CAP);
+        return head.map(_tag).join("")
+          + (rest.length
+            ? `<span class="driver-rest" hidden>${rest.map(_tag).join("")}</span>`
+              + `<button class="driver-more-btn" type="button" data-more="${rest.length}" data-all="${sorted.length}" title="Show all ${sorted.length} drivers" onclick="toggleDrivers(this)">+${rest.length} more</button>`
+            : "");
+      })()}</div>
     </div>
   `;}).join("");
 
@@ -14413,6 +14537,38 @@ const CHART_AXES = {
     { key: "cmd",            label: "Command",            getter: p => _tcOf(p, "cmd"),                     fmt: v => v.toFixed(0) },
     { key: "delivery",       label: "Delivery (FG, FV)",  getter: p => _tcOf(p, "delivery"),                fmt: v => v.toFixed(0) },
   ],
+  debuted: [
+    { key: "fv",            label: "Prospect FV",        getter: g => { const f = g.fv_close_raw ?? g.fv_close; return f != null ? fvCeil(f) : null; }, fmt: v => v.toString() },
+    { key: "career_war",    label: "Career WAR",         getter: g => (g.career_war || {}).career_war,      fmt: v => v.toFixed(1) },
+    { key: "warwag",        label: "WARWAG",             getter: g => gradWarWag(g),                        fmt: v => (v >= 0 ? "+" : "") + v.toFixed(2) },
+    { key: "war_per_yr",    label: "WAR / season",       getter: g => { const o = gradWarPerYr(g); return o ? o.war_per_yr : null; }, fmt: v => v.toFixed(2) },
+    { key: "wag",           label: "WAG / season",       getter: g => gradVsFvProjection(g),                fmt: v => (v >= 0 ? "+" : "") + v.toFixed(2) },
+    { key: "age",           label: "Age",                getter: g => g.age,                                fmt: v => v.toFixed(1) },
+  ],
+  draft: [
+    { key: "consensus_fv",     label: "Consensus FV",     getter: p => p.consensus_fv,                       fmt: v => fvCeil(v).toString() },
+    { key: "consensus_rank",   label: "Consensus rank",   getter: p => p.consensus_rank,                     fmt: v => "#" + v },
+    { key: "draft_stock_plus", label: "Draft Stock+",     getter: p => p.draft_stock_plus,                   fmt: v => Math.round(v).toString() },
+    { key: "projected_round",  label: "Projected round",  getter: p => (p.projected_round != null ? Number(p.projected_round) : null), fmt: v => "R" + v },
+    { key: "age",              label: "Age",              getter: p => p.age,                                fmt: v => v.toFixed(1) },
+    { key: "tool",             label: "Tool composite",   getter: p => _chartToolComposite(p),               fmt: v => v.toFixed(0) },
+  ],
+  ifa: [
+    { key: "bonus_usd",      label: "Signing bonus ($M)", getter: s => (s.bonus_usd ? s.bonus_usd / 1e6 : null), fmt: v => "$" + v.toFixed(2) + "M" },
+    { key: "pool_pct",       label: "Pool %",             getter: s => s.pool_pct,                           fmt: v => v.toFixed(1) + "%" },
+    { key: "fv",             label: "Current FV",         getter: s => s.fv,                                 fmt: v => fvCeil(v).toString() },
+    { key: "fv_signing",     label: "FV at signing",      getter: s => s.fv_signing,                         fmt: v => fvCeil(v).toString() },
+    { key: "age_at_signing", label: "Age at signing",     getter: s => s.age_at_signing,                     fmt: v => v.toFixed(1) },
+    { key: "overall_rank",   label: "Overall rank",       getter: s => s.overall_rank,                       fmt: v => "#" + v },
+    { key: "tool_current",   label: "Tool (current)",     getter: s => s.tool_current,                       fmt: v => v.toFixed(0) },
+    { key: "tool_signing",   label: "Tool (at signing)",  getter: s => s.tool_signing,                       fmt: v => v.toFixed(0) },
+  ],
+  overseas: [
+    { key: "consensus_fv",     label: "Consensus FV",     getter: p => p.consensus_fv,                       fmt: v => fvCeil(v).toString() },
+    { key: "tool",             label: "Tool composite",   getter: p => _chartToolComposite(p),               fmt: v => v.toFixed(0) },
+    { key: "age",              label: "Age",              getter: p => p.age,                                fmt: v => v.toFixed(1) },
+    { key: "signed_bonus_usd", label: "Bonus ($M)",       getter: p => { const b = p.signed_bonus_usd || p.proj_bonus_usd; return b ? b / 1e6 : null; }, fmt: v => "$" + v.toFixed(2) + "M" },
+  ],
   farms: [
     { key: "farm_rank",      label: "Farm rank",          getter: o => o.farm_rank,                          fmt: v => "#" + v },
     { key: "dvm_plus_3y",    label: "DvM+ (3y)",          getter: o => (o.dvm_plus || {})["3y"],            fmt: v => Math.round(v).toString() },
@@ -14467,12 +14623,88 @@ function _linearRegression(pts) {
   return { m, b, r2 };
 }
 
+// Average every per-tool scouting grade across all sources on a draft /
+// overseas prospect's `tool_grades` map. Skips the `_extras` meta key.
+function _chartToolComposite(p) {
+  const tg = p.tool_grades || {};
+  const vals = [];
+  for (const src in tg) {
+    for (const k in (tg[src] || {})) {
+      if (k === "_extras") continue;
+      const v = tg[src][k];
+      if (typeof v === "number" && isFinite(v)) vals.push(v);
+    }
+  }
+  return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+}
+
+// Scatterplot prospect groups. Each carries the chip label, the noun for
+// the coverage line, and a click→detail navigator. `prospects` (MiLB) and
+// `farms` use already-loaded DATA; the rest lazy-load their sidecar.
+const _CHART_GROUPS = {
+  prospects: { label: "MiLB",          noun: "prospects",        nav: e => e.player_key && goToPlayer(e.player_key) },
+  debuted:   { label: "Debuted",       noun: "graduates",        nav: e => e.player_key && goToPlayer(e.player_key) },
+  draft:     { label: "MLB Draft",     noun: "draft prospects",  nav: e => e.player_key && goToDraftee(e.player_key) },
+  ifa:       { label: "Int'l Amateurs",noun: "signings",         nav: e => (e.is_tracked && e.player_key) ? goToPlayer(e.player_key) : null },
+  overseas:  { label: "Overseas",      noun: "overseas players", nav: e => e.player_key && goToOverseas(e.player_key) },
+  farms:     { label: "Farms",         noun: "farm systems",     nav: e => e.org && goToFarm(e.org) },
+};
+
+// Tracks which groups' data has been loaded into DATA. MiLB + farms are
+// always present from the monolithic export; others resolve once fetched.
+const _chartGroupLoaded = { prospects: true, farms: true };
+
+function _chartDataReady(mode) { return !!_chartGroupLoaded[mode]; }
+
+function _ensureChartData(mode) {
+  if (_chartGroupLoaded[mode]) return Promise.resolve();
+  const base = DATA_URL.replace(/[^/]+$/, "");
+  const fetchInto = (file, key) =>
+    DATA[key] ? Promise.resolve()
+      : fetch(base + file, { cache: "no-cache" })
+          .then(r => (r.ok ? r.json() : null))
+          .then(j => { if (j) DATA[key] = j; })
+          .catch(() => {});
+  let pr;
+  if (mode === "debuted")      pr = loadSlice("debuts");
+  else if (mode === "draft")   pr = fetchInto("draft_timeseries.json", "draft");
+  else if (mode === "ifa")     pr = fetchInto("ifa_timeseries.json", "ifa");
+  else if (mode === "overseas")pr = fetchInto("overseas_timeseries.json", "overseas");
+  else                         pr = Promise.resolve();
+  return pr.then(() => { _chartGroupLoaded[mode] = true; });
+}
+
+// Flatten a group's source data into a flat entity array for plotting.
+function _chartEntities(mode) {
+  if (mode === "prospects") return (DATA.players || []).filter(p => p && p.status !== "debuted");
+  if (mode === "debuted")   return (DATA.debuts || []).filter(Boolean);
+  if (mode === "draft")     return ((DATA.draft && DATA.draft.classes) || []).flatMap(c => c.prospects || []);
+  if (mode === "ifa")       return ((DATA.ifa && DATA.ifa.classes) || []).flatMap(c => c.signings || []);
+  if (mode === "overseas")  return ((DATA.overseas && DATA.overseas.leagues) || []).flatMap(l => l.prospects || []);
+  if (mode === "farms")     return (DATA.org_summary || []).filter(o => o && o.org);
+  return [];
+}
+
 function renderCharts() {
   const mode = state.chartMode || "prospects";
+  const grp = _CHART_GROUPS[mode] || _CHART_GROUPS.prospects;
   const axes = CHART_AXES[mode];
   // Default axes
   if (!state.chartX || !axes.find(a => a.key === state.chartX)) state.chartX = axes[0].key;
   if (!state.chartY || !axes.find(a => a.key === state.chartY)) state.chartY = axes[1].key;
+
+  // Mode (group) chips — wire even while data loads so switching works.
+  document.querySelectorAll("[data-chart-mode]").forEach(b => {
+    b.classList.toggle("active", b.dataset.chartMode === mode);
+    b.onclick = () => {
+      if (state.chartMode === b.dataset.chartMode) return;
+      state.chartMode = b.dataset.chartMode;
+      // Each group has its own axis vocabulary — reset to its defaults.
+      state.chartX = null;
+      state.chartY = null;
+      renderCharts();
+    };
+  });
 
   // Populate dropdowns
   const xSel = document.getElementById("chart-axis-x");
@@ -14485,30 +14717,28 @@ function renderCharts() {
   xSel.onchange = () => { state.chartX = xSel.value; renderCharts(); };
   ySel.onchange = () => { state.chartY = ySel.value; renderCharts(); };
 
-  // Mode chips
-  document.querySelectorAll("[data-chart-mode]").forEach(b => {
-    b.classList.toggle("active", b.dataset.chartMode === mode);
-    b.onclick = () => { state.chartMode = b.dataset.chartMode; renderCharts(); };
-  });
-
   const trendCb = document.getElementById("chart-trendline");
   trendCb.onchange = () => renderCharts();
   const trendOn = !!trendCb.checked;
 
+  // Lazy-load the selected group's data; show a loading state meanwhile,
+  // then re-render once it lands (if the user is still on this group/tab).
+  if (!_chartDataReady(mode)) {
+    document.getElementById("chart-svg").innerHTML =
+      `<text x="380" y="240" text-anchor="middle" fill="var(--text-tertiary)">Loading ${escapeHtml(grp.label)} data…</text>`;
+    document.getElementById("chart-meta").innerHTML = "";
+    document.getElementById("chart-stats").innerHTML = "";
+    _ensureChartData(mode).then(() => {
+      if ((state.chartMode || "prospects") === mode && state.section === "charts") renderCharts();
+    });
+    return;
+  }
+
   const xAxis = axes.find(a => a.key === state.chartX);
   const yAxis = axes.find(a => a.key === state.chartY);
 
-  // Build the entity list.
-  // v7 — DATA.players is an Array, not an object. Object.values worked
-  // by accident; iterating directly is clearer and avoids the array→
-  // object→array round trip. We also pass through `injured_list`
-  // status here since they're still tracked prospects (just sidelined).
-  let entities = [];
-  if (mode === "prospects") {
-    entities = (DATA.players || []).filter(p => p && p.status !== "debuted");
-  } else {
-    entities = (DATA.org_summary || []).filter(o => o && o.org);
-  }
+  // Build the entity list for the selected group.
+  let entities = _chartEntities(mode);
   // v7 — track WHY each entity was dropped so the chart-meta line can
   // surface "N of M prospects plotted" with the missing-axis breakdown.
   let nMissingX = 0, nMissingY = 0;
@@ -14607,11 +14837,14 @@ function renderCharts() {
   const yTickLabels = yTicks.map(t =>
     `<text x="${(ML-6).toFixed(1)}" y="${(t.y+3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--text-secondary)">${yAxis.fmt(t.v)}</text>`).join("");
 
-  // Dots
-  const dotsHtml = dots.map(d =>
+  // Dots — clickable when the group has a detail page (data-i resolves
+  // the entity for navigation after innerHTML is set).
+  const clickable = typeof grp.nav === "function";
+  const dotsHtml = dots.map((d, i) =>
     `<circle cx="${sx(d.x).toFixed(1)}" cy="${sy(d.y).toFixed(1)}" r="3.5"
-             fill="var(--neon-cyan)" fill-opacity="0.7" stroke="var(--bg-primary)" stroke-width="0.5">
-       <title>${escapeHtml(d.label)} · ${xAxis.label}=${xAxis.fmt(d.x)}, ${yAxis.label}=${yAxis.fmt(d.y)}</title>
+             fill="var(--neon-cyan)" fill-opacity="0.7" stroke="var(--bg-primary)" stroke-width="0.5"
+             ${clickable ? `data-dot="${i}" style="cursor:pointer;"` : ""}>
+       <title>${escapeHtml(d.label)} · ${xAxis.label}=${xAxis.fmt(d.x)}, ${yAxis.label}=${yAxis.fmt(d.y)}${clickable ? " · click to open" : ""}</title>
      </circle>`).join("");
 
   svg.innerHTML = `
@@ -14628,6 +14861,16 @@ function renderCharts() {
           transform="rotate(-90 14 ${(MT+innerH/2).toFixed(1)})">${escapeHtml(yAxis.label)}</text>
     ${r2Chip}
   `;
+  // Wire dot clicks → the group's detail page. Done post-innerHTML since
+  // SVG inline handlers can't carry the entity object.
+  if (clickable) {
+    svg.querySelectorAll("[data-dot]").forEach(c => {
+      c.addEventListener("click", () => {
+        const d = dots[+c.getAttribute("data-dot")];
+        if (d && d._entity) grp.nav(d._entity);
+      });
+    });
+  }
   // v7 — surface coverage diagnostics so the user sees when an axis is
   // sparse (e.g., "1842 of 2804 prospects plotted; 712 missing X, 250
   // missing Y"). Helps explain why some prospects don't appear.
@@ -14635,7 +14878,7 @@ function renderCharts() {
     ? ` · <span style="color:var(--text-tertiary);">(${nMissingX} missing X${nMissingY ? `, ${nMissingY} missing Y` : ""})</span>`
     : "";
   document.getElementById("chart-meta").innerHTML =
-    `${dots.length} of ${entities.length} ${mode} plotted · ${escapeHtml(xAxis.label)} vs ${escapeHtml(yAxis.label)}${_coverageNote}`;
+    `${dots.length} of ${entities.length} ${grp.noun} plotted · ${escapeHtml(xAxis.label)} vs ${escapeHtml(yAxis.label)}${_coverageNote}`;
   document.getElementById("chart-stats").innerHTML = trend
     ? `Trendline: y = ${trend.m.toFixed(3)}x + ${trend.b.toFixed(2)} · R² = ${trend.r2.toFixed(3)}`
     : "Trendline disabled";
@@ -14882,7 +15125,11 @@ function renderGlossary() {
   const root = document.getElementById("glossary-rows");
   if (!root) return;
   const cat = state.glossaryCat || "all";
-  const search = (state.glossarySearch || "").toLowerCase().trim();
+  // Either the glossary's own box OR the global top search filters terms,
+  // so the single top search "just works" on this section too.
+  // v34 — Glossary uses the single global search bar (its own box was
+  // removed to eliminate the redundant second search field).
+  const search = (state.search || "").toLowerCase().trim();
   document.querySelectorAll("[data-glossary-cat]").forEach(b =>
     b.classList.toggle("active", b.dataset.glossaryCat === cat));
 
@@ -16723,15 +16970,14 @@ async function renderDraft() {
   //                              fv_distribution, prospects: [...],
   //                              draft_order: [...], team_pool_usd, ...}] }
   if (!DATA.draft) {
-    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
-      Loading draft data…</div>`;
+    host.innerHTML = `<div class="state-message is-loading">Loading draft data…</div>`;
     try {
       const base = DATA_URL.replace(/[^/]+$/, "");
       const resp = await fetch(base + "draft_timeseries.json", { cache: "no-cache" });
       if (!resp.ok) throw new Error("HTTP " + resp.status);
       DATA.draft = await resp.json();
     } catch (e) {
-      host.innerHTML = `<div style="padding:14px;color:var(--neon-red);">
+      host.innerHTML = `<div class="state-message is-error">
         Could not load draft data: ${escapeHtml(String(e.message || e))}.
         Run <code>python run_monthly.py --rebuild-only</code> to regenerate
         <code>data/draft_timeseries.json</code>.</div>`;
@@ -16741,8 +16987,7 @@ async function renderDraft() {
 
   const classes = (DATA.draft && DATA.draft.classes) || [];
   if (!classes.length) {
-    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
-      No draft classes available.</div>`;
+    host.innerHTML = `<div class="state-message">No draft classes available.</div>`;
     return;
   }
 
@@ -16909,6 +17154,11 @@ function _draftPosBucket(pos) {
 // Returns a new filtered array; never mutates the input.
 function _applyDraftFilters(prospects) {
   let pool = prospects.slice();
+  // Global top-search filters draft prospects by name / school.
+  const _q = (state.search || "").toLowerCase();
+  if (_q) pool = pool.filter(p =>
+    (p.player_name || "").toLowerCase().includes(_q)
+    || (p.school || "").toLowerCase().includes(_q));
   if (state.draftPool && state.draftPool !== "all") {
     pool = pool.filter(p => {
       const pt = (p.player_type || "").toUpperCase();
@@ -17046,6 +17296,19 @@ function _renderDraftRankings(host, cls) {
   // indicators read the upside flag via fvBadgeUpsideClass (which also
   // honors the FV-tier cap). Sort branches in _applyDraftSort.
   const totalUnfiltered = (cls.prospects || []).length;
+  // v35 — Future class not scouted yet (e.g. the 2027 class months out
+  // from the draft). Show a clear placeholder instead of a blank "0 of 0"
+  // table. Order & Slots / Lottery sub-views still work (those project
+  // off standings), so this guard is rankings-only.
+  if (totalUnfiltered === 0) {
+    host.innerHTML = `<div class="state-message">
+      <div class="state-message-title">The ${cls.year} draft class hasn't been scouted yet</div>
+      <div class="state-message-body">Prospect rankings, FVs, and Draft Stock+ populate as
+      scouting reports land closer to draft day. In the meantime, check
+      <strong>Order &amp; Slots</strong> for the projected pick order.</div>
+    </div>`;
+    return;
+  }
   const prospects = _applyDraftFilters((cls.prospects || []).slice());
   _applyDraftSort(prospects);
   prospects.forEach((p, i) => { p._fvSortRank = i + 1; });
@@ -17937,14 +18200,14 @@ async function renderIFA() {
   if (!host) return;
 
   if (!DATA.ifa) {
-    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">Loading international-amateur data…</div>`;
+    host.innerHTML = `<div class="state-message is-loading">Loading international-amateur data…</div>`;
     try {
       const base = DATA_URL.replace(/[^/]+$/, "");
       const resp = await fetch(base + "ifa_timeseries.json", { cache: "no-cache" });
       if (!resp.ok) throw new Error("HTTP " + resp.status);
       DATA.ifa = await resp.json();
     } catch (e) {
-      host.innerHTML = `<div style="padding:14px;color:var(--neon-red);">Could not load international-amateur data: ${escapeHtml(String(e.message || e))}.
+      host.innerHTML = `<div class="state-message is-error">Could not load international-amateur data: ${escapeHtml(String(e.message || e))}.
         Run <code>python run_monthly.py --rebuild-only</code> to regenerate
         <code>data/ifa_timeseries.json</code>.</div>`;
       return;
@@ -17953,7 +18216,7 @@ async function renderIFA() {
 
   const classes = (DATA.ifa && DATA.ifa.classes) || [];
   if (!classes.length) {
-    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">No international-amateur classes available.</div>`;
+    host.innerHTML = `<div class="state-message">No international-amateur classes available.</div>`;
     return;
   }
   if (state.ifaYear !== "all" &&
@@ -17983,10 +18246,28 @@ async function renderIFA() {
   if (state.ifaYear === "all") { _renderIFAAllTime(host, classes, usd); return; }
 
   const cls = classes.find(c => c.year === state.ifaYear) || classes[0];
+  // v35 — Signing class with no signings yet (e.g. the current J2 class
+  // before the Jan-15 signing window opens). Clear placeholder instead of
+  // an empty leaderboard / zeroed trends.
+  if ((cls.signings || []).length === 0) {
+    host.innerHTML = `<div class="state-message">
+      <div class="state-message-title">The ${cls.year} international class hasn't signed yet</div>
+      <div class="state-message-body">J2 signings open January 15 of the class year. Bonuses,
+      signing teams, and org spending populate here as deals are reported.</div>
+    </div>`;
+    return;
+  }
   const t = cls.trends || {};
   const orgFilter = state.ifaOrgFilter || null;
   let signings = cls.signings || [];
   if (orgFilter) signings = signings.filter(s => s.org === orgFilter);
+  // Global search filters signings by player / signing team / country.
+  const _q = (state.search || "").toLowerCase();
+  if (_q) signings = signings.filter(s =>
+    (s.player_name || "").toLowerCase().includes(_q)
+    || (s.org || "").toLowerCase().includes(_q)
+    || (fullOrgName(s.org) || "").toLowerCase().includes(_q)
+    || (s.country || "").toLowerCase().includes(_q));
 
   // Sort dimension (user-selectable). Featured membership is always computed
   // by BONUS rank (+ tracked) so a non-bonus sort still hides the low-signal
@@ -18112,15 +18393,14 @@ async function renderOverseas() {
 
   // Lazy-load the overseas payload.
   if (!DATA.overseas) {
-    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
-      Loading overseas data…</div>`;
+    host.innerHTML = `<div class="state-message is-loading">Loading overseas data…</div>`;
     try {
       const base = DATA_URL.replace(/[^/]+$/, "");
       const resp = await fetch(base + "overseas_timeseries.json", { cache: "no-cache" });
       if (!resp.ok) throw new Error("HTTP " + resp.status);
       DATA.overseas = await resp.json();
     } catch (e) {
-      host.innerHTML = `<div style="padding:14px;color:var(--neon-red);">
+      host.innerHTML = `<div class="state-message is-error">
         Could not load overseas data: ${escapeHtml(String(e.message || e))}.
         Run <code>python run_monthly.py --rebuild-only</code> to regenerate
         <code>data/overseas_timeseries.json</code>.</div>`;
@@ -18130,8 +18410,7 @@ async function renderOverseas() {
 
   const leagues = (DATA.overseas && DATA.overseas.leagues) || [];
   if (!leagues.length) {
-    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
-      No overseas prospects on file.</div>`;
+    host.innerHTML = `<div class="state-message">No overseas prospects on file.</div>`;
     return;
   }
 
@@ -18182,7 +18461,13 @@ async function renderOverseas() {
     ? leagues
     : leagues.filter(l => l.league === state.overseasLeague);
   // Merged prospect list for views that don't care about league grouping.
-  const prospects = selectedLeagues.flatMap(l => l.prospects.map(p => ({...p, _ctx: l.league_context})));
+  let prospects = selectedLeagues.flatMap(l => l.prospects.map(p => ({...p, _ctx: l.league_context})));
+  // Global top-search filters overseas prospects by name / team / league.
+  const _osq = (state.search || "").toLowerCase();
+  if (_osq) prospects = prospects.filter(p =>
+    (p.player_name || "").toLowerCase().includes(_osq)
+    || (p.current_team || "").toLowerCase().includes(_osq)
+    || (p.league || "").toLowerCase().includes(_osq));
 
   // v28 — Hide the filter / sort accordion on non-Rankings sub-views,
   // matching the draft page's pattern. The chip filters only affect
@@ -20315,6 +20600,11 @@ function renderDebuts() {
           : `league default = ${denomFmt}`;
         warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="WAR/year — total MLB WAR ÷ ${r.war_seasons_count} season${r.war_seasons_count === 1 ? "" : "s"} weighted by playing time (1 season = ${denomTag}). Requires ≥1 full-season equivalent of MLB time.">${r.war_per_yr > 0 ? '+' : ''}${r.war_per_yr.toFixed(2)} WAR/yr</span>`;
       }
+    } else if (sortMode === "warwag" || sortMode === "warwag_low") {
+      const ww = gradWarWag(g);
+      if (ww != null) {
+        warTag = `<span class="g-term" data-term="warwag" style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);cursor:help;" title="WARWAG = WAR/year + WAG/year — combines raw production (WAR/yr) with grade-beating (WAG/yr). Highest = productive AND outperforming their prospect grade.">${ww > 0 ? '+' : ''}${ww.toFixed(2)} WARWAG</span>`;
+      }
     }
     // v19 — FG writeup chip removed from the grad list; the full writeup
     // still renders on each grad's detail page (renderPlayerDetail
@@ -20977,25 +21267,25 @@ const GLOSSARY = {
     name: "Tool Δ", aliases: ["Tool delta", "Tool dev", "Tool development"], category: "custom-index",
     priority: 6,
     short: "Lifetime change in a prospect's consensus tool grade — first observation to latest.",
-    long: "Per-tool lifetime delta computed across a prospect's full consensus history. For each tool with ≥2 published consensus snapshots, we record first_grade, last_grade, and delta = (last − first). Powers the +N / -N chip beside each tool grade in the prospect-detail Tools section, the Tool development table on the same page, and the org-level rollups (HitDvM+, PowerDvM+, …, ToolsDvM+) on the farm-detail page. Tools observed only once produce no delta — that's a 'not enough signal' state, not a 'no change' state.",
+    long: "Per-tool lifetime delta computed across a prospect's full consensus history. For each tool with ≥2 published consensus snapshots, we record first_grade, last_grade, and delta = (last − first). Powers the +N / -N chip beside each tool grade in the prospect-detail Tools section, the Tool development table on the same page, and the org-level rollups (HitDvM+, PowerDvM+, …, ToolDvM+) on the farm-detail page. Tools observed only once produce no delta — that's a 'not enough signal' state, not a 'no change' state.",
     formula: "tool_delta(tool) = consensus_grade_latest(tool) − consensus_grade_first(tool)",
     example: "Jesús Made's game-power tool was 30 in the FG 2024 pre-season and 60 by the 2026 pre-season report — a +30 lifetime delta over 12 observations.",
     related: ["tools_dvm_plus", "fv", "tool"],
   },
   "tools_dvm_plus": {
-    name: "ToolsDvM+", aliases: ["ToolsDvM+", "Tools Development vs Mean"], category: "custom-index",
+    name: "ToolDvM+", aliases: ["ToolDvM+", "ToolsDvM+", "Tool Development vs Mean"], category: "custom-index",
     priority: 7,
-    short: "Org-level tool development composite. 100 = league-mean dev pace across all tools; +10 = 1σ above.",
-    long: "Composite of every per-tool DvM+ an org has populated (HitDvM+, PowerDvM+, SpeedDvM+, FieldDvM+, ArmDvM+, PitchSelDvM+, BatCtrlDvM+ for hitters; FBDvM+, SLDvM+, CBDvM+, CHDvM+, CmdDvM+, CtDvM+ for pitchers). v14 — PowerDvM+ reads from the consolidated `pwr` key (synthesized at consensus time from game_pwr + raw_pwr) instead of double-counting the two power keys. FG physical grades (Frame, Athleticism, Delivery) are NOT included — they're static published values without the multi-snapshot longitudinal history that DvM+ velocity requires. Each per-tool DvM+ is computed by taking every active prospect's lifetime tool delta, averaging within the org, then scoring that mean against the league: 100 + 10·z. Orgs with too few multi-cycle prospects on a given tool get '—' for that cell rather than a noisy 1-prospect mean. Attribution: current org — trade-acquired prospects bring their full lifetime delta with them (mixes acquisition + development skill, same convention as Financial ROI). Standalone display metric for now; not yet folded into farm_score.",
-    formula: "ToolsDvM+ = mean over tools of (100 + 10·(org_mean_delta − league_mean) / league_stdev)",
-    example: "NYM ToolsDvM+ = 106 (rank 1 of 30) — Mets actives have grown across the toolset roughly 0.6σ faster than the league-mean farm over their tracked careers. NYY ToolsDvM+ = 91 (rank 30) — Yankees actives have grown ~0.9σ slower.",
-    related: ["dvm_plus", "tool_delta", "tool", "farm_rank"],
+    short: "Org-level tool development composite, weighted by what matters per position. 100 = league-mean dev pace; +10 = 1σ above.",
+    long: "Position-weighted blend of every per-tool DvM+ an org has populated (HitDvM+, PowerDvM+, SpeedDvM+, FieldDvM+, ArmDvM+, PitchSelDvM+, BatCtrlDvM+ for hitters; FBDvM+, SLDvM+, CBDvM+, CHDvM+, CmdDvM+, CtDvM+ for pitchers). Each per-tool DvM+ is the league-anchored (100 + 10·z) score of an org's mean lifetime tool delta across its multi-cycle actives. v35 — rather than a flat average across tools, ToolDvM+ now weights each tool by its IMPORTANCE for the position bucket the prospect plays: a catcher's Field/Arm count most, an outfielder's Speed, a starter's Fastball/Command. The composite is computed per bucket (C / INF / OF / SP / RP) using the bucket's own per-tool DvM+ (falling back to the org-wide value when a bucket cell is sparse), then blended across buckets by how many prospects the org actually develops in each. This rewards orgs that grow the tools that MATTER for a position over ones that pad the average with off-position gains. FG physical grades (Frame, Athleticism, Delivery) are excluded — static published values without the multi-snapshot history DvM+ velocity requires. Attribution: current org — trade-acquired prospects bring their full lifetime delta with them. Standalone display metric for now; not yet folded into farm_score.",
+    formula: "ToolDvM+ = Σ_bucket (n_bucket · ToolDvM+_bucket) / Σ_bucket n_bucket\nToolDvM+_bucket = Σ_tool (w_tool · DvM+_tool) / Σ_tool w_tool\nwhere w_tool is the tool's position-importance weight for that bucket",
+    example: "An org that develops Field + Arm for its catchers and Fastball + Command for its starters scores higher than an equal-on-average org whose gains came from low-importance tools. NYM ToolDvM+ = 106 (rank 1 of 30) ≈ 0.6σ faster development on position-relevant tools than the league-mean farm.",
+    related: ["dvm_plus", "tool_specific_dvm_plus", "tool_delta", "tool", "farm_rank"],
   },
   "tool_specific_dvm_plus": {
     name: "HitDvM+ / PowerDvM+ / …", aliases: ["HitDvM+", "PowerDvM+", "SpeedDvM+", "FieldDvM+", "ArmDvM+", "PitchSelDvM+", "BatCtrlDvM+", "FBDvM+", "SLDvM+", "CBDvM+", "CHDvM+", "CmdDvM+", "CtDvM+"], category: "custom-index",
     priority: 8,
     short: "Per-tool org development index. 100 = league mean; +10 = 1σ. Reveals which tools the org actually develops well.",
-    long: "Same wRC+ shape as DvM+ and ToolsDvM+ but scoped to a single tool. For each tool group (Hit, Power = mean of game_pwr + raw_pwr, Speed, Field, Arm, PitchSel, BatCtrl, FB, SL, CB, CH, Cmd, Ct), we compute every org's mean lifetime delta across its actives that have ≥2 consensus observations of that tool, then anchor the league at 100 + 10·z. Cell renders '—' for orgs with fewer than 3 prospects contributing — not enough signal to compare. Read these to find a farm's development specialties: HitDvM+ 115 means this org grows the hit tool 1.5σ better than the typical farm.",
+    long: "Same wRC+ shape as DvM+ and ToolDvM+ but scoped to a single tool. For each tool group (Hit, Power = mean of game_pwr + raw_pwr, Speed, Field, Arm, PitchSel, BatCtrl, FB, SL, CB, CH, Cmd, Ct), we compute every org's mean lifetime delta across its actives that have ≥2 consensus observations of that tool, then anchor the league at 100 + 10·z. Cell renders '—' for orgs with fewer than 3 prospects contributing — not enough signal to compare. Read these to find a farm's development specialties: HitDvM+ 115 means this org grows the hit tool 1.5σ better than the typical farm.",
     formula: "ToolDvM+ = 100 + 10 · (org_mean_lifetime_delta − league_mean) / league_stdev",
     example: "MIL HitDvM+ 119 + PowerDvM+ 124 = a power-bat development specialist; their hitters add ~2σ more game power across their org tenure than the league mean.",
     related: ["tools_dvm_plus", "tool_delta", "dvm_plus", "tool"],
@@ -21062,6 +21352,15 @@ const GLOSSARY = {
     formula: "WAG = (career_war / career_pa or ip) × full_season_target − expected_war(FV)\nhitter target: 612 PA · SP: 175 IP · MIRP: 65 IP · SIRP: 50 IP · CL: 60 IP",
     example: "Junior Caminero: 4.6 WAR / 510 PA × 612 ≈ 5.5 full-season WAR. FV 55 expects 2.5. WAG = +3.0 → BOOM.",
     related: ["fv", "war", "boom_bust_label", "fv_war_table", "fv_to_war_table"],
+  },
+  "warwag": {
+    name: "WARWAG", aliases: ["WARWAG", "WAR+WAG", "WAR/yr + WAG/yr"], category: "custom-index",
+    priority: 2,
+    short: "Graduate metric: WAR/year + WAG/year — combines raw production with grade-beating.",
+    long: "WARWAG sums a debuted player's playing-time-weighted WAR/year and their WAG/year (WAR Above Grade). Because WAG = WAR/yr − FV-implied WAR/yr, WARWAG works out to (2 × WAR/yr − FV-implied WAR/yr): it rewards graduates who are BOTH genuinely productive (high WAR/yr) AND outperforming the bet implied by their prospect grade (high WAG). A productive player who merely met an elite grade scores lower than an equally-productive player who beat a modest grade. Shares WAG's sample gate — requires ≥1 full-season equivalent of MLB playing time (PA for hitters, IP for pitchers) and an FV on file, else it returns None and the row sinks in the WARWAG sort. Surfaced as a sort (high/low) on the Debuted (Graduates) list; the value shows on each row when that sort is active.",
+    formula: "WARWAG = WAR/yr + WAG/yr = 2 · WAR/yr − expected_war(FV)",
+    example: "Bobby Witt Jr.: ~6.5 WAR/yr, FV-55 expects ~2.5 → WAG ≈ +4.0, WARWAG ≈ 6.5 + 4.0 = 10.5 (elite on both axes). A 2.5 WAR/yr player who exactly met an FV-55 grade has WAG ≈ 0 → WARWAG ≈ 2.5.",
+    related: ["wag", "war", "war_per_yr", "fv", "boom_bust_label"],
   },
   // ---- v32.0 FV/WAR/$ Conversion Framework (Arkmetrics) -----------------
   // These entries describe the value_framework module that unifies all
@@ -21930,7 +22229,7 @@ const GLOSSARY = {
     name: "OrgSur+", aliases: ["OrgSur+", "Org SUR+", "SUR+", "Surplus index", "Org surplus index"], category: "custom-index",
     priority: 56,
     short: "Capital-efficiency index for farm systems. 100 = league mean, +10 = 1σ.",
-    long: "Org-level composite of WAR/$M (existing Financial ROI) and Grad-Contract Surplus (current AAV − amortized bonus per year). Each input z-scored across the 30 orgs and anchored at 100. Designed to mirror the wRC+/OPS+ shape so the reader can compare it against DvM+ + ToolsDvM+ on the same dial. Powers the Financial branch of the farm grade tree. NOTE: distinct from Sur+, which is the per-prospect $M surplus-value projection.",
+    long: "Org-level composite of WAR/$M (existing Financial ROI) and Grad-Contract Surplus (current AAV − amortized bonus per year). Each input z-scored across the 30 orgs and anchored at 100. Designed to mirror the wRC+/OPS+ shape so the reader can compare it against DvM+ + ToolDvM+ on the same dial. Powers the Financial branch of the farm grade tree. NOTE: distinct from Sur+, which is the per-prospect $M surplus-value projection.",
     related: ["farm_grade_financial", "wag", "farm_report_card", "tvi"],
   },
   "draft_ceiling_hits": {
@@ -23516,20 +23815,31 @@ function updateMeta() {
   const draftCount = (DATA.draft && DATA.draft.classes)
     ? DATA.draft.classes.reduce((n, c) => n + ((c.prospects || []).length), 0)
     : null;
+  // v35 — Overseas leagues key prospects under `prospects` (with an
+  // `n_prospects` count), not `players`; the old `l.players` always
+  // summed to 0 and silently undercounted the all-up total.
   const overseasCount = (DATA.overseas && DATA.overseas.leagues)
-    ? DATA.overseas.leagues.reduce((n, l) => n + ((l.players || []).length), 0)
+    ? DATA.overseas.leagues.reduce((n, l) =>
+        n + (l.n_prospects != null ? l.n_prospects : (l.prospects || []).length), 0)
     : null;
   const totalProspects = (draftCount != null && overseasCount != null)
     ? DATA.active_count + draftCount + overseasCount
     : null;
-  // v19 — Brought back the refresh date prefix + a dedicated active count
-  // alongside the all-up total. Reads:
-  //   Last refresh: 2026-05-23 · X prospects · X active · X graduates
+  // v35 — Refresh line: date (with a relative "N days ago" tooltip) + the
+  // all-up prospect total. v36 — per-cohort breakouts (active / debut /
+  // draft / overseas) all dropped per user ask; the line is just the date
+  // + the all-up total now. `totalProspects` still folds in draft +
+  // overseas, so it stays "…" until those lazy sidecars resolve.
   const refreshedAt = DATA.generated_at ? DATA.generated_at.split("T")[0] : "—";
-  meta.innerHTML = `Last refresh: <code>${refreshedAt}</code>` +
-    `<span class="dot">·</span>${totalProspects != null ? totalProspects : "…"} prospects` +
-    `<span class="dot">·</span>${DATA.active_count} active` +
-    `<span class="dot">·</span>${DATA.debut_count} debuts`;
+  let agoTip = "";
+  if (DATA.generated_at) {
+    const days = Math.floor((Date.now() - new Date(DATA.generated_at).getTime()) / 86400000);
+    agoTip = days <= 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
+  }
+  const _n = v => (v != null ? Number(v).toLocaleString() : "…");
+  meta.innerHTML =
+    `Last refresh: <code${agoTip ? ` title="Data generated ${agoTip}"` : ""}>${refreshedAt}</code>` +
+    `<span class="dot">·</span><strong>${_n(totalProspects)}</strong> prospects tracked`;
   // v19 — Section flavor-text element removed; the per-section count
   // strip was unnecessary chrome cluttering the tabs row. The active
   // filters chip strip (below) now carries the per-page status info.
@@ -24871,7 +25181,7 @@ function makeFarmReportCard(org) {
           ${branch('Acquisition Strategy', 'acquisition_strategy', W.acquisition_strategy, acqSubs,
                    'Outcome quality of how this org acquires prospects — via draft, IFA signings, trades, and waiver claims.')}
           ${branch('Development',         'development',          W.development,          devSubs,
-                   'Per-tool development pace vs the league mean farm. Hitter + pitcher Tools DvM+ composites (100 = league mean, +10 = 1σ).')}
+                   'Per-tool development pace vs the league mean farm. Hitter + pitcher Tool DvM+ composites (100 = league mean, +10 = 1σ).')}
           ${branch('Financial',           'financial',            W.financial,            finSubs,
                    'Capital efficiency (v4). WAR per $M of signing bonus + grad-contract surplus + draft-pool efficiency (WAR/$M of pool) + IFA ROI (WAR/$M of bonuses signed). All 4 leaves equally weighted.')}
           ${branch('MLB Production',      'mlb_production',       W.mlb_production,       mlbSubs,
@@ -24940,9 +25250,9 @@ function makeFarmToolDevCard(org) {
     <span class="detail-title-sub">per-tool DvM+ across actives · 100 = league mean dev pace · +10 = 1σ · attribution to current org</span></div>
     <div class="tooldev-card">
       <div class="tooldev-headline ${compositeTone}">
-        <span class="td-headline-label">ToolsDvM+</span>
+        <span class="td-headline-label g-term" data-term="tools_dvm_plus" style="cursor:help;">ToolDvM+</span>
         <span class="td-headline-val">${composite ?? "—"}</span>
-        <span class="td-headline-rank" title="Rank among the 30 orgs (1 = best development pace)">#${td.tools_dvm_plus_rank ?? "—"}</span>
+        <span class="td-headline-rank" title="Rank among the 30 orgs (1 = best position-weighted development pace)">#${td.tools_dvm_plus_rank ?? "—"}</span>
       </div>
       <div class="tooldev-section-label">Hitter tools</div>
       <div class="tooldev-grid">
@@ -27348,14 +27658,19 @@ function makeToolDvmCell(org) {
       <span class="fl-td-val">${val ?? '—'}</span>
     </div>`;
   return `<div class="fl-tool-dvm" title="Tool development pace vs league mean (100 = mean, +10 = 1σ)">
-    ${row('Tools', composite, `ToolsDvM+ ${composite ?? '—'} · composite of all per-tool DvM+ values`)}
-    ${row('Hit',   hitter,    `Hitter Tools DvM+ ${hitter ?? '—'} · mean of hit/power/speed/field/arm/pitch_sel/bat_ctrl DvM+`)}
-    ${row('Pit',   pitcher,   `Pitcher Tools DvM+ ${pitcher ?? '—'} · mean of fb/sl/cb/ch/cmd/ct DvM+`)}
+    ${row('Tools', composite, `ToolDvM+ ${composite ?? '—'} · position-weighted blend of per-tool DvM+ values`)}
+    ${row('Hit',   hitter,    `Hitter Tool DvM+ ${hitter ?? '—'} · mean of hit/power/speed/field/arm/pitch_sel/bat_ctrl DvM+`)}
+    ${row('Pit',   pitcher,   `Pitcher Tool DvM+ ${pitcher ?? '—'} · mean of fb/sl/cb/ch/cmd/ct DvM+`)}
   </div>`;
 }
 
 function renderFarmSystems() {
-  const orgs = farmSortedOrgs();
+  let orgs = farmSortedOrgs();
+  // Global top-search filters farms by org code / full name.
+  const _fq = (state.search || "").toLowerCase();
+  if (_fq) orgs = orgs.filter(o =>
+    (o.org || "").toLowerCase().includes(_fq)
+    || ((typeof fullOrgName === "function" ? fullOrgName(o.org) : "") || "").toLowerCase().includes(_fq));
   // Apply card-mode class based on state.farmViewMode. The class flips
   // #farm-section into a CSS grid of cards via the .farm-rows-cards
   // stylesheet rules; .table-mode is the default no-op.
@@ -34416,6 +34731,7 @@ function render() {
   else if (active === "debuts")  renderDebuts();
   else if (active === "farm")       renderFarmSystems();
   else if (active === "leaderboards") renderLeaderboards();
+  else if (active === "charts")     renderCharts();
   else if (active === "glossary")   renderGlossary();
   else if (active === "watchlist")  renderWatchlist();
   decorateA11yRows();
@@ -36870,17 +37186,8 @@ function populateOrgFilter() {
   // every keystroke for long notes).
   let _noteSaveTimer = null;
   document.getElementById("content").addEventListener("input", (e) => {
-    // Glossary search box — debounced re-render.
-    if (e.target && e.target.id === "glossary-search") {
-      clearTimeout(_glossarySearchTimer);
-      _glossarySearchTimer = setTimeout(() => {
-        state.glossarySearch = e.target.value || "";
-        resetPage("glossary");
-        syncToURL();
-        renderGlossary();
-      }, 120);
-      return;
-    }
+    // (v34 — glossary's own search box was removed; the global search bar
+    // drives glossary filtering now via state.search.)
     const ta = e.target.closest("textarea[data-note-key], textarea[data-farm-note-key]");
     if (!ta) return;
     clearTimeout(_noteSaveTimer);

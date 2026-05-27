@@ -4572,6 +4572,87 @@ TOOL_GROUPS: dict[str, list[str]] = {
 }
 
 
+# Position-bucket tool-importance matrix for the composite ToolDvM+. Within
+# each bucket the tools that *define* the position carry more weight (a
+# catcher's Field/Arm matter more than its Speed; a starter's FB/Command
+# more than a fourth pitch). Buckets mirror the tool-dev pass's
+# _ALL_BUCKETS (C / INF / OF / SP / RP); 1B/2B/3B/SS roll into INF. Weights
+# are relative WITHIN a bucket and are tunable.
+_BUCKET_TOOL_IMPORTANCE: dict[str, dict[str, float]] = {
+    "C":   {"field": 3.0, "arm": 3.0, "hit": 2.0, "bat_ctrl": 1.0,
+            "pitch_sel": 1.0, "pwr": 1.0, "speed": 0.5},
+    "INF": {"field": 3.0, "arm": 2.0, "hit": 2.0, "speed": 1.5,
+            "pwr": 1.5, "bat_ctrl": 1.0, "pitch_sel": 1.0},
+    "OF":  {"speed": 2.5, "hit": 2.0, "pwr": 2.0, "field": 2.0,
+            "arm": 1.5, "bat_ctrl": 1.0, "pitch_sel": 1.0},
+    "SP":  {"fb": 3.0, "cmd": 3.0, "sl": 1.5, "cb": 1.5, "ch": 1.5, "ct": 1.0},
+    "RP":  {"fb": 3.0, "cmd": 2.0, "sl": 2.0, "cb": 1.0, "ch": 1.0, "ct": 1.0},
+}
+
+
+def _bucket_weighted_tool_dvm(per_grp: dict, by_bucket: dict,
+                              counts_by_bucket: dict) -> int | None:
+    """Composite ToolDvM+ for one org: a position-bucket importance-weighted
+    blend of per-tool DvM+ values.
+
+    For each bucket (C/INF/OF/SP/RP) we take a weighted mean of that bucket's
+    own per-tool DvM+ (``by_bucket[bucket]``), weighting each tool by its
+    position importance and falling back to the org-wide value
+    (``per_grp[tool]``) when a bucket cell is sparse/None. The per-bucket
+    composites are then blended by how many prospects the org develops in
+    each bucket (``counts_by_bucket[bucket][tool]["n_prospects"]``), so the
+    org's composite leans toward the positions it actually has.
+
+    Falls back to the legacy unweighted org-wide mean when no bucket data
+    exists (tiny / sparse orgs). Returns ``None`` when the org has no
+    per-tool DvM+ at all.
+
+    Args:
+        per_grp: org-wide ``per_tool_dvm_plus`` {tool_group: dvm_plus|None}.
+        by_bucket: ``per_tool_dvm_plus_by_bucket`` {bucket: {tool: dvm|None}}.
+        counts_by_bucket: ``per_tool_by_bucket`` {bucket: {tool: {n_prospects}}}.
+    """
+    per_grp = per_grp or {}
+    by_bucket = by_bucket or {}
+    counts_by_bucket = counts_by_bucket or {}
+
+    bucket_blend: list[tuple[float, float]] = []  # (composite, blend weight)
+    for bucket, weights in _BUCKET_TOOL_IMPORTANCE.items():
+        # Only blend buckets the org actually develops prospects in. The
+        # per-tool hybrid fallback below fills sparse cells WITHIN an
+        # existing bucket from the org-wide value, but a bucket with no
+        # data at all is skipped (not synthesized from org-wide grades) so
+        # the legacy unweighted-mean fallback stays reachable.
+        if bucket not in by_bucket:
+            continue
+        cell = by_bucket.get(bucket) or {}
+        num = den = 0.0
+        for tk, w in weights.items():
+            if w <= 0:
+                continue
+            v = cell.get(tk)
+            if v is None:                  # hybrid fallback to org-wide
+                v = per_grp.get(tk)
+            if v is None:
+                continue
+            num += w * v
+            den += w
+        if den <= 0:
+            continue
+        bucket_comp = num / den
+        cnt_cell = counts_by_bucket.get(bucket) or {}
+        bw = sum((cnt_cell.get(tk) or {}).get("n_prospects", 0) for tk in weights)
+        bucket_blend.append((bucket_comp, float(max(bw, 1))))
+
+    if bucket_blend:
+        tot_w = sum(w for _, w in bucket_blend)
+        return int(round(sum(c * w for c, w in bucket_blend) / tot_w))
+
+    # Legacy unweighted org-wide mean fallback (tiny / sparse orgs).
+    vs = [v for v in per_grp.values() if v is not None]
+    return int(round(sum(vs) / len(vs))) if vs else None
+
+
 # Statcast pitch-type code → TOOL_GROUPS pitcher-tool key. Used by the
 # league-pitch-usage aggregator to roll per-prospect arsenal usage_pct
 # rows into a single per-tool weight. Pitch codes that don't have a
@@ -8603,14 +8684,20 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     _entry["tool_dev"]["per_tool_dvm_plus_by_bucket"] \
                         .setdefault(bucket, {})[grp_name] = int(round(stretched_b))
 
-    # Composite ToolsDvM+ — unweighted mean of the per-group DvM+ values
-    # an org actually has. Orgs missing every group entry get None.
+    # Composite ToolDvM+ — position-bucket importance-weighted blend of the
+    # per-tool DvM+ values (see `_bucket_weighted_tool_dvm`). Rewards orgs
+    # that develop the tools that MATTER for a position over ones that pad
+    # the average with off-position gains. The internal storage key stays
+    # `tools_dvm_plus`; the front-end label is "ToolDvM+".
     _composite_vals: list[tuple[str, int | None]] = []
     for entry in org_summary:
-        per_grp = entry["tool_dev"].get("per_tool_dvm_plus") or {}
-        vs = [v for v in per_grp.values() if v is not None]
-        composite = int(round(sum(vs) / len(vs))) if vs else None
-        entry["tool_dev"]["tools_dvm_plus"] = composite
+        td = entry["tool_dev"]
+        composite = _bucket_weighted_tool_dvm(
+            td.get("per_tool_dvm_plus"),
+            td.get("per_tool_dvm_plus_by_bucket"),
+            td.get("per_tool_by_bucket"),
+        )
+        td["tools_dvm_plus"] = composite
         _composite_vals.append((entry["org"], composite))
 
     # Rank for the composite — descending (higher composite = rank 1).

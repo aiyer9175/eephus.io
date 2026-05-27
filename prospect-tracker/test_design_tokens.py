@@ -43,7 +43,6 @@ REQUIRED_TOKENS = [
     "--fs-lg", "--fs-xl", "--fs-xxl",
     # Interaction + theme-aware text tokens (P1-C, P1-D)
     "--text-on-accent",
-    "--text-on-dark-muted",
     "--bg-hover",
     "--transition-hover",
 ]
@@ -127,7 +126,7 @@ def test_no_em_or_rem_for_font_size_in_new_rules(html_text):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("token", [
-    "--text-on-accent", "--text-on-dark-muted",
+    "--text-on-accent",
 ])
 def test_token_is_referenced_somewhere(html_text, token):
     # A defined-but-unused token = dead weight. After Phase 1 each of

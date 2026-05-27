@@ -88,7 +88,8 @@
       "Bash(PYTHONIOENCODING=utf-8 python -m pytest test_ifa_export.py -q)",
       "Bash(grep -nA20 \"h1-rule\")",
       "Bash(rm -f _navchk.py _navshot.py _nav_light.png _nav_dark.png _nav_narrow.png)",
-      "Bash(python -m pytest test_design_tokens.py test_index_html_loads.py -q)"
+      "Bash(python -m pytest test_design_tokens.py test_index_html_loads.py -q)",
+      "PowerShell(python -m pytest test_index_html_loads.py test_design_tokens.py test_no_hardcoded_colors.py -q 2>&1)"
     ],
     "additionalDirectories": [
       "C:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker"
