@@ -22687,17 +22687,30 @@ function makeFarmReportCard(org) {
     // tint of the grade color. v31.4 — Dev DvM+ leaves read the
     // window-specific letter (state.formWindow) from grades_by_window
     // when present, so flipping the window actually changes the
-    // displayed leaf grade — not just the value. Other leaves are
-    // window-agnostic.
+    // displayed leaf grade. v31.5 — MLB Production (Hitter/Pitcher)
+    // and Acquisition (Draft/IFA) leaves are also window-sensitive
+    // now: their grades reflect the in-window grad cohort.
     const _gradesByWin = org.grades_by_window || {};
     const _winLetter = (leafKey) =>
       (_gradesByWin[_devActiveWindow] || {})[leafKey];
+    const _WIN_SENSITIVE_LEAVES = new Set([
+      'dev_hitter', 'dev_pitcher',
+      'mlb_hitter_production', 'mlb_pitcher_production',
+      'acq_draft', 'acq_ifa',
+    ]);
     const leafBars = branchLayouts.map(b => {
       return b.leafLayouts.map(leaf => {
-        const winLetter = (leaf.letterKey === 'dev_hitter' || leaf.letterKey === 'dev_pitcher')
+        const winLetter = _WIN_SENSITIVE_LEAVES.has(leaf.letterKey)
           ? _winLetter(leaf.letterKey) : null;
         const letter = winLetter || g[leaf.letterKey] || '—';
         const c = gradeColor(letter);
+        // v31.5 — Append a small "1y/3y/6y" indicator chip on the
+        // leaf bar's right edge for window-sensitive leaves so the
+        // user sees AT A GLANCE which leaves move when they flip
+        // the window selector. Builds into the leaf label below.
+        const _winChip = _WIN_SENSITIVE_LEAVES.has(leaf.letterKey)
+          ? ` <tspan style="fill:var(--text-tertiary);font-size:8px;letter-spacing:0.05em;">${_devActiveWindow}</tspan>`
+          : '';
         // Faint background tint (8% opacity overlay on bg-secondary).
         // Built as a second rect on top so the color reads through
         // without losing the bg-secondary baseline.
@@ -22709,7 +22722,7 @@ function makeFarmReportCard(org) {
           <rect x="${COL_LEAF_LEFT}" y="${leaf.yTop}" width="3" height="${leaf.h}"
                 fill="${c}" opacity="0.95"/>
           <text x="${COL_LEAF_LEFT + 10}" y="${leaf.y - 3}" text-anchor="start"
-                style="font-family:var(--font-sans);font-size:10px;font-weight:600;fill:var(--text-primary);">${escapeHtml(leaf.label)}</text>
+                style="font-family:var(--font-sans);font-size:10px;font-weight:600;fill:var(--text-primary);">${escapeHtml(leaf.label)}${_winChip}</text>
           <text x="${COL_LEAF_LEFT + 10}" y="${leaf.y + 9}" text-anchor="start"
                 style="font-family:var(--font-mono);font-size:10px;fill:var(--text-secondary);">
             <tspan style="fill:${c};font-weight:700;">${escapeHtml(letter)}</tspan>

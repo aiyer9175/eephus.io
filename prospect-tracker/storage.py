@@ -3538,11 +3538,36 @@ def _attach_sub_leaves(entry: dict) -> None:
     # sub-leaf values match the by-position-bucket grid that the
     # Dev tab already renders. Renderer treats "kind=dvm" as a
     # 100-anchored value (centered at league mean).
+    # v31.5 — Hitter/Pitcher tool group sets feed the per-tool sub-
+    # leaves alongside the position-bucket sub-leaves. Hitter tools:
+    # HIT/PWR/SPD/FLD/ARM/PSEL/BCT. Pitcher pitches: FB/SL/CB/CH/CMD/CT.
+    _HIT_TOOLS = [
+        ("hit",       "HIT"),
+        ("pwr",       "PWR"),
+        ("speed",     "SPD"),
+        ("field",     "FLD"),
+        ("arm",       "ARM"),
+        ("pitch_sel", "PSEL"),
+        ("bat_ctrl",  "BCT"),
+    ]
+    _PIT_TOOLS = [
+        ("fb",  "FB"),
+        ("sl",  "SL"),
+        ("cb",  "CB"),
+        ("ch",  "CH"),
+        ("cmd", "CMD"),
+        ("ct",  "CT"),
+    ]
+    _PER_TOOL_BY_DEV = {
+        "dev_hitter":  _HIT_TOOLS,
+        "dev_pitcher": _PIT_TOOLS,
+    }
     for dev_key in ("dev_hitter", "dev_pitcher"):
         node = tree.get(dev_key) or {}
+        subs = []
+        # Pos-bucket sub-leaves (existing behavior).
         pb = node.get("pos_buckets") or {}
         if pb:
-            subs = []
             for bucket, v in pb.items():
                 blend = (v.get("blend_by_window") or {}).get("6y")
                 n     = v.get("active_count") or 0
@@ -3554,6 +3579,23 @@ def _attach_sub_leaves(entry: dict) -> None:
                     "weight": v.get("weight"),
                     "sparse": (n < 3),
                 })
+        # v31.5 — Per-tool DvM+ sub-leaves. Pulled from the org's
+        # `tool_dev.per_tool_dvm_plus` map (computed in the league
+        # pass earlier). Each tool's value is already 100-anchored
+        # (Bayesian-shrunk + composite-stretched), so the renderer's
+        # dvm tone (>100 green, <100 red) applies cleanly. Letter
+        # grading happens in the post-attach league pass.
+        tool_dev_per = ((entry.get("tool_dev") or {}).get("per_tool_dvm_plus") or {})
+        for tool_key, tool_lbl in _PER_TOOL_BY_DEV[dev_key]:
+            v = tool_dev_per.get(tool_key)
+            subs.append({
+                "label":  tool_lbl,
+                "kind":   "dvm",
+                "value":  v,
+                "tier":   "per_tool",
+                "sparse": v is None,
+            })
+        if subs:
             node["sub_leaves"] = subs
 
     # ── Acquisition → Draft Performance — round-tier WAR/yr breakdown ──
@@ -3596,6 +3638,14 @@ def _attach_sub_leaves(entry: dict) -> None:
                 "n":     draft.get("draft_actives_count"),
                 "raw":   f"{draft.get('ceiling_hits_count', 0)} of {draft.get('draft_actives_count', 0)} at FV ≥60",
             })
+        if draft.get("sleeper_hit_rate") is not None:
+            subs.append({
+                "label": "Sleeper hit rate",
+                "kind":  "pct",
+                "value": round(draft["sleeper_hit_rate"], 3),
+                "n":     draft.get("sleeper_low_fv_count"),
+                "raw":   f"{draft.get('sleeper_hit_count', 0)} of {draft.get('sleeper_low_fv_count', 0)} low-FV (≤45 fv_open) draft grads cleared ≥2 WAR/yr",
+            })
         if subs:
             draft["sub_leaves"] = subs
 
@@ -3632,6 +3682,14 @@ def _attach_sub_leaves(entry: dict) -> None:
                 "kind":  "war",
                 "value": round(ifa["career_war_mean"], 1),
                 "n":     ifa.get("grad_count"),
+            })
+        if ifa.get("sleeper_hit_rate") is not None:
+            subs.append({
+                "label": "Sleeper hit rate",
+                "kind":  "pct",
+                "value": round(ifa["sleeper_hit_rate"], 3),
+                "n":     ifa.get("sleeper_low_fv_count"),
+                "raw":   f"{ifa.get('sleeper_hit_count', 0)} of {ifa.get('sleeper_low_fv_count', 0)} low-FV (≤45 fv_open) IFA grads cleared ≥2 WAR/yr",
             })
         if subs:
             ifa["sub_leaves"] = subs
@@ -3773,12 +3831,36 @@ def _attach_sub_leaves(entry: dict) -> None:
         if subs:
             hm["sub_leaves"] = subs
 
-    # ── MLB Production → Hitter / Pitcher Production — 3 input split ──
+    # ── MLB Production → Hitter / Pitcher Production — bucket splits
+    # + aggregate inputs. v31.5 — leads with per-position-bucket WAR/yr
+    # (C/INF/OF for hitters, SP/RP for pitchers) so the user sees
+    # WHICH bucket carries the org's production, then surfaces the
+    # aggregate WAR/yr / Top-3 cum / WAG mean as supplementary
+    # signal lines.
+    _PROD_BUCKETS = {
+        "mlb_hitter_production":  ("C", "INF", "OF"),
+        "mlb_pitcher_production": ("SP", "RP"),
+    }
     for prod_key in ("mlb_hitter_production", "mlb_pitcher_production"):
         prod = tree.get(prod_key) or {}
         if not prod:
             continue
         subs = []
+        # Per-bucket sub-leaves (production split by position type).
+        pb = prod.get("pos_buckets") or {}
+        for bucket in _PROD_BUCKETS[prod_key]:
+            cell = pb.get(bucket) or {}
+            v = cell.get("war_per_yr_mean")
+            n = cell.get("grad_count") or 0
+            subs.append({
+                "label":  f"{bucket} grads",
+                "kind":   "war",
+                "value":  round(v, 2) if v is not None else None,
+                "n":      n,
+                "sparse": (n < 3) or v is None,
+                "tier":   "prod_bucket",
+            })
+        # Aggregate inputs (existing).
         if prod.get("war_per_yr_mean") is not None:
             subs.append({
                 "label": "WAR/yr mean",
@@ -3850,7 +3932,7 @@ def _attach_sub_leaves(entry: dict) -> None:
             })
         hof["sub_leaves"] = subs
 
-    # ── Financial → Active Surplus — per-prospect + total ──
+    # ── Financial → Active Surplus — per-prospect + per-side splits ──
     asurp = tree.get("fin_active_surplus") or {}
     if asurp and asurp.get("surplus_per_prospect_mm") is not None:
         subs = [{
@@ -3859,6 +3941,26 @@ def _attach_sub_leaves(entry: dict) -> None:
             "value": round(asurp["surplus_per_prospect_mm"], 2),
             "n":     asurp.get("active_count"),
         }]
+        # v31.5 — Per-side splits (Hitter $/prospect vs Pitcher
+        # $/prospect). Pitcher surplus typically trails because
+        # of higher attrition / injury cost; surfacing the split
+        # makes the asymmetry visible.
+        if asurp.get("per_prospect_hit_mm") is not None:
+            subs.append({
+                "label":  "Hitter $/prospect",
+                "kind":   "usd",
+                "value":  round(asurp["per_prospect_hit_mm"], 2),
+                "n":      asurp.get("active_count_hit"),
+                "tier":   "surplus_side",
+            })
+        if asurp.get("per_prospect_pit_mm") is not None:
+            subs.append({
+                "label":  "Pitcher $/prospect",
+                "kind":   "usd",
+                "value":  round(asurp["per_prospect_pit_mm"], 2),
+                "n":      asurp.get("active_count_pit"),
+                "tier":   "surplus_side",
+            })
         if asurp.get("cost_basis_mm") is not None:
             subs.append({
                 "label": "Cost basis",
@@ -3867,6 +3969,26 @@ def _attach_sub_leaves(entry: dict) -> None:
                 "raw":   "total bonus $ paid for actives",
             })
         asurp["sub_leaves"] = subs
+
+    # ── Financial → WAR per $M — channel split (Draft / IFA / Other) ──
+    fwpm = tree.get("fin_war_per_m") or {}
+    if fwpm and (fwpm.get("value") is not None or fwpm.get("channels")):
+        subs = []
+        channels = fwpm.get("channels") or {}
+        for chan_label, chan_data in channels.items():
+            wpm = chan_data.get("war_per_million")
+            n = chan_data.get("grad_count") or 0
+            subs.append({
+                "label":  chan_label,
+                "kind":   "warpm",
+                "value":  wpm,
+                "n":      n,
+                "sparse": (wpm is None),
+                "tier":   "channel",
+                "raw":    f"${(chan_data.get('bonus_usd') or 0) / 1_000_000:.1f}M paid · {chan_data.get('war_sum', 0):.1f} WAR",
+            })
+        if subs:
+            fwpm["sub_leaves"] = subs
 
 
 def _compute_draft_pool_efficiency(gagg: dict,
@@ -4030,18 +4152,35 @@ def _finalize_active_surplus_leaf(m: dict) -> dict:
     n = m.get("_active_surplus_count") or 0
     total_surplus = m.get("_active_surplus_net_mm") or 0.0
     cost_basis = m.get("_active_surplus_cost_mm") or 0.0
+    # v31.5 — Per-side stats. Each side gates at ≥3 contributing
+    # prospects (looser than the parent's ≥5 since splitting a small
+    # cohort 50/50 makes ≥5 unrealistic on one side).
+    n_hit = m.get("_active_surplus_count_hit") or 0
+    n_pit = m.get("_active_surplus_count_pit") or 0
+    surplus_hit = m.get("_active_surplus_net_mm_hit") or 0.0
+    surplus_pit = m.get("_active_surplus_net_mm_pit") or 0.0
+    per_prospect_hit = round(surplus_hit / n_hit, 2) if n_hit >= 3 else None
+    per_prospect_pit = round(surplus_pit / n_pit, 2) if n_pit >= 3 else None
     if n < 5:
         return {
             "surplus_total_mm":        None,
             "surplus_per_prospect_mm": None,
             "active_count":            n,
             "cost_basis_mm":           round(cost_basis, 1) if n else None,
+            "per_prospect_hit_mm":     per_prospect_hit,
+            "per_prospect_pit_mm":     per_prospect_pit,
+            "active_count_hit":        n_hit,
+            "active_count_pit":        n_pit,
         }
     return {
         "surplus_total_mm":        round(total_surplus, 1),
         "surplus_per_prospect_mm": round(total_surplus / n, 2),
         "active_count":            n,
         "cost_basis_mm":           round(cost_basis, 1),
+        "per_prospect_hit_mm":     per_prospect_hit,
+        "per_prospect_pit_mm":     per_prospect_pit,
+        "active_count_hit":        n_hit,
+        "active_count_pit":        n_pit,
     }
 
 
@@ -6755,6 +6894,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "_active_surplus_net_mm":  0.0,
                 "_active_surplus_cost_mm": 0.0,
                 "_active_surplus_count":   0,
+                # v31.5 — Per-side splits (hitter vs pitcher) so the
+                # Active Surplus leaf can surface a sub-leaf breakdown.
+                # Pitcher surplus per prospect typically trails hitter
+                # surplus due to higher injury / bust risk; the split
+                # makes that asymmetry visible.
+                "_active_surplus_net_mm_hit":  0.0,
+                "_active_surplus_count_hit":   0,
+                "_active_surplus_net_mm_pit":  0.0,
+                "_active_surplus_count_pit":   0,
                 # v29 — Statcast+ + indicator-count accumulators feeding
                 # the new `statcast_quality` farm-grade leaf. _sc_plus
                 # collects every active prospect's SC+ when tracked;
@@ -6877,9 +7025,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _surplus_mm = _estimate_surplus_mm(fv_raw, is_pitcher_p, p.position)
         if _surplus_mm is not None:
             _bonus_mm = (float(acq_rec.get("bonus_usd") or 0) / 1_000_000.0)
-            m["_active_surplus_net_mm"]  += (_surplus_mm - _bonus_mm)
+            _net_mm = _surplus_mm - _bonus_mm
+            m["_active_surplus_net_mm"]  += _net_mm
             m["_active_surplus_cost_mm"] += _bonus_mm
             m["_active_surplus_count"]   += 1
+            # v31.5 — Per-side split.
+            if is_pitcher_p:
+                m["_active_surplus_net_mm_pit"] += _net_mm
+                m["_active_surplus_count_pit"]  += 1
+            else:
+                m["_active_surplus_net_mm_hit"] += _net_mm
+                m["_active_surplus_count_hit"]  += 1
         # Tree v3 — Draft Ceiling Hits: count drafted actives whose
         # current consensus FV ≥ 60 and whose draft year is within the
         # last 3 years. Captures whether the org's recent draft classes
@@ -7055,6 +7211,37 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # thresholds, so the two grade signals stay aligned).
             "_method_grad_counts": {},
             "_method_star_counts": {},
+            # v31.5 — Per-channel WAR + bonus accumulators for the
+            # Financial WAR per $M leaf's sub-leaf split. Lets the
+            # tree show "this org's $/WAR came from draft signings vs
+            # IFA bonuses" instead of one aggregate number. Each grad
+            # with both a bonus AND career WAR routes into exactly one
+            # channel based on their acquisition method.
+            "war_sum_draft":      0.0, "bonus_sum_draft": 0,
+            "war_sum_ifa":        0.0, "bonus_sum_ifa":   0,
+            "war_sum_other":      0.0, "bonus_sum_other": 0,
+            "grad_count_draft":   0,
+            "grad_count_ifa":     0,
+            "grad_count_other":   0,
+            # v31.5 — Sleeper development counters per acquisition
+            # method. A "sleeper" grad is one whose FV-at-acquisition
+            # (fv_open on the PlayerTimeseries) was ≤45 AND who went
+            # on to clear ≥2.0 WAR/yr in MLB. Sleeper hit rate =
+            # sleepers / low-FV-acquisitions per method. Higher =
+            # better at finding talent that wasn't obvious upfront.
+            "sleeper_low_fv_draft": 0, "sleeper_hit_draft": 0,
+            "sleeper_low_fv_ifa":   0, "sleeper_hit_ifa":   0,
+            # v31.5 — Per-position-bucket Production accumulators.
+            # Splits the existing hit_war_per_yr_* + pit_war_per_yr_*
+            # totals by position bucket (C/INF/OF for hitters,
+            # SP/RP for pitchers) so MLB Hitter/Pitcher Production
+            # can surface per-bucket sub-leaves. Each grad lands in
+            # exactly one bucket based on their position.
+            "hit_war_per_yr_sum_C":   0.0, "hit_war_per_yr_count_C":   0,
+            "hit_war_per_yr_sum_INF": 0.0, "hit_war_per_yr_count_INF": 0,
+            "hit_war_per_yr_sum_OF":  0.0, "hit_war_per_yr_count_OF":  0,
+            "pit_war_per_yr_sum_SP":  0.0, "pit_war_per_yr_count_SP":  0,
+            "pit_war_per_yr_sum_RP":  0.0, "pit_war_per_yr_count_RP":  0,
             # v31.1 — Draft round-tier + IFA bonus-tier accumulators.
             # Feed the new sub-leaf league pass that letter-grades each
             # tier's WAR/yr mean across the league. Tiers:
@@ -7140,6 +7327,33 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 if yval is not None:
                     bucket["hit_war_per_yr_sum"]   += yval
                     bucket["hit_war_per_yr_count"] += 1
+            # v31.5 — Sleeper development tracking. Grades each org's
+            # ability to find ≥2 WAR/yr graduates from low-FV
+            # (≤45 fv_open) acquisitions. Only fires for draft / IFA
+            # method grads; trade / waiver acquisitions are excluded
+            # since the org isn't doing initial scouting on those.
+            _fv_open = getattr(gp, "fv_open", None)
+            if _fv_open is not None and float(_fv_open) <= 45.0:
+                if gp_method == "draft":
+                    bucket["sleeper_low_fv_draft"] += 1
+                    if yval is not None and float(yval) >= 2.0:
+                        bucket["sleeper_hit_draft"] += 1
+                elif gp_method == "international_fa":
+                    bucket["sleeper_low_fv_ifa"] += 1
+                    if yval is not None and float(yval) >= 2.0:
+                        bucket["sleeper_hit_ifa"] += 1
+            # v31.5 — Per-position-bucket production split. Routes
+            # this grad's WAR/yr into the right C/INF/OF (hitter) or
+            # SP/RP (pitcher) bucket so the Production leaves can
+            # break their grade out by position type.
+            if yval is not None:
+                _grad_bucket = _pos_bucket_v2(gp.position)
+                if _grad_bucket in ("C", "INF", "OF"):
+                    bucket[f"hit_war_per_yr_sum_{_grad_bucket}"]   += yval
+                    bucket[f"hit_war_per_yr_count_{_grad_bucket}"] += 1
+                elif _grad_bucket in ("SP", "RP"):
+                    bucket[f"pit_war_per_yr_sum_{_grad_bucket}"]   += yval
+                    bucket[f"pit_war_per_yr_count_{_grad_bucket}"] += 1
             # v31.1 — Draft round-tier + IFA bonus-tier per-grad WAR/yr
             # accumulators. Only fires when WAR/yr is on file (graduate
             # has a non-empty MLB career). Tiers are mutually exclusive
@@ -7171,6 +7385,20 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         if bonus_usd is not None:
             bucket["bonus_sum"] += int(bonus_usd)
             bucket["bonus_count"] += 1
+            # v31.5 — Channel split: route this grad's bonus + WAR
+            # into the right channel bucket so the WAR/$M leaf can
+            # surface a per-channel sub-leaf breakdown (Draft / IFA /
+            # Other). career_war_val may be None — handled below by
+            # checking before incrementing the WAR sum.
+            _chan = "other"
+            if gp_method == "draft":
+                _chan = "draft"
+            elif gp_method == "international_fa":
+                _chan = "ifa"
+            bucket[f"bonus_sum_{_chan}"] += int(bonus_usd)
+            bucket[f"grad_count_{_chan}"] += 1
+            if career_war_val is not None:
+                bucket[f"war_sum_{_chan}"] += float(career_war_val)
         # Grad-Contract Surplus accumulator. 6-year amortization mirrors
         # the typical pre-FA cost-controlled window for a graduate; longer
         # extensions get credited yearly via aav_usd, not the bonus.
@@ -7536,6 +7764,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "star_grad_count":     _ifa_grad_n,
                 "star_rate_deviation": None,   # filled in league pass
                 "star_rate_league_median": None,
+                # v31.5 — Sleeper development signal (IFA side).
+                # Same shape as acq_draft.sleeper_*; surfaces orgs
+                # that find ≥2 WAR/yr grads from lower-bonus / low-
+                # FV IFA signings.
+                "sleeper_hit_rate": (
+                    round(gagg.get("sleeper_hit_ifa") / gagg.get("sleeper_low_fv_ifa"), 3)
+                    if (gagg.get("sleeper_low_fv_ifa") or 0) >= 3 else None
+                ),
+                "sleeper_hit_count":     gagg.get("sleeper_hit_ifa") or 0,
+                "sleeper_low_fv_count":  gagg.get("sleeper_low_fv_ifa") or 0,
                 # v31.1 — Bonus-tier breakdown. Same shape as
                 # acq_draft.round_tiers — per-tier WAR/yr mean grades
                 # the org's hit rate inside each bonus band. Letter-
@@ -7581,6 +7819,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "star_grad_count":     _draft_grad_n,
                 "star_rate_deviation": None,   # filled in league pass
                 "star_rate_league_median": None,
+                # v31.5 — Sleeper development signal. Hit rate on
+                # low-FV (≤45 fv_open) drafted grads — captures the
+                # org's ability to find ≥2 WAR/yr graduates from
+                # lower-ranked picks. Gated at ≥3 low-FV grads.
+                "sleeper_hit_rate": (
+                    round(gagg.get("sleeper_hit_draft") / gagg.get("sleeper_low_fv_draft"), 3)
+                    if (gagg.get("sleeper_low_fv_draft") or 0) >= 3 else None
+                ),
+                "sleeper_hit_count":   gagg.get("sleeper_hit_draft") or 0,
+                "sleeper_low_fv_count": gagg.get("sleeper_low_fv_draft") or 0,
                 # v31.1 — Round-tier breakdown. Each tier carries the
                 # per-org WAR/yr mean across grads acquired via that
                 # tier. Letter-graded in the league pass.
@@ -7615,10 +7863,28 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                            "hit_rate": None, "claims_total": 0, "claims_with_mlb": 0},
             # FINANCIAL branch — war_per_million reused from financial_roi;
             # grad-contract surplus mean computed here.
-            "fin_war_per_m": {
+            "fin_war_per_m": (lambda _chan=lambda c: (lambda _ws=(gagg.get(f"war_sum_{c}") or 0.0),
+                                                              _bs=(gagg.get(f"bonus_sum_{c}") or 0),
+                                                              _n=(gagg.get(f"grad_count_{c}") or 0):
+                {
+                    "war_per_million": (round(_ws / (_bs / 1_000_000), 3)
+                                         if _bs >= 1_000_000 and _n >= 3 else None),
+                    "war_sum":         round(_ws, 2),
+                    "bonus_usd":       int(_bs),
+                    "grad_count":      _n,
+                })(): {
                 "value": m["financial_roi"]["war_per_million"],
                 "grad_count": m["financial_roi"]["grad_count_with_bonus"],
-            },
+                # v31.5 — Channel split sub-data. WAR/$M computed
+                # per channel (Draft / IFA / Other). Gated at ≥$1M
+                # AND ≥3 contributing grads so a single big bonus
+                # doesn't dominate.
+                "channels": {
+                    "Draft $": _chan("draft"),
+                    "IFA $":   _chan("ifa"),
+                    "Other $": _chan("other"),
+                },
+            })(),
             "fin_contract_surplus": {
                 "mean_usd_per_yr": (round(gagg["contract_surplus_sum"] / gagg["contract_surplus_count"], 0)
                                     if (gagg.get("contract_surplus_count") or 0) >= 3 else None),
@@ -7634,6 +7900,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "war_per_yr_mean": _gated_mean("hit_war_per_yr_sum", "hit_war_per_yr_count"),
                 "career_war_mean": _gated_mean("hit_career_war_sum", "hit_career_war_count"),
                 "top3_career_war": _top3_career_war(gagg.get("_top_grads") or [], is_pitcher=False),
+                # v31.5 — Per-position-bucket Hitter Production split.
+                # Same WAR/yr mean as the parent leaf, just bucketed
+                # so the user can see WHICH position group drove the
+                # grade (e.g. an org's hitter production might be
+                # carried by INF grads while C and OF lag).
+                "pos_buckets": {
+                    "C":   {"war_per_yr_mean": _gated_mean("hit_war_per_yr_sum_C",   "hit_war_per_yr_count_C"),
+                            "grad_count":      gagg.get("hit_war_per_yr_count_C") or 0},
+                    "INF": {"war_per_yr_mean": _gated_mean("hit_war_per_yr_sum_INF", "hit_war_per_yr_count_INF"),
+                            "grad_count":      gagg.get("hit_war_per_yr_count_INF") or 0},
+                    "OF":  {"war_per_yr_mean": _gated_mean("hit_war_per_yr_sum_OF",  "hit_war_per_yr_count_OF"),
+                            "grad_count":      gagg.get("hit_war_per_yr_count_OF") or 0},
+                },
                 # WAG kept on the leaf for tooltip / back-compat consumers
                 # but NO longer the headline stat.
                 "wag_mean":        _gated_mean("hit_wag_sum",        "hit_wag_count"),
@@ -7644,6 +7923,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "war_per_yr_mean": _gated_mean("pit_war_per_yr_sum", "pit_war_per_yr_count"),
                 "career_war_mean": _gated_mean("pit_career_war_sum", "pit_career_war_count"),
                 "top3_career_war": _top3_career_war(gagg.get("_top_grads") or [], is_pitcher=True),
+                # v31.5 — Per-role Pitcher Production split (SP vs RP).
+                # Same WAR/yr mean as parent, bucketed by role so the
+                # user can see whether the org's pitcher production is
+                # rotation-driven or bullpen-driven.
+                "pos_buckets": {
+                    "SP": {"war_per_yr_mean": _gated_mean("pit_war_per_yr_sum_SP", "pit_war_per_yr_count_SP"),
+                           "grad_count":      gagg.get("pit_war_per_yr_count_SP") or 0},
+                    "RP": {"war_per_yr_mean": _gated_mean("pit_war_per_yr_sum_RP", "pit_war_per_yr_count_RP"),
+                           "grad_count":      gagg.get("pit_war_per_yr_count_RP") or 0},
+                },
                 "wag_mean":        _gated_mean("pit_wag_sum",        "pit_wag_count"),
                 "wag_sum":  round(gagg.get("pit_wag_sum") or 0.0, 2),
                 "grad_count": gagg.get("pit_wag_count") or 0,
@@ -7768,6 +8057,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             if _wp is not None:
                 # Stamp the fallback inline so LEAF_SPECS can read it.
                 _ifa_leaf["war_per_yr_fallback"] = _wp
+
+        # v31.5 — Stash raw grad lists on entry so the per-window
+        # MLB Production / Acquisition aggregator (downstream league
+        # pass) can re-walk them per window. Copies the lists (don't
+        # pop) so the existing leaf computations remain intact.
+        m["_top_grads_raw"]        = list(gagg.get("_top_grads") or [])
+        m["_draft_pool_grads_raw"] = list(gagg.get("_draft_pool_grads") or [])
+        m["_ifa_grads_raw"]        = list(gagg.get("_ifa_grads") or [])
 
         # _active_keys stays for the second-pass index attachment; popped later.
         org_summary.append(m)
@@ -9531,6 +9828,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         for bucket in buckets:
             _grade_sub_leaf_across_league(leaf_key, f"{bucket} bucket")
 
+    # v31.5 — Per-tool DvM+ sub-leaves. Each tool's value is already
+    # 100-anchored across the league (computed earlier), so grading
+    # here just maps each org's value to a letter via z-score vs the
+    # cohort mean. Higher tool DvM+ = better.
+    _PER_TOOL_LABELS = {
+        "dev_hitter":  ["HIT", "PWR", "SPD", "FLD", "ARM", "PSEL", "BCT"],
+        "dev_pitcher": ["FB", "SL", "CB", "CH", "CMD", "CT"],
+    }
+    for leaf_key, tool_labels in _PER_TOOL_LABELS.items():
+        for tool_label in tool_labels:
+            _grade_sub_leaf_across_league(leaf_key, tool_label)
+
     # Draft round-tier + IFA bonus-tier sub-leaves.
     for tier_label in ("1st round (R1)", "Day 1 (R2-R10)", "Late (R11+)"):
         _grade_sub_leaf_across_league("acq_draft", tier_label)
@@ -9555,9 +9864,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _grade_sub_leaf_across_league("dev_statcast_quality", scq_label)
 
     # Acquisition aggregate sub-leaves (after tier-specific grading).
-    for d_label in ("Pick value vs slot", "Ceiling hits"):
+    for d_label in ("Pick value vs slot", "Ceiling hits", "Sleeper hit rate"):
         _grade_sub_leaf_across_league("acq_draft", d_label)
-    for i_label in ("WAR/yr mean", "Career WAR mean"):
+    for i_label in ("WAR/yr mean", "Career WAR mean", "Sleeper hit rate"):
         _grade_sub_leaf_across_league("acq_ifa", i_label)
 
     # Trade Acumen splits (higher inbound better; lower outbound
@@ -9573,6 +9882,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     for prod_label in ("WAR/yr mean", "Top-3 cum WAR", "WAG mean"):
         _grade_sub_leaf_across_league("mlb_hitter_production", prod_label)
         _grade_sub_leaf_across_league("mlb_pitcher_production", prod_label)
+    # v31.5 — Per-position-bucket Production sub-leaves.
+    for hbkt in ("C", "INF", "OF"):
+        _grade_sub_leaf_across_league("mlb_hitter_production", f"{hbkt} grads")
+    for pbkt in ("SP", "RP"):
+        _grade_sub_leaf_across_league("mlb_pitcher_production", f"{pbkt} grads")
 
     # Top Grads / Conviction / HOF sub-leaves.
     _grade_sub_leaf_across_league("mlb_production_top_grads", "Top-3 mean WAR/yr")
@@ -9603,8 +9917,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _grade_sub_leaf_across_league("mlb_production_hof_track", _hof_count_label)
 
     # Active Surplus per-prospect (higher better; Cost basis is
-    # informational only — not graded).
+    # informational only — not graded). v31.5 — also grade the per-
+    # side splits.
     _grade_sub_leaf_across_league("fin_active_surplus", "$ / prospect")
+    _grade_sub_leaf_across_league("fin_active_surplus", "Hitter $/prospect")
+    _grade_sub_leaf_across_league("fin_active_surplus", "Pitcher $/prospect")
+
+    # v31.5 — Financial WAR per $M channel split (Draft / IFA / Other).
+    for chan_label in ("Draft $", "IFA $", "Other $"):
+        _grade_sub_leaf_across_league("fin_war_per_m", chan_label)
 
     # v31.4 — Per-window letter grades for the DvM+ leaves. Lets the
     # frontend's 1y/3y/6y window selector ACTUALLY change the leaf
@@ -9638,6 +9959,114 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 else:
                     z = (v - mu) / sd
                     wmap[leaf_key] = _z_to_letter(z)
+
+    # v31.5 — Per-window letter grades for MLB Production + Acquisition
+    # leaves. Filters the per-grad records by recency (last_mlb_year for
+    # production, acquisition year for acquisition leaves) so the
+    # window selector actually reshapes those grades too. Tree node
+    # `_top_grads` carries last_mlb_year + method; `acquisitions` table
+    # carries the per-prospect year. We re-aggregate per-window then
+    # z-score-grade across the league.
+    _now_yr = date.today().year
+    _WINDOWS = {"1y": 1, "3y": 3, "6y": 6}
+    # Production windowing: aggregate WAR/yr from grads whose
+    # last_mlb_year is within the window, per side (hitter vs pitcher).
+    _PROD_LEAF_BY_SIDE = {False: "mlb_hitter_production",
+                           True:  "mlb_pitcher_production"}
+    for win_label, win_years in _WINDOWS.items():
+        for is_pit, leaf_key in _PROD_LEAF_BY_SIDE.items():
+            # Collect per-org WAR/yr mean for grads in window.
+            org_vals = []
+            for entry in org_summary:
+                gagg_grads = (entry.get("_top_grads_for_windowing") or [])
+                # _top_grads_for_windowing is populated below; fall back
+                # to the persistent grad list on the tree-builder bucket
+                # which we keep as _top_grads.
+                if not gagg_grads:
+                    # build it once: pull from entry's stashed _top_grads
+                    # which we preserved on entry as _top_grads_raw.
+                    gagg_grads = entry.get("_top_grads_raw") or []
+                vals_w = []
+                for g in gagg_grads:
+                    if bool(g.get("is_pitcher")) != is_pit:
+                        continue
+                    lmy = g.get("last_mlb_year")
+                    wpy = g.get("war_per_yr")
+                    if lmy is None or wpy is None:
+                        continue
+                    if _now_yr - int(lmy) <= win_years:
+                        vals_w.append(float(wpy))
+                org_mean = sum(vals_w) / len(vals_w) if len(vals_w) >= 3 else None
+                org_vals.append(org_mean)
+            present = [v for v in org_vals if v is not None]
+            n_p = len(present)
+            if n_p >= 3:
+                mu = sum(present) / n_p
+                var = sum((v - mu) ** 2 for v in present) / n_p
+                sd = var ** 0.5
+            else:
+                mu, sd = 0.0, 0.0
+            for i, v in enumerate(org_vals):
+                entry = org_summary[i]
+                gbw = entry.setdefault("grades_by_window", {})
+                wmap = gbw.setdefault(win_label, {})
+                if v is None or sd < 1e-9:
+                    wmap[leaf_key] = "C"
+                else:
+                    z = (v - mu) / sd
+                    wmap[leaf_key] = _z_to_letter(z)
+                # Also stamp the windowed value on the tree node for
+                # display.
+                node = (entry.get("tree") or {}).get(leaf_key) or {}
+                wpy_map = node.setdefault("war_per_yr_by_window", {})
+                wpy_map[win_label] = round(v, 2) if v is not None else None
+    # Acquisition windowing: per-leaf grade based on grads with acq
+    # year in window. acq_draft windows on draft year; acq_ifa windows
+    # on signed year. We aggregate WAR/yr means for grads filtered by
+    # `acq_year_window`.
+    _ACQ_GRAD_LISTS = {
+        "acq_draft": "_draft_pool_grads",   # has draft_year + career_war
+        "acq_ifa":   "_ifa_grads",          # has signed_year + career_war
+    }
+    for win_label, win_years in _WINDOWS.items():
+        for leaf_key, grad_list_key in _ACQ_GRAD_LISTS.items():
+            org_vals = []
+            for entry in org_summary:
+                grad_list = entry.get(grad_list_key + "_raw") or []
+                vals_w = []
+                for g in grad_list:
+                    yr = g.get("draft_year") or g.get("signed_year")
+                    cw = g.get("career_war")
+                    if yr is None or cw is None:
+                        continue
+                    if _now_yr - int(yr) <= win_years:
+                        vals_w.append(float(cw))
+                # Use career WAR mean as the in-window signal (WAR/yr
+                # not stored on _draft_pool_grads / _ifa_grads).
+                org_mean = sum(vals_w) / len(vals_w) if len(vals_w) >= 3 else None
+                org_vals.append(org_mean)
+            present = [v for v in org_vals if v is not None]
+            n_p = len(present)
+            if n_p >= 3:
+                mu = sum(present) / n_p
+                var = sum((v - mu) ** 2 for v in present) / n_p
+                sd = var ** 0.5
+            else:
+                mu, sd = 0.0, 0.0
+            for i, v in enumerate(org_vals):
+                entry = org_summary[i]
+                gbw = entry.setdefault("grades_by_window", {})
+                wmap = gbw.setdefault(win_label, {})
+                if v is None or sd < 1e-9:
+                    wmap[leaf_key] = "C"
+                else:
+                    z = (v - mu) / sd
+                    wmap[leaf_key] = _z_to_letter(z)
+    # Pop the scratch fields so they don't bloat the exported JSON.
+    for entry in org_summary:
+        entry.pop("_top_grads_raw", None)
+        entry.pop("_draft_pool_grads_raw", None)
+        entry.pop("_ifa_grads_raw", None)
     # ────────────────────────────────────────────────────────────────────────
 
     # ── Per-org draft spending (computed from our acquisitions table) ──
