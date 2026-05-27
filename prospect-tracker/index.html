@@ -1434,11 +1434,11 @@
     .trade-group .player-row::before { border-radius: 0; }
     .trade-group .trade-audit-card { margin-left: 0; }
     .trade-group-head {
-      font-size: 9px;
-      letter-spacing: 0.1em;
+      font-size: 11px;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      font-weight: 700;
-      color: var(--text-tertiary);
+      font-weight: 800;
+      color: var(--text-secondary);
       padding: 6px 2px 3px;
     }
     /* Row variants — each section's per-render `grid-template-columns`
@@ -15752,9 +15752,12 @@ function renderRecentlyTraded() {
     _lastOfTrade[i]  = k != null && (i === filtered.length - 1 || _tk(filtered[i + 1]) !== k);
   });
   const _groupHead = (k) => {
+    const g = evalByTrade[k] || {};
     const n = (_groupKeys[k] || new Set()).size;
-    const dt = (evalByTrade[k] || {}).date || "";
-    return `<div class="trade-group-head">⇄ ${n} prospects in this trade${dt ? ` · ${escapeHtml(dt)}` : ""}</div>`;
+    const dt = g.date || "";
+    const teams = (g.orgA && g.orgB)
+      ? `${escapeHtml(g.orgA)} ⇄ ${escapeHtml(g.orgB)} · ` : "";
+    return `<div class="trade-group-head">${teams}${n} prospects${dt ? ` · ${escapeHtml(dt)}` : ""}</div>`;
   };
 
   const rows = filtered.map(({ p, acq }, i) => {
@@ -15917,7 +15920,7 @@ function renderRecentlyTraded() {
             const _pos = e.p.position || v.pos || null;
             const _lvl = (e.p.statline && e.p.statline.level) || e.p.level || null;
             const _posLvl = (_pos || _lvl)
-              ? `<span style="color:var(--text-tertiary);font-size:8.5px;white-space:nowrap;">${escapeHtml([_pos, _lvl].filter(Boolean).join(" · "))}</span>`
+              ? `<span style="color:var(--text-tertiary);font-size:8px;white-space:nowrap;">${escapeHtml([_pos, _lvl].filter(Boolean).join(" · "))}</span>`
               : "";
             const _fvNum = (v.kind === "fv" && v.fv != null) ? v.fv
                          : (e.p.fv_close != null ? e.p.fv_close : null);

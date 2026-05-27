@@ -8896,11 +8896,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         in_surplus_n_vet  = 0;         out_surplus_n_vet  = 0
         # Top weighted-contributor trades for the tooltip story.
         weighted_trades: list[dict] = []
+        # Count each player's participation in a given trade ONCE per org.
+        # `fv_events` is built from actives+grads+inactives, so a player who
+        # appears in more than one bucket (e.g. a debuted prospect still
+        # listed as active) would otherwise have the same trade summed twice
+        # into this org's inbound/outbound totals. The (player, date,
+        # counterparty, direction) tuple uniquely identifies one player's
+        # leg of one trade — mirrors the frontend trade-audit dedup key.
+        _seen_trade_legs: set = set()
         for ev in (entry["fv_events"] or []):
             if ev.get("kind") != "trade":
                 continue
             fv = ev.get("fv") or 0.0
             pkey = ev.get("player_key")
+            _leg = (pkey, ev.get("date"), ev.get("other_org"), ev.get("direction"))
+            if _leg in _seen_trade_legs:
+                continue
+            _seen_trade_legs.add(_leg)
             cw = ((career_war or {}).get(pkey) or {}).get("career_war")
             w = _trade_recency_weight(ev.get("date"))
             # v32.1 — Per-player surplus value + kind ("vet" / "prospect").
