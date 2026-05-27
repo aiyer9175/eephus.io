@@ -77,9 +77,132 @@ from storage import (
     load_draft_players,
     load_draft_results,
     load_draft_snapshots,
+    load_draft_statlines,
 )
 
 log = logging.getLogger(__name__)
+
+
+# v31.7 — College / amateur stats integration. Each draft prospect
+# with FG-side amateur stats (college conference, HS, summer-league
+# rows from draft_statlines) gets a `college_stats` summary block on
+# their export record: latest season's headline stats + a 2-3 season
+# career trail. The summary also drives a SMALL Draft Stock+ boost
+# (z-scored against the class cohort) so an outlier college season
+# nudges the prospect's DS+ above/below the rank-derived baseline.
+
+# Headline hitter stats surfaced on player cards + detail pages.
+# Pick wRC+ first when present (best park-adjusted aggregate); fall
+# back to OPS / AVG / OBP for sparse rows.
+_COLLEGE_HIT_HEADLINE_KEYS = (
+    ("wRC+",  "wrc_plus", "{:.0f}"),
+    ("OPS",   "ops",      "{:.3f}"),
+    ("AVG",   "avg",      "{:.3f}"),
+    ("OBP",   "obp",      "{:.3f}"),
+    ("SLG",   "slg",      "{:.3f}"),
+    ("HR",    "hr",       "{:.0f}"),
+    ("SB",    "sb",       "{:.0f}"),
+)
+_COLLEGE_PIT_HEADLINE_KEYS = (
+    ("ERA",   "era",      "{:.2f}"),
+    ("FIP",   "fip",      "{:.2f}"),
+    ("K/9",   "k_per_9",  "{:.1f}"),
+    ("BB/9",  "bb_per_9", "{:.1f}"),
+    ("K%",    "k_pct",    "{:.0%}"),
+    ("WHIP",  "whip",     "{:.2f}"),
+    ("IP",    "ip",       "{:.1f}"),
+)
+
+
+def _is_pitcher_stat_row(payload: dict) -> bool:
+    """A statline carries pitcher fields only when ERA / IP / K/9 are
+    set; hitter rows have PA / AVG / wRC+ instead."""
+    return any(payload.get(k) is not None for k in ("ip", "era", "k_per_9", "fip"))
+
+
+def _summarize_college_stats(statlines: list[dict]) -> dict | None:
+    """Return a compact summary for one player's college / HS / amateur
+    statline list. Picks the most recent season as the headline, then
+    keeps up to 3 prior seasons (newest first) for the detail page."""
+    if not statlines:
+        return None
+    # Sort newest first by season.
+    rows = sorted(statlines, key=lambda r: -(r.get("season") or 0))
+    latest = rows[0]
+    payload = latest.get("payload") or {}
+    is_pit = _is_pitcher_stat_row(payload)
+    headline_keys = _COLLEGE_PIT_HEADLINE_KEYS if is_pit else _COLLEGE_HIT_HEADLINE_KEYS
+    # Build headline chip list (label + formatted value), skipping
+    # missing values. Cap at 4 chips for the player-card row.
+    headline = []
+    for label, k, fmt in headline_keys:
+        v = payload.get(k)
+        if v is None:
+            continue
+        try:
+            formatted = fmt.format(float(v))
+        except (TypeError, ValueError):
+            formatted = str(v)
+        headline.append({"label": label, "value": formatted, "raw": v})
+        if len(headline) >= 4:
+            break
+    # Build the per-season trail (compact). Keep the same shape as
+    # what the detail page already renders for overseas players.
+    trail = []
+    for r in rows[:3]:
+        trail.append({
+            "season":  r.get("season"),
+            "league":  r.get("league"),
+            "team":    r.get("team"),
+            "payload": r.get("payload") or {},
+        })
+    return {
+        "is_pitcher":     is_pit,
+        "latest_season":  latest.get("season"),
+        "latest_league":  latest.get("league"),
+        "latest_team":    latest.get("team"),
+        "headline":       headline,
+        "trail":          trail,
+        "season_count":   len(rows),
+    }
+
+
+def _college_perf_z(summary: dict | None) -> float | None:
+    """Translate a player's college summary into a small z-style boost
+    score for Draft Stock+. Uses wRC+ for hitters (anchored at 100,
+    each +30 = ~1σ in college samples), ERA- for pitchers (lower =
+    better, each -10 = ~1σ; we negate so positive = better). Returns
+    None when the headline metric isn't available."""
+    if not summary:
+        return None
+    latest = (summary.get("trail") or [{}])[0]
+    payload = latest.get("payload") or {}
+    if summary.get("is_pitcher"):
+        # Prefer FIP when present (more predictive than ERA at college
+        # level due to small samples + variable defense); fall back to
+        # ERA. Anchor at 4.00 ERA / FIP ≈ league avg in college.
+        v = payload.get("fip") if payload.get("fip") is not None else payload.get("era")
+        if v is None:
+            return None
+        try:
+            return round((4.0 - float(v)) / 1.5, 2)   # negative ERA → +z
+        except (TypeError, ValueError):
+            return None
+    else:
+        # Hitter — prefer wRC+ then fall back to OPS-anchored.
+        wrc = payload.get("wrc_plus")
+        if wrc is not None:
+            try:
+                return round((float(wrc) - 100.0) / 30.0, 2)
+            except (TypeError, ValueError):
+                return None
+        ops = payload.get("ops")
+        if ops is not None:
+            try:
+                return round((float(ops) - 0.850) / 0.150, 2)
+            except (TypeError, ValueError):
+                return None
+        return None
 
 
 # Draft Stock+ — class-normalized index. 100 = class median rank,
@@ -172,7 +295,8 @@ def _build_class(year: int,
                  results_by_year: dict[int, list[dict]],
                  order_by_year: dict[int, list[dict]],
                  canonical_keys: dict[str, str],
-                 lottery_by_year: dict[int, list[dict]] | None = None) -> dict:
+                 lottery_by_year: dict[int, list[dict]] | None = None,
+                 college_by_player: dict[str, list[dict]] | None = None) -> dict:
     """Build one draft-class payload."""
     snaps = [s for s in all_snaps if s.get("draft_year") == year]
     by_player: dict[str, list[dict]] = defaultdict(list)
@@ -251,6 +375,20 @@ def _build_class(year: int,
         if drafted_pick and status != "drafted":
             status = "drafted"
 
+        # v31.7 — College stats summary + Draft Stock+ boost.
+        # The college signal nudges DS+ by ±6 (clamped) so it stays
+        # secondary to the rank-derived baseline but visible enough
+        # to push an outlier hitter / arm up or down a few slots.
+        cstats_rows = (college_by_player or {}).get(pk) or []
+        cstats_summary = _summarize_college_stats(cstats_rows)
+        cperf_z = _college_perf_z(cstats_summary)
+        sp_boosted = sp
+        if sp is not None and cperf_z is not None:
+            # Cap the boost at ±6 pts so DS+ retains its rank-driven
+            # character (rank is the primary signal — college is a
+            # secondary confidence layer).
+            boost = max(-6, min(6, round(cperf_z * 3.0)))
+            sp_boosted = max(60, min(140, sp + boost))
         prospects.append({
             "player_key":     pk,
             "player_name":    any_snap.get("player_name"),
@@ -270,7 +408,10 @@ def _build_class(year: int,
             "consensus_rank": rank,              # raw avg of per-source ranks
             "consensus_pick": None,              # populated post-sort (sequential 1, 2, 3, ...)
             "projected_round": None,             # populated post-sort from consensus_pick
-            "draft_stock_plus": sp,
+            "draft_stock_plus": sp_boosted,
+            "draft_stock_plus_pre_college": sp,
+            "draft_stock_plus_college_boost": (sp_boosted - sp) if (sp is not None and sp_boosted is not None) else None,
+            "college_stats":  cstats_summary,
             "headshot_url":   player_headshot_url({
                 "mlbam_id":     player_meta.get("mlbam_id"),
                 "fg_player_id": player_meta.get("fg_player_id"),
@@ -384,6 +525,15 @@ def build_draft_export() -> dict:
     order_all = load_draft_order()
     canonical = load_draft_canonical_keys()
     lottery_all = load_draft_lottery_odds(latest_only=True)
+    # v31.7 — College / amateur statlines, grouped by player_key.
+    # Populated only for prospects with an fg_player_id who had at
+    # least one parsed amateur row (see draft_stats.refresh_draft_stats).
+    college_all = load_draft_statlines()
+    college_by_player: dict[str, list[dict]] = defaultdict(list)
+    for r in college_all:
+        pk = r.get("player_key")
+        if pk:
+            college_by_player[pk].append(r)
 
     results_by_year: dict[int, list[dict]] = defaultdict(list)
     for r in results_all:
@@ -405,7 +555,8 @@ def build_draft_export() -> dict:
                    reverse=True)
 
     classes = [_build_class(y, all_snaps, players, results_by_year,
-                            order_by_year, canonical, lottery_by_year)
+                            order_by_year, canonical, lottery_by_year,
+                            college_by_player=college_by_player)
                for y in years]
 
     return {

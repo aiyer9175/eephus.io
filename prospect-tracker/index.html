@@ -7130,6 +7130,7 @@
           <option value="waiver">Waiver claim</option>
           <option value="rule_5">Rule 5</option>
           <option value="contract_purchase">Contract purchase</option>
+          <option value="debut">MLB debut</option>
         </select>
       </div>
       <div class="filter-group">
@@ -13406,21 +13407,47 @@ const ACQ_LABELS = {
   international_fa:  { label: "Signed from international FA",color: "var(--neon-violet)" },
   draft:             { label: "Drafted and signed",          color: "var(--up)" },
   free_agent:        { label: "Free-agent signing",          color: "var(--neon-cyan)" },
+  // v31.7 — MLB debut as a transaction kind. Debuted players exit
+  // the active prospect pool, so this entry shows up exactly once
+  // per prospect (no post-debut tx noise). Treated as the canonical
+  // "graduation" transaction on the Transactions tab.
+  debut:             { label: "MLB debut",                   color: "var(--up)" },
 };
 
 function getFilteredAcquired() {
-  // Active prospects only (graduates have their own section). For each
-  // active player we resolve their MOST RECENT inbound acquisition; the
-  // pool is players where that resolves to something.
+  // Active prospects' most-recent inbound acquisition, PLUS MLB debut
+  // events for graduated players (v31.7 — graduations are first-class
+  // transactions; previously they only showed in the chrome news
+  // strip + the separate Debuted section).
   let pool = [];
   for (const p of (DATA.players || [])) {
     const acq = latestAcquisition(p);
     if (!acq) continue;
     pool.push({ p, acq });
   }
+  // v31.7 — Synthesize debut events for graduated players. We DO NOT
+  // include any other post-debut transactions for these players (the
+  // user's contract: "once a prospect has debuted, their following
+  // transactions shouldn't show up"). Each debuted player surfaces
+  // exactly one row keyed off their debut_date.
+  for (const g of (DATA.debuts || [])) {
+    if (!g || !g.debut_date) continue;
+    // Build a synthetic acq record for the debut event.
+    pool.push({
+      p: g,
+      acq: {
+        method:      "debut",
+        date:        g.debut_date,
+        from_org:    g.org || null,
+        to_org:      "MLB",
+        description: `MLB debut · ${g.org || "—"}`,
+        _is_debut:   true,
+      },
+    });
+  }
   if (state.search) {
     const q = state.search.toLowerCase();
-    pool = pool.filter(({ p }) => p.player_name.toLowerCase().includes(q));
+    pool = pool.filter(({ p }) => (p.player_name || "").toLowerCase().includes(q));
   }
   if (state.orgFilter !== "all") {
     pool = pool.filter(({ p }) => p.org === state.orgFilter);
@@ -13430,10 +13457,13 @@ function getFilteredAcquired() {
   }
   // Sort by acquisition date desc; tiebreak by FV desc.
   pool.sort((a, b) => {
-    if (a.acq.date !== b.acq.date) return b.acq.date.localeCompare(a.acq.date);
-    const fa = a.p.points.length ? a.p.points[a.p.points.length - 1].consensus_fv_raw : 0;
-    const fb = b.p.points.length ? b.p.points[b.p.points.length - 1].consensus_fv_raw : 0;
-    return fb - fa;
+    if (a.acq.date !== b.acq.date) return (b.acq.date || "").localeCompare(a.acq.date || "");
+    const _fv = (row) => {
+      const pts = (row.p && row.p.points) || [];
+      const last = pts.length ? pts[pts.length - 1] : null;
+      return last ? (last.consensus_fv_raw || 0) : 0;
+    };
+    return _fv(b) - _fv(a);
   });
   return pool;
 }
@@ -14737,7 +14767,11 @@ function renderRecentlyTraded() {
   </div>`;
 
   const rows = filtered.map(({ p, acq }, i) => {
-    const latest = p.points[p.points.length - 1];
+    // v31.7 — Debuted players synthesized into this list may not
+    // have a populated `points` array; guard so the row still
+    // renders with a fallback FV display.
+    const pts = (p && p.points) || [];
+    const latest = pts.length ? pts[pts.length - 1] : {};
     const meta = ACQ_LABELS[acq.method] || { label: acq.method, color: "var(--text-secondary)" };
     // The "method · context" cell shows the acquisition method as a
     // colored pill, plus a short context line (from→to for trades,
@@ -14825,8 +14859,10 @@ function renderRecentlyTraded() {
           ${methodPill}
           <span style="font-size:11px;">${contextLine}</span>
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}</div>
-        <div class="line-chart-cell desktop-only">${lazyLineChartHTML(p)}</div>
+        <div style="text-align:center;">${latest.consensus_fv_label
+          ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}`
+          : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+        <div class="line-chart-cell desktop-only">${pts.length >= 2 ? lazyLineChartHTML(p) : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`}</div>
       </div>
     `;
   }).join("");
@@ -15820,16 +15856,45 @@ function _renderDraftCard(p) {
 
   // Report (first source's writeup, truncated). The full writeup lives
   // in tool_grades[source]._extras.report; expose a "more" toggle later.
+  // v31.7 — Trimmed from 260 → 140 chars to make room for the new
+  // college-stats chip strip below. Full report stays on the detail
+  // page; the card-level snippet is just a teaser.
   let report = "";
   for (const src in (p.tool_grades || {})) {
     const ext = (p.tool_grades[src] || {})._extras || {};
     if (ext.report) { report = ext.report; break; }
   }
   const reportLine = report
-    ? `<div class="draft-report" style="margin-top:6px;font-size:10.5px;
+    ? `<div class="draft-report" style="margin-top:5px;font-size:10.5px;
           color:var(--text-secondary);line-height:1.35;
-          max-height:40px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 60%,transparent);">
-        ${escapeHtml(report.slice(0, 260))}…</div>` : "";
+          max-height:28px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 60%,transparent);">
+        ${escapeHtml(report.slice(0, 140))}…</div>` : "";
+
+  // v31.7 — College / amateur stats chip strip. Renders the headline
+  // chips from p.college_stats.headline (4 max, hitter or pitcher key
+  // metrics depending on player type). When the prospect has no
+  // college stats on file (HS players without showcase rows, or
+  // overseas-side amateurs we didn't fetch) the strip is omitted.
+  const cs = p.college_stats || null;
+  let collegeChips = "";
+  if (cs && Array.isArray(cs.headline) && cs.headline.length) {
+    const chips = cs.headline.map(c => {
+      const lbl = String(c.label || '');
+      const val = String(c.value || '—');
+      return `<span style="display:inline-flex;align-items:baseline;gap:3px;padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-family:var(--font-mono);font-size:9px;color:var(--text-secondary);">
+        <span style="color:var(--text-tertiary);letter-spacing:0.04em;">${escapeHtml(lbl)}</span>
+        <span style="font-weight:700;color:var(--text-primary);">${escapeHtml(val)}</span>
+      </span>`;
+    }).join("");
+    const ssn = cs.latest_season ? String(cs.latest_season).slice(-2) : "";
+    const lg  = cs.latest_league ? `${cs.latest_league}` : "";
+    const eyebrow = (ssn || lg)
+      ? `<span style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:700;margin-right:2px;" title="Most recent amateur season on file">${escapeHtml(lg)}${ssn ? ' ′' + ssn : ''}</span>`
+      : "";
+    collegeChips = `<div class="draft-college-stats" style="display:flex;align-items:center;flex-wrap:wrap;gap:3px;margin-top:4px;min-width:0;">
+      ${eyebrow}${chips}
+    </div>`;
+  }
 
   // v17 — Display sequential rank from the new FV-sort order (the parent
   // _renderDraftRankings stamps _fvSortRank after sorting). Falls back to
@@ -15887,6 +15952,7 @@ function _renderDraftCard(p) {
       </span>
     </div>
     ${toolPills}
+    ${collegeChips}
     ${statusBadge}
     ${reportLine}
   </div>`;
@@ -16822,16 +16888,71 @@ function _renderOverseasCard(p) {
     : "";
 
   // First-source report (truncated, hover-to-expand via CSS).
+  // v31.7 — Trimmed from 260 → 140 chars to make room for the
+  // headline overseas-stats chip strip below. Full report stays
+  // on the detail page.
   let report = "";
   for (const src in (p.tool_grades || {})) {
     const ext = (p.tool_grades[src] || {})._extras || {};
     if (ext.report) { report = ext.report; break; }
   }
   const reportLine = report
-    ? `<div class="draft-report" style="margin-top:6px;font-size:10.5px;
+    ? `<div class="draft-report" style="margin-top:5px;font-size:10.5px;
           color:var(--text-secondary);line-height:1.35;
-          max-height:40px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 60%,transparent);">
-        ${escapeHtml(report.slice(0, 260))}…</div>` : "";
+          max-height:28px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 60%,transparent);">
+        ${escapeHtml(report.slice(0, 140))}…</div>` : "";
+
+  // v31.7 — Overseas headline-stats chip strip. The overseas export
+  // already provides per-season statlines on each prospect record
+  // (p.stat_rows or p.career_stats — varies by source). Build a
+  // headline-chip strip mirroring the draft-card pattern. Falls back
+  // silently when no stats are on file (HS overseas prospects, etc).
+  const _ovStats = (p.stat_rows && p.stat_rows.length) ? p.stat_rows
+                  : (p.career_stats && p.career_stats.length) ? p.career_stats
+                  : null;
+  let overseasChips = "";
+  if (_ovStats && _ovStats.length) {
+    // Latest season = first row when sorted DESC by season.
+    const sorted = _ovStats.slice().sort((a, b) => (b.season || 0) - (a.season || 0));
+    const latest = sorted[0];
+    const payload = latest.payload || latest;
+    const isPit = (payload.ip != null || payload.era != null || payload.fip != null
+                   || payload.k_per_9 != null);
+    const keys = isPit
+      ? [["ERA", "era", v => v.toFixed(2)],
+         ["FIP", "fip", v => v.toFixed(2)],
+         ["K/9", "k_per_9", v => v.toFixed(1)],
+         ["IP",  "ip",  v => v.toFixed(1)]]
+      : [["wRC+", "wrc_plus", v => Math.round(v).toString()],
+         ["OPS",  "ops",  v => v.toFixed(3)],
+         ["HR",   "hr",   v => Math.round(v).toString()],
+         ["SB",   "sb",   v => Math.round(v).toString()]];
+    const hl = [];
+    for (const [lbl, k, fmt] of keys) {
+      if (payload[k] == null) continue;
+      let formatted;
+      try { formatted = fmt(Number(payload[k])); }
+      catch (e) { formatted = String(payload[k]); }
+      hl.push({ label: lbl, value: formatted });
+      if (hl.length >= 4) break;
+    }
+    if (hl.length) {
+      const chips = hl.map(c =>
+        `<span style="display:inline-flex;align-items:baseline;gap:3px;padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-family:var(--font-mono);font-size:9.5px;color:var(--text-secondary);">
+          <span style="color:var(--text-tertiary);letter-spacing:0.04em;">${escapeHtml(c.label)}</span>
+          <span style="font-weight:700;color:var(--text-primary);">${escapeHtml(c.value)}</span>
+        </span>`
+      ).join("");
+      const ssn = latest.season ? String(latest.season).slice(-2) : "";
+      const lg  = latest.league ? `${latest.league}` : "";
+      const eyebrow = (ssn || lg)
+        ? `<span style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:700;margin-right:2px;" title="Most recent season on file">${escapeHtml(lg)}${ssn ? ' ′' + ssn : ''}</span>`
+        : "";
+      overseasChips = `<div class="draft-college-stats" style="display:flex;align-items:center;flex-wrap:wrap;gap:3px;margin-top:4px;min-width:0;">
+        ${eyebrow}${chips}
+      </div>`;
+    }
+  }
 
   // Bonus pill (projected or signed).
   const bonus = p.signed_bonus_usd || p.proj_bonus_usd;
@@ -16887,6 +17008,7 @@ function _renderOverseasCard(p) {
       <span style="margin-left:auto;display:inline-flex;gap:4px;flex-shrink:0;">${bonusPill}</span>
     </div>
     ${toolPills}
+    ${overseasChips}
     ${arc}
     ${statusBadge}
     ${reportLine}
@@ -17451,9 +17573,55 @@ async function renderDraftDetail(key) {
     ${p.school ? `<div style="margin-top:6px;font-size:12px;color:var(--text-tertiary);">School: ${schoolLogoHero}${escapeHtml(p.school)}</div>` : ""}
     ${milbLinkHtml}`;
 
+  // v31.7 — College Stats tab. Renders the prospect's amateur stat
+  // line (latest season + 2-3 prior seasons) when fetched college
+  // data is available. Skipped (tab hidden) when there's no
+  // college_stats payload on file.
+  const _collegeStatsHtml = (() => {
+    const cs = p.college_stats || null;
+    if (!cs || !Array.isArray(cs.trail) || !cs.trail.length) return "";
+    const isPit = !!cs.is_pitcher;
+    const cols = isPit
+      ? [["Season", "season"], ["League", "league"], ["Team", "team"],
+         ["IP", "ip"], ["ERA", "era"], ["FIP", "fip"], ["K/9", "k_per_9"],
+         ["BB/9", "bb_per_9"], ["K%", "k_pct"], ["BB%", "bb_pct"], ["WHIP", "whip"]]
+      : [["Season", "season"], ["League", "league"], ["Team", "team"],
+         ["PA", "pa"], ["AVG", "avg"], ["OBP", "obp"], ["SLG", "slg"],
+         ["OPS", "ops"], ["HR", "hr"], ["SB", "sb"], ["wRC+", "wrc_plus"]];
+    const fmtCell = (k, v) => {
+      if (v == null) return "—";
+      if (typeof v !== "number") return String(v);
+      if (["avg", "obp", "slg", "ops"].includes(k)) return v.toFixed(3);
+      if (["era", "fip", "whip", "ip", "k_per_9", "bb_per_9"].includes(k)) return v.toFixed(2);
+      if (["k_pct", "bb_pct"].includes(k)) return (v * 100).toFixed(0) + '%';
+      return Math.round(v).toString();
+    };
+    const rows = cs.trail.map(t => {
+      const tds = cols.map(([lbl, k]) => {
+        const v = k === "season" ? t.season
+                : k === "league" ? t.league
+                : k === "team"   ? t.team
+                : (t.payload || {})[k];
+        return `<td style="padding:4px 8px;border-bottom:1px solid var(--border-light);font-family:var(--font-mono);font-size:11px;text-align:${k === "season" || k === "league" || k === "team" ? "left" : "right"};color:var(--text-primary);">${escapeHtml(fmtCell(k, v))}</td>`;
+      }).join("");
+      return `<tr>${tds}</tr>`;
+    }).join("");
+    const ths = cols.map(([lbl]) => `<th style="padding:4px 8px;text-align:${lbl === "Season" || lbl === "League" || lbl === "Team" ? "left" : "right"};font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;border-bottom:1px solid var(--border);">${escapeHtml(lbl)}</th>`).join("");
+    const boostNote = (p.draft_stock_plus_college_boost != null && p.draft_stock_plus_college_boost !== 0)
+      ? ` Currently nudging DS+ by ${p.draft_stock_plus_college_boost > 0 ? '+' : ''}${p.draft_stock_plus_college_boost}.`
+      : '';
+    return `<div class="detail-title">College / amateur stats <span class="detail-title-sub">${cs.season_count || cs.trail.length} season${(cs.season_count || cs.trail.length) === 1 ? '' : 's'} on file from FanGraphs · ${isPit ? 'pitcher' : 'hitter'} view${boostNote}</span></div>
+      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:6px 4px;border-radius:6px;overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr>${ths}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  })();
   const tabs = [
     { key: "overview",    label: "Overview",          html: overviewHtml },
     { key: "scouting",    label: "Tools & Scouting",  html: toolsScoutingHtml },
+    { key: "college",     label: "College Stats",     html: _collegeStatsHtml },
     { key: "acquisition", label: "Acquisition",        html: acquisitionHtml },
   ];
   const tabBar = renderDetailTabs(tabs, state.prospectTab, "prospect");

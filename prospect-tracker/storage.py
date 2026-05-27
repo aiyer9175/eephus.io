@@ -1258,6 +1258,24 @@ CREATE TABLE IF NOT EXISTS overseas_statlines (
 );
 CREATE INDEX IF NOT EXISTS idx_overseas_stats_player ON overseas_statlines(player_key);
 
+-- v31.7 — Per-player season stats from FG player pages for DRAFT
+-- prospects (college + HS). FG hosts amateur stats at the same
+-- /players/<slug>/<playerId>/stats URL as overseas players; the
+-- difference is the LEVEL column carries college conference codes
+-- (SEC / ACC / Big 12 / etc.) or HS / Summer-league codes instead
+-- of NPB/KBO/CPBL. Same payload shape so the scraper can reuse the
+-- overseas parser with minor filtering.
+CREATE TABLE IF NOT EXISTS draft_statlines (
+    player_key   TEXT NOT NULL,
+    season       INTEGER NOT NULL,
+    league       TEXT NOT NULL,              -- conf code (SEC, ACC, B12, ...) or "HS", "Summer", "Cape Cod", etc.
+    team         TEXT,                       -- college team or HS / showcase team
+    payload_json TEXT NOT NULL,
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, season, league)
+);
+CREATE INDEX IF NOT EXISTS idx_draft_stats_player ON draft_statlines(player_key);
+
 CREATE TABLE IF NOT EXISTS overseas_canonical_keys (
     overseas_key   TEXT PRIMARY KEY,
     milb_key       TEXT NOT NULL,
@@ -2494,6 +2512,56 @@ def load_overseas_statlines(player_key: str | None = None) -> list[dict]:
         q += " WHERE player_key = ?"
         params = (player_key,)
     q += " ORDER BY player_key ASC, season ASC"
+    try:
+        with connect() as con:
+            rows = con.execute(q, params).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    out: list[dict] = []
+    for r in rows:
+        d = dict(r)
+        if d.get("payload_json"):
+            try:
+                d["payload"] = json.loads(d["payload_json"])
+            except (ValueError, TypeError):
+                d["payload"] = {}
+        out.append(d)
+    return out
+
+
+# v31.7 — Draft statlines mirror the overseas helpers.
+def upsert_draft_statlines(rows: Iterable[dict]) -> int:
+    """Upsert per-season draft prospect stat lines. Each row carries
+    player_key, season, league (conference / level code), team, payload."""
+    n = 0
+    with connect() as con:
+        for r in rows:
+            payload = r.get("payload") or {k: v for k, v in r.items()
+                                           if k not in {"player_key", "season",
+                                                        "league", "team"}}
+            con.execute(
+                """INSERT INTO draft_statlines
+                     (player_key, season, league, team, payload_json)
+                   VALUES (?, ?, ?, ?, ?)
+                   ON CONFLICT(player_key, season, league) DO UPDATE SET
+                     team         = COALESCE(excluded.team, draft_statlines.team),
+                     payload_json = excluded.payload_json,
+                     fetched_at   = datetime('now')""",
+                (r["player_key"], r["season"], r["league"], r.get("team"),
+                 json.dumps(payload, default=str)),
+            )
+            n += 1
+    return n
+
+
+def load_draft_statlines(player_key: str | None = None) -> list[dict]:
+    q = """SELECT player_key, season, league, team, payload_json
+           FROM draft_statlines"""
+    params: tuple = ()
+    if player_key is not None:
+        q += " WHERE player_key = ?"
+        params = (player_key,)
+    q += " ORDER BY player_key ASC, season DESC"
     try:
         with connect() as con:
             rows = con.execute(q, params).fetchall()

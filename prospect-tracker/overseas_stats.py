@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from pathlib import Path
 
@@ -193,25 +194,52 @@ def scrape_fg_player_stats(fg_player_id: str,
     return rows
 
 
-def refresh_overseas_stats(force: bool = False, max_players: int | None = None) -> int:
+def _fetch_one_overseas(pk_fg_id: tuple[str, str], force: bool) -> tuple[str, list[dict]]:
+    pk, fg_id = pk_fg_id
+    try:
+        rows = scrape_fg_player_stats(fg_id, force=force)
+    except Exception:
+        log.exception("overseas_stats fetch crashed for %s (%s)", pk, fg_id)
+        return (pk, [])
+    return (pk, rows)
+
+
+def refresh_overseas_stats(force: bool = False,
+                            max_players: int | None = None,
+                            workers: int = 8) -> int:
     """For every overseas_player with a fg_player_id, scrape their FG
     page and upsert per-season stats into overseas_statlines.
 
-    Returns the count of season-rows inserted. Idempotent."""
+    v31.7 — Concurrent fetching via ThreadPoolExecutor (default 8
+    workers; pass workers=1 for sequential). FG tolerates this rate
+    well when paired with the on-disk cache. Returns count of
+    season-rows inserted. Idempotent."""
     players = load_overseas_players()
-    targets = [(pk, p) for pk, p in players.items() if p.get("fg_player_id")]
+    targets = [(pk, p["fg_player_id"]) for pk, p in players.items()
+                if p.get("fg_player_id")]
     if max_players is not None:
         targets = targets[:max_players]
     if not targets:
         log.info("refresh_overseas_stats: no overseas players with FG IDs")
         return 0
+
+    log.info("refresh_overseas_stats: fetching %d overseas players (%d workers)",
+             len(targets), workers)
+
+    results: dict[str, list[dict]] = {}
+    if workers <= 1:
+        for t in targets:
+            pk, rows = _fetch_one_overseas(t, force)
+            results[pk] = rows
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            futures = {ex.submit(_fetch_one_overseas, t, force): t[0] for t in targets}
+            for fut in as_completed(futures):
+                pk, rows = fut.result()
+                results[pk] = rows
+
     total = 0
-    for pk, p in targets:
-        try:
-            rows = scrape_fg_player_stats(p["fg_player_id"], force=force)
-        except Exception:
-            log.exception("refresh_overseas_stats: %s scrape crashed", pk)
-            continue
+    for pk, rows in results.items():
         if not rows:
             continue
         payloads = []
@@ -235,8 +263,6 @@ def refresh_overseas_stats(force: bool = False, max_players: int | None = None) 
         if payloads:
             n = upsert_overseas_statlines(payloads)
             total += n
-            log.info("refresh_overseas_stats: %s -> %d season rows",
-                     pk, len(payloads))
     log.info("refresh_overseas_stats: %d total season rows upserted across %d players",
              total, len(targets))
     return total

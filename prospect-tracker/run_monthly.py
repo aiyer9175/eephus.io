@@ -546,6 +546,15 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     if tk_rows:
                         upsert_draft_lottery_odds(tk_rows)
                     promote_drafted_players()
+                    # v31.7 — Fetch college / HS / showcase stats from
+                    # FG player pages for draft prospects with an FG ID
+                    # on file. Concurrent (8 workers); on-disk cache
+                    # so subsequent runs are fast.
+                    try:
+                        from draft_stats import refresh_draft_stats
+                        refresh_draft_stats(force=force_refetch, workers=8)
+                    except Exception:
+                        log.exception("draft_stats fetch crashed — continuing with draft export")
                     n_draft = export_draft_json(out_dir / "draft_timeseries.json")
                     log.info("draft pipeline: exported %d prospects across all classes",
                              n_draft)
