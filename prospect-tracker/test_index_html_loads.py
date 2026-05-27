@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Launch smoke test — boots `index.html` in headless Chromium and
 asserts the boot IIFE actually runs (no JS parse errors, the loading
 placeholder gets replaced with rendered content).

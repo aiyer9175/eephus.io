@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Tests for the Farm System Report Card Overhaul — new helpers
 (`_fv_to_expected_war`, `_grad_wag`) and per-org grade behavior added
 in Steps 1-9 of the overhaul plan."""

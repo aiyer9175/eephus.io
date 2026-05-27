@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Asserts the legacy breakout indicator has been removed.
 
 The old `breakout_score` composite was replaced by the WAG-anchored

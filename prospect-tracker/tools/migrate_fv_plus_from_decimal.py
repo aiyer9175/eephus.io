@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """One-shot v26 migration: restore '+' upside flag + canonical tier FV.
 
 Before v26, `_parse_fv("55+")` returned 57.5 (interpolated halfway to the

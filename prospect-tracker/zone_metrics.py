@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Approximate MiLB hitter zone metrics from MLB Stats API pitch feeds.
 
 This is an experimental implementation of the workflow described by Thomas

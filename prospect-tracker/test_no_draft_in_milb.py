@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Firewall test — draft prospects must NEVER leak into the MiLB-side
 tables. RPS+ + farm-system queries + consensus FV all key on the MiLB
 schema; if a draft_<year>_<name> key ever appears in `snapshots` /

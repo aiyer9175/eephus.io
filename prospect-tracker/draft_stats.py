@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """FG player-page stats scraper for DRAFT (college + HS) prospects.
 
 FanGraphs hosts amateur stats at the same `/players/<slug>/<playerId>/

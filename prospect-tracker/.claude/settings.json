@@ -49,7 +49,10 @@
       "Bash(python -m pytest test_value_framework_integration.py -x --tb=short)",
       "Bash(python -m pytest test_value_framework.py test_value_framework_integration.py test_farm_tree.py test_metrics_audit.py -x --tb=short)",
       "Bash(python -m pytest test_value_framework.py test_value_framework_integration.py -x --tb=short)",
-      "Bash(python -m pytest test_value_framework.py test_value_framework_integration.py --tb=short)"
+      "Bash(python -m pytest test_value_framework.py test_value_framework_integration.py --tb=short)",
+      "WebFetch(domain:softwareengineering.stackexchange.com)",
+      "Bash(python tools/apply_watermark.py --dry-run)",
+      "Bash(python tools/apply_watermark.py)"
     ]
   }
 }
