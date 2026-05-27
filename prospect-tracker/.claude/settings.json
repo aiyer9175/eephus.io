@@ -79,7 +79,8 @@
       "Bash(rm -rf _ncaa_fixtures)",
       "Bash(python -c \"import college_stats; print\\('import OK'\\)\")",
       "Bash(git -c core.quotepath=false status)",
-      "Bash(PYTHONIOENCODING=utf-8 python _logoverify.py)"
+      "Bash(PYTHONIOENCODING=utf-8 python _logoverify.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python _tgverify.py)"
     ],
     "additionalDirectories": [
       "C:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker"

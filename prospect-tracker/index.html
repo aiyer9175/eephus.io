@@ -1417,6 +1417,30 @@
     .sort-header.is-active:not([data-sort-dir])::after {
       content: " ▼";
     }
+    /* v33 — Trade group tray. When a single trade brought in multiple
+       tracked prospects, their rows + the one audit card are wrapped in
+       this tray so they read as one unit. Left rail is the acquiring org's
+       color (via --group-rail). Inner row cards drop their own shadow so
+       the tray reads as the container, not a stack of detached cards. */
+    .trade-group {
+      border: 1px solid var(--border-light);
+      border-left: 3px solid var(--group-rail, var(--border));
+      border-radius: var(--radius-sm);
+      background: var(--bg-primary);
+      padding: 2px 8px 6px;
+      margin-bottom: 12px;
+    }
+    .trade-group .player-row { box-shadow: none; margin-bottom: 6px; }
+    .trade-group .player-row::before { border-radius: 0; }
+    .trade-group .trade-audit-card { margin-left: 0; }
+    .trade-group-head {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      padding: 6px 2px 3px;
+    }
     /* Row variants — each section's per-render `grid-template-columns`
        lived inline before; centralizing here keeps the renderers terse
        and lets a single media-query block handle mobile collapses. */
@@ -15702,9 +15726,36 @@ function renderRecentlyTraded() {
       g.winner = g.orgB;
     }
   }
-  // Track which trades we've already emitted the expanded card under
-  // (we only emit once per trade — on the topmost row that day).
-  const _tradeCardEmitted = new Set();
+  // v33 — Trade GROUPING. Pull every tracked prospect from the same trade
+  // into one contiguous block (members collapse to the first member's slot),
+  // wrap multi-prospect trades in a `.trade-group` tray, and emit ONE audit
+  // beneath the group highlighting all of them.
+  const _tk = (row) => (row.acq && row.acq.method === "trade")
+    ? _descTradeKey(row.acq) : null;
+  const _clusters = new Map();
+  filtered.forEach((row, idx) => {
+    const key = _tk(row) != null ? ("T:" + _tk(row)) : ("S:" + idx);
+    if (!_clusters.has(key)) _clusters.set(key, []);
+    _clusters.get(key).push(row);
+  });
+  filtered.splice(0, filtered.length, ...Array.from(_clusters.values()).flat());
+  // Per-trade member keys (for the ★ highlight) + first/last boundaries.
+  const _groupKeys = {};
+  filtered.forEach(row => {
+    const k = _tk(row);
+    if (k != null) (_groupKeys[k] = _groupKeys[k] || new Set()).add(row.p.player_key);
+  });
+  const _firstOfTrade = [], _lastOfTrade = [];
+  filtered.forEach((row, i) => {
+    const k = _tk(row);
+    _firstOfTrade[i] = k != null && (i === 0 || _tk(filtered[i - 1]) !== k);
+    _lastOfTrade[i]  = k != null && (i === filtered.length - 1 || _tk(filtered[i + 1]) !== k);
+  });
+  const _groupHead = (k) => {
+    const n = (_groupKeys[k] || new Set()).size;
+    const dt = (evalByTrade[k] || {}).date || "";
+    return `<div class="trade-group-head">⇄ ${n} prospects in this trade${dt ? ` · ${escapeHtml(dt)}` : ""}</div>`;
+  };
 
   const rows = filtered.map(({ p, acq }, i) => {
     // v31.7 — Debuted players synthesized into this list may not
@@ -15781,7 +15832,16 @@ function renderRecentlyTraded() {
       contextLine = `<span style="color:var(--text-tertiary);">${escapeHtml(acq.description || "—")}</span>`;
     }
     const methodPill = `<span class="debut-pill" style="background:var(--bg-tertiary);color:${meta.color};border:1px solid var(--border);">${escapeHtml(meta.label)}</span>`;
+    // Group framing: open a .trade-group tray before the first row of a
+    // multi-prospect trade; close it after that trade's audit (below).
+    const _gk = acq.method === "trade" ? _descTradeKey(acq) : null;
+    const _isMultiTrade = _gk != null && (_groupKeys[_gk] || new Set()).size > 1;
+    const _groupOpen = (_isMultiTrade && _firstOfTrade[i])
+      ? `<div class="trade-group" style="--group-rail:${(typeof orgColor === "function" && p.org) ? orgColor(p.org) : "var(--border)"};">${_groupHead(_gk)}`
+      : "";
+    const _groupClose = (_isMultiTrade && _lastOfTrade[i]) ? `</div>` : "";
     return `
+      ${_groupOpen}
       <div class="player-row is-traded" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
         <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div></div>
         <div style="display:flex;align-items:center;gap:8px;min-width:0;">
@@ -15805,17 +15865,15 @@ function renderRecentlyTraded() {
         <div class="line-chart-cell desktop-only">${pts.length >= 2 ? lazyLineChartHTML(p) : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`}</div>
       </div>
       ${(() => {
-        // v31.9 — Trade Audit card. Description-keyed grouping means
-        // each unique trade gets ONE card, emitted under whichever
-        // row appears first in the filtered list. Card is now a
-        // compact single-row strip (was 2-column 2-row box) — reads
-        // as a sidebar to the trade row above, not a separate panel.
-        if (acq.method !== "trade") return "";
+        // v33 — One Trade Audit card per trade, emitted beneath the LAST
+        // row of the (now-contiguous) trade group so it summarizes all the
+        // prospects above it. Every tracked prospect in the group is ★/
+        // tinted in the chips.
+        if (acq.method !== "trade" || !_lastOfTrade[i]) return "";
         const k = _descTradeKey(acq);
-        if (_tradeCardEmitted.has(k)) return "";
-        _tradeCardEmitted.add(k);
         const g = evalByTrade[k];
         if (!g) return "";
+        const highlightKeys = _groupKeys[k] || new Set([p.player_key]);
         const winColor = g.verdict === "balanced" ? "var(--text-secondary)" : "var(--up)";
         const aTone = g.verdict === "orgA" ? "var(--up)"
                     : g.verdict === "orgB" ? "var(--down)"
@@ -15827,13 +15885,13 @@ function renderRecentlyTraded() {
           ? `<span style="color:var(--text-secondary);">Balanced trade</span>`
           : `<span style="color:var(--up);font-weight:700;">${escapeHtml(g.winner)} +$${Math.abs(g.netDeltaA).toFixed(1)}M</span>`;
         const _tbsFor = (pp) => (pp ? (typeof tiebreakerScore === "function" ? tiebreakerScore(pp) : null) : null);
-        const sidePlayerChips = (orgCode, highlightKey = null) => {
+        const sidePlayerChips = (orgCode, highlightKeys = null) => {
           const players = g.players.filter(e => e.to === orgCode);
           const chips = [];
           for (const e of players) {
-            // ★ + tint the chip for the prospect from the row directly above,
-            // so the audit card visibly ties back to its row.
-            const isRowPlayer = highlightKey && e.p.player_key === highlightKey;
+            // ★ + tint chips for the tracked prospects from the group's rows
+            // above, so the audit visibly ties back to them.
+            const isRowPlayer = highlightKeys && highlightKeys.has(e.p.player_key);
             const v = e.val;
             const valStr = v.value != null ? `$${v.value.toFixed(1)}` : '—';
             const tbsHere = (v.kind === "fv") ? _tbsFor(e.p) : null;
@@ -15849,11 +15907,24 @@ function renderRecentlyTraded() {
             const nameMarkup = e.p.player_key
               ? `<a href="#player=${escapeHtml(e.p.player_key)}" onclick="event.preventDefault();event.stopPropagation();goToPlayer('${escapeHtml(e.p.player_key)}');" style="color:var(--text-primary);text-decoration:none;font-weight:600;">${escapeHtml(e.p.player_name)}</a>`
               : `<span style="color:${v.kind === 'unresolved' ? 'var(--text-tertiary)' : 'var(--text-primary)'};font-weight:600;">${escapeHtml(e.p.player_name)}</span>`;
-            const star = isRowPlayer ? `<span style="color:var(--neon-amber);font-size:9px;flex-shrink:0;" aria-label="this row's prospect">★</span>` : "";
+            const star = isRowPlayer ? `<span style="color:var(--neon-amber);font-size:9px;flex-shrink:0;" aria-label="tracked prospect">★</span>` : "";
             const wrapStyle = isRowPlayer
               ? `display:inline-flex;align-items:baseline;gap:3px;font-size:10px;background:var(--bg-tertiary);border:1px solid var(--neon-amber);border-radius:3px;padding:1px 5px;`
               : `display:inline-flex;align-items:baseline;gap:3px;font-size:10px;`;
-            chips.push(`<span style="${wrapStyle}" title="${escapeHtml(kindLbl)}">${star}${vetTag}${nameMarkup}<span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">${valStr}M</span></span>`);
+            // Position · level meta + an FV badge, so the audit reads like a
+            // scouting line, not just names. Vets carry a position but no
+            // MiLB level/FV; unresolved players carry neither.
+            const _pos = e.p.position || v.pos || null;
+            const _lvl = (e.p.statline && e.p.statline.level) || e.p.level || null;
+            const _posLvl = (_pos || _lvl)
+              ? `<span style="color:var(--text-tertiary);font-size:8.5px;white-space:nowrap;">${escapeHtml([_pos, _lvl].filter(Boolean).join(" · "))}</span>`
+              : "";
+            const _fvNum = (v.kind === "fv" && v.fv != null) ? v.fv
+                         : (e.p.fv_close != null ? e.p.fv_close : null);
+            const _fvBadge = _fvNum != null
+              ? `<span class="fv-badge ${fvClass(String(fvCeil(_fvNum)))}" style="font-size:8px;padding:0 3px;line-height:1.5;flex-shrink:0;">${fvCeil(_fvNum)}</span>`
+              : "";
+            chips.push(`<span style="${wrapStyle}" title="${escapeHtml(kindLbl)}">${star}${vetTag}${nameMarkup}${_posLvl}${_fvBadge}<span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">${valStr}M</span></span>`);
           }
           const ibp  = (orgCode === g.orgA) ? g.aIbp  : g.bIbp;
           const cash = (orgCode === g.orgA) ? g.aCash : g.bCash;
@@ -15908,7 +15979,7 @@ function renderRecentlyTraded() {
         // one line per org — logo + code + "receives ▸" + the players that
         // org got + the $ total (right-aligned). The row's own prospect is
         // ★/tinted inside its side so the card ties back to the row above.
-        const _hl = p.player_key || null;
+        const _hl = highlightKeys;
         const orgLine = (orgCode, tone, received, split) => {
           const logo = (typeof teamLogoHTML === "function" && orgCode)
             ? teamLogoHTML(orgCode, "sm", (typeof fullOrgName === "function" ? fullOrgName(orgCode) : orgCode)) : "";
@@ -15934,6 +16005,7 @@ function renderRecentlyTraded() {
           ${orgLine(g.orgB, bTone, g.bReceived, bSplit)}
         </div>`;
       })()}
+      ${_groupClose}
     `;
   }).join("");
 
