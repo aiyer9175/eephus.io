@@ -1258,6 +1258,29 @@ CREATE TABLE IF NOT EXISTS overseas_statlines (
 );
 CREATE INDEX IF NOT EXISTS idx_overseas_stats_player ON overseas_statlines(player_key);
 
+-- v31.8 — Cache of non-prospect MLB players that show up in trade
+-- descriptions but aren't in our actives/grads/inactives database.
+-- Lets the trade audit value them via career WAR × $/WAR. Populated
+-- on demand by `mlb_trade_lookup.refresh_mlb_trade_players()` which
+-- parses trade descriptions, resolves names via the MLB Stats API,
+-- and caches career WAR aggregates.
+CREATE TABLE IF NOT EXISTS mlb_trade_players (
+    -- Lowercase, punctuation-stripped name slug. Used as the lookup
+    -- key from the frontend trade audit when description-parsed names
+    -- don't match a tracked prospect.
+    name_slug      TEXT PRIMARY KEY,
+    player_name    TEXT NOT NULL,
+    mlbam_id       INTEGER,
+    primary_position TEXT,           -- C / 1B / 2B / SS / 3B / OF / SP / RP
+    career_war     REAL,             -- accumulated bWAR across MLB seasons
+    war_seasons    INTEGER,          -- MLB seasons that contributed
+    last_team      TEXT,             -- current / last MLB team abbrev
+    is_pitcher     INTEGER NOT NULL DEFAULT 0,
+    fetched_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    resolve_status TEXT              -- "resolved" | "ambiguous" | "not_found"
+);
+CREATE INDEX IF NOT EXISTS idx_mlb_trade_players_status ON mlb_trade_players(resolve_status);
+
 -- v31.7 — Per-player season stats from FG player pages for DRAFT
 -- prospects (college + HS). FG hosts amateur stats at the same
 -- /players/<slug>/<playerId>/stats URL as overseas players; the
@@ -2529,6 +2552,62 @@ def load_overseas_statlines(player_key: str | None = None) -> list[dict]:
     return out
 
 
+# v31.8 — MLB trade player cache helpers. Lookup keyed by name slug
+# (lowercase + punctuation-stripped) so frontend description parsers
+# can resolve "Brendan Donovan" → "brendan_donovan" → cached row.
+import re as _re_mlb_slug
+def _name_slug(name: str | None) -> str:
+    if not name:
+        return ""
+    return _re_mlb_slug.sub(r"[^a-z0-9]+", "_", str(name).lower()).strip("_")
+
+
+def upsert_mlb_trade_player(row: dict) -> int:
+    """Upsert one MLB trade player. Returns 1 on insert/update."""
+    slug = _name_slug(row.get("player_name"))
+    if not slug:
+        return 0
+    with connect() as con:
+        con.execute(
+            """INSERT INTO mlb_trade_players
+                 (name_slug, player_name, mlbam_id, primary_position,
+                  career_war, war_seasons, last_team, is_pitcher,
+                  resolve_status)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(name_slug) DO UPDATE SET
+                 player_name      = excluded.player_name,
+                 mlbam_id         = COALESCE(excluded.mlbam_id, mlb_trade_players.mlbam_id),
+                 primary_position = COALESCE(excluded.primary_position, mlb_trade_players.primary_position),
+                 career_war       = COALESCE(excluded.career_war, mlb_trade_players.career_war),
+                 war_seasons      = COALESCE(excluded.war_seasons, mlb_trade_players.war_seasons),
+                 last_team        = COALESCE(excluded.last_team, mlb_trade_players.last_team),
+                 is_pitcher       = excluded.is_pitcher,
+                 resolve_status   = excluded.resolve_status,
+                 fetched_at       = datetime('now')""",
+            (slug, row["player_name"], row.get("mlbam_id"),
+             row.get("primary_position"), row.get("career_war"),
+             row.get("war_seasons"), row.get("last_team"),
+             1 if row.get("is_pitcher") else 0,
+             row.get("resolve_status") or "resolved"),
+        )
+    return 1
+
+
+def load_mlb_trade_players() -> dict[str, dict]:
+    """Return {name_slug: row} for every cached MLB trade player."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                """SELECT name_slug, player_name, mlbam_id, primary_position,
+                          career_war, war_seasons, last_team, is_pitcher,
+                          resolve_status, fetched_at
+                   FROM mlb_trade_players"""
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["name_slug"]: dict(r) for r in rows}
+
+
 # v31.7 — Draft statlines mirror the overseas helpers.
 def upsert_draft_statlines(rows: Iterable[dict]) -> int:
     """Upsert per-season draft prospect stat lines. Each row carries
@@ -3762,7 +3841,7 @@ def _attach_sub_leaves(entry: dict) -> None:
         if subs:
             ifa["sub_leaves"] = subs
 
-    # ── Acquisition → Trade Acumen — inbound/outbound WAR split ──
+    # ── Acquisition → Trade Acumen — inbound/outbound WAR + surplus splits ──
     tx = tree.get("tx_trades") or {}
     if tx:
         subs = []
@@ -3782,10 +3861,35 @@ def _attach_sub_leaves(entry: dict) -> None:
             })
         if tx.get("war_delta_unweighted") is not None:
             subs.append({
-                "label": "Unweighted Δ",
+                "label": "Unweighted WAR Δ",
                 "kind":  "war",
                 "value": round(tx["war_delta_unweighted"], 1),
                 "raw":   "Net WAR delta without recency decay",
+            })
+        # v31.8 — Surplus deltas (parallel signal to WAR, captures
+        # uncrystallized prospect trades alongside debuted players).
+        if tx.get("surplus_in") is not None:
+            subs.append({
+                "label": "Inbound surplus",
+                "kind":  "usd",
+                "value": round(tx["surplus_in"], 1),
+                "n":     tx.get("surplus_in_count") or 0,
+                "raw":   "Debuted players: career WAR × $8M/WAR · Prospects: FV-anchored surplus",
+            })
+        if tx.get("surplus_out") is not None:
+            subs.append({
+                "label": "Outbound surplus",
+                "kind":  "usd",
+                "value": round(tx["surplus_out"], 1),
+                "n":     tx.get("surplus_out_count") or 0,
+                "raw":   "Talent given up — same valuation as inbound side",
+            })
+        if tx.get("surplus_delta") is not None:
+            subs.append({
+                "label": "Surplus Δ",
+                "kind":  "usd",
+                "value": round(tx["surplus_delta"], 1),
+                "raw":   "Recency-weighted net surplus delta (v31.8 co-scoring signal)",
             })
         if subs:
             tx["sub_leaves"] = subs
@@ -6356,6 +6460,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "org_promo_h1_rate": eta.org_promo_h1_rate,
                 "org_promo_h2_rate": eta.org_promo_h2_rate,
                 "org_promo_weight":  eta.org_promo_weight,
+                # v31.8 — Half-year bucket ("early" = Apr-Jun debut window
+                # within eta_year; "late" = Jul-Sep). Combines fractional
+                # ETA distance + org H1/H2 tendency + current-level bias.
+                "half":              eta.eta_half,
             },
             # Per-tool lifetime delta map (first observation → latest).
             # `{hit: {delta, first, last, first_date, last_date, n_obs}, ...}`
@@ -8530,6 +8638,35 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Linear from (3yr, 1.0) → (13yr, 0.2): slope -0.08/yr
         return max(0.2, 1.0 - 0.08 * (years - 3.0))
 
+    # v31.8 — Per-trade SURPLUS evaluator. Parallel to the existing
+    # WAR delta computation. For each trade event:
+    #   * If the player is debuted → value = career_war × $8M/WAR
+    #     (matches the FA market WAR price)
+    #   * Else (still a prospect) → value = _estimate_surplus_mm(
+    #     fv_at_trade, is_pitcher, position) — same FV-anchored
+    #     surplus estimator the active_surplus leaf uses
+    # Recency-weighted same as war_delta. Drives the new
+    # surplus_delta sub-input on the Trade Acumen leaf.
+    _WAR_DOLLAR_VALUE_M = 8.0
+    # Build a small lookup of player_key → position so we can
+    # estimate surplus when career WAR isn't on file.
+    _player_pos_by_key: dict[str, tuple[bool, str | None]] = {}
+    for _src in (actives, grads, inactives):
+        for _p in (_src or []):
+            if _p and getattr(_p, "player_key", None):
+                _pos = getattr(_p, "position", None)
+                _is_pit = bool(_pos and _pos.split("/")[0] in PITCHER_POS)
+                _player_pos_by_key[_p.player_key] = (_is_pit, _pos)
+
+    def _trade_player_value(pkey: str, fv: float | None) -> float | None:
+        """Surplus $M value of one player in one trade. Debuted players
+        use realized WAR × $8M/WAR; prospects use FV-anchored surplus."""
+        cw = ((career_war or {}).get(pkey) or {}).get("career_war")
+        if cw is not None and float(cw) > 0:
+            return round(float(cw) * _WAR_DOLLAR_VALUE_M, 2)
+        is_pit, pos = _player_pos_by_key.get(pkey, (False, None))
+        return _estimate_surplus_mm(fv, is_pit, pos)
+
     for entry in org_summary:
         in_fv = 0.0;  out_fv = 0.0
         in_n  = 0;    out_n  = 0
@@ -8538,6 +8675,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         in_war_n = 0;      out_war_n = 0
         # Recency-weighted sums (drive leaf scoring).
         in_war_w  = 0.0;   out_war_w   = 0.0
+        # v31.8 — Recency-weighted SURPLUS sums (parallel signal).
+        in_surplus_w  = 0.0;  out_surplus_w  = 0.0
+        in_surplus_n  = 0;    out_surplus_n  = 0
         # Top weighted-contributor trades for the tooltip story.
         weighted_trades: list[dict] = []
         for ev in (entry["fv_events"] or []):
@@ -8547,6 +8687,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             pkey = ev.get("player_key")
             cw = ((career_war or {}).get(pkey) or {}).get("career_war")
             w = _trade_recency_weight(ev.get("date"))
+            # v31.8 — Compute per-player surplus value.
+            psurplus = _trade_player_value(pkey, fv)
             if ev.get("direction") == "in":
                 in_fv += fv; in_n += 1
                 if cw is not None:
@@ -8558,6 +8700,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                         "career_war": float(cw),
                         "weighted_war": round(float(cw) * w, 2),
                     })
+                if psurplus is not None:
+                    in_surplus_w += psurplus * w
+                    in_surplus_n += 1
             elif ev.get("direction") == "out":
                 out_fv += fv; out_n += 1
                 if cw is not None:
@@ -8569,6 +8714,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                         "career_war": float(cw),
                         "weighted_war": round(float(cw) * w, 2),
                     })
+                if psurplus is not None:
+                    out_surplus_w += psurplus * w
+                    out_surplus_n += 1
         entry["tree"]["tx_trades"] = {
             "net_fv":    round(in_fv - out_fv, 1) if (in_n + out_n) else None,
             "fv_in":     round(in_fv, 1),
@@ -8584,6 +8732,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "war_delta_unweighted": round(in_war_raw - out_war_raw, 2) if (in_war_n + out_war_n) >= 3 else None,
             "war_in_unweighted":    round(in_war_raw, 2),
             "war_out_unweighted":   round(out_war_raw, 2),
+            # v31.8 — Recency-weighted SURPLUS delta. Co-signal alongside
+            # war_delta. Captures both debuted players (WAR×$M/WAR) AND
+            # current prospects (FV-anchored surplus), giving Trade
+            # Acumen credit for trades whose outcomes haven't fully
+            # crystallized yet (vs war_delta which only counts debuted).
+            # Gate: ≥3 valued trades total (in + out combined).
+            "surplus_delta": round(in_surplus_w - out_surplus_w, 2)
+                             if (in_surplus_n + out_surplus_n) >= 3 else None,
+            "surplus_in":    round(in_surplus_w, 2),
+            "surplus_out":   round(out_surplus_w, 2),
+            "surplus_in_count":  in_surplus_n,
+            "surplus_out_count": out_surplus_n,
             # Top weighted contributors for the tooltip (sorted by
             # absolute weighted_war desc, max 5).
             "top_weighted_trades": sorted(
@@ -9446,8 +9606,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # on FV but tells you nothing about whether the FV-55 panned
         # out. WAR is the only signal that closes the outcome loop.
         # net_fv stays on the tree node for context display.
+        # v31.8 — Surplus delta added as a co-scoring signal alongside
+        # war_delta. war_delta is backward-looking (only counts debuted
+        # players' realized WAR); surplus_delta closes the loop on
+        # trades whose outcomes haven't crystallized yet — debuted
+        # players use WAR × $8M/WAR, prospects use FV-anchored surplus.
+        # Both inputs blend equally inside leaf_100 normalization so
+        # an org that nets +5 WAR delta AND +30M surplus delta grades
+        # better than one that nets +5 WAR but is currently down on
+        # prospect-side surplus.
         "tx_trades": [
-            ("war_delta", lambda e: (e["tree"]["tx_trades"] or {}).get("war_delta")),
+            ("war_delta",     lambda e: (e["tree"]["tx_trades"] or {}).get("war_delta")),
+            ("surplus_delta", lambda e: (e["tree"]["tx_trades"] or {}).get("surplus_delta")),
         ],
         # v30.7 — Waiver Claims is now a pure hit-rate leaf. The prior
         # 50/50 blend of net_fv + hit_rate let big-system orgs win on
@@ -10402,6 +10572,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # from MLB.com per year. Keyed by year (int). Drives the
         # spending-block utilization caption on the farm detail page.
         "mlb_draft_pools": draft_pools,
+        # v31.8 — MLB veterans named in trade descriptions but not in
+        # the tracked-prospect database. Keyed by name slug
+        # (lowercase + underscore-joined), valued with career_war +
+        # primary_position. The frontend trade audit looks these up
+        # when description-parsed names don't match a tracked player,
+        # giving Brendan-Donovan-style trades an accurate WAR-derived
+        # valuation instead of showing "PTBNL / no tracked players".
+        "mlb_trade_players": load_mlb_trade_players(),
         "_slices": {
             "debuts":         "debuts.json",
             "inactive":       "inactive.json",

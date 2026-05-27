@@ -146,6 +146,14 @@ class ETAResult:
     org_promo_h1_rate: float | None = None
     org_promo_h2_rate: float | None = None
     org_promo_weight:  float = 1.0   # 1.0 = neutral / no adjustment
+    # v31.8 — Half-year debut bucket. "early" = Apr-Jun (H1) debut
+    # projected; "late" = Jul-Sep (H2). Derived from:
+    #   * fractional part of `total` years (>0.5 → leans late this year)
+    #   * org H1/H2 tendency (H2-heavy → late; H1-heavy → early)
+    #   * current level (AAA → early bias; A/A+ → late bias when total
+    #     years rounds to a year out)
+    # None when ETA itself is None (insufficient signal).
+    eta_half: str | None = None      # "early" | "late" | None
 
 
 def _org_promotion_phase_weight(phase: str, org_tendency: dict | None) -> float:
@@ -456,6 +464,48 @@ def estimate_eta(
     else:
         confidence = "low"
 
+    # v31.8 — Half-year bucket. Three signals contribute:
+    #   1. Fractional part of `total`: if the eta_year rounded UP (i.e.
+    #      total - round(total) >= 0), the prospect is closer to the
+    #      START of the year → "early". If it rounded DOWN (total
+    #      below the integer), they're already at year-end of their
+    #      projected debut window → "late".
+    #   2. Org promo tendency: H2-heavy orgs nudge toward "late",
+    #      H1-heavy toward "early".
+    #   3. Current-level bias: AAA prospects with eta within 1 year
+    #      tend to debut April-June (rosters get reshuffled at the
+    #      Super-2 line in early June); A / A+ prospects projected
+    #      for a 2-3yr horizon tend to debut "late" (full level cycle
+    #      first).
+    # Each signal contributes a small ±0.5 score; final sign picks the
+    # bucket. Tie → "early" (slight optimism bias; FA market expects
+    # April call-ups for plausible 2H impact bats).
+    half_score = 0.0
+    frac = total - round(total)
+    if frac > 0.15:        # we rounded down — already past the year mark
+        half_score += 0.5
+    elif frac < -0.15:     # rounded up — at the start of the year
+        half_score -= 0.5
+    # Org tendency layer.
+    if org_promotion_tendency and (org_promotion_tendency.get("sample_n") or 0) >= 5:
+        h2 = float(org_promotion_tendency.get("h2_rate") or 0.0)
+        h1 = float(org_promotion_tendency.get("h1_rate") or 0.0)
+        if h2 >= 0.60:
+            half_score += 0.4
+        elif h1 >= 0.60:
+            half_score -= 0.4
+    # Current level bias (only fires when ETA is close).
+    if eta_year - today_year <= 2:
+        lvl = (current_level or "").upper()
+        if lvl in ("AAA",):
+            half_score -= 0.3   # AAA prospects debut early
+        elif lvl in ("A", "A+", "CPX", "DSL"):
+            half_score += 0.3   # lower levels usually full season first
+    if total < 0.01:
+        # Already MLB-ready; bias to early.
+        half_score -= 0.5
+    eta_half = "late" if half_score > 0.0 else "early"
+
     return ETAResult(
         eta_year=eta_year,
         confidence=confidence,
@@ -470,4 +520,5 @@ def estimate_eta(
         org_promo_h1_rate=(org_promotion_tendency or {}).get("h1_rate"),
         org_promo_h2_rate=(org_promotion_tendency or {}).get("h2_rate"),
         org_promo_weight=round(org_weight, 2),
+        eta_half=eta_half,
     )

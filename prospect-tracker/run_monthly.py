@@ -1505,6 +1505,17 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             log.info("detected %d trades (%d new)", len(new_trades), trade_count)
             trades_by_player = load_trades()
 
+            # v31.8 — Resolve MLB veterans named in trade descriptions
+            # who aren't in our tracked-prospect database (e.g. Brendan
+            # Donovan going to SEA for a prospect package). Fetches
+            # career WAR + position from MLB Stats API + BBRef; cached
+            # in mlb_trade_players for the frontend trade-audit UI.
+            try:
+                from mlb_trade_lookup import refresh_mlb_trade_players
+                refresh_mlb_trade_players(force=force_refetch, workers=4)
+            except Exception:
+                log.exception("MLB trade-player lookup crashed — continuing")
+
             # Career WAR — loaded once here and reused by the JSON export.
             career_war_all = load_career_war()
 

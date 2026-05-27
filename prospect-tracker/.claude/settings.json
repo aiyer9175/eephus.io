@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"tools_payload\\\\|d\\\\\\\\[\\\\\"tools\\\\\"\\\\\\\\] = \\\\|player_payload.*tools\\\\|\\\\\"tools\\\\\": tools\\\\|\\\\\"rps_plus\\\\\"\\\\\\\\|statline\\\\\\\\[\\\\\"rps_plus\\\\\"\\\\\\\\]\" c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/storage.py)",
+      "Bash(grep -n \"eta_year\\\\|\\\\\"eta\\\\\":\\\\|eta_result\\\\\\\\|estimate_eta\\(\" c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/storage.py)",
+      "Bash(grep -n \"war_in\\\\\\\\|war_out\\\\\\\\|war_delta\\\\\\\\|trade.*war\\\\\\\\|_trade_recency_weight\" c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/storage.py)",
+      "Bash(grep -n \"ev\\\\\\\\.description\\\\\\\\|t\\\\\\\\.description\\\\\\\\|trade\\\\\\\\.description\\\\\\\\|trade_description\" c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/storage.py)",
+      "Bash(grep -n \"trades_by_player\\\\\\\\[\" c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/storage.py)",
+      "Bash(python -c \"import storage; import eta; print\\('OK'\\)\")",
+      "Bash(python -m pytest test_index_html_loads.py test_design_tokens.py test_eta.py test_farm_grading_v4.py test_farm_grades.py test_farm_tree.py --tb=short)",
+      "Bash(python -c \"import mlb_trade_lookup; print\\('OK'\\); print\\('parsing test:'\\); names = mlb_trade_lookup.extract_player_names_from_description\\('Mariners traded 2B Brendan Donovan to Cardinals for CF Colton Ledbetter, SHP Jurrangelo Cijntje, and CF Tai Peete.'\\); print\\(names\\)\")",
+      "Bash(grep -n \"def export_timeseries_json\\\\|out\\\\\\\\[.org_summary.\\\\\\\\]\\\\|out\\\\\\\\[.players.\\\\\\\\]\" c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/storage.py)",
+      "Bash(python -c \"import storage; import mlb_trade_lookup; import eta; print\\('OK'\\)\")",
+      "Bash(python -m pytest test_index_html_loads.py test_design_tokens.py test_storage_export.py --tb=short)",
+      "Bash(python -c ' *)"
+    ]
+  }
+}

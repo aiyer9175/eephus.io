@@ -8276,6 +8276,118 @@ function _toolComposite(p) {
   const v = (p && p.tools || {}).composite_overall;
   return typeof v === "number" && isFinite(v) ? v : null;
 }
+// v31.8 — Tiebreaker Score (TBS). 0-100 composite that ranks two
+// prospects with identical FV grades. Combines:
+//   * Tool composite (20-80 → 0-1)         × 35%
+//   * RPS+ (80-120 → 0-1)                  × 25%
+//   * SC+ (80-120 → 0-1)                   × 25%
+//   * Per-tool max grade (20-80 → 0-1)     × 15%
+// Each signal is independently normalized + clipped so a missing
+// signal just contributes 0 (rather than poisoning the whole score
+// with NaN). The result is 0-100; render-time consumers can also
+// surface it as a chip via `tiebreakerScoreChip(p)`.
+function _tbsNorm(v, lo, hi) {
+  if (v == null || !isFinite(v)) return null;
+  const z = (Number(v) - lo) / (hi - lo);
+  return Math.max(0, Math.min(1, z));
+}
+function _perToolMax(p) {
+  const t = p && p.tools;
+  if (!t) return null;
+  const grades = (t.grades) || {};
+  let m = null;
+  for (const k in grades) {
+    const g = Number(grades[k]);
+    if (isFinite(g) && (m == null || g > m)) m = g;
+  }
+  return m;
+}
+// v31.8 — Detect overseas player. We treat any prospect carrying
+// `stat_rows` or career-statline payloads from NPB / KBO / CPBL /
+// Cuba / TWN leagues as an overseas prospect for tiebreaker
+// purposes — they don't have MiLB RPS+ or SC+, so we substitute
+// their FG-side stat headlines instead.
+const _OVERSEAS_LEAGUES = new Set(["NPB", "NPBF", "KBO", "CPBL", "Cuba", "TWN"]);
+function _isOverseasProspect(p) {
+  if (!p) return false;
+  if (p.league && _OVERSEAS_LEAGUES.has(p.league)) return true;
+  const rows = (p.stat_rows && p.stat_rows.length) ? p.stat_rows
+             : (p.career_stats && p.career_stats.length) ? p.career_stats
+             : null;
+  if (!rows) return false;
+  for (const r of rows) {
+    if (r && r.league && _OVERSEAS_LEAGUES.has(r.league)) return true;
+  }
+  return false;
+}
+function _overseasHeadline(p) {
+  // Return {wrc, fip} for the player's latest overseas season.
+  const rows = (p.stat_rows && p.stat_rows.length) ? p.stat_rows
+             : (p.career_stats && p.career_stats.length) ? p.career_stats
+             : null;
+  if (!rows) return { wrc: null, fip: null };
+  const sorted = rows.slice().sort((a, b) => (b.season || 0) - (a.season || 0));
+  for (const r of sorted) {
+    if (r && r.league && _OVERSEAS_LEAGUES.has(r.league)) {
+      const payload = r.payload || r;
+      return {
+        wrc: payload.wrc_plus != null ? Number(payload.wrc_plus) : null,
+        fip: payload.fip != null ? Number(payload.fip) : null,
+      };
+    }
+  }
+  return { wrc: null, fip: null };
+}
+
+function tiebreakerScore(p) {
+  if (!p) return 0;
+  // v31.8 — Three tiebreaker variants depending on player context:
+  //   1. DRAFT  (has draft_stock_plus)  : Tool + per-tool max + DS+
+  //   2. OVERSEAS (has NPB/KBO/CPBL stats): Tool + per-tool max + wRC+
+  //      (hitters) OR FIP-inverted (pitchers)
+  //   3. ACTIVE MiLB (default)          : Tool + per-tool max + RPS+ + SC+
+  // Each path normalizes its inputs to 0-1, weights, then renormalizes
+  // by present weight so a player with some-but-not-all signals still
+  // produces a comparable 0-100 score.
+  const tool = _toolComposite(p);                                  // 20-80
+  const tmax = _perToolMax(p);                                     // 20-80
+  const dsPlus = (p.draft_stock_plus != null) ? p.draft_stock_plus : null;
+  let parts;
+  if (dsPlus != null) {
+    parts = [
+      [_tbsNorm(tool,   40, 70), 0.40],
+      [_tbsNorm(tmax,   40, 70), 0.25],
+      [_tbsNorm(dsPlus, 70, 130), 0.35],
+    ];
+  } else if (_isOverseasProspect(p)) {
+    const { wrc, fip } = _overseasHeadline(p);
+    // For pitchers, invert FIP (lower is better → flip into the
+    // higher-is-better 0-1 space; 2.50 FIP ≈ 1.0, 4.50 FIP ≈ 0.0).
+    const fipNorm = (fip != null) ? Math.max(0, Math.min(1, (4.50 - Number(fip)) / 2.00)) : null;
+    parts = [
+      [_tbsNorm(tool, 40, 70), 0.40],
+      [_tbsNorm(tmax, 40, 70), 0.25],
+      [_tbsNorm(wrc,  80, 160), 0.35],   // hitter perf
+      [fipNorm,                 0.35],   // pitcher perf (only one of wrc/fip will be present)
+    ];
+  } else {
+    const rps = (p.statline && p.statline.rps_plus) ?? null;
+    const sc  = getStatcastPlus(p);
+    parts = [
+      [_tbsNorm(tool, 40, 70), 0.35],
+      [_tbsNorm(rps,  80, 130), 0.25],
+      [_tbsNorm(sc,   80, 130), 0.25],
+      [_tbsNorm(tmax, 40, 70), 0.15],
+    ];
+  }
+  let presentSum = 0, presentWeight = 0;
+  for (const [v, w] of parts) {
+    if (v != null) { presentSum += v * w; presentWeight += w; }
+  }
+  if (presentWeight === 0) return 0;
+  return Math.round(100 * presentSum / presentWeight);
+}
+
 function fvCmpDesc(a, b) {
   const af = (a && a.fv_close != null) ? a.fv_close : -1;
   const bf = (b && b.fv_close != null) ? b.fv_close : -1;
@@ -8285,23 +8397,13 @@ function fvCmpDesc(a, b) {
   const ap = (a && a.fv_close_plus) ? 1 : 0;
   const bp = (b && b.fv_close_plus) ? 1 : 0;
   if (bp !== ap) return bp - ap;
-  // v29 — Statcast+ supplemental tiebreaker. When two prospects share
-  // the same FV + upside flag, the one with the better Statcast+
-  // composite ranks first. Players without tracked Statcast data
-  // (Stats API didn't cover their games) sink — this is intentional
-  // since the tiebreaker only fires inside an already-equal tier.
-  const as = getStatcastPlus(a);
-  const bs = getStatcastPlus(b);
-  if (as != null && bs != null && as !== bs) return bs - as;
-  if (as != null && bs == null) return -1;
-  if (bs != null && as == null) return 1;
-  // FVs tie — tools composite breaks it (ungraded sinks).
-  const at = _toolComposite(a);
-  const bt = _toolComposite(b);
-  if (bt != null && at != null && bt !== at) return bt - at;
-  if (at == null && bt != null) return 1;
-  if (bt == null && at != null) return -1;
-  // Tools also tie — alphabetical for stability.
+  // v31.8 — Composite Tiebreaker Score (TBS) — single number that
+  // blends Tool / RPS+ / SC+ / per-tool max. Replaces the prior
+  // multi-step chain (SC+ → Tool composite → name). Equal-TBS
+  // players still fall through to alphabetical for sort stability.
+  const ta = tiebreakerScore(a);
+  const tb = tiebreakerScore(b);
+  if (tb !== ta) return tb - ta;
   const an = (a && a.player_name) || "";
   const bn = (b && b.player_name) || "";
   return an.localeCompare(bn);
@@ -10379,16 +10481,19 @@ function makeEtaCell(p) {
              : diff === 3 ? "eta-mid"
              : diff === 4 ? "eta-far"
              : "eta-very-far";
-  // v12 — surface H1/H2 indicator inline with the ETA year. Phase
-  // values come from estimate_eta:
-  //   "pre_break"  → H1 chip (cyan)
-  //   "post_break" → H2 chip (orange)
-  //   "offseason"  → no chip (the cycle naturally rolls into next year)
-  // v17 — H1/H2 phase chip removed. The pre/post All-Star-break
-  // distinction didn't communicate anything actionable to readers; ETA
-  // is now displayed as the year alone.
-  return `<div class="eta-cell">
-    <span class="eta-year ${cls}">${eta.year}</span>
+  // v31.8 — Half-year prefix ("Early" / "Late") derived from a blend
+  // of fractional ETA distance, org H1/H2 promotion tendency, and
+  // current-level bias. Rendered as a small italic prefix before the
+  // year so the cell reads "Late 2026" / "Early 2027" at a glance.
+  // Falls back to the year alone when the backend hasn't shipped the
+  // bucket yet (older payloads).
+  const halfBucket = (eta.half === "early") ? "Early"
+                   : (eta.half === "late")  ? "Late"  : null;
+  const halfChip = halfBucket
+    ? `<span style="font-family:var(--font-serif);font-style:italic;font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;margin-right:3px;" title="${halfBucket === 'Early' ? 'Apr-Jun debut window' : 'Jul-Sep debut window'} — blends fractional ETA distance + org H1/H2 promotion tendency + current-level bias">${halfBucket}</span>`
+    : '';
+  return `<div class="eta-cell" title="${eta.confidence ? eta.confidence + ' confidence' : 'ETA estimate'}${halfBucket ? ` · ${halfBucket} ${eta.year}` : ''}">
+    ${halfChip}<span class="eta-year ${cls}">${eta.year}</span>
   </div>`;
 }
 
@@ -14766,6 +14871,341 @@ function renderRecentlyTraded() {
     <span class="desktop-only" style="text-align:center;">FV history</span>
   </div>`;
 
+  // v31.8 — Trade evaluator. Groups every per-player trade row by
+  // (date, from_org, to_org) and computes per-side surplus value
+  // using:
+  //   * Tracked debuted players → career WAR × $8M/WAR
+  //   * Tracked active prospects → estimateSurplusValueMM(...) with
+  //     v31.8 position + TBS nudges
+  //   * v31.8b — MLB VETERANS named in the trade description but not
+  //     in our tracked database (e.g. Brendan Donovan dealt for a
+  //     prospect package) → looked up in DATA.mlb_trade_players via
+  //     name slug; valued by their career WAR × $8M/WAR same as
+  //     tracked debutants. This closes the "PTBNL / no tracked
+  //     players" gap that mis-stated trade surplus when one side
+  //     received an established MLB vet.
+  //   * International bonus pool / cash considerations parsed from
+  //     the trade narrative (e.g. "$500,000 in international bonus
+  //     pool space" → +$0.5M to receiving side)
+  // Output: per-trade `evalByTrade[tradeKey]` carries net surplus
+  // delta + per-side breakdowns; the row renderer below injects an
+  // expanded card under each trade row with the verdict.
+  const _WAR_DOLLAR_VALUE = 8.0;   // $M per WAR (modern FA market avg)
+  // Parse IBP + cash mentions from a trade description. Returns
+  // {ibp_mm, cash_mm, recipient_hint} where recipient_hint is
+  // either "from" / "to" / null (we use the canonical sender / receiver
+  // language to attribute flow; if narrative is ambiguous we default
+  // recipient to the prospect-receiving side and adjust both sides
+  // symmetrically). Amounts come back as $M.
+  const _parseTradeExtras = (desc) => {
+    if (!desc) return { ibp_mm: 0, cash_mm: 0 };
+    const text = String(desc);
+    let ibp_mm = 0, cash_mm = 0;
+    // International bonus pool patterns
+    //   "$500,000 in international bonus pool space"
+    //   "$1.5M in international slot money"
+    //   "international bonus pool slot value of $500,000"
+    const ibpPatterns = [
+      /\$\s*([\d,]+(?:\.\d+)?)\s*(?:M|million)?\s*(?:in\s+)?(?:international\s+)?(?:bonus\s+pool|slot\s+money|signing\s+bonus\s+pool)/gi,
+      /(?:international\s+)?(?:bonus\s+pool|slot\s+money)[^.]*\$\s*([\d,]+(?:\.\d+)?)\s*(?:M|million)?/gi,
+    ];
+    for (const re of ibpPatterns) {
+      let m;
+      while ((m = re.exec(text)) !== null) {
+        const raw = (m[1] || '').replace(/,/g, '');
+        let val = parseFloat(raw);
+        if (!isFinite(val)) continue;
+        // Heuristic: if the matched substring ends with M / million, the
+        // value is already in millions; otherwise dollars → /1M.
+        const tail = text.substr(m.index + m[0].length - 12, 12).toLowerCase();
+        if (!/(m|million)/.test(tail) && val > 1000) val = val / 1_000_000;
+        else if (!/(m|million)/.test(tail) && val <= 5) val = val;  // could be $5M
+        ibp_mm = Math.max(ibp_mm, val);
+      }
+    }
+    // Generic "cash considerations" / "cash" — only count when paired
+    // with a dollar figure that ISN'T part of an IBP / bonus pool clause.
+    const cashRe = /\$\s*([\d,]+(?:\.\d+)?)\s*(?:M|million)?\s*(?:in\s+)?cash\b/gi;
+    let m2;
+    while ((m2 = cashRe.exec(text)) !== null) {
+      const raw = (m2[1] || '').replace(/,/g, '');
+      let val = parseFloat(raw);
+      if (!isFinite(val)) continue;
+      const tail = text.substr(m2.index + m2[0].length - 12, 12).toLowerCase();
+      if (!/(m|million)/.test(tail) && val > 1000) val = val / 1_000_000;
+      cash_mm = Math.max(cash_mm, val);
+    }
+    return {
+      ibp_mm:  Math.round(ibp_mm * 100) / 100,
+      cash_mm: Math.round(cash_mm * 100) / 100,
+    };
+  };
+  const _TRADE_PITCHER_RE = /^(RHP|LHP|SP|RP|MIRP|SIRP)/;
+  const _playerTradeValue = (p) => {
+    if (!p) return { value: null, kind: "unknown" };
+    // Debuted players get WAR-derived value when career_war is on file.
+    const cwObj = p.career_war;
+    const careerWar = (cwObj && typeof cwObj === "object" && cwObj.career_war != null)
+      ? Number(cwObj.career_war)
+      : (typeof cwObj === "number" ? cwObj : null);
+    if (careerWar != null && (p.debut_date || p.status === "debuted")) {
+      return {
+        value: Math.round(careerWar * _WAR_DOLLAR_VALUE * 10) / 10,
+        kind:  "war",
+        war:   careerWar,
+      };
+    }
+    // Prospects (with or without realized WAR) → FV-derived surplus.
+    if (p.fv_close != null) {
+      const isPit = _TRADE_PITCHER_RE.test(String(p.position || ""));
+      const surplus = estimateSurplusValueMM(p.fv_close, isPit, p.position, { player: p });
+      return { value: surplus, kind: "fv", fv: p.fv_close };
+    }
+    return { value: null, kind: "unknown" };
+  };
+  // Build trade groups: tradeKey = `${date}|${from}|${to}` (and
+  // the mirror `${date}|${to}|${from}` resolves to the same group).
+  const _tradeKey = (acq) => {
+    const from = acq.from_org || "?", to = acq.to_org || "?";
+    const lo = from < to ? from : to, hi = from < to ? to : from;
+    return `${acq.date}|${lo}|${hi}`;
+  };
+  // v31.8b — MLB trade-vet lookup. Description-parser identifies
+  // candidate player names; we resolve in this order:
+  //   1. DATA.mlb_trade_players (storage-cached MLB Stats API + BBRef)
+  //   2. DATA.debuts (tracked debutants that aren't in the active
+  //      pool but DO carry career_war — covers prospect-grads dealt
+  //      AFTER their debut, e.g. Brendan Donovan SEA→STL trade)
+  //   3. DATA.inactive (legacy / no-longer-tracked players with WAR)
+  // Names already added to this trade's seen-set are skipped.
+  const _mlbVets = DATA.mlb_trade_players || {};
+  const _nameToSlug = (name) =>
+    String(name || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  // Build a debuts/inactive index by slug for the secondary lookup.
+  // Cached lazily — only built when we actually need to resolve a vet.
+  let _debutSlugIndex = null;
+  const _buildDebutSlugIndex = () => {
+    if (_debutSlugIndex !== null) return _debutSlugIndex;
+    _debutSlugIndex = {};
+    const sources = [DATA.debuts || [], DATA.inactive || []];
+    for (const list of sources) {
+      for (const p of list) {
+        if (!p || !p.player_name) continue;
+        const slug = _nameToSlug(p.player_name);
+        if (slug && !_debutSlugIndex[slug]) _debutSlugIndex[slug] = p;
+      }
+    }
+    return _debutSlugIndex;
+  };
+  // Reuse the same description parser shape used by storage's
+  // mlb_trade_lookup so the JS extraction mirrors the backend's.
+  // Catches "POS Name" patterns including multi-position ("OF/1B").
+  const _POS_TOKENS_JS = ["3B","2B","1B","SS","LF","CF","RF","OF","DH","C",
+                          "RHP","LHP","SHP","MIRP","SIRP","TWP","INF","IF",
+                          "MI","UTIL","SP","RP","P"];
+  const _posPat = _POS_TOKENS_JS.join("|");
+  const _multiPos = `(?:(?:${_posPat})(?:\\/(?:${_posPat}))*)`;
+  const _nameTok = "[A-Z][A-Za-zÀ-ÿ.'´\\-]+";
+  const _namePat = `(?:${_nameTok}(?:\\s+${_nameTok}){0,3})(?:\\s+(?:Jr\\.?|Sr\\.?|II|III|IV))?`;
+  const _tradeRowRe = new RegExp(`\\b(${_multiPos})\\s+(${_namePat})`, "g");
+  const _extractNames = (desc) => {
+    if (!desc) return [];
+    const out = [];
+    let m;
+    _tradeRowRe.lastIndex = 0;
+    while ((m = _tradeRowRe.exec(desc)) !== null) {
+      let nm = m[2].replace(/[.,;:!?]+$/g, "").trim();
+      if (nm) out.push(nm);
+    }
+    return out;
+  };
+  // Side resolution for a description-extracted player name: parses
+  // the narrative "Orgs traded X to Org for Y" — players appearing
+  // BEFORE "to <Org>" went TO that org; players AFTER "for" went
+  // the other way. Falls back to splitting by side counts.
+  const _resolveSideForName = (desc, name, orgFrom, orgTo) => {
+    // Conservative: find name's position in description, find "to"/"for"
+    // keywords' positions, infer side.
+    const lower = (desc || "").toLowerCase();
+    const idxName = lower.indexOf(name.toLowerCase());
+    if (idxName < 0) return null;
+    // Find "for " before / after name. "X to Y for Z" → X goes TO Y,
+    // Z goes the other way (TO X's old team).
+    const idxFor = lower.indexOf(" for ", idxName);
+    const idxForBefore = lower.lastIndexOf(" for ", idxName);
+    // If the name appears AFTER "for ", they went to the team that
+    // originally HAD the players being traded — typically orgFrom.
+    if (idxForBefore > 0 && idxForBefore < idxName) return orgFrom;
+    // Otherwise (name appears BEFORE "for "), they went to orgTo.
+    return orgTo;
+  };
+
+  const evalByTrade = {};   // tradeKey → { sideA, sideB, players: [...], rows }
+  for (const row of filtered) {
+    if (row.acq.method !== "trade") continue;
+    const k = _tradeKey(row.acq);
+    const grp = evalByTrade[k] = evalByTrade[k] || {
+      orgA: null, orgB: null, date: row.acq.date,
+      players: [], rows: [],
+      descriptions: new Set(),
+      seenSlugs: new Set(),  // de-dupe tracked names vs vet-resolved
+    };
+    const from = row.acq.from_org, to = row.acq.to_org;
+    if (!grp.orgA) { grp.orgA = from; grp.orgB = to; }
+    const val = _playerTradeValue(row.p);
+    // Determine which SIDE this player went to (= incoming side).
+    // The player's `to_org` on the acq is the receiving org.
+    grp.players.push({
+      p: row.p,
+      from: from, to: to,
+      val: val,
+    });
+    grp.seenSlugs.add(_nameToSlug(row.p.player_name));
+    grp.rows.push(row);
+    if (row.acq.description) grp.descriptions.add(row.acq.description);
+  }
+  // v31.8b — Walk each trade group's description(s), extract player
+  // names, and for any name NOT already on the tracked-players list
+  // for this trade, look up the MLB vet via DATA.mlb_trade_players
+  // and inject them as a synthetic player entry with WAR-derived value.
+  for (const k in evalByTrade) {
+    const g = evalByTrade[k];
+    for (const desc of g.descriptions) {
+      const names = _extractNames(desc);
+      for (const nm of names) {
+        const slug = _nameToSlug(nm);
+        if (g.seenSlugs.has(slug)) continue;
+        // Lookup 1: storage-cached MLB Stats API resolver
+        let vet = _mlbVets[slug];
+        let vetSource = "mlb_api";
+        // Lookup 2: debuts / inactive index (covers prospect-grads
+        // dealt AFTER debuting — they have career_war on file already)
+        if (!vet || vet.career_war == null) {
+          const idx = _buildDebutSlugIndex();
+          const debut = idx[slug];
+          if (debut) {
+            const cwObj = debut.career_war;
+            const cwVal = (cwObj && typeof cwObj === "object" && cwObj.career_war != null)
+              ? Number(cwObj.career_war)
+              : (typeof cwObj === "number" ? cwObj : null);
+            if (cwVal != null) {
+              vet = {
+                player_name: debut.player_name,
+                mlbam_id:    debut.mlbam_id,
+                primary_position: (debut.position || '').split('/')[0],
+                career_war:  cwVal,
+                last_team:   debut.org,
+                is_pitcher:  /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(debut.position || ''),
+              };
+              vetSource = "debuts";
+            }
+          }
+        }
+        if (!vet) {
+          g.seenSlugs.add(slug);
+          const side = _resolveSideForName(desc, nm, g.orgA, g.orgB);
+          if (side) {
+            g.players.push({
+              p: { player_name: nm, player_key: "" },
+              from: side === g.orgA ? g.orgB : g.orgA,
+              to:   side,
+              val:  { value: null, kind: "unresolved" },
+            });
+          }
+          continue;
+        }
+        g.seenSlugs.add(slug);
+        const side = _resolveSideForName(desc, nm, g.orgA, g.orgB);
+        if (!side) continue;
+        const war = vet.career_war != null ? Number(vet.career_war) : null;
+        const value = war != null ? Math.round(war * _WAR_DOLLAR_VALUE * 10) / 10 : null;
+        const playerKey = vet.mlbam_id
+          ? (vetSource === "debuts" ? slug : `mlbam_${vet.mlbam_id}`)
+          : "";
+        g.players.push({
+          p: {
+            player_name: vet.player_name || nm,
+            player_key:  playerKey,
+            _mlb_vet:    true,
+          },
+          from: side === g.orgA ? g.orgB : g.orgA,
+          to:   side,
+          val:  {
+            value: value,
+            kind:  war != null ? "war_vet" : "unresolved",
+            war:   war,
+            pos:   vet.primary_position,
+            team:  vet.last_team,
+            src:   vetSource,
+          },
+        });
+      }
+    }
+  }
+  // Finalize per-side surplus + verdict on each group.
+  for (const k in evalByTrade) {
+    const g = evalByTrade[k];
+    // v31.8 — Parse IBP / cash from any trade description and split
+    // the value across sides. We don't always know the direction of
+    // the cash from narrative parsing, so we conservatively credit
+    // the side that receives FEWER tracked-player dollars (assumption:
+    // cash/IBP usually offsets the smaller talent side). Falls back
+    // to splitting equally across both sides when totals are tied.
+    let totalIbp = 0, totalCash = 0;
+    for (const d of g.descriptions) {
+      const x = _parseTradeExtras(d);
+      totalIbp  = Math.max(totalIbp,  x.ibp_mm  || 0);
+      totalCash = Math.max(totalCash, x.cash_mm || 0);
+    }
+    // sideA = "what orgA received" (players whose to_org === orgA);
+    // sideB = "what orgB received". Net for orgA = sideA - sideB.
+    let aIn = 0, bIn = 0;
+    let aCount = 0, bCount = 0;
+    let unknownCount = 0;
+    for (const e of g.players) {
+      if (e.val.value == null) { unknownCount++; continue; }
+      if (e.to === g.orgA) { aIn += e.val.value; aCount++; }
+      else if (e.to === g.orgB) { bIn += e.val.value; bCount++; }
+    }
+    // Credit cash + IBP to the side that received less player value
+    // (i.e. the side that's likely being COMPENSATED with the extras).
+    let aIbp = 0, bIbp = 0, aCash = 0, bCash = 0;
+    if (totalIbp > 0) {
+      if (aIn < bIn)       aIbp = totalIbp;
+      else if (bIn < aIn)  bIbp = totalIbp;
+      else                 { aIbp = totalIbp / 2; bIbp = totalIbp / 2; }
+    }
+    if (totalCash > 0) {
+      if (aIn < bIn)       aCash = totalCash;
+      else if (bIn < aIn)  bCash = totalCash;
+      else                 { aCash = totalCash / 2; bCash = totalCash / 2; }
+    }
+    g.aReceived = Math.round((aIn + aIbp + aCash) * 10) / 10;
+    g.bReceived = Math.round((bIn + bIbp + bCash) * 10) / 10;
+    g.netDeltaA = Math.round((g.aReceived - g.bReceived) * 10) / 10;
+    g.unknownCount = unknownCount;
+    g.aCount = aCount;
+    g.bCount = bCount;
+    g.ibp_mm  = totalIbp;
+    g.cash_mm = totalCash;
+    g.aIbp = aIbp;   g.bIbp = bIbp;
+    g.aCash = aCash; g.bCash = bCash;
+    // Verdict: who won + by how much.
+    if (Math.abs(g.netDeltaA) < 1.0) {
+      g.verdict = "balanced";
+      g.winner = null;
+    } else if (g.netDeltaA > 0) {
+      g.verdict = "orgA";
+      g.winner = g.orgA;
+    } else {
+      g.verdict = "orgB";
+      g.winner = g.orgB;
+    }
+  }
+  // Track which trades we've already emitted the expanded card under
+  // (we only emit once per trade — on the topmost row that day).
+  const _tradeCardEmitted = new Set();
+
   const rows = filtered.map(({ p, acq }, i) => {
     // v31.7 — Debuted players synthesized into this list may not
     // have a populated `points` array; guard so the row still
@@ -14864,6 +15304,104 @@ function renderRecentlyTraded() {
           : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div class="line-chart-cell desktop-only">${pts.length >= 2 ? lazyLineChartHTML(p) : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`}</div>
       </div>
+      ${(() => {
+        // v31.8 — Expanded Trade Audit card. Renders once per trade
+        // (under the first row that day belonging to that trade
+        // group). Shows per-side surplus + winner verdict + a
+        // per-player value breakdown. Hover on each chip shows the
+        // valuation method (WAR×$/WAR for debuted players, FV-derived
+        // for prospects).
+        if (acq.method !== "trade") return "";
+        const k = _tradeKey(acq);
+        if (_tradeCardEmitted.has(k)) return "";
+        _tradeCardEmitted.add(k);
+        const g = evalByTrade[k];
+        if (!g) return "";
+        const winColor = g.verdict === "orgA" ? "var(--up)"
+                        : g.verdict === "orgB" ? "var(--up)"
+                        : "var(--text-secondary)";
+        const loseColor = "var(--down)";
+        const aTone = g.verdict === "orgA" ? winColor
+                    : g.verdict === "orgB" ? loseColor
+                    : "var(--text-secondary)";
+        const bTone = g.verdict === "orgB" ? winColor
+                    : g.verdict === "orgA" ? loseColor
+                    : "var(--text-secondary)";
+        const verdictText = g.verdict === "balanced"
+          ? `<span style="color:var(--text-secondary);">Balanced trade · net delta ${(g.netDeltaA >= 0 ? '+' : '')}$${g.netDeltaA.toFixed(1)}M</span>`
+          : `<span style="color:${winColor};font-weight:700;">${escapeHtml(g.winner)} +$${Math.abs(g.netDeltaA).toFixed(1)}M surplus</span>`;
+        const sidePlayerChips = (orgCode, otherCode) => {
+          const players = g.players.filter(e => e.to === orgCode);
+          const chips = [];
+          if (players.length) {
+            for (const e of players) {
+              const v = e.val;
+              const valStr = v.value != null ? `$${v.value.toFixed(1)}M` : '—';
+              const kindLbl = v.kind === "war"   ? `WAR-derived (${v.war?.toFixed(1)} career WAR × $${_WAR_DOLLAR_VALUE.toFixed(0)}M/WAR)`
+                            : v.kind === "war_vet" ? `MLB vet · ${v.pos || '—'} · ${v.war?.toFixed(1)} career WAR × $${_WAR_DOLLAR_VALUE.toFixed(0)}M/WAR`
+                            : v.kind === "fv"    ? `FV ${v.fv} surplus (TBS-nudged)`
+                            : v.kind === "unresolved" ? "Untracked MLB player — career WAR not yet on file"
+                            : 'unknown valuation';
+              const vetTag = v.kind === "war_vet" ? `<span style="font-size:8px;color:var(--neon-cyan);letter-spacing:0.04em;text-transform:uppercase;font-weight:700;">MLB</span>` : "";
+              const nameMarkup = e.p.player_key
+                ? `<a href="#player=${escapeHtml(e.p.player_key)}" onclick="event.preventDefault();event.stopPropagation();goToPlayer('${escapeHtml(e.p.player_key)}');" style="color:var(--text-primary);text-decoration:none;font-weight:600;">${escapeHtml(e.p.player_name)}</a>`
+                : `<span style="color:${v.kind === 'unresolved' ? 'var(--text-tertiary)' : 'var(--text-primary)'};font-weight:600;">${escapeHtml(e.p.player_name)}</span>`;
+              chips.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:2px;background:var(--bg-tertiary);font-size:10px;margin:1px 2px 1px 0;" title="${escapeHtml(kindLbl)}">
+                ${vetTag}${nameMarkup}
+                <span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">${valStr}</span>
+              </span>`);
+            }
+          }
+          // v31.8 — IBP / cash chips on the receiving side (parsed
+          // from the trade narrative).
+          const ibp  = (orgCode === g.orgA) ? g.aIbp  : g.bIbp;
+          const cash = (orgCode === g.orgA) ? g.aCash : g.bCash;
+          if (ibp && ibp > 0.05) {
+            chips.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:2px;background:var(--bg-tertiary);font-size:10px;margin:1px 2px 1px 0;border:1px dashed var(--border);" title="International bonus pool space parsed from the trade narrative">
+              <span style="color:var(--neon-violet);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;font-size:9px;">IBP</span>
+              <span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">$${ibp.toFixed(2)}M</span>
+            </span>`);
+          }
+          if (cash && cash > 0.05) {
+            chips.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:2px;background:var(--bg-tertiary);font-size:10px;margin:1px 2px 1px 0;border:1px dashed var(--border);" title="Cash considerations parsed from the trade narrative">
+              <span style="color:var(--neon-cyan);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;font-size:9px;">CASH</span>
+              <span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">$${cash.toFixed(2)}M</span>
+            </span>`);
+          }
+          if (!chips.length) return `<span style="color:var(--text-tertiary);font-size:9px;">PTBNL / no tracked players</span>`;
+          return chips.join("");
+        };
+        // v31.8c — Compact Trade Audit card. Pulled inside the same
+        // visual rhythm as the row above (smaller padding + font, left
+        // accent stripe only, single condensed header line). Spans
+        // all 6 grid columns so it reads as a sub-row, not a separate
+        // card.
+        return `<div class="trade-audit-card is-traded" style="grid-column:1 / -1;margin:0;padding:4px 10px 5px;background:var(--bg-secondary);border-left:2px solid ${winColor};border-radius:0;font-size:11px;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:9px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:700;margin-bottom:3px;">
+            <span>Trade Audit</span>
+            <span style="text-transform:none;letter-spacing:0;color:var(--text-secondary);font-weight:400;font-family:var(--font-serif);font-style:italic;font-size:10px;">${escapeHtml(g.orgA)} ↔ ${escapeHtml(g.orgB)}</span>
+            <span style="margin-left:auto;text-transform:none;letter-spacing:0;font-family:var(--font-mono);font-weight:700;font-size:10px;">${verdictText}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:11px;">
+            <div>
+              <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px;">
+                <span style="font-family:var(--font-serif);font-size:12px;font-weight:700;color:${aTone};">${escapeHtml(g.orgA)}</span>
+                <span style="color:var(--text-tertiary);font-size:9px;letter-spacing:0.04em;">RCV</span>
+                <span style="margin-left:auto;font-family:var(--font-mono);font-weight:700;font-size:10px;color:${aTone};">$${g.aReceived.toFixed(1)}M</span>
+              </div>
+              <div style="line-height:1.5;">${sidePlayerChips(g.orgA, g.orgB)}</div>
+            </div>
+            <div>
+              <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px;">
+                <span style="font-family:var(--font-serif);font-size:12px;font-weight:700;color:${bTone};">${escapeHtml(g.orgB)}</span>
+                <span style="color:var(--text-tertiary);font-size:9px;letter-spacing:0.04em;">RCV</span>
+                <span style="margin-left:auto;font-family:var(--font-mono);font-weight:700;font-size:10px;color:${bTone};">$${g.bReceived.toFixed(1)}M</span>
+              </div>
+              <div style="line-height:1.5;">${sidePlayerChips(g.orgB, g.orgA)}</div>
+            </div>
+          </div>
+        </div>`;
+      })()}
     `;
   }).join("");
 
@@ -15042,31 +15580,33 @@ const SURPLUS_VALUE_MM = {
 };
 
 // Per-position surplus multiplier (Phase A1 — applied AFTER the
-// hitter/pitcher base table). Reflects that a 50 FV catcher or
-// shortstop carries more org value than a 50 FV first-baseman or
-// reliever because of position scarcity + defensive premium.
-// Anchored to MLB free-agent comp surveys (up-the-middle premium ~10%,
-// bat-only positions ~10% discount, RP fungibility ~30% discount).
-// Falls back to 1.00 for unknown positions so legacy callers without
-// a position arg behave identically.
+// hitter/pitcher base table). v31.8 — values re-anchored to recent
+// (2023-2025) MLB FA contract surveys + Fangraphs WAR-at-position
+// averages. Up-the-middle premium tightened (SS now 1.12, CF 1.07,
+// C 1.06) reflecting the post-pitch-clock OPS premium for premium
+// defenders. RP discount widened (0.65) — average MLB RP gets ~$3M
+// AAV vs $25M+ for a SP at equivalent fWAR. DH stays at 0.85 to
+// reflect the lineup-flex penalty for one-trick bats.
 const SURPLUS_POSITION_MULT = {
-  C:    1.05,
-  SS:   1.10,
-  "2B": 1.00,
+  C:    1.06,    // top-3 catcher AAV (~$10M) vs avg SP (~$12M): 0.85 raw, scarcity boost to 1.06
+  SS:   1.12,    // up-the-middle scarcity premium
+  "2B": 0.98,    // slight discount; pure 2B usually convert to SS/3B
   "3B": 0.95,
-  "1B": 0.90,
-  CF:   1.05,
-  LF:   0.95,
+  "1B": 0.88,    // bat-only positions discount
+  CF:   1.07,
+  LF:   0.93,
   RF:   0.95,
-  OF:   0.97,
-  DH:   0.85,
+  OF:   0.96,    // unspecified OF
+  DH:   0.82,    // pure DH carries lineup-flex penalty
   // Pitchers
   SP:   1.00,
   RHP:  1.00,
-  LHP:  1.00,
-  RP:   0.70,
-  MIRP: 0.85,
-  SIRP: 0.75,
+  LHP:  1.03,    // small lefty premium reflecting market scarcity
+  RP:   0.65,    // fungibility discount widened from 0.70 → 0.65
+  MIRP: 0.82,
+  SIRP: 0.72,
+  // Two-way / unknown defaults
+  TWP:  1.10,    // two-way (Ohtani-style) carries the premium
 };
 function surplusPositionMult(position) {
   if (!position) return 1.0;
@@ -15074,7 +15614,20 @@ function surplusPositionMult(position) {
   return SURPLUS_POSITION_MULT[p] != null ? SURPLUS_POSITION_MULT[p] : 1.0;
 }
 
-function estimateSurplusValueMM(fv, isPitcher, position) {
+// v31.8 — Tiebreaker-score sub-adjustment for AAV. Within a single FV
+// bucket, prospects with a high TBS (better tool stack + better
+// MiLB performance) earn a small AAV premium; low-TBS prospects in
+// the same bucket get a small discount. The adjustment is capped at
+// ±12% so the FV anchor still dominates (an FV 50 SS won't ever
+// out-price an FV 55 SS just by having a better TBS).
+function _tbsSurplusMult(tbsScore) {
+  if (tbsScore == null) return 1.0;
+  // Map TBS 0 → 0.88, TBS 50 → 1.00, TBS 100 → 1.12 (linear).
+  const c = Math.max(0, Math.min(100, Number(tbsScore)));
+  return 0.88 + (c / 100) * 0.24;
+}
+
+function estimateSurplusValueMM(fv, isPitcher, position, opts) {
   if (fv == null) return null;
   const table = SURPLUS_VALUE_MM[isPitcher ? "pitcher" : "hitter"];
   // Clamp to the 35-80 anchor range. Below 35 reads as ~$0.5M (a
@@ -15089,7 +15642,19 @@ function estimateSurplusValueMM(fv, isPitcher, position) {
     const t  = (fv - lo) / 5;
     base = table[lo] * (1 - t) + table[hi] * t;
   }
-  return Math.round(base * surplusPositionMult(position) * 10) / 10;
+  // v31.8 — Optional TBS nudge: pass {tbs: <0-100>} or a player
+  // object (we'll compute the score internally). Same-FV prospects
+  // with different tool/perf packages now spread within ±12% of the
+  // FV-anchored base price.
+  let tbsMult = 1.0;
+  if (opts && typeof opts === "object") {
+    if (typeof opts.tbs === "number") {
+      tbsMult = _tbsSurplusMult(opts.tbs);
+    } else if (opts.player && typeof tiebreakerScore === "function") {
+      tbsMult = _tbsSurplusMult(tiebreakerScore(opts.player));
+    }
+  }
+  return Math.round(base * surplusPositionMult(position) * tbsMult * 10) / 10;
 }
 
 // Playing-time-weighted MLB WAR/year, with a minimum-sample gate to
@@ -15708,10 +16273,23 @@ function _applyDraftSort(prospects) {
       return (bv - av) || ((b.consensus_fv ?? 0) - (a.consensus_fv ?? 0));
     });
   } else {
-    // Default: consensus FV desc, then consensus rank asc.
+    // Default: consensus FV desc, then TBS desc, then consensus rank asc.
+    // v31.8 — TBS (Tool composite + per-tool max + DS+ blend) breaks
+    // FV ties before falling back to consensus rank. Surfaces the
+    // "better tool / production stack" prospect when two share an
+    // identical FV grade.
     prospects.sort((a, b) => {
+      // Normalize prospect shape for tiebreakerScore — it expects
+      // `fv_close` and `draft_stock_plus`. Draft prospects use
+      // consensus_fv as their FV proxy.
       const fvDelta = (b.consensus_fv ?? 0) - (a.consensus_fv ?? 0);
       if (fvDelta !== 0) return fvDelta;
+      const aShim = { fv_close: a.consensus_fv, draft_stock_plus: a.draft_stock_plus,
+                       tools: a.tools, tool_grades: a.tool_grades };
+      const bShim = { fv_close: b.consensus_fv, draft_stock_plus: b.draft_stock_plus,
+                       tools: b.tools, tool_grades: b.tool_grades };
+      const tbsDelta = tiebreakerScore(bShim) - tiebreakerScore(aShim);
+      if (tbsDelta !== 0) return tbsDelta;
       const aRank = a.consensus_rank != null ? a.consensus_rank : 9999;
       const bRank = b.consensus_rank != null ? b.consensus_rank : 9999;
       return Number(aRank) - Number(bRank);
@@ -28568,7 +29146,10 @@ function renderPlayerDetail(key) {
     const fv = p.fv_close ?? null;
     if (fv == null && !p.acquisition) return "";
     const _isPit = !!(p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position));
-    const surplus = estimateSurplusValueMM(fv, _isPit, p.position);
+    // v31.8 — Pass the player to estimateSurplusValueMM so TBS nudges
+    // the FV-anchored base AAV ±12% based on the prospect's tool
+    // stack + MiLB performance.
+    const surplus = estimateSurplusValueMM(fv, _isPit, p.position, { player: p });
     const fmtUsd = m => {
       if (m == null) return "—";
       if (m >= 100) return `$${m.toFixed(0)}M`;
