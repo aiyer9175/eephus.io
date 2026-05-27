@@ -7340,15 +7340,10 @@
           </optgroup>
         </select>
       </div>
+      <!-- v31.9 — Density toggle removed. Compact is the only mode site-wide
+           (Expanded view was inferior in every way per user direction). -->
       <div class="filter-group">
-        <span class="filter-label">Density</span>
-        <div class="density-toggle">
-          <button class="chip active" data-density="compact" type="button" title="Default tight row layout — name, FV diamond, FV history minichart, MiLB stats, ETA. Most rows visible at once.">Compact</button>
-          <button class="chip" data-density="expanded" type="button" title="Adds the per-tool grade strip + row summary line under each prospect. Same columns as Compact, taller rows for more detail.">Expanded</button>
-        </div>
-      </div>
-      <div class="filter-group">
-        <button class="chip reset-chip" type="button" data-reset-page="actives" title="Reset all filters, search, sort, and density on the prospect list">↺ Reset filters</button>
+        <button class="chip reset-chip" type="button" data-reset-page="actives" title="Reset all filters, search, and sort on the prospect list">↺ Reset filters</button>
       </div>
     </div>
   </div>
@@ -7363,15 +7358,18 @@
     </div>
   </div>
 
+  <!-- v31.9 — Transactions section now ships the same right-rail
+       context cards as the Active Prospects landing. -->
   <div id="traded-section" style="display: none;">
     <div id="whats-new-traded"></div>
-    <div id="traded-rows"></div>
+    <div class="active-grid">
+      <div id="traded-rows"></div>
+      <aside id="traded-context-rail" class="active-context-rail" aria-label="League context"></aside>
+    </div>
   </div>
 
+  <!-- v31.9 — Spotlights now ships the right-side context rail. -->
   <div id="spotlights-section" style="display: none;">
-    <!-- v30.7 — Standout-performances ribbon lives inside the
-         Spotlights section (no longer above the global header).
-         renderSpotlights paints into this div on every render. -->
     <div id="whats-standout-spotlights" class="news-row news-row-standout"></div>
     <div class="spotlight-subtabs">
       <button class="chip active" data-spotlight-bucket="risers"
@@ -7380,10 +7378,12 @@
               title="Pedigree-comeback narrative: previously hyped (first-round pick / IFA / $1M+ bonus) prospects whose prior season was weak but who have bounced back this year with improved skills.">Rebounders</button>
       <button class="chip" data-spotlight-bucket="fallers"
               title="Prospects whose 2026 performance has materially deteriorated. Very-young and young+pedigreed prospects are filtered out unless their K-rate has cratered (Bryce Rainer-style).">Fallers</button>
-      <!-- v18 — Reset chip for spotlights -->
       <button class="chip reset-chip" type="button" data-reset-page="spotlights" title="Reset spotlight bucket back to default (Risers)" style="margin-left:12px;">↺ Reset</button>
     </div>
-    <div id="spotlight-rows"></div>
+    <div class="active-grid">
+      <div id="spotlight-rows"></div>
+      <aside id="spotlights-context-rail" class="active-context-rail" aria-label="League context"></aside>
+    </div>
   </div>
 
   <div id="injured-section" style="display: none;">
@@ -7425,7 +7425,11 @@
         </select>
       </div>
     </div>
-    <div id="injured-rows"></div>
+    <!-- v31.9 — IL list now ships the right-side context rail. -->
+    <div class="active-grid">
+      <div id="injured-rows"></div>
+      <aside id="injured-context-rail" class="active-context-rail" aria-label="League context"></aside>
+    </div>
   </div>
 
   <!-- Draft prospects — fully separate from the MiLB pipeline.
@@ -7965,13 +7969,18 @@
       <button class="chip active" data-wl-tab="prospects" type="button">Prospects<span class="wl-tab-count" id="wl-tab-prospects-count"></span></button>
       <button class="chip" data-wl-tab="farms" type="button">Farm systems<span class="wl-tab-count" id="wl-tab-farms-count"></span></button>
     </div>
+    <!-- v31.9 — Watchlist now ships the right-side context rail to match
+         the Active Prospects landing page (cross-page parity). -->
     <div id="watchlist-prospects-panel">
       <div id="watchlist-empty" class="state-message" style="display:none;">
         <div style="font-size:32px;margin-bottom:var(--space-2);opacity:0.5;">☆</div>
         <div style="font-size:var(--fs-md);color:var(--text-secondary);margin-bottom:var(--space-1);">No prospects starred yet</div>
         <div style="font-size:var(--fs-sm);color:var(--text-tertiary);">Click the ☆ icon on any prospect to track them here. Watchlist + notes are private to this browser.</div>
       </div>
-      <div id="watchlist-rows"></div>
+      <div class="active-grid">
+        <div id="watchlist-rows"></div>
+        <aside id="watchlist-context-rail" class="active-context-rail" aria-label="League context"></aside>
+      </div>
     </div>
     <div id="watchlist-farms-panel" style="display:none;">
       <div id="watchlist-farms-empty" class="state-message" style="display:none;">
@@ -10280,8 +10289,11 @@ function restoreUIFromState() {
   document.querySelectorAll("[data-density]").forEach(b =>
     b.classList.toggle("active", b.dataset.density === (state.density || "compact")));
   // Body class mirrors state.density so the CSS rules can target it.
-  document.body.classList.remove("density-compact", "density-standard", "density-expanded");
-  document.body.classList.add(`density-${state.density || "compact"}`);
+  // v31.9 — Density mode pinned to compact site-wide. Expanded view
+  // was removed entirely; the body class is force-set on every render
+  // so legacy localStorage state can't bring it back.
+  document.body.classList.remove("density-standard", "density-expanded");
+  document.body.classList.add("density-compact");
   document.querySelectorAll("[data-filter-level]").forEach(b =>
     b.classList.toggle("active", b.dataset.filterLevel === state.levelFilter));
   document.querySelectorAll("[data-filter-pos]").forEach(b =>
@@ -11379,20 +11391,16 @@ const state = {
   // chase_pct / fb_velo / whiff_pct_pit / chase_pct_pit /
   // hh_pct_allowed / barrel_pct_allowed.
   statcastSortKey: "off",
-  // Row density — "compact" (default) / "expanded". Picked up from
-  // URL > localStorage > default on boot. Drives a body-level class.
-  // Defaults to "compact" so a fresh visitor lands on the cleanest row
-  // layout (28×34 headshot, 12px name, 120×38 minichart). Migration:
-  // legacy "standard" stored values map to the new "expanded" (which
-  // is the renamed-Standard, mid-density layout); any other unknown
-  // stored value also collapses to "expanded" so weird state never
-  // leaves the user staring at a blank density.
+  // v31.9 — Density mode pinned to "compact" sitewide. Expanded
+  // view was removed entirely (compact was strictly better in
+  // every comparison). Legacy localStorage values are wiped.
   density: (() => {
-    if (typeof localStorage === "undefined") return "compact";
-    const saved = localStorage.getItem("prospect-tracker.density");
-    if (!saved) return "compact";
-    if (saved === "compact") return "compact";
-    return "expanded";  // "standard", old "expanded", or anything else
+    try {
+      if (typeof localStorage !== "undefined") {
+        localStorage.removeItem("prospect-tracker.density");
+      }
+    } catch {}
+    return "compact";
   })(),
   // Leaderboards tab — stat × season × level × position-group × org
   // selection. Pulls from career_stats (year-by-year per-level rows) so
@@ -12900,8 +12908,13 @@ function _farmDetailSidebarCards(org, activeTab) {
   ];
 }
 
-function renderActiveContextRail() {
-  const rail = document.getElementById("active-context-rail");
+function renderActiveContextRail(railId = "active-context-rail") {
+  // v31.9 — Accept a target railId so the same context cards can
+  // also render into the Watchlist / Spotlights / Recently Traded /
+  // Injured section rails (parameter defaults preserve the existing
+  // call signature). All rails share the .active-context-rail CSS,
+  // so visual treatment stays identical across sections.
+  const rail = document.getElementById(railId);
   if (!rail) return;
   const players = DATA.players || [];
 
@@ -13259,6 +13272,8 @@ function renderSpotlights() {
   // now lives inside the spotlights section so it shows in context
   // and only when the user has come to look at movement signals.
   try { renderStandoutPerformances("whats-standout-spotlights"); } catch (e) { /* silent */ }
+  // v31.9 — Spotlights now ships the league-context rail.
+  try { renderActiveContextRail("spotlights-context-rail"); } catch (e) { /* silent */ }
   const buckets = DATA.spotlights || {};
   // Spotlights now ship three buckets: risers / rebounders / fallers.
   // Legacy `hot` is still aliased to `risers` in the export for one
@@ -13835,12 +13850,12 @@ const LB_STATS = {
 // pointer to the star button. localStorage-backed; never flows into
 // the shareable URL.
 function renderWatchlist() {
-  // Watchlist always renders compact regardless of the actives-list
-  // density preference (state.density). Force the body class here;
-  // when the user navigates back to actives, applySectionStateToFilterBar
-  // re-applies their saved density on the next render() call.
+  // v31.9 — Compact density is the only mode site-wide (force-set
+  // here for back-compat with any cached page state). Watchlist also
+  // ships the same league-context rail as Active Prospects.
   document.body.classList.remove("density-standard", "density-expanded");
   document.body.classList.add("density-compact");
+  try { renderActiveContextRail("watchlist-context-rail"); } catch (e) { /* silent */ }
 
   const activeTab = state.watchlistTab || "prospects";
   // Toggle panel visibility based on the active sub-tab. Both panels are
@@ -13875,33 +13890,47 @@ function renderWatchlist() {
     const rankOffset = (curPage - 1) * pageSize;
     const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "watchlist");
     const paginationStripTop = renderPaginationStripCompact(curPage, totalItems, pageSize, "watchlist");
+    // v31.9 — Watchlist now renders IDENTICAL player cards to the
+    // Active Prospects list (matching the v31 7-col grid + every
+    // cell + buttons + expanded meta + tool strip). Mirror of the
+    // markup in `renderActives` to keep the two views visually
+    // identical; any future tweaks to the active-row template
+    // should be mirrored here. Star button stays in the "is-in"
+    // state by definition (everyone on watchlist is starred).
     const pHeader = `<div class="col-header">
-      <span style="text-align:center;">#</span>
-      <span>Player · pos · org · age</span>
-      <span style="text-align:center;">FV · stock</span>
-      <span style="text-align:center;">Rank</span>
-      <span class="desktop-only" style="text-align:center;">FV history</span>
-      <span class="desktop-only">MiLB · age vs. level</span>
-      <span class="desktop-only" style="text-align:center;">ETA</span>
+      <span class="sort-header" data-sort-key="name_asc" title="Player name + meta line: pos · org · age · handedness. Click to sort alphabetically.">Player · pos · org · age · B/T</span>
+      <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="FV-derived overall rank — diamond border matches the prospect's rarity tier. Click to sort.">Rank</span>
+      <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="Consensus Future Value · stock delta below · click to sort">FV Grade</span>
+      <span class="desktop-only" style="text-align:center;" title="FV history sparkline">FV history</span>
+      <span class="desktop-only sort-header" data-sort-key="level_desc" title="MiLB level + age vs level. Click to sort by closeness to MLB.">MiLB · age vs. level</span>
+      <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="Physical profile: Height · Weight · BMI.">Ht · Wt · BMI</span>
+      <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
     </div>`;
     const pRows = pagedPlayers.map((p, i) => {
       const latest = p.points && p.points.length ? p.points[p.points.length - 1] : null;
+      const fvTier = latest && latest.consensus_fv != null
+        ? String(Math.round(latest.consensus_fv / 5) * 5)
+        : "";
       return `
-        <div class="player-row" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-          <div class="rank-num"><span class="rank-num-inner">#${rankOffset + i + 1}</span></div>
-          <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-            ${headshotHTML(p, 50)}
-            <div style="min-width:0;flex:1;">
-              <div class="player-name">${escapeHtml(p.player_name)}</div>
+        <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
+          <div class="player-row-col1" style="display:flex;align-items:center;gap:10px;min-width:0;">
+            <span class="headshot-stack">${headshotHTML(p, 64)}${optionsDotsHTML(p)}</span>
+            <div class="player-name-stack" style="min-width:0;flex:1;">
+              <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
               ${playerMetaHTML(p)}
             </div>
             <button class="watch-btn is-in" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="Remove from watchlist">★</button>
+            <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
+            <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
           </div>
-          <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}` : "—"}</div>
-          <div class="rank-cell">${p.overall_rank != null ? "#" + p.overall_rank : "—"}</div>
-          <div class="line-chart-cell">${p.points && p.points.length >= 2 ? lazyLineChartHTML(p) : ""}</div>
+          <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${p.overall_rank != null ? "#" + p.overall_rank : "—"}</span></div>${rankTrendHTML(p)}</div>
+          <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+          <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${p.points && p.points.length >= 2 ? lazyLineChartHTML(p) : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`}</div>
           ${makeMilbCell(p)}
+          ${physClusterHTML(p)}
           ${makeEtaCell(p)}
+          ${playerExpandedMetaHTML(p)}
+          ${makeListRowSummary(p) ? `<div class="player-row-toolstrip">${makeListRowSummary(p)}</div>` : ""}
         </div>
       `;
     }).join("");
@@ -14668,6 +14697,8 @@ function openGlossaryPopover(anchorEl) {
 // Honors the global search box and the per-section sort chips.
 function renderInjured() {
   renderWhatsNew("whats-new-injured", kind => kind === "il");
+  // v31.9 — IL list now ships the league-context rail.
+  try { renderActiveContextRail("injured-context-rail"); } catch (e) { /* silent */ }
   const today = new Date();
   // v19 — Active prospects only. Graduates + inactives were included
   // historically so a post-grad MLB IL stint would still surface here,
@@ -14852,6 +14883,8 @@ async function _ensureMlbTradePlayersLoaded() {
 }
 
 function renderRecentlyTraded() {
+  // v31.9 — Transactions tab now ships the league-context rail.
+  try { renderActiveContextRail("traded-context-rail"); } catch (e) { /* silent */ }
   // v31.8c — Kick off the lazy MLB-vet sidecar load. If it's not
   // ready yet, we render with empty mlb_trade_players (the trade
   // audit falls back to DATA.debuts / inactive for prospect-grads,
@@ -14904,9 +14937,25 @@ function renderRecentlyTraded() {
     <span class="desktop-only" style="text-align:center;">FV history</span>
   </div>`;
 
-  // v31.8 — Trade evaluator. Groups every per-player trade row by
-  // (date, from_org, to_org) and computes per-side surplus value
-  // using:
+  // v31.9 — TRADE GROUPING OVERHAUL.
+  //
+  // Previous design grouped trade rows by per-player `acq.from/to_org`,
+  // which broke when:
+  //   * A player's current org was stale (latest acq pointed at a
+  //     prior trade, not the one being audited)
+  //   * The same trade appeared multiple times because each player's
+  //     from/to combo differed (e.g. multi-team trades)
+  //   * Players in the same trade got assigned to DIFFERENT groups
+  //
+  // New design uses the trade DESCRIPTION + DATE as the canonical
+  // group key — every player in a real trade shares the identical
+  // description string (MLB API ships it that way), so grouping by
+  // `${date}|${descriptionHash}` reliably collapses a multi-prospect
+  // trade into one card. The description parser then identifies ALL
+  // players (tracked + MLB vets + IBP/cash) and renders ONE audit
+  // card per trade, attached to the FIRST player's row in the list.
+  //
+  // Original v31.8 valuation rules:
   //   * Tracked debuted players → career WAR × $8M/WAR
   //   * Tracked active prospects → estimateSurplusValueMM(...) with
   //     v31.8 position + TBS nudges
@@ -15073,46 +15122,127 @@ function renderRecentlyTraded() {
     return orgTo;
   };
 
-  const evalByTrade = {};   // tradeKey → { sideA, sideB, players: [...], rows }
-  for (const row of filtered) {
-    if (row.acq.method !== "trade") continue;
-    const k = _tradeKey(row.acq);
-    const grp = evalByTrade[k] = evalByTrade[k] || {
-      orgA: null, orgB: null, date: row.acq.date,
-      players: [], rows: [],
-      descriptions: new Set(),
-      seenSlugs: new Set(),  // de-dupe tracked names vs vet-resolved
-    };
-    const from = row.acq.from_org, to = row.acq.to_org;
-    if (!grp.orgA) { grp.orgA = from; grp.orgB = to; }
+  // v31.9 — Description-keyed trade grouping. Every player in a real
+  // trade shares the identical narrative ("Org A traded X to Org B
+  // for Y, Z."), so hashing the description (+ date as belt-and-
+  // suspenders) collapses multi-prospect trades into a single audit
+  // group. This replaces the prior per-player from/to keying that
+  // mis-grouped trades when player orgs were stale or when a player
+  // had multiple historical trades.
+  const _hashDesc = (s) => {
+    // Tiny FNV-style hash so the key string stays bounded.
+    let h = 0x811c9dc5;
+    const str = (s || "").trim().toLowerCase();
+    for (let i = 0; i < str.length; i++) {
+      h = (h ^ str.charCodeAt(i)) >>> 0;
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h.toString(36);
+  };
+  const _descTradeKey = (acq) => `${acq.date}|${_hashDesc(acq.description)}`;
+  // Pull every trade involvement out of `filtered` AND every player's
+  // `p.trades[]` array — the latter catches cases where a row's
+  // `latestAcquisition` doesn't reflect the trade we're looking at
+  // (stale current_org, multi-team trades, etc.).
+  const evalByTrade = {};
+  const _ensureGroup = (date, desc) => {
+    const key = `${date}|${_hashDesc(desc)}`;
+    if (!evalByTrade[key]) {
+      evalByTrade[key] = {
+        key, date, description: desc || "",
+        // orgA / orgB are derived from the trade narrative, not the
+        // player's stale acq. Parsed lazily once we have at least one
+        // canonical "X traded ... to Y" anchor.
+        orgA: null, orgB: null,
+        players: [], rows: [],
+        descriptions: new Set([desc].filter(Boolean)),
+        seenSlugs: new Set(),
+        firstSeenIdx: Infinity,
+      };
+    }
+    return evalByTrade[key];
+  };
+  // Parse "<Team A> traded ... to <Team B>" → [from_org, to_org].
+  // Returns null if narrative doesn't match the canonical shape.
+  const _ORG_FROM_NAME = {};   // lazy team-name → org-abbr lookup, built on first use
+  const _buildOrgMap = () => {
+    if (Object.keys(_ORG_FROM_NAME).length) return;
+    if (typeof fullOrgName !== "function") return;
+    const orgs = ["LAA","HOU","OAK","TOR","ATL","MIL","STL","CHC","ARI","LAD",
+                   "SFG","CLE","SEA","MIA","NYM","WSN","BAL","SDP","PHI","PIT",
+                   "TEX","TBR","BOS","CIN","COL","KCR","DET","MIN","CHW","NYY"];
+    for (const o of orgs) {
+      const n = fullOrgName(o);
+      if (n) _ORG_FROM_NAME[n.toLowerCase()] = o;
+      // Also accept the abbreviation itself if mentioned directly.
+      _ORG_FROM_NAME[o.toLowerCase()] = o;
+    }
+  };
+  const _parseTradeOrgs = (desc) => {
+    if (!desc) return null;
+    _buildOrgMap();
+    const text = desc.toLowerCase();
+    // Match: "<Team A> traded ... to <Team B>"
+    const m = text.match(/^(.+?)\s+traded\s+.+?\s+to\s+(.+?)(?:\s+(?:for|in exchange|on)\b|\.|$)/);
+    if (!m) return null;
+    const fromName = m[1].trim(), toName = m[2].trim();
+    let from = _ORG_FROM_NAME[fromName] || null;
+    let to   = _ORG_FROM_NAME[toName]   || null;
+    // Fallback: try matching last 2-3 words of each side (handles
+    // "the Seattle Mariners" prefix or similar).
+    if (!from) for (const k in _ORG_FROM_NAME)
+      if (fromName.endsWith(k)) { from = _ORG_FROM_NAME[k]; break; }
+    if (!to) for (const k in _ORG_FROM_NAME)
+      if (toName.endsWith(k))   { to   = _ORG_FROM_NAME[k]; break; }
+    return (from && to) ? [from, to] : null;
+  };
+  // First pass — every trade row from `filtered` gets its player
+  // attached to the description-keyed group.
+  filtered.forEach((row, idx) => {
+    if (row.acq.method !== "trade") return;
+    const desc = row.acq.description || "";
+    const g = _ensureGroup(row.acq.date, desc);
+    if (idx < g.firstSeenIdx) g.firstSeenIdx = idx;
+    // Resolve orgs lazily from the narrative (more reliable than the
+    // player's per-acq from/to which may reflect a different trade).
+    if (!g.orgA || !g.orgB) {
+      const orgs = _parseTradeOrgs(desc);
+      if (orgs) { g.orgA = orgs[0]; g.orgB = orgs[1]; }
+    }
+    // Add the player. We DO NOT trust the per-acq from/to here —
+    // we resolve which side they went TO via the narrative-position
+    // parser below (matching the same logic we use for description-
+    // extracted MLB vets). Falls back to the acq's to_org when the
+    // narrative parser can't find the name.
     const val = _playerTradeValue(row.p);
-    // Determine which SIDE this player went to (= incoming side).
-    // The player's `to_org` on the acq is the receiving org.
-    grp.players.push({
+    let side = null;
+    if (g.orgA && g.orgB) {
+      side = _resolveSideForName(desc, row.p.player_name, g.orgA, g.orgB)
+              || row.acq.to_org;
+    } else {
+      side = row.acq.to_org;
+    }
+    g.players.push({
       p: row.p,
-      from: from, to: to,
-      val: val,
+      from: (side === g.orgA) ? g.orgB : g.orgA,
+      to:   side,
+      val,
     });
-    grp.seenSlugs.add(_nameToSlug(row.p.player_name));
-    grp.rows.push(row);
-    if (row.acq.description) grp.descriptions.add(row.acq.description);
-  }
-  // v31.8b — Walk each trade group's description(s), extract player
-  // names, and for any name NOT already on the tracked-players list
-  // for this trade, look up the MLB vet via DATA.mlb_trade_players
-  // and inject them as a synthetic player entry with WAR-derived value.
+    g.seenSlugs.add(_nameToSlug(row.p.player_name));
+    g.rows.push(row);
+  });
+  // Second pass — for each group, parse the description for names
+  // not yet seen, and inject them as MLB-vet / unresolved entries.
   for (const k in evalByTrade) {
     const g = evalByTrade[k];
+    if (!g.orgA || !g.orgB) continue;  // unparseable narrative — skip vet injection
     for (const desc of g.descriptions) {
       const names = _extractNames(desc);
       for (const nm of names) {
         const slug = _nameToSlug(nm);
         if (g.seenSlugs.has(slug)) continue;
-        // Lookup 1: storage-cached MLB Stats API resolver
         let vet = _mlbVets[slug];
         let vetSource = "mlb_api";
-        // Lookup 2: debuts / inactive index (covers prospect-grads
-        // dealt AFTER debuting — they have career_war on file already)
         if (!vet || vet.career_war == null) {
           const idx = _buildDebutSlugIndex();
           const debut = idx[slug];
@@ -15134,22 +15264,18 @@ function renderRecentlyTraded() {
             }
           }
         }
-        if (!vet) {
-          g.seenSlugs.add(slug);
-          const side = _resolveSideForName(desc, nm, g.orgA, g.orgB);
-          if (side) {
-            g.players.push({
-              p: { player_name: nm, player_key: "" },
-              from: side === g.orgA ? g.orgB : g.orgA,
-              to:   side,
-              val:  { value: null, kind: "unresolved" },
-            });
-          }
-          continue;
-        }
-        g.seenSlugs.add(slug);
         const side = _resolveSideForName(desc, nm, g.orgA, g.orgB);
         if (!side) continue;
+        g.seenSlugs.add(slug);
+        if (!vet) {
+          g.players.push({
+            p: { player_name: nm, player_key: "" },
+            from: side === g.orgA ? g.orgB : g.orgA,
+            to:   side,
+            val:  { value: null, kind: "unresolved" },
+          });
+          continue;
+        }
         const war = vet.career_war != null ? Number(vet.career_war) : null;
         const value = war != null ? Math.round(war * _WAR_DOLLAR_VALUE * 10) / 10 : null;
         const playerKey = vet.mlbam_id
@@ -15338,101 +15464,80 @@ function renderRecentlyTraded() {
         <div class="line-chart-cell desktop-only">${pts.length >= 2 ? lazyLineChartHTML(p) : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`}</div>
       </div>
       ${(() => {
-        // v31.8 — Expanded Trade Audit card. Renders once per trade
-        // (under the first row that day belonging to that trade
-        // group). Shows per-side surplus + winner verdict + a
-        // per-player value breakdown. Hover on each chip shows the
-        // valuation method (WAR×$/WAR for debuted players, FV-derived
-        // for prospects).
+        // v31.9 — Trade Audit card. Description-keyed grouping means
+        // each unique trade gets ONE card, emitted under whichever
+        // row appears first in the filtered list. Card is now a
+        // compact single-row strip (was 2-column 2-row box) — reads
+        // as a sidebar to the trade row above, not a separate panel.
         if (acq.method !== "trade") return "";
-        const k = _tradeKey(acq);
+        const k = _descTradeKey(acq);
         if (_tradeCardEmitted.has(k)) return "";
         _tradeCardEmitted.add(k);
         const g = evalByTrade[k];
         if (!g) return "";
-        const winColor = g.verdict === "orgA" ? "var(--up)"
-                        : g.verdict === "orgB" ? "var(--up)"
-                        : "var(--text-secondary)";
-        const loseColor = "var(--down)";
-        const aTone = g.verdict === "orgA" ? winColor
-                    : g.verdict === "orgB" ? loseColor
+        const winColor = g.verdict === "balanced" ? "var(--text-secondary)" : "var(--up)";
+        const aTone = g.verdict === "orgA" ? "var(--up)"
+                    : g.verdict === "orgB" ? "var(--down)"
                     : "var(--text-secondary)";
-        const bTone = g.verdict === "orgB" ? winColor
-                    : g.verdict === "orgA" ? loseColor
+        const bTone = g.verdict === "orgB" ? "var(--up)"
+                    : g.verdict === "orgA" ? "var(--down)"
                     : "var(--text-secondary)";
         const verdictText = g.verdict === "balanced"
-          ? `<span style="color:var(--text-secondary);">Balanced trade · net delta ${(g.netDeltaA >= 0 ? '+' : '')}$${g.netDeltaA.toFixed(1)}M</span>`
-          : `<span style="color:${winColor};font-weight:700;">${escapeHtml(g.winner)} +$${Math.abs(g.netDeltaA).toFixed(1)}M surplus</span>`;
-        const sidePlayerChips = (orgCode, otherCode) => {
+          ? `<span style="color:var(--text-secondary);">Balanced trade</span>`
+          : `<span style="color:var(--up);font-weight:700;">${escapeHtml(g.winner)} +$${Math.abs(g.netDeltaA).toFixed(1)}M</span>`;
+        const _tbsFor = (pp) => (pp ? (typeof tiebreakerScore === "function" ? tiebreakerScore(pp) : null) : null);
+        const sidePlayerChips = (orgCode) => {
           const players = g.players.filter(e => e.to === orgCode);
           const chips = [];
-          if (players.length) {
-            for (const e of players) {
-              const v = e.val;
-              const valStr = v.value != null ? `$${v.value.toFixed(1)}M` : '—';
-              const kindLbl = v.kind === "war"   ? `WAR-derived (${v.war?.toFixed(1)} career WAR × $${_WAR_DOLLAR_VALUE.toFixed(0)}M/WAR)`
-                            : v.kind === "war_vet" ? `MLB vet · ${v.pos || '—'} · ${v.war?.toFixed(1)} career WAR × $${_WAR_DOLLAR_VALUE.toFixed(0)}M/WAR`
-                            : v.kind === "fv"    ? `FV ${v.fv} surplus (TBS-nudged)`
-                            : v.kind === "unresolved" ? "Untracked MLB player — career WAR not yet on file"
-                            : 'unknown valuation';
-              const vetTag = v.kind === "war_vet" ? `<span style="font-size:8px;color:var(--neon-cyan);letter-spacing:0.04em;text-transform:uppercase;font-weight:700;">MLB</span>` : "";
-              const nameMarkup = e.p.player_key
-                ? `<a href="#player=${escapeHtml(e.p.player_key)}" onclick="event.preventDefault();event.stopPropagation();goToPlayer('${escapeHtml(e.p.player_key)}');" style="color:var(--text-primary);text-decoration:none;font-weight:600;">${escapeHtml(e.p.player_name)}</a>`
-                : `<span style="color:${v.kind === 'unresolved' ? 'var(--text-tertiary)' : 'var(--text-primary)'};font-weight:600;">${escapeHtml(e.p.player_name)}</span>`;
-              chips.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:2px;background:var(--bg-tertiary);font-size:10px;margin:1px 2px 1px 0;" title="${escapeHtml(kindLbl)}">
-                ${vetTag}${nameMarkup}
-                <span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">${valStr}</span>
-              </span>`);
-            }
+          for (const e of players) {
+            const v = e.val;
+            const valStr = v.value != null ? `$${v.value.toFixed(1)}` : '—';
+            const tbsHere = (v.kind === "fv") ? _tbsFor(e.p) : null;
+            const kindLbl = v.kind === "war"     ? `Realized · ${v.war?.toFixed(1)} WAR × $${_WAR_DOLLAR_VALUE.toFixed(0)}M`
+                          : v.kind === "war_vet" ? `MLB vet · ${v.pos || '—'} · ${v.war?.toFixed(1)} WAR × $${_WAR_DOLLAR_VALUE.toFixed(0)}M`
+                          : v.kind === "fv"      ? `Projected MLB surplus · FV ${v.fv}${tbsHere != null ? ` · TBS ${tbsHere}` : ''} · 6yr cost-controlled`
+                          : v.kind === "unresolved" ? "Untracked MLB player — career WAR not on file yet"
+                          : 'unknown';
+            const vetTag = v.kind === "war_vet"
+              ? `<span style="font-size:8px;color:var(--neon-cyan);letter-spacing:0.04em;text-transform:uppercase;font-weight:700;margin-right:1px;">MLB</span>` : "";
+            const nameMarkup = e.p.player_key
+              ? `<a href="#player=${escapeHtml(e.p.player_key)}" onclick="event.preventDefault();event.stopPropagation();goToPlayer('${escapeHtml(e.p.player_key)}');" style="color:var(--text-primary);text-decoration:none;font-weight:600;">${escapeHtml(e.p.player_name)}</a>`
+              : `<span style="color:${v.kind === 'unresolved' ? 'var(--text-tertiary)' : 'var(--text-primary)'};font-weight:600;">${escapeHtml(e.p.player_name)}</span>`;
+            chips.push(`<span style="display:inline-flex;align-items:baseline;gap:3px;font-size:10px;" title="${escapeHtml(kindLbl)}">${vetTag}${nameMarkup}<span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">${valStr}M</span></span>`);
           }
-          // v31.8 — IBP / cash chips on the receiving side (parsed
-          // from the trade narrative).
           const ibp  = (orgCode === g.orgA) ? g.aIbp  : g.bIbp;
           const cash = (orgCode === g.orgA) ? g.aCash : g.bCash;
           if (ibp && ibp > 0.05) {
-            chips.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:2px;background:var(--bg-tertiary);font-size:10px;margin:1px 2px 1px 0;border:1px dashed var(--border);" title="International bonus pool space parsed from the trade narrative">
-              <span style="color:var(--neon-violet);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;font-size:9px;">IBP</span>
-              <span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">$${ibp.toFixed(2)}M</span>
-            </span>`);
+            chips.push(`<span style="display:inline-flex;align-items:baseline;gap:3px;font-size:10px;" title="International bonus pool"><span style="color:var(--neon-violet);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;font-size:9px;">IBP</span><span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">$${ibp.toFixed(2)}M</span></span>`);
           }
           if (cash && cash > 0.05) {
-            chips.push(`<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:2px;background:var(--bg-tertiary);font-size:10px;margin:1px 2px 1px 0;border:1px dashed var(--border);" title="Cash considerations parsed from the trade narrative">
-              <span style="color:var(--neon-cyan);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;font-size:9px;">CASH</span>
-              <span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">$${cash.toFixed(2)}M</span>
-            </span>`);
+            chips.push(`<span style="display:inline-flex;align-items:baseline;gap:3px;font-size:10px;" title="Cash considerations"><span style="color:var(--neon-cyan);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;font-size:9px;">CASH</span><span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:9px;">$${cash.toFixed(2)}M</span></span>`);
           }
-          if (!chips.length) return `<span style="color:var(--text-tertiary);font-size:9px;">PTBNL / no tracked players</span>`;
-          return chips.join("");
+          if (!chips.length) return `<span style="color:var(--text-tertiary);font-size:9px;">PTBNL</span>`;
+          // Comma-separated inline (not chip-bordered) — reads as a
+          // sentence rather than a chip wall.
+          return chips.join(`<span style="color:var(--text-tertiary);margin:0 4px;">,</span>`);
         };
-        // v31.8c — Compact Trade Audit card. Pulled inside the same
-        // visual rhythm as the row above (smaller padding + font, left
-        // accent stripe only, single condensed header line). Spans
-        // all 6 grid columns so it reads as a sub-row, not a separate
-        // card.
-        return `<div class="trade-audit-card is-traded" style="grid-column:1 / -1;margin:0;padding:4px 10px 5px;background:var(--bg-secondary);border-left:2px solid ${winColor};border-radius:0;font-size:11px;">
-          <div style="display:flex;align-items:center;gap:8px;font-size:9px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:700;margin-bottom:3px;">
-            <span>Trade Audit</span>
-            <span style="text-transform:none;letter-spacing:0;color:var(--text-secondary);font-weight:400;font-family:var(--font-serif);font-style:italic;font-size:10px;">${escapeHtml(g.orgA)} ↔ ${escapeHtml(g.orgB)}</span>
-            <span style="margin-left:auto;text-transform:none;letter-spacing:0;font-family:var(--font-mono);font-weight:700;font-size:10px;">${verdictText}</span>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:11px;">
-            <div>
-              <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px;">
-                <span style="font-family:var(--font-serif);font-size:12px;font-weight:700;color:${aTone};">${escapeHtml(g.orgA)}</span>
-                <span style="color:var(--text-tertiary);font-size:9px;letter-spacing:0.04em;">RCV</span>
-                <span style="margin-left:auto;font-family:var(--font-mono);font-weight:700;font-size:10px;color:${aTone};">$${g.aReceived.toFixed(1)}M</span>
-              </div>
-              <div style="line-height:1.5;">${sidePlayerChips(g.orgA, g.orgB)}</div>
-            </div>
-            <div>
-              <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:2px;">
-                <span style="font-family:var(--font-serif);font-size:12px;font-weight:700;color:${bTone};">${escapeHtml(g.orgB)}</span>
-                <span style="color:var(--text-tertiary);font-size:9px;letter-spacing:0.04em;">RCV</span>
-                <span style="margin-left:auto;font-family:var(--font-mono);font-weight:700;font-size:10px;color:${bTone};">$${g.bReceived.toFixed(1)}M</span>
-              </div>
-              <div style="line-height:1.5;">${sidePlayerChips(g.orgB, g.orgA)}</div>
-            </div>
-          </div>
+        if (!g.orgA || !g.orgB) return "";  // unparseable narrative
+        // Single-row strip: ORG_A receives "[chips]" → $X.XM ↔ ORG_B
+        // receives "[chips]" → $Y.YM | Verdict
+        return `<div class="trade-audit-card is-traded" style="grid-column:1 / -1;margin:0;padding:5px 12px;background:var(--bg-secondary);border-left:2px solid ${winColor};border-radius:0;font-size:10px;display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;line-height:1.5;">
+          <span style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;font-weight:700;flex-shrink:0;">Trade Audit</span>
+          <span style="display:inline-flex;align-items:baseline;gap:5px;flex:1;min-width:0;">
+            <span style="font-family:var(--font-serif);font-size:11px;font-weight:700;color:${aTone};">${escapeHtml(g.orgA)}</span>
+            <span style="color:var(--text-tertiary);font-size:9px;">←</span>
+            <span style="flex:1;min-width:0;">${sidePlayerChips(g.orgA)}</span>
+            <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;color:${aTone};white-space:nowrap;">$${g.aReceived.toFixed(1)}M</span>
+          </span>
+          <span style="color:var(--text-tertiary);">·</span>
+          <span style="display:inline-flex;align-items:baseline;gap:5px;flex:1;min-width:0;">
+            <span style="font-family:var(--font-serif);font-size:11px;font-weight:700;color:${bTone};">${escapeHtml(g.orgB)}</span>
+            <span style="color:var(--text-tertiary);font-size:9px;">←</span>
+            <span style="flex:1;min-width:0;">${sidePlayerChips(g.orgB)}</span>
+            <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;color:${bTone};white-space:nowrap;">$${g.bReceived.toFixed(1)}M</span>
+          </span>
+          <span style="color:var(--text-tertiary);">·</span>
+          <span style="font-family:var(--font-mono);font-weight:700;font-size:10px;white-space:nowrap;">${verdictText}</span>
         </div>`;
       })()}
     `;
@@ -35003,23 +35108,9 @@ function attachHandlers() {
     renderOverseas();
   });
   wireThemeToggle();
-  // Density toggle chips — body class + localStorage so the choice
-  // survives across sessions and reloads. URL also persists via
-  // syncToURL/syncFromURL above.
-  document.querySelectorAll("[data-density]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const prev = state.density || "compact";
-      const next = btn.dataset.density;
-      document.body.classList.remove(`density-${prev}`);
-      state.density = next;
-      document.body.classList.add(`density-${state.density}`);
-      try { localStorage.setItem("prospect-tracker.density", next); } catch {}
-      document.querySelectorAll("[data-density]").forEach(b =>
-        b.classList.toggle("active", b.dataset.density === next));
-      render();
-      syncToURL();
-    });
-  });
+  // v31.9 — Density toggle removed entirely; compact is the only
+  // mode. The body class is force-set in render() so no handler is
+  // needed here.
   // Level filter chips (main list + URL state).
   document.querySelectorAll("[data-filter-level]").forEach(btn => {
     btn.addEventListener("click", () => {

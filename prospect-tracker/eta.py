@@ -452,8 +452,38 @@ def estimate_eta(
         half_season_adj = 0.0
 
     # ── Combine and clamp ──────────────────────────────────────────────────
-    total = (base + perf_adj + age_adj + fv_adj + statcast_plus_adj
-             + health_adj + half_season_adj)
+    # v31.9 — Per-level FLOOR on the cumulative pull-in. Without this,
+    # an elite young-for-level prospect at AA (e.g. Jesus Made — 19yo,
+    # AA, ~60 FV) gets age_adj −0.75 + fv_adj −0.50 + perf_adj −0.75
+    # which collapses base 2.0 → 0.0 and the model says "Early 2026"
+    # even though no 19yo in AA realistically debuts within months.
+    # Floor caps the negative pull at 50% of the level's base years
+    # for A/A+/AA and 25% for AAA (where short ETAs are believable).
+    # The floor never INCREASES the projection beyond what the model
+    # would otherwise produce — only prevents over-compression.
+    _LEVEL_PULL_FLOOR_FRAC = {
+        "AAA": 0.25,   # AAA prospects can debut very quickly
+        "AA":  0.50,
+        "A+":  0.55,
+        "A":   0.60,
+        "CPX": 0.65,
+        "DSL": 0.65,
+    }
+    _pull_frac = _LEVEL_PULL_FLOOR_FRAC.get(current_level or "")
+    raw_total = (base + perf_adj + age_adj + fv_adj + statcast_plus_adj
+                 + health_adj + half_season_adj)
+    if _pull_frac is not None and base is not None:
+        # Floor applies to the level-base + prospect-quality cluster
+        # (perf/age/fv/statcast). Health + half-season adjustments
+        # apply on top — they're separate timing signals (current IL,
+        # in-season elapsed) that should still shift ETA regardless
+        # of the prospect's quality ceiling.
+        floor = base * _pull_frac
+        capped_quality = max(floor,
+                              base + perf_adj + age_adj + fv_adj + statcast_plus_adj)
+        total = capped_quality + health_adj + half_season_adj
+    else:
+        total = raw_total
     total = max(0.0, total)                 # can't arrive in the past
     eta_year = today_year + round(total)
 
