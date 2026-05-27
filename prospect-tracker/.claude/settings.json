@@ -24,7 +24,8 @@
       "Bash(grep -n \"Could not load\\\\\\\\|state-message.*error\\\\\\\\|innerHTML.*[Ee]rror\" c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/index.html)",
       "Bash(grep -n \"\\\\\\\\.chip:focus\\\\\\\\|\\\\\\\\.chip {\" c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/index.html)",
       "Bash(grep -n \"@media \\(max-width: 600\\\\\\\\|@media \\(max-width: 700\\\\\\\\|@media \\(max-width: 800\" c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/index.html)",
-      "Bash(python -m pytest test_index_html_loads.py test_design_tokens.py test_eta.py test_storage_export.py --tb=short)"
+      "Bash(python -m pytest test_index_html_loads.py test_design_tokens.py test_eta.py test_storage_export.py --tb=short)",
+      "Bash(node -e ' *)"
     ]
   }
 }

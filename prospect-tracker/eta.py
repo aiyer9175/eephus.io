@@ -313,10 +313,17 @@ def estimate_eta(
     # take longer if they make it at all (positive adj = later ETA).
     #
     # `diff = age - level_median`; positive = old for level.
+    # v31.11 — Extra-young tier added (≤-4yr from level mean). The
+    # 19-yo-at-AA case (Jesus Made) sits at diff = -4 and was hitting
+    # the old -0.75 ceiling alongside the more common 3-yr-young
+    # prospects. The new -1.00 tier lets truly precocious prospects
+    # outrun the merely-young cohort by one extra adjustment notch.
     if age is not None and current_level in age_norm:
         expected = age_norm[current_level]
         diff = age - expected
-        if diff <= -3.0:
+        if diff <= -4.0:
+            age_adj = -1.00   # 4+ years young-for-level: aggressive fast-track
+        elif diff <= -3.0:
             age_adj = -0.75   # 3+ years young-for-level: elite fast-track
         elif diff <= -2.0:
             age_adj = -0.50
@@ -461,15 +468,23 @@ def estimate_eta(
     # years for A/A+/AA (where short ETAs by FV/perf alone are risky)
     # and only 25% for AAA (where short ETAs are believable).
     #
-    # v31.10 — AGE-AWARE floor. The 50% AA floor still let a 19yo
-    # ~60 FV prospect compress to 1.0y → mid-2027, but the user wants
-    # 19yo-at-AA to project ≥ 1.5y (Late 2027 territory). When the
-    # age_adj signal indicates the prospect is meaningfully YOUNG for
-    # level (age_adj ≤ -0.50, i.e. 2+ years young), use the YOUNG floor
-    # table — AA scales 0.50 → 0.75, A+ scales 0.55 → 0.80, A scales
-    # 0.60 → 0.80. AAA stays at 0.25 even for young prospects (a 21yo
-    # at AAA SHOULD debut quickly). Older-for-level prospects use the
-    # standard floor unchanged.
+    # v31.11 — Rebalanced YOUNG-floor table. The 0.75-AA young-floor
+    # introduced in v31.10 was too conservative — Jesus Made (19yo
+    # AA, .920 OPS, 60 FV) was forecast for 2028 Early, but he's a
+    # realistic 2027 callup given the quality signals stacking. The
+    # new YOUNG floors (AA 0.55, A+ 0.65, A 0.70) let the quality
+    # cluster compress base to ~1.1y for that profile — round →
+    # 2027 Late, which matches the user-anchored expectation.
+    #
+    # v31.11 — also adds an ORG-AGGRESSIVENESS multiplier. The
+    # `org_promotion_tendency.aggressiveness_index` field (computed in
+    # storage.py against the league-median promotion volume) scales
+    # the floor: top-quintile aggressive orgs (LAD/TBR-types) get
+    # floor × 0.90 — they call prospects up sooner given equal
+    # quality. Bottom-quintile conservative orgs get floor × 1.10.
+    # League-median orgs get 1.00 (no change). Missing tendency data
+    # → 1.00 (neutral fallback).
+    #
     # The floor never INCREASES the projection beyond what the model
     # would otherwise produce — only prevents over-compression.
     _LEVEL_PULL_FLOOR_FRAC = {
@@ -482,11 +497,11 @@ def estimate_eta(
     }
     _LEVEL_PULL_FLOOR_FRAC_YOUNG = {
         "AAA": 0.25,   # 21yo at AAA: keep the existing fast-track room
-        "AA":  0.75,   # 19-20yo at AA: hold to ≥ 1.5y of AA base (2.0)
-        "A+":  0.80,
-        "A":   0.80,
-        "CPX": 0.80,
-        "DSL": 0.80,
+        "AA":  0.55,   # 19-20yo at AA: ~1.1y minimum given quality stack
+        "A+":  0.65,
+        "A":   0.70,
+        "CPX": 0.75,
+        "DSL": 0.75,
     }
     _is_very_young_for_level = age_adj <= -0.50
     _pull_frac = (
@@ -494,6 +509,23 @@ def estimate_eta(
         if _is_very_young_for_level
         else _LEVEL_PULL_FLOOR_FRAC.get(current_level or "")
     )
+    # Org-aggressiveness floor multiplier.
+    _org_floor_mult = 1.0
+    if org_promotion_tendency:
+        _aggr = org_promotion_tendency.get("aggressiveness_index")
+        try:
+            _aggr_v = float(_aggr) if _aggr is not None else None
+        except (TypeError, ValueError):
+            _aggr_v = None
+        if _aggr_v is not None:
+            if _aggr_v >= 1.30:
+                _org_floor_mult = 0.90
+            elif _aggr_v >= 1.10:
+                _org_floor_mult = 0.95
+            elif _aggr_v <= 0.70:
+                _org_floor_mult = 1.10
+            elif _aggr_v <= 0.90:
+                _org_floor_mult = 1.05
     raw_total = (base + perf_adj + age_adj + fv_adj + statcast_plus_adj
                  + health_adj + half_season_adj)
     if _pull_frac is not None and base is not None:
@@ -502,7 +534,7 @@ def estimate_eta(
         # apply on top — they're separate timing signals (current IL,
         # in-season elapsed) that should still shift ETA regardless
         # of the prospect's quality ceiling.
-        floor = base * _pull_frac
+        floor = base * _pull_frac * _org_floor_mult
         capped_quality = max(floor,
                               base + perf_adj + age_adj + fv_adj + statcast_plus_adj)
         total = capped_quality + health_adj + half_season_adj

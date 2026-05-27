@@ -5112,6 +5112,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 else:
                     org_h1[org] = org_h1.get(org, 0) + 1
         out: dict[str, dict] = {}
+        per_org_n: dict[str, int] = {}
         for org in set(list(org_h1) + list(org_h2)):
             h1 = org_h1.get(org, 0)
             h2 = org_h2.get(org, 0)
@@ -5120,11 +5121,29 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # Too few events to anchor a rate; skip — the player's
                 # ETA falls back to the league-default half-season adj.
                 continue
+            per_org_n[org] = n
             out[org] = {
                 "h1_rate":   round(h1 / n, 3),
                 "h2_rate":   round(h2 / n, 3),
                 "sample_n":  n,
             }
+        # v31.11 — Org promotion aggressiveness. Index is the org's
+        # rolling-3yr promotion+debut count divided by the league
+        # median count over that same window. >1.0 = more aggressive
+        # promoter than the median org (LAD/TBR profile), <1.0 = more
+        # conservative (PIT/CIN profile). Consumed by eta.py as a
+        # floor multiplier — aggressive orgs let quality cluster
+        # compress further; conservative orgs hold the line.
+        if per_org_n:
+            sorted_n = sorted(per_org_n.values())
+            mid = len(sorted_n) // 2
+            if len(sorted_n) % 2 == 1:
+                median_n = sorted_n[mid]
+            else:
+                median_n = (sorted_n[mid - 1] + sorted_n[mid]) / 2
+            if median_n > 0:
+                for org, n in per_org_n.items():
+                    out[org]["aggressiveness_index"] = round(n / median_n, 3)
         return out
 
     org_promotion_tendencies = _compute_org_promotion_tendencies()
