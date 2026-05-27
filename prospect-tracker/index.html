@@ -7131,9 +7131,9 @@
     <button class="section-tab" data-section="traded">Transactions</button>
     <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL">Injured List</button>
     <button class="section-tab" data-section="debuts">Debuted</button>
+    <button class="section-tab" data-section="leaderboards">Leaderboards</button>
     <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">MLB Draft</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
-    <button class="section-tab" data-section="leaderboards">Leaderboards</button>
     <button class="section-tab" data-section="glossary" title="Stats, indices, scouting concepts, and methodology — every term used on the site">Glossary</button>
     <button class="section-tab" data-section="watchlist" title="Your starred prospects and farm systems — private to this browser">Watchlist<span class="section-tab-count" id="watchlist-tab-count"></span></button>
     <button class="compare-toggle is-empty-hidden" id="compare-toggle" type="button" aria-label="Open compare panel" title="Open compare panel (c)">
@@ -15960,7 +15960,7 @@ function estimateRealizedSurplusValueMM(g) {
   for (let i = 0; i < years.length; i++) {
     const year = years[i];
     const war = Number(seasons[year]) || 0;
-    const marketValue = Math.max(0, war) * DOLLARS_PER_WAR_MM;
+    const marketValue = Math.max(0, war) * dollarsPerWar(war);
     let salary;
     // Actual Spotrac salary when available — the team's yearly page
     // covers the active contract window (current year + remaining
@@ -15973,10 +15973,10 @@ function estimateRealizedSurplusValueMM(g) {
       salary = LEAGUE_MIN_SALARY_MM;
     } else if (i < 6) {
       const priorWar = Number(seasons[years[i - 1]]) || 0;
-      const arbBase = Math.max(0, priorWar) * DOLLARS_PER_WAR_MM;
+      const arbBase = Math.max(0, priorWar) * dollarsPerWar(priorWar);
       salary = Math.max(LEAGUE_MIN_SALARY_MM, arbBase * ARB_FRACTIONS[i - 3]);
     } else {
-      const faEquivalent = Math.max(0, war) * DOLLARS_PER_WAR_MM;
+      const faEquivalent = Math.max(0, war) * dollarsPerWar(war);
       salary = Math.max(LEAGUE_MIN_SALARY_MM, faEquivalent);
     }
     totalValue += marketValue;
@@ -29868,14 +29868,14 @@ function renderPlayerDetail(key) {
     if (fv != null) {
       const expectedWar = fvExpectedWarPerYr(fv, _isPit);
       if (expectedWar != null) {
-        const expectedAav = Math.round(expectedWar * DOLLARS_PER_WAR_MM * 10) / 10;
+        const expectedAav = Math.round(expectedWar * dollarsPerWar(expectedWar) * 10) / 10;
         const eaColor = expectedAav >= 30 ? "var(--up)"
                        : expectedAav >= 10 ? "var(--neon-cyan)"
                        : "var(--text-primary)";
         expectedAavRow = `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
            <div>
              <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Expected market AAV</div>
-             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">FV ${fvCeil(fv)} → ${expectedWar.toFixed(2)} WAR/yr × $${DOLLARS_PER_WAR_MM}M</div>
+             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">FV ${fvCeil(fv)} → ${expectedWar.toFixed(2)} WAR/yr × $${dollarsPerWar(expectedWar).toFixed(1)}M</div>
            </div>
            <div style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:${eaColor};font-variant-numeric:tabular-nums;" title="If the player hits their FV projection, this is what a comparable free agent would command per year at the prevailing $/WAR rate.">${fmtUsd(expectedAav)}/yr</div>
          </div>`;
@@ -29902,7 +29902,8 @@ function renderPlayerDetail(key) {
         const salaryNote = actualSeasons > 0
           ? `${actualSeasons} season${actualSeasons === 1 ? "" : "s"} use Spotrac's actual contract salary; remaining seasons use the league-min + arb-fraction model (pre-arb at MLB minimum, arb years at 30/55/80% of FA-equivalent, FA years at fair market)`
           : `League-min + arb-fraction model: pre-arb at MLB minimum, arb years scaled to 30/55/80% of FA-equivalent, FA years at fair market`;
-        const rTip = `Career WAR ${realized.total_war.toFixed(1)} × $${DOLLARS_PER_WAR_MM}M/WAR = ${fmtUsd(realized.total_value)} market value. Subtract salary paid ($${realized.total_salary.toFixed(1)}M — ${salaryNote}). Result = realized surplus value over ${realized.season_count} MLB season${realized.season_count === 1 ? "" : "s"}.`;
+        const effRate = realized.total_war > 0 ? realized.total_value / realized.total_war : dollarsPerWar(0);
+        const rTip = `Career WAR ${realized.total_war.toFixed(1)} × $${effRate.toFixed(1)}M/WAR (tier-blended) = ${fmtUsd(realized.total_value)} market value. Subtract salary paid ($${realized.total_salary.toFixed(1)}M — ${salaryNote}). Result = realized surplus value over ${realized.season_count} MLB season${realized.season_count === 1 ? "" : "s"}.`;
         realizedRow = `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;" title="${escapeHtml(rTip)}">
            <div>
              <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Realized surplus (WAR)</div>
@@ -29944,9 +29945,9 @@ function renderPlayerDetail(key) {
         aavRow = `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
            <div>
              <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Realized market AAV</div>
-             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${warRate.war_per_yr.toFixed(2)} WAR/yr × $${DOLLARS_PER_WAR_MM}M · ${warRate.war_seasons_count} season${warRate.war_seasons_count === 1 ? "" : "s"}</div>
+             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${warRate.war_per_yr.toFixed(2)} WAR/yr × $${dollarsPerWar(warRate.war_per_yr).toFixed(1)}M · ${warRate.war_seasons_count} season${warRate.war_seasons_count === 1 ? "" : "s"}</div>
            </div>
-           <div style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:${aavColor};font-variant-numeric:tabular-nums;" title="Market-equivalent Average Annual Value. Multiplies the debuted player's playing-time-weighted WAR/yr by the prevailing $/WAR market rate (~$${DOLLARS_PER_WAR_MM}M, the recent free-agent winter average). What a comparable free agent would command per year on the open market.">${fmtUsd(aav)}/yr</div>
+           <div style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:${aavColor};font-variant-numeric:tabular-nums;" title="Market-equivalent Average Annual Value. Multiplies the debuted player's playing-time-weighted WAR/yr by the prevailing $/WAR market rate (~$${dollarsPerWar(warRate.war_per_yr).toFixed(1)}M for this production tier, from the recent free-agent winters). What a comparable free agent would command per year on the open market.">${fmtUsd(aav)}/yr</div>
          </div>`;
       }
     }
