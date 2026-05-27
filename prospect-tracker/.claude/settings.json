@@ -36,7 +36,17 @@
       "Bash(git restore *)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "WebFetch(domain:blogs.fangraphs.com)",
+      "Bash(python value_framework.py --print-table)",
+      "Bash(python tools/calibrate_position_mults.py)",
+      "Bash(python -m pytest test_value_framework.py -x --tb=short)",
+      "Bash(python value_framework.py --emit-snapshots)",
+      "Bash(python -c \"import storage; import mlb_trade_lookup; print\\('imports OK'\\)\")",
+      "Bash(python -m pytest test_value_framework.py test_metrics_audit.py test_farm_tree.py -x --tb=short)",
+      "Bash(python -m pytest --tb=short -q)",
+      "Bash(python -m pytest test_index_html_loads.py test_no_hardcoded_colors.py test_design_tokens.py -x --tb=short)",
+      "Bash(python -m pytest test_value_framework_integration.py -x --tb=short)"
     ]
   }
 }

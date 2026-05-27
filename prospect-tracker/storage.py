@@ -4207,12 +4207,17 @@ def _attach_sub_leaves(entry: dict) -> None:
 def _compute_draft_pool_efficiency(gagg: dict,
                                    draft_pools: dict | None,
                                    org_code: str) -> dict:
-    """Per-org WAR-per-$M-draft-pool over a 3-year rolling window.
+    """Per-org draft-pool efficiency over a 3-year rolling window.
 
-    Numerator: sum of grad career WAR for grads drafted in years
-    (T-5)…(T-2) — gives at least 3 development years before counting WAR.
-    Denominator: sum of draft-pool spend across the same years.
-    Gates at ≥3 contributing grads."""
+    Two signals on the same denominator (pool $ spent in T-5..T-2):
+      * war_per_m_pool — sum of grad career WAR / pool $M. Lagging
+        but realized: WAR only accrues after the prospect debuts.
+      * fv_per_m_pool  — sum of CURRENT FV across drafted-actives /
+        pool $M. v32.0 fast-cycle companion: doesn't wait for WAR
+        maturation, so the signal is responsive within ~2yr of draft.
+
+    Gates: war_per_m_pool requires ≥3 grads; fv_per_m_pool requires
+    pool_total > 0 (active count gating happens upstream)."""
     draft_pools = draft_pools or {}
     grads = gagg.get("_draft_pool_grads") or []
     today_year = date.today().year
@@ -4221,23 +4226,31 @@ def _compute_draft_pool_efficiency(gagg: dict,
 
     relevant = [g for g in grads
                 if start_year <= g["draft_year"] <= end_year]
-    if len(relevant) < 3:
-        return {"war_per_m_pool": None, "grad_count": len(relevant),
-                "war_total": 0.0, "pool_total_usd": 0}
-    war_total = sum(g["career_war"] for g in relevant)
+    war_total = sum(g["career_war"] for g in relevant) if relevant else 0.0
     pool_total = 0
     for y in range(start_year, end_year + 1):
         pools_y = (draft_pools.get(y) or {}).get("team_pools") or {}
         pool_total += int(pools_y.get(org_code) or 0)
-    if pool_total <= 0:
-        return {"war_per_m_pool": None, "grad_count": len(relevant),
-                "war_total": round(war_total, 2), "pool_total_usd": 0}
-    war_per_m = round(war_total / (pool_total / 1_000_000.0), 3)
+    # FV-side (v32.0) — active prospects' current FV, accumulated in
+    # the main per-prospect loop (see _draft_pool_active_fv_total).
+    fv_total_active = float(gagg.get("_draft_pool_active_fv_total") or 0.0)
+
+    war_per_m = None
+    fv_per_m  = None
+    if pool_total > 0:
+        pool_total_mm = pool_total / 1_000_000.0
+        if len(relevant) >= 3:
+            war_per_m = round(war_total / pool_total_mm, 3)
+        if fv_total_active > 0:
+            fv_per_m = round(fv_total_active / pool_total_mm, 3)
+
     return {
-        "war_per_m_pool": war_per_m,
-        "grad_count":     len(relevant),
-        "war_total":      round(war_total, 2),
-        "pool_total_usd": pool_total,
+        "war_per_m_pool":   war_per_m,
+        "fv_per_m_pool":    fv_per_m,
+        "grad_count":       len(relevant),
+        "war_total":        round(war_total, 2),
+        "fv_total_active":  round(fv_total_active, 1),
+        "pool_total_usd":   pool_total,
     }
 
 
@@ -4292,59 +4305,23 @@ def _compute_ifa_roi(gagg: dict, ifa_org_spending: dict) -> dict:
     }
 
 
-# v18 — FV-implied 6yr surplus value table ($M). Mirrors the frontend
-# SURPLUS_VALUE_MM at index.html:10100 so backend and UI agree on the
-# per-FV cost-controlled surplus estimate. Anchored to the FanGraphs /
-# Craig Edwards 2019 framework (hitters carry more than pitchers at
-# equal FV because pitchers face higher injury / role-conversion risk).
-_SURPLUS_VALUE_MM_HITTER  = {80: 200, 75: 130, 70: 80, 65: 50, 60: 35,
-                             55: 20,  50: 10,  45: 5,  40: 2,  35: 1}
-_SURPLUS_VALUE_MM_PITCHER = {80: 100, 75: 80,  70: 55, 65: 35, 60: 25,
-                             55: 12,  50: 7,   45: 4,  40: 1.5, 35: 1}
-
-# Position multipliers — up-the-middle defenders carry a premium, bat-
-# only positions / fungible relievers carry a discount. Mirrors
-# SURPLUS_POSITION_MULT at index.html:10112.
-_SURPLUS_POSITION_MULT = {
-    "C":    1.05, "SS":   1.10, "2B":   1.00, "3B":   0.95,
-    "1B":   0.90, "CF":   1.05, "LF":   0.95, "RF":   0.95,
-    "OF":   0.97, "DH":   0.85,
-    "SP":   1.00, "RHP":  1.00, "LHP":  1.00,
-    "RP":   0.70, "MIRP": 0.85, "SIRP": 0.75,
-}
+# v32.0 — Surplus value now comes from value_framework, a single source
+# of truth anchored to the 2026 FanGraphs scouting primer (FV->WAR ranges)
+# and the 2026 $/WAR FA-market article (non-linear 3-tier model, rolling
+# 3yr avg). Formula is now transparent: WAR_peak * 6 * ramp * p_success
+# * $/WAR_tier minus cost basis, all factors auditable in
+# value_framework.py. Position multipliers ALSO live there (resolving
+# a prior backend/frontend divergence bug where the two had different
+# values for SS / CF / RP etc).
+from value_framework import (
+    surplus_value_mm as _estimate_surplus_mm,
+    position_multiplier as _surplus_position_mult,
+    is_pitcher_position as _vf_is_pitcher_position,
+    dollars_per_war_flat as _dollars_per_war_flat,
+    dollars_per_war as _dollars_per_war,
+)
 
 _PITCHER_POS_RE = re.compile(r"^(RHP|LHP|SP|RP|MIRP|SIRP|P)")
-
-
-def _estimate_surplus_mm(fv: float | None, is_pitcher: bool,
-                          position: str | None = None) -> float | None:
-    """FV → estimated 6yr cost-controlled surplus value in $M.
-
-    Linear-interpolated between the 5-grade anchors above; clamped to
-    $0.5M below FV 35, capped at the elite-tier value above FV 80.
-    Multiplied by the position-scarcity factor (1.0 default).
-    """
-    if fv is None:
-        return None
-    try:
-        fv_f = float(fv)
-    except (TypeError, ValueError):
-        return None
-    table = _SURPLUS_VALUE_MM_PITCHER if is_pitcher else _SURPLUS_VALUE_MM_HITTER
-    if fv_f >= 80:
-        base = table[80]
-    elif fv_f <= 35:
-        base = 0.5
-    else:
-        lo = int(fv_f // 5) * 5
-        hi = lo + 5
-        t = (fv_f - lo) / 5.0
-        base = table[lo] * (1 - t) + table[hi] * t
-    mult = 1.0
-    if position:
-        primary = str(position).split("/")[0].strip().upper()
-        mult = _SURPLUS_POSITION_MULT.get(primary, 1.0)
-    return round(base * mult, 1)
 
 
 def _finalize_active_surplus_leaf(m: dict) -> dict:
@@ -4365,6 +4342,7 @@ def _finalize_active_surplus_leaf(m: dict) -> dict:
     n = m.get("_active_surplus_count") or 0
     total_surplus = m.get("_active_surplus_net_mm") or 0.0
     cost_basis = m.get("_active_surplus_cost_mm") or 0.0
+    fv_total = m.get("_active_surplus_fv_total") or 0.0
     # v31.5 — Per-side stats. Each side gates at ≥3 contributing
     # prospects (looser than the parent's ≥5 since splitting a small
     # cohort 50/50 makes ≥5 unrealistic on one side).
@@ -4374,6 +4352,10 @@ def _finalize_active_surplus_leaf(m: dict) -> dict:
     surplus_pit = m.get("_active_surplus_net_mm_pit") or 0.0
     per_prospect_hit = round(surplus_hit / n_hit, 2) if n_hit >= 3 else None
     per_prospect_pit = round(surplus_pit / n_pit, 2) if n_pit >= 3 else None
+    # v32.0 — $ surplus per FV-point. Higher = star/premium-position
+    # loaded; lower = depth-heavy. Gated at ≥5 prospects AND fv_total>0.
+    surplus_per_fv_pt = (round(total_surplus / fv_total, 3)
+                         if n >= 5 and fv_total > 0 else None)
     if n < 5:
         return {
             "surplus_total_mm":        None,
@@ -4384,6 +4366,8 @@ def _finalize_active_surplus_leaf(m: dict) -> dict:
             "per_prospect_pit_mm":     per_prospect_pit,
             "active_count_hit":        n_hit,
             "active_count_pit":        n_pit,
+            "surplus_per_fv_pt_mm":    None,
+            "fv_total":                round(fv_total, 1) if fv_total else None,
         }
     return {
         "surplus_total_mm":        round(total_surplus, 1),
@@ -4394,6 +4378,8 @@ def _finalize_active_surplus_leaf(m: dict) -> dict:
         "per_prospect_pit_mm":     per_prospect_pit,
         "active_count_hit":        n_hit,
         "active_count_pit":        n_pit,
+        "surplus_per_fv_pt_mm":    surplus_per_fv_pt,
+        "fv_total":                round(fv_total, 1),
     }
 
 
@@ -7141,6 +7127,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "_active_surplus_count_hit":   0,
                 "_active_surplus_net_mm_pit":  0.0,
                 "_active_surplus_count_pit":   0,
+                # v32.0 — FV-points-spent accumulator. Sums fv_raw across
+                # the same set of prospects contributing to surplus_net_mm,
+                # enabling the surplus_per_fv_pt_mm efficiency metric
+                # (how much $ surplus this org is generating per FV point
+                # of active prospect capital). High = star-loaded /
+                # premium-position; low = depth-heavy but flat.
+                "_active_surplus_fv_total":  0.0,
                 # v29 — Statcast+ + indicator-count accumulators feeding
                 # the new `statcast_quality` farm-grade leaf. _sc_plus
                 # collects every active prospect's SC+ when tracked;
@@ -7267,6 +7260,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             m["_active_surplus_net_mm"]  += _net_mm
             m["_active_surplus_cost_mm"] += _bonus_mm
             m["_active_surplus_count"]   += 1
+            # v32.0 — Track FV-pts contributing to surplus_net so
+            # surplus_per_fv_pt_mm can be computed in finalize.
+            if fv_raw is not None:
+                m["_active_surplus_fv_total"] += float(fv_raw)
             # v31.5 — Per-side split.
             if is_pitcher_p:
                 m["_active_surplus_net_mm_pit"] += _net_mm
@@ -7288,6 +7285,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     and fv_raw is not None
                     and fv_raw >= 60.0):
                 m["_draft_ceiling_hits"] = m.get("_draft_ceiling_hits", 0) + 1
+            # v32.0 — Track FV-pts produced by active drafted prospects
+            # in the same 3yr (T-5..T-2) window the war_per_m_pool leaf
+            # uses for grads. This feeds the new fv_per_m_pool metric,
+            # which gives a fast-cycle (no 5yr WAR maturation needed)
+            # signal of draft-spending efficiency.
+            if (draft_yr is not None
+                    and today_yr - 5 <= int(draft_yr) <= today_yr - 2
+                    and fv_raw is not None):
+                m.setdefault("_draft_pool_active_fv_total", 0.0)
+                m["_draft_pool_active_fv_total"] += float(fv_raw)
         # Health profile (reuse the same helper the per-prospect path uses).
         rs_player = (roster_status or {}).get(p.player_key) or {}
         hp = _derive_health_profile(rs_player.get("injury_history") or [])
@@ -8701,14 +8708,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     # v31.8 — Per-trade SURPLUS evaluator. Parallel to the existing
     # WAR delta computation. For each trade event:
-    #   * If the player is debuted → value = career_war × $8M/WAR
-    #     (matches the FA market WAR price)
+    #   * If the player is debuted → value = career_war × $/WAR_overall
+    #     (the FA market WAR price; overall rate, not tier, since
+    #     career WAR aggregates multi-season output at varying tiers)
     #   * Else (still a prospect) → value = _estimate_surplus_mm(
     #     fv_at_trade, is_pitcher, position) — same FV-anchored
-    #     surplus estimator the active_surplus leaf uses
+    #     surplus estimator the active_surplus leaf uses, now sourced
+    #     from value_framework with the 2026-anchored non-linear tiers.
     # Recency-weighted same as war_delta. Drives the new
     # surplus_delta sub-input on the Trade Acumen leaf.
-    _WAR_DOLLAR_VALUE_M = 8.0
+    _WAR_DOLLAR_VALUE_M = _dollars_per_war_flat()
     # Build a small lookup of player_key → position so we can
     # estimate surplus when career WAR isn't on file.
     _player_pos_by_key: dict[str, tuple[bool, str | None]] = {}
@@ -8721,7 +8730,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     def _trade_player_value(pkey: str, fv: float | None) -> float | None:
         """Surplus $M value of one player in one trade. Debuted players
-        use realized WAR × $8M/WAR; prospects use FV-anchored surplus."""
+        use realized WAR × $/WAR_overall (rolling 3yr avg $11.74M);
+        prospects use FV-anchored surplus (value_framework)."""
         cw = ((career_war or {}).get(pkey) or {}).get("career_war")
         if cw is not None and float(cw) > 0:
             return round(float(cw) * _WAR_DOLLAR_VALUE_M, 2)

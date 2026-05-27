@@ -194,9 +194,11 @@ def _resolve_one(name: str) -> dict | None:
 
     v31.9c — Also fetches age + current contract (AAV + years remaining)
     and computes a contract-based surplus = projected_remaining_WAR ×
-    $8M − sum(remaining_AAV). This trumps the naive career_war × $8M
-    valuation in the frontend trade audit when contract data is on
-    file (more accurate for evaluating future value being acquired).
+    $/WAR_tier(avg_per_yr) − sum(remaining_AAV). This trumps the naive
+    career_war × overall-rate valuation in the frontend trade audit
+    when contract data is on file (more accurate for evaluating future
+    value being acquired). The $/WAR tier comes from value_framework,
+    which uses the rolling 3yr (2024-2026) non-linear 3-tier model.
     """
     try:
         mlbam_id = _search_mlbam_vet(name)
@@ -302,14 +304,17 @@ def _compute_surplus(career_war: float | None, war_seasons: int | None,
     0 (negative-projection veterans contribute 0 future WAR for
     valuation purposes — surplus calc still subtracts their AAV).
 
-    Surplus formula: (proj_remaining_WAR × $8M) − (aav × years_rem),
-    expressed in $M. Positive = team gets MORE WAR than they pay
-    for; negative = overpaying (e.g. expensive declining vet).
+    Surplus formula: (proj_remaining_WAR × $/WAR_tier) − (aav × years_rem),
+    expressed in $M. The $/WAR rate is dispatched off the AVERAGE per-year
+    projected WAR via the non-linear tier model in value_framework
+    (rolling 3yr 2024-2026 averages): <1 WAR -> ~$7M, 1-2 -> ~$8.8M,
+    2+ -> ~$13.6M. This properly prices declining vets at the fringe
+    tier and stars at the premium tier rather than a flat $8M.
 
     Returns (proj_war_remaining, surplus_mm) or (None, None) when
     insufficient inputs (no career WAR or no contract data).
     """
-    _WAR_DOLLAR_MM = 8.0
+    from value_framework import dollars_per_war
     if career_war is None or war_seasons is None or war_seasons <= 0:
         return (None, None)
     if aav_usd is None or years_remaining is None or years_remaining <= 0:
@@ -325,7 +330,11 @@ def _compute_surplus(career_war: float | None, war_seasons: int | None,
         season_war = max(0.0, rate - decline)
         proj_war += season_war
     aav_mm = aav_usd / 1_000_000.0
-    surplus_mm = (proj_war * _WAR_DOLLAR_MM) - (aav_mm * years_remaining)
+    # Tier the $/WAR rate off the AVG per-year projection -- a 1.5 WAR/yr
+    # vet sits in the 1-2 tier, a 0.5 WAR/yr declining vet sits at fringe.
+    avg_per_year = proj_war / years_remaining
+    war_dollar_mm = dollars_per_war(avg_per_year)
+    surplus_mm = (proj_war * war_dollar_mm) - (aav_mm * years_remaining)
     return (round(proj_war, 2), round(surplus_mm, 1))
 
 
