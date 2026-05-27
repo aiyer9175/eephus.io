@@ -457,8 +457,19 @@ def estimate_eta(
     # AA, ~60 FV) gets age_adj −0.75 + fv_adj −0.50 + perf_adj −0.75
     # which collapses base 2.0 → 0.0 and the model says "Early 2026"
     # even though no 19yo in AA realistically debuts within months.
-    # Floor caps the negative pull at 50% of the level's base years
-    # for A/A+/AA and 25% for AAA (where short ETAs are believable).
+    # Floor caps the negative pull at a fraction of the level's base
+    # years for A/A+/AA (where short ETAs by FV/perf alone are risky)
+    # and only 25% for AAA (where short ETAs are believable).
+    #
+    # v31.10 — AGE-AWARE floor. The 50% AA floor still let a 19yo
+    # ~60 FV prospect compress to 1.0y → mid-2027, but the user wants
+    # 19yo-at-AA to project ≥ 1.5y (Late 2027 territory). When the
+    # age_adj signal indicates the prospect is meaningfully YOUNG for
+    # level (age_adj ≤ -0.50, i.e. 2+ years young), use the YOUNG floor
+    # table — AA scales 0.50 → 0.75, A+ scales 0.55 → 0.80, A scales
+    # 0.60 → 0.80. AAA stays at 0.25 even for young prospects (a 21yo
+    # at AAA SHOULD debut quickly). Older-for-level prospects use the
+    # standard floor unchanged.
     # The floor never INCREASES the projection beyond what the model
     # would otherwise produce — only prevents over-compression.
     _LEVEL_PULL_FLOOR_FRAC = {
@@ -469,7 +480,20 @@ def estimate_eta(
         "CPX": 0.65,
         "DSL": 0.65,
     }
-    _pull_frac = _LEVEL_PULL_FLOOR_FRAC.get(current_level or "")
+    _LEVEL_PULL_FLOOR_FRAC_YOUNG = {
+        "AAA": 0.25,   # 21yo at AAA: keep the existing fast-track room
+        "AA":  0.75,   # 19-20yo at AA: hold to ≥ 1.5y of AA base (2.0)
+        "A+":  0.80,
+        "A":   0.80,
+        "CPX": 0.80,
+        "DSL": 0.80,
+    }
+    _is_very_young_for_level = age_adj <= -0.50
+    _pull_frac = (
+        _LEVEL_PULL_FLOOR_FRAC_YOUNG.get(current_level or "")
+        if _is_very_young_for_level
+        else _LEVEL_PULL_FLOOR_FRAC.get(current_level or "")
+    )
     raw_total = (base + perf_adj + age_adj + fv_adj + statcast_plus_adj
                  + health_adj + half_season_adj)
     if _pull_frac is not None and base is not None:

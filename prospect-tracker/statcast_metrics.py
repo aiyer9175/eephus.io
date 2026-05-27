@@ -170,14 +170,26 @@ def _game_logs(player_id: int, season: int, is_pitcher: bool) -> list[dict]:
 def _extract_standout_games(
     logs: list[dict],
     is_pitcher: bool,
-    limit: int = 5,
+    limit: int = 8,
+    window_days: int = 14,
 ) -> list[dict]:
     """Pick the player's top standout single-game performances from the
     raw `_game_logs` output. Score each game on raw box-line achievement
     (hitters: hits + HR + XBH; pitchers: K + scoreless IP + low hits) and
     return the top `limit`, sorted newest-first. v30.7 — feeds the
     'Standout performances' widget on the Spotlights page.
+
+    v31.10 — Trailing `window_days` filter (default 14d). Also widened
+    inclusion floors per user calibration ("moderate loosening"):
+      Hitters: 3+ XBH OR 4+ hits OR 6+ RBI OR multi-HR game
+      Pitchers: 10+ K OR 7+ IP no-ER OR per-game FIP ≤ 2.50
+        (FIP outing is approximated from the in-game line: see helper).
+    Limit bumped to 8 (from 5) to push more per-player history into
+    the FV-weighted ticker layer, which still de-dupes per player.
     """
+    from datetime import date as _date, timedelta as _td
+    cutoff = (_date.today() - _td(days=window_days)).isoformat()
+
     scored: list[tuple[float, dict]] = []
     for split in logs:
         st = split.get("stat") or {}
@@ -186,10 +198,12 @@ def _extract_standout_games(
         date = split.get("date") or (game.get("officialDate"))
         if not date:
             continue
+        if date < cutoff:
+            continue
         level = split.get("_level")
         score = 0.0
         # Hitter scoring — raw counting stats from gameLog. Higher is
-        # better; 3+H game is the baseline standout floor (score ≥ 3.0).
+        # better; floors below set inclusion.
         if not is_pitcher:
             h    = _safe_int(st.get("hits"))
             ab   = _safe_int(st.get("atBats"))
@@ -212,8 +226,19 @@ def _extract_standout_games(
                 + (sb or 0) * 0.5
                 - (so or 0) * 0.2
             )
-            # 3-hit game floor (or 1 HR floor) before we even consider it.
-            if (h or 0) < 3 and (hr or 0) < 1 and (rbi or 0) < 3:
+            # v31.10 inclusion floor — any of:
+            #   * 4+ hits (high-volume night)
+            #   * 3+ XBH (doubles + triples + HR combined)
+            #   * 6+ RBI (productive RBI night)
+            #   * multi-HR game (2+)
+            xbh = (doub or 0) + (trip or 0) + (hr or 0)
+            qualifies = (
+                (h or 0) >= 4
+                or xbh >= 3
+                or (rbi or 0) >= 6
+                or (hr or 0) >= 2
+            )
+            if not qualifies:
                 continue
             line_parts = []
             line_parts.append(f"{h}-for-{ab}")
@@ -226,7 +251,6 @@ def _extract_standout_games(
             line = " · ".join(line_parts)
         else:
             # Pitcher scoring — IP, K, scoreless game, low H, no BB.
-            # 5+ IP shutout or 8+ K outing is the floor for inclusion.
             ip   = _safe_float(st.get("inningsPitched"))
             k    = _safe_int(st.get("strikeOuts"))
             er   = _safe_int(st.get("earnedRuns"))
@@ -236,14 +260,23 @@ def _extract_standout_games(
             hra  = _safe_int(st.get("homeRuns"))
             if ip is None or ip < 2.0:
                 continue
-            # Standout floors:
-            #   * 8+ K outing
-            #   * 5+ IP with 0 ER
-            #   * 7+ IP with ≤1 ER
+            # v31.10 inclusion floor — any of:
+            #   * 10+ K outing
+            #   * 7+ IP with 0 ER (long scoreless start)
+            #   * per-game FIP ≤ 2.50 (any of the rare clean lines that
+            #     don't trip the K-threshold but are clearly dominant —
+            #     e.g. 6 IP, 1 H, 0 ER, 1 BB, 5 K — that's a sub-2 FIP
+            #     outing even without 10 K).
+            # Per-game FIP approximation: (13*HR + 3*BB - 2*K) / IP + 3.10
+            fip_outing = None
+            if ip > 0:
+                fip_outing = (
+                    13.0 * (hra or 0) + 3.0 * (bb or 0) - 2.0 * (k or 0)
+                ) / ip + 3.10
             qualifies = (
-                (k is not None and k >= 8)
-                or (ip >= 5.0 and (er or 0) == 0)
-                or (ip >= 7.0 and (er or 0) <= 1)
+                (k is not None and k >= 10)
+                or (ip >= 7.0 and (er or 0) == 0)
+                or (fip_outing is not None and fip_outing <= 2.50 and ip >= 4.0)
             )
             if not qualifies:
                 continue
@@ -672,10 +705,13 @@ def fetch_statcast_metrics_for_player(
         pitch_movement=pitch_movement,
         pitch_plot=pitch_plot,
         level_splits=level_splits,
-        # v30.7 — Pull top 5 standout single-game performances off the
+        # v30.7 — Pull top 8 standout single-game performances off the
         # same `logs` we already walked above. Free piggyback — no
         # extra HTTP, just an extra pass over the per-game stat dicts.
-        standout_games=_extract_standout_games(logs, is_pitcher, limit=5),
+        # v31.10 — limit bumped to 8 (was 5), trailing-14d window now
+        # applied inside _extract_standout_games so the ticker leads
+        # with the past two weeks of activity.
+        standout_games=_extract_standout_games(logs, is_pitcher, limit=8),
         # v30.8 — Last 15 game rows for the prospect-detail "Recent
         # gameLogs" viz. Same `logs` we already walked above (free
         # piggyback, no extra HTTP).

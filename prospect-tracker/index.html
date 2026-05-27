@@ -12144,18 +12144,16 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
       games.push({ p, g });
     }
   }
-  // v30.8 — FV-weighted composite scoring with diversity caps.
-  // Three improvements over the prior version:
-  //   1. FV weight reduced (was 10× → now 6×) so truly insane games
-  //      from low-FV prospects can still surface above a stale game
-  //      from a top-FV prospect.
-  //   2. Exceptional-game bonus added — game scores ≥9 get +25 pts,
-  //      ≥7 get +15 pts. A jaw-dropping 4-HR night from a 40-FV
-  //      now outranks a routine 2-hit game from a 60-FV.
-  //   3. Per-player cap of 2 games keeps any one prospect from
-  //      dominating the ticker (the prior version showed all Max
-  //      Clark games because his FV-tier baseline crushed everyone).
+  // v31.10 — PRIMARY sort is now date DESC (newest first), per user
+  // ask: the ticker should read as a chronological feed of the past
+  // two weeks. FV-weight scoring still runs to break date ties and
+  // to drive the per-player cap walk order (so when two prospects
+  // both have games today, the higher-FV one ranks first within the
+  // tie). A trailing-14-day window is also applied to the input set
+  // so older games can't leak through even if a cached payload was
+  // populated against an earlier limit.
   const _nowMs = Date.now();
+  const _14dCutoffMs = _nowMs - 14 * 86400000;
   const _fvWeight = (fv) => {
     if (fv == null) return 0.5;
     if (fv >= 60) return 4.0;
@@ -12167,39 +12165,33 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
   for (const item of games) {
     const fvW = _fvWeight(item.p.fv_close);
     const dateMs = new Date(item.g.date + "T00:00:00").getTime();
-    const daysAgo = isFinite(dateMs)
-      ? Math.max(0, (_nowMs - dateMs) / 86400000)
-      : 14;
-    // Recency points: 14 days = 0 pts, today = 14 pts, linear.
-    const recencyPts = Math.max(0, 14 - daysAgo);
-    // Raw game score (from _extract_standout_games — 5+ for a strong
-    // 3-hit game, 10+ for a 4-hit / multi-HR night, 13+ for elite).
+    item._dateMs = isFinite(dateMs) ? dateMs : 0;
     const gameScore = item.g.score || 0;
     const gamePts = Math.min(15, gameScore);
-    // Exceptional-game bonus — big additive jump so a truly insane
-    // game from a low-FV prospect can outrank a routine top-FV game.
     const exceptionalBonus = gameScore >= 9 ? 25
                            : gameScore >= 7 ? 15
                            : gameScore >= 5 ? 5
                            : 0;
-    // FV gets 24 pts for 60+ down to 3 pts for sub-45. Combined with
-    // recency (0-14) + game (0-15) + exceptional (0-25), a 60+ FV
-    // routine game ≈ 24+14+5+5 = 48; a sub-45 INSANE recent game
-    // ≈ 3+14+12+25 = 54 — the truly exceptional low-FV game wins,
-    // but a 60+ FV with even a mildly-better game still dominates.
-    item._composite = (fvW * 6) + recencyPts + gamePts + exceptionalBonus;
+    // Tiebreaker score: FV-weight + game-quality + exceptional bonus.
+    // Recency is the PRIMARY axis (sort below), so we omit it here —
+    // older games are filtered out wholesale by the window cutoff.
+    item._tieScore = (fvW * 6) + gamePts + exceptionalBonus;
   }
-  games.sort((a, b) => {
-    if (a._composite !== b._composite) return b._composite - a._composite;
+  const filteredGames = games.filter(
+    (item) => item._dateMs >= _14dCutoffMs,
+  );
+  filteredGames.sort((a, b) => {
+    if (a._dateMs !== b._dateMs) return b._dateMs - a._dateMs;  // date desc
+    if (a._tieScore !== b._tieScore) return b._tieScore - a._tieScore;
     return a.g.date < b.g.date ? 1 : -1;
   });
-  // Per-player cap so the ticker doesn't show 5 games from the same
-  // prospect just because their FV-tier baseline is high. Walk in
-  // composite-desc order and keep up to 2 per player; stop at 12 total.
+  // Per-player cap so the ticker doesn't show many games from the same
+  // prospect on a hot stretch. Walk in date-desc order and keep up to
+  // 2 per player; stop at 12 total.
   const perPlayerCap = 2;
   const perPlayer = new Map();
   const top = [];
-  for (const item of games) {
+  for (const item of filteredGames) {
     const k = item.p.player_key;
     const n = perPlayer.get(k) || 0;
     if (n >= perPlayerCap) continue;
