@@ -1277,7 +1277,20 @@ CREATE TABLE IF NOT EXISTS mlb_trade_players (
     last_team      TEXT,             -- current / last MLB team abbrev
     is_pitcher     INTEGER NOT NULL DEFAULT 0,
     fetched_at     TEXT NOT NULL DEFAULT (datetime('now')),
-    resolve_status TEXT              -- "resolved" | "ambiguous" | "not_found"
+    resolve_status TEXT,             -- "resolved" | "ambiguous" | "not_found"
+    -- v31.9c — Contract-based surplus columns. When a Spotrac match
+    -- is on file, current_aav_usd + years_remaining + projected_war
+    -- combine into surplus_mm via the projected-remaining-WAR × $8M
+    -- minus sum-of-remaining-AAV formula. Surplus_mm trumps the
+    -- naive career_war × $8M valuation on the frontend trade audit
+    -- (more accurate when a team is acquiring future value, not
+    -- realized historical value). NULL when no contract data found.
+    current_aav_usd     INTEGER,
+    years_remaining     INTEGER,
+    contract_total_usd  INTEGER,
+    age                 INTEGER,
+    projected_war_remaining REAL,    -- aging-curve adjusted future WAR
+    surplus_mm          REAL         -- (projected_war × $8M) − (aav × yrs) in $M
 );
 CREATE INDEX IF NOT EXISTS idx_mlb_trade_players_status ON mlb_trade_players(resolve_status);
 
@@ -1368,6 +1381,20 @@ def init_db():
             con.execute("ALTER TABLE draft_lottery_odds ADD COLUMN round_label TEXT NOT NULL DEFAULT '1'")
         except sqlite3.OperationalError:
             pass  # column already exists
+        # v31.9c — Migration: add contract-based surplus columns to
+        # mlb_trade_players. Existing rows default to NULL.
+        for _col, _ddl in (
+            ("current_aav_usd",          "INTEGER"),
+            ("years_remaining",          "INTEGER"),
+            ("contract_total_usd",       "INTEGER"),
+            ("age",                      "INTEGER"),
+            ("projected_war_remaining",  "REAL"),
+            ("surplus_mm",               "REAL"),
+        ):
+            try:
+                con.execute(f"ALTER TABLE mlb_trade_players ADD COLUMN {_col} {_ddl}")
+            except sqlite3.OperationalError:
+                pass  # column already exists
         # Migration: relax odds_pct NOT NULL constraint so picks 7+ on
         # the projected order (no published odds) can be stored. SQLite
         # doesn't support ALTER COLUMN — rebuild the table preserving
@@ -2563,7 +2590,8 @@ def _name_slug(name: str | None) -> str:
 
 
 def upsert_mlb_trade_player(row: dict) -> int:
-    """Upsert one MLB trade player. Returns 1 on insert/update."""
+    """Upsert one MLB trade player. Returns 1 on insert/update.
+    v31.9c — Accepts contract + surplus fields."""
     slug = _name_slug(row.get("player_name"))
     if not slug:
         return 0
@@ -2572,23 +2600,34 @@ def upsert_mlb_trade_player(row: dict) -> int:
             """INSERT INTO mlb_trade_players
                  (name_slug, player_name, mlbam_id, primary_position,
                   career_war, war_seasons, last_team, is_pitcher,
-                  resolve_status)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  resolve_status,
+                  current_aav_usd, years_remaining, contract_total_usd,
+                  age, projected_war_remaining, surplus_mm)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                ON CONFLICT(name_slug) DO UPDATE SET
-                 player_name      = excluded.player_name,
-                 mlbam_id         = COALESCE(excluded.mlbam_id, mlb_trade_players.mlbam_id),
-                 primary_position = COALESCE(excluded.primary_position, mlb_trade_players.primary_position),
-                 career_war       = COALESCE(excluded.career_war, mlb_trade_players.career_war),
-                 war_seasons      = COALESCE(excluded.war_seasons, mlb_trade_players.war_seasons),
-                 last_team        = COALESCE(excluded.last_team, mlb_trade_players.last_team),
-                 is_pitcher       = excluded.is_pitcher,
-                 resolve_status   = excluded.resolve_status,
-                 fetched_at       = datetime('now')""",
+                 player_name             = excluded.player_name,
+                 mlbam_id                = COALESCE(excluded.mlbam_id, mlb_trade_players.mlbam_id),
+                 primary_position        = COALESCE(excluded.primary_position, mlb_trade_players.primary_position),
+                 career_war              = COALESCE(excluded.career_war, mlb_trade_players.career_war),
+                 war_seasons             = COALESCE(excluded.war_seasons, mlb_trade_players.war_seasons),
+                 last_team               = COALESCE(excluded.last_team, mlb_trade_players.last_team),
+                 is_pitcher              = excluded.is_pitcher,
+                 resolve_status          = excluded.resolve_status,
+                 current_aav_usd         = COALESCE(excluded.current_aav_usd, mlb_trade_players.current_aav_usd),
+                 years_remaining         = COALESCE(excluded.years_remaining, mlb_trade_players.years_remaining),
+                 contract_total_usd      = COALESCE(excluded.contract_total_usd, mlb_trade_players.contract_total_usd),
+                 age                     = COALESCE(excluded.age, mlb_trade_players.age),
+                 projected_war_remaining = COALESCE(excluded.projected_war_remaining, mlb_trade_players.projected_war_remaining),
+                 surplus_mm              = COALESCE(excluded.surplus_mm, mlb_trade_players.surplus_mm),
+                 fetched_at              = datetime('now')""",
             (slug, row["player_name"], row.get("mlbam_id"),
              row.get("primary_position"), row.get("career_war"),
              row.get("war_seasons"), row.get("last_team"),
              1 if row.get("is_pitcher") else 0,
-             row.get("resolve_status") or "resolved"),
+             row.get("resolve_status") or "resolved",
+             row.get("current_aav_usd"), row.get("years_remaining"),
+             row.get("contract_total_usd"), row.get("age"),
+             row.get("projected_war_remaining"), row.get("surplus_mm")),
         )
     return 1
 
@@ -2600,7 +2639,10 @@ def load_mlb_trade_players() -> dict[str, dict]:
             rows = con.execute(
                 """SELECT name_slug, player_name, mlbam_id, primary_position,
                           career_war, war_seasons, last_team, is_pitcher,
-                          resolve_status, fetched_at
+                          resolve_status, fetched_at,
+                          current_aav_usd, years_remaining,
+                          contract_total_usd, age,
+                          projected_war_remaining, surplus_mm
                    FROM mlb_trade_players"""
             ).fetchall()
     except sqlite3.OperationalError:

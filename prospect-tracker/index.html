@@ -990,6 +990,49 @@
       color: var(--text-primary);
       border-color: var(--text-tertiary);
     }
+    /* v31.9 — Focus-visible ring for keyboard navigation across all
+       chip-based filter/sort UIs. Mouse clicks don't trigger this
+       (focus-visible), so the ring is reserved for actual a11y use. */
+    button.chip:focus-visible {
+      outline: 2px solid var(--neon-cyan);
+      outline-offset: 1px;
+      border-color: var(--neon-cyan);
+    }
+    /* v31.9 — Narrow-viewport polish. The filter bar wraps a lot at
+       small widths and chip overflow used to clip; tighten gaps +
+       allow horizontal scroll for the filter rows + tab strips. */
+    @media (max-width: 720px) {
+      .filter-bar {
+        flex-wrap: wrap;
+        gap: 4px;
+        row-gap: 6px;
+      }
+      .filter-group {
+        flex-wrap: wrap;
+        gap: 3px;
+      }
+      button.chip {
+        padding: 4px 8px;
+        font-size: 11px;
+      }
+      /* Trade audit card collapses to a stacked layout on phone widths
+         (single-row strip would clip the chips). */
+      .trade-audit-card {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 4px !important;
+      }
+      .trade-audit-card > span {
+        flex-basis: auto !important;
+      }
+      /* Sub-tab strips (spotlights / watchlist / draft) scroll-x
+         instead of wrapping awkwardly. */
+      .spotlight-subtabs,
+      .filter-toggle-row + .filter-bar {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+    }
     button.chip.active {
       background: var(--bg-header);
       color: var(--text-on-dark-muted);
@@ -3288,16 +3331,18 @@
     }
 
     /* === Empty / loading / error states =========================== */
+    /* v31.9 — Three variants stamped via modifier classes:
+       .state-message (empty) → grey flag, default copy color
+       .state-message.is-loading → pulsing animation, no glyph
+       .state-message.is-error  → red exclamation glyph + danger color */
     .state-message {
       text-align: center;
       padding: 4rem 1rem;
       color: var(--text-secondary);
       font-size: 14px;
       font-family: var(--font-sans);
+      line-height: 1.5;
     }
-    /* Subtle flag mark above the empty-state copy. Renders before the
-       text via a ::before pseudo so existing call sites don't need to
-       embed an icon. */
     .state-message::before {
       content: "⚐";
       display: block;
@@ -3307,11 +3352,27 @@
       margin-bottom: 8px;
       line-height: 1;
     }
-    /* Loading state shouldn't show the flag — override. */
+    .state-message.is-loading {
+      animation: state-pulse 1.6s ease-in-out infinite;
+    }
     .state-message.is-loading::before { content: none; }
-    .state-message.is-error::before { content: "!"; }
+    .state-message.is-error::before {
+      content: "!";
+      font-weight: 700;
+      color: var(--down);
+      opacity: 1;
+      border: 2px solid var(--down);
+      border-radius: 50%;
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 8px;
+    }
     .state-message code { font-size: 12px; }
     .state-error { color: var(--down); }
+    @keyframes state-pulse {
+      0%, 100% { opacity: 0.55; }
+      50%      { opacity: 1; }
+    }
     .footnote {
       font-size: 11px;
       color: var(--text-tertiary);
@@ -6247,19 +6308,29 @@
     /* Compact "+ to compare" toggle used on prospect list rows. Square,
        icon-sized so it fits beside the player name without breaking the
        grid layout. */
+    /* v31.9 — Harmonized 24×24 sizing + focus-visible ring so
+       compare + watch + expand buttons render as a single visual
+       triplet on every row across the site. */
     .compare-add-btn.is-compact {
       font-size: 14px;
       padding: 0;
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
       line-height: 1;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       vertical-align: middle;
       flex-shrink: 0;
+      transition: color 0.12s, border-color 0.12s, background 0.12s;
     }
     .compare-add-btn.is-compact:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .compare-add-btn:focus-visible,
+    .watch-btn:focus-visible,
+    .row-expand-btn:focus-visible {
+      outline: 2px solid var(--neon-cyan);
+      outline-offset: 1px;
+    }
 
     /* === Compare cart 2.0 — side-by-side layout ===================
        When 2+ players are pinned the cart switches from stacked cards
@@ -7130,7 +7201,6 @@
           <option value="waiver">Waiver claim</option>
           <option value="rule_5">Rule 5</option>
           <option value="contract_purchase">Contract purchase</option>
-          <option value="debut">MLB debut</option>
         </select>
       </div>
       <div class="filter-group">
@@ -11333,11 +11403,12 @@ const state = {
   // "war" = highest current-season WAR; "fv_close" = highest final FV.
   // Career-aggregated WAR isn't on the MLB Stats API (the endpoint
   // returns one split per season), so the WAR sort uses the
-  // most-recent-season number — labelled accordingly in the chip.
-  // Default sort is WAG (vs_fv_proj) — the headline metric for
-  // graduates. Sort by graduation date is still one click away via
-  // the "Date" chip on the graduates page.
-  debutSort: "vs_fv_proj",
+  // v31.9b — Default sort flipped from WAG to debut date desc (most
+  // recent first). The Debuted tab is now the canonical "who just
+  // got called up" surface (debut events were removed from the
+  // Transactions list in v31.9b); date-desc puts the latest debutants
+  // at the top so the page reads as a chronological feed.
+  debutSort: "date",
   // Injured-list sort. "days_asc" (default) sorts by elapsed IL days
   // ascending so the players closest to returning surface first.
   // "days" sorts descending (longest-out first); "fv" puts high-FV
@@ -13545,26 +13616,11 @@ function getFilteredAcquired() {
     if (!acq) continue;
     pool.push({ p, acq });
   }
-  // v31.7 — Synthesize debut events for graduated players. We DO NOT
-  // include any other post-debut transactions for these players (the
-  // user's contract: "once a prospect has debuted, their following
-  // transactions shouldn't show up"). Each debuted player surfaces
-  // exactly one row keyed off their debut_date.
-  for (const g of (DATA.debuts || [])) {
-    if (!g || !g.debut_date) continue;
-    // Build a synthetic acq record for the debut event.
-    pool.push({
-      p: g,
-      acq: {
-        method:      "debut",
-        date:        g.debut_date,
-        from_org:    g.org || null,
-        to_org:      "MLB",
-        description: `MLB debut · ${g.org || "—"}`,
-        _is_debut:   true,
-      },
-    });
-  }
+  // v31.9b — Debut events REMOVED from the Transactions list. They
+  // now live exclusively on the dedicated Debuted tab (which default-
+  // sorts by debut_date desc — most recent first). Earlier v31.7
+  // surfaced them here per user direction, but the dedicated tab
+  // does a better job of grouping the full debut roster.
   if (state.search) {
     const q = state.search.toLowerCase();
     pool = pool.filter(({ p }) => (p.player_name || "").toLowerCase().includes(q));
@@ -15276,8 +15332,18 @@ function renderRecentlyTraded() {
           });
           continue;
         }
+        // v31.9c — Prefer contract-based surplus_mm when on file. Falls
+        // back to career_war × $8M only when contract data is missing
+        // (which is most prospect-grads — their AAV isn't on Spotrac
+        // yet so we still use the realized-value approximation).
         const war = vet.career_war != null ? Number(vet.career_war) : null;
-        const value = war != null ? Math.round(war * _WAR_DOLLAR_VALUE * 10) / 10 : null;
+        const hasSurplus = vet.surplus_mm != null;
+        const value = hasSurplus
+          ? Math.round(Number(vet.surplus_mm) * 10) / 10
+          : (war != null ? Math.round(war * _WAR_DOLLAR_VALUE * 10) / 10 : null);
+        const valueKind = hasSurplus ? "surplus_mm"
+                        : war != null ? "war_vet"
+                        : "unresolved";
         const playerKey = vet.mlbam_id
           ? (vetSource === "debuts" ? slug : `mlbam_${vet.mlbam_id}`)
           : "";
@@ -15290,12 +15356,16 @@ function renderRecentlyTraded() {
           from: side === g.orgA ? g.orgB : g.orgA,
           to:   side,
           val:  {
-            value: value,
-            kind:  war != null ? "war_vet" : "unresolved",
-            war:   war,
-            pos:   vet.primary_position,
-            team:  vet.last_team,
-            src:   vetSource,
+            value:    value,
+            kind:     valueKind,
+            war:      war,
+            pos:      vet.primary_position,
+            team:     vet.last_team,
+            src:      vetSource,
+            aav_usd:  vet.current_aav_usd,
+            years:    vet.years_remaining,
+            age:      vet.age,
+            proj_war: vet.projected_war_remaining,
           },
         });
       }
@@ -15493,12 +15563,14 @@ function renderRecentlyTraded() {
             const v = e.val;
             const valStr = v.value != null ? `$${v.value.toFixed(1)}` : '—';
             const tbsHere = (v.kind === "fv") ? _tbsFor(e.p) : null;
-            const kindLbl = v.kind === "war"     ? `Realized · ${v.war?.toFixed(1)} WAR × $${_WAR_DOLLAR_VALUE.toFixed(0)}M`
-                          : v.kind === "war_vet" ? `MLB vet · ${v.pos || '—'} · ${v.war?.toFixed(1)} WAR × $${_WAR_DOLLAR_VALUE.toFixed(0)}M`
-                          : v.kind === "fv"      ? `Projected MLB surplus · FV ${v.fv}${tbsHere != null ? ` · TBS ${tbsHere}` : ''} · 6yr cost-controlled`
+            const aavMm = v.aav_usd != null ? (v.aav_usd / 1_000_000).toFixed(1) : null;
+            const kindLbl = v.kind === "war"        ? `Realized · ${v.war?.toFixed(1)} WAR × $${_WAR_DOLLAR_VALUE.toFixed(0)}M`
+                          : v.kind === "surplus_mm" ? `MLB vet contract surplus · ${v.pos || '—'}${v.age ? ` · age ${v.age}` : ''} · proj ${v.proj_war?.toFixed(1) ?? '?'} WAR over ${v.years || '?'}yr at $${aavMm || '?'}M AAV · net $${v.value.toFixed(1)}M`
+                          : v.kind === "war_vet"    ? `MLB vet (no contract on file) · ${v.pos || '—'} · ${v.war?.toFixed(1)} career WAR × $${_WAR_DOLLAR_VALUE.toFixed(0)}M — using realized career value as proxy`
+                          : v.kind === "fv"         ? `Projected MLB surplus · FV ${v.fv}${tbsHere != null ? ` · TBS ${tbsHere}` : ''} · 6yr cost-controlled`
                           : v.kind === "unresolved" ? "Untracked MLB player — career WAR not on file yet"
                           : 'unknown';
-            const vetTag = v.kind === "war_vet"
+            const vetTag = (v.kind === "war_vet" || v.kind === "surplus_mm")
               ? `<span style="font-size:8px;color:var(--neon-cyan);letter-spacing:0.04em;text-transform:uppercase;font-weight:700;margin-right:1px;">MLB</span>` : "";
             const nameMarkup = e.p.player_key
               ? `<a href="#player=${escapeHtml(e.p.player_key)}" onclick="event.preventDefault();event.stopPropagation();goToPlayer('${escapeHtml(e.p.player_key)}');" style="color:var(--text-primary);text-decoration:none;font-weight:600;">${escapeHtml(e.p.player_name)}</a>`
@@ -17896,13 +17968,13 @@ async function renderDraftDetail(key) {
   if (!root) return;
   // Lazy-load the draft payload if it hasn't arrived yet.
   if (!DATA.draft) {
-    root.innerHTML = `<div class="state-message">Loading draft data…</div>`;
+    root.innerHTML = `<div class="state-message is-loading">Loading draft data…</div>`;
     try {
       const base = DATA_URL.replace(/[^/]+$/, "");
       const resp = await fetch(`${base}draft_timeseries.json`);
       DATA.draft = await resp.json();
     } catch (e) {
-      root.innerHTML = `<div class="state-message">Could not load draft data: ${escapeHtml(e.message || e)}</div>`;
+      root.innerHTML = `<div class="state-message is-error">Could not load draft data: ${escapeHtml(e.message || e)}</div>`;
       return;
     }
   }
@@ -18358,13 +18430,13 @@ async function renderOverseasDetail(key) {
   const root = document.getElementById("overseas-detail-body");
   if (!root) return;
   if (!DATA.overseas) {
-    root.innerHTML = `<div class="state-message">Loading overseas data…</div>`;
+    root.innerHTML = `<div class="state-message is-loading">Loading overseas data…</div>`;
     try {
       const base = DATA_URL.replace(/[^/]+$/, "");
       const resp = await fetch(`${base}overseas_timeseries.json`);
       DATA.overseas = await resp.json();
     } catch (e) {
-      root.innerHTML = `<div class="state-message">Could not load overseas data: ${escapeHtml(e.message || e)}</div>`;
+      root.innerHTML = `<div class="state-message is-error">Could not load overseas data: ${escapeHtml(e.message || e)}</div>`;
       return;
     }
   }
@@ -34560,7 +34632,7 @@ function renderCompareCart() {
   const body = document.getElementById("compare-body");
   if (!body) return;
   if (!totalCount) {
-    body.innerHTML = `<div style="color:var(--text-tertiary);font-size:13px;padding:8px 4px;">No prospects or farm systems pinned yet. Tap "+ Add to compare" on any list or detail view.</div>`;
+    body.innerHTML = `<div class="state-message" style="padding:24px 16px;">No prospects or farm systems pinned yet. Tap "+ Add to compare" on any list or detail view.</div>`;
     return;
   }
   // Resolve every pinned key to a full player object (or render a
@@ -35568,7 +35640,7 @@ function populateOrgFilter() {
 
   if (DATA.__error) {
     content.innerHTML = `
-      <div class="state-message state-error">
+      <div class="state-message is-error">
         Could not load <code>${DATA_URL}</code>: ${escapeHtml(DATA.__error)}
         <br><br>
         <span style="color: var(--text-tertiary);">

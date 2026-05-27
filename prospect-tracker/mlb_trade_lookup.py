@@ -190,12 +190,13 @@ def _search_mlbam_vet(name: str) -> int | None:
 
 def _resolve_one(name: str) -> dict | None:
     """Resolve a single name → {player_name, mlbam_id, primary_position,
-    career_war, is_pitcher, resolve_status}.
+    career_war, is_pitcher, surplus_mm, ...}.
 
-    Uses our vet-friendly MLB Stats API search (DROPS the prospect-
-    era 1994 birth-year filter that stats._search_mlbam_via_api
-    applies). Career WAR is filled from pybaseball.bwar_bat /
-    bwar_pitch if available.
+    v31.9c — Also fetches age + current contract (AAV + years remaining)
+    and computes a contract-based surplus = projected_remaining_WAR ×
+    $8M − sum(remaining_AAV). This trumps the naive career_war × $8M
+    valuation in the frontend trade audit when contract data is on
+    file (more accurate for evaluating future value being acquired).
     """
     try:
         mlbam_id = _search_mlbam_vet(name)
@@ -213,10 +214,17 @@ def _resolve_one(name: str) -> dict | None:
             "is_pitcher":     False,
             "resolve_status": "not_found",
         }
-    # Fetch position via Stats API.
-    pos, is_pit, last_team = _fetch_position_and_team(mlbam_id)
+    # Fetch position + age via Stats API.
+    pos, is_pit, last_team, age = _fetch_position_team_age(mlbam_id)
     # Career WAR via pybaseball (BBRef).
     career_war, war_seasons = _fetch_career_war_one(mlbam_id, is_pit)
+    # v31.9c — Contract lookup (Spotrac via storage.load_spotrac_contracts).
+    # Falls back to None when no match — surplus stays NULL and the
+    # frontend uses the career-WAR fallback.
+    aav, years_rem, total = _lookup_spotrac_contract(name, mlbam_id)
+    proj_war_rem, surplus_mm = _compute_surplus(
+        career_war, war_seasons, age, aav, years_rem,
+    )
     return {
         "player_name":      name,
         "mlbam_id":         mlbam_id,
@@ -226,17 +234,110 @@ def _resolve_one(name: str) -> dict | None:
         "last_team":        last_team,
         "is_pitcher":       is_pit,
         "resolve_status":   "resolved",
+        "current_aav_usd":  aav,
+        "years_remaining":  years_rem,
+        "contract_total_usd": total,
+        "age":              age,
+        "projected_war_remaining": proj_war_rem,
+        "surplus_mm":       surplus_mm,
     }
 
 
-def _fetch_position_and_team(mlbam_id: int) -> tuple[str | None, bool, str | None]:
-    """Hit MLB Stats API /people/{id} for position + current team."""
+# v31.9c — Lazy module-level cache of Spotrac contracts indexed by
+# name slug. Built on first lookup so the resolver pool can share the
+# scrape; failures are swallowed (surplus_mm just stays NULL).
+_SPOTRAC_BY_SLUG: dict[str, dict] | None = None
+
+
+def _load_spotrac_by_slug() -> dict[str, dict]:
+    global _SPOTRAC_BY_SLUG
+    if _SPOTRAC_BY_SLUG is not None:
+        return _SPOTRAC_BY_SLUG
+    out: dict[str, dict] = {}
+    try:
+        from spotrac import scrape_all_spotrac_contracts, build_contracts_by_key
+        rows = scrape_all_spotrac_contracts(force=False) or []
+        # build_contracts_by_key expects (rows, lookup_dict) — but for
+        # MLB-vet resolution we don't have a tracked-key lookup, so we
+        # just walk the raw rows by name.
+        for r in rows:
+            nm = (r or {}).get("player_name") or ""
+            slug = re.sub(r"[^a-z0-9]+", "_", nm.lower()).strip("_")
+            if not slug:
+                continue
+            # Keep the highest-AAV row when a name appears multiple
+            # times (rare — usually same player on multiple teams within
+            # a year via mid-season trade).
+            existing = out.get(slug)
+            if not existing or (r.get("aav_usd") or 0) > (existing.get("aav_usd") or 0):
+                out[slug] = r
+    except Exception:
+        log.debug("spotrac scrape failed during MLB vet resolution", exc_info=True)
+    _SPOTRAC_BY_SLUG = out
+    log.info("_load_spotrac_by_slug: cached %d contracts by name slug", len(out))
+    return out
+
+
+def _lookup_spotrac_contract(name: str, mlbam_id: int) -> tuple[int | None, int | None, int | None]:
+    """Look up Spotrac contract data by name slug. Returns (aav_usd,
+    years_remaining, total_usd) or (None, None, None) on miss."""
+    by_slug = _load_spotrac_by_slug()
+    slug = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
+    rec = by_slug.get(slug)
+    if not rec:
+        return (None, None, None)
+    return (rec.get("aav_usd"), rec.get("years_remaining"), rec.get("total_usd"))
+
+
+def _compute_surplus(career_war: float | None, war_seasons: int | None,
+                     age: int | None, aav_usd: int | None,
+                     years_remaining: int | None,
+                     ) -> tuple[float | None, float | None]:
+    """Project remaining WAR + compute surplus_mm.
+
+    Projected remaining WAR: starts from the player's recent rate
+    (career_war / war_seasons, capped at 6 to avoid out-of-sample),
+    then applies a -0.4 WAR/yr aging penalty per year past 29. Each
+    year's projection is summed across `years_remaining`. Floored at
+    0 (negative-projection veterans contribute 0 future WAR for
+    valuation purposes — surplus calc still subtracts their AAV).
+
+    Surplus formula: (proj_remaining_WAR × $8M) − (aav × years_rem),
+    expressed in $M. Positive = team gets MORE WAR than they pay
+    for; negative = overpaying (e.g. expensive declining vet).
+
+    Returns (proj_war_remaining, surplus_mm) or (None, None) when
+    insufficient inputs (no career WAR or no contract data).
+    """
+    _WAR_DOLLAR_MM = 8.0
+    if career_war is None or war_seasons is None or war_seasons <= 0:
+        return (None, None)
+    if aav_usd is None or years_remaining is None or years_remaining <= 0:
+        return (None, None)
+    rate = max(0.0, min(6.0, float(career_war) / float(war_seasons)))
+    # Aging-curve adjusted future seasons.
+    proj_war = 0.0
+    base_age = age if age is not None else 28
+    for i in range(int(years_remaining)):
+        yr_age = base_age + i
+        # Aging penalty: 0 below age 29, then -0.4 per year above 29.
+        decline = max(0.0, 0.4 * (yr_age - 29))
+        season_war = max(0.0, rate - decline)
+        proj_war += season_war
+    aav_mm = aav_usd / 1_000_000.0
+    surplus_mm = (proj_war * _WAR_DOLLAR_MM) - (aav_mm * years_remaining)
+    return (round(proj_war, 2), round(surplus_mm, 1))
+
+
+def _fetch_position_team_age(mlbam_id: int) -> tuple[str | None, bool, str | None, int | None]:
+    """Hit MLB Stats API /people/{id} for position + current team + age."""
     import time
     import requests
+    from datetime import date as _date
     try:
         from stats import MLB_STATS_API, RATE_LIMIT_SECONDS
     except ImportError:
-        return (None, False, None)
+        return (None, False, None, None)
     time.sleep(RATE_LIMIT_SECONDS)
     try:
         r = requests.get(
@@ -246,17 +347,29 @@ def _fetch_position_and_team(mlbam_id: int) -> tuple[str | None, bool, str | Non
         r.raise_for_status()
         data = r.json()
     except Exception:
-        return (None, False, None)
+        return (None, False, None, None)
     people = data.get("people") or []
     if not people:
-        return (None, False, None)
+        return (None, False, None, None)
     p = people[0]
     pos_info = p.get("primaryPosition") or {}
     pos_abbr = pos_info.get("abbreviation")
     is_pit = (pos_info.get("code") == "1") or (pos_abbr in ("P", "SP", "RP"))
     team_info = p.get("currentTeam") or {}
     team_abbr = team_info.get("abbreviation")
-    return (pos_abbr, is_pit, team_abbr)
+    age = None
+    bd = p.get("birthDate") or ""
+    if bd:
+        try:
+            yr = int(bd[:4])
+            age = _date.today().year - yr
+        except ValueError:
+            age = None
+    return (pos_abbr, is_pit, team_abbr, age)
+
+
+# v31.9c — `_fetch_position_and_team` superseded by `_fetch_position
+# _team_age` which also returns age (for surplus aging-curve calc).
 
 
 _BWAR_BAT_CACHE = None
