@@ -133,9 +133,16 @@ class _NcaaBrowser:
     testable. `available` is False when Playwright/Chrome can't launch, so
     callers degrade gracefully."""
 
+    # Resource types we never need (we only read table#stat_grid). Aborting
+    # them makes every page load markedly faster with no effect on the data
+    # or the JS that builds the grid (scripts/xhr/fetch are kept).
+    _BLOCK_TYPES = {"image", "font", "media", "stylesheet"}
+
     def __init__(self):
         self._pw = self._browser = self.page = None
         self.available = False
+        self._navigated = False     # True iff the last html() call hit the network
+        self._pit_cat = None        # season-wide pitching year_stat_category_id (cached once)
 
     def __enter__(self):
         try:
@@ -143,6 +150,12 @@ class _NcaaBrowser:
             self._pw = sync_playwright().start()
             self._browser = self._pw.chromium.launch(channel="chrome", headless=True)
             self.page = self._browser.new_page(user_agent=_UA)
+            # Drop images/fonts/css/media — pure speed, zero data impact.
+            self.page.route(
+                "**/*",
+                lambda route: (route.abort()
+                               if route.request.resource_type in self._BLOCK_TYPES
+                               else route.continue_()))
             self.available = True
         except Exception:
             log.warning("playwright/chrome unavailable — NCAA stats skipped")
@@ -163,6 +176,7 @@ class _NcaaBrowser:
         """Load `url` in the session and return page HTML (or one element's
         outerHTML via `extract_selector`). 7-day disk cache."""
         import time
+        self._navigated = False
         cache_path = CACHE_DIR / f"{cache_key}.html"
         if cache_path.exists() and not force:
             if time.time() - cache_path.stat().st_mtime < 7 * 24 * 3600:
@@ -171,12 +185,15 @@ class _NcaaBrowser:
             return None
         try:
             self.page.goto(url, wait_until="domcontentloaded", timeout=45000)
+            self._navigated = True
             if wait_selector:
+                # Waiting on the *data-bearing* selector (e.g. a populated grid
+                # row, or a real team link past the Incapsula challenge) lets us
+                # proceed the instant content is ready — no blind sleep.
                 try:
                     self.page.wait_for_selector(wait_selector, timeout=15000)
                 except Exception:
                     return None
-            self.page.wait_for_timeout(700)
             out = (self.page.eval_on_selector(extract_selector, "el => el.outerHTML")
                    if extract_selector and self.page.query_selector(extract_selector)
                    else self.page.content())
@@ -197,6 +214,21 @@ class _NcaaBrowser:
                     return m.group(1)
         return None
 
+    def ensure_pit_cat(self, team_id: int) -> str | None:
+        """The pitching category id is season-wide (same across D-I teams), so
+        we discover it once and cache it. Only navigates when it's unknown and
+        we couldn't read it off a team page we'd already loaded."""
+        if self._pit_cat is not None or not self.available:
+            return self._pit_cat
+        try:
+            self.page.goto(TEAM_STATS_URL.format(team_id=team_id),
+                           wait_until="domcontentloaded", timeout=45000)
+            self.page.wait_for_selector("a[href*='year_stat_category_id']", timeout=10000)
+            self._pit_cat = self.pitching_category()
+        except Exception:
+            pass
+        return self._pit_cat
+
 
 # ---------------------------------------------------------------------------
 # 1. school -> NCAA team-id map (HTTP, server-rendered)
@@ -210,7 +242,10 @@ def fetch_d1_team_map(year: int, force: bool = False,
     (falling back to a cached copy / plain HTTP otherwise)."""
     url = INST_TEAM_LIST.format(year=year)
     cache_key = f"ncaa_inst_team_list_{year}"
-    body = (browser.html(url, cache_key, force=force) if browser is not None
+    # Wait for real team links so we read the post-Incapsula content, not the
+    # challenge shell (replaces the old blind delay).
+    body = (browser.html(url, cache_key, force=force,
+                         wait_selector="a[href*='/teams/']") if browser is not None
             else _ncaa_get(url, cache_key, force=force))
     if not body:
         log.warning("ncaa inst_team_list %s: fetch failed", year)
@@ -378,29 +413,31 @@ def parse_team_grids(batting_html: str | None, pitching_html: str | None,
 # ---------------------------------------------------------------------------
 # 3. headless render of a team's stat grids (shared browser session)
 # ---------------------------------------------------------------------------
-def render_team_grids(team_id: int, browser: "_NcaaBrowser",
-                      force: bool = False) -> tuple[str | None, str | None]:
-    """Render a team's batting + pitching grids in the shared session,
-    extracting just the `table#stat_grid` of each. Disk-cached per team.
-    Returns (batting_html, pitching_html)."""
+def render_team_grids(team_id: int, browser: "_NcaaBrowser", force: bool = False,
+                      sides: set | None = None) -> tuple[str | None, str | None]:
+    """Render only the stat sides this team actually needs (`sides` ⊆
+    {"batting","pitching"}; defaults to both). Each render extracts just the
+    `table#stat_grid`, waiting on a populated row so it returns the moment the
+    data is ready. Disk-cached per team. Returns (batting_html, pitching_html)."""
+    sides = sides or {"batting", "pitching"}
     base = TEAM_STATS_URL.format(team_id=team_id)
-    batting = browser.html(base, f"ncaa_team_{team_id}_bat", force=force,
-                           wait_selector="table#stat_grid",
-                           extract_selector="table#stat_grid")
-    pitching = None
-    if batting:
-        # The batting page is loaded in the session — read its pitching split.
-        pit_cache = CACHE_DIR / f"ncaa_team_{team_id}_pit.html"
-        if not force and pit_cache.exists():
-            pitching = pit_cache.read_text(encoding="utf-8")
-        else:
-            pit_cat = browser.pitching_category()
-            if pit_cat:
-                pitching = browser.html(
-                    f"{base}?year_stat_category_id={pit_cat}",
-                    f"ncaa_team_{team_id}_pit", force=force,
-                    wait_selector="table#stat_grid",
-                    extract_selector="table#stat_grid")
+    GRID, ROW = "table#stat_grid", "table#stat_grid tbody tr"
+    batting = pitching = None
+
+    if "batting" in sides:
+        batting = browser.html(base, f"ncaa_team_{team_id}_bat", force=force,
+                               wait_selector=ROW, extract_selector=GRID)
+        # If we actually loaded the (default=hitting) page, grab the season's
+        # pitching category off its nav for free — saves a load on later teams.
+        if browser._navigated and browser._pit_cat is None:
+            browser._pit_cat = browser.pitching_category()
+
+    if "pitching" in sides:
+        cat = browser._pit_cat or browser.ensure_pit_cat(team_id)
+        if cat:
+            pitching = browser.html(f"{base}?year_stat_category_id={cat}",
+                                    f"ncaa_team_{team_id}_pit", force=force,
+                                    wait_selector=ROW, extract_selector=GRID)
     return (batting, pitching)
 
 
@@ -465,6 +502,21 @@ def _players_needing_stats(draft_year: int | None) -> dict[str, dict]:
     return {pk: p for pk, p in players.items() if pk not in have}
 
 
+def _prospect_sides(p: dict) -> set:
+    """Which stat side(s) a prospect needs rendered — {"batting"} for a hitter,
+    {"pitching"} for a pitcher, both for a two-way / unknown. Lets us skip the
+    pitching page for an all-hitters team (and vice-versa). A position token
+    ending in 'P' (RHP/LHP/SP/RP/P/SIRP…) marks the pitching side; anything
+    else marks batting."""
+    toks = [t for t in re.split(r"[/,\s]+", (p.get("position") or "").upper()) if t]
+    if not toks:
+        return {"batting", "pitching"}
+    sides = set()
+    for t in toks:
+        sides.add("pitching" if t.endswith("P") else "batting")
+    return sides or {"batting", "pitching"}
+
+
 def refresh_ncaa_stats(draft_year: int, force: bool = False,
                        max_teams: int | None = None) -> int:
     """Fetch NCAA D-I box scores for `draft_year` prospects that still lack
@@ -500,7 +552,9 @@ def refresh_ncaa_stats(draft_year: int, force: bool = False,
             teams = teams[:max_teams]
 
         for tid, needers in teams:
-            batting, pitching = render_team_grids(tid, browser, force=force)
+            # Only render the side(s) some needed prospect actually uses.
+            sides = set().union(*(_prospect_sides(p) for _pk, p in needers))
+            batting, pitching = render_team_grids(tid, browser, force=force, sides=sides)
             if not batting and not pitching:
                 continue
             roster = parse_team_grids(batting, pitching, season=draft_year)
