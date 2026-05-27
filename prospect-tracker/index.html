@@ -4853,7 +4853,11 @@
       padding: 6px 8px 10px;
     }
     .grade-tree-fallback { display: none; }
-    @media (max-width: 860px) {
+    /* v31.6 — Breakpoint widened 860px → 1100px now that the 3-column
+       tree (canopy is ~720px wide and full tree ~1140px) doesn't
+       legibly fit below ~1100px viewport width. Below 1100px the
+       accordion fallback takes over with no leaf truncation. */
+    @media (max-width: 1100px) {
       .grade-tree-svg { display: none; }
       .grade-tree-wrap { display: none; }
       .grade-tree-fallback { display: block; }
@@ -8535,9 +8539,12 @@ function computeFgFlags(p) {
     }
   }
 
-  // Post-TJ red flag — only when the existing health profile didn't
+  // Post-TJ info flag — only when the existing health profile didn't
   // already pick up the surgery (avoid double-emitting). Window of 24
-  // months for "recent."
+  // months for "recent." v31.6 — Direction "neutral" (was "red") and
+  // polarity "neutral" (was "below_good"). Post-TJ isn't inherently
+  // negative: pitchers in the post-surgery grace period often produce
+  // above-avg outcomes, so the flag is now context, not a warning.
   const tj = ex.tj_date;
   const hp = p.health_profile || {};
   if (tj && !hp.is_post_tj) {
@@ -8547,11 +8554,11 @@ function computeFgFlags(p) {
       if (!isNaN(ageMs) && ageMs >= 0 && ageMs <= 2 * 365 * 86400000) {
         flags.push({
           stat:          "Post-TJ",
-          direction:     "red",
+          direction:     "neutral",
           value_display: `since ${tj}`,
           category:      "health",
-          polarity:      "below_good",
-          note:          "Tommy John surgery on record (FG report) — recovery window may apply.",
+          polarity:      "neutral",
+          note:          "Tommy John surgery on record (FG report) — informational context only. Post-surgery recovery window often correlates with above-avg outcomes.",
           _origin:       "fg",
         });
       }
@@ -20159,7 +20166,7 @@ const GLOSSARY = {
     name: "Health Burden", aliases: ["Health grade", "Farm health"], category: "custom-index",
     priority: 60,
     short: "Combined post-TJ % and trailing 12-month IL-days mean. INVERSE — lower burden = better letter grade.",
-    long: "Per-org health_burden = 100 × post_tj_pct + il_days_mean. The score is INVERTED before ranking so the org with the LOWEST burden gets the BEST letter grade (A+ = healthiest system). The Health component has the smallest weight in farm_score (1%) because it's the most volatile category, but ranks separately as a stand-alone indicator.",
+    long: "Per-org health_burden displays the legacy 100 × post_tj_pct + il_days_mean composite for back-compat, but the v31.6 Health Mgmt LEAF GRADE no longer includes post-TJ (post-surgery grace period often produces above-avg outcomes, and TJ for hitters isn't a real signal). Current Health Mgmt leaf scoring = IL% current + avg 12-month IL days, both inverted. Post-TJ pitcher counts still ship as informational context on the leaf but no longer affect the grade.",
     related: ["post_tj", "on_il", "il_10_15_60", "farm_il_pct_current", "farm_report_card"],
   },
   "farm_il_pct_current": {
@@ -22295,33 +22302,34 @@ function makeFarmReportCard(org) {
     </div>${_posBucketGrid}`;
   };
   // v31 — Health Management leaf under Development. Captures how
-  // well the org keeps prospects healthy / available — composite of
-  // IL%-current, avg 12-month IL days, and post-TJ rate (all inverted
-  // so LOWER burden = HIGHER grade). Data feeds straight off the
-  // org's existing health_burden roll-up.
+  // well the org keeps prospects healthy / available. v31.6 —
+  // Composite of IL%-current + avg 12-month IL days only (post-TJ
+  // dropped from scoring — post-surgery grace period often produces
+  // above-avg outcomes, and TJ for hitters isn't a real signal at
+  // all). Post-TJ still ships on the payload as INFORMATIONAL
+  // context (rendered as info-only sub-leaf rows).
   const _healthLeaf = t.dev_health_mgmt || {};
   const _healthFmt = leaf => {
     const ilPct = leaf.il_pct_current;
-    const tj    = leaf.post_tj_pct;
     const days  = leaf.il_days_mean;
-    if (ilPct == null && tj == null && days == null) return '—';
+    if (ilPct == null && days == null) return '—';
     const parts = [];
     if (ilPct != null) parts.push(`${(ilPct * 100).toFixed(0)}% IL`);
     if (days  != null) parts.push(`${days.toFixed(0)}d avg`);
-    if (tj    != null) parts.push(`${(tj * 100).toFixed(0)}% TJ`);
     return parts.join(' · ');
   };
   const _healthTooltip = (() => {
     const ilPct = _healthLeaf.il_pct_current;
-    const tj    = _healthLeaf.post_tj_pct;
     const days  = _healthLeaf.il_days_mean;
     const n     = _healthLeaf.active_count;
     if (n == null) return 'Insufficient roster sample to score health management.';
+    const tjBit = (_healthLeaf.post_tj_pct != null)
+      ? ` Post-TJ context: ${_healthLeaf.post_tj_count ?? 0} pitcher${(_healthLeaf.post_tj_count === 1) ? '' : 's'} (${(_healthLeaf.post_tj_pct * 100).toFixed(1)}%) — informational only, no longer factored into the leaf grade.`
+      : '';
     return `Roster health composite (LOWER burden = HIGHER grade). Across ${n} active prospect${n === 1 ? '' : 's'}: ` +
            `${_healthLeaf.il_current_count ?? 0} currently on IL (${ilPct != null ? (ilPct * 100).toFixed(1) + '%' : '—'}), ` +
-           `${days != null ? days.toFixed(1) + ' avg IL days / active over trailing 12mo' : '— avg IL days'}, ` +
-           `${_healthLeaf.post_tj_count ?? 0} with prior Tommy John (${tj != null ? (tj * 100).toFixed(1) + '%' : '—'}). ` +
-           `All three inputs are inverted before z-scoring; the leaf grade reflects how clean the org's pipeline reads on injury exposure.`;
+           `${days != null ? days.toFixed(1) + ' avg IL days / active over trailing 12mo' : '— avg IL days'}. ` +
+           `Both inputs are inverted before z-scoring; the leaf grade reflects current injury exposure only.${tjBit}`;
   })();
   // v31 — Statcast Quality leaf under Development. Org-wide
   // aggregate SC+ across graded actives, as a standalone signal
@@ -22746,18 +22754,32 @@ function makeFarmReportCard(org) {
         return subs.map((s, i) => {
           const cy = stackTop + i * (SUB_H + SUB_GAP);
           const hasLetter = s.letter && s.letter !== "—";
-          // Color preference: grade-letter color when present, else
-          // fall back to kind-aware value-based tone.
-          const tone = hasLetter ? gradeColor(s.letter) : _toneSub(s);
-          const dim = s.sparse ? 0.55 : 1;
+          // v31.6 — Info-only sub-leaves (e.g. post-TJ % rows) render
+          // with a neutral tone + no letter chip so the user can tell
+          // at a glance that the row is context, not a grade. The
+          // raw value still displays and the tooltip still surfaces
+          // the n + raw context line.
+          const infoOnly = !!s.info_only;
+          // Color preference: neutral for info-only, grade-letter
+          // color when present, else fall back to kind-aware tone.
+          const tone = infoOnly ? 'var(--text-tertiary)'
+                     : hasLetter ? gradeColor(s.letter)
+                     : _toneSub(s);
+          const dim = (s.sparse || infoOnly) ? 0.55 : 1;
           const valStr = _fmtSub(s);
-          const letterChip = s.letter
+          const letterChip = (s.letter && !infoOnly)
             ? `<text x="${COL_SUB_LEFT + SUB_W - 5}" y="${cy + SUB_H / 2 + 3}" text-anchor="end"
                      style="font-family:var(--font-serif);font-size:10px;font-weight:700;fill:${tone};">${escapeHtml(s.letter)}</text>`
-            : '';
-          const valueX = s.letter ? (COL_SUB_LEFT + SUB_W - 22) : (COL_SUB_LEFT + SUB_W - 5);
+            : (infoOnly
+                ? `<text x="${COL_SUB_LEFT + SUB_W - 5}" y="${cy + SUB_H / 2 + 3}" text-anchor="end"
+                         style="font-family:var(--font-sans);font-size:7px;font-style:italic;letter-spacing:0.06em;text-transform:uppercase;fill:var(--text-tertiary);">info</text>`
+                : '');
+          const valueX = (s.letter && !infoOnly) ? (COL_SUB_LEFT + SUB_W - 22)
+                       : infoOnly ? (COL_SUB_LEFT + SUB_W - 30)
+                       : (COL_SUB_LEFT + SUB_W - 5);
           const tipParts = [s.label, valStr];
-          if (s.letter && s.rank != null && s.rank_n) {
+          if (infoOnly) tipParts.push('informational only — not graded');
+          if (s.letter && !infoOnly && s.rank != null && s.rank_n) {
             tipParts.push(`grade ${s.letter} (#${s.rank} of ${s.rank_n})`);
           }
           if (s.n != null) tipParts.push(`n=${s.n}`);
@@ -22771,9 +22793,9 @@ function makeFarmReportCard(org) {
               <rect x="${COL_SUB_LEFT}" y="${cy}" width="${SUB_W}" height="${SUB_H - 1}"
                     rx="2" fill="var(--bg-secondary)" stroke="${tone}" stroke-width="0.7" opacity="0.85"/>
               <rect x="${COL_SUB_LEFT}" y="${cy}" width="${SUB_W}" height="${SUB_H - 1}"
-                    rx="2" fill="${tone}" opacity="${hasLetter ? 0.08 : 0}"/>
+                    rx="2" fill="${tone}" opacity="${(hasLetter && !infoOnly) ? 0.08 : 0}"/>
               <rect x="${COL_SUB_LEFT}" y="${cy}" width="2.5" height="${SUB_H - 1}"
-                    fill="${tone}" opacity="0.9"/>
+                    fill="${tone}" opacity="${infoOnly ? 0.5 : 0.9}"/>
               <text x="${COL_SUB_LEFT + 6}" y="${cy + SUB_H / 2 + 3}" text-anchor="start"
                     style="font-family:var(--font-sans);font-size:9px;fill:var(--text-secondary);">${escapeHtml(s.label)}</text>
               <text x="${valueX}" y="${cy + SUB_H / 2 + 3}" text-anchor="end"
@@ -23032,10 +23054,10 @@ function makeRosterSnapshotTile(org) {
         <div class="rs-stat" title="FV-weighted debuts in trailing 12 months"><span class="rs-stat-label">Debut pipe</span><span class="rs-stat-val">${num(org.grad_pipeline_score)}</span></div>
         <div class="rs-stat" title="Top-10 mean of composite_overall (20-80 power mean)"><span class="rs-stat-label">Tool top10</span><span class="rs-stat-val">${num(tq.top10_mean)}</span></div>
         <div class="rs-stat" title="(very-young − very-old) / total actives"><span class="rs-stat-label">Readiness</span><span class="rs-stat-val">${pct(rdy.pct_signal)}</span></div>
-        <div class="rs-stat rs-stat-health${hb.il_pct_current >= 0.10 ? ' is-warn' : ''}" title="Combined health view. Burden = 100·post-TJ% + IL-days mean (lower is better, ranks to letter-grade in the Farm Report Card). On IL now = ${hb.il_current_count != null ? hb.il_current_count : '—'} of ${hb.active_count != null ? hb.active_count : '—'} tracked actives currently sidelined; highlighted red when ≥10%.">
+        <div class="rs-stat rs-stat-health${hb.il_pct_current >= 0.10 ? ' is-warn' : ''}" title="Combined health view. v31.6 — Health Mgmt leaf grade now scores on IL% + avg 12mo IL days only (post-TJ dropped from grading since the surgical grace period often correlates with above-avg outcomes; hitter post-TJ removed entirely). On IL now = ${hb.il_current_count != null ? hb.il_current_count : '—'} of ${hb.active_count != null ? hb.active_count : '—'} tracked actives currently sidelined; highlighted red when ≥10%. Avg IL-days context: ${hb.il_days_mean != null ? hb.il_days_mean.toFixed(1) + 'd / active' : '—'}.">
           <span class="rs-stat-label">Health</span>
           <span class="rs-stat-val" style="display:flex;flex-direction:column;gap:2px;line-height:1.15;">
-            <span style="font-size:14px;">${num(hb.score)} <span style="font-size:9px;color:var(--text-tertiary);font-weight:400;letter-spacing:0.04em;text-transform:uppercase;">burden</span></span>
+            <span style="font-size:14px;">${num(hb.il_days_mean)} <span style="font-size:9px;color:var(--text-tertiary);font-weight:400;letter-spacing:0.04em;text-transform:uppercase;">avg IL d</span></span>
             <span style="font-size:12px;font-weight:600;color:${hb.il_pct_current >= 0.10 ? 'var(--down)' : 'var(--text-secondary)'};">${hb.il_pct_current != null ? (hb.il_pct_current * 100).toFixed(0) + '%' : '—'} <span style="font-size:9px;color:var(--text-tertiary);font-weight:400;letter-spacing:0.04em;text-transform:uppercase;">on IL${hb.il_current_count != null ? ` · ${hb.il_current_count}/${hb.active_count}` : ''}</span></span>
           </span>
         </div>

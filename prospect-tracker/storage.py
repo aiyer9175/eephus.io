@@ -3763,12 +3763,13 @@ def _attach_sub_leaves(entry: dict) -> None:
         })
         scq["sub_leaves"] = subs
 
-    # ── Development → Health Mgmt — three inverted inputs surfaced ──
-    # plus per-side splits (Pitcher / Hitter post-TJ + IL%) so the
-    # user can see arm-injury concentration. Per-side sub-leaves are
-    # marked with a "tier" so the league pass can letter-grade them
-    # across the cohort (lower % = better letter, mirroring the leaf
-    # itself — LOWER burden = HIGHER grade).
+    # ── Development → Health Mgmt — IL signals (graded) + post-TJ
+    # context (info-only as of v31.6). The org-wide + pitcher-side
+    # post-TJ sub-leaves are emitted with `info_only: True` so the
+    # renderer can skip letter-grading and show them as neutral-toned
+    # context rows. Hitter post-TJ was removed entirely (hitter TJ
+    # isn't a real metric). Pitcher IL share + Hitter IL share remain
+    # letter-graded (lower = better) as side-specific injury exposure.
     hm = tree.get("dev_health_mgmt") or {}
     if hm and hm.get("active_count"):
         subs = []
@@ -3787,37 +3788,13 @@ def _attach_sub_leaves(entry: dict) -> None:
                 "value": round(hm["il_days_mean"], 1),
                 "n":     hm.get("active_count"),
             })
-        if hm.get("post_tj_pct") is not None:
-            subs.append({
-                "label": "Post-TJ share",
-                "kind":  "pct",
-                "value": round(hm["post_tj_pct"], 3),
-                "n":     hm.get("active_count"),
-                "raw":   f"{hm.get('post_tj_count', 0)} of {hm.get('active_count', 0)} with prior TJ",
-            })
-        # Per-side splits — only emit when that side has actives.
-        if hm.get("post_tj_pct_pit") is not None:
-            subs.append({
-                "label":  "Pitcher post-TJ %",
-                "kind":   "pct",
-                "value":  round(hm["post_tj_pct_pit"], 3),
-                "n":      hm.get("actives_pit_count"),
-                "tier":   "health_split",
-            })
+        # Per-side IL splits — graded (lower = better).
         if hm.get("il_pct_current_pit") is not None:
             subs.append({
                 "label":  "Pitcher IL share",
                 "kind":   "pct",
                 "value":  round(hm["il_pct_current_pit"], 3),
                 "n":      hm.get("actives_pit_count"),
-                "tier":   "health_split",
-            })
-        if hm.get("post_tj_pct_hit") is not None:
-            subs.append({
-                "label":  "Hitter post-TJ %",
-                "kind":   "pct",
-                "value":  round(hm["post_tj_pct_hit"], 3),
-                "n":      hm.get("actives_hit_count"),
                 "tier":   "health_split",
             })
         if hm.get("il_pct_current_hit") is not None:
@@ -3827,6 +3804,28 @@ def _attach_sub_leaves(entry: dict) -> None:
                 "value":  round(hm["il_pct_current_hit"], 3),
                 "n":      hm.get("actives_hit_count"),
                 "tier":   "health_split",
+            })
+        # v31.6 — Post-TJ rows are INFORMATIONAL ONLY. Both the org-
+        # wide and pitcher-side post-TJ shares are emitted with
+        # `info_only: True` so the renderer skips letter grading and
+        # treats them as neutral context. Hitter post-TJ removed.
+        if hm.get("post_tj_pct") is not None:
+            subs.append({
+                "label":    "Post-TJ share (info)",
+                "kind":     "pct",
+                "value":    round(hm["post_tj_pct"], 3),
+                "n":        hm.get("active_count"),
+                "raw":      f"{hm.get('post_tj_count', 0)} of {hm.get('active_count', 0)} with prior TJ — informational only, not graded",
+                "info_only": True,
+            })
+        if hm.get("post_tj_pct_pit") is not None:
+            subs.append({
+                "label":     "Pitcher post-TJ % (info)",
+                "kind":      "pct",
+                "value":     round(hm["post_tj_pct_pit"], 3),
+                "n":         hm.get("actives_pit_count"),
+                "raw":       "informational only — post-surgery grace period often correlates with above-avg outcomes",
+                "info_only": True,
             })
         if subs:
             hm["sub_leaves"] = subs
@@ -6852,12 +6851,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # v31.1 — Per-side health splits (Hitter vs Pitcher).
                 # Surfaces side-specific injury exposure under the
                 # Health Mgmt leaf's sub-leaves so the user can see,
-                # e.g., a pitcher-heavy TJ rate even when the overall
-                # IL share is moderate (pitcher arms are the main
-                # injury risk in baseball; the side split makes that
-                # signal visible).
+                # e.g., a pitcher-heavy IL share even when the overall
+                # IL rate is moderate (pitcher arms are the main injury
+                # risk; the side split makes that asymmetry visible).
+                # v31.6 — Hitter post-TJ removed (TJ for hitters isn't
+                # a real thing — the metric was misleading). Pitcher
+                # post-TJ kept but as informational only (no longer
+                # affects the Health Mgmt grade).
                 "_post_tj_count_pit":  0,
-                "_post_tj_count_hit":  0,
                 "_il_current_count_pit": 0,
                 "_il_current_count_hit": 0,
                 "_actives_pit_count":  0,
@@ -7060,12 +7061,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             m["_actives_pit_count"] += 1
         else:
             m["_actives_hit_count"] += 1
-        if hp.get("is_post_tj"):
+        # v31.6 — Post-TJ tracking limited to PITCHERS only. Hitter
+        # TJ isn't a real signal (the surgery is overwhelmingly a
+        # pitcher procedure) and the metric was misleading when
+        # surfaced for hitters. Post-TJ still counted at the org-
+        # wide level as informational context but no longer affects
+        # the Health Mgmt grade.
+        if hp.get("is_post_tj") and _is_pit_active:
             m["_post_tj_count"] += 1
-            if _is_pit_active:
-                m["_post_tj_count_pit"] += 1
-            else:
-                m["_post_tj_count_hit"] += 1
+            m["_post_tj_count_pit"] += 1
         il_days = int(hp.get("il_days_12mo") or 0)
         m["_il_days_sum"]   += il_days
         m["_il_days_count"] += 1
@@ -7629,19 +7633,22 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "very_young_count": m["very_young_count"],
             "very_old_count":   m["very_old_count"],
         }
-        # Health burden (LOWER IS BETTER) — combines post-TJ % and
-        # mean trailing 12-month IL days. The ranking layer below
-        # inverts so the LOWEST burden gets the BEST letter grade.
+        # Health burden (LOWER IS BETTER on the scoring inputs).
+        # v31.6 — Post-TJ removed from the scoring composite (it's
+        # now informational only — post-surgery grace period often
+        # leads to above-avg outcomes for pitchers, and the rate is
+        # mostly a function of past-injury exposure rather than
+        # current development quality). The `score` field still
+        # mixes post-TJ for back-compat with older payloads but the
+        # Health Mgmt LEAF_SPECS no longer reads it.
         post_tj_count = m.pop("_post_tj_count") or 0
         il_days_sum = m.pop("_il_days_sum") or 0
         il_days_count = m.pop("_il_days_count") or 0
         il_current_count = m.pop("_il_current_count") or 0
-        # v31.1 — Per-side health counters (pitcher vs hitter splits)
-        # so the Health Mgmt leaf's sub-leaves can show side-specific
-        # exposure. Pitcher arm issues are the bulk of injury risk in
-        # baseball; surfacing the split here makes that visible.
+        # v31.1 — Per-side health counters. v31.6 — Hitter post-TJ
+        # tracking removed (hitter TJ isn't a real signal). Pitcher
+        # post-TJ retained as informational context only.
         post_tj_count_pit = m.pop("_post_tj_count_pit") or 0
-        post_tj_count_hit = m.pop("_post_tj_count_hit") or 0
         il_current_count_pit = m.pop("_il_current_count_pit") or 0
         il_current_count_hit = m.pop("_il_current_count_hit") or 0
         actives_pit_count = m.pop("_actives_pit_count") or 0
@@ -7650,7 +7657,6 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         il_days_mean = (il_days_sum / il_days_count) if il_days_count else 0
         il_pct_current = (il_current_count / n_actives) if n_actives else 0
         post_tj_pct_pit = (post_tj_count_pit / actives_pit_count) if actives_pit_count else None
-        post_tj_pct_hit = (post_tj_count_hit / actives_hit_count) if actives_hit_count else None
         il_pct_current_pit = (il_current_count_pit / actives_pit_count) if actives_pit_count else None
         il_pct_current_hit = (il_current_count_hit / actives_hit_count) if actives_hit_count else None
         m["health_burden"] = {
@@ -7663,7 +7669,6 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "active_count": n_actives,
             # Per-side splits (None when that side has zero actives).
             "post_tj_pct_pit":    round(post_tj_pct_pit, 3) if post_tj_pct_pit is not None else None,
-            "post_tj_pct_hit":    round(post_tj_pct_hit, 3) if post_tj_pct_hit is not None else None,
             "il_pct_current_pit": round(il_pct_current_pit, 3) if il_pct_current_pit is not None else None,
             "il_pct_current_hit": round(il_pct_current_hit, 3) if il_pct_current_hit is not None else None,
             "actives_pit_count":  actives_pit_count,
@@ -7998,11 +8003,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "il_current_count": hb.get("il_current_count"),
                 "post_tj_count":    hb.get("post_tj_count"),
                 # v31.1 — Per-side health splits surfaced as sub-leaves
-                # of the Health Mgmt leaf. Pitcher arm risk dominates
-                # the baseline post-TJ rate; the side split makes the
-                # exposure asymmetry visible to the user.
+                # of the Health Mgmt leaf. v31.6 — Hitter post-TJ
+                # removed (TJ for hitters isn't a real signal); only
+                # pitcher post-TJ remains, and it's INFORMATIONAL only
+                # now (no longer a scoring input or letter-graded sub-
+                # leaf — post-surgery grace period often produces
+                # above-avg outcomes, so a higher post-TJ share doesn't
+                # cleanly map to "worse development").
                 "post_tj_pct_pit":    hb.get("post_tj_pct_pit"),
-                "post_tj_pct_hit":    hb.get("post_tj_pct_hit"),
                 "il_pct_current_pit": hb.get("il_pct_current_pit"),
                 "il_pct_current_hit": hb.get("il_pct_current_hit"),
                 "actives_pit_count":  hb.get("actives_pit_count"),
@@ -9471,15 +9479,20 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             ("war_per_m_ifa", lambda e: (e["tree"]["fin_ifa_roi"] or {}).get("war_per_m_ifa")),
             ("war_per_yr_fallback", lambda e: (e["tree"]["fin_ifa_roi"] or {}).get("war_per_yr_fallback")),
         ],
-        # v31 — Health Management leaf under Development. Three NEGATED
+        # v31 — Health Management leaf under Development. Two NEGATED
         # inputs (LOWER burden = HIGHER score):
         #   * il_pct_current  — share of actives currently on IL
         #   * il_days_mean    — avg trailing 12mo IL days per active
-        #   * post_tj_pct     — share of actives with a Tommy John in
-        #                       their history
-        # Each input z-blends independently then averages, mirroring
-        # the other multi-input leaves. Sparse-gated downstream by
-        # `_zscore_to_100`'s n≥3 floor.
+        # v31.6 — Post-TJ share REMOVED from scoring. A pitcher being
+        # post-TJ isn't inherently bad — the post-surgery grace period
+        # often produces above-average outcomes, and a high post-TJ
+        # share also reflects past injury exposure rather than current
+        # development quality. Post-TJ count still ships on the leaf
+        # payload as INFORMATIONAL only (no letter grade, no scoring
+        # weight). Hitter post-TJ is dropped entirely from the data
+        # model since TJ for hitters is rare enough that the metric
+        # was misleading. Each input z-blends independently then
+        # averages, sparse-gated downstream by _zscore_to_100's n≥3.
         "dev_health_mgmt": [
             ("il_pct_current_neg", lambda e: (
                 -(e["tree"]["dev_health_mgmt"] or {}).get("il_pct_current")
@@ -9489,11 +9502,6 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             ("il_days_mean_neg", lambda e: (
                 -(e["tree"]["dev_health_mgmt"] or {}).get("il_days_mean")
                 if (e["tree"]["dev_health_mgmt"] or {}).get("il_days_mean") is not None
-                else None
-            )),
-            ("post_tj_pct_neg", lambda e: (
-                -(e["tree"]["dev_health_mgmt"] or {}).get("post_tj_pct")
-                if (e["tree"]["dev_health_mgmt"] or {}).get("post_tj_pct") is not None
                 else None
             )),
         ],
@@ -9846,16 +9854,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     for tier_label in ("Top (≥$2M)", "Mid ($500K-$2M)", "Lower / unknown bonus"):
         _grade_sub_leaf_across_league("acq_ifa", tier_label)
 
-    # Per-side health splits (LOWER IS BETTER — fewer TJ + fewer on IL
-    # = better letter). Mirrors the parent Health Mgmt leaf's grading
-    # direction.
-    for split_label in ("Pitcher post-TJ %", "Pitcher IL share",
-                         "Hitter post-TJ %", "Hitter IL share"):
+    # Per-side health splits (LOWER IS BETTER — fewer on IL = better
+    # letter). v31.6 — Post-TJ removed from grading (now info-only;
+    # hitter TJ removed entirely as a metric). Only IL share splits
+    # remain graded.
+    for split_label in ("Pitcher IL share", "Hitter IL share"):
         _grade_sub_leaf_across_league("dev_health_mgmt", split_label,
                                        higher_is_better=False)
     # Org-wide health signals — same lower-is-better direction.
-    for hsig_label in ("Currently on IL", "Avg IL days / active (12mo)",
-                        "Post-TJ share"):
+    for hsig_label in ("Currently on IL", "Avg IL days / active (12mo)"):
         _grade_sub_leaf_across_league("dev_health_mgmt", hsig_label,
                                        higher_is_better=False)
 
