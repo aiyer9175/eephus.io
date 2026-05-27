@@ -1,4 +1,4 @@
-# MLB Prospect Portal
+# MLB PROSPX (Alpha v0.1)
 
 ## Install
 
