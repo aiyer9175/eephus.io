@@ -285,6 +285,16 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
         player_ids={},
     )
 
+    # International Amateurs sidecar — IFA signing classes (2021–current)
+    # from the cached Spotrac tracker, enriched against the freshly-written
+    # timeseries.json. Best-effort; a failure here must not abort the run.
+    try:
+        from ifa_export import export_ifa_json
+        n_ifa = export_ifa_json(out_dir / "ifa_timeseries.json")
+        log.info("ifa pipeline (rebuild): exported %d signings", n_ifa)
+    except Exception:
+        log.exception("ifa export crashed in rebuild_only — continuing")
+
     # Post-export sanity: surface what landed in the JSON so the user
     # doesn't have to grep the file.
     _post_export_summary(out_path, all_snaps, log)
@@ -1567,6 +1577,15 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                player_ids=ids_by_key)
         log.info("wrote %s", out_path)
         _post_export_summary(out_path, all_snaps, log)
+        # International Amateurs sidecar — IFA signing classes from the
+        # cached Spotrac tracker, enriched against the just-written
+        # timeseries.json. Best-effort; never aborts the run.
+        try:
+            from ifa_export import export_ifa_json
+            n_ifa = export_ifa_json(out_dir / "ifa_timeseries.json")
+            log.info("ifa pipeline: exported %d signings", n_ifa)
+        except Exception:
+            log.exception("ifa export crashed — continuing")
         _STEP_TIMES.append(("5. Export timeseries.json + summary", time.monotonic() - _step_5_start))
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,

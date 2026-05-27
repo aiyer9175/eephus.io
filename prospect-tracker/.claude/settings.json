@@ -82,7 +82,10 @@
       "Bash(PYTHONIOENCODING=utf-8 python _logoverify.py)",
       "Bash(PYTHONIOENCODING=utf-8 python _tgverify.py)",
       "Bash(awk 'NR>=4820 && NR<=4876 && /^def |^    def /' storage.py)",
-      "Bash(python -m pytest test_design_tokens.py test_farm_tree.py -q)"
+      "Bash(python -m pytest test_design_tokens.py test_farm_tree.py -q)",
+      "Bash(grep -nE \"def player_headshot_url|def canonical_player_key\" player_images.py scrapers.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python _ifaverify.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python -m pytest test_ifa_export.py -q)"
     ],
     "additionalDirectories": [
       "C:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker"

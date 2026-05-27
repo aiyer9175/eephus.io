@@ -1441,6 +1441,33 @@
       color: var(--text-secondary);
       padding: 6px 2px 3px;
     }
+    /* International Amateurs section — main signings table + sidebar stack. */
+    .ifa-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .ifa-grid { grid-template-columns: 1fr; }
+    }
+    .ifa-side-card {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      background: var(--bg-secondary);
+      padding: 8px 10px;
+      margin-bottom: 10px;
+    }
+    .ifa-side-title {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      margin-bottom: 6px;
+    }
+    .ifa-side-card table.detail-table td,
+    .ifa-side-card table.detail-table th { padding: 2px 4px; }
     /* Row variants — each section's per-render `grid-template-columns`
        lived inline before; centralizing here keeps the renderers terse
        and lets a single media-query block handle mobile collapses. */
@@ -7178,9 +7205,10 @@
     <button class="section-tab" data-section="spotlights">Spotlights</button>
     <button class="section-tab" data-section="traded">Transactions</button>
     <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL">Injured List</button>
-    <button class="section-tab" data-section="debuts">Debuted</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
+    <button class="section-tab" data-section="debuts">Debuted</button>
     <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">MLB Draft</button>
+    <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes — signing bonuses, signing teams, prospects signed, and org spending by year (2021–present).">International Amateurs</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
     <button class="section-tab" data-section="glossary" title="Stats, indices, scouting concepts, and methodology — every term used on the site">Glossary</button>
     <button class="section-tab" data-section="watchlist" title="Your starred prospects and farm systems — private to this browser">Watchlist<span class="section-tab-count" id="watchlist-tab-count"></span></button>
@@ -7762,6 +7790,18 @@
       </div>
     </div>
     <div id="overseas-rows"></div>
+  </div>
+
+  <!-- International Amateurs — IFA (J2) signing classes by year. Mirrors the
+       Draft section: per-year chips at top, then a main signings table +
+       org-spending / trends sidebars. Signing TEAM (not current org) is the
+       headline affordance. Data: data/ifa_timeseries.json (Spotrac tracker). -->
+  <div id="ifa-section" style="display: none;">
+    <div id="ifa-class-bar" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+      <span class="filter-label" title="IFA signing year (Jan 15 signing day opens each class)">Class</span>
+      <span id="ifa-class-chips"></span>
+    </div>
+    <div id="ifa-rows"></div>
   </div>
 
   <div id="debuts-section" style="display: none;">
@@ -17750,6 +17790,177 @@ function _overseasStatusColor(status) {
     case "posted":         return "var(--neon-orange)";
     default:               return "var(--text-tertiary)";
   }
+}
+
+// FV-progression chip for the IFA signings table: FV at signing (muted,
+// desaturated) → current FV (full badge) with a direction-colored arrow and
+// Δ. Shows how a signing has tracked since the org committed to it.
+function _ifaFvProgHTML(s) {
+  const sig = s.fv_signing, cur = s.fv;
+  if (sig == null && cur == null) return `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
+  const badge = (v, label, muted) => {
+    const style = muted ? `font-size:9px;padding:0 4px;opacity:0.5;filter:saturate(0.4);`
+                        : `font-size:10px;padding:1px 5px;`;
+    return `<span class="fv-badge ${fvClass(String(fvCeil(v)))}" style="${style}">${escapeHtml(label || String(fvCeil(v)))}</span>`;
+  };
+  if (sig == null) return badge(cur, s.fv_label, false);
+  if (cur == null) return badge(sig, s.fv_signing_label, true);
+  const delta = cur - sig;
+  const dColor = delta > 0 ? "var(--up)" : delta < 0 ? "var(--down)" : "var(--text-tertiary)";
+  const arrow = delta > 0 ? "↗" : delta < 0 ? "↘" : "→";
+  const dTxt = delta ? `${delta > 0 ? "+" : ""}${delta % 1 ? delta.toFixed(1) : delta.toFixed(0)}` : "";
+  return `<span style="display:inline-flex;align-items:center;gap:4px;" title="FV at signing ${escapeHtml(s.fv_signing_label || String(fvCeil(sig)))} → current ${escapeHtml(s.fv_label || String(fvCeil(cur)))}">
+    ${badge(sig, s.fv_signing_label, true)}<span style="color:${dColor};font-size:12px;line-height:1;">${arrow}</span>${badge(cur, s.fv_label, false)}${dTxt ? `<span style="color:${dColor};font-size:9px;font-family:var(--font-mono);">${dTxt}</span>` : ""}
+  </span>`;
+}
+
+// ── International Amateurs (IFA) section ─────────────────────────────────────
+// Per-year J2 signing classes from data/ifa_timeseries.json (Spotrac tracker).
+// Main signings table (featured + expandable, org-filterable) plus org-spending
+// and trend sidebars. Headlines the SIGNING team, not the player's current org.
+async function renderIFA() {
+  const host = document.getElementById("ifa-rows");
+  const classChips = document.getElementById("ifa-class-chips");
+  if (!host) return;
+
+  if (!DATA.ifa) {
+    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">Loading international-amateur data…</div>`;
+    try {
+      const base = DATA_URL.replace(/[^/]+$/, "");
+      const resp = await fetch(base + "ifa_timeseries.json", { cache: "no-cache" });
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      DATA.ifa = await resp.json();
+    } catch (e) {
+      host.innerHTML = `<div style="padding:14px;color:var(--neon-red);">Could not load international-amateur data: ${escapeHtml(String(e.message || e))}.
+        Run <code>python run_monthly.py --rebuild-only</code> to regenerate
+        <code>data/ifa_timeseries.json</code>.</div>`;
+      return;
+    }
+  }
+
+  const classes = (DATA.ifa && DATA.ifa.classes) || [];
+  if (!classes.length) {
+    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">No international-amateur classes available.</div>`;
+    return;
+  }
+  if (!state.ifaYear || !classes.find(c => c.year === state.ifaYear)) {
+    state.ifaYear = classes[0].year;   // newest first
+  }
+  const cls = classes.find(c => c.year === state.ifaYear) || classes[0];
+
+  const usd = n => n == null ? "—"
+    : n >= 1e6 ? `$${(n / 1e6).toFixed(2)}M`
+    : n >= 1e3 ? `$${Math.round(n / 1e3)}k` : `$${n}`;
+
+  // Year chip strip.
+  classChips.innerHTML = classes.map(c =>
+    `<button class="chip ${c.year === state.ifaYear ? "active" : ""}" data-ifa-year="${c.year}"
+       title="${c.n_signings} signings · ${usd(c.total_usd)}${c.is_current ? " · current class" : ""}">${c.year}${c.is_current ? " ⏳" : ""}</button>`
+  ).join("");
+  classChips.querySelectorAll("[data-ifa-year]").forEach(b => b.addEventListener("click", () => {
+    state.ifaYear = +b.dataset.ifaYear; state.ifaOrgFilter = null; state.ifaShowAll = false; renderIFA();
+  }));
+
+  const t = cls.trends || {};
+  const orgFilter = state.ifaOrgFilter || null;
+  let signings = cls.signings || [];
+  if (orgFilter) signings = signings.filter(s => s.org === orgFilter);
+
+  // Featured = top 40 by bonus (list is bonus-sorted) + every tracked
+  // prospect; the rest hides behind a "Show all" expander. An active org
+  // filter always shows that team's full haul.
+  const showAll = !!state.ifaShowAll || !!orgFilter;
+  let shown = signings, hiddenCount = 0;
+  if (!showAll) {
+    shown = signings.filter((s, i) => i < 40 || s.is_tracked);
+    hiddenCount = signings.length - shown.length;
+  }
+
+  const sigRow = (s) => {
+    const logo = s.org ? teamLogoHTML(s.org, "sm", fullOrgName(s.org)) : "";
+    const nowNote = (s.is_tracked && s.current_org && s.current_org !== s.org)
+      ? `<span style="color:var(--text-tertiary);font-size:9px;margin-left:4px;" title="Current org (traded since signing)">now ${escapeHtml(s.current_org)}</span>` : "";
+    // Rectangular "baseball-card" silhouette like the MiLB list, but smaller
+    // so the row height doesn't grow. We intentionally OMIT mlbam_id so every
+    // row uses the SAME SVG silhouette placeholder — J2 signees almost never
+    // have a real MLB photo, and the CDN's generic (dark) silhouette clashed
+    // with the (light) SVG one, so the table looked inconsistent. The FV-tier
+    // ring still differentiates tracked prospects.
+    const head = headshotHTML({ fv_close: s.fv, fv_close_raw: s.fv }, 28);
+    const name = (s.is_tracked && s.player_key)
+      ? `<a href="#player=${escapeHtml(s.player_key)}" onclick="event.preventDefault();goToPlayer('${escapeHtml(s.player_key)}');" style="color:var(--text-primary);font-weight:600;text-decoration:none;">${escapeHtml(s.player_name)}</a>`
+      : `<span style="color:var(--text-primary);">${escapeHtml(s.player_name)}</span>`;
+    // Sub-line: pos · country, plus (tracked) age-at-signing and the Tool
+    // composite's signing → current movement.
+    const sub = [`${escapeHtml(s.position || "—")} · ${escapeHtml(s.country || "—")}`];
+    if (s.age_at_signing != null) sub.push(`signed at ${s.age_at_signing}`);
+    if (s.tool_current != null || s.tool_signing != null) {
+      const ts = s.tool_signing, tc = s.tool_current;
+      sub.push(`Tool ${ts != null ? ts : "—"}${(tc != null && tc !== ts) ? ` → ${tc}` : (tc != null && ts == null ? tc : "")}`);
+    }
+    const subLine = `<div style="font-size:10px;color:var(--text-tertiary);">${sub.join(" · ")}</div>`;
+    // FV-progression cell — signing FV (muted) → current FV (bright) + Δ.
+    const fvCell = _ifaFvProgHTML(s);
+    return `<tr>
+      <td style="text-align:left;"><div style="display:flex;align-items:center;gap:7px;min-width:0;">${head}<div style="min-width:0;">${name}${nowNote}${subLine}</div></div></td>
+      <td style="text-align:left;white-space:nowrap;">${fvCell}</td>
+      <td style="text-align:left;white-space:nowrap;"><span style="display:inline-flex;align-items:center;gap:4px;">${logo}${escapeHtml(s.org || "—")}</span></td>
+      <td style="text-align:right;font-family:var(--font-mono);font-weight:700;">${usd(s.bonus_usd)}</td>
+      <td style="text-align:right;font-family:var(--font-mono);color:var(--text-tertiary);">${s.pool_pct != null ? s.pool_pct.toFixed(1) + "%" : "—"}</td>
+    </tr>`;
+  };
+  const tableHTML = `<table class="detail-table" style="width:100%;">
+    <thead><tr><th style="text-align:left;">Player · pos · country</th><th style="text-align:left;" title="FV at signing (earliest grade on file) → current FV">FV · signing → now</th><th style="text-align:left;">Signing team</th><th style="text-align:right;">Bonus</th><th style="text-align:right;" title="Share of the signing team's international bonus pool this signing used">Pool %</th></tr></thead>
+    <tbody>${shown.map(sigRow).join("") || `<tr><td colspan="5" style="color:var(--text-tertiary);padding:10px;">No signings.</td></tr>`}</tbody></table>`;
+  const expandBtn = (!showAll && hiddenCount > 0)
+    ? `<button class="chip" id="ifa-show-all" style="margin-top:8px;">Show all ${signings.length} signings (+${hiddenCount} more)</button>` : "";
+  const filterBanner = orgFilter
+    ? `<div style="margin-bottom:8px;font-size:12px;">${teamLogoHTML(orgFilter, "sm", fullOrgName(orgFilter))} <strong>${escapeHtml(fullOrgName(orgFilter))}</strong>'s ${cls.year} signing class · <button class="chip" id="ifa-clear-filter" style="font-size:11px;">✕ clear</button></div>` : "";
+
+  // Sidebar — org spending leaderboard (drill-down) + trend modules.
+  const orgRows = (cls.org_spending || []).slice(0, 16).map((o, i) =>
+    `<tr data-ifa-org="${escapeHtml(o.org)}" style="cursor:pointer;${o.org === orgFilter ? "background:var(--bg-tertiary);" : ""}" title="${o.signings} signings · top: ${escapeHtml(o.top_player || "—")} (${usd(o.top_bonus)})">
+      <td style="color:var(--text-tertiary);">${i + 1}</td>
+      <td><span style="display:inline-flex;align-items:center;gap:4px;">${teamLogoHTML(o.org, "sm", fullOrgName(o.org))}${escapeHtml(o.org)}</span></td>
+      <td style="text-align:right;font-family:var(--font-mono);">${usd(o.total_usd)}</td>
+      <td style="text-align:right;color:var(--text-tertiary);font-family:var(--font-mono);">${o.pool_pct_sum != null ? o.pool_pct_sum.toFixed(0) + "%" : "—"}</td>
+    </tr>`).join("");
+  const orgCard = `<div class="ifa-side-card"><div class="ifa-side-title">Org spending · ${cls.year}</div>
+    <table class="detail-table" style="width:100%;font-size:11px;"><thead><tr><th>#</th><th style="text-align:left;">Org</th><th style="text-align:right;">Total</th><th style="text-align:right;" title="Sum of bonus-pool % used">Pool</th></tr></thead><tbody>${orgRows}</tbody></table>
+    <div style="font-size:9px;color:var(--text-tertiary);margin-top:5px;">Click a team to filter the signings list.</div></div>`;
+
+  const countryRows = (t.top_countries || []).map(c =>
+    `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;gap:8px;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.country)}</span><span style="color:var(--text-tertiary);font-family:var(--font-mono);white-space:nowrap;">${c.n} · ${usd(c.total_usd)}</span></div>`).join("");
+  const countryCard = `<div class="ifa-side-card"><div class="ifa-side-title">Top markets</div>${countryRows || "—"}</div>`;
+
+  const dist = t.bonus_distribution || {};
+  const maxd = Math.max(1, ...Object.values(dist));
+  const distRows = Object.entries(dist).map(([k, v]) =>
+    `<div style="font-size:11px;margin:3px 0;"><div style="display:flex;justify-content:space-between;"><span>${escapeHtml(k)}</span><span style="color:var(--text-tertiary);">${v}</span></div>
+      <div style="height:4px;background:var(--bg-tertiary);border-radius:2px;overflow:hidden;margin-top:1px;"><div style="height:100%;width:${(v / maxd * 100).toFixed(0)}%;background:var(--neon-cyan);"></div></div></div>`).join("");
+  const distCard = `<div class="ifa-side-card"><div class="ifa-side-title">Bonus distribution</div>${distRows}</div>`;
+
+  const bigRows = (t.biggest_signings || []).slice(0, 8).map(b =>
+    `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;gap:6px;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(b.player_name)} <span style="color:var(--text-tertiary);">${escapeHtml(b.org || "")}</span></span><span style="font-family:var(--font-mono);white-space:nowrap;">${usd(b.bonus_usd)}</span></div>`).join("");
+  const bigCard = `<div class="ifa-side-card"><div class="ifa-side-title">Biggest signings</div>${bigRows || "—"}</div>`;
+
+  const summary = `<div style="margin-bottom:10px;">
+    <span style="font-size:16px;font-weight:700;">${cls.year} International Amateur class</span>
+    <span style="color:var(--text-tertiary);font-size:12px;"> · ${cls.n_signings} signings · ${usd(cls.total_usd)} total · avg ${usd(t.avg_bonus)} · median ${usd(t.median_bonus)} · ${cls.n_tracked} tracked${cls.is_current ? " · current ⏳" : ""}</span></div>`;
+
+  host.innerHTML = `${summary}<div class="ifa-grid">
+    <div class="ifa-main">${filterBanner}${tableHTML}${expandBtn}</div>
+    <div class="ifa-side">${orgCard}${countryCard}${distCard}${bigCard}</div>
+  </div>`;
+
+  const sa = document.getElementById("ifa-show-all");
+  if (sa) sa.addEventListener("click", () => { state.ifaShowAll = true; renderIFA(); });
+  const cf = document.getElementById("ifa-clear-filter");
+  if (cf) cf.addEventListener("click", () => { state.ifaOrgFilter = null; renderIFA(); });
+  host.querySelectorAll("[data-ifa-org]").forEach(tr => tr.addEventListener("click", () => {
+    state.ifaOrgFilter = (state.ifaOrgFilter === tr.dataset.ifaOrg) ? null : tr.dataset.ifaOrg;
+    state.ifaShowAll = false; renderIFA();
+  }));
 }
 
 async function renderOverseas() {
@@ -33918,6 +34129,7 @@ function render() {
     injured:      "injured-section",
     draft:        "draft-section",
     overseas:     "overseas-section",
+    ifa:          "ifa-section",
     debuts:       "debuts-section",
     farm:         "farm-section",
     leaderboards: "leaderboards-section",
@@ -34048,6 +34260,7 @@ function render() {
   else if (active === "injured")    renderInjured();
   else if (active === "draft")      renderDraft();
   else if (active === "overseas")   renderOverseas();
+  else if (active === "ifa")        renderIFA();
   else if (active === "debuts")  renderDebuts();
   else if (active === "farm")       renderFarmSystems();
   else if (active === "leaderboards") renderLeaderboards();
