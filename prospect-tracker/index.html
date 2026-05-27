@@ -9,7 +9,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MLB PROSPX (Alpha v0.1)</title>
+  <title>MLB PROSPX αv0.1</title>
   <meta name="description" content="Consensus FV tracker across seven industry prospect-ranking sources.">
 
   <!--
@@ -844,6 +844,22 @@
     .h1-logo .ball-face   { fill: var(--bg-secondary); stroke: var(--text-primary); stroke-width: 2; }
     .h1-logo .seam-arc    { fill: none; stroke-width: 3; stroke-linecap: round; }
     .h1-logo .seam-stitch { stroke: var(--text-primary); stroke-width: 1.2; stroke-linecap: round; stroke-dasharray: 1.5 3; fill: none; }
+    /* Interlocking P/X monogram overlaid on the ball. Old-style/blackletter
+       font stack with a bold-serif fallback so it reads as a classic
+       ball-cap mark even when no gothic face is installed. The thin
+       ball-colored stroke (painted under the fill) keeps the overlapping
+       letter edges crisp; mono-x sits above mono-p for the interlock. */
+    .h1-logo .mono-letter {
+      font-family: "Old English Text MT", "UnifrakturCook", "Cloister Black",
+                   Georgia, "Times New Roman", serif;
+      font-weight: 800;
+      font-size: 22px;
+      fill: var(--text-primary);
+      stroke: var(--bg-secondary);
+      stroke-width: 0.7;
+      paint-order: stroke;
+    }
+    .h1-logo .mono-x { font-size: 23px; }
     /* v30 — Title text + underline rule stack vertically alongside
        the badge. The .h1-rule sits inside .h1-title so the gradient
        underline lands directly below the wordmark (not below the
@@ -7034,7 +7050,7 @@
            CSS gradients aren't required on `stroke`). The stitching
            dashes overlay the seam to evoke a real ball without
            cluttering the silhouette. -->
-      <svg class="h1-logo" viewBox="0 0 44 44" role="img" aria-label="MLB Prospect Portal baseball logo">
+      <svg class="h1-logo" viewBox="0 0 44 44" role="img" aria-label="PROSPX baseball logo">
         <defs>
           <linearGradient id="ball-seam-gradient" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%"   stop-color="#B91C1C"/>
@@ -7050,8 +7066,16 @@
         <!-- Left seam arc — mirror on the opposite side. -->
         <path class="seam-arc"    stroke="url(#ball-seam-gradient)" d="M 12 8 Q 4 22 12 36"/>
         <path class="seam-stitch"                                  d="M 12 8 Q 4 22 12 36"/>
+        <!-- Interlocking P/X monogram (PROSPX) in a gothic/old-style serif,
+             à la the Yankees / Mets ball-cap marks. The two letters overlap
+             at the ball's center; the X is stroked over the P so the
+             interlock reads cleanly. -->
+        <g class="h1-monogram" aria-hidden="true" text-anchor="middle">
+          <text class="mono-letter mono-p" x="18.5" y="30">P</text>
+          <text class="mono-letter mono-x" x="26"   y="30">X</text>
+        </g>
       </svg>
-      <span class="h1-title">MLB PROSPX (Alpha v0.1)<span class="h1-rule" aria-hidden="true"></span></span>
+      <span class="h1-title">MLB PROSPX αv0.1<span class="h1-rule" aria-hidden="true"></span></span>
     </h1>
     <div class="meta-line" id="meta-line">Loading…</div>
     <!-- Persistent global controls — these survive content overwrites
@@ -23928,7 +23952,7 @@ function makeFarmReportCard(org) {
         ],
       },
       {
-        key: 'financial', label: '$FIN', weight: W.financial,
+        key: 'financial', label: 'FIN', weight: W.financial,
         leaves: [
           { label: 'Active Surplus',        letterKey: 'fin_active_surplus',        metric: fmtSurplusPerProspect(_surplusPerProspect),
             subLeaves: (t.fin_active_surplus || {}).sub_leaves || [] },
@@ -24245,7 +24269,7 @@ function makeFarmReportCard(org) {
     const _branchLabels = {
       'acquisition_strategy': 'ACQ',
       'development':          'DEV',
-      'financial':            '$FIN',
+      'financial':            'FIN',
       'mlb_production':       'PROD',
     };
     // Vertical layout: top eyebrow ribbon (24px), then content row
@@ -24380,7 +24404,7 @@ function makeFarmReportCard(org) {
           <span class="gt-comp-score">farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'} / 100</span>
           ${cappedBadge}
         </div>
-        <div class="gt-comp-foot">ACQ ${W.acquisition_strategy}% · DEV ${W.development}% · $FIN ${W.financial}% · PROD ${W.mlb_production}%</div>
+        <div class="gt-comp-foot">ACQ ${W.acquisition_strategy}% · DEV ${W.development}% · FIN ${W.financial}% · PROD ${W.mlb_production}%</div>
       </div>
       ${(() => {
         // v31.3 — Tri-state grade tree view. State.farmTreeView toggles
@@ -26845,12 +26869,12 @@ function makeComponentGrades(org) {
   // grade. Mirrors the report card's 4 parent branches so a row-
   // scanner can read the org's per-branch profile without opening
   // the detail page. Abbreviations: ACQ (Acquisition), DEV
-  // (Development), $FIN (Financial), PROD (MLB Production).
+  // (Development), FIN (Financial), PROD (MLB Production).
   const g = org.grades || {};
   const branches = [
     { k: 'acquisition_strategy', lbl: 'ACQ'  },
     { k: 'development',          lbl: 'DEV'  },
-    { k: 'financial',            lbl: '$FIN' },
+    { k: 'financial',            lbl: 'FIN' },
     { k: 'mlb_production',       lbl: 'PROD' },
   ];
   const chips = branches.map(({ k, lbl }) => {
