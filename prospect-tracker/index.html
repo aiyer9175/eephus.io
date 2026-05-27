@@ -7238,7 +7238,7 @@
     <button class="section-tab" data-section="traded">Transactions</button>
     <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL">Injured List</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
-    <button class="section-tab" data-section="debuts">Debuted</button>
+    <button class="section-tab" data-section="debuts">Debuted (Graduates)</button>
     <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">MLB Draft</button>
     <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes — signing bonuses, signing teams, prospects signed, and org spending by year (2021–present).">International Amateurs</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
@@ -7867,6 +7867,10 @@
                 title="WAG (WAR Above Grade) — playing-time-weighted MLB WAR/year (PA for hitters / IP for pitchers) minus the FV-grade-implied WAR/year (FanGraphs primer, lower-bound; linearly interpolated; hitter/pitcher tables split). Requires ≥1 full-season equivalent of MLB playing time. Highest outperformance first.">WAG (high)</button>
         <button class="chip" data-debut-sort="vs_fv_proj_low"
                 title="WAG (WAR Above Grade) — same metric as 'WAG (high)' but inverted: lowest delta first, so debuts UNDERPERFORMING their FV grade most heavily surface at the top. Playing-time-weighted; requires ≥1 full-season equivalent of MLB playing time (thin-debut players sink to the bottom).">WAG (low)</button>
+        <button class="chip" data-debut-sort="warwag"
+                title="WARWAG — WAR/year + WAG/year combined (= 2 × WAR/year − FV-implied WAR/year). Rewards debuts that are BOTH productive (high WAR/yr) AND outperforming their prospect grade (high WAG). Highest first. Playing-time-weighted; requires ≥1 full-season equivalent of MLB playing time.">WARWAG (high)</button>
+        <button class="chip" data-debut-sort="warwag_low"
+                title="WARWAG (WAR/year + WAG/year) — same metric as 'WARWAG (high)' but inverted: lowest first, so debuts that are both unproductive AND underperforming their grade surface at the top. Thin-debut players (under 1 full-season equivalent) sink to the bottom.">WARWAG (low)</button>
       </div>
       <!-- v30.8 — Statcast metric sort, Debuted list. Surfaces the
            graduate Statcast signals (most relevant to evaluating
@@ -16516,6 +16520,18 @@ function gradVsFvProjection(g) {
   return r.war_per_yr - expected;
 }
 
+// WARWAG = WAR/year + WAG/year for a debuted player. WAG/yr is itself
+// (WAR/yr − FV-implied WAR/yr), so WARWAG = 2·WAR/yr − expected. It rewards
+// debuts that are BOTH productive AND beating their prospect grade. Shares
+// gradWarPerYr's ≥1-full-season gate (returns null below it / without an FV).
+function gradWarWag(g) {
+  const r = gradWarPerYr(g);
+  if (!r) return null;
+  const wag = gradVsFvProjection(g);
+  if (wag == null) return null;
+  return r.war_per_yr + wag;
+}
+
 // WAG-by-season sparkline for a graduate. Bars: green when the
 // season's WAR exceeded the FV-grade-implied baseline, red when it
 // fell short. A dashed midline at y = 0 anchors the eye to "matched
@@ -17847,6 +17863,70 @@ function _ifaFvProgHTML(s) {
   </span>`;
 }
 
+// All-time IFA view: classes ranked by total spend, the biggest signings
+// across every year, and cumulative org spending. Built entirely from the
+// already-loaded DATA.ifa.classes (no extra fetch).
+function _renderIFAAllTime(host, classes, usd) {
+  const ranked = classes.slice().sort((a, b) => (b.total_usd || 0) - (a.total_usd || 0));
+  const classRows = ranked.map((c, i) => {
+    const b = (c.trends && c.trends.biggest_signings || [])[0];
+    const top = b ? `${escapeHtml(b.player_name)} <span style="color:var(--text-tertiary);">${escapeHtml(b.org || "")}</span> ${usd(b.bonus_usd)}` : "—";
+    return `<tr>
+      <td style="color:var(--text-tertiary);">${i + 1}</td>
+      <td><strong>${c.year}</strong>${c.is_current ? ' <span style="font-size:9px;color:var(--text-tertiary);">⏳</span>' : ""}</td>
+      <td style="text-align:right;font-family:var(--font-mono);font-weight:700;">${usd(c.total_usd)}</td>
+      <td style="text-align:right;font-family:var(--font-mono);">${c.n_signings}</td>
+      <td style="text-align:right;font-family:var(--font-mono);">${c.n_tracked}</td>
+      <td style="text-align:left;">${top}</td></tr>`;
+  }).join("");
+
+  const allSign = [];
+  classes.forEach(c => (c.signings || []).forEach(s => {
+    if (s.bonus_usd != null) allSign.push(Object.assign({ year: c.year }, s));
+  }));
+  allSign.sort((a, b) => (b.bonus_usd || 0) - (a.bonus_usd || 0));
+  const bigRows = allSign.slice(0, 20).map((s, i) => {
+    const name = (s.is_tracked && s.player_key)
+      ? `<a href="#player=${escapeHtml(s.player_key)}" onclick="event.preventDefault();goToPlayer('${escapeHtml(s.player_key)}');" style="color:var(--text-primary);font-weight:600;text-decoration:none;">${escapeHtml(s.player_name)}</a>`
+      : escapeHtml(s.player_name);
+    return `<tr>
+      <td style="color:var(--text-tertiary);">${i + 1}</td>
+      <td>${name}<div style="font-size:9px;color:var(--text-tertiary);">${escapeHtml(s.position || "—")} · ${escapeHtml(s.country || "—")}</div></td>
+      <td style="white-space:nowrap;"><span style="display:inline-flex;align-items:center;gap:4px;">${s.org ? teamLogoHTML(s.org, "sm", fullOrgName(s.org)) : ""}${escapeHtml(s.org || "—")}</span></td>
+      <td style="text-align:right;font-family:var(--font-mono);">${s.year}</td>
+      <td style="text-align:right;font-family:var(--font-mono);font-weight:700;">${usd(s.bonus_usd)}</td></tr>`;
+  }).join("");
+
+  const orgAll = {};
+  classes.forEach(c => (c.org_spending || []).forEach(o => {
+    const b = orgAll[o.org] = orgAll[o.org] || { org: o.org, total_usd: 0, signings: 0 };
+    b.total_usd += o.total_usd || 0; b.signings += o.signings || 0;
+  }));
+  const orgRows = Object.values(orgAll).sort((a, b) => b.total_usd - a.total_usd).slice(0, 20)
+    .map((o, i) => `<tr>
+      <td style="color:var(--text-tertiary);">${i + 1}</td>
+      <td><span style="display:inline-flex;align-items:center;gap:4px;">${teamLogoHTML(o.org, "sm", fullOrgName(o.org))}${escapeHtml(o.org)}</span></td>
+      <td style="text-align:right;font-family:var(--font-mono);">${usd(o.total_usd)}</td>
+      <td style="text-align:right;color:var(--text-tertiary);font-family:var(--font-mono);">${o.signings}</td></tr>`).join("");
+
+  const totalAll = classes.reduce((s, c) => s + (c.total_usd || 0), 0);
+  const nAll = classes.reduce((s, c) => s + (c.n_signings || 0), 0);
+  const trackedAll = classes.reduce((s, c) => s + (c.n_tracked || 0), 0);
+  host.innerHTML = `<div style="margin-bottom:10px;">
+      <span style="font-size:16px;font-weight:700;">International Amateurs · All-time</span>
+      <span style="color:var(--text-tertiary);font-size:12px;"> · ${classes.length} classes · ${nAll} signings · ${usd(totalAll)} total · ${trackedAll} tracked</span></div>
+    <div class="ifa-grid">
+      <div class="ifa-main">
+        <div class="ifa-side-title" style="margin-bottom:4px;">Classes ranked by total spend</div>
+        <table class="detail-table" style="width:100%;margin-bottom:14px;"><thead><tr><th>#</th><th style="text-align:left;">Class</th><th style="text-align:right;">Total $</th><th style="text-align:right;" title="Signings">#</th><th style="text-align:right;" title="Tracked prospects">Trk</th><th style="text-align:left;">Top signing</th></tr></thead><tbody>${classRows}</tbody></table>
+        <div class="ifa-side-title" style="margin-bottom:4px;">Biggest signings · all-time</div>
+        <table class="detail-table" style="width:100%;"><thead><tr><th>#</th><th style="text-align:left;">Player</th><th style="text-align:left;">Signing team</th><th style="text-align:right;">Year</th><th style="text-align:right;">Bonus</th></tr></thead><tbody>${bigRows}</tbody></table>
+      </div>
+      <div class="ifa-side"><div class="ifa-side-card"><div class="ifa-side-title">Org spending · all-time</div>
+        <table class="detail-table" style="width:100%;font-size:11px;"><thead><tr><th>#</th><th style="text-align:left;">Org</th><th style="text-align:right;">Total</th><th style="text-align:right;" title="Signings">#</th></tr></thead><tbody>${orgRows}</tbody></table></div></div>
+    </div>`;
+}
+
 // ── International Amateurs (IFA) section ─────────────────────────────────────
 // Per-year J2 signing classes from data/ifa_timeseries.json (Spotrac tracker).
 // Main signings table (featured + expandable, org-filterable) plus org-spending
@@ -17876,38 +17956,58 @@ async function renderIFA() {
     host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">No international-amateur classes available.</div>`;
     return;
   }
-  if (!state.ifaYear || !classes.find(c => c.year === state.ifaYear)) {
+  if (state.ifaYear !== "all" &&
+      (!state.ifaYear || !classes.find(c => c.year === state.ifaYear))) {
     state.ifaYear = classes[0].year;   // newest first
   }
-  const cls = classes.find(c => c.year === state.ifaYear) || classes[0];
 
   const usd = n => n == null ? "—"
     : n >= 1e6 ? `$${(n / 1e6).toFixed(2)}M`
     : n >= 1e3 ? `$${Math.round(n / 1e3)}k` : `$${n}`;
 
-  // Year chip strip.
-  classChips.innerHTML = classes.map(c =>
-    `<button class="chip ${c.year === state.ifaYear ? "active" : ""}" data-ifa-year="${c.year}"
-       title="${c.n_signings} signings · ${usd(c.total_usd)}${c.is_current ? " · current class" : ""}">${c.year}${c.is_current ? " ⏳" : ""}</button>`
-  ).join("");
+  // Year chip strip — prefixed with an All-time aggregate view.
+  classChips.innerHTML =
+    `<button class="chip ${state.ifaYear === "all" ? "active" : ""}" data-ifa-year="all"
+       title="Rank every class all-time + cross-year biggest signings and org spending">★ All-time</button>` +
+    classes.map(c =>
+      `<button class="chip ${c.year === state.ifaYear ? "active" : ""}" data-ifa-year="${c.year}"
+         title="${c.n_signings} signings · ${usd(c.total_usd)}${c.is_current ? " · current class" : ""}">${c.year}${c.is_current ? " ⏳" : ""}</button>`
+    ).join("");
   classChips.querySelectorAll("[data-ifa-year]").forEach(b => b.addEventListener("click", () => {
-    state.ifaYear = +b.dataset.ifaYear; state.ifaOrgFilter = null; state.ifaShowAll = false; renderIFA();
+    const v = b.dataset.ifaYear;
+    state.ifaYear = (v === "all") ? "all" : +v;
+    state.ifaOrgFilter = null; state.ifaShowAll = false; renderIFA();
   }));
 
+  // All-time aggregate view (classes ranked + cross-year leaders).
+  if (state.ifaYear === "all") { _renderIFAAllTime(host, classes, usd); return; }
+
+  const cls = classes.find(c => c.year === state.ifaYear) || classes[0];
   const t = cls.trends || {};
   const orgFilter = state.ifaOrgFilter || null;
   let signings = cls.signings || [];
   if (orgFilter) signings = signings.filter(s => s.org === orgFilter);
 
-  // Featured = top 40 by bonus (list is bonus-sorted) + every tracked
-  // prospect; the rest hides behind a "Show all" expander. An active org
-  // filter always shows that team's full haul.
+  // Sort dimension (user-selectable). Featured membership is always computed
+  // by BONUS rank (+ tracked) so a non-bonus sort still hides the low-signal
+  // long tail; the chosen sort only controls DISPLAY order.
+  const sortMode = state.ifaSort || "bonus";
+  const _byBonus = (a, b) => (b.bonus_usd || 0) - (a.bonus_usd || 0)
+    || (a.player_name || "").localeCompare(b.player_name || "");
+  const _sortFns = {
+    bonus: _byBonus,
+    org:   (a, b) => (a.org || "~").localeCompare(b.org || "~") || _byBonus(a, b),
+    fv:    (a, b) => ((b.fv ?? -1) - (a.fv ?? -1)) || _byBonus(a, b),
+    name:  (a, b) => (a.player_name || "").localeCompare(b.player_name || ""),
+  };
+  const _featured = new Set(
+    signings.slice().sort(_byBonus).filter((s, i) => i < 40 || s.is_tracked));
+  const sortedSignings = signings.slice().sort(_sortFns[sortMode] || _byBonus);
+  // Featured = top 40 by bonus + every tracked prospect; the rest hides behind
+  // a "Show all" expander. An active org filter always shows that team's haul.
   const showAll = !!state.ifaShowAll || !!orgFilter;
-  let shown = signings, hiddenCount = 0;
-  if (!showAll) {
-    shown = signings.filter((s, i) => i < 40 || s.is_tracked);
-    hiddenCount = signings.length - shown.length;
-  }
+  const shown = showAll ? sortedSignings : sortedSignings.filter(s => _featured.has(s));
+  const hiddenCount = signings.length - shown.length;
 
   const sigRow = (s) => {
     const logo = s.org ? teamLogoHTML(s.org, "sm", fullOrgName(s.org)) : "";
@@ -17926,7 +18026,7 @@ async function renderIFA() {
     // Sub-line: pos · country, plus (tracked) age-at-signing and the Tool
     // composite's signing → current movement.
     const sub = [`${escapeHtml(s.position || "—")} · ${escapeHtml(s.country || "—")}`];
-    if (s.age_at_signing != null) sub.push(`signed at ${s.age_at_signing}`);
+    if (s.age_at_signing != null) sub.push(`signed at ${s.age_at_signing}y/o`);
     if (s.tool_current != null || s.tool_signing != null) {
       const ts = s.tool_signing, tc = s.tool_current;
       sub.push(`Tool ${ts != null ? ts : "—"}${(tc != null && tc !== ts) ? ` → ${tc}` : (tc != null && ts == null ? tc : "")}`);
@@ -17977,15 +18077,24 @@ async function renderIFA() {
     `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;gap:6px;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(b.player_name)} <span style="color:var(--text-tertiary);">${escapeHtml(b.org || "")}</span></span><span style="font-family:var(--font-mono);white-space:nowrap;">${usd(b.bonus_usd)}</span></div>`).join("");
   const bigCard = `<div class="ifa-side-card"><div class="ifa-side-title">Biggest signings</div>${bigRows || "—"}</div>`;
 
-  const summary = `<div style="margin-bottom:10px;">
+  const sortSel = `<select id="ifa-sort" class="chip" style="font-size:11px;" title="Sort the signings list">
+      <option value="bonus" ${sortMode === "bonus" ? "selected" : ""}>Bonus (high)</option>
+      <option value="org" ${sortMode === "org" ? "selected" : ""}>Organization (A→Z)</option>
+      <option value="fv" ${sortMode === "fv" ? "selected" : ""}>FV (high)</option>
+      <option value="name" ${sortMode === "name" ? "selected" : ""}>Player (A→Z)</option>
+    </select>`;
+  const summary = `<div style="margin-bottom:10px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
     <span style="font-size:16px;font-weight:700;">${cls.year} International Amateur class</span>
-    <span style="color:var(--text-tertiary);font-size:12px;"> · ${cls.n_signings} signings · ${usd(cls.total_usd)} total · avg ${usd(t.avg_bonus)} · median ${usd(t.median_bonus)} · ${cls.n_tracked} tracked${cls.is_current ? " · current ⏳" : ""}</span></div>`;
+    <span style="color:var(--text-tertiary);font-size:12px;"> · ${cls.n_signings} signings · ${usd(cls.total_usd)} total · avg ${usd(t.avg_bonus)} · median ${usd(t.median_bonus)} · ${cls.n_tracked} tracked${cls.is_current ? " · current ⏳" : ""}</span>
+    <span style="margin-left:auto;font-size:11px;color:var(--text-tertiary);">Sort</span>${sortSel}</div>`;
 
   host.innerHTML = `${summary}<div class="ifa-grid">
     <div class="ifa-main">${filterBanner}${tableHTML}${expandBtn}</div>
     <div class="ifa-side">${orgCard}${countryCard}${distCard}${bigCard}</div>
   </div>`;
 
+  const ss = document.getElementById("ifa-sort");
+  if (ss) ss.addEventListener("change", () => { state.ifaSort = ss.value; renderIFA(); });
   const sa = document.getElementById("ifa-show-all");
   if (sa) sa.addEventListener("click", () => { state.ifaShowAll = true; renderIFA(); });
   const cf = document.getElementById("ifa-clear-filter");
@@ -20123,6 +20232,16 @@ function renderDebuts() {
     // sides so graduates without WAG data still sink to the bottom.
     orderedGrads = filtered.slice().sort(sortByWarField(g => {
       const d = gradVsFvProjection(g);
+      return d == null ? null : -d;
+    }));
+  } else if (sortMode === "warwag") {
+    // WARWAG (high): WAR/yr + WAG/yr, highest first.
+    orderedGrads = filtered.slice().sort(sortByWarField(g => gradWarWag(g)));
+  } else if (sortMode === "warwag_low") {
+    // WARWAG (low): inverted — negate so the null-sink keeps thin-debut
+    // players at the bottom (same pattern as vs_fv_proj_low).
+    orderedGrads = filtered.slice().sort(sortByWarField(g => {
+      const d = gradWarWag(g);
       return d == null ? null : -d;
     }));
   } else {
