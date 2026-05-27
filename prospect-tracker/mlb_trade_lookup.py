@@ -13,12 +13,23 @@ This is a one-time-per-trade cost: subsequent runs only fetch new
 names. The MLB Stats API search endpoint is the same one stats.py's
 `_search_mlbam_via_api` uses, so we get consistent name resolution
 across the project.
+
+v31.8b — Pipeline-safe defaults:
+  * `max_new` defaults to 50 per run so first runs don't try to
+    resolve 600+ names + download the 5MB BBRef CSV in one stall.
+    Subsequent runs continue chipping through the backlog.
+  * `time_budget_seconds` hard cap (default 90s) — the resolver
+    aborts and returns whatever it's resolved so far if the budget
+    is exhausted, so the rest of the pipeline keeps moving.
+  * pybaseball BBRef download is wrapped in a timeout + try/except
+    that downgrades to "skip WAR backfill" instead of hanging.
 """
 
 from __future__ import annotations
 
 import logging
 import re
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from storage import (
@@ -248,26 +259,83 @@ def _fetch_position_and_team(mlbam_id: int) -> tuple[str | None, bool, str | Non
     return (pos_abbr, is_pit, team_abbr)
 
 
+_BWAR_BAT_CACHE = None
+_BWAR_PIT_CACHE = None
+_BWAR_BAT_FAILED = False     # sticky: once a download fails, stop retrying this run
+_BWAR_PIT_FAILED = False
+
+
+def _ensure_bwar_loaded(is_pitcher: bool, timeout_seconds: float = 30.0) -> bool:
+    """Lazy-load the BBRef WAR CSV for one side (bat / pitch). Returns
+    True if the cache is ready, False if the download failed (caller
+    should skip WAR backfill for this name).
+
+    Wraps pybaseball's bwar_bat / bwar_pitch in a thread + join with
+    timeout, since the underlying urllib.request call can hang
+    indefinitely on a slow / unreliable connection.
+    """
+    global _BWAR_BAT_CACHE, _BWAR_PIT_CACHE, _BWAR_BAT_FAILED, _BWAR_PIT_FAILED
+    cache_ref = _BWAR_PIT_CACHE if is_pitcher else _BWAR_BAT_CACHE
+    failed_ref = _BWAR_PIT_FAILED if is_pitcher else _BWAR_BAT_FAILED
+    if cache_ref is not None:
+        return True
+    if failed_ref:
+        return False
+    try:
+        import pybaseball as pyb
+    except ImportError:
+        if is_pitcher: _BWAR_PIT_FAILED = True
+        else:           _BWAR_BAT_FAILED = True
+        return False
+    # Download in a thread so we can enforce a timeout. Module-level
+    # caches are touched directly on success.
+    import threading
+    result: dict[str, object] = {}
+    def _worker():
+        try:
+            result["df"] = pyb.bwar_pitch() if is_pitcher else pyb.bwar_bat()
+        except Exception as e:
+            result["err"] = e
+    t = threading.Thread(target=_worker, daemon=True)
+    t.start()
+    t.join(timeout_seconds)
+    if t.is_alive():
+        log.warning("BBRef %s WAR download timed out after %.0fs — skipping WAR backfill",
+                    "pitch" if is_pitcher else "bat", timeout_seconds)
+        if is_pitcher: _BWAR_PIT_FAILED = True
+        else:           _BWAR_BAT_FAILED = True
+        return False
+    if "err" in result:
+        log.warning("BBRef %s WAR download crashed: %s — skipping WAR backfill",
+                    "pitch" if is_pitcher else "bat", result["err"])
+        if is_pitcher: _BWAR_PIT_FAILED = True
+        else:           _BWAR_BAT_FAILED = True
+        return False
+    df = result.get("df")
+    if df is None:
+        if is_pitcher: _BWAR_PIT_FAILED = True
+        else:           _BWAR_BAT_FAILED = True
+        return False
+    if is_pitcher:
+        _BWAR_PIT_CACHE = df
+    else:
+        _BWAR_BAT_CACHE = df
+    return True
+
+
 def _fetch_career_war_one(mlbam_id: int, is_pitcher: bool) -> tuple[float | None, int | None]:
     """Fetch career WAR + season count via pybaseball BBRef tables.
 
     Returns (career_war_sum, season_count) or (None, None) on failure.
-    Module-level cache keeps repeated calls cheap.
+    Uses the timeout-wrapped lazy loader above so a single hung
+    download can't stall the whole pipeline.
     """
-    try:
-        import pybaseball as pyb
-    except ImportError:
+    if not _ensure_bwar_loaded(is_pitcher):
         return (None, None)
-    global _BWAR_BAT_CACHE, _BWAR_PIT_CACHE
+    df = _BWAR_PIT_CACHE if is_pitcher else _BWAR_BAT_CACHE
+    if df is None:
+        return (None, None)
     try:
-        if is_pitcher:
-            if "_BWAR_PIT_CACHE" not in globals() or _BWAR_PIT_CACHE is None:
-                _BWAR_PIT_CACHE = pyb.bwar_pitch()
-            df = _BWAR_PIT_CACHE
-        else:
-            if "_BWAR_BAT_CACHE" not in globals() or _BWAR_BAT_CACHE is None:
-                _BWAR_BAT_CACHE = pyb.bwar_bat()
-            df = _BWAR_BAT_CACHE
         rows = df[df["mlb_ID"] == int(mlbam_id)]
         if rows.empty:
             return (0.0, 0)
@@ -282,20 +350,23 @@ def _fetch_career_war_one(mlbam_id: int, is_pitcher: bool) -> tuple[float | None
         return (None, None)
 
 
-_BWAR_BAT_CACHE = None
-_BWAR_PIT_CACHE = None
-
-
 def refresh_mlb_trade_players(force: bool = False, workers: int = 4,
-                               max_new: int | None = None) -> int:
+                               max_new: int | None = 50,
+                               time_budget_seconds: float = 90.0) -> int:
     """For every trade in the `trades` table, parse its description for
     player names, and for any name not in our tracked player map nor
     already cached, resolve + fetch + upsert.
 
     `force=True` re-resolves every name (refreshes career WAR).
     `workers` controls the parallel resolver pool size.
-    `max_new` caps new lookups per run (None = unlimited).
+    `max_new` caps NEW lookups per run (default 50 — pipeline-safe,
+       subsequent runs chip through the backlog). Pass None to attempt
+       all pending names in one shot.
+    `time_budget_seconds` hard upper bound (default 90s). When the
+       budget runs out we abort the remaining lookups and persist
+       whatever we resolved; pipeline keeps moving.
     """
+    deadline = time.monotonic() + max(10.0, time_budget_seconds)
     # Existing tracked-prospect names (slug set) so we skip them.
     known_names = _load_known_tracked_names()
     # Existing MLB trade-player cache.
@@ -321,26 +392,44 @@ def refresh_mlb_trade_players(force: bool = False, workers: int = 4,
                 if (not force) and slug in cached:
                     continue
                 pending.add(nm)
-    if max_new is not None:
-        pending = set(list(pending)[:max_new])
+    if max_new is not None and len(pending) > max_new:
+        # Stable subset so multiple runs cover the backlog deterministically.
+        pending = set(sorted(pending)[:max_new])
     if not pending:
         log.info("refresh_mlb_trade_players: nothing new to resolve "
                  "(%d cached, %d tracked-prospect names)",
                  len(cached), len(known_names))
         return 0
-    log.info("refresh_mlb_trade_players: resolving %d new MLB names "
-             "(%d workers)", len(pending), workers)
+    log.info("refresh_mlb_trade_players: resolving up to %d new MLB names "
+             "(%d workers, %.0fs budget)",
+             len(pending), workers, time_budget_seconds)
     resolved = 0
+    aborted = False
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futures = {ex.submit(_resolve_one, nm): nm for nm in pending}
         for fut in as_completed(futures):
+            # Hard time budget: persist what we have + bail.
+            if time.monotonic() > deadline:
+                aborted = True
+                # Cancel any not-yet-started futures.
+                for f in futures:
+                    if not f.done():
+                        f.cancel()
+                break
             try:
-                rec = fut.result()
+                rec = fut.result(timeout=max(1.0, deadline - time.monotonic()))
             except Exception:
-                log.exception("_resolve_one crashed for %s", futures[fut])
+                log.debug("_resolve_one crashed for %s",
+                          futures.get(fut), exc_info=True)
                 continue
             if rec:
                 upsert_mlb_trade_player(rec)
                 resolved += 1
-    log.info("refresh_mlb_trade_players: cached %d new MLB names", resolved)
+    if aborted:
+        log.warning("refresh_mlb_trade_players: time budget exhausted at "
+                    "%d resolutions — remaining names will retry next run",
+                    resolved)
+    else:
+        log.info("refresh_mlb_trade_players: cached %d new MLB names",
+                 resolved)
     return resolved

@@ -10572,19 +10572,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # from MLB.com per year. Keyed by year (int). Drives the
         # spending-block utilization caption on the farm detail page.
         "mlb_draft_pools": draft_pools,
-        # v31.8 — MLB veterans named in trade descriptions but not in
-        # the tracked-prospect database. Keyed by name slug
-        # (lowercase + underscore-joined), valued with career_war +
-        # primary_position. The frontend trade audit looks these up
-        # when description-parsed names don't match a tracked player,
-        # giving Brendan-Donovan-style trades an accurate WAR-derived
-        # valuation instead of showing "PTBNL / no tracked players".
-        "mlb_trade_players": load_mlb_trade_players(),
+        # v31.8c — mlb_trade_players moved to a sidecar so the boot
+        # payload stays light. The frontend lazy-loads it only when
+        # the user opens the Transactions tab (trade audit consumer).
         "_slices": {
-            "debuts":         "debuts.json",
-            "inactive":       "inactive.json",
-            "rosters_by_org": "rosters_by_org.json",
-            "scout_reports":  "scout_reports.json",
+            "debuts":             "debuts.json",
+            "inactive":           "inactive.json",
+            "rosters_by_org":     "rosters_by_org.json",
+            "scout_reports":      "scout_reports.json",
+            "mlb_trade_players":  "mlb_trade_players.json",
         },
     }
     out_dir = out_path.parent
@@ -10611,6 +10607,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     _dump(inactive_payload, out_dir / "inactive.json")
     _dump(rosters_by_org, out_dir / "rosters_by_org.json")
     _dump(scout_reports_sidecar, out_dir / "scout_reports.json")
+    # v31.8c — mlb_trade_players sidecar (lazy-loaded when the
+    # Transactions tab opens, not part of initial boot).
+    _dump(load_mlb_trade_players(), out_dir / "mlb_trade_players.json")
     return out_path
 
 
@@ -10626,7 +10625,8 @@ def load_export_unified(boot_path: Path) -> dict:
     boot_path = Path(boot_path)
     payload = json.loads(boot_path.read_text())
     out_dir = boot_path.parent
-    for slice_name in ("debuts", "inactive", "rosters_by_org", "scout_reports"):
+    for slice_name in ("debuts", "inactive", "rosters_by_org",
+                        "scout_reports", "mlb_trade_players"):
         if slice_name in payload:
             continue
         sidecar = out_dir / f"{slice_name}.json"
@@ -10636,5 +10636,5 @@ def load_export_unified(boot_path: Path) -> dict:
             # Empty default keeps test assertions like `for g in
             # payload["debuts"]` from raising KeyError when the slice
             # is genuinely empty for this run.
-            payload[slice_name] = [] if slice_name == "debuts" or slice_name == "inactive" else {}
+            payload[slice_name] = [] if slice_name in ("debuts", "inactive") else {}
     return payload

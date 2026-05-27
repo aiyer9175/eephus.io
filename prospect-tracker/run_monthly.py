@@ -1510,9 +1510,17 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             # Donovan going to SEA for a prospect package). Fetches
             # career WAR + position from MLB Stats API + BBRef; cached
             # in mlb_trade_players for the frontend trade-audit UI.
+            # v31.8c — Pipeline-safe defaults: max_new=50 + 90s budget,
+            # so first runs chip through the backlog incrementally
+            # instead of stalling on a 600+ name first-resolve. The
+            # BBRef WAR download is timeout-wrapped to 30s so a slow
+            # mirror can't hang the whole pipeline either.
             try:
                 from mlb_trade_lookup import refresh_mlb_trade_players
-                refresh_mlb_trade_players(force=force_refetch, workers=4)
+                refresh_mlb_trade_players(force=force_refetch,
+                                           workers=4,
+                                           max_new=50,
+                                           time_budget_seconds=90.0)
             except Exception:
                 log.exception("MLB trade-player lookup crashed — continuing")
 

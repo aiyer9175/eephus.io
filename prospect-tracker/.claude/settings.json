@@ -12,7 +12,9 @@
       "Bash(grep -n \"def export_timeseries_json\\\\|out\\\\\\\\[.org_summary.\\\\\\\\]\\\\|out\\\\\\\\[.players.\\\\\\\\]\" c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/storage.py)",
       "Bash(python -c \"import storage; import mlb_trade_lookup; import eta; print\\('OK'\\)\")",
       "Bash(python -m pytest test_index_html_loads.py test_design_tokens.py test_storage_export.py --tb=short)",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(grep -n \"active === \\\\\"traded\\\\\"\\\\\\\\|renderRecentlyTraded\\\\\\\\|state\\\\\\\\.section.*traded\" c:/Users/noah/baseball-projects/BaseballR/prospect-tracker/index.html)",
+      "Bash(python -c \"import mlb_trade_lookup; print\\('OK'\\)\")"
     ]
   }
 }

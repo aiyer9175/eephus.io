@@ -14830,7 +14830,40 @@ function renderInjured() {
   syncSortHeaderActive();
 }
 
+// v31.8c — Lazy-load the mlb_trade_players sidecar exactly once on
+// first open of the Transactions tab. The slice file is ~165KB
+// (618 vets) and only the trade audit consumes it, so keeping it
+// out of the boot payload saves ~165KB on every page load.
+let _mlbTradePlayersLoading = null;
+async function _ensureMlbTradePlayersLoaded() {
+  if (DATA.mlb_trade_players) return;
+  if (_mlbTradePlayersLoading) return _mlbTradePlayersLoading;
+  _mlbTradePlayersLoading = (async () => {
+    try {
+      const base = DATA_URL.replace(/[^/]+$/, "");
+      const resp = await fetch(`${base}mlb_trade_players.json`);
+      if (resp.ok) DATA.mlb_trade_players = await resp.json();
+      else         DATA.mlb_trade_players = {};
+    } catch (e) {
+      DATA.mlb_trade_players = {};
+    }
+  })();
+  return _mlbTradePlayersLoading;
+}
+
 function renderRecentlyTraded() {
+  // v31.8c — Kick off the lazy MLB-vet sidecar load. If it's not
+  // ready yet, we render with empty mlb_trade_players (the trade
+  // audit falls back to DATA.debuts / inactive for prospect-grads,
+  // which covers most cases); when the fetch lands we re-render so
+  // the verdict picks up MLB veteran valuations.
+  if (!DATA.mlb_trade_players) {
+    DATA.mlb_trade_players = {};
+    _ensureMlbTradePlayersLoaded().then(() => {
+      // Only re-render if the user is still on this tab.
+      if (state.section === "traded") renderRecentlyTraded();
+    });
+  }
   // v30.8 — Now surfaces trades AND debut events. Debuts are the
   // canonical "prospect → MLB" transaction; previously they were
   // siloed in the Debuted section only. Both kinds are first-class
