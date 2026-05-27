@@ -3255,16 +3255,6 @@
       color: var(--neon-green);
       border-color: var(--neon-green);
     }
-    /* "FG writeup" indicator on graduate-list rows. Flags that the
-       prospect has a FanGraphs graduate-year scouting writeup on file.
-       Cyan to match the FanGraphs source-tab styling elsewhere. */
-    .debut-pill.debut-writeup-pill {
-      background: rgba(78, 224, 255, 0.12);
-      color: var(--neon-cyan);
-      border-color: var(--neon-cyan);
-      font-weight: 600;
-      margin-left: var(--space-1);
-    }
     /* Phase B1 — Breakout Signal pill. Two tiers:
          tier-warm (score 75-84): amber glow, "watch list" energy.
          tier-hot  (score 85+):   red-hot, "this guy is moving" alert.
@@ -8151,6 +8141,52 @@ function toolAbbrev(key) {
 // =============================================================================
 const DATA_URL = "data/timeseries.json";
 
+// v31.12 — Global error surface. Uncaught JS errors + unhandled promise
+// rejections previously vanished into the console only; Alpha testers
+// who hit a render bug had no visible signal beyond "the page looks
+// wrong." Now we surface a small dismissible toast in the bottom-right
+// so the error is at least visible, while still preserving the original
+// console error for full stack-trace access. Throttled to one toast per
+// 5 seconds so a tight error loop can't paper-blast the screen.
+(function installErrorToast() {
+  const TOAST_ID = "__global_err_toast";
+  let _lastToastTs = 0;
+  function _showToast(msg) {
+    const now = Date.now();
+    if (now - _lastToastTs < 5000) return;
+    _lastToastTs = now;
+    let el = document.getElementById(TOAST_ID);
+    if (!el) {
+      el = document.createElement("div");
+      el.id = TOAST_ID;
+      el.setAttribute("role", "alert");
+      el.setAttribute("aria-live", "assertive");
+      el.style.cssText = (
+        "position:fixed;bottom:16px;right:16px;z-index:99999;"
+        + "max-width:380px;padding:10px 14px;border-radius:6px;"
+        + "background:#3a1212;color:#ffb4b4;border:1px solid #6e2020;"
+        + "font:12px/1.4 system-ui,-apple-system,sans-serif;"
+        + "box-shadow:0 4px 18px rgba(0,0,0,0.45);cursor:pointer;"
+      );
+      el.title = "Click to dismiss";
+      el.addEventListener("click", () => el.remove());
+      document.body && document.body.appendChild(el);
+    }
+    el.textContent = "⚠ " + msg;
+    setTimeout(() => { if (el && el.parentNode) el.remove(); }, 8000);
+  }
+  window.addEventListener("error", (ev) => {
+    const msg = (ev && ev.message) || "Unknown error";
+    const where = ev.filename ? ` (${ev.filename}:${ev.lineno || "?"})` : "";
+    _showToast(msg + where);
+  });
+  window.addEventListener("unhandledrejection", (ev) => {
+    const reason = ev && ev.reason;
+    const msg = reason && reason.message ? reason.message : String(reason || "unhandled rejection");
+    _showToast("Promise: " + msg);
+  });
+})();
+
 // Sync the theme toggle's icon + wire its click handler. Called after the
 // main template mounts so the #theme-toggle element exists. The icon
 // flips between ☾ (currently light, click to go dark) and ☀ (currently
@@ -8421,33 +8457,51 @@ function _overseasHeadline(p) {
 function tiebreakerScore(p) {
   if (!p) return 0;
   // v31.8 — Three tiebreaker variants depending on player context:
-  //   1. DRAFT  (has draft_stock_plus)  : Tool + per-tool max + DS+
-  //   2. OVERSEAS (has NPB/KBO/CPBL stats): Tool + per-tool max + wRC+
-  //      (hitters) OR FIP-inverted (pitchers)
-  //   3. ACTIVE MiLB (default)          : Tool + per-tool max + RPS+ + SC+
+  //   1. DRAFT  (has draft_stock_plus)  : Tool + Tool+ + per-tool max + DS+ + RPS+ (college)
+  //   2. OVERSEAS (NPB/KBO/CPBL stats) : Tool + Tool+ + per-tool max + RPS+ + raw wRC+/FIP
+  //   3. ACTIVE MiLB (default)          : Tool + RPS+ + SC+ + per-tool max
   // Each path normalizes its inputs to 0-1, weights, then renormalizes
   // by present weight so a player with some-but-not-all signals still
   // produces a comparable 0-100 score.
+  //
+  // v31.12 — Draft + Overseas now read the cohort-normalized
+  // `tool_plus` and `rps_plus` fields that draft_export.py and
+  // overseas_export.py stamp at export time. They sit on the same
+  // 60-140 axis as RPS+/SC+ for MiLB, so two prospects with the same
+  // FV but very different cohort-relative tool quality / production
+  // can now be separated cleanly.
   const tool = _toolComposite(p);                                  // 20-80
   const tmax = _perToolMax(p);                                     // 20-80
+  const toolPlus = (p.tool_plus != null) ? p.tool_plus : null;
+  const rpsPlusCohort = (p.rps_plus != null) ? p.rps_plus : null;
   const dsPlus = (p.draft_stock_plus != null) ? p.draft_stock_plus : null;
   let parts;
   if (dsPlus != null) {
+    // Draft TBS — DS+ (35%) is the primary rank-anchored signal.
+    // Tool+ (20%) + Tool (10%) capture scout grades. RPS+ (20%)
+    // captures college performance. Per-tool max (15%) rewards a
+    // single elite carrying tool.
     parts = [
-      [_tbsNorm(tool,   40, 70), 0.40],
-      [_tbsNorm(tmax,   40, 70), 0.25],
-      [_tbsNorm(dsPlus, 70, 130), 0.35],
+      [_tbsNorm(dsPlus,        70, 130), 0.35],
+      [_tbsNorm(toolPlus,      80, 130), 0.20],
+      [_tbsNorm(rpsPlusCohort, 80, 130), 0.20],
+      [_tbsNorm(tool,          40, 70),  0.10],
+      [_tbsNorm(tmax,          40, 70),  0.15],
     ];
   } else if (_isOverseasProspect(p)) {
     const { wrc, fip } = _overseasHeadline(p);
-    // For pitchers, invert FIP (lower is better → flip into the
-    // higher-is-better 0-1 space; 2.50 FIP ≈ 1.0, 4.50 FIP ≈ 0.0).
     const fipNorm = (fip != null) ? Math.max(0, Math.min(1, (4.50 - Number(fip)) / 2.00)) : null;
+    // Overseas TBS — Tool+ (25%) + RPS+ (25%) carry the cohort-
+    // normalized signals; raw wRC+ / FIP (25%) supplements as
+    // an absolute-scale anchor; per-tool max (15%) + Tool (10%)
+    // round it out.
     parts = [
-      [_tbsNorm(tool, 40, 70), 0.40],
-      [_tbsNorm(tmax, 40, 70), 0.25],
-      [_tbsNorm(wrc,  80, 160), 0.35],   // hitter perf
-      [fipNorm,                 0.35],   // pitcher perf (only one of wrc/fip will be present)
+      [_tbsNorm(toolPlus,      80, 130), 0.25],
+      [_tbsNorm(rpsPlusCohort, 80, 130), 0.25],
+      [_tbsNorm(wrc,           80, 160), 0.25],   // hitter perf
+      [fipNorm,                          0.25],   // pitcher perf (only one of wrc/fip will be present)
+      [_tbsNorm(tool,          40, 70),  0.10],
+      [_tbsNorm(tmax,          40, 70),  0.15],
     ];
   } else {
     const rps = (p.statline && p.statline.rps_plus) ?? null;
@@ -12212,6 +12266,14 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
     perPlayer.set(k, n + 1);
     if (top.length >= 12) break;
   }
+  // v31.12 — Final render order is date DESC (most recent first).
+  // The composite-walk above picked the right MIX of high-FV-good
+  // games and exceptional-low-FV games; this re-sort makes the
+  // rendered strip read chronologically as the user expects.
+  top.sort((a, b) => {
+    if (a._dateMs !== b._dateMs) return b._dateMs - a._dateMs;
+    return b._composite - a._composite;
+  });
   if (!top.length) {
     // Fallback: when standout_games hasn't been populated (a freshly-
     // updated UI on top of older cached statcast_metrics rows), fall
@@ -13320,7 +13382,7 @@ function renderActives() {
             <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
             ${playerMetaHTML(p)}
           </div>
-          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
+          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
           <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
         </div>
@@ -13449,7 +13511,7 @@ function renderSpotlights() {
           ${playerMetaHTML(s)}
         </div>
         <!-- v17 — Compare + Watchlist on spotlight rows. -->
-        <button class="watch-btn${watchlistHas(s.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(s.player_key)}" type="button" title="${watchlistHas(s.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(s.player_key) ? "★" : "☆"}</button>
+        <button class="watch-btn${watchlistHas(s.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(s.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(s.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(s.player_key) ? "★" : "☆"}</button>
         <button class="compare-add-btn is-compact${compareHas(s.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(s.player_key)}" type="button" title="${compareHas(s.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(s.player_key) ? "✓" : "+"}</button>
       </div>
       <div style="text-align:center;"><span class="fv-badge ${fvClass(s.fv || "40")}${fvBadgeChainClasses(_full)}" title="${escapeHtml(fvBadgeTooltip(_full))}">${escapeHtml(s.fv ?? "—")}${fvBadgeChainMarks(_full)}</span></div>
@@ -13980,7 +14042,7 @@ function renderWatchlist() {
               <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
               ${playerMetaHTML(p)}
             </div>
-            <button class="watch-btn is-in" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="Remove from watchlist">★</button>
+            <button class="watch-btn is-in" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Remove from watchlist" title="Remove from watchlist">★</button>
             <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
             <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
           </div>
@@ -14029,7 +14091,7 @@ function renderWatchlist() {
         </div>
         <div style="font-family:var(--font-serif);font-size:22px;line-height:1;color:${gradeColor(overall)};font-weight:700;min-width:36px;text-align:center;" title="Farm grade">${escapeHtml(overall)}</div>
         <div style="font-family:var(--font-mono);font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;color:${dvm == null ? 'var(--text-tertiary)' : (dvm >= 110 ? 'var(--up)' : dvm <= 90 ? 'var(--down)' : 'var(--neon-violet)')};min-width:42px;text-align:right;" title="${win.toUpperCase()}DvM+">${dvm == null ? "—" : dvm}</div>
-        <button class="watch-btn is-in" data-farm-watch-key="${escapeHtml(org.org)}" type="button" title="Remove farm from watchlist">★</button>
+        <button class="watch-btn is-in" data-farm-watch-key="${escapeHtml(org.org)}" type="button" aria-label="Remove farm from watchlist" title="Remove farm from watchlist">★</button>
       </div>
     `;
   }).join("");
@@ -14903,7 +14965,7 @@ function renderInjured() {
             ${playerMetaHTML(p, { showIL: false, showRoster: false })}
           </div>
           <!-- v17 — Add Watchlist alongside the existing Compare button on IL rows. -->
-          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
+          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
         <div><span class="debut-pill" style="background:${_pal.bg};color:${_pal.fg};border:1px solid ${_pal.bd};">${escapeHtml(il.type || "?")} IL</span></div>
@@ -19528,7 +19590,7 @@ function renderDebuts() {
             ${playerMetaHTML(g, { showIL: false, showRoster: false })}
           </div>
           <!-- v17 — Compare + Watchlist on graduate rows. -->
-          <button class="watch-btn${watchlistHas(g.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(g.player_key)}" type="button" title="${watchlistHas(g.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(g.player_key) ? "★" : "☆"}</button>
+          <button class="watch-btn${watchlistHas(g.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(g.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(g.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(g.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(g.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(g.player_key)}" type="button" title="${compareHas(g.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(g.player_key) ? "✓" : "+"}</button>
         </div>
         <div class="debut-date-cell">
@@ -24704,18 +24766,48 @@ function makeFarmTransactionsSummary(allEvents, org, orgCode) {
   // Pair each trade event with the player's career WAR (best proxy
   // for the realized outcome of the trade). Career WAR sits on the
   // player payload; orgs without grad data still show name + FV.
+  //
+  // v31.12 — fix: previously the row mapping filtered on
+  // `careerWar != null`, which excluded EVERY un-debuted prospect.
+  // Most active prospects haven't reached MLB yet, so the "Biggest
+  // outbound regrets" table was effectively limited to the few
+  // debuted-AND-traded names per org (and often empty for orgs
+  // whose biggest outbound deals haven't paid off yet). Now we
+  // surface ALL traded players and use FV-projected WAR as the
+  // ranking signal when career WAR isn't yet realized — labeled
+  // "proj" so the user knows which is which. The reading order
+  // becomes: realized first (sorted by career WAR desc), then
+  // projected (sorted by FV-proj desc).
   const tradeEvents = (allEvents || []).filter(e => e.kind === "trade");
+  // FV → peak-yr WAR projection (mirrors FV_TO_WAR table headline
+  // numbers but as floats for arithmetic). Anchor to peak; over a
+  // realistic 5-yr regular's career the realized WAR runs ~3× peak
+  // for stars and ~2× for fringe regulars. We use a 4× multiplier
+  // here as a rough "career-WAR equivalence" so projected values
+  // sit on the same axis as realized career WAR.
+  const _PROJ_PEAK = { 80: 7.0, 75: 6.0, 70: 5.0, 65: 4.0, 60: 3.5,
+                       55: 3.0, 50: 2.5, 45: 1.5, 40: 0.5, 35: 0.0,
+                       30: 0.0, 25: 0.0, 20: 0.0 };
+  const _projectedCareerWar = (fv) => {
+    if (fv == null) return null;
+    const tier = Math.round(fv / 5) * 5;
+    const peak = _PROJ_PEAK[tier];
+    if (peak == null) return null;
+    return Math.round(peak * 4 * 10) / 10;  // 1-decimal career-WAR proxy
+  };
   const tradeRows = tradeEvents.map(e => {
     const p = e.player || {};
     const inbound = e.to_org === orgCode;
-    // career_war on debuts is nested: { career_war, war_per_yr, seasons,
-    // war_seasons_count, source }. Active prospects don't carry the
-    // field at all. Read the nested total when present so trade-outcome
-    // rankings reflect actual MLB realization.
     const cwObj = p.career_war;
     const careerWar = (cwObj && typeof cwObj === "object" && cwObj.career_war != null) ? Number(cwObj.career_war)
                     : (typeof cwObj === "number" ? cwObj : null);
     const fv = p.fv_close ?? null;
+    const projWar = careerWar == null ? _projectedCareerWar(fv) : null;
+    // Ranking value: realized WAR if available, else FV projection.
+    // Realized rows still sort above projected ones (same magnitude
+    // because realized is a known truth).
+    const rankValue = careerWar != null ? careerWar
+                    : projWar != null ? projWar : null;
     return {
       name: p.player_name,
       key: p.player_key,
@@ -24724,15 +24816,21 @@ function makeFarmTransactionsSummary(allEvents, org, orgCode) {
       otherOrg: inbound ? e.from_org : e.to_org,
       fv,
       careerWar,
+      projWar,
+      rankValue,
+      isRealized: careerWar != null,
     };
-  });
-  // Sort separately for in / out. Inbound: highest WAR first (best
-  // hits). Outbound: also highest WAR first (worst-misses — players
-  // we traded away who blew up).
-  const inboundHits = tradeRows.filter(r => r.direction === "in" && r.careerWar != null)
-    .sort((a, b) => b.careerWar - a.careerWar).slice(0, 5);
-  const outboundMisses = tradeRows.filter(r => r.direction === "out" && r.careerWar != null)
-    .sort((a, b) => b.careerWar - a.careerWar).slice(0, 5);
+  }).filter(r => r.rankValue != null);
+  // Sort: realized first (descending by realized WAR), projected
+  // after (descending by projected WAR). Cap at 10 rows per side so
+  // we can show a fuller picture without overwhelming the layout.
+  const _splitSort = (rows) => {
+    const realized = rows.filter(r => r.isRealized).sort((a, b) => b.careerWar - a.careerWar);
+    const projected = rows.filter(r => !r.isRealized).sort((a, b) => b.projWar - a.projWar);
+    return realized.concat(projected).slice(0, 10);
+  };
+  const inboundHits     = _splitSort(tradeRows.filter(r => r.direction === "in"));
+  const outboundMisses  = _splitSort(tradeRows.filter(r => r.direction === "out"));
 
   const fmtPct1 = v => v == null ? '—' : `${(v * 100).toFixed(0)}%`;
   const fmtFv = v => v == null ? '—' : Math.round(v);
@@ -24772,28 +24870,36 @@ function makeFarmTransactionsSummary(allEvents, org, orgCode) {
               waiverHitRate != null && waiverHitRate >= 0.25 ? 'var(--up)' : 'var(--border-light)')}
     </div>`;
 
-  const tradeRow = r => `<tr>
+  const tradeRow = r => {
+    const warDisplay = r.isRealized ? r.careerWar : r.projWar;
+    const warColor = warDisplay == null ? 'var(--text-tertiary)'
+                   : warDisplay >= 0 ? 'var(--up)' : 'var(--down)';
+    const tag = r.isRealized
+      ? `<span style="font-size:9px;color:var(--up);letter-spacing:0.04em;margin-left:4px;text-transform:uppercase;">real</span>`
+      : `<span style="font-size:9px;color:var(--text-tertiary);letter-spacing:0.04em;margin-left:4px;text-transform:uppercase;">proj</span>`;
+    return `<tr>
       <td><a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(r.key)}');" style="color:var(--text-primary);">${escapeHtml(r.name)}</a></td>
       <td style="text-align:center;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);">${r.date || '—'}</td>
       <td style="text-align:center;font-family:var(--font-mono);font-size:11px;">${r.otherOrg ? `<a href="#farm-org=${escapeHtml(r.otherOrg)}" style="color:inherit;text-decoration:none;">${escapeHtml(r.otherOrg)}</a>` : '—'}</td>
       <td style="text-align:center;"><span class="fv-badge ${fvClass(String(fmtFv(r.fv)))} size-sm">${fmtFv(r.fv)}</span></td>
-      <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;color:${r.careerWar >= 0 ? 'var(--up)' : 'var(--down)'};font-weight:600;">${r.careerWar != null ? (r.careerWar >= 0 ? '+' : '') + r.careerWar.toFixed(1) : '—'}</td>
+      <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;color:${warColor};font-weight:600;">${warDisplay != null ? (warDisplay >= 0 ? '+' : '') + warDisplay.toFixed(1) : '—'}${tag}</td>
     </tr>`;
-  const emptyRow = `<tr><td colspan="5" style="text-align:center;color:var(--text-tertiary);font-size:11px;padding:8px;">— none with realized WAR on file —</td></tr>`;
+  };
+  const emptyRow = `<tr><td colspan="5" style="text-align:center;color:var(--text-tertiary);font-size:11px;padding:8px;">— no trades on file —</td></tr>`;
   const tradeHitsHtml = (inboundHits.length || outboundMisses.length)
-    ? `<div class="detail-title" style="margin-top:12px;">Trade outcomes <span class="detail-title-sub">Players ranked by realized career WAR · "Best inbound hits" = highest-WAR players acquired via trade · "Biggest outbound regrets" = highest-WAR players sent away. Anchor is career WAR (post-debut realization).</span></div>
+    ? `<div class="detail-title" style="margin-top:12px;">Trade outcomes <span class="detail-title-sub">All trades. Debuted players ranked by realized career WAR (<span style="color:var(--up);">real</span>); active prospects ranked by FV-projected career WAR (proj). Realized rows always sort above projected.</span></div>
        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;">
          <div>
-           <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Best inbound hits</div>
+           <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Inbound (acquired)</div>
            <table class="detail-table" style="width:100%;">
-             <thead><tr><th>Player</th><th style="text-align:center;">Date</th><th style="text-align:center;">From</th><th style="text-align:center;">FV</th><th style="text-align:right;">Career WAR</th></tr></thead>
+             <thead><tr><th>Player</th><th style="text-align:center;">Date</th><th style="text-align:center;">From</th><th style="text-align:center;">FV</th><th style="text-align:right;">WAR</th></tr></thead>
              <tbody>${inboundHits.length ? inboundHits.map(tradeRow).join('') : emptyRow}</tbody>
            </table>
          </div>
          <div>
-           <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Biggest outbound regrets</div>
+           <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Outbound (sent away)</div>
            <table class="detail-table" style="width:100%;">
-             <thead><tr><th>Player</th><th style="text-align:center;">Date</th><th style="text-align:center;">To</th><th style="text-align:center;">FV</th><th style="text-align:right;">Career WAR</th></tr></thead>
+             <thead><tr><th>Player</th><th style="text-align:center;">Date</th><th style="text-align:center;">To</th><th style="text-align:center;">FV</th><th style="text-align:right;">WAR</th></tr></thead>
              <tbody>${outboundMisses.length ? outboundMisses.map(tradeRow).join('') : emptyRow}</tbody>
            </table>
          </div>
@@ -26722,7 +26828,7 @@ function renderFarmSystems() {
           })()}</div>
         <div class="stock-cell" style="font-size:12px;">${stockHtml}</div>
         <div style="text-align:right;display:flex;gap:4px;justify-content:flex-end;align-items:center;">
-          <button class="watch-btn${farmWatchlistHas(org.org) ? " is-in" : ""}" data-farm-watch-key="${escapeHtml(org.org)}" type="button" title="${farmWatchlistHas(org.org) ? "Remove farm from watchlist" : "Add farm to watchlist"}">${farmWatchlistHas(org.org) ? "★" : "☆"}</button>
+          <button class="watch-btn${farmWatchlistHas(org.org) ? " is-in" : ""}" data-farm-watch-key="${escapeHtml(org.org)}" type="button" aria-label="Toggle farm watchlist" title="${farmWatchlistHas(org.org) ? "Remove farm from watchlist" : "Add farm to watchlist"}">${farmWatchlistHas(org.org) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${farmCompareHas(org.org) ? " is-in" : ""}" data-farm-compare-key="${escapeHtml(org.org)}" type="button" title="${farmCompareHas(org.org) ? "Remove farm from compare" : "Add farm to compare"}" aria-label="Toggle farm compare">${farmCompareHas(org.org) ? "✓" : "+"}</button>
         </div>
         ${metricsHtml}
@@ -27838,8 +27944,32 @@ function updatePitchMovementPlot(id, gamePk) {
   });
 }
 
+// v31.12 — Resolve a player's pitch_plot. Reads first from the inline
+// statcast_metrics.pitch_plot (legacy / monolithic export), then falls
+// back to the lazy-loaded DATA.pitch_plots[playerKey].top sidecar entry.
+// Kicks off loadSlice("pitch_plots") on first miss so the next
+// render() picks up the data once it arrives.
+function _resolvePitchPlot(sc, playerKey) {
+  const inline = sc && sc.pitch_plot;
+  if (inline && (inline.points || []).length) return inline;
+  const fromSidecar = (DATA && DATA.pitch_plots && DATA.pitch_plots[playerKey]) || null;
+  if (fromSidecar && fromSidecar.top) return fromSidecar.top;
+  // Sidecar advertised but not loaded — fire the fetch.
+  if (DATA && DATA._slices && DATA._slices.pitch_plots
+      && !(DATA.pitch_plots && Object.keys(DATA.pitch_plots).length)) {
+    loadSlice("pitch_plots").then(() => {
+      // Trigger a re-render of the player detail panel if one is open.
+      if (typeof renderPlayerDetail === "function"
+          && state && state.view && state.view.type === "player" && state.view.key) {
+        try { renderPlayerDetail(state.view.key); } catch (e) { /* ignored */ }
+      }
+    });
+  }
+  return null;
+}
+
 function makePitchMovementPlot(sc, playerKey) {
-  const plot = sc && sc.pitch_plot;
+  const plot = _resolvePitchPlot(sc, playerKey);
   const points = (plot && plot.points) || [];
   if (!points.length) return "";
   const rootId = `pitch-plot-${String(playerKey || "player").replace(/[^a-zA-Z0-9_-]/g, "")}`;
@@ -28934,7 +29064,7 @@ function renderPlayerDetail(key) {
         })()}
         ${latest && latest.avg_rank != null ? `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:4px;">Avg rank #${latest.avg_rank.toFixed(1)}</div>` : ""}
         <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:10px;align-items:center;">
-          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
+          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="watch-btn" id="detail-copy-url" type="button" title="Copy shareable link" aria-label="Copy link">🔗</button>
           <button class="watch-btn" id="detail-copy-key" type="button" data-copy-key="${escapeHtml(p.player_key)}" title="Copy player key" aria-label="Copy player key">⧉</button>
           <button class="compare-add-btn${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button">${compareHas(p.player_key) ? "✓ In compare" : "+ Add to compare"}</button>
@@ -32016,7 +32146,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
             <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
             ${playerMetaHTML(p)}
           </div>
-          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
+          <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
           <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
         </div>

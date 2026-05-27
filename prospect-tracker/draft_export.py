@@ -433,6 +433,58 @@ def _build_class(year: int,
             "points":         points,
         })
 
+    # v31.12 — Cohort-normalized Tool+ and RPS+ for the draft class.
+    # Both surface in the front-end tiebreaker so two prospects with
+    # the same FV (e.g. two 50-FV college hitters) can be separated on
+    # underlying tool quality + performance.
+    #
+    # Tool+ = class-normalized average of per-source tool composites.
+    # Each prospect's "composite" is the mean of their numeric tool
+    # grades (skipping the `_extras` metadata sub-dict). Players with
+    # no tool data on file get `tool_plus = None`.
+    #
+    # RPS+ = 100 + 15*cperf_z (already a z-score from college perf).
+    # Clipped to [60, 140] so an outlier season doesn't dominate.
+    def _draft_tool_composite(tg: dict) -> float | None:
+        if not tg: return None
+        per_source = []
+        for src, tools in tg.items():
+            if not isinstance(tools, dict): continue
+            nums = [float(v) for k, v in tools.items()
+                    if k != "_extras" and isinstance(v, (int, float))]
+            if nums:
+                per_source.append(sum(nums) / len(nums))
+        if not per_source: return None
+        return sum(per_source) / len(per_source)
+    raw_tool_comps: list[float] = []
+    for p in prospects:
+        tc = _draft_tool_composite(p.get("tool_grades"))
+        p["_tool_composite_raw"] = tc
+        if tc is not None:
+            raw_tool_comps.append(tc)
+    if len(raw_tool_comps) >= 5:
+        _tmean = sum(raw_tool_comps) / len(raw_tool_comps)
+        _tvar = sum((x - _tmean) ** 2 for x in raw_tool_comps) / len(raw_tool_comps)
+        _tstd = _tvar ** 0.5 if _tvar > 0 else 1.0
+        for p in prospects:
+            tc = p.get("_tool_composite_raw")
+            if tc is None:
+                p["tool_plus"] = None
+            else:
+                z = (tc - _tmean) / _tstd
+                p["tool_plus"] = max(60, min(140, int(round(100 + 15 * z))))
+    else:
+        for p in prospects:
+            p["tool_plus"] = None
+    for p in prospects:
+        p.pop("_tool_composite_raw", None)
+        cstats = p.get("college_stats")
+        cperf_z_p = _college_perf_z(cstats) if cstats else None
+        if cperf_z_p is None:
+            p["rps_plus"] = None
+        else:
+            p["rps_plus"] = max(60, min(140, int(round(100 + 15 * cperf_z_p))))
+
     # Sort by continuous consensus_rank ascending, with FV (desc) +
     # player name as deterministic tiebreakers. Then assign sequential
     # consensus_pick = 1, 2, 3, ... so the UI never shows duplicate

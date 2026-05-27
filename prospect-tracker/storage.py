@@ -10606,6 +10606,48 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     for p in inactive_payload:
         _harvest_and_strip_reports(p)
 
+    # v31.12 — pitch_plot sidecar harvest. The per-player pitch_plot
+    # blob (raw per-pitch coordinates rendered by the player-detail
+    # pitch-movement chart) is the single biggest contributor to the
+    # boot payload (~36 MB combined: 17.8 MB at the top level + 18.8
+    # MB nested inside level_splits[].pitch_plot). It's also used in
+    # exactly one place — `makePitchMovementPlot` on the player detail
+    # page — so it's a textbook lazy-load candidate. Extract into a
+    # sidecar keyed by player_key; the boot dict carries only
+    # `statcast_metrics` minus the pitch_plot fields.
+    pitch_plots_sidecar: dict[str, dict] = {}
+    def _harvest_and_strip_pitch_plots(player_payload):
+        pkey = player_payload.get("player_key")
+        sc = player_payload.get("statcast_metrics") or {}
+        if not sc:
+            return
+        captured: dict = {}
+        top_plot = sc.get("pitch_plot")
+        if top_plot:
+            captured["top"] = top_plot
+            sc["pitch_plot"] = {}
+        ls = sc.get("level_splits") or []
+        if ls:
+            level_plots = {}
+            for row in ls:
+                if not isinstance(row, dict):
+                    continue
+                rp = row.get("pitch_plot")
+                if rp:
+                    lvl = row.get("level") or "_"
+                    level_plots[lvl] = rp
+                    row["pitch_plot"] = {}
+            if level_plots:
+                captured["level_splits"] = level_plots
+        if captured and pkey:
+            pitch_plots_sidecar[pkey] = captured
+    for p in active_payload:
+        _harvest_and_strip_pitch_plots(p)
+    for p in graduate_payload:
+        _harvest_and_strip_pitch_plots(p)
+    for p in inactive_payload:
+        _harvest_and_strip_pitch_plots(p)
+
     boot = {
         "generated_at": _utcnow_iso() + "Z",
         "run": latest_run_summary(),
@@ -10642,6 +10684,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "rosters_by_org":     "rosters_by_org.json",
             "scout_reports":      "scout_reports.json",
             "mlb_trade_players":  "mlb_trade_players.json",
+            # v31.12 — pitch_plot raw coordinates moved out of boot.
+            # Lazy-loaded by the player-detail pitch chart only.
+            "pitch_plots":        "pitch_plots.json",
         },
     }
     out_dir = out_path.parent
@@ -10671,6 +10716,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # v31.8c — mlb_trade_players sidecar (lazy-loaded when the
     # Transactions tab opens, not part of initial boot).
     _dump(load_mlb_trade_players(), out_dir / "mlb_trade_players.json")
+    # v31.12 — pitch_plots sidecar (lazy-loaded only when the player
+    # detail page opens for a pitcher with tracked pitch data).
+    _dump(pitch_plots_sidecar, out_dir / "pitch_plots.json")
     return out_path
 
 
@@ -10687,7 +10735,8 @@ def load_export_unified(boot_path: Path) -> dict:
     payload = json.loads(boot_path.read_text())
     out_dir = boot_path.parent
     for slice_name in ("debuts", "inactive", "rosters_by_org",
-                        "scout_reports", "mlb_trade_players"):
+                        "scout_reports", "mlb_trade_players",
+                        "pitch_plots"):
         if slice_name in payload:
             continue
         sidecar = out_dir / f"{slice_name}.json"
@@ -10698,4 +10747,26 @@ def load_export_unified(boot_path: Path) -> dict:
             # payload["debuts"]` from raising KeyError when the slice
             # is genuinely empty for this run.
             payload[slice_name] = [] if slice_name in ("debuts", "inactive") else {}
+    # v31.12 — re-inline pitch_plots into the statcast_metrics block
+    # for tests + ad-hoc callers that expect the unified shape. The
+    # frontend lazy-loads + merges separately.
+    pp = payload.get("pitch_plots") or {}
+    if pp:
+        for cohort_key in ("players", "debuts", "inactive"):
+            for p in payload.get(cohort_key) or []:
+                pkey = p.get("player_key")
+                if pkey not in pp:
+                    continue
+                sc = p.get("statcast_metrics") or {}
+                if not sc:
+                    continue
+                entry = pp[pkey]
+                if entry.get("top"):
+                    sc["pitch_plot"] = entry["top"]
+                level_map = entry.get("level_splits") or {}
+                if level_map:
+                    for row in sc.get("level_splits") or []:
+                        lvl = row.get("level") or "_"
+                        if lvl in level_map:
+                            row["pitch_plot"] = level_map[lvl]
     return payload

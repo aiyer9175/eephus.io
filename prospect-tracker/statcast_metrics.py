@@ -23,6 +23,15 @@ from urllib3.util.retry import Retry
 
 MLB_STATS_API = "https://statsapi.mlb.com/api/v1"
 MLB_GAME_FEED_API = "https://statsapi.mlb.com/api/v1.1/game"
+# v31.12 — Cache version is appended to the hash key, so bumping it
+# auto-invalidates every cached response without manual cleanup. Bump
+# when the upstream API response shape changes or when this module
+# starts consuming additional fields that older cached payloads lack.
+# Current bumps:
+#   v1 — original
+#   v2 — added gameLog standout/recent_games piggyback (v30.7/.8)
+#   v3 — switched zone-metric aggregation to per-level splits (v20)
+CACHE_VERSION = "v3"
 CACHE_DIR = Path(__file__).parent / ".cache" / "statcast_metrics"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -80,7 +89,9 @@ class StatcastMetricRow:
 
 def _get_json(url: str, params: dict | None = None, ttl_seconds: int = 7 * 86400) -> dict:
     key = requests.Request("GET", url, params=params).prepare().url or url
-    safe = hashlib.md5(key.encode("utf-8")).hexdigest()
+    # Cache version goes INTO the hash so a bump invalidates everything.
+    versioned_key = f"{CACHE_VERSION}|{key}"
+    safe = hashlib.md5(versioned_key.encode("utf-8")).hexdigest()
     path = CACHE_DIR / f"{safe}.json"
     if path.exists() and time.time() - path.stat().st_mtime <= ttl_seconds:
         return json.loads(path.read_text(encoding="utf-8"))

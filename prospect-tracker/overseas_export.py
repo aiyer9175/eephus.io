@@ -469,6 +469,77 @@ def _build_league(league: str,
             "points":          points,
         })
 
+    # v31.12 — Cohort-normalized Tool+ and RPS+ for the overseas
+    # league. Tool+ is the league-z-normalized average of per-source
+    # tool composites. RPS+ uses the latest-season wRC+ (hitters) or
+    # FIP inverted to wRC+-style positive scale (pitchers), then
+    # league-z-normalized.
+    def _ovs_tool_composite(tg: dict) -> float | None:
+        if not tg: return None
+        per_source = []
+        for src, tools in tg.items():
+            if not isinstance(tools, dict): continue
+            nums = [float(v) for k, v in tools.items()
+                    if k != "_extras" and isinstance(v, (int, float))]
+            if nums:
+                per_source.append(sum(nums) / len(nums))
+        if not per_source: return None
+        return sum(per_source) / len(per_source)
+    def _ovs_perf_signal(stat_rows: list, is_pitcher: bool):
+        if not stat_rows: return None
+        # Find the most recent in-league payload (skip MLB rows).
+        for row in reversed(stat_rows):
+            row_league = row.get("league")
+            if row_league in {"MLB", "AL", "NL"}: continue
+            pl = row.get("payload") or {}
+            if is_pitcher:
+                v = pl.get("fip")
+                if v is not None:
+                    try: return float(v)
+                    except (TypeError, ValueError): pass
+            else:
+                v = pl.get("wrc_plus")
+                if v is not None:
+                    try: return float(v)
+                    except (TypeError, ValueError): pass
+        return None
+    raw_tool_comps: list[float] = []
+    raw_perf_hit: list[float]   = []
+    raw_perf_pit: list[float]   = []
+    for p in prospects:
+        tc = _ovs_tool_composite(p.get("tool_grades"))
+        p["_tool_composite_raw"] = tc
+        if tc is not None: raw_tool_comps.append(tc)
+        # Hitter vs pitcher inferred from same logic used inline above
+        # — we have ERA/IP in the payload then pitcher.
+        sr = p.get("stats") or []
+        is_pit = False
+        if sr:
+            lpl = (sr[-1].get("payload") or {})
+            is_pit = (lpl.get("era") is not None or lpl.get("ip") is not None)
+        p["_is_pitcher_hint"] = is_pit
+        ps = _ovs_perf_signal(sr, is_pit)
+        p["_perf_signal_raw"] = ps
+        if ps is None: continue
+        (raw_perf_pit if is_pit else raw_perf_hit).append(ps)
+    def _cohort_plus(values: list[float], v: float | None, *,
+                      lower_better: bool = False) -> int | None:
+        if v is None or len(values) < 5: return None
+        m = sum(values) / len(values)
+        var = sum((x - m) ** 2 for x in values) / len(values)
+        sd = var ** 0.5 if var > 0 else 1.0
+        z = (v - m) / sd
+        if lower_better: z = -z
+        return max(60, min(140, int(round(100 + 15 * z))))
+    for p in prospects:
+        p["tool_plus"] = _cohort_plus(raw_tool_comps, p.pop("_tool_composite_raw", None))
+        ps_raw = p.pop("_perf_signal_raw", None)
+        is_pit = p.pop("_is_pitcher_hint", False)
+        if is_pit:
+            p["rps_plus"] = _cohort_plus(raw_perf_pit, ps_raw, lower_better=True)
+        else:
+            p["rps_plus"] = _cohort_plus(raw_perf_hit, ps_raw, lower_better=False)
+
     # v26 — Sort by (FV desc, '+' tiebreaker desc) so 42+ ranks above
     # 42 but below 43. None FVs sink to the bottom of the list.
     prospects.sort(key=lambda p: (p.get("consensus_fv") is None,
