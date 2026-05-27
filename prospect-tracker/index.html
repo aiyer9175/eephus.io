@@ -7797,7 +7797,7 @@
         <button class="chip" data-farm-sort="ifa_spend_pct" title="IFA's share of total Draft+IFA spending over the trailing 3 years — orgs that allocate the highest percentage of their amateur-acquisition dollars to international free agents rise to the top">IFA Spending %</button>
         <button class="chip" data-farm-sort="draft_spend_pct" title="Draft's share of total Draft+IFA spending over the trailing 3 years — orgs that allocate the highest percentage of their amateur-acquisition dollars to the draft rise to the top">Draft Spending %</button>
         <button class="chip" data-farm-sort="roi" title="Financial ROI — career WAR per million USD spent on signing bonuses (draft + IFA). Higher = more efficient development per dollar.">ROI</button>
-        <button class="chip" data-farm-sort="surplus" title="Aggregate FV-implied surplus value ($M) across all active prospects in the org">Surplus value</button>
+        <button class="chip" data-farm-sort="surplus" title="Aggregate FV-implied 6yr cost-controlled surplus value ($M) across all active prospects in the org. v32.0 — re-derived from FV→WAR primer × non-linear $/WAR; click the Sur+ term in the glossary for details.">Surplus value</button>
         <button class="chip" data-farm-sort="total_fv">Total FV</button>
         <button class="chip" data-farm-sort="count">Count</button>
         <button class="chip" data-farm-sort="tier_60">60+ prospects</button>
@@ -15818,7 +15818,7 @@ function renderRecentlyTraded() {
         const fvSuffix = (recv, fv) => {
           if (fv <= 0 || recv <= 0) return "";
           const perFv = (recv / fv).toFixed(1);
-          return ` <span style="color:var(--text-tertiary);font-size:9px;font-weight:500;" title="Total FV-pts received · $/FV implied">(${fv.toFixed(0)} FV · $${perFv}M/FV)</span>`;
+          return ` <span class="g-term" data-term="dollars_per_fv" style="color:var(--text-tertiary);font-size:9px;font-weight:500;cursor:help;" title="Total FV-pts received · $/FV implied (click for glossary)">(${fv.toFixed(0)} FV · $${perFv}M/FV)</span>`;
         };
         // Single-row strip: ORG_A receives "[chips]" → $X.XM ↔ ORG_B
         // receives "[chips]" → $Y.YM | Verdict
@@ -15873,18 +15873,20 @@ function fvExpectedWarPerYr(fv, isPitcher) {
   return null;
 }
 
-// $/WAR market anchor. Recent free-agent winters have averaged ~$9-10M
-// per win above replacement; we use $9.5M as a stable midpoint. Used
-// to convert a graduate's playing-time-weighted WAR/year into a market-
-// equivalent Average Annual Value — the AAV a comparable free agent
-// would command on the open market for that production rate.
-const DOLLARS_PER_WAR_MM = 9.5;
+// v32.0 — $/WAR market anchor. Now routed through dollarsPerWar() (the
+// non-linear 3-tier model from the 2026 FA article, rolling 3yr avg).
+// Used to convert a graduate's playing-time-weighted WAR/year into a
+// market-equivalent Average Annual Value — the AAV a comparable free
+// agent would command on the open market for that production rate.
+// A 2.5 WAR/yr regular sits in the 2+ tier (~$13.63M); a 0.7 WAR/yr
+// fringe vet sits in the 0-1 tier (~$6.97M). This properly captures
+// star vs bench pricing rather than a flat midpoint.
 function estimateMarketAavMM(warPerYr) {
   if (warPerYr == null || !isFinite(warPerYr)) return null;
   // Replacement-level (~0 WAR) reads as league min (~$0.75M); below
   // that floor we clamp because no negative-AAV contract exists.
   if (warPerYr <= 0) return 0.75;
-  return Math.round(warPerYr * DOLLARS_PER_WAR_MM * 10) / 10;
+  return Math.round(warPerYr * dollarsPerWar(warPerYr) * 10) / 10;
 }
 
 // MLB salary cost model — used to convert a graduate's career WAR into
@@ -20461,11 +20463,11 @@ const GLOSSARY = {
   "tvi": {
     name: "Sur+", aliases: ["Sur+", "SUR+", "TVI", "Surplus Plus", "Trade Value Index"], category: "custom-index",
     priority: 15,
-    short: "Per-prospect Cleveland-derived expected MLB surplus value ($M) interpolated from consensus FV.",
-    long: "Maps a single prospect's consensus FV to estimated total surplus value across their 6-year cost-controlled MLB window using a published industry table (FanGraphs / Craig Edwards 2019 framework). Linearly interpolated between half-grade ticks. Higher FV = exponentially higher Sur+ because of the WAR distribution at the upper tail. NOTE: distinct from OrgSur+, which is a farm-level capital-efficiency index — Sur+ is a $-denominated per-player projection.",
-    formula: "Sur+ ≈ piecewise-linear interp on (FV, $M) anchor points: 80→$145M, 70→$60M, 60→$25M, 50→$9M, 40→$1.5M",
-    example: "A 55-FV prospect has a Sur+ of ~$15M; the team is sitting on ~$15M of surplus value above league-min cost over the 6yr window if the player hits his projection.",
-    related: ["fv", "surplus_value", "war", "sur_plus"],
+    short: "Per-prospect expected MLB surplus value ($M) re-derived from FV→WAR + non-linear $/WAR.",
+    long: "v32.0 — Re-anchored to the 2026 FanGraphs scouting primer (FV→peak-WAR ranges, hitter/pitcher split) and the 2026 'What Are Teams Paying for a Win in Free Agency' article (non-linear 3-tier $/WAR, rolling 3yr avg). Formula is now fully decomposed: expected_6yr_WAR × $/WAR_tier minus the 3+3 cost basis (pre-arb $0.8M/yr + arb 40/60/80% of FA value), all factors auditable in value_framework.py. Hitters carry more than pitchers at equal FV (injury + role-conversion attrition); position scarcity multipliers layered on top. NOTE: distinct from OrgSur+, which is a farm-level capital-efficiency index — Sur+ is a $-denominated per-player projection.",
+    formula: "Sur+ = (WAR_peak × 6 × ramp × p_success × $/WAR_tier(WAR_peak) − cost_basis) × position_mult\nAnchor points (hitter, pre-position): FV 80→$326M, 70→$212M, 60→$112M, 55→$56M, 50→$26M, 45→$4M",
+    example: "An FV 55 SS: WAR_peak 2.9 × 6 × 0.78 × 0.45 × $13.63M − cost ≈ $56M gross × 1.18 SS mult ≈ $66M Sur+. Star premium ($13.63M/WAR for the 2+ tier) drives the gap from FV 50.",
+    related: ["fv", "surplus_value", "war", "sur_plus", "dpw_tier", "fv_to_war_table", "bust_prob", "dollars_per_fv", "value_framework"],
   },
   "wag": {
     name: "WAG", aliases: ["WAG", "WAR Above Grade"], category: "custom-index",
@@ -20474,7 +20476,78 @@ const GLOSSARY = {
     long: "v14 — WAG is the player's career WAR/(PA|IP) rate projected to a role-typical full-season workload, minus the FV-implied per-season WAR baseline. Hitters use a 612 PA target; pitchers use role-specific IP targets (SP 175 / MIRP 65 / SIRP 50 / CL 60). The full-season projection fixes the cycle-13 bug where mid-career grads with elite rates (e.g. Junior Caminero, 4.6 WAR over ~510 PA at FV 55) read as negative WAG simply because they hadn't accumulated a full season's WAR yet. Sample floor: hitters need ≥150 career PA, pitchers need ≥50 career IP — below that, WAG returns None and no BOOM/BUST pill renders. Targets are loaded from data/role_full_season_baselines.json (MLB qualifier medians, refreshed annually).",
     formula: "WAG = (career_war / career_pa or ip) × full_season_target − expected_war(FV)\nhitter target: 612 PA · SP: 175 IP · MIRP: 65 IP · SIRP: 50 IP · CL: 60 IP",
     example: "Junior Caminero: 4.6 WAR / 510 PA × 612 ≈ 5.5 full-season WAR. FV 55 expects 2.5. WAG = +3.0 → BOOM.",
-    related: ["fv", "war", "boom_bust_label", "fv_war_table"],
+    related: ["fv", "war", "boom_bust_label", "fv_war_table", "fv_to_war_table"],
+  },
+  // ---- v32.0 FV/WAR/$ Conversion Framework (Arkmetrics) -----------------
+  // These entries describe the value_framework module that unifies all
+  // FV↔WAR↔$ conversions across the site (trade audits, surplus tables,
+  // draft pool efficiency, etc). Sources:
+  //   * FV→WAR ranges from the 2026 FanGraphs scouting primer
+  //   * $/WAR tiers from the 2026 "What Are Teams Paying for a Win in
+  //     Free Agency" article (rolling 3yr non-linear 3-tier model)
+  // ----------------------------------------------------------------------
+  "value_framework": {
+    name: "Value Framework", aliases: ["Value Framework", "FV/WAR/$ Framework", "Conversion Framework"], category: "custom-index",
+    priority: 14,
+    short: "Single source of truth for FV↔WAR↔$ conversions across the site — anchors trade audits, surplus tables, draft pool efficiency, player-card dollar values.",
+    long: "v32.0 — Consolidated all FV↔WAR↔$ math into one module (value_framework.py) anchored to two Fangraphs sources: the 2026 scouting primer (FV→peak-WAR ranges, hitter/pitcher split) and the 2026 'What Are Teams Paying for a Win in Free Agency' article (non-linear 3-tier $/WAR). Replaces the prior flat $8M/WAR + 2019 Craig Edwards surplus table that powered Sur+, OrgSur+, trade audits, draft pool efficiency, etc. The new framework is fully decomposed (every input — bust probability, ramp factor, position multiplier, $/WAR tier — is auditable and configurable). Backend (storage.py, mlb_trade_lookup.py) and frontend (index.html) read from the SAME generated snapshot (data/value_framework.json + .js) so the two surfaces can never drift again.",
+    formula: "Surplus($M) = (WAR_peak × 6 × ramp × p_success × $/WAR_tier(WAR_peak) − pre_arb − arb_cost) × position_mult",
+    example: "An FV 60 SS hitter: WAR_peak 4.15 (primer midpoint) × 6 × 0.78 (ramp) × 0.62 (bust prob) × $13.63M (2+ tier) − costs ≈ $112M × 1.18 SS mult ≈ $133M Sur+. Each factor is independently tunable.",
+    related: ["tvi", "dpw_tier", "fv_to_war_table", "bust_prob", "dollars_per_fv", "surplus_per_fv_pt", "fv_per_m_pool"],
+  },
+  "dpw_tier": {
+    name: "$/WAR (tiered)", aliases: ["$/WAR", "Dollars per WAR", "dpw", "DPW", "WAR price", "Tier rate"], category: "custom-index",
+    priority: 16,
+    short: "Non-linear 3-tier $M/WAR price the FA market is paying — fringe / mid / star — rolling 3yr avg.",
+    long: "Per the 2026 'What Are Teams Paying for a Win in Free Agency' article, teams pay non-linearly for projected first-year WAR. The star premium has roughly doubled vs 2020-2023, so a flat $/WAR mis-prices both ends. The framework uses a rolling 3yr (2024-2026) average across the article's three tiers, dispatched off the player's projected per-year WAR. Used everywhere a $ value is needed: career WAR × overall rate (vets), trade audits, prospect surplus calcs, contract surplus comparisons.",
+    formula: "$/WAR ≈ $6.97M (0-1 WAR) · $8.76M (1-2) · $13.63M (2+) · $11.74M overall (rolling 2024-2026)",
+    example: "A 4-WAR star earns $13.63M per WAR; a fringe 0.5-WAR vet earns $6.97M per WAR. A 2-WAR average regular sits right at the boundary ($8.76M). Compared to a flat $11M, the tiered model overpays stars and underpays fringe — exactly what the FA data shows.",
+    related: ["war", "surplus_value", "value_framework", "tvi"],
+  },
+  "fv_to_war_table": {
+    name: "FV → WAR ranges", aliases: ["FV→WAR", "FV to WAR", "FV-WAR table", "Primer ranges"], category: "custom-index",
+    priority: 17,
+    short: "Per-FV peak-WAR/yr ranges from the 2026 FanGraphs scouting primer — hitter vs pitcher.",
+    long: "The 2026 FanGraphs scouting primer publishes (low, high) peak-WAR projections for each FV grade, with separate ranges for hitters and pitchers (pitchers run slightly higher at the same FV because the role-typical workload converts to more WAR before injury). The framework uses the MIDPOINT as the peak-year projection and linear-interpolates between 5-pt anchors for half-grades. Drives every downstream conversion: Sur+, $/FV, projected career WAR for the trade regret table, surplus per FV-pt.",
+    formula: "Hitter midpoints: FV 80→8.0, 70→6.0, 60→4.15, 55→2.9, 50→2.0, 45→1.15, 40→0.35\nPitcher midpoints: FV 80→8.0, 70→6.0, 60→4.20, 55→3.0, 50→2.15, 45→1.35, 40→0.45",
+    example: "An FV 55 hitter projects ~2.9 WAR/yr at peak (between 2.5 and 3.3); an FV 55 pitcher ~3.0 (between 2.6 and 3.4). The half-tick gap reflects pitchers' workload-driven WAR distribution.",
+    related: ["fv", "war", "value_framework", "dpw_tier", "wag"],
+  },
+  "bust_prob": {
+    name: "Success probability", aliases: ["P(MLB regular)", "Success prob", "Bust prob", "P-success"], category: "custom-index",
+    priority: 18,
+    short: "Per-FV probability of a prospect becoming an MLB regular (≥2 career WAR). Pitchers run 5-10pp lower than hitters.",
+    long: "Industry-standard prospect-success rates anchored to Sickels (2002-2012) + McDaniel/Longenhagen (2014-2020) + recent BA primer commentary. Defines 'MLB regular' as accumulating ≥2 career WAR. Pitchers run ~5-10pp lower at each grade due to TJ + role-conversion attrition. These probabilities feed every prospect's expected-WAR-over-6yr calc, which is what makes Sur+ defensible at the upper tail (a FV 70 hitter's ~80% success rate is what gets you to a 9-figure surplus expectation). Configurable in value_framework.py — when our own grad data accumulates enough sample we can override individual cells.",
+    formula: "Hitter: FV 70→80%, 60→62%, 55→45%, 50→32%, 45→20%, 40→10%\nPitcher: FV 70→70%, 60→50%, 55→36%, 50→25%, 45→15%, 40→8%",
+    example: "An FV 50 hitter has ~32% chance to clear ≥2 career WAR; an FV 50 pitcher ~25%. The 7pp gap propagates into ~25% lower Sur+ for pitchers at every grade.",
+    related: ["fv", "value_framework", "tvi", "wag"],
+  },
+  "dollars_per_fv": {
+    name: "$/FV-pt", aliases: ["$/FV", "Dollars per FV", "$/FV-pt", "Per-FV dollar value"], category: "custom-index",
+    priority: 19,
+    short: "Translates an FV grade to a per-point dollar value — surplus_value / FV. Surfaces on player cards + trade audit cards.",
+    long: "v32.0 — The bridge between scouting grades and trade-market dollars. For a single prospect, $/FV = Sur+ / FV (after position multiplier). For a trade audit, sum the FV-points received per side and divide each side's $-value by FV to get implied per-point pricing. Useful for: comparing trade sides at a glance (which side paid more per FV-pt?), benchmarking player valuations across orgs, and surfacing the same $ language teams use internally rather than abstract FV grades.",
+    formula: "$/FV-pt = Sur+ / FV (per-prospect) · trade-side: $_received / Σ(FV_received)",
+    example: "An FV 60 SS Sur+ ~$133M → $2.2M/FV-pt. An FV 50 1B Sur+ ~$18M → $0.36M/FV-pt. The 6x ratio between the same FV-pt at different position+grade combos is exactly what makes 'just FV' an incomplete trade currency.",
+    related: ["tvi", "surplus_value", "value_framework", "fv_per_m_pool", "surplus_per_fv_pt"],
+  },
+  "fv_per_m_pool": {
+    name: "FV per $M (pool)", aliases: ["FV/$M pool", "FV per $M pool", "fv_per_m_pool", "FV pool efficiency"], category: "custom-index",
+    priority: 60,
+    short: "Active prospects' current FV per $M of trailing-3yr draft-pool spend. Fast-cycle companion to war_per_m_pool.",
+    long: "v32.0 — Companion to Draft Pool Efficiency's WAR/$M signal. Where war_per_m_pool sums grad career WAR over (T-5)..(T-2) drafts and lags reality by ~5yr (the WAR maturation window), fv_per_m_pool sums the CURRENT consensus FV of ACTIVE prospects from the same draft years and reads as fast as the next ranking cycle. Both signals share the same denominator (the org's pool $ for the window), so a high fv_per_m / low war_per_m gap is a leading indicator: the scouting + dev are working but the WAR hasn't shown up yet. The reverse (high war / low fv) suggests grad-side success isn't being replenished. Gated only on pool > $0.",
+    formula: "fv_per_m_pool = Σ(active_fv | drafted T-5..T-2) / (org_pool_$ T-5..T-2 / 1M)",
+    example: "Org X spent $35M of draft pool over T-5..T-2 and has 280 FV-pts in active prospects from those drafts → 8.0 FV/$M. Concurrent war_per_m might still be 0 (grads haven't matured), but the scouting/dev signal is loud.",
+    related: ["fin_draft_pool_efficiency", "war", "fv", "dollars_per_fv", "value_framework"],
+  },
+  "surplus_per_fv_pt": {
+    name: "Surplus / FV-pt", aliases: ["Surplus per FV-pt", "$/FV (org)", "surplus_per_fv_pt_mm"], category: "custom-index",
+    priority: 61,
+    short: "Org-level $ surplus per FV-point of active prospect capital. Captures the quality-of-FV-mix dimension.",
+    long: "v32.0 — Sub-metric inside the fin_active_surplus leaf. Divides the org's total active-prospect Sur+ ($M) by the org's total active-prospect FV-pts. High = the FV is concentrated in high-leverage positions (SS, CF, premium SP) and/or high-FV grades where the surplus curve is steep. Low = depth-heavy but flat (lots of FV 45-50 corner / bench profiles). Lets two orgs with the same raw FV-pts be differentiated by whether their portfolio is star+premium-position or generic depth. Gated at ≥5 contributing actives.",
+    formula: "surplus_per_fv_pt_mm = Σ(Sur+ across actives) / Σ(FV across same actives)",
+    example: "Org A (LAD-style top-loaded) has 250 active FV-pts and $400M surplus → $1.6M/FV-pt. Org B (depth-style) has 400 active FV-pts but $300M surplus → $0.75M/FV-pt. Same raw quality dial reads differently in $/FV space.",
+    related: ["dollars_per_fv", "tvi", "value_framework", "fin_draft_pool_efficiency"],
   },
   // ---- Pitcher roles (SP / RP / SIRP / MIRP) ----
   "sp": {
@@ -20759,8 +20832,8 @@ const GLOSSARY = {
     name: "Surplus value", category: "financial",
     priority: 10,
     short: "Total $M of MLB value above cost-controlled salary across a prospect's 6yr team-control window.",
-    long: "Expected: FV-derived (Sur+ table). Realized: actual career WAR × $9.5M/WAR market rate minus actual or estimated salaries paid. Positive means the team beat the bet implied by the player's grade, negative means they paid more than the realized value.",
-    related: ["tvi", "war", "aav", "wag"],
+    long: "v32.0 — Expected: FV-derived (Sur+ table; see value_framework). Realized: actual career WAR × $/WAR_overall ($11.74M rolling 3yr 2024-2026 avg, replacing the prior flat $9.5M) minus actual or estimated salaries paid. Positive means the team beat the bet implied by the player's grade, negative means they paid more than the realized value. The rolling 3yr window balances recency against single-year noise — see dpw_tier for the underlying non-linear pricing model.",
+    related: ["tvi", "war", "aav", "wag", "dpw_tier", "dollars_per_fv", "value_framework"],
   },
   "aav": {
     name: "AAV", aliases: ["AAV", "Average Annual Value"], category: "financial",
@@ -21257,9 +21330,9 @@ const GLOSSARY = {
   "fin_draft_pool_efficiency": {
     name: "Draft Pool Efficiency", aliases: ["Draft Pool Efficiency", "Draft pool ROI"], category: "custom-index",
     priority: 59,
-    short: "Trailing-3yr-window WAR per $M of draft-pool spend. Captures whether the org's draft dollars translated to MLB production.",
-    long: "Draft Pool Efficiency leaf inside Financial v4. Numerator: sum of career WAR for grads drafted in the window (T-5)…(T-2) — that's a 4-year lookback ending 2 years before today so drafted players have had time to develop. Denominator: sum of MLB-published draft-pool spend for those same draft years (from `mlb_draft_pools` org-summary data). Output: WAR/$M. Gated at ≥3 contributing grads with both draft_year and career_war on file. Complements WAR per $M (signing-bonus-based) by tying outcomes to the per-org pool the team was allotted, capturing slot-money discipline + late-round hits.",
-    related: ["farm_grade_financial", "fin_ifa_roi", "war", "signing_bonus"],
+    short: "Trailing-3yr-window WAR per $M (and v32.0 — FV per $M) of draft-pool spend.",
+    long: "Draft Pool Efficiency leaf inside Financial. Two signals on the same denominator (pool $ spent in T-5..T-2):\n• **war_per_m_pool** — sum of career WAR for grads drafted in the window divided by pool $M. Lagging but realized: WAR only accrues after the prospect debuts. Gated at ≥3 grads.\n• **fv_per_m_pool** (v32.0) — sum of current FV across drafted-actives in the same window divided by pool $M. Fast-cycle companion: doesn't wait the typical 5yr for WAR maturation, so the signal is responsive within ~2yr of draft.\nDenominator comes from MLB-published per-team draft pools (from `mlb_draft_pools` org-summary data). Together these capture both slot-money discipline + late-round hits (WAR side) AND scouting/dev acceleration (FV side).",
+    related: ["farm_grade_financial", "fin_ifa_roi", "war", "signing_bonus", "fv_per_m_pool", "dollars_per_fv", "value_framework"],
   },
   "fin_ifa_roi": {
     name: "IFA ROI", aliases: ["IFA ROI", "International FA ROI"], category: "custom-index",
@@ -23558,9 +23631,14 @@ function makeFarmReportCard(org) {
     ? `FV-implied 6yr surplus value across the org's ${activeSurplusLeaf.active_count ?? '—'} active prospects, divided by active count. Net of acquisition bonus cost basis ($${activeSurplusLeaf.cost_basis_mm != null ? activeSurplusLeaf.cost_basis_mm.toFixed(1) : '—'}M). Most forward-looking signal — captures the dollar value the current pipeline projects to generate.`
     : `Insufficient active-roster surplus data on file.`;
   const draftEffLeaf = t.fin_draft_pool_efficiency || {};
-  const draftEffTooltip = draftEffLeaf.war_per_m_pool != null
-    ? `Trailing 3yr-window WAR per $M of draft-pool spend (efficiency of draft dollars). ${draftEffLeaf.grad_count ?? 0} contributing grads, ${draftEffLeaf.pool_total_usd != null ? '$' + (draftEffLeaf.pool_total_usd / 1_000_000).toFixed(1) + 'M pool' : 'pool data unavailable'}. Distinct from Acquisition's Draft Performance leaf — that measures raw pick-slot-adjusted WAR (talent), this measures WAR per $ spent (efficiency).`
-    : `Insufficient draft-pool data (needs ≥3 contributing grads with draft-pool spend on file).`;
+  // v32.0 — Tooltip now surfaces both signals on the same denominator:
+  // war_per_m_pool (lagging realized) + fv_per_m_pool (fast-cycle FV).
+  const _draftEffFvLine = draftEffLeaf.fv_per_m_pool != null
+    ? ` · ${draftEffLeaf.fv_per_m_pool.toFixed(1)} FV/$M (active prospects from same draft window — fast-cycle companion)`
+    : '';
+  const draftEffTooltip = (draftEffLeaf.war_per_m_pool != null || draftEffLeaf.fv_per_m_pool != null)
+    ? `Trailing 3yr-window draft-pool efficiency. WAR per $M of draft-pool spend (efficiency of draft dollars): ${draftEffLeaf.war_per_m_pool != null ? draftEffLeaf.war_per_m_pool.toFixed(2) + ' WAR/$M' : '— (needs ≥3 grads)'}. ${draftEffLeaf.grad_count ?? 0} contributing grads, ${draftEffLeaf.pool_total_usd != null ? '$' + (draftEffLeaf.pool_total_usd / 1_000_000).toFixed(1) + 'M pool' : 'pool data unavailable'}.${_draftEffFvLine} Distinct from Acquisition's Draft Performance leaf — that measures raw pick-slot-adjusted WAR (talent), this measures WAR/FV per $ spent (efficiency).`
+    : `Insufficient draft-pool data (needs draft-pool spend on file).`;
   const ifaRoiLeaf = t.fin_ifa_roi || {};
   const ifaRoiTooltip = ifaRoiLeaf.war_per_m_ifa != null
     ? `Trailing 6yr-window WAR per $M of IFA spend (efficiency of IFA dollars). ${ifaRoiLeaf.grad_count ?? 0} contributing grads, ${ifaRoiLeaf.spend_total_usd != null ? '$' + (ifaRoiLeaf.spend_total_usd / 1_000_000).toFixed(1) + 'M IFA spend' : 'spend data unavailable'}. Distinct from Acquisition's IFA Performance leaf — that measures WAR/yr + cumulative WAR (talent), this measures WAR per $ spent.`
@@ -25151,7 +25229,7 @@ function makeFarmFinancialComposite(org) {
         <div style="font-family:var(--font-mono);font-size:36px;font-weight:700;line-height:1;color:${gradeColor(parentLetter)};margin:2px 0;">${parentLetter}</div>
         <div style="font-size:10px;color:var(--text-tertiary);">#${parentRank ?? '—'} of 30</div>
       </div>
-      ${tile('Active Surplus',    fmtMM(totalSurplus),  perProspect != null ? `${fmtPerProspect(perProspect)} / prospect · ${activeSurplus.active_count ?? '—'} actives` : '')}
+      ${tile('Active Surplus',    fmtMM(totalSurplus),  perProspect != null ? `${fmtPerProspect(perProspect)} / prospect${activeSurplus.surplus_per_fv_pt_mm != null ? ` · <span class="g-term" data-term="surplus_per_fv_pt" style="cursor:help;" title="$ surplus per FV-pt — captures the quality-of-FV-mix dimension. Click for glossary.">$${activeSurplus.surplus_per_fv_pt_mm.toFixed(2)}M/FV</span>` : ''} · ${activeSurplus.active_count ?? '—'} actives` : '')}
       ${tile('Cost Basis',        fmtMM(costBasis),     'Acquisition bonus paid for the active roster')}
       ${tile('Net Surplus',       fmtMM(netActive),     netActive != null ? `${netActive >= 0 ? '+' : ''}${(100 * netActive / (costBasis || 1)).toFixed(0)}% over cost` : '')}
       ${tile('Grad-Contract / yr', contractSurplus.mean_usd_per_yr != null ? `$${(contractSurplus.mean_usd_per_yr / 1_000_000).toFixed(2)}M` : '—', `${contractSurplus.grad_count ?? 0} qualifying grads`)}
