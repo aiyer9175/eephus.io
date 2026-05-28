@@ -7598,7 +7598,7 @@
   <div id="traded-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Transactions</span>
-      <span class="newsprint-eyebrow-meta">trades · promotions · signings</span>
+      <span class="newsprint-eyebrow-meta">how each prospect was acquired</span>
     </div>
     <div id="whats-new-traded"></div>
     <div class="active-grid">
@@ -7610,8 +7610,8 @@
   <!-- v31.9 — Spotlights now ships the right-side context rail. -->
   <div id="spotlights-section" style="display: none;">
     <div class="newsprint-eyebrow">
-      <span class="newsprint-eyebrow-label">Standout Performances</span>
-      <span class="newsprint-eyebrow-meta">risers · rebounders · fallers</span>
+      <span class="newsprint-eyebrow-label">Prospect Stock Watch</span>
+      <span class="newsprint-eyebrow-meta">season-long risers, rebounders &amp; fallers</span>
     </div>
     <div id="whats-standout-spotlights" class="news-row news-row-standout"></div>
     <div class="spotlight-subtabs">
@@ -8236,8 +8236,30 @@
               data-share-filename="chart" style="margin-left:auto;"
               title="Save this chart as a PNG image">⤴ Save PNG</button>
     </div>
+    <!-- Row 2 — color encoding, population filters, player highlight. The
+         filter selects + color options populate dynamically per group in
+         renderCharts (a dim with no data for the group is hidden). -->
+    <div id="charts-controls-2" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+      <span class="filter-label">Color</span>
+      <select id="chart-color" class="chip"></select>
+      <span class="filter-label" data-chart-filter-label="org" style="margin-left:8px;">Org</span>
+      <select id="chart-filter-org" class="chip" data-chart-filter="org"></select>
+      <span class="filter-label" data-chart-filter-label="level">Level</span>
+      <select id="chart-filter-level" class="chip" data-chart-filter="level"></select>
+      <span class="filter-label" data-chart-filter-label="pos">Pos</span>
+      <select id="chart-filter-pos" class="chip" data-chart-filter="pos"></select>
+      <span class="filter-label" data-chart-filter-label="fv">FV ≥</span>
+      <input id="chart-filter-fv" type="number" inputmode="numeric" min="20" max="80" step="5"
+             placeholder="any" data-chart-filter="fv"
+             style="width:62px;font-family:var(--font-mono);font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
+      <span class="filter-label" style="margin-left:8px;">Find</span>
+      <input id="chart-highlight" type="search" placeholder="highlight a player…" autocomplete="off"
+             style="width:150px;font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
+      <button class="chip reset-chip" type="button" id="chart-reset" title="Clear filters, color, and highlight" style="margin-left:auto;">↺ Reset</button>
+    </div>
     <div id="chart-canvas-wrap" style="background:var(--bg-secondary);border-radius:8px;padding:14px;">
       <div id="chart-meta" style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;"></div>
+      <div id="chart-legend" style="display:flex;flex-wrap:wrap;gap:4px 12px;margin-bottom:8px;font-size:11px;color:var(--text-secondary);"></div>
       <svg id="chart-svg" width="100%" viewBox="0 0 760 480" style="background:transparent;font-family:var(--font-sans);"></svg>
       <div id="chart-stats" style="font-size:11px;color:var(--text-tertiary);margin-top:6px;"></div>
     </div>
@@ -10773,6 +10795,28 @@ function goToFarm(org) {
   p.set("farm-org", org);
   _pushHash(p);
 }
+// Reduce a spotlights driver label to its "base stat" for the pill face —
+// e.g. "K% 18% vs 24% prior" → "K%", "OPS +0.245 vs '24-25" → "OPS",
+// "Hit 55 → 60" → "Hit". Cuts at the first numeric value (with optional
+// sign immediately attached), arrow, "(", or " vs ". A stat name's own
+// "+"/"%" (SC+, wRC+, K%) survives because the cut needs a digit right
+// after the sign. Labels with no numeric tail (e.g. "young for level")
+// pass through unchanged.
+function _driverShort(label) {
+  const s = String(label || "").trim();
+  if (!s) return "";
+  const m = s.match(/[+\-−]?\d|→|↑|↓|\(|\bvs\b/);
+  if (!m) return s;
+  if (m.index === 0) {
+    // Leading value (e.g. "+69% vs level mean") — keep the trailing
+    // descriptor as the pill face; the value lands in the hover tooltip.
+    const tail = s.replace(/^[+\-−]?[\d.,%]+\s*/, "").trim();
+    return tail || s;
+  }
+  const head = s.slice(0, m.index).replace(/[\s:·,–—\-]+$/, "").trim();
+  return head || s;
+}
+
 // Spotlights driver-pill expander. Toggles the hidden overflow pills and
 // swaps the button between "+N more" and "− less" so it expands AND
 // collapses (the prior version was one-way).
@@ -13941,18 +13985,24 @@ function renderSpotlights() {
       <!-- v17 — Strength score column replaced with mini FV sparkline. -->
       <div class="line-chart-cell" style="text-align:center;" title="${escapeHtml(_ohlcTooltip(_full))}">${lazyLineChartHTML(_full)}</div>
       <div class="driver-list">${(() => {
-        // v34 — Render one driver pill. Drivers are dicts {label, valence,
-        // tooltip}; legacy string drivers fall back to neutral coloring.
+        // v36 — Driver pills now show just the BASE STAT (e.g. "K%") and
+        // carry the detail (how much it moved, vs what baseline) in the
+        // hover tooltip. _driverShort strips the numeric/comparison tail
+        // off the label; valence color still conveys good/bad at a glance.
         const _tag = (d) => {
-          if (typeof d === "string")
-            return `<span class="driver-tag" title="${escapeHtml(d)}">${escapeHtml(d)}</span>`;
-          const valenceClass = d.valence === "good" ? "is-good"
-                            : d.valence === "bad"  ? "is-bad"
-                            : d.valence === "upside" ? "is-upside"
-                            : d.valence === "breakout" ? "is-breakout"
-                            : "is-neutral";
-          const tip = d.tooltip || d.label || "";
-          return `<span class="driver-tag ${valenceClass}" title="${escapeHtml(tip)}">${escapeHtml(d.label || "")}</span>`;
+          const label = typeof d === "string" ? d : (d.label || "");
+          const valenceClass = (typeof d === "string") ? "" :
+              (d.valence === "good" ? "is-good"
+             : d.valence === "bad"  ? "is-bad"
+             : d.valence === "upside" ? "is-upside"
+             : d.valence === "breakout" ? "is-breakout"
+             : "is-neutral");
+          const short = _driverShort(label);
+          // Hover = full label + any extra breakdown the driver carries.
+          const extra = (typeof d !== "string" && d.tooltip && d.tooltip !== label)
+            ? ` — ${d.tooltip}` : "";
+          const tip = `${label}${extra}`;
+          return `<span class="driver-tag ${valenceClass}" title="${escapeHtml(tip)}">${escapeHtml(short)}</span>`;
         };
         // v34 — Most-impactful drivers first (breakout → good/bad signals →
         // upside → neutral context), then cap the row and tuck the rest
@@ -14537,6 +14587,30 @@ function renderWatchlist() {
 // Axis metadata: key + label + getter (per-entity value extractor) +
 // formatter (for tooltips + axis ticks). Add new axes here and they
 // appear in both the X and Y dropdowns automatically.
+
+// Current-season statline value as a Number (or null). Covers OPS / K% /
+// ERA / etc. — the rich production side of the MiLB scatter axes.
+function _slOf(p, field) {
+  const sl = p.statline || {};
+  const v = sl[field];
+  if (v == null || v === "") return null;
+  const n = Number(v);
+  return isFinite(n) ? n : null;
+}
+// Statcast contact-quality value (avg/max EV, hard-hit%, barrel%). Sparse
+// — many prospects have no tracked batted-ball data — so these axes are
+// best-effort; the coverage line surfaces how many dropped out.
+function _scOf(p, field) {
+  const cq = ((p.statcast_metrics || {}).contact_quality) || {};
+  const v = cq[field];
+  if (v == null) return null;
+  const n = Number(v);
+  return isFinite(n) ? n : null;
+}
+const _fmt3 = v => Number(v).toFixed(3).replace(/^0/, "");  // .312
+const _fmtPct = v => Number(v).toFixed(1) + "%";
+const _fmt2 = v => Number(v).toFixed(2);
+
 const CHART_AXES = {
   prospects: [
     { key: "age",            label: "Age",                getter: p => p.age,                                fmt: v => v.toFixed(1) },
@@ -14556,6 +14630,27 @@ const CHART_AXES = {
     { key: "fb",             label: "Fastball",           getter: p => _tcOf(p, "fb"),                      fmt: v => v.toFixed(0) },
     { key: "cmd",            label: "Command",            getter: p => _tcOf(p, "cmd"),                     fmt: v => v.toFixed(0) },
     { key: "delivery",       label: "Delivery (FG, FV)",  getter: p => _tcOf(p, "delivery"),                fmt: v => v.toFixed(0) },
+    // ── Current-season production (statline) ──
+    { key: "ops",            label: "OPS",                getter: p => _slOf(p, "ops"),                     fmt: _fmt3 },
+    { key: "obp",            label: "OBP",                getter: p => _slOf(p, "obp"),                     fmt: _fmt3 },
+    { key: "slg",            label: "SLG",                getter: p => _slOf(p, "slg"),                     fmt: _fmt3 },
+    { key: "avg",            label: "AVG",                getter: p => _slOf(p, "avg"),                     fmt: _fmt3 },
+    { key: "iso",            label: "ISO",                getter: p => _slOf(p, "iso"),                     fmt: _fmt3 },
+    { key: "bb_pct",         label: "BB%",                getter: p => _slOf(p, "bb_pct"),                  fmt: _fmtPct },
+    { key: "k_pct",          label: "K%",                 getter: p => _slOf(p, "k_pct"),                   fmt: _fmtPct },
+    { key: "ops_plus_level", label: "OPS+ vs level",      getter: p => _slOf(p, "ops_plus_level"),          fmt: v => Math.round(v).toString() },
+    { key: "hr",             label: "Home runs",          getter: p => _slOf(p, "hr"),                      fmt: v => v.toFixed(0) },
+    { key: "sb",             label: "Stolen bases",       getter: p => _slOf(p, "sb"),                      fmt: v => v.toFixed(0) },
+    { key: "era",            label: "ERA",                getter: p => _slOf(p, "era"),                     fmt: _fmt2 },
+    { key: "whip",           label: "WHIP",               getter: p => _slOf(p, "whip"),                    fmt: _fmt2 },
+    { key: "fip",            label: "FIP",                getter: p => _slOf(p, "fip"),                     fmt: _fmt2 },
+    { key: "k_per_9",        label: "K/9",                getter: p => _slOf(p, "k_per_9"),                 fmt: _fmt2 },
+    { key: "bb_per_9",       label: "BB/9",               getter: p => _slOf(p, "bb_per_9"),                fmt: _fmt2 },
+    // ── Statcast contact quality (sparse) ──
+    { key: "avg_ev",         label: "Avg exit velo",      getter: p => _scOf(p, "avg_ev"),                  fmt: v => v.toFixed(1) + " mph" },
+    { key: "max_ev",         label: "Max exit velo",      getter: p => _scOf(p, "max_ev"),                  fmt: v => v.toFixed(1) + " mph" },
+    { key: "hard_hit_pct",   label: "Hard-hit %",         getter: p => _scOf(p, "hard_hit_pct"),            fmt: _fmtPct },
+    { key: "barrel_pct",     label: "Barrel %",           getter: p => _scOf(p, "barrel_pct"),              fmt: _fmtPct },
   ],
   debuted: [
     { key: "fv",            label: "Prospect FV",        getter: g => { const f = g.fv_close_raw ?? g.fv_close; return f != null ? fvCeil(f) : null; }, fmt: v => v.toString() },
@@ -14705,6 +14800,116 @@ function _chartEntities(mode) {
   return [];
 }
 
+// Per-entity categorical/numeric dimensions used by the color encoder +
+// population filters. Returns {org, level, pos, fv} with nulls where a
+// group doesn't carry that dimension (e.g. draft has no org/level).
+function _chartDims(mode, e) {
+  const _fvTier = v => (v == null ? null : fvCeil(v));
+  if (mode === "prospects")
+    return { org: e.org || null, level: (e.statline && e.statline.level) || e.level || null,
+             pos: _draftPosBucket(e.position), fv: (e.fv_close_raw ?? e.fv_close ?? null) };
+  if (mode === "debuted")
+    return { org: e.org || null, level: null, pos: _draftPosBucket(e.position),
+             fv: (e.fv_close_raw ?? e.fv_close ?? null) };
+  if (mode === "draft")
+    return { org: null, level: null, pos: _draftPosBucket(e.position), fv: e.consensus_fv ?? null };
+  if (mode === "ifa")
+    return { org: e.org || null, level: null, pos: _draftPosBucket(e.position), fv: e.fv ?? null };
+  if (mode === "overseas")
+    return { org: e.current_team || null, level: e.league || null,
+             pos: _draftPosBucket(e.position), fv: e.consensus_fv ?? null };
+  if (mode === "farms")
+    return { org: e.org || null, level: null, pos: null, fv: null };
+  return { org: null, level: null, pos: null, fv: null };
+}
+
+// Categorical color palette for the "color by" encoder (org / level /
+// position). FV tier uses the fv-tier CSS variables instead so the dots
+// match the badge colors used everywhere else.
+const _CHART_PALETTE = [
+  "#2E86C1", "#E67E22", "#27AE60", "#C0392B", "#8E44AD", "#16A085",
+  "#D4AC0D", "#CB4335", "#2471A3", "#117A65", "#7D3C98", "#B9770E",
+  "#1F618D", "#A04000", "#196F3D", "#76448A",
+];
+// Stable category → color (consistent across re-renders within a session).
+function _chartCatColor(cat, orderedCats) {
+  const i = orderedCats.indexOf(cat);
+  return i < 0 ? "var(--text-tertiary)" : _CHART_PALETTE[i % _CHART_PALETTE.length];
+}
+// FV → tier color via the same --fv-NN-bd tokens the badges use.
+function _chartFvColor(fv) {
+  if (fv == null) return "var(--text-tertiary)";
+  const tiers = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
+  let tier = 20;
+  for (const t of tiers) { if (fv >= t - 2.5) { tier = t; break; } }
+  return `var(--fv-${tier}-bd, var(--neon-cyan))`;
+}
+
+// Populate + wire the row-2 controls (color encoder, org/level/pos/FV
+// filters, player highlight, reset). `distinct` carries the Sets of
+// categorical values present in the current group; a dimension with no
+// values hides its control. Selects re-render the chart on change.
+function _chartWireControls(mode, distinct, anyFv) {
+  // ---- Color-by ----
+  const colorSel = document.getElementById("chart-color");
+  if (colorSel) {
+    const opts = [`<option value="none">None</option>`];
+    if (anyFv)                opts.push(`<option value="fv">FV tier</option>`);
+    if (distinct.pos.size)    opts.push(`<option value="pos">Position</option>`);
+    if (distinct.level.size)  opts.push(`<option value="level">Level</option>`);
+    if (distinct.org.size)    opts.push(`<option value="org">Org</option>`);
+    colorSel.innerHTML = opts.join("");
+    // Drop a stale color dim that the new group doesn't support.
+    const valid = ["none", anyFv && "fv", distinct.pos.size && "pos",
+                   distinct.level.size && "level", distinct.org.size && "org"].filter(Boolean);
+    if (!valid.includes(state.chartColorBy)) state.chartColorBy = "none";
+    colorSel.value = state.chartColorBy || "none";
+    colorSel.onchange = () => { state.chartColorBy = colorSel.value; renderCharts(); };
+  }
+  // ---- Categorical filters (org / level / pos) ----
+  const wireFilter = (dim, stateKey) => {
+    const sel = document.getElementById(`chart-filter-${dim}`);
+    const lbl = document.querySelector(`[data-chart-filter-label="${dim}"]`);
+    if (!sel) return;
+    const vals = [...distinct[dim]].sort();
+    const show = vals.length > 1;     // no point filtering a single-value dim
+    sel.style.display = show ? "" : "none";
+    if (lbl) lbl.style.display = show ? "" : "none";
+    if (!show) { if (state[stateKey] && state[stateKey] !== "all") state[stateKey] = "all"; return; }
+    sel.innerHTML = [`<option value="all">All</option>`]
+      .concat(vals.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`)).join("");
+    if (!vals.includes(state[stateKey])) state[stateKey] = "all";
+    sel.value = state[stateKey] || "all";
+    sel.onchange = () => { state[stateKey] = sel.value; renderCharts(); };
+  };
+  wireFilter("org", "chartFilterOrg");
+  wireFilter("level", "chartFilterLevel");
+  wireFilter("pos", "chartFilterPos");
+  // ---- FV minimum ----
+  const fvIn = document.getElementById("chart-filter-fv");
+  const fvLbl = document.querySelector(`[data-chart-filter-label="fv"]`);
+  if (fvIn) {
+    fvIn.style.display = anyFv ? "" : "none";
+    if (fvLbl) fvLbl.style.display = anyFv ? "" : "none";
+    if (document.activeElement !== fvIn) fvIn.value = (state.chartFvMin != null ? state.chartFvMin : "");
+    fvIn.onchange = () => { state.chartFvMin = fvIn.value === "" ? null : fvIn.value; renderCharts(); };
+  }
+  // ---- Highlight (don't clobber the field while the user is typing) ----
+  const hi = document.getElementById("chart-highlight");
+  if (hi) {
+    if (document.activeElement !== hi) hi.value = state.chartHighlight || "";
+    hi.oninput = () => { state.chartHighlight = hi.value; renderCharts(); };
+  }
+  // ---- Reset ----
+  const reset = document.getElementById("chart-reset");
+  if (reset) reset.onclick = () => {
+    state.chartColorBy = "none"; state.chartFilterOrg = "all";
+    state.chartFilterLevel = "all"; state.chartFilterPos = "all";
+    state.chartFvMin = null; state.chartHighlight = "";
+    renderCharts();
+  };
+}
+
 function renderCharts() {
   const mode = state.chartMode || "prospects";
   const grp = _CHART_GROUPS[mode] || _CHART_GROUPS.prospects;
@@ -14719,9 +14924,14 @@ function renderCharts() {
     b.onclick = () => {
       if (state.chartMode === b.dataset.chartMode) return;
       state.chartMode = b.dataset.chartMode;
-      // Each group has its own axis vocabulary — reset to its defaults.
+      // Each group has its own axis vocabulary + filter dims — reset to
+      // its defaults so a stale org/level filter can't blank the new group.
       state.chartX = null;
       state.chartY = null;
+      state.chartFilterOrg = "all";
+      state.chartFilterLevel = "all";
+      state.chartFilterPos = "all";
+      state.chartFvMin = null;
       renderCharts();
     };
   });
@@ -14757,10 +14967,51 @@ function renderCharts() {
   const xAxis = axes.find(a => a.key === state.chartX);
   const yAxis = axes.find(a => a.key === state.chartY);
 
-  // Build the entity list for the selected group.
-  let entities = _chartEntities(mode);
-  // v7 — track WHY each entity was dropped so the chart-meta line can
-  // surface "N of M prospects plotted" with the missing-axis breakdown.
+  // Raw entities + per-entity dims (drive both filters and color).
+  const allEntities = _chartEntities(mode);
+  const dimsFor = e => _chartDims(mode, e);
+
+  // Distinct categorical values present → populate + wire the controls.
+  const distinct = { org: new Set(), level: new Set(), pos: new Set() };
+  let anyFv = false;
+  for (const e of allEntities) {
+    const d = dimsFor(e);
+    if (d.org) distinct.org.add(d.org);
+    if (d.level) distinct.level.add(d.level);
+    if (d.pos) distinct.pos.add(d.pos);
+    if (d.fv != null) anyFv = true;
+  }
+  _chartWireControls(mode, distinct, anyFv);
+
+  // Apply population filters.
+  const fOrg = state.chartFilterOrg || "all";
+  const fLevel = state.chartFilterLevel || "all";
+  const fPos = state.chartFilterPos || "all";
+  const fFv = (state.chartFvMin != null && state.chartFvMin !== "") ? Number(state.chartFvMin) : null;
+  const entities = allEntities.filter(e => {
+    const d = dimsFor(e);
+    if (fOrg !== "all" && d.org !== fOrg) return false;
+    if (fLevel !== "all" && d.level !== fLevel) return false;
+    if (fPos !== "all" && d.pos !== fPos) return false;
+    if (fFv != null && (d.fv == null || d.fv < fFv)) return false;
+    return true;
+  });
+  const nFiltered = allEntities.length - entities.length;
+
+  // Color encoder — categorical (org/level/pos) or FV-tier continuous.
+  const colorBy = state.chartColorBy || "none";
+  const colorCats = (colorBy === "org" || colorBy === "level" || colorBy === "pos")
+    ? [...distinct[colorBy]].sort() : [];
+  const colorOf = (d) => {
+    if (colorBy === "fv")    return _chartFvColor(d.fv);
+    if (colorBy === "org")   return d.org   ? _chartCatColor(d.org, colorCats)   : "var(--text-tertiary)";
+    if (colorBy === "level") return d.level ? _chartCatColor(d.level, colorCats) : "var(--text-tertiary)";
+    if (colorBy === "pos")   return d.pos   ? _chartCatColor(d.pos, colorCats)   : "var(--text-tertiary)";
+    return "var(--neon-cyan)";
+  };
+  const hq = (state.chartHighlight || "").trim().toLowerCase();
+
+  // Build dots (filtered to entities with both axes populated).
   let nMissingX = 0, nMissingY = 0;
   const dots = [];
   for (const e of entities) {
@@ -14771,13 +15022,15 @@ function renderCharts() {
     if (!xOK) nMissingX++;
     if (!yOK) nMissingY++;
     if (!xOK || !yOK) continue;
+    const d = dimsFor(e);
+    const label = e.player_name || e.org;
     dots.push({
       x: Number(xv), y: Number(yv),
-      label: e.player_name || e.org,
-      key: e.player_key || e.org,
-      org: e.org,
-      // v7 — pin the full entity to the dot so hover/click handlers can
-      // O(1)-resolve the prospect without re-scanning DATA.players.
+      label, key: e.player_key || e.org, org: e.org,
+      color: colorOf(d),
+      // Highlight when the find-box matches the entity name.
+      hi: !!hq && (label || "").toLowerCase().includes(hq),
+      // v7 — pin the full entity so click/hover resolve O(1).
       _entity: e,
     });
   }
@@ -14788,8 +15041,13 @@ function renderCharts() {
   const innerW = W - ML - MR, innerH = H - MT - MB;
   const svg = document.getElementById("chart-svg");
   if (!dots.length) {
-    svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="var(--text-tertiary)">No data points with both axes populated.</text>`;
-    document.getElementById("chart-meta").innerHTML = "";
+    const why = nFiltered
+      ? "No points match the current filters — loosen them or hit Reset."
+      : "No data points with both axes populated — try different axes.";
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="var(--text-tertiary)">${why}</text>`;
+    document.getElementById("chart-meta").innerHTML =
+      `0 of ${entities.length} ${grp.noun} plotted${nFiltered ? ` · ${nFiltered} filtered out` : ""}`;
+    const _lg = document.getElementById("chart-legend"); if (_lg) _lg.innerHTML = "";
     document.getElementById("chart-stats").innerHTML = "";
     return;
   }
@@ -14857,15 +15115,49 @@ function renderCharts() {
   const yTickLabels = yTicks.map(t =>
     `<text x="${(ML-6).toFixed(1)}" y="${(t.y+3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--text-secondary)">${yAxis.fmt(t.v)}</text>`).join("");
 
-  // Dots — clickable when the group has a detail page (data-i resolves
-  // the entity for navigation after innerHTML is set).
+  // Dots — colored by the chosen dimension, with highlighted matches
+  // enlarged + non-matches dimmed when a Find query is active. data-dot
+  // stores the ORIGINAL index so click→detail resolves after innerHTML.
   const clickable = typeof grp.nav === "function";
-  const dotsHtml = dots.map((d, i) =>
-    `<circle cx="${sx(d.x).toFixed(1)}" cy="${sy(d.y).toFixed(1)}" r="3.5"
-             fill="var(--neon-cyan)" fill-opacity="0.7" stroke="var(--bg-primary)" stroke-width="0.5"
+  const dimOthers = !!hq;
+  // Render highlighted dots LAST so they sit on top; keep original index.
+  const order = dots.map((_, i) => i).sort((a, b) => (dots[a].hi ? 1 : 0) - (dots[b].hi ? 1 : 0));
+  const dotsHtml = order.map(i => {
+    const d = dots[i];
+    const r = d.hi ? 6 : 3.5;
+    const op = dimOthers && !d.hi ? 0.16 : 0.72;
+    const stroke = d.hi ? "var(--text-primary)" : "var(--bg-primary)";
+    const sw = d.hi ? 1.5 : 0.5;
+    return `<circle cx="${sx(d.x).toFixed(1)}" cy="${sy(d.y).toFixed(1)}" r="${r}"
+             fill="${d.color}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}"
              ${clickable ? `data-dot="${i}" style="cursor:pointer;"` : ""}>
-       <title>${escapeHtml(d.label)} · ${xAxis.label}=${xAxis.fmt(d.x)}, ${yAxis.label}=${yAxis.fmt(d.y)}${clickable ? " · click to open" : ""}</title>
-     </circle>`).join("");
+       <title>${escapeHtml(d.label)} · ${escapeHtml(xAxis.label)}=${xAxis.fmt(d.x)}, ${escapeHtml(yAxis.label)}=${yAxis.fmt(d.y)}${clickable ? " · click to open" : ""}</title>
+     </circle>`;
+  }).join("");
+
+  // Point labels: every highlighted match (when searching), else the most
+  // extreme outliers (max combined |z| on the two axes) so the plot stays
+  // readable. Halo via paint-order stroke keeps text legible over dots.
+  const _mean = a => a.reduce((s, v) => s + v, 0) / a.length;
+  const xm = _mean(dots.map(d => d.x)), ym = _mean(dots.map(d => d.y));
+  const _sd = (a, m) => Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length) || 1;
+  const xsd = _sd(dots.map(d => d.x), xm), ysd = _sd(dots.map(d => d.y), ym);
+  let labelDots = [];
+  if (hq) {
+    labelDots = dots.filter(d => d.hi).slice(0, 24);
+  } else if (dots.length >= 12) {
+    labelDots = [...dots]
+      .sort((a, b) => (Math.abs((b.x - xm) / xsd) + Math.abs((b.y - ym) / ysd))
+                    - (Math.abs((a.x - xm) / xsd) + Math.abs((a.y - ym) / ysd)))
+      .slice(0, 8);
+  }
+  const labelsHtml = labelDots.map(d => {
+    const tx = Math.min(Math.max(sx(d.x) + 6, ML + 2), ML + innerW - 2);
+    const ty = Math.min(Math.max(sy(d.y) - 6, MT + 9), MT + innerH - 2);
+    return `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" font-size="9" font-weight="600"
+       fill="var(--text-primary)" stroke="var(--bg-secondary)" stroke-width="2.5" paint-order="stroke"
+       style="pointer-events:none;">${escapeHtml(d.label || "")}</text>`;
+  }).join("");
 
   svg.innerHTML = `
     ${xGrid}${yGrid}
@@ -14873,6 +15165,7 @@ function renderCharts() {
     <line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT+innerH}" stroke="var(--text-secondary)" stroke-width="1"/>
     ${trendLine}
     ${dotsHtml}
+    ${labelsHtml}
     ${xTickLabels}${yTickLabels}
     <text x="${(ML+innerW/2).toFixed(1)}" y="${(H-12).toFixed(1)}" text-anchor="middle"
           font-size="11" fill="var(--text-primary)" font-weight="600">${escapeHtml(xAxis.label)}</text>
@@ -14891,14 +15184,35 @@ function renderCharts() {
       });
     });
   }
-  // v7 — surface coverage diagnostics so the user sees when an axis is
-  // sparse (e.g., "1842 of 2804 prospects plotted; 712 missing X, 250
-  // missing Y"). Helps explain why some prospects don't appear.
+
+  // Color legend.
+  const legendEl = document.getElementById("chart-legend");
+  if (legendEl) {
+    const swatch = (c, lbl) =>
+      `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:${c};display:inline-block;border:0.5px solid var(--border);"></span>${escapeHtml(lbl)}</span>`;
+    if (colorBy === "fv") {
+      legendEl.innerHTML = `<span style="color:var(--text-tertiary);">Color = FV tier:</span>` +
+        [70, 60, 55, 50, 45, 40].map(t => swatch(`var(--fv-${t}-bd)`, String(t))).join("");
+    } else if (colorCats.length) {
+      const shown = colorCats.slice(0, 16);
+      legendEl.innerHTML = `<span style="color:var(--text-tertiary);">Color = ${escapeHtml(colorBy)}:</span>` +
+        shown.map(c => swatch(_chartCatColor(c, colorCats), c)).join("") +
+        (colorCats.length > 16 ? `<span style="color:var(--text-tertiary);">+${colorCats.length - 16} more</span>` : "");
+    } else {
+      legendEl.innerHTML = "";
+    }
+  }
+
+  // v7 — coverage diagnostics + filter note so the user understands why
+  // some entities don't appear (sparse axis vs. filtered out).
   const _coverageNote = (nMissingX || nMissingY)
     ? ` · <span style="color:var(--text-tertiary);">(${nMissingX} missing X${nMissingY ? `, ${nMissingY} missing Y` : ""})</span>`
     : "";
+  const _filterNote = nFiltered
+    ? ` · <span style="color:var(--text-tertiary);">${nFiltered} filtered out</span>`
+    : "";
   document.getElementById("chart-meta").innerHTML =
-    `${dots.length} of ${entities.length} ${grp.noun} plotted · ${escapeHtml(xAxis.label)} vs ${escapeHtml(yAxis.label)}${_coverageNote}`;
+    `${dots.length} of ${entities.length} ${grp.noun} plotted · ${escapeHtml(xAxis.label)} vs ${escapeHtml(yAxis.label)}${_coverageNote}${_filterNote}`;
   document.getElementById("chart-stats").innerHTML = trend
     ? `Trendline: y = ${trend.m.toFixed(3)}x + ${trend.b.toFixed(2)} · R² = ${trend.r2.toFixed(3)}`
     : "Trendline disabled";
