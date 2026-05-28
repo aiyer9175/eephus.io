@@ -89,10 +89,25 @@
       "Bash(grep -nA20 \"h1-rule\")",
       "Bash(rm -f _navchk.py _navshot.py _nav_light.png _nav_dark.png _nav_narrow.png)",
       "Bash(python -m pytest test_design_tokens.py test_index_html_loads.py -q)",
-      "PowerShell(python -m pytest test_index_html_loads.py test_design_tokens.py test_no_hardcoded_colors.py -q 2>&1)"
+      "PowerShell(python -m pytest test_index_html_loads.py test_design_tokens.py test_no_hardcoded_colors.py -q 2>&1)",
+      "Bash(python -m pytest test_no_hardcoded_colors.py test_design_tokens.py -q)",
+      "Bash(python -m pytest test_index_html_loads.py -q)",
+      "Bash(python -m pytest test_boom_bust.py test_breakout_removed.py test_metrics_audit.py -q)",
+      "Bash(python /tmp/shot_gate.py)",
+      "Bash(rm -f _gate_light.png _gate_dark.png _gate_read.png _header.png /tmp/shot_gate.py /tmp/shot_header.py; git status --short)",
+      "Bash(python /tmp/shot_gate2.py)",
+      "Bash(python -m pytest test_index_html_loads.py test_no_hardcoded_colors.py test_design_tokens.py -q)",
+      "Bash(python -m pytest test_no_hardcoded_colors.py test_design_tokens.py test_index_html_loads.py -q)",
+      "Bash(PYTHONIOENCODING=utf-8 python /tmp/shot_gate3.py)",
+      "Bash(rm -f _fit_*.png _detail_gate.png _detail_read.png /tmp/shot_fit.py /tmp/shot_detail.py; git status --short index.html test_index_html_loads.py)",
+      "Bash(python /tmp/shot_fin.py)",
+      "Bash(python -m pytest test_no_hardcoded_colors.py test_design_tokens.py test_index_html_loads.py -q 2>&1 | tail -4 *)",
+      "Bash(python /tmp/shot_v.py)",
+      "Bash(python -m pytest test_index_html_loads.py::test_welcome_gate_locks_unlocks_and_persists -q)"
     ],
     "additionalDirectories": [
-      "C:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker"
+      "C:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker",
+      "\\tmp"
     ]
   }
 }

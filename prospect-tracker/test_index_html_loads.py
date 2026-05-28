@@ -62,6 +62,12 @@ def test_page_boots_without_js_errors(server):
         except Exception as exc:
             pytest.skip(f"chromium not installed for playwright: {exc}")
         page = browser.new_page()
+        # Pre-unlock the welcome gate so its full-screen overlay doesn't sit
+        # on top of #content. Runs before any page script on every navigation.
+        page.add_init_script(
+            "try{localStorage.setItem('prospect-tracker.gate-unlocked','1')}"
+            "catch(e){}"
+        )
         page.on("pageerror", lambda err: page_errors.append(err.message))
         page.goto(server, wait_until="load", timeout=15_000)
         page.wait_for_timeout(2500)  # let async boot IIFE finish
@@ -109,6 +115,12 @@ def test_every_section_renders(server):
         except Exception as exc:
             pytest.skip(f"chromium not installed for playwright: {exc}")
         page = browser.new_page()
+        # Pre-unlock the welcome gate — otherwise its overlay intercepts the
+        # .section-tab clicks below.
+        page.add_init_script(
+            "try{localStorage.setItem('prospect-tracker.gate-unlocked','1')}"
+            "catch(e){}"
+        )
         page.on("pageerror", lambda err: page_errors.append(err.message))
         page.goto(server, wait_until="load", timeout=15_000)
         page.wait_for_timeout(3000)  # let boot + initial render settle
@@ -167,3 +179,81 @@ def test_every_section_renders(server):
 # The `.debut-writeup-pill` CSS class + this test were a stale Stage-3a
 # stub that never had a JS render path wired up after the
 # Graduates -> Debuted rename. CSS deleted alongside this test.
+
+
+def test_welcome_gate_locks_unlocks_and_persists(server):
+    """The first-visit welcome gate covers the page, rejects a wrong
+    password, accepts "baseball", and stays dismissed on reload (the
+    unlock persists to localStorage)."""
+    pytest.importorskip("playwright.sync_api")
+    from playwright.sync_api import sync_playwright
+
+    page_errors: list[str] = []
+    with sync_playwright() as p:
+        try:
+            browser = p.chromium.launch(headless=True)
+        except Exception as exc:
+            pytest.skip(f"chromium not installed for playwright: {exc}")
+        # Fresh context => empty localStorage => first-visit (locked) state.
+        page = browser.new_page()
+        page.on("pageerror", lambda err: page_errors.append(err.message))
+        page.goto(server, wait_until="load", timeout=15_000)
+        page.wait_for_timeout(500)
+
+        gate = page.locator("#welcome-gate")
+        # Gate is visible and the password row (gate mode) is showing.
+        assert gate.is_visible(), "gate should be up on a first visit"
+        assert page.locator("#wg-input").is_visible(), (
+            "password input should show in gate mode"
+        )
+
+        # Wrong password keeps the gate up and surfaces an error.
+        page.fill("#wg-input", "wrongword")
+        page.click(".wg-submit")
+        page.wait_for_timeout(200)
+        assert gate.is_visible(), "wrong password must not dismiss the gate"
+        assert page.locator("#wg-error").inner_text().strip() != "", (
+            "wrong password should show an error message"
+        )
+
+        # Correct password (case-insensitive) drops the gate.
+        page.fill("#wg-input", "BASEBALL")
+        page.click(".wg-submit")
+        page.wait_for_timeout(300)
+        assert not gate.is_visible(), "correct password should dismiss the gate"
+        unlocked = page.evaluate(
+            "localStorage.getItem('prospect-tracker.gate-unlocked')"
+        )
+        assert unlocked == "1", "unlock should persist to localStorage"
+
+        # Reload — the gate stays down (no re-prompt on this device).
+        page.reload(wait_until="load", timeout=15_000)
+        page.wait_for_timeout(500)
+        assert not page.locator("#welcome-gate").is_visible(), (
+            "gate must not re-appear after a previous unlock"
+        )
+
+        # The masthead link re-opens it read-only (no password field).
+        page.click("#open-welcome-letter")
+        page.wait_for_timeout(300)
+        assert page.locator("#welcome-gate").is_visible(), (
+            "masthead link should re-open the letter"
+        )
+        assert page.locator("#wg-close").is_visible(), (
+            "read mode should show the Close button"
+        )
+        assert not page.locator("#wg-input").is_visible(), (
+            "read mode must not show the password field"
+        )
+        # Esc closes the read-only letter.
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(200)
+        assert not page.locator("#welcome-gate").is_visible(), (
+            "Esc should close the read-only letter"
+        )
+
+        browser.close()
+
+    assert not page_errors, (
+        "JS errors during welcome-gate walk:\n  " + "\n  ".join(page_errors)
+    )
