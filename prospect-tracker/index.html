@@ -9211,16 +9211,20 @@ function _toolComposite(p) {
   const v = (p && p.tools || {}).composite_overall;
   return typeof v === "number" && isFinite(v) ? v : null;
 }
-// v31.8 — Tiebreaker Score (TBS). 0-100 composite that ranks two
-// prospects with identical FV grades. Combines:
-//   * Tool composite (20-80 → 0-1)         × 35%
-//   * RPS+ (80-120 → 0-1)                  × 25%
-//   * SC+ (80-120 → 0-1)                   × 25%
-//   * Per-tool max grade (20-80 → 0-1)     × 15%
-// Each signal is independently normalized + clipped so a missing
-// signal just contributes 0 (rather than poisoning the whole score
-// with NaN). The result is 0-100; render-time consumers can also
-// surface it as a chip via `tiebreakerScoreChip(p)`.
+// v31.8 / v37 — Tiebreaker Score (TBS). 0-100 composite that ranks two
+// prospects carrying the IDENTICAL FV grade by projected MLB success. It
+// is cohort-aware (see `tiebreakerScore` below) — Active MiLB, MLB Draft,
+// and Overseas each weight a tuned blend of:
+//   * Scout grades        — Tool composite, per-tool max, Tool+ / DS+
+//   * Performance vs peers — RPS+, SC+ (active), Stuff+ (pitchers),
+//                            translation-adjusted wRC+/FIP (overseas)
+//   * Modifiers           — age-vs-level (runway), HEALTH/injuries
+//                            (durability), stock movement (trajectory)
+// Each signal is independently normalized + clipped to 0-1; a missing
+// signal drops out and the remaining weights renormalize (a partial
+// player still scores on a comparable 0-100 scale). Health: a currently-
+// on-IL prospect zeros the health term; recent IL history / post-TJ
+// recovery partially discount it; a clean profile is neutral-max.
 function _tbsNorm(v, lo, hi) {
   if (v == null || !isFinite(v)) return null;
   const z = (Number(v) - lo) / (hi - lo);
@@ -9378,13 +9382,13 @@ function tiebreakerScore(p) {
     // Tool / per-tool max round out the scouting picture; age,
     // health, movement act as secondary modifiers.
     parts = [
-      [_tbsNorm(dsPlus,        70, 130), 0.28],
+      [_tbsNorm(dsPlus,        70, 130), 0.27],
       [_tbsNorm(toolPlus,      80, 130), 0.18],
-      [_tbsNorm(rpsPlusCohort, 80, 130), 0.18],
+      [_tbsNorm(rpsPlusCohort, 80, 130), 0.17],
       [_tbsNorm(tool,          40, 70),  0.10],
       [_tbsNorm(tmax,          40, 70),  0.10],
       [ageBoost,                         0.08],
-      [healthMod,                        0.04],
+      [healthMod,                        0.06],   // v37 — injuries up-weighted (e.g. post-TJ college arms)
       [moveBoost,                        0.04],
     ];
   } else if (_isOverseasProspect(p)) {
@@ -9396,12 +9400,13 @@ function tiebreakerScore(p) {
     // Health is usually null for overseas pros (no MLB IL records).
     parts = [
       [_tbsNorm(toolPlus,      80, 130), 0.22],
-      [_tbsNorm(rpsPlusCohort, 80, 130), 0.20],
+      [_tbsNorm(rpsPlusCohort, 80, 130), 0.18],
       [_tbsNorm(wrc,           80, 160), 0.18],   // translation-adjusted
       [fipNorm,                          0.18],   // pitcher perf (only one of wrc/fip will be present)
       [_tbsNorm(tool,          40, 70),  0.08],
-      [_tbsNorm(tmax,          40, 70),  0.10],
+      [_tbsNorm(tmax,          40, 70),  0.08],
       [ageBoost,                         0.04],
+      [healthMod,                        0.04],   // v37 — included for parity; usually null for overseas pros (drops out via renorm)
       [moveBoost,                        0.04],
     ];
   } else {
@@ -9414,14 +9419,14 @@ function tiebreakerScore(p) {
     const sc  = getStatcastPlus(p);
     const stf = _stuffPlusTBS(p);
     parts = [
-      [_tbsNorm(tool, 40, 70),   0.28],
-      [_tbsNorm(rps,  80, 130),  0.18],
-      [_tbsNorm(sc,   80, 130),  0.18],
+      [_tbsNorm(tool, 40, 70),   0.26],
+      [_tbsNorm(rps,  80, 130),  0.16],
+      [_tbsNorm(sc,   80, 130),  0.16],
       [_tbsNorm(tmax, 40, 70),   0.10],
       [_tbsNorm(stf,  80, 130),  0.08],
       [ageBoost,                 0.08],
-      [healthMod,                0.05],
-      [moveBoost,                0.05],
+      [healthMod,                0.10],   // v37 — injuries now a meaningful tiebreaker for active prospects (was 0.05); on-IL zeros this term, recent IL / post-TJ partially discount it
+      [moveBoost,                0.06],
     ];
   }
   let presentSum = 0, presentWeight = 0;
@@ -19623,11 +19628,16 @@ function _applyOverseasSort(prospects) {
       return (bv - av) || ((b.consensus_fv ?? 0) - (a.consensus_fv ?? 0));
     });
   } else {
-    // Default: consensus FV desc, then consensus rank asc, then name.
+    // Default: consensus FV desc, then injury-aware TBS desc, then
+    // consensus rank asc, then name. v37 — added the TBS tiebreak so
+    // same-FV overseas prospects order by the same projected-MLB-success
+    // composite the draft list uses (was FV → consensus rank only).
     prospects.sort((a, b) => {
       const fa = a.consensus_fv != null ? a.consensus_fv : -1;
       const fb = b.consensus_fv != null ? b.consensus_fv : -1;
       if (fa !== fb) return fb - fa;
+      const ta = tiebreakerScore(a), tb = tiebreakerScore(b);
+      if (tb !== ta) return tb - ta;
       const ra = a.consensus_rank != null ? a.consensus_rank : 9999;
       const rb = b.consensus_rank != null ? b.consensus_rank : 9999;
       if (ra !== rb) return ra - rb;
@@ -22295,6 +22305,15 @@ const GLOSSARY = {
     example: "A hitter with EV 92 (+1σ), HH% 45 (+1σ), Z-Con% 88 (+0.5σ) lands around SC+ 113 — solidly above-pool, reads green in driver chips.",
     related: ["statcast", "rps_plus", "breakout_indicator"],
     visual_html: '<span class="driver-tag is-good" style="font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--up);background:rgba(31,122,58,0.15);color:var(--up);font-family:var(--font-mono);">SC+ 122</span><span class="driver-tag is-neutral" style="font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--neon-amber);background:rgba(255,215,0,0.15);color:var(--neon-amber);font-family:var(--font-mono);margin-left:4px;">SC+ 101</span><span class="driver-tag is-bad" style="font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--down);background:rgba(185,28,28,0.12);color:var(--down);font-family:var(--font-mono);margin-left:4px;">SC+ 84</span>',
+  },
+  "tiebreaker_score": {
+    name: "Tiebreaker Score (TBS)", aliases: ["TBS", "Tiebreaker Score", "Tie-breaker", "Tiebreak"], category: "custom-index",
+    priority: 12,
+    short: "0–100 composite that separates two prospects carrying the IDENTICAL FV grade by projected MLB success. Cohort-aware (MiLB / Draft / Overseas) and injury-aware.",
+    long: "When two prospects share the same Future Value, raw FV can't separate them — TBS does. It blends scouting grades, cohort-normalized performance, and developmental/risk modifiers into one 0–100 number, tuned per cohort for 'how likely is this player to become a useful MLB regular?' rather than current-season output. MiLB (active): Tool composite 26% · RPS+ 16% · SC+ 16% · per-tool max 10% · Stuff+ 8% (pitchers) · age-vs-level 8% · health/injuries 10% · stock movement 6%. MLB Draft: Draft Stock+ 27% · Tool+ 18% · college RPS+ 17% · Tool composite 10% · per-tool max 10% · age 8% · health 6% · movement 4%. Overseas: Tool+ 22% · cohort RPS+ 18% · translation-adjusted wRC+ or FIP 18% · Tool composite 8% · per-tool max 8% · age 4% · health 4% · movement 4%. Each signal is independently normalized to 0–1 and clipped; any missing signal drops out and the remaining weights renormalize, so a partial-data player still scores on a comparable scale. The HEALTH term works the same way everywhere: a prospect currently on the IL zeros it (sinking below a healthy same-FV peer); recent IL history (≥1 stint or ≥30 days in the trailing year) or a post-Tommy-John recovery window partially discounts it; a clean profile is neutral-max. TBS drives same-FV ordering on the Draft + Overseas lists, the surplus-value nudge in trade evaluations, and the 'TBS NN' line in Trade Audit cards. The Active list's headline #overall-rank is computed server-side with a matching FV → Tools → currently-on-IL tiebreak, so an injured prospect also ranks just behind a healthy same-FV, same-tools peer there.",
+    formula: "TBS = round( 100 × Σ(signalᵢ × weightᵢ) ÷ Σ(weightᵢ for present signals) ) — per-cohort weights as listed above",
+    example: "Two 50-FV shortstops with similar tools: one healthy (RPS+ 118), one on the 60-day IL. The healthy bat scores ~8–10 TBS points higher and ranks ahead in any same-FV tiebreak.",
+    related: ["fv", "tool", "rps_plus", "statcast_plus"],
   },
   "rps_plus": {
     name: "RPS+", aliases: ["RPS+", "Rate Performance Score"], category: "custom-index",

@@ -126,6 +126,9 @@ SKIP_DIRS = {
     ".cache", "__pycache__", "vendor", "logs",
     "data",                 # data/*.json and data/*.js are auto-generated
     "data/fangraphs_imports",  # user-imported CSVs (data, not code)
+    "test_fixtures",        # third-party scraped HTML (NCAA stat pages, etc.)
+                            # captured as parser test inputs — not authored code,
+                            # so a "Written by …" header would be a false claim.
 }
 SKIP_EXTS = {
     ".pyc", ".pyo", ".json", ".csv", ".db", ".sqlite",

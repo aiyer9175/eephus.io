@@ -7050,9 +7050,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     def _active_key(p: PlayerTimeseries):
         latest = p.points[-1]
         rank_key = latest.avg_rank if latest.avg_rank is not None else 999
+        # v37 — injuries break ties among same-FV, same-tools prospects: a
+        # prospect currently on the IL sinks just below an otherwise-equal
+        # healthy peer. Mirrors the front-end TBS health term.
+        _il = il_status.get(p.player_key) or {}
+        on_il = 1 if _il.get("is_on_il") else 0
         return (
             -latest.consensus_fv_raw,   # FV desc — primary
             -_tool_overall(p),          # Tools desc — FV tiebreaker
+            on_il,                      # healthy (0) ranks above injured (1)
             rank_key,                   # avg_rank asc — final separator
         )
     actives.sort(key=_active_key)
@@ -7099,9 +7105,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           and p.position.split("/")[0] in PITCHER_POS_SET)
         comp = _compute_tool_composites(dict(prior_tools), is_pitcher)
         prior_tool = float(comp["composite_overall"]) if (comp and comp.get("composite_overall") is not None) else 0.0
+        # v37 — apply the same on-IL tiebreak so the rank-delta arrow
+        # reflects FV / tools movement rather than a one-time jump when a
+        # player goes on or off the IL (current IL status cancels out of
+        # both the current and prior keys).
+        _il = il_status.get(p.player_key) or {}
+        on_il = 1 if _il.get("is_on_il") else 0
         return (
             -prior_fv if prior_fv is not None else 999,
             -prior_tool,
+            on_il,
             prior_rank,
         )
     prior_actives = sorted(
