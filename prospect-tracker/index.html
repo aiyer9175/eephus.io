@@ -885,6 +885,34 @@
     [data-theme="dark"] .build-banner {
       color: #D9B8E8;  /* slightly lifted lilac for dark mode */
     }
+    /* Social links above the byline (Twitter / X + LinkedIn). Small square
+       icon buttons that sit just above the "Created by …" signature. */
+    .signature-socials {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .sig-social {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px; height: 26px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+    }
+    .sig-social:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-color: var(--text-tertiary);
+    }
+    .sig-social svg { width: 14px; height: 14px; display: block; fill: currentColor; }
+    /* The Discord control is an <a>; keep it visually identical to the
+       sibling <button> controls (no underline). */
+    a.global-ctrl { text-decoration: none; }
     h1 .h1-rule {
       display: block;
       width: 64px; height: 3px;
@@ -1506,6 +1534,8 @@
     }
     .ifa-side-card table.detail-table td,
     .ifa-side-card table.detail-table th { padding: 2px 4px; }
+    /* Clickable org → farm-system affordance in the IFA tables. */
+    .ifa-org-link:hover { color: var(--neon-cyan); text-decoration: underline; }
     /* Row variants — each section's per-render `grid-template-columns`
        lived inline before; centralizing here keeps the renderers terse
        and lets a single media-query block handle mobile collapses. */
@@ -7552,7 +7582,17 @@
 <div class="container">
 
   <header class="header">
-    <div class="build-banner" aria-label="Build version">Created by Noah J. Dengler (@ARKNDJL)</div>
+    <div class="signature-socials">
+      <a class="sig-social" href="https://x.com/ARKNDJL" target="_blank" rel="noopener"
+         title="Twitter / X — @ARKNDJL" aria-label="Twitter / X">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+      <a class="sig-social" href="https://www.linkedin.com/in/noahjdengler/" target="_blank" rel="noopener"
+         title="LinkedIn — Noah J. Dengler" aria-label="LinkedIn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      </a>
+    </div>
+    <div class="build-banner" aria-label="Build version">Created by <span aria-hidden="true">🜎</span> Noah J. Dengler / @ARKNDJL</div>
     <h1>
       <!-- v30 — Baseball badge logo. Cream face + dark outline read as
            a vintage Topps-card baseball; the seam arc is painted with
@@ -7601,10 +7641,17 @@
         <span aria-hidden="true">✉</span>
         <span class="global-ctrl-label">Alpha test letter</span>
       </button>
+      <a class="global-ctrl" id="open-discord" href="https://discord.gg/VBQ9BR3Wt"
+         target="_blank" rel="noopener"
+         title="Join the Alpha test Discord" aria-label="Alpha test Discord">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="display:block;"><path d="M20.317 4.369a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.211.375-.444.864-.608 1.249a18.27 18.27 0 0 0-5.487 0 12.6 12.6 0 0 0-.617-1.25.077.077 0 0 0-.079-.036A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.099.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.029ZM8.02 15.331c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.332-.956 2.418-2.157 2.418Zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.332-.946 2.418-2.157 2.418Z"/></svg>
+        <span class="global-ctrl-label">Alpha test Discord</span>
+      </a>
       <button class="global-ctrl" id="global-watchlist" type="button"
               title="Open your watchlist" aria-label="Watchlist">
         <span aria-hidden="true">★</span>
         <span class="global-ctrl-label">Watchlist</span>
+        <span class="global-ctrl-count" id="global-watchlist-count" hidden>0</span>
       </button>
       <button class="global-ctrl global-compare is-empty-hidden" id="global-compare" type="button"
               title="Open compare panel" aria-label="Compare">
@@ -7963,7 +8010,7 @@
          render an empty duplicate. -->
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">MiLB Prospects</span>
-      <span class="newsprint-eyebrow-meta">the full tracked board</span>
+      <span class="newsprint-eyebrow-meta">the full tracked board · consensus FV, tools, Statcast &amp; stock movement</span>
     </div>
     <div class="active-grid">
       <div id="rows"></div>
@@ -7976,7 +8023,7 @@
   <div id="traded-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Transactions</span>
-      <span class="newsprint-eyebrow-meta">how each prospect was acquired</span>
+      <span class="newsprint-eyebrow-meta">prospect moves · trades · signings · waivers · Rule 5 · promotions &amp; demotions</span>
     </div>
     <div id="whats-new-traded"></div>
     <div class="active-grid">
@@ -7989,7 +8036,7 @@
   <div id="spotlights-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Prospect Stock Watch</span>
-      <span class="newsprint-eyebrow-meta">season-long risers, rebounders &amp; fallers</span>
+      <span class="newsprint-eyebrow-meta">season-long risers, rebounders &amp; fallers · standout single-game performances</span>
     </div>
     <div id="whats-standout-spotlights" class="news-row news-row-standout"></div>
     <div class="spotlight-subtabs">
@@ -8010,7 +8057,7 @@
   <div id="injured-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Injured List</span>
-      <span class="newsprint-eyebrow-meta">active prospects on the IL</span>
+      <span class="newsprint-eyebrow-meta">active prospects currently on the IL · injury type, timeline &amp; days out</span>
     </div>
     <div id="whats-new-injured"></div>
     <!-- v29 — Collapsed-by-default sort accordion for IL list. -->
@@ -8066,7 +8113,7 @@
   <div id="draft-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">MLB Draft Prospects</span>
-      <span class="newsprint-eyebrow-meta">amateur pipeline · isolated from MiLB</span>
+      <span class="newsprint-eyebrow-meta">amateur draft pipeline · rankings, schools, slot values &amp; signing bonuses · isolated from MiLB</span>
     </div>
     <div id="draft-class-bar" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
       <span class="filter-label" title="Draft class year">Class</span>
@@ -8185,7 +8232,7 @@
   <div id="overseas-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Overseas Professionals</span>
-      <span class="newsprint-eyebrow-meta">KBO · NPB · CPBL · MLB-eligible</span>
+      <span class="newsprint-eyebrow-meta">established KBO · NPB · CPBL pros · MLB-eligible via posting or international FA</span>
     </div>
     <div id="overseas-league-bar" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
       <span class="filter-label" title="Source league">League</span>
@@ -8290,7 +8337,7 @@
   <div id="ifa-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">International Amateur Signings</span>
-      <span class="newsprint-eyebrow-meta">J2 classes · 2021–present</span>
+      <span class="newsprint-eyebrow-meta">J2 classes 2021–present · bonuses, signing teams, pool spend &amp; org leaders</span>
     </div>
     <div id="ifa-class-bar" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
       <span class="filter-label" title="IFA signing year (Jan 15 signing day opens each class)">Class</span>
@@ -8302,7 +8349,7 @@
   <div id="debuts-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Graduated to the Majors</span>
-      <span class="newsprint-eyebrow-meta">tracked prospects who debuted</span>
+      <span class="newsprint-eyebrow-meta">tracked prospects who reached MLB · career WAR, WAG &amp; performance vs prospect grade</span>
     </div>
     <div id="whats-new-debuts"></div>
     <!-- v29 — Collapsed-by-default sort accordion mirroring the
@@ -8368,7 +8415,7 @@
          idiom. -->
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">League-wide Farm System Rankings · 30 Organizations</span>
-      <span class="newsprint-eyebrow-meta">v31 composite · grade-sorted</span>
+      <span class="newsprint-eyebrow-meta">v31 composite grade · acquisition, development, financial &amp; MLB-production rollups</span>
     </div>
     <!-- v29 — Collapsed-by-default filter accordion for farm system. -->
     <div class="filter-toggle-row">
@@ -8458,7 +8505,7 @@
   <div id="leaderboards-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Prospect Leaderboards</span>
-      <span class="newsprint-eyebrow-meta">by stat · level · position · org</span>
+      <span class="newsprint-eyebrow-meta">single-season stat leaders · filter by level, position, org &amp; season</span>
     </div>
     <div id="whats-standout-leaderboards" class="news-row news-row-standout"></div>
     <!-- v29 — Collapsed-by-default filter accordion for leaderboards. -->
@@ -8470,102 +8517,140 @@
         <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
       </button>
     </div>
+    <!-- v36 — Reorganized into the WHO / WHAT / HOW clusters shared with the
+         MiLB prospect filter bar: WHO narrows the pool (level / pos / org /
+         age), WHAT picks the metric (board + stat pickers), HOW controls
+         presentation (season + sort order). -->
     <div class="filter-bar collapsible-filter-bar" id="leaderboard-bar" style="flex-wrap:wrap;gap:6px;">
-      <span class="filter-label">Stat</span>
-      <button class="chip active" data-lb-stat="ops"     title="On-base + slugging">OPS</button>
-      <button class="chip"        data-lb-stat="avg"     title="Batting average">AVG</button>
-      <button class="chip"        data-lb-stat="obp"     title="On-base percentage">OBP</button>
-      <button class="chip"        data-lb-stat="slg"     title="Slugging percentage">SLG</button>
-      <button class="chip"        data-lb-stat="iso"     title="Isolated power (SLG − AVG)">ISO</button>
-      <button class="chip"        data-lb-stat="bb_pct"  title="Walk rate">BB%</button>
-      <button class="chip"        data-lb-stat="k_pct"   title="Strikeout rate (lower is better)">K%</button>
-      <button class="chip"        data-lb-stat="hr"      title="Home runs">HR</button>
-      <button class="chip"        data-lb-stat="sb"      title="Stolen bases">SB</button>
-      <button class="chip"        data-lb-stat="hit_level_plus" title="OPS vs level mean — surfaces hitters whose OPS is great BECAUSE the level is hard">OPS+ lvl</button>
-      <!-- v17 — RPS+ leaderboard sort. Active-prospect rate-performance
-           score (100 = cohort mean, +10 = +1σ). Hitters only. -->
-      <button class="chip"        data-lb-stat="rps_plus" title="RPS+ — level-anchored rate performance score (100 = mean, +10 = +1σ). Hitters only.">RPS+</button>
-      <button class="chip"        data-lb-stat="era"     title="Earned-run average (lower is better)">ERA</button>
-      <button class="chip"        data-lb-stat="whip"    title="Walks + hits / IP (lower is better)">WHIP</button>
-      <button class="chip"        data-lb-stat="fip"     title="Fielding Independent Pitching (lower is better)">FIP</button>
-      <button class="chip"        data-lb-stat="pitcher_k_pct" title="Pitcher K% — strikeouts as % of batters faced">K%</button>
-      <button class="chip"        data-lb-stat="pitcher_bb_pct" title="Pitcher BB% — walks as % of batters faced (lower is better)">BB%</button>
-      <button class="chip"        data-lb-stat="hr_per_9" title="Home runs allowed per 9 (lower is better)">HR/9</button>
-      <button class="chip"        data-lb-stat="pit_level_plus" title="ERA vs level mean — surfaces pitchers whose ERA is dominant relative to the level cohort">ERA- lvl</button>
-      <span class="filter-label">Board</span>
-      <button class="chip active" data-lb-side="all">All</button>
-      <button class="chip"        data-lb-side="hit">Hitters</button>
-      <button class="chip"        data-lb-side="pit">Pitchers</button>
+      <!-- ============================== WHO ============================= -->
+      <div class="filter-cluster">
+        <span class="filter-cluster-label">WHO</span>
+        <div class="filter-group">
+          <span class="filter-label" title="Prospect leaderboard — MiLB levels only. Debuted players and MLB-level rows are excluded.">Level</span>
+          <button class="chip active" data-lb-level="all">All MiLB</button>
+          <button class="chip"        data-lb-level="AAA">AAA</button>
+          <button class="chip"        data-lb-level="AA">AA</button>
+          <button class="chip"        data-lb-level="A+">A+</button>
+          <button class="chip"        data-lb-level="A">A</button>
+          <button class="chip"        data-lb-level="CPX">CPX</button>
+          <button class="chip"        data-lb-level="DSL">DSL</button>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Position</span>
+          <button class="chip active" data-lb-pos="all">All</button>
+          <button class="chip"        data-lb-pos="C">C</button>
+          <button class="chip"        data-lb-pos="1B">1B</button>
+          <button class="chip"        data-lb-pos="2B">2B</button>
+          <button class="chip"        data-lb-pos="SS">SS</button>
+          <button class="chip"        data-lb-pos="3B">3B</button>
+          <button class="chip"        data-lb-pos="INF" title="Any infielder">INF</button>
+          <button class="chip"        data-lb-pos="CF">CF</button>
+          <button class="chip"        data-lb-pos="LF">LF</button>
+          <button class="chip"        data-lb-pos="RF">RF</button>
+          <button class="chip"        data-lb-pos="OF" title="Any outfielder">OF</button>
+          <button class="chip"        data-lb-pos="P" title="Any pitcher — SP / RP / SIRP / MIRP / RHP / LHP">P</button>
+          <button class="chip"        data-lb-pos="SP" title="Starting pitcher">SP</button>
+          <button class="chip"        data-lb-pos="RP" title="Relief pitcher — rolls up SIRP + MIRP + bare RP">RP</button>
+          <button class="chip"        data-lb-pos="SIRP" title="Single-Inning Relief Pitcher — closer / setup role">SIRP</button>
+          <button class="chip"        data-lb-pos="MIRP" title="Multi-Inning Relief Pitcher — long-relief / bulk follower">MIRP</button>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Org</span>
+          <select class="chip" id="lb-org-filter"><option value="all">All orgs</option></select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label" title="Cap the board to prospects at or below this current age — surfaces young-for-the-level leaders.">Age</span>
+          <button class="chip active" data-lb-age="all">All</button>
+          <button class="chip"        data-lb-age="19" title="Age 19 or younger">≤19</button>
+          <button class="chip"        data-lb-age="21" title="Age 21 or younger">≤21</button>
+          <button class="chip"        data-lb-age="23" title="Age 23 or younger">≤23</button>
+        </div>
+      </div>
+      <!-- ============================== WHAT ============================ -->
+      <div class="filter-cluster">
+        <span class="filter-cluster-label">WHAT</span>
+        <div class="filter-group">
+          <span class="filter-label">Board</span>
+          <button class="chip active" data-lb-side="all">All</button>
+          <button class="chip"        data-lb-side="hit">Hitters</button>
+          <button class="chip"        data-lb-side="pit">Pitchers</button>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Stat</span>
+          <button class="chip active" data-lb-stat="ops"     title="On-base + slugging">OPS</button>
+          <button class="chip"        data-lb-stat="avg"     title="Batting average">AVG</button>
+          <button class="chip"        data-lb-stat="obp"     title="On-base percentage">OBP</button>
+          <button class="chip"        data-lb-stat="slg"     title="Slugging percentage">SLG</button>
+          <button class="chip"        data-lb-stat="iso"     title="Isolated power (SLG − AVG)">ISO</button>
+          <button class="chip"        data-lb-stat="bb_pct"  title="Walk rate">BB%</button>
+          <button class="chip"        data-lb-stat="k_pct"   title="Strikeout rate (lower is better)">K%</button>
+          <button class="chip"        data-lb-stat="hr"      title="Home runs">HR</button>
+          <button class="chip"        data-lb-stat="sb"      title="Stolen bases">SB</button>
+          <button class="chip"        data-lb-stat="hit_level_plus" title="OPS vs level mean — surfaces hitters whose OPS is great BECAUSE the level is hard">OPS+ lvl</button>
+          <button class="chip"        data-lb-stat="rps_plus" title="RPS+ — level-anchored rate performance score (100 = mean, +10 = +1σ). Hitters only.">RPS+</button>
+          <button class="chip"        data-lb-stat="era"     title="Earned-run average (lower is better)">ERA</button>
+          <button class="chip"        data-lb-stat="whip"    title="Walks + hits / IP (lower is better)">WHIP</button>
+          <button class="chip"        data-lb-stat="fip"     title="Fielding Independent Pitching (lower is better)">FIP</button>
+          <button class="chip"        data-lb-stat="pitcher_k_pct" title="Pitcher K% — strikeouts as % of batters faced">K%</button>
+          <button class="chip"        data-lb-stat="pitcher_bb_pct" title="Pitcher BB% — walks as % of batters faced (lower is better)">BB%</button>
+          <button class="chip"        data-lb-stat="hr_per_9" title="Home runs allowed per 9 (lower is better)">HR/9</button>
+          <button class="chip"        data-lb-stat="pit_level_plus" title="ERA vs level mean — surfaces pitchers whose ERA is dominant relative to the level cohort">ERA- lvl</button>
+        </div>
 
-      <span class="filter-label" style="margin-left:10px;">Hitter stats</span>
-      <button class="chip active" data-lb-stat="ops"     data-lb-stat-side="hit" title="On-base + slugging">OPS</button>
-      <button class="chip"        data-lb-stat="iso"     data-lb-stat-side="hit" title="Isolated power (SLG − AVG)">ISO</button>
-      <button class="chip"        data-lb-stat="bb_pct"  data-lb-stat-side="hit" title="Walk rate">BB%</button>
-      <button class="chip"        data-lb-stat="k_pct"   data-lb-stat-side="hit" title="Strikeout rate (lower is better)">K%</button>
-      <button class="chip"        data-lb-stat="hr"      data-lb-stat-side="hit" title="Home runs">HR</button>
-      <button class="chip"        data-lb-stat="sb"      data-lb-stat-side="hit" title="Stolen bases">SB</button>
-      <button class="chip"        data-lb-stat="zone_z_contact" data-lb-stat-side="hit" title="Hitter zone contact percent">Z-Con%</button>
-      <button class="chip"        data-lb-stat="zone_chase" data-lb-stat-side="hit" title="Hitter chase rate; lower is better">Chase%</button>
-      <button class="chip"        data-lb-stat="avg_ev" data-lb-stat-side="hit" title="Average exit velocity">Avg EV</button>
-      <button class="chip"        data-lb-stat="max_ev" data-lb-stat-side="hit" title="Maximum exit velocity">Max EV</button>
-      <button class="chip"        data-lb-stat="hard_hit_pct" data-lb-stat-side="hit" title="95+ mph batted-ball rate">Hard%</button>
-      <button class="chip"        data-lb-stat="barrel_pct" data-lb-stat-side="hit" title="Approximate barrel rate from exit velocity and launch angle">Brl%</button>
-
-      <span class="filter-label" style="margin-left:10px;">Pitcher stats</span>
-      <button class="chip"        data-lb-stat="era"     data-lb-stat-side="pit" title="Earned-run average (lower is better)">ERA</button>
-      <button class="chip"        data-lb-stat="whip"    data-lb-stat-side="pit" title="Walks + hits / IP (lower is better)">WHIP</button>
-      <button class="chip"        data-lb-stat="pitcher_k_pct" data-lb-stat-side="pit" title="Pitcher K% — strikeouts as % of batters faced">K%</button>
-      <button class="chip"        data-lb-stat="pitcher_bb_pct" data-lb-stat-side="pit" title="Pitcher BB% — walks as % of batters faced (lower is better)">BB%</button>
-      <button class="chip"        data-lb-stat="pitcher_zone_whiff" data-lb-stat-side="pit" title="Pitcher whiffs per swing">Whiff%</button>
-      <button class="chip"        data-lb-stat="pitcher_zone_chase" data-lb-stat-side="pit" title="Pitcher chase rate induced; higher is better">Chase%</button>
-      <button class="chip"        data-lb-stat="pitcher_zone_z_contact" data-lb-stat-side="pit" title="Pitcher in-zone contact allowed; lower is better">Z-Con%</button>
-      <button class="chip"        data-lb-stat="fb_velo_feed" data-lb-stat-side="pit" title="Average velocity of the highest-usage fastball-like pitch from pitch feeds">FB velo</button>
-      <button class="chip"        data-lb-stat="fb_ivb_feed" data-lb-stat-side="pit" title="Average induced vertical break on the highest-usage fastball-like pitch from pitch feeds">FB IVB</button>
-      <button class="chip"        data-lb-stat="pitcher_avg_ev_allowed" data-lb-stat-side="pit" title="Average exit velocity allowed from tracked batted balls; lower is better">Avg EVa</button>
-      <button class="chip"        data-lb-stat="pitcher_hard_hit_allowed" data-lb-stat-side="pit" title="95+ mph batted-ball rate allowed; lower is better">HardA%</button>
-      <button class="chip"        data-lb-stat="pitcher_barrel_allowed" data-lb-stat-side="pit" title="Approximate barrel rate allowed; lower is better">BrlA%</button>
-
-      <span class="filter-label" style="margin-left:10px;" title="Prospect leaderboard — MiLB levels only. Debuted players and MLB-level rows are excluded.">Level</span>
-      <button class="chip active" data-lb-level="all">All MiLB</button>
-      <button class="chip"        data-lb-level="AAA">AAA</button>
-      <button class="chip"        data-lb-level="AA">AA</button>
-      <button class="chip"        data-lb-level="A+">A+</button>
-      <button class="chip"        data-lb-level="A">A</button>
-      <button class="chip"        data-lb-level="CPX">CPX</button>
-      <button class="chip"        data-lb-level="DSL">DSL</button>
-
-      <span class="filter-label" style="margin-left:10px;">Position</span>
-      <button class="chip active" data-lb-pos="all">All</button>
-      <button class="chip"        data-lb-pos="C">C</button>
-      <button class="chip"        data-lb-pos="1B">1B</button>
-      <button class="chip"        data-lb-pos="2B">2B</button>
-      <button class="chip"        data-lb-pos="SS">SS</button>
-      <button class="chip"        data-lb-pos="3B">3B</button>
-      <button class="chip"        data-lb-pos="INF" title="Any infielder">INF</button>
-      <button class="chip"        data-lb-pos="CF">CF</button>
-      <button class="chip"        data-lb-pos="LF">LF</button>
-      <button class="chip"        data-lb-pos="RF">RF</button>
-      <button class="chip"        data-lb-pos="OF" title="Any outfielder">OF</button>
-      <button class="chip"        data-lb-pos="P" title="Any pitcher — SP / RP / SIRP / MIRP / RHP / LHP">P</button>
-      <button class="chip"        data-lb-pos="SP" title="Starting pitcher">SP</button>
-      <button class="chip"        data-lb-pos="RP" title="Relief pitcher — rolls up SIRP + MIRP + bare RP">RP</button>
-      <button class="chip"        data-lb-pos="SIRP" title="Single-Inning Relief Pitcher — closer / setup role">SIRP</button>
-      <button class="chip"        data-lb-pos="MIRP" title="Multi-Inning Relief Pitcher — long-relief / bulk follower">MIRP</button>
-
-      <span class="filter-label" style="margin-left:10px;">Org</span>
-      <select class="chip" id="lb-org-filter">
-        <option value="all">All orgs</option>
-      </select>
-
-      <span class="filter-label" style="margin-left:10px;">Season</span>
-      <button class="chip active" data-lb-season="2026">2026</button>
-      <button class="chip"        data-lb-season="2025">2025</button>
-      <button class="chip"        data-lb-season="2024">2024</button>
-      <button class="chip"        data-lb-season="2023">2023</button>
-      <button class="chip"        data-lb-season="2022">2022</button>
-      <button class="chip"        data-lb-season="2021">2021</button>
-      <!-- v18 — Reset chip for the leaderboards page -->
-      <button class="chip reset-chip" type="button" data-reset-page="leaderboard" title="Reset stat / level / position / org / season back to defaults" style="margin-left:12px;">↺ Reset</button>
+        <div class="filter-group">
+          <span class="filter-label">Hitter stats</span>
+          <button class="chip active" data-lb-stat="ops"     data-lb-stat-side="hit" title="On-base + slugging">OPS</button>
+          <button class="chip"        data-lb-stat="iso"     data-lb-stat-side="hit" title="Isolated power (SLG − AVG)">ISO</button>
+          <button class="chip"        data-lb-stat="bb_pct"  data-lb-stat-side="hit" title="Walk rate">BB%</button>
+          <button class="chip"        data-lb-stat="k_pct"   data-lb-stat-side="hit" title="Strikeout rate (lower is better)">K%</button>
+          <button class="chip"        data-lb-stat="hr"      data-lb-stat-side="hit" title="Home runs">HR</button>
+          <button class="chip"        data-lb-stat="sb"      data-lb-stat-side="hit" title="Stolen bases">SB</button>
+          <button class="chip"        data-lb-stat="zone_z_contact" data-lb-stat-side="hit" title="Hitter zone contact percent">Z-Con%</button>
+          <button class="chip"        data-lb-stat="zone_chase" data-lb-stat-side="hit" title="Hitter chase rate; lower is better">Chase%</button>
+          <button class="chip"        data-lb-stat="avg_ev" data-lb-stat-side="hit" title="Average exit velocity">Avg EV</button>
+          <button class="chip"        data-lb-stat="max_ev" data-lb-stat-side="hit" title="Maximum exit velocity">Max EV</button>
+          <button class="chip"        data-lb-stat="hard_hit_pct" data-lb-stat-side="hit" title="95+ mph batted-ball rate">Hard%</button>
+          <button class="chip"        data-lb-stat="barrel_pct" data-lb-stat-side="hit" title="Approximate barrel rate from exit velocity and launch angle">Brl%</button>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Pitcher stats</span>
+          <button class="chip"        data-lb-stat="era"     data-lb-stat-side="pit" title="Earned-run average (lower is better)">ERA</button>
+          <button class="chip"        data-lb-stat="whip"    data-lb-stat-side="pit" title="Walks + hits / IP (lower is better)">WHIP</button>
+          <button class="chip"        data-lb-stat="pitcher_k_pct" data-lb-stat-side="pit" title="Pitcher K% — strikeouts as % of batters faced">K%</button>
+          <button class="chip"        data-lb-stat="pitcher_bb_pct" data-lb-stat-side="pit" title="Pitcher BB% — walks as % of batters faced (lower is better)">BB%</button>
+          <button class="chip"        data-lb-stat="pitcher_zone_whiff" data-lb-stat-side="pit" title="Pitcher whiffs per swing">Whiff%</button>
+          <button class="chip"        data-lb-stat="pitcher_zone_chase" data-lb-stat-side="pit" title="Pitcher chase rate induced; higher is better">Chase%</button>
+          <button class="chip"        data-lb-stat="pitcher_zone_z_contact" data-lb-stat-side="pit" title="Pitcher in-zone contact allowed; lower is better">Z-Con%</button>
+          <button class="chip"        data-lb-stat="fb_velo_feed" data-lb-stat-side="pit" title="Average velocity of the highest-usage fastball-like pitch from pitch feeds">FB velo</button>
+          <button class="chip"        data-lb-stat="fb_ivb_feed" data-lb-stat-side="pit" title="Average induced vertical break on the highest-usage fastball-like pitch from pitch feeds">FB IVB</button>
+          <button class="chip"        data-lb-stat="pitcher_avg_ev_allowed" data-lb-stat-side="pit" title="Average exit velocity allowed from tracked batted balls; lower is better">Avg EVa</button>
+          <button class="chip"        data-lb-stat="pitcher_hard_hit_allowed" data-lb-stat-side="pit" title="95+ mph batted-ball rate allowed; lower is better">HardA%</button>
+          <button class="chip"        data-lb-stat="pitcher_barrel_allowed" data-lb-stat-side="pit" title="Approximate barrel rate allowed; lower is better">BrlA%</button>
+        </div>
+      </div>
+      <!-- ============================== HOW ============================= -->
+      <div class="filter-cluster">
+        <span class="filter-cluster-label">HOW</span>
+        <div class="filter-group">
+          <span class="filter-label">Season</span>
+          <button class="chip active" data-lb-season="2026">2026</button>
+          <button class="chip"        data-lb-season="2025">2025</button>
+          <button class="chip"        data-lb-season="2024">2024</button>
+          <button class="chip"        data-lb-season="2023">2023</button>
+          <button class="chip"        data-lb-season="2022">2022</button>
+          <button class="chip"        data-lb-season="2021">2021</button>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label" title="Override the stat's natural ranking direction — handy for surfacing the lowest values too.">Order</span>
+          <button class="chip active" data-lb-dir="auto" title="Use the stat's natural direction (e.g. high OPS, low ERA)">Stat default</button>
+          <button class="chip"        data-lb-dir="hi" title="Highest value first">High → Low</button>
+          <button class="chip"        data-lb-dir="lo" title="Lowest value first">Low → High</button>
+        </div>
+        <div class="filter-group">
+          <!-- v18 — Reset chip for the leaderboards page -->
+          <button class="chip reset-chip" type="button" data-reset-page="leaderboard" title="Reset all leaderboard filters back to defaults">↺ Reset</button>
+        </div>
+      </div>
     </div>
     <!-- Cohort histogram + top-10 sparklines land here in Phase 3.
          Empty container today; renderLeaderboards fills it in once the
@@ -8582,59 +8667,89 @@
   <div id="charts-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Build-Your-Own Scatterplot</span>
-      <span class="newsprint-eyebrow-meta">pick a group · pick two axes</span>
+      <span class="newsprint-eyebrow-meta">pick a prospect group &amp; any two axes · trendline, R² &amp; color encoding</span>
     </div>
     <p style="font-size:12px;color:var(--text-secondary);margin:0 0 10px;line-height:1.5;">
       Pick a prospect group, then any two stats for the X / Y axes. Toggle the
       least-squares trendline + R² to gauge how tightly the two move together.
       Click any dot to open that player. Hover for exact values.
     </p>
+    <!-- v36 — Controls grouped into the WHO / WHAT / HOW clusters shared with
+         the MiLB prospect filter bar: WHAT chooses the group, axes & color
+         encoding; WHO narrows the plotted population; HOW controls
+         presentation (trendline, find, export). Inner control IDs are
+         unchanged so renderCharts / _chartWireControls keep working. -->
     <div id="charts-controls" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
-      <span class="filter-label">Group</span>
-      <button class="chip active" data-chart-mode="prospects"
-              title="Active MiLB prospects — each dot is one prospect">MiLB</button>
-      <button class="chip" data-chart-mode="debuted"
-              title="Graduated prospects — career WAR, WAG, WARWAG vs their prospect grade">Debuted</button>
-      <button class="chip" data-chart-mode="draft"
-              title="Amateur draft prospects — consensus FV, Draft Stock+, tools">MLB Draft</button>
-      <button class="chip" data-chart-mode="ifa"
-              title="International amateur (J2) signings — bonus, pool %, FV">Int'l Amateurs</button>
-      <button class="chip" data-chart-mode="overseas"
-              title="KBO / NPB / CPBL prospects — FV, age, bonus, tools">Overseas</button>
-      <button class="chip" data-chart-mode="farms"
-              title="Each dot = one MLB farm system">Farms</button>
-      <span class="filter-label" style="margin-left:12px;">X axis</span>
-      <select id="chart-axis-x"></select>
-      <span class="filter-label">Y axis</span>
-      <select id="chart-axis-y"></select>
-      <label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary);margin-left:8px;">
-        <input type="checkbox" id="chart-trendline" checked>
-        Trendline + R²
-      </label>
-      <button class="share-as-image" data-share-target="#chart-canvas-wrap"
-              data-share-filename="chart" style="margin-left:auto;"
-              title="Save this chart as a PNG image">⤴ Save PNG</button>
-    </div>
-    <!-- Row 2 — color encoding, population filters, player highlight. The
-         filter selects + color options populate dynamically per group in
-         renderCharts (a dim with no data for the group is hidden). -->
-    <div id="charts-controls-2" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
-      <span class="filter-label">Color</span>
-      <select id="chart-color" class="chip"></select>
-      <span class="filter-label" data-chart-filter-label="org" style="margin-left:8px;">Org</span>
-      <select id="chart-filter-org" class="chip" data-chart-filter="org"></select>
-      <span class="filter-label" data-chart-filter-label="level">Level</span>
-      <select id="chart-filter-level" class="chip" data-chart-filter="level"></select>
-      <span class="filter-label" data-chart-filter-label="pos">Pos</span>
-      <select id="chart-filter-pos" class="chip" data-chart-filter="pos"></select>
-      <span class="filter-label" data-chart-filter-label="fv">FV ≥</span>
-      <input id="chart-filter-fv" type="number" inputmode="numeric" min="20" max="80" step="5"
-             placeholder="any" data-chart-filter="fv"
-             style="width:62px;font-family:var(--font-mono);font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
-      <span class="filter-label" style="margin-left:8px;">Find</span>
-      <input id="chart-highlight" type="search" placeholder="highlight a player…" autocomplete="off"
-             style="width:150px;font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
-      <button class="chip reset-chip" type="button" id="chart-reset" title="Clear filters, color, and highlight" style="margin-left:auto;">↺ Reset</button>
+      <!-- ============================== WHAT ============================ -->
+      <div class="filter-cluster">
+        <span class="filter-cluster-label">WHAT</span>
+        <div class="filter-group">
+          <span class="filter-label">Group</span>
+          <button class="chip active" data-chart-mode="prospects" title="Active MiLB prospects — each dot is one prospect">MiLB</button>
+          <button class="chip" data-chart-mode="debuted" title="Graduated prospects — career WAR, WAG, WARWAG vs their prospect grade">Debuted</button>
+          <button class="chip" data-chart-mode="draft" title="Amateur draft prospects — consensus FV, Draft Stock+, tools">MLB Draft</button>
+          <button class="chip" data-chart-mode="ifa" title="International amateur (J2) signings — bonus, pool %, FV">Int'l Amateurs</button>
+          <button class="chip" data-chart-mode="overseas" title="KBO / NPB / CPBL prospects — FV, age, bonus, tools">Overseas</button>
+          <button class="chip" data-chart-mode="farms" title="Each dot = one MLB farm system">Farms</button>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">X axis</span>
+          <select id="chart-axis-x" class="chip"></select>
+          <span class="filter-label">Y axis</span>
+          <select id="chart-axis-y" class="chip"></select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Color</span>
+          <select id="chart-color" class="chip"></select>
+        </div>
+      </div>
+      <!-- ============================== WHO ============================= -->
+      <div class="filter-cluster">
+        <span class="filter-cluster-label">WHO</span>
+        <div class="filter-group">
+          <span class="filter-label" data-chart-filter-label="org">Org</span>
+          <select id="chart-filter-org" class="chip" data-chart-filter="org"></select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label" data-chart-filter-label="level">Level</span>
+          <select id="chart-filter-level" class="chip" data-chart-filter="level"></select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label" data-chart-filter-label="pos">Pos</span>
+          <select id="chart-filter-pos" class="chip" data-chart-filter="pos"></select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label" data-chart-filter-label="fv">FV ≥</span>
+          <input id="chart-filter-fv" type="number" inputmode="numeric" min="20" max="80" step="5"
+                 placeholder="any" data-chart-filter="fv"
+                 style="width:62px;font-family:var(--font-mono);font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
+        </div>
+        <div class="filter-group">
+          <span class="filter-label" data-chart-filter-label="age">Age ≤</span>
+          <input id="chart-filter-age" type="number" inputmode="numeric" min="15" max="40" step="1"
+                 placeholder="any" data-chart-filter="age"
+                 style="width:62px;font-family:var(--font-mono);font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
+        </div>
+      </div>
+      <!-- ============================== HOW ============================= -->
+      <div class="filter-cluster">
+        <span class="filter-cluster-label">HOW</span>
+        <div class="filter-group">
+          <label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary);">
+            <input type="checkbox" id="chart-trendline" checked> Trendline + R²
+          </label>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Find</span>
+          <input id="chart-highlight" type="search" placeholder="highlight a player…" autocomplete="off"
+                 style="width:150px;font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
+        </div>
+        <div class="filter-group">
+          <button class="share-as-image" data-share-target="#chart-canvas-wrap"
+                  data-share-filename="chart" title="Save this chart as a PNG image">⤴ Save PNG</button>
+          <button class="chip reset-chip" type="button" id="chart-reset" title="Clear filters, color, and highlight">↺ Reset</button>
+        </div>
+      </div>
     </div>
     <div id="chart-canvas-wrap" style="background:var(--bg-secondary);border-radius:8px;padding:14px;">
       <div id="chart-meta" style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;"></div>
@@ -8670,7 +8785,7 @@
   <div id="watchlist-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Watchlist</span>
-      <span class="newsprint-eyebrow-meta">your starred prospects &amp; farms</span>
+      <span class="newsprint-eyebrow-meta">your starred prospects &amp; farm systems · private to this browser</span>
     </div>
     <div class="filter-bar" style="margin-bottom:8px;">
       <span class="filter-label">Watchlist</span>
@@ -11275,6 +11390,10 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.lbLevel === state.lbLevel));
   document.querySelectorAll("[data-lb-pos]").forEach(b =>
     b.classList.toggle("active", b.dataset.lbPos === state.lbPos));
+  document.querySelectorAll("[data-lb-age]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbAge === (state.lbAgeMax || "all")));
+  document.querySelectorAll("[data-lb-dir]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbDir === (state.lbDir || "auto")));
   document.querySelectorAll("[data-lb-season]").forEach(b =>
     b.classList.toggle("active", b.dataset.lbSeason === state.lbSeason));
   const orgSel = document.getElementById("org-filter");
@@ -12256,6 +12375,10 @@ const state = {
   // Recently-Acquired list sort: date (default — newest first), name
   // (A-Z), or fv (high-to-low). Click-routed via SORT_HEADER_MAP.
   tradedSort: "date",
+  // v37 — Transactions + Debuted lists cap to 150 rows; these flip to true via
+  // each list's "show all" expander (reset on section switch).
+  tradedShowAll: false,
+  debutsShowAll: false,
   // Spotlights list sort: rank (default — backend bucket order), name,
   // fv. Click-routed via SORT_HEADER_MAP.
   spotlightSort: "rank",
@@ -14158,7 +14281,11 @@ function renderActiveContextRail(railId = "active-context-rail") {
       e.stopPropagation();
       state.moverFilter = btn.dataset.moverFilter;
       syncToURL();
-      renderActiveContextRail();
+      // Re-render THIS rail — not the default active-section rail. Without
+      // passing railId, clicking these chips on the Spotlights / Injured /
+      // Transactions / Watchlist rails silently re-rendered the (hidden)
+      // active rail, so the visible card never updated.
+      renderActiveContextRail(railId);
     });
   });
   const toolSel = rail.querySelector("#sidebar-tool-select");
@@ -14166,7 +14293,7 @@ function renderActiveContextRail(railId = "active-context-rail") {
     toolSel.addEventListener("change", () => {
       state.sidebarTopTool = toolSel.value;
       syncToURL();
-      renderActiveContextRail();
+      renderActiveContextRail(railId);
     });
   }
   // "View all →" link routes to Spotlights tab.
@@ -14400,7 +14527,7 @@ function renderSpotlights() {
         return head.map(_tag).join("")
           + (rest.length
             ? `<span class="driver-rest" hidden>${rest.map(_tag).join("")}</span>`
-              + `<button class="driver-more-btn" type="button" data-more="${rest.length}" data-all="${sorted.length}" title="Show all ${sorted.length} drivers" onclick="toggleDrivers(this)">+${rest.length} more</button>`
+              + `<button class="driver-more-btn" type="button" data-more="${rest.length}" data-all="${sorted.length}" title="Show all ${sorted.length} drivers" onclick="event.stopPropagation();toggleDrivers(this)">+${rest.length} more</button>`
             : "");
       })()}</div>
     </div>
@@ -15262,7 +15389,7 @@ function _chartFvColor(fv) {
 // filters, player highlight, reset). `distinct` carries the Sets of
 // categorical values present in the current group; a dimension with no
 // values hides its control. Selects re-render the chart on change.
-function _chartWireControls(mode, distinct, anyFv) {
+function _chartWireControls(mode, distinct, anyFv, anyAge) {
   // ---- Color-by ----
   const colorSel = document.getElementById("chart-color");
   if (colorSel) {
@@ -15307,6 +15434,15 @@ function _chartWireControls(mode, distinct, anyFv) {
     if (document.activeElement !== fvIn) fvIn.value = (state.chartFvMin != null ? state.chartFvMin : "");
     fvIn.onchange = () => { state.chartFvMin = fvIn.value === "" ? null : fvIn.value; renderCharts(); };
   }
+  // ---- Age maximum ----
+  const ageIn = document.getElementById("chart-filter-age");
+  const ageLbl = document.querySelector(`[data-chart-filter-label="age"]`);
+  if (ageIn) {
+    ageIn.style.display = anyAge ? "" : "none";
+    if (ageLbl) ageLbl.style.display = anyAge ? "" : "none";
+    if (document.activeElement !== ageIn) ageIn.value = (state.chartAgeMax != null ? state.chartAgeMax : "");
+    ageIn.onchange = () => { state.chartAgeMax = ageIn.value === "" ? null : ageIn.value; renderCharts(); };
+  }
   // ---- Highlight (don't clobber the field while the user is typing) ----
   const hi = document.getElementById("chart-highlight");
   if (hi) {
@@ -15318,7 +15454,7 @@ function _chartWireControls(mode, distinct, anyFv) {
   if (reset) reset.onclick = () => {
     state.chartColorBy = "none"; state.chartFilterOrg = "all";
     state.chartFilterLevel = "all"; state.chartFilterPos = "all";
-    state.chartFvMin = null; state.chartHighlight = "";
+    state.chartFvMin = null; state.chartAgeMax = null; state.chartHighlight = "";
     renderCharts();
   };
 }
@@ -15345,6 +15481,7 @@ function renderCharts() {
       state.chartFilterLevel = "all";
       state.chartFilterPos = "all";
       state.chartFvMin = null;
+      state.chartAgeMax = null;
       renderCharts();
     };
   });
@@ -15384,29 +15521,37 @@ function renderCharts() {
   const allEntities = _chartEntities(mode);
   const dimsFor = e => _chartDims(mode, e);
 
+  // Per-entity age (players/draftees use `age`; IFA signings use
+  // `age_at_signing`) — drives the optional Age ≤ population filter.
+  const _eAge = e => (e && e.age != null ? e.age
+    : (e && e.age_at_signing != null ? e.age_at_signing : null));
+
   // Distinct categorical values present → populate + wire the controls.
   const distinct = { org: new Set(), level: new Set(), pos: new Set() };
-  let anyFv = false;
+  let anyFv = false, anyAge = false;
   for (const e of allEntities) {
     const d = dimsFor(e);
     if (d.org) distinct.org.add(d.org);
     if (d.level) distinct.level.add(d.level);
     if (d.pos) distinct.pos.add(d.pos);
     if (d.fv != null) anyFv = true;
+    if (_eAge(e) != null) anyAge = true;
   }
-  _chartWireControls(mode, distinct, anyFv);
+  _chartWireControls(mode, distinct, anyFv, anyAge);
 
   // Apply population filters.
   const fOrg = state.chartFilterOrg || "all";
   const fLevel = state.chartFilterLevel || "all";
   const fPos = state.chartFilterPos || "all";
   const fFv = (state.chartFvMin != null && state.chartFvMin !== "") ? Number(state.chartFvMin) : null;
+  const fAge = (state.chartAgeMax != null && state.chartAgeMax !== "") ? Number(state.chartAgeMax) : null;
   const entities = allEntities.filter(e => {
     const d = dimsFor(e);
     if (fOrg !== "all" && d.org !== fOrg) return false;
     if (fLevel !== "all" && d.level !== fLevel) return false;
     if (fPos !== "all" && d.pos !== fPos) return false;
     if (fFv != null && (d.fv == null || d.fv < fFv)) return false;
+    if (fAge != null) { const a = _eAge(e); if (a == null || a > fAge) return false; }
     return true;
   });
   const nFiltered = allEntities.length - entities.length;
@@ -15641,6 +15786,8 @@ function renderLeaderboards() {
   const lvl    = state.lbLevel    || "all";
   const pos    = state.lbPos      || "all";
   const org    = state.lbOrg      || "all";
+  const ageMax = state.lbAgeMax   || "all";
+  const dir    = state.lbDir      || "auto";   // auto = stat's natural direction
   const season = Number(state.lbSeason || new Date().getUTCFullYear());
   if (boardSide !== "all" && cfg.side !== boardSide) {
     state.lbStat = boardSide === "pit" ? "era" : "ops";
@@ -15649,7 +15796,17 @@ function renderLeaderboards() {
   document.querySelectorAll("[data-lb-stat]").forEach(b =>
     b.classList.toggle("active", b.dataset.lbStat === state.lbStat));
   document.querySelectorAll("[data-lb-side]").forEach(b =>
-    b.classList.toggle("active", b.dataset.lbSide === state.lbSide));
+    b.classList.toggle("active", b.dataset.lbSide === (state.lbSide || "all")));
+  document.querySelectorAll("[data-lb-level]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbLevel === lvl));
+  document.querySelectorAll("[data-lb-pos]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbPos === pos));
+  document.querySelectorAll("[data-lb-age]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbAge === ageMax));
+  document.querySelectorAll("[data-lb-dir]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbDir === dir));
+  document.querySelectorAll("[data-lb-season]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbSeason === String(season)));
   document.querySelectorAll("[data-lb-stat-side]").forEach(btn => {
     const side = btn.dataset.lbStatSide;
     btn.style.display = (boardSide === "all" || side === boardSide) ? "" : "none";
@@ -15686,11 +15843,13 @@ function renderLeaderboards() {
   // prospects who happen to have MLB-level stats). A player can have
   // multiple MiLB rows in the same season; each becomes its own entry
   // so a Jesús Made AA-then-AAA year would land in both AAA and AA boards.
-  const pool = [];
+  let pool = [];
+  const _ageCap = ageMax === "all" ? null : Number(ageMax);
   for (const p of (DATA.players || [])) {
     const bucket = positionBucket(p.position);
       if (pos !== "all" && !positionMatches(bucket, pos)) continue;
       if (org !== "all" && p.org !== org) continue;
+      if (_ageCap != null && !(p.age != null && p.age <= _ageCap)) continue;
       if (boardSide !== "all" && cfg.side !== boardSide) continue;
     if (cfg.source === "zone") {
       const splits = (p.zone_metrics && Array.isArray(p.zone_metrics.level_splits) && p.zone_metrics.level_splits.length)
@@ -15762,7 +15921,10 @@ function renderLeaderboards() {
     const q = state.search.toLowerCase();
     pool = pool.filter(({ p }) => (p.player_name || "").toLowerCase().includes(q));
   }
-  pool.sort((a, b) => cfg.hi ? (b.v - a.v) : (a.v - b.v));
+  // Sort direction: "auto" follows the stat's natural orientation (cfg.hi);
+  // "hi"/"lo" let the user override to surface highest or lowest values.
+  const _hiFirst = dir === "auto" ? cfg.hi : (dir === "hi");
+  pool.sort((a, b) => _hiFirst ? (b.v - a.v) : (a.v - b.v));
   const pageSize = state.pageSizes.leaderboard || 25;
   const totalItems = pool.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -16813,6 +16975,19 @@ function renderRecentlyTraded() {
     _clusters.get(key).push(row);
   });
   filtered.splice(0, filtered.length, ...Array.from(_clusters.values()).flat());
+  // v37 — Cap the rendered list. The page interleaves every active prospect's
+  // latest acquisition AND latest level move (~3.8k rows), which ballooned the
+  // DOM to ~150k nodes and made scrolling janky. Render the newest TX_CAP by
+  // default with a "show all" expander (mirrors the IFA / draft / leaderboard
+  // lists). Group metadata below is computed over the capped slice so the
+  // trade-audit cards stay correct within the visible window.
+  const _txFullCount = filtered.length;
+  const TX_CAP = 150;
+  const _txShowAll = !!state.tradedShowAll;
+  if (!_txShowAll && _txFullCount > TX_CAP) {
+    filtered.splice(TX_CAP, filtered.length - TX_CAP);
+  }
+  const _txHidden = _txFullCount - filtered.length;
   // Per-trade member keys (for the ★ highlight) + first/last boundaries.
   const _groupKeys = {};
   filtered.forEach(row => {
@@ -17096,9 +17271,14 @@ function renderRecentlyTraded() {
     `;
   }).join("");
 
-  document.getElementById("traded-rows").innerHTML = filtered.length
-    ? header + rows
+  const _txExpander = _txHidden > 0
+    ? `<div style="text-align:center;margin-top:10px;"><button class="chip" id="traded-show-all" type="button">Show all ${_txFullCount} transactions (+${_txHidden} more)</button></div>`
+    : "";
+  document.getElementById("traded-rows").innerHTML = _txFullCount
+    ? header + rows + _txExpander
     : `<div class="state-message">No acquired prospects match these filters.</div>`;
+  const _txSa = document.getElementById("traded-show-all");
+  if (_txSa) _txSa.addEventListener("click", () => { state.tradedShowAll = true; renderRecentlyTraded(); });
   syncSortHeaderActive();
 }
 
@@ -18867,6 +19047,19 @@ function _overseasStatusColor(status) {
 // FV-progression chip for the IFA signings table: FV at signing (muted,
 // desaturated) → current FV (full badge) with a direction-colored arrow and
 // Δ. Shows how a signing has tracked since the org committed to it.
+// Clickable org affordance for the International Amateurs section — opens
+// that org's farm-system page. stopPropagation lets it live inside rows
+// that carry their own (filter) click handlers. logoOnly renders just the
+// logo as the link (used where the surrounding row already does something
+// else on click, so only the logo navigates).
+function _ifaOrgLink(org, { logoOnly = false } = {}) {
+  if (!org) return `<span style="color:var(--text-tertiary);">—</span>`;
+  const full = (typeof fullOrgName === "function" ? fullOrgName(org) : org);
+  const logo = teamLogoHTML(org, "sm", full);
+  const inner = logoOnly ? logo : `${logo}${escapeHtml(org)}`;
+  return `<span class="ifa-org-link" onclick="event.stopPropagation();goToFarm('${escapeHtml(org)}')" title="Open ${escapeHtml(full)} farm system" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;">${inner}</span>`;
+}
+
 function _ifaFvProgHTML(s) {
   const sig = s.fv_signing, cur = s.fv;
   if (sig == null && cur == null) return `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`;
@@ -18908,7 +19101,37 @@ function _renderIFAAllTime(host, classes, usd) {
     if (s.bonus_usd != null) allSign.push(Object.assign({ year: c.year }, s));
   }));
   allSign.sort((a, b) => (b.bonus_usd || 0) - (a.bonus_usd || 0));
-  const bigRows = allSign.slice(0, 20).map((s, i) => {
+
+  // Biggest signings · all-time — a filterable + sortable list (was a flat
+  // top-20). Filters: org, country, tracked-only. Sorts: bonus / FV / year /
+  // player / country. Capped at 50 by default with a "show all" expander;
+  // any active filter shows the full filtered set.
+  const aSort    = state.ifaAllSort    || "bonus";
+  const aOrg     = state.ifaAllOrg     || "all";
+  const aCountry = state.ifaAllCountry || "all";
+  const aTracked = !!state.ifaAllTracked;
+  const orgOpts     = Array.from(new Set(allSign.map(s => s.org).filter(Boolean))).sort();
+  const countryOpts = Array.from(new Set(allSign.map(s => s.country).filter(Boolean))).sort();
+  let bigList = allSign.slice();
+  if (aOrg !== "all")     bigList = bigList.filter(s => s.org === aOrg);
+  if (aCountry !== "all") bigList = bigList.filter(s => s.country === aCountry);
+  if (aTracked)           bigList = bigList.filter(s => s.is_tracked);
+  const _bonusDesc = (a, b) => (b.bonus_usd || 0) - (a.bonus_usd || 0)
+    || (a.player_name || "").localeCompare(b.player_name || "");
+  const _bigSorts = {
+    bonus:   _bonusDesc,
+    fv:      (a, b) => ((b.fv ?? -1) - (a.fv ?? -1)) || _bonusDesc(a, b),
+    year:    (a, b) => ((b.year || 0) - (a.year || 0)) || _bonusDesc(a, b),
+    name:    (a, b) => (a.player_name || "").localeCompare(b.player_name || ""),
+    country: (a, b) => (a.country || "~").localeCompare(b.country || "~") || _bonusDesc(a, b),
+  };
+  bigList.sort(_bigSorts[aSort] || _bonusDesc);
+  const BIG_CAP = 50;
+  const _bigFiltered = (aOrg !== "all" || aCountry !== "all" || aTracked);
+  const bigShowAll = !!state.ifaAllShowAll || _bigFiltered;
+  const bigShown = bigShowAll ? bigList : bigList.slice(0, BIG_CAP);
+  const bigHidden = bigList.length - bigShown.length;
+  const bigRows = bigShown.map((s, i) => {
     const name = (s.is_tracked && s.player_key)
       ? `<a href="#player=${escapeHtml(s.player_key)}" onclick="event.preventDefault();goToPlayer('${escapeHtml(s.player_key)}');" style="color:var(--text-primary);font-weight:600;text-decoration:none;">${escapeHtml(s.player_name)}</a>`
       : escapeHtml(s.player_name);
@@ -18916,10 +19139,24 @@ function _renderIFAAllTime(host, classes, usd) {
       <td style="color:var(--text-tertiary);">${i + 1}</td>
       <td>${name}<div style="font-size:9px;color:var(--text-tertiary);">${escapeHtml(s.position || "—")} · ${escapeHtml(s.country || "—")}</div></td>
       <td style="text-align:left;white-space:nowrap;">${_ifaFvProgHTML(s)}</td>
-      <td style="white-space:nowrap;"><span style="display:inline-flex;align-items:center;gap:4px;">${s.org ? teamLogoHTML(s.org, "sm", fullOrgName(s.org)) : ""}${escapeHtml(s.org || "—")}</span></td>
+      <td style="white-space:nowrap;">${_ifaOrgLink(s.org)}</td>
       <td style="text-align:right;font-family:var(--font-mono);">${s.year}</td>
       <td style="text-align:right;font-family:var(--font-mono);font-weight:700;">${usd(s.bonus_usd)}</td></tr>`;
-  }).join("");
+  }).join("") || `<tr><td colspan="6" style="color:var(--text-tertiary);padding:10px;">No signings match these filters.</td></tr>`;
+
+  const _opt = (val, cur, label) => `<option value="${escapeHtml(String(val))}" ${String(val) === String(cur) ? "selected" : ""}>${escapeHtml(label)}</option>`;
+  const bigControls = `<div class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:6px;padding:6px 8px;">
+    <span class="filter-label">Sort</span>
+    <select class="chip" id="ifa-all-sort">${_opt("bonus", aSort, "Bonus (high)")}${_opt("fv", aSort, "FV (high)")}${_opt("year", aSort, "Year (newest)")}${_opt("name", aSort, "Player (A→Z)")}${_opt("country", aSort, "Country (A→Z)")}</select>
+    <span class="filter-label" style="margin-left:8px;">Org</span>
+    <select class="chip" id="ifa-all-org"><option value="all">All orgs</option>${orgOpts.map(o => _opt(o, aOrg, o)).join("")}</select>
+    <span class="filter-label" style="margin-left:8px;">Country</span>
+    <select class="chip" id="ifa-all-country"><option value="all">All countries</option>${countryOpts.map(c => _opt(c, aCountry, c)).join("")}</select>
+    <label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary);margin-left:8px;"><input type="checkbox" id="ifa-all-tracked" ${aTracked ? "checked" : ""}> Tracked only</label>
+    ${(aSort !== "bonus" || _bigFiltered) ? `<button class="chip reset-chip" id="ifa-all-reset" type="button" style="margin-left:auto;">↺ Reset</button>` : ""}
+  </div>`;
+  const bigExpander = (!bigShowAll && bigHidden > 0)
+    ? `<button class="chip" id="ifa-all-show-all" style="margin-top:8px;">Show all ${bigList.length} signings (+${bigHidden} more)</button>` : "";
 
   const orgAll = {};
   classes.forEach(c => (c.org_spending || []).forEach(o => {
@@ -18939,7 +19176,7 @@ function _renderIFAAllTime(host, classes, usd) {
         : "";
       return `<tr>
       <td style="color:var(--text-tertiary);vertical-align:top;">${i + 1}</td>
-      <td><span style="display:inline-flex;align-items:center;gap:4px;">${teamLogoHTML(o.org, "sm", fullOrgName(o.org))}${escapeHtml(o.org)}</span>${topLine}</td>
+      <td>${_ifaOrgLink(o.org)}${topLine}</td>
       <td style="text-align:right;font-family:var(--font-mono);vertical-align:top;">${usd(o.total_usd)}</td>
       <td style="text-align:right;color:var(--text-tertiary);font-family:var(--font-mono);vertical-align:top;">${o.signings}</td></tr>`;
     }).join("");
@@ -18954,12 +19191,28 @@ function _renderIFAAllTime(host, classes, usd) {
       <div class="ifa-main">
         <div class="ifa-side-title" style="margin-bottom:4px;">Classes ranked by total spend</div>
         <table class="detail-table" style="width:100%;margin-bottom:14px;"><thead><tr><th>#</th><th style="text-align:left;">Class</th><th style="text-align:right;">Total $</th><th style="text-align:right;" title="Signings">#</th><th style="text-align:right;" title="Tracked prospects">Trk</th><th style="text-align:left;">Top signing</th></tr></thead><tbody>${classRows}</tbody></table>
-        <div class="ifa-side-title" style="margin-bottom:4px;">Biggest signings · all-time</div>
+        <div class="ifa-side-title" style="margin-bottom:4px;">Biggest signings · all-time <span style="color:var(--text-tertiary);font-weight:400;text-transform:none;letter-spacing:0;">· ${bigList.length} match${bigList.length === 1 ? "" : "es"}</span></div>
+        ${bigControls}
         <table class="detail-table" style="width:100%;"><thead><tr><th>#</th><th style="text-align:left;">Player</th><th style="text-align:left;" title="Future Value at signing → current">FV</th><th style="text-align:left;">Signing team</th><th style="text-align:right;">Year</th><th style="text-align:right;">Bonus</th></tr></thead><tbody>${bigRows}</tbody></table>
+        ${bigExpander}
       </div>
       <div class="ifa-side"><div class="ifa-side-card"><div class="ifa-side-title">Org spending · all-time</div>
         <table class="detail-table" style="width:100%;font-size:11px;"><thead><tr><th>#</th><th style="text-align:left;">Org</th><th style="text-align:right;">Total</th><th style="text-align:right;" title="Signings">#</th></tr></thead><tbody>${orgRows}</tbody></table></div></div>
     </div>`;
+
+  // Wire the biggest-signings list controls. _renderIFAAllTime returns
+  // before renderIFA's own listener block, so it binds its own here; each
+  // change re-runs renderIFA (state.ifaYear === "all" routes back here).
+  const _wire = (id, ev, fn) => { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); };
+  _wire("ifa-all-sort",     "change", e => { state.ifaAllSort = e.target.value; state.ifaAllShowAll = false; renderIFA(); });
+  _wire("ifa-all-org",      "change", e => { state.ifaAllOrg = e.target.value; renderIFA(); });
+  _wire("ifa-all-country",  "change", e => { state.ifaAllCountry = e.target.value; renderIFA(); });
+  _wire("ifa-all-tracked",  "change", e => { state.ifaAllTracked = e.target.checked; renderIFA(); });
+  _wire("ifa-all-show-all", "click",  () => { state.ifaAllShowAll = true; renderIFA(); });
+  _wire("ifa-all-reset",    "click",  () => {
+    state.ifaAllSort = "bonus"; state.ifaAllOrg = "all"; state.ifaAllCountry = "all";
+    state.ifaAllTracked = false; state.ifaAllShowAll = false; renderIFA();
+  });
 }
 
 // ── International Amateurs (IFA) section ─────────────────────────────────────
@@ -19011,7 +19264,8 @@ async function renderIFA() {
   classChips.querySelectorAll("[data-ifa-year]").forEach(b => b.addEventListener("click", () => {
     const v = b.dataset.ifaYear;
     state.ifaYear = (v === "all") ? "all" : +v;
-    state.ifaOrgFilter = null; state.ifaShowAll = false; renderIFA();
+    state.ifaOrgFilter = null; state.ifaShowAll = false;
+    state.ifaCountry = "all"; state.ifaTracked = false; renderIFA();
   }));
 
   // All-time aggregate view (classes ranked + cross-year leaders).
@@ -19031,8 +19285,15 @@ async function renderIFA() {
   }
   const t = cls.trends || {};
   const orgFilter = state.ifaOrgFilter || null;
+  // Country + tracked-only filters (alongside the org filter + sort). Option
+  // list comes from the full class so it stays stable as filters narrow.
+  const yrCountryOpts = Array.from(new Set((cls.signings || []).map(s => s.country).filter(Boolean))).sort();
+  const yrCountry = state.ifaCountry || "all";
+  const yrTracked = !!state.ifaTracked;
   let signings = cls.signings || [];
   if (orgFilter) signings = signings.filter(s => s.org === orgFilter);
+  if (yrCountry !== "all") signings = signings.filter(s => s.country === yrCountry);
+  if (yrTracked) signings = signings.filter(s => s.is_tracked);
   // Global search filters signings by player / signing team / country.
   const _q = (state.search || "").toLowerCase();
   if (_q) signings = signings.filter(s =>
@@ -19048,17 +19309,20 @@ async function renderIFA() {
   const _byBonus = (a, b) => (b.bonus_usd || 0) - (a.bonus_usd || 0)
     || (a.player_name || "").localeCompare(b.player_name || "");
   const _sortFns = {
-    bonus: _byBonus,
-    org:   (a, b) => (a.org || "~").localeCompare(b.org || "~") || _byBonus(a, b),
-    fv:    (a, b) => ((b.fv ?? -1) - (a.fv ?? -1)) || _byBonus(a, b),
-    name:  (a, b) => (a.player_name || "").localeCompare(b.player_name || ""),
+    bonus:   _byBonus,
+    org:     (a, b) => (a.org || "~").localeCompare(b.org || "~") || _byBonus(a, b),
+    fv:      (a, b) => ((b.fv ?? -1) - (a.fv ?? -1)) || _byBonus(a, b),
+    name:    (a, b) => (a.player_name || "").localeCompare(b.player_name || ""),
+    country: (a, b) => (a.country || "~").localeCompare(b.country || "~") || _byBonus(a, b),
+    pool:    (a, b) => ((b.pool_pct ?? -1) - (a.pool_pct ?? -1)) || _byBonus(a, b),
   };
   const _featured = new Set(
     signings.slice().sort(_byBonus).filter((s, i) => i < 40 || s.is_tracked));
   const sortedSignings = signings.slice().sort(_sortFns[sortMode] || _byBonus);
   // Featured = top 40 by bonus + every tracked prospect; the rest hides behind
-  // a "Show all" expander. An active org filter always shows that team's haul.
-  const showAll = !!state.ifaShowAll || !!orgFilter;
+  // a "Show all" expander. An active org / country / tracked filter always
+  // shows the full matching set.
+  const showAll = !!state.ifaShowAll || !!orgFilter || yrCountry !== "all" || yrTracked;
   const shown = showAll ? sortedSignings : sortedSignings.filter(s => _featured.has(s));
   const hiddenCount = signings.length - shown.length;
 
@@ -19090,7 +19354,7 @@ async function renderIFA() {
     return `<tr>
       <td style="text-align:left;"><div style="display:flex;align-items:center;gap:7px;min-width:0;">${head}<div style="min-width:0;">${name}${nowNote}${subLine}</div></div></td>
       <td style="text-align:left;white-space:nowrap;">${fvCell}</td>
-      <td style="text-align:left;white-space:nowrap;"><span style="display:inline-flex;align-items:center;gap:4px;">${logo}${escapeHtml(s.org || "—")}</span></td>
+      <td style="text-align:left;white-space:nowrap;">${_ifaOrgLink(s.org)}</td>
       <td style="text-align:right;font-family:var(--font-mono);font-weight:700;">${usd(s.bonus_usd)}</td>
       <td style="text-align:right;font-family:var(--font-mono);color:var(--text-tertiary);">${s.pool_pct != null ? s.pool_pct.toFixed(1) + "%" : "—"}</td>
     </tr>`;
@@ -19107,13 +19371,13 @@ async function renderIFA() {
   const orgRows = (cls.org_spending || []).slice(0, 16).map((o, i) =>
     `<tr data-ifa-org="${escapeHtml(o.org)}" style="cursor:pointer;${o.org === orgFilter ? "background:var(--bg-tertiary);" : ""}" title="${o.signings} signings · top: ${escapeHtml(o.top_player || "—")} (${usd(o.top_bonus)})">
       <td style="color:var(--text-tertiary);">${i + 1}</td>
-      <td><span style="display:inline-flex;align-items:center;gap:4px;">${teamLogoHTML(o.org, "sm", fullOrgName(o.org))}${escapeHtml(o.org)}</span></td>
+      <td><span style="display:inline-flex;align-items:center;gap:4px;">${_ifaOrgLink(o.org, { logoOnly: true })}${escapeHtml(o.org)}</span></td>
       <td style="text-align:right;font-family:var(--font-mono);">${usd(o.total_usd)}</td>
       <td style="text-align:right;color:var(--text-tertiary);font-family:var(--font-mono);">${o.pool_pct_sum != null ? o.pool_pct_sum.toFixed(0) + "%" : "—"}</td>
     </tr>`).join("");
   const orgCard = `<div class="ifa-side-card"><div class="ifa-side-title">Org spending · ${cls.year}</div>
     <table class="detail-table" style="width:100%;font-size:11px;"><thead><tr><th>#</th><th style="text-align:left;">Org</th><th style="text-align:right;">Total</th><th style="text-align:right;" title="Sum of bonus-pool % used">Pool</th></tr></thead><tbody>${orgRows}</tbody></table>
-    <div style="font-size:9px;color:var(--text-tertiary);margin-top:5px;">Click a team to filter the signings list.</div></div>`;
+    <div style="font-size:9px;color:var(--text-tertiary);margin-top:5px;">Click a row to filter the signings list · click a team logo to open its farm system.</div></div>`;
 
   const countryRows = (t.top_countries || []).map(c =>
     `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;gap:8px;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.country)}</span><span style="color:var(--text-tertiary);font-family:var(--font-mono);white-space:nowrap;">${c.n} · ${usd(c.total_usd)}</span></div>`).join("");
@@ -19130,16 +19394,16 @@ async function renderIFA() {
     `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;gap:6px;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(b.player_name)} <span style="color:var(--text-tertiary);">${escapeHtml(b.org || "")}</span></span><span style="font-family:var(--font-mono);white-space:nowrap;">${usd(b.bonus_usd)}</span></div>`).join("");
   const bigCard = `<div class="ifa-side-card"><div class="ifa-side-title">Biggest signings</div>${bigRows || "—"}</div>`;
 
-  const sortSel = `<select id="ifa-sort" class="chip" style="font-size:11px;" title="Sort the signings list">
-      <option value="bonus" ${sortMode === "bonus" ? "selected" : ""}>Bonus (high)</option>
-      <option value="org" ${sortMode === "org" ? "selected" : ""}>Organization (A→Z)</option>
-      <option value="fv" ${sortMode === "fv" ? "selected" : ""}>FV (high)</option>
-      <option value="name" ${sortMode === "name" ? "selected" : ""}>Player (A→Z)</option>
-    </select>`;
-  const summary = `<div style="margin-bottom:10px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+  const _yopt = (val, cur, label) => `<option value="${escapeHtml(String(val))}" ${String(val) === String(cur) ? "selected" : ""}>${escapeHtml(label)}</option>`;
+  const sortSel = `<select id="ifa-sort" class="chip" style="font-size:11px;" title="Sort the signings list">${_yopt("bonus", sortMode, "Bonus (high)")}${_yopt("fv", sortMode, "FV (high)")}${_yopt("org", sortMode, "Organization (A→Z)")}${_yopt("country", sortMode, "Country (A→Z)")}${_yopt("pool", sortMode, "Pool % (high)")}${_yopt("name", sortMode, "Player (A→Z)")}</select>`;
+  const countrySel = `<select id="ifa-country" class="chip" style="font-size:11px;" title="Filter signings by country"><option value="all">All countries</option>${yrCountryOpts.map(c => _yopt(c, yrCountry, c)).join("")}</select>`;
+  const trackedChk = `<label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary);"><input type="checkbox" id="ifa-tracked" ${yrTracked ? "checked" : ""}> Tracked only</label>`;
+  const summary = `<div style="margin-bottom:10px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
     <span style="font-size:16px;font-weight:700;">${cls.year} International Amateur class</span>
     <span style="color:var(--text-tertiary);font-size:12px;"> · ${cls.n_signings} signings · ${usd(cls.total_usd)} total · avg ${usd(t.avg_bonus)} · median ${usd(t.median_bonus)} · ${cls.n_tracked} tracked${cls.is_current ? " · current ⏳" : ""}</span>
-    <span style="margin-left:auto;font-size:11px;color:var(--text-tertiary);">Sort</span>${sortSel}</div>`;
+    <span style="margin-left:auto;font-size:11px;color:var(--text-tertiary);">Country</span>${countrySel}
+    ${trackedChk}
+    <span style="font-size:11px;color:var(--text-tertiary);">Sort</span>${sortSel}</div>`;
 
   host.innerHTML = `${summary}<div class="ifa-grid">
     <div class="ifa-main">${filterBanner}${tableHTML}${expandBtn}</div>
@@ -19148,6 +19412,10 @@ async function renderIFA() {
 
   const ss = document.getElementById("ifa-sort");
   if (ss) ss.addEventListener("change", () => { state.ifaSort = ss.value; renderIFA(); });
+  const cc = document.getElementById("ifa-country");
+  if (cc) cc.addEventListener("change", () => { state.ifaCountry = cc.value; state.ifaShowAll = false; renderIFA(); });
+  const tk = document.getElementById("ifa-tracked");
+  if (tk) tk.addEventListener("change", () => { state.ifaTracked = tk.checked; state.ifaShowAll = false; renderIFA(); });
   const sa = document.getElementById("ifa-show-all");
   if (sa) sa.addEventListener("click", () => { state.ifaShowAll = true; renderIFA(); });
   const cf = document.getElementById("ifa-clear-filter");
@@ -21421,20 +21689,26 @@ function renderDebuts() {
       </div>`;
   };
 
+  // v37 — Cap the rendered list (1,300+ graduates ≈ 86k DOM nodes). Newest /
+  // sorted-first with a "show all" expander, matching the Transactions list.
+  const DEBUT_CAP = 150;
+  const _debutShowAll = !!state.debutsShowAll;
+  let _debutEmitted = 0;
   let body = header;
+  const _emitGrad = (g, rank, a, sub) => {
+    if (!_debutShowAll && _debutEmitted >= DEBUT_CAP) return;
+    body += renderRow(g, rank, a, sub); _debutEmitted++;
+  };
   if (orderedGrads !== null) {
     // Flat list driven by sort.
-    orderedGrads.forEach((g, i) => {
-      body += renderRow(g, i + 1, null, "");
-    });
+    orderedGrads.forEach((g, i) => { _emitGrad(g, i + 1, null, ""); });
   } else {
     let rank = 1;
     for (const dateKey of sortedDates) {
-      for (const g of byDate[dateKey]) {
-        body += renderRow(g, rank++, null, null);
-      }
+      for (const g of byDate[dateKey]) { _emitGrad(g, rank++, null, null); }
     }
   }
+  const _debutHidden = filtered.length - _debutEmitted;
 
   // Sticky "what just graduated" banner — counts graduates whose
   // date falls within the past 14 days. Shown only in date-sort mode
@@ -21525,9 +21799,14 @@ function renderDebuts() {
   // v17 — Graduate classes bar chart + class strength strip removed
   // (both were redundant with the per-row data and the existing date-
   // grouped layout). The list now leads directly with the date-banner.
+  const _debutExpander = _debutHidden > 0
+    ? `<div style="text-align:center;margin-top:10px;"><button class="chip" id="debuts-show-all" type="button">Show all ${filtered.length} graduates (+${_debutHidden} more)</button></div>`
+    : "";
   document.getElementById("debut-rows").innerHTML = filtered.length
-    ? banner + body
+    ? banner + body + _debutExpander
     : `<div class="state-message">No debuts match these filters.</div>`;
+  const _dbSa = document.getElementById("debuts-show-all");
+  if (_dbSa) _dbSa.addEventListener("click", () => { state.debutsShowAll = true; renderDebuts(); });
   syncSortHeaderActive();
 }
 
@@ -35635,6 +35914,9 @@ const CHIP_GROUP_DEFAULTS = {
   "filter-overseas-side":  "all",
   "filter-overseas-pos":   "all",
   "filter-overseas-status":"all",
+  // Leaderboard WHO/HOW chip groups.
+  "lb-age":   "all",
+  "lb-dir":   "auto",
 };
 function attachChipGroup(attr, stateKey, onChange, opts = {}) {
   const { clearView = false, allowDeselect = true } = opts;
@@ -35748,10 +36030,17 @@ function syncFarmWatchlistButtons() {
   });
 }
 function updateWatchlistTabBadge() {
-  const tabBadge = document.querySelector(".section-tab[data-section='watchlist'] .section-tab-count");
-  if (!tabBadge) return;
   const n = watchlistLoad().length + farmWatchlistLoad().length;
-  tabBadge.textContent = n ? ` · ${n}` : "";
+  // Legacy in-strip tab badge (kept for back-compat if the tab ever
+  // returns); the watchlist now lives behind the persistent top-right
+  // control, so the count surfaces there.
+  const tabBadge = document.querySelector(".section-tab[data-section='watchlist'] .section-tab-count");
+  if (tabBadge) tabBadge.textContent = n ? ` · ${n}` : "";
+  const gCount = document.getElementById("global-watchlist-count");
+  if (gCount) {
+    gCount.textContent = n;
+    gCount.hidden = !n;
+  }
 }
 
 function noteLoad(key) {
@@ -37277,6 +37566,8 @@ function attachHandlers() {
         classFilter:  "all",
         sort:         "fv",
         search:       "",
+        tradedShowAll: false,
+        debutsShowAll: false,
       };
       Object.assign(state, FILTER_DEFAULTS);
       // Sync the chip-bar active classes to the reset values.
@@ -37466,6 +37757,8 @@ function attachHandlers() {
   attachChipGroup("lb-side",   "lbSide",   () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-level",  "lbLevel",  () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-pos",    "lbPos",    () => { resetPage("leaderboard"); renderLeaderboards(); });
+  attachChipGroup("lb-age",    "lbAgeMax", () => { resetPage("leaderboard"); renderLeaderboards(); });
+  attachChipGroup("lb-dir",    "lbDir",    () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-season", "lbSeason", () => { resetPage("leaderboard"); renderLeaderboards(); });
   // Null-guard each selector binding — missing elements (caused by template
   // ordering, embed contexts, or future markup changes) would otherwise
@@ -37732,6 +38025,8 @@ function _resetPageFilters(page) {
     state.lbPos    = "all";
     state.lbOrg    = "all";
     state.lbSeason = String(new Date().getUTCFullYear());
+    state.lbAgeMax = "all";
+    state.lbDir    = "auto";
   } else if (page === "draft") {
     state.draftPool          = "all";
     state.draftSide          = "all";
