@@ -1222,26 +1222,19 @@
       top: 0;
       z-index: 50;
     }
-    /* v34 — The section tabs live in a single-line horizontal scroll strip
-       so the masthead never wraps to a ragged second row as more sections
-       are added. The compare + theme controls sit OUTSIDE this strip (as
-       siblings) so they stay pinned at the right edge, always reachable.
-       A soft mask fades the strip's edges to hint there's more to scroll. */
+    /* v35 — The section tabs WRAP to fit the viewport rather than living in
+       a horizontal scroll strip, so the full nav is always visible without
+       scrolling at every page size (per user ask). On wide screens the tabs
+       sit on a single line; narrower widths wrap to a 2nd/3rd row instead of
+       hiding tabs behind a scroll. The compare + theme controls sit OUTSIDE
+       this block (as siblings) so they stay pinned at the right edge. */
     .section-tabs-scroll {
       display: flex;
       flex: 1 1 auto;
       min-width: 0;
-      overflow-x: auto;
-      overflow-y: hidden;
-      scrollbar-width: thin;
-      scrollbar-color: var(--border) transparent;
-      -webkit-overflow-scrolling: touch;
-      -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
-              mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+      flex-wrap: wrap;
+      row-gap: 2px;
     }
-    .section-tabs-scroll::-webkit-scrollbar { height: 4px; }
-    .section-tabs-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-    .section-tabs-scroll::-webkit-scrollbar-track { background: transparent; }
     /* Keep the compare + theme toggles from being squeezed/scrolled away. */
     .section-tabs > .compare-toggle,
     .section-tabs > #theme-toggle { flex-shrink: 0; }
@@ -7593,7 +7586,7 @@
           <text class="mono-letter mono-x" x="26"   y="30">X</text>
         </g>
       </svg>
-      <span class="h1-title">MLB PROSPX αv0.1<span class="h1-rule" aria-hidden="true"></span><button type="button" class="h1-welcome-link" id="open-welcome-letter">Alpha test letter</button></span>
+      <span class="h1-title">MLB PROSPX αv0.1<span class="h1-rule" aria-hidden="true"></span></span>
     </h1>
     <div class="meta-line" id="meta-line">Loading…</div>
     <!-- Persistent global controls — these survive content overwrites
@@ -7603,6 +7596,11 @@
          keyboard accessibility on the list pages, but these are the
          always-available affordances. -->
     <div class="global-controls" id="global-controls">
+      <button class="global-ctrl" id="open-welcome-letter" type="button"
+              title="Re-open the Alpha test welcome letter" aria-label="Alpha test letter">
+        <span aria-hidden="true">✉</span>
+        <span class="global-ctrl-label">Alpha test letter</span>
+      </button>
       <button class="global-ctrl" id="global-watchlist" type="button"
               title="Open your watchlist" aria-label="Watchlist">
         <span aria-hidden="true">★</span>
@@ -7617,6 +7615,7 @@
       <button class="global-ctrl" id="global-theme-toggle" type="button"
               aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
         <span class="theme-icon" aria-hidden="true">☾</span>
+        <span class="global-ctrl-label theme-label">Dark Mode</span>
       </button>
     </div>
   </header>
@@ -7674,19 +7673,15 @@
     <button class="section-tab" data-section="traded">Transactions</button>
     <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL">Injured List</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
-    <button class="section-tab" data-section="debuts">Debuted (Graduates)</button>
+    <button class="section-tab" data-section="debuts">Debuted</button>
     <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">MLB Draft</button>
     <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes — signing bonuses, signing teams, prospects signed, and org spending by year (2021–present).">International Amateurs</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
     <button class="section-tab" data-section="charts" title="Build your own scatterplot — pick X/Y axes and a prospect group (MiLB, Debuted, Draft, International Amateurs, Overseas, or Farm systems).">Scatterplots</button>
     <button class="section-tab" data-section="glossary" title="Stats, indices, scouting concepts, and methodology — every term used on the site">Glossary</button>
-    <button class="section-tab" data-section="watchlist" title="Your starred prospects and farm systems — private to this browser">Watchlist<span class="section-tab-count" id="watchlist-tab-count"></span></button>
     </div>
     <button class="compare-toggle is-empty-hidden" id="compare-toggle" type="button" aria-label="Open compare panel" title="Open compare panel (c)">
       <span>Compare</span><span class="compare-count" id="compare-count">0</span>
-    </button>
-    <button id="theme-toggle" type="button" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
-      <span class="theme-icon">☾</span>
     </button>
   </div>
 
@@ -7743,6 +7738,8 @@
           <option value="waiver">Waiver claim</option>
           <option value="rule_5">Rule 5</option>
           <option value="contract_purchase">Contract purchase</option>
+          <option value="promotion">Promotion (Transactions)</option>
+          <option value="demotion">Demotion (Transactions)</option>
         </select>
       </div>
       <div class="filter-group">
@@ -8463,6 +8460,7 @@
       <span class="newsprint-eyebrow-label">Prospect Leaderboards</span>
       <span class="newsprint-eyebrow-meta">by stat · level · position · org</span>
     </div>
+    <div id="whats-standout-leaderboards" class="news-row news-row-standout"></div>
     <!-- v29 — Collapsed-by-default filter accordion for leaderboards. -->
     <div class="filter-toggle-row">
       <button class="filter-toggle" type="button"
@@ -8858,6 +8856,10 @@ function applyTheme(theme) {
     if (btn) {
       const icon = btn.querySelector(".theme-icon");
       if (icon) icon.textContent = theme === "dark" ? "☀" : "☾";
+      // Label names the destination mode (matches icon + title): in light
+      // mode the toggle offers "Dark Mode", and vice-versa.
+      const label = btn.querySelector(".theme-label");
+      if (label) label.textContent = theme === "dark" ? "Light Mode" : "Dark Mode";
       btn.title = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
     }
   }
@@ -14535,6 +14537,12 @@ const ACQ_LABELS = {
   // per prospect (no post-debut tx noise). Treated as the canonical
   // "graduation" transaction on the Transactions tab.
   debut:             { label: "MLB debut",                   color: "var(--up)" },
+  // Minor-league level moves surfaced as first-class transactions. Each
+  // active prospect contributes their MOST RECENT level change (see
+  // getFilteredAcquired) so the feed shows current movement without
+  // flooding with every historical rung.
+  promotion:         { label: "Promotion",                   color: "var(--up)" },
+  demotion:          { label: "Demotion",                    color: "var(--down)" },
 };
 
 function getFilteredAcquired() {
@@ -14547,6 +14555,29 @@ function getFilteredAcquired() {
     const acq = latestAcquisition(p);
     if (!acq) continue;
     pool.push({ p, acq });
+  }
+  // Level promotions / demotions as first-class transaction rows. Each
+  // active prospect contributes their MOST RECENT level change only —
+  // showing all ~8k historical rungs would bury the acquisition feed and
+  // tank render perf. The full ladder still lives on the player detail
+  // page. Synthesized as pseudo-acquisitions so they flow through the
+  // existing org / search filters, date sort, and row renderer below.
+  for (const p of (DATA.players || [])) {
+    if (p.status === "debuted") continue;
+    const evs = levelChangeEvents(p);
+    if (!evs || !evs.length) continue;
+    const latest = evs.reduce((a, b) =>
+      ((b.date || "") > (a.date || "") ? b : a), evs[0]);
+    if (!latest || !latest.date) continue;
+    pool.push({ p, acq: {
+      date: latest.date,
+      method: latest.kind,            // "promotion" | "demotion"
+      from_level: latest.prev_level,
+      to_level: latest.level,
+      from_team: latest.from_team,
+      to_team: latest.to_team,
+      description: `${latest.prev_level || "?"} → ${latest.level || "?"}`,
+    }});
   }
   // v31.9b — Debut events REMOVED from the Transactions list. They
   // now live exclusively on the dedicated Debuted tab (which default-
@@ -15601,6 +15632,9 @@ function renderCharts() {
 }
 
 function renderLeaderboards() {
+  // Standout single-game performances ticker — same feed as Spotlights,
+  // rendered into the leaderboards section's own container.
+  try { renderStandoutPerformances("whats-standout-leaderboards"); } catch (e) { /* silent */ }
   const statKey = state.lbStat   || "ops";
   const cfg = LB_STATS[statKey]   || LB_STATS.ops;
   const boardSide = state.lbSide || "all";
@@ -16871,6 +16905,16 @@ function renderRecentlyTraded() {
       contextLine = `<span style="color:var(--text-tertiary);">claimed from ${escapeHtml(acq.from_org)}</span>`;
     } else if (acq.method === "rule_5" && acq.from_org) {
       contextLine = `<span style="color:var(--text-tertiary);">Rule 5 from ${escapeHtml(acq.from_org)}</span>`;
+    } else if (acq.method === "promotion" || acq.method === "demotion") {
+      const up = acq.method === "promotion";
+      const arrow = up ? "↑" : "↓";
+      const tone = up ? "var(--up)" : "var(--down)";
+      contextLine = `<span style="display:inline-flex;align-items:center;gap:5px;">`
+        + `<span style="color:var(--text-tertiary);">${escapeHtml(acq.from_level || "?")}</span>`
+        + `<span style="color:${tone};font-weight:700;">${arrow}</span>`
+        + `<span style="color:var(--text-primary);font-weight:600;">${escapeHtml(acq.to_level || "?")}</span>`
+        + (acq.to_team ? `<span style="color:var(--text-tertiary);font-size:10px;">· ${escapeHtml(acq.to_team)}</span>` : "")
+        + `</span>`;
     } else {
       contextLine = `<span style="color:var(--text-tertiary);">${escapeHtml(acq.description || "—")}</span>`;
     }
@@ -18871,6 +18915,7 @@ function _renderIFAAllTime(host, classes, usd) {
     return `<tr>
       <td style="color:var(--text-tertiary);">${i + 1}</td>
       <td>${name}<div style="font-size:9px;color:var(--text-tertiary);">${escapeHtml(s.position || "—")} · ${escapeHtml(s.country || "—")}</div></td>
+      <td style="text-align:left;white-space:nowrap;">${_ifaFvProgHTML(s)}</td>
       <td style="white-space:nowrap;"><span style="display:inline-flex;align-items:center;gap:4px;">${s.org ? teamLogoHTML(s.org, "sm", fullOrgName(s.org)) : ""}${escapeHtml(s.org || "—")}</span></td>
       <td style="text-align:right;font-family:var(--font-mono);">${s.year}</td>
       <td style="text-align:right;font-family:var(--font-mono);font-weight:700;">${usd(s.bonus_usd)}</td></tr>`;
@@ -18881,12 +18926,23 @@ function _renderIFAAllTime(host, classes, usd) {
     const b = orgAll[o.org] = orgAll[o.org] || { org: o.org, total_usd: 0, signings: 0 };
     b.total_usd += o.total_usd || 0; b.signings += o.signings || 0;
   }));
-  const orgRows = Object.values(orgAll).sort((a, b) => b.total_usd - a.total_usd).slice(0, 20)
-    .map((o, i) => `<tr>
-      <td style="color:var(--text-tertiary);">${i + 1}</td>
-      <td><span style="display:inline-flex;align-items:center;gap:4px;">${teamLogoHTML(o.org, "sm", fullOrgName(o.org))}${escapeHtml(o.org)}</span></td>
-      <td style="text-align:right;font-family:var(--font-mono);">${usd(o.total_usd)}</td>
-      <td style="text-align:right;color:var(--text-tertiary);font-family:var(--font-mono);">${o.signings}</td></tr>`).join("");
+  // Biggest single signing per org — allSign is already bonus-desc, so the
+  // first time an org appears is its all-time top bonus.
+  const topByOrg = {};
+  allSign.forEach(s => { if (s.org && !topByOrg[s.org]) topByOrg[s.org] = s; });
+  // Show every org (all 30), not just the top 20.
+  const orgRows = Object.values(orgAll).sort((a, b) => b.total_usd - a.total_usd)
+    .map((o, i) => {
+      const t = topByOrg[o.org];
+      const topLine = t
+        ? `<div style="font-size:9px;color:var(--text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;" title="Biggest signing: ${escapeHtml(t.player_name)} · ${usd(t.bonus_usd)} (${t.year})">${escapeHtml(t.player_name)} · ${usd(t.bonus_usd)}</div>`
+        : "";
+      return `<tr>
+      <td style="color:var(--text-tertiary);vertical-align:top;">${i + 1}</td>
+      <td><span style="display:inline-flex;align-items:center;gap:4px;">${teamLogoHTML(o.org, "sm", fullOrgName(o.org))}${escapeHtml(o.org)}</span>${topLine}</td>
+      <td style="text-align:right;font-family:var(--font-mono);vertical-align:top;">${usd(o.total_usd)}</td>
+      <td style="text-align:right;color:var(--text-tertiary);font-family:var(--font-mono);vertical-align:top;">${o.signings}</td></tr>`;
+    }).join("");
 
   const totalAll = classes.reduce((s, c) => s + (c.total_usd || 0), 0);
   const nAll = classes.reduce((s, c) => s + (c.n_signings || 0), 0);
@@ -18899,7 +18955,7 @@ function _renderIFAAllTime(host, classes, usd) {
         <div class="ifa-side-title" style="margin-bottom:4px;">Classes ranked by total spend</div>
         <table class="detail-table" style="width:100%;margin-bottom:14px;"><thead><tr><th>#</th><th style="text-align:left;">Class</th><th style="text-align:right;">Total $</th><th style="text-align:right;" title="Signings">#</th><th style="text-align:right;" title="Tracked prospects">Trk</th><th style="text-align:left;">Top signing</th></tr></thead><tbody>${classRows}</tbody></table>
         <div class="ifa-side-title" style="margin-bottom:4px;">Biggest signings · all-time</div>
-        <table class="detail-table" style="width:100%;"><thead><tr><th>#</th><th style="text-align:left;">Player</th><th style="text-align:left;">Signing team</th><th style="text-align:right;">Year</th><th style="text-align:right;">Bonus</th></tr></thead><tbody>${bigRows}</tbody></table>
+        <table class="detail-table" style="width:100%;"><thead><tr><th>#</th><th style="text-align:left;">Player</th><th style="text-align:left;" title="Future Value at signing → current">FV</th><th style="text-align:left;">Signing team</th><th style="text-align:right;">Year</th><th style="text-align:right;">Bonus</th></tr></thead><tbody>${bigRows}</tbody></table>
       </div>
       <div class="ifa-side"><div class="ifa-side-card"><div class="ifa-side-title">Org spending · all-time</div>
         <table class="detail-table" style="width:100%;font-size:11px;"><thead><tr><th>#</th><th style="text-align:left;">Org</th><th style="text-align:right;">Total</th><th style="text-align:right;" title="Signings">#</th></tr></thead><tbody>${orgRows}</tbody></table></div></div>
@@ -37026,7 +37082,7 @@ function attachHandlers() {
       state.view = { type: "list" };
       state.glossaryTerm = slug;
       syncToURL();
-      renderSection();
+      render();
       return;
     }
     // Related-term chips inside a glossary card — scroll to the
@@ -37184,7 +37240,7 @@ function attachHandlers() {
       state.view = { type: "list" };
       state.section = "watchlist";
       syncToURL();
-      renderSection();
+      render();
     });
   }
   document.getElementById("compare-close").addEventListener("click", () => {

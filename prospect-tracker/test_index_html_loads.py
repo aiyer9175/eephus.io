@@ -127,7 +127,14 @@ def test_every_section_renders(server):
 
         for section in SECTION_TABS:
             # Click the section-tab button — same path as a real user.
-            page.click(f'.section-tab[data-section="{section}"]')
+            # Watchlist no longer has a section tab; it's reached via the
+            # persistent top-right global control. Exercising that button
+            # here also guards the regression where it called an undefined
+            # renderSection() and silently failed to navigate.
+            if section == "watchlist":
+                page.click("#global-watchlist")
+            else:
+                page.click(f'.section-tab[data-section="{section}"]')
             # Slice-gated sections (graduates, injured) fire one extra
             # render once the lazy sidecar arrives — give it room.
             page.wait_for_timeout(800)
