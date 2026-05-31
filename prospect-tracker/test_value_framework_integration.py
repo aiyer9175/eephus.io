@@ -322,34 +322,27 @@ def test_trade_player_value_returns_kind() -> None:
 
 
 def test_surplus_granular_for_non_anchor_fv() -> None:
-    """value_framework.surplus_value_mm should produce a defensible
-    value for non-5pt FVs (e.g. 47) that is BELOW what naive linear-
-    interpolation between FV 45 and FV 50 anchor surpluses would give
-    -- because the $/WAR tier-rate jump from $8.76M (1-2 WAR) to
-    $13.63M (2+ WAR) happens BETWEEN FV 45 and FV 50 for hitters."""
-    s45 = vf.surplus_value_mm(45, is_pitcher=False, position=None,
-                              apply_position_mult=False)
-    s47 = vf.surplus_value_mm(47, is_pitcher=False, position=None,
-                              apply_position_mult=False)
-    s50 = vf.surplus_value_mm(50, is_pitcher=False, position=None,
-                              apply_position_mult=False)
+    """v2: surplus_value_mm produces a smooth, granular value for non-5pt FVs.
+    Continuity is now a model GUARANTEE (P(bucket|FV) is a smooth ordered-logit
+    and the per-bucket surplus is FV-independent), so FV 47 sits strictly
+    between FV 45 and FV 50 with NO grade-boundary jump -- the opposite of the
+    v1 tier-rate kink this test used to assert."""
+    s45 = vf.surplus_value_mm(45, is_pitcher=False, position=None)
+    s47 = vf.surplus_value_mm(47, is_pitcher=False, position=None)
+    s50 = vf.surplus_value_mm(50, is_pitcher=False, position=None)
+    assert s45 < s47 < s50, f"FV 47 ({s47}) not strictly between FV 45 ({s45}) and 50 ({s50})"
+    # Smooth: close to the linear interpolation (no discontinuous kink).
     naive_linear = s45 + (s50 - s45) * (47 - 45) / 5
-    # The real FV 47 surplus should be LESS than the linear interp
-    # because at FV 47 the WAR_peak is ~1.49 (< 2) so it still gets
-    # the 1-2 tier rate, not the 2+ tier rate that FV 50 enjoys.
-    assert s47 < naive_linear, (
-        f"FV 47 surplus {s47} not below naive linear interp {naive_linear:.2f}"
-    )
-    assert s47 > s45, "FV 47 surplus must exceed FV 45 surplus"
+    assert abs(s47 - naive_linear) < 0.25 * (s50 - s45)
 
 
-def test_fv_to_war_peak_interpolates_at_one_point_granularity() -> None:
-    """fv_to_war_peak should produce distinct values for FV 47, 48, 49
-    (not bucket to FV 45 or FV 50)."""
-    vals = [vf.fv_to_war_peak(g, is_pitcher=False) for g in (45, 46, 47, 48, 49, 50)]
-    # All distinct (strictly monotonic between anchors)
+def test_expected_war_interpolates_at_one_point_granularity() -> None:
+    """v2: the P(bucket|FV)-weighted six-year average WAR (which replaced the v1
+    fv_to_war_peak point estimate) must be distinct and strictly monotone at
+    1-point FV granularity -- continuous FV shifts probability mass smoothly."""
+    vals = [vf.expected_six_year_avg_war(g, is_pitcher=False) for g in (45, 46, 47, 48, 49, 50)]
     for i in range(len(vals) - 1):
-        assert vals[i] < vals[i+1], f"non-monotonic at FV {45+i}->{46+i}"
+        assert vals[i] < vals[i + 1], f"non-monotonic at FV {45+i}->{46+i}: {vals}"
 
 
 def test_dollars_per_fv_granular() -> None:

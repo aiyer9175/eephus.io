@@ -4334,23 +4334,147 @@ def _compute_ifa_roi(gagg: dict, ifa_org_spending: dict) -> dict:
     }
 
 
-# v32.0 — Surplus value now comes from value_framework, a single source
-# of truth anchored to the 2026 FanGraphs scouting primer (FV->WAR ranges)
-# and the 2026 $/WAR FA-market article (non-linear 3-tier model, rolling
-# 3yr avg). Formula is now transparent: WAR_peak * 6 * ramp * p_success
-# * $/WAR_tier minus cost basis, all factors auditable in
-# value_framework.py. Position multipliers ALSO live there (resolving
-# a prior backend/frontend divergence bug where the two had different
-# values for SS / CF / RP etc).
+# v33.0 — Surplus value comes from value_framework, the single source of
+# truth. v2 of that module is a CAREER-PATH MIXTURE MODEL: expected surplus =
+# sum over outcome buckets of P(bucket|FV) * bucket_surplus, where each bucket
+# is built season-by-season (tiered $/WAR market value minus performance-adaptive
+# salary, discounted) and aggregated last -- the fix for E[f(X)] != f(E[X]).
+# The v1 ramp/p_success point estimate is retired. No positional $ multiplier
+# (WAR already contains a positional adjustment); relievers get a WAR-input
+# haircut. All factors are auditable in value_framework.py + its config.
 from value_framework import (
     surplus_value_mm as _estimate_surplus_mm,
     position_multiplier as _surplus_position_mult,
     is_pitcher_position as _vf_is_pitcher_position,
     dollars_per_war_flat as _dollars_per_war_flat,
     dollars_per_war as _dollars_per_war,
+    # v34 — richer per-prospect engine outputs baked into the export so the
+    # frontend shows the SAME timing/uncertainty the engine computes (Prompts
+    # H/G/I) and a per-org system rollup (Prompt K), rather than a timing-naive
+    # client-side curve lookup.
+    sv_distribution as _sv_distribution,
+    sv_credible_interval as _sv_credible_interval,
+    system_surplus_distribution as _system_surplus_distribution,
 )
 
 _PITCHER_POS_RE = re.compile(r"^(RHP|LHP|SP|RP|MIRP|SIRP|P)")
+
+# v34 — Monte-Carlo draw counts for the BAKED per-player distribution / credible
+# interval. Smaller than the engine defaults so the per-player export stays fast
+# (~18ms/player here; the displayed percentiles are ample at these counts).
+_SURPLUS_DIST_DRAWS = 4000
+_SURPLUS_CI_DRAWS = 1500
+
+
+def _eta_years_from(eta, today_year):
+    """Years from now to projected debut, from the ETA estimate (half-season
+    aware). None when no ETA year is known -> the engine uses its config default."""
+    yr = getattr(eta, "eta_year", None) if eta is not None else None
+    if yr is None:
+        return None
+    yrs = float(yr) - float(today_year)
+    if getattr(eta, "eta_half", None) == "late":
+        yrs += 0.5
+    return max(0.0, yrs)
+
+
+def _build_surplus_payload(fv, is_pitcher, position, *, age=None, eta_years=None,
+                           fv_dispersion=None, n_sources=None):
+    """Bake value_framework's per-prospect engine outputs into the export so the
+    frontend renders the SAME numbers the engine computes -- not a timing-naive
+    client-side curve lookup:
+      * value_mm -- the TIMING-aware expected surplus (Prompt H: age + ETA shape
+        the aging curve and discount the control window from projected debut);
+      * ci       -- the epistemic CREDIBLE INTERVAL on expected surplus (Prompt G);
+      * dist     -- the SOURCE-DISAGREEMENT-widened outcome distribution (Prompt I:
+        fv_dispersion = the across-source FV stddev widens the spread, same mean).
+    Returns None when FV is missing/invalid. The ci/dist enrichment is wrapped so a
+    numerical hiccup degrades to the bare point value rather than sinking the export."""
+    if fv is None:
+        return None
+    point = _estimate_surplus_mm(fv, is_pitcher, position, age=age, eta_years=eta_years)
+    if point is None:
+        return None
+    # Store the is_pitcher the value was actually baked with, so the K rollup
+    # reuses the EXACT same classification (no re-derivation drift -> the system
+    # figure reconciles with the per-player headline).
+    out = {"value_mm": point, "is_pitcher": bool(is_pitcher)}
+    if eta_years is not None:
+        out["eta_years"] = round(float(eta_years), 2)
+    try:
+        ci = _sv_credible_interval(fv, is_pitcher, position, age=age,
+                                   eta_years=eta_years, draws=_SURPLUS_CI_DRAWS)
+        if ci and ci.get("point_mm") is not None:
+            out["ci"] = {"lo_mm": ci["lo_mm"], "median_mm": ci["median_mm"],
+                         "hi_mm": ci["hi_mm"], "cred": ci["cred"], "regime": ci.get("regime")}
+        dist = _sv_distribution(fv, is_pitcher, position, age=age, eta_years=eta_years,
+                                fv_dispersion=fv_dispersion, n_sources=n_sources,
+                                draws=_SURPLUS_DIST_DRAWS)
+        if dist:
+            pcts = dist.get("percentiles", {})
+            out["dist"] = {
+                "p10_mm": pcts.get("p10"), "p50_mm": pcts.get("p50"), "p90_mm": pcts.get("p90"),
+                "p_bust": dist.get("p_bust"), "downside_mm": dist.get("downside_metric"),
+                "p_above_threshold": dist.get("p_above_threshold"),
+                "threshold_mm": dist.get("threshold_mm"),
+                "fv_dispersion": dist.get("fv_dispersion"),
+            }
+    except Exception:
+        pass   # enrichment only -- never let a MC/numerical hiccup sink the build
+    return out
+
+
+def _attach_system_rollup(active_payload, org_summary):
+    """Prompt K -- per-org farm-system surplus DISTRIBUTION (not a sum of means).
+    Groups the serialized active prospects by org and runs each org's prospects
+    through value_framework.system_surplus_distribution (single-factor outcome
+    correlation + roster-logjam realization cap), reusing the SAME timing/dispersion
+    inputs that were baked per-player so the system figure reconciles with the
+    per-prospect headline values. Attaches `system_surplus` (mean, P10/P50/P90,
+    sum_of_means, realization_discount, ...) to the matching org_summary entry."""
+    by_org: dict[str, list] = {}
+    for pl in active_payload:
+        org = pl.get("org")
+        sp = pl.get("surplus")
+        fv = pl.get("fv_close_raw")
+        fv = fv if fv is not None else pl.get("fv_close")
+        if not org or sp is None or fv is None:
+            continue
+        pts = pl.get("points") or []
+        by_org.setdefault(org, []).append({
+            "fv": fv,
+            # Reuse the EXACT is_pitcher the per-player value was baked with (stored
+            # on the surplus block) so the rollup reconciles with the headline.
+            "is_pitcher": bool(sp.get("is_pitcher")),
+            "position": pl.get("position"),
+            "age": pl.get("age"),
+            "eta_years": sp.get("eta_years"),
+            "fv_dispersion": (pts[-1].get("fv_stddev") if pts else None),
+        })
+    entry_by_org = {e.get("org"): e for e in org_summary}
+    for org, prospects in by_org.items():
+        entry = entry_by_org.get(org)
+        if entry is None:
+            continue
+        try:
+            d = _system_surplus_distribution(prospects, draws=_SURPLUS_DIST_DRAWS)
+        except Exception:
+            d = None
+        if not d:
+            continue
+        pcts = d.get("percentiles", {})
+        entry["system_surplus"] = {
+            "mean_mm": d.get("mean"),
+            "sum_of_means_mm": d.get("sum_of_means"),
+            "realization_discount": d.get("realization_discount"),
+            "p10_mm": pcts.get("p10"),
+            "p50_mm": pcts.get("p50"),
+            "p90_mm": pcts.get("p90"),
+            "std_mm": d.get("std"),
+            "n_prospects": d.get("n_prospects"),
+            "correlation": d.get("correlation"),
+            "cap_applied": d.get("cap_applied"),
+        }
 
 
 def _finalize_active_surplus_leaf(m: dict) -> dict:
@@ -6485,6 +6609,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _mlbam = player_ids.get(p.player_key)
         if _mlbam is None and sl_out:
             _mlbam = sl_out.get("mlbam_id")
+        # v34 — bake the engine's TIMING-aware surplus + credible interval +
+        # disagreement-widened distribution (Prompts H/G/I). age and the ETA gap
+        # (years to projected debut) shape the value; the latest snapshot's
+        # across-source FV stddev widens the distribution. The frontend reads this
+        # baked block as the headline surplus instead of a timing-naive curve.
+        # Use the CANONICAL value_framework pitcher classifier (config-driven,
+        # case/whitespace-normalized, and includes bare 'P'/'CL') -- not the local
+        # PITCHER_POS_SET used for ETA, which mislabels 'P'/'CL' as hitters and
+        # would (a) price them off the wrong curve and (b) desync the K rollup.
+        _surplus = _build_surplus_payload(
+            latest_fv, _vf_is_pitcher_position(p.position), p.position,
+            age=age, eta_years=_eta_years_from(eta, date.today().year),
+            fv_dispersion=(p.points[-1].fv_stddev if p.points else None))
         payload = {
             "player_key": p.player_key,
             "player_name": p.player_name,
@@ -6532,6 +6669,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # value clarifies how much the shrinkage moved them.
             "fv_close_raw": (round(p.points[-1].consensus_fv_raw, 2)
                              if p.points else None),
+            # v34 — baked engine surplus (timing-aware value_mm + credible
+            # interval `ci` + disagreement-widened distribution `dist`). None when
+            # FV is missing. The frontend prefers this over the live sv_curve.
+            "surplus": _surplus,
             # Total (source, snapshot_date) instances where a published FV
             # exists across the player's full history. When 1, the FV
             # consensus is pulled toward FV 35 (Bayesian shrinkage); when
@@ -10740,6 +10881,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # one field instead of re-deriving from the raw maps.
     for _pl in active_payload + graduate_payload:
         _pl["statcast_plus"] = _sc_plus_map.get(_pl["player_key"])
+
+    # v34 (Prompt K) — per-org farm-system surplus distribution, attached onto the
+    # already-built org_summary entries (reuses each prospect's baked timing inputs).
+    _attach_system_rollup(active_payload, org_summary)
 
     # X+ tool composites need cohort mean/stdev. Use the union of all
     # serialized prospects so a single norm anchors actives / inactives /

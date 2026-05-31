@@ -300,46 +300,45 @@ def _compute_surplus(career_war: float | None, war_seasons: int | None,
                      age: int | None, aav_usd: int | None,
                      years_remaining: int | None,
                      ) -> tuple[float | None, float | None]:
-    """Project remaining WAR + compute surplus_mm.
+    """Project remaining WAR + compute contract surplus_mm, PER SEASON.
 
-    Projected remaining WAR: starts from the player's recent rate
-    (career_war / war_seasons, capped at 6 to avoid out-of-sample),
-    then applies a -0.4 WAR/yr aging penalty per year past 29. Each
-    year's projection is summed across `years_remaining`. Floored at
-    0 (negative-projection veterans contribute 0 future WAR for
-    valuation purposes — surplus calc still subtracts their AAV).
+    Commensurable with the prospect-side surplus (value_framework's career-path
+    mixture): each remaining season is valued on ITS OWN WAR through the convex
+    tiered $/WAR, the season's salary (AAV) is subtracted, and each future
+    season's surplus is discounted to present value -- never averaging WAR first
+    (E[f(X)] != f(E[X])). Fixes docs/sv-audit.md FLAG 12 (vet surplus was on a
+    different basis -- avg-WAR tier dispatch, no discounting -- than prospect SV).
 
-    Surplus formula: (proj_remaining_WAR × $/WAR_tier) − (aav × years_rem),
-    expressed in $M. The $/WAR rate is dispatched off the AVERAGE per-year
-    projected WAR via the non-linear tier model in value_framework
-    (rolling 3yr 2024-2026 averages): <1 WAR -> ~$7M, 1-2 -> ~$8.8M,
-    2+ -> ~$13.6M. This properly prices declining vets at the fringe
-    tier and stars at the premium tier rather than a flat $8M.
+    Projected remaining WAR per season: recent rate (career_war / war_seasons,
+    capped at 6 to avoid out-of-sample) minus a -0.4 WAR/yr aging penalty per
+    year past 29, floored at 0. A declining year sits at the fringe tier, a star
+    year at the premium tier -- the tier is chosen per season, not off the
+    average. Salary is the contract AAV each year. Surplus is the discounted sum
+    of (season value - season salary), in $M.
 
-    Returns (proj_war_remaining, surplus_mm) or (None, None) when
-    insufficient inputs (no career WAR or no contract data).
+    Returns (proj_war_remaining, surplus_mm) or (None, None) when insufficient
+    inputs (no career WAR or no contract data).
     """
-    from value_framework import dollars_per_war
+    from value_framework import dollars_per_war, present_value
     if career_war is None or war_seasons is None or war_seasons <= 0:
         return (None, None)
     if aav_usd is None or years_remaining is None or years_remaining <= 0:
         return (None, None)
     rate = max(0.0, min(6.0, float(career_war) / float(war_seasons)))
-    # Aging-curve adjusted future seasons.
-    proj_war = 0.0
+    aav_mm = aav_usd / 1_000_000.0
     base_age = age if age is not None else 28
+    proj_war = 0.0
+    surplus_mm = 0.0
     for i in range(int(years_remaining)):
         yr_age = base_age + i
         # Aging penalty: 0 below age 29, then -0.4 per year above 29.
         decline = max(0.0, 0.4 * (yr_age - 29))
         season_war = max(0.0, rate - decline)
         proj_war += season_war
-    aav_mm = aav_usd / 1_000_000.0
-    # Tier the $/WAR rate off the AVG per-year projection -- a 1.5 WAR/yr
-    # vet sits in the 1-2 tier, a 0.5 WAR/yr declining vet sits at fringe.
-    avg_per_year = proj_war / years_remaining
-    war_dollar_mm = dollars_per_war(avg_per_year)
-    surplus_mm = (proj_war * war_dollar_mm) - (aav_mm * years_remaining)
+        # Value THIS season's WAR at its own convex tier rate ($M/WAR), then
+        # net out that season's salary and discount to present value.
+        season_value_mm = season_war * dollars_per_war(season_war)
+        surplus_mm += present_value(season_value_mm - aav_mm, i)
     return (round(proj_war, 2), round(surplus_mm, 1))
 
 
