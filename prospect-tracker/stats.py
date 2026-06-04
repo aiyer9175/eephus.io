@@ -190,6 +190,7 @@ _NAME_ALIASES: dict[str, str] = {
     "leodalis_de_vries": "Leo De Vries",
     "dominic_keegan":    "Dom Keegan",         # 681371 born 2000-08-01
     "leonardo_bernal":   "Leo Bernal",         # 699024 born 2004-02-13
+    "luis_de_avila":     "Luinder Avila",      # 679883 born 2001-08-21
     "markevian_hence":   "Tink Hence",         # 693311 born 2002-08-06
     "samuel_stafura":    "Sammy Stafura",      # 806230 born 2004-11-15
     "zachary_root":      "Zach Root",          # 702539 born 2004-02-06
@@ -230,12 +231,7 @@ def _position_matches(prospect_pos: str | None, api_pos: str | None) -> bool:
 
 def _first_name_compatible(a: str, b: str) -> bool:
     """True if two normalized first names plausibly refer to the same person."""
-    if a == b:
-        return True
-    short, long_ = (a, b) if len(a) <= len(b) else (b, a)
-    if long_.startswith(short) and len(short) >= 2:
-        return True
-    return len(a) >= 3 and len(b) >= 3 and a[:3] == b[:3]
+    return a == b
 
 
 # Targets the bulk player-index fetch hits. Sport IDs:
@@ -438,6 +434,34 @@ class PlayerIndex:
                 best_score = score
                 best_rec = r
         return best_rec
+
+
+def _strip_name_suffix(name: str) -> str:
+    return _re.sub(r"\s+(jr\.?|sr\.?|ii|iii|iv|v)$", "", name,
+                   flags=_re.IGNORECASE).strip()
+
+
+def _cached_id_matches_request(idx: PlayerIndex, cached_id: int,
+                               name: str, player_key: str | None) -> bool:
+    """Validate a cached MLBAM id against the current player index.
+
+    Cache hits bypass `best_match()`, so they need a stricter guard than
+    the fuzzy resolver. If the cached id is present in the index, require
+    an exact normalized name match or an explicit alias match. If the id is
+    not in the warm index, keep the cache entry; older inactive players may
+    be absent from current-season roster indexes.
+    """
+    try:
+        rec = idx.by_id.get(int(cached_id))
+    except (TypeError, ValueError):
+        return False
+    if not rec:
+        return True
+    rec_name = _norm_key(_strip_name_suffix(rec.get("fullName") or ""))
+    allowed = {_norm_key(_strip_name_suffix(name))}
+    if player_key and player_key in _NAME_ALIASES:
+        allowed.add(_norm_key(_strip_name_suffix(_NAME_ALIASES[player_key])))
+    return rec_name in allowed
 
 
 def _is_better_record(new: dict, existing: dict) -> bool:
@@ -940,16 +964,29 @@ def bulk_resolve_ids(
                                 for r in idx.players if r.get("birthDate")}
 
     new_cache_entries = 0
+    cache_dirty = False
     for key, name, position in triples:
         if key in cache:
             cid = cache[key]
             if cid is not None:
-                ids_out[key] = cid
-                # Refresh birth date from the index when available — covers
-                # prospects whose DB birth_date is stale from a prior bad ID.
-                idx_bd = bd_by_id.get(cid)
-                if idx_bd:
-                    bds_out[key] = idx_bd
+                if not _cached_id_matches_request(idx, cid, name, key):
+                    log.warning(
+                        "evicting stale MLBAM cache hit for %s (%s -> %s)",
+                        key, name, cid,
+                    )
+                    cache.pop(key, None)
+                    cache_dirty = True
+                else:
+                    ids_out[key] = cid
+                    # Refresh birth date from the index when available — covers
+                    # prospects whose DB birth_date is stale from a prior bad ID.
+                    idx_bd = bd_by_id.get(cid)
+                    if idx_bd:
+                        bds_out[key] = idx_bd
+                    continue
+            else:
+                continue
+        if key in ids_out:
             continue
         rec = idx.best_match(name, position=position, player_key=key)
         if rec is None:
@@ -980,7 +1017,7 @@ def bulk_resolve_ids(
                 else:
                     cache[key] = None  # remember "unresolvable"
 
-    if new_cache_entries:
+    if new_cache_entries or cache_dirty:
         _save_id_cache(cache)
 
     log.info(

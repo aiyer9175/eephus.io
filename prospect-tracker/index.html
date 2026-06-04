@@ -7977,10 +7977,14 @@
           <option value="off">— off —</option>
           <option value="sc_plus">SC+ composite</option>
           <optgroup label="Hitter contact">
+            <option value="xwoba_est">Est. xwOBA</option>
+            <option value="xwobacon_est">Est. xwOBAcon</option>
             <option value="avg_ev">Avg EV (mph)</option>
+            <option value="p90_ev">90th EV (mph)</option>
             <option value="max_ev">Max EV (mph)</option>
             <option value="hard_hit_pct">Hard-hit %</option>
             <option value="barrel_pct">Barrel %</option>
+            <option value="pull_air_pct">Pull-air %</option>
           </optgroup>
           <optgroup label="Zone discipline">
             <option value="z_contact_pct">Z-Contact % (high)</option>
@@ -8565,6 +8569,13 @@
           <button class="chip"        data-lb-age="21" title="Age 21 or younger">≤21</button>
           <button class="chip"        data-lb-age="23" title="Age 23 or younger">≤23</button>
         </div>
+        <div class="filter-group">
+          <span class="filter-label" title="Limit the board to players at or inside this overall prospect rank.">Rank</span>
+          <button class="chip active" data-lb-rank="all">All</button>
+          <button class="chip"        data-lb-rank="50">Top 50</button>
+          <button class="chip"        data-lb-rank="100">Top 100</button>
+          <button class="chip"        data-lb-rank="200">Top 200</button>
+        </div>
       </div>
       <!-- ============================== WHAT ============================ -->
       <div class="filter-cluster">
@@ -8605,12 +8616,17 @@
           <button class="chip"        data-lb-stat="k_pct"   data-lb-stat-side="hit" title="Strikeout rate (lower is better)">K%</button>
           <button class="chip"        data-lb-stat="hr"      data-lb-stat-side="hit" title="Home runs">HR</button>
           <button class="chip"        data-lb-stat="sb"      data-lb-stat-side="hit" title="Stolen bases">SB</button>
+          <button class="chip"        data-lb-stat="zone_z_swing" data-lb-stat-side="hit" title="In-zone swing rate">Z-Swing%</button>
           <button class="chip"        data-lb-stat="zone_z_contact" data-lb-stat-side="hit" title="Hitter zone contact percent">Z-Con%</button>
           <button class="chip"        data-lb-stat="zone_chase" data-lb-stat-side="hit" title="Hitter chase rate; lower is better">Chase%</button>
+          <button class="chip"        data-lb-stat="xwoba_est" data-lb-stat-side="hit" title="Estimated xwOBA from tracked launch speed / angle">xwOBA</button>
+          <button class="chip"        data-lb-stat="xwobacon_est" data-lb-stat-side="hit" title="Estimated xwOBA on contact from tracked launch speed / angle">xwOBAcon</button>
           <button class="chip"        data-lb-stat="avg_ev" data-lb-stat-side="hit" title="Average exit velocity">Avg EV</button>
+          <button class="chip"        data-lb-stat="p90_ev" data-lb-stat-side="hit" title="90th percentile exit velocity">90th EV</button>
           <button class="chip"        data-lb-stat="max_ev" data-lb-stat-side="hit" title="Maximum exit velocity">Max EV</button>
           <button class="chip"        data-lb-stat="hard_hit_pct" data-lb-stat-side="hit" title="95+ mph batted-ball rate">Hard%</button>
           <button class="chip"        data-lb-stat="barrel_pct" data-lb-stat-side="hit" title="Approximate barrel rate from exit velocity and launch angle">Brl%</button>
+          <button class="chip"        data-lb-stat="pull_air_pct" data-lb-stat-side="hit" title="Pull-side airborne batted balls divided by total batted balls">Pull-air%</button>
         </div>
         <div class="filter-group">
           <span class="filter-label">Pitcher stats</span>
@@ -8620,6 +8636,7 @@
           <button class="chip"        data-lb-stat="pitcher_bb_pct" data-lb-stat-side="pit" title="Pitcher BB% — walks as % of batters faced (lower is better)">BB%</button>
           <button class="chip"        data-lb-stat="pitcher_zone_whiff" data-lb-stat-side="pit" title="Pitcher whiffs per swing">Whiff%</button>
           <button class="chip"        data-lb-stat="pitcher_zone_chase" data-lb-stat-side="pit" title="Pitcher chase rate induced; higher is better">Chase%</button>
+          <button class="chip"        data-lb-stat="pitcher_zone_z_swing" data-lb-stat-side="pit" title="In-zone swing rate induced">Z-Swing%</button>
           <button class="chip"        data-lb-stat="pitcher_zone_z_contact" data-lb-stat-side="pit" title="Pitcher in-zone contact allowed; lower is better">Z-Con%</button>
           <button class="chip"        data-lb-stat="fb_velo_feed" data-lb-stat-side="pit" title="Average velocity of the highest-usage fastball-like pitch from pitch feeds">FB velo</button>
           <button class="chip"        data-lb-stat="fb_ivb_feed" data-lb-stat-side="pit" title="Average induced vertical break on the highest-usage fastball-like pitch from pitch feeds">FB IVB</button>
@@ -10445,6 +10462,18 @@ function levelChangeEvents(player) {
   return events;
 }
 
+function currentDisplayLevel(p) {
+  if (!p) return null;
+  const games = (p.statcast_metrics && Array.isArray(p.statcast_metrics.recent_games))
+    ? p.statcast_metrics.recent_games
+    : [];
+  for (const g of games) {
+    const lvl = g && String(g.level || "").trim();
+    if (lvl) return lvl;
+  }
+  return p.current_level || p.display_level || (p.statline && p.statline.level) || p.level || null;
+}
+
 // =============================================================================
 // TRANSACTION INDICATORS — visual vocabulary shared across every FV chart.
 // =============================================================================
@@ -10942,6 +10971,30 @@ function fvTrendHTML(p) {
   return `<div class="fv-stock-line">${stockInnerHTML(s)}</div>`;
 }
 
+function liveTrendHTML(p) {
+  if (!p || p.live_overall_rank == null || p.live_rank_delta == null) return "";
+  const delta = Number(p.live_rank_delta);
+  const liveRank = Number(p.live_overall_rank);
+  if (!Number.isFinite(delta) || !Number.isFinite(liveRank) || Math.abs(delta) < 10) return "";
+  const cls = delta > 0 ? "stock-up" : "stock-down";
+  const sign = delta > 0 ? "+" : "";
+  const drivers = ((p.live_signal && Array.isArray(p.live_signal.drivers)) ? p.live_signal.drivers : [])
+    .slice(0, 4)
+    .map(d => {
+      const label = d && d.label != null ? String(d.label) : "";
+      const value = d && d.value != null ? String(d.value) : "";
+      return [label, value].filter(Boolean).join(" ");
+    })
+    .filter(Boolean);
+  const tip = [
+    `Live rank #${liveRank}`,
+    p.overall_rank != null ? `Consensus rank #${p.overall_rank}` : "",
+    `Move ${sign}${delta} spots`,
+    drivers.length ? `Drivers: ${drivers.join(" · ")}` : ""
+  ].filter(Boolean).join(" · ");
+  return `<div class="fv-stock-line" title="${escapeHtml(tip)}"><span class="${cls}">LIVE #${liveRank} ${sign}${delta}</span></div>`;
+}
+
 // Rank trend — ▲/▼/— under the rank diamond. Matches the visual
 // language of fvTrendHTML but inverted: a LOWER rank number is BETTER
 // (rank #5 beats #50), so delta = prev - cur. Positive delta → green
@@ -11109,6 +11162,7 @@ function syncToURL() {
   if (state.lbLevel     !== "all")        p.set("lblvl",   state.lbLevel);
   if (state.lbPos       !== "all")        p.set("lbpos",   state.lbPos);
   if (state.lbOrg       !== "all")        p.set("lborg",   state.lbOrg);
+  if ((state.lbRankMax || "all") !== "all") p.set("lbrank", state.lbRankMax);
   if (state.lbSeason    !== String(new Date().getUTCFullYear())) p.set("lbseason", state.lbSeason);
   // Detail-page tab selection. Only encoded when actively on the
   // matching detail page so other views don't carry an unused param.
@@ -11224,6 +11278,7 @@ function syncFromURL() {
   if (p.has("lblvl"))    state.lbLevel  = p.get("lblvl");
   if (p.has("lbpos"))    state.lbPos    = p.get("lbpos");
   if (p.has("lborg"))    state.lbOrg    = p.get("lborg");
+  if (p.has("lbrank"))   state.lbRankMax = p.get("lbrank");
   if (p.has("lbseason")) state.lbSeason = p.get("lbseason");
   // Detail-page tab + pagination state. Reset to defaults when missing
   // so back-navigating to a list doesn't carry stale page numbers.
@@ -11782,6 +11837,60 @@ function _milbStatcastOutlierChips(p) {
   }).join("");
 }
 
+function currentSeasonStatRows(p) {
+  const rows = Array.isArray(p && p.current_season_statlines)
+    ? p.current_season_statlines.slice()
+    : [];
+  if (!rows.length && p && p.statline) rows.push(p.statline);
+  const seen = new Set();
+  return rows.filter(r => {
+    if (!r) return false;
+    const key = `${r.season || ""}|${r.level || ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function formatLevelStatline(row) {
+  if (!row) return "—";
+  if (row.is_pitcher) {
+    return [
+      row.era != null ? `${row.era} ERA` : null,
+      row.whip != null ? `${row.whip} WHIP` : null,
+      row.ip != null ? `${row.ip} IP` : null,
+    ].filter(Boolean).join(" · ") || "—";
+  }
+  return `${row.avg ?? "—"}/${row.obp ?? "—"}/${row.slg ?? "—"}`
+    + (row.hr != null ? ` · ${row.hr} HR` : "")
+    + (row.ops_plus_level != null ? ` · OPS+ ${Math.round(row.ops_plus_level)}` : "");
+}
+
+function levelStatlinesHTML(p, opts = {}) {
+  const rows = currentSeasonStatRows(p);
+  if (!rows.length) return "—";
+  const compact = opts.compact !== false;
+  const hideCurrentLevelLabel = !!opts.hideCurrentLevelLabel;
+  const displayLevel = currentDisplayLevel(p);
+  const pieces = rows.map(r => {
+    const lvl = r.level || "?";
+    const isCurrent = displayLevel && lvl === displayLevel;
+    const showLevelLabel = !(hideCurrentLevelLabel && isCurrent);
+    const tip = isCurrent ? `Current level ${lvl}` : `${r.season || new Date().getFullYear()} stats at ${lvl}`;
+    return `<span style="display:${compact ? "inline-flex" : "flex"};align-items:baseline;gap:5px;${compact ? "margin-right:8px;" : "margin-bottom:2px;"}min-width:0;" title="${escapeHtml(tip)}">
+      ${showLevelLabel ? `<span class="level-pill ${isCurrent ? "level-neutral" : "level-old"}" style="font-size:9px;padding:1px 5px;">${escapeHtml(lvl)}</span>` : ""}
+      <span style="color:var(--text-primary);font-family:var(--font-mono);font-size:${compact ? "11px" : "12px"};white-space:nowrap;">${escapeHtml(formatLevelStatline(r))}</span>
+    </span>`;
+  });
+  if (displayLevel && !rows.some(r => r && r.level === displayLevel)) {
+    pieces.unshift(`<span style="display:${compact ? "inline-flex" : "flex"};align-items:baseline;gap:5px;${compact ? "margin-right:8px;" : "margin-bottom:2px;"}min-width:0;" title="No current-season stats on file yet at ${escapeHtml(displayLevel)}">
+      <span class="level-pill level-neutral" style="font-size:9px;padding:1px 5px;">${escapeHtml(displayLevel)}</span>
+      <span style="color:var(--text-tertiary);font-size:${compact ? "11px" : "12px"};">stats pending</span>
+    </span>`);
+  }
+  return pieces.join(compact ? "" : "");
+}
+
 function makeMilbCell(p) {
   const sl = p.statline;
   const avl = p.age_vs_level;
@@ -11792,19 +11901,14 @@ function makeMilbCell(p) {
   // age-vs-level tier coloring on the level chip itself even though the
   // text age-vs-level chip has been retired in favor of the RPS+ pill.
   const tier = (avl && avl.tier && avl.tier !== "unknown") ? avl.tier : "neutral";
-  const levelClass = sl.level === "MLB" ? "level-mlb" : `level-${tier}`;
+  const displayLevel = currentDisplayLevel(p) || sl.level;
+  const levelClass = displayLevel === "MLB" ? "level-mlb" : `level-${tier}`;
   const isPitcher = sl.is_pitcher;
   const fmtRate3 = v => v == null ? "—" : (Math.abs(v) < 1 ? (v >= 0 ? "" : "-") + Math.abs(v).toFixed(3).replace(/^0/, "") : v.toFixed(3));
   // Triple-slash / IP+ERA still leads the supporting line; the new
   // "key stat" detail row below it surfaces the rate stats the reader
   // most often wants without forcing them into the detail page.
-  const slashLine = isPitcher
-    ? [
-        sl.era != null ? `${sl.era} ERA` : null,
-        sl.whip != null ? `${sl.whip} WHIP` : null,
-        sl.ip != null ? `${sl.ip} IP` : null,
-      ].filter(Boolean).join(" · ") || "—"
-    : `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"}`;
+  const slashLine = levelStatlinesHTML(p, { hideCurrentLevelLabel: true });
   // Key-stat detail line: K%/BB% + HR/9 (P) or ISO/HR/HH (H). OPS+/ERA-
   // were promoted to a pill on the top row (next to Level + RPS+), so
   // they're no longer in this prose detail line.
@@ -11834,6 +11938,9 @@ function makeMilbCell(p) {
   // Skip the RPS+ pill at MLB level since the headline already carries
   // the league-relative (wRC+ / xFIP) read.
   const rpsPill = sl.level === "MLB" ? "" : rpsPlusPillHTML(p);
+  const levelTip = displayLevel && sl.level && displayLevel !== sl.level
+    ? ` title="${escapeHtml(`Current level ${displayLevel}; stats shown from ${sl.level}`)}"`
+    : "";
   // OPS+ / ERA- promoted from prose-detail-line to a sibling pill so it
   // sits inline with Level + RPS+ at the same chip geometry.
   const plusPill = isPitcher
@@ -11873,7 +11980,7 @@ function makeMilbCell(p) {
     + (evChips        ? `<span class="milb-ev-chip-strip">${evChips}</span>` : "")
     + (scOutlierChips ? `<span class="milb-sc-chip-strip">${scOutlierChips}</span>` : "");
   return `<div class="milb-cell milb-cell-wrap"${tipAttr}>
-    <span class="milb-pill-row"><span class="level-pill ${levelClass}">${sl.level}</span>${seasonTag}${plusPill}${rpsPill}${scPlusPill}${headline}</span>
+    <span class="milb-pill-row"><span class="level-pill ${levelClass}"${levelTip}>${displayLevel}</span>${seasonTag}${plusPill}${rpsPill}${scPlusPill}${headline}</span>
     <br/><span style="color: var(--text-primary);">${slashLine}</span>
     <br/><span style="color: var(--text-tertiary);">${detailWithSc}</span>
   </div>`;
@@ -11909,7 +12016,7 @@ function _milbBaselineEvChips(p) {
 
 // v30.8 — Statcast percentile-bars block for the MiLB detail page.
 // For each Statcast metric the prospect has, computes the
-// percentile vs the same-position same-level cohort across the
+// percentile vs the same-level hitter/pitcher cohort across the
 // league and renders a horizontal bar. Hitters get contact (EV,
 // max EV, HH%, Barrel%) + zone (Z-Con%, Whiff%, Chase%); pitchers
 // get arsenal (top-pitch velo, induced Whiff%, Chase%, contact
@@ -11917,39 +12024,52 @@ function _milbBaselineEvChips(p) {
 // metrics (whiff% allowed for hitters, HH% allowed for pitchers,
 // etc.) render the bar from the OTHER edge.
 //
-// Cohort: same primary position (uses positionBucket) AND same
-// level. Cohort floor: ≥10 peers, else falls back to same-level
-// cohort regardless of position. ≥5 peers needed to render the bar
-// at all.
-function _statcastPercentileBlock(p) {
+// Cohort: same level + same side (hitter/pitcher). ≥5 peers needed to
+// render the bar at all.
+function _statcastPercentileBlock(p, opts = {}) {
   if (!p) return "";
-  // Skip for debuted players — the MiLB-cohort percentile is no
-  // longer the relevant comparison once a player graduates. Their
-  // story is told by projectionArcSection (WAG / WAR-vs-FV) +
-  // career-stats blocks instead.
-  if (p.status === "debuted") return "";
-  const cq = ((p.statcast_metrics || {}).contact_quality) || {};
-  const pm = ((p.statcast_metrics || {}).pitch_movement) || {};
-  const zRoot = p.zone_metrics || {};
-  let z = zRoot;
-  if (zRoot && Array.isArray(zRoot.level_splits) && zRoot.level_splits.length) {
-    z = zRoot.level_splits.reduce((a, b) =>
-      (a && (a.pitches || 0) >= (b.pitches || 0)) ? a : b, null);
-  }
-  z = z || {};
+  const levelOverride = opts.level || null;
+  const _splitForLevel = (root, level) => {
+    if (!root) return null;
+    const splits = Array.isArray(root.level_splits) && root.level_splits.length
+      ? root.level_splits
+      : [root];
+    if (level) {
+      const exact = splits.find(s => s && s.level === level);
+      if (exact) return exact;
+    }
+    return splits.reduce((a, b) => {
+      const aN = ((a || {}).contact_quality || {}).batted_balls || (a || {}).pitches || 0;
+      const bN = ((b || {}).contact_quality || {}).batted_balls || (b || {}).pitches || 0;
+      return aN >= bN ? a : b;
+    }, null);
+  };
+  const sc = opts.statcast || _splitForLevel(p.statcast_metrics, levelOverride) || {};
+  const cq = (sc.contact_quality) || {};
+  const pm = (sc.pitch_movement) || {};
+  let z = opts.zone || _splitForLevel(p.zone_metrics, levelOverride) || {};
   const sl = p.statline || {};
-  const isPit = !!sl.is_pitcher;
-  const ourPos = positionBucket(p.position) || "?";
-  const ourLevel = sl.level || null;
-  // Build cohort.
-  const all = (DATA && DATA.players) || [];
-  let cohort = all.filter(q => q && q.player_key !== p.player_key
-    && (q.statline && q.statline.level === ourLevel)
-    && positionBucket(q.position) === ourPos);
-  if (cohort.length < 10) {
-    // Fall back to same-level only (across positions).
-    cohort = all.filter(q => q && q.player_key !== p.player_key
-      && (q.statline && q.statline.level === ourLevel));
+  const isPit = !!(sc.is_pitcher != null ? sc.is_pitcher : (z.is_pitcher != null ? z.is_pitcher : sl.is_pitcher));
+  const ourLevel = levelOverride || sc.level || z.level || ((p.statcast_metrics || {}).level) || sl.level || null;
+  if (!ourLevel) return "";
+
+  const all = [
+    ...((DATA && DATA.players) || []),
+    ...((DATA && DATA.debuts) || []),
+  ];
+  const seen = new Set();
+  const cohort = [];
+  for (const q of all) {
+    if (!q || q.player_key === p.player_key || seen.has(q.player_key)) continue;
+    seen.add(q.player_key);
+    const qSc = _splitForLevel(q.statcast_metrics, ourLevel);
+    const qZ = _splitForLevel(q.zone_metrics, ourLevel);
+    const qSl = q.statline || {};
+    const qSide = !!(qSc && qSc.is_pitcher != null ? qSc.is_pitcher : (qZ && qZ.is_pitcher != null ? qZ.is_pitcher : qSl.is_pitcher));
+    if (qSide !== isPit) continue;
+    if ((qSc && qSc.level === ourLevel) || (qZ && qZ.level === ourLevel) || qSl.level === ourLevel) {
+      cohort.push({ p: q, sc: qSc || {}, z: qZ || {} });
+    }
   }
   if (cohort.length < 5) return "";
   // Per-metric percentile.
@@ -11960,18 +12080,20 @@ function _statcastPercentileBlock(p) {
     for (const v of sorted) { if (lowerIsBetter ? v > val : v < val) below++; }
     return Math.round((below / vals.length) * 100);
   };
-  const _zRowOf = (q) => {
-    const zr = q.zone_metrics;
-    if (!zr) return {};
-    if (Array.isArray(zr.level_splits) && zr.level_splits.length) {
-      return zr.level_splits.reduce((a, b) =>
-        (a && (a.pitches || 0) >= (b.pitches || 0)) ? a : b, null) || {};
-    }
-    return zr;
-  };
   const _gatherCohortVals = (extract) => cohort
     .map(extract)
     .filter(v => v != null && isFinite(v));
+  const _p90EvOf = (q) => {
+    const c = ((q.sc || {}).contact_quality || {});
+    if (c.p90_ev != null) return c.p90_ev;
+    const evs = (c.hit_locations || [])
+      .map(l => Number(l && l.launch_speed))
+      .filter(Number.isFinite)
+      .sort((a, b) => a - b);
+    if (!evs.length) return null;
+    const idx = Math.min(evs.length - 1, Math.max(0, Math.round((evs.length - 1) * 0.90)));
+    return evs[idx];
+  };
   // Metric specs: {label, value, cohortVals, lowerIsBetter, format}
   const specs = [];
   const _push = (label, val, extract, lowerIsBetter, fmt) => {
@@ -11983,55 +12105,85 @@ function _statcastPercentileBlock(p) {
     specs.push({ label, val, pct, fmt, lowerIsBetter });
   };
   if (!isPit) {
+    _push("Est. xwOBA", cq.xwoba_est,
+      q => ((q.sc || {}).contact_quality || {}).xwoba_est,
+      false, v => v.toFixed(3).replace(/^0/, ""));
+    _push("Est. xwOBAcon", cq.xwobacon_est,
+      q => ((q.sc || {}).contact_quality || {}).xwobacon_est,
+      false, v => v.toFixed(3).replace(/^0/, ""));
     _push("Avg EV",   cq.avg_ev,
-      q => ((q.statcast_metrics || {}).contact_quality || {}).avg_ev,
+      q => ((q.sc || {}).contact_quality || {}).avg_ev,
+      false, v => v.toFixed(1) + " mph");
+    _push("90th EV",  cq.p90_ev != null ? cq.p90_ev : _p90EvOf(p),
+      q => _p90EvOf(q),
       false, v => v.toFixed(1) + " mph");
     _push("Max EV",   cq.max_ev,
-      q => ((q.statcast_metrics || {}).contact_quality || {}).max_ev,
+      q => ((q.sc || {}).contact_quality || {}).max_ev,
       false, v => v.toFixed(1) + " mph");
     _push("Hard-hit%", cq.hard_hit_pct,
-      q => ((q.statcast_metrics || {}).contact_quality || {}).hard_hit_pct,
+      q => ((q.sc || {}).contact_quality || {}).hard_hit_pct,
       false, v => v.toFixed(0) + "%");
     _push("Barrel%",  cq.barrel_pct,
-      q => ((q.statcast_metrics || {}).contact_quality || {}).barrel_pct,
+      q => ((q.sc || {}).contact_quality || {}).barrel_pct,
+      false, v => v.toFixed(0) + "%");
+    _push("Pull-air%", (cq.spray || {}).pull_air_pct,
+      q => ((((q.sc || {}).contact_quality || {}).spray || {}).pull_air_pct),
+      false, v => v.toFixed(0) + "%");
+    _push("Z-Swing%", z.z_swing_pct,
+      q => (q.z || {}).z_swing_pct,
       false, v => v.toFixed(0) + "%");
     _push("Z-Contact%", z.z_contact_pct,
-      q => _zRowOf(q).z_contact_pct,
+      q => (q.z || {}).z_contact_pct,
       false, v => v.toFixed(0) + "%");
     _push("Whiff%",   z.whiff_pct,
-      q => _zRowOf(q).whiff_pct,
+      q => (q.z || {}).whiff_pct,
       true,  v => v.toFixed(0) + "%");
-    _push("Chase%",   z.chase_pct,
-      q => _zRowOf(q).chase_pct,
+    _push("Chase%",   z.o_swing_pct,
+      q => (q.z || {}).o_swing_pct,
       true,  v => v.toFixed(0) + "%");
   } else {
     const topPitch = (pm.pitch_summary || [])[0];
     _push(`${(topPitch && topPitch.pitch_type) || "FB"} velo`,
       topPitch ? topPitch.avg_velo : null,
       q => {
-        const tp = (((q.statcast_metrics || {}).pitch_movement || {}).pitch_summary || [])[0];
+        const tp = (((q.sc || {}).pitch_movement || {}).pitch_summary || [])[0];
         return tp ? tp.avg_velo : null;
       }, false, v => v.toFixed(1) + " mph");
     _push("Induced Whiff%", z.whiff_pct,
-      q => _zRowOf(q).whiff_pct,
+      q => (q.z || {}).whiff_pct,
       false, v => v.toFixed(0) + "%");
-    _push("Induced Chase%", z.chase_pct,
-      q => _zRowOf(q).chase_pct,
+    _push("Induced Chase%", z.o_swing_pct,
+      q => (q.z || {}).o_swing_pct,
+      false, v => v.toFixed(0) + "%");
+    _push("Z-Swing%", z.z_swing_pct,
+      q => (q.z || {}).z_swing_pct,
       false, v => v.toFixed(0) + "%");
     _push("HH% allowed", cq.hard_hit_pct,
-      q => ((q.statcast_metrics || {}).contact_quality || {}).hard_hit_pct,
+      q => ((q.sc || {}).contact_quality || {}).hard_hit_pct,
       true,  v => v.toFixed(0) + "%");
     _push("Brl% allowed", cq.barrel_pct,
-      q => ((q.statcast_metrics || {}).contact_quality || {}).barrel_pct,
+      q => ((q.sc || {}).contact_quality || {}).barrel_pct,
       true,  v => v.toFixed(0) + "%");
   }
   if (!specs.length) return "";
   // Render — bars + label + percentile tag.
+  const pctColor = (pct) => {
+    const p = Math.max(0, Math.min(100, Number(pct) || 0));
+    const stops = [
+      { at: 0,   rgb: [56, 123, 210] },
+      { at: 45,  rgb: [104, 126, 148] },
+      { at: 75,  rgb: [206, 75, 83] },
+      { at: 100, rgb: [126, 23, 31] },
+    ];
+    const hi = stops.find(s => p <= s.at) || stops[stops.length - 1];
+    const lo = stops[Math.max(0, stops.indexOf(hi) - 1)];
+    const span = Math.max(1, hi.at - lo.at);
+    const t = Math.max(0, Math.min(1, (p - lo.at) / span));
+    const rgb = lo.rgb.map((v, i) => Math.round(v + (hi.rgb[i] - v) * t));
+    return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+  };
   const bars = specs.map(s => {
-    const tone = s.pct >= 75 ? "var(--up)"
-              : s.pct >= 50 ? "var(--neon-cyan)"
-              : s.pct >= 25 ? "var(--neon-amber)"
-              : "var(--down)";
+    const tone = pctColor(s.pct);
     const pctLabel = s.pct >= 90 ? `${s.pct}th · top ${100 - s.pct}%`
                     : s.pct >= 50 ? `${s.pct}th percentile`
                     : `${s.pct}th · bottom ${s.pct}%`;
@@ -12046,15 +12198,14 @@ function _statcastPercentileBlock(p) {
       <span style="font-family:var(--font-mono);font-size:10px;color:${tone};text-align:right;font-weight:700;">${escapeHtml(pctLabel)}</span>
     </div>`;
   }).join("");
-  const cohortLabel = cohort.length >= 10
-    ? `${ourPos} · ${ourLevel} · ${cohort.length} peers`
-    : `${ourLevel} · ${cohort.length} peers (position cohort sparse)`;
+  const cohortLabel = `${ourLevel} · ${isPit ? "pitchers" : "hitters"}`;
+  const cohortTitle = `${cohort.length} comparison peers; each metric requires at least 5 finite peer values.`;
   return `<div class="detail-title">Statcast percentiles
-    <span class="detail-title-sub">vs ${escapeHtml(cohortLabel)}</span></div>
+    <span class="detail-title-sub" title="${escapeHtml(cohortTitle)}">vs ${escapeHtml(cohortLabel)}</span></div>
     <div class="detail-card" style="padding:12px 14px;">
       ${bars}
       <div style="font-size:10px;color:var(--text-tertiary);margin-top:6px;line-height:1.5;border-top:1px dashed var(--border-light);padding-top:6px;">
-        Higher percentile = better for this metric (direction handled per-metric — Whiff%, Chase%, HH% allowed flip so "low value" = "high percentile"). Bars colored by tier: green 75+, cyan 50+, amber 25+, red &lt; 25.
+        Higher percentile = better for this metric (direction handled per-metric — Whiff%, Chase%, HH% allowed flip so "low value" = "high percentile"). Bar color is keyed to percentile value: blue low, red high.
       </div>
     </div>`;
 }
@@ -12514,6 +12665,7 @@ const state = {
   lbLevel:  "all",
   lbPos:    "all",
   lbOrg:    "all",
+  lbRankMax: "all",
   lbSeason: String(new Date().getUTCFullYear()),
   // Detail-page tab selection — which tab the prospect/farm detail page
   // opens on. URL-round-tripped via ?ptab=... / ?ftab=... so deep links
@@ -12758,10 +12910,14 @@ function getFilteredActives() {
       const cq = ((p.statcast_metrics || {}).contact_quality) || {};
       const pm = ((p.statcast_metrics || {}).pitch_movement) || {};
       const z  = _zRow(p);
+      if (sk === "xwoba_est")     return cq.xwoba_est;
+      if (sk === "xwobacon_est")  return cq.xwobacon_est;
       if (sk === "avg_ev")         return cq.avg_ev;
+      if (sk === "p90_ev")         return cq.p90_ev;
       if (sk === "max_ev")         return cq.max_ev;
       if (sk === "hard_hit_pct")   return cq.hard_hit_pct;
       if (sk === "barrel_pct")     return cq.barrel_pct;
+      if (sk === "pull_air_pct")   return ((cq.spray || {}).pull_air_pct);
       if (sk === "z_contact_pct")  return z.z_contact_pct;
       if (sk === "whiff_pct")      return z.whiff_pct;
       if (sk === "chase_pct")      return z.chase_pct;
@@ -12786,7 +12942,7 @@ function getFilteredActives() {
       "hh_pct_allowed", "barrel_pct_allowed",
     ]);
     const hitterOnly  = new Set([
-      "avg_ev", "max_ev", "hard_hit_pct", "barrel_pct",
+      "xwoba_est", "xwobacon_est", "avg_ev", "p90_ev", "max_ev", "hard_hit_pct", "barrel_pct", "pull_air_pct",
       "z_contact_pct", "whiff_pct", "chase_pct",
     ]);
     let scope = pool;
@@ -13595,10 +13751,11 @@ function _prospectDetailSidebarCards(p, activeTab) {
       value: q.fv_close != null ? `FV ${Math.round(q.fv_close)}` : "—",
     }));
   const sl = p.statline || {};
+  const displayLevel = currentDisplayLevel(p);
   const signals = [
     fv != null ? { key: "Consensus FV", value: Math.round(fv) } : null,
     p.eta && p.eta.year != null ? { key: "ETA", value: p.eta.year } : null,
-    sl.level ? { key: "Level", value: sl.level } : null,
+    displayLevel ? { key: "Level", value: displayLevel } : null,
     p.age != null ? { key: "Age", value: p.age.toFixed(1) } : null,
   ].filter(Boolean);
   return [
@@ -14369,7 +14526,7 @@ function renderActives() {
           <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
         </div>
         <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${p.overall_rank != null ? "#" + p.overall_rank : "—"}</span></div>${rankTrendHTML(p)}</div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}</div>
+        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}${liveTrendHTML(p)}</div>
         <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${lazyLineChartHTML(p)}</div>
         ${makeMilbCell(p)}
         ${physClusterHTML(p)}
@@ -14966,22 +15123,34 @@ const LB_STATS = {
                     field: "level_plus_pct" },
   zone_z_contact: { label: "Z-Con%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
                     source: "zone", side: "hit", field: "z_contact_pct", minPitches: 200, support: _lbZoneSupport },
+  zone_z_swing: { label: "Z-Swing%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+                  source: "zone", side: "hit", field: "z_swing_pct", minPitches: 200, support: _lbZoneSupport },
   zone_chase: { label: "Chase%", hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
                 source: "zone", side: "hit", field: "o_swing_pct", minPitches: 200, support: _lbZoneSupport },
   pitcher_zone_whiff: { label: "Whiff%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
                         source: "zone", side: "pit", field: "whiff_pct", minPitches: 200, support: _lbZoneSupport },
   pitcher_zone_chase: { label: "Chase%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
                         source: "zone", side: "pit", field: "o_swing_pct", minPitches: 200, support: _lbZoneSupport },
+  pitcher_zone_z_swing: { label: "Z-Swing%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+                          source: "zone", side: "pit", field: "z_swing_pct", minPitches: 200, support: _lbZoneSupport },
   pitcher_zone_z_contact: { label: "Z-Con%", hi: false, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
                             source: "zone", side: "pit", field: "z_contact_pct", minPitches: 200, support: _lbZoneSupport },
   avg_ev: { label: "Avg EV", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : "—",
             source: "statcast", side: "hit", field: "avg_ev", minBBE: 10, support: _lbStatcastSupport },
+  xwoba_est: { label: "Est. xwOBA", hi: true, fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : "—",
+               source: "statcast", side: "hit", field: "xwoba_est", minBBE: 25, support: _lbStatcastSupport },
+  xwobacon_est: { label: "Est. xwOBAcon", hi: true, fmt: v => v != null ? Number(v).toFixed(3).replace(/^0/, "") : "—",
+                  source: "statcast", side: "hit", field: "xwobacon_est", minBBE: 25, support: _lbStatcastSupport },
+  p90_ev: { label: "90th EV", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : "—",
+            source: "statcast", side: "hit", field: "p90_ev", minBBE: 10, support: _lbStatcastSupport },
   max_ev: { label: "Max EV", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : "—",
             source: "statcast", side: "hit", field: "max_ev", minBBE: 5, support: _lbStatcastSupport },
   hard_hit_pct: { label: "Hard%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
                   source: "statcast", side: "hit", field: "hard_hit_pct", minBBE: 10, support: _lbStatcastSupport },
   barrel_pct: { label: "Brl%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
                 source: "statcast", side: "hit", field: "barrel_pct", minBBE: 10, support: _lbStatcastSupport },
+  pull_air_pct: { label: "Pull-air%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
+                  source: "statcast", side: "hit", field: "pull_air_pct", minBBE: 10, support: _lbStatcastSupport },
   fb_velo_feed: { label: "FB velo", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : "—",
                   source: "statcast", side: "pit", field: "fb_velo_feed", minTrackedPitches: 20, support: _lbStatcastSupport },
   ivb_ff: { label: "FF IVB", hi: true, fmt: v => v != null ? Number(v).toFixed(1) : "—",
@@ -15075,7 +15244,7 @@ function renderWatchlist() {
             <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
           </div>
           <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${p.overall_rank != null ? "#" + p.overall_rank : "—"}</span></div>${rankTrendHTML(p)}</div>
-          <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+          <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}${liveTrendHTML(p)}` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
           <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${p.points && p.points.length >= 2 ? lazyLineChartHTML(p) : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`}</div>
           ${makeMilbCell(p)}
           ${physClusterHTML(p)}
@@ -15192,7 +15361,10 @@ const CHART_AXES = {
     { key: "k_per_9",        label: "K/9",                getter: p => _slOf(p, "k_per_9"),                 fmt: _fmt2 },
     { key: "bb_per_9",       label: "BB/9",               getter: p => _slOf(p, "bb_per_9"),                fmt: _fmt2 },
     // ── Statcast contact quality (sparse) ──
+    { key: "xwoba_est",      label: "Est. xwOBA",         getter: p => _scOf(p, "xwoba_est"),               fmt: _fmt3 },
+    { key: "xwobacon_est",   label: "Est. xwOBAcon",      getter: p => _scOf(p, "xwobacon_est"),            fmt: _fmt3 },
     { key: "avg_ev",         label: "Avg exit velo",      getter: p => _scOf(p, "avg_ev"),                  fmt: v => v.toFixed(1) + " mph" },
+    { key: "p90_ev",         label: "90th EV",            getter: p => _scOf(p, "p90_ev"),                  fmt: v => v.toFixed(1) + " mph" },
     { key: "max_ev",         label: "Max exit velo",      getter: p => _scOf(p, "max_ev"),                  fmt: v => v.toFixed(1) + " mph" },
     { key: "hard_hit_pct",   label: "Hard-hit %",         getter: p => _scOf(p, "hard_hit_pct"),            fmt: _fmtPct },
     { key: "barrel_pct",     label: "Barrel %",           getter: p => _scOf(p, "barrel_pct"),              fmt: _fmtPct },
@@ -15792,6 +15964,7 @@ function renderLeaderboards() {
   const pos    = state.lbPos      || "all";
   const org    = state.lbOrg      || "all";
   const ageMax = state.lbAgeMax   || "all";
+  const rankMax = state.lbRankMax || "all";
   const dir    = state.lbDir      || "auto";   // auto = stat's natural direction
   const season = Number(state.lbSeason || new Date().getUTCFullYear());
   if (boardSide !== "all" && cfg.side !== boardSide) {
@@ -15808,6 +15981,8 @@ function renderLeaderboards() {
     b.classList.toggle("active", b.dataset.lbPos === pos));
   document.querySelectorAll("[data-lb-age]").forEach(b =>
     b.classList.toggle("active", b.dataset.lbAge === ageMax));
+  document.querySelectorAll("[data-lb-rank]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbRank === rankMax));
   document.querySelectorAll("[data-lb-dir]").forEach(b =>
     b.classList.toggle("active", b.dataset.lbDir === dir));
   document.querySelectorAll("[data-lb-season]").forEach(b =>
@@ -15821,6 +15996,8 @@ function renderLeaderboards() {
     if (!sc) return null;
     const cq = sc.contact_quality || {};
     const pm = sc.pitch_movement || {};
+    const spray = cq.spray || {};
+    if (field === "pull_air_pct") return spray.pull_air_pct;
     if (field in cq) return cq[field];
     if (field === "fb_velo_feed") {
       const hard = (pm.pitch_summary || []).filter(p => ["FF", "SI", "FT", "FC"].includes(p.pitch_type) && p.avg_velo != null);
@@ -15850,11 +16027,13 @@ function renderLeaderboards() {
   // so a Jesús Made AA-then-AAA year would land in both AAA and AA boards.
   let pool = [];
   const _ageCap = ageMax === "all" ? null : Number(ageMax);
+  const _rankCap = rankMax === "all" ? null : Number(rankMax);
   for (const p of (DATA.players || [])) {
     const bucket = positionBucket(p.position);
       if (pos !== "all" && !positionMatches(bucket, pos)) continue;
       if (org !== "all" && p.org !== org) continue;
       if (_ageCap != null && !(p.age != null && p.age <= _ageCap)) continue;
+      if (_rankCap != null && !(p.overall_rank != null && Number(p.overall_rank) <= _rankCap)) continue;
       if (boardSide !== "all" && cfg.side !== boardSide) continue;
     if (cfg.source === "zone") {
       const splits = (p.zone_metrics && Array.isArray(p.zone_metrics.level_splits) && p.zone_metrics.level_splits.length)
@@ -16333,10 +16512,14 @@ function renderInjured() {
     if (key === "sc_plus") return getStatcastPlus(player);
     const cq = ((player.statcast_metrics || {}).contact_quality) || {};
     const pm = ((player.statcast_metrics || {}).pitch_movement) || {};
+    if (key === "xwoba_est")   return cq.xwoba_est;
+    if (key === "xwobacon_est") return cq.xwobacon_est;
     if (key === "avg_ev")       return cq.avg_ev;
+    if (key === "p90_ev")       return cq.p90_ev;
     if (key === "max_ev")       return cq.max_ev;
     if (key === "hard_hit_pct") return cq.hard_hit_pct;
     if (key === "barrel_pct")   return cq.barrel_pct;
+    if (key === "pull_air_pct") return ((cq.spray || {}).pull_air_pct);
     if (key === "fb_velo") {
       const top = (pm.pitch_summary || [])[0];
       return top ? top.avg_velo : null;
@@ -17127,7 +17310,7 @@ function renderRecentlyTraded() {
           <span style="font-size:11px;">${contextLine}</span>
         </div>
         <div style="text-align:center;">${latest.consensus_fv_label
-          ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}`
+          ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}${liveTrendHTML(p)}`
           : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div class="line-chart-cell desktop-only">${pts.length >= 2 ? lazyLineChartHTML(p) : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`}</div>
       </div>
@@ -17696,6 +17879,21 @@ function gradWarPerYr(g) {
   };
 }
 
+function graduateOutcomePenalty(g) {
+  const churnKinds = new Set(["dfa", "outrighted", "released"]);
+  const txs = (g && g.transactions) || [];
+  const churnCount = txs.filter(tx => churnKinds.has(String((tx && tx.kind) || "").toLowerCase())).length;
+  const age = Number(g && g.age);
+  const lvl = (typeof getCurrentLevelForDebut === "function" ? getCurrentLevelForDebut(g) : null) || "";
+  const inMinorsNow = lvl && String(lvl).toUpperCase() !== "MLB";
+  let penalty = 1.0;
+  if (churnCount >= 2) penalty *= 0.45;
+  else if (churnCount === 1) penalty *= 0.72;
+  if (isFinite(age) && age >= 26.0) penalty *= 0.85;
+  if (inMinorsNow) penalty *= 0.85;
+  return Math.max(0.25, Math.min(1.0, penalty));
+}
+
 function gradVsFvProjection(g) {
   // WAG = (playing-time-weighted MLB WAR/yr) − (FV-grade-implied
   // WAR/yr). gradWarPerYr returns null when the player has < 1 full-
@@ -17709,7 +17907,11 @@ function gradVsFvProjection(g) {
   const isPitcher = !!(g.sabermetrics && g.sabermetrics.is_pitcher);
   const expected = fvExpectedWarPerYr(fv, isPitcher);
   if (expected == null) return null;
-  return r.war_per_yr - expected;
+  let delta = r.war_per_yr - expected;
+  if (delta > 0) {
+    delta = (delta * 0.70 + r.war_per_yr * 0.30) * graduateOutcomePenalty(g);
+  }
+  return delta;
 }
 
 // WARWAG = WAR/year + WAG/year for a debuted player. WAG/yr is itself
@@ -21470,6 +21672,7 @@ function _buildRosterLevelCache() {
 }
 function getCurrentLevelForDebut(player) {
   if (!player || !player.player_key) return null;
+  if (player.current_level) return player.current_level;
   if (!_rosterLevelCache) _rosterLevelCache = _buildRosterLevelCache();
   return _rosterLevelCache[player.player_key] || null;
 }
@@ -21531,10 +21734,14 @@ function renderDebuts() {
       if (sk === "sc_plus") return getStatcastPlus(player);
       const cq = ((player.statcast_metrics || {}).contact_quality) || {};
       const pm = ((player.statcast_metrics || {}).pitch_movement) || {};
+      if (sk === "xwoba_est")   return cq.xwoba_est;
+      if (sk === "xwobacon_est") return cq.xwobacon_est;
       if (sk === "avg_ev")       return cq.avg_ev;
+      if (sk === "p90_ev")       return cq.p90_ev;
       if (sk === "max_ev")       return cq.max_ev;
       if (sk === "hard_hit_pct") return cq.hard_hit_pct;
       if (sk === "barrel_pct")   return cq.barrel_pct;
+      if (sk === "pull_air_pct") return ((cq.spray || {}).pull_air_pct);
       if (sk === "fb_velo") {
         const top = (pm.pitch_summary || [])[0];
         return top ? top.avg_velo : null;
@@ -24190,7 +24397,7 @@ function makeQuickReadSummaryParts(p, opts = {}) {
     // recently sent down post-debut) was showing "at MLB" because
     // his season-aggregate statline is MLB-flavored, even when
     // his actual current assignment is AAA. Latest movement wins.
-    const curLvl = currentLevelForSummary(p) || sl.level;
+    const curLvl = currentDisplayLevel(p) || currentLevelForSummary(p) || sl.level;
     const levelPart = curLvl ? ` at ${curLvl}` : "";
     if (agePart || posPart) {
       parts.push(`${agePart}${posPart ? ` ${escapeHtml(posPart)}` : ""}${levelPart}`);
@@ -24362,9 +24569,13 @@ function _buildDetailChipRibbon(p) {
     if (!sl.level) return "";
     const avl = p.age_vs_level || {};
     const tier = (avl.tier && avl.tier !== "unknown") ? avl.tier : "neutral";
-    const levelClass = sl.level === "MLB" ? "level-mlb" : `level-${tier}`;
+    const displayLevel = currentDisplayLevel(p) || sl.level;
+    const levelClass = displayLevel === "MLB" ? "level-mlb" : `level-${tier}`;
+    const levelTip = displayLevel !== sl.level
+      ? ` title="${escapeHtml(`Current level ${displayLevel}; stats shown from ${sl.level}`)}"`
+      : "";
     const bits = [
-      `<span class="level-pill ${levelClass}" style="font-size:11px;padding:3px 8px;">${escapeHtml(sl.level)}</span>`,
+      `<span class="level-pill ${levelClass}"${levelTip} style="font-size:11px;padding:3px 8px;">${escapeHtml(displayLevel)}</span>`,
     ];
     if (sl.is_prior_season && sl.season) {
       bits.push(`<span class="prior-season-tag" style="font-size:10px;">${escapeHtml(String(sl.season))}</span>`);
@@ -24412,23 +24623,21 @@ function _buildDetailChipRibbon(p) {
   // velo for pitchers; then zone discipline).
   const statsLine = (() => {
     if (!sl) return "";
+    const levelLines = levelStatlinesHTML(p, { compact: true, hideCurrentLevelLabel: true });
     const seg = (label, val, color) => `<span class="ribbon-stat" title="${escapeHtml(label)}">
       <span class="ribbon-stat-lbl">${escapeHtml(label)}</span>
       <span class="ribbon-stat-val"${color ? ` style="color:${color};"` : ""}>${escapeHtml(String(val))}</span>
     </span>`;
-    const bits = [];
+    const bits = levelLines && levelLines !== "—"
+      ? [`<span style="display:inline-flex;align-items:center;flex-wrap:wrap;gap:0 2px;">${levelLines}</span>`]
+      : [];
     if (!isPit) {
-      const slash = `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"}`;
-      bits.push(seg("AVG/OBP/SLG", slash));
       if (sl.hr  != null) bits.push(seg("HR", sl.hr));
       if (sl.sb  != null) bits.push(seg("SB", sl.sb));
       if (sl.iso != null) bits.push(seg("ISO", (Math.abs(sl.iso) < 1 ? (sl.iso >= 0 ? "" : "-") + Math.abs(sl.iso).toFixed(3).replace(/^0/, "") : sl.iso.toFixed(3))));
       if (sl.bb_pct != null) bits.push(seg("BB%", sl.bb_pct.toFixed(1)));
       if (sl.k_pct  != null) bits.push(seg("K%",  sl.k_pct.toFixed(1)));
     } else {
-      if (sl.era  != null) bits.push(seg("ERA",  sl.era));
-      if (sl.whip != null) bits.push(seg("WHIP", sl.whip));
-      if (sl.ip   != null) bits.push(seg("IP",   sl.ip));
       if (sl.k_pct  != null) bits.push(seg("K%",  sl.k_pct.toFixed(1)));
       if (sl.bb_pct != null) bits.push(seg("BB%", sl.bb_pct.toFixed(1)));
       if (sl.hr_per_9 != null) bits.push(seg("HR/9", sl.hr_per_9.toFixed(2)));
@@ -30280,18 +30489,276 @@ function makePitchMovementPlot(sc, playerKey) {
   </div>`;
 }
 
+function _hitTypeColor(t) {
+  const key = String(t || "").toLowerCase();
+  if (key.includes("home_run") || key.includes("home run")) return "var(--neon-magenta)";
+  if (key.includes("triple")) return "var(--neon-violet)";
+  if (key.includes("double")) return "var(--neon-amber)";
+  if (key.includes("single")) return "var(--up)";
+  if (key.includes("field_out") || key.includes("force_out") || key.includes("double_play") || key.includes("fielders_choice") || key.includes("grounded")) return "var(--text-tertiary)";
+  return "var(--neon-cyan)";
+}
+
+function makeRollingXwobaSparkline(cq) {
+  const rows = (cq && cq.rolling_xwoba) || [];
+  if (rows.length < 3) return "";
+  const points = rows
+    .map(r => ({ date: r.date || "", xwoba: Number(r.xwoba), bbe: Number(r.bbe) }))
+    .filter(r => Number.isFinite(r.xwoba));
+  const vals = points.map(r => r.xwoba);
+  if (points.length < 3) return "";
+  const W = 320, H = 108;
+  const ML = 34, MR = 10, MT = 10, MB = 27;
+  const min = Math.min(0.24, ...vals) - 0.015;
+  const max = Math.max(0.42, ...vals) + 0.015;
+  const sx = i => ML + (i / Math.max(1, points.length - 1)) * (W - ML - MR);
+  const sy = v => H - MB - ((v - min) / Math.max(0.001, max - min)) * (H - MT - MB);
+  const fmtXw = v => Number(v).toFixed(3).replace(/^0/, "");
+  const shortDate = d => {
+    if (!d) return "";
+    const dt = new Date(d + "T00:00:00");
+    if (isNaN(dt.getTime())) return d;
+    return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
+  const toneFor = v => {
+    if (v >= 0.400) return "rgba(214, 45, 45, 0.95)";
+    if (v >= 0.350) return "rgba(224, 132, 38, 0.88)";
+    if (v >= 0.320) return "rgba(83, 176, 218, 0.82)";
+    return "rgba(57, 112, 214, 0.82)";
+  };
+  const bands = [
+    { lo: 0.400, hi: max,       label: "Hot",  fill: "rgba(214, 45, 45, 0.18)" },
+    { lo: 0.350, hi: 0.400,     label: "Good", fill: "rgba(224, 132, 38, 0.12)" },
+    { lo: 0.320, hi: 0.350,     label: "Avg",  fill: "rgba(83, 176, 218, 0.10)" },
+    { lo: min,   hi: 0.320,     label: "Cool", fill: "rgba(57, 112, 214, 0.12)" },
+  ].filter(b => b.hi > min && b.lo < max).map(b => {
+    const y1 = sy(Math.min(max, b.hi));
+    const y2 = sy(Math.max(min, b.lo));
+    return `<rect x="${ML}" y="${y1.toFixed(1)}" width="${W-ML-MR}" height="${Math.max(0, y2-y1).toFixed(1)}" fill="${b.fill}"/>
+      <text x="${W-MR-3}" y="${(y1 + Math.max(10, (y2-y1)/2) - 2).toFixed(1)}" text-anchor="end" font-size="8.5" fill="var(--text-tertiary)">${b.label}</text>`;
+  }).join("");
+  const yTicks = [0.280, 0.340, 0.400].filter(v => v >= min && v <= max);
+  const grid = yTicks.map(v =>
+    `<line x1="${ML}" x2="${W-MR}" y1="${sy(v).toFixed(1)}" y2="${sy(v).toFixed(1)}" stroke="var(--border)" stroke-width="0.7" stroke-dasharray="${v === 0.320 ? '3,3' : '1,3'}"/>
+     <text x="${ML-5}" y="${(sy(v)+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text-secondary)">${fmtXw(v)}</text>`
+  ).join("");
+  const segments = points.slice(1).map((p, i) => {
+    const prev = points[i];
+    const mid = (prev.xwoba + p.xwoba) / 2;
+    const tip = `${shortDate(prev.date)} → ${shortDate(p.date)} · ${fmtXw(prev.xwoba)} → ${fmtXw(p.xwoba)}`;
+    return `<line x1="${sx(i).toFixed(1)}" y1="${sy(prev.xwoba).toFixed(1)}" x2="${sx(i+1).toFixed(1)}" y2="${sy(p.xwoba).toFixed(1)}" stroke="${toneFor(mid)}" stroke-width="2.3" stroke-linecap="round"><title>${escapeHtml(tip)}</title></line>`;
+  }).join("");
+  const last = vals[vals.length - 1];
+  const color = toneFor(last);
+  const firstDate = shortDate(points[0].date);
+  const lastDate = shortDate(points[points.length - 1].date);
+  return `<div style="margin-top:10px;padding:8px;border:1px solid var(--border-light);background:var(--bg-tertiary);border-radius:var(--radius-sm);">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:4px;">
+      <span style="font-size:11px;font-weight:600;color:var(--text-secondary);letter-spacing:0.04em;text-transform:uppercase;">Rolling est. xwOBA</span>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="Rolling estimated xwOBA">
+      ${bands}
+      ${grid}
+      <line x1="${ML}" x2="${W-MR}" y1="${H-MB}" y2="${H-MB}" stroke="var(--text-secondary)" stroke-width="0.8"/>
+      <line x1="${ML}" x2="${ML}" y1="${MT}" y2="${H-MB}" stroke="var(--text-secondary)" stroke-width="0.8"/>
+      ${segments}
+      <circle cx="${sx(points.length - 1).toFixed(1)}" cy="${sy(last).toFixed(1)}" r="3.4" fill="${color}" stroke="var(--bg-secondary)" stroke-width="1"/>
+      <text x="${ML}" y="${H-9}" text-anchor="start" font-size="9" fill="var(--text-secondary)">${escapeHtml(firstDate)}</text>
+      <text x="${W-MR}" y="${H-9}" text-anchor="end" font-size="9" fill="var(--text-secondary)">${escapeHtml(lastDate)}</text>
+      <text x="${(ML + W - MR) / 2}" y="${H-2}" text-anchor="middle" font-size="9" fill="var(--text-primary)">Rolling window date</text>
+      <text x="10" y="${(MT + H - MB) / 2}" text-anchor="middle" font-size="9" fill="var(--text-primary)" transform="rotate(-90 10 ${(MT + H - MB) / 2})">Est. xwOBA</text>
+    </svg>
+  </div>`;
+}
+
+function makeSprayChart(cq) {
+  const pts = (cq && cq.hit_locations) || [];
+  if (!pts.length) return "";
+  const W = 360, H = 350;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const home = { x: W / 2, y: H - 12 };
+  const FEET_SCALE = 0.70;
+  const srcHome = { x: 125, y: 200 };
+  const degToRad = d => d * Math.PI / 180;
+  const sideSign = (p, angle) => {
+    if (Number.isFinite(angle) && Math.abs(angle) >= 1) return angle < 0 ? -1 : 1;
+    const spray = String((p && p.spray) || "").toLowerCase();
+    if (spray === "pull") return -1;
+    if (spray === "oppo") return 1;
+    return 1;
+  };
+  const sourcePolar = (p) => {
+    const rawX = Number(p && p.x);
+    const rawY = Number(p && p.y);
+    const dx = Number.isFinite(rawX) ? rawX - srcHome.x : 0;
+    const dy = Number.isFinite(rawY) ? srcHome.y - rawY : 0;
+    let angle = Number.isFinite(Number(p && p.spray_angle))
+      ? Number(p.spray_angle)
+      : Math.atan2(dx, Math.max(1, dy)) * 180 / Math.PI;
+    const spray = String((p && p.spray) || "").toLowerCase();
+    if ((spray === "pull" || spray === "oppo") && Math.abs(angle) < 20) {
+      angle = sideSign(p, angle) * 20;
+    } else if (spray === "center" && Math.abs(angle) > 18) {
+      angle = sideSign(p, angle) * 18;
+    }
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    return { angle, dist };
+  };
+  const dodgerWallFt = (angleDeg) => {
+    const a = clamp(angleDeg, -45, 45);
+    const stops = [
+      { angle: -45, ft: 330 },
+      { angle: -22, ft: 385 },
+      { angle: 0,   ft: 395 },
+      { angle: 22,  ft: 385 },
+      { angle: 45,  ft: 330 },
+    ];
+    for (let i = 1; i < stops.length; i++) {
+      if (a <= stops[i].angle) {
+        const lo = stops[i - 1];
+        const hi = stops[i];
+        const t = (a - lo.angle) / Math.max(1, hi.angle - lo.angle);
+        return lo.ft + (hi.ft - lo.ft) * t;
+      }
+    }
+    return stops[stops.length - 1].ft;
+  };
+  const fieldRadius = (angleDeg) => {
+    return dodgerWallFt(angleDeg) * FEET_SCALE;
+  };
+  const feetCoord = (angleDeg, feet) => {
+    const angle = clamp(angleDeg, -45, 45);
+    const radius = feet * FEET_SCALE;
+    const a = degToRad(angle);
+    return {
+      x: home.x + Math.sin(a) * radius,
+      y: home.y - Math.cos(a) * radius,
+    };
+  };
+  const contactDepthPct = (p, rawPct) => {
+    const ev = Number(p && p.launch_speed);
+    const la = Number(p && p.launch_angle);
+    const hit = String((p && p.hit_type) || "").toLowerCase();
+    let shaped = Number.isFinite(rawPct) ? rawPct : 0.2;
+    if (hit.includes("home_run")) shaped = Math.max(shaped, 0.97);
+    else if (hit.includes("triple")) shaped = Math.max(shaped, 0.82);
+    else if (hit.includes("double")) shaped = Math.max(shaped, 0.66);
+    else if (hit.includes("single")) shaped = Math.max(shaped, 0.42);
+    if (Number.isFinite(ev) && Number.isFinite(la)) {
+      if (la < 5) {
+        shaped = Math.max(shaped, clamp(0.17 + (ev - 75) / 120, 0.12, 0.45));
+      } else if (la < 10) {
+        shaped = Math.max(shaped, clamp(0.26 + (ev - 80) / 105, 0.20, 0.58));
+      } else if (la <= 45) {
+        const evPart = clamp((ev - 78) / 34, 0, 1);
+        const anglePeak = 1 - Math.min(1, Math.abs(la - 24) / 26);
+        shaped = Math.max(shaped, clamp(0.40 + evPart * 0.38 + anglePeak * 0.14, 0.34, 0.94));
+      } else {
+        shaped = Math.max(shaped, clamp(0.24 + (ev - 82) / 130, 0.18, 0.55));
+      }
+    }
+    return clamp(shaped, 0.015, 1);
+  };
+  const plotPoint = (p) => {
+    const polar = sourcePolar(p);
+    const angle = clamp(polar.angle, -45, 45);
+    const measuredDistance = Number(p && p.distance_ft);
+    const rawPct = clamp(polar.dist / 205, 0.015, 1);
+    const displayFeet = Number.isFinite(measuredDistance) && measuredDistance > 0
+      ? measuredDistance
+      : dodgerWallFt(angle) * contactDepthPct(p, rawPct);
+    const radius = Math.min(displayFeet, dodgerWallFt(angle) * 1.18) * FEET_SCALE;
+    const a = degToRad(angle);
+    return {
+      x: clamp(home.x + Math.sin(a) * radius, 8, W - 8),
+      y: clamp(home.y - Math.cos(a) * radius, 8, H - 8),
+    };
+  };
+  const fieldCoord = (angleDeg, pct = 1) => {
+    const angle = clamp(angleDeg, -45, 45);
+    const radius = fieldRadius(angle) * pct;
+    const a = degToRad(angle);
+    return {
+      x: home.x + Math.sin(a) * radius,
+      y: home.y - Math.cos(a) * radius,
+    };
+  };
+  const lfPole = fieldCoord(-45);
+  const lfGap = fieldCoord(-22);
+  const cfWall = fieldCoord(0);
+  const rfGap = fieldCoord(22);
+  const rfPole = fieldCoord(45);
+  const leftLine = fieldCoord(-45, 0.72);
+  const rightLine = fieldCoord(45, 0.72);
+  const secondBase = feetCoord(0, Math.sqrt(2) * 90);
+  const thirdBase = feetCoord(-45, 90);
+  const firstBase = feetCoord(45, 90);
+  const dots = pts.map(p => {
+    const pt = plotPoint(p);
+    const color = _hitTypeColor(p.hit_type);
+    const ev = p.launch_speed != null ? `${Number(p.launch_speed).toFixed(1)} mph` : "EV —";
+    const la = p.launch_angle != null ? `${Number(p.launch_angle).toFixed(0)}°` : "LA —";
+    const dist = Number.isFinite(Number(p.distance_ft)) && Number(p.distance_ft) > 0
+      ? ` · ${Number(p.distance_ft).toFixed(0)} ft`
+      : " · distance estimated";
+    const xw = p.xwoba_est != null ? ` · xwOBAcon ${Number(p.xwoba_est).toFixed(3).replace(/^0/, "")}` : "";
+    const tip = `${p.date || ""} · ${String(p.hit_type || "batted ball").replaceAll("_", " ")} · ${ev} · ${la}${dist}${xw}`;
+    return `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="3.9" fill="${color}" fill-opacity="0.84" stroke="var(--bg-tertiary)" stroke-width="1.1"><title>${escapeHtml(tip)}</title></circle>`;
+  }).join("");
+  const spray = (cq && cq.spray) || {};
+  const sprayLine = [spray.pull_pct != null ? `Pull ${Number(spray.pull_pct).toFixed(0)}%` : null,
+                     spray.center_pct != null ? `Center ${Number(spray.center_pct).toFixed(0)}%` : null,
+                     spray.oppo_pct != null ? `Oppo ${Number(spray.oppo_pct).toFixed(0)}%` : null,
+                     spray.pull_air_pct != null ? `Pull air ${Number(spray.pull_air_pct).toFixed(0)}% of BBE` : null]
+    .filter(Boolean).join(" · ");
+  const legend = [
+    ["Single", "single"], ["Double", "double"], ["Triple", "triple"],
+    ["HR", "home_run"], ["Out", "field_out"], ["Other", "other"],
+  ].map(([lab, key]) => `<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--text-secondary);"><span style="width:8px;height:8px;border-radius:50%;background:${_hitTypeColor(key)};"></span>${lab}</span>`).join("");
+  return `<div style="margin-top:10px;padding:8px;border:1px solid var(--border-light);background:var(--bg-tertiary);border-radius:var(--radius-sm);">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+      <span style="font-size:11px;font-weight:600;color:var(--text-secondary);letter-spacing:0.04em;text-transform:uppercase;">Spray chart</span>
+      <span style="font-size:10px;color:var(--text-tertiary);">${escapeHtml(sprayLine || `${pts.length} tracked BBE`)}</span>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="Batted-ball spray chart">
+      <path d="M${home.x.toFixed(1)} ${home.y.toFixed(1)} L${lfPole.x.toFixed(1)} ${lfPole.y.toFixed(1)} Q${lfGap.x.toFixed(1)} ${lfGap.y.toFixed(1)} ${cfWall.x.toFixed(1)} ${cfWall.y.toFixed(1)} Q${rfGap.x.toFixed(1)} ${rfGap.y.toFixed(1)} ${rfPole.x.toFixed(1)} ${rfPole.y.toFixed(1)} Z" fill="rgba(31,122,58,0.13)" stroke="var(--border)" stroke-width="1.2"/>
+      <path d="M${home.x.toFixed(1)} ${home.y.toFixed(1)} L${lfPole.x.toFixed(1)} ${lfPole.y.toFixed(1)} M${home.x.toFixed(1)} ${home.y.toFixed(1)} L${rfPole.x.toFixed(1)} ${rfPole.y.toFixed(1)}" stroke="var(--border-light)" stroke-width="1"/>
+      <path d="M${home.x.toFixed(1)} ${home.y.toFixed(1)} L${leftLine.x.toFixed(1)} ${leftLine.y.toFixed(1)} M${home.x.toFixed(1)} ${home.y.toFixed(1)} L${rightLine.x.toFixed(1)} ${rightLine.y.toFixed(1)}" stroke="var(--border-light)" stroke-width="0.9" stroke-dasharray="4,4"/>
+      <path d="M${thirdBase.x.toFixed(1)} ${thirdBase.y.toFixed(1)} L${secondBase.x.toFixed(1)} ${secondBase.y.toFixed(1)} L${firstBase.x.toFixed(1)} ${firstBase.y.toFixed(1)} L${home.x.toFixed(1)} ${home.y.toFixed(1)} Z" fill="rgba(201,162,39,0.16)" stroke="var(--text-secondary)" stroke-width="1.25" opacity="0.82"/>
+      <path d="M${fieldCoord(-45, 0.52).x.toFixed(1)} ${fieldCoord(-45, 0.52).y.toFixed(1)} Q${fieldCoord(0, 0.55).x.toFixed(1)} ${fieldCoord(0, 0.55).y.toFixed(1)} ${fieldCoord(45, 0.52).x.toFixed(1)} ${fieldCoord(45, 0.52).y.toFixed(1)}" fill="none" stroke="var(--text-secondary)" stroke-width="0.9" opacity="1"/>
+      <text x="${lfPole.x.toFixed(1)}" y="${(lfPole.y - 5).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="var(--text-tertiary)" opacity="0.42">330</text>
+      <text x="${lfGap.x.toFixed(1)}" y="${(lfGap.y - 5).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="var(--text-tertiary)" opacity="0.42">385</text>
+      <text x="${cfWall.x.toFixed(1)}" y="${(cfWall.y - 5).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="var(--text-tertiary)" opacity="0.42">395</text>
+      <text x="${rfGap.x.toFixed(1)}" y="${(rfGap.y - 5).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="var(--text-tertiary)" opacity="0.42">385</text>
+      <text x="${rfPole.x.toFixed(1)}" y="${(rfPole.y - 5).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="var(--text-tertiary)" opacity="0.42">330</text>
+      <circle cx="${home.x.toFixed(1)}" cy="${home.y.toFixed(1)}" r="4" fill="var(--neon-amber)"/>
+      ${dots}
+    </svg>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">${legend}</div>
+  </div>`;
+}
+
 function makeStatcastApiBlock(sc, player) {
   if (!sc) return "";
   const cq = sc.contact_quality || {};
   const pm = sc.pitch_movement || {};
   const fmt = (v, suffix = "") => v == null ? "—" : `${Number(v).toFixed(1)}${suffix}`;
+  const fmtRate = v => v == null ? "—" : Number(v).toFixed(3).replace(/^0/, "");
   const tiles = [];
   if (cq.batted_balls) {
     tiles.push(["BBE", cq.batted_balls, "Batted balls with launch data"]);
+    tiles.push(["Est. xwOBA", fmtRate(cq.xwoba_est), "Estimated PA-level xwOBA from contact quality plus BB/K rates; not official Baseball Savant xwOBA"]);
+    if (cq.xwobacon_est != null) {
+      tiles.push(["xwOBAcon", fmtRate(cq.xwobacon_est), "Estimated xwOBA on contact from launch speed / launch angle"]);
+    }
     tiles.push(["Avg EV", fmt(cq.avg_ev), "Average exit velocity"]);
+    tiles.push(["90th EV", fmt(cq.p90_ev), "90th percentile exit velocity"]);
     tiles.push(["Max EV", fmt(cq.max_ev), "Maximum exit velocity"]);
     tiles.push(["Hard-hit", fmt(cq.hard_hit_pct, "%"), "95+ mph batted-ball rate"]);
     tiles.push(["Barrel", fmt(cq.barrel_pct, "%"), "Approximate barrel rate from EV/LA"]);
+    if ((cq.spray || {}).pull_air_pct != null) {
+      tiles.push(["Pull air", fmt((cq.spray || {}).pull_air_pct, "%"), "Pull-side airborne batted balls divided by total batted balls"]);
+    }
   }
   if (pm.tracked_pitches) {
     tiles.push(["Tracked", pm.tracked_pitches, "Pitches with pitch type, HB, and IVB"]);
@@ -30315,7 +30782,9 @@ function makeStatcastApiBlock(sc, player) {
   // v20 — Use the per-level `sc` payload so the pitch-movement plot
   // tracks whichever level-tab is active. Previously this read
   // `player.statcast_metrics` (the primary) and ignored the tab.
-  const plotHtml = sc ? makePitchMovementPlot(sc, (player && player.player_key) + "-" + (sc.level || "main")) : "";
+  const plotHtml = sc && sc.is_pitcher
+    ? makePitchMovementPlot(sc, (player && player.player_key) + "-" + (sc.level || "main"))
+    : `${makeSprayChart(cq)}${makeRollingXwobaSparkline(cq)}`;
   return `<div class="stat-groups">
     <div class="stat-group">
       <div class="stat-group-label">${escapeHtml(sc.level || "")}<span style="font-weight:500;color:var(--text-tertiary);letter-spacing:0;text-transform:none;"> · MLB Stats API game feed${venues ? ` · ${escapeHtml(venues)}` : ""}</span></div>
@@ -30323,6 +30792,67 @@ function makeStatcastApiBlock(sc, player) {
       ${pitchSummary}
     </div>
     ${plotHtml}
+  </div>`;
+}
+
+function makeStatcastNuggetsBlock(player, opts = {}) {
+  if (!player) return "";
+  const events = Array.isArray(player.source_events) ? player.source_events : [];
+  const ev = events.find(e => e && e.event_type === "statcast_by_age_standout" && e.payload);
+  if (!ev) return "";
+  const payload = ev.payload || {};
+  const sc = opts.statcast || {};
+  const z = opts.zone || {};
+  const cq = sc.contact_quality || {};
+  const has = v => v != null && v !== "" && Number.isFinite(Number(v));
+  const rawNum = v => {
+    if (v == null) return null;
+    const n = Number(String(v).replace("%", "").trim());
+    return Number.isFinite(n) ? n : null;
+  };
+  const fmtPct = v => {
+    const n = rawNum(v);
+    if (n == null) return null;
+    const d = Math.abs(n - Math.round(n)) < 0.05 ? 0 : 1;
+    return `${n.toFixed(d)}%`;
+  };
+  const fmtMph = v => {
+    const n = rawNum(v);
+    return n == null ? null : `${n.toFixed(1)} mph`;
+  };
+  const tiles = [];
+  const push = (label, value, title) => {
+    if (!value) return;
+    tiles.push(`<div class="stat-tile" title="${escapeHtml(title)}">
+      <div class="stat-label">${escapeHtml(label)}</div>
+      <div class="stat-value" style="font-family:var(--font-mono);">${escapeHtml(value)}</div>
+    </div>`);
+  };
+
+  // Only fill metrics this site has not calculated for the displayed split.
+  if (!has(z.z_contact_pct)) {
+    push("Z-Contact", fmtPct(payload.z_contact_pct), "Baseball America statcast-by-age table · shown because this split lacks a calculated Z-Contact% value");
+  }
+  if (!has(z.o_swing_pct)) {
+    push("Chase", fmtPct(payload.chase_pct), "Baseball America statcast-by-age table · shown because this split lacks a calculated Chase% value");
+  }
+  if (!has(cq.hard_hit_pct)) {
+    push("Hard-hit", fmtPct(payload.hard_hit_pct), "Baseball America statcast-by-age table · shown because this split lacks a calculated hard-hit rate");
+  }
+  if (!has(cq.p90_ev)) {
+    push("90th EV", fmtMph(payload.p90_ev), "Baseball America statcast-by-age table · shown because this split lacks a calculated 90th percentile exit velocity");
+  }
+  if (!tiles.length) return "";
+
+  const meta = [
+    ev.event_date ? `BA ${ev.event_date}` : "Baseball America",
+    payload.age_bucket != null ? `age ${payload.age_bucket}` : "",
+    payload.pa != null ? `${payload.pa} PA` : "",
+    payload.team || "",
+  ].filter(Boolean).join(" · ");
+  return `<div style="margin-top:8px;">
+    <div style="font-size:11px;font-weight:600;color:var(--text-secondary);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Statcast nuggets <span style="color:var(--text-tertiary);font-weight:400;text-transform:none;letter-spacing:0;">· ${escapeHtml(meta)}</span></div>
+    <div class="stat-group-tiles">${tiles.join("")}</div>
   </div>`;
 }
 
@@ -30480,23 +31010,40 @@ function makeMergedStatcastSection(p) {
     ? zone.level_splits : (zone && Object.keys(zone).length ? [zone] : []);
   const scSplits = (sc && Array.isArray(sc.level_splits) && sc.level_splits.length)
     ? sc.level_splits : (sc && Object.keys(sc).length ? [sc] : []);
-  if (!zoneSplits.length && !scSplits.length) return "";
+  if (!zoneSplits.length && !scSplits.length) {
+    const nuggets = makeStatcastNuggetsBlock(p);
+    if (!nuggets) return "";
+    return `<div class="detail-title">Statcast <span class="detail-title-sub">Baseball America table note</span></div>
+      <div class="detail-card" style="padding:12px 14px;">${nuggets}</div>`;
+  }
 
   const LVL_ORDER = ["MLB", "AAA", "AA", "A+", "A", "CPX", "DSL"];
+  const levelKey = (lvl) => String(lvl || "").trim().toUpperCase();
   // Build the union of available levels.
   const levelSet = new Set();
-  for (const s of zoneSplits) if (s.level) levelSet.add(s.level);
-  for (const s of scSplits)   if (s.level) levelSet.add(s.level);
+  for (const s of zoneSplits) {
+    const k = levelKey(s.level);
+    if (k) levelSet.add(k);
+  }
+  for (const s of scSplits) {
+    const k = levelKey(s.level);
+    if (k) levelSet.add(k);
+  }
+  for (const lvl of [p.current_level, p.statline_level, (p.statline || {}).level]) {
+    const k = levelKey(lvl);
+    if (k) levelSet.add(k);
+  }
   const levels = Array.from(levelSet).sort((a, b) => {
     const ai = LVL_ORDER.indexOf(a), bi = LVL_ORDER.indexOf(b);
     return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
   });
   if (!levels.length) return "";
-  const zoneByLevel = Object.fromEntries(zoneSplits.map(s => [s.level, s]));
-  const scByLevel   = Object.fromEntries(scSplits.map(s => [s.level, s]));
+  const zoneByLevel = Object.fromEntries(zoneSplits.map(s => [levelKey(s.level), s]));
+  const scByLevel   = Object.fromEntries(scSplits.map(s => [levelKey(s.level), s]));
 
   const isPitcher = !!((zone && zone.is_pitcher) || (sc && sc.is_pitcher));
   const groupId = `statcast-${p.player_key || "_"}`;
+  const activeIdx = Math.max(0, levels.findIndex(lvl => zoneByLevel[lvl] || scByLevel[lvl]));
 
   // Tab strip — show each level + a tiny pitch/games sample chip so
   // the user can tell which level has the deeper dataset at a glance.
@@ -30504,7 +31051,7 @@ function makeMergedStatcastSection(p) {
     const z = zoneByLevel[lvl], s = scByLevel[lvl];
     const pitches = (z && z.pitches) || (s && (s.pitch_movement || {}).tracked_pitches) || null;
     const sample = pitches ? `${pitches} pitches` : lvl;
-    return `<button class="level-tab${i === 0 ? " is-active" : ""}"
+    return `<button class="level-tab${i === activeIdx ? " is-active" : ""}"
               data-lvl-group="${escapeHtml(groupId)}" data-lvl-idx="${i}"
               title="${escapeHtml(sample)}" type="button"
               onclick="switchLevelTab(this)">${escapeHtml(lvl)}</button>`;
@@ -30522,7 +31069,9 @@ function makeMergedStatcastSection(p) {
     const scHtml = s
       ? makeStatcastApiBlock(s, p)
       : `<div style="color:var(--text-tertiary);font-size:11px;font-style:italic;padding:6px 0;">No Statcast feed data at ${escapeHtml(lvl)}.</div>`;
-    return `<div class="level-tab-panel${i === 0 ? " is-active" : ""}"
+    const nuggetHtml = makeStatcastNuggetsBlock(p, { statcast: s, zone: z });
+    const pctHtml = _statcastPercentileBlock(p, { level: lvl, statcast: s, zone: z });
+    return `<div class="level-tab-panel${i === activeIdx ? " is-active" : ""}"
               data-lvl-group="${escapeHtml(groupId)}" data-lvl-idx="${i}">
       <div style="margin-top:6px;">
         <div style="font-size:11px;font-weight:600;color:var(--text-secondary);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">${escapeHtml(zoneTitle)} <span style="color:var(--text-tertiary);font-weight:400;text-transform:none;letter-spacing:0;">· MLB Stats API zone approximation</span></div>
@@ -30531,7 +31080,9 @@ function makeMergedStatcastSection(p) {
       <div style="margin-top:14px;">
         <div style="font-size:11px;font-weight:600;color:var(--text-secondary);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Statcast feed <span style="color:var(--text-tertiary);font-weight:400;text-transform:none;letter-spacing:0;">· per-game pitch + batted-ball tracking</span></div>
         ${scHtml}
+        ${nuggetHtml}
       </div>
+      ${pctHtml ? `<div style="margin-top:14px;">${pctHtml}</div>` : ""}
     </div>`;
   }).join("");
 
@@ -31174,9 +31725,17 @@ function renderPlayerDetail(key) {
       }
     }
   }
-  const rankPills = (p.overall_rank != null || p.org_rank != null || wagRankPill)
+  const liveRankPill = (p.live_overall_rank != null && p.overall_rank != null && Math.abs(Number(p.live_rank_delta || 0)) >= 5)
+    ? rankPill(
+        "Live",
+        "#" + p.live_overall_rank + (p.live_rank_delta ? ` (${p.live_rank_delta > 0 ? "+" : ""}${p.live_rank_delta})` : ""),
+        Number(p.live_rank_delta || 0) > 0 ? "var(--up)" : "var(--down)"
+      )
+    : "";
+  const rankPills = (p.overall_rank != null || p.org_rank != null || wagRankPill || liveRankPill)
     ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
         ${p.overall_rank != null ? rankPill("Overall", "#" + p.overall_rank, "var(--neon-violet)") : ""}
+        ${liveRankPill}
         ${p.org_rank != null ? rankPill(escapeHtml(p.org || "?"), "#" + p.org_rank + (p.org_rank_total ? " of " + p.org_rank_total : ""), "var(--neon-cyan)") : ""}
         ${wagRankPill}
       </div>`
@@ -32580,7 +33139,7 @@ function renderPlayerDetail(key) {
   // surface as "78th percentile · top 22% for SS at AA." This is
   // the missing context layer between "EV 92" (a number) and
   // "is that good?" (the user's actual question).
-  const statcastPercentilesSection = _statcastPercentileBlock(p);
+  const statcastPercentilesSection = statcastSection ? "" : _statcastPercentileBlock(p);
   // v30.8 — Debuted-specific viz: FV-tier debut comparison. Ranks
   // the graduate against ALL graduates who entered with the same
   // FV bucket. Surfaces "of the 38 FV-55 debuts since 2018, ranks
@@ -34385,7 +34944,11 @@ function _renderFarmDetailBody(orgCode, org, root) {
     const sl = p.statline;
     if (!sl) return `<span style="color:var(--text-tertiary);">no stats yet</span>`;
     const isP = sl.is_pitcher;
-    const levelPill = `<span class="level-pill level-neutral" style="margin-right:4px;">${escapeHtml(sl.level || "?")}</span>`;
+    const displayLevel = currentDisplayLevel(p) || sl.level || "?";
+    const levelTip = displayLevel !== sl.level
+      ? ` title="${escapeHtml(`Current level ${displayLevel}; stats shown from ${sl.level || "unknown level"}`)}"`
+      : "";
+    const levelPill = `<span class="level-pill level-neutral"${levelTip} style="margin-right:4px;">${escapeHtml(displayLevel)}</span>`;
     const slash = isP
       ? `${sl.era ?? "—"} ERA · ${sl.whip != null ? sl.whip + " WHIP · " : ""}${sl.k_per_9 != null ? sl.k_per_9.toFixed(1) + " K/9 · " : ""}${sl.bb_per_9 != null ? sl.bb_per_9.toFixed(1) + " BB/9 · " : ""}${sl.ip ?? "—"} IP`
       : `${sl.avg ?? "—"}/${sl.obp ?? "—"}/${sl.slg ?? "—"} · ${sl.hr ?? 0} HR${sl.sb ? ' · ' + sl.sb + ' SB' : ''}${sl.bb_pct != null ? ' · ' + sl.bb_pct.toFixed(0) + '% BB' : ''}${sl.k_pct != null ? ' · ' + sl.k_pct.toFixed(0) + '% K' : ''}`;
@@ -34437,7 +35000,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
           <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
         </div>
         <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${p.overall_rank != null ? "#" + p.overall_rank : (p.org_rank != null ? "#" + p.org_rank : "—")}</span></div>${rankTrendHTML(p)}</div>
-        <div style="text-align:center;">${latest && latest.consensus_fv_label != null ? `<span class="fv-badge ${fvClass(fvLabel)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
+        <div style="text-align:center;">${latest && latest.consensus_fv_label != null ? `<span class="fv-badge ${fvClass(fvLabel)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}${liveTrendHTML(p)}` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
         <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${pts.length >= 2 ? lazyLineChartHTML(p) : `<span style="color:var(--text-tertiary);font-size:11px;">—</span>`}</div>
         ${makeMilbCell(p)}
         ${physClusterHTML(p)}
@@ -36909,10 +37472,13 @@ function makeCompareStatTable(players) {
     { hi: true, fmt: v => String(v) }];
   const hitStatcastRows = [
     _scPlusRow,
+    ["Est. xwOBA", p => _cq(p).xwoba_est,    { hi: true,  fmt: v => v.toFixed(3).replace(/^0/, "") }],
+    ["Est. xwOBAcon", p => _cq(p).xwobacon_est, { hi: true, fmt: v => v.toFixed(3).replace(/^0/, "") }],
     ["Avg EV",     p => _cq(p).avg_ev,        { hi: true,  fmt: v => v.toFixed(1) + " mph" }],
     ["Max EV",     p => _cq(p).max_ev,        { hi: true,  fmt: v => v.toFixed(1) + " mph" }],
     ["Hard-hit %", p => _cq(p).hard_hit_pct,  { hi: true,  fmt: v => v.toFixed(0) + "%" }],
     ["Barrel %",   p => _cq(p).barrel_pct,    { hi: true,  fmt: v => v.toFixed(0) + "%" }],
+    ["Pull-air %", p => ((_cq(p).spray || {}).pull_air_pct), { hi: true, fmt: v => v.toFixed(0) + "%" }],
     ["Z-Contact %",p => _zRow(p).z_contact_pct, { hi: true, fmt: v => v.toFixed(0) + "%" }],
     ["Whiff %",    p => _zRow(p).whiff_pct,   { hi: false, fmt: v => v.toFixed(0) + "%" }],
     ["Chase %",    p => _zRow(p).chase_pct,   { hi: false, fmt: v => v.toFixed(0) + "%" }],
@@ -37777,6 +38343,7 @@ function attachHandlers() {
   attachChipGroup("lb-level",  "lbLevel",  () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-pos",    "lbPos",    () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-age",    "lbAgeMax", () => { resetPage("leaderboard"); renderLeaderboards(); });
+  attachChipGroup("lb-rank",   "lbRankMax", () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-dir",    "lbDir",    () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-season", "lbSeason", () => { resetPage("leaderboard"); renderLeaderboards(); });
   // Null-guard each selector binding — missing elements (caused by template
@@ -38045,6 +38612,7 @@ function _resetPageFilters(page) {
     state.lbOrg    = "all";
     state.lbSeason = String(new Date().getUTCFullYear());
     state.lbAgeMax = "all";
+    state.lbRankMax = "all";
     state.lbDir    = "auto";
   } else if (page === "draft") {
     state.draftPool          = "all";

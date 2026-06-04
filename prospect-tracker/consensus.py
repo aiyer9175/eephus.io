@@ -153,6 +153,20 @@ PLAYER_KEY_ALIASES = {
         "player_key": "yeremy_cabrera",
         "player_name": "Yeremy Cabrera",
     },
+    "george_lombard": {
+        "player_key": "george_lombard_jr",
+        "player_name": "George Lombard Jr.",
+    },
+    "leonardo_bernal": {
+        "player_key": "leo_bernal",
+        "player_name": "Leo Bernal",
+    },
+}
+
+CANONICAL_PLAYER_NAMES = {
+    alias["player_key"]: alias["player_name"]
+    for alias in PLAYER_KEY_ALIASES.values()
+    if alias.get("player_key") and alias.get("player_name")
 }
 
 
@@ -165,6 +179,10 @@ def _canonicalize_player_snapshot(s: Snapshot) -> Snapshot:
         player_key=alias["player_key"],
         player_name=alias.get("player_name") or s.player_name,
     )
+
+
+def _canonical_player_name(player_key: str, fallback: str) -> str:
+    return CANONICAL_PLAYER_NAMES.get(player_key) or fallback
 
 
 def _dedupe_source_aliases(day_snaps: list[Snapshot]) -> list[Snapshot]:
@@ -897,6 +915,7 @@ def build_timeseries(
     result: list[PlayerTimeseries] = []
     for player_key, player_snaps in by_player.items():
         name, pos, org = _latest_meta(player_snaps)
+        name = _canonical_player_name(player_key, name)
 
         by_date: dict[str, list[Snapshot]] = defaultdict(list)
         for s in player_snaps:

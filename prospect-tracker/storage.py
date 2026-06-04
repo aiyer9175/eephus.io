@@ -15,6 +15,7 @@ import json
 import logging
 import re
 import sqlite3
+import copy
 from contextlib import contextmanager
 from dataclasses import asdict
 from datetime import date, datetime, timedelta, timezone
@@ -41,6 +42,7 @@ from consensus import PlayerTimeseries, stock_movement
 from stats import StatLine
 
 DB_PATH = Path(__file__).parent / "prospects.db"
+_LEVEL_SORT_ORDER = {"MLB": 0, "AAA": 1, "AA": 2, "A+": 3, "A": 4, "CPX": 5, "DSL": 6}
 
 # Prospects whose most recent ranking update is older than this many months are
 # classified as "inactive" rather than "active". They fell off prospect lists
@@ -970,6 +972,23 @@ CREATE TABLE IF NOT EXISTS statcast_metrics (
     fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS source_events (
+    event_key     TEXT PRIMARY KEY,
+    player_key    TEXT NOT NULL,
+    player_name   TEXT NOT NULL,
+    source        TEXT NOT NULL,
+    event_date    TEXT NOT NULL,
+    event_type    TEXT NOT NULL,
+    rank_before   INTEGER,
+    rank_after    INTEGER,
+    confidence    REAL NOT NULL DEFAULT 0.5,
+    payload_json  TEXT NOT NULL DEFAULT '{}',
+    excerpt       TEXT,
+    inserted_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_source_events_player ON source_events(player_key);
+CREATE INDEX IF NOT EXISTS idx_source_events_date ON source_events(event_date);
+
 CREATE TABLE IF NOT EXISTS career_stats (
     player_key   TEXT PRIMARY KEY,
     payload_json TEXT NOT NULL,       -- list of per-season stat rows (most recent first)
@@ -1887,6 +1906,92 @@ def load_statcast_metrics_meta() -> dict[str, str]:
     except sqlite3.OperationalError:
         return {}
     return {r["player_key"]: r["fetched_at"] for r in rows if r["fetched_at"]}
+
+
+def upsert_source_events(events: list[dict]) -> int:
+    """Upsert manually/article-derived source events.
+
+    Events are non-consensus annotations: BA movement, article statcast
+    callouts, injury notes, and similar fast-moving signals.
+    """
+    if not events:
+        return 0
+    n = 0
+    with connect() as con:
+        for event in events:
+            payload = event.get("payload") or event.get("payload_json") or {}
+            if isinstance(payload, str):
+                payload_json = payload
+            else:
+                payload_json = json.dumps(payload)
+            con.execute(
+                """INSERT INTO source_events
+                   (event_key, player_key, player_name, source, event_date, event_type,
+                    rank_before, rank_after, confidence, payload_json, excerpt)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(event_key) DO UPDATE SET
+                     player_key=excluded.player_key,
+                     player_name=excluded.player_name,
+                     source=excluded.source,
+                     event_date=excluded.event_date,
+                     event_type=excluded.event_type,
+                     rank_before=excluded.rank_before,
+                     rank_after=excluded.rank_after,
+                     confidence=excluded.confidence,
+                     payload_json=excluded.payload_json,
+                     excerpt=excluded.excerpt""",
+                (
+                    event["event_key"],
+                    event["player_key"],
+                    event.get("player_name") or event["player_key"],
+                    event.get("source") or "manual",
+                    event.get("event_date") or date.today().isoformat(),
+                    event.get("event_type") or "note",
+                    event.get("rank_before"),
+                    event.get("rank_after"),
+                    float(event.get("confidence") if event.get("confidence") is not None else 0.5),
+                    payload_json,
+                    event.get("excerpt") or "",
+                ),
+            )
+            n += 1
+    return n
+
+
+def load_source_events() -> dict[str, list[dict]]:
+    """Return article/list source events grouped by player_key."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                """SELECT event_key, player_key, player_name, source, event_date,
+                          event_type, rank_before, rank_after, confidence,
+                          payload_json, excerpt
+                   FROM source_events
+                   ORDER BY event_date DESC, source, event_type"""
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    out: dict[str, list[dict]] = {}
+    for r in rows:
+        try:
+            payload = json.loads(r["payload_json"] or "{}")
+        except json.JSONDecodeError:
+            payload = {}
+        event = {
+            "event_key": r["event_key"],
+            "player_key": r["player_key"],
+            "player_name": r["player_name"],
+            "source": r["source"],
+            "event_date": r["event_date"],
+            "event_type": r["event_type"],
+            "rank_before": r["rank_before"],
+            "rank_after": r["rank_after"],
+            "confidence": r["confidence"],
+            "payload": payload,
+            "excerpt": r["excerpt"],
+        }
+        out.setdefault(r["player_key"], []).append(event)
+    return out
 
 
 def upsert_sabermetrics(metrics: dict[str, "Sabermetrics"], season: int) -> int:
@@ -3406,6 +3511,38 @@ def _career_pa_ip(graduate_payload: dict) -> tuple[int, float]:
     return total_pa, total_ip
 
 
+def _graduate_outcome_penalty(graduate_payload: dict) -> float:
+    """Dampen positive WAG for older churn profiles.
+
+    WAG is meant to surface genuinely surprising MLB outcomes, not simply
+    low-FV players who briefly banked WAR and then fell into the DFA/outright
+    loop. This only affects positive WAG; underperformance is not softened.
+    """
+
+    txs = graduate_payload.get("transactions") or []
+    churn_kinds = {"dfa", "outrighted", "released"}
+    churn_count = sum(1 for tx in txs if (tx.get("kind") or "").lower() in churn_kinds)
+    age = graduate_payload.get("age")
+    try:
+        age = float(age) if age is not None else None
+    except (TypeError, ValueError):
+        age = None
+    current_level = (graduate_payload.get("current_level")
+                     or graduate_payload.get("level")
+                     or "").upper()
+    in_minors_now = current_level and current_level != "MLB"
+    penalty = 1.0
+    if churn_count >= 2:
+        penalty *= 0.45
+    elif churn_count == 1:
+        penalty *= 0.72
+    if age is not None and age >= 26.0:
+        penalty *= 0.85
+    if in_minors_now:
+        penalty *= 0.85
+    return max(0.25, min(1.0, penalty))
+
+
 def _grad_wag(graduate_payload: dict) -> float | None:
     """v14 WAG (WAR Above Grade) — role-adjusted full-season-equivalent.
 
@@ -3482,7 +3619,14 @@ def _grad_wag(graduate_payload: dict) -> float | None:
     expected = _fv_to_expected_war_per_yr(fv_close, is_pitcher=is_pitcher)
     if expected is None:
         return None
-    return round(full_season_war - expected, 2)
+    delta = full_season_war - expected
+    if delta > 0:
+        # Positive surprise should still require current MLB production.
+        # Blend WAG with actual WAR/yr, then dampen churn/older-minors
+        # profiles so DFA-circus players do not top the leaderboard.
+        delta = (delta * 0.70 + full_season_war * 0.30)
+        delta *= _graduate_outcome_penalty(graduate_payload)
+    return round(delta, 2)
 
 
 def _compute_boom_bust(graduate_payload: dict) -> str:
@@ -4817,6 +4961,168 @@ def _normalize_to_100(values: list[float]) -> list[float]:
     return [round(max(0.0, min(100.0, (v - lo) / rng * 100.0)), 1) for v in values]
 
 
+def _clamp(value: float, lo: float, hi: float) -> float:
+    return max(lo, min(hi, value))
+
+
+def _safe_float(value) -> float | None:
+    if value is None:
+        return None
+    try:
+        if isinstance(value, str):
+            value = value.strip().replace("%", "")
+            if not value or value == "—":
+                return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _live_signal_for_player(
+    *,
+    statline: dict | None,
+    statcast: dict | None,
+    zone: dict | None,
+    health: dict | None,
+    il_row: dict | None,
+    source_events: list[dict],
+) -> dict | None:
+    """Fast-moving overlay separate from source consensus."""
+    drivers: list[dict] = []
+    raw = 0.0
+    sample_weight = 0.0
+    sl = statline or {}
+    is_pitcher = bool(sl.get("is_pitcher"))
+    if sl:
+        if is_pitcher:
+            bf = _safe_float(sl.get("tbf"))
+            ip = _safe_float(sl.get("ip"))
+            if bf is None and ip is not None:
+                bf = ip * 4.25
+            sample_weight = (bf or 0.0) / ((bf or 0.0) + 180.0) if bf else 0.0
+            level_plus = _safe_float(sl.get("level_plus_pct"))
+            stf = _safe_float(sl.get("stf_plus_periph"))
+            if level_plus is not None:
+                v = _clamp(level_plus / 18.0, -3.0, 3.0)
+                raw += 0.8 * v
+                if abs(v) >= 0.8:
+                    drivers.append({"label": "level run prevention", "value": round(level_plus, 1), "impact": round(0.8 * v, 2)})
+            if stf is not None:
+                v = _clamp((stf - 100.0) / 12.0, -2.0, 2.0)
+                raw += 0.5 * v
+                if abs(v) >= 0.7:
+                    drivers.append({"label": "peripheral stuff", "value": round(stf, 1), "impact": round(0.5 * v, 2)})
+        else:
+            pa = _safe_float(sl.get("pa"))
+            if pa is None:
+                ab = _safe_float(sl.get("ab"))
+                games = _safe_float(sl.get("games"))
+                pa = ab if ab is not None else (games * 4.1 if games is not None else None)
+            sample_weight = (pa or 0.0) / ((pa or 0.0) + 120.0) if pa else 0.0
+            ops_plus = _safe_float(sl.get("ops_plus_level"))
+            if ops_plus is not None:
+                v = _clamp((ops_plus - 100.0) / 18.0, -3.0, 3.0)
+                raw += 0.9 * v
+                if abs(v) >= 0.8:
+                    drivers.append({"label": "level-adjusted offense", "value": round(ops_plus, 1), "impact": round(0.9 * v, 2)})
+    cq = ((statcast or {}).get("contact_quality") or {})
+    if cq and not is_pitcher:
+        bbe = _safe_float(cq.get("batted_balls"))
+        bbe_w = (bbe or 0.0) / ((bbe or 0.0) + 75.0) if bbe else 0.0
+        xwoba = _safe_float(cq.get("xwoba_est"))
+        xwobacon = _safe_float(cq.get("xwobacon_est"))
+        p90 = _safe_float(cq.get("p90_ev"))
+        sc_raw = 0.0
+        if xwoba is not None:
+            sc_raw += _clamp((xwoba - 0.330) / 0.035, -2.5, 2.5)
+        if xwobacon is not None:
+            sc_raw += 0.6 * _clamp((xwobacon - 0.390) / 0.045, -2.0, 2.0)
+        if p90 is not None:
+            sc_raw += 0.4 * _clamp((p90 - 104.0) / 4.0, -2.0, 2.0)
+        if sc_raw:
+            impact = 0.75 * bbe_w * sc_raw
+            raw += impact
+            sample_weight = max(sample_weight, bbe_w)
+            if abs(impact) >= 0.6:
+                drivers.append({"label": "contact quality", "value": round(sc_raw, 2), "impact": round(impact, 2)})
+    z = zone or {}
+    if z and not is_pitcher:
+        pitches = _safe_float(z.get("pitches"))
+        zone_w = (pitches or 0.0) / ((pitches or 0.0) + 250.0) if pitches else 0.0
+        zc = _safe_float(z.get("z_contact_pct"))
+        chase = _safe_float(z.get("o_swing_pct"))
+        zone_raw = 0.0
+        if zc is not None:
+            zone_raw += _clamp((zc - 82.0) / 7.0, -2.0, 2.0)
+        if chase is not None:
+            zone_raw += _clamp((27.0 - chase) / 6.0, -2.0, 2.0)
+        if zone_raw:
+            impact = 0.45 * zone_w * zone_raw
+            raw += impact
+            sample_weight = max(sample_weight, zone_w)
+            if abs(impact) >= 0.5:
+                drivers.append({"label": "zone discipline", "value": round(zone_raw, 2), "impact": round(impact, 2)})
+    source_raw = 0.0
+    latest_rank = None
+    for ev in source_events or []:
+        et = ev.get("event_type")
+        conf = float(ev.get("confidence") or 0.5)
+        payload = ev.get("payload") or {}
+        if et == "top100_rank" and ev.get("rank_after"):
+            latest_rank = ev.get("rank_after") if latest_rank is None else min(latest_rank, ev.get("rank_after"))
+            source_raw += conf * _clamp((101 - float(ev["rank_after"])) / 30.0, 0.4, 3.2)
+        elif et == "top100_joined":
+            source_raw += 4.0 * conf
+        elif et == "top100_dropped":
+            source_raw -= 4.0 * conf
+        elif et == "top100_movement":
+            diff = _safe_float(payload.get("june_diff"))
+            token = payload.get("june_token")
+            if token == "Dr.":
+                source_raw -= 4.0 * conf
+            elif diff is not None:
+                source_raw += conf * _clamp(diff / 8.0, -4.0, 4.0)
+        elif et == "statcast_by_age_standout":
+            source_raw += 1.5 * conf
+        elif et == "injury_note":
+            source_raw -= 1.0 * conf
+    if source_raw:
+        source_impact = _clamp(source_raw, -7.0, 7.0)
+        raw += source_impact
+        label = "BA/source movement"
+        if latest_rank is not None:
+            label = f"BA Top 100 #{latest_rank}"
+        drivers.append({"label": label, "impact": round(source_impact, 2)})
+    h = health or {}
+    il = il_row or {}
+    injury_penalty = 0.0
+    if il.get("is_on_il"):
+        injury_penalty -= 1.5
+        if str(il.get("type") or "").startswith("60"):
+            injury_penalty -= 1.0
+    days = _safe_float(h.get("il_days_12mo"))
+    stints = _safe_float(h.get("il_stints_12mo"))
+    if days and days >= 60:
+        injury_penalty -= 1.0
+    if stints and stints >= 2:
+        injury_penalty -= 1.25
+    if injury_penalty:
+        raw += injury_penalty
+        drivers.append({"label": "injury drag", "value": round(days or 0), "impact": round(injury_penalty, 2)})
+    if not drivers:
+        return None
+    final = _clamp(raw * max(0.45, min(1.0, 0.55 + sample_weight)), -8.0, 8.0)
+    if abs(final) < 0.35:
+        return None
+    return {
+        "delta": round(final, 2),
+        "sample_weight": round(sample_weight, 3),
+        "rank_pressure": round(-final * 8),
+        "tier": "up" if final >= 2.0 else "down" if final <= -2.0 else "watch",
+        "drivers": sorted(drivers, key=lambda d: abs(d.get("impact") or 0), reverse=True)[:5],
+    }
+
+
 # Letter-grade buckets calibrated for ~30 orgs (v6 — harsher curve).
 # A+ is reserved for the #1 farm. The top of the scale is steeper
 # (A = top 7% vs the old top 10%) so an "A-tier" reads as genuinely
@@ -5143,6 +5449,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     roster_status = roster_status or {}
     ifa_spending_by_org = ifa_spending_by_org or {}
     contracts_by_key = dict(contracts_by_key or {})
+    source_events_by_key = load_source_events()
 
     # v17 — Merge in manual contract overrides from
     # data/contract_overrides.json. These take precedence over Spotrac
@@ -5183,6 +5490,193 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     )
     from stat_flags import compute_stat_flags, compute_tool_flags
 
+    _ZONE_PERCENTILE_MIN_PITCHES = 100
+    _ZONE_HITTER_PERCENTILE_METRICS = {
+        "zone_rate": True,
+        "z_swing_pct": True,
+        "o_swing_pct": False,
+        "z_contact_pct": True,
+        "o_contact_pct": True,
+        "overall_contact_pct": True,
+        "whiff_pct": False,
+    }
+    _ZONE_PITCHER_PERCENTILE_METRICS = {
+        "zone_rate": True,
+        "z_swing_pct": False,
+        "o_swing_pct": True,
+        "z_contact_pct": False,
+        "o_contact_pct": False,
+        "overall_contact_pct": False,
+        "whiff_pct": True,
+    }
+
+    def _zone_num(v):
+        if v is None or v == "":
+            return None
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
+    def _percentile_rank_100(value: float, values: list[float], higher_is_better: bool) -> float:
+        if not values:
+            return 0.0
+        if higher_is_better:
+            count = sum(1 for v in values if v <= value)
+        else:
+            count = sum(1 for v in values if v >= value)
+        return round(100.0 * count / len(values), 1)
+
+    def _normalize_zone_percentiles_for_export(zm_by_key: dict[str, dict]) -> dict[str, dict]:
+        """Recompute zone percentiles from the full stored level cohort.
+
+        Stored zone payloads carry embedded percentiles from the fetch batch.
+        Promotion-only refreshes can make an old-level split compare against a
+        tiny batch, e.g. one A-level promoted player. The export should always
+        compare each level split against every qualified stored peer at that
+        same level.
+        """
+        out = copy.deepcopy(zm_by_key or {})
+        rows_by_level_side: dict[tuple[str, bool], list[dict]] = {}
+        row_refs: list[dict] = []
+        seen: set[tuple[str, str, bool]] = set()
+        for key, payload in out.items():
+            if not isinstance(payload, dict):
+                continue
+            rows = payload.get("level_splits") or [payload]
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                level = row.get("level")
+                if not level:
+                    continue
+                is_pitcher = bool(row.get("is_pitcher"))
+                dedupe_key = (key, level, is_pitcher)
+                if dedupe_key in seen:
+                    continue
+                seen.add(dedupe_key)
+                row_refs.append(row)
+                row["qualified"] = bool((row.get("pitches") or 0) >= _ZONE_PERCENTILE_MIN_PITCHES)
+                row["qualifier_min_pitches"] = _ZONE_PERCENTILE_MIN_PITCHES
+                row["percentile_sample_size"] = None
+                row["percentiles"] = {}
+                if row["qualified"]:
+                    rows_by_level_side.setdefault((level, is_pitcher), []).append(row)
+
+        for (_level, is_pitcher), level_rows in rows_by_level_side.items():
+            metric_directions = (
+                _ZONE_PITCHER_PERCENTILE_METRICS
+                if is_pitcher else _ZONE_HITTER_PERCENTILE_METRICS
+            )
+            n = len(level_rows)
+            for row in level_rows:
+                row["qualified"] = True
+                row["percentile_sample_size"] = n
+                for metric, higher_is_better in metric_directions.items():
+                    value = _zone_num(row.get(metric))
+                    if value is None:
+                        continue
+                    vals = [
+                        _zone_num(peer.get(metric))
+                        for peer in level_rows
+                        if _zone_num(peer.get(metric)) is not None
+                    ]
+                    row["percentiles"][metric] = _percentile_rank_100(value, vals, higher_is_better)
+
+        for payload in out.values():
+            if not isinstance(payload, dict):
+                continue
+            split_map = {
+                (row.get("level"), bool(row.get("is_pitcher"))): row
+                for row in payload.get("level_splits") or []
+                if isinstance(row, dict)
+            }
+            own_key = (payload.get("level"), bool(payload.get("is_pitcher")))
+            normalized_primary = split_map.get(own_key)
+            if normalized_primary:
+                for field in (
+                    "qualified",
+                    "percentile_sample_size",
+                    "qualifier_min_pitches",
+                    "percentiles",
+                ):
+                    payload[field] = copy.deepcopy(normalized_primary.get(field))
+        return out
+
+    zone_metrics = _normalize_zone_percentiles_for_export(zone_metrics)
+
+    def _num(v):
+        if v is None or v == "":
+            return None
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
+    def _pa_adjust_xwoba_from_rates(xwobacon: float | None, stat_row: dict | None) -> float | None:
+        """Convert contact-only xwOBAcon to PA-level xwOBA when BB/K exist."""
+        if xwobacon is None or not stat_row:
+            return xwobacon
+        bb_pct = _num(stat_row.get("bb_pct"))
+        k_pct = _num(stat_row.get("k_pct"))
+        if bb_pct is None or k_pct is None:
+            return xwobacon
+        bb_rate = max(0.0, min(0.45, bb_pct / 100.0))
+        k_rate = max(0.0, min(0.55, k_pct / 100.0))
+        bip_rate = max(0.0, min(1.0, 1.0 - bb_rate - k_rate))
+        # 2023 unintentional BB weight was ~0.69; HBP is unavailable in
+        # several MiLB statline rows, so leave it out instead of guessing.
+        est = bb_rate * 0.69 + bip_rate * xwobacon
+        return round(max(0.02, min(1.20, est)), 3)
+
+    def _adjust_statcast_xwoba_for_export(scm: dict | None, sl: dict | None, season_rows: list[dict]) -> dict | None:
+        if not scm:
+            return scm
+        out = copy.deepcopy(scm)
+        rows_by_level = {
+            r.get("level"): r for r in (season_rows or [])
+            if isinstance(r, dict) and r.get("level")
+        }
+
+        def _apply(block: dict | None, stat_row: dict | None) -> None:
+            cq = (block or {}).get("contact_quality") or {}
+            if not cq:
+                return
+            raw = _num(cq.get("xwobacon_est"))
+            if raw is None:
+                raw = _num(cq.get("xwoba_est"))
+            if raw is None:
+                return
+            cq["xwobacon_est"] = round(raw, 3)
+            cq["xwoba_est"] = _pa_adjust_xwoba_from_rates(raw, stat_row)
+            if cq.get("xwoba_est") != cq.get("xwobacon_est"):
+                cq["xwoba_model"] = "knn_ev_la_pa_adjusted"
+
+        _apply(out, sl)
+        for split in out.get("level_splits") or []:
+            if not isinstance(split, dict):
+                continue
+            stat_row = rows_by_level.get(split.get("level")) or sl
+            _apply(split, stat_row)
+        return out
+
+    def _prefer_metric_current_level(metric: dict | None, current_level: str | None) -> dict | None:
+        if not metric or not current_level:
+            return metric
+        splits = metric.get("level_splits") or []
+        match = next(
+            (row for row in splits
+             if isinstance(row, dict) and row.get("level") == current_level),
+            None,
+        )
+        if not match:
+            return metric
+        out = copy.deepcopy(metric)
+        keep_splits = out.get("level_splits") or []
+        out.update(copy.deepcopy(match))
+        out["level_splits"] = keep_splits
+        return out
+
     # Empirical level baselines computed from the career_stats payload we
     # already have. age_baselines / ops_norms / era_norms feed into the
     # per-player ETA + age-vs-level calls below.
@@ -5201,12 +5695,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 graduate_mlb_org_by_key[key] = org_code
 
     roster_org_by_key: dict[str, str] = {}
+    roster_level_by_key: dict[str, str] = {}
     for org_code, levels in rosters_by_org.items():
-        for recs in levels.values():
+        for level_name, recs in levels.items():
             for rec in recs or []:
                 key = rec.get("player_key")
                 if key and key not in roster_org_by_key:
                     roster_org_by_key[key] = org_code
+                if key and key not in roster_level_by_key:
+                    roster_level_by_key[key] = level_name
 
     # ── Per-org promotion-phase tendency (H1 vs H2) ───────────────────────
     # Walks every promotion event across every prospect (active +
@@ -6112,11 +6609,83 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                                   if "is_pitcher" in _mlb_row
                                   else _sl_existing.get("is_pitcher"),
                 }
-        level = sl.get("level") if sl else None
+        _scm_pre = statcast_metrics.get(p.player_key)
+        _latest_played_level_pre = None
+        for _g in ((_scm_pre or {}).get("recent_games") or []):
+            _lvl = str((_g or {}).get("level") or "").strip()
+            if _lvl:
+                _latest_played_level_pre = _lvl
+                break
+        _level_changes_pre = _level_changes_with_debut(p.player_key)
+        _latest_level_event_pre = None
+        for _lc in _level_changes_pre:
+            _lc_date = _lc.get("date") or ""
+            if _lc_date and _lc_date > date.today().isoformat():
+                continue
+            if _lc.get("to_level"):
+                _latest_level_event_pre = _lc
+        _statline_level_pre = sl.get("level") if sl else None
+        _current_level_pre = None
+        if p.status == "debuted" or (roster_status.get(p.player_key) or {}).get("mlb_debut_date"):
+            _rs_pre = roster_status.get(p.player_key) or {}
+            _debut_date_pre = _rs_pre.get("mlb_debut_date") or p.debut_date or ""
+            _post_debut_move_pre = None
+            _debut_event_pre = None
+            for _lc in reversed(_level_changes_pre):
+                _lc_date = _lc.get("date") or ""
+                if (
+                    _lc.get("kind") in {"promotion", "demotion"}
+                    and _lc.get("to_level")
+                    and _debut_date_pre
+                    and _lc_date > _debut_date_pre
+                ):
+                    _post_debut_move_pre = _lc
+                    break
+                if _debut_event_pre is None and _lc.get("kind") == "debut" and _lc.get("to_level"):
+                    _debut_event_pre = _lc
+            _current_level_pre = (
+                _latest_played_level_pre
+                or ((_post_debut_move_pre or {}).get("to_level"))
+                or ((_debut_event_pre or {}).get("to_level"))
+                or "MLB"
+            )
+        else:
+            _current_level_pre = (
+                _latest_played_level_pre
+                or roster_level_by_key.get(p.player_key)
+                or ((_latest_level_event_pre or {}).get("to_level"))
+                or _statline_level_pre
+            )
+        # If a player has multiple same-season level rows, use the current
+        # assignment's row for the headline statline when it exists. The
+        # full set is exported below as current_season_statlines so the UI
+        # can show AA + AAA instead of implying one slash covers both.
+        _cy_pre = date.today().year
+        _rows_for_p_pre = (career_stats or {}).get(p.player_key, []) or []
+        _current_level_row_pre = next(
+            (r for r in _rows_for_p_pre
+             if r.get("season") == _cy_pre and r.get("level") == _current_level_pre),
+            None,
+        )
+        if _current_level_row_pre and sl:
+            sl = {
+                **sl,
+                **_current_level_row_pre,
+                "level": _current_level_pre,
+                "season": _cy_pre,
+                "is_prior_season": False,
+                "mlbam_id": _current_level_row_pre.get("mlbam_id") or sl.get("mlbam_id"),
+                "is_pitcher": _current_level_row_pre.get("is_pitcher")
+                              if "is_pitcher" in _current_level_row_pre
+                              else sl.get("is_pitcher"),
+            }
+        level = sl.get("level") if sl else _current_level_pre
         avl = score_age_vs_level(age, level, baselines=age_baselines)
         pa = pitch_arsenals.get(p.player_key)
         zm = zone_metrics.get(p.player_key)
-        scm = statcast_metrics.get(p.player_key)
+        scm = _scm_pre
+        zm = _prefer_metric_current_level(zm, _current_level_pre)
+        scm = _prefer_metric_current_level(scm, _current_level_pre)
         sm = sabermetrics.get(p.player_key)
         is_pitcher = bool(p.position and p.position.split("/")[0] in PITCHER_POS_SET)
         latest_fv = p.points[-1].consensus_fv_raw if p.points else None
@@ -6217,6 +6786,35 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                         sl_out["level_plus_pct"] = round((ops - avg_ops) / avg_ops * 100)
             except (TypeError, ValueError, ZeroDivisionError):
                 pass
+
+        _current_season_statlines = []
+        for _r in (career_stats or {}).get(p.player_key, []) or []:
+            if _r.get("season") != date.today().year:
+                continue
+            _rr = dict(_r)
+            _lvl = _rr.get("level")
+            _norms_perf = (level_norms.get(_lvl) or {}).get("perf") or {} if _lvl else {}
+            try:
+                if _rr.get("is_pitcher"):
+                    _era = float(_rr.get("era")) if _rr.get("era") and _rr.get("era") != "—" else None
+                    _avg_era = _norms_perf.get("avg_era")
+                    if _era and _avg_era and _era > 0:
+                        _rr["era_minus_level"] = round(_era / _avg_era * 100)
+                else:
+                    _ops = float(_rr.get("ops")) if _rr.get("ops") and _rr.get("ops") != "—" else None
+                    _avg_ops = _norms_perf.get("avg_ops")
+                    if _ops and _avg_ops and _avg_ops > 0:
+                        _rr["ops_plus_level"] = round(_ops / _avg_ops * 100)
+            except (TypeError, ValueError, ZeroDivisionError):
+                pass
+            _current_season_statlines.append(_rr)
+        _current_season_statlines.sort(
+            key=lambda r: (
+                0 if r.get("level") == _current_level_pre else 1,
+                _LEVEL_SORT_ORDER.get(r.get("level"), 99),
+            )
+        )
+        scm = _adjust_statcast_xwoba_for_export(scm, sl_out, _current_season_statlines)
 
         # Scouting flags — green/red rate-stat indicators driven by the
         # current statline + the level norms we already built. Skipped for
@@ -6485,6 +7083,81 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _mlbam = player_ids.get(p.player_key)
         if _mlbam is None and sl_out:
             _mlbam = sl_out.get("mlbam_id")
+        _latest_played_level = None
+        for _g in ((scm or {}).get("recent_games") or []):
+            _lvl = str((_g or {}).get("level") or "").strip()
+            if _lvl:
+                _latest_played_level = _lvl
+                break
+        _level_changes = _level_changes_with_debut(p.player_key)
+        _latest_level_event = None
+        for _lc in _level_changes:
+            _lc_date = _lc.get("date") or ""
+            if _lc_date and _lc_date > date.today().isoformat():
+                continue
+            if _lc.get("to_level"):
+                _latest_level_event = _lc
+        _statline_level = sl_out.get("level") if sl_out else None
+        _current_level = None
+        if p.status == "debuted" or (rs.get("mlb_debut_date")):
+            _debut_date_current = rs.get("mlb_debut_date") or p.debut_date or ""
+            _post_debut_move = None
+            _debut_event = None
+            for _lc in reversed(_level_changes):
+                _lc_date = _lc.get("date") or ""
+                if (
+                    _lc.get("kind") in {"promotion", "demotion"}
+                    and _lc.get("to_level")
+                    and _debut_date_current
+                    and _lc_date > _debut_date_current
+                ):
+                    _post_debut_move = _lc
+                    break
+                if _debut_event is None and _lc.get("kind") == "debut" and _lc.get("to_level"):
+                    _debut_event = _lc
+            _current_level = (
+                _latest_played_level
+                or ((_post_debut_move or {}).get("to_level"))
+                or ((_debut_event or {}).get("to_level"))
+                or "MLB"
+            )
+        else:
+            _current_level = (
+                _latest_played_level
+                or roster_level_by_key.get(p.player_key)
+                or ((_latest_level_event or {}).get("to_level"))
+                or _statline_level
+            )
+        _live_signal = _live_signal_for_player(
+            statline=sl_out,
+            statcast=scm,
+            zone=zm,
+            health=health,
+            il_row=il_status.get(p.player_key) or {},
+            source_events=source_events_by_key.get(p.player_key, []),
+        )
+        _source_events = source_events_by_key.get(p.player_key, [])
+        _event_priority = {
+            "statcast_by_age_standout": 0,
+            "injury_note": 1,
+            "top100_rank": 2,
+            "top100_movement": 3,
+            "top100_joined": 4,
+            "top100_dropped": 5,
+        }
+        def _event_date_sort(ev: dict) -> int:
+            raw = str(ev.get("event_date") or "").replace("-", "")
+            try:
+                return -int(raw)
+            except ValueError:
+                return 0
+        _source_events_export = sorted(
+            _source_events,
+            key=lambda ev: (
+                _event_priority.get(ev.get("event_type"), 9),
+                _event_date_sort(ev),
+            ),
+        )[:10]
         payload = {
             "player_key": p.player_key,
             "player_name": p.player_name,
@@ -6492,6 +7165,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "position": p.position,
             "org": display_org,
             "status": p.status,
+            # Current roster/assignment level for display context. Kept
+            # separate from statline.level, which remains the level where
+            # the exported season stat row was accumulated. This avoids
+            # showing a promoted player as "AA" when their latest stats are
+            # AA but their current affiliate is AAA.
+            "current_level": _current_level,
+            "statline_level": _statline_level,
             # v20 — Consolidated to a single `debut_date` field. Was a
             # pair (graduation_date + mlb_debut_date) under the old
             # threshold-based graduation model. With debut_date now
@@ -6541,7 +7221,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # corner mark read off this field.
             "fv_total_instances": getattr(p, "fv_total_instances", 0),
             "stock": stock_movement(p),
+            "live_signal": _live_signal,
+            "source_events": _source_events_export,
             "statline": sl_out,
+            "current_season_statlines": _current_season_statlines,
             "stat_flags": flags,
             # Scouting tool grades — consensus per-tool 20-80 grades,
             # three composites (offensive/defensive/overall for hitters;
@@ -6591,7 +7274,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # (kind == "debut") so the transaction-history block can
             # render it distinctly. Drives promotion/demotion markers on
             # the FV chart.
-            "level_changes": _level_changes_with_debut(p.player_key),
+            "level_changes": _level_changes,
             # MLB roster status: debut, options used, 40-man state,
             # accumulated service time, arb cycle bucket. Empty dict if
             # the player has not yet appeared in the majors.
@@ -7590,11 +8273,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         cw = (career_war or {}).get(gp.player_key) or {}
         fv_close_raw = (round(gp.points[-1].consensus_fv_raw, 2)
                         if gp.points else None)
+        gp_bd = birth_dates.get(gp.player_key)
+        gp_age = compute_age_decimal(gp_bd)
+        gp_current_level = roster_level_by_key.get(gp.player_key)
         wag = _grad_wag({
             "career_war":   cw,
             "fv_close_raw": fv_close_raw,
             "fv_close":     gp.fv_close,
             "position":     gp.position,
+            "career_stats": career_stats.get(gp.player_key, []),
+            "transactions": transactions_by_player.get(gp.player_key, []),
+            "age":          gp_age,
+            "current_level": gp_current_level,
         })
         career_war_val = cw.get("career_war")
         gp_acq = (acquisitions or {}).get(gp.player_key, {}) or {}
@@ -10747,6 +11437,26 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     active_payload = [_serialize(p) for p in actives]
     inactive_payload = [_serialize(p) for p in inactives]
     graduate_payload = [_serialize(p) for p in grads]
+    _live_ranked = []
+    for _pl in active_payload:
+        _base = _safe_float(_pl.get("fv_close_raw"))
+        if _base is None:
+            _base = _safe_float(_pl.get("fv_close"))
+        _delta = _safe_float(((_pl.get("live_signal") or {}).get("delta")))
+        if _base is None:
+            continue
+        _live_score = round(_base + (_delta or 0.0), 2)
+        _pl["live_score"] = _live_score
+        _live_ranked.append(_pl)
+    _live_ranked.sort(key=lambda _pl: (
+        -(_safe_float(_pl.get("live_score")) or -999),
+        -(_safe_float(_pl.get("fv_close_raw")) or -999),
+        _pl.get("player_name") or "",
+    ))
+    for _idx, _pl in enumerate(_live_ranked, start=1):
+        _pl["live_overall_rank"] = _idx
+        if _pl.get("overall_rank") is not None:
+            _pl["live_rank_delta"] = int(_pl["overall_rank"]) - _idx
     graduate_payload.sort(key=lambda p: p.get("debut_date") or "", reverse=True)
     # Stamp the precomputed Statcast+ onto each payload so downstream
     # consumers (UI badge, breakout gate, farm-grade rollup) can pull
@@ -10975,7 +11685,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     boot = {
         "generated_at": _utcnow_iso() + "Z",
         "run": latest_run_summary(),
-        "total_tracked": len(timeseries),
+        "total_tracked": len(active_payload) + len(graduate_payload) + len(inactive_payload),
         "active_count": len(actives),
         "inactive_count": len(inactives),
         "debut_count": len(grads),

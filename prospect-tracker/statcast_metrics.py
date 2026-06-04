@@ -16,6 +16,8 @@ from __future__ import annotations
 import concurrent.futures
 import hashlib
 import json
+import math
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import date
@@ -36,7 +38,9 @@ MLB_GAME_FEED_API = "https://statsapi.mlb.com/api/v1.1/game"
 #   v1 — original
 #   v2 — added gameLog standout/recent_games piggyback (v30.7/.8)
 #   v3 — switched zone-metric aggregation to per-level splits (v20)
-CACHE_VERSION = "v3"
+#   v4 — added hitter batted-ball coordinates, spray buckets, and
+#        rolling estimated xwOBA from the same game feed.
+CACHE_VERSION = "v4"
 CACHE_DIR = Path(__file__).parent / ".cache" / "statcast_metrics"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -426,6 +430,211 @@ def _is_barrel(ev: float | None, la: float | None) -> bool:
     return lower <= la <= min(50, upper)
 
 
+def _percentile(vals: list[float], pct: float) -> float | None:
+    vals = sorted(v for v in vals if v is not None)
+    if not vals:
+        return None
+    if len(vals) == 1:
+        return vals[0]
+    rank = (len(vals) - 1) * pct
+    lo = int(math.floor(rank))
+    hi = int(math.ceil(rank))
+    if lo == hi:
+        return vals[lo]
+    return vals[lo] + (vals[hi] - vals[lo]) * (rank - lo)
+
+
+_BIP_WOBA_WEIGHTS = {
+    "out": 0.0,
+    "single": 0.88,
+    "double": 1.25,
+    "triple": 1.58,
+    "hr": 2.03,
+}
+_XWOBA_K = 61
+_XWOBA_EPS = 0.75
+_XWOBA_EV_SCALE = 4.0
+_XWOBA_LA_SCALE = 8.0
+_XWOBA_KNN_POINTS: list[tuple[float, float, float]] | None = None
+
+
+def _add_xwoba_knn_point(points: list[tuple[float, float, float]], ev: float, la: float, outcome: str, reps: int = 1) -> None:
+    val = _BIP_WOBA_WEIGHTS[outcome]
+    for _ in range(reps):
+        points.append((float(ev), float(la), val))
+
+
+def _xwoba_knn_points() -> list[tuple[float, float, float]]:
+    """Synthetic EV/LA outcome cloud used by the KNN contact model.
+
+    The shape follows the TJStats article approach: predict total-base
+    outcome probabilities from launch speed + launch angle, then convert
+    those probabilities to an expected wOBA value. We do not ship MLB's
+    historical Statcast training data in this repo, so this deterministic
+    cloud encodes broad public baseball priors: soft/low/high contact is
+    mostly out value, soft liners can be singles, hard low liners carry
+    single/double value, and the 98+ mph / 20-35 degree band carries the
+    highest extra-base/HR probability.
+    """
+
+    global _XWOBA_KNN_POINTS
+    if _XWOBA_KNN_POINTS is not None:
+        return _XWOBA_KNN_POINTS
+    points: list[tuple[float, float, float]] = []
+    for ev in range(50, 116, 5):
+        for la in (-50, -35, -25, -15, 35, 45, 55, 65, 75):
+            _add_xwoba_knn_point(points, ev, la, "out", reps=5)
+    for ev in range(70, 106, 5):
+        for la in (-8, -3, 0, 25, 30, 35):
+            _add_xwoba_knn_point(points, ev, la, "out", reps=2)
+    for ev in (88, 94, 100, 106):
+        for la in (-7, -3, 1, 5):
+            _add_xwoba_knn_point(points, ev, la, "single")
+    for ev in (70, 76, 82, 88, 94):
+        for la in (6, 10, 14, 18):
+            _add_xwoba_knn_point(points, ev, la, "single", reps=3)
+    for ev in (92, 97, 102, 107):
+        for la in (14, 18, 22, 26, 30):
+            _add_xwoba_knn_point(points, ev, la, "double")
+    for ev in (96, 102):
+        for la in (16, 22):
+            _add_xwoba_knn_point(points, ev, la, "triple")
+    for ev in (99, 103, 107, 111, 115):
+        for la in (23, 28, 33):
+            _add_xwoba_knn_point(points, ev, la, "hr")
+    _XWOBA_KNN_POINTS = points
+    return points
+
+
+def _estimate_xwoba(ev: float | None, la: float | None) -> float | None:
+    """KNN-style expected wOBA on contact from launch speed + angle."""
+
+    if ev is None or la is None:
+        return None
+    neighbors: list[tuple[float, float]] = []
+    for ref_ev, ref_la, value in _xwoba_knn_points():
+        dist = ((ev - ref_ev) / _XWOBA_EV_SCALE) ** 2 + ((la - ref_la) / _XWOBA_LA_SCALE) ** 2
+        neighbors.append((dist, value))
+    neighbors.sort(key=lambda row: row[0])
+    top = neighbors[:_XWOBA_K]
+    denom = sum(1.0 / (dist + _XWOBA_EPS) for dist, _value in top)
+    if denom <= 0:
+        return None
+    xwoba = sum(value / (dist + _XWOBA_EPS) for dist, value in top) / denom
+    return round(max(0.02, min(1.60, xwoba)), 3)
+
+
+def _spray_angle(coord_x: float | None, coord_y: float | None) -> float | None:
+    if coord_x is None or coord_y is None:
+        return None
+    # MLB Gameday coordinates use a 250-ish px field canvas. Treat home as
+    # bottom-center and center field as top-center, then compute horizontal
+    # spray angle where negative is LF-side and positive is RF-side.
+    dx = coord_x - 125.0
+    dy = 200.0 - coord_y
+    if dy <= 0:
+        return None
+    import math
+    return round(math.degrees(math.atan2(dx, dy)), 1)
+
+
+def _spray_bucket(angle: float | None, batter_side: str | None) -> str | None:
+    if angle is None:
+        return None
+    if angle <= -15:
+        field = "lf"
+    elif angle >= 15:
+        field = "rf"
+    else:
+        field = "cf"
+    side = (batter_side or "").upper()
+    if side == "R":
+        return "pull" if field == "lf" else ("oppo" if field == "rf" else "center")
+    if side == "L":
+        return "pull" if field == "rf" else ("oppo" if field == "lf" else "center")
+    return {"lf": "left", "cf": "center", "rf": "right"}[field]
+
+
+def _is_air_ball(la: float | None) -> bool:
+    return la is not None and la >= 10.0
+
+
+def _is_pull_air_type(row: dict, la: float | None) -> bool:
+    """Return True for FB/LD/popup batted-ball events.
+
+    Pull-air% is defined as pull-side fly balls + line drives + popups
+    divided by total batted-ball events. Prefer the tagged trajectory
+    from the feed; launch angle is only a fallback for older rows that
+    predate storing the trajectory label.
+    """
+    raw = (
+        row.get("bb_type")
+        or row.get("batted_ball_type")
+        or row.get("trajectory")
+        or row.get("hit_type")
+        or ""
+    )
+    kind = re.sub(r"[^a-z]", "", str(raw).lower())
+    if kind in {"flyball", "linedrive", "popup", "popupbunt"}:
+        return True
+    if kind in {"groundball", "groundout", "groundedintodoubleplay"}:
+        return False
+    return _is_air_ball(la)
+
+
+def _xwobacon_profile_adjustment(
+    xwobacon: float | None,
+    avg_ev: float | None,
+    p90_ev: float | None,
+    hard_hit_pct: float | None,
+    barrel_pct: float | None,
+    _pull_air_pct: float | None,
+    avg_la: float | None,
+    bbe: int,
+) -> float:
+    if xwobacon is None or bbe < 25:
+        return 0.0
+    lift = 0.0
+    # MLB's public xwOBA is deliberately context-neutral: EV/LA drive the
+    # contact estimate, while spray/park/weather are excluded. Keep this
+    # aggregate correction tied to EV/LA-derived contact quality only.
+    if (
+        barrel_pct is not None and barrel_pct >= 10.0
+        and hard_hit_pct is not None and hard_hit_pct >= 45.0
+    ):
+        lift += max(0.0, barrel_pct - 8.0) * 0.005
+        if p90_ev is not None:
+            lift += max(0.0, p90_ev - 104.0) * 0.0025
+        if avg_la is not None and avg_la >= 18.0:
+            lift += min(0.018, (avg_la - 18.0) * 0.006)
+    # Hard-contact grounder/liner profiles are not barrel monsters, but a
+    # .340-ish contact estimate is too light when the player is sustaining
+    # 50%+ hard-hit contact with a 90+ mph average EV.
+    if (
+        xwobacon < 0.365
+        and hard_hit_pct is not None and hard_hit_pct >= 50.0
+        and avg_ev is not None and avg_ev >= 90.0
+        and avg_la is not None and avg_la <= 8.0
+    ):
+        lift += max(0.0, hard_hit_pct - 45.0) * 0.003
+        lift += max(0.0, avg_ev - 90.0) * 0.006
+    # The EV/LA surface can over-credit soft line-drive batches because
+    # those batted balls often become singles in small samples. If the
+    # aggregate profile has no real hard-contact support, pull the contact
+    # estimate back down instead of letting batting-average contact masquerade
+    # as power contact.
+    if (
+        avg_ev is not None and avg_ev < 86.0
+        and p90_ev is not None and p90_ev < 100.0
+        and hard_hit_pct is not None and hard_hit_pct < 30.0
+        and (barrel_pct or 0.0) <= 2.0
+        and xwobacon > 0.330
+    ):
+        soft_cap = 0.325 - max(0.0, 86.0 - avg_ev) * 0.008
+        lift = min(lift, soft_cap - xwobacon)
+    return round(max(-0.45, min(0.08, lift)), 3)
+
+
 def _finalize_contact(rows: list[dict], is_pitcher: bool) -> dict:
     evs = [_safe_float(r.get("launch_speed")) for r in rows]
     las = [_safe_float(r.get("launch_angle")) for r in rows]
@@ -435,15 +644,108 @@ def _finalize_contact(rows: list[dict], is_pitcher: bool) -> dict:
         return {}
     hard = sum(1 for ev, _la in paired if ev >= 95)
     barrels = sum(1 for ev, la in paired if _is_barrel(ev, la))
-    return {
+    avg_ev = _mean([ev for ev, _la in paired])
+    p90_ev = round(_percentile([ev for ev, _la in paired], 0.90), 1)
+    avg_la = _mean([la for _ev, la in paired if la is not None])
+    hard_hit_pct = round(hard / bbe * 100, 1)
+    barrel_pct = round(barrels / bbe * 100, 1)
+    xwobas = [_estimate_xwoba(ev, la) for ev, la in paired]
+    xwobas = [v for v in xwobas if v is not None]
+    xwoba_base = round(sum(xwobas) / len(xwobas), 3) if xwobas else None
+
+    spray_counts = {"pull": 0, "center": 0, "oppo": 0}
+    air_pull = air_total = 0
+    locs: list[dict] = []
+    dated_for_roll: list[dict] = []
+    for r in rows:
+        ev = _safe_float(r.get("launch_speed"))
+        la = _safe_float(r.get("launch_angle"))
+        if ev is None:
+            continue
+        x = _safe_float(r.get("coord_x"))
+        y = _safe_float(r.get("coord_y"))
+        angle = _spray_angle(x, y)
+        bucket = _spray_bucket(angle, r.get("batter_side"))
+        if bucket not in spray_counts and r.get("spray") in spray_counts:
+            bucket = r.get("spray")
+        if bucket in spray_counts:
+            spray_counts[bucket] += 1
+        if _is_pull_air_type(r, la):
+            air_total += 1
+            if bucket == "pull":
+                air_pull += 1
+        xwoba = _estimate_xwoba(ev, la)
+        if xwoba is not None:
+            dated_for_roll.append({"date": r.get("date"), "xwoba": xwoba})
+        if x is not None and y is not None:
+            locs.append({
+                "game_pk": r.get("game_pk"),
+                "date": r.get("date"),
+                "x": round(x, 1),
+                "y": round(y, 1),
+                "launch_speed": ev,
+                "launch_angle": la,
+                "distance_ft": _safe_float(r.get("total_distance")),
+                "xwoba_est": xwoba,
+                "hit_type": r.get("hit_type") or r.get("event") or "batted_ball",
+                "bb_type": r.get("bb_type") or r.get("batted_ball_type") or r.get("trajectory"),
+                "spray": bucket,
+                "spray_angle": angle,
+            })
+    locs = locs[-450:]
+
+    rolling: list[dict] = []
+    dated_for_roll = [r for r in dated_for_roll if r.get("date")]
+    dated_for_roll.sort(key=lambda r: r["date"])
+    win = 25
+    for i in range(len(dated_for_roll)):
+        chunk = dated_for_roll[max(0, i - win + 1):i + 1]
+        if len(chunk) < 5:
+            continue
+        rolling.append({
+            "date": dated_for_roll[i]["date"],
+            "bbe": len(chunk),
+            "xwoba": round(sum(r["xwoba"] for r in chunk) / len(chunk), 3),
+        })
+
+    out = {
         "batted_balls": bbe,
-        "avg_ev": _mean([ev for ev, _la in paired]),
+        "avg_ev": avg_ev,
         "max_ev": round(max(ev for ev, _la in paired), 1),
-        "avg_la": _mean([la for _ev, la in paired if la is not None]),
-        "hard_hit_pct": round(hard / bbe * 100, 1),
-        "barrel_pct": round(barrels / bbe * 100, 1),
+        "p90_ev": p90_ev,
+        "avg_la": avg_la,
+        "hard_hit_pct": hard_hit_pct,
+        "barrel_pct": barrel_pct,
+        "xwoba_est": xwoba_base,
+        "xwobacon_est": xwoba_base,
+        "spray": {
+            "pull_pct": round(spray_counts["pull"] / bbe * 100, 1) if bbe else None,
+            "center_pct": round(spray_counts["center"] / bbe * 100, 1) if bbe else None,
+            "oppo_pct": round(spray_counts["oppo"] / bbe * 100, 1) if bbe else None,
+            "pull_air_pct": round(air_pull / bbe * 100, 1) if bbe else None,
+            "pull_air_bbe": air_pull,
+            "air_bbe": air_total,
+        },
+        "rolling_xwoba": rolling[-60:],
+        "hit_locations": locs,
         "direction": "allowed" if is_pitcher else "hit",
     }
+    adj = _xwobacon_profile_adjustment(
+        xwoba_base,
+        avg_ev,
+        p90_ev,
+        hard_hit_pct,
+        barrel_pct,
+        out["spray"]["pull_air_pct"],
+        avg_la,
+        bbe,
+    )
+    if adj and xwoba_base is not None:
+        out["xwobacon_raw"] = xwoba_base
+        out["xwobacon_adjustment"] = adj
+        out["xwoba_est"] = round(max(0.02, min(1.60, xwoba_base + adj)), 3)
+        out["xwobacon_est"] = out["xwoba_est"]
+    return out
 
 
 def _finalize_pitch(points: list[dict], outings: list[dict]) -> tuple[dict, dict]:
@@ -643,19 +945,32 @@ def fetch_statcast_metrics_for_player(
                 launch_speed = _safe_float(hit_data.get("launchSpeed"))
                 launch_angle = _safe_float(hit_data.get("launchAngle"))
                 if launch_speed is not None:
+                    coords = hit_data.get("coordinates") or {}
+                    coord_x = _safe_float(coords.get("coordX"))
+                    coord_y = _safe_float(coords.get("coordY"))
+                    batted_ball_type = (hit_data.get("trajectory") or "").title().replace("_", "")
+                    hit_type = (
+                        details.get("eventType")
+                        or details.get("event")
+                        or (play.get("result") or {}).get("eventType")
+                        or (play.get("result") or {}).get("event")
+                    )
+                    batter_side = (matchup.get("batSide") or {}).get("code")
                     contact_count += 1
-                    contact_rows.append({
+                    contact_row = {
                         "game_pk": game_pk,
                         "date": game_date,
                         "launch_speed": launch_speed,
                         "launch_angle": launch_angle,
-                    })
-                    level_bucket["contact_rows"].append({
-                        "game_pk": game_pk,
-                        "date": game_date,
-                        "launch_speed": launch_speed,
-                        "launch_angle": launch_angle,
-                    })
+                        "total_distance": _safe_float(hit_data.get("totalDistance")),
+                        "coord_x": coord_x,
+                        "coord_y": coord_y,
+                        "hit_type": hit_type,
+                        "bb_type": batted_ball_type,
+                        "batter_side": batter_side,
+                    }
+                    contact_rows.append(contact_row)
+                    level_bucket["contact_rows"].append(contact_row)
         if tracked_pitch_count:
             games_with_pitch += 1
             level_bucket["games_with_pitch"] += 1

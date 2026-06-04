@@ -62,6 +62,15 @@ class TestParseFV:
         assert _parse_fv_full("55") == (55.0, False)
         assert _parse_fv_full("45/55+") == (55.0, True)
 
+    def test_single_digit_pvfv_scales_to_20_80(self):
+        assert _parse_fv("4/5") == 50.0
+
+    def test_concatenated_tool_and_fv_cell_recovers_trailing_grade(self):
+        assert _parse_fv("560") == 60.0
+
+    def test_out_of_scale_fv_is_rejected(self):
+        assert _parse_fv("99") is None
+
     def test_empty(self):
         assert _parse_fv("") is None
         assert _parse_fv("   ") is None
@@ -883,6 +892,75 @@ class TestCutterCanonical:
         from scrapers import PITCHER_TOOL_KEYS, ALL_TOOL_KEYS
         assert "ct" in PITCHER_TOOL_KEYS
         assert "ct" in ALL_TOOL_KEYS
+
+
+class TestPlayerAliases:
+    def test_ingest_normalize_key_collapses_known_name_variants(self):
+        from scrapers import normalize_key
+        assert normalize_key("George Lombard") == "george_lombard_jr"
+        assert normalize_key("George Lombard Jr.") == "george_lombard_jr"
+        assert normalize_key("Leonardo Bernal") == "leo_bernal"
+        assert normalize_key("Leo Bernal") == "leo_bernal"
+
+    def test_build_timeseries_merges_lombard_suffix_variant(self):
+        snaps = [
+            Snapshot(
+                source="just_baseball", snapshot_date="2026-03-01",
+                interval_label="JB 2026",
+                player_key="george_lombard", player_name="George Lombard",
+                position="SS", org="NYY", rank=90, fv=50.0, status="active",
+            ),
+            Snapshot(
+                source="fangraphs", snapshot_date="2026-05-01",
+                interval_label="FG 2026",
+                player_key="george_lombard_jr", player_name="George Lombard Jr.",
+                position="SS", org="NYY", rank=45, fv=55.0, status="active",
+            ),
+        ]
+        ts = build_timeseries(snaps, single_source_k=0)
+        assert len(ts) == 1
+        assert ts[0].player_key == "george_lombard_jr"
+        assert ts[0].player_name == "George Lombard Jr."
+        assert set(ts[0].points[-1].per_source) == {
+            "just_baseball", "fangraphs"
+        }
+
+    def test_build_timeseries_merges_bernal_given_name_variant(self):
+        snaps = [
+            Snapshot(
+                source="baseball_america", snapshot_date="2026-03-01",
+                interval_label="BA 2026",
+                player_key="leonardo_bernal", player_name="Leonardo Bernal",
+                position="C", org="STL", rank=120, fv=45.0, status="active",
+            ),
+            Snapshot(
+                source="fangraphs", snapshot_date="2026-05-01",
+                interval_label="FG 2026",
+                player_key="leo_bernal", player_name="Leo Bernal",
+                position="C", org="STL", rank=80, fv=50.0, status="active",
+            ),
+        ]
+        ts = build_timeseries(snaps, single_source_k=0)
+        assert len(ts) == 1
+        assert ts[0].player_key == "leo_bernal"
+        assert ts[0].player_name == "Leo Bernal"
+        assert set(ts[0].points[-1].per_source) == {
+            "baseball_america", "fangraphs"
+        }
+
+    def test_canonical_key_with_raw_alias_name_uses_preferred_display_name(self):
+        snaps = [
+            Snapshot(
+                source="baseball_america", snapshot_date="2026-06-03",
+                interval_label="BA source article",
+                player_key="leo_bernal", player_name="Leonardo Bernal",
+                position="C", org="STL", rank=75, fv=50.0, status="active",
+            ),
+        ]
+        ts = build_timeseries(snaps, single_source_k=0)
+        assert len(ts) == 1
+        assert ts[0].player_key == "leo_bernal"
+        assert ts[0].player_name == "Leo Bernal"
 
 
 # ---------------------------------------------------------------------------

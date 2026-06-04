@@ -94,6 +94,20 @@ def _log_step_summary(log: logging.Logger, total_runtime: float) -> None:
     log.info("%-44s %10s %7.1f%%", "TOTAL", _fmt_duration(total), 100.0)
     log.info("=" * 64)
 
+
+def _patch_export_run_summary(out_path: Path, log: logging.Logger) -> None:
+    """Refresh boot JSON's run summary after finish_run() has completed."""
+    try:
+        payload = json.loads(out_path.read_text(encoding="utf-8"))
+        payload["run"] = latest_run_summary()
+        try:
+            import orjson as _orjson
+            out_path.write_bytes(_orjson.dumps(payload, option=_orjson.OPT_NON_STR_KEYS))
+        except ImportError:
+            out_path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
+    except Exception:
+        log.exception("could not patch latest run summary into %s", out_path)
+
 from scrapers import scrape_all, probe
 from storage import (
     init_db, insert_snapshots, start_run, finish_run,
@@ -112,7 +126,8 @@ from storage import (
     upsert_player_transactions, load_player_transactions,
     load_player_transactions_meta,
     upsert_roster_status, load_roster_status,
-    export_timeseries_json,
+    upsert_source_events,
+    export_timeseries_json, latest_run_summary,
 )
 from consensus import build_timeseries
 from stats import (fetch_statlines_for, derive_statlines_from_career,
@@ -159,6 +174,21 @@ def _is_career_fresh(fetched_at: str | None, max_age_days: int) -> bool:
     return (_dt.now(_tz.utc).replace(tzinfo=None) - ts).days < max_age_days
 
 
+def ingest_source_article_drops(out_dir: Path, log: logging.Logger) -> tuple[int, int]:
+    """Ingest local source article text drops into snapshots + source_events."""
+    try:
+        from source_articles import parse_source_article_drops
+        snapshots, events = parse_source_article_drops(out_dir)
+        n_snap = insert_snapshots(snapshots) if snapshots else 0
+        n_events = upsert_source_events(events) if events else 0
+        if snapshots or events:
+            log.info("source articles: ingested %d snapshots + %d events", n_snap, n_events)
+        return n_snap, n_events
+    except Exception:
+        log.exception("source article ingest failed — continuing")
+        return 0, 0
+
+
 def rebuild_only(out_dir: Path = Path("data")) -> None:
     """Fast export-only path: ingest any FG drops, rebuild the timeseries
     from the current DB state, write `data/timeseries.json`. No scraping,
@@ -171,6 +201,7 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     )
     log = logging.getLogger("rebuild_only")
     init_db()
+    ingest_source_article_drops(out_dir, log)
 
     # First: drain the FanGraphs drop folder so any waiting CSVs land
     # in the DB before we rebuild. (The FG ingest internally routes
@@ -606,6 +637,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.info("scraped %d total snapshot rows", len(snapshots))
                 _new = insert_snapshots(snapshots)
                 log.info("inserted %d new snapshot rows", _new)
+                ingest_source_article_drops(out_dir, log)
                 for key, bd in csv_birth_dates.items():
                     upsert_birth_date(key, bd)
                 if csv_birth_dates:
@@ -947,6 +979,12 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             _STEP_TIMES.append(("3a-i. Bulk season-stats fetch + merge", time.monotonic() - _step_3a_bulk_start))
         _step_3a_per_start = time.monotonic() if not skip_stats else None
         if not skip_stats:
+            level_changes_for_stats = _derive_all_level_changes()
+            current_year_level_change_keys = {
+                key for key, evs in level_changes_for_stats.items()
+                if any(str(ev.get("date") or "").startswith(str(season))
+                       and ev.get("to_level") for ev in (evs or []))
+            }
             non_grad_players = [
                 (p.player_key, p.player_name, _is_pitcher(p.position))
                 for p in timeseries if p.status != "debuted"
@@ -963,12 +1001,15 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 # would just refresh data we already have — skip. Players
                 # in the bulk WITHOUT prior-season rows fall through so
                 # yearByYear can backfill the detail-page career history.
+                has_current_year_level_change = key in current_year_level_change_keys
                 if (key in keys_with_bulk_2026
+                        and not has_current_year_level_change
                         and len(career_cache.get(key, [])) > 1):
                     skipped_bulk += 1
                     continue
                 if not force_refetch and _is_career_fresh(
-                        career_meta.get(key), CAREER_STATS_FRESH_DAYS):
+                        career_meta.get(key), CAREER_STATS_FRESH_DAYS
+                ) and not has_current_year_level_change:
                     skipped_fresh += 1
                     continue
                 cs_tasks.append((key, mlbam, is_p))
@@ -1240,7 +1281,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 # eligibility check trusts the statline's `level` field,
                 # which is set to "MLB" for debuted players once their
                 # roster status flips.
-                _zone_tracked_levels = {"MLB", "AAA", "AA", "A+", "A"}
+                _zone_tracked_levels = {"MLB", "AAA", "AA", "A+", "A", "CPX"}
                 _zone_meta = load_zone_metrics_meta()
                 _zone_eligible_keys = [
                     p.player_key for p in timeseries
@@ -1590,6 +1631,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
                    notes=f"{len(timeseries)} players, {len(new_trades)} trades")
+        _patch_export_run_summary(out_path, log)
         # v19 — Per-step duration table. Sorted by slowest first so the
         # biggest wall-time culprits surface at the top of the log.
         _log_step_summary(log, time.monotonic() - _run_start)
