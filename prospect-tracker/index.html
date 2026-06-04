@@ -5480,7 +5480,19 @@
       gap: 5px;
     }
     .detail-chip-ribbon .ribbon-row .tool-grade-strip {
-      flex-wrap: wrap;
+      /* Keep the tool/pitch-grade pills on ONE line. Was flex-wrap: wrap,
+         which spilled the strip onto a second row on narrow prospect cards.
+         Overflow scrolls horizontally if the full set is wider than the card;
+         the slightly tighter gap + pill padding below let the common 7-8 pill
+         pitcher strip fit without needing to scroll. */
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+      gap: 3px;
+    }
+    .detail-chip-ribbon .ribbon-row .tool-grade-pill {
+      padding: 1px 4px;
     }
     .detail-chip-ribbon .ribbon-row-stats {
       gap: 12px;
