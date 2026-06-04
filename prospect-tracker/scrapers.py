@@ -438,6 +438,11 @@ _CANONICAL_KEYS: dict[str, str] = {
     # JoJo Parker (TOR 3B/SS). TJStats pre-season + Just Baseball listed him as
     # "Joseph Parker" without a team; FanGraphs uses "JoJo Parker" (TOR).
     "joseph_parker": "jojo_parker",
+    # MLB/Statcast and current rosters use the suffix/nickname forms below.
+    # Some ranking/editorial sources omit the suffix or use the given name,
+    # which otherwise creates a headshot-less duplicate card.
+    "george_lombard": "george_lombard_jr",
+    "leonardo_bernal": "leo_bernal",
 }
 
 
@@ -471,15 +476,35 @@ def _parse_fv_full(raw) -> tuple[float | None, bool]:
     raw = str(raw).strip()
     if not raw:
         return None, False
-    if "/" in raw:  # PV/FV format — take the right side (the FV)
-        raw = raw.split("/")[-1].strip()
+    # PV/FV format — take the right side (the FV). Some older Pipeline
+    # bios use the 2-8 scouting shorthand ("4/5") instead of 20-80
+    # ("40/50"); scale those single-digit grades before returning.
+    if "/" in raw:
+        parts = [p.strip() for p in raw.split("/") if p.strip()]
+        if len(parts) >= 2 and all(re.fullmatch(r"\d(?:\+)?", p) for p in parts[:2]):
+            right = parts[-1].rstrip("+")
+            return float(right) * 10.0, parts[-1].endswith("+")
+        raw = parts[-1] if parts else raw
     has_plus = raw.endswith("+")
     if has_plus:
         raw = raw[:-1]
     try:
-        return float(raw), has_plus
+        fv = float(raw)
     except ValueError:
         return None, False
+    # JB table extraction can occasionally concatenate the preceding
+    # future tool grade with the FV cell ("55" + "60" => "560"). Recover
+    # the trailing 20-80 grade when that shape is obvious; otherwise
+    # reject out-of-scale FVs so they cannot poison consensus.
+    if fv > 80 and raw.isdigit() and len(raw) >= 3:
+        tail = float(raw[-2:])
+        if 20 <= tail <= 80:
+            fv = tail
+    if 2 <= fv <= 8:
+        fv *= 10.0
+    if fv < 20 or fv > 80:
+        return None, False
+    return fv, has_plus
 
 
 # MLB Pipeline labels its tool grades with words/abbreviations that
@@ -1642,17 +1667,17 @@ def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
         # Prefer the bio whose contentTitle matches the page year.
         for bio in bios:
             if bio.group(2) == year_str:
-                m2 = re.search(r'Overall:\s*(\d+)', bio.group(1))
+                m2 = re.search(r'Overall:\s*([0-9]+(?:\s*/\s*[0-9]+)?\+?)', bio.group(1))
                 if m2:
-                    overall = float(m2.group(1))
+                    overall, _overall_plus = _parse_fv_full(m2.group(1))
                     bio_text = bio.group(1)
                     break
         # Fallback: any bio with an Overall grade line.
         if overall is None:
             for bio in bios:
-                m2 = re.search(r'Overall:\s*(\d+)', bio.group(1))
+                m2 = re.search(r'Overall:\s*([0-9]+(?:\s*/\s*[0-9]+)?\+?)', bio.group(1))
                 if m2:
-                    overall = float(m2.group(1))
+                    overall, _overall_plus = _parse_fv_full(m2.group(1))
                     bio_text = bio.group(1)
                     break
 
@@ -1761,9 +1786,9 @@ def scrape_mlb_international(url: str, label: str, snap_date: str, year: int,
             # MLB exposes a team for them.
             continue
         overall = None
-        overall_m = re.search(r'Overall:\s*(\d+)', chunk)
+        overall_m = re.search(r'Overall:\s*([0-9]+(?:\s*/\s*[0-9]+)?\+?)', chunk)
         if overall_m:
-            overall = float(overall_m.group(1))
+            overall, _overall_plus = _parse_fv_full(overall_m.group(1))
         apollo_rows.append(Snapshot(
             source="mlb_pipeline_international",
             snapshot_date=snap_date,
@@ -2177,16 +2202,16 @@ def scrape_mlb_pipeline_draft(url: str, label: str, snap_date: str,
         year_str = str(draft_year)
         for bio in bios:
             if bio.group(2) == year_str:
-                m2 = re.search(r'Overall:\s*(\d+)', bio.group(1))
+                m2 = re.search(r'Overall:\s*([0-9]+(?:\s*/\s*[0-9]+)?\+?)', bio.group(1))
                 if m2:
-                    overall = float(m2.group(1))
-                bio_text = bio.group(1)
-                break
+                    overall, _overall_plus = _parse_fv_full(m2.group(1))
+                    bio_text = bio.group(1)
+                    break
         if bio_text is None and bios:
             bio_text = bios[0].group(1)
-            m2 = re.search(r'Overall:\s*(\d+)', bio_text)
+            m2 = re.search(r'Overall:\s*([0-9]+(?:\s*/\s*[0-9]+)?\+?)', bio_text)
             if m2:
-                overall = float(m2.group(1))
+                overall, _overall_plus = _parse_fv_full(m2.group(1))
 
         tools = _parse_pipeline_tools(bio_text) if bio_text else None
         prose = _clean_pipeline_writeup(bio_text) if bio_text else None
