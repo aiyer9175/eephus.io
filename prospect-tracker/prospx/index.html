@@ -1631,6 +1631,25 @@
       box-shadow: var(--shadow-card-hover);
       transform: translateY(-1px);
     }
+    /* v43 — UNIFORM CARD HEIGHT. Every prospect card is the same fixed height
+       regardless of hitter/pitcher type or how much stat content a player has
+       (the MiLB cell's detail line can wrap to a 4th line on data-rich players,
+       and pitchers carry the pitch-mix line — both were making cards different
+       heights). Row 1 (identity / FV / chart / stats) takes the fixed remaining
+       space; row 2 is the tool-grade strip. Cells center within row 1
+       (align-items:center) so shorter content sits with even top/bottom
+       breathing room instead of stretching the card. Height is sized to clear
+       the tallest content (4-line MiLB cell ≈ 95px) so nothing clips. Applies
+       to every grid card (active list, watchlist, etc.); the stats leaderboard
+       (.is-leaderboard) and flex farm rows ([data-org]) keep their own layouts. */
+    .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) {
+      box-sizing: border-box;
+      height: 136px;
+      grid-template-rows: 1fr auto;
+    }
+    /* Expanded rows open an accordion below the card — they must grow, so the
+       fixed height only applies while collapsed. */
+    .player-row.is-expanded { height: auto; }
     /* Hover state widens + glows the org-color stripe so the row the
        mouse is on reads "I'm clickable" louder than the lift alone. */
     .player-row:hover::before {
@@ -2312,18 +2331,17 @@
     .row-tag.acq-rule5,
     .row-tag.acq-waiver     { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.06); }
     .row-tag.savant-inline-pill { color: var(--neon-violet); border-color: var(--neon-violet); background: rgba(107,79,168,0.10); }
-    .row-tag.arsenal-mini    { color: var(--neon-cyan);   border-color: var(--neon-cyan);   background: rgba(74,200,224,0.06); letter-spacing: 0.04em;
-      /* Pitch-mix pill ("FF 48 · CH 18 · SL 18") must stay on ONE line.
-         It lives in `.player-name` (inline-flex; flex-wrap:wrap); by
-         default it was a shrinkable flex item, so on narrow cards the flex
-         layout compressed it and its text wrapped to two lines. nowrap +
-         flex-shrink:0 keep the text on a single line at its natural width
-         (it flows to its own line under the name via the parent's wrap).
-         max-width:100% + ellipsis is the safety net so it can never spill
-         past its column into the rank/FV cells on the narrowest phones —
-         the full mix stays in the title tooltip. Purely layout; the pill's
-         colors / border / padding / font are untouched. */
-      white-space: nowrap; flex-shrink: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+    .row-tag.arsenal-mini    { color: var(--neon-cyan);   border-color: var(--neon-cyan);   background: rgba(74,200,224,0.06);
+      /* v43 — Pitch-mix pill now lives on its OWN full-width line under the
+         name/meta (.pr-arsenal-line), which spans the whole player column —
+         so the COMPLETE arsenal fits on one line. nowrap keeps it single-
+         line; the old max-width/overflow/ellipsis CLIP was removed (it was
+         hiding pitches) and letter-spacing dropped + padding tightened so
+         long arsenals stay inside the column without clipping. */
+      white-space: nowrap; flex-shrink: 0; padding-left: 5px; padding-right: 5px; }
+    /* Dedicated pitch-mix line in the list-row identity block (pitchers). */
+    .pr-arsenal-line { width: 100%; min-width: 0; display: flex; align-items: center; line-height: 1; margin-top: 1px; }
+    .player-row-idrow { min-width: 0; }
     .row-tag.recent-acq      { color: var(--text-on-accent); border-color: var(--neon-cyan); background: var(--neon-cyan); text-transform: uppercase; letter-spacing: 0.06em; }
 
     /* Subtle full-row FV-tier background tint. Derived from the
@@ -10512,10 +10530,14 @@ function arsenalMiniHTML(p) {
   // vintage; we normalize to percentage in the label.
   const sorted = pitches.slice().sort((a, b) =>
     (Number(b.usage_pct) || 0) - (Number(a.usage_pct) || 0));
-  const top = sorted.slice(0, 3);
+  // v43 — Show the COMPLETE arsenal (was top-3). The pill now lives on its
+  // own full-width line under the name/meta (.pr-arsenal-line), so it has
+  // room for every pitch on one line without clipping. Cap at 6 (covers
+  // every real MLB arsenal) purely as an overflow guard on narrow columns.
+  const top = sorted.slice(0, 6);
   const labelBits = top.map(pi => {
     const pct = _pitchUsagePercent(pi);
-    if (pct == null) return null;
+    if (pct == null || Math.round(pct) < 1) return null;  // drop ~0%-usage noise (e.g. "CU 0")
     return `${pi.pitch_type || pi.pitch_name || "?"} ${Math.round(pct)}`;
   }).filter(Boolean);
   if (!labelBits.length) return "";
@@ -10525,6 +10547,15 @@ function arsenalMiniHTML(p) {
     return `${pi.pitch_name || pi.pitch_type || "?"} ${pct != null ? pct.toFixed(1) + "%" : "?"}${velo}`;
   });
   return `<span class="row-tag arsenal-mini" title="${escapeHtml("Pitch mix: " + tipBits.join(" · "))}">${escapeHtml(labelBits.join(" · "))}</span>`;
+}
+
+// v43 — Dedicated full-width pitch-mix line for the list-row identity block
+// (pitchers only). Spans the whole player column under the name/meta, so the
+// complete arsenal fits on one line without wrapping the name row or clipping.
+// Hitters return "" (their handedness badges live inline in the meta line).
+function arsenalLineHTML(p) {
+  const pill = (typeof arsenalMiniHTML === "function") ? arsenalMiniHTML(p) : "";
+  return pill ? `<div class="pr-arsenal-line">${pill}</div>` : "";
 }
 
 // "Newly acquired" chip — fires when the most recent trade / waiver
@@ -10578,10 +10609,15 @@ function _inlineBadgeStrip(p, max = 3) {
   // the per-tool tool-grade-strip rendered under the player meta line
   // via makeListRowSummary. Health glyph + (optional) Savant/Arsenal
   // extras are all that's left.
+  // v43 — Arsenal mini-pill removed from the inline name-row strip: it was
+  // the widest item and wrapped `.player-name` to a 2nd line on pitchers
+  // (taller card + displaced health glyph + clipped pill). It now renders on
+  // its own full-width line under the name/meta via arsenalLineHTML(). The
+  // inline strip keeps only narrow badges (health glyph + Statcast pill) so
+  // the name row never wraps and the glyph stays inline on every card type.
   const builders = [
     typeof healthBadgeHTML        === "function" ? healthBadgeHTML        : null,
     typeof savantInlinePillHTML   === "function" ? savantInlinePillHTML   : null,
-    typeof arsenalMiniHTML        === "function" ? arsenalMiniHTML        : null,
   ].filter(Boolean);
   const all = builders.map(fn => fn(p) || "").filter(Boolean);
   if (all.length <= max) return all.join("");
@@ -11254,13 +11290,22 @@ function fvCloseLabel(p) {
   return `${n}`;
 }
 
-function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
+function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player, dims) {
   if (!points || points.length === 0) return "";
+  // v43 — Render the SVG coordinate space at the chart's ACTUAL rendered
+  // pixel size (measured by the lazy observer and passed in `dims`) instead
+  // of a fixed 200×56 viewBox stretched with preserveAspectRatio="none".
+  // The old fixed viewBox was non-uniformly scaled to fill the cell
+  // (~306×111), which stretched every TEXT annotation (H:/L:, FV labels,
+  // year labels, transaction glyphs) — the "warped indicator" bug. With
+  // viewBox == rendered px the scale is 1:1, so text renders undistorted.
+  // The plotted curve still fills the full cell (it's drawn across the
+  // whole W×H space, exactly as before) — its interpolation is unchanged.
   // Reserve 9px of left margin for the 20/80 Y-axis labels so the chart
-  // line itself doesn't get squeezed by them. The labels sit OUTSIDE
-  // the line's X range, anchored at x≈1; the polyline runs from
-  // x=Y_LABEL_W+PAD onward.
-  const W = 200, H = 56, PAD = 4, LABEL_H = 9, Y_LABEL_W = 9;
+  // line itself doesn't get squeezed by them.
+  const W = Math.max(120, Math.round((dims && dims.width)  || 200));
+  const H = Math.max(40,  Math.round((dims && dims.height) || 56));
+  const PAD = 4, LABEL_H = 9, Y_LABEL_W = 9;
   // Chart area: y from PAD to H-LABEL_H-PAD. Bottom LABEL_H px reserved for year labels.
   const CHART_BOTTOM = H - LABEL_H - PAD;
   // Per-prospect time domain: first recorded FV → debut_date (if graduated)
@@ -11468,7 +11513,7 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player) {
     );
   }
 
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" role="img" aria-label="FV trajectory">
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="none" role="img" aria-label="FV trajectory">
     ${yearSvg.join("")}
     <line x1="${X_LEFT}" y1="${yRef.toFixed(1)}" x2="${W - PAD}" y2="${yRef.toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,2" vector-effect="non-scaling-stroke" />
     ${yLabels}
@@ -15090,7 +15135,7 @@ function renderActives() {
       : "";
     return `
       <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
-        <div class="player-row-col1" style="display:flex;align-items:center;gap:10px;min-width:0;">
+        <div class="player-row-col1" style="display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;"><div class="player-row-idrow" style="display:flex;align-items:center;gap:10px;min-width:0;width:100%;">
           <span class="headshot-stack">${headshotHTML(p, 64)}${optionsDotsHTML(p)}</span>
           <div class="player-name-stack" style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
@@ -15098,7 +15143,7 @@ function renderActives() {
           </div>
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
-          <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
+          <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button></div>${arsenalLineHTML(p)}
         </div>
         <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${p.overall_rank != null ? "#" + p.overall_rank : "—"}</span></div>${rankTrendHTML(p)}</div>
         <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}${liveTrendHTML(p)}</div>
@@ -15812,7 +15857,7 @@ function renderWatchlist() {
         : "";
       return `
         <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
-          <div class="player-row-col1" style="display:flex;align-items:center;gap:10px;min-width:0;">
+          <div class="player-row-col1" style="display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;"><div class="player-row-idrow" style="display:flex;align-items:center;gap:10px;min-width:0;width:100%;">
             <span class="headshot-stack">${headshotHTML(p, 64)}${optionsDotsHTML(p)}</span>
             <div class="player-name-stack" style="min-width:0;flex:1;">
               <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
@@ -15820,7 +15865,7 @@ function renderWatchlist() {
             </div>
             <button class="watch-btn is-in" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Remove from watchlist" title="Remove from watchlist">★</button>
             <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
-            <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
+            <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button></div>${arsenalLineHTML(p)}
           </div>
           <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${p.overall_rank != null ? "#" + p.overall_rank : "—"}</span></div>${rankTrendHTML(p)}</div>
           <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}${liveTrendHTML(p)}` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
@@ -37262,7 +37307,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       ? latest.consensus_fv_label : "—";
     return `
       <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
-        <div class="player-row-col1" style="display:flex;align-items:center;gap:10px;min-width:0;">
+        <div class="player-row-col1" style="display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;"><div class="player-row-idrow" style="display:flex;align-items:center;gap:10px;min-width:0;width:100%;">
           <span class="headshot-stack">${headshotHTML(p, 64)}${optionsDotsHTML(p)}</span>
           <div class="player-name-stack" style="min-width:0;flex:1;">
             <div class="player-name">${escapeHtml(p.player_name)}${_inlineBadgeStrip(p, 3)}</div>
@@ -37270,7 +37315,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
           </div>
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
-          <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button>
+          <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button></div>${arsenalLineHTML(p)}
         </div>
         <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${p.overall_rank != null ? "#" + p.overall_rank : (p.org_rank != null ? "#" + p.org_rank : "—")}</span></div>${rankTrendHTML(p)}</div>
         <div style="text-align:center;">${latest && latest.consensus_fv_label != null ? `<span class="fv-badge ${fvClass(fvLabel)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}${liveTrendHTML(p)}` : `<span style="color:var(--text-tertiary);">—</span>`}</div>
@@ -38722,8 +38767,13 @@ const _lazyChartObserver = ("IntersectionObserver" in window)
         const id = el.dataset.lazyChart;
         const args = _lazyChartArgs.get(id);
         if (args) {
+          // Measure the cell's actual rendered size so the chart's SVG
+          // coordinate space matches its pixels 1:1 (no warped text). The
+          // placeholder is width/height:100% of the chart cell, so its
+          // client box is the real chart area.
+          const dims = { width: el.clientWidth, height: el.clientHeight };
           el.innerHTML = makeLineChart(args.points, args.fvOpen, args.fvClose,
-                                       args.gradDate, args.trades, args.player);
+                                       args.gradDate, args.trades, args.player, dims);
           _lazyChartArgs.delete(id);
         }
         obs.unobserve(el);
