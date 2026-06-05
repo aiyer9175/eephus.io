@@ -7787,6 +7787,13 @@
           <option value="wide">Wide 16:9</option>
         </select>
       </label>
+      <label class="gfx-ctrl">Theme
+        <select id="gfx-theme" class="gfx-select">
+          <option value="auto">Auto (site)</option>
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </label>
       <label class="gfx-ctrl">Show
         <select id="gfx-count" class="gfx-select">
           <option value="10">Top 10</option>
@@ -13201,6 +13208,35 @@ function getFilteredActives() {
       if (bs == null) return -1;
       return (bs - as) || fvCmpDesc(a, b);
     });
+  } else if (state.sort === "surplus_sv" || state.sort === "surplus_risk"
+             || state.sort === "surplus_p10" || state.sort === "surplus_p90"
+             || state.sort === "surplus_pbust" || state.sort === "wag") {
+    // v38 — sort by the baked engine surplus outputs (single source of truth:
+    // read straight from the per-player surplus / debuted_value block). Expected
+    // SV / risk-adj / P10 / P90 sort DESC (bigger = better); P(bust) ASC (lowest
+    // bust risk first); WAG reads debuted players' WAR-above-grade. Missing sink;
+    // FV is the tiebreak. Header re-click toggles direction via _applySortDir.
+    const _sk = state.sort;
+    const _asc = (_sk === "surplus_pbust");
+    const _sval = p => {
+      const s = p.surplus, d = s && s.dist;
+      if (_sk === "surplus_sv")    return s ? s.value_mm : null;
+      if (_sk === "surplus_risk")  return d ? d.risk_adjusted_mm : null;
+      if (_sk === "surplus_p10")   return d ? d.p10_mm : null;
+      if (_sk === "surplus_p90")   return d ? d.p90_mm : null;
+      if (_sk === "surplus_pbust") return d ? d.p_bust : null;
+      if (_sk === "wag")           return (p.debuted_value && p.debuted_value.wag)
+                                          ? p.debuted_value.wag.regressed_wag : null;
+      return null;
+    };
+    pool.sort((a, b) => {
+      const av = _sval(a), bv = _sval(b);
+      const am = (av == null || !isFinite(av)), bm = (bv == null || !isFinite(bv));
+      if (am && bm) return fvCmpDesc(a, b);
+      if (am) return 1;
+      if (bm) return -1;
+      return (_asc ? (av - bv) : (bv - av)) || fvCmpDesc(a, b);
+    });
   } else if (state.sort === "age_asc") {
     pool.sort((a, b) => (a.age ?? 99) - (b.age ?? 99));
   } else if (state.sort === "age_vs_level") {
@@ -16292,6 +16328,8 @@ function renderLeaderboards() {
   // "hi"/"lo" let the user override to surface highest or lowest values.
   const _hiFirst = dir === "auto" ? cfg.hi : (dir === "hi");
   pool.sort((a, b) => _hiFirst ? (b.v - a.v) : (a.v - b.v));
+  _gfxSet("leaderboards", "leader", pool,        // snapshot for Generate GFX
+          { statLabel: cfg.label, fmt: cfg.fmt, level: state.lbLevel, season: state.lbSeason });
   const pageSize = state.pageSizes.leaderboard || 25;
   const totalItems = pool.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -23993,7 +24031,23 @@ const _GFX_FORMATS = {
   wide:     { w: 1600, h: 900,  label: "Wide 16:9" },
 };
 // User customization (persists across opens within a session).
-const _gfxOpts = { count: 50, title: "", accent: "", showValue: true, format: "portrait" };
+const _gfxOpts = { count: 50, title: "", accent: "", showValue: true, format: "portrait", theme: "auto" };
+let _gfxOrigTheme = null;
+// v38 — Force the GFX board (+ the open modal) to a chosen light/dark theme by
+// flipping the root data-theme. The board inherits ALL tokens + fv-badge tints
+// correctly (:root = light, [data-theme="dark"] = the only override), so this
+// needs no token duplication. "auto" uses the live site theme. The live theme
+// is saved on open and restored on close (localStorage is never touched).
+function _gfxApplyTheme() {
+  const root = document.documentElement;
+  if (_gfxOpts.theme === "light" || _gfxOpts.theme === "dark") {
+    root.setAttribute("data-theme", _gfxOpts.theme);
+  } else if (_gfxOrigTheme != null) {
+    root.setAttribute("data-theme", _gfxOrigTheme);
+  } else {
+    root.removeAttribute("data-theme");
+  }
+}
 const _GFX_ACCENTS = {
   cyan: "--neon-cyan", green: "--up", amber: "--neon-amber",
   violet: "--neon-violet", magenta: "--neon-magenta",
@@ -24252,7 +24306,20 @@ function buildGfxBoard() {
         <div style="font-size:15px;color:${P.text2};margin-top:9px;">${escapeHtml(subtitle)}</div>
       </div>
       <div style="text-align:right;flex:none;margin-left:24px;">
-        <div style="font-family:var(--font-retro);font-weight:700;font-size:19px;color:${accent};">PROSPX</div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:7px;">
+          <svg width="22" height="22" viewBox="0 0 44 44" style="flex:none;display:block;" aria-hidden="true">
+            <defs><linearGradient id="gfxBallSeam" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#B91C1C"/><stop offset="35%" stop-color="#C9A227"/>
+              <stop offset="65%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/>
+            </linearGradient></defs>
+            <circle cx="22" cy="22" r="19" fill="#FBF8F0" stroke="#C9C1AE" stroke-width="1"/>
+            <path d="M 32 8 Q 40 22 32 36" fill="none" stroke="url(#gfxBallSeam)" stroke-width="2.2"/>
+            <path d="M 12 8 Q 4 22 12 36" fill="none" stroke="url(#gfxBallSeam)" stroke-width="2.2"/>
+            <text x="18.5" y="30" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="20" fill="#0E2B4D">P</text>
+            <text x="26" y="30" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="20" fill="#B91C1C">X</text>
+          </svg>
+          <span style="font-family:var(--font-retro);font-weight:700;font-size:19px;color:${accent};">PROSPX</span>
+        </div>
         <div style="font-size:12px;color:${P.text3};margin-top:3px;">@ARKNDJL · ${dateStr}</div>
       </div>
     </div>
@@ -24295,6 +24362,8 @@ function _gfxRefresh() {
 function _gfxSyncControls() {
   const fmt = document.getElementById("gfx-format");
   if (fmt) fmt.value = _gfxOpts.format;
+  const th = document.getElementById("gfx-theme");
+  if (th) th.value = _gfxOpts.theme;
   const cnt = document.getElementById("gfx-count");
   if (cnt) cnt.value = String(_gfxOpts.count);
   const ti = document.getElementById("gfx-title-input");
@@ -24309,13 +24378,18 @@ function openGfxModal() {
   if (!overlay) return;
   // Reset the title override each open so the derived title tracks the section.
   _gfxOpts.title = "";
+  _gfxOrigTheme = document.documentElement.getAttribute("data-theme");
   overlay.classList.add("is-open");
+  _gfxApplyTheme();
   _gfxSyncControls();
   _gfxRefresh();
 }
 function closeGfxModal() {
   const overlay = document.getElementById("gfx-overlay");
   if (overlay) overlay.classList.remove("is-open");
+  // Restore the live site theme (we may have flipped it for a forced GFX theme).
+  if (_gfxOrigTheme != null) document.documentElement.setAttribute("data-theme", _gfxOrigTheme);
+  else document.documentElement.removeAttribute("data-theme");
   _gfxBoardEl = null;
 }
 // Rasterize the board at full res (strip the fit-scale transform first).
@@ -24379,6 +24453,10 @@ document.addEventListener("click", (e) => {
 document.addEventListener("change", (e) => {
   if (e.target.id === "gfx-format") {
     _gfxOpts.format = e.target.value;
+    _gfxRefresh();
+  } else if (e.target.id === "gfx-theme") {
+    _gfxOpts.theme = e.target.value;
+    _gfxApplyTheme();
     _gfxRefresh();
   } else if (e.target.id === "gfx-count") {
     const v = e.target.value;
@@ -38127,10 +38205,21 @@ function stuffPlusPillHTML(p) {
     "stf_plus");
 }
 function tradeValuePillHTML(p) {
-  const v = computeTradeValue(p);
+  // v38 — prefer the BAKED engine surplus (p.surplus.value_mm — the career-path
+  // mixture model, same source as the player-list Surplus column) so the detail
+  // pill and the list never disagree. Fall back to the legacy client estimate
+  // only when no baked block is present (e.g. a stale cached payload).
+  const baked = (p.surplus && p.surplus.value_mm != null) ? Number(p.surplus.value_mm) : null;
+  const v = baked != null ? baked : computeTradeValue(p);
   if (v == null) return "";
-  const formatted = v >= 100 ? `$${v.toFixed(0)}M` : v >= 10 ? `$${v.toFixed(1)}M` : `$${v.toFixed(1)}M`;
-  return `<span class="rps-plus-pill is-neutral g-term" data-term="tvi" style="color:var(--card-gold);border-color:var(--card-gold);background:rgba(201,162,39,0.10);" title="${escapeHtml(`Estimated MLB surplus value (Cleveland-derived FV→$ table) at consensus FV ${(p.points && p.points.length ? p.points[p.points.length - 1].consensus_fv_label : "?")}`)}">Sur+ ${formatted}</span>`;
+  const formatted = `$${v >= 100 ? v.toFixed(0) : v.toFixed(1)}M`;
+  const fvc = (baked != null && p.surplus.fv_continuous != null)
+    ? Number(p.surplus.fv_continuous).toFixed(1)
+    : (p.points && p.points.length ? p.points[p.points.length - 1].consensus_fv_label : "?");
+  const tip = baked != null
+    ? `Expected MLB surplus value ${formatted} from the career-path mixture engine — probability-weighted across five outcome buckets (bust→star) at FV ${fvc}. Click for methodology.`
+    : `Estimated MLB surplus value at consensus FV ${fvc}`;
+  return `<span class="rps-plus-pill is-neutral g-term" data-term="${baked != null ? "surplus_value" : "tvi"}" style="color:var(--card-gold);border-color:var(--card-gold);background:rgba(201,162,39,0.10);" title="${escapeHtml(tip)}">Sur+ ${formatted}</span>`;
 }
 
 // Composite helper for the prospect detail stat strip / rows — renders
