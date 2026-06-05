@@ -60,6 +60,16 @@ BASE_YEARS: dict[str, float] = {
     "DSL": 7.5,
 }
 
+# v38 — Item-4 ETA rebalance: shift weight from current level onto age.
+# The level base is modestly de-weighted (×0.90 — a ~10% compression of the
+# level term, so two players at different levels sit a touch closer and the
+# age-for-level term carries more of the differentiation), and the age_adj
+# tiers below are widened ~1.5×. Net effect: within ONE level tier, a young
+# prospect (e.g. a 19yo at High-A) now projects meaningfully earlier than an
+# old-for-level peer (e.g. a 24yo at High-A) instead of nearly tying them.
+# The young-floor still guards against absurd over-compression.
+_LEVEL_BASE_WEIGHT = 0.90
+
 # ── Static fallback expected ages — only used when the caller does not
 # supply empirical numbers from level_norms (e.g. unit tests).
 EXPECTED_AGES: dict[str, float] = {
@@ -262,6 +272,7 @@ def estimate_eta(
         base = max(0.0, 24.5 - age)
     else:
         signals += 1
+        base *= _LEVEL_BASE_WEIGHT   # item-4: modestly de-weight current level
 
     # ── Performance adjustment ──────────────────────────────────────────────
     if stats and current_level:
@@ -326,20 +337,26 @@ def estimate_eta(
     if age is not None and current_level in age_norm:
         expected = age_norm[current_level]
         diff = age - expected
+        # v38 — Item-4: age_adj tiers widened ~1.5× so age differentiates ETA
+        # strongly WITHIN a level tier (paired with the de-weighted level base
+        # above). A 19yo at A+ (diff ≈ −3 → −1.15) now projects ~1.9y earlier
+        # than a 24yo at A+ (diff ≈ +2 → +0.70), vs ~1.25y under the old tiers.
         if diff <= -4.0:
-            age_adj = -1.00   # 4+ years young-for-level: aggressive fast-track
+            age_adj = -1.50   # 4+ years young-for-level: aggressive fast-track
         elif diff <= -3.0:
-            age_adj = -0.75   # 3+ years young-for-level: elite fast-track
+            age_adj = -1.15   # 3+ years young-for-level: elite fast-track
         elif diff <= -2.0:
-            age_adj = -0.50
+            age_adj = -0.80
         elif diff <= -1.0:
-            age_adj = -0.25
+            age_adj = -0.40
+        elif diff >= 4.0:
+            age_adj = +1.25   # 4+ years old-for-level: deep org filler
         elif diff >= 3.0:
-            age_adj = +0.75   # 3+ years old-for-level: organizational filler
+            age_adj = +1.00   # 3+ years old-for-level: organizational filler
         elif diff >= 2.0:
-            age_adj = +0.50
+            age_adj = +0.70
         elif diff >= 1.0:
-            age_adj = +0.25
+            age_adj = +0.35
         signals += 1
 
     # ── FV adjustment ──────────────────────────────────────────────────────
