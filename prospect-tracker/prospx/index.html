@@ -1936,6 +1936,11 @@
       vertical-align: middle;
       flex-shrink: 0;
       background: transparent;
+      /* v41 — keep the pixel-art logos crisp when the browser scales the baked
+         252px asset down to the 20-76px render sizes (nearest-neighbor). */
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
     }
     .team-logo-sm { width: 20px; height: 20px; }
     .team-logo-md { width: 32px; height: 32px; }
@@ -24528,7 +24533,7 @@ function _gfxTeamLogo(org, P, px) {
   const wrap = `display:inline-flex;align-items:center;justify-content:center;height:${s}px;min-width:${s}px;vertical-align:middle;`;
   if (!url) return `<span style="${wrap}">${abbr}</span>`;
   return `<span style="${wrap}">`
-    + `<img src="${url}" crossorigin="anonymous" alt="${escapeHtml(org)}" style="height:${s}px;width:auto;max-width:${s + 8}px;object-fit:contain;display:block;" `
+    + `<img src="${url}" crossorigin="anonymous" alt="${escapeHtml(org)}" style="height:${s}px;width:auto;max-width:${s + 8}px;object-fit:contain;display:block;image-rendering:pixelated;" `
     + `onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">`
     + `<span style="display:none;font-family:var(--font-mono);font-size:${fs}px;font-weight:700;color:${P.text2};letter-spacing:0.02em;">${escapeHtml(org)}</span>`
     + `</span>`;
@@ -25543,8 +25548,14 @@ const ESPN_LOGO_SLUGS = {
 };
 function teamLogoURL(org) {
   if (!org) return null;
-  const slug = ESPN_LOGO_SLUGS[org] || org.toLowerCase();
-  return `https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png`;
+  // v41 — Pixelated local assets (assets/logos/pixel/<ORG>.png) replace the clean
+  // ESPN CDN logos to match the low-fi / retro aesthetic. Baked at a 36px grid +
+  // a beige sprite outline (invisible in light mode, a legibility halo in dark).
+  // Same-origin, so they rasterize cleanly in the Generate GFX output (no CORS).
+  // Regenerate via tools/pixelate_logos.py; ESPN originals kept in assets/logos/orig/.
+  // Any org outside the 30-team map falls back to the live CDN logo.
+  if (ESPN_LOGO_SLUGS[org]) return `/assets/logos/pixel/${org}.png`;
+  return `https://a.espncdn.com/i/teamlogos/mlb/500/${org.toLowerCase()}.png`;
 }
 
 // Highlight tracked-prospect names inside a transaction description.
