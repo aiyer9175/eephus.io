@@ -1,6 +1,8 @@
 [
-  { "name": "Noah J. Dengler", "handle": "ARKNDJL" },
-  { "name": "Will Cahoon",     "handle": "WillColqhn" },
-  { "name": "Michael Behrens",  "handle": null },
-  { "name": "Anirudh Iyer",     "handle": null }
+  { "name": "Noah J. Dengler",   "handle": "ARKNDJL",   "note": "PROSPX Creator" },
+  { "name": "Will Cahoon",       "handle": "WillColqhn" },
+  { "name": "Michael Behrens",   "handle": null },
+  { "name": "Anirudh Iyer",      "handle": null },
+  { "name": "Joseph Gillis",     "handle": null },
+  { "name": "Charlie Mortellite", "handle": null }
 ]
