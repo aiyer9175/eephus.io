@@ -3,6 +3,7 @@
 # can be rebuilt by running `py -3 run_monthly.py`.
 .cache/
 prospects.db
+prospects.db.bak*
 prospects.db-journal
 prospects.db-wal
 prospects.db-shm

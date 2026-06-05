@@ -1427,6 +1427,146 @@ def scrape_just_baseball(url: str, label: str, snap_date: str,
     return rows
 
 
+# FanGraphs org-list tool-label → canonical key. The org Top-N articles render
+# each prospect as a TheBoard "tool-item" card with a present/future grade
+# table; map FG's full-word labels onto the same canonical keys every other
+# source uses so the grades aggregate cross-source. Velocity ("Sits/Tops") and
+# bio fields are NOT 20-80 tool grades and are skipped.
+FG_TOOL_KEY = {
+    "hit": "hit",
+    "game power": "game_pwr", "power": "game_pwr",
+    "raw power": "raw_pwr",
+    "run": "speed", "speed": "speed",
+    "fielding": "field", "field": "field",
+    "throw": "throw", "throws": "throw", "arm": "throw",
+    "pitch selection": "pitch_sel", "selection": "pitch_sel",
+    "bat control": "bat_ctrl",
+    "fastball": "fb", "sinker": "fb",
+    "slider": "sl",
+    "curveball": "cb", "curve": "cb",
+    "changeup": "ch", "change": "ch",
+    "cutter": "ct",
+    "command": "cmd", "control": "cmd",
+}
+
+# Heading inside each .tool-item: "1. Konnor Griffin , SS".
+_FG_HEAD_RE = re.compile(r"^\s*(\d{1,3})\.\s+(.+?)\s*,\s*([A-Za-z0-9/]+)\s*$")
+# FV-tier section header: "70 FV Prospects" / "45+ FV Prospects".
+_FG_TIER_RE = re.compile(r"^\s*(\d{2})(\+)?\s*FV\b", re.I)
+
+
+def _parse_fg_tool_table(table) -> dict[str, float] | None:
+    """Parse a FanGraphs 2-row tool table (header-label row + present/future
+    value row, e.g. 'Hit' → '40/60'). Returns canonical-keyed FUTURE grades,
+    range-validated via sanitize_fv. Bio/velocity columns are skipped."""
+    trs = table.find_all("tr")
+    if len(trs) < 2:
+        return None
+    headers = [c.get_text(" ", strip=True).lower() for c in trs[0].find_all(["td", "th"])]
+    values = [c.get_text(" ", strip=True) for c in trs[1].find_all(["td", "th"])]
+    if not headers or not values:
+        return None
+    tools: dict[str, float] = {}
+    for hdr, raw in zip(headers, values):
+        key = FG_TOOL_KEY.get(hdr.strip())
+        if not key:
+            continue
+        # "40/60" → future 60; "70" → 70. Two-digit grades only (skips velo).
+        m = re.search(r"(\d{2})(?:\s*/\s*(\d{2}))?", raw)
+        if not m:
+            continue
+        try:
+            grade = float(m.group(2) or m.group(1))
+        except ValueError:
+            continue
+        if 20.0 <= grade <= 80.0:   # range-validate (drop typos/velocity), as JB tools do
+            tools[key] = grade
+    return tools or None
+
+
+def scrape_fangraphs_org_list(url: str, label: str, snap_date: str,
+                              org: str, force: bool = False) -> list[Snapshot]:
+    """Scrape a FanGraphs org Top-N prospect article (TheBoard 'tool-item'
+    cards): FV (bio table, falling back to the FV-tier header), present/future
+    tool grades, and the prose writeup. Stored under source='fangraphs'.
+
+    `org` is the canonical org code stamped on every prospect — org lists
+    don't repeat the team per player. Mirrors scrape_just_baseball's contract.
+    """
+    if date.fromisoformat(snap_date) > date.today():
+        return []
+    cache_key = "fg_" + re.sub(r"[^a-z0-9]+", "_", label.lower())
+    fr = _fetch(url, cache_key, force=force)
+    if fr.status != 200:
+        log.error("fangraphs %s: HTTP %d", label, fr.status)
+        return []
+    soup = BeautifulSoup(fr.body, "html.parser")
+    rows: list[Snapshot] = []
+    seen: set[str] = set()
+    n_with_tools = 0
+    for item in soup.select("div.tool-item"):
+        hdr = item.find(["h2", "h3", "h4"])
+        if not hdr:
+            continue
+        m = _FG_HEAD_RE.match(hdr.get_text(" ", strip=True))
+        if not m:
+            continue
+        rank = int(m.group(1))
+        name = m.group(2).strip()
+        position = m.group(3).strip().split("/")[0]
+        if not (1 <= rank <= 200) or name in seen:
+            continue
+        seen.add(name)
+        # FV-tier header preceding this card → tier FV + '+' marker.
+        tier_fv = None
+        fv_plus = False
+        for prev in hdr.find_all_previous(["h1", "h2", "h3", "h4"]):
+            tm = _FG_TIER_RE.match(prev.get_text(" ", strip=True))
+            if tm:
+                tier_fv = float(tm.group(1))
+                fv_plus = bool(tm.group(2))
+                break
+        # Bio table FV (preferred) + the tool-grade table(s).
+        fv = None
+        tools: dict | None = None
+        for tbl in item.find_all("table"):
+            cells = [c.get_text(" ", strip=True) for c in tbl.find_all(["td", "th"])]
+            low = [c.lower() for c in cells]
+            if "fv" in low:                       # bio key/value table
+                i = low.index("fv")
+                if i + 1 < len(cells):
+                    fvv, fp = _parse_fv_full(cells[i + 1])
+                    if fvv is not None:
+                        fv = fvv
+                    fv_plus = fv_plus or fp
+                continue
+            t = _parse_fg_tool_table(tbl)          # tool-grade table
+            if t:
+                tools = {**(tools or {}), **t}
+        if fv is None and tier_fv is not None and 20.0 <= tier_fv <= 80.0:
+            fv = tier_fv
+        if tools:
+            n_with_tools += 1
+        # Writeup — prose paragraphs inside the card.
+        paragraphs = [fix_mojibake(p.get_text(" ", strip=True))
+                      for p in item.find_all("p") if p.get_text(strip=True)]
+        prose = "\n\n".join(p for p in paragraphs if p).strip()
+        if prose and len(prose) > 60:
+            tools = tools or {}
+            cleaned = _clean_report_prose(prose)
+            if cleaned:
+                tools.setdefault("_extras", {})["report"] = cleaned[:8000]
+        rows.append(Snapshot(
+            source="fangraphs", snapshot_date=snap_date, interval_label=label,
+            player_key=normalize_key(name), player_name=name,
+            position=position, org=org, rank=rank, fv=fv, status="active",
+            tools=tools, fv_plus=fv_plus,
+        ))
+    log.info("fangraphs %s -> %d players (%d with tools)%s", label, len(rows), n_with_tools,
+             "" if rows else " (parser returned 0 rows — page structure may have changed)")
+    return rows
+
+
 # --- MLB Pipeline (mlb.com/milb/prospects/<year>/top100/) -----------------
 # Each year's archived Top 100 page is server-rendered HTML with the full
 # ranking embedded as an Apollo Client cache (HTML-encoded JSON inside the
