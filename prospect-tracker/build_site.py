@@ -127,16 +127,20 @@ def _fmt_date(s: str) -> str:
         except ValueError:
             return s
 
-def _byline(meta: dict, sep: str = " · ") -> str:
+def _byline(meta: dict, sep: str = " · ", link_handle: bool = True) -> str:
+    # link_handle=False when the byline sits INSIDE a card <a> (nested <a> is
+    # invalid HTML and the browser splits the card apart) — render @handle as text.
     author = html.escape(meta.get("author", "") or "")
     handle = (meta.get("handle") or "").lstrip("@")
     parts = [f'<span class="author">{author}</span>'] if author else []
     if handle:
-        parts.append(f'<a href="https://x.com/{html.escape(handle)}">@{html.escape(handle)}</a>')
-    out = sep.join(parts)
+        parts.append(
+            f'<a href="https://x.com/{html.escape(handle)}">@{html.escape(handle)}</a>'
+            if link_handle else f'<span class="handle">@{html.escape(handle)}</span>'
+        )
     if meta.get("date_disp"):
-        out += f'<span class="dot-sep">·</span>{html.escape(meta["date_disp"])}'
-    return out
+        parts.append(html.escape(meta["date_disp"]))
+    return sep.join(parts)
 
 # --------------------------------------------------------------------------- #
 # Page shell
@@ -180,29 +184,47 @@ def page(title: str, active: str, body: str, description: str = "") -> str:
 # --------------------------------------------------------------------------- #
 # Page builders
 # --------------------------------------------------------------------------- #
-def build_home() -> str:
-    cards = [
-        ("Read", "Articles", "Analysis &amp; long-form on prospects, development, and the game.", "Browse articles →", "/articles/"),
-        ("Tool", "PROSPX", "Consensus FV-based MiLB prospect tracker with surplus-value analytics.", "Open PROSPX →", "/prospx/"),
-        ("About", "Development Team", "The people building eephus.io.", "Meet the team →", "/team/"),
-    ]
-    mod = "".join(
-        f'<a class="card module-card" href="{href}">'
-        f'<div class="eyebrow">{eye}</div><h2>{html.escape(name)}</h2>'
-        f'<p>{desc}</p><span class="card-cta">{cta}</span></a>'
-        for eye, name, desc, cta, href in cards
-    )
+def build_home(articles: list[dict]) -> str:
+    # Lead with the latest article as a real teaser (it speaks for itself — no
+    # "Articles: analysis & long-form…" intro copy), then PROSPX, then the team.
+    latest = articles[0] if articles else None
+    if latest:
+        articles_card = (
+            f'<a class="card article-card" href="/articles/{latest["slug"]}/">'
+            '<div class="eyebrow">Latest</div>'
+            f'<p class="meta">{_byline(latest, link_handle=False)}</p>'
+            f'<h2>{html.escape(latest["title"])}</h2>'
+            f'<p>{html.escape(latest.get("summary", ""))}</p>'
+            '<span class="card-cta">Read →</span></a>'
+        )
+    else:
+        articles_card = ('<a class="card module-card" href="/articles/">'
+                         '<div class="eyebrow">Read</div><h2>Articles</h2>'
+                         '<span class="card-cta">Browse articles →</span></a>')
+
+    prospx_card = ('<a class="card module-card" href="/prospx/">'
+                   '<div class="eyebrow">Tool</div><h2>PROSPX</h2>'
+                   '<p>Consensus-FV prospect tracker with surplus value, tool grades, '
+                   'and development metrics.</p>'
+                   '<span class="card-cta">Open PROSPX →</span></a>')
+
+    team = json.loads((CONTENT / "team.json").read_text(encoding="utf-8"))
+    names = " · ".join(html.escape(m["name"]) for m in team)
+    team_card = ('<a class="card module-card" href="/team/">'
+                 '<div class="eyebrow">Team</div><h2>Development Team</h2>'
+                 f'<p>{names}</p>'
+                 '<span class="card-cta">Meet the team →</span></a>')
+
     body = (
         '<section class="hero">'
         '<h1>eephus<span class="dot">.io</span></h1>'
         '<div class="hero-rule"></div>'
-        "<p>An editorial baseball-analytics portal — long-form articles, the PROSPX "
-        "prospect tracker, and the people behind it.</p>"
-        "</section>"
-        f'<div class="module-grid">{mod}</div>'
+        '<p>Prospect analysis and the PROSPX tracker.</p>'
+        '</section>'
+        f'<div class="module-grid">{articles_card}{prospx_card}{team_card}</div>'
     )
-    return page("eephus.io — editorial baseball analytics", "home", body,
-                "Editorial baseball analytics portal: articles, the PROSPX prospect tracker, and the team.")
+    return page("eephus.io", "home", body,
+                "Baseball prospect analysis and the PROSPX prospect tracker.")
 
 def build_articles_index(articles: list[dict]) -> str:
     cards = []
@@ -211,15 +233,14 @@ def build_articles_index(articles: list[dict]) -> str:
         cards.append(
             f'<a class="card article-card" href="/articles/{a["slug"]}/">'
             '<div class="eyebrow">Article</div>'
-            f'<p class="meta">{_byline(a)}</p>'
+            f'<p class="meta">{_byline(a, link_handle=False)}</p>'
             f'<h3>{html.escape(a["title"])}</h3>'
             f"<p>{excerpt}</p>"
             '<span class="card-cta">Read →</span></a>'
         )
     grid = "".join(cards) or '<p>No articles yet.</p>'
     body = (
-        '<div class="section-head"><h1>Articles</h1>'
-        '<span class="section-sub">analysis &amp; long-form from the eephus desk</span></div>'
+        '<div class="section-head"><h1>Articles</h1></div>'
         f'<div class="article-grid">{grid}</div>'
     )
     return page("Articles — eephus.io", "articles", body, "Long-form baseball analysis from eephus.io.")
@@ -251,8 +272,7 @@ def build_team() -> str:
             f'<div class="card team-card"><p class="name">{html.escape(m["name"])}</p>{handle_html}</div>'
         )
     body = (
-        '<div class="section-head"><h1>Development Team</h1>'
-        '<span class="section-sub">the people building eephus.io</span></div>'
+        '<div class="section-head"><h1>Development Team</h1></div>'
         f'<div class="team-grid">{"".join(cards)}</div>'
     )
     return page("Development Team — eephus.io", "team", body, "The team behind eephus.io.")
@@ -270,7 +290,7 @@ def main() -> None:
     articles = [parse_article(p) for p in sorted(art_dir.glob("*.md"))] if art_dir.exists() else []
     articles.sort(key=lambda a: a.get("date_sort", ""), reverse=True)  # newest first
 
-    _write("index.html", build_home())
+    _write("index.html", build_home(articles))
     _write("articles/index.html", build_articles_index(articles))
     for a in articles:
         _write(f"articles/{a['slug']}/index.html", build_article_page(a))

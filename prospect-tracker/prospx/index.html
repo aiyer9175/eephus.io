@@ -4319,6 +4319,20 @@
     }
     .gfx-list-btn:hover { background: var(--neon-cyan); color: var(--bg-primary); }
     .gfx-list-btn .gfx-list-btn-icon { font-size: 13px; line-height: 1; }
+    /* v40 — Detail-page (prospect / farm) GFX button. Same outlined-cyan
+       treatment as the list button but sized to sit inline in the header
+       action row (no margin-left:auto — it's placed deliberately). */
+    .gfx-card-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-sans); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 6px 11px; background: var(--bg-secondary); color: var(--text-primary);
+      border: 1px solid var(--neon-cyan); border-radius: var(--radius-sm);
+      cursor: pointer; white-space: nowrap;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+    }
+    .gfx-card-btn:hover { background: var(--neon-cyan); color: var(--bg-primary); }
+    .gfx-card-btn .gfx-card-btn-icon { font-size: 12px; line-height: 1; }
     /* In card mode, reveal the .card-only elements (they ship with
        inline display:none for back-compat) and hide the now-redundant
        hero pieces (rank cell, logo cell, org cell, grade cell) since
@@ -7996,11 +8010,11 @@
         <span class="global-ctrl-label">Compare</span>
         <span class="global-ctrl-count" id="global-compare-count">0</span>
       </button>
-      <button class="global-ctrl" id="generate-gfx-btn" type="button"
-              title="Generate a shareable PROSPX graphic of the current list + filters">
-        <span aria-hidden="true">📊</span>
-        <span class="global-ctrl-label">Generate GFX</span>
-      </button>
+      <!-- v40 — The global "Generate GFX" masthead button was removed: it
+           duplicated the per-list inline button on list pages and rendered
+           the wrong (last-list) snapshot on detail pages. GFX now lives once
+           per page: inline in each list header, and in the prospect / farm
+           detail page headers. -->
       <button class="global-ctrl" id="global-theme-toggle" type="button"
               aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
         <span class="theme-icon" aria-hidden="true">☾</span>
@@ -24388,6 +24402,9 @@ function _gfxPalette() {
     bg: g("--bg-secondary", "#0f1b2d"), text: g("--text-primary", "#e8eef5"),
     text2: g("--text-secondary", "#a8b5c8"), text3: g("--text-tertiary", "#6b7a8f"),
     border: g("--border-light", "#1e2535"), cyan: g("--neon-cyan", "#00d9ff"),
+    // v40 — card templates need the page + panel surfaces for tile contrast.
+    bg0: g("--bg-primary", "#0b1422"), bg3: g("--bg-tertiary", "#16202e"),
+    borderStrong: g("--border", "#2a3445"),
   };
 }
 function _gfxAccentColor(P) {
@@ -24566,9 +24583,316 @@ function _gfxFooterNote(kind) {
   }[kind] || "";
 }
 
+// ===========================================================================
+// v40 — Single-subject GFX CARDS (prospect detail + farm detail). Distinct from
+// the list BOARD below: each renders ONE subject as a shareable card. They reuse
+// the GFX palette + theme-forcing so they match the list graphics and the live
+// site. buildGfxBoard() branches to these on the snapshot's `kind`.
+// ===========================================================================
+function _gfxWordmark(accent, P, px) {
+  const s = px || 22;
+  return `<div style="display:flex;align-items:center;gap:7px;">
+    <svg width="${s}" height="${s}" viewBox="0 0 44 44" style="flex:none;display:block;" aria-hidden="true">
+      <defs><linearGradient id="gfxSeam${s}" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#B91C1C"/><stop offset="35%" stop-color="#C9A227"/>
+        <stop offset="65%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/>
+      </linearGradient></defs>
+      <circle cx="22" cy="22" r="19" fill="#FBF8F0" stroke="#C9C1AE" stroke-width="1"/>
+      <path d="M 32 8 Q 40 22 32 36" fill="none" stroke="url(#gfxSeam${s})" stroke-width="2.2"/>
+      <path d="M 12 8 Q 4 22 12 36" fill="none" stroke="url(#gfxSeam${s})" stroke-width="2.2"/>
+      <text x="18.5" y="30" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="20" fill="#0E2B4D">P</text>
+      <text x="26" y="30" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="20" fill="#B91C1C">X</text>
+    </svg>
+    <span style="font-family:var(--font-retro);font-weight:700;font-size:${Math.round(s * 0.86)}px;color:${accent};letter-spacing:0.02em;">PROSPX</span>
+  </div>`;
+}
+
+function buildProspectCard(snap) {
+  const p = (snap.items && snap.items[0]) || null;
+  const P = _gfxPalette();
+  const accent = _gfxAccentColor(P);
+  // Prospect cards are portrait by default; honor a user format change otherwise.
+  const fmt = _GFX_FORMATS[_gfxOpts.format] || _GFX_FORMATS.portrait;
+  const W = fmt.w, H = fmt.h;
+  const board = document.createElement("div");
+  if (!p) {
+    board.style.cssText = `width:${W}px;min-height:${H}px;background:${P.bg};color:${P.text};display:flex;align-items:center;justify-content:center;font-family:var(--font-retro);font-size:24px;`;
+    board.textContent = "No prospect selected";
+    return { board, total: 0, w: W, h: H };
+  }
+  const fmtAvg = v => (v == null) ? null : Number(v).toFixed(3).replace(/^0(?=\.)/, "");
+  const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+  const fvLabel = (latest && latest.consensus_fv_label != null) ? String(latest.consensus_fv_label)
+                : (p.fv_close != null ? String(Math.round(p.fv_close)) : null);
+  const fvNum = (p.fv_close != null) ? Math.round(p.fv_close) : (fvLabel ? parseInt(fvLabel, 10) : null);
+  const dateStr = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const sl = p.statline || {};
+
+  // Rarity frame — holographic for 60+ FV (chrome at 70+), per spec.
+  const rarity = (fvNum != null && fvNum >= 70) ? "chrome"
+               : (fvNum != null && fvNum >= 61) ? "holo"
+               : (fvNum != null && fvNum >= 60) ? "gold" : "plain";
+  const frameBg = rarity === "chrome" ? "linear-gradient(135deg,#dfe2ea 0%,#aab0be 25%,#f6f7fb 50%,#9097a8 75%,#dfe2ea 100%)"
+                : rarity === "holo"   ? "linear-gradient(135deg,#B91C1C,#C9A227,#1F7A3A,#0E2B4D,#7d3cff,#B91C1C)"
+                : rarity === "gold"   ? "linear-gradient(135deg,#C9A227,#f0d77a,#C9A227)"
+                : accent;
+  const framePad = rarity === "plain" ? 4 : 10;
+
+  // Headshot — rectangular crop with silhouette fallback (matches site).
+  const hsURL = (_gfxOpts.photos !== false && p.mlbam_id) ? _gfxHeadshotURL(p.mlbam_id, 240) : "";
+  const headshot = `<div style="width:240px;height:300px;flex:none;border:1px solid ${P.borderStrong};border-radius:8px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 62%;background-size:52%;position:relative;">
+    ${hsURL ? `<img src="${hsURL}" crossorigin="anonymous" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 18%;" onerror="this.style.display='none';">` : ""}
+  </div>`;
+
+  const fvBadgeBig = fvLabel
+    ? `<span class="fv-badge ${fvClass(fvLabel)}" style="font-size:64px;line-height:1;padding:12px 22px;border-radius:10px;font-weight:800;display:inline-block;">${escapeHtml(fvLabel)}</span>`
+    : `<span style="font-size:56px;font-weight:800;color:${P.text3};">—</span>`;
+
+  // Tool grades (20-80) — same key sets the detail page uses.
+  const grades = (p.tools && p.tools.grades) || {};
+  const ltc = (latest && latest.tools_consensus) || {};
+  const getT = k => { const v = grades[k]; if (v != null && !isNaN(v)) return Number(v); const lv = ltc[k]; return (lv != null && !isNaN(lv)) ? Number(lv) : null; };
+  const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true);
+  const toolKeys = isPitcher
+    ? [["FB", "fb"], ["SL", "sl"], ["CB", "cb"], ["CH", "ch"], ["CMD", "cmd"], ["FRM", "frame"], ["ATHL", "athl"]]
+    : [["HIT", "hit"], ["PWR", "pwr"], ["SPD", "speed"], ["FLD", "field"], ["ARM", "throw"], ["FRM", "frame"], ["ATHL", "athl"]];
+  const toolPills = toolKeys.map(([lab, k]) => {
+    const v = getT(k); if (v == null) return "";
+    const c = v >= 60 ? "var(--up)" : v >= 50 ? P.text : v >= 40 ? "var(--neon-amber)" : "var(--down)";
+    return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:13px 4px;background:${P.bg};border:1px solid ${P.border};border-radius:7px;">
+      <span style="font-family:var(--font-mono);font-size:30px;font-weight:700;color:${c};line-height:1;">${fvCeil(v)}</span>
+      <span style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.05em;color:${P.text3};">${lab}</span>
+    </div>`;
+  }).filter(Boolean);
+  const toolsRow = toolPills.length ? `<div style="display:flex;gap:8px;">${toolPills.join("")}</div>` : "";
+
+  // Key metrics — 3-6 most signal-rich populated stats (statcast first).
+  const cq = (p.statcast_metrics && p.statcast_metrics.contact_quality) || {};
+  const scPlus = (typeof getStatcastPlus === "function") ? getStatcastPlus(p) : null;
+  const rps = (typeof getRpsPlus === "function") ? getRpsPlus(p) : null;
+  const zRow = (() => {
+    const z = p.zone_metrics; if (!z) return null;
+    const arr = (z.level_splits && z.level_splits.length) ? z.level_splits : (Object.keys(z).length ? [z] : []);
+    if (!arr.length) return null;
+    if (sl.level) { const m = arr.find(s => s && s.level === sl.level); if (m) return m; }
+    return arr.slice().sort((a, b) => (b.pitches || 0) - (a.pitches || 0))[0] || null;
+  })();
+  const stats = [];
+  const push = (l, v) => { if (v != null && v !== "") stats.push([l, v]); };
+  if (scPlus != null) push("Statcast+", String(scPlus));
+  if (!isPitcher) {
+    if (sl.avg != null && sl.obp != null && sl.slg != null) push("Slash", `${fmtAvg(sl.avg)}/${fmtAvg(sl.obp)}/${fmtAvg(sl.slg)}`);
+    else if (sl.ops != null) push("OPS", Number(sl.ops).toFixed(3).replace(/^0(?=\.)/, ""));
+    if (cq.avg_ev != null) push("Exit Velo", cq.avg_ev.toFixed(1) + " mph");
+    if (cq.barrel_pct != null) push("Barrel%", cq.barrel_pct.toFixed(1) + "%");
+    if (cq.hard_hit_pct != null) push("Hard-Hit%", cq.hard_hit_pct.toFixed(1) + "%");
+    if (zRow && zRow.chase_pct != null) push("Chase%", zRow.chase_pct.toFixed(1) + "%");
+    if (zRow && zRow.z_contact_pct != null) push("Z-Contact%", zRow.z_contact_pct.toFixed(1) + "%");
+    if (sl.hr != null) push("HR", String(sl.hr));
+    if (sl.sb != null) push("SB", String(sl.sb));
+    if (rps && rps.plus != null) push("RPS+", String(rps.plus));
+  } else {
+    if (sl.era != null) push("ERA", Number(sl.era).toFixed(2));
+    if (sl.whip != null) push("WHIP", Number(sl.whip).toFixed(2));
+    if (sl.ip != null) push("IP", String(sl.ip));
+    const pm = (p.statcast_metrics && p.statcast_metrics.pitch_movement) || {};
+    const top = (pm.pitch_summary || [])[0];
+    if (top && top.avg_velo != null) push((top.pitch_type || "FB") + " Velo", top.avg_velo.toFixed(1) + " mph");
+    if (zRow && zRow.whiff_pct != null) push("Whiff%", zRow.whiff_pct.toFixed(1) + "%");
+    if (zRow && zRow.chase_pct != null) push("Chase%", zRow.chase_pct.toFixed(1) + "%");
+    if (sl.k_per_9 != null) push("K/9", Number(sl.k_per_9).toFixed(1));
+    if (sl.bb_per_9 != null) push("BB/9", Number(sl.bb_per_9).toFixed(1));
+    if (rps && rps.plus != null) push("RPS+", String(rps.plus));
+  }
+  const statsShown = stats.slice(0, 6);
+  const statsGrid = statsShown.length ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">${statsShown.map(([l, v]) => `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 16px;background:${P.bg};border:1px solid ${P.border};border-radius:7px;">
+      <span style="font-family:var(--font-sans);font-size:13px;font-weight:600;letter-spacing:0.03em;color:${P.text3};text-transform:uppercase;">${escapeHtml(l)}</span>
+      <span style="font-family:var(--font-mono);font-size:19px;font-weight:700;color:${P.text};font-variant-numeric:tabular-nums;">${escapeHtml(String(v))}</span>
+    </div>`).join("")}</div>` : "";
+
+  // Status flags already shown on the detail page.
+  const chains = (typeof fvBadgeChainClasses === "function") ? fvBadgeChainClasses(p) : "";
+  const ilNow = (p.il_status && p.il_status.is_on_il) ? p.il_status : null;
+  const flagChip = (txt, bg, col, bd) => `<span style="font-family:var(--font-sans);font-size:13px;font-weight:700;letter-spacing:0.03em;padding:7px 13px;border-radius:999px;background:${bg};color:${col};border:1px solid ${bd || col};">${txt}</span>`;
+  const flags = [];
+  if (p.breakout_flag) flags.push(flagChip("★ Breakout", "rgba(127,255,212,0.18)", "#0a8f73", "#7FFFD4"));
+  if (chains && chains.includes("is-wide")) flags.push(flagChip("Wide FV spread", P.bg3, P.text2, P.border));
+  if (ilNow) flags.push(flagChip(`${escapeHtml(ilNow.type || "")} IL`, "rgba(185,28,28,0.12)", "var(--down)", "var(--down)"));
+  if ((p.health_profile || {}).is_post_tj) flags.push(flagChip("Post-TJ", P.bg3, P.text2, P.border));
+  const flagsRow = flags.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;">${flags.join("")}</div>` : "";
+
+  // One-line scouting blurb from the latest FanGraphs report (omit if absent).
+  let blurb = "";
+  for (let i = (p.points || []).length - 1; i >= 0; i--) {
+    const fg = p.points[i] && p.points[i].per_source && p.points[i].per_source.fangraphs;
+    const ex = fg && fg.tools && fg.tools._extras;
+    if (ex && ex.report) { blurb = String(ex.report).trim(); break; }
+  }
+  if (blurb.length > 230) { const cut = blurb.slice(0, 230); const d = cut.lastIndexOf(". "); blurb = d > 130 ? cut.slice(0, d + 1) : cut.trim() + "…"; }
+  const blurbHTML = blurb ? `<div style="font-family:var(--font-retro);font-size:16px;line-height:1.5;color:${P.text2};font-style:italic;border-left:3px solid ${accent};padding-left:15px;">${escapeHtml(blurb)}</div>` : "";
+
+  const eta = p.eta || {};
+  const metaLine = [p.position, (typeof fullOrgName === "function" && p.org) ? fullOrgName(p.org) : p.org, sl.level].filter(Boolean).join("  ·  ");
+  const orgLogo = (_gfxOpts.logos !== false && p.org) ? _gfxTeamLogo(p.org, P, 38) : "";
+  const eyebrow = `Prospect Card${p.overall_rank != null ? `  ·  #${p.overall_rank} overall` : ""}`;
+
+  board.style.cssText = `width:${W}px;min-height:${H}px;box-sizing:border-box;background:${frameBg};padding:${framePad}px;font-family:var(--font-sans);`;
+  board.innerHTML = `
+    <div style="background:${P.bg0};border-radius:${framePad > 5 ? 6 : 4}px;box-sizing:border-box;min-height:${H - framePad * 2}px;padding:44px 44px 28px;display:flex;flex-direction:column;color:${P.text};">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex:none;">
+        ${_gfxWordmark(accent, P, 26)}
+        <span style="font-family:var(--font-sans);font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};">${escapeHtml(eyebrow)}</span>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:28px;padding:30px 0;">
+        <div style="display:flex;gap:26px;align-items:stretch;">
+          ${headshot}
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:14px;">
+            <div>
+              <div style="display:flex;align-items:center;gap:12px;">
+                ${orgLogo}
+                <div style="font-family:var(--font-retro);font-size:44px;font-weight:700;line-height:1.03;color:${P.text};">${escapeHtml(p.player_name || "")}</div>
+              </div>
+              <div style="font-family:var(--font-mono);font-size:18px;color:${P.text2};margin-top:10px;">${escapeHtml(metaLine)}</div>
+              ${eta.year != null ? `<div style="font-family:var(--font-sans);font-size:15px;font-weight:600;color:${P.text3};margin-top:6px;">ETA ${escapeHtml(String(eta.year))}${eta.confidence ? ` · ${escapeHtml(eta.confidence)} confidence` : ""}</div>` : ""}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <span style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${P.text3};">Consensus FV</span>
+              <span>${fvBadgeBig}</span>
+            </div>
+          </div>
+        </div>
+        ${flagsRow}
+        ${toolsRow ? `<div><div style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};margin-bottom:10px;">Tool Grades · 20–80</div>${toolsRow}</div>` : ""}
+        ${statsGrid ? `<div><div style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};margin-bottom:10px;">Key Metrics</div>${statsGrid}</div>` : ""}
+        ${blurbHTML}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid ${P.border};padding-top:14px;flex:none;">
+        ${_gfxWordmark(accent, P, 20)}
+        <span style="font-family:var(--font-mono);font-size:13px;color:${P.text3};">@ARKNDJL · ${dateStr}</span>
+      </div>
+    </div>`;
+  return { board, total: 1, w: W, h: H };
+}
+
+// Letter-grade color for the farm card (A green / B cyan / C neutral / D-F red).
+function _gfxGradeColor(letter) {
+  if (!letter) return "var(--text-tertiary)";
+  const c = String(letter)[0].toUpperCase();
+  return c === "A" ? "var(--up)" : c === "B" ? "var(--neon-cyan)" : c === "C" ? "var(--text-primary)" : "var(--down)";
+}
+
+function buildFarmCard(snap) {
+  const org = (snap.items && snap.items[0]) || null;
+  const meta = snap.meta || {};
+  const P = _gfxPalette();
+  const accent = _gfxAccentColor(P);
+  // Farm cards default to landscape (wide); honor a user switch to portrait.
+  const fmt = _GFX_FORMATS[_gfxOpts.format] || _GFX_FORMATS.wide;
+  const W = fmt.w, H = fmt.h;
+  const landscape = W >= H;
+  const board = document.createElement("div");
+  if (!org) {
+    board.style.cssText = `width:${W}px;min-height:${H}px;background:${P.bg};color:${P.text};display:flex;align-items:center;justify-content:center;font-family:var(--font-retro);font-size:24px;`;
+    board.textContent = "No farm system selected";
+    return { board, total: 0, w: W, h: H };
+  }
+  const dateStr = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const g = meta.grades || org.grades || {};
+  const overall = g.overall || "—";
+  const orgName = (typeof fullOrgName === "function") ? fullOrgName(org.org) : org.org;
+  const logo = _gfxTeamLogo(org.org, P, 58);
+
+  // Condensed canopy — overall + the 4 top-level branch grades (with weights).
+  const sect = (title, body) => body ? `<div><div style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};margin-bottom:11px;">${title}</div>${body}</div>` : "";
+  const gradeChip = (label, letter, weight) => `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 6px;background:${P.bg};border:1px solid ${P.border};border-radius:8px;">
+      <span style="font-family:var(--font-retro);font-size:28px;font-weight:800;color:${_gfxGradeColor(letter)};line-height:1;">${escapeHtml(letter || "—")}</span>
+      <span style="font-family:var(--font-sans);font-size:11px;font-weight:700;letter-spacing:0.03em;color:${P.text3};text-transform:uppercase;text-align:center;">${escapeHtml(label)}</span>
+      ${weight ? `<span style="font-family:var(--font-mono);font-size:10px;color:${P.text3};">${weight}%</span>` : ""}
+    </div>`;
+  const branches = [["Development", g.development, 50], ["MLB Prod.", g.mlb_production, 20], ["Financial", g.financial, 18], ["Acquisition", g.acquisition_strategy, 12]];
+  const canopy = `<div style="display:flex;gap:8px;">${branches.map(b => gradeChip(b[0], b[1], b[2])).join("")}</div>`;
+
+  // Top 5 by FV — same row idiom as the main list (rank · FV pill · name · pos).
+  const top5 = meta.top5 || [];
+  const top5HTML = top5.length ? `<div>${top5.map((r, i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px solid ${P.border};">
+      <span style="font-family:var(--font-mono);font-size:16px;font-weight:700;color:${accent};width:24px;text-align:right;flex:none;">${i + 1}</span>
+      <span class="fv-badge ${fvClass(r.fvLabel)}" style="flex:none;">${escapeHtml(String(r.fvLabel))}</span>
+      <span style="flex:1;min-width:0;font-weight:700;font-size:17px;color:${P.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.name || "")}</span>
+      <span style="font-family:var(--font-mono);font-size:13px;color:${P.text3};flex:none;">${escapeHtml(r.pos || "")}</span>
+    </div>`).join("")}</div>` : "";
+
+  // FV distribution — glanceable horizontal bars by tier.
+  const dist = meta.dist || org.fv_distribution || {};
+  const bucket = (lo, hi) => Object.keys(dist).reduce((s, k) => { const n = Number(k); return s + ((n >= lo && n <= hi) ? (dist[k] || 0) : 0); }, 0);
+  const tiers = [["60+", bucket(60, 200)], ["55", bucket(55, 59)], ["50", bucket(50, 54)], ["45", bucket(45, 49)], ["40", bucket(40, 44)], ["≤35", bucket(0, 39)]];
+  const maxC = Math.max(1, ...tiers.map(t => t[1]));
+  const tierColor = { "60+": "var(--up)", "55": "var(--neon-cyan)", "50": "var(--neon-cyan)", "45": "var(--neon-amber)", "40": "var(--neon-amber)", "≤35": "var(--text-tertiary)" };
+  const distHTML = `<div style="display:flex;flex-direction:column;gap:8px;">${tiers.map(([lab, c]) => `
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="width:42px;flex:none;font-family:var(--font-mono);font-size:13px;color:${P.text2};text-align:right;">${lab}</span>
+      <div style="flex:1;height:18px;background:${P.bg};border:1px solid ${P.border};border-radius:4px;overflow:hidden;"><div style="height:100%;width:${Math.round(c / maxC * 100)}%;background:${tierColor[lab] || accent};"></div></div>
+      <span style="width:26px;flex:none;font-family:var(--font-mono);font-size:14px;font-weight:700;color:${P.text};text-align:right;">${c}</span>
+    </div>`).join("")}</div>`;
+
+  // Finances + a development metric.
+  const finItems = [];
+  if (meta.surplusStr && meta.surplusStr !== "—") finItems.push(["Farm surplus", meta.surplusStr]);
+  const dvm = meta.dvm || org.dvm_plus || {};
+  if (dvm["6y"] != null) finItems.push(["DvM+ 6y", String(dvm["6y"])]);
+  if (dvm["3y"] != null && finItems.length < 4) finItems.push(["DvM+ 3y", String(dvm["3y"])]);
+  if (g.development) finItems.push(["Dev grade", g.development]);
+  const finHTML = finItems.length ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">${finItems.map(([l, v]) => `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:12px 15px;background:${P.bg};border:1px solid ${P.border};border-radius:7px;">
+      <span style="font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;color:${P.text3};">${escapeHtml(l)}</span>
+      <span style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:${P.text};">${escapeHtml(String(v))}</span>
+    </div>`).join("")}</div>` : "";
+
+  const gap = `<div style="height:24px;flex:none;"></div>`;
+  const leftPanel = [sect("Grade canopy", canopy), sect("Finances & development", finHTML)].filter(Boolean).join(gap);
+  const rightPanel = [sect("Top 5 prospects", top5HTML), sect("FV distribution", distHTML)].filter(Boolean).join(gap);
+  const content = landscape
+    ? `<div style="flex:1;display:flex;gap:44px;align-items:flex-start;">
+         <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-start;">${leftPanel}</div>
+         <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-start;">${rightPanel}</div>
+       </div>`
+    : `<div style="flex:1;display:flex;flex-direction:column;gap:24px;">${leftPanel}${gap}${rightPanel}</div>`;
+
+  board.style.cssText = `width:${W}px;min-height:${H}px;box-sizing:border-box;background:${P.bg0};color:${P.text};font-family:var(--font-sans);padding:40px 44px 26px;display:flex;flex-direction:column;gap:24px;`;
+  board.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex:none;">
+      ${_gfxWordmark(accent, P, 24)}
+      <span style="font-family:var(--font-sans);font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};">Farm System Report</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex:none;border-bottom:3px solid ${accent};padding-bottom:18px;gap:20px;">
+      <div style="display:flex;align-items:center;gap:18px;min-width:0;">
+        <div style="display:flex;align-items:center;justify-content:center;height:64px;min-width:64px;">${logo}</div>
+        <div style="min-width:0;">
+          <div style="font-family:var(--font-retro);font-size:40px;font-weight:700;line-height:1.02;color:${P.text};">${escapeHtml(orgName)} <span style="font-size:21px;color:${P.text3};font-weight:700;">Farm System</span></div>
+          <div style="font-family:var(--font-mono);font-size:16px;color:${P.text2};margin-top:8px;">Farm rank #${escapeHtml(String(meta.farmRank != null ? meta.farmRank : (org.farm_rank != null ? org.farm_rank : "—")))} of 30 · ${escapeHtml(String(org.count != null ? org.count : (meta.gradedCount || "—")))} prospects tracked</div>
+        </div>
+      </div>
+      <div style="text-align:center;flex:none;">
+        <div style="font-family:var(--font-sans);font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${P.text3};margin-bottom:4px;">Overall</div>
+        <div style="font-family:var(--font-retro);font-size:62px;font-weight:800;line-height:1;color:${_gfxGradeColor(overall)};">${escapeHtml(String(overall))}</div>
+      </div>
+    </div>
+    ${content}
+    <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid ${P.border};padding-top:14px;flex:none;">
+      ${_gfxWordmark(accent, P, 20)}
+      <span style="font-family:var(--font-mono);font-size:13px;color:${P.text3};">@ARKNDJL · ${dateStr}</span>
+    </div>`;
+  return { board, total: 1, w: W, h: H };
+}
+
 // Build the full-resolution (1080px-wide) board from the current snapshot + opts.
 function buildGfxBoard() {
   const snap = _gfxSnapshot;
+  // v40 — single-subject card modes (prospect / farm detail) branch out early;
+  // they render ONE subject, not the list board.
+  if (snap && snap.kind === "prospect-card") return buildProspectCard(snap);
+  if (snap && snap.kind === "farm-card") return buildFarmCard(snap);
   const P = _gfxPalette();
   const accent = _gfxAccentColor(P);
   const fmt = _GFX_FORMATS[_gfxOpts.format] || _GFX_FORMATS.portrait;
@@ -24707,15 +25031,38 @@ function _gfxSyncControls() {
   document.querySelectorAll("[data-gfx-accent]").forEach(b =>
     b.classList.toggle("is-active", b.dataset.gfxAccent === (_gfxOpts.accent || "cyan")));
 }
+// v40 — card modes (single-subject prospect / farm graphics) vs the list board.
+function _gfxIsCard() {
+  const k = _gfxSnapshot && _gfxSnapshot.kind;
+  return k === "prospect-card" || k === "farm-card";
+}
+// Show only the controls that apply to the current mode. List-only knobs (count,
+// value column, title) are hidden on cards; the player-photos toggle is hidden on
+// farm cards (no headshots there).
+function _gfxApplyModeUI() {
+  const k = _gfxSnapshot && _gfxSnapshot.kind;
+  const card = (k === "prospect-card" || k === "farm-card");
+  const hide = (el, h) => { if (el) el.style.display = h ? "none" : ""; };
+  const ctrlOf = id => { const el = document.getElementById(id); return el ? el.closest(".gfx-ctrl") : null; };
+  hide(ctrlOf("gfx-count"), card);
+  hide(ctrlOf("gfx-showval"), card);
+  hide(ctrlOf("gfx-title-input"), card);
+  hide(ctrlOf("gfx-photos"), k === "farm-card");
+}
 function openGfxModal() {
   const overlay = document.getElementById("gfx-overlay");
   if (!overlay) return;
   // Reset the title override each open so the derived title tracks the section.
   _gfxOpts.title = "";
+  // Card modes have natural canvas defaults: prospect = portrait (card), farm =
+  // wide (landscape; it carries more horizontal data). Both stay user-switchable.
+  if (_gfxSnapshot && _gfxSnapshot.kind === "prospect-card") _gfxOpts.format = "portrait";
+  else if (_gfxSnapshot && _gfxSnapshot.kind === "farm-card") _gfxOpts.format = "wide";
   _gfxOrigTheme = document.documentElement.getAttribute("data-theme");
   overlay.classList.add("is-open");
   _gfxApplyTheme();
   _gfxSyncControls();
+  _gfxApplyModeUI();
   _gfxRefresh();
 }
 function closeGfxModal() {
@@ -24791,7 +25138,7 @@ async function copyGfx() {
 // Delegated wiring (button lives in the mounted template; overlay at body level).
 document.addEventListener("click", (e) => {
   if (!e.target.closest) return;
-  if (e.target.closest("#generate-gfx-btn") || e.target.closest(".gfx-list-btn")) { e.preventDefault(); openGfxModal(); return; }
+  if (e.target.closest(".gfx-list-btn") || e.target.closest(".gfx-card-btn")) { e.preventDefault(); openGfxModal(); return; }
   if (e.target.closest("#gfx-download")) { e.preventDefault(); downloadGfx(); return; }
   if (e.target.closest("#gfx-copy")) { e.preventDefault(); copyGfx(); return; }
   if (e.target.closest("#gfx-close")) { e.preventDefault(); closeGfxModal(); return; }
@@ -24848,8 +25195,9 @@ document.addEventListener("keydown", (e) => {
 // "Share as image" buttons: every GFX-able list gets its OWN button inline with
 // that list's controls (scoped to the list because openGfxModal reads the
 // section snapshot set by the list's render). Injected once into the static
-// section markup so each list header carries the action without 9 hand-edited
-// HTML copies. The persistent global header button stays as a fallback.
+// section markup so each list header carries the action without N hand-edited
+// HTML copies. v40 — this is now the ONLY GFX trigger on list pages (the global
+// masthead button was removed); detail pages carry their own .gfx-card-btn.
 function _gfxInjectListButtons() {
   const btnHTML = '<button class="gfx-list-btn" type="button" '
     + 'title="Generate a shareable PROSPX graphic of this list">'
@@ -24858,9 +25206,11 @@ function _gfxInjectListButtons() {
   // Every list section's inline controls row (active, injured, draft, overseas,
   // debuts, farm, leaderboards all render a .filter-toggle-row).
   document.querySelectorAll(".filter-toggle-row").forEach(addTo);
-  // Spotlights uses a bucket sub-tab strip; IFA uses its class filter bar.
+  // Spotlights uses a bucket sub-tab strip; IFA uses its class filter bar;
+  // Watchlist uses its sub-tab filter bar (its snapshot is the starred list).
   addTo(document.querySelector("#spotlights-section .spotlight-subtabs"));
   addTo(document.querySelector("#ifa-class-bar"));
+  addTo(document.querySelector("#watchlist-section .filter-bar"));
 }
 // Invoked from the boot sequence right after #main-template is mounted (the
 // section markup lives inside that inert <template> until then).
@@ -32977,6 +33327,10 @@ function renderPlayerDetail(key) {
     return;
   }
   const latest = p.points && p.points.length ? p.points[p.points.length - 1] : null;
+  // v40 — Snapshot for the prospect-detail Generate GFX card (kind drives the
+  // dedicated card template in buildGfxBoard). Set on every detail render so the
+  // header .gfx-card-btn always graphics the player currently in view.
+  _gfxSet("prospect-detail", "prospect-card", [p], {});
   const orgLink = p.org
     ? `<a href="#farm-org=${escapeHtml(p.org)}" onclick="event.preventDefault();goToFarm('${escapeHtml(p.org)}');" style="color:var(--neon-cyan);text-decoration:none;">${escapeHtml(p.org)}</a>`
     : "—";
@@ -33178,7 +33532,8 @@ function renderPlayerDetail(key) {
           return `<div><span class="detail-stock-chip ${cls}" title="${escapeHtml(tip)}">${arrow} ${sign}${s.delta.toFixed(1)} FV${sinceTxt ? `<span class="detail-stock-chip-since"> · ${escapeHtml(sinceTxt.trim())}</span>` : ""}</span></div>`;
         })()}
         ${latest && latest.avg_rank != null ? `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:4px;">Avg rank #${latest.avg_rank.toFixed(1)}</div>` : ""}
-        <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:10px;align-items:center;">
+        <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:10px;align-items:center;flex-wrap:wrap;">
+          <button class="gfx-card-btn" type="button" title="Generate a shareable PROSPX graphic of this prospect"><span class="gfx-card-btn-icon" aria-hidden="true">📊</span>Generate GFX</button>
           <button class="watch-btn${watchlistHas(p.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(p.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(p.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(p.player_key) ? "★" : "☆"}</button>
           <button class="watch-btn" id="detail-copy-url" type="button" title="Copy shareable link" aria-label="Copy link">🔗</button>
           <button class="watch-btn" id="detail-copy-key" type="button" data-copy-key="${escapeHtml(p.player_key)}" title="Copy player key" aria-label="Copy player key">⧉</button>
@@ -36161,7 +36516,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       <span class="newsprint-eyebrow-meta">${org.count} prospects tracked · ${org.total_fv != null ? org.total_fv.toFixed(0) + " total FV" : "—"}</span>
     </div>
     <div class="detail-page-header" style="${orgStripe(org.org)}">
-      <div style="display:flex;align-items:center;gap:16px;">
+      <div style="display:flex;align-items:center;gap:16px;flex:1;min-width:0;">
         ${teamLogoHTML(org.org, "xl", fullOrgName(org.org))}
         <div>
           <div class="player-display-name">${escapeHtml(fullOrgName(org.org))}</div>
@@ -36170,6 +36525,9 @@ function _renderFarmDetailBody(orgCode, org, root) {
             Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="45% top-end talent · 25% depth · 15% trajectory · 15% debut pipeline (each rescaled 0-100 across the 30 orgs)">#${org.farm_rank}</strong> of 30 · ${org.count} prospects tracked · Total FV <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : "—"}</strong>
           </div>
         </div>
+      </div>
+      <div style="display:flex;align-items:center;flex:none;">
+        <button class="gfx-card-btn" type="button" title="Generate a shareable PROSPX graphic of this farm system"><span class="gfx-card-btn-icon" aria-hidden="true">📊</span>Generate GFX</button>
       </div>
     </div>
     ${makeFarmReportCard(org)}
@@ -36223,6 +36581,32 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const surplusColor = farmSurplusBreakdown.total >= 500 ? "var(--up)"
                      : farmSurplusBreakdown.total >= 200 ? "var(--neon-cyan)"
                      : "var(--text-primary)";
+
+  // v40 — Snapshot for the farm-detail Generate GFX card. Computes the bits the
+  // card needs (top-5 by FV, FV distribution, surplus, dev metrics) from the
+  // same data the page renders, so the header .gfx-card-btn graphics this org.
+  {
+    const _top5 = rosterPlayersAll.slice()
+      .sort((a, b) => (b.fv_close || 0) - (a.fv_close || 0))
+      .slice(0, 5)
+      .map(p => {
+        const lt = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+        return {
+          name: p.player_name, pos: p.position, mlbam: p.mlbam_id,
+          fvLabel: (lt && lt.consensus_fv_label != null) ? String(lt.consensus_fv_label)
+                 : (p.fv_close != null ? String(Math.round(p.fv_close)) : "—"),
+          fv: p.fv_close,
+        };
+      });
+    let _dist = org.fv_distribution;
+    if (!_dist) { _dist = {}; for (const p of rosterPlayersAll) { if (p.fv_close == null) continue; const t = Math.round(p.fv_close); _dist[t] = (_dist[t] || 0) + 1; } }
+    _gfxSet("farm-detail", "farm-card", [org], {
+      top5: _top5, dist: _dist, farmRank: org.farm_rank,
+      surplusStr: surplusValue, surplusMM: farmSurplusBreakdown.total,
+      dvm: (org.dvm_plus || {}), grades: (org.grades || {}),
+      gradedCount: (org.prospects || []).length,
+    });
+  }
 
   // DvM+ tile — prioritized 3-up stat showing 1y / 3y / 6y development
   // vs the league mean as a wRC+/OPS+-style index (100 = league mean,
