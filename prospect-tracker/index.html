@@ -1323,7 +1323,7 @@
          widened to 50px so the "RANK" header label has room next to
          the diamond chip. FV history bumped to 1.8fr so the sparkline
          fills more of the available horizontal space. */
-      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr;
+      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr 0.75fr;
       grid-template-rows: auto auto;  /* v19 — row 1 = existing cells; row 2 = tool strip */
       gap: 14px;
       column-gap: 14px;
@@ -7538,6 +7538,11 @@
     }
     .gfx-swatch.is-active { border-color: var(--text-primary); }
 
+      /* v38 — SV overhaul surplus cell (baked p.surplus: expected SV + outcome-bucket
+       bar + distribution fan). Functions render mostly inline; this just lays out
+       the cell + the optional list-column. */
+    .surplus-cell { min-width: 0; display: flex; flex-direction: column; gap: 3px; align-items: stretch; }
+    .col-header.with-sv, .player-row.with-sv { }
   </style>
 
   <!-- Welcome-gate state, resolved synchronously before <body> paints so a
@@ -9270,7 +9275,13 @@ function fvToWarPeak(fv, isPitcher) {
   if (fv == null) return null;
   const vf = window.VALUE_FRAMEWORK;
   if (!vf) return null;
-  const table = vf.fv_to_war_peak[isPitcher ? "pitcher" : "hitter"];
+  // v38 — the overhauled engine renamed this table to fv_to_6yr_avg_war (the
+  // FanGraphs "6yr average WAR" anchor, not a peak). Read either + guard so a
+  // shape change never crashes boot. Surplus display now comes from the baked
+  // p.surplus block (makeSurplusCell); this stays only for the FV→WAR tooltip.
+  const _warTbl = vf.fv_to_war_peak || vf.fv_to_6yr_avg_war;
+  const table = _warTbl && _warTbl[isPitcher ? "pitcher" : "hitter"];
+  if (!table) return null;
   const f = Number(fv);
   if (!isFinite(f)) return null;
   if (f >= 80) return table["80"];
@@ -14668,6 +14679,7 @@ function renderActives() {
     <span class="desktop-only sort-header" data-sort-key="level_desc" title="MiLB level + age vs level. Click to sort by closeness to MLB (MLB → DSL); click again for the reverse.">MiLB · age vs. level</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="Physical profile: Height · Weight · BMI (colored by z-score vs same-position-bucket peers). B/T handedness now lives next to the age chip on each row, so the header reflects only what this column displays.">Ht · Wt · BMI</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
+    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="surplus_sv" title="Expected MLB surplus value ($M) from the career-path mixture engine, with the outcome-bucket bar (bust→star). Click to sort by expected SV.">Surplus</span>
   </div>`;
 
   const rows = pagedRows.map((p, i) => {
@@ -14697,6 +14709,7 @@ function renderActives() {
         ${makeMilbCell(p)}
         ${physClusterHTML(p)}
         ${makeEtaCell(p)}
+        <div class="desktop-only" style="align-self:center;min-width:0;">${makeSurplusCell(p)}</div>
         ${playerExpandedMetaHTML(p)}
         ${makeListRowSummary(p) ? `<div class="player-row-toolstrip">${makeListRowSummary(p)}</div>` : ""}
       </div>
@@ -15393,6 +15406,7 @@ function renderWatchlist() {
       <span class="desktop-only sort-header" data-sort-key="level_desc" title="MiLB level + age vs level. Click to sort by closeness to MLB.">MiLB · age vs. level</span>
       <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="Physical profile: Height · Weight · BMI.">Ht · Wt · BMI</span>
       <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
+      <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="surplus_sv" title="Expected MLB surplus value ($M) from the career-path mixture engine.">Surplus</span>
     </div>`;
     const pRows = pagedPlayers.map((p, i) => {
       const latest = p.points && p.points.length ? p.points[p.points.length - 1] : null;
@@ -24390,6 +24404,119 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+
+
+const SV_BUCKET_ORDER = (window.VALUE_FRAMEWORK && window.VALUE_FRAMEWORK.bucket_order)
+                        || ["bust", "bench", "regular", "good", "star"];
+const SV_BUCKET_COLOR = {
+  bust: "var(--down)", bench: "var(--text-tertiary)", regular: "var(--neon-amber)",
+  good: "var(--neon-cyan)", star: "var(--up)",
+};
+const SV_BUCKET_LABEL = {
+  bust: "Bust", bench: "Bench", regular: "Regular", good: "Good", star: "Star",
+};
+function svBucketBand(key) {
+  const b = window.VALUE_FRAMEWORK && window.VALUE_FRAMEWORK.buckets
+            && window.VALUE_FRAMEWORK.buckets[key];
+  return (b && b.band) ? `${b.band} WAR` : "";
+}
+
+// Compact $M formatter for SV displays (≥$10M → whole, ≥$1M → 1 dp, else $K),
+// with a real minus sign for negatives. Used by every new SV surface so units
+// + rounding are consistent.
+
+// ===== SV overhaul UI (ported from sv-engine) — baked p.surplus display =====
+// the baked engine SV: expected SV ($M) + the outcome-bucket stacked bar
+// (posterior for debuted players, FV prior otherwise) + the SV distribution fan
+// + a P(bust) tag. Everything reads p.surplus / p.debuted_value directly — no JS
+// recompute. Empty cell when the player has no baked surplus (keeps the grid).
+function makeSurplusCell(p) {
+  const s = p.surplus;
+  if (!s || s.value_mm == null) return `<div class="surplus-cell"></div>`;
+  const d = s.dist || {};
+  const buckets = (p.debuted_value && p.debuted_value.posterior)
+                  ? p.debuted_value.posterior : s.buckets;
+  const pb = d.p_bust != null ? Math.round(d.p_bust * 100) : null;
+  const wag = (p.debuted_value && p.debuted_value.wag)
+              ? p.debuted_value.wag.regressed_wag : null;
+  const svColor = s.value_mm >= 50 ? "var(--up)"
+                : s.value_mm >= 10 ? "var(--neon-cyan)" : "var(--text-primary)";
+  const tip = `Expected surplus ${fmtSvMM(s.value_mm)} (FV ${s.fv_continuous != null ? Number(s.fv_continuous).toFixed(1) : "?"})`
+    + (d.p10_mm != null ? ` · outcome range ${fmtSvMM(d.p10_mm)}–${fmtSvMM(d.p90_mm)}` : "")
+    + (pb != null ? ` · P(bust) ${pb}%` : "")
+    + (d.risk_adjusted_mm != null ? ` · risk-adj ${fmtSvMM(d.risk_adjusted_mm)}` : "")
+    + (wag != null ? ` · WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(2)}` : "")
+    + ". Open the player for the full distribution + methodology.";
+  return `<div class="surplus-cell" title="${escapeHtml(tip)}">
+      <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${svColor};font-variant-numeric:tabular-nums;line-height:1.05;">${fmtSvMM(s.value_mm)}</div>
+      ${buckets ? renderBucketBar(buckets, { height: 7 }) : ""}
+      ${d.p10_mm != null ? renderSvDistribution(d, { height: 13 }) : ""}
+      ${pb != null ? `<div style="font-family:var(--font-mono);font-size:9px;color:${pb >= 40 ? 'var(--down)' : 'var(--text-tertiary)'};line-height:1;">bust ${pb}%${wag != null ? ` · WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(1)}` : ""}</div>` : ""}
+    </div>`;
+}
+
+function fmtSvMM(m) {
+  if (m == null || !isFinite(m)) return "—";
+  const a = Math.abs(Number(m)), sign = m < 0 ? "−" : "";
+  if (a >= 10) return `${sign}$${Math.round(a)}M`;
+  if (a >= 1)  return `${sign}$${a.toFixed(1)}M`;
+  return `${sign}$${Math.round(a * 1000)}K`;
+}
+
+// Stacked outcome-bucket bar. `buckets` = {bust,bench,regular,good,star} probs
+// (0–1). opts: {height, labels (inline % when wide enough), legend (caption row)}.
+function renderBucketBar(buckets, opts) {
+  opts = opts || {};
+  if (!buckets) return "";
+  const segs = SV_BUCKET_ORDER
+    .map(k => ({ k, p: Number(buckets[k]) || 0 }))
+    .filter(s => s.p > 0);
+  if (!segs.length) return "";
+  const total = segs.reduce((s, x) => s + x.p, 0) || 1;
+  const h = opts.height || 12;
+  const bar = segs.map(s => {
+    const w = (s.p / total) * 100;
+    const pct = Math.round(s.p * 100);
+    const band = svBucketBand(s.k);
+    const tip = `${SV_BUCKET_LABEL[s.k]}${band ? ` (${band})` : ""}: ${pct}% chance`;
+    const lbl = (opts.labels && w >= 11)
+      ? `<span style="font-family:var(--font-mono);font-size:8px;font-weight:700;color:var(--text-on-accent);opacity:0.92;">${pct}</span>` : "";
+    return `<div title="${escapeHtml(tip)}" style="width:${w.toFixed(2)}%;background:${SV_BUCKET_COLOR[s.k]};height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;">${lbl}</div>`;
+  }).join("");
+  let legend = "";
+  if (opts.legend) {
+    legend = `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);">`
+      + segs.map(s => `<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:7px;height:7px;border-radius:1px;background:${SV_BUCKET_COLOR[s.k]};display:inline-block;"></span>${SV_BUCKET_LABEL[s.k]} ${Math.round(s.p * 100)}%</span>`).join("")
+      + `</div>`;
+  }
+  return `<div class="sv-bucket-bar" role="img" aria-label="Outcome-bucket probabilities" style="display:flex;width:100%;height:${h}px;border-radius:2px;overflow:hidden;border:1px solid var(--border-light);">${bar}</div>${legend}`;
+}
+
+// Percentile fan of the simulated SV distribution. `dist` = the baked
+// surplus.dist block ({p10_mm,p25_mm,p50_mm,p75_mm,p90_mm,mean_mm}). Draws a
+// P10–P90 band, a darker P25–P75 box, a median tick and an expected-value
+// (mean) tick. Self-scaled to its own P90 (a per-row sparkline of SHAPE, not a
+// cross-row scale). opts: {height, axis (P10/median/P90 labels under the bar)}.
+function renderSvDistribution(dist, opts) {
+  opts = opts || {};
+  if (!dist || dist.p50_mm == null || dist.p90_mm == null) return "";
+  const p10 = Number(dist.p10_mm), p25 = Number(dist.p25_mm), p50 = Number(dist.p50_mm),
+        p75 = Number(dist.p75_mm), p90 = Number(dist.p90_mm);
+  const mean = (dist.mean_mm != null && isFinite(dist.mean_mm)) ? Number(dist.mean_mm) : null;
+  const hi = Math.max(p90, mean != null ? mean : p90) * 1.04 || 1;   // floor at $0 (bust)
+  const X = v => Math.max(0, Math.min(100, (Number(v) / hi) * 100));
+  const h = opts.height || 22;
+  const band = `<div style="position:absolute;left:${X(p10).toFixed(2)}%;width:${(X(p90) - X(p10)).toFixed(2)}%;top:34%;height:32%;background:var(--neon-cyan);opacity:0.16;border-radius:3px;"></div>`;
+  const iqr  = (p25 != null && p75 != null)
+    ? `<div style="position:absolute;left:${X(p25).toFixed(2)}%;width:${(X(p75) - X(p25)).toFixed(2)}%;top:20%;height:60%;background:var(--neon-cyan);opacity:0.34;border-radius:3px;"></div>` : "";
+  const med  = `<div style="position:absolute;left:calc(${X(p50).toFixed(2)}% - 1px);top:8%;height:84%;width:2px;background:var(--text-primary);"></div>`;
+  const meanM = mean != null
+    ? `<div style="position:absolute;left:calc(${X(mean).toFixed(2)}% - 1px);top:0;height:100%;width:2px;background:var(--up);"></div>` : "";
+  const tip = `Simulated surplus outcomes — P10 ${fmtSvMM(p10)} · P25 ${fmtSvMM(p25)} · median ${fmtSvMM(p50)} · P75 ${fmtSvMM(p75)} · P90 ${fmtSvMM(p90)}${mean != null ? ` · expected ${fmtSvMM(mean)}` : ""}. Light band = P10–P90, inner box = P25–P75, dark line = median, green line = expected (mean).`;
+  const axis = opts.axis
+    ? `<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:8px;color:var(--text-tertiary);margin-top:2px;"><span>${fmtSvMM(p10)}</span><span>${fmtSvMM(p50)}</span><span>${fmtSvMM(p90)}</span></div>` : "";
+  return `<div class="sv-fan" title="${escapeHtml(tip)}" style="position:relative;width:100%;height:${h}px;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:3px;">${band}${iqr}${med}${meanM}</div>${axis}`;
+}
 
 // Global click delegate for pagination chips + detail-page tab buttons.
 // One listener handles every paginated view + both detail-page tab
@@ -35649,6 +35776,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
         ${makeMilbCell(p)}
         ${physClusterHTML(p)}
         ${makeEtaCell(p)}
+        <div class="desktop-only" style="align-self:center;min-width:0;">${makeSurplusCell(p)}</div>
         ${playerExpandedMetaHTML(p)}
         ${makeListRowSummary(p) ? `<div class="player-row-toolstrip">${makeListRowSummary(p)}</div>` : ""}
       </div>`;

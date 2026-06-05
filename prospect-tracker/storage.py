@@ -4507,7 +4507,235 @@ from value_framework import (
     is_pitcher_position as _vf_is_pitcher_position,
     dollars_per_war_flat as _dollars_per_war_flat,
     dollars_per_war as _dollars_per_war,
+    # v34 — richer per-prospect engine outputs baked into the export so the
+    # frontend shows the SAME timing/uncertainty the engine computes (Prompts
+    # H/G/I) and a per-org system rollup (Prompt K), rather than a timing-naive
+    # client-side curve lookup.
+    sv_distribution as _sv_distribution,
+    sv_credible_interval as _sv_credible_interval,
+    system_surplus_distribution as _system_surplus_distribution,
+    # v35 — full per-prospect contract: outcome-bucket probabilities, the
+    # debuted-player split (trade vs total vs realized), and the engine WAG, so
+    # the frontend reads EVERY new engine output rather than recomputing any of
+    # it in JS (single source of truth).
+    p_bucket_given_fv as _p_bucket_given_fv,
+    debuted_player_value as _debuted_player_value,
+    wag as _engine_wag,
+    wag_boom_bust as _engine_wag_boom_bust,
+    realized_consumed_seasons as _realized_consumed_seasons,
+    _BUCKETS as _SV_BUCKET_ORDER,
 )
+
+
+def _eta_years_from(eta, today_year):
+    """Years from now to projected debut, from the ETA estimate (half-season
+    aware). None when no ETA year is known -> the engine uses its config default."""
+    yr = getattr(eta, "eta_year", None) if eta is not None else None
+    if yr is None:
+        return None
+    yrs = float(yr) - float(today_year)
+    if getattr(eta, "eta_half", None) == "late":
+        yrs += 0.5
+    return max(0.0, yrs)
+
+
+def _build_surplus_payload(fv, is_pitcher, position, *, age=None, eta_years=None,
+                           fv_dispersion=None, n_sources=None):
+    """Bake value_framework's per-prospect engine outputs into the export so the
+    frontend renders the SAME numbers the engine computes -- not a timing-naive
+    client-side curve lookup:
+      * value_mm -- the TIMING-aware expected surplus (Prompt H: age + ETA shape
+        the aging curve and discount the control window from projected debut);
+      * ci       -- the epistemic CREDIBLE INTERVAL on expected surplus (Prompt G);
+      * dist     -- the SOURCE-DISAGREEMENT-widened outcome distribution (Prompt I:
+        fv_dispersion = the across-source FV stddev widens the spread, same mean).
+    Returns None when FV is missing/invalid. The ci/dist enrichment is wrapped so a
+    numerical hiccup degrades to the bare point value rather than sinking the export."""
+    if fv is None:
+        return None
+    point = _estimate_surplus_mm(fv, is_pitcher, position, age=age, eta_years=eta_years)
+    if point is None:
+        return None
+    # Store the is_pitcher the value was actually baked with, so the K rollup
+    # reuses the EXACT same classification (no re-derivation drift -> the system
+    # figure reconciles with the per-player headline). `fv_used` is the EXACT
+    # continuous FV the engine priced, so the frontend can show "FV the engine
+    # used" with zero drift (validation: displayed FV == engine FV).
+    out = {
+        "value_mm": point,
+        "is_pitcher": bool(is_pitcher),
+        "fv_used": round(float(fv), 2),
+        "fv_continuous": round(float(fv), 2),
+    }
+    if eta_years is not None:
+        out["eta_years"] = round(float(eta_years), 2)
+    # Outcome-bucket probabilities P(bucket|FV) over the five career buckets
+    # (bust/bench/regular/good/star) -- the prior shown as the stacked bar for a
+    # prospect (debuted players override this with the Bayes posterior).
+    try:
+        probs = _p_bucket_given_fv(float(fv), is_pitcher)
+        if probs is not None:
+            out["buckets"] = {b: round(float(pp), 4)
+                              for b, pp in zip(_SV_BUCKET_ORDER, probs)}
+    except Exception:
+        pass
+    try:
+        ci = _sv_credible_interval(fv, is_pitcher, position, age=age,
+                                   eta_years=eta_years, draws=_SURPLUS_CI_DRAWS)
+        if ci and ci.get("point_mm") is not None:
+            out["ci"] = {"lo_mm": ci["lo_mm"], "median_mm": ci["median_mm"],
+                         "hi_mm": ci["hi_mm"], "cred": ci["cred"], "regime": ci.get("regime")}
+        dist = _sv_distribution(fv, is_pitcher, position, age=age, eta_years=eta_years,
+                                fv_dispersion=fv_dispersion, n_sources=n_sources,
+                                draws=_SURPLUS_DIST_DRAWS)
+        if dist:
+            pcts = dist.get("percentiles", {})
+            # Carry the FULL percentile set the engine emits (p10/p25/p50/p75/p90
+            # at the shipped config) so the frontend can draw a percentile fan,
+            # plus the mean, spread, downside CVaR and the risk-adjusted score
+            # (mean - lambda*(mean - downside)) at the configured risk-aversion
+            # lambda. The frontend reads these directly -- it never re-runs MC.
+            out["dist"] = {
+                "p10_mm": pcts.get("p10"), "p25_mm": pcts.get("p25"),
+                "p50_mm": pcts.get("p50"), "p75_mm": pcts.get("p75"),
+                "p90_mm": pcts.get("p90"),
+                "percentiles": {k: round(float(v), 2) for k, v in pcts.items()},
+                "mean_mm": dist.get("mean"),
+                "std_mm": dist.get("std"),
+                "p_bust": dist.get("p_bust"), "downside_mm": dist.get("downside_metric"),
+                "risk_adjusted_mm": dist.get("risk_adjusted_score"),
+                "risk_lambda": dist.get("risk_aversion_lambda"),
+                "p_above_threshold": dist.get("p_above_threshold"),
+                "threshold_mm": dist.get("threshold_mm"),
+                "fv_dispersion": dist.get("fv_dispersion"),
+            }
+    except Exception:
+        pass   # enrichment only -- never let a MC/numerical hiccup sink the build
+    return out
+
+
+def _mlb_exposure_pa_ip(career_stats) -> tuple[float, float]:
+    """Sum MLB-level PA / IP across a player's career_stats rows -> a WAG exposure
+    fallback when no service-time decimal is on file."""
+    pa = ip = 0.0
+    for row in (career_stats or []):
+        if str(row.get("level") or "").upper() != "MLB":
+            continue
+        try:
+            p = row.get("pa")
+            pa += float(p) if p is not None else (float(row.get("ab") or 0) * 1.1)
+        except (TypeError, ValueError):
+            pass
+        try:
+            ip += float(row.get("ip") or 0)
+        except (TypeError, ValueError):
+            pass
+    return pa, ip
+
+
+def _engine_wag_result(fv, is_pitcher, position, observed_war, *, age=None,
+                       service_years=None, career_stats=None):
+    """The ONE engine-WAG computation path (value_framework.wag, Prompt M).
+    Resolves exposure from the service-time decimal (preferred) or summed MLB
+    PA/IP. Returns the full wag dict or None. Shared by the baked
+    debuted_value.wag, the boom/bust label, and the farm-grade WAG rollup so every
+    WAG figure on the site agrees (single source of truth -- replaces _grad_wag)."""
+    if fv is None or observed_war is None:
+        return None
+    try:
+        ow = float(observed_war)
+    except (TypeError, ValueError):
+        return None
+    try:
+        if service_years is not None:
+            return _engine_wag(fv, is_pitcher, ow, position=position,
+                               service_years=float(service_years), age=age)
+        pa, ip = _mlb_exposure_pa_ip(career_stats)
+        return _engine_wag(fv, is_pitcher, ow, position=position,
+                           exposure_pa=(pa or None), exposure_ip=(ip or None), age=age)
+    except Exception:
+        return None
+
+
+def _build_debuted_payload(fv, is_pitcher, position, *, age=None,
+                           career_war=None, roster_status=None,
+                           contract=None, career_stats=None):
+    """Bake the engine's DEBUTED-player split + WAG for a player who has reached the
+    majors (Prompts D + M). REALIZED (consumed control years, sunk) + REMAINING
+    (projected) trade value + their sum (total value), the Bayes-updated outcome
+    posterior, and the FV-vs-realized WAG. Every figure comes straight from
+    value_framework, so the frontend renders these directly -- this RETIRES the
+    prior JS realized-surplus salary model + grad-WAG recompute. Returns None when
+    there is no usable MLB WAR record (so a 0-MLB prospect carries no debuted block
+    and the UI hides every debuted-only field)."""
+    if fv is None:
+        return None
+    cw = career_war or {}
+    seasons = cw.get("seasons") or {}
+    observed_war = cw.get("career_war")
+    if observed_war is None or not seasons:
+        return None
+    rs = roster_status or {}
+    sy = rs.get("service_years_decimal")
+    service_years = float(sy) if sy is not None else None
+    salary_by_year = (contract or {}).get("salary_by_year") or {}
+    # Observed MLB exposure (the Bayes-update SAMPLE for Prompt D + WAG). Without
+    # it the bucket posterior would never move off the FV prior.
+    _obs_pa, _obs_ip = _mlb_exposure_pa_ip(career_stats)
+    out = {}
+    try:
+        consumed = _realized_consumed_seasons(seasons, salary_by_year=salary_by_year)
+        dv = _debuted_player_value(
+            fv, is_pitcher, position, observed_war=float(observed_war),
+            observed_pa=(_obs_pa or None), observed_ip=(_obs_ip or None),
+            service_time=(service_years if service_years is not None else 0.0),
+            age=age, consumed_seasons=consumed)
+        if dv:
+            rem = dv.get("remaining") or {}
+            rpct = rem.get("percentiles", {})
+            out.update({
+                "trade_value_mm": dv.get("trade_value_mm"),    # remaining control yrs (consumed = sunk)
+                "total_value_mm": dv.get("total_value_mm"),    # realized banked + remaining
+                "realized_mm": dv.get("realized_mm"),          # market value of consumed WAR - salary paid
+                "true_talent_war": dv.get("true_talent_war"),
+                "consumed_control_years": dv.get("consumed_control_years"),
+                "remaining_control_years": dv.get("remaining_control_years"),
+                # Bayes-updated outcome distribution -- the stacked bucket bar for a
+                # debuted player uses this posterior (vs the FV prior for prospects).
+                "posterior": dv.get("posterior"),
+                "prior": dv.get("prior"),
+                "remaining_dist": {
+                    "p10_mm": rpct.get("p10"), "p50_mm": rpct.get("p50"),
+                    "p90_mm": rpct.get("p90"), "p_bust": rem.get("p_bust"),
+                },
+            })
+    except Exception:
+        pass   # enrichment only -- a numerical hiccup must not sink the export
+    try:
+        w = _engine_wag_result(fv, is_pitcher, position, observed_war,
+                               age=age, service_years=service_years, career_stats=career_stats)
+        if w:
+            out["wag"] = {
+                "regressed_wag": w.get("regressed_wag"),
+                "regressed_lo": w.get("regressed_lo"),
+                "regressed_hi": w.get("regressed_hi"),
+                "counting_wag": w.get("counting_wag"),
+                "rate_wag": w.get("rate_wag"),
+                "percentile": w.get("percentile"),
+                "z": w.get("z"),
+                "expected_war": w.get("expected_war"),
+                "observed_war": w.get("observed_war"),
+                "true_talent_war": w.get("true_talent_war"),
+                "w_obs": w.get("w_obs"),
+                "below_meaningful_exposure": w.get("below_meaningful_exposure"),
+                # Standardized boom/bust label (percentile-keyed) -- the canonical
+                # categorical grade signal, replacing the legacy _compute_boom_bust.
+                "boom_label": _engine_wag_boom_bust(w),
+            }
+    except Exception:
+        pass
+    return out or None
+
 
 _PITCHER_POS_RE = re.compile(r"^(RHP|LHP|SP|RP|MIRP|SIRP|P)")
 
@@ -7173,6 +7401,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 _event_date_sort(ev),
             ),
         )[:10]
+        # v34/v35 — baked engine surplus: timing-aware expected SV ($M) + the
+        # outcome-bucket probabilities + the disagreement-widened distribution +
+        # (for debuted players) the trade/total/realized split + WAG. The frontend
+        # reads this block directly instead of recomputing a timing-naive curve.
+        _is_pitcher_vf = _vf_is_pitcher_position(p.position)
+        _surplus = _build_surplus_payload(
+            latest_fv, _is_pitcher_vf, p.position,
+            age=age, eta_years=_eta_years_from(eta, date.today().year),
+            fv_dispersion=(p.points[-1].fv_stddev if p.points else None))
+        _debuted_value = (
+            _build_debuted_payload(
+                latest_fv, _is_pitcher_vf, p.position, age=age,
+                career_war=career_war.get(p.player_key),
+                roster_status=roster_status.get(p.player_key),
+                contract=contracts_by_key.get(p.player_key),
+                career_stats=career_stats.get(p.player_key))
+            if p.status == "debuted" else None)
         payload = {
             "player_key": p.player_key,
             "player_name": p.player_name,
@@ -7217,6 +7462,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "fv_low_date": p.fv_low_date,
             "fv_open": p.fv_open,
             "fv_close": p.fv_close,
+            "surplus": _surplus,
+            "debuted_value": _debuted_value,
             # v26 — '+' upside flag on the latest observation. Used by
             # frontend sort comparators (42+ ranks above 42 < 43) and
             # for rendering "42+" on aggregate displays anchored on fv_close.
