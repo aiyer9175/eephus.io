@@ -126,6 +126,37 @@ def _mean(vals: list[float]) -> float | None:
     return round(sum(vals) / len(vals), 1) if vals else None
 
 
+def _mean_round(vals: list[float], digits: int = 1) -> float | None:
+    vals = [v for v in vals if v is not None]
+    return round(sum(vals) / len(vals), digits) if vals else None
+
+
+HOME_PLATE_Y_FT = 17 / 12
+
+
+def _calculate_vaa_from_coords(coords: dict) -> float | None:
+    """Vertical approach angle at the front of home plate, in degrees."""
+    try:
+        vy0 = float(coords["vY0"])
+        vz0 = float(coords["vZ0"])
+        ay = float(coords["aY"])
+        az = float(coords["aZ"])
+        y0 = float(coords.get("y0") or 50.0)
+        if ay == 0:
+            return None
+        discriminant = vy0 * vy0 - (2 * ay * (y0 - HOME_PLATE_Y_FT))
+        if discriminant < 0:
+            return None
+        vy_f = -math.sqrt(discriminant)
+        t = (vy_f - vy0) / ay
+        vz_f = vz0 + (az * t)
+        if vy_f == 0:
+            return None
+        return round(-math.degrees(math.atan(vz_f / vy_f)), 2)
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
 def _rounded_pct_parts(counts: dict[str, int]) -> dict[str, float]:
     """One-decimal percentages that sum to exactly 100.0 when possible."""
     total = sum(counts.values())
@@ -793,6 +824,10 @@ def _finalize_pitch(points: list[dict], outings: list[dict]) -> tuple[dict, dict
             "avg_hb": _mean([r.get("hb") for r in rows]),
             "avg_ivb": _mean([r.get("ivb") for r in rows]),
             "avg_spin": _mean([r.get("spin") for r in rows]),
+            "avg_extension": _mean([r.get("extension") for r in rows]),
+            "avg_release_height": _mean([r.get("release_height") for r in rows]),
+            "avg_plate_height": _mean([r.get("plate_height") for r in rows]),
+            "avg_vaa": _mean_round([r.get("vaa") for r in rows], 2),
             "usage_by_batter_side": side_usage,
         })
     summary.sort(key=lambda r: -r["count"])
@@ -919,6 +954,7 @@ def fetch_statcast_metrics_for_player(
                 pitch_type = (details.get("type") or {}).get("code")
                 pitch_name = (details.get("type") or {}).get("description") or pitch_type
                 breaks = pitch_data.get("breaks") or {}
+                coords = pitch_data.get("coordinates") or {}
                 if is_pitcher:
                     pitch_count += 1
                     if pitch_type:
@@ -936,6 +972,9 @@ def fetch_statcast_metrics_for_player(
                         "ivb": _safe_float(breaks.get("breakVerticalInduced")),
                         "spin": _safe_float(breaks.get("spinRate")),
                         "extension": _safe_float(pitch_data.get("extension")),
+                        "release_height": _safe_float(coords.get("z0")),
+                        "plate_height": _safe_float(coords.get("pZ")),
+                        "vaa": _calculate_vaa_from_coords(coords),
                     }
                     if point["hb"] is not None and point["ivb"] is not None:
                         tracked_pitch_count += 1
