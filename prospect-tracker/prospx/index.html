@@ -5997,6 +5997,25 @@
       .player-row .eta-cell,
       .player-row .phys-cell,
       .col-header .desktop-only { display: none; }
+      /* v43 — Mobile keeps the signature FV-history "stock chart": surface it as
+         a compact full-width strip at the BOTTOM of the card (desktop hides it
+         in the dense grid). `grid-column: 1 / 6` spans all five mobile tracks —
+         a bare `1 / -1` mis-resolves against the auto-placed items and collapses
+         to ~3 tracks. Card height -> auto so the chart + tool strip render in
+         full without clipping; both span the full card width. Scoped to the
+         standard prospect card so injured / traded / leaderboard / farm-roster
+         variants keep their own mobile collapse. */
+      .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) {
+        height: auto;
+        grid-template-rows: auto auto auto;
+        row-gap: 6px;
+      }
+      .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) > .line-chart-cell {
+        display: flex; grid-column: 1 / 6; grid-row: 3; height: 42px; align-self: stretch;
+      }
+      .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) > .player-row-toolstrip {
+        grid-column: 1 / 6; grid-row: 2;
+      }
       /* Row variants collapse to a name + key-stat layout on mobile so
          the wide desktop grids don't squish columns into illegibility. */
       .col-header.is-injured, .player-row.is-injured {
