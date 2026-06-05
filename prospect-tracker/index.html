@@ -2309,7 +2309,18 @@
     .row-tag.acq-rule5,
     .row-tag.acq-waiver     { color: var(--neon-amber); border-color: var(--neon-amber); background: rgba(232,165,31,0.06); }
     .row-tag.savant-inline-pill { color: var(--neon-violet); border-color: var(--neon-violet); background: rgba(107,79,168,0.10); }
-    .row-tag.arsenal-mini    { color: var(--neon-cyan);   border-color: var(--neon-cyan);   background: rgba(74,200,224,0.06); letter-spacing: 0.04em; }
+    .row-tag.arsenal-mini    { color: var(--neon-cyan);   border-color: var(--neon-cyan);   background: rgba(74,200,224,0.06); letter-spacing: 0.04em;
+      /* Pitch-mix pill ("FF 48 · CH 18 · SL 18") must stay on ONE line.
+         It lives in `.player-name` (inline-flex; flex-wrap:wrap); by
+         default it was a shrinkable flex item, so on narrow cards the flex
+         layout compressed it and its text wrapped to two lines. nowrap +
+         flex-shrink:0 keep the text on a single line at its natural width
+         (it flows to its own line under the name via the parent's wrap).
+         max-width:100% + ellipsis is the safety net so it can never spill
+         past its column into the rank/FV cells on the narrowest phones —
+         the full mix stays in the title tooltip. Purely layout; the pill's
+         colors / border / padding / font are untouched. */
+      white-space: nowrap; flex-shrink: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
     .row-tag.recent-acq      { color: var(--text-on-accent); border-color: var(--neon-cyan); background: var(--neon-cyan); text-transform: uppercase; letter-spacing: 0.06em; }
 
     /* Subtle full-row FV-tier background tint. Derived from the
@@ -4280,35 +4291,31 @@
     .farm-rows-cards .farm-card-top-prospects {
       padding: 4px 0;
     }
-    /* Share-as-image button — small ⤴ icon. Hover-reveal on list rows,
-       always-visible in detail-page headers. Style scoped via the
-       parent .farm-row / .player-row / .draft-card / etc. */
-    .share-as-image {
-      background: var(--bg-tertiary);
-      color: var(--text-secondary);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 2px 7px;
-      font-size: 11px;
+    /* Inline "Generate GFX" button for list headers (v39). Replaces the
+       per-card / per-detail Share-as-image buttons. Secondary / outlined
+       style with the cyan accent edge so it reads as a distinct action
+       without competing with primary CTAs. Right-aligns in its flex row. */
+    .gfx-list-btn {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 7px 12px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--neon-cyan);
+      border-radius: var(--radius-sm);
       cursor: pointer;
-      transition: background 0.1s, color 0.1s;
+      white-space: nowrap;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
     }
-    .share-as-image:hover {
-      background: var(--neon-cyan);
-      color: var(--bg-primary);
-    }
-    .share-as-image.share-inline {
-      font-size: 10px;
-      padding: 1px 5px;
-      opacity: 0;
-      transition: opacity 0.15s;
-    }
-    .farm-row:hover .share-as-image.share-inline,
-    .player-row:hover .share-as-image.share-inline,
-    .draft-card:hover .share-as-image.share-inline,
-    .debut-row:hover .share-as-image.share-inline {
-      opacity: 1;
-    }
+    .gfx-list-btn:hover { background: var(--neon-cyan); color: var(--bg-primary); }
+    .gfx-list-btn .gfx-list-btn-icon { font-size: 13px; line-height: 1; }
     /* In card mode, reveal the .card-only elements (they ship with
        inline display:none for back-compat) and hide the now-redundant
        hero pieces (rank cell, logo cell, org cell, grade cell) since
@@ -7754,17 +7761,14 @@
         grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)) !important;
       }
 
-      /* --- Pitcher list rows: the inline arsenal-mini ("FF 48 · CH 18 …")
-         and savant micro-pill sit in the upper name-meta with no clean
-         home at 390px — single-line they overflow the rank/FV columns,
-         wrapped they stack into an awkward tall pill. Hide them here; the
-         bottom tool/pitch grade strip (FB/SL/CB/CH) already carries the
-         arsenal, and the mobile-only RPS+/wRC+ pill carries the Statcast
-         line, so no signal is lost. --- */
+      /* --- Pitch-mix pill: enforced single-line everywhere it renders
+         (see .row-tag.arsenal-mini). But at ≤640px the list-row name
+         column is only ~90px wide after the headshot + action buttons, so
+         a single-line pill ellipsizes down to ~1 character. Rather than
+         show a useless stub, hide it on phones — the full arsenal is in
+         the bottom FB/SL/CB/CH grade strip and in the pill's tooltip. --- */
       .player-row .row-tag.arsenal-mini,
-      .player-row .row-tag.savant-inline-pill,
-      .spotlight-row .row-tag.arsenal-mini,
-      .spotlight-row .row-tag.savant-inline-pill { display: none; }
+      .spotlight-row .row-tag.arsenal-mini { display: none; }
 
       /* --- Tighten loose vertical space on the densest views. --- */
       .detail-page-header { padding: 10px 12px 10px 14px; gap: 8px; }
@@ -9139,8 +9143,7 @@
                  style="width:150px;font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
         </div>
         <div class="filter-group">
-          <button class="share-as-image" data-share-target="#chart-canvas-wrap"
-                  data-share-filename="chart" title="Save this chart as a PNG image">⤴ Save PNG</button>
+          <button class="chip" id="chart-save-png" type="button" title="Save this chart as a PNG image">⤴ Save PNG</button>
           <button class="chip reset-chip" type="button" id="chart-reset" title="Clear filters, color, and highlight">↺ Reset</button>
         </div>
       </div>
@@ -19095,11 +19098,6 @@ function _renderDraftCard(p) {
         : "Consensus rank");
 
   return `<div class="draft-card" style="position:relative;cursor:pointer;${p.org ? orgStripe(p.org) : ''}" onclick="if(event.target.closest('a,button'))return;goToDraftee('${escapeHtml(p.player_key)}');">
-    <button class="share-as-image share-inline"
-            data-share-target=".draft-card"
-            data-share-filename="draft-${escapeHtml(p.player_key)}"
-            style="position:absolute;top:4px;right:4px;"
-            title="Save this draft card as a PNG image">⤴</button>
     <div style="display:flex;align-items:center;gap:6px;min-width:0;">
       <span class="rank-num ${typeof rankNumRarityClass === 'function' ? rankNumRarityClass(p) : ''}"
             style="width:24px;height:24px;flex-shrink:0;"
@@ -20550,11 +20548,6 @@ function _renderOverseasCard(p) {
   // {small:true} mode so it tucks neatly next to the league chip.
   const leagueFlag = _flagImg(p.country_flag_svg, p.country_flag, p.country, { small: true });
   return `<div class="draft-card" style="position:relative;cursor:pointer;${p.org ? orgStripe(p.org) : ''}" onclick="if(event.target.closest('a,button'))return;goToOverseas('${escapeHtml(p.player_key)}');">
-    <button class="share-as-image share-inline"
-            data-share-target=".draft-card"
-            data-share-filename="overseas-${escapeHtml(p.player_key)}"
-            style="position:absolute;top:6px;right:6px;"
-            title="Save this overseas card as a PNG image">⤴</button>
     <div style="display:flex;align-items:center;gap:6px;min-width:0;">
       ${p._overseasRank != null
         ? `<span class="rank-num ${typeof rankNumRarityClass === 'function' ? rankNumRarityClass({ fv_close: p.consensus_fv }) : ''}" style="width:22px;height:22px;flex-shrink:0;"><span class="rank-num-inner" style="font-size:9px;">#${p._overseasRank}</span></span>`
@@ -24141,13 +24134,10 @@ function escapeHtml(s) {
 }
 
 // =============================================================================
-// IMAGE EXPORT — html2canvas wrapper for "Share as image" + "Copy as tweet"
+// IMAGE EXPORT — html2canvas wrapper (Generate GFX board + Scatterplot "Save PNG")
 // =============================================================================
-// Captures any DOM element to a 2x DPR PNG. The trigger HTML lives at each
-// share-button surface (.share-as-image[data-share-target=...]); a single
-// delegated click handler reads the target selector, finds the wrapping
-// element, rasterizes it, and triggers a download. Tweet flow opens the
-// Twitter compose intent with the page URL + a short caption pre-filled.
+// Captures any DOM element to a 2x-DPR PNG. Used by the Generate GFX board
+// export (_gfxCanvas) and the Scatterplots "Save PNG" utility (#chart-save-png).
 async function exportElementAsImage(el, opts = {}) {
   if (!window.html2canvas) {
     alert("Image export not ready — refresh and try again (vendor script still loading).");
@@ -24203,39 +24193,23 @@ async function downloadElementAsPng(el, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function openTweetIntent(text) {
-  const url = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text || "")
-            + "&url=" + encodeURIComponent(location.href);
-  window.open(url, "_blank", "noopener,width=600,height=480");
-}
-
-// Delegated click handler for .share-as-image buttons. Two flavors:
-//   * data-share-target=".css-selector" — picks the nearest ancestor
-//     matching the selector and rasterizes that subtree.
-//   * data-share-tweet="..." — opens a Twitter intent with the given
-//     caption (image-less share, since Twitter doesn't accept inline
-//     image uploads from a query param).
-// The button itself stays out of the captured screenshot (we hide it
-// while html2canvas runs and restore afterward).
+// v39 — The per-card / per-detail "Share as image" buttons were removed in
+// favor of the list-scoped Generate GFX flow (see the inline Generate GFX
+// buttons in each list header). The only remaining direct PNG export is the
+// Scatterplots "Save PNG" utility, which rasterizes the chart canvas — wired
+// here with a dedicated handler (downloadElementAsPng / exportElementAsImage
+// are still used by both this and the GFX board export).
 document.addEventListener("click", async (e) => {
-  const btn = e.target && e.target.closest && e.target.closest(".share-as-image");
+  const btn = e.target && e.target.closest && e.target.closest("#chart-save-png");
   if (!btn) return;
   e.stopPropagation();
   e.preventDefault();
-  const tweetText = btn.dataset.shareTweet;
-  if (tweetText !== undefined) {
-    openTweetIntent(tweetText);
-    return;
-  }
-  const sel = btn.dataset.shareTarget;
-  if (!sel) return;
-  const target = btn.closest(sel) || document.querySelector(sel);
+  const target = document.getElementById("chart-canvas-wrap");
   if (!target) return;
   const prevDisplay = btn.style.display;
   btn.style.display = "none";
   try {
-    const fname = (btn.dataset.shareFilename || "prospect-card") + ".png";
-    await downloadElementAsPng(target, fname);
+    await downloadElementAsPng(target, "chart.png");
   } finally {
     btn.style.display = prevDisplay || "";
   }
@@ -24488,22 +24462,76 @@ function _gfxSilhouetteBg(P) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="${fill}" d="M12 12.4a4.6 4.6 0 1 0 0-9.2 4.6 4.6 0 0 0 0 9.2zm0 1.9c-4.7 0-8.5 2.4-8.5 5.7V22h17v-2c0-3.3-3.8-5.7-8.5-5.7z"/></svg>`;
   return `url('data:image/svg+xml,${encodeURIComponent(svg)}')`;
 }
+// GFX headshot URL — DELIBERATELY omits MLB Cloudinary's `d_people:generic`
+// default param so a player with no headshot on file returns a real 404
+// (image/gif) instead of a silhouette served at HTTP 200. That 404 is what
+// lets the <img> onerror fire so the cell degrades to our own silhouette +
+// logs the miss. (The main-site headshotURL keeps the default on purpose.)
+function _gfxHeadshotURL(mlbamId, px) {
+  if (!mlbamId) return "";
+  const r = Math.max(120, Math.round((px || 52) * 2));
+  return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${r},q_auto:best/v1/people/${mlbamId}/headshot/67/current`;
+}
+// Track + log the mlbam_ids that 404'd at GFX render time so missing photos
+// can be audited. Called from the inline <img> onerror (global scope).
+const _gfxMissingPhotos = new Set();
+function _gfxLogMissingPhoto(id) {
+  if (id == null || _gfxMissingPhotos.has(id)) return;
+  _gfxMissingPhotos.add(id);
+  try { console.warn("[GFX] no MLB headshot for mlbam_id " + id + " — showing silhouette (" + _gfxMissingPhotos.size + " missing this session)"); } catch (_) {}
+}
+// Small inline team-logo mark for the meta line, with a styled abbreviation
+// badge fallback when the CDN image fails (img hidden → abbr sibling shown).
+// This is what makes the "team logos" toggle visible alongside player photos.
+function _gfxTeamLogo(org, P, px) {
+  if (!org) return "";
+  const s = px || 19;
+  const fs = Math.max(8, Math.round(s * 0.52));
+  const abbr = `<span style="font-family:var(--font-mono);font-size:${fs}px;font-weight:700;color:${P.text2};letter-spacing:0.02em;">${escapeHtml(org)}</span>`;
+  const url = (typeof teamLogoURL === "function") ? teamLogoURL(org) : null;
+  const wrap = `display:inline-flex;align-items:center;justify-content:center;height:${s}px;min-width:${s}px;vertical-align:middle;`;
+  if (!url) return `<span style="${wrap}">${abbr}</span>`;
+  return `<span style="${wrap}">`
+    + `<img src="${url}" crossorigin="anonymous" alt="${escapeHtml(org)}" style="height:${s}px;width:auto;max-width:${s + 8}px;object-fit:contain;display:block;" `
+    + `onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">`
+    + `<span style="display:none;font-family:var(--font-mono);font-size:${fs}px;font-weight:700;color:${P.text2};letter-spacing:0.02em;">${escapeHtml(org)}</span>`
+    + `</span>`;
+}
+// v39 — Avatar is now a RECTANGULAR portrait (matches the main-site headshot
+// crop), not a circle. Photos and logos are decoupled: a row with a player
+// photo shows the photo here and the team logo in the meta line (see
+// _gfxRowHasPhotoAvatar / rowHtml); a row without a player photo (farm rows,
+// or photos-off) shows the team logo as the avatar instead. The silhouette
+// SVG is the cell background, so a 404'd photo degrades to it (never a broken
+// image) and logs the miss.
+function _gfxRowHasPhotoAvatar(r) {
+  return !!(_gfxOpts.photos && r && r.mlbam);
+}
 function _gfxAvatar(r, P) {
-  const useP = _gfxOpts.photos && r && r.mlbam;
+  const useP = _gfxRowHasPhotoAvatar(r);
   const useL = _gfxOpts.logos && r && r.org;
   if (!useP && !useL) return "";
-  const size = 36;
-  const wrap = `width:${size}px;height:${size}px;border-radius:50%;flex:none;border:1px solid ${P.border};`
-    + `background-color:${P.bg};background-image:${_gfxSilhouetteBg(P)};background-position:center;background-size:58%;`
+  // Portrait crop ~3:4 — rectangular with a subtle 3px radius for polish.
+  const w = 40, h = 52;
+  const wrap = `width:${w}px;height:${h}px;border-radius:3px;flex:none;border:1px solid ${P.border};`
+    + `background-color:${P.bg};background-image:${_gfxSilhouetteBg(P)};background-position:center;background-size:62%;`
     + `background-repeat:no-repeat;overflow:hidden;display:inline-block;vertical-align:middle;`;
   if (useP) {
-    const hs = (typeof headshotURL === "function") ? headshotURL(r.mlbam, size * 2) : "";
-    const onerr = useL
-      ? `this.onerror=function(){this.style.display='none';};this.src='${teamLogoURL(r.org)}';this.style.objectFit='contain';this.style.padding='4px';this.style.boxSizing='border-box';`
-      : `this.style.display='none';`;
-    return `<span style="${wrap}"><img src="${hs}" crossorigin="anonymous" alt="" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="${onerr}"></span>`;
+    const hs = _gfxHeadshotURL(r.mlbam, h);
+    // No photo on file → 404 → fall through to the silhouette background and
+    // log the miss. The team logo (when enabled) shows in the meta line, so
+    // we deliberately do NOT swap the avatar to a logo here (avoids a double
+    // team logo on photo-less rows).
+    // typeof guard: html2canvas rasterizes inside a cloned iframe whose global
+    // scope does NOT have our functions, so a bare call would throw a
+    // ReferenceError there. typeof on an undeclared name is safe (returns
+    // "undefined") — in the live page it logs the miss, in the clone it no-ops,
+    // and display:none always runs so the photo degrades to the silhouette.
+    const onerr = `if(typeof _gfxLogMissingPhoto!=='undefined')_gfxLogMissingPhoto(${Number(r.mlbam) || 0});this.style.display='none';`;
+    return `<span style="${wrap}"><img src="${hs}" crossorigin="anonymous" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block;" onerror="${onerr}"></span>`;
   }
-  return `<span style="${wrap}"><img src="${teamLogoURL(r.org)}" crossorigin="anonymous" alt="" style="width:100%;height:100%;object-fit:contain;padding:4px;box-sizing:border-box;display:block;" onerror="this.style.display='none';"></span>`;
+  // Logo-as-avatar (farm rows, or photos toggled off): contain + padding.
+  return `<span style="${wrap}background-size:46%;"><img src="${teamLogoURL(r.org)}" crossorigin="anonymous" alt="${escapeHtml(r.org || "")}" style="width:100%;height:100%;object-fit:contain;padding:7px;box-sizing:border-box;display:block;" onerror="this.style.display='none';"></span>`;
 }
 // Footer legend per kind.
 function _gfxFooterNote(kind) {
@@ -24551,13 +24579,19 @@ function buildGfxBoard() {
     const lead = (r.fv != null)
       ? `<span class="fv-badge ${fvClass(r.fv)}" style="flex:none;">${escapeHtml(String(r.fv))}</span>`
       : `<span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${accent};flex:none;width:36px;text-align:center;">${r.rank != null ? "#" + r.rank : ""}</span>`;
+    // Team logo rides the meta line when the AVATAR is a player photo (so the
+    // team is still shown). When the avatar is already the team logo (photos
+    // off, or a photo-less / farm row), we skip the meta logo to avoid a
+    // duplicate. Gated by the logos toggle.
+    const metaLogo = (_gfxOpts.logos && r.org && _gfxRowHasPhotoAvatar(r))
+      ? _gfxTeamLogo(r.org, P, 18) : "";
     return `<div style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-bottom:1px solid ${P.border};">
-        <span style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:${P.text3};width:30px;text-align:right;flex:none;">${i + 1}</span>
+        <span style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:${accent};width:30px;text-align:right;flex:none;">${i + 1}</span>
         ${lead}
         ${_gfxAvatar(r, P)}
         <span style="min-width:0;flex:1;overflow:hidden;">
           <span style="font-weight:700;font-size:15px;color:${P.text};display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.name)}</span>
-          ${r.meta ? `<span style="font-family:var(--font-mono);font-size:11px;color:${P.text3};white-space:nowrap;">${escapeHtml(r.meta)}</span>` : ""}
+          ${(metaLogo || r.meta) ? `<span style="font-family:var(--font-mono);font-size:11px;color:${P.text3};white-space:nowrap;display:flex;align-items:center;gap:5px;">${metaLogo}${r.meta ? `<span style="overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.meta)}</span>` : ""}</span>` : ""}
         </span>
         ${(showVal && r.value) ? `<span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${accent};flex:none;">${escapeHtml(String(r.value))}</span>` : ""}
       </div>`;
@@ -24698,25 +24732,47 @@ async function downloadGfx() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 async function copyGfx() {
-  if (!navigator.clipboard || typeof ClipboardItem === "undefined") {
+  if (!navigator.clipboard || typeof navigator.clipboard.write !== "function"
+      || typeof ClipboardItem === "undefined") {
     alert("Clipboard image copy isn't supported in this browser — use Download PNG.");
     return;
   }
-  const canvas = await _gfxCanvas();
-  if (!canvas) return;
-  const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+  const cp = document.getElementById("gfx-copy");
+  const restore = (txt) => { if (cp) { const t = cp.dataset.label || cp.textContent; cp.dataset.label = ""; cp.textContent = txt; setTimeout(() => { cp.textContent = t; }, 1400); } };
+  if (cp && !cp.dataset.label) cp.dataset.label = cp.textContent;
+  // Render the PNG blob lazily INSIDE the ClipboardItem. Safari (WebKit)
+  // requires navigator.clipboard.write() to be invoked synchronously within
+  // the user-gesture and accepts a Promise<Blob> as the item value — awaiting
+  // html2canvas first (as the old code did) blew the gesture and threw
+  // NotAllowedError. Chrome/Edge/Firefox accept the Promise form too, so this
+  // one path works across browsers.
+  const pngBlob = (async () => {
+    const canvas = await _gfxCanvas();
+    if (!canvas) throw new Error("GFX render failed");
+    const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+    if (!blob) throw new Error("toBlob returned null");
+    return blob;
+  })();
   try {
-    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-    const cp = document.getElementById("gfx-copy");
-    if (cp) { const t = cp.textContent; cp.textContent = "Copied ✓"; setTimeout(() => { cp.textContent = t; }, 1400); }
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": pngBlob })]);
+    if (cp) { const t = cp.dataset.label || "Copy"; cp.textContent = "Copied ✓"; setTimeout(() => { cp.textContent = t; }, 1400); }
   } catch (e) {
-    alert("Couldn't copy to clipboard — use Download PNG.");
+    // Some engines (older Firefox) reject the Promise form — retry with a
+    // resolved blob before giving up.
+    try {
+      const blob = await pngBlob;
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      if (cp) { const t = cp.dataset.label || "Copy"; cp.textContent = "Copied ✓"; setTimeout(() => { cp.textContent = t; }, 1400); }
+    } catch (e2) {
+      console.error("copyGfx failed:", e2);
+      alert("Couldn't copy to clipboard — use Download PNG.");
+    }
   }
 }
 // Delegated wiring (button lives in the mounted template; overlay at body level).
 document.addEventListener("click", (e) => {
   if (!e.target.closest) return;
-  if (e.target.closest("#generate-gfx-btn")) { e.preventDefault(); openGfxModal(); return; }
+  if (e.target.closest("#generate-gfx-btn") || e.target.closest(".gfx-list-btn")) { e.preventDefault(); openGfxModal(); return; }
   if (e.target.closest("#gfx-download")) { e.preventDefault(); downloadGfx(); return; }
   if (e.target.closest("#gfx-copy")) { e.preventDefault(); copyGfx(); return; }
   if (e.target.closest("#gfx-close")) { e.preventDefault(); closeGfxModal(); return; }
@@ -24768,6 +24824,27 @@ document.addEventListener("keydown", (e) => {
     if (o && o.classList.contains("is-open")) closeGfxModal();
   }
 });
+
+// v39 — Per-list inline "Generate GFX" buttons. Replaces the removed per-card
+// "Share as image" buttons: every GFX-able list gets its OWN button inline with
+// that list's controls (scoped to the list because openGfxModal reads the
+// section snapshot set by the list's render). Injected once into the static
+// section markup so each list header carries the action without 9 hand-edited
+// HTML copies. The persistent global header button stays as a fallback.
+function _gfxInjectListButtons() {
+  const btnHTML = '<button class="gfx-list-btn" type="button" '
+    + 'title="Generate a shareable PROSPX graphic of this list">'
+    + '<span class="gfx-list-btn-icon" aria-hidden="true">\u{1F4CA}</span>Generate GFX</button>';
+  const addTo = (el) => { if (el && !el.querySelector(":scope > .gfx-list-btn")) el.insertAdjacentHTML("beforeend", btnHTML); };
+  // Every list section's inline controls row (active, injured, draft, overseas,
+  // debuts, farm, leaderboards all render a .filter-toggle-row).
+  document.querySelectorAll(".filter-toggle-row").forEach(addTo);
+  // Spotlights uses a bucket sub-tab strip; IFA uses its class filter bar.
+  addTo(document.querySelector("#spotlights-section .spotlight-subtabs"));
+  addTo(document.querySelector("#ifa-class-bar"));
+}
+// Invoked from the boot sequence right after #main-template is mounted (the
+// section markup lives inside that inert <template> until then).
 
 
 
@@ -30312,10 +30389,6 @@ function renderFarmSystems() {
         </div>
         <div class="farm-grade-cell" title="Overall grade · farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}/100">
           <span class="fg-letter" style="color:${gradeColorVal};font-size:28px;">${escapeHtml(overall)}</span>
-          <button class="share-as-image share-inline"
-                  data-share-target=".farm-row"
-                  data-share-filename="farm-${escapeHtml(org.org)}"
-                  title="Save this farm card as an image">⤴</button>
         </div>
       </div>`;
     const metricsHtml = `
@@ -33003,9 +33076,6 @@ function renderPlayerDetail(key) {
       </div>
       <div style="text-align:right;">
         <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">
-          <button class="share-as-image" data-share-target="#player-detail-body"
-                  data-share-filename="${escapeHtml(p.player_key)}"
-                  title="Save this prospect profile as a PNG image">⤴ Share</button>
           <span>Current FV</span>
         </div>
         ${fvBadge}
@@ -35998,10 +36068,6 @@ function _renderFarmDetailBody(orgCode, org, root) {
           </div>
         </div>
       </div>
-      <button class="share-as-image" data-share-target="#farm-detail-body"
-              data-share-filename="farm-${escapeHtml(org.org)}-detail"
-              style="position:absolute;top:12px;right:12px;"
-              title="Save this farm profile as a PNG image">⤴ Share</button>
     </div>
     ${makeFarmReportCard(org)}
     ${makeRosterSnapshotTile(org)}`;
@@ -37454,6 +37520,15 @@ function render() {
   if (filterToggleBtn) {
     filterToggleBtn.style.display = usesFilters ? "" : "none";
   }
+  // The top-level filter-toggle-row belongs to the ACTIVE list (it sits above
+  // #active-section, not inside it). Hide the whole row when the active list's
+  // filters aren't in play so its injected "Generate GFX" button doesn't leak
+  // onto other sections; keep the GFX button itself active-only (traded reuses
+  // the row's filters but isn't a GFX-able list).
+  const topFilterRow = filterToggleBtn && filterToggleBtn.closest(".filter-toggle-row");
+  if (topFilterRow) topFilterRow.style.display = usesFilters ? "" : "none";
+  const topGfxBtn = topFilterRow && topFilterRow.querySelector(".gfx-list-btn");
+  if (topGfxBtn) topGfxBtn.style.display = (!isDetail && state.section === "active") ? "" : "none";
 
   let active;
   if (state.view && state.view.type === "player") active = "player";
@@ -40092,6 +40167,8 @@ function populateOrgFilter() {
   const tpl = document.getElementById("main-template");
   content.innerHTML = "";
   content.appendChild(tpl.content.cloneNode(true));
+  // Section markup is now live — inject the per-list Generate GFX buttons.
+  if (typeof _gfxInjectListButtons === "function") _gfxInjectListButtons();
 
   syncFromURL();
   populateOrgFilter();
