@@ -24447,6 +24447,8 @@ function _gfxRow(item, kind, meta) {
   }
   return { fv, name: p.player_name || "", mlbam: p.mlbam_id,
            org: (kind === "draftee" || kind === "overseas") ? null : p.org,
+           // v39 — per-player $DvM+ rides under the value column in the board.
+           dvm: (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) ? Math.round(p.dollar_dvm_plus) : null,
            meta: metaBits.filter(Boolean).join(" · "), value };
 }
 // v38 — GFX avatar: prospect headshot → team logo → silhouette fallback chain,
@@ -24536,8 +24538,8 @@ function _gfxAvatar(r, P) {
 // Footer legend per kind.
 function _gfxFooterNote(kind) {
   return {
-    prospect: "$M = engine expected surplus value · badge = consensus FV",
-    graduate: "WAG = WAR above grade (engine) · badge = final prospect FV",
+    prospect: "$M = engine expected surplus value · $DvM+ = surplus-development index (100 = FV-tier avg) · badge = consensus FV",
+    graduate: "WAG = WAR above grade (engine) · $DvM+ = surplus-development index · badge = final prospect FV",
     draftee: "Stk+ = Draft Stock+ (100 = class median) · badge = consensus FV",
     overseas: "badge = consensus FV",
     leader: "value = the selected stat · badge = consensus FV",
@@ -24593,7 +24595,7 @@ function buildGfxBoard() {
           <span style="font-weight:700;font-size:15px;color:${P.text};display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.name)}</span>
           ${(metaLogo || r.meta) ? `<span style="font-family:var(--font-mono);font-size:11px;color:${P.text3};white-space:nowrap;display:flex;align-items:center;gap:5px;">${metaLogo}${r.meta ? `<span style="overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.meta)}</span>` : ""}</span>` : ""}
         </span>
-        ${(showVal && r.value) ? `<span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${accent};flex:none;">${escapeHtml(String(r.value))}</span>` : ""}
+        ${(showVal && (r.value || r.dvm != null)) ? `<span style="flex:none;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;line-height:1.15;">${r.value ? `<span style="display:block;font-size:13px;font-weight:700;color:${accent};">${escapeHtml(String(r.value))}</span>` : ""}${r.dvm != null ? `<span style="display:block;font-size:10px;font-weight:700;color:${P.text3};">$DvM+ ${r.dvm}</span>` : ""}</span>` : ""}
       </div>`;
   };
   // Single column for short lists; two columns otherwise. The wide (16:9) format
@@ -24881,6 +24883,7 @@ function makeSurplusCell(p) {
   const pb = d.p_bust != null ? Math.round(d.p_bust * 100) : null;
   const wag = (p.debuted_value && p.debuted_value.wag)
               ? p.debuted_value.wag.regressed_wag : null;
+  const dvm = p.dollar_dvm_plus;   // per-player $DvM+ (surplus-development index)
   const svColor = s.value_mm >= 50 ? "var(--up)"
                 : s.value_mm >= 10 ? "var(--neon-cyan)" : "var(--text-primary)";
   const tip = `Expected surplus ${fmtSvMM(s.value_mm)} (FV ${s.fv_continuous != null ? Number(s.fv_continuous).toFixed(1) : "?"})`
@@ -24888,13 +24891,45 @@ function makeSurplusCell(p) {
     + (pb != null ? ` · P(bust) ${pb}%` : "")
     + (d.risk_adjusted_mm != null ? ` · risk-adj ${fmtSvMM(d.risk_adjusted_mm)}` : "")
     + (wag != null ? ` · WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(2)}` : "")
+    + (dvm != null ? ` · $DvM+ ${Math.round(dvm)} (surplus-development vs FV-tier peers)` : "")
     + ". Open the player for the full distribution + methodology.";
+  // Bottom meta line: P(bust), WAG (grads), and $DvM+ — whichever are present.
+  const botBits = [];
+  if (pb != null)  botBits.push(`<span style="color:${pb >= 40 ? 'var(--down)' : 'var(--text-tertiary)'};">bust ${pb}%</span>`);
+  if (wag != null) botBits.push(`WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(1)}`);
+  if (dvm != null) botBits.push(`<span style="color:${dollarDvmColor(dvm)};">$DvM+ ${Math.round(dvm)}</span>`);
   return `<div class="surplus-cell" title="${escapeHtml(tip)}">
       <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${svColor};font-variant-numeric:tabular-nums;line-height:1.05;">${fmtSvMM(s.value_mm)}</div>
       ${buckets ? renderBucketBar(buckets, { height: 7 }) : ""}
       ${d.p10_mm != null ? renderSvDistribution(d, { height: 13 }) : ""}
-      ${pb != null ? `<div style="font-family:var(--font-mono);font-size:9px;color:${pb >= 40 ? 'var(--down)' : 'var(--text-tertiary)'};line-height:1;">bust ${pb}%${wag != null ? ` · WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(1)}` : ""}</div>` : ""}
+      ${botBits.length ? `<div style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);line-height:1.1;">${botBits.join(" · ")}</div>` : ""}
     </div>`;
+}
+
+// ===== $DvM+ (Surplus-Development index) — per-player helpers ==============
+// Baked in storage as p.dollar_dvm_plus: the player's consensus-FV
+// appreciation trajectory (+ age-for-level standing) indexed against
+// same-FV-tier peers. 100 = tier average, +10 ≈ 1σ faster. Reused by the
+// list surplus cell, player detail, GFX board, and the farm drill-down so
+// the metric reads identically everywhere.
+function dollarDvmColor(v) {
+  if (v == null || !isFinite(v)) return "var(--text-tertiary)";
+  if (v >= 115) return "var(--up)";
+  if (v >= 105) return "var(--neon-cyan)";
+  if (v >= 95)  return "var(--text-secondary)";
+  if (v >= 85)  return "var(--neon-amber)";
+  return "var(--down)";
+}
+function dollarDvmTooltip(v) {
+  return `$DvM+ ${v == null ? "—" : Math.round(v)} — Surplus-Development index. The player's consensus-FV appreciation rate over time (plus age-for-level standing) indexed against same-FV-tier peers. 100 = tier average, +10 ≈ 1σ faster. Above 100 = developing/appreciating faster than same-grade prospects.`;
+}
+// Compact inline $DvM+ pill (outlined, color-coded). Returns "" when the
+// player has no baked value (debutants / pre-resolution prospects).
+function dollarDvmPill(p) {
+  const v = p && p.dollar_dvm_plus;
+  if (v == null || !isFinite(v)) return "";
+  const c = dollarDvmColor(v);
+  return `<span class="dvm-pill" title="${escapeHtml(dollarDvmTooltip(v))}" style="display:inline-flex;align-items:baseline;gap:3px;font-family:var(--font-mono);font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;border:1px solid ${c};color:${c};vertical-align:middle;cursor:help;line-height:1.4;"><span style="opacity:0.8;">$DvM+</span><span style="font-variant-numeric:tabular-nums;">${Math.round(v)}</span></span>`;
 }
 
 function fmtSvMM(m) {
@@ -33554,10 +33589,14 @@ function renderPlayerDetail(key) {
     const fv = p.fv_close ?? null;
     if (fv == null && !p.acquisition) return "";
     const _isPit = !!(p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position));
-    // v31.8 — Pass the player to estimateSurplusValueMM so TBS nudges
-    // the FV-anchored base AAV ±12% based on the prospect's tool
-    // stack + MiLB performance.
-    const surplus = estimateSurplusValueMM(fv, _isPit, p.position, { player: p });
+    // v39 — Use the BAKED engine surplus (p.surplus.value_mm) as the single
+    // source of truth so the detail page matches the list rows + GFX (the
+    // career-path mixture engine), rather than the legacy FV-anchored JS
+    // recompute. Fall back to estimateSurplusValueMM only when no baked
+    // surplus is on file (older payloads / pre-resolution prospects).
+    const _baked = (p.surplus && p.surplus.value_mm != null) ? p.surplus : null;
+    const surplus = _baked ? _baked.value_mm
+                           : estimateSurplusValueMM(fv, _isPit, p.position, { player: p });
     const fmtUsd = m => {
       if (m == null) return "—";
       if (m >= 100) return `$${m.toFixed(0)}M`;
@@ -33751,9 +33790,45 @@ function renderPlayerDetail(key) {
          </div>`;
       }
     }
-    const inner = surplusRow + expectedAavRow + realizedRow + surplusDeltaRow + aavRow + acqRow + bonusRow + roiRow + actualRoiRow;
+    // v39 — Rich baked-engine breakdown (mirrors the list-row surplus cell):
+    // outcome-bucket bar (bust→star), the P10–P90 simulated distribution fan,
+    // P(bust) / risk-adjusted SV. Only when the baked engine output is present.
+    let bakedDetailRow = "";
+    if (_baked) {
+      const d = _baked.dist || {};
+      const bk = (p.debuted_value && p.debuted_value.posterior)
+                 ? p.debuted_value.posterior : _baked.buckets;
+      const pb = d.p_bust != null ? Math.round(d.p_bust * 100) : null;
+      const metaBits = [];
+      if (d.p10_mm != null) metaBits.push(`P10–P90 ${fmtSvMM(d.p10_mm)}–${fmtSvMM(d.p90_mm)}`);
+      if (pb != null) metaBits.push(`<span style="color:${pb >= 40 ? 'var(--down)' : 'var(--text-secondary)'};">P(bust) ${pb}%</span>`);
+      if (d.risk_adjusted_mm != null) metaBits.push(`risk-adj ${fmtSvMM(d.risk_adjusted_mm)}`);
+      if (bk || d.p10_mm != null || metaBits.length) {
+        bakedDetailRow = `<div style="padding-bottom:10px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
+            ${bk ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Outcome mix</div>${renderBucketBar(bk, { height: 16, labels: true, legend: true })}` : ""}
+            ${d.p10_mm != null ? `<div style="margin-top:10px;">${renderSvDistribution(d, { height: 30 })}</div>` : ""}
+            ${metaBits.length ? `<div style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);margin-top:8px;">${metaBits.join(" · ")}</div>` : ""}
+          </div>`;
+      }
+    }
+    // v39 — $DvM+ (Surplus-Development index) row. Surfaces the per-player
+    // p.dollar_dvm_plus that previously only fed the org-level farm grade.
+    let dvmRow = "";
+    if (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) {
+      const dv = p.dollar_dvm_plus;
+      const dc = dollarDvmColor(dv);
+      dvmRow = `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;" title="${escapeHtml(dollarDvmTooltip(dv))}">
+           <div>
+             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">$DvM+ <span style="text-transform:none;letter-spacing:0;font-style:italic;color:var(--text-tertiary);">surplus-dev index</span></div>
+             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">vs same-FV-tier peers · 100 = avg, +10 ≈ 1σ faster</div>
+           </div>
+           <div style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:${dc};font-variant-numeric:tabular-nums;">${Math.round(dv)}</div>
+         </div>`;
+    }
+    const inner = surplusRow + bakedDetailRow + dvmRow + expectedAavRow + realizedRow + surplusDeltaRow + aavRow + acqRow + bonusRow + roiRow + actualRoiRow;
     if (!inner) return "";
-    return `<div class="detail-title">Surplus value <span class="detail-title-sub">FV-implied · FanGraphs 2019 framework</span></div>
+    const _srcLabel = _baked ? "career-path mixture engine" : "FV-implied · FanGraphs 2019 framework";
+    return `<div class="detail-title">Surplus value <span class="detail-title-sub">${_srcLabel}</span></div>
       <div class="detail-card">${inner}</div>`;
   })();
 
@@ -35565,12 +35640,18 @@ function renderPlayerDetail(key) {
     return { label: "ETA", value: etaDisplayYear(eta), sub: eta.confidence ? `${eta.confidence} conf` : "" };
   })();
   const _ovSurplus = (() => {
-    const fv = p.fv_close;
-    if (fv == null) return null;
-    const isP = !!(p.statline || {}).is_pitcher;
-    const sv = estimateSurplusValueMM(fv, isP, p.position);
+    // v39 — prefer the baked engine SV (matches the valuation card below);
+    // sub-line carries $DvM+ when present so the glance tile shows both.
+    const sv = (p.surplus && p.surplus.value_mm != null)
+      ? p.surplus.value_mm
+      : (p.fv_close != null ? estimateSurplusValueMM(p.fv_close, !!(p.statline || {}).is_pitcher, p.position) : null);
     if (sv == null) return null;
-    return { label: "Surplus", value: sv >= 1 ? `$${sv.toFixed(1)}M` : `$${(sv * 1000).toFixed(0)}k` };
+    const dvm = p.dollar_dvm_plus;
+    return {
+      label: "Surplus value",
+      value: sv >= 1 ? `$${sv.toFixed(1)}M` : `$${(sv * 1000).toFixed(0)}k`,
+      sub: (dvm != null && isFinite(dvm)) ? `$DvM+ ${Math.round(dvm)}` : "",
+    };
   })();
   const _ovStock = (() => {
     const s = p.stock || {};
@@ -35602,7 +35683,7 @@ function renderPlayerDetail(key) {
       ${_ovTile(_ovTopTools ? { label: "Top tools", value: _ovTopTools } : null, "scouting")}
       ${_ovTile(_ovHealth,    "health")}
       ${_ovTile(_ovEta,       "details")}
-      ${_ovTile(_ovSurplus,   "details")}
+      ${_ovTile(_ovSurplus,   null)}
       ${_ovTile(_ovStock,     null)}
     </div>`;
   // v12 — scouting reports also surface on the Overview tab so users
@@ -35615,7 +35696,11 @@ function renderPlayerDetail(key) {
          <div style="padding:0 12px 12px;">${scoutingReportsSection}</div>
        </details>`
     : "";
-  const overviewHtml = [summaryGridHtml, chartSection, scoutReportsOnOverview, sourceSection, noteSection]
+  // v39 — Surface the valuation (surplus + contract) prominently on the
+  // Overview tab, right under the summary tiles, instead of burying it in the
+  // back "Details" tab. The two financial cards stay together.
+  const valuationHtml = [surplusValueSection, contractDetailsSection].filter(Boolean).join("");
+  const overviewHtml = [summaryGridHtml, valuationHtml, chartSection, scoutReportsOnOverview, sourceSection, noteSection]
     .filter(Boolean).join("");
   // v30.8 — Recent gameLogs viz. Reads p.statcast_metrics.recent_games
   // (populated by the per-player MLB Stats API gameLog pass). When
@@ -35650,8 +35735,9 @@ function renderPlayerDetail(key) {
   // Details tab so it sits next to surplusValueSection. The two financial
   // cards belong together — readers expect contract info alongside the
   // surplus / ROI math, not buried under injury status.
+  // v39 — surplusValueSection + contractDetailsSection moved to the Overview
+  // tab (valuationHtml). The Details tab keeps the supporting context.
   const contextHtml = [
-    surplusValueSection, contractDetailsSection,
     acquisitionTimelineSection, tradesSection, etaRows,
     rosterStatusSection, perSourceTabbedSection,
     sameFarmSection, similarProspectsSection,
@@ -37226,12 +37312,19 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // Financial grade.
   const _activeForOrg = (DATA.players || []).filter(pp => pp.org === orgCode);
   const _surplusByProspect = _activeForOrg.map(pp => {
-    const _fv = pp.fv_close ?? null;
-    if (_fv == null) return null;
-    const _isPit = !!(pp.statline || {}).is_pitcher
-      || /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(String(pp.position || ""));
-    const sv = estimateSurplusValueMM(_fv, _isPit, pp.position);
-    return sv != null && sv > 0 ? { p: pp, fv: _fv, surplus: sv } : null;
+    // v39 — use the BAKED engine SV (matches player detail / list / GFX);
+    // fall back to the FV-anchored estimate only when no baked value exists.
+    const _fv = pp.fv_close ?? (pp.surplus || {}).fv_continuous ?? null;
+    let sv = (pp.surplus && pp.surplus.value_mm != null) ? pp.surplus.value_mm : null;
+    if (sv == null) {
+      if (_fv == null) return null;
+      const _isPit = !!(pp.statline || {}).is_pitcher
+        || /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(String(pp.position || ""));
+      sv = estimateSurplusValueMM(_fv, _isPit, pp.position);
+    }
+    return (sv != null && sv > 0)
+      ? { p: pp, fv: _fv, surplus: sv, dvm: pp.dollar_dvm_plus }
+      : null;
   }).filter(Boolean).sort((a, b) => b.surplus - a.surplus);
   const _surplusTotal = _surplusByProspect.reduce((s, r) => s + r.surplus, 0);
   const _surplusByTier = { "60+": 0, "55": 0, "50": 0, "45": 0, "<45": 0 };
@@ -37243,21 +37336,29 @@ function _renderFarmDetailBody(orgCode, org, root) {
     else _surplusByTier["<45"] += r.surplus;
   }
   const _fmtM = v => v >= 1 ? `$${v.toFixed(1)}M` : `$${(v * 1000).toFixed(0)}k`;
+  // Org-average $DvM+ (the same value that feeds the financial grade leaf).
+  const _orgDvm = (org.tree && org.tree.fin_dollar_dvm) ? org.tree.fin_dollar_dvm.dollar_dvm_plus : null;
+  const _orgDvmSub = (_orgDvm != null)
+    ? ` · org $DvM+ <span style="color:${dollarDvmColor(_orgDvm)};font-weight:700;">${Math.round(_orgDvm)}</span>`
+    : "";
+  const _topN = Math.min(8, _surplusByProspect.length);
   const surplusSection = _surplusByProspect.length
-    ? `<div class="detail-title" style="margin-top:18px;">Surplus details <span class="detail-title-sub">FV-implied trade value across the active roster · ${_fmtM(_surplusTotal)} total</span></div>
-       <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px;align-items:start;">
+    ? `<div class="detail-title" style="margin-top:18px;">Surplus details <span class="detail-title-sub">baked career-path engine SV across the active roster · ${_fmtM(_surplusTotal)} total${_orgDvmSub}</span></div>
+       <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;align-items:start;">
          <div>
-           <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Top-5 surplus contributors</div>
-           <table class="detail-table" style="width:100%;">
-             <thead><tr><th>Player</th><th style="text-align:center;">FV</th><th style="text-align:right;">Surplus</th></tr></thead>
+           <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Top surplus contributors</div>
+           <div class="table-scroll-x"><table class="detail-table" style="width:100%;">
+             <thead><tr><th>Player</th><th style="text-align:center;">FV</th><th style="text-align:right;">Surplus</th><th style="text-align:right;" title="$DvM+ — surplus-development index (100 = FV-tier average appreciation; >100 = developing faster than same-grade peers).">$DvM+</th><th style="text-align:right;" title="Share of the org's total active-roster surplus.">% org</th></tr></thead>
              <tbody>
-               ${_surplusByProspect.slice(0, 5).map(r => `<tr>
+               ${_surplusByProspect.slice(0, _topN).map(r => `<tr>
                  <td><a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(r.p.player_key)}');" style="color:var(--text-primary);">${escapeHtml(r.p.player_name)}</a></td>
                  <td style="text-align:center;"><span class="fv-badge ${fvClass(String(Math.round(r.fv)))} size-sm">${Math.round(r.fv)}</span></td>
                  <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;">${_fmtM(r.surplus)}</td>
+                 <td style="text-align:right;font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;color:${r.dvm != null ? dollarDvmColor(r.dvm) : 'var(--text-tertiary)'};" title="${r.dvm != null ? escapeHtml(dollarDvmTooltip(r.dvm)) : ''}">${r.dvm != null ? Math.round(r.dvm) : '—'}</td>
+                 <td style="text-align:right;font-variant-numeric:tabular-nums;color:var(--text-tertiary);">${_surplusTotal > 0 ? (100 * r.surplus / _surplusTotal).toFixed(0) + '%' : '—'}</td>
                </tr>`).join("")}
              </tbody>
-           </table>
+           </table></div>
          </div>
          <div>
            <div style="font-size:11px;color:var(--text-tertiary);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px;">Surplus by FV tier</div>
