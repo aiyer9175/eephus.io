@@ -4327,7 +4327,7 @@
     /* v40 — Detail-page (prospect / farm) GFX button. Same outlined-cyan
        treatment as the list button but sized to sit inline in the header
        action row (no margin-left:auto — it's placed deliberately). */
-    .gfx-card-btn {
+    .gfx-card-btn, .gfx-compare-btn {
       display: inline-flex; align-items: center; gap: 6px;
       font-family: var(--font-sans); font-size: 11px; font-weight: 600;
       letter-spacing: 0.04em; text-transform: uppercase;
@@ -4336,7 +4336,7 @@
       cursor: pointer; white-space: nowrap;
       transition: background 0.12s, color 0.12s, border-color 0.12s;
     }
-    .gfx-card-btn:hover { background: var(--neon-cyan); color: var(--bg-primary); }
+    .gfx-card-btn:hover, .gfx-compare-btn:hover { background: var(--neon-cyan); color: var(--bg-primary); }
     .gfx-card-btn .gfx-card-btn-icon { font-size: 12px; line-height: 1; }
     /* In card mode, reveal the .card-only elements (they ship with
        inline display:none for back-compat) and hide the now-redundant
@@ -8052,9 +8052,18 @@
       <label class="gfx-ctrl">Format
         <select id="gfx-format" class="gfx-select">
           <option value="portrait">Portrait 4:5</option>
+          <option value="tall">Tall 2:3</option>
           <option value="square">Square 1:1</option>
           <option value="story">Story 9:16</option>
           <option value="wide">Wide 16:9</option>
+        </select>
+      </label>
+      <label class="gfx-ctrl">Template
+        <select id="gfx-variant" class="gfx-select">
+          <option value="detailed">Detailed</option>
+          <option value="compact">Compact</option>
+          <option value="scouting">Scouting</option>
+          <option value="stats">Stats / Statcast</option>
         </select>
       </label>
       <label class="gfx-ctrl">Theme
@@ -9271,6 +9280,9 @@
      Loaded async so it doesn't block first paint; the export helper
      gates on `window.html2canvas` being defined before firing. -->
 <script src="/vendor/html2canvas.min.js" defer></script>
+<!-- qrcode-generator (vendored, ~56KB) — builds the optional QR in the GFX card
+     header that links a shared graphic back to the eephus.io prospect/farm page. -->
+<script src="/vendor/qrcode.min.js" defer></script>
 
 <!-- v32.0 — FV/WAR/$ conversion framework, loaded synchronously so all
      downstream code can call dollarsPerWar() / surplusValueMM() / etc
@@ -24181,22 +24193,9 @@ async function exportElementAsImage(el, opts = {}) {
   }
   if (!el) return null;
   const scale = opts.scale || 2;
-  // Add a temporary watermark so re-shared images keep attribution. v38 —
-  // PROSPX brand; mid-gray reads on both light + dark exports; small + corner-
-  // anchored so it's present but not easy to crop without losing the image edge.
-  const watermark = document.createElement("div");
-  watermark.textContent = "PROSPX · prospx.app";
-  Object.assign(watermark.style, {
-    position: "absolute", bottom: "8px", right: "12px",
-    fontSize: "10px", fontWeight: "700", letterSpacing: "0.04em",
-    color: "rgba(128,134,148,0.65)",
-    fontFamily: "var(--font-sans, sans-serif)",
-    pointerEvents: "none", zIndex: "9999",
-  });
-  // Position-relative on the el so the watermark anchors correctly.
-  const prevPos = el.style.position;
-  if (!prevPos || prevPos === "static") el.style.position = "relative";
-  el.appendChild(watermark);
+  // v42 — the old "PROSPX · prospx.app" corner watermark was removed: GFX cards
+  // now carry a single branding header (PROSPX wordmark + eephus.io/PROSPX · date),
+  // so a separate footer/watermark strip is redundant.
   try {
     const canvas = await html2canvas(el, {
       scale,
@@ -24208,9 +24207,6 @@ async function exportElementAsImage(el, opts = {}) {
   } catch (err) {
     console.error("exportElementAsImage failed:", err);
     return null;
-  } finally {
-    el.removeChild(watermark);
-    el.style.position = prevPos || "";
   }
 }
 
@@ -24277,12 +24273,13 @@ const _GFX_SECTIONS = {
 // a minimum height so short lists render at the exact aspect (long lists extend).
 const _GFX_FORMATS = {
   portrait: { w: 1080, h: 1350, label: "Portrait 4:5" },
+  tall:     { w: 1080, h: 1620, label: "Tall 2:3" },
   square:   { w: 1080, h: 1080, label: "Square 1:1" },
   story:    { w: 1080, h: 1920, label: "Story 9:16" },
   wide:     { w: 1600, h: 900,  label: "Wide 16:9" },
 };
 // User customization (persists across opens within a session).
-const _gfxOpts = { count: 50, title: "", accent: "", showValue: true, format: "portrait", theme: "auto", photos: true, logos: true };
+const _gfxOpts = { count: 50, title: "", accent: "", showValue: true, format: "portrait", theme: "auto", photos: true, logos: true, variant: "detailed" };
 let _gfxOrigTheme = null;
 // v38 — Force the GFX board (+ the open modal) to a chosen light/dark theme by
 // flipping the root data-theme. The board inherits ALL tokens + fv-badge tints
@@ -24612,12 +24609,191 @@ function _gfxWordmark(accent, P, px) {
   </div>`;
 }
 
+// v42 — Resolve CSS var() tokens to concrete colors in an SVG string. html2canvas
+// serializes inline <svg> standalone, where :root custom properties are NOT
+// available, so var(--up) etc. would render as default/black in the PNG. We
+// resolve them against the (theme-forced) document root at build time.
+function _gfxResolveVars(svg) {
+  if (!svg) return svg;
+  const cs = getComputedStyle(document.documentElement);
+  return svg.replace(/var\((--[a-z0-9-]+)(?:\s*,\s*([^()]+))?\)/gi, (m, name, fb) => {
+    const v = cs.getPropertyValue(name).trim();
+    return v || (fb ? fb.trim() : m);
+  });
+}
+// Make a reused SVG chart self-contained + responsive for the GFX board.
+function _gfxPrepSvg(svg, style) {
+  if (!svg) return "";
+  svg = _gfxResolveVars(svg);
+  return svg.replace(/<svg\b/, `<svg style="${style || "width:100%;height:auto;display:block;"}"`);
+}
+// "As of" date for the data shown — uses the dataset's generated_at so a shared
+// graphic stays accurate. Falls back to today.
+function _gfxAsOf() {
+  const raw = (typeof DATA !== "undefined" && DATA && DATA.generated_at) ? DATA.generated_at : null;
+  const dt = raw ? new Date(raw) : new Date();
+  const d = isNaN(dt.getTime()) ? new Date() : dt;
+  return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
+// Single branding header (every GFX type): wordmark left, eephus.io/PROSPX + as-of
+// date right. No footer, no handle.
+// Small QR (dark modules on a white chip) linking a shared graphic back to the
+// eephus.io page. Returns "" if the lib didn't load. White chip so it scans on
+// both light + dark cards.
+function _gfxQR(url, px) {
+  if (!url || typeof qrcode === "undefined") return "";
+  try {
+    const qr = qrcode(0, "M"); qr.addData(url); qr.make();
+    // Data-URL <img> (gif) rasterizes reliably in html2canvas (unlike inline SVG).
+    const dataUrl = qr.createDataURL(4, 2);
+    const s = px || 84;
+    return `<div title="${escapeHtml(url)}" style="width:${s}px;height:${s}px;flex:none;background:#fff;border:1px solid #d8d2c2;border-radius:6px;padding:5px;box-sizing:border-box;"><img src="${dataUrl}" alt="QR" style="width:100%;height:100%;display:block;image-rendering:pixelated;"></div>`;
+  } catch (e) { return ""; }
+}
+function _gfxHeader(P, accent, eyebrow, qrUrl) {
+  const asOf = _gfxAsOf();
+  const qr = qrUrl ? _gfxQR(qrUrl, 84) : "";
+  return `<div style="display:flex;justify-content:space-between;align-items:center;flex:none;border-bottom:1px solid ${P.border};padding-bottom:16px;gap:16px;">
+      <div style="display:flex;align-items:center;gap:14px;min-width:0;">
+        ${_gfxWordmark(accent, P, 26)}
+        ${eyebrow ? `<span style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};border-left:1px solid ${P.border};padding-left:14px;">${escapeHtml(eyebrow)}</span>` : ""}
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;flex:none;">
+        <span style="font-family:var(--font-mono);font-size:14px;font-weight:600;color:${P.text3};letter-spacing:0.02em;white-space:nowrap;text-align:right;">eephus.io/PROSPX · ${escapeHtml(asOf)}${qr ? '<br><span style="font-size:11px;opacity:0.8;">scan for full profile</span>' : ''}</span>
+        ${qr}
+      </div>
+    </div>`;
+}
+// Dynamic accent (concrete hex, for SVG + HTML): user override wins; else FV-tier.
+function _gfxDynAccent(p, P) {
+  const cs = getComputedStyle(document.documentElement);
+  const C = t => (cs.getPropertyValue(t).trim() || P.cyan);
+  if (_gfxOpts.accent) return C(_GFX_ACCENTS[_gfxOpts.accent] || "--neon-cyan");
+  const fv = p && p.fv_close;
+  if (fv == null) return P.cyan;
+  if (fv >= 60) return C("--neon-violet");
+  if (fv >= 55) return C("--neon-cyan");
+  if (fv >= 50) return C("--up");
+  if (fv >= 45) return C("--neon-amber");
+  return P.cyan;
+}
+// Tool radar (spider) chart — concrete colors + literal mono font so it survives
+// html2canvas serialization. items: [{label, value(20-80|null)}].
+function _gfxToolRadar(items, P, accent, size) {
+  const n = items.length; if (n < 3) return "";
+  const MONO = "'MS Gothic','Osaka-Mono','Roboto Mono','Courier New',monospace";
+  const S = size || 320, cx = S / 2, cy = S / 2, R = S * 0.30, FMIN = 20, FMAX = 80;
+  const ang = i => -Math.PI / 2 + i * (2 * Math.PI / n);
+  const pt = (i, val) => { const r = R * Math.max(0, Math.min(1, (val - FMIN) / (FMAX - FMIN))); return [cx + r * Math.cos(ang(i)), cy + r * Math.sin(ang(i))]; };
+  const rings = [35, 50, 65, 80].map(gv => {
+    const pts = items.map((_, i) => pt(i, gv).map(v => v.toFixed(1)).join(",")).join(" ");
+    return `<polygon points="${pts}" fill="none" stroke="${P.border}" stroke-width="1"${gv === 50 ? ` stroke-dasharray="3,3"` : ""}/>`;
+  }).join("");
+  const spokes = items.map((it, i) => { const [ox, oy] = pt(i, 80); return `<line x1="${cx}" y1="${cy}" x2="${ox.toFixed(1)}" y2="${oy.toFixed(1)}" stroke="${P.border}" stroke-width="0.8"/>`; }).join("");
+  const poly = items.map((it, i) => pt(i, it.value != null ? it.value : FMIN).map(v => v.toFixed(1)).join(",")).join(" ");
+  const dots = items.map((it, i) => { if (it.value == null) return ""; const [x, y] = pt(i, it.value); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${accent}" stroke="${P.bg0}" stroke-width="1.5"/>`; }).join("");
+  const labels = items.map((it, i) => {
+    const lr = R + 20, lx = cx + lr * Math.cos(ang(i)), ly = cy + lr * Math.sin(ang(i));
+    const valCol = (it.value != null && it.value >= 60) ? accent : P.text3;
+    return `<text x="${lx.toFixed(1)}" y="${(ly - 3).toFixed(1)}" text-anchor="middle" style="font-family:${MONO};font-size:15px;font-weight:700;fill:${P.text2};">${escapeHtml(it.label)}</text>`
+      + `<text x="${lx.toFixed(1)}" y="${(ly + 14).toFixed(1)}" text-anchor="middle" style="font-family:${MONO};font-size:14px;font-weight:700;fill:${valCol};">${it.value != null ? fvCeil(it.value) : "—"}</text>`;
+  }).join("");
+  return `<svg viewBox="0 0 ${S} ${S}" width="${S}" height="${S}" style="display:block;overflow:visible;">${rings}${spokes}<polygon points="${poly}" fill="${accent}" fill-opacity="0.2" stroke="${accent}" stroke-width="2.5" stroke-linejoin="round"/>${dots}${labels}</svg>`;
+}
+// Trend callout from the baked stock-movement field.
+function _gfxTrend(p) {
+  const s = p && p.stock;
+  if (!s || s.delta == null || s.direction === "flat" || s.direction === "debuted" || Math.abs(s.delta) < 1.5) return null;
+  const up = s.delta > 0;
+  let since = "";
+  if (s.from_date) { const dt = new Date(s.from_date + "T00:00:00"); if (!isNaN(dt.getTime())) since = " since " + dt.toLocaleDateString("en-US", { month: "short", year: "2-digit" }); }
+  return { up, text: `${up ? "▲" : "▼"} ${up ? "+" : ""}${s.delta.toFixed(1)} FV${since}` };
+}
+// Auto-generated insight line — one data-derived headline.
+function _gfxInsight(p) {
+  const s = p.stock;
+  if (s && s.delta != null && Math.abs(s.delta) >= 5 && s.direction !== "debuted" && s.direction !== "flat") {
+    const m = s.from_date ? new Date(s.from_date + "T00:00:00") : null;
+    const when = (m && !isNaN(m.getTime())) ? " since " + m.toLocaleDateString("en-US", { month: "long" }) : "";
+    return `${s.delta > 0 ? "+" : ""}${s.delta.toFixed(0)} FV ${s.delta > 0 ? "riser" : "faller"}${when}`;
+  }
+  if (p.breakout_flag) return "Flagged breakout — FV velocity + performance gate cleared";
+  const grades = (p.tools && p.tools.grades) || {};
+  const ltc = (p.points && p.points.length ? p.points[p.points.length - 1].tools_consensus : {}) || {};
+  const get = k => { const v = grades[k]; if (v != null) return v; return ltc[k]; };
+  const lbl = { hit: "hit tool", pwr: "power", game_pwr: "power", raw_pwr: "raw power", speed: "speed", field: "glove", throw: "arm", fb: "fastball", sl: "slider", cb: "curveball", ch: "changeup", cmd: "command" };
+  let best = null; for (const k in lbl) { const v = get(k); if (v != null && (!best || v > best.v)) best = { k, v }; }
+  if (best && best.v >= 60) return `Standout ${lbl[best.k]} — ${fvCeil(best.v)} grade`;
+  const sc = (typeof getStatcastPlus === "function") ? getStatcastPlus(p) : null;
+  if (sc != null && sc >= 115) return `Statcast+ ${sc} — tracked data backs the profile`;
+  return null;
+}
+
+// Full surplus-value section for the card bottom (mirrors the detail page):
+// headline $ + scarcity chip, the Outcome-mix bucket bar, and the Simulated
+// outcome-range fan + P10–P90 / P(bust) / risk-adj meta. Reuses renderBucketBar
+// + renderSvDistribution (both HTML, so var() resolves in html2canvas).
+function _gfxSurplusBlock(p, P) {
+  const baked = (p && p.surplus && p.surplus.value_mm != null) ? p.surplus : null;
+  if (!baked || typeof renderBucketBar !== "function") return "";
+  const isPit = !!(p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position));
+  const fv = p.fv_close;
+  const surplus = baked.value_mm;
+  const d = baked.dist || {};
+  const bk = (p.debuted_value && p.debuted_value.posterior) ? p.debuted_value.posterior : baked.buckets;
+  const fmtUsd = m => (typeof fmtSvMM === "function") ? fmtSvMM(m) : ("$" + Math.round(m) + "M");
+  const surplusColor = surplus >= 50 ? "var(--up)" : surplus >= 10 ? "var(--neon-cyan)" : P.text;
+  const scarcity = (typeof surplusPositionMult === "function") ? surplusPositionMult(p.position) : 1;
+  const scChip = (Math.abs(scarcity - 1) >= 0.05)
+    ? ` <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:${scarcity > 1 ? "var(--up)" : "var(--down)"};border:1px solid ${scarcity > 1 ? "var(--up)" : "var(--down)"};padding:1px 5px;border-radius:3px;">×${scarcity.toFixed(2)}</span>` : "";
+  const pb = d.p_bust != null ? Math.round(d.p_bust * 100) : null;
+  const metaBits = [];
+  if (d.p10_mm != null) metaBits.push(`P10–P90 ${fmtUsd(d.p10_mm)}–${fmtUsd(d.p90_mm)}`);
+  if (pb != null) metaBits.push(`P(bust) ${pb}%`);
+  if (d.risk_adjusted_mm != null) metaBits.push(`risk-adj ${fmtUsd(d.risk_adjusted_mm)}`);
+  return `<div style="background:${P.bg};border:1px solid ${P.border};border-radius:8px;padding:16px 18px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:11px;border-bottom:1px solid ${P.border};margin-bottom:13px;">
+      <div style="min-width:0;">
+        <div style="font-family:var(--font-sans);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:${P.text3};font-weight:700;">Surplus value${scChip}</div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:${P.text3};margin-top:4px;font-style:italic;">FV ${fv != null ? fvCeil(fv) : "—"} ${isPit ? "pitcher" : "hitter"} · 6yr cost-controlled</div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:30px;font-weight:800;color:${surplusColor};line-height:1;">${escapeHtml(fmtUsd(surplus))}</div>
+    </div>
+    ${bk ? `<div style="font-family:var(--font-sans);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:${P.text3};font-weight:700;margin-bottom:7px;">Outcome mix</div>${renderBucketBar(bk, { height: 20, labels: true, legend: true })}` : ""}
+    ${(d.p50_mm != null && typeof renderSvDistribution === "function") ? `<div style="margin-top:15px;"><div style="font-family:var(--font-sans);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:${P.text3};font-weight:700;margin-bottom:7px;">Simulated outcome range</div>${renderSvDistribution(d, { height: 38, axis: true })}</div>` : ""}
+    ${metaBits.length ? `<div style="font-family:var(--font-mono);font-size:11px;color:${P.text3};margin-top:12px;">${metaBits.join("  ·  ")}</div>` : ""}
+  </div>`;
+}
+
+// Pitch arsenal + VAA/release table for pitcher cards (velo, usage, movement,
+// VAA, extension). Columns with no data across all pitches are dropped. HTML.
+function _gfxPitchArsenal(p, P) {
+  const pm = (p && p.statcast_metrics || {}).pitch_movement || {};
+  const rows = (pm.pitch_summary || []).slice().sort((a, b) => (b.usage_pct || 0) - (a.usage_pct || 0)).slice(0, 6);
+  if (!rows.length) return "";
+  const num = (v, d = 1, s = "") => (v == null || isNaN(v)) ? "—" : Number(v).toFixed(d) + s;
+  const pc = (t) => (typeof _pitchColor === "function") ? _pitchColor(t) : P.text;
+  const cols = [
+    ["Pitch", "left", r => `<span style="color:${pc(r.pitch_type)};font-weight:800;">${escapeHtml(r.pitch_type || "?")}</span>`, null],
+    ["Velo", "right", r => num(r.avg_velo, 1), "avg_velo"],
+    ["Usage", "right", r => num(r.usage_pct, 0, "%"), "usage_pct"],
+    ["IVB", "right", r => num(r.avg_ivb, 1), "avg_ivb"],
+    ["HB", "right", r => num(r.avg_hb, 1), "avg_hb"],
+    ["VAA", "right", r => num(r.avg_vaa, 2, "°"), "avg_vaa"],
+    ["Ext", "right", r => num(r.avg_extension, 1), "avg_extension"],
+  ];
+  const keep = cols.filter(c => !c[3] || rows.some(r => r[c[3]] != null));
+  const th = keep.map(c => `<th style="text-align:${c[1]};font-family:var(--font-sans);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;color:${P.text3};font-weight:700;padding:6px 11px;border-bottom:1px solid ${P.border};">${c[0]}</th>`).join("");
+  const body = rows.map(r => `<tr>${keep.map(c => `<td style="text-align:${c[1]};font-family:var(--font-mono);font-size:15px;color:${P.text};padding:7px 11px;border-bottom:1px solid ${P.border};">${c[2](r)}</td>`).join("")}</tr>`).join("");
+  return `<table style="width:100%;border-collapse:collapse;background:${P.bg};border:1px solid ${P.border};border-radius:7px;overflow:hidden;"><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
 function buildProspectCard(snap) {
   const p = (snap.items && snap.items[0]) || null;
   const P = _gfxPalette();
-  const accent = _gfxAccentColor(P);
-  // Prospect cards are portrait by default; honor a user format change otherwise.
-  const fmt = _GFX_FORMATS[_gfxOpts.format] || _GFX_FORMATS.portrait;
+  const accent = _gfxDynAccent(p, P);
+  // Prospect cards default to the tall format; honor a user format change.
+  const fmt = _GFX_FORMATS[_gfxOpts.format] || _GFX_FORMATS.tall;
   const W = fmt.w, H = fmt.h;
   const board = document.createElement("div");
   if (!p) {
@@ -24630,10 +24806,10 @@ function buildProspectCard(snap) {
   const fvLabel = (latest && latest.consensus_fv_label != null) ? String(latest.consensus_fv_label)
                 : (p.fv_close != null ? String(Math.round(p.fv_close)) : null);
   const fvNum = (p.fv_close != null) ? Math.round(p.fv_close) : (fvLabel ? parseInt(fvLabel, 10) : null);
-  const dateStr = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const sl = p.statline || {};
+  const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true);
 
-  // Rarity frame — holographic for 60+ FV (chrome at 70+), per spec.
+  // Rarity frame — holographic for 60+ FV (chrome at 70+).
   const rarity = (fvNum != null && fvNum >= 70) ? "chrome"
                : (fvNum != null && fvNum >= 61) ? "holo"
                : (fvNum != null && fvNum >= 60) ? "gold" : "plain";
@@ -24643,35 +24819,58 @@ function buildProspectCard(snap) {
                 : accent;
   const framePad = rarity === "plain" ? 4 : 10;
 
-  // Headshot — rectangular crop with silhouette fallback (matches site).
-  const hsURL = (_gfxOpts.photos !== false && p.mlbam_id) ? _gfxHeadshotURL(p.mlbam_id, 240) : "";
-  const headshot = `<div style="width:240px;height:300px;flex:none;border:1px solid ${P.borderStrong};border-radius:8px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 62%;background-size:52%;position:relative;">
-    ${hsURL ? `<img src="${hsURL}" crossorigin="anonymous" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 18%;" onerror="this.style.display='none';">` : ""}
+  // Photo — EXPORT-SAFE cover via background-image on a fixed 3:4 frame (html2canvas
+  // honors background-size:cover but mishandles <img> object-fit, which squished it).
+  const hsURL = (_gfxOpts.photos !== false && p.mlbam_id) ? _gfxHeadshotURL(p.mlbam_id, 320) : "";
+  const PW = 264, PH = 352; // 3:4
+  const headshot = `<div style="width:${PW}px;height:${PH}px;flex:none;border:1px solid ${P.borderStrong};border-radius:8px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;">
+    ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center top;background-repeat:no-repeat;"></div>` : ""}
   </div>`;
 
   const fvBadgeBig = fvLabel
-    ? `<span class="fv-badge ${fvClass(fvLabel)}" style="font-size:64px;line-height:1;padding:12px 22px;border-radius:10px;font-weight:800;display:inline-block;">${escapeHtml(fvLabel)}</span>`
-    : `<span style="font-size:56px;font-weight:800;color:${P.text3};">—</span>`;
+    ? `<span class="fv-badge ${fvClass(fvLabel)}" style="font-size:60px;line-height:1;padding:12px 22px;border-radius:10px;font-weight:800;display:inline-block;">${escapeHtml(fvLabel)}</span>`
+    : `<span style="font-size:52px;font-weight:800;color:${P.text3};">—</span>`;
 
-  // Tool grades (20-80) — same key sets the detail page uses.
+  // Tools — radar (primary) + pill row (secondary).
   const grades = (p.tools && p.tools.grades) || {};
   const ltc = (latest && latest.tools_consensus) || {};
   const getT = k => { const v = grades[k]; if (v != null && !isNaN(v)) return Number(v); const lv = ltc[k]; return (lv != null && !isNaN(lv)) ? Number(lv) : null; };
-  const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true);
+  const radarKeys = isPitcher
+    ? [["FB", "fb"], ["SL", "sl"], ["CB", "cb"], ["CH", "ch"], ["CMD", "cmd"]]
+    : [["HIT", "hit"], ["PWR", "pwr"], ["SPD", "speed"], ["FLD", "field"], ["ARM", "throw"]];
+  const radarItems = radarKeys.map(([lab, k]) => ({ label: lab, value: getT(k) }));
+  const radarSvg = (radarItems.filter(it => it.value != null).length >= 3) ? _gfxToolRadar(radarItems, P, accent, 320) : "";
   const toolKeys = isPitcher
     ? [["FB", "fb"], ["SL", "sl"], ["CB", "cb"], ["CH", "ch"], ["CMD", "cmd"], ["FRM", "frame"], ["ATHL", "athl"]]
     : [["HIT", "hit"], ["PWR", "pwr"], ["SPD", "speed"], ["FLD", "field"], ["ARM", "throw"], ["FRM", "frame"], ["ATHL", "athl"]];
   const toolPills = toolKeys.map(([lab, k]) => {
     const v = getT(k); if (v == null) return "";
     const c = v >= 60 ? "var(--up)" : v >= 50 ? P.text : v >= 40 ? "var(--neon-amber)" : "var(--down)";
-    return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:13px 4px;background:${P.bg};border:1px solid ${P.border};border-radius:7px;">
-      <span style="font-family:var(--font-mono);font-size:30px;font-weight:700;color:${c};line-height:1;">${fvCeil(v)}</span>
-      <span style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.05em;color:${P.text3};">${lab}</span>
+    return `<div style="flex:1;min-width:46px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 4px;background:${P.bg};border:1px solid ${P.border};border-radius:7px;">
+      <span style="font-family:var(--font-mono);font-size:25px;font-weight:700;color:${c};line-height:1;">${fvCeil(v)}</span>
+      <span style="font-family:var(--font-sans);font-size:11px;font-weight:700;letter-spacing:0.05em;color:${P.text3};">${lab}</span>
     </div>`;
   }).filter(Boolean);
-  const toolsRow = toolPills.length ? `<div style="display:flex;gap:8px;">${toolPills.join("")}</div>` : "";
+  const toolsRow = toolPills.length ? `<div style="display:flex;gap:7px;flex-wrap:wrap;">${toolPills.join("")}</div>` : "";
+  const toolBlock = (radarSvg || toolsRow) ? `<div style="display:flex;gap:26px;align-items:center;">
+      ${radarSvg ? `<div style="flex:none;">${radarSvg}</div>` : ""}
+      ${toolsRow ? `<div style="flex:1;min-width:0;">${toolsRow}</div>` : ""}
+    </div>` : "";
 
-  // Key metrics — 3-6 most signal-rich populated stats (statcast first).
+  // FV history stock chart (the heart) + trend callout.
+  const fvChartSvg = (typeof makeBigLineChart === "function" && p.points && p.points.length >= 2)
+    ? _gfxPrepSvg(makeBigLineChart(p.points, p.fv_open, p.fv_close, p.debut_date, p.trades, p.career_stats, p), "width:100%;height:auto;display:block;")
+    : "";
+  const trend = _gfxTrend(p);
+  const trendChip = trend ? `<span style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:${trend.up ? "var(--up)" : "var(--down)"};background:${P.bg};border:1px solid ${trend.up ? "var(--up)" : "var(--down)"};border-radius:6px;padding:5px 11px;">${escapeHtml(trend.text)}</span>` : "";
+
+  // Statcast percentile sliders (Savant-style) + pitcher pitch plot.
+  const pctBlock = (typeof _statcastPercentileBlock === "function") ? _statcastPercentileBlock(p) : "";
+  const pitchPlotSvg = (isPitcher && typeof makePitchMovementPlot === "function")
+    ? _gfxPrepSvg(makePitchMovementPlot(p.statcast_metrics, p.player_key), "width:100%;height:auto;display:block;max-width:560px;margin:0 auto;")
+    : "";
+
+  // Compact stat line.
   const cq = (p.statcast_metrics && p.statcast_metrics.contact_quality) || {};
   const scPlus = (typeof getStatcastPlus === "function") ? getStatcastPlus(p) : null;
   const rps = (typeof getRpsPlus === "function") ? getRpsPlus(p) : null;
@@ -24684,98 +24883,135 @@ function buildProspectCard(snap) {
   })();
   const stats = [];
   const push = (l, v) => { if (v != null && v !== "") stats.push([l, v]); };
-  if (scPlus != null) push("Statcast+", String(scPlus));
   if (!isPitcher) {
     if (sl.avg != null && sl.obp != null && sl.slg != null) push("Slash", `${fmtAvg(sl.avg)}/${fmtAvg(sl.obp)}/${fmtAvg(sl.slg)}`);
     else if (sl.ops != null) push("OPS", Number(sl.ops).toFixed(3).replace(/^0(?=\.)/, ""));
-    if (cq.avg_ev != null) push("Exit Velo", cq.avg_ev.toFixed(1) + " mph");
-    if (cq.barrel_pct != null) push("Barrel%", cq.barrel_pct.toFixed(1) + "%");
-    if (cq.hard_hit_pct != null) push("Hard-Hit%", cq.hard_hit_pct.toFixed(1) + "%");
-    if (zRow && zRow.chase_pct != null) push("Chase%", zRow.chase_pct.toFixed(1) + "%");
-    if (zRow && zRow.z_contact_pct != null) push("Z-Contact%", zRow.z_contact_pct.toFixed(1) + "%");
     if (sl.hr != null) push("HR", String(sl.hr));
     if (sl.sb != null) push("SB", String(sl.sb));
-    if (rps && rps.plus != null) push("RPS+", String(rps.plus));
+    if (sl.bb_pct != null) push("BB%", Number(sl.bb_pct).toFixed(1) + "%");
+    if (sl.k_pct != null) push("K%", Number(sl.k_pct).toFixed(1) + "%");
+    if (cq.avg_ev != null) push("Exit Velo", cq.avg_ev.toFixed(1) + " mph");
   } else {
     if (sl.era != null) push("ERA", Number(sl.era).toFixed(2));
+    if (sl.fip != null) push("FIP", Number(sl.fip).toFixed(2));
     if (sl.whip != null) push("WHIP", Number(sl.whip).toFixed(2));
     if (sl.ip != null) push("IP", String(sl.ip));
-    const pm = (p.statcast_metrics && p.statcast_metrics.pitch_movement) || {};
-    const top = (pm.pitch_summary || [])[0];
-    if (top && top.avg_velo != null) push((top.pitch_type || "FB") + " Velo", top.avg_velo.toFixed(1) + " mph");
-    if (zRow && zRow.whiff_pct != null) push("Whiff%", zRow.whiff_pct.toFixed(1) + "%");
-    if (zRow && zRow.chase_pct != null) push("Chase%", zRow.chase_pct.toFixed(1) + "%");
     if (sl.k_per_9 != null) push("K/9", Number(sl.k_per_9).toFixed(1));
     if (sl.bb_per_9 != null) push("BB/9", Number(sl.bb_per_9).toFixed(1));
-    if (rps && rps.plus != null) push("RPS+", String(rps.plus));
   }
   const statsShown = stats.slice(0, 6);
-  const statsGrid = statsShown.length ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">${statsShown.map(([l, v]) => `
-    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 16px;background:${P.bg};border:1px solid ${P.border};border-radius:7px;">
-      <span style="font-family:var(--font-sans);font-size:13px;font-weight:600;letter-spacing:0.03em;color:${P.text3};text-transform:uppercase;">${escapeHtml(l)}</span>
-      <span style="font-family:var(--font-mono);font-size:19px;font-weight:700;color:${P.text};font-variant-numeric:tabular-nums;">${escapeHtml(String(v))}</span>
+  const statsGrid = statsShown.length ? `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;">${statsShown.map(([l, v]) => `
+    <div style="display:flex;flex-direction:column;gap:2px;padding:10px 13px;background:${P.bg};border:1px solid ${P.border};border-radius:7px;">
+      <span style="font-family:var(--font-sans);font-size:11px;font-weight:600;letter-spacing:0.03em;color:${P.text3};text-transform:uppercase;">${escapeHtml(l)}</span>
+      <span style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:${P.text};font-variant-numeric:tabular-nums;">${escapeHtml(String(v))}</span>
     </div>`).join("")}</div>` : "";
 
-  // Status flags already shown on the detail page.
+  // Arkmetrics chips (SC+, RPS+, $DvM+) + the FULL surplus-value section (outcome
+  // mix bar + simulated outcome-range fan) — the richer career-path signal that
+  // replaces the old DvM+-vs-league bar.
+  const dvm = (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) ? Math.round(p.dollar_dvm_plus) : null;
+  const arkChips = [];
+  const arkChip = (lab, val, col) => `<div style="flex:1;min-width:96px;display:flex;flex-direction:column;gap:3px;padding:11px 14px;background:${P.bg};border:1px solid ${P.border};border-radius:7px;">
+      <span style="font-family:var(--font-sans);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${P.text3};">${lab}</span>
+      <span style="font-family:var(--font-mono);font-size:24px;font-weight:800;color:${col || P.text};line-height:1;">${escapeHtml(String(val))}</span>
+    </div>`;
+  if (scPlus != null) arkChips.push(arkChip("SC+", scPlus, scPlus >= 110 ? "var(--up)" : scPlus <= 90 ? "var(--down)" : P.text));
+  if (rps && rps.plus != null) arkChips.push(arkChip("RPS+", rps.plus, rps.plus >= 110 ? "var(--up)" : rps.plus <= 90 ? "var(--down)" : P.text));
+  if (dvm != null) arkChips.push(arkChip("$DvM+", dvm, dvm >= 110 ? "var(--up)" : dvm <= 90 ? "var(--down)" : "var(--neon-violet)"));
+  const surplusSection = _gfxSurplusBlock(p, P);
+  const valuationBlock = (arkChips.length || surplusSection)
+    ? `${arkChips.length ? `<div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:${surplusSection ? "14px" : "0"};">${arkChips.join("")}</div>` : ""}${surplusSection}`
+    : "";
+
+  // Status flags + scouting blurb.
   const chains = (typeof fvBadgeChainClasses === "function") ? fvBadgeChainClasses(p) : "";
   const ilNow = (p.il_status && p.il_status.is_on_il) ? p.il_status : null;
-  const flagChip = (txt, bg, col, bd) => `<span style="font-family:var(--font-sans);font-size:13px;font-weight:700;letter-spacing:0.03em;padding:7px 13px;border-radius:999px;background:${bg};color:${col};border:1px solid ${bd || col};">${txt}</span>`;
+  const flagChip = (txt, bg, col, bd) => `<span style="font-family:var(--font-sans);font-size:13px;font-weight:700;letter-spacing:0.03em;padding:6px 12px;border-radius:999px;background:${bg};color:${col};border:1px solid ${bd || col};">${txt}</span>`;
   const flags = [];
+  if (trendChip) flags.push(trendChip);
   if (p.breakout_flag) flags.push(flagChip("★ Breakout", "rgba(127,255,212,0.18)", "#0a8f73", "#7FFFD4"));
   if (chains && chains.includes("is-wide")) flags.push(flagChip("Wide FV spread", P.bg3, P.text2, P.border));
   if (ilNow) flags.push(flagChip(`${escapeHtml(ilNow.type || "")} IL`, "rgba(185,28,28,0.12)", "var(--down)", "var(--down)"));
   if ((p.health_profile || {}).is_post_tj) flags.push(flagChip("Post-TJ", P.bg3, P.text2, P.border));
-  const flagsRow = flags.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;">${flags.join("")}</div>` : "";
+  const flagsRow = flags.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${flags.join("")}</div>` : "";
 
-  // One-line scouting blurb from the latest FanGraphs report (omit if absent).
   let blurb = "";
   for (let i = (p.points || []).length - 1; i >= 0; i--) {
     const fg = p.points[i] && p.points[i].per_source && p.points[i].per_source.fangraphs;
     const ex = fg && fg.tools && fg.tools._extras;
     if (ex && ex.report) { blurb = String(ex.report).trim(); break; }
   }
-  if (blurb.length > 230) { const cut = blurb.slice(0, 230); const d = cut.lastIndexOf(". "); blurb = d > 130 ? cut.slice(0, d + 1) : cut.trim() + "…"; }
-  const blurbHTML = blurb ? `<div style="font-family:var(--font-retro);font-size:16px;line-height:1.5;color:${P.text2};font-style:italic;border-left:3px solid ${accent};padding-left:15px;">${escapeHtml(blurb)}</div>` : "";
+  if (blurb.length > 260) { const cut = blurb.slice(0, 260); const d = cut.lastIndexOf(". "); blurb = d > 150 ? cut.slice(0, d + 1) : cut.trim() + "…"; }
+  const blurbHTML = blurb ? `<div style="font-family:var(--font-retro);font-size:16px;line-height:1.55;color:${P.text2};font-style:italic;border-left:3px solid ${accent};padding-left:15px;">${escapeHtml(blurb)}</div>` : "";
 
   const eta = p.eta || {};
-  const metaLine = [p.position, (typeof fullOrgName === "function" && p.org) ? fullOrgName(p.org) : p.org, sl.level].filter(Boolean).join("  ·  ");
-  const orgLogo = (_gfxOpts.logos !== false && p.org) ? _gfxTeamLogo(p.org, P, 38) : "";
-  const eyebrow = `Prospect Card${p.overall_rank != null ? `  ·  #${p.overall_rank} overall` : ""}`;
+  const metaLine = [p.position, (typeof fullOrgName === "function" && p.org) ? fullOrgName(p.org) : p.org, sl.level, p.age != null ? "age " + p.age.toFixed(1) : null].filter(Boolean).join("  ·  ");
+  const orgLogo = (_gfxOpts.logos !== false && p.org) ? _gfxTeamLogo(p.org, P, 40) : "";
+  const insight = _gfxInsight(p);
+  const eyebrow = `Prospect Card${p.overall_rank != null ? ` · #${p.overall_rank}` : ""}`;
+  const qrUrl = p.player_key ? `https://eephus.io/prospx/#player=${encodeURIComponent(p.player_key)}` : "";
+  const sect = (t, body) => body ? `<div><div style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};margin-bottom:12px;border-bottom:1px solid ${P.border};padding-bottom:6px;">${t}</div>${body}</div>` : "";
+
+  // ---- Template variant: pick which sections render ----
+  const variant = _gfxOpts.variant || "detailed";
+  // Compact: a small FV sparkline (+ trend) in the hero, in place of the big chart.
+  const fvVals = (p.points || []).map(pt => (pt && pt.consensus_fv_raw != null) ? pt.consensus_fv_raw : null);
+  const fvSparkHTML = (variant === "compact" && typeof _miniSparkline === "function" && fvVals.filter(v => v != null).length >= 2)
+    ? `<div style="margin-top:12px;">${_gfxPrepSvg(_miniSparkline(fvVals, { width: 230, height: 48, stroke: accent }), "display:block;")}${trend ? `<div style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:${trend.up ? "var(--up)" : "var(--down)"};margin-top:4px;">${escapeHtml(trend.text)}</div>` : ""}</div>` : "";
+  // Pitchers: arsenal + VAA table (with a compact rate-stat caption) replaces the
+  // hitting-line stat grid.
+  const rateCaption = isPitcher ? [
+    sl.era != null ? `ERA ${Number(sl.era).toFixed(2)}` : null,
+    sl.whip != null ? `WHIP ${Number(sl.whip).toFixed(2)}` : null,
+    sl.k_per_9 != null ? `K/9 ${Number(sl.k_per_9).toFixed(1)}` : null,
+    sl.bb_per_9 != null ? `BB/9 ${Number(sl.bb_per_9).toFixed(1)}` : null,
+    sl.ip != null ? `${sl.ip} IP` : null,
+  ].filter(Boolean).join("  ·  ") : "";
+  const arsenalTable = isPitcher ? _gfxPitchArsenal(p, P) : "";
+  const statsOrArsenal = isPitcher
+    ? (arsenalTable ? sect("Pitch Arsenal &amp; VAA", `${rateCaption ? `<div style="font-family:var(--font-mono);font-size:14px;color:${P.text2};margin-bottom:13px;">${escapeHtml(rateCaption)}</div>` : ""}${arsenalTable}`) : sect("Pitching Line", statsGrid))
+    : sect("Hitting Line", statsGrid);
+  const fvSect = sect("FV History", fvChartSvg);
+  const toolSect = sect("Tool Profile · 20–80", toolBlock);
+  const toolPillsSect = sect("Tool Grades · 20–80", toolsRow);
+  const pctSect = sect("Statcast Percentiles", pctBlock);
+  const pitchSect = isPitcher ? sect("Pitch Movement", pitchPlotSvg) : "";
+  const valSect = sect("Valuation & Surplus", valuationBlock);
+  let sectionsHTML;
+  if (variant === "compact") {
+    sectionsHTML = [flagsRow, toolPillsSect, statsOrArsenal, valSect].filter(Boolean).join("");
+  } else if (variant === "scouting") {
+    sectionsHTML = [flagsRow, fvSect, toolSect, blurbHTML, valSect].filter(Boolean).join("");
+  } else if (variant === "stats") {
+    sectionsHTML = [flagsRow, fvSect, pctSect, pitchSect, statsOrArsenal, valSect].filter(Boolean).join("");
+  } else { // detailed
+    sectionsHTML = [flagsRow, fvSect, toolSect, pctSect, pitchSect, statsOrArsenal, valSect, blurbHTML].filter(Boolean).join("");
+  }
 
   board.style.cssText = `width:${W}px;min-height:${H}px;box-sizing:border-box;background:${frameBg};padding:${framePad}px;font-family:var(--font-sans);`;
   board.innerHTML = `
-    <div style="background:${P.bg0};border-radius:${framePad > 5 ? 6 : 4}px;box-sizing:border-box;min-height:${H - framePad * 2}px;padding:44px 44px 28px;display:flex;flex-direction:column;color:${P.text};">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex:none;">
-        ${_gfxWordmark(accent, P, 26)}
-        <span style="font-family:var(--font-sans);font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};">${escapeHtml(eyebrow)}</span>
-      </div>
-      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:28px;padding:30px 0;">
-        <div style="display:flex;gap:26px;align-items:stretch;">
-          ${headshot}
-          <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:14px;">
-            <div>
-              <div style="display:flex;align-items:center;gap:12px;">
-                ${orgLogo}
-                <div style="font-family:var(--font-retro);font-size:44px;font-weight:700;line-height:1.03;color:${P.text};">${escapeHtml(p.player_name || "")}</div>
-              </div>
-              <div style="font-family:var(--font-mono);font-size:18px;color:${P.text2};margin-top:10px;">${escapeHtml(metaLine)}</div>
-              ${eta.year != null ? `<div style="font-family:var(--font-sans);font-size:15px;font-weight:600;color:${P.text3};margin-top:6px;">ETA ${escapeHtml(String(eta.year))}${eta.confidence ? ` · ${escapeHtml(eta.confidence)} confidence` : ""}</div>` : ""}
+    <div style="background:${P.bg0};border-radius:${framePad > 5 ? 6 : 4}px;box-sizing:border-box;min-height:${H - framePad * 2}px;padding:40px 44px 34px;display:flex;flex-direction:column;gap:26px;color:${P.text};">
+      ${_gfxHeader(P, accent, eyebrow, qrUrl)}
+      <div style="display:flex;gap:26px;align-items:stretch;flex:none;">
+        ${headshot}
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:12px;">
+          <div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              ${orgLogo}
+              <div style="font-family:var(--font-retro);font-size:44px;font-weight:700;line-height:1.03;color:${P.text};">${escapeHtml(p.player_name || "")}</div>
             </div>
-            <div style="display:flex;flex-direction:column;gap:5px;">
-              <span style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${P.text3};">Consensus FV</span>
-              <span>${fvBadgeBig}</span>
-            </div>
+            <div style="font-family:var(--font-mono);font-size:17px;color:${P.text2};margin-top:10px;">${escapeHtml(metaLine)}</div>
+            ${eta.year != null ? `<div style="font-family:var(--font-sans);font-size:14px;font-weight:600;color:${P.text3};margin-top:6px;">ETA ${escapeHtml(String(eta.year))}${eta.confidence ? ` · ${escapeHtml(eta.confidence)} confidence` : ""}</div>` : ""}
+            ${insight ? `<div style="font-family:var(--font-retro);font-size:15px;font-weight:700;color:${accent};margin-top:10px;">▸ ${escapeHtml(insight)}</div>` : ""}
+            ${fvSparkHTML}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <span style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${P.text3};">Consensus FV</span>
+            <span>${fvBadgeBig}</span>
           </div>
         </div>
-        ${flagsRow}
-        ${toolsRow ? `<div><div style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};margin-bottom:10px;">Tool Grades · 20–80</div>${toolsRow}</div>` : ""}
-        ${statsGrid ? `<div><div style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};margin-bottom:10px;">Key Metrics</div>${statsGrid}</div>` : ""}
-        ${blurbHTML}
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid ${P.border};padding-top:14px;flex:none;">
-        ${_gfxWordmark(accent, P, 20)}
-        <span style="font-family:var(--font-mono);font-size:13px;color:${P.text3};">@ARKNDJL · ${dateStr}</span>
-      </div>
+      ${sectionsHTML}
     </div>`;
   return { board, total: 1, w: W, h: H };
 }
@@ -24854,22 +25090,36 @@ function buildFarmCard(snap) {
       <span style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:${P.text};">${escapeHtml(String(v))}</span>
     </div>`).join("")}</div>` : "";
 
-  const gap = `<div style="height:24px;flex:none;"></div>`;
-  const leftPanel = [sect("Grade canopy", canopy), sect("Finances & development", finHTML)].filter(Boolean).join(gap);
-  const rightPanel = [sect("Top 5 prospects", top5HTML), sect("FV distribution", distHTML)].filter(Boolean).join(gap);
-  const content = landscape
-    ? `<div style="flex:1;display:flex;gap:44px;align-items:flex-start;">
-         <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-start;">${leftPanel}</div>
-         <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-start;">${rightPanel}</div>
-       </div>`
-    : `<div style="flex:1;display:flex;flex-direction:column;gap:24px;">${leftPanel}${gap}${rightPanel}</div>`;
+  // Surplus top-contributors bar chart (reclaims the old footer space).
+  const fmtSurp = m => (typeof fmtSvMM === "function") ? fmtSvMM(m) : ("$" + Math.round(m) + "M");
+  const topSurplus = meta.topSurplus || [];
+  const surplusBarHTML = topSurplus.length ? `<div style="display:flex;flex-direction:column;gap:8px;">${(() => {
+    const max = Math.max(1, ...topSurplus.map(t => t.mm));
+    return topSurplus.map(t => `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="width:150px;flex:none;font-family:var(--font-sans);font-size:13px;color:${P.text2};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(t.name)}</span>
+        <div style="flex:1;height:16px;background:${P.bg};border:1px solid ${P.border};border-radius:4px;overflow:hidden;"><div style="height:100%;width:${Math.round(t.mm / max * 100)}%;background:${accent};"></div></div>
+        <span style="width:58px;flex:none;text-align:right;font-family:var(--font-mono);font-size:13px;font-weight:700;color:${P.text};">${escapeHtml(fmtSurp(t.mm))}</span>
+      </div>`).join("");
+  })()}</div>` : "";
 
-  board.style.cssText = `width:${W}px;min-height:${H}px;box-sizing:border-box;background:${P.bg0};color:${P.text};font-family:var(--font-sans);padding:40px 44px 26px;display:flex;flex-direction:column;gap:24px;`;
+  // Compact variant: a glanceable snapshot (grade canopy + top 5 + FV distribution).
+  // Detailed (default): adds the finances/dev panel + top-surplus-contributors bar.
+  const compact = (_gfxOpts.variant === "compact");
+  const gap = `<div style="height:24px;flex:none;"></div>`;
+  const leftPanel = [sect("Grade canopy", canopy), compact ? "" : sect("Finances & development", finHTML)].filter(Boolean).join(gap);
+  const rightPanel = [sect("Top 5 prospects", top5HTML), sect("FV distribution", distHTML)].filter(Boolean).join(gap);
+  const twoCol = landscape
+    ? `<div style="display:flex;gap:44px;align-items:flex-start;">
+         <div style="flex:1;min-width:0;display:flex;flex-direction:column;">${leftPanel}</div>
+         <div style="flex:1;min-width:0;display:flex;flex-direction:column;">${rightPanel}</div>
+       </div>`
+    : `<div style="display:flex;flex-direction:column;gap:24px;">${leftPanel}${gap}${rightPanel}</div>`;
+  const content = `<div style="flex:1;display:flex;flex-direction:column;gap:24px;">${twoCol}${(!compact && surplusBarHTML) ? sect("Top surplus contributors", surplusBarHTML) : ""}</div>`;
+
+  board.style.cssText = `width:${W}px;min-height:${H}px;box-sizing:border-box;background:${P.bg0};color:${P.text};font-family:var(--font-sans);padding:40px 44px 34px;display:flex;flex-direction:column;gap:24px;`;
   board.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;flex:none;">
-      ${_gfxWordmark(accent, P, 24)}
-      <span style="font-family:var(--font-sans);font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};">Farm System Report</span>
-    </div>
+    ${_gfxHeader(P, accent, "Farm System Report", org.org ? `https://eephus.io/prospx/#farm-org=${encodeURIComponent(org.org)}` : "")}
     <div style="display:flex;justify-content:space-between;align-items:center;flex:none;border-bottom:3px solid ${accent};padding-bottom:18px;gap:20px;">
       <div style="display:flex;align-items:center;gap:18px;min-width:0;">
         <div style="display:flex;align-items:center;justify-content:center;height:64px;min-width:64px;">${logo}</div>
@@ -24883,11 +25133,125 @@ function buildFarmCard(snap) {
         <div style="font-family:var(--font-retro);font-size:62px;font-weight:800;line-height:1;color:${_gfxGradeColor(overall)};">${escapeHtml(String(overall))}</div>
       </div>
     </div>
-    ${content}
-    <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid ${P.border};padding-top:14px;flex:none;">
-      ${_gfxWordmark(accent, P, 20)}
-      <span style="font-family:var(--font-mono);font-size:13px;color:${P.text3};">@ARKNDJL · ${dateStr}</span>
+    ${content}`;
+  return { board, total: 1, w: W, h: H };
+}
+
+// Multi-series tool radar (overlay) — one polygon per player, shared axes.
+// series: [{label, color, items:[{label, value}]}]. Concrete colors (export-safe).
+function _gfxRadarOverlay(series, P, size) {
+  if (!series.length) return "";
+  const items0 = series[0].items; const n = items0.length; if (n < 3) return "";
+  const MONO = "'MS Gothic','Osaka-Mono','Roboto Mono',monospace";
+  const S = size || 360, cx = S / 2, cy = S / 2, R = S * 0.30, FMIN = 20, FMAX = 80;
+  const ang = i => -Math.PI / 2 + i * (2 * Math.PI / n);
+  const pt = (i, v) => { const r = R * Math.max(0, Math.min(1, (v - FMIN) / (FMAX - FMIN))); return [cx + r * Math.cos(ang(i)), cy + r * Math.sin(ang(i))]; };
+  const rings = [35, 50, 65, 80].map(g => `<polygon points="${items0.map((_, i) => pt(i, g).map(x => x.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="${P.border}" stroke-width="1"${g === 50 ? ` stroke-dasharray="3,3"` : ""}/>`).join("");
+  const spokes = items0.map((_, i) => { const [ox, oy] = pt(i, 80); return `<line x1="${cx}" y1="${cy}" x2="${ox.toFixed(1)}" y2="${oy.toFixed(1)}" stroke="${P.border}" stroke-width="0.7"/>`; }).join("");
+  const labels = items0.map((it, i) => { const lr = R + 18, lx = cx + lr * Math.cos(ang(i)), ly = cy + lr * Math.sin(ang(i)); return `<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="middle" style="font-family:${MONO};font-size:14px;font-weight:700;fill:${P.text2};">${escapeHtml(it.label)}</text>`; }).join("");
+  const polys = series.map(s => `<polygon points="${s.items.map((it, i) => pt(i, it.value != null ? it.value : FMIN).map(x => x.toFixed(1)).join(",")).join(" ")}" fill="${s.color}" fill-opacity="0.1" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round"/>`).join("");
+  return `<svg viewBox="0 0 ${S} ${S}" style="width:${S}px;height:${S}px;display:block;overflow:visible;">${rings}${spokes}${polys}${labels}</svg>`;
+}
+// Multi-series FV history overlay — one consensus-FV line per player.
+function _gfxFvOverlay(data, P) {
+  const series = data.map(d => ({ color: d.color, pts: (d.p.points || []).map(pt => ({ t: new Date(pt.snapshot_date).getTime(), fv: pt.consensus_fv_raw })).filter(x => x.fv != null && isFinite(x.t)) })).filter(s => s.pts.length >= 2);
+  if (!series.length) return "";
+  const allT = series.flatMap(s => s.pts.map(p => p.t));
+  const minT = Math.min(...allT), maxT = Math.max(...allT), span = (maxT - minT) || 1;
+  const W = 720, H = 230, PL = 30, PR = 14, PT = 14, PB = 22, iW = W - PL - PR, iH = H - PT - PB, FMIN = 35, FMAX = 80;
+  const xs = t => PL + ((t - minT) / span) * iW, ys = fv => PT + iH - ((Math.max(FMIN, Math.min(FMAX, fv)) - FMIN) / (FMAX - FMIN)) * iH;
+  const grid = [];
+  for (let fv = FMIN; fv <= FMAX; fv += 5) { const y = ys(fv).toFixed(1); grid.push(`<line x1="${PL}" y1="${y}" x2="${W - PR}" y2="${y}" stroke="${P.border}" stroke-width="0.5" stroke-dasharray="${fv === 50 ? "3,2" : "2,3"}" opacity="${fv === 50 ? 0.6 : 0.4}"/>`); grid.push(`<text x="${PL - 4}" y="${(Number(y) + 3).toFixed(1)}" text-anchor="end" style="font-family:'Roboto Mono',monospace;font-size:9px;fill:${P.text3};">${fv}</text>`); }
+  const lines = series.map(s => { const pts = s.pts.map(p => `${xs(p.t).toFixed(1)},${ys(p.fv).toFixed(1)}`).join(" "); const last = s.pts[s.pts.length - 1]; return `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round"/><circle cx="${xs(last.t).toFixed(1)}" cy="${ys(last.fv).toFixed(1)}" r="3.5" fill="${s.color}"/>`; }).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;">${grid.join("")}${lines}</svg>`;
+}
+function buildCompareCard(snap) {
+  const players = (snap.items || []).slice(0, 3);
+  const P = _gfxPalette();
+  const accent = _gfxAccentColor(P);
+  const fmt = _GFX_FORMATS[_gfxOpts.format] || _GFX_FORMATS.wide;
+  const W = fmt.w, H = fmt.h;
+  const board = document.createElement("div");
+  if (players.length < 2) {
+    board.style.cssText = `width:${W}px;min-height:${H}px;background:${P.bg};color:${P.text};display:flex;align-items:center;justify-content:center;font-family:var(--font-retro);font-size:24px;text-align:center;padding:40px;`;
+    board.textContent = "Add 2+ prospects to compare (use + Add to compare), then generate.";
+    return { board, total: 0, w: W, h: H };
+  }
+  const cs = getComputedStyle(document.documentElement);
+  const tok = (t, fb) => cs.getPropertyValue(t).trim() || fb;
+  const COL = [tok("--neon-cyan", P.cyan), tok("--neon-violet", "#a764fc"), tok("--neon-amber", "#C9A227")];
+  const fmtAvg = v => (v == null) ? "—" : Number(v).toFixed(3).replace(/^0(?=\.)/, "");
+  const fmtSurp = m => (m == null) ? "—" : (typeof fmtSvMM === "function" ? fmtSvMM(m) : "$" + Math.round(m) + "M");
+  const data = players.map((p, i) => {
+    const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+    const fvLabel = (latest && latest.consensus_fv_label != null) ? String(latest.consensus_fv_label) : (p.fv_close != null ? String(Math.round(p.fv_close)) : "—");
+    const isPit = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true);
+    const grades = (p.tools && p.tools.grades) || {}; const ltc = (latest && latest.tools_consensus) || {};
+    const getT = k => { const v = grades[k]; if (v != null && !isNaN(v)) return Number(v); const lv = ltc[k]; return (lv != null && !isNaN(lv)) ? Number(lv) : null; };
+    const rpsObj = (typeof getRpsPlus === "function") ? getRpsPlus(p) : null;
+    return { p, i, color: COL[i], latest, fvLabel, fvNum: p.fv_close, isPit, getT, sl: p.statline || {},
+             sc: (typeof getStatcastPlus === "function") ? getStatcastPlus(p) : null,
+             rps: rpsObj ? rpsObj.plus : null,
+             dvm: (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) ? Math.round(p.dollar_dvm_plus) : null,
+             surplus: (p.surplus && p.surplus.value_mm != null) ? p.surplus.value_mm : null };
+  });
+  const allPit = data.every(d => d.isPit), allHit = data.every(d => !d.isPit);
+
+  // Player columns (photo, name+logo, FV, meta).
+  const colDivider = `<div style="width:1px;background:${P.border};flex:none;"></div>`;
+  const cols = data.map(d => {
+    const hs = (d.p.mlbam_id) ? _gfxHeadshotURL(d.p.mlbam_id, 200) : "";
+    const meta = [d.p.position, d.p.org, d.sl.level, d.p.age != null ? "age " + d.p.age.toFixed(1) : null].filter(Boolean).join(" · ");
+    return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;border-top:5px solid ${d.color};padding:16px 10px 0;">
+      <div style="width:132px;height:176px;flex:none;border:1px solid ${P.borderStrong};border-radius:6px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;">${hs ? `<div style="width:100%;height:100%;background-image:url('${hs}');background-size:cover;background-position:center top;"></div>` : ""}</div>
+      <div style="display:flex;align-items:center;gap:8px;justify-content:center;">${_gfxTeamLogo(d.p.org, P, 26)}<div style="font-family:var(--font-retro);font-size:22px;font-weight:700;color:${P.text};line-height:1.05;">${escapeHtml(d.p.player_name || "")}</div></div>
+      <div style="font-family:var(--font-mono);font-size:12px;color:${P.text2};">${escapeHtml(meta)}</div>
+      <span class="fv-badge ${fvClass(d.fvLabel)}" style="font-size:32px;padding:7px 15px;border-radius:8px;font-weight:800;">${escapeHtml(d.fvLabel)}</span>
     </div>`;
+  }).join(colDivider);
+
+  // Tool radar overlay (same-type compares only).
+  const radarSvg = (allPit || allHit)
+    ? _gfxRadarOverlay(data.map(d => ({ label: d.p.player_name, color: d.color,
+        items: (d.isPit ? [["FB", "fb"], ["SL", "sl"], ["CB", "cb"], ["CH", "ch"], ["CMD", "cmd"]] : [["HIT", "hit"], ["PWR", "pwr"], ["SPD", "speed"], ["FLD", "field"], ["ARM", "throw"]]).map(([lab, k]) => ({ label: lab, value: d.getT(k) })) })), P, 360)
+    : "";
+  const legend = `<div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:8px;">${data.map(d => `<span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:13px;color:${P.text2};"><span style="width:12px;height:12px;border-radius:2px;background:${d.color};display:inline-block;"></span>${escapeHtml(d.p.player_name)}</span>`).join("")}</div>`;
+  const fvSvg = _gfxFvOverlay(data, P);
+
+  // Comparison stat table (best per row highlighted in that player's color).
+  const rows = [
+    ["Consensus FV", d => d.fvNum, "high", v => v != null ? Math.round(v) : "—"],
+    ["Statcast+", d => d.sc, "high", v => v != null ? v : "—"],
+    ["RPS+", d => d.rps, "high", v => v != null ? v : "—"],
+    ["$DvM+", d => d.dvm, "high", v => v != null ? v : "—"],
+    ["Surplus", d => d.surplus, "high", v => fmtSurp(v)],
+  ];
+  if (allHit) rows.push(["AVG/OBP/SLG", d => null, null, () => null]); // placeholder dropped below
+  if (allHit) { rows.pop(); rows.push(["OPS", d => (d.sl.ops != null ? Number(d.sl.ops) : null), "high", v => v != null ? v.toFixed(3).replace(/^0(?=\.)/, "") : "—"], ["HR", d => d.sl.hr, "high", v => v != null ? v : "—"], ["K%", d => (d.sl.k_pct != null ? Number(d.sl.k_pct) : null), "low", v => v != null ? v.toFixed(1) + "%" : "—"]); }
+  else if (allPit) { rows.push(["ERA", d => (d.sl.era != null ? Number(d.sl.era) : null), "low", v => v != null ? v.toFixed(2) : "—"], ["WHIP", d => (d.sl.whip != null ? Number(d.sl.whip) : null), "low", v => v != null ? v.toFixed(2) : "—"], ["K/9", d => (d.sl.k_per_9 != null ? Number(d.sl.k_per_9) : null), "high", v => v != null ? v.toFixed(1) : "—"]); }
+  const tableHTML = `<table style="width:100%;border-collapse:collapse;">
+    <thead><tr><th style="text-align:left;padding:8px 12px;border-bottom:1px solid ${P.border};font-family:var(--font-sans);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:${P.text3};">Metric</th>${data.map(d => `<th style="text-align:right;padding:8px 12px;border-bottom:2px solid ${d.color};font-family:var(--font-retro);font-size:14px;color:${P.text};white-space:nowrap;">${escapeHtml((d.p.player_name || "").split(" ").slice(-1)[0])}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map(([label, getv, dir, fmtv]) => {
+      const vals = data.map(getv);
+      const nums = vals.map(v => (v == null || isNaN(v)) ? null : Number(v));
+      const valid = nums.filter(v => v != null);
+      let bestIdx = -1;
+      if (dir && valid.length) { const best = dir === "high" ? Math.max(...valid) : Math.min(...valid); bestIdx = nums.findIndex(v => v === best); }
+      return `<tr><td style="text-align:left;padding:8px 12px;border-bottom:1px solid ${P.border};font-family:var(--font-sans);font-size:13px;font-weight:600;color:${P.text3};">${escapeHtml(label)}</td>${data.map((d, i) => `<td style="text-align:right;padding:8px 12px;border-bottom:1px solid ${P.border};font-family:var(--font-mono);font-size:16px;font-weight:${i === bestIdx ? "800" : "600"};color:${i === bestIdx ? d.color : P.text};">${escapeHtml(String(fmtv(vals[i])))}</td>`).join("")}</tr>`;
+    }).join("")}</tbody></table>`;
+
+  const sect = (t, body) => body ? `<div><div style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};margin-bottom:12px;border-bottom:1px solid ${P.border};padding-bottom:6px;">${t}</div>${body}</div>` : "";
+  const chartsRow = (radarSvg || fvSvg) ? `<div style="display:flex;gap:40px;align-items:flex-start;">
+      ${radarSvg ? `<div style="flex:none;">${sect("Tool Profiles", `<div style="display:flex;justify-content:center;">${radarSvg}</div>${legend}`)}</div>` : ""}
+      ${fvSvg ? `<div style="flex:1;min-width:0;">${sect("FV History", fvSvg)}</div>` : ""}
+    </div>` : "";
+
+  board.style.cssText = `width:${W}px;min-height:${H}px;box-sizing:border-box;background:${P.bg0};color:${P.text};font-family:var(--font-sans);padding:40px 44px 34px;display:flex;flex-direction:column;gap:26px;`;
+  board.innerHTML = `
+    ${_gfxHeader(P, accent, "Prospect Comparison", `https://eephus.io/prospx/#cmp=${players.map(p => encodeURIComponent(p.player_key)).join(",")}`)}
+    <div style="display:flex;align-items:stretch;border-bottom:3px solid ${accent};padding-bottom:8px;">${cols}</div>
+    ${chartsRow}
+    ${sect("Head-to-Head", tableHTML)}`;
   return { board, total: 1, w: W, h: H };
 }
 
@@ -24898,6 +25262,7 @@ function buildGfxBoard() {
   // they render ONE subject, not the list board.
   if (snap && snap.kind === "prospect-card") return buildProspectCard(snap);
   if (snap && snap.kind === "farm-card") return buildFarmCard(snap);
+  if (snap && snap.kind === "compare-card") return buildCompareCard(snap);
   const P = _gfxPalette();
   const accent = _gfxAccentColor(P);
   const fmt = _GFX_FORMATS[_gfxOpts.format] || _GFX_FORMATS.portrait;
@@ -24964,22 +25329,25 @@ function buildGfxBoard() {
         <div style="font-family:var(--font-retro);font-size:40px;font-weight:700;line-height:1.05;color:${P.text};">${escapeHtml(title)}</div>
         <div style="font-size:15px;color:${P.text2};margin-top:9px;">${escapeHtml(subtitle)}</div>
       </div>
-      <div style="text-align:right;flex:none;margin-left:24px;">
-        <div style="display:flex;align-items:center;justify-content:flex-end;gap:7px;">
-          <svg width="22" height="22" viewBox="0 0 44 44" style="flex:none;display:block;" aria-hidden="true">
-            <defs><linearGradient id="gfxBallSeam" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#B91C1C"/><stop offset="35%" stop-color="#C9A227"/>
-              <stop offset="65%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/>
-            </linearGradient></defs>
-            <circle cx="22" cy="22" r="19" fill="#FBF8F0" stroke="#C9C1AE" stroke-width="1"/>
-            <path d="M 32 8 Q 40 22 32 36" fill="none" stroke="url(#gfxBallSeam)" stroke-width="2.2"/>
-            <path d="M 12 8 Q 4 22 12 36" fill="none" stroke="url(#gfxBallSeam)" stroke-width="2.2"/>
-            <text x="18.5" y="30" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="20" fill="#0E2B4D">P</text>
-            <text x="26" y="30" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="20" fill="#B91C1C">X</text>
-          </svg>
-          <span style="font-family:var(--font-retro);font-weight:700;font-size:19px;color:${accent};">PROSPX</span>
+      <div style="display:flex;align-items:center;gap:14px;flex:none;margin-left:24px;">
+        <div style="text-align:right;">
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:7px;">
+            <svg width="22" height="22" viewBox="0 0 44 44" style="flex:none;display:block;" aria-hidden="true">
+              <defs><linearGradient id="gfxBallSeam" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#B91C1C"/><stop offset="35%" stop-color="#C9A227"/>
+                <stop offset="65%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/>
+              </linearGradient></defs>
+              <circle cx="22" cy="22" r="19" fill="#FBF8F0" stroke="#C9C1AE" stroke-width="1"/>
+              <path d="M 32 8 Q 40 22 32 36" fill="none" stroke="url(#gfxBallSeam)" stroke-width="2.2"/>
+              <path d="M 12 8 Q 4 22 12 36" fill="none" stroke="url(#gfxBallSeam)" stroke-width="2.2"/>
+              <text x="18.5" y="30" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="20" fill="#0E2B4D">P</text>
+              <text x="26" y="30" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="20" fill="#B91C1C">X</text>
+            </svg>
+            <span style="font-family:var(--font-retro);font-weight:700;font-size:19px;color:${accent};">PROSPX</span>
+          </div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:${P.text3};margin-top:3px;">eephus.io/PROSPX · ${_gfxAsOf()}</div>
         </div>
-        <div style="font-size:12px;color:${P.text3};margin-top:3px;">@ARKNDJL · ${dateStr}</div>
+        ${_gfxQR("https://eephus.io/prospx/", 74)}
       </div>
     </div>
     <div style="flex:1 0 auto;padding-top:20px;">${grid}</div>
@@ -25033,8 +25401,14 @@ function _gfxSyncControls() {
   if (ph) ph.checked = !!_gfxOpts.photos;
   const lg = document.getElementById("gfx-logos");
   if (lg) lg.checked = !!_gfxOpts.logos;
+  const va = document.getElementById("gfx-variant");
+  if (va) va.value = _gfxOpts.variant || "detailed";
   document.querySelectorAll("[data-gfx-accent]").forEach(b =>
     b.classList.toggle("is-active", b.dataset.gfxAccent === (_gfxOpts.accent || "cyan")));
+}
+// Default canvas format for a prospect-card variant (compact is shorter).
+function _gfxVariantFormat(variant) {
+  return variant === "compact" ? "portrait" : "tall";
 }
 // v40 — card modes (single-subject prospect / farm graphics) vs the list board.
 function _gfxIsCard() {
@@ -25046,13 +25420,15 @@ function _gfxIsCard() {
 // farm cards (no headshots there).
 function _gfxApplyModeUI() {
   const k = _gfxSnapshot && _gfxSnapshot.kind;
-  const card = (k === "prospect-card" || k === "farm-card");
+  const card = (k === "prospect-card" || k === "farm-card" || k === "compare-card");
   const hide = (el, h) => { if (el) el.style.display = h ? "none" : ""; };
   const ctrlOf = id => { const el = document.getElementById(id); return el ? el.closest(".gfx-ctrl") : null; };
   hide(ctrlOf("gfx-count"), card);
   hide(ctrlOf("gfx-showval"), card);
   hide(ctrlOf("gfx-title-input"), card);
   hide(ctrlOf("gfx-photos"), k === "farm-card");
+  // Template variants apply to player + farm cards (farm honors Compact/Detailed).
+  hide(ctrlOf("gfx-variant"), k !== "prospect-card" && k !== "farm-card");
 }
 function openGfxModal() {
   const overlay = document.getElementById("gfx-overlay");
@@ -25061,8 +25437,9 @@ function openGfxModal() {
   _gfxOpts.title = "";
   // Card modes have natural canvas defaults: prospect = portrait (card), farm =
   // wide (landscape; it carries more horizontal data). Both stay user-switchable.
-  if (_gfxSnapshot && _gfxSnapshot.kind === "prospect-card") _gfxOpts.format = "portrait";
+  if (_gfxSnapshot && _gfxSnapshot.kind === "prospect-card") _gfxOpts.format = _gfxVariantFormat(_gfxOpts.variant);
   else if (_gfxSnapshot && _gfxSnapshot.kind === "farm-card") _gfxOpts.format = "wide";
+  else if (_gfxSnapshot && _gfxSnapshot.kind === "compare-card") _gfxOpts.format = "wide";
   _gfxOrigTheme = document.documentElement.getAttribute("data-theme");
   overlay.classList.add("is-open");
   _gfxApplyTheme();
@@ -25143,6 +25520,12 @@ async function copyGfx() {
 // Delegated wiring (button lives in the mounted template; overlay at body level).
 document.addEventListener("click", (e) => {
   if (!e.target.closest) return;
+  if (e.target.closest(".gfx-compare-btn")) {
+    e.preventDefault();
+    const cmp = (typeof compareLoad === "function" ? compareLoad() : []).map(k => findPlayer(k)).filter(Boolean);
+    if (cmp.length >= 2) { _gfxSet("compare", "compare-card", cmp, {}); openGfxModal(); }
+    return;
+  }
   if (e.target.closest(".gfx-list-btn") || e.target.closest(".gfx-card-btn")) { e.preventDefault(); openGfxModal(); return; }
   if (e.target.closest("#gfx-download")) { e.preventDefault(); downloadGfx(); return; }
   if (e.target.closest("#gfx-copy")) { e.preventDefault(); copyGfx(); return; }
@@ -25180,6 +25563,15 @@ document.addEventListener("change", (e) => {
     _gfxRefresh();
   } else if (e.target.id === "gfx-logos") {
     _gfxOpts.logos = e.target.checked;
+    _gfxRefresh();
+  } else if (e.target.id === "gfx-variant") {
+    _gfxOpts.variant = e.target.value;
+    // Player cards switch to the variant's natural canvas height so they reflow
+    // without clipping; farm cards keep their own format (wide / portrait).
+    if (_gfxSnapshot && _gfxSnapshot.kind === "prospect-card") {
+      _gfxOpts.format = _gfxVariantFormat(_gfxOpts.variant);
+    }
+    _gfxSyncControls();
     _gfxRefresh();
   }
 });
@@ -36611,11 +37003,21 @@ function _renderFarmDetailBody(orgCode, org, root) {
       });
     let _dist = org.fv_distribution;
     if (!_dist) { _dist = {}; for (const p of rosterPlayersAll) { if (p.fv_close == null) continue; const t = Math.round(p.fv_close); _dist[t] = (_dist[t] || 0) + 1; } }
+    const _topSurplus = rosterPlayersAll
+      .map(p => {
+        if (p.fv_close == null) return null;
+        const isP = !!(p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position));
+        const mm = estimateSurplusValueMM(p.fv_close, isP, p.position);
+        return (mm && mm > 0) ? { name: p.player_name, mm } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.mm - a.mm)
+      .slice(0, 6);
     _gfxSet("farm-detail", "farm-card", [org], {
       top5: _top5, dist: _dist, farmRank: org.farm_rank,
       surplusStr: surplusValue, surplusMM: farmSurplusBreakdown.total,
       dvm: (org.dvm_plus || {}), grades: (org.grades || {}),
-      gradedCount: (org.prospects || []).length,
+      gradedCount: (org.prospects || []).length, topSurplus: _topSurplus,
     });
   }
 
@@ -39668,7 +40070,7 @@ function renderCompareCart() {
   if (players.length || stubs.length) {
     const stubHTML = stubs.map(k => `<div class="compare-card"><div style="color:var(--text-tertiary);">Player "${escapeHtml(k)}" not in current data.</div><button class="cc-remove" data-compare-remove="${escapeHtml(k)}">remove</button></div>`).join("");
     if (players.length) {
-      html += `<div class="detail-title flush no-rule" style="font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);">Prospects · ${players.length}</div>`;
+      html += `<div class="detail-title flush no-rule" style="font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);display:flex;align-items:center;justify-content:space-between;gap:8px;">Prospects · ${players.length}${players.length >= 2 ? `<button class="gfx-compare-btn" type="button" title="Generate a side-by-side comparison graphic"><span aria-hidden="true">📊</span> Generate GFX</button>` : ""}</div>`;
       html += makeCompareSideBySide(players);
     }
     html += stubHTML;
