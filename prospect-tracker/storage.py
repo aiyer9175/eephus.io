@@ -3205,12 +3205,27 @@ FARM_TREE_SUB_WEIGHT_EQUAL = 0.5
 # normalize to 1.0 across present leaves at compute time, so a sparse-
 # data org just weighted-means whatever leaves it has.
 FARM_LEAF_WEIGHTS = {
+    # v38 — Item-7 reweight. Now that surplus value is re-derived through the
+    # transparent value_framework FV→WAR×$/WAR core AND $DvM+ adds a
+    # development-trajectory lens, the surplus grades carry more of the
+    # financial axis and the simpler per-$ ROI leaves (war_per_m,
+    # draft_pool_efficiency, ifa_roi) — which $DvM+ now partly supersedes as a
+    # forward "are these prospects appreciating?" signal — are trimmed.
+    #   fin_active_surplus   0.40 → 0.42   (↑ surplus)
+    #   fin_dollar_dvm       NEW    0.18   (surplus-dev vs FV-tier mean)
+    #   fin_contract_surplus 0.20 → 0.18
+    #   fin_war_per_m        0.10 → 0.07   (↓ superseded ROI)
+    #   fin_draft_pool_eff   0.15 → 0.08   (↓ superseded ROI)
+    #   fin_ifa_roi          0.15 → 0.07   (↓ superseded ROI)
+    # Sum = 1.00. (Weights renormalize across present leaves at compute time,
+    # so a sparse-data org just weighted-means whatever leaves it has.)
     "financial": {
-        "fin_active_surplus":        0.40,    # v32.1: 0.35 → 0.40
-        "fin_contract_surplus":      0.20,    # v32.1: 0.25 → 0.20
-        "fin_war_per_m":             0.10,
-        "fin_draft_pool_efficiency": 0.15,
-        "fin_ifa_roi":               0.15,
+        "fin_active_surplus":        0.42,
+        "fin_dollar_dvm":            0.18,
+        "fin_contract_surplus":      0.18,
+        "fin_war_per_m":             0.07,
+        "fin_draft_pool_efficiency": 0.08,
+        "fin_ifa_roi":               0.07,
     },
 }
 
@@ -7826,19 +7841,46 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             return float(comp["composite_overall"])
         return 0.0  # ungraded sinks below any graded tiebreaker
 
+    # v38 — Item-5: server-side Tiebreaker-Score proxy. Mirrors the front-end
+    # tiebreakerScore intent (talent/performance base from Tool composite + SC+,
+    # LIFTED by the upside "+" flag, DRAGGED sharply by current injury) and is
+    # used ONLY to order prospects who share the same SURFACED (rounded)
+    # consensus FV. The raw decimal no longer decides the rank.
+    def _tbs_proxy(p: PlayerTimeseries) -> float:
+        latest = p.points[-1]
+        tool = _tool_overall(p)                                   # 20-80
+        tool_n = max(0.0, min(1.0, (tool - 40.0) / 30.0)) if tool else None
+        sc = _sc_plus_map.get(p.player_key)                       # 100 = pool avg
+        sc_n = (max(0.0, min(1.0, (float(sc) - 80.0) / 50.0))
+                if sc is not None else None)
+        s = w = 0.0
+        for v, wt in ((tool_n, 0.6), (sc_n, 0.4)):                # perf-weighted base
+            if v is not None:
+                s += v * wt; w += wt
+        score = (s / w) if w else 0.0
+        if getattr(latest, "consensus_fv_plus", False):
+            score *= 1.06                                         # upside (+) lift
+        if (il_status.get(p.player_key) or {}).get("is_on_il"):
+            score *= 0.70                                         # currently injured — sharp drag
+        return score
+
     def _active_key(p: PlayerTimeseries):
         latest = p.points[-1]
         rank_key = latest.avg_rank if latest.avg_rank is not None else 999
-        # v37 — injuries break ties among same-FV, same-tools prospects: a
-        # prospect currently on the IL sinks just below an otherwise-equal
-        # healthy peer. Mirrors the front-end TBS health term.
-        _il = il_status.get(p.player_key) or {}
-        on_il = 1 if _il.get("is_on_il") else 0
+        # Rank by the SURFACED (snapped/displayed) consensus FV — so a 56.3 and
+        # a 56.6 that both display as the same grade are TIED here and the
+        # Tiebreaker-Score proxy arbitrates, rather than the higher decimal
+        # auto-winning. The '+' upside flag is the only sub-FV distinction kept
+        # ahead of TBS (a 45+ outranks a 45 but stays below 46).
+        surfaced_fv = (latest.consensus_fv if latest.consensus_fv is not None
+                       else (round(latest.consensus_fv_raw)
+                             if latest.consensus_fv_raw is not None else 0))
+        upside = 1 if getattr(latest, "consensus_fv_plus", False) else 0
         return (
-            -latest.consensus_fv_raw,   # FV desc — primary
-            -_tool_overall(p),          # Tools desc — FV tiebreaker
-            on_il,                      # healthy (0) ranks above injured (1)
-            rank_key,                   # avg_rank asc — final separator
+            -surfaced_fv,        # surfaced (rounded) FV desc — primary
+            -upside,             # '+' upside flag — ranks above same-FV non-'+'
+            -_tbs_proxy(p),      # Tiebreaker Score desc — ARBITER on tied surfaced FV
+            rank_key,            # avg_rank asc — final stable separator
         )
     actives.sort(key=_active_key)
     if top_n_active is not None:
@@ -7890,8 +7932,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # both the current and prior keys).
         _il = il_status.get(p.player_key) or {}
         on_il = 1 if _il.get("is_on_il") else 0
+        # v38 — Item-5: round the prior FV too, so the rank-delta arrow is
+        # computed on the same surfaced-FV basis as the current rank (else a
+        # sub-decimal FV drift would manufacture a phantom rank change).
         return (
-            -prior_fv if prior_fv is not None else 999,
+            -round(prior_fv) if prior_fv is not None else 999,
             -prior_tool,
             on_il,
             prior_rank,
@@ -7970,6 +8015,63 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     #    talent_translation / MLB production / WAG / WAR-per-year ONLY
     #    counts debuted players."
     # ────────────────────────────────────────────────────────────────────
+    # ── $DvM+ (Surplus Development vs Mean) — item-6 league pre-pass ─────────
+    # Per-prospect SURPLUS-VALUE DEVELOPMENT TRAJECTORY, indexed against the
+    # mean prospect at the SAME FV tier (100 = tier mean, +10 = 1σ better).
+    # Surplus value is a monotonic function of FV, so the trajectory is built
+    # from the RATE of FV movement over the tracked history (the dominant
+    # signal — stat/tool breakouts manifest as FV jumps and are captured here)
+    # plus the age-relative-to-level standing (younger-for-level = developing
+    # ahead of peers). Computed once here so BOTH the org financial grade
+    # (fin_dollar_dvm, below) and the per-prospect payload (stamped after
+    # serialization) read one consistent value. Z-scored WITHIN FV tier; tiers
+    # with <4 members borrow the global spread so a sparse tier can't manufacture
+    # extreme scores.
+    _ddvm_raw_by_key: dict[str, float] = {}
+    _ddvm_tier_by_key: dict[str, int] = {}
+    for p in actives:
+        pts = p.points or []
+        if not pts or pts[-1].consensus_fv_raw is None:
+            continue
+        fv_close = float(pts[-1].consensus_fv_raw)
+        fv_open = float(pts[0].consensus_fv_raw) if pts[0].consensus_fv_raw is not None else fv_close
+        try:
+            _d0 = date.fromisoformat(pts[0].snapshot_date)
+            _d1 = date.fromisoformat(pts[-1].snapshot_date)
+            _yrs = max(0.5, (_d1 - _d0).days / 365.0)
+        except Exception:
+            _yrs = 1.0
+        fv_move_rate = (fv_close - fv_open) / _yrs              # FV grade-pts / yr
+        _bd = birth_dates.get(p.player_key)
+        _age = compute_age_decimal(_bd)
+        _sl = statlines.get(p.player_key)
+        _lvl = _sl.get("level") if _sl else None
+        _avl = score_age_vs_level(_age, _lvl, baselines=age_baselines)
+        age_term = (-float(_avl.diff)) if (_avl and _avl.diff is not None) else 0.0
+        # trajectory = FV-movement rate (primary) + 0.5 × age-for-level standing
+        _ddvm_raw_by_key[p.player_key] = fv_move_rate + 0.5 * age_term
+        _ddvm_tier_by_key[p.player_key] = int(round(fv_close / 5.0) * 5)
+    import statistics as _stats
+    _all_traj = list(_ddvm_raw_by_key.values())
+    _g_mu = _stats.fmean(_all_traj) if _all_traj else 0.0
+    _g_sd = (_stats.pstdev(_all_traj) if len(_all_traj) > 1 else 0.0) or 1.0
+    _ddvm_by_tier: dict[int, list[float]] = {}
+    for _k, _t in _ddvm_tier_by_key.items():
+        _ddvm_by_tier.setdefault(_t, []).append(_ddvm_raw_by_key[_k])
+    _tier_stats: dict[int, tuple[float, float]] = {}
+    for _t, _vals in _ddvm_by_tier.items():
+        if len(_vals) >= 4:
+            _mu = _stats.fmean(_vals)
+            _sd = (_stats.pstdev(_vals) or _g_sd) or 1.0
+        else:
+            _mu, _sd = _g_mu, _g_sd
+        _tier_stats[_t] = (_mu, _sd)
+    _dollar_dvm_by_key: dict[str, float] = {}
+    for _k, _traj in _ddvm_raw_by_key.items():
+        _mu, _sd = _tier_stats.get(_ddvm_tier_by_key[_k], (_g_mu, _g_sd))
+        _z = (_traj - _mu) / (_sd or 1.0)
+        _dollar_dvm_by_key[_k] = round(max(40.0, min(160.0, 100.0 + 10.0 * _z)), 1)
+
     org_map: dict[str, dict] = {}
     for idx, p in enumerate(actives):
         # Skip prospects with no resolved org — they fall through every source
@@ -8119,8 +8221,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "_sc_plus_pit":     [],
                 "_upside_count":     0,
                 "_breakout_count":   0,
+                # v38 — Item-6: per-prospect $DvM+ values for this org. Org
+                # $DvM+ = mean of these; feeds the fin_dollar_dvm financial leaf.
+                "_ddvm_vals":        [],
             }
         m = org_map[org]
+        _pdvm = _dollar_dvm_by_key.get(p.player_key)
+        if _pdvm is not None:
+            m["_ddvm_vals"].append(_pdvm)
         m["prospects"].append({
             "name": p.player_name,
             "player_key": p.player_key,
@@ -9220,6 +9328,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # bonus paid. Surfaces orgs whose current crop projects to
             # generate more cost-controlled WAR than they spent.
             "fin_active_surplus": _finalize_active_surplus_leaf(m),
+            # v38 — Item-6/7: org $DvM+ leaf. Mean of member prospects'
+            # surplus-development indices (100 = league mean prospect at the
+            # same FV tier). Surfaces alongside surplus on the financial detail
+            # page and feeds the reweighted financial grade as fin_dollar_dvm.
+            "fin_dollar_dvm": (lambda _v=m["_ddvm_vals"]: {
+                "dollar_dvm_plus": (round(sum(_v) / len(_v), 1) if _v else None),
+                "n": len(_v),
+            })(),
             # v31 — Health Management leaf under Development. Captures
             # how well the org keeps prospects healthy / available —
             # composite of IL%-current (share of actives sidelined
@@ -10820,6 +10936,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # captures "FV is concentrated in high-leverage spots." Equal
         # 50/50 weight inside the leaf z-blend (the framework averages
         # the two z-scores), so both signals carry the leaf together.
+        # v38 — Item-6/7: org $DvM+ graded league-relative (higher = the org's
+        # prospects develop faster than peers at the same FV tier).
+        "fin_dollar_dvm": [
+            ("dollar_dvm_plus", lambda e: (e["tree"].get("fin_dollar_dvm") or {}).get("dollar_dvm_plus")),
+        ],
         "fin_active_surplus": [
             ("per_prospect", lambda e: (e["tree"]["fin_active_surplus"] or {}).get("surplus_per_prospect_mm")),
             ("per_fv_pt",    lambda e: (e["tree"]["fin_active_surplus"] or {}).get("surplus_per_fv_pt_mm")),
@@ -10984,7 +11105,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Together they cover the full pipeline rather than only the
         # historical grad side.
         "financial":            ["fin_war_per_m", "fin_contract_surplus",
-                                  "fin_active_surplus",
+                                  "fin_active_surplus", "fin_dollar_dvm",
                                   "fin_draft_pool_efficiency", "fin_ifa_roi"],
         # v31 — HOF-track count joins MLB Production. Ceiling signal
         # complement to Conviction (which fires on the lower star
@@ -11533,6 +11654,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     active_payload = [_serialize(p) for p in actives]
     inactive_payload = [_serialize(p) for p in inactives]
     graduate_payload = [_serialize(p) for p in grads]
+    # v38 — Item-6: stamp the per-prospect $DvM+ (computed in the league pre-pass
+    # above) onto each active payload so the farm financial detail can surface it
+    # alongside the prospect's surplus value.
+    for _pl in active_payload:
+        _pl["dollar_dvm_plus"] = _dollar_dvm_by_key.get(_pl.get("player_key"))
     _live_ranked = []
     for _pl in active_payload:
         _base = _safe_float(_pl.get("fv_close_raw"))

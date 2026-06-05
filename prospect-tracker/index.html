@@ -5505,7 +5505,19 @@
       gap: 5px;
     }
     .detail-chip-ribbon .ribbon-row .tool-grade-strip {
-      flex-wrap: wrap;
+      /* Keep the tool/pitch-grade pills on ONE line. Was flex-wrap: wrap,
+         which spilled the strip onto a second row on narrow prospect cards.
+         Overflow scrolls horizontally if the full set is wider than the card;
+         the slightly tighter gap + pill padding below let the common 7-8 pill
+         pitcher strip fit without needing to scroll. */
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+      gap: 3px;
+    }
+    .detail-chip-ribbon .ribbon-row .tool-grade-pill {
+      padding: 1px 4px;
     }
     .detail-chip-ribbon .ribbon-row-stats {
       gap: 12px;
@@ -7482,6 +7494,75 @@
       transition: var(--transition-hover);
     }
     .h1-welcome-link:hover { color: var(--text-primary); }
+      .gfx-overlay {
+      position: fixed; inset: 0;
+      background: rgba(15, 27, 45, 0.62);
+      backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+      z-index: 320; display: none; align-items: center; justify-content: center;
+      padding: 3vh 14px;
+    }
+    .gfx-overlay.is-open { display: flex; }
+    .gfx-modal {
+      width: min(720px, 100%); max-height: 94vh;
+      display: flex; flex-direction: column;
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: 0 24px 70px rgba(15, 27, 45, 0.5);
+      overflow: hidden; font-family: var(--font-sans);
+    }
+    .gfx-modal-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; border-bottom: 1px solid var(--border-light);
+    }
+    .gfx-modal-title {
+      font-family: var(--font-retro); font-weight: 700; font-size: 13px;
+      letter-spacing: 0.04em; color: var(--text-primary);
+    }
+    .gfx-modal-actions { margin-left: auto; display: flex; gap: 8px; }
+    .gfx-btn {
+      font-family: var(--font-sans); font-size: 12px; font-weight: 600;
+      padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer;
+      border: 1px solid var(--border); background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+    .gfx-btn.is-primary { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+    .gfx-btn:hover { border-color: var(--neon-cyan); }
+    .gfx-btn:disabled { opacity: 0.5; cursor: default; }
+    .gfx-preview {
+      overflow: auto; padding: 16px; background: var(--bg-tertiary);
+      display: flex; justify-content: center; align-items: flex-start;
+    }
+    .gfx-board-scale { transform-origin: top center; }
+    .gfx-empty {
+      padding: 44px 24px; text-align: center; color: var(--text-secondary);
+      font-size: 14px; line-height: 1.5; font-family: var(--font-sans);
+    }
+    /* Customization controls bar */
+    .gfx-controls {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+      padding: 9px 14px; border-bottom: 1px solid var(--border-light);
+      background: var(--bg-tertiary); font-family: var(--font-sans); font-size: 11px;
+    }
+    .gfx-ctrl {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em;
+      font-weight: 700; font-size: 10px;
+    }
+    .gfx-ctrl-title { flex: 1 1 180px; text-transform: none; letter-spacing: 0; }
+    .gfx-ctrl-check { text-transform: none; letter-spacing: 0; font-weight: 600; cursor: pointer; }
+    .gfx-select, .gfx-input {
+      font-family: var(--font-sans); font-size: 12px; font-weight: 500;
+      padding: 4px 8px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary);
+    }
+    .gfx-input { flex: 1; min-width: 0; text-transform: none; letter-spacing: 0; }
+    .gfx-accents { display: inline-flex; gap: 5px; }
+    .gfx-swatch {
+      width: 16px; height: 16px; border-radius: 50%; cursor: pointer; padding: 0;
+      border: 2px solid transparent; box-shadow: 0 0 0 1px var(--border);
+    }
+    .gfx-swatch.is-active { border-color: var(--text-primary); }
+
   </style>
 
   <!-- Welcome-gate state, resolved synchronously before <body> paints so a
@@ -7684,6 +7765,11 @@
         <span class="global-ctrl-label">Compare</span>
         <span class="global-ctrl-count" id="global-compare-count">0</span>
       </button>
+      <button class="global-ctrl" id="generate-gfx-btn" type="button"
+              title="Generate a shareable PROSPX graphic of the current list + filters">
+        <span aria-hidden="true">📊</span>
+        <span class="global-ctrl-label">Generate GFX</span>
+      </button>
       <button class="global-ctrl" id="global-theme-toggle" type="button"
               aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
         <span class="theme-icon" aria-hidden="true">☾</span>
@@ -7702,6 +7788,53 @@
      below) + side panel. Pinned prospects/farms persist in localStorage
      so refresh / sharing keeps the comparison alive. Up to 3 items
      side-by-side. The chip auto-hides when the cart is empty. -->
+<div class="gfx-overlay" id="gfx-overlay" role="dialog" aria-label="Generate graphic">
+  <div class="gfx-modal">
+    <div class="gfx-modal-head">
+      <span class="gfx-modal-title">Generate graphic</span>
+      <div class="gfx-modal-actions">
+        <button class="gfx-btn is-primary" id="gfx-download" type="button">⤓ Download PNG</button>
+        <button class="gfx-btn" id="gfx-copy" type="button" title="Copy image to clipboard">Copy</button>
+        <button class="gfx-btn" id="gfx-close" type="button" aria-label="Close">Close</button>
+      </div>
+    </div>
+    <div class="gfx-controls">
+      <label class="gfx-ctrl">Format
+        <select id="gfx-format" class="gfx-select">
+          <option value="portrait">Portrait 4:5</option>
+          <option value="square">Square 1:1</option>
+          <option value="story">Story 9:16</option>
+          <option value="wide">Wide 16:9</option>
+        </select>
+      </label>
+      <label class="gfx-ctrl">Show
+        <select id="gfx-count" class="gfx-select">
+          <option value="10">Top 10</option>
+          <option value="25">Top 25</option>
+          <option value="50">Top 50</option>
+          <option value="100">Top 100</option>
+          <option value="all">All</option>
+        </select>
+      </label>
+      <label class="gfx-ctrl gfx-ctrl-title">Title
+        <input id="gfx-title-input" type="text" class="gfx-input" autocomplete="off" spellcheck="false" placeholder="(auto from filters)">
+      </label>
+      <span class="gfx-ctrl">Accent
+        <span class="gfx-accents">
+          <button class="gfx-swatch is-active" data-gfx-accent="cyan"    type="button" title="Cyan"    style="background:var(--neon-cyan);"></button>
+          <button class="gfx-swatch"           data-gfx-accent="green"   type="button" title="Green"   style="background:var(--up);"></button>
+          <button class="gfx-swatch"           data-gfx-accent="amber"   type="button" title="Amber"   style="background:var(--neon-amber);"></button>
+          <button class="gfx-swatch"           data-gfx-accent="violet"  type="button" title="Violet"  style="background:var(--neon-violet);"></button>
+          <button class="gfx-swatch"           data-gfx-accent="magenta" type="button" title="Magenta" style="background:var(--neon-magenta);"></button>
+        </span>
+      </span>
+      <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-showval" type="checkbox" checked> value column</label>
+    </div>
+    <div class="gfx-preview" id="gfx-preview"></div>
+  </div>
+</div>
+
+
 <!-- Command palette modal — Cmd+K (Mac) / Ctrl+K to open. Searches
      across active prospects + farm orgs; Enter to navigate to the
      selected row, Up/Down to move highlight. -->
@@ -9415,59 +9548,55 @@ function tiebreakerScore(p) {
   const rpsPlusCohort = (p.rps_plus != null) ? p.rps_plus : null;
   const dsPlus = (p.draft_stock_plus != null) ? p.draft_stock_plus : null;
   const ageBoost = _ageVsLevelBoostTBS(p);
-  const healthMod = _healthPenaltyTBS(p);
   const moveBoost = _movementBoostTBS(p);
+  // v38 — Item-5 reweight. Health is no longer a weak additive term; it is now
+  // a SHARP multiplicative drag applied after the base (see below), and
+  // performance (+ metrics: RPS+, SC+) is weighted more heavily. Breakout +
+  // upside become strong positive multipliers. The additive `parts` now carry
+  // only the talent/performance signal; modifiers multiply the renormalized base.
   let parts;
   if (dsPlus != null) {
-    // DRAFT TBS — DS+ anchors the rank-based projection; Tool+ and
-    // RPS+ (college perf) provide cohort-normalized confirmation;
-    // Tool / per-tool max round out the scouting picture; age,
-    // health, movement act as secondary modifiers.
+    // DRAFT TBS — DS+ anchors the rank-based projection; Tool+ and RPS+
+    // (college perf, a "+" performance metric — up-weighted) confirm; Tool /
+    // per-tool max round out scouting; age modulates.
     parts = [
       [_tbsNorm(dsPlus,        70, 130), 0.27],
       [_tbsNorm(toolPlus,      80, 130), 0.18],
-      [_tbsNorm(rpsPlusCohort, 80, 130), 0.17],
+      [_tbsNorm(rpsPlusCohort, 80, 130), 0.21],   // perf ↑ (was 0.17)
       [_tbsNorm(tool,          40, 70),  0.10],
       [_tbsNorm(tmax,          40, 70),  0.10],
-      [ageBoost,                         0.08],
-      [healthMod,                        0.06],   // v37 — injuries up-weighted (e.g. post-TJ college arms)
+      [ageBoost,                         0.10],    // was 0.08 (absorbs removed health term)
       [moveBoost,                        0.04],
     ];
   } else if (_isOverseasProspect(p)) {
     const { wrc, fip } = _translatedOverseasPerf(p);
     const fipNorm = (fip != null) ? Math.max(0, Math.min(1, (4.50 - Number(fip)) / 2.00)) : null;
-    // OVERSEAS TBS — Tool+ + cohort RPS+ + translation-adjusted
-    // wRC+/FIP carry the headline. Tool composite + per-tool max
-    // provide scout-grade depth. Age + movement act as modifiers.
-    // Health is usually null for overseas pros (no MLB IL records).
+    // OVERSEAS TBS — Tool+ + cohort RPS+ + translation-adjusted wRC+/FIP
+    // (performance) carry the headline. Tool depth + age modulate.
     parts = [
       [_tbsNorm(toolPlus,      80, 130), 0.22],
-      [_tbsNorm(rpsPlusCohort, 80, 130), 0.18],
-      [_tbsNorm(wrc,           80, 160), 0.18],   // translation-adjusted
-      [fipNorm,                          0.18],   // pitcher perf (only one of wrc/fip will be present)
+      [_tbsNorm(rpsPlusCohort, 80, 130), 0.20],   // perf ↑ (was 0.18)
+      [_tbsNorm(wrc,           80, 160), 0.20],   // perf ↑ (translation-adjusted)
+      [fipNorm,                          0.18],   // pitcher perf (only one of wrc/fip present)
       [_tbsNorm(tool,          40, 70),  0.08],
       [_tbsNorm(tmax,          40, 70),  0.08],
       [ageBoost,                         0.04],
-      [healthMod,                        0.04],   // v37 — included for parity; usually null for overseas pros (drops out via renorm)
       [moveBoost,                        0.04],
     ];
   } else {
-    // ACTIVE MiLB TBS — Tool composite + RPS+ (current rate-perf vs
-    // level) + SC+ (underlying tracked-data composite) carry the
-    // headline. Stuff+ adds pitcher-specific arsenal signal when
-    // present. Per-tool max + age-vs-level boost provide ceiling +
-    // developmental-curve hints. Health + movement modulate.
+    // ACTIVE MiLB TBS — performance (RPS+ rate-vs-level + SC+ tracked-data
+    // composite, both "+" metrics) is now weighted alongside the Tool
+    // composite rather than well below it; Stuff+ adds pitcher arsenal signal.
     const rps = (p.statline && p.statline.rps_plus) ?? null;
     const sc  = getStatcastPlus(p);
     const stf = _stuffPlusTBS(p);
     parts = [
-      [_tbsNorm(tool, 40, 70),   0.26],
-      [_tbsNorm(rps,  80, 130),  0.16],
-      [_tbsNorm(sc,   80, 130),  0.16],
+      [_tbsNorm(tool, 40, 70),   0.24],   // was 0.26
+      [_tbsNorm(rps,  80, 130),  0.22],   // perf ↑ (was 0.16)
+      [_tbsNorm(sc,   80, 130),  0.20],   // perf ↑ (was 0.16)
       [_tbsNorm(tmax, 40, 70),   0.10],
       [_tbsNorm(stf,  80, 130),  0.08],
-      [ageBoost,                 0.08],
-      [healthMod,                0.10],   // v37 — injuries now a meaningful tiebreaker for active prospects (was 0.05); on-IL zeros this term, recent IL / post-TJ partially discount it
+      [ageBoost,                 0.10],   // was 0.08
       [moveBoost,                0.06],
     ];
   }
@@ -9476,22 +9605,51 @@ function tiebreakerScore(p) {
     if (v != null) { presentSum += v * w; presentWeight += w; }
   }
   if (presentWeight === 0) return 0;
-  return Math.round(100 * presentSum / presentWeight);
+  let score = 100 * presentSum / presentWeight;   // renormalized talent/perf base (0-100)
+
+  // v38 — Item-5 modifiers as multipliers (vs the old weak additive terms):
+  //   + Breakout signal      → strong positive multiplier (×1.12)
+  //   + Upside indicator (+)  → positive multiplier (×1.06)
+  //   − Currently on IL       → SHARP negative multiplier (×0.70)
+  //   − Severe/long IL hist.  → meaningful negative multiplier (×0.86 / post-TJ ×0.85)
+  //   − Moderate IL history   → mild negative multiplier (×0.94)
+  // These scale the whole score so an injured or breakout prospect moves
+  // decisively relative to a tied-FV peer, instead of nudging one renorm term.
+  if (p.fv_close_plus || p.consensus_fv_plus) score *= 1.06;   // upside indicator
+  if (p.breakout_flag)                         score *= 1.12;   // breakout signal (strong)
+  const il = p.il_status, hp = p.health_profile;
+  if (il && il.is_on_il) {
+    score *= 0.70;                                              // currently injured — sharp drag
+  } else if (hp) {
+    if (hp.is_post_tj) {
+      score *= 0.85;                                            // post-TJ recovery window
+    } else {
+      const stints = Number(hp.il_stints_12mo) || 0;
+      const days   = Number(hp.il_days_12mo) || 0;
+      if (stints >= 3 || days >= 90)      score *= 0.86;        // severe / long IL history
+      else if (stints >= 1 || days >= 30) score *= 0.94;        // moderate IL history
+    }
+  }
+  return Math.round(Math.max(0, Math.min(130, score)));
 }
 
 function fvCmpDesc(a, b) {
-  const af = (a && a.fv_close != null) ? a.fv_close : -1;
-  const bf = (b && b.fv_close != null) ? b.fv_close : -1;
+  // v38 — Item-5: rank by the SURFACED (rounded/displayed) FV, NOT the raw
+  // decimal. Two prospects whose FV rounds to the same displayed value — e.g.
+  // 56.3 and 56.6 both surface as the same number — are TIED here, and the
+  // Tiebreaker Score (not the underlying decimal) arbitrates their order.
+  // fv_close is the snapped consensus FV server-side, so Math.round is normally
+  // a no-op; rounding makes the "TBS breaks same-surfaced-FV ties" contract
+  // explicit and robust to any raw-decimal payload.
+  const af = (a && a.fv_close != null) ? Math.round(Number(a.fv_close)) : -1;
+  const bf = (b && b.fv_close != null) ? Math.round(Number(b.fv_close)) : -1;
   if (bf !== af) return bf - af;
-  // v26 — '+' upside tiebreaker: 42+ ranks above 42 but below 43.
-  // Numeric FVs are tied at this point; the upside flag breaks first.
+  // '+' upside flag is the only sub-FV distinction kept ahead of TBS: a 42+
+  // outranks a 42 but stays below 43.
   const ap = (a && a.fv_close_plus) ? 1 : 0;
   const bp = (b && b.fv_close_plus) ? 1 : 0;
   if (bp !== ap) return bp - ap;
-  // v31.8 — Composite Tiebreaker Score (TBS) — single number that
-  // blends Tool / RPS+ / SC+ / per-tool max. Replaces the prior
-  // multi-step chain (SC+ → Tool composite → name). Equal-TBS
-  // players still fall through to alphabetical for sort stability.
+  // Tiebreaker Score is the FINAL arbiter on equal surfaced FV (+ flag).
   const ta = tiebreakerScore(a);
   const tb = tiebreakerScore(b);
   if (tb !== ta) return tb - ta;
@@ -9607,9 +9765,16 @@ function fvBadgeBreakoutMarkHTML(player) {
 // marker appears: badges, FV chart dots, per-source FV labels, compare
 // overlay.
 function _fvQualifiesForPlus(fvNumeric) {
+  // v38 — Upside-indicator floor lowered: the "+" now displays for ANY
+  // upside-flagged prospect at every FV tier, explicitly including 50 FV and
+  // below (was capped to >... i.e. previously gated to a single side of 50,
+  // which hid the marker on the low-FV lottery-ticket prospects it matters
+  // most for). Callers still require the upside FLAG (fv_close_plus /
+  // consensus_fv_plus / per-source fv_plus) before calling this, so this gate
+  // is now purely "is there a numeric FV to hang the + on?".
   if (fvNumeric == null) return false;
   const n = Number(fvNumeric);
-  return isFinite(n) && n <= 50;
+  return isFinite(n);
 }
 function fvBadgeUpsideClass(player) {
   if (!player) return "";
@@ -11948,7 +12113,7 @@ function makeMilbCell(p) {
         const _hh = _ex && _ex.hard_hit_pct != null ? (_ex.hard_hit_pct * 100).toFixed(0) + "%" : null;
         return [
           sl.hr != null ? `${sl.hr} HR` : null,
-          sl.iso != null ? `ISO ${fmtRate3(sl.iso)}` : null,
+          sl.iso != null ? (() => { const ip = computeIsoPlus(p); return `ISO ${fmtRate3(sl.iso)}${ip != null ? ` (ISO+ ${ip})` : ""}`; })() : null,
           sl.bb_pct != null ? `BB% ${sl.bb_pct.toFixed(1)}` : null,
           sl.k_pct != null ? `K% ${sl.k_pct.toFixed(1)}` : null,
           _hh != null ? `HH ${_hh}` : null,
@@ -14510,6 +14675,7 @@ function renderActives() {
   // no prepended news ribbon.
   renderActiveContextRail();
   const filtered = getFilteredActives();
+  _gfxSet("active", "prospect", filtered, {});
   const pageSize = state.pageSizes.actives || 50;
   const totalItems = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -14622,6 +14788,7 @@ function renderSpotlights() {
   }
   // v29 — Universal direction-flip honored after sort.
   _applySortDir(rowsData, "spotlightSort");
+  _gfxSet("spotlights", "spotlight", rowsData, { bucket });
 
   const pageSize = state.pageSizes.spotlights || 25;
   const totalItems = rowsData.length;
@@ -15238,6 +15405,7 @@ function renderWatchlist() {
     if ((state.pages.watchlist || 1) > totalPages) state.pages.watchlist = 1;
     const curPage = state.pages.watchlist || 1;
     const pagedPlayers = pageSlice(players, curPage, pageSize);
+    _gfxSet("watchlist", "prospect", players, {});
     const rankOffset = (curPage - 1) * pageSize;
     const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "watchlist");
     const paginationStripTop = renderPaginationStripCompact(curPage, totalItems, pageSize, "watchlist");
@@ -15381,6 +15549,7 @@ const CHART_AXES = {
     { key: "slg",            label: "SLG",                getter: p => _slOf(p, "slg"),                     fmt: _fmt3 },
     { key: "avg",            label: "AVG",                getter: p => _slOf(p, "avg"),                     fmt: _fmt3 },
     { key: "iso",            label: "ISO",                getter: p => _slOf(p, "iso"),                     fmt: _fmt3 },
+    { key: "iso_plus",       label: "ISO+ (vs level)",    getter: p => computeIsoPlus(p),                   fmt: v => Math.round(v).toString() },
     { key: "bb_pct",         label: "BB%",                getter: p => _slOf(p, "bb_pct"),                  fmt: _fmtPct },
     { key: "k_pct",          label: "K%",                 getter: p => _slOf(p, "k_pct"),                   fmt: _fmtPct },
     { key: "ops_plus_level", label: "OPS+ vs level",      getter: p => _slOf(p, "ops_plus_level"),          fmt: v => Math.round(v).toString() },
@@ -16589,6 +16758,7 @@ function renderInjured() {
   }
   // v29 — Universal direction-flip honored after sort.
   _applySortDir(filtered, "ilSort");
+  _gfxSet("injured", "prospect", filtered, {});
 
   // Grid columns live on `.col-header.is-injured` / `.player-row.is-injured`.
   // Days / Since / FV headers are click-sortable; the active chip stays
@@ -18506,6 +18676,7 @@ function _renderDraftRankings(host, cls) {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   if ((state.pages.draft || 1) > totalPages) state.pages.draft = 1;
   const curPage = state.pages.draft || 1;
+  _gfxSet("draft", "draftee", prospects, { year: (typeof cls !== "undefined" && cls) ? cls.year : null });
   const pagedItems = pageSlice(prospects, curPage, pageSize);
   const paginationStrip = renderPaginationStrip(curPage, totalItems, pageSize, "draft");
   const paginationStripTop = renderPaginationStripCompact(curPage, totalItems, pageSize, "draft");
@@ -19557,6 +19728,7 @@ async function renderIFA() {
   const _featured = new Set(
     signings.slice().sort(_byBonus).filter((s, i) => i < 40 || s.is_tracked));
   const sortedSignings = signings.slice().sort(_sortFns[sortMode] || _byBonus);
+  _gfxSet("ifa", "ifa", sortedSignings, { year: cls.year, sortMode });
   // Featured = top 40 by bonus + every tracked prospect; the rest hides behind
   // a "Show all" expander. An active org / country / tracked filter always
   // shows the full matching set.
@@ -19900,6 +20072,7 @@ function _renderOverseasRankings(host, leagues) {
   // so _renderOverseasCard can render a rank diamond matching the
   // active-list / draft-card visual treatment.
   flat.forEach((p, i) => { p._overseasRank = i + 1; });
+  _gfxSet("overseas", "overseas", flat, {});
 
   const pageSize = state.pageSizes.overseas || 50;
   const totalItems = flat.length;
@@ -21823,6 +21996,7 @@ function renderDebuts() {
   }
   // v29 — Universal direction-flip honored on the flat-list path.
   if (orderedGrads) _applySortDir(orderedGrads, "debutSort");
+  _gfxSet("debuts", "graduate", orderedGrads || filtered, {});
 
   const renderRow = (g, rank, pillClassOverride, sublabel) => {
     const isRecent = isRecentDebutDate(g.debut_date);
@@ -22601,20 +22775,29 @@ const GLOSSARY = {
   "hit_plus": {
     name: "HIT+", aliases: ["HIT+", "Hitting+", "Hit Index"], category: "custom-index",
     priority: 28,
-    short: "Hit-tool index; batting average + contact vs level-mean blended 70/30 with the hit-tool grade (mean of Hit + Bat Control). 100 = average.",
-    long: "Isolates the hit-tool dimension (distinct from POW+ power and OPS+ overall). The raw component blends 0.6 · batting-average-vs-level and 0.4 · contact-vs-level (K%-avoidance — a lower K% than the level mean reads above 100). That raw index is then blended 70% / 30% with the player's hit-tool scouting grade — the mean of the Hit grade and Bat Control (BCTRL, FG's bat-to-ball contact tool), using whichever are on file — on the 20-80 scale (50 → 100, ±10 grade ≈ ±20 points). Hitters only, 40-game minimum. When a graded prospect is below the sample gate, HIT+ falls back to the tool grade alone; when no Hit/Bat-Control grade is on file, it uses the raw stats alone. Note: until level norms are regenerated with a batting-average baseline, the raw side runs on contact only.",
-    formula: "HIT+ = 0.7 · raw + 0.3 · tool+\nraw = 100 · (0.6 · AVG_ratio + 0.4 · contact_ratio)\ntool+ = 100 + (mean(Hit, BatControl) − 50) · 2",
-    example: "A AA hitter batting .300 (level .246) with a 16% K% (level 22.5%) carries a raw ~133; paired with a 55 Hit / 60 Bat Control (mean 57.5 → tool+ 115) the HIT+ lands ~128.",
+    short: "Hit-tool index — weighted blend of performance (AVG + contact), Statcast (zone-contact + whiff), and the Hit/Bat-Control grade. 100 = average.",
+    long: "Isolates the hit-tool dimension (distinct from POW+ power and OPS+ overall) as a three-way weighted blend, renormalized over whichever components are on file: 45% PERFORMANCE (0.6 · batting-average-vs-level + 0.4 · contact-vs-level, where a lower K% than the level mean reads above 100), 25% STATCAST contact (0.5 · zone-contact% + 0.5 · whiff%-inverted, indexed to pool averages), and 30% SCOUTING (the mean of the Hit grade and Bat Control on the 20-80 scale, 50 → 100, ±10 grade ≈ ±20 points). Hitters only, 40-game minimum. A graded prospect below the sample gate falls back to whichever components exist; the weights always renormalize so partial data still yields a comparable 100-anchored read. Statcast pool anchors (z-contact ≈ 80%, whiff ≈ 26%) are placeholders pending real per-level MiLB calibration.",
+    formula: "HIT+ = renorm(0.45·perf + 0.25·statcast + 0.30·tool+)\nperf = 100 · (0.6·AVG_ratio + 0.4·contact_ratio)\nstatcast = 0.5·(100·Zcon/80) + 0.5·(100·26/Whiff)\ntool+ = 100 + (mean(Hit, BatControl) − 50) · 2",
+    example: "A AA hitter batting .300 (level .246), 16% K% (level 22.5%), 82% zone-contact, paired with 55 Hit / 60 Bat Control — perf ~133, statcast ~103, tool+ 115 → HIT+ ~122.",
     related: ["bb_pct", "k_pct", "tool", "pwr_plus", "pd_plus", "ops_plus_level"],
+  },
+  "iso_plus": {
+    name: "ISO+", aliases: ["ISO+", "ISO Plus", "Isolated Power+"], category: "custom-index",
+    priority: 29,
+    short: "Isolated power indexed to the level-average ISO. 100 = league-average; +1 pt = 1% better (wRC+/ERA+ paradigm).",
+    long: "ISO (SLG − AVG) rescaled against the current level's average ISO so power reads on one cross-level axis: 100 is exactly league-average, 120 is 20% above, 80 is 20% below. The baseline is the same DATA.level_norms cohort every other '+' metric uses (same season/level source). Pure performance rescaling — no scouting-tool blend (that distinguishes it from POW+, which now blends ISO+ and HR-rate with the Power grade and Statcast). Hitters only, 40-game minimum.",
+    formula: "ISO+ = 100 · ISO / level_avg_ISO",
+    example: "A High-A hitter with a .180 ISO at a level averaging .130 posts an ISO+ of ~138 (38% above league-average power).",
+    related: ["iso", "pwr_plus", "slg", "tool"],
   },
   "pwr_plus": {
     name: "POW+", aliases: ["POW+", "PWR+", "Power Index", "Power+"], category: "custom-index",
     priority: 30,
-    short: "Hitter power index; ISO + HR-rate vs level-mean blended 70/30 with the Power tool grade. 100 = average.",
-    long: "Composite of isolated power (SLG minus AVG) and home-run rate, both normalized against the player's current level (weighted 60% ISO / 40% HR-rate, since ISO is the more stable single-year power signal). That raw index is then blended 70% / 30% with the player's Power scouting grade on the 20-80 scale (50 → 100, ±10 grade ≈ ±20 points; Power uses the consolidated grade, else the mean of game/raw power). Hitters only, 40-game minimum. Below the sample gate a graded prospect gets the tool alone; with no grade on file the raw stats stand alone. (Renamed from PWR+.)",
-    formula: "POW+ = 0.7 · raw + 0.3 · tool+\nraw = 100 · (0.6 · ISO_ratio + 0.4 · HR_rate_ratio)\ntool+ = 100 + (Power_grade − 50) · 2",
-    example: "A AA hitter with a .240 ISO at a level where the mean is .140 posts a raw ~145; paired with a 60 Power grade (tool+ 120) the POW+ lands ~138.",
-    related: ["iso", "tool", "rps_plus", "hit_plus", "pd_plus"],
+    short: "Hitter power index — weighted blend of performance (ISO+ + HR-rate), Statcast (hard-hit + barrel), and the Power grade. 100 = average.",
+    long: "Three-way weighted blend, renormalized over whichever components are on file: 45% PERFORMANCE (0.6 · ISO+ + 0.4 · HR-rate+, both level-relative — ISO+ is the item-1 metric, the more stable single-season power signal), 25% STATCAST batted-ball quality (0.55 · hard-hit% + 0.45 · barrel%, indexed to pool averages), and 30% SCOUTING (Power grade on the 20-80 scale, 50 → 100, ±10 ≈ ±20 points; consolidated grade else mean of game/raw power). Hitters only, 40-game minimum. Below the gate or with sparse data the weights renormalize over the present components. Statcast pool anchors (hard-hit ≈ 33%, barrel ≈ 6%) are placeholders pending real per-level MiLB calibration.",
+    formula: "POW+ = renorm(0.45·perf + 0.25·statcast + 0.30·tool+)\nperf = 0.6·ISO+ + 0.4·HR-rate+\nstatcast = 0.55·(100·HH%/33) + 0.45·(100·Brl%/6)\ntool+ = 100 + (Power_grade − 50) · 2",
+    example: "A AA hitter with ISO+ 145, hard-hit 40% / barrel 9% (statcast ~134), and a 60 Power grade (tool+ 120) → POW+ ~135.",
+    related: ["iso", "iso_plus", "tool", "rps_plus", "hit_plus", "pd_plus"],
   },
   "pd_plus": {
     name: "PD+", aliases: ["PD+", "Disci+", "Plate Discipline+", "Plate Discipline"], category: "custom-index",
@@ -23795,6 +23978,449 @@ document.addEventListener("click", async (e) => {
     btn.style.display = prevDisplay || "";
   }
 });
+
+// GENERATE GFX — a one-page shareable graphic of the current filter selection
+// =============================================================================
+// Replaces ad-hoc sharing for the prospect list: reads the ACTIVE list's current
+// filters + sort, derives a headline ("Top 50 MiLB Prospects", "Top SP · Mariners
+// System"), and renders a branded ranked board (the SAME filtered+sorted players
+// the list shows, top 50) that the user can download / copy as a PNG. When no
+// prospect matches the filters it prompts the user to adjust them instead.
+
+// Snapshot of the CURRENT on-screen list, set by each list render at its full
+// filtered+sorted-array point (_gfxSet). The graphic reads this so it always
+// matches exactly what the user sees — no re-derivation / drift across sections.
+let _gfxSnapshot = null;   // { section, kind, items:[...], total, meta:{} }
+function _gfxSet(section, kind, items, meta) {
+  const arr = Array.isArray(items) ? items : [];
+  _gfxSnapshot = { section, kind, items: arr, total: arr.length, meta: meta || {} };
+}
+// Sections that can be graphic'd + their item "kind" (drives row rendering).
+const _GFX_SECTIONS = {
+  active: "prospect", injured: "prospect", watchlist: "prospect",
+  debuts: "graduate", draft: "draftee", overseas: "overseas",
+  leaderboards: "leader", farm: "farm", spotlights: "spotlight", ifa: "ifa",
+};
+// Social-media canvas presets (px). The board fills the chosen width and pins to
+// a minimum height so short lists render at the exact aspect (long lists extend).
+const _GFX_FORMATS = {
+  portrait: { w: 1080, h: 1350, label: "Portrait 4:5" },
+  square:   { w: 1080, h: 1080, label: "Square 1:1" },
+  story:    { w: 1080, h: 1920, label: "Story 9:16" },
+  wide:     { w: 1600, h: 900,  label: "Wide 16:9" },
+};
+// User customization (persists across opens within a session).
+const _gfxOpts = { count: 50, title: "", accent: "", showValue: true, format: "portrait" };
+const _GFX_ACCENTS = {
+  cyan: "--neon-cyan", green: "--up", amber: "--neon-amber",
+  violet: "--neon-violet", magenta: "--neon-magenta",
+};
+
+// Org code -> nickname ("SEA" -> "Mariners"); falls back to the full name.
+function _gfxOrgNick(code) {
+  if (!code) return "";
+  const n = _FG_TEAM_PREFIX_TO_NAME[String(code).toLowerCase()];
+  return n || (typeof fullOrgName === "function" ? fullOrgName(code) : code);
+}
+const _GFX_POS_LABEL = {
+  C: "Catchers", "1B": "1B", "2B": "2B", "3B": "3B", SS: "Shortstops",
+  INF: "Infielders", CF: "CF", LF: "LF", RF: "RF", OF: "Outfielders",
+  P: "Pitchers", SP: "SP", RP: "Relievers", SIRP: "SIRP", MIRP: "MIRP",
+};
+function _gfxPosLabel(pos) { return _GFX_POS_LABEL[pos] || pos; }
+
+// Active-list headline (org / pos / level aware) — the original behavior.
+function _gfxActiveTitle(n) {
+  const org = state.orgFilter, pos = state.posFilter, lvl = state.levelFilter;
+  const quals = [];
+  if (lvl && lvl !== "all") quals.push(lvl);
+  if (pos && pos !== "all") quals.push(_gfxPosLabel(pos));
+  const qstr = quals.join(" ");
+  if (org && org !== "all") {
+    const nick = _gfxOrgNick(org);
+    return qstr ? `Top ${qstr} · ${nick} System` : `${nick} System — Top ${n}`;
+  }
+  return `Top ${n}${qstr ? " " + qstr : ""} MiLB Prospects`;
+}
+
+// Section-aware headline. A user title override always wins.
+function _gfxTitle(n) {
+  if (_gfxOpts.title && _gfxOpts.title.trim()) return _gfxOpts.title.trim();
+  const snap = _gfxSnapshot;
+  if (!snap) return `Top ${n}`;
+  const m = snap.meta || {};
+  const orgNick = (state.orgFilter && state.orgFilter !== "all") ? _gfxOrgNick(state.orgFilter) : null;
+  switch (snap.section) {
+    case "active":      return _gfxActiveTitle(n);
+    case "injured":     return `Injured List — ${n} Prospect${n === 1 ? "" : "s"}`;
+    case "watchlist":   return `My Watchlist — Top ${n}`;
+    case "debuts":      return `Top ${n} ${orgNick ? orgNick + " " : ""}Graduates`;
+    case "draft":       return `Top ${n} ${m.year ? m.year + " " : ""}Draft Prospects`;
+    case "overseas":    return `Top ${n} Overseas Prospects`;
+    case "leaderboards":return `${m.statLabel || "Stat"} Leaders${m.level && m.level !== "all" ? " · " + m.level : ""}`;
+    case "farm":        return `Farm System Rankings`;
+    case "spotlights": {
+      const b = { risers: "Risers", rebounders: "Rebounders", fallers: "Fallers", hot: "Risers" }[m.bucket] || "Movers";
+      return `Prospect ${b} — Top ${n}`;
+    }
+    case "ifa":         return `Top ${n} ${m.year ? m.year + " " : ""}Int'l Signings`;
+    default:            return `Top ${n}`;
+  }
+}
+
+// Section-aware sub-line: count + ranking dimension + active filters.
+function _gfxSubtitle(total, cap) {
+  const snap = _gfxSnapshot; if (!snap) return "";
+  const m = snap.meta || {};
+  const nounMap = { prospect: "prospect", graduate: "graduate", draftee: "draft prospect",
+                    overseas: "overseas prospect", leader: "qualified player", farm: "farm system" };
+  const noun = nounMap[snap.kind] || "item";
+  const countNote = cap < total ? `top ${cap} of ${total}` : `${total} ${noun}${total === 1 ? "" : "s"}`;
+  const parts = [];
+  const SORT = {
+    fv: "by consensus FV", upside: "upside first", statcast_plus: "by Statcast+",
+    tool: "by tool grade", stock_movers: "biggest FV movers", source_confidence: "most-corroborated FV",
+    surplus_sv: "by expected surplus value", surplus_risk: "by risk-adjusted SV",
+    surplus_p90: "by ceiling (P90)", surplus_p10: "by floor (P10)", surplus_pbust: "lowest bust risk",
+    wag: "by WAR-above-grade", age_asc: "youngest first", age_desc: "oldest first",
+    age_vs_level: "most young-for-level", eta: "earliest ETA",
+  };
+  if (snap.section === "active") {
+    parts.push("ranked " + (SORT[state.sort] || "by consensus FV"));
+    if (state.ageFilter && state.ageFilter !== "all") parts.push(`age ≤ ${state.ageFilter}`);
+    if (state.etaFilter && state.etaFilter !== "all") parts.push(`ETA by ${state.etaFilter}`);
+    if (state.acqFilter && state.acqFilter !== "all") parts.push(`${String(state.acqFilter).replace(/_/g, " ")}`);
+  } else if (snap.section === "debuts") {
+    parts.push("ranked " + ({ vs_fv_proj: "by WAG", vs_fv_proj_low: "by lowest WAG", warwag: "by WARWAG",
+      wag_pct: "by WAG percentile", war: "by current WAR", career_war: "by career WAR",
+      war_per_yr: "by WAR/yr", fv_close: "by FV", date: "newest debuts first" }[state.debutSort] || "newest first"));
+  } else if (snap.section === "draft") {
+    parts.push("ranked " + (state.draftSort && state.draftSort !== "fv" ? "by " + String(state.draftSort).replace(/_/g, " ") : "by consensus FV"));
+  } else if (snap.section === "overseas") {
+    parts.push("ranked " + (state.overseasSort && state.overseasSort !== "fv" ? "by " + String(state.overseasSort).replace(/_/g, " ") : "by consensus FV"));
+  } else if (snap.section === "leaderboards") {
+    if (m.season) parts.push(`${m.season} season`);
+  } else if (snap.section === "farm") {
+    parts.push(m.sortLabel ? "ranked " + m.sortLabel : "ranked by composite grade");
+  } else if (snap.section === "spotlights") {
+    parts.push("by FV movement");
+  } else if (snap.section === "ifa") {
+    parts.push("ranked " + (m.sortMode === "fv" ? "by FV" : m.sortMode === "name" ? "A–Z" : "by signing bonus"));
+  }
+  if (state.search) parts.push(`“${state.search}”`);
+  return `${countNote}${parts.length ? " · " + parts.join(" · ") : ""}`;
+}
+
+// Theme-resolved palette (concrete colors so html2canvas rasterizes cleanly).
+function _gfxPalette() {
+  const cs = getComputedStyle(document.documentElement);
+  const g = (name, fb) => (cs.getPropertyValue(name).trim() || fb);
+  return {
+    bg: g("--bg-secondary", "#0f1b2d"), text: g("--text-primary", "#e8eef5"),
+    text2: g("--text-secondary", "#a8b5c8"), text3: g("--text-tertiary", "#6b7a8f"),
+    border: g("--border-light", "#1e2535"), cyan: g("--neon-cyan", "#00d9ff"),
+  };
+}
+function _gfxAccentColor(P) {
+  const v = _GFX_ACCENTS[_gfxOpts.accent];
+  if (!v) return P.cyan;
+  return (getComputedStyle(document.documentElement).getPropertyValue(v).trim() || P.cyan);
+}
+
+// Normalize ONE list item to a render row {fv, rank, name, meta, value} by kind.
+function _gfxRow(item, kind, meta) {
+  const ageStr = a => (a != null && isFinite(a)) ? "Age " + Number(a).toFixed(1) : null;
+  if (kind === "farm") {
+    const o = item || {};
+    return { rank: o.farm_rank, fv: null,
+             name: (typeof fullOrgName === "function" ? fullOrgName(o.org) : o.org) || o.org || "—",
+             meta: "", value: (o.grades && o.grades.overall) ? o.grades.overall : "" };
+  }
+  if (kind === "leader") {
+    const p = item.p || {}, r = item.r || {};
+    const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+    return {
+      fv: (latest && latest.consensus_fv_label != null) ? latest.consensus_fv_label
+          : (p.fv_close != null ? String(Math.round(p.fv_close)) : null),
+      name: p.player_name || "",
+      meta: [p.position, p.org, r.level].filter(Boolean).join(" · "),
+      value: (meta && typeof meta.fmt === "function" && item.v != null) ? meta.fmt(item.v)
+             : (item.v != null ? String(item.v) : ""),
+    };
+  }
+  if (kind === "spotlight") {
+    const s = item || {};
+    const d = (s.fv_delta != null) ? s.fv_delta : (s.delta != null ? s.delta : (s.fv_change != null ? s.fv_change : null));
+    return {
+      fv: (s.fv != null && isFinite(s.fv)) ? String(Math.round(s.fv)) : null,
+      name: s.player_name || "",
+      meta: [s.position, s.org, s.level].filter(Boolean).join(" · "),
+      value: (d != null && isFinite(d)) ? `${d > 0 ? "+" : ""}${Number(d).toFixed(1)} FV` : "",
+    };
+  }
+  if (kind === "ifa") {
+    const s = item || {};
+    const bonus = (s.bonus_usd != null) ? (s.bonus_usd >= 1e6 ? `$${(s.bonus_usd / 1e6).toFixed(2)}M` : `$${Math.round(s.bonus_usd / 1e3)}K`) : "";
+    return {
+      fv: (s.fv != null && isFinite(s.fv)) ? String(Math.round(s.fv)) : null,
+      name: s.player_name || "",
+      meta: [s.position, s.country, s.org].filter(Boolean).join(" · "),
+      value: bonus,
+    };
+  }
+  const p = item.p || item;
+  const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+  const isDO = (kind === "draftee" || kind === "overseas");
+  const fv = isDO
+    ? (p.consensus_fv != null ? String(Math.round(p.consensus_fv)) : null)
+    : ((latest && latest.consensus_fv_label != null) ? latest.consensus_fv_label
+       : (p.fv_close != null ? String(Math.round(p.fv_close)) : null));
+  const metaBits = [p.position];
+  if (kind === "draftee") metaBits.push(p.school || p.commit_school || p.commit);
+  else if (kind === "overseas") metaBits.push((p._league_obj && p._league_obj.league) || p.league);
+  else metaBits.push(p.org);
+  metaBits.push(ageStr(p.age));
+  if (kind === "prospect" || kind === "graduate") metaBits.push((p.statline || {}).level);
+  let value = "";
+  if (kind === "graduate") {
+    const w = p.debuted_value && p.debuted_value.wag;
+    if (w && w.regressed_wag != null) value = (w.regressed_wag >= 0 ? "+" : "") + Number(w.regressed_wag).toFixed(2) + " WAG";
+  } else if (kind === "draftee") {
+    if (p.draft_stock_plus != null) value = "Stk+ " + Math.round(p.draft_stock_plus);
+  } else if (kind === "prospect") {
+    if (p.surplus && p.surplus.value_mm != null && typeof fmtSvMM === "function") value = fmtSvMM(p.surplus.value_mm);
+  }
+  return { fv, name: p.player_name || "", meta: metaBits.filter(Boolean).join(" · "), value };
+}
+// Footer legend per kind.
+function _gfxFooterNote(kind) {
+  return {
+    prospect: "$M = engine expected surplus value · badge = consensus FV",
+    graduate: "WAG = WAR above grade (engine) · badge = final prospect FV",
+    draftee: "Stk+ = Draft Stock+ (100 = class median) · badge = consensus FV",
+    overseas: "badge = consensus FV",
+    leader: "value = the selected stat · badge = consensus FV",
+    farm: "grade = composite farm-system grade · # = farm rank",
+    spotlight: "FV Δ = recent consensus-FV movement · badge = current FV",
+    ifa: "$ = signing bonus · badge = consensus FV",
+  }[kind] || "";
+}
+
+// Build the full-resolution (1080px-wide) board from the current snapshot + opts.
+function buildGfxBoard() {
+  const snap = _gfxSnapshot;
+  const P = _gfxPalette();
+  const accent = _gfxAccentColor(P);
+  const fmt = _GFX_FORMATS[_gfxOpts.format] || _GFX_FORMATS.portrait;
+  const W = fmt.w, H = fmt.h;
+  const board = document.createElement("div");
+  const base = `width:${W}px;box-sizing:border-box;background:${P.bg};color:${P.text};font-family:var(--font-sans);`;
+  // Guard against a STALE cross-section snapshot: if the current section's render
+  // didn't refresh the snapshot (e.g. an empty watchlist early-returns), the
+  // snapshot still belongs to a prior section — treat as nothing to graphic.
+  const fresh = snap && (!state.section || snap.section === state.section);
+  const total = fresh ? snap.total : 0;
+  if (!fresh || total === 0) {
+    board.style.cssText = base + `min-height:${H}px;padding:64px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;`;
+    board.innerHTML = `<div style="font-family:var(--font-retro);font-size:26px;font-weight:700;color:${P.text};margin-bottom:12px;">Nothing to graphic yet</div>
+      <div style="font-size:16px;color:${P.text2};max-width:640px;line-height:1.5;">Open a list — Prospects, Draft, Graduates, Overseas, Farm, Leaderboards, Spotlights, Int'l&nbsp;Amateurs — set your filters, then generate.</div>`;
+    return { board, total: 0, w: W, h: H };
+  }
+  const cap = (_gfxOpts.count === "all") ? total : Math.min(total, Number(_gfxOpts.count) || 50);
+  const shown = snap.items.slice(0, cap);
+  const title = _gfxTitle(cap);
+  const subtitle = _gfxSubtitle(total, cap);
+  const dateStr = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const showVal = _gfxOpts.showValue;
+
+  const rowHtml = (item, i) => {
+    const r = _gfxRow(item, snap.kind, snap.meta);
+    const lead = (r.fv != null)
+      ? `<span class="fv-badge ${fvClass(r.fv)}" style="flex:none;">${escapeHtml(String(r.fv))}</span>`
+      : `<span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${accent};flex:none;width:36px;text-align:center;">${r.rank != null ? "#" + r.rank : ""}</span>`;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-bottom:1px solid ${P.border};">
+        <span style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:${P.text3};width:30px;text-align:right;flex:none;">${i + 1}</span>
+        ${lead}
+        <span style="min-width:0;flex:1;overflow:hidden;">
+          <span style="font-weight:700;font-size:15px;color:${P.text};display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.name)}</span>
+          ${r.meta ? `<span style="font-family:var(--font-mono);font-size:11px;color:${P.text3};white-space:nowrap;">${escapeHtml(r.meta)}</span>` : ""}
+        </span>
+        ${(showVal && r.value) ? `<span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${accent};flex:none;">${escapeHtml(String(r.value))}</span>` : ""}
+      </div>`;
+  };
+  // Single column for short lists; two columns otherwise. The wide (16:9) format
+  // always uses two columns so it fills its horizontal space.
+  let grid;
+  if (cap <= 12 && _gfxOpts.format !== "wide") {
+    grid = `<div>${shown.map((it, i) => rowHtml(it, i)).join("")}</div>`;
+  } else {
+    const half = Math.ceil(cap / 2);
+    const col = (arr, off) => arr.map((it, i) => rowHtml(it, i + off)).join("");
+    grid = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 28px;"><div>${col(shown.slice(0, half), 0)}</div><div>${col(shown.slice(half), half)}</div></div>`;
+  }
+  // Fixed-canvas frame: pins to the format's min-height so short lists hit the
+  // exact social aspect ratio (the footer rides the bottom edge); long lists
+  // extend below it. flex column => header top, rows fill, footer bottom.
+  board.style.cssText = base + `min-height:${H}px;padding:40px;display:flex;flex-direction:column;`;
+  board.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid ${accent};padding-bottom:16px;flex:none;">
+      <div style="min-width:0;">
+        <div style="font-family:var(--font-retro);font-size:40px;font-weight:700;line-height:1.05;color:${P.text};">${escapeHtml(title)}</div>
+        <div style="font-size:15px;color:${P.text2};margin-top:9px;">${escapeHtml(subtitle)}</div>
+      </div>
+      <div style="text-align:right;flex:none;margin-left:24px;">
+        <div style="font-family:var(--font-retro);font-weight:700;font-size:19px;color:${accent};">PROSPX</div>
+        <div style="font-size:12px;color:${P.text3};margin-top:3px;">@ARKNDJL · ${dateStr}</div>
+      </div>
+    </div>
+    <div style="flex:1 0 auto;padding-top:20px;">${grid}</div>
+    <div style="margin-top:16px;border-top:1px solid ${P.border};padding-top:11px;font-size:11px;color:${P.text3};display:flex;justify-content:space-between;flex:none;">
+      <span>${escapeHtml(_gfxFooterNote(snap.kind))}</span>
+      <span>${total} matched${cap < total ? ` · showing top ${cap}` : ""}</span>
+    </div>`;
+  return { board, total, w: W, h: H };
+}
+
+let _gfxBoardEl = null;
+// (Re)build the board into the preview pane + fit-scale it. Called on open and
+// on any customization change.
+function _gfxRefresh() {
+  const preview = document.getElementById("gfx-preview");
+  if (!preview) return;
+  preview.innerHTML = "";
+  const { board, total } = buildGfxBoard();
+  _gfxBoardEl = total > 0 ? board : null;
+  const holder = document.createElement("div");
+  holder.style.margin = "0 auto";
+  holder.appendChild(board);
+  preview.appendChild(holder);
+  requestAnimationFrame(() => {
+    const s = Math.min(1, (preview.clientWidth - 32) / (board.offsetWidth || 1080));
+    if (s < 1) {
+      board.style.transform = `scale(${s})`;
+      board.style.transformOrigin = "top left";
+      holder.style.width = (board.offsetWidth * s) + "px";
+      holder.style.height = (board.offsetHeight * s) + "px";
+    }
+  });
+  const dl = document.getElementById("gfx-download");
+  const cp = document.getElementById("gfx-copy");
+  if (dl) dl.disabled = total === 0;
+  if (cp) cp.disabled = total === 0;
+}
+// Sync the customization controls' values from _gfxOpts (called on open).
+function _gfxSyncControls() {
+  const fmt = document.getElementById("gfx-format");
+  if (fmt) fmt.value = _gfxOpts.format;
+  const cnt = document.getElementById("gfx-count");
+  if (cnt) cnt.value = String(_gfxOpts.count);
+  const ti = document.getElementById("gfx-title-input");
+  if (ti) { ti.value = _gfxOpts.title || ""; ti.placeholder = _gfxTitle(_gfxOpts.count === "all" ? (_gfxSnapshot ? _gfxSnapshot.total : 0) : _gfxOpts.count); }
+  const sv = document.getElementById("gfx-showval");
+  if (sv) sv.checked = !!_gfxOpts.showValue;
+  document.querySelectorAll("[data-gfx-accent]").forEach(b =>
+    b.classList.toggle("is-active", b.dataset.gfxAccent === (_gfxOpts.accent || "cyan")));
+}
+function openGfxModal() {
+  const overlay = document.getElementById("gfx-overlay");
+  if (!overlay) return;
+  // Reset the title override each open so the derived title tracks the section.
+  _gfxOpts.title = "";
+  overlay.classList.add("is-open");
+  _gfxSyncControls();
+  _gfxRefresh();
+}
+function closeGfxModal() {
+  const overlay = document.getElementById("gfx-overlay");
+  if (overlay) overlay.classList.remove("is-open");
+  _gfxBoardEl = null;
+}
+// Rasterize the board at full res (strip the fit-scale transform first).
+async function _gfxCanvas() {
+  if (!_gfxBoardEl || typeof exportElementAsImage !== "function") return null;
+  const prev = _gfxBoardEl.style.transform;
+  _gfxBoardEl.style.transform = "none";
+  try { return await exportElementAsImage(_gfxBoardEl, { scale: 2 }); }
+  finally { _gfxBoardEl.style.transform = prev || ""; }
+}
+function _gfxFilename() {
+  const n = (_gfxOpts.count === "all") ? (_gfxSnapshot ? _gfxSnapshot.total : 0) : _gfxOpts.count;
+  const t = _gfxTitle(n).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return (t || "prospects") + ".png";
+}
+async function downloadGfx() {
+  const canvas = await _gfxCanvas();
+  if (!canvas) return;
+  const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+  if (!blob) return;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = _gfxFilename();
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+async function copyGfx() {
+  if (!navigator.clipboard || typeof ClipboardItem === "undefined") {
+    alert("Clipboard image copy isn't supported in this browser — use Download PNG.");
+    return;
+  }
+  const canvas = await _gfxCanvas();
+  if (!canvas) return;
+  const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    const cp = document.getElementById("gfx-copy");
+    if (cp) { const t = cp.textContent; cp.textContent = "Copied ✓"; setTimeout(() => { cp.textContent = t; }, 1400); }
+  } catch (e) {
+    alert("Couldn't copy to clipboard — use Download PNG.");
+  }
+}
+// Delegated wiring (button lives in the mounted template; overlay at body level).
+document.addEventListener("click", (e) => {
+  if (!e.target.closest) return;
+  if (e.target.closest("#generate-gfx-btn")) { e.preventDefault(); openGfxModal(); return; }
+  if (e.target.closest("#gfx-download")) { e.preventDefault(); downloadGfx(); return; }
+  if (e.target.closest("#gfx-copy")) { e.preventDefault(); copyGfx(); return; }
+  if (e.target.closest("#gfx-close")) { e.preventDefault(); closeGfxModal(); return; }
+  const acc = e.target.closest("[data-gfx-accent]");
+  if (acc) {                                  // accent swatch -> recolor + re-render
+    _gfxOpts.accent = acc.dataset.gfxAccent;
+    document.querySelectorAll("[data-gfx-accent]").forEach(b =>
+      b.classList.toggle("is-active", b === acc));
+    _gfxRefresh();
+    return;
+  }
+  if (e.target.id === "gfx-overlay") { closeGfxModal(); return; }   // backdrop click
+});
+// Customization inputs (count select, value toggle) + live title field.
+document.addEventListener("change", (e) => {
+  if (e.target.id === "gfx-format") {
+    _gfxOpts.format = e.target.value;
+    _gfxRefresh();
+  } else if (e.target.id === "gfx-count") {
+    const v = e.target.value;
+    _gfxOpts.count = (v === "all") ? "all" : Number(v);
+    const ti = document.getElementById("gfx-title-input");
+    if (ti && !_gfxOpts.title) ti.placeholder = _gfxTitle(_gfxOpts.count === "all" ? (_gfxSnapshot ? _gfxSnapshot.total : 0) : _gfxOpts.count);
+    _gfxRefresh();
+  } else if (e.target.id === "gfx-showval") {
+    _gfxOpts.showValue = e.target.checked;
+    _gfxRefresh();
+  }
+});
+document.addEventListener("input", (e) => {
+  if (e.target.id === "gfx-title-input") {
+    _gfxOpts.title = e.target.value;
+    _gfxRefresh();
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    const o = document.getElementById("gfx-overlay");
+    if (o && o.classList.contains("is-open")) closeGfxModal();
+  }
+});
+
 
 // Global click delegate for pagination chips + detail-page tab buttons.
 // One listener handles every paginated view + both detail-page tab
@@ -25855,8 +26481,17 @@ function makeFarmReportCard(org) {
   const finContractTooltip = (t.fin_contract_surplus || {}).mean_usd_per_yr != null
     ? `Mean per-year cost-controlled surplus across qualifying graduates. ${(t.fin_contract_surplus || {}).grad_count ?? 0} grads with AAV + bonus on file. Captures the realized $-value of CBA cost-control years (pre-FA) — orthogonal to spend efficiency since it measures dollars saved post-debut rather than $ spent at acquisition.`
     : `Insufficient grad-contract data on file.`;
+  // v38 — Item-6: org $DvM+ (Surplus Development vs Mean) leaf, surfaced
+  // alongside the surplus figures on the financial branch.
+  const dollarDvmLeaf = t.fin_dollar_dvm || {};
+  const _dollarDvm = dollarDvmLeaf.dollar_dvm_plus;
+  const fmtDvmPlus = v => v != null ? String(Math.round(v)) : '—';
+  const dollarDvmTooltip = _dollarDvm != null
+    ? `$DvM+ ${Math.round(_dollarDvm)} — the org's mean prospect SURPLUS-DEVELOPMENT trajectory indexed against the league-average prospect at the SAME FV tier (100 = average, +10 ≈ 1σ better). Built from the rate of FV movement over time + age-relative-to-level standing across ${dollarDvmLeaf.n ?? '—'} active prospects. Above 100 = this org's prospects are appreciating faster than same-grade peers.`
+    : `Insufficient active-prospect trajectory data on file.`;
   const finSubs =
     subCell('Active Surplus',        'fin_active_surplus',         'fin_active_surplus',         fmtSurplusPerProspect, _surplusPerProspect,                            activeSurplusTooltip) +
+    subCell('$DvM+ (Surplus Dev)',   'fin_dollar_dvm',             'fin_dollar_dvm',             fmtDvmPlus,            _dollarDvm,                                     dollarDvmTooltip) +
     subCell('Grad-Contract Surplus', 'fin_contract_surplus',       'fin_contract_surplus',       fmtUsdPerYr,           (t.fin_contract_surplus || {}).mean_usd_per_yr, finContractTooltip) +
     subCell('WAR per $M',            'fin_war_per_m',              'fin_war_per_m',              fmtWarPerM,            finWarLeaf.value,                               finWarTooltip) +
     subCell('Draft Pool Efficiency', 'fin_draft_pool_efficiency',  'fin_draft_pool_efficiency',  fmtWarPerM,            draftEffLeaf.war_per_m_pool,                    draftEffTooltip) +
@@ -26825,6 +27460,7 @@ function makeFarmCompareBlock(currentOrg) {
       { key: "fin_war_per_m",             label: "WAR/$M" },
       { key: "fin_contract_surplus",      label: "Grad Surplus" },
       { key: "fin_active_surplus",        label: "Active Surplus" },
+      { key: "fin_dollar_dvm",            label: "$DvM+" },
       { key: "fin_draft_pool_efficiency", label: "Draft Pool" },
       { key: "fin_ifa_roi",               label: "IFA ROI" },
     ],
@@ -26916,6 +27552,9 @@ function makeFarmCompareBlock(currentOrg) {
     ],
     fin_contract_surplus: [
       { lbl: "Surplus / yr (grads)", fmt: _fmtUsd, g: n => n.mean_usd_per_yr },
+    ],
+    fin_dollar_dvm: [
+      { lbl: "$DvM+ (vs FV-tier mean)", fmt: _fmtInt, g: n => n.dollar_dvm_plus },
     ],
     fin_active_surplus: [
       { lbl: "Surplus / prospect", fmt: v => v == null ? "—" : `$${v.toFixed(2)}M`,
@@ -27384,15 +28023,19 @@ function makeFarmFinancialComposite(org) {
   // league mean. Bar width caps at ±30 so a 130 fills the bar
   // entirely. Weight comes from FARM_LEAF_WEIGHTS.financial; weights
   // shown so the reader sees the math behind the parent.
+  // v38 — Item-7: weights mirror FARM_LEAF_WEIGHTS["financial"] (surplus +
+  // $DvM+ up, simpler ROI leaves down).
   const LEAF_WEIGHTS_FIN = {
-    fin_active_surplus:        35,
-    fin_contract_surplus:      25,
-    fin_war_per_m:             10,
-    fin_draft_pool_efficiency: 15,
-    fin_ifa_roi:               15,
+    fin_active_surplus:        42,
+    fin_dollar_dvm:            18,
+    fin_contract_surplus:      18,
+    fin_war_per_m:              7,
+    fin_draft_pool_efficiency:  8,
+    fin_ifa_roi:                7,
   };
   const LEAF_LABELS_FIN = {
     fin_active_surplus:        'Active Surplus',
+    fin_dollar_dvm:            '$DvM+ (Surplus Dev)',
     fin_contract_surplus:      'Grad-Contract Surplus',
     fin_war_per_m:             'WAR per $M',
     fin_draft_pool_efficiency: 'Draft Pool Efficiency',
@@ -28976,6 +29619,7 @@ function makeToolDvmCell(org) {
 
 function renderFarmSystems() {
   let orgs = farmSortedOrgs();
+  _gfxSet("farm", "farm", orgs, { sortLabel: (state.farmSort && state.farmSort !== "farm_rank") ? "by " + String(state.farmSort).replace(/_/g, " ") : "by composite grade" });
   // Global top-search filters farms by org code / full name.
   const _fq = (state.search || "").toLowerCase();
   if (_fq) orgs = orgs.filter(o =>
@@ -37127,6 +37771,68 @@ function _blendPlus(rawPlus, toolPlus, wRaw = 0.7) {
   };
 }
 
+// 3-way "+" blend (raw performance / Statcast / scouting tool), each already
+// on the 100-anchored scale. Weights renormalize over whichever components are
+// present, so a prospect missing Statcast (most non-AAA arms/bats) or a tool
+// grade still gets a comparable reading from what's available. Returns
+// {value, raw, statcast, tool} for tooltip transparency; null when all absent.
+function _blendPlus3(rawPlus, scPlus, toolPlus, wRaw, wSc, wTool) {
+  const parts = [[rawPlus, wRaw], [scPlus, wSc], [toolPlus, wTool]];
+  let sum = 0, wsum = 0;
+  for (const [v, w] of parts) {
+    if (v != null && isFinite(v)) { sum += v * w; wsum += w; }
+  }
+  if (wsum === 0) return null;
+  return {
+    value:    _clampPlus(sum / wsum),
+    raw:      (rawPlus  != null && isFinite(rawPlus))  ? _clampPlus(rawPlus)  : null,
+    statcast: (scPlus   != null && isFinite(scPlus))   ? _clampPlus(scPlus)   : null,
+    tool:     (toolPlus != null && isFinite(toolPlus)) ? _clampPlus(toolPlus) : null,
+  };
+}
+
+// Freshest tracked zone-discipline split for a player (largest pitch sample),
+// mirroring _milbStatcastOutlierChips. Returns {} when none on file.
+function _freshZoneSplit(p) {
+  const zRoot = (p && p.zone_metrics) || {};
+  if (Array.isArray(zRoot.level_splits) && zRoot.level_splits.length) {
+    return zRoot.level_splits.reduce((a, b) => (a && (a.pitches || 0) >= (b.pitches || 0)) ? a : b, zRoot) || {};
+  }
+  return zRoot || {};
+}
+
+// Statcast POWER component (100 = pool-average), from batted-ball quality.
+// hard-hit% and barrel% are each indexed to an approximate pool-average
+// anchor, then blended 55% HH / 45% Barrel (barrel is rarer + noisier, so it
+// gets slightly less). NOTE: anchors (HH≈33%, Brl≈6%) are MLB-ish placeholders
+// — MiLB Statcast coverage is partial, so these need real per-level
+// calibration (flagged). Null when no batted-ball data on file.
+function _statcastPowerPlus(p) {
+  const cq = ((p && p.statcast_metrics) || {}).contact_quality || {};
+  const hh = Number(cq.hard_hit_pct), brl = Number(cq.barrel_pct);
+  const hhPlus  = isFinite(hh)  && hh  > 0 ? 100 * hh  / 33 : null;   // pool HH%  ≈ 33
+  const brlPlus = isFinite(brl) && brl > 0 ? 100 * brl /  6 : null;   // pool Brl% ≈ 6
+  const parts = [[hhPlus, 0.55], [brlPlus, 0.45]];
+  let s = 0, w = 0;
+  for (const [v, wt] of parts) if (v != null) { s += v * wt; w += wt; }
+  return w === 0 ? null : _clampPlus(s / w);
+}
+
+// Statcast CONTACT/HIT component (100 = pool-average), from zone discipline.
+// z-contact% indexed to ≈80 pool avg; whiff% INVERTED (less is better) indexed
+// to ≈26 pool avg. Blended 50/50. Anchors are MLB-ish placeholders needing
+// per-level MiLB calibration (flagged). Null when no zone data on file.
+function _statcastHitPlus(p) {
+  const z = _freshZoneSplit(p);
+  const zc = Number(z.z_contact_pct), wh = Number(z.whiff_pct);
+  const zcPlus = isFinite(zc) && zc > 0 ? 100 * zc / 80 : null;       // pool Z-contact ≈ 80
+  const whPlus = isFinite(wh) && wh > 0 ? 100 * 26 / wh : null;       // pool Whiff ≈ 26 (inverted)
+  const parts = [[zcPlus, 0.5], [whPlus, 0.5]];
+  let s = 0, w = 0;
+  for (const [v, wt] of parts) if (v != null) { s += v * wt; w += wt; }
+  return w === 0 ? null : _clampPlus(s / w);
+}
+
 // Consolidated Power tool grade — prefers the single `pwr` key, else the
 // mean of FG's game_pwr + raw_pwr (mirrors the backend O-Tool blend).
 function _pwrToolGrade(grades) {
@@ -37138,6 +37844,30 @@ function _pwrToolGrade(grades) {
   return null;
 }
 
+// ISO+ — Isolated Power (SLG−AVG) indexed to the player's LEVEL-AVERAGE ISO,
+// on the same "100 = league-average, +1pt = 1% better" paradigm as wRC+/ERA+.
+// The baseline (perf.avg_iso) is read from the SAME DATA.level_norms source
+// every other "+" metric uses (same season/level cohort). Pure rescaling of
+// ISO — NO scouting-tool blend (that is POW+'s job; ISO+ feeds POW+ as its
+// stat component, see _powerPlusRaw). Hitters only; 40-game volume gate +
+// a positive level baseline. Null when inputs/baseline are missing.
+function computeIsoPlus(p) {
+  const sl = p && p.statline; if (!sl || sl.is_pitcher) return null;
+  if ((Number(sl.games) || 0) < 40) return null;
+  const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
+  const lgIso = perf.avg_iso;
+  const iso = sl.iso != null ? Number(sl.iso) : null;
+  if (lgIso == null || !(lgIso > 0) || iso == null || !isFinite(iso)) return null;
+  return _clampPlus(100 * iso / lgIso);
+}
+function isoPlusPillHTML(p) {
+  const v = computeIsoPlus(p);
+  if (v == null) return "";
+  return _plusPill("ISO+", v, _plusClass,
+    `ISO+ ${v} · isolated power (SLG−AVG) indexed to the ${p.statline.level || "level"}-average ISO (100 = league-average ISO; each point = 1% above/below, same paradigm as wRC+/ERA+).`,
+    "iso_plus");
+}
+
 // Raw power index — ISO + HR-rate vs the player's level average. 100 =
 // level-average power. Hitters only; 40-game volume gate. Null when the
 // gate fails or inputs are missing (the blend then leans on the tool).
@@ -37146,39 +37876,42 @@ function _powerPlusRaw(p) {
   if ((Number(sl.games) || 0) < 40) return null;
   const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
   if (perf.avg_iso == null) return null;
-  const iso = sl.iso != null ? sl.iso : null;
-  if (iso == null) return null;
-  const isoRatio = iso / Math.max(0.05, perf.avg_iso);
-  // HR-rate: prefer HR/PA when PA available; otherwise fall back to a
-  // rough HR/G normalization. Most exports carry games but not PA, so
-  // the fallback keeps the metric defined for the typical row.
-  let hrRatio = null;
+  // ISO+ IS the isolated-power component (100 = level-avg ISO) — item-1 metric
+  // wired in directly so PWR+ and the standalone ISO+ pill never diverge.
+  const isoP = computeIsoPlus(p);
+  // HR-rate vs level on the same 100-anchored scale (HR-rate+). Prefer HR/PA;
+  // most rows carry games not PA, so fall back to a HR/G normalization.
+  let hrPlus = null;
   const hr = Number(sl.hr) || 0;
   const games = Number(sl.games) || 0;
   if (sl.pa != null && Number(sl.pa) > 0) {
     const playerRate = hr / Number(sl.pa);
-    // League HR/PA ≈ 0.18 × level ISO (puts a league-average AA bat at ~100).
-    const leagueRate = (perf.avg_iso || 0.130) * 0.18;
-    if (leagueRate > 0) hrRatio = playerRate / leagueRate;
+    const leagueRate = (perf.avg_iso || 0.130) * 0.18;   // league HR/PA ≈ 0.18 × level ISO
+    if (leagueRate > 0) hrPlus = 100 * playerRate / leagueRate;
   } else if (games > 0) {
     const playerRate = hr / games;
-    // Most rows carry games, not PA, so convert the HR/PA baseline above to
-    // a per-game baseline using ~4 PA/game: league HR/game ≈ 0.18 × 4 ×
-    // level ISO ≈ 0.72 × ISO. (Earlier this used 0.045 — a ~16× too-low
-    // baseline that DIVIDED rather than multiplied by PA/game, which pinned
-    // every power hitter to the 250 clamp.)
-    const leagueRate = (perf.avg_iso || 0.130) * 0.72;
-    if (leagueRate > 0) hrRatio = playerRate / leagueRate;
+    const leagueRate = (perf.avg_iso || 0.130) * 0.72;   // league HR/G ≈ 0.72 × level ISO
+    if (leagueRate > 0) hrPlus = 100 * playerRate / leagueRate;
   }
-  if (hrRatio == null) hrRatio = isoRatio;  // fall back to pure ISO
-  return _clampPlus(100 * (isoRatio * 0.6 + hrRatio * 0.4));
+  // Raw power index = 60% ISO+ / 40% HR-rate+ (ISO is the more stable
+  // single-season power signal). Falls back to whichever component exists.
+  if (isoP != null && hrPlus != null) return _clampPlus(0.6 * isoP + 0.4 * hrPlus);
+  if (isoP != null)   return _clampPlus(isoP);
+  if (hrPlus != null) return _clampPlus(hrPlus);
+  return null;
 }
 
-// POW+ — 70% raw power index / 30% Power tool grade.
+// POW+ — weighted blend, renormalized over whichever components are present:
+//   0.45  raw performance index   (_powerPlusRaw: 60% ISO+ / 40% HR-rate+)
+//   0.25  Statcast power          (_statcastPowerPlus: 55% hard-hit / 45% barrel)
+//   0.30  Power scouting grade    (20-80 → tool+)
+// (Was 70% raw / 30% tool with no Statcast.) ISO+ is the performance core;
+// Statcast adds batted-ball confirmation wherever tracked data exists.
 function computePowerPlus(p) {
   if (!p || !p.statline || p.statline.is_pitcher) return null;
   const grades = (p.tools && p.tools.grades) || {};
-  return _blendPlus(_powerPlusRaw(p), _toolToPlus(_pwrToolGrade(grades)));
+  return _blendPlus3(_powerPlusRaw(p), _statcastPowerPlus(p),
+                     _toolToPlus(_pwrToolGrade(grades)), 0.45, 0.25, 0.30);
 }
 
 // Raw plate-discipline index — additive shift on the BB% − K% differential
@@ -37238,11 +37971,16 @@ function _hitToolGrade(grades) {
   return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
 
-// HIT+ — 70% raw hit index / 30% hit-tool grade (mean of Hit + Bat Control).
+// HIT+ — weighted blend, renormalized over whichever components are present:
+//   0.45  raw performance index  (_hittingPlusRaw: 60% AVG / 40% K%-avoidance)
+//   0.25  Statcast contact       (_statcastHitPlus: 50% z-contact / 50% whiff-inv)
+//   0.30  Hit scouting grade     (mean of Hit + Bat Control → tool+)
+// (Was 70% raw / 30% tool with no Statcast.)
 function computeHittingPlus(p) {
   if (!p || !p.statline || p.statline.is_pitcher) return null;
   const grades = (p.tools && p.tools.grades) || {};
-  return _blendPlus(_hittingPlusRaw(p), _toolToPlus(_hitToolGrade(grades)));
+  return _blendPlus3(_hittingPlusRaw(p), _statcastHitPlus(p),
+                     _toolToPlus(_hitToolGrade(grades)), 0.45, 0.25, 0.30);
 }
 
 // Pitcher Stuff+ (STF+) — composite of K/9, BB/9, HR/9 normalized
@@ -37307,24 +38045,27 @@ function _plusPill(label, value, classFn, tooltip, slug) {
 // Format the blend-composition suffix for a tool-blended {value,raw,tool}
 // result so the tooltip always shows how the number was built.
 function _blendTip(b) {
-  if (b.raw != null && b.tool != null) return ` · 70% performance (${b.raw}) + 30% scouting tool (${b.tool})`;
-  if (b.raw != null)  return ` · performance only (no tool grade on file)`;
-  if (b.tool != null) return ` · scouting tool only (sample below 40-game gate)`;
-  return "";
+  const segs = [];
+  if (b.raw != null)      segs.push(`performance ${b.raw}`);
+  if (b.statcast != null) segs.push(`Statcast ${b.statcast}`);
+  if (b.tool != null)     segs.push(`scouting ${b.tool}`);
+  if (!segs.length) return "";
+  if (segs.length === 1) return ` · ${segs[0]} only (other components missing)`;
+  return ` · ${segs.join(" + ")} (component weights renormalized over what's on file)`;
 }
 const _plusClass = n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral";
 function hittingPlusPillHTML(p) {
   const b = computeHittingPlus(p);
   if (b == null) return "";   // hitters only — silently omit for pitchers
   return _plusPill("HIT+", b.value, _plusClass,
-    `HIT+ ${b.value} · batting average + contact (K%-avoidance) vs ${p.statline.level || "level"} mean blended with the hit-tool grade (mean of Hit + Bat Control) (100 = league-average hit tool)${_blendTip(b)}`,
+    `HIT+ ${b.value} · 45% AVG & contact (K%-avoidance) vs ${p.statline.level || "level"} mean / 25% Statcast zone-contact & whiff / 30% Hit+Bat-Control grade (100 = league-average hit tool)${_blendTip(b)}`,
     "hit_plus");
 }
 function powerPlusPillHTML(p) {
   const b = computePowerPlus(p);
   if (b == null) return "";   // hitters only — silently omit for pitchers
   return _plusPill("POW+", b.value, _plusClass,
-    `POW+ ${b.value} · ISO + HR-rate vs ${p.statline.level || "level"} mean blended with the Power tool grade (100 = league-average power)${_blendTip(b)}`,
+    `POW+ ${b.value} · 45% ISO+ & HR-rate vs ${p.statline.level || "level"} mean / 25% Statcast hard-hit & barrel / 30% Power grade (100 = league-average power)${_blendTip(b)}`,
     "pwr_plus");
 }
 function disciplinePlusPillHTML(p) {
@@ -37356,6 +38097,7 @@ function scoutRatesHTML(p) {
   return [
     hittingPlusPillHTML(p),
     powerPlusPillHTML(p),
+    isoPlusPillHTML(p),
     disciplinePlusPillHTML(p),
     stuffPlusPillHTML(p),
     tradeValuePillHTML(p),
