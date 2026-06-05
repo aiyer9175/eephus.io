@@ -1265,33 +1265,47 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.info("--fast: skipping approximate MiLB zone metrics")
             else:
                 # v19 — Freshness gate. If a meaningful fraction of the
-                # active hitter pool already has a recent zone-metric
+                # active player pool already has a recent zone-metric
                 # row (within ZONE_METRICS_FRESH_DAYS), skip the whole
                 # step. Avoids a ~2-3 minute rebuild on weekly re-runs
                 # when nothing material has changed. --force overrides.
                 #
                 # Eligibility set MUST mirror what the fetcher actually
-                # processes — non-pitchers at AAA/AA/A+/A. The prior
-                # version counted every non-pitcher with an mlbam_id
-                # including CPX/DSL and statline-less prospects, which
-                # diluted the pool and kept the gate below 90% even
-                # when every reachable hitter was fresh.
-                # v20 — MLB added so debuted hitters who have both AAA
-                # + MLB tape get level_splits for both levels. The
-                # eligibility check trusts the statline's `level` field,
-                # which is set to "MLB" for debuted players once their
-                # roster status flips.
+                # processes — hitters and pitchers at tracked levels. A
+                # hitter-only gate can skip the whole refresh while pitcher
+                # splits are stale, e.g. an MLB-debut arm with a stored MLB
+                # zone row but newly available AAA tape.
                 _zone_tracked_levels = {"MLB", "AAA", "AA", "A+", "A", "CPX"}
                 _zone_meta = load_zone_metrics_meta()
                 _zone_eligible_keys = [
                     p.player_key for p in timeseries
-                    if not _is_pitcher(p.position)
-                       and ids_by_key.get(p.player_key) is not None
+                    if ids_by_key.get(p.player_key) is not None
                        and (statlines.get(p.player_key) or {}).get("level") in _zone_tracked_levels
                 ]
+                _zone_metric_cache = load_zone_metrics()
+                def _zone_has_statcast_levels(player_key: str) -> bool:
+                    """Rows missing known Statcast split levels are stale."""
+                    zm = _zone_metric_cache.get(player_key) or {}
+                    sc = statcast_metric_cache.get(player_key) or {}
+                    sc_levels = {
+                        row.get("level")
+                        for row in (sc.get("level_splits") or [])
+                        if isinstance(row, dict) and row.get("level") in _zone_tracked_levels
+                    }
+                    if not sc_levels:
+                        return True
+                    zone_levels = {
+                        row.get("level")
+                        for row in (zm.get("level_splits") or [])
+                        if isinstance(row, dict) and row.get("level") in _zone_tracked_levels
+                    }
+                    if not zone_levels and zm.get("level") in _zone_tracked_levels:
+                        zone_levels.add(zm.get("level"))
+                    return sc_levels.issubset(zone_levels)
                 _zone_fresh_count = sum(
                     1 for k in _zone_eligible_keys
                     if _is_career_fresh(_zone_meta.get(k), ZONE_METRICS_FRESH_DAYS)
+                    and _zone_has_statcast_levels(k)
                 )
                 _zone_fresh_pct = (_zone_fresh_count / max(1, len(_zone_eligible_keys))) * 100
                 _zone_should_skip = (
@@ -1300,7 +1314,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     and _zone_fresh_pct >= 90
                 )
                 if _zone_should_skip:
-                    log.info("zone metrics: SKIP (%d/%d eligible hitters fresh within %dd, %.0f%%)",
+                    log.info("zone metrics: SKIP (%d/%d eligible players fresh within %dd, %.0f%%)",
                              _zone_fresh_count, len(_zone_eligible_keys),
                              ZONE_METRICS_FRESH_DAYS, _zone_fresh_pct)
                 else:
@@ -1329,7 +1343,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                 key: asdict(value)
                                 for key, value in new_zone_metrics.items()
                             })
-                        log.info("fetched approximate zone metrics for %d hitters",
+                        log.info("fetched approximate zone metrics for %d players",
                                  len(new_zone_metrics))
                     except Exception:
                         log.exception("approximate zone metrics failed — continuing")

@@ -3,13 +3,41 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-from statcast_metrics import _estimate_xwoba, _finalize_contact, _finalize_pitch, _primary_level
+from statcast_metrics import (
+    _calculate_vaa_from_coords,
+    _estimate_xwoba,
+    _finalize_contact,
+    _finalize_pitch,
+    _primary_level,
+)
 
 
 def test_finalize_pitch_summary_and_plot_points():
     points = [
-        {"pitch_type": "FF", "pitch_name": "Four-Seam Fastball", "velo": 96.0, "hb": 10.0, "ivb": 18.0, "spin": 2200},
-        {"pitch_type": "FF", "pitch_name": "Four-Seam Fastball", "velo": 98.0, "hb": 12.0, "ivb": 20.0, "spin": 2400},
+        {
+            "pitch_type": "FF",
+            "pitch_name": "Four-Seam Fastball",
+            "velo": 96.0,
+            "hb": 10.0,
+            "ivb": 18.0,
+            "spin": 2200,
+            "extension": 6.5,
+            "release_height": 5.6,
+            "plate_height": 2.7,
+            "vaa": -4.8,
+        },
+        {
+            "pitch_type": "FF",
+            "pitch_name": "Four-Seam Fastball",
+            "velo": 98.0,
+            "hb": 12.0,
+            "ivb": 20.0,
+            "spin": 2400,
+            "extension": 6.7,
+            "release_height": 5.8,
+            "plate_height": 2.9,
+            "vaa": -5.0,
+        },
         {"pitch_type": "SL", "pitch_name": "Slider", "velo": 84.0, "hb": -6.0, "ivb": 1.0, "spin": 2300},
     ]
     movement, plot = _finalize_pitch(points, outings=[])
@@ -18,8 +46,24 @@ def test_finalize_pitch_summary_and_plot_points():
     assert movement["pitch_summary"][0]["pitch_type"] == "FF"
     assert movement["pitch_summary"][0]["avg_velo"] == 97.0
     assert movement["pitch_summary"][0]["avg_hb"] == 11.0
+    assert movement["pitch_summary"][0]["avg_extension"] == 6.6
+    assert movement["pitch_summary"][0]["avg_release_height"] == 5.7
+    assert movement["pitch_summary"][0]["avg_plate_height"] == 2.8
+    assert movement["pitch_summary"][0]["avg_vaa"] == -4.9
     assert round(sum(p["usage_pct"] for p in movement["pitch_summary"]), 1) == 100.0
     assert len(plot["points"]) == 3
+
+
+def test_calculate_vaa_from_statcast_coordinates():
+    coords = {
+        "vY0": -141.88051222402854,
+        "vZ0": -8.358292137377004,
+        "aY": 27.913067237094754,
+        "aZ": -15.419559917976526,
+        "y0": 50.000683758692006,
+    }
+
+    assert _calculate_vaa_from_coords(coords) == -5.98
 
 
 def test_finalize_pitch_usage_sums_to_100_after_rounding():

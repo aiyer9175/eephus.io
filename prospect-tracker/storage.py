@@ -5509,6 +5509,26 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "overall_contact_pct": False,
         "whiff_pct": True,
     }
+    _STATCAST_CONTACT_MIN_BBE = 10
+    _STATCAST_HITTER_CONTACT_PERCENTILE_METRICS = {
+        "xwoba_est": True,
+        "xwobacon_est": True,
+        "avg_ev": True,
+        "p90_ev": True,
+        "max_ev": True,
+        "hard_hit_pct": True,
+        "barrel_pct": True,
+        "pull_air_pct": True,
+    }
+    _STATCAST_PITCHER_CONTACT_PERCENTILE_METRICS = {
+        "xwoba_est": False,
+        "xwobacon_est": False,
+        "avg_ev": False,
+        "p90_ev": False,
+        "max_ev": False,
+        "hard_hit_pct": False,
+        "barrel_pct": False,
+    }
 
     def _zone_num(v):
         if v is None or v == "":
@@ -5659,6 +5679,82 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             stat_row = rows_by_level.get(split.get("level")) or sl
             _apply(split, stat_row)
         return out
+
+    def _statcast_contact_metric(cq: dict, metric: str) -> float | None:
+        if metric == "pull_air_pct":
+            return _num((cq.get("spray") or {}).get("pull_air_pct"))
+        return _num(cq.get(metric))
+
+    def _normalize_statcast_contact_percentiles_for_export(scm_by_key: dict[str, dict]) -> dict[str, dict]:
+        """Attach level/side contact-quality percentiles from stored rows.
+
+        This is export-only and uses already-fetched Statcast contact_quality
+        payloads, so it does not require another MLB API pass.
+        """
+        out = copy.deepcopy(scm_by_key or {})
+        rows_by_level_side: dict[tuple[str, bool], list[dict]] = {}
+        seen: set[tuple[str, str, bool]] = set()
+        for key, payload in out.items():
+            if not isinstance(payload, dict):
+                continue
+            rows = payload.get("level_splits") or [payload]
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                level = row.get("level")
+                if not level:
+                    continue
+                is_pitcher = bool(row.get("is_pitcher"))
+                dedupe_key = (key, level, is_pitcher)
+                if dedupe_key in seen:
+                    continue
+                seen.add(dedupe_key)
+                cq = row.get("contact_quality") or {}
+                bbe = int(cq.get("batted_balls") or 0)
+                cq["qualified"] = bool(bbe >= _STATCAST_CONTACT_MIN_BBE)
+                cq["qualifier_min_bbe"] = _STATCAST_CONTACT_MIN_BBE
+                cq["percentile_sample_size"] = None
+                cq["percentiles"] = {}
+                if cq["qualified"]:
+                    rows_by_level_side.setdefault((level, is_pitcher), []).append(row)
+
+        for (_level, is_pitcher), level_rows in rows_by_level_side.items():
+            metric_directions = (
+                _STATCAST_PITCHER_CONTACT_PERCENTILE_METRICS
+                if is_pitcher else _STATCAST_HITTER_CONTACT_PERCENTILE_METRICS
+            )
+            n = len(level_rows)
+            for row in level_rows:
+                cq = row.get("contact_quality") or {}
+                cq["percentile_sample_size"] = n
+                for metric, higher_is_better in metric_directions.items():
+                    value = _statcast_contact_metric(cq, metric)
+                    if value is None:
+                        continue
+                    vals = [
+                        _statcast_contact_metric(peer.get("contact_quality") or {}, metric)
+                        for peer in level_rows
+                    ]
+                    vals = [v for v in vals if v is not None]
+                    if len(vals) < 5:
+                        continue
+                    cq["percentiles"][metric] = _percentile_rank_100(value, vals, higher_is_better)
+
+        for payload in out.values():
+            if not isinstance(payload, dict):
+                continue
+            split_map = {
+                (row.get("level"), bool(row.get("is_pitcher"))): row
+                for row in payload.get("level_splits") or []
+                if isinstance(row, dict)
+            }
+            own_key = (payload.get("level"), bool(payload.get("is_pitcher")))
+            normalized_primary = split_map.get(own_key)
+            if normalized_primary:
+                payload["contact_quality"] = copy.deepcopy(normalized_primary.get("contact_quality") or {})
+        return out
+
+    statcast_metrics = _normalize_statcast_contact_percentiles_for_export(statcast_metrics)
 
     def _prefer_metric_current_level(metric: dict | None, current_level: str | None) -> dict | None:
         if not metric or not current_level:

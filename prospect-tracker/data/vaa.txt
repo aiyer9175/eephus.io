@@ -1,0 +1,56 @@
+VAA, being a function of velocity and acceleration in all three dimensions, is largely a product of these physical specifications:
+
+Release speed (a.k.a. velocity),
+Pitch height, and
+Release point.
+VAA correlates strongly with all three, and changes to any of these specs will naturally alter VAA. Here, we can see just how strongly VAA (x-axis) correlates with pitch height (y-axis):
+
+Generally, this amorphous blob illustrates two points: (1) certain VAAs can only be achieved at certain pitch heights, and (2) all VAAs can be achieved at many pitch heights. If all we know about a pitch is that its VAA is –5.0°, we can intuit that the pitch was thrown anywhere between the bottom of the strike zone and a half foot above it — not to mention, we would know little about the velocity or the release point. In a vacuum, that VAA is not particularly helpful. It lacks context.
+
+So let’s add some context! We can convert raw VAA measurements into “VAA Above Average” (VAAAA? Please, Alex, no.) by normalizing for pitch height. If we adjust for pitch height among all pitches at once, with four-seamers, sinkers, curves and so on all compared to one another, our amorphous blob is, well, still amorphous. But it is visibly less correlated with pitch height:
+
+And if we adjust for pitch height within a specific pitch type — like for four-seamers, as you’ll see below — our VAA Above Average blob becomes a nearly perfect circle:
+
+
+Having added height-related context, if I tell you a pitcher’s four-seamer’s VAA is 0.8° above average, you can know two things immediately: (1) his four-seamer is significantly flatter than average, irrespective of pitch height; and (2) he has (i) above-average velocity and/or (ii) a lower-than-average release point. Flip it to 0.8° below average, and all the inverse points similarly apply.
+
+Moreover, comparing within a pitch type (rather than including all pitch types) creates a uniform, normally distributed scale:
+
+VAA Distribution by Pitch Type
++/- StDev	Four-Seamer	Sinker	Cutter	Change-Up	Slider	Curve
+-3 σ	-1.5°	-1.5°	-1.6°	-1.6°	-2.1°	-2.4°
+-2 σ	-1.0°	-1.1°	-1.3°	-1.1°	-1.5°	-1.9°
+-1 σ	-0.5°	-0.6°	-0.7°	-0.6°	-0.8°	-1.1°
+0 σ	0.0°	0.0°	0.0°	0.0°	0.0°	0.0°
++1 σ	+0.5°	+0.5°	+0.6°	+0.5°	+0.7°	+1.0°
++2 σ	+0.9°	+1.2°	+1.1°	+1.0°	+1.4°	+1.9°
++3 σ	+1.4°	+1.8°	+1.4°	+1.4°	+1.9°	+2.4°
+SOURCE: Statcast
+Here it is converted to 20-80 scouting grades:
+
+VAA Scouting Grades by Pitch Type
+Scouting Grade	Four-Seamer	Sinker	Cutter	Change-Up	Slider	Curve
+20	-1.5°	+1.8°	n/a	n/a	n/a	n/a
+30	-1.0°	+1.2°	n/a	n/a	n/a	n/a
+40	-0.5°	+0.5°	n/a	n/a	n/a	n/a
+50	0.0°	0.0°	n/a	n/a	n/a	n/a
+60	+0.5°	-0.6°	n/a	n/a	n/a	n/a
+70	+0.9°	-1.1°	n/a	n/a	n/a	n/a
+80	+1.4°	-1.5°	n/a	n/a	n/a	n/a
+SOURCE: Statcast
+
+Thanks to Baseball Prospectus‘ Harry Pavlidis (who credits baseball’s renowned physicists), here are the equations:
+
+vy_f = -sqrt(vy0² – (2 * ay * (y0 – yf)))
+t = (vy_f – vy0) / ay
+vz_f = vz0 + (az * t)
+VAA = -arctan(vz_f/vy_f) * (180 / pi)
+
+where, per Statcast’s documentation:
+
+vy0 = The velocity of the pitch, in feet per second, in y-dimension*, determined at y=50 feet. (*toward home plate)
+ay = The acceleration of the pitch, in feet per second per second, in y-dimension, determined at y=50 feet.
+y0 = 50 (“y=50 feet”).
+yf = 17/12 (home plate, converted to inches).
+vz0 = The velocity of the pitch, in feet per second, in z-dimension**, determined at y=50 feet. (**vertically)
+az = The acceleration of the pitch, in feet per second per second, in z-dimension, determined at y=50 feet.

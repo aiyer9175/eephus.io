@@ -4636,6 +4636,31 @@
       margin-top: 2px;
       font-variant-numeric: tabular-nums;
     }
+    .vaa-table .vaa-bar {
+      position: relative;
+      height: 7px;
+      min-width: 74px;
+      border: 1px solid var(--border-light);
+      border-radius: 2px;
+      overflow: hidden;
+      background: linear-gradient(90deg,
+        rgba(57,112,214,0.88) 0%,
+        rgba(100,116,139,0.58) 48%,
+        rgba(214,45,45,0.92) 100%);
+    }
+    .vaa-table .vaa-marker {
+      position: absolute;
+      top: -3px;
+      width: 2px;
+      height: 13px;
+      border-radius: 2px;
+      background: var(--text-primary);
+      box-shadow: 0 0 0 1px var(--bg-primary), 0 0 8px rgba(255,255,255,0.32);
+    }
+    .vaa-table .vaa-neutral {
+      opacity: 0.38;
+      filter: grayscale(0.6);
+    }
     .zone-battery {
       display: flex;
       align-items: center;
@@ -12158,12 +12183,18 @@ function _statcastPercentileBlock(p, opts = {}) {
     _push("Z-Swing%", z.z_swing_pct,
       q => (q.z || {}).z_swing_pct,
       false, v => v.toFixed(0) + "%");
+    _push("Est. xwOBA allowed", cq.xwoba_est,
+      q => ((q.sc || {}).contact_quality || {}).xwoba_est,
+      true, v => v.toFixed(3).replace(/^0/, ""));
     _push("HH% allowed", cq.hard_hit_pct,
       q => ((q.sc || {}).contact_quality || {}).hard_hit_pct,
       true,  v => v.toFixed(0) + "%");
     _push("Brl% allowed", cq.barrel_pct,
       q => ((q.sc || {}).contact_quality || {}).barrel_pct,
       true,  v => v.toFixed(0) + "%");
+    _push("Z-Contact% allowed", z.z_contact_pct,
+      q => (q.z || {}).z_contact_pct,
+      true, v => v.toFixed(0) + "%");
   }
   if (!specs.length) return "";
   // Render — bars + label + percentile tag.
@@ -30738,6 +30769,52 @@ function makeSprayChart(cq) {
   </div>`;
 }
 
+function makeReleaseTraitsTable(sc) {
+  const pm = (sc && sc.pitch_movement) || {};
+  const rows = (pm.pitch_summary || []).filter(p =>
+    p && (p.avg_vaa != null || p.avg_extension != null || p.avg_release_height != null || p.avg_plate_height != null)
+  );
+  if (!rows.length) return "";
+  const fastballTypes = new Set(["FF", "SI", "FT", "FC"]);
+  const fmt = (v, digits = 1, suffix = "") => v == null ? "—" : `${Number(v).toFixed(digits)}${suffix}`;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const qualityScore = (r) => {
+    if (!fastballTypes.has(r.pitch_type) || r.avg_vaa == null) return null;
+    // Four-seamers generally benefit from flatter entry; sinkers and cutters
+    // are shown on the opposite plane-shape read for now.
+    if (r.pitch_type === "FF") return clamp((Number(r.avg_vaa) + 6.0) / 1.8, 0, 1);
+    return clamp((-Number(r.avg_vaa) - 4.8) / 1.8, 0, 1);
+  };
+  const bar = (r) => {
+    const q = qualityScore(r);
+    const neutral = q == null;
+    const marker = neutral ? 50 : q * 100;
+    const label = neutral
+      ? "Displayed for release context; VAA trait read is most meaningful for fastball-family pitches."
+      : r.pitch_type === "FF"
+        ? "Four-seam VAA trait: flatter plots hotter."
+        : "Sinker/cutter VAA trait: steeper plots hotter in this provisional read.";
+    return `<div class="vaa-bar${neutral ? " vaa-neutral" : ""}" title="${escapeHtml(label)}">
+      <span class="vaa-marker" style="left:calc(${marker.toFixed(1)}% - 1px);"></span>
+    </div>`;
+  };
+  const body = rows.map(r => `<tr>
+    <td><span style="color:${_pitchColor(r.pitch_type)};font-weight:800;font-family:var(--font-mono);">${escapeHtml(r.pitch_type || "?")}</span> ${escapeHtml(r.pitch_name || "")}</td>
+    <td style="text-align:right;font-family:var(--font-mono);">${r.count != null ? Number(r.count) : "—"}</td>
+    <td style="text-align:right;font-family:var(--font-mono);">${fmt(r.avg_velo, 1)}</td>
+    <td style="text-align:right;font-family:var(--font-mono);">${fmt(r.avg_vaa, 2, "°")}</td>
+    <td style="text-align:right;font-family:var(--font-mono);">${fmt(r.avg_extension, 1)}</td>
+    <td style="text-align:right;font-family:var(--font-mono);">${fmt(r.avg_release_height, 1)}</td>
+    <td>${bar(r)}</td>
+  </tr>`).join("");
+  return `<div style="margin-top:12px;">
+    <div class="stat-group-label">Release traits <span style="font-weight:500;color:var(--text-tertiary);letter-spacing:0;text-transform:none;"> · VAA + release geometry</span></div>
+    <table class="detail-table vaa-table" style="margin-top:8px;"><thead><tr>
+      <th>Pitch</th><th>Pitches</th><th>Velo</th><th>VAA</th><th>Ext</th><th>Rel Ht</th><th>VAAoe</th>
+    </tr></thead><tbody>${body}</tbody></table>
+  </div>`;
+}
+
 function makeStatcastApiBlock(sc, player) {
   if (!sc) return "";
   const cq = sc.contact_quality || {};
@@ -30778,6 +30855,7 @@ function makeStatcastApiBlock(sc, player) {
     <td>${p.avg_ivb != null ? Number(p.avg_ivb).toFixed(1) : "—"}</td>
     <td>${p.avg_spin != null ? Math.round(Number(p.avg_spin)) : "—"}</td>
   </tr>`).join("")}</tbody></table>` : "";
+  const releaseTraits = makeReleaseTraitsTable(sc);
   const venues = (((sc.coverage || {}).venues || []).map(v => v.name).filter(Boolean).slice(0, 3).join(" / "));
   // v20 — Use the per-level `sc` payload so the pitch-movement plot
   // tracks whichever level-tab is active. Previously this read
@@ -30790,6 +30868,7 @@ function makeStatcastApiBlock(sc, player) {
       <div class="stat-group-label">${escapeHtml(sc.level || "")}<span style="font-weight:500;color:var(--text-tertiary);letter-spacing:0;text-transform:none;"> · MLB Stats API game feed${venues ? ` · ${escapeHtml(venues)}` : ""}</span></div>
       ${tileHtml}
       ${pitchSummary}
+      ${releaseTraits}
     </div>
     ${plotHtml}
   </div>`;
@@ -31043,7 +31122,12 @@ function makeMergedStatcastSection(p) {
 
   const isPitcher = !!((zone && zone.is_pitcher) || (sc && sc.is_pitcher));
   const groupId = `statcast-${p.player_key || "_"}`;
-  const activeIdx = Math.max(0, levels.findIndex(lvl => zoneByLevel[lvl] || scByLevel[lvl]));
+  const preferredLevel = [p.current_level, p.statline_level, (p.statline || {}).level]
+    .map(levelKey)
+    .find(lvl => lvl && levels.includes(lvl));
+  const activeIdx = Math.max(0,
+    preferredLevel ? levels.indexOf(preferredLevel) : levels.findIndex(lvl => zoneByLevel[lvl] || scByLevel[lvl])
+  );
 
   // Tab strip — show each level + a tiny pitch/games sample chip so
   // the user can tell which level has the deeper dataset at a glance.
