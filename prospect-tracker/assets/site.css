@@ -16,7 +16,7 @@
   --bg-header:     #0E2B4D;   /* deep navy band */
   --text-primary:  #0F1B2D;
   --text-secondary:#4A5468;
-  --text-tertiary: #8B8474;
+  --text-tertiary: #706B5C;  /* v43: darkened from #8B8474 -> ~4.7:1 on warm paper (WCAG AA) */
   --border:        #C9C1AE;
   --border-light:  #E2DCC9;
   --accent-gold:   #C9A227;
@@ -80,7 +80,7 @@
   --bg-header:     #08080A;
   --text-primary:  #ECEEF2;
   --text-secondary:#A6ABB5;
-  --text-tertiary: #6E727B;
+  --text-tertiary: #7C808A;  /* v43: lightened from #6E727B -> ~4.9:1 on near-black (WCAG AA) */
   --border:        #2B2B31;
   --border-light:  #1D1D21;
   --accent-gold:   #FFD700;   /* refractor gold */
