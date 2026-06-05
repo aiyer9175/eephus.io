@@ -33,8 +33,15 @@ class _QuietHandler(http.server.SimpleHTTPRequestHandler):
 
 @pytest.fixture(scope="module")
 def server():
-    httpd = socketserver.TCPServer(("127.0.0.1", 0), _QuietHandler,
-                                   bind_and_activate=False)
+    # ThreadingTCPServer (not the single-threaded TCPServer): the boot path
+    # kicks off a large async fetch of data/timeseries.json (~58MB) which, on a
+    # single-threaded server, blocks the remaining load-blocking resources and
+    # pushes page.goto(wait_until="load") past its timeout. A threaded server
+    # serves resources concurrently — like real static hosting — so the page
+    # loads promptly regardless of payload size. (Assertions are unchanged.)
+    httpd = socketserver.ThreadingTCPServer(("127.0.0.1", 0), _QuietHandler,
+                                            bind_and_activate=False)
+    httpd.daemon_threads = True
     httpd.allow_reuse_address = True
     httpd.server_bind()
     httpd.server_activate()

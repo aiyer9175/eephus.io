@@ -4526,6 +4526,17 @@ from value_framework import (
     _BUCKETS as _SV_BUCKET_ORDER,
 )
 
+# Per-prospect Monte-Carlo draw counts for the baked surplus enrichment
+# (`_build_surplus_payload`). These were referenced but never defined, so the
+# `ci`/`dist` enrichment threw NameError and was silently swallowed by its
+# `except: pass` — every player shipped with `surplus` but no distribution
+# (no P10–P90 fan, no P(bust)). Modest counts keep the ~2k-player export fast
+# while giving stable percentiles + P(bust); the engine's config defaults
+# (10000 dist / 4000 CI) are reserved for one-off analysis. Pass None to fall
+# back to those config defaults instead.
+_SURPLUS_DIST_DRAWS = 4000   # outcome distribution (percentiles, P(bust), risk-adj)
+_SURPLUS_CI_DRAWS   = 2000   # epistemic credible interval on expected SV
+
 
 def _eta_years_from(eta, today_year):
     """Years from now to projected debut, from the ETA estimate (half-season

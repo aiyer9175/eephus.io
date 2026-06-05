@@ -33806,7 +33806,7 @@ function renderPlayerDetail(key) {
       if (bk || d.p10_mm != null || metaBits.length) {
         bakedDetailRow = `<div style="padding-bottom:10px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
             ${bk ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Outcome mix</div>${renderBucketBar(bk, { height: 16, labels: true, legend: true })}` : ""}
-            ${d.p10_mm != null ? `<div style="margin-top:10px;">${renderSvDistribution(d, { height: 30 })}</div>` : ""}
+            ${d.p10_mm != null ? `<div style="margin-top:10px;"><div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Simulated outcome range</div>${renderSvDistribution(d, { height: 30, axis: true })}</div>` : ""}
             ${metaBits.length ? `<div style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);margin-top:8px;">${metaBits.join(" · ")}</div>` : ""}
           </div>`;
       }
