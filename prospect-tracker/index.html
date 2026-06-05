@@ -239,16 +239,21 @@
          theme evokes a traditional warm-paper baseball card, dark mode
          leans modern-premium: deep ink-black background, chromed silver
          borders on the detail header, refractor-rainbow accent ramp,
-         holographic glow on elite-tier FV badges. */
-      --bg-primary:       #0A0E16;   /* deep ink */
-      --bg-secondary:     #141923;   /* card surface */
-      --bg-tertiary:      #1E2535;   /* alt rows */
-      --bg-header:        #050810;   /* near-black header band */
-      --text-primary:     #E8EEF5;
-      --text-secondary:   #A8B5C8;
-      --text-tertiary:    #6B7A8F;
-      --border:           #2A3142;
-      --border-light:     #1E2535;
+         holographic glow on elite-tier FV badges.
+         v39 — Background stack pulled off the old blue-ink (#0A0E16) onto
+         a NEUTRAL near-black so the refractor-rainbow accents pop harder
+         against true black instead of fighting a navy cast. Surfaces land
+         in the #0c / #1a / #22 range; the refractor accent ramp, FV tiers,
+         chrome header, holo cards, and cool-white text are all UNCHANGED. */
+      --bg-primary:       #0C0C0E;   /* neutral near-black (was #0A0E16 blue-ink) */
+      --bg-secondary:     #1A1A1E;   /* card surface — subtle lift */
+      --bg-tertiary:      #232328;   /* alt rows / inset panels */
+      --bg-header:        #08080A;   /* near-black header band */
+      --text-primary:     #ECEEF2;   /* near-neutral bright white */
+      --text-secondary:   #A6ABB5;   /* cool-neutral mid gray */
+      --text-tertiary:    #6E727B;   /* dim cool-neutral gray */
+      --border:           #2B2B31;   /* neutral hairline (was #2A3142 slate) */
+      --border-light:     #1D1D21;   /* faint neutral divider */
 
       /* Refractor accent ramp — cyan + magenta + gold + mint, the
          classic Topps Chrome rainbow. Variable NAMES match the light
@@ -408,9 +413,14 @@
        contrast lift wasn't enough at the variable level. */
     [data-theme="dark"] {
       /* Row-hover surface lifted so a hover read is unambiguous against
-         the new card surface (the prior pass closed the gap between
-         bg-secondary and bg-tertiary, killing the hover signal). */
-      --bg-row-hover: #353C4D;
+         the card surface. v39 — neutralized off the old blue-slate
+         (#353C4D) to a neutral charcoal lift to match the near-black base
+         while still sitting clearly above bg-tertiary. */
+      --bg-row-hover: #2E2E35;
+      /* Visible scrollbar thumb over the deepened near-black base
+         (--bg-header was too dark to see). Tokenized so the shorthand
+         below stays hex-free. */
+      --scrollbar-thumb: #3A3A42;
     }
     [data-theme="dark"] .player-row:hover,
     [data-theme="dark"] .debut-row:hover,
@@ -1515,8 +1525,12 @@
       align-items: start;
     }
     @media (max-width: 900px) {
-      .ifa-grid { grid-template-columns: 1fr; }
+      .ifa-grid { grid-template-columns: minmax(0, 1fr); }
     }
+    /* Let the main IFA column shrink below its (wide, non-wrapping signings
+       table) content so the table's own horizontal scroll engages instead
+       of forcing page-wide overflow on mobile. */
+    .ifa-main { min-width: 0; }
     .ifa-side-card {
       border: 1px solid var(--border-light);
       border-radius: var(--radius-sm);
@@ -6001,7 +6015,11 @@
        the full container width back. */
     .active-grid {
       display: grid;
-      grid-template-columns: 1fr;
+      /* minmax(0, 1fr) — NOT a bare 1fr — so the single content column can
+         shrink below its widest child's min-content. A bare 1fr grew to
+         ~452px to fit a non-wrapping traded-row cell, pushing the page
+         past the viewport on mobile. */
+      grid-template-columns: minmax(0, 1fr);
       gap: 18px;
       align-items: start;
     }
@@ -7583,6 +7601,178 @@
        the cell + the optional list-column. */
     .surplus-cell { min-width: 0; display: flex; flex-direction: column; gap: 3px; align-items: stretch; }
     .col-header.with-sv, .player-row.with-sv { }
+
+    /* ===================================================================
+       v39 — DARK-MODE NEUTRAL-BLACK POLISH + MOBILE OVERHAUL
+       Appended last so these overrides win on equal specificity. The dark
+       rules keep the refractor/chrome/holo identity — they only fix the
+       few spots the new neutral near-black base exposed (scrollbar, faint
+       composite-pill fills). The mobile block is a ground-up pass for the
+       390px (iPhone 15) baseline: 44px touch targets, header de-overlap,
+       horizontally-scrollable pill rows + tables, and tightened spacing.
+       =================================================================== */
+
+    /* --- Dark: scrollbar thumb was painted with --bg-header (near-black),
+       invisible against the deepened base. Repaint with a visible neutral
+       charcoal; refractor accent on hover. --- */
+    [data-theme="dark"] *::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); }
+    [data-theme="dark"] *::-webkit-scrollbar-thumb:hover { background: var(--neon-cyan); }
+    [data-theme="dark"] * { scrollbar-color: var(--scrollbar-thumb) var(--bg-secondary); }
+
+    /* --- Dark: bolder inline composite pills. The light-theme rgba washes
+       read faint over true black; repaint with a richer dark-accent fill
+       (currentColor mixed into the surface) so the chip reads as filled.
+       Border + text stay the refractor accent already set per state. --- */
+    [data-theme="dark"] .tool-pill,
+    [data-theme="dark"] .rps-plus-pill,
+    [data-theme="dark"] .wag-pill {
+      background: color-mix(in srgb, currentColor 16%, var(--bg-secondary));
+    }
+    /* Null/neutral composite states keep their muted surface (no accent). */
+    [data-theme="dark"] .rps-plus-pill.is-null {
+      background: var(--bg-tertiary);
+    }
+
+    /* =================================================================
+       MOBILE — pill rows stay single-line + horizontally scrollable
+       (applies at the tablet/phone collapse, not just phone). The in-row
+       tool/pitch grade strip was overflow:hidden — it CLIPPED pills. Make
+       it scroll instead so nothing truncates without intent. */
+    @media (max-width: 900px) {
+      .tool-grade-strip {
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .tool-grade-strip::-webkit-scrollbar { display: none; }
+      /* Expanded-density 7-tool grid can exceed a narrow card — let it
+         scroll horizontally rather than overflow the row. */
+      .expand-tools { overflow-x: auto; max-width: 100%; }
+      /* Farm list row: the 4-chip per-component grade strip (ACQ/DEV/FIN/
+         PROD) is wider than the collapsed GRADE column and spilled over
+         the neighboring Tool-DvM+ stats (visible overlap). The overall
+         grade circle + DvM+ donut carry the headline on a phone; the
+         per-component letters are detail-page material. Hide them here so
+         the dense row reads cleanly with no overlap. */
+      .farm-grade-cell .fg-components { display: none; }
+
+      /* Canonical grid-overflow fix: the collapsed row/header grids use
+         fr/auto tracks whose automatic minimum is the cell's min-content
+         (a long trade "From → To" string, a wide header label, a chart).
+         That forced some rows (traded list, farm header) wider than the
+         viewport. min-width:0 on every cell lets those tracks shrink to
+         the container so the row never exceeds the screen. */
+      .player-row > *, .col-header > *,
+      .farm-row > *, .farm-header > *,
+      .spotlight-row > *, .spotlight-header > *,
+      .debut-row > *, .debut-header > * { min-width: 0; }
+      /* Long column-header labels wrap (rather than force track width or
+         clip a short label like "RANK"); min-width:0 above lets the track
+         shrink and the multi-word labels break across lines cleanly. */
+      .col-header > span, .farm-header > span,
+      .spotlight-header > span, .debut-header > span {
+        overflow: hidden;
+        overflow-wrap: anywhere;
+      }
+    }
+
+    /* =================================================================
+       MOBILE BASELINE — 390px (iPhone 15). Everything below targets the
+       phone range. Tablet (641-1024) keeps its existing denser rules. */
+    @media (max-width: 640px) {
+      /* --- Tighter page gutters: kill dead side-space on phones. --- */
+      .container { padding: 0.8rem 0.6rem 2.5rem; }
+
+      /* --- Header: the absolute top-right control rail (6 icon buttons)
+         overlapped the title/byline at phone widths. Drop it into normal
+         flow below the meta line so it can never collide with content. --- */
+      .global-controls {
+        position: static;
+        top: auto; right: auto;
+        margin-top: 10px;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-start;
+      }
+
+      /* --- Touch targets: 44px minimum on every primary interactive
+         control. Chips/tabs/pagination live in horizontally-scrolling or
+         wrapping rows, so growing their height is safe. --- */
+      button.chip,
+      .section-tab,
+      .detail-tab,
+      .filter-toggle,
+      .pg-chip,
+      .pg-nav,
+      .global-ctrl,
+      .compare-toggle,
+      .level-tab,
+      .detail-jumplinks a {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      /* Selects can't be flex containers — size via min-height only. */
+      select.chip { min-height: 44px; }
+      /* Pagination prev/next/number become tappable squares. */
+      .pg-chip, .pg-nav { min-width: 44px; }
+      /* Pack the wrapping section-tabs tighter (less h-padding) so 44px-tall
+         tabs don't balloon the sticky nav into too many rows. */
+      .section-tab { padding-left: 12px; padding-right: 12px; }
+      /* Icon-only round buttons → full 44px hit area. */
+      .watch-btn,
+      #theme-toggle,
+      #global-theme-toggle {
+        width: 44px; height: 44px; min-height: 44px;
+        font-size: var(--fs-lg);
+      }
+      .sig-social { width: 40px; height: 40px; }
+
+      /* --- Dense tables → horizontally scrollable so columns never squish
+         below legible size. display:block keeps an anonymous table inside
+         that sizes to content + scrolls within the 100%-wide block. --- */
+      .detail-table,
+      .draft-table,
+      .compare-stat-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+        max-width: 100%;
+      }
+
+      /* --- Detail-page stat-tile grids are inline-styled with fixed fr
+         columns (e.g. the farm-detail 6-col DvM+/Surplus/Age/Stock/Health
+         strip) and blew past the viewport (~581px) on a phone. Reflow ANY
+         stat-tile grid to a responsive auto-fit so tiles wrap cleanly
+         instead of overflowing. !important is required to beat the inline
+         grid-template-columns. :has() picks up every such grid generically
+         (farm detail, player detail, draft detail) without per-site edits. */
+      div:has(> .stat-tile) {
+        grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)) !important;
+      }
+
+      /* --- Pitcher list rows: the inline arsenal-mini ("FF 48 · CH 18 …")
+         and savant micro-pill sit in the upper name-meta with no clean
+         home at 390px — single-line they overflow the rank/FV columns,
+         wrapped they stack into an awkward tall pill. Hide them here; the
+         bottom tool/pitch grade strip (FB/SL/CB/CH) already carries the
+         arsenal, and the mobile-only RPS+/wRC+ pill carries the Statcast
+         line, so no signal is lost. --- */
+      .player-row .row-tag.arsenal-mini,
+      .player-row .row-tag.savant-inline-pill,
+      .spotlight-row .row-tag.arsenal-mini,
+      .spotlight-row .row-tag.savant-inline-pill { display: none; }
+
+      /* --- Tighten loose vertical space on the densest views. --- */
+      .detail-page-header { padding: 10px 12px 10px 14px; gap: 8px; }
+      .detail-page-header .player-display-name { font-size: var(--fs-xl); }
+      .empty-state { padding: 16px; margin: 16px auto; }
+      .news-ticker { margin-bottom: 6px; }
+      h1 { margin-bottom: 0.25rem; }
+    }
   </style>
 
   <!-- Welcome-gate state, resolved synchronously before <body> paints so a
