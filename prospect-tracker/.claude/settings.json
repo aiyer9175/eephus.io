@@ -103,7 +103,9 @@
       "Bash(python /tmp/shot_fin.py)",
       "Bash(python -m pytest test_no_hardcoded_colors.py test_design_tokens.py test_index_html_loads.py -q 2>&1 | tail -4 *)",
       "Bash(python /tmp/shot_v.py)",
-      "Bash(python -m pytest test_index_html_loads.py::test_welcome_gate_locks_unlocks_and_persists -q)"
+      "Bash(python -m pytest test_index_html_loads.py::test_welcome_gate_locks_unlocks_and_persists -q)",
+      "Bash(cd /c/Users/noah/baseball-projects/BaseballR/prospect-tracker *)",
+      "Read(//c/Users/noah/baseball-projects/BaseballR/prospect-tracker/**)"
     ],
     "additionalDirectories": [
       "C:\\Users\\noah\\baseball-projects\\BaseballR\\prospect-tracker",
