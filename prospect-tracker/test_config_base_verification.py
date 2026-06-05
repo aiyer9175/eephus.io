@@ -91,12 +91,15 @@ def test_malformed_config_raises(mutate) -> None:
 # (3) REFERENCE-VALUE PINS -- flag (via failing test) any future drift
 # =============================================================================
 def test_tiered_and_flat_dollars_per_war_match_reference() -> None:
+    # v44 — intentional retune: $/WAR moved from the single-2026 row to the
+    # trailing 3-yr average (2024-26) of historical_dollars_per_war. These pins
+    # are the means of those three years; re-average when a new year is appended.
     dpw = _CFG["dollars_per_war"]
-    assert dpw["flat"] == pytest.approx(11.23e6)
+    assert dpw["flat"] == pytest.approx(11.74e6)
     rates = dpw["tiered"]["rates"]
-    assert rates["lt_1"] == pytest.approx(6.74e6)
-    assert rates["1_to_2"] == pytest.approx(8.51e6)
-    assert rates["2plus"] == pytest.approx(12.84e6)
+    assert rates["lt_1"] == pytest.approx(6.97e6)
+    assert rates["1_to_2"] == pytest.approx(8.76e6)
+    assert rates["2plus"] == pytest.approx(13.63e6)
     assert dpw["tiered"]["breakpoints"] == [1.0, 2.0]
 
 

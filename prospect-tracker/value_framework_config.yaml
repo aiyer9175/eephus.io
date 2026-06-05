@@ -188,11 +188,16 @@ lowtier_anchor:
 # NEVER to a blended/averaged WAR. The 0-1 / 1-2 / 2+ breakpoints are a
 # different cut than the outcome buckets.
 dollars_per_war:
-  flat: 11.23e+6
+  # v44 — switched from the single-2026 row to a TRAILING 3-YEAR AVERAGE
+  # (2024-2026) of historical_dollars_per_war, per this block's own
+  # recommendation ("3-yr-average rates preferred"). Smooths offseason
+  # variance; the 2plus tier (highest backtest sensitivity, elasticity ~1.0)
+  # firms up. Recompute the means here whenever a new year is appended below.
+  flat: 11.74e+6                       # mean(overall 2024-26): (12.08+11.92+11.23)/3
   tiered:
     breakpoints: [1.0, 2.0]            # WAR thresholds: [<1 -> lt_1, <2 -> 1_to_2, else 2plus]
-    rates: {lt_1: 6.74e+6, "1_to_2": 8.51e+6, "2plus": 12.84e+6}
-  note: "offseason-variable -> 3-yr-average rates preferred; update annually"
+    rates: {lt_1: 6.97e+6, "1_to_2": 8.76e+6, "2plus": 13.63e+6}   # 3-yr means (2024-26)
+  note: "trailing 3-yr average (2024-2026) of historical_dollars_per_war; re-average annually as new years are appended"
 
 # =============================================================================
 # Time value & input calibration

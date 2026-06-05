@@ -6828,6 +6828,9 @@
     .rps-plus-pill.is-neg { background: rgba(185, 28, 28, 0.12); color: var(--down); border-color: var(--down); }
     .rps-plus-pill.is-neutral { background: rgba(167, 100, 252, 0.10); color: var(--neon-violet); }
     .rps-plus-pill.is-null { background: var(--bg-tertiary); color: var(--text-tertiary); border-style: dashed; }
+    /* Provisional (<40-game) "+" reads: dashed border + a muted trailing star. */
+    .rps-plus-pill.is-provisional { border-style: dashed; }
+    .plus-provisional { color: var(--text-tertiary); font-weight: 700; margin-left: 1px; }
 
     /* Tool composite pill — same shape as RPS+ but a half-step smaller
        so it can ride inline next to a player name in list rows without
@@ -9139,13 +9142,19 @@
           <button class="chip"        data-lb-stat="sb"      title="Stolen bases">SB</button>
           <button class="chip"        data-lb-stat="hit_level_plus" title="OPS vs level mean — surfaces hitters whose OPS is great BECAUSE the level is hard">OPS+ lvl</button>
           <button class="chip"        data-lb-stat="rps_plus" title="RPS+ — level-anchored rate performance score (100 = mean, +10 = +1σ). Hitters only.">RPS+</button>
+          <button class="chip"        data-lb-stat="iso_plus" title="ISO+ — isolated power indexed to level-average ISO (100 = league-average power). Hitters only.">ISO+</button>
+          <button class="chip"        data-lb-stat="pow_plus" title="POW+ — power index: ISO+ & HR-rate + Statcast hard-hit/barrel + Power grade (100 = average). Hitters only.">POW+</button>
+          <button class="chip"        data-lb-stat="pd_plus"  title="PD+ — plate-discipline index: BB%−K% vs level + Pitch-Selection grade (100 = average). Hitters only.">PD+</button>
+          <button class="chip"        data-lb-stat="sc_plus"  title="SC+ — Statcast composite (contact quality) indexed to pool average. Hitters only.">SC+</button>
+          <button class="chip"        data-lb-stat="dvm_plus" title="$DvM+ — surplus-development index (100 = FV-tier average).">$DvM+</button>
           <button class="chip"        data-lb-stat="era"     title="Earned-run average (lower is better)">ERA</button>
           <button class="chip"        data-lb-stat="whip"    title="Walks + hits / IP (lower is better)">WHIP</button>
           <button class="chip"        data-lb-stat="fip"     title="Fielding Independent Pitching (lower is better)">FIP</button>
           <button class="chip"        data-lb-stat="pitcher_k_pct" title="Pitcher K% — strikeouts as % of batters faced">K%</button>
           <button class="chip"        data-lb-stat="pitcher_bb_pct" title="Pitcher BB% — walks as % of batters faced (lower is better)">BB%</button>
           <button class="chip"        data-lb-stat="hr_per_9" title="Home runs allowed per 9 (lower is better)">HR/9</button>
-          <button class="chip"        data-lb-stat="pit_level_plus" title="ERA vs level mean — surfaces pitchers whose ERA is dominant relative to the level cohort">ERA- lvl</button>
+          <button class="chip"        data-lb-stat="pit_level_plus" title="ERA- vs level mean (100 = level-average; lower is better)">ERA- lvl</button>
+          <button class="chip"        data-lb-stat="pstuff_plus" title="pStuff+ — K/9 + BB/9 + HR/9 normalized to level mean (100 = average peripherals). Pitchers only.">pStuff+</button>
         </div>
 
         <div class="filter-group">
@@ -12530,7 +12539,7 @@ function makeMilbCell(p) {
         const _hh = _ex && _ex.hard_hit_pct != null ? (_ex.hard_hit_pct * 100).toFixed(0) + "%" : null;
         return [
           sl.hr != null ? `${sl.hr} HR` : null,
-          sl.iso != null ? (() => { const ip = computeIsoPlus(p); return `ISO ${fmtRate3(sl.iso)}${ip != null ? ` (ISO+ ${ip})` : ""}`; })() : null,
+          sl.iso != null ? (() => { const ip = computeIsoPlus(p); return `ISO ${fmtRate3(sl.iso)}${ip != null ? ` (ISO+ ${ip}${_plusProvisional(p) ? "*" : ""})` : ""}`; })() : null,
           sl.bb_pct != null ? `BB% ${sl.bb_pct.toFixed(1)}` : null,
           sl.k_pct != null ? `K% ${sl.k_pct.toFixed(1)}` : null,
           _hh != null ? `HH ${_hh}` : null,
@@ -15730,15 +15739,34 @@ const LB_STATS = {
   // the level-cohort mean (signed %). Surfaces players whose surface
   // OPS is great BECAUSE the level is hard, not because the level is
   // soft. Field name is `level_plus_pct` (positive = better than mean).
-  hit_level_plus: { label: "OPS+ vs lvl", hi: true,
-                    fmt: v => v != null ? (v > 0 ? "+" : "") + Number(v).toFixed(0) + "%" : "—",
+  // v44 — these "+" indices are JS-derived from the player's current statline,
+  // not baked per career-row, so each carries a `getter` and rides the per-player
+  // getter path in renderLeaderboards (fixing the previously-empty boards).
+  hit_level_plus: { label: "OPS+ lvl", hi: true,
+                    fmt: v => v != null ? Math.round(Number(v)).toString() : "—",
                     minAB: 50, support: _lbHitterSupport, side: "hit",
-                    field: "level_plus_pct" },
-  // v17 — RPS+ leaderboard. Sort by site's Rate Performance Score
-  // (level-anchored, 100 = mean, +10 = +1σ). Hitters only.
+                    getter: p => (p.statline && p.statline.ops_plus_level != null) ? p.statline.ops_plus_level : null },
+  // v17 — RPS+ leaderboard. Level-anchored Rate Performance Score (100 = mean,
+  // +10 = +1σ). Hitters only.
   rps_plus: { label: "RPS+", hi: true,
               fmt: v => v != null ? Math.round(Number(v)).toString() : "—",
-              minAB: 50, support: _lbHitterSupport, side: "hit" },
+              minAB: 50, support: _lbHitterSupport, side: "hit",
+              getter: p => { const r = (typeof getRpsPlus === "function") ? getRpsPlus(p) : null; return r ? r.plus : null; } },
+  // v44 — level-relative "+" index family (hitters), one entry per player.
+  iso_plus: { label: "ISO+", hi: true, fmt: v => v != null ? Math.round(v).toString() : "—",
+              minAB: 50, support: _lbHitterSupport, side: "hit", getter: p => computeIsoPlus(p) },
+  pow_plus: { label: "POW+", hi: true, fmt: v => v != null ? Math.round(v).toString() : "—",
+              minAB: 50, support: _lbHitterSupport, side: "hit",
+              getter: p => { const b = computePowerPlus(p); return b ? b.value : null; } },
+  pd_plus:  { label: "PD+", hi: true, fmt: v => v != null ? Math.round(v).toString() : "—",
+              minAB: 50, support: _lbHitterSupport, side: "hit",
+              getter: p => { const b = computeDisciplinePlus(p); return b ? b.value : null; } },
+  sc_plus:  { label: "SC+", hi: true, fmt: v => v != null ? Math.round(v).toString() : "—",
+              minAB: 50, support: _lbHitterSupport, side: "hit",
+              getter: p => (typeof getStatcastPlus === "function") ? getStatcastPlus(p) : null },
+  dvm_plus: { label: "$DvM+", hi: true, fmt: v => v != null ? Math.round(v).toString() : "—",
+              minAB: 50, support: _lbHitterSupport, side: "hit",
+              getter: p => (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) ? p.dollar_dvm_plus : null },
   // ── Pitcher ──
   era:     { label: "ERA",     hi: false, fmt: v => v != null ? Number(v).toFixed(2) : "—",
              minIP: 15, support: _lbPitcherSupport, side: "pit" },
@@ -15763,10 +15791,13 @@ const LB_STATS = {
   // v12 — level-relative run prevention. Sort by ERA's gap to the
   // level-cohort mean. Same `level_plus_pct` field but inverted-
   // direction since lower ERA = better.
-  pit_level_plus: { label: "ERA- vs lvl", hi: true,
-                    fmt: v => v != null ? (v > 0 ? "+" : "") + Number(v).toFixed(0) + "%" : "—",
+  pit_level_plus: { label: "ERA- lvl", hi: false,
+                    fmt: v => v != null ? Math.round(Number(v)).toString() : "—",
                     minIP: 15, support: _lbPitcherSupport, side: "pit",
-                    field: "level_plus_pct" },
+                    getter: p => (p.statline && p.statline.era_minus_level != null) ? p.statline.era_minus_level : null },
+  // v44 — pitcher peripherals index, one entry per player.
+  pstuff_plus: { label: "pStuff+", hi: true, fmt: v => v != null ? Math.round(v).toString() : "—",
+                 minIP: 15, support: _lbPitcherSupport, side: "pit", getter: p => computeStuffPlus(p) },
   zone_z_contact: { label: "Z-Con%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
                     source: "zone", side: "hit", field: "z_contact_pct", minPitches: 200, support: _lbZoneSupport },
   zone_z_swing: { label: "Z-Swing%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : "—",
@@ -16684,6 +16715,26 @@ function renderLeaderboards() {
       if (_ageCap != null && !(p.age != null && p.age <= _ageCap)) continue;
       if (_rankCap != null && !(p.overall_rank != null && Number(p.overall_rank) <= _rankCap)) continue;
       if (boardSide !== "all" && cfg.side !== boardSide) continue;
+    // v44 — Getter-based "+" index stats (ISO+/RPS+/SC+/POW+/PD+/pStuff+/$DvM+).
+    // These are JS-derived from the player's current statline (not baked per
+    // career-row), so they take a dedicated per-player path: one entry per
+    // player, gated by the current statline's sample. (This also FIXES the
+    // previously-empty rps_plus / hit_level_plus / pit_level_plus boards, which
+    // read non-existent career-row fields and returned 0 rows.)
+    if (cfg.getter) {
+      const sl = p.statline;
+      if (!sl) continue;
+      if (season != null && sl.season != null && Number(sl.season) !== Number(season)) continue;
+      if (lvl !== "all" && sl.level !== lvl) continue;
+      if (cfg.side === "hit" && sl.is_pitcher) continue;
+      if (cfg.side === "pit" && !sl.is_pitcher) continue;
+      if (cfg.minAB && Number(sl.ab ?? 0) < cfg.minAB) continue;
+      if (cfg.minIP && Number(sl.ip ?? 0) < cfg.minIP) continue;
+      const gv = cfg.getter(p);
+      if (gv == null || !isFinite(gv)) continue;
+      pool.push({ p, r: sl, v: Number(gv) });
+      continue;
+    }
     if (cfg.source === "zone") {
       const splits = (p.zone_metrics && Array.isArray(p.zone_metrics.level_splits) && p.zone_metrics.level_splits.length)
         ? p.zone_metrics.level_splits
@@ -25051,13 +25102,23 @@ function buildProspectCard(snap) {
   // mix bar + simulated outcome-range fan) — the richer career-path signal that
   // replaces the old DvM+-vs-league bar.
   const dvm = (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) ? Math.round(p.dollar_dvm_plus) : null;
+  // v44 — level-relative "+" index family on the GFX card (hitters): ISO+/POW+/PD+
+  // alongside the existing SC+/RPS+/$DvM+, so the shareable graphic carries the
+  // same metric depth as the detail Overview. Each returns null for pitchers.
+  const isoP = (typeof computeIsoPlus === "function") ? computeIsoPlus(p) : null;
+  const powP = (typeof computePowerPlus === "function") ? ((computePowerPlus(p) || {}).value ?? null) : null;
+  const pdP  = (typeof computeDisciplinePlus === "function") ? ((computeDisciplinePlus(p) || {}).value ?? null) : null;
+  const _arkCol = v => v >= 110 ? "var(--up)" : v <= 90 ? "var(--down)" : P.text;
   const arkChips = [];
-  const arkChip = (lab, val, col) => `<div style="flex:1;min-width:96px;display:flex;flex-direction:column;gap:3px;padding:11px 14px;background:${P.bg};border:1px solid ${P.border};border-radius:7px;">
+  const arkChip = (lab, val, col) => `<div style="flex:1;min-width:88px;display:flex;flex-direction:column;gap:3px;padding:11px 14px;background:${P.bg};border:1px solid ${P.border};border-radius:7px;">
       <span style="font-family:var(--font-sans);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${P.text3};">${lab}</span>
       <span style="font-family:var(--font-mono);font-size:24px;font-weight:800;color:${col || P.text};line-height:1;">${escapeHtml(String(val))}</span>
     </div>`;
-  if (scPlus != null) arkChips.push(arkChip("SC+", scPlus, scPlus >= 110 ? "var(--up)" : scPlus <= 90 ? "var(--down)" : P.text));
-  if (rps && rps.plus != null) arkChips.push(arkChip("RPS+", rps.plus, rps.plus >= 110 ? "var(--up)" : rps.plus <= 90 ? "var(--down)" : P.text));
+  if (scPlus != null) arkChips.push(arkChip("SC+", scPlus, _arkCol(scPlus)));
+  if (rps && rps.plus != null) arkChips.push(arkChip("RPS+", rps.plus, _arkCol(rps.plus)));
+  if (isoP != null) arkChips.push(arkChip("ISO+", isoP, _arkCol(isoP)));
+  if (powP != null) arkChips.push(arkChip("POW+", powP, _arkCol(powP)));
+  if (pdP != null) arkChips.push(arkChip("PD+", pdP, _arkCol(pdP)));
   if (dvm != null) arkChips.push(arkChip("$DvM+", dvm, dvm >= 110 ? "var(--up)" : dvm <= 90 ? "var(--down)" : "var(--neon-violet)"));
   const surplusSection = _gfxSurplusBlock(p, P);
   const valuationBlock = (arkChips.length || surplusSection)
@@ -26875,8 +26936,21 @@ function _buildDetailChipRibbon(p) {
     return `<span class="ribbon-row ribbon-row-sc">${bits.join("")}</span>`;
   })();
 
+  // Row 3.5 — level-relative "+" index metrics (ISO+/HIT+/POW+/PD+, pStuff+ for
+  // pitchers). Previously these only appeared buried on the Performance tab via
+  // scoutRatesHTML; surfacing them on the Overview gives the index family the
+  // same prominence as RPS+/SC+. Sur+ is omitted (the surplus section owns it).
+  const plusIndexRow = (() => {
+    const bits = [
+      isoPlusPillHTML(p), hittingPlusPillHTML(p), powerPlusPillHTML(p),
+      disciplinePlusPillHTML(p), stuffPlusPillHTML(p),
+    ].filter(Boolean);
+    if (!bits.length) return "";
+    return `<span class="ribbon-row ribbon-row-plus">${bits.join("")}</span>`;
+  })();
+
   // Compose. Skip the whole ribbon when nothing populated.
-  const allRows = [levelPills, toolStrip, statsLine, statcastChips].filter(Boolean);
+  const allRows = [levelPills, toolStrip, statsLine, plusIndexRow, statcastChips].filter(Boolean);
   if (!allRows.length) return "";
   return `<div class="detail-chip-ribbon">${allRows.join("")}</div>`;
 }
@@ -39495,9 +39569,21 @@ function _pwrToolGrade(grades) {
 // ISO — NO scouting-tool blend (that is POW+'s job; ISO+ feeds POW+ as its
 // stat component, see _powerPlusRaw). Hitters only; 40-game volume gate +
 // a positive level baseline. Null when inputs/baseline are missing.
+// v44 — Sample gates for the level-relative "+" metrics. Below PROVISIONAL the
+// metric is suppressed entirely (too noisy); in the [PROVISIONAL, MIN) band it
+// computes but is flagged "provisional" (small sample). At/above MIN it's a
+// full-confidence read. Relaxed from a hard 40-game cutoff that hid ~59% of
+// hitters in early season — they now surface with a flag instead of vanishing.
+const PLUS_MIN_GAMES = 40;
+const PLUS_PROVISIONAL_GAMES = 20;
+// True when a hitter's sample sits in the provisional band [20, 40) games.
+function _plusProvisional(p) {
+  const g = Number(p && p.statline && p.statline.games) || 0;
+  return g >= PLUS_PROVISIONAL_GAMES && g < PLUS_MIN_GAMES;
+}
 function computeIsoPlus(p) {
   const sl = p && p.statline; if (!sl || sl.is_pitcher) return null;
-  if ((Number(sl.games) || 0) < 40) return null;
+  if ((Number(sl.games) || 0) < PLUS_PROVISIONAL_GAMES) return null;
   const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
   const lgIso = perf.avg_iso;
   const iso = sl.iso != null ? Number(sl.iso) : null;
@@ -39509,7 +39595,7 @@ function isoPlusPillHTML(p) {
   if (v == null) return "";
   return _plusPill("ISO+", v, _plusClass,
     `ISO+ ${v} · isolated power (SLG−AVG) indexed to the ${p.statline.level || "level"}-average ISO (100 = league-average ISO; each point = 1% above/below, same paradigm as wRC+/ERA+).`,
-    "iso_plus");
+    "iso_plus", _plusProvisional(p));
 }
 
 // Raw power index — ISO + HR-rate vs the player's level average. 100 =
@@ -39517,7 +39603,7 @@ function isoPlusPillHTML(p) {
 // gate fails or inputs are missing (the blend then leans on the tool).
 function _powerPlusRaw(p) {
   const sl = p && p.statline; if (!sl || sl.is_pitcher) return null;
-  if ((Number(sl.games) || 0) < 40) return null;
+  if ((Number(sl.games) || 0) < PLUS_PROVISIONAL_GAMES) return null;
   const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
   if (perf.avg_iso == null) return null;
   // ISO+ IS the isolated-power component (100 = level-avg ISO) — item-1 metric
@@ -39563,7 +39649,7 @@ function computePowerPlus(p) {
 // 40-game gate.
 function _disciplinePlusRaw(p) {
   const sl = p && p.statline; if (!sl || sl.is_pitcher) return null;
-  if ((Number(sl.games) || 0) < 40) return null;
+  if ((Number(sl.games) || 0) < PLUS_PROVISIONAL_GAMES) return null;
   const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
   if (sl.bb_pct == null || sl.k_pct == null || perf.avg_bb_pct == null || perf.avg_k_pct == null) return null;
   const playerDiff = Number(sl.bb_pct) - Number(sl.k_pct);
@@ -39588,7 +39674,7 @@ function computeDisciplinePlus(p) {
 // Hitters only; 40-game gate.
 function _hittingPlusRaw(p) {
   const sl = p && p.statline; if (!sl || sl.is_pitcher) return null;
-  if ((Number(sl.games) || 0) < 40) return null;
+  if ((Number(sl.games) || 0) < PLUS_PROVISIONAL_GAMES) return null;
   const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
   // Contact: lower K% than the level mean reads above 100.
   const kp = Number(sl.k_pct), avgK = perf.avg_k_pct;
@@ -39677,14 +39763,18 @@ function computeTradeValue(p) {
 // reused with stat-specific labels so every "X+" reading reads as the
 // same family of metric. Optional `slug` arg attaches the glossary
 // click-to-define affordance (`.g-term[data-term]`) to the entire pill.
-function _plusPill(label, value, classFn, tooltip, slug) {
+function _plusPill(label, value, classFn, tooltip, slug, provisional) {
   const gClass = slug ? " g-term" : "";
   const gAttr  = slug ? ` data-term="${slug}"` : "";
   if (value == null) {
     return `<span class="rps-plus-pill is-null${gClass}"${gAttr} title="${escapeHtml(label + " unavailable — insufficient sample or missing inputs.")}">${label} —</span>`;
   }
   const cls = classFn(value);
-  return `<span class="rps-plus-pill ${cls}${gClass}"${gAttr} title="${escapeHtml(tooltip)}">${label} ${value}</span>`;
+  // Provisional (small-sample) "+" reads get a trailing asterisk + tooltip note
+  // so the number is visible early in the season without implying it's stable.
+  const star = provisional ? '<span class="plus-provisional">*</span>' : "";
+  const tip = provisional ? tooltip + ` · provisional (small sample, <${PLUS_MIN_GAMES} games)` : tooltip;
+  return `<span class="rps-plus-pill ${cls}${gClass}${provisional ? " is-provisional" : ""}"${gAttr} title="${escapeHtml(tip)}">${label} ${value}${star}</span>`;
 }
 // Format the blend-composition suffix for a tool-blended {value,raw,tool}
 // result so the tooltip always shows how the number was built.
@@ -39703,21 +39793,21 @@ function hittingPlusPillHTML(p) {
   if (b == null) return "";   // hitters only — silently omit for pitchers
   return _plusPill("HIT+", b.value, _plusClass,
     `HIT+ ${b.value} · 45% AVG & contact (K%-avoidance) vs ${p.statline.level || "level"} mean / 25% Statcast zone-contact & whiff / 30% Hit+Bat-Control grade (100 = league-average hit tool)${_blendTip(b)}`,
-    "hit_plus");
+    "hit_plus", _plusProvisional(p));
 }
 function powerPlusPillHTML(p) {
   const b = computePowerPlus(p);
   if (b == null) return "";   // hitters only — silently omit for pitchers
   return _plusPill("POW+", b.value, _plusClass,
     `POW+ ${b.value} · 45% ISO+ & HR-rate vs ${p.statline.level || "level"} mean / 25% Statcast hard-hit & barrel / 30% Power grade (100 = league-average power)${_blendTip(b)}`,
-    "pwr_plus");
+    "pwr_plus", _plusProvisional(p));
 }
 function disciplinePlusPillHTML(p) {
   const b = computeDisciplinePlus(p);
   if (b == null) return "";
   return _plusPill("PD+", b.value, _plusClass,
     `PD+ ${b.value} · BB%−K% differential vs ${p.statline.level || "level"} mean blended with the Pitch-Selection (PSel) tool grade (100 = league-average plate discipline)${_blendTip(b)}`,
-    "pd_plus");
+    "pd_plus", _plusProvisional(p));
 }
 function stuffPlusPillHTML(p) {
   const v = computeStuffPlus(p);

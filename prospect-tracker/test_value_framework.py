@@ -426,9 +426,11 @@ def test_disabling_timing_reproduces_flat_behavior() -> None:
         v_young = vf.surplus_value_mm(60, False, "SS", age=19, eta_years=4)
         v_old = vf.surplus_value_mm(60, False, "SS", age=30, eta_years=0)
         assert v_noargs == v_young == v_old                    # timing has NO effect (flat)
-        # The flat value tracks the (hierarchical-MAP) point estimate -- ~the
-        # Prompt-B-era 132.5, drifting only slightly with re-fits (G pooling).
-        assert 130.0 <= v_noargs <= 135.0
+        # The flat value tracks the (hierarchical-MAP) point estimate. v44 lifted
+        # the $/WAR tiers to the trailing 3-yr average (2024-26), so the 60-FV
+        # flat surplus rose ~6% (the 2plus tier firmed up) to ~140 from the old
+        # ~132.5; range widened to absorb future annual re-averages + G pooling.
+        assert 135.0 <= v_noargs <= 145.0
     finally:
         (cfg["dollars_per_war_inflation"], cfg["discount_from"], cfg["aging"]["enabled"]) = saved
         vf._bucket_sv_usd.cache_clear()
