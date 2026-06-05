@@ -125,9 +125,9 @@
       --accent-il-soft:        rgba(201, 162, 39, 0.12);
       --accent-il-border:      rgba(201, 162, 39, 0.45);
 
-      --radius-sm: 3px;
-      --radius-md: 4px;
-      --radius-lg: 6px;
+      --radius-sm: 0;  /* corners sharpened site-wide (global rule in assets/site.css) */
+      --radius-md: 0;
+      --radius-lg: 0;
 
       /* Defaults for the org-color accent stripe — overridden per row via
          inline `--org-color` style attribute set by the render functions. */
@@ -1936,11 +1936,6 @@
       vertical-align: middle;
       flex-shrink: 0;
       background: transparent;
-      /* v41 — keep the pixel-art logos crisp when the browser scales the baked
-         252px asset down to the 20-76px render sizes (nearest-neighbor). */
-      image-rendering: pixelated;
-      image-rendering: -moz-crisp-edges;
-      image-rendering: crisp-edges;
     }
     .team-logo-sm { width: 20px; height: 20px; }
     .team-logo-md { width: 32px; height: 32px; }
@@ -7565,6 +7560,7 @@
     }
     .gfx-overlay.is-open { display: flex; }
     .gfx-modal {
+      position: relative;
       width: min(720px, 100%); max-height: 94vh;
       display: flex; flex-direction: column;
       background: var(--bg-secondary); border: 1px solid var(--border);
@@ -7580,7 +7576,11 @@
       font-family: var(--font-retro); font-weight: 700; font-size: 13px;
       letter-spacing: 0.04em; color: var(--text-primary);
     }
-    .gfx-modal-actions { margin-left: auto; display: flex; gap: 8px; }
+    .gfx-close-x {
+      margin-left: auto; line-height: 1; font-size: 14px;
+      width: 32px; height: 32px; padding: 0; display: inline-flex;
+      align-items: center; justify-content: center;
+    }
     .gfx-btn {
       font-family: var(--font-sans); font-size: 12px; font-weight: 600;
       padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer;
@@ -7588,11 +7588,36 @@
       color: var(--text-primary);
     }
     .gfx-btn.is-primary { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+    /* Filled share CTA — the primary action on mobile (native share sheet). */
+    .gfx-btn.is-share { border-color: var(--neon-cyan); background: var(--neon-cyan); color: var(--bg-primary); }
     .gfx-btn:hover { border-color: var(--neon-cyan); }
     .gfx-btn:disabled { opacity: 0.5; cursor: default; }
+    /* Action bar — bottom toolbar (thumb-reachable on mobile). */
+    .gfx-modal-foot {
+      display: flex; align-items: center; gap: 8px; flex: none;
+      padding: 10px 14px; border-top: 1px solid var(--border-light);
+      background: var(--bg-secondary); justify-content: flex-end;
+    }
+    /* Render busy/loading overlay (export can take a beat on mobile CPUs). */
+    .gfx-busy {
+      position: absolute; inset: 0; z-index: 5;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
+      backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+      font-family: var(--font-retro); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.05em; color: var(--text-primary);
+    }
+    .gfx-busy[hidden] { display: none; }
+    .gfx-busy-spin {
+      width: 22px; height: 22px; flex: none;
+      border: 3px solid var(--border); border-top-color: var(--neon-cyan);
+      border-radius: 50%; animation: gfx-spin 0.7s linear infinite;
+    }
+    @keyframes gfx-spin { to { transform: rotate(360deg); } }
     .gfx-preview {
       overflow: auto; padding: 16px; background: var(--bg-tertiary);
       display: flex; justify-content: center; align-items: flex-start;
+      touch-action: pan-x pan-y pinch-zoom; -webkit-overflow-scrolling: touch;
     }
     .gfx-board-scale { transform-origin: top center; }
     .gfx-empty {
@@ -7624,6 +7649,51 @@
       border: 2px solid transparent; box-shadow: 0 0 0 1px var(--border);
     }
     .gfx-swatch.is-active { border-color: var(--text-primary); }
+
+    /* ── Generate GFX: mobile-first (primary platform) ──────────────────────
+       Full-height bottom sheet, touch-sized controls, thumb-reachable action
+       bar pinned at the bottom, scrollable/pinch-zoomable preview. */
+    @media (max-width: 640px) {
+      .gfx-overlay { padding: 0; align-items: stretch; justify-content: stretch; }
+      .gfx-modal {
+        width: 100%; max-width: 100%; max-height: 100dvh; height: 100dvh;
+        border: 0; box-shadow: none;
+      }
+      .gfx-modal-head { padding: 12px 14px; }
+      .gfx-modal-title { font-size: 15px; }
+      .gfx-close-x { width: 40px; height: 40px; font-size: 18px; }
+      /* Controls reflow to comfortable, full-width rows with big tap targets. */
+      .gfx-controls { gap: 12px 14px; padding: 12px 14px; }
+      .gfx-ctrl { font-size: 11px; }
+      .gfx-select, .gfx-input {
+        font-size: 16px; /* ≥16px avoids iOS input zoom */ padding: 10px 12px; min-height: 44px;
+      }
+      .gfx-ctrl-title { flex-basis: 100%; }
+      .gfx-ctrl-check { min-height: 32px; }
+      .gfx-ctrl-check input[type="checkbox"] { width: 22px; height: 22px; }
+      .gfx-swatch { width: 30px; height: 30px; }
+      /* Preview grows to fill, scrolls + pinch-zooms for inspection. */
+      .gfx-preview { flex: 1 1 auto; min-height: 0; padding: 12px; }
+      /* Bottom action bar — big, thumb-reachable; Share leads. */
+      .gfx-modal-foot {
+        position: sticky; bottom: 0; gap: 10px; padding: 12px 14px 16px;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+        box-shadow: 0 -6px 20px rgba(0,0,0,0.18);
+      }
+      .gfx-modal-foot .gfx-btn { flex: 1; min-height: 48px; font-size: 14px; justify-content: center; display: inline-flex; align-items: center; }
+      .gfx-busy-spin { width: 28px; height: 28px; }
+      .gfx-busy { font-size: 15px; }
+    }
+
+    /* Mobile prominence for the per-page Generate GFX entry buttons — filled,
+       full-width, ≥44px tap target so it's obvious + thumb-reachable. */
+    @media (max-width: 640px) {
+      .gfx-list-btn, .gfx-card-btn {
+        width: 100%; justify-content: center; min-height: 44px;
+        margin-left: 0; font-size: 13px;
+        background: var(--neon-cyan); color: var(--bg-primary); border-color: var(--neon-cyan);
+      }
+    }
 
       /* v38 — SV overhaul surplus cell (baked p.surplus: expected SV + outcome-bucket
        bar + distribution fan). Functions render mostly inline; this just lays out
@@ -8042,11 +8112,7 @@
   <div class="gfx-modal">
     <div class="gfx-modal-head">
       <span class="gfx-modal-title">Generate graphic</span>
-      <div class="gfx-modal-actions">
-        <button class="gfx-btn is-primary" id="gfx-download" type="button">⤓ Download PNG</button>
-        <button class="gfx-btn" id="gfx-copy" type="button" title="Copy image to clipboard">Copy</button>
-        <button class="gfx-btn" id="gfx-close" type="button" aria-label="Close">Close</button>
-      </div>
+      <button class="gfx-btn gfx-close-x" id="gfx-close" type="button" aria-label="Close">✕</button>
     </div>
     <div class="gfx-controls">
       <label class="gfx-ctrl">Format
@@ -8099,6 +8165,12 @@
       <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-logos" type="checkbox" checked> team logos</label>
     </div>
     <div class="gfx-preview" id="gfx-preview"></div>
+    <div class="gfx-modal-foot">
+      <button class="gfx-btn is-share" id="gfx-share" type="button" hidden>⇪&nbsp;Share</button>
+      <button class="gfx-btn is-primary" id="gfx-download" type="button">⤓&nbsp;Download&nbsp;PNG</button>
+      <button class="gfx-btn" id="gfx-copy" type="button" title="Copy image to clipboard">Copy</button>
+    </div>
+    <div class="gfx-busy" id="gfx-busy" hidden><span class="gfx-busy-spin" aria-hidden="true"></span>Rendering…</div>
   </div>
 </div>
 
@@ -16332,7 +16404,7 @@ function renderCharts() {
           <g style="cursor:help;">
             <title>R² = ${r2.toFixed(3)} — share of variance the linear fit explains. ≥0.5 strong, 0.2–0.5 moderate, &lt;0.2 weak.</title>
             <rect x="${(cx - 88).toFixed(1)}" y="${(cy - 12).toFixed(1)}" width="86" height="20"
-                  rx="3" fill="var(--bg-secondary)" stroke="${fill}" stroke-width="1"/>
+                  rx="0" fill="var(--bg-secondary)" stroke="${fill}" stroke-width="1"/>
             <text x="${(cx - 80).toFixed(1)}" y="${(cy + 2).toFixed(1)}"
                   font-family="var(--font-mono)" font-size="10" font-weight="700"
                   fill="${fill}">R² ${r2.toFixed(3)}</text>
@@ -24530,7 +24602,7 @@ function _gfxTeamLogo(org, P, px) {
   const wrap = `display:inline-flex;align-items:center;justify-content:center;height:${s}px;min-width:${s}px;vertical-align:middle;`;
   if (!url) return `<span style="${wrap}">${abbr}</span>`;
   return `<span style="${wrap}">`
-    + `<img src="${url}" crossorigin="anonymous" alt="${escapeHtml(org)}" style="height:${s}px;width:auto;max-width:${s + 8}px;object-fit:contain;display:block;image-rendering:pixelated;" `
+    + `<img src="${url}" crossorigin="anonymous" alt="${escapeHtml(org)}" style="height:${s}px;width:auto;max-width:${s + 8}px;object-fit:contain;display:block;" `
     + `onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">`
     + `<span style="display:none;font-family:var(--font-mono);font-size:${fs}px;font-weight:700;color:${P.text2};letter-spacing:0.02em;">${escapeHtml(org)}</span>`
     + `</span>`;
@@ -25382,8 +25454,10 @@ function _gfxRefresh() {
   });
   const dl = document.getElementById("gfx-download");
   const cp = document.getElementById("gfx-copy");
+  const sh = document.getElementById("gfx-share");
   if (dl) dl.disabled = total === 0;
   if (cp) cp.disabled = total === 0;
+  if (sh) sh.disabled = total === 0;
 }
 // Sync the customization controls' values from _gfxOpts (called on open).
 function _gfxSyncControls() {
@@ -25442,6 +25516,10 @@ function openGfxModal() {
   else if (_gfxSnapshot && _gfxSnapshot.kind === "compare-card") _gfxOpts.format = "wide";
   _gfxOrigTheme = document.documentElement.getAttribute("data-theme");
   overlay.classList.add("is-open");
+  // Show the Share action only where the Web Share API exists (mobile + some
+  // desktops); elsewhere Download PNG is the primary path.
+  const sh = document.getElementById("gfx-share");
+  if (sh) sh.hidden = !(typeof navigator !== "undefined" && typeof navigator.canShare === "function");
   _gfxApplyTheme();
   _gfxSyncControls();
   _gfxApplyModeUI();
@@ -25468,32 +25546,78 @@ function _gfxFilename() {
   const t = _gfxTitle(n).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   return (t || "prospects") + ".png";
 }
-async function downloadGfx() {
-  const canvas = await _gfxCanvas();
-  if (!canvas) return;
-  const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
-  if (!blob) return;
+// Render busy/loading overlay — export at scale 2 can take a beat on phones.
+// Disables the action buttons while rendering so taps don't queue or appear hung.
+function _gfxBusy(on) {
+  const b = document.getElementById("gfx-busy");
+  if (b) b.hidden = !on;
+  const dis = on || !_gfxBoardEl;
+  ["gfx-download", "gfx-copy", "gfx-share"].forEach(id => {
+    const el = document.getElementById(id); if (el) el.disabled = dis;
+  });
+}
+function _gfxSaveBlob(blob, fname) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = _gfxFilename();
+  a.href = url; a.download = fname || _gfxFilename(); a.rel = "noopener";
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+function _gfxShareTitle() {
+  const snap = _gfxSnapshot;
+  if (_gfxIsCard() && snap && snap.items && snap.items[0] && snap.items[0].player_name)
+    return `${snap.items[0].player_name} — PROSPX`;
+  return "PROSPX — eephus.io";
+}
+async function downloadGfx() {
+  if (!_gfxBoardEl) return;
+  _gfxBusy(true);
+  try {
+    const canvas = await _gfxCanvas();
+    if (!canvas) return;
+    const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+    if (blob) _gfxSaveBlob(blob, _gfxFilename());
+  } catch (e) { console.error("downloadGfx failed:", e); }
+  finally { _gfxBusy(false); }
+}
+// Web Share API (navigator.share with files) — the ideal mobile path: hands the
+// PNG straight to the OS share sheet (X / Instagram / Messages / save to Photos).
+// Feature-detected; falls back to a PNG download where file-share is unavailable.
+async function shareGfx() {
+  if (!_gfxBoardEl) return;
+  _gfxBusy(true);
+  try {
+    const canvas = await _gfxCanvas();
+    if (!canvas) return;
+    const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+    if (!blob) return;
+    const fname = _gfxFilename();
+    const file = new File([blob], fname, { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: _gfxShareTitle() }); }
+      catch (e) { if (e && e.name === "AbortError") return; _gfxSaveBlob(blob, fname); }
+    } else {
+      _gfxSaveBlob(blob, fname);  // file-share unavailable -> download
+    }
+  } catch (e) { console.error("shareGfx failed:", e); }
+  finally { _gfxBusy(false); }
 }
 async function copyGfx() {
   if (!navigator.clipboard || typeof navigator.clipboard.write !== "function"
       || typeof ClipboardItem === "undefined") {
-    alert("Clipboard image copy isn't supported in this browser — use Download PNG.");
+    alert("Clipboard image copy isn't supported here — use Share or Download PNG.");
     return;
   }
+  if (!_gfxBoardEl) return;
   const cp = document.getElementById("gfx-copy");
-  const restore = (txt) => { if (cp) { const t = cp.dataset.label || cp.textContent; cp.dataset.label = ""; cp.textContent = txt; setTimeout(() => { cp.textContent = t; }, 1400); } };
   if (cp && !cp.dataset.label) cp.dataset.label = cp.textContent;
-  // Render the PNG blob lazily INSIDE the ClipboardItem. Safari (WebKit)
-  // requires navigator.clipboard.write() to be invoked synchronously within
-  // the user-gesture and accepts a Promise<Blob> as the item value — awaiting
-  // html2canvas first (as the old code did) blew the gesture and threw
-  // NotAllowedError. Chrome/Edge/Firefox accept the Promise form too, so this
-  // one path works across browsers.
+  _gfxBusy(true);
+  // Render the PNG blob lazily INSIDE the ClipboardItem. Safari (WebKit) requires
+  // navigator.clipboard.write() to be invoked synchronously within the user
+  // gesture and accepts a Promise<Blob> as the item value — awaiting html2canvas
+  // first blows the gesture (NotAllowedError). Chrome/Edge/Firefox accept the
+  // Promise form too, so one path works everywhere. (_gfxBusy toggles are
+  // synchronous DOM writes, so they don't consume the gesture.)
   const pngBlob = (async () => {
     const canvas = await _gfxCanvas();
     if (!canvas) throw new Error("GFX render failed");
@@ -25505,17 +25629,15 @@ async function copyGfx() {
     await navigator.clipboard.write([new ClipboardItem({ "image/png": pngBlob })]);
     if (cp) { const t = cp.dataset.label || "Copy"; cp.textContent = "Copied ✓"; setTimeout(() => { cp.textContent = t; }, 1400); }
   } catch (e) {
-    // Some engines (older Firefox) reject the Promise form — retry with a
-    // resolved blob before giving up.
     try {
       const blob = await pngBlob;
       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
       if (cp) { const t = cp.dataset.label || "Copy"; cp.textContent = "Copied ✓"; setTimeout(() => { cp.textContent = t; }, 1400); }
     } catch (e2) {
       console.error("copyGfx failed:", e2);
-      alert("Couldn't copy to clipboard — use Download PNG.");
+      alert("Couldn't copy to clipboard — use Share or Download PNG.");
     }
-  }
+  } finally { _gfxBusy(false); }
 }
 // Delegated wiring (button lives in the mounted template; overlay at body level).
 document.addEventListener("click", (e) => {
@@ -25527,6 +25649,7 @@ document.addEventListener("click", (e) => {
     return;
   }
   if (e.target.closest(".gfx-list-btn") || e.target.closest(".gfx-card-btn")) { e.preventDefault(); openGfxModal(); return; }
+  if (e.target.closest("#gfx-share")) { e.preventDefault(); shareGfx(); return; }
   if (e.target.closest("#gfx-download")) { e.preventDefault(); downloadGfx(); return; }
   if (e.target.closest("#gfx-copy")) { e.preventDefault(); copyGfx(); return; }
   if (e.target.closest("#gfx-close")) { e.preventDefault(); closeGfxModal(); return; }
@@ -25940,13 +26063,8 @@ const ESPN_LOGO_SLUGS = {
 };
 function teamLogoURL(org) {
   if (!org) return null;
-  // v41 — Pixelated local assets (assets/logos/pixel/<ORG>.png) replace the clean
-  // ESPN CDN logos to match the low-fi / retro aesthetic. Baked at a 36px grid +
-  // a beige sprite outline (invisible in light mode, a legibility halo in dark).
-  // Same-origin, so they rasterize cleanly in the Generate GFX output (no CORS).
-  // Regenerate via tools/pixelate_logos.py; ESPN originals kept in assets/logos/orig/.
-  // Any org outside the 30-team map falls back to the live CDN logo.
-  if (ESPN_LOGO_SLUGS[org]) return `/assets/logos/pixel/${org}.png`;
+  // Clean ESPN CDN team logos.
+  if (ESPN_LOGO_SLUGS[org]) return `https://a.espncdn.com/i/teamlogos/mlb/500/${ESPN_LOGO_SLUGS[org]}.png`;
   return `https://a.espncdn.com/i/teamlogos/mlb/500/${org.toLowerCase()}.png`;
 }
 
@@ -28112,7 +28230,7 @@ function makeFarmReportCard(org) {
     // Root rectangle + label (condensed v31.3).
     const rootRect = `
       <rect x="${PAD_L}" y="${rootY - ROOT_H / 2}" width="${ROOT_W}" height="${ROOT_H}"
-            rx="3" fill="var(--bg-secondary)" stroke="${rootColor}" stroke-width="2.2"/>
+            rx="0" fill="var(--bg-secondary)" stroke="${rootColor}" stroke-width="2.2"/>
       <text x="${PAD_L + ROOT_W / 2}" y="${rootY - 18}" text-anchor="middle"
             style="font-family:var(--font-sans);font-size:9px;letter-spacing:0.10em;text-transform:uppercase;font-weight:600;fill:var(--text-tertiary);">FARM GRADE</text>
       <text x="${PAD_L + ROOT_W / 2}" y="${rootY + 7}" text-anchor="middle"
@@ -28169,9 +28287,9 @@ function makeFarmReportCard(org) {
         // without losing the bg-secondary baseline.
         return `
           <rect x="${COL_LEAF_LEFT}" y="${leaf.yTop}" width="${LEAF_W}" height="${leaf.h}"
-                rx="3" fill="var(--bg-secondary)" stroke="${c}" stroke-width="1" opacity="0.95"/>
+                rx="0" fill="var(--bg-secondary)" stroke="${c}" stroke-width="1" opacity="0.95"/>
           <rect x="${COL_LEAF_LEFT}" y="${leaf.yTop}" width="${LEAF_W}" height="${leaf.h}"
-                rx="3" fill="${c}" opacity="0.08"/>
+                rx="0" fill="${c}" opacity="0.08"/>
           <rect x="${COL_LEAF_LEFT}" y="${leaf.yTop}" width="3" height="${leaf.h}"
                 fill="${c}" opacity="0.95"/>
           <text x="${COL_LEAF_LEFT + 10}" y="${leaf.y - 3}" text-anchor="start"
@@ -28236,9 +28354,9 @@ function makeFarmReportCard(org) {
             <g opacity="${dim}">
               <title>${escapeHtml(tip)}</title>
               <rect x="${COL_SUB_LEFT}" y="${cy}" width="${SUB_W}" height="${SUB_H - 1}"
-                    rx="2" fill="var(--bg-secondary)" stroke="${tone}" stroke-width="0.7" opacity="0.85"/>
+                    rx="0" fill="var(--bg-secondary)" stroke="${tone}" stroke-width="0.7" opacity="0.85"/>
               <rect x="${COL_SUB_LEFT}" y="${cy}" width="${SUB_W}" height="${SUB_H - 1}"
-                    rx="2" fill="${tone}" opacity="${(hasLetter && !infoOnly) ? 0.08 : 0}"/>
+                    rx="0" fill="${tone}" opacity="${(hasLetter && !infoOnly) ? 0.08 : 0}"/>
               <rect x="${COL_SUB_LEFT}" y="${cy}" width="2.5" height="${SUB_H - 1}"
                     fill="${tone}" opacity="${infoOnly ? 0.5 : 0.9}"/>
               <text x="${COL_SUB_LEFT + 6}" y="${cy + SUB_H / 2 + 3}" text-anchor="start"
@@ -28340,9 +28458,9 @@ function makeFarmReportCard(org) {
     const rootTopY = yMid - ROOT_H / 2;
     const cRoot = `
       <rect x="${PAD_L}" y="${rootTopY}" width="${ROOT_W}" height="${ROOT_H}"
-            rx="2" fill="var(--bg-secondary)" stroke="${cRootColor}" stroke-width="1"/>
+            rx="0" fill="var(--bg-secondary)" stroke="${cRootColor}" stroke-width="1"/>
       <rect x="${PAD_L + 4}" y="${rootTopY + 4}" width="${ROOT_W - 8}" height="${ROOT_H - 8}"
-            rx="1" fill="none" stroke="${cRootColor}" stroke-width="0.6" opacity="0.55"/>
+            rx="0" fill="none" stroke="${cRootColor}" stroke-width="0.6" opacity="0.55"/>
       <text x="${PAD_L + ROOT_W / 2}" y="${rootTopY + 18}" text-anchor="middle"
             style="font-family:var(--font-sans);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;fill:var(--text-tertiary);">Farm Grade</text>
       <line x1="${PAD_L + 18}" y1="${rootTopY + 24}" x2="${PAD_L + ROOT_W - 18}" y2="${rootTopY + 24}"
@@ -28383,7 +28501,7 @@ function makeFarmReportCard(org) {
       const npY = yMid - BRANCH_R - NAMEPLATE_H - 6;
       return `
         <rect x="${npX}" y="${npY}" width="${NAMEPLATE_W}" height="${NAMEPLATE_H}"
-              fill="var(--bg-tertiary)" stroke="${c}" stroke-width="0.8" rx="1"/>
+              fill="var(--bg-tertiary)" stroke="${c}" stroke-width="0.8" rx="0"/>
         <line x1="${npX + 4}" y1="${npY + NAMEPLATE_H - 3}" x2="${npX + NAMEPLATE_W - 4}" y2="${npY + NAMEPLATE_H - 3}"
               stroke="${c}" stroke-width="0.4" opacity="0.5"/>
         <text x="${bx}" y="${npY + 14}" text-anchor="middle"

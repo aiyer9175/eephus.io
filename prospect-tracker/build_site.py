@@ -262,11 +262,23 @@ def load_site_data() -> dict | None:
 def _player_href(key: str) -> str:
     return f"/prospx/#player={key}" if key else "/prospx/"
 
-def _pix_logo(org: str | None) -> str:
+# ORG abbreviation -> ESPN logo slug (mirrors ESPN_LOGO_SLUGS in prospx/index.html).
+ESPN_SLUGS = {
+    "ARI": "ari", "ATH": "ath", "ATL": "atl", "BAL": "bal", "BOS": "bos",
+    "CHC": "chc", "CHW": "chw", "CIN": "cin", "CLE": "cle", "COL": "col",
+    "DET": "det", "HOU": "hou", "KCR": "kc",  "LAA": "laa", "LAD": "lad",
+    "MIA": "mia", "MIL": "mil", "MIN": "min", "NYM": "nym", "NYY": "nyy",
+    "PHI": "phi", "PIT": "pit", "SDP": "sd",  "SEA": "sea", "SFG": "sf",
+    "STL": "stl", "TBR": "tb",  "TEX": "tex", "TOR": "tor", "WSN": "wsh",
+}
+
+def _team_logo(org: str | None) -> str:
+    """Clean ESPN CDN team logo (falls back to the ORG abbreviation chip)."""
     if not org:
         return ""
     o = html.escape(org)
-    return (f'<img class="row-logo" src="/assets/logos/pixel/{o}.png" alt="{o}" loading="lazy" '
+    slug = ESPN_SLUGS.get(org, org.lower())
+    return (f'<img class="row-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/{slug}.png" alt="{o}" loading="lazy" '
             f"onerror=\"this.outerHTML='<span class=&quot;row-logo&quot; style=&quot;font:700 9px var(--font-retro-mono);display:inline-flex;align-items:center;justify-content:center&quot;>{o}</span>'\">")
 
 def _fv_label(p: dict) -> str:
@@ -299,7 +311,7 @@ def _row_mover(p: dict) -> str:
 
 def _row_top(p: dict, rank: int) -> str:
     return (f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
-            f'<span class="row-rank">{rank}</span>{_pix_logo(p.get("org"))}'
+            f'<span class="row-rank">{rank}</span>{_team_logo(p.get("org"))}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(p.get("position"))}</span>{_fv_pill(p)}</a>')
 
@@ -310,7 +322,7 @@ def _row_grad(g: dict) -> str:
     else:
         wtxt = '<span class="row-meta">debut</span>'
     return (f'<a class="row-link" href="{_player_href(g.get("player_key"))}">'
-            f'{_pix_logo(g.get("org"))}<span class="row-name">{html.escape(g.get("player_name") or "")}</span>'
+            f'{_team_logo(g.get("org"))}<span class="row-name">{html.escape(g.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(g.get("position"), g.get("org"))}</span>{wtxt}</a>')
 
 def _row_farm(o: dict, rank: int) -> str:
@@ -318,7 +330,7 @@ def _row_farm(o: dict, rank: int) -> str:
     gcls = " gold" if str(grade).startswith("A") else ""
     name = ORG_NAMES.get(o.get("org"), o.get("org") or "—")
     return (f'<a class="row-link" href="/prospx/#farm-org={html.escape(o.get("org") or "")}">'
-            f'<span class="row-rank">{rank}</span>{_pix_logo(o.get("org"))}'
+            f'<span class="row-rank">{rank}</span>{_team_logo(o.get("org"))}'
             f'<span class="row-name">{html.escape(name)}</span>'
             f'<span class="row-meta">{o.get("count", "")} prospects</span>'
             f'<span class="fv-pill{gcls}">{html.escape(str(grade))}</span></a>')
