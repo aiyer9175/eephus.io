@@ -76,7 +76,7 @@ def test_page_boots_without_js_errors(server):
             "catch(e){}"
         )
         page.on("pageerror", lambda err: page_errors.append(err.message))
-        page.goto(server, wait_until="load", timeout=15_000)
+        page.goto(server + "prospx/index.html", wait_until="load", timeout=15_000)
         page.wait_for_timeout(2500)  # let async boot IIFE finish
         content_html = page.evaluate(
             "document.getElementById('content').innerHTML"
@@ -129,7 +129,7 @@ def test_every_section_renders(server):
             "catch(e){}"
         )
         page.on("pageerror", lambda err: page_errors.append(err.message))
-        page.goto(server, wait_until="load", timeout=15_000)
+        page.goto(server + "prospx/index.html", wait_until="load", timeout=15_000)
         page.wait_for_timeout(3000)  # let boot + initial render settle
 
         for section in SECTION_TABS:
@@ -211,7 +211,7 @@ def test_welcome_gate_locks_unlocks_and_persists(server):
         # Fresh context => empty localStorage => first-visit (locked) state.
         page = browser.new_page()
         page.on("pageerror", lambda err: page_errors.append(err.message))
-        page.goto(server, wait_until="load", timeout=15_000)
+        page.goto(server + "prospx/index.html", wait_until="load", timeout=15_000)
         page.wait_for_timeout(500)
 
         gate = page.locator("#welcome-gate")

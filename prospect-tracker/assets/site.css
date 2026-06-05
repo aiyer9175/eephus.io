@@ -1,0 +1,180 @@
+/* =============================================================================
+   eephus.io — shared site stylesheet
+   -----------------------------------------------------------------------------
+   The site-wide nav + the editorial pages (Home / Articles / Team) share this
+   file so they read as one brand with PROSPX. Tokens are lifted verbatim from
+   the PROSPX :root palette (warm newsprint paper, navy headline band, gold
+   accent, MS-Gothic retro stack) so the parent brand and the tool match.
+
+   On the PROSPX page this file is loaded BEFORE its inline <style>, so PROSPX's
+   own :root wins the cascade — here we only need it for `.eephus-nav`.
+   ========================================================================== */
+:root {
+  --bg-primary:    #F4F0E6;   /* warm paper */
+  --bg-secondary:  #FBF8F0;   /* card surface */
+  --bg-tertiary:   #ECE6D6;   /* alt panel */
+  --bg-header:     #0E2B4D;   /* deep navy band */
+  --text-primary:  #0F1B2D;
+  --text-secondary:#4A5468;
+  --text-tertiary: #8B8474;
+  --border:        #C9C1AE;
+  --border-light:  #E2DCC9;
+  --accent-gold:   #C9A227;
+  --accent-red:    #B91C1C;
+  --accent-green:  #1F7A3A;
+  --accent-navy:   #0E2B4D;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --shadow-card: 0 1px 0 rgba(15,27,45,.05), 0 1px 2px rgba(15,27,45,.04);
+  --shadow-card-hover: 0 2px 6px rgba(15,27,45,.12), 0 0 0 1px rgba(14,43,77,.10);
+  --iridescent: linear-gradient(90deg,#B91C1C 0%,#C9A227 35%,#1F7A3A 65%,#0E2B4D 100%);
+  --font-retro: "MS UI Gothic","MS Gothic","Osaka","Roboto Mono","VT323",
+                "Courier Prime","Press Start 2P",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --font-retro-mono: "MS Gothic","Osaka-Mono","Roboto Mono","VT323","Press Start 2P",
+                     "Courier Prime",ui-monospace,"SF Mono",Consolas,monospace;
+}
+
+/* ---- base (editorial pages only; PROSPX has its own <body> rules) ---- */
+.eephus-page * { box-sizing: border-box; }
+.eephus-page {
+  margin: 0;
+  background: var(--bg-primary);
+  background-image:
+    radial-gradient(rgba(15,27,45,.035) 1px, transparent 1px),
+    radial-gradient(rgba(139,132,116,.05) 1px, transparent 1px);
+  background-size: 26px 26px, 13px 13px;
+  background-position: 0 0, 13px 13px;
+  color: var(--text-primary);
+  font-family: var(--font-retro);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
+}
+.eephus-page a { color: var(--accent-navy); }
+.eephus-wrap { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+/* ---- site nav (every page, incl. PROSPX) ---- */
+.eephus-nav {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  max-width: 1100px; margin: 0 auto;
+  padding: 12px 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.eephus-nav .eephus-wordmark {
+  font-family: var(--font-retro-mono);
+  font-weight: 700; font-size: 20px; letter-spacing: .04em;
+  color: var(--text-primary); text-decoration: none;
+  display: inline-flex; flex-direction: column; line-height: 1;
+}
+.eephus-nav .eephus-wordmark::after {
+  content: ""; display: block; height: 3px; margin-top: 4px;
+  background: var(--iridescent); border-radius: 2px;
+}
+.eephus-nav .eephus-links {
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+  margin-left: auto;
+}
+.eephus-nav .eephus-links a {
+  font-family: var(--font-retro); font-size: 13px; font-weight: 600;
+  letter-spacing: .03em; color: var(--text-secondary); text-decoration: none;
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  min-height: 40px; display: inline-flex; align-items: center;
+  transition: background .12s, color .12s;
+}
+.eephus-nav .eephus-links a:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.eephus-nav .eephus-links a.is-active { color: var(--text-primary); font-weight: 700; position: relative; }
+.eephus-nav .eephus-links a.is-active::after {
+  content: ""; position: absolute; left: 12px; right: 12px; bottom: 3px;
+  height: 2px; background: var(--iridescent); border-radius: 2px;
+}
+
+/* ---- hero (Home) ---- */
+.hero { padding: 56px 0 36px; border-bottom: 3px double var(--border); margin-bottom: 32px; }
+.hero h1 {
+  font-family: var(--font-retro-mono); font-weight: 700;
+  font-size: clamp(2.2rem, 6vw, 3.6rem); letter-spacing: .03em;
+  margin: 0 0 8px; line-height: 1.05;
+}
+.hero h1 .dot { color: var(--accent-gold); }
+.hero .hero-rule { height: 4px; width: 120px; background: var(--iridescent); border-radius: 2px; margin: 14px 0 18px; }
+.hero p { font-size: 1.05rem; color: var(--text-secondary); max-width: 60ch; margin: 0; }
+
+/* ---- module cards (Home) + article/team cards (shared geometry) ---- */
+.module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+.card {
+  display: block; text-decoration: none; color: inherit;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-card);
+  padding: 20px 22px; transition: box-shadow .12s, transform .12s;
+  position: relative; overflow: hidden;
+}
+a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px); }
+.card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--accent-navy); }
+.card.module-card::before { background: var(--accent-gold); }
+.card .eyebrow {
+  font-family: var(--font-retro); font-size: 10px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 6px;
+}
+.card h2, .card h3 { font-family: var(--font-retro-mono); margin: 0 0 8px; letter-spacing: .02em; }
+.card h2 { font-size: 1.25rem; } .card h3 { font-size: 1.05rem; }
+.card p { margin: 0; color: var(--text-secondary); font-size: .95rem; }
+.card .card-cta { display: inline-block; margin-top: 12px; font-weight: 700; font-size: 13px; color: var(--accent-navy); }
+
+/* ---- section heading (newspaper banner) ---- */
+.section-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  border-top: 3px double var(--border); border-bottom: 3px double var(--border);
+  padding: 10px 2px; margin: 28px 0 22px;
+}
+.section-head h1 { font-family: var(--font-retro-mono); font-size: 1.5rem; margin: 0; letter-spacing: .04em; }
+.section-head .section-sub { font-size: .85rem; color: var(--text-tertiary); font-style: italic; }
+
+/* ---- articles index grid ---- */
+.article-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.article-card .meta { font-size: 12px; color: var(--text-tertiary); margin: 0 0 8px; }
+.article-card .meta .author { color: var(--text-secondary); font-weight: 700; }
+
+/* ---- article reading view ---- */
+.article { max-width: 720px; margin: 0 auto; }
+.article-header { border-bottom: 3px double var(--border); padding-bottom: 18px; margin-bottom: 24px; }
+.article-header h1 { font-family: var(--font-retro-mono); font-size: clamp(1.6rem, 4vw, 2.4rem); line-height: 1.1; margin: 0 0 12px; letter-spacing: .02em; }
+.article-header .byline { font-size: 13px; color: var(--text-secondary); }
+.article-header .byline .author { font-weight: 700; }
+.article-header .byline .dot-sep { color: var(--text-tertiary); margin: 0 8px; }
+.article-summary { font-size: 1.05rem; color: var(--text-secondary); font-style: italic; border-left: 3px solid var(--accent-gold); padding-left: 14px; margin: 0 0 28px; }
+.article-body { font-size: 1.05rem; line-height: 1.7; }
+.article-body p { margin: 0 0 1.1em; }
+.article-body h2, .article-body h3 { font-family: var(--font-retro-mono); margin: 1.6em 0 .5em; letter-spacing: .02em; }
+.article-body a { color: var(--accent-navy); text-decoration: underline; }
+.article-body ul, .article-body ol { margin: 0 0 1.1em 1.4em; }
+.article-body img { max-width: 100%; height: auto; border-radius: var(--radius-sm); }
+.article-body .video-embed { position: relative; width: 100%; padding-top: 56.25%; margin: 1.4em 0; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); }
+.article-body .video-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.back-link { display: inline-block; margin-bottom: 18px; font-size: 13px; font-weight: 700; color: var(--accent-navy); text-decoration: none; }
+.back-link:hover { text-decoration: underline; }
+
+/* ---- team ---- */
+.team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.team-card .name { font-family: var(--font-retro-mono); font-size: 1.1rem; font-weight: 700; margin: 0; letter-spacing: .02em; }
+.team-card .handle { font-size: 13px; color: var(--accent-navy); margin: 6px 0 0; }
+.team-card .handle a { color: var(--accent-navy); text-decoration: none; }
+.team-card .handle a:hover { text-decoration: underline; }
+
+/* ---- footer ---- */
+.eephus-footer {
+  max-width: 1100px; margin: 0 auto; padding: 24px 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--text-tertiary);
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+
+/* ---- mobile ---- */
+@media (max-width: 640px) {
+  .eephus-nav { gap: 8px; padding: 10px 1rem; }
+  .eephus-nav .eephus-links { margin-left: 0; width: 100%; }
+  .eephus-nav .eephus-links a { padding: 8px 10px; }
+  .eephus-wrap { padding: 0 1rem 3rem; }
+  .hero { padding: 36px 0 24px; }
+}

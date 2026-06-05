@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-INDEX = Path(__file__).parent / "index.html"
+INDEX = Path(__file__).parent / "prospx" / "index.html"
 
 
 @pytest.fixture(scope="module")

@@ -93,16 +93,16 @@ def test_mlb_trade_lookup_routes_through_value_framework() -> None:
 def test_index_html_includes_value_framework_script() -> None:
     """index.html must load data/value_framework.js so the
     window.VALUE_FRAMEWORK global is defined before downstream JS runs."""
-    src = (_ROOT / "index.html").read_text(encoding="utf-8")
-    assert 'src="data/value_framework.js"' in src, \
-        "index.html missing <script src=data/value_framework.js>"
+    src = (_ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    assert 'src="/data/value_framework.js"' in src, \
+        "prospx/index.html missing <script src=/data/value_framework.js>"
 
 
 def test_index_html_drops_hardcoded_surplus_tables() -> None:
     """The duplicated SURPLUS_VALUE_MM / SURPLUS_POSITION_MULT literal
     tables in index.html should be gone -- replaced by reads from
     window.VALUE_FRAMEWORK."""
-    src = (_ROOT / "index.html").read_text(encoding="utf-8")
+    src = (_ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
     # The old hardcoded surplus table was literally "{ 80: 200, 75: 130 ..."
     # If that's gone, the de-duplication landed cleanly.
     assert "{ 80: 200, 75: 130" not in src, \
