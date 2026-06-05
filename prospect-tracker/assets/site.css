@@ -263,14 +263,19 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 
 /* ---- top wire ticker (scoreboard/terminal) ---- */
 .home-ticker {
+  position: relative;
   background: #0B0E07; color: #d7f7e4; border-bottom: 2px solid var(--accent-gold);
   font-family: var(--font-retro-mono); font-size: 12.5px; letter-spacing: .03em;
   display: flex; align-items: center; gap: 0; overflow: hidden; white-space: nowrap;
 }
+/* Tag layers ABOVE the scrolling track so the marquee text passes cleanly
+   behind it instead of overlapping the "WIRE" label at the left edge. */
 .home-ticker .ticker-tag {
+  position: relative; z-index: 2;
   flex: none; display: inline-flex; align-items: center; gap: 6px;
   background: var(--accent-red); color: #fff; font-weight: 700;
   padding: 6px 12px; letter-spacing: .08em; text-transform: uppercase;
+  box-shadow: 2px 0 6px #0B0E07;
 }
 .home-ticker .ticker-tag .blip { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: ticker-blip 1.4s steps(2) infinite; }
 @keyframes ticker-blip { 50% { opacity: .25; } }
@@ -391,4 +396,33 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   .lead-story .lead-img { min-height: 160px; max-height: 240px; }
   .secondary-stories a { border-left: 0; border-top: 1px solid var(--border); }
   .sb-subnav { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+/* ── Accessibility ────────────────────────────────────────────────────────── */
+/* Visible, on-theme focus ring (sharp, cyan) for keyboard users on the editorial
+   pages + homepage. site.css previously shipped no focus styles, so keyboard
+   focus depended on the UA default; this makes it consistent + on-brand. Loaded
+   by PROSPX too, so it backstops any control there without its own focus style. */
+:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+/* Respect prefers-reduced-motion: stop the homepage wire ticker + blink-dots and
+   neutralize transitions/animations site-wide for users who ask for less motion.
+   Plotted chart curves are static SVG paths, unaffected. */
+@media (prefers-reduced-motion: reduce) {
+  .home-ticker .ticker-track { animation: none; transform: none; }
+  .home-ticker .ticker-tag .blip, .sb-feed .feed-head .blip { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

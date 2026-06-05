@@ -3985,7 +3985,12 @@
          overflowed across the grid-track boundary, visually colliding
          with the level-depth chips. Level-depth stays 1fr (the +N
          overflow pill already handles narrow widths gracefully). */
-      grid-template-columns: 32px 56px 180px 80px 110px 76px 160px 1fr 156px 1fr 56px 60px 64px 64px 60px 56px;
+      /* v43 — `minmax(0,1fr)` on the flexible tracks (sparkline + level-depth)
+         instead of `1fr`: a bare 1fr has min-width:auto (= min-content), so the
+         sparkline SVG + level-depth chips pushed the 16-col grid ~10px past the
+         viewport at desktop (page-level horizontal scroll). minmax(0,1fr) lets
+         them shrink to the available track, eliminating the overflow. */
+      grid-template-columns: 32px 56px 180px 80px 110px 76px 160px minmax(0,1fr) 156px minmax(0,1fr) 56px 60px 64px 64px 60px 56px;
       gap: 10px;
       align-items: center;
     }

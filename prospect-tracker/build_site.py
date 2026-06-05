@@ -494,7 +494,10 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     )
 
     # ---- top wire ticker ----
-    ticker = (f'<div class="home-ticker"><span class="ticker-tag"><span class="blip"></span>Wire</span>'
+    # Decorative scrolling marquee — duplicates the accessible Prospect Wire feed
+    # in the sidebar, so it's hidden from assistive tech (aria-hidden) to avoid
+    # reading the same items twice / announcing a moving region.
+    ticker = (f'<div class="home-ticker" aria-hidden="true"><span class="ticker-tag"><span class="blip"></span>Wire</span>'
               f'<div class="ticker-track">{_ticker_html(events)}</div></div>')
 
     # ---- masthead ----
