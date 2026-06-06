@@ -253,6 +253,18 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .team-card .handle { font-size: 13px; color: var(--accent-navy); margin: 6px 0 0; }
 .team-card .handle a { color: var(--accent-navy); text-decoration: none; }
 .team-card .handle a:hover { text-decoration: underline; }
+/* Per-member Twitter / LinkedIn chips (sharp corners, on-theme). */
+.team-card .team-socials { display: flex; gap: 8px; margin-top: 10px; }
+.team-card .team-soc {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg-tertiary); color: var(--text-secondary);
+  text-decoration: none;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.team-card .team-soc:hover { background: var(--bg-secondary); color: var(--text-primary); border-color: var(--text-tertiary); }
+.team-card .team-soc svg { width: 15px; height: 15px; display: block; fill: currentColor; }
 
 /* ---- footer ---- */
 .eephus-footer {
