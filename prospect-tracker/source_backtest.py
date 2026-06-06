@@ -50,7 +50,9 @@ DATA_DIR = Path(__file__).parent / "data"
 # Only score base years with at least this much development lag.
 MIN_LAG_YEARS = 3
 # Candidate preseason base years (filtered to those resolved + present in data).
-CANDIDATE_YEARS = (2021, 2022, 2023, 2024)
+# 2017-2020 added via the FanGraphs + MLB Pipeline historical backfill — these
+# fully-resolved cohorts extend the evaluation window back four years.
+CANDIDATE_YEARS = (2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024)
 # Preseason window per base year: Jan 1 – Apr 30. Captures the FanGraphs
 # preseason "report" + MLB Pipeline January Top-100/org lists; excludes the
 # midseason "updated" list so there is no within-season lookahead.
