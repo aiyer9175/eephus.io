@@ -45,5 +45,13 @@ env/
 .DS_Store
 Thumbs.db
 
+# --- Accounts / Supabase ------------------------------------------------
+# Front-end Supabase connection (project URL + anon key). The anon key is
+# public-safe, but we keep real values out of source control; copy from the
+# example in supabase/README.md. Service-role keys NEVER live in the repo.
+assets/eephus-config.js
+.env
+.env.local
+
 # --- Misc ---------------------------------------------------------------
 *.log
