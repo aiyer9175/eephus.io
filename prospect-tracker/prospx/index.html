@@ -4190,6 +4190,50 @@
       .guide-anat-vis { flex-basis: 96px; }
     }
 
+    /* === Interactive teaching widgets (Part 5) === */
+    .gx-card { border: 1px solid var(--border); background: var(--bg-secondary);
+      margin: 10px 0 14px; max-width: 860px; }
+    .gx-card-title { font-family: var(--font-sans); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.02em; color: var(--text-primary); padding: 9px 14px;
+      border-bottom: 1px solid var(--border); background: var(--bg-primary); }
+    .gx-card-body { padding: 14px; }
+    .gx-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+    .gx-label { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary);
+      display: block; margin-bottom: 6px; }
+    .gx-label b { color: var(--neon-cyan); font-size: 14px; }
+    .gx-range { width: 100%; accent-color: var(--neon-cyan); cursor: pointer; }
+    .gx-range-sm { width: 90px; vertical-align: middle; }
+    .gx-num { font-family: var(--font-mono); font-size: 12px; background: var(--bg-primary);
+      color: var(--text-primary); border: 1px solid var(--border); padding: 3px 6px; width: 56px; }
+    .gx-out { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+    .gx-out-inline { display: inline-flex; gap: 14px; flex-wrap: wrap; }
+    .gx-out-big { font-family: var(--font-mono); font-size: 30px; font-weight: 800;
+      color: var(--neon-cyan); line-height: 1; margin-bottom: 8px; }
+    .gx-out-big .gx-out-sub { font-size: 12px; font-weight: 500; color: var(--text-tertiary); }
+    .gx-out-row { display: flex; justify-content: space-between; gap: 12px;
+      padding: 4px 0; border-bottom: 1px dotted var(--border-light); max-width: 280px; }
+    .gx-out-row b { color: var(--text-primary); }
+    .gx-srcs { display: flex; flex-direction: column; gap: 6px; }
+    .gx-src-row { display: grid; grid-template-columns: 1.2fr 1fr 1.4fr; gap: 10px; align-items: center;
+      font-family: var(--font-mono); font-size: 12px; padding: 4px 0; }
+    .gx-src-name { font-weight: 700; color: var(--text-primary); }
+    .gx-src-lab { color: var(--text-tertiary); display: flex; align-items: center; gap: 5px; }
+    .gx-steps .gx-step { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: baseline;
+      padding: 4px 0; border-bottom: 1px dotted var(--border-light); }
+    .gx-step-n { font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--text-tertiary);
+      text-align: center; border: 1px solid var(--border-light); border-radius: 50%; }
+    .gx-step-t { color: var(--text-secondary); }
+    .gx-step-v { font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+    .gx-step-sum .gx-step-n { color: var(--neon-cyan); border-color: var(--neon-cyan); }
+    .gx-step-sum .gx-step-v { color: var(--neon-cyan); }
+    .gx-surplus-final { margin-top: 10px; padding-top: 8px; border-top: 2px solid var(--border);
+      font-family: var(--font-mono); font-size: 13px; color: var(--text-secondary); }
+    .gx-surplus-final b { font-size: 18px; color: var(--up); margin-left: 6px; }
+    .gx-surplus-note { font-family: var(--font-serif); font-size: 11px; font-style: italic;
+      color: var(--text-tertiary); margin-top: 5px; line-height: 1.45; }
+    @media (max-width: 640px) { .gx-2col { grid-template-columns: 1fr; }
+      .gx-src-row { grid-template-columns: 1fr 1fr; } }
+
     /* === Methodology & Track Record === */
     /* Source Comparison — visually set apart as the empirical "does it work?"
        data area: framed panel + a data-tone eyebrow so it reads distinct from
@@ -18329,10 +18373,172 @@ function renderGuide() {
   </div>`;
 }
 
+// ---- Part 5: interactive teaching widgets ---------------------------------
+// Standard-normal CDF (Abramowitz-Stegun 26.2.17) for the 20-80 percentile.
+function _normCdf(z) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989423 * Math.exp(-z * z / 2);
+  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  return z > 0 ? 1 - p : p;
+}
+// Linear-interpolate a string-keyed numeric table ({"35":..,"80":..}) at x.
+function _vfInterp(table, x) {
+  const ks = Object.keys(table || {}).map(Number).sort((a, b) => a - b);
+  if (!ks.length) return null;
+  if (x <= ks[0]) return table[ks[0]];
+  if (x >= ks[ks.length - 1]) return table[ks[ks.length - 1]];
+  for (let i = 0; i < ks.length - 1; i++) {
+    if (x >= ks[i] && x <= ks[i + 1]) {
+      const t = (x - ks[i]) / (ks[i + 1] - ks[i]);
+      return table[ks[i]] * (1 - t) + table[ks[i + 1]] * t;
+    }
+  }
+  return table[ks[ks.length - 1]];
+}
+const _fmtMM2 = m => (m == null ? "—" : "$" + (Math.round(m * 10) / 10).toFixed(1) + "M");
+
+// Bell curve with a marker at grade g (20-80) + shaded left tail = percentile.
+function _gxBellSvg(g) {
+  const W = 320, H = 96, pad = 6;
+  const x = v => pad + (v - 20) / 60 * (W - 2 * pad);
+  const mu = 50, sd = 10;
+  const yOf = v => Math.exp(-((v - mu) ** 2) / (2 * sd * sd));
+  let path = "", area = "";
+  const pts = [];
+  for (let v = 20; v <= 80; v += 1) pts.push([x(v), H - pad - yOf(v) * (H - 2 * pad - 8)]);
+  path = "M" + pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" L");
+  const ap = pts.filter((_, i) => 20 + i <= g);
+  if (ap.length) area = `M${x(20).toFixed(1)},${(H - pad).toFixed(1)} L` + ap.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" L") + ` L${ap[ap.length - 1][0].toFixed(1)},${(H - pad).toFixed(1)} Z`;
+  const gx = x(g);
+  const ticks = [20, 30, 40, 50, 60, 70, 80].map(v => `<line x1="${x(v).toFixed(1)}" y1="${H - pad}" x2="${x(v).toFixed(1)}" y2="${H - pad + 3}" stroke="var(--text-tertiary)" stroke-width="1"/><text x="${x(v).toFixed(1)}" y="${H - pad + 12}" font-size="8" fill="var(--text-tertiary)" text-anchor="middle" font-family="var(--font-mono)">${v}</text>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H + 8}" width="100%" style="max-width:340px;display:block;" preserveAspectRatio="xMidYMid meet">
+    ${area ? `<path d="${area}" fill="var(--neon-cyan)" opacity="0.18"/>` : ""}
+    <path d="${path}" fill="none" stroke="var(--text-secondary)" stroke-width="1.5"/>
+    <line x1="${gx.toFixed(1)}" y1="${pad}" x2="${gx.toFixed(1)}" y2="${H - pad}" stroke="var(--neon-cyan)" stroke-width="2"/>
+    <circle cx="${gx.toFixed(1)}" cy="${(H - pad - yOf(g) * (H - 2 * pad - 8)).toFixed(1)}" r="3.5" fill="var(--neon-cyan)"/>
+    ${ticks}
+  </svg>`;
+}
+function _gx2080() {
+  const g = +(_byId("gx-grade-in") || {}).value || 50;
+  const z = (g - 50) / 10;
+  const pct = Math.round(_normCdf(z) * 100);
+  const label = g >= 70 ? "Elite (top of scale)" : g >= 65 ? "Plus-plus" : g >= 60 ? "Plus" : g >= 55 ? "Above average" : g >= 45 ? "Average-ish" : g >= 40 ? "Below average" : "Well below average";
+  _setHTML("gx-grade-out", `<div class="gx-out-big">${g} <span class="gx-out-sub">grade</span></div>
+    <div class="gx-out-row"><span>z-score</span><b>${z >= 0 ? "+" : ""}${z.toFixed(1)} σ</b></div>
+    <div class="gx-out-row"><span>percentile</span><b>~${pct}th</b></div>
+    <div class="gx-out-row"><span>reads as</span><b>${label}</b></div>`);
+  _setHTML("gx-grade-svg", _gxBellSvg(g));
+  const lbl = _byId("gx-grade-val"); if (lbl) lbl.textContent = g;
+}
+function _gxConsensus() {
+  const rows = [...document.querySelectorAll("#gx-consensus .gx-src-row")];
+  let wsum = 0, wfv = 0, n = 0, fsum = 0;
+  rows.forEach(r => {
+    const fv = +r.querySelector(".gx-src-fv").value;
+    const w = +r.querySelector(".gx-src-w").value;
+    r.querySelector(".gx-src-wv").textContent = w.toFixed(1);
+    if (!isFinite(fv)) return;
+    n++; fsum += fv; wsum += w; wfv += fv * w;
+  });
+  const equal = n ? (fsum / n) : 0;
+  const weighted = wsum > 0 ? (wfv / wsum) : equal;
+  _setHTML("gx-consensus-out", `<div class="gx-out-row"><span>Equal-weight (site default)</span><b>${equal.toFixed(1)} FV</b></div>
+    <div class="gx-out-row"><span>Your weighting</span><b style="color:var(--neon-cyan);">${weighted.toFixed(1)} FV</b></div>
+    <div class="gx-out-row"><span>Difference</span><b style="color:${Math.abs(weighted - equal) >= 1 ? "var(--neon-amber)" : "var(--text-secondary)"};">${(weighted - equal) >= 0 ? "+" : ""}${(weighted - equal).toFixed(1)}</b></div>`);
+}
+function _gxConsensusReset() {
+  document.querySelectorAll("#gx-consensus .gx-src-w").forEach(s => { s.value = 1; });
+  _gxConsensus();
+}
+function _gxSurplus() {
+  const vf = window.VALUE_FRAMEWORK || {};
+  const fv = +(_byId("gx-surplus-fv") || {}).value || 50;
+  const side = (_byId("gx-surplus-side") || {}).value || "hitter";
+  const lbl = _byId("gx-surplus-fvval"); if (lbl) lbl.textContent = fv;
+  const warYr = _vfInterp(vf.fv_to_6yr_avg_war || {}, fv);
+  const dpw = (vf.dollars_per_war || {}).flat_mm || 11.74;
+  const st = vf.service_time || {};
+  const ctrl = st.control_years || 6, preArb = st.pre_arb_years || 3, lgMin = st.league_min_mm || 0.76;
+  const arbFr = st.arb_fractions_of_fa_value || [0.4, 0.6, 0.8];
+  if (warYr == null) { _setHTML("gx-surplus-out", "—"); return; }
+  const war6 = warYr * ctrl;
+  const gross = war6 * dpw;
+  const faPerYr = warYr * dpw;
+  const arbCost = arbFr.reduce((s, f) => s + f * faPerYr, 0);
+  const cost = preArb * lgMin + arbCost;
+  const framework = gross - cost;
+  const published = _vfInterp((vf.surplus_by_grade_mm || {})[side] || {}, fv);
+  _setHTML("gx-surplus-out", `
+    <div class="gx-step"><span class="gx-step-n">1</span><span class="gx-step-t">FV ${fv} → ${warYr.toFixed(2)} WAR/yr</span><span class="gx-step-v">${gTermLink("fv_to_war_table", "table")}</span></div>
+    <div class="gx-step"><span class="gx-step-n">2</span><span class="gx-step-t">× ${ctrl} controlled yrs</span><span class="gx-step-v">${war6.toFixed(1)} WAR</span></div>
+    <div class="gx-step"><span class="gx-step-n">3</span><span class="gx-step-t">× $${dpw.toFixed(2)}M / WAR</span><span class="gx-step-v">${_fmtMM2(gross)} gross</span></div>
+    <div class="gx-step"><span class="gx-step-n">4</span><span class="gx-step-t">− cost (3×$${lgMin}M pre-arb + arb ${arbFr.map(f => f).join("/")})</span><span class="gx-step-v">−${_fmtMM2(cost)}</span></div>
+    <div class="gx-step gx-step-sum"><span class="gx-step-n">=</span><span class="gx-step-t">framework surplus</span><span class="gx-step-v">${_fmtMM2(framework)}</span></div>
+    <div class="gx-surplus-final">Published surplus value <b>${_fmtMM2(published)}</b><div class="gx-surplus-note">The published figure additionally probability-weights the outcome distribution and discounts future years at ${((vf.discount_rate || 0.09) * 100).toFixed(0)}%/yr, so it differs slightly from the flat framework walk above.</div></div>`);
+}
+function _byId(id) { return document.getElementById(id); }
+function _setHTML(id, html) { const e = document.getElementById(id); if (e) e.innerHTML = html; }
+
+function _methInteractivesHTML() {
+  return `
+  <h2 class="meth-h">Interactive — manipulate the models</h2>
+  <p class="meth-note">These run on the live framework values. Move the inputs to see how a scouting grade, a source-weighting scheme, and the surplus walk respond.</p>
+
+  <div class="gx-card">
+    <div class="gx-card-title">The 20-80 scale as a distribution</div>
+    <div class="gx-card-body gx-2col">
+      <div>
+        <label class="gx-label">Grade <b id="gx-grade-val">60</b></label>
+        <input id="gx-grade-in" class="gx-range" type="range" min="20" max="80" step="1" value="60" oninput="_gx2080()">
+        <div id="gx-grade-svg"></div>
+      </div>
+      <div id="gx-grade-out" class="gx-out"></div>
+    </div>
+  </div>
+
+  <div class="gx-card">
+    <div class="gx-card-title">Why equal source weights? — adjustable consensus</div>
+    <div class="gx-card-body">
+      <div id="gx-consensus" class="gx-srcs">
+        ${[["FanGraphs", 60], ["MLB Pipeline", 55], ["ESPN", 60], ["Just Baseball", 50], ["TJStats", 55]].map(([nm, fv]) => `
+        <div class="gx-src-row">
+          <span class="gx-src-name">${nm}</span>
+          <label class="gx-src-lab">FV <input class="gx-src-fv gx-num" type="number" min="20" max="80" step="1" value="${fv}" oninput="_gxConsensus()"></label>
+          <label class="gx-src-lab">w <input class="gx-src-w gx-range gx-range-sm" type="range" min="0" max="2" step="0.1" value="1" oninput="_gxConsensus()"> <b class="gx-src-wv">1.0</b></label>
+        </div>`).join("")}
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap;">
+        <button class="chip" type="button" onclick="_gxConsensusReset()">Reset to equal weights</button>
+        <div id="gx-consensus-out" class="gx-out gx-out-inline"></div>
+      </div>
+      <p class="meth-note" style="margin-top:8px;">The site uses equal weights: no source has shown a durable, statistically separable edge on resolved cohorts (see Source Comparison), so weighting inputs would add variance without reliable signal.</p>
+    </div>
+  </div>
+
+  <div class="gx-card">
+    <div class="gx-card-title">Surplus value calculator — FV to dollars, step by step</div>
+    <div class="gx-card-body gx-2col">
+      <div>
+        <label class="gx-label">FV <b id="gx-surplus-fvval">55</b></label>
+        <input id="gx-surplus-fv" class="gx-range" type="range" min="35" max="80" step="1" value="55" oninput="_gxSurplus()">
+        <label class="gx-label" style="margin-top:10px;display:block;">Side
+          <select id="gx-surplus-side" class="gx-num" style="width:auto;" onchange="_gxSurplus()">
+            <option value="hitter">Hitter</option><option value="pitcher">Pitcher</option>
+          </select>
+        </label>
+      </div>
+      <div id="gx-surplus-out" class="gx-out gx-steps"></div>
+    </div>
+  </div>`;
+}
+
 function renderMethodology() {
   const el = document.getElementById("methodology-body");
   if (!el) return;
-  el.innerHTML = _methProseHTML();
+  el.innerHTML = _methProseHTML() + _methInteractivesHTML();
+  // Populate the interactives' initial state.
+  _gx2080(); _gxConsensus(); _gxSurplus();
 }
 
 // Source Comparison — the empirical backtest, visually set apart from the
