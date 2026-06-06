@@ -289,14 +289,15 @@ ESPN_SLUGS = {
     "STL": "stl", "TBR": "tb",  "TEX": "tex", "TOR": "tor", "WSN": "wsh",
 }
 
-def _team_logo(org: str | None) -> str:
-    """Clean ESPN CDN team logo (falls back to the ORG abbreviation chip)."""
+def _team_logo(org: str | None, cls: str = "row-logo") -> str:
+    """Clean ESPN CDN team logo (falls back to the ORG abbreviation chip).
+    `cls` lets callers reuse it at other sizes (e.g. the ticker's tk-logo)."""
     if not org:
         return ""
     o = html.escape(org)
     slug = ESPN_SLUGS.get(org, org.lower())
-    return (f'<img class="row-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/{slug}.png" alt="{o}" loading="lazy" '
-            f"onerror=\"this.outerHTML='<span class=&quot;row-logo&quot; style=&quot;font:700 9px var(--font-retro-mono);display:inline-flex;align-items:center;justify-content:center&quot;>{o}</span>'\">")
+    return (f'<img class="{cls}" src="https://a.espncdn.com/i/teamlogos/mlb/500/{slug}.png" alt="{o}" loading="lazy" '
+            f"onerror=\"this.outerHTML='<span class=&quot;{cls}&quot; style=&quot;font:700 9px var(--font-retro-mono);display:inline-flex;align-items:center;justify-content:center&quot;>{o}</span>'\">")
 
 def _fv_label(p: dict) -> str:
     pts = p.get("points") or []
@@ -360,35 +361,38 @@ def _row_farm(o: dict, rank: int) -> str:
 
 def _collect_events(players: list, graduates: list) -> list:
     ev = []
-    def add(dt, typ, glyph, text, key):
+    def add(dt, typ, glyph, text, key, org=None):
         if dt:
-            ev.append((str(dt)[:10], typ, glyph, text, key))
+            ev.append((str(dt)[:10], typ, glyph, text, key, org))
     for p in players:
         nm = p.get("player_name") or ""
         key = p.get("player_key")
+        org = p.get("org")
         s = p.get("stock") or {}
         if s.get("delta") is not None and abs(s["delta"]) >= 3 and s.get("direction") not in ("flat", "debuted"):
             up = s["delta"] > 0
             add(s.get("to_date"), "up" if up else "down", "▲" if up else "▼",
-                f'{nm} {"▲" if up else "▼"} {"+" if up else ""}{s["delta"]:.0f} FV', key)
+                f'{nm} {"▲" if up else "▼"} {"+" if up else ""}{s["delta"]:.0f} FV', key, org)
         for lc in (p.get("level_changes") or []):
             if lc.get("kind") in ("promotion", "demotion"):
                 promo = lc["kind"] == "promotion"
                 add(lc.get("date"), "promo" if promo else "demo", "↑" if promo else "↓",
-                    f'{nm} {"promoted" if promo else "demoted"} {lc.get("from_level", "?")}→{lc.get("to_level", "?")}', key)
+                    f'{nm} {"promoted" if promo else "demoted"} {lc.get("from_level", "?")}→{lc.get("to_level", "?")}', key, org)
         for tr in (p.get("trades") or []):
-            add(tr.get("trade_date"), "trade", "⇄", f'{nm} traded {tr.get("from_org", "?")}→{tr.get("to_org", "?")}', key)
+            add(tr.get("trade_date"), "trade", "⇄", f'{nm} traded {tr.get("from_org", "?")}→{tr.get("to_org", "?")}', key,
+                tr.get("to_org") or org)
         il = p.get("il_status") or {}
         if il.get("is_on_il") and il.get("since"):
-            add(il.get("since"), "il", "✚", f'{nm} to {il.get("type", "")} IL'.replace("  ", " "), key)
+            add(il.get("since"), "il", "✚", f'{nm} to {il.get("type", "")} IL'.replace("  ", " "), key, org)
     for g in graduates:
-        add(g.get("debut_date"), "debut", "★", f'{g.get("player_name", "")} debuted · {g.get("org", "")}', g.get("player_key"))
+        add(g.get("debut_date"), "debut", "★", f'{g.get("player_name", "")} debuted · {g.get("org", "")}',
+            g.get("player_key"), g.get("org"))
     ev.sort(key=lambda e: e[0], reverse=True)
     return ev
 
 def _feed_html(events: list, n: int = 12) -> str:
     out = []
-    for dt, typ, glyph, text, key in events[:n]:
+    for dt, typ, glyph, text, key, org in events[:n]:
         ts = f"{dt[5:7]}/{dt[8:10]}" if len(dt) >= 10 else dt
         out.append(f'<a class="feed-item" href="{_player_href(key)}"><span class="ts">{ts}</span>'
                    f'<span class="g {typ}">{glyph}</span>{html.escape(text)}</a>')
@@ -401,10 +405,11 @@ def _ticker_html(events: list, n: int = 14) -> str:
     # accessible, keyboard-navigable equivalent.
     items = []
     known = ("up", "down", "promo", "demo", "il", "debut", "trade")
-    for dt, typ, glyph, text, key in events[:n]:
+    for dt, typ, glyph, text, key, org in events[:n]:
         cls = typ if typ in known else "glyph"
         href = f"/prospx/#player={key}" if key else "/prospx/#tab=spotlights"
-        items.append(f'<a href="{html.escape(href)}" tabindex="-1">'
+        logo = _team_logo(org, "tk-logo") if org else ""
+        items.append(f'<a href="{html.escape(href)}" tabindex="-1">{logo}'
                      f'<span class="{cls}">{glyph}</span> {html.escape(text)}</a>')
     if not items:
         items = ['<span><span class="glyph">◆</span> PROSPX — live prospect wire</span>']
