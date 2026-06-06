@@ -13765,6 +13765,12 @@ function positionMatches(playerBucket, filterVal) {
 }
 let DATA = null;
 
+// Resolved headshot-context map ({mlbam_id: "67"|"milb"|"none"}) loaded from
+// data/photo_ctx.json on boot (built by headshots.py). headshotURL /
+// _gfxHeadshotURL consult it to pick the context that actually has a real
+// photo — "milb" fills most prospect gaps the old "67"-only URL missed.
+let _photoCtx = {};
+
 // --- Data-aware freshness ("as of") -----------------------------------------
 // run_monthly stamps timeseries.json with a two-track `data_freshness`:
 //   grades_updated_at      — last MONTHLY run (consensus FV, tools, Arkmetrics)
@@ -26036,7 +26042,14 @@ function _gfxSilhouetteBg(P) {
 function _gfxHeadshotURL(mlbamId, px) {
   if (!mlbamId) return "";
   const r = Math.max(120, Math.round((px || 52) * 2));
-  return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${r},q_auto:best/v1/people/${mlbamId}/headshot/67/current`;
+  // Use the resolved context ('milb' fills most prospect gaps); "none" → "" so
+  // the silhouette shows. Same img.mlbstatic.com host as before, which serves
+  // Access-Control-Allow-Origin:* — so milb photos are as export-safe under
+  // html2canvas (crossorigin=anonymous + useCORS) as the 67 ones already were.
+  const ctx = _photoCtx[mlbamId];
+  if (ctx === "none") return "";
+  const seg = (ctx === "67" || ctx === "milb") ? ctx : "67";
+  return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${r},q_auto:best/v1/people/${mlbamId}/headshot/${seg}/current`;
 }
 // Track + log the mlbam_ids that 404'd at GFX render time so missing photos
 // can be audited. Called from the inline <img> onerror (global scope).
@@ -27608,6 +27621,16 @@ function headshotURL(mlbamId, sizePx) {
   // Cloudinary returns the requested resolution; we request 2x for
   // sharp rendering on retina displays.
   const r = Math.max(60, Math.round(sizePx * 2));
+  const ctx = _photoCtx[mlbamId];
+  // Validated "no photo" → null so the caller renders the silhouette (and we
+  // don't fetch a known-404). A resolved context ('67'/'milb') uses the
+  // no-generic URL so it's the REAL photo (MiLB fills most prospect gaps).
+  if (ctx === "none") return null;
+  if (ctx === "67" || ctx === "milb")
+    return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${r},q_auto:best/v1/people/${mlbamId}/headshot/${ctx}/current`;
+  // Not yet resolved (map not loaded, or id added since the last backfill):
+  // legacy 67 + generic overlay (always 200 — real photo or generic silhouette)
+  // so coverage never regresses before the resolver reaches this id.
   return `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_${r},q_auto:best/v1/people/${mlbamId}/headshot/67/current`;
 }
 // Resolve a player's FV to the nearest published tier (80/75/70/65/60/
@@ -27680,10 +27703,12 @@ function headshotHTML(player, sizePx = 36) {
   // without an MLBAM ID don't look like a missing image — the dashed
   // edge reads as "no headshot on file" rather than "broken render".
   const placeholderWrap = `width:${w}px;height:${h}px;border-radius:3px;flex-shrink:0;background:var(--bg-tertiary);border:1px dashed var(--border);overflow:hidden;display:inline-block;position:relative;vertical-align:middle;`;
-  if (!id) {
+  const url = id ? headshotURL(id, h) : null;
+  // No id, or the resolver validated "no photo in any context" (url === null):
+  // render the silhouette placeholder rather than fetch a known-404.
+  if (!url) {
     return `<span class="headshot ${ringClass}" style="${placeholderWrap}">${sil}</span>`;
   }
-  const url = headshotURL(id, h);
   // v16 — Use native `loading="lazy"` directly via `src` (was: data-src
   // + IntersectionObserver swap). The IO-based approach added a noticeable
   // delay on graduate-list rows because the observer callback only fires
@@ -42747,6 +42772,17 @@ function populateOrgFilter() {
       </div>`;
     return;
   }
+
+  // Load the resolved headshot-context map (small, ~50KB) before first paint so
+  // headshotURL picks the context that actually has a photo (MiLB fills the
+  // prospect gaps). Failure is non-fatal — _photoCtx stays empty and headshots
+  // fall back to the legacy 67+generic URL, so nothing regresses.
+  try {
+    const _pcBase = DATA_URL.replace(/[^/]+$/, "");
+    const _pcv = DATA.generated_at ? `?v=${encodeURIComponent(DATA.generated_at)}` : "";
+    const _pcr = await fetch(_pcBase + "photo_ctx.json" + _pcv, { cache: "force-cache" });
+    if (_pcr.ok) { const _pc = await _pcr.json(); _photoCtx = (_pc && _pc.ctx) || {}; }
+  } catch (e) { /* keep _photoCtx = {} → legacy fallback */ }
 
   // Mount the main UI
   const tpl = document.getElementById("main-template");

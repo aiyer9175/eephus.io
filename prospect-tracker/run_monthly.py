@@ -1854,6 +1854,19 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                      len(_bt["window"]["years"]), _bt["accuracy"]["common_n"])
         except Exception:
             log.exception("source_backtest failed — continuing")
+        # Headshot resolution (data/photo_ctx.json for the photo fallback chain).
+        # Incremental: TTL-skips already-resolved ids and only re-probes new or
+        # still-missing players, so steady-state runs are cheap. Best-effort —
+        # a network hiccup must not fail the pipeline (the front-end falls back
+        # to the legacy 67+generic URL for any unresolved id).
+        try:
+            from headshots import backfill as _backfill_headshots
+            _hs = _backfill_headshots(data_dir=out_dir, workers=16, write_json=True)
+            log.info("headshots: %.1f%% coverage (%d/%d) — %d probed this run, %d still missing",
+                     _hs["pct"], _hs["with_photo"], _hs["total"],
+                     _hs.get("probed_this_run", 0), _hs["missing_count"])
+        except Exception:
+            log.exception("headshot resolution failed — continuing")
         # v19 — Per-step duration table. Sorted by slowest first so the
         # biggest wall-time culprits surface at the top of the log.
         _log_step_summary(log, time.monotonic() - _run_start)

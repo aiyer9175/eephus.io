@@ -1129,6 +1129,20 @@ CREATE TABLE IF NOT EXISTS il_history (
 );
 CREATE INDEX IF NOT EXISTS idx_il_history_player ON il_history(player_key);
 
+-- Resolved+validated headshot context per MLBAM id (added 2026-06). The MLB
+-- CDN serves headshots keyed by player id under a context segment: '67' is the
+-- MLB roster set (empty for many prospects → silhouette), 'milb' is the MiLB
+-- set (fills most of those gaps). We HEAD-probe both (no generic fallback so a
+-- missing photo 404s) and cache the first that returns a real image; 'none'
+-- means neither resolved. Keyed by mlbam_id because the photo follows the id
+-- (a player keeps it across the active→debuted transition).
+CREATE TABLE IF NOT EXISTS player_photos (
+    mlbam_id     INTEGER PRIMARY KEY,
+    headshot_ctx TEXT NOT NULL,            -- '67' | 'milb' | 'none'
+    player_key   TEXT,                     -- last-seen key (for reference/reporting)
+    checked_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ===========================================================================
 -- Draft prospects (amateurs — HS/college players in upcoming MLB drafts)
 -- ===========================================================================
@@ -3279,6 +3293,49 @@ def load_il_history(player_key: str | None = None) -> list[dict]:
     except sqlite3.OperationalError:
         return []
     return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Headshot context cache (player_photos) — added 2026-06.
+# ---------------------------------------------------------------------------
+def load_photo_ctx() -> dict[int, str]:
+    """Return {mlbam_id: headshot_ctx} for every resolved photo."""
+    try:
+        with connect() as con:
+            rows = con.execute("SELECT mlbam_id, headshot_ctx FROM player_photos").fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {int(r["mlbam_id"]): r["headshot_ctx"] for r in rows}
+
+
+def load_photo_meta() -> dict[int, str]:
+    """Return {mlbam_id: checked_at_iso} so the resolver can TTL-skip fresh rows."""
+    try:
+        with connect() as con:
+            rows = con.execute("SELECT mlbam_id, checked_at FROM player_photos").fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {int(r["mlbam_id"]): r["checked_at"] for r in rows}
+
+
+def upsert_photo_ctx(by_id: dict[int, dict]) -> int:
+    """Upsert resolved headshot contexts. by_id = {mlbam_id: {ctx, player_key}}."""
+    n = 0
+    with connect() as con:
+        for mid, rec in by_id.items():
+            if mid is None or not rec or not rec.get("ctx"):
+                continue
+            con.execute(
+                """INSERT INTO player_photos (mlbam_id, headshot_ctx, player_key, checked_at)
+                   VALUES (?, ?, ?, datetime('now'))
+                   ON CONFLICT(mlbam_id) DO UPDATE SET
+                     headshot_ctx = excluded.headshot_ctx,
+                     player_key   = COALESCE(excluded.player_key, player_photos.player_key),
+                     checked_at   = excluded.checked_at""",
+                (int(mid), rec["ctx"], rec.get("player_key")),
+            )
+            n += 1
+    return n
 
 
 def load_career_stats_meta() -> dict[str, str]:
