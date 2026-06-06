@@ -1078,6 +1078,58 @@ CREATE TABLE IF NOT EXISTS runs (
 );
 
 -- ===========================================================================
+-- Forward-looking history tables (added 2026-06). The per-source `snapshots`
+-- table already retains grade/rank history per published list, but the
+-- DERIVED state — the PROSPX consensus board rank and the Arkmetric family
+-- (DvM+/SC+/$DvM+/Tool/live composite) — was only ever stored as the CURRENT
+-- value (keyed by player_key, overwritten each run). These two tables capture
+-- that derived state over time so the time-travel board (Part 2) and the
+-- Arkmetric-vs-outcome backtest (Part 4) compound going forward. They cannot
+-- be back-filled — the track record begins the first run after this lands.
+-- ===========================================================================
+
+-- One row per (player, snapshot calendar date): the full DERIVED board state.
+-- Written at the end of every full run_monthly (and standalone --rebuild-only).
+-- Upsert-by-date is idempotent: re-running on the same day overwrites that
+-- day's row, so cadence is governed entirely by how often run_monthly runs
+-- (monthly via the scheduled job → one row per player per month).
+CREATE TABLE IF NOT EXISTS metric_snapshots (
+    player_key    TEXT NOT NULL,
+    snapshot_date TEXT NOT NULL,        -- 'YYYY-MM-DD' of the run
+    overall_rank  INTEGER,              -- PROSPX consensus board rank as-of
+    consensus_fv  REAL,                 -- headline consensus FV (fv_close)
+    fv_plus       INTEGER NOT NULL DEFAULT 0,
+    fv_tier       TEXT,                 -- bucket label ('60','55',… ) for cohorting
+    org           TEXT,
+    position      TEXT,
+    status        TEXT,                 -- active | debuted | inactive
+    is_pitcher    INTEGER NOT NULL DEFAULT 0,
+    age           REAL,
+    payload_json  TEXT NOT NULL,        -- {dollar_dvm_plus, statcast_plus, live_score,
+                                        --  tool, surplus_mm, …} — the Arkmetric family
+    inserted_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, snapshot_date)
+);
+CREATE INDEX IF NOT EXISTS idx_metric_snap_date ON metric_snapshots(snapshot_date);
+CREATE INDEX IF NOT EXISTS idx_metric_snap_player ON metric_snapshots(player_key);
+
+-- Append-only IL stint timeline. The il_status table is current-state only
+-- (overwritten each run); this records each placement once (keyed by the
+-- placement `since` date) and stamps the activation date when the player
+-- next appears OFF the IL. Built by the daily job so IL track record accrues.
+CREATE TABLE IF NOT EXISTS il_history (
+    player_key     TEXT NOT NULL,
+    since          TEXT NOT NULL,       -- IL placement date per the API (stint id)
+    il_type        TEXT,                -- '7-day' | '10-day' | '60-day' | …
+    description    TEXT,
+    placed_seen    TEXT NOT NULL,       -- first run-date we observed this stint
+    activated_seen TEXT,                -- first run-date we observed them OFF it (NULL while ongoing)
+    inserted_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, since)
+);
+CREATE INDEX IF NOT EXISTS idx_il_history_player ON il_history(player_key);
+
+-- ===========================================================================
 -- Draft prospects (amateurs — HS/college players in upcoming MLB drafts)
 -- ===========================================================================
 -- Parallel track to the snapshots/players tables. Column-level firewall:
@@ -3025,6 +3077,210 @@ def load_roster_status() -> dict[str, dict]:
     return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
 
 
+# ---------------------------------------------------------------------------
+# Derived-state history (metric_snapshots + il_history) — added 2026-06.
+# ---------------------------------------------------------------------------
+# Fields pulled from each serialized timeseries player into the snapshot
+# payload. These are the Arkmetric family + value signals that are reliably
+# present at the player top level (raw dvm_plus/rps_plus live on graduate/org
+# records, not the active board, so we capture the surfaced "+" versions).
+_METRIC_SNAPSHOT_PAYLOAD_FIELDS = (
+    "dollar_dvm_plus",   # $DvM+
+    "statcast_plus",     # SC+
+    "live_score",        # live composite
+    "tool",              # tool composite (ToolDvM+ base)
+    "live_overall_rank",
+)
+
+
+def _fv_tier_label(fv, fv_plus) -> str | None:
+    """Coarse FV-tier bucket label used for cohorting ('60','55','50'…).
+
+    Mirrors the 5-point grade ladder; the trailing '+' upside marker is kept
+    so a 55+ cohort can be split from a flat 55 if desired downstream.
+    """
+    if fv is None:
+        return None
+    base = int(round(float(fv) / 5.0) * 5)
+    return f"{base}+" if fv_plus else str(base)
+
+
+def snapshot_board_metrics(players: Iterable[dict], snapshot_date: str | None = None) -> int:
+    """Capture the DERIVED board state (consensus rank/FV + Arkmetric family)
+    for every player in a built timeseries, one row per player per calendar
+    date. Idempotent: re-running on the same date overwrites that date's rows.
+
+    `players` is the list of serialized player dicts from timeseries.json
+    (or the in-memory equivalent). Players with no consensus FV and no rank
+    are skipped (nothing meaningful to snapshot).
+    """
+    snapshot_date = snapshot_date or date.today().isoformat()
+    n = 0
+    with connect() as con:
+        for p in players:
+            if not isinstance(p, dict):
+                continue
+            key = p.get("player_key")
+            if not key:
+                continue
+            fv = p.get("fv_close")
+            rank = p.get("overall_rank")
+            if fv is None and rank is None:
+                continue
+            fv_plus = 1 if p.get("fv_close_plus") else 0
+            surplus = p.get("surplus") or {}
+            payload = {f: p.get(f) for f in _METRIC_SNAPSHOT_PAYLOAD_FIELDS
+                       if p.get(f) is not None}
+            if surplus.get("value_mm") is not None:
+                payload["surplus_mm"] = surplus.get("value_mm")
+            con.execute(
+                """INSERT INTO metric_snapshots
+                     (player_key, snapshot_date, overall_rank, consensus_fv,
+                      fv_plus, fv_tier, org, position, status, is_pitcher,
+                      age, payload_json, inserted_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                   ON CONFLICT(player_key, snapshot_date) DO UPDATE SET
+                     overall_rank=excluded.overall_rank,
+                     consensus_fv=excluded.consensus_fv,
+                     fv_plus=excluded.fv_plus,
+                     fv_tier=excluded.fv_tier,
+                     org=excluded.org,
+                     position=excluded.position,
+                     status=excluded.status,
+                     is_pitcher=excluded.is_pitcher,
+                     age=excluded.age,
+                     payload_json=excluded.payload_json,
+                     inserted_at=excluded.inserted_at""",
+                (key, snapshot_date, rank, fv, fv_plus,
+                 _fv_tier_label(fv, fv_plus), p.get("org"), p.get("position"),
+                 p.get("status"),
+                 1 if (p.get("position") or "").upper() in ("SP", "RP", "P", "SIRP", "MIRP", "RHP", "LHP") else 0,
+                 p.get("age"), json.dumps(payload)),
+            )
+            n += 1
+    return n
+
+
+def metric_snapshot_dates() -> list[str]:
+    """Return the distinct snapshot dates present in metric_snapshots, ascending."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT DISTINCT snapshot_date FROM metric_snapshots ORDER BY snapshot_date"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [r[0] for r in rows]
+
+
+def load_metric_snapshots(player_key: str | None = None,
+                          snapshot_date: str | None = None) -> list[dict]:
+    """Load metric_snapshots rows, optionally filtered by player and/or date.
+
+    Returns a list of flat dicts with the board columns plus the unpacked
+    Arkmetric payload (dollar_dvm_plus, statcast_plus, …).
+    """
+    where, params = [], []
+    if player_key is not None:
+        where.append("player_key = ?"); params.append(player_key)
+    if snapshot_date is not None:
+        where.append("snapshot_date = ?"); params.append(snapshot_date)
+    sql = ("SELECT player_key, snapshot_date, overall_rank, consensus_fv, fv_plus, "
+           "fv_tier, org, position, status, is_pitcher, age, payload_json "
+           "FROM metric_snapshots")
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY snapshot_date, overall_rank"
+    try:
+        with connect() as con:
+            rows = con.execute(sql, params).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    out = []
+    for r in rows:
+        d = dict(r)
+        payload = d.pop("payload_json", None)
+        if payload:
+            try:
+                d.update(json.loads(payload))
+            except (TypeError, ValueError):
+                pass
+        out.append(d)
+    return out
+
+
+def record_il_observation(current_il_by_key: dict[str, dict],
+                          observed_date: str | None = None) -> dict[str, int]:
+    """Append-only IL stint timeline update. Call after refreshing IL status.
+
+    `current_il_by_key` is the {player_key: il_dict} of everyone CURRENTLY on
+    the IL (i.e. the output of load_il_status()). For each, record the stint
+    once keyed by its placement `since` date; for any previously-open stint
+    whose player is no longer on the IL, stamp the activation date.
+
+    Idempotent within a day. Returns {placed, activated} counts.
+    """
+    observed_date = observed_date or date.today().isoformat()
+    placed = activated = 0
+    with connect() as con:
+        try:
+            con.execute("SELECT 1 FROM il_history LIMIT 1")
+        except sqlite3.OperationalError:
+            con.executescript(SCHEMA)
+        # 1. Record / refresh currently-open stints.
+        for key, rec in (current_il_by_key or {}).items():
+            since = (rec or {}).get("since")
+            if not since:
+                # No placement date from the API — fall back to first-observed
+                # date so the stint still gets a stable key.
+                since = observed_date
+            cur = con.execute(
+                """INSERT INTO il_history
+                     (player_key, since, il_type, description, placed_seen, activated_seen)
+                   VALUES (?, ?, ?, ?, ?, NULL)
+                   ON CONFLICT(player_key, since) DO UPDATE SET
+                     il_type=excluded.il_type,
+                     description=excluded.description,
+                     -- a player reappearing on a stint we'd marked activated
+                     -- means it never really ended; clear the activation.
+                     activated_seen=NULL""",
+                (key, since, (rec or {}).get("type"), (rec or {}).get("description"),
+                 observed_date),
+            )
+            if cur.rowcount:
+                placed += 1
+        # 2. Close out stints whose player is no longer on the IL.
+        current_keys = set(current_il_by_key or {})
+        open_rows = con.execute(
+            "SELECT player_key, since FROM il_history WHERE activated_seen IS NULL"
+        ).fetchall()
+        for r in open_rows:
+            if r["player_key"] not in current_keys:
+                con.execute(
+                    "UPDATE il_history SET activated_seen = ? "
+                    "WHERE player_key = ? AND since = ? AND activated_seen IS NULL",
+                    (observed_date, r["player_key"], r["since"]),
+                )
+                activated += 1
+    return {"placed": placed, "activated": activated}
+
+
+def load_il_history(player_key: str | None = None) -> list[dict]:
+    """Return IL stint rows (placement + activation timeline), newest first."""
+    sql = ("SELECT player_key, since, il_type, description, placed_seen, "
+           "activated_seen FROM il_history")
+    params: list = []
+    if player_key is not None:
+        sql += " WHERE player_key = ?"; params.append(player_key)
+    sql += " ORDER BY since DESC"
+    try:
+        with connect() as con:
+            rows = con.execute(sql, params).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [dict(r) for r in rows]
+
+
 def load_career_stats_meta() -> dict[str, str]:
     """Return {player_key: fetched_at_iso} for every stored career_stats row.
 
@@ -3068,6 +3324,46 @@ def latest_run_summary() -> dict | None:
     except sqlite3.OperationalError:
         # Table doesn't exist yet — fine for first run or test isolation.
         return None
+
+
+def data_freshness() -> dict:
+    """Return the two-track freshness stamps the site uses for data-aware
+    'as of' labels:
+
+      • grades_updated_at  — finish time of the last MONTHLY run (full
+        pipeline: grades, tool evals, Arkmetrics, farm grades, rankings).
+      • transactions_updated_at — finish time of the last run of ANY kind
+        (a daily run refreshes transactions/IL/roster; a monthly run does
+        both, so the latest run always reflects the freshest fast-moving
+        data).
+      • last_run_kind — 'daily' | 'monthly' for the most recent run.
+
+    Daily runs are tagged with a notes prefix of 'DAILY:' by run_daily();
+    everything else is treated as a monthly/full run.
+    """
+    out = {"grades_updated_at": None, "transactions_updated_at": None,
+           "last_run_kind": None}
+    try:
+        with connect() as con:
+            latest = con.execute(
+                "SELECT finished_at, started_at, notes FROM runs "
+                "WHERE finished_at IS NOT NULL ORDER BY id DESC LIMIT 1"
+            ).fetchone()
+            monthly = con.execute(
+                "SELECT finished_at, started_at FROM runs "
+                "WHERE finished_at IS NOT NULL "
+                "AND COALESCE(notes,'') NOT LIKE 'DAILY:%' "
+                "ORDER BY id DESC LIMIT 1"
+            ).fetchone()
+    except sqlite3.OperationalError:
+        return out
+    if latest:
+        out["transactions_updated_at"] = latest["finished_at"] or latest["started_at"]
+        out["last_run_kind"] = ("daily" if (latest["notes"] or "").startswith("DAILY:")
+                                else "monthly")
+    if monthly:
+        out["grades_updated_at"] = monthly["finished_at"] or monthly["started_at"]
+    return out
 
 
 # ---------------------------------------------------------------------------

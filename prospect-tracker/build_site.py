@@ -252,8 +252,13 @@ def load_site_data() -> dict | None:
     if dpath.exists():
         d = json.loads(dpath.read_text(encoding="utf-8"))
         grads = d if isinstance(d, list) else (d.get("players") or d.get("debuts") or [])
+    # The homepage surfaces daily-fresh content (movers, transactions,
+    # graduates), so its "Data as of" tracks the freshest run (daily refresh
+    # when one has happened, else the monthly generated_at).
+    fresh = ts.get("data_freshness") or {}
+    as_of_iso = fresh.get("transactions_updated_at") or ts.get("generated_at")
     return {
-        "as_of": _fmt_iso_date(ts.get("generated_at")),
+        "as_of": _fmt_iso_date(as_of_iso),
         "players": ts.get("players") or [],
         "org_summary": ts.get("org_summary") or [],
         "graduates": grads,

@@ -90,10 +90,26 @@ rankings in `data/manual_rankings.csv`, rebuilds the SQLite cache
 (`data/timeseries.json` plus the lazy sidecars: graduates / inactive /
 rosters_by_org / draft / overseas / ifa).
 
-Run it **monthly**, or any time you edit `data/manual_rankings.csv`:
+### Two cadences: monthly grades, daily fast-moving data
+
+The pipeline is split so time-sensitive data stays fresh without re-grading
+every day:
+
+| Command | Cadence | What it refreshes |
+|---|---|---|
+| `python run_monthly.py` | **monthly** | Consensus FV + per-source grades, tool grades, Arkmetrics (WAG · DvM+ · RPS+ · SC+ · ToolDvM+), farm grades, full ranking, the source-vs-source backtest, and the monthly board snapshot. Also refreshes everything the daily job does. |
+| `python run_monthly.py --daily` | **daily** | Only fast-moving data: transactions, Injured-List stints, roster status (40-man / options / service), debuts & graduations, promotions/demotions, and trades — then rebuilds `data/timeseries.json` (no scrape, no re-grading). |
+
+The two jobs write **disjoint** tables and are individually idempotent + error-
+handled, so they never conflict or double-write. The site stamps a two-track
+`data_freshness` block into `timeseries.json` (`grades_updated_at` = last
+monthly run; `transactions_updated_at` = last run of any kind) — the
+Transactions + Injured-List sections show a live "updated daily · as of …"
+stamp while the graded board honestly reflects its monthly cadence.
 
 ```bash
-python run_monthly.py                 # full refresh (scrape + ingest + export)
+python run_monthly.py                 # full monthly refresh (scrape + ingest + grade + export)
+python run_monthly.py --daily         # daily fast-moving refresh (transactions/IL/roster/debuts/trades)
 python run_monthly.py --rebuild-only  # no scrape; re-ingest DB + re-export JSON (fast)
 python run_monthly.py --skip-stats    # skip MLB / MiLB stat fetches
 python run_monthly.py --force         # bypass HTTP + DB freshness cache
@@ -105,6 +121,28 @@ python run_monthly.py --out-dir path  # write data/*.json elsewhere
 After a data refresh you do **not** need to rebuild the site (PROSPX reads the
 JSON at runtime), but it's harmless to run `build_site.py` too.
 
+### Scheduling (GitHub Actions)
+
+Two in-repo workflows run the cadences automatically (both also have a
+`workflow_dispatch` "Run workflow" button):
+
+- `.github/workflows/daily.yml` — `run_monthly.py --daily`, 08:10 UTC daily.
+- `.github/workflows/monthly.yml` — `run_monthly.py`, 10:00 UTC on the 1st.
+
+They share a `concurrency` group so they never overlap, and use a rolling
+`actions/cache` for `prospects.db` + the HTTP cache so state survives between
+runs. For a durable production DB, point the cache step at your real state
+store (the workflow comments mark where). Fill in the commented `Publish` step
+for your static host.
+
+### Forward-looking history (started 2026-06)
+
+`run_monthly.py` snapshots derived state each run so the track record compounds:
+`metric_snapshots` (the board rank + consensus FV + Arkmetric family per month,
+powering the **Time Machine** board-over-time) and `il_history` (an append-only
+IL stint timeline). `source_backtest.py` writes `data/source_backtest.json`
+(the **Methodology & Track Record** tab) each monthly run.
+
 ### Edit the prospect lists
 
 ```
@@ -115,16 +153,40 @@ Columns: `source,snapshot_date,interval_label,player_name,position,org,rank,fv,s
 Valid `source`: `fangraphs`, `espn`, `just_baseball`, `tjstats`, `baseball_america`, `mlb_pipeline`, `the_athletic`.
 Valid `status`: `active`, `debuted`, `injured_list`, `off_list`.
 
+## PROSPX views
+
+Beyond the prospect board, PROSPX (`/prospx/`) includes:
+
+- **Time Machine** (`#tab=timemachine`) — travel the consensus board to any
+  past snapshot, or diff two dates for a changelog of risers / fallers / new
+  entries / graduates / grade changes. Reconstructed from each prospect's
+  consensus-FV history; URL-shareable.
+- **Scatterplots** (`#tab=charts`) — a configurable plot/query builder: any
+  X/Y metric, color + size encodings, log scales, org/level/pos + per-axis
+  threshold filters, brush-to-zoom, highlight/search, a shareable URL config,
+  and an on-theme **Generate GFX** export.
+- **Methodology & Track Record** (`#tab=glossary` → Methodology toggle) —
+  plain-language derivations of consensus FV + each Arkmetric, plus the
+  source-vs-source backtest (cohort outcomes, calibration curves, and a
+  head-to-head accuracy ranking of FanGraphs / MLB Pipeline / PROSPX consensus
+  on resolved cohorts) with sample-size and survivorship caveats stated openly.
+- Per-prospect detail pages add a **per-source FV overlay** toggle on the FV
+  history chart.
+
 ## Deploy
 
 The build output is plain static files, so it deploys to **any static host**
 (object store + CDN, Netlify, Vercel, Cloudflare Pages, a plain web server, …):
 
 ```bash
-python run_monthly.py     # (when data changed) refresh data/*.json
-python build_site.py      # regenerate the editorial pages
+python run_monthly.py        # monthly: refresh grades + data/*.json
+python run_monthly.py --daily # daily: refresh transactions / IL / roster / debuts / trades
+python build_site.py         # regenerate the editorial pages
 # then publish the repository contents (served at the domain root)
 ```
+
+(Both pipeline cadences are automated via GitHub Actions — see *Scheduling*
+above.)
 
 Publish these so the routes resolve: `index.html`, `articles/`, `prospx/`,
 `team/`, `assets/`, `data/`, `vendor/`. The site must be served at the **domain
@@ -146,7 +208,9 @@ eephus.io / prospect-tracker/
 ├── data/                      # generated PROSPX data (timeseries.json + sidecars)
 │   └── manual_rankings.csv    #   prospect source-of-truth (edit by hand)
 ├── prospects.db               # SQLite cache (regenerable)
-├── run_monthly.py             # PROSPX data pipeline entry point
+├── run_monthly.py             # PROSPX data pipeline entry point (monthly + --daily)
+├── source_backtest.py         # source-vs-source predictive track record → source_backtest.json
+├── .github/workflows/         # daily.yml + monthly.yml scheduled pipelines
 ├── consensus.py               # FV grid + unweighted aggregation
 ├── value_framework.py         # FV→WAR→$ surplus-value engine
 ├── storage.py                 # SQLite schema + JSON export
