@@ -10009,12 +10009,18 @@ function fvToWarPeak(fv, isPitcher) {
   const vf = window.VALUE_FRAMEWORK;
   if (!vf) return null;
   // v38 — the overhauled engine renamed this table to fv_to_6yr_avg_war (the
-  // FanGraphs "6yr average WAR" anchor, not a peak). Read either + guard so a
-  // shape change never crashes boot. Surplus display now comes from the baked
-  // p.surplus block (makeSurplusCell); this stays only for the FV→WAR tooltip.
-  const _warTbl = vf.fv_to_war_peak || vf.fv_to_6yr_avg_war;
-  const table = _warTbl && _warTbl[isPitcher ? "pitcher" : "hitter"];
-  if (!table) return null;
+  // FanGraphs "6yr average WAR" anchor, not a peak) AND flattened it: the new
+  // table is FV-keyed with no hitter/pitcher split ({"35":..,"80":..}), whereas
+  // the old fv_to_war_peak nested by side. Handle BOTH shapes so this never
+  // returns null on the current data (the old per-side read silently broke the
+  // FV→WAR tooltip + the legacy surplus estimate). Surplus DISPLAY comes from
+  // the baked p.surplus block / org._active_surplus_net_mm now; this powers the
+  // FV→WAR tooltip + the rare no-baked fallback.
+  const _peak = vf.fv_to_war_peak;
+  const table = (_peak && _peak[isPitcher ? "pitcher" : "hitter"]) // legacy per-side
+             || _peak                                              // legacy flat (unlikely)
+             || vf.fv_to_6yr_avg_war;                              // current flat, side-agnostic
+  if (!table || typeof table !== "object") return null;
   const f = Number(fv);
   if (!isFinite(f)) return null;
   if (f >= 80) return table["80"];
@@ -10073,11 +10079,13 @@ function fvBadgeTooltip(player) {
   // 47.3-FV prospect doesn't get bucketed to FV 45's projection.
   if (rawFv != null && rawFv >= 40) {
     const isPit = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(player.position || ""));
-    const surplus = estimateSurplusValueMM(rawFv, isPit, player.position);
+    // Baked engine surplus (matches the player's surplus cell); FV→WAR anchor
+    // from the repaired fvToWarPeak.
+    const surplus = playerSurplusMM(player);
     const warPeak = fvToWarPeak(rawFv, isPit);
     if (surplus != null && surplus > 0.5 && warPeak != null) {
       const perFv = surplus / rawFv;
-      parts.push(`~${warPeak.toFixed(1)} WAR/yr peak · ~$${surplus.toFixed(1)}M 6yr surplus · ~$${perFv.toFixed(1)}M/FV-pt`);
+      parts.push(`~${warPeak.toFixed(1)} WAR/yr · ~$${surplus.toFixed(1)}M 6yr surplus · ~$${perFv.toFixed(1)}M/FV-pt`);
     }
   }
   // Surface the single-source pull-down when it applies — the badge
@@ -18804,10 +18812,10 @@ function renderRecentlyTraded() {
         war:   careerWar,
       };
     }
-    // Prospects (with or without realized WAR) → FV-derived surplus.
-    if (p.fv_close != null) {
-      const isPit = _TRADE_PITCHER_RE.test(String(p.position || ""));
-      const surplus = estimateSurplusValueMM(p.fv_close, isPit, p.position, { player: p });
+    // Prospects (with or without realized WAR) → baked engine surplus (the
+    // single source of truth; FV-estimate fallback only when none is baked).
+    if (p.fv_close != null || (p.surplus && p.surplus.value_mm != null)) {
+      const surplus = playerSurplusMM(p);
       return { value: surplus, kind: "fv", fv: p.fv_close };
     }
     return { value: null, kind: "unknown" };
@@ -19710,6 +19718,21 @@ function successProb(fv, isPitcher) {
 // the formula directly at the requested FV gives accurate values for
 // non-anchor FVs like 47 or 52.5 (which used to bucket to FV 45/55
 // interpolations that crossed a tier boundary).
+// SINGLE SOURCE OF TRUTH for a prospect's surplus value ($M): the baked
+// career-path engine value (p.surplus.value_mm) — the same number shown on the
+// prospect list/detail/GFX via makeSurplusCell. Falls back to the FV-anchored
+// client estimate ONLY when no baked value is on file (older payloads / amateurs
+// with no engine run). Farm-level surplus rolls up via org._active_surplus_net_mm
+// (the engine's org aggregate of this same per-player surplus). Use THIS for any
+// per-player surplus $ so the farm + trade + GFX surfaces can't drift from the
+// list/detail or silently break when the legacy estimate changes shape.
+function playerSurplusMM(p) {
+  if (p && p.surplus && p.surplus.value_mm != null) return p.surplus.value_mm;
+  if (!p || p.fv_close == null) return null;
+  const isP = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").split("/")[0].toUpperCase());
+  return estimateSurplusValueMM(p.fv_close, isP, p.position, { player: p });
+}
+
 function estimateSurplusValueMM(fv, isPitcher, position, opts) {
   if (fv == null) return null;
   const f = Number(fv);
@@ -32277,19 +32300,15 @@ function farmSortedOrgs() {
     if (grand <= 0) return { ifaPct: 0, draftPct: 0, grand: 0 };
     return { ifaPct: ifaTotal / grand, draftPct: draftTotal / grand, grand };
   };
-  // Aggregate surplus value per org for the "surplus" sort — same
-  // computation as renderFarmSystems but built lazily and only when needed.
+  // Org surplus for the "surplus" sort — the engine's authoritative aggregate
+  // (matches the list cell + Finances tab). Built lazily from org_summary.
   let _surplusMemo = null;
   const surplusForOrg = (orgCode) => {
     if (!_surplusMemo) {
       _surplusMemo = {};
-      const PITCHER_RE = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/;
-      for (const pl of (DATA.players || [])) {
-        if (!pl.org || pl.fv_close == null) continue;
-        const isP = PITCHER_RE.test(String(pl.position || "").split("/")[0].toUpperCase());
-        const sv  = estimateSurplusValueMM(pl.fv_close, isP, pl.position);
-        if (sv == null) continue;
-        _surplusMemo[pl.org] = (_surplusMemo[pl.org] || 0) + sv;
+      for (const o of (DATA.org_summary || [])) {
+        if (o && o.org && o._active_surplus_net_mm != null)
+          _surplusMemo[o.org] = o._active_surplus_net_mm;
       }
     }
     return _surplusMemo[orgCode] || 0;
@@ -32668,19 +32687,17 @@ function renderFarmSystems() {
       date: g.debut_date,
     });
   }
-  // Aggregate surplus value per org — sum each active prospect's FV-implied
-  // Sur+ table value, split hitter / pitcher. Same call powering the per-org
-  // Surplus tile on renderFarmDetail.
-  const PITCHER_RE = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/;
+  // Org-level surplus comes straight from the engine's authoritative aggregate
+  // (org._active_surplus_net_mm — the roll-up of each active prospect's baked
+  // p.surplus.value_mm), the SAME number the Finances tab + detail tile show.
+  // (Was a client-side re-sum of estimateSurplusValueMM, which the v38
+  // value-framework refactor silently broke → every row showed "—".)
   const surplusByOrg = {};
   const countByOrg = {};
-  for (const pl of (DATA.players || [])) {
-    if (!pl.org || pl.fv_close == null) continue;
-    const isP = PITCHER_RE.test(String(pl.position || "").split("/")[0].toUpperCase());
-    const s = estimateSurplusValueMM(pl.fv_close, isP, pl.position);
-    if (s == null) continue;
-    surplusByOrg[pl.org] = (surplusByOrg[pl.org] || 0) + s;
-    countByOrg[pl.org]   = (countByOrg[pl.org]   || 0) + 1;
+  for (const o of (DATA.org_summary || [])) {
+    if (!o || !o.org) continue;
+    if (o._active_surplus_net_mm != null) surplusByOrg[o.org] = o._active_surplus_net_mm;
+    if (o._active_surplus_count != null)  countByOrg[o.org]   = o._active_surplus_count;
   }
   // Last-visit rank deltas — load BEFORE rendering, snapshot AFTER so
   // the same render cycle doesn't compare against itself.
@@ -38485,9 +38502,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
     },
     surplus: (a, b) => {
       const sv = (p) => {
-        if (p.fv_close == null) return -1;
-        const isP = !!(p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position));
-        return estimateSurplusValueMM(p.fv_close, isP, p.position) || 0;
+        const v = playerSurplusMM(p);
+        return v == null ? -1 : v;
       };
       return sv(b) - sv(a);
     },
@@ -38626,21 +38642,22 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // surplus-value sidebar card on the detail page. Each prospect's
   // estimate uses the FV → $M lookup with hitter/pitcher split.
   const farmSurplusBreakdown = (() => {
-    let total = 0;
-    let n = 0;
-    let topContributor = null;
-    let topShare = 0;
+    // Org total = the engine's authoritative aggregate (matches the farm list
+    // cell + Finances tab). Top contributor = the active prospect with the
+    // largest baked per-player surplus (the SAME p.surplus.value_mm shown on
+    // the prospect list). One definition: per-player baked, per-org aggregate.
+    let topContributor = null, topShare = 0, n = 0;
     for (const p of rosterPlayersAll) {
-      const fv = p.fv_close;
-      if (fv == null) continue;
-      const isP = !!(p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position));
-      const s = estimateSurplusValueMM(fv, isP, p.position);
+      const s = playerSurplusMM(p);
       if (s == null) continue;
-      total += s;
       n++;
       if (s > topShare) { topShare = s; topContributor = p; }
     }
-    return { total, n, topContributor, topShare };
+    const total = (org && org._active_surplus_net_mm != null)
+                  ? org._active_surplus_net_mm
+                  : null;
+    const count = (org && org._active_surplus_count != null) ? org._active_surplus_count : n;
+    return { total: total ?? 0, n: count, topContributor, topShare };
   })();
   const fmtSurplusUsd = m => {
     if (m == null) return "—";
@@ -38677,9 +38694,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     if (!_dist) { _dist = {}; for (const p of rosterPlayersAll) { if (p.fv_close == null) continue; const t = Math.round(p.fv_close); _dist[t] = (_dist[t] || 0) + 1; } }
     const _topSurplus = rosterPlayersAll
       .map(p => {
-        if (p.fv_close == null) return null;
-        const isP = !!(p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position));
-        const mm = estimateSurplusValueMM(p.fv_close, isP, p.position);
+        const mm = playerSurplusMM(p);
         return (mm && mm > 0) ? { name: p.player_name, mm } : null;
       })
       .filter(Boolean)
