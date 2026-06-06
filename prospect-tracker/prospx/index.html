@@ -4154,6 +4154,42 @@
       border: 1px solid var(--border);
     }
     .chart-fchip:hover { border-color: var(--down); color: var(--down); }
+    /* === How to Read the Site (guide) === */
+    .guide-wrap { max-width: 900px; }
+    .guide-intro { font-family: var(--font-serif); font-size: 14px; line-height: 1.6;
+      color: var(--text-secondary); margin: 2px 0 8px; }
+    .guide-anat { display: flex; flex-direction: column; gap: 0; margin: 6px 0 4px;
+      border: 1px solid var(--border); }
+    .guide-anat-row { display: flex; align-items: flex-start; gap: 14px; padding: 11px 14px;
+      border-bottom: 1px solid var(--border-light); }
+    .guide-anat-row:last-child { border-bottom: 0; }
+    .guide-anat-row:nth-child(odd) { background: var(--bg-secondary); }
+    .guide-anat-vis { flex: 0 0 130px; display: flex; align-items: center; min-height: 24px; }
+    .guide-anat-txt { flex: 1 1 auto; min-width: 0; }
+    .guide-anat-term { font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+      color: var(--text-primary); margin-bottom: 2px; }
+    .guide-anat-plain { font-family: var(--font-serif); font-size: 13px; line-height: 1.5;
+      color: var(--text-secondary); }
+    .arch-flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px;
+      margin: 8px 0 18px; }
+    .arch-stage { border: 1px solid var(--border); background: var(--bg-secondary);
+      padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .arch-stage-label { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); }
+    .arch-node { border: 1px solid var(--border-light); background: var(--bg-primary);
+      padding: 6px 9px; font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+      color: var(--text-primary); display: flex; flex-direction: column; }
+    .arch-node-sub { font-family: var(--font-sans); font-size: 9px; font-weight: 500;
+      letter-spacing: 0.02em; color: var(--text-tertiary); margin-top: 1px; }
+    .arch-node-col { display: flex; flex-direction: column; gap: 5px; }
+    .arch-arrow { display: flex; align-items: center; color: var(--neon-cyan);
+      font-size: 18px; font-weight: 700; }
+    @media (max-width: 640px) {
+      .arch-flow { flex-direction: column; align-items: stretch; }
+      .arch-arrow { justify-content: center; transform: rotate(90deg); height: 18px; }
+      .guide-anat-vis { flex-basis: 96px; }
+    }
+
     /* === Methodology & Track Record === */
     /* Source Comparison — visually set apart as the empirical "does it work?"
        data area: framed panel + a data-tone eyebrow so it reads distinct from
@@ -9668,10 +9704,12 @@
       <span class="newsprint-eyebrow-meta">term reference · model derivations · source-comparison backtest — the single source of truth for every metric</span>
     </div>
     <div class="tm-mode" role="tablist" aria-label="Glossary / Methodology view" style="margin-bottom:10px;">
+      <button class="tm-mode-btn" data-glossary-view="guide" role="tab" title="Annotated walkthrough of a player card, the FV chart, and a farm page — plus how the metrics build on each other">How&nbsp;to&nbsp;Read</button>
       <button class="tm-mode-btn active" data-glossary-view="terms" role="tab" title="Term reference — every stat, index, and concept used on the site">Glossary</button>
       <button class="tm-mode-btn" data-glossary-view="methodology" role="tab" title="How the proprietary models are built — derivations, worked examples, citations">Methodology</button>
       <button class="tm-mode-btn" data-glossary-view="source-comparison" role="tab" title="The empirical backtest — does the consensus outperform its sources on resolved cohorts?">Source&nbsp;Comparison</button>
     </div>
+    <div id="guide-body" style="display:none;"></div>
     <div id="methodology-body" style="display:none;"></div>
     <div id="source-comparison-body" style="display:none;"></div>
     <div class="filter-bar" id="glossary-filter-bar" style="flex-wrap:wrap;gap:6px;align-items:center;">
@@ -18179,6 +18217,118 @@ function _methTierTable(bt, rater) {
   </div>`;
 }
 
+// Inline glossary link — wraps a label in a click-to-define .g-term span so any
+// metric name anywhere resolves to its single-source-of-truth glossary entry.
+function gTermLink(slug, label) {
+  return `<span class="g-term" data-term="${escapeHtml(slug)}">${escapeHtml(label != null ? label : (GLOSSARY[slug] ? GLOSSARY[slug].name : slug))}</span>`;
+}
+
+// "How to Read the Site" (Part 1 anchor) — annotated anatomy of a player card,
+// the FV history chart, and a farm page, with every element linked to its
+// glossary term, plus the metric-architecture diagram (how the metrics build on
+// each other). Onboards new readers and lays out the system at a glance.
+function renderGuide() {
+  const el = document.getElementById("guide-body");
+  if (!el) return;
+  // One annotated element: a live example chip + the term link + plain-English.
+  const anat = (example, slug, plain) => `<div class="guide-anat-row">
+      <div class="guide-anat-vis">${example}</div>
+      <div class="guide-anat-txt"><div class="guide-anat-term">${gTermLink(slug, GLOSSARY[slug] ? GLOSSARY[slug].name : slug)}</div><div class="guide-anat-plain">${plain}</div></div>
+    </div>`;
+  const archNode = (slug, label, sub) => `<div class="arch-node">${gTermLink(slug, label)}${sub ? `<span class="arch-node-sub">${escapeHtml(sub)}</span>` : ""}</div>`;
+
+  const cardAnatomy = [
+    anat(`<span class="fv-badge fv-60" style="padding:3px 9px;">60</span>`, "fv",
+      "The headline grade — a single 20-80 number summarizing the prospect's projected MLB future, blended across every source that grades them."),
+    anat(`<span style="display:inline-flex;gap:3px;"><span class="fv-badge fv-55 card-rarity-holo" style="padding:2px 7px;font-size:11px;">photo</span></span>`, "fv_rarity",
+      "The photo's border/effect tier (shine → foil → chrome → holo → legendary) is keyed to FV, so rarity reads at a glance and matches the prospect list."),
+    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--up);">HIT 60 · PWR 65 · …</span>`, "twenty_eighty",
+      "Per-tool 20-80 scouting grades. 50 is MLB-average; each ±10 is roughly one standard deviation. These feed the composite and, ultimately, FV."),
+    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-violet);">$DvM+ 110</span>`, "dvm_plus",
+      "A wRC+-style index of organizational development applied to the player's surplus dollars — 100 is league mean, +10 ≈ one SD."),
+    anat(`<span class="g-term" data-term="rps_plus" style="font-family:var(--font-mono);font-size:12px;color:var(--neon-cyan);">RPS+ 118</span>`, "rps_plus",
+      "Level-anchored rate performance vs the player's own age × position cohort. 100 = cohort mean."),
+    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--up);">SC+ 113</span>`, "statcast_plus",
+      "Tracked-data composite (contact quality + discipline for hitters; stuff + induced whiff/chase for pitchers), scaled so 100 = pool mean."),
+    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--up);">$154M</span>`, "surplus_value",
+      "Projected cost-controlled surplus value — the dollar production the player is expected to deliver above what those years cost."),
+    anat(`<span style="font-family:var(--font-mono);font-size:13px;color:var(--up);">▲</span>`, "stock",
+      "Recent direction of the consensus FV — rising, flat, or falling over the trailing window."),
+    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);">ETA 2027</span>`, "eta",
+      "Projected MLB-arrival year, derived from level, age, performance, and the org's promotion pace."),
+  ].join("");
+
+  const chartAnatomy = [
+    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-cyan);">━━ line</span>`, "consensus_fv",
+      "The solid line is the point-in-time consensus FV — the forward-filled, Bayesian-shrunk mean of every source's grade as of each date."),
+    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-tertiary);">┈┈ overlay</span>`, "fv",
+      "Toggling the per-source overlay shows each outlet's individual grade history — the inputs the consensus blends."),
+    anat(`<span style="font-family:var(--font-mono);font-size:13px;color:var(--up);">◆</span>`, "debut_rule",
+      "A debut marker flags when the player crossed the rookie-eligibility threshold and graduated off the prospect board."),
+    anat(`<span style="font-family:var(--font-mono);font-size:13px;color:var(--neon-amber);">⇄</span>`, "trade",
+      "Trade markers stamp cross-org moves at the FV the league assigned on the trade date."),
+  ].join("");
+
+  const farmAnatomy = [
+    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);">A+ tree</span>`, "farm_report_card",
+      "The org letter grade is a weighted tree: Development, MLB Production, Acquisition Strategy, and Financial branches, each built from auditable leaves."),
+    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-violet);">DvM+ 112</span>`, "dvm_plus",
+      "Development vs Mean — how fast the org grows the FV of prospects it already had (acquisitions nullified), 100 = league mean."),
+    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-cyan);">ToolDvM+ 108</span>`, "tools_dvm_plus",
+      "The same development idea applied per tool, weighted by what each position needs."),
+    anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--up);">OrgSur+ 121</span>`, "sur_plus",
+      "Org-level capital efficiency — WAR and contract surplus per dollar spent, scaled to 100 = league mean."),
+  ].join("");
+
+  el.innerHTML = `
+  <div class="guide-wrap">
+    <p class="guide-intro">Every number on the site resolves to a glossary entry. This page labels the elements you'll see on a player card, the FV history chart, and a farm-system page, then shows how the metrics build on one another. Click any underlined term for its definition.</p>
+
+    <h2 class="meth-h">Anatomy of a player card</h2>
+    <div class="guide-anat">${cardAnatomy}</div>
+
+    <h2 class="meth-h">Reading the FV history chart</h2>
+    <div class="guide-anat">${chartAnatomy}</div>
+
+    <h2 class="meth-h">Reading a farm-system page</h2>
+    <div class="guide-anat">${farmAnatomy}</div>
+
+    <h2 class="meth-h">How the metrics build on each other</h2>
+    <p class="meth-note">Each stage consumes the one before it. Scouting grades aggregate into a per-source FV; per-source FVs blend into the consensus; the consensus plus performance and tracked data drive the player indices; player indices roll up to the org grade.</p>
+    <div class="arch-flow">
+      <div class="arch-stage">
+        <div class="arch-stage-label">Inputs</div>
+        ${archNode("twenty_eighty", "Tool grades", "20-80, per source")}
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-stage">
+        <div class="arch-stage-label">Per-source grade</div>
+        ${archNode("fv", "FV", "each outlet")}
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-stage">
+        <div class="arch-stage-label">Blend</div>
+        ${archNode("consensus_fv", "Consensus FV", "forward-fill + shrink")}
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-stage">
+        <div class="arch-stage-label">Player indices</div>
+        <div class="arch-node-col">
+          ${archNode("rps_plus", "RPS+")}
+          ${archNode("statcast_plus", "SC+")}
+          ${archNode("dvm_plus", "DvM+ / $DvM+")}
+          ${archNode("surplus_value", "Surplus value")}
+        </div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-stage">
+        <div class="arch-stage-label">Org roll-up</div>
+        ${archNode("farm_report_card", "Farm grade", "weighted tree")}
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderMethodology() {
   const el = document.getElementById("methodology-body");
   if (!el) return;
@@ -18249,22 +18399,27 @@ function renderGlossary() {
       b.onclick = () => { state.glossaryView = b.dataset.glossaryView; renderGlossary(); syncToURL(); };
     }
   });
+  const guideBody = document.getElementById("guide-body");
   const methBody = document.getElementById("methodology-body");
   const scBody = document.getElementById("source-comparison-body");
   const filterBar = document.getElementById("glossary-filter-bar");
-  // Three differentiated areas share the section: Glossary (terms) · Methodology
-  // (derivations) · Source Comparison (the empirical backtest). Each renders into
-  // its own body so Methodology / Source Comparison can later be promoted to a
-  // standalone top-level section without a rewrite.
-  if (view === "methodology" || view === "source-comparison") {
+  // Four differentiated areas share the section: How to Read (onboarding guide +
+  // metric architecture) · Glossary (terms) · Methodology (derivations) · Source
+  // Comparison (the empirical backtest). Each renders into its own body so
+  // Methodology / Source Comparison can later be promoted to a standalone
+  // top-level section without a rewrite.
+  if (view === "guide" || view === "methodology" || view === "source-comparison") {
     if (filterBar) filterBar.style.display = "none";
     root.style.display = "none";
-    if (methBody) methBody.style.display = (view === "methodology") ? "" : "none";
-    if (scBody)   scBody.style.display   = (view === "source-comparison") ? "" : "none";
-    if (view === "methodology") renderMethodology();
+    if (guideBody) guideBody.style.display = (view === "guide") ? "" : "none";
+    if (methBody)  methBody.style.display  = (view === "methodology") ? "" : "none";
+    if (scBody)    scBody.style.display    = (view === "source-comparison") ? "" : "none";
+    if (view === "guide") renderGuide();
+    else if (view === "methodology") renderMethodology();
     else renderSourceComparison();
     return;
   }
+  if (guideBody) guideBody.style.display = "none";
   if (methBody) methBody.style.display = "none";
   if (scBody) scBody.style.display = "none";
   if (filterBar) filterBar.style.display = "";
