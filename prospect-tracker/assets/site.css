@@ -264,8 +264,8 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* ---- top wire ticker (scoreboard/terminal) ---- */
 .home-ticker {
   position: relative;
-  background: #0B0E07; color: #d7f7e4; border-bottom: 2px solid var(--accent-gold);
-  font-family: var(--font-retro-mono); font-size: 12.5px; letter-spacing: .03em;
+  background: #0B0E07; color: #e6fbef; border-bottom: 2px solid var(--accent-gold);
+  font-family: var(--font-retro-mono); font-size: 13px; letter-spacing: .02em;
   display: flex; align-items: center; gap: 0; overflow: hidden; white-space: nowrap;
 }
 /* WIRE brand mark — pinned at the left, opaque, and ABOVE the scrolling track
@@ -287,10 +287,27 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 }
 .home-ticker .ticker-tag .blip { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: ticker-blip 1.4s steps(2) infinite; }
 @keyframes ticker-blip { 50% { opacity: .25; } }
-.home-ticker .ticker-track { display: inline-flex; gap: 34px; padding: 6px 0; animation: ticker-scroll 48s linear infinite; }
+.home-ticker .ticker-track {
+  display: inline-flex; align-items: center; gap: 0; padding: 7px 0;
+  animation: ticker-scroll 50s linear infinite;
+  /* Keep scrolling even when the browser/OS prefers reduced motion. The global
+     reduced-motion reset (animation-duration:.001ms + iteration-count:1,
+     !important) is beaten here by higher selector specificity. The ticker is
+     decorative (aria-hidden) with a STATIC, accessible Prospect Wire feed in the
+     sidebar, and it pauses on hover — so motion-sensitive readers still get the
+     data and can stop it. (Per site-owner request the marquee always runs.) */
+  animation-duration: 50s !important;
+  animation-iteration-count: infinite !important;
+}
 /* Pause-on-hover (desktop) so a reader can stop the marquee and click an item. */
 .home-ticker:hover .ticker-track { animation-play-state: paused; }
-.home-ticker .ticker-track span, .home-ticker .ticker-track a { flex: none; }
+/* Direct children only (the items) — NOT the inner glyph spans. */
+.home-ticker .ticker-track > a, .home-ticker .ticker-track > span { flex: none; }
+/* Dim separator after each item for scannability (lives inside the item so the
+   duplicated track still loops seamlessly). */
+.home-ticker .ticker-track > a::after, .home-ticker .ticker-track > span::after {
+  content: "•"; color: #45563d; margin: 0 20px; font-weight: 400;
+}
 .home-ticker .ticker-track a { color: inherit; text-decoration: none; }
 .home-ticker .ticker-track a:hover { text-decoration: underline; }
 .home-ticker .ticker-track .up { color: #6ee7a8; } .home-ticker .ticker-track .down { color: #ff8a8a; }
@@ -335,11 +352,11 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 [data-theme="dark"] .sb-feed { background: #0a0c06; }
 .sb-feed .feed-head { display: flex; align-items: center; gap: 7px; font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8fe3b0; margin-bottom: 8px; }
 .sb-feed .feed-head .blip { width: 7px; height: 7px; border-radius: 50%; background: #6ee7a8; animation: ticker-blip 1.4s steps(2) infinite; }
-.feed-item { display: block; font-family: var(--font-retro-mono); font-size: 11.5px; line-height: 1.35; color: #cfe8d8; text-decoration: none; padding: 5px 0; border-bottom: 1px dotted #2a3326; }
+.feed-item { display: flex; align-items: baseline; gap: 7px; font-family: var(--font-retro-mono); font-size: 12px; line-height: 1.4; color: #e0f2e7; text-decoration: none; padding: 7px 2px; border-bottom: 1px dotted #2f3a2a; }
 .feed-item:last-child { border-bottom: 0; }
-.feed-item:hover { color: #fff; }
-.feed-item .ts { color: #6f8a76; margin-right: 6px; }
-.feed-item .g { margin-right: 5px; }
+.feed-item:hover { color: #fff; background: rgba(255,255,255,0.03); }
+.feed-item .ts { color: #7fa389; font-size: 10px; flex: none; letter-spacing: .02em; }
+.feed-item .g { margin-right: 1px; flex: none; font-weight: 700; }
 .feed-item .g.up { color: #6ee7a8; } .feed-item .g.down { color: #ff8a8a; }
 .feed-item .g.trade { color: #7fd0ff; } .feed-item .g.promo { color: var(--accent-gold); }
 .feed-item .g.debut { color: #c9a7ff; } .feed-item .g.il { color: #ff8a8a; }
@@ -424,9 +441,11 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .otd-ago { flex: none; font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-tertiary); }
 
 /* Date-aware upcoming-event callout (draft / signing period). */
-.home-callout { display: flex; align-items: center; gap: 12px; margin: 12px 0 0; padding: 8px 14px; border: 1px solid var(--accent-gold); background: color-mix(in srgb, var(--accent-gold) 10%, var(--bg-secondary)); text-decoration: none; color: var(--text-primary); font-family: var(--font-retro-mono); font-size: 13px; }
-.home-callout .cal-tag { font-weight: 700; color: var(--accent-gold); letter-spacing: .06em; text-transform: uppercase; font-size: 11px; flex: none; }
-.home-callout .cal-go { margin-left: auto; font-weight: 700; color: var(--accent-navy); flex: none; }
+.home-callout { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 14px; margin: 12px 0 0; padding: 9px 16px; border: 1px solid var(--accent-gold); background: color-mix(in srgb, var(--accent-gold) 10%, var(--bg-secondary)); text-decoration: none; color: var(--text-primary); font-family: var(--font-retro-mono); font-size: 13px; }
+.home-callout .cal-tag { font-weight: 700; color: var(--accent-gold); letter-spacing: .08em; text-transform: uppercase; font-size: 10px; flex: none; border: 1px solid color-mix(in srgb, var(--accent-gold) 45%, transparent); padding: 2px 7px; }
+.home-callout .cal-msg { color: var(--text-secondary); } .home-callout .cal-msg strong { color: var(--text-primary); }
+.home-callout .cal-go { font-weight: 700; color: var(--accent-navy); flex: none; }
+.home-callout:hover .cal-go { text-decoration: underline; }
 
 /* ---- responsive ---- */
 @media (max-width: 900px) {
@@ -459,11 +478,9 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    neutralize transitions/animations site-wide for users who ask for less motion.
    Plotted chart curves are static SVG paths, unaffected. */
 @media (prefers-reduced-motion: reduce) {
-  /* Don't leave a frozen stub: stop the auto-scroll but make the bar manually
-     scrollable so reduced-motion users can still read every item (the WIRE
-     mark is sticky, so it stays pinned while the track scrolls). */
-  .home-ticker { overflow-x: auto; }
-  .home-ticker .ticker-track { animation: none; transform: none; }
+  /* The decorative WIRE marquee keeps scrolling (it's exempted above and has a
+     static accessible equivalent in the sidebar + pauses on hover). Only the
+     small involuntary pulse-dots are stilled here. */
   .home-ticker .ticker-tag .blip, .sb-feed .feed-head .blip { animation: none; }
   *, *::before, *::after {
     animation-duration: 0.001ms !important;

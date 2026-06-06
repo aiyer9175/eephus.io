@@ -535,10 +535,11 @@ def _date_callout() -> str:
     for d, name, href in sorted(events, key=lambda e: e[0]):
         days = (d - today).days
         if 0 <= days <= 45:
-            when = "today" if days == 0 else ("tomorrow" if days == 1 else f"in {days} days")
+            when = "Today" if days == 0 else ("Tomorrow" if days == 1 else f"in {days} days")
+            md = d.strftime("%b %d").replace(" 0", " ")
             return (f'<a class="home-callout" href="{href}">'
                     f'<span class="cal-tag">◆ Upcoming</span>'
-                    f'<span>{html.escape(name)} {when} · {d.strftime("%b %d").replace(" 0", " ")}</span>'
+                    f'<span class="cal-msg"><strong>{html.escape(name)}</strong> · {md} · {when}</span>'
                     f'<span class="cal-go">View →</span></a>')
     return ""
 
