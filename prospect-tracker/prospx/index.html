@@ -13364,14 +13364,24 @@ function _statcastPercentileBlock(p, opts = {}) {
     const rgb = lo.rgb.map((v, i) => Math.round(v + (hi.rgb[i] - v) * t));
     return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
   };
+  // Statcast slider label → glossary slug (single source of truth, click-to-define).
+  const _SC_LABEL_SLUG = {
+    "Avg EV": "exit_velocity", "Exit Velo": "exit_velocity", "90th EV": "exit_velocity", "Max EV": "exit_velocity",
+    "Barrel%": "barrel_pct", "Hard-hit%": "hard_hit_pct", "Hard-Hit%": "hard_hit_pct",
+    "Chase%": "chase_pct", "Whiff%": "whiff_pct", "Z-Contact%": "z_contact_pct",
+  };
   const bars = specs.map(s => {
     const tone = pctColor(s.pct);
     const pctLabel = s.pct >= 90 ? `${s.pct}th · top ${100 - s.pct}%`
                     : s.pct >= 50 ? `${s.pct}th percentile`
                     : `${s.pct}th · bottom ${s.pct}%`;
     const valStr = s.fmt(s.val);
+    const _scSlug = _SC_LABEL_SLUG[s.label] || _SC_LABEL_SLUG[s.label.replace(/ allowed$/, "")];
+    const labelHtml = (_scSlug && typeof GLOSSARY !== "undefined" && GLOSSARY[_scSlug])
+      ? `<span class="g-term" data-term="${_scSlug}" style="color:var(--text-secondary);font-weight:600;">${escapeHtml(s.label)}</span>`
+      : `<span style="color:var(--text-secondary);font-weight:600;">${escapeHtml(s.label)}</span>`;
     return `<div style="display:grid;grid-template-columns:96px 1fr 70px 110px;gap:8px;align-items:center;font-size:var(--fs-sm);margin-bottom:4px;">
-      <span style="color:var(--text-secondary);font-weight:600;">${escapeHtml(s.label)}</span>
+      ${labelHtml}
       <div style="position:relative;height:8px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;border:1px solid var(--border-light);">
         <div style="position:absolute;left:0;top:0;height:100%;width:${s.pct}%;background:${tone};border-radius:4px;"></div>
         <div style="position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--text-tertiary);opacity:0.5;"></div>
@@ -30399,6 +30409,19 @@ function makeFarmReportCard(org) {
   };
 
   // Sub-grade cell: label · letter · rank · raw value.
+  // Farm-tree leaf key → glossary slug (only mapped where a real entry exists).
+  const _FARM_LEAF_SLUG = {
+    acq_draft: "draft_ceiling_hits", tx_trades: "trade_war_delta", tx_waivers: "waiver_hit_rate",
+    dev_hitter: "tools_dvm_plus", dev_pitcher: "tools_dvm_plus", dev_statcast_quality: "statcast_plus",
+    dev_health_mgmt: "farm_grade_health_burden",
+    fin_active_surplus: "surplus_value", fin_dollar_dvm: "fin_dollar_dvm",
+    fin_contract_surplus: "fin_contract_surplus", fin_war_per_m: "fin_war_per_m",
+    fin_draft_pool_efficiency: "fin_draft_pool_efficiency", fin_ifa_roi: "fin_ifa_roi",
+    mlb_hitter_production: "farm_grade_mlb_production", mlb_pitcher_production: "farm_grade_mlb_production",
+    talent_translation: "farm_grade_talent_translation",
+    mlb_production_boom_pct: "mlb_production_boom_pct", mlb_production_bust_pct: "mlb_production_bust_pct",
+    mlb_production_top_grads: "mlb_production_top_grads", mlb_production_conviction: "mlb_production_conviction",
+  };
   const subCell = (label, letterKey, rankKey, scoreFmt, scoreVal, extraTooltip) => {
     // v23 — default ungraded leaves to neutral 'C' instead of '—' so
     // every leaf in the tree displays a letter.
@@ -30419,9 +30442,13 @@ function makeFarmReportCard(org) {
     const letterStyle = isMissing
       ? `color:${gradeColor(letter)};opacity:0.55;`
       : `color:${gradeColor(letter)};`;
+    const _lslug = _FARM_LEAF_SLUG[letterKey];
+    const labelHtml = (_lslug && typeof GLOSSARY !== "undefined" && GLOSSARY[_lslug])
+      ? `<span class="gt-sub-label g-term" data-term="${_lslug}">${escapeHtml(label)}</span>`
+      : `<span class="gt-sub-label">${escapeHtml(label)}</span>`;
     return `
     <div class="gt-sub-cell" style="border-color:${gradeColor(letter)}33;"${titleAttr}>
-      <span class="gt-sub-label">${escapeHtml(label)}</span>
+      ${labelHtml}
       <span class="gt-sub-letter" style="${letterStyle}">${escapeHtml(letter)}</span>
       <span class="gt-sub-rank">#${rank ?? '—'}</span>
       <span class="gt-sub-meta">${typeof scoreFmt === 'function' ? scoreFmt(scoreVal) : scoreFmt}</span>
