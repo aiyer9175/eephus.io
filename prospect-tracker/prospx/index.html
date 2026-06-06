@@ -8482,6 +8482,7 @@
           <button class="gfx-swatch"           data-gfx-accent="magenta" type="button" title="Magenta" style="background:var(--neon-magenta);"></button>
         </span>
       </span>
+      <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-pack" type="checkbox"> card pack</label>
       <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-showval" type="checkbox" checked> value column</label>
       <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-photos" type="checkbox" checked> photos</label>
       <label class="gfx-ctrl gfx-ctrl-check"><input id="gfx-logos" type="checkbox" checked> team logos</label>
@@ -8491,6 +8492,7 @@
       <button class="gfx-btn is-share" id="gfx-share" type="button" hidden>⇪&nbsp;Share</button>
       <button class="gfx-btn is-primary" id="gfx-download" type="button">⤓&nbsp;Download&nbsp;PNG</button>
       <button class="gfx-btn" id="gfx-copy" type="button" title="Copy image to clipboard">Copy</button>
+      <button class="gfx-btn is-animate" id="gfx-animate" type="button" hidden title="Export a short looping clip where the rarity foil shimmers">✦&nbsp;Animate</button>
     </div>
     <div class="gfx-busy" id="gfx-busy" hidden><span class="gfx-busy-spin" aria-hidden="true"></span>Rendering…</div>
   </div>
@@ -25897,7 +25899,7 @@ const _GFX_FORMATS = {
   wide:     { w: 1600, h: 900,  label: "Wide 16:9" },
 };
 // User customization (persists across opens within a session).
-const _gfxOpts = { count: 50, title: "", accent: "", showValue: true, format: "portrait", theme: "auto", photos: true, logos: true, variant: "detailed", frame: "rarity" };
+const _gfxOpts = { count: 50, title: "", accent: "", showValue: true, format: "portrait", theme: "auto", photos: true, logos: true, variant: "detailed", frame: "rarity", pack: false };
 let _gfxOrigTheme = null;
 // v38 — Force the GFX board (+ the open modal) to a chosen light/dark theme by
 // flipping the root data-theme. The board inherits ALL tokens + fv-badge tints
@@ -26988,6 +26990,37 @@ function buildCompareCard(snap) {
 }
 
 // Build the full-resolution (1080px-wide) board from the current snapshot + opts.
+// Mini prospect card for the "card pack" sheet export — a small collectible
+// card (photo + rarity frame + FV chip + a key line), 3 across. Reuses the
+// same rarity tiers + FV chip as the list/full card so the pack matches.
+function _gfxMiniCard(item, kind, P, accent, idx) {
+  const p = (kind === "leader" || kind === "spotlight") ? (item.p || item) : item;
+  const r = _gfxRow(item, kind, null);
+  const rar = (typeof _gfxRarityTier === "function") ? _gfxRarityTier(p) : null;
+  const grad = (typeof _gfxRarityGradient === "function") ? _gfxRarityGradient(rar) : null;
+  const orgColor = (typeof ORG_COLORS !== "undefined" && p.org && ORG_COLORS[p.org]) ? ORG_COLORS[p.org] : accent;
+  const PW = 116, PH = 150, pad = rar ? 5 : 3;
+  const hsURL = (_gfxOpts.photos !== false && p.mlbam_id) ? _gfxHeadshotURL(p.mlbam_id, 200) : "";
+  const photo = `<div style="width:${PW}px;height:${PH}px;flex:none;border-radius:7px;overflow:hidden;box-sizing:border-box;padding:${pad}px;background:${grad || P.borderStrong};border-top:3px solid ${orgColor};">
+      <div style="width:100%;height:100%;border-radius:3px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;">
+        ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center top;background-repeat:no-repeat;"></div>` : ""}
+      </div></div>`;
+  const fvBadge = (r.fv != null)
+    ? `<span class="fv-badge ${fvClass(String(r.fv))}" style="font-size:21px;padding:3px 10px;border-radius:6px;font-weight:800;flex:none;">${escapeHtml(String(r.fv))}</span>`
+    : `<span style="font-family:var(--font-mono);font-size:18px;font-weight:800;color:${accent};">${r.rank != null ? "#" + r.rank : ""}</span>`;
+  const logo = (_gfxOpts.logos && p.org) ? _gfxTeamLogo(p.org, P, 18) : "";
+  const metaTxt = [p.position, (p.statline || {}).level || p.level, p.age != null ? "age " + Number(p.age).toFixed(1) : null].filter(Boolean).join(" · ");
+  return `<div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:14px 12px;background:${P.bg0};border:1px solid ${P.border};border-radius:10px;box-sizing:border-box;">
+      <div style="display:flex;align-items:center;justify-content:space-between;align-self:stretch;">
+        <span style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:${accent};">#${r.rank != null ? r.rank : idx + 1}</span>
+        ${fvBadge}
+      </div>
+      ${photo}
+      <div style="font-family:var(--font-retro);font-size:18px;font-weight:700;line-height:1.05;color:${P.text};">${escapeHtml(r.name || "")}</div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:${P.text3};display:flex;align-items:center;gap:5px;justify-content:center;">${logo}${escapeHtml(metaTxt)}</div>
+    </div>`;
+}
+
 function buildGfxBoard() {
   const snap = _gfxSnapshot;
   // v40 — single-subject card modes (prospect / farm detail) branch out early;
@@ -27018,6 +27051,20 @@ function buildGfxBoard() {
   const subtitle = _gfxSubtitle(total, cap);
   const dateStr = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const showVal = _gfxOpts.showValue;
+
+  // --- Card pack (Part 7): a sheet of mini collectible cards, 3 across. Only
+  // for player-ish lists (skip farm). Capped so the sheet stays a "pack". ---
+  if (_gfxOpts.pack && snap.kind !== "farm") {
+    const packN = Math.min(cap, 15);
+    const cards = shown.slice(0, packN).map((it, i) => _gfxMiniCard(it, snap.kind, P, accent, i)).join("");
+    const PW2 = 1080;
+    board.style.cssText = base + `padding:40px 44px 34px;display:flex;flex-direction:column;gap:24px;`;
+    board.innerHTML = `${_gfxHeader(P, accent, "Prospect Pack · " + packN, "")}
+      <div><div style="font-family:var(--font-retro);font-size:34px;font-weight:700;color:${P.text};line-height:1.05;">${escapeHtml(title)}</div>
+        <div style="font-family:var(--font-mono);font-size:14px;color:${P.text3};margin-top:6px;">${escapeHtml(subtitle)}</div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">${cards}</div>`;
+    return { board, total, w: PW2, h: board.offsetHeight || H };
+  }
 
   const rowHtml = (item, i) => {
     const r = _gfxRow(item, snap.kind, snap.meta);
@@ -27134,6 +27181,8 @@ function _gfxSyncControls() {
   if (ph) ph.checked = !!_gfxOpts.photos;
   const lg = document.getElementById("gfx-logos");
   if (lg) lg.checked = !!_gfxOpts.logos;
+  const pk = document.getElementById("gfx-pack");
+  if (pk) pk.checked = !!_gfxOpts.pack;
   const va = document.getElementById("gfx-variant");
   if (va) va.value = _gfxOpts.variant || "detailed";
   const frm = document.getElementById("gfx-frame");
@@ -27166,6 +27215,8 @@ function _gfxApplyModeUI() {
   hide(ctrlOf("gfx-variant"), k !== "prospect-card" && k !== "farm-card");
   // Frame style applies to prospect cards (rarity/chrome/retro/team).
   hide(ctrlOf("gfx-frame"), k !== "prospect-card");
+  // Card-pack (mini-card sheet) is a LIST-mode export (top-N / watchlist).
+  hide(ctrlOf("gfx-pack"), card);
 }
 function openGfxModal() {
   const overlay = document.getElementById("gfx-overlay");
@@ -27183,6 +27234,8 @@ function openGfxModal() {
   // desktops); elsewhere Download PNG is the primary path.
   const sh = document.getElementById("gfx-share");
   if (sh) sh.hidden = !(typeof navigator !== "undefined" && typeof navigator.canShare === "function");
+  const an = document.getElementById("gfx-animate");
+  if (an) an.hidden = !_gfxAnimateSupported();
   _gfxApplyTheme();
   _gfxSyncControls();
   _gfxApplyModeUI();
@@ -27274,7 +27327,7 @@ function _gfxBusy(on) {
   const b = document.getElementById("gfx-busy");
   if (b) b.hidden = !on;
   const dis = on || !_gfxBoardEl;
-  ["gfx-download", "gfx-copy", "gfx-share"].forEach(id => {
+  ["gfx-download", "gfx-copy", "gfx-share", "gfx-animate"].forEach(id => {
     const el = document.getElementById(id); if (el) el.disabled = dis;
   });
 }
@@ -27354,9 +27407,73 @@ async function copyGfx() {
     }
   }
 }
+// Animated export (Part 7) — a short looping clip where a holographic foil
+// glare sweeps across the card (the natural showcase for the rarity effects a
+// static PNG can't convey). WebM via MediaRecorder + canvas.captureStream: no
+// vendored encoder, mobile-friendly (Web Share path). Feature-detected.
+function _gfxAnimateSupported() {
+  return typeof MediaRecorder !== "undefined"
+      && typeof HTMLCanvasElement !== "undefined"
+      && typeof HTMLCanvasElement.prototype.captureStream === "function"
+      && (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+          || MediaRecorder.isTypeSupported("video/webm;codecs=vp8")
+          || MediaRecorder.isTypeSupported("video/webm"));
+}
+async function animateGfx() {
+  if (!_gfxBoardEl) return;
+  if (!_gfxAnimateSupported()) { alert("Animated export isn't supported in this browser — use Download PNG."); return; }
+  _gfxBusy(true);
+  try {
+    const base = await _gfxCanvas();             // one html2canvas pass → still frame
+    if (!base) throw new Error("render failed");
+    const W = base.width, H = base.height;
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const ctx = cv.getContext("2d");
+    const stream = cv.captureStream(30);
+    const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9"
+               : MediaRecorder.isTypeSupported("video/webm;codecs=vp8") ? "video/webm;codecs=vp8" : "video/webm";
+    const chunks = [];
+    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 12_000_000 });
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    const stopped = new Promise(res => { rec.onstop = res; });
+    rec.start();
+    const DUR = 2600, t0 = performance.now();
+    await new Promise(res => {
+      const frame = (now) => {
+        const prog = ((now - t0) % DUR) / DUR;
+        ctx.drawImage(base, 0, 0);
+        // Diagonal holographic glare sweep — the classic foil "tilt" shimmer.
+        const cx = (-0.35 + 1.7 * prog) * W;
+        const g = ctx.createLinearGradient(cx - W * 0.28, 0, cx + W * 0.28, H);
+        g.addColorStop(0, "rgba(255,255,255,0)");
+        g.addColorStop(0.5, "rgba(255,255,255,0.30)");
+        g.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.globalCompositeOperation = "soft-light";
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+        ctx.globalCompositeOperation = "source-over";
+        if (now - t0 < DUR) requestAnimationFrame(frame); else res();
+      };
+      requestAnimationFrame(frame);
+    });
+    rec.stop(); await stopped;
+    const blob = new Blob(chunks, { type: "video/webm" });
+    if (!blob.size) throw new Error("empty recording");
+    const fname = _gfxFilename().replace(/\.png$/i, "") + ".webm";
+    const file = new File([blob], fname, { type: "video/webm" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: _gfxShareTitle() }); }
+      catch (e) { if (!(e && e.name === "AbortError")) _gfxSaveBlob(blob, fname); }
+    } else { _gfxSaveBlob(blob, fname); }
+  } catch (e) {
+    console.error("animateGfx failed:", e);
+    alert("Couldn't render the animation — use Download PNG instead.");
+  } finally { _gfxBusy(false); }
+}
+
 // Delegated wiring (button lives in the mounted template; overlay at body level).
 document.addEventListener("click", (e) => {
   if (!e.target.closest) return;
+  if (e.target.closest("#gfx-animate")) { e.preventDefault(); animateGfx(); return; }
   if (e.target.closest(".gfx-compare-btn")) {
     e.preventDefault();
     const cmp = (typeof compareLoad === "function" ? compareLoad() : []).map(k => findPlayer(k)).filter(Boolean);
@@ -27401,6 +27518,9 @@ document.addEventListener("change", (e) => {
     _gfxRefresh();
   } else if (e.target.id === "gfx-logos") {
     _gfxOpts.logos = e.target.checked;
+    _gfxRefresh();
+  } else if (e.target.id === "gfx-pack") {
+    _gfxOpts.pack = e.target.checked;
     _gfxRefresh();
   } else if (e.target.id === "gfx-frame") {
     _gfxOpts.frame = e.target.value;
