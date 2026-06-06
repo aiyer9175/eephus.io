@@ -25695,6 +25695,50 @@ function escapeHtml(s) {
 // =============================================================================
 // Captures any DOM element to a 2x-DPR PNG. Used by the Generate GFX board
 // export (_gfxCanvas) and the Scatterplots "Save PNG" utility (#chart-save-png).
+// Preload + decode every async asset inside `el` and await webfonts, so
+// html2canvas never captures a half-loaded card (the #1 cause of blank/partial
+// GFX output). Covers BOTH <img> elements (logos, QR) AND background-image:url()
+// — the prospect headshot renders as a bg-image cover, which a naive <img>
+// preload would miss. Raced against a per-asset timeout so one slow/blocked
+// asset can't hang the export (it degrades to the silhouette instead).
+async function _gfxAwaitAssets(el, timeoutMs = 8000) {
+  const _to = (ms) => new Promise(r => setTimeout(r, ms));
+  const jobs = [];
+  // Webfonts — the pixel/mono faces must be ready or text reflows in the capture.
+  if (document.fonts && document.fonts.ready) {
+    jobs.push(Promise.race([document.fonts.ready, _to(timeoutMs)]).catch(() => {}));
+  }
+  if (el) {
+    const urls = new Set();
+    el.querySelectorAll("img").forEach(img => {
+      const s = img.currentSrc || img.getAttribute("src");
+      if (s && !s.startsWith("data:")) urls.add(s);
+    });
+    el.querySelectorAll("*").forEach(node => {
+      const bg = node.style && node.style.backgroundImage;
+      if (bg && bg.indexOf("url(") >= 0) {
+        (bg.match(/url\((['"]?)(.*?)\1\)/g) || []).forEach(u => {
+          const mm = u.match(/url\((['"]?)(.*?)\1\)/);
+          if (mm && mm[2] && !mm[2].startsWith("data:")) urls.add(mm[2]);
+        });
+      }
+    });
+    urls.forEach(src => {
+      jobs.push(Promise.race([
+        new Promise(res => {
+          const im = new Image();
+          im.crossOrigin = "anonymous";
+          im.onload = () => { (im.decode ? im.decode().catch(() => {}) : Promise.resolve()).then(res); };
+          im.onerror = res;   // 404 logo/headshot → silhouette fallback; don't block
+          im.src = src;
+        }),
+        _to(timeoutMs),
+      ]));
+    });
+  }
+  await Promise.allSettled(jobs);
+}
+
 async function exportElementAsImage(el, opts = {}) {
   if (!window.html2canvas) {
     alert("Image export not ready — refresh and try again (vendor script still loading).");
@@ -25702,21 +25746,29 @@ async function exportElementAsImage(el, opts = {}) {
   }
   if (!el) return null;
   const scale = opts.scale || 2;
-  // v42 — the old "PROSPX · prospx.app" corner watermark was removed: GFX cards
-  // now carry a single branding header (PROSPX wordmark + eephus.io/PROSPX · date),
-  // so a separate footer/watermark strip is redundant.
-  try {
-    const canvas = await html2canvas(el, {
-      scale,
-      backgroundColor: getComputedStyle(document.body).backgroundColor || "#0a0a0a",
-      useCORS: true,
-      logging: false,
-    });
-    return canvas;
-  } catch (err) {
-    console.error("exportElementAsImage failed:", err);
-    return null;
+  // Preload → await fonts BEFORE capture (header carries the PROSPX wordmark +
+  // eephus.io/PROSPX + timestamp; no footer/handle).
+  await _gfxAwaitAssets(el);
+  const run = () => html2canvas(el, {
+    scale,
+    backgroundColor: getComputedStyle(document.body).backgroundColor || "#0a0a0a",
+    useCORS: true,
+    logging: false,
+    imageTimeout: 15000,
+  });
+  // Retry once — transient decode/layout races occasionally yield a 0-size or
+  // throwing canvas; a second pass after assets settle almost always succeeds.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const canvas = await run();
+      if (canvas && canvas.width > 0 && canvas.height > 0) return canvas;
+      console.warn(`exportElementAsImage: empty canvas (attempt ${attempt + 1})`);
+    } catch (err) {
+      console.error(`exportElementAsImage failed (attempt ${attempt + 1}):`, err);
+    }
+    if (attempt === 0) { await _gfxAwaitAssets(el, 4000); await new Promise(r => setTimeout(r, 120)); }
   }
+  return null;
 }
 
 async function downloadElementAsPng(el, filename) {
@@ -26241,6 +26293,28 @@ function _gfxDynAccent(p, P) {
   if (fv >= 45) return C("--neon-amber");
   return P.cyan;
 }
+// --- Rarity parity (Part 5) -------------------------------------------------
+// Tier name driven by the EXACT SAME logic the prospect list uses
+// (_fvHeadshotRingClass), so GFX rarity always matches list rarity.
+function _gfxRarityTier(p) {
+  if (typeof _fvHeadshotRingClass !== "function") return null;
+  const m = (_fvHeadshotRingClass(p) || "").match(/card-rarity-(\w+)/);
+  return m ? m[1] : null;   // shine | foil | chrome | holo | legendary | null
+}
+// The list paints each tier as an animated gradient border (padding-box/
+// border-box) — which html2canvas can't capture. These are the SAME gradient
+// color stops rendered as a plain background (export-safe; the faithful static
+// frame of the live effect), so the rarity shows up in the exported PNG.
+function _gfxRarityGradient(tier) {
+  switch (tier) {
+    case "legendary": return "linear-gradient(120deg,#ff5fa2 0%,#ffd45a 18%,#4ee0ff 36%,#b455ff 54%,#ff5fa2 72%,#ffd45a 90%,#4ee0ff 100%)";
+    case "holo":      return "linear-gradient(135deg,#4ee0ff 0%,#b455ff 25%,#ff5fa2 50%,#ffd45a 75%,#4ee0ff 100%)";
+    case "chrome":    return "linear-gradient(135deg,#dce0ec 0%,#aab2c6 35%,#ffffff 50%,#aab2c6 65%,#dce0ec 100%)";
+    case "foil":      return "linear-gradient(135deg,#c8c8d2 0%,#f0f0fa 50%,#c8c8d2 100%)";
+    case "shine":     return "#C9A85A";
+    default:          return null;
+  }
+}
 // Tool radar (spider) chart — concrete colors + literal mono font so it survives
 // html2canvas serialization. items: [{label, value(20-80|null)}].
 function _gfxToolRadar(items, P, accent, size) {
@@ -26373,22 +26447,29 @@ function buildProspectCard(snap) {
   const sl = p.statline || {};
   const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true);
 
-  // Rarity frame — holographic for 60+ FV (chrome at 70+).
-  const rarity = (fvNum != null && fvNum >= 70) ? "chrome"
-               : (fvNum != null && fvNum >= 61) ? "holo"
-               : (fvNum != null && fvNum >= 60) ? "gold" : "plain";
-  const frameBg = rarity === "chrome" ? "linear-gradient(135deg,#dfe2ea 0%,#aab0be 25%,#f6f7fb 50%,#9097a8 75%,#dfe2ea 100%)"
-                : rarity === "holo"   ? "linear-gradient(135deg,#B91C1C,#C9A227,#1F7A3A,#0E2B4D,#7d3cff,#B91C1C)"
-                : rarity === "gold"   ? "linear-gradient(135deg,#C9A227,#f0d77a,#C9A227)"
-                : accent;
-  const framePad = rarity === "plain" ? 4 : 10;
+  // Rarity — driven by the SAME logic as the prospect list (_fvHeadshotRingClass),
+  // so a prospect's GFX rarity matches their list rarity automatically. The list
+  // paints the effect as an animated gradient BORDER (padding-box/border-box +
+  // keyframes) — a pattern html2canvas can't capture. We render the IDENTICAL
+  // gradient as a solid frame (the faithful static frame of the same effect), so
+  // the rarity appears in the EXPORTED PNG, not just the live preview.
+  const rar = _gfxRarityTier(p);            // 'legendary'|'holo'|'chrome'|'foil'|'shine'|null
+  const rarGrad = _gfxRarityGradient(rar);  // matching list gradient, or null
+  // Team-color top edge — parity with the list headshot's --org-color top border.
+  const orgColor = (typeof ORG_COLORS !== "undefined" && p.org && ORG_COLORS[p.org]) ? ORG_COLORS[p.org] : accent;
+  const framePad = rar ? (rar === "legendary" ? 9 : rar === "holo" ? 8 : 7) : 5;
+  const frameBg = rarGrad || accent;        // card edge mirrors the photo rarity
 
-  // Photo — EXPORT-SAFE cover via background-image on a fixed 3:4 frame (html2canvas
-  // honors background-size:cover but mishandles <img> object-fit, which squished it).
+  // Photo — EXPORT-SAFE cover via background-image on a fixed 3:4 frame, wrapped
+  // in the rarity gradient frame + a team-color top edge (matches the list).
   const hsURL = (_gfxOpts.photos !== false && p.mlbam_id) ? _gfxHeadshotURL(p.mlbam_id, 320) : "";
   const PW = 264, PH = 352; // 3:4
-  const headshot = `<div style="width:${PW}px;height:${PH}px;flex:none;border:1px solid ${P.borderStrong};border-radius:8px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;">
-    ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center top;background-repeat:no-repeat;"></div>` : ""}
+  const photoPad = rar ? (rar === "legendary" ? 9 : 7) : 3;
+  const photoFrameBg = rarGrad || P.borderStrong;
+  const headshot = `<div style="width:${PW}px;height:${PH}px;flex:none;border-radius:9px;overflow:hidden;box-sizing:border-box;padding:${photoPad}px;background:${photoFrameBg};border-top:4px solid ${orgColor};box-shadow:0 2px 10px rgba(0,0,0,0.25);">
+    <div style="width:100%;height:100%;border-radius:4px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;">
+      ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center top;background-repeat:no-repeat;"></div>` : ""}
+    </div>
   </div>`;
 
   const fvBadgeBig = fvLabel
@@ -26445,23 +26526,34 @@ function buildProspectCard(snap) {
     if (sl.level) { const m = arr.find(s => s && s.level === sl.level); if (m) return m; }
     return arr.slice().sort((a, b) => (b.pitches || 0) - (a.pitches || 0))[0] || null;
   })();
+  // Preferred, modern rate/descriptive metrics (consistent across every
+  // variant): hitters lead with slash / OPS+ / ISO / BB% / K% / Statcast;
+  // pitchers lead with ERA / FIP / WHIP / K% / BB% / K-BB% (NOT K/9 · BB/9).
+  // Each preferred metric falls back to the next-best only when unpopulated.
   const stats = [];
   const push = (l, v) => { if (v != null && v !== "") stats.push([l, v]); };
+  const pct1 = v => Number(v).toFixed(1) + "%";
   if (!isPitcher) {
     if (sl.avg != null && sl.obp != null && sl.slg != null) push("Slash", `${fmtAvg(sl.avg)}/${fmtAvg(sl.obp)}/${fmtAvg(sl.slg)}`);
     else if (sl.ops != null) push("OPS", Number(sl.ops).toFixed(3).replace(/^0(?=\.)/, ""));
-    if (sl.hr != null) push("HR", String(sl.hr));
-    if (sl.sb != null) push("SB", String(sl.sb));
-    if (sl.bb_pct != null) push("BB%", Number(sl.bb_pct).toFixed(1) + "%");
-    if (sl.k_pct != null) push("K%", Number(sl.k_pct).toFixed(1) + "%");
-    if (cq.avg_ev != null) push("Exit Velo", cq.avg_ev.toFixed(1) + " mph");
+    if (sl.ops_plus_level != null) push("OPS+ vs lvl", String(Math.round(sl.ops_plus_level)));
+    if (sl.iso != null) push("ISO", Number(sl.iso).toFixed(3).replace(/^0(?=\.)/, ""));
+    if (sl.bb_pct != null) push("BB%", pct1(sl.bb_pct));
+    if (sl.k_pct != null) push("K%", pct1(sl.k_pct));
+    // Statcast descriptor — barrel% (preferred) else exit velo.
+    if (cq.barrel_pct != null) push("Barrel%", pct1(cq.barrel_pct));
+    else if (cq.avg_ev != null) push("Exit Velo", cq.avg_ev.toFixed(1) + " mph");
+    else if (sl.hr != null) push("HR", String(sl.hr));   // last-resort counting stat
   } else {
     if (sl.era != null) push("ERA", Number(sl.era).toFixed(2));
     if (sl.fip != null) push("FIP", Number(sl.fip).toFixed(2));
     if (sl.whip != null) push("WHIP", Number(sl.whip).toFixed(2));
-    if (sl.ip != null) push("IP", String(sl.ip));
-    if (sl.k_per_9 != null) push("K/9", Number(sl.k_per_9).toFixed(1));
-    if (sl.bb_per_9 != null) push("BB/9", Number(sl.bb_per_9).toFixed(1));
+    if (sl.k_pct != null) push("K%", pct1(sl.k_pct));
+    else if (sl.k_per_9 != null) push("K/9", Number(sl.k_per_9).toFixed(1));   // fallback
+    if (sl.bb_pct != null) push("BB%", pct1(sl.bb_pct));
+    else if (sl.bb_per_9 != null) push("BB/9", Number(sl.bb_per_9).toFixed(1)); // fallback
+    if (sl.k_pct != null && sl.bb_pct != null) push("K-BB%", pct1(sl.k_pct - sl.bb_pct));
+    else if (sl.ip != null) push("IP", String(sl.ip));
   }
   const statsShown = stats.slice(0, 6);
   const statsGrid = statsShown.length ? `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;">${statsShown.map(([l, v]) => `
@@ -26536,9 +26628,11 @@ function buildProspectCard(snap) {
   // hitting-line stat grid.
   const rateCaption = isPitcher ? [
     sl.era != null ? `ERA ${Number(sl.era).toFixed(2)}` : null,
+    sl.fip != null ? `FIP ${Number(sl.fip).toFixed(2)}` : null,
     sl.whip != null ? `WHIP ${Number(sl.whip).toFixed(2)}` : null,
-    sl.k_per_9 != null ? `K/9 ${Number(sl.k_per_9).toFixed(1)}` : null,
-    sl.bb_per_9 != null ? `BB/9 ${Number(sl.bb_per_9).toFixed(1)}` : null,
+    sl.k_pct != null ? `K% ${Number(sl.k_pct).toFixed(1)}%` : (sl.k_per_9 != null ? `K/9 ${Number(sl.k_per_9).toFixed(1)}` : null),
+    sl.bb_pct != null ? `BB% ${Number(sl.bb_pct).toFixed(1)}%` : (sl.bb_per_9 != null ? `BB/9 ${Number(sl.bb_per_9).toFixed(1)}` : null),
+    (sl.k_pct != null && sl.bb_pct != null) ? `K-BB% ${(sl.k_pct - sl.bb_pct).toFixed(1)}%` : null,
     sl.ip != null ? `${sl.ip} IP` : null,
   ].filter(Boolean).join("  ·  ") : "";
   const arsenalTable = isPitcher ? _gfxPitchArsenal(p, P) : "";
@@ -26945,6 +27039,9 @@ function _gfxRefresh() {
   holder.style.margin = "0 auto";
   holder.appendChild(board);
   preview.appendChild(holder);
+  // Config changed → the cached export blob is stale; clear it and re-render in
+  // the background so Copy/Download/Share stay near-instant when the user taps.
+  _gfxInvalidateBlob();
   requestAnimationFrame(() => {
     const s = Math.min(1, (preview.clientWidth - 32) / (board.offsetWidth || 1080));
     if (s < 1) {
@@ -26953,13 +27050,9 @@ function _gfxRefresh() {
       holder.style.width = (board.offsetWidth * s) + "px";
       holder.style.height = (board.offsetHeight * s) + "px";
     }
+    // Pre-generate the blob AFTER layout so html2canvas measures the real box.
+    _gfxKickPrepare();
   });
-  const dl = document.getElementById("gfx-download");
-  const cp = document.getElementById("gfx-copy");
-  const sh = document.getElementById("gfx-share");
-  if (dl) dl.disabled = total === 0;
-  if (cp) cp.disabled = total === 0;
-  if (sh) sh.disabled = total === 0;
 }
 // Sync the customization controls' values from _gfxOpts (called on open).
 function _gfxSyncControls() {
@@ -27043,6 +27136,65 @@ async function _gfxCanvas() {
   try { return await exportElementAsImage(_gfxBoardEl, { scale: 2 }); }
   finally { _gfxBoardEl.style.transform = prev || ""; }
 }
+
+// --- Cached export blob (Part 2: fast Copy/Download/Share) -------------------
+// The blob is rendered once when the preview is (re)built and reused by Copy,
+// Download, and Share — so the click is near-instant instead of re-running the
+// full html2canvas pass every time. Invalidated whenever the config signature
+// (format/variant/theme/accent/toggles/subject) changes.
+let _gfxBlob = null, _gfxBlobSig = null, _gfxBlobPending = null;
+function _gfxConfigSig() {
+  const s = _gfxSnapshot;
+  const subj = s ? `${s.kind}:${(s.items && s.items[0] && (s.items[0].player_key || s.items[0].org)) || ""}:${s.items ? s.items.length : 0}` : "none";
+  return JSON.stringify(_gfxOpts) + "|" + subj + "|" + (document.documentElement.getAttribute("data-theme") || "");
+}
+function _gfxInvalidateBlob() { _gfxBlob = null; _gfxBlobSig = null; _gfxBlobPending = null; }
+// Render (or reuse) the export blob for the current config. Dedupes concurrent
+// callers and only stores the result if the config hasn't changed since.
+function _gfxPrepareBlob() {
+  const sig = _gfxConfigSig();
+  if (_gfxBlob && _gfxBlobSig === sig) return Promise.resolve(_gfxBlob);
+  if (_gfxBlobPending && _gfxBlobSig === sig) return _gfxBlobPending;
+  _gfxBlobSig = sig;
+  _gfxBlob = null;
+  _gfxBlobPending = (async () => {
+    const canvas = await _gfxCanvas();
+    if (!canvas) throw new Error("GFX render failed");
+    const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+    if (!blob) throw new Error("toBlob returned null");
+    if (_gfxConfigSig() === sig) _gfxBlob = blob;   // still current → cache it
+    return blob;
+  })();
+  return _gfxBlobPending;
+}
+// Reflect blob readiness on the action buttons: subtle "preparing…" while the
+// cached blob renders, then enabled. Keeps Copy/Download/Share clearly ready.
+function _gfxSetActionState(state) {   // 'preparing' | 'ready' | 'empty' | 'error'
+  const dl = document.getElementById("gfx-download");
+  const cp = document.getElementById("gfx-copy");
+  const sh = document.getElementById("gfx-share");
+  const busy = document.getElementById("gfx-busy");
+  const preparing = state === "preparing";
+  const usable = state === "ready";
+  [dl, cp, sh].forEach(el => { if (el) el.disabled = !usable; });
+  if (busy) {
+    busy.hidden = !(preparing || state === "error");
+    const lbl = busy.querySelector(".gfx-busy-label") || busy;
+    if (state === "error") busy.textContent = "Render failed — tap Download to retry";
+    else if (preparing && lbl) { /* spinner markup retained; text below */ }
+  }
+  // Pre-generate readiness dot on Copy so it reads ready vs still preparing.
+  if (cp && !cp.dataset.label) cp.dataset.label = cp.textContent;
+}
+// Kick off background blob prep for the current board; update button state.
+function _gfxKickPrepare() {
+  if (!_gfxBoardEl) { _gfxSetActionState("empty"); return; }
+  _gfxSetActionState("preparing");
+  const sig = _gfxConfigSig();
+  _gfxPrepareBlob()
+    .then(() => { if (_gfxConfigSig() === sig) _gfxSetActionState("ready"); })
+    .catch((e) => { console.error("GFX blob prepare failed:", e); if (_gfxConfigSig() === sig) _gfxSetActionState("error"); });
+}
 function _gfxFilename() {
   const n = (_gfxOpts.count === "all") ? (_gfxSnapshot ? _gfxSnapshot.total : 0) : _gfxOpts.count;
   const t = _gfxTitle(n).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -27075,12 +27227,12 @@ async function downloadGfx() {
   if (!_gfxBoardEl) return;
   _gfxBusy(true);
   try {
-    const canvas = await _gfxCanvas();
-    if (!canvas) return;
-    const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+    const blob = await _gfxPrepareBlob();   // cached if already prepared
     if (blob) _gfxSaveBlob(blob, _gfxFilename());
-  } catch (e) { console.error("downloadGfx failed:", e); }
-  finally { _gfxBusy(false); }
+  } catch (e) {
+    console.error("downloadGfx failed:", e);
+    alert("Couldn't render the graphic — please try again.");
+  } finally { _gfxBusy(false); }
 }
 // Web Share API (navigator.share with files) — the ideal mobile path: hands the
 // PNG straight to the OS share sheet (X / Instagram / Messages / save to Photos).
@@ -27089,9 +27241,7 @@ async function shareGfx() {
   if (!_gfxBoardEl) return;
   _gfxBusy(true);
   try {
-    const canvas = await _gfxCanvas();
-    if (!canvas) return;
-    const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+    const blob = await _gfxPrepareBlob();   // cached if already prepared
     if (!blob) return;
     const fname = _gfxFilename();
     const file = new File([blob], fname, { type: "image/png" });
@@ -27113,33 +27263,28 @@ async function copyGfx() {
   if (!_gfxBoardEl) return;
   const cp = document.getElementById("gfx-copy");
   if (cp && !cp.dataset.label) cp.dataset.label = cp.textContent;
-  _gfxBusy(true);
-  // Render the PNG blob lazily INSIDE the ClipboardItem. Safari (WebKit) requires
-  // navigator.clipboard.write() to be invoked synchronously within the user
-  // gesture and accepts a Promise<Blob> as the item value — awaiting html2canvas
-  // first blows the gesture (NotAllowedError). Chrome/Edge/Firefox accept the
-  // Promise form too, so one path works everywhere. (_gfxBusy toggles are
-  // synchronous DOM writes, so they don't consume the gesture.)
-  const pngBlob = (async () => {
-    const canvas = await _gfxCanvas();
-    if (!canvas) throw new Error("GFX render failed");
-    const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
-    if (!blob) throw new Error("toBlob returned null");
-    return blob;
-  })();
+  const ok = () => { if (cp) { const t = cp.dataset.label || "Copy"; cp.textContent = "Copied ✓"; setTimeout(() => { cp.textContent = t; }, 1400); } };
   try {
-    await navigator.clipboard.write([new ClipboardItem({ "image/png": pngBlob })]);
-    if (cp) { const t = cp.dataset.label || "Copy"; cp.textContent = "Copied ✓"; setTimeout(() => { cp.textContent = t; }, 1400); }
+    // FAST path: the blob was pre-rendered when the preview built, so copy is
+    // an instant clipboard write. Otherwise hand clipboard.write a Promise<Blob>
+    // so Safari/WebKit keeps the user gesture (awaiting the render first throws
+    // NotAllowedError there); Chrome/Edge/Firefox accept the Promise form too.
+    const item = _gfxBlob
+      ? new ClipboardItem({ "image/png": _gfxBlob })
+      : new ClipboardItem({ "image/png": _gfxPrepareBlob() });
+    await navigator.clipboard.write([item]);
+    ok();
   } catch (e) {
-    try {
-      const blob = await pngBlob;
+    console.error("copyGfx failed:", e);
+    try {                                  // retry with a freshly awaited blob
+      const blob = await _gfxPrepareBlob();
       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-      if (cp) { const t = cp.dataset.label || "Copy"; cp.textContent = "Copied ✓"; setTimeout(() => { cp.textContent = t; }, 1400); }
+      ok();
     } catch (e2) {
-      console.error("copyGfx failed:", e2);
+      console.error("copyGfx retry failed:", e2);
       alert("Couldn't copy to clipboard — use Share or Download PNG.");
     }
-  } finally { _gfxBusy(false); }
+  }
 }
 // Delegated wiring (button lives in the mounted template; overlay at body level).
 document.addEventListener("click", (e) => {
