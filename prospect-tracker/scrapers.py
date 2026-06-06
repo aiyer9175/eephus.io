@@ -1603,7 +1603,10 @@ MLB_PIPELINE_INTERVALS = [
      f"MLB Pipeline {y} Top 100",
      f"{y}-01-22",
      y)
-    for y in (2021, 2022, 2023, 2024, 2025, 2026)
+    # 2017-2020 historical backfill — mlb.com serves these year-keyed pages
+    # directly (era-correct, with per-year bios carrying the point-in-time
+    # scouting grades). These resolved cohorts strengthen the backtest.
+    for y in (2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026)
 ]
 
 MLB_INTERNATIONAL_INTERVALS = [
@@ -1638,7 +1641,7 @@ MLB_PIPELINE_ORG_SLUGS = (
     "cubs", "reds", "brewers", "pirates", "cardinals",
     "dbacks", "rockies", "dodgers", "padres", "giants",
 )
-MLB_PIPELINE_ORG_YEARS = (2021, 2022, 2023, 2024, 2025, 2026)
+MLB_PIPELINE_ORG_YEARS = (2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026)
 
 # Display labels — concatenated slugs (dbacks/redsox/bluejays/whitesox)
 # need explicit pretty names so interval_label still reads "Diamondbacks"
