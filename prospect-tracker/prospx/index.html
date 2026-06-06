@@ -8443,6 +8443,15 @@
           <option value="compact">Compact</option>
           <option value="scouting">Scouting</option>
           <option value="stats">Stats / Statcast</option>
+          <option value="back">Card back</option>
+        </select>
+      </label>
+      <label class="gfx-ctrl">Frame
+        <select id="gfx-frame" class="gfx-select">
+          <option value="rarity">Rarity (FV tier)</option>
+          <option value="chrome">Chrome</option>
+          <option value="retro">Retro set</option>
+          <option value="team">Team colors</option>
         </select>
       </label>
       <label class="gfx-ctrl">Theme
@@ -25888,7 +25897,7 @@ const _GFX_FORMATS = {
   wide:     { w: 1600, h: 900,  label: "Wide 16:9" },
 };
 // User customization (persists across opens within a session).
-const _gfxOpts = { count: 50, title: "", accent: "", showValue: true, format: "portrait", theme: "auto", photos: true, logos: true, variant: "detailed" };
+const _gfxOpts = { count: 50, title: "", accent: "", showValue: true, format: "portrait", theme: "auto", photos: true, logos: true, variant: "detailed", frame: "rarity" };
 let _gfxOrigTheme = null;
 // v38 — Force the GFX board (+ the open modal) to a chosen light/dark theme by
 // flipping the root data-theme. The board inherits ALL tokens + fv-badge tints
@@ -26315,6 +26324,32 @@ function _gfxRarityGradient(tier) {
     default:          return null;
   }
 }
+// Year-by-year stat table for the CARD BACK — a compact, fixed-column line
+// (rate/descriptive metrics per Part 4) sized to the card width so html2canvas
+// never clips it. Last 8 seasons, newest at the bottom (chronological).
+function _gfxCareerTable(p, isPitcher, P) {
+  const rows = (p.career_stats || []).filter(r => r && r.season);
+  if (!rows.length) return "";
+  const f3 = v => v == null ? "—" : Number(v).toFixed(3).replace(/^0(?=\.)/, "");
+  const pc = v => v == null ? "—" : Number(v).toFixed(1) + "%";
+  const n2 = v => v == null ? "—" : Number(v).toFixed(2);
+  const cols = isPitcher
+    ? [["Yr", r => r.season], ["Lvl", r => r.level || ""], ["IP", r => r.ip != null ? r.ip : "—"],
+       ["ERA", r => n2(r.era)], ["FIP", r => n2(r.fip)], ["WHIP", r => n2(r.whip)],
+       ["K%", r => pc(r.k_pct)], ["BB%", r => pc(r.bb_pct)]]
+    : [["Yr", r => r.season], ["Lvl", r => r.level || ""], ["PA", r => r.pa != null ? r.pa : (r.ab != null ? r.ab : "—")],
+       ["AVG/OBP/SLG", r => (r.avg != null ? `${f3(r.avg)}/${f3(r.obp)}/${f3(r.slg)}` : "—")],
+       ["OPS", r => r.ops != null ? f3(r.ops) : "—"], ["ISO", r => f3(r.iso)],
+       ["BB%", r => pc(r.bb_pct)], ["K%", r => pc(r.k_pct)]];
+  const th = cols.map((c, i) => `<th style="text-align:${i < 2 ? "left" : "right"};padding:7px 9px;font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${P.text3};border-bottom:2px solid ${P.border};">${escapeHtml(c[0])}</th>`).join("");
+  const trs = rows.slice(-8).map((r, ri) => `<tr style="background:${ri % 2 ? P.bg : "transparent"};">${cols.map((c, i) => {
+    const v = c[1](r);
+    return `<td style="text-align:${i < 2 ? "left" : "right"};padding:6px 9px;font-family:var(--font-mono);font-size:17px;color:${i === 0 ? P.text : P.text2};font-variant-numeric:tabular-nums;border-bottom:1px solid ${P.borderLight || P.border};white-space:nowrap;">${escapeHtml(String(v))}</td>`;
+  }).join("")}</tr>`).join("");
+  return `<table style="width:100%;border-collapse:collapse;">
+    <thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table>`;
+}
+
 // Tool radar (spider) chart — concrete colors + literal mono font so it survives
 // html2canvas serialization. items: [{label, value(20-80|null)}].
 function _gfxToolRadar(items, P, accent, size) {
@@ -26454,17 +26489,25 @@ function buildProspectCard(snap) {
   // gradient as a solid frame (the faithful static frame of the same effect), so
   // the rarity appears in the EXPORTED PNG, not just the live preview.
   const rar = _gfxRarityTier(p);            // 'legendary'|'holo'|'chrome'|'foil'|'shine'|null
-  const rarGrad = _gfxRarityGradient(rar);  // matching list gradient, or null
   // Team-color top edge — parity with the list headshot's --org-color top border.
   const orgColor = (typeof ORG_COLORS !== "undefined" && p.org && ORG_COLORS[p.org]) ? ORG_COLORS[p.org] : accent;
-  const framePad = rar ? (rar === "legendary" ? 9 : rar === "holo" ? 8 : 7) : 5;
-  const frameBg = rarGrad || accent;        // card edge mirrors the photo rarity
+  // Frame style: Rarity (default, list-parity) · Chrome · Retro set · Team colors.
+  const frameStyle = _gfxOpts.frame || "rarity";
+  let rarGrad;
+  if (frameStyle === "chrome")      rarGrad = _gfxRarityGradient("chrome");
+  else if (frameStyle === "team")   rarGrad = `linear-gradient(135deg,${orgColor} 0%,rgba(255,255,255,0.55) 50%,${orgColor} 100%)`;
+  else if (frameStyle === "retro")  rarGrad = `repeating-linear-gradient(45deg,${P.text} 0 7px,${P.bg2} 7px 14px)`;
+  else                              rarGrad = _gfxRarityGradient(rar);  // rarity (FV tier)
+  const framePad = rar ? (rar === "legendary" ? 9 : rar === "holo" ? 8 : 7) : 6;
+  const frameBg = rarGrad || accent;        // card edge mirrors the photo frame
 
   // Photo — EXPORT-SAFE cover via background-image on a fixed 3:4 frame, wrapped
   // in the rarity gradient frame + a team-color top edge (matches the list).
   const hsURL = (_gfxOpts.photos !== false && p.mlbam_id) ? _gfxHeadshotURL(p.mlbam_id, 320) : "";
   const PW = 264, PH = 352; // 3:4
-  const photoPad = rar ? (rar === "legendary" ? 9 : 7) : 3;
+  // A chosen frame style (chrome/retro/team) always shows a visible frame; the
+  // default "rarity" style scales the frame with tier (thin/none below FV 45).
+  const photoPad = (frameStyle !== "rarity") ? 7 : (rar ? (rar === "legendary" ? 9 : 7) : 3);
   const photoFrameBg = rarGrad || P.borderStrong;
   const headshot = `<div style="width:${PW}px;height:${PH}px;flex:none;border-radius:9px;overflow:hidden;box-sizing:border-box;padding:${photoPad}px;background:${photoFrameBg};border-top:4px solid ${orgColor};box-shadow:0 2px 10px rgba(0,0,0,0.25);">
     <div style="width:100%;height:100%;border-radius:4px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;">
@@ -26652,6 +26695,27 @@ function buildProspectCard(snap) {
     sectionsHTML = [flagsRow, fvSect, toolSect, blurbHTML, valSect].filter(Boolean).join("");
   } else if (variant === "stats") {
     sectionsHTML = [flagsRow, fvSect, pctSect, pitchSect, statsOrArsenal, valSect].filter(Boolean).join("");
+  } else if (variant === "back") {
+    // Card back — the reverse of a real baseball card: full year-by-year stat
+    // line + complete tools + every Arkmetric + scouting report + bio. Lets the
+    // front stay clean while this holds the deep data.
+    const careerTbl = _gfxCareerTable(p, isPitcher, P);
+    const acq = p.acquisition || {};
+    const bioBits = [
+      acq.method === "draft" ? `Drafted ${acq.year || ""}${acq.round_label ? ` · ${acq.round_label}` : ""}${acq.pick_overall ? ` (#${acq.pick_overall})` : ""}` : null,
+      acq.method === "international_fa" ? `Int'l FA ${acq.year || ""}` : null,
+      acq.bonus_usd ? `$${(acq.bonus_usd / 1e6).toFixed(2)}M bonus` : null,
+      acq.school || null,
+      eta.year != null ? `ETA ${eta.year}` : null,
+    ].filter(Boolean).join("  ·  ");
+    const bioSect = bioBits ? `<div style="font-family:var(--font-mono);font-size:15px;color:${P.text2};">${escapeHtml(bioBits)}</div>` : "";
+    sectionsHTML = [
+      sect(isPitcher ? "Career Pitching · by season" : "Career Hitting · by season", careerTbl),
+      sect("Tool Grades · 20–80", toolsRow),
+      sect("Arkmetrics & Surplus", valuationBlock),
+      blurb ? sect("Scouting Report", blurbHTML) : "",
+      bioSect ? sect("Bio", bioSect) : "",
+    ].filter(Boolean).join("");
   } else { // detailed
     sectionsHTML = [flagsRow, fvSect, toolSect, pctSect, pitchSect, statsOrArsenal, valSect, blurbHTML].filter(Boolean).join("");
   }
@@ -27072,6 +27136,8 @@ function _gfxSyncControls() {
   if (lg) lg.checked = !!_gfxOpts.logos;
   const va = document.getElementById("gfx-variant");
   if (va) va.value = _gfxOpts.variant || "detailed";
+  const frm = document.getElementById("gfx-frame");
+  if (frm) frm.value = _gfxOpts.frame || "rarity";
   document.querySelectorAll("[data-gfx-accent]").forEach(b =>
     b.classList.toggle("is-active", b.dataset.gfxAccent === (_gfxOpts.accent || "cyan")));
 }
@@ -27098,6 +27164,8 @@ function _gfxApplyModeUI() {
   hide(ctrlOf("gfx-photos"), k === "farm-card");
   // Template variants apply to player + farm cards (farm honors Compact/Detailed).
   hide(ctrlOf("gfx-variant"), k !== "prospect-card" && k !== "farm-card");
+  // Frame style applies to prospect cards (rarity/chrome/retro/team).
+  hide(ctrlOf("gfx-frame"), k !== "prospect-card");
 }
 function openGfxModal() {
   const overlay = document.getElementById("gfx-overlay");
@@ -27333,6 +27401,9 @@ document.addEventListener("change", (e) => {
     _gfxRefresh();
   } else if (e.target.id === "gfx-logos") {
     _gfxOpts.logos = e.target.checked;
+    _gfxRefresh();
+  } else if (e.target.id === "gfx-frame") {
+    _gfxOpts.frame = e.target.value;
     _gfxRefresh();
   } else if (e.target.id === "gfx-variant") {
     _gfxOpts.variant = e.target.value;
