@@ -25,6 +25,7 @@ Usage:  python build_site.py
 """
 from __future__ import annotations
 
+import hashlib
 import html
 import json
 import re
@@ -35,6 +36,16 @@ import markdown as md
 
 ROOT = Path(__file__).resolve().parent
 CONTENT = ROOT / "content"
+
+# Cache-bust assets/site.css by content hash so browsers/CDNs always pull the
+# latest stylesheet after a rebuild — otherwise a stale cached CSS shows the old
+# layout (frozen ticker, unstyled callout, etc.) even though the files updated.
+def _asset_ver(rel: str) -> str:
+    try:
+        return hashlib.md5((ROOT / rel).read_bytes()).hexdigest()[:8]
+    except OSError:
+        return "1"
+_CSS_VER = _asset_ver("assets/site.css")
 
 NAV_ITEMS = [
     ("home",     "Home",             "/"),
@@ -201,7 +212,7 @@ def page(title: str, active: str, body: str, description: str = "") -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(title)}</title>
 <meta name="description" content="{desc}">
-<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
 </head>
 <body class="eephus-page">
 {_nav(active)}
@@ -461,7 +472,7 @@ def page_home(title: str, inner: str, description: str = "") -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(title)}</title>
 <meta name="description" content="{desc}">
-<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
 </head>
 <body class="eephus-page eephus-home">
 {inner}
