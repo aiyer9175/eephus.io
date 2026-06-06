@@ -310,9 +310,15 @@ def _row_mover(p: dict) -> str:
     s = p.get("stock") or {}
     d = s.get("delta") or 0
     up = d > 0
+    # Mini FV-history sparkline — reinforces the stock-chart identity. Colored
+    # by direction; the curve stays smooth (the sharp-corner rule is for UI
+    # chrome, not plotted lines).
+    spark = _fv_sparkline(p.get("points"), "var(--accent-green)" if up else "var(--accent-red)", w=58, h=20)
+    spark_html = f'<span class="row-spark">{spark}</span>' if spark else '<span class="row-spark"></span>'
     return (f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(p.get("position"), p.get("org"))}</span>'
+            f'{spark_html}'
             f'<span class="row-delta {"up" if up else "down"}">{"▲" if up else "▼"} {"+" if up else ""}{d:.0f}</span></a>')
 
 def _row_top(p: dict, rank: int) -> str:
@@ -393,11 +399,10 @@ def _ticker_html(events: list, n: int = 14) -> str:
         items = ['<span><span class="glyph">◆</span> PROSPX — live prospect wire</span>']
     return " ".join(items * 2)  # duplicated for seamless scroll
 
-def _fv_sparkline(points: list, color: str) -> str:
+def _fv_sparkline(points: list, color: str, w: int = 150, h: int = 34) -> str:
     vals = [pt.get("consensus_fv_raw") for pt in (points or []) if pt.get("consensus_fv_raw") is not None]
     if len(vals) < 2:
         return ""
-    w, h = 150, 34
     lo, hi = min(vals), max(vals)
     span = (hi - lo) or 1
     step = w / (len(vals) - 1)
@@ -472,6 +477,88 @@ def _home_module(kicker: str, see_all_href: str, see_all: str, body: str, full: 
     head = (f'<div class="kicker"><h2>{html.escape(kicker)}</h2>'
             f'<a class="see-all" href="{see_all_href}">{html.escape(see_all)} →</a></div>')
     return f'<section class="home-module{" full" if full else ""}">{head}{body}</section>'
+
+def _this_day_html(graduates: list) -> str:
+    """'This day in prospect history' — a graduate who debuted on (or within a
+    few days of) today's calendar date in a past season. Ties the historical
+    record to the homepage and links into Time Machine at that date."""
+    today = date.today()
+    best = None  # (date_proximity, -prominence, grad, debut_date)
+    for g in graduates:
+        dd = g.get("debut_date")
+        if not dd:
+            continue
+        try:
+            d = date.fromisoformat(str(dd)[:10])
+        except ValueError:
+            continue
+        if d.year >= today.year:
+            continue
+        try:
+            anniv = date(today.year, d.month, d.day)
+        except ValueError:
+            continue
+        prox = abs((anniv - today).days)
+        if prox > 4:
+            continue
+        prom = g.get("fv_close") or ((g.get("debuted_value") or {}).get("wag") or {}).get("regressed_wag") or 0
+        cand = (prox, -float(prom), g, d)
+        if best is None or cand[:2] < best[:2]:
+            best = cand
+    if best is None:
+        return ""
+    _, _, g, d = best
+    yrs = today.year - d.year
+    nm = html.escape(g.get("player_name") or "")
+    meta = _meta(g.get("position"), g.get("org"))
+    when = f"{d.strftime('%B')} {d.day}, {d.year}"   # no %-d (unsupported on Windows)
+    return (
+        '<section class="home-module otd-module">'
+        '<div class="kicker"><h2>This Day in Prospect History</h2>'
+        f'<a class="see-all" href="/prospx/#tab=timemachine&tm={d.isoformat()}">Time Machine →</a></div>'
+        f'<a class="otd-row" href="{_player_href(g.get("player_key"))}">'
+        f'<span class="otd-when">{html.escape(when)}</span>'
+        f'<span class="otd-body"><strong>{nm}</strong> debuted — {meta}</span>'
+        f'<span class="otd-ago">{yrs}y ago</span></a>'
+        '</section>'
+    )
+
+def _date_callout() -> str:
+    """Date-aware countdown when the MLB Draft or Int'l signing period is near."""
+    today = date.today()
+    yr = today.year
+    events = [
+        (date(yr, 7, 13), "MLB Draft", "/prospx/#tab=draft"),
+        (date(yr if today <= date(yr, 1, 15) else yr + 1, 1, 15),
+         "International signing period", "/prospx/#tab=ifa"),
+    ]
+    for d, name, href in sorted(events, key=lambda e: e[0]):
+        days = (d - today).days
+        if 0 <= days <= 45:
+            when = "today" if days == 0 else ("tomorrow" if days == 1 else f"in {days} days")
+            return (f'<a class="home-callout" href="{href}">'
+                    f'<span class="cal-tag">◆ Upcoming</span>'
+                    f'<span>{html.escape(name)} {when} · {d.strftime("%b %d").replace(" 0", " ")}</span>'
+                    f'<span class="cal-go">View →</span></a>')
+    return ""
+
+def _scatter_teaser() -> str:
+    """Tiny inline scatter linking to the Scatterplots builder — a visual nudge,
+    not live data (kept featherweight; the real plot lives in PROSPX)."""
+    import random
+    rnd = random.Random(date.today().toordinal())
+    pts = "".join(
+        f'<circle cx="{rnd.uniform(8, 142):.0f}" cy="{rnd.uniform(6, 42):.0f}" r="2.2" '
+        f'fill="var(--accent-{"green" if rnd.random() > .5 else "gold"})" opacity="0.85"/>'
+        for _ in range(16))
+    svg = (f'<svg viewBox="0 0 150 48" preserveAspectRatio="none" aria-hidden="true">'
+           f'<line x1="6" y1="44" x2="144" y2="44" stroke="var(--border)" stroke-width="1"/>'
+           f'<line x1="6" y1="4" x2="6" y2="44" stroke="var(--border)" stroke-width="1"/>{pts}</svg>')
+    return (f'<a class="scatter-teaser" href="/prospx/#tab=charts">'
+            f'<div class="st-svg">{svg}</div>'
+            f'<div class="st-txt"><strong>Build a scatterplot</strong>'
+            f'<span>Any X/Y metric · color &amp; size encodings · brush-to-zoom</span></div>'
+            f'<span class="st-go">Scatterplots →</span></a>')
 
 def build_home(articles: list[dict], data: dict | None = None) -> str:
     """Homepage = sidebar + newspaper-style main, with live PROSPX modules + a
@@ -563,11 +650,14 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     glossary = (f'<div class="glossary-teaser"><span>Today\'s term: <strong>{html.escape(term)}</strong> — {html.escape(defn)}</span>'
                 f'<a href="/prospx/#tab=glossary">Glossary →</a></div>')
 
+    callout = _date_callout()
+    otd = _this_day_html(graduates)
+    scatter = _scatter_teaser()
     main = (
         '<main class="home-main">'
-        f'{masthead}{lead}{secondary}'
-        f'<div class="module-cols">{movers}{topp}{grads}{farm}</div>'
-        f'{glossary}'
+        f'{masthead}{callout}{lead}{secondary}'
+        f'<div class="module-cols">{movers}{topp}{grads}{farm}{otd}</div>'
+        f'<div class="teaser-row">{glossary}{scatter}</div>'
         '</main>'
     )
     inner = f'{ticker}<div class="home-shell">{sidebar}{main}</div>'
