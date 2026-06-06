@@ -96,10 +96,21 @@ def _log_step_summary(log: logging.Logger, total_runtime: float) -> None:
 
 
 def _patch_export_run_summary(out_path: Path, log: logging.Logger) -> None:
-    """Refresh boot JSON's run summary after finish_run() has completed."""
+    """Refresh boot JSON's run summary after finish_run() has completed.
+
+    Also stamps the two-track `data_freshness` block (grades = last monthly
+    run, transactions/IL = last run of any kind) so the front-end can render
+    data-aware 'as of' labels that distinguish daily-fresh fast-moving data
+    from monthly grade data.
+    """
     try:
         payload = json.loads(out_path.read_text(encoding="utf-8"))
         payload["run"] = latest_run_summary()
+        try:
+            from storage import data_freshness as _data_freshness
+            payload["data_freshness"] = _data_freshness()
+        except Exception:
+            log.exception("could not compute data_freshness for %s", out_path)
         try:
             import orjson as _orjson
             out_path.write_bytes(_orjson.dumps(payload, option=_orjson.OPT_NON_STR_KEYS))
@@ -128,6 +139,7 @@ from storage import (
     upsert_roster_status, load_roster_status,
     upsert_source_events,
     export_timeseries_json, latest_run_summary,
+    snapshot_board_metrics, record_il_observation,
 )
 from consensus import build_timeseries
 from stats import (fetch_statlines_for, derive_statlines_from_career,
@@ -329,6 +341,171 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     # Post-export sanity: surface what landed in the JSON so the user
     # doesn't have to grep the file.
     _post_export_summary(out_path, all_snaps, log)
+
+
+def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
+              no_cache: bool = False) -> None:
+    """DAILY fast-moving refresh — the time-sensitive subset of the pipeline.
+
+    Pulls and updates ONLY data that changes between monthly grade releases:
+      • player transactions (drives promotions/demotions + the move timeline)
+      • Injured-List stints (+ append-only il_history timeline)
+      • roster status (debut / 40-man / options / service phase)
+      • debuts & graduations
+      • trades
+
+    It then rebuilds data/timeseries.json from the refreshed DB via the same
+    no-scrape `rebuild_only()` path. It deliberately does NOT touch grades,
+    tool evaluations, Arkmetrics, farm grades, or the full ranking — those
+    stay on the monthly cadence in `main()`. The two jobs write disjoint
+    tables (run_daily: transactions/il_status/il_history/roster_status/trades;
+    run_monthly: snapshots/sabermetrics/statcast/metric_snapshots/…), so they
+    never double-write the same row. Every step is idempotent; a failure in
+    one fetch logs and continues so a single flaky endpoint can't strand the
+    rebuild.
+    """
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        stream=sys.stdout,
+    )
+    log = logging.getLogger("run_daily")
+    import stats as stats_mod
+    stats_mod.FORCE_REFETCH = no_cache
+
+    init_db()
+    run_id = start_run()
+    log.info("started DAILY run %s", run_id)
+    season = date.today().year
+    _STEP_TIMES.clear()
+    _run_start = time.monotonic()
+    n_il = n_debuts = n_trades = 0
+
+    try:
+        # --- 1. Player set from existing snapshots (no scrape). -----------
+        with _step("d1. Build player set from DB", log):
+            all_snaps = load_all_snapshots()
+            timeseries = build_timeseries(all_snaps)
+            log.info("daily: %d tracked players", len(timeseries))
+
+        # --- 2. Resolve MLBAM IDs + PlayerIndex (disk-cached, fast). ------
+        with _step("d2. Resolve IDs (warm PlayerIndex)", log):
+            prospects = [(p.player_key, p.player_name, p.position) for p in timeseries]
+            ids_by_key, _bds, player_index = bulk_resolve_ids(
+                prospects, season=season, force_rebuild_index=no_cache,
+            )
+
+        # --- 3. Team affiliations (cached) — needed for level_changes. ----
+        with _step("d3. Team affiliations", log):
+            try:
+                team_affil = fetch_team_affiliations(season)
+            except Exception:
+                log.exception("daily: team affiliations fetch failed — promotions "
+                              "may be stale this run")
+                team_affil = {}
+
+        # --- 4. Transactions (promotions/demotions + move timeline). ------
+        with _step("d4. Player transactions", log):
+            try:
+                tx_tasks = [(p.player_key, ids_by_key.get(p.player_key))
+                            for p in timeseries
+                            if ids_by_key.get(p.player_key) is not None]
+                if tx_tasks:
+                    max_w = (max(1, min(workers, len(tx_tasks))) if workers is not None
+                             else min(24, max(1, len(tx_tasks))))
+                    new_tx = bulk_fetch_player_transactions(tx_tasks, max_workers=max_w)
+                    if new_tx:
+                        upsert_player_transactions(new_tx)
+                    log.info("daily: refreshed transactions for %d players", len(new_tx))
+            except Exception:
+                log.exception("daily: transactions refresh failed — continuing")
+
+        # --- 5. IL status (+ append-only il_history timeline). ------------
+        with _step("d5. IL status", log):
+            try:
+                il_mids = {p.player_key: ids_by_key.get(p.player_key)
+                           for p in timeseries
+                           if ids_by_key.get(p.player_key) is not None
+                           and p.status != "debuted"}
+                il_by_mid = bulk_fetch_il_status(il_mids.values())
+                il_updates = {k: il_by_mid.get(m) for k, m in il_mids.items()}
+                upsert_il_status(il_updates)
+                n_il = sum(1 for v in il_updates.values() if v)
+                hist = record_il_observation(load_il_status())
+                log.info("daily: %d on IL (il_history +%d placed / %d activated)",
+                         n_il, hist["placed"], hist["activated"])
+            except Exception:
+                log.exception("daily: IL refresh failed — continuing")
+
+        # --- 6. Roster status (fresh tx + cached career stats). -----------
+        with _step("d6. Roster status", log):
+            try:
+                career_cache = load_career_stats()
+                tx_cache = load_player_transactions()
+                roster_status_by_key: dict[str, dict] = {}
+                for p in timeseries:
+                    tx_rows = tx_cache.get(p.player_key, [])
+                    cs_rows = career_cache.get(p.player_key, [])
+                    mid = ids_by_key.get(p.player_key)
+                    api_debut = player_index.get_debut_date(mid) if mid else None
+                    roster_status_by_key[p.player_key] = derive_roster_status(
+                        tx_rows, cs_rows, api_debut_date=api_debut)
+                if roster_status_by_key:
+                    upsert_roster_status(roster_status_by_key)
+                log.info("daily: roster_status for %d players", len(roster_status_by_key))
+            except Exception:
+                log.exception("daily: roster_status derivation failed — continuing")
+
+        # --- 7. Debut / graduation detection. -----------------------------
+        with _step("d7. Auto-debut detection", log):
+            try:
+                active_for_debut = [
+                    (p.player_key, p.player_name, _is_pitcher(p.position))
+                    for p in timeseries if p.status != "debuted"
+                ]
+                debuts_found = detect_debuts_from_index(
+                    load_career_stats(), active_for_debut,
+                    player_index=player_index, id_cache=ids_by_key,
+                    statlines=load_statlines() or None,
+                )
+                for pkey, debut_date in (debuts_found or {}).items():
+                    auto_debut_player(pkey, debut_date=debut_date)
+                n_debuts = len(debuts_found or {})
+                if n_debuts:
+                    log.info("daily: auto-debuted %d players", n_debuts)
+                    all_snaps = load_all_snapshots()  # refresh statuses for trades
+            except Exception:
+                log.exception("daily: debut detection failed — continuing")
+
+        # --- 8. Trade detection. ------------------------------------------
+        with _step("d8. Trade detection", log):
+            try:
+                tracked = {p.player_key: (p.player_name, ids_by_key.get(p.player_key))
+                           for p in timeseries}
+                new_trades = detect_trades(all_snaps, tracked_players=tracked,
+                                           skip_api=False)
+                n_trades = insert_trades(new_trades)
+                log.info("daily: detected %d trades (%d new)", len(new_trades), n_trades)
+            except Exception:
+                log.exception("daily: trade detection failed — continuing")
+
+        # --- 9. Rebuild timeseries.json from the refreshed DB. ------------
+        with _step("d9. Rebuild timeseries (no scrape)", log):
+            rebuild_only(out_dir)
+
+        finish_run(run_id, new_snapshots=0, stat_lines=0,
+                   notes=f"DAILY: {n_il} on IL, {n_debuts} debuts, {n_trades} new trades")
+        # Patch the just-written run summary into timeseries.json so the
+        # site's "as of" reflects this daily refresh.
+        _patch_export_run_summary(out_dir / "timeseries.json", log)
+        total = time.monotonic() - _run_start
+        log.info("DAILY run %s complete in %.1fs", run_id, total)
+        for label, secs in _STEP_TIMES:
+            log.info("  %-34s %6.1fs", label, secs)
+    except Exception:
+        log.exception("DAILY run %s failed", run_id)
+        finish_run(run_id, new_snapshots=0, stat_lines=0, notes="DAILY: failed")
+        raise
 
 
 def _load_draft_pools_for_rebuild() -> dict:
@@ -836,8 +1013,18 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             for key, mid in il_mids_by_key.items():
                 il_updates[key] = il_by_mid.get(mid)
             upsert_il_status(il_updates)
-            log.info("IL: %d prospects currently on IL",
-                     sum(1 for v in il_updates.values() if v))
+            # Append-only IL stint timeline (records placements once, stamps
+            # activation when a player comes off). Idempotent; runs here too
+            # so the timeline accrues even on monthly-only cadence.
+            try:
+                _ilh = record_il_observation(load_il_status())
+                log.info("IL: %d currently on IL (il_history +%d placed / %d activated)",
+                         sum(1 for v in il_updates.values() if v),
+                         _ilh["placed"], _ilh["activated"])
+            except Exception:
+                log.exception("il_history update failed — continuing")
+                log.info("IL: %d prospects currently on IL",
+                         sum(1 for v in il_updates.values() if v))
 
         # --- 2c. Affiliate roster map. ~6 HTTP calls (one per sport level)
         # returns every MLB + MiLB team with its parent_org_id, which lets
@@ -1646,6 +1833,27 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
                    notes=f"{len(timeseries)} players, {len(new_trades)} trades")
         _patch_export_run_summary(out_path, log)
+        # Capture the DERIVED board state (consensus rank/FV + Arkmetric
+        # family) for the active board so the time-travel board (Part 2) and
+        # the Arkmetric-vs-outcome backtest (Part 4) accrue monthly history.
+        # Monthly-only: the daily job does NOT snapshot here (grades/rankings
+        # only change on the monthly cadence). Idempotent (upsert-by-date).
+        try:
+            _ts = json.loads(out_path.read_text(encoding="utf-8"))
+            _n_metric = snapshot_board_metrics(_ts.get("players") or [])
+            log.info("metric_snapshots: captured board state for %d players", _n_metric)
+        except Exception:
+            log.exception("metric_snapshots capture failed — continuing")
+        # Source-vs-source predictive backtest (data/source_backtest.json for
+        # the Methodology tab). Reads the just-written timeseries + debuts, so
+        # it refreshes as new outcome WAR lands and 2024+ cohorts resolve.
+        try:
+            from source_backtest import run_source_backtest
+            _bt = run_source_backtest(data_dir=out_dir, write=True)
+            log.info("source_backtest: %d resolved base years, common_n=%d",
+                     len(_bt["window"]["years"]), _bt["accuracy"]["common_n"])
+        except Exception:
+            log.exception("source_backtest failed — continuing")
         # v19 — Per-step duration table. Sorted by slowest first so the
         # biggest wall-time culprits surface at the top of the log.
         _log_step_summary(log, time.monotonic() - _run_start)
@@ -1687,9 +1895,19 @@ if __name__ == "__main__":
                          "data/timeseries.json from the current DB state. "
                          "Use after dropping new FG CSVs to push the data "
                          "to the website without rerunning the full pipeline.")
+    ap.add_argument("--daily", action="store_true",
+                    help="DAILY fast-moving refresh only: transactions, IL, "
+                         "roster status, debuts/graduations, and trades, then "
+                         "rebuild data/timeseries.json. Grades, tool evals, "
+                         "Arkmetrics, farm grades and the ranking stay on the "
+                         "monthly cadence (a plain `python run_monthly.py`). "
+                         "Run this nightly.")
     args = ap.parse_args()
     if args.dry_run:
         probe(force=args.force)
+        sys.exit(0)
+    if args.daily:
+        run_daily(out_dir=args.out_dir, workers=args.workers, no_cache=args.no_cache)
         sys.exit(0)
     if args.rebuild_only:
         rebuild_only(out_dir=args.out_dir)

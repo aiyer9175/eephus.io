@@ -3964,6 +3964,224 @@
       font-style: italic; font-size: 11px;
       color: var(--text-tertiary);
     }
+    /* Data-aware freshness stamp — distinguishes daily-fresh fast-moving data
+       (transactions / IL) from monthly grade data. Populated at boot from
+       DATA.data_freshness; :empty keeps it out of the layout until then. */
+    .freshness-stamp {
+      margin-left: auto;
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--font-retro-mono);
+      font-size: 10px; letter-spacing: 0.04em;
+      color: var(--text-tertiary); white-space: nowrap;
+    }
+    .freshness-stamp:empty { display: none; }
+    .freshness-stamp .fresh-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--up);
+      box-shadow: 0 0 0 0 var(--up);
+      animation: freshPulse 2.4s ease-out infinite;
+    }
+    .freshness-stamp.is-grades .fresh-dot { background: var(--text-tertiary); animation: none; }
+    @keyframes freshPulse {
+      0%   { box-shadow: 0 0 0 0 var(--up); opacity: 1; }
+      70%  { box-shadow: 0 0 0 5px transparent; opacity: 0.7; }
+      100% { box-shadow: 0 0 0 0 transparent; opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .freshness-stamp .fresh-dot { animation: none; }
+    }
+
+    /* === Time Machine ============================================= */
+    .tm-controls {
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--bg-secondary), transparent);
+      padding: 14px 16px; margin: 0 0 14px;
+    }
+    .tm-mode { display: inline-flex; gap: 0; margin-bottom: 12px;
+      border: 1px solid var(--border); }
+    .tm-mode-btn {
+      font-family: var(--font-sans); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.04em; padding: 6px 14px; border: none; cursor: pointer;
+      background: transparent; color: var(--text-tertiary);
+      border-right: 1px solid var(--border);
+    }
+    .tm-mode-btn:last-child { border-right: none; }
+    .tm-mode-btn.active { background: var(--text-primary); color: var(--bg-primary); }
+    [data-theme="dark"] .tm-mode-btn.active { background: var(--neon-cyan); color: var(--bg-primary); }
+    .tm-asof-controls { display: flex; align-items: center; gap: 12px; }
+    .tm-slider { flex: 1; accent-color: var(--neon-cyan); height: 4px; cursor: pointer; }
+    .tm-step {
+      font-family: var(--font-retro-mono); font-size: 18px; line-height: 1;
+      width: 30px; height: 30px; flex: none; cursor: pointer;
+      background: var(--bg-primary); color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .tm-step:disabled { opacity: 0.35; cursor: default; }
+    .tm-date-readout {
+      font-family: var(--font-retro-mono); font-size: 14px; font-weight: 700;
+      color: var(--text-primary); white-space: nowrap; min-width: 132px; text-align: right;
+    }
+    .tm-slider-ends { display: flex; justify-content: space-between;
+      font-family: var(--font-retro-mono); font-size: 10px;
+      color: var(--text-tertiary); margin-top: 4px; }
+    .tm-diff-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .tm-sel-wrap { font-family: var(--font-sans); font-size: 12px;
+      font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.04em;
+      display: inline-flex; align-items: center; gap: 6px; }
+    .tm-sel {
+      font-family: var(--font-retro-mono); font-size: 13px;
+      padding: 5px 8px; background: var(--bg-primary); color: var(--text-primary);
+      border: 1px solid var(--border); cursor: pointer;
+    }
+    .tm-arrow { color: var(--text-tertiary); font-size: 16px; }
+    .tm-note { font-family: var(--font-serif); font-style: italic;
+      font-size: 11px; color: var(--text-tertiary); margin: 10px 0 0; line-height: 1.5; }
+    .tm-asof-head, .tm-diff-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 12px; margin: 0 0 8px; flex-wrap: wrap;
+    }
+    .tm-asof-title, .tm-diff-title {
+      font-family: var(--font-sans); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-primary);
+    }
+    .tm-asof-sub, .tm-diff-sub { font-family: var(--font-retro-mono);
+      font-size: 11px; color: var(--text-tertiary); }
+    .tm-board { display: flex; flex-direction: column; }
+    .tm-row {
+      display: grid;
+      grid-template-columns: 34px 22px minmax(0,1fr) 42px auto auto;
+      align-items: center; gap: 10px; padding: 7px 8px;
+      border-bottom: 1px solid var(--border-light); text-decoration: none;
+      color: var(--text-primary);
+    }
+    .tm-row:hover { background: var(--bg-secondary); }
+    .tm-row .team-logo { width: 20px; height: 20px; }
+    .tm-rank { font-family: var(--font-retro-mono); font-size: 13px;
+      font-weight: 700; color: var(--text-tertiary); text-align: right; }
+    .tm-name { font-family: var(--font-sans); font-size: 14px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tm-pos { font-family: var(--font-retro-mono); font-size: 11px;
+      color: var(--text-tertiary); }
+    .tm-fv {
+      font-family: var(--font-retro-mono); font-size: 13px; font-weight: 700;
+      padding: 2px 8px; border: 1px solid; border-radius: 3px; min-width: 30px;
+      text-align: center; justify-self: end;
+    }
+    .tm-delta { font-family: var(--font-retro-mono); font-size: 11px;
+      font-weight: 700; white-space: nowrap; justify-self: end; }
+    .tm-delta.up { color: var(--up); }
+    .tm-delta.down { color: var(--down); }
+    .tm-delta.is-grad { color: var(--neon-violet); }
+    .tm-changelog { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 18px 24px; }
+    .tm-change-group { min-width: 0; }
+    .tm-change-title {
+      display: flex; align-items: center; gap: 8px; margin: 0 0 4px;
+      font-family: var(--font-sans); font-size: 12px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary);
+      border-bottom: 2px solid var(--border); padding-bottom: 4px;
+    }
+    .tm-change-glyph { font-family: var(--font-retro-mono); color: var(--text-tertiary); }
+    .tm-change-count { margin-left: auto; font-family: var(--font-retro-mono);
+      font-size: 11px; color: var(--text-tertiary); }
+    .tm-src-toggle {
+      font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.04em; padding: 3px 9px; cursor: pointer;
+      background: var(--bg-primary); color: var(--text-tertiary);
+      border: 1px solid var(--border); text-transform: none;
+    }
+    .tm-src-toggle.active { background: var(--neon-cyan); color: var(--bg-primary);
+      border-color: var(--neon-cyan); }
+    .tm-src-legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 6px 0 0;
+      font-family: var(--font-retro-mono); font-size: 10px; color: var(--text-tertiary); }
+    .tm-src-key { display: inline-flex; align-items: center; gap: 5px; }
+    .tm-src-swatch { width: 14px; height: 0; border-top: 2px dotted currentColor;
+      display: inline-block; }
+    .tm-src-swatch-consensus { border-top: 2px solid var(--up); }
+    /* Scatterplot active-filter chips */
+    .chart-active-filters { display: flex; flex-wrap: wrap; align-items: center;
+      gap: 6px; margin-top: 6px; }
+    .chart-af-label { font-family: var(--font-sans); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); }
+    .chart-fchip {
+      font-family: var(--font-retro-mono); font-size: 11px; cursor: pointer;
+      padding: 2px 8px; background: var(--bg-primary); color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .chart-fchip:hover { border-color: var(--down); color: var(--down); }
+    /* === Methodology & Track Record === */
+    .meth-prose { max-width: 860px; margin-bottom: 22px; }
+    .meth-h { font-family: var(--font-sans); font-size: 17px; font-weight: 800;
+      letter-spacing: 0.01em; color: var(--text-primary); margin: 24px 0 8px;
+      padding-bottom: 5px; border-bottom: 2px solid var(--border); }
+    .meth-h3 { font-family: var(--font-sans); font-size: 14px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary); margin: 22px 0 6px; }
+    .meth-prose p, .meth-window, .meth-note { font-family: var(--font-serif);
+      font-size: 14px; line-height: 1.6; color: var(--text-secondary); margin: 0 0 10px; }
+    .meth-note { font-size: 12px; font-style: italic; color: var(--text-tertiary); max-width: 860px; }
+    .meth-window { font-size: 13px; max-width: 860px; }
+    .meth-prose code { font-family: var(--font-retro-mono); font-size: 12px;
+      background: var(--bg-secondary); padding: 1px 4px; }
+    .meth-dl { margin: 6px 0 0; }
+    .meth-dl dt { font-family: var(--font-sans); font-weight: 700; font-size: 14px;
+      color: var(--text-primary); margin-top: 14px; }
+    .meth-dl dd { font-family: var(--font-serif); font-size: 13px; line-height: 1.55;
+      color: var(--text-secondary); margin: 3px 0 0; padding-left: 14px;
+      border-left: 2px solid var(--border-light); }
+    .meth-tag { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary);
+      border: 1px solid var(--border); padding: 1px 6px; margin-left: 8px; vertical-align: middle; }
+    .meth-chart { background: var(--bg-secondary); border: 1px solid var(--border);
+      padding: 14px 16px; margin: 0 0 16px; }
+    .meth-chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+    .meth-chart-title { font-family: var(--font-sans); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-primary); margin-bottom: 8px; }
+    .meth-sub { font-family: var(--font-serif); font-style: italic; font-weight: 400;
+      font-size: 11px; text-transform: none; letter-spacing: 0; color: var(--text-tertiary); margin-left: 8px; }
+    .meth-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
+    .meth-legend-key { display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-secondary); }
+    .meth-legend-swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+    .meth-metric { margin: 10px 0; }
+    .meth-metric-title { font-family: var(--font-serif); font-style: italic; font-size: 12px;
+      color: var(--text-tertiary); margin-bottom: 4px; }
+    .meth-bar-row { display: grid; grid-template-columns: 128px 1fr 64px; align-items: center;
+      gap: 8px; margin: 3px 0; }
+    .meth-bar-label { font-family: var(--font-sans); font-size: 12px; color: var(--text-secondary); }
+    .meth-bar-track { background: var(--bg-primary); border: 1px solid var(--border-light); height: 16px; }
+    .meth-bar-fill { display: block; height: 100%; opacity: 0.55; }
+    .meth-bar-fill.is-consensus { opacity: 1; }
+    .meth-bar-val { font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
+      color: var(--text-secondary); text-align: right; }
+    .meth-bar-val.is-best { color: var(--up); }
+    .meth-verdict { font-family: var(--font-serif); font-size: 13px; line-height: 1.55;
+      color: var(--text-secondary); margin: 12px 0 0; padding: 10px 12px;
+      border-left: 3px solid var(--border); background: var(--bg-primary); }
+    .meth-verdict.is-good { border-left-color: var(--up); }
+    .meth-tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 14px; }
+    .meth-table-wrap { min-width: 0; }
+    .meth-table-title { display: flex; align-items: center; gap: 7px; font-family: var(--font-sans);
+      font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 5px; }
+    .meth-table { width: 100%; border-collapse: collapse; font-family: var(--font-retro-mono); font-size: 11px; }
+    .meth-table th { font-family: var(--font-sans); font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary);
+      text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+    .meth-table th:first-child { text-align: left; }
+    .meth-table td { text-align: right; padding: 3px 6px; color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-light); font-variant-numeric: tabular-nums; }
+    .meth-td-tier { text-align: left !important; font-weight: 700; color: var(--text-primary); }
+    .meth-caveats { margin: 18px 0 0; padding: 12px 16px; border: 1px solid var(--neon-amber);
+      background: var(--bg-secondary); max-width: 860px; }
+    .meth-caveats-title { font-family: var(--font-sans); font-size: 12px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--neon-amber); margin-bottom: 6px; }
+    .meth-caveats ul { margin: 0; padding-left: 18px; }
+    .meth-caveats li { font-family: var(--font-serif); font-size: 13px; line-height: 1.5;
+      color: var(--text-secondary); margin: 4px 0; }
+    @media (max-width: 640px) {
+      .tm-row { grid-template-columns: 28px 20px minmax(0,1fr) auto auto; gap: 7px; }
+      .tm-pos { display: none; }
+      .tm-date-readout { min-width: 0; }
+    }
 
     /* === Farm systems ============================================= */
     .farm-header, .farm-row {
@@ -8258,6 +8476,7 @@
          are tool tabs on the right. -->
     <div class="section-tabs-scroll">
     <button class="section-tab active" data-section="active">MiLB Prospects</button>
+    <button class="section-tab" data-section="timemachine" title="Time-travel the board — view rankings &amp; grades as they stood at any past snapshot, or diff two dates for a changelog of risers, fallers, new entries &amp; graduates.">Time Machine</button>
     <button class="section-tab" data-section="spotlights">Spotlights</button>
     <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="traded">Transactions</button>
@@ -8565,12 +8784,26 @@
     </div>
   </div>
 
+  <!-- Time Machine — the board as it stood at any past snapshot, plus a
+       two-date diff/changelog. Controls + body are built in renderTimeMachine
+       (the date list comes from the data). -->
+  <div id="timemachine-section" style="display: none;">
+    <div class="newsprint-eyebrow">
+      <span class="newsprint-eyebrow-label">Time Machine</span>
+      <span class="newsprint-eyebrow-meta">the board as it stood · travel to any past snapshot, or diff two dates for a changelog</span>
+      <span class="freshness-stamp" id="timemachine-freshness" data-fresh="grades"></span>
+    </div>
+    <div id="tm-controls" class="tm-controls"></div>
+    <div id="tm-body"></div>
+  </div>
+
   <!-- v31.9 — Transactions section now ships the same right-rail
        context cards as the Active Prospects landing. -->
   <div id="traded-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Transactions</span>
       <span class="newsprint-eyebrow-meta">prospect moves · trades · signings · waivers · Rule 5 · promotions &amp; demotions</span>
+      <span class="freshness-stamp" id="traded-freshness" data-fresh="transactions"></span>
     </div>
     <div id="whats-new-traded"></div>
     <div class="active-grid">
@@ -8605,6 +8838,7 @@
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Injured List</span>
       <span class="newsprint-eyebrow-meta">active prospects currently on the IL · injury type, timeline &amp; days out</span>
+      <span class="freshness-stamp" id="injured-freshness" data-fresh="transactions"></span>
     </div>
     <div id="whats-new-injured"></div>
     <!-- v29 — Collapsed-by-default sort accordion for IL list. -->
@@ -9268,6 +9502,10 @@
           <span class="filter-label">Color</span>
           <select id="chart-color" class="chip"></select>
         </div>
+        <div class="filter-group">
+          <span class="filter-label">Size</span>
+          <select id="chart-size" class="chip" title="Scale each point's radius by a quantitative metric (e.g. surplus value)"></select>
+        </div>
       </div>
       <!-- ============================== WHO ============================= -->
       <div class="filter-cluster">
@@ -9296,6 +9534,24 @@
                  placeholder="any" data-chart-filter="age"
                  style="width:62px;font-family:var(--font-mono);font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
         </div>
+        <!-- Threshold filters on the plotted metrics themselves — set the X/Y
+             axis to any metric (EV, FV, surplus…) then bound it here. -->
+        <div class="filter-group">
+          <span class="filter-label" id="chart-xrange-label">X range</span>
+          <input id="chart-xmin" type="number" inputmode="decimal" placeholder="min"
+                 style="width:54px;font-family:var(--font-mono);font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
+          <span style="color:var(--text-tertiary);">–</span>
+          <input id="chart-xmax" type="number" inputmode="decimal" placeholder="max"
+                 style="width:54px;font-family:var(--font-mono);font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
+        </div>
+        <div class="filter-group">
+          <span class="filter-label" id="chart-yrange-label">Y range</span>
+          <input id="chart-ymin" type="number" inputmode="decimal" placeholder="min"
+                 style="width:54px;font-family:var(--font-mono);font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
+          <span style="color:var(--text-tertiary);">–</span>
+          <input id="chart-ymax" type="number" inputmode="decimal" placeholder="max"
+                 style="width:54px;font-family:var(--font-mono);font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
+        </div>
       </div>
       <!-- ============================== HOW ============================= -->
       <div class="filter-cluster">
@@ -9306,13 +9562,22 @@
           </label>
         </div>
         <div class="filter-group">
+          <span class="filter-label">Scale</span>
+          <label style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--text-secondary);">
+            <input type="checkbox" id="chart-logx"> log X</label>
+          <label style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--text-secondary);">
+            <input type="checkbox" id="chart-logy"> log Y</label>
+        </div>
+        <div class="filter-group">
           <span class="filter-label">Find</span>
           <input id="chart-highlight" type="search" placeholder="highlight a player…" autocomplete="off"
                  style="width:150px;font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
         </div>
         <div class="filter-group">
-          <button class="chip" id="chart-save-png" type="button" title="Save this chart as a PNG image">⤴ Save PNG</button>
-          <button class="chip reset-chip" type="button" id="chart-reset" title="Clear filters, color, and highlight">↺ Reset</button>
+          <button class="chip" id="chart-reset-view" type="button" title="Reset zoom/pan to fit all points" style="display:none;">⤢ Reset view</button>
+          <button class="chip" id="chart-share" type="button" title="Copy a shareable link to this exact chart + filter configuration">🔗 Share</button>
+          <button class="chip" id="chart-save-png" type="button" title="Export this scatterplot as an on-theme graphic (Generate GFX)">⤴ Generate GFX</button>
+          <button class="chip reset-chip" type="button" id="chart-reset" title="Clear filters, color, size, ranges, and highlight">↺ Reset</button>
         </div>
       </div>
     </div>
@@ -9327,8 +9592,13 @@
   <div id="glossary-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Glossary</span>
-      <span class="newsprint-eyebrow-meta">every stat, index &amp; term on the site</span>
+      <span class="newsprint-eyebrow-meta">every stat, index &amp; term on the site · plus methodology &amp; track record</span>
     </div>
+    <div class="tm-mode" role="tablist" aria-label="Glossary view" style="margin-bottom:10px;">
+      <button class="tm-mode-btn active" data-glossary-view="terms" role="tab">Glossary</button>
+      <button class="tm-mode-btn" data-glossary-view="methodology" role="tab">Methodology &amp; Track Record</button>
+    </div>
+    <div id="methodology-body" style="display:none;"></div>
     <div class="filter-bar" id="glossary-filter-bar" style="flex-wrap:wrap;gap:6px;align-items:center;">
       <span class="filter-label">Category</span>
       <button class="chip active" data-glossary-cat="all" type="button">All</button>
@@ -11730,6 +12000,7 @@ function syncToURL() {
   if (state.farmViewMode && state.farmViewMode !== "table") p.set("farmview", state.farmViewMode);
   if (state.rosterSort  && state.rosterSort  !== "fv")    p.set("rsort", state.rosterSort);
   if (state.glossaryCat && state.glossaryCat !== "all")    p.set("gcat", state.glossaryCat);
+  if (state.glossaryView && state.glossaryView !== "terms") p.set("gview", state.glossaryView);
   if (state.glossarySearch)                                 p.set("gq",   state.glossarySearch);
   if (state.formWindow  !== "1y")         p.set("formw", state.formWindow);
   if (state.farmTreeView && state.farmTreeView !== "expanded") p.set("ftree", state.farmTreeView);
@@ -11737,6 +12008,34 @@ function syncToURL() {
   if (state.farmTxDir   !== "all")        p.set("ftxd",  state.farmTxDir);
   if (state.debutSort    !== "date")       p.set("gsort", state.debutSort);
   if (state.ilSort      !== "days_asc")   p.set("ilsort", state.ilSort);
+  if (state.section === "timemachine") {
+    if (state.tmMode !== "asof")          p.set("tmmode", state.tmMode);
+    if (state.tmMode === "asof" && state.tmDate) p.set("tmd", state.tmDate);
+    if (state.tmMode === "diff") {
+      if (state.tmDateA)                  p.set("tmda", state.tmDateA);
+      if (state.tmDateB)                  p.set("tmdb", state.tmDateB);
+    }
+    if (state.tmTopN !== 100)             p.set("tmn", String(state.tmTopN));
+  }
+  if (state.section === "charts") {
+    if (state.chartMode && state.chartMode !== "prospects") p.set("chm", state.chartMode);
+    if (state.chartX)        p.set("chx", state.chartX);
+    if (state.chartY)        p.set("chy", state.chartY);
+    if (state.chartColorBy && state.chartColorBy !== "none") p.set("chc", state.chartColorBy);
+    if (state.chartSizeBy && state.chartSizeBy !== "none")   p.set("chs", state.chartSizeBy);
+    if (state.chartLogX)     p.set("chlx", "1");
+    if (state.chartLogY)     p.set("chly", "1");
+    if (state.chartFilterOrg && state.chartFilterOrg !== "all")     p.set("chorg", state.chartFilterOrg);
+    if (state.chartFilterLevel && state.chartFilterLevel !== "all") p.set("chlvl", state.chartFilterLevel);
+    if (state.chartFilterPos && state.chartFilterPos !== "all")     p.set("chpos", state.chartFilterPos);
+    if (state.chartFvMin != null && state.chartFvMin !== "")        p.set("chfv", state.chartFvMin);
+    if (state.chartAgeMax != null && state.chartAgeMax !== "")      p.set("chage", state.chartAgeMax);
+    if (state.chartXMin != null && state.chartXMin !== "")          p.set("chxmin", state.chartXMin);
+    if (state.chartXMax != null && state.chartXMax !== "")          p.set("chxmax", state.chartXMax);
+    if (state.chartYMin != null && state.chartYMin !== "")          p.set("chymin", state.chartYMin);
+    if (state.chartYMax != null && state.chartYMax !== "")          p.set("chymax", state.chartYMax);
+    if (state.chartHighlight)  p.set("chq", state.chartHighlight);
+  }
   if (state.ilStatcastSort && state.ilStatcastSort !== "off") p.set("ilssk", state.ilStatcastSort);
   if (state.debutStatcastSort && state.debutStatcastSort !== "off") p.set("dssk", state.debutStatcastSort);
   if (state.tradedSort  && state.tradedSort   !== "date")    p.set("tsort",  state.tradedSort);
@@ -11844,6 +12143,7 @@ function syncFromURL() {
   if (p.has("farmview")) state.farmViewMode = p.get("farmview");
   if (p.has("rsort")) state.rosterSort   = p.get("rsort");
   if (p.has("gcat"))  state.glossaryCat   = p.get("gcat");
+  if (p.has("gview")) state.glossaryView  = p.get("gview");
   if (p.has("gq"))    state.glossarySearch = p.get("gq");
   if (p.has("g"))     state.glossaryTerm   = p.get("g");
   if (p.has("formw")) {
@@ -11860,6 +12160,29 @@ function syncFromURL() {
   if (p.has("ftxd")) state.farmTxDir  = p.get("ftxd");
   if (p.has("gsort")) state.debutSort  = p.get("gsort");
   if (p.has("ilsort")) state.ilSort    = p.get("ilsort");
+  if (p.has("tmmode")) state.tmMode    = (p.get("tmmode") === "diff" ? "diff" : "asof");
+  if (p.has("tmd"))    state.tmDate    = p.get("tmd");
+  if (p.has("tmda"))   state.tmDateA   = p.get("tmda");
+  if (p.has("tmdb"))   state.tmDateB   = p.get("tmdb");
+  if (p.has("tmn"))    { const n = parseInt(p.get("tmn"), 10); if (n > 0) state.tmTopN = n; }
+  // Scatterplot config (shareable links).
+  if (p.has("chm"))    state.chartMode = p.get("chm");
+  if (p.has("chx"))    state.chartX = p.get("chx");
+  if (p.has("chy"))    state.chartY = p.get("chy");
+  if (p.has("chc"))    state.chartColorBy = p.get("chc");
+  if (p.has("chs"))    state.chartSizeBy = p.get("chs");
+  if (p.has("chlx"))   state.chartLogX = true;
+  if (p.has("chly"))   state.chartLogY = true;
+  if (p.has("chorg"))  state.chartFilterOrg = p.get("chorg");
+  if (p.has("chlvl"))  state.chartFilterLevel = p.get("chlvl");
+  if (p.has("chpos"))  state.chartFilterPos = p.get("chpos");
+  if (p.has("chfv"))   state.chartFvMin = p.get("chfv");
+  if (p.has("chage"))  state.chartAgeMax = p.get("chage");
+  if (p.has("chxmin")) state.chartXMin = p.get("chxmin");
+  if (p.has("chxmax")) state.chartXMax = p.get("chxmax");
+  if (p.has("chymin")) state.chartYMin = p.get("chymin");
+  if (p.has("chymax")) state.chartYMax = p.get("chymax");
+  if (p.has("chq"))    state.chartHighlight = p.get("chq");
   if (p.has("ilssk")) state.ilStatcastSort    = p.get("ilssk");
   if (p.has("dssk"))  state.debutStatcastSort = p.get("dssk");
   if (p.has("tsort"))  state.tradedSort   = p.get("tsort");
@@ -13125,6 +13448,14 @@ const state = {
   chartMode: "prospects",
   chartX: null,
   chartY: null,
+  // Time Machine sub-state. tmMode = "asof" (single-date board) | "diff"
+  // (compare two snapshot dates → changelog). Dates are snapshot_date
+  // strings; null resolves to sensible defaults inside renderTimeMachine.
+  tmMode: "asof",
+  tmDate: null,
+  tmDateA: null,
+  tmDateB: null,
+  tmTopN: 100,
   // Class filter — restrict to prospects acquired in a specific year
   // (draft year for drafted players; IFA signing year for IFAs). "all"
   // means no class restriction. Drives the "Class of YYYY" dropdown
@@ -13166,6 +13497,7 @@ const state = {
   // Player-detail Per-Source FV table sort: source (default), then
   // fv / date.
   sourceFvSort: "source",
+  fvChartSources: false,   // Time Machine: overlay per-source FV lines on the detail FV chart
   // Depth-chart (farm detail) sort: fv (default), age, eta.
   depthSort: "fv",
   // v19 — Active-list sidebar state.
@@ -13380,6 +13712,42 @@ function positionMatches(playerBucket, filterVal) {
   return false;
 }
 let DATA = null;
+
+// --- Data-aware freshness ("as of") -----------------------------------------
+// run_monthly stamps timeseries.json with a two-track `data_freshness`:
+//   grades_updated_at      — last MONTHLY run (consensus FV, tools, Arkmetrics)
+//   transactions_updated_at — last run of ANY kind (daily refreshes the
+//                             transaction / IL / roster / debut / trade data)
+// These let the Transactions + IL sections advertise daily freshness while the
+// graded board honestly reflects its monthly cadence.
+function _freshDateLabel(iso) {
+  if (!iso) return null;
+  const dt = new Date(String(iso).replace(" ", "T"));
+  if (isNaN(dt.getTime())) return null;
+  return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+function _dataFreshness() {
+  return (typeof DATA !== "undefined" && DATA && DATA.data_freshness) || {};
+}
+// Populate any [data-fresh] stamp from the dataset. kind="transactions" shows
+// the daily-fresh stamp with a live pulse; kind="grades" shows the monthly
+// grade stamp (static dot).
+function _applyFreshnessStamps(root) {
+  const f = _dataFreshness();
+  const scope = root || document;
+  scope.querySelectorAll(".freshness-stamp[data-fresh]").forEach(el => {
+    const kind = el.getAttribute("data-fresh");
+    const iso = kind === "grades" ? f.grades_updated_at : f.transactions_updated_at;
+    const label = _freshDateLabel(iso);
+    if (!label) { el.textContent = ""; return; }
+    const word = kind === "grades" ? "grades as of" : "updated daily · as of";
+    el.classList.toggle("is-grades", kind === "grades");
+    el.innerHTML = `<span class="fresh-dot" aria-hidden="true"></span>${escapeHtml(word)} ${escapeHtml(label)}`;
+    el.title = kind === "grades"
+      ? "Grades, tool evaluations and Arkmetrics refresh on a monthly cadence."
+      : "Transactions, the Injured List and roster status refresh daily.";
+  });
+}
 
 function getAllOrgs() {
   const orgs = new Set();
@@ -16300,18 +16668,37 @@ function _chartWireControls(mode, distinct, anyFv, anyAge) {
     if (document.activeElement !== ageIn) ageIn.value = (state.chartAgeMax != null ? state.chartAgeMax : "");
     ageIn.onchange = () => { state.chartAgeMax = ageIn.value === "" ? null : ageIn.value; renderCharts(); };
   }
+  // ---- Axis-range threshold filters (bind to whatever metric is on X/Y) ----
+  const wireRange = (id, stateKey) => {
+    const inp = document.getElementById(id);
+    if (!inp) return;
+    if (document.activeElement !== inp)
+      inp.value = (state[stateKey] != null ? state[stateKey] : "");
+    inp.onchange = () => { state[stateKey] = inp.value === "" ? null : inp.value; renderCharts(); };
+  };
+  wireRange("chart-xmin", "chartXMin"); wireRange("chart-xmax", "chartXMax");
+  wireRange("chart-ymin", "chartYMin"); wireRange("chart-ymax", "chartYMax");
+  // ---- Log-scale toggles ----
+  const logXcb = document.getElementById("chart-logx");
+  if (logXcb) { logXcb.checked = !!state.chartLogX;
+    logXcb.onchange = () => { state.chartLogX = logXcb.checked; state.chartView = null; renderCharts(); }; }
+  const logYcb = document.getElementById("chart-logy");
+  if (logYcb) { logYcb.checked = !!state.chartLogY;
+    logYcb.onchange = () => { state.chartLogY = logYcb.checked; state.chartView = null; renderCharts(); }; }
   // ---- Highlight (don't clobber the field while the user is typing) ----
   const hi = document.getElementById("chart-highlight");
   if (hi) {
     if (document.activeElement !== hi) hi.value = state.chartHighlight || "";
     hi.oninput = () => { state.chartHighlight = hi.value; renderCharts(); };
   }
-  // ---- Reset ----
+  // ---- Reset (everything except the group + axes) ----
   const reset = document.getElementById("chart-reset");
   if (reset) reset.onclick = () => {
-    state.chartColorBy = "none"; state.chartFilterOrg = "all";
-    state.chartFilterLevel = "all"; state.chartFilterPos = "all";
+    state.chartColorBy = "none"; state.chartSizeBy = "none";
+    state.chartFilterOrg = "all"; state.chartFilterLevel = "all"; state.chartFilterPos = "all";
     state.chartFvMin = null; state.chartAgeMax = null; state.chartHighlight = "";
+    state.chartXMin = state.chartXMax = state.chartYMin = state.chartYMax = null;
+    state.chartLogX = false; state.chartLogY = false; state.chartView = null;
     renderCharts();
   };
 }
@@ -16351,8 +16738,25 @@ function renderCharts() {
   ySel.innerHTML = opts;
   xSel.value = state.chartX;
   ySel.value = state.chartY;
-  xSel.onchange = () => { state.chartX = xSel.value; renderCharts(); };
-  ySel.onchange = () => { state.chartY = ySel.value; renderCharts(); };
+  // Changing an axis invalidates the zoom view + that axis's range bounds.
+  xSel.onchange = () => { state.chartX = xSel.value; state.chartView = null; state.chartXMin = state.chartXMax = null; renderCharts(); };
+  ySel.onchange = () => { state.chartY = ySel.value; state.chartView = null; state.chartYMin = state.chartYMax = null; renderCharts(); };
+
+  // Size encoder — any numeric axis (or none). Reuses the axis vocabulary.
+  const sizeSel = document.getElementById("chart-size");
+  if (sizeSel) {
+    sizeSel.innerHTML = `<option value="none">None</option>` +
+      axes.map(a => `<option value="${a.key}">${escapeHtml(a.label)}</option>`).join("");
+    if (state.chartSizeBy && state.chartSizeBy !== "none" && !axes.find(a => a.key === state.chartSizeBy))
+      state.chartSizeBy = "none";
+    sizeSel.value = state.chartSizeBy || "none";
+    sizeSel.onchange = () => { state.chartSizeBy = sizeSel.value; renderCharts(); };
+  }
+  // Range-filter labels track the active axis metric.
+  const xrl = document.getElementById("chart-xrange-label");
+  const yrl = document.getElementById("chart-yrange-label");
+  if (xrl) xrl.textContent = (axes.find(a => a.key === state.chartX) || {}).label || "X" ;
+  if (yrl) yrl.textContent = (axes.find(a => a.key === state.chartY) || {}).label || "Y";
 
   const trendCb = document.getElementById("chart-trendline");
   trendCb.onchange = () => renderCharts();
@@ -16426,6 +16830,18 @@ function renderCharts() {
   };
   const hq = (state.chartHighlight || "").trim().toLowerCase();
 
+  // Size encoder — scale point radius by any numeric axis (sqrt scale so
+  // AREA, not radius, is proportional to the value — the honest encoding).
+  const sizeKey = state.chartSizeBy && state.chartSizeBy !== "none" ? state.chartSizeBy : null;
+  const sizeAxis = sizeKey ? axes.find(a => a.key === sizeKey) : null;
+
+  // Threshold filters on the plotted metrics themselves (the generalized
+  // "EV ≥ X / FV ≥ 50" query). Empty = unbounded.
+  const _num = v => (v != null && v !== "" && isFinite(Number(v))) ? Number(v) : null;
+  const xMinF = _num(state.chartXMin), xMaxF = _num(state.chartXMax);
+  const yMinF = _num(state.chartYMin), yMaxF = _num(state.chartYMax);
+  let nRange = 0;
+
   // Build dots (filtered to entities with both axes populated).
   let nMissingX = 0, nMissingY = 0;
   const dots = [];
@@ -16437,12 +16853,18 @@ function renderCharts() {
     if (!xOK) nMissingX++;
     if (!yOK) nMissingY++;
     if (!xOK || !yOK) continue;
+    const xn = Number(xv), yn = Number(yv);
+    // Axis-range threshold filters.
+    if ((xMinF != null && xn < xMinF) || (xMaxF != null && xn > xMaxF) ||
+        (yMinF != null && yn < yMinF) || (yMaxF != null && yn > yMaxF)) { nRange++; continue; }
     const d = dimsFor(e);
     const label = e.player_name || e.org;
+    const sizeVal = sizeAxis ? sizeAxis.getter(e) : null;
     dots.push({
-      x: Number(xv), y: Number(yv),
+      x: xn, y: yn,
       label, key: e.player_key || e.org, org: e.org,
       color: colorOf(d),
+      sizeVal: (sizeVal != null && isFinite(sizeVal)) ? Number(sizeVal) : null,
       // Highlight when the find-box matches the entity name.
       hi: !!hq && (label || "").toLowerCase().includes(hq),
       // v7 — pin the full entity so click/hover resolve O(1).
@@ -16467,23 +16889,53 @@ function renderCharts() {
     return;
   }
   const xs = dots.map(d => d.x), ys = dots.map(d => d.y);
-  const xMin = Math.min(...xs), xMax = Math.max(...xs);
-  const yMin = Math.min(...ys), yMax = Math.max(...ys);
-  const xPad = (xMax - xMin) * 0.05 || 1;
-  const yPad = (yMax - yMin) * 0.05 || 1;
-  const xLo = xMin - xPad, xHi = xMax + xPad;
-  const yLo = yMin - yPad, yHi = yMax + yPad;
-  const sx = v => ML + ((v - xLo) / (xHi - xLo)) * innerW;
-  const sy = v => MT + innerH - ((v - yLo) / (yHi - yLo)) * innerH;
+  // Log scale is only valid for strictly-positive data; silently fall back
+  // to linear (and note it) when the axis contains a non-positive value.
+  const logX = !!state.chartLogX && xs.every(v => v > 0);
+  const logY = !!state.chartLogY && ys.every(v => v > 0);
+  const tf = (v, isLog) => isLog ? Math.log10(v) : v;
+  const tinv = (v, isLog) => isLog ? Math.pow(10, v) : v;
+  // Data extent in transformed space, padded 5%.
+  const _ext = (arr, isLog) => {
+    const t = arr.map(v => tf(v, isLog));
+    let lo = Math.min(...t), hi = Math.max(...t);
+    const pad = (hi - lo) * 0.05 || (isLog ? 0.05 : 1);
+    return [lo - pad, hi + pad];
+  };
+  let [xLoT, xHiT] = _ext(xs, logX);
+  let [yLoT, yHiT] = _ext(ys, logY);
+  // Zoom/pan view override (stored in DATA space; transform to scale space).
+  const view = state.chartView;
+  if (view && view.logX === logX && view.logY === logY) {
+    xLoT = tf(view.xLo, logX); xHiT = tf(view.xHi, logX);
+    yLoT = tf(view.yLo, logY); yHiT = tf(view.yHi, logY);
+  }
+  const sx = v => ML + ((tf(v, logX) - xLoT) / (xHiT - xLoT)) * innerW;
+  const sy = v => MT + innerH - ((tf(v, logY) - yLoT) / (yHiT - yLoT)) * innerH;
+  // Inverse maps (pixel → data) for brush-to-zoom.
+  const xInv = px => tinv(xLoT + ((px - ML) / innerW) * (xHiT - xLoT), logX);
+  const yInv = py => tinv(yLoT + ((MT + innerH - py) / innerH) * (yHiT - yLoT), logY);
+
+  // Size scale (sqrt → area-proportional). Radius spans ~3..13px.
+  const sizeVals = sizeAxis ? dots.map(d => d.sizeVal).filter(v => v != null) : [];
+  const szMin = sizeVals.length ? Math.min(...sizeVals) : 0;
+  const szMax = sizeVals.length ? Math.max(...sizeVals) : 1;
+  const R_MIN = 3, R_MAX = 13;
+  const radiusOf = (d) => {
+    if (!sizeAxis || d.sizeVal == null || szMax === szMin) return null;
+    const t = (d.sizeVal - szMin) / (szMax - szMin);
+    return R_MIN + Math.sqrt(Math.max(0, t)) * (R_MAX - R_MIN);
+  };
 
   // Trendline + on-chart R² chip. Chip sits top-right so it's visible
   // without consulting the caption below — gives the reader an instant
   // read on trend strength. Hover anywhere on the dashed line shows the
   // full equation as a tooltip.
   let trend = trendOn ? _linearRegression(dots.map(d => [d.x, d.y])) : null;
+  const _trendX0 = tinv(xLoT, logX), _trendX1 = tinv(xHiT, logX);
   const trendLine = trend
-    ? `<line x1="${sx(xLo).toFixed(1)}" y1="${sy(trend.m * xLo + trend.b).toFixed(1)}"
-              x2="${sx(xHi).toFixed(1)}" y2="${sy(trend.m * xHi + trend.b).toFixed(1)}"
+    ? `<line x1="${sx(_trendX0).toFixed(1)}" y1="${sy(trend.m * _trendX0 + trend.b).toFixed(1)}"
+              x2="${sx(_trendX1).toFixed(1)}" y2="${sy(trend.m * _trendX1 + trend.b).toFixed(1)}"
               stroke="var(--neon-orange)" stroke-width="1.5" stroke-dasharray="6,4"
               style="cursor:help;">
          <title>Linear trendline: y = ${trend.m.toFixed(4)}x + ${trend.b.toFixed(3)} · R² = ${trend.r2.toFixed(3)}</title>
@@ -16512,12 +16964,14 @@ function renderCharts() {
       })()
     : "";
 
-  // Axis ticks (4 each)
+  // Axis ticks (4 each) — evenly spaced in scale (transformed) space so log
+  // axes get geometrically-spaced ticks; values mapped back to data space.
   const tickCount = 4;
   const xTicks = [], yTicks = [];
   for (let i = 0; i <= tickCount; i++) {
-    const tx = xLo + ((xHi - xLo) * i) / tickCount;
-    const ty = yLo + ((yHi - yLo) * i) / tickCount;
+    const txT = xLoT + ((xHiT - xLoT) * i) / tickCount;
+    const tyT = yLoT + ((yHiT - yLoT) * i) / tickCount;
+    const tx = tinv(txT, logX), ty = tinv(tyT, logY);
     xTicks.push({ v: tx, x: sx(tx) });
     yTicks.push({ v: ty, y: sy(ty) });
   }
@@ -16539,14 +16993,16 @@ function renderCharts() {
   const order = dots.map((_, i) => i).sort((a, b) => (dots[a].hi ? 1 : 0) - (dots[b].hi ? 1 : 0));
   const dotsHtml = order.map(i => {
     const d = dots[i];
-    const r = d.hi ? 6 : 3.5;
-    const op = dimOthers && !d.hi ? 0.16 : 0.72;
+    const baseR = radiusOf(d);                       // null when size encoding off
+    const r = d.hi ? Math.max(6, (baseR || 0) + 2) : (baseR != null ? baseR : 3.5);
+    const op = dimOthers && !d.hi ? 0.16 : (sizeAxis ? 0.62 : 0.72);
     const stroke = d.hi ? "var(--text-primary)" : "var(--bg-primary)";
     const sw = d.hi ? 1.5 : 0.5;
-    return `<circle cx="${sx(d.x).toFixed(1)}" cy="${sy(d.y).toFixed(1)}" r="${r}"
+    const sizeTip = sizeAxis && d.sizeVal != null ? `, ${escapeHtml(sizeAxis.label)}=${sizeAxis.fmt(d.sizeVal)}` : "";
+    return `<circle cx="${sx(d.x).toFixed(1)}" cy="${sy(d.y).toFixed(1)}" r="${r.toFixed(1)}"
              fill="${d.color}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}"
              ${clickable ? `data-dot="${i}" style="cursor:pointer;"` : ""}>
-       <title>${escapeHtml(d.label)} · ${escapeHtml(xAxis.label)}=${xAxis.fmt(d.x)}, ${escapeHtml(yAxis.label)}=${yAxis.fmt(d.y)}${clickable ? " · click to open" : ""}</title>
+       <title>${escapeHtml(d.label)} · ${escapeHtml(xAxis.label)}=${xAxis.fmt(d.x)}, ${escapeHtml(yAxis.label)}=${yAxis.fmt(d.y)}${sizeTip}${clickable ? " · click to open" : ""}</title>
      </circle>`;
   }).join("");
 
@@ -16588,34 +17044,100 @@ function renderCharts() {
           font-size="11" fill="var(--text-primary)" font-weight="600"
           transform="rotate(-90 14 ${(MT+innerH/2).toFixed(1)})">${escapeHtml(yAxis.label)}</text>
     ${r2Chip}
+    <rect id="chart-brush" x="0" y="0" width="0" height="0" fill="var(--neon-cyan)" fill-opacity="0.12" stroke="var(--neon-cyan)" stroke-width="1" stroke-dasharray="3,2" style="display:none;pointer-events:none;"/>
   `;
-  // Wire dot clicks → the group's detail page. Done post-innerHTML since
-  // SVG inline handlers can't carry the entity object.
-  if (clickable) {
-    svg.querySelectorAll("[data-dot]").forEach(c => {
-      c.addEventListener("click", () => {
-        const d = dots[+c.getAttribute("data-dot")];
-        if (d && d._entity) grp.nav(d._entity);
-      });
-    });
+
+  // Unified pointer handling: drag a box to ZOOM into that region; a plain
+  // click on a dot opens it; double-click resets the view. clientX/Y → viewBox
+  // coords via the rendered rect (viewBox is 0..W × 0..H).
+  const brushRect = svg.querySelector("#chart-brush");
+  const toVB = (evt) => {
+    const r = svg.getBoundingClientRect();
+    return [ (evt.clientX - r.left) / r.width * W, (evt.clientY - r.top) / r.height * H ];
+  };
+  let _bStart = null, _bMoved = false;
+  const onDown = (evt) => {
+    const [vx, vy] = toVB(evt);
+    _bStart = { vx, vy, target: evt.target };
+    _bMoved = false;
+  };
+  const onMove = (evt) => {
+    if (!_bStart) return;
+    const [vx, vy] = toVB(evt);
+    if (Math.abs(vx - _bStart.vx) > 4 || Math.abs(vy - _bStart.vy) > 4) _bMoved = true;
+    if (!_bMoved) return;
+    const x = Math.max(ML, Math.min(_bStart.vx, vx)), y = Math.max(MT, Math.min(_bStart.vy, vy));
+    const x2 = Math.min(ML + innerW, Math.max(_bStart.vx, vx)), y2 = Math.min(MT + innerH, Math.max(_bStart.vy, vy));
+    brushRect.setAttribute("x", x.toFixed(1)); brushRect.setAttribute("y", y.toFixed(1));
+    brushRect.setAttribute("width", Math.max(0, x2 - x).toFixed(1));
+    brushRect.setAttribute("height", Math.max(0, y2 - y).toFixed(1));
+    brushRect.style.display = "";
+    if (evt.cancelable) evt.preventDefault();
+  };
+  const onUp = (evt) => {
+    if (!_bStart) return;
+    const start = _bStart; _bStart = null;
+    brushRect.style.display = "none";
+    if (_bMoved) {
+      const [vx, vy] = toVB(evt);
+      const px0 = Math.max(ML, Math.min(start.vx, vx)), px1 = Math.min(ML + innerW, Math.max(start.vx, vx));
+      const py0 = Math.max(MT, Math.min(start.vy, vy)), py1 = Math.min(MT + innerH, Math.max(start.vy, vy));
+      if (px1 - px0 > 6 && py1 - py0 > 6) {
+        // y is inverted: top pixel → higher value.
+        const nx = [xInv(px0), xInv(px1)].sort((a, b) => a - b);
+        const ny = [yInv(py1), yInv(py0)].sort((a, b) => a - b);
+        state.chartView = { logX, logY, xLo: nx[0], xHi: nx[1], yLo: ny[0], yHi: ny[1] };
+        renderCharts();
+      }
+      return;
+    }
+    // Treat as a click: open the dot under the pointer.
+    if (clickable && start.target && start.target.getAttribute) {
+      const di = start.target.getAttribute("data-dot");
+      if (di != null) { const d = dots[+di]; if (d && d._entity) grp.nav(d._entity); }
+    }
+  };
+  svg.addEventListener("pointerdown", onDown);
+  svg.addEventListener("pointermove", onMove);
+  svg.addEventListener("pointerup", onUp);
+  svg.addEventListener("dblclick", () => { if (state.chartView) { state.chartView = null; renderCharts(); } });
+  svg.style.touchAction = "none";
+
+  // Reset-view button — visible only when a zoom/pan view is active.
+  const resetViewBtn = document.getElementById("chart-reset-view");
+  if (resetViewBtn) {
+    resetViewBtn.style.display = state.chartView ? "" : "none";
+    resetViewBtn.onclick = () => { state.chartView = null; renderCharts(); };
   }
 
-  // Color legend.
+  // Color + size legend.
   const legendEl = document.getElementById("chart-legend");
   if (legendEl) {
     const swatch = (c, lbl) =>
       `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:${c};display:inline-block;border:0.5px solid var(--border);"></span>${escapeHtml(lbl)}</span>`;
+    let colorHtml = "";
     if (colorBy === "fv") {
-      legendEl.innerHTML = `<span style="color:var(--text-tertiary);">Color = FV tier:</span>` +
+      colorHtml = `<span style="color:var(--text-tertiary);">Color = FV tier:</span>` +
         [70, 60, 55, 50, 45, 40].map(t => swatch(`var(--fv-${t}-bd)`, String(t))).join("");
     } else if (colorCats.length) {
       const shown = colorCats.slice(0, 16);
-      legendEl.innerHTML = `<span style="color:var(--text-tertiary);">Color = ${escapeHtml(colorBy)}:</span>` +
+      colorHtml = `<span style="color:var(--text-tertiary);">Color = ${escapeHtml(colorBy)}:</span>` +
         shown.map(c => swatch(_chartCatColor(c, colorCats), c)).join("") +
         (colorCats.length > 16 ? `<span style="color:var(--text-tertiary);">+${colorCats.length - 16} more</span>` : "");
-    } else {
-      legendEl.innerHTML = "";
     }
+    // Size legend — 3 reference bubbles (min / mid / max of the size metric).
+    let sizeHtml = "";
+    if (sizeAxis && sizeVals.length && szMax > szMin) {
+      const bubble = (val) => {
+        const t = (val - szMin) / (szMax - szMin);
+        const rr = R_MIN + Math.sqrt(Math.max(0, t)) * (R_MAX - R_MIN);
+        const dia = (rr * 2).toFixed(0);
+        return `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:${dia}px;height:${dia}px;border-radius:50%;background:var(--text-tertiary);opacity:0.5;display:inline-block;"></span>${escapeHtml(sizeAxis.fmt(val))}</span>`;
+      };
+      sizeHtml = `<span style="color:var(--text-tertiary);margin-left:10px;">Size = ${escapeHtml(sizeAxis.label)}:</span>` +
+        [szMin, (szMin + szMax) / 2, szMax].map(bubble).join("");
+    }
+    legendEl.innerHTML = colorHtml + sizeHtml;
   }
 
   // v7 — coverage diagnostics + filter note so the user understands why
@@ -16623,14 +17145,74 @@ function renderCharts() {
   const _coverageNote = (nMissingX || nMissingY)
     ? ` · <span style="color:var(--text-tertiary);">(${nMissingX} missing X${nMissingY ? `, ${nMissingY} missing Y` : ""})</span>`
     : "";
-  const _filterNote = nFiltered
-    ? ` · <span style="color:var(--text-tertiary);">${nFiltered} filtered out</span>`
+  const _filterNote = (nFiltered || nRange)
+    ? ` · <span style="color:var(--text-tertiary);">${nFiltered + nRange} filtered out</span>`
     : "";
+  // Active-filter chip strip — the live query, each chip clears that facet.
+  const xLbl = (axes.find(a => a.key === state.chartX) || {}).label || "X";
+  const yLbl = (axes.find(a => a.key === state.chartY) || {}).label || "Y";
+  const activeChips = [];
+  const addChip = (clear, txt) => activeChips.push(
+    `<button class="chart-fchip" type="button" data-clear="${clear}" title="Remove this filter">${escapeHtml(txt)} ✕</button>`);
+  if (fOrg !== "all")   addChip("org", `Org: ${fOrg}`);
+  if (fLevel !== "all") addChip("level", `Level: ${fLevel}`);
+  if (fPos !== "all")   addChip("pos", `Pos: ${fPos}`);
+  if (fFv != null)      addChip("fv", `FV ≥ ${fFv}`);
+  if (fAge != null)     addChip("age", `Age ≤ ${fAge}`);
+  if (xMinF != null)    addChip("xmin", `${xLbl} ≥ ${xMinF}`);
+  if (xMaxF != null)    addChip("xmax", `${xLbl} ≤ ${xMaxF}`);
+  if (yMinF != null)    addChip("ymin", `${yLbl} ≥ ${yMinF}`);
+  if (yMaxF != null)    addChip("ymax", `${yLbl} ≤ ${yMaxF}`);
+  if (hq)               addChip("find", `Find: "${state.chartHighlight}"`);
+  if (state.chartView)  addChip("view", `Zoomed`);
+  const chipStrip = activeChips.length
+    ? `<div class="chart-active-filters"><span class="chart-af-label">Filters:</span>${activeChips.join("")}</div>` : "";
   document.getElementById("chart-meta").innerHTML =
-    `${dots.length} of ${entities.length} ${grp.noun} plotted · ${escapeHtml(xAxis.label)} vs ${escapeHtml(yAxis.label)}${_coverageNote}${_filterNote}`;
+    `<div>${dots.length} of ${entities.length} ${grp.noun} plotted · ${escapeHtml(xLbl)} vs ${escapeHtml(yLbl)}${_coverageNote}${_filterNote}</div>${chipStrip}`;
+  // Wire chip removal.
+  document.querySelectorAll("#chart-meta [data-clear]").forEach(b => b.onclick = () => {
+    const k = b.dataset.clear;
+    if (k === "org") state.chartFilterOrg = "all";
+    else if (k === "level") state.chartFilterLevel = "all";
+    else if (k === "pos") state.chartFilterPos = "all";
+    else if (k === "fv") state.chartFvMin = null;
+    else if (k === "age") state.chartAgeMax = null;
+    else if (k === "xmin") state.chartXMin = null;
+    else if (k === "xmax") state.chartXMax = null;
+    else if (k === "ymin") state.chartYMin = null;
+    else if (k === "ymax") state.chartYMax = null;
+    else if (k === "find") state.chartHighlight = "";
+    else if (k === "view") state.chartView = null;
+    renderCharts();
+  });
   document.getElementById("chart-stats").innerHTML = trend
     ? `Trendline: y = ${trend.m.toFixed(3)}x + ${trend.b.toFixed(2)} · R² = ${trend.r2.toFixed(3)}`
     : "Trendline disabled";
+
+  // Keep the URL in sync so the current plot+filter config is always
+  // shareable (control handlers call renderCharts directly, bypassing the
+  // main render()'s syncToURL).
+  if (state.section === "charts" && !state.view) syncToURL();
+
+  // ---- Share — copy a deep link to this exact configuration. ----
+  const shareBtn = document.getElementById("chart-share");
+  if (shareBtn && !shareBtn._wired) {
+    shareBtn._wired = true;
+    shareBtn.onclick = () => {
+      syncToURL();
+      const url = window.location.href;
+      const done = () => {
+        const old = shareBtn.textContent;
+        shareBtn.textContent = "✓ Link copied";
+        setTimeout(() => { shareBtn.textContent = old; }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done).catch(() => window.prompt("Copy this link:", url));
+      } else {
+        window.prompt("Copy this link:", url);
+      }
+    };
+  }
 }
 
 function renderLeaderboards() {
@@ -16916,12 +17498,536 @@ function renderLeaderboards() {
 }
 
 // =============================================================================
+// TIME MACHINE — the consensus board as it stood at any past snapshot, plus a
+// two-date diff/changelog. Reconstructed entirely from each player's points[]
+// history (consensus_fv per snapshot_date), so no extra data fetch is needed.
+// =============================================================================
+
+// The board pool: active prospects + graduated players (debuts slice), so a
+// historical board includes prospects who have since debuted. The debuts slice
+// loads lazily; until it arrives the pool is active-only and the board still
+// renders (then re-renders when the slice lands).
+function _tmPool() {
+  return [...(DATA.players || []), ...((DATA && DATA.debuts) || [])];
+}
+
+// Distinct snapshot dates across the whole pool (ascending). Cached on DATA;
+// invalidated when the debuts slice loads (it can add earlier dates).
+function _tmDates() {
+  if (DATA._tmDates) return DATA._tmDates;
+  const s = new Set();
+  for (const p of _tmPool())
+    for (const pt of (p.points || []))
+      if (pt && pt.snapshot_date && pt.consensus_fv != null) s.add(pt.snapshot_date);
+  DATA._tmDates = [...s].sort();
+  return DATA._tmDates;
+}
+
+// FV pill themed by tier (reuses the --fv-NN-* tokens → correct in both modes).
+function _tmFvPill(fv, plus) {
+  if (fv == null) return "";
+  const tier = Math.max(20, Math.min(80, Math.round(fv / 5) * 5));
+  const lab = (Number.isInteger(fv) ? fv : fv.toFixed(0)) + (plus ? "+" : "");
+  return `<span class="tm-fv" style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);">${escapeHtml(String(lab))}</span>`;
+}
+
+// Pretty date: "Feb 13, 2025".
+function _tmFmtDate(d) {
+  if (!d) return "";
+  const dt = new Date(String(d) + "T00:00:00");
+  return isNaN(dt.getTime()) ? d
+    : dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+// The board as it stood on `dateStr`: each player's latest consensus_fv
+// at-or-before that date, ranked FV desc (avg_rank then name as tiebreaks).
+// Returns the FULL ordered board; callers slice to top-N.
+function _boardAsOf(dateStr) {
+  const rows = [];
+  for (const p of _tmPool()) {
+    // A player who had already debuted by this date was no longer on the
+    // prospect board then — exclude them from that point onward.
+    if (p.debut_date && p.debut_date <= dateStr) continue;
+    let best = null;
+    for (const pt of (p.points || [])) {
+      if (!pt || pt.snapshot_date > dateStr || pt.consensus_fv == null) continue;
+      if (!best || pt.snapshot_date >= best.snapshot_date) best = pt;
+    }
+    if (!best) continue;
+    rows.push({
+      key: p.player_key, name: p.player_name, org: p.org, pos: p.position,
+      fv: best.consensus_fv, fvPlus: !!best.consensus_fv_plus,
+      avgRank: best.avg_rank, asOf: best.snapshot_date,
+      debutDate: p.debut_date || null,
+    });
+  }
+  rows.sort((a, b) => (b.fv - a.fv)
+    || ((a.avgRank ?? 9e9) - (b.avgRank ?? 9e9))
+    || a.name.localeCompare(b.name));
+  rows.forEach((r, i) => { r.rank = i + 1; });
+  return rows;
+}
+
+// Diff two boards into a changelog. Membership is defined by top-N so the
+// "new entries" / "dropped off" buckets are meaningful.
+function _boardDiff(dateA, dateB, topN) {
+  const A = _boardAsOf(dateA), B = _boardAsOf(dateB);
+  const aTop = new Map(A.filter(r => r.rank <= topN).map(r => [r.key, r]));
+  const bTop = new Map(B.filter(r => r.rank <= topN).map(r => [r.key, r]));
+  const aAll = new Map(A.map(r => [r.key, r]));
+  const bAll = new Map(B.map(r => [r.key, r]));
+  const risers = [], fallers = [], gainers = [], sliders = [], entered = [], dropped = [], graduated = [];
+  for (const [key, b] of bTop) {
+    const a = aAll.get(key);
+    if (!a || a.rank > topN) { entered.push({ b, a: a || null }); continue; }
+    const rankDelta = a.rank - b.rank;       // + = moved up the board
+    const fvDelta = b.fv - a.fv;
+    if (rankDelta > 0) risers.push({ a, b, rankDelta, fvDelta });
+    else if (rankDelta < 0) fallers.push({ a, b, rankDelta, fvDelta });
+    if (fvDelta > 0) gainers.push({ a, b, fvDelta, rankDelta });
+    else if (fvDelta < 0) sliders.push({ a, b, fvDelta, rankDelta });
+  }
+  for (const [key, a] of aTop) {
+    if (bTop.has(key)) continue;
+    // Graduated if the player debuted within the (dateA, dateB] window.
+    if (a.debutDate && a.debutDate > dateA && a.debutDate <= dateB) {
+      graduated.push({ a });
+    } else {
+      dropped.push({ a, b: bAll.get(key) || null });
+    }
+  }
+  risers.sort((x, y) => y.rankDelta - x.rankDelta);
+  fallers.sort((x, y) => x.rankDelta - y.rankDelta);
+  gainers.sort((x, y) => y.fvDelta - x.fvDelta);
+  sliders.sort((x, y) => x.fvDelta - y.fvDelta);
+  entered.sort((x, y) => x.b.rank - y.b.rank);
+  dropped.sort((x, y) => x.a.rank - y.a.rank);
+  graduated.sort((x, y) => x.a.rank - y.a.rank);
+  return { risers, fallers, gainers, sliders, entered, dropped, graduated,
+           sizeA: A.length, sizeB: B.length };
+}
+
+function _tmBoardRowHTML(r, opts) {
+  opts = opts || {};
+  const delta = opts.deltaHTML || "";
+  return `<a class="tm-row" href="#player=${escapeHtml(r.key)}"
+      onclick="event.preventDefault();state.section='timemachine';state.view={type:'player',key:'${escapeHtml(r.key)}'};render();syncToURL();">
+      <span class="tm-rank">${r.rank}</span>
+      ${teamLogoHTML(r.org, "sm")}
+      <span class="tm-name">${escapeHtml(r.name)}</span>
+      <span class="tm-pos">${escapeHtml(r.pos || "")}</span>
+      ${delta}
+      ${_tmFvPill(r.fv, r.fvPlus)}
+    </a>`;
+}
+
+// Render the controls bar (mode toggle + date pickers + slider). Kept separate
+// so the slider can re-render only #tm-body on input without losing focus.
+function _tmRenderControls() {
+  const el = document.getElementById("tm-controls");
+  if (!el) return;
+  const dates = _tmDates();
+  if (!dates.length) { el.innerHTML = ""; return; }
+  const latest = dates[dates.length - 1];
+  if (!state.tmDate || !dates.includes(state.tmDate)) state.tmDate = latest;
+  if (!state.tmDateB || !dates.includes(state.tmDateB)) state.tmDateB = latest;
+  if (!state.tmDateA || !dates.includes(state.tmDateA)) {
+    // Default the "from" date to ~1 year back: the earliest snapshot whose
+    // year is (latest year − 1), else the earliest available.
+    const latestYear = parseInt(latest.slice(0, 4), 10);
+    state.tmDateA = dates.find(d => parseInt(d.slice(0, 4), 10) >= latestYear - 1)
+                    || dates[0];
+  }
+  const idx = Math.max(0, dates.indexOf(state.tmDate));
+  const opts = (sel) => dates.map(d =>
+    `<option value="${d}"${d === sel ? " selected" : ""}>${_tmFmtDate(d)}</option>`).join("");
+
+  const modeToggle = `
+    <div class="tm-mode" role="tablist" aria-label="Time Machine mode">
+      <button class="tm-mode-btn${state.tmMode === "asof" ? " active" : ""}" data-tm-mode="asof" role="tab" aria-selected="${state.tmMode === "asof"}">As of date</button>
+      <button class="tm-mode-btn${state.tmMode === "diff" ? " active" : ""}" data-tm-mode="diff" role="tab" aria-selected="${state.tmMode === "diff"}">Compare two dates</button>
+    </div>`;
+
+  let body;
+  if (state.tmMode === "asof") {
+    body = `
+      <div class="tm-asof-controls">
+        <button class="tm-step" data-tm-step="-1" aria-label="Previous snapshot" ${idx === 0 ? "disabled" : ""}>‹</button>
+        <input type="range" class="tm-slider" min="0" max="${dates.length - 1}" value="${idx}" aria-label="Snapshot date" list="tm-ticks">
+        <button class="tm-step" data-tm-step="1" aria-label="Next snapshot" ${idx === dates.length - 1 ? "disabled" : ""}>›</button>
+        <span class="tm-date-readout" id="tm-date-readout">${_tmFmtDate(state.tmDate)}</span>
+      </div>
+      <div class="tm-slider-ends"><span>${_tmFmtDate(dates[0])}</span><span>${_tmFmtDate(latest)}</span></div>`;
+  } else {
+    body = `
+      <div class="tm-diff-controls">
+        <label class="tm-sel-wrap">From <select class="tm-sel" id="tm-date-a">${opts(state.tmDateA)}</select></label>
+        <span class="tm-arrow" aria-hidden="true">→</span>
+        <label class="tm-sel-wrap">To <select class="tm-sel" id="tm-date-b">${opts(state.tmDateB)}</select></label>
+      </div>`;
+  }
+
+  el.innerHTML = `${modeToggle}${body}
+    <p class="tm-note">Board reconstructed from each prospect's consensus-FV history (${dates.length} snapshots, ${_tmFmtDate(dates[0])} – ${_tmFmtDate(latest)}). Ranking is by consensus FV. Players who have since graduated leave the active board.</p>`;
+
+  el.querySelectorAll("[data-tm-mode]").forEach(b => b.onclick = () => {
+    state.tmMode = b.dataset.tmMode; _tmRenderControls(); _tmRenderBody(); syncToURL();
+  });
+  const slider = el.querySelector(".tm-slider");
+  if (slider) slider.oninput = () => {
+    state.tmDate = dates[parseInt(slider.value, 10)] || latest;
+    const ro = document.getElementById("tm-date-readout");
+    if (ro) ro.textContent = _tmFmtDate(state.tmDate);
+    _tmRenderBody(); syncToURL();
+  };
+  el.querySelectorAll("[data-tm-step]").forEach(b => b.onclick = () => {
+    const ni = Math.max(0, Math.min(dates.length - 1, idx + parseInt(b.dataset.tmStep, 10)));
+    state.tmDate = dates[ni]; _tmRenderControls(); _tmRenderBody(); syncToURL();
+  });
+  const selA = el.querySelector("#tm-date-a"), selB = el.querySelector("#tm-date-b");
+  if (selA) selA.onchange = () => { state.tmDateA = selA.value; _tmRenderBody(); syncToURL(); };
+  if (selB) selB.onchange = () => { state.tmDateB = selB.value; _tmRenderBody(); syncToURL(); };
+}
+
+function _tmChangeGroup(title, glyph, items, kind) {
+  if (!items.length) return "";
+  const rows = items.slice(0, 25).map(it => {
+    const r = it.b || it.a;
+    let delta = "";
+    if (kind === "rank") {
+      const d = it.rankDelta;
+      delta = `<span class="tm-delta ${d > 0 ? "up" : "down"}">${d > 0 ? "▲" : "▼"} ${Math.abs(d)}</span>`;
+    } else if (kind === "fv") {
+      const d = it.fvDelta;
+      delta = `<span class="tm-delta ${d > 0 ? "up" : "down"}">${d > 0 ? "+" : ""}${d} FV</span>`;
+    } else if (kind === "new") {
+      delta = `<span class="tm-delta up">✦ new</span>`;
+    } else if (kind === "drop") {
+      delta = `<span class="tm-delta down">left top ${state.tmTopN}</span>`;
+    } else if (kind === "grad") {
+      delta = `<span class="tm-delta is-grad">★ debuted${it.a && it.a.debutDate ? " " + _tmFmtDate(it.a.debutDate) : ""}</span>`;
+    }
+    return _tmBoardRowHTML({ ...r, rank: r.rank }, { deltaHTML: delta });
+  }).join("");
+  return `<div class="tm-change-group">
+      <h3 class="tm-change-title"><span class="tm-change-glyph">${glyph}</span>${escapeHtml(title)} <span class="tm-change-count">${items.length}</span></h3>
+      <div class="tm-board">${rows}</div>
+    </div>`;
+}
+
+function _tmRenderBody() {
+  const el = document.getElementById("tm-body");
+  if (!el) return;
+  const dates = _tmDates();
+  if (!dates.length) { el.innerHTML = `<div class="state-message">No snapshot history yet.</div>`; return; }
+
+  if (state.tmMode === "asof") {
+    const board = _boardAsOf(state.tmDate).slice(0, state.tmTopN);
+    el.innerHTML = `
+      <div class="tm-asof-head">
+        <span class="tm-asof-title">Top ${state.tmTopN} as of ${_tmFmtDate(state.tmDate)}</span>
+        <span class="tm-asof-sub">${board.length} ranked prospects</span>
+      </div>
+      <div class="tm-board">${board.map(r => _tmBoardRowHTML(r)).join("")}</div>`;
+    return;
+  }
+
+  // diff mode
+  if (state.tmDateA === state.tmDateB) {
+    el.innerHTML = `<div class="state-message">Pick two different dates to see what changed.</div>`;
+    return;
+  }
+  // Order so "from" is the earlier date regardless of select order.
+  let a = state.tmDateA, b = state.tmDateB;
+  if (a > b) { const t = a; a = b; b = t; }
+  const diff = _boardDiff(a, b, state.tmTopN);
+  const summary = `
+    <div class="tm-diff-head">
+      <span class="tm-diff-title">What changed · ${_tmFmtDate(a)} → ${_tmFmtDate(b)}</span>
+      <span class="tm-diff-sub">${diff.entered.length} new · ${diff.risers.length} up · ${diff.fallers.length} down · ${diff.graduated.length} graduated · ${diff.dropped.length} dropped (top ${state.tmTopN})</span>
+    </div>`;
+  const groups = [
+    _tmChangeGroup("New to the top " + state.tmTopN, "✦", diff.entered, "new"),
+    _tmChangeGroup("Risers", "▲", diff.risers, "rank"),
+    _tmChangeGroup("Grade gainers", "+", diff.gainers, "fv"),
+    _tmChangeGroup("Graduated to MLB", "★", diff.graduated, "grad"),
+    _tmChangeGroup("Fallers", "▼", diff.fallers, "rank"),
+    _tmChangeGroup("Grade slides", "−", diff.sliders, "fv"),
+    _tmChangeGroup("Dropped off", "◇", diff.dropped, "drop"),
+  ].join("");
+  el.innerHTML = summary + `<div class="tm-changelog">${groups}</div>`;
+}
+
+function renderTimeMachine() {
+  // Pull in graduated players (debuts slice) so historical boards include
+  // since-graduated prospects + the diff's "Graduated to MLB" bucket. Load in
+  // the background — the board renders active-only first, then re-renders.
+  if (DATA._slices && DATA._slices.debuts && !((DATA.debuts || []).length) && !DATA._tmGradLoading) {
+    DATA._tmGradLoading = true;
+    loadSlice("debuts").then(() => {
+      DATA._tmDates = null;   // grads can add earlier snapshot dates
+      if (state.section === "timemachine" && !state.view) renderTimeMachine();
+    }).catch(() => {});
+  }
+  _applyFreshnessStamps(document.getElementById("timemachine-section"));
+  _tmRenderControls();
+  _tmRenderBody();
+}
+
+// =============================================================================
 // GLOSSARY render — categorized term cards with filter + search support.
 // Reads from the GLOSSARY const + state.glossaryCat / state.glossarySearch.
 // =============================================================================
+// =============================================================================
+// METHODOLOGY & TRACK RECORD — plain-language derivations of consensus FV +
+// each Arkmetric, plus the source-vs-source backtest visualizations rendered
+// from data/source_backtest.json (built by source_backtest.py each monthly run).
+// =============================================================================
+const _RATER_META = {
+  fangraphs:        { label: "FanGraphs",        color: "var(--neon-cyan)" },
+  mlb_pipeline:     { label: "MLB Pipeline",     color: "var(--neon-amber)" },
+  prospx_consensus: { label: "PROSPX consensus", color: "var(--up)" },
+};
+const _TIER_ORDER = ["<45", "45", "50", "55", "60+"];
+
+function _methProseHTML() {
+  return `
+  <div class="meth-prose">
+    <h2 class="meth-h">How the consensus FV is built</h2>
+    <p>Every source that publishes an explicit 20–80 Future Value grade contributes
+    <strong>equally</strong> — there is no per-source weighting. The consensus FV is the
+    mean of those published grades (FanGraphs, ESPN, Just Baseball, TJStats, MLB Pipeline,
+    and MLB Pipeline International). Two rank-only sources (Baseball America, The Athletic)
+    contribute a rank→implied-FV <em>only</em> when no source has graded a player yet; once
+    any explicit FV exists, the grade mean wins and ranks become informational (the
+    <code>avg_rank</code> field).</p>
+    <p>Grades are <strong>forward-filled</strong>: because sources publish on different dates,
+    the consensus at any date uses the latest snapshot from <em>every</em> source up to that
+    date, so a player isn't reduced to a single most-recent list. It is then
+    <strong>Bayesian-shrunk</strong> — a thin-evidence grade (graded by few sources, or only
+    just added) is pulled toward a prior, so one aggressive outlier source can't swing the
+    number until corroborating grades arrive. The chart you see on every prospect page is this
+    point-in-time consensus history; the per-source overlay shows the inputs it blends.</p>
+
+    <h2 class="meth-h">How the Arkmetrics are derived</h2>
+    <dl class="meth-dl">
+      <dt>WAG — WAR Above Grade <span class="meth-tag">graduates</span></dt>
+      <dd>A graduate's career WAR <em>rate</em> projected to a role-typical full season
+      (612 PA for hitters; 175 / 65 / 50 / 60 IP for SP / MIRP / SIRP / CL), minus the
+      per-season WAR the player's FV grade implied. Positive = outproducing the grade. Sample
+      floors of 150 PA / 50 IP gate it. This is the realized-outcome metric the backtest below
+      leans on.</dd>
+
+      <dt>DvM+ — Development vs Mean <span class="meth-tag">farm system</span></dt>
+      <dd>A wRC+-style index of organizational development: an org's cumulative FV growth over a
+      1 / 3 / 6-year window scored against the league-mean farm (100 = mean, +10 = one standard
+      deviation). Acquisitions are nullified and graduations don't subtract, so it measures only
+      development of prospects already in the system. The farm grade weights 6y / 3y / 1y at
+      60 / 30 / 10%.</dd>
+
+      <dt>RPS+ — Rate Performance Score <span class="meth-tag">prospect</span></dt>
+      <dd>A level-anchored rate index (OPS+ for hitters, ERA- for pitchers) normalized against
+      the player's <em>own</em> age × position-group cohort, then nudged by a small position
+      multiplier (C ×1.08 … 1B ×0.95). 100 = the same-age, same-position-group mean. MLB-level
+      prospects substitute canonical wRC+ / xFIP.</dd>
+
+      <dt>SC+ — Statcast+ <span class="meth-tag">prospect</span></dt>
+      <dd>A side-aware composite of tracked Statcast / zone signals — contact quality + zone
+      discipline for hitters; stuff + induced whiff/chase + suppressed contact for pitchers.
+      Each component is z-scored against the side-matched active pool, averaged, and rescaled so
+      100 = pool mean and one standard deviation moves it 15 points (the wRC+/OPS+ family).</dd>
+
+      <dt>ToolDvM+ — Tool Development vs Mean <span class="meth-tag">farm system</span></dt>
+      <dd>A position-weighted blend of an org's per-tool DvM+ values (Hit, Power, Field, Arm,
+      Fastball, Command, …). Each tool's development velocity is league-anchored (100 + 10·z),
+      then weighted by how much that tool matters for the position bucket (a catcher's Field/Arm,
+      a starter's Fastball/Command), so growing the <em>right</em> tools scores higher than
+      padding the average.</dd>
+    </dl>
+  </div>`;
+}
+
+// Smooth (Catmull-Rom) calibration line: x = FV tier, y = an outcome metric,
+// one line per rater. Honest "smooth data curve" while UI stays sharp-cornered.
+function _methCalibrationChart(bt, metricKey, metricLabel, opts) {
+  opts = opts || {};
+  const W = 580, H = 250, ML = 46, MR = 16, MT = 16, MB = 40;
+  const iW = W - ML - MR, iH = H - MT - MB;
+  const tiers = _TIER_ORDER;
+  const series = bt.raters.map(r => {
+    const tmap = {}; (bt.cohorts[r].tiers || []).forEach(t => { tmap[t.tier] = t; });
+    return { rater: r, pts: tiers.map(t => tmap[t] ? tmap[t][metricKey] : null) };
+  });
+  const allVals = series.flatMap(s => s.pts).filter(v => v != null);
+  if (!allVals.length) return "";
+  const yMax = opts.yMax || (Math.max(...allVals) * 1.1 || 1);
+  const yMin = opts.yMin || 0;
+  const sx = i => ML + (tiers.length === 1 ? iW / 2 : (i / (tiers.length - 1)) * iW);
+  const sy = v => MT + iH - ((v - yMin) / (yMax - yMin)) * iH;
+  const yticks = 4;
+  const grid = [];
+  for (let i = 0; i <= yticks; i++) {
+    const v = yMin + (yMax - yMin) * i / yticks;
+    const y = sy(v).toFixed(1);
+    grid.push(`<line x1="${ML}" y1="${y}" x2="${ML + iW}" y2="${y}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,3"/>`,
+      `<text x="${ML - 6}" y="${y}" dy="3" text-anchor="end" font-size="9" fill="var(--text-tertiary)">${opts.pct ? Math.round(v * 100) + "%" : v.toFixed(opts.dp != null ? opts.dp : 1)}</text>`);
+  }
+  const xlabels = tiers.map((t, i) =>
+    `<text x="${sx(i).toFixed(1)}" y="${MT + iH + 16}" text-anchor="middle" font-size="10" fill="var(--text-secondary)" font-weight="600">${t}</text>`).join("");
+  const lines = series.map(s => {
+    const pts = s.pts.map((v, i) => v == null ? null : { x: sx(i), y: sy(v) }).filter(Boolean);
+    if (pts.length < 2) return "";
+    let d = `M ${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || pts[i + 1];
+      const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
+      const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
+      d += ` C ${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+    }
+    const col = _RATER_META[s.rater].color;
+    const emph = s.rater === "prospx_consensus";
+    const dots = pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${emph ? 3.5 : 2.5}" fill="${col}"/>`).join("");
+    return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${emph ? 2.6 : 1.6}" ${emph ? "" : 'stroke-dasharray="5,3"'} stroke-linecap="round"/>${dots}`;
+  }).join("");
+  const legend = bt.raters.map(r =>
+    `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${_RATER_META[r].color};"></span>${escapeHtml(_RATER_META[r].label)}</span>`).join("");
+  return `<div class="meth-chart">
+    <div class="meth-chart-title">${escapeHtml(metricLabel)} by FV tier</div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${escapeHtml(metricLabel)} by FV tier">
+      ${grid.join("")}
+      <line x1="${ML}" y1="${MT + iH}" x2="${ML + iW}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
+      <line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
+      ${lines}${xlabels}
+    </svg>
+    <div class="meth-legend">${legend}</div>
+  </div>`;
+}
+
+// Source-accuracy comparison — horizontal bars for Spearman ρ + AUC, consensus
+// highlighted. Answers "which is most reliable, and does the blend win?"
+function _methAccuracyChart(bt) {
+  const acc = bt.accuracy && bt.accuracy.pooled;
+  if (!acc) return "";
+  const metric = (key, label, lo, hi, fmt) => {
+    const rows = bt.raters.map(r => ({ r, v: acc[r] ? acc[r][key] : null })).filter(x => x.v != null);
+    if (!rows.length) return "";
+    const best = Math.max(...rows.map(x => x.v));
+    const bars = rows.map(x => {
+      const w = Math.max(2, ((x.v - lo) / (hi - lo)) * 100);
+      const emph = x.r === "prospx_consensus";
+      const isBest = x.v === best;
+      return `<div class="meth-bar-row">
+        <span class="meth-bar-label">${escapeHtml(_RATER_META[x.r].label)}</span>
+        <span class="meth-bar-track"><span class="meth-bar-fill${emph ? " is-consensus" : ""}" style="width:${w.toFixed(1)}%;background:${_RATER_META[x.r].color};"></span></span>
+        <span class="meth-bar-val${isBest ? " is-best" : ""}">${fmt(x.v)}${isBest ? " ★" : ""}</span>
+      </div>`;
+    }).join("");
+    return `<div class="meth-metric"><div class="meth-metric-title">${escapeHtml(label)}</div>${bars}</div>`;
+  };
+  const sp = metric("spearman", "Ordering skill — Spearman ρ (grade vs realized WAR)", 0, 0.4, v => v.toFixed(3));
+  const au = metric("auc", "Discrimination — AUC (grade predicts ‘became a contributor’)", 0.5, 0.85, v => v.toFixed(3));
+  const cvi = bt.accuracy.consensus_vs_inputs || {};
+  const verdict = (cvi.spearman && cvi.spearman.consensus_wins && cvi.auc && cvi.auc.consensus_wins)
+    ? `<p class="meth-verdict is-good">On the common set of ${bt.accuracy.common_n.toLocaleString()} players graded by all three, the <strong>PROSPX consensus edges out both individual inputs</strong> on ordering skill and discrimination — the result a consensus model needs to defend. The margin is modest and not uniform year-to-year; see the caveats.</p>`
+    : `<p class="meth-verdict">On the common set of ${bt.accuracy.common_n.toLocaleString()} players, the consensus is competitive with its inputs but does not lead on every metric — reported honestly rather than cherry-picked.</p>`;
+  return `<div class="meth-chart meth-accuracy">
+    <div class="meth-chart-title">Head-to-head predictive accuracy <span class="meth-sub">same players, same outcome, same window</span></div>
+    ${sp}${au}${verdict}
+  </div>`;
+}
+
+function _methTierTable(bt, rater) {
+  const c = bt.cohorts[rater];
+  const rows = (c.tiers || []).slice().reverse().map(t => `
+    <tr>
+      <td class="meth-td-tier">${t.tier}</td>
+      <td>${t.n}</td>
+      <td>${Math.round(t.debut_rate * 100)}%</td>
+      <td>${t.mean_war.toFixed(1)}</td>
+      <td>${t.mean_war_per_yr_debut != null ? t.mean_war_per_yr_debut.toFixed(2) : "—"}</td>
+      <td>${Math.round(t.contributor_rate * 100)}%</td>
+      <td>${Math.round((t.regular_pace_rate || 0) * 100)}%</td>
+      <td>${Math.round(t.star_rate * 100)}%</td>
+    </tr>`).join("");
+  return `<div class="meth-table-wrap">
+    <div class="meth-table-title"><span class="meth-legend-swatch" style="background:${_RATER_META[rater].color};"></span>${escapeHtml(_RATER_META[rater].label)} <span class="meth-sub">n=${c.n} · ${c.n_debuted} debuted</span></div>
+    <div class="table-scroll-x"><table class="meth-table">
+      <thead><tr><th>FV</th><th>n</th><th title="Reached MLB">Debut</th><th title="Mean cumulative career WAR (undebuted = 0)">WAR</th><th title="Mean WAR per season, among players who debuted">WAR/yr</th><th title="Career WAR ≥ 3">Contrib</th><th title="≥ 1.5 WAR per season">Reg pace</th><th title="Career WAR ≥ 10">Star</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function renderMethodology() {
+  const el = document.getElementById("methodology-body");
+  if (!el) return;
+  // Lazy-load the backtest payload; re-render when it lands.
+  if (!DATA._sourceBacktest && !DATA._btLoading) {
+    DATA._btLoading = true;
+    const base = DATA_URL.replace(/[^/]+$/, "");
+    fetch(base + "source_backtest.json", { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => { DATA._sourceBacktest = j || { __error: true };
+        if (state.section === "glossary" && (state.glossaryView === "methodology")) renderMethodology(); })
+      .catch(() => { DATA._sourceBacktest = { __error: true }; });
+  }
+  const bt = DATA._sourceBacktest;
+  let backtestHTML;
+  if (!bt) {
+    backtestHTML = `<div class="state-message">Loading track record…</div>`;
+  } else if (bt.__error || !bt.window || !bt.window.years || !bt.window.years.length) {
+    backtestHTML = `<div class="meth-chart"><p class="meth-note">The source-vs-source backtest has no resolved cohorts yet (it needs ≥ ${_TIER_ORDER ? 3 : 3} years of development lag). It will populate once the retained per-source history clears that window.</p></div>`;
+  } else {
+    const od = bt.outcome_defs || {};
+    backtestHTML = `
+      <h2 class="meth-h">Track record — does the model predict?</h2>
+      <p class="meth-window">${escapeHtml(bt.window.note)} <strong>Sources with too little history to score</strong> (${(bt.insufficient_history || []).join(", ")}) are excluded, not guessed at.</p>
+      ${_methAccuracyChart(bt)}
+      <div class="meth-chart-grid">
+        ${_methCalibrationChart(bt, "mean_war", "Mean career WAR")}
+        ${_methCalibrationChart(bt, "contributor_rate", "Contributor rate (career WAR ≥ " + (od.contributor_war ?? 3) + ")", { pct: true, yMax: 1 })}
+      </div>
+      <h3 class="meth-h3">Cohort outcomes by FV tier</h3>
+      <p class="meth-note">Every prospect a source graded that preseason is in its cohort — players who never debuted stay in at 0 WAR (no survivorship cherry-picking). Cumulative WAR is censored at today, so younger cohorts (2023) have had less time to accrue it; the rate columns (WAR/yr, Reg pace) are less sensitive to that.</p>
+      <div class="meth-tables">${bt.raters.map(r => _methTierTable(bt, r)).join("")}</div>
+      <div class="meth-caveats">
+        <div class="meth-caveats-title">⚠ Read this honestly</div>
+        <ul>
+          <li><strong>Short track record.</strong> Only ${bt.window.years.length} preseason base years (${bt.window.years.join(", ")}) are old enough to have resolved outcomes. The newer sources have <em>zero</em> resolved cohorts.</li>
+          <li><strong>Thin top tiers.</strong> The 60+ tier is only n≈40–60 across all years — a handful of hits or misses moves its rates a lot.</li>
+          <li><strong>Censoring.</strong> Outcomes are cumulative WAR as of ${escapeHtml(bt.as_of_date || "today")}; the 2023 cohort has had ~3 seasons, the 2021 cohort ~5. Rate metrics mitigate but don't erase this.</li>
+          <li><strong>Modest, noisy edge.</strong> The consensus's advantage over its best input is real on the pooled set but small, and it isn't #1 every single year. A credible short track record beats an inflated one.</li>
+        </ul>
+      </div>`;
+  }
+  el.innerHTML = _methProseHTML() + backtestHTML;
+}
+
 function renderGlossary() {
   const root = document.getElementById("glossary-rows");
   if (!root) return;
+  // ---- Glossary | Methodology sub-view toggle ----
+  const view = state.glossaryView || "terms";
+  document.querySelectorAll("[data-glossary-view]").forEach(b => {
+    b.classList.toggle("active", b.dataset.glossaryView === view);
+    if (!b._wired) {
+      b._wired = true;
+      b.onclick = () => { state.glossaryView = b.dataset.glossaryView; renderGlossary(); syncToURL(); };
+    }
+  });
+  const methBody = document.getElementById("methodology-body");
+  const filterBar = document.getElementById("glossary-filter-bar");
+  if (view === "methodology") {
+    if (methBody) methBody.style.display = "";
+    if (filterBar) filterBar.style.display = "none";
+    root.style.display = "none";
+    renderMethodology();
+    return;
+  }
+  if (methBody) methBody.style.display = "none";
+  if (filterBar) filterBar.style.display = "";
+  root.style.display = "";
+
   const cat = state.glossaryCat || "all";
   // Either the glossary's own box OR the global top search filters terms,
   // so the single top search "just works" on this section too.
@@ -24423,19 +25529,67 @@ async function downloadElementAsPng(el, filename) {
 // Scatterplots "Save PNG" utility, which rasterizes the chart canvas — wired
 // here with a dedicated handler (downloadElementAsPng / exportElementAsImage
 // are still used by both this and the GFX board export).
+// Build the human-readable config description for the scatterplot GFX export.
+function _scatterGfxCaption() {
+  const mode = state.chartMode || "prospects";
+  const axes = (typeof CHART_AXES !== "undefined" && CHART_AXES[mode]) || [];
+  const lbl = k => (axes.find(a => a.key === k) || {}).label || k;
+  const grp = (typeof _CHART_GROUPS !== "undefined" && _CHART_GROUPS[mode]) || { label: mode };
+  const title = `${lbl(state.chartX)} vs ${lbl(state.chartY)}`;
+  const bits = [grp.label];
+  if (state.chartColorBy && state.chartColorBy !== "none") bits.push(`color: ${state.chartColorBy === "fv" ? "FV tier" : state.chartColorBy}`);
+  if (state.chartSizeBy && state.chartSizeBy !== "none") bits.push(`size: ${lbl(state.chartSizeBy)}`);
+  if (state.chartFilterOrg && state.chartFilterOrg !== "all") bits.push(`org ${state.chartFilterOrg}`);
+  if (state.chartFilterLevel && state.chartFilterLevel !== "all") bits.push(`level ${state.chartFilterLevel}`);
+  if (state.chartFilterPos && state.chartFilterPos !== "all") bits.push(`pos ${state.chartFilterPos}`);
+  if (state.chartFvMin) bits.push(`FV ≥ ${state.chartFvMin}`);
+  if (state.chartAgeMax) bits.push(`age ≤ ${state.chartAgeMax}`);
+  if (state.chartXMin) bits.push(`${lbl(state.chartX)} ≥ ${state.chartXMin}`);
+  if (state.chartXMax) bits.push(`${lbl(state.chartX)} ≤ ${state.chartXMax}`);
+  if (state.chartYMin) bits.push(`${lbl(state.chartY)} ≥ ${state.chartYMin}`);
+  if (state.chartYMax) bits.push(`${lbl(state.chartY)} ≤ ${state.chartYMax}`);
+  return { title, subtitle: bits.join(" · ") };
+}
+
+// Generate GFX for the scatterplot — wraps the configured chart in a branded,
+// on-theme card (PROSPX wordmark + eephus.io/PROSPX · date + the query caption)
+// and rasterizes it, so a shared image is self-describing and on-brand.
 document.addEventListener("click", async (e) => {
   const btn = e.target && e.target.closest && e.target.closest("#chart-save-png");
   if (!btn) return;
   e.stopPropagation();
   e.preventDefault();
-  const target = document.getElementById("chart-canvas-wrap");
-  if (!target) return;
-  const prevDisplay = btn.style.display;
-  btn.style.display = "none";
+  const canvasWrap = document.getElementById("chart-canvas-wrap");
+  if (!canvasWrap) return;
+  const cap = _scatterGfxCaption();
+  const asOf = (typeof _gfxAsOf === "function") ? _gfxAsOf() : "";
+  const cs = getComputedStyle(document.body);
+  // Off-screen branded card.
+  const card = document.createElement("div");
+  // Positioned behind the page (z-index:-9999) rather than off-screen so
+  // html2canvas reliably captures it (off-screen elements can render blank).
+  card.style.cssText = `position:fixed;left:0;top:0;z-index:-9999;pointer-events:none;width:820px;padding:22px 24px;` +
+    `background:${cs.getPropertyValue("--bg-primary") || "#fff"};` +
+    `font-family:var(--font-sans);box-sizing:border-box;`;
+  card.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:14px;">
+      <div style="display:flex;align-items:baseline;gap:11px;">
+        <span style="font-family:var(--font-retro-mono);font-weight:800;font-size:22px;color:var(--text-primary);letter-spacing:0.03em;">MLB PROSPX</span>
+        <span style="font-family:var(--font-sans);font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-tertiary);border-left:1px solid var(--border);padding-left:11px;">Scatterplot</span>
+      </div>
+      <span style="font-family:var(--font-retro-mono);font-size:12px;color:var(--text-tertiary);">eephus.io/PROSPX · ${escapeHtml(asOf)}</span>
+    </div>
+    <div style="font-family:var(--font-sans);font-weight:700;font-size:17px;color:var(--text-primary);margin-bottom:2px;">${escapeHtml(cap.title)}</div>
+    <div style="font-family:var(--font-serif);font-style:italic;font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${escapeHtml(cap.subtitle)}</div>`;
+  const clone = canvasWrap.cloneNode(true);
+  clone.style.background = "transparent";
+  clone.style.padding = "0";
+  card.appendChild(clone);
+  document.body.appendChild(card);
   try {
-    await downloadElementAsPng(target, "chart.png");
+    await downloadElementAsPng(card, "prospx-scatter.png");
   } finally {
-    btn.style.display = prevDisplay || "";
+    card.remove();
   }
 });
 
@@ -31563,8 +32717,17 @@ function findOrg(org) {
 // Bigger version of the line chart used on prospect detail pages — same
 // 20-80 Y-axis as the inline sparkline, but rendered at ~2x size with
 // gridlines at every 5-FV tick and date labels along the bottom.
-function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats, player) {
+// Per-source overlay colors for the FV-history chart (theme-aware tokens).
+const _SRC_OVERLAY_COLORS = {
+  fangraphs: "--neon-cyan", mlb_pipeline: "--neon-amber",
+  espn: "--neon-magenta", just_baseball: "--neon-green",
+  baseballamerica: "--up", baseball_america: "--up",
+  tjstats: "--down", the_athletic: "--text-secondary",
+};
+
+function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats, player, opts) {
   if (!points || points.length === 0) return "";
+  opts = opts || {};
   const W = 720, H = 260, PAD_L = 28, PAD_R = 14, PAD_T = 14, PAD_B = 28;
   const innerW = W - PAD_L - PAD_R;
   const innerH = H - PAD_T - PAD_B;
@@ -31772,10 +32935,35 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
     ? `<polyline points="${toolCoords.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ')}" fill="none" stroke="var(--neon-violet)" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.8" vector-effect="non-scaling-stroke"><title>${escapeHtml(toolTip)}</title></polyline>`
     : "";
 
+  // Per-source FV overlay (opt-in): a faint dotted line per source so the
+  // reader can see how each list graded the player over time and where they
+  // diverged from consensus. Built from points[].per_source[src].fv_published.
+  let sourceLinesSvg = "";
+  if (opts.showSources) {
+    const srcSet = new Set();
+    for (const pt of points)
+      for (const [s, v] of Object.entries(pt.per_source || {}))
+        if (v && v.fv_published != null) srcSet.add(s);
+    const lines = [];
+    for (const src of srcSet) {
+      const segPts = [];
+      for (const pt of points) {
+        const v = (pt.per_source || {})[src];
+        if (v && v.fv_published != null)
+          segPts.push(`${xScale(pt.snapshot_date).toFixed(1)},${yScale(v.fv_published).toFixed(1)}`);
+      }
+      if (segPts.length < 2) continue;
+      const col = `var(${_SRC_OVERLAY_COLORS[src] || "--text-tertiary"})`;
+      lines.push(`<polyline points="${segPts.join(' ')}" fill="none" stroke="${col}" stroke-width="1" stroke-dasharray="1,2.5" opacity="0.6" vector-effect="non-scaling-stroke"><title>${escapeHtml((SOURCE_LABELS[src] || src) + " FV history")}</title></polyline>`);
+    }
+    sourceLinesSvg = lines.join("");
+  }
+
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="FV trajectory">
     ${yTicks.join("")}
     ${yearSvg.join("")}
     ${eventSvg.join("")}
+    ${sourceLinesSvg}
     ${toolLineSvg}
     ${segments.join("")}
     ${circles}
@@ -34562,8 +35750,24 @@ function renderPlayerDetail(key) {
     return `<table class="detail-table"><thead><tr><th>Season</th><th>Level</th><th>Age vs lvl</th>${statHeaders}</tr></thead><tbody>${rows}</tbody></table>`;
   })();
 
+  const _showSrc = !!state.fvChartSources;
+  const _srcToggle = `<button class="tm-src-toggle${_showSrc ? " active" : ""}" type="button"
+      title="Overlay each source's published FV over time — see where FanGraphs, MLB Pipeline, etc. diverged from consensus"
+      onclick="state.fvChartSources=!state.fvChartSources;if(state.view&&state.view.type==='player')renderPlayerDetail(state.view.key);">
+      ${_showSrc ? "✓ " : ""}Per-source grades</button>`;
+  const _srcLegend = _showSrc ? (() => {
+    const seen = new Set();
+    for (const pt of p.points)
+      for (const [s, v] of Object.entries(pt.per_source || {}))
+        if (v && v.fv_published != null) seen.add(s);
+    if (!seen.size) return "";
+    const items = [...seen].map(s =>
+      `<span class="tm-src-key"><span class="tm-src-swatch" style="color:var(${_SRC_OVERLAY_COLORS[s] || "--text-tertiary"});"></span>${escapeHtml(SOURCE_LABELS[s] || s)}</span>`).join("");
+    return `<div class="tm-src-legend"><span class="tm-src-key"><span class="tm-src-swatch tm-src-swatch-consensus"></span>PROSPX consensus</span>${items}</div>`;
+  })() : "";
   const chartSection = (p.points && p.points.length >= 2)
-    ? `<div class="detail-title">FV history</div>${makeBigLineChart(p.points, p.fv_open, p.fv_close, p.debut_date, p.trades, p.career_stats, p)}
+    ? `<div class="detail-title">FV history <span style="margin-left:8px;vertical-align:middle;">${_srcToggle}</span></div>${makeBigLineChart(p.points, p.fv_open, p.fv_close, p.debut_date, p.trades, p.career_stats, p, { showSources: _showSrc })}
+       ${_srcLegend}
        ${transactionLegend()}`
     : `<div style="color:var(--text-tertiary);font-size:12px;">Not enough FV updates yet for a chart.</div>`;
 
@@ -38656,6 +39860,7 @@ function render() {
   // floating header strip on unrelated pages.
   const sections = {
     active:       "active-section",
+    timemachine:  "timemachine-section",
     spotlights:   "spotlights-section",
     traded:       "traded-section",
     injured:      "injured-section",
@@ -38796,6 +40001,7 @@ function render() {
   else if (active === "draftDetail")    renderDraftDetail(state.view.key);
   else if (active === "overseasDetail") renderOverseasDetail(state.view.key);
   else if (active === "active")     renderActives();
+  else if (active === "timemachine") renderTimeMachine();
   else if (active === "spotlights") renderSpotlights();
   else if (active === "traded")     renderRecentlyTraded();
   else if (active === "injured")    renderInjured();
@@ -41371,6 +42577,7 @@ function populateOrgFilter() {
   populateOrgFilter();
   restoreUIFromState();
   attachHandlers();
+  _applyFreshnessStamps();
   render();
   // Eager prefetch of draft + overseas JSON so the cohort counts in the
   // header meta line can render real numbers instead of "…". These

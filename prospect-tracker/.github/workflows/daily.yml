@@ -1,0 +1,67 @@
+# Daily fast-moving refresh — transactions, IL, roster status, debuts /
+# graduations, and trades. Grades, tool evaluations, Arkmetrics, farm grades
+# and the full ranking are NOT recomputed here; those run on the monthly
+# cadence (see monthly.yml). The two workflows share a `concurrency` group so
+# they never run at the same time and can never double-write the DB.
+name: prospx-daily
+
+on:
+  schedule:
+    # 08:10 UTC every day (~04:10 ET) — after the MLB transaction wire settles.
+    - cron: "10 8 * * *"
+  workflow_dispatch: {}   # manual "Run workflow" button
+
+concurrency:
+  group: prospx-pipeline
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Rolling cache of the mutable pipeline state. `prospects.db` (the SQLite
+      # store) and `.cache/` (the HTTP response cache) are gitignored and must
+      # survive between runs so the daily job updates rather than rebuilds.
+      # The run-id-keyed `key` always writes a fresh cache; `restore-keys`
+      # prefix-matches to pull the most recent prior state.
+      #
+      # NOTE: GitHub caches evict after 7 days idle / a 10 GB repo cap. For a
+      # durable production DB, point this at your real state store instead
+      # (download the DB from object storage here, upload it after the run).
+      - name: Restore pipeline state (DB + HTTP cache)
+        uses: actions/cache@v4
+        with:
+          path: |
+            prospects.db
+            .cache
+          key: prospx-state-${{ github.run_id }}
+          restore-keys: |
+            prospx-state-
+
+      - name: Run daily refresh
+        run: python run_monthly.py --daily
+
+      # Publish the refreshed data + static site. Fill in the deploy target for
+      # your host (object store + CDN, rsync to a server, Pages, …). The daily
+      # job only changes data/*.json; the editorial build is unchanged but
+      # cheap to regenerate.
+      - name: Build editorial pages
+        run: python build_site.py
+      # - name: Publish
+      #   run: |
+      #     # e.g. aws s3 sync . s3://eephus.io --exclude '.git/*' --exclude 'prospects.db'
+      #     echo "TODO: wire up your static-host publish step"
