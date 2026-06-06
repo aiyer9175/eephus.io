@@ -1,8 +1,8 @@
 [
-  { "name": "Noah J. Dengler",   "handle": "ARKNDJL",   "linkedin": "noahjdengler", "note": "PROSPX Creator" },
-  { "name": "Will Cahoon",       "handle": "WillColqhn" },
-  { "name": "Michael Behrens",   "handle": null },
-  { "name": "Anirudh Iyer",      "handle": null },
-  { "name": "Joseph Gillis",     "handle": null },
-  { "name": "Charlie Mortellite", "handle": null }
+  { "name": "Noah J. Dengler",    "handle": "ARKNDJL",    "linkedin": "noahjdengler",              "note": "PROSPX Creator" },
+  { "name": "Will Cahoon",        "handle": "WillColqhn", "linkedin": "will-cahoon-b94308396" },
+  { "name": "Michael Behrens",    "handle": null,         "linkedin": "michael-behrens-" },
+  { "name": "Anirudh Iyer",       "handle": null,         "linkedin": "anirudh-iyer-193086229" },
+  { "name": "Joseph Gillis",      "handle": null,         "linkedin": "josephdgil" },
+  { "name": "Charlie Mortellite", "handle": null,         "linkedin": "charlie-mortellite-a8b8222a3" }
 ]
