@@ -4294,6 +4294,15 @@
       display: grid; grid-template-columns: 64px 1fr; gap: 12px; }
     .meth-changelog .mc-date { font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
       color: var(--neon-cyan); letter-spacing: 0.02em; }
+    .meth-eg-card { border: 1px solid var(--border); border-left: 3px solid var(--neon-amber);
+      background: var(--bg-secondary); padding: 11px 14px; margin: 8px 0 14px; max-width: 860px; }
+    .meth-eg-title { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 7px; }
+    .meth-eg-row { font-family: var(--font-serif); font-size: 13px; line-height: 1.55;
+      color: var(--text-secondary); padding: 4px 0; }
+    .meth-eg-row b { color: var(--text-primary); }
+    .meth-eg-note { font-family: var(--font-serif); font-size: 11px; font-style: italic;
+      color: var(--text-tertiary); margin-top: 5px; }
     .meth-toolbar { display: flex; justify-content: flex-end; max-width: 860px; margin-bottom: 6px; }
     .meth-export-btn { font-family: var(--font-mono); font-size: 11px; font-weight: 700;
       letter-spacing: 0.04em; color: var(--text-secondary); background: var(--bg-secondary);
@@ -18209,6 +18218,13 @@ function _methProseHTML() {
       padding the average.</dd>
     </dl>
 
+    <div class="meth-eg-card">
+      <div class="meth-eg-title">Worked examples · current board</div>
+      <div class="meth-eg-row"><b>Jesus Made</b> — SS · MIL · ${gTermLink("fv", "FV")} 62. ${gTermLink("dvm_plus", "$DvM+")} 109.6 (projected surplus dollars ~10% above the mean farm's development pace), ${gTermLink("k_pct", "K%")} 14.3 / ${gTermLink("bb_pct", "BB%")} 10.7, ${gTermLink("ops_plus", "OPS+ vs lvl")} 115 → published ${gTermLink("surplus_value", "surplus value")} <b>$154M</b>.</div>
+      <div class="meth-eg-row"><b>Seth Hernandez</b> — SP · PIT · ${gTermLink("fv", "FV")} 60. ${gTermLink("k_bb_pct", "K-BB%")} 18.0 (36.1 K − 18.1 BB), ${gTermLink("dvm_plus", "$DvM+")} 116.9 → published ${gTermLink("surplus_value", "surplus value")} <b>$131M</b>.</div>
+      <div class="meth-eg-note">Live figures from this month's board — the same numbers shown on each player's card.</div>
+    </div>
+
     <h2 class="meth-h">Surplus value — the economic model</h2>
     <p>A prospect is an asset because the six years of team control after debut are paid below
     market. Surplus value is the dollar production those controlled years are expected to deliver
@@ -18563,6 +18579,57 @@ function _gxBellSvg(g) {
     ${ticks}
   </svg>`;
 }
+// ---- Per-term glossary visualizations (Part 2) ----------------------------
+// Small, theme-aware diagrams keyed by slug, rendered inside the term card.
+function _vizFvWar() {
+  const tbl = (window.VALUE_FRAMEWORK || {}).fv_to_6yr_avg_war || { 40: 1, 45: 1.5, 50: 2, 55: 2.5, 60: 3, 65: 4, 70: 5, 80: 7 };
+  const fvs = [40, 45, 50, 55, 60, 65, 70, 80], max = 7;
+  return `<div style="display:flex;flex-direction:column;gap:3px;width:100%;max-width:300px;">${fvs.map(fv => {
+    const w = _vfInterp(tbl, fv), pct = Math.max(3, w / max * 100);
+    return `<div style="display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;"><span style="width:20px;color:var(--text-tertiary);text-align:right;">${fv}</span><span style="flex:1;height:9px;background:var(--bg-tertiary);position:relative;"><span style="position:absolute;left:0;top:0;bottom:0;width:${pct}%;background:var(--neon-cyan);"></span></span><span style="width:54px;color:var(--text-secondary);">${w.toFixed(1)} WAR/yr</span></div>`;
+  }).join("")}</div>`;
+}
+function _vizPlusGauge(val, lo, hi) {
+  lo = lo || 70; hi = hi || 130;
+  const pct = Math.max(0, Math.min(100, (val - lo) / (hi - lo) * 100));
+  return `<div style="width:100%;max-width:300px;font-family:var(--font-mono);font-size:10px;">
+    <div style="height:11px;background:linear-gradient(90deg,var(--down),var(--bg-tertiary) 50%,var(--up));position:relative;border:1px solid var(--border-light);">
+      <span style="position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--text-tertiary);"></span>
+      <span style="position:absolute;left:${pct}%;top:-3px;bottom:-3px;width:2px;background:var(--neon-cyan);"></span>
+      <span style="position:absolute;left:${pct}%;top:-15px;transform:translateX(-50%);color:var(--neon-cyan);font-weight:700;">${val}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;color:var(--text-tertiary);margin-top:3px;"><span>${lo}</span><span>100 = mean</span><span>${hi}</span></div></div>`;
+}
+function _vizPercentile(pct) {
+  return `<div style="width:100%;max-width:300px;font-family:var(--font-mono);font-size:10px;">
+    <div style="height:11px;background:linear-gradient(90deg,#3b6bd6,#cfd6e4 50%,#d62b3b);position:relative;border-radius:6px;">
+      <span style="position:absolute;left:${pct}%;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:var(--text-primary);border:2px solid var(--bg-primary);"></span>
+    </div>
+    <div style="color:var(--text-tertiary);margin-top:3px;">${pct}th percentile vs pool (example)</div></div>`;
+}
+function _vizSurplusCurve() {
+  const g = (window.VALUE_FRAMEWORK || {}).surplus_by_grade_mm, t = (g && g.hitter) || {};
+  const fvs = [40, 45, 50, 55, 60, 65, 70], max = _vfInterp(t, 70) || 200;
+  const pts = fvs.map((fv, i) => [i / (fvs.length - 1) * 100, 100 - ((_vfInterp(t, fv) || 0) / max * 92)]);
+  const path = "M" + pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" L");
+  return `<svg viewBox="0 0 100 100" width="100%" style="max-width:240px;height:84px;display:block;" preserveAspectRatio="none"><path d="${path}" fill="none" stroke="var(--up)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg><div style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);">FV 40 → 70 · surplus $M (hitter), convex by grade</div>`;
+}
+const _GLOSSARY_VIZ = {
+  twenty_eighty:   () => _gxBellSvg(60),
+  fv:              () => _vizFvWar(),
+  fv_to_war_table: () => _vizFvWar(),
+  dvm_plus:        () => _vizPlusGauge(110),
+  rps_plus:        () => _vizPlusGauge(118),
+  sur_plus:        () => _vizPlusGauge(121),
+  statcast_plus:   () => _vizPlusGauge(113),
+  fin_dollar_dvm:  () => _vizPlusGauge(112),
+  barrel_pct:      () => _vizPercentile(78),
+  exit_velocity:   () => _vizPercentile(72),
+  hard_hit_pct:    () => _vizPercentile(70),
+  surplus_value:   () => _vizSurplusCurve(),
+  tvi:             () => _vizSurplusCurve(),
+};
+
 function _gx2080() {
   const g = +(_byId("gx-grade-in") || {}).value || 50;
   const z = (g - 50) / 10;
@@ -18984,6 +19051,15 @@ function renderGlossary() {
         moreBits.push(`<div style="margin-top:8px;">
           <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;margin-bottom:6px;">Visual</div>
           <div class="glossary-visual" style="padding:10px 12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:rgba(255,255,255,0.02);display:flex;flex-wrap:wrap;align-items:center;gap:8px;">${entry.visual_html}</div>
+        </div>`);
+      }
+      // Per-term visualization (distribution / gauge / curve), keyed by slug.
+      if (_GLOSSARY_VIZ[slug]) {
+        let vizHtml = "";
+        try { vizHtml = _GLOSSARY_VIZ[slug](); } catch (e) { vizHtml = ""; }
+        if (vizHtml) moreBits.push(`<div style="margin-top:8px;">
+          <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:600;margin-bottom:6px;">Visualization</div>
+          <div class="glossary-visual" style="padding:12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:rgba(255,255,255,0.02);">${vizHtml}</div>
         </div>`);
       }
       const relatedChips = (entry.related || [])
@@ -30353,14 +30429,19 @@ function makeFarmReportCard(org) {
   };
 
   // Main-grade branch (<details>) with sub-cells inside.
+  const _FARM_BRANCH_SLUG = { acquisition_strategy: "farm_grade_acquisition_strategy", development: "farm_grade_development", financial: "farm_grade_financial", mlb_production: "farm_grade_mlb_production" };
   const branch = (label, parentKey, weightPct, subsHtml, tooltip) => {
     const letter = g[parentKey] || 'C';
     const rank = r[parentKey];
+    const _slug = _FARM_BRANCH_SLUG[parentKey];
+    const labelHtml = _slug
+      ? `<span class="gt-branch-label g-term" data-term="${_slug}">${escapeHtml(label)}</span>`
+      : `<span class="gt-branch-label">${escapeHtml(label)}</span>`;
     return `
     <details class="gt-branch" open>
       <summary title="${escapeHtml(tooltip)}">
         <span class="gt-marker">▾</span>
-        <span class="gt-branch-label">${escapeHtml(label)}</span>
+        ${labelHtml}
         <span class="gt-branch-letter" style="color:${gradeColor(letter)};">${escapeHtml(letter)}</span>
         <span class="gt-branch-rank">#${rank ?? '—'}</span>
         <span class="gt-branch-weight">${weightPct}%</span>
