@@ -226,10 +226,14 @@ def _merged_to_snapshot_dict(m: dict,
         if v is not None:
             extras[k] = v
 
-    # Physical extras
+    # Physical extras. New-format (2017-2020) draft boards fold Athl/Frame/Perf
+    # into the position/pitching CSVs instead of a standalone physical CSV, so
+    # fall back to those blocks when no physical row is present.
     phys = m.get("_physical") or {}
     for k in ("frame", "athl", "levers", "arm", "perf", "delivery"):
         v = phys.get(k)
+        if v is None and k in ("frame", "athl", "perf"):
+            v = pos.get(k) if pos.get(k) is not None else pit.get(k)
         if v is not None:
             extras[k] = v
 

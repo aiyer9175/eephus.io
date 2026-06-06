@@ -79,15 +79,18 @@ _REPORT_MAX_CHARS = 8000
 # <type>-<slug>.csv, case-insensitive. Type is one of summary, position,
 # pitching, physical (or physicalattributes, which aliases to physical).
 _FILENAME_RE = re.compile(
-    r"^(summary|position|pitching|physical(?:attributes)?)-([\w-]+)\.csv$",
+    r"^(summary|position|pitching|scouting|physical(?:attributes)?)-([\w-]+)\.csv$",
     re.IGNORECASE,
 )
 
 
 def _parse_filename(name: str) -> tuple[str, str] | None:
     """Return ``(type, slug)`` for a valid FG-CSV filename, or None.
-    ``type`` is one of {summary, position, pitching, physical}.
-    ``physicalattributes-<slug>.csv`` aliases to type=physical."""
+    ``type`` is one of {summary, position, pitching, scouting, physical}.
+    ``physicalattributes-<slug>.csv`` aliases to type=physical. The
+    new-format ``scouting-<slug>.csv`` (2017-2018 boards) is a single file
+    carrying BOTH hitter and pitcher tool grades, used where the per-type
+    position/pitching files don't exist."""
     m = _FILENAME_RE.match(name)
     if not m:
         return None
@@ -247,6 +250,11 @@ _TOOL_HITTER_COLS = (
     ("raw pwr",   "raw_pwr"),
     ("spd",       "speed"),
     ("fld",       "field"),
+    # v4 (2017-2020 new format) — the position CSV now carries Arm as a
+    # pres/fut tool grade (it lived in the standalone physical CSV before).
+    # Maps to the canonical 'throw' tool. Absent in 2021-2024 position
+    # exports, so this is a no-op there (missing → None).
+    ("arm",       "throw"),
     # FG publishes pitch_sel and bat_ctrl as single-value 20-80 grades
     # (no "/" split). They sit alongside the standard hitter tools as
     # first-class canonical keys — see scrapers.HITTER_TOOL_KEYS.
@@ -338,6 +346,11 @@ def _parse_position_row(raw: dict) -> dict | None:
     # alongside Hard Hit%. Land as decimal MPH in extras.
     out["avg_ev"]        = _to_float(row.get("avg ev"))
     out["max_ev"]        = _to_float(row.get("max ev"))
+    # v4 (2017-2020 new format, draft boards) — physical grades folded into
+    # the position CSV. None when the columns are absent (2021-2024 boards).
+    out["frame"]         = _to_int(row.get("frame"))
+    out["athl"]          = _to_int(row.get("athl"))
+    out["perf"]          = _to_int(row.get("perf"))
     return out
 
 
@@ -367,7 +380,39 @@ def _parse_pitching_row(raw: dict) -> dict | None:
     # Statcast-style spin columns from older boards (2021-2024).
     out["rpm_fb"]        = _to_int(row.get("rpm fb"))
     out["rpm_break"]     = _to_int(row.get("rpm break"))
+    # v4 (2017-2020 new format, draft boards) — physical grades folded into
+    # the pitching CSV. None when absent (2021-2024 boards).
+    out["frame"]         = _to_int(row.get("frame"))
+    out["athl"]          = _to_int(row.get("athl"))
+    out["perf"]          = _to_int(row.get("perf"))
     return out
+
+
+def _parse_scouting_row(raw: dict) -> dict | None:
+    """New-format consolidated scouting CSV (2017-2018 boards): one row per
+    player carrying BOTH hitter tools (Hit/Game Pwr/Raw Pwr/Spd/Fld/Arm) and
+    pitcher grades (FB/SL/CB/CH/CMD). FV is NOT here (it's on the summary
+    row). A hitter has the hitter columns filled; a pitcher the pitch columns.
+    Emits the same {tools_future, tools_present} shape as position/pitching so
+    it merges through the same join path."""
+    row = _norm_headers(raw)
+    pkey, fg_id = _row_id(row)
+    if not pkey:
+        return None
+    tools_fut: dict[str, float] = {}
+    tools_pres: dict[str, float] = {}
+    for hdr, key in (_TOOL_HITTER_COLS + _TOOL_PITCHER_COLS):
+        pres, fut = _parse_grade_pair(row.get(hdr))
+        if fut is not None:
+            tools_fut[key] = fut
+        if pres is not None:
+            tools_pres[key] = pres
+    return {
+        "player_key":   pkey,
+        "fg_player_id": _to_int(fg_id) if fg_id else None,
+        "tools_future": tools_fut,
+        "tools_present": tools_pres,
+    }
 
 
 def _parse_physical_row(raw: dict) -> dict | None:
@@ -390,6 +435,7 @@ _TYPE_PARSERS = {
     "summary":  _parse_summary_row,
     "position": _parse_position_row,
     "pitching": _parse_pitching_row,
+    "scouting": _parse_scouting_row,
     "physical": _parse_physical_row,
 }
 
@@ -410,6 +456,16 @@ _TYPE_PARSERS = {
 # the table falls back to the type-defaults below, then to age-based
 # back-solve if the slug doesn't match either pattern.
 FG_PUBLICATION_CALENDAR: dict[tuple[int, str], str] = {
+    # 2017-2020 historical backfill. FG's preseason board lands mid-Feb and
+    # the trade-deadline update late-Jul/early-Aug; the exact day is
+    # approximate but the YEAR (what the backtest buckets on) is exact.
+    (2017, "report"):    "2017-02-15",
+    (2018, "report"):    "2018-02-15",
+    (2018, "updated"):   "2018-08-01",
+    (2019, "report"):    "2019-02-13",
+    (2019, "updated"):   "2019-07-31",
+    (2020, "report"):    "2020-02-13",
+    (2020, "updated"):   "2020-08-01",
     # 2021
     (2021, "report"):    "2021-02-26",
     (2021, "updated"):   "2021-07-30",
@@ -554,7 +610,8 @@ def _detect_publish_date(slug: str,
 def _join_report_set(summary_rows: list[dict],
                      position_rows: list[dict],
                      pitching_rows: list[dict],
-                     physical_rows: list[dict]) -> list[dict]:
+                     physical_rows: list[dict],
+                     scouting_rows: list[dict] | None = None) -> list[dict]:
     """Join the four per-type row lists by FG PlayerId (preferred) with
     a name-key fallback. Summary is the spine — only summary players
     appear in the output. Other rows that don't match are dropped with
@@ -620,6 +677,11 @@ def _join_report_set(summary_rows: list[dict],
         if host is None:
             continue
         host.setdefault("_physical", r)
+    for r in scouting_rows or []:
+        host = _lookup(r)
+        if host is None:
+            continue
+        host.setdefault("_scouting", r)
 
     return list(by_key.values())
 
@@ -637,9 +699,13 @@ def _build_snapshot(merged: dict, slug: str, snapshot_date: str) -> Snapshot:
     pos_block = merged.get("_position") or {}
     pit_block = merged.get("_pitching") or {}
     phys_block = merged.get("_physical") or {}
+    scout_block = merged.get("_scouting") or {}
 
+    # Consolidated 2017-2018 scouting CSV carries both hitter + pitcher tools.
+    tools_future.update(scout_block.get("tools_future") or {})
     tools_future.update(pos_block.get("tools_future") or {})
     tools_future.update(pit_block.get("tools_future") or {})
+    tools_present.update(scout_block.get("tools_present") or {})
     tools_present.update(pos_block.get("tools_present") or {})
     tools_present.update(pit_block.get("tools_present") or {})
 
@@ -673,8 +739,17 @@ def _build_snapshot(merged: dict, slug: str, snapshot_date: str) -> Snapshot:
         if v is not None and v != "":
             extras[k] = v
 
-    # Physical-block extras.
-    for k in ("frame", "athl", "levers", "arm", "delivery"):
+    # Physical-block extras. frame/athl/perf may now arrive folded into the
+    # position/pitching CSV (new format) instead of a standalone physical CSV.
+    # (arm in the new position CSV is the 'throw' TOOL, already in tools_future
+    # above — not surfaced here as a physical extra.)
+    for k in ("frame", "athl", "perf"):
+        v = phys_block.get(k)
+        if v is None:
+            v = pos_block.get(k) if pos_block.get(k) is not None else pit_block.get(k)
+        if v is not None and v != "":
+            extras[k] = v
+    for k in ("levers", "arm", "delivery"):
         v = phys_block.get(k)
         if v is not None and v != "":
             extras[k] = v
@@ -746,6 +821,14 @@ def _classify_csv(headers: list[str] | set[str]) -> str | None:
     norm = {str(h).strip().lower() for h in (headers or [])}
     if "report" in norm:
         return "summary"
+    # New-format consolidated scouting CSV: hitter tools AND pitch grades in
+    # one file, no FV. Distinguish from pitching (no 'tj date'/'fb type') and
+    # from position (no 'pitch sel'/'versa'/'con style'). Check before the
+    # pitching/position signatures so it isn't mis-claimed.
+    if ("hit" in norm and "fb" in norm and "cmd" in norm
+            and "tj date" not in norm and "fb type" not in norm
+            and "pitch sel" not in norm and "versa" not in norm):
+        return "scouting"
     if "fb type" in norm or "tj date" in norm:
         return "pitching"
     if "hit" in norm and (
@@ -1061,7 +1144,7 @@ def _process_one_set(grp: dict, slug: str, birth_dates: dict[str, str],
     move files to processed/. Returns (n_inserted, success)."""
     parsed_by_type: dict[str, list[dict]] = {}
     mtimes: list[float] = []
-    for ftype in ("summary", "position", "pitching", "physical"):
+    for ftype in ("summary", "position", "pitching", "scouting", "physical"):
         path = grp.get(ftype)
         if path is None:
             parsed_by_type[ftype] = []
@@ -1110,6 +1193,7 @@ def _process_one_set(grp: dict, slug: str, birth_dates: dict[str, str],
         parsed_by_type["position"],
         parsed_by_type["pitching"],
         parsed_by_type["physical"],
+        parsed_by_type.get("scouting"),
     )
     owners = canonical_owners or {}
     snapshots = []
@@ -1161,7 +1245,7 @@ def _process_one_set(grp: dict, slug: str, birth_dates: dict[str, str],
                           "to processed/", grp["_folder"])
     else:
         set_dest.mkdir(parents=True, exist_ok=True)
-        for ftype in ("summary", "position", "pitching", "physical"):
+        for ftype in ("summary", "position", "pitching", "scouting", "physical"):
             src = grp.get(ftype)
             if src is None:
                 continue
