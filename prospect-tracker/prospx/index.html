@@ -18298,6 +18298,7 @@ function _methProseHTML() {
 
     <h2 class="meth-h">Methodology changelog</h2>
     <ul class="meth-changelog">
+      <li><span class="mc-date">2026-06</span> Historical backfill: ingested FanGraphs 2017–2020 boards (new-format CSVs) + MLB Pipeline 2017–2020 Top 100, each grade date-stamped to its year. The backtest's resolved-cohort window grew from 2021–2023 (3 base years) to 2017–2023 (7); the common scored set rose from ≈2,294 to ≈2,544 players. On the larger, further-resolved sample the consensus still outranks its best individual source (Spearman 0.31 vs 0.30; AUC 0.79 vs 0.78).</li>
       <li><span class="mc-date">2026-06</span> Surplus engine v38: FV→WAR anchor moved from a single peak-year projection to a flat 6-year-average table; side difference carried by the position multiplier. Farm list/detail surplus consolidated on the engine aggregate.</li>
       <li><span class="mc-date">2026-06</span> Glossary reorganized into Glossary / Methodology / Source Comparison; taxonomy regrouped (Arkmetrics · Statcast · Standard · Scouting · Economic · Farm · Site Features); Statcast input terms added.</li>
       <li><span class="mc-date">2026-05</span> Farm grade tree v7: MLB Production added a Bust-Rate (negative) leaf and a Conviction star-presence cap; Development promoted to the 40% top weight.</li>
@@ -18311,11 +18312,11 @@ function _methProseHTML() {
       <dt>Why a consensus instead of one source?</dt>
       <dd>No single source has shown a durable, statistically separable edge on resolved cohorts (see Source Comparison). Averaging cancels idiosyncratic source error; the pooled consensus modestly but consistently beats its best individual input.</dd>
       <dt>Why equal weights?</dt>
-      <dd>Weighting requires a reliable, persistent accuracy gap to exploit. The track record is short and the per-source differences are within noise, so equal weighting avoids over-fitting to a handful of resolved years. The Interactive tab lets you test alternative weightings yourself.</dd>
+      <dd>Weighting requires a reliable, persistent accuracy gap to exploit. Even on the extended 2017–2023 window the per-source differences stay within noise, so equal weighting avoids over-fitting to a handful of resolved years. The Interactive tab lets you test alternative weightings yourself.</dd>
       <dt>How often does it update?</dt>
       <dd>Grades, Arkmetrics, farm grades, and the backtest refresh monthly; transactions, IL, roster status, debuts, and trades refresh daily. Each board honestly stamps its own cadence.</dd>
       <dt>What's the track record — and its limits?</dt>
-      <dd>Only a few preseason base years are old enough to have resolved outcomes, top FV tiers are thin (n≈40-60), and cumulative WAR is censored at today. The Source Comparison area states these caveats in full rather than headlining an inflated number.</dd>
+      <dd>The evaluation window spans seven preseason base years (2017–2023): the 2017–2020 cohorts are fully resolved while 2021–2023 are still accruing WAR, and cumulative WAR is censored at today. Top FV tiers stay thin (n≈40–70), so their rates move on a few outcomes. The Source Comparison area lists sample sizes and these caveats in full rather than headlining an inflated number.</dd>
     </dl>
   </div>`;
 }
