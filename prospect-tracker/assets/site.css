@@ -242,6 +242,27 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 
 /* ---- team ---- */
 .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+/* Headshot — rectangular, sharp corners (circular is reserved for account
+   avatars). Provided <img> sits above a monogram that shows through when there's
+   no photo or the file fails to load. */
+.team-card .team-photo {
+  position: relative; width: 100%; height: 168px; margin: 0 0 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg-tertiary); overflow: hidden;
+}
+.team-card .team-photo img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center top; z-index: 1;
+}
+.team-card .team-monogram {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-retro-mono); font-size: 2.6rem; font-weight: 700;
+  letter-spacing: .04em; color: var(--text-tertiary);
+}
+.team-card .team-photo::after {   /* thin iridescent baseline, like the card rules */
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: var(--iridescent); z-index: 2;
+}
 .team-card .name { font-family: var(--font-retro-mono); font-size: 1.1rem; font-weight: 700; margin: 0; letter-spacing: .02em; }
 .team-card .team-note {
   display: inline-block; margin: 7px 0 0; padding: 2px 8px;

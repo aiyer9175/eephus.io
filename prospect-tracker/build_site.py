@@ -761,10 +761,36 @@ def build_team() -> str:
                '0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 '
                '5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 '
                '0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>')
+    def _initials(name: str) -> str:
+        parts = [p for p in name.split() if p[:1].isalpha()]
+        if not parts:
+            return "?"
+        return (parts[0][0] + (parts[-1][0] if len(parts) > 1 else parts[0][1:2])).upper()
+    def _team_photo(m: dict) -> str | None:
+        # Explicit `photo` path wins; otherwise auto-detect assets/team/<first>.<ext>
+        # so a member just drops a file (e.g. assets/team/noah.jpg) and rebuilds —
+        # no JSON edit, and no 404 since we only emit <img> when the file exists.
+        if m.get("photo"):
+            return m["photo"]
+        slug = (m["name"].split() or [""])[0].lower()
+        for ext in ("jpg", "jpeg", "png", "webp"):
+            if (ROOT / "assets" / "team" / f"{slug}.{ext}").exists():
+                return f"/assets/team/{slug}.{ext}"
+        return None
     cards = []
     for m in team:
         handle = (m.get("handle") or "").lstrip("@")
         linkedin = (m.get("linkedin") or "").strip().rstrip("/").rsplit("/", 1)[-1]
+        # Headshot: provided image (rectangular, sharp) over a monogram fallback
+        # that shows when there's no photo or the file 404s — never a broken image.
+        mono = f'<span class="team-monogram" aria-hidden="true">{html.escape(_initials(m["name"]))}</span>'
+        photo = _team_photo(m)
+        if photo:
+            img = (f'<img src="{html.escape(photo)}" alt="{html.escape(m["name"])}" '
+                   f'loading="lazy" onerror="this.style.display=\'none\'">')
+            photo_html = f'<div class="team-photo">{mono}{img}</div>'
+        else:
+            photo_html = f'<div class="team-photo">{mono}</div>'
         chips = []
         if handle:
             chips.append(f'<a class="team-soc" href="https://x.com/{html.escape(handle)}" target="_blank" '
@@ -778,7 +804,8 @@ def build_team() -> str:
             f'<p class="team-note">{html.escape(m["note"])}</p>' if m.get("note") else ""
         )
         cards.append(
-            f'<div class="card team-card"><p class="name">{html.escape(m["name"])}</p>{note_html}{socials_html}</div>'
+            f'<div class="card team-card">{photo_html}'
+            f'<p class="name">{html.escape(m["name"])}</p>{note_html}{socials_html}</div>'
         )
     body = (
         '<div class="section-head"><h1>Development Team</h1></div>'
