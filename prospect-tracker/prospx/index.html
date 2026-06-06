@@ -4049,13 +4049,21 @@
     .tm-board { display: flex; flex-direction: column; }
     .tm-row {
       display: grid;
-      grid-template-columns: 34px 22px minmax(0,1fr) 42px auto auto;
-      align-items: center; gap: 10px; padding: 7px 8px;
+      /* rank | photo | logo | name | pos | slot(outcome/delta) | fv */
+      grid-template-columns: 30px 18px 20px minmax(0,1fr) 40px auto auto;
+      /* Original padding kept; the photo is sized to the SAME 20px the logo
+         already set as the tallest element, so rows do NOT grow taller. */
+      align-items: center; gap: 9px; padding: 7px 8px;
       border-bottom: 1px solid var(--border-light); text-decoration: none;
       color: var(--text-primary);
     }
     .tm-row:hover { background: var(--bg-secondary); }
     .tm-row .team-logo { width: 20px; height: 20px; }
+    /* Photo thumbnail — 16×20 baseball-card slot matching the logo's height so
+       it fits the existing row; no border (the FV-tier ring still frames
+       high-grade photos) keeps the outer box at exactly 20px. */
+    .tm-photo { display: inline-flex; align-items: center; justify-content: center; }
+    .tm-photo .headshot { vertical-align: middle; border: none; }
     .tm-rank { font-family: var(--font-retro-mono); font-size: 13px;
       font-weight: 700; color: var(--text-tertiary); text-align: right; }
     .tm-name { font-family: var(--font-sans); font-size: 14px; font-weight: 600;
@@ -4072,6 +4080,43 @@
     .tm-delta.up { color: var(--up); }
     .tm-delta.down { color: var(--down); }
     .tm-delta.is-grad { color: var(--neon-violet); }
+    /* Hindsight outcome chips on as-of rows (since-debuted prospects). */
+    .tm-outcome { display: inline-flex; align-items: center; gap: 7px;
+      justify-self: end; white-space: nowrap; }
+    .tm-grad { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+      color: var(--neon-violet); white-space: nowrap; }
+    .tm-stat { font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
+      color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+    .tm-stat em { font-style: normal; font-weight: 600; font-size: 9px;
+      letter-spacing: 0.03em; color: var(--text-tertiary); margin-left: 2px; }
+    .tm-stat.is-pos { color: var(--up); }
+    .tm-stat.is-neg { color: var(--down); }
+    .tm-hind-toggle { margin-left: auto; display: inline-flex; align-items: center;
+      gap: 5px; font-family: var(--font-retro-mono); font-size: 11px;
+      color: var(--text-tertiary); cursor: pointer; white-space: nowrap; }
+    .tm-delta.is-trade { color: var(--neon-cyan); }
+    /* Hits & misses retrospective panel. */
+    .tm-hitmiss { margin: 0 0 12px; border: 1px solid var(--border);
+      background: var(--bg-secondary); padding: 8px 12px; }
+    .tm-hitmiss > summary { font-family: var(--font-sans); font-size: 12px;
+      font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-secondary); cursor: pointer; }
+    .tm-hm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; margin-top: 8px; }
+    .tm-hm-col { min-width: 0; }
+    .tm-hm-h { font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
+      margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1px solid var(--border-light); }
+    .tm-hm-h.is-good { color: var(--up); }
+    .tm-hm-h.is-bad { color: var(--down); }
+    .tm-hm-chip { display: flex; align-items: center; gap: 8px; padding: 3px 0;
+      text-decoration: none; color: var(--text-primary); border-bottom: 1px solid var(--border-light); }
+    .tm-hm-chip:hover { background: var(--bg-primary); }
+    .tm-hm-name { flex: 1; min-width: 0; font-family: var(--font-sans); font-size: 13px;
+      font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tm-hm-wag { font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
+      white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .tm-hm-wag.is-pos { color: var(--up); }
+    .tm-hm-wag.is-neg { color: var(--down); }
+    @media (max-width: 640px) { .tm-hm-grid { grid-template-columns: 1fr; } }
     .tm-changelog { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 18px 24px; }
     .tm-change-group { min-width: 0; }
@@ -4178,9 +4223,14 @@
     .meth-caveats li { font-family: var(--font-serif); font-size: 13px; line-height: 1.5;
       color: var(--text-secondary); margin: 4px 0; }
     @media (max-width: 640px) {
-      .tm-row { grid-template-columns: 28px 20px minmax(0,1fr) auto auto; gap: 7px; }
+      /* rank | photo | logo | name | slot | fv (pos hidden) */
+      .tm-row { grid-template-columns: 26px 18px 20px minmax(0,1fr) auto auto; gap: 6px; }
       .tm-pos { display: none; }
       .tm-date-readout { min-width: 0; }
+      /* Keep the width-fair WAR/yr + graduation marker; drop the wider
+         cumulative-WAR and WAG chips so the row never overflows on phones. */
+      .tm-outcome { gap: 5px; }
+      .tm-stat-war, .tm-stat-wag { display: none; }
     }
 
     /* === Farm systems ============================================= */
@@ -8476,7 +8526,6 @@
          are tool tabs on the right. -->
     <div class="section-tabs-scroll">
     <button class="section-tab active" data-section="active">MiLB Prospects</button>
-    <button class="section-tab" data-section="timemachine" title="Time-travel the board — view rankings &amp; grades as they stood at any past snapshot, or diff two dates for a changelog of risers, fallers, new entries &amp; graduates.">Time Machine</button>
     <button class="section-tab" data-section="spotlights">Spotlights</button>
     <button class="section-tab" data-section="farm">Farm Systems</button>
     <button class="section-tab" data-section="traded">Transactions</button>
@@ -8486,6 +8535,7 @@
     <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">MLB Draft</button>
     <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes — signing bonuses, signing teams, prospects signed, and org spending by year (2021–present).">International Amateurs</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
+    <button class="section-tab" data-section="timemachine" title="Time-travel the board — view rankings &amp; grades as they stood at any past snapshot, or diff two dates for a changelog of risers, fallers, new entries &amp; graduates.">Time Machine</button>
     <button class="section-tab" data-section="charts" title="Build your own scatterplot — pick X/Y axes and a prospect group (MiLB, Debuted, Draft, International Amateurs, Overseas, or Farm systems).">Scatterplots</button>
     <button class="section-tab" data-section="glossary" title="Stats, indices, scouting concepts, and methodology — every term used on the site">Glossary</button>
     </div>
@@ -12016,6 +12066,7 @@ function syncToURL() {
       if (state.tmDateB)                  p.set("tmdb", state.tmDateB);
     }
     if (state.tmTopN !== 100)             p.set("tmn", String(state.tmTopN));
+    if (state.tmHindsight === false)      p.set("tmhind", "0");
   }
   if (state.section === "charts") {
     if (state.chartMode && state.chartMode !== "prospects") p.set("chm", state.chartMode);
@@ -12165,6 +12216,7 @@ function syncFromURL() {
   if (p.has("tmda"))   state.tmDateA   = p.get("tmda");
   if (p.has("tmdb"))   state.tmDateB   = p.get("tmdb");
   if (p.has("tmn"))    { const n = parseInt(p.get("tmn"), 10); if (n > 0) state.tmTopN = n; }
+  if (p.has("tmhind")) state.tmHindsight = p.get("tmhind") !== "0";
   // Scatterplot config (shareable links).
   if (p.has("chm"))    state.chartMode = p.get("chm");
   if (p.has("chx"))    state.chartX = p.get("chx");
@@ -17511,6 +17563,15 @@ function _tmPool() {
   return [...(DATA.players || []), ...((DATA && DATA.debuts) || [])];
 }
 
+// key → full player lookup (cached; invalidated when the debuts slice lands).
+function _tmPlayerByKey() {
+  if (DATA._tmByKey) return DATA._tmByKey;
+  const m = new Map();
+  for (const p of _tmPool()) m.set(p.player_key, p);
+  DATA._tmByKey = m;
+  return m;
+}
+
 // Distinct snapshot dates across the whole pool (ascending). Cached on DATA;
 // invalidated when the debuts slice loads (it can add earlier dates).
 function _tmDates() {
@@ -17554,11 +17615,25 @@ function _boardAsOf(dateStr) {
       if (!best || pt.snapshot_date >= best.snapshot_date) best = pt;
     }
     if (!best) continue;
+    const cw = p.career_war || {};
+    // Hindsight outcomes (only meaningful for since-debuted players). All three
+    // share the same WAR flavor the rest of the site uses — career_war is bWAR
+    // (source:"bbref"), WAG's observed_war is that same career WAR, and WAR/yr
+    // is the canonical full-season-normalized rate (gradWarPerYr) — so WAR,
+    // WAR/yr, and WAG never mix WAR sources.
+    const wpyObj = (typeof gradWarPerYr === "function" && p.debut_date) ? gradWarPerYr(p) : null;
+    const wagObj = (p.debuted_value || {}).wag;
     rows.push({
       key: p.player_key, name: p.player_name, org: p.org, pos: p.position,
+      mlbamId: p.mlbam_id || (p.statline || {}).mlbam_id || null,
       fv: best.consensus_fv, fvPlus: !!best.consensus_fv_plus,
       avgRank: best.avg_rank, asOf: best.snapshot_date,
       debutDate: p.debut_date || null,
+      war: cw.career_war ?? null,
+      warPerYr: (wpyObj && wpyObj.war_per_yr != null) ? wpyObj.war_per_yr : (cw.war_per_yr ?? null),
+      warSeasons: cw.war_seasons_count ?? null,
+      wag: (wagObj && wagObj.regressed_wag != null) ? wagObj.regressed_wag : null,
+      boomLabel: (wagObj && wagObj.boom_label) || null,
     });
   }
   rows.sort((a, b) => (b.fv - a.fv)
@@ -17589,12 +17664,25 @@ function _boardDiff(dateA, dateB, topN) {
   }
   for (const [key, a] of aTop) {
     if (bTop.has(key)) continue;
-    // Graduated if the player debuted within the (dateA, dateB] window.
+    // A player who left the top-N is a GRADUATION (debuted in the window) —
+    // not a "drop"/"faller". Everything else that left is a genuine decline.
     if (a.debutDate && a.debutDate > dateA && a.debutDate <= dateB) {
       graduated.push({ a });
     } else {
       dropped.push({ a, b: bAll.get(key) || null });
     }
+  }
+  // TRADES are distinct from grade moves: a traded player stays ON the board
+  // (org changes, grade doesn't), so they're never a "drop". Surface org
+  // changes in the window as their own informational bucket so the diff
+  // doesn't silently fold them into rises/falls. Uses the player's dated
+  // trades[] — reliable, not inferred from board membership.
+  const byKey = _tmPlayerByKey();
+  const traded = [];
+  for (const [key, b] of bTop) {
+    const p = byKey.get(key);
+    const tr = (p && p.trades || []).find(t => t.trade_date && t.trade_date > dateA && t.trade_date <= dateB && (t.to_org || t.from_org));
+    if (tr) traded.push({ b, from: tr.from_org, to: tr.to_org });
   }
   risers.sort((x, y) => y.rankDelta - x.rankDelta);
   fallers.sort((x, y) => x.rankDelta - y.rankDelta);
@@ -17603,20 +17691,97 @@ function _boardDiff(dateA, dateB, topN) {
   entered.sort((x, y) => x.b.rank - y.b.rank);
   dropped.sort((x, y) => x.a.rank - y.a.rank);
   graduated.sort((x, y) => x.a.rank - y.a.rank);
-  return { risers, fallers, gainers, sliders, entered, dropped, graduated,
+  traded.sort((x, y) => x.b.rank - y.b.rank);
+  return { risers, fallers, gainers, sliders, entered, dropped, graduated, traded,
            sizeA: A.length, sizeB: B.length };
+}
+
+// Log genuine headshot 404s once per player so missing photos can be tracked.
+// (The Cloudinary d_people:generic URL normally returns a silhouette at 200, so
+// this rarely fires — it's the safety net for true network/asset failures.)
+const _tmMissingPhotos = new Set();
+function _tmWirePhotoLog(container) {
+  if (!container || container._tmPhotoLogWired) return;
+  container._tmPhotoLogWired = true;
+  container.addEventListener("error", (e) => {
+    const img = e.target;
+    if (!img || img.tagName !== "IMG") return;
+    const wrap = img.closest && img.closest(".tm-photo");
+    if (!wrap) return;
+    const pid = wrap.getAttribute("data-tm-pid") || "?";
+    const key = wrap.getAttribute("data-tm-key") || "?";
+    const sig = key + "|" + pid;
+    if (_tmMissingPhotos.has(sig)) return;
+    _tmMissingPhotos.add(sig);
+    console.warn(`[TimeMachine] headshot failed to load — player_key=${key} mlbam_id=${pid}`);
+  }, true);   // capture: <img> error events don't bubble
+}
+
+// Compact baseball-card thumbnail for a Time Machine row. Reuses the site's
+// headshotHTML (rectangular, FV-tier rarity ring, native lazy-load, silhouette
+// behind the img so a 404 degrades gracefully). The synthetic player carries
+// mlbam_id (→ MLB headshot, resolves for active AND debuted alike) and the
+// as-of FV (→ correct rarity ring for that point in time). data-tm-pid lets the
+// delegated error logger record genuine 404s.
+function _tmRowPhoto(r) {
+  const img = headshotHTML({ mlbam_id: r.mlbamId, fv_close: r.fv }, 20);
+  // Tag the wrapper so _tmWirePhotoLog can attribute a broken headshot.
+  return `<span class="tm-photo" data-tm-pid="${r.mlbamId || ""}" data-tm-key="${escapeHtml(r.key)}">${img}</span>`;
+}
+
+// Hindsight outcome chips for a since-debuted prospect (empty otherwise).
+// Surfaces the realized result — graduation date + WAR / WAR-per-year / WAG —
+// distinct from the point-in-time grade (which is the FV pill on the same row).
+function _tmOutcomeHTML(r) {
+  if (!r.debutDate) return "";
+  const bits = [`<span class="tm-grad" title="Debuted ${_tmFmtDate(r.debutDate)} — shown on this board because it predates the debut">▸ ${_tmFmtDate(r.debutDate)}</span>`];
+  if (r.war != null)
+    bits.push(`<span class="tm-stat tm-stat-war" title="Career MLB WAR (bWAR) since debut">${(+r.war).toFixed(1)}<em>WAR</em></span>`);
+  if (r.warPerYr != null)
+    bits.push(`<span class="tm-stat tm-stat-rate" title="WAR per MLB season played${r.warSeasons ? ` (${r.warSeasons} season${r.warSeasons === 1 ? "" : "s"})` : ""} — the length-fair signal">${(+r.warPerYr).toFixed(1)}<em>/yr</em></span>`);
+  if (r.wag != null) {
+    const pos = r.wag >= 0;
+    bits.push(`<span class="tm-stat tm-stat-wag ${pos ? "is-pos" : "is-neg"}" title="WAR Above Grade — realized production vs what the grade implied">${pos ? "+" : ""}${(+r.wag).toFixed(1)}<em>WAG</em></span>`);
+  }
+  return `<span class="tm-outcome">${bits.join("")}</span>`;
+}
+
+// Retrospective calibration on a resolved board: which graded prospects
+// over/under-performed their grade, by WAG. Ties directly to the Methodology
+// backtest. Collapsible (<details>) so it never crowds the board.
+function _tmHitMissHTML(board) {
+  const resolved = board.filter(r => r.debutDate && r.wag != null);
+  if (resolved.length < 4) return "";
+  const byWag = [...resolved].sort((a, b) => b.wag - a.wag);
+  const overs = byWag.slice(0, 5);
+  const busts = byWag.slice(-5).reverse();
+  const chip = (r) => `<a class="tm-hm-chip" href="#player=${escapeHtml(r.key)}"
+      onclick="event.preventDefault();state.section='timemachine';state.view={type:'player',key:'${escapeHtml(r.key)}'};render();syncToURL();"
+      title="Graded ${r.fv} FV as of this date · ${(+r.war).toFixed(1)} WAR since · ${r.wag >= 0 ? "+" : ""}${(+r.wag).toFixed(1)} WAG">
+      <span class="tm-hm-name">${escapeHtml(r.name)}</span>
+      ${_tmFvPill(r.fv, r.fvPlus)}
+      <span class="tm-hm-wag ${r.wag >= 0 ? "is-pos" : "is-neg"}">${r.wag >= 0 ? "+" : ""}${(+r.wag).toFixed(1)} WAG</span>
+    </a>`;
+  return `<details class="tm-hitmiss" open>
+      <summary>Hits &amp; misses <span class="tm-sub">how this board's debutants panned out vs their grade</span></summary>
+      <div class="tm-hm-grid">
+        <div class="tm-hm-col"><div class="tm-hm-h is-good">✦ Overperformed grade</div>${overs.map(chip).join("")}</div>
+        <div class="tm-hm-col"><div class="tm-hm-h is-bad">✗ Underperformed grade</div>${busts.map(chip).join("")}</div>
+      </div>
+    </details>`;
 }
 
 function _tmBoardRowHTML(r, opts) {
   opts = opts || {};
-  const delta = opts.deltaHTML || "";
+  const slot = opts.deltaHTML || "";
   return `<a class="tm-row" href="#player=${escapeHtml(r.key)}"
       onclick="event.preventDefault();state.section='timemachine';state.view={type:'player',key:'${escapeHtml(r.key)}'};render();syncToURL();">
       <span class="tm-rank">${r.rank}</span>
+      ${_tmRowPhoto(r)}
       ${teamLogoHTML(r.org, "sm")}
       <span class="tm-name">${escapeHtml(r.name)}</span>
       <span class="tm-pos">${escapeHtml(r.pos || "")}</span>
-      ${delta}
+      ${slot}
       ${_tmFvPill(r.fv, r.fvPlus)}
     </a>`;
 }
@@ -17654,10 +17819,11 @@ function _tmRenderControls() {
       <div class="tm-asof-controls">
         <button class="tm-step" data-tm-step="-1" aria-label="Previous snapshot" ${idx === 0 ? "disabled" : ""}>‹</button>
         <input type="range" class="tm-slider" min="0" max="${dates.length - 1}" value="${idx}" aria-label="Snapshot date" list="tm-ticks">
+        <datalist id="tm-ticks">${dates.map((_, i) => `<option value="${i}"></option>`).join("")}</datalist>
         <button class="tm-step" data-tm-step="1" aria-label="Next snapshot" ${idx === dates.length - 1 ? "disabled" : ""}>›</button>
         <span class="tm-date-readout" id="tm-date-readout">${_tmFmtDate(state.tmDate)}</span>
       </div>
-      <div class="tm-slider-ends"><span>${_tmFmtDate(dates[0])}</span><span>${_tmFmtDate(latest)}</span></div>`;
+      <div class="tm-slider-ends"><span>${_tmFmtDate(dates[0])}</span><span>${dates.length} snapshots · drag to any</span><span>${_tmFmtDate(latest)}</span></div>`;
   } else {
     body = `
       <div class="tm-diff-controls">
@@ -17668,7 +17834,7 @@ function _tmRenderControls() {
   }
 
   el.innerHTML = `${modeToggle}${body}
-    <p class="tm-note">Board reconstructed from each prospect's consensus-FV history (${dates.length} snapshots, ${_tmFmtDate(dates[0])} – ${_tmFmtDate(latest)}). Ranking is by consensus FV. Players who have since graduated leave the active board.</p>`;
+    <p class="tm-note">Board reconstructed from each prospect's point-in-time consensus-FV history (${dates.length} snapshots, ${_tmFmtDate(dates[0])} – ${_tmFmtDate(latest)}), ranked by consensus FV. A prospect appears on every board dated <em>before</em> their MLB debut at their grade/rank then, and leaves on their debut date — debut date is the practical proxy for rookie-eligibility exhaustion. Hindsight outcomes (WAR / WAR-per-season / WAG) are realized results known only now, distinct from the as-of grade.</p>`;
 
   el.querySelectorAll("[data-tm-mode]").forEach(b => b.onclick = () => {
     state.tmMode = b.dataset.tmMode; _tmRenderControls(); _tmRenderBody(); syncToURL();
@@ -17705,7 +17871,11 @@ function _tmChangeGroup(title, glyph, items, kind) {
     } else if (kind === "drop") {
       delta = `<span class="tm-delta down">left top ${state.tmTopN}</span>`;
     } else if (kind === "grad") {
-      delta = `<span class="tm-delta is-grad">★ debuted${it.a && it.a.debutDate ? " " + _tmFmtDate(it.a.debutDate) : ""}</span>`;
+      // Graduates carry their realized outcome (the retrospective payoff).
+      delta = (it.a && it.a.debutDate) ? _tmOutcomeHTML(it.a)
+        : `<span class="tm-delta is-grad">★ debuted</span>`;
+    } else if (kind === "trade") {
+      delta = `<span class="tm-delta is-trade">⇄ ${escapeHtml(it.from || "?")}→${escapeHtml(it.to || "?")}</span>`;
     }
     return _tmBoardRowHTML({ ...r, rank: r.rank }, { deltaHTML: delta });
   }).join("");
@@ -17723,12 +17893,21 @@ function _tmRenderBody() {
 
   if (state.tmMode === "asof") {
     const board = _boardAsOf(state.tmDate).slice(0, state.tmTopN);
+    const hind = state.tmHindsight !== false;
+    const gradN = board.filter(r => r.debutDate).length;
     el.innerHTML = `
       <div class="tm-asof-head">
         <span class="tm-asof-title">Top ${state.tmTopN} as of ${_tmFmtDate(state.tmDate)}</span>
-        <span class="tm-asof-sub">${board.length} ranked prospects</span>
+        <span class="tm-asof-sub">${board.length} ranked${gradN ? ` · ${gradN} since debuted` : ""}</span>
+        <label class="tm-hind-toggle" title="Annotate since-debuted prospects with their realized outcomes (WAR / WAR-yr / WAG). Off = the board purely as it appeared then.">
+          <input type="checkbox" id="tm-hindsight"${hind ? " checked" : ""}> Hindsight outcomes
+        </label>
       </div>
-      <div class="tm-board">${board.map(r => _tmBoardRowHTML(r)).join("")}</div>`;
+      ${hind ? _tmHitMissHTML(board) : ""}
+      <div class="tm-board">${board.map(r => _tmBoardRowHTML(r, { deltaHTML: hind ? _tmOutcomeHTML(r) : "" })).join("")}</div>`;
+    const hb = document.getElementById("tm-hindsight");
+    if (hb) hb.onchange = () => { state.tmHindsight = hb.checked; _tmRenderBody(); syncToURL(); };
+    _tmWirePhotoLog(el);
     return;
   }
 
@@ -17744,18 +17923,20 @@ function _tmRenderBody() {
   const summary = `
     <div class="tm-diff-head">
       <span class="tm-diff-title">What changed · ${_tmFmtDate(a)} → ${_tmFmtDate(b)}</span>
-      <span class="tm-diff-sub">${diff.entered.length} new · ${diff.risers.length} up · ${diff.fallers.length} down · ${diff.graduated.length} graduated · ${diff.dropped.length} dropped (top ${state.tmTopN})</span>
+      <span class="tm-diff-sub">${diff.entered.length} new · ${diff.risers.length} up · ${diff.fallers.length} down · ${diff.graduated.length} graduated · ${diff.traded.length} traded · ${diff.dropped.length} dropped (top ${state.tmTopN})</span>
     </div>`;
   const groups = [
     _tmChangeGroup("New to the top " + state.tmTopN, "✦", diff.entered, "new"),
     _tmChangeGroup("Risers", "▲", diff.risers, "rank"),
     _tmChangeGroup("Grade gainers", "+", diff.gainers, "fv"),
     _tmChangeGroup("Graduated to MLB", "★", diff.graduated, "grad"),
+    _tmChangeGroup("Traded", "⇄", diff.traded, "trade"),
     _tmChangeGroup("Fallers", "▼", diff.fallers, "rank"),
     _tmChangeGroup("Grade slides", "−", diff.sliders, "fv"),
     _tmChangeGroup("Dropped off", "◇", diff.dropped, "drop"),
   ].join("");
   el.innerHTML = summary + `<div class="tm-changelog">${groups}</div>`;
+  _tmWirePhotoLog(el);
 }
 
 function renderTimeMachine() {
@@ -17765,7 +17946,8 @@ function renderTimeMachine() {
   if (DATA._slices && DATA._slices.debuts && !((DATA.debuts || []).length) && !DATA._tmGradLoading) {
     DATA._tmGradLoading = true;
     loadSlice("debuts").then(() => {
-      DATA._tmDates = null;   // grads can add earlier snapshot dates
+      DATA._tmDates = null;    // grads can add earlier snapshot dates
+      DATA._tmByKey = null;    // rebuild the key→player map to include grads
       if (state.section === "timemachine" && !state.view) renderTimeMachine();
     }).catch(() => {});
   }
@@ -39860,12 +40042,12 @@ function render() {
   // floating header strip on unrelated pages.
   const sections = {
     active:       "active-section",
-    timemachine:  "timemachine-section",
     spotlights:   "spotlights-section",
     traded:       "traded-section",
     injured:      "injured-section",
     draft:        "draft-section",
     overseas:     "overseas-section",
+    timemachine:  "timemachine-section",
     ifa:          "ifa-section",
     debuts:       "debuts-section",
     farm:         "farm-section",

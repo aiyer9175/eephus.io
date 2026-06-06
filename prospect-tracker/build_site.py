@@ -56,6 +56,7 @@ PROSPX_SUBNAV = [
     ("MLB Draft",     "/prospx/#tab=draft"),
     ("International",  "/prospx/#tab=ifa"),
     ("Overseas",      "/prospx/#tab=overseas"),
+    ("Time Machine",  "/prospx/#tab=timemachine"),
     ("Scatterplots",  "/prospx/#tab=charts"),
     ("Glossary",      "/prospx/#tab=glossary"),
 ]
