@@ -268,21 +268,36 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   font-family: var(--font-retro-mono); font-size: 12.5px; letter-spacing: .03em;
   display: flex; align-items: center; gap: 0; overflow: hidden; white-space: nowrap;
 }
-/* Tag layers ABOVE the scrolling track so the marquee text passes cleanly
-   behind it instead of overlapping the "WIRE" label at the left edge. */
+/* WIRE brand mark — pinned at the left, opaque, and ABOVE the scrolling track
+   (sticky so it stays put if the bar becomes manually scrollable under
+   reduced-motion). Items dissolve behind it rather than overlapping it. */
 .home-ticker .ticker-tag {
-  position: relative; z-index: 2;
+  position: sticky; left: 0; z-index: 3;
   flex: none; display: inline-flex; align-items: center; gap: 6px;
   background: var(--accent-red); color: #fff; font-weight: 700;
-  padding: 6px 12px; letter-spacing: .08em; text-transform: uppercase;
-  box-shadow: 2px 0 6px #0B0E07;
+  padding: 6px 12px; letter-spacing: .14em; text-transform: uppercase; font-size: 11px;
+}
+/* Trailing gradient fade just right of the label: items dissolve into the bar
+   as they pass behind the WIRE mark instead of hard-cutting against it. Sits
+   above the track (the tag's z-index:3 stacking context) but below the label. */
+.home-ticker .ticker-tag::after {
+  content: ""; position: absolute; left: 100%; top: 0; bottom: 0; width: 40px;
+  background: linear-gradient(to right, #0B0E07 0%, rgba(11,14,7,0) 100%);
+  z-index: 1; pointer-events: none;
 }
 .home-ticker .ticker-tag .blip { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: ticker-blip 1.4s steps(2) infinite; }
 @keyframes ticker-blip { 50% { opacity: .25; } }
 .home-ticker .ticker-track { display: inline-flex; gap: 34px; padding: 6px 0; animation: ticker-scroll 48s linear infinite; }
-.home-ticker .ticker-track span { flex: none; }
+/* Pause-on-hover (desktop) so a reader can stop the marquee and click an item. */
+.home-ticker:hover .ticker-track { animation-play-state: paused; }
+.home-ticker .ticker-track span, .home-ticker .ticker-track a { flex: none; }
+.home-ticker .ticker-track a { color: inherit; text-decoration: none; }
+.home-ticker .ticker-track a:hover { text-decoration: underline; }
 .home-ticker .ticker-track .up { color: #6ee7a8; } .home-ticker .ticker-track .down { color: #ff8a8a; }
 .home-ticker .ticker-track .glyph { color: var(--accent-gold); }
+.home-ticker .ticker-track .promo { color: #6ee7a8; } .home-ticker .ticker-track .demo { color: #ff8a8a; }
+.home-ticker .ticker-track .il { color: #ffb454; } .home-ticker .ticker-track .debut { color: #4ee0ff; }
+.home-ticker .ticker-track .trade { color: var(--accent-gold); }
 @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
 /* ---- shell grid ---- */
@@ -417,6 +432,10 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    neutralize transitions/animations site-wide for users who ask for less motion.
    Plotted chart curves are static SVG paths, unaffected. */
 @media (prefers-reduced-motion: reduce) {
+  /* Don't leave a frozen stub: stop the auto-scroll but make the bar manually
+     scrollable so reduced-motion users can still read every item (the WIRE
+     mark is sticky, so it stays pinned while the track scrolls). */
+  .home-ticker { overflow-x: auto; }
   .home-ticker .ticker-track { animation: none; transform: none; }
   .home-ticker .ticker-tag .blip, .sb-feed .feed-head .blip { animation: none; }
   *, *::before, *::after {

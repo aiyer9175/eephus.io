@@ -357,7 +357,7 @@ def _collect_events(players: list, graduates: list) -> list:
         for lc in (p.get("level_changes") or []):
             if lc.get("kind") in ("promotion", "demotion"):
                 promo = lc["kind"] == "promotion"
-                add(lc.get("date"), "promo", "↑" if promo else "↓",
+                add(lc.get("date"), "promo" if promo else "demo", "↑" if promo else "↓",
                     f'{nm} {"promoted" if promo else "demoted"} {lc.get("from_level", "?")}→{lc.get("to_level", "?")}', key)
         for tr in (p.get("trades") or []):
             add(tr.get("trade_date"), "trade", "⇄", f'{nm} traded {tr.get("from_org", "?")}→{tr.get("to_org", "?")}', key)
@@ -378,10 +378,17 @@ def _feed_html(events: list, n: int = 12) -> str:
     return "".join(out)
 
 def _ticker_html(events: list, n: int = 14) -> str:
+    # Each item is a mouse-clickable link to the player (or spotlights), color-
+    # coded by type. tabindex=-1 keeps it out of the keyboard/AT path — the
+    # ticker is aria-hidden decoration; the sidebar Prospect Wire feed is the
+    # accessible, keyboard-navigable equivalent.
     items = []
+    known = ("up", "down", "promo", "demo", "il", "debut", "trade")
     for dt, typ, glyph, text, key in events[:n]:
-        cls = typ if typ in ("up", "down") else "glyph"
-        items.append(f'<span><span class="{cls}">{glyph}</span> {html.escape(text)}</span>')
+        cls = typ if typ in known else "glyph"
+        href = f"/prospx/#player={key}" if key else "/prospx/#tab=spotlights"
+        items.append(f'<a href="{html.escape(href)}" tabindex="-1">'
+                     f'<span class="{cls}">{glyph}</span> {html.escape(text)}</a>')
     if not items:
         items = ['<span><span class="glyph">◆</span> PROSPX — live prospect wire</span>']
     return " ".join(items * 2)  # duplicated for seamless scroll
