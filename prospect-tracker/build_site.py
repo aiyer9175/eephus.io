@@ -47,6 +47,34 @@ def _asset_ver(rel: str) -> str:
         return "1"
 _CSS_VER = _asset_ver("assets/site.css")
 
+# Unified prospect-photo resolution — mirrors PROSPX's headshotURL(): consult the
+# resolved context map (data/photo_ctx.json, built by headshots.py) and use the
+# REAL MiLB/MLB photo for resolved ids ('67'/'milb'); fall back to the generic
+# silhouette overlay (always 200 — never a broken image) when unresolved/'none'.
+# Single source of truth so the homepage shows the same coverage as PROSPX,
+# instead of the old hardcoded '67' that silhouetted every milb-only prospect.
+def _load_photo_ctx() -> dict:
+    try:
+        return (json.loads((ROOT / "data" / "photo_ctx.json").read_text(encoding="utf-8")).get("ctx")) or {}
+    except (OSError, ValueError, AttributeError):
+        return {}
+_PHOTO_CTX = _load_photo_ctx()
+
+def _headshot_url(mlbam, px: int = 180) -> str | None:
+    """Resolved rectangular prospect headshot URL via the unified chain, or None
+    when there's no MLBAM id (caller renders the silhouette)."""
+    if not mlbam:
+        return None
+    r = max(60, px * 2)
+    ctx = _PHOTO_CTX.get(str(mlbam))
+    if ctx in ("67", "milb"):
+        return (f"https://img.mlbstatic.com/mlb-photos/image/upload/"
+                f"w_{r},q_auto:best/v1/people/{mlbam}/headshot/{ctx}/current")
+    # 'none' / not-yet-resolved → generic overlay (always returns an image:
+    # the real headshot if one exists, else the silhouette) so it's never empty.
+    return (f"https://img.mlbstatic.com/mlb-photos/image/upload/"
+            f"d_people:generic:headshot:67:current.png/w_{r},q_auto:best/v1/people/{mlbam}/headshot/67/current")
+
 NAV_ITEMS = [
     ("home",     "Home",             "/"),
     ("articles", "Articles",         "/articles/"),
@@ -438,12 +466,8 @@ def _spotlight_html(players: list) -> str:
         return ""
     fv = p.get("fv_close")
     holo = " holo" if (fv is not None and fv >= 61) else ""
-    mlbam = p.get("mlbam_id")
-    photo = ""
-    if mlbam:
-        url = (f"https://img.mlbstatic.com/mlb-photos/image/upload/"
-               f"d_people:generic:headshot:67:current.png/w_180,q_auto:best/v1/people/{mlbam}/headshot/67/current")
-        photo = f'background-image:url(\'{url}\');'
+    url = _headshot_url(p.get("mlbam_id"), 180)   # unified chain (resolves milb-only ids)
+    photo = f"background-image:url('{url}');" if url else ""
     spark = _fv_sparkline(p.get("points"), "var(--accent-green)")
     d = p["stock"]["delta"]
     return (

@@ -416,7 +416,10 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .home-module.full { grid-column: 1 / -1; }
 
 /* data rows (PROSPX row idiom) */
-.row-link { display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 8px 4px; border-bottom: 1px solid var(--border-light); }
+/* Right padding sized for the widest trailing value (e.g. "▼ -16" / a holo FV
+   pill) so it never hugs the row border; left stays tight to align with the
+   module header. */
+.row-link { display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 8px 12px 8px 4px; border-bottom: 1px solid var(--border-light); }
 .row-link:hover { background: var(--bg-tertiary); }
 .row-rank { font-family: var(--font-retro-mono); font-size: 14px; font-weight: 700; color: var(--text-tertiary); width: 24px; text-align: right; flex: none; }
 .row-logo { width: 24px; height: 24px; flex: none; object-fit: contain; }
