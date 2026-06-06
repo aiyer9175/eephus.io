@@ -116,15 +116,19 @@
 .eephus-wrap { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem 4rem; }
 
 /* ---- site nav (every page, incl. PROSPX) ---- */
+/* PRIMARY site nav — masthead-level. A filled band with a heavy double rule
+   (the newspaper-nameplate treatment) so it reads as the dominant, site-wide
+   bar that the PROSPX section strip nests beneath. */
 .eephus-nav {
   display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
   max-width: 1100px; margin: 0 auto;
-  padding: 12px 1.5rem;
-  border-bottom: 1px solid var(--border);
+  padding: 14px 1.5rem 12px;
+  background: var(--bg-secondary);
+  border-bottom: 3px double var(--text-primary);
 }
 .eephus-nav .eephus-wordmark {
   font-family: var(--font-retro-mono);
-  font-weight: 700; font-size: 20px; letter-spacing: .04em;
+  font-weight: 700; font-size: 22px; letter-spacing: .04em;
   color: var(--text-primary); text-decoration: none;
   display: inline-flex; flex-direction: column; line-height: 1;
 }
@@ -148,6 +152,27 @@
 .eephus-nav .eephus-links a.is-active::after {
   content: ""; position: absolute; left: 12px; right: 12px; bottom: 3px;
   height: 2px; background: var(--iridescent); border-radius: 2px;
+}
+/* Site-wide controls (Watchlist, Dark Mode), right-aligned in the primary nav. */
+.eephus-nav .eephus-nav-controls { display: inline-flex; align-items: center; gap: 8px; }
+.eephus-nav .eephus-nav-ctrl {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .03em; text-transform: uppercase;
+  color: var(--text-secondary); background: var(--bg-tertiary);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 0 11px; min-height: 38px; line-height: 1;
+  cursor: pointer; text-decoration: none;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.eephus-nav .eephus-nav-ctrl:hover { background: var(--bg-primary); color: var(--text-primary); border-color: var(--text-tertiary); }
+.eephus-nav .eephus-nav-ctrl .theme-icon { font-size: 14px; }
+.eephus-nav .eephus-nav-ctrl .eephus-nav-ctrl-label { white-space: nowrap; }
+.eephus-nav .eephus-nav-ctrl .global-ctrl-count {
+  font-family: var(--font-retro-mono); font-size: 10px; font-weight: 800;
+  min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--radius-sm);
+  background: var(--accent-gold); color: #0B0E07;
+  display: inline-flex; align-items: center; justify-content: center;
 }
 
 /* ---- hero (Home) ---- */
@@ -242,6 +267,8 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   .eephus-nav { gap: 8px; padding: 10px 1rem; }
   .eephus-nav .eephus-links { margin-left: 0; width: 100%; }
   .eephus-nav .eephus-links a { padding: 8px 10px; }
+  .eephus-nav .eephus-nav-controls { width: 100%; }
+  .eephus-nav .eephus-nav-ctrl { flex: 1; justify-content: center; }
   .eephus-wrap { padding: 0 1rem 3rem; }
   .hero { padding: 36px 0 24px; }
 }

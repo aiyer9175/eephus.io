@@ -222,11 +222,23 @@ def _nav(active: str) -> str:
     for key, label, href in NAV_ITEMS:
         cls = ' class="is-active"' if key == active else ""
         items.append(f'<a href="{href}"{cls}>{html.escape(label)}</a>')
+    # Site-wide controls (right-aligned), matching PROSPX's primary nav: a
+    # Watchlist deep-link into PROSPX + the Dark Mode toggle.
+    controls = (
+        '<div class="eephus-nav-controls">'
+        '<a class="eephus-nav-ctrl" href="/prospx/#tab=watchlist" aria-label="Watchlist">'
+        '<span aria-hidden="true">★</span><span class="eephus-nav-ctrl-label">Watchlist</span></a>'
+        '<button class="eephus-nav-ctrl" type="button" data-theme-toggle onclick="eephusToggleTheme()" aria-label="Toggle dark mode">'
+        '<span class="theme-icon lbl-dark" aria-hidden="true">☾</span>'
+        '<span class="theme-icon lbl-light" aria-hidden="true">☀</span>'
+        '<span class="eephus-nav-ctrl-label"><span class="lbl-dark">Dark Mode</span><span class="lbl-light">Light Mode</span></span>'
+        '</button></div>'
+    )
     return (
         '<header class="eephus-nav">'
         '<a class="eephus-wordmark" href="/">eephus.io</a>'
         f'<nav class="eephus-links">{"".join(items)}</nav>'
-        f'{THEME_BTN}'
+        f'{controls}'
         "</header>"
     )
 
