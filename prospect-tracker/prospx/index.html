@@ -4210,7 +4210,7 @@
     .qk-row-tag { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
       letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); white-space: nowrap; }
     .qk-row-tag-p { color: var(--neon-cyan); }
-    .qk-row-sub { font-family: var(--font-sans); font-size: 11.5px; color: var(--text-secondary);
+    .qk-row-sub { font-family: var(--font-sans); font-size: 12px; color: var(--text-secondary);
       margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .qk-empty { padding: 16px; font-family: var(--font-mono); font-size: 12px; color: var(--text-tertiary); }
     .qk-foot { display: flex; gap: 16px; padding: 8px 16px; border-top: 1px solid var(--border);
@@ -4275,6 +4275,40 @@
     .source-comp-eyebrow .scx-dot { width: 7px; height: 7px; background: var(--neon-cyan);
       border-radius: 50%; box-shadow: 0 0 6px var(--neon-cyan); }
     .meth-prose { max-width: 860px; margin-bottom: 22px; }
+    .meth-eq { font-family: var(--font-retro-mono); font-size: 13px; color: var(--text-primary);
+      background: var(--bg-secondary); border-left: 3px solid var(--neon-cyan);
+      padding: 9px 13px; margin: 8px 0 12px; max-width: 860px; line-height: 1.5; }
+    .meth-cmp { border-collapse: collapse; width: 100%; max-width: 860px; margin: 6px 0 16px;
+      font-family: var(--font-sans); font-size: 13px; }
+    .meth-cmp th { text-align: left; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-tertiary); border-bottom: 2px solid var(--border); padding: 6px 9px; }
+    .meth-cmp td { border-bottom: 1px solid var(--border-light); padding: 7px 9px; vertical-align: top;
+      color: var(--text-secondary); line-height: 1.45; }
+    .meth-cmp td:first-child { font-family: var(--font-mono); font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+    .meth-refs { max-width: 860px; margin: 4px 0 12px; padding-left: 18px; }
+    .meth-refs li { font-family: var(--font-serif); font-size: 13px; line-height: 1.55;
+      color: var(--text-secondary); margin-bottom: 5px; }
+    .meth-changelog { list-style: none; padding: 0; margin: 4px 0 12px; max-width: 860px; }
+    .meth-changelog li { font-family: var(--font-serif); font-size: 13px; line-height: 1.5;
+      color: var(--text-secondary); padding: 6px 0 6px 0; border-bottom: 1px dotted var(--border-light);
+      display: grid; grid-template-columns: 64px 1fr; gap: 12px; }
+    .meth-changelog .mc-date { font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
+      color: var(--neon-cyan); letter-spacing: 0.02em; }
+    .meth-toolbar { display: flex; justify-content: flex-end; max-width: 860px; margin-bottom: 6px; }
+    .meth-export-btn { font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.04em; color: var(--text-secondary); background: var(--bg-secondary);
+      border: 1px solid var(--border); padding: 6px 12px; cursor: pointer; }
+    .meth-export-btn:hover { color: var(--neon-cyan); border-color: var(--neon-cyan); }
+    @media print {
+      body.printing-meth * { visibility: hidden !important; }
+      body.printing-meth #methodology-body, body.printing-meth #methodology-body * { visibility: visible !important; }
+      body.printing-meth #methodology-body { position: absolute; left: 0; top: 0; width: 100%; }
+      /* Don't print the toolbar or the interactive widgets — they don't belong in a handout. */
+      body.printing-meth .meth-toolbar, body.printing-meth .gx-card { display: none !important; }
+      body.printing-meth #methodology-print-head { display: block !important; visibility: visible !important;
+        margin-bottom: 14px; font-family: var(--font-mono); border-bottom: 2px solid #000; padding-bottom: 8px; }
+    }
+    #methodology-print-head { display: none; }
     .meth-h { font-family: var(--font-sans); font-size: 17px; font-weight: 800;
       letter-spacing: 0.01em; color: var(--text-primary); margin: 24px 0 8px;
       padding-bottom: 5px; border-bottom: 2px solid var(--border); }
@@ -18174,6 +18208,89 @@ function _methProseHTML() {
       a starter's Fastball/Command), so growing the <em>right</em> tools scores higher than
       padding the average.</dd>
     </dl>
+
+    <h2 class="meth-h">Surplus value — the economic model</h2>
+    <p>A prospect is an asset because the six years of team control after debut are paid below
+    market. Surplus value is the dollar production those controlled years are expected to deliver
+    above what they cost:</p>
+    <p class="meth-eq">surplus = (expected WAR × $/WAR) − cost basis, probability-weighted across outcomes and discounted to present value</p>
+    <p>The build, in order: (1) the <strong>FV→WAR anchor</strong> converts the scouting grade to an
+    expected ${gTermLink("war", "WAR")}/year over six controlled seasons (${gTermLink("fv_to_war_table", "the FV→WAR table")}).
+    (2) WAR is priced at a non-linear, tiered <strong>${gTermLink("dpw_tier", "$/WAR")}</strong> (a win on a star is worth more
+    than a win on a replacement-level filler). (3) The <strong>cost basis</strong> is the three pre-arbitration
+    years at the league minimum plus three arbitration years at an escalating fraction of free-agent
+    value (${gTermLink("service_time", "service-time")} schedule). (4) Because a prospect is a <em>distribution</em>
+    of outcomes, not a point, the engine probability-weights a bucketed outcome set (bust → role player
+    → regular → star) rather than trusting the FV midpoint, then discounts future years to present value
+    at 9%/yr. The published per-prospect figure is ${gTermLink("surplus_value", "Surplus value")}; the per-FV-point
+    and per-dollar efficiency cuts are ${gTermLink("surplus_per_fv_pt", "Surplus / FV-pt")} and ${gTermLink("dollars_per_fv", "$/FV-pt")}.
+    The <em>Interactive</em> tab below walks an FV through every step.</p>
+
+    <h2 class="meth-h">Farm-system grades — how the org letter is built</h2>
+    <p>The org grade is a weighted tree (${gTermLink("farm_report_card", "Farm grade tree")}), not a single
+    formula, so each letter is auditable down to its leaves. Four branches:
+    <strong>Development</strong> (40% — per-tool growth of prospects the org already had, ${gTermLink("dvm_plus", "DvM+")} /
+    ${gTermLink("tools_dvm_plus", "ToolDvM+")}), <strong>MLB Production</strong> (25% — does the system produce
+    big-leaguers, boom/bust rates, top-3 graduate WAR, a star-presence ${gTermLink("mlb_production_conviction", "Conviction")}
+    flag), <strong>Acquisition Strategy</strong> (Draft / IFA / Trade / Waiver channels), and
+    <strong>Financial</strong> (capital efficiency — ${gTermLink("fin_war_per_m", "WAR per $M")},
+    ${gTermLink("fin_contract_surplus", "grad-contract surplus")}, ${gTermLink("fin_dollar_dvm", "Org $DvM+")},
+    ${gTermLink("fin_draft_pool_efficiency", "draft-pool efficiency")}, ${gTermLink("fin_ifa_roi", "IFA ROI")}).
+    Every leaf is z-scored across the 30 orgs and anchored so the composite reads on a 100 = league-mean
+    scale; sparse leaves return "—" rather than guessing. Surplus enters here twice — as realized capital
+    efficiency (Financial) and as the development of surplus dollars (Org $DvM+).</p>
+
+    <h2 class="meth-h">Aggregation — player level to farm level</h2>
+    <p>Roll-ups are explicit, not implied. Org surplus is the sum of its active prospects' per-player
+    surplus dollars (the authoritative engine aggregate, <code>_active_surplus_net_mm</code>); the farm
+    list, the detail Surplus tile, and the Finances tab all read that one number. DvM+ / ToolDvM+
+    aggregate per-tool development across the org's actives with acquisitions nullified (so a trade
+    doesn't masquerade as development) and graduations not subtracted (so promoting a star doesn't read
+    as a loss). The "+" indices (DvM+, RPS+, SC+, OrgSur+) are all built to the wRC+/OPS+ convention —
+    100 = the relevant mean, ±10 ≈ one standard deviation — so they share one mental scale.</p>
+
+    <h2 class="meth-h">Where the Arkmetrics sit vs public metrics</h2>
+    <table class="meth-cmp">
+      <thead><tr><th>Arkmetric</th><th>Closest public analogue</th><th>What's different</th></tr></thead>
+      <tbody>
+        <tr><td>${gTermLink("wag", "WAG")}</td><td>WAR vs draft-pick / FV expectation</td><td>Measures realized career WAR against the WAR a player's FV grade <em>implied</em> — a grade-calibration residual, not raw production.</td></tr>
+        <tr><td>${gTermLink("dvm_plus", "DvM+ / $DvM+")}</td><td>Farm-system surplus-value rankings (e.g. public prospect-value tables)</td><td>Indexed wRC+-style (100 = mean) and scoped to in-system <em>development</em> with acquisitions removed, so it isolates org skill rather than hoarded talent.</td></tr>
+        <tr><td>${gTermLink("surplus_value", "Surplus value")}</td><td>Surplus-value frameworks (FV→WAR→$ minus cost)</td><td>Same skeleton, but probability-weighted over a bucketed outcome distribution and discounted, rather than applying a single FV-tier dollar constant.</td></tr>
+        <tr><td>${gTermLink("rps_plus", "RPS+")}</td><td>wRC+ / ERA-</td><td>Re-anchored to the player's own age × position-group cohort and level, so a young hitter at a hard level isn't penalized against older peers.</td></tr>
+        <tr><td>${gTermLink("statcast_plus", "SC+")}</td><td>Statcast percentile dashboards</td><td>Collapses the tracked-data panel into one side-aware, pool-anchored composite on the wRC+ scale.</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="meth-h">Data sources &amp; references</h2>
+    <ul class="meth-refs">
+      <li><strong>Scouting grades / FV:</strong> FanGraphs, MLB Pipeline (domestic + international), ESPN, Just Baseball, TJStats; rank-only fallbacks from Baseball America and The Athletic.</li>
+      <li><strong>Performance &amp; tracked data:</strong> MLB Stats API (MLB + MiLB statlines), Baseball Savant (Statcast) where available for upper-level / debuted players.</li>
+      <li><strong>Contracts &amp; bonuses:</strong> published MLB draft-pool and international bonus-pool figures; Spotrac for graduate contract/AAV data.</li>
+      <li><strong>Framework anchors:</strong> the FanGraphs scouting primer (FV→WAR ranges) and public $/WAR estimates (tiered, rolling multi-year average). The surplus engine's outcome buckets and discount rate are documented in <code>value_framework.py</code>.</li>
+    </ul>
+    <p class="meth-note">All grades remain the property of their publishers; the site stores them to compute a consensus and does not redistribute source lists wholesale.</p>
+
+    <h2 class="meth-h">Methodology changelog</h2>
+    <ul class="meth-changelog">
+      <li><span class="mc-date">2026-06</span> Surplus engine v38: FV→WAR anchor moved from a single peak-year projection to a flat 6-year-average table; side difference carried by the position multiplier. Farm list/detail surplus consolidated on the engine aggregate.</li>
+      <li><span class="mc-date">2026-06</span> Glossary reorganized into Glossary / Methodology / Source Comparison; taxonomy regrouped (Arkmetrics · Statcast · Standard · Scouting · Economic · Farm · Site Features); Statcast input terms added.</li>
+      <li><span class="mc-date">2026-05</span> Farm grade tree v7: MLB Production added a Bust-Rate (negative) leaf and a Conviction star-presence cap; Development promoted to the 40% top weight.</li>
+      <li><span class="mc-date">2026-05</span> Source-vs-source backtest published (resolved cohorts only) as the Source Comparison area.</li>
+      <li><span class="mc-date">2026-04</span> Consensus FV: equal-weight mean confirmed over weighted schemes; Bayesian shrinkage + forward-fill formalized.</li>
+    </ul>
+    <p class="meth-note">Versioned methodology pairs with the Time Machine: a board state and the rules that produced it are both reconstructable for any past month.</p>
+
+    <h2 class="meth-h">FAQ</h2>
+    <dl class="meth-dl">
+      <dt>Why a consensus instead of one source?</dt>
+      <dd>No single source has shown a durable, statistically separable edge on resolved cohorts (see Source Comparison). Averaging cancels idiosyncratic source error; the pooled consensus modestly but consistently beats its best individual input.</dd>
+      <dt>Why equal weights?</dt>
+      <dd>Weighting requires a reliable, persistent accuracy gap to exploit. The track record is short and the per-source differences are within noise, so equal weighting avoids over-fitting to a handful of resolved years. The Interactive tab lets you test alternative weightings yourself.</dd>
+      <dt>How often does it update?</dt>
+      <dd>Grades, Arkmetrics, farm grades, and the backtest refresh monthly; transactions, IL, roster status, debuts, and trades refresh daily. Each board honestly stamps its own cadence.</dd>
+      <dt>What's the track record — and its limits?</dt>
+      <dd>Only a few preseason base years are old enough to have resolved outcomes, top FV tiers are thin (n≈40-60), and cumulative WAR is censored at today. The Source Comparison area states these caveats in full rather than headlining an inflated number.</dd>
+    </dl>
   </div>`;
 }
 
@@ -18656,9 +18773,23 @@ function _methInteractivesHTML() {
 function renderMethodology() {
   const el = document.getElementById("methodology-body");
   if (!el) return;
-  el.innerHTML = _methProseHTML() + _methInteractivesHTML();
+  const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  const printHead = `<div id="methodology-print-head">PROSPX — Methodology · eephus.io/prospx · ${escapeHtml(today)}</div>`;
+  const toolbar = `<div class="meth-toolbar"><button class="meth-export-btn" type="button" onclick="_printMethodology()" title="Print or save the methodology as a PDF">⎙ Export methodology (PDF)</button></div>`;
+  el.innerHTML = printHead + toolbar + _methProseHTML() + _methInteractivesHTML();
   // Populate the interactives' initial state.
   _gx2080(); _gxConsensus(); _gxSurplus();
+}
+// Part 8 — exportable methodology: print just the methodology body (the
+// toolbar + interactive widgets are hidden by the print stylesheet; a dated
+// PROSPX header prints at the top). Users "Save as PDF" from the print dialog.
+function _printMethodology() {
+  document.body.classList.add("printing-meth");
+  const cleanup = () => { document.body.classList.remove("printing-meth"); window.removeEventListener("afterprint", cleanup); };
+  window.addEventListener("afterprint", cleanup);
+  setTimeout(() => { window.print(); }, 30);
+  // Fallback cleanup if afterprint doesn't fire (some browsers).
+  setTimeout(cleanup, 1500);
 }
 
 // Source Comparison — the empirical backtest, visually set apart from the
