@@ -4155,6 +4155,18 @@
     }
     .chart-fchip:hover { border-color: var(--down); color: var(--down); }
     /* === Methodology & Track Record === */
+    /* Source Comparison — visually set apart as the empirical "does it work?"
+       data area: framed panel + a data-tone eyebrow so it reads distinct from
+       the methodology prose. Sharp corners (site standard). */
+    .source-comp-wrap { border: 1px solid var(--border); border-left: 3px solid var(--neon-cyan);
+      background: var(--bg-secondary); padding: 14px 18px 20px; margin-top: 4px; }
+    [data-theme="dark"] .source-comp-wrap { background: rgba(78, 224, 255, 0.035); }
+    .source-comp-eyebrow { display: inline-flex; align-items: center; gap: 7px;
+      font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary);
+      margin-bottom: 6px; }
+    .source-comp-eyebrow .scx-dot { width: 7px; height: 7px; background: var(--neon-cyan);
+      border-radius: 50%; box-shadow: 0 0 6px var(--neon-cyan); }
     .meth-prose { max-width: 860px; margin-bottom: 22px; }
     .meth-h { font-family: var(--font-sans); font-size: 17px; font-weight: 800;
       letter-spacing: 0.01em; color: var(--text-primary); margin: 24px 0 8px;
@@ -9655,11 +9667,13 @@
       <span class="newsprint-eyebrow-label">Glossary / Methodology</span>
       <span class="newsprint-eyebrow-meta">term reference · model derivations · source-comparison backtest — the single source of truth for every metric</span>
     </div>
-    <div class="tm-mode" role="tablist" aria-label="Glossary view" style="margin-bottom:10px;">
-      <button class="tm-mode-btn active" data-glossary-view="terms" role="tab">Glossary</button>
-      <button class="tm-mode-btn" data-glossary-view="methodology" role="tab">Methodology &amp; Track Record</button>
+    <div class="tm-mode" role="tablist" aria-label="Glossary / Methodology view" style="margin-bottom:10px;">
+      <button class="tm-mode-btn active" data-glossary-view="terms" role="tab" title="Term reference — every stat, index, and concept used on the site">Glossary</button>
+      <button class="tm-mode-btn" data-glossary-view="methodology" role="tab" title="How the proprietary models are built — derivations, worked examples, citations">Methodology</button>
+      <button class="tm-mode-btn" data-glossary-view="source-comparison" role="tab" title="The empirical backtest — does the consensus outperform its sources on resolved cohorts?">Source&nbsp;Comparison</button>
     </div>
     <div id="methodology-body" style="display:none;"></div>
+    <div id="source-comparison-body" style="display:none;"></div>
     <div class="filter-bar" id="glossary-filter-bar" style="flex-wrap:wrap;gap:6px;align-items:center;">
       <span class="filter-label">Category</span>
       <button class="chip active" data-glossary-cat="all" type="button">All</button>
@@ -18168,26 +18182,34 @@ function _methTierTable(bt, rater) {
 function renderMethodology() {
   const el = document.getElementById("methodology-body");
   if (!el) return;
-  // Lazy-load the backtest payload; re-render when it lands.
+  el.innerHTML = _methProseHTML();
+}
+
+// Source Comparison — the empirical backtest, visually set apart from the
+// methodology prose as the "does it work?" evidence area (distinct framed
+// container + eyebrow). Lazy-loads source_backtest.json.
+function renderSourceComparison() {
+  const el = document.getElementById("source-comparison-body");
+  if (!el) return;
   if (!DATA._sourceBacktest && !DATA._btLoading) {
     DATA._btLoading = true;
     const base = DATA_URL.replace(/[^/]+$/, "");
     fetch(base + "source_backtest.json", { cache: "no-cache" })
       .then(r => (r.ok ? r.json() : null))
       .then(j => { DATA._sourceBacktest = j || { __error: true };
-        if (state.section === "glossary" && (state.glossaryView === "methodology")) renderMethodology(); })
+        if (state.section === "glossary" && state.glossaryView === "source-comparison") renderSourceComparison(); })
       .catch(() => { DATA._sourceBacktest = { __error: true }; });
   }
   const bt = DATA._sourceBacktest;
   let backtestHTML;
   if (!bt) {
-    backtestHTML = `<div class="state-message">Loading track record…</div>`;
+    backtestHTML = `<div class="state-message">Loading backtest…</div>`;
   } else if (bt.__error || !bt.window || !bt.window.years || !bt.window.years.length) {
-    backtestHTML = `<div class="meth-chart"><p class="meth-note">The source-vs-source backtest has no resolved cohorts yet (it needs ≥ ${_TIER_ORDER ? 3 : 3} years of development lag). It will populate once the retained per-source history clears that window.</p></div>`;
+    backtestHTML = `<div class="meth-chart"><p class="meth-note">The source-vs-source backtest has no resolved cohorts yet (it needs ≥ 3 years of development lag). It will populate once the retained per-source history clears that window.</p></div>`;
   } else {
     const od = bt.outcome_defs || {};
     backtestHTML = `
-      <h2 class="meth-h">Track record — does the model predict?</h2>
+      <h2 class="meth-h">Does the consensus outperform its sources?</h2>
       <p class="meth-window">${escapeHtml(bt.window.note)} <strong>Sources with too little history to score</strong> (${(bt.insufficient_history || []).join(", ")}) are excluded, not guessed at.</p>
       ${_methAccuracyChart(bt)}
       <div class="meth-chart-grid">
@@ -18207,7 +18229,12 @@ function renderMethodology() {
         </ul>
       </div>`;
   }
-  el.innerHTML = _methProseHTML() + backtestHTML;
+  // Framed as a distinct analytical area (eyebrow + bordered panel) so it reads
+  // as the empirical evidence, not more prose.
+  el.innerHTML = `<div class="source-comp-wrap">
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Empirical backtest · resolved cohorts only</div>
+    ${backtestHTML}
+  </div>`;
 }
 
 function renderGlossary() {
@@ -18223,15 +18250,23 @@ function renderGlossary() {
     }
   });
   const methBody = document.getElementById("methodology-body");
+  const scBody = document.getElementById("source-comparison-body");
   const filterBar = document.getElementById("glossary-filter-bar");
-  if (view === "methodology") {
-    if (methBody) methBody.style.display = "";
+  // Three differentiated areas share the section: Glossary (terms) · Methodology
+  // (derivations) · Source Comparison (the empirical backtest). Each renders into
+  // its own body so Methodology / Source Comparison can later be promoted to a
+  // standalone top-level section without a rewrite.
+  if (view === "methodology" || view === "source-comparison") {
     if (filterBar) filterBar.style.display = "none";
     root.style.display = "none";
-    renderMethodology();
+    if (methBody) methBody.style.display = (view === "methodology") ? "" : "none";
+    if (scBody)   scBody.style.display   = (view === "source-comparison") ? "" : "none";
+    if (view === "methodology") renderMethodology();
+    else renderSourceComparison();
     return;
   }
   if (methBody) methBody.style.display = "none";
+  if (scBody) scBody.style.display = "none";
   if (filterBar) filterBar.style.display = "";
   root.style.display = "";
 
@@ -25088,9 +25123,9 @@ const GLOSSARY = {
   },
   "dsl": {
     name: "DSL", aliases: ["DSL", "Dominican Summer League"], category: "level",
-    short: "Dominican Summer League. The entry point for most international amateur signings.",
-    long: "Avg age ~18. Heavily Latin American; primarily Dominican, Venezuelan, and Colombian players who signed as 16-year-old IFAs.",
-    related: ["cpx", "ifa"],
+    short: "Dominican Summer League — the entry point for most international amateur signings. Players are 16-19, mostly IFAs.",
+    long: "Affiliated rookie ball played in the Dominican Republic; avg age ~18, heavily Latin American (Dominican, Venezuelan, Colombian signees). Each MLB org runs at least one DSL team and many run two. DSL → complex league (CPX) → A-ball is the typical international development ladder.",
+    related: ["cpx", "complex_league", "ifa"],
   },
   // ---- Status / Misc ----
   "ifa": {
@@ -25303,13 +25338,6 @@ const GLOSSARY = {
     long: "Two leagues: ACL (Arizona Complex League, ex-AZL) and FCL (Florida Complex League, ex-GCL). Games at team backfields, no fans. Players are 17-20. The 2021 MiLB reorg consolidated the older rookie-level leagues into these two.",
     related: ["dsl"],
   },
-  "dsl": {
-    name: "DSL", aliases: ["Dominican Summer League"], category: "mlb-rules",
-    priority: 48,
-    short: "Dominican Summer League — the entry point for international amateur signees. Players are 16-19, mostly IFAs.",
-    long: "Affiliated rookie ball played in the Dominican Republic. Each MLB org runs at least one DSL team; many run two (DSL Yankees / DSL Yankees Bombers). DSL → complex league (CPX) → A-ball is the typical international development ladder.",
-    related: ["complex_league", "ifa"],
-  },
 
   // ---- Indicators / badges / visual chips ----
   // Each entry's visual_html renders an inline example of the actual
@@ -25455,28 +25483,12 @@ const GLOSSARY = {
     long: "Acquisition Strategy branch of the farm grade tree (15% of farm_score in v5; was 20% in v4; merged what were Acquisitions + Transactions in v2). Four sub-leaves, equal weight: (a) Draft Performance — 50/50 blend of pick-slot-adjusted WAR (career WAR vs. historical expectation at that pick slot) + Draft Ceiling Hits % (recent drafted actives at FV ≥ 60 within 3yr of draft). (b) IFA Performance — 3-input composite of WAG + WAR-per-year + Cumulative WAR across IFA-method graduates. (c) Trade Acumen — net FV gained vs lost at trade dates + Trade WAR Delta (career WAR of acquired grads − career WAR of traded-away grads). (d) Waiver Claims — net FV from non-trade cross-org events + Waiver Hit Rate (% of claims who reached MLB). Each leaf z-scored across orgs; sparse leaves get '—'.",
     related: ["wag", "farm_report_card", "draft_ceiling_hits", "trade_war_delta", "waiver_hit_rate"],
   },
-  // Back-compat: old "farm_grade_acquisitions" + "farm_grade_transactions"
-  // resolve to the merged Acquisition Strategy entry above.
-  "farm_grade_acquisitions": {
-    name: "Acquisitions (legacy alias)", aliases: ["Acquisitions grade"], category: "custom-index",
-    priority: 99,
-    short: "Renamed in tree v3. See Acquisition Strategy.",
-    long: "The v2 'Acquisitions' branch merged with Transactions in v3 to form Acquisition Strategy. See `farm_grade_acquisition_strategy` for the current definition.",
-    related: ["farm_grade_acquisition_strategy"],
-  },
   "farm_grade_development": {
     name: "Development", aliases: ["Development grade", "Dev grade"], category: "custom-index",
     priority: 52,
     short: "Per-tool dev pace of the org's prospects vs the league. SOLO TOP-WEIGHTED branch (v5: 40%) — the single biggest controllable skill the org has direct hands on.",
     long: "Development branch of the farm grade tree. Two sub-grades, equal weight: (a) Hitter Tools DvM+ — mean of HitDvM+ / PowerDvM+ / SpeedDvM+ / FieldDvM+ / ArmDvM+ / PitchSelDvM+ / BatCtrlDvM+ for this org's actives, (b) Pitcher Tools DvM+ — mean of FB / SL / CB / CH / Cmd / CtDvM+. Both 100-anchored (100 = league mean dev pace, +10 = 1σ). Measures pure tool growth in-org, independent of raw FV — a 40-grade hit tool that grew to 55 over 2 cycles signals development skill regardless of where the prospect started.",
     related: ["dvm_plus", "tools_dvm_plus", "tool_delta", "farm_report_card"],
-  },
-  "farm_grade_transactions": {
-    name: "Transactions (legacy alias)", aliases: ["Transactions grade"], category: "custom-index",
-    priority: 99,
-    short: "Merged into Acquisition Strategy in tree v3. See Acquisition Strategy.",
-    long: "The v2 'Transactions' branch (Trades + Waiver Claims) merged with Acquisitions in v3 to form Acquisition Strategy — a single branch covering all 4 acquisition channels (Draft / IFA / Trade / Waiver). See `farm_grade_acquisition_strategy` for the current definition.",
-    related: ["farm_grade_acquisition_strategy"],
   },
   "farm_grade_financial": {
     name: "Financial / OrgSur+", aliases: ["Financial grade", "OrgSur+", "SUR+", "Surplus grade"], category: "custom-index",
@@ -25569,14 +25581,14 @@ const GLOSSARY = {
     priority: 60,
     short: "Cross-org player swap. The Transactions branch of the farm grade tree rolls up net trade FV per org.",
     long: "Every trade involving a tracked prospect generates two fv_events on the org timeline: a 'trade out' on the sending org and a 'trade in' on the receiving org, both stamped with the prospect's consensus FV at the trade date. Per-org net = sum(fv_in) − sum(fv_out). Higher net = better trade acumen (the org captured more talent than it gave up at the FV the league assigned on the trade date). Note that a fair trade by retrospective WAR can still register asymmetrically here because trade-date FV may have lagged or led actual development.",
-    related: ["farm_grade_transactions", "fv", "trades"],
+    related: ["farm_grade_acquisition_strategy", "trade_war_delta", "fv", "trades"],
   },
   "waiver_claim": {
     name: "Waiver claim", aliases: ["Waiver claim", "Waiver", "Rule 5", "FA signing"], category: "transactions",
     priority: 61,
     short: "Non-trade cross-org acquisition. Counted in the Transactions branch alongside trades.",
-    long: "Includes waiver claims, Rule 5 selections + returns, contract purchases, and free-agent signings. Each event generates a non-trade fv_event tagged with the prospect's most-recent consensus FV (vs trades which use FV at the trade date — waivers happen on too short a timeline for an explicit FV-at-date lookup to be worth the cost). The Transactions branch's Waiver Claims sub-grade sums these per org as a net FV: claimed-in minus released-out.",
-    related: ["farm_grade_transactions", "trade", "fv"],
+    long: "Includes waiver claims, Rule 5 selections + returns, contract purchases, and free-agent signings. Each event generates a non-trade fv_event tagged with the prospect's most-recent consensus FV (vs trades which use FV at the trade date — waivers happen on too short a timeline for an explicit FV-at-date lookup to be worth the cost). The Acquisition Strategy branch's Waiver Claims sub-grade sums these per org as a net FV: claimed-in minus released-out.",
+    related: ["farm_grade_acquisition_strategy", "waiver_hit_rate", "trade", "fv"],
   },
   "farm_grade_talent_translation": {
     name: "Talent Translation", aliases: ["Talent Translation", "WAG grade", "Farm WAG"], category: "custom-index",
