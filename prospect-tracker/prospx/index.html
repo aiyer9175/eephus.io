@@ -9715,13 +9715,13 @@
     <div class="filter-bar" id="glossary-filter-bar" style="flex-wrap:wrap;gap:6px;align-items:center;">
       <span class="filter-label">Category</span>
       <button class="chip active" data-glossary-cat="all" type="button">All</button>
-      <button class="chip" data-glossary-cat="custom-index" type="button">Arkmetrics</button>
+      <button class="chip" data-glossary-cat="arkmetric" type="button">Arkmetrics</button>
+      <button class="chip" data-glossary-cat="statcast" type="button">Statcast</button>
+      <button class="chip" data-glossary-cat="standard-stat" type="button">Standard Stats</button>
       <button class="chip" data-glossary-cat="scouting" type="button">Scouting</button>
-      <button class="chip" data-glossary-cat="hitter-stat" type="button">Hitter stats</button>
-      <button class="chip" data-glossary-cat="pitcher-stat" type="button">Pitcher stats</button>
-      <button class="chip" data-glossary-cat="general-stat" type="button">General stats</button>
-      <button class="chip" data-glossary-cat="methodology" type="button">Methodology</button>
-      <button class="chip" data-glossary-cat="financial" type="button">Financial</button>
+      <button class="chip" data-glossary-cat="economic" type="button">Economic &amp; Surplus</button>
+      <button class="chip" data-glossary-cat="farm" type="button">Farm Grades</button>
+      <button class="chip" data-glossary-cat="site-feature" type="button">Site Features</button>
       <button class="chip" data-glossary-cat="level" type="button">Levels</button>
       <button class="chip" data-glossary-cat="status" type="button">Status</button>
       <button class="chip" data-glossary-cat="mlb-rules" type="button">MLB Jargon</button>
@@ -18437,13 +18437,14 @@ function renderGlossary() {
   // Group entries by category, preserving the canonical category order.
   const buckets = new Map(GLOSSARY_CATEGORIES.map(([k]) => [k, []]));
   for (const [slug, entry] of Object.entries(GLOSSARY)) {
-    if (cat !== "all" && entry.category !== cat) continue;
+    const group = _glossaryGroupOf(slug, entry);
+    if (cat !== "all" && group !== cat) continue;
     if (search) {
       const hay = (entry.name + " " + (entry.aliases || []).join(" ") +
                    " " + entry.short + " " + (entry.long || "")).toLowerCase();
       if (!hay.includes(search)) continue;
     }
-    const list = buckets.get(entry.category);
+    const list = buckets.get(group);
     if (list) list.push({ slug, entry });
   }
 
@@ -24651,26 +24652,63 @@ function fgPrettifyInterval(source, intervalLabel) {
 // Categories: custom-index, scouting, hitter-stat, pitcher-stat,
 // general-stat, methodology, financial, level, status.
 // =============================================================================
+// v45 — top-level taxonomy (the glossary GROUPS). Each term keeps its original
+// fine-grained `category` tag; _glossaryGroupOf() maps it to one of these groups
+// (via base-category map + per-slug overrides) so we recategorize WITHOUT
+// editing 150 entries. Display order below is the section order in the glossary.
 const GLOSSARY_CATEGORIES = [
-  ["custom-index", "Arkmetrics"],
-  ["scouting",     "Scouting"],
-  ["hitter-stat",  "Hitter stats"],
-  ["pitcher-stat", "Pitcher stats"],
-  ["general-stat", "General stats"],
-  ["methodology",  "Methodology"],
-  ["financial",    "Financial"],
-  ["level",        "Levels"],
-  ["status",       "Status"],
-  // Casual-fan MLB jargon — Rule 5, 40-man, options, service time,
-  // DFA, IL types, etc. Distinct from "methodology" (site-built) and
-  // "status" (per-player conditions) — these are universal MLB concepts.
-  ["mlb-rules",    "MLB Jargon"],
-  // Visual indicators / badges / chips used across the site (Stock arrow,
-  // FV badge, Tool pill, RPS+ pill, IL chip, LATEST/STALE source pills).
-  // Each entry carries a `visual_html` field that renders an inline
-  // example of the actual UI element in the glossary card.
-  ["indicators",   "Indicators & badges"],
+  ["arkmetric",     "Arkmetrics"],
+  ["statcast",      "Statcast"],
+  ["standard-stat", "Standard Stats"],
+  ["scouting",      "Scouting"],
+  ["economic",      "Economic & Surplus"],
+  ["farm",          "Farm System Grades"],
+  ["site-feature",  "Site Features"],
+  ["level",         "Levels"],
+  ["status",        "Status"],
+  ["mlb-rules",     "MLB Jargon"],
+  ["indicators",    "Indicators & Badges"],
 ];
+// Old fine category → new group. Anything not listed falls through to its own
+// key (so new terms tagged directly with a group key just work).
+const _GLOSSARY_BASECAT_TO_GROUP = {
+  "custom-index": "arkmetric",
+  "hitter-stat":  "standard-stat",
+  "pitcher-stat": "standard-stat",
+  "general-stat": "standard-stat",
+  "scouting":     "scouting",
+  "definition":   "scouting",       // pitcher-role definitions (SP/RP/SIRP/MIRP)
+  "financial":    "economic",
+  "methodology":  "site-feature",   // site mechanics (consensus FV, stock, ETA, …)
+  "transactions": "farm",
+};
+// Per-slug overrides — split the overloaded custom-index tag into Arkmetrics
+// (the player indices, default), Economic & Surplus (the valuation framework),
+// Farm System Grades (the org-grade leaves), and Site Features (indicators).
+const _GLOSSARY_GROUP_OVERRIDE = {
+  // Economic & surplus framework (per-player / dollar valuation)
+  tvi: "economic", value_framework: "economic", dpw_tier: "economic",
+  fv_to_war_table: "economic", bust_prob: "economic", dollars_per_fv: "economic",
+  fv_per_m_pool: "economic", surplus_per_fv_pt: "economic",
+  // Farm-system grade tree (org-level)
+  farm_report_card: "farm", farm_grade_acquisition_strategy: "farm",
+  farm_grade_development: "farm", farm_grade_financial: "farm",
+  farm_grade_mlb_production: "farm", mlb_production_boom_pct: "farm",
+  mlb_production_bust_pct: "farm", mlb_production_top_grads: "farm",
+  mlb_production_conviction: "farm", fin_draft_pool_efficiency: "farm",
+  fin_ifa_roi: "farm", sur_plus: "farm", draft_ceiling_hits: "farm",
+  trade_war_delta: "farm", waiver_hit_rate: "farm", farm_grade_talent_translation: "farm",
+  farm_grade_financial_roi: "farm", farm_grade_tools_quality: "farm",
+  farm_grade_intl_depth: "farm", farm_grade_readiness: "farm",
+  farm_grade_health_burden: "farm", farm_il_pct_current: "farm",
+  // Site-feature indicators (FV-badge marks)
+  breakout_indicator: "site-feature", upside_indicator: "site-feature",
+};
+function _glossaryGroupOf(slug, entry) {
+  return _GLOSSARY_GROUP_OVERRIDE[slug]
+      || _GLOSSARY_BASECAT_TO_GROUP[entry.category]
+      || entry.category;
+}
 
 const GLOSSARY = {
   // ---- Arkmetrics (site-built custom indices) ----
@@ -24890,12 +24928,12 @@ const GLOSSARY = {
     related: ["war", "surplus_value", "value_framework", "tvi"],
   },
   "fv_to_war_table": {
-    name: "FV → WAR ranges", aliases: ["FV→WAR", "FV to WAR", "FV-WAR table", "Primer ranges"], category: "custom-index",
+    name: "FV → WAR ranges", aliases: ["FV→WAR", "FV to WAR", "FV-WAR table", "6yr-avg WAR"], category: "custom-index",
     priority: 17,
-    short: "Per-FV peak-WAR/yr ranges from the 2026 FanGraphs scouting primer — hitter vs pitcher.",
-    long: "The 2026 FanGraphs scouting primer publishes (low, high) peak-WAR projections for each FV grade, with separate ranges for hitters and pitchers (pitchers run slightly higher at the same FV because the role-typical workload converts to more WAR before injury). The framework uses the MIDPOINT as the peak-year projection and linear-interpolates between 5-pt anchors for half-grades. Drives every downstream conversion: Sur+, $/FV, projected career WAR for the trade regret table, surplus per FV-pt.",
-    formula: "Hitter midpoints: FV 80→8.0, 70→6.0, 60→4.15, 55→2.9, 50→2.0, 45→1.15, 40→0.35\nPitcher midpoints: FV 80→8.0, 70→6.0, 60→4.20, 55→3.0, 50→2.15, 45→1.35, 40→0.45",
-    example: "An FV 55 hitter projects ~2.9 WAR/yr at peak (between 2.5 and 3.3); an FV 55 pitcher ~3.0 (between 2.6 and 3.4). The half-tick gap reflects pitchers' workload-driven WAR distribution.",
+    short: "Per-FV expected WAR/year, anchored to the FanGraphs scouting primer. The conversion that turns a scouting grade into projected production.",
+    long: "Each FV grade maps to an expected annual WAR over the player's first six cost-controlled seasons (the years a prospect is an asset). v38 moved the anchor from a single peak-year projection to a 6-year-average WAR and uses one FV-keyed table — no separate hitter/pitcher split, since the side difference is carried later by the position multiplier rather than the WAR anchor. Half-grades linear-interpolate between the 5-pt anchors. This table drives every downstream conversion: surplus value, Sur+, $/FV-pt, and the projected career WAR behind the trade-regret view.",
+    formula: "6yr-avg WAR/yr by FV: 80→7.0, 70→5.0, 65→4.0, 60→3.0, 55→2.5, 50→2.0, 45→1.5, 40→1.0, 35→0.6  (half-grades interpolated)",
+    example: "An FV 55 prospect projects ~2.5 WAR/yr across the six controlled years; FV 60 jumps to ~3.0. Multiplying by $/WAR and netting the cost basis yields the surplus dollars shown on the card.",
     related: ["fv", "war", "value_framework", "dpw_tier", "wag"],
   },
   "bust_prob": {
@@ -25822,6 +25860,191 @@ const GLOSSARY = {
     short: "Per-level + per-side age threshold that gates excessively-old prospects out of the Risers / Rebounders / Fallers buckets. Anchored on the prospect-aspirational level baseline (A=21, A+=22, AA=23, AAA=24, MLB=26).",
     long: "Hitters get disqualified when their age is ≥ +2.0 years above the level baseline; pitchers get a 1-year grace (≥ +3.0) since later debuts are common. Anchored on aspirational baselines NOT empirical level means — the empirical AAA pool is dragged up by the same journeymen we're trying to filter, so anchoring on the empirical median defeats the purpose. Examples (AAA, baseline 24): a 26.0+ hitter is cut; a 27.0+ pitcher is cut. The cap fires inside `_classify_movement` in spotlights.py BEFORE bucket classification — capped prospects return bucket='none' and never reach the Risers / Fallers / Rebounders lists. Players at rookie levels (DSL/CPX/ROK) and players with missing age/level pass through (no cap fires). The cap is SPECIFIC to the spotlights section — it does not affect the active prospect list, farm rosters, leaderboards, or any other view.",
     related: ["age_vs_level", "spotlights"],
+  },
+
+  // ============================================================
+  // v45 — Statcast (tracked-data inputs behind SC+ and the percentile sliders)
+  // ============================================================
+  "exit_velocity": {
+    name: "Exit Velocity (EV)", aliases: ["EV", "Exit Velo", "Average EV", "Avg EV"], category: "statcast",
+    priority: 10,
+    short: "How hard a hitter strikes the ball, in mph off the bat. Higher = louder contact and more damage on balls in play.",
+    long: "Average exit velocity is the mean batted-ball speed measured at contact. It is the most stable batted-ball signal at small samples — it stabilizes in ~40 batted balls, far faster than results stats — so it reads a prospect's raw contact quality before the surface stats settle. Pairs with launch angle to produce barrels. League-average MLB EV is ~89 mph; 92+ is plus, 95+ is elite (Stanton/Judge tier).",
+    example: "A prospect averaging 92.5 mph EV sits roughly one standard deviation above the MLB mean — a plus raw-power signal even on a modest slash line.",
+    related: ["statcast_plus", "barrel_pct", "hard_hit_pct", "raw_power"],
+  },
+  "barrel_pct": {
+    name: "Barrel%", aliases: ["Barrel rate", "Barrels", "Brl%"], category: "statcast",
+    priority: 11,
+    short: "Share of batted balls hit in the EV + launch-angle window that historically produces ≥ .500 AVG and ≥ 1.500 SLG. The single best contact-damage signal.",
+    long: "A 'barrel' is a batted ball whose exit-velocity / launch-angle combination has historically yielded at least a .500 batting average and 1.500 slugging. Barrel% = barrels ÷ batted balls. It isolates the loud, optimally-angled contact that drives extra-base power, filtering out both weak contact and hard-but-mishit balls. League average is ~8%; 12%+ is plus, 16%+ is elite.",
+    formula: "Barrel% = barrels / batted_balls × 100\nbarrel = (EV, launch angle) in the ≥.500 AVG / ≥1.500 SLG zone",
+    example: "A hitter at 14% Barrel% on a full-season MiLB sample profiles as plus game power even if his HR total looks ordinary for the park.",
+    related: ["exit_velocity", "hard_hit_pct", "game_power", "iso", "statcast_plus"],
+  },
+  "hard_hit_pct": {
+    name: "Hard-Hit%", aliases: ["Hard hit rate", "HH%", "Hard-hit rate"], category: "statcast",
+    priority: 12,
+    short: "Share of batted balls hit ≥ 95 mph. A volume measure of quality contact — broader than Barrel% (no angle requirement).",
+    long: "Hard-Hit% = batted balls at or above 95 mph ÷ all batted balls. It captures how often a hitter makes authoritative contact regardless of angle, so it complements Barrel% (which adds the angle requirement). League average is ~40%; 45%+ is plus. High Hard-Hit% with low Barrel% flags a hitter who needs a launch-angle adjustment to convert raw power into game power.",
+    formula: "Hard-Hit% = batted_balls ≥ 95 mph / batted_balls × 100",
+    related: ["exit_velocity", "barrel_pct", "statcast_plus"],
+  },
+  "chase_pct": {
+    name: "Chase% (O-Swing)", aliases: ["Chase rate", "O-Swing%", "Chase", "Out-of-zone swing%"], category: "statcast",
+    priority: 13,
+    short: "Share of pitches OUTSIDE the strike zone that a hitter swings at. Lower = better plate discipline.",
+    long: "Chase% (a.k.a. O-Swing%) = swings on out-of-zone pitches ÷ out-of-zone pitches seen. It is the core plate-discipline input: low chase predicts walk rate and protects the hit tool against advanced sequencing. It stabilizes quickly and travels well across levels, so it's a leading indicator that a young hitter's approach will hold up against better pitching. League average is ~28-31%; sub-25% is plus discipline.",
+    formula: "Chase% = out-of-zone swings / out-of-zone pitches × 100",
+    example: "A 20-year-old at AA running a 22% Chase% has a discipline foundation that typically survives the jump to MLB sequencing.",
+    related: ["whiff_pct", "z_contact_pct", "bb_pct", "pitch_sel", "statcast_plus"],
+  },
+  "whiff_pct": {
+    name: "Whiff%", aliases: ["Whiff rate", "SwStr%", "Swinging-strike%", "Miss%"], category: "statcast",
+    priority: 14,
+    short: "Share of SWINGS that miss. For hitters, lower is better; for pitchers (induced whiff), higher is better.",
+    long: "Whiff% = swings-and-misses ÷ total swings. For a hitter it measures bat-to-ball skill and underlies strikeout risk; for a pitcher it measures stuff (the rate at which his offerings are swung through). Distinct from K% (a plate-appearance outcome) — Whiff% is a per-swing rate and stabilizes faster. Hitter league average is ~24%; for a pitcher's primary pitch, 30%+ induced whiff is plus stuff.",
+    formula: "Whiff% = swinging strikes / swings × 100",
+    related: ["k_pct", "csw_pct", "stf_plus", "chase_pct", "statcast_plus"],
+  },
+  "z_contact_pct": {
+    name: "Z-Contact%", aliases: ["Z-Contact", "In-zone contact%", "Zone contact"], category: "statcast",
+    priority: 15,
+    short: "Share of swings on IN-zone pitches that make contact. The purest bat-to-ball / hit-tool signal.",
+    long: "Z-Contact% = in-zone swings that make contact ÷ in-zone swings. By restricting to hittable pitches it isolates pure bat control from approach, so it's the tracked-data complement to the scouted Hit tool. Hitters who pair high Z-Contact with low Chase have the strongest hit-tool foundations. League average is ~85%; 90%+ is plus contact.",
+    formula: "Z-Contact% = in-zone contact / in-zone swings × 100",
+    related: ["hit_tool", "bat_ctrl", "chase_pct", "k_pct", "statcast_plus"],
+  },
+  "csw_pct": {
+    name: "CSW%", aliases: ["CSW", "Called+Swinging Strike%", "Called Strikes + Whiffs"], category: "statcast",
+    priority: 16,
+    short: "Pitcher metric: share of pitches that are either called strikes OR whiffs. One number for 'how often this pitch beats the hitter.'",
+    long: "CSW% = (called strikes + swinging strikes) ÷ total pitches. It folds stuff (whiffs) and command/deception (called strikes) into a single rate, and it stabilizes faster than K% because it counts every pitch, not just plate-appearance outcomes. League average is ~28%; 30%+ is a strong pitch, 32%+ is elite. Used as the high-signal modern pitcher input alongside K-BB%.",
+    formula: "CSW% = (called strikes + whiffs) / pitches × 100",
+    related: ["whiff_pct", "k_pct_pitcher", "stf_plus", "command_grade"],
+  },
+  "spin_rate": {
+    name: "Spin Rate", aliases: ["Spin", "RPM", "Spin rate"], category: "statcast",
+    priority: 17,
+    short: "Revolutions per minute on a pitch. Drives movement — high fastball spin → ride; high breaking-ball spin → sharper break.",
+    long: "Spin rate (RPM) is a raw stuff input: on four-seamers, high active spin produces 'ride'/carry that beats hitters at the top of the zone; on breaking balls it produces tighter, later break. Spin only matters via the movement it creates (spin efficiency / spin axis), so it's an input to stuff models rather than a standalone grade. Typical four-seam spin is ~2,250 RPM; 2,500+ is high.",
+    related: ["fastball_grade", "stf_plus", "extension"],
+  },
+  "extension": {
+    name: "Extension", aliases: ["Release extension"], category: "statcast",
+    priority: 18,
+    short: "How far in front of the rubber a pitcher releases the ball (feet). More extension = less reaction time = effective velocity above the radar reading.",
+    long: "Extension is the distance from the pitching rubber to the release point. Greater extension shortens the ball's perceived travel, adding 'effective velocity' — a 95-mph fastball with 7.0 ft of extension plays like ~96-97 to the hitter. It's why two pitchers with identical radar velocity can grade differently on stuff. League average is ~6.3 ft; 7.0+ ft is a meaningful add.",
+    related: ["fastball_grade", "spin_rate", "stf_plus"],
+  },
+  "sprint_speed": {
+    name: "Sprint Speed", aliases: ["Sprint", "ft/sec", "Sprint speed"], category: "statcast",
+    priority: 19,
+    short: "Top running speed in feet per second on a player's fastest competitive runs. The tracked-data version of the Run tool.",
+    long: "Sprint speed measures feet per second over a player's fastest one-second window on qualified runs. It is the objective complement to the scouted 20-80 Run grade and feeds defensive range and baserunning value. League average is ~27 ft/s; 28+ is plus, 30+ is elite (top-of-scale 70-80 run).",
+    related: ["speed_tool", "field_tool"],
+  },
+
+  // ============================================================
+  // v45 — Standard stats that were displayed but missing an entry
+  // ============================================================
+  "k_bb_pct": {
+    name: "K-BB%", aliases: ["K minus BB%", "K-BB", "Strikeout-minus-walk rate"], category: "standard-stat",
+    priority: 7,
+    short: "Strikeout rate minus walk rate. A single pitcher command-and-miss number — the cleanest rate-stat summary of a pitcher's peripheral skill.",
+    long: "K-BB% = K% − BB% (both as a share of batters faced). Subtracting walks from strikeouts captures the two outcomes a pitcher most controls in one figure, and it correlates with run prevention better than K/9 or BB/9 because it's denominated in batters faced rather than innings (innings are inflated by defense and sequencing luck). League-average starters sit ~13-14%; 18%+ is plus, 22%+ is elite.",
+    formula: "K-BB% = K% − BB%",
+    example: "A starter at 30% K% and 7% BB% posts a 23% K-BB% — front-of-rotation peripheral skill regardless of a noisy ERA.",
+    related: ["k_pct_pitcher", "bb_pct_pitcher", "fip", "csw_pct"],
+  },
+  "ops_plus": {
+    name: "OPS+ (vs level)", aliases: ["OPS+", "OPS plus", "OPS+ vs lvl", "Level OPS+"], category: "standard-stat",
+    priority: 6,
+    short: "On-base-plus-slugging indexed so 100 = the player's level average. Above 100 = better than his league; the +/− is roughly a percentage.",
+    long: "OPS+ rescales OPS against the run environment the player actually hit in, so a .800 OPS in a pitcher-friendly Low-A league and a .800 OPS in the hitter-friendly PCL aren't read as equal. 100 is the level mean; 130 means ~30% better than league. The site computes it against the prospect's specific level so cross-level comparisons are honest. It's the quick descriptive cousin of wRC+ (which additionally park- and position-adjusts).",
+    formula: "OPS+ = 100 × (OBP/lgOBP + SLG/lgSLG − 1)   (computed vs the player's level)",
+    related: ["ops", "wrc_plus", "iso", "rps_plus"],
+  },
+
+  // ============================================================
+  // v45 — Live Financial farm-grade leaves that lacked an entry
+  // ============================================================
+  "fin_war_per_m": {
+    name: "WAR per $M", aliases: ["WAR/$M", "WAR per million", "war_per_m"], category: "farm",
+    priority: 60,
+    short: "Career WAR an org's graduates produced per $1M of signing-bonus spend. The headline capital-efficiency leaf of the Financial branch.",
+    long: "WAR per $M = total career WAR of an org's graduates ÷ total signing-bonus dollars (draft + IFA), in $M. It is the purest bang-for-buck measure of an org's amateur acquisition + development: did the money spent turn into MLB production? Lagging (WAR only accrues after debut), so it's gated at ≥3 grads with both bonus and career-WAR on file. Anchored across the 30 orgs into the Financial composite.",
+    formula: "WAR per $M = Σ career_WAR(grads) / (Σ signing_bonus_USD / 1,000,000)",
+    related: ["farm_grade_financial", "fin_contract_surplus", "fin_dollar_dvm", "signing_bonus", "war"],
+  },
+  "fin_contract_surplus": {
+    name: "Grad-Contract Surplus", aliases: ["Contract surplus", "Grad contract surplus"], category: "farm",
+    priority: 61,
+    short: "Per-year dollar surplus on an org's graduates: current AAV minus the signing bonus amortized over six cost-controlled years.",
+    long: "For each graduate with both Spotrac contract data and a signing bonus on file, surplus per year = current AAV − (signing bonus ÷ 6). It captures whether the org is extracting cheap production from the six cost-controlled years a prospect provides before free agency — the core economic reason prospects are assets. Averaged across qualifying grads and z-anchored into the Financial branch.",
+    formula: "per-year surplus = current_AAV − (signing_bonus / 6)",
+    related: ["farm_grade_financial", "fin_war_per_m", "surplus_value", "aav", "service_time"],
+  },
+  "fin_dollar_dvm": {
+    name: "Org $DvM+", aliases: ["Org $DvM+", "Financial DvM", "fin_dollar_dvm"], category: "farm",
+    priority: 62,
+    short: "The org-level roll-up of its active prospects' $DvM+ — development of surplus dollars, indexed to 100 = league mean.",
+    long: "Aggregates the $DvM+ of an org's active prospects (development-vs-mean applied to projected surplus dollars rather than raw FV) into one 100-anchored org figure. It rewards systems that are growing the dollar value of the talent they already hold, not just its scouting grade. Feeds the Financial branch alongside the realized-money leaves (WAR/$M, contract surplus).",
+    related: ["dvm_plus", "farm_grade_financial", "surplus_value", "tvi"],
+  },
+
+  // ============================================================
+  // v45 — Site Features (interactive views + collectible system)
+  // ============================================================
+  "time_machine": {
+    name: "Time Machine", aliases: ["Time Machine", "Board over time", "Snapshot diff"], category: "site-feature",
+    priority: 5,
+    short: "Travel the consensus board to any past monthly snapshot, or diff two dates for a changelog of risers, fallers, new entries, graduates, and grade changes.",
+    long: "Each monthly run snapshots the board (rank + consensus FV + the Arkmetric family per prospect) into metric_snapshots. The Time Machine reconstructs the board as it stood at any past snapshot and can diff two dates — producing an explicit changelog of who rose, fell, debuted/graduated, or changed grade. URL-shareable, so a specific board state or diff can be linked.",
+    related: ["consensus_fv", "stock", "fv"],
+  },
+  "generate_gfx": {
+    name: "Generate GFX", aliases: ["Generate GFX", "GFX", "Shareable card", "Prospect card export"], category: "site-feature",
+    priority: 6,
+    short: "Export a shareable graphic — a prospect card, farm card, list, or card pack — as a PNG (or a short animated clip), with rarity treatment matching the list.",
+    long: "Generate GFX rasterizes an on-theme graphic for sharing: single-prospect cards (compact / detailed / scouting / stats / card-back templates), farm cards, ranked-list boards, and multi-card 'packs'. Cards carry the FV-tier rarity frame, the FV history chart, tool radar, Statcast sliders, and surplus. Exports are 2× resolution; an animated WebM showcases the holographic foil. The blob is pre-rendered so Copy/Download/Share are near-instant.",
+    related: ["fv_rarity", "fv", "surplus_value"],
+  },
+  "scatterplots": {
+    name: "Scatterplots", aliases: ["Scatterplots", "Plot builder", "Query builder"], category: "site-feature",
+    priority: 7,
+    short: "A configurable plot/query builder: any X/Y metric, color + size encodings, log scales, filters, brush-to-zoom, a shareable URL config, and a GFX export.",
+    long: "The Scatterplots view lets you build an arbitrary two-axis plot over any prospect cohort (MiLB, debuted, draft, overseas, IFA, or farm systems): pick X/Y from any metric, add color and size encodings, toggle log scales, apply org/level/position + per-axis threshold filters, brush to zoom, and highlight/search individual players. The full configuration is encoded in the URL so a specific query is shareable.",
+    related: ["dvm_plus", "rps_plus", "statcast_plus", "fv"],
+  },
+  "watchlist": {
+    name: "Watchlist", aliases: ["Watchlist", "Starred", "Followed prospects"], category: "site-feature",
+    priority: 8,
+    short: "A personal, locally-saved set of starred prospects, filterable and exportable as a GFX card pack.",
+    long: "Starring a prospect adds them to a Watchlist stored in the browser (localStorage — nothing leaves the device). The list is filterable like any board and can be exported as a Generate GFX card pack, so a personal shortlist becomes a shareable sheet.",
+    related: ["generate_gfx"],
+  },
+  "spotlights": {
+    name: "Spotlights", aliases: ["Spotlights", "Risers", "Fallers", "Rebounders"], category: "site-feature",
+    priority: 9,
+    short: "Curated movement buckets — Risers, Fallers, Rebounders, and breakout/upside flags — with the driver signals that put each prospect there.",
+    long: "Spotlights classifies recent prospect movement into buckets (Risers / Fallers / Rebounders) using consensus-FV velocity confirmed or contradicted by performance signals (RPS+, SC+, tool velocity), and surfaces the specific driver chips behind each placement. The spotlight age cap gates excessively-old prospects out so an aging hot stretch doesn't read as a prospect breakout.",
+    related: ["stock", "breakout_indicator", "upside_indicator", "spotlight_age_cap", "rps_plus", "statcast_plus"],
+  },
+  "rarity_tiers": {
+    name: "Rarity tiers", aliases: ["Rarity", "Card rarity", "Foil tiers", "Holo", "Chrome", "Legendary"], category: "site-feature",
+    priority: 10,
+    short: "FV-keyed collectible treatment on prospect photos: shine (45) → foil (50) → chrome (55-60) → holo (61-69) → legendary (70+). Same logic on the list and in Generate GFX.",
+    long: "Rarity maps the prospect's FV tier to a photo border/effect, so the rarest prospects read instantly as collectible cards. Thresholds: FV 45 = shine (static gold), 50 = foil (silver shimmer), 55-60 = chrome, 61-69 = holo (rainbow), 70+ = legendary (rainbow + breathing glow); below 45 = a plain team-color frame. The exact same FV→tier logic drives the prospect-list headshots and the Generate GFX cards, so a prospect's rarity is consistent everywhere (in GFX the live animation is captured as a faithful static frame so it survives PNG export).",
+    related: ["fv", "fv_rarity", "generate_gfx"],
+    visual_html: '<span class="fv-badge fv-70 card-rarity-legendary" style="padding:3px 9px;">70</span><span style="font-size:11px;color:var(--text-tertiary);margin-left:8px;">legendary → holo → chrome → foil → shine</span>',
+  },
+  "quick_search": {
+    name: "Quick search (⌘K)", aliases: ["Quick search", "Command palette", "Ctrl+K", "Cmd+K", "Term lookup"], category: "site-feature",
+    priority: 4,
+    short: "Press ⌘K (Mac) or Ctrl+K to look up any glossary term — or jump to any prospect — from anywhere on the site.",
+    long: "The quick-search palette is the site-wide entry point to the glossary single-source-of-truth: type any metric name or alias to see its definition inline and open the full entry. It also resolves prospect names for fast navigation. Opens with ⌘K / Ctrl+K (or the / key) and is dismissable with Escape.",
+    related: ["consensus_fv"],
   },
 };
 
