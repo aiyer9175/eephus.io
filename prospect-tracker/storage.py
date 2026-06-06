@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import sqlite3
 import copy
@@ -8189,6 +8190,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # this floor fall into `inactives` and stay out of farm rollups.
     MIN_PROSPECT_FV = 30
 
+    # ── HISTORICAL-LEAK FIX (active-prospect recency ceiling) ─────────────
+    # A player not ranked by ANY prospect source in HARD_FV_STALE_YEARS years
+    # has aged out of prospect status → INACTIVE regardless of whether they're
+    # still grinding in the minors or sitting on an IL. The fv_stale gate below
+    # only deactivates stale players who ALSO stopped playing (`fv_stale AND
+    # play_stale`), which let players who keep playing affiliated ball linger in
+    # the active pool indefinitely with a years-old grade. The 2017-2020
+    # historical backfill exposed this: it introduced players whose ENTIRE
+    # ranking history is 5+ years old (still active in MiLB, never debuted) →
+    # they defaulted to "active" and leaked into current farm pools, shifting
+    # farm rankings. This ceiling makes the current pool independent of any
+    # historical ingestion (past OR future) — a purely-historical cohort can
+    # never enter the current active pool. (Time Machine / backtest read the
+    # full snapshot history directly and are unaffected.)
+    HARD_FV_STALE_YEARS = int(os.environ.get("HARD_FV_STALE_YEARS", "5"))
+    try:
+        hard_fv_cutoff = date(today.year - HARD_FV_STALE_YEARS, today.month, today.day)
+    except ValueError:
+        hard_fv_cutoff = date(today.year - HARD_FV_STALE_YEARS, today.month, 28)
+    _audit_aged_out = 0
+
     actives: list[PlayerTimeseries] = []
     inactives: list[PlayerTimeseries] = []
     grads: list[PlayerTimeseries] = []
@@ -8250,6 +8272,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _resolved_org = _active_display_org(p)
         if _resolved_org not in MLB_30_ORGS:
             inactives.append(p)
+            continue
+
+        # ── Active-prospect recency ceiling (historical-leak fix) ──────────
+        # Latest FV snapshot older than HARD_FV_STALE_YEARS → the player hasn't
+        # been ranked by any source in 5+ years → aged out → inactive, even if
+        # still playing or on an IL. Takes precedence over the IL bypass + the
+        # softer fv_stale/play_stale gates below, so purely-historical players
+        # (e.g. the 2017-2020 backfill cohort) can never enter the current pool.
+        if latest_date < hard_fv_cutoff:
+            inactives.append(p)
+            _audit_aged_out += 1
             continue
 
         # v19 — Compute play-staleness up front so the new gates can use
@@ -8354,9 +8387,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # log so the magnitude of each gate's contribution is visible at a
     # glance. Pre-dedup counts (mlbam_id dedup runs below).
     log.info(
-        "active-pool cleanup: %d low-FV (<%d), %d play-2yr-stale, %d stale-IL, %d FV+play stale "
-        "-> actives=%d, debuts=%d, inactives=%d (pre-dedup)",
-        _audit_low_fv, MIN_PROSPECT_FV, _audit_play2yr, _audit_stale_il, _audit_fv_play_stale,
+        "active-pool cleanup: %d low-FV (<%d), %d aged-out (FV >%dy stale), %d play-2yr-stale, "
+        "%d stale-IL, %d FV+play stale -> actives=%d, debuts=%d, inactives=%d (pre-dedup)",
+        _audit_low_fv, MIN_PROSPECT_FV, _audit_aged_out, HARD_FV_STALE_YEARS, _audit_play2yr,
+        _audit_stale_il, _audit_fv_play_stale,
         len(actives), len(grads), len(inactives),
     )
 
@@ -8403,6 +8437,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     actives = _dedup_by_mlbam(actives, "actives")
     grads = _dedup_by_mlbam(grads, "graduates")
     inactives = _dedup_by_mlbam(inactives, "inactives")
+
+    # ── DATA-INTEGRITY GUARD (historical-leak tripwire) ───────────────────
+    # The active pool must contain only current prospects: none graduated, none
+    # FV-stale beyond the aged-out ceiling. This catches regressions if a future
+    # change weakens the cascade or a new historical ingestion sneaks players in.
+    # Non-fatal: log loudly so the rebuild surfaces it (the pipeline still runs).
+    _leak_graduated = [p.player_key for p in actives if p.status == "debuted"]
+    _leak_aged_out = [
+        p.player_key for p in actives
+        if p.points and p.points[-1].snapshot_date
+        and p.points[-1].snapshot_date < hard_fv_cutoff.isoformat()
+    ]
+    if _leak_graduated or _leak_aged_out:
+        log.error(
+            "INTEGRITY GUARD: active pool leak detected — %d graduated, %d aged-out "
+            "(FV >%dy stale). Examples: %s",
+            len(_leak_graduated), len(_leak_aged_out), HARD_FV_STALE_YEARS,
+            (_leak_graduated + _leak_aged_out)[:5],
+        )
+    else:
+        log.info("integrity guard: active pool clean (0 graduated, 0 aged-out).")
 
     # v29 — Statcast+ map: per-player composite indexed by player_key,
     # populated from the active prospect set (the side-aware pool). Has
