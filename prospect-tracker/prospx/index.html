@@ -15011,7 +15011,7 @@ function _farmDetailSidebarCards(org, activeTab) {
     org.farm_rank != null ? { key: "Farm rank", value: `#${org.farm_rank}`, valColor: org.farm_rank <= 5 ? "var(--up)" : org.farm_rank >= 25 ? "var(--down)" : "var(--text-primary)" } : null,
     org.acquisition_strategy_score != null ? { key: "Acquisition", value: org.acquisition_strategy_score } : null,
     org.development_score != null ? { key: "Development", value: org.development_score } : null,
-    org.financial_score != null ? { key: "Financial", value: org.financial_score } : null,
+    org.financial_score != null ? { key: "Value", value: org.financial_score } : null,
     org.mlb_production_score != null ? { key: "MLB Production", value: org.mlb_production_score } : null,
     sq.mean != null ? { key: "SC+ avg", value: sq.mean, valColor: sq.mean >= 105 ? "var(--up)" : sq.mean <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
   ].filter(Boolean);
@@ -16284,6 +16284,7 @@ const CHART_AXES = {
   ],
   farms: [
     { key: "farm_rank",      label: "Farm rank",          getter: o => o.farm_rank,                          fmt: v => "#" + v },
+    { key: "tiebreaker",     label: "Tiebreaker score",   getter: o => (o.farm_tiebreaker || {}).score,       fmt: v => v.toFixed(1) },
     { key: "dvm_plus_3y",    label: "DvM+ (3y)",          getter: o => (o.dvm_plus || {})["3y"],            fmt: v => Math.round(v).toString() },
     { key: "top_end",        label: "Top-end points",     getter: o => o.top_end_points,                     fmt: v => v.toFixed(1) },
     { key: "depth",          label: "Depth points",       getter: o => o.depth_points,                       fmt: v => v.toFixed(1) },
@@ -23002,7 +23003,7 @@ async function renderDraftDetail(key) {
       </div>`);
     }
     if (!rows.length) return "";
-    return `<div class="detail-title">Financial</div>
+    return `<div class="detail-title">Value</div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 14px;border-radius:6px;font-size:13px;">
         ${rows.join("")}
       </div>`;
@@ -25788,10 +25789,17 @@ const GLOSSARY = {
   "farm_report_card": {
     name: "Farm grade tree", aliases: ["Farm grade", "Report card", "Grade tree"], category: "custom-index",
     priority: 50,
-    short: "4-branch hierarchical farm grade (v7). Composite = Development 50% (clear majority) · MLB Production 25% · Acquisition Strategy 12.5% · Financial 12.5%.",
-    long: "Grade tree v7 — Development is the clear majority influence. Weights: Development 50% / MLB Production 25% / Acquisition Strategy 12.5% / Financial 12.5%. Development is the highest-conviction org signal — sustained per-tool growth is the one thing the org has the most direct control over and is least confounded by acquisition luck or upper-league hot/cold streaks. v7 also: (1) drops WAG from the MLB Production composite (WAG now lives only in Acquisition Strategy as the talent-translation signal) — MLB Production uses WAR/yr + Top-3 cumulative WAR for both hitter/pitcher leaves. (2) Adds a bust_pct leaf as a NEGATIVE input to MLB Production (parallel to boom_pct but pulls the score DOWN), so bust-heavy orgs get penalized cleanly. (3) Applies the v6 composite stretch (factor=1.35) per-tool too, magnifying high-end tool growth (60→80 PowerDvM+ jump worth more than 40→60). (4) Pitch DvM+ is league-frequency-weighted via per-pitcher arsenal usage_pct aggregation — heavily-thrown pitches (fastball) carry more weight than rare ones in the pitcher composite. Conviction cap: orgs without a star-tier grad (WAR/yr ≥ 4.0 last 6yr OR career WAR ≥ 12 ever) clamp at the 75th-percentile farm_score, preventing depth-only orgs from grading elite. Letter scale: A+ #1, A top 7%, F bottom ~3%. Every leaf z-score normalized across the 30 orgs; sparse leaves get '—'. The trajectory_score that feeds the Development letter grade is a blended 60% 6y + 30% 3y + 10% 1y DvM+.",
-    formula: "farm_score = 0.125·Acquisition_Strategy + 0.50·Development + 0.125·Financial + 0.25·MLB_Production\n  Acquisition_Strategy = mean(Draft, IFA-ROI, Trade, Waiver)\n  Development          = mean(Hitter_Tools_DvM+, Pitcher_Tools_DvM+_usage_weighted)\n  Financial            = mean(WAR_per_$M, Grad_contract_surplus, Draft_pool_efficiency, IFA_ROI)\n  MLB_Production       = mean(Hitter_WAR/yr+Top3, Pitcher_WAR/yr+Top3, Boom%, -Bust%, Top3_WAR/yr, Conviction)\n  if Conviction = 0 and farm_score > p75: farm_score = p75  (Conviction cap)",
-    related: ["farm_grade_acquisition_strategy", "farm_grade_development", "farm_grade_financial", "farm_grade_mlb_production", "mlb_production_boom_pct", "mlb_production_top_grads", "mlb_production_conviction", "fin_draft_pool_efficiency", "fin_ifa_roi", "dvm_plus", "wag", "sur_plus"],
+    short: "4-branch farm grade (v40 — VALUE-TRACKING). Composite = Value 65% (aggregate risk-adjusted surplus) · MLB Production 18% (raw graduate WAR) · Development 9% · Acquisition 8%.",
+    long: "Grade tree v40 — recalibrated to PRIMARILY track aggregate value. The grade was previously a per-prospect tool-development index (Development 50%, with the surplus leaf normalized to a PER-PROSPECT figure), which decoupled it from a system's total value: a farm could be 3rd in total surplus yet grade 15th, below a 25th-in-surplus farm. v40 fixes that. Weights: Value 65% / MLB Production 18% / Development 9% / Acquisition 8%. (1) The Value branch is driven by AGGREGATE risk-adjusted controlled surplus — the total $ value of the org's active prospect pool from the recalibrated value_framework, which already prices elite ceiling non-linearly, so it captures top-end-vs-depth on its own (no opaque top-heavy weighting). (2) MLB Production grades on RAW realized graduate WAR (WAR/yr + Top-3 cumulative WAR + boom/−bust/top-grads/conviction/HOF-track); the WAG talent-translation leaf is DROPPED from the rollup (raw MLB output matters more than translation-vs-grade). (3) Development (per-tool DvM+) and Acquisition stay as secondary controllable-skill / process signals. Validation against realized output: grade-rank now correlates +0.85 with total-surplus rank (was +0.38); every remaining deviation is production-explained — orgs grading above their surplus rank lead the league in realized graduate WAR (e.g. ATL #1), orgs below are near-last. Letter scale: A+ #1, A top 7%, F bottom ~3%. Every leaf z-scored across the 30 orgs; sparse leaves get '—'. A continuous TIEBREAKER score differentiates same-grade farms — see farm_tiebreaker.",
+    formula: "farm_score = 0.65·Value + 0.18·MLB_Production + 0.09·Development + 0.08·Acquisition\n  Value          = wmean(Aggregate_active_surplus[0.68], Org_$DvM+, Grad_contract_surplus, WAR_per_$M, Draft_pool_eff, IFA_ROI)\n  MLB_Production  = mean(Hitter_WAR/yr+Top3, Pitcher_WAR/yr+Top3, Boom%, -Bust%, Top3_WAR/yr, Conviction, HOF_track)\n  Development     = mean(Hitter_Tools_DvM+, Pitcher_Tools_DvM+, Health_Mgmt, Statcast_Quality)\n  Acquisition     = mean(Draft, IFA-ROI, Trade, Waiver)\n  tiebreaker = 100 + 10·(0.40·z(total_surplus) + 0.25·z(6yDvM+) + 0.35·z(raw_graduate_WAR))",
+    related: ["farm_tiebreaker", "farm_grade_financial", "farm_grade_mlb_production", "farm_grade_development", "farm_grade_acquisition_strategy", "fin_active_surplus", "sur_plus", "dvm_plus", "mlb_production_top_grads"],
+  },
+  "farm_tiebreaker": {
+    name: "Farm tiebreaker score", aliases: ["Tiebreaker", "Tiebreaker score", "TB score"], category: "custom-index",
+    priority: 50,
+    short: "Continuous score differentiating farms that share a letter grade. 100 = league mean, +10 = 1σ.",
+    long: "Coarse letter grades collapse real value gaps — two clearly different farms can share a grade. The tiebreaker is a continuous, league-normalized blend of the three value dimensions, shown under each farm's letter so same-grade systems are ordered and distinguishable: 0.40·total active surplus + 0.25·6yDvM+ + 0.35·raw graduate WAR (z-scored across the 30 orgs, anchored 100 + 10·z). Total surplus and 6yDvM+ are the dollar and indexed views of one controlled-value concept, so they share weight rather than double-count; raw graduate WAR adds the REALIZED-output axis (actual MLB WAR produced by the org's graduates — not WAG) that the paper-value measures can't see. Carries a component breakdown and a finer continuous 1–30 rank alongside the letter grade.",
+    related: ["farm_report_card", "sur_plus", "dvm_plus", "fin_active_surplus", "mlb_production_top_grads"],
   },
   "farm_grade_acquisition_strategy": {
     name: "Acquisition Strategy", aliases: ["Acquisition Strategy", "Acquisitions", "Acq Strategy"], category: "custom-index",
@@ -25808,11 +25816,11 @@ const GLOSSARY = {
     related: ["dvm_plus", "tools_dvm_plus", "tool_delta", "farm_report_card"],
   },
   "farm_grade_financial": {
-    name: "Financial / OrgSur+", aliases: ["Financial grade", "OrgSur+", "SUR+", "Surplus grade"], category: "custom-index",
+    name: "Value (OrgSur+)", aliases: ["Value grade", "Value branch", "Financial grade", "OrgSur+", "SUR+", "Surplus grade"], category: "custom-index",
     priority: 54,
-    short: "Org's capital efficiency. 4 leaves (v4): WAR per $M, grad-contract surplus, draft-pool efficiency, IFA ROI.",
-    long: "Financial branch of the farm grade tree (15% of farm_score in v5; was 20% in v4). Tied with Acquisition Strategy as a supporting column behind Development (40%) and MLB Production (30%). Four sub-grades, equal weight: (a) WAR per $M — total career WAR yielded by graduates divided by total signing bonus paid, (b) Grad-Contract Surplus — for graduates with both Spotrac contract data and signing bonus, per-year surplus (current AAV minus bonus amortized over 6 years), (c) Draft Pool Efficiency — trailing-3yr rolling WAR per $M of draft-pool spend, (d) IFA ROI — trailing-6yr rolling WAR per $M of IFA bonus spend. SUR+ shape preserved at the composite level (100-anchored, +10 = 1σ).",
-    formula: "Financial_score = mean of z-anchored (war_per_$M, mean grad surplus per yr, war_per_M_draft_pool, war_per_M_IFA)",
+    short: "The org's aggregate risk-adjusted controlled value. PRIMARY grade branch (v40 — 65% of the composite). Dominated by total active-pool surplus.",
+    long: "Value branch of the farm grade tree (the Financial branch reframed; 65% of farm_score in v40, up from 18%). The single largest grade input, by design — a farm's grade should principally reflect the total risk-adjusted value of its active prospect pool. The dominant leaf (0.68) is AGGREGATE active surplus: the summed FV-implied, risk-adjusted, present-valued controlled surplus across the org's active prospects (recalibrated value_framework), which prices elite ceiling non-linearly so the total captures top-end-vs-depth without a separate premium. Secondary leaves add texture: Org $DvM+ (do these prospects appreciate vs FV-tier peers), grad-contract surplus, WAR per $M, draft-pool efficiency, IFA ROI. The prior spec scored the surplus leaf PER PROSPECT (normalizing aggregate away), which is why a high-total-value farm couldn't grade up; v40 scores it on the total. 100-anchored (+10 = 1σ).",
+    formula: "Value_score = wmean( aggregate_active_surplus[0.68], org_$DvM+[0.10], grad_contract_surplus[0.10], war_per_$M[0.04], draft_pool_eff[0.04], IFA_ROI[0.04] )",
     related: ["wag", "war", "signing_bonus", "fin_draft_pool_efficiency", "fin_ifa_roi", "farm_report_card"],
   },
   "farm_grade_mlb_production": {
@@ -27299,7 +27307,7 @@ function buildFarmCard(snap) {
       <span style="font-family:var(--font-sans);font-size:11px;font-weight:700;letter-spacing:0.03em;color:${P.text3};text-transform:uppercase;text-align:center;">${escapeHtml(label)}</span>
       ${weight ? `<span style="font-family:var(--font-mono);font-size:10px;color:${P.text3};">${weight}%</span>` : ""}
     </div>`;
-  const branches = [["Development", g.development, 50], ["MLB Prod.", g.mlb_production, 20], ["Financial", g.financial, 18], ["Acquisition", g.acquisition_strategy, 12]];
+  const branches = [["Development", g.development, 50], ["MLB Prod.", g.mlb_production, 20], ["Value", g.financial, 18], ["Acquisition", g.acquisition_strategy, 12]];
   const canopy = `<div style="display:flex;gap:8px;">${branches.map(b => gradeChip(b[0], b[1], b[2])).join("")}</div>`;
 
   // Top 5 by FV — same row idiom as the main list (rank · FV pill · name · pos).
@@ -30987,7 +30995,7 @@ function makeFarmReportCard(org) {
                    'Outcome quality of how this org acquires prospects — via draft, IFA signings, trades, and waiver claims.')}
           ${branch('Development',         'development',          W.development,          devSubs,
                    'Per-tool development pace vs the league mean farm. Hitter + pitcher Tool DvM+ composites (100 = league mean, +10 = 1σ).')}
-          ${branch('Financial',           'financial',            W.financial,            finSubs,
+          ${branch('Value',           'financial',            W.financial,            finSubs,
                    'Capital efficiency (v4). WAR per $M of signing bonus + grad-contract surplus + draft-pool efficiency (WAR/$M of pool) + IFA ROI (WAR/$M of bonuses signed). All 4 leaves equally weighted.')}
           ${branch('MLB Production',      'mlb_production',       W.mlb_production,       mlbSubs,
                    'Whether this org produces MLB players, especially top-end ones (v4). 5 leaves: Hitter + Pitcher 3-input composites (WAG + WAR/yr + top-3 career WAR), Boom Rate (% settled grads with career WAR ≥ +5), Top-3 Grad WAR/yr, and Conviction (star-tier grad present). Conviction caps the composite for orgs without a star.')}
@@ -31298,7 +31306,7 @@ function makeFarmCompareBlock(currentOrg) {
   const branches = [
     { key: "acquisition_strategy", label: "Acquisition" },
     { key: "development",          label: "Development" },
-    { key: "financial",            label: "Financial" },
+    { key: "financial",            label: "Value" },
     { key: "mlb_production",       label: "MLB Production" },
   ];
   // v30.9 — Per-leaf breakdown maps each parent branch to its leaves.
@@ -31658,7 +31666,7 @@ function makeFarmLeagueRankBar(org) {
   const axes = [
     { key: 'acquisition_strategy', label: 'Acquisition' },
     { key: 'development',          label: 'Development' },
-    { key: 'financial',            label: 'Financial' },
+    { key: 'financial',            label: 'Value' },
     { key: 'mlb_production',       label: 'MLB Production' },
   ];
   const row = ({ key, label }) => {
@@ -33588,7 +33596,7 @@ function renderFarmSystems() {
     <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Farm rank (1 = #1 system). Click to sort by overall grade.">Rank</span>
     <span></span>
     <span>Organization</span>
-    <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Overall farm-system letter grade (v31 composite: 12% Acquisition · 50% Development · 18% Financial · 20% MLB Production). Click to sort.">Grade</span>
+    <span class="sort-header" style="text-align:center;" data-farm-sort="farm_rank" title="Overall farm-system letter grade (v40 composite: 65% Value (aggregate risk-adjusted surplus) · 18% MLB Production (raw graduate WAR) · 9% Development · 8% Acquisition). Click to sort.">Grade</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${winLabel} ${win.toUpperCase()}DvM+ — wRC+/OPS+-style index where 100 = league mean and 10 pts = 1 std-dev. Acquisitions contribute zero on arrival; debuts don't subtract — pure-development metric. Click to sort.">${win.toUpperCase()}DvM+</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="Tool development pace vs league mean (100 = league mean, +10 = 1σ). Composite + hitter + pitcher rows. Click to sort.">Tool DvM+</span>
     <span class="sort-header" style="text-align:center;" data-farm-sort="trajectory" title="${escapeHtml(winLabel)} trajectory chart. Click to sort by ${escapeHtml(winLabel)} DvM+.">${escapeHtml(winLabel)} trajectory</span>
@@ -33612,6 +33620,15 @@ function renderFarmSystems() {
     const tp = org.top_prospect;
     const overall = (org.grades && org.grades.overall) || '—';
     const gradeColorVal = gradeColor(overall);
+    // v40 — continuous tiebreaker score, surfaced under the letter so same-grade
+    // farms are visibly differentiated (0.40 total surplus + 0.25 6yDvM+ + 0.35
+    // raw graduate WAR; 100 = league mean, +10 = 1σ).
+    const _tb = org.farm_tiebreaker || null;
+    const tbScore = (_tb && _tb.score != null) ? _tb.score.toFixed(1) : null;
+    const tbTitle = _tb ? `Tiebreaker ${tbScore} (rank #${_tb.rank}) — orders same-grade farms · 0.40 surplus + 0.25 6yDvM+ + 0.35 graduate WAR (100 = league mean)` : "";
+    const tbHtml = tbScore != null
+      ? `<span class="fg-tiebreak" title="${escapeHtml(tbTitle)}" style="display:block;font:600 9px var(--font-mono);color:var(--text-tertiary);letter-spacing:0.04em;margin-top:2px;">TB&nbsp;${tbScore}</span>`
+      : "";
     const deltaAbove = (org.delta_above_mean || {})[win]
                       ?? (org.trajectories || {})[win]
                       ?? org.trajectory_score
@@ -33704,7 +33721,7 @@ function renderFarmSystems() {
           <div class="hero-rank">#${displayRank} · ${escapeHtml(org.org)}${alumniBadge}</div>
         </div>
         <div class="farm-grade-cell" title="Overall grade · farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}/100">
-          <span class="fg-letter" style="color:${gradeColorVal};font-size:28px;">${escapeHtml(overall)}</span>
+          <span class="fg-letter" style="color:${gradeColorVal};font-size:28px;">${escapeHtml(overall)}</span>${tbHtml}
         </div>
       </div>`;
     const metricsHtml = `
@@ -33727,7 +33744,7 @@ function renderFarmSystems() {
           </div>
         </div>
         <div class="farm-grade-cell" title="Overall grade · farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : '—'}/100">
-          <span class="fg-letter" style="color:${gradeColorVal};">${escapeHtml(overall)}</span>
+          <span class="fg-letter" style="color:${gradeColorVal};">${escapeHtml(overall)}</span>${tbHtml}
           <span class="fg-score">${org.farm_score != null ? org.farm_score.toFixed(0) : '—'}${confDot}</span>
           ${makeComponentGrades(org)}
           ${makeOrgTierBar(org)}

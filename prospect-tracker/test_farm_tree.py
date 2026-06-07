@@ -61,21 +61,21 @@ class TestTreeWeights:
             f"Main weights must sum to 1.0; got {total}"
         )
 
-    def test_development_is_solo_top_weighted(self):
-        # v8 weights — Development bumped to 0.55 (solo top, current-farm
-        # signal). MLB Production at 0.15. Financial at 0.20 (tier-2 input,
-        # outweighs Acquisition Strategy). Acquisition Strategy at 0.10
-        # (smallest input — acquisition luck distorts year-over-year).
-        # The "development-first" thesis: sustained per-tool growth is the
-        # highest-conviction org signal, least confounded by acquisition
-        # luck or upper-league streaks.
-        assert FARM_TREE_WEIGHT_DEVELOPMENT > FARM_TREE_WEIGHT_MLB_PRODUCTION, (
-            "v8: Development is solo top, MLB Production is below Financial"
+    def test_value_is_dominant_weighted(self):
+        # v40 — VALUE-TRACKING recalibration. The Value branch (Financial key:
+        # aggregate risk-adjusted controlled surplus) is the DOMINANT input (0.65),
+        # reversing the old development-first thesis that decoupled the grade from a
+        # system's total value. MLB Production (raw graduate WAR) is the secondary
+        # check; Development + Acquisition are minor. The grade should principally
+        # reflect the total risk-adjusted value of the active prospect pool.
+        assert FARM_TREE_WEIGHT_FINANCIAL > FARM_TREE_WEIGHT_MLB_PRODUCTION, (
+            "v40: Value (aggregate surplus) is the dominant branch"
         )
-        assert FARM_TREE_WEIGHT_DEVELOPMENT > FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
-        assert FARM_TREE_WEIGHT_DEVELOPMENT > FARM_TREE_WEIGHT_FINANCIAL
-        assert FARM_TREE_WEIGHT_FINANCIAL > FARM_TREE_WEIGHT_ACQUISITION_STRATEGY, (
-            "v8: Financial outweighs Acquisition Strategy (0.20 > 0.10)"
+        assert FARM_TREE_WEIGHT_FINANCIAL > FARM_TREE_WEIGHT_DEVELOPMENT
+        assert FARM_TREE_WEIGHT_FINANCIAL > FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
+        assert FARM_TREE_WEIGHT_FINANCIAL >= 0.5, "v40: Value carries the plurality of the grade"
+        assert FARM_TREE_WEIGHT_MLB_PRODUCTION > FARM_TREE_WEIGHT_DEVELOPMENT, (
+            "v40: realized production outweighs per-tool development"
         )
 
     def test_sub_weight_is_50_percent(self):

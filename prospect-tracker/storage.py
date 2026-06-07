@@ -3537,10 +3537,19 @@ MLB_30_ORGS: set[str] = {
 # Financial drops 25% → 20% to absorb the rest of the shift;
 # Acquisition Strategy unchanged.
 # Weights sum to 1.00.
-FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.12    # v31: 0.10 → 0.12 (deeper acq tree)
-FARM_TREE_WEIGHT_DEVELOPMENT          = 0.50    # v31: 0.55 → 0.50 (Health Mgmt joins; share spread)
-FARM_TREE_WEIGHT_FINANCIAL            = 0.18    # v31: 0.20 → 0.18 (small trim)
-FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.20    # v31: 0.15 → 0.20 (HOF-track adds forward signal)
+# v40 — VALUE-TRACKING REWEIGHT. The grade is now PRIMARILY driven by aggregate
+# risk-adjusted controlled surplus (the Financial branch, reframed as "Value" in the
+# UI). The prior split (Development 0.50, Financial 0.18) made the grade a per-prospect
+# tool-development index decoupled from aggregate value: a farm could be 3rd in total
+# surplus (TBR, $264M) yet grade 15th, below a 25th-in-surplus farm (NYM). Aggregate
+# surplus already prices elite ceiling non-linearly (the recalibrated value_framework),
+# so it captures top-end-vs-depth on its own — no opaque top-heavy weighting. MLB
+# Production rises (realized graduate WAR proof); Development drops to a secondary
+# controllable-skill signal. Sum = 1.00.
+FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.08    # v40: 0.12 → 0.08
+FARM_TREE_WEIGHT_DEVELOPMENT          = 0.09    # v40: 0.50 → 0.09 (secondary skill signal)
+FARM_TREE_WEIGHT_FINANCIAL            = 0.65    # v40: 0.18 → 0.65 (the Value branch — DOMINANT)
+FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.18    # v40: 0.20 → 0.18 (raw graduate WAR — secondary check)
 # Back-compat aliases — anything that imported the v2 constants still
 # works. The composite blend below uses the v3 names exclusively.
 FARM_TREE_WEIGHT_ACQUISITIONS = FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
@@ -3573,13 +3582,16 @@ FARM_LEAF_WEIGHTS = {
     #   fin_ifa_roi          0.15 → 0.07   (↓ superseded ROI)
     # Sum = 1.00. (Weights renormalize across present leaves at compute time,
     # so a sparse-data org just weighted-means whatever leaves it has.)
+    # v40 — Value branch leaf weights. fin_active_surplus (now AGGREGATE controlled
+    # surplus, not per-prospect) is the dominant leaf; the value-development +
+    # per-$ ROI leaves provide secondary texture. Sum = 1.00.
     "financial": {
-        "fin_active_surplus":        0.42,
-        "fin_dollar_dvm":            0.18,
-        "fin_contract_surplus":      0.18,
-        "fin_war_per_m":             0.07,
-        "fin_draft_pool_efficiency": 0.08,
-        "fin_ifa_roi":               0.07,
+        "fin_active_surplus":        0.68,   # v40: AGGREGATE controlled value — dominant
+        "fin_dollar_dvm":            0.10,
+        "fin_contract_surplus":      0.10,
+        "fin_war_per_m":             0.04,
+        "fin_draft_pool_efficiency": 0.04,
+        "fin_ifa_roi":               0.04,
     },
 }
 
@@ -9573,6 +9585,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # agent without a published bonus doesn't drag the ratio down).
         bonus_sum = gagg.get("bonus_sum") or 0
         war_sum = gagg.get("war_sum") or 0.0
+        # v40 — total realized graduate WAR (raw MLB production) exposed for the
+        # farm tiebreaker score. Sum of career bWAR across the org's graduates.
+        m["_grad_war_total"] = round(war_sum, 2)
         m["financial_roi"] = {
             "war_per_million": (round(war_sum / (bonus_sum / 1_000_000), 3)
                                 if bonus_sum >= 1_000_000 else None),
@@ -11617,9 +11632,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "fin_dollar_dvm": [
             ("dollar_dvm_plus", lambda e: (e["tree"].get("fin_dollar_dvm") or {}).get("dollar_dvm_plus")),
         ],
+        # v40 — PRIMARY value signal = AGGREGATE risk-adjusted controlled surplus
+        # (total $ across the active pool). Pure aggregate (the prior per-prospect
+        # spec deliberately normalized aggregate AWAY, v18, which is exactly why a
+        # high-total-surplus farm couldn't grade up). The recalibrated value_framework
+        # already prices elite ceiling non-linearly, so the total captures top-end-
+        # vs-depth without an opaque premium.
         "fin_active_surplus": [
-            ("per_prospect", lambda e: (e["tree"]["fin_active_surplus"] or {}).get("surplus_per_prospect_mm")),
-            ("per_fv_pt",    lambda e: (e["tree"]["fin_active_surplus"] or {}).get("surplus_per_fv_pt_mm")),
+            ("total_surplus", lambda e: e.get("_active_surplus_net_mm")),
         ],
         # MLB Production — v17: renamed mlb_hitter_wag/mlb_pitcher_wag
         # leaves to mlb_hitter_production/mlb_pitcher_production. Primary
@@ -11786,9 +11806,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # v31 — HOF-track count joins MLB Production. Ceiling signal
         # complement to Conviction (which fires on the lower star
         # threshold).
-        "mlb_production":       ["mlb_hitter_production",   # v17 renamed (was mlb_hitter_wag)
-                                  "mlb_pitcher_production",  # v17 renamed (was mlb_pitcher_wag)
-                                  "talent_translation",      # v17 NEW — WAG-based sibling leaf
+        # v40 — talent_translation (WAG) DROPPED from the rollup: raw realized
+        # graduate WAR is the production signal we grade on, not WAR-above-grade
+        # (MLB translation matters far less than raw MLB output). The WAG leaf is
+        # still computed for display/tooltip, just no longer in the grade.
+        "mlb_production":       ["mlb_hitter_production",   # raw WAR/yr (v17)
+                                  "mlb_pitcher_production",  # raw WAR/yr (v17)
                                   "mlb_production_boom_pct",
                                   "mlb_production_bust_pct",
                                   "mlb_production_top_grads",
@@ -11854,6 +11877,53 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # value so any UI reading the old keys still gets a number.
         entry["acquisitions_score"] = entry.get("acquisition_strategy_score")
         entry["transactions_score"] = entry.get("acquisition_strategy_score")
+
+    # ── v40 — Continuous TIEBREAKER score ─────────────────────────────────
+    # Differentiates farms that land on the same letter grade (coarse grades
+    # collapse real value gaps). A normalized z-blend across the 30 orgs of the
+    # three value dimensions, anchored DvM+-style (100 + 10·z):
+    #   • total surplus      0.40 — aggregate risk-adjusted controlled value ($)
+    #   • 6yDvM+             0.25 — the indexed view of the same controlled value
+    #   • raw graduate WAR   0.35 — REALIZED MLB production (not WAG) over the grad pool
+    # Surplus and 6yDvM+ are the dollar/indexed views of one controlled-value
+    # concept, so they share weight rather than double-count; raw grad WAR adds the
+    # realized-output axis the paper-value measures can't see. The score gives a
+    # finer continuous ordering and orders within-grade ties on the list.
+    def _farm_z(vals: list[float | None]) -> list[float]:
+        present = [v for v in vals if v is not None]
+        if len(present) < 2:
+            return [0.0] * len(vals)
+        mu = sum(present) / len(present)
+        sd = (sum((v - mu) ** 2 for v in present) / len(present)) ** 0.5 or 1.0
+        return [((v - mu) / sd if v is not None else 0.0) for v in vals]
+
+    _surp_z = _farm_z([e.get("_active_surplus_net_mm") for e in org_summary])
+    _dvm_z  = _farm_z([(e.get("dvm_plus") or {}).get("6y") for e in org_summary])
+    _gwar_z = _farm_z([e.get("_grad_war_total") for e in org_summary])
+    _TB_W = {"surplus": 0.40, "dvm6y": 0.25, "grad_war": 0.35}
+    for i, entry in enumerate(org_summary):
+        _blend = (_TB_W["surplus"] * _surp_z[i] + _TB_W["dvm6y"] * _dvm_z[i]
+                  + _TB_W["grad_war"] * _gwar_z[i])
+        entry["farm_tiebreaker"] = {
+            "score": round(100 + 10 * _blend, 1),
+            "weights": _TB_W,
+            "components": {
+                "surplus_z":  round(_surp_z[i], 2),
+                "dvm6y_z":    round(_dvm_z[i], 2),
+                "grad_war_z": round(_gwar_z[i], 2),
+            },
+            "inputs": {
+                "total_surplus_mm": round(entry.get("_active_surplus_net_mm") or 0.0, 1),
+                "dvm_plus_6y":      (entry.get("dvm_plus") or {}).get("6y"),
+                "grad_war_total":   entry.get("_grad_war_total"),
+            },
+        }
+    # Continuous "true rank" 1–30 by the tiebreaker score (finer than the letter
+    # grade); the letter grade still comes from farm_score's rank bucket below.
+    _tb_order = sorted(range(len(org_summary)),
+                       key=lambda i: -(org_summary[i]["farm_tiebreaker"]["score"]))
+    for _r, _i in enumerate(_tb_order, start=1):
+        org_summary[_i]["farm_tiebreaker"]["rank"] = _r
 
     # v18 — Conviction cap removed. The 75th-percentile farm_score cap
     # for orgs without a star-tier graduate in the last 6 years was a
