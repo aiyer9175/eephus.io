@@ -1,0 +1,54 @@
+NOTICE
+
+Copyright (C) 2026 Will Cahoon (@willcolqhn) - All Rights Reserved
+Unauthorized copying of this file, via any medium is strictly prohibited
+Proprietary and confidential
+Written by Will Cahoon (@willcolqhn), 2026
+
+Project
+  Author:  Will Cahoon (@willcolqhn)
+  Status:  Proprietary, closed-source.
+  License: See LICENSE for the full terms.
+
+What this is
+  This directory contains a proprietary MLB bat-tracking analytics system: original
+  analytical models and the tooling that serves them — Swing+ (bat-path quality),
+  Decision+ (swing/take run value), the Bat-to-Ball+ integration, and Hitter+ (the
+  OPS-optimal three-axis blend), plus the FastAPI single-page application, per-pitch
+  swing grading, hitter-vs-pitcher matchup engine, aging projections, and model audit
+  report cards. The source files, documentation, data pipelines, and derived metrics
+  are the author's intellectual property.
+
+What you may not do
+  Without prior express written permission from the author:
+    * You may not copy, redistribute, modify, or create derivative works of any source
+      file in this directory.
+    * You may not use any portion of this codebase to train, fine-tune, or otherwise
+      inform machine-learning or artificial-intelligence systems.
+    * You may not publish excerpts of this codebase on forums, code-sharing sites, or
+      any public venue.
+    * You may not remove, alter, or obscure any per-file copyright header, this NOTICE
+      file, the LICENSE file, or any other proprietary marking.
+  See LICENSE for the full set of restrictions.
+
+Third-party content
+  Python dependencies (see requirements.txt) remain under their own licenses; nothing
+  here modifies, supersedes, or revokes those terms. Data sources referenced in the
+  codebase (MLB Stats API, Baseball Savant / Statcast) are referenced for analytical
+  purposes only and remain the property of their respective owners. The Bat-to-Ball+
+  framework integrated via B2B+ is the property of its respective author and is used
+  here under that arrangement.
+
+Authorship marker
+  Each source file carries a per-file watermark:
+
+      Copyright (C) 2026 Will Cahoon (@willcolqhn) - All Rights Reserved
+      Unauthorized copying of this file, via any medium is strictly prohibited
+      Proprietary and confidential
+      Written by Will Cahoon (@willcolqhn), 2026
+
+  Removal or alteration of the watermark is itself a breach of the LICENSE.
+
+Contact
+  For licensing inquiries, partnership requests, or any other matter related to this
+  codebase, contact the author via @willcolqhn (X/Twitter).
