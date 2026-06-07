@@ -284,23 +284,45 @@ def _use_dispersion() -> bool:
 # =============================================================================
 # Tiered $/WAR  (per-SEASON, convex; classify each season by its own WAR)
 # =============================================================================
+def _smoothstep(t: float) -> float:
+    """C1 Hermite smoothstep on [0,1] (flat slope at both ends)."""
+    if t <= 0.0:
+        return 0.0
+    if t >= 1.0:
+        return 1.0
+    return t * t * (3.0 - 2.0 * t)
+
+
 def tiered_war_value_usd(season_war: float) -> float:
-    """Market $ value of ONE season's WAR. The season is classified into a tier
-    by its own WAR and the whole season's WAR is valued at that tier's rate
-    (convex: a star season costs more per win). Never call this on an averaged
-    WAR -- value each bucket-season separately. WAR <= 0 -> $0."""
+    """Market $ value of ONE season's WAR. The per-win rate rises CONVEXLY with
+    the season's own WAR (a star season costs more per win); value = WAR x rate.
+
+    v46 — the rate is a CONTINUOUS (smoothstep) ramp through the tier-center rates
+    instead of a hard 3-step. The old step valued the whole season at one tier's
+    flat rate, so value jumped ~$10M at the 1.0/2.0-WAR breakpoints; as bucket
+    midpoints / aging / ETA pushed a season across a breakpoint, the jump broke
+    value-surface smoothness (debuted-value humps, non-monotone PV-in-ETA) and
+    blocked re-anchoring the low-mid FV WAR targets. The ramp passes through the
+    tier rates at the tier CENTERS (b1-0.5, b1+0.5, b2+0.5), so it returns exactly
+    0.5*lt_1, 1.5*(1_to_2), 3*(2plus) there — same convex intent, no discontinuity.
+    Never call on an averaged WAR -- value each bucket-season separately. WAR<=0 -> $0."""
     if season_war is None or season_war <= 0:
         return 0.0
     dpw = _config()["dollars_per_war"]["tiered"]
     b1, b2 = dpw["breakpoints"]
     rates = dpw["rates"]
-    if season_war < b1:
-        rate = rates["lt_1"]
-    elif season_war < b2:
-        rate = rates["1_to_2"]
+    r_lo, r_mid, r_hi = float(rates["lt_1"]), float(rates["1_to_2"]), float(rates["2plus"])
+    w = float(season_war)
+    c_lo, c_mid, c_hi = b1 - 0.5, b1 + 0.5, b2 + 0.5   # tier centers: 0.5, 1.5, 2.5
+    if w <= c_lo:
+        rate = r_lo
+    elif w <= c_mid:
+        rate = r_lo + (r_mid - r_lo) * _smoothstep((w - c_lo) / (c_mid - c_lo))
+    elif w <= c_hi:
+        rate = r_mid + (r_hi - r_mid) * _smoothstep((w - c_mid) / (c_hi - c_mid))
     else:
-        rate = rates["2plus"]
-    return float(season_war) * float(rate)
+        rate = r_hi
+    return w * rate
 
 
 def _flat_rate_usd() -> float:

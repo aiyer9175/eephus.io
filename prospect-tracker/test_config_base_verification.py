@@ -216,9 +216,17 @@ def test_committed_fitted_reconciliation_within_tol() -> None:
 # =============================================================================
 def test_tiered_value_classifies_each_season_by_own_war() -> None:
     rates = _CFG["dollars_per_war"]["tiered"]["rates"]
+    # v46 — continuous convex ramp (smoothstep through the tier-CENTER rates at
+    # 0.5/1.5/2.5 WAR), replacing the old hard 3-step. Equals the tier rates at the
+    # centers, rises convexly, and is CONTINUOUS across the old 1.0/2.0 breakpoints.
     assert vf.tiered_war_value_usd(0.5) == pytest.approx(0.5 * rates["lt_1"])
-    assert vf.tiered_war_value_usd(1.9) == pytest.approx(1.9 * rates["1_to_2"])
-    assert vf.tiered_war_value_usd(2.1) == pytest.approx(2.1 * rates["2plus"])
+    assert vf.tiered_war_value_usd(1.5) == pytest.approx(1.5 * rates["1_to_2"])
+    assert vf.tiered_war_value_usd(2.5) == pytest.approx(2.5 * rates["2plus"])
+    vals = [vf.tiered_war_value_usd(w) for w in (0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0)]
+    assert all(vals[i] <= vals[i + 1] for i in range(len(vals) - 1))      # monotone
+    eff = [vf.tiered_war_value_usd(w) / w for w in (0.6, 1.5, 2.4)]
+    assert eff[0] < eff[1] < eff[2]                                       # per-win rate rises (convex)
+    assert abs(vf.tiered_war_value_usd(2.01) - vf.tiered_war_value_usd(1.99)) < 2.0e6  # no jump (old step was ~$10M)
 
 
 def test_mixture_differs_from_collapsed_point_estimate() -> None:
