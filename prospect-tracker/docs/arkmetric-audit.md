@@ -319,3 +319,31 @@ Recommendation: **(B) splice** — it preserves the integrity of the historical 
 Time Machine / backtest) and is honest about when the method changed; (A) only matters if
 perfectly smooth multi-year DvM+ charts are worth rewriting history for. WAG above needed
 neither (live-computed). No snapshot has been touched.
+
+---
+
+# Findings 6 + 9 — implemented (recompute = option A, user's call)
+
+- **Finding 6 — scale harmonization.** SC+ moved from `100 + 15·z` to `100 + 10·z`
+  (`statcast_plus._SC_PLUS_PER_SIGMA` 15→10; tier breakpoints 115/85 → 110/90; the JS
+  mirror `100 + avgZ*10` + the SC+ ≥110 "tracked-data" gate synced). Now every backend
+  "+" index (RPS+/DvM+/Stf+/$DvM+/SC+) is on one σ-per-point convention, so a SC+ 110 and
+  a DvM+ 110 mean the same thing (+1σ). Post-rebuild SC+ pool mean 99.9, +1σ ≈ 110.
+- **Finding 9 — circularity.** Measured org-level corr(FV-DvM, Tool-DvM) ≈ 0.30 — a modest
+  but real double-count (tool grades feed both the consensus FV→FV-DvM and ToolDvM+). The
+  DvM+ blend trimmed the FV+Tool slice 0.80→0.75 and raised the ORTHOGONAL Statcast axis
+  0.20→0.25, proportionate to the shared variance — reducing the tool double-exposure
+  without overcorrecting a 0.30 correlation.
+
+Recompute (option A): the user-visible DvM+ history is the FV-history-derived trajectory,
+which **recomputes fully on rebuild** under the new blend (no stored per-date DvM+ to
+splice). Note: the `metric_snapshots` point-in-time records (Time Machine) forward-fill
+with the new formulas; a full historical backfill of pool-anchored SC+ is not cleanly
+feasible (it would need each past date's active-pool z-scores reconstructed), so those
+stored snapshots carry the new formula from the change date forward.
+
+Audit status: findings 1/3 (frontend shrinkage + collinearity + reliability blend), 8
+(WAG↔surplus), 6 (scale), 9 (circularity) — implemented + backtested/validated. Deferred
+with rationale: 2 (regressed park factors — needs a run-environment source), 4 (outcome-
+calibrated grade→+ map — needs clean OOS grade→MLB data), 7 (Statcast level-anchoring),
+and the RPS+ branding on wRC+.

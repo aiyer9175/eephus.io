@@ -115,7 +115,9 @@ class TestStatcastPlusCore:
         elite_pit = _pit("e_pit", velo=99.0, whiff=38.0, chase=38.0,
                          hh_allowed=24.0, brl_allowed=1.5)
         sp = compute_statcast_plus(elite_pit, pool)
-        assert sp is not None and sp > 120
+        # v-audit finding 6: SC+ harmonized to 10 pts/σ (was 15), so an elite arm
+        # reads clearly above the +1σ top-quintile mark (110) rather than >120.
+        assert sp is not None and sp > 113
 
     def test_missing_data_returns_none(self):
         pool_players = [

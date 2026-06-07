@@ -40,13 +40,16 @@ from typing import Any, Iterable
 
 # Anchoring constants — match the JS implementation exactly so a badge
 # label and the gate it fired through never disagree. 100 is the pool
-# mean; 15 points per stddev mirrors wRC+ / OPS+ display ergonomics.
+# mean. v-arkmetric-audit (finding 6): harmonized to 10 points per stddev to
+# match every other backend "+" index (RPS+/DvM+/Stf+/$DvM+ all use 100 + 10·z);
+# SC+ was the lone metric on a 15-pt scale, so a SC+ 115 and a DvM+ 115 meant
+# different things. Now one σ-per-point convention across the suite.
 _SC_PLUS_ANCHOR = 100
-_SC_PLUS_PER_SIGMA = 15
+_SC_PLUS_PER_SIGMA = 10
 
-# Tier breakpoints used by downstream gates / display.
-SC_PLUS_TOP_QUINTILE = 115     # ≥115 ≈ +1σ → top quintile of pool
-SC_PLUS_BOTTOM_QUINTILE = 85   # ≤85 ≈ -1σ → bottom quintile
+# Tier breakpoints used by downstream gates / display (±1σ at 10 pts/σ).
+SC_PLUS_TOP_QUINTILE = 110     # ≥110 ≈ +1σ → top quintile of pool
+SC_PLUS_BOTTOM_QUINTILE = 90   # ≤90 ≈ -1σ → bottom quintile
 
 
 def _zone_row(player: dict) -> dict | None:

@@ -11162,21 +11162,25 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # up to absorb the difference). Statcast layers on top at a
     # fixed 20%.
     def _blend_dvm_3way(fv_dvm, tool_dvm, sc_dvm):
-        """User-specified 50/30/20 weights (FV / Tool / Statcast).
-        Adaptive penalty fires only on the FV+Tool sub-blend so the
-        existing test suite (test_dvm_disparity_penalty.py) still
-        passes — `_blend_dvm` is untouched and re-used here."""
+        """FV / Tool / Statcast development blend. v-arkmetric-audit (finding 9 —
+        CIRCULARITY): scouting tool grades feed BOTH the consensus FV (so FV-DvM)
+        AND ToolDvM+, so the tool signal enters this blend via two correlated paths
+        (measured org-level corr(FV-DvM, Tool-DvM) ≈ 0.30 — modest but real double-
+        count). The FV+Tool slice is trimmed 0.80 → 0.75 and the ORTHOGONAL Statcast
+        axis (independent tracked-data signal) raised 0.20 → 0.25, proportionate to
+        the shared variance — reducing the tool double-exposure without overcorrecting.
+        Adaptive penalty fires only on the FV+Tool sub-blend so test_dvm_disparity_
+        penalty.py still passes (`_blend_dvm` untouched, re-used in the SC-missing path)."""
         # All three present — apply the precise weight allocation.
         if fv_dvm is not None and tool_dvm is not None and sc_dvm is not None:
             tool_w_in_slice = _adaptive_tool_weight(fv_dvm, tool_dvm)
-            # FV + Tool combined = 80% of total; the existing
-            # tool-weight-in-slice (baseline 30%, up to 60% under
-            # penalty) governs how the 80% splits between FV and Tool.
-            tool_w_total = 0.80 * tool_w_in_slice
-            fv_w_total   = 0.80 - tool_w_total
+            # FV + Tool combined = 75% of total (was 80%); the tool-weight-in-slice
+            # (baseline 30%, up to 60% under penalty) governs how the 75% splits.
+            tool_w_total = 0.75 * tool_w_in_slice
+            fv_w_total   = 0.75 - tool_w_total
             return int(round(fv_w_total * fv_dvm
                              + tool_w_total * tool_dvm
-                             + 0.20 * sc_dvm))
+                             + 0.25 * sc_dvm))
         # Missing-axis fallbacks. SC missing → original 2-way blend.
         if sc_dvm is None:
             return _blend_dvm(fv_dvm, tool_dvm)
