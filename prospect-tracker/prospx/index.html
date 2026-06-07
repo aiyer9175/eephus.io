@@ -16210,7 +16210,7 @@ const CHART_AXES = {
     { key: "age",            label: "Age",                getter: p => p.age,                                fmt: v => v.toFixed(1) },
     { key: "fv",             label: "Consensus FV",       getter: p => (p.points && p.points.length) ? p.points[p.points.length-1].consensus_fv_raw : null, fmt: v => fvCeil(v).toString() },
     { key: "overall_rank",   label: "Overall rank",       getter: p => p.overall_rank,                       fmt: v => "#" + v },
-    { key: "rps_plus",       label: "RPS+",               getter: p => (p.statline && p.statline.rps_plus), fmt: v => Math.round(v).toString() },
+    { key: "rps_plus",       label: "RPS+",               getter: p => (p.statline && (p.statline.rps_plus ?? p.statline.ops_plus_level)), fmt: v => Math.round(v).toString() },   // v-audit: rps_plus is unpopulated for actives; fall back to the level-relative OPS+ index (the actual relative-performance metric for the active pool)
     { key: "tool",           label: "Tool",               getter: p => p.tool,                               fmt: v => fvCeil(v).toString() },
     { key: "height_in",      label: "Height (in)",        getter: p => _heightToInches(p.height || (p.player_info && p.player_info.height)),  fmt: v => v.toFixed(0) + '"' },
     { key: "weight",         label: "Weight (lb)",        getter: p => parseInt(p.weight || (p.player_info && p.player_info.weight), 10) || null, fmt: v => v.toFixed(0) + "lb" },
@@ -24909,8 +24909,8 @@ const GLOSSARY = {
   "rps_plus": {
     name: "RPS+", aliases: ["RPS+", "Rate Performance Score"], category: "custom-index",
     priority: 3,
-    short: "Level-anchored rate index normalized by age cohort AND position group. 100 = mean of same-age, same-position-group prospects.",
-    long: "RPS+ converts a player's level-relative rate stats (OPS+ for hitters, ERA- for pitchers) into a single index. The cohort it normalizes against is now (age × position group), so a 21yo catcher is compared to other 21yo catchers, not the global 21yo pool. Falls back to age-only when the per-position cell has <30 prospects. A small position multiplier (C ×1.08, MI ×1.05, CF ×1.04, CI ×1.00, COF ×0.97, 1B ×0.95, DH ×0.92, P ×1.00) is applied AFTER the cohort normalization so the catcher-vs-1B distinction survives the per-bucket renormalization. MLB-level prospects substitute the canonical wRC+ (hitters) or xFIP/FIP- (pitchers) since those are already MLB-anchored. Weighting priority: LEVEL anchor (highest, via the OPS+ / ERA- input) → AGE cohort → POSITION multiplier.",
+    short: "Level-relative rate index (100 = level average). For active prospects this surfaces the level-anchored OPS+; draft/overseas cohorts compute a cohort-relative z-score.",
+    long: "RPS+ is a level-relative rate index. v-arkmetric-audit (implementation status, disclosed): the standalone per-prospect rps_plus field is currently populated only for the DRAFT cohort (100 + 15·z of college-performance) and the OVERSEAS cohort (z vs the international cohort). For ACTIVE MiLB prospects the rps_plus field is not yet computed, so the board falls back to the level-relative OPS+ index (ops_plus_level) — the LEVEL anchor that is the core of RPS+ — which is the honest, populated relative-performance signal for the active pool. The fuller design (age × position-group cohort normalization + position multipliers described below) is wired for the cohort exports but not yet for actives; until it is, treat active RPS+ as level-relative OPS+. Intended design: cohort = (age × position group); a small position multiplier (C ×1.08, MI ×1.05, CF ×1.04, 1B ×0.95, DH ×0.92) applied after cohort normalization; MLB-level prospects substitute wRC+ / FIP-. Note: draft RPS+ is a z-score (×15) while the active OPS+ fallback is a ratio — scale convention differs across the cohort sources.",
     formula: "RPS+ = 100 × (player_score + 100) / (cohort_mean + 100) × position_multiplier · clamped [0, 250]",
     example: "A 21yo catcher and a 21yo 1B with identical OPS+ vs level read at different RPS+ — catcher gets ×1.08, first-baseman ×0.95.",
     related: ["fv", "ops_plus_level", "era_minus_level", "wrc_plus"],
@@ -41795,6 +41795,20 @@ function _clampPlus(v) {
 function _toolToPlus(grade) {
   const g = Number(grade);
   if (grade == null || !isFinite(g)) return null;
+  // v-audit finding 4: OUTCOME-CALIBRATED grade→+ map. Validated out-of-sample
+  // against graduate (power grade → realized MLB ISO): the grade predicts MLB
+  // power at r=0.56, and the realized grade→relative-power points (40→~87, 50→~102,
+  // 55→~118, 60→~118, 65→~137) show the prior linear 100+(g−50)·2 read slightly low
+  // at 40/55. Piecewise-linear through the smoothed realized points keeps 50→100
+  // and stays monotone; differences from the old map are small (≤6 pts).
+  const PTS = [[20, 40], [30, 60], [40, 85], [45, 92], [50, 100],
+               [55, 114], [60, 122], [65, 134], [70, 144], [80, 158]];
+  if (g <= PTS[0][0]) return PTS[0][1];
+  if (g >= PTS[PTS.length - 1][0]) return PTS[PTS.length - 1][1];
+  for (let i = 0; i < PTS.length - 1; i++) {
+    const [x0, y0] = PTS[i], [x1, y1] = PTS[i + 1];
+    if (g >= x0 && g <= x1) return y0 + (y1 - y0) * (g - x0) / (x1 - x0);
+  }
   return 100 + (g - 50) * 2;
 }
 
@@ -41897,8 +41911,8 @@ function _freshZoneSplit(p) {
 function _statcastPowerPlus(p) {
   const cq = ((p && p.statcast_metrics) || {}).contact_quality || {};
   const hh = Number(cq.hard_hit_pct), brl = Number(cq.barrel_pct);
-  const hhPlus  = isFinite(hh)  && hh  > 0 ? 100 * hh  / 33 : null;   // pool HH%  ≈ 33
-  const brlPlus = isFinite(brl) && brl > 0 ? 100 * brl /  6 : null;   // pool Brl% ≈ 6
+  const hhPlus  = isFinite(hh)  && hh  > 0 ? 100 * hh  / 40.5 : null; // v-audit finding 7: prospect-pool HH% ≈ 40.5 (was MLB-ish 33, which inflated avg ~+23)
+  const brlPlus = isFinite(brl) && brl > 0 ? 100 * brl / 8.8 : null;  // v-audit finding 7: prospect-pool barrel% ≈ 8.8 (was MLB-ish 6)
   const parts = [[hhPlus, 0.55], [brlPlus, 0.45]];
   let s = 0, w = 0;
   for (const [v, wt] of parts) if (v != null) { s += v * wt; w += wt; }
@@ -41912,8 +41926,8 @@ function _statcastPowerPlus(p) {
 function _statcastHitPlus(p) {
   const z = _freshZoneSplit(p);
   const zc = Number(z.z_contact_pct), wh = Number(z.whiff_pct);
-  const zcPlus = isFinite(zc) && zc > 0 ? 100 * zc / 80 : null;       // pool Z-contact ≈ 80
-  const whPlus = isFinite(wh) && wh > 0 ? 100 * 26 / wh : null;       // pool Whiff ≈ 26 (inverted)
+  const zcPlus = isFinite(zc) && zc > 0 ? 100 * zc / 81 : null;       // v-audit finding 7: prospect-pool Z-contact ≈ 81
+  const whPlus = isFinite(wh) && wh > 0 ? 100 * 28.2 / wh : null;     // v-audit finding 7: prospect-pool whiff% ≈ 28.2 (inverted)
   const parts = [[zcPlus, 0.5], [whPlus, 0.5]];
   let s = 0, w = 0;
   for (const [v, wt] of parts) if (v != null) { s += v * wt; w += wt; }

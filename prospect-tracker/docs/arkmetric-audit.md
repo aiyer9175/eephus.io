@@ -347,3 +347,33 @@ Audit status: findings 1/3 (frontend shrinkage + collinearity + reliability blen
 with rationale: 2 (regressed park factors — needs a run-environment source), 4 (outcome-
 calibrated grade→+ map — needs clean OOS grade→MLB data), 7 (Statcast level-anchoring),
 and the RPS+ branding on wRC+.
+
+---
+
+# Findings 4 + 7 + RPS+ — implemented (frontend, live-computed)
+
+- **Finding 7 — Statcast anchoring.** The POW+/HIT+ Statcast components were indexed to
+  hardcoded MLB-ish anchors that are wrong for the prospect pool: hard-hit% 33 (pool 40.5),
+  barrel% 6 (pool 8.8), z-contact 80 (pool 81), whiff 26 (pool 28.2). The barrel/HH anchors
+  being far too low inflated the average prospect's Statcast-power to **134** (should be 100)
+  — a 34% systematic upward bias that propagated into POW+ (25% weight). Corrected to the
+  prospect-pool means; the average now centers at 100. (Full per-level anchoring is the next
+  refinement, but Statcast coverage is concentrated at the upper levels, so the pool mean ≈
+  the relevant level mean.)
+- **Finding 4 — outcome-calibrated grade→+ map.** Validated OUT-OF-SAMPLE: across 374
+  graduates, power grade predicts realized MLB ISO at **r=0.56**, and the realized grade→
+  relative-power points (40→~87, 50→~102, 55→~118, 65→~137) show the prior linear
+  `100+(g−50)·2` read slightly low at 40/55. `_toolToPlus` is now a piecewise-linear map
+  through the smoothed realized points (50→100 preserved, monotone; differences ≤6 pts) —
+  outcome-grounded rather than assumed.
+- **RPS+ — resolved + disclosed.** The standalone rps_plus field is computed only for the
+  DRAFT (100+15·z college perf) and OVERSEAS (cohort z) cohorts; it is unpopulated for the
+  2,013 active prospects (and wRC+ isn't exported for actives either). The active RPS+ board
+  now falls back to the level-relative OPS+ index (`ops_plus_level`, 93% coverage) — the
+  level-anchor core of RPS+ — and the glossary discloses the implementation status + the
+  cross-cohort scale difference (draft z-score vs active ratio) honestly.
+
+Audit complete except park factors (finding 2, skipped per user — needs a run-environment
+data source). Implemented: 1, 3, 4, 6, 7, 8, 9 + RPS+ resolution. Frontend metrics are
+live-computed (no snapshot recompute); the backend WAG/SC+/DvM+ changes were handled under
+the recompute decision.
