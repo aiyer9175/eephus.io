@@ -1,0 +1,136 @@
+Loading model from swing_plus_model_v1.joblib
+  version=1.0.0  features=9  min_swings=180  k=360
+[2023_H2] cached: statcast_2023_H2.parquet
+[2024_H1] cached: statcast_2024_H1.parquet
+[2024_H2] cached: statcast_2024_H2.parquet
+[2025_H1] cached: statcast_2025_H1.parquet
+[2025_H2] cached: statcast_2025_H2.parquet
+[2026_H1] pulling 2026-03-25 -> 2026-05-28
+This is a large query, it may take a moment to complete
+  0%|          | 0/7 [00:00<?, ?it/s] 14%|█▍        | 1/7 [00:00<00:04,  1.40it/s] 43%|████▎     | 3/7 [00:00<00:01,  3.85it/s]100%|██████████| 7/7 [00:00<00:00,  7.06it/s]
+  2026-03-25 -> 2026-03-31: 22,610 rows
+This is a large query, it may take a moment to complete
+  0%|          | 0/7 [00:00<?, ?it/s] 14%|█▍        | 1/7 [00:00<00:04,  1.32it/s] 29%|██▊       | 2/7 [00:00<00:01,  2.51it/s]100%|██████████| 7/7 [00:04<00:00,  1.43it/s]100%|██████████| 7/7 [00:04<00:00,  1.47it/s]
+  2026-04-01 -> 2026-04-07: 27,502 rows
+This is a large query, it may take a moment to complete
+  0%|          | 0/7 [00:00<?, ?it/s] 14%|█▍        | 1/7 [00:00<00:04,  1.24it/s] 43%|████▎     | 3/7 [00:00<00:01,  3.69it/s]100%|██████████| 7/7 [00:01<00:00,  9.44it/s]100%|██████████| 7/7 [00:01<00:00,  6.45it/s]
+  2026-04-08 -> 2026-04-14: 26,969 rows
+This is a large query, it may take a moment to complete
+  0%|          | 0/7 [00:00<?, ?it/s] 14%|█▍        | 1/7 [00:01<00:06,  1.11s/it]100%|██████████| 7/7 [00:01<00:00,  6.07it/s]
+  2026-04-15 -> 2026-04-21: 28,978 rows
+This is a large query, it may take a moment to complete
+  0%|          | 0/7 [00:00<?, ?it/s] 14%|█▍        | 1/7 [00:00<00:05,  1.18it/s] 57%|█████▋    | 4/7 [00:00<00:00,  5.11it/s] 86%|████████▌ | 6/7 [00:11<00:00,  5.11it/s]100%|██████████| 7/7 [00:16<00:00,  2.95s/it]100%|██████████| 7/7 [00:16<00:00,  2.42s/it]
+  2026-04-22 -> 2026-04-28: 26,705 rows
+This is a large query, it may take a moment to complete
+  0%|          | 0/7 [00:00<?, ?it/s] 14%|█▍        | 1/7 [00:00<00:05,  1.10it/s] 86%|████████▌ | 6/7 [00:15<00:02,  2.75s/it]100%|██████████| 7/7 [07:48<00:00, 92.96s/it]100%|██████████| 7/7 [07:48<00:00, 66.98s/it]
+  2026-04-29 -> 2026-05-05: 27,252 rows
+This is a large query, it may take a moment to complete
+  0%|          | 0/7 [00:00<?, ?it/s] 14%|█▍        | 1/7 [00:00<00:05,  1.12it/s] 29%|██▊       | 2/7 [00:01<00:02,  2.28it/s] 86%|████████▌ | 6/7 [00:04<00:00,  1.43it/s]100%|██████████| 7/7 [00:05<00:00,  1.20it/s]100%|██████████| 7/7 [00:05<00:00,  1.29it/s]
+  2026-05-06 -> 2026-05-12: 26,409 rows
+This is a large query, it may take a moment to complete
+  0%|          | 0/7 [00:00<?, ?it/s] 14%|█▍        | 1/7 [00:01<00:07,  1.25s/it]100%|██████████| 7/7 [00:01<00:00,  5.41it/s]
+  2026-05-13 -> 2026-05-19: 29,199 rows
+This is a large query, it may take a moment to complete
+  0%|          | 0/7 [00:00<?, ?it/s] 14%|█▍        | 1/7 [00:00<00:05,  1.01it/s] 43%|████▎     | 3/7 [00:01<00:01,  3.22it/s]100%|██████████| 7/7 [00:01<00:00,  5.79it/s]
+  2026-05-20 -> 2026-05-26: 26,850 rows
+This is a large query, it may take a moment to complete
+  0%|          | 0/2 [00:00<?, ?it/s] 50%|█████     | 1/2 [00:00<00:00,  1.83it/s]100%|██████████| 2/2 [03:02<00:00, 107.31s/it]100%|██████████| 2/2 [03:02<00:00, 91.29s/it] 
+  2026-05-27 -> 2026-05-28: 5,926 rows
+[2026_H1] saved 248,400 rows -> statcast_2026_H1.parquet
+
+Total pitches across halves: 1,989,946
+With bat_speed: 902,736
+
+Scoring (filter -> profile -> score)...
+  1992 qualifying player-halves (>= 180 competitive swings)
+Predicting batted-ball stats with predicted_stats_models.joblib...
+  added 5 columns: pred_avg_ev, pred_hard_hit_pct, pred_barrel_pct, pred_avg_la, pred_xwobacon
+Computing approach features + observed PA value...
+  PA-value model v1.0.0, blend k={'xwoba': 250, 'woba': 700}
+  added blended_xwoba / blended_woba (+ obs_*, pred_* for transparency)
+
+Looking up names for 585 batters...
+
+Looking up names for 585 batters...
+
+Looking up names for 585 batters...
+
+Writing outputs to data/processed/
+  wrote leaderboard_half.csv (1992 rows)
+  wrote leaderboard_season.csv (1452 rows)
+  wrote leaderboard_alltime.csv (585 rows)
+
+========================================================================================
+TOP 25 — ALL-TIME (2023 H2 – 2025 H2, swing-weighted, reliability-shrunk)
+========================================================================================
+             name  swing_plus  n_swings  pred_barrel_pct  pred_xwobacon  obs_xwoba  pred_xwoba  blended_xwoba
+Giancarlo Stanton       133.1    1541.0             19.8          0.501      0.353       0.374          0.358
+      Aaron Judge       132.6    2993.0             18.5          0.520      0.464       0.425          0.459
+       Nick Kurtz       132.4    1199.0             19.1          0.522      0.376       0.378          0.376
+   Kyle Schwarber       129.0    3115.0             18.1          0.475      0.390       0.380          0.389
+    Shohei Ohtani       123.9    3208.0             15.7          0.473      0.431       0.394          0.427
+     Riley Greene       121.8    2619.0             14.6          0.480      0.352       0.348          0.351
+     Ronald Acuña       119.9    1947.0             13.7          0.462      0.405       0.405          0.405
+     Byron Buxton       119.7    2123.0             13.2          0.434      0.349       0.326          0.345
+  Elly De La Cruz       119.4    3153.0             11.4          0.427      0.328       0.327          0.328
+Christopher Morel       119.1    2076.0             14.6          0.426      0.320       0.333          0.322
+    Tyler O'Neill       118.3    1461.0             14.5          0.440      0.328       0.337          0.330
+    Jordan Walker       118.2    1816.0             12.8          0.423      0.312       0.313          0.312
+     Matt Chapman       118.0    2662.0             11.7          0.403      0.326       0.342          0.328
+         Jo Adell       117.8    2454.0             14.3          0.448      0.342       0.348          0.343
+  Junior Caminero       117.8    1835.0             14.2          0.429      0.344       0.351          0.346
+        Juan Soto       117.7    2671.0             12.4          0.419      0.441       0.409          0.437
+      Pete Alonso       117.0    3223.0             13.6          0.443      0.364       0.362          0.364
+      Luis Robert       116.6    2049.0             13.3          0.437      0.309       0.327          0.312
+       James Wood       116.4    1922.0             13.7          0.464      0.379       0.355          0.375
+ Garrett Mitchell       115.9     610.0             13.7          0.460      0.319       0.330          0.323
+       Andy Pages       115.6    2312.0              9.2          0.405      0.326       0.338          0.328
+  George Springer       115.5    2900.0             11.4          0.405      0.350       0.362          0.352
+   Eugenio Suárez       115.5    3091.0             12.6          0.406      0.321       0.321          0.321
+    Colton Cowser       115.4    1756.0             13.7          0.453      0.315       0.331          0.318
+  Julio Rodríguez       115.3    3553.0             12.3          0.427      0.346       0.340          0.345
+
+========================================================================================
+BOTTOM 15 — ALL-TIME
+========================================================================================
+            name  swing_plus  n_swings  pred_barrel_pct  pred_xwobacon  obs_xwoba  pred_xwoba  blended_xwoba
+     Steven Kwan        84.7    2527.0              1.2          0.295      0.321       0.317          0.321
+     Nicky Lopez        85.9     691.0              2.7          0.280      0.273       0.282          0.276
+Travis Jankowski        87.0     420.0             -0.9          0.260      0.261       0.283          0.271
+  Xavier Edwards        88.3    1796.0              2.6          0.314      0.309       0.300          0.307
+    Jacob Wilson        88.5    1066.0              1.4          0.298      0.297       0.285          0.294
+Chandler Simpson        88.8     991.0              2.3          0.283      0.287       0.291          0.288
+     Sal Frelick        89.1    2360.0              2.5          0.299      0.294       0.299          0.295
+  Nolan Schanuel        89.2    2265.0              4.6          0.330      0.325       0.327          0.326
+     Jake Mangum        89.3    1036.0              1.6          0.301      0.277       0.279          0.277
+  Zach Mckinstry        90.2    2092.0              3.9          0.335      0.296       0.299          0.296
+Jake Cronenworth        90.2    2235.0              4.2          0.334      0.329       0.313          0.326
+      Liam Hicks        90.4     843.0              3.6          0.313      0.319       0.322          0.320
+   Wilmer Flores        90.5    1600.0              3.4          0.302      0.304       0.300          0.303
+ Whit Merrifield        90.8     976.0              2.5          0.303      0.275       0.283          0.278
+  Luis Guillorme        90.9     185.0              3.6          0.290      0.285       0.266          0.272
+
+========================================================================================
+2025 SEASON — TOP 20
+========================================================================================
+             name  swing_plus  n_swings  pred_barrel_pct  pred_xwobacon  obs_xwoba  pred_xwoba  blended_xwoba
+       Nick Kurtz       128.7     783.0             19.3          0.523      0.374       0.371          0.373
+   Kyle Schwarber       127.2    1211.0             18.7          0.485      0.402       0.381          0.397
+      Aaron Judge       125.5    1103.0             17.7          0.507      0.461       0.422          0.450
+    Shohei Ohtani       121.6    1234.0             16.3          0.481      0.424       0.388          0.415
+     Riley Greene       120.9    1119.0             15.7          0.494      0.335       0.334          0.335
+Giancarlo Stanton       120.2     353.0             19.8          0.503      0.385       0.366          0.375
+  George Springer       119.3    1001.0             14.0          0.437      0.408       0.382          0.401
+     Byron Buxton       118.3    1005.0             14.1          0.447      0.350       0.334          0.345
+      Pete Alonso       117.7    1227.0             14.2          0.457      0.386       0.369          0.381
+       James Wood       116.4    1098.0             14.2          0.471      0.361       0.347          0.357
+    Jordan Walker       116.2     744.0             13.8          0.436      0.278       0.305          0.289
+         Jo Adell       116.0    1112.0             14.9          0.458      0.367       0.355          0.364
+      Cal Raleigh       115.9    1375.0             16.4          0.455      0.371       0.380          0.373
+     Ronald Acuña       115.8     752.0             13.7          0.462      0.398       0.375          0.389
+  Junior Caminero       115.5    1187.0             14.4          0.432      0.346       0.348          0.347
+   Eugenio Suárez       114.7    1220.0             13.0          0.401      0.321       0.309          0.317
+  Elly De La Cruz       114.6    1176.0             10.3          0.410      0.322       0.326          0.323
+       Oneil Cruz       114.5     873.0             17.9          0.481      0.325       0.363          0.337
+      Luis Robert       114.4     787.0             14.6          0.446      0.325       0.352          0.335
+        Juan Soto       114.3     995.0             11.9          0.412      0.430       0.401          0.422
