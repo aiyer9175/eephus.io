@@ -26717,8 +26717,12 @@ function _gfxAvatar(r, P) {
     const onerr = `if(typeof _gfxLogMissingPhoto!=='undefined')_gfxLogMissingPhoto(${Number(r.mlbam) || 0});this.style.display='none';`;
     return `<span style="${wrap}"><img src="${hs}" crossorigin="anonymous" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block;" onerror="${onerr}"></span>`;
   }
-  // Logo-as-avatar (farm rows, or photos toggled off): contain + padding.
-  return `<span style="${wrap}background-size:46%;"><img src="${teamLogoURL(r.org)}" crossorigin="anonymous" alt="${escapeHtml(r.org || "")}" style="width:100%;height:100%;object-fit:contain;padding:7px;box-sizing:border-box;display:block;" onerror="this.style.display='none';"></span>`;
+  // Logo-as-avatar (farm rows, or photos toggled off): contain + padding. The
+  // team logo IS the avatar here, not a 404 fallback, so CLEAR the silhouette
+  // cell background (otherwise the player silhouette shows through around the
+  // padded, contained logo — farm-GFX bug). A logo 404 degrades to the plain
+  // palette bg, not the silhouette.
+  return `<span style="${wrap}background-image:none;"><img src="${teamLogoURL(r.org)}" crossorigin="anonymous" alt="${escapeHtml(r.org || "")}" style="width:100%;height:100%;object-fit:contain;padding:7px;box-sizing:border-box;display:block;" onerror="this.style.display='none';"></span>`;
 }
 // Footer legend per kind.
 function _gfxFooterNote(kind) {
