@@ -129,6 +129,7 @@ def test_means_still_reconcile_after_bayes() -> None:
     """The hierarchical-MAP point estimate still reconciles the weighted six-year
     avg WAR to the anchor at 50/55/60 (the Prompt-B calibration survives)."""
     tol = float(vf._config()["fit"]["reconcile_tol"])
-    for fv, target in [(50, 2.0), (55, 2.5), (60, 3.0)]:
+    for fv in (50, 55, 60):
+        target = vf.fv_to_6yr_avg_war(fv)   # v47 config anchor, not hardcoded
         for is_pit in (False, True):
             assert vf.expected_six_year_avg_war(fv, is_pit) == pytest.approx(target, abs=tol)

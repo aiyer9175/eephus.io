@@ -147,21 +147,20 @@ fit:
 # =============================================================================
 # Calibration anchor: FV -> 6-YEAR AVERAGE annual WAR (FanGraphs primer; NOT peak)
 # =============================================================================
-# The bucket WAR levels are calibrated so the P(bucket|FV)-weighted six-year
-# average annual WAR matches these targets. ~linear 0.1 WAR/pt over 45-60;
-# tapers below 45; steeper above 60. Interpolated smoothly (PCHIP) for non-grid FV.
-fv_to_6yr_avg_war: {35: 0.6, 40: 1.0, 45: 1.5, 50: 2.0, 55: 2.5, 60: 3.0, 65: 4.0, 70: 5.0, 80: 7.0}
-# HIGH-FV RECONCILIATION CEILING (known limitation): because §1 makes bucket
-# WAR levels FV-INDEPENDENT, the (single) calibrated star midpoint (~4.6 hitter /
-# ~5.0 pitcher) is a hard ceiling on the achievable weighted-avg WAR. The primer
-# anchors above (70->5.0, 80->7.0) therefore CANNOT be reconciled by any
-# probability shift -- the Clemens star band and the primer's elite-FV anchors
-# are mutually inconsistent at the top. We reconcile tightly at reconcile_fvs
-# (below) and treat FV>~62 as cautious extrapolation (spec support is [35,70]).
-# To price elite prospects higher, either raise the star band / add a 6th
-# "superstar" bucket, or extend reconcile_fvs (which trades named-target
-# tightness for upper-FV reach -- 60 loosens toward the tol edge).
-# FVs at which the bucket-midpoint calibration is solved (must have fitted probs).
+# v47 — EMPIRICALLY RECALIBRATED to realized outcomes. These are the bust-INCLUSIVE
+# six-year-avg controlled WAR by FV, grounded in the resolved 2017-2020 cohorts
+# (n=2,684; realized first-6-MLB-season WAR, never-debuted=0), lightly blended with
+# the public Edwards scale at the thin/censored tiers (45-50 and 60+). The prior
+# anchors (45->1.5 ... 60->3.0) were the FanGraphs primer's survivor/ceiling values
+# and ran the model ~3-4x over realized AND public; the 2017-20 cohorts produced
+# only ~0.15/0.50/0.77/1.36 WAR/yr at 45/50/55/60 (bust rates 81/52/43/~20%). With
+# the FV-DEPENDENT bucket midpoints (§ _fv_war_scale), the bucket-weighted WAR
+# reconciles EXACTLY to these anchors at EVERY FV, so there is no longer a high-FV
+# ceiling and no bimodal-split smoothness problem. See docs/surplus-recalibration.md
+# for the empirical distributions, out-of-sample validation, and benchmark check.
+fv_to_6yr_avg_war: {35: 0.12, 40: 0.22, 45: 0.38, 50: 0.70, 55: 0.95, 60: 1.45, 65: 1.95, 70: 2.60, 80: 3.80}
+# reconcile_fvs is now vestigial (the FV-dependent scale reconciles at every FV);
+# retained for the diagnostic midpoint-solve provenance in the fit file.
 reconcile_fvs: [45, 50, 55, 60]
 
 # =============================================================================

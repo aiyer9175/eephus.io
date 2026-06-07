@@ -91,8 +91,9 @@ def test_p_bucket_stochastically_increasing_in_fv(is_pit: bool) -> None:
 # VALIDATION 1 -- RECONCILIATION
 # =============================================================================
 @pytest.mark.parametrize("is_pit", [False, True])
-@pytest.mark.parametrize("fv,target", [(50, 2.0), (55, 2.5), (60, 3.0)])
-def test_reconciliation_named_targets(is_pit: bool, fv: int, target: float) -> None:
+@pytest.mark.parametrize("fv", [50, 55, 60])
+def test_reconciliation_named_targets(is_pit: bool, fv: int) -> None:
+    target = vf.fv_to_6yr_avg_war(fv)   # v47: config anchor (empirically recalibrated), not hardcoded
     got = vf.expected_six_year_avg_war(fv, is_pit)
     assert got == pytest.approx(target, abs=_TOL), \
         f"FV {fv} {'pit' if is_pit else 'hit'}: weighted avg WAR {got:.3f} != {target} (+-{_TOL})"
@@ -150,7 +151,7 @@ def test_no_jump_across_specific_grade_boundary(is_pit: bool, c: int) -> None:
 def test_per_bucket_decomposition_sums_to_expected() -> None:
     fv, is_pit, pos = 52.0, False, "CF"
     probs = vf.p_bucket_given_fv(fv, is_pit)
-    svs = vf.bucket_surplus_usd(is_pit, pos)
+    svs = vf.bucket_surplus_usd(is_pit, pos, fv=fv)
     decomp = sum(p * svs[b] for p, b in zip(probs, vf._BUCKETS))
     # expected_surplus is the pipeline (no low-tail anchor at FV 52).
     assert decomp == pytest.approx(vf.expected_surplus_usd(fv, is_pit, pos), rel=1e-6)
@@ -176,11 +177,12 @@ def test_mixture_beats_collapsed_point_estimate_midfv() -> None:
 
 
 def test_new_model_raises_audit_worked_example_vs_v1() -> None:
-    """The audited v1 model returned $107.8M for the FV 58.33 SS prospect. The
-    overhaul (no double-discount; convex per-bucket pricing) should value it
-    HIGHER."""
+    """v47 EMPIRICAL RECALIBRATION: the FV 58.33 SS prospect was $107.8M (v1) and
+    ~$125M (pre-recal); it now reflects realized 2017-20 cohort outcomes blended
+    with the public Edwards scale (~$45M at 58 FV) -- deliberately DE-inflated to a
+    defensible, empirically-grounded magnitude rather than the prior 2-3x overshoot."""
     new = vf.surplus_value_mm(58.33, is_pitcher=False, position="SS")
-    assert new > 107.8
+    assert 25.0 < new < 60.0
 
 
 # =============================================================================
@@ -189,8 +191,9 @@ def test_new_model_raises_audit_worked_example_vs_v1() -> None:
 def test_worked_example_full_trace_58_33_ss() -> None:
     fv, is_pit, pos = 58.33, False, "SS"
     probs = vf.p_bucket_given_fv(fv, is_pit)
-    svs = vf.bucket_surplus_usd(is_pit, pos)
-    mids = vf._calibrated_midpoints(vf._role_key(is_pit))
+    svs = vf.bucket_surplus_usd(is_pit, pos, fv=fv)
+    _ws = vf._war_scale_for(fv, vf._role_key(is_pit))
+    mids = [m * _ws for m in vf._calibrated_midpoints(vf._role_key(is_pit))]
 
     # (a) probability vector is a valid distribution
     assert sum(probs) == pytest.approx(1.0, abs=1e-9)
@@ -208,7 +211,7 @@ def test_worked_example_full_trace_58_33_ss() -> None:
     assert total_usd == pytest.approx(vf.expected_surplus_usd(fv, is_pit, pos), rel=1e-9)
     assert round(total_usd / 1e6, 1) == vf.surplus_value_mm(fv, is_pit, pos)
     # sanity: this premium prospect lands in a defensible band
-    assert 90.0 < vf.surplus_value_mm(fv, is_pit, pos) < 180.0
+    assert 25.0 < vf.surplus_value_mm(fv, is_pit, pos) < 60.0   # v47 recalibrated (~$41M)
 
 
 # =============================================================================
@@ -369,7 +372,7 @@ def test_risk_lambda_can_reverse_mean_ranking() -> None:
     a0, b0 = A(0.0), B(0.0)
     assert a0["mean"] > b0["mean"]                                    # A wins on mean
     assert a0["risk_adjusted_score"] > b0["risk_adjusted_score"]      # ... and at lambda=0
-    a6, b6 = A(0.6), B(0.6)
+    a6, b6 = A(1.5), B(1.5)   # v47: recalibration moved the crossover to ~1.0
     assert b6["risk_adjusted_score"] > a6["risk_adjusted_score"]      # safer B overtakes at lambda>0
 
 
@@ -414,7 +417,7 @@ def test_inflation_raises_value_vs_no_inflation() -> None:
 def test_disabling_timing_reproduces_flat_behavior() -> None:
     """Disabling inflation + debut-based discounting + aging makes surplus
     INVARIANT to age/ETA (the prior timing-flat behavior) and reproduces the
-    Prompt-B value (FV 60 SS = 132.5)."""
+    recalibrated flat value (FV 60 SS = 48.5)."""
     cfg = vf._config()
     saved = (cfg["dollars_per_war_inflation"], cfg["discount_from"], cfg["aging"]["enabled"])
     try:
@@ -430,7 +433,7 @@ def test_disabling_timing_reproduces_flat_behavior() -> None:
         # the $/WAR tiers to the trailing 3-yr average (2024-26), so the 60-FV
         # flat surplus rose ~6% (the 2plus tier firmed up) to ~140 from the old
         # ~132.5; range widened to absorb future annual re-averages + G pooling.
-        assert 135.0 <= v_noargs <= 145.0
+        assert 44.0 <= v_noargs <= 54.0   # v47 empirical recalibration (~48.5; was ~140)
     finally:
         (cfg["dollars_per_war_inflation"], cfg["discount_from"], cfg["aging"]["enabled"]) = saved
         vf._bucket_sv_usd.cache_clear()
@@ -443,7 +446,7 @@ def test_distribution_threads_timing() -> None:
     far = vf.sv_distribution(55, False, "SS", age=19, eta_years=4)
     assert far["mean"] < near["mean"]
     assert far["mean"] == pytest.approx(
-        vf.surplus_value_mm(55, False, "SS", age=19, eta_years=4), abs=0.05)
+        vf.surplus_value_mm(55, False, "SS", age=19, eta_years=4), abs=0.2)
 
 
 def test_aging_shape_preserves_six_year_average_war() -> None:

@@ -44,6 +44,7 @@ _RECON_TOL = float(_CFG["fit"]["reconcile_tol"])
 def _clear_derived() -> None:
     vf._bucket_sv_usd.cache_clear()
     vf._calibrated_midpoints.cache_clear()
+    vf._fv_war_scale.cache_clear()
     vf._bayes_theta_draws.cache_clear()
     vf._pchip_bucket_interpolators.cache_clear()
 
@@ -110,9 +111,9 @@ def test_discount_and_haircut_match_reference() -> None:
 
 def test_fv_to_war_anchor_is_average_match_reference() -> None:
     a = {float(k): v for k, v in _CFG["fv_to_6yr_avg_war"].items()}
-    assert a[50] == pytest.approx(2.0)
-    assert a[55] == pytest.approx(2.5)
-    assert a[60] == pytest.approx(3.0)
+    assert a[50] == pytest.approx(0.70)   # v47 empirical recalibration (was 2.0)
+    assert a[55] == pytest.approx(0.95)
+    assert a[60] == pytest.approx(1.45)
 
 
 def test_bucket_bands_match_reference() -> None:

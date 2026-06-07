@@ -161,7 +161,7 @@ def test_hitter_surplus_unchanged_vs_raw_pipeline(fv) -> None:
     role layer never touches it."""
     if fv >= 45:
         probs = vf.p_bucket_given_fv(fv, False)
-        svs = vf._bucket_sv_usd("hitter", False, None, 0.0)
+        svs = vf._bucket_sv_usd("hitter", False, None, 0.0, vf._war_scale_for(fv, "hitter"))
         raw_mm = sum(p * s for p, s in zip(probs, svs)) / 1e6
         assert vf.surplus_value_mm(fv, False, "SS") == pytest.approx(round(raw_mm, 1), abs=0.1)
 

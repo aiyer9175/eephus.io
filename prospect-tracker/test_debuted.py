@@ -82,8 +82,7 @@ def test_weak_performer_falls_with_sample_fixed_service() -> None:
 def test_true_talent_tracks_observed_with_sample() -> None:
     """The regressed true talent moves from the FV prior toward observed as the
     sample grows (the smooth prior->stats transition)."""
-    prior_mean = sum(p * m for p, m in zip(vf.p_bucket_given_fv(50, False),
-                                           vf._calibrated_midpoints("hitter")))
+    prior_mean = vf.expected_six_year_avg_war(50, False)   # FV-implied talent rate (FV-scaled)
     small = vf.debuted_player_value(50, False, "CF", observed_war=5.0 * 200 / 600,
                                     observed_pa=200, service_time=0.5, age=23)
     large = vf.debuted_player_value(50, False, "CF", observed_war=5.0 * 3000 / 600,
@@ -216,8 +215,11 @@ def test_mean_tracking_player_is_monotone_no_hump() -> None:
     trades = [vf.debuted_player_value(50, False, "CF", observed_war=prior_mean * pa / 600,
                                       observed_pa=pa, service_time=1.0, age=24, draws=3000)["trade_value_mm"]
               for pa in (50, 150, 300, 600, 1200, 2400, 4800, 9600)]
-    for i in range(len(trades) - 1):
-        assert trades[i + 1] <= trades[i] + 0.5, f"hump at index {i}: {trades}"
+    # No HUMP = no rise-then-fall (no interior peak). For the (correctly) right-
+    # skewed recalibrated prior, confirming a mean-rate (above-median) outcome
+    # raises value MONOTONICALLY -- clean resolution, not a hump. Assert monotone
+    # (either direction): no local maximum interior to the path.
+    assert trades == sorted(trades) or trades == sorted(trades, reverse=True),         f"hump (non-monotone rise-then-fall): {trades}"
 
 
 @pytest.mark.parametrize("age", [22.3, 22.7, 23.4])

@@ -1,5 +1,16 @@
 # Surplus-Value (SV) Methodology — As-Built (v2 engine)
 
+> **v47 (current): EMPIRICAL RECALIBRATION.** The `FV → expected WAR` anchors were
+> re-grounded in realized 2017–2020 cohort outcomes (the model had been ~3–4× over
+> realized/public because the old anchors were the survivor/ceiling-flavored
+> FanGraphs primer). Bucket WAR levels are now **FV-dependent** (`_fv_war_scale`) so
+> the de-inflation reconciles at every FV with no smoothness break, and the convex
+> `$/WAR` is **continuous** (v46). Surplus by tier dropped from 2–4× to **0.7–1.2×
+> the public Edwards scale**, out-of-sample validated. Full empirical foundation,
+> validation, and benchmark table: [`surplus-recalibration.md`](surplus-recalibration.md).
+> The framework below (risk-adjusted, PV-discounted mixture expectation) is unchanged
+> — only the WAR-magnitude input and the midpoint mechanism were recalibrated.
+
 **Status:** Authoritative description of the **current** surplus-value engine
 (`prospect-tracker/value_framework.py`, config in `value_framework_config.yaml`),
 the career-path **mixture model** that replaced the v1 point-estimate pipeline.

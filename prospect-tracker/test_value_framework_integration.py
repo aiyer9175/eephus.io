@@ -216,7 +216,7 @@ def test_top_prospect_surplus_in_expected_range() -> None:
     that warrants review."""
     s = vf.surplus_value_mm(60, is_pitcher=False, position="SS")
     assert s is not None
-    assert 80.0 <= s <= 200.0, f"FV 60 SS surplus {s} out of expected range"
+    assert 35.0 <= s <= 90.0, f"FV 60 SS surplus {s} out of expected range"   # v47 recalibrated (~$53M)
 
 
 def test_fringe_prospect_surplus_at_floor() -> None:

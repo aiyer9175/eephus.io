@@ -539,8 +539,9 @@ def expected_six_year_avg_war(fv: float, is_pitcher: bool) -> float | None:
     probs = p_bucket_given_fv(fv, is_pitcher)
     if probs is None:
         return None
-    mids = _calibrated_midpoints(_role_key(is_pitcher))
-    return sum(p * m for p, m in zip(probs, mids))
+    role = _role_key(is_pitcher)
+    mids = _calibrated_midpoints(role)
+    return sum(p * m for p, m in zip(probs, mids)) * _war_scale_for(fv, role)
 
 
 # =============================================================================
@@ -647,7 +648,8 @@ def sv_credible_interval(fv, is_pitcher, position=None, *, cred=None, age=None,
     # Mirror expected_surplus_usd's regime: the pipeline component is evaluated at
     # FV for the pipeline region and at bridge_to for the (cutover, bridge) bridge,
     # so the interval brackets the SAME quantity as point_mm.
-    bucket_sv = _effective_bucket_sv(is_pitcher, position, da, ee)
+    bucket_sv = _effective_bucket_sv(is_pitcher, position, da, ee,
+                                     _war_scale_for(f if f >= bridge_to else bridge_to, _role_key(is_pitcher)))
     draw_fv = f if f >= bridge_to else bridge_to
     d = p_bucket_posterior_draws(draw_fv, is_pitcher, draws=draws, seed=seed)
     if d is None:
@@ -675,14 +677,43 @@ def sv_credible_interval(fv, is_pitcher, position=None, *, cred=None, age=None,
 # =============================================================================
 @lru_cache(maxsize=4)
 def _calibrated_midpoints(role: str) -> tuple[float, ...]:
-    """Per-bucket six-year-average WAR levels. Read from the fitted file if
-    present; else fall back to the config seed midpoints. bust is pinned at 0."""
-    fit = _fitted()
-    mids = (fit.get("bucket_midpoints") or {}).get(role)
-    if mids and len(mids) == _N_BUCKETS:
-        return tuple(float(x) for x in mids)
+    """v47 — the FIXED, smooth per-bucket WAR SHAPE (the band-prior levels). The
+    per-FV LEVEL now comes from `_fv_war_scale` (FV-DEPENDENT midpoints = shape *
+    scale): low-FV prospects de-value smoothly without the old joint midpoint
+    solve forcing a bimodal split (which broke debuted-value monotonicity). bust
+    pinned at 0. (The legacy fitted `bucket_midpoints` stay in the fit file for
+    provenance but no longer drive valuation.)"""
     cfg = _config()["buckets"]
     return tuple(float(cfg[b]["midpoint_war"]) for b in _BUCKETS)
+
+
+@lru_cache(maxsize=1024)
+def _fv_war_scale(fv_half: float, role: str) -> float:
+    """FV-dependent scalar k(FV) on the base bucket shape: scales it so the
+    P(bucket|FV)-weighted six-year-avg WAR reconciles EXACTLY to the
+    fv_to_6yr_avg_war anchor at this FV. Smooth in FV (anchor + P(bucket) are
+    smooth), so midpoints = shape * k(FV) never go bimodal. `fv_half` is the FV
+    rounded to 0.5 (bounds the cache). bust bucket (shape 0) is unaffected."""
+    is_pit = (role == "pitcher")
+    probs = p_bucket_given_fv(fv_half, is_pit)
+    base = _calibrated_midpoints(role)
+    if probs is None:
+        return 1.0
+    denom = sum(p * b for p, b in zip(probs, base))
+    anchor = fv_to_6yr_avg_war(fv_half)
+    if not denom or anchor is None:
+        return 1.0
+    return float(anchor) / float(denom)
+
+
+def _war_scale_for(fv: float | None, role: str) -> float:
+    """Public helper: FV-dependent WAR scale, FV rounded to 0.5 for caching."""
+    if fv is None:
+        return 1.0
+    try:
+        return _fv_war_scale(round(float(fv) * 2) / 2.0, role)
+    except (TypeError, ValueError):
+        return 1.0
 
 
 # =============================================================================
@@ -749,13 +780,13 @@ def _reliever_level(midpoint_war: float) -> float:
 
 
 def _bucket_season_wars(role: str, bucket_idx: int, reliever: bool,
-                        debut_age: float | None = None) -> list[float]:
-    """Per-season WAR for a bucket across the control window. SP level = the
-    calibrated 200-IP-band midpoint; RELIEVER level = the bullpen-normalized,
-    ceiling-capped value (the role-outcome layer values relief outcomes at their
-    real, far lower, full-season WAR). Times the aging/fixed shape."""
+                        debut_age: float | None = None, war_scale: float = 1.0) -> list[float]:
+    """Per-season WAR for a bucket across the control window. The bucket level =
+    base SHAPE midpoint * `war_scale` (the FV-DEPENDENT scale, default 1.0); SP
+    uses that, RELIEVER uses the bullpen-normalized, ceiling-capped value. Times
+    the aging/fixed shape."""
     shape = _trajectory_shape(role, debut_age, _BUCKETS[bucket_idx])
-    mid = _calibrated_midpoints(role)[bucket_idx]
+    mid = _calibrated_midpoints(role)[bucket_idx] * float(war_scale)
     level = _reliever_level(mid) if reliever else mid
     return [level * float(s) for s in shape]
 
@@ -806,12 +837,14 @@ def _service_path_surplus_usd(season_wars: list[float], super_two: bool,
 
 @lru_cache(maxsize=512)
 def _bucket_sv_usd(role: str, reliever: bool,
-                   debut_age: float | None = None, eta_years: float = 0.0) -> tuple[float, ...]:
-    """The 5 per-bucket surplus values ($USD), given timing. WAR levels are
-    FV-independent; `debut_age` reshapes each bucket's trajectory along the aging
-    curve and `eta_years` discounts the control window from projected debut.
-    Blends the standard and super-two service paths and floors each bucket at its
-    config floor (bust -> $0). Cached on rounded timing keys."""
+                   debut_age: float | None = None, eta_years: float = 0.0,
+                   war_scale: float = 1.0) -> tuple[float, ...]:
+    """The 5 per-bucket surplus values ($USD), given timing + the FV-dependent
+    `war_scale` (scales bucket WAR levels per FV). `debut_age` reshapes each
+    bucket's trajectory along the aging curve and `eta_years` discounts the
+    control window from projected debut. Blends the standard and super-two service
+    paths and floors each bucket at its config floor (bust -> $0). Cached on
+    rounded timing + war_scale keys."""
     cfg = _config()
     st = cfg["service_time"]
     s2 = st["super_two"]
@@ -819,7 +852,7 @@ def _bucket_sv_usd(role: str, reliever: bool,
     floors = cfg["buckets"]
     out = []
     for b in range(_N_BUCKETS):
-        wars = _bucket_season_wars(role, b, reliever, debut_age)
+        wars = _bucket_season_wars(role, b, reliever, debut_age, war_scale)
         sv_std = _service_path_surplus_usd(wars, False, eta_years)
         sv_s2 = _service_path_surplus_usd(wars, True, eta_years) if f > 0 else sv_std
         sv = (1.0 - f) * sv_std + f * sv_s2
@@ -859,15 +892,16 @@ def _pitcher_rp_by_bucket(position: str | None) -> list[float]:
 
 
 def _effective_bucket_sv(is_pitcher: bool, position: str | None,
-                         debut_age: float | None, eta_years: float) -> tuple[float, ...]:
-    """Per-bucket surplus ($USD) with the pitcher role-outcome layer applied.
-    Hitters: the plain bucket SVs (path unchanged). Pitchers: each bucket blends
-    the full-SP value and the bullpen-capped RP value by P(reliever|bucket),
-    with an optional injury/attrition haircut on the non-bust buckets."""
+                         debut_age: float | None, eta_years: float,
+                         war_scale: float = 1.0) -> tuple[float, ...]:
+    """Per-bucket surplus ($USD) with the pitcher role-outcome layer applied, at
+    the FV-dependent `war_scale`. Hitters: the plain bucket SVs. Pitchers: each
+    bucket blends the full-SP value and the bullpen-capped RP value by
+    P(reliever|bucket), with an optional injury/attrition haircut."""
     if not is_pitcher:
-        return _bucket_sv_usd("hitter", False, debut_age, eta_years)
-    sp = _bucket_sv_usd("pitcher", False, debut_age, eta_years)   # full 200-IP-band SP
-    rp = _bucket_sv_usd("pitcher", True, debut_age, eta_years)    # bullpen-capped RP
+        return _bucket_sv_usd("hitter", False, debut_age, eta_years, war_scale)
+    sp = _bucket_sv_usd("pitcher", False, debut_age, eta_years, war_scale)   # full 200-IP-band SP
+    rp = _bucket_sv_usd("pitcher", True, debut_age, eta_years, war_scale)    # bullpen-capped RP
     p_rp = _pitcher_rp_by_bucket(position)
     haz = float(_config().get("pitcher_role_mix", {}).get("injury_hazard", 0.0))
     out = []
@@ -896,12 +930,15 @@ def pitcher_role_split(fv, is_pitcher: bool, position: str | None = None) -> dic
 
 
 def bucket_surplus_usd(is_pitcher: bool, position: str | None = None, *,
-                       age: float | None = None, eta_years: float | None = None) -> dict[str, float]:
+                       age: float | None = None, eta_years: float | None = None,
+                       fv: float | None = None) -> dict[str, float]:
     """Public view of the per-bucket surplus constants (transparency / snapshot /
-    comparison test), with the pitcher role-outcome layer applied."""
+    comparison test), with the pitcher role-outcome layer applied. `fv` applies the
+    FV-dependent WAR scale (None -> base shape, the per-bucket reference levels)."""
     debut_age, eta_eff = _resolve_timing(age, eta_years)
     da, ee = _round_timing(debut_age, eta_eff)
-    svs = _effective_bucket_sv(is_pitcher, position, da, ee)
+    ws = _war_scale_for(fv, _role_key(is_pitcher)) if fv is not None else 1.0
+    svs = _effective_bucket_sv(is_pitcher, position, da, ee, ws)
     return {b: svs[i] for i, b in enumerate(_BUCKETS)}
 
 
@@ -993,8 +1030,9 @@ def point_estimate_surplus_usd(fv: float | None, is_pitcher: bool, position: str
     # trajectory at that level (collapse across years too -- the v1 ramp/avg).
     probs = p_bucket_given_fv(f, is_pitcher)
     mids = _calibrated_midpoints(role)
+    war_scale = _war_scale_for(f, role)   # FV-dependent level
     haircut = float(_config()["position"]["relief_war_haircut"]) if reliever else 1.0
-    e_war = sum(p * m for p, m in zip(probs, mids)) * haircut
+    e_war = sum(p * m for p, m in zip(probs, mids)) * war_scale * haircut
     n_years = int(_config()["service_time"]["control_years"])
     wars = [e_war] * n_years
     st = _config()["service_time"]
@@ -1030,9 +1068,9 @@ def expected_surplus_usd(fv: float | None, is_pitcher: bool, position: str | Non
     role = _role_key(is_pitcher)
     debut_age, eta_eff = _resolve_timing(age, eta_years)
     da, ee = _round_timing(debut_age, eta_eff)
-    # Role-mixed effective per-bucket SVs (hitter path unchanged; pitcher blends
-    # SP and bullpen-capped RP per bucket by P(reliever|bucket)).
-    svs = _effective_bucket_sv(is_pitcher, position, da, ee)
+    # Role-mixed effective per-bucket SVs at the FV-DEPENDENT WAR scale (hitter
+    # path; pitcher blends SP and bullpen-capped RP per bucket). The pipeline part
+    # is evaluated at the relevant FV's scale (the bridge uses bridge_to's scale).
     a = _config()["lowtier_anchor"]
     cutover = float(a["cutover_fv"])
     bridge_to = float(a["bridge_to_fv"])
@@ -1040,10 +1078,12 @@ def expected_surplus_usd(fv: float | None, is_pitcher: bool, position: str | Non
         base = _lowtier_anchor_usd(f, role, ee)
     elif f < bridge_to:
         lo = _lowtier_anchor_usd(cutover, role, ee)
-        hi = _pipeline_surplus_from_svs(bridge_to, is_pitcher, svs)
+        svs_b = _effective_bucket_sv(is_pitcher, position, da, ee, _war_scale_for(bridge_to, role))
+        hi = _pipeline_surplus_from_svs(bridge_to, is_pitcher, svs_b)
         t = (f - cutover) / (bridge_to - cutover)
         base = lo * (1 - t) + hi * t
     else:
+        svs = _effective_bucket_sv(is_pitcher, position, da, ee, _war_scale_for(f, role))
         base = _pipeline_surplus_from_svs(f, is_pitcher, svs)
     if apply_position_mult:
         base *= position_multiplier(position)  # 1.0 unless market_scarcity enabled
@@ -1272,7 +1312,7 @@ def _sv_draws_mm(fv, is_pitcher, position, n, seed=None, age=None, eta_years=Non
     debut_age, eta_eff = _resolve_timing(age, eta_years)
     da, ee = _round_timing(debut_age, eta_eff)
     probs = p_bucket_given_fv(f, is_pitcher)
-    bucket_sv = list(_effective_bucket_sv(is_pitcher, position, da, ee))
+    bucket_sv = list(_effective_bucket_sv(is_pitcher, position, da, ee, _war_scale_for(f, _role_key(is_pitcher))))
     pipeline_mean = sum(p * s for p, s in zip(probs, bucket_sv))
     scale = (mean_usd / pipeline_mean) if pipeline_mean > 0 else 0.0
     eff_sv = [s * scale for s in bucket_sv]
@@ -1562,13 +1602,15 @@ def _remaining_path_surplus_usd(season_wars: list[float], start_k: int, super_tw
 
 
 def _remaining_bucket_sv_usd(role: str, reliever: bool, debut_age: float | None,
-                             start_k: int, super_two_fraction: float) -> list[float]:
+                             start_k: int, super_two_fraction: float,
+                             war_scale: float = 1.0) -> list[float]:
     """Per-bucket surplus over the REMAINING control window (years start_k..end),
-    aging-shaped from debut_age, super-two blended by `super_two_fraction`."""
+    aging-shaped from debut_age, super-two blended by `super_two_fraction`, at the
+    FV-dependent `war_scale`."""
     floors = _config()["buckets"]
     out = []
     for b in range(_N_BUCKETS):
-        wars = _bucket_season_wars(role, b, reliever, debut_age)
+        wars = _bucket_season_wars(role, b, reliever, debut_age, war_scale)
         f = float(super_two_fraction)
         sv = ((1.0 - f) * _remaining_path_surplus_usd(wars, start_k, False)
               + f * _remaining_path_surplus_usd(wars, start_k, True))
@@ -1577,15 +1619,16 @@ def _remaining_bucket_sv_usd(role: str, reliever: bool, debut_age: float | None,
 
 
 def _effective_remaining_bucket_sv(is_pitcher: bool, position: str | None, debut_age: float | None,
-                                   start_k: int, super_two_fraction: float) -> list[float]:
+                                   start_k: int, super_two_fraction: float,
+                                   war_scale: float = 1.0) -> list[float]:
     """Per-bucket REMAINING surplus with the pitcher role-outcome layer applied
-    (mirror of _effective_bucket_sv over the remaining window). At start_k=0 this
-    reduces to _effective_bucket_sv, so a 0-sample debuted pitcher matches the
-    prospect path exactly. Hitter path unchanged."""
+    (mirror of _effective_bucket_sv over the remaining window), at the FV-dependent
+    `war_scale`. At start_k=0 this reduces to _effective_bucket_sv, so a 0-sample
+    debuted pitcher matches the prospect path exactly. Hitter path unchanged."""
     if not is_pitcher:
-        return _remaining_bucket_sv_usd("hitter", False, debut_age, start_k, super_two_fraction)
-    sp = _remaining_bucket_sv_usd("pitcher", False, debut_age, start_k, super_two_fraction)
-    rp = _remaining_bucket_sv_usd("pitcher", True, debut_age, start_k, super_two_fraction)
+        return _remaining_bucket_sv_usd("hitter", False, debut_age, start_k, super_two_fraction, war_scale)
+    sp = _remaining_bucket_sv_usd("pitcher", False, debut_age, start_k, super_two_fraction, war_scale)
+    rp = _remaining_bucket_sv_usd("pitcher", True, debut_age, start_k, super_two_fraction, war_scale)
     p_rp = _pitcher_rp_by_bucket(position)
     haz = float(_config().get("pitcher_role_mix", {}).get("injury_hazard", 0.0))
     out = []
@@ -1744,7 +1787,7 @@ def _lowtier_remaining_scale(fv: float, is_pitcher: bool, position: str | None,
     a = _config()["lowtier_anchor"]
     if fv >= float(a["bridge_to_fv"]):
         return 1.0
-    svs = _effective_bucket_sv(is_pitcher, position, debut_age, 0.0)
+    svs = _effective_bucket_sv(is_pitcher, position, debut_age, 0.0, _war_scale_for(fv, _role_key(is_pitcher)))
     full_pipe = _pipeline_surplus_from_svs(fv, is_pitcher, svs)
     if full_pipe <= 0:
         return 1.0
@@ -1807,7 +1850,8 @@ def _talent_regression(fv, is_pitcher: bool, observed_war: float,
             pen = float(deb.get("defense_early_penalty", 0.0))
             k_eff *= (1.0 - pen * (1.0 - seasons_played / max(dstab, 1e-9)))
     prior = p_bucket_given_fv(fv, is_pitcher)
-    mids_role = list(_calibrated_midpoints(role))
+    _ws = _war_scale_for(fv, role)                                      # FV-dependent bucket level
+    mids_role = [m * _ws for m in _calibrated_midpoints(role)]
     prior_mean_rate = sum(p * m for p, m in zip(prior, mids_role))
     obs_rate = (float(observed_war) * ref / sample) if sample > 0 else None
     k_reg = float(rel["hitter_regression_pa"]) if not is_pitcher else float(rel["pitcher_regression_ip"])
@@ -1913,7 +1957,8 @@ def debuted_player_value(
     # _effective_bucket_sv at start_k=0 so 0-sample continuity with the prospect
     # path is exact). Hitter path unchanged.
     remaining_bucket_sv = _effective_remaining_bucket_sv(is_pitcher, position, debut_age,
-                                                         start_k, super_two_fraction)
+                                                         start_k, super_two_fraction,
+                                                         _war_scale_for(fv, _role_key(is_pitcher)))
     posterior_mixture_mean = sum(p * sv for p, sv in zip(posterior, remaining_bucket_sv))
     # Continuous (graduated) projection, role-mixed: blend the full-SP and the
     # bullpen-capped RP continuous values by the posterior-weighted P(reliever)
@@ -2057,7 +2102,7 @@ def expected_war(fv, is_pitcher: bool, position: str | None = None, *,
     for b in range(_N_BUCKETS):
         # Band-scale trajectory (reliever=False): WAG grades on the talent/band scale;
         # the reliever role-VALUE haircut is a $ effect applied once downstream only.
-        traj = _bucket_season_wars(role, b, False, debut_age)
+        traj = _bucket_season_wars(role, b, False, debut_age, _war_scale_for(f, role))
         cum_b = _bucket_cumulative_war(traj, seasons)
         comps.append((float(probs[b]), cum_b, sd_within))
         mean += probs[b] * cum_b
@@ -2999,7 +3044,7 @@ def emit_snapshots(out_dir: Path | None = None) -> tuple[Path, Path]:
 def _print_worked_example(fv: float, is_pitcher: bool, position: str | None) -> None:
     role = _role_key(is_pitcher)
     probs = p_bucket_given_fv(fv, is_pitcher)
-    svs = _effective_bucket_sv(is_pitcher, position, None, 0.0)
+    svs = _effective_bucket_sv(is_pitcher, position, None, 0.0, _war_scale_for(fv, role))
     mids = _calibrated_midpoints(role)
     print(f"\nWorked example: FV {fv} {role}{'/'+position if position else ''}")
     print(f"  six-year avg WAR anchor target = {fv_to_6yr_avg_war(fv)}")

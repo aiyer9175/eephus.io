@@ -554,7 +554,9 @@ def make_synthetic_cohort(*, years: Sequence[int] = (2012, 2013, 2014, 2015, 201
             # Sample the player's actual career-outcome bucket from the model's
             # own P(bucket|FV) (so the realized OUTCOME DISTRIBUTION is preserved),
             # then realize a shrunk version of that bucket's talent level.
-            mids = vf._calibrated_midpoints("pitcher" if is_pit else "hitter")
+            _role = "pitcher" if is_pit else "hitter"
+            _ws = vf._war_scale_for(fv, _role)             # v47: FV-dependent bucket level
+            mids = [m * _ws for m in vf._calibrated_midpoints(_role)]
             probs = np.asarray(vf.p_bucket_given_fv(fv, is_pit), dtype=float)
             probs = probs / probs.sum()
             b = int(rng.choice(len(mids), p=probs))
