@@ -426,7 +426,11 @@ def fv_to_6yr_avg_war(fv: float | None) -> float | None:
         return None
     if not math.isfinite(f):
         return None
-    anchor = _config()["fv_to_6yr_avg_war"]
+    # Prefer the EMPIRICAL anchors re-derived from resolved cohorts (continuous
+    # calibration, written to the fit file by --fit); fall back to the config seed.
+    cal = _config().get("anchor_calibration", {})
+    fitted_anchors = (_fitted().get("empirical_anchors") or {}).get("anchors") if cal.get("use_empirical") else None
+    anchor = fitted_anchors or _config()["fv_to_6yr_avg_war"]
     pts = sorted((float(k), float(v)) for k, v in anchor.items())
     if f <= pts[0][0]:
         return pts[0][1]
@@ -2870,6 +2874,22 @@ def fit_and_write(out_path: Path | None = None, verbose: bool = True) -> dict:
             for k, v in recon.items():
                 print(f"  reconcile FV {k}: target={v['target']} "
                       f"weighted_avg_war={v['weighted_avg_war']} resid={v['resid']}")
+
+    # Continuous calibration: re-derive the empirical fv_to_6yr_avg_war anchors from
+    # the resolved historical cohorts (build-time DB). Guarded -- on any failure /
+    # missing DB / thin cohort, keep the config seed anchors (None -> not written).
+    cal = cfg.get("anchor_calibration", {})
+    if cal.get("use_empirical"):
+        try:
+            import empirical_anchors
+            ea = empirical_anchors.derive_empirical_war_anchors(policy=cal)
+            if ea and ea.get("anchors"):
+                fitted["empirical_anchors"] = ea
+                if verbose:
+                    print(f"  empirical_anchors (cohort {ea['cohort_window']}, n={ea['n_cohort']}): {ea['anchors']}")
+        except Exception as exc:                                   # never let calibration break the fit
+            if verbose:
+                print(f"  empirical_anchors: skipped ({exc})")
 
     out_path = out_path or _FITTED_PATH
     out_path.parent.mkdir(parents=True, exist_ok=True)

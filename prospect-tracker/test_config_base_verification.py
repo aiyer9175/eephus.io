@@ -206,10 +206,15 @@ def test_weighted_six_year_avg_war_reconciles(is_pit, fv) -> None:
 
 
 def test_committed_fitted_reconciliation_within_tol() -> None:
-    recon = json.loads(Path("data/value_framework_fitted.json").read_text())["reconciliation"]
-    for role in ("hitter", "pitcher"):
-        for fv in ("50.0", "55.0", "60.0"):
-            assert abs(recon[role][fv]["resid"]) <= _RECON_TOL
+    # v47: bucket-WAR reconciliation is now EXACT via the FV-dependent scale
+    # (_fv_war_scale) -- the live check above (test_*_reconcil*) verifies it. The
+    # committed fit instead carries the empirically-derived anchors; verify they're
+    # present + monotone (the FV-independent midpoint solve is vestigial).
+    fit = json.loads(Path("data/value_framework_fitted.json").read_text())
+    ea = (fit.get("empirical_anchors") or {}).get("anchors")
+    assert ea, "fitted file missing empirical_anchors (run --fit with a DB)"
+    vals = [v for _, v in sorted(ea.items(), key=lambda kv: float(kv[0]))]
+    assert vals == sorted(vals), f"empirical anchors not monotone: {ea}"
 
 
 # =============================================================================

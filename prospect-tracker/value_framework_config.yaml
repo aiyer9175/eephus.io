@@ -163,6 +163,26 @@ fv_to_6yr_avg_war: {35: 0.12, 40: 0.22, 45: 0.38, 50: 0.70, 55: 0.95, 60: 1.45, 
 # retained for the diagnostic midpoint-solve provenance in the fit file.
 reconcile_fvs: [45, 50, 55, 60]
 
+# CONTINUOUS CALIBRATION (empirical_anchors.py, run during --fit) -- the anchors
+# above are the SEED/fallback; when use_empirical is on AND the fit file carries
+# `empirical_anchors`, fv_to_6yr_avg_war reads those instead, re-derived from the
+# resolved historical cohorts so the model self-updates as cohorts resolve. The
+# resolved window slides forward automatically (reference_year = current year).
+# (Named anchor_calibration to avoid the post-hoc `calibration` shrinkage layer.)
+anchor_calibration:
+  use_empirical: true            # read fitted empirical anchors when present
+  resolved_lag_min: 6            # cohort = snapshots in [year-lag_max, year-lag_min]
+  resolved_lag_max: 9            #   (old enough that the 6-yr control window is ~complete)
+  min_cohort: 200                # below this many resolved players -> skip, keep seed
+  min_n_robust: 40               # tier n>=this -> base blend weight; thinner -> more reference
+  blend_weight_public: 0.5       # base weight toward the Edwards-implied reference
+  blend_thin_extra: 0.4          # extra public weight as n -> 0 (thin/censored cells)
+  tiers: [40, 45, 50, 55, 60, 65, 70, 80]
+  # Edwards-scale-implied six-year-avg WAR/yr (the WAR that reproduces the public
+  # surplus scale in THIS engine's cost/PV machinery) -- the blend reference + the
+  # value used where the cohort has no data (70/80, beyond the resolved sample).
+  public_reference: {35: 0.20, 40: 0.30, 45: 0.50, 50: 0.85, 55: 1.15, 60: 1.50, 65: 1.80, 70: 2.40, 80: 3.50}
+
 # =============================================================================
 # FV <= 40 dollar anchor (Edwards) -- SUPERSEDES the bucket pipeline below cutover
 # =============================================================================
@@ -171,7 +191,8 @@ reconcile_fvs: [45, 50, 55, 60]
 # anchor (decaying with FV); between the anchor point and the lowest reliable
 # fitted FV we bridge linearly so expected SV is continuous and monotone.
 lowtier_anchor:
-  anchor_usd_40fv_position: 2.5e+6
+  anchor_usd_40fv_position: 2.0e+6   # v47: lowered to the recalibrated scale (was 2.5e6;
+                                     #   the old value sat above the recal 45-FV RP pipeline)
   anchor_fv: 40.0
   decay_per_point: 0.16      # anchor *= exp(-decay * (40 - fv)) for fv < 40
   cutover_fv: 40.0           # fv <= this uses the anchor
