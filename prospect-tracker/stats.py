@@ -1913,6 +1913,27 @@ _PLACEHOLDER_TEAM_PHRASES = (
     "all-star",
 )
 
+# Arizona Fall League / showcase teams use real team ids in the MLB Stats
+# API and can be returned from the same team endpoint as DSL/rookie teams.
+# They are development/exhibition assignments, not affiliate level moves.
+_AFL_TEAM_PHRASES = (
+    "arizona fall league",
+    "mesa solar sox",
+    "salt river rafters",
+    "glendale desert dogs",
+    "peoria javelinas",
+    "scottsdale scorpions",
+    "surprise saguaros",
+    "fall stars",
+)
+
+
+def _is_exhibition_team(name: str | None) -> bool:
+    if not name:
+        return False
+    low = name.lower()
+    return any(p in low for p in _AFL_TEAM_PHRASES)
+
 # Verbs that MUST appear in the description for a move TO the parent MLB
 # club to count as a real call-up. Without one of these, "X assigned to
 # <Parent MLB Team>" is always spring training / exhibition. Affiliate
@@ -1967,6 +1988,8 @@ def derive_level_changes(transactions: list[dict],
             # Spring training / exhibition / placeholder row — never a
             # real affiliate move, even when the API team_id resolves.
             continue
+        if _is_exhibition_team(desc_low):
+            continue
         to_id = tx.get("to_team_id")
         from_id = tx.get("from_team_id")
         to_info = team_affiliations.get(int(to_id)) if to_id else None
@@ -1978,6 +2001,9 @@ def derive_level_changes(transactions: list[dict],
         if not to_level:
             continue
         if _is_placeholder_team(to_name) or _is_placeholder_team(tx.get("to_team_name")):
+            continue
+        if (_is_exhibition_team(to_name) or _is_exhibition_team(tx.get("to_team_name"))
+                or _is_exhibition_team(from_name) or _is_exhibition_team(tx.get("from_team_name"))):
             continue
         # Moves TO the parent MLB team need an explicit promotion verb,
         # otherwise they're spring training / non-roster invites which
@@ -2146,11 +2172,15 @@ def derive_transactions(transactions: list[dict]) -> list[dict]:
         desc_low = (tx.get("description") or "").lower()
         if any(p in desc_low for p in _NON_LEVEL_CHANGE_PHRASES):
             continue
+        if _is_exhibition_team(desc_low):
+            continue
         if any(p in desc_low for p in _NON_TRANSACTION_PHRASES):
             continue
         to_name   = tx.get("to_team_name")   or ""
         from_name = tx.get("from_team_name") or ""
         if _is_placeholder_team(to_name) or _is_placeholder_team(from_name):
+            continue
+        if _is_exhibition_team(to_name) or _is_exhibition_team(from_name):
             continue
         out.append({
             "date":        tx.get("date") or "",
@@ -3991,6 +4021,9 @@ def fetch_team_affiliations(season: int) -> dict[int, dict]:
             tid = int(t["id"])
             parent_id = t.get("parentOrgId")
             league_name = ((t.get("league") or {}).get("name") or "").lower()
+            team_name = (t.get("name") or "")
+            if _is_exhibition_team(team_name) or _is_exhibition_team(league_name):
+                continue
             level = default_level
             if level == "CPX" and "dominican" in league_name:
                 level = "DSL"

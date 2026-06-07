@@ -9742,6 +9742,35 @@ function loadSlice(name) {
   return _sliceInFlight[name];
 }
 
+let _playerNewsLoaded = false;
+let _playerNewsInFlight = null;
+function loadPlayerNewsSidecar() {
+  if (_playerNewsLoaded) return Promise.resolve();
+  if (_playerNewsInFlight) return _playerNewsInFlight;
+  const base = DATA_URL.replace(/[^/]+$/, "");
+  const versionParam = DATA && DATA.generated_at
+    ? `?v=${encodeURIComponent(DATA.generated_at)}`
+    : "";
+  _playerNewsInFlight = fetch(base + "player_news.json" + versionParam, {
+    cache: versionParam ? "force-cache" : "no-cache",
+  })
+    .then(r => {
+      if (r.status === 404) return {};
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
+    .then(payload => {
+      if (DATA) DATA.player_news = payload && typeof payload === "object" ? payload : {};
+      _playerNewsLoaded = true;
+    })
+    .catch(err => {
+      console.warn("player_news sidecar fetch failed:", err);
+      _playerNewsLoaded = true;
+    })
+    .finally(() => { _playerNewsInFlight = null; });
+  return _playerNewsInFlight;
+}
+
 // =============================================================================
 // FORMATTING HELPERS
 // =============================================================================
@@ -34674,18 +34703,23 @@ function makeSabermetricsBlock(player) {
     }
   } else if (sl.ops_plus_level != null || sl.era_minus_level != null) {
     // MiLB fallback — level-relative proxies.
-    if (sl.is_pitcher && sl.era_minus_level != null) {
-      const v = sl.era_minus_level;
-      tiles.push([
-        "ERA- (vs level)", v, colorize(v <= 90, v >= 110, v),
-        `Earned Run Average vs ${sl.level || "level"} mean · proxy for xFIP (real xFIP requires MLB data)`,
-      ]);
-    } else if (!sl.is_pitcher && sl.ops_plus_level != null) {
-      const v = sl.ops_plus_level;
-      tiles.push([
-        "OPS+ (vs level)", v, colorize(v >= 110, v <= 90, v),
-        `On-base + Slugging vs ${sl.level || "level"} mean · proxy for wRC+ (real wRC+ requires MLB data)`,
-      ]);
+    const levelRows = currentSeasonStatRows(player)
+      .filter(r => r && (r.ops_plus_level != null || r.era_minus_level != null));
+    const proxyRows = levelRows.length ? levelRows : [sl];
+    for (const row of proxyRows) {
+      if (row.is_pitcher && row.era_minus_level != null) {
+        const v = row.era_minus_level;
+        tiles.push([
+          `ERA- ${row.level || ""}`.trim(), v, colorize(v <= 90, v >= 110, v),
+          `Earned Run Average vs ${row.level || "level"} mean · proxy for xFIP (real xFIP requires MLB data)`,
+        ]);
+      } else if (!row.is_pitcher && row.ops_plus_level != null) {
+        const v = row.ops_plus_level;
+        tiles.push([
+          `OPS+ ${row.level || ""}`.trim(), v, colorize(v >= 110, v <= 90, v),
+          `On-base + Slugging vs ${row.level || "level"} mean · proxy for wRC+ (real wRC+ requires MLB data)`,
+        ]);
+      }
     }
   }
 
@@ -34698,6 +34732,49 @@ function makeSabermetricsBlock(player) {
       <div class="stat-label">${escapeHtml(label)}</div>
       <div class="stat-value" style="color:${color};font-family:var(--font-mono);">${val}</div>
     </div>`).join("")}</div>`;
+}
+
+function _playerNewsRows(player) {
+  const inlineRows = Array.isArray(player && player.player_news) ? player.player_news : [];
+  const sidecarRows = DATA && DATA.player_news && DATA.player_news[player.player_key]
+    ? DATA.player_news[player.player_key]
+    : [];
+  const rows = [...inlineRows, ...sidecarRows].filter(Boolean);
+  const seen = new Set();
+  return rows.filter(r => {
+    const key = `${r.source || ""}|${r.published_at || r.date || ""}|${r.headline || ""}|${r.summary || ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).sort((a, b) => String(b.published_at || b.date || "").localeCompare(String(a.published_at || a.date || "")));
+}
+
+function makePlayerNewsSection(player) {
+  if (!_playerNewsLoaded) {
+    loadPlayerNewsSidecar().then(() => {
+      if (state.view && state.view.type === "player" && state.view.key === player.player_key) render();
+    });
+  }
+  const rows = _playerNewsRows(player).slice(0, 4);
+  if (!rows.length) return "";
+  const cards = rows.map(r => {
+    const source = r.source || "News";
+    const date = r.published_at || r.date || "";
+    const headline = r.headline || r.title || "Player update";
+    const summary = r.summary || r.note || r.news || "";
+    const analysis = r.analysis || r.impact || "";
+    const href = r.url || r.link || "";
+    return `<div style="padding:10px 0;border-top:1px solid var(--border-light);">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+        <span class="source-pill">${escapeHtml(source)}</span>
+        ${date ? `<span style="color:var(--text-tertiary);font-size:11px;">${escapeHtml(String(date).slice(0, 10))}</span>` : ""}
+      </div>
+      <div style="font-weight:700;color:var(--text-primary);font-size:13px;line-height:1.35;">${href ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener">${escapeHtml(headline)}</a>` : escapeHtml(headline)}</div>
+      ${summary ? `<div style="margin-top:5px;color:var(--text-secondary);font-size:12px;line-height:1.45;">${escapeHtml(summary)}</div>` : ""}
+      ${analysis && analysis !== summary ? `<div style="margin-top:5px;color:var(--text-tertiary);font-size:12px;line-height:1.45;">${escapeHtml(analysis)}</div>` : ""}
+    </div>`;
+  }).join("");
+  return `<div class="detail-title">News</div><div class="detail-card" style="padding-top:0;">${cards}</div>`;
 }
 
 // Baseball-Savant quality-of-contact / plate-discipline tiles. Driven
@@ -35934,7 +36011,7 @@ function makeTransactionHistoryBlock(player) {
       detail: detailHtml,
     });
   }
-  rows.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   const html = rows.map(r => `<tr>
     <td style="white-space:nowrap;">${escapeHtml(r.date)}</td>
     <td style="white-space:nowrap;">${typeChip(r.kind)}</td>
@@ -39063,7 +39140,8 @@ function renderPlayerDetail(key) {
   // Overview tab, right under the summary tiles, instead of burying it in the
   // back "Details" tab. The two financial cards stay together.
   const valuationHtml = [surplusValueSection, contractDetailsSection].filter(Boolean).join("");
-  const overviewHtml = [summaryGridHtml, valuationHtml, chartSection, scoutReportsOnOverview, sourceSection, noteSection]
+  const playerNewsSection = makePlayerNewsSection(p);
+  const overviewHtml = [summaryGridHtml, valuationHtml, chartSection, playerNewsSection, scoutReportsOnOverview, sourceSection, noteSection]
     .filter(Boolean).join("");
   // v30.8 — Recent gameLogs viz. Reads p.statcast_metrics.recent_games
   // (populated by the per-player MLB Stats API gameLog pass). When
@@ -39090,7 +39168,7 @@ function renderPlayerDetail(key) {
   const scoutingHtml = [
     toolsSection + (sourceHistorySection || ""),
     toolHistorySection,
-    toolDevSection, perSourceToolsSection, scoutingReportsSection,
+    toolDevSection, perSourceToolsSection, playerNewsSection, scoutingReportsSection,
   ].filter(s => s && s.trim()).join("");
   const healthHtml = [ilSection, healthSection]
     .filter(Boolean).join("");

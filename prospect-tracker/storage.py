@@ -2061,6 +2061,27 @@ def load_source_events() -> dict[str, list[dict]]:
     return out
 
 
+def load_player_news() -> dict[str, list[dict]]:
+    """Return optional static news sidecar rows grouped by player_key."""
+    path = Path(__file__).parent / "data" / "player_news.json"
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8") or "{}")
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, list[dict]] = {}
+    for key, rows in raw.items():
+        if not isinstance(rows, list):
+            continue
+        clean = [r for r in rows if isinstance(r, dict)]
+        clean.sort(key=lambda r: str(r.get("published_at") or r.get("date") or ""), reverse=True)
+        out[str(key)] = clean[:8]
+    return out
+
+
 def upsert_sabermetrics(metrics: dict[str, "Sabermetrics"], season: int) -> int:
     """Upsert sabermetrics (wRC+, xFIP, wOBA, FIP, ...). One row per player."""
     n = 0
@@ -6085,6 +6106,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     ifa_spending_by_org = ifa_spending_by_org or {}
     contracts_by_key = dict(contracts_by_key or {})
     source_events_by_key = load_source_events()
+    player_news_by_key = load_player_news()
 
     # v17 — Merge in manual contract overrides from
     # data/contract_overrides.json. These take precedence over Spotrac
@@ -7973,6 +7995,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "stock": stock_movement(p),
             "live_signal": _live_signal,
             "source_events": _source_events_export,
+            "player_news": player_news_by_key.get(p.player_key, []),
             "statline": sl_out,
             "current_season_statlines": _current_season_statlines,
             "stat_flags": flags,
