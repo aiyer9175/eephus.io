@@ -24949,8 +24949,8 @@ const GLOSSARY = {
     name: "HIT+", aliases: ["HIT+", "Hitting+", "Hit Index"], category: "custom-index",
     priority: 28,
     short: "Hit-tool index — weighted blend of performance (AVG + contact), Statcast (zone-contact + whiff), and the Hit/Bat-Control grade. 100 = average.",
-    long: "Isolates the hit-tool dimension (distinct from POW+ power and OPS+ overall) as a three-way weighted blend, renormalized over whichever components are on file: 45% PERFORMANCE (0.6 · batting-average-vs-level + 0.4 · contact-vs-level, where a lower K% than the level mean reads above 100), 25% STATCAST contact (0.5 · zone-contact% + 0.5 · whiff%-inverted, indexed to pool averages), and 30% SCOUTING (the mean of the Hit grade and Bat Control on the 20-80 scale, 50 → 100, ±10 grade ≈ ±20 points). Hitters only, 40-game minimum. A graded prospect below the sample gate falls back to whichever components exist; the weights always renormalize so partial data still yields a comparable 100-anchored read. Statcast pool anchors (z-contact ≈ 80%, whiff ≈ 26%) are placeholders pending real per-level MiLB calibration.",
-    formula: "HIT+ = renorm(0.45·perf + 0.25·statcast + 0.30·tool+)\nperf = 100 · (0.6·AVG_ratio + 0.4·contact_ratio)\nstatcast = 0.5·(100·Zcon/80) + 0.5·(100·26/Whiff)\ntool+ = 100 + (mean(Hit, BatControl) − 50) · 2",
+    long: "Isolates the hit-tool dimension (distinct from POW+ power and OPS+ overall) as a reliability-weighted blend, base 45% PERFORMANCE / 25% STATCAST / 30% Hit-tool. The performance (0.6 · batting-average-vs-level + 0.4 · K%-avoidance-vs-level) and Statcast (zone-contact, whiff) components are down-weighted by sample reliability — batting average is slow to stabilize, so performance is anchored at 170 PA; zone signals stabilize over roughly 200 tracked pitches — so a thin-sample prospect leans on the scouting prior. Batting average and K%-avoidance are distinct contact constructs (not as collinear as ISO+/HR-rate+ in POW+), so the performance core keeps both. Hit grade = mean of Hit and Bat Control on the 20-80 scale (50 → 100, ±10 ≈ ±20). Statcast pool anchors (z-contact ≈ 80%, whiff ≈ 26%) are placeholders pending per-level MiLB calibration.",
+    formula: "HIT+ = Σ wᵢ·xᵢ / Σ wᵢ\nperf:     x = 100·(0.6·AVG_ratio + 0.4·contact_ratio),  w = 0.45 · AB/(AB+170)\nstatcast: x = 0.5·Zcon/80 + 0.5·26/Whiff (×100),  w = 0.25 · pitches/(pitches+200)\ntool:     x = 100 + (mean(Hit,BatCtrl) − 50)·2,  w = 0.30  (prior)",
     example: "A AA hitter batting .300 (level .246), 16% K% (level 22.5%), 82% zone-contact, paired with 55 Hit / 60 Bat Control — perf ~133, statcast ~103, tool+ 115 → HIT+ ~122.",
     related: ["bb_pct", "k_pct", "tool", "pwr_plus", "pd_plus", "ops_plus_level"],
   },
@@ -24958,17 +24958,17 @@ const GLOSSARY = {
     name: "ISO+", aliases: ["ISO+", "ISO Plus", "Isolated Power+"], category: "custom-index",
     priority: 29,
     short: "Isolated power indexed to the level-average ISO. 100 = league-average; +1 pt = 1% better (wRC+/ERA+ paradigm).",
-    long: "ISO (SLG − AVG) rescaled against the current level's average ISO so power reads on one cross-level axis: 100 is exactly league-average, 120 is 20% above, 80 is 20% below. The baseline is the same DATA.level_norms cohort every other '+' metric uses (same season/level source). Pure performance rescaling — no scouting-tool blend (that distinguishes it from POW+, which now blends ISO+ and HR-rate with the Power grade and Statcast). Hitters only, 40-game minimum.",
-    formula: "ISO+ = 100 · ISO / level_avg_ISO",
+    long: "ISO (SLG − AVG) rescaled against the current level's average ISO so power reads on one cross-level axis: 100 is exactly league-average, 120 is 20% above, 80 is 20% below. The baseline is the same DATA.level_norms cohort every other '+' metric uses (same season/level source). Pure performance rescaling, EMPIRICAL-BAYES shrunk toward the level average by AB (ISO stabilizes ~150 PA), so a 40-AB hot streak no longer posts an extreme ISO+. No scouting-tool blend — that distinguishes it from POW+, which reliability-weights ISO+ with the Power grade and Statcast. Hitters only, 40-game minimum.",
+    formula: "ISO+ = 100 + (100·ISO/level_avg_ISO − 100) · AB/(AB+150)   (empirical-Bayes shrunk toward the level average by AB)",
     example: "A High-A hitter with a .180 ISO at a level averaging .130 posts an ISO+ of ~138 (38% above league-average power).",
     related: ["iso", "pwr_plus", "slg", "tool"],
   },
   "pwr_plus": {
     name: "POW+", aliases: ["POW+", "PWR+", "Power Index", "Power+"], category: "custom-index",
     priority: 30,
-    short: "Hitter power index — weighted blend of performance (ISO+ + HR-rate), Statcast (hard-hit + barrel), and the Power grade. 100 = average.",
-    long: "Three-way weighted blend, renormalized over whichever components are on file: 45% PERFORMANCE (0.6 · ISO+ + 0.4 · HR-rate+, both level-relative — ISO+ is the item-1 metric, the more stable single-season power signal), 25% STATCAST batted-ball quality (0.55 · hard-hit% + 0.45 · barrel%, indexed to pool averages), and 30% SCOUTING (Power grade on the 20-80 scale, 50 → 100, ±10 ≈ ±20 points; consolidated grade else mean of game/raw power). Hitters only, 40-game minimum. Below the gate or with sparse data the weights renormalize over the present components. Statcast pool anchors (hard-hit ≈ 33%, barrel ≈ 6%) are placeholders pending real per-level MiLB calibration.",
-    formula: "POW+ = renorm(0.45·perf + 0.25·statcast + 0.30·tool+)\nperf = 0.6·ISO+ + 0.4·HR-rate+\nstatcast = 0.55·(100·HH%/33) + 0.45·(100·Brl%/6)\ntool+ = 100 + (Power_grade − 50) · 2",
+    short: "Hitter power index — RELIABILITY-WEIGHTED blend of ISO+ (performance), Statcast (hard-hit + barrel), and the Power grade. The scouting grade anchors thin samples; observed stats take over as PA accrue. 100 = average.",
+    long: "Reliability-weighted blend, base importances 45% PERFORMANCE / 25% STATCAST / 30% Power grade. The performance and Statcast components are down-weighted by their own sample reliability — ISO stabilizes around 150 PA, batted-ball quality in tens of batted balls — so a thin-sample prospect leans on the scouting prior and a full-season one leans on observed power. The performance signal is ISO+ ALONE: the prior version also summed an HR-rate+ term, but ISO+ and HR-rate+ correlate 0.91 across active hitters, so adding them double-counted one power trait and inflated the reading. Validated against graduate outcomes — the reliability-weighted POW+ predicts MLB ISO at 0.50, up from 0.35. Power grade on the 20-80 scale (50 → 100, ±10 ≈ ±20). Statcast pool anchors (hard-hit ≈ 33%, barrel ≈ 6%) remain placeholders pending per-level MiLB calibration.",
+    formula: "POW+ = Σ wᵢ·xᵢ / Σ wᵢ\nperf:     x = ISO+,  w = 0.45 · AB/(AB+150)\nstatcast: x = 0.55·HH%/33 + 0.45·Brl%/6 (×100),  w = 0.25 · BBE/(BBE+40)\ntool:     x = 100 + (Power_grade − 50)·2,  w = 0.30  (prior, full weight)",
     example: "A AA hitter with ISO+ 145, hard-hit 40% / barrel 9% (statcast ~134), and a 60 Power grade (tool+ 120) → POW+ ~135.",
     related: ["iso", "iso_plus", "tool", "rps_plus", "hit_plus", "pd_plus"],
   },
@@ -41830,6 +41830,48 @@ function _blendPlus3(rawPlus, scPlus, toolPlus, wRaw, wSc, wTool) {
   };
 }
 
+// ── Arkmetric audit v1 — precision upgrades for the ratio "+" metrics ─────────
+// Stat-specific stabilization points (PA/AB-equivalent at which the rate is ~50%
+// reliable). ISO stabilizes in the mid-100s of PA; AVG is slow; K%-contact fast;
+// Statcast batted-ball quality stabilizes in tens of BBE; zone whiff/contact over
+// a couple hundred tracked pitches. (Stabilization literature + site data.)
+const PLUS_STABILIZE = { iso: 150, hit: 170, bbe: 40, zone_pitches: 200 };
+
+// Empirical-Bayes shrinkage of a ratio "+" toward 100 (the level baseline) by
+// sample reliability rel = n/(n+k). Thin samples pull to 100; full samples keep
+// the observed value. Used for STANDALONE pills that have no scouting prior.
+function _ebShrinkPlus(rawPlus, n, k) {
+  if (rawPlus == null || !isFinite(rawPlus)) return null;
+  const nn = Math.max(0, Number(n) || 0);
+  const rel = nn / (nn + k);
+  return 100 + (rawPlus - 100) * rel;
+}
+
+// Reliability-weighted blend for POW+/HIT+. The scouting tool grade is the PRIOR
+// (full base weight, always available); the stat and Statcast OBSERVATIONS are
+// down-weighted by their own sample reliability, so a thin-sample prospect leans
+// on the scouting prior and a full-season one leans on observed performance +
+// tracked data. Replaces the fixed-weight _blendPlus3 (which gave a 40-PA hot
+// streak the same weight as a full season). Same return shape + a reliability %.
+function _blendPlus3Rel(statPlus, statRel, scPlus, scRel, toolPlus, wStat, wSc, wTool) {
+  const clamp01 = r => Math.max(0, Math.min(1, r == null ? 1 : r));
+  const parts = [
+    [statPlus, wStat * clamp01(statRel)],
+    [scPlus,   wSc   * clamp01(scRel)],
+    [toolPlus, wTool],                       // prior: not sample-discounted
+  ];
+  let sum = 0, wsum = 0;
+  for (const [v, w] of parts) if (v != null && isFinite(v) && w > 0) { sum += v * w; wsum += w; }
+  if (wsum === 0) return null;
+  return {
+    value:    _clampPlus(sum / wsum),
+    raw:      (statPlus != null && isFinite(statPlus)) ? _clampPlus(statPlus) : null,
+    statcast: (scPlus   != null && isFinite(scPlus))   ? _clampPlus(scPlus)   : null,
+    tool:     (toolPlus != null && isFinite(toolPlus)) ? _clampPlus(toolPlus) : null,
+    reliability: Math.round(100 * clamp01(statRel)),
+  };
+}
+
 // Freshest tracked zone-discipline split for a player (largest pitch sample),
 // mirroring _milbStatcastOutlierChips. Returns {} when none on file.
 function _freshZoneSplit(p) {
@@ -41902,14 +41944,25 @@ function _plusProvisional(p) {
   const g = Number(p && p.statline && p.statline.games) || 0;
   return g >= PLUS_PROVISIONAL_GAMES && g < PLUS_MIN_GAMES;
 }
-function computeIsoPlus(p) {
+// Raw level-relative ISO ratio (100 = level-average ISO), UN-shrunk. The blended
+// POW+ consumes this and reliability-weights it; the standalone pill shrinks it.
+function _isoPlusRaw(p) {
   const sl = p && p.statline; if (!sl || sl.is_pitcher) return null;
   if ((Number(sl.games) || 0) < PLUS_PROVISIONAL_GAMES) return null;
   const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
   const lgIso = perf.avg_iso;
   const iso = sl.iso != null ? Number(sl.iso) : null;
   if (lgIso == null || !(lgIso > 0) || iso == null || !isFinite(iso)) return null;
-  return _clampPlus(100 * iso / lgIso);
+  return 100 * iso / lgIso;
+}
+// ISO+ (standalone) — empirical-Bayes shrunk toward the level average by AB, so a
+// 40-AB hot streak no longer posts a sky-high ISO+. (Audit fix: small-sample
+// reliability; ISO stabilizes ~150 PA.)
+function computeIsoPlus(p) {
+  const raw = _isoPlusRaw(p);
+  if (raw == null) return null;
+  const ab = Number((p.statline || {}).ab) || 0;
+  return _clampPlus(_ebShrinkPlus(raw, ab, PLUS_STABILIZE.iso));
 }
 function isoPlusPillHTML(p) {
   const v = computeIsoPlus(p);
@@ -41952,17 +42005,27 @@ function _powerPlusRaw(p) {
   return null;
 }
 
-// POW+ — weighted blend, renormalized over whichever components are present:
-//   0.45  raw performance index   (_powerPlusRaw: 60% ISO+ / 40% HR-rate+)
-//   0.25  Statcast power          (_statcastPowerPlus: 55% hard-hit / 45% barrel)
-//   0.30  Power scouting grade    (20-80 → tool+)
-// (Was 70% raw / 30% tool with no Statcast.) ISO+ is the performance core;
-// Statcast adds batted-ball confirmation wherever tracked data exists.
+// POW+ — RELIABILITY-WEIGHTED blend (audit v1). Base importances 0.45 perf /
+//   0.25 Statcast / 0.30 power tool, but the perf and Statcast OBSERVATIONS are
+//   down-weighted by their own sample reliability, so a thin-sample prospect
+//   leans on the scouting prior and a full-season one leans on observed batted-
+//   ball performance.
+// COLLINEARITY FIX: the performance signal is ISO+ ALONE. The old _powerPlusRaw
+//   stacked ISO+ and HR-rate+ additively, but they correlate r=0.91 across active
+//   hitters — summing them double-counted one latent power trait and inflated the
+//   reading. ISO+ is the more stable single-season power rate, so it carries the
+//   performance axis on its own.
 function computePowerPlus(p) {
   if (!p || !p.statline || p.statline.is_pitcher) return null;
-  const grades = (p.tools && p.tools.grades) || {};
-  return _blendPlus3(_powerPlusRaw(p), _statcastPowerPlus(p),
-                     _toolToPlus(_pwrToolGrade(grades)), 0.45, 0.25, 0.30);
+  const sl = p.statline; const grades = (p.tools && p.tools.grades) || {};
+  const ab = Number(sl.ab) || 0;
+  const statPlus = _isoPlusRaw(p);                                    // ISO+ only (collinearity fix)
+  const statRel  = statPlus == null ? null : ab / (ab + PLUS_STABILIZE.iso);
+  const scPlus   = _statcastPowerPlus(p);
+  const bbe      = Number((((p.statcast_metrics || {}).contact_quality) || {}).batted_balls) || 0;
+  const scRel    = scPlus == null ? null : bbe / (bbe + PLUS_STABILIZE.bbe);
+  const toolPlus = _toolToPlus(_pwrToolGrade(grades));
+  return _blendPlus3Rel(statPlus, statRel, scPlus, scRel, toolPlus, 0.45, 0.25, 0.30);
 }
 
 // Raw plate-discipline index — additive shift on the BB% − K% differential
@@ -42022,16 +42085,24 @@ function _hitToolGrade(grades) {
   return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
 
-// HIT+ — weighted blend, renormalized over whichever components are present:
-//   0.45  raw performance index  (_hittingPlusRaw: 60% AVG / 40% K%-avoidance)
-//   0.25  Statcast contact       (_statcastHitPlus: 50% z-contact / 50% whiff-inv)
-//   0.30  Hit scouting grade     (mean of Hit + Bat Control → tool+)
-// (Was 70% raw / 30% tool with no Statcast.)
+// HIT+ — RELIABILITY-WEIGHTED blend (audit v1). Base 0.45 perf / 0.25 Statcast /
+//   0.30 hit tool, with the perf (AVG + K%-avoidance, by AB) and Statcast (zone
+//   contact/whiff, by tracked pitches) observations down-weighted by sample
+//   reliability so thin samples lean on the scouting prior. AVG is slow to
+//   stabilize, so the perf stabilization point (170 PA) is higher than power's.
+//   (AVG and K%-avoidance are distinct contact constructs — kept; not as collinear
+//   as ISO+/HR-rate+ — so the perf core retains both.)
 function computeHittingPlus(p) {
   if (!p || !p.statline || p.statline.is_pitcher) return null;
-  const grades = (p.tools && p.tools.grades) || {};
-  return _blendPlus3(_hittingPlusRaw(p), _statcastHitPlus(p),
-                     _toolToPlus(_hitToolGrade(grades)), 0.45, 0.25, 0.30);
+  const sl = p.statline; const grades = (p.tools && p.tools.grades) || {};
+  const ab = Number(sl.ab) || 0;
+  const statPlus = _hittingPlusRaw(p);
+  const statRel  = statPlus == null ? null : ab / (ab + PLUS_STABILIZE.hit);
+  const scPlus   = _statcastHitPlus(p);
+  const tp       = Number((_freshZoneSplit(p) || {}).pitches) || 0;
+  const scRel    = scPlus == null ? null : tp / (tp + PLUS_STABILIZE.zone_pitches);
+  const toolPlus = _toolToPlus(_hitToolGrade(grades));
+  return _blendPlus3Rel(statPlus, statRel, scPlus, scRel, toolPlus, 0.45, 0.25, 0.30);
 }
 
 // Pitcher Stuff+ (STF+) — composite of K/9, BB/9, HR/9 normalized
