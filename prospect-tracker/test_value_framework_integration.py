@@ -344,9 +344,11 @@ def test_surplus_granular_for_non_anchor_fv() -> None:
 
 
 def test_fv_to_war_peak_interpolates_at_one_point_granularity() -> None:
-    """fv_to_war_peak should produce distinct values for FV 47, 48, 49
-    (not bucket to FV 45 or FV 50)."""
-    vals = [vf.fv_to_war_peak(g, is_pitcher=False) for g in (45, 46, 47, 48, 49, 50)]
+    """The FV->WAR expectation must interpolate at 1-point granularity: FV 47, 48,
+    49 are distinct (not bucketed to FV 45 or FV 50). The SV overhaul renamed the
+    old `fv_to_war_peak` -> `expected_six_year_avg_war` (the per-FV career-mixture
+    WAR), which is the continuous mapping the surplus engine reads."""
+    vals = [vf.expected_six_year_avg_war(g, False) for g in (45, 46, 47, 48, 49, 50)]
     # All distinct (strictly monotonic between anchors)
     for i in range(len(vals) - 1):
         assert vals[i] < vals[i+1], f"non-monotonic at FV {45+i}->{46+i}"
@@ -363,15 +365,17 @@ def test_dollars_per_fv_granular() -> None:
 
 
 def test_financial_leaf_weights_v32_1() -> None:
-    """Leaf weights should reflect the v32.1 rebalance: active_surplus 0.40,
-    contract_surplus 0.20, others unchanged."""
+    """Financial leaf weights (current scheme). The SV overhaul added the
+    `fin_dollar_dvm` leaf (surplus-development vs FV-tier mean, 0.18) and
+    rebalanced the rest; weights still sum to 1.0."""
     import storage
     fin = storage.FARM_LEAF_WEIGHTS["financial"]
-    assert fin["fin_active_surplus"]   == 0.40
-    assert fin["fin_contract_surplus"] == 0.20
-    assert fin["fin_war_per_m"]        == 0.10
-    assert fin["fin_draft_pool_efficiency"] == 0.15
-    assert fin["fin_ifa_roi"]          == 0.15
+    assert fin["fin_active_surplus"]        == 0.42
+    assert fin["fin_dollar_dvm"]            == 0.18
+    assert fin["fin_contract_surplus"]      == 0.18
+    assert fin["fin_war_per_m"]             == 0.07
+    assert fin["fin_draft_pool_efficiency"] == 0.08
+    assert fin["fin_ifa_roi"]               == 0.07
     # Weights still sum to 1.0
     assert pytest.approx(sum(fin.values()), abs=1e-9) == 1.0
 

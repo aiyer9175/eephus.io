@@ -8407,7 +8407,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         by_mlbid: dict = {}
         drop_count = 0
         for cand in bucket:
-            mid = player_ids.get(cand.player_key) if player_ids else None
+            # Resolve the MLBAM id the SAME way _serialize does — fall back to the
+            # statline's mlbam_id when player_ids lacks the key. Without this,
+            # name-only "__noid" variant records (whose id is resolved later, at
+            # serialization) bypass the dedup and the same player is double-counted
+            # in the pool, org counts, rankings, and surplus.
+            mid = (player_ids.get(cand.player_key) if player_ids else None) \
+                  or ((statlines or {}).get(cand.player_key) or {}).get("mlbam_id")
             if not mid:
                 by_mlbid[("nokey", cand.player_key)] = cand
                 continue
@@ -8415,9 +8421,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             if existing is None:
                 by_mlbid[mid] = cand
                 continue
-            ex_latest = max((s.snapshot_date for s in (existing.points or [])), default="")
-            new_latest = max((s.snapshot_date for s in (cand.points or [])), default="")
-            if new_latest > ex_latest:
+            # Keep the RICHER record (more snapshots), tie-broken by recency, so
+            # the fuller multi-source entry wins over a sparse variant.
+            ex_score = (len(existing.points or []),
+                        max((s.snapshot_date for s in (existing.points or [])), default=""))
+            new_score = (len(cand.points or []),
+                         max((s.snapshot_date for s in (cand.points or [])), default=""))
+            if new_score > ex_score:
                 keep, drop = cand, existing
             else:
                 keep, drop = existing, cand
