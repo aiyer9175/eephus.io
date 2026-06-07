@@ -539,13 +539,33 @@ def p_bucket_given_fv(fv: float, is_pitcher: bool) -> list[float] | None:
 
 def expected_six_year_avg_war(fv: float, is_pitcher: bool) -> float | None:
     """P(bucket|FV)-weighted six-year average annual WAR (the quantity the
-    reconciliation calibration pins to fv_to_6yr_avg_war). None on bad FV."""
+    reconciliation calibration pins to fv_to_6yr_avg_war). None on bad FV.
+    This is the BUST-INCLUSIVE expectation (used by the surplus model)."""
     probs = p_bucket_given_fv(fv, is_pitcher)
     if probs is None:
         return None
     role = _role_key(is_pitcher)
     mids = _calibrated_midpoints(role)
     return sum(p * m for p, m in zip(probs, mids)) * _war_scale_for(fv, role)
+
+
+def survivor_expected_war(fv: float, is_pitcher: bool) -> float | None:
+    """SURVIVOR expected WAR/yr = E[WAR | the prospect did NOT bust], derived from
+    the SAME calibrated model as the surplus (bucket probabilities x FV-dependent
+    bucket midpoints, conditioned on the non-bust buckets). This is the single
+    source of truth for the FV->WAR expectation that WAG measures graduates against
+    (graduates are, by definition, survivors), so WAG and the surplus model can no
+    longer drift onto inconsistent FV->WAR assumptions. None on bad FV / all-bust."""
+    probs = p_bucket_given_fv(fv, is_pitcher)
+    if probs is None:
+        return None
+    role = _role_key(is_pitcher)
+    scale = _war_scale_for(fv, role)
+    mids = [m * scale for m in _calibrated_midpoints(role)]
+    p_survive = sum(probs[1:])                      # non-bust mass
+    if p_survive <= 1e-9:
+        return None
+    return sum(probs[b] * mids[b] for b in range(1, len(mids))) / p_survive
 
 
 # =============================================================================

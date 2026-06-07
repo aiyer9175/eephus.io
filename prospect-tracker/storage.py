@@ -3688,10 +3688,15 @@ def _fv_to_expected_war(fv: float | int | None) -> float | None:
     return None
 
 
-# FV → expected WAR-per-year (the FanGraphs scouting-primer "lower bound"
-# rate). Mirrors the JS `FV_WAR_ANCHORS` + `fvExpectedWarPerYr` in
-# [index.html] so the boom/bust label the backend stamps matches the WAG
-# pill the frontend already shows on every graduate page.
+# FV → expected WAR-per-year — the SURVIVOR expectation WAG measures graduates
+# against. v-arkmetric-audit: this is now DERIVED from value_framework's
+# `survivor_expected_war` (the same calibrated bucket model the surplus uses,
+# conditioned on non-bust), so WAG and the surplus model can no longer drift onto
+# inconsistent FV->WAR assumptions. The tables below are a STALE FanGraphs-primer
+# fallback used only if the engine is unavailable; they ran ~2-3x over realized
+# graduate outcomes (mean 0.34/0.77/0.94/1.23 WAR/yr at FV 45/50/55/60), which is
+# exactly why graduates read as systematically negative-WAG before this fix. The
+# frontend `FV_WAR_ANCHORS` mirror is synced to the derived survivor curve.
 FV_EXPECTED_WAR_PER_YR_HITTER = {
     30: -0.1, 40: 0.0, 45: 0.8, 50: 1.6, 55: 2.5, 60: 3.4, 70: 5.0, 80: 7.0,
 }
@@ -3701,13 +3706,23 @@ FV_EXPECTED_WAR_PER_YR_PITCHER = {
 
 
 def _fv_to_expected_war_per_yr(fv, is_pitcher: bool = False) -> float | None:
-    """Linear-interpolate FV → expected WAR/yr. None for None / out-of-range."""
+    """FV → SURVIVOR expected WAR/yr, derived from the surplus model
+    (value_framework.survivor_expected_war) so WAG is measured on the SAME FV->WAR
+    calibration as the surplus. Falls back to the legacy primer table only if the
+    engine can't price it. None for None / out-of-range."""
     if fv is None:
         return None
     try:
         v = float(fv)
     except (TypeError, ValueError):
         return None
+    try:
+        import value_framework as _vf
+        derived = _vf.survivor_expected_war(v, is_pitcher)
+        if derived is not None:
+            return round(float(derived), 3)
+    except Exception:
+        pass
     table = FV_EXPECTED_WAR_PER_YR_PITCHER if is_pitcher else FV_EXPECTED_WAR_PER_YR_HITTER
     keys = sorted(table.keys())
     if v <= keys[0]:

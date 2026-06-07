@@ -155,16 +155,17 @@ class TestGradWagRate:
         assert -1.5 < v < 2.5
 
     def test_negative_when_rate_misses_projection(self):
-        # FV 65 hitter, 2 WAR / 800 PA = (2/800)*612 = 1.53 full-season.
-        # Expected at FV 65 = ~4.2. WAG ≈ -2.67 (clearly negative).
+        # FV 65 hitter, 0.5 WAR / 800 PA = (0.5/800)*612 = 0.38 full-season.
+        # Expected at FV 65 ≈ 1.99 (realized-calibrated SURVIVOR curve, v-audit;
+        # was the ~4.2 primer value). WAG ≈ 0.38 − 1.99 ≈ -1.6 (clearly negative).
         grad = {
-            "career_war": {"career_war": 2.0},
+            "career_war": {"career_war": 0.5},
             "fv_close_raw": 65.0,
             "position": "OF",
             "career_stats": [{"level": "MLB", "pa": 800}],
         }
         v = _grad_wag(grad)
-        assert v is not None and v < -1.5
+        assert v is not None and v < -1.0
 
     def test_none_when_career_war_missing(self):
         assert _grad_wag({"fv_close_raw": 50.0}) is None

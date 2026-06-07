@@ -274,3 +274,48 @@ recompute for them. The decision applies only when the backend snapshotted metri
 the new formula (consistent charts, but rewrites stored snapshots) vs (B) splice at the
 change date (preserves the audit trail, visible discontinuity). Awaiting your call before
 any backend snapshot change.
+
+---
+
+# Backend reconciliation — finding 8 implemented (WAG ↔ surplus FV→WAR)
+
+Decisive diagnosis: WAG measured graduates against a survivor curve (0.8/1.6/2.5/3.4
+WAR/yr at FV 45/50/55/60) that ran **2–3× over realized graduate outcomes** (empirical
+graduate mean 0.34/0.77/0.94/1.23, n=172–303 from debuts.json + career_war). It was the
+old FanGraphs-primer curve — the SAME over-projection the surplus model was recalibrated
+away from — so the surplus recalibration silently left WAG measuring against a stale,
+inflated bar, making graduates read as systematically negative-WAG.
+
+Fix (WAG is live-computed → no snapshot gate): added
+`value_framework.survivor_expected_war(fv, is_pitcher)` = E[WAR | non-bust], derived from
+the SAME calibrated bucket model the surplus uses. `storage._fv_to_expected_war_per_yr`
+now derives from it (primer table kept only as an engine-unavailable fallback), and the
+frontend `FV_WAR_ANCHORS` mirror is synced to the derived survivor curve
+(hitter 45→0.67, 50→0.97, 55→1.13, 60→1.57; close to realized). WAG and the surplus model
+now share ONE FV→WAR calibration, and any future surplus recalibration auto-propagates to
+WAG. Tests updated; 114 pass.
+
+## Findings 6 + 9 — diagnosed, gated behind the historical-recompute decision
+- **Scale convention (6):** confirmed — generic backend "+" (RPS+/DvM+/Stf+/$DvM+) uses
+  `100 + 10·z`; SC+ uses `100 + 15·z`. Harmonizing to one σ-per-point is a one-line change
+  but it shifts every DvM+/SC+ value, and the **DvM+ trajectory IS snapshotted** (farm
+  trajectory history), so it triggers the recompute decision.
+- **Circularity (9):** structural — scouting tool grades inform consensus FV (upstream),
+  FV growth → FV-DvM, and the same tool grades → ToolDvM+; both FV-DvM and ToolDvM+ feed
+  the DvM+ 50/30/20 blend, so the tool signal enters DvM+ via two correlated paths. The
+  fix (orthogonalize / down-weight the shared axis) also changes snapshotted DvM+.
+
+Both are gated behind the **historical-recompute decision** below, since they mutate the
+snapshotted DvM+ history.
+
+## Historical-recompute decision (awaiting your call)
+For the DvM+-affecting changes (scale harmonization, circularity), the snapshotted DvM+
+trajectory makes this a real choice:
+- **(A) Recompute history** under the new formula — charts stay internally consistent, but
+  it rewrites stored snapshots (the audit trail of what was shown historically changes).
+- **(B) Splice at the change date** — preserve every historical snapshot as-shown; the new
+  formula applies forward only, with a visible one-time discontinuity at the change date.
+Recommendation: **(B) splice** — it preserves the integrity of the historical record (and
+Time Machine / backtest) and is honest about when the method changed; (A) only matters if
+perfectly smooth multi-year DvM+ charts are worth rewriting history for. WAG above needed
+neither (live-computed). No snapshot has been touched.
