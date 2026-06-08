@@ -65,6 +65,29 @@
       --neon-amber:       #C9A227;     /* card gold — highlight    */
       --neon-violet:      #6B4FA8;     /* royal purple — graduates */
       --upside-pink:      #F4A6C8;     /* v29 — soft pink (lightened from #FF1493): '+' upside chip + chart dot. Hot pink read too aggressive/"warning" at a glance. */
+      /* Polish v1.0 (B2) — promoted from inlined literals. Column-header cream
+         reads on the navy/near-black header band in both themes (theme-agnostic,
+         so :root only). Byline lilac is theme-specific (dark lifts it). */
+      --col-header-fg:    #F5EBDC;     /* cream — column-header text on --bg-header */
+      --byline-lilac:     #C8A2C8;     /* dev byline (build-banner) text */
+      /* Topps-Chrome refractor ramp (B1) — the holographic rainbow on the elite-FV
+         card-rarity treatments (.card-rarity-holo / -legendary diamonds + headshot
+         rings). Theme-AGNOSTIC: identical bright chrome on paper and near-black, so
+         :root only (no dark override). Atomic stops feed the two composed gradients
+         so each stop is defined exactly once. NB: the JS export builder
+         _gfxRarityGradient(~L26970) keeps these as LITERAL hex — html2canvas can't
+         resolve CSS vars when rasterizing the GFX PNG. Keep the two in sync. */
+      --refractor-cyan:   #4ee0ff;
+      --refractor-violet: #b455ff;
+      --refractor-pink:   #ff5fa2;
+      --refractor-gold:   #ffd45a;
+      --refractor-holo: linear-gradient(135deg,
+        var(--refractor-cyan) 0%, var(--refractor-violet) 25%,
+        var(--refractor-pink) 50%, var(--refractor-gold) 75%, var(--refractor-cyan) 100%);
+      --refractor-legendary: linear-gradient(120deg,
+        var(--refractor-pink) 0%, var(--refractor-gold) 18%, var(--refractor-cyan) 36%,
+        var(--refractor-violet) 54%, var(--refractor-pink) 72%, var(--refractor-gold) 90%,
+        var(--refractor-cyan) 100%);
       /* Dedicated tokens for the IFA / Draft spend-mix visualizations.
          Draft was previously sharing --neon-cyan with the header blue
          which made the legend swatches nearly invisible against the
@@ -267,6 +290,7 @@
       --neon-amber:       #FFD700;   /* refractor gold */
       --neon-violet:      #B47CFF;   /* refractor purple */
       --upside-pink:      #F8B4D2;   /* v29 — soft pink for dark theme '+' upside (lightened from #FF3DA0 to read as supportive, not warning) */
+      --byline-lilac:     #D9B8E8;   /* lifted lilac for the near-black surface (B2) */
       --spend-ifa:        #F5A623;     /* amber — IFA */
       --spend-draft:      #E040A0;     /* magenta — Draft (v7 — was cyan, conflicted with neon-cyan accent) */
 
@@ -493,7 +517,7 @@
       border: 1px solid var(--border);
       background: var(--bg-secondary);
       color: var(--text-primary);
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
       font-size: 14px;
       line-height: 1;
@@ -542,7 +566,7 @@
       background: var(--neon-amber);
       color: var(--bg-header);
       padding: 1px 6px;
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
       line-height: 1.2;
     }
     .global-compare.is-empty-hidden { display: none; }
@@ -887,16 +911,14 @@
       font-size: 11px;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #C8A2C8;  /* lilac */
+      color: var(--byline-lilac);  /* lilac (B2 token; dark lifts via --byline-lilac override) */
       /* v12 — outline removed per user ask; plain lilac text now. */
       margin: 0 0 8px;
       opacity: 0.95;
       font-weight: 600;
       user-select: text;  /* allow easy copy of the byline */
     }
-    [data-theme="dark"] .build-banner {
-      color: #D9B8E8;  /* slightly lifted lilac for dark mode */
-    }
+    /* (dark byline lilac now handled by the --byline-lilac token override — B2) */
     /* Social links above the byline (Twitter / X + LinkedIn). Small square
        icon buttons that sit just above the "Created by …" signature. */
     /* Any global control rendered as an <a> stays visually identical to the
@@ -1566,7 +1588,7 @@
       font-size: 10px;
       padding: 9px 14px 9px 18px;
       background: var(--bg-header);
-      color: #F5EBDC;
+      color: var(--col-header-fg);
       border-radius: var(--radius-sm);
       margin-bottom: 8px;
       text-transform: uppercase;
@@ -1581,7 +1603,7 @@
        when the column is the active sort target. */
     .col-header > span {
       display: block;
-      color: #F5EBDC !important;
+      color: var(--col-header-fg) !important;
       font-size: 10px;
       font-weight: 600;
       letter-spacing: 0.10em;
@@ -1750,18 +1772,13 @@
       border: 2px solid transparent !important;
       background:
         linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
-        linear-gradient(135deg,
-          #4ee0ff 0%, #b455ff 25%,
-          #ff5fa2 50%, #ffd45a 75%, #4ee0ff 100%) border-box !important;
+        var(--refractor-holo) border-box !important;
     }
     .rank-num.card-rarity-legendary {
       border: 2.5px solid transparent !important;
       background:
         linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
-        linear-gradient(120deg,
-          #ff5fa2 0%, #ffd45a 18%, #4ee0ff 36%,
-          #b455ff 54%, #ff5fa2 72%, #ffd45a 90%,
-          #4ee0ff 100%) border-box !important;
+        var(--refractor-legendary) border-box !important;
       box-shadow: 0 0 6px rgba(180,85,255,0.35), 0 1px 3px rgba(0,0,0,0.15) !important;
     }
     /* Compact-density: shrink the diamond so it doesn't dominate the
@@ -2120,7 +2137,7 @@
       font-size: 11px;
       font-weight: 800;
       color: var(--text-on-accent);
-      border-radius: 50%;
+      border-radius: var(--radius-sm);
       padding: 0;
       line-height: 0;
       letter-spacing: 0;
@@ -2199,7 +2216,7 @@
       font-weight: 700;
       letter-spacing: 0.02em;
       padding: 1px 5px;
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       background: var(--bg-tertiary);
       color: var(--text-secondary);
@@ -2235,7 +2252,7 @@
       content: "";
       display: inline-block;
       width: 6px; height: 6px;
-      border-radius: 50%;
+      border-radius: var(--radius-sm);
       margin-right: 4px;
       flex: 0 0 auto;
     }
@@ -2263,7 +2280,7 @@
       align-items: center;
       justify-content: center;
       width: 14px; height: 14px;
-      border-radius: 50%;
+      border-radius: var(--radius-sm);
       border: 1.5px solid var(--bg-primary);
       box-shadow: 0 0 0 1px currentColor;
       background: currentColor;
@@ -2381,7 +2398,7 @@
       background: transparent;
       color: var(--text-tertiary);
       border: 1px solid var(--border);
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
       font-size: 11px;
       cursor: pointer;
       transition: transform 0.15s, color 0.15s, border-color 0.15s;
@@ -3323,7 +3340,7 @@
       font-family: var(--font-sans);
       font-size: 12px;
       padding: 3px 9px;
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       background: var(--bg-tertiary);
       color: var(--text-secondary);
@@ -3338,7 +3355,7 @@
       font-size: 10.5px;
       font-weight: 700;
       padding: 3px 9px;
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
       border: 1px dashed var(--border);
       background: transparent;
       color: var(--text-tertiary);
@@ -3505,7 +3522,7 @@
     }
     .debut-recent-banner .grb-dot {
       width: 8px; height: 8px;
-      border-radius: 50%;
+      border-radius: var(--radius-sm);
       background: var(--neon-green);
       box-shadow: 0 0 0 0 rgba(31, 122, 58, 0.50);
       animation: grb-pulse 2s infinite;
@@ -3556,7 +3573,7 @@
       color: var(--down);
       opacity: 1;
       border: 2px solid var(--down);
-      border-radius: 50%;
+      border-radius: var(--radius-sm);
       width: 32px; height: 32px;
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 8px;
@@ -3764,9 +3781,7 @@
     .headshot.fv-headshot-ring.card-rarity-holo {
       background:
         linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
-        linear-gradient(135deg,
-          #4ee0ff 0%, #b455ff 25%,
-          #ff5fa2 50%, #ffd45a 75%, #4ee0ff 100%) border-box !important;
+        var(--refractor-holo) border-box !important;
       background-size: 100% 100%, 300% 300% !important;
       animation: holo-shift 5s linear infinite,
                  holo-headshot-pulse 2s ease-in-out infinite;
@@ -3781,10 +3796,7 @@
       border-left-width:   2.5px !important;
       background:
         linear-gradient(var(--bg-tertiary), var(--bg-tertiary)) padding-box,
-        linear-gradient(120deg,
-          #ff5fa2 0%, #ffd45a 18%, #4ee0ff 36%,
-          #b455ff 54%, #ff5fa2 72%, #ffd45a 90%,
-          #4ee0ff 100%) border-box !important;
+        var(--refractor-legendary) border-box !important;
       background-size: 100% 100%, 400% 400% !important;
       animation: holo-shift 3s linear infinite,
                  legendary-headshot-pulse 2s ease-in-out infinite;
@@ -3961,7 +3973,7 @@
     }
     .freshness-stamp:empty { display: none; }
     .freshness-stamp .fresh-dot {
-      width: 6px; height: 6px; border-radius: 50%;
+      width: 6px; height: 6px; border-radius: var(--radius-sm);
       background: var(--up);
       box-shadow: 0 0 0 0 var(--up);
       animation: freshPulse 2.4s ease-out infinite;
@@ -4233,7 +4245,7 @@
     .gx-steps .gx-step { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: baseline;
       padding: 4px 0; border-bottom: 1px dotted var(--border-light); }
     .gx-step-n { font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--text-tertiary);
-      text-align: center; border: 1px solid var(--border-light); border-radius: 50%; }
+      text-align: center; border: 1px solid var(--border-light); border-radius: var(--radius-sm); }
     .gx-step-t { color: var(--text-secondary); }
     .gx-step-v { font-weight: 700; color: var(--text-primary); white-space: nowrap; }
     .gx-step-sum .gx-step-n { color: var(--neon-cyan); border-color: var(--neon-cyan); }
@@ -4258,7 +4270,7 @@
       letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary);
       margin-bottom: 6px; }
     .source-comp-eyebrow .scx-dot { width: 7px; height: 7px; background: var(--neon-cyan);
-      border-radius: 50%; box-shadow: 0 0 6px var(--neon-cyan); }
+      border-radius: var(--radius-sm); box-shadow: 0 0 6px var(--neon-cyan); }
     .meth-prose { max-width: 860px; margin-bottom: 22px; }
     .meth-eq { font-family: var(--font-retro-mono); font-size: 13px; color: var(--text-primary);
       background: var(--bg-secondary); border-left: 3px solid var(--neon-cyan);
@@ -4570,7 +4582,7 @@
       letter-spacing: 0.04em;
       color: var(--neon-violet);
       border: 1px solid var(--neon-violet);
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
       padding: 1px 6px;
       margin-left: 6px;
       cursor: help;
@@ -4600,7 +4612,7 @@
     .farm-conf-dot {
       display: inline-block;
       width: 6px; height: 6px;
-      border-radius: 50%;
+      border-radius: var(--radius-sm);
       background: var(--dot-color);
       margin-left: 4px;
       vertical-align: middle;
@@ -4807,7 +4819,7 @@
       height: 38px;
       padding: 0;
       border: 2px solid currentColor;
-      border-radius: 50%;
+      border-radius: var(--radius-sm);
       background: rgba(255, 255, 255, 0.04);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
       font-family: var(--font-serif);
@@ -6248,9 +6260,7 @@
       border: 2px solid transparent;
       background:
         linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
-        linear-gradient(135deg,
-          #4ee0ff 0%, #b455ff 25%,
-          #ff5fa2 50%, #ffd45a 75%, #4ee0ff 100%) border-box;
+        var(--refractor-holo) border-box;
       background-size: 100% 100%, 300% 300%;
       animation: holo-shift 6s linear infinite;
     }
@@ -6295,9 +6305,9 @@
       background:
         linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
         linear-gradient(135deg,
-          #ff5fa2 0%, #ffd45a 14%, #4ee0ff 28%,
-          #b455ff 42%, #ff5fa2 56%, #ffd45a 70%,
-          #4ee0ff 84%, #b455ff 100%) border-box;
+          var(--refractor-pink) 0%, var(--refractor-gold) 14%, var(--refractor-cyan) 28%,
+          var(--refractor-violet) 42%, var(--refractor-pink) 56%, var(--refractor-gold) 70%,
+          var(--refractor-cyan) 84%, var(--refractor-violet) 100%) border-box;
       background-size: 100% 100%, 400% 400%;
       animation: legendary-shift 3s linear infinite;
       box-shadow: 0 0 8px rgba(180,85,255,0.35);
@@ -6833,7 +6843,7 @@
       color: var(--text-tertiary);
       background: transparent;
       border: 1px solid var(--border-light);
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
       padding: 2px 8px;
       cursor: pointer;
       white-space: nowrap;
@@ -6886,7 +6896,7 @@
       margin-left: 2px;
     }
     .pos-depth-card .pdc-age-dot {
-      width: 6px; height: 6px; border-radius: 50%;
+      width: 6px; height: 6px; border-radius: var(--radius-sm);
       display: inline-block;
     }
     .pos-depth-card .pdc-age-dot.dot-young { background: var(--up); }
@@ -6894,7 +6904,7 @@
     .pos-depth-card .pdc-age-dot.dot-neutral { background: var(--text-tertiary); opacity: 0.6; }
     .pos-depth-card .pdc-health {
       display: inline-flex; align-items: center; justify-content: center;
-      width: 14px; height: 14px; border-radius: 50%;
+      width: 14px; height: 14px; border-radius: var(--radius-sm);
       font-size: 8px; font-weight: 800; letter-spacing: 0;
       line-height: 1;
     }
@@ -6907,7 +6917,7 @@
       letter-spacing: 0.02em;
       color: var(--text-tertiary);
       padding: 0 4px;
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
       border: 1px solid var(--border-light);
     }
     .pos-depth-card .pdc-acq.acq-trade  { color: var(--neon-cyan); border-color: var(--neon-cyan); }
@@ -6936,7 +6946,7 @@
       font-weight: 600;
       letter-spacing: 0.03em;
       border: 1px solid var(--bg-header);
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
       transition: transform 0.12s, box-shadow 0.12s;
     }
@@ -6984,7 +6994,7 @@
       color: var(--text-tertiary);
       cursor: pointer;
       padding: 4px 10px;
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
     }
     .compare-panel .compare-close:hover {
       background: var(--bg-tertiary);
@@ -7020,7 +7030,7 @@
       font-family: var(--font-sans);
       font-size: 11px;
       padding: 4px 10px;
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       background: var(--bg-secondary);
       color: var(--text-secondary);
@@ -7098,7 +7108,7 @@
       line-height: 1;
       cursor: pointer;
       padding: 2px 6px;
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
     }
     .compare-sbs-head .csbs-remove:hover {
       background: var(--bg-tertiary);
@@ -7259,7 +7269,7 @@
       font-size: 10px;
       font-weight: 700;
       padding: 1px 6px;
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
       font-variant-numeric: tabular-nums;
       letter-spacing: 0;
       cursor: help;
@@ -7295,7 +7305,7 @@
     .options-pip {
       width: 5px;
       height: 5px;
-      border-radius: 50%;
+      border-radius: var(--radius-sm);
       border: 1px solid var(--neon-cyan);
       background: transparent;
       box-sizing: border-box;
@@ -7321,7 +7331,7 @@
       font-size: 10px;
       font-weight: 700;
       padding: 1px 6px;
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
       font-variant-numeric: tabular-nums;
       letter-spacing: 0;
       cursor: help;
@@ -7641,7 +7651,7 @@
       background: transparent;
       color: var(--text-tertiary);
       border: 1px solid var(--border);
-      border-radius: 999px;
+      border-radius: var(--radius-sm);
       font-size: 14px;
       line-height: 1;
       cursor: pointer;
@@ -7809,7 +7819,7 @@
     .gfx-busy-spin {
       width: 22px; height: 22px; flex: none;
       border: 3px solid var(--border); border-top-color: var(--neon-cyan);
-      border-radius: 50%; animation: gfx-spin 0.7s linear infinite;
+      border-radius: var(--radius-sm); animation: gfx-spin 0.7s linear infinite;
     }
     @keyframes gfx-spin { to { transform: rotate(360deg); } }
     .gfx-preview {
@@ -7843,7 +7853,7 @@
     .gfx-input { flex: 1; min-width: 0; text-transform: none; letter-spacing: 0; }
     .gfx-accents { display: inline-flex; gap: 5px; }
     .gfx-swatch {
-      width: 16px; height: 16px; border-radius: 50%; cursor: pointer; padding: 0;
+      width: 16px; height: 16px; border-radius: var(--radius-sm); cursor: pointer; padding: 0;
       border: 2px solid transparent; box-shadow: 0 0 0 1px var(--border);
     }
     .gfx-swatch.is-active { border-color: var(--text-primary); }
@@ -9546,6 +9556,51 @@ function toolFullName(key) {
 function toolAbbrev(key) {
   const e = TOOL_DISPLAY_NAMES[key];
   return Array.isArray(e) ? e[1] : (typeof e === "string" ? e.toUpperCase() : key.toUpperCase());
+}
+
+// =============================================================================
+// formatMetric — single source of truth for rendering metric VALUES
+// =============================================================================
+// Polish-pass v1.0 (Phase 2). Every metric the product SELLS — FV, the +-index
+// family, surplus $, WAR/WAG — renders through here so display precision, sign,
+// units, and the null token can never drift between a table cell, a tooltip,
+// and prose. Precision is fixed PER METHODOLOGY: never show more precision than
+// the metric supports (the brief's core rule). Types:
+//   'fv'       20–80 grade        integer (grid enforced upstream)      -> "55"
+//   'plus'     +-index family — DvM+, RPS+, SC+, ToolDvM+, $DvM+, wRC+ —
+//              baseline 100, integer, NO leading '+' (an index, not a
+//              delta, so "+105" would misread as a change)              -> "112"
+//   'war'      wins               1 decimal                            -> "3.4"
+//   'wag'      wins-above-grad    SIGNED, 2 decimals                   -> "+0.25"
+//   'netfv'    FV delta           SIGNED integer                       -> "+5"
+//   'surplusM' surplus value $M   SIGNED, 1 decimal, '$' + 'M'         -> "+$4.2M"
+//   'permil'   per-prospect $M    2 decimals, '$' + 'M'                -> "$0.35M"
+//   'pct'      percent            1 decimal, '%'                       -> "42.0%"
+//   'rate'     per-year rate      SIGNED, 2 decimals                   -> "+0.30"
+//   'int'      plain count        integer                             -> "70"
+// Null/undefined/blank/non-finite -> EM_DASH for EVERY type. Zero is unsigned
+// for signed types, so a value that rounds to 0 can never render as "-0.0"/"+0"
+// (the negative-zero defect the audit flagged on the homepage grad rows).
+const EM_DASH = "—";
+function formatMetric(value, type = "int") {
+  const n = Number(value);
+  if (value == null || value === "" || !Number.isFinite(n)) return EM_DASH;
+  const z = n === 0 ? 0 : n;                              // collapse -0 -> 0
+  const sign = z > 0 ? "+" : (z < 0 ? "-" : "");          // zero is unsigned
+  const abs = Math.abs(z);
+  switch (type) {
+    case "fv":       return String(Math.round(z));
+    case "plus":     return String(Math.round(z));
+    case "int":      return String(Math.round(z));
+    case "war":      return z.toFixed(1);
+    case "wag":      return sign + abs.toFixed(2);
+    case "netfv":    return sign + String(Math.round(abs));
+    case "rate":     return sign + abs.toFixed(2);
+    case "surplusM": return sign + "$" + abs.toFixed(1) + "M";
+    case "permil":   return "$" + abs.toFixed(2) + "M";
+    case "pct":      return z.toFixed(1) + "%";
+    default:         return String(z);
+  }
 }
 
 // =============================================================================
@@ -13181,8 +13236,8 @@ function _debutFvCohortBlock(p) {
     </div>`;
   }).join("");
 
-  const fmtFv = v => v != null ? v.toFixed(1) + " WAR" : "—";
-  const fmtRate = v => v != null ? (v >= 0 ? "+" : "") + v.toFixed(2) + " /yr" : "—";
+  const fmtFv = v => { const s = formatMetric(v, 'war'); return s === EM_DASH ? s : s + " WAR"; };   // NB: formats WAR, not FV (name is a known collision — see bug list)
+  const fmtRate = v => { const s = formatMetric(v, 'rate'); return s === EM_DASH ? s : s + " /yr"; };
 
   return `<div class="detail-title">FV-${myTier} debut cohort
     <span class="detail-title-sub">${cohort.length} debut${cohort.length === 1 ? "" : "s"} with the same FV tier</span></div>
@@ -16239,7 +16294,7 @@ const CHART_AXES = {
     { key: "age",            label: "Age",                getter: p => p.age,                                fmt: v => v.toFixed(1) },
     { key: "fv",             label: "Consensus FV",       getter: p => (p.points && p.points.length) ? p.points[p.points.length-1].consensus_fv_raw : null, fmt: v => fvCeil(v).toString() },
     { key: "overall_rank",   label: "Overall rank",       getter: p => p.overall_rank,                       fmt: v => "#" + v },
-    { key: "rps_plus",       label: "RPS+",               getter: p => (p.statline && (p.statline.rps_plus ?? p.statline.ops_plus_level)), fmt: v => Math.round(v).toString() },   // v-audit: rps_plus is unpopulated for actives; fall back to the level-relative OPS+ index (the actual relative-performance metric for the active pool)
+    { key: "rps_plus",       label: "RPS+",               getter: p => (p.statline && (p.statline.rps_plus ?? p.statline.ops_plus_level)), fmt: v => formatMetric(v, 'plus') },   // v-audit: rps_plus is unpopulated for actives; fall back to the level-relative OPS+ index (the actual relative-performance metric for the active pool)
     { key: "tool",           label: "Tool",               getter: p => p.tool,                               fmt: v => fvCeil(v).toString() },
     { key: "height_in",      label: "Height (in)",        getter: p => _heightToInches(p.height || (p.player_info && p.player_info.height)),  fmt: v => v.toFixed(0) + '"' },
     { key: "weight",         label: "Weight (lb)",        getter: p => parseInt(p.weight || (p.player_info && p.player_info.weight), 10) || null, fmt: v => v.toFixed(0) + "lb" },
@@ -16259,10 +16314,10 @@ const CHART_AXES = {
     { key: "slg",            label: "SLG",                getter: p => _slOf(p, "slg"),                     fmt: _fmt3 },
     { key: "avg",            label: "AVG",                getter: p => _slOf(p, "avg"),                     fmt: _fmt3 },
     { key: "iso",            label: "ISO",                getter: p => _slOf(p, "iso"),                     fmt: _fmt3 },
-    { key: "iso_plus",       label: "ISO+ (vs level)",    getter: p => computeIsoPlus(p),                   fmt: v => Math.round(v).toString() },
+    { key: "iso_plus",       label: "ISO+ (vs level)",    getter: p => computeIsoPlus(p),                   fmt: v => formatMetric(v, 'plus') },
     { key: "bb_pct",         label: "BB%",                getter: p => _slOf(p, "bb_pct"),                  fmt: _fmtPct },
     { key: "k_pct",          label: "K%",                 getter: p => _slOf(p, "k_pct"),                   fmt: _fmtPct },
-    { key: "ops_plus_level", label: "OPS+ vs level",      getter: p => _slOf(p, "ops_plus_level"),          fmt: v => Math.round(v).toString() },
+    { key: "ops_plus_level", label: "OPS+ vs level",      getter: p => _slOf(p, "ops_plus_level"),          fmt: v => formatMetric(v, 'plus') },
     { key: "hr",             label: "Home runs",          getter: p => _slOf(p, "hr"),                      fmt: v => v.toFixed(0) },
     { key: "sb",             label: "Stolen bases",       getter: p => _slOf(p, "sb"),                      fmt: v => v.toFixed(0) },
     { key: "era",            label: "ERA",                getter: p => _slOf(p, "era"),                     fmt: _fmt2 },
@@ -16290,7 +16345,7 @@ const CHART_AXES = {
   draft: [
     { key: "consensus_fv",     label: "Consensus FV",     getter: p => p.consensus_fv,                       fmt: v => fvCeil(v).toString() },
     { key: "consensus_rank",   label: "Consensus rank",   getter: p => p.consensus_rank,                     fmt: v => "#" + v },
-    { key: "draft_stock_plus", label: "Draft Stock+",     getter: p => p.draft_stock_plus,                   fmt: v => Math.round(v).toString() },
+    { key: "draft_stock_plus", label: "Draft Stock+",     getter: p => p.draft_stock_plus,                   fmt: v => formatMetric(v, 'plus') },
     { key: "projected_round",  label: "Projected round",  getter: p => (p.projected_round != null ? Number(p.projected_round) : null), fmt: v => "R" + v },
     { key: "age",              label: "Age",              getter: p => p.age,                                fmt: v => v.toFixed(1) },
     { key: "tool",             label: "Tool composite",   getter: p => _chartToolComposite(p),               fmt: v => v.toFixed(0) },
@@ -16314,7 +16369,7 @@ const CHART_AXES = {
   farms: [
     { key: "farm_rank",      label: "Farm rank",          getter: o => o.farm_rank,                          fmt: v => "#" + v },
     { key: "tiebreaker",     label: "Tiebreaker score",   getter: o => (o.farm_tiebreaker || {}).score,       fmt: v => v.toFixed(1) },
-    { key: "dvm_plus_3y",    label: "DvM+ (3y)",          getter: o => (o.dvm_plus || {})["3y"],            fmt: v => Math.round(v).toString() },
+    { key: "dvm_plus_3y",    label: "DvM+ (3y)",          getter: o => (o.dvm_plus || {})["3y"],            fmt: v => formatMetric(v, 'plus') },
     { key: "top_end",        label: "Top-end points",     getter: o => o.top_end_points,                     fmt: v => v.toFixed(1) },
     { key: "depth",          label: "Depth points",       getter: o => o.depth_points,                       fmt: v => v.toFixed(1) },
     { key: "trajectory",     label: "Trajectory score",   getter: o => o.trajectory_score,                   fmt: v => v.toFixed(1) },
@@ -30010,9 +30065,9 @@ function makeFarmReportCard(org) {
   const W = { acquisition_strategy: 12, development: 50, financial: 18, mlb_production: 20 };
 
   // Format helpers for leaf score values.
-  const fmtSignedWag = v => v != null ? `WAG ${v >= 0 ? '+' : ''}${v.toFixed(2)}` : '—';
-  const fmtDvm       = v => v != null ? `${v}` : '—';
-  const fmtNetFv     = v => v != null ? `${v >= 0 ? '+' : ''}${v.toFixed(0)} FV` : '—';
+  const fmtSignedWag = v => { const s = formatMetric(v, 'wag'); return s === EM_DASH ? s : 'WAG ' + s; };
+  const fmtDvm       = v => formatMetric(v, 'plus');   // +index: integer, via single formatter (was raw ${v} — A3 precision drift)
+  const fmtNetFv     = v => { const s = formatMetric(v, 'netfv'); return s === EM_DASH ? s : s + ' FV'; };
   const fmtWarPerM   = v => v != null ? `${v.toFixed(2)} WAR/$M` : '—';
   const fmtWarPerYr  = v => v != null ? `${v.toFixed(2)} WAR/yr` : '—';
   const fmtUsdPerYr  = v => v != null ? `$${(v / 1_000_000).toFixed(1)}M / yr` : '—';
@@ -30364,7 +30419,7 @@ function makeFarmReportCard(org) {
   // card even though it's the highest-weight leaf — v28 surfaces it.
   const activeSurplusLeaf = t.fin_active_surplus || {};
   const _surplusPerProspect = activeSurplusLeaf.surplus_per_prospect_mm;
-  const fmtSurplusPerProspect = v => v != null ? `$${v.toFixed(2)}M / prospect` : '—';
+  const fmtSurplusPerProspect = v => { const s = formatMetric(v, 'permil'); return s === EM_DASH ? s : s + ' / prospect'; };
   const activeSurplusTooltip = _surplusPerProspect != null
     ? `FV-implied 6yr surplus value across the org's ${activeSurplusLeaf.active_count ?? '—'} active prospects, divided by active count. Net of acquisition bonus cost basis ($${activeSurplusLeaf.cost_basis_mm != null ? activeSurplusLeaf.cost_basis_mm.toFixed(1) : '—'}M). Most forward-looking signal — captures the dollar value the current pipeline projects to generate.`
     : `Insufficient active-roster surplus data on file.`;
@@ -30392,7 +30447,7 @@ function makeFarmReportCard(org) {
   // alongside the surplus figures on the financial branch.
   const dollarDvmLeaf = t.fin_dollar_dvm || {};
   const _dollarDvm = dollarDvmLeaf.dollar_dvm_plus;
-  const fmtDvmPlus = v => v != null ? String(Math.round(v)) : '—';
+  const fmtDvmPlus = v => formatMetric(v, 'plus');
   const dollarDvmTooltip = _dollarDvm != null
     ? `$DvM+ ${Math.round(_dollarDvm)} — the org's mean prospect SURPLUS-DEVELOPMENT trajectory indexed against the league-average prospect at the SAME FV tier (100 = average, +10 ≈ 1σ better). Built from the rate of FV movement over time + age-relative-to-level standing across ${dollarDvmLeaf.n ?? '—'} active prospects. Above 100 = this org's prospects are appreciating faster than same-grade peers.`
     : `Insufficient active-prospect trajectory data on file.`;
@@ -30447,7 +30502,7 @@ function makeFarmReportCard(org) {
   // on this surface. fmtWarPerYr is declared in the helpers block above.
   const _hitProd = t.mlb_hitter_production  || t.mlb_hitter_wag  || {};
   const _pitProd = t.mlb_pitcher_production || t.mlb_pitcher_wag || {};
-  const fmtWag = v => v != null ? `${v >= 0 ? '+' : ''}${v.toFixed(2)} WAG` : '—';
+  const fmtWag = v => { const s = formatMetric(v, 'wag'); return s === EM_DASH ? s : s + ' WAG'; };
   // v31 — HOF-track leaf. Sibling ceiling signal to Conviction —
   // counts grads whose peak single season WAR ≥ 5 (the loose
   // "All-Star season" threshold). A 2-HOF-track org reads as having
@@ -31820,7 +31875,7 @@ function makeFarmTransactionsSummary(allEvents, org, orgCode) {
   const outboundMisses  = _splitSort(tradeRows.filter(r => r.direction === "out"));
 
   const fmtPct1 = v => v == null ? '—' : `${(v * 100).toFixed(0)}%`;
-  const fmtFv = v => v == null ? '—' : Math.round(v);
+  const fmtFv = v => formatMetric(v, 'fv');
 
   // Stat tiles for the headline numbers.
   const tile = (label, value, sub, tone) => `
@@ -31922,7 +31977,7 @@ function makeFarmFinancialComposite(org) {
   const perProspect  = activeSurplus.surplus_per_prospect_mm;
 
   const fmtMM = v => v == null ? '—' : `$${v.toFixed(1)}M`;
-  const fmtPerProspect = v => v == null ? '—' : `$${v.toFixed(2)}M`;
+  const fmtPerProspect = v => formatMetric(v, 'permil');
 
   // Leaf contribution chart. Each leaf carries `score_100` (the
   // 100-anchored z-score that feeds the parent composite). Tone the

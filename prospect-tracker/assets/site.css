@@ -49,6 +49,18 @@
    rects keep theirs. Circular dots/avatars/pills become squares. */
 *, *::before, *::after { border-radius: 0 !important; }
 
+/* ── Keyboard focus safety net (a11y) ─────────────────────────────────────────
+   One shared, sharp, token-colored focus ring for every interactive element,
+   site-wide (editorial pages + PROSPX, which also loads this sheet). Authored
+   with :where() so its specificity is ZERO — any element that already defines a
+   richer :focus/:focus-visible style still wins, and this only backstops the
+   ones that had a bare `outline:none` with no visible replacement. :focus-visible
+   (not :focus) keeps it keyboard-only, so mouse clicks don't draw the ring. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 1px;
+}
+
 /* Diamond accents (approved) — small live / status glyphs rendered as
    45°-rotated squares (the global rule above already squared their corners).
    Scope: homepage live "blip" dots + the PROSPX IL / health status dots.
@@ -489,6 +501,9 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .row-spark svg { width: 58px; height: 20px; display: block; }
 .row-delta { font-family: var(--font-retro-mono); font-size: 13px; font-weight: 700; flex: none; font-variant-numeric: tabular-nums; min-width: 46px; text-align: right; }
 .row-delta.up { color: var(--accent-green); } .row-delta.down { color: var(--accent-red); }
+/* Neutral delta — a value that rounds to zero is not a gain or a loss. Prevents
+   the "-0.0 WAG" (red) negative-zero artifact on grad rows. */
+.row-delta.flat { color: var(--text-tertiary); }
 .fv-pill { font-family: var(--font-retro-mono); font-size: 13px; font-weight: 800; flex: none; padding: 3px 9px; border-radius: var(--radius-sm); background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .fv-pill.holo { border: 2px solid transparent; background: linear-gradient(var(--bg-secondary),var(--bg-secondary)) padding-box, var(--iridescent) border-box; }
 .fv-pill.gold { border-color: var(--accent-gold); color: var(--accent-gold); }
@@ -561,9 +576,10 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
    neutralize transitions/animations site-wide for users who ask for less motion.
    Plotted chart curves are static SVG paths, unaffected. */
 @media (prefers-reduced-motion: reduce) {
-  /* The decorative WIRE marquee keeps scrolling (it's exempted above and has a
-     static accessible equivalent in the sidebar + pauses on hover). Only the
-     small involuntary pulse-dots are stilled here. */
+  /* Under reduced-motion the global reset below also stills the WIRE marquee
+     (the duplicated track holds a complete, readable set of items when frozen);
+     the sidebar "Prospect Wire" feed is the static accessible equivalent. The
+     pulse-dots are stilled explicitly so they don't hold a half-faded frame. */
   .home-ticker .ticker-tag .blip, .sb-feed .feed-head .blip { animation: none; }
   *, *::before, *::after {
     animation-duration: 0.001ms !important;

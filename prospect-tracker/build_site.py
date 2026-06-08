@@ -382,7 +382,12 @@ def _row_top(p: dict, rank: int) -> str:
 def _row_grad(g: dict) -> str:
     wag = ((g.get("debuted_value") or {}).get("wag") or {}).get("regressed_wag")
     if wag is not None:
-        wtxt = f'<span class="row-delta {"up" if wag >= 0 else "down"}">{"+" if wag >= 0 else ""}{wag:.1f} WAG</span>'
+        # Decide sign + color on the ROUNDED value so a tiny ±0.0x never renders
+        # as "-0.0 WAG" (red) — a WAG that rounds to zero is neutral, not negative.
+        wag_r = round(wag, 1) + 0.0          # +0.0 collapses Python's -0.0 -> 0.0
+        cls = "up" if wag_r > 0 else ("down" if wag_r < 0 else "flat")
+        sign = "+" if wag_r > 0 else ""      # negatives carry their own '-'; zero is unsigned
+        wtxt = f'<span class="row-delta {cls}">{sign}{wag_r:.1f} WAG</span>'
     else:
         wtxt = '<span class="row-meta">debut</span>'
     return (f'<a class="row-link" href="{_player_href(g.get("player_key"))}">'
