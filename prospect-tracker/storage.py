@@ -8332,6 +8332,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     # already includes a "+" suffix when this is True; the
                     # separate boolean lets sort comparators tie-break.
                     "consensus_fv_plus": bool(getattr(pt, "consensus_fv_plus", False)),
+                    # Point-in-time org for the Time Machine (the org as of this
+                    # snapshot, not "now"). None on a gap → neutral placeholder.
+                    "org": getattr(pt, "org", None),
                     "shrinkage_weight": pt.shrinkage_weight,
                     "avg_rank": pt.avg_rank,
                     "avg_fv": pt.avg_fv,

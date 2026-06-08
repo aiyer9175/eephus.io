@@ -4067,6 +4067,12 @@
     }
     .tm-row:hover { background: var(--bg-secondary); }
     .tm-row .team-logo { width: 20px; height: 20px; }
+    /* Genuine point-in-time-org gap (no historical org on file): a neutral
+       placeholder slot — never the wrong current-org logo. */
+    .tm-org-gap { width: 20px; height: 20px; display: inline-flex; align-items: center;
+      justify-content: center; box-sizing: border-box; border: 1px dashed var(--border);
+      color: var(--text-tertiary); font-family: var(--font-retro-mono); font-size: 12px; }
+    .tm-org-gap::before { content: "–"; }
     /* Photo thumbnail — 16×20 baseball-card slot matching the logo's height so
        it fits the existing row; no border (the FV-tier ring still frames
        high-grade photos) keeps the outer box at exactly 20px. */
@@ -17543,7 +17549,13 @@ function _boardAsOf(dateStr) {
     const wpyObj = (typeof gradWarPerYr === "function" && p.debut_date) ? gradWarPerYr(p) : null;
     const wagObj = (p.debuted_value || {}).wag;
     rows.push({
-      key: p.player_key, name: p.player_name, org: p.org, pos: p.position,
+      key: p.player_key, name: p.player_name,
+      // Point-in-time org (the Time Machine is a point-in-time view): the org AS
+      // OF this snapshot, exported per consensus point — NOT the current org the
+      // live/Statcast surfaces use. `undefined` = data predates the field (pre-
+      // regeneration) → keep current org so deployed logos don't vanish; `null` =
+      // a genuine resolution gap → neutral placeholder (never the wrong "now" org).
+      org: (best.org === undefined ? p.org : best.org), pos: p.position,
       mlbamId: p.mlbam_id || (p.statline || {}).mlbam_id || null,
       fv: best.consensus_fv, fvPlus: !!best.consensus_fv_plus,
       avgRank: best.avg_rank, asOf: best.snapshot_date,
@@ -17697,7 +17709,8 @@ function _tmBoardRowHTML(r, opts) {
       onclick="event.preventDefault();state.section='timemachine';state.view={type:'player',key:'${escapeHtml(r.key)}'};render();syncToURL();">
       <span class="tm-rank">${r.rank}</span>
       ${_tmRowPhoto(r)}
-      ${teamLogoHTML(r.org, "sm")}
+      ${r.org ? teamLogoHTML(r.org, "sm")
+              : `<span class="team-logo tm-org-gap" title="Org as of this date unavailable" aria-label="Org unavailable"></span>`}
       <span class="tm-name">${escapeHtml(r.name)}</span>
       <span class="tm-pos">${escapeHtml(r.pos || "")}</span>
       ${slot}

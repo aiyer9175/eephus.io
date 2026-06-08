@@ -330,6 +330,14 @@ class ConsensusPoint:
     # comparators can break ties (42+ > 42).
     consensus_fv_plus: bool = False
 
+    # Point-in-time org — the MLB org the prospect was in AS OF this snapshot.
+    # The Time Machine (an explicitly point-in-time view) resolves its logo from
+    # this, not the player's current org. FanGraphs records the historical org
+    # per snapshot; other sources stamp the current org, so we don't trust theirs.
+    # None on a genuine gap — the UI shows a neutral placeholder, never a wrong
+    # current-org logo. Live/Statcast surfaces ignore this (they want current org).
+    org: str | None = None
+
 
 @dataclass
 class PlayerTimeseries:
@@ -373,6 +381,41 @@ class PlayerTimeseries:
 # ---------------------------------------------------------------------------
 # Core compute — one (player, date) bucket
 # ---------------------------------------------------------------------------
+
+def _pit_org(day_snaps, event_date):
+    """Point-in-time org for a consensus point: the org the prospect was actually
+    in AS OF this snapshot, not their current org.
+
+    Two trustworthy point-in-time signals: FanGraphs records the historical org
+    per snapshot (every other source stamps "now"), and a per-team list LABEL
+    names the org ("… Astros Top 30" → HOU). We prefer signals published AT this
+    snapshot date over stale forward-fills, so a just-published team list reflects
+    a recent trade (e.g. a Jan list that already moved a prospect to his new org)
+    rather than the last FanGraphs ranking. Returns None on a genuine gap so the
+    Time Machine shows a neutral placeholder, never a wrong current-org logo."""
+    from trades import canonical_org           # lazy import — avoid a cycle
+
+    def _ok(o):                                     # a real 2-4 char org code
+        return o if (o and len(o) <= 4 and o.isupper()) else None
+
+    def _fg(snaps):
+        fg = [s for s in snaps if s.source == "fangraphs" and s.org]
+        if not fg:
+            return None
+        # FanGraphs abbreviates some orgs mixed-case ("StL"); upper-case first so
+        # canonical_org's code path normalizes it (StL → STL).
+        return _ok(canonical_org(max(fg, key=lambda s: s.snapshot_date or "").org.upper()))
+
+    def _label(snaps):
+        for s in snaps:
+            o = _ok(canonical_org(getattr(s, "interval_label", "") or ""))
+            if o:                                   # a team name in the label resolved
+                return o
+        return None
+
+    fresh = [s for s in day_snaps if s.snapshot_date == event_date]
+    return _fg(fresh) or _label(fresh) or _fg(day_snaps) or _label(day_snaps)
+
 
 def compute_consensus_point(
     day_snaps: list[Snapshot],
@@ -659,6 +702,7 @@ def compute_consensus_point(
         tools_spread=tools_spread,
         dropped_off_sources=sorted(set(dropped_off_in_point)),
         consensus_fv_plus=consensus_fv_plus,
+        org=_pit_org(day_snaps, event_date),
     )
 
 
