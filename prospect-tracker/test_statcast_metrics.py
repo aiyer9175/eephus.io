@@ -10,6 +10,7 @@ from statcast_metrics import (
     _finalize_pitch,
     _primary_level,
 )
+from mlb_stuff_plus import score_pitch_points
 
 
 def test_finalize_pitch_summary_and_plot_points():
@@ -22,6 +23,10 @@ def test_finalize_pitch_summary_and_plot_points():
             "ivb": 18.0,
             "spin": 2200,
             "extension": 6.5,
+            "ax": -8.0,
+            "az": -12.0,
+            "x0": -1.7,
+            "pitcher_hand": "R",
             "release_height": 5.6,
             "plate_height": 2.7,
             "vaa": -4.8,
@@ -34,11 +39,28 @@ def test_finalize_pitch_summary_and_plot_points():
             "ivb": 20.0,
             "spin": 2400,
             "extension": 6.7,
+            "ax": -7.5,
+            "az": -11.5,
+            "x0": -1.8,
+            "pitcher_hand": "R",
             "release_height": 5.8,
             "plate_height": 2.9,
             "vaa": -5.0,
         },
-        {"pitch_type": "SL", "pitch_name": "Slider", "velo": 84.0, "hb": -6.0, "ivb": 1.0, "spin": 2300},
+        {
+            "pitch_type": "SL",
+            "pitch_name": "Slider",
+            "velo": 84.0,
+            "hb": -6.0,
+            "ivb": 1.0,
+            "spin": 2300,
+            "extension": 6.2,
+            "ax": 8.0,
+            "az": -31.0,
+            "x0": -1.6,
+            "pitcher_hand": "R",
+            "release_height": 5.5,
+        },
     ]
     movement, plot = _finalize_pitch(points, outings=[])
 
@@ -50,8 +72,42 @@ def test_finalize_pitch_summary_and_plot_points():
     assert movement["pitch_summary"][0]["avg_release_height"] == 5.7
     assert movement["pitch_summary"][0]["avg_plate_height"] == 2.8
     assert movement["pitch_summary"][0]["avg_vaa"] == -4.9
+    assert movement["pitch_summary"][0]["avg_stuff_plus"] is not None
     assert round(sum(p["usage_pct"] for p in movement["pitch_summary"]), 1) == 100.0
     assert len(plot["points"]) == 3
+
+
+def test_tjstuff_plus_scores_pitch_points_with_required_features():
+    points = [
+        {
+            "pitch_type": "FF",
+            "velo": 96.0,
+            "spin": 2400,
+            "extension": 6.5,
+            "az": -12.0,
+            "ax": -8.0,
+            "x0": -1.7,
+            "release_height": 5.6,
+            "pitcher_hand": "R",
+        },
+        {
+            "pitch_type": "SL",
+            "velo": 85.0,
+            "spin": 2500,
+            "extension": 6.3,
+            "az": -30.0,
+            "ax": 8.0,
+            "x0": -1.6,
+            "release_height": 5.5,
+            "pitcher_hand": "R",
+        },
+    ]
+
+    scored = score_pitch_points(points)
+
+    assert scored[0]["tj_stuff_plus"] > 80
+    assert scored[1]["tj_stuff_plus"] > 80
+    assert scored[0]["tj_stuff_plus_model"] == "tjstuff_plus_2020_2023_lgbm"
 
 
 def test_calculate_vaa_from_statcast_coordinates():

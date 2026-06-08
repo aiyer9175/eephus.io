@@ -13048,6 +13048,10 @@ function _statcastPercentileBlock(p, opts = {}) {
         const tp = (((q.sc || {}).pitch_movement || {}).pitch_summary || [])[0];
         return tp ? tp.avg_velo : null;
       }, false, v => v.toFixed(1) + " mph");
+    _push("Stuff+",
+      _pitcherCompositeStuffPlusFromSc(sc),
+      q => _pitcherCompositeStuffPlusFromSc(q.sc),
+      false, v => String(Math.round(v)));
     _push("Induced Whiff%", z.whiff_pct,
       q => (q.z || {}).whiff_pct,
       false, v => v.toFixed(0) + "%");
@@ -35597,7 +35601,7 @@ function makeSprayChart(cq) {
   </div>`;
 }
 
-function makeReleaseTraitsTable(sc) {
+function makeReleaseTraitsTable(sc, player) {
   const pm = (sc && sc.pitch_movement) || {};
   const rows = (pm.pitch_summary || []).filter(p =>
     p && (p.avg_vaa != null || p.avg_extension != null || p.avg_release_height != null || p.avg_plate_height != null)
@@ -35605,6 +35609,7 @@ function makeReleaseTraitsTable(sc) {
   if (!rows.length) return "";
   const fastballTypes = new Set(["FF", "SI", "FT", "FC"]);
   const fmt = (v, digits = 1, suffix = "") => v == null ? "—" : `${Number(v).toFixed(digits)}${suffix}`;
+  const fmtStuff = r => _formatPitchStuffPercentile(player, sc, r);
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const qualityScore = (r) => {
     if (!fastballTypes.has(r.pitch_type) || r.avg_vaa == null) return null;
@@ -35634,11 +35639,12 @@ function makeReleaseTraitsTable(sc) {
     <td style="text-align:right;font-family:var(--font-mono);">${fmt(r.avg_extension, 1)}</td>
     <td style="text-align:right;font-family:var(--font-mono);">${fmt(r.avg_release_height, 1)}</td>
     <td>${bar(r)}</td>
+    <td style="text-align:right;font-family:var(--font-mono);">${fmtStuff(r)}</td>
   </tr>`).join("");
   return `<div style="margin-top:12px;">
     <div class="stat-group-label">Release traits <span style="font-weight:500;color:var(--text-tertiary);letter-spacing:0;text-transform:none;"> · VAA + release geometry</span></div>
     <table class="detail-table vaa-table" style="margin-top:8px;"><thead><tr>
-      <th>Pitch</th><th>Pitches</th><th>Velo</th><th>VAA</th><th>Ext</th><th>Rel Ht</th><th>VAAoe</th>
+      <th>Pitch</th><th>Pitches</th><th>Velo</th><th>VAA</th><th>Ext</th><th>Rel Ht</th><th>VAAoe</th><th title="Raw Stuff+ with pitch-level percentile among same-level pitchers for this pitch type">Stuff+</th>
     </tr></thead><tbody>${body}</tbody></table>
   </div>`;
 }
@@ -35648,6 +35654,7 @@ function makeStatcastApiBlock(sc, player) {
   const cq = sc.contact_quality || {};
   const pm = sc.pitch_movement || {};
   const fmt = (v, suffix = "") => v == null ? "—" : `${Number(v).toFixed(1)}${suffix}`;
+  const fmtStuff = r => _formatPitchStuffPercentile(player, sc, r);
   const fmtRate = v => v == null ? "—" : Number(v).toFixed(3).replace(/^0/, "");
   const tiles = [];
   if (cq.batted_balls) {
@@ -35674,7 +35681,7 @@ function makeStatcastApiBlock(sc, player) {
       <div class="stat-value" style="font-family:var(--font-mono);">${escapeHtml(String(val))}</div>
     </div>`).join("")}</div>` : "";
   const pitchSummary = (pm.pitch_summary || []).length ? `<table class="detail-table" style="margin-top:8px;"><thead><tr>
-    <th>Pitch</th><th>Usage</th><th>Velo</th><th>HB</th><th>IVB</th><th>Spin</th>
+    <th>Pitch</th><th>Usage</th><th>Velo</th><th>HB</th><th>IVB</th><th>Spin</th><th title="Raw Stuff+ with pitch-level percentile among same-level pitchers for this pitch type">Stuff+</th>
   </tr></thead><tbody>${pm.pitch_summary.map(p => `<tr>
     <td><span style="color:${_pitchColor(p.pitch_type)};font-weight:700;">${escapeHtml(p.pitch_type || "?")}</span> ${escapeHtml(p.pitch_name || "")}</td>
     <td>${p.usage_pct != null ? Number(p.usage_pct).toFixed(1) + "%" : "—"}</td>
@@ -35682,8 +35689,9 @@ function makeStatcastApiBlock(sc, player) {
     <td>${p.avg_hb != null ? Number(p.avg_hb).toFixed(1) : "—"}</td>
     <td>${p.avg_ivb != null ? Number(p.avg_ivb).toFixed(1) : "—"}</td>
     <td>${p.avg_spin != null ? Math.round(Number(p.avg_spin)) : "—"}</td>
+    <td>${fmtStuff(p)}</td>
   </tr>`).join("")}</tbody></table>` : "";
-  const releaseTraits = makeReleaseTraitsTable(sc);
+  const releaseTraits = makeReleaseTraitsTable(sc, player);
   const venues = (((sc.coverage || {}).venues || []).map(v => v.name).filter(Boolean).slice(0, 3).join(" / "));
   // v20 — Use the per-level `sc` payload so the pitch-movement plot
   // tracks whichever level-tab is active. Previously this read
@@ -35863,6 +35871,7 @@ function statcastArsenalPayload(p) {
     avg_hb: s.avg_hb,
     avg_ivb: s.avg_ivb,
     avg_spin: s.avg_spin,
+    avg_stuff_plus: s.avg_stuff_plus,
     usage_by_batter_side: s.usage_by_batter_side || {},
     source: "statcast_feed",
   })).filter(s => s.pitch_type);
@@ -35885,6 +35894,119 @@ function _pitchUsagePercent(p) {
   const n = Number(p.usage_pct);
   if (!isFinite(n)) return null;
   return p.source === "statcast_feed" ? n : (n <= 1 ? n * 100 : n);
+}
+
+function _statcastSplitForLevel(root, level) {
+  if (!root) return null;
+  const splits = Array.isArray(root.level_splits) && root.level_splits.length
+    ? root.level_splits
+    : [root];
+  if (level) {
+    const exact = splits.find(s => s && s.level === level);
+    if (exact) return exact;
+  }
+  return splits.reduce((a, b) => {
+    const aN = ((a || {}).contact_quality || {}).batted_balls || ((a || {}).pitch_movement || {}).tracked_pitches || (a || {}).pitches || 0;
+    const bN = ((b || {}).contact_quality || {}).batted_balls || ((b || {}).pitch_movement || {}).tracked_pitches || (b || {}).pitches || 0;
+    return aN >= bN ? a : b;
+  }, null);
+}
+
+function _statcastPercentileOf(val, vals, lowerIsBetter = false) {
+  const n = Number(val);
+  if (!isFinite(n) || !vals.length) return null;
+  const finite = vals.map(Number).filter(Number.isFinite);
+  if (!finite.length) return null;
+  let below = 0;
+  for (const v of finite) {
+    if (lowerIsBetter ? v > n : v < n) below++;
+  }
+  return Math.round((below / finite.length) * 100);
+}
+
+function _sameLevelPitcherStatcastCohort(player, level) {
+  const all = [
+    ...((DATA && DATA.players) || []),
+    ...((DATA && DATA.debuts) || []),
+  ];
+  const seen = new Set();
+  const cohort = [];
+  for (const q of all) {
+    if (!q || q.player_key === (player || {}).player_key || seen.has(q.player_key)) continue;
+    seen.add(q.player_key);
+    const qSc = _statcastSplitForLevel(q.statcast_metrics, level);
+    const qSl = q.statline || {};
+    const qIsPit = !!(qSc && qSc.is_pitcher != null ? qSc.is_pitcher : qSl.is_pitcher);
+    if (!qIsPit) continue;
+    if ((qSc && qSc.level === level) || qSl.level === level) cohort.push({ p: q, sc: qSc || {} });
+  }
+  return cohort;
+}
+
+function _pitcherCompositeStuffPlusFromSc(sc) {
+  const pitches = (((sc || {}).pitch_movement || {}).pitch_summary || [])
+    .map(px => {
+      const stuff = Number(px && px.avg_stuff_plus);
+      const usage = Number(px && px.usage_pct);
+      const count = Number(px && px.count);
+      if (!isFinite(stuff)) return null;
+      return {
+        stuff,
+        weight: isFinite(usage) && usage > 0 ? usage : (isFinite(count) && count > 0 ? count : 1),
+      };
+    })
+    .filter(Boolean);
+  if (!pitches.length) return null;
+  const wsum = pitches.reduce((s, p) => s + p.weight, 0);
+  if (!(wsum > 0)) return null;
+  return pitches.reduce((s, p) => s + p.stuff * p.weight, 0) / wsum;
+}
+
+function _formatPitchStuffPercentile(player, sc, pitch) {
+  const raw = Number(pitch && pitch.avg_stuff_plus);
+  if (!isFinite(raw)) return "—";
+  const rawLabel = String(Math.round(raw));
+  const level = (sc && sc.level) || ((player && player.statcast_metrics) || {}).level || ((player && player.statline) || {}).level || null;
+  const type = pitch && pitch.pitch_type;
+  if (!level || !type) return rawLabel;
+  const vals = _sameLevelPitcherStatcastCohort(player, level)
+    .flatMap(q => ((((q.sc || {}).pitch_movement || {}).pitch_summary || [])))
+    .filter(px => px && px.pitch_type === type)
+    .map(px => Number(px.avg_stuff_plus))
+    .filter(Number.isFinite);
+  if (vals.length < 5) return `<span title="${escapeHtml(`Raw Stuff+ ${rawLabel}; fewer than 5 same-level ${type} peer pitches for percentile.`)}">${rawLabel}</span>`;
+  const pct = _statcastPercentileOf(raw, vals, false);
+  return `<span title="${escapeHtml(`Raw Stuff+ ${rawLabel}; ${pct}th percentile among same-level ${type} pitches.`)}">${rawLabel} <span style="color:var(--text-tertiary);font-size:10px;">(${pct}th)</span></span>`;
+}
+
+function _formatStuffPercentileFromArsenalPitch(player, pitch) {
+  const feedSc = player && player.statcast_metrics;
+  const level = (feedSc && feedSc.level) || ((player && player.statline) || {}).level || null;
+  return _formatPitchStuffPercentile(player, { level, pitch_movement: { pitch_summary: (feedSc && feedSc.pitch_movement && feedSc.pitch_movement.pitch_summary) || [] } }, pitch);
+}
+
+function _arsenalHandednessUsageTable(pitches) {
+  const rows = (pitches || []).filter(p => {
+    const side = p && p.usage_by_batter_side;
+    return side && ((side.L && side.L.usage_pct != null) || (side.R && side.R.usage_pct != null));
+  });
+  if (!rows.length) return "";
+  const fmt = (p, side) => {
+    const s = (p.usage_by_batter_side || {})[side] || {};
+    if (s.usage_pct == null) return "—";
+    const n = Number(s.usage_pct);
+    const c = s.count != null ? ` · ${s.count} pitch${Number(s.count) === 1 ? "" : "es"}` : "";
+    return `<span title="${escapeHtml(`${side === "L" ? "Left" : "Right"}-handed batters${c}`)}">${n.toFixed(1)}%</span>`;
+  };
+  const body = rows.map(p => `<tr>
+    <td><span class="src-tag">${escapeHtml(p.pitch_type || "?")}</span> ${escapeHtml(p.pitch_name || "")}</td>
+    <td style="text-align:right;font-variant-numeric:tabular-nums;">${fmt(p, "L")}</td>
+    <td style="text-align:right;font-variant-numeric:tabular-nums;">${fmt(p, "R")}</td>
+  </tr>`).join("");
+  return `<div style="margin-top:10px;">
+    <div class="stat-group-label">Usage by batter handedness <span style="font-weight:500;color:var(--text-tertiary);letter-spacing:0;text-transform:none;"> · pitch mix within each batter-side split</span></div>
+    <table class="detail-table" style="margin-top:6px;"><thead><tr><th>Pitch</th><th>vs LHH</th><th>vs RHH</th></tr></thead><tbody>${body}</tbody></table>
+  </div>`;
 }
 
 // Global click handler for level-tab chips. Toggles `.is-active` on
@@ -36051,14 +36173,31 @@ function makeArsenalBlock(pa, p) {
   const sourceLabel = pa && (pa.pitches || []).length ? "Pitch arsenal endpoint" : (feedPa ? "Pitch feed" : "");
   pa = (pa && (pa.pitches || []).length) ? pa : feedPa;
   if (!pa || !(pa.pitches || []).length) return fgArsenalLine;
+  if (feedPa && (feedPa.pitches || []).length && sourceLabel === "Pitch arsenal endpoint") {
+    const feedByType = Object.fromEntries((feedPa.pitches || []).map(px => [px.pitch_type, px]));
+    pa = {
+      ...pa,
+      tracked_pitches: pa.tracked_pitches || feedPa.tracked_pitches,
+      pitches: (pa.pitches || []).map(px => {
+        const feed = feedByType[px.pitch_type] || {};
+        const side = px.usage_by_batter_side && Object.keys(px.usage_by_batter_side).length
+          ? px.usage_by_batter_side
+          : feed.usage_by_batter_side;
+        return {
+          ...px,
+          avg_stuff_plus: px.avg_stuff_plus != null ? px.avg_stuff_plus : feed.avg_stuff_plus,
+          usage_by_batter_side: side || {},
+        };
+      }),
+    };
+  }
   // Sort pitches descending by usage for clear primary-vs-secondary read.
   const sorted = [...pa.pitches].sort((a, b) => (b.usage_pct || 0) - (a.usage_pct || 0));
-  const rows = sorted.map(p => {
+  const playerForPct = p;
+  const rows = sorted.map(pi => {
     // Visual usage bar: 100% of column width = ~highest usage in arsenal.
-    const pct = _pitchUsagePercent(p) || 0;
-    const side = p.usage_by_batter_side || {};
-    const lhh = side.L && side.L.usage_pct != null ? Number(side.L.usage_pct).toFixed(1) + "%" : "—";
-    const rhh = side.R && side.R.usage_pct != null ? Number(side.R.usage_pct).toFixed(1) + "%" : "—";
+    const pct = _pitchUsagePercent(pi) || 0;
+    const stuffPct = _formatStuffPercentileFromArsenalPitch(playerForPct, pi);
     const bar = `<div style="display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums;">
       <div style="flex:1;height:6px;background:var(--bg-tertiary);border:1px solid var(--border-light);border-radius:2px;overflow:hidden;">
         <div style="width:${Math.min(100, pct).toFixed(1)}%;height:100%;background:var(--neon-cyan);"></div>
@@ -36066,11 +36205,10 @@ function makeArsenalBlock(pa, p) {
       <span style="color:var(--text-primary);min-width:42px;text-align:right;">${pct.toFixed(1)}%</span>
     </div>`;
     return `<tr>
-      <td><span class="src-tag">${escapeHtml(p.pitch_type)}</span> ${escapeHtml(p.pitch_name)}</td>
-      <td style="text-align:right;font-variant-numeric:tabular-nums;">${p.avg_speed != null ? p.avg_speed.toFixed(1) + " mph" : "—"}</td>
+      <td><span class="src-tag">${escapeHtml(pi.pitch_type)}</span> ${escapeHtml(pi.pitch_name)}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;">${pi.avg_speed != null ? pi.avg_speed.toFixed(1) + " mph" : "—"}</td>
       <td>${bar}</td>
-      <td style="text-align:right;font-variant-numeric:tabular-nums;">${lhh}</td>
-      <td style="text-align:right;font-variant-numeric:tabular-nums;">${rhh}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;">${stuffPct}</td>
     </tr>`;
   }).join("");
   const fb = pa.fb_velo != null
@@ -36080,12 +36218,13 @@ function makeArsenalBlock(pa, p) {
   // screens — pure visual at-a-glance summary of pitch mix. Collapses
   // below the table on narrow viewports via flex-wrap.
   const radar = makeArsenalRadar(pa);
-  const tableHtml = `<table class="detail-table"><thead><tr><th>Pitch</th><th title="Average velocity in mph">Velo</th><th>Usage</th><th title="Usage rate against left-handed hitters, when pitch feed batter-side data is available">vs LHH</th><th title="Usage rate against right-handed hitters, when pitch feed batter-side data is available">vs RHH</th></tr></thead><tbody>${rows}</tbody></table>`;
-  if (!radar) return fgArsenalLine + fb + tableHtml;
+  const tableHtml = `<table class="detail-table"><thead><tr><th>Pitch</th><th title="Average velocity in mph">Velo</th><th>Usage</th><th title="Raw Stuff+ with pitch-level percentile among same-level pitchers for this pitch type">Stuff+</th></tr></thead><tbody>${rows}</tbody></table>`;
+  const handednessTable = _arsenalHandednessUsageTable(sorted);
+  if (!radar) return fgArsenalLine + fb + tableHtml + handednessTable;
   return fgArsenalLine + fb + `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
     <div style="flex:1;min-width:200px;">${tableHtml}</div>
     ${radar}
-  </div>`;
+  </div>${handednessTable}`;
 }
 
 // Unified transaction-history block — trades + level changes + other

@@ -40,7 +40,8 @@ MLB_GAME_FEED_API = "https://statsapi.mlb.com/api/v1.1/game"
 #   v3 — switched zone-metric aggregation to per-level splits (v20)
 #   v4 — added hitter batted-ball coordinates, spray buckets, and
 #        rolling estimated xwOBA from the same game feed.
-CACHE_VERSION = "v4"
+#   v5 — added pitch acceleration / release-side fields for tjStuff+.
+CACHE_VERSION = "v5"
 CACHE_DIR = Path(__file__).parent / ".cache" / "statcast_metrics"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -786,6 +787,11 @@ def _finalize_pitch(points: list[dict], outings: list[dict]) -> tuple[dict, dict
     ]
     if not tracked:
         return {}, {}
+    try:
+        from mlb_stuff_plus import score_pitch_points
+        tracked = score_pitch_points(tracked)
+    except Exception:
+        tracked = [dict(p) for p in tracked]
     by_type: dict[str, list[dict]] = {}
     totals_by_side: dict[str, int] = {}
     for p in tracked:
@@ -824,6 +830,7 @@ def _finalize_pitch(points: list[dict], outings: list[dict]) -> tuple[dict, dict
             "avg_hb": _mean([r.get("hb") for r in rows]),
             "avg_ivb": _mean([r.get("ivb") for r in rows]),
             "avg_spin": _mean([r.get("spin") for r in rows]),
+            "avg_stuff_plus": _mean_round([r.get("tj_stuff_plus") for r in rows], 0),
             "avg_extension": _mean([r.get("extension") for r in rows]),
             "avg_release_height": _mean([r.get("release_height") for r in rows]),
             "avg_plate_height": _mean([r.get("plate_height") for r in rows]),
@@ -967,11 +974,15 @@ def fetch_statcast_metrics_for_player(
                         "pitch_type": pitch_type,
                         "pitch_name": pitch_name,
                         "batter_side": (matchup.get("batSide") or {}).get("code"),
+                        "pitcher_hand": (matchup.get("pitchHand") or {}).get("code"),
                         "velo": _safe_float(pitch_data.get("startSpeed")),
                         "hb": _safe_float(breaks.get("breakHorizontal")),
                         "ivb": _safe_float(breaks.get("breakVerticalInduced")),
                         "spin": _safe_float(breaks.get("spinRate")),
                         "extension": _safe_float(pitch_data.get("extension")),
+                        "ax": _safe_float(coords.get("aX")),
+                        "az": _safe_float(coords.get("aZ")),
+                        "x0": _safe_float(coords.get("x0")),
                         "release_height": _safe_float(coords.get("z0")),
                         "plate_height": _safe_float(coords.get("pZ")),
                         "vaa": _calculate_vaa_from_coords(coords),
