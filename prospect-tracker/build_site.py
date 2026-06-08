@@ -25,10 +25,12 @@ Usage:  python build_site.py
 """
 from __future__ import annotations
 
+import functools
 import hashlib
 import html
 import json
 import re
+import unicodedata
 from datetime import date, datetime
 from pathlib import Path
 
@@ -36,6 +38,7 @@ import markdown as md
 
 ROOT = Path(__file__).resolve().parent
 CONTENT = ROOT / "content"
+SITE_ORIGIN = "https://eephus.io"   # absolute base for canonical + social-card (og/twitter) URLs
 
 # Cache-bust assets/site.css by content hash so browsers/CDNs always pull the
 # latest stylesheet after a rebuild — otherwise a stale cached CSS shows the old
@@ -168,6 +171,91 @@ def render_markdown(text: str) -> str:
     return body
 
 # --------------------------------------------------------------------------- #
+# Prospect deep-linking — turn the first mention of a known player's name into a
+# link to their PROSPX detail page (/prospx/#player=<key>), the same deep link the
+# homepage modules use. Matching is accent/'.'-insensitive so Will's "Rodríguez" /
+# "Witt Jr" resolve against the data's "Rodriguez" / "Witt Jr.".
+# --------------------------------------------------------------------------- #
+def _norm_map(s: str):
+    """Accent-stripped, lowercased copy of `s` plus an index map back to the
+    original character positions (so we can wrap the original spelling)."""
+    out, idx = [], []
+    for i, ch in enumerate(s):
+        for d in unicodedata.normalize("NFKD", ch):
+            if unicodedata.combining(d):
+                continue
+            out.append(d.lower())
+            idx.append(i)
+    return "".join(out), idx
+
+@functools.lru_cache(maxsize=1)
+def _player_links() -> tuple:
+    """(normalized full name, player_key) pairs from the live data layer (prospects +
+    graduates), longest first. Only players with a real PROSPX page are linkable."""
+    data = load_site_data() or {}
+    seen, pairs = set(), []
+    for p in (data.get("players") or []) + (data.get("graduates") or []):
+        nm = (p.get("player_name") or "").strip()
+        key = p.get("player_key")
+        if not nm or not key or " " not in nm:      # full "First Last" names only
+            continue
+        norm = _norm_map(nm)[0].rstrip(".").strip()
+        if len(norm) < 6 or norm in seen:
+            continue
+        seen.add(norm)
+        pairs.append((norm, key))
+    pairs.sort(key=lambda x: len(x[0]), reverse=True)
+    return tuple(pairs)
+
+def _linkify_players(body_html: str) -> str:
+    """Link the first mention of each known player name. Operates only on text nodes
+    (tags + their attributes, e.g. image alt text, and existing <a>…</a> are skipped)."""
+    pairs = _player_links()
+    if not pairs:
+        return body_html
+    linked = set()
+    parts = re.split(r'(<[^>]+>)', body_html)
+    in_link = False
+    for i, tok in enumerate(parts):
+        if tok[:1] == "<":
+            t = tok.lower()
+            if t.startswith("<a"):
+                in_link = True
+            elif t.startswith("</a"):
+                in_link = False
+            continue
+        if in_link or not tok.strip():
+            continue
+        nrm, idx = _norm_map(tok)
+        hits = []
+        for norm, key in pairs:
+            if key in linked:
+                continue
+            pos = nrm.find(norm)
+            if pos < 0:
+                continue
+            end = pos + len(norm)
+            before = nrm[pos - 1] if pos > 0 else " "
+            after = nrm[end] if end < len(nrm) else " "
+            if before.isalnum() or after.isalnum():     # require clean word boundaries
+                continue
+            hits.append((idx[pos], idx[end - 1] + 1, key))
+        if not hits:
+            continue
+        out, cur = [], 0
+        for s, e, key in sorted(hits):
+            if s < cur:                                 # drop overlapping matches
+                continue
+            href = f"/prospx/#player={html.escape(key)}"
+            out.append(tok[cur:s])
+            out.append(f'<a class="px-link" href="{href}">{html.escape(tok[s:e])}</a>')
+            linked.add(key)
+            cur = e
+        out.append(tok[cur:])
+        parts[i] = "".join(out)
+    return "".join(parts)
+
+# --------------------------------------------------------------------------- #
 # Frontmatter
 # --------------------------------------------------------------------------- #
 def parse_article(path: Path) -> dict:
@@ -185,7 +273,7 @@ def parse_article(path: Path) -> dict:
                     meta[k.strip()] = v.strip()
     meta.setdefault("title", path.stem.replace("-", " ").title())
     meta["slug"] = path.stem
-    meta["body_html"] = render_markdown(body)
+    meta["body_html"] = _linkify_players(render_markdown(body))
     meta["date_sort"] = meta.get("date", "")
     meta["date_disp"] = _fmt_date(meta.get("date", ""))
     return meta
@@ -242,8 +330,30 @@ def _nav(active: str) -> str:
         "</header>"
     )
 
-def page(title: str, active: str, body: str, description: str = "") -> str:
+def _social_meta(title: str, description: str, image: str = "", url: str = "") -> str:
+    """Open Graph + Twitter card tags so a shared link (X/Facebook/iMessage) renders a
+    rich preview. Emitted only when a page supplies an absolute share-card `image`."""
+    t, d = html.escape(title), html.escape(description)
+    tags = ['<meta property="og:type" content="article">',
+            f'<meta property="og:title" content="{t}">',
+            f'<meta property="og:description" content="{d}">',
+            '<meta property="og:site_name" content="eephus.io">']
+    if url:
+        tags += [f'<meta property="og:url" content="{html.escape(url)}">',
+                 f'<link rel="canonical" href="{html.escape(url)}">']
+    if image:
+        tags += [f'<meta property="og:image" content="{html.escape(image)}">',
+                 '<meta name="twitter:card" content="summary_large_image">',
+                 f'<meta name="twitter:title" content="{t}">',
+                 f'<meta name="twitter:description" content="{d}">',
+                 f'<meta name="twitter:image" content="{html.escape(image)}">']
+    return "\n".join(tags)
+
+def page(title: str, active: str, body: str, description: str = "",
+         image: str = "", url: str = "") -> str:
     desc = html.escape(description or "eephus.io — editorial baseball analytics portal")
+    social = _social_meta(title, description or "eephus.io — editorial baseball analytics portal",
+                          image, url) if image else ""
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -252,6 +362,7 @@ def page(title: str, active: str, body: str, description: str = "") -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(title)}</title>
 <meta name="description" content="{desc}">
+{social}
 <link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
 </head>
 <body class="eephus-page">
@@ -816,7 +927,13 @@ def build_article_page(a: dict) -> str:
         + f'<div class="article-body">{a["body_html"]}</div>'
         "</article>"
     )
-    return page(f'{a["title"]} — eephus.io', "articles", body, a.get("summary", ""))
+    # Per-article social card (assets/articles/<slug>/share-card.png) is optional —
+    # only emit og:image/twitter when one was generated for this piece.
+    slug = a["slug"]
+    card = ROOT / "assets" / "articles" / slug / "share-card.png"
+    image = f"{SITE_ORIGIN}/assets/articles/{slug}/share-card.png" if card.exists() else ""
+    return page(f'{a["title"]} — eephus.io', "articles", body, a.get("summary", ""),
+                image=image, url=f"{SITE_ORIGIN}/articles/{slug}/")
 
 def build_team() -> str:
     team = json.loads((CONTENT / "team.json").read_text(encoding="utf-8"))
