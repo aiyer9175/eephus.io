@@ -143,6 +143,45 @@ powering the **Time Machine** board-over-time) and `il_history` (an append-only
 IL stint timeline). `source_backtest.py` writes `data/source_backtest.json`
 (the **Methodology & Track Record** tab) each monthly run.
 
+### TJStats ingestion (Thomas Nestico Top 100)
+
+`tjstats.py` scrapes [TJStats](https://tjstats.ca/top-100-prospects/) as the
+`tjstats` per-source key. The page is a React front-end over a public custom
+WordPress REST API (`/wp-json/tjstats/v1/…`) — we hit the JSON directly, **no
+headless browser**. Endpoints: `major-snapshots` (the dated dropdown, with
+TJStats's own `pushed_at` effective date), `rankings` (the Live board),
+`snapshot-rankings/{id}` (named historical boards), and the bulk
+`scout-batters` / `scout-pitchers` / `bio` tables. Join key is `player_id` =
+the MLBAM id (so it's an **exact id join**, name-slug only as fallback); org is
+`parent_org_id` (an MLBAM team id) → eephus org.
+
+- **FV** lives only in the current scout tables, so the **Live board carries FV
+  + 20-80 tool grades**; **named historical snapshots store rank/bio/writeup
+  point-in-time with FV NULL** (the API exposes no historical FV).
+- **Storage.** The Live board lands in the shared `snapshots` table
+  (`source='tjstats'`, today's date → newest → **feeds present-day consensus**)
+  AND the `tjstats_snapshots` sidecar. Named historical boards land in the
+  **sidecar only** — the dedicated `(MLBAM id, snapshot)` point-in-time store
+  (writeups + raw grades for Time Machine + Source Comparison). Keeping history
+  out of the shared table is the **ranking-integrity guardrail**: historical
+  TJStats data can never move present-day consensus or farm rankings. Upsert
+  grain `(mlbam_id, snapshot_label)`; the Live label is date-stamped, so a
+  same-day re-run updates in place and a new day creates a new point-in-time row.
+- **Cadence.** `run_monthly` pulls **Live + all named snapshots** (dynamically
+  enumerated — a future "June 2026" drop is picked up automatically). `--daily`
+  pulls **Live only** for finer Time Machine resolution. The capture timestamp is
+  the real scrape moment in UTC (ISO 8601); `article:modified_time` is stored as
+  a freshness cross-check.
+- **Politeness.** Identifying User-Agent, on-disk response cache, request
+  throttle, retry + exponential backoff. robots.txt allows it (`Allow: /`); we
+  attribute writeups and don't use them for model training (`ai-train=no`). A
+  health check probes every endpoint's shape and **skips the write** (rather than
+  corrupting storage) on a malformed/short payload or a TJStats redesign.
+- **Config.** None required — endpoints + UA are constants in `tjstats.py`.
+- **Movers.** `tjstats.compute_snapshot_diff(older, newer)` yields rank/FV deltas
+  + entries/exits between any two stored snapshots. *Follow-up (not yet wired):*
+  surface it in the homepage Top Movers / editorial layer.
+
 ### Edit the prospect lists
 
 ```

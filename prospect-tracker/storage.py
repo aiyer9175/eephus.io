@@ -1311,6 +1311,48 @@ CREATE INDEX IF NOT EXISTS idx_overseas_snap_league ON overseas_snapshots(league
 CREATE INDEX IF NOT EXISTS idx_overseas_snap_player ON overseas_snapshots(player_key);
 CREATE INDEX IF NOT EXISTS idx_overseas_snap_date   ON overseas_snapshots(snapshot_date);
 
+-- TJStats (Thomas Nestico) per-(MLBAM id, snapshot) point-in-time sidecar.
+-- The consensus-relevant rank/FV/tools ALSO land in the generic `snapshots`
+-- table (source='tjstats', name-slug player_key) so TJStats merges into
+-- consensus like every other source; THIS table is the authoritative MLBAM-keyed
+-- grain that carries the full provenance + writeup + raw grades for Time Machine
+-- + Source Comparison, without bloating the shared snapshots row. captured_at is
+-- the real UTC scrape moment (the source of truth for "when we saw this");
+-- effective_date is TJStats's own pushed_at for named snapshots, or the capture
+-- date for the Live board. Upsert grain = (mlbam_id, snapshot_label): a same-day
+-- Live re-run (same date-stamped label) updates in place; a new day or a new
+-- named snapshot creates a new row.
+CREATE TABLE IF NOT EXISTS tjstats_snapshots (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    mlbam_id           TEXT NOT NULL,
+    player_key         TEXT,                    -- resolved eephus key (name-slug)
+    snapshot_label     TEXT NOT NULL,           -- verbatim: 'May 2026' | 'Live 2026-06-08'
+    snapshot_kind      TEXT NOT NULL,           -- 'live' | 'named'
+    snapshot_id        TEXT,                    -- TJStats major-snapshot id (named only)
+    effective_date     TEXT,                    -- TJStats pushed_at date | Live capture date
+    captured_at        TEXT NOT NULL,           -- UTC ISO 8601 — actual scrape moment
+    source_modified_at TEXT,                    -- page article:modified_time (cross-check)
+    source_url         TEXT,
+    name               TEXT,
+    position           TEXT,
+    org                TEXT,                    -- eephus org key
+    type               TEXT,                    -- 'batter' | 'pitcher'
+    rank               INTEGER,
+    prev_rank          INTEGER,
+    fv                 REAL,                    -- NULL on snapshots older than current scout grades
+    eta                TEXT,
+    risk               TEXT,
+    grades_json        TEXT,                    -- raw TJStats 20-80 pv/fv grades
+    tools_json         TEXT,                    -- eephus-keyed tool grades
+    writeup            TEXT,                    -- TJStats scouting report (attributed)
+    with_fv            INTEGER NOT NULL DEFAULT 0,
+    inserted_at        TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(mlbam_id, snapshot_label)
+);
+CREATE INDEX IF NOT EXISTS idx_tjstats_snap_label ON tjstats_snapshots(snapshot_label);
+CREATE INDEX IF NOT EXISTS idx_tjstats_snap_key   ON tjstats_snapshots(player_key);
+CREATE INDEX IF NOT EXISTS idx_tjstats_snap_date  ON tjstats_snapshots(effective_date);
+
 CREATE TABLE IF NOT EXISTS overseas_players (
     player_key       TEXT PRIMARY KEY,
     player_name      TEXT NOT NULL,
@@ -2762,6 +2804,84 @@ def overseas_snapshot_count() -> int:
         raise
 
 
+# ── TJStats per-(MLBAM id, snapshot) sidecar ─────────────────────────────────
+def upsert_tjstats_snapshots(rows: Iterable[dict]) -> int:
+    """Upsert TJStats point-in-time rows. Grain = (mlbam_id, snapshot_label) so a
+    same-label re-run (the date-stamped Live label gives per-day idempotency)
+    updates in place, while a new day or named snapshot inserts. fv/grades/writeup
+    use COALESCE so a re-run that lacks them (e.g. a historical board with FV NULL)
+    never wipes values already on file."""
+    con_rows = list(rows)
+    if not con_rows:
+        return 0
+    n = 0
+    with connect() as con:
+        for r in con_rows:
+            cur = con.execute(
+                """INSERT INTO tjstats_snapshots
+                   (mlbam_id, player_key, snapshot_label, snapshot_kind, snapshot_id,
+                    effective_date, captured_at, source_modified_at, source_url,
+                    name, position, org, type, rank, prev_rank, fv, eta, risk,
+                    grades_json, tools_json, writeup, with_fv)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                   ON CONFLICT(mlbam_id, snapshot_label) DO UPDATE SET
+                       player_key=excluded.player_key, snapshot_kind=excluded.snapshot_kind,
+                       snapshot_id=excluded.snapshot_id, effective_date=excluded.effective_date,
+                       captured_at=excluded.captured_at,
+                       source_modified_at=excluded.source_modified_at,
+                       source_url=excluded.source_url, name=excluded.name,
+                       position=COALESCE(excluded.position, tjstats_snapshots.position),
+                       org=COALESCE(excluded.org, tjstats_snapshots.org),
+                       type=excluded.type, rank=excluded.rank, prev_rank=excluded.prev_rank,
+                       fv=COALESCE(excluded.fv, tjstats_snapshots.fv),
+                       eta=COALESCE(excluded.eta, tjstats_snapshots.eta),
+                       risk=COALESCE(excluded.risk, tjstats_snapshots.risk),
+                       grades_json=COALESCE(excluded.grades_json, tjstats_snapshots.grades_json),
+                       tools_json=COALESCE(excluded.tools_json, tjstats_snapshots.tools_json),
+                       writeup=COALESCE(excluded.writeup, tjstats_snapshots.writeup),
+                       with_fv=excluded.with_fv""",
+                (str(r["mlbam_id"]), r.get("player_key"), r["snapshot_label"],
+                 r["snapshot_kind"], r.get("snapshot_id"), r.get("effective_date"),
+                 r["captured_at"], r.get("source_modified_at"), r.get("source_url"),
+                 r.get("name"), r.get("position"), r.get("org"), r.get("type"),
+                 r.get("rank"), r.get("prev_rank"), r.get("fv"), r.get("eta"),
+                 r.get("risk"), r.get("grades_json"), r.get("tools_json"),
+                 r.get("writeup"), 1 if r.get("with_fv") else 0),
+            )
+            n += cur.rowcount
+    return n
+
+
+def load_tjstats_snapshots(snapshot_label: str | None = None) -> list[dict]:
+    q = "SELECT * FROM tjstats_snapshots"
+    params: tuple = ()
+    if snapshot_label is not None:
+        q += " WHERE snapshot_label = ?"
+        params = (snapshot_label,)
+    q += " ORDER BY snapshot_label DESC, rank ASC"
+    try:
+        with connect() as con:
+            return [dict(r) for r in con.execute(q, params).fetchall()]
+    except sqlite3.OperationalError as e:
+        if "no such table" in str(e).lower():
+            return []
+        raise
+
+
+def tjstats_snapshot_labels() -> list[dict]:
+    """Distinct snapshot labels with kind, effective date, latest capture, and
+    count — for Time Machine wiring and the scraper health check."""
+    try:
+        with connect() as con:
+            return [dict(r) for r in con.execute(
+                "SELECT snapshot_label, snapshot_kind, effective_date, "
+                "       MAX(captured_at) AS captured_at, COUNT(*) AS n "
+                "FROM tjstats_snapshots GROUP BY snapshot_label "
+                "ORDER BY effective_date DESC").fetchall()]
+    except sqlite3.OperationalError:
+        return []
+
+
 def load_overseas_players(league: str | None = None) -> dict[str, dict]:
     q = """SELECT player_key, player_name, position, league, country,
                   current_team, proj_team, proj_bonus_usd, eta_year,
@@ -3371,6 +3491,32 @@ def load_photo_meta() -> dict[int, str]:
     except sqlite3.OperationalError:
         return {}
     return {int(r["mlbam_id"]): r["checked_at"] for r in rows}
+
+
+def load_mlbam_player_keys() -> dict[str, str]:
+    """Return {mlbam_id(str): player_key} from player_photos — the available
+    MLBAM->eephus-key index. Used by the TJStats ingest for the exact-id join
+    (name-slug is the fallback). Keys are strings to match scraped payloads."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT mlbam_id, player_key FROM player_photos "
+                "WHERE player_key IS NOT NULL AND player_key <> ''"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {str(r["mlbam_id"]): r["player_key"] for r in rows}
+
+
+def known_player_keys() -> set[str]:
+    """Every player_key eephus already knows (the players table). The TJStats
+    ingest logs any scraped player whose resolved key is NOT in here as a
+    fall-through for manual review."""
+    try:
+        with connect() as con:
+            return {r[0] for r in con.execute("SELECT player_key FROM players").fetchall()}
+    except sqlite3.OperationalError:
+        return set()
 
 
 def upsert_photo_ctx(by_id: dict[int, dict]) -> int:

@@ -382,6 +382,24 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
     n_il = n_debuts = n_trades = 0
 
     try:
+        # --- d0. TJStats Live board (daily point-in-time capture) ---------
+        # TJStats updates continuously, so a daily Live pull gives finer Time
+        # Machine resolution AND keeps TJStats's present-day consensus contribution
+        # fresh between monthly runs. Live only (named historical snapshots are a
+        # monthly concern). Date-stamped label -> a same-day re-run updates in
+        # place; a new day creates a new point-in-time row. Never aborts the run.
+        with _step("d0. TJStats Live capture", log):
+            try:
+                import tjstats
+                _tj = tjstats.run_tjstats_pipeline(live=True, history=False)
+                if _tj.get("live"):
+                    log.info("tjstats: daily Live %d players @ %s",
+                             _tj["live"]["n_players"], _tj["live"]["captured_at"])
+                elif _tj.get("health"):
+                    log.error("tjstats: health check failed, skipped: %s", _tj["health"])
+            except Exception:
+                log.exception("tjstats daily capture crashed — continuing")
+
         # --- 1. Player set from existing snapshots (no scrape). -----------
         with _step("d1. Build player set from DB", log):
             all_snaps = load_all_snapshots()
@@ -832,6 +850,27 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 new_count, _ = _f_milb.result()
                 for _f in (_f_draft, _f_overseas):
                     _f.result()  # propagate any unexpected exception
+
+        # --- 1c. TJStats Top-100 (Thomas Nestico) ----------------------
+        # The Live board is scraped at the real moment and feeds TJStats's
+        # contribution to PRESENT-DAY consensus (it lands in the shared snapshots
+        # table with today's date -> newest tjstats snapshot -> drives current).
+        # Named historical snapshots land in the point-in-time sidecar
+        # (tjstats_snapshots) only, never the shared table, so they can't move
+        # current consensus/farm rankings. Runs SEQUENTIALLY (not in the parallel
+        # block) to avoid DB-lock contention, and BEFORE the consensus build below.
+        with _step("1c. TJStats Top-100 (Live + history)", log):
+            try:
+                import tjstats
+                _tj = tjstats.run_tjstats_pipeline(live=True, history=True)
+                if _tj.get("health"):
+                    log.error("tjstats: health check failed, skipped ingest: %s", _tj["health"])
+                elif _tj.get("live"):
+                    log.info("tjstats: Live %d players @ %s + %d historical snapshot(s)",
+                             _tj["live"]["n_players"], _tj["live"]["captured_at"],
+                             len(_tj["history"]))
+            except Exception:
+                log.exception("tjstats pipeline crashed — continuing")
 
         # --- 2. Build consensus ----------------------------------------
         with _step("2. Build consensus timeseries", log):
