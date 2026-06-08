@@ -34333,6 +34333,16 @@ function _seasonOrgForRow(player, season) {
   trades.sort((a, b) => (a.trade_date || "").localeCompare(b.trade_date || ""));
   // Default: prospect's current org.
   let org = player.org || null;
+  // The CURRENT season reflects the player's CURRENT affiliation. A trade in the
+  // current calendar year — offseason OR mid-season — has already moved the player
+  // to `org` (the canonical current org that the home pages + transactions log
+  // show). The year-granularity walk below can't tell an offseason trade from a
+  // mid-season one, so without this guard it wrongly rolls the current-season row
+  // back to the pre-trade org for the whole current-year-trade cohort (the 2026
+  // offseason trades). Short-circuit: the current season is always the canonical
+  // current org. Past seasons keep the trade-history walk (accrual attribution)
+  // untouched, so historical/point-in-time org never shifts.
+  if (season >= new Date().getFullYear()) return org;
   // Walk trades from MOST recent to least so we can "undo" each one
   // to land on the org the prospect was with at the start of the
   // given season. Trade date: trade.trade_date (ISO yyyy-mm-dd).
