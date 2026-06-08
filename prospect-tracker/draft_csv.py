@@ -98,16 +98,30 @@ def draft_player_key(draft_year: int, player_name: str) -> str:
 #   Post-draft: Rank, Top 100, Pick,  Name, Pos, Player Type, Age, Ht, Wt, B, T,
 #               School, College Commit, FV, Risk, Report, Video, PlayerId
 # `Pick` column carries "<overall>/<org>" (e.g. "7/STL").
-_PICK_RE = re.compile(r"^\s*(\d{1,3})\s*/\s*([A-Z]{2,4})\s*$")
+# FG draft summary "Pick" cell encodes the overall pick + drafting org, but the
+# token ORDER differs across FG's own export years:
+#   2019 boards:        "<overall>/<TEAM>"  e.g. "1/BAL"
+#   2018 & 2020 boards: "<TEAM>/<overall>"  e.g. "DET/1", "CHW/4"
+# Parse order-agnostically: one token is the numeric overall pick (up to 4 digits
+# for deep late-round selections), the other the 2-4 letter org code. Empty
+# tokens are dropped first so a stray "116//SFG" still resolves. Pre-draft boards
+# leave the cell blank and "---" markers carry no pick -> (None, None).
+_PICK_NUM_RE = re.compile(r"^\d{1,4}$")
+_PICK_TEAM_RE = re.compile(r"^[A-Z]{2,4}$")
 
 
 def _parse_pick_cell(cell: str | None) -> tuple[int | None, str | None]:
     if not cell:
         return (None, None)
-    m = _PICK_RE.match(str(cell).strip())
-    if not m:
+    parts = [p.strip() for p in str(cell).strip().split("/") if p.strip()]
+    if len(parts) != 2:
         return (None, None)
-    return (int(m.group(1)), m.group(2))
+    a, b = parts
+    if _PICK_NUM_RE.match(a) and _PICK_TEAM_RE.match(b.upper()):
+        return (int(a), b.upper())
+    if _PICK_TEAM_RE.match(a.upper()) and _PICK_NUM_RE.match(b):
+        return (int(b), a.upper())
+    return (None, None)
 
 
 def _parse_draft_summary_row(raw: dict, draft_year: int) -> dict | None:

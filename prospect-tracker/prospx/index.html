@@ -17848,14 +17848,32 @@ function _tmRenderBody() {
   const dates = _tmDates();
   if (!dates.length) { el.innerHTML = `<div class="state-message">No snapshot history yet.</div>`; return; }
 
+  // The global search bar feeds state.search (same as every other section).
+  // Point-in-time-safe: _boardAsOf(date) already carries each row's org/grade
+  // AS OF that date, so filtering by name never surfaces current-state data.
+  const tmQuery = (state.search || "").toLowerCase().trim();
+
   if (state.tmMode === "asof") {
-    const board = _boardAsOf(state.tmDate).slice(0, state.tmTopN);
+    const full = _boardAsOf(state.tmDate);
+    // When searching, scan the WHOLE as-of board (so a match ranked outside the
+    // Top N still surfaces) and cap the result list; otherwise show the Top N.
+    const board = (tmQuery
+      ? full.filter(r => (r.name || r.player_name || "").toLowerCase().includes(tmQuery)).slice(0, 60)
+      : full.slice(0, state.tmTopN));
     const hind = state.tmHindsight !== false;
     const gradN = board.filter(r => r.debutDate).length;
+    if (tmQuery && !board.length) {
+      el.innerHTML = `
+        <div class="tm-asof-head">
+          <span class="tm-asof-title">No prospects match “${escapeHtml(state.search)}” as of ${_tmFmtDate(state.tmDate)}</span>
+          <span class="tm-asof-sub">Try another name, change the date, or clear the search.</span>
+        </div>`;
+      return;
+    }
     el.innerHTML = `
       <div class="tm-asof-head">
-        <span class="tm-asof-title">Top ${state.tmTopN} as of ${_tmFmtDate(state.tmDate)}</span>
-        <span class="tm-asof-sub">${board.length} ranked${gradN ? ` · ${gradN} since debuted` : ""}</span>
+        <span class="tm-asof-title">${tmQuery ? `Matches for “${escapeHtml(state.search)}”` : `Top ${state.tmTopN}`} as of ${_tmFmtDate(state.tmDate)}</span>
+        <span class="tm-asof-sub">${board.length} ${tmQuery ? (board.length === 1 ? "match" : "matches") : "ranked"}${gradN ? ` · ${gradN} since debuted` : ""}</span>
         <label class="tm-hind-toggle" title="Annotate since-debuted prospects with their realized outcomes (WAR / WAR-yr / WAG). Off = the board purely as it appeared then.">
           <input type="checkbox" id="tm-hindsight"${hind ? " checked" : ""}> Hindsight outcomes
         </label>
@@ -17877,6 +17895,13 @@ function _tmRenderBody() {
   let a = state.tmDateA, b = state.tmDateB;
   if (a > b) { const t = a; a = b; b = t; }
   const diff = _boardDiff(a, b, state.tmTopN);
+  if (tmQuery) {
+    // Narrow the changelog by name too, so the search bar is consistent across
+    // both TM modes. Both dates are in the past — no current-state leakage.
+    const keep = it => ((it.b || it.a || {}).name || "").toLowerCase().includes(tmQuery);
+    ["entered", "risers", "gainers", "graduated", "traded", "fallers", "sliders", "dropped"]
+      .forEach(k => { if (Array.isArray(diff[k])) diff[k] = diff[k].filter(keep); });
+  }
   const summary = `
     <div class="tm-diff-head">
       <span class="tm-diff-title">What changed · ${_tmFmtDate(a)} → ${_tmFmtDate(b)}</span>

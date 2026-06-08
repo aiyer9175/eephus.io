@@ -363,15 +363,54 @@ def _fmt_date(s: str) -> str:
         except ValueError:
             return s
 
+def _member_slug(name: str) -> str:
+    """Stable per-person anchor slug for a Development Team card (e.g.
+    'Will Cahoon' -> 'will-cahoon'). Used by both the team-card id and the
+    article byline deep-link so they always line up."""
+    return re.sub(r"[^a-z0-9]+", "-", (name or "").lower()).strip("-")
+
+def _team_index() -> dict:
+    """name(lowercased) -> {slug, handle} from content/team.json — the single
+    source of truth for dev-team identity + X handles. Empty on any error."""
+    idx: dict = {}
+    try:
+        members = json.loads((CONTENT / "team.json").read_text(encoding="utf-8"))
+    except Exception:
+        return idx
+    for m in members:
+        nm = (m.get("name") or "").strip()
+        if nm:
+            idx[nm.lower()] = {"slug": _member_slug(nm), "handle": (m.get("handle") or None)}
+    return idx
+
 def _byline(meta: dict, sep: str = " · ", link_handle: bool = True) -> str:
     # link_handle=False when the byline sits INSIDE a card <a> (nested <a> is
-    # invalid HTML and the browser splits the card apart) — render @handle as text.
-    author = html.escape(meta.get("author", "") or "")
-    handle = (meta.get("handle") or "").lstrip("@")
-    parts = [f'<span class="author">{author}</span>'] if author else []
+    # invalid HTML and the browser splits the card apart) — render the author +
+    # @handle as text there, and only deep-link on the standalone article page.
+    author = (meta.get("author", "") or "").strip()
+    member = _team_index().get(author.lower())  # None for guest authors
+    # Author name → their Development Team card (deep-linked) when they're on the
+    # team and we're allowed to emit a link; otherwise plain text. No broken
+    # anchors — a guest author with no card simply isn't linked.
+    if author and member and link_handle:
+        author_html = (f'<a class="byline-author" href="/team/#member-{member["slug"]}">'
+                       f'{html.escape(author)}</a>')
+    elif author:
+        author_html = f'<span class="author">{html.escape(author)}</span>'
+    else:
+        author_html = ""
+    # Handle → X profile. Prefer the dev-team handle (single source of truth);
+    # fall back to the article's own handle only for guests not on the team.
+    # Missing handle → hidden, never a guessed URL.
+    if member:
+        handle = (member.get("handle") or "").lstrip("@") or None
+    else:
+        handle = (meta.get("handle") or "").lstrip("@") or None
+    parts = [author_html] if author_html else []
     if handle:
         parts.append(
-            f'<a href="https://x.com/{html.escape(handle)}">@{html.escape(handle)}</a>'
+            f'<a class="byline-handle" href="https://x.com/{html.escape(handle)}" '
+            f'target="_blank" rel="noopener noreferrer">@{html.escape(handle)}</a>'
             if link_handle else f'<span class="handle">@{html.escape(handle)}</span>'
         )
     if meta.get("date_disp"):
@@ -1096,7 +1135,7 @@ def build_team() -> str:
             f'<p class="team-note">{html.escape(m["note"])}</p>' if m.get("note") else ""
         )
         cards.append(
-            f'<div class="card team-card">{photo_html}'
+            f'<div class="card team-card" id="member-{_member_slug(m["name"])}">{photo_html}'
             f'<p class="name">{html.escape(m["name"])}</p>{note_html}{socials_html}</div>'
         )
     follow = (

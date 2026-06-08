@@ -773,7 +773,11 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                         n_d = insert_draft_snapshots(draft_snaps)
                         log.info("inserted %d draft snapshot rows", n_d)
                     this_year = date.today().year
-                    for y in range(2021, this_year + 1):
+                    # 2017+ so the historical classes stay authoritative: the FG
+                    # 2017 board is pre-draft (no picks) and the 2018/2020 FG CSVs
+                    # encode Pick as <TEAM>/<overall>, so the tracker is the org
+                    # source of record for those years. Idempotent upsert.
+                    for y in range(2017, this_year + 1):
                         rows = scrape_mlb_draft_tracker(y, force=force_refetch)
                         if rows:
                             upsert_draft_results(rows)

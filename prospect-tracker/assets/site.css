@@ -272,6 +272,11 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .article-header .byline { font-size: 13px; color: var(--text-secondary); }
 .article-header .byline .author { font-weight: 700; }
 .article-header .byline .dot-sep { color: var(--text-tertiary); margin: 0 8px; }
+/* Byline links: author → their Development Team card, handle → X profile. */
+.byline-author { color: inherit; font-weight: 700; text-decoration: none; }
+.byline-author:hover, .byline-author:focus-visible { text-decoration: underline; }
+.byline-handle { color: var(--accent-navy); text-decoration: none; }
+.byline-handle:hover, .byline-handle:focus-visible { text-decoration: underline; }
 .article-summary { font-size: 1.05rem; color: var(--text-secondary); font-style: italic; border-left: 3px solid var(--accent-gold); padding-left: 14px; margin: 0 0 28px; }
 .article-body { font-size: 1.05rem; line-height: 1.7; }
 .article-body p { margin: 0 0 1.1em; }
@@ -286,6 +291,9 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 
 /* ---- team ---- */
 .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+/* Deep-linked card (e.g. /team/#member-will-cahoon) gets a brief gold accent. */
+.team-card { scroll-margin-top: 90px; }
+.team-card:target { outline: 2px solid var(--accent-gold); outline-offset: 3px; }
 /* Headshot — rectangular, sharp corners (circular is reserved for account
    avatars). Provided <img> sits above a monogram that shows through when there's
    no photo or the file fails to load. */
