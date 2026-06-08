@@ -5,10 +5,13 @@ account watchlist, forums/comments, notifications, and moderation. The rest of
 the site stays **static** (HTML/JS/JSON on a CDN); the browser talks to Supabase
 directly and **Row-Level Security** — not the public key — enforces access.
 
-> **Auth method:** email sign-up (Supabase-managed passwords/sessions — *not*
-> hand-rolled). **No Twitter/X integration** (X discontinued its free API tier
-> in Feb 2026; login would be a paid per-call dependency). Google can be enabled
-> later from the same Auth settings at no cost if desired.
+> **Auth method:** first-party email sign-up only — email + password,
+> Supabase-managed passwords/sessions (*not* hand-rolled). **No social OAuth of
+> any kind** (no Sign in with X, no Sign in with Google) — this is an intentional,
+> permanent product guardrail, not a cost decision. The only third-party identity
+> reference anywhere is a *self-entered* X handle on profiles, which is
+> display/link-out text — not a login and not an integration. Do not enable any
+> OAuth provider in Auth settings.
 
 ## One-time provisioning (you, the site owner)
 
@@ -21,9 +24,14 @@ directly and **Row-Level Security** — not the public key — enforces access.
    **2 MB**, allowed MIME `image/png, image/jpeg, image/webp`.
 4. **Auth settings** (Authentication → Providers/Settings):
    - Enable **Email** (confirm-email on; password min length ≥ 8).
+   - Leave **every OAuth/social provider disabled** — first-party email only is a
+     product guardrail (see auth-method note above).
    - Set **Site URL** = `https://eephus.io` and add redirect URLs (incl.
      `http://localhost:8000` for local dev).
-   - (Optional) enable **Google** later — no cost, no extra code beyond a button.
+   - For production, point Auth → SMTP at a dedicated transactional sender
+     (**Resend**) so verification/reset mail and the Part 5 digest share one
+     sending reputation; set **SPF/DKIM/DMARC** on `eephus.io`. The built-in
+     sender is fine for local/dev only.
 5. **Make yourself admin** once you've signed up:
    `update profiles set role = 'admin' where username = '<you>';`
 6. **Wire the front-end config** (below).

@@ -59,12 +59,24 @@ drop trigger if exists trg_guard_profile on profiles;
 create trigger trg_guard_profile before update on profiles
   for each row execute function guard_profile_privileged_cols();
 
--- Auto-create a profile when a new auth user signs up. Username defaults from
--- email local-part (sanitized + de-duped); the user can edit it in settings.
+-- Auto-create a profile when a new auth user signs up. Prefer the username the
+-- user chose on-site at signup (passed in auth metadata as `username`); if it's
+-- absent / malformed / already taken, fall back to an email-local-part default
+-- (sanitized + de-duped). Either way the user can edit it later in settings.
 create or replace function handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
-declare base text; cand text; n int := 0;
+declare chosen text; base text; cand text; n int := 0;
 begin
+  -- 1) Honor the on-site chosen handle when it passes the same rules as the
+  --    `username_format` check on profiles and isn't already taken.
+  chosen := nullif(regexp_replace(coalesce(new.raw_user_meta_data->>'username',''),
+                                  '[^A-Za-z0-9_]', '', 'g'), '');
+  if chosen is not null and char_length(chosen) between 3 and 20
+       and not exists (select 1 from profiles where username = chosen) then
+    insert into profiles (id, username) values (new.id, chosen);
+    return new;
+  end if;
+  -- 2) Fallback: derive + de-dupe from the email local-part.
   base := regexp_replace(split_part(coalesce(new.email,'user'), '@', 1), '[^A-Za-z0-9_]', '', 'g');
   base := left(coalesce(nullif(base,''),'user'), 16);
   if char_length(base) < 3 then base := base || 'fan'; end if;

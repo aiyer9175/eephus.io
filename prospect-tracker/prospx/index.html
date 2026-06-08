@@ -29,6 +29,11 @@
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
   <link rel="stylesheet" href="/assets/site.css">
+  <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
+       resolve; scoped under .eph-* so it can't touch existing chrome. Circular
+       account avatars (.eph-avatar) are the one sanctioned exception to the
+       site-wide sharp-corner rule. -->
+  <link rel="stylesheet" href="/assets/eephus-account.css">
 
   <!-- Webfonts: Source Serif for headlines, Inter for UI, JetBrains Mono
        for numerics. System fallbacks (Georgia / -apple-system / Menlo)
@@ -8108,6 +8113,7 @@
     <a href="/">Home</a>
     <a href="/articles/">Articles</a>
     <a href="/prospx/" class="is-active">PROSPX</a>
+    <a href="/forums/">Forums</a>
     <a href="/team/">Development Team</a>
   </nav>
   <div class="eephus-nav-controls">
@@ -9511,6 +9517,16 @@
 <!-- qrcode-generator (vendored, ~56KB) — builds the optional QR in the GFX card
      header that links a shared graphic back to the eephus.io prospect/farm page. -->
 <script src="/vendor/qrcode.min.js" defer></script>
+
+<!-- eephus.io account layer (Parts 1-7). Both are OPTIONAL: eephus-config.js is
+     git-ignored and absent on the public/dev tree, so its <script> 404s harmlessly
+     and window.EEPHUS_SUPABASE stays undefined. eephus-account.js then runs fully
+     inert — no Supabase SDK fetch, no behavior change — and the site works exactly
+     as today (logged-out, localStorage watchlist). When config IS present, the
+     module self-injects the Supabase SDK and lights up the account UI. -->
+<script src="/assets/eephus-config.js" defer></script>
+<script src="/assets/eephus-account.js" defer></script>
+<script src="/assets/eephus-ui.js" defer></script>
 
 <!-- v32.0 — FV/WAR/$ conversion framework, loaded synchronously so all
      downstream code can call dollarsPerWar() / surplusValueMM() / etc
@@ -39525,6 +39541,10 @@ function renderPlayerDetail(key) {
     { key: "scouting",    label: "Scouting / Tools", html: scoutingHtml },
     { key: "health",      label: "Health", html: healthHtml },
     { key: "details",     label: "Details",         html: contextHtml },
+    // eephus.io — Discussion tab. The panel is a mount point the account/forum
+    // layer fills (see the EephusUI.mountForum hook at the end of this fn); the
+    // forum loads only while this tab is active, not on every detail render.
+    { key: "discussion",  label: "Discussion",      html: '<div id="eph-forum-mount"></div>' },
   ];
   const tabBar = renderDetailTabs(tabs, state.playerTab, "player");
 
@@ -39551,6 +39571,13 @@ function renderPlayerDetail(key) {
   </div>`;
   root.innerHTML = header + detailChipRibbon + quickReadHtml + tilesHtml + tabBarWithRail;
   syncSortHeaderActive();
+  // eephus.io account/forum layer — fills the Discussion tab's mount point with
+  // the thread, ONLY while that tab is active (so the forum doesn't load on every
+  // detail render). No-op when the UI module isn't present; passes the player
+  // object so FV-chart embeds render from already-loaded data without a refetch.
+  if (window.EephusUI && state.playerTab === "discussion") {
+    try { window.EephusUI.mountForum("prospect", key, p); } catch (e) { /* non-fatal */ }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -41235,6 +41262,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
     { key: "development",  label: "Development",  html: devTabHtml },
     { key: "finances",     label: "Finances",     html: financesTabHtml },
     { key: "transactions", label: "Transactions & Pipeline", html: transactionsTabHtml },
+    // eephus.io — per-farm Discussion thread (same component as prospect pages).
+    { key: "discussion",   label: "Discussion",   html: '<div id="eph-forum-mount"></div>' },
   ];
   const tabBar = renderDetailTabs(tabs, state.farmTab, "farm");
   // v30.7 — Tab-aware sidebar for farm-detail. Wraps the tab bar in
@@ -41254,6 +41283,10 @@ function _renderFarmDetailBody(orgCode, org, root) {
   </div>`;
   root.innerHTML = header + tilesHtml + tabBarWithRail;
   syncSortHeaderActive();
+  // eephus.io — fill the farm Discussion tab when it's active.
+  if (window.EephusUI && state.farmTab === "discussion") {
+    try { window.EephusUI.mountForum("farm", orgCode, { name: orgCode + " farm system", org: orgCode }); } catch (e) { /* non-fatal */ }
+  }
 
   // Wire affiliate level tabs (vanilla — toggle visibility, no re-render).
   document.querySelectorAll("#farm-detail-body .level-tab").forEach(btn => {
@@ -41756,6 +41789,8 @@ function watchlistToggle(key) {
   syncWatchlistButtons();
   if (state.section === "watchlist") renderWatchlist();
   updateWatchlistTabBadge();
+  // eephus.io — mirror the change up to the signed-in account (no-op logged-out).
+  if (window.EephusUI) { try { window.EephusUI.onWatchChange("prospect", key, keys.includes(key)); } catch (e) {} }
 }
 function syncWatchlistButtons() {
   const inSet = new Set(watchlistLoad());
@@ -41787,6 +41822,8 @@ function farmWatchlistToggle(org) {
   syncFarmWatchlistButtons();
   if (state.section === "watchlist") renderWatchlist();
   updateWatchlistTabBadge();
+  // eephus.io — mirror the change up to the signed-in account (no-op logged-out).
+  if (window.EephusUI) { try { window.EephusUI.onWatchChange("farm", org, orgs.includes(org)); } catch (e) {} }
 }
 function syncFarmWatchlistButtons() {
   const inSet = new Set(farmWatchlistLoad());
@@ -44279,6 +44316,18 @@ function populateOrgFilter() {
     }, 0);
   }
 })();
+
+// eephus.io reuse shim — exposes the handful of PROSPX primitives the account/
+// forum layer reuses (single source of truth for any number/logo a post or
+// embed surfaces), since the app's top-level `let DATA` and helpers aren't on
+// window. Safe, read-only accessors; evaluated after the app script defines them.
+window.PROSPX = {
+  prospects: function () { return (typeof DATA !== "undefined" && DATA && DATA.players) ? DATA.players : []; },
+  findPlayer: function (key) { try { return findPlayer(key); } catch (e) { return null; } },
+  teamLogoURL: function (org) { try { return teamLogoURL(org); } catch (e) { return null; } },
+  headshotURL: function (id, px) { try { return headshotURL(id, px); } catch (e) { return null; } },
+  formatMetric: function (v, t) { try { return formatMetric(v, t); } catch (e) { return String(v); } }
+};
 </script>
 </body>
 </html>

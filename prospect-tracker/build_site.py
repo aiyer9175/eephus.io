@@ -49,6 +49,24 @@ def _asset_ver(rel: str) -> str:
     except OSError:
         return "1"
 _CSS_VER = _asset_ver("assets/site.css")
+_ACCT_VER = _asset_ver("assets/eephus-account.js")
+_UI_VER = _asset_ver("assets/eephus-ui.js")
+_ACCT_CSS_VER = _asset_ver("assets/eephus-account.css")
+
+# eephus.io account layer (Parts 1-7), injected before </body> on every editorial
+# page. OPTIONAL by design: assets/eephus-config.js is git-ignored and absent on
+# the public tree, so its <script> 404s harmlessly and window.EEPHUS_SUPABASE stays
+# undefined — eephus-account.js then runs fully inert (no Supabase SDK fetch, no
+# behavior change) and the page renders exactly as today. When config IS present
+# the module self-injects the SDK and lights up the account UI.
+ACCOUNT_SCRIPTS = (
+    f'<script src="/assets/eephus-config.js" defer></script>\n'
+    f'<script src="/assets/eephus-account.js?v={_ACCT_VER}" defer></script>\n'
+    f'<script src="/assets/eephus-ui.js?v={_UI_VER}" defer></script>'
+)
+# Account/forum stylesheet — linked in <head> after site.css on every editorial
+# page (scoped under .eph-*; the circular avatar is the one sanctioned curve).
+ACCOUNT_CSS_LINK = f'<link rel="stylesheet" href="/assets/eephus-account.css?v={_ACCT_CSS_VER}">'
 
 # Unified prospect-photo resolution — mirrors PROSPX's headshotURL(): consult the
 # resolved context map (data/photo_ctx.json, built by headshots.py) and use the
@@ -82,6 +100,7 @@ NAV_ITEMS = [
     ("home",     "Home",             "/"),
     ("articles", "Articles",         "/articles/"),
     ("prospx",   "PROSPX",           "/prospx/"),
+    ("forums",   "Forums",           "/forums/"),
     ("team",     "Development Team",  "/team/"),
 ]
 
@@ -364,6 +383,7 @@ def page(title: str, active: str, body: str, description: str = "",
 <meta name="description" content="{desc}">
 {social}
 <link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
+{ACCOUNT_CSS_LINK}
 </head>
 <body class="eephus-page">
 {_nav(active)}
@@ -374,6 +394,7 @@ def page(title: str, active: str, body: str, description: str = "",
   <span>eephus.io — editorial baseball analytics</span>
   <span>© {date.today().year} eephus.io</span>
 </footer>
+{ACCOUNT_SCRIPTS}
 </body>
 </html>
 """
@@ -693,6 +714,7 @@ def page_home(title: str, inner: str, description: str = "") -> str:
 <title>{html.escape(title)}</title>
 <meta name="description" content="{desc}">
 <link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
+{ACCOUNT_CSS_LINK}
 </head>
 <body class="eephus-page eephus-home">
 {inner}
@@ -700,6 +722,7 @@ def page_home(title: str, inner: str, description: str = "") -> str:
   <span>eephus.io — editorial baseball analytics</span>
   <span>© {date.today().year} eephus.io</span>
 </footer>
+{ACCOUNT_SCRIPTS}
 </body>
 </html>
 """
@@ -817,6 +840,10 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     sidebar = (
         '<aside class="home-sidebar">'
         f'<div class="sb-brand"><a class="wm" href="/">eephus.io</a>{THEME_BTN}</div>'
+        # eephus.io — account entry point for the homepage (page_home has no
+        # .eephus-nav top bar). refreshNav() in eephus-ui.js injects the Sign-in /
+        # avatar control into any .eephus-nav-controls, including this sidebar slot.
+        '<div class="sb-account eephus-nav-controls"></div>'
         f'{search}'
         f'<div class="sb-group"><div class="sb-group-label">Sections</div><nav class="sb-nav">{"".join(nav)}</nav></div>'
         f'<div class="sb-group"><div class="sb-group-label">PROSPX</div><nav class="sb-subnav">{sub}</nav></div>'
@@ -885,10 +912,15 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     callout = _date_callout()
     otd = _this_day_html(graduates)
     scatter = _scatter_teaser()
+    # eephus.io — Forums module (third content pillar). Hydrated client-side by
+    # eephus-ui.js (#eph-home-forums): bump/Hot ordering, last-active first.
+    forums_mod = _home_module("Forums", "/forums/", "All discussions",
+                              '<div id="eph-home-forums"></div>', full=True)
     main = (
         '<main class="home-main">'
         f'{masthead}{callout}{lead}{secondary}'
         f'<div class="module-cols">{movers}{topp}{grads}{farm}{otd}</div>'
+        f'{forums_mod}'
         f'<div class="teaser-row">{glossary}{scatter}</div>'
         '</main>'
     )
@@ -915,6 +947,18 @@ def build_articles_index(articles: list[dict]) -> str:
     )
     return page("Articles — eephus.io", "articles", body, "Long-form baseball analysis from eephus.io.")
 
+def build_forums_index() -> str:
+    """The /forums/ index — the third content pillar. The thread list is hydrated
+    client-side by eephus-ui.js (#eph-forums-index): bump / Hot ordering, most
+    recently active first. Static shell gives SEO + first paint + a nav home."""
+    body = (
+        '<div class="section-head"><h1>Forums</h1>'
+        '<span class="section-sub">Discussion across prospects, farm systems, and articles</span></div>'
+        '<div class="eph-forums-index-page"><div id="eph-forums-index"></div></div>'
+    )
+    return page("Forums — eephus.io", "forums", body,
+                "Community discussion across prospects, farm systems, and articles on eephus.io.")
+
 def build_article_page(a: dict) -> str:
     body = (
         '<a class="back-link" href="/articles/">← All articles</a>'
@@ -926,6 +970,10 @@ def build_article_page(a: dict) -> str:
         + (f'<p class="article-summary">{html.escape(a["summary"])}</p>' if a.get("summary") else "")
         + f'<div class="article-body">{a["body_html"]}</div>'
         "</article>"
+        # eephus.io — article comment thread (the same forum component PROSPX uses),
+        # auto-mounted client-side by eephus-ui.js from these data-* hints.
+        f'<div id="eph-forum-mount" class="eph-article-forum" data-forum-scope="article" '
+        f'data-forum-key="{html.escape(a["slug"])}" data-forum-title="{html.escape(a["title"])}"></div>'
     )
     # Per-article social card (assets/articles/<slug>/share-card.png) is optional —
     # only emit og:image/twitter when one was generated for this piece.
@@ -1018,6 +1066,7 @@ def main() -> None:
     _write("articles/index.html", build_articles_index(articles))
     for a in articles:
         _write(f"articles/{a['slug']}/index.html", build_article_page(a))
+    _write("forums/index.html", build_forums_index())
     _write("team/index.html", build_team())
     print(f"done — {len(articles)} article(s).")
 
