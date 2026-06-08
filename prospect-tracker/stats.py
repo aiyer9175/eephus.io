@@ -1323,6 +1323,162 @@ def date_today_iso() -> str:
 CAREER_SEASONS_KEPT = 5
 
 
+def _level_label_from(league_name: str, sport_name: str) -> str | None:
+    """Map a split's league/sport name to a short level label (MLB/AAA/…/DSL).
+    League name takes precedence over the generic sport name so 'Florida
+    Complex League' → CPX rather than the Rookie default."""
+    for candidate in (league_name, sport_name):
+        if not candidate:
+            continue
+        best_len, label = 0, None
+        cand_lower = candidate.lower()
+        for key, lbl in LEVEL_LABELS.items():
+            if key.lower() in cand_lower and len(key) > best_len:
+                label, best_len = lbl, len(key)
+        if label is not None and label in LEVEL_ORDER:
+            return label
+    return None
+
+
+def _row_from_split(s: dict, is_pitcher: bool) -> dict:
+    """Build one career-table row from a single yearByYear split (one team, one
+    level, one season). Carries `org` = the canonical parent club so a mid-season
+    stint at a AA affiliate resolves to its big-league org."""
+    stat = s.get("stat", {})
+    row = {
+        "season": int(s.get("season") or 0),
+        "level": s.get("_level"),
+        "level_label": s.get("_level_label"),
+        "org": s.get("_org"),
+        "games": int(stat.get("gamesPlayed", 0) or 0),
+    }
+    if is_pitcher:
+        ip_val = (float(stat.get("inningsPitched"))
+                  if stat.get("inningsPitched") else None)
+        hr_allowed = int(stat.get("homeRuns", 0) or 0)
+        hr_per_9 = _safe_float(stat.get("homeRunsPer9"))
+        if hr_per_9 is None and ip_val and ip_val > 0:
+            hr_per_9 = round(hr_allowed * 9.0 / ip_val, 2)
+        tbf = int(stat.get("battersFaced", 0) or 0)
+        so_p = int(stat.get("strikeOuts", 0) or 0)
+        bb_p = int(stat.get("baseOnBalls", 0) or 0)
+        row.update({
+            "era": str(stat.get("era") or "—"),
+            "ip": ip_val,
+            "k_per_9":  _safe_float(stat.get("strikeoutsPer9Inn")),
+            "bb_per_9": _safe_float(stat.get("walksPer9Inn")),
+            "k_pct":  round(100 * so_p / tbf, 1) if tbf else None,
+            "bb_pct": round(100 * bb_p / tbf, 1) if tbf else None,
+            "tbf": tbf,
+            "hr_per_9": hr_per_9,
+            "hr_allowed": hr_allowed,
+            "whip": _safe_float(stat.get("whip")),
+            "wins": int(stat.get("wins", 0) or 0),
+            "losses": int(stat.get("losses", 0) or 0),
+            "is_pitcher": True,
+        })
+    else:
+        pa = stat.get("plateAppearances", 0) or 0
+        bb = stat.get("baseOnBalls", 0) or 0
+        so = stat.get("strikeOuts", 0) or 0
+        avg_str = str(stat.get("avg") or "")
+        slg_str = str(stat.get("slg") or "")
+        iso_val = None
+        try:
+            if avg_str and slg_str and avg_str != "—" and slg_str != "—":
+                iso_val = round(float(slg_str) - float(avg_str), 3)
+        except (TypeError, ValueError):
+            iso_val = None
+        row.update({
+            "avg": str(stat.get("avg") or "—"),
+            "obp": str(stat.get("obp") or "—"),
+            "slg": str(stat.get("slg") or "—"),
+            "ops": str(stat.get("ops") or "—"),
+            "iso": iso_val,
+            "hr":  int(stat.get("homeRuns", 0) or 0),
+            "sb":  int(stat.get("stolenBases", 0) or 0),
+            "rbi": int(stat.get("rbi", 0) or 0),
+            "ab":  int(stat.get("atBats", 0) or 0),
+            "bb_pct": round(100 * bb / pa, 1) if pa else None,
+            "k_pct":  round(100 * so / pa, 1) if pa else None,
+            "is_pitcher": False,
+        })
+    return row
+
+
+def _fmt_rate(v: float) -> str:
+    """Format a rate the way the API does: '.293', or '1.050' when >= 1."""
+    s = f"{v:.3f}"
+    return s[1:] if s.startswith("0.") else s
+
+
+def _ip_outs(ip) -> int:
+    """Innings-pitched string ('48.1' = 48⅓ IP) → integer outs."""
+    try:
+        whole, _, frac = str(ip).partition(".")
+        return int(whole or 0) * 3 + (int(frac) if frac else 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _combine_stints(splits: list[dict], is_pitcher: bool) -> dict:
+    """Sum a multi-team (season, level) into one combined line that reconciles to
+    its per-org stints. Counting stats add; rate stats are recomputed from the
+    summed components (an average of rates would be wrong)."""
+    first = splits[0]
+    S = [s.get("stat") or {} for s in splits]
+    _sum = lambda f: sum(int(st.get(f, 0) or 0) for st in S)
+    base = {
+        "season": int(first.get("season") or 0),
+        "level": first.get("_level"),
+        "level_label": first.get("_level_label"),
+        "org": None,                          # multi-org — the chip uses `stints`
+        "games": _sum("gamesPlayed"),
+    }
+    if is_pitcher:
+        outs = sum(_ip_outs(st.get("inningsPitched")) for st in S)
+        ip_real = outs / 3 if outs else 0.0
+        er, bb, h = _sum("earnedRuns"), _sum("baseOnBalls"), _sum("hits")
+        hr, so, tbf = _sum("homeRuns"), _sum("strikeOuts"), _sum("battersFaced")
+        base.update({
+            "era": f"{(9 * er / ip_real):.2f}" if ip_real else "—",
+            "ip": round(outs // 3 + (outs % 3) / 10.0, 1) if outs else None,
+            "k_per_9":  round(9 * so / ip_real, 2) if ip_real else None,
+            "bb_per_9": round(9 * bb / ip_real, 2) if ip_real else None,
+            "k_pct":  round(100 * so / tbf, 1) if tbf else None,
+            "bb_pct": round(100 * bb / tbf, 1) if tbf else None,
+            "tbf": tbf,
+            "hr_per_9": round(9 * hr / ip_real, 2) if ip_real else None,
+            "hr_allowed": hr,
+            "whip": round((bb + h) / ip_real, 2) if ip_real else None,
+            "wins": _sum("wins"), "losses": _sum("losses"),
+            "is_pitcher": True,
+        })
+    else:
+        ab, h, tb = _sum("atBats"), _sum("hits"), _sum("totalBases")
+        bb, hbp, sf = _sum("baseOnBalls"), _sum("hitByPitch"), _sum("sacFlies")
+        pa, so = _sum("plateAppearances"), _sum("strikeOuts")
+        obp_den = ab + bb + hbp + sf
+        avg = h / ab if ab else 0.0
+        slg = tb / ab if ab else 0.0
+        obp = (h + bb + hbp) / obp_den if obp_den else 0.0
+        base.update({
+            "avg": _fmt_rate(avg) if ab else "—",
+            "obp": _fmt_rate(obp) if obp_den else "—",
+            "slg": _fmt_rate(slg) if ab else "—",
+            # OPS by convention = (rounded OBP) + (rounded SLG), matching how the
+            # API + single-org rows report it (not a re-rounded full-precision sum).
+            "ops": _fmt_rate(round(obp, 3) + round(slg, 3)) if ab else "—",
+            "iso": round(slg - avg, 3) if ab else None,
+            "hr": _sum("homeRuns"), "sb": _sum("stolenBases"), "rbi": _sum("rbi"),
+            "ab": ab,
+            "bb_pct": round(100 * bb / pa, 1) if pa else None,
+            "k_pct":  round(100 * so / pa, 1) if pa else None,
+            "is_pitcher": False,
+        })
+    return base
+
+
 def fetch_career_stats(player_key: str, mlbam_id: int,
                        is_pitcher: bool = False) -> list[dict] | None:
     """
@@ -1344,7 +1500,7 @@ def fetch_career_stats(player_key: str, mlbam_id: int,
     splits (defensive for API edge cases).
     """
     group = "pitching" if is_pitcher else "hitting"
-    base = f"{MLB_STATS_API}/people/{mlbam_id}/stats?stats=yearByYear&group={group}"
+    base = f"{MLB_STATS_API}/people/{mlbam_id}/stats?stats=yearByYear&group={group}&hydrate=team"
     combined_url = f"{base}&leagueListId=mlb_milb"
 
     raw_splits: list[dict] = []
@@ -1373,140 +1529,54 @@ def fetch_career_stats(player_key: str, mlbam_id: int,
     if not raw_splits:
         return None
 
-    # Keep every (season, level) split — a 2025 AA-then-AAA stint
-    # produces TWO entries so the consumer sees both rungs of the ladder.
-    # `accepted` is the merged stash; rows sort by (season desc, then
-    # level rank asc within the season — highest level first).
-    accepted: list[dict] = []
-    seen: set[tuple[str, str]] = set()  # de-dup (season, level)
+    # Group the raw yearByYear splits by (season, level), keeping EVERY per-team
+    # stint so a mid-season trade surfaces both orgs. The API also returns an
+    # aggregate ("team": null) row per level — we skip it and recompute the
+    # combined line ourselves by summing the stints, which reconciles to the
+    # parts and dodges the aggregate row's null-league level ambiguity. Each
+    # split resolves to the canonical PARENT org (a AA affiliate → its big club).
+    from collections import OrderedDict
+    from trades import canonical_org          # lazy import: trades imports stats
+    groups: "OrderedDict[tuple, list]" = OrderedDict()
     for s in raw_splits:
         season = str(s.get("season") or "")
         if not season:
             continue
+        team = s.get("team") or {}
+        if not team.get("id"):
+            continue                          # API aggregate row — recomputed below
         league = s.get("league") or {}
         sport_name = (league.get("sport") or {}).get("name") or ""
         league_name = league.get("name") or ""
-        # League name takes precedence: "Florida Complex League" should
-        # map to CPX even when sport.name is the generic "Rookie", and
-        # "Dominican Summer League" must hit DSL rather than fall through
-        # to the Rookie-default CPX. We try league_name first, then
-        # sport_name as a fallback.
-        label = None
-        for candidate in (league_name, sport_name):
-            if not candidate:
-                continue
-            best_len = 0
-            cand_lower = candidate.lower()
-            for key, lbl in LEVEL_LABELS.items():
-                if key.lower() in cand_lower and len(key) > best_len:
-                    label = lbl
-                    best_len = len(key)
-            if label is not None and label in LEVEL_ORDER:
-                break
+        label = _level_label_from(league_name, sport_name)
         if label is None or label not in LEVEL_ORDER:
             continue
-        key = (season, label)
-        if key in seen:
-            # Some seasons surface the same level twice via different
-            # affiliates (e.g. mid-season trade to another AA team).
-            # Keep the first occurrence; downstream sums see the API's
-            # aggregate via its own composite stat row.
-            continue
-        seen.add(key)
         s["_level"] = label
         s["_level_label"] = league_name or sport_name
-        accepted.append(s)
+        s["_org"] = canonical_org(team.get("parentOrgName") or team.get("name"))
+        groups.setdefault((int(season), label), []).append(s)
 
-    if not accepted:
+    if not groups:
         return None
 
-    # Sort: season desc, then level rank asc (highest level first) inside
-    # each season. The "first row per season" matches the legacy
-    # behavior, but later rows now carry the lower-level splits.
-    accepted.sort(key=lambda r: (
-        -int(r.get("season") or 0),
-        LEVEL_ORDER.index(r["_level"]),
-    ))
-
+    # One row per (season, level), sorted season desc then level rank asc. A
+    # single stint stays a plain row; 2+ stints collapse to a summed combined
+    # line carrying the per-org `stints` breakdown in chronological (old → new)
+    # order — the order the API returns them, which the consumer renders as the
+    # dual-org chip + per-org split.
     out: list[dict] = []
-    for s in accepted:
-        stat = s.get("stat", {})
-        row = {
-            "season": int(s.get("season") or 0),
-            "level": s["_level"],
-            "level_label": s["_level_label"],
-            "games": int(stat.get("gamesPlayed", 0) or 0),
-        }
-        if is_pitcher:
-            ip_val = (float(stat.get("inningsPitched"))
-                      if stat.get("inningsPitched") else None)
-            hr_allowed = int(stat.get("homeRuns", 0) or 0)
-            # HR/9 is one of the cleanest red-flag signals for pitchers
-            # (HR-prone arms struggle as they move up). Use the API's
-            # `homeRunsPer9` when present; fall back to computing from
-            # HR-allowed and IP so we still get a value when the field
-            # is absent at a given level/season.
-            hr_per_9 = _safe_float(stat.get("homeRunsPer9"))
-            if hr_per_9 is None and ip_val and ip_val > 0:
-                hr_per_9 = round(hr_allowed * 9.0 / ip_val, 2)
-            # Per-batter rates — K% / BB% measured against batters
-            # faced, not innings. More resilient than K/9 to starter vs.
-            # reliever workload differences (a reliever K/9 of 14 vs.
-            # a starter K/9 of 11 looks dominant but normalizes when you
-            # use K%). When TBF is absent (older bulk paths), fall back
-            # to None so the consumer can decide how to render the gap.
-            tbf = int(stat.get("battersFaced", 0) or 0)
-            so_p = int(stat.get("strikeOuts", 0) or 0)
-            bb_p = int(stat.get("baseOnBalls", 0) or 0)
-            row.update({
-                "era": str(stat.get("era") or "—"),
-                "ip": ip_val,
-                "k_per_9":  _safe_float(stat.get("strikeoutsPer9Inn")),
-                "bb_per_9": _safe_float(stat.get("walksPer9Inn")),
-                "k_pct":  round(100 * so_p / tbf, 1) if tbf else None,
-                "bb_pct": round(100 * bb_p / tbf, 1) if tbf else None,
-                "tbf": tbf,
-                "hr_per_9": hr_per_9,
-                "hr_allowed": hr_allowed,
-                "whip": _safe_float(stat.get("whip")),
-                "wins": int(stat.get("wins", 0) or 0),
-                "losses": int(stat.get("losses", 0) or 0),
-                "is_pitcher": True,
-            })
+    for skey in sorted(groups, key=lambda k: (-k[0], LEVEL_ORDER.index(k[1]))):
+        splits = groups[skey]
+        stint_rows = [_row_from_split(s, is_pitcher) for s in splits]
+        if len(stint_rows) == 1:
+            out.append(stint_rows[0])
         else:
-            pa = stat.get("plateAppearances", 0) or 0
-            bb = stat.get("baseOnBalls", 0) or 0
-            so = stat.get("strikeOuts", 0) or 0
-            avg_str = str(stat.get("avg") or "")
-            slg_str = str(stat.get("slg") or "")
-            iso_val = None
-            try:
-                if avg_str and slg_str and avg_str != "—" and slg_str != "—":
-                    iso_val = round(float(slg_str) - float(avg_str), 3)
-            except (TypeError, ValueError):
-                iso_val = None
-            row.update({
-                "avg": str(stat.get("avg") or "—"),
-                "obp": str(stat.get("obp") or "—"),
-                "slg": str(stat.get("slg") or "—"),
-                "ops": str(stat.get("ops") or "—"),
-                "iso": iso_val,
-                "hr":  int(stat.get("homeRuns", 0) or 0),
-                "sb":  int(stat.get("stolenBases", 0) or 0),
-                "rbi": int(stat.get("rbi", 0) or 0),
-                # Raw at-bats — kept for the bulk graduation pass so we can
-                # sum MLB-level rows against the 130-AB rookie threshold
-                # without making a separate `/people/{id}/stats?stats=career`
-                # call per prospect.
-                "ab":  int(stat.get("atBats", 0) or 0),
-                "bb_pct": round(100 * bb / pa, 1) if pa else None,
-                "k_pct":  round(100 * so / pa, 1) if pa else None,
-                "is_pitcher": False,
-            })
-        out.append(row)
-    # Cap at CAREER_SEASONS_KEPT UNIQUE seasons (not rows) so the
-    # multi-level expansion doesn't accidentally truncate the table to
-    # mid-2023. Walk the sorted list collecting rows until the season
+            combined = _combine_stints(splits, is_pitcher)
+            combined["stints"] = stint_rows   # per-org lines (old → new)
+            out.append(combined)
+
+    # Cap at CAREER_SEASONS_KEPT UNIQUE seasons (not rows) so the multi-level
+    # ladder doesn't truncate the table. Walk collecting rows until the season
     # set hits the cap.
     kept_seasons: set[int] = set()
     capped: list[dict] = []

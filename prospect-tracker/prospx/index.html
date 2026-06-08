@@ -3239,6 +3239,17 @@
     .detail-table tbody tr:hover { background: rgba(14, 43, 77, 0.04); }
     .detail-table td:first-child { text-align: left; }
     .detail-table th:first-child { text-align: left; }
+    /* In-season-trade split season: dual-org chip (old → new) + per-org split sub-rows. */
+    .career-dual { display: inline-flex; align-items: center; justify-content: center; gap: 3px; white-space: nowrap; }
+    .org-sep { color: var(--text-tertiary); font-size: 11px; margin: 0 1px; }
+    .org-more { font-family: var(--font-retro-mono); font-size: 10px; color: var(--text-tertiary); }
+    .career-org-multi { white-space: nowrap; }
+    .career-org-multi .stint-caret { font-size: 9px; color: var(--text-tertiary); margin-left: 2px; transition: transform .15s ease; display: inline-block; }
+    .career-org-multi[aria-expanded="true"] .stint-caret { transform: rotate(90deg); }
+    .career-org-multi:hover { background: var(--bg-tertiary); }
+    .career-org-multi:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: -2px; }
+    .stint-row > td { background: var(--bg-tertiary); font-size: 0.92em; color: var(--text-secondary); }
+    .stint-row .stint-org { display: inline-flex; align-items: center; justify-content: center; gap: 3px; padding-left: 10px; }
 
     /* Per-source FV history table — 10+ columns when a player has lots
        of sources. The wrapper allows horizontal scroll; the date column
@@ -34381,6 +34392,71 @@ function _rowOpsPlus(s) {
   return Math.round(100 * ops / avgOps);
 }
 
+// Org cell for a career row. A multi-org season — the player accrued stats at
+// 2+ orgs that year (an IN-SEASON trade), surfaced as 2+ `stints` on the row —
+// renders the orgs old → new with an expander caret + hidden per-org split
+// sub-rows. A normal (single-org / offseason-trade) season keeps the single
+// trade-derived logo from _seasonOrgForRow, exactly as before. The right-hand
+// (new) logo is that season's final org, which equals the canonical current org
+// when the in-season trade is the player's latest move. `statCellsFn(line)`
+// renders the stat <td>s so the split rows match the main row's columns.
+function _careerOrgAndStints(s, player, statCellsFn) {
+  const _logo = o => (typeof teamLogoHTML === "function" ? teamLogoHTML(o, "sm") : escapeHtml(o));
+  const stints = (s && Array.isArray(s.stints))
+    ? s.stints.filter(st => st && st.org) : [];
+  if (stints.length < 2) {
+    const _org = _seasonOrgForRow(player, s.season);
+    const orgCell = _org
+      ? `<td style="text-align:center;"><span title="${escapeHtml(_org)} — derived from trade history">${typeof teamLogoHTML === "function" ? teamLogoHTML(_org, "sm") : ""}${escapeHtml(_org)}</span></td>`
+      : `<td style="text-align:center;color:var(--text-tertiary);">—</td>`;
+    return { orgCell, stintRows: "" };
+  }
+  const orgs = stints.map(st => st.org);
+  const key = `${s.season}-${s.level}`;
+  const sep = `<span class="org-sep" aria-hidden="true">/</span>`;
+  let logos;
+  if (orgs.length <= 3) {
+    logos = orgs.map(_logo).join(sep);
+  } else {
+    // N>2 stints (traded twice+): oldest / +middle / newest, full list in tooltip.
+    logos = _logo(orgs[0]) + sep
+      + `<span class="org-more" title="${escapeHtml(orgs.slice(1, -1).join(" / "))}">+${orgs.length - 2}</span>`
+      + sep + _logo(orgs[orgs.length - 1]);
+  }
+  const tip = `${orgs.join(" → ")} — split season (in-season trade); click to expand the per-org split`;
+  const orgCell = `<td class="career-org-multi" style="text-align:center;cursor:pointer;" `
+    + `data-stint-toggle="${key}" title="${escapeHtml(tip)}" role="button" tabindex="0" aria-expanded="false">`
+    + `<span class="career-dual">${logos}<span class="stint-caret" aria-hidden="true">▸</span></span></td>`;
+  const stintRows = stints.map(st =>
+    `<tr class="stint-row" data-stint-rows="${key}" hidden>`
+    + `<td></td><td></td>`
+    + `<td style="text-align:center;"><span class="stint-org" title="${escapeHtml(st.org)} stint">${_logo(st.org)}${escapeHtml(st.org)}</span></td>`
+    + `<td><span class="level-pill level-neutral">${st.level || s.level}</span></td>`
+    + statCellsFn(st) + `</tr>`).join("");
+  return { orgCell, stintRows };
+}
+
+// Expand/collapse a split-season's per-org rows. Pure DOM toggle (no re-render),
+// delegated so it works for any career table on the page.
+function _toggleStintRows(cell) {
+  const key = cell.getAttribute("data-stint-toggle");
+  if (!key) return;
+  const open = cell.getAttribute("aria-expanded") === "true";
+  cell.setAttribute("aria-expanded", open ? "false" : "true");
+  const root = cell.closest("table") || document;
+  root.querySelectorAll(`tr.stint-row[data-stint-rows="${key}"]`)
+      .forEach(tr => { tr.hidden = open; });
+}
+document.addEventListener("click", e => {
+  const cell = e.target.closest && e.target.closest("[data-stint-toggle]");
+  if (cell) { e.preventDefault(); _toggleStintRows(cell); }
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const cell = e.target.closest && e.target.closest("[data-stint-toggle]");
+  if (cell) { e.preventDefault(); _toggleStintRows(cell); }
+});
+
 function makeCareerTable(career, birthDate, player) {
   if (!career || !career.length) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No multi-season stats available.</div>`;
@@ -34530,16 +34606,7 @@ function makeCareerTable(career, birthDate, player) {
       if (s.bb_per_9 != null) return (s.bb_per_9 / 0.387).toFixed(1) + "%";
       return "—";
     };
-    const rows = sorted.map(s => {
-      const _org = _seasonOrgForRow(player, s.season);
-      const _orgCell = _org
-        ? `<td style="text-align:center;"><span title="${escapeHtml(_org)} — derived from trade history">${typeof teamLogoHTML === "function" ? teamLogoHTML(_org, "sm") : ""}${escapeHtml(_org)}</span></td>`
-        : `<td style="text-align:center;color:var(--text-tertiary);">—</td>`;
-      return `<tr>
-        <td>${s.season}</td>
-        <td>${ageFor(s.season)}</td>
-        ${_orgCell}
-        <td><span class="level-pill level-neutral">${s.level}</span></td>
+    const pitcherCells = (s) => `
         <td>${s.games ?? "—"}</td>
         <td>${s.ip ?? "—"}</td>
         <td>${s.wins != null ? `${s.wins}-${s.losses}` : "—"}</td>
@@ -34547,8 +34614,16 @@ function makeCareerTable(career, birthDate, player) {
         <td>${s.whip ?? "—"}</td>
         <td>${_kPctOrFallback(s)}</td>
         <td>${_bbPctOrFallback(s)}</td>
-        <td>${s.hr_per_9 != null ? s.hr_per_9.toFixed(2) : "—"}</td>
-      </tr>`;
+        <td>${s.hr_per_9 != null ? s.hr_per_9.toFixed(2) : "—"}</td>`;
+    const rows = sorted.map(s => {
+      const { orgCell, stintRows } = _careerOrgAndStints(s, player, pitcherCells);
+      return `<tr>
+        <td>${s.season}</td>
+        <td>${ageFor(s.season)}</td>
+        ${orgCell}
+        <td><span class="level-pill level-neutral">${s.level}</span></td>
+        ${pitcherCells(s)}
+      </tr>${stintRows}`;
     }).join("");
     return `<table class="detail-table"><thead>${strip}${head}</thead><tbody>${rows}</tbody></table>`;
   }
@@ -34595,16 +34670,7 @@ function makeCareerTable(career, birthDate, player) {
     if (!isFinite(slg) || !isFinite(avg)) return "—";
     return (slg - avg).toFixed(3).replace(/^0/, "");
   };
-  const rows = sorted.map(s => {
-    const _org = _seasonOrgForRow(player, s.season);
-    const _orgCell = _org
-      ? `<td style="text-align:center;"><span title="${escapeHtml(_org)} — derived from trade history">${typeof teamLogoHTML === "function" ? teamLogoHTML(_org, "sm") : ""}${escapeHtml(_org)}</span></td>`
-      : `<td style="text-align:center;color:var(--text-tertiary);">—</td>`;
-    return `<tr>
-      <td>${s.season}</td>
-      <td>${ageFor(s.season)}</td>
-      ${_orgCell}
-      <td><span class="level-pill level-neutral">${s.level}</span></td>
+  const hitterCells = (s) => `
       <td>${s.games ?? "—"}</td>
       <td>${s.ab ?? "—"}</td>
       <td>${s.hr ?? "—"}</td>
@@ -34616,8 +34682,16 @@ function makeCareerTable(career, birthDate, player) {
       <td>${(() => { const v = _rowOpsPlus(s); return v == null ? "—" : `<span style="color:${v >= 110 ? "var(--up)" : v <= 90 ? "var(--down)" : "inherit"};">${v}</span>`; })()}</td>
       <td>${isoCell(s)}</td>
       <td>${s.bb_pct != null ? s.bb_pct.toFixed(1) : "—"}</td>
-      <td>${s.k_pct != null ? s.k_pct.toFixed(1) : "—"}</td>
-    </tr>`;
+      <td>${s.k_pct != null ? s.k_pct.toFixed(1) : "—"}</td>`;
+  const rows = sorted.map(s => {
+    const { orgCell, stintRows } = _careerOrgAndStints(s, player, hitterCells);
+    return `<tr>
+      <td>${s.season}</td>
+      <td>${ageFor(s.season)}</td>
+      ${orgCell}
+      <td><span class="level-pill level-neutral">${s.level}</span></td>
+      ${hitterCells(s)}
+    </tr>${stintRows}`;
   }).join("");
   return `<table class="detail-table"><thead>${strip}${head}</thead><tbody>${rows}</tbody></table>`;
 }
