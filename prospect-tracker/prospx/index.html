@@ -9604,6 +9604,48 @@ function formatMetric(value, type = "int") {
 }
 
 // =============================================================================
+// displayMetricFor — which realized metric a player's shared value slot shows
+// =============================================================================
+// JS mirror of build_site.py::display_metric_for (keep the two in sync). The
+// metric ESCALATES with on-field information:
+//   graduated to MLB          -> WAR  (career-since-debut bWAR + WAR/yr)
+//   prospect, settled sample  -> WAG  (regressed WAR-above-grade)
+//   prospect / no real sample -> FV   (the scouting-consensus projection)
+// WAG (WAR Above Grade) is only meaningful once a real sample stabilizes, so a
+// graduate shows raw WAR and a sub-threshold prospect shows FV — never a WAG
+// number on a thin sample. The sample gate is the WAG model's own
+// `below_meaningful_exposure` flag (config wag.meaningful_exposure 200 PA / 80
+// IP), so display and methodology share one source of truth.
+// NB: WAG is computed FROM an MLB sample, so today only graduates carry one and
+// the WAG branch is reached only if a pre-graduation WAG is ever added.
+// Returns { metric:'WAR'|'WAG'|'FV'|null, value, cls } — `value` is the labeled
+// short string for a shared slot; `metric` names it so three metrics can share
+// one slot without being confused.
+function displayMetricFor(p) {
+  const cw = (p && p.career_war) || {};
+  const isGrad = (p && p.status === "debuted") || cw.career_war != null;
+  if (isGrad) {
+    const war = cw.career_war;
+    if (war == null) return { metric: "WAR", value: "— WAR", cls: "flat", pending: true };
+    const warR = (Math.round(war * 10) / 10) || 0;   // collapse -0
+    const cls = warR > 0 ? "up" : (warR < 0 ? "down" : "flat");
+    const wpy = cw.war_per_yr;
+    const yr = (typeof wpy === "number") ? ` · ${((Math.round(wpy * 10) / 10) || 0).toFixed(1)}/yr` : "";
+    return { metric: "WAR", value: `${warR.toFixed(1)} WAR`, valueLong: `${warR.toFixed(1)} WAR${yr}`, cls };
+  }
+  const wag = (p && p.debuted_value && p.debuted_value.wag) || {};
+  if (wag.regressed_wag != null && !wag.below_meaningful_exposure) {
+    const wr = (Math.round(wag.regressed_wag * 10) / 10) || 0;
+    const cls = wr > 0 ? "up" : (wr < 0 ? "down" : "flat");
+    const s = (wr > 0 ? "+" : "");
+    return { metric: "WAG", value: `${s}${wr.toFixed(1)} WAG`, valueLong: `${s}${wr.toFixed(1)} WAG`, cls };
+  }
+  const fv = p && (p.fv_close != null ? p.fv_close : p.consensus_fv);
+  if (fv != null) return { metric: "FV", value: `FV ${Math.round(fv)}`, valueLong: `FV ${Math.round(fv)}`, cls: "flat" };
+  return { metric: null, value: "—", valueLong: "—", cls: "flat" };
+}
+
+// =============================================================================
 // CONFIG
 // =============================================================================
 // If your timeseries.json lives at a different path (or on a different host),
@@ -26706,8 +26748,10 @@ function _gfxRow(item, kind, meta) {
   if (kind === "prospect" || kind === "graduate") metaBits.push((p.statline || {}).level);
   let value = "";
   if (kind === "graduate") {
-    const w = p.debuted_value && p.debuted_value.wag;
-    if (w && w.regressed_wag != null) value = (w.regressed_wag >= 0 ? "+" : "") + Number(w.regressed_wag).toFixed(2) + " WAG";
+    // Graduates are MLB players now → show raw WAR (not WAG) via the single
+    // display escalation helper. WAG (WAR-above-grade) is kept for the explicit
+    // grade-calibration views (Time Machine hits/misses, farm talent-translation).
+    value = displayMetricFor(p).value;
   } else if (kind === "draftee") {
     if (p.draft_stock_plus != null) value = "Stk+ " + Math.round(p.draft_stock_plus);
   } else if (kind === "prospect") {
@@ -26818,7 +26862,7 @@ function _gfxAvatar(r, P) {
 function _gfxFooterNote(kind) {
   return {
     prospect: "$M = engine expected surplus value · $DvM+ = surplus-development index (100 = FV-tier avg) · badge = consensus FV",
-    graduate: "WAG = WAR above grade (engine) · $DvM+ = surplus-development index · badge = final prospect FV",
+    graduate: "WAR = career MLB WAR since debut (bWAR) · $DvM+ = surplus-development index · badge = final prospect FV",
     draftee: "Stk+ = Draft Stock+ (100 = class median) · badge = consensus FV",
     overseas: "badge = consensus FV",
     leader: "value = the selected stat · badge = consensus FV",

@@ -1414,7 +1414,13 @@ CREATE INDEX IF NOT EXISTS idx_overseas_canon_milb ON overseas_canonical_keys(mi
 
 @contextmanager
 def connect():
-    con = sqlite3.connect(DB_PATH)
+    # timeout=30s: the monthly run executes draft + overseas + milb pipelines
+    # CONCURRENTLY (ThreadPoolExecutor, run_monthly._run_*_pipeline) against this
+    # one SQLite file. A reader that lands while another thread holds the write
+    # lock must WAIT it out, not fail. The Python-level `timeout` plus the
+    # matching PRAGMA busy_timeout below give a hard 30s budget before SQLITE_BUSY
+    # is raised — long enough to ride out any single batch write in the pipeline.
+    con = sqlite3.connect(DB_PATH, timeout=30.0)
     con.row_factory = sqlite3.Row
     # v19 — Performance pragmas. WAL mode gives 2-5x faster writes plus
     # concurrent readers (the prior rollback-journal mode serialized
@@ -1428,6 +1434,7 @@ def connect():
         con.execute("PRAGMA synchronous=NORMAL")
         con.execute("PRAGMA temp_store=MEMORY")
         con.execute("PRAGMA cache_size=-65536")  # 64 MB page cache (negative = KB)
+        con.execute("PRAGMA busy_timeout=30000")  # wait up to 30s on a locked DB (concurrent pipeline) instead of erroring
     except sqlite3.OperationalError:
         # Pragmas can fail on a corrupt / read-only DB; that's surfaced
         # downstream by the actual query. Don't block connection here.
@@ -2717,8 +2724,16 @@ def load_overseas_snapshots(league: str | None = None) -> list[dict]:
     try:
         with connect() as con:
             rows = con.execute(q, params).fetchall()
-    except sqlite3.OperationalError:
-        return []
+    except sqlite3.OperationalError as e:
+        # A MISSING TABLE on a fresh DB is a legitimate empty result. Any other
+        # operational error — notably "database is locked" under the concurrent
+        # monthly pipeline — must NOT be swallowed into []: that turns a transient
+        # lock into a permanently-empty overseas export (the 2026-06 leagues:[]
+        # regression). Re-raise so the caller aborts instead of clobbering a good
+        # sidecar; the export floor in export_overseas_json then preserves it.
+        if "no such table" in str(e).lower():
+            return []
+        raise
     out: list[dict] = []
     for r in rows:
         d = dict(r)
@@ -2731,6 +2746,20 @@ def load_overseas_snapshots(league: str | None = None) -> list[dict]:
             d["tools"] = None
         out.append(d)
     return out
+
+
+def overseas_snapshot_count() -> int:
+    """Row count of the overseas_snapshots table (0 if the table is missing).
+    Used by export_overseas_json's floor guard to tell a genuinely-empty source
+    apart from a transient read that returned nothing — so a 0-prospect export
+    can never silently overwrite a known-good sidecar."""
+    try:
+        with connect() as con:
+            return int(con.execute("SELECT COUNT(*) FROM overseas_snapshots").fetchone()[0])
+    except sqlite3.OperationalError as e:
+        if "no such table" in str(e).lower():
+            return 0
+        raise
 
 
 def load_overseas_players(league: str | None = None) -> dict[str, dict]:
@@ -2747,8 +2776,12 @@ def load_overseas_players(league: str | None = None) -> dict[str, dict]:
     try:
         with connect() as con:
             rows = con.execute(q, params).fetchall()
-    except sqlite3.OperationalError:
-        return {}
+    except sqlite3.OperationalError as e:
+        # See load_overseas_snapshots: only a missing table is a legit empty;
+        # a transient lock must propagate, not silently zero the overseas pool.
+        if "no such table" in str(e).lower():
+            return {}
+        raise
     return {r["player_key"]: dict(r) for r in rows}
 
 

@@ -77,6 +77,7 @@ from storage import (
     load_overseas_players,
     load_overseas_snapshots,
     load_overseas_statlines,
+    overseas_snapshot_count,
 )
 
 log = logging.getLogger(__name__)
@@ -605,6 +606,22 @@ def build_overseas_export() -> dict:
 def export_overseas_json(out_path: Path) -> int:
     payload = build_overseas_export()
     n = sum(b["n_prospects"] for b in payload["leagues"])
+    # ── FLOOR GUARD (2026-06 leagues:[] regression fix) ───────────────────────
+    # A 0-prospect export must NEVER overwrite a known-good sidecar. If we built 0
+    # but overseas_snapshots is non-empty, the build hit a transient failure (the
+    # root cause was a swallowed "database is locked" during the concurrent
+    # pipeline) — abort the write so the last good file (e.g. 40 prospects) is
+    # preserved and the run logs the failure loudly instead of silently shipping
+    # an empty Overseas section. A genuinely-empty source (0 rows) writes normally.
+    if n == 0:
+        have = overseas_snapshot_count()
+        if have > 0:
+            raise RuntimeError(
+                f"overseas export computed 0 prospects but overseas_snapshots has "
+                f"{have} rows — refusing to overwrite {out_path.name}. This is the "
+                f"empty-export signature (likely a transient DB lock during the "
+                f"concurrent pipeline); the existing sidecar is preserved."
+            )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))

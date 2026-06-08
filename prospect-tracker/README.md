@@ -173,6 +173,36 @@ Beyond the prospect board, PROSPX (`/prospx/`) includes:
 - Per-prospect detail pages add a **per-source FV overlay** toggle on the FV
   history chart.
 
+### Displayed metric: WAR / WAG / FV
+
+A player's headline "value" slot escalates with on-field information, enforced by
+one shared helper (`display_metric_for` in `build_site.py`; its JS mirror
+`displayMetricFor` in `prospx/index.html` — keep the two in sync):
+
+- **Graduated to MLB → WAR.** Career-since-debut MLB WAR plus WAR/yr. **Source:
+  Baseball-Reference bWAR** (already ingested per graduate as `career_war`; no
+  new sourcing was added). Brand-new debuts with no WAR posted yet show
+  `— WAR` ("WAR pending") rather than a fabricated number.
+- **Prospect with a settled sample → WAG** (WAR Above Grade).
+- **Prospect with no meaningful sample → FV** (the scouting-consensus
+  projection — the right number before there's an on-field sample).
+
+WAG is **never** shown on a sub-threshold sample: the gate is the WAG model's own
+`below_meaningful_exposure` flag (`value_framework_config.yaml` →
+`wag.meaningful_exposure`: 200 PA / 80 IP ≈ ⅓ season), so display and methodology
+can't drift. WAG is still used in the explicit grade-calibration views (Time
+Machine hits/misses, farm talent-translation) where "vs grade" is the point.
+
+### Overseas resilience
+
+The Overseas section reads `data/overseas_timeseries.json` (built from the
+FanGraphs Overseas CSV). Two root-cause guards prevent the section from silently
+emptying under the concurrent monthly pipeline: the storage loaders no longer
+swallow a transient "database is locked" into an empty result (only a genuinely
+missing table is empty), and `export_overseas_json` refuses to overwrite a
+known-good sidecar with zero prospects when `overseas_snapshots` is non-empty.
+`test_overseas_regression.py` locks both in.
+
 ## Deploy
 
 The build output is plain static files, so it deploys to **any static host**

@@ -379,17 +379,80 @@ def _row_top(p: dict, rank: int) -> str:
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(p.get("position"))}</span>{_fv_pill(p)}</a>')
 
-def _row_grad(g: dict) -> str:
-    wag = ((g.get("debuted_value") or {}).get("wag") or {}).get("regressed_wag")
-    if wag is not None:
-        # Decide sign + color on the ROUNDED value so a tiny ±0.0x never renders
-        # as "-0.0 WAG" (red) — a WAG that rounds to zero is neutral, not negative.
-        wag_r = round(wag, 1) + 0.0          # +0.0 collapses Python's -0.0 -> 0.0
+def display_metric_for(p: dict) -> dict:
+    """Single source of truth for which realized metric a player's shared
+    "value" slot shows. The metric ESCALATES with on-field information:
+
+      graduated to MLB          -> WAR  (career-since-debut bWAR + WAR/yr)
+      prospect, settled sample  -> WAG  (regressed WAR-above-grade)
+      prospect / no real sample -> FV   (the scouting-consensus projection)
+
+    Why: WAG (WAR Above Grade) is only meaningful once a real sample has
+    stabilized. It is misleading on a graduate (who now has actual MLB WAR to
+    show) and on a prospect who hasn't played a pro season. So a graduate shows
+    WAR, and a sub-threshold prospect shows FV — never a WAG number.
+
+    The sample gate is the WAG model's OWN `below_meaningful_exposure` flag
+    (config wag.meaningful_exposure = 200 PA / 80 IP ≈ ⅓ season); display and
+    methodology share one source of truth rather than a re-invented threshold.
+
+    NB on the data model: WAG (`debuted_value.wag`) is computed FROM a player's
+    MLB sample, so in practice only graduates carry one — the WAG branch below is
+    reachable only if a pre-graduation WAG is ever added; today every WAG-carrier
+    graduates to the WAR branch. That is intended, not dead weight.
+
+    Returns {metric: 'WAR'|'WAG'|'FV'|None, cls, html} — `metric` labels the
+    value so a number sitting in a shared slot is never mistaken for another now
+    that the slot can hold any of three. `html` is render-ready and HTML-safe."""
+    cw = p.get("career_war") or {}
+    is_grad = (p.get("status") == "debuted") or (cw.get("career_war") is not None)
+
+    # 1) Graduated -> raw MLB WAR (career-since-debut bWAR, with WAR/yr).
+    if is_grad:
+        war = cw.get("career_war")
+        if war is None:
+            # bWAR hasn't posted yet (brand-new debut) — keep it a WAR slot and be
+            # honest the sample hasn't landed; never fabricate a number.
+            return {"metric": "WAR", "cls": "flat",
+                    "html": '<span class="row-meta" title="MLB WAR not yet posted">— WAR</span>'}
+        war_r = round(war, 1) + 0.0          # collapse -0.0
+        cls = "up" if war_r > 0 else ("down" if war_r < 0 else "flat")
+        wpy = cw.get("war_per_yr")
+        nseas = cw.get("war_seasons_count")
+        yr = (f' <span style="opacity:.55;font-weight:400">· {wpy:.1f}/yr</span>'
+              if isinstance(wpy, (int, float)) else "")
+        title = f"{war_r:.1f} career bWAR"
+        if isinstance(wpy, (int, float)):
+            title += f" · {wpy:.2f}/yr"
+        if nseas:
+            title += f" · {nseas} MLB season{'s' if nseas != 1 else ''}"
+        return {"metric": "WAR", "cls": cls,
+                "html": (f'<span class="row-delta {cls}" title="{html.escape(title)}">'
+                         f'{war_r:.1f} WAR{yr}</span>')}
+
+    # 2) Still a prospect with a SETTLED sample -> WAG (WAR above grade).
+    wag = (p.get("debuted_value") or {}).get("wag") or {}
+    rw = wag.get("regressed_wag")
+    if rw is not None and not wag.get("below_meaningful_exposure"):
+        wag_r = round(rw, 1) + 0.0
         cls = "up" if wag_r > 0 else ("down" if wag_r < 0 else "flat")
         sign = "+" if wag_r > 0 else ""      # negatives carry their own '-'; zero is unsigned
-        wtxt = f'<span class="row-delta {cls}">{sign}{wag_r:.1f} WAG</span>'
-    else:
-        wtxt = '<span class="row-meta">debut</span>'
+        return {"metric": "WAG", "cls": cls,
+                "html": f'<span class="row-delta {cls}">{sign}{wag_r:.1f} WAG</span>'}
+
+    # 3) No meaningful on-field sample yet -> FV (the scouting-consensus projection).
+    fv = p.get("fv_close") or p.get("consensus_fv") or p.get("fv")
+    if fv is not None:
+        return {"metric": "FV", "cls": "flat",
+                "html": (f'<span class="row-meta" title="Final prospect FV — no MLB sample yet">'
+                         f'FV {int(round(fv))}</span>')}
+    return {"metric": None, "cls": "flat", "html": '<span class="row-meta">debut</span>'}
+
+
+def _row_grad(g: dict) -> str:
+    # Recent graduates are MLB players now, so the shared value slot shows WAR
+    # (not WAG) via the single display_metric_for() escalation helper.
+    wtxt = display_metric_for(g)["html"]
     return (f'<a class="row-link" href="{_player_href(g.get("player_key"))}">'
             f'{_team_logo(g.get("org"))}<span class="row-name">{html.escape(g.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(g.get("position"), g.get("org"))}</span>{wtxt}</a>')
