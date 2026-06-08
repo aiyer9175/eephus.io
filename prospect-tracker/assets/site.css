@@ -148,6 +148,17 @@
   content: ""; display: block; height: 3px; margin-top: 4px;
   background: var(--iridescent); border-radius: 2px;
 }
+/* Wordmark + beta tag lockup. One version string lives in build_site.py
+   (EEPHUS_VERSION); the badge is a platform-wide state, so it rides the
+   eephus.io wordmark — never PROSPX. Subordinate to the wordmark, sharp, both
+   themes. */
+.eephus-nav .eephus-brand { display: inline-flex; align-items: center; gap: 9px; }
+.eephus-beta {
+  font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; line-height: 1; white-space: nowrap;
+  color: var(--text-tertiary); background: transparent;
+  border: 1px solid var(--border); padding: 3px 6px;
+}
 .eephus-nav .eephus-links {
   display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
   margin-left: auto;
@@ -167,17 +178,38 @@
 }
 /* Site-wide controls (Watchlist, Dark Mode), right-aligned in the primary nav. */
 .eephus-nav .eephus-nav-controls { display: inline-flex; align-items: center; gap: 8px; }
+/* Terminal/Bloomberg treatment: see-through chip + hairline border + MS-Gothic
+   label, with an iridescent hairline that lights on hover/focus (and marks the
+   dark-mode toggle's "on" state). Header-only — scoped under .eephus-nav, so the
+   homepage sidebar controls (.home-theme-toggle / .sb-* / .eph-*) are untouched. */
 .eephus-nav .eephus-nav-ctrl {
+  position: relative;
   display: inline-flex; align-items: center; gap: 6px;
   font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
-  letter-spacing: .03em; text-transform: uppercase;
-  color: var(--text-secondary); background: var(--bg-tertiary);
+  letter-spacing: .04em; text-transform: uppercase;
+  color: var(--text-secondary); background: transparent;
   border: 1px solid var(--border); border-radius: var(--radius-sm);
   padding: 0 11px; min-height: 38px; line-height: 1;
   cursor: pointer; text-decoration: none;
   transition: background .12s, color .12s, border-color .12s;
 }
-.eephus-nav .eephus-nav-ctrl:hover { background: var(--bg-primary); color: var(--text-primary); border-color: var(--text-tertiary); }
+.eephus-nav .eephus-nav-ctrl:hover,
+.eephus-nav .eephus-nav-ctrl:focus-visible {
+  background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--text-tertiary);
+}
+/* Iridescent hairline accent — the red→yellow→green masthead gradient. */
+.eephus-nav .eephus-nav-ctrl::after {
+  content: ""; position: absolute; left: -1px; right: -1px; bottom: -1px; height: 2px;
+  background: var(--iridescent); opacity: 0; transition: opacity .12s; pointer-events: none;
+}
+.eephus-nav .eephus-nav-ctrl:hover::after,
+.eephus-nav .eephus-nav-ctrl:focus-visible::after { opacity: 1; }
+/* Dark mode "on": the theme toggle wears the accent so its active state reads
+   (prospx uses #global-theme-toggle; editorial nav uses [data-theme-toggle]). */
+[data-theme="dark"] .eephus-nav .eephus-nav-ctrl[data-theme-toggle]::after,
+[data-theme="dark"] .eephus-nav #global-theme-toggle::after { opacity: 1; }
+[data-theme="dark"] .eephus-nav .eephus-nav-ctrl[data-theme-toggle],
+[data-theme="dark"] .eephus-nav #global-theme-toggle { color: var(--text-primary); }
 .eephus-nav .eephus-nav-ctrl .theme-icon { font-size: 14px; }
 .eephus-nav .eephus-nav-ctrl .eephus-nav-ctrl-label { white-space: nowrap; }
 .eephus-nav .eephus-nav-ctrl .global-ctrl-count {
@@ -457,6 +489,43 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .masthead { text-align: center; border-bottom: 3px double var(--text-primary); padding: 22px 0 12px; margin-bottom: 4px; }
 .masthead .nameplate { font-family: var(--font-retro-mono); font-weight: 700; font-size: clamp(2.4rem, 6vw, 4rem); letter-spacing: .04em; line-height: 1; margin: 0; }
 .masthead .nameplate .dot { color: var(--accent-gold); }
+/* eephus.io placeholder logo lockup (homepage hero). Swappable: the mark itself
+   is EEPHUS_LOGO_MARK in build_site.py. Crisp vector, sharp container, theme-aware
+   (arc gradient is fixed brand colors; baseline/seam ride currentColor; the ball
+   punches through with the page background so it reads in both modes). */
+.masthead .eephus-logo { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
+.masthead .eephus-logo-mark { width: 88px; height: 52px; display: block; color: var(--text-primary); }
+.masthead .eephus-logo-word { display: inline-flex; align-items: flex-start; gap: 9px; }
+.masthead .eephus-logo-word .nameplate { margin: 0; }
+.masthead .eephus-logo-word .eephus-beta { margin-top: 7px; }
+.eephus-logo-ball { fill: var(--bg-primary); }
+.eephus-logo-base { opacity: .4; }
+.eephus-logo-seam { opacity: .55; }
+.masthead-follow { display: flex; justify-content: center; margin-top: 12px; }
+
+/* Shared on-theme X link: glyph + @handle. Sharp corners, opens in a new tab.
+   Used on the homepage hero, the team page Follow row, and the PROSPX masthead. */
+.eph-xlink {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .03em; line-height: 1;
+  color: var(--text-secondary); background: var(--bg-tertiary);
+  border: 1px solid var(--border); padding: 7px 11px; text-decoration: none;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.eph-xlink:hover, .eph-xlink:focus-visible {
+  background: var(--bg-secondary); color: var(--text-primary); border-color: var(--text-tertiary);
+}
+.eph-xlink svg { width: 14px; height: 14px; display: block; fill: currentColor; flex: 0 0 auto; }
+.eph-xlink-handle { white-space: nowrap; }
+/* Dev Team: labeled Follow row grouping both handles. */
+.team-follow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 22px; }
+.team-follow-label {
+  font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary);
+}
+/* PROSPX masthead: the @MLBPROSPX link sits in the title space the beta tag freed. */
+.header h1 .eph-xlink--mast { font-size: 11px; padding: 5px 9px; align-self: center; }
 .masthead .dateline { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-family: var(--font-retro-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 5px 2px; margin-top: 14px; }
 
 /* ---- section kicker ---- */

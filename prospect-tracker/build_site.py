@@ -138,6 +138,63 @@ THEME_BTN = (
 )
 
 # --------------------------------------------------------------------------- #
+# Brand: one version string + one beta badge, the eephus.io placeholder logo,
+# and a shared X/social link. THE SINGLE SOURCE for the version is EEPHUS_VERSION
+# here; the prospx/index.html static header mirrors the same literal (its own
+# hand-edited file) and points back to this constant in a comment.
+# --------------------------------------------------------------------------- #
+EEPHUS_VERSION = "β v1.0"
+BETA_BADGE = (
+    f'<span class="eephus-beta" title="eephus.io is in beta — version 1.0">'
+    f'{html.escape(EEPHUS_VERSION)}</span>'
+)
+
+# Modern X (Twitter) glyph — module-level so social links on every surface share
+# one mark. (build_team keeps its own local copy for the per-member chips.)
+_X_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 '
+          '8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 '
+          '17.52h1.833L7.084 4.126H5.117z"/></svg>')
+
+def _x_link(handle: str) -> str:
+    """An on-theme X link: glyph + @handle. Sharp corners, opens in a new tab."""
+    h = handle.lstrip("@")
+    return (f'<a class="eph-xlink" href="https://x.com/{html.escape(h)}" target="_blank" '
+            f'rel="noopener noreferrer" aria-label="Follow @{html.escape(h)} on X">'
+            f'{_X_SVG}<span class="eph-xlink-handle">@{html.escape(h)}</span></a>')
+
+# eephus.io placeholder logo — the "signature pitch": a thin parabolic lob with a
+# ball crowning its apex over a dashed mound line. Self-contained inline SVG so
+# final art can drop straight in. Arc uses the cardinal→gold→green→navy masthead
+# gradient; baseline/seam ride currentColor; the ball punches through via CSS
+# (.eephus-logo-ball fill) so it stays theme-aware.
+EEPHUS_LOGO_MARK = (
+    '<svg class="eephus-logo-mark" viewBox="0 0 80 48" role="img" aria-label="eephus.io">'
+    '<defs><linearGradient id="eephus-arc-grad" x1="0" y1="0" x2="1" y2="0">'
+    '<stop offset="0%" stop-color="#B91C1C"/><stop offset="38%" stop-color="#C9A227"/>'
+    '<stop offset="68%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/>'
+    '</linearGradient></defs>'
+    '<line class="eephus-logo-base" x1="8" y1="40" x2="72" y2="40" stroke="currentColor" '
+    'stroke-width="1" stroke-dasharray="2 3"/>'
+    '<path class="eephus-logo-arc" d="M 12 40 Q 40 -16 68 40" fill="none" '
+    'stroke="url(#eephus-arc-grad)" stroke-width="2.6" stroke-linecap="round"/>'
+    '<circle class="eephus-logo-ball" cx="40" cy="12" r="5" stroke="url(#eephus-arc-grad)" stroke-width="2"/>'
+    '<path class="eephus-logo-seam" d="M 36.6 10.4 Q 40 13.6 43.4 10.4" fill="none" '
+    'stroke="currentColor" stroke-width="0.9"/>'
+    '</svg>'
+)
+
+def eephus_logo_lockup(badge: bool = True) -> str:
+    """Homepage hero lockup: pitch mark + eephus.io nameplate + (optional) beta tag."""
+    b = BETA_BADGE if badge else ""
+    return (
+        '<div class="eephus-logo">'
+        f'{EEPHUS_LOGO_MARK}'
+        '<div class="eephus-logo-word"><h1 class="nameplate">eephus<span class="dot">.io</span></h1>'
+        f'{b}</div>'
+        '</div>'
+    )
+
+# --------------------------------------------------------------------------- #
 # Markdown + YouTube
 # --------------------------------------------------------------------------- #
 _YT_RE = re.compile(
@@ -343,7 +400,7 @@ def _nav(active: str) -> str:
     )
     return (
         '<header class="eephus-nav">'
-        '<a class="eephus-wordmark" href="/">eephus.io</a>'
+        f'<span class="eephus-brand"><a class="eephus-wordmark" href="/">eephus.io</a>{BETA_BADGE}</span>'
         f'<nav class="eephus-links">{"".join(items)}</nav>'
         f'{controls}'
         "</header>"
@@ -861,9 +918,11 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
 
     # ---- masthead ----
     masthead = (
-        '<div class="masthead"><h1 class="nameplate">eephus<span class="dot">.io</span></h1>'
+        '<div class="masthead">'
+        f'{eephus_logo_lockup()}'
         '<div class="dateline"><span>Baseball Prospect Analytics</span>'
-        f'<span>{html.escape(today)}</span><span>Data as of {html.escape(as_of)}</span></div></div>'
+        f'<span>{html.escape(today)}</span><span>Data as of {html.escape(as_of)}</span></div>'
+        f'<div class="masthead-follow">{_x_link("eephus_io")}</div></div>'
     )
 
     # ---- lead story (latest article) + secondary ----
@@ -1040,8 +1099,13 @@ def build_team() -> str:
             f'<div class="card team-card">{photo_html}'
             f'<p class="name">{html.escape(m["name"])}</p>{note_html}{socials_html}</div>'
         )
+    follow = (
+        '<div class="team-follow"><span class="team-follow-label">Follow</span>'
+        f'{_x_link("eephus_io")}{_x_link("MLBPROSPX")}</div>'
+    )
     body = (
         '<div class="section-head"><h1>Development Team</h1></div>'
+        f'{follow}'
         f'<div class="team-grid">{"".join(cards)}</div>'
     )
     return page("Development Team — eephus.io", "team", body, "The team behind eephus.io.")

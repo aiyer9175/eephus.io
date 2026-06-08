@@ -9,7 +9,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MLB PROSPX βv1.0</title>
+  <title>PROSPX βv1.0</title>
   <meta name="description" content="Consensus FV tracker across seven industry prospect-ranking sources.">
 
   <!--
@@ -8108,7 +8108,9 @@
      PROSPX's section-tabs still pin to the viewport top on scroll. Site-wide
      controls (Watchlist, Dark Mode) live here — they're not PROSPX-specific. -->
 <header class="eephus-nav">
-  <a class="eephus-wordmark" href="/">eephus.io</a>
+  <!-- Beta badge rides the eephus.io wordmark (platform-wide state, not PROSPX-
+       specific). Version literal mirrors build_site.py EEPHUS_VERSION. -->
+  <span class="eephus-brand"><a class="eephus-wordmark" href="/">eephus.io</a><span class="eephus-beta" title="eephus.io is in beta — version 1.0">β v1.0</span></span>
   <nav class="eephus-links">
     <a href="/">Home</a>
     <a href="/articles/">Articles</a>
@@ -8170,7 +8172,10 @@
           <text class="mono-letter mono-x" x="26"   y="30">X</text>
         </g>
       </svg>
-      <span class="h1-title">MLB PROSPX βv1.0<span class="h1-rule" aria-hidden="true"></span></span>
+      <span class="h1-title">PROSPX<span class="h1-rule" aria-hidden="true"></span></span>
+      <!-- @MLBPROSPX lives in the title space the beta tag vacated (the badge
+           moved to the eephus.io wordmark). Opens in a new tab. -->
+      <a class="eph-xlink eph-xlink--mast" href="https://x.com/MLBPROSPX" target="_blank" rel="noopener noreferrer" aria-label="Follow @MLBPROSPX on X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span class="eph-xlink-handle">@MLBPROSPX</span></a>
     </h1>
     <div class="meta-line" id="meta-line">Loading…</div>
     <!-- PROSPX-specific persistent control: Compare survives content overwrites
@@ -26546,7 +26551,7 @@ document.addEventListener("click", async (e) => {
   card.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:14px;">
       <div style="display:flex;align-items:baseline;gap:11px;">
-        <span style="font-family:var(--font-retro-mono);font-weight:800;font-size:22px;color:var(--text-primary);letter-spacing:0.03em;">MLB PROSPX</span>
+        <span style="font-family:var(--font-retro-mono);font-weight:800;font-size:22px;color:var(--text-primary);letter-spacing:0.03em;">PROSPX</span>
         <span style="font-family:var(--font-sans);font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-tertiary);border-left:1px solid var(--border);padding-left:11px;">Scatterplot</span>
       </div>
       <span style="font-family:var(--font-retro-mono);font-size:12px;color:var(--text-tertiary);">eephus.io/PROSPX · ${escapeHtml(asOf)}</span>
@@ -43511,15 +43516,40 @@ function attachHandlers() {
   // stays scannable without a search refinement.
   attachCommandPalette();
 
-  // Mobile filter-toggle — flips `#filter-bar.is-open` so the chip
-  // rows expand/collapse. Desktop hides the toggle entirely via CSS.
+  // Filters/sort accordion — default OPEN on desktop, collapsed below the mobile
+  // breakpoint, with a per-section manual collapse remembered across reload +
+  // navigation. One stored key per bar id; an explicit stored choice wins on
+  // every viewport — the viewport only decides the no-preference fallback, and
+  // each section is independent (collapsing one never collapses another).
+  const FILTER_LS_PREFIX = "prospect-tracker.filters.";
+  const FILTER_MOBILE_BP = 720;  // matches the site's @media (max-width: 720px)
+  function filterBarStored(id) {
+    try { return localStorage.getItem(FILTER_LS_PREFIX + id); } catch (_) { return null; }
+  }
+  function setFilterBarPref(id, open) {
+    try { localStorage.setItem(FILTER_LS_PREFIX + id, open ? "open" : "collapsed"); } catch (_) {}
+  }
+  function applyFilterBarDefault(bar, btn) {
+    if (!bar || !bar.id) return;
+    const pref = filterBarStored(bar.id);
+    const open = pref === "open" ? true
+               : pref === "collapsed" ? false
+               : window.innerWidth > FILTER_MOBILE_BP;  // no pref: desktop open, mobile collapsed
+    bar.classList.toggle("is-open", open);
+    if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  // Main list (id-based). The toggle persists the explicit choice; init applies
+  // the per-viewport default unless the user already chose.
   const filterToggle = document.getElementById("filter-toggle");
   if (filterToggle) {
     filterToggle.addEventListener("click", () => {
       const bar = document.getElementById("filter-bar");
       const isOpen = bar.classList.toggle("is-open");
       filterToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      setFilterBarPref("filter-bar", isOpen);
     });
+    applyFilterBarDefault(document.getElementById("filter-bar"), filterToggle);
   }
 
   // Comparison-cart open/close + per-card remove buttons.
@@ -43682,7 +43712,13 @@ function attachHandlers() {
       if (!bar) return;
       const isOpen = bar.classList.toggle("is-open");
       btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      setFilterBarPref(id, isOpen);
     });
+    // Default-open on desktop / collapsed on mobile, honoring any stored choice —
+    // applied per section so each (Farm, Draft, Overseas, …) is independent.
+    const initId = btn.dataset.collapseTarget;
+    const initBar = initId ? document.getElementById(initId) : null;
+    if (initBar) applyFilterBarDefault(initBar, btn);
   });
 
   // v28 — Draft filter chips. attachChipGroup handles the
