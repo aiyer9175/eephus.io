@@ -167,40 +167,42 @@ def _x_link(handle: str, cls: str = "") -> str:
             f'rel="noopener noreferrer" aria-label="Follow @{html.escape(h)} on X">'
             f'{_X_SVG}<span class="eph-xlink-handle">@{html.escape(h)}</span></a>')
 
-# eephus.io placeholder logo — the "signature pitch": a thin parabolic lob with a
-# ball crowning its apex over a dashed mound line. Self-contained inline SVG so
-# final art can drop straight in. Arc uses the cardinal→gold→green→navy masthead
-# gradient; baseline/seam ride currentColor; the ball punches through via CSS
-# (.eephus-logo-ball fill) so it stays theme-aware.
-EEPHUS_LOGO_MARK = (
-    '<svg class="eephus-logo-mark" viewBox="0 0 80 48" role="img" aria-label="eephus.io">'
-    '<defs><linearGradient id="eephus-arc-grad" x1="0" y1="0" x2="1" y2="0">'
-    '<stop offset="0%" stop-color="#B91C1C"/><stop offset="38%" stop-color="#C9A227"/>'
-    '<stop offset="68%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/>'
-    '</linearGradient></defs>'
-    '<line class="eephus-logo-base" x1="8" y1="40" x2="72" y2="40" stroke="currentColor" '
-    'stroke-width="1" stroke-dasharray="2 3"/>'
-    '<path class="eephus-logo-arc" d="M 12 40 Q 40 -16 68 40" fill="none" '
-    'stroke="url(#eephus-arc-grad)" stroke-width="2.6" stroke-linecap="round"/>'
-    '<circle class="eephus-logo-ball" cx="40" cy="12" r="5" stroke="url(#eephus-arc-grad)" stroke-width="2"/>'
-    '<path class="eephus-logo-seam" d="M 36.6 10.4 Q 40 13.6 43.4 10.4" fill="none" '
-    'stroke="currentColor" stroke-width="0.9"/>'
-    '</svg>'
-)
+# eephus.io merged brand mark — the "signature pitch" arc is now PART of the
+# lettering: the lob launches off the leading "e", crests with the ball at
+# apex, and lands on the "o". Everything is em-scaled inside the nameplate,
+# so the same mark renders at masthead (clamp 2.4-4rem) and sidebar (20px)
+# sizes without separate art. Arc carries the cardinal→gold→green→navy
+# masthead gradient (vector-effect keeps the stroke crisp under the
+# stretch-to-width scaling); the ball is its own fixed-aspect SVG so it can
+# never squash, punches through via .eephus-logo-ball (theme-aware bg fill),
+# and the seam rides currentColor.
+def eephus_merged_wordmark(uid: str, tag: str = "h1") -> str:
+    grad = f"eephus-arc-{uid}"   # per-instance gradient id — two marks per page
+    arc = (
+        f'<svg class="ew-arc" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">'
+        f'<defs><linearGradient id="{grad}" x1="0" y1="0" x2="1" y2="0">'
+        '<stop offset="0%" stop-color="#B91C1C"/><stop offset="38%" stop-color="#C9A227"/>'
+        '<stop offset="68%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/>'
+        '</linearGradient></defs>'
+        f'<path d="M 3 30 Q 50 -24 97 30" fill="none" stroke="url(#{grad})" '
+        'stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>'
+        f'<svg class="ew-ball" viewBox="0 0 24 24" aria-hidden="true">'
+        f'<circle class="eephus-logo-ball" cx="12" cy="12" r="8.5" stroke="url(#{grad})" stroke-width="3"/>'
+        '<path class="eephus-logo-seam" d="M 6.5 10 Q 12 15.5 17.5 10" fill="none" '
+        'stroke="currentColor" stroke-width="1.5"/></svg>'
+    )
+    return (f'<{tag} class="nameplate eephus-wordmark-merged">{arc}'
+            f'eephus<span class="dot">.io</span></{tag}>')
 
 def eephus_logo_lockup(badge: bool = True) -> str:
-    """Homepage hero lockup: pitch mark + eephus.io nameplate + (optional)
-    beta tag + the @eephus_io chip, sized to the β chip so the two read as one
-    chip family riding the nameplate."""
-    b = BETA_BADGE if badge else ""
-    x = _x_link("eephus_io", cls="eph-xlink--beta") if badge else ""
-    return (
-        '<div class="eephus-logo">'
-        f'{EEPHUS_LOGO_MARK}'
-        '<div class="eephus-logo-word"><h1 class="nameplate">eephus<span class="dot">.io</span></h1>'
-        f'{b}{x}</div>'
-        '</div>'
-    )
+    """Homepage hero lockup: the merged arc-wordmark with the β tag and the
+    @eephus_io chip stacked beside it (β on top, X under — the X chip carries
+    the link accent so it reads clickable)."""
+    chips = (
+        f'<div class="eephus-logo-chips">{BETA_BADGE}'
+        f'{_x_link("eephus_io", cls="eph-xlink--beta eph-xlink--live")}</div>'
+    ) if badge else ""
+    return f'<div class="eephus-logo">{eephus_merged_wordmark("mast")}{chips}</div>'
 
 # --------------------------------------------------------------------------- #
 # Markdown + YouTube
@@ -1116,7 +1118,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
               "onkeydown=\"if(event.key==='Enter'&&this.value.trim()){location.href='/prospx/#q='+encodeURIComponent(this.value.trim());}\">")
     sidebar = (
         '<aside class="home-sidebar">'
-        f'<div class="sb-brand"><a class="wm" href="/">eephus.io</a>{THEME_BTN}</div>'
+        f'<div class="sb-brand"><a class="wm" href="/">{eephus_merged_wordmark("sb", tag="span")}</a>{THEME_BTN}</div>'
         # eephus.io — account entry point for the homepage (page_home has no
         # .eephus-nav top bar). refreshNav() in eephus-ui.js injects the Sign-in /
         # avatar control into any .eephus-nav-controls, including this sidebar slot.

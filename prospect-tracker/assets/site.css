@@ -515,8 +515,9 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 
 /* sidebar brand + search + nav */
 .sb-brand { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+/* Sidebar brand = the merged arc-wordmark at 20px (the arc IS the flourish —
+   the old iridescent underline is gone with it). */
 .sb-brand .wm { font-family: var(--font-retro-mono); font-weight: 700; font-size: 20px; letter-spacing: .03em; color: var(--text-primary); text-decoration: none; }
-.sb-brand .wm::after { content: ""; display: block; height: 3px; margin-top: 3px; background: var(--iridescent); border-radius: 2px; }
 .sb-search { width: 100%; font-family: var(--font-retro); font-size: 13px; padding: 8px 10px; margin-bottom: 18px;
   background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); border-radius: var(--radius-sm); }
 .sb-search::placeholder { color: var(--text-tertiary); }
@@ -584,14 +585,19 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    is EEPHUS_LOGO_MARK in build_site.py. Crisp vector, sharp container, theme-aware
    (arc gradient is fixed brand colors; baseline/seam ride currentColor; the ball
    punches through with the page background so it reads in both modes). */
-.masthead .eephus-logo { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
-.masthead .eephus-logo-mark { width: 88px; height: 52px; display: block; color: var(--text-primary); }
-.masthead .eephus-logo-word { display: inline-flex; align-items: flex-start; gap: 9px; }
-.masthead .eephus-logo-word .nameplate { margin: 0; }
-.masthead .eephus-logo-word .eephus-beta { margin-top: 7px; }
-/* @eephus_io chip rides the nameplate beside the β tag, sized to match it —
-   one chip family (replaces the old standalone .masthead-follow row).
-   Double-class selector outranks the base .eph-xlink rule below regardless
+/* Merged brand mark — the signature lob is PART of the lettering: the arc
+   spans the wordmark with the ball at apex (replaces the old mark-above-text
+   lockup). Arc + ball are em-scaled off the nameplate's own font-size, so
+   the masthead (clamp 2.4–4rem) and the sidebar (20px) share one mark. */
+.eephus-wordmark-merged { position: relative; display: inline-block; line-height: 1; padding-top: .5em; margin: 0; }
+.eephus-wordmark-merged .ew-arc { position: absolute; left: -1%; width: 102%; top: .04em; height: .48em; overflow: visible; }
+.eephus-wordmark-merged .ew-ball { position: absolute; left: 50%; top: -.08em; width: .26em; height: .26em; transform: translateX(-50%); color: var(--text-primary); }
+.masthead .eephus-logo { display: inline-flex; align-items: flex-end; gap: 14px; }
+/* β + @eephus_io chips stack beside the wordmark (β on top, X under),
+   bottom-aligned with the lettering. */
+.eephus-logo-chips { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 5px; margin-bottom: .3em; }
+/* Chip-family sizing for the @handle link (matches the β chip geometry).
+   Double-class selectors outrank the base .eph-xlink rule below regardless
    of source order. */
 .eph-xlink.eph-xlink--beta {
   font-size: 10px; font-weight: 700; letter-spacing: .06em;
@@ -600,9 +606,13 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   border: 1px solid var(--border);
 }
 .eph-xlink.eph-xlink--beta svg { width: 10px; height: 10px; }
-.masthead .eephus-logo-word .eph-xlink--beta { margin-top: 7px; }
+/* The live link chip carries the link accent so it reads clickable next to
+   the inert β tag; hover inverts to a filled chip. */
+.eph-xlink.eph-xlink--live { color: var(--accent-navy); border-color: var(--accent-navy); }
+.eph-xlink.eph-xlink--live:hover, .eph-xlink.eph-xlink--live:focus-visible {
+  background: var(--accent-navy); color: var(--bg-primary); border-color: var(--accent-navy);
+}
 .eephus-logo-ball { fill: var(--bg-primary); }
-.eephus-logo-base { opacity: .4; }
 .eephus-logo-seam { opacity: .55; }
 .masthead-follow { display: flex; justify-content: center; margin-top: 12px; }
 

@@ -26687,7 +26687,7 @@ const _GFX_FORMATS = {
 // v45 — default format is WIDE (1600×900, 16:9): graphics land Twitter/X-ready
 // with no crop. Prospect-card kinds still force their own portrait/tall
 // geometry via _gfxVariantFormat.
-const _gfxOpts = { count: 50, title: "", accent: "", showValue: true, format: "wide", theme: "auto", photos: true, logos: true, variant: "detailed", frame: "rarity", pack: false };
+const _gfxOpts = { count: 50, title: "", accent: "", showValue: true, format: "wide", theme: "auto", photos: true, logos: true, variant: "compact", frame: "rarity", pack: false };
 let _gfxOrigTheme = null;
 // v38 — Force the GFX board (+ the open modal) to a chosen light/dark theme by
 // flipping the root data-theme. The board inherits ALL tokens + fv-badge tints
@@ -27488,6 +27488,29 @@ function buildProspectCard(snap) {
     ? `<div style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:${P.text2};margin-top:6px;">${escapeHtml(rankBits)}</div>` : "";
   const orgLogo = (_gfxOpts.logos !== false && p.org) ? _gfxTeamLogo(p.org, P, 40) : "";
   const insight = _gfxInsight(p);
+  // v45 — hero right rail: the FV badge plus a stat stack (engine surplus,
+  // SC+, $DvM+) fills the dead space to the right of the name block that
+  // every variant carried. Bloomberg rule: empty space is unspent signal.
+  const heroTiles = (() => {
+    const tiles = [];
+    const tile = (lab, val, col) => tiles.push(
+      `<div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end;padding:9px 13px;background:${P.bg};border:1px solid ${P.border};min-width:96px;">
+         <span style="font-family:var(--font-sans);font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};">${lab}</span>
+         <span style="font-family:var(--font-mono);font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:${col || P.text};">${val}</span>
+       </div>`);
+    if (p.surplus && p.surplus.value_mm != null && typeof fmtSvMM === "function") {
+      tile("Surplus", fmtSvMM(p.surplus.value_mm), accent);
+    }
+    if (p.statcast_plus != null && isFinite(p.statcast_plus)) {
+      const v = Math.round(p.statcast_plus);
+      tile("SC+", String(v), v >= 105 ? "var(--up)" : v <= 95 ? "var(--down)" : P.text);
+    }
+    if (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) {
+      const v = Math.round(p.dollar_dvm_plus);
+      tile("$DvM+", String(v), v >= 105 ? "var(--up)" : v <= 95 ? "var(--down)" : P.text);
+    }
+    return tiles.length ? `<div style="display:flex;flex-direction:column;gap:8px;">${tiles.join("")}</div>` : "";
+  })();
   const eyebrow = `Prospect Card${p.overall_rank != null ? ` · #${p.overall_rank}` : ""}`;
   const qrUrl = p.player_key ? `https://eephus.io/prospx/#player=${encodeURIComponent(p.player_key)}` : "";
   const sect = (t, body) => body ? `<div><div style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};margin-bottom:12px;border-bottom:1px solid ${P.border};padding-bottom:6px;">${t}</div>${body}</div>` : "";
@@ -27496,8 +27519,12 @@ function buildProspectCard(snap) {
   const variant = _gfxOpts.variant || "detailed";
   // Compact: a small FV sparkline (+ trend) in the hero, in place of the big chart.
   const fvVals = (p.points || []).map(pt => (pt && pt.consensus_fv_raw != null) ? pt.consensus_fv_raw : null);
+  // Trend caption suppressed when the hero insight line already narrates the
+  // FV move — three "+5 FV" readings on one card was noise, not signal.
+  const _sparkTrend = (trend && !(insight && /FV/.test(insight)))
+    ? `<div style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:${trend.up ? "var(--up)" : "var(--down)"};margin-top:4px;">${escapeHtml(trend.text)}</div>` : "";
   const fvSparkHTML = (variant === "compact" && typeof _miniSparkline === "function" && fvVals.filter(v => v != null).length >= 2)
-    ? `<div style="margin-top:12px;">${_gfxPrepSvg(_miniSparkline(fvVals, { width: 230, height: 48, stroke: accent }), "display:block;")}${trend ? `<div style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:${trend.up ? "var(--up)" : "var(--down)"};margin-top:4px;">${escapeHtml(trend.text)}</div>` : ""}</div>` : "";
+    ? `<div style="margin-top:12px;">${_gfxPrepSvg(_miniSparkline(fvVals, { width: 230, height: 48, stroke: accent }), "display:block;")}${_sparkTrend}</div>` : "";
   // Pitchers: arsenal + VAA table (with a compact rate-stat caption) replaces the
   // hitting-line stat grid.
   const rateCaption = isPitcher ? [
@@ -27557,7 +27584,7 @@ function buildProspectCard(snap) {
       ${_gfxHeader(P, accent, eyebrow, qrUrl)}
       <div style="display:flex;gap:26px;align-items:stretch;flex:none;">
         ${headshot}
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:12px;">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-start;gap:12px;">
           <div>
             <div style="display:flex;align-items:center;gap:12px;">
               ${orgLogo}
@@ -27569,10 +27596,13 @@ function buildProspectCard(snap) {
             ${insight ? `<div style="font-family:var(--font-retro);font-size:15px;font-weight:700;color:${accent};margin-top:10px;">▸ ${escapeHtml(insight)}</div>` : ""}
             ${fvSparkHTML}
           </div>
-          <div style="display:flex;flex-direction:column;gap:5px;">
+        </div>
+        <div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:12px;">
+          <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
             <span style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${P.text3};">Consensus FV</span>
             <span>${fvBadgeBig}</span>
           </div>
+          ${heroTiles}
         </div>
       </div>
       ${sectionsHTML}
@@ -37070,10 +37100,13 @@ function renderPlayerDetail(key) {
     for (const b of buckets) {
       if (fv >= b - 2.5) { pick = b; break; }
     }
-    // Holo cutoff is FV ≥ 61 so the exact-60 first-division-floor
-    // prospects drop into chrome territory.
-    const rarity = fv >= 70 ? "card-rarity-chrome"
+    // ONE canonical rarity ramp everywhere (rankNumRarityClass / headshot
+    // rings / starfield): 70+ legendary, 61+ holo, 55+ chrome. This header
+    // previously topped out at chrome for 70+ — the only surface that
+    // diverged from the canonical thresholds (Phase-4f audit fix).
+    const rarity = fv >= 70 ? "card-rarity-legendary"
                  : fv >= 61 ? "card-rarity-holo"
+                 : fv >= 55 ? "card-rarity-chrome"
                  : "";
     return `fv-tier-${pick}${rarity ? " " + rarity : ""}`;
   })();
