@@ -1281,6 +1281,46 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             if _step_3a_per_start is not None:
                 _STEP_TIMES.append(("3a-ii. Per-player career stats fetch (parallel)", time.monotonic() - _step_3a_per_start))
 
+            # --- 3a-iii. Self-heal graduates frozen pre-org-feature ----------
+            # Graduates are otherwise frozen (their MiLB career is over), but a
+            # pre-feature freeze left their cached career_stats with NO `org`
+            # key at all — so the detail-page career table couldn't attribute
+            # per-season orgs (e.g. Cole Ragans's 2022 read as his current org
+            # and his 2023 Texas->KC split was lost). Re-fetch only those
+            # stale-shape graduates; once rebuilt with `org` (+ split stints)
+            # they stop matching, so this is a bounded one-time catch-up that
+            # respects the freeze. The active backfill is covered above.
+            grad_heal = [
+                (p.player_key, ids_by_key[p.player_key], _is_pitcher(p.position))
+                for p in timeseries
+                if p.status == "debuted"
+                and ids_by_key.get(p.player_key)
+                and (career_cache.get(p.player_key))
+                and all("org" not in r for r in career_cache[p.player_key])
+            ]
+            if grad_heal:
+                log.info("self-healing per-season org for %d graduates frozen "
+                         "before the org/split-stints feature", len(grad_heal))
+                healed: dict = {}
+                heal_workers = min(24, max(1, len(grad_heal)))
+                with concurrent.futures.ThreadPoolExecutor(max_workers=heal_workers) as ex:
+                    heal_futs = {
+                        ex.submit(fetch_career_stats, k, m, is_pitcher=ip): k
+                        for k, m, ip in grad_heal
+                    }
+                    for fut in concurrent.futures.as_completed(heal_futs):
+                        try:
+                            rows = fut.result()
+                            if rows:
+                                healed[heal_futs[fut]] = rows
+                        except Exception as e:
+                            log.debug("graduate career heal failed for %s: %s",
+                                      heal_futs[fut], e)
+                if healed:
+                    upsert_career_stats(healed)
+                    career_cache.update(healed)
+                log.info("healed per-season org for %d graduates", len(healed))
+
         # --- 3b. Derive current-season stat lines (top-level digest) ------
         # Skips already-graduated prospects since their graduation snapshot
         # already exists; the existing statlines row in the DB is preserved

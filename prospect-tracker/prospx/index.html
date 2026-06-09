@@ -34475,11 +34475,27 @@ function _careerOrgAndStints(s, player, statCellsFn) {
     // with their current org, so that IS this season's stat-line org even when
     // the in-progress row hasn't been stamped with a team yet.
     let _org = (stints.length === 1 ? stints[0].org : (s && s.org)) || null;
-    if (!_org && s && s.season >= new Date().getFullYear() && player && player.org) {
-      _org = player.org;
+    if (!_org) {
+      // The stat line didn't stamp a team for this season. Resolve it WITHOUT
+      // ever folding the current org back over a trade:
+      //   1. a player who has only ever been with ONE org across their whole
+      //      resolved career (never traded) — that single org is unambiguous for
+      //      every season, even ones the data didn't stamp;
+      //   2. a player with NO resolved org history at all → their current org;
+      //   3. the in-progress CURRENT season → current org (rostered there now).
+      // A multi-org (traded) player's unresolved PAST season stays a visible gap
+      // (—): we never guess which side of a trade it fell on (point-in-time).
+      const resolved = new Set();
+      for (const row of (player && player.career_stats) || []) {
+        if (row && row.org) resolved.add(row.org);
+        for (const st of (row && row.stints) || []) if (st && st.org) resolved.add(st.org);
+      }
+      if (resolved.size === 1) _org = [...resolved][0];
+      else if (resolved.size === 0 && player && player.org) _org = player.org;
+      else if (s && s.season >= new Date().getFullYear() && player && player.org) _org = player.org;
     }
     const orgCell = _org
-      ? `<td style="text-align:center;"><span title="${escapeHtml(_org)} — this season's stat-line org">${_logo(_org)}${escapeHtml(_org)}</span></td>`
+      ? `<td style="text-align:center;"><span title="${escapeHtml(_org)} — this season's org">${_logo(_org)}${escapeHtml(_org)}</span></td>`
       : `<td style="text-align:center;color:var(--text-tertiary);" title="Org unresolved in this season's stat data">—</td>`;
     return { orgCell, stintRows: "" };
   }
