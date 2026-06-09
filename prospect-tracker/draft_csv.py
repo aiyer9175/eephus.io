@@ -427,9 +427,17 @@ def _process_one_set(grp: dict,
         folder = grp.get("_folder")
         if folder:
             snap_date = date.fromtimestamp(folder.stat().st_mtime).isoformat()
+        elif "__" in grp["summary"].parent.name:
+            snap_date = grp["summary"].parent.name.split("__")[-1]
         else:
-            snap_date = grp["summary"].parent.name.split("__")[-1] if "__" in grp["summary"].parent.name \
-                        else date.today().isoformat()
+            # Flat layout (loose <type>-<year>draft.csv at the drop root): pin the
+            # snapshot_date to the summary CSV's own mtime, NOT date.today(). These
+            # are static historical boards; a today() date would mint a fresh
+            # interval_label on every re-ingest day and duplicate the whole board
+            # in draft_snapshots (the export reads latest-per-source, so the JSON
+            # stayed correct, but the table grew one copy per run). mtime is the
+            # same stable publish-date proxy the slug-folder path already uses.
+            snap_date = date.fromtimestamp(grp["summary"].stat().st_mtime).isoformat()
 
     interval_label = f"FG {year} Draft ({snap_date})"
 
