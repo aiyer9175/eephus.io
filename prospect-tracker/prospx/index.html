@@ -20455,12 +20455,25 @@ function graduateOutcomePenalty(g) {
   return Math.max(0.25, Math.min(1.0, penalty));
 }
 
+// Per-SEASON MLB WAR for a graduate: career WAR ÷ number of MLB seasons (the
+// baked war_per_yr), NOT the playing-time-weighted rate. An injury-shortened
+// season still counts as a full season here, so WAG reflects accumulation over
+// the seasons a grad has been up. Falls back to war_total/seasons from the
+// rate object when the baked field is missing.
+function _gradPerSeasonWar(g, r) {
+  const cw = (g && g.career_war) || {};
+  if (cw.war_per_yr != null) return cw.war_per_yr;
+  if (cw.career_war != null && cw.war_seasons_count) return cw.career_war / cw.war_seasons_count;
+  return r ? (r.war_total / Math.max(1, r.war_seasons_count)) : null;
+}
+
 function gradVsFvProjection(g) {
-  // WAG = (playing-time-weighted MLB WAR/yr) − (FV-grade-implied
-  // WAR/yr). gradWarPerYr returns null when the player has < 1 full-
-  // season equivalent of MLB playing time, so a thin-debut prospect
-  // (Ben Rice with only 50 PA) silently drops out instead of reading
-  // as a massive bust.
+  // WAG = (MLB WAR per SEASON) − (FV-grade-implied WAR/season). v16 — matched to
+  // the number of MLB seasons a grad has accrued, NOT a playing-time-weighted
+  // rate (which inflated injury-limited grads like Evan Carter — 5.6 WAR over 4
+  // partial seasons read as a +4 boom instead of ~on-grade). Mirrors the server
+  // _grad_wag / engine WAG. gradWarPerYr is still the ≥1-full-season-of-playing-
+  // time GATE so a thin debut (Ben Rice, 50 PA) drops out instead of a huge bust.
   const r = gradWarPerYr(g);
   if (!r) return null;
   const fv = g.fv_close_raw ?? g.fv_close;
@@ -20468,9 +20481,11 @@ function gradVsFvProjection(g) {
   const isPitcher = !!(g.sabermetrics && g.sabermetrics.is_pitcher);
   const expected = fvExpectedWarPerYr(fv, isPitcher);
   if (expected == null) return null;
-  let delta = r.war_per_yr - expected;
+  const perSeason = _gradPerSeasonWar(g, r);
+  if (perSeason == null) return null;
+  let delta = perSeason - expected;
   if (delta > 0) {
-    delta = (delta * 0.70 + r.war_per_yr * 0.30) * graduateOutcomePenalty(g);
+    delta = (delta * 0.70 + perSeason * 0.30) * graduateOutcomePenalty(g);
   }
   return delta;
 }
@@ -20484,7 +20499,8 @@ function gradWarWag(g) {
   if (!r) return null;
   const wag = gradVsFvProjection(g);
   if (wag == null) return null;
-  return r.war_per_yr + wag;
+  const perSeason = _gradPerSeasonWar(g, r);
+  return (perSeason != null ? perSeason : r.war_per_yr) + wag;
 }
 
 // WAG-by-season sparkline for a graduate. Bars: green when the
