@@ -555,6 +555,13 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .feed-item:hover { color: #fff; background: rgba(255,255,255,0.04); }
 .feed-item .ts { color: #8fb89b; font-size: 10px; flex: none; letter-spacing: .02em; }
 .feed-item .g { margin-right: 1px; flex: none; font-weight: 700; }
+/* Day headers group the wire by date; each deep-links into Time Machine at
+   that date (the full board as of that day). */
+.sb-feed .feed-day { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 9px 2px 3px; }
+.sb-feed .feed-day:first-child { padding-top: 2px; }
+.sb-feed .feed-day-date { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .1em; color: #8fb89b; }
+.sb-feed .feed-day-tm { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700; letter-spacing: .04em; color: #4ee0ff; text-decoration: none; }
+.sb-feed .feed-day-tm:hover, .sb-feed .feed-day-tm:focus-visible { text-decoration: underline; }
 .feed-item .feed-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .feed-item .feed-val { flex: none; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
 /* Per-item team logo — same light plate as the top ticker's tk-logo so dark

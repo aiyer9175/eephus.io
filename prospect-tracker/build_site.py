@@ -863,14 +863,23 @@ def _collect_events(players: list, graduates: list) -> list:
     return [e[:8] for e in ev]
 
 def _feed_html(events: list, n: int = 12) -> str:
-    # Structured rows: date | logo | name (ellipsized) | colored value chip
-    # right-aligned. One line per item — the glyph lives in the value chip,
-    # never duplicated next to the name.
+    # Day-grouped wire: each date gets one thin header row that deep-links
+    # into Time Machine at that date (the full board as of that day), and the
+    # item rows drop the per-row timestamp the header now carries. Item rows
+    # stay structured: logo | name (ellipsized) | colored value chip — the
+    # type glyph lives only in the value chip.
     out = []
+    last_day = None
     for dt, typ, glyph, text, key, org, name, val in events[:n]:
-        ts = f"{dt[5:7]}/{dt[8:10]}" if len(dt) >= 10 else dt
+        if dt != last_day:
+            last_day = dt
+            ts = f"{dt[5:7]}/{dt[8:10]}" if len(dt) >= 10 else dt
+            out.append(
+                f'<div class="feed-day"><span class="feed-day-date">{ts}</span>'
+                f'<a class="feed-day-tm" href="/prospx/#tab=timemachine&tm={dt}" '
+                f'title="Time Machine — the full board as of {dt}">Time Machine →</a></div>')
         logo = _team_logo(org, "feed-logo") if org else ""
-        out.append(f'<a class="feed-item" href="{_player_href(key)}"><span class="ts">{ts}</span>'
+        out.append(f'<a class="feed-item" href="{_player_href(key)}">'
                    f'{logo}<span class="feed-name">{html.escape(name or text)}</span>'
                    f'<span class="feed-val {typ}">{glyph} {html.escape(val)}</span></a>')
     return "".join(out)
