@@ -105,7 +105,71 @@
   --grain2: rgba(120,200,224,.04);
   --shadow-card: 0 1px 0 rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.4);
   --shadow-card-hover: 0 2px 8px rgba(0,0,0,.55), 0 0 0 1px rgba(0,217,255,.14);
+
+  /* ── Phosphor starfield background system (dark theme ONLY) ─────────────
+     Single source of truth for BOTH surfaces: PROSPX loads this sheet before
+     its inline <style> and never redefines these names, so the values below
+     resolve identically on the editorial pages and inside the app. Consumed
+     by assets/eephus-bg.js (the star canvas) + the #eephus-bg rule below
+     (glow/vignette layers). None of these tokens exists outside this block,
+     so the treatment cannot leak into the light theme. Hues DERIVE from the
+     audited dark accents (--accent-green #4FFF9E refractor mint,
+     --accent-gold #FFD700 refractor gold) — no new brand colors. */
+  --bg-base: var(--bg-primary);        /* near-black field base (#0C0C0E) */
+  --bg-glow-color: var(--accent-green);
+  --bg-glow-origin: 50% 0%;            /* top-center — brightest above the fold */
+  --bg-glow-radius: 120%;
+  --bg-glow-strength: 0.05;            /* 0..1 alpha dial on the glow pool */
+  --bg-vignette-strength: 0.35;        /* 0..1 corner darkening (CRT curvature) */
+  --bg-scanline-opacity: 0;            /* opt-in CRT scanlines — default OFF */
+  --star-color-primary: var(--accent-green);
+  --star-color-secondary: var(--accent-gold);
+  --star-mix-ratio: 0.85;              /* share of stars on the primary hue */
+  --star-density-base: 0.08;           /* stars per 1000px² (JS hard-caps total) */
+  --star-opacity-max: 0.45;
+  --star-twinkle-speed: 1;             /* global twinkle-rate multiplier */
+  --star-twinkle-attack: 0.18;         /* fraction of cycle brightening; the
+                                          remainder is the slow phosphor decay */
+  --star-parallax-layers: 3;           /* 2..3 depth layers (scroll/pointer only) */
+  /* FV-linked escalation (PROSPX prospect views; t=1 at the 70 legendary tier) */
+  --star-fv-density-mult: 1.6;
+  --star-fv-chroma-mult: 1.5;
+  --star-fv-opacity-mult: 1.25;
 }
+
+/* ── Phosphor starfield canvas (dark theme only) ──────────────────────────
+   One fixed, full-viewport <canvas id="eephus-bg">, mounted by
+   assets/eephus-bg.js only while data-theme="dark" and removed entirely on
+   any other theme. z-index:-1 slots it ABOVE the page background (the body
+   background promotes to the document canvas, which paints below negative-z
+   elements) and BELOW all content — panels, WIRE ticker, cards, modals. The
+   radial glow + corner vignette render as CSS background layers ON the
+   element (beneath the JS-drawn stars); cards/data panels keep their flat
+   near-black surfaces on top, untinted. pointer-events:none — decoration. */
+[data-theme="dark"] #eephus-bg {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    /* scanlines (top layer — invisible at the default 0 opacity) */
+    repeating-linear-gradient(0deg,
+      color-mix(in srgb, #000 calc(var(--bg-scanline-opacity) * 100%), transparent) 0 1px,
+      transparent 1px 3px),
+    /* corner vignette */
+    radial-gradient(ellipse 130% 130% at 50% 45%,
+      transparent 55%,
+      color-mix(in srgb, #000 calc(var(--bg-vignette-strength) * 100%), transparent) 100%),
+    /* top-center phosphor glow */
+    radial-gradient(ellipse var(--bg-glow-radius) 70% at var(--bg-glow-origin),
+      color-mix(in srgb, var(--bg-glow-color) calc(var(--bg-glow-strength) * 100%), transparent),
+      transparent 70%);
+}
+/* Belt-and-braces: the JS unmounts the canvas outside dark; if a stale node
+   ever survives a theme race it renders nothing. */
+:root:not([data-theme="dark"]) #eephus-bg { display: none; }
 
 /* ---- base (editorial pages only; PROSPX has its own <body> rules) ---- */
 .eephus-page * { box-sizing: border-box; }

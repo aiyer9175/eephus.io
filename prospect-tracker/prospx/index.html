@@ -9540,6 +9540,11 @@
 <script src="/assets/eephus-config.js" defer></script>
 <script src="/assets/eephus-account.js" defer></script>
 <script src="/assets/eephus-ui.js" defer></script>
+<!-- Dark-theme phosphor-starfield background — shared with the editorial
+     pages (single component + token set in assets/site.css [data-theme=dark]).
+     Mounts only while the dark theme is active; render() feeds it the
+     prospect FV on detail views so the field escalates with the rarity tier. -->
+<script src="/assets/eephus-bg.js" defer></script>
 
 <!-- v32.0 — FV/WAR/$ conversion framework, loaded synchronously so all
      downstream code can call dollarsPerWar() / surplusValueMM() / etc
@@ -16020,8 +16025,12 @@ const _lbStatcastSupport = row => {
 // headshot ring so the rank diamond and the player picture share the
 // same rarity signal. Returns "" when no FV is available; the diamond
 // then falls back to the plain --border color.
-function rankNumRarityClass(player) {
-  if (!player) return "";
+// FV resolution shared by every rarity-linked treatment — close FV when
+// published, else consensus, else the latest timeseries point. Extracted from
+// rankNumRarityClass so the dark-theme phosphor background's FV linkage
+// (render() → EephusBG.setFV) can never drift from the border-tier signal.
+function rarityFvOf(player) {
+  if (!player) return null;
   let fv = player.fv_close;
   if (fv == null) fv = player.consensus_fv;
   if (fv == null) {
@@ -16029,7 +16038,11 @@ function rankNumRarityClass(player) {
     const last = pts.length ? pts[pts.length - 1] : null;
     if (last) fv = last.consensus_fv_raw != null ? last.consensus_fv_raw : last.consensus_fv;
   }
-  if (fv == null || !isFinite(fv)) return "";
+  return fv != null && isFinite(fv) ? fv : null;
+}
+function rankNumRarityClass(player) {
+  const fv = rarityFvOf(player);
+  if (fv == null) return "";
   // Holo cutoff is FV ≥ 61 so the exact-60 prospects drop to chrome —
   // 60 is the first-division floor, 61+ reads as "rare upside" which
   // is the right semantic for the rainbow holo treatment.
@@ -41638,6 +41651,17 @@ function render() {
   else if (state.view && state.view.type === "draftee") active = "draftDetail";
   else if (state.view && state.view.type === "overseas_player") active = "overseasDetail";
   else active = state.section;
+
+  // Dark-theme phosphor starfield ←→ FV linkage. Prospect detail views feed
+  // the background the SAME FV the rarity border resolves (rarityFvOf, the
+  // rankNumRarityClass chain) so the field escalates in lockstep with the
+  // border tier; every other view gets the base field. No-op when the module
+  // hasn't loaded; in light mode it just records the value so a mid-session
+  // toggle into dark lands on the right intensity.
+  if (window.EephusBG) {
+    const bgPlayer = active === "player" ? findPlayer(state.view.key) : null;
+    window.EephusBG.setFV(bgPlayer ? rarityFvOf(bgPlayer) : null);
+  }
 
   for (const [name, id] of Object.entries(sections)) {
     const el = document.getElementById(id);

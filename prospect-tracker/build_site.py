@@ -52,6 +52,7 @@ _CSS_VER = _asset_ver("assets/site.css")
 _ACCT_VER = _asset_ver("assets/eephus-account.js")
 _UI_VER = _asset_ver("assets/eephus-ui.js")
 _ACCT_CSS_VER = _asset_ver("assets/eephus-account.css")
+_BG_VER = _asset_ver("assets/eephus-bg.js")
 
 # eephus.io account layer (Parts 1-7), injected before </body> on every editorial
 # page. OPTIONAL by design: assets/eephus-config.js is git-ignored and absent on
@@ -62,7 +63,10 @@ _ACCT_CSS_VER = _asset_ver("assets/eephus-account.css")
 ACCOUNT_SCRIPTS = (
     f'<script src="/assets/eephus-config.js" defer></script>\n'
     f'<script src="/assets/eephus-account.js?v={_ACCT_VER}" defer></script>\n'
-    f'<script src="/assets/eephus-ui.js?v={_UI_VER}" defer></script>'
+    f'<script src="/assets/eephus-ui.js?v={_UI_VER}" defer></script>\n'
+    # Dark-theme phosphor-starfield background (shared with PROSPX). Rides the
+    # per-page script block; inert (mounts nothing) under the light theme.
+    f'<script src="/assets/eephus-bg.js?v={_BG_VER}" defer></script>'
 )
 # Account/forum stylesheet — linked in <head> after site.css on every editorial
 # page (scoped under .eph-*; the circular avatar is the one sanctioned curve).
