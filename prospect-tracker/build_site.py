@@ -701,7 +701,10 @@ def display_metric_for(p: dict) -> dict:
     cw = p.get("career_war") or {}
     is_grad = (p.get("status") == "debuted") or (cw.get("career_war") is not None)
 
-    # 1) Graduated -> raw MLB WAR (career-since-debut bWAR, with WAR/yr).
+    # 1) Graduated -> raw MLB WAR (career-since-debut bWAR). WAR/yr stays in
+    #    the hover tooltip only — as a visible suffix it was noise on the
+    #    homepage grad rows, where most players have one partial MLB season
+    #    and the per-year rate is just the WAR number echoed back.
     if is_grad:
         war = cw.get("career_war")
         if war is None:
@@ -713,8 +716,6 @@ def display_metric_for(p: dict) -> dict:
         cls = "up" if war_r > 0 else ("down" if war_r < 0 else "flat")
         wpy = cw.get("war_per_yr")
         nseas = cw.get("war_seasons_count")
-        yr = (f' <span style="opacity:.55;font-weight:400">· {wpy:.1f}/yr</span>'
-              if isinstance(wpy, (int, float)) else "")
         title = f"{war_r:.1f} career bWAR"
         if isinstance(wpy, (int, float)):
             title += f" · {wpy:.2f}/yr"
@@ -722,7 +723,7 @@ def display_metric_for(p: dict) -> dict:
             title += f" · {nseas} MLB season{'s' if nseas != 1 else ''}"
         return {"metric": "WAR", "cls": cls,
                 "html": (f'<span class="row-delta {cls}" title="{html.escape(title)}">'
-                         f'{war_r:.1f} WAR{yr}</span>')}
+                         f'{war_r:.1f} WAR</span>')}
 
     # 2) Still a prospect with a SETTLED sample -> WAG (WAR above grade).
     wag = (p.get("debuted_value") or {}).get("wag") or {}
@@ -750,6 +751,33 @@ def _row_grad(g: dict) -> str:
     return (f'<a class="row-link" href="{_player_href(g.get("player_key"))}">'
             f'{_team_logo(g.get("org"))}<span class="row-name">{html.escape(g.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(g.get("position"), g.get("org"))}</span>{wtxt}</a>')
+
+def _recent_trades_html(players: list, n: int = 6) -> str:
+    """'Recent Trades' module — the latest prospect trades from the tracked
+    pool, newest first. Fills the grid slot beside This Day in Prospect
+    History so the front page bottom row reads as a full spread."""
+    trs = []
+    for p in players:
+        for tr in (p.get("trades") or []):
+            dt = str(tr.get("trade_date") or "")[:10]
+            if len(dt) == 10:
+                trs.append((dt, p, tr))
+    if not trs:
+        return ""
+    trs.sort(key=lambda t: t[0], reverse=True)
+    rows = []
+    for dt, p, tr in trs[:n]:
+        frm = html.escape(tr.get("from_org") or "?")
+        to = html.escape(tr.get("to_org") or "?")
+        rows.append(
+            f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
+            f'{_team_logo(tr.get("to_org") or p.get("org"))}'
+            f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
+            f'<span class="row-meta">{_meta(p.get("position"))}</span>'
+            f'<span class="row-meta" title="Traded {frm} → {to}">{frm} ⇄ {to}</span>'
+            f'<span class="row-meta">{dt[5:7]}/{dt[8:10]}</span></a>'
+        )
+    return _home_module("Recent Trades", "/prospx/#tab=traded", "All transactions", "".join(rows))
 
 def _row_farm(o: dict, rank: int) -> str:
     grade = (o.get("grades") or {}).get("overall") or "—"
@@ -874,8 +902,11 @@ def _spotlight_html(players: list) -> str:
         '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;">'
         f'<div class="sp-name">{html.escape(p.get("player_name") or "")}</div>'
         f'<div class="sp-meta">{_meta(p.get("position"), p.get("org"))}</div>'
-        f'<div style="display:flex;align-items:center;gap:8px;margin-top:4px;">{_fv_pill(p)}'
-        f'<span class="row-delta up" style="font-family:var(--font-retro-mono);font-size:12px;">▲ +{d} FV</span></div>'
+        # flex-wrap + nowrap chip: under the wide MS-Gothic metrics the pill +
+        # delta can outgrow the narrow sidebar column — wrap the chip as a unit
+        # below the pill instead of letting it overflow into the card border.
+        f'<div style="display:flex;align-items:center;gap:8px;row-gap:2px;margin-top:4px;flex-wrap:wrap;">{_fv_pill(p)}'
+        f'<span class="row-delta up" style="font-family:var(--font-retro-mono);font-size:12px;white-space:nowrap;">▲ +{d} FV</span></div>'
         f'{spark}</div></a></div>'
     )
 
@@ -917,12 +948,13 @@ def _home_module(kicker: str, see_all_href: str, see_all: str, body: str, full: 
             f'<a class="see-all" href="{see_all_href}">{html.escape(see_all)} →</a></div>')
     return f'<section class="home-module{" full" if full else ""}">{head}{body}</section>'
 
-def _this_day_html(graduates: list) -> str:
-    """'This day in prospect history' — a graduate who debuted on (or within a
-    few days of) today's calendar date in a past season. Ties the historical
-    record to the homepage and links into Time Machine at that date."""
+def _this_day_html(graduates: list, n: int = 5) -> str:
+    """'This day in prospect history' — graduates who debuted on (or within a
+    few days of) today's calendar date in past seasons. Up to `n` rows,
+    exact-date anniversaries first, then by prominence (final FV, then WAG).
+    Ties the historical record to the homepage and links into Time Machine."""
     today = date.today()
-    best = None  # (date_proximity, -prominence, grad, debut_date)
+    cands = []  # (date_proximity, -prominence, debut_date, grad)
     for g in graduates:
         dd = g.get("debut_date")
         if not dd:
@@ -941,24 +973,28 @@ def _this_day_html(graduates: list) -> str:
         if prox > 4:
             continue
         prom = g.get("fv_close") or ((g.get("debuted_value") or {}).get("wag") or {}).get("regressed_wag") or 0
-        cand = (prox, -float(prom), g, d)
-        if best is None or cand[:2] < best[:2]:
-            best = cand
-    if best is None:
+        cands.append((prox, -float(prom), d, g))
+    if not cands:
         return ""
-    _, _, g, d = best
-    yrs = today.year - d.year
-    nm = html.escape(g.get("player_name") or "")
-    meta = _meta(g.get("position"), g.get("org"))
-    when = f"{d.strftime('%B')} {d.day}, {d.year}"   # no %-d (unsupported on Windows)
+    cands.sort(key=lambda c: c[:2])
+    rows = []
+    for _, _, d, g in cands[:n]:
+        yrs = today.year - d.year
+        nm = html.escape(g.get("player_name") or "")
+        meta = _meta(g.get("position"), g.get("org"))
+        when = f"{d.strftime('%B')} {d.day}, {d.year}"   # no %-d (unsupported on Windows)
+        rows.append(
+            f'<a class="otd-row" href="{_player_href(g.get("player_key"))}">'
+            f'<span class="otd-when">{html.escape(when)}</span>'
+            f'<span class="otd-body"><strong>{nm}</strong> debuted — {meta}</span>'
+            f'<span class="otd-ago">{yrs}y ago</span></a>'
+        )
+    lead_date = cands[0][2]
     return (
         '<section class="home-module otd-module">'
         '<div class="kicker"><h2>This Day in Prospect History</h2>'
-        f'<a class="see-all" href="/prospx/#tab=timemachine&tm={d.isoformat()}">Time Machine →</a></div>'
-        f'<a class="otd-row" href="{_player_href(g.get("player_key"))}">'
-        f'<span class="otd-when">{html.escape(when)}</span>'
-        f'<span class="otd-body"><strong>{nm}</strong> debuted — {meta}</span>'
-        f'<span class="otd-ago">{yrs}y ago</span></a>'
+        f'<a class="see-all" href="/prospx/#tab=timemachine&tm={lead_date.isoformat()}">Time Machine →</a></div>'
+        + "".join(rows) +
         '</section>'
     )
 
@@ -1093,7 +1129,9 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     grad_body = "".join(_row_grad(g) for g in gr)
     grads = _home_module("Recent Graduates", "/prospx/#tab=debuts", "All graduates", grad_body) if grad_body else ""
 
-    fm = sorted((o for o in org_summary if o.get("farm_rank")), key=lambda o: o["farm_rank"])[:4]
+    # Top 6 farms (was 4) so the module fills its grid cell instead of leaving
+    # dead space beside the six-row Recent Graduates column.
+    fm = sorted((o for o in org_summary if o.get("farm_rank")), key=lambda o: o["farm_rank"])[:6]
     farm_body = "".join(_row_farm(o, o.get("farm_rank") or i) for i, o in enumerate(fm, 1))
     farm = _home_module("Farm Spotlight", "/prospx/#tab=farm", "Farm systems", farm_body) if farm_body else ""
 
@@ -1103,6 +1141,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
 
     callout = _date_callout()
     otd = _this_day_html(graduates)
+    trades_mod = _recent_trades_html(players)
     scatter = _scatter_teaser()
     # eephus.io — Forums module (third content pillar). Hydrated client-side by
     # eephus-ui.js (#eph-home-forums): bump/Hot ordering, last-active first.
@@ -1111,7 +1150,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     main = (
         '<main class="home-main">'
         f'{masthead}{callout}{lead}{secondary}'
-        f'<div class="module-cols">{movers}{topp}{grads}{farm}{otd}</div>'
+        f'<div class="module-cols">{movers}{topp}{grads}{farm}{otd}{trades_mod}</div>'
         f'{forums_mod}'
         f'<div class="teaser-row">{glossary}{scatter}</div>'
         '</main>'
