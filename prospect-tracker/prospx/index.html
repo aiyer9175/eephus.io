@@ -3255,6 +3255,14 @@
     .career-org-multi:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: -2px; }
     .stint-row > td { background: var(--bg-tertiary); font-size: 0.92em; color: var(--text-secondary); }
     .stint-row .stint-org { display: inline-flex; align-items: center; justify-content: center; gap: 3px; padding-left: 10px; }
+    /* Multi-level season: the season collapses to its highest level + a caret
+       that expands the other levels (mirrors the per-org split treatment). */
+    .career-season-multi { white-space: nowrap; }
+    .career-season-multi .season-caret { font-size: 9px; color: var(--text-tertiary); margin-left: 3px; transition: transform .15s ease; display: inline-block; }
+    .career-season-multi[aria-expanded="true"] .season-caret { transform: rotate(90deg); }
+    .career-season-multi:hover { background: var(--bg-tertiary); }
+    .career-season-multi:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: -2px; }
+    .season-sub-row > td { background: var(--bg-tertiary); font-size: 0.94em; color: var(--text-secondary); }
 
     /* Per-source FV history table — 10+ columns when a player has lots
        of sources. The wrapper allows horizontal scroll; the date column
@@ -34545,6 +34553,28 @@ document.addEventListener("keydown", e => {
   if (cell) { e.preventDefault(); _toggleStintRows(cell); }
 });
 
+// Expand/collapse a multi-level season's per-level rows. Same pure-DOM-toggle
+// pattern as the per-org stint rows; the two nest cleanly (a season's level row
+// can itself carry a per-org stint expansion).
+function _toggleSeasonRows(cell) {
+  const key = cell.getAttribute("data-season-toggle");
+  if (!key) return;
+  const open = cell.getAttribute("aria-expanded") === "true";
+  cell.setAttribute("aria-expanded", open ? "false" : "true");
+  const root = cell.closest("table") || document;
+  root.querySelectorAll(`tr.season-sub-row[data-season-rows="${key}"]`)
+      .forEach(tr => { tr.hidden = open; });
+}
+document.addEventListener("click", e => {
+  const cell = e.target.closest && e.target.closest("[data-season-toggle]");
+  if (cell) { e.preventDefault(); _toggleSeasonRows(cell); }
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const cell = e.target.closest && e.target.closest("[data-season-toggle]");
+  if (cell) { e.preventDefault(); _toggleSeasonRows(cell); }
+});
+
 function makeCareerTable(career, birthDate, player) {
   if (!career || !career.length) {
     return `<div style="color:var(--text-tertiary);font-size:12px;">No multi-season stats available.</div>`;
@@ -34600,19 +34630,67 @@ function makeCareerTable(career, birthDate, player) {
              : sortMode.endsWith("_desc") ? true
              : defaultDesc;
   const extract = FIELD_BY_KEY[baseKey] || FIELD_BY_KEY.season;
-  const sorted = [...career].sort((a, b) => {
-    const av = extract(a);
-    const bv = extract(b);
+  const _sortCmp = (av, bv, fa, fb) => {
     const aNull = av == null || (typeof av === "number" && isNaN(av));
     const bNull = bv == null || (typeof bv === "number" && isNaN(bv));
-    if (aNull && bNull) return (b.season || 0) - (a.season || 0);
+    if (aNull && bNull) return (fb || 0) - (fa || 0);
     if (aNull) return 1;
     if (bNull) return -1;
-    if (typeof av === "number" && typeof bv === "number") {
-      return desc ? (bv - av) : (av - bv);
-    }
+    if (typeof av === "number" && typeof bv === "number") return desc ? (bv - av) : (av - bv);
     return desc ? String(bv).localeCompare(String(av)) : String(av).localeCompare(String(bv));
-  });
+  };
+
+  // Per-season MLB WAR (debuted prospects only) → a "WAR" column. career_war.seasons
+  // is bbref WAR, MLB-only, so minor-league rows render "—".
+  const warSeasons = (player && player.career_war && player.career_war.seasons) || {};
+  const hasWar = Object.keys(warSeasons).length > 0;
+  const warHead = hasWar ? '<th title="Baseball-Reference WAR for that MLB season (career_war). MLB-only — minor-league rows show —.">WAR</th>' : "";
+  const metaSpan = hasWar ? 5 : 4;
+  const _warCell = (season) => {
+    if (!hasWar) return "";
+    const w = warSeasons[season];
+    if (w == null) return '<td style="text-align:center;color:var(--text-tertiary);">—</td>';
+    const col = w > 0 ? "var(--up)" : w < 0 ? "var(--down)" : "var(--text-secondary)";
+    return `<td style="text-align:center;color:${col};font-variant-numeric:tabular-nums;">${w >= 0 ? "+" : ""}${w.toFixed(1)}</td>`;
+  };
+
+  // One row per SEASON. A season played at 2+ levels collapses to its HIGHEST
+  // level that year (the headline) with a caret that expands the other levels;
+  // a single-level season stays a plain row. Lower LEVEL_ORDER index = higher
+  // level (MLB first). Season headers sort by the active sort key applied to the
+  // headline (highest-level) row.
+  const _lvlRank = lvl => { const r = (typeof LEVEL_RANK !== "undefined" && LEVEL_RANK) ? LEVEL_RANK[lvl] : null; return r == null ? -1 : r; };
+  const _bySeason = new Map();
+  for (const s of career) {
+    if (!_bySeason.has(s.season)) _bySeason.set(s.season, []);
+    _bySeason.get(s.season).push(s);
+  }
+  const seasonEntries = [];
+  for (const [season, rows] of _bySeason) {
+    const lv = [...rows].sort((a, b) => _lvlRank(b.level) - _lvlRank(a.level));  // highest level first
+    seasonEntries.push({ season, header: lv[0], levels: lv });
+  }
+  seasonEntries.sort((a, b) => _sortCmp(extract(a.header), extract(b.header), a.season, b.season));
+
+  // Shared season-row renderer (hitter + pitcher pass their own stat cells).
+  const buildSeasonRows = (cellsFn) => seasonEntries.map(e => {
+    const s = e.header;
+    const multi = e.levels.length > 1;
+    const { orgCell, stintRows } = _careerOrgAndStints(s, player, cellsFn);
+    const key = `yr-${e.season}`;
+    const seasonCell = multi
+      ? `<td class="career-season-multi" style="text-align:center;cursor:pointer;" data-season-toggle="${key}" role="button" tabindex="0" aria-expanded="false" title="${e.levels.map(r => escapeHtml(r.level)).join(" / ")} — ${e.levels.length} levels this season; click to expand each level">${s.season}<span class="season-caret" aria-hidden="true">▸</span></td>`
+      : `<td style="text-align:center;">${s.season}</td>`;
+    let html = `<tr>${seasonCell}<td>${ageFor(s.season)}</td>${orgCell}<td><span class="level-pill level-neutral">${s.level}</span></td>${_warCell(s.season)}${cellsFn(s)}</tr>${stintRows}`;
+    if (multi) {
+      html += e.levels.slice(1).map(lv => {
+        const sub = _careerOrgAndStints(lv, player, cellsFn);
+        const warBlank = hasWar ? '<td style="text-align:center;color:var(--text-tertiary);">—</td>' : "";
+        return `<tr class="season-sub-row" data-season-rows="${key}" hidden><td style="text-align:center;color:var(--text-tertiary);">↳</td><td></td>${sub.orgCell}<td><span class="level-pill level-neutral">${lv.level}</span></td>${warBlank}${cellsFn(lv)}</tr>${sub.stintRows}`;
+      }).join("");
+    }
+    return html;
+  }).join("");
   const _sh = (key, label, attrs = "") => {
     const isActive = baseKey === key;
     return `<th class="sort-header${isActive ? " is-active" : ""}" data-career-sort="${key}" ${attrs}>${label}</th>`;
@@ -34660,7 +34738,7 @@ function makeCareerTable(career, birthDate, player) {
     // v30.6 — Meta col-span bumped to 4 to accommodate the new Org
     // column (Season / Age / Org / Level).
     const strip = `<tr>
-      <th colspan="4" style="${stripStyle(META_COLOR)}">Meta</th>
+      <th colspan="${metaSpan}" style="${stripStyle(META_COLOR)}">Meta</th>
       <th colspan="3" style="${stripStyle(COUNT_COLOR)}">Counting</th>
       <th colspan="2" style="${stripStyle(SLASH_COLOR)}">Run prevention</th>
       <th colspan="3" style="${stripStyle(PERIPH_COLOR)}">Peripherals</th>
@@ -34669,7 +34747,7 @@ function makeCareerTable(career, birthDate, player) {
       ${_sh("season", "Season")}
       ${_sh("age", "Age", 'title="Age at July 1 of season"')}
       <th title="MLB org affiliation from each season's actual stat lines (never the current org). A season with stats at 2+ orgs (an in-season trade) shows both orgs old → new and expands to the per-org split; an offseason move shows one org per season. Cross-reference the transaction history block for precise dates.">Org</th>
-      ${_sh("level", "Level")}
+      ${_sh("level", "Level")}${warHead}
       ${_sh("g", "G", 'title="Games appeared"')}
       ${_sh("ip", "IP", 'title="Innings pitched"')}
       ${_sh("wins", "W-L", 'title="Wins–Losses (sorts by wins)"')}
@@ -34703,16 +34781,7 @@ function makeCareerTable(career, birthDate, player) {
         <td>${_kPctOrFallback(s)}</td>
         <td>${_bbPctOrFallback(s)}</td>
         <td>${s.hr_per_9 != null ? s.hr_per_9.toFixed(2) : "—"}</td>`;
-    const rows = sorted.map(s => {
-      const { orgCell, stintRows } = _careerOrgAndStints(s, player, pitcherCells);
-      return `<tr>
-        <td>${s.season}</td>
-        <td>${ageFor(s.season)}</td>
-        ${orgCell}
-        <td><span class="level-pill level-neutral">${s.level}</span></td>
-        ${pitcherCells(s)}
-      </tr>${stintRows}`;
-    }).join("");
+    const rows = buildSeasonRows(pitcherCells);
     return `<table class="detail-table"><thead>${strip}${head}</thead><tbody>${rows}</tbody></table>`;
   }
 
@@ -34725,7 +34794,7 @@ function makeCareerTable(career, birthDate, player) {
   // is distinct from its neighbors — which the POWER_COLOR ensures.
   // v30.6 — Meta col-span bumped to 4 for the new Org column.
   const strip = `<tr>
-    <th colspan="4" style="${stripStyle(META_COLOR)}">Meta</th>
+    <th colspan="${metaSpan}" style="${stripStyle(META_COLOR)}">Meta</th>
     <th colspan="4" style="${stripStyle(COUNT_COLOR)}">Counting</th>
     <th colspan="5" style="${stripStyle(SLASH_COLOR)}">Slash</th>
     <th colspan="1" style="${stripStyle(POWER_COLOR)}">Power</th>
@@ -34735,7 +34804,7 @@ function makeCareerTable(career, birthDate, player) {
     ${_sh("season", "Season")}
     ${_sh("age", "Age", 'title="Age at July 1 of season"')}
     <th title="MLB org affiliation from each season's actual stat lines (never the current org). A season with stats at 2+ orgs (an in-season trade) shows both orgs old → new and expands to the per-org split; an offseason move shows one org per season. Cross-reference the transaction history block for precise dates.">Org</th>
-    ${_sh("level", "Level")}
+    ${_sh("level", "Level")}${warHead}
     ${_sh("g", "G", 'title="Games"')}
     ${_sh("ab", "AB", 'title="At-Bats"')}
     ${_sh("hr", "HR", 'title="Home Runs"')}
@@ -34771,16 +34840,7 @@ function makeCareerTable(career, birthDate, player) {
       <td>${isoCell(s)}</td>
       <td>${s.bb_pct != null ? s.bb_pct.toFixed(1) : "—"}</td>
       <td>${s.k_pct != null ? s.k_pct.toFixed(1) : "—"}</td>`;
-  const rows = sorted.map(s => {
-    const { orgCell, stintRows } = _careerOrgAndStints(s, player, hitterCells);
-    return `<tr>
-      <td>${s.season}</td>
-      <td>${ageFor(s.season)}</td>
-      ${orgCell}
-      <td><span class="level-pill level-neutral">${s.level}</span></td>
-      ${hitterCells(s)}
-    </tr>${stintRows}`;
-  }).join("");
+  const rows = buildSeasonRows(hitterCells);
   return `<table class="detail-table"><thead>${strip}${head}</thead><tbody>${rows}</tbody></table>`;
 }
 
