@@ -34468,10 +34468,19 @@ function _careerOrgAndStints(s, player, statCellsFn) {
   const stints = (s && Array.isArray(s.stints))
     ? s.stints.filter(st => st && st.org) : [];
   if (stints.length < 2) {
-    const _org = _seasonOrgForRow(player, s.season);
+    // Per-season org = the org on THIS season's actual stat line. For PAST
+    // seasons we NEVER fold back to the current/canonical org (point-in-time
+    // integrity) — an unresolved past season renders as a visible gap (—). The
+    // sole exception is the CURRENT season: the player is presently rostered
+    // with their current org, so that IS this season's stat-line org even when
+    // the in-progress row hasn't been stamped with a team yet.
+    let _org = (stints.length === 1 ? stints[0].org : (s && s.org)) || null;
+    if (!_org && s && s.season >= new Date().getFullYear() && player && player.org) {
+      _org = player.org;
+    }
     const orgCell = _org
-      ? `<td style="text-align:center;"><span title="${escapeHtml(_org)} — derived from trade history">${typeof teamLogoHTML === "function" ? teamLogoHTML(_org, "sm") : ""}${escapeHtml(_org)}</span></td>`
-      : `<td style="text-align:center;color:var(--text-tertiary);">—</td>`;
+      ? `<td style="text-align:center;"><span title="${escapeHtml(_org)} — this season's stat-line org">${_logo(_org)}${escapeHtml(_org)}</span></td>`
+      : `<td style="text-align:center;color:var(--text-tertiary);" title="Org unresolved in this season's stat data">—</td>`;
     return { orgCell, stintRows: "" };
   }
   const orgs = stints.map(st => st.org);
@@ -34643,7 +34652,7 @@ function makeCareerTable(career, birthDate, player) {
     const head = `<tr>
       ${_sh("season", "Season")}
       ${_sh("age", "Age", 'title="Age at July 1 of season"')}
-      <th title="MLB org affiliation derived from the prospect's trade history. For traded prospects, the org is folded backward against trade dates so each season reflects the affiliate the prospect was rostered with at that point. Cross-reference the transaction history block for precise mid-season swap dates.">Org</th>
+      <th title="MLB org affiliation from each season's actual stat lines (never the current org). A season with stats at 2+ orgs (an in-season trade) shows both orgs old → new and expands to the per-org split; an offseason move shows one org per season. Cross-reference the transaction history block for precise dates.">Org</th>
       ${_sh("level", "Level")}
       ${_sh("g", "G", 'title="Games appeared"')}
       ${_sh("ip", "IP", 'title="Innings pitched"')}
@@ -34709,7 +34718,7 @@ function makeCareerTable(career, birthDate, player) {
   const head = `<tr>
     ${_sh("season", "Season")}
     ${_sh("age", "Age", 'title="Age at July 1 of season"')}
-    <th title="MLB org affiliation derived from the prospect's trade history. For traded prospects, the org is folded backward against trade dates so each season reflects the affiliate the prospect was rostered with at that point. Cross-reference the transaction history block for precise mid-season swap dates.">Org</th>
+    <th title="MLB org affiliation from each season's actual stat lines (never the current org). A season with stats at 2+ orgs (an in-season trade) shows both orgs old → new and expands to the per-org split; an offseason move shows one org per season. Cross-reference the transaction history block for precise dates.">Org</th>
     ${_sh("level", "Level")}
     ${_sh("g", "G", 'title="Games"')}
     ${_sh("ab", "AB", 'title="At-Bats"')}
