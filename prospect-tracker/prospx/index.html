@@ -36727,6 +36727,21 @@ function makeInjuryHistoryBlock(history) {
   return `<table class="detail-table"><thead><tr><th>Stint</th><th>List</th><th>Length</th><th>Diagnosis</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
+// Expand/collapse one run of no-change Live check-in rows in the per-source
+// FV history table (see the v44 collapse block in makePerSourceHistory).
+// Scoped to the enclosing table so detail-page re-renders stay self-contained.
+function toggleSrcLiveRun(summaryRow, gid) {
+  const open = summaryRow.getAttribute("aria-expanded") === "true";
+  summaryRow.setAttribute("aria-expanded", String(!open));
+  const caret = summaryRow.querySelector(".src-live-caret");
+  if (caret) caret.textContent = open ? "▸" : "▾";
+  const table = summaryRow.closest("table");
+  if (!table) return;
+  for (const tr of table.querySelectorAll(`tr[data-src-live-run="${gid}"]`)) {
+    tr.style.display = open ? "none" : "";
+  }
+}
+
 // Per-source FV history — shows the full breakdown of how each ranking
 // source has graded the player over time.
 function makePerSourceHistory(points) {
@@ -36785,7 +36800,51 @@ function makePerSourceHistory(points) {
   };
 
   const head = `<tr>${_sh("date", "Date")}${_sh("update", "Update")}${sortedSources.map(s => _sh(`src:${s}`, escapeHtml(SOURCE_LABELS[s] || s))).join("")}${_sh("consensus", "Consensus")}</tr>`;
-  const body = sortedPoints.map(pt => {
+
+  // v44 — Collapse daily Live check-ins that changed nothing. The TJStats
+  // Live board is captured every day; each capture appends a snapshot point
+  // even when every source re-published identical grades, so the table was
+  // filling with duplicate "Live YYYY-MM-DD" rows. Consecutive Live-only
+  // points whose per-source grades AND consensus match the previous point
+  // collapse into ONE expandable summary row ("N live check-ins · no grade
+  // changes"); a Live capture that DID move a grade stays a normal row, and
+  // named releases (BA Top 100, TJ May, …) are never collapsed. Applies only
+  // on the date sort — other sorts scatter the rows, so they render plainly.
+  const _liveLabelRe = /^Live \d{4}-\d{2}-\d{2}$/;
+  const _rawLabelsOf = (pt) => {
+    const labels = [];
+    for (const info of Object.values(pt.per_source || {})) {
+      if (!info) continue;
+      for (const pub of [info].concat(info.extras || [])) {
+        if (pub.snapshot_date === pt.snapshot_date) labels.push(pub.interval_label || pt.interval_label || "");
+      }
+    }
+    if (!labels.length) labels.push(pt.interval_label || "");
+    return labels;
+  };
+  const _gradeSig = (pt) =>
+    JSON.stringify(Object.entries(pt.per_source || {})
+      .map(([src, info]) => [src, info ? info.fv_published : null, !!(info && info.fv_plus)])
+      .sort((a, b) => String(a[0]).localeCompare(String(b[0]))));
+  const collapsible = new Set();
+  // The default sort state is "source", which extract() routes to
+  // snapshot_date — so both keys render date-ordered rows where runs of
+  // consecutive Live check-ins are contiguous and collapsible.
+  const _dateOrdered = baseKey === "date" || baseKey === "source";
+  if (_dateOrdered) {
+    const chrono = [...points].sort((a, b) =>
+      String(a.snapshot_date || "").localeCompare(String(b.snapshot_date || "")));
+    for (let i = 1; i < chrono.length; i++) {
+      const pt = chrono[i], prev = chrono[i - 1];
+      const labels = _rawLabelsOf(pt);
+      if (!labels.every(l => _liveLabelRe.test(l))) continue;       // named release → always a row
+      if (String(pt.consensus_fv_label) !== String(prev.consensus_fv_label)) continue;
+      if (_gradeSig(pt) !== _gradeSig(prev)) continue;              // a grade moved → real news
+      collapsible.add(pt);
+    }
+  }
+
+  const rowHtml = (pt, attrs = "") => {
     const perSrc = pt.per_source || {};
     // v23 — Update column lists EVERY source publication on this date,
     // not just `pt.interval_label` (which is whichever source happened
@@ -36817,7 +36876,7 @@ function makePerSourceHistory(points) {
         `<span class="src-tag" style="display:inline-block;margin:1px 2px;">${escapeHtml(l)}</span>`
       ).join("");
     })();
-    return `<tr>
+    return `<tr${attrs}>
       <td>${pt.snapshot_date}</td>
       <td>${updatePills}</td>
       ${sortedSources.map(s => {
@@ -36854,7 +36913,35 @@ function makePerSourceHistory(points) {
       }).join("")}
       <td><span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-secondary);font-weight:600;" title="Consensus FV at this snapshot">${pt.consensus_fv_label}</span></td>
     </tr>`;
-  }).join("");
+  };
+
+  // Assemble the body, folding consecutive collapsible Live points into one
+  // summary row each. The hidden rows stay in the DOM (display:none) so the
+  // expander is instant and the column alignment never reflows.
+  let body = "";
+  let _srcLiveSeq = 0;
+  for (let i = 0; i < sortedPoints.length;) {
+    const pt = sortedPoints[i];
+    if (!collapsible.has(pt)) { body += rowHtml(pt); i++; continue; }
+    let j = i;
+    while (j < sortedPoints.length && collapsible.has(sortedPoints[j])) j++;
+    const run = sortedPoints.slice(i, j);
+    const gid = `srclive-${_srcLiveSeq++}`;
+    const dates = run.map(r => r.snapshot_date || "").sort();
+    const lo = dates[0], hi = dates[dates.length - 1];
+    const range = lo === hi ? hi : `${lo} → ${hi}`;
+    body += `<tr class="src-live-summary" data-hoverable role="button" tabindex="0" aria-expanded="false"
+      title="Daily Live-board check-ins where every source re-published the same grades — click to expand the individual captures."
+      style="cursor:pointer;"
+      onclick="toggleSrcLiveRun(this,'${gid}')"
+      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSrcLiveRun(this,'${gid}');}">
+      <td style="white-space:nowrap;color:var(--text-tertiary);">${range}</td>
+      <td colspan="${sortedSources.length + 2}" style="color:var(--text-tertiary);font-size:11px;">
+        <span class="src-live-caret" style="display:inline-block;width:1.1em;">▸</span>${run.length} live check-in${run.length === 1 ? "" : "s"} · no grade changes</td>
+    </tr>`;
+    body += run.map(rpt => rowHtml(rpt, ` data-src-live-run="${gid}" style="display:none;"`)).join("");
+    i = j;
+  }
   // Per-source cells keep their compact badges so the reader can spot
   // source agreement at a glance; the consensus column drops the badge
   // (the header FV badge is the single hero number) and renders as plain

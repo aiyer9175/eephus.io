@@ -31,7 +31,7 @@ import html
 import json
 import re
 import unicodedata
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import markdown as md
@@ -590,9 +590,71 @@ def _fv_pill(p: dict) -> str:
 def _meta(*parts) -> str:
     return html.escape(" · ".join(str(x) for x in parts if x))
 
-def _row_mover(p: dict) -> str:
-    s = p.get("stock") or {}
-    d = s.get("delta") or 0
+# --------------------------------------------------------------------------- #
+# Real consensus-grade movement, computed from the player's own points[].
+#
+# `stock` in timeseries.json is the PERFORMANCE-ANCHORED MOVEMENT ENGINE
+# (spotlights.compute_movement): its `delta` is a composite score (perf +
+# skills + list-jump + pedigree) and its from/to dates are simply the last two
+# snapshots — with daily TJStats Live captures that's "yesterday → today" for
+# every active prospect. The homepage was written against the legacy
+# stock_movement shape (a true FV delta over a meaningful window) and silently
+# broke when storage switched the field to the engine: the wire showed engine
+# scores as "▲ +5 FV" items dated at the latest Live refresh. These helpers
+# read the published grade history directly so a "+N FV" on the homepage is
+# always a real grade change — and wire items are dated when the consensus
+# actually moved, not when a daily capture re-confirmed it.
+# --------------------------------------------------------------------------- #
+def _label_series(p: dict) -> list[tuple[str, int]]:
+    """(snapshot_date, consensus grade as int) per point, oldest → newest."""
+    out = []
+    for pt in (p.get("points") or []):
+        d = pt.get("snapshot_date")
+        try:
+            v = int(round(float(pt.get("consensus_fv_label"))))
+        except (TypeError, ValueError):
+            continue
+        if d:
+            out.append((str(d)[:10], v))
+    return out
+
+def _fv_window_delta(p: dict, days: int = 365) -> int | None:
+    """Consensus-grade change over the trailing window (label units). Anchor
+    mirrors consensus.stock_movement v12: latest grade minus the grade at the
+    snapshot closest to (latest − days) without crossing it; falls back to the
+    earliest snapshot when history is shorter than the window."""
+    series = _label_series(p)
+    if len(series) < 2:
+        return None
+    last_d, last_v = series[-1]
+    try:
+        cutoff = date.fromisoformat(last_d) - timedelta(days=days)
+    except ValueError:
+        return last_v - series[-2][1]
+    prior_v = series[0][1]
+    for d, v in series[:-1]:
+        try:
+            if date.fromisoformat(d) <= cutoff:
+                prior_v = v
+            else:
+                break
+        except ValueError:
+            continue
+    return last_v - prior_v
+
+def _latest_fv_change(p: dict) -> tuple[str, int] | None:
+    """The most recent ACTUAL grade change as (date_of_change, step). None when
+    the published grade has never moved. This is what the wire treats as FV
+    news — daily Live re-confirmations of an unchanged grade are not events."""
+    series = _label_series(p)
+    for i in range(len(series) - 1, 0, -1):
+        prev_v = series[i - 1][1]
+        cur_d, cur_v = series[i]
+        if cur_v != prev_v:
+            return (cur_d, cur_v - prev_v)
+    return None
+
+def _row_mover(p: dict, d: int) -> str:
     up = d > 0
     # Mini FV-history sparkline — reinforces the stock-chart identity. Colored
     # by direction; the curve stays smooth (the sharp-corner rule is for UI
@@ -603,7 +665,7 @@ def _row_mover(p: dict) -> str:
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(p.get("position"), p.get("org"))}</span>'
             f'{spark_html}'
-            f'<span class="row-delta {"up" if up else "down"}">{"▲" if up else "▼"} {"+" if up else ""}{d:.0f}</span></a>')
+            f'<span class="row-delta {"up" if up else "down"}">{"▲" if up else "▼"} {"+" if up else ""}{d}</span></a>')
 
 def _row_top(p: dict, rank: int) -> str:
     return (f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
@@ -699,36 +761,59 @@ def _row_farm(o: dict, rank: int) -> str:
             f'<span class="row-meta">{o.get("count", "")} prospects</span>'
             f'<span class="fv-pill{gcls}">{html.escape(str(grade))}</span></a>')
 
+# One mass re-grade (a single source dropping a 17-player international list)
+# would otherwise fill the entire 12/14-item wire by itself; cap FV items per
+# day (biggest grade steps win) so debuts / promotions / IL news from the same
+# window keep their slots.
+_WIRE_MAX_FV_PER_DAY = 6
+
 def _collect_events(players: list, graduates: list) -> list:
+    # Internally (date, typ, glyph, text, key, org, weight); weight orders
+    # same-date items editorially — debut > trade > promo/demo > IL > FV,
+    # with bigger grade steps leading the FV items. Stripped before return.
     ev = []
-    def add(dt, typ, glyph, text, key, org=None):
+    def add(dt, typ, glyph, text, key, org=None, weight=0):
         if dt:
-            ev.append((str(dt)[:10], typ, glyph, text, key, org))
+            ev.append((str(dt)[:10], typ, glyph, text, key, org, weight))
+    fv_items = []
     for p in players:
         nm = p.get("player_name") or ""
         key = p.get("player_key")
         org = p.get("org")
-        s = p.get("stock") or {}
-        if s.get("delta") is not None and abs(s["delta"]) >= 3 and s.get("direction") not in ("flat", "debuted"):
-            up = s["delta"] > 0
-            add(s.get("to_date"), "up" if up else "down", "▲" if up else "▼",
-                f'{nm} {"▲" if up else "▼"} {"+" if up else ""}{s["delta"]:.0f} FV', key, org)
+        # FV news = the most recent REAL grade change, dated at the change.
+        # Never stock.delta — that's the movement engine's composite score
+        # stamped with the latest (daily Live) snapshot date, which flooded
+        # the wire with fake "▲ +N FV today" items for every top prospect.
+        chg = None if p.get("status") == "debuted" else _latest_fv_change(p)
+        if chg and abs(chg[1]) >= 2:
+            fv_items.append((str(chg[0])[:10], chg[1], nm, key, org))
         for lc in (p.get("level_changes") or []):
             if lc.get("kind") in ("promotion", "demotion"):
                 promo = lc["kind"] == "promotion"
                 add(lc.get("date"), "promo" if promo else "demo", "↑" if promo else "↓",
-                    f'{nm} {"promoted" if promo else "demoted"} {lc.get("from_level", "?")}→{lc.get("to_level", "?")}', key, org)
+                    f'{nm} {"promoted" if promo else "demoted"} {lc.get("from_level", "?")}→{lc.get("to_level", "?")}', key, org,
+                    weight=80)
         for tr in (p.get("trades") or []):
             add(tr.get("trade_date"), "trade", "⇄", f'{nm} traded {tr.get("from_org", "?")}→{tr.get("to_org", "?")}', key,
-                tr.get("to_org") or org)
+                tr.get("to_org") or org, weight=90)
         il = p.get("il_status") or {}
         if il.get("is_on_il") and il.get("since"):
-            add(il.get("since"), "il", "✚", f'{nm} to {il.get("type", "")} IL'.replace("  ", " "), key, org)
+            add(il.get("since"), "il", "✚", f'{nm} to {il.get("type", "")} IL'.replace("  ", " "), key, org, weight=70)
     for g in graduates:
         add(g.get("debut_date"), "debut", "★", f'{g.get("player_name", "")} debuted · {g.get("org", "")}',
-            g.get("player_key"), g.get("org"))
-    ev.sort(key=lambda e: e[0], reverse=True)
-    return ev
+            g.get("player_key"), g.get("org"), weight=100)
+    by_day: dict[str, list] = {}
+    for it in fv_items:
+        by_day.setdefault(it[0], []).append(it)
+    for day, items in by_day.items():
+        items.sort(key=lambda t: -abs(t[1]))
+        for d8, step, nm, key, org in items[:_WIRE_MAX_FV_PER_DAY]:
+            up = step > 0
+            add(d8, "up" if up else "down", "▲" if up else "▼",
+                f'{nm} {"▲" if up else "▼"} {"+" if up else ""}{step} FV', key, org,
+                weight=abs(step))
+    ev.sort(key=lambda e: (e[0], e[6]), reverse=True)
+    return [e[:6] for e in ev]
 
 def _feed_html(events: list, n: int = 12) -> str:
     out = []
@@ -768,20 +853,20 @@ def _fv_sparkline(points: list, color: str, w: int = 150, h: int = 34) -> str:
             'stroke-linejoin="round" stroke-linecap="round"/></svg>')
 
 def _spotlight_html(players: list) -> str:
-    # Biggest riser with FV history — rendered as a baseball card.
-    cands = [p for p in players if (p.get("stock") or {}).get("delta") is not None]
-    cands = [p for p in cands if (p["stock"].get("direction") not in ("flat", "debuted"))]
+    # Biggest riser with FV history — rendered as a baseball card. Ranked by
+    # the REAL trailing-1y grade change (label units), so the "+N FV" caption
+    # is a true FV statement (stock.delta is the engine's composite score).
+    cands = [(d, p) for p in players
+             if p.get("status") != "debuted"
+             and (d := _fv_window_delta(p)) is not None and d > 0]
     if not cands:
         return ""
-    p = max(cands, key=lambda x: x["stock"]["delta"])
-    if p["stock"]["delta"] <= 0:
-        return ""
+    d, p = max(cands, key=lambda t: t[0])
     fv = p.get("fv_close")
     holo = " holo" if (fv is not None and fv >= 61) else ""
     url = _headshot_url(p.get("mlbam_id"), 180)   # unified chain (resolves milb-only ids)
     photo = f"background-image:url('{url}');" if url else ""
     spark = _fv_sparkline(p.get("points"), "var(--accent-green)")
-    d = p["stock"]["delta"]
     return (
         '<div class="sb-group"><div class="sb-group-label">Spotlight — Top Riser</div>'
         f'<a class="spotlight{holo}" href="{_player_href(p.get("player_key"))}" style="text-decoration:none;color:inherit;">'
@@ -790,7 +875,7 @@ def _spotlight_html(players: list) -> str:
         f'<div class="sp-name">{html.escape(p.get("player_name") or "")}</div>'
         f'<div class="sp-meta">{_meta(p.get("position"), p.get("org"))}</div>'
         f'<div style="display:flex;align-items:center;gap:8px;margin-top:4px;">{_fv_pill(p)}'
-        f'<span class="row-delta up" style="font-family:var(--font-retro-mono);font-size:12px;">▲ +{d:.0f} FV</span></div>'
+        f'<span class="row-delta up" style="font-family:var(--font-retro-mono);font-size:12px;">▲ +{d} FV</span></div>'
         f'{spark}</div></a></div>'
     )
 
@@ -988,11 +1073,16 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         f'<h3>{html.escape(a["title"])}</h3></a>' for a in sec) + '</div>') if sec else ""
 
     # ---- live PROSPX modules ----
-    mv = [p for p in players if (p.get("stock") or {}).get("delta") is not None
-          and (p["stock"].get("direction") not in ("flat", "debuted")) and abs(p["stock"]["delta"]) >= 1.5]
-    risers = sorted((p for p in mv if p["stock"]["delta"] > 0), key=lambda p: -p["stock"]["delta"])[:5]
-    fallers = sorted((p for p in mv if p["stock"]["delta"] < 0), key=lambda p: p["stock"]["delta"])[:4]
-    movers_body = "".join(_row_mover(p) for p in risers + fallers)
+    # Top Movers = biggest REAL grade changes over the trailing year (label
+    # units, ≥2 grade points), matching the FV sparkline drawn beside each
+    # row. The engine-flavored movers (performance-anchored, with driver
+    # chips) live on the PROSPX spotlights tab this module links to.
+    mv = [(d, p) for p in players
+          if p.get("status") != "debuted"
+          and (d := _fv_window_delta(p)) is not None and abs(d) >= 2]
+    risers = sorted((t for t in mv if t[0] > 0), key=lambda t: -t[0])[:5]
+    fallers = sorted((t for t in mv if t[0] < 0), key=lambda t: t[0])[:4]
+    movers_body = "".join(_row_mover(p, d) for d, p in risers + fallers)
     movers = _home_module("Top Movers", "/prospx/#tab=spotlights", "All movers", movers_body) if movers_body else ""
 
     topN = sorted(players, key=lambda p: (p.get("fv_close") if p.get("fv_close") is not None else -1), reverse=True)[:8]
