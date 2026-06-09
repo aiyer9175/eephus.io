@@ -159,10 +159,11 @@ _X_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.3
           '8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 '
           '17.52h1.833L7.084 4.126H5.117z"/></svg>')
 
-def _x_link(handle: str) -> str:
-    """An on-theme X link: glyph + @handle. Sharp corners, opens in a new tab."""
+def _x_link(handle: str, cls: str = "") -> str:
+    """An on-theme X link: glyph + @handle. Sharp corners, opens in a new tab.
+    `cls` appends a modifier (e.g. eph-xlink--beta sizes it to the β chip)."""
     h = handle.lstrip("@")
-    return (f'<a class="eph-xlink" href="https://x.com/{html.escape(h)}" target="_blank" '
+    return (f'<a class="eph-xlink{" " + cls if cls else ""}" href="https://x.com/{html.escape(h)}" target="_blank" '
             f'rel="noopener noreferrer" aria-label="Follow @{html.escape(h)} on X">'
             f'{_X_SVG}<span class="eph-xlink-handle">@{html.escape(h)}</span></a>')
 
@@ -188,13 +189,16 @@ EEPHUS_LOGO_MARK = (
 )
 
 def eephus_logo_lockup(badge: bool = True) -> str:
-    """Homepage hero lockup: pitch mark + eephus.io nameplate + (optional) beta tag."""
+    """Homepage hero lockup: pitch mark + eephus.io nameplate + (optional)
+    beta tag + the @eephus_io chip, sized to the β chip so the two read as one
+    chip family riding the nameplate."""
     b = BETA_BADGE if badge else ""
+    x = _x_link("eephus_io", cls="eph-xlink--beta") if badge else ""
     return (
         '<div class="eephus-logo">'
         f'{EEPHUS_LOGO_MARK}'
         '<div class="eephus-logo-word"><h1 class="nameplate">eephus<span class="dot">.io</span></h1>'
-        f'{b}</div>'
+        f'{b}{x}</div>'
         '</div>'
     )
 
@@ -661,9 +665,12 @@ def _row_mover(p: dict, d: int) -> str:
     # chrome, not plotted lines).
     spark = _fv_sparkline(p.get("points"), "var(--accent-green)" if up else "var(--accent-red)", w=58, h=20)
     spark_html = f'<span class="row-spark">{spark}</span>' if spark else '<span class="row-spark"></span>'
+    # Team logo leads the row — same idiom as Top Prospects / Recent Graduates,
+    # so the org reads at a glance and the meta cell can drop the code.
     return (f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
+            f'{_team_logo(p.get("org"))}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
-            f'<span class="row-meta">{_meta(p.get("position"), p.get("org"))}</span>'
+            f'<span class="row-meta">{_meta(p.get("position"))}</span>'
             f'{spark_html}'
             f'<span class="row-delta {"up" if up else "down"}">{"▲" if up else "▼"} {"+" if up else ""}{d}</span></a>')
 
@@ -796,13 +803,17 @@ def _row_farm(o: dict, rank: int) -> str:
 _WIRE_MAX_FV_PER_DAY = 6
 
 def _collect_events(players: list, graduates: list) -> list:
-    # Internally (date, typ, glyph, text, key, org, weight); weight orders
-    # same-date items editorially — debut > trade > promo/demo > IL > FV,
-    # with bigger grade steps leading the FV items. Stripped before return.
+    # Each event is (date, typ, glyph, ticker_text, key, org, name, val):
+    # `ticker_text` is the one-string form the scrolling WIRE marquee uses;
+    # `name`/`val` are the structured halves the sidebar feed lays out as
+    # name-left / value-right (PROSPX row idiom — no wrapping, scannable).
+    # Internally a trailing weight orders same-date items editorially —
+    # debut > trade > promo/demo > IL > FV, bigger grade steps leading the
+    # FV items. Stripped before return.
     ev = []
-    def add(dt, typ, glyph, text, key, org=None, weight=0):
+    def add(dt, typ, glyph, text, key, org=None, name="", val="", weight=0):
         if dt:
-            ev.append((str(dt)[:10], typ, glyph, text, key, org, weight))
+            ev.append((str(dt)[:10], typ, glyph, text, key, org, name, val, weight))
     fv_items = []
     for p in players:
         nm = p.get("player_name") or ""
@@ -818,18 +829,23 @@ def _collect_events(players: list, graduates: list) -> list:
         for lc in (p.get("level_changes") or []):
             if lc.get("kind") in ("promotion", "demotion"):
                 promo = lc["kind"] == "promotion"
+                lvls = f'{lc.get("from_level", "?")}→{lc.get("to_level", "?")}'
                 add(lc.get("date"), "promo" if promo else "demo", "↑" if promo else "↓",
-                    f'{nm} {"promoted" if promo else "demoted"} {lc.get("from_level", "?")}→{lc.get("to_level", "?")}', key, org,
-                    weight=80)
+                    f'{nm} {"promoted" if promo else "demoted"} {lvls}', key, org,
+                    name=nm, val=lvls, weight=80)
         for tr in (p.get("trades") or []):
-            add(tr.get("trade_date"), "trade", "⇄", f'{nm} traded {tr.get("from_org", "?")}→{tr.get("to_org", "?")}', key,
-                tr.get("to_org") or org, weight=90)
+            orgs = f'{tr.get("from_org", "?")}→{tr.get("to_org", "?")}'
+            add(tr.get("trade_date"), "trade", "⇄", f'{nm} traded {orgs}', key,
+                tr.get("to_org") or org, name=nm, val=orgs, weight=90)
         il = p.get("il_status") or {}
         if il.get("is_on_il") and il.get("since"):
-            add(il.get("since"), "il", "✚", f'{nm} to {il.get("type", "")} IL'.replace("  ", " "), key, org, weight=70)
+            il_label = f'{il.get("type", "")} IL'.strip()
+            add(il.get("since"), "il", "✚", f'{nm} to {il_label}', key, org,
+                name=nm, val=il_label, weight=70)
     for g in graduates:
         add(g.get("debut_date"), "debut", "★", f'{g.get("player_name", "")} debuted · {g.get("org", "")}',
-            g.get("player_key"), g.get("org"), weight=100)
+            g.get("player_key"), g.get("org"),
+            name=g.get("player_name") or "", val="debut", weight=100)
     by_day: dict[str, list] = {}
     for it in fv_items:
         by_day.setdefault(it[0], []).append(it)
@@ -837,18 +853,24 @@ def _collect_events(players: list, graduates: list) -> list:
         items.sort(key=lambda t: -abs(t[1]))
         for d8, step, nm, key, org in items[:_WIRE_MAX_FV_PER_DAY]:
             up = step > 0
+            val = f'{"+" if up else ""}{step} FV'
             add(d8, "up" if up else "down", "▲" if up else "▼",
-                f'{nm} {"▲" if up else "▼"} {"+" if up else ""}{step} FV', key, org,
-                weight=abs(step))
-    ev.sort(key=lambda e: (e[0], e[6]), reverse=True)
-    return [e[:6] for e in ev]
+                f'{nm} {"▲" if up else "▼"} {val}', key, org,
+                name=nm, val=val, weight=abs(step))
+    ev.sort(key=lambda e: (e[0], e[8]), reverse=True)
+    return [e[:8] for e in ev]
 
 def _feed_html(events: list, n: int = 12) -> str:
+    # Structured rows: date | logo | name (ellipsized) | colored value chip
+    # right-aligned. One line per item — the glyph lives in the value chip,
+    # never duplicated next to the name.
     out = []
-    for dt, typ, glyph, text, key, org in events[:n]:
+    for dt, typ, glyph, text, key, org, name, val in events[:n]:
         ts = f"{dt[5:7]}/{dt[8:10]}" if len(dt) >= 10 else dt
+        logo = _team_logo(org, "feed-logo") if org else ""
         out.append(f'<a class="feed-item" href="{_player_href(key)}"><span class="ts">{ts}</span>'
-                   f'<span class="g {typ}">{glyph}</span>{html.escape(text)}</a>')
+                   f'{logo}<span class="feed-name">{html.escape(name or text)}</span>'
+                   f'<span class="feed-val {typ}">{glyph} {html.escape(val)}</span></a>')
     return "".join(out)
 
 def _ticker_html(events: list, n: int = 14) -> str:
@@ -858,7 +880,7 @@ def _ticker_html(events: list, n: int = 14) -> str:
     # accessible, keyboard-navigable equivalent.
     items = []
     known = ("up", "down", "promo", "demo", "il", "debut", "trade")
-    for dt, typ, glyph, text, key, org in events[:n]:
+    for dt, typ, glyph, text, key, org, name, val in events[:n]:
         cls = typ if typ in known else "glyph"
         href = f"/prospx/#player={key}" if key else "/prospx/#tab=spotlights"
         logo = _team_logo(org, "tk-logo") if org else ""
@@ -948,11 +970,42 @@ def _home_module(kicker: str, see_all_href: str, see_all: str, body: str, full: 
             f'<a class="see-all" href="{see_all_href}">{html.escape(see_all)} →</a></div>')
     return f'<section class="home-module{" full" if full else ""}">{head}{body}</section>'
 
+def _debut_org(g: dict) -> str | None:
+    """Org the player DEBUTED with — point-in-time, never the current org.
+    Primary source: the debut-season MLB stat row (its first org is the debut
+    org by construction — the first MLB appearance IS the debut). Fallback:
+    fold the trade history back across every trade dated after the debut.
+    Mirrors the career-table rule: a historical event never silently wears
+    the current org."""
+    dd = str(g.get("debut_date") or "")[:10]
+    if not dd:
+        return g.get("org")
+    try:
+        debut_year = int(dd[:4])
+    except ValueError:
+        return g.get("org")
+    for row in g.get("career_stats") or []:
+        if row.get("season") == debut_year and str(row.get("level") or "") == "MLB":
+            stints = [s for s in (row.get("stints") or []) if s.get("org")]
+            if stints:
+                return stints[0]["org"]
+            if row.get("org"):
+                return row["org"]
+    org = g.get("org")
+    for tr in sorted((g.get("trades") or []), key=lambda t: t.get("trade_date") or "", reverse=True):
+        td = str(tr.get("trade_date") or "")[:10]
+        if td and td > dd:
+            org = tr.get("from_org") or org
+        else:
+            break
+    return org
+
 def _this_day_html(graduates: list, n: int = 5) -> str:
     """'This day in prospect history' — graduates who debuted on (or within a
     few days of) today's calendar date in past seasons. Up to `n` rows,
     exact-date anniversaries first, then by prominence (final FV, then WAG).
-    Ties the historical record to the homepage and links into Time Machine."""
+    Shows the org each player DEBUTED with (point-in-time via _debut_org),
+    and links into Time Machine at the lead anniversary date."""
     today = date.today()
     cands = []  # (date_proximity, -prominence, debut_date, grad)
     for g in graduates:
@@ -981,7 +1034,10 @@ def _this_day_html(graduates: list, n: int = 5) -> str:
     for _, _, d, g in cands[:n]:
         yrs = today.year - d.year
         nm = html.escape(g.get("player_name") or "")
-        meta = _meta(g.get("position"), g.get("org"))
+        # The org shown is the one the player DEBUTED with, not where they
+        # play now — this is a history module.
+        org_then = _debut_org(g)
+        meta = _meta(g.get("position"), org_then)
         when = f"{d.strftime('%B')} {d.day}, {d.year}"   # no %-d (unsupported on Windows)
         rows.append(
             f'<a class="otd-row" href="{_player_href(g.get("player_key"))}">'
@@ -1085,8 +1141,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '<div class="masthead">'
         f'{eephus_logo_lockup()}'
         '<div class="dateline"><span>Baseball Prospect Analytics</span>'
-        f'<span>{html.escape(today)}</span><span>Data as of {html.escape(as_of)}</span></div>'
-        f'<div class="masthead-follow">{_x_link("eephus_io")}</div></div>'
+        f'<span>{html.escape(today)}</span><span>Data as of {html.escape(as_of)}</span></div></div>'
     )
 
     # ---- lead story (latest article) + secondary ----
@@ -1225,6 +1280,21 @@ def build_team() -> str:
                '0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 '
                '5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 '
                '0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>')
+    # Personal website — globe glyph (stroke-style, rides currentColor like the rest).
+    _WEB_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm7.93 '
+                '9h-3.46a15.6 15.6 0 0 0-1.21-5.07A8.03 8.03 0 0 1 19.93 11zM12 4.06c.93 1.28 1.85 3.7 2.16 '
+                '6.94H9.84c.31-3.24 1.23-5.66 2.16-6.94zM4.07 13h3.46c.18 1.85.6 3.6 1.21 5.07A8.03 8.03 0 0 1 4.07 '
+                '13zm3.46-2H4.07a8.03 8.03 0 0 1 4.67-5.07A15.6 15.6 0 0 0 7.53 11zM12 19.94c-.93-1.28-1.85-3.7-2.16-6.94h4.32c-.31 '
+                '3.24-1.23 5.66-2.16 6.94zm3.26-1.87c.61-1.47 1.03-3.22 1.21-5.07h3.46a8.03 8.03 0 0 1-4.67 5.07z"/></svg>')
+    # GitHub mark.
+    _GH_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 '
+               '9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 '
+               '18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 '
+               '2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 '
+               '1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 '
+               '2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 '
+               '3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 '
+               '22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>')
     def _initials(name: str) -> str:
         parts = [p for p in name.split() if p[:1].isalpha()]
         if not parts:
@@ -1262,6 +1332,15 @@ def build_team() -> str:
         if linkedin:
             chips.append(f'<a class="team-soc" href="https://www.linkedin.com/in/{html.escape(linkedin)}/" target="_blank" '
                          f'rel="noopener" title="LinkedIn — {html.escape(m["name"])}" aria-label="LinkedIn — {html.escape(m["name"])}">{_LI_SVG}</a>')
+        website = (m.get("website") or "").strip()
+        if website:
+            _host = website.split("//", 1)[-1].strip("/")
+            chips.append(f'<a class="team-soc" href="{html.escape(website)}" target="_blank" '
+                         f'rel="noopener" title="Website — {html.escape(_host)}" aria-label="Website — {html.escape(_host)}">{_WEB_SVG}</a>')
+        github = (m.get("github") or "").strip().rstrip("/").rsplit("/", 1)[-1]
+        if github:
+            chips.append(f'<a class="team-soc" href="https://github.com/{html.escape(github)}" target="_blank" '
+                         f'rel="noopener" title="GitHub — {html.escape(github)}" aria-label="GitHub — {html.escape(github)}">{_GH_SVG}</a>')
         socials_html = f'<div class="team-socials">{"".join(chips)}</div>' if chips else ""
         # Optional subtle note (only Noah gets "PROSPX Creator") — small mono pill.
         note_html = (

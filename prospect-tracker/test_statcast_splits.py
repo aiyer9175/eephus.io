@@ -205,9 +205,15 @@ def test_js_dual_chip_keys_off_stints_with_single_fallback():
     # data-driven signal: 2+ stints
     assert "s.stints" in body and re.search(r"stints\.length\s*<\s*2", body), \
         "dual chip must key off len(stints) >= 2"
-    # single / offseason path still uses the trade-derived single-org resolver
-    assert "_seasonOrgForRow(player, s.season)" in body, \
-        "single-org fallback must still use _seasonOrgForRow (prior offseason fix)"
+    # Single / offseason path resolves the row's org from THAT SEASON'S OWN
+    # stat line (point-in-time) — never the current org folded back across a
+    # trade. (Replaced the v30.6 _seasonOrgForRow trade-walk, which could
+    # mis-attribute unstamped seasons around a trade.)
+    assert re.search(r"stints\.length\s*===\s*1\s*\?\s*stints\[0\]\.org", body), \
+        "single-org fallback must read the season's own stat-line org"
+    # Unresolved past seasons of a traded player render a visible gap.
+    assert "Org unresolved in this season's stat data" in body, \
+        "unresolved past season must surface an explicit gap, not the current org"
 
 
 def test_js_has_split_toggle_and_rows():

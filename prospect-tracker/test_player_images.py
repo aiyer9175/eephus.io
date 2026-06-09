@@ -22,20 +22,20 @@ class Headshot(unittest.TestCase):
         self.assertIn("img.mlbstatic.com", url)
         self.assertIn("683953", url)
 
-    def test_fg_fallback(self):
-        url = player_headshot_url({"fg_player_id": "sa3063816"})
-        self.assertIn("fangraphs.com", url)
-        self.assertIn("sa3063816", url)
+    def test_fg_tier_retired(self):
+        # The FanGraphs photo tier was removed 2026-06-09: FG serves
+        # Cross-Origin-Resource-Policy headers, so browsers hard-block every
+        # cross-origin <img> load — the URLs could never render. An fg-only
+        # player resolves to None (silhouette), never a doomed FG request.
+        self.assertIsNone(player_headshot_url({"fg_player_id": "sa3063816"}))
 
     def test_no_ids_returns_none(self):
         self.assertIsNone(player_headshot_url({}))
         self.assertIsNone(player_headshot_url(None))
-        # fg_player_id present but empty/whitespace → None
-        self.assertIsNone(player_headshot_url({"fg_player_id": "   "}))
 
     def test_mlbam_coerce_failure_falls_through(self):
-        url = player_headshot_url({"mlbam_id": "not-an-int", "fg_player_id": "sa1"})
-        self.assertIn("fangraphs.com", url)
+        # Bad MLBAM id → None (silhouette); no FG fallback exists anymore.
+        self.assertIsNone(player_headshot_url({"mlbam_id": "not-an-int", "fg_player_id": "sa1"}))
 
 
 class CollegeLogo(unittest.TestCase):

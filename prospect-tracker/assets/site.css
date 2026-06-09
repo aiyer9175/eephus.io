@@ -545,17 +545,36 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* NOTE: the base color is set on `.sb-feed .feed-item` below — `.feed-item`
    alone (0,1,0) loses to the global `.eephus-page a` link color (0,1,1), which
    would render the names dark-navy on the dark feed. */
-.feed-item { display: flex; align-items: baseline; gap: 7px; font-family: var(--font-retro-mono); font-size: 12px; line-height: 1.4; text-decoration: none; padding: 7px 2px; border-bottom: 1px dotted #2f3a2a; }
+/* Structured wire rows: date | logo | name (ellipsized, fills) | value chip
+   right-aligned. One line per item — the type glyph lives only in the value
+   chip, never duplicated beside the name. */
+.feed-item { display: flex; align-items: center; gap: 7px; font-family: var(--font-retro-mono); font-size: 12px; line-height: 1.4; text-decoration: none; padding: 7px 2px; border-bottom: 1px dotted #2f3a2a; }
 .sb-feed .feed-item { color: #e6fbef; }
 .feed-item:last-child { border-bottom: 0; }
 .feed-item:hover { color: #fff; background: rgba(255,255,255,0.04); }
 .feed-item .ts { color: #8fb89b; font-size: 10px; flex: none; letter-spacing: .02em; }
 .feed-item .g { margin-right: 1px; flex: none; font-weight: 700; }
-.feed-item .g.up,   .feed-item .g.promo { color: #6ee7a8; }
-.feed-item .g.down, .feed-item .g.demo  { color: #ff8a8a; }
-.feed-item .g.il    { color: #ffb454; }
-.feed-item .g.debut { color: #4ee0ff; }
-.feed-item .g.trade { color: var(--accent-gold); }
+.feed-item .feed-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feed-item .feed-val { flex: none; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+/* Per-item team logo — same light plate as the top ticker's tk-logo so dark
+   marks (Yankees, Giants…) stay visible on the near-black feed panel.
+   Nearly-sharp corners; circles stay avatar-only. */
+.sb-feed .feed-item .feed-logo {
+  width: 15px; height: 15px; flex: none; object-fit: contain;
+  background: rgba(245,246,238,0.92); border-radius: 3px; padding: 1px;
+  box-sizing: content-box; box-shadow: 0 0 0 1px rgba(255,255,255,0.18);
+}
+.sb-feed .feed-item span.feed-logo {
+  width: auto; height: auto; font: 700 8px var(--font-retro-mono);
+  color: #1a1d12; padding: 1px 3px;
+}
+.feed-item .g.up,    .feed-item .feed-val.up,
+.feed-item .g.promo, .feed-item .feed-val.promo { color: #6ee7a8; }
+.feed-item .g.down,  .feed-item .feed-val.down,
+.feed-item .g.demo,  .feed-item .feed-val.demo  { color: #ff8a8a; }
+.feed-item .g.il,    .feed-item .feed-val.il    { color: #ffb454; }
+.feed-item .g.debut, .feed-item .feed-val.debut { color: #4ee0ff; }
+.feed-item .g.trade, .feed-item .feed-val.trade { color: var(--accent-gold); }
 
 /* ---- masthead ---- */
 .masthead { text-align: center; border-bottom: 3px double var(--text-primary); padding: 22px 0 12px; margin-bottom: 4px; }
@@ -570,6 +589,18 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .masthead .eephus-logo-word { display: inline-flex; align-items: flex-start; gap: 9px; }
 .masthead .eephus-logo-word .nameplate { margin: 0; }
 .masthead .eephus-logo-word .eephus-beta { margin-top: 7px; }
+/* @eephus_io chip rides the nameplate beside the β tag, sized to match it —
+   one chip family (replaces the old standalone .masthead-follow row).
+   Double-class selector outranks the base .eph-xlink rule below regardless
+   of source order. */
+.eph-xlink.eph-xlink--beta {
+  font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  padding: 3px 6px; gap: 5px; line-height: 1;
+  color: var(--text-tertiary); background: transparent;
+  border: 1px solid var(--border);
+}
+.eph-xlink.eph-xlink--beta svg { width: 10px; height: 10px; }
+.masthead .eephus-logo-word .eph-xlink--beta { margin-top: 7px; }
 .eephus-logo-ball { fill: var(--bg-primary); }
 .eephus-logo-base { opacity: .4; }
 .eephus-logo-seam { opacity: .55; }

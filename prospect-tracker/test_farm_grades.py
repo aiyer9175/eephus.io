@@ -122,47 +122,45 @@ class TestGradWagCumulative:
 # ---------------------------------------------------------------------------
 
 class TestGradWagRate:
-    # v14 — WAG = (career_war / career_pa) * 612 - fv_implied_war_per_yr
-    # (hitters), or (career_war / career_ip) * role_ip_target - implied
-    # (pitchers). Mid-career grads no longer false-negative because their
-    # rate now projects to a full season instead of being penalized for
-    # partial accumulation.
+    # v16 — WAG matched to SEASONS, not PA / rate of production: per-season
+    # WAR (career WAR ÷ MLB season count) minus the FV-implied WAR/season.
+    # The PA/IP floor still gates cup-of-coffee samples, but the denominator
+    # is seasons — an injury-shortened season still counts as a season.
+    # (The old v14 PA-rate projection over-credited partial-season grads.)
 
     def test_positive_when_rate_beats_projection(self):
-        # FV 50 hitter, 4 WAR / 800 PA = (4/800)*612 = 3.06 full-season.
-        # Expected at FV 50 = 1.6. WAG ≈ +1.46.
+        # FV 50 hitter, 4 WAR over 1 MLB season = 4.0/season.
+        # Expected at FV 50 ≈ 0.68 (realized-calibrated curve) → WAG ≈ +3.3.
         grad = {
-            "career_war": {"career_war": 4.0},
+            "career_war": {"career_war": 4.0, "war_seasons_count": 1},
             "fv_close_raw": 50.0,
             "position": "SS",
-            "career_stats": [{"level": "MLB", "pa": 800}],
+            "career_stats": [{"level": "MLB", "pa": 800, "season": 2025}],
         }
         v = _grad_wag(grad)
         assert v is not None and v > 1.0
 
     def test_pitcher_uses_pitcher_table_and_role(self):
-        # SP role, FV 60. 6 WAR / 350 IP = (6/350)*175 = 3.0 full-season.
-        # Expected at FV 60 (pitcher) = 3.5. WAG ≈ -0.5.
+        # SP role, FV 60. 6 WAR over 2 MLB seasons = 3.0/season vs the
+        # pitcher-table FV-60 expectation → mildly positive, settled band.
         grad = {
-            "career_war": {"career_war": 6.0},
+            "career_war": {"career_war": 6.0, "war_seasons_count": 2},
             "fv_close_raw": 60.0,
             "position": "SP",
-            "career_stats": [{"level": "MLB", "ip": 350}],
+            "career_stats": [{"level": "MLB", "ip": 350, "season": 2025}],
         }
         v = _grad_wag(grad)
         assert v is not None
-        # Roughly -0.5 — settled band
         assert -1.5 < v < 2.5
 
     def test_negative_when_rate_misses_projection(self):
-        # FV 65 hitter, 0.5 WAR / 800 PA = (0.5/800)*612 = 0.38 full-season.
-        # Expected at FV 65 ≈ 1.99 (realized-calibrated SURVIVOR curve, v-audit;
-        # was the ~4.2 primer value). WAG ≈ 0.38 − 1.99 ≈ -1.6 (clearly negative).
+        # FV 65 hitter, 0.5 WAR over 1 MLB season vs the FV-65 expectation
+        # (realized-calibrated SURVIVOR curve ≈ 2.0) → clearly negative.
         grad = {
-            "career_war": {"career_war": 0.5},
+            "career_war": {"career_war": 0.5, "war_seasons_count": 1},
             "fv_close_raw": 65.0,
             "position": "OF",
-            "career_stats": [{"level": "MLB", "pa": 800}],
+            "career_stats": [{"level": "MLB", "pa": 800, "season": 2025}],
         }
         v = _grad_wag(grad)
         assert v is not None and v < -1.0

@@ -8179,7 +8179,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # multiple snapshots. Frontend `is-single-source` outline +
             # corner mark read off this field.
             "fv_total_instances": getattr(p, "fv_total_instances", 0),
-            "stock": stock_movement(p),
+            # `stock` is stamped below by the movement engine (compute_movement),
+            # with consensus.stock_movement as the exception-path fallback.
             "live_signal": _live_signal,
             "source_events": _source_events_export,
             "player_news": player_news_by_key.get(p.player_key, []),
@@ -8381,15 +8382,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Performance-anchored movement engine (replaces the FV-delta-only
         # `stock_movement`). compute_movement reads statline / career_stats
         # / age_vs_level / tools_consensus / acquisition / prospect_savant —
-        # all of which are stamped on the payload above. Falls back to the
-        # legacy `stock_movement` output (already in payload["stock"]) if
-        # the engine raises.
+        # all of which are stamped on the payload above. The legacy
+        # stock_movement is computed ONLY in the exception fallback — no
+        # point paying for a per-player computation the engine immediately
+        # overwrites on the happy path.
         try:
             from spotlights import compute_movement
             payload["stock"] = compute_movement(payload)
         except Exception:
-            log.exception("compute_movement failed for %s — keeping legacy "
-                          "FV-delta stock signal", p.player_key)
+            log.exception("compute_movement failed for %s — falling back to "
+                          "the legacy FV-delta stock signal", p.player_key)
+            payload["stock"] = stock_movement(p)
 
         return payload
 

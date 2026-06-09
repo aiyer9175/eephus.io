@@ -47,6 +47,15 @@
 
   var reducedMq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   function reducedMotion() { return !!(reducedMq && reducedMq.matches); }
+  // OWNER OVERRIDE (2026-06-09): the phosphor twinkle stays ON under
+  // prefers-reduced-motion — the same deliberate exemption the WIRE marquee
+  // carries in site.css. The field is aria-hidden decoration at whisper
+  // opacity with zero information content. The override is twinkle-only:
+  // pointer/scroll parallax still honors the OS preference (it tracks user
+  // motion, which reads very differently), and the hidden-tab pause is
+  // unconditional.
+  var FORCE_TWINKLE = true;
+  function twinkleFrozen() { return !FORCE_TWINKLE && reducedMotion(); }
   function isDark() { return document.documentElement.getAttribute("data-theme") === "dark"; }
 
   // ---- token plumbing ------------------------------------------------------
@@ -141,7 +150,7 @@
     var styles = hueStyles();
     var alphaMax = Math.min(0.7, tokens.opacityMax * (1 + (tokens.opacityMult - 1) * fvT));
     var dpr = canvas.width / Math.max(1, w);
-    var stat = reducedMotion();
+    var stat = twinkleFrozen();
     for (var hue = 0; hue < 2; hue++) {
       ctx.fillStyle = styles[hue];
       for (var i = 0; i < stars.length; i++) {
@@ -164,11 +173,11 @@
     rafId = null;
     if (!canvas) return;
     draw(now);
-    if (!reducedMotion() && !document.hidden) rafId = requestAnimationFrame(frame);
+    if (!twinkleFrozen() && !document.hidden) rafId = requestAnimationFrame(frame);
   }
   function startLoop() {
     if (!canvas || rafId !== null) return;
-    if (reducedMotion()) { draw(performance.now()); return; }  // static field
+    if (twinkleFrozen()) { draw(performance.now()); return; }  // static field
     if (!document.hidden) rafId = requestAnimationFrame(frame);
   }
   function stopLoop() {
@@ -190,7 +199,7 @@
     if (!canvas) return;
     sizeCanvas();
     buildStars(canvas.clientWidth || window.innerWidth, canvas.clientHeight || window.innerHeight);
-    if (reducedMotion() || document.hidden) draw(performance.now());
+    if (twinkleFrozen() || document.hidden) draw(performance.now());
   }
   function mount() {
     if (canvas || !document.body) return;

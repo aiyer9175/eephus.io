@@ -364,18 +364,18 @@ def test_dollars_per_fv_granular() -> None:
     assert abs(d47 - d50) > 0.01
 
 
-def test_financial_leaf_weights_v32_1() -> None:
-    """Financial leaf weights (current scheme). The SV overhaul added the
-    `fin_dollar_dvm` leaf (surplus-development vs FV-tier mean, 0.18) and
-    rebalanced the rest; weights still sum to 1.0."""
+def test_financial_leaf_weights_v40() -> None:
+    """Financial leaf weights (v40 scheme). fin_active_surplus is now
+    AGGREGATE controlled value and the dominant leaf (0.68); $DvM+ and the
+    per-$ ROI leaves provide secondary texture. Weights still sum to 1.0."""
     import storage
     fin = storage.FARM_LEAF_WEIGHTS["financial"]
-    assert fin["fin_active_surplus"]        == 0.42
-    assert fin["fin_dollar_dvm"]            == 0.18
-    assert fin["fin_contract_surplus"]      == 0.18
-    assert fin["fin_war_per_m"]             == 0.07
-    assert fin["fin_draft_pool_efficiency"] == 0.08
-    assert fin["fin_ifa_roi"]               == 0.07
+    assert fin["fin_active_surplus"]        == 0.68
+    assert fin["fin_dollar_dvm"]            == 0.10
+    assert fin["fin_contract_surplus"]      == 0.10
+    assert fin["fin_war_per_m"]             == 0.04
+    assert fin["fin_draft_pool_efficiency"] == 0.04
+    assert fin["fin_ifa_roi"]               == 0.04
     # Weights still sum to 1.0
     assert pytest.approx(sum(fin.values()), abs=1e-9) == 1.0
 
@@ -395,14 +395,18 @@ def test_draft_pool_efficiency_grades_both_metrics() -> None:
     assert '"fv_per_m_pool"'  in block
 
 
-def test_active_surplus_grades_both_metrics() -> None:
-    """The fin_active_surplus leaf grading spec should now grade BOTH
-    surplus_per_prospect_mm and surplus_per_fv_pt_mm."""
+def test_active_surplus_grades_aggregate_controlled_value() -> None:
+    """v40 — the fin_active_surplus leaf grades AGGREGATE controlled value
+    (_active_surplus_net_mm), not the old per-prospect / per-FV-point rates.
+    Rate-style normalization rewarded thin systems; total controlled surplus
+    is what a farm is actually worth."""
     src = (_ROOT / "storage.py").read_text(encoding="utf-8")
     start = src.find('"fin_active_surplus": [')
     assert start >= 0, "fin_active_surplus block not found"
     end = src.find("],", start)
     assert end > start, "fin_active_surplus block end not found"
     block = src[start:end]
-    assert "surplus_per_prospect_mm" in block
-    assert "surplus_per_fv_pt_mm"    in block
+    assert "_active_surplus_net_mm" in block, \
+        "leaf must grade the aggregate controlled-surplus total"
+    assert "surplus_per_prospect_mm" not in block, \
+        "per-prospect rate must not silently return to the leaf (v40 design)"

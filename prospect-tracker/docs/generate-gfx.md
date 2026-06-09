@@ -41,7 +41,7 @@ always uses two columns to fill the horizontal space.
 
 The modal exposes a customization row — every control re-renders the live preview:
 
-- **Format** — portrait / square / story / wide (above).
+- **Format** — portrait / square / story / wide (above). **Wide (16:9) is the default** — list graphics land Twitter/X-ready with no crop; prospect-card kinds keep their own portrait/tall geometry.
 - **Theme** — `Auto (site)` / `Dark` / `Light`. Forces the board (and the open
   modal) to the chosen theme by flipping the root `data-theme` while the modal is
   open; the live site theme is restored on close. Both themes are first-class.

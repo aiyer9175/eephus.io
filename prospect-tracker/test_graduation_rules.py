@@ -55,13 +55,17 @@ class TestRosterStatusGraduationGates:
 
     def test_single_mlb_game_below_threshold_stays_active(self):
         """The whole point of this rewrite — one MLB game must not flip
-        a prospect to graduated."""
+        a prospect to graduated. `today` is PINNED 5 days after the
+        selection so the (correct) 45-active-roster-day gate can't fire —
+        the unpinned fixture started failing once the wall clock drifted
+        past 45 days from the hardcoded selection date."""
+        from datetime import date as _date
         txs = [self._select_contract_tx("2026-04-15")]
         career = [
             {"season": 2026, "level": "MLB",  "is_pitcher": False, "ab": 4,  "games": 1},
             {"season": 2026, "level": "AAA",  "is_pitcher": False, "ab": 110, "games": 30},
         ]
-        rs = derive_roster_status(txs, career)
+        rs = derive_roster_status(txs, career, _date(2026, 4, 20))
         assert rs["mlb_debut_date"] == "2026-04-15"
         assert rs["rookie_exhausted"] is False
         assert rs["graduation_reason"] is None
@@ -76,10 +80,13 @@ class TestRosterStatusGraduationGates:
 
     def test_at_bat_exactly_at_threshold_does_not_graduate(self):
         """The rule is `> 130 AB`, not `>= 130`. A player with exactly the
-        threshold AB is still a rookie."""
+        threshold AB is still a rookie. `today` pinned (see above) so only
+        the AB boundary is under test, not the active-days gate."""
+        from datetime import date as _date
         career = [{"season": 2026, "level": "MLB", "is_pitcher": False,
                    "ab": ROOKIE_AB_THRESHOLD, "games": 40}]
-        rs = derive_roster_status([self._select_contract_tx("2026-04-15")], career)
+        rs = derive_roster_status([self._select_contract_tx("2026-04-15")], career,
+                                  _date(2026, 4, 20))
         assert rs["rookie_exhausted"] is False
         assert rs["graduation_reason"] is None
 

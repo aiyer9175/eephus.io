@@ -2966,22 +2966,21 @@ def fetch_sabermetrics(player_key: str, mlbam_id: int,
 
 
 # ---------------------------------------------------------------------------
-# Career WAR — bulk FanGraphs pull via pybaseball
+# Career WAR — bulk bWAR pull via pybaseball (Baseball-Reference war_daily)
 # ---------------------------------------------------------------------------
-# FanGraphs is the only place that publishes a per-season WAR series we can
-# stitch into a "career WAR" number. The MLB Stats API only returns WAR
-# inside the `stats=sabermetrics` endpoint and only one season at a time,
-# so a per-player loop would be 2-4k extra requests on a cold cache.
-# pybaseball.batting_stats / pitching_stats serve up the whole FG leader-
-# board for a year in one shot; we call them once per season in the
-# requested window and join by `IDfg` after a one-time MLBAM→FG mapping.
+# bWAR is the ONE WAR source site-wide (career totals, per-season columns,
+# current-season pills — every display reads this per-season series). The
+# MLB Stats API only returns WAR inside the `stats=sabermetrics` endpoint
+# and only one season at a time, so a per-player loop would be 2-4k extra
+# requests on a cold cache; B-Ref's war_daily tables arrive as two static
+# CSVs covering every player-season in one shot.
 #
 # Returned aggregate per player_key:
 #   {"seasons": {"2023": 1.5, "2024": 2.8, ...},
 #    "career_war": 4.3,
 #    "war_per_yr": 2.15,
 #    "war_seasons_count": 2,
-#    "source": "fangraphs"}
+#    "source": "bbref"}
 # `seasons` is sparse — only years the player actually appeared in MLB.
 
 def fetch_career_war_bulk(

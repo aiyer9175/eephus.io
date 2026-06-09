@@ -46,10 +46,10 @@ env/
 Thumbs.db
 
 # --- Accounts / Supabase ------------------------------------------------
-# Front-end Supabase connection (project URL + anon key). The anon key is
-# public-safe, but we keep real values out of source control; copy from the
-# example in supabase/README.md. Service-role keys NEVER live in the repo.
-assets/eephus-config.js
+# assets/eephus-config.js is now a COMMITTED-BLANK stub (kills the per-page
+# 404 console error the missing file used to log; blank values keep the
+# account layer dormant). Real values are filled at deploy time — keep them
+# out of source control. Service-role keys NEVER live in the repo.
 .env
 .env.local
 

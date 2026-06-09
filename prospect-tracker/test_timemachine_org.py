@@ -143,12 +143,19 @@ def test_js_board_resolves_point_in_time_org():
     assert "tm-org-gap" in src, "gap placeholder (tm-org-gap) missing"
 
 
-def test_js_live_statcast_surface_still_uses_current_org():
-    """Guardrail: the live/Statcast career table keeps the current-org resolver —
-    point-in-time resolution must not leak into it."""
+def test_js_career_table_org_is_point_in_time_with_current_season_exception():
+    """Guardrail: the career table resolves each row's org from that season's
+    own stat line (point-in-time), with exactly one exception — the in-progress
+    CURRENT season may resolve to the player's current org (they are rostered
+    there now). Past seasons must never silently fold back to the current org."""
     src = INDEX.read_text(encoding="utf-8")
-    assert "_seasonOrgForRow(player, s.season)" in src, \
-        "live Statcast surface lost its current-org resolver"
+    m = re.search(r"function _careerOrgAndStints\(.+?\n\}", src, re.S)
+    assert m, "_careerOrgAndStints not found"
+    body = m.group(0)
+    assert re.search(r"season\s*>=\s*new Date\(\)\.getFullYear\(\)", body), \
+        "current-season exception missing (in-progress season -> current org)"
+    assert "Org unresolved in this season's stat data" in body, \
+        "past-season data gap must render explicitly, not resolve to current org"
 
 
 if __name__ == "__main__":

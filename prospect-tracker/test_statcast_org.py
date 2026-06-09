@@ -56,14 +56,17 @@ def _season_org(player: dict, season: int) -> str | None:
 
 
 def test_js_keeps_current_season_shortcircuit():
-    """Source guard: _seasonOrgForRow must short-circuit the current season to the
-    canonical current org. Dropping this re-introduces the stale-org bug."""
+    """Source guard: the career-table org resolver must short-circuit the
+    CURRENT season to the canonical current org. Dropping this re-introduces
+    the stale-org bug for current-year-traded players. (_seasonOrgForRow was
+    retired in favor of the stat-line point-in-time resolver inside
+    _careerOrgAndStints; the current-season exception lives there now.)"""
     src = INDEX.read_text(encoding="utf-8")
-    m = re.search(r"function _seasonOrgForRow\(player, season\)\s*\{(.+?)\n\}", src, re.S)
-    assert m, "_seasonOrgForRow not found in prospx/index.html"
-    body = m.group(1)
-    assert "getFullYear()" in body and re.search(r"season\s*>=.*getFullYear\(\)", body), \
-        "current-season short-circuit (season >= getFullYear()) missing from _seasonOrgForRow"
+    m = re.search(r"function _careerOrgAndStints\(.+?\n\}", src, re.S)
+    assert m, "_careerOrgAndStints not found in prospx/index.html"
+    body = m.group(0)
+    assert "getFullYear()" in body and re.search(r"season\s*>=\s*new Date\(\)\.getFullYear\(\)", body), \
+        "current-season short-circuit (season >= getFullYear()) missing from the career-table org resolver"
 
 
 def _load(path: Path):

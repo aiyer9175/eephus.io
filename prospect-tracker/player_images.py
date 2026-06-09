@@ -43,18 +43,18 @@ _MLB_HEADSHOT_TEMPLATE = (
     "w_213,q_auto:best/v1/people/{mlbam}/headshot/67/current"
 )
 
-# FG player photo. Observed at the URL pattern below for ranked
-# prospects; some 404 (small sample / older entries) — the <img>'s
-# onerror fallback handles that gracefully.
-_FG_PHOTO_TEMPLATE = "https://www.fangraphs.com/players/photo/{fg_id}.jpg"
+# (The FanGraphs photo tier — fangraphs.com/players/photo/{fg_id}.jpg — was
+# retired: FG now serves Cross-Origin-Resource-Policy headers, so browsers
+# hard-block every cross-origin <img> load (ERR_BLOCKED_BY_RESPONSE). The
+# URLs could never render; emitting them just issued dozens of doomed
+# requests per draft/IFA page. No MLBAM id → silhouette, honestly.)
 
 
 def player_headshot_url(player: dict | None) -> str | None:
     """Return a best-effort headshot URL or None.
 
-    Reads `mlbam_id` (preferred) then `fg_player_id` from the player
-    dict. Either field missing → falls through to the next; both
-    missing → returns None."""
+    Reads `mlbam_id` from the player dict; missing/invalid → None and
+    the caller renders the silhouette."""
     if not player:
         return None
     mlbam = player.get("mlbam_id")
@@ -63,9 +63,6 @@ def player_headshot_url(player: dict | None) -> str | None:
             return _MLB_HEADSHOT_TEMPLATE.format(mlbam=int(mlbam))
         except (TypeError, ValueError):
             pass
-    fg_id = player.get("fg_player_id")
-    if fg_id and isinstance(fg_id, str) and fg_id.strip():
-        return _FG_PHOTO_TEMPLATE.format(fg_id=fg_id.strip())
     return None
 
 

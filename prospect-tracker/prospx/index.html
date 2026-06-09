@@ -13350,11 +13350,22 @@ function _debutFvCohortBlock(p) {
     </div>`;
 }
 
-// FanGraphs-flavored WAR aggregate. Returns a small mono block with
-// cumulative career WAR, the per-season average, and the underlying
-// season count so a reader can see how the average was built. The
-// `career_war` payload is populated server-side by
-// stats.fetch_career_war_bulk; empty dict when no MLB time on file.
+// ONE WAR SOURCE SITE-WIDE: bWAR (Baseball-Reference, via pybaseball's
+// war_daily tables — see stats.fetch_career_war_bulk). Every WAR a user sees
+// — career totals, per-season column, current-season pill, WAR sorts — reads
+// the same career_war.seasons map so two surfaces can never disagree.
+// sabermetrics.war (the MLB-API number) is deliberately NOT displayed.
+function currentSeasonBwar(p, year) {
+  const seasons = (p && p.career_war && p.career_war.seasons) || {};
+  const v = seasons[String(year || new Date().getUTCFullYear())];
+  return v == null ? null : Number(v);
+}
+
+// Career bWAR aggregate. Returns a small mono block with cumulative career
+// WAR, the per-season average, and the underlying season count so a reader
+// can see how the average was built. The `career_war` payload is populated
+// server-side by stats.fetch_career_war_bulk; empty dict when no MLB time
+// on file.
 function gradCareerWarHTML(p) {
   const cw = p.career_war || {};
   if (cw.career_war == null || cw.war_seasons_count == null) return "";
@@ -13366,8 +13377,8 @@ function gradCareerWarHTML(p) {
   const seasons = cw.seasons || {};
   const years = Object.keys(seasons).sort();
   const tip = years.length
-    ? `Career WAR · FanGraphs\n` + years.map(y => `${y}: ${seasons[y] >= 0 ? "+" : ""}${seasons[y]}`).join("\n")
-    : "Career WAR · FanGraphs";
+    ? `Career WAR · bWAR (Baseball-Reference)\n` + years.map(y => `${y}: ${seasons[y] >= 0 ? "+" : ""}${seasons[y]}`).join("\n")
+    : "Career WAR · bWAR (Baseball-Reference)";
   return `<div style="margin-top:4px;font-family:var(--font-mono);font-size:11px;font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">
     <span style="color:${totColor};font-weight:700;">${tot >= 0 ? "+" : ""}${tot.toFixed(1)} WAR</span>
     <span style="color:var(--text-tertiary);"> · </span><span style="color:${perColor};">${per >= 0 ? "+" : ""}${per.toFixed(2)}/yr</span>
@@ -13375,15 +13386,16 @@ function gradCareerWarHTML(p) {
   </div>`;
 }
 
-// Always-on current-season fWAR pill for graduate rows. Uses
-// sabermetrics.war (FanGraphs), the same field the "sort by current-
-// season WAR" chip keys off, so the badge and the sort agree.
+// Always-on current-season WAR pill for graduate rows. Reads the bWAR
+// seasons map (currentSeasonBwar) — the same source the career table, the
+// WAR/season column, and the "sort by current-season WAR" chip key off, so
+// the badge and the sort always agree.
 function gradCurrentWarHTML(p) {
-  const w = (p.sabermetrics || {}).war;
+  const w = currentSeasonBwar(p);
   if (w == null) return "";
   const yr = new Date().getUTCFullYear();
   const color = w >= 3 ? "var(--up)" : w <= 0 ? "var(--down)" : "var(--text-primary)";
-  return `<span class="grad-war-current" style="display:inline-block;font-family:var(--font-mono);font-size:10.5px;font-variant-numeric:tabular-nums;font-weight:700;color:${color};padding:1px 6px;border:1px solid ${color};border-radius:999px;margin-right:6px;" title="${yr} season WAR (FanGraphs)">${yr} fWAR ${w >= 0 ? "+" : ""}${w.toFixed(1)}</span>`;
+  return `<span class="grad-war-current" style="display:inline-block;font-family:var(--font-mono);font-size:10.5px;font-variant-numeric:tabular-nums;font-weight:700;color:${color};padding:1px 6px;border:1px solid ${color};border-radius:999px;margin-right:6px;" title="${yr} season bWAR (Baseball-Reference)">${yr} bWAR ${w >= 0 ? "+" : ""}${w.toFixed(1)}</span>`;
 }
 
 function makeGradMilbCell(p) {
@@ -20626,6 +20638,11 @@ function _stockPlusColor(sp) {
 // `name` is used for the initial letters when the image fails.
 function _headshotImg(url, name, opts) {
   opts = opts || {};
+  // FanGraphs photo URLs are CORP-blocked by FG (ERR_BLOCKED_BY_RESPONSE) —
+  // they can never render in a browser. Treat them as no-photo so older
+  // exported JSON that still carries one falls straight to the silhouette
+  // without issuing a doomed request. (player_images.py no longer emits them.)
+  if (url && String(url).includes("fangraphs.com/players/photo")) url = null;
   // Silhouette SVG always renders inside the wrapper; the <img> sits
   // ABOVE it. When the image 404s, the img is hidden via onerror and
   // the silhouette underneath shows through. Same pattern as the MiLB
@@ -24295,9 +24312,9 @@ function renderDebuts() {
     <span class="debut-date-cell sort-header" data-debut-sort="date" title="Sort by debut date (newest first)">Debut</span>
     <span class="sort-header" data-debut-sort="fv_close" title="Sort by FV at debut (high to low)" style="text-align:center;">FV</span>
     <span class="desktop-only sort-header" data-debut-sort="vs_fv_proj" title="Sort by WAG — WAR Above Grade · click to toggle high-to-low / low-to-high" style="text-align:center;">WAG / season</span>
-    <span class="desktop-only" style="text-align:center;" title="Raw fWAR per MLB season — hover any bar for the year-by-year value">WAR / season</span>
+    <span class="desktop-only" style="text-align:center;" title="Raw bWAR per MLB season — hover any bar for the year-by-year value">WAR / season</span>
     <span class="debut-level-cell">Level</span>
-    <span class="sort-header" data-debut-sort="war" title="Sort by current-season fWAR (high to low)">MLB stats</span>
+    <span class="sort-header" data-debut-sort="war" title="Sort by current-season bWAR (high to low)">MLB stats</span>
   </div>`;
 
   // Build the iteration order based on the active sort.
@@ -24335,7 +24352,7 @@ function renderDebuts() {
     };
     orderedGrads = filtered.slice().sort(sortByWarField(_scVal));
   } else if (sortMode === "war") {
-    orderedGrads = filtered.slice().sort(sortByWarField(g => (g.sabermetrics || {}).war));
+    orderedGrads = filtered.slice().sort(sortByWarField(g => currentSeasonBwar(g)));
   } else if (sortMode === "career_war") {
     orderedGrads = filtered.slice().sort(sortByWarField(g => (g.career_war || {}).career_war));
   } else if (sortMode === "war_per_yr") {
@@ -24430,8 +24447,9 @@ function renderDebuts() {
     // so the inline tag here is reserved for the two cumulative sorts.
     // (vs_fv_proj is handled by the always-on wagPill above.)
     let warTag = "";
-    if (sortMode === "war" && sm.war != null) {
-      warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);">${sm.war > 0 ? '+' : ''}${sm.war.toFixed(2)} fWAR</span>`;
+    const curWar = currentSeasonBwar(g);
+    if (sortMode === "war" && curWar != null) {
+      warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);">${curWar > 0 ? '+' : ''}${curWar.toFixed(2)} bWAR</span>`;
     } else if (sortMode === "career_war" && cw.career_war != null) {
       warTag = `<span style="margin-left:6px;font-family:var(--font-mono);font-size:10px;color:var(--neon-cyan);" title="Career WAR · ${cw.war_seasons_count ?? "?"} season${cw.war_seasons_count === 1 ? "" : "s"} (${cw.source || "bbref"})">${cw.career_war > 0 ? '+' : ''}${cw.career_war.toFixed(1)} career WAR</span>`;
     } else if (sortMode === "war_per_yr") {
@@ -25571,10 +25589,10 @@ const GLOSSARY = {
   },
   // ---- General stats ----
   "war": {
-    name: "WAR", aliases: ["WAR", "fWAR"], category: "general-stat",
+    name: "WAR", aliases: ["WAR", "bWAR", "rWAR"], category: "general-stat",
     priority: 5,
     short: "Wins Above Replacement. Single-number value estimate; offense, defense, baserunning, position adjustment.",
-    long: "FanGraphs' implementation (fWAR) is the version used here. 2 WAR/yr is an MLB regular, 4 is an above-average regular, 6+ is All-Star, 8+ is MVP candidate. Used as the realized output baseline for WAG.",
+    long: "Baseball-Reference's implementation (bWAR) is the one WAR source used site-wide — career totals, per-season columns, and current-season pills all read the same per-season series. 2 WAR/yr is an MLB regular, 4 is an above-average regular, 6+ is All-Star, 8+ is MVP candidate. Used as the realized output baseline for WAG.",
     related: ["wag", "tvi", "war_war_table"],
   },
   // ---- Methodology ----
@@ -26666,7 +26684,10 @@ const _GFX_FORMATS = {
   wide:     { w: 1600, h: 900,  label: "Wide 16:9" },
 };
 // User customization (persists across opens within a session).
-const _gfxOpts = { count: 50, title: "", accent: "", showValue: true, format: "portrait", theme: "auto", photos: true, logos: true, variant: "detailed", frame: "rarity", pack: false };
+// v45 — default format is WIDE (1600×900, 16:9): graphics land Twitter/X-ready
+// with no crop. Prospect-card kinds still force their own portrait/tall
+// geometry via _gfxVariantFormat.
+const _gfxOpts = { count: 50, title: "", accent: "", showValue: true, format: "wide", theme: "auto", photos: true, logos: true, variant: "detailed", frame: "rarity", pack: false };
 let _gfxOrigTheme = null;
 // v38 — Force the GFX board (+ the open modal) to a chosen light/dark theme by
 // flipping the root data-theme. The board inherits ALL tokens + fv-badge tints
@@ -26800,6 +26821,23 @@ function _gfxAccentColor(P) {
   const v = _GFX_ACCENTS[_gfxOpts.accent];
   if (!v) return P.cyan;
   return (getComputedStyle(document.documentElement).getPropertyValue(v).trim() || P.cyan);
+}
+
+// v45 — Dark boards carry the site's phosphor identity into exports: a faint
+// top-center glow + a static, deterministic dot field rendered as CSS
+// gradients (html2canvas rasterizes gradients; the LIVE starfield canvas can
+// never bleed into a capture). Colors are literal rgba on purpose — same
+// rule as _gfxRarityGradient: html2canvas can't resolve CSS vars. The hues
+// are the audited dark accents (#4FFF9E mint / #FFD700 gold) at whisper
+// opacity, so the field reads as texture behind the data, never signal.
+// Light boards stay clean paper.
+function _gfxBoardBg(P, surface) {
+  const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  if (!dark) return surface;
+  return `radial-gradient(ellipse 120% 70% at 50% 0%, rgba(79,255,158,0.05), transparent 70%), ` +
+         `radial-gradient(rgba(79,255,158,0.07) 1px, transparent 1px) 0 0 / 23px 23px, ` +
+         `radial-gradient(rgba(255,215,0,0.05) 1px, transparent 1px) 11px 14px / 41px 47px, ` +
+         `${surface}`;
 }
 
 // Normalize ONE list item to a render row {fv, rank, name, meta, value} by kind.
@@ -27429,7 +27467,25 @@ function buildProspectCard(snap) {
   const blurbHTML = blurb ? `<div style="font-family:var(--font-retro);font-size:16px;line-height:1.55;color:${P.text2};font-style:italic;border-left:3px solid ${accent};padding-left:15px;">${escapeHtml(blurb)}</div>` : "";
 
   const eta = p.eta || {};
-  const metaLine = [p.position, (typeof fullOrgName === "function" && p.org) ? fullOrgName(p.org) : p.org, sl.level, p.age != null ? "age " + p.age.toFixed(1) : null].filter(Boolean).join("  ·  ");
+  // v45 — density pass: the hero meta carries height/weight (phys profile)
+  // and a rank line (overall + org), filling the dead space every variant
+  // had under the name block. Bloomberg rule: empty space is unspent signal.
+  const phys = (typeof _getPhysicalProfile === "function" ? _getPhysicalProfile(p) : null) || {};
+  const htWt = (() => {
+    const bits = [];
+    if (phys.height_in != null && isFinite(phys.height_in)) {
+      bits.push(`${Math.floor(phys.height_in / 12)}'${Math.round(phys.height_in % 12)}"`);
+    }
+    if (phys.weight_lb != null && isFinite(phys.weight_lb)) bits.push(`${Math.round(phys.weight_lb)} lb`);
+    return bits.join(" · ");
+  })();
+  const metaLine = [p.position, (typeof fullOrgName === "function" && p.org) ? fullOrgName(p.org) : p.org, sl.level, p.age != null ? "age " + p.age.toFixed(1) : null, htWt || null].filter(Boolean).join("  ·  ");
+  const rankBits = [
+    p.overall_rank != null ? `#${p.overall_rank} overall` : null,
+    (p.org_rank != null && p.org) ? `#${p.org_rank}${p.org_rank_total ? ` of ${p.org_rank_total}` : ""} ${p.org}` : null,
+  ].filter(Boolean).join("  ·  ");
+  const rankLine = rankBits
+    ? `<div style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:${P.text2};margin-top:6px;">${escapeHtml(rankBits)}</div>` : "";
   const orgLogo = (_gfxOpts.logos !== false && p.org) ? _gfxTeamLogo(p.org, P, 40) : "";
   const insight = _gfxInsight(p);
   const eyebrow = `Prospect Card${p.overall_rank != null ? ` · #${p.overall_rank}` : ""}`;
@@ -27497,7 +27553,7 @@ function buildProspectCard(snap) {
 
   board.style.cssText = `width:${W}px;min-height:${H}px;box-sizing:border-box;background:${frameBg};padding:${framePad}px;font-family:var(--font-sans);`;
   board.innerHTML = `
-    <div style="background:${P.bg0};border-radius:${framePad > 5 ? 6 : 4}px;box-sizing:border-box;min-height:${H - framePad * 2}px;padding:40px 44px 34px;display:flex;flex-direction:column;gap:26px;color:${P.text};">
+    <div style="background:${_gfxBoardBg(P, P.bg0)};border-radius:${framePad > 5 ? 6 : 4}px;box-sizing:border-box;min-height:${H - framePad * 2}px;padding:40px 44px 34px;display:flex;flex-direction:column;gap:26px;color:${P.text};">
       ${_gfxHeader(P, accent, eyebrow, qrUrl)}
       <div style="display:flex;gap:26px;align-items:stretch;flex:none;">
         ${headshot}
@@ -27508,6 +27564,7 @@ function buildProspectCard(snap) {
               <div style="font-family:var(--font-retro);font-size:44px;font-weight:700;line-height:1.03;color:${P.text};">${escapeHtml(p.player_name || "")}</div>
             </div>
             <div style="font-family:var(--font-mono);font-size:17px;color:${P.text2};margin-top:10px;">${escapeHtml(metaLine)}</div>
+            ${rankLine}
             ${eta.year != null ? `<div style="font-family:var(--font-sans);font-size:14px;font-weight:600;color:${P.text3};margin-top:6px;">ETA ${escapeHtml(String(eta.year))}${eta.confidence ? ` · ${escapeHtml(eta.confidence)} confidence` : ""}</div>` : ""}
             ${insight ? `<div style="font-family:var(--font-retro);font-size:15px;font-weight:700;color:${accent};margin-top:10px;">▸ ${escapeHtml(insight)}</div>` : ""}
             ${fvSparkHTML}
@@ -27806,7 +27863,7 @@ function buildGfxBoard() {
   const fmt = _GFX_FORMATS[_gfxOpts.format] || _GFX_FORMATS.portrait;
   const W = fmt.w, H = fmt.h;
   const board = document.createElement("div");
-  const base = `width:${W}px;box-sizing:border-box;background:${P.bg};color:${P.text};font-family:var(--font-sans);`;
+  const base = `width:${W}px;box-sizing:border-box;background:${_gfxBoardBg(P, P.bg)};color:${P.text};font-family:var(--font-sans);`;
   // Guard against a STALE cross-section snapshot: if the current section's render
   // didn't refresh the snapshot (e.g. an empty watchlist early-returns), the
   // snapshot still belongs to a prior section — treat as nothing to graphic.
@@ -34428,60 +34485,11 @@ function makeCareerTrendStrip(career) {
   return `<div class="detail-card" style="display:flex;flex-wrap:wrap;padding:0;margin-bottom:10px;overflow-x:auto;">${tiles}</div>`;
 }
 
-// v30.6 — Per-season org resolver for the career table. Walks the
-// player's trades chronologically and folds them backward against the
-// current org so each season's row can show the affiliate the
-// prospect was rostered with at that point in time. For a never-traded
-// prospect, every row resolves to the current org. For a traded
-// prospect, rows BEFORE the trade date resolve to the prior org. The
-// trade-year boundary is approximated at the trade date itself —
-// readers cross-reference with the transaction-history block for
-// precise mid-season swaps. Returns null when player is missing or
-// no current org is on file (defensive — older synthetic test
-// payloads sometimes lack p.org).
-function _seasonOrgForRow(player, season) {
-  if (!player || season == null) return null;
-  const trades = (player.trades || []).slice();
-  // Sort trades ascending by date for the walk below.
-  trades.sort((a, b) => (a.trade_date || "").localeCompare(b.trade_date || ""));
-  // Default: prospect's current org.
-  let org = player.org || null;
-  // The CURRENT season reflects the player's CURRENT affiliation. A trade in the
-  // current calendar year — offseason OR mid-season — has already moved the player
-  // to `org` (the canonical current org that the home pages + transactions log
-  // show). The year-granularity walk below can't tell an offseason trade from a
-  // mid-season one, so without this guard it wrongly rolls the current-season row
-  // back to the pre-trade org for the whole current-year-trade cohort (the 2026
-  // offseason trades). Short-circuit: the current season is always the canonical
-  // current org. Past seasons keep the trade-history walk (accrual attribution)
-  // untouched, so historical/point-in-time org never shifts.
-  if (season >= new Date().getFullYear()) return org;
-  // Walk trades from MOST recent to least so we can "undo" each one
-  // to land on the org the prospect was with at the start of the
-  // given season. Trade date: trade.trade_date (ISO yyyy-mm-dd).
-  for (let i = trades.length - 1; i >= 0; i--) {
-    const t = trades[i];
-    if (!t || !t.trade_date) continue;
-    const tradeSeason = parseInt(String(t.trade_date).slice(0, 4), 10);
-    if (!isFinite(tradeSeason)) continue;
-    // If this trade happened AFTER the row's season, the prospect
-    // was with the from_org during that season — swap back.
-    if (tradeSeason > season) {
-      org = t.from_org || org;
-    } else if (tradeSeason === season) {
-      // Trade happened DURING the season — show the FROM org as the
-      // dominant affiliate (most rosters report the highest-stint
-      // org for split-team seasons). Tooltip is added by the caller
-      // when this case fires.
-      org = t.from_org || org;
-    } else {
-      // Trade happened BEFORE the row's season — we've reached the
-      // correct era; stop walking back.
-      break;
-    }
-  }
-  return org;
-}
+// (v30.6's _seasonOrgForRow — the trade-walk approximation that folded the
+// current org backward across trades — was retired when the career table
+// moved to resolving each row's org from that season's OWN stat line; see
+// _careerOrgAndStints. The walk could mis-attribute unstamped seasons around
+// a trade; the stat-line source can't.)
 
 // Per-season OPS+ vs the league average at that level (100 = level
 // average; higher is better). Shares the DATA.level_norms baseline used by
@@ -34497,11 +34505,13 @@ function _rowOpsPlus(s) {
 // Org cell for a career row. A multi-org season — the player accrued stats at
 // 2+ orgs that year (an IN-SEASON trade), surfaced as 2+ `stints` on the row —
 // renders the orgs old → new with an expander caret + hidden per-org split
-// sub-rows. A normal (single-org / offseason-trade) season keeps the single
-// trade-derived logo from _seasonOrgForRow, exactly as before. The right-hand
-// (new) logo is that season's final org, which equals the canonical current org
-// when the in-season trade is the player's latest move. `statCellsFn(line)`
-// renders the stat <td>s so the split rows match the main row's columns.
+// sub-rows. A normal (single-org / offseason-trade) season shows the org
+// stamped on that season's own stat line (point-in-time; never the current
+// org folded back over a trade — unresolved past seasons render a visible
+// gap). The right-hand (new) logo is that season's final org, which equals
+// the canonical current org when the in-season trade is the player's latest
+// move. `statCellsFn(line)` renders the stat <td>s so the split rows match
+// the main row's columns.
 function _careerOrgAndStints(s, player, statCellsFn) {
   const _logo = o => (typeof teamLogoHTML === "function" ? teamLogoHTML(o, "sm") : escapeHtml(o));
   const stints = (s && Array.isArray(s.stints))
@@ -35034,10 +35044,10 @@ function makeSabermetricsBlock(player) {
       tiles.push(["wOBA", v, colorize(sm.woba >= 0.340, sm.woba <= 0.300, sm.woba),
                   "Weighted On-Base Average · linear-weights scale, .320 ≈ avg"]);
     }
-    if (sm.war != null) {
-      const v = sm.war.toFixed(1);
-      tiles.push(["WAR", v, colorize(sm.war >= 2.0, sm.war <= 0, sm.war),
-                  "FanGraphs Wins Above Replacement"]);
+    if (currentSeasonBwar(player) != null) {
+      const w = currentSeasonBwar(player);
+      tiles.push(["WAR", w.toFixed(1), colorize(w >= 2.0, w <= 0, w),
+                  "Current-season bWAR (Baseball-Reference) — the one WAR source site-wide"]);
     }
   } else if (sm && (sm.xfip != null || sm.fip != null || sm.fip_minus != null || sm.era_minus != null || sm.war != null)) {
     // MLB pitcher — use real xFIP / FIP / FIP-
@@ -35059,9 +35069,10 @@ function makeSabermetricsBlock(player) {
       tiles.push(["ERA-", v, colorize(v <= 90, v >= 110, v),
                   "ERA- · 100 = league avg, lower is better"]);
     }
-    if (sm.war != null) {
-      tiles.push(["WAR", sm.war.toFixed(1), colorize(sm.war >= 2.0, sm.war <= 0, sm.war),
-                  "FanGraphs Wins Above Replacement"]);
+    if (currentSeasonBwar(player) != null) {
+      const w = currentSeasonBwar(player);
+      tiles.push(["WAR", w.toFixed(1), colorize(w >= 2.0, w <= 0, w),
+                  "Current-season bWAR (Baseball-Reference) — the one WAR source site-wide"]);
     }
   } else if (sl.ops_plus_level != null || sl.era_minus_level != null) {
     // MiLB fallback — level-relative proxies.
@@ -37600,7 +37611,7 @@ function renderPlayerDetail(key) {
   const _sm = p.sabermetrics || {};
   const _hasRealSabr = (_sm.wrc_plus != null || _sm.xfip != null);
   const sabermetricsTitle = _hasRealSabr
-    ? `Advanced stats <span class="detail-title-sub">FanGraphs sabermetrics (MLB)</span>`
+    ? `Advanced stats <span class="detail-title-sub">MLB sabermetrics</span>`
     : `Advanced stats <span class="detail-title-sub">level-relative proxies · MLB sabermetrics unavailable for MiLB</span>`;
   const sabermetricsSection = `<div class="detail-title">${sabermetricsTitle}</div>${makeSabermetricsBlock(p)}`;
 
@@ -42716,7 +42727,7 @@ function _powerPlusRaw(p) {
   const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
   if (perf.avg_iso == null) return null;
   // ISO+ IS the isolated-power component (100 = level-avg ISO) — item-1 metric
-  // wired in directly so PWR+ and the standalone ISO+ pill never diverge.
+  // wired in directly so POW+ and the standalone ISO+ pill never diverge.
   const isoP = computeIsoPlus(p);
   // HR-rate vs level on the same 100-anchored scale (HR-rate+). Prefer HR/PA;
   // most rows carry games not PA, so fall back to a HR/G normalization.
