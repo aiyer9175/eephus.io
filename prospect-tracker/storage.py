@@ -4186,28 +4186,23 @@ def _grad_wag(graduate_payload: dict) -> float | None:
     except (TypeError, ValueError):
         war_per_yr = None
 
+    # v16 — WAG matched to SEASONS, not PA / rate of production: the per-season WAR
+    # (career WAR over the number of MLB seasons) vs the FV-implied WAR/season. An
+    # injury-shortened season still counts as a season, so WAG reflects accumulation
+    # over time rather than a small-sample rate projected up to a full season (which
+    # over-credited injury-limited / partial-season grads like Evan Carter). The
+    # PA/IP floor still gates cup-of-coffee samples below the sample minimum.
+    season_count = (cw.get("war_seasons_count")
+                    or len(cw.get("seasons") or {})
+                    or len({s.get("season")
+                            for s in (graduate_payload.get("career_stats") or [])
+                            if s.get("level") == "MLB" and s.get("season") is not None}))
+    floor_ok = (total_ip >= 50.0) if is_pitcher else (total_pa >= 150)
     full_season_war: float | None = None
-    if is_pitcher:
-        role = _pitcher_role(graduate_payload)
-        target = _ROLE_BASELINES.get(f"{role}_ip_target",
-                                     _ROLE_BASELINES["mirp_ip_target"])
-        if target <= 0:
-            return None
-        if total_ip >= 50.0:
-            full_season_war = (career_war / total_ip) * target
-        elif war_per_yr is not None:
-            # Pitcher full-season fallback: use war_per_yr as the projected
-            # season rate. (Equivalent to treating one rate-season as a
-            # full-target-IP season.)
-            full_season_war = war_per_yr
-    else:
-        target = _ROLE_BASELINES.get("hitter_pa_target", 612.0)
-        if target <= 0:
-            return None
-        if total_pa >= 150:
-            full_season_war = (career_war / total_pa) * target
-        elif war_per_yr is not None:
-            full_season_war = war_per_yr
+    if season_count and floor_ok:
+        full_season_war = career_war / season_count
+    elif war_per_yr is not None:
+        full_season_war = war_per_yr
 
     if full_season_war is None:
         return None
@@ -5239,10 +5234,14 @@ def _engine_wag_result(fv, is_pitcher, position, observed_war, *, age=None,
     except (TypeError, ValueError):
         return None
     try:
+        # Expected baseline matched to MLB SEASONS (service_years); the gate +
+        # reliability use the REAL accumulated MLB PA/IP (passed alongside so a
+        # thin multi-season sample is still gated + regressed).
+        pa, ip = _mlb_exposure_pa_ip(career_stats)
         if service_years is not None:
             return _engine_wag(fv, is_pitcher, ow, position=position,
-                               service_years=float(service_years), age=age)
-        pa, ip = _mlb_exposure_pa_ip(career_stats)
+                               service_years=float(service_years),
+                               exposure_pa=(pa or None), exposure_ip=(ip or None), age=age)
         return _engine_wag(fv, is_pitcher, ow, position=position,
                            exposure_pa=(pa or None), exposure_ip=(ip or None), age=age)
     except Exception:
@@ -5304,8 +5303,17 @@ def _build_debuted_payload(fv, is_pitcher, position, *, age=None,
     except Exception:
         pass   # enrichment only -- a numerical hiccup must not sink the export
     try:
+        # WAG is matched to the number of MLB SEASONS the player has been in the
+        # majors (not PA / rate of production): an injury-shortened season still
+        # counts as a season, so WAR-above-grade reflects accumulation over time.
+        # (service_years_decimal still feeds the realized/consumed-control value
+        # above; it's None for many players and would otherwise fall this WAG call
+        # back to PA-matching, inflating injury-limited rates.)
+        season_count = len(seasons)
         w = _engine_wag_result(fv, is_pitcher, position, observed_war,
-                               age=age, service_years=service_years, career_stats=career_stats)
+                               age=age,
+                               service_years=(float(season_count) if season_count else None),
+                               career_stats=career_stats)
         if w:
             out["wag"] = {
                 "regressed_wag": w.get("regressed_wag"),

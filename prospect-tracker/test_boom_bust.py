@@ -84,10 +84,11 @@ class V14BoomBustThresholds(unittest.TestCase):
             career_war=20.0, seasons=4, pa=2400, fv=55)), "boom")
 
     def test_clear_bust(self):
-        # FV 55, expect 2.5. 1.0 WAR / 1500 PA = (1/1500)*612 = 0.408
-        # full-season → -2.1 WAG → BUST
+        # v16 per-season: FV 55 implies ~1.13 WAR/season. A below-replacement
+        # grad — -2.0 WAR over 3 seasons = -0.67/season → -0.67 - 1.13 ≈ -1.8
+        # WAG → BUST (≤ -1.5).
         self.assertEqual(_compute_boom_bust(self._payload(
-            career_war=1.0, seasons=3, pa=1500, fv=55)), "bust")
+            career_war=-2.0, seasons=3, pa=1500, fv=55)), "bust")
 
     def test_settled_middle(self):
         # FV 55. 6 WAR / 1500 PA = (6/1500)*612 = 2.448

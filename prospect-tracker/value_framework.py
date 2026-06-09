@@ -2175,14 +2175,25 @@ def wag(fv, is_pitcher: bool, observed_war: float, *, position: str | None = Non
     seasons, ref, sample = ew["seasons"], ew["ref"], ew["sample"]
     me = wcfg.get("meaningful_exposure", {})
     thr_exposure = float(me.get("pitcher_ip", 0) if is_pitcher else me.get("hitter_pa", 0))
-    below = sample < thr_exposure
+    # When the expected baseline is matched to SEASONS (service_years) but the REAL
+    # accumulated PA/IP is also supplied, the meaningful-exposure GATE and the
+    # talent-regression RELIABILITY stay on the real load: an injury-shortened
+    # player is graded over the seasons he's been in the majors (so WAG reflects
+    # accumulation, not a small-sample rate) yet a thin multi-season sample is
+    # still gated + heavily regressed rather than treated as a full season load.
+    real_exp = exposure_ip if is_pitcher else exposure_pa
+    gate_sample = float(real_exp) if real_exp is not None else sample
+    below = gate_sample < thr_exposure
 
-    # Shared talent-level regression (same core/constants as the Prompt-D update).
-    if service_years is not None:
+    # Shared talent-level regression (same core/constants as the Prompt-D update),
+    # weighted by the REAL exposure when supplied, else the season-implied load.
+    if exposure_pa is not None or exposure_ip is not None:
+        eff_pa, eff_ip = exposure_pa, exposure_ip
+    elif service_years is not None:
         eff_pa = None if is_pitcher else seasons * ref
         eff_ip = (seasons * ref) if is_pitcher else None
     else:
-        eff_pa, eff_ip = exposure_pa, exposure_ip
+        eff_pa, eff_ip = None, None
     tr = _talent_regression(fv, is_pitcher, observed_war, eff_pa, eff_ip, fv_reflects_mlb)
     standardized = str(wcfg.get("standardized", "percentile"))
 
@@ -2209,9 +2220,17 @@ def wag(fv, is_pitcher: bool, observed_war: float, *, position: str | None = Non
                       else (1.0 if observed >= cum_b else 0.0))
     pit = min(1.0, max(0.0, pit))
 
-    regressed = tr["true_talent"] - tr["prior_mean_rate"]          # = w_obs * (obs_rate - prior_mean_rate)
+    # regressed_wag is the per-SEASON rate WAG (observed WAR/season vs the FV-implied
+    # WAR/season) shrunk toward 0 by the real-PA reliability weight w_obs, so a thin
+    # sample regresses hard. Season-based per the service-years framing — driven by
+    # accumulation over the seasons a player has been in the majors, NOT the per-PA
+    # rate. (true_talent_war below is the PA-rate true-talent, unchanged, and still
+    # feeds the debuted posterior / surplus.)
+    w_obs = float(tr["w_obs"])
+    regressed = w_obs * rate
+    sd_season = (ew["sd"] / seasons) if seasons > 0 else 0.0
     half = _cred_z(cred if cred is not None else cfg.get("fit", {}).get("bayes", {}).get("credible_mass", 0.90)) \
-        * float(tr["posterior_sd"] or 0.0)
+        * sd_season * (1.0 - w_obs)
     return {
         "counting_wag": round(counting, 3),
         "rate_wag": round(rate, 3),

@@ -25217,10 +25217,10 @@ const GLOSSARY = {
   "wag": {
     name: "WAG", aliases: ["WAG", "WAR Above Grade"], category: "custom-index",
     priority: 2,
-    short: "Graduate metric: full-season-equivalent WAR (rate × role workload target) minus FV-grade-implied baseline.",
-    long: "v14 — WAG is the player's career WAR/(PA|IP) rate projected to a role-typical full-season workload, minus the FV-implied per-season WAR baseline. Hitters use a 612 PA target; pitchers use role-specific IP targets (SP 175 / MIRP 65 / SIRP 50 / CL 60). The full-season projection fixes the cycle-13 bug where mid-career grads with elite rates (e.g. Junior Caminero, 4.6 WAR over ~510 PA at FV 55) read as negative WAG simply because they hadn't accumulated a full season's WAR yet. Sample floor: hitters need ≥150 career PA, pitchers need ≥50 career IP — below that, WAG returns None and no BOOM/BUST pill renders. Targets are loaded from data/role_full_season_baselines.json (MLB qualifier medians, refreshed annually).",
-    formula: "WAG = (career_war / career_pa or ip) × full_season_target − expected_war(FV)\nhitter target: 612 PA · SP: 175 IP · MIRP: 65 IP · SIRP: 50 IP · CL: 60 IP",
-    example: "Junior Caminero: 4.6 WAR / 510 PA × 612 ≈ 5.5 full-season WAR. FV 55 expects 2.5. WAG = +3.0 → BOOM.",
+    short: "Graduate metric: career WAR per MLB season minus the FV-grade-implied WAR/season baseline.",
+    long: "v16 — WAG is matched to the number of MLB SEASONS a graduate has accrued, not plate appearances / rate of production: career WAR ÷ MLB seasons, minus the FV-implied per-season WAR baseline. An injury-shortened season still counts as a season, so WAG reflects accumulation over time rather than a small-sample rate projected up to a full season (which over-credited injury-limited grads like Evan Carter — 5.6 WAR over 4 partial seasons reads on-grade for a 60 FV, not as a 99th-percentile boom). An elite single season (e.g. Junior Caminero) still posts a high per-season WAG; the BOOM/BUST pill's own sample floor (≥2 MLB seasons OR ≥800 career PA OR ≥200 career IP) holds partial-season grads at 'unsettled'. WAG sample floor: hitters need ≥150 career PA, pitchers ≥50 career IP — below that, WAG returns None.",
+    formula: "WAG = (career_war / mlb_seasons) − expected_war_per_season(FV)\nBOOM ≥ +2.5 · BUST ≤ −1.5 · floor: ≥2 seasons OR ≥800 PA OR ≥200 IP",
+    example: "Evan Carter: 5.6 WAR over 4 MLB seasons = 1.4 WAR/season. FV 60 expects ~1.57/season. WAG ≈ −0.2 → SETTLED (on grade).",
     related: ["fv", "war", "boom_bust_label", "fv_war_table", "fv_to_war_table"],
   },
   "warwag": {
