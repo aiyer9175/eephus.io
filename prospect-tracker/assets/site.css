@@ -215,7 +215,7 @@
 .eephus-nav .eephus-nav-ctrl .global-ctrl-count {
   font-family: var(--font-retro-mono); font-size: 10px; font-weight: 800;
   min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--radius-sm);
-  background: var(--accent-gold); color: #0B0E07;
+  background: transparent; color: var(--accent-gold); border: 1px solid var(--accent-gold);
   display: inline-flex; align-items: center; justify-content: center;
 }
 
@@ -533,7 +533,18 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary);
 }
 /* PROSPX masthead: the @MLBPROSPX link sits in the title space the beta tag freed. */
-.header h1 .eph-xlink--mast { font-size: 11px; padding: 5px 9px; align-self: center; }
+.header h1 .eph-xlink--mast {
+  position: relative;
+  font-size: 11px; padding: 5px 9px; align-self: center; background: transparent;
+}
+.header h1 .eph-xlink--mast:hover, .header h1 .eph-xlink--mast:focus-visible { background: var(--bg-tertiary); }
+/* Iridescent hairline accent — matches the nav control cluster (Watchlist /
+   theme toggle / Sign in) so the @handle chip reads as part of the same family. */
+.header h1 .eph-xlink--mast::after {
+  content: ""; position: absolute; left: -1px; right: -1px; bottom: -1px; height: 2px;
+  background: var(--iridescent); opacity: 0; transition: opacity .12s; pointer-events: none;
+}
+.header h1 .eph-xlink--mast:hover::after, .header h1 .eph-xlink--mast:focus-visible::after { opacity: 1; }
 .masthead .dateline { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-family: var(--font-retro-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 5px 2px; margin-top: 14px; }
 
 /* ---- section kicker ---- */

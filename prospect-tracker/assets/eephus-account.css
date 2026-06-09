@@ -42,17 +42,28 @@
 /* ── Nav account control (matches .eephus-nav-ctrl idiom) ─────────────────── */
 .eph-nav-account { position: relative; display: inline-flex; }
 .eph-nav-account .eph-acct-btn {
+  position: relative;
   display: inline-flex; align-items: center; gap: 7px;
   font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
-  letter-spacing: .03em; text-transform: uppercase;
-  color: var(--text-secondary); background: var(--bg-tertiary);
-  border: 1px solid var(--border); padding: 0 11px; min-height: 38px;
+  letter-spacing: .04em; text-transform: uppercase;
+  color: var(--text-secondary); background: transparent;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 0 11px; min-height: 38px;
   line-height: 1; cursor: pointer; text-decoration: none;
   transition: background .12s, color .12s, border-color .12s;
 }
-.eph-nav-account .eph-acct-btn:hover {
-  background: var(--bg-primary); color: var(--text-primary); border-color: var(--text-tertiary);
+.eph-nav-account .eph-acct-btn:hover,
+.eph-nav-account .eph-acct-btn:focus-visible {
+  background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--text-tertiary);
 }
+/* Iridescent hairline accent — matches .eephus-nav-ctrl so SIGN IN reads as part
+   of the same control cluster as Watchlist / the theme toggle. */
+.eph-nav-account .eph-acct-btn::after {
+  content: ""; position: absolute; left: -1px; right: -1px; bottom: -1px; height: 2px;
+  background: var(--iridescent); opacity: 0; transition: opacity .12s; pointer-events: none;
+}
+.eph-nav-account .eph-acct-btn:hover::after,
+.eph-nav-account .eph-acct-btn:focus-visible::after { opacity: 1; }
 .eph-nav-account .eph-acct-btn .eph-avatar { margin: -2px 0; }
 .eph-nav-account .eph-caret { font-size: 9px; opacity: .7; }
 
