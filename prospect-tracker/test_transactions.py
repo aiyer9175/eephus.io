@@ -72,7 +72,10 @@ def test_arizona_fall_league_assignment_does_not_create_dsl_level_change():
         564: {"name": "Jacksonville Jumbo Shrimp", "level": "AAA"},
     }
 
-    events = derive_level_changes(txs, affiliations)
+    # Point-in-time signature: one affiliation map per event YEAR. This fixture's
+    # clubs don't rename across the span, so the same map applies to each year.
+    affil_by_year = {y: affiliations for y in range(2020, 2027)}
+    events = derive_level_changes(txs, affil_by_year)
 
     assert all(ev["to_team"] != "Mesa Solar Sox" for ev in events)
     assert all(ev["to_level"] != "DSL" for ev in events)

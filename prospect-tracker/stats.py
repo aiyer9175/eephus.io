@@ -1917,6 +1917,12 @@ def bulk_fetch_player_transactions(
 # Lower index = higher level. Reused from LEVEL_ORDER above for callers
 # that want to import this directly (level_changes works on the same set).
 _LEVEL_RANK = {lvl: i for i, lvl in enumerate(LEVEL_ORDER)}
+# Pre-2021-reorg rookie/complex aliases share the modern complex (CPX) tier so
+# point-in-time level changes built on era-correct names (a 2019 AZL / GCL move
+# now labeled "Rk") still rank correctly for promotion/demotion direction.
+# Mirrors the frontend LEVEL_RANK, which already collapses these onto one tier.
+_LEVEL_RANK.update({a: _LEVEL_RANK["CPX"]
+                    for a in ("Rk", "R", "ROK", "FCL", "ACL", "AZL", "GCL")})
 
 
 def _level_rank(level: str | None) -> int | None:
@@ -2026,11 +2032,16 @@ def _is_placeholder_team(name: str | None) -> bool:
 
 
 def derive_level_changes(transactions: list[dict],
-                          team_affiliations: dict[int, dict]) -> list[dict]:
+                          affil_by_year: dict[int, dict]) -> list[dict]:
     """
-    Walk a player's transactions in date order, resolve each move's
-    from/to level via the team_affiliations map, and emit one record per
-    actual level change.
+    Walk a player's transactions in date order, resolve each move's from/to level
+    + team name POINT-IN-TIME (against the affiliation map for the event's OWN
+    year), and emit one record per actual level change.
+
+    `affil_by_year` is {year: {team_id: info}} — one season-aware affiliation map
+    per event year (the 2021 MiLB reorg renamed & re-leveled many clubs) — so a
+    pre-2021 move resolves to the name/league/level in effect THEN ("AZL Rangers"
+    / Rk), not the current post-reorg naming ("ACL Rangers" / CPX).
 
     Returns events shaped like:
       {date, kind: 'promotion'|'demotion', from_level, to_level,
@@ -2050,6 +2061,10 @@ def derive_level_changes(transactions: list[dict],
         date_iso = tx.get("date") or ""
         if not date_iso:
             continue
+        # Point-in-time: resolve this move against the affiliation map for ITS
+        # OWN year so pre-2021 events get era-correct team names + levels.
+        _yr = int(date_iso[:4]) if date_iso[:4].isdigit() else None
+        team_affiliations = affil_by_year.get(_yr) or {}
         type_code = tx.get("type_code") or ""
         if type_code and type_code not in _LEVEL_AFFECTING_TYPE_CODES:
             continue
@@ -4095,8 +4110,17 @@ def fetch_team_affiliations(season: int) -> dict[int, dict]:
             if _is_exhibition_team(team_name) or _is_exhibition_team(league_name):
                 continue
             level = default_level
-            if level == "CPX" and "dominican" in league_name:
-                level = "DSL"
+            if level == "CPX":
+                if "dominican" in league_name:
+                    level = "DSL"
+                elif "complex" not in league_name:
+                    # Point-in-time level: pre-2021-reorg the US rookie circuits
+                    # (AZL / GCL, Pioneer, Appalachian) were "Rookie" (Rk), not
+                    # the post-reorg "Complex" (CPX). The season-aware league name
+                    # carries the era ("Arizona League" 2019 -> "Arizona Complex
+                    # League" 2021), so a sport-16 league whose name lacks
+                    # "complex" is the pre-reorg Rookie level.
+                    level = "Rk"
             team_info[tid] = {
                 "id":              tid,
                 "name":            t.get("name") or "",

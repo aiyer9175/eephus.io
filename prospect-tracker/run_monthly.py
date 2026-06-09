@@ -550,6 +550,38 @@ def _load_draft_pools_for_rebuild() -> dict:
         return {}
 
 
+def _affil_by_year_for_transactions(tx_cache: dict, log) -> dict[int, dict]:
+    """Point-in-time team-affiliation maps keyed by event YEAR, covering every
+    year that appears in the cached transactions.
+
+    fetch_team_affiliations is season-aware (the MLB Stats API returns the
+    era-correct team name + league per season), so resolving each move against
+    the map for ITS OWN year fixes the 2021-reorg nomenclature: a 2019 complex
+    move reads 'AZL Rangers' / Rookie, not the post-reorg 'ACL Rangers' / CPX.
+    Each season's map is cached on disk for 7 days, so warm reruns do no network.
+    No fallback to current naming — a year that fails to fetch stays empty, so
+    moves that year surface unlabeled rather than mislabeled."""
+    from stats import fetch_team_affiliations
+    years: set[int] = set()
+    for rows in tx_cache.values():
+        for tx in (rows or []):
+            d = tx.get("date") or ""
+            if len(d) >= 4 and d[:4].isdigit():
+                years.add(int(d[:4]))
+    affil_by_year: dict[int, dict] = {}
+    for yr in sorted(years):
+        try:
+            affil_by_year[yr] = fetch_team_affiliations(yr)
+        except Exception as e:
+            log.warning("team_affil fetch failed for %d (%s) — moves that year "
+                        "stay unlabeled (no fallback to current naming)", yr, e)
+            affil_by_year[yr] = {}
+    log.info("point-in-time team affiliations: %d seasons (%s..%s)",
+             len(affil_by_year), min(years) if years else "-",
+             max(years) if years else "-")
+    return affil_by_year
+
+
 def _derive_all_level_changes() -> dict:
     """Helper: rebuild level_changes_by_key from the cached transactions
     table. Mirrors the per-player loop in main(). Used by rebuild_only().
@@ -570,18 +602,11 @@ def _derive_all_level_changes() -> dict:
     tx_cache = load_player_transactions()
     if not tx_cache:
         return {}
-    from datetime import date as _date
-    season = _date.today().year
-    try:
-        team_affil = fetch_team_affiliations(season)
-    except Exception as e:
-        _log.warning("team_affil fetch failed (%s) — promotions will be "
-                     "unlabeled by level", e)
-        team_affil = {}
+    affil_by_year = _affil_by_year_for_transactions(tx_cache, _log)
     out: dict = {}
     for key, tx_rows in tx_cache.items():
         try:
-            evs = derive_level_changes(tx_rows, team_affil)
+            evs = derive_level_changes(tx_rows, affil_by_year)
             if evs:
                 out[key] = evs
         except Exception as e:
@@ -910,21 +935,21 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             if bds_from_index:
                 log.info("upserted %d birth dates from PlayerIndex", len(bds_from_index))
 
-        # --- 2b. Bulk fetch draft data for the rolling window of years a
-        # current prospect could plausibly have been drafted in. One call
-        # per year (~10 total) returns thousands of picks each; matching to
-        # tracked prospects happens in-memory via mlbam_id. Players with no
-        # draft match are labeled 'international_fa' since the user's
-        # convention is to treat undrafted prospects as IFA signings.
-        # /draft/{year} payloads are cached on disk for 30 days, so reruns
-        # within a month cost nothing beyond reading the local cache.
-        with _step("2b. Bulk fetch draft data (10-year window)", log):
-            draft_years = list(range(season - 9, season + 1))
+        # --- 2b. Bulk fetch draft data for the full window of years a tracked
+        # prospect could plausibly have been drafted in. One call per year
+        # returns thousands of picks each; matching to tracked prospects happens
+        # in-memory via mlbam_id. A no-draft-match is NOT defaulted to IFA — it is
+        # classified from data below (acquisition_classify). The window spans a
+        # full career length so older prospects/recent grads (e.g. a 2016 R1 pick)
+        # still resolve to Draft instead of falling through. /draft/{year} payloads
+        # are cached on disk for 30 days, so reruns within a month are near-free.
+        with _step("2b. Bulk fetch draft data (career-span window)", log):
+            draft_years = list(range(season - 20, season + 1))
             log.info("fetching draft picks for years %s", draft_years)
             draft_by_id = bulk_fetch_drafts(draft_years)
 
         acquisitions: dict[str, dict] = {}
-        ifa_mids_by_key: dict[str, int] = {}
+        unresolved_by_key: dict[str, int] = {}  # no draft match → classify from data below
         for p in timeseries:
             mid = ids_by_key.get(p.player_key)
             if mid is None:
@@ -943,43 +968,38 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     "signing_date": None,
                 }
             else:
-                # No draft record across the lookback window — treat as IFA.
-                # We enrich below with the original signing transaction.
-                ifa_mids_by_key[p.player_key] = mid
-                acquisitions[p.player_key] = {
-                    "method":       "international_fa",
-                    "year":         None,
-                    "round_label":  None,
-                    "pick_round":   None,
-                    "pick_overall": None,
-                    "bonus_usd":    None,
-                    "team_name":    None,
-                    "school":       None,
-                    "signing_date": None,
-                }
+                # No draft match — do NOT default to IFA. Collect for the
+                # data-derived classification below (signing window + explicit
+                # ifa_timeseries match); unresolved entries become 'unknown'.
+                unresolved_by_key[p.player_key] = mid
 
-        # --- 2b.ii Enrich IFA records with original signing transaction.
-        # One /transactions call per IFA prospect returns the SFA/SGN event
-        # that records the signing team + date. The MLB Stats API doesn't
-        # publish signing-bonus dollars; we layer in Spotrac (below) to
-        # fill the bonus_usd field where they have a row for the player.
-        with _step("2b.ii. IFA signing enrichment (MLB transactions)", log):
-            if ifa_mids_by_key:
-                log.info("fetching IFA signing info for %d prospects",
-                         len(ifa_mids_by_key))
-                ifa_by_id = bulk_fetch_ifa_signings(ifa_mids_by_key.values())
-                n_enriched = 0
-                for key, mid in ifa_mids_by_key.items():
-                    sig = ifa_by_id.get(mid)
-                    if not sig:
-                        continue
-                    rec = acquisitions[key]
-                    rec["year"]         = sig.get("year")
-                    rec["team_name"]    = sig.get("team_name")
-                    rec["signing_date"] = sig.get("signing_date")
-                    n_enriched += 1
-                log.info("IFA enrichment: %d/%d signings resolved",
-                         n_enriched, len(ifa_mids_by_key))
+        # --- 2b.ii Classify the no-draft-match prospects from DATA — never a
+        # default. One /transactions call per prospect returns the SFA/SGN signing
+        # (team + date, the MLB API doesn't expose bonus dollars). A prospect is
+        # international_fa ONLY on positive evidence — an explicit ifa_timeseries
+        # signing, or a signing in the international window (Jan-Apr) — otherwise
+        # 'unknown' ("Entry type not on file"). Spotrac (2b.iii) fills bonus_usd.
+        with _step("2b.ii. Acquisition classification (no-draft-match)", log):
+            if unresolved_by_key:
+                from acquisition_classify import (classify_acquisition,
+                                                  load_ifa_signing_ids)
+                log.info("classifying %d no-draft-match prospects",
+                         len(unresolved_by_key))
+                signings = bulk_fetch_ifa_signings(unresolved_by_key.values())
+                ifa_mids, ifa_keys = load_ifa_signing_ids(out_dir / "ifa_timeseries.json")
+                n_ifa = n_unknown = 0
+                for key, mid in unresolved_by_key.items():
+                    rec = classify_acquisition(
+                        None, signings.get(mid),
+                        (key in ifa_keys) or (mid in ifa_mids))
+                    acquisitions[key] = rec
+                    if rec["method"] == "international_fa":
+                        n_ifa += 1
+                    else:
+                        n_unknown += 1
+                log.info("acquisition classify: %d international_fa, %d unknown "
+                         "(of %d no-draft-match)", n_ifa, n_unknown,
+                         len(unresolved_by_key))
 
         # --- 2b.iii Spotrac IFA tracker — bonus dollars + per-org cycle
         # spending. Scrapes 2021-current; cached per year on disk so
@@ -1751,8 +1771,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # work, no I/O), and Python's GIL serializes thread execution
         # anyway. Removing the pool eliminates the per-task submit /
         # collect overhead and the worker startup cost.
+        affil_by_year = _affil_by_year_for_transactions(tx_cache, log)
         for key, tx_rows in tx_cache.items():
-            evs = derive_level_changes(tx_rows, team_affil)
+            evs = derive_level_changes(tx_rows, affil_by_year)
             txs = derive_transactions(tx_rows)
             if evs:
                 level_changes_by_key[key] = evs

@@ -11513,7 +11513,7 @@ function transactionEvents(player) {
     });
   }
   const acq = player.acquisition;
-  if (acq && acq.signing_date) {
+  if (acq && acq.signing_date && acq.method !== "unknown") {
     const team = acq.team_name ? ` by ${acq.team_name}` : "";
     // Tag the marker by acquisition method so the chip + legend on the
     // FV chart says "Drafted" vs "Signed (IFA)" vs the generic "Signed"
@@ -15787,7 +15787,9 @@ function latestAcquisition(p) {
   // Original acquisition (draft / IFA) — only if they're still with
   // the org that drafted / signed them (no events more recent).
   const a = p.acquisition;
-  if (a && a.method) {
+  // Skip the origin marker for an unresolved ('unknown') entry type — surface the
+  // gap (no marker) rather than assert a draft/signing the data doesn't support.
+  if (a && a.method && a.method !== "unknown") {
     const sameOrg = !a.team_abbr || a.team_abbr === p.org || !p.org;
     // Acquisitions don't always have a precise date; use signing_date,
     // then year-only as a fallback so they don't sort before trades.
@@ -38719,6 +38721,27 @@ function renderPlayerDetail(key) {
           <div style="font-size:14px;color:var(--text-primary);">${headline}</div>
           ${bonusLine}
           ${dateLine}
+        </div>`;
+    }
+    if (a.method === "unknown") {
+      // Entry type couldn't be resolved from data (no draft record, no
+      // international-signing match). Surface the gap rather than assert a
+      // category — show whatever first-transaction context we do have, unlabeled.
+      let ctx = "";
+      if (a.signing_date) {
+        const d = new Date(a.signing_date + "T00:00:00");
+        const formatted = isNaN(d.getTime()) ? a.signing_date
+          : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+        const team = a.team_name ? ` · ${escapeHtml(a.team_name)}` : "";
+        ctx = `<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">First transaction on file: ${escapeHtml(formatted)}${team}</div>`;
+      } else if (a.team_name) {
+        ctx = `<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">First org on file: ${escapeHtml(a.team_name)}</div>`;
+      }
+      return `<div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:10px 12px;border-radius:2px;">
+          <div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Original entry · Not on file</div>
+          <div style="font-size:14px;color:var(--text-primary);">Entry type not on file</div>
+          <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">No draft record or international-signing match on file for this player.</div>
+          ${ctx}
         </div>`;
     }
     return "";
