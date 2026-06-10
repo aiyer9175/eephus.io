@@ -404,3 +404,48 @@ def scrape_spotrac_payroll(year: int, force: bool = False) -> list[dict]:
         })
     log.info("spotrac payroll %d: %d teams", year, len(out))
     return out
+
+
+# --------------------------------------------------------------------------- #
+# Aging / projection corpus — MLB StatsAPI league-wide season stats
+# --------------------------------------------------------------------------- #
+# One official source covers the whole modern era AND the current season
+# (no Lahman publication lag; pybaseball's Lahman mirror is broken upstream
+# anyway). playerPool=All returns every player-season, not just qualifiers.
+# Age + per-season bWAR join in from B-Ref's war_daily tables by MLBAM id
+# (war_daily's mlb_ID column) in fa_projection.build_corpus().
+
+_STATSAPI_SEASON_URL = (
+    "https://statsapi.mlb.com/api/v1/stats?stats=season&group={group}"
+    "&season={season}&sportId=1&limit=5000&playerPool=All"
+)
+
+
+def fetch_statsapi_season_stats(season: int, group: str, force: bool = False) -> list[dict]:
+    """Every MLB player-season stat line for one (season, group) — group is
+    "hitting" or "pitching". Returns the raw `splits` records."""
+    import json as _json
+    url = _STATSAPI_SEASON_URL.format(group=group, season=season)
+    fr = _fetch(url, f"fa_statsapi_{group}_{season}", force=force, accept_json=True)
+    if fr.status != 200 or not fr.body:
+        log.warning("statsapi season %s %d: fetch failed (status=%d)", group, season, fr.status)
+        return []
+    try:
+        payload = _json.loads(fr.body)
+        stats = payload.get("stats") or []
+        return (stats[0].get("splits") or []) if stats else []
+    except (ValueError, KeyError) as e:
+        log.warning("statsapi season %s %d: parse failed (%s)", group, season, e)
+        return []
+
+
+def fetch_statsapi_season_range(first: int, last: int, force: bool = False,
+                                max_workers: int = 6) -> dict:
+    """{(season, group): splits} for both groups across a season range.
+    Per-season disk caches make re-runs free."""
+    jobs = [(s, g) for s in range(first, last + 1) for g in ("hitting", "pitching")]
+    out: dict = {}
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        for (s, g), res in zip(jobs, ex.map(lambda j: fetch_statsapi_season_stats(*j, force=force), jobs)):
+            out[(s, g)] = res
+    return out

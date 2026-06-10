@@ -35,3 +35,32 @@ market_model:
 
 backfill:
   first_class_year: 2015     # owner decision: 2014-15 winter onward
+
+projection:
+  corpus_first_season: 2000
+  # Component stabilization points (exposure added as league-mean prior),
+  # standard public reliability anchors; PA for hitters, BF for pitchers.
+  regression_k:
+    hit: { k_pct: 60, bb_pct: 120, iso: 160, babip: 820, hr_pa: 170 }
+    pit: { k_pct: 70, bb_pct: 170, hr_bf: 400 }
+  marcel_weights: [5, 4, 3]          # seasons N-1, N-2, N-3
+  playing_time:                       # classic Marcel PT + aging delta
+    hit: { w1: 0.5, w2: 0.1, base_pa: 200 }
+    pit: { w1: 0.5, w2: 0.1, base_ip_sp: 60, base_ip_rp: 25 }
+  min_exposure_pair: { pa: 100, bf: 70 }   # aging-curve season pairs
+  survivorship_lambda: 1.0           # correction strength (documented v1)
+  age_range: [21, 42]                # curve support; clamped outside
+  # Fixed assembly constants (documented): league HBP/SF rates and the
+  # 2B:3B split used to invert ISO into a slash line; wOBA linear weights
+  # (FG-era constants) + scale; evaluated park-neutral.
+  assembly:
+    hbp_rate: 0.009
+    sf_rate: 0.007
+    double_triple_ratio: 5.0
+    woba_weights: { bb: 0.69, hbp: 0.72, single: 0.89, double: 1.27, triple: 1.62, hr: 2.10 }
+    woba_scale: 1.15
+  bands: { z_p10_p90: 1.2816 }       # parametric v1; calibration measured in the gate
+  eval:
+    target_seasons: [2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
+    rate_eval_min_pa: 150
+    rate_eval_min_bf: 150
