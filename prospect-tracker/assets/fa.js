@@ -163,11 +163,81 @@
     return `<div class="fa-note fa-sources" title="MAX(fetched_at) per source table — when each input was last pulled, not when the page was built.">sources: ${parts.join(" &middot; ")}</div>`;
   }
 
+  // ---- Share card — canvas-native PNG of the board's top 10 -----------------
+  // Drawn by hand (no html2canvas: it can't resolve CSS var(), per the PROSPX
+  // GFX builder's literal-stops precedent), so the card is deterministic in
+  // both themes. Token colors are read from the live computed style.
+  function _tok(name, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+
+  function downloadShareCard(cls) {
+    const dark = document.documentElement.getAttribute("data-theme") === "dark";
+    const W = 1200, H = 675, PAD = 48;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const g = c.getContext("2d");
+    const bg = _tok("--bg-primary", dark ? "#101014" : "#F6F1E4");
+    const fg = _tok("--text-primary", dark ? "#ECEEF2" : "#0F1B2D");
+    const sub = _tok("--text-tertiary", dark ? "#7C808A" : "#706B5C");
+    const line = _tok("--border", dark ? "#2B2B31" : "#C9C1AE");
+    const MONO = '"MS Gothic","Osaka-Mono","Roboto Mono",monospace';
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    // iridescent rule — literal stops per theme (canvas can't read var())
+    const ramp = g.createLinearGradient(PAD, 0, W - PAD, 0);
+    (dark
+      ? [[0, "#00D9FF"], [0.3, "#B47CFF"], [0.55, "#FF4FD8"], [0.78, "#FFD700"], [1, "#4FFF9E"]]
+      : [[0, "#B91C1C"], [0.35, "#C9A227"], [0.65, "#1F7A3A"], [1, "#0E2B4D"]]
+    ).forEach(([s, col]) => ramp.addColorStop(s, col));
+    g.fillStyle = ramp; g.fillRect(PAD, 86, W - 2 * PAD, 3);
+    g.fillStyle = fg;
+    g.font = `700 34px ${MONO}`;
+    g.fillText(`MLB FREE AGENCY — ${cls.class_year - 1}-${String(cls.class_year).slice(2)} CLASS BOARD`, PAD, 60);
+    g.fillStyle = sub;
+    g.font = `16px ${MONO}`;
+    g.fillText(`${cls.n_members} constructed members · ${cls.n_projected} projected · winter $/WAR (ex-ante) ${money(cls.dpw_usd)}`, PAD, 116);
+    const cols = [PAD, PAD + 50, PAD + 470, PAD + 640, PAD + 800, PAD + 950];
+    g.font = `700 14px ${MONO}`;
+    ["#", "PLAYER", "mYEARS/mGUAR", "mAAV", "SURPLUS", "DEAL+"].forEach((h, i) =>
+      g.fillText(h, cols[i], 152));
+    g.strokeStyle = line; g.beginPath(); g.moveTo(PAD, 162); g.lineTo(W - PAD, 162); g.stroke();
+    const top = cls.members.filter(m => m.mGuar != null).slice(0, 10);
+    top.forEach((m, i) => {
+      const y = 196 + i * 40;
+      g.fillStyle = sub; g.font = `16px ${MONO}`;
+      g.fillText(String(i + 1), cols[0], y);
+      g.fillStyle = fg; g.font = `700 17px ${MONO}`;
+      g.fillText(m.name, cols[1], y);
+      const nameW = g.measureText(m.name).width;
+      g.fillStyle = sub; g.font = `13px ${MONO}`;
+      g.fillText(`${m.pos || ""} · ${m.age != null ? Math.floor(m.age) : "?"} · ${m.from || ""}${m.thinPlatform ? " · ⚠ thin platform" : ""}`,
+                 cols[1] + nameW + 10, y);
+      g.fillStyle = fg; g.font = `16px ${MONO}`;
+      g.fillText(`${m.mYears}y / ${money(m.mGuar)}`, cols[2], y);
+      g.fillText(money(m.mAav), cols[3], y);
+      g.fillText(formatMetric(m.surplus / 1e6, "surplusM"), cols[4], y);
+      g.fillText(String(m.dealPlus ?? "—"), cols[5], y);
+    });
+    g.fillStyle = sub; g.font = `13px ${MONO}`;
+    g.fillText("predicted market (mGuarantee) vs rational value — two numbers, never conflated · both hard gates passed · projections ex-ante",
+               PAD, H - 56);
+    g.fillStyle = fg; g.font = `700 16px ${MONO}`;
+    g.fillText("eephus.io/fa", PAD, H - 28);
+    c.toBlob(blob => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `fa-class-board-${cls.class_year - 1}-${String(cls.class_year).slice(2)}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    }, "image/png");
+  }
+
   function renderBoard(rows, cls) {
     const members = cls.members;
     const head = `<div class="newsprint-eyebrow" style="margin-top:4px;">
       <span class="newsprint-eyebrow-label">2026-27 Class Board</span>
-      <span class="newsprint-eyebrow-meta">${members.length} constructed members &middot; ${cls.n_projected} projected &middot; winter $/WAR (ex-ante) ${money(cls.dpw_usd)} &middot; sorted by mGuarantee</span>
+      <span class="newsprint-eyebrow-meta">${members.length} constructed members &middot; ${cls.n_projected} projected &middot; winter $/WAR (ex-ante) ${money(cls.dpw_usd)} &middot; sorted by mGuarantee &middot; <button class="chip" id="fa-gfx-btn" title="Download the top of the board as a PNG share card (theme-aware)">&#8681; share card</button></span>
     </div>`;
     const body = members.map((m, i) => {
       const fits = (m.fits || []).map(f =>
@@ -196,6 +266,8 @@
     rows.innerHTML = head + `<table class="detail-table">
       <thead><tr><th>#</th><th>Player</th><th>Status</th><th>WAR y1</th><th>mYears</th><th>mGuarantee</th><th>mAAV</th><th>Rational</th><th>Surplus</th><th>Deal+</th><th>Fits</th></tr></thead>
       <tbody>${body}</tbody></table>`;
+    const gfx = document.getElementById("fa-gfx-btn");
+    if (gfx) gfx.onclick = () => downloadShareCard(cls);
   }
 
   // ---- Signing Tracker — mode-aware ------------------------------------------
@@ -213,7 +285,9 @@
           <div class="state-message-title">The ${cls.class_year - 1}-${String(cls.class_year).slice(2)} winter hasn't opened</div>
           <div class="state-message-body">Signings, option decisions and qualifying offers land here as the
           daily pipeline first observes them (Spotrac publishes no dates, so every event carries its
-          observation stamp). Until then the Class Board carries the projected market &mdash;
+          observation stamp). The winter runs in sequence: contract options resolve in the days after
+          the World Series, qualifying offers are extended and decided, and then the market opens.
+          Until then the Class Board carries the projected market &mdash;
           ${cls.n_projected} of ${cls.n_members} members projected.</div>
         </div>`;
       return;
@@ -389,7 +463,7 @@
       <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${state.winter - 1}-${String(state.winter).slice(2)} winter</span>
       <span class="newsprint-eyebrow-meta">${w.n} signings &middot; ${money(w.spend_usd)} guaranteed &middot; implied $/WAR ${money(w.dpw_usd)}${w.qo_offered != null ? ` &middot; ${w.qo_offered} qualifying offers` : ""}</span></div>
       <table class="detail-table">
-      <thead><tr><th>Player</th><th>From &rarr; To</th><th>Yrs</th><th>Guarantee</th><th>AAV</th><th>WAR to date</th><th>Surplus to date</th><th>Status</th></tr></thead>
+      <thead><tr><th>Player</th><th title="From = the club holding his rights AT signing — a midseason rental shows the acquiring club, not the team he opened the year with.">From &rarr; To</th><th>Yrs</th><th>Guarantee</th><th>AAV</th><th>WAR to date</th><th>Surplus to date</th><th>Status</th></tr></thead>
       <tbody>${body}</tbody></table>`;
     rows.querySelectorAll("[data-fa-winter]").forEach(b => b.onclick = () => {
       state.winter = Number(b.dataset.faWinter); syncToURL(); render();

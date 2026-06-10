@@ -94,3 +94,29 @@ def test_meta_sources_freshness_stamps():
     assert src and "class" in src
     for label, day in src.items():
         assert len(day) == 10 and day[4] == "-" and day[7] == "-", (label, day)
+
+
+# ---- fit-score regression bounds (reliever supply / zero-room teams) ---------
+
+def test_team_fits_components_bounded_and_finite():
+    """Every exported fit row: components in [0, 1], composite finite and
+    non-negative — a zero-CBT-room club or a missing behavior prior must
+    degrade gracefully, never produce NaN/negative scores."""
+    d = _cls()
+    tf = d.get("teamFits") or {}
+    assert len(tf) == 30, f"teamFits must cover all 30 clubs, got {len(tf)}"
+    for org, rows in tf.items():
+        for r in rows:
+            assert 0.0 <= r["fit"] <= 1.0001, (org, r)
+            for comp in ("need", "window", "afford", "park", "behavior"):
+                v = r.get(comp)
+                assert v is not None and 0.0 <= v <= 1.0001, (org, comp, r)
+
+
+def test_reliever_supply_present_in_class():
+    """The class construction must carry the RP supply (relievers are the
+    bulk of every winter); a reliever-free class means the position
+    normalizer or the scrape regressed."""
+    d = _cls()
+    rps = [m for m in d["members"] if (m.get("pos") or "").upper() in ("RP", "CL", "CP")]
+    assert len(rps) >= 30, f"only {len(rps)} relievers in a {d['n_members']}-member class"
