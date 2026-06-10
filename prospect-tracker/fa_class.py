@@ -134,13 +134,32 @@ def _advertised_count(html_rows: list[dict], page_count: int | None) -> dict:
     }
 
 
+def dedupe_double_listings(rows: list[dict], class_year: int | None = None) -> list[dict]:
+    """Spotrac sometimes lists an option-holder TWICE — once under the option
+    type and once as the post-decline UFA scenario (Mountcastle & Urías on
+    the 2027 page: 229 rows, 227 humans). Same spotrac_id = same player:
+    keep the option row, since it carries the pending decision; the plain
+    UFA listing is conditional on that option being declined."""
+    by_id: dict = {}
+    for r in rows:
+        rid = r.get("spotrac_id") or r.get("player_key")
+        cur = by_id.get(rid)
+        if cur is None or (cur.get("fa_type") == "ufa" and r.get("fa_type") != "ufa"):
+            by_id[rid] = r
+    if len(by_id) < len(rows):
+        log.info("fa class %s: deduped %d double-listed option row(s)",
+                 class_year, len(rows) - len(by_id))
+    return list(by_id.values())
+
+
 def build_current_class(class_year: int, force: bool = False) -> dict:
     """The constructed (pre-resolution) class for the coming winter.
 
     Returns {"class_year", "built_at", "players": [...], "reconciliation",
     "qo_note"}. Each player row carries status + enter_prob + the raw
     ingested fields; nothing here is invented."""
-    rows = fa_sources.scrape_spotrac_fa_available(class_year, force=force)
+    rows = dedupe_double_listings(
+        fa_sources.scrape_spotrac_fa_available(class_year, force=force), class_year)
     players = []
     for r in rows:
         ep = exercise_probability(r)

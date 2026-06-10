@@ -51,6 +51,22 @@ def _clean(d: dict) -> dict:
     return {k: v for k, v in d.items() if v is not None and v != [] and v != {}}
 
 
+TWO_WAY_NOTE = ("Two-way profile — the market model prices one profile only, "
+                "so the predicted contract is a FLOOR, not a point estimate.")
+
+
+def _load_overrides() -> dict[str, dict]:
+    """Owner-curated per-player overrides (data/fa_overrides.json):
+    two_way / note / exclude. Disclosure and curation only — never
+    touches the model. '_'-prefixed keys are documentation."""
+    try:
+        d = json.loads((DATA_DIR / "fa_overrides.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {k: v for k, v in (d.get("players") or {}).items()
+            if not k.startswith("_") and isinstance(v, dict)}
+
+
 def _prospect_fv_history(keys: set) -> dict[str, dict]:
     """Read-only Prospect-to-Payday source: condensed consensus-FV arcs from
     the PROSPX boot export, for class members who were tracked prospects.
@@ -109,10 +125,14 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         [{"class_year": class_year, "position": p.get("position")} for p in cls], class_year)
     dpw = fm.winter_dpw(dpw_series, class_year)
 
+    overrides = _load_overrides()
     members = []
     full_fits: list[tuple[dict, list[dict]]] = []   # (member, all-org fits)
     n_proj = 0
     for row in cls:
+        ovr = overrides.get(row.get("player_key")) or {}
+        if ovr.get("exclude"):
+            continue
         m = _clean({
             "key": row.get("player_key"), "name": row["player_name"],
             "pos": row.get("position"), "age": row.get("age"),
@@ -123,6 +143,10 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
             "prevAav": row.get("prev_aav_usd"), "prevWar": row.get("prev_war"),
             "qoValue": row.get("qo_value_usd"),
         })
+        if ovr.get("two_way"):
+            m["twoWay"] = True
+        if ovr.get("note") or ovr.get("two_way"):
+            m["note"] = ovr.get("note") or TWO_WAY_NOTE
         mlbam = fa_ident.resolve(row["player_name"], range(class_year - 4, class_year))
         if mlbam:
             pos_grp = fm._pos_group(row.get("position"))
@@ -130,6 +154,24 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
             seasons = by_player[side].get(mlbam) or {}
             hist = [seasons[t] for t in (class_year - 1, class_year - 2, class_year - 3)
                     if t in seasons]
+            # Thin-platform disclosure: a projection riding a missing or
+            # injury-shortened platform year is the model's weakest case
+            # (Burnes-type) — badge it, don't hide it. The exposure floor
+            # scales by season_fraction, so a normal in-progress June season
+            # never flags; 30% of a regular's pace does.
+            platform = seasons.get(class_year - 1)
+            if platform is None:
+                m["thinPlatform"] = (f"no {class_year - 1} season in the corpus — "
+                                     "projection rides older years")
+            else:
+                # Full-season volume is ROLE-aware: a reliever at 20 IP in
+                # June is on pace, not hurt (65 IP RP season vs 180 SP).
+                vol_key, full = (("pa", 600) if side == "hit"
+                                 else ("ip", 65 if pos_grp == "RP" else 180))
+                vol = platform.get(vol_key) or 0
+                if vol < 0.3 * full * max(frac, 0.1):
+                    m["thinPlatform"] = (f"only {vol:.0f} {vol_key.upper()} in "
+                                         f"{class_year - 1} — injury-thin platform")
             if hist:
                 age_prev = next((h.get("age") for h in hist if h.get("age")), None)
                 age = ((age_prev + (class_year - hist[0]["season"])) if age_prev
@@ -281,6 +323,24 @@ def build_fa_archive_payload(first: int = 2015, last: int = CLASS_YEAR - 1) -> d
     return {"generated_at": date.today().isoformat(), "winters": winters}
 
 
+def _source_freshness() -> dict:
+    """MAX(fetched_at) per FA source table — the UI's staleness stamps.
+    Read-only; missing tables (fresh DB) just drop out."""
+    out = {}
+    try:
+        with storage.connect() as con:
+            for label, table in (("class", "fa_class_players"),
+                                 ("signings", "fa_signings"),
+                                 ("payroll", "fa_team_payroll"),
+                                 ("parks", "fa_park_factors")):
+                r = con.execute(f"SELECT MAX(fetched_at) FROM {table}").fetchone()
+                if r and r[0]:
+                    out[label] = str(r[0])[:10]
+    except Exception:                                    # noqa: BLE001 — stamps are best-effort
+        pass
+    return out
+
+
 def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
     def _gate(path: str):
         try:
@@ -307,6 +367,7 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
     return {
         "generated_at": date.today().isoformat(),
         "class_year": class_year,
+        "sources": _source_freshness(),
         "cba": {"threshold_usd": thr["threshold_usd"],
                 "carry_forward": thr["carry_forward"],
                 "regime": thr.get("regime"),

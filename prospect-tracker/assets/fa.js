@@ -112,9 +112,9 @@
       rows.innerHTML = `<div class="state-message">Free-agency data not exported yet.</div>`;
       return;
     }
-    banner.innerHTML = cls.cba_carry_forward
+    banner.innerHTML = (cls.cba_carry_forward
       ? `<div class="fa-cba-note" title="The 2022 CBA expired 2026-12-01. Every 2027 threshold/QO figure is a carry-forward of the last known rule, not a published number.">&#9888; CBA rules past 2026-12-01 are carried forward &mdash; thresholds and QO values for this winter are NOT yet collectively bargained.</div>`
-      : "";
+      : "") + freshnessLine(meta);
     if (state.player) { renderPlayer(rows, cls, state.player); return; }
     if (state.view === "board") renderBoard(rows, cls);
     else if (state.view === "tracker") renderTracker(rows, cls);
@@ -143,6 +143,26 @@
     return `<a href="#player=${encodeURIComponent(m.key || "")}" class="fa-player-link"><strong>${esc(m.name)}</strong></a>`;
   }
 
+  // Disclosure badges — the model's weak spots are surfaced, never hidden.
+  function thinBadge(m) {
+    return m.thinPlatform
+      ? ` <span class="fa-thin" title="${esc(m.thinPlatform)} — projection confidence is LOW; the market line inherits the weakness.">&#9888;</span>` : "";
+  }
+
+  function noteBadge(m) {
+    return m.note
+      ? ` <span class="fa-thin" title="${esc(m.note)}">&#8251;</span>` : "";
+  }
+
+  function freshnessLine(meta) {
+    const src = meta && meta.sources;
+    if (!src || !Object.keys(src).length) return "";
+    const stale = d => (Date.now() - new Date(d + "T00:00:00").getTime()) / 864e5 > 14;
+    const parts = Object.entries(src).map(([k, d]) =>
+      `${k} ${d}${stale(d) ? ` <span class="fa-stale" title="${k} last fetched ${d} — more than 14 days old. Re-run the FA pipeline.">&#9888; stale</span>` : ""}`);
+    return `<div class="fa-note fa-sources" title="MAX(fetched_at) per source table — when each input was last pulled, not when the page was built.">sources: ${parts.join(" &middot; ")}</div>`;
+  }
+
   function renderBoard(rows, cls) {
     const members = cls.members;
     const head = `<div class="newsprint-eyebrow" style="margin-top:4px;">
@@ -161,9 +181,9 @@
       const surplus = m.surplus != null ? formatMetric(m.surplus / 1e6, "surplusM") : EM_DASH;
       return `<tr${m.mGuar == null || m.status === "option_exercised" ? ' class="fa-dim"' : ""}>
         <td>${i + 1}</td>
-        <td>${playerLink(m)}<span class="fa-sub"> ${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${esc(m.from || "")}</span>${comps ? `<div class="fa-comps" title="Nearest real historical contracts (never fabricated)">comps: ${comps}</div>` : ""}</td>
+        <td>${playerLink(m)}${noteBadge(m)}<span class="fa-sub"> ${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${esc(m.from || "")}</span>${comps ? `<div class="fa-comps" title="Nearest real historical contracts (never fabricated)">comps: ${comps}</div>` : ""}</td>
         <td>${statusChip(m)}</td>
-        <td title="Projected year-1 bWAR from the Gate-1-passed engine">${m.warY1 != null ? formatMetric(m.warY1, "war") : EM_DASH}</td>
+        <td title="Projected year-1 bWAR from the Gate-1-passed engine">${m.warY1 != null ? formatMetric(m.warY1, "war") : EM_DASH}${thinBadge(m)}</td>
         <td title="Predicted contract length (P10–P90 band)">${yearsBand}</td>
         <td title="Predicted total guarantee (P10–P90 band)">${guarBand}</td>
         <td title="Predicted AAV">${m.mAav != null ? money(m.mAav) : EM_DASH}</td>
@@ -287,6 +307,8 @@
       <p><a href="#view=board">&larr; Class Board</a></p>
       <div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">${esc(m.name)}</span>
       <span class="newsprint-eyebrow-meta">${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${esc(m.from || "")} &middot; ${statusChip(m)}</span></div>
+      ${m.thinPlatform ? `<div class="fa-cba-note">&#9888; ${esc(m.thinPlatform)} &mdash; the projection, and every number priced off it, is low-confidence.</div>` : ""}
+      ${m.note ? `<div class="fa-cba-note">&#8251; ${esc(m.note)}</div>` : ""}
       ${signedBlock}
       <h3>Predicted market</h3>
       <table class="detail-table"><thead><tr><th>mYears</th><th>mGuarantee</th><th>mAAV</th><th>Rational</th><th>Surplus</th><th>Deal+</th></tr></thead>

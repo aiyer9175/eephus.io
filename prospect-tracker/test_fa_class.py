@@ -115,3 +115,26 @@ def test_dpw_backcast_fallback_deescalates(monkeypatch):
     assert cur > old > 0
     # 11 years of the framework's configured escalation
     assert old == pytest.approx(cur / (1.05 ** 11), rel=1e-6)
+
+
+# ---- double-listing dedup (Spotrac option + post-decline UFA rows) -----------
+
+def test_double_listed_option_rows_deduped_option_wins():
+    rows = [
+        {"player_key": "ryan_mountcastle", "spotrac_id": "17652", "fa_type": "ufa"},
+        {"player_key": "ryan_mountcastle", "spotrac_id": "17652", "fa_type": "club_option"},
+    ]
+    out = fc.dedupe_double_listings(rows)
+    assert len(out) == 1 and out[0]["fa_type"] == "club_option"
+    # order-independent: option first, UFA second collapses the same way
+    out2 = fc.dedupe_double_listings(rows[::-1])
+    assert len(out2) == 1 and out2[0]["fa_type"] == "club_option"
+
+
+def test_distinct_players_never_deduped():
+    rows = [
+        {"player_key": "a_guy", "spotrac_id": "1", "fa_type": "ufa"},
+        {"player_key": "b_guy", "spotrac_id": "2", "fa_type": "ufa"},
+        {"player_key": "c_guy", "spotrac_id": None, "fa_type": "club_option"},
+    ]
+    assert len(fc.dedupe_double_listings(rows)) == 3
