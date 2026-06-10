@@ -498,6 +498,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .home-ticker .ticker-track span.tk-logo { width: auto; height: auto; vertical-align: baseline; color: #1a1d12; padding: 1px 4px; }
 .home-ticker .ticker-track a:hover { text-decoration: underline; }
 .home-ticker .ticker-track .up { color: #6ee7a8; } .home-ticker .ticker-track .down { color: #ff8a8a; }
+.home-ticker .ticker-track .signing { color: #b47cff; }   /* FA winter wire */
 .home-ticker .ticker-track .glyph { color: var(--accent-gold); }
 .home-ticker .ticker-track .promo { color: #6ee7a8; } .home-ticker .ticker-track .demo { color: #ff8a8a; }
 .home-ticker .ticker-track .il { color: #ffb454; } .home-ticker .ticker-track .debut { color: #4ee0ff; }
@@ -583,6 +584,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .feed-item .g.il,    .feed-item .feed-val.il    { color: #ffb454; }
 .feed-item .g.debut, .feed-item .feed-val.debut { color: #4ee0ff; }
 .feed-item .g.trade, .feed-item .feed-val.trade { color: var(--accent-gold); }
+.feed-item .g.signing, .feed-item .feed-val.signing { color: #b47cff; }   /* FA winter wire — refractor violet */
 
 /* ---- masthead ---- */
 .masthead { text-align: center; border-bottom: 3px double var(--text-primary); padding: 22px 0 12px; margin-bottom: 4px; }
@@ -882,6 +884,20 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 }
 .fa-app .state-message.is-error { color: var(--accent-red); }
 .fa-app .state-message code { font-family: var(--font-retro-mono); font-size: 12px; }
+.fa-app .fa-player-link { color: var(--text-primary); text-decoration: none; border-bottom: 1px dotted var(--border); }
+.fa-app .fa-player-link:hover { border-bottom-color: var(--text-tertiary); }
+.fa-app .fa-warpath { display: flex; gap: 6px; align-items: flex-end; height: 90px; padding: 6px 2px; }
+.fa-app .fa-warbar { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; width: 34px; }
+.fa-app .fa-warbar > div { width: 100%; background: var(--iridescent); opacity: 0.85; }
+.fa-app .fa-warbar > span { font-size: 10px; color: var(--text-tertiary); margin-top: 3px; }
+.fa-app .fa-arc { color: var(--accent-gold); }      /* sparkline stroke/fill = currentColor */
+.fa-app .fa-arc circle { fill: currentColor; }
+.fa-app .fa-fitchips .chip {
+  display: inline-block; font-size: 12px; padding: 4px 10px; margin: 0 4px 4px 0;
+  border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary);
+}
+.fa-app .state-message-title { font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.fa-app .state-message-body { max-width: 60ch; margin: 0 auto; }
 .fa-app .fa-gloss { max-width: 72ch; margin: 0 0 18px; }
 .fa-app .fa-gloss h3 { margin: 0 0 4px; }
 .fa-app .fa-gloss p { margin: 0 0 6px; color: var(--text-secondary); font-size: 0.95rem; }

@@ -557,6 +557,10 @@ def load_site_data() -> dict | None:
     }
 
 def _player_href(key: str) -> str:
+    # "fa:" keys belong to the Free Agency surface (separate from PROSPX) —
+    # they deep-link the /fa/ player card, not a PROSPX player page.
+    if key and key.startswith("fa:"):
+        return f"/fa/#player={key[3:]}"
     return f"/prospx/#player={key}" if key else "/prospx/"
 
 # ORG abbreviation -> ESPN logo slug (mirrors ESPN_LOGO_SLUGS in prospx/index.html).
@@ -806,7 +810,17 @@ def _row_farm(o: dict, rank: int) -> str:
 # window keep their slots.
 _WIRE_MAX_FV_PER_DAY = 6
 
-def _collect_events(players: list, graduates: list) -> list:
+def _load_fa_events_for_wire() -> list:
+    """Recent winter events from the FA module's own export (the events
+    block in data/fa_class.json). Additive: an absent or pre-events export
+    just yields no items. Dates are the pipeline's first-seen stamps."""
+    try:
+        d = json.loads((DATA_DIR / "fa_class.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return d.get("events") or []
+
+def _collect_events(players: list, graduates: list, fa_events: list | None = None) -> list:
     # Each event is (date, typ, glyph, ticker_text, key, org, name, val):
     # `ticker_text` is the one-string form the scrolling WIRE marquee uses;
     # `name`/`val` are the structured halves the sidebar feed lays out as
@@ -850,6 +864,27 @@ def _collect_events(players: list, graduates: list) -> list:
         add(g.get("debut_date"), "debut", "★", f'{g.get("player_name", "")} debuted · {g.get("org", "")}',
             g.get("player_key"), g.get("org"),
             name=g.get("player_name") or "", val="debut", weight=100)
+    # Free-agency winter events (signings / option resolutions / QOs) from
+    # the FA module's export. "fa:"-prefixed keys route to /fa/, never to a
+    # PROSPX player page; the signing org carries the logo.
+    for e in (fa_events or []):
+        nm = e.get("name") or ""
+        key = f'fa:{e.get("key", "")}'
+        t = e.get("type")
+        if t == "signing":
+            terms = ("MiLB deal" if e.get("milb")
+                     else f'{e.get("years", "?")}y/${(e.get("guar") or 0) / 1e6:.0f}M')
+            add(e.get("date"), "signing", "✎", f'{nm} signs · {e.get("to", "?")} {terms}',
+                key, e.get("to"), name=nm, val=terms, weight=95)
+        elif t == "option_declined":
+            add(e.get("date"), "signing", "✎", f'{nm} declines option — enters FA class',
+                key, e.get("from"), name=nm, val="opt-out → FA", weight=85)
+        elif t == "option_exercised":
+            add(e.get("date"), "signing", "✎", f'{nm} option exercised — off the FA board',
+                key, e.get("from"), name=nm, val="option exercised", weight=85)
+        elif t == "qo_offered":
+            add(e.get("date"), "signing", "✎", f'{nm} receives qualifying offer',
+                key, e.get("from"), name=nm, val="QO offered", weight=84)
     by_day: dict[str, list] = {}
     for it in fv_items:
         by_day.setdefault(it[0], []).append(it)
@@ -892,10 +927,10 @@ def _ticker_html(events: list, n: int = 14) -> str:
     # ticker is aria-hidden decoration; the sidebar Prospect Wire feed is the
     # accessible, keyboard-navigable equivalent.
     items = []
-    known = ("up", "down", "promo", "demo", "il", "debut", "trade")
+    known = ("up", "down", "promo", "demo", "il", "debut", "trade", "signing")
     for dt, typ, glyph, text, key, org, name, val in events[:n]:
         cls = typ if typ in known else "glyph"
-        href = f"/prospx/#player={key}" if key else "/prospx/#tab=spotlights"
+        href = _player_href(key) if key else "/prospx/#tab=spotlights"
         logo = _team_logo(org, "tk-logo") if org else ""
         items.append(f'<a href="{html.escape(href)}" tabindex="-1">{logo}'
                      f'<span class="{cls}">{glyph}</span> {html.escape(text)}</a>')
@@ -1114,7 +1149,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     graduates = data.get("graduates") or []
     as_of = data.get("as_of", "—")
     today = datetime.now().strftime("%A, %B %d, %Y").replace(" 0", " ")
-    events = _collect_events(players, graduates)
+    events = _collect_events(players, graduates, _load_fa_events_for_wire())
 
     # ---- sidebar ----
     nav = []

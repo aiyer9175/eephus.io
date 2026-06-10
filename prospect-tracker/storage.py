@@ -1502,6 +1502,21 @@ CREATE TABLE IF NOT EXISTS fa_park_factors (
     PRIMARY KEY (venue, season)
 );
 
+-- Append-only winter event ledger. event_date is the FIRST-SEEN date —
+-- Spotrac publishes no per-signing dates, so the pipeline stamps each
+-- transition when it observes it (ex-ante, consistent with the module's
+-- no-lookahead rule) and never updates it afterward. Feeds the homepage
+-- WIRE and the /fa/ Signing Tracker.
+CREATE TABLE IF NOT EXISTS fa_events (
+    class_year   INTEGER NOT NULL,
+    player_key   TEXT NOT NULL,
+    event_type   TEXT NOT NULL,            -- 'signing' | 'option_exercised' | 'option_declined' | 'qo_offered'
+    event_date   TEXT NOT NULL,            -- first observed (yyyy-mm-dd)
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    PRIMARY KEY (class_year, player_key, event_type)
+);
+CREATE INDEX IF NOT EXISTS idx_fa_events_year ON fa_events(class_year, event_date);
+
 -- v31.7 — Per-player season stats from FG player pages for DRAFT
 -- prospects (college + HS). FG hosts amateur stats at the same
 -- /players/<slug>/<playerId>/stats URL as overseas players; the
@@ -13160,6 +13175,52 @@ def upsert_fa_team_payroll(season: int, teams: list[dict]) -> int:
 def load_fa_team_payroll(season: int | None = None) -> dict:
     where, args = ("WHERE season = ?", (season,)) if season else ("", ())
     return _fa_load("fa_team_payroll", ("team", "season"), where, args)
+
+
+def insert_fa_events_first_seen(class_year: int, events: list[dict]) -> int:
+    """Append-only event insert. Each event is {player_key, event_type,
+    payload?}. The event_date stamps as today ONLY on first insert —
+    re-observing the same transition on later refreshes is a no-op, so
+    first-seen dates never drift."""
+    n = 0
+    with connect() as con:
+        for e in events:
+            if not (e.get("player_key") and e.get("event_type")):
+                continue
+            cur = con.execute(
+                """INSERT OR IGNORE INTO fa_events
+                   (class_year, player_key, event_type, event_date, payload_json)
+                   VALUES (?, ?, ?, date('now'), ?)""",
+                (class_year, e["player_key"], e["event_type"],
+                 json.dumps(e.get("payload") or {})))
+            n += cur.rowcount
+    return n
+
+
+def load_fa_events(class_year: int | None = None) -> list[dict]:
+    """Events newest-first; each row carries class_year/player_key/
+    event_type/event_date plus the payload fields."""
+    where, args = ("WHERE class_year = ?", (class_year,)) if class_year else ("", ())
+    try:
+        with connect() as con:
+            rows = con.execute(
+                f"""SELECT class_year, player_key, event_type, event_date, payload_json
+                    FROM fa_events {where} ORDER BY event_date DESC, player_key""",
+                args).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [{"class_year": r[0], "player_key": r[1], "event_type": r[2],
+             "event_date": r[3], **json.loads(r[4])} for r in rows]
+
+
+def set_fa_class_player_status(class_year: int, player_key: str, status: str) -> None:
+    """Flip one class member's queryable status column (e.g. → 'signed'
+    when the winter tracker observes a deal). The payload keeps the raw
+    as-scraped row; status is the pipeline's reconciled view."""
+    with connect() as con:
+        con.execute(
+            "UPDATE fa_class_players SET status = ? WHERE class_year = ? AND player_key = ?",
+            (status, class_year, player_key))
 
 
 def upsert_fa_model_eval(model_version: str, gate: str, payload: dict) -> None:

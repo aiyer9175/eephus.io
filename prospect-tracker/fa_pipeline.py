@@ -173,11 +173,97 @@ def backfill_historical(first_year: int | None = None,
 
 
 def refresh_current_class(class_year: int, force: bool = False) -> dict:
+    prior = {k: p for (k, yr), p in
+             storage.load_fa_class_players(class_year).items() if yr == class_year}
     cls = fa_class.build_current_class(class_year, force=force)
     n = storage.upsert_fa_class_players(class_year, cls["players"])
     log.info("fa current class %d: stored %d players (reconciliation %s)",
              class_year, n, cls["reconciliation"])
+    try:
+        ev = track_winter_events(class_year, prior, cls["players"], force=force)
+        if ev["inserted"]:
+            log.info("fa events %d: %s", class_year, ev)
+    except Exception:                                    # noqa: BLE001 — tracker is additive
+        log.exception("fa winter event tracking failed — continuing")
     return cls
+
+
+def track_winter_events(class_year: int, prior: dict, available: list[dict],
+                        force: bool = False, signed_rows: list[dict] | None = None) -> dict:
+    """Observe winter transitions and append them to the first-seen ledger.
+
+    Spotrac publishes terms but no per-signing dates, so every event stamps
+    the date the PIPELINE first saw it (ex-ante — no backdating). Sources:
+      • the class page's signed table (authoritative for terms)         → signing
+      • status diffs vs the previously stored rows:
+          pending_option re-listed as a locked UFA                      → option_declined
+          pending_option gone from the page without a signing           → option_exercised
+          QO flag newly published on an available row (early November)  → qo_offered
+    ``signed_rows`` is injectable for tests; production scrapes the page.
+    The option_exercised branch is a documented v1 heuristic (same status
+    as the exercise-probability heuristic): page variance can momentarily
+    drop a row, but events are append-only with stable keys, so one noisy
+    scrape cannot duplicate or re-date anything.
+    """
+    avail_by_key = {p["player_key"]: p for p in available if p.get("player_key")}
+    seen = {(e["player_key"], e["event_type"])
+            for e in storage.load_fa_events(class_year)}
+    events: list[dict] = []
+
+    if signed_rows is None:
+        try:
+            signed_rows = fa_sources.scrape_spotrac_fa_class(class_year,
+                                                             force=force).get("signed") or []
+        except Exception:                                # noqa: BLE001 — page may not exist pre-winter
+            log.exception("fa class %d: signed-page scrape failed — signings skipped",
+                          class_year)
+            signed_rows = []
+    for s in signed_rows:
+        key = s.get("player_key")
+        if not key:
+            continue
+        events.append({"player_key": key, "event_type": "signing",
+                       "payload": {k: s.get(k) for k in
+                                   ("player_name", "position", "from_team", "to_team",
+                                    "years", "guarantee_usd", "aav_usd", "qo",
+                                    "qo_accepted", "mlb_deal") if s.get(k) is not None}})
+    if signed_rows:
+        storage.upsert_fa_signings(class_year, signed_rows)
+    signing_keys = ({s.get("player_key") for s in signed_rows}
+                    | {k for k, t in seen if t == "signing"})
+
+    for key, p in prior.items():
+        if p.get("status") != "pending_option":
+            continue
+        now = avail_by_key.get(key)
+        base = {"player_name": p.get("player_name"), "position": p.get("position"),
+                "option_price_usd": p.get("option_price_usd")}
+        if now is not None and now.get("status") == "locked":
+            events.append({"player_key": key, "event_type": "option_declined",
+                           "payload": base})
+        elif now is None and key not in signing_keys:
+            events.append({"player_key": key, "event_type": "option_exercised",
+                           "payload": base})
+
+    for key, now in avail_by_key.items():
+        was = prior.get(key) or {}
+        if ((now.get("qo") or now.get("qo_offered"))
+                and not (was.get("qo") or was.get("qo_offered"))):
+            events.append({"player_key": key, "event_type": "qo_offered",
+                           "payload": {"player_name": now.get("player_name"),
+                                       "position": now.get("position")}})
+
+    inserted = storage.insert_fa_events_first_seen(class_year, events)
+    # Reconcile the queryable status column: payload keeps the raw scrape;
+    # status is the pipeline's view (board dims signed/exercised members).
+    for e in events:
+        if e["event_type"] == "signing":
+            storage.set_fa_class_player_status(class_year, e["player_key"], "signed")
+        elif e["event_type"] == "option_exercised":
+            storage.set_fa_class_player_status(class_year, e["player_key"],
+                                               "option_exercised")
+    return {"observed": len(events), "inserted": inserted,
+            "signed_rows": len(signed_rows)}
 
 
 def refresh_payroll(seasons: list[int] | None = None, force: bool = False) -> int:

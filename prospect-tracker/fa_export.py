@@ -51,6 +51,38 @@ def _clean(d: dict) -> dict:
     return {k: v for k, v in d.items() if v is not None and v != [] and v != {}}
 
 
+def _prospect_fv_history(keys: set) -> dict[str, dict]:
+    """Read-only Prospect-to-Payday source: condensed consensus-FV arcs from
+    the PROSPX boot export, for class members who were tracked prospects.
+    mlbam rides along so the caller can id-gate name-key collisions (the FA
+    Jacob Webb is NOT the FV-40 prospect Jacob Webb)."""
+    path = DATA_DIR / "timeseries.json"
+    if not path.exists():
+        return {}
+    try:
+        players = json.loads(path.read_text(encoding="utf-8")).get("players") or []
+    except ValueError:
+        return {}
+    out: dict[str, dict] = {}
+    for p in players:
+        key = p.get("player_key")
+        if key not in keys or not p.get("mlbam_id"):
+            continue
+        pts: list = []
+        last = None
+        for pt in (p.get("points") or []):
+            fv = pt.get("consensus_fv_raw")
+            d = (pt.get("snapshot_date") or "")[:10]
+            if fv is None or not d:
+                continue
+            if last is None or fv != last:
+                pts.append([d, round(fv, 1)])
+                last = fv
+        if len(pts) >= 2:
+            out[key] = {"mlbam": int(p["mlbam_id"]), "pts": pts[-40:]}
+    return out
+
+
 def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
     corpus = fp.build_corpus()
     league = corpus["league"]
@@ -66,6 +98,13 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
     dpw_series = fm.dollars_per_war_by_winter(enriched)
     model = fm.MarketModel(enriched, dpw_series)
     cls = list(storage.load_fa_class_players(class_year).values())
+    # Winter-tracker state: in-class signings (terms from the class page) +
+    # the first-seen event ledger. Both empty preseason.
+    signings = {k: v for (k, yr), v in storage.load_fa_signings(class_year).items()
+                if yr == class_year}
+    events = storage.load_fa_events(class_year)
+    ev_date = {(e["player_key"], e["event_type"]): e["event_date"] for e in events}
+    fv_hist = _prospect_fv_history({p.get("player_key") for p in cls})
     model.supply_by_year[class_year] = fm._supply(
         [{"class_year": class_year, "position": p.get("position")} for p in cls], class_year)
     dpw = fm.winter_dpw(dpw_series, class_year)
@@ -138,6 +177,29 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                         }) for f in fits],
                     }))
                     n_proj += 1
+        # Winter overrides: the reconciled pipeline status beats the stale
+        # as-scraped payload status, and signed members carry their ACTUAL
+        # terms next to the prediction (the tracker's whole point).
+        key = row.get("player_key")
+        sgn = signings.get(key)
+        if sgn:
+            m["status"] = "signed"
+            m.update(_clean({
+                "signedTo": sgn.get("to_team"),
+                "signedYears": sgn.get("years"),
+                "signedGuar": sgn.get("guarantee_usd"),
+                "signedAav": sgn.get("aav_usd"),
+                "signedDate": ev_date.get((key, "signing")),
+                "signedMilb": True if sgn.get("mlb_deal") is False else None,
+                "qoAccepted": True if sgn.get("qo_accepted") else None,
+            }))
+        elif (key, "option_exercised") in ev_date:
+            m["status"] = "option_exercised"
+        # Prospect-to-Payday arc — id-gated so a name-key collision can
+        # never paste a prospect's FV history onto a same-named veteran.
+        arc = fv_hist.get(key)
+        if arc and mlbam and arc["mlbam"] == mlbam:
+            m["fvArc"] = arc["pts"]
         members.append(m)
     members.sort(key=lambda m: -(m.get("mGuar") or 0))
     # Per-team fit lists covering ALL 30 orgs (the member rows only carry
@@ -167,8 +229,22 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         "dpw_usd": int(dpw),
         "cba_carry_forward": bool(thr.get("carry_forward")),
         "n_members": len(members), "n_projected": n_proj,
+        "n_signed": sum(1 for m in members if m.get("status") == "signed"),
         "members": members,
         "teamFits": team_fits,
+        # First-seen winter events (newest first, capped) — the WIRE and the
+        # Signing Tracker timeline. Dates are observation stamps, not
+        # Spotrac dates (the source publishes none).
+        "events": [_clean({
+            "date": e["event_date"], "type": e["event_type"],
+            "key": e["player_key"], "name": e.get("player_name"),
+            "pos": e.get("position"), "from": e.get("from_team"),
+            "to": e.get("to_team"), "years": e.get("years"),
+            "guar": e.get("guarantee_usd"), "aav": e.get("aav_usd"),
+            "qo": True if e.get("qo") else None,
+            "milb": True if e.get("mlb_deal") is False else None,
+            "optPrice": e.get("option_price_usd"),
+        }) for e in events[:80]],
     }
 
 
