@@ -11,9 +11,11 @@
 // chrome (assets/site.css) and the data/ directory but loads none of the
 // PROSPX boot payload and none of its script. Fed by the three fa_export.py
 // sidecars (fa_class.json / fa_archive.json / fa_meta.json) fetched directly
-// from /data/. Two numbers, never conflated: RATIONAL VALUE (NPV of the gated
-// projection) vs PREDICTED MARKET (mYears/mGuarantee/mAAV with bands).
-// Contract Surplus ($) = rational − predicted; Deal+ 100 = market-rate.
+// from /data/. Two numbers, never conflated: RATIONAL VALUE (convex-priced
+// NPV of the gated projection) vs PREDICTED MARKET (projLength /
+// projGuarantee / projAAV with P10-P90 bands). Contract Surplus ($) =
+// rational − predicted; the VERDICT chip (value / market / overpay) reads
+// Deal+ against the historical corpus terciles.
 (function () {
   "use strict";
 
@@ -48,6 +50,39 @@
   function esc(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  // ORG abbreviation -> ESPN logo slug (same map as build_site/prospx).
+  const ESPN_SLUGS = {
+    ARI: "ari", ATH: "ath", ATL: "atl", BAL: "bal", BOS: "bos",
+    CHC: "chc", CHW: "chw", CIN: "cin", CLE: "cle", COL: "col",
+    DET: "det", HOU: "hou", KCR: "kc", LAA: "laa", LAD: "lad",
+    MIA: "mia", MIL: "mil", MIN: "min", NYM: "nym", NYY: "nyy",
+    PHI: "phi", PIT: "pit", SDP: "sd", SEA: "sea", SFG: "sf",
+    STL: "stl", TBR: "tb", TEX: "tex", TOR: "tor", WSN: "wsh",
+  };
+  function teamLogo(org) {
+    if (!org || !ESPN_SLUGS[org]) return "";
+    return `<img class="fa-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/${ESPN_SLUGS[org]}.png" alt="${esc(org)}" loading="lazy" onerror="this.remove()">`;
+  }
+
+  // Deal verdict chip — the plain-English read of Deal+ (band edges are the
+  // 2015-2026 corpus terciles; see the deal_verdict glossary entry).
+  const VERDICT_META = {
+    value:   ["VALUE",   "Projected to be UNDERPAID — rational value runs well past the predicted price (Deal+ in the corpus top tercile, ≥185)."],
+    market:  ["MARKET",  "Priced about right — rational value and predicted price within the corpus middle tercile (Deal+ 85–185)."],
+    overpay: ["OVERPAY", "Projected to be OVERPAID — predicted price runs past rational value (Deal+ in the corpus bottom tercile, <85)."],
+  };
+  function verdictChip(m) {
+    const v = VERDICT_META[m.verdict];
+    if (!v) return EM_DASH;
+    return `<span class="fa-verdict fa-verdict-${m.verdict}" data-gl="deal_plus" title="${v[1]} Underlying Deal+ ${m.dealPlus ?? "?"} (100 × rational / predicted price).">${v[0]}</span>`;
+  }
+  function surplusSpan(usd, p10, p90) {
+    if (usd == null) return EM_DASH;
+    const band = (p10 != null && p90 != null)
+      ? ` title="Floor/ceiling surplus from the P10/P90 WAR paths: ${formatMetric(p10 / 1e6, "surplusM")} … ${formatMetric(p90 / 1e6, "surplusM")}"` : "";
+    return `<span class="${usd >= 0 ? "fa-pos" : "fa-neg"}"${band}>${formatMetric(usd / 1e6, "surplusM")}</span>`;
   }
 
   function load(name) {
@@ -206,12 +241,13 @@
     g.fillStyle = sub;
     g.font = `16px ${MONO}`;
     g.fillText(`${cls.n_members} constructed members · ${cls.n_projected} projected · winter $/WAR (ex-ante) ${money(cls.dpw_usd)}`, PAD, 116);
-    const cols = [PAD, PAD + 50, PAD + 470, PAD + 640, PAD + 800, PAD + 950];
+    const cols = [PAD, PAD + 50, PAD + 440, PAD + 610, PAD + 750, PAD + 905, PAD + 1010];
     g.font = `700 14px ${MONO}`;
-    ["#", "PLAYER", "mYEARS/mGUAR", "mAAV", "SURPLUS", "DEAL+"].forEach((h, i) =>
+    ["#", "PLAYER", "projLEN/GUAR", "projAAV", "DEAL WAR", "SURPLUS", "VERDICT"].forEach((h, i) =>
       g.fillText(h, cols[i], 152));
     g.strokeStyle = line; g.beginPath(); g.moveTo(PAD, 162); g.lineTo(W - PAD, 162); g.stroke();
-    const top = cls.members.filter(m => m.mGuar != null).slice(0, 10);
+    const top = cls.members.filter(m => m.projGuar != null).slice(0, 10);
+    const vcol = { value: dark ? "#4FFF9E" : "#1F7A3A", market: sub, overpay: dark ? "#FF6B6B" : "#B91C1C" };
     top.forEach((m, i) => {
       const y = 196 + i * 40;
       g.fillStyle = sub; g.font = `16px ${MONO}`;
@@ -223,13 +259,15 @@
       g.fillText(`${m.pos || ""} · ${m.age != null ? Math.floor(m.age) : "?"} · ${m.from || ""}${m.thinPlatform ? " · ⚠ thin platform" : ""}`,
                  cols[1] + nameW + 10, y);
       g.fillStyle = fg; g.font = `16px ${MONO}`;
-      g.fillText(`${m.mYears}y / ${money(m.mGuar)}`, cols[2], y);
-      g.fillText(money(m.mAav), cols[3], y);
-      g.fillText(formatMetric(m.surplus / 1e6, "surplusM"), cols[4], y);
-      g.fillText(String(m.dealPlus ?? "—"), cols[5], y);
+      g.fillText(`${m.projYears}y / ${money(m.projGuar)}`, cols[2], y);
+      g.fillText(money(m.projAav), cols[3], y);
+      g.fillText(m.warTotal != null ? m.warTotal.toFixed(1) : "—", cols[4], y);
+      g.fillText(formatMetric(m.surplus / 1e6, "surplusM"), cols[5], y);
+      g.fillStyle = vcol[m.verdict] || sub;
+      g.fillText((m.verdict || "—").toUpperCase(), cols[6], y);
     });
     g.fillStyle = sub; g.font = `13px ${MONO}`;
-    g.fillText("predicted market (mGuarantee) vs rational value — two numbers, never conflated · both hard gates passed · projections ex-ante",
+    g.fillText("predicted market (projGuarantee) vs rational value — two numbers, never conflated · both hard gates passed · projections ex-ante",
                PAD, H - 56);
     g.fillStyle = fg; g.font = `700 16px ${MONO}`;
     g.fillText("eephus.io/fa", PAD, H - 28);
@@ -242,41 +280,114 @@
     }, "image/png");
   }
 
+  // Blocked-by chips: WHO and WHAT KIND ('prospect' = PROSPX near-ETA,
+  // 'mlb' = a contracted incumbent already producing at the slot).
+  function blockedText(blockedBy) {
+    if (!blockedBy || !blockedBy.length) return "";
+    return blockedBy.map(b => `${b.n} (${b.t === "mlb" ? "MLB incumbent" : "prospect"})`).join(", ");
+  }
+
+  const boardState = { sort: "projGuar", dir: -1 };
+
   function renderBoard(rows, cls) {
-    const members = cls.members;
+    const sortKey = boardState.sort;
+    const members = cls.members.slice().sort((a, b) => {
+      const v = m => m[sortKey] ?? (sortKey === "age" ? 99 : -1e15);
+      return boardState.dir * (v(a) > v(b) ? 1 : v(a) < v(b) ? -1 : 0);
+    });
+    const sHead = (label, key, title) => {
+      const on = sortKey === key;
+      return `<th class="fa-sort${on ? " is-sorted" : ""}" data-fsort="${key}" title="${esc(title || "Click to sort")}">${label}${on ? (boardState.dir < 0 ? " ▾" : " ▴") : ""}</th>`;
+    };
     const head = `<div class="newsprint-eyebrow" style="margin-top:4px;">
       <span class="newsprint-eyebrow-label">2026-27 Class Board</span>
-      <span class="newsprint-eyebrow-meta">${members.length} constructed members &middot; ${cls.n_projected} projected &middot; winter $/WAR (ex-ante) ${money(cls.dpw_usd)} &middot; sorted by mGuarantee &middot; <button class="chip" id="fa-gfx-btn" title="Download the top of the board as a PNG share card (theme-aware)">&#8681; share card</button></span>
+      <span class="newsprint-eyebrow-meta">${cls.members.length} constructed members &middot; ${cls.n_projected} projected &middot; winter $/WAR (ex-ante) ${money(cls.dpw_usd)}, escalating ${((cls.dpw_infl || 0.05) * 100).toFixed(0)}%/yr &middot; <button class="chip" id="fa-gfx-btn" title="Download the top of the board as a PNG share card (theme-aware)">&#8681; share card</button></span>
     </div>`;
     const body = members.map((m, i) => {
       const fits = (m.fits || []).map(f =>
-        `<span title="fit ${f.fit} — need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " — blocked by " + esc(f.blockedBy.join(", ")) : ""}">${f.org}${f.blockedBy ? "*" : ""}</span>`).join(" ");
+        `<span class="fa-fitorg" title="fit ${f.fit} — need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " — blocked by " + esc(blockedText(f.blockedBy)) : ""}">${teamLogo(f.org)}${f.org}${f.blockedBy ? "*" : ""}</span>`).join(" ");
       const comps = (m.comps || []).map(c =>
         `${esc(c.name)} '${String(c.yr).slice(2)} ${c.years || "?"}y/${c.guar ? "$" + (c.guar / 1e6).toFixed(0) + "M" : "?"}`).join("; ");
-      const yearsBand = m.mYears != null
-        ? `${m.mYears}<span class="fa-band"> (${m.mYearsP10 ?? "?"}&ndash;${m.mYearsP90 ?? "?"})</span>` : EM_DASH;
-      const guarBand = m.mGuar != null
-        ? `${money(m.mGuar)}<span class="fa-band"> (${money(m.mGuarP10)}&ndash;${money(m.mGuarP90)})</span>` : EM_DASH;
-      const surplus = m.surplus != null ? formatMetric(m.surplus / 1e6, "surplusM") : EM_DASH;
-      return `<tr${m.mGuar == null || m.status === "option_exercised" ? ' class="fa-dim"' : ""}>
+      const yearsBand = m.projYears != null
+        ? `${m.projYears}<span class="fa-band"> (${m.projYearsP10 ?? "?"}&ndash;${m.projYearsP90 ?? "?"})</span>` : EM_DASH;
+      const guarBand = m.projGuar != null
+        ? `${money(m.projGuar)}<span class="fa-band"> (${money(m.projGuarP10)}&ndash;${money(m.projGuarP90)})</span>` : EM_DASH;
+      const dealWar = m.warTotal != null
+        ? `${formatMetric(m.warTotal, "war")}<span class="fa-band"> (${formatMetric(m.warTotalP10, "war")}&ndash;${formatMetric(m.warTotalP90, "war")})</span>` : EM_DASH;
+      return `<tr${m.projGuar == null || m.status === "option_exercised" ? ' class="fa-dim"' : ""}>
         <td>${i + 1}</td>
-        <td>${playerLink(m)}${noteBadge(m)}<span class="fa-sub"> ${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${esc(m.from || "")}</span>${comps ? `<div class="fa-comps" title="Nearest real historical contracts (never fabricated)">comps: ${comps}</div>` : ""}</td>
+        <td>${playerLink(m)}${noteBadge(m)}<span class="fa-sub"> ${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")}</span>${comps ? `<div class="fa-comps" title="Nearest real historical contracts (never fabricated)">comps: ${comps}</div>` : ""}</td>
         <td>${statusChip(m)}</td>
         <td>${m.warY1 != null ? formatMetric(m.warY1, "war") : EM_DASH}${thinBadge(m)}</td>
+        <td title="Projected bWAR over the predicted term (floor–ceiling from the Gate-1 probability buckets)">${dealWar}</td>
         <td>${yearsBand}</td>
         <td>${guarBand}</td>
-        <td>${m.mAav != null ? money(m.mAav) : EM_DASH}</td>
+        <td>${m.projAav != null ? `${money(m.projAav)}<span class="fa-band"> (${money(m.projAavP10)}&ndash;${money(m.projAavP90)})</span>` : EM_DASH}</td>
         <td>${m.rational != null ? money(m.rational) : EM_DASH}</td>
-        <td>${surplus}</td>
-        <td>${m.dealPlus ?? EM_DASH}</td>
-        <td title="* = position blocked by a PROSPX prospect">${fits || EM_DASH}</td>
+        <td>${surplusSpan(m.surplus, m.surplusP10, m.surplusP90)}</td>
+        <td>${verdictChip(m)}</td>
+        <td title="* = blocked (hover each club for who's blocking — prospect or MLB incumbent)">${fits || EM_DASH}</td>
       </tr>`;
     }).join("");
-    rows.innerHTML = head + `<table class="detail-table">
-      <thead><tr><th>#</th><th>Player</th><th>Status</th><th><span data-gl="war">WAR</span> y1</th><th><span data-gl="m_years">mYears</span></th><th><span data-gl="m_guarantee">mGuarantee</span></th><th><span data-gl="m_aav">mAAV</span></th><th><span data-gl="rational_value">Rational</span></th><th><span data-gl="contract_surplus">Surplus</span></th><th><span data-gl="deal_plus">Deal+</span></th><th><span data-gl="fit_components">Fits</span></th></tr></thead>
-      <tbody>${body}</tbody></table>`;
+    rows.innerHTML = head + `<div class="fa-board-layout"><div class="fa-board-main"><table class="detail-table">
+      <thead><tr><th>#</th><th>Player</th><th>Status</th>
+      ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 bWAR")}
+      ${sHead("Deal WAR", "warTotal", "Projected bWAR over the predicted term, with floor–ceiling buckets")}
+      ${sHead(`<span data-gl="m_years">projLength</span>`, "projYears", "Predicted contract length (P10–P90)")}
+      ${sHead(`<span data-gl="m_guarantee">projGuarantee</span>`, "projGuar", "Predicted total guarantee (P10–P90)")}
+      ${sHead(`<span data-gl="m_aav">projAAV</span>`, "projAav", "Predicted average annual value (P10–P90)")}
+      ${sHead(`<span data-gl="rational_value">Rational</span>`, "rational", "Convex-priced NPV of the projected production")}
+      ${sHead(`<span data-gl="contract_surplus">Surplus</span>`, "surplus", "Rational value minus predicted price (hover for the floor/ceiling range)")}
+      <th><span data-gl="deal_plus">Verdict</span></th>
+      <th><span data-gl="fit_components">Fits</span></th></tr></thead>
+      <tbody>${body}</tbody></table></div>
+      ${boardRail(cls)}</div>`;
+    rows.querySelectorAll("[data-fsort]").forEach(h => h.onclick = () => {
+      const k = h.dataset.fsort;
+      if (boardState.sort === k) boardState.dir = -boardState.dir;
+      else { boardState.sort = k; boardState.dir = -1; }
+      renderBoard(rows, cls);
+      if (window.EEPHUS_GL) window.EEPHUS_GL.wire(rows);
+    });
     const gfx = document.getElementById("fa-gfx-btn");
     if (gfx) gfx.onclick = () => downloadShareCard(cls);
+  }
+
+  // Market-pulse rail beside the board: best values, biggest projected
+  // overpays, class supply by position group, the $/WAR trend.
+  function boardRail(cls) {
+    const proj = cls.members.filter(m => m.projGuar != null);
+    const railRow = m => `<div class="fa-rail-row">${teamLogo(m.from)}
+      <a class="fa-player-link" href="#player=${encodeURIComponent(m.key || "")}">${esc(m.name)}</a>
+      <span class="fa-rail-num">${surplusSpan(m.surplus)}</span></div>`;
+    const values = proj.filter(m => m.verdict === "value")
+      .sort((a, b) => (b.surplus || 0) - (a.surplus || 0)).slice(0, 6);
+    const overpays = proj.filter(m => m.verdict === "overpay")
+      .sort((a, b) => (a.surplus || 0) - (b.surplus || 0)).slice(0, 6);
+    const groups = {};
+    proj.forEach(m => {
+      const head = String(m.pos || "").toUpperCase().split("/")[0];
+      const g = ["SP", "LHP", "RHP", "P"].includes(head) ? "SP"
+        : ["RP", "CL"].includes(head) ? "RP" : head === "C" ? "C"
+        : ["1B", "2B", "3B", "SS"].includes(head) ? "IF"
+        : ["LF", "CF", "RF", "OF"].includes(head) ? "OF" : "DH";
+      groups[g] = (groups[g] || 0) + 1;
+    });
+    const supply = Object.entries(groups).sort((a, b) => b[1] - a[1])
+      .map(([g, n]) => `<div class="fa-rail-row"><span>${g}</span><span class="fa-rail-num">${n}</span></div>`).join("");
+    const meta = D.fa_meta || {};
+    const series = ((meta.dpw_series || {}).usd_per_war_by_winter) || {};
+    const yrs = Object.keys(series).sort();
+    const trend = yrs.slice(-6).map(y =>
+      `<div class="fa-rail-row"><span>${Number(y) - 1}-${String(y).slice(2)}</span><span class="fa-rail-num">${money(series[y])}</span></div>`).join("");
+    const mod = (title, body, tip) => body
+      ? `<div class="fa-rail-mod"><div class="fa-rail-head" title="${esc(tip || "")}">${title}</div>${body}</div>` : "";
+    return `<aside class="fa-board-rail">
+      ${mod("Best projected values", values.map(railRow).join(""), "Largest projected Contract Surplus among VALUE verdicts — rational value furthest above the predicted price")}
+      ${mod("Projected overpays", overpays.map(railRow).join(""), "Most negative projected Contract Surplus among OVERPAY verdicts")}
+      ${mod("Class supply", supply, "Projected members by position group — thin groups inflate prices (a market-model feature)")}
+      ${mod("FA $/WAR by winter", trend, "The signings-implied $/WAR series (Gate-2 estimator) — the gradual climb is why every future season escalates")}
+    </aside>`;
   }
 
   // ---- Signing Tracker — mode-aware ------------------------------------------
@@ -302,22 +413,22 @@
       return;
     }
     const spent = signed.reduce((s, m) => s + (m.signedGuar || 0), 0);
-    const scored = signed.filter(m => m.mGuar != null && m.signedGuar != null && !m.signedMilb);
+    const scored = signed.filter(m => m.projGuar != null && m.signedGuar != null && !m.signedMilb);
     const mae = scored.length
-      ? scored.reduce((s, m) => s + Math.abs(m.signedGuar - m.mGuar), 0) / scored.length : null;
+      ? scored.reduce((s, m) => s + Math.abs(m.signedGuar - m.projGuar), 0) / scored.length : null;
     const sigRows = signed
       .slice().sort((a, b) => (b.signedDate || "").localeCompare(a.signedDate || "") || (b.signedGuar || 0) - (a.signedGuar || 0))
       .map(m => {
         const actual = m.signedMilb ? "MiLB deal" : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)}`;
-        const pred = m.mGuar != null ? `${m.mYears}y / ${money(m.mGuar)}` : EM_DASH;
-        const dGuar = (m.signedGuar != null && m.mGuar != null && !m.signedMilb)
-          ? formatMetric((m.signedGuar - m.mGuar) / 1e6, "surplusM") : EM_DASH;
+        const pred = m.projGuar != null ? `${m.projYears}y / ${money(m.projGuar)}` : EM_DASH;
+        const dGuar = (m.signedGuar != null && m.projGuar != null && !m.signedMilb)
+          ? formatMetric((m.signedGuar - m.projGuar) / 1e6, "surplusM") : EM_DASH;
         const realized = (m.rational != null && m.signedGuar > 0 && !m.signedMilb)
           ? Math.round(100 * m.rational / m.signedGuar) : null;
         return `<tr>
           <td>${m.signedDate || EM_DASH}</td>
           <td>${playerLink(m)} <span class="fa-sub">${esc(m.pos || "")}</span>${m.qoAccepted ? ' <span title="Accepted the qualifying offer">QO accepted</span>' : ""}</td>
-          <td>${esc(m.from || "")} &rarr; ${esc(m.signedTo || "")}</td>
+          <td>${teamLogo(m.from)}${esc(m.from || "")} &rarr; ${teamLogo(m.signedTo)}${esc(m.signedTo || "")}</td>
           <td>${actual}</td>
           <td title="The model's pre-winter prediction — frozen, not re-fit">${pred}</td>
           <td title="Actual guarantee minus predicted (positive = market paid above model)">${dGuar}</td>
@@ -330,7 +441,7 @@
         : e.type === "qo_offered" ? "receives qualifying offer" : esc(e.type);
       return `<tr><td>${e.date}</td><td><a href="#player=${encodeURIComponent(e.key || "")}" class="fa-player-link"><strong>${esc(e.name || e.key || "")}</strong></a> <span class="fa-sub">${esc(e.pos || "")}</span></td><td>${label}</td></tr>`;
     }).join("");
-    const remaining = cls.members.filter(m => m.status !== "signed" && m.status !== "option_exercised" && m.mGuar != null).slice(0, 10);
+    const remaining = cls.members.filter(m => m.status !== "signed" && m.status !== "option_exercised" && m.projGuar != null).slice(0, 10);
     rows.innerHTML = `<div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Signing Tracker &mdash; live</span>
       <span class="newsprint-eyebrow-meta">${signed.length} of ${cls.n_members} signed &middot; ${money(spent)} guaranteed &middot; ${mae != null ? `running guarantee MAE ${money(mae)} over ${scored.length} scored deals` : "no scored MLB deals yet"} &middot; dates are first-seen stamps</span></div>
       ${sigRows ? `<table class="detail-table">
@@ -339,9 +450,9 @@
       ${evRows ? `<h3>Option &amp; QO timeline</h3><table class="detail-table">
         <thead><tr><th>Seen</th><th>Player</th><th>Event</th></tr></thead><tbody>${evRows}</tbody></table>` : ""}
       ${remaining.length ? `<h3>Top of the remaining board</h3><table class="detail-table">
-        <thead><tr><th>Player</th><th>mYears</th><th>mGuarantee</th><th>mAAV</th></tr></thead>
+        <thead><tr><th>Player</th><th><span data-gl="m_years">projLength</span></th><th><span data-gl="m_guarantee">projGuarantee</span></th><th><span data-gl="m_aav">projAAV</span></th><th>Verdict</th></tr></thead>
         <tbody>${remaining.map(m => `<tr><td>${playerLink(m)} <span class="fa-sub">${esc(m.pos || "")}</span></td>
-          <td>${m.mYears}</td><td>${money(m.mGuar)}</td><td>${money(m.mAav)}</td></tr>`).join("")}</tbody></table>` : ""}`;
+          <td>${m.projYears}</td><td>${money(m.projGuar)}</td><td>${money(m.projAav)}</td><td>${verdictChip(m)}</td></tr>`).join("")}</tbody></table>` : ""}`;
   }
 
   // ---- FA player card (#player=<key>) ----------------------------------------
@@ -368,42 +479,67 @@
     }
     const band = (v, p10, p90, fmt) => v == null ? EM_DASH
       : `${fmt(v)}<span class="fa-band"> (${fmt(p10)}&ndash;${fmt(p90)})</span>`;
+    // Year-by-year projection table: calendar season, age, floor/mean/
+    // ceiling bWAR, and that season's escalated $/WAR level. The mean bars
+    // ride below as the visual.
+    const infl = cls.dpw_infl ?? 0.05;
+    const yearRows = (m.warPath || []).map((w, i) => {
+      const season = cls.class_year + i;
+      const lo = (m.warPathP10 || [])[i];
+      const hi = (m.warPathP90 || [])[i];
+      const dpwT = cls.dpw_usd * Math.pow(1 + infl, i);
+      const inTerm = m.projYears != null && i < m.projYears;
+      return `<tr${inTerm ? "" : ' class="fa-dim"'}>
+        <td>${season}${inTerm ? "" : '<span class="fa-sub" title="Beyond the predicted term — shown because any longer offer prices these seasons"> +</span>'}</td>
+        <td>${m.age != null ? Math.floor(m.age) + i : EM_DASH}</td>
+        <td>${lo != null ? formatMetric(lo, "war") : EM_DASH}</td>
+        <td><strong>${formatMetric(w, "war")}</strong></td>
+        <td>${hi != null ? formatMetric(hi, "war") : EM_DASH}</td>
+        <td title="The winter's ex-ante $/WAR escalated ${(infl * 100).toFixed(0)}%/yr to this season">${money(dpwT)}</td>
+      </tr>`;
+    }).join("");
     const wp = (m.warPath || []).map((w, i) =>
-      `<div class="fa-warbar" title="Year ${i + 1}: ${formatMetric(w, "war")} bWAR"><div style="height:${Math.max(4, Math.min(100, w / 6 * 100)).toFixed(0)}%"></div><span>y${i + 1}</span></div>`).join("");
-    const comps = (m.comps || []).map(c => `<tr><td>${esc(c.name)}</td><td>${c.yr}</td><td>${esc(c.to || "")}</td><td>${c.years ?? "?"}y / ${c.guar ? money(c.guar) : "?"}</td></tr>`).join("");
+      `<div class="fa-warbar" title="${cls.class_year + i}: ${formatMetric(w, "war")} bWAR${(m.warPathP10 || [])[i] != null ? ` (floor ${formatMetric(m.warPathP10[i], "war")} / ceiling ${formatMetric(m.warPathP90[i], "war")})` : ""}"><div style="height:${Math.max(4, Math.min(100, w / 6 * 100)).toFixed(0)}%"></div><span>${String(cls.class_year + i).slice(2)}</span></div>`).join("");
+    const comps = (m.comps || []).map(c => `<tr><td>${esc(c.name)}</td><td>${c.yr}</td><td>${teamLogo(c.to)}${esc(c.to || "")}</td><td>${c.years ?? "?"}y / ${c.guar ? money(c.guar) : "?"}</td></tr>`).join("");
     const fits = (m.fits || []).map(f =>
-      `<span class="chip" title="need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " — blocked by " + esc(f.blockedBy.join(", ")) : ""}">${f.org}${f.blockedBy ? "*" : ""} &middot; ${f.fit}</span>`).join(" ");
+      `<span class="chip" title="need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " — blocked by " + esc(blockedText(f.blockedBy)) : ""}">${teamLogo(f.org)}${f.org}${f.blockedBy ? "*" : ""} &middot; ${f.fit}</span>`).join(" ");
     const signedBlock = m.status === "signed" ? `
       <h3>Signed</h3>
-      <p>${esc(m.from || "")} &rarr; <strong>${esc(m.signedTo || "")}</strong> &middot;
+      <p>${teamLogo(m.from)}${esc(m.from || "")} &rarr; <strong>${teamLogo(m.signedTo)}${esc(m.signedTo || "")}</strong> &middot;
       ${m.signedMilb ? "MiLB deal" : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)} (${money(m.signedAav)} AAV)`}
       ${m.signedDate ? `<span class="fa-sub"> &middot; first seen ${m.signedDate}</span>` : ""}
-      ${(m.mGuar != null && m.signedGuar != null && !m.signedMilb) ? `<br>vs predicted ${m.mYears}y / ${money(m.mGuar)} &mdash; miss ${formatMetric((m.signedGuar - m.mGuar) / 1e6, "surplusM")}; Deal+ at the actual price ${Math.round(100 * m.rational / m.signedGuar)}` : ""}</p>` : "";
+      ${(m.projGuar != null && m.signedGuar != null && !m.signedMilb) ? `<br>vs predicted ${m.projYears}y / ${money(m.projGuar)} &mdash; miss ${formatMetric((m.signedGuar - m.projGuar) / 1e6, "surplusM")}; Deal+ at the actual price ${Math.round(100 * m.rational / m.signedGuar)}` : ""}</p>` : "";
     const arcBlock = m.fvArc ? `
       <h3>Prospect to payday</h3>
       <div class="fa-arc">${_fvArcSvg(m.fvArc)}</div>
       <p class="fa-note">Consensus-FV history from his run as a tracked PROSPX prospect
       (${m.fvArc[0][0]} &rarr; ${m.fvArc[m.fvArc.length - 1][0]}), ending at today's
-      ${m.mGuar != null ? money(m.mGuar) + " predicted guarantee" : "constructed class row"} &middot;
+      ${m.projGuar != null ? money(m.projGuar) + " predicted guarantee" : "constructed class row"} &middot;
       <a href="/prospx/#player=${encodeURIComponent(m.key)}">full prospect page &rarr;</a></p>` : "";
     rows.innerHTML = `
       <p><a href="#view=board">&larr; Class Board</a></p>
       <div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">${esc(m.name)}</span>
-      <span class="newsprint-eyebrow-meta">${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${esc(m.from || "")} &middot; ${statusChip(m)}</span></div>
+      <span class="newsprint-eyebrow-meta">${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")} &middot; ${statusChip(m)}</span></div>
       ${m.thinPlatform ? `<div class="fa-cba-note">&#9888; ${esc(m.thinPlatform)} &mdash; the projection, and every number priced off it, is low-confidence.</div>` : ""}
       ${m.note ? `<div class="fa-cba-note">&#8251; ${esc(m.note)}</div>` : ""}
       ${signedBlock}
       <h3>Predicted market</h3>
-      <table class="detail-table"><thead><tr><th><span data-gl="m_years">mYears</span></th><th><span data-gl="m_guarantee">mGuarantee</span></th><th><span data-gl="m_aav">mAAV</span></th><th><span data-gl="rational_value">Rational</span></th><th><span data-gl="contract_surplus">Surplus</span></th><th><span data-gl="deal_plus">Deal+</span></th></tr></thead>
+      <table class="detail-table"><thead><tr><th><span data-gl="m_years">projLength</span></th><th><span data-gl="m_guarantee">projGuarantee</span></th><th><span data-gl="m_aav">projAAV</span></th><th>Deal <span data-gl="war">WAR</span></th><th><span data-gl="rational_value">Rational</span></th><th><span data-gl="contract_surplus">Surplus</span></th><th><span data-gl="deal_plus">Verdict</span></th></tr></thead>
       <tbody><tr>
-        <td>${band(m.mYears, m.mYearsP10, m.mYearsP90, v => v ?? "?")}</td>
-        <td>${band(m.mGuar, m.mGuarP10, m.mGuarP90, money)}</td>
-        <td>${m.mAav != null ? money(m.mAav) : EM_DASH}</td>
+        <td>${band(m.projYears, m.projYearsP10, m.projYearsP90, v => v ?? "?")}</td>
+        <td>${band(m.projGuar, m.projGuarP10, m.projGuarP90, money)}</td>
+        <td>${band(m.projAav, m.projAavP10, m.projAavP90, money)}</td>
+        <td>${band(m.warTotal, m.warTotalP10, m.warTotalP90, v => v == null ? "?" : formatMetric(v, "war"))}</td>
         <td>${m.rational != null ? money(m.rational) : EM_DASH}</td>
-        <td>${m.surplus != null ? formatMetric(m.surplus / 1e6, "surplusM") : EM_DASH}</td>
-        <td>${m.dealPlus ?? EM_DASH}</td>
+        <td>${surplusSpan(m.surplus, m.surplusP10, m.surplusP90)}</td>
+        <td>${verdictChip(m)}</td>
       </tr></tbody></table>
-      ${wp ? `<h3>Projected WAR path</h3><div class="fa-warpath" title="Aging-curve-decayed projected bWAR by contract year">${wp}</div>` : ""}
+      ${(m.surplusP10 != null && m.surplusP90 != null) ? `<p class="fa-note" title="Rational value of the floor/ceiling WAR paths minus the predicted price — the probability-bucketed read on the deal">Surplus range (floor &rarr; ceiling): ${surplusSpan(m.surplusP10)} &rarr; ${surplusSpan(m.surplusP90)} around a mean of ${surplusSpan(m.surplus)}</p>` : ""}
+      ${yearRows ? `<h3>Season-by-season projection</h3>
+      <table class="detail-table fa-year-table">
+      <thead><tr><th>Season</th><th>Age</th><th title="P10 of the Gate-1 probability bucket, decayed along the aging curves">Floor</th><th>Mean</th><th title="P90 of the Gate-1 probability bucket, decayed along the aging curves">Ceiling</th><th><span data-gl="winter_dpw">$/WAR</span></th></tr></thead>
+      <tbody>${yearRows}</tbody></table>` : ""}
+      ${wp ? `<div class="fa-warpath" title="Aging-curve-decayed projected bWAR by season (hover bars for the floor/ceiling band)">${wp}</div>` : ""}
       ${arcBlock}
       ${comps ? `<h3>Nearest real comps</h3><table class="detail-table">
         <thead><tr><th>Player</th><th>Winter</th><th>To</th><th>Deal</th></tr></thead><tbody>${comps}</tbody></table>` : ""}
@@ -429,19 +565,29 @@
       `<button class="chip${o === state.team ? " active" : ""}" data-fa-team="${o}">${o}</button>`).join("");
     const t = (meta && meta.teams && meta.teams[state.team]) || {};
     const list = (byOrg[state.team] || []).sort((a, b) => b.f.fit - a.f.fit);
+    // Component mini-bars: the same 0-1 score, readable at a glance.
+    const cbar = (v, label) => `<div class="fa-cbar" title="${label} ${v}"><div style="width:${Math.round((v || 0) * 100)}%"></div><span>${v}</span></div>`;
+    const blockedCell = bb => bb && bb.length
+      ? bb.map(b => `<span class="fa-block fa-block-${b.t}" title="${b.t === "mlb" ? "MLB incumbent already producing at the slot the signing would displace" : "PROSPX prospect (FV ≥ 50, near ETA)"}">${esc(b.n)}<i>${b.t === "mlb" ? "MLB" : "PX"}</i></span>`).join(" ")
+      : EM_DASH;
     const body = list.map(({ m, f }) => `<tr>
-        <td><strong>${esc(m.name)}</strong> <span class="fa-sub">${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"}</span></td>
-        <td>${f.fit.toFixed(2)}</td>
-        <td>${f.need}</td><td>${f.window}</td><td>${f.afford}</td><td>${f.park}</td><td>${f.behavior}</td>
-        <td>${f.blockedBy ? `<span title="Position blocked by a PROSPX prospect (FV &ge; 50, near ETA)">${esc(f.blockedBy.join(", "))}</span>` : EM_DASH}</td>
-        <td>${m.mGuar != null ? `${m.mYears}y / ${money(m.mGuar)}` : EM_DASH}</td>
+        <td><strong>${playerLink(m)}</strong> <span class="fa-sub">${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"}</span></td>
+        <td><strong>${f.fit.toFixed(2)}</strong></td>
+        <td>${cbar(f.need, "need")}</td><td>${cbar(f.window, "window")}</td><td>${cbar(f.afford, "afford")}</td><td>${cbar(f.park, "park")}</td><td>${cbar(f.behavior, "behavior")}</td>
+        <td>${blockedCell(f.blockedBy)}</td>
+        <td>${m.projGuar != null ? `${m.projYears}y / ${money(m.projGuar)}` : EM_DASH}</td>
+        <td>${verdictChip(m)}</td>
       </tr>`).join("");
+    const blockedLine = (t.blocked || []).length
+      ? `<div class="fa-note" title="Positions this club is NOT shopping at — the needs matrix found a blocker. MLB = a contracted incumbent producing at the slot a signing would displace; PX = a near-ETA PROSPX prospect (FV ≥ 50).">Not buying: ${t.blocked.map(b =>
+          `<span class="fa-block fa-block-${b.t}">${esc(b.pos)} — ${esc(b.n)}${b.w != null ? ` (${formatMetric(b.w, "war")} WAR)` : ""}<i>${b.t === "mlb" ? "MLB" : "PX"}</i></span>`).join(" ")}</div>` : "";
     rows.innerHTML = `<div class="filter-bar"><span class="filter-label">Team</span>${chips}</div>
-      <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${state.team} fits</span>
-      <span class="newsprint-eyebrow-meta">committed ${money(t.committed)} &middot; CBT space ${t.space != null ? formatMetric(t.space / 1e6, "surplusM") : EM_DASH} &middot; baseline ${t.baseWins ?? "?"}w (contracted core) &middot; biggest deal ever ${money(t.maxGuar)}</span></div>
-      <table class="detail-table">
-      <thead><tr><th>Player</th><th>Fit</th><th>Need</th><th>Window</th><th>Afford</th><th>Park</th><th>Behavior</th><th>Blocked by</th><th>Predicted</th></tr></thead>
-      <tbody>${body || `<tr><td colspan="9">No scored fits for ${state.team} in this class.</td></tr>`}</tbody></table>`;
+      <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${teamLogo(state.team)}${state.team} fits</span>
+      <span class="newsprint-eyebrow-meta">CBT payroll ${money(t.taxPayroll ?? t.committed)} &middot; tax space ${t.space != null ? formatMetric(t.space / 1e6, "surplusM") : EM_DASH}${t.payor ? ` &middot; ${esc(t.payor)}` : ""} &middot; baseline ${t.baseWins ?? "?"}w (contracted core) &middot; biggest deal ever ${money(t.maxGuar)} &middot; last-3-winter outlay ${money(t.recentSpend)}</span></div>
+      ${blockedLine}
+      <table class="detail-table fa-fits-table">
+      <thead><tr><th>Player</th><th>Fit</th><th title="Displacement WAR gap at the position (CAN they upgrade here)">Need</th><th title="Marginal playoff leverage at the club's baseline wins">Window</th><th title="CBT space vs the predicted AAV — habitual taxpayers keep a documented floor">Afford</th><th title="Park factor alignment (deliberately the smallest weight — a tiebreaker, not a driver)">Park</th><th title="WILL they spend: biggest deal ever vs this price, recent 3-winter outlay, $100M-deal participation">Behavior</th><th title="WHO blocks the position: PX = PROSPX prospect (near ETA), MLB = contracted incumbent producing at the displaced slot">Blocked by</th><th>Predicted</th><th>Verdict</th></tr></thead>
+      <tbody>${body || `<tr><td colspan="10">No scored fits for ${state.team} in this class.</td></tr>`}</tbody></table>`;
     rows.querySelectorAll("[data-fa-team]").forEach(b => b.onclick = () => {
       state.team = b.dataset.faTeam; syncToURL(); render();
     });
@@ -460,7 +606,7 @@
     const w = winters.find(x => x.year === state.winter);
     const body = w.signings.map(s => `<tr${s.milb ? ' class="fa-dim"' : ""}>
         <td><strong>${esc(s.name)}</strong> <span class="fa-sub">${esc(s.pos || "")}</span>${s.qo ? ' <span title="Received a qualifying offer">QO</span>' : ""}</td>
-        <td>${esc(s.from || "")} &rarr; ${esc(s.to || "")}</td>
+        <td>${esc(s.from || "")} &rarr; ${teamLogo(s.to)}${esc(s.to || "")}</td>
         <td>${s.years ?? EM_DASH}</td>
         <td>${s.milb ? "MiLB deal" : money(s.guar)}</td>
         <td>${money(s.aav)}</td>

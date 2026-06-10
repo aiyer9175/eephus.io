@@ -56,6 +56,7 @@ _BG_VER = _asset_ver("assets/eephus-bg.js")
 _FA_VER = _asset_ver("assets/fa.js")
 _GL_VER = _asset_ver("assets/eephus-gl.js")
 _GLAPP_VER = _asset_ver("assets/glossary.js")
+_PROJ_VER = _asset_ver("assets/projections.js")
 
 # eephus.io account layer (Parts 1-7), injected before </body> on every editorial
 # page. OPTIONAL by design: assets/eephus-config.js is git-ignored and absent on
@@ -110,6 +111,7 @@ NAV_ITEMS = [
     ("articles", "Articles",         "/articles/"),
     ("prospx",   "PROSPX",           "/prospx/"),
     ("fa",       "Free Agency",      "/fa/"),
+    ("projections", "Projections",   "/projections/"),
     ("glossary", "Glossary",         "/glossary/"),
     ("forums",   "Forums",           "/forums/"),
     ("team",     "Development Team",  "/team/"),
@@ -166,6 +168,7 @@ BETA_BADGE = (
 MODULE_STAGE = {
     "prospx": ("β", "PROSPX is in beta"),
     "fa":     ("α", "MLB Free Agency is in alpha — newly launched; numbers may shift as the model matures"),
+    "projections": ("α", "MLB Projections is in alpha — newly launched; numbers may shift as the model matures"),
 }
 
 def _stage_sup(key: str) -> str:
@@ -1204,9 +1207,10 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     # header nav, so a couple of labels expand here (key → sidebar label).
     # Every module carries a terminal-safe glyph (PROSPX carries its ball
     # badge instead) and, where staged, its α/β lifecycle marker.
-    sidebar_labels = {"fa": "MLB Free Agency", "glossary": "Glossary & Methodology"}
-    sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$", "glossary": "§",
-                     "forums": "❝", "team": "⚒"}
+    sidebar_labels = {"fa": "MLB Free Agency", "projections": "MLB Projections",
+                      "glossary": "Glossary & Methodology"}
+    sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$", "projections": "Δ",
+                     "glossary": "§", "forums": "❝", "team": "⚒"}
     nav = []
     for key, label, href in NAV_ITEMS:
         cls = ' class="is-active"' if key == "home" else ""
@@ -1372,9 +1376,33 @@ def build_fa() -> str:
         f'<script src="/assets/fa.js?v={_FA_VER}" defer></script>'
     )
     return page("Free Agency — eephus.io", "fa", body,
-                "The 2026-27 MLB free-agent class: projected contracts (mYears / mGuarantee / mAAV), "
-                "rational value vs predicted price, team fits, and twelve archived winters with a "
-                "realized-surplus ledger.")
+                "The 2026-27 MLB free-agent class: projected contracts (projLength / projGuarantee / "
+                "projAAV with floor-mean-ceiling bands), rational value vs predicted price, deal "
+                "verdicts, team fits, and twelve archived winters with a realized-surplus ledger.")
+
+
+def build_projections() -> str:
+    """The /projections/ MLB Projections app — the FA module's projection
+    engine applied to the whole league plus post-ETA PROSPX prospects.
+    Static shell + assets/projections.js, which fetches the proj_export.py
+    sidecar (data/mlb_projections.json). Styles ride the .fa-app block plus
+    a small .proj-app extension in site.css."""
+    body = (
+        '<div class="fa-app proj-app">'
+        '<div class="section-head"><h1>MLB Projections '
+        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["projections"][1])}">α alpha</span></h1>'
+        '<span class="section-sub">five-year bWAR paths for every MLB player · floor / mean / ceiling '
+        'probability buckets · contract surplus on salary-known seasons · prospects join at their PROSPX ETA</span></div>'
+        '<div id="proj-banner"></div>'
+        '<div class="filter-bar" id="proj-filters"></div>'
+        '<div id="proj-rows"></div>'
+        '</div>'
+        f'<script src="/assets/projections.js?v={_PROJ_VER}" defer></script>'
+    )
+    return page("MLB Projections — eephus.io", "projections", body,
+                "Five-year bWAR projections for every MLB player — floor/mean/ceiling probability "
+                "buckets, aging-curve decay, contract surplus on salary-known seasons, and PROSPX "
+                "prospects joining at their projected ETA.")
 
 def build_glossary() -> str:
     """The /glossary/ unified Glossary & Methodology module — the canonical
@@ -1569,6 +1597,7 @@ def main() -> None:
         _write(f"articles/{a['slug']}/index.html", build_article_page(a))
     _write("forums/index.html", build_forums_index())
     _write("fa/index.html", build_fa())
+    _write("projections/index.html", build_projections())
     _write("glossary/index.html", build_glossary())
     _write("team/index.html", build_team())
     print(f"done — {len(articles)} article(s).")

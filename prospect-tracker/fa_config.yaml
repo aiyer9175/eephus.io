@@ -68,6 +68,13 @@ projection:
 fit:
   blocker_fv_min: 50            # existing FV grid line — no parallel thresholds
   blocker_eta_horizon: 1        # ETA <= class_year + 1 blocks the position
+  # MLB incumbents at/above the displacement slot projecting >= this WAR
+  # are LISTED as blockers (their WAR already discounts need via the gap).
+  incumbent_block_war: 2.5
+  # Prospect blockers aren't on the contracted roster (invisible to the
+  # gap), so they carry an explicit multiplier. 0.5, softened from the v1
+  # 0.35 — prospects bust; a blocked position is discounted, not closed.
+  prospect_block_multiplier: 0.5
   replacement_wins: 47.7        # 0-WAR team baseline
   # Win-curve (documented v1, fixed not fitted): playoff odds as a logistic
   # in talent wins; marginal leverage = P x (1 - P), peaking at the center.
@@ -77,6 +84,18 @@ fit:
   # peak. v2 fills actual arb rosters.
   win_curve: { center: 86.5, scale: 2.8, roster_fill_wins: 12 }
   # Composite weights (sum 1.0) — every component decomposes in the UI.
-  weights: { need: 0.34, window: 0.22, afford: 0.20, park: 0.12, behavior: 0.12 }
+  # v2 reweight: park cut from 0.12 to 0.04 (the measured Giants-for-all-
+  # pitchers failure — at 0.12, and even 0.06, the most suppressive park
+  # still tipped rank order among otherwise-clustered teams; park is a
+  # tiebreaker, not a driver) and the freed weight moved to the money
+  # axes: afford (CAN pay: CBT space) and behavior (WILL pay: own
+  # signing history).
+  weights: { need: 0.31, window: 0.19, afford: 0.22, park: 0.04, behavior: 0.24 }
+  # Behavior (will-spend) blend: biggest-deal scale vs this price, recent
+  # 3-winter FA outlay (league-max-normalized), $100M-deal participation.
+  behavior_weights: { max_guar: 0.5, recent: 0.3, rich: 0.2 }
+  # Habitual taxpayers (payor status + >= 3 nine-figure deals) keep at
+  # least this afford score — CBT space is not their binding constraint.
+  taxpayer_afford_floor: 0.4
   # Need scaling: a 4-WAR upgrade gap saturates the need component.
   need_war_saturation: 4.0

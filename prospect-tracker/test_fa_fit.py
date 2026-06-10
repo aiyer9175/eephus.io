@@ -49,10 +49,12 @@ def test_park_component_directions(monkeypatch):
     monkeypatch.setattr(fa_fit, "park_factors", lambda season, bat_side="": pf)
     hitter = {"position": "SS", "bat_throw": "R/R"}
     pitcher = {"position": "SP", "bat_throw": "L/L"}
+    # v2 squashed the saturation (±30 pts full-scale; weight cut to 0.04 —
+    # the Giants-for-all-pitchers fix): directions hold, spreads shrink.
     assert fa_fit.park_component(hitter, "COL", 2026)["score"] > 0.6
-    assert fa_fit.park_component(hitter, "SEA", 2026)["score"] < 0.4
-    assert fa_fit.park_component(pitcher, "SEA", 2026)["score"] > 0.6
-    assert fa_fit.park_component(pitcher, "COL", 2026)["score"] < 0.4
+    assert fa_fit.park_component(hitter, "SEA", 2026)["score"] < 0.45
+    assert fa_fit.park_component(pitcher, "SEA", 2026)["score"] > 0.55
+    assert fa_fit.park_component(pitcher, "COL", 2026)["score"] < 0.45
     # unknown venue falls back to neutral, never invents
     assert fa_fit.park_component(hitter, "XXX", 2026)["score"] == pytest.approx(0.5)
 

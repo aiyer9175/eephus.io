@@ -113,5 +113,8 @@ def test_sidecars_exist_and_parse():
     assert cls["n_members"] > 150 and cls["n_projected"] > 100
     top = cls["members"][0]
     # the board's two numbers ride every projected member, never conflated
-    assert "mGuar" in top and "rational" in top and "surplus" in top
-    assert top["surplus"] == top["rational"] - top["mGuar"]
+    assert "projGuar" in top and "rational" in top and "surplus" in top
+    assert top["surplus"] == top["rational"] - top["projGuar"]
+    # v2 surfaces: verdict string + probability buckets on projected members
+    assert top.get("verdict") in ("value", "market", "overpay")
+    assert top["warTotalP10"] <= top["warTotal"] <= top["warTotalP90"]
