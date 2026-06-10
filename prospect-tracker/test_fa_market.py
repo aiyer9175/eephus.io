@@ -21,15 +21,33 @@ def test_pos_groups():
 
 
 def test_rational_value_is_npv_not_sticker():
-    """Year-1 WAR at $10M/WAR with no escalation/discount would be $40M
-    over 4 flat years; with 9% discount and 5% escalation the NPV lands
-    BELOW sticker — and a decayed path is worth less than a flat one."""
+    """v2 — seasons price CONVEXLY through the platform tier curve scaled
+    to the winter $/WAR level. The NPV properties still hold (a decayed
+    path is worth less than a flat one), and the convexity contract is
+    stated as math: one season prices at exactly the rescaled tier value,
+    and a 3-WAR season is worth more than three 1-WAR seasons."""
+    from value_framework import _config as vf_config, tiered_war_value_usd
     flat = fm.rational_value_usd([2.0, 2.0, 2.0, 2.0], 2027, 10_000_000)
     decayed = fm.rational_value_usd([2.0, 1.6, 1.2, 0.8], 2027, 10_000_000)
-    assert decayed < flat < 80_000_000
-    assert flat > 60_000_000          # sane magnitude
-    # one year, one WAR, no time effects: exactly $/WAR
-    assert fm.rational_value_usd([1.0], 2027, 10_000_000) == 10_000_000
+    assert decayed < flat
+    level = 10_000_000 / float(vf_config()["dollars_per_war"]["flat"])
+    assert fm.rational_value_usd([1.0], 2027, 10_000_000) == int(
+        tiered_war_value_usd(1.0) * level)
+    one = fm.rational_value_usd([1.0], 2027, 10_000_000)
+    three = fm.rational_value_usd([3.0], 2027, 10_000_000)
+    assert three > 3 * one
+
+
+def test_deal_verdict_bands():
+    """Verdict edges sit on the 2015-2026 corpus terciles (85 / 185) —
+    value above, overpay below, market between; None passes through."""
+    assert fm.deal_verdict(None) is None
+    assert fm.deal_verdict(300) == "value"
+    assert fm.deal_verdict(185) == "value"
+    assert fm.deal_verdict(184) == "market"
+    assert fm.deal_verdict(85) == "market"
+    assert fm.deal_verdict(84) == "overpay"
+    assert fm.deal_verdict(0) == "overpay"
 
 
 def test_deferral_npv_discounts_schedule():

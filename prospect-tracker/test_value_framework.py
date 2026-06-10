@@ -180,9 +180,13 @@ def test_new_model_raises_audit_worked_example_vs_v1() -> None:
     """v47 EMPIRICAL RECALIBRATION: the FV 58.33 SS prospect was $107.8M (v1) and
     ~$125M (pre-recal); it now reflects realized 2017-20 cohort outcomes blended
     with the public Edwards scale (~$45M at 58 FV) -- deliberately DE-inflated to a
-    defensible, empirically-grounded magnitude rather than the prior 2-3x overshoot."""
+    defensible, empirically-grounded magnitude rather than the prior 2-3x overshoot.
+    v3 (surplus re-anchor): the $/WAR LEVEL now tracks the FA signings-implied
+    series (open-market price of a win, ~1.34x the curated league-wide table),
+    lifting the band proportionally — WAR-side calibration unchanged."""
     new = vf.surplus_value_mm(58.33, is_pitcher=False, position="SS")
-    assert 25.0 < new < 60.0
+    scale = (vf._config()["dollars_per_war"].get("_fa_reanchor") or {}).get("scale", 1.0)
+    assert 25.0 * scale < new < 60.0 * scale
 
 
 # =============================================================================
@@ -210,8 +214,10 @@ def test_worked_example_full_trace_58_33_ss() -> None:
     # (e) the assembled expected surplus matches the public API to the cent
     assert total_usd == pytest.approx(vf.expected_surplus_usd(fv, is_pit, pos), rel=1e-9)
     assert round(total_usd / 1e6, 1) == vf.surplus_value_mm(fv, is_pit, pos)
-    # sanity: this premium prospect lands in a defensible band
-    assert 25.0 < vf.surplus_value_mm(fv, is_pit, pos) < 60.0   # v47 recalibrated (~$41M)
+    # sanity: this premium prospect lands in a defensible band (v47 WAR-side
+    # calibration; v3 scales the band by the FA-implied $/WAR re-anchor)
+    scale = (vf._config()["dollars_per_war"].get("_fa_reanchor") or {}).get("scale", 1.0)
+    assert 25.0 * scale < vf.surplus_value_mm(fv, is_pit, pos) < 60.0 * scale
 
 
 # =============================================================================
@@ -433,7 +439,9 @@ def test_disabling_timing_reproduces_flat_behavior() -> None:
         # the $/WAR tiers to the trailing 3-yr average (2024-26), so the 60-FV
         # flat surplus rose ~6% (the 2plus tier firmed up) to ~140 from the old
         # ~132.5; range widened to absorb future annual re-averages + G pooling.
-        assert 44.0 <= v_noargs <= 54.0   # v47 empirical recalibration (~48.5; was ~140)
+        # v3 (re-anchor): the band scales by the FA-implied level shift.
+        scale = (cfg["dollars_per_war"].get("_fa_reanchor") or {}).get("scale", 1.0)
+        assert 44.0 * scale <= v_noargs <= 54.0 * scale   # v47 recalibration (~48.5 pre-anchor)
     finally:
         (cfg["dollars_per_war_inflation"], cfg["discount_from"], cfg["aging"]["enabled"]) = saved
         vf._bucket_sv_usd.cache_clear()

@@ -95,13 +95,39 @@ def test_tiered_and_flat_dollars_per_war_match_reference() -> None:
     # v44 — intentional retune: $/WAR moved from the single-2026 row to the
     # trailing 3-yr average (2024-26) of historical_dollars_per_war. These pins
     # are the means of those three years; re-average when a new year is appended.
-    dpw = _CFG["dollars_per_war"]
+    # v3 — the LOADED config re-anchors to the FA signings-implied series
+    # (_apply_fa_implied_reanchor), so the curated BASE pins are asserted on
+    # the raw YAML — the documented fallback that must never silently drift.
+    import yaml
+    raw = yaml.safe_load(vf._CONFIG_PATH.open(encoding="utf-8"))
+    dpw = raw["dollars_per_war"]
     assert dpw["flat"] == pytest.approx(11.74e6)
     rates = dpw["tiered"]["rates"]
     assert rates["lt_1"] == pytest.approx(6.97e6)
     assert rates["1_to_2"] == pytest.approx(8.76e6)
     assert rates["2plus"] == pytest.approx(13.63e6)
     assert dpw["tiered"]["breakpoints"] == [1.0, 2.0]
+
+
+def test_fa_implied_reanchor_preserves_tier_shape() -> None:
+    """The v3 re-anchor may move the LEVEL (to the FA signings-implied
+    trailing mean) but never the convex SHAPE: rate ratios match the
+    curated base, the flat tracks the series mean, and the re-anchor
+    metadata discloses itself."""
+    dpw = _CFG["dollars_per_war"]
+    meta = dpw.get("_fa_reanchor")
+    if not meta:
+        pytest.skip("fa_implied re-anchor disabled or series absent")
+    assert meta["applied"] is True and meta["scale"] > 0
+    rates = dpw["tiered"]["rates"]
+    base = {"lt_1": 6.97e6, "1_to_2": 8.76e6, "2plus": 13.63e6}
+    for k, b in base.items():
+        assert rates[k] / dpw["flat"] == pytest.approx(b / 11.74e6, rel=1e-3), k
+    series = json.loads((Path(vf._HERE) / "data" / "fa_dpw_series.json")
+                        .read_text(encoding="utf-8"))["usd_per_war_by_winter"]
+    tail = sorted(int(y) for y in series)[-3:]
+    expect = sum(float(series[str(y)]) for y in tail) / len(tail)
+    assert dpw["flat"] == pytest.approx(expect)
 
 
 def test_discount_and_haircut_match_reference() -> None:

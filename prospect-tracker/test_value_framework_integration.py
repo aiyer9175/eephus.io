@@ -227,11 +227,14 @@ def test_fringe_prospect_surplus_at_floor() -> None:
 
 
 def test_mlb_vet_career_war_value() -> None:
-    """A 30-WAR career vet should value around $300M+ at the overall
-    rolling $/WAR rate (~$11.74M)."""
+    """A 30-WAR career vet values at 30x the overall flat $/WAR rate —
+    asserted against the LOADED rate so the v3 FA-implied re-anchor
+    (which moves the level, never the math) can't break the contract."""
     v = vf.career_war_value_mm(30.0)
     assert v is not None
-    assert 300.0 <= v <= 400.0
+    flat_mm = float(vf._config()["dollars_per_war"]["flat"]) / 1e6
+    assert v == pytest.approx(30.0 * flat_mm, abs=0.01)   # API rounds to 2dp
+    assert 300.0 <= v <= 600.0    # sane open-market magnitude
 
 
 # =============================================================================

@@ -1968,6 +1968,17 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("fa pipeline failed — continuing")
 
+        # --- 6b. MLB Projections module (the /projections/ surface) -----
+        # The FA engine over the whole league + post-ETA prospects. Reads
+        # the corpus cache, Spotrac contract pages (cached) and the
+        # just-written timeseries.json. Additive; never aborts the run.
+        with _step("6b. MLB projections export (mlb_projections.json)", log):
+            try:
+                from proj_export import export as _export_proj
+                _export_proj()
+            except Exception:
+                log.exception("mlb projections export failed — continuing")
+
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
                    notes=f"{len(timeseries)} players, {len(new_trades)} trades")
         _patch_export_run_summary(out_path, log)

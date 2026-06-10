@@ -272,7 +272,7 @@ def main() -> None:
 # $/WAR trend. Misses are published, not hidden.
 
 GATE2_WARMUP_THROUGH = 2017          # train-only winters; scoring starts after
-GATE2_MODEL_VERSION = "fa_mkt_v1"
+GATE2_MODEL_VERSION = "fa_mkt_v2"
 
 
 def run_market_gate(persist: bool = True) -> dict:
@@ -307,21 +307,21 @@ def run_market_gate(persist: bool = True) -> dict:
             b_aav = b_guar / max(b_years, 1)
             act_g, act_y = s["guarantee_usd"], float(s["years"])
             act_a = s.get("aav_usd") or act_g / max(act_y, 1)
-            wstats["guarantee"]["m"].append((pred["m_guarantee_usd"] / 1e6, act_g / 1e6))
+            wstats["guarantee"]["m"].append((pred["proj_guarantee_usd"] / 1e6, act_g / 1e6))
             wstats["guarantee"]["b"].append((b_guar / 1e6, act_g / 1e6))
             if act_g >= 100_000_000:               # the megadeal slice, measured
-                wstats["mega_guarantee"]["m"].append((pred["m_guarantee_usd"] / 1e6, act_g / 1e6))
+                wstats["mega_guarantee"]["m"].append((pred["proj_guarantee_usd"] / 1e6, act_g / 1e6))
                 wstats["mega_guarantee"]["b"].append((b_guar / 1e6, act_g / 1e6))
-            wstats["aav"]["m"].append((pred["m_aav_usd"] / 1e6, act_a / 1e6))
+            wstats["aav"]["m"].append((pred["proj_aav_usd"] / 1e6, act_a / 1e6))
             wstats["aav"]["b"].append((b_aav / 1e6, act_a / 1e6))
-            wstats["years"]["m"].append((float(pred["m_years"]), act_y))
+            wstats["years"]["m"].append((float(pred["proj_years"]), act_y))
             wstats["years"]["b"].append((b_years, act_y))
             misses.append({"player": s["player_name"], "winter": W,
                            "to_team": s.get("to_team"), "qo": bool(s.get("qo")),
                            "actual_guar_mm": round(act_g / 1e6, 1),
-                           "pred_guar_mm": round(pred["m_guarantee_usd"] / 1e6, 1),
-                           "actual_years": act_y, "pred_years": pred["m_years"],
-                           "err_mm": round((pred["m_guarantee_usd"] - act_g) / 1e6, 1)})
+                           "pred_guar_mm": round(pred["proj_guarantee_usd"] / 1e6, 1),
+                           "actual_years": act_y, "pred_years": pred["proj_years"],
+                           "err_mm": round((pred["proj_guarantee_usd"] - act_g) / 1e6, 1)})
         row = {"winter": W, "n": len(wstats["guarantee"]["m"])}
         for k in pooled:
             row[f"{k}_mae_model"] = _mae(wstats[k]["m"])

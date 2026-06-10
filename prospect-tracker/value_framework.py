@@ -154,6 +154,11 @@ def _validate_config(cfg: dict) -> dict:
         raise ConfigError(f"dollars_per_war.tiered.breakpoints must be 2 ascending values, got {bps}")
     for r in ("lt_1", "1_to_2", "2plus"):
         _cfg_require(cfg, ("dollars_per_war", "tiered", "rates", r), (int, float), positive=True)
+    fa = cfg["dollars_per_war"].get("fa_implied")
+    if fa is not None:
+        if not isinstance(fa, dict) or not isinstance(fa.get("enabled"), bool):
+            raise ConfigError("dollars_per_war.fa_implied must carry a boolean 'enabled'")
+        _cfg_require(cfg, ("dollars_per_war", "fa_implied", "trailing_years"), int, positive=True)
     # --- Time value of money ---
     _cfg_require(cfg, ("discount_rate",), (int, float), rng=(0.0, 1.0))
     # --- Service-time / performance-adaptive arbitration ---
@@ -170,15 +175,57 @@ def _validate_config(cfg: dict) -> dict:
     return cfg
 
 
+def _apply_fa_implied_reanchor(cfg: dict) -> dict:
+    """v3 (surplus) — re-anchor the $/WAR LEVEL to the FA module's
+    signings-implied series (data/fa_dpw_series.json: per-winter total
+    guarantee over total discounted projected contract WAR — what clubs
+    ACTUALLY paid per win on the open market, the Gate-2-validated
+    estimator). The tier curve keeps its fitted convex SHAPE (the rate
+    ratios); only the level rescales, so a prospect's surplus is priced
+    against the same market the FA module prices contracts against.
+    Trailing-N-winter mean smooths single-offseason variance, mirroring
+    the v44 trailing-average decision. Falls back silently to the curated
+    historical table when the series file is absent (fresh checkout) —
+    the re-anchor is an upgrade, never a dependency."""
+    fa = (cfg.get("dollars_per_war") or {}).get("fa_implied") or {}
+    if not fa.get("enabled"):
+        return cfg
+    try:
+        series = json.loads((_HERE / "data" / "fa_dpw_series.json")
+                            .read_text(encoding="utf-8"))["usd_per_war_by_winter"]
+    except (OSError, ValueError, KeyError):
+        return cfg
+    winters = sorted(int(k) for k in series)
+    n = int(fa.get("trailing_years", 3))
+    tail = winters[-n:]
+    if not tail:
+        return cfg
+    level = sum(float(series[str(y)]) for y in tail) / len(tail)
+    dpw = cfg["dollars_per_war"]
+    base_flat = float(dpw["flat"])
+    scale = level / base_flat
+    dpw["flat"] = level
+    dpw["tiered"]["rates"] = {k: float(v) * scale
+                              for k, v in dpw["tiered"]["rates"].items()}
+    dpw["_fa_reanchor"] = {"applied": True, "winters": tail,
+                           "level_usd": round(level),
+                           "base_flat_usd": round(base_flat),
+                           "scale": round(scale, 4),
+                           "method": "fa_signings_implied trailing mean; tier shape preserved"}
+    return cfg
+
+
 @lru_cache(maxsize=1)
 def _config() -> dict:
     """Load + validate the YAML config (the hand-edited source of truth). A
     missing/malformed CORE key raises ConfigError here rather than defaulting
-    silently downstream."""
+    silently downstream. The FA-implied $/WAR re-anchor (see
+    _apply_fa_implied_reanchor) applies AFTER validation so the validated
+    base table remains the documented fallback."""
     import yaml  # pyyaml; only needed to read the config
     with _CONFIG_PATH.open(encoding="utf-8") as fh:
         cfg = yaml.safe_load(fh)
-    return _validate_config(cfg)
+    return _apply_fa_implied_reanchor(_validate_config(cfg))
 
 
 @lru_cache(maxsize=1)

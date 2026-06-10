@@ -55,6 +55,26 @@ TWO_WAY_NOTE = ("Two-way profile — the market model prices one profile only, "
                 "so the predicted contract is a FLOOR, not a point estimate.")
 
 
+def _compact_fit(f: dict, with_org: bool = True) -> dict:
+    """Wire-compact fit row. blockedBy entries carry WHO and WHAT KIND —
+    {n, t} where t is 'prospect' (PROSPX near-ETA) or 'mlb' (a contracted
+    incumbent already producing at the slot)."""
+    blocked = [{"n": b["player_name"], "t": b.get("kind", "prospect")}
+               for b in f["components"]["need"]["blocked_by"]]
+    out = {
+        "fit": f["fit"],
+        "need": f["components"]["need"]["score"],
+        "window": f["components"]["window"]["score"],
+        "afford": f["components"]["afford"]["score"],
+        "park": f["components"]["park"]["score"],
+        "behavior": f["components"]["behavior"]["score"],
+        "blockedBy": blocked or None,
+    }
+    if with_org:
+        out = {"org": f["org"], **out}
+    return _clean(out)
+
+
 def _load_overrides() -> dict[str, dict]:
     """Owner-curated per-player overrides (data/fa_overrides.json):
     two_way / note / exclude. Disclosure and curation only — never
@@ -182,8 +202,19 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                 if path:
                     s = {**row, "_war_path": path, "_age": age, "class_year": class_year}
                     pred = model.predict(s)
-                    yrs = pred["m_years"]
+                    yrs = pred["proj_years"]
+                    guar = pred["proj_guarantee_usd"]
                     rational = fm.rational_value_usd(path["war_by_year"][:yrs], class_year, dpw)
+                    deal_plus = round(100 * rational / max(guar, 1))
+                    # Probability buckets: floor/ceiling WAR paths (Gate-1
+                    # empirical quantiles decayed along the aging curves)
+                    # price to floor/ceiling rational value -> surplus range.
+                    p10_path = path.get("war_by_year_p10")
+                    p90_path = path.get("war_by_year_p90")
+                    rational_p10 = (fm.rational_value_usd(p10_path[:yrs], class_year, dpw)
+                                    if p10_path else None)
+                    rational_p90 = (fm.rational_value_usd(p90_path[:yrs], class_year, dpw)
+                                    if p90_path else None)
                     comps = fm.comps_for(s, enriched, k=3)
                     # Full 30-org fit vector: top-3 rides the member row (the
                     # board's Fits column), the rest feeds the per-team view
@@ -194,29 +225,30 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                     m.update(_clean({
                         "warY1": path["war_y1"],
                         "warPath": path["war_by_year"][:max(yrs, 5)],
-                        "mYears": yrs,
-                        "mYearsP10": pred.get("m_years_p10"), "mYearsP90": pred.get("m_years_p90"),
-                        "mGuar": pred["m_guarantee_usd"],
-                        "mGuarP10": pred.get("m_guarantee_p10_usd"),
-                        "mGuarP90": pred.get("m_guarantee_p90_usd"),
-                        "mAav": pred["m_aav_usd"],
-                        "mAavP10": pred.get("m_aav_p10_usd"), "mAavP90": pred.get("m_aav_p90_usd"),
+                        "warPathP10": p10_path[:max(yrs, 5)] if p10_path else None,
+                        "warPathP90": p90_path[:max(yrs, 5)] if p90_path else None,
+                        "warTotal": round(sum(path["war_by_year"][:yrs]), 1),
+                        "warTotalP10": round(sum(p10_path[:yrs]), 1) if p10_path else None,
+                        "warTotalP90": round(sum(p90_path[:yrs]), 1) if p90_path else None,
+                        "projYears": yrs,
+                        "projYearsP10": pred.get("proj_years_p10"),
+                        "projYearsP90": pred.get("proj_years_p90"),
+                        "projGuar": guar,
+                        "projGuarP10": pred.get("proj_guarantee_p10_usd"),
+                        "projGuarP90": pred.get("proj_guarantee_p90_usd"),
+                        "projAav": pred["proj_aav_usd"],
+                        "projAavP10": pred.get("proj_aav_p10_usd"),
+                        "projAavP90": pred.get("proj_aav_p90_usd"),
                         "rational": rational,
-                        "surplus": rational - pred["m_guarantee_usd"],
-                        "dealPlus": round(100 * rational / max(pred["m_guarantee_usd"], 1)),
+                        "surplus": rational - guar,
+                        "surplusP10": (rational_p10 - guar) if rational_p10 is not None else None,
+                        "surplusP90": (rational_p90 - guar) if rational_p90 is not None else None,
+                        "dealPlus": deal_plus,
+                        "verdict": fm.deal_verdict(deal_plus),
                         "comps": [_clean({"name": c["player_name"], "yr": c["class_year"],
                                           "to": c.get("to_team"), "years": c.get("years"),
                                           "guar": c.get("guarantee_usd")}) for c in comps],
-                        "fits": [_clean({
-                            "org": f["org"], "fit": f["fit"],
-                            "need": f["components"]["need"]["score"],
-                            "window": f["components"]["window"]["score"],
-                            "afford": f["components"]["afford"]["score"],
-                            "park": f["components"]["park"]["score"],
-                            "behavior": f["components"]["behavior"]["score"],
-                            "blockedBy": [b["player_name"] for b in
-                                          f["components"]["need"]["blocked_by"]] or None,
-                        }) for f in fits],
+                        "fits": [_compact_fit(f) for f in fits],
                     }))
                     n_proj += 1
         # Winter overrides: the reconciled pipeline status beats the stale
@@ -243,7 +275,7 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         if arc and mlbam and arc["mlbam"] == mlbam:
             m["fvArc"] = arc["pts"]
         members.append(m)
-    members.sort(key=lambda m: -(m.get("mGuar") or 0))
+    members.sort(key=lambda m: -(m.get("projGuar") or 0))
     # Per-team fit lists covering ALL 30 orgs (the member rows only carry
     # top-3, which left half the league without a Fits view). Members are
     # referenced by post-sort index ("i") so nothing is duplicated; top-12
@@ -252,16 +284,8 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
     team_fits: dict[str, list[dict]] = defaultdict(list)
     for m, fits in full_fits:
         for f in fits:
-            team_fits[f["org"]].append(_clean({
-                "i": idx_of[id(m)], "fit": f["fit"],
-                "need": f["components"]["need"]["score"],
-                "window": f["components"]["window"]["score"],
-                "afford": f["components"]["afford"]["score"],
-                "park": f["components"]["park"]["score"],
-                "behavior": f["components"]["behavior"]["score"],
-                "blockedBy": [b["player_name"] for b in
-                              f["components"]["need"]["blocked_by"]] or None,
-            }))
+            team_fits[f["org"]].append(_clean({"i": idx_of[id(m)],
+                                               **_compact_fit(f, with_org=False)}))
     team_fits = {org: sorted(rows, key=lambda r: -r["fit"])[:12]
                  for org, rows in sorted(team_fits.items())}
     thr = fa_cba.cbt_threshold(class_year)
@@ -269,6 +293,7 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         "generated_at": date.today().isoformat(),
         "class_year": class_year,
         "dpw_usd": int(dpw),
+        "dpw_infl": fm._dpw_inflation(),
         "cba_carry_forward": bool(thr.get("carry_forward")),
         "n_members": len(members), "n_projected": n_proj,
         "n_signed": sum(1 for m in members if m.get("status") == "signed"),
@@ -351,14 +376,30 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
     afford = fa_fit.affordability(class_year)
     priors = fa_fit.behavior_priors()
     bases = fa_fit.team_baselines(class_year)
+    # Per-team blocked positions (the needs matrix's blocker lists, both
+    # kinds): blocked teams fall OUT of the top-fits lists by construction
+    # (their need craters), so the Fits view names the blockers here —
+    # "why isn't this team shopping at SS" is half the product.
+    needs = fa_fit.needs_matrix(class_year)
     teams = {}
     for org in sorted(set(afford) | set(priors) | set(bases)):
         a, b, w = afford.get(org) or {}, priors.get(org) or {}, bases.get(org) or {}
+        blocked = []
+        for pos, cell in (needs.get(org) or {}).items():
+            for bl in cell.get("mlb_blockers") or []:
+                blocked.append({"pos": pos, "n": bl["player_name"], "t": "mlb",
+                                "w": bl.get("war_proj")})
+            for bl in (cell.get("blockers") or [])[:1]:
+                blocked.append({"pos": pos, "n": bl["player_name"], "t": "prospect"})
         teams[org] = _clean({
-            "committed": a.get("committed_usd"), "space": a.get("space_usd"),
+            "committed": a.get("committed_usd"),
+            "taxPayroll": a.get("tax_payroll_usd"),
+            "space": a.get("space_usd"),
             "payor": a.get("payor_status"),
             "maxGuar": b.get("max_guarantee_usd"), "n100m": b.get("n_100m"),
+            "recentSpend": b.get("recent_spend_usd"),
             "baseWins": w.get("baseline_wins"),
+            "blocked": blocked or None,
         })
     try:
         dpw_series = json.loads((DATA_DIR / "fa_dpw_series.json").read_text(encoding="utf-8"))

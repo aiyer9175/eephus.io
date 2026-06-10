@@ -10,23 +10,34 @@ every score decomposable in the UI:
 
   NEED      incumbent committed strength at the player's position for the
             contract season (projected WAR of resolved contracted players)
-            minus PROSPX prospect blockers — a top shortstop prospect with
-            a near ETA means the team is NOT a shortstop buyer. Blockers
-            consume EXISTING platform data read-only at the EXISTING FV
-            grid (fv_close >= 50, ETA <= class_year + 1); no parallel
-            thresholds, no writes.
+            minus blockers. Blockers come in TWO kinds, both listed in the
+            UI: PROSPX prospects with a near ETA at the existing FV grid
+            (fv_close >= 50, ETA <= class_year + 1 — read-only, no parallel
+            thresholds), and MLB INCUMBENTS already producing at the
+            position (the displaced player projects >= incumbent_block_war).
+            Incumbent strength also flows CONTINUOUSLY through the
+            displacement gap, so only the prospect kind carries an extra
+            multiplier — a prospect isn't on the contracted roster, so the
+            gap can't see him.
   WINDOW    marginal playoff leverage at the team's 2027 baseline
             (replacement floor + projected WAR of players signed through
             the season): the 85-win team gains far more from +4 WAR than
             the 70-win team. Fixed documented logistic (not fitted, v1).
-  AFFORD    committed payroll vs the rule-versioned CBT threshold — for
-            2027 the threshold is an explicit carry-forward (CBA expired
-            mid-market), and the flag rides every output.
+  AFFORD    CAN the team fit the price: CBT-basis payroll vs the
+            rule-versioned threshold (Spotrac's own tax-space number when
+            present). Habitual taxpayers who keep spending get a documented
+            floor — the Dodgers' afford is not zero just because they're
+            over the line. For 2027 the threshold is an explicit
+            carry-forward and the flag rides every output.
   PARK      destination park factors (Savant, 100 = neutral) aligned to
             the player's batted side; pitchers prefer suppressive parks.
-  BEHAVIOR  priors from the team's OWN signing history in the corpus —
-            biggest guarantee ever given, $100M-deal participation: some
-            teams structurally never shop in certain aisles.
+            Deliberately the SMALLEST weight: park is a tiebreaker, not a
+            driver (the v1 weighting recommended suppressive parks for
+            every pitcher — the Giants-for-all-pitchers failure).
+  BEHAVIOR  WILL the team spend: priors from the team's OWN signing
+            history — biggest guarantee ever (vs this price), recent
+            3-winter FA outlay, $100M-deal participation. Some teams
+            structurally never shop in certain aisles.
 """
 
 from __future__ import annotations
@@ -89,7 +100,10 @@ def park_factors(season: int, bat_side: str = "") -> dict[str, dict]:
 
 def park_component(player: dict, org: str, season: int) -> dict:
     """0..1 score + the underlying indices. Hitters want >100 wOBA/HR in
-    their batted side; pitchers want <100. ±20 index points saturate."""
+    their batted side; pitchers want <100. ±25 index points saturate —
+    flattened from the v1 ±20 (and the weight cut in fa_config) after the
+    measured failure mode: the most suppressive park topped EVERY pitcher's
+    fit list because park alone separated otherwise-similar teams."""
     side = (player.get("bat_throw") or "").split("/")[0].strip().upper()
     bat_side = side if side in ("L", "R") else ""
     pf = park_factors(season, bat_side).get(org) or park_factors(season).get(org) \
@@ -97,7 +111,7 @@ def park_component(player: dict, org: str, season: int) -> dict:
     idx = (pf["woba"] + pf["hr"]) / 2.0
     is_pitcher = _position_norm(player.get("position")) in ("SP", "RP")
     edge = (100.0 - idx) if is_pitcher else (idx - 100.0)
-    score = max(0.0, min(1.0, 0.5 + edge / 40.0))
+    score = max(0.0, min(1.0, 0.5 + edge / 60.0))
     return {"score": round(score, 3), "park_woba": pf["woba"], "park_hr": pf["hr"],
             "bat_side": bat_side or None, "view": "suppressive-good" if is_pitcher else "hitter-good"}
 
@@ -182,7 +196,14 @@ def _blockers(class_year: int) -> dict[tuple[str, str], list[dict]]:
 
 
 def needs_matrix(class_year: int) -> dict[str, dict[str, dict]]:
-    """{org: {position: {incumbent_war, incumbents, blockers, outgoing}}}."""
+    """{org: {position: {incumbent_war, incumbents, blockers, mlb_blockers,
+    outgoing}}}. Blockers come in two kinds: PROSPX prospects (near-ETA,
+    FV grid) and MLB incumbents already producing at the slot the signing
+    would displace (war_proj >= incumbent_block_war) — a team whose
+    displaced starter projects 3 WAR is not a buyer there, and the UI says
+    WHO is doing the blocking, not just that it's blocked."""
+    cfg = _fit_cfg()
+    inc_block = float(cfg.get("incumbent_block_war", 2.5))
     rosters = _contracted_projections(class_year)
     blockers = _blockers(class_year)
     outgoing: dict[tuple[str, str], list[str]] = defaultdict(list)
@@ -206,11 +227,22 @@ def needs_matrix(class_year: int) -> dict[str, dict[str, dict]]:
             # the back of the pen. unit_war (the sum) stays for context.
             slot = {"SP": 4, "RP": 2}.get(pos, 0)
             displaced = inc[slot]["war_proj"] if len(inc) > slot else 0.0
+            # MLB incumbent blocker: the player the signing would actually
+            # DISPLACE (the starter at the slot, the 5th starter, the back
+            # of the pen) when he himself projects as a real producer. An
+            # ace doesn't block adding another SP — only a full slot does.
+            # The WAR already discounts need through the gap; this list
+            # exists so the surfaces can NAME the blocker.
+            mlb_blockers = ([{"player_name": inc[slot]["name"],
+                              "war_proj": inc[slot]["war_proj"]}]
+                            if len(inc) > slot and inc[slot]["war_proj"] >= inc_block
+                            else [])
             out[org][pos] = {
                 "unit_war": round(sum(max(0.0, r["war_proj"]) for r in inc[:5 if pos == "SP" else 2]), 2),
                 "displaced_war": round(max(0.0, displaced), 2),
                 "incumbents": inc[:3],
                 "blockers": blockers.get((org, pos), []),
+                "mlb_blockers": mlb_blockers,
                 "outgoing": outgoing.get((org, pos), []),
             }
     return out
@@ -245,39 +277,53 @@ def win_leverage(wins: float) -> float:
 
 @lru_cache(maxsize=2)
 def affordability(class_year: int) -> dict[str, dict]:
-    """{org: {committed_usd, threshold_usd, space_usd, carry_forward,
-    payor_status}} — rule-versioned; the 2027 threshold is an explicit
-    carry-forward and the flag rides every consumer."""
+    """{org: {committed_usd, tax_payroll_usd, threshold_usd, space_usd,
+    carry_forward, payor_status}} — rule-versioned; the 2027 threshold is
+    an explicit carry-forward and the flag rides every consumer. Space is
+    measured on the CBT BASIS (Spotrac's own tax-space figure when
+    present) — the number front offices actually budget against."""
     thr = fa_cba.cbt_threshold(class_year)
     pay = storage.load_fa_team_payroll(class_year)
     tax_prev = storage.load_fa_team_payroll(class_year - 1)
     out = {}
     for (team, _season), row in pay.items():
         committed = row.get("total_payroll_usd") or 0
+        tax_payroll = row.get("tax_payroll_usd")
+        space = row.get("space_usd")
+        if space is None:
+            space = thr["threshold_usd"] - (tax_payroll or committed)
         prev = tax_prev.get((team, class_year - 1)) or {}
         out[team] = {
             "committed_usd": committed,
+            "tax_payroll_usd": tax_payroll,
             "threshold_usd": thr["threshold_usd"],
-            "space_usd": thr["threshold_usd"] - committed,
+            "space_usd": space,
             "carry_forward": thr["carry_forward"],
-            "payor_status": prev.get("payor_status_raw"),
+            "payor_status": prev.get("payor_status_raw") or row.get("payor_status_raw"),
         }
     return out
 
 
 @lru_cache(maxsize=1)
 def behavior_priors() -> dict[str, dict]:
-    """Per-team priors from the team's OWN signings in the corpus:
-    max guarantee ever, count of $100M deals, total FA spend."""
+    """Per-team WILL-SPEND priors from the team's OWN signings in the
+    corpus: max guarantee ever, count of $100M deals, total FA spend, and
+    the recent 3-winter outlay (spending appetite is a recency story —
+    an owner who spent $400M since 2024 is live in a way 2016 can't show)."""
+    signings = storage.load_fa_signings()
+    last_winter = max((y for (_k, y) in signings), default=0)
     out: dict[str, dict] = defaultdict(lambda: {"max_guarantee_usd": 0,
-                                                "n_100m": 0, "total_spend_usd": 0})
-    for (_k, _y), s in storage.load_fa_signings().items():
+                                                "n_100m": 0, "total_spend_usd": 0,
+                                                "recent_spend_usd": 0})
+    for (_k, y), s in signings.items():
         team, g = s.get("to_team"), s.get("guarantee_usd") or 0
         if not team or not s.get("mlb_deal"):
             continue
         b = out[team]
         b["max_guarantee_usd"] = max(b["max_guarantee_usd"], g)
         b["total_spend_usd"] += g
+        if y >= last_winter - 2:
+            b["recent_spend_usd"] += g
         if g >= 100_000_000:
             b["n_100m"] += 1
     return dict(out)
@@ -287,35 +333,63 @@ def behavior_priors() -> dict[str, dict]:
 # Composite fit
 # ============================================================================
 
+def _is_taxpayer(payor_status: str | None) -> bool:
+    """Spotrac's payor strings are free-form; anything that isn't an
+    explicit non-payor reads as a taxpayer signal."""
+    s = (payor_status or "").strip().lower()
+    return bool(s) and "non" not in s
+
+
 def fit_scores(player: dict, market_pred: dict, class_year: int,
                top_n: int = 5) -> list[dict]:
     """Per-team transparent composite for one class member. ``player`` is a
     class row (position, bat_throw, from_team); ``market_pred`` carries
-    m_guarantee_usd / m_aav_usd. Every component returns its inputs."""
+    proj_guarantee_usd / proj_aav_usd. Every component returns its inputs."""
     cfg = _fit_cfg()
     w = cfg["weights"]
+    bw = cfg.get("behavior_weights") or {"max_guar": 0.5, "recent": 0.3, "rich": 0.2}
     pos = _position_norm(player.get("position"))
     needs = needs_matrix(class_year)
     bases = team_baselines(class_year)
     afford = affordability(class_year)
     priors = behavior_priors()
+    # League-max recent spend normalizes the will-spend component to [0,1].
+    max_recent = max((b.get("recent_spend_usd") or 0) for b in priors.values()) or 1
     war1 = (player.get("_war_path") or {}).get("war_y1") or 1.0
     rows = []
     for org, by_pos in needs.items():
         cell = by_pos.get(pos) or {}
         gap = max(0.0, war1 - (cell.get("displaced_war") or 0.0))
-        blocked = bool(cell.get("blockers"))
-        need = min(1.0, gap / cfg["need_war_saturation"]) * (0.35 if blocked else 1.0)
+        # Prospect blockers carry the multiplier (they're invisible to the
+        # contracted-roster gap); MLB incumbents already discount need
+        # continuously THROUGH the gap, so they're listed but not
+        # double-counted.
+        prospect_blocked = bool(cell.get("blockers"))
+        need = (min(1.0, gap / cfg["need_war_saturation"])
+                * (float(cfg.get("prospect_block_multiplier", 0.5)) if prospect_blocked else 1.0))
+        blocked_by = ([{"player_name": b["player_name"], "kind": "prospect"}
+                       for b in (cell.get("blockers") or [])]
+                      + [{"player_name": b["player_name"], "kind": "mlb",
+                          "war_proj": b.get("war_proj")}
+                         for b in (cell.get("mlb_blockers") or [])])
         base = bases.get(org) or {"baseline_wins": cfg["replacement_wins"]}
         window = win_leverage(base["baseline_wins"] + war1 / 2.0)
         a = afford.get(org) or {}
-        aav = market_pred.get("m_aav_usd") or 10_000_000
+        b = priors.get(org) or {}
+        aav = market_pred.get("proj_aav_usd") or 10_000_000
         space = a.get("space_usd")
         afford_score = (max(0.0, min(1.0, space / (aav * 2.0))) if space is not None else 0.5)
+        # Habitual-taxpayer floor: a club that lives above the threshold AND
+        # keeps signing nine-figure deals is not priced out by CBT space —
+        # its real constraint is appetite (the behavior component's job).
+        if (_is_taxpayer(a.get("payor_status")) and (b.get("n_100m") or 0) >= 3):
+            afford_score = max(afford_score, float(cfg.get("taxpayer_afford_floor", 0.4)))
         park = park_component(player, org, class_year - 1)
-        b = priors.get(org) or {}
-        guar = market_pred.get("m_guarantee_usd") or 20_000_000
-        behavior = min(1.0, (b.get("max_guarantee_usd") or 0) / max(guar, 1)) ** 0.5
+        guar = market_pred.get("proj_guarantee_usd") or 20_000_000
+        scale = min(1.0, (b.get("max_guarantee_usd") or 0) / max(guar, 1)) ** 0.5
+        recent = min(1.0, (b.get("recent_spend_usd") or 0) / max_recent)
+        rich = min(1.0, (b.get("n_100m") or 0) / 5.0)
+        behavior = bw["max_guar"] * scale + bw["recent"] * recent + bw["rich"] * rich
         comp = (w["need"] * need + w["window"] * window + w["afford"] * afford_score
                 + w["park"] * park["score"] + w["behavior"] * behavior)
         rows.append({
@@ -324,17 +398,19 @@ def fit_scores(player: dict, market_pred: dict, class_year: int,
                 "need": {"score": round(need, 3), "war_gap": round(gap, 2),
                          "displaced_war": cell.get("displaced_war"),
                          "unit_war": cell.get("unit_war"),
-                         "blocked_by": cell.get("blockers") or [],
+                         "blocked_by": blocked_by,
                          "outgoing": cell.get("outgoing") or []},
                 "window": {"score": round(window, 3),
                            "baseline_wins": base.get("baseline_wins")},
                 "afford": {"score": round(afford_score, 3),
                            "space_usd": space,
+                           "tax_payroll_usd": a.get("tax_payroll_usd"),
                            "carry_forward": a.get("carry_forward", True),
                            "payor_status": a.get("payor_status")},
                 "park": park,
                 "behavior": {"score": round(behavior, 3),
                              "max_guarantee_usd": b.get("max_guarantee_usd"),
+                             "recent_spend_usd": b.get("recent_spend_usd"),
                              "n_100m": b.get("n_100m", 0)},
             },
         })

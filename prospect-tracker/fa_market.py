@@ -13,9 +13,9 @@ TWO NUMBERS, NEVER CONFLATED:
   pick tax literally subtracts one from the other, so the two must share
   an NPV currency).
 
-  PREDICTED MARKET PRICE (mYears / mGuarantee / mAAV) — what teams will
-  actually pay: a transparent two-stage model trained ONLY on the
-  historical FA-signing corpus (years first, then log-guarantee given
+  PREDICTED MARKET PRICE (projLength / projGuarantee / projAAV) — what
+  teams will actually pay: a transparent two-stage model trained ONLY on
+  the historical FA-signing corpus (years first, then log-guarantee given
   years), with class-supply and QO features and per-winter $/WAR levels
   carried forward ex-ante. Bands are empirical residual quantiles. Real
   nearest-neighbor comps ride alongside every prediction — comps are
@@ -23,7 +23,15 @@ TWO NUMBERS, NEVER CONFLATED:
 
 The GAP (rational − predicted, "Contract Surplus ($)") is the module's
 core editorial product. Deal+ (100 = market-rate, >100 = team-friendly)
-indexes a contract's rational value against its price.
+indexes a contract's rational value against its price; the UI surfaces it
+as a VERDICT string (value / market / overpay — see deal_verdict).
+
+Probability bucketing: every projected WAR path ships floor/mean/ceiling
+variants (P10/P50/P90). The quantiles are the Gate-1 EMPIRICAL year-1
+residual quantiles per reliability bucket (data/fa_gate1_eval.json
+band_quantiles) applied to the year-1 WAR rate, then decayed along the
+SAME aging curves as the central path — uncertainty propagates the way
+talent does, not as a constant ribbon.
 
 Point-in-time discipline: every signing's WAR projection is built with
 fa_projection models fitted on seasons STRICTLY BEFORE its winter
@@ -39,6 +47,7 @@ import logging
 import math
 import statistics
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
 
 import fa_cba
@@ -49,7 +58,7 @@ from value_framework import _config as _vf_config, point_estimate_surplus_usd
 
 log = logging.getLogger(__name__)
 
-MODEL_VERSION = "fa_mkt_v1"
+MODEL_VERSION = "fa_mkt_v2"
 GATE2_PATH = Path(__file__).parent / "data" / "fa_gate2_eval.json"
 
 POS_GROUPS = ("SP", "RP", "C", "POS")
@@ -81,6 +90,46 @@ def _dpw_inflation() -> float:
 MAX_PATH_YEARS = 15
 
 
+def _decay_path(war1: float, expo: float, side: str, role: str, age: int,
+                curves: dict) -> list[float]:
+    """Decay a year-1 WAR along the aging curves: the WAR RATE (per 600 PA /
+    250 BF) and playing time each walk their fitted deltas at the advancing
+    age. Shared by the central path and the P10/P90 variants so uncertainty
+    propagates through the SAME aging machinery."""
+    per = 600.0 if side == "hit" else 250.0
+    rate = (war1 / expo * per) if expo > 0 else 0.0
+    path = []
+    a = age
+    e = expo
+    for t in range(MAX_PATH_YEARS):
+        if t > 0:
+            a += 1
+            rate += fp.curve_delta(curves, side, role, "war_rate", a)
+            e += fp.curve_delta(curves, side, role, "pt", a)
+            e = max(0.0, e)
+        path.append(max(0.0, rate * e / per))
+    return path
+
+
+@lru_cache(maxsize=1)
+def _gate1_band_quantiles() -> dict:
+    """The Gate-1 EMPIRICAL year-1 WAR residual quantiles per reliability
+    bucket (side x projected-exposure tier) — the committed artifact is the
+    single source for every probability bucket on the platform."""
+    try:
+        d = json.loads((Path(__file__).parent / "data" / "fa_gate1_eval.json")
+                       .read_text(encoding="utf-8"))
+        return d.get("band_quantiles") or {}
+    except (OSError, ValueError):
+        log.warning("gate1 band quantiles unavailable — paths ship without bands")
+        return {}
+
+
+def _band_bucket(side: str, pt_y1: float) -> str:
+    lo = 350 if side == "hit" else 250
+    return f"{side}:{'hi' if pt_y1 >= lo else 'lo'}"
+
+
 def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
                       age: int | None, curves: dict, war_map: dict,
                       league: dict, in_progress: tuple[int, float] | None = None) -> dict | None:
@@ -88,29 +137,31 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
     years decay the WAR rate and playing time along the SAME aging curves
     (war_rate per-600/250 deltas + pt deltas at the advancing age).
     The path always extends MAX_PATH_YEARS so any candidate term can be
-    priced by slicing; war_total covers the ACTUAL contract years."""
+    priced by slicing; war_total covers the ACTUAL contract years.
+
+    Floor/ceiling variants (war_by_year_p10 / _p90): the Gate-1 empirical
+    year-1 residual quantile for the player's reliability bucket shifts the
+    year-1 WAR, and the shifted talent decays along the same curves."""
     proj = fp.project_player(hist, side, class_year, curves, league, age,
                              in_progress=in_progress)
     if proj is None:
         return None
     war1 = fp.war_from_projection(proj, side, war_map, league, class_year)
     expo = proj["pt_proj"]
-    per = 600.0 if side == "hit" else 250.0
-    rate = (war1 / expo * per) if expo > 0 else 0.0
     role = proj["role"]
-    path = []
     a = age or 30
-    for t in range(MAX_PATH_YEARS):
-        if t > 0:
-            a += 1
-            rate += fp.curve_delta(curves, side, role, "war_rate", a)
-            expo += fp.curve_delta(curves, side, role, "pt", a)
-            expo = max(0.0, expo)
-        path.append(max(0.0, rate * expo / per))
-    return {"war_by_year": [round(w, 2) for w in path],
-            "war_total": round(sum(path[:years]), 2),
-            "war_y1": round(path[0], 2) if path else 0.0,
-            "role": role, "pt_y1": proj["pt_proj"]}
+    path = _decay_path(war1, expo, side, role, a, curves)
+    out = {"war_by_year": [round(w, 2) for w in path],
+           "war_total": round(sum(path[:years]), 2),
+           "war_y1": round(path[0], 2) if path else 0.0,
+           "role": role, "pt_y1": proj["pt_proj"]}
+    q = _gate1_band_quantiles().get(_band_bucket(side, expo))
+    if q:
+        p10 = _decay_path(war1 + q["q10"], expo, side, role, a, curves)
+        p90 = _decay_path(war1 + q["q90"], expo, side, role, a, curves)
+        out["war_by_year_p10"] = [round(w, 2) for w in p10]
+        out["war_by_year_p90"] = [round(w, 2) for w in p90]
+    return out
 
 
 def disc_war(path: dict, years: int) -> float:
@@ -164,13 +215,26 @@ def winter_dpw(dpw_series: dict[int, float], class_year: int) -> float:
 
 def rational_value_usd(war_by_year: list[float], class_year: int,
                        dpw_usd: float) -> int:
-    """NPV of the projected production: Σ_t PV(war_t × $/WAR_t), $/WAR
-    escalating at the configured inflation, discounted at the platform 9%."""
+    """NPV of the projected production: Σ_t PV(value(war_t) × level_t),
+    $/WAR escalating at the configured inflation, discounted at the
+    platform 9%.
+
+    v2 — CONVEX season pricing. The v1 flat rate priced a 1-WAR season and
+    the third win of a 3-WAR season identically, so the entire bottom of
+    the class graded as a bargain (measured: class median Deal+ 220).
+    Wins are NOT fungible at one price — the market pays a premium per win
+    for star seasons and a discount for fringe ones. Each season is now
+    priced through the platform's tier curve (value_framework
+    tiered_war_value_usd — the SAME convexity the prospect surplus model
+    uses), rescaled so the curve's overall level matches this winter's
+    ex-ante FA $/WAR. One convex shape, two modules, one source of truth."""
+    from value_framework import tiered_war_value_usd
     r = _discount_rate()
     infl = _dpw_inflation()
+    level = dpw_usd / float(_vf_config()["dollars_per_war"]["flat"])
     total = 0.0
     for t, w in enumerate(war_by_year):
-        total += (w * dpw_usd * ((1 + infl) ** t)) / ((1 + r) ** t)
+        total += (tiered_war_value_usd(w) * level * ((1 + infl) ** t)) / ((1 + r) ** t)
     return int(total)
 
 
@@ -259,7 +323,11 @@ def _features_years(s: dict, comps_my: float) -> list[float]:
     return [1.0, s["_age"], w1, w1 * w1, s["_age"] * w1,
             1.0 if g == "SP" else 0.0, 1.0 if g == "RP" else 0.0,
             1.0 if g == "C" else 0.0, 1.0 if s.get("qo") else 0.0,
-            comps_my]
+            comps_my,
+            # prime years remaining — the term structure behind long deals:
+            # teams buy seasons through ~30; a 26-year-old's market simply
+            # has more buyable years in it (v2 feature, gate-measured).
+            max(0.0, 30.0 - s["_age"])]
 
 
 def _features_guar(s: dict, years: float, dpw_usd: float, supply: float,
@@ -415,8 +483,11 @@ class MarketModel:
             # alpha 0 below a $50M comps median (pure model, mid-market
             # untouched) rising to 0.8 at $400M+. Smooth, monotone,
             # documented; the mega slice in the eval measures its effect.
+            # v2: cap raised 0.8 -> 0.9 — the measured mega slice (model
+            # $99M MAE vs comps $93M) says the anchor deserves MORE of the
+            # vote at the very top, not less.
             lo, hi = math.log(50e6), math.log(400e6)
-            alpha = min(0.8, max(0.0, (math.log(comps_guar) - lo) / (hi - lo) * 0.8))
+            alpha = min(0.9, max(0.0, (math.log(comps_guar) - lo) / (hi - lo) * 0.9))
             if alpha > 0:
                 comps_aav = self._comps_stats(s)[2]
                 mega_anchor = max(comps_guar, comps_aav * years)
@@ -430,22 +501,51 @@ class MarketModel:
         qy = statistics.quantiles(self.resid_years, n=10) if len(self.resid_years) >= 50 else None
         qg = statistics.quantiles(self.resid_log_guar, n=10) if len(self.resid_log_guar) >= 50 else None
         out = {
-            "m_years": max(1, years),
-            "m_guarantee_usd": int(guar),
-            "m_aav_usd": int(guar / max(years, 1)),
+            "proj_years": max(1, years),
+            "proj_guarantee_usd": int(guar),
+            "proj_aav_usd": int(guar / max(years, 1)),
         }
         if qy:
-            out["m_years_p10"] = max(1, int(round(years_f + qy[0])))
-            out["m_years_p90"] = int(round(years_f + qy[-1]))
+            out["proj_years_p10"] = max(1, int(round(years_f + qy[0])))
+            out["proj_years_p90"] = int(round(years_f + qy[-1]))
         if qg:
-            out["m_guarantee_p10_usd"] = int(guar * math.exp(qg[0]))
-            out["m_guarantee_p90_usd"] = int(guar * math.exp(qg[-1]))
-            # mAAV bands ride the guarantee band at the point-estimate term —
+            out["proj_guarantee_p10_usd"] = int(guar * math.exp(qg[0]))
+            out["proj_guarantee_p90_usd"] = int(guar * math.exp(qg[-1]))
+            # projAAV bands ride the guarantee band at the point-estimate term —
             # both framings (per-year price AND total value/length) carry
             # P10/P50/P90, per the module's distributions-not-points rule.
-            out["m_aav_p10_usd"] = int(out["m_guarantee_p10_usd"] / max(years, 1))
-            out["m_aav_p90_usd"] = int(out["m_guarantee_p90_usd"] / max(years, 1))
+            out["proj_aav_p10_usd"] = int(out["proj_guarantee_p10_usd"] / max(years, 1))
+            out["proj_aav_p90_usd"] = int(out["proj_guarantee_p90_usd"] / max(years, 1))
         return out
+
+
+# ============================================================================
+# Deal verdict — the UI-facing read of Deal+
+# ============================================================================
+# Deal+ (100 x rational / price) stays the underlying index; the surfaces
+# render a plain-English VERDICT so a reader never has to translate a
+# number: value (projected to be underpaid), market (priced about right),
+# overpay (projected to be overpaid).
+#
+# Band edges are EMPIRICALLY CENTERED, not symmetric around 100: Deal+ at
+# convex pricing is right-skewed (the 2015-2026 corpus at actual prices
+# runs p33=81, median=121, p67=186 — short cheap deals on projectable
+# players grade well; the left tail is megadeal overpays). The edges sit
+# on the corpus TERCILES, so each verdict named exactly a third of twelve
+# winters of real contracts. A class that skews "value" against these
+# fixed bands is information, not a calibration artifact.
+VERDICT_VALUE_MIN = 185     # Deal+ >= 185 -> "value"   (corpus top tercile)
+VERDICT_OVERPAY_MAX = 85    # Deal+ <  85  -> "overpay" (corpus bottom tercile)
+
+
+def deal_verdict(deal_plus: float | None) -> str | None:
+    if deal_plus is None:
+        return None
+    if deal_plus >= VERDICT_VALUE_MIN:
+        return "value"
+    if deal_plus < VERDICT_OVERPAY_MAX:
+        return "overpay"
+    return "market"
 
 
 def comps_for(s: dict, pool: list[dict], k: int = 5) -> list[dict]:
