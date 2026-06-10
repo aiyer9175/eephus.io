@@ -155,6 +155,20 @@ BETA_BADGE = (
     f'{html.escape(EEPHUS_VERSION)}</span>'
 )
 
+# Module lifecycle stages — α = newly launched (numbers may still shift),
+# β = established but in beta. Rendered as a superscript marker next to
+# module names in navs and as a bordered chip on module mastheads.
+MODULE_STAGE = {
+    "prospx": ("β", "PROSPX is in beta"),
+    "fa":     ("α", "MLB Free Agency is in alpha — newly launched; numbers may shift as the model matures"),
+}
+
+def _stage_sup(key: str) -> str:
+    st = MODULE_STAGE.get(key)
+    if not st:
+        return ""
+    return f'<sup class="mod-stage" title="{html.escape(st[1])}">{st[0]}</sup>'
+
 # Modern X (Twitter) glyph — module-level so social links on every surface share
 # one mark. (build_team keeps its own local copy for the per-member chips.)
 _X_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 '
@@ -460,7 +474,7 @@ def _nav(active: str) -> str:
     items = []
     for key, label, href in NAV_ITEMS:
         cls = ' class="is-active"' if key == active else ""
-        items.append(f'<a href="{href}"{cls}>{html.escape(label)}</a>')
+        items.append(f'<a href="{href}"{cls}>{html.escape(label)}{_stage_sup(key)}</a>')
     # Site-wide controls (right-aligned), matching PROSPX's primary nav: a
     # Watchlist deep-link into PROSPX + the Dark Mode toggle.
     controls = (
@@ -1178,12 +1192,17 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     # ---- sidebar ----
     # The sidebar has room for fuller module names than the horizontal
     # header nav, so a couple of labels expand here (key → sidebar label).
+    # Every module carries a terminal-safe glyph (PROSPX carries its ball
+    # badge instead) and, where staged, its α/β lifecycle marker.
     sidebar_labels = {"fa": "MLB Free Agency"}
+    sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$",
+                     "forums": "❝", "team": "⚒"}
     nav = []
     for key, label, href in NAV_ITEMS:
         cls = ' class="is-active"' if key == "home" else ""
-        icon = prospx_ball_logo("sbnav") if key == "prospx" else ""
-        nav.append(f'<a href="{href}"{cls}>{icon}{html.escape(sidebar_labels.get(key, label))}</a>')
+        icon = (prospx_ball_logo("sbnav") if key == "prospx"
+                else f'<span class="sb-ico" aria-hidden="true">{sidebar_icons.get(key, "›")}</span>')
+        nav.append(f'<a href="{href}"{cls}>{icon}{html.escape(sidebar_labels.get(key, label))}{_stage_sup(key)}</a>')
     sub = "".join(f'<a href="{href}"><span class="px-glyph">›</span>{html.escape(label)}</a>'
                   for label, href in PROSPX_SUBNAV)
     feed = _feed_html(events, 12) or '<div class="feed-item" style="color:#6f8a76;">No recent activity.</div>'
@@ -1192,14 +1211,14 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
               "onkeydown=\"if(event.key==='Enter'&&this.value.trim()){location.href='/prospx/#q='+encodeURIComponent(this.value.trim());}\">")
     sidebar = (
         '<aside class="home-sidebar">'
-        f'<div class="sb-brand"><a class="wm" href="/">{eephus_merged_wordmark("sb", tag="span")}</a>{THEME_BTN}</div>'
+        f'<div class="sb-brand"><a class="wm" href="/">{eephus_merged_wordmark("sb", tag="span")}</a>{BETA_BADGE}{THEME_BTN}</div>'
         # eephus.io — account entry point for the homepage (page_home has no
         # .eephus-nav top bar). refreshNav() in eephus-ui.js injects the Sign-in /
         # avatar control into any .eephus-nav-controls, including this sidebar slot.
         '<div class="sb-account eephus-nav-controls"></div>'
         f'{search}'
         f'<div class="sb-group"><div class="sb-group-label">Modules</div><nav class="sb-nav">{"".join(nav)}</nav></div>'
-        f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{prospx_ball_logo("sbgrp", 14)}PROSPX</div><nav class="sb-subnav">{sub}</nav></div>'
+        f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{prospx_ball_logo("sbgrp", 14)}PROSPX{_stage_sup("prospx")}</div><nav class="sb-subnav">{sub}</nav></div>'
         f'{spotlight}'
         f'<div class="sb-group"><div class="sb-feed"><div class="feed-head"><span class="blip"></span>Prospect Wire</div>{feed}</div></div>'
         '</aside>'
@@ -1331,7 +1350,8 @@ def build_fa() -> str:
     archive / model / glossary)."""
     body = (
         '<div class="fa-app">'
-        '<div class="section-head"><h1>MLB Free Agency</h1>'
+        '<div class="section-head"><h1>MLB Free Agency '
+        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["fa"][1])}">α alpha</span></h1>'
         '<span class="section-sub">the 2026-27 class, constructed from data · '
         'projected markets, rational value &amp; team fits · twelve archived winters</span></div>'
         '<div id="fa-banner"></div>'

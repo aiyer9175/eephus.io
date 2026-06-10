@@ -526,6 +526,24 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* PROSPX baseball badge inline with its nav entry + subnav group label. */
 .px-ball { flex: none; }
 .sb-group-label--lockup { display: flex; align-items: center; gap: 6px; }
+/* Module glyphs in the sidebar nav — terminal-safe text glyphs, fixed
+   width so labels align whether the icon is a glyph or the ball SVG. */
+.sb-ico {
+  width: 16px; flex: none; text-align: center;
+  font-family: var(--font-retro-mono); font-size: 13px;
+  color: var(--text-tertiary);
+}
+.sb-nav a:hover .sb-ico, .sb-nav a.is-active .sb-ico { color: var(--text-primary); }
+/* α/β module lifecycle markers — superscript next to module names in navs;
+   the bordered .eephus-beta chip is the masthead form. */
+.mod-stage {
+  font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+  color: var(--text-tertiary); margin-left: 2px;
+  vertical-align: super; line-height: 1; cursor: help;
+}
+.section-head h1 .eephus-beta { vertical-align: middle; margin-left: 10px; }
+/* PROSPX masthead stage chip (prospx h1 is a flex lockup). */
+.h1-stage { align-self: center; margin-left: 4px; }
 .sb-group-label { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 8px; padding-bottom: 5px; border-bottom: 1px solid var(--border-light); }
 .sb-nav a, .sb-subnav a {
   display: flex; align-items: center; gap: 8px; text-decoration: none;
