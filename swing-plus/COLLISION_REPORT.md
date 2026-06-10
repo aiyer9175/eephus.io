@@ -35,14 +35,17 @@ Nothing projects next BB% or next wOBA meaningfully (|r| ≤ 0.18).
 
 | Model | Target (next yr) | Base R² | +Collision | ΔR² | Verdict |
 |---|---|---|---|---|---|
-| **Contact+** | whiff | 0.629 | 0.719 | **+0.089** | **PASS — upgraded (v2 shipped)** |
+| **Contact+** | whiff | 0.625 | 0.707 | **+0.082** | **PASS — upgraded (v2 shipped)** |
 | **Contact+** | K% | 0.530 | 0.562 | +0.032 | ↑ part of v2 |
-| **Swing+** | EV90 | 0.462 | 0.521 | +0.059 | PASS-signal / **not housed here** (see below) |
+| **Swing+** | EV90 | 0.527 | 0.595 | +0.068 | PASS-signal / **not housed here** (see below) |
 | **Swing+** | ISO | 0.234 | 0.240 | +0.007 | no gain |
-| **B2B+** | xwOBAcon | 0.086 | 0.262 | **+0.176** | standalone PASS / **framework-redundant** |
+| **B2B+** | xwOBAcon | 0.086 | 0.286 | **+0.200** | standalone PASS / **framework-redundant** |
 | **Decision+** | BB% | 0.403 | 0.387 | −0.016 | **REJECT** |
 | **Decision+** | wOBA | 0.022 | 0.007 | −0.015 | **REJECT** |
 | **DC+** | ISO | 0.035 | 0.106 | +0.072 | standalone PASS / framework-redundant |
+
+*(Numbers re-verified after fixing a stand-split duplicate-row bug in the audit join —
+all verdicts unchanged; see Reproducibility note.)*
 
 **Beyond the FULL framework (all 5 model scores as baseline):** whiff **+0.025**, EV90 **+0.037**,
 K% +0.008, xwOBAcon +0.010, ISO +0.001, wOBA −0.014, BB% −0.025.
@@ -71,28 +74,47 @@ endpoint's own `whiff_rate` column is excluded from features. No identity/derive
 
 Ridge on [Contact+ v1, perfect %, flawed %, vert_entropy, lined-up %, over %,
 collision_entropy, miss distance] → next-season whiff; score = −prediction, 100±10 per
-year, shrunk K=150 swings. **Champion vs challenger:** next-whiff r −0.854 (v2) vs −0.799 (v1);
-next-K% −0.736 vs −0.715. 1,616 player-years scored incl. **463 direct-2026** (no calibration
+year, shrunk K=150 swings. **Champion vs challenger:** next-whiff r −0.846 (v2) vs −0.793 (v1);
+next-K% −0.773 vs −0.761. 1,479 player-years scored incl. **463 direct-2026** (no calibration
 detour needed — collision data is live for 2026). Face validity: top = Arraez 127, Simpson 125,
-Hoerner 123, Kwan 120; bottom = Murakami 85, Raley 85, Kurtz 86.
+Hoerner 123, Kwan 120; bottom = Murakami 84, Raley 84, Kurtz 86.
 
-Boards now carry `contact_axis` = v2 with v1 fallback (coverage ↑: season 1,616→1,890 axis rows).
+Boards carry `contact_axis` = v2 with v1 fallback.
 
-## Hitter+ (4-axis) — weights refit with v2 (Step 14 decision impact)
+## Addendum: DCV+ (Damage Conversion+) as 5th Hitter+ axis
 
-OPS-optimal weights: **Swing 0.37 / Decision 0.20 / B2B 0.24 / Contact 0.18**
-(was 0.35/0.23/0.22/0.20 with v1). Composite performance: same-season OPS r 0.65,
-K% 0.88, **next-OPS 0.52, next-K% 0.81** — identical to v1 at the composite level
-(documented honestly: the v2 gain lives in the axis, not the blend), and still well clear
-of SEAGER (next-OPS 0.34). Coverage: 681 all-time / 1,890 season rows.
+**Experiment:** dcv-axis-2026-06-10 · external damage-geometry framework
+(`~/damage_conversion_plus`, dcv_plus = pull-air 0.20 / spray 0.02 / HR-window 0.13 blend).
+
+**Pre-registered concern (cannibalization):** DCV+ correlates 0.92 with shrunk pulled-air
+rate — if B2B+ already proxies pull-air, the OPS-optimal DCV+ weight should collapse to ~0.
+**Result: no cannibalization.** corr(B2B+, pull-air) = **−0.14** (B2B+ carries no pull-air
+info; Swing+ only +0.22), and DCV+ holds a healthy weight.
+
+- Axis orthogonality: DCV+ vs Swing+ +0.21, Decision+ +0.13, B2B+ −0.08, Contact+ v2 −0.12.
+- **5-axis OPS weights: Swing 0.31 / Dec 0.16 / B2B 0.23 / Contact 0.17 / DCV 0.13** (n=749).
+- Gains (5-fold CV r): same-season ISO 0.69 → **0.81**, OPS 0.65 → **0.69**;
+  next-ISO 0.58 → **0.64**, next-OPS 0.50 → 0.51, next-K% 0.79 (unchanged). Verdict: **PASS — shipped.**
+- 2026 coverage: `dcv_2026.py` replicates the framework's raw damage-geometry rates from
+  raw Statcast (replication r = 1.000 on pulled-air/pulled-barrel/HR-window), calibrates
+  dcv_plus ~ shrunk rates (2023-25, **R² = 0.985**), predicts 2026 (397 hitters, K=100 BIP
+  shrink). 2026 top: Torkelson, Y. Álvarez, Schwarber — the pull-air board, as expected.
+
+## Reproducibility note (2026-06-10)
+
+The original audit joined the season leaderboard without collapsing stand-split rows,
+duplicating ~8% of pairs (and contact_v2 scores). Fixed in `collision_audit.build()`
+(groupby-mean to one row per batter-year) + de-dup in `bat_to_ball._v2()`; boards rebuilt
+at original grain (3,028 / 2,194 / 836 rows). All audit numbers above are post-fix;
+every verdict was re-verified and unchanged.
 
 ## Summary
 
-| Model | Improved by collision data? |
+| Model | Improved by new data? |
 |---|---|
-| Swing+ | Signal exists (+0.059 EV90 standalone) but rejected for inclusion — redundant with deployed features, retrain risk > benefit |
+| Swing+ | Signal exists (+0.068 EV90 standalone) but rejected for inclusion — redundant with deployed features, retrain risk > benefit |
 | Decision+ | **No** (negative ΔR² — collision is post-swing) |
-| Contact+ | **Yes — upgraded to v2** (+0.089 OOS whiff R², next-whiff r −0.80 → −0.85) |
-| B2B+ | Standalone yes (+0.176 xwOBAcon) but framework-redundant (+0.010 beyond all 5) — external artifact left unchanged, documented |
+| Contact+ | **Yes — upgraded to v2** (+0.082 OOS whiff R², next-whiff r −0.79 → −0.85) |
+| B2B+ | Standalone yes (+0.200 xwOBAcon) but framework-redundant (+0.010 beyond all 5) — external artifact left unchanged, documented |
 | DC+ | Standalone +0.072 ISO, framework-redundant (+0.001) — unchanged |
-| Hitter+ | Rebuilt 4-axis on Contact+ v2, weights 0.37/0.20/0.24/0.18 |
+| Hitter+ | **5-axis**: + Contact+ v2 and DCV+ (0.31/0.16/0.23/0.17/0.13); ISO r 0.69→0.81, next-ISO 0.58→0.64 |

@@ -28,7 +28,18 @@ def _v2():
         return None
     v = pd.read_parquet(p).rename(columns={"id": "batter", "year": "_yr",
                                            "contact2_plus": "contact2_plus"})
-    return v[["batter", "_yr", "contact2_plus", "n_swings"]]
+    return v[["batter", "_yr", "contact2_plus", "n_swings"]].drop_duplicates(["batter", "_yr"])
+
+
+def _dcv():
+    """DCV+ (external damage-geometry framework; 2026 calibrated by dcv_2026.py)."""
+    p = PROC / "dcv_plus.parquet"
+    if not p.exists():
+        return None
+    v = pd.read_parquet(p).rename(columns={"season": "_yr"})
+    v["batter"] = v["batter"].astype("int64")
+    v["_yr"] = v["_yr"].astype("int64")
+    return v.dropna(subset=["dcv_plus"])[["batter", "_yr", "dcv_plus", "n_bip"]]
 
 
 def add_to_boards(board: pd.DataFrame) -> pd.DataFrame:
@@ -36,6 +47,7 @@ def add_to_boards(board: pd.DataFrame) -> pd.DataFrame:
         return board
     s = _src()
     v2 = _v2()
+    dcv = _dcv()
     keep = ["b2b_plus", "contact_plus_b2b", "dc_plus_b2b"]
     b = board.copy()
     s_yr = s.assign(_yr=s["season"].astype(int))[["batter", "_yr"] + keep]
@@ -55,16 +67,22 @@ def add_to_boards(board: pd.DataFrame) -> pd.DataFrame:
             c2 = v2.groupby("batter").apply(lambda g: pd.Series({
                 "contact2_plus": np.average(g.contact2_plus, weights=g.n_swings)})).reset_index()
             b = b.merge(c2, on="batter", how="left")
+        if dcv is not None:                       # BIP-weighted career DCV+
+            dc = dcv.dropna(subset=["n_bip"]).groupby("batter").apply(lambda g: pd.Series({
+                "dcv_plus": np.average(g.dcv_plus, weights=g.n_bip)})).reset_index()
+            b = b.merge(dc, on="batter", how="left")
     if "_yr" in b.columns:
         if v2 is not None:
             b = b.merge(v2[["batter", "_yr", "contact2_plus"]], on=["batter", "_yr"], how="left")
+        if dcv is not None:
+            b = b.merge(dcv[["batter", "_yr", "dcv_plus"]], on=["batter", "_yr"], how="left")
         b = b.drop(columns="_yr")
     # the contact AXIS the app + Hitter+ use: v2 (collision-aware) where available, else v1
     if "contact2_plus" in b.columns:
         b["contact_axis"] = b["contact2_plus"].fillna(b["contact_plus_b2b"])
     else:
         b["contact_axis"] = b["contact_plus_b2b"]
-    for c in keep + ["contact2_plus", "contact_axis"]:
+    for c in keep + ["contact2_plus", "contact_axis", "dcv_plus"]:
         if c in b.columns:
             b[c] = b[c].round(1)
     return b
