@@ -262,18 +262,24 @@ def _features_years(s: dict, comps_my: float) -> list[float]:
 
 
 def _features_guar(s: dict, years: float, dpw_usd: float, supply: float,
-                   log_comps_guar: float) -> list[float]:
-    """log-guarantee stage. Stacks the (trend-inflated) nearest-comps
-    median guarantee — how front offices actually anchor — alongside the
-    structural terms. Predictions are CLAMPED to a comps envelope at
-    predict time (see _point): development showed unguarded extrapolation
-    failing in both directions at market extremes (megadeals collapsing
-    to $9M on the level form; bottom-of-market exploding on a pure rate
-    form), and the envelope is the documented backstop."""
+                   log_comps_guar: float, log_rational: float,
+                   prime_war: float) -> list[float]:
+    """log-guarantee stage. Anchors (all ex-ante):
+      - log_comps_guar: trend-inflated nearest-comps median — how front
+        offices anchor;
+      - log_rational: the ECONOMIC anchor — discounted projected WAR base
+        x the winter $/WAR level (what a rational buyer pays). This is
+        what makes a record-scale deal predictable WITHOUT having seen a
+        prior record print: Soto-shaped inputs carry a ~$450M+ rational
+        base regardless of past contract history;
+      - prime_war: max(0, 30 - age) x year-1 WAR — prime seasons
+        remaining x quality, the term structure behind decade-long deals.
+    Predictions are still CLAMPED to the comps envelope at predict time
+    (see _point) — the documented extrapolation backstop."""
     w1 = s["_war_path"]["war_y1"]
     return [1.0, years, w1, w1 * years, s["_age"],
             1.0 if s.get("qo") else 0.0, supply, math.log(max(dpw_usd, 1e6)),
-            log_comps_guar]
+            log_comps_guar, log_rational, prime_war]
 
 
 def _ols(X: list[list[float]], y: list[float], ridge: float = 0.0):
@@ -333,7 +339,9 @@ class MarketModel:
         for s in rows:
             dpw = winter_dpw(dpw_series, s["class_year"])
             Xg.append(_features_guar(s, float(s["years"]), dpw,
-                                     self._supply_z(s), self._comps_stats(s)[1]))
+                                     self._supply_z(s), self._comps_stats(s)[1],
+                                     self._log_rational(s, float(s["years"]), dpw),
+                                     self._prime_war(s)))
             yg.append(math.log(s["guarantee_usd"]))
         self.coef_guar = _ols(Xg, yg)
         self.n_train = len(rows)
@@ -362,20 +370,34 @@ class MarketModel:
                 mg = statistics.median(
                     c["guarantee_usd"] * ((1 + infl) ** (s["class_year"] - c["class_year"]))
                     for c in cs)
+                ma = statistics.median(
+                    (c["aav_usd"] or c["guarantee_usd"] / max(c["years"], 1))
+                    * ((1 + infl) ** (s["class_year"] - c["class_year"]))
+                    for c in cs)
             else:
-                my, mg = 1.0, 1_000_000.0
-            self._comps_my_cache[key] = (my, math.log(max(mg, 1.0)))
+                my, mg, ma = 1.0, 1_000_000.0, 1_000_000.0
+            self._comps_my_cache[key] = (my, math.log(max(mg, 1.0)), ma)
         return self._comps_my_cache[key]
 
     def _comps_my(self, s: dict) -> float:
         return self._comps_stats(s)[0]
+
+    @staticmethod
+    def _log_rational(s: dict, years: float, dpw_usd: float) -> float:
+        units = max(disc_war(s["_war_path"], int(round(years))), 0.25)
+        return math.log(max(units * dpw_usd, 1e6))
+
+    @staticmethod
+    def _prime_war(s: dict) -> float:
+        return max(0.0, 30.0 - s["_age"]) * max(0.0, s["_war_path"]["war_y1"])
 
     def _point(self, s: dict) -> tuple[float, float]:
         fy = _features_years(s, self._comps_my(s))
         years = math.exp(float(sum(c * x for c, x in zip(self.coef_years, fy))))
         years = min(max(years, 1.0), 13.0)
         dpw = winter_dpw(self.dpw_series, s["class_year"])
-        fg = _features_guar(s, years, dpw, self._supply_z(s), self._comps_stats(s)[1])
+        fg = _features_guar(s, years, dpw, self._supply_z(s), self._comps_stats(s)[1],
+                            self._log_rational(s, years, dpw), self._prime_war(s))
         guar = math.exp(float(sum(c * x for c, x in zip(self.coef_guar, fg))))
         # Comps-envelope guard: predictions differentiate within a 2.5x
         # band around the trend-inflated comps median, never outside it.
@@ -385,6 +407,20 @@ class MarketModel:
         comps_guar = math.exp(self._comps_stats(s)[1])
         if comps_guar > 1.0:
             guar = min(max(guar, comps_guar / 2.5), comps_guar * 2.5)
+            # Megadeal regime: the measured Gate-2 mega slice shows the
+            # comps anchor is the BEST ex-ante estimator at the top of the
+            # market (stars' neighbors are prior stars). Blend toward comps
+            # in log space as the comps scale enters megadeal territory —
+            # alpha 0 below a $50M comps median (pure model, mid-market
+            # untouched) rising to 0.8 at $400M+. Smooth, monotone,
+            # documented; the mega slice in the eval measures its effect.
+            lo, hi = math.log(50e6), math.log(400e6)
+            alpha = min(0.8, max(0.0, (math.log(comps_guar) - lo) / (hi - lo) * 0.8))
+            if alpha > 0:
+                comps_aav = self._comps_stats(s)[2]
+                mega_anchor = max(comps_guar, comps_aav * years)
+                guar = math.exp((1 - alpha) * math.log(max(guar, 1.0))
+                                + alpha * math.log(mega_anchor))
         return years, guar
 
     def predict(self, s: dict) -> dict:
@@ -403,6 +439,11 @@ class MarketModel:
         if qg:
             out["m_guarantee_p10_usd"] = int(guar * math.exp(qg[0]))
             out["m_guarantee_p90_usd"] = int(guar * math.exp(qg[-1]))
+            # mAAV bands ride the guarantee band at the point-estimate term —
+            # both framings (per-year price AND total value/length) carry
+            # P10/P50/P90, per the module's distributions-not-points rule.
+            out["m_aav_p10_usd"] = int(out["m_guarantee_p10_usd"] / max(years, 1))
+            out["m_aav_p90_usd"] = int(out["m_guarantee_p90_usd"] / max(years, 1))
         return out
 
 

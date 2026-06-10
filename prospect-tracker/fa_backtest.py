@@ -281,7 +281,7 @@ def run_market_gate(persist: bool = True) -> dict:
     test_years = sorted({s["class_year"] for s in enriched
                          if s["class_year"] > GATE2_WARMUP_THROUGH})
     pooled = {"guarantee": {"m": [], "b": []}, "aav": {"m": [], "b": []},
-              "years": {"m": [], "b": []}}
+              "years": {"m": [], "b": []}, "mega_guarantee": {"m": [], "b": []}}
     per_winter: list[dict] = []
     misses: list[dict] = []
     infl = fm._dpw_inflation()
@@ -309,6 +309,9 @@ def run_market_gate(persist: bool = True) -> dict:
             act_a = s.get("aav_usd") or act_g / max(act_y, 1)
             wstats["guarantee"]["m"].append((pred["m_guarantee_usd"] / 1e6, act_g / 1e6))
             wstats["guarantee"]["b"].append((b_guar / 1e6, act_g / 1e6))
+            if act_g >= 100_000_000:               # the megadeal slice, measured
+                wstats["mega_guarantee"]["m"].append((pred["m_guarantee_usd"] / 1e6, act_g / 1e6))
+                wstats["mega_guarantee"]["b"].append((b_guar / 1e6, act_g / 1e6))
             wstats["aav"]["m"].append((pred["m_aav_usd"] / 1e6, act_a / 1e6))
             wstats["aav"]["b"].append((b_aav / 1e6, act_a / 1e6))
             wstats["years"]["m"].append((float(pred["m_years"]), act_y))
@@ -347,6 +350,11 @@ def run_market_gate(persist: bool = True) -> dict:
     }
     gates = {k: summary["pooled"][k]["mae_model"] < summary["pooled"][k]["mae_base"]
              for k in ("guarantee", "aav", "years")}
+    # tracked (non-gating) slice: the megadeal shortfall, measured per run
+    mg = summary["pooled"]["mega_guarantee"]
+    summary["mega_slice_note"] = (
+        f"megadeals (actual >= $100M, n={mg['n']}): model MAE ${mg['mae_model']:.0f}M "
+        f"vs comps baseline ${mg['mae_base']:.0f}M")
     summary["gates"] = gates
     summary["pass"] = all(gates.values())
     if persist:
