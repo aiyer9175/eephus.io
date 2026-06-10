@@ -160,9 +160,21 @@ def score_pitch_points(points: list[dict]) -> list[dict]:
     if not feature_rows:
         return rows
 
+    # Predict with the feature NAMES the model was fitted with. A bare
+    # list/array triggers sklearn's "X does not have valid feature names"
+    # UserWarning — and the old catch_warnings() suppression mutates global
+    # filter state, which is not thread-safe under run_monthly's parallel
+    # pipelines, so the warning still leaked intermittently.
+    try:
+        import pandas as pd
+        names = getattr(model, "feature_names_in_", None)   # ndarray on sklearn Pipelines
+        cols = list(names) if names is not None and len(names) else FEATURES
+        x = pd.DataFrame(feature_rows, columns=cols)
+    except Exception:                                    # noqa: BLE001 — names are an optimization
+        x = feature_rows
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        preds = model.predict(feature_rows)
+        preds = model.predict(x)
     for idx, pred in zip(feature_indexes, preds):
         z = (float(pred) - TJSTUFF_TARGET_MEAN) / TJSTUFF_TARGET_STD
         rows[idx]["tj_stuff_plus"] = round(max(20.0, min(180.0, 100.0 - (z * 10.0))), 1)
