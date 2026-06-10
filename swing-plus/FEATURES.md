@@ -31,13 +31,29 @@ Default owner: **@willclq** (reassign per feature as the team grows).
 - **Owner:** @willclq  (external model owner: bat-to-ball framework maintainer)
 - **Data deps:** `data/processed/bat_to_ball_plus.parquet` (external artifact); `b2b_2026.py` also needs the framework's `models/opportunity_*_v2.lgb.joblib` (external) + `data/raw/statcast_2026_H1.parquet`.
 
-## Hitter+ — complete-hitter metric
-- **What:** OPS-optimal blend of Swing+ (0.39) · Decision+ (0.28) · B2B+ (0.33), standardized to 100/SD 10; decomposes into the three axes.
-- **Inputs:** `swing_plus`, `decision_plus_mlb`, `b2b_plus` on a board.
-- **Outputs:** `hitter_plus` + `h_swing_part`, `h_dec_part`, `h_b2b_part`.
-- **Definition of done:** beats SEAGER & SwingDecision+ on ISO/BB%/OPS (same & next season), out-of-sample. ✅ (OPS next: 0.47 vs SEAGER 0.34).
+## Savant collision dataset — bat-ball collision geometry (NEW)
+- **What:** Per-(batter, season) collision measurements from Savant's swing-timing-miss-distance leaderboard: avg miss distance, perfect/flawed contact %, horizontal alignment (tied-up/centered/flailed), timing (early/on-time/late), vertical alignment (over/lined-up/under) + engineered biases/entropies. Audited per the universal framework before any model use — full results in `COLLISION_REPORT.md`.
+- **Inputs:** Savant `leaderboard/bat-tracking/swing-timing-miss-distance` CSV endpoint (2023 ASG onward; supports season + dateStart/dateEnd).
+- **Outputs:** `data/processed/savant_collision.parquet` (full seasons) + `savant_collision_halves.parquet` (split-half reliability panels).
+- **Definition of done:** reliability (split-half ≥ 0.5, y2y up to 0.82) ✅; projectability (next-whiff r up to 0.73) ✅; leakage LOW ✅; per-model incremental verdicts documented ✅.
 - **Owner:** @willclq
-- **Data deps:** all three axis columns on the board; computed by `hitter_plus.py` (and `combo_plus.py` for the 2-axis SwingDecision+).
+- **Data deps:** Baseball Savant CSV endpoint (external API); `savant_collision.py`.
+
+## Contact+ v2 — collision-aware contact-frequency axis
+- **What:** Upgraded contact-FREQUENCY axis: ridge on [Contact+ v1, perfect/flawed %, vertical-alignment entropy, lined-up/over %, collision entropy, miss distance] fit to next-season whiff; 100 = avg, SD 10, shrunk K = 150 swings. Replaced v1 as the displayed/blended axis (v1 fallback where collision data missing).
+- **Inputs:** `savant_collision.parquet` + v1 `contact_plus` (external framework artifact).
+- **Outputs:** `data/processed/contact_v2.parquet` → `contact_axis` (+ `contact2_plus`) on boards; leaderboard "Contact+" column.
+- **Definition of done:** beats champion v1 out-of-sample on next-whiff (ΔR² +0.089, leave-transition-year-out; r −0.854 vs −0.799) and next-K% (+0.032); robust per fold, archetype, bat side, strict thresholds; 2026 scored directly (463 hitters). ✅
+- **Owner:** @willclq  (v1 external model owner: bat-to-ball / contact framework maintainer)
+- **Data deps:** `savant_collision.parquet`, `bat_to_ball_plus.parquet` (external artifact); built by `contact_v2.py` (audit: `collision_audit.py`). Legacy 2026 v1 calibration: `contact_2026.py` + framework `difficulty_contact.lgb.joblib`.
+
+## Hitter+ — complete-hitter metric (4-axis)
+- **What:** OPS-optimal blend of all four orthogonal axes — Swing+ (0.37) · Decision+ (0.20) · B2B+ (0.24) · Contact+ v2 (0.18) — standardized to 100/SD 10; decomposes into the four axes.
+- **Inputs:** `swing_plus`, `decision_plus_mlb`, `b2b_plus`, `contact_axis` on a board.
+- **Outputs:** `hitter_plus` + `h_swing_part`, `h_dec_part`, `h_b2b_part`, `h_contact_part`.
+- **Definition of done:** beats SEAGER, SwingDecision+, and the 3-axis version on overall production (next-OPS 0.52 vs SEAGER 0.34) out-of-sample; adding Contact+ lifts next-season K% prediction 0.45 → 0.81. ✅
+- **Owner:** @willclq
+- **Data deps:** all four axis columns on the board; computed by `hitter_plus.py` (and `combo_plus.py` for the 2-axis SwingDecision+).
 
 ## Per-pitch swing grades / Matchup / Aging / Model report cards
 - **What:** swing-grade tab (per-swing 20-90 grades + percentiles), hitter-vs-pitcher arsenal matchup, aging projection, and in-app model audit cards.
