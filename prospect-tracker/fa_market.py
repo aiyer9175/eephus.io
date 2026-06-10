@@ -78,12 +78,17 @@ def _dpw_inflation() -> float:
 # Point-in-time contract WAR paths (the projection engine + curve decay)
 # ============================================================================
 
+MAX_PATH_YEARS = 15
+
+
 def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
                       age: int | None, curves: dict, war_map: dict,
                       league: dict) -> dict | None:
     """WAR by contract year: year 1 from the full Marcel engine; later
     years decay the WAR rate and playing time along the SAME aging curves
-    (war_rate per-600/250 deltas + pt deltas at the advancing age)."""
+    (war_rate per-600/250 deltas + pt deltas at the advancing age).
+    The path always extends MAX_PATH_YEARS so any candidate term can be
+    priced by slicing; war_total covers the ACTUAL contract years."""
     proj = fp.project_player(hist, side, class_year, curves, league, age)
     if proj is None:
         return None
@@ -94,7 +99,7 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
     role = proj["role"]
     path = []
     a = age or 30
-    for t in range(years):
+    for t in range(MAX_PATH_YEARS):
         if t > 0:
             a += 1
             rate += fp.curve_delta(curves, side, role, "war_rate", a)
@@ -102,9 +107,17 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
             expo = max(0.0, expo)
         path.append(max(0.0, rate * expo / per))
     return {"war_by_year": [round(w, 2) for w in path],
-            "war_total": round(sum(path), 2),
+            "war_total": round(sum(path[:years]), 2),
             "war_y1": round(path[0], 2) if path else 0.0,
-            "role": role, "pt_y1": expo if years == 1 else proj["pt_proj"]}
+            "role": role, "pt_y1": proj["pt_proj"]}
+
+
+def disc_war(path: dict, years: int) -> float:
+    """Discounted WAR units over a candidate term — the quantity the
+    market rate multiplies."""
+    r = _discount_rate()
+    return sum(w / ((1 + r) ** t)
+               for t, w in enumerate(path["war_by_year"][:max(1, int(years))]))
 
 
 # ============================================================================
@@ -120,9 +133,9 @@ def dollars_per_war_by_winter(signings: list[dict]) -> dict[int, float]:
     r = _discount_rate()
     for s in signings:
         cw = s.get("_war_path")
-        if not cw or not s.get("guarantee_usd"):
+        if not cw or not s.get("guarantee_usd") or not s.get("years"):
             continue
-        disc = sum(w / ((1 + r) ** t) for t, w in enumerate(cw["war_by_year"]))
+        disc = disc_war(cw, int(s["years"]))
         if disc <= 0:
             continue
         a = agg[s["class_year"]]
@@ -252,17 +265,39 @@ def _features_guar(s: dict, years: float, dpw_usd: float, supply: float,
                    log_comps_guar: float) -> list[float]:
     """log-guarantee stage. Stacks the (trend-inflated) nearest-comps
     median guarantee — how front offices actually anchor — alongside the
-    structural terms, exactly as the years stage does."""
+    structural terms. Predictions are CLAMPED to a comps envelope at
+    predict time (see _point): development showed unguarded extrapolation
+    failing in both directions at market extremes (megadeals collapsing
+    to $9M on the level form; bottom-of-market exploding on a pure rate
+    form), and the envelope is the documented backstop."""
     w1 = s["_war_path"]["war_y1"]
     return [1.0, years, w1, w1 * years, s["_age"],
             1.0 if s.get("qo") else 0.0, supply, math.log(max(dpw_usd, 1e6)),
             log_comps_guar]
 
 
-def _ols(X: list[list[float]], y: list[float]):
+def _ols(X: list[list[float]], y: list[float], ridge: float = 0.0):
+    """Least squares, optionally ridge-regularized on STANDARDIZED
+    features (intercept exempt). Unregularized OLS extrapolated wildly at
+    megadeal-extreme inputs on small early train windows — both observed
+    failure directions (Soto at $9M; 2019 over-explosions) trace to it."""
     import numpy as np
-    A = np.asarray(X)
-    b, *_ = np.linalg.lstsq(A, np.asarray(y), rcond=None)
+    A = np.asarray(X, dtype=float)
+    yv = np.asarray(y, dtype=float)
+    if not ridge:
+        b, *_ = np.linalg.lstsq(A, yv, rcond=None)
+        return b
+    mu = A.mean(axis=0)
+    sd = A.std(axis=0)
+    sd[sd == 0] = 1.0
+    Z = (A - mu) / sd
+    Z[:, 0] = 1.0                                   # intercept column
+    lam = ridge * np.eye(Z.shape[1])
+    lam[0, 0] = 0.0
+    bz = np.linalg.solve(Z.T @ Z + lam * len(yv), Z.T @ yv)
+    # fold standardization back into raw-space coefficients
+    b = bz / sd
+    b[0] = bz[0] - float(((mu / sd)[1:] * bz[1:]).sum())
     return b
 
 
@@ -342,6 +377,14 @@ class MarketModel:
         dpw = winter_dpw(self.dpw_series, s["class_year"])
         fg = _features_guar(s, years, dpw, self._supply_z(s), self._comps_stats(s)[1])
         guar = math.exp(float(sum(c * x for c, x in zip(self.coef_guar, fg))))
+        # Comps-envelope guard: predictions differentiate within a 2.5x
+        # band around the trend-inflated comps median, never outside it.
+        # An extrapolation backstop, not a crutch: mid-market predictions
+        # sit comfortably inside it; it binds exactly where unguarded OLS
+        # failed (megadeal extremes). Documented in the eval notes.
+        comps_guar = math.exp(self._comps_stats(s)[1])
+        if comps_guar > 1.0:
+            guar = min(max(guar, comps_guar / 2.5), comps_guar * 2.5)
         return years, guar
 
     def predict(self, s: dict) -> dict:

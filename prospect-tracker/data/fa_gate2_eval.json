@@ -13,12 +13,12 @@
  ],
  "pooled": {
   "guarantee": {
-   "mae_model": 11.582212663886573,
+   "mae_model": 11.230439012510425,
    "mae_base": 11.621180051268077,
    "n": 1199
   },
   "aav": {
-   "mae_model": 3.256175553794829,
+   "mae_model": 3.2096686371976646,
    "mae_base": 3.4281284444462456,
    "n": 1199
   },
@@ -32,9 +32,9 @@
   {
    "winter": 2018,
    "n": 96,
-   "guarantee_mae_model": 8.527043260416667,
+   "guarantee_mae_model": 8.369737208333333,
    "guarantee_mae_base": 9.671906360677083,
-   "aav_mae_model": 2.321828375,
+   "aav_mae_model": 2.25771296875,
    "aav_mae_base": 3.1123494960937506,
    "years_mae_model": 0.6145833333333334,
    "years_mae_base": 0.6458333333333334
@@ -42,9 +42,9 @@
   {
    "winter": 2019,
    "n": 106,
-   "guarantee_mae_model": 12.481549594339622,
+   "guarantee_mae_model": 11.719368641509433,
    "guarantee_mae_base": 12.110114594929245,
-   "aav_mae_model": 3.2235597358490566,
+   "aav_mae_model": 3.2606068396226413,
    "aav_mae_base": 3.2450506745283016,
    "years_mae_model": 0.5,
    "years_mae_base": 0.6132075471698113
@@ -52,9 +52,9 @@
   {
    "winter": 2020,
    "n": 125,
-   "guarantee_mae_model": 8.772372328,
+   "guarantee_mae_model": 8.536420784,
    "guarantee_mae_base": 9.017187076781251,
-   "aav_mae_model": 2.629112944,
+   "aav_mae_model": 2.577841808,
    "aav_mae_base": 2.6351878697562503,
    "years_mae_model": 0.368,
    "years_mae_base": 0.384
@@ -62,9 +62,9 @@
   {
    "winter": 2021,
    "n": 147,
-   "guarantee_mae_model": 6.740704142857143,
+   "guarantee_mae_model": 6.689993795918367,
    "guarantee_mae_base": 6.291468962792305,
-   "aav_mae_model": 2.75021406122449,
+   "aav_mae_model": 2.711346666666667,
    "aav_mae_base": 2.7101887340508077,
    "years_mae_model": 0.3401360544217687,
    "years_mae_base": 0.3197278911564626
@@ -72,9 +72,9 @@
   {
    "winter": 2022,
    "n": 144,
-   "guarantee_mae_model": 13.62469017361111,
+   "guarantee_mae_model": 13.633347,
    "guarantee_mae_base": 13.924043063162165,
-   "aav_mae_model": 3.003993791666667,
+   "aav_mae_model": 2.9979745625,
    "aav_mae_base": 3.1094187371394857,
    "years_mae_model": 0.5833333333333334,
    "years_mae_base": 0.6111111111111112
@@ -82,9 +82,9 @@
   {
    "winter": 2023,
    "n": 139,
-   "guarantee_mae_model": 15.010373129496404,
+   "guarantee_mae_model": 14.191125676258993,
    "guarantee_mae_base": 15.415250311597038,
-   "aav_mae_model": 3.770719913669065,
+   "aav_mae_model": 3.6685063741007196,
    "aav_mae_base": 4.166841578487663,
    "years_mae_model": 0.6546762589928058,
    "years_mae_base": 0.6690647482014388
@@ -92,9 +92,9 @@
   {
    "winter": 2024,
    "n": 136,
-   "guarantee_mae_model": 12.301160948529413,
+   "guarantee_mae_model": 12.306361522058824,
    "guarantee_mae_base": 13.622689427044381,
-   "aav_mae_model": 3.6751261470588235,
+   "aav_mae_model": 3.6803267205882353,
    "aav_mae_base": 4.077411211715955,
    "years_mae_model": 0.36764705882352944,
    "years_mae_base": 0.4632352941176471
@@ -102,9 +102,9 @@
   {
    "winter": 2025,
    "n": 161,
-   "guarantee_mae_model": 14.737138236024844,
+   "guarantee_mae_model": 13.649019099378883,
    "guarantee_mae_base": 12.993594234435122,
-   "aav_mae_model": 3.773106130434783,
+   "aav_mae_model": 3.6130375590062114,
    "aav_mae_base": 3.647193641142552,
    "years_mae_model": 0.30434782608695654,
    "years_mae_base": 0.391304347826087
@@ -112,9 +112,9 @@
   {
    "winter": 2026,
    "n": 145,
-   "guarantee_mae_model": 10.785987096551725,
+   "guarantee_mae_model": 10.773387331034483,
    "guarantee_mae_base": 10.87716533396807,
-   "aav_mae_model": 3.742404351724138,
+   "aav_mae_model": 3.7336243862068965,
    "aav_mae_base": 3.938589486661084,
    "years_mae_model": 0.3793103448275862,
    "years_mae_base": 0.36551724137931035
@@ -127,10 +127,10 @@
    "to_team": "NYM",
    "qo": true,
    "actual_guar_mm": 765.0,
-   "pred_guar_mm": 8.9,
+   "pred_guar_mm": 158.8,
    "actual_years": 15.0,
    "pred_years": 13,
-   "err_mm": -756.1
+   "err_mm": -606.2
   },
   {
    "player": "Shohei Ohtani",
@@ -144,26 +144,15 @@
    "err_mm": -515.5
   },
   {
-   "player": "Aaron Judge",
-   "winter": 2023,
-   "to_team": "NYY",
-   "qo": true,
-   "actual_guar_mm": 360.0,
-   "pred_guar_mm": 21.6,
-   "actual_years": 9.0,
-   "pred_years": 13,
-   "err_mm": -338.4
-  },
-  {
    "player": "Bryce Harper",
    "winter": 2019,
    "to_team": "PHI",
    "qo": true,
    "actual_guar_mm": 330.0,
-   "pred_guar_mm": 22.9,
+   "pred_guar_mm": 61.5,
    "actual_years": 13.0,
    "pred_years": 13,
-   "err_mm": -307.1
+   "err_mm": -268.5
   },
   {
    "player": "Gerrit Cole",
@@ -186,6 +175,17 @@
    "actual_years": 10.0,
    "pred_years": 4,
    "err_mm": -251.7
+  },
+  {
+   "player": "Aaron Judge",
+   "winter": 2023,
+   "to_team": "NYY",
+   "qo": true,
+   "actual_guar_mm": 360.0,
+   "pred_guar_mm": 113.4,
+   "actual_years": 9.0,
+   "pred_years": 13,
+   "err_mm": -246.6
   },
   {
    "player": "Manny Machado",
