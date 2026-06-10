@@ -104,6 +104,7 @@ NAV_ITEMS = [
     ("home",     "Home",             "/"),
     ("articles", "Articles",         "/articles/"),
     ("prospx",   "PROSPX",           "/prospx/"),
+    ("fa",       "Free Agency",      "/prospx/#tab=fa"),
     ("forums",   "Forums",           "/forums/"),
     ("team",     "Development Team",  "/team/"),
 ]
@@ -121,6 +122,7 @@ PROSPX_SUBNAV = [
     ("MLB Draft",     "/prospx/#tab=draft"),
     ("International",  "/prospx/#tab=ifa"),
     ("Overseas",      "/prospx/#tab=overseas"),
+    ("Free Agency",   "/prospx/#tab=fa"),
     ("Time Machine",  "/prospx/#tab=timemachine"),
     ("Scatterplots",  "/prospx/#tab=charts"),
     ("Glossary",      "/prospx/#tab=glossary"),

@@ -12999,6 +12999,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # v31.12 — pitch_plot raw coordinates moved out of boot.
             # Lazy-loaded by the player-detail pitch chart only.
             "pitch_plots":        "pitch_plots.json",
+            # MLB Free Agency module sidecars (written by fa_export.py;
+            # lazy-loaded on first visit to the Free Agency section).
+            "fa_class":           "fa_class.json",
+            "fa_archive":         "fa_archive.json",
+            "fa_meta":            "fa_meta.json",
         },
     }
     out_dir = out_path.parent
