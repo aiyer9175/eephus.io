@@ -44,7 +44,9 @@ def build():
     rates = pd.read_parquet("data/processed/obs_rates.parquet")
     keep = ["batter", "year", "n_pa", "obs_iso", "obs_avg_ev90", "obs_k_pct",
             "obs_woba", "obs_xwobacon"] + list(MODELS.values())
-    d = F.merge(b[keep], left_on=["id", "year"], right_on=["batter", "year"], how="left")
+    # board has stand-split rows -> collapse to one row per (batter, year)
+    bk = b[keep].groupby(["batter", "year"], as_index=False).mean()
+    d = F.merge(bk, left_on=["id", "year"], right_on=["batter", "year"], how="left")
     d = d.merge(rates[["batter", "year", "pa", "obs_bb_pct", "obs_avg"]],
                 left_on=["id", "year"], right_on=["batter", "year"], how="left")
     return d

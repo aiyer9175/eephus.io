@@ -47,13 +47,21 @@ Default owner: **@willclq** (reassign per feature as the team grows).
 - **Owner:** @willclq  (v1 external model owner: bat-to-ball / contact framework maintainer)
 - **Data deps:** `savant_collision.parquet`, `bat_to_ball_plus.parquet` (external artifact); built by `contact_v2.py` (audit: `collision_audit.py`). Legacy 2026 v1 calibration: `contact_2026.py` + framework `difficulty_contact.lgb.joblib`.
 
-## Hitter+ — complete-hitter metric (4-axis)
-- **What:** OPS-optimal blend of all four orthogonal axes — Swing+ (0.37) · Decision+ (0.20) · B2B+ (0.24) · Contact+ v2 (0.18) — standardized to 100/SD 10; decomposes into the four axes.
-- **Inputs:** `swing_plus`, `decision_plus_mlb`, `b2b_plus`, `contact_axis` on a board.
-- **Outputs:** `hitter_plus` + `h_swing_part`, `h_dec_part`, `h_b2b_part`, `h_contact_part`.
-- **Definition of done:** beats SEAGER, SwingDecision+, and the 3-axis version on overall production (next-OPS 0.52 vs SEAGER 0.34) out-of-sample; adding Contact+ lifts next-season K% prediction 0.45 → 0.81. ✅
+## DCV+ — damage-geometry / pull-air axis
+- **What:** External Damage Conversion+ framework's composite: converts contact into pulled-air damage (pull-air rate 0.20 / spray-SLG bonus 0.02 / HR-window 0.13 blend, 100±10). The ISO/HR-geometry axis; orthogonal to all other axes (max |r| 0.21 vs Swing+; B2B+ carries no pull-air info, r −0.14 — cannibalization check passed).
+- **Inputs:** framework artifact (2023-25); for 2026, raw damage-geometry rates (pulled-air, pulled-barrel, HR-window, pull) computed from raw Statcast with the framework's exact cuts (replication r = 1.000), calibrated to the dcv_plus scale.
+- **Outputs:** `data/processed/dcv_plus.parquet` → `dcv_plus` on boards; leaderboard "DCV+" column.
+- **Definition of done:** OPS-optimal weight ≠ 0 in the 5-axis blend (0.13 ✅); lifts Hitter+ same-season ISO 0.69→0.81 and next-ISO 0.58→0.64 (5-fold CV); 2026 calibration R² ≥ 0.9 (0.985 ✅), K=100 BIP shrink.
+- **Owner:** @willclq  (external model owner: damage-conversion framework maintainer)
+- **Data deps:** `~/damage_conversion_plus/data/processed/{damage_conversion_plus,batter_season_damage}.parquet` (external artifacts); `data/raw/statcast_*.parquet`; built by `dcv_2026.py`.
+
+## Hitter+ — complete-hitter metric (5-axis)
+- **What:** OPS-optimal blend of all five orthogonal axes — Swing+ (0.31) · Decision+ (0.16) · B2B+ (0.23) · Contact+ v2 (0.17) · DCV+ (0.13) — standardized to 100/SD 10; decomposes into the five axes.
+- **Inputs:** `swing_plus`, `decision_plus_mlb`, `b2b_plus`, `contact_axis`, `dcv_plus` on a board.
+- **Outputs:** `hitter_plus` + `h_swing_part`, `h_dec_part`, `h_b2b_part`, `h_contact_part`, `h_dcv_part`.
+- **Definition of done:** beats SEAGER, SwingDecision+, and the 3/4-axis versions out-of-sample (same-season ISO r 0.81, K% 0.88, OPS 0.69; next-OPS 0.51 vs SEAGER 0.34, next-ISO 0.64, next-K% 0.79). ✅
 - **Owner:** @willclq
-- **Data deps:** all four axis columns on the board; computed by `hitter_plus.py` (and `combo_plus.py` for the 2-axis SwingDecision+).
+- **Data deps:** all five axis columns on the board; computed by `hitter_plus.py` (and `combo_plus.py` for the 2-axis SwingDecision+).
 
 ## Per-pitch swing grades / Matchup / Aging / Model report cards
 - **What:** swing-grade tab (per-swing 20-90 grades + percentiles), hitter-vs-pitcher arsenal matchup, aging projection, and in-app model audit cards.

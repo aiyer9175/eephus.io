@@ -204,13 +204,15 @@ const TRACK = [
 // SwingDecision+ : OPS-optimal blend of Swing+ (power) and Decision+ (selection).
 const COMBO = [
   { key: "hitter_plus", label: "Hitter+", cls: "key", format: v => v?.toFixed(1),
-    desc: "Hitter+ — the complete-hitter metric: OPS-optimal blend of all FOUR orthogonal axes Swing+ (37%, power), Decision+ (20%, selection), B2B+ (24%, contact quality/damage), Contact+ (18%, contact frequency/K% — v2, collision-aware). 100=league avg, SD 10. Beats SEAGER, SwingDecision+ and the 3-axis version on ISO, BB%, K% and OPS, same- and next-season. Adding Contact+ unlocks K% (R²0.20→0.80). Decomposes into its 4 axes (see Drivers)." },
+    desc: "Hitter+ — the complete-hitter metric: OPS-optimal blend of all FIVE orthogonal axes Swing+ (31%, power), Decision+ (16%, selection), B2B+ (23%, contact quality/damage), Contact+ (17%, contact frequency/K% — v2, collision-aware), DCV+ (13%, damage geometry/pull-air). 100=league avg, SD 10. Beats SEAGER, SwingDecision+ and the 3/4-axis versions on ISO, K% and OPS, same- and next-season (same-season ISO r 0.81, K% 0.88, OPS 0.69; next-OPS 0.51 vs SEAGER 0.34). Decomposes into its 5 axes." },
   { key: "swingdecision_plus", label: "SwingDecision+", cls: "key", format: v => v?.toFixed(1),
     desc: "SwingDecision+ — OPS-optimal blend of Swing+ (63%) and Decision+ (37%), 100=avg, SD 10. The 2-axis combo (no bat-to-ball); Hitter+ adds the bat-to-ball + contact axes." },
   { key: "b2b_plus", label: "B2B+", cls: "dec", format: v => v?.toFixed(1),
     desc: "Bat-to-Ball+ (external 12-module model): contact-QUALITY / bat-to-ball damage axis, 100=avg. Orthogonal to Swing+ (r=-0.03) and Decision+ (r=-0.07). The damage-on-contact axis." },
   { key: "contact_axis", label: "Contact+", cls: "dec", format: v => v?.toFixed(1),
-    desc: "Contact+ v2 (collision-aware): the contact-FREQUENCY axis — how often he makes contact when he swings (whiff-avoidance), now measured with Savant's bat-ball collision data (vertical-alignment consistency, perfect/flawed contact %, miss distance). Predicts next-season whiff rate at r=-0.85 (v1 was -0.80) and K% at r=-0.74. 100=avg, SD 10. High = Arraez/Kwan type; low = swing-and-miss sluggers (Kurtz, Judge)." },
+    desc: "Contact+ v2 (collision-aware): the contact-FREQUENCY axis — how often he makes contact when he swings (whiff-avoidance), now measured with Savant's bat-ball collision data (vertical-alignment consistency, perfect/flawed contact %, miss distance). Predicts next-season whiff rate at r=-0.85 (v1 was -0.80) and K% at r=-0.77. 100=avg, SD 10. High = Arraez/Kwan type; low = swing-and-miss sluggers (Kurtz, Judge)." },
+  { key: "dcv_plus", label: "DCV+", cls: "dec", format: v => v?.toFixed(1),
+    desc: "Damage Conversion+ (DCV+, external damage-geometry model): does he convert his contact into PULLED AIR damage — pulled-air rate, pulled barrels, HR-window launch. The ISO/HR axis: same-season ISO r 0.54, and adding it to Hitter+ lifts ISO prediction 0.69→0.81 (next-ISO 0.58→0.64). Orthogonal to every other axis (B2B+ carries no pull-air info, r −0.14). 100=avg, SD 10. High = Schwarber/Torkelson pull-air types; 2026 calibrated from raw damage-geometry rates (R²=0.985)." },
 ];
 const sgn2 = v => v == null ? "" : (v >= 0 ? "+" : "") + Number(v).toFixed(2);
 const DECISION = [

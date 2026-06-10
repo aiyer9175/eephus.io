@@ -39,9 +39,9 @@ NEEDED = [
     "decision_traj.parquet", "swing_by_pitch.parquet", "pitcher_arsenal.parquet",
     "hitter_skill.parquet", "bat_to_ball_plus.parquet", "birthdates.json",
     "matchup_scale.json", "matchup_league.json", "swing_grade_scale.json",
-    # collision data + Contact+ v2 (board-rebuild inputs, small)
+    # collision data + Contact+ v2 + DCV+ (board-rebuild inputs, small)
     "savant_collision.parquet", "savant_collision_halves.parquet",
-    "contact_v2.parquet", "obs_rates.parquet",
+    "contact_v2.parquet", "obs_rates.parquet", "dcv_plus.parquet",
 ]
 
 
