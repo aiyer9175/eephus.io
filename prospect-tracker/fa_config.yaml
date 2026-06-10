@@ -1,0 +1,37 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# MLB Free Agency module configuration. Kept separate from
+# value_framework_config.yaml so that file's strict validator is untouched;
+# the shared economics (discount rate 0.09, $/WAR tiers, 5% escalation) are
+# READ from value_framework at runtime — never duplicated here.
+
+schema_version: 1
+
+class_construction:
+  # v1 option-exercise heuristic (DOCUMENTED SIMPLIFICATION, replaced by a
+  # learned model in v2): P(player walks / club declines) is a logistic on
+  # the gap between the option price and the player's crude rational AAV
+  # (prev WAR x flat $/WAR when Spotrac's market value is absent).
+  exercise_logistic_scale_usd: 6000000     # $6M gap ~= one logit unit
+  # Mutual options: both sides almost never exercise — encode the prior
+  # explicitly rather than pretending the logistic knows it.
+  mutual_option_decline_prob: 0.85
+  conditional_option_unknown_prob: 0.50    # conditions unobservable at class level
+
+ledger:
+  # Retrospective $/WAR per past season: until the Stage-3 market model
+  # estimates per-winter $/WAR from the signing corpus itself, the ledger
+  # backcasts the current framework rate by the configured escalation
+  # (value_framework dollars_per_war_inflation, 5%/yr). DOCUMENTED v1;
+  # Stage 3.1 replaces this with the estimated series.
+  backcast_mode: framework_flat_deescalated
+
+market_model:
+  # Regime breaks for $/WAR estimation — dated records, not code.
+  regimes:
+    - { name: pre_covid,  from_class_year: 2015, to_class_year: 2020 }
+    - { name: covid,      from_class_year: 2021, to_class_year: 2021 }
+    - { name: lockout,    from_class_year: 2022, to_class_year: 2022 }
+    - { name: current,    from_class_year: 2023, to_class_year: 2027 }
+
+backfill:
+  first_class_year: 2015     # owner decision: 2014-15 winter onward

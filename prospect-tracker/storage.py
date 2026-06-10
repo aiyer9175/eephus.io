@@ -1427,6 +1427,81 @@ CREATE TABLE IF NOT EXISTS mlb_trade_players (
 );
 CREATE INDEX IF NOT EXISTS idx_mlb_trade_players_status ON mlb_trade_players(resolve_status);
 
+-- =========================================================================
+-- MLB Free Agency module (additive — fa_* tables only; nothing here is
+-- read by the prospect pool, farm grades, or surplus aggregates).
+-- payload_json pattern throughout, matching career_war / mlb_trade_players.
+-- =========================================================================
+-- One row per (player, FA class winter); payload is the POINT-IN-TIME
+-- class-construction record (age, from_team, option flags, enter_prob,
+-- QO status) — frozen at build, never backfilled from current state.
+CREATE TABLE IF NOT EXISTS fa_class_players (
+    player_key   TEXT NOT NULL,
+    class_year   INTEGER NOT NULL,        -- 2027 = the 2026-27 offseason
+    mlbam_id     INTEGER,
+    position     TEXT,
+    status       TEXT,                    -- locked | pending_option | signed | ...
+    payload_json TEXT NOT NULL,
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, class_year)
+);
+CREATE INDEX IF NOT EXISTS idx_fa_class_status ON fa_class_players(class_year, status);
+
+-- Historical + live signings ledger (2014-15 winter onward). payload
+-- carries terms (years/guarantee/aav), from/to teams, qo flags, the
+-- mlb_deal flag, and — once elapsed seasons exist — the retrospective
+-- ledger block (realized WAR x per-season $/WAR vs paid).
+CREATE TABLE IF NOT EXISTS fa_signings (
+    player_key   TEXT NOT NULL,
+    class_year   INTEGER NOT NULL,
+    payload_json TEXT NOT NULL,
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, class_year)
+);
+CREATE INDEX IF NOT EXISTS idx_fa_signings_year ON fa_signings(class_year);
+
+-- Spotrac CBT/payroll ledgers per (team, season).
+CREATE TABLE IF NOT EXISTS fa_team_payroll (
+    team         TEXT NOT NULL,
+    season       INTEGER NOT NULL,
+    payload_json TEXT NOT NULL,
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (team, season)
+);
+
+-- Stage-2+ artifacts: projections / market predictions / gate evals are
+-- versioned by model_version so backtests and live runs never collide.
+CREATE TABLE IF NOT EXISTS fa_projections (
+    player_key    TEXT NOT NULL,
+    class_year    INTEGER NOT NULL,
+    model_version TEXT NOT NULL,
+    payload_json  TEXT NOT NULL,
+    computed_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, class_year, model_version)
+);
+CREATE TABLE IF NOT EXISTS fa_market_preds (
+    player_key    TEXT NOT NULL,
+    class_year    INTEGER NOT NULL,
+    model_version TEXT NOT NULL,
+    payload_json  TEXT NOT NULL,
+    computed_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, class_year, model_version)
+);
+CREATE TABLE IF NOT EXISTS fa_model_eval (
+    model_version TEXT NOT NULL,
+    gate          TEXT NOT NULL,          -- 'projection' | 'market'
+    payload_json  TEXT NOT NULL,
+    computed_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (model_version, gate)
+);
+CREATE TABLE IF NOT EXISTS fa_park_factors (
+    venue        TEXT NOT NULL,
+    season       INTEGER NOT NULL,
+    payload_json TEXT NOT NULL,
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (venue, season)
+);
+
 -- v31.7 — Per-player season stats from FG player pages for DRAFT
 -- prospects (college + HS). FG hosts amateur stats at the same
 -- /players/<slug>/<playerId>/stats URL as overseas players; the
@@ -13007,3 +13082,91 @@ def load_export_unified(boot_path: Path) -> dict:
                         if lvl in level_map:
                             row["pitch_plot"] = level_map[lvl]
     return payload
+
+
+# ============================================================================
+# MLB Free Agency module — storage accessors (additive; fa_* tables only).
+# Generic (key1, key2) payload_json upsert/load pairs in the career_war
+# style. Nothing here touches prospect tables; the FA module's PROSPX
+# consumption is read-only by construction.
+# ============================================================================
+
+def _fa_upsert(table: str, key_cols: tuple[str, str], rows: dict, extra_cols=None) -> int:
+    """Shared two-key payload upsert. ``rows`` maps (k1, k2) -> payload
+    dict; ``extra_cols`` optionally maps column name -> per-row getter so
+    queryable columns (status, position…) ride alongside the payload."""
+    extra_cols = extra_cols or {}
+    n = 0
+    cols = [key_cols[0], key_cols[1], *extra_cols.keys(), "payload_json"]
+    placeholders = ", ".join("?" for _ in cols)
+    updates = ", ".join(f"{c}=excluded.{c}" for c in [*extra_cols.keys(), "payload_json"])
+    sql = (f"INSERT INTO {table} ({', '.join(cols)}, fetched_at) "
+           f"VALUES ({placeholders}, datetime('now')) "
+           f"ON CONFLICT({key_cols[0]}, {key_cols[1]}) DO UPDATE SET "
+           f"{updates}, fetched_at=excluded.fetched_at")
+    with connect() as con:
+        for (k1, k2), payload in rows.items():
+            if not payload:
+                continue
+            vals = [k1, k2, *(get(payload) for get in extra_cols.values()), json.dumps(payload)]
+            con.execute(sql, vals)
+            n += 1
+    return n
+
+
+def _fa_load(table: str, key_cols: tuple[str, str], where: str = "", args: tuple = ()) -> dict:
+    try:
+        with connect() as con:
+            rows = con.execute(
+                f"SELECT {key_cols[0]}, {key_cols[1]}, payload_json FROM {table} {where}", args
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {(r[0], r[1]): json.loads(r[2]) for r in rows}
+
+
+def upsert_fa_class_players(class_year: int, players: list[dict]) -> int:
+    rows = {(p["player_key"], class_year): p for p in players if p.get("player_key")}
+    return _fa_upsert("fa_class_players", ("player_key", "class_year"), rows,
+                      extra_cols={"mlbam_id": lambda p: p.get("mlbam_id"),
+                                  "position": lambda p: p.get("position"),
+                                  "status": lambda p: p.get("status")})
+
+
+def load_fa_class_players(class_year: int | None = None) -> dict:
+    where, args = ("WHERE class_year = ?", (class_year,)) if class_year else ("", ())
+    return _fa_load("fa_class_players", ("player_key", "class_year"), where, args)
+
+
+def upsert_fa_signings(class_year: int, signings: list[dict]) -> int:
+    rows = {(s["player_key"], class_year): s for s in signings if s.get("player_key")}
+    return _fa_upsert("fa_signings", ("player_key", "class_year"), rows)
+
+
+def load_fa_signings(class_year: int | None = None) -> dict:
+    where, args = ("WHERE class_year = ?", (class_year,)) if class_year else ("", ())
+    return _fa_load("fa_signings", ("player_key", "class_year"), where, args)
+
+
+def upsert_fa_team_payroll(season: int, teams: list[dict]) -> int:
+    rows = {(t["team"], season): t for t in teams if t.get("team")}
+    return _fa_upsert("fa_team_payroll", ("team", "season"), rows)
+
+
+def load_fa_team_payroll(season: int | None = None) -> dict:
+    where, args = ("WHERE season = ?", (season,)) if season else ("", ())
+    return _fa_load("fa_team_payroll", ("team", "season"), where, args)
+
+
+def upsert_fa_model_eval(model_version: str, gate: str, payload: dict) -> None:
+    with connect() as con:
+        con.execute(
+            """INSERT INTO fa_model_eval (model_version, gate, payload_json, computed_at)
+               VALUES (?, ?, ?, datetime('now'))
+               ON CONFLICT(model_version, gate) DO UPDATE SET
+                 payload_json=excluded.payload_json, computed_at=excluded.computed_at""",
+            (model_version, gate, json.dumps(payload)))
+
+
+def load_fa_model_eval() -> dict:
+    return _fa_load("fa_model_eval", ("model_version", "gate"))

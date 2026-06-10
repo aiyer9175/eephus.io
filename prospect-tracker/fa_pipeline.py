@@ -1,0 +1,218 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
+"""MLB Free Agency pipeline orchestrator (Stage 1: data layer).
+
+Standalone entry so the Stage-1 checkpoint is reproducible end-to-end:
+
+    python fa_pipeline.py --backfill      # historical classes 2015..latest
+                                          #   + ID resolution + career bWAR
+                                          #   + retrospective ledger
+    python fa_pipeline.py --current 2027  # the coming winter's class
+    python fa_pipeline.py --payroll       # CBT + payroll ledgers
+
+run_monthly grows matching `_step("fa: …")` blocks at Stage 6
+(integrations) — this module owns the logic either way.
+
+Identity discipline: signed players resolve to the SAME canonical ids the
+rest of the platform uses (player_key slug + MLBAM id via the existing
+PlayerIndex/Chadwick machinery in stats.bulk_resolve_ids). Unresolved
+players are counted and reported — never silently dropped, never faked.
+WAR is bWAR via stats.fetch_career_war_bulk — one WAR source site-wide.
+"""
+
+from __future__ import annotations
+
+import argparse
+import logging
+from datetime import date
+
+import fa_class
+import fa_sources
+import storage
+from fa_class import get_config
+
+log = logging.getLogger(__name__)
+
+
+def _resolve_signed_via_war_daily(classes: dict[int, dict],
+                                  first_year: int, last_year: int
+                                  ) -> tuple[dict[str, int], dict[str, dict], dict]:
+    """Resolve every signed player against B-Ref's war_daily tables and
+    build their per-season bWAR maps in the same pass.
+
+    Returns (player_key -> mlb_ID, player_key -> {"seasons": {str(yr): WAR}},
+    stats dict). Sums batting + pitching WAR per season (two-way players),
+    and stints within a season. Ambiguous names (two candidates active in
+    the same pre-signing window) are skipped and counted — the ledger
+    never scores a guessed identity."""
+    import pybaseball as pyb
+    from scrapers import normalize_key
+    import concurrent.futures as _cf
+
+    def _safe(fn, label):
+        try:
+            return fn(return_all=True)
+        except Exception as e:                                # noqa: BLE001
+            log.warning("%s fetch failed: %s", label, e)
+            return None
+
+    with _cf.ThreadPoolExecutor(max_workers=2) as ex:
+        f_bat = ex.submit(_safe, pyb.bwar_bat, "bwar_bat")
+        f_pit = ex.submit(_safe, pyb.bwar_pitch, "bwar_pitch")
+        bat_df, pit_df = f_bat.result(), f_pit.result()
+    if bat_df is None and pit_df is None:
+        return {}, {}, {"error": "war_daily unavailable"}
+
+    # name(normalized) -> {mlb_ID: {"years": set, "war": {year: total}}}
+    by_name: dict[str, dict[int, dict]] = {}
+    for df in (bat_df, pit_df):
+        if df is None or df.empty:
+            continue
+        sub = df[df["WAR"].notna() & df["mlb_ID"].notna()]
+        for row in sub.itertuples(index=False):
+            try:
+                mid = int(getattr(row, "mlb_ID"))
+                yr = int(getattr(row, "year_ID"))
+                war = float(getattr(row, "WAR"))
+                nm = normalize_key(str(getattr(row, "name_common")))
+            except (TypeError, ValueError):
+                continue
+            ent = by_name.setdefault(nm, {}).setdefault(mid, {"years": set(), "war": {}})
+            ent["years"].add(yr)
+            ent["war"][yr] = ent["war"].get(yr, 0.0) + war
+
+    resolved: dict[str, int] = {}
+    war_by_key: dict[str, dict] = {}
+    n_seen = n_nomatch = n_ambig = 0
+    seen_keys: set[str] = set()
+    for class_year, cls in sorted(classes.items()):
+        for s in cls["signed"]:
+            key = s.get("player_key")
+            if not key or key in seen_keys:
+                continue
+            seen_keys.add(key)
+            n_seen += 1
+            cands = by_name.get(normalize_key(s["player_name"]))
+            if not cands:
+                n_nomatch += 1
+                continue
+            # Plausible = active at some point in the 4 platform seasons
+            # before the signing winter (war_daily year = season played).
+            window = set(range(class_year - 4, class_year))
+            plausible = [mid for mid, ent in cands.items() if ent["years"] & window]
+            if not plausible:
+                # Career predates the window entirely (e.g. re-listed name)
+                # — fall back to the most recently active candidate if it is
+                # UNIQUE; otherwise ambiguous.
+                latest = sorted(cands.items(), key=lambda kv: -max(kv[1]["years"]))
+                plausible = [latest[0][0]] if len(cands) == 1 else []
+            if len(plausible) != 1:
+                n_ambig += 1
+                continue
+            mid = plausible[0]
+            resolved[key] = mid
+            war_by_key[key] = {"seasons": {str(y): round(w, 2)
+                                           for y, w in sorted(cands[mid]["war"].items())},
+                               "source": "bbref"}
+    stats = {"seen": n_seen, "resolved": len(resolved),
+             "no_match": n_nomatch, "ambiguous": n_ambig}
+    return resolved, war_by_key, stats
+
+
+def backfill_historical(first_year: int | None = None,
+                        last_year: int | None = None,
+                        force: bool = False) -> dict:
+    """Ingest every historical class, resolve ids, fetch career bWAR for
+    the signed pool, build the ledger, persist. Returns a summary dict."""
+    cfg = get_config()
+    first = first_year or int(cfg["backfill"]["first_class_year"])
+    last = last_year or date.today().year       # 2026 = the 2025-26 winter (complete)
+    classes: dict[int, dict] = {}
+    for year in range(first, last + 1):
+        classes[year] = fa_class.build_historical_class(year, force=force)
+
+    # ---- identity + per-season bWAR via the B-Ref war_daily tables ----------
+    # The platform's PlayerIndex covers PROSPECTS; FA veterans (back to the
+    # 2014-15 winter) resolve instead against war_daily itself — the same
+    # bWAR source the whole site uses, covering every MLB player ever, with
+    # name + mlb_ID + per-season WAR in one place. Disambiguation: a
+    # candidate must have been ACTIVE in the platform window before the
+    # signing winter; ≥2 plausible candidates → counted ambiguous and
+    # skipped (never guessed).
+    resolved, war_by_key, id_stats = _resolve_signed_via_war_daily(
+        classes, first_year=first, last_year=last)
+    log.info("fa backfill: war_daily identity — %s", id_stats)
+
+    # ---- ledger + persistence ----------------------------------------------
+    ledger_rows = fa_class.build_ledger(classes, war_by_key)
+    n_sign = 0
+    for year, cls in classes.items():
+        # stamp ledger blocks back onto their signing rows before persisting
+        led_by_key = {(r["player_key"], r["class_year"]): r["ledger"] for r in ledger_rows}
+        for s in cls["signed"]:
+            s["mlbam_id"] = resolved.get(s.get("player_key"))
+            led = led_by_key.get((s.get("player_key"), year))
+            if led:
+                s["ledger"] = led
+        n_sign += storage.upsert_fa_signings(year, cls["signed"])
+    summary = {
+        "classes": len(classes),
+        "first_year": first, "last_year": last,
+        "signings_stored": n_sign,
+        "signed_total": sum(len(c["signed"]) for c in classes.values()),
+        "mlb_deals": sum(1 for c in classes.values() for s in c["signed"] if s["mlb_deal"]),
+        "id_resolved": id_stats.get("resolved"), "id_no_match": id_stats.get("no_match"),
+        "id_ambiguous": id_stats.get("ambiguous"),
+        "ledger_rows": len(ledger_rows),
+    }
+    log.info("fa backfill summary: %s", summary)
+    return summary
+
+
+def refresh_current_class(class_year: int, force: bool = False) -> dict:
+    cls = fa_class.build_current_class(class_year, force=force)
+    n = storage.upsert_fa_class_players(class_year, cls["players"])
+    log.info("fa current class %d: stored %d players (reconciliation %s)",
+             class_year, n, cls["reconciliation"])
+    return cls
+
+
+def refresh_payroll(seasons: list[int] | None = None, force: bool = False) -> int:
+    seasons = seasons or [date.today().year, date.today().year + 1]
+    n = 0
+    for season in seasons:
+        tax = {r["team"]: r for r in fa_sources.scrape_spotrac_tax(season, force=force)}
+        pay = {r["team"]: r for r in fa_sources.scrape_spotrac_payroll(season, force=force)}
+        merged = []
+        for team in sorted(set(tax) | set(pay)):
+            merged.append({"team": team, "season": season,
+                           **(pay.get(team) or {}), **(tax.get(team) or {})})
+        n += storage.upsert_fa_team_payroll(season, merged)
+    return n
+
+
+def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    ap = argparse.ArgumentParser(description="MLB Free Agency pipeline (Stage 1)")
+    ap.add_argument("--backfill", action="store_true")
+    ap.add_argument("--current", type=int, metavar="CLASS_YEAR")
+    ap.add_argument("--payroll", action="store_true")
+    ap.add_argument("--force", action="store_true", help="bypass page caches")
+    args = ap.parse_args()
+    if args.backfill:
+        print(backfill_historical(force=args.force))
+    if args.current:
+        cls = refresh_current_class(args.current, force=args.force)
+        print({k: cls[k] for k in ("class_year", "reconciliation", "cba_note")},
+              "players:", len(cls["players"]))
+    if args.payroll:
+        print("payroll rows:", refresh_payroll(force=args.force))
+    if not (args.backfill or args.current or args.payroll):
+        ap.print_help()
+
+
+if __name__ == "__main__":
+    main()
