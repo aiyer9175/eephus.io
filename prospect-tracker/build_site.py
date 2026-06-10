@@ -54,6 +54,8 @@ _UI_VER = _asset_ver("assets/eephus-ui.js")
 _ACCT_CSS_VER = _asset_ver("assets/eephus-account.css")
 _BG_VER = _asset_ver("assets/eephus-bg.js")
 _FA_VER = _asset_ver("assets/fa.js")
+_GL_VER = _asset_ver("assets/eephus-gl.js")
+_GLAPP_VER = _asset_ver("assets/glossary.js")
 
 # eephus.io account layer (Parts 1-7), injected before </body> on every editorial
 # page. OPTIONAL by design: assets/eephus-config.js is git-ignored and absent on
@@ -67,7 +69,9 @@ ACCOUNT_SCRIPTS = (
     f'<script src="/assets/eephus-ui.js?v={_UI_VER}" defer></script>\n'
     # Dark-theme phosphor-starfield background (shared with PROSPX). Rides the
     # per-page script block; inert (mounts nothing) under the light theme.
-    f'<script src="/assets/eephus-bg.js?v={_BG_VER}" defer></script>'
+    f'<script src="/assets/eephus-bg.js?v={_BG_VER}" defer></script>\n'
+    # Shared glossary runtime: data loader + ⌘K palette + term tooltips.
+    f'<script src="/assets/eephus-gl.js?v={_GL_VER}" defer></script>'
 )
 # Account/forum stylesheet — linked in <head> after site.css on every editorial
 # page (scoped under .eph-*; the circular avatar is the one sanctioned curve).
@@ -106,6 +110,7 @@ NAV_ITEMS = [
     ("articles", "Articles",         "/articles/"),
     ("prospx",   "PROSPX",           "/prospx/"),
     ("fa",       "Free Agency",      "/fa/"),
+    ("glossary", "Glossary",         "/glossary/"),
     ("forums",   "Forums",           "/forums/"),
     ("team",     "Development Team",  "/team/"),
 ]
@@ -125,7 +130,7 @@ PROSPX_SUBNAV = [
     ("Overseas",      "/prospx/#tab=overseas"),
     ("Time Machine",  "/prospx/#tab=timemachine"),
     ("Scatterplots",  "/prospx/#tab=charts"),
-    ("Glossary",      "/prospx/#tab=glossary"),
+    ("Glossary",      "/glossary/"),
 ]
 
 # Site-wide theme: read the shared key PROSPX uses (prospect-tracker.theme) and
@@ -479,6 +484,8 @@ def _nav(active: str) -> str:
     # Watchlist deep-link into PROSPX + the Dark Mode toggle.
     controls = (
         '<div class="eephus-nav-controls">'
+        '<button class="eephus-nav-ctrl" type="button" data-qk-open aria-label="Quick search (Ctrl+K)" title="Search any term or metric — Ctrl+K / ⌘K">'
+        '<span aria-hidden="true">⌘K</span><span class="eephus-nav-ctrl-label">Search</span></button>'
         '<a class="eephus-nav-ctrl" href="/prospx/#tab=watchlist" aria-label="Watchlist">'
         '<span aria-hidden="true">★</span><span class="eephus-nav-ctrl-label">Watchlist</span></a>'
         '<button class="eephus-nav-ctrl" type="button" data-theme-toggle onclick="eephusToggleTheme()" aria-label="Toggle dark mode">'
@@ -1018,13 +1025,16 @@ def _spotlight_html(players: list) -> str:
         f'{spark}</div></a></div>'
     )
 
+# Homepage teaser rotation — curated Arkmetrics showcase. The phrases are
+# label expansions (hints), not definitions; the canonical entry lives in
+# data/glossary.json and the link deep-links it by slug.
 _GLOSSARY_TERMS = [
-    ("DvM+", "development vs. mean"),
-    ("Sur+", "FV-implied surplus value"),
-    ("RPS+", "rate performance vs. same-age peers"),
-    ("SC+", "Statcast composite"),
-    ("WAG", "WAR above grade"),
-    ("Tool+", "20–80 tool composite"),
+    ("dvm_plus", "DvM+", "development vs. mean"),
+    ("tvi", "Sur+", "FV-implied surplus value"),
+    ("rps_plus", "RPS+", "rate performance vs. same-age peers"),
+    ("statcast_plus", "SC+", "Statcast composite"),
+    ("wag", "WAG", "WAR above grade"),
+    ("tool", "Tool+", "20–80 tool composite"),
 ]
 
 def page_home(title: str, inner: str, description: str = "") -> str:
@@ -1194,8 +1204,8 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     # header nav, so a couple of labels expand here (key → sidebar label).
     # Every module carries a terminal-safe glyph (PROSPX carries its ball
     # badge instead) and, where staged, its α/β lifecycle marker.
-    sidebar_labels = {"fa": "MLB Free Agency"}
-    sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$",
+    sidebar_labels = {"fa": "MLB Free Agency", "glossary": "Glossary & Methodology"}
+    sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$", "glossary": "§",
                      "forums": "❝", "team": "⚒"}
     nav = []
     for key, label, href in NAV_ITEMS:
@@ -1285,9 +1295,9 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     farm_body = "".join(_row_farm(o, o.get("farm_rank") or i) for i, o in enumerate(fm, 1))
     farm = _home_module("Farm Spotlight", "/prospx/#tab=farm", "Farm systems", farm_body) if farm_body else ""
 
-    term, defn = _GLOSSARY_TERMS[datetime.now().timetuple().tm_yday % len(_GLOSSARY_TERMS)]
+    slug, term, defn = _GLOSSARY_TERMS[datetime.now().timetuple().tm_yday % len(_GLOSSARY_TERMS)]
     glossary = (f'<div class="glossary-teaser"><span>Today\'s term: <strong>{html.escape(term)}</strong> — {html.escape(defn)}</span>'
-                f'<a href="/prospx/#tab=glossary">Glossary →</a></div>')
+                f'<a href="/glossary/#g={slug}">Glossary →</a></div>')
 
     callout = _date_callout()
     otd = _this_day_html(graduates)
@@ -1365,6 +1375,61 @@ def build_fa() -> str:
                 "The 2026-27 MLB free-agent class: projected contracts (mYears / mGuarantee / mAAV), "
                 "rational value vs predicted price, team fits, and twelve archived winters with a "
                 "realized-surplus ledger.")
+
+def build_glossary() -> str:
+    """The /glossary/ unified Glossary & Methodology module — the canonical
+    definition layer's page. Static shell + assets/glossary.js; definitions
+    come from data/glossary.json via the shared eephus-gl.js runtime. The
+    How to Read guide, methodology derivations + interactive widgets, and
+    the source-vs-source backtest were ported here from the retired PROSPX
+    Glossary/Methodology tab (owner decision 2026-06-10)."""
+    intro = (
+        '<div class="gl-intro">'
+        "<p>Every number on eephus.io resolves to an entry on this page. The glossary is the "
+        "platform's single source of truth: the PROSPX board, the Free Agency module, the "
+        "command palette (Ctrl+K from anywhere), and every hover definition read from the same "
+        "file that renders these cards.</p>"
+        "<p>The analytical frame throughout is resource allocation. A prospect is a "
+        "cost-controlled asset whose scouting grade implies a production forecast; a free agent "
+        "is a priced asset whose contract is the market's forecast. For any priced decision the "
+        "platform keeps two independently derived numbers — what the production is worth "
+        "(rational value, surplus) and what the market pays (predicted or actual contract) — and "
+        "never blends them, because the gap between them is the entire point.</p>"
+        "<p>WAR site-wide is Baseball-Reference's bWAR: one source, every surface. Where samples "
+        "are thin the models shrink toward the mean and say so; where data is missing the site "
+        "shows an em-dash, never a guess.</p>"
+        "<p>Model derivations and the interactive teaching widgets live under Methodology; the "
+        "source-vs-source backtest under Source Comparison grades the site's own consensus "
+        "against its inputs — misses included.</p>"
+        "</div>"
+    )
+    body = (
+        '<div class="gl-app">'
+        '<div class="section-head"><h1>Glossary &amp; Methodology</h1>'
+        '<span class="section-sub">every term, model derivation, and the track record behind the site</span></div>'
+        f"{intro}"
+        '<div class="filter-bar"><span class="gl-microlabel">View</span>'
+        '<button class="chip active" data-glossary-view="terms">Terms</button>'
+        '<button class="chip" data-glossary-view="guide">How to Read</button>'
+        '<button class="chip" data-glossary-view="methodology">Methodology</button>'
+        '<button class="chip" data-glossary-view="source-comparison">Source Comparison</button>'
+        '</div>'
+        '<div id="gl-termbar">'
+        '<input id="gl-search" class="gl-search" type="search" placeholder="Search terms, abbreviations, definitions…" aria-label="Search glossary">'
+        '<div class="filter-bar" id="gl-cats"></div>'
+        '<div id="gl-az"></div>'
+        '</div>'
+        '<div id="guide-body" style="display:none;"></div>'
+        '<div id="methodology-body" style="display:none;"></div>'
+        '<div id="source-comparison-body" style="display:none;"></div>'
+        '<div id="glossary-rows"></div>'
+        '</div>'
+        '<script src="/data/value_framework.js" defer></script>'
+        f'<script src="/assets/glossary.js?v={_GLAPP_VER}" defer></script>'
+    )
+    return page("Glossary & Methodology — eephus.io", "glossary", body,
+                "Definitions, model mechanics, and methodology for every metric on eephus.io — "
+                "PROSPX prospect analytics, MLB Free Agency, and the statistical foundations.")
 
 def build_article_page(a: dict) -> str:
     body = (
@@ -1504,6 +1569,7 @@ def main() -> None:
         _write(f"articles/{a['slug']}/index.html", build_article_page(a))
     _write("forums/index.html", build_forums_index())
     _write("fa/index.html", build_fa())
+    _write("glossary/index.html", build_glossary())
     _write("team/index.html", build_team())
     print(f"done — {len(articles)} article(s).")
 

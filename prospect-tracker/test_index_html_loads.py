@@ -92,10 +92,12 @@ def test_page_boots_without_js_errors(server):
     )
 
 
-# All 11 list/scan sections + the 2 detail entry points. Each must
-# render without JS errors AND either show content or a `.state-message`
-# empty-state placeholder. Catches the regression where a section
-# silently renders blank because a render fn threw mid-build.
+# Every list/scan section reachable from the tabs strip (+ watchlist via
+# the global control). Each must render without JS errors AND either show
+# content or a `.state-message` empty-state placeholder. Catches the
+# regression where a section silently renders blank because a render fn
+# threw mid-build. (Glossary left for /glossary/ 2026-06-10 — its redirect
+# is covered in test_glossary_page_loads.py.)
 SECTION_TABS = [
     "active",
     "spotlights",
@@ -104,7 +106,6 @@ SECTION_TABS = [
     "debuts",
     "farm",
     "leaderboards",
-    "glossary",
     "watchlist",
 ]
 
@@ -155,7 +156,7 @@ def test_every_section_renders(server):
                 // `.debut-row` is the debuts/graduates list row class
                 // (renamed when the Graduates section became Debuted).
                 const hasRows = !!sec.querySelector(
-                    '.player-row, .debut-row, .grad-row, .farm-row, .spotlight-row, .glossary-card');
+                    '.player-row, .debut-row, .grad-row, .farm-row, .spotlight-row');
                 const hasStateMsg = !!sec.querySelector('.state-message');
                 return {{
                     found: true,

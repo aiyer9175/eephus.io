@@ -65,11 +65,16 @@
   // #player=<key> for the FA player card (rides on top of the current view).
   const VIEWS = [["board", "Class Board"], ["tracker", "Signing Tracker"],
                  ["fits", "Team Fits"], ["archive", "Archive"],
-                 ["model", "Model Accountability"], ["glossary", "Glossary"]];
+                 ["model", "Model Accountability"]];
   const state = { view: "board", team: null, winter: null, player: null };
 
   function syncFromURL() {
     const p = new URLSearchParams(window.location.hash.slice(1));
+    // The FA glossary view moved into the unified module — redirect deep links.
+    if (p.get("view") === "glossary") {
+      window.location.replace("/glossary/#cat=" + encodeURIComponent("Free Agency"));
+      return;
+    }
     if (p.has("view") && VIEWS.some(([k]) => k === p.get("view"))) state.view = p.get("view");
     if (p.has("team")) state.team = p.get("team");
     if (p.has("winter")) state.winter = Number(p.get("winter")) || null;
@@ -94,7 +99,8 @@
     const banner = document.getElementById("fa-banner");
     if (!rows) return;
     chips.innerHTML = VIEWS.map(([k, label]) =>
-      `<button class="chip${state.view === k ? " active" : ""}" data-fa-view="${k}">${label}</button>`).join("");
+      `<button class="chip${state.view === k ? " active" : ""}" data-fa-view="${k}">${label}</button>`).join("")
+      + ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Free Agency")}" title="Every FA term, defined — in the unified site glossary">Glossary &rarr;</a>`;
     chips.querySelectorAll("[data-fa-view]").forEach(b => b.onclick = () => {
       state.view = b.dataset.faView; state.player = null; syncToURL(); render();
     });
@@ -113,15 +119,18 @@
       return;
     }
     banner.innerHTML = (cls.cba_carry_forward
-      ? `<div class="fa-cba-note" title="The 2022 CBA expired 2026-12-01. Every 2027 threshold/QO figure is a carry-forward of the last known rule, not a published number.">&#9888; CBA rules past 2026-12-01 are carried forward &mdash; thresholds and QO values for this winter are NOT yet collectively bargained.</div>`
+      ? `<div class="fa-cba-note">&#9888; CBA rules past 2026-12-01 are <span data-gl="cba_carry_forward">carried forward</span> &mdash; thresholds and QO values for this winter are NOT yet collectively bargained.</div>`
       : "") + freshnessLine(meta);
-    if (state.player) { renderPlayer(rows, cls, state.player); return; }
-    if (state.view === "board") renderBoard(rows, cls);
+    if (window.EEPHUS_GL) window.EEPHUS_GL.wire(banner);
+    if (state.player) { renderPlayer(rows, cls, state.player); }
+    else if (state.view === "board") renderBoard(rows, cls);
     else if (state.view === "tracker") renderTracker(rows, cls);
     else if (state.view === "fits") renderFits(rows, cls, meta);
     else if (state.view === "archive") renderArchive(rows);
-    else if (state.view === "model") renderModel(rows, meta);
-    else renderGlossary(rows);
+    else renderModel(rows, meta);
+    // Term spans ([data-gl]) get tooltip + aria wiring from the shared
+    // glossary runtime; definitions come from the unified data layer.
+    if (window.EEPHUS_GL) window.EEPHUS_GL.wire(rows);
   }
 
   function statusChip(m) {
@@ -253,18 +262,18 @@
         <td>${i + 1}</td>
         <td>${playerLink(m)}${noteBadge(m)}<span class="fa-sub"> ${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${esc(m.from || "")}</span>${comps ? `<div class="fa-comps" title="Nearest real historical contracts (never fabricated)">comps: ${comps}</div>` : ""}</td>
         <td>${statusChip(m)}</td>
-        <td title="Projected year-1 bWAR from the Gate-1-passed engine">${m.warY1 != null ? formatMetric(m.warY1, "war") : EM_DASH}${thinBadge(m)}</td>
-        <td title="Predicted contract length (P10–P90 band)">${yearsBand}</td>
-        <td title="Predicted total guarantee (P10–P90 band)">${guarBand}</td>
-        <td title="Predicted AAV">${m.mAav != null ? money(m.mAav) : EM_DASH}</td>
-        <td title="Rational value — NPV of the projected WAR path at the platform 9% discount">${m.rational != null ? money(m.rational) : EM_DASH}</td>
-        <td title="Contract Surplus ($) — rational value minus predicted price">${surplus}</td>
-        <td title="Deal+ — 100 = market-rate; above 100 = team-friendly at the predicted price">${m.dealPlus ?? EM_DASH}</td>
-        <td title="Top team fits (* = position blocked by a PROSPX prospect)">${fits || EM_DASH}</td>
+        <td>${m.warY1 != null ? formatMetric(m.warY1, "war") : EM_DASH}${thinBadge(m)}</td>
+        <td>${yearsBand}</td>
+        <td>${guarBand}</td>
+        <td>${m.mAav != null ? money(m.mAav) : EM_DASH}</td>
+        <td>${m.rational != null ? money(m.rational) : EM_DASH}</td>
+        <td>${surplus}</td>
+        <td>${m.dealPlus ?? EM_DASH}</td>
+        <td title="* = position blocked by a PROSPX prospect">${fits || EM_DASH}</td>
       </tr>`;
     }).join("");
     rows.innerHTML = head + `<table class="detail-table">
-      <thead><tr><th>#</th><th>Player</th><th>Status</th><th>WAR y1</th><th>mYears</th><th>mGuarantee</th><th>mAAV</th><th>Rational</th><th>Surplus</th><th>Deal+</th><th>Fits</th></tr></thead>
+      <thead><tr><th>#</th><th>Player</th><th>Status</th><th><span data-gl="war">WAR</span> y1</th><th><span data-gl="m_years">mYears</span></th><th><span data-gl="m_guarantee">mGuarantee</span></th><th><span data-gl="m_aav">mAAV</span></th><th><span data-gl="rational_value">Rational</span></th><th><span data-gl="contract_surplus">Surplus</span></th><th><span data-gl="deal_plus">Deal+</span></th><th><span data-gl="fit_components">Fits</span></th></tr></thead>
       <tbody>${body}</tbody></table>`;
     const gfx = document.getElementById("fa-gfx-btn");
     if (gfx) gfx.onclick = () => downloadShareCard(cls);
@@ -325,7 +334,7 @@
     rows.innerHTML = `<div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Signing Tracker &mdash; live</span>
       <span class="newsprint-eyebrow-meta">${signed.length} of ${cls.n_members} signed &middot; ${money(spent)} guaranteed &middot; ${mae != null ? `running guarantee MAE ${money(mae)} over ${scored.length} scored deals` : "no scored MLB deals yet"} &middot; dates are first-seen stamps</span></div>
       ${sigRows ? `<table class="detail-table">
-        <thead><tr><th>Seen</th><th>Player</th><th>From &rarr; To</th><th>Actual</th><th>Predicted</th><th>&Delta; Guar</th><th>Deal+ real</th></tr></thead>
+        <thead><tr><th><span data-gl="first_seen_dates">Seen</span></th><th>Player</th><th>From &rarr; To</th><th>Actual</th><th><span data-gl="m_guarantee">Predicted</span></th><th>&Delta; Guar</th><th><span data-gl="deal_plus">Deal+</span> real</th></tr></thead>
         <tbody>${sigRows}</tbody></table>` : ""}
       ${evRows ? `<h3>Option &amp; QO timeline</h3><table class="detail-table">
         <thead><tr><th>Seen</th><th>Player</th><th>Event</th></tr></thead><tbody>${evRows}</tbody></table>` : ""}
@@ -385,7 +394,7 @@
       ${m.note ? `<div class="fa-cba-note">&#8251; ${esc(m.note)}</div>` : ""}
       ${signedBlock}
       <h3>Predicted market</h3>
-      <table class="detail-table"><thead><tr><th>mYears</th><th>mGuarantee</th><th>mAAV</th><th>Rational</th><th>Surplus</th><th>Deal+</th></tr></thead>
+      <table class="detail-table"><thead><tr><th><span data-gl="m_years">mYears</span></th><th><span data-gl="m_guarantee">mGuarantee</span></th><th><span data-gl="m_aav">mAAV</span></th><th><span data-gl="rational_value">Rational</span></th><th><span data-gl="contract_surplus">Surplus</span></th><th><span data-gl="deal_plus">Deal+</span></th></tr></thead>
       <tbody><tr>
         <td>${band(m.mYears, m.mYearsP10, m.mYearsP90, v => v ?? "?")}</td>
         <td>${band(m.mGuar, m.mGuarP10, m.mGuarP90, money)}</td>
@@ -499,38 +508,8 @@
       <div class="fa-note" style="margin-top:8px;">${(g2.notes || []).map(esc).join(" &middot; ")}</div>` : ""}`;
   }
 
-  // ---- Glossary — the module's six terms, moved here from the PROSPX
-  // glossary when Free Agency became its own surface. -------------------------
-  const GLOSSARY = [
-    ["mGuarantee",
-     "Predicted total contract guarantee for a free agent, from the market model (what teams WILL pay, not what the production is worth).",
-     "mGuarantee is the market model: a transparent two-stage regression (contract length first, then log-guarantee given length) trained only on the 2014-15 to present FA-signing corpus, with age, projected year-1 bWAR, position group, qualifying-offer status, class supply, the winter $/WAR level (carried forward ex-ante), nearest-comps anchors, and economic anchors (discounted projected WAR x $/WAR; prime-years x quality). Predictions clamp to a 2.5x envelope around the comps median and blend toward comps in the megadeal regime. P10-P90 bands are empirical residual quantiles from the forward-chained backtest. The model beat the nearest-comps baseline on guarantee, AAV and years across nine held-out winters (Gate 2 on the Model Accountability page)."],
-    ["mAAV",
-     "Predicted average annual value: mGuarantee / mYears, with its own P10-P90 band.",
-     "Both framings of a contract are projected: the per-year price (mAAV) and the total value / length (mGuarantee / mYears). mAAV bands ride the guarantee band at the point-estimate term."],
-    ["mYears",
-     "Predicted contract length (P10-P90 banded), from a log-years model with comps stacking.",
-     "Contract length is modeled before money (teams trade years against AAV). The stage predicts log(years) with curvature terms (WAR squared, age x WAR) and the nearest-comps median length stacked as a feature; it beat the comps baseline 0.448 vs 0.485 MAE across nine held-out winters."],
-    ["Deal+",
-     "Contract-value index: 100 = priced exactly at rational value; above 100 = team-friendly.",
-     "Deal+ = 100 x rational value / predicted (or actual) guarantee. Rational value is the NPV of the projected WAR path (aging-curve decayed, playing-time weighted) x escalated $/WAR at the platform 9% discount rate - the same NPV currency as PROSPX prospect surplus, so the qualifying-offer pick tax can be subtracted meaningfully."],
-    ["Contract Surplus ($)",
-     "Rational value minus predicted market price - the gap the module exists to surface.",
-     "Two independently derived numbers, never conflated: RATIONAL VALUE (what the projected production is worth in NPV) and PREDICTED MARKET PRICE (what teams will actually pay, from the market model). Contract Surplus ($) is rational minus market. Positive = the market is expected to underprice the player. The retrospective ledger applies the same lens backward: realized bWAR x each season's estimated $/WAR minus prorated money paid, for every MLB free-agent deal since 2014-15."],
-    ["QO pick tax",
-     "The dollar cost of forfeited draft picks (and intl pool money) when signing a qualifying-offer free agent.",
-     "Signing a QO-attached free agent forfeits draft picks per the CBA compensation matrix (rule-versioned; CBT payors forfeit their 2nd- and 5th-highest picks plus $1M of international pool). The module prices each forfeited slot using the platform's OWN draft research: median consensus FV at the slot mapped through the prospect surplus curve. Because rational value and pick values share the same 9% NPV currency, the tax subtracts directly."],
-  ];
-
-  function renderGlossary(rows) {
-    rows.innerHTML = `<div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Glossary</span>
-      <span class="newsprint-eyebrow-meta">the module's terms &mdash; every number on this surface defined</span></div>`
-      + GLOSSARY.map(([name, short, long]) => `<div class="fa-gloss">
-        <h3>${esc(name)}</h3>
-        <p class="fa-gloss-short">${esc(short)}</p>
-        <p class="fa-gloss-long">${esc(long)}</p>
-      </div>`).join("");
-  }
+  // The module glossary moved into the unified /glossary/ data layer
+  // (data/glossary.json) — terms here are wrapped as [data-gl] spans instead.
 
   function boot() {
     syncFromURL();

@@ -87,7 +87,7 @@
         },
         {
           id: "seed2", parent_id: "seed1", author: authors.scout_mendoza, score: 3, created_at: iso(120),
-          body_md: "Fair — for pitchers I lean on the `command` proxy first, but the through-line holds. The [methodology](/prospx/#tab=glossary&gview=methodology) backs it up."
+          body_md: "Fair — for pitchers I lean on the `command` proxy first, but the through-line holds. The [methodology](/glossary/#view=methodology) backs it up."
         }
       ];
     }
@@ -95,7 +95,7 @@
       return [
         {
           id: "seed1", parent_id: null, author: authors.farm_report, score: 11, created_at: iso(520),
-          body_md: "System take: the upper levels finally have **real depth**, not just a top-heavy big-three.\n\n- two ready-now bats at AAA\n- a sleeper arm jumping a level\n- the [methodology page](/prospx/#tab=glossary&gview=methodology) likes the pipeline's calibration\n\n> Top-5 farm if the AA arms hold velo."
+          body_md: "System take: the upper levels finally have **real depth**, not just a top-heavy big-three.\n\n- two ready-now bats at AAA\n- a sleeper arm jumping a level\n- the [methodology page](/glossary/#view=methodology) likes the pipeline's calibration\n\n> Top-5 farm if the AA arms hold velo."
         },
         {
           id: "seed2", parent_id: "seed1", author: authors.scout_mendoza, score: 4, created_at: iso(300),
@@ -106,7 +106,7 @@
     return [
       {
         id: "seed1", parent_id: null, author: authors.scout_mendoza, score: 14, created_at: iso(640),
-        body_md: "Quietly one of the cleaner risers on the board. The **swing decisions** finally caught up to the raw, and the FV trend says the room agrees:\n\n[[fv:THIS]]\n\nThree things I'm watching into next update:\n\n- in-zone contact holding above the org line\n- the [methodology page](/prospx/#tab=glossary&gview=methodology) backtest cohort\n- whether the power ticks from 55 → 60\n\n> If the hit tool is real, this is a top-15 name by July."
+        body_md: "Quietly one of the cleaner risers on the board. The **swing decisions** finally caught up to the raw, and the FV trend says the room agrees:\n\n[[fv:THIS]]\n\nThree things I'm watching into next update:\n\n- in-zone contact holding above the org line\n- the [methodology page](/glossary/#view=methodology) backtest cohort\n- whether the power ticks from 55 → 60\n\n> If the hit tool is real, this is a top-15 name by July."
       },
       {
         id: "seed2", parent_id: "seed1", author: authors.farm_report, score: 5, created_at: iso(415),
