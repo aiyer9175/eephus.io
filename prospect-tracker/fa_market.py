@@ -83,13 +83,14 @@ MAX_PATH_YEARS = 15
 
 def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
                       age: int | None, curves: dict, war_map: dict,
-                      league: dict) -> dict | None:
+                      league: dict, in_progress: tuple[int, float] | None = None) -> dict | None:
     """WAR by contract year: year 1 from the full Marcel engine; later
     years decay the WAR rate and playing time along the SAME aging curves
     (war_rate per-600/250 deltas + pt deltas at the advancing age).
     The path always extends MAX_PATH_YEARS so any candidate term can be
     priced by slicing; war_total covers the ACTUAL contract years."""
-    proj = fp.project_player(hist, side, class_year, curves, league, age)
+    proj = fp.project_player(hist, side, class_year, curves, league, age,
+                             in_progress=in_progress)
     if proj is None:
         return None
     war1 = fp.war_from_projection(proj, side, war_map, league, class_year)

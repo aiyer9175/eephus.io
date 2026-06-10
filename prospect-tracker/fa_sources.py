@@ -449,3 +449,34 @@ def fetch_statsapi_season_range(first: int, last: int, force: bool = False,
         for (s, g), res in zip(jobs, ex.map(lambda j: fetch_statsapi_season_stats(*j, force=force), jobs)):
             out[(s, g)] = res
     return out
+
+
+# --------------------------------------------------------------------------- #
+# Baseball Savant park factors (embedded-JSON extraction; csv=true is
+# ignored by the endpoint, the page embeds `var data = [...]`)
+# --------------------------------------------------------------------------- #
+
+_SAVANT_PF_URL = (
+    "https://baseballsavant.mlb.com/leaderboard/statcast-park-factors"
+    "?type=year&year={year}&batSide={bat_side}&stat=index_wOBA&condition=All&rolling="
+)
+
+
+def fetch_savant_park_factors(year: int, bat_side: str = "", force: bool = False) -> list[dict]:
+    """Park-factor rows (100 = neutral) per venue: index_woba / index_hr /
+    index_runs / ... bat_side "" (all), "L", or "R" for handedness splits."""
+    import json as _json
+    url = _SAVANT_PF_URL.format(year=year, bat_side=bat_side)
+    fr = _fetch(url, f"savant_pf_{year}_{bat_side or 'all'}", force=force)
+    if fr.status != 200 or not fr.body:
+        log.warning("savant pf %d/%s: fetch failed (status=%d)", year, bat_side or "all", fr.status)
+        return []
+    m = re.search(r"var\s+data\s*=\s*(\[.*?\]);", fr.body, re.S)
+    if not m:
+        log.warning("savant pf %d/%s: embedded data array not found", year, bat_side or "all")
+        return []
+    try:
+        return _json.loads(m.group(1))
+    except ValueError as e:
+        log.warning("savant pf %d/%s: JSON parse failed (%s)", year, bat_side or "all", e)
+        return []

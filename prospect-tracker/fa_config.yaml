@@ -64,3 +64,19 @@ projection:
     target_seasons: [2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
     rate_eval_min_pa: 150
     rate_eval_min_bf: 150
+
+fit:
+  blocker_fv_min: 50            # existing FV grid line — no parallel thresholds
+  blocker_eta_horizon: 1        # ETA <= class_year + 1 blocks the position
+  replacement_wins: 47.7        # 0-WAR team baseline
+  # Win-curve (documented v1, fixed not fitted): playoff odds as a logistic
+  # in talent wins; marginal leverage = P x (1 - P), peaking at the center.
+  # roster_fill_wins: contracted-core baselines exclude arb/pre-arb
+  # players, understating full-roster strength by a roughly constant
+  # amount — the documented shift recenters contenders near the curve
+  # peak. v2 fills actual arb rosters.
+  win_curve: { center: 86.5, scale: 2.8, roster_fill_wins: 12 }
+  # Composite weights (sum 1.0) — every component decomposes in the UI.
+  weights: { need: 0.34, window: 0.22, afford: 0.20, park: 0.12, behavior: 0.12 }
+  # Need scaling: a 4-WAR upgrade gap saturates the need component.
+  need_war_saturation: 4.0

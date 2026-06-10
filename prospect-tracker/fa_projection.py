@@ -168,6 +168,7 @@ def build_corpus(first_season: int | None = None, last_season: int | None = None
             lg_woba_num = (w["bb"] * tot["bb"] + w["hbp"] * tot["hbp"] + w["single"] * singles
                            + w["double"] * tot["d"] + w["triple"] * tot["t"] + w["hr"] * tot["hr"])
             lg.update({
+                "_total_pa": tot["pa"],
                 "woba": lg_woba_num / tot["pa"],
                 "r_pa": tot["r"] / tot["pa"],
                 "k_pct": tot["so"] / tot["pa"], "bb_pct": tot["bb"] / tot["pa"],
@@ -379,9 +380,20 @@ def _league_recent(league: dict, season: int, key: str):
     return None
 
 
+def season_fraction(league: dict, season: int) -> float:
+    """Elapsed fraction of an IN-PROGRESS season, estimated from the
+    league's accumulated PA vs the prior full season. Clamped [0.05, 1]."""
+    cur = (league.get(season) or {}).get("_total_pa")
+    prev = (league.get(season - 1) or {}).get("_total_pa")
+    if not cur or not prev:
+        return 1.0
+    return max(0.05, min(1.0, cur / prev))
+
+
 def project_player(history: list[dict], side: str, target_season: int,
                    curves: dict, league: dict, age: int | None,
-                   role: str | None = None) -> dict | None:
+                   role: str | None = None,
+                   in_progress: tuple[int, float] | None = None) -> dict | None:
     """Project one player's ``target_season`` from up to three prior
     seasons (the rows must be corpus-shaped). Returns the component dict +
     assembled composites (wRC+/FIP) + playing time — WAR attaches later
@@ -417,15 +429,26 @@ def project_player(history: list[dict], side: str, target_season: int,
             rate += curve_delta(curves, side, role, comp, age)
         out[comp] = max(0.0, rate)
     # ---- playing time (its own model: classic Marcel PT + PT aging) ---------
+    # In-progress season handling (LIVE path only; the gates always project
+    # from completed seasons): a June rebuild sees ~40% of the current
+    # season — feeding that raw into the PT model projects everyone as a
+    # part-timer. Pro-rate the in-progress season's exposure to its
+    # full-season equivalent for PT INPUTS ONLY (rate reliability keeps the
+    # actual sample size — the evidence really is partial).
+    def _pt_expo(h: dict, key: str) -> float:
+        e = h.get(key) or 0
+        if in_progress and h["season"] == in_progress[0] and in_progress[1] > 0:
+            return e / in_progress[1]
+        return e
     pt_cfg = cfg["playing_time"]["hit" if side == "hit" else "pit"]
-    e1 = next((h.get(expo_key) or 0 for h in hist if h["season"] == target_season - 1), 0)
-    e2 = next((h.get(expo_key) or 0 for h in hist if h["season"] == target_season - 2), 0)
+    e1 = next((_pt_expo(h, expo_key) for h in hist if h["season"] == target_season - 1), 0)
+    e2 = next((_pt_expo(h, expo_key) for h in hist if h["season"] == target_season - 2), 0)
     if side == "hit":
         pt = pt_cfg["w1"] * e1 + pt_cfg["w2"] * e2 + pt_cfg["base_pa"]
     else:
         base_ip = pt_cfg["base_ip_sp"] if role == "SP" else pt_cfg["base_ip_rp"]
-        ip1 = next((h.get("ip") or 0 for h in hist if h["season"] == target_season - 1), 0)
-        ip2 = next((h.get("ip") or 0 for h in hist if h["season"] == target_season - 2), 0)
+        ip1 = next((_pt_expo(h, "ip") for h in hist if h["season"] == target_season - 1), 0)
+        ip2 = next((_pt_expo(h, "ip") for h in hist if h["season"] == target_season - 2), 0)
         ip = pt_cfg["w1"] * ip1 + pt_cfg["w2"] * ip2 + base_ip
         pt = ip * 4.3                                          # BF ≈ 4.3 / IP
         out["ip_proj"] = round(ip, 1)
