@@ -207,12 +207,34 @@ def build_historical_class(class_year: int, force: bool = False) -> dict:
 # Retrospective ledger
 # --------------------------------------------------------------------------- #
 
+_DPW_SERIES_PATH = Path(__file__).parent / "data" / "fa_dpw_series.json"
+
+
+@lru_cache(maxsize=1)
+def _dpw_series() -> dict[int, float]:
+    """The per-winter $/WAR series ESTIMATED FROM THE SIGNING CORPUS
+    (written by the Stage-3 market model). Empty when not yet generated."""
+    try:
+        import json as _json
+        raw = _json.loads(_DPW_SERIES_PATH.read_text(encoding="utf-8"))
+        return {int(k): float(v) for k, v in raw["usd_per_war_by_winter"].items()}
+    except (OSError, ValueError, KeyError):
+        return {}
+
+
 def dollars_per_war_for_season(season: int, current_season: int | None = None) -> float:
-    """v1 per-season $/WAR: the framework's flat rate de-escalated by its
-    own configured inflation back from the current season. DOCUMENTED
-    SIMPLIFICATION (fa_config.yaml ledger.backcast_mode) — Stage 3.1
-    replaces this with the per-winter series estimated from the signing
-    corpus itself."""
+    """Per-season $/WAR for the retrospective ledger. PRIMARY: the
+    per-winter series estimated from the FA-signing corpus itself
+    (data/fa_dpw_series.json, Stage-3 market model — the nearest winter's
+    rate when the exact season is absent). FALLBACK (documented v1): the
+    framework's flat rate de-escalated by its configured inflation."""
+    series = _dpw_series()
+    if series:
+        if season in series:
+            return series[season]
+        nearest = min(series, key=lambda y: abs(y - season))
+        infl = float(_vf_config().get("dollars_per_war_inflation", 0.05))
+        return series[nearest] * ((1.0 + infl) ** (season - nearest))
     cur = current_season or date.today().year
     rate_usd = _flat_dpw_usd()
     infl = float(_vf_config().get("dollars_per_war_inflation", 0.05))

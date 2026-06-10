@@ -122,8 +122,7 @@ def run_projection_gate(persist: bool = True) -> dict:
 
     for target in WARMUP_TARGETS + targets:
         is_warmup = target in WARMUP_TARGETS
-        curves = fp.fit_aging_curves(corpus, max_season=target - 1, write=False)
-        war_map = fp.fit_war_map(corpus, max_season=target - 1)
+        curves, war_map = fp.fitted_models(corpus, target - 1)
         season_stats = {"war": {"m": [], "b": []}, "wrc_plus": {"m": [], "b": []},
                         "fip": {"m": [], "b": []}, "war30": {"m": [], "b": []},
                         "cov_hits": 0, "cov_n": 0}
@@ -242,6 +241,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     ap = argparse.ArgumentParser()
     ap.add_argument("--gate1", action="store_true")
+    ap.add_argument("--gate2", action="store_true")
     args = ap.parse_args()
     if args.gate1:
         s = run_projection_gate()
@@ -251,6 +251,120 @@ def main() -> None:
         print(f"  coverage P10-P90: {s['coverage_p10_p90']:.3f}" if s["coverage_p10_p90"] else "  coverage: n/a")
         print(f"  gates: {s['gates']}")
         print(f"  PASS: {s['pass']}")
+    if args.gate2:
+        s = run_market_gate()
+        print("\n==== HARD GATE 2 — market model ====")
+        for k, v in s["pooled"].items():
+            print(f"  {k:10s} model MAE {v['mae_model']:.3f}  vs base {v['mae_base']:.3f}  (n={v['n']})")
+        print(f"  gates: {s['gates']}")
+        print(f"  PASS: {s['pass']}")
+
+
+
+
+# ============================================================================
+# HARD GATE 2 — predicted market price vs the nearest-comps naive baseline
+# ============================================================================
+# Forward-chained winters (the honest ex-ante stance): train on winters
+# strictly BEFORE the held-out winter, with $/WAR levels carried forward;
+# warmup winters seed the first train set and are never scored. Baseline =
+# median of the 5 nearest comps from prior winters, inflated by the naive
+# $/WAR trend. Misses are published, not hidden.
+
+GATE2_WARMUP_THROUGH = 2017          # train-only winters; scoring starts after
+GATE2_MODEL_VERSION = "fa_mkt_v1"
+
+
+def run_market_gate(persist: bool = True) -> dict:
+    import fa_market as fm
+    enriched = fm.enriched_signings(2015, 2026)
+    test_years = sorted({s["class_year"] for s in enriched
+                         if s["class_year"] > GATE2_WARMUP_THROUGH})
+    pooled = {"guarantee": {"m": [], "b": []}, "aav": {"m": [], "b": []},
+              "years": {"m": [], "b": []}}
+    per_winter: list[dict] = []
+    misses: list[dict] = []
+    infl = fm._dpw_inflation()
+    for W in test_years:
+        train = [s for s in enriched if s["class_year"] < W]
+        test = [s for s in enriched if s["class_year"] == W]
+        if len(train) < 100 or not test:
+            continue
+        dpw_series = fm.dollars_per_war_by_winter(train)
+        model = fm.MarketModel(train, dpw_series)
+        # class composition of the test winter is known at winter start —
+        # a legitimate ex-ante feature.
+        model.supply_by_year[W] = fm._supply(test, W)
+        wstats = {k: {"m": [], "b": []} for k in pooled}
+        for s in test:
+            pred = model.predict(s)
+            comps = fm.comps_for(s, train)
+            if not comps:
+                continue
+            b_guar = statistics.median(
+                c["guarantee_usd"] * ((1 + infl) ** (W - c["class_year"])) for c in comps)
+            b_years = statistics.median(c["years"] for c in comps)
+            b_aav = b_guar / max(b_years, 1)
+            act_g, act_y = s["guarantee_usd"], float(s["years"])
+            act_a = s.get("aav_usd") or act_g / max(act_y, 1)
+            wstats["guarantee"]["m"].append((pred["m_guarantee_usd"] / 1e6, act_g / 1e6))
+            wstats["guarantee"]["b"].append((b_guar / 1e6, act_g / 1e6))
+            wstats["aav"]["m"].append((pred["m_aav_usd"] / 1e6, act_a / 1e6))
+            wstats["aav"]["b"].append((b_aav / 1e6, act_a / 1e6))
+            wstats["years"]["m"].append((float(pred["m_years"]), act_y))
+            wstats["years"]["b"].append((b_years, act_y))
+            misses.append({"player": s["player_name"], "winter": W,
+                           "to_team": s.get("to_team"), "qo": bool(s.get("qo")),
+                           "actual_guar_mm": round(act_g / 1e6, 1),
+                           "pred_guar_mm": round(pred["m_guarantee_usd"] / 1e6, 1),
+                           "actual_years": act_y, "pred_years": pred["m_years"],
+                           "err_mm": round((pred["m_guarantee_usd"] - act_g) / 1e6, 1)})
+        row = {"winter": W, "n": len(wstats["guarantee"]["m"])}
+        for k in pooled:
+            row[f"{k}_mae_model"] = _mae(wstats[k]["m"])
+            row[f"{k}_mae_base"] = _mae(wstats[k]["b"])
+            pooled[k]["m"].extend(wstats[k]["m"])
+            pooled[k]["b"].extend(wstats[k]["b"])
+        per_winter.append(row)
+        log.info("gate2 %d: guar mae %.1f vs base %.1f ($M, n=%d) | aav %.2f vs %.2f | yrs %.2f vs %.2f",
+                 W, row["guarantee_mae_model"], row["guarantee_mae_base"], row["n"],
+                 row["aav_mae_model"], row["aav_mae_base"],
+                 row["years_mae_model"], row["years_mae_base"])
+    misses.sort(key=lambda m: -abs(m["err_mm"]))
+    summary = {
+        "model_version": GATE2_MODEL_VERSION,
+        "test_winters": test_years,
+        "pooled": {k: {"mae_model": _mae(v["m"]), "mae_base": _mae(v["b"]),
+                       "n": len(v["m"])} for k, v in pooled.items()},
+        "per_winter": per_winter,
+        "biggest_misses": misses[:12],
+        "notes": [
+            "forward-chained: trained on winters strictly before each test winter",
+            "guarantee/AAV in $M; population = MLB-guarantee deals with corpus history",
+            "baseline = median of 5 nearest comps (prior winters), naive $/WAR-trend inflated",
+            "$/WAR level per test winter carried forward ex-ante from the last train winter",
+        ],
+    }
+    gates = {k: summary["pooled"][k]["mae_model"] < summary["pooled"][k]["mae_base"]
+             for k in ("guarantee", "aav", "years")}
+    summary["gates"] = gates
+    summary["pass"] = all(gates.values())
+    if persist:
+        storage.upsert_fa_model_eval(GATE2_MODEL_VERSION, "market", summary)
+        import json as _json
+        from pathlib import Path as _Path
+        (_Path(__file__).parent / "data" / "fa_gate2_eval.json").write_text(
+            _json.dumps(summary, indent=1), encoding="utf-8")
+        # The estimated per-winter $/WAR series (FULL corpus — the ledger is
+        # retrospective and may see every winter's own implied rate). This
+        # REPLACES fa_class's v1 framework backcast, as the plan promised.
+        series = fm.dollars_per_war_by_winter(enriched)
+        (_Path(__file__).parent / "data" / "fa_dpw_series.json").write_text(
+            _json.dumps({"method": "fa_signings_implied_v1",
+                         "model_version": GATE2_MODEL_VERSION,
+                         "usd_per_war_by_winter": {str(k): int(v) for k, v in series.items()}},
+                        indent=1), encoding="utf-8")
+    return summary
 
 
 if __name__ == "__main__":

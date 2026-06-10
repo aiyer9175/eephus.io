@@ -94,7 +94,22 @@ def test_ledger_skips_milb_and_unstarted_deals():
     assert fc.ledger_for_signing({**_SIGNING, "class_year": 2030}, {}, current_season=2026) is None
 
 
-def test_dpw_backcast_deescalates():
+def test_dpw_prefers_estimated_series(monkeypatch):
+    """When the Stage-3 market model has written the per-winter $/WAR
+    series, the ledger uses IT — the exact season when present, the
+    nearest winter escalated otherwise."""
+    series = {2024: 15_000_000.0, 2026: 15_300_000.0}
+    monkeypatch.setattr(fc, "_dpw_series", lambda: series)
+    assert fc.dollars_per_war_for_season(2026) == 15_300_000.0
+    # 2028 absent -> nearest (2026) escalated two years at 5%
+    assert fc.dollars_per_war_for_season(2028) == pytest.approx(
+        15_300_000 * 1.05 ** 2, rel=1e-6)
+
+
+def test_dpw_backcast_fallback_deescalates(monkeypatch):
+    """Without the estimated series (fresh checkout, pre-gate), the
+    documented v1 fallback backcasts the framework flat rate."""
+    monkeypatch.setattr(fc, "_dpw_series", lambda: {})
     cur = fc.dollars_per_war_for_season(2026, current_season=2026)
     old = fc.dollars_per_war_for_season(2015, current_season=2026)
     assert cur > old > 0

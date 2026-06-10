@@ -240,6 +240,22 @@ def _era_adjust(rows: list[dict], league: dict, comp: str, side: str) -> dict:
     return out
 
 
+def fitted_models(corpus: dict, max_season: int, use_cache: bool = True) -> tuple[dict, dict]:
+    """(curves, war_map) fitted on seasons <= max_season, disk-cached per
+    max_season — Gate 2 and the live market model reuse Gate 1's twelve
+    point-in-time fits instead of recomputing them (load-time ask)."""
+    cache = CACHE_DIR / f"fa_fits_{max_season}_{corpus['first']}.pkl"
+    if use_cache and cache.exists():
+        with open(cache, "rb") as fh:
+            return pickle.load(fh)
+    curves = fit_aging_curves(corpus, max_season=max_season, write=False)
+    war_map = fit_war_map(corpus, max_season=max_season)
+    CACHE_DIR.mkdir(exist_ok=True)
+    with open(cache, "wb") as fh:
+        pickle.dump((curves, war_map), fh)
+    return curves, war_map
+
+
 def fit_aging_curves(corpus: dict | None = None, max_season: int | None = None,
                      write: bool = True) -> dict:
     """Delta-method aging curves per (side, role-group, component) +

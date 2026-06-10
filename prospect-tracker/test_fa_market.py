@@ -1,0 +1,103 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
+"""Market-model guards: the two-numbers discipline, NPV math, QO tax
+structure, ex-ante $/WAR carry, comps realness, and the Gate-2 artifact
+contract. Pure unit tests — no network."""
+
+from __future__ import annotations
+
+import pytest
+
+import fa_market as fm
+
+
+def test_pos_groups():
+    assert fm._pos_group("SP") == "SP" and fm._pos_group("RHP/DH") == "SP"
+    assert fm._pos_group("CL") == "RP" and fm._pos_group("C") == "C"
+    assert fm._pos_group("SS") == "POS" and fm._pos_group(None) == "POS"
+
+
+def test_rational_value_is_npv_not_sticker():
+    """Year-1 WAR at $10M/WAR with no escalation/discount would be $40M
+    over 4 flat years; with 9% discount and 5% escalation the NPV lands
+    BELOW sticker — and a decayed path is worth less than a flat one."""
+    flat = fm.rational_value_usd([2.0, 2.0, 2.0, 2.0], 2027, 10_000_000)
+    decayed = fm.rational_value_usd([2.0, 1.6, 1.2, 0.8], 2027, 10_000_000)
+    assert decayed < flat < 80_000_000
+    assert flat > 60_000_000          # sane magnitude
+    # one year, one WAR, no time effects: exactly $/WAR
+    assert fm.rational_value_usd([1.0], 2027, 10_000_000) == 10_000_000
+
+
+def test_deferral_npv_discounts_schedule():
+    sched = [{"year_offset": 0, "amount_usd": 10_000_000},
+             {"year_offset": 10, "amount_usd": 90_000_000}]   # Ohtani-shaped
+    d = fm.deferral_npv_usd(sched, 100_000_000)
+    assert d["sticker_usd"] == 100_000_000
+    assert d["npv_usd"] < 60_000_000                          # heavy deferral haircut
+    nod = fm.deferral_npv_usd(None, 50_000_000)
+    assert nod["npv_usd"] == nod["sticker_usd"] == 50_000_000
+    assert "no_deferral_schedule" in nod["method"]
+
+
+def test_opt_out_scenarios_are_labeled_not_priced():
+    s = fm.opt_out_scenarios([3.0, 2.5, 2.0, 1.5], opt_out_after=2,
+                             class_year=2027, dpw_usd=12_000_000)
+    assert s["pre_opt_out_rational_usd"] < s["full_term_rational_usd"]
+    assert "not option-priced" in s["note"]
+
+
+def test_winter_dpw_is_ex_ante():
+    """A winter must never see its own prices: the level is the most
+    recent PRIOR winter escalated, even when the winter exists in the
+    series."""
+    series = {2024: 15_000_000.0, 2025: 16_600_000.0}
+    got = fm.winter_dpw(series, 2026)
+    assert got == pytest.approx(16_600_000 * 1.05, rel=1e-6)
+    # 2025 must anchor on 2024, not itself
+    assert fm.winter_dpw(series, 2025) == pytest.approx(15_000_000 * 1.05, rel=1e-6)
+
+
+def test_qo_tax_prices_picks_in_dollars():
+    tax = fm.qo_tax_usd("cbt_payor", "2025-12-15")
+    assert tax["total_usd"] > 5_000_000            # two picks + $1M intl pool
+    assert len(tax["detail"]) == 2
+    assert all(d["surplus_usd"] >= 0 for d in tax["detail"])
+    other = fm.qo_tax_usd("other", "2025-12-15")
+    assert other["total_usd"] < tax["total_usd"]   # CBT payors pay the most
+
+
+def test_comps_are_real_prior_contracts():
+    pool = [{"player_name": f"P{i}", "class_year": 2020 + (i % 3),
+             "position": "SS", "to_team": "NYM", "years": 3 + (i % 4),
+             "guarantee_usd": 30_000_000 + i * 1_000_000, "aav_usd": 10_000_000,
+             "_war_path": {"war_y1": 2.0 + (i % 5) * 0.3}, "_age": 28 + (i % 6)}
+            for i in range(20)]
+    target = {"player_name": "Target", "class_year": 2024, "position": "2B",
+              "_war_path": {"war_y1": 2.6}, "_age": 30}
+    cs = fm.comps_for(target, pool)
+    assert 0 < len(cs) <= 5
+    names = {p["player_name"] for p in pool}
+    assert all(c["player_name"] in names for c in cs)         # never fabricated
+    assert all(c["class_year"] <= target["class_year"] for c in cs)
+
+
+# ---- HARD GATE 2 artifact -----------------------------------------------------
+
+def test_gate2_artifact_committed_and_passing():
+    """Ship/no-ship: surfaces may not consume market predictions unless the
+    persisted market-gate artifact passes, with the misses published."""
+    import json
+    from pathlib import Path
+    path = Path(__file__).parent / "data" / "fa_gate2_eval.json"
+    if not path.exists():
+        pytest.skip("market gate not yet run on this machine")
+    row = json.loads(path.read_text(encoding="utf-8"))
+    assert row["pass"] is True, f"GATE 2 FAILING: {row['gates']}"
+    assert all(row["gates"].values())
+    assert row["pooled"]["guarantee"]["n"] > 1000
+    assert len(row["biggest_misses"]) >= 10        # honesty surface populated
+    assert "forward-chained" in " ".join(row["notes"])

@@ -1,0 +1,269 @@
+{
+ "model_version": "fa_mkt_v1",
+ "test_winters": [
+  2018,
+  2019,
+  2020,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025,
+  2026
+ ],
+ "pooled": {
+  "guarantee": {
+   "mae_model": 11.582212663886573,
+   "mae_base": 11.621180051268077,
+   "n": 1199
+  },
+  "aav": {
+   "mae_model": 3.256175553794829,
+   "mae_base": 3.4281284444462456,
+   "n": 1199
+  },
+  "years": {
+   "mae_model": 0.44787322768974147,
+   "mae_base": 0.4854045037531276,
+   "n": 1199
+  }
+ },
+ "per_winter": [
+  {
+   "winter": 2018,
+   "n": 96,
+   "guarantee_mae_model": 8.527043260416667,
+   "guarantee_mae_base": 9.671906360677083,
+   "aav_mae_model": 2.321828375,
+   "aav_mae_base": 3.1123494960937506,
+   "years_mae_model": 0.6145833333333334,
+   "years_mae_base": 0.6458333333333334
+  },
+  {
+   "winter": 2019,
+   "n": 106,
+   "guarantee_mae_model": 12.481549594339622,
+   "guarantee_mae_base": 12.110114594929245,
+   "aav_mae_model": 3.2235597358490566,
+   "aav_mae_base": 3.2450506745283016,
+   "years_mae_model": 0.5,
+   "years_mae_base": 0.6132075471698113
+  },
+  {
+   "winter": 2020,
+   "n": 125,
+   "guarantee_mae_model": 8.772372328,
+   "guarantee_mae_base": 9.017187076781251,
+   "aav_mae_model": 2.629112944,
+   "aav_mae_base": 2.6351878697562503,
+   "years_mae_model": 0.368,
+   "years_mae_base": 0.384
+  },
+  {
+   "winter": 2021,
+   "n": 147,
+   "guarantee_mae_model": 6.740704142857143,
+   "guarantee_mae_base": 6.291468962792305,
+   "aav_mae_model": 2.75021406122449,
+   "aav_mae_base": 2.7101887340508077,
+   "years_mae_model": 0.3401360544217687,
+   "years_mae_base": 0.3197278911564626
+  },
+  {
+   "winter": 2022,
+   "n": 144,
+   "guarantee_mae_model": 13.62469017361111,
+   "guarantee_mae_base": 13.924043063162165,
+   "aav_mae_model": 3.003993791666667,
+   "aav_mae_base": 3.1094187371394857,
+   "years_mae_model": 0.5833333333333334,
+   "years_mae_base": 0.6111111111111112
+  },
+  {
+   "winter": 2023,
+   "n": 139,
+   "guarantee_mae_model": 15.010373129496404,
+   "guarantee_mae_base": 15.415250311597038,
+   "aav_mae_model": 3.770719913669065,
+   "aav_mae_base": 4.166841578487663,
+   "years_mae_model": 0.6546762589928058,
+   "years_mae_base": 0.6690647482014388
+  },
+  {
+   "winter": 2024,
+   "n": 136,
+   "guarantee_mae_model": 12.301160948529413,
+   "guarantee_mae_base": 13.622689427044381,
+   "aav_mae_model": 3.6751261470588235,
+   "aav_mae_base": 4.077411211715955,
+   "years_mae_model": 0.36764705882352944,
+   "years_mae_base": 0.4632352941176471
+  },
+  {
+   "winter": 2025,
+   "n": 161,
+   "guarantee_mae_model": 14.737138236024844,
+   "guarantee_mae_base": 12.993594234435122,
+   "aav_mae_model": 3.773106130434783,
+   "aav_mae_base": 3.647193641142552,
+   "years_mae_model": 0.30434782608695654,
+   "years_mae_base": 0.391304347826087
+  },
+  {
+   "winter": 2026,
+   "n": 145,
+   "guarantee_mae_model": 10.785987096551725,
+   "guarantee_mae_base": 10.87716533396807,
+   "aav_mae_model": 3.742404351724138,
+   "aav_mae_base": 3.938589486661084,
+   "years_mae_model": 0.3793103448275862,
+   "years_mae_base": 0.36551724137931035
+  }
+ ],
+ "biggest_misses": [
+  {
+   "player": "Juan Soto",
+   "winter": 2025,
+   "to_team": "NYM",
+   "qo": true,
+   "actual_guar_mm": 765.0,
+   "pred_guar_mm": 8.9,
+   "actual_years": 15.0,
+   "pred_years": 13,
+   "err_mm": -756.1
+  },
+  {
+   "player": "Shohei Ohtani",
+   "winter": 2024,
+   "to_team": "LAD",
+   "qo": true,
+   "actual_guar_mm": 700.0,
+   "pred_guar_mm": 184.5,
+   "actual_years": 10.0,
+   "pred_years": 5,
+   "err_mm": -515.5
+  },
+  {
+   "player": "Aaron Judge",
+   "winter": 2023,
+   "to_team": "NYY",
+   "qo": true,
+   "actual_guar_mm": 360.0,
+   "pred_guar_mm": 21.6,
+   "actual_years": 9.0,
+   "pred_years": 13,
+   "err_mm": -338.4
+  },
+  {
+   "player": "Bryce Harper",
+   "winter": 2019,
+   "to_team": "PHI",
+   "qo": true,
+   "actual_guar_mm": 330.0,
+   "pred_guar_mm": 22.9,
+   "actual_years": 13.0,
+   "pred_years": 13,
+   "err_mm": -307.1
+  },
+  {
+   "player": "Gerrit Cole",
+   "winter": 2020,
+   "to_team": "NYY",
+   "qo": true,
+   "actual_guar_mm": 324.0,
+   "pred_guar_mm": 66.5,
+   "actual_years": 9.0,
+   "pred_years": 13,
+   "err_mm": -257.5
+  },
+  {
+   "player": "Corey Seager",
+   "winter": 2022,
+   "to_team": "TEX",
+   "qo": true,
+   "actual_guar_mm": 325.0,
+   "pred_guar_mm": 73.3,
+   "actual_years": 10.0,
+   "pred_years": 4,
+   "err_mm": -251.7
+  },
+  {
+   "player": "Manny Machado",
+   "winter": 2019,
+   "to_team": "SDP",
+   "qo": false,
+   "actual_guar_mm": 300.0,
+   "pred_guar_mm": 71.2,
+   "actual_years": 10.0,
+   "pred_years": 12,
+   "err_mm": -228.8
+  },
+  {
+   "player": "Kris Bryant",
+   "winter": 2022,
+   "to_team": "COL",
+   "qo": false,
+   "actual_guar_mm": 182.0,
+   "pred_guar_mm": 20.6,
+   "actual_years": 7.0,
+   "pred_years": 2,
+   "err_mm": -161.4
+  },
+  {
+   "player": "Pete Alonso",
+   "winter": 2025,
+   "to_team": "NYM",
+   "qo": true,
+   "actual_guar_mm": 54.0,
+   "pred_guar_mm": 213.2,
+   "actual_years": 2.0,
+   "pred_years": 6,
+   "err_mm": 159.2
+  },
+  {
+   "player": "Alex Bregman",
+   "winter": 2026,
+   "to_team": "CHC",
+   "qo": false,
+   "actual_guar_mm": 175.0,
+   "pred_guar_mm": 24.2,
+   "actual_years": 5.0,
+   "pred_years": 2,
+   "err_mm": -150.8
+  },
+  {
+   "player": "Blake Snell",
+   "winter": 2025,
+   "to_team": "LAD",
+   "qo": false,
+   "actual_guar_mm": 182.0,
+   "pred_guar_mm": 40.4,
+   "actual_years": 5.0,
+   "pred_years": 2,
+   "err_mm": -141.6
+  },
+  {
+   "player": "Javier B\u00e1ez",
+   "winter": 2022,
+   "to_team": "DET",
+   "qo": false,
+   "actual_guar_mm": 140.0,
+   "pred_guar_mm": 7.1,
+   "actual_years": 6.0,
+   "pred_years": 1,
+   "err_mm": -132.9
+  }
+ ],
+ "notes": [
+  "forward-chained: trained on winters strictly before each test winter",
+  "guarantee/AAV in $M; population = MLB-guarantee deals with corpus history",
+  "baseline = median of 5 nearest comps (prior winters), naive $/WAR-trend inflated",
+  "$/WAR level per test winter carried forward ex-ante from the last train winter"
+ ],
+ "gates": {
+  "guarantee": true,
+  "aav": true,
+  "years": true
+ },
+ "pass": true
+}
