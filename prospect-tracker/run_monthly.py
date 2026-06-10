@@ -511,6 +511,23 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         with _step("d9. Rebuild timeseries (no scrape)", log):
             rebuild_only(out_dir)
 
+        # --- 10. FA signing-window tracker (Nov–Mar only). ----------------
+        # In-winter the class moves daily (signings, option decisions, QO
+        # acceptances), so the daily job re-scrapes the current class and
+        # re-exports the fa_* sidecars. Outside the window the FA refresh
+        # rides the monthly run only — June payrolls don't move daily.
+        if date.today().month in (11, 12, 1, 2, 3):
+            with _step("d10. FA signing-window refresh", log):
+                try:
+                    import fa_pipeline
+                    from fa_export import CLASS_YEAR as _FA_CLASS_YEAR
+                    from fa_export import export_all as _export_fa
+                    fa_pipeline.refresh_current_class(_FA_CLASS_YEAR,
+                                                      force=no_cache)
+                    _export_fa()
+                except Exception:
+                    log.exception("daily: FA refresh failed — continuing")
+
         finish_run(run_id, new_snapshots=0, stat_lines=0,
                    notes=f"DAILY: {n_il} on IL, {n_debuts} debuts, {n_trades} new trades")
         # Patch the just-written run summary into timeseries.json so the
@@ -1933,6 +1950,23 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         except Exception:
             log.exception("ifa export crashed — continuing")
         _STEP_TIMES.append(("5. Export timeseries.json + summary", time.monotonic() - _step_5_start))
+
+        # --- 6. Free Agency module (the standalone /fa/ surface) --------
+        # Refresh the constructed class (Spotrac, page-cached) + payroll
+        # ledger, then re-export the fa_* sidecars assets/fa.js consumes.
+        # Best-effort: the FA module is additive by contract and must
+        # never abort the prospect pipeline.
+        with _step("6. FA refresh + export (fa_* sidecars)", log):
+            try:
+                import fa_pipeline
+                from fa_export import CLASS_YEAR as _FA_CLASS_YEAR
+                from fa_export import export_all as _export_fa
+                fa_pipeline.refresh_current_class(_FA_CLASS_YEAR,
+                                                  force=force_refetch)
+                fa_pipeline.refresh_payroll(force=force_refetch)
+                _export_fa()
+            except Exception:
+                log.exception("fa pipeline failed — continuing")
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
                    notes=f"{len(timeseries)} players, {len(new_trades)} trades")

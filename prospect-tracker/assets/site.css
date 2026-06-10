@@ -791,3 +791,102 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
     scroll-behavior: auto !important;
   }
 }
+
+/* ── Free Agency app (/fa/) ──────────────────────────────────────────────── */
+/* The FA module's own surface — separate from PROSPX by design. Everything is
+   scoped under .fa-app so none of these primitives (chips, detail tables,
+   newsprint eyebrows) leak into PROSPX, which also loads site.css. Tokens
+   only — both themes ride the palette blocks at the top of this file. */
+.eephus-wrap:has(.fa-app) { max-width: 1400px; }   /* 11-col board needs room */
+.fa-app { font-family: var(--font-retro); }
+.fa-app .newsprint-eyebrow {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; padding: 4px 10px 5px; margin: 0 0 8px;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, transparent, var(--bg-secondary));
+  position: relative;
+}
+.fa-app .newsprint-eyebrow::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  background: var(--iridescent); opacity: 0.85;
+}
+.fa-app .newsprint-eyebrow-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--text-tertiary);
+}
+.fa-app .newsprint-eyebrow-meta {
+  font-size: 11px; font-style: italic; color: var(--text-tertiary);
+}
+.fa-app .filter-bar {
+  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+  margin-bottom: 8px; padding: 8px 10px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+}
+.fa-app .filter-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-tertiary); margin-right: 4px;
+}
+.fa-app button.chip {
+  font-family: var(--font-retro); font-size: 12px; font-weight: 500;
+  padding: 4px 10px; letter-spacing: 0.02em; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+.fa-app button.chip:hover {
+  background: var(--bg-tertiary); color: var(--text-primary);
+  border-color: var(--text-tertiary);
+}
+.fa-app button.chip.active {
+  background: var(--bg-secondary); color: var(--text-primary);
+  border-color: var(--accent-gold); font-weight: 700;
+  position: relative; overflow: hidden;
+}
+.fa-app button.chip.active::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: var(--iridescent);
+}
+.fa-app .detail-table {
+  width: 100%; border-collapse: collapse; font-family: var(--font-retro-mono);
+}
+.fa-app .detail-table th, .fa-app .detail-table td {
+  padding: 6px 10px; text-align: center; font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid var(--border-light);
+}
+.fa-app .detail-table thead th {
+  background: var(--bg-tertiary); color: var(--text-primary);
+  font-family: var(--font-retro); font-weight: 700; font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  border-bottom: 2px solid var(--bg-header);
+}
+.fa-app .detail-table tbody tr:hover { background: var(--bg-tertiary); }
+.fa-app .detail-table td:first-child, .fa-app .detail-table th:first-child { text-align: left; }
+.fa-app .detail-table td:nth-child(2) { text-align: left; }
+.fa-app .fa-dim { opacity: 0.55; }
+.fa-app .fa-sub { color: var(--text-tertiary); font-weight: 400; }
+.fa-app .fa-band { opacity: 0.55; font-size: 0.85em; }
+.fa-app .fa-comps { opacity: 0.55; font-size: 0.85em; }
+.fa-app .fa-note { color: var(--text-secondary); font-size: 0.9em; margin-bottom: 6px; }
+.fa-app h3 { font-family: var(--font-retro-mono); margin: 14px 0 6px; letter-spacing: 0.02em; }
+.fa-app .fa-cba-note {
+  margin-bottom: 8px; padding: 8px 12px; font-size: 12px;
+  color: var(--text-secondary);
+  border: 1px solid var(--accent-gold); border-left-width: 4px;
+  background: var(--bg-secondary);
+}
+.fa-app #fa-rows { overflow-x: auto; }   /* wide board scrolls, never clips */
+.fa-app .state-message {
+  text-align: center; padding: 4rem 1rem; font-size: 14px;
+  color: var(--text-secondary); line-height: 1.5;
+}
+.fa-app .state-message.is-error { color: var(--accent-red); }
+.fa-app .state-message code { font-family: var(--font-retro-mono); font-size: 12px; }
+.fa-app .fa-gloss { max-width: 72ch; margin: 0 0 18px; }
+.fa-app .fa-gloss h3 { margin: 0 0 4px; }
+.fa-app .fa-gloss p { margin: 0 0 6px; color: var(--text-secondary); font-size: 0.95rem; }
+.fa-app .fa-gloss .fa-gloss-short { font-weight: 700; color: var(--text-primary); }
+@media (max-width: 720px) {
+  .fa-app .detail-table th, .fa-app .detail-table td { padding: 4px 6px; font-size: 11px; }
+  .fa-app button.chip { padding: 3px 8px; font-size: 11px; }
+}

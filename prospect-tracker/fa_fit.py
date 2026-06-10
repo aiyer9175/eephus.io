@@ -190,7 +190,10 @@ def needs_matrix(class_year: int) -> dict[str, dict[str, dict]]:
         if p.get("from_team"):
             outgoing[(p["from_team"], _position_norm(p.get("position")))].append(p["player_name"])
     out: dict[str, dict[str, dict]] = {}
-    orgs = set(rosters) | {k[0] for k in blockers} | {k[0] for k in outgoing}
+    # Org universe = clubs with a contracted roster (exactly the 30 MLB
+    # teams). from_team rides foreign postings too (Woo Jin An → "KOR"),
+    # and a posting league must not get a needs page of its own.
+    orgs = set(rosters)
     for org in sorted(orgs):
         out[org] = {}
         roster = rosters.get(org, [])

@@ -53,6 +53,7 @@ _ACCT_VER = _asset_ver("assets/eephus-account.js")
 _UI_VER = _asset_ver("assets/eephus-ui.js")
 _ACCT_CSS_VER = _asset_ver("assets/eephus-account.css")
 _BG_VER = _asset_ver("assets/eephus-bg.js")
+_FA_VER = _asset_ver("assets/fa.js")
 
 # eephus.io account layer (Parts 1-7), injected before </body> on every editorial
 # page. OPTIONAL by design: assets/eephus-config.js is git-ignored and absent on
@@ -104,7 +105,7 @@ NAV_ITEMS = [
     ("home",     "Home",             "/"),
     ("articles", "Articles",         "/articles/"),
     ("prospx",   "PROSPX",           "/prospx/"),
-    ("fa",       "Free Agency",      "/prospx/#tab=fa"),
+    ("fa",       "Free Agency",      "/fa/"),
     ("forums",   "Forums",           "/forums/"),
     ("team",     "Development Team",  "/team/"),
 ]
@@ -122,7 +123,6 @@ PROSPX_SUBNAV = [
     ("MLB Draft",     "/prospx/#tab=draft"),
     ("International",  "/prospx/#tab=ifa"),
     ("Overseas",      "/prospx/#tab=overseas"),
-    ("Free Agency",   "/prospx/#tab=fa"),
     ("Time Machine",  "/prospx/#tab=timemachine"),
     ("Scatterplots",  "/prospx/#tab=charts"),
     ("Glossary",      "/prospx/#tab=glossary"),
@@ -1258,6 +1258,31 @@ def build_forums_index() -> str:
     return page("Forums — eephus.io", "forums", body,
                 "Community discussion across prospects, farm systems, and articles on eephus.io.")
 
+def build_fa() -> str:
+    """The /fa/ Free Agency app — its own surface, SEPARATE from PROSPX.
+
+    Static shell + assets/fa.js, which fetches the fa_export.py sidecars
+    (data/fa_class.json / fa_archive.json / fa_meta.json) directly. Shares the
+    site chrome and styles (.fa-app block in site.css) but loads none of the
+    PROSPX boot payload or script. Views route via #view= (board / fits /
+    archive / model / glossary)."""
+    body = (
+        '<div class="fa-app">'
+        '<div class="section-head"><h1>MLB Free Agency</h1>'
+        '<span class="section-sub">the 2026-27 class, constructed from data · '
+        'projected markets, rational value &amp; team fits · twelve archived winters</span></div>'
+        '<div id="fa-banner"></div>'
+        '<div class="filter-bar"><span class="filter-label">View</span>'
+        '<span id="fa-view-chips"></span></div>'
+        '<div id="fa-rows"></div>'
+        '</div>'
+        f'<script src="/assets/fa.js?v={_FA_VER}" defer></script>'
+    )
+    return page("Free Agency — eephus.io", "fa", body,
+                "The 2026-27 MLB free-agent class: projected contracts (mYears / mGuarantee / mAAV), "
+                "rational value vs predicted price, team fits, and twelve archived winters with a "
+                "realized-surplus ledger.")
+
 def build_article_page(a: dict) -> str:
     body = (
         '<a class="back-link" href="/articles/">← All articles</a>'
@@ -1395,6 +1420,7 @@ def main() -> None:
     for a in articles:
         _write(f"articles/{a['slug']}/index.html", build_article_page(a))
     _write("forums/index.html", build_forums_index())
+    _write("fa/index.html", build_fa())
     _write("team/index.html", build_team())
     print(f"done — {len(articles)} article(s).")
 

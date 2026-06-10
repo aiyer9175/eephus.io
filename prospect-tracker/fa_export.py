@@ -5,9 +5,9 @@
 
 """Sidecar exports for the MLB Free Agency module (Stage 5).
 
-Three lazy-loaded sidecars (advertised in the boot file's `_slices`,
-fetched by loadSlice() on first visit — the module adds ZERO bytes to
-boot, per the load-time mandate):
+Three sidecars consumed by the standalone /fa/ surface (assets/fa.js +
+build_site.py::build_fa — the FA module is SEPARATE from PROSPX, which
+carries zero FA bytes; these are fetched from /data/ directly):
 
   fa_class.json    the 2026-27 Class Board: every constructed member with
                    status/option flags, and — where identity + history
@@ -71,6 +71,7 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
     dpw = fm.winter_dpw(dpw_series, class_year)
 
     members = []
+    full_fits: list[tuple[dict, list[dict]]] = []   # (member, all-org fits)
     n_proj = 0
     for row in cls:
         m = _clean({
@@ -103,7 +104,12 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                     yrs = pred["m_years"]
                     rational = fm.rational_value_usd(path["war_by_year"][:yrs], class_year, dpw)
                     comps = fm.comps_for(s, enriched, k=3)
-                    fits = fa_fit.fit_scores(s, pred, class_year, top_n=3)
+                    # Full 30-org fit vector: top-3 rides the member row (the
+                    # board's Fits column), the rest feeds the per-team view
+                    # via the compact teamFits block below.
+                    all_fits = fa_fit.fit_scores(s, pred, class_year, top_n=30)
+                    fits = all_fits[:3]
+                    full_fits.append((m, all_fits))
                     m.update(_clean({
                         "warY1": path["war_y1"],
                         "warPath": path["war_by_year"][:max(yrs, 5)],
@@ -134,6 +140,26 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                     n_proj += 1
         members.append(m)
     members.sort(key=lambda m: -(m.get("mGuar") or 0))
+    # Per-team fit lists covering ALL 30 orgs (the member rows only carry
+    # top-3, which left half the league without a Fits view). Members are
+    # referenced by post-sort index ("i") so nothing is duplicated; top-12
+    # per org keeps the block ~40KB.
+    idx_of = {id(m): i for i, m in enumerate(members)}
+    team_fits: dict[str, list[dict]] = defaultdict(list)
+    for m, fits in full_fits:
+        for f in fits:
+            team_fits[f["org"]].append(_clean({
+                "i": idx_of[id(m)], "fit": f["fit"],
+                "need": f["components"]["need"]["score"],
+                "window": f["components"]["window"]["score"],
+                "afford": f["components"]["afford"]["score"],
+                "park": f["components"]["park"]["score"],
+                "behavior": f["components"]["behavior"]["score"],
+                "blockedBy": [b["player_name"] for b in
+                              f["components"]["need"]["blocked_by"]] or None,
+            }))
+    team_fits = {org: sorted(rows, key=lambda r: -r["fit"])[:12]
+                 for org, rows in sorted(team_fits.items())}
     thr = fa_cba.cbt_threshold(class_year)
     return {
         "generated_at": date.today().isoformat(),
@@ -142,6 +168,7 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         "cba_carry_forward": bool(thr.get("carry_forward")),
         "n_members": len(members), "n_projected": n_proj,
         "members": members,
+        "teamFits": team_fits,
     }
 
 

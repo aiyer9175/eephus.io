@@ -8335,7 +8335,6 @@
     <button class="section-tab" data-section="draft" title="Amateur draft prospects — isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">MLB Draft</button>
     <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes — signing bonuses, signing teams, prospects signed, and org spending by year (2021–present).">International Amateurs</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
-    <button class="section-tab" data-section="fa" title="MLB Free Agency — the constructed 2026-27 class with projected markets (mYears / mGuarantee / mAAV), rational value vs predicted price, team fits with PROSPX prospect blockers, twelve archived winters with a realized-surplus ledger, and the model accountability page.">Free Agency</button>
     <button class="section-tab" data-section="timemachine" title="Time-travel the board — view rankings &amp; grades as they stood at any past snapshot, or diff two dates for a changelog of risers, fallers, new entries &amp; graduates.">Time Machine</button>
     <button class="section-tab" data-section="charts" title="Build your own scatterplot — pick X/Y axes and a prospect group (MiLB, Debuted, Draft, International Amateurs, Overseas, or Farm systems).">Scatterplots</button>
     <button class="section-tab" data-section="glossary" title="Glossary, methodology &amp; source-comparison backtest — every term, model derivation, and the track record behind the site">Glossary/Methodology</button>
@@ -8976,19 +8975,6 @@
       <span id="ifa-class-chips"></span>
     </div>
     <div id="ifa-rows"></div>
-  </div>
-
-  <div id="fa-section" style="display: none;">
-    <div class="newsprint-eyebrow">
-      <span class="newsprint-eyebrow-label">MLB Free Agency</span>
-      <span class="newsprint-eyebrow-meta">the 2026-27 class, constructed from data &middot; projected markets, rational value &amp; team fits &middot; twelve archived winters</span>
-    </div>
-    <div id="fa-banner"></div>
-    <div class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
-      <span class="filter-label">View</span>
-      <span id="fa-view-chips"></span>
-    </div>
-    <div id="fa-rows"></div>
   </div>
 
   <div id="debuts-section" style="display: none;">
@@ -9662,7 +9648,6 @@ function formatMetric(value, type = "int") {
     case "netfv":    return sign + String(Math.round(abs));
     case "rate":     return sign + abs.toFixed(2);
     case "surplusM": return sign + "$" + abs.toFixed(1) + "M";
-    case "moneyM":   return "$" + (abs >= 100 ? abs.toFixed(0) : abs.toFixed(1)) + "M";
     case "permil":   return "$" + abs.toFixed(2) + "M";
     case "pct":      return z.toFixed(1) + "%";
     default:         return String(z);
@@ -12137,6 +12122,8 @@ function syncFromURL() {
                     : p.has("ostab") ? p.get("ostab")
                     : "overview";
   if (p.has("tab"))   state.section     = p.get("tab");
+  // Free Agency moved to its own surface — redirect legacy #tab=fa deep links.
+  if (state.section === "fa") { window.location.replace("/fa/"); return; }
   if (p.has("org"))   state.orgFilter   = p.get("org");
   if (p.has("acq"))   state.acqFilter   = p.get("acq");
   if (p.has("class")) state.classFilter = p.get("class");
@@ -22042,195 +22029,16 @@ function _renderIFAAllTime(host, classes, usd) {
   });
 }
 
+// =============================================================================
+// Free Agency — moved to its own surface at /fa/ (assets/fa.js +
+// build_site.py::build_fa). The FA module is SEPARATE from PROSPX by design:
+// this app carries no FA render code, no FA sidecar loads, no FA glossary.
+// Legacy #tab=fa deep links redirect in syncFromURL.
+// =============================================================================
 // ── International Amateurs (IFA) section ─────────────────────────────────────
 // Per-year J2 signing classes from data/ifa_timeseries.json (Spotrac tracker).
 // Main signings table (featured + expandable, org-filterable) plus org-spending
 // and trend sidebars. Headlines the SIGNING team, not the player's current org.
-// =============================================================================
-// Free Agency section (Stage 5) — Class Board / Team Fits / Archive / Model
-// =============================================================================
-// Sidecar-fed (fa_class / fa_archive / fa_meta via loadSlice — zero boot
-// bytes). Two numbers, never conflated: RATIONAL VALUE (NPV of the gated
-// projection) vs PREDICTED MARKET (mYears/mGuarantee/mAAV with bands).
-// Contract Surplus ($) = rational − predicted; Deal+ 100 = market-rate.
-let _faView = "board";
-let _faWinter = null;
-let _faTeam = null;
-
-function _faMoney(usd, type = "moneyM") {
-  return usd == null ? EM_DASH : formatMetric(usd / 1e6, type);
-}
-
-function _faEsc(s) {
-  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-async function renderFA() {
-  const rows = document.getElementById("fa-rows");
-  const chips = document.getElementById("fa-view-chips");
-  const banner = document.getElementById("fa-banner");
-  if (!rows) return;
-  const VIEWS = [["board", "Class Board"], ["fits", "Team Fits"],
-                 ["archive", "Archive"], ["model", "Model Accountability"]];
-  chips.innerHTML = VIEWS.map(([k, label]) =>
-    `<button class="chip${_faView === k ? " active" : ""}" data-fa-view="${k}">${label}</button>`).join("");
-  chips.querySelectorAll("[data-fa-view]").forEach(b => b.onclick = () => {
-    _faView = b.dataset.faView; renderFA();
-  });
-  rows.innerHTML = `<div class="state-message">Loading free-agency data&hellip;</div>`;
-  try {
-    await Promise.all([loadSlice("fa_class"), loadSlice("fa_archive"), loadSlice("fa_meta")]);
-  } catch (e) {
-    rows.innerHTML = `<div class="state-message">Free-agency data unavailable.</div>`;
-    return;
-  }
-  const cls = DATA.fa_class, meta = DATA.fa_meta;
-  if (!cls || !cls.members) {
-    rows.innerHTML = `<div class="state-message">Free-agency data not exported yet.</div>`;
-    return;
-  }
-  banner.innerHTML = cls.cba_carry_forward
-    ? `<div class="state-message" style="margin-bottom:8px;" title="The 2022 CBA expired 2026-12-01. Every 2027 threshold/QO figure is a carry-forward of the last known rule, not a published number.">&#9888; CBA rules past 2026-12-01 are carried forward &mdash; thresholds and QO values for this winter are NOT yet collectively bargained.</div>`
-    : "";
-  if (_faView === "board") _faRenderBoard(rows, cls);
-  else if (_faView === "fits") _faRenderFits(rows, cls, meta);
-  else if (_faView === "archive") _faRenderArchive(rows);
-  else _faRenderModel(rows, meta);
-}
-
-function _faStatusChip(m) {
-  if (m.status === "locked") return `<span title="Contract expires — locked into the class.">UFA</span>`;
-  const pct = m.enterProb != null ? ` &middot; P(enter) ${(m.enterProb * 100).toFixed(0)}%` : "";
-  const price = m.optPrice ? ` $${(m.optPrice / 1e6).toFixed(1)}M` : "";
-  return `<span title="Option-pending — class membership is probabilistic until the option resolves. Exercise probability is a documented v1 heuristic.">${_faEsc((m.type || "").replace(/_/g, " "))}${price}${pct}</span>`;
-}
-
-function _faRenderBoard(rows, cls) {
-  const members = cls.members;
-  const head = `<div class="newsprint-eyebrow" style="margin-top:4px;">
-    <span class="newsprint-eyebrow-label">2026-27 Class Board</span>
-    <span class="newsprint-eyebrow-meta">${members.length} constructed members &middot; ${cls.n_projected} projected &middot; winter $/WAR (ex-ante) ${_faMoney(cls.dpw_usd)} &middot; sorted by mGuarantee</span>
-  </div>`;
-  const body = members.map((m, i) => {
-    const fits = (m.fits || []).map(f =>
-      `<span title="fit ${f.fit} — need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " — blocked by " + _faEsc(f.blockedBy.join(", ")) : ""}">${f.org}${f.blockedBy ? "*" : ""}</span>`).join(" ");
-    const comps = (m.comps || []).map(c =>
-      `${_faEsc(c.name)} '${String(c.yr).slice(2)} ${c.years || "?"}y/${c.guar ? "$" + (c.guar / 1e6).toFixed(0) + "M" : "?"}`).join("; ");
-    const yearsBand = m.mYears != null
-      ? `${m.mYears}<span style="opacity:.55;font-size:.85em;"> (${m.mYearsP10 ?? "?"}&ndash;${m.mYearsP90 ?? "?"})</span>` : EM_DASH;
-    const guarBand = m.mGuar != null
-      ? `${_faMoney(m.mGuar)}<span style="opacity:.55;font-size:.85em;"> (${_faMoney(m.mGuarP10)}&ndash;${_faMoney(m.mGuarP90)})</span>` : EM_DASH;
-    const surplus = m.surplus != null ? formatMetric(m.surplus / 1e6, "surplusM") : EM_DASH;
-    return `<tr${m.mGuar == null ? ' style="opacity:.6;"' : ""}>
-      <td>${i + 1}</td>
-      <td><strong>${_faEsc(m.name)}</strong><span style="opacity:.65;"> ${_faEsc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${_faEsc(m.from || "")}</span>${comps ? `<div style="opacity:.55;font-size:.85em;" title="Nearest real historical contracts (never fabricated)">comps: ${comps}</div>` : ""}</td>
-      <td>${_faStatusChip(m)}</td>
-      <td title="Projected year-1 bWAR from the Gate-1-passed engine">${m.warY1 != null ? formatMetric(m.warY1, "war") : EM_DASH}</td>
-      <td title="Predicted contract length (P10–P90 band)">${yearsBand}</td>
-      <td title="Predicted total guarantee (P10–P90 band)">${guarBand}</td>
-      <td title="Predicted AAV">${m.mAav != null ? _faMoney(m.mAav) : EM_DASH}</td>
-      <td title="Rational value — NPV of the projected WAR path at the platform 9% discount">${m.rational != null ? _faMoney(m.rational) : EM_DASH}</td>
-      <td title="Contract Surplus ($) — rational value minus predicted price">${surplus}</td>
-      <td title="Deal+ — 100 = market-rate; above 100 = team-friendly at the predicted price">${m.dealPlus ?? EM_DASH}</td>
-      <td title="Top team fits (* = position blocked by a PROSPX prospect)">${fits || EM_DASH}</td>
-    </tr>`;
-  }).join("");
-  rows.innerHTML = head + `<table class="detail-table" style="width:100%;">
-    <thead><tr><th>#</th><th>Player</th><th>Status</th><th>WAR y1</th><th>mYears</th><th>mGuarantee</th><th>mAAV</th><th>Rational</th><th>Surplus</th><th>Deal+</th><th>Fits</th></tr></thead>
-    <tbody>${body}</tbody></table>`;
-}
-
-function _faRenderFits(rows, cls, meta) {
-  const byOrg = {};
-  cls.members.forEach(m => (m.fits || []).forEach(f => {
-    (byOrg[f.org] = byOrg[f.org] || []).push({ m, f });
-  }));
-  const orgs = Object.keys(byOrg).sort();
-  if (!_faTeam || !byOrg[_faTeam]) _faTeam = orgs[0];
-  const chips = orgs.map(o =>
-    `<button class="chip${o === _faTeam ? " active" : ""}" data-fa-team="${o}">${o}</button>`).join("");
-  const t = (meta && meta.teams && meta.teams[_faTeam]) || {};
-  const list = (byOrg[_faTeam] || []).sort((a, b) => b.f.fit - a.f.fit);
-  const body = list.map(({ m, f }) => `<tr>
-      <td><strong>${_faEsc(m.name)}</strong> <span style="opacity:.65;">${_faEsc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"}</span></td>
-      <td>${f.fit.toFixed(2)}</td>
-      <td>${f.need}</td><td>${f.window}</td><td>${f.afford}</td><td>${f.park}</td><td>${f.behavior}</td>
-      <td>${f.blockedBy ? `<span title="Position blocked by a PROSPX prospect (FV &ge; 50, near ETA)">${_faEsc(f.blockedBy.join(", "))}</span>` : EM_DASH}</td>
-      <td>${m.mGuar != null ? `${m.mYears}y / ${_faMoney(m.mGuar)}` : EM_DASH}</td>
-    </tr>`).join("");
-  rows.innerHTML = `<div class="filter-bar" style="flex-wrap:wrap;gap:4px;margin-bottom:8px;"><span class="filter-label">Team</span>${chips}</div>
-    <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${_faTeam} fits</span>
-    <span class="newsprint-eyebrow-meta">committed ${_faMoney(t.committed)} &middot; CBT space ${t.space != null ? formatMetric(t.space / 1e6, "surplusM") : EM_DASH} &middot; baseline ${t.baseWins ?? "?"}w (contracted core) &middot; biggest deal ever ${_faMoney(t.maxGuar)}</span></div>
-    <table class="detail-table" style="width:100%;">
-    <thead><tr><th>Player</th><th>Fit</th><th>Need</th><th>Window</th><th>Afford</th><th>Park</th><th>Behavior</th><th>Blocked by</th><th>Predicted</th></tr></thead>
-    <tbody>${body || `<tr><td colspan="9">No scored fits for ${_faTeam} in this class.</td></tr>`}</tbody></table>`;
-  rows.querySelectorAll("[data-fa-team]").forEach(b => b.onclick = () => {
-    _faTeam = b.dataset.faTeam; renderFA();
-  });
-}
-
-function _faRenderArchive(rows) {
-  const arc = DATA.fa_archive;
-  if (!arc || !arc.winters) {
-    rows.innerHTML = `<div class="state-message">Archive not exported yet.</div>`;
-    return;
-  }
-  const winters = arc.winters.slice().sort((a, b) => b.year - a.year);
-  if (!_faWinter || !winters.some(w => w.year === _faWinter)) _faWinter = winters[0].year;
-  const chips = winters.map(w =>
-    `<button class="chip${w.year === _faWinter ? " active" : ""}" data-fa-winter="${w.year}">${w.year - 1}-${String(w.year).slice(2)}</button>`).join("");
-  const w = winters.find(x => x.year === _faWinter);
-  const body = w.signings.map(s => `<tr${s.milb ? ' style="opacity:.55;"' : ""}>
-      <td><strong>${_faEsc(s.name)}</strong> <span style="opacity:.65;">${_faEsc(s.pos || "")}</span>${s.qo ? ' <span title="Received a qualifying offer">QO</span>' : ""}</td>
-      <td>${_faEsc(s.from || "")} &rarr; ${_faEsc(s.to || "")}</td>
-      <td>${s.years ?? EM_DASH}</td>
-      <td>${s.milb ? "MiLB deal" : _faMoney(s.guar)}</td>
-      <td>${_faMoney(s.aav)}</td>
-      <td title="Realized bWAR over the contract's elapsed seasons">${s.warTd != null ? formatMetric(s.warTd, "war") : EM_DASH}</td>
-      <td title="Realized surplus to date: WAR delivered x that season's estimated $/WAR minus prorated money paid">${s.surplusTd != null ? formatMetric(s.surplusTd / 1e6, "surplusM") : EM_DASH}</td>
-      <td>${s.done ? "complete" : (s.warTd != null ? "running" : EM_DASH)}</td>
-    </tr>`).join("");
-  rows.innerHTML = `<div class="filter-bar" style="flex-wrap:wrap;gap:4px;margin-bottom:8px;"><span class="filter-label">Winter</span>${chips}</div>
-    <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${_faWinter - 1}-${String(_faWinter).slice(2)} winter</span>
-    <span class="newsprint-eyebrow-meta">${w.n} signings &middot; ${_faMoney(w.spend_usd)} guaranteed &middot; implied $/WAR ${_faMoney(w.dpw_usd)}${w.qo_offered != null ? ` &middot; ${w.qo_offered} qualifying offers` : ""}</span></div>
-    <table class="detail-table" style="width:100%;">
-    <thead><tr><th>Player</th><th>From &rarr; To</th><th>Yrs</th><th>Guarantee</th><th>AAV</th><th>WAR to date</th><th>Surplus to date</th><th>Status</th></tr></thead>
-    <tbody>${body}</tbody></table>`;
-  rows.querySelectorAll("[data-fa-winter]").forEach(b => b.onclick = () => {
-    _faWinter = Number(b.dataset.faWinter); renderFA();
-  });
-}
-
-function _faRenderModel(rows, meta) {
-  if (!meta || (!meta.gate1 && !meta.gate2)) {
-    rows.innerHTML = `<div class="state-message">Model evaluation artifacts not exported yet.</div>`;
-    return;
-  }
-  const g1 = meta.gate1, g2 = meta.gate2;
-  const pooledRows = (pooled, fmt) => Object.entries(pooled).map(([k, v]) =>
-    `<tr><td>${_faEsc(k)}</td><td>${fmt(v.mae_model)}</td><td>${fmt(v.mae_base)}</td><td>${v.n}</td><td>${v.mae_model < v.mae_base ? "&#10003; beats baseline" : "&#10007; behind baseline"}</td></tr>`).join("");
-  const missRows = g2 && g2.biggest_misses ? g2.biggest_misses.map(m =>
-    `<tr><td>${m.winter}</td><td>${_faEsc(m.player)}</td><td>${_faEsc(m.to_team || "")}</td>
-     <td>${m.actual_years}y / $${m.actual_guar_mm}M</td><td>${m.pred_years}y / $${m.pred_guar_mm}M</td>
-     <td>${formatMetric(m.err_mm, "rate")}M</td></tr>`).join("") : "";
-  rows.innerHTML = `
-    <div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Model Accountability</span>
-    <span class="newsprint-eyebrow-meta">both hard gates, rendered verbatim from the committed eval artifacts &mdash; misses and all &middot; ${meta.cba ? meta.cba.unverified_records + " curated CBA records pending owner verification" : ""}</span></div>
-    ${g1 ? `<h3 style="margin:14px 0 6px;">Gate 1 &mdash; projection engine (${g1.pass ? "PASSED" : "FAILING"})</h3>
-    <div style="opacity:.7;font-size:.9em;margin-bottom:6px;">train &le; N&minus;1, predict N, ten held-out seasons ${g1.targets ? g1.targets.join(", ") : ""} &middot; P10&ndash;P90 coverage ${g1.coverage_p10_p90 != null ? g1.coverage_p10_p90.toFixed(3) : "?"} (target 0.75&ndash;0.85)</div>
-    <table class="detail-table"><thead><tr><th>Metric</th><th>Model MAE</th><th>Naive baseline</th><th>n</th><th>Verdict</th></tr></thead>
-    <tbody>${pooledRows(g1.pooled, v => v == null ? EM_DASH : v.toFixed(3))}</tbody></table>` : ""}
-    ${g2 ? `<h3 style="margin:14px 0 6px;">Gate 2 &mdash; market model (${g2.pass ? "PASSED" : "FAILING"})</h3>
-    <div style="opacity:.7;font-size:.9em;margin-bottom:6px;">forward-chained winters ${g2.test_winters ? g2.test_winters.join(", ") : ""} vs nearest-comps baseline &middot; guarantee/AAV in $M</div>
-    <table class="detail-table"><thead><tr><th>Metric</th><th>Model MAE</th><th>Comps baseline</th><th>n</th><th>Verdict</th></tr></thead>
-    <tbody>${pooledRows(g2.pooled, v => v == null ? EM_DASH : v.toFixed(2))}</tbody></table>
-    <h3 style="margin:14px 0 6px;">Biggest misses (published, not hidden)</h3>
-    <table class="detail-table"><thead><tr><th>Winter</th><th>Player</th><th>To</th><th>Actual</th><th>Model</th><th>Err</th></tr></thead>
-    <tbody>${missRows}</tbody></table>
-    <div style="opacity:.7;font-size:.9em;margin-top:8px;">${(g2.notes || []).map(_faEsc).join(" &middot; ")}</div>` : ""}`;
-}
-
 async function renderIFA() {
   const host = document.getElementById("ifa-rows");
   const classChips = document.getElementById("ifa-class-chips");
@@ -25299,44 +25107,6 @@ function _glossaryGroupOf(slug, entry) {
 }
 
 const GLOSSARY = {
-  // ---- MLB Free Agency module ----
-  "m_guarantee": {
-    name: "mGuarantee", aliases: ["mGuarantee", "mGuar", "predicted guarantee"], category: "economic",
-    priority: 60,
-    short: "Predicted total contract guarantee for a free agent, from the market model (what teams WILL pay, not what the production is worth).",
-    long: "mGuarantee is the market model: a transparent two-stage regression (contract length first, then log-guarantee given length) trained only on the 2014-15 to present FA-signing corpus, with age, projected year-1 bWAR, position group, qualifying-offer status, class supply, the winter $/WAR level (carried forward ex-ante), nearest-comps anchors, and economic anchors (discounted projected WAR x $/WAR; prime-years x quality). Predictions clamp to a 2.5x envelope around the comps median and blend toward comps in the megadeal regime. P10-P90 bands are empirical residual quantiles from the forward-chained backtest. The model beat the nearest-comps baseline on guarantee, AAV and years across nine held-out winters (Gate 2 on the Model Accountability page).",
-    related: ["m_aav", "m_years", "deal_plus", "contract_surplus"],
-  },
-  "m_aav": {
-    name: "mAAV", aliases: ["mAAV", "predicted AAV"], category: "economic", priority: 61,
-    short: "Predicted average annual value: mGuarantee / mYears, with its own P10-P90 band.",
-    long: "Both framings of a contract are projected: the per-year price (mAAV) and the total value / length (mGuarantee / mYears). mAAV bands ride the guarantee band at the point-estimate term.",
-    related: ["m_guarantee", "m_years"],
-  },
-  "m_years": {
-    name: "mYears", aliases: ["mYears", "predicted years"], category: "economic", priority: 62,
-    short: "Predicted contract length (P10-P90 banded), from a log-years model with comps stacking.",
-    long: "Contract length is modeled before money (teams trade years against AAV). The stage predicts log(years) with curvature terms (WAR squared, age x WAR) and the nearest-comps median length stacked as a feature; it beat the comps baseline 0.448 vs 0.485 MAE across nine held-out winters.",
-    related: ["m_guarantee", "m_aav"],
-  },
-  "deal_plus": {
-    name: "Deal+", aliases: ["Deal+"], category: "economic", priority: 63,
-    short: "Contract-value index: 100 = priced exactly at rational value; above 100 = team-friendly.",
-    long: "Deal+ = 100 x rational value / predicted (or actual) guarantee. Rational value is the NPV of the projected WAR path (aging-curve decayed, playing-time weighted) x escalated $/WAR at the platform 9% discount rate - the same NPV currency as PROSPX prospect surplus, so the qualifying-offer pick tax can be subtracted meaningfully.",
-    related: ["contract_surplus", "m_guarantee", "surplus"],
-  },
-  "contract_surplus": {
-    name: "Contract Surplus ($)", aliases: ["Contract Surplus", "FA surplus", "GAP"], category: "economic", priority: 64,
-    short: "Rational value minus predicted market price - the gap the module exists to surface.",
-    long: "Two independently derived numbers, never conflated: RATIONAL VALUE (what the projected production is worth in NPV) and PREDICTED MARKET PRICE (what teams will actually pay, from the market model). Contract Surplus ($) is rational minus market. Positive = the market is expected to underprice the player. The retrospective ledger applies the same lens backward: realized bWAR x each season-s estimated $/WAR minus prorated money paid, for every MLB free-agent deal since 2014-15.",
-    related: ["deal_plus", "m_guarantee", "qo_tax"],
-  },
-  "qo_tax": {
-    name: "QO pick tax", aliases: ["QO tax", "qualifying offer tax", "draft pick compensation"], category: "economic", priority: 65,
-    short: "The dollar cost of forfeited draft picks (and intl pool money) when signing a qualifying-offer free agent.",
-    long: "Signing a QO-attached free agent forfeits draft picks per the CBA compensation matrix (rule-versioned; CBT payors forfeit their 2nd- and 5th-highest picks plus $1M of international pool). The module prices each forfeited slot using the platform-s OWN draft research: median consensus FV at the slot mapped through the prospect surplus curve. Because rational value and pick values share the same 9% NPV currency, the tax subtracts directly.",
-    related: ["contract_surplus", "fv", "surplus"],
-  },
   // ---- Arkmetrics (site-built custom indices) ----
   "tool": {
     name: "Tool", aliases: ["Tool", "Tool grade", "ToolComposite", "Tools+", "T+"], category: "custom-index",
@@ -42127,7 +41897,6 @@ function render() {
   else if (active === "farm")       renderFarmSystems();
   else if (active === "leaderboards") renderLeaderboards();
   else if (active === "charts")     renderCharts();
-  else if (active === "fa")         renderFA();
   else if (active === "glossary")   renderGlossary();
   else if (active === "watchlist")  renderWatchlist();
   decorateA11yRows();
