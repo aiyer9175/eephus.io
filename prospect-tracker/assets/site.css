@@ -523,6 +523,9 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); border-radius: var(--radius-sm); }
 .sb-search::placeholder { color: var(--text-tertiary); }
 .sb-group { margin-bottom: 20px; }
+/* PROSPX baseball badge inline with its nav entry + subnav group label. */
+.px-ball { flex: none; }
+.sb-group-label--lockup { display: flex; align-items: center; gap: 6px; }
 .sb-group-label { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 8px; padding-bottom: 5px; border-bottom: 1px solid var(--border-light); }
 .sb-nav a, .sb-subnav a {
   display: flex; align-items: center; gap: 8px; text-decoration: none;

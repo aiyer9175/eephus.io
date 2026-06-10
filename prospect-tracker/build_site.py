@@ -196,6 +196,30 @@ def eephus_merged_wordmark(uid: str, tag: str = "h1") -> str:
     return (f'<{tag} class="nameplate eephus-wordmark-merged">{arc}'
             f'eephus<span class="dot">.io</span></{tag}>')
 
+def prospx_ball_logo(uid: str, px: int = 16) -> str:
+    """The PROSPX baseball badge — a self-contained copy of the app
+    masthead's .h1-logo SVG (cream ball, gradient seams, P/X monogram) for
+    sidebar/nav lockups. Fills ride the theme tokens via inline style; the
+    seam gradient keeps the masthead's literal stops (SVG gradients can't
+    read CSS var()). ``uid`` keeps gradient ids unique per placement."""
+    gid = f"px-seam-{uid}"
+    return (
+        f'<svg class="px-ball" width="{px}" height="{px}" viewBox="0 0 44 44" aria-hidden="true">'
+        f'<defs><linearGradient id="{gid}" x1="0" y1="0" x2="1" y2="0">'
+        '<stop offset="0%" stop-color="#B91C1C"/><stop offset="35%" stop-color="#C9A227"/>'
+        '<stop offset="65%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/>'
+        '</linearGradient></defs>'
+        '<circle cx="22" cy="22" r="19" style="fill:var(--bg-secondary);stroke:var(--text-primary);stroke-width:2"/>'
+        f'<path stroke="url(#{gid})" d="M 32 8 Q 40 22 32 36" style="fill:none;stroke-width:3;stroke-linecap:round"/>'
+        '<path d="M 32 8 Q 40 22 32 36" style="fill:none;stroke:var(--text-primary);stroke-width:1.2;stroke-linecap:round;stroke-dasharray:1.5 3"/>'
+        f'<path stroke="url(#{gid})" d="M 12 8 Q 4 22 12 36" style="fill:none;stroke-width:3;stroke-linecap:round"/>'
+        '<path d="M 12 8 Q 4 22 12 36" style="fill:none;stroke:var(--text-primary);stroke-width:1.2;stroke-linecap:round;stroke-dasharray:1.5 3"/>'
+        '<g text-anchor="middle" style="font-family:\'Old English Text MT\',\'UnifrakturCook\',Georgia,serif;'
+        'font-weight:800;fill:var(--text-primary);stroke:var(--bg-secondary);stroke-width:0.7;paint-order:stroke">'
+        '<text x="18.5" y="30" font-size="22">P</text><text x="26" y="30" font-size="23">X</text></g>'
+        '</svg>'
+    )
+
 def eephus_logo_lockup(badge: bool = True) -> str:
     """Homepage hero lockup: the merged arc-wordmark with the β tag and the
     @eephus_io chip stacked beside it (β on top, X under — the X chip carries
@@ -1152,10 +1176,14 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     events = _collect_events(players, graduates, _load_fa_events_for_wire())
 
     # ---- sidebar ----
+    # The sidebar has room for fuller module names than the horizontal
+    # header nav, so a couple of labels expand here (key → sidebar label).
+    sidebar_labels = {"fa": "MLB Free Agency"}
     nav = []
     for key, label, href in NAV_ITEMS:
         cls = ' class="is-active"' if key == "home" else ""
-        nav.append(f'<a href="{href}"{cls}>{html.escape(label)}</a>')
+        icon = prospx_ball_logo("sbnav") if key == "prospx" else ""
+        nav.append(f'<a href="{href}"{cls}>{icon}{html.escape(sidebar_labels.get(key, label))}</a>')
     sub = "".join(f'<a href="{href}"><span class="px-glyph">›</span>{html.escape(label)}</a>'
                   for label, href in PROSPX_SUBNAV)
     feed = _feed_html(events, 12) or '<div class="feed-item" style="color:#6f8a76;">No recent activity.</div>'
@@ -1170,8 +1198,8 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         # avatar control into any .eephus-nav-controls, including this sidebar slot.
         '<div class="sb-account eephus-nav-controls"></div>'
         f'{search}'
-        f'<div class="sb-group"><div class="sb-group-label">Sections</div><nav class="sb-nav">{"".join(nav)}</nav></div>'
-        f'<div class="sb-group"><div class="sb-group-label">PROSPX</div><nav class="sb-subnav">{sub}</nav></div>'
+        f'<div class="sb-group"><div class="sb-group-label">Modules</div><nav class="sb-nav">{"".join(nav)}</nav></div>'
+        f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{prospx_ball_logo("sbgrp", 14)}PROSPX</div><nav class="sb-subnav">{sub}</nav></div>'
         f'{spotlight}'
         f'<div class="sb-group"><div class="sb-feed"><div class="feed-head"><span class="blip"></span>Prospect Wire</div>{feed}</div></div>'
         '</aside>'
