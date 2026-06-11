@@ -196,9 +196,16 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                 age_prev = next((h.get("age") for h in hist if h.get("age")), None)
                 age = ((age_prev + (class_year - hist[0]["season"])) if age_prev
                        else int(row.get("age") or 30))
+                # CHAMPION paths throughout the FA pricing stack: the market
+                # model's Gate-2 verdict holds under champion inputs only
+                # (the ML-path version FAILED its gate — see
+                # fa_market.enriched_signings). Display, rational value,
+                # verdict terciles and market features stay one consistent
+                # engine; /projections/ serves the gate-winning ML paths.
                 path = fm.contract_war_path(hist, side, class_year, 10, age,
                                             curves, war_map, league,
-                                            in_progress=(class_year - 1, frac))
+                                            in_progress=(class_year - 1, frac),
+                                            use_ml=False)
                 if path:
                     s = {**row, "_war_path": path, "_age": age, "class_year": class_year}
                     pred = model.predict(s)

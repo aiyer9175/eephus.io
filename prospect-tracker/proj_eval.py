@@ -67,9 +67,10 @@ def _pinball(q: float, actual: float, pred_q: float) -> float:
 
 def default_predict_fn(hist, side, base, age, curves, war_map, league):
     """The incumbent champion: Marcel year-1 + regressed-rate aging decay
-    with Gate-1 quantile bands (fa_market.contract_war_path)."""
+    with Gate-1 quantile bands. use_ml=False PINS the champion — this
+    baseline must stay the champion even after an ML bundle ships."""
     return fm.contract_war_path(hist, side, base, HORIZONS, age,
-                                curves, war_map, league)
+                                curves, war_map, league, use_ml=False)
 
 
 def run(bases: list[int], persist: bool = True, predict_fn=None,

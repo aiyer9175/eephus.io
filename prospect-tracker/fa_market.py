@@ -130,9 +130,19 @@ def _band_bucket(side: str, pt_y1: float) -> str:
     return f"{side}:{'hi' if pt_y1 >= lo else 'lo'}"
 
 
+def _ml_active() -> bool:
+    cfg = (fa_class.get_config().get("projection") or {}).get("ml") or {}
+    if not cfg.get("enabled"):
+        return False
+    import proj_ml
+    return proj_ml.load() is not None
+
+
 def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
                       age: int | None, curves: dict, war_map: dict,
-                      league: dict, in_progress: tuple[int, float] | None = None) -> dict | None:
+                      league: dict, in_progress: tuple[int, float] | None = None,
+                      use_ml: bool | None = None,
+                      ml_models: dict | None = None) -> dict | None:
     """WAR by contract year: year 1 from the full Marcel engine; later
     years decay the WAR rate and playing time along the SAME aging curves
     (war_rate per-600/250 deltas + pt deltas at the advancing age).
@@ -141,7 +151,16 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
 
     Floor/ceiling variants (war_by_year_p10 / _p90): the Gate-1 empirical
     year-1 residual quantile for the player's reliability bucket shifts the
-    year-1 WAR, and the shifted talent decays along the same curves."""
+    year-1 WAR, and the shifted talent decays along the same curves.
+
+    ML DISPATCH (model-audit Phase 1): when projection.ml is enabled and a
+    shipped proj_lgbm bundle loads, horizons 1-5 (point + bands) come from
+    the quantile heads — which carry NO zero floor, the measured root
+    cause of the survived-only coverage collapse. Horizons 6+ extrapolate
+    the h5 head along the champion's relative decay (the documented seam:
+    nothing beyond h5 is validatable). The champion path is ALWAYS
+    computed (stack features + extrapolation + fallback); ``use_ml=False``
+    pins the champion (gates, eval baselines, feature assembly)."""
     proj = fp.project_player(hist, side, class_year, curves, league, age,
                              in_progress=in_progress)
     if proj is None:
@@ -165,7 +184,48 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
         p90 = _decay_path(war1 + q["q90"], expo, side, decay_role, a, curves)
         out["war_by_year_p10"] = [round(w, 2) for w in p10]
         out["war_by_year_p90"] = [round(w, 2) for w in p90]
-    return out
+    if use_ml is False or (use_ml is None and not _ml_active() and ml_models is None):
+        return out
+    import proj_ml
+    # Explicit ml_models = a POINT-IN-TIME bundle (historical enrichment);
+    # default = the shipped live bundle. The live bundle must never serve
+    # historical winters — it has seen their outcomes.
+    models = ml_models if ml_models is not None else proj_ml.load()
+    feats = proj_ml.build_features(hist, side, class_year, age, curves,
+                                   war_map, league, champ=out)
+    if models is None or feats is None:
+        return out
+    ml = proj_ml.predict_path(models, feats, side)
+    if ml is None:
+        return out
+    H = proj_ml.HORIZONS
+
+    def _extend(series_ml: list[float], champ_series: list[float]) -> list[float]:
+        anchor = champ_series[H - 1]
+        scale = (series_ml[H - 1] / anchor) if anchor > 0.05 else None
+        tail = []
+        for t in range(H, MAX_PATH_YEARS):
+            if scale is not None:
+                tail.append(max(0.0, champ_series[t] * scale))
+            else:
+                # champion anchor ~0: decay the ml h5 value by the champion's
+                # year-over-year ratio chain, floored at 0
+                prev = tail[-1] if tail else max(0.0, series_ml[H - 1])
+                r = (champ_series[t] / champ_series[t - 1]) if champ_series[t - 1] > 0.05 else 0.7
+                tail.append(max(0.0, prev * min(1.0, r)))
+        return series_ml + [round(v, 2) for v in tail]
+
+    med = _extend(ml["war_by_year"], path)
+    out_ml = {**out,
+              "war_by_year": med,
+              "war_total": round(sum(med[:years]), 2),
+              "war_y1": med[0],
+              "war_by_year_p10": _extend(ml["war_by_year_p10"],
+                                         [p * 0.6 for p in path]),
+              "war_by_year_p90": _extend(ml["war_by_year_p90"],
+                                         [p * 1.4 for p in path]),
+              "model": proj_ml.MODEL_VERSION}
+    return out_ml
 
 
 def disc_war(path: dict, years: int) -> float:
@@ -594,6 +654,14 @@ def enriched_signings(first_year: int = 2015, last_year: int = 2026) -> list[dic
     skipped = 0
     for year in range(first_year, last_year + 1):
         curves, war_map = fp.fitted_models(corpus, year - 1)
+        # MEASURED (Phase-1 ship attempt, 2026-06-11): feeding ML paths into
+        # the market model FAILED Gate 2 (guarantee 11.08 vs 10.56, AAV
+        # 3.53 vs its 3.51 baseline) even with point-in-time bundles
+        # (proj_ml.train_cached) — FA signees are SURVIVORS, and the ML
+        # medians carry attrition mass that doesn't apply to players teams
+        # are actively signing. The market stack therefore keeps CHAMPION
+        # paths (its validated Gate-2 inputs); projection surfaces serve
+        # ML, which won their gates. Revisit as features in Phase 2 WS-2f.
         for s in storage.load_fa_signings(year).values():
             if not (s.get("mlb_deal") and s.get("years") and s.get("guarantee_usd")
                     and s.get("mlbam_id")):
@@ -607,7 +675,7 @@ def enriched_signings(first_year: int = 2015, last_year: int = 2026) -> list[dic
             age_prev = next((h.get("age") for h in hist if h.get("age")), None)
             age = (age_prev + (year - hist[0]["season"])) if age_prev else None
             path = contract_war_path(hist, side, year, int(s["years"]), age,
-                                     curves, war_map, league)
+                                     curves, war_map, league, use_ml=False)
             if path is None or age is None:
                 skipped += 1
                 continue
