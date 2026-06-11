@@ -442,6 +442,45 @@ def deferral_coverage_audit(signings: list[dict],
                                  if "unverified" in (e.get("verify_status") or ""))}
 
 
+def enter_probability_v2(pred: dict, fa_type: str | None,
+                         option_price_usd: float | None) -> dict | None:
+    """P(player actually reaches the class) priced from the MARKET MODEL'S
+    OWN band distribution (model-audit Phase 3, WS-2d) — replacing the v1
+    crude-$-gap logistic for the option types where one side compares the
+    option price against the player's market:
+
+      opt_out / player_option  the player walks when the market beats the
+                               price: P(enter) = P(projAAV > price)
+      club_option              the club declines (player enters) when the
+                               market is BELOW the price: P(projAAV < price)
+
+    The distribution is log-normal interpolated from the Gate-2-validated
+    empirical residual bands (mu = log point estimate, sigma from the
+    P10-P90 span / 2z). Mutual + conditional options keep their explicit
+    priors (a band can't see two parties' intentions). DECISION-level
+    validation is blocked on the historical option-decision data lift
+    (registry: fa_penter) — the 2026-27 winter's logged events are the
+    first live shakedown."""
+    if not option_price_usd or not pred:
+        return None
+    point = pred.get("proj_aav_usd")
+    p10 = pred.get("proj_aav_p10_usd")
+    p90 = pred.get("proj_aav_p90_usd")
+    if not point or not p10 or not p90 or p90 <= p10:
+        return None
+    z = 1.2816
+    mu = math.log(point)
+    sigma = max(0.05, (math.log(p90) - math.log(p10)) / (2 * z))
+    # standard normal CDF via erf
+    zscore = (math.log(option_price_usd) - mu) / sigma
+    cdf = 0.5 * (1.0 + math.erf(zscore / math.sqrt(2)))
+    if fa_type in ("opt_out", "player_option"):
+        return {"enter_prob": round(1.0 - cdf, 3), "method": "band_priced_player_side"}
+    if fa_type == "club_option":
+        return {"enter_prob": round(cdf, 3), "method": "band_priced_club_side"}
+    return None
+
+
 def opt_out_scenarios(war_by_year: list[float], opt_out_after: int,
                       class_year: int, dpw_usd: float) -> dict:
     """v1 = SCENARIO LINES (owner decision): the rational value of the full

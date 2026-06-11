@@ -180,7 +180,10 @@
     if (m.status === "locked") return `<span title="Contract expires — locked into the class.">UFA</span>`;
     const pct = m.enterProb != null ? ` &middot; P(enter) ${(m.enterProb * 100).toFixed(0)}%` : "";
     const price = m.optPrice ? ` $${(m.optPrice / 1e6).toFixed(1)}M` : "";
-    return `<span title="Option-pending — class membership is probabilistic until the option resolves. Exercise probability is a documented v1 heuristic.">${esc((m.type || "").replace(/_/g, " "))}${price}${pct}</span>`;
+    const src = m.enterProbSrc && m.enterProbSrc.startsWith("band_priced")
+      ? "Priced from the market model's own P10-P90 band distribution (the option price against the predicted AAV) — v2."
+      : "Documented v1 heuristic (mutual/conditional options keep explicit priors).";
+    return `<span title="Option-pending — class membership is probabilistic until the option resolves. ${src}">${esc((m.type || "").replace(/_/g, " "))}${price}${pct}</span>`;
   }
 
   function playerLink(m) {

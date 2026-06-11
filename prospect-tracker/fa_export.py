@@ -209,6 +209,15 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                 if path:
                     s = {**row, "_war_path": path, "_age": age, "class_year": class_year}
                     pred = model.predict(s)
+                    # WS-2d — option-pending members get P(enter) re-priced
+                    # from the market model's own band distribution (the v1
+                    # $-gap logistic stays for mutual/conditional types and
+                    # as the fallback where bands are missing).
+                    v2 = fm.enter_probability_v2(pred, row.get("fa_type"),
+                                                 row.get("option_price_usd"))
+                    if v2 is not None:
+                        m["enterProb"] = v2["enter_prob"]
+                        m["enterProbSrc"] = v2["method"]
                     yrs = pred["proj_years"]
                     guar = pred["proj_guarantee_usd"]
                     rational = fm.rational_value_usd(path["war_by_year"][:yrs], class_year, dpw)

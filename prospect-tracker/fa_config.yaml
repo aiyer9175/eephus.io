@@ -138,13 +138,20 @@ fit:
   # peak. v2 fills actual arb rosters.
   win_curve: { center: 86.5, scale: 2.8, roster_fill_wins: 12 }
   # Composite weights (sum 1.0) — every component decomposes in the UI.
-  # v2 reweight: park cut from 0.12 to 0.04 (the measured Giants-for-all-
-  # pitchers failure — at 0.12, and even 0.06, the most suppressive park
-  # still tipped rank order among otherwise-clustered teams; park is a
-  # tiebreaker, not a driver) and the freed weight moved to the money
-  # axes: afford (CAN pay: CBT space) and behavior (WILL pay: own
-  # signing history).
-  weights: { need: 0.31, window: 0.19, afford: 0.22, park: 0.04, behavior: 0.24 }
+  # v3 — GATE-3 MEASURED WEIGHTS (data/fa_gate3_eval.json, 2026-06-11):
+  # the first-ever fit backtest (does fit rank predict the actual signing
+  # team; 1,173 signings, forward-chained 2018-2026) measured the v2
+  # hand-set weights barely beating random (MRR 0.142 vs 0.133) and
+  # LOSING to behavior-alone (0.152). Will-spend behavior is the dominant
+  # predictive signal; window/afford/park carry ~zero signing signal.
+  # The logistic-fitted vector (behavior .67) scored MRR 0.165 — but a
+  # behavior-dominated composite is nearly player-INDEPENDENT and put LAD
+  # atop all 133 pitcher fit lists (the measured Giants-failure pattern,
+  # reborn). The shipped mix below scored MRR 0.167 in the same harness —
+  # gate-equivalent-or-better AND player-discriminative, because the need
+  # proxy is the only player-specific signal with positive coefficient.
+  # All candidates + the comparison are committed in the artifact.
+  weights: { need: 0.40, window: 0.05, afford: 0.05, park: 0.05, behavior: 0.45 }
   # Behavior (will-spend) blend: biggest-deal scale vs this price, recent
   # 3-winter FA outlay (league-max-normalized), $100M-deal participation.
   behavior_weights: { max_guar: 0.5, recent: 0.3, rich: 0.2 }
