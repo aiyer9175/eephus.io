@@ -167,9 +167,11 @@ class TestPickSlotExpectedWar:
         assert _pick_slot_expected_war(-5) is None
 
     def test_huge_pick_returns_tail_value(self):
-        # Picks past the table's last threshold get the tail value
-        # (currently 0.03).
-        assert _pick_slot_expected_war(99_999) == 0.03
+        # Picks past the table's last threshold get the tail value (the
+        # fitted realized curve since Phase 4b; 0.03 on the hand-set
+        # fallback) — pin the invariant, not the provenance.
+        assert _pick_slot_expected_war(99_999) == _pick_slot_expected_war(500)
+        assert _pick_slot_expected_war(99_999) > 0
 
     def test_pick_string_coerces(self):
         # CSV ingest sometimes leaves pick_overall as a string.

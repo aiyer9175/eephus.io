@@ -2060,6 +2060,34 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                      _ab["ship"], _ab["live_weights"])
         except Exception:
             log.exception("consensus weight A/B failed — continuing")
+        # ETA backtest rerun (Phase 4b WS-8 — cheap, cache-only StatsAPI
+        # reads). Rescores the live v39 bases as new debuts land; the
+        # frozen v38 comparator keeps the before/after honest forever.
+        try:
+            from eta_backtest import run as _eta_bt
+            _er = _eta_bt()
+            log.info("eta_backtest: champion MAE %.3f within-1y %.3f (n=%d)",
+                     _er["champion_heuristic"]["mae"],
+                     _er["champion_heuristic"]["within_1y"],
+                     _er["champion_heuristic"]["n"])
+        except Exception:
+            log.exception("eta_backtest failed — continuing")
+        # Editorial forward-validation (Phase 5 WS-10). Scores matured
+        # 30/60-day flag cohorts vs matched controls; WITHHOLDS the
+        # artifact until the first cohort matures (registry honesty —
+        # an empty eval would let spotlights masquerade as measured).
+        # NB once it first writes data/editorial_eval.json, the standing
+        # rule test goes red until the owner registers the verdict —
+        # that forcing function is the design.
+        try:
+            from editorial_eval import run as _ed_eval
+            _ed = _ed_eval()
+            log.info("editorial_eval: %s matured, %s pending, written=%s",
+                     _ed.get("flags_matured", _ed.get("matured", 0)),
+                     _ed.get("flags_pending", _ed.get("pending", 0)),
+                     _ed.get("written"))
+        except Exception:
+            log.exception("editorial_eval failed — continuing")
         # Model registry freshness pass (data/model_registry.json) — restamps
         # artifact ages + re-validates references. Verdicts are hand-committed
         # with their evals; this only keeps the accountability ledger honest

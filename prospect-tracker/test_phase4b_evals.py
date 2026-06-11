@@ -1,0 +1,206 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
+"""Phase 4b / Phase 5 ship pins (model-audit): every shipped constant
+must stay in sync with the committed eval artifact that justified it,
+and every committed loss must stay committed. The pattern from
+test_fa_fit_gate (weights <-> config sync, test-enforced)."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).parent
+
+
+def _load(name: str) -> dict:
+    p = ROOT / "data" / name
+    if not p.exists():
+        pytest.skip(f"{name} not generated on this machine")
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+# ---------------------------------------------------------------------------
+# WS-8: ETA — v39 KM bases shipped from eta_eval.json
+# ---------------------------------------------------------------------------
+
+def test_eta_bases_match_km_artifact():
+    """eta.BASE_YEARS == the artifact's full-window KM table, with DSL
+    retained hand-set (curve never crosses 50%) and MLB pinned 0."""
+    from eta import BASE_YEARS
+    art = _load("eta_eval.json")
+    km = art["km_base_years_full_window"]
+    for lvl, val in km.items():
+        assert BASE_YEARS[lvl] == pytest.approx(val), \
+            f"BASE_YEARS[{lvl}]={BASE_YEARS[lvl]} != shipped KM {val}"
+    assert BASE_YEARS["DSL"] == 7.5      # cure fraction — hand-set survives
+    assert BASE_YEARS["MLB"] == 0.0
+
+
+def test_eta_artifact_records_the_ship():
+    art = _load("eta_eval.json")
+    sd = art["ship_decision"]
+    assert sd["decision"].startswith("SHIP")
+    m = sd["measured_2026_06_11"]
+    assert m["km_recalibrated"]["mae"] < m["v38_incumbent"]["mae"]
+    assert m["km_recalibrated"]["within_1y"] > m["v38_incumbent"]["within_1y"]
+    # the disclosed trade is recorded, not hidden
+    assert m["overdue"]["km"] >= m["overdue"]["v38"]
+    # censoring accounting present
+    assert art["accounting"]["censored_active"] > 0
+    assert art["accounting"]["washed_out"] > 0
+
+
+def test_eta_estimate_accepts_base_override():
+    """The backtest scores candidate tables through the live code path."""
+    from eta import estimate_eta
+    a = estimate_eta("AA", 21.0, False, 50.0, None)
+    b = estimate_eta("AA", 21.0, False, 50.0, None,
+                     base_years={"AA": 6.0})
+    assert b.eta_year > a.eta_year
+
+
+# ---------------------------------------------------------------------------
+# WS-8: draft slot curve — fitted first-6 serves the live lookup
+# ---------------------------------------------------------------------------
+
+def test_slot_lookup_serves_fitted_first6():
+    import storage
+    art = _load("draft_slot_curve.json")
+    steps = [(int(b), w) for b, w in art["first6_step_curve"] if w is not None]
+    assert steps, "no fitted steps committed"
+    storage._FITTED_SLOT_LOADED = False           # force re-read of the artifact
+    for bound, war in steps[:6]:
+        assert storage._pick_slot_expected_war(bound) == pytest.approx(war)
+    # monotone non-increasing by construction
+    vals = [w for _, w in steps]
+    assert all(a >= b for a, b in zip(vals, vals[1:]))
+
+
+def test_slot_artifact_documents_confounds():
+    art = _load("draft_slot_curve.json")
+    assert "holdout_confounds" in art["conventions"]
+    assert art["accounting"]["unsigned_excluded"] > 0
+    assert art["ship_decision"]["decision"].startswith("SHIP")
+
+
+def test_qo_tax_priced_on_realized_curve():
+    import fa_market as fm
+    _load("draft_slot_curve.json")
+    tax = fm.qo_tax_usd("cbt_payor", "2025-12-15")
+    assert tax["method"] == "realized_slot_war_service_priced_v2"
+    assert tax["total_usd"] > 5_000_000
+    other = fm.qo_tax_usd("other", "2025-12-15")
+    assert other["total_usd"] < tax["total_usd"]
+
+
+# ---------------------------------------------------------------------------
+# WS-8: overseas factors — shipped values == artifact shipped values
+# ---------------------------------------------------------------------------
+
+def test_overseas_factors_match_refit_artifact():
+    from overseas_export import LEAGUE_CONTEXT
+    art = _load("overseas_translation_eval.json")
+    for lg in ("NPB", "KBO"):
+        f = art["factors"][lg]
+        # constants ship at 2dp; the artifact records 3dp
+        assert LEAGUE_CONTEXT[lg]["pitcher_era_factor"] == pytest.approx(
+            f["shipped_era_factor"], abs=0.005), lg
+        assert LEAGUE_CONTEXT[lg]["hitter_k_pct_delta"] == pytest.approx(
+            f["shipped_k_pct_delta"], abs=0.005), lg
+        # the wRC+ factor explicitly stays prior (lift documented)
+        assert LEAGUE_CONTEXT[lg]["hitter_wrc_factor"] == pytest.approx(
+            f["incumbent_wrc_factor_retained"]), lg
+    # exclusions are counted, never silently dropped
+    acct = art["accounting"]
+    assert acct["listed"] == acct["resolved"] + acct["no_register_page"] \
+        + acct["no_foreign_line"] + acct["no_mlb_line"]
+
+
+# ---------------------------------------------------------------------------
+# WS-8: farm grade reduced analog
+# ---------------------------------------------------------------------------
+
+def test_farm_grade_analog_beats_count_baseline():
+    art = _load("farm_grade_eval.json")
+    rho = art["mean_spearman"]
+    assert rho["sum_surplus_mm"] > rho["count"], \
+        "financial core no longer beats the count baseline — re-verdict required"
+    assert art["verdict"]["financial_core_beats_count"] is True
+    # 30 orgs every vintage (alias/junk org codes normalized)
+    for v in art["per_vintage"].values():
+        assert v["n_orgs"] == 30
+
+
+# ---------------------------------------------------------------------------
+# WS-8: SC+ — weak r published, not hidden
+# ---------------------------------------------------------------------------
+
+def test_statcast_plus_eval_publishes_r():
+    art = _load("statcast_plus_eval.json")
+    assert art["hitters"]["n_ops"] >= 30
+    assert art["pitchers"]["n_era"] >= 30
+    assert art["hitters"]["r_sc_vs_mlb_ops"] is not None
+    assert "WEAK" in art["verdict"]["summary"]
+
+
+# ---------------------------------------------------------------------------
+# WS-7: the challenger LOST and the loss is committed
+# ---------------------------------------------------------------------------
+
+def test_prospect_path_loss_is_committed():
+    art = _load("prospect_path_eval.json")
+    assert art["ship_decision"]["challenger_wins"] is False
+    base = art["baseline_pooled_oos"]
+    chall = art["challenger_pooled_oos"]
+    assert base["n"] == chall["n"] and base["n"] > 300
+    assert base["mae"] <= chall["mae"]
+    assert (base["spearman"] or 0) >= (chall["spearman"] or 0)
+
+
+def test_prospect_path_not_dispatched():
+    """The loser must NOT be wired into the live export."""
+    import proj_export
+    src = (ROOT / "proj_export.py").read_text(encoding="utf-8")
+    assert "prospect_path" not in src
+    assert not hasattr(proj_export, "prospect_path")
+
+
+# ---------------------------------------------------------------------------
+# Phase 5 WS-10: editorial eval honesty guard
+# ---------------------------------------------------------------------------
+
+def test_editorial_artifact_withheld_until_matured():
+    """While spotlights_movement is `unvalidated` (no artifact allowed),
+    data/editorial_eval.json must not exist; once it appears, the
+    standing-rule test forces the registry update."""
+    import model_registry as mr
+    row = next(m for m in mr.load()["models"]
+               if m["model_id"] == "spotlights_movement")
+    if row["verdict"] == "unvalidated":
+        assert not (ROOT / "data" / "editorial_eval.json").exists(), \
+            "editorial_eval.json exists but spotlights_movement claims unvalidated"
+
+
+def test_wilson_interval_sane():
+    from editorial_eval import _wilson
+    p, lo, hi = _wilson(8, 10)
+    assert 0 < lo < p < hi < 1
+    assert _wilson(0, 0) == (0.0, 0.0, 1.0)
+
+
+# ---------------------------------------------------------------------------
+# Phase 5 WS-11: the accountability surface renders the registry
+# ---------------------------------------------------------------------------
+
+def test_glossary_renders_model_registry():
+    src = (ROOT / "assets" / "glossary.js").read_text(encoding="utf-8")
+    assert "model_registry.json" in src
+    assert "_methRegistryHTML" in src
+    # unvalidated rows render too — that's the accountability point
+    assert "unvalidated" in src

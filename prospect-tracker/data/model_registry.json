@@ -114,13 +114,16 @@
   {
    "model_id": "fa_qo_pick_tax",
    "surface": "/fa/ QO tax on player cards",
-   "predicts": "dollar cost of forfeited picks via platform FV-at-slot curve",
-   "champion": "platform_fv_at_slot_v1",
-   "baseline": "none yet",
-   "metric": "none yet",
-   "eval_artifact": null,
-   "verdict": "unvalidated",
-   "notes": "depends on the unvalidated draft slot curve — re-priced by Phase 4 WS-8 slot refit QO ACCEPTANCE model (WS-2e) similarly deferred: qo_history has acceptances + offered counts but not per-player offered rosters — tier conditioning needs that lift; the constant base rate (~10%) is the only honest model today."
+   "predicts": "dollar cost of forfeited picks",
+   "champion": "realized_slot_war_service_priced_v2 (fitted first-6 WAR at the slot through _service_path_surplus_usd, draft->debut eta-lagged 3y)",
+   "baseline": "platform_fv_at_slot_v1 (retained as artifact-absent fallback)",
+   "metric": "inherits the validated slot curve (data/draft_slot_curve.json)",
+   "eval_artifact": "data/draft_slot_curve.json",
+   "verdict": "provisional",
+   "notes": "Phase 4b WS-8 (2026-06-11): re-priced on the REALIZED slot curve — replaces the thin platform FV-at-slot median chain. DISCLOSED: pricing the expected path through the convex tier curve is a LOWER BOUND on expected value (Jensen; the rare-hit mass prices above linear) — consistent across slots. QO ACCEPTANCE model (WS-2e) still deferred: qo_history lacks per-player offered rosters; constant base rate remains the only honest acceptance model.",
+   "last_checked": "2026-06-11",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "mlb_projections_vets",
@@ -140,12 +143,15 @@
    "model_id": "mlb_projections_prospects",
    "surface": "/projections/ prospects",
    "predicts": "post-ETA WAR paths from P(bucket|FV) x calibrated trajectories",
-   "champion": "fv_outcome_v1",
-   "baseline": "none yet — FV-only vs MiLB-stats challenger is Phase 4 WS-7",
-   "metric": "none yet (components validated separately: anchors, buckets)",
-   "eval_artifact": null,
-   "verdict": "unvalidated",
-   "notes": "paths never backtested as paths; bucket machinery itself is empirically fit"
+   "champion": "fv_outcome_v1 (RETAINED — beat the WS-7 MiLB-stats challenger)",
+   "baseline": "MiLB-stats translation ridge (prospect_path.py): level-relative K/BB/ISO-or-ERA + age + level + FV — LOST, committed",
+   "metric": "first-3y WAR MAE / Spearman / calibration, forward-chained debut cohorts 2019-21 (pre-debut grade vintages)",
+   "eval_artifact": "data/prospect_path_eval.json",
+   "verdict": "provisional",
+   "notes": "Phase 4b WS-7 (2026-06-11): the recorded fork is ANSWERED — adding level-translated MiLB rates on top of consensus FV does NOT improve first-3y WAR prediction (challenger MAE 1.679 / rho .122 vs FV-only 1.641 / .202 pooled OOS; loses 2 of 3 forward folds). The scouting consensus already prices the stat line. FIRST path-level measurement of the live model committed: MAE 1.641, rho .202, calibration slope .751 / bias +0.245 (mild over-projection at the mean — a future recalibration candidate, NOT corrected this phase). Statcast features excluded from the challenger by design: AAA tracking starts 2023, the 2017-21 training cohorts have none.",
+   "last_checked": "2026-06-11",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "prospect_surplus",
@@ -221,56 +227,71 @@
    "model_id": "eta",
    "surface": "PROSPX ETA on every prospect",
    "predicts": "years to MLB debut",
-   "champion": "heuristic v38 (level base + age/perf/FV adjustments)",
-   "baseline": "none yet — naive level->years table",
-   "metric": "none yet",
-   "eval_artifact": null,
-   "verdict": "unvalidated",
-   "notes": "ZERO validation vs actual debut dates despite debut data existing; Phase 4 WS-8 backtest"
+   "champion": "heuristic v39 (Kaplan-Meier recalibrated level bases + age/perf/FV adjustments)",
+   "baseline": "naive level->years table + the v38 hand-set bases (both measured)",
+   "metric": "debut-year MAE / within-1y, vintages 2018-2023 (n=4,111 debuted; censoring + washout accounted)",
+   "eval_artifact": "data/eta_eval.json",
+   "verdict": "validated",
+   "notes": "Phase 4b WS-8 (2026-06-11): FIRST scoring vs actual debuts. v38 hand-set bases ran ~1.5y LATE on debuted players; bases recalibrated to censoring-aware KM medians (washed-out players never leave the risk set — NOT survivor medians). Forward-chained on identical rows: MAE 1.448 vs 1.993, within-1y .571 vs .405. DISCLOSED trade: overdue censored-actives 803->904 of 2,345. DSL base stays hand-set (debut curve never crosses 50%). Live signals (SC+/health/org-tendency nudges) not reconstructable per vintage — unscored. Reruns monthly. LEVEL-NORM PARK ADJUSTMENT DEFERRED (documented): needs full-season AAA/AA ball-by-ball exports that are not on disk; export_aaa_ball_by_ball.py exists, the season-scale fetch is the lift.",
+   "last_checked": "2026-06-11",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "farm_grades",
    "surface": "PROSPX farm systems + detail pages",
    "predicts": "system quality grade (A-F, financial-dominant tree)",
-   "champion": "farm_tree_v40",
-   "baseline": "none yet — prospect-count baseline",
-   "metric": "none yet",
-   "eval_artifact": null,
-   "verdict": "unvalidated",
-   "notes": "never validated against subsequent system production; Phase 4 WS-8"
+   "champion": "farm_tree_v40 (financial core validated via reduced analog)",
+   "baseline": "prospect-count ranking (measured)",
+   "metric": "org-rank Spearman vs realized graduate bWAR Y..Y+3, vintages 2018-2022",
+   "eval_artifact": "data/farm_grade_eval.json",
+   "verdict": "provisional",
+   "notes": "Phase 4b WS-8 (2026-06-11): REDUCED ANALOG (grades were never snapshotted — the Gate-3 pattern): ranking orgs by vintage surplus mass predicts realized graduate WAR at mean Spearman .508 vs count baseline .240 (wins all 5 vintages). HONEST NOTE: simple FV50+ top-end depth nearly ties (.495) — the convex surplus weighting, not the rest of the tree, carries the signal. The literal v40 letter remains unvalidated as a letter; verdict stays provisional until grades accumulate their own vintage trail.",
+   "last_checked": "2026-06-11",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "draft_slot_curve",
    "surface": "farm finance leaves + QO pick tax",
-   "predicts": "expected career WAR by draft pick",
-   "champion": "hardcoded curve",
-   "baseline": "none yet — realized WAR by pick 2005-2018",
-   "metric": "none yet",
-   "eval_artifact": null,
-   "verdict": "unvalidated",
-   "notes": "never backtested; Phase 4 WS-8 monotone-constrained refit"
+   "predicts": "expected first-six-MLB-season bWAR by draft pick (career curve kept as reference)",
+   "champion": "realized_isotonic_v1 (decreasing PAVA on StatsAPI drafts 2005-14 x war_daily; signed picks; never-MLB = 0)",
+   "baseline": "the hand-set step table (now the artifact-absent fallback)",
+   "metric": "realized per-bucket bWAR on resolved cohorts; monotonicity by construction",
+   "eval_artifact": "data/draft_slot_curve.json",
+   "verdict": "validated",
+   "notes": "Phase 4b WS-8 (2026-06-11): the hand-set table was never realized-anchored and UNDERSHOOTS resolved 2005-14 career means ~3x at every slot (pick 1: 28.4 realized vs 9.0). Live lookup = fitted FIRST-6 curve (matches the grad career-to-date comparison window + the QO control-window basis). 2015-18 holdout disclosed as censoring/COVID-confounded diagnostic (windows count from debut), not the ship criterion. Unsigned picks excluded via re-draft detection (404 of 7,000).",
+   "last_checked": "2026-06-11",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "overseas_translation",
    "surface": "Overseas tab MLBe lines",
    "predicts": "MLB-equivalent rates for NPB/KBO/CPBL stats",
-   "champion": "hardcoded factors",
-   "baseline": "none yet — realized MLB transitions 2015-2025",
-   "metric": "none yet",
-   "eval_artifact": null,
-   "verdict": "unvalidated",
-   "notes": "factors frozen, never refit; Phase 4 WS-8 (CPBL stays prior, n too small)"
+   "champion": "phase4b_refit_v2: NPB ERA factor 1.54 (measured 1.696, n=15, shrunk k=8 from 1.25), KBO ERA 1.275 (measured 1.215, n=6), NPB K% delta +0.043; wRC+/velo/CPBL/CUBA/NPBF priors RETAINED",
+   "baseline": "the hand-set Longenhagen-primer factors (measured against the cohort)",
+   "metric": "IP/PA-weighted transition ratios, curated 2015-2026 cohort (28/34 resolved, B-Ref register x StatsAPI)",
+   "eval_artifact": "data/overseas_translation_eval.json",
+   "verdict": "provisional",
+   "notes": "Phase 4b WS-8 (2026-06-11): the NPB pitcher haircut was badly optimistic (real ERA ratio 1.696 vs the hand-set 1.25); KBO was slightly harsh. NOT SHIPPED (documented lifts): hitter wRC+ factor (needs per-season foreign league offense context — raw OPS ratios 0.802 NPB / 0.819 KBO reported as analogs), fb_velo_delta (no historical velo source). Exclusions counted in the artifact; the transition ledger is owner-extendable.",
+   "last_checked": "2026-06-11",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "statcast_plus",
    "surface": "PROSPX SC+ pills + leaderboards",
    "predicts": "pool-relative contact/zone composite (descriptive, but consumed as signal)",
    "champion": "sc_plus_v2 (post arkmetric-audit fixes)",
-   "baseline": "none yet — forward r vs MLB outcomes",
-   "metric": "none yet (known: final-MiLB ISO+ -> MLB ISO r=0.24)",
-   "eval_artifact": null,
-   "verdict": "unvalidated",
-   "notes": "29% coverage; Phase 4 WS-8 publishes the honest forward correlation"
+   "baseline": "n/a — the measurement IS the verdict (publish-the-r rule)",
+   "metric": "final-AAA contact analog (4 of 6 components, Savant minors aggregates 2023-25) vs first-MLB outcomes, debut cohorts 2024-26",
+   "eval_artifact": "data/statcast_plus_eval.json",
+   "verdict": "provisional",
+   "notes": "Phase 4b WS-8 (2026-06-11): WEAK forward signal, published as required — r ~ .12-.17 vs first-MLB OPS/ERA, ~0 vs 2y bWAR for hitters (n~50/side per outcome). Consistent with the ISO+ r=.24 prior. SC+ stays descriptive; downstream consumers (breakout gate, ETA nudge, spotlight boost) must treat it as a tiebreaker. Zone-discipline half of the composite has no historical source (gap documented); the literal composite's own forward trail starts with the 2026 per-season rows.",
+   "last_checked": "2026-06-11",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "stuff_plus_external",
@@ -281,7 +302,7 @@
    "metric": "none locally",
    "eval_artifact": null,
    "verdict": "unvalidated",
-   "notes": "external model consumed as-is; Phase 4 WS-8 local validation on graduates"
+   "notes": "Phase 4b WS-8 (2026-06-11): local validation BLOCKED on data — tjStuff+ consumes per-pitch kinematics and no historical archive exists for prospects' pre-debut pitches (Savant minors tracking is AAA-2023+ aggregates, not per-pitch history per graduate). The lift resolves with time: per-season Stf+/statcast rows began persisting in 2026; the first scoreable cohort arrives when those prospects debut. Until then the external model stays consumed-as-is and labeled so."
   },
   {
    "model_id": "spotlights_movement",
@@ -292,7 +313,7 @@
    "metric": "none yet (flag logging started Phase 0 WS-0c)",
    "eval_artifact": null,
    "verdict": "unvalidated",
-   "notes": "forward-validation clock started 2026-06; verdicts land Phase 5 after 2 matured cohorts"
+   "notes": "Phase 5 WS-10 (2026-06-11): scoring machinery SHIPPED (editorial_eval.py — 30/60-day windows, config-defined hits, fv-band matched controls, Wilson CIs, kill rule = fails-to-clear-control after 2 matured cohorts) and wired into run_monthly. The artifact (data/editorial_eval.json) is WITHHELD until the first cohort matures (~2026-07) — an empty artifact would let this row masquerade as measured. Verdict moves on first matured scoring."
   },
   {
    "model_id": "org_tendencies",
