@@ -1,5 +1,5 @@
 /* =============================================================================
-   eephus.io — account + forum layer styles (Parts 1-7)
+   eephus.io - account + forum layer styles (Parts 1-7)
    Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
    -----------------------------------------------------------------------------
    Loaded AFTER assets/site.css on both surfaces (editorial pages + the PROSPX
@@ -8,7 +8,7 @@
    so it can't touch existing chrome.
 
    MOTIFS (verbatim with the rest of the site):
-   • Sharp corners everywhere — inherits site.css `*{border-radius:0!important}`.
+   • Sharp corners everywhere - inherits site.css `*{border-radius:0!important}`.
      The ONE sanctioned exception is the circular account avatar (.eph-avatar),
      which beats the universal rule by class-level specificity + !important.
    • On-type: body copy in --font-retro; counts/scores/metrics in
@@ -56,7 +56,7 @@
 .eph-nav-account .eph-acct-btn:focus-visible {
   background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--text-tertiary);
 }
-/* Iridescent hairline accent — matches .eephus-nav-ctrl so SIGN IN reads as part
+/* Iridescent hairline accent - matches .eephus-nav-ctrl so SIGN IN reads as part
    of the same control cluster as Watchlist / the theme toggle. */
 .eph-nav-account .eph-acct-btn::after {
   content: ""; position: absolute; left: -1px; right: -1px; bottom: -1px; height: 2px;
@@ -112,7 +112,7 @@
   position: relative;
 }
 .eph-modal.wide { max-width: 560px; }
-.eph-modal::before {  /* iridescent top rule — the masthead signature */
+.eph-modal::before { /* iridescent top rule - the masthead signature */
   content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--iridescent);
 }
 .eph-modal-head {
@@ -234,7 +234,7 @@
   margin-top: 26px; border-top: 3px double var(--border); padding-top: 4px;
 }
 /* When mounted inside the Discussion detail tab, the tab itself provides the
-   section boundary — drop the redundant top rule/margin so it sits flush. */
+   section boundary - drop the redundant top rule/margin so it sits flush. */
 .eph-forum.in-tab { margin-top: 0; border-top: 0; padding-top: 0; }
 .eph-forum .eph-forum-head {
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
@@ -389,7 +389,7 @@
 .eph-toast.err { border-left-color: var(--accent-red); }
 .eph-toast.ok { border-left-color: var(--accent-green); }
 
-/* homepage sidebar account slot — full-width, left-aligned (vs. the inline nav) */
+/* homepage sidebar account slot - full-width, left-aligned (vs. the inline nav) */
 .home-sidebar .sb-account { margin-bottom: 16px; }
 .home-sidebar .eph-nav-account { width: 100%; display: block; }
 .home-sidebar .eph-nav-account .eph-acct-btn { width: 100%; justify-content: flex-start; }
@@ -409,7 +409,7 @@
 .eph-article-forum { display: block; max-width: 720px; margin: 34px auto 0; }
 .eph-forums-index-page .eph-forum, #eph-forums-index { margin-top: 0; }
 
-/* ── Part 5 — notifications (bell badge + inbox) ──────────────────────────── */
+/* ── Part 5 - notifications (bell badge + inbox) ──────────────────────────── */
 .eph-nav-account .eph-bell { position: relative; padding: 0 10px; }
 .eph-nav-account .eph-bell .eph-bell-count { position: absolute; top: 3px; right: 1px; transform: translate(35%, -35%); }
 .eph-notif-list { display: flex; flex-direction: column; }
@@ -422,7 +422,7 @@
 .eph-notif-txt { flex: 1; min-width: 0; font-family: var(--font-retro); font-size: 13px; color: var(--text-primary); }
 .eph-notif-ts { font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-tertiary); flex: none; }
 
-/* ── Part 6 — moderation view ─────────────────────────────────────────────── */
+/* ── Part 6 - moderation view ─────────────────────────────────────────────── */
 .eph-mod-sec { font-family: var(--font-retro-mono); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary); border-bottom: 2px solid var(--text-primary); padding: 10px 0 5px; margin: 8px 0 10px; }
 .eph-report { border: 1px solid var(--border); background: var(--bg-secondary); padding: 10px 12px; margin-bottom: 10px; }
 .eph-report-head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
@@ -431,7 +431,7 @@
 .eph-report-by { font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-tertiary); margin: 5px 0 8px; }
 .eph-edit { margin-top: 8px; }
 
-/* ── Part 7 — polls (embedded in comments) ────────────────────────────────── */
+/* ── Part 7 - polls (embedded in comments) ────────────────────────────────── */
 .eph-poll { border: 1px solid var(--border); background: var(--bg-secondary); padding: 11px 12px; margin: 9px 0; max-width: 420px; }
 .eph-poll-q { font-family: var(--font-retro-mono); font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 9px; }
 .eph-poll-opt { position: relative; display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; cursor: pointer; overflow: hidden; font-family: var(--font-retro); font-size: 13px; color: var(--text-primary); background: var(--bg-primary); border: 1px solid var(--border); padding: 8px 10px; margin-bottom: 6px; }

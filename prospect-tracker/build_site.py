@@ -3,7 +3,7 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 """
-build_site.py — static-site generator for the editorial pages of eephus.io.
+build_site.py - static-site generator for the editorial pages of eephus.io.
 
 Reads `content/` and writes the static pages that share the PROSPX theme
 (`assets/site.css`) + the site-wide nav:
@@ -41,7 +41,7 @@ CONTENT = ROOT / "content"
 SITE_ORIGIN = "https://eephus.io"   # absolute base for canonical + social-card (og/twitter) URLs
 
 # Cache-bust assets/site.css by content hash so browsers/CDNs always pull the
-# latest stylesheet after a rebuild — otherwise a stale cached CSS shows the old
+# latest stylesheet after a rebuild - otherwise a stale cached CSS shows the old
 # layout (frozen ticker, unstyled callout, etc.) even though the files updated.
 def _asset_ver(rel: str) -> str:
     try:
@@ -61,7 +61,7 @@ _PROJ_VER = _asset_ver("assets/projections.js")
 # eephus.io account layer (Parts 1-7), injected before </body> on every editorial
 # page. OPTIONAL by design: assets/eephus-config.js is git-ignored and absent on
 # the public tree, so its <script> 404s harmlessly and window.EEPHUS_SUPABASE stays
-# undefined — eephus-account.js then runs fully inert (no Supabase SDK fetch, no
+# undefined - eephus-account.js then runs fully inert (no Supabase SDK fetch, no
 # behavior change) and the page renders exactly as today. When config IS present
 # the module self-injects the SDK and lights up the account UI.
 ACCOUNT_SCRIPTS = (
@@ -74,14 +74,14 @@ ACCOUNT_SCRIPTS = (
     # Shared glossary runtime: data loader + ⌘K palette + term tooltips.
     f'<script src="/assets/eephus-gl.js?v={_GL_VER}" defer></script>'
 )
-# Account/forum stylesheet — linked in <head> after site.css on every editorial
+# Account/forum stylesheet - linked in <head> after site.css on every editorial
 # page (scoped under .eph-*; the circular avatar is the one sanctioned curve).
 ACCOUNT_CSS_LINK = f'<link rel="stylesheet" href="/assets/eephus-account.css?v={_ACCT_CSS_VER}">'
 
-# Unified prospect-photo resolution — mirrors PROSPX's headshotURL(): consult the
+# Unified prospect-photo resolution - mirrors PROSPX's headshotURL(): consult the
 # resolved context map (data/photo_ctx.json, built by headshots.py) and use the
 # REAL MiLB/MLB photo for resolved ids ('67'/'milb'); fall back to the generic
-# silhouette overlay (always 200 — never a broken image) when unresolved/'none'.
+# silhouette overlay (always 200 - never a broken image) when unresolved/'none'.
 # Single source of truth so the homepage shows the same coverage as PROSPX,
 # instead of the old hardcoded '67' that silhouetted every milb-only prospect.
 def _load_photo_ctx() -> dict:
@@ -117,7 +117,7 @@ NAV_ITEMS = [
     ("team",     "Development Team",  "/team/"),
 ]
 
-# PROSPX sub-sections — deep links into the app (section = `tab` query param in
+# PROSPX sub-sections - deep links into the app (section = `tab` query param in
 # the hash; `active` is the default so it has no param).
 PROSPX_SUBNAV = [
     ("Prospects",     "/prospx/"),
@@ -158,26 +158,23 @@ THEME_BTN = (
 # --------------------------------------------------------------------------- #
 EEPHUS_VERSION = "β v1.0"
 BETA_BADGE = (
-    f'<span class="eephus-beta" title="eephus.io is in beta — version 1.0">'
+    f'<span class="eephus-beta" title="eephus.io is in beta - version 1.0">'
     f'{html.escape(EEPHUS_VERSION)}</span>'
 )
 
-# Module lifecycle stages — α = newly launched (numbers may still shift),
-# β = established but in beta. Rendered as a superscript marker next to
-# module names in navs and as a bordered chip on module mastheads.
+# Module lifecycle stages - α = newly launched (numbers may still shift),
+# β = established but in beta. Rendered ONLY as a bordered chip on each
+# module's own masthead (Open Beta polish: the nav links and the homepage
+# sidebar carry no sigils; version is noted where you land, not where you
+# browse). The homepage hero keeps the site-wide chip (eephus.io is in beta).
 MODULE_STAGE = {
     "prospx": ("β", "PROSPX is in beta"),
-    "fa":     ("α", "MLB Free Agency is in alpha — newly launched; numbers may shift as the model matures"),
-    "projections": ("α", "MLB Projections is in alpha — newly launched; numbers may shift as the model matures"),
+    "fa": ("α", "MLB Free Agency is in alpha - newly launched; numbers may shift as the model matures"),
+    "projections": ("α", "MLB Projections is in alpha - newly launched; numbers may shift as the model matures"),
+    "forums": ("α", "Forums is in alpha - newly launched"),
 }
 
-def _stage_sup(key: str) -> str:
-    st = MODULE_STAGE.get(key)
-    if not st:
-        return ""
-    return f'<sup class="mod-stage" title="{html.escape(st[1])}">{st[0]}</sup>'
-
-# Modern X (Twitter) glyph — module-level so social links on every surface share
+# Modern X (Twitter) glyph - module-level so social links on every surface share
 # one mark. (build_team keeps its own local copy for the per-member chips.)
 _X_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 '
           '8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 '
@@ -191,7 +188,7 @@ def _x_link(handle: str, cls: str = "") -> str:
             f'rel="noopener noreferrer" aria-label="Follow @{html.escape(h)} on X">'
             f'{_X_SVG}<span class="eph-xlink-handle">@{html.escape(h)}</span></a>')
 
-# eephus.io merged brand mark — the "signature pitch" arc is now PART of the
+# eephus.io merged brand mark - the "signature pitch" arc is now PART of the
 # lettering: the lob launches off the leading "e", crests with the ball at
 # apex, and lands on the "o". Everything is em-scaled inside the nameplate,
 # so the same mark renders at masthead (clamp 2.4-4rem) and sidebar (20px)
@@ -201,7 +198,7 @@ def _x_link(handle: str, cls: str = "") -> str:
 # never squash, punches through via .eephus-logo-ball (theme-aware bg fill),
 # and the seam rides currentColor.
 def eephus_merged_wordmark(uid: str, tag: str = "h1") -> str:
-    grad = f"eephus-arc-{uid}"   # per-instance gradient id — two marks per page
+    grad = f"eephus-arc-{uid}" # per-instance gradient id - two marks per page
     arc = (
         f'<svg class="ew-arc" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">'
         f'<defs><linearGradient id="{grad}" x1="0" y1="0" x2="1" y2="0">'
@@ -219,7 +216,7 @@ def eephus_merged_wordmark(uid: str, tag: str = "h1") -> str:
             f'eephus<span class="dot">.io</span></{tag}>')
 
 def prospx_ball_logo(uid: str, px: int = 16) -> str:
-    """The PROSPX baseball badge — a self-contained copy of the app
+    """The PROSPX baseball badge - a self-contained copy of the app
     masthead's .h1-logo SVG (cream ball, gradient seams, P/X monogram) for
     sidebar/nav lockups. Fills ride the theme tokens via inline style; the
     seam gradient keeps the masthead's literal stops (SVG gradients can't
@@ -244,7 +241,7 @@ def prospx_ball_logo(uid: str, px: int = 16) -> str:
 
 def eephus_logo_lockup(badge: bool = True) -> str:
     """Homepage hero lockup: the merged arc-wordmark with the β tag and the
-    @eephus_io chip stacked beside it (β on top, X under — the X chip carries
+    @eephus_io chip stacked beside it (β on top, X under - the X chip carries
     the link accent so it reads clickable)."""
     chips = (
         f'<div class="eephus-logo-chips">{BETA_BADGE}'
@@ -305,7 +302,7 @@ def render_markdown(text: str) -> str:
     return body
 
 # --------------------------------------------------------------------------- #
-# Prospect deep-linking — turn the first mention of a known player's name into a
+# Prospect deep-linking - turn the first mention of a known player's name into a
 # link to their PROSPX detail page (/prospx/#player=<key>), the same deep link the
 # homepage modules use. Matching is accent/'.'-insensitive so Will's "Rodríguez" /
 # "Witt Jr" resolve against the data's "Rodriguez" / "Witt Jr.".
@@ -428,7 +425,7 @@ def _member_slug(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", (name or "").lower()).strip("-")
 
 def _team_index() -> dict:
-    """name(lowercased) -> {slug, handle} from content/team.json — the single
+    """name(lowercased) -> {slug, handle} from content/team.json - the single
     source of truth for dev-team identity + X handles. Empty on any error."""
     idx: dict = {}
     try:
@@ -443,13 +440,13 @@ def _team_index() -> dict:
 
 def _byline(meta: dict, sep: str = " · ", link_handle: bool = True) -> str:
     # link_handle=False when the byline sits INSIDE a card <a> (nested <a> is
-    # invalid HTML and the browser splits the card apart) — render the author +
+    # invalid HTML and the browser splits the card apart) - render the author +
     # @handle as text there, and only deep-link on the standalone article page.
     author = (meta.get("author", "") or "").strip()
     member = _team_index().get(author.lower())  # None for guest authors
     # Author name → their Development Team card (deep-linked) when they're on the
     # team and we're allowed to emit a link; otherwise plain text. No broken
-    # anchors — a guest author with no card simply isn't linked.
+    # anchors - a guest author with no card simply isn't linked.
     if author and member and link_handle:
         author_html = (f'<a class="byline-author" href="/team/#member-{member["slug"]}">'
                        f'{html.escape(author)}</a>')
@@ -482,12 +479,12 @@ def _nav(active: str) -> str:
     items = []
     for key, label, href in NAV_ITEMS:
         cls = ' class="is-active"' if key == active else ""
-        items.append(f'<a href="{href}"{cls}>{html.escape(label)}{_stage_sup(key)}</a>')
+        items.append(f'<a href="{href}"{cls}>{html.escape(label)}</a>')
     # Site-wide controls (right-aligned), matching PROSPX's primary nav: a
     # Watchlist deep-link into PROSPX + the Dark Mode toggle.
     controls = (
         '<div class="eephus-nav-controls">'
-        '<button class="eephus-nav-ctrl" type="button" data-qk-open aria-label="Quick search (Ctrl+K)" title="Search any term or metric — Ctrl+K / ⌘K">'
+        '<button class="eephus-nav-ctrl" type="button" data-qk-open aria-label="Quick search (Ctrl+K)" title="Search any term or metric - Ctrl+K / ⌘K">'
         '<span aria-hidden="true">⌘K</span><span class="eephus-nav-ctrl-label">Search</span></button>'
         '<a class="eephus-nav-ctrl" href="/prospx/#tab=watchlist" aria-label="Watchlist">'
         '<span aria-hidden="true">★</span><span class="eephus-nav-ctrl-label">Watchlist</span></a>'
@@ -499,7 +496,7 @@ def _nav(active: str) -> str:
     )
     return (
         '<header class="eephus-nav">'
-        f'<span class="eephus-brand"><a class="eephus-wordmark" href="/">eephus.io</a>{BETA_BADGE}</span>'
+        '<span class="eephus-brand"><a class="eephus-wordmark" href="/">eephus.io</a></span>'
         f'<nav class="eephus-links">{"".join(items)}</nav>'
         f'{controls}'
         "</header>"
@@ -526,8 +523,8 @@ def _social_meta(title: str, description: str, image: str = "", url: str = "") -
 
 def page(title: str, active: str, body: str, description: str = "",
          image: str = "", url: str = "") -> str:
-    desc = html.escape(description or "eephus.io — editorial baseball analytics portal")
-    social = _social_meta(title, description or "eephus.io — editorial baseball analytics portal",
+    desc = html.escape(description or "eephus.io - editorial baseball analytics portal")
+    social = _social_meta(title, description or "eephus.io - editorial baseball analytics portal",
                           image, url) if image else ""
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -547,7 +544,7 @@ def page(title: str, active: str, body: str, description: str = "",
 {body}
 </main>
 <footer class="eephus-footer">
-  <span>eephus.io — editorial baseball analytics</span>
+  <span>eephus.io - editorial baseball analytics</span>
   <span>© {date.today().year} eephus.io</span>
 </footer>
 {ACCOUNT_SCRIPTS}
@@ -576,11 +573,11 @@ ORG_NAMES = {
 
 def _fmt_iso_date(s: str | None) -> str:
     if not s:
-        return "—"
+        return " - "
     try:
         return datetime.strptime(s[:10], "%Y-%m-%d").strftime("%B %d, %Y").replace(" 0", " ")
     except ValueError:
-        return "—"
+        return " - "
 
 def load_site_data() -> dict | None:
     ts_path = DATA_DIR / "timeseries.json"
@@ -605,7 +602,7 @@ def load_site_data() -> dict | None:
     }
 
 def _player_href(key: str) -> str:
-    # "fa:" keys belong to the Free Agency surface (separate from PROSPX) —
+    # "fa:" keys belong to the Free Agency surface (separate from PROSPX) - 
     # they deep-link the /fa/ player card, not a PROSPX player page.
     if key and key.startswith("fa:"):
         return f"/fa/#player={key[3:]}"
@@ -636,7 +633,7 @@ def _fv_label(p: dict) -> str:
     if pts and pts[-1].get("consensus_fv_label") is not None:
         return str(pts[-1]["consensus_fv_label"])
     fv = p.get("fv_close")
-    return str(round(fv)) if fv is not None else "—"
+    return str(round(fv)) if fv is not None else " - "
 
 def _fv_pill(p: dict) -> str:
     fv = p.get("fv_close")
@@ -656,13 +653,13 @@ def _meta(*parts) -> str:
 # `stock` in timeseries.json is the PERFORMANCE-ANCHORED MOVEMENT ENGINE
 # (spotlights.compute_movement): its `delta` is a composite score (perf +
 # skills + list-jump + pedigree) and its from/to dates are simply the last two
-# snapshots — with daily TJStats Live captures that's "yesterday → today" for
+# snapshots - with daily TJStats Live captures that's "yesterday → today" for
 # every active prospect. The homepage was written against the legacy
 # stock_movement shape (a true FV delta over a meaningful window) and silently
 # broke when storage switched the field to the engine: the wire showed engine
 # scores as "▲ +5 FV" items dated at the latest Live refresh. These helpers
 # read the published grade history directly so a "+N FV" on the homepage is
-# always a real grade change — and wire items are dated when the consensus
+# always a real grade change - and wire items are dated when the consensus
 # actually moved, not when a daily capture re-confirmed it.
 # --------------------------------------------------------------------------- #
 def _label_series(p: dict) -> list[tuple[str, int]]:
@@ -705,7 +702,7 @@ def _fv_window_delta(p: dict, days: int = 365) -> int | None:
 def _latest_fv_change(p: dict) -> tuple[str, int] | None:
     """The most recent ACTUAL grade change as (date_of_change, step). None when
     the published grade has never moved. This is what the wire treats as FV
-    news — daily Live re-confirmations of an unchanged grade are not events."""
+    news - daily Live re-confirmations of an unchanged grade are not events."""
     series = _label_series(p)
     for i in range(len(series) - 1, 0, -1):
         prev_v = series[i - 1][1]
@@ -716,12 +713,12 @@ def _latest_fv_change(p: dict) -> tuple[str, int] | None:
 
 def _row_mover(p: dict, d: int) -> str:
     up = d > 0
-    # Mini FV-history sparkline — reinforces the stock-chart identity. Colored
+    # Mini FV-history sparkline - reinforces the stock-chart identity. Colored
     # by direction; the curve stays smooth (the sharp-corner rule is for UI
     # chrome, not plotted lines).
     spark = _fv_sparkline(p.get("points"), "var(--accent-green)" if up else "var(--accent-red)", w=58, h=20)
     spark_html = f'<span class="row-spark">{spark}</span>' if spark else '<span class="row-spark"></span>'
-    # Team logo leads the row — same idiom as Top Prospects / Recent Graduates,
+    # Team logo leads the row - same idiom as Top Prospects / Recent Graduates,
     # so the org reads at a glance and the meta cell can drop the code.
     return (f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
             f'{_team_logo(p.get("org"))}'
@@ -747,34 +744,34 @@ def display_metric_for(p: dict) -> dict:
     Why: WAG (WAR Above Grade) is only meaningful once a real sample has
     stabilized. It is misleading on a graduate (who now has actual MLB WAR to
     show) and on a prospect who hasn't played a pro season. So a graduate shows
-    WAR, and a sub-threshold prospect shows FV — never a WAG number.
+    WAR, and a sub-threshold prospect shows FV - never a WAG number.
 
     The sample gate is the WAG model's OWN `below_meaningful_exposure` flag
     (config wag.meaningful_exposure = 200 PA / 80 IP ≈ ⅓ season); display and
     methodology share one source of truth rather than a re-invented threshold.
 
     NB on the data model: WAG (`debuted_value.wag`) is computed FROM a player's
-    MLB sample, so in practice only graduates carry one — the WAG branch below is
+    MLB sample, so in practice only graduates carry one - the WAG branch below is
     reachable only if a pre-graduation WAG is ever added; today every WAG-carrier
     graduates to the WAR branch. That is intended, not dead weight.
 
-    Returns {metric: 'WAR'|'WAG'|'FV'|None, cls, html} — `metric` labels the
+    Returns {metric: 'WAR'|'WAG'|'FV'|None, cls, html} - `metric` labels the
     value so a number sitting in a shared slot is never mistaken for another now
     that the slot can hold any of three. `html` is render-ready and HTML-safe."""
     cw = p.get("career_war") or {}
     is_grad = (p.get("status") == "debuted") or (cw.get("career_war") is not None)
 
     # 1) Graduated -> raw MLB WAR (career-since-debut bWAR). WAR/yr stays in
-    #    the hover tooltip only — as a visible suffix it was noise on the
+    # the hover tooltip only - as a visible suffix it was noise on the
     #    homepage grad rows, where most players have one partial MLB season
     #    and the per-year rate is just the WAR number echoed back.
     if is_grad:
         war = cw.get("career_war")
         if war is None:
-            # bWAR hasn't posted yet (brand-new debut) — keep it a WAR slot and be
+            # bWAR hasn't posted yet (brand-new debut) - keep it a WAR slot and be
             # honest the sample hasn't landed; never fabricate a number.
             return {"metric": "WAR", "cls": "flat",
-                    "html": '<span class="row-meta" title="MLB WAR not yet posted">— WAR</span>'}
+                    "html": '<span class="row-meta" title="MLB WAR not yet posted"> - WAR</span>'}
         war_r = round(war, 1) + 0.0          # collapse -0.0
         cls = "up" if war_r > 0 else ("down" if war_r < 0 else "flat")
         wpy = cw.get("war_per_yr")
@@ -802,7 +799,7 @@ def display_metric_for(p: dict) -> dict:
     fv = p.get("fv_close") or p.get("consensus_fv") or p.get("fv")
     if fv is not None:
         return {"metric": "FV", "cls": "flat",
-                "html": (f'<span class="row-meta" title="Final prospect FV — no MLB sample yet">'
+                "html": (f'<span class="row-meta" title="Final prospect FV - no MLB sample yet">'
                          f'FV {int(round(fv))}</span>')}
     return {"metric": None, "cls": "flat", "html": '<span class="row-meta">debut</span>'}
 
@@ -816,7 +813,7 @@ def _row_grad(g: dict) -> str:
             f'<span class="row-meta">{_meta(g.get("position"), g.get("org"))}</span>{wtxt}</a>')
 
 def _recent_trades_html(players: list, n: int = 6) -> str:
-    """'Recent Trades' module — the latest prospect trades from the tracked
+    """'Recent Trades' module - the latest prospect trades from the tracked
     pool, newest first. Fills the grid slot beside This Day in Prospect
     History so the front page bottom row reads as a full spread."""
     trs = []
@@ -843,9 +840,9 @@ def _recent_trades_html(players: list, n: int = 6) -> str:
     return _home_module("Recent Trades", "/prospx/#tab=traded", "All transactions", "".join(rows))
 
 def _row_farm(o: dict, rank: int) -> str:
-    grade = (o.get("grades") or {}).get("overall") or "—"
+    grade = (o.get("grades") or {}).get("overall") or " - "
     gcls = " gold" if str(grade).startswith("A") else ""
-    name = ORG_NAMES.get(o.get("org"), o.get("org") or "—")
+    name = ORG_NAMES.get(o.get("org"), o.get("org") or " - ")
     return (f'<a class="row-link" href="/prospx/#farm-org={html.escape(o.get("org") or "")}">'
             f'<span class="row-rank">{rank}</span>{_team_logo(o.get("org"))}'
             f'<span class="row-name">{html.escape(name)}</span>'
@@ -872,8 +869,8 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
     # Each event is (date, typ, glyph, ticker_text, key, org, name, val):
     # `ticker_text` is the one-string form the scrolling WIRE marquee uses;
     # `name`/`val` are the structured halves the sidebar feed lays out as
-    # name-left / value-right (PROSPX row idiom — no wrapping, scannable).
-    # Internally a trailing weight orders same-date items editorially —
+    # name-left / value-right (PROSPX row idiom - no wrapping, scannable).
+    # Internally a trailing weight orders same-date items editorially - 
     # debut > trade > promo/demo > IL > FV, bigger grade steps leading the
     # FV items. Stripped before return.
     ev = []
@@ -886,7 +883,7 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
         key = p.get("player_key")
         org = p.get("org")
         # FV news = the most recent REAL grade change, dated at the change.
-        # Never stock.delta — that's the movement engine's composite score
+        # Never stock.delta - that's the movement engine's composite score
         # stamped with the latest (daily Live) snapshot date, which flooded
         # the wire with fake "▲ +N FV today" items for every top prospect.
         chg = None if p.get("status") == "debuted" else _latest_fv_change(p)
@@ -925,10 +922,10 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
             add(e.get("date"), "signing", "✎", f'{nm} signs · {e.get("to", "?")} {terms}',
                 key, e.get("to"), name=nm, val=terms, weight=95)
         elif t == "option_declined":
-            add(e.get("date"), "signing", "✎", f'{nm} declines option — enters FA class',
+            add(e.get("date"), "signing", "✎", f'{nm} declines option - enters FA class',
                 key, e.get("from"), name=nm, val="opt-out → FA", weight=85)
         elif t == "option_exercised":
-            add(e.get("date"), "signing", "✎", f'{nm} option exercised — off the FA board',
+            add(e.get("date"), "signing", "✎", f'{nm} option exercised - off the FA board',
                 key, e.get("from"), name=nm, val="option exercised", weight=85)
         elif t == "qo_offered":
             add(e.get("date"), "signing", "✎", f'{nm} receives qualifying offer',
@@ -951,7 +948,7 @@ def _feed_html(events: list, n: int = 12) -> str:
     # Day-grouped wire: each date gets one thin header row that deep-links
     # into Time Machine at that date (the full board as of that day), and the
     # item rows drop the per-row timestamp the header now carries. Item rows
-    # stay structured: logo | name (ellipsized) | colored value chip — the
+    # stay structured: logo | name (ellipsized) | colored value chip - the
     # type glyph lives only in the value chip.
     out = []
     last_day = None
@@ -962,7 +959,7 @@ def _feed_html(events: list, n: int = 12) -> str:
             out.append(
                 f'<div class="feed-day"><span class="feed-day-date">{ts}</span>'
                 f'<a class="feed-day-tm" href="/prospx/#tab=timemachine&tm={dt}" '
-                f'title="Time Machine — the full board as of {dt}">Time Machine →</a></div>')
+                f'title="Time Machine - the full board as of {dt}">Time Machine →</a></div>')
         logo = _team_logo(org, "feed-logo") if org else ""
         out.append(f'<a class="feed-item" href="{_player_href(key)}">'
                    f'{logo}<span class="feed-name">{html.escape(name or text)}</span>'
@@ -971,7 +968,7 @@ def _feed_html(events: list, n: int = 12) -> str:
 
 def _ticker_html(events: list, n: int = 14) -> str:
     # Each item is a mouse-clickable link to the player (or spotlights), color-
-    # coded by type. tabindex=-1 keeps it out of the keyboard/AT path — the
+    # coded by type. tabindex=-1 keeps it out of the keyboard/AT path - the
     # ticker is aria-hidden decoration; the sidebar Prospect Wire feed is the
     # accessible, keyboard-navigable equivalent.
     items = []
@@ -983,7 +980,7 @@ def _ticker_html(events: list, n: int = 14) -> str:
         items.append(f'<a href="{html.escape(href)}" tabindex="-1">{logo}'
                      f'<span class="{cls}">{glyph}</span> {html.escape(text)}</a>')
     if not items:
-        items = ['<span><span class="glyph">◆</span> PROSPX — live prospect wire</span>']
+        items = ['<span><span class="glyph">◆</span> PROSPX - live prospect wire</span>']
     return " ".join(items * 2)  # duplicated for seamless scroll
 
 def _fv_sparkline(points: list, color: str, w: int = 150, h: int = 34) -> str:
@@ -999,7 +996,7 @@ def _fv_sparkline(points: list, color: str, w: int = 150, h: int = 34) -> str:
             'stroke-linejoin="round" stroke-linecap="round"/></svg>')
 
 def _spotlight_html(players: list) -> str:
-    # Biggest riser with FV history — rendered as a baseball card. Ranked by
+    # Biggest riser with FV history - rendered as a baseball card. Ranked by
     # the REAL trailing-1y grade change (label units), so the "+N FV" caption
     # is a true FV statement (stock.delta is the engine's composite score).
     cands = [(d, p) for p in players
@@ -1014,21 +1011,21 @@ def _spotlight_html(players: list) -> str:
     photo = f"background-image:url('{url}');" if url else ""
     spark = _fv_sparkline(p.get("points"), "var(--accent-green)")
     return (
-        '<div class="sb-group"><div class="sb-group-label">Spotlight — Top Riser</div>'
+        '<div class="sb-group"><div class="sb-group-label">Spotlight - Top Riser</div>'
         f'<a class="spotlight{holo}" href="{_player_href(p.get("player_key"))}" style="text-decoration:none;color:inherit;">'
         f'<div class="sp-photo" style="{photo}"></div>'
         '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;">'
         f'<div class="sp-name">{html.escape(p.get("player_name") or "")}</div>'
         f'<div class="sp-meta">{_meta(p.get("position"), p.get("org"))}</div>'
         # flex-wrap + nowrap chip: under the wide MS-Gothic metrics the pill +
-        # delta can outgrow the narrow sidebar column — wrap the chip as a unit
+        # delta can outgrow the narrow sidebar column - wrap the chip as a unit
         # below the pill instead of letting it overflow into the card border.
         f'<div style="display:flex;align-items:center;gap:8px;row-gap:2px;margin-top:4px;flex-wrap:wrap;">{_fv_pill(p)}'
         f'<span class="row-delta up" style="font-family:var(--font-retro-mono);font-size:12px;white-space:nowrap;">▲ +{d} FV</span></div>'
         f'{spark}</div></a></div>'
     )
 
-# Homepage teaser rotation — curated Arkmetrics showcase. The phrases are
+# Homepage teaser rotation - curated Arkmetrics showcase. The phrases are
 # label expansions (hints), not definitions; the canonical entry lives in
 # data/glossary.json and the link deep-links it by slug.
 _GLOSSARY_TERMS = [
@@ -1041,7 +1038,7 @@ _GLOSSARY_TERMS = [
 ]
 
 def page_home(title: str, inner: str, description: str = "") -> str:
-    desc = html.escape(description or "eephus.io — baseball prospect analytics")
+    desc = html.escape(description or "eephus.io - baseball prospect analytics")
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1056,7 +1053,7 @@ def page_home(title: str, inner: str, description: str = "") -> str:
 <body class="eephus-page eephus-home">
 {inner}
 <footer class="eephus-footer">
-  <span>eephus.io — editorial baseball analytics</span>
+  <span>eephus.io - editorial baseball analytics</span>
   <span>© {date.today().year} eephus.io</span>
 </footer>
 {ACCOUNT_SCRIPTS}
@@ -1070,9 +1067,9 @@ def _home_module(kicker: str, see_all_href: str, see_all: str, body: str, full: 
     return f'<section class="home-module{" full" if full else ""}">{head}{body}</section>'
 
 def _debut_org(g: dict) -> str | None:
-    """Org the player DEBUTED with — point-in-time, never the current org.
+    """Org the player DEBUTED with - point-in-time, never the current org.
     Primary source: the debut-season MLB stat row (its first org is the debut
-    org by construction — the first MLB appearance IS the debut). Fallback:
+    org by construction - the first MLB appearance IS the debut). Fallback:
     fold the trade history back across every trade dated after the debut.
     Mirrors the career-table rule: a historical event never silently wears
     the current org."""
@@ -1100,7 +1097,7 @@ def _debut_org(g: dict) -> str | None:
     return org
 
 def _this_day_html(graduates: list, n: int = 5) -> str:
-    """'This day in prospect history' — graduates who debuted on (or within a
+    """'This day in prospect history' - graduates who debuted on (or within a
     few days of) today's calendar date in past seasons. Up to `n` rows,
     exact-date anniversaries first, then by prominence (final FV, then WAG).
     Shows the org each player DEBUTED with (point-in-time via _debut_org),
@@ -1134,14 +1131,14 @@ def _this_day_html(graduates: list, n: int = 5) -> str:
         yrs = today.year - d.year
         nm = html.escape(g.get("player_name") or "")
         # The org shown is the one the player DEBUTED with, not where they
-        # play now — this is a history module.
+        # play now - this is a history module.
         org_then = _debut_org(g)
         meta = _meta(g.get("position"), org_then)
         when = f"{d.strftime('%B')} {d.day}, {d.year}"   # no %-d (unsupported on Windows)
         rows.append(
             f'<a class="otd-row" href="{_player_href(g.get("player_key"))}">'
             f'<span class="otd-when">{html.escape(when)}</span>'
-            f'<span class="otd-body"><strong>{nm}</strong> debuted — {meta}</span>'
+            f'<span class="otd-body"><strong>{nm}</strong> debuted - {meta}</span>'
             f'<span class="otd-ago">{yrs}y ago</span></a>'
         )
     lead_date = cands[0][2]
@@ -1174,7 +1171,7 @@ def _date_callout() -> str:
     return ""
 
 def _scatter_teaser() -> str:
-    """Tiny inline scatter linking to the Scatterplots builder — a visual nudge,
+    """Tiny inline scatter linking to the Scatterplots builder - a visual nudge,
     not live data (kept featherweight; the real plot lives in PROSPX)."""
     import random
     rnd = random.Random(date.today().toordinal())
@@ -1198,7 +1195,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     players = data.get("players") or []
     org_summary = data.get("org_summary") or []
     graduates = data.get("graduates") or []
-    as_of = data.get("as_of", "—")
+    as_of = data.get("as_of", " - ")
     today = datetime.now().strftime("%A, %B %d, %Y").replace(" 0", " ")
     events = _collect_events(players, graduates, _load_fa_events_for_wire())
 
@@ -1206,7 +1203,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     # The sidebar has room for fuller module names than the horizontal
     # header nav, so a couple of labels expand here (key → sidebar label).
     # Every module carries a terminal-safe glyph (PROSPX carries its ball
-    # badge instead) and, where staged, its α/β lifecycle marker.
+    # badge instead). Lifecycle sigils live on module mastheads, not here.
     sidebar_labels = {"fa": "MLB Free Agency", "projections": "MLB Projections",
                       "glossary": "Glossary & Methodology"}
     sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$", "projections": "Δ",
@@ -1216,7 +1213,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         cls = ' class="is-active"' if key == "home" else ""
         icon = (prospx_ball_logo("sbnav") if key == "prospx"
                 else f'<span class="sb-ico" aria-hidden="true">{sidebar_icons.get(key, "›")}</span>')
-        nav.append(f'<a href="{href}"{cls}>{icon}{html.escape(sidebar_labels.get(key, label))}{_stage_sup(key)}</a>')
+        nav.append(f'<a href="{href}"{cls}>{icon}{html.escape(sidebar_labels.get(key, label))}</a>')
     sub = "".join(f'<a href="{href}"><span class="px-glyph">›</span>{html.escape(label)}</a>'
                   for label, href in PROSPX_SUBNAV)
     feed = _feed_html(events, 12) or '<div class="feed-item" style="color:#6f8a76;">No recent activity.</div>'
@@ -1225,21 +1222,21 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
               "onkeydown=\"if(event.key==='Enter'&&this.value.trim()){location.href='/prospx/#q='+encodeURIComponent(this.value.trim());}\">")
     sidebar = (
         '<aside class="home-sidebar">'
-        f'<div class="sb-brand"><a class="wm" href="/">{eephus_merged_wordmark("sb", tag="span")}</a>{BETA_BADGE}{THEME_BTN}</div>'
-        # eephus.io — account entry point for the homepage (page_home has no
+        f'<div class="sb-brand"><a class="wm" href="/">{eephus_merged_wordmark("sb", tag="span")}</a>{THEME_BTN}</div>'
+        # eephus.io - account entry point for the homepage (page_home has no
         # .eephus-nav top bar). refreshNav() in eephus-ui.js injects the Sign-in /
         # avatar control into any .eephus-nav-controls, including this sidebar slot.
         '<div class="sb-account eephus-nav-controls"></div>'
         f'{search}'
         f'<div class="sb-group"><div class="sb-group-label">Modules</div><nav class="sb-nav">{"".join(nav)}</nav></div>'
-        f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{prospx_ball_logo("sbgrp", 14)}PROSPX{_stage_sup("prospx")}</div><nav class="sb-subnav">{sub}</nav></div>'
+        f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{prospx_ball_logo("sbgrp", 14)}PROSPX</div><nav class="sb-subnav">{sub}</nav></div>'
         f'{spotlight}'
         f'<div class="sb-group"><div class="sb-feed"><div class="feed-head"><span class="blip"></span>Prospect Wire</div>{feed}</div></div>'
         '</aside>'
     )
 
     # ---- top wire ticker ----
-    # Decorative scrolling marquee — duplicates the accessible Prospect Wire feed
+    # Decorative scrolling marquee - duplicates the accessible Prospect Wire feed
     # in the sidebar, so it's hidden from assistive tech (aria-hidden) to avoid
     # reading the same items twice / announcing a moving region.
     ticker = (f'<div class="home-ticker" aria-hidden="true"><span class="ticker-tag"><span class="blip"></span>Wire</span>'
@@ -1300,14 +1297,14 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     farm = _home_module("Farm Spotlight", "/prospx/#tab=farm", "Farm systems", farm_body) if farm_body else ""
 
     slug, term, defn = _GLOSSARY_TERMS[datetime.now().timetuple().tm_yday % len(_GLOSSARY_TERMS)]
-    glossary = (f'<div class="glossary-teaser"><span>Today\'s term: <strong>{html.escape(term)}</strong> — {html.escape(defn)}</span>'
+    glossary = (f'<div class="glossary-teaser"><span>Today\'s term: <strong>{html.escape(term)}</strong> - {html.escape(defn)}</span>'
                 f'<a href="/glossary/#g={slug}">Glossary →</a></div>')
 
     callout = _date_callout()
     otd = _this_day_html(graduates)
     trades_mod = _recent_trades_html(players)
     scatter = _scatter_teaser()
-    # eephus.io — Forums module (third content pillar). Hydrated client-side by
+    # eephus.io - Forums module (third content pillar). Hydrated client-side by
     # eephus-ui.js (#eph-home-forums): bump/Hot ordering, last-active first.
     forums_mod = _home_module("Forums", "/forums/", "All discussions",
                               '<div id="eph-home-forums"></div>', full=True)
@@ -1320,7 +1317,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '</main>'
     )
     inner = f'{ticker}<div class="home-shell">{sidebar}{main}</div>'
-    return page_home("eephus.io — baseball prospect analytics", inner,
+    return page_home("eephus.io - baseball prospect analytics", inner,
                      "Live MiLB prospect movers, top prospects, graduates, and analysis.")
 
 def build_articles_index(articles: list[dict]) -> str:
@@ -1340,22 +1337,23 @@ def build_articles_index(articles: list[dict]) -> str:
         '<div class="section-head"><h1>Articles</h1></div>'
         f'<div class="article-grid">{grid}</div>'
     )
-    return page("Articles — eephus.io", "articles", body, "Long-form baseball analysis from eephus.io.")
+    return page("Articles - eephus.io", "articles", body, "Long-form baseball analysis from eephus.io.")
 
 def build_forums_index() -> str:
-    """The /forums/ index — the third content pillar. The thread list is hydrated
+    """The /forums/ index - the third content pillar. The thread list is hydrated
     client-side by eephus-ui.js (#eph-forums-index): bump / Hot ordering, most
     recently active first. Static shell gives SEO + first paint + a nav home."""
     body = (
-        '<div class="section-head"><h1>Forums</h1>'
+        '<div class="section-head"><h1>Forums '
+        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["forums"][1])}">α alpha</span></h1>'
         '<span class="section-sub">Discussion across prospects, farm systems, and articles</span></div>'
         '<div class="eph-forums-index-page"><div id="eph-forums-index"></div></div>'
     )
-    return page("Forums — eephus.io", "forums", body,
+    return page("Forums - eephus.io", "forums", body,
                 "Community discussion across prospects, farm systems, and articles on eephus.io.")
 
 def build_fa() -> str:
-    """The /fa/ Free Agency app — its own surface, SEPARATE from PROSPX.
+    """The /fa/ Free Agency app - its own surface, SEPARATE from PROSPX.
 
     Static shell + assets/fa.js, which fetches the fa_export.py sidecars
     (data/fa_class.json / fa_archive.json / fa_meta.json) directly. Shares the
@@ -1375,14 +1373,14 @@ def build_fa() -> str:
         '</div>'
         f'<script src="/assets/fa.js?v={_FA_VER}" defer></script>'
     )
-    return page("Free Agency — eephus.io", "fa", body,
+    return page("Free Agency - eephus.io", "fa", body,
                 "The 2026-27 MLB free-agent class: projected contracts (projLength / projGuarantee / "
                 "projAAV with floor-mean-ceiling bands), rational value vs predicted price, deal "
                 "verdicts, team fits, and twelve archived winters with a realized-surplus ledger.")
 
 
 def build_projections() -> str:
-    """The /projections/ MLB Projections app — the FA module's projection
+    """The /projections/ MLB Projections app - the FA module's projection
     engine applied to the whole league plus post-ETA PROSPX prospects.
     Static shell + assets/projections.js, which fetches the proj_export.py
     sidecar (data/mlb_projections.json). Styles ride the .fa-app block plus
@@ -1399,13 +1397,13 @@ def build_projections() -> str:
         '</div>'
         f'<script src="/assets/projections.js?v={_PROJ_VER}" defer></script>'
     )
-    return page("MLB Projections — eephus.io", "projections", body,
-                "Five-year bWAR projections for every MLB player — floor/mean/ceiling probability "
+    return page("MLB Projections - eephus.io", "projections", body,
+                "Five-year bWAR projections for every MLB player - floor/mean/ceiling probability "
                 "buckets, aging-curve decay, contract surplus on salary-known seasons, and PROSPX "
                 "prospects joining at their projected ETA.")
 
 def build_glossary() -> str:
-    """The /glossary/ unified Glossary & Methodology module — the canonical
+    """The /glossary/ unified Glossary & Methodology module - the canonical
     definition layer's page. Static shell + assets/glossary.js; definitions
     come from data/glossary.json via the shared eephus-gl.js runtime. The
     How to Read guide, methodology derivations + interactive widgets, and
@@ -1420,15 +1418,15 @@ def build_glossary() -> str:
         "<p>The analytical frame throughout is resource allocation. A prospect is a "
         "cost-controlled asset whose scouting grade implies a production forecast; a free agent "
         "is a priced asset whose contract is the market's forecast. For any priced decision the "
-        "platform keeps two independently derived numbers — what the production is worth "
-        "(rational value, surplus) and what the market pays (predicted or actual contract) — and "
+        "platform keeps two independently derived numbers - what the production is worth "
+        "(rational value, surplus) and what the market pays (predicted or actual contract) - and "
         "never blends them, because the gap between them is the entire point.</p>"
         "<p>WAR site-wide is Baseball-Reference's bWAR: one source, every surface. Where samples "
         "are thin the models shrink toward the mean and say so; where data is missing the site "
         "shows an em-dash, never a guess.</p>"
         "<p>Model derivations and the interactive teaching widgets live under Methodology; the "
         "source-vs-source backtest under Source Comparison grades the site's own consensus "
-        "against its inputs — misses included.</p>"
+        "against its inputs - misses included.</p>"
         "</div>"
     )
     body = (
@@ -1455,8 +1453,8 @@ def build_glossary() -> str:
         '<script src="/data/value_framework.js" defer></script>'
         f'<script src="/assets/glossary.js?v={_GLAPP_VER}" defer></script>'
     )
-    return page("Glossary & Methodology — eephus.io", "glossary", body,
-                "Definitions, model mechanics, and methodology for every metric on eephus.io — "
+    return page("Glossary & Methodology - eephus.io", "glossary", body,
+                "Definitions, model mechanics, and methodology for every metric on eephus.io - "
                 "PROSPX prospect analytics, MLB Free Agency, and the statistical foundations.")
 
 def build_article_page(a: dict) -> str:
@@ -1470,17 +1468,17 @@ def build_article_page(a: dict) -> str:
         + (f'<p class="article-summary">{html.escape(a["summary"])}</p>' if a.get("summary") else "")
         + f'<div class="article-body">{a["body_html"]}</div>'
         "</article>"
-        # eephus.io — article comment thread (the same forum component PROSPX uses),
+        # eephus.io - article comment thread (the same forum component PROSPX uses),
         # auto-mounted client-side by eephus-ui.js from these data-* hints.
         f'<div id="eph-forum-mount" class="eph-article-forum" data-forum-scope="article" '
         f'data-forum-key="{html.escape(a["slug"])}" data-forum-title="{html.escape(a["title"])}"></div>'
     )
-    # Per-article social card (assets/articles/<slug>/share-card.png) is optional —
+    # Per-article social card (assets/articles/<slug>/share-card.png) is optional - 
     # only emit og:image/twitter when one was generated for this piece.
     slug = a["slug"]
     card = ROOT / "assets" / "articles" / slug / "share-card.png"
     image = f"{SITE_ORIGIN}/assets/articles/{slug}/share-card.png" if card.exists() else ""
-    return page(f'{a["title"]} — eephus.io', "articles", body, a.get("summary", ""),
+    return page(f'{a["title"]} - eephus.io', "articles", body, a.get("summary", ""),
                 image=image, url=f"{SITE_ORIGIN}/articles/{slug}/")
 
 def build_team() -> str:
@@ -1494,7 +1492,7 @@ def build_team() -> str:
                '0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 '
                '5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 '
                '0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>')
-    # Personal website — globe glyph (stroke-style, rides currentColor like the rest).
+    # Personal website - globe glyph (stroke-style, rides currentColor like the rest).
     _WEB_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm7.93 '
                 '9h-3.46a15.6 15.6 0 0 0-1.21-5.07A8.03 8.03 0 0 1 19.93 11zM12 4.06c.93 1.28 1.85 3.7 2.16 '
                 '6.94H9.84c.31-3.24 1.23-5.66 2.16-6.94zM4.07 13h3.46c.18 1.85.6 3.6 1.21 5.07A8.03 8.03 0 0 1 4.07 '
@@ -1516,7 +1514,7 @@ def build_team() -> str:
         return (parts[0][0] + (parts[-1][0] if len(parts) > 1 else parts[0][1:2])).upper()
     def _team_photo(m: dict) -> str | None:
         # Explicit `photo` path wins; otherwise auto-detect assets/team/<first>.<ext>
-        # so a member just drops a file (e.g. assets/team/noah.jpg) and rebuilds —
+        # so a member just drops a file (e.g. assets/team/noah.jpg) and rebuilds - 
         # no JSON edit, and no 404 since we only emit <img> when the file exists.
         if m.get("photo"):
             return m["photo"]
@@ -1530,7 +1528,7 @@ def build_team() -> str:
         handle = (m.get("handle") or "").lstrip("@")
         linkedin = (m.get("linkedin") or "").strip().rstrip("/").rsplit("/", 1)[-1]
         # Headshot: provided image (rectangular, sharp) over a monogram fallback
-        # that shows when there's no photo or the file 404s — never a broken image.
+        # that shows when there's no photo or the file 404s - never a broken image.
         mono = f'<span class="team-monogram" aria-hidden="true">{html.escape(_initials(m["name"]))}</span>'
         photo = _team_photo(m)
         if photo:
@@ -1542,21 +1540,21 @@ def build_team() -> str:
         chips = []
         if handle:
             chips.append(f'<a class="team-soc" href="https://x.com/{html.escape(handle)}" target="_blank" '
-                         f'rel="noopener" title="Twitter / X — @{html.escape(handle)}" aria-label="Twitter / X — @{html.escape(handle)}">{_TW_SVG}</a>')
+                         f'rel="noopener" title="Twitter / X - @{html.escape(handle)}" aria-label="Twitter / X - @{html.escape(handle)}">{_TW_SVG}</a>')
         if linkedin:
             chips.append(f'<a class="team-soc" href="https://www.linkedin.com/in/{html.escape(linkedin)}/" target="_blank" '
-                         f'rel="noopener" title="LinkedIn — {html.escape(m["name"])}" aria-label="LinkedIn — {html.escape(m["name"])}">{_LI_SVG}</a>')
+                         f'rel="noopener" title="LinkedIn - {html.escape(m["name"])}" aria-label="LinkedIn - {html.escape(m["name"])}">{_LI_SVG}</a>')
         website = (m.get("website") or "").strip()
         if website:
             _host = website.split("//", 1)[-1].strip("/")
             chips.append(f'<a class="team-soc" href="{html.escape(website)}" target="_blank" '
-                         f'rel="noopener" title="Website — {html.escape(_host)}" aria-label="Website — {html.escape(_host)}">{_WEB_SVG}</a>')
+                         f'rel="noopener" title="Website - {html.escape(_host)}" aria-label="Website - {html.escape(_host)}">{_WEB_SVG}</a>')
         github = (m.get("github") or "").strip().rstrip("/").rsplit("/", 1)[-1]
         if github:
             chips.append(f'<a class="team-soc" href="https://github.com/{html.escape(github)}" target="_blank" '
-                         f'rel="noopener" title="GitHub — {html.escape(github)}" aria-label="GitHub — {html.escape(github)}">{_GH_SVG}</a>')
+                         f'rel="noopener" title="GitHub - {html.escape(github)}" aria-label="GitHub - {html.escape(github)}">{_GH_SVG}</a>')
         socials_html = f'<div class="team-socials">{"".join(chips)}</div>' if chips else ""
-        # Optional subtle note (only Noah gets "PROSPX Creator") — small mono pill.
+        # Optional subtle note (only Noah gets "PROSPX Creator") - small mono pill.
         note_html = (
             f'<p class="team-note">{html.escape(m["note"])}</p>' if m.get("note") else ""
         )
@@ -1573,7 +1571,7 @@ def build_team() -> str:
         f'{follow}'
         f'<div class="team-grid">{"".join(cards)}</div>'
     )
-    return page("Development Team — eephus.io", "team", body, "The team behind eephus.io.")
+    return page("Development Team - eephus.io", "team", body, "The team behind eephus.io.")
 
 # --------------------------------------------------------------------------- #
 def _write(rel: str, content: str) -> None:
@@ -1583,13 +1581,13 @@ def _write(rel: str, content: str) -> None:
     print(f"  wrote {rel}")
 
 def main() -> None:
-    print("build_site.py — generating editorial pages")
+    print("build_site.py - generating editorial pages")
     art_dir = CONTENT / "articles"
     articles = [parse_article(p) for p in sorted(art_dir.glob("*.md"))] if art_dir.exists() else []
     articles.sort(key=lambda a: a.get("date_sort", ""), reverse=True)  # newest first
 
     data = load_site_data()
-    print("  data layer:", "loaded" if data else "MISSING (run run_monthly) — modules will be empty")
+    print(" data layer:", "loaded" if data else "MISSING (run run_monthly) - modules will be empty")
 
     _write("index.html", build_home(articles, data))
     _write("articles/index.html", build_articles_index(articles))
@@ -1600,7 +1598,7 @@ def main() -> None:
     _write("projections/index.html", build_projections())
     _write("glossary/index.html", build_glossary())
     _write("team/index.html", build_team())
-    print(f"done — {len(articles)} article(s).")
+    print(f"done - {len(articles)} article(s).")
 
 if __name__ == "__main__":
     main()

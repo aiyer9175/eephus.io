@@ -1,4 +1,4 @@
-// eephus.io — account layer client (Parts 1-7).
+// eephus.io - account layer client (Parts 1-7).
 // Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
 //
 // The ONE boundary between the static front-end and Supabase. Everything the
@@ -11,7 +11,7 @@
 // behaves exactly as it does today, logged-out, with the localStorage watchlist
 // still working. Nothing here may throw on the happy logged-out path.
 //
-// SECURITY: the anon key shipped in eephus-config.js is public by design — Row-
+// SECURITY: the anon key shipped in eephus-config.js is public by design - Row-
 // Level Security in supabase/migrations/0001_accounts_forums.sql, not the key,
 // guards data. The service-role key is NEVER referenced here (pipeline-only).
 (function () {
@@ -104,7 +104,7 @@
         })
         .then(function () { _notifyAuth(); });
     })
-    .catch(function () { /* unconfigured / offline / blocked — stay logged-out */ })
+    .catch(function () { /* unconfigured / offline / blocked - stay logged-out */ })
     .finally(function () { _resolveReady(); });
   }
 
@@ -194,7 +194,7 @@
     updateProfile: function (patch) {
       var c = client();
       if (!c || !_session) return Promise.resolve({ data: null, error: new Error("not signed in") });
-      // role/karma are pinned server-side (trigger) even if passed — harmless.
+      // role/karma are pinned server-side (trigger) even if passed - harmless.
       return _safe(
         c.from("profiles").update(patch).eq("id", _session.user.id).select().maybeSingle()
           .then(function (res) { if (res && res.data) _profile = res.data; return res; })
@@ -207,7 +207,7 @@
         c.from("profiles").select("*").eq("username", username).maybeSingle()
       ).then(function (res) { return res && res.data ? res.data : null; });
     },
-    // @mention autocomplete — prefix match on username.
+    // @mention autocomplete - prefix match on username.
     searchUsernames: function (prefix, limit) {
       var c = client();
       if (!c || !prefix) return Promise.resolve([]);
@@ -249,7 +249,7 @@
         user_id: _session.user.id, kind: kind, entity_key: entityKey,
         is_number_one: !!isNumberOne
       };
-      // unique partial index enforces one #1 per (user,kind) — clear the old #1 first.
+      // unique partial index enforces one #1 per (user,kind) - clear the old #1 first.
       var pre = isNumberOne
         ? c.from("favorites").update({ is_number_one: false })
             .eq("user_id", _session.user.id).eq("kind", kind).eq("is_number_one", true)
@@ -570,7 +570,7 @@
       return _safe(c.from("notification_prefs").upsert(row, { onConflict: "user_id" }));
     },
 
-    // --- realtime (reply/mention/vote push) — optional, no-op if unavailable -
+    // --- realtime (reply/mention/vote push) - optional, no-op if unavailable -
     subscribeNotifications: function (cb) {
       var c = client();
       if (!c || !_session || typeof cb !== "function") return function () {};

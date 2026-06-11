@@ -25,7 +25,7 @@
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
-  // Inline glossary link — same .g-term affordance as PROSPX; the shared
+  // Inline glossary link - same .g-term affordance as PROSPX; the shared
   // tooltip engine in eephus-gl.js handles hover/click on [data-gl].
   function gTermLink(slug, label) {
     return `<span class="g-term" data-gl="${escapeHtml(slug)}">${escapeHtml(label != null ? label : (GL[slug] ? GL[slug].name : slug))}</span>`;
@@ -229,7 +229,7 @@
 // Hand-maintained from here on; the generator is provenance only.
 //
 // _RATER_META / _TIER_ORDER sat ONE LINE above the port slice and were
-// missed — Source Comparison silently hung on "Loading…" because the
+// missed - Source Comparison silently hung on "Loading…" because the
 // ReferenceError died inside the fetch promise (fixed 2026-06-10; the
 // smoke test now asserts rendered content, not just a non-empty body).
 // _raterMeta() is the safe accessor: unknown raters (new sources join the
@@ -248,7 +248,7 @@ function _methProseHTML() {
   <div class="meth-prose">
     <h2 class="meth-h">How the consensus FV is built</h2>
     <p>Every source that publishes an explicit 20–80 Future Value grade contributes
-    <strong>equally</strong> — there is no per-source weighting. The consensus FV is the
+    <strong>equally</strong> - there is no per-source weighting. The consensus FV is the
     mean of those published grades (FanGraphs, ESPN, Just Baseball, TJStats, MLB Pipeline,
     and MLB Pipeline International). Two rank-only sources (Baseball America, The Athletic)
     contribute a rank→implied-FV <em>only</em> when no source has graded a player yet; once
@@ -257,40 +257,40 @@ function _methProseHTML() {
     <p>Grades are <strong>forward-filled</strong>: because sources publish on different dates,
     the consensus at any date uses the latest snapshot from <em>every</em> source up to that
     date, so a player isn't reduced to a single most-recent list. It is then
-    <strong>Bayesian-shrunk</strong> — a thin-evidence grade (graded by few sources, or only
+    <strong>Bayesian-shrunk</strong> - a thin-evidence grade (graded by few sources, or only
     just added) is pulled toward a prior, so one aggressive outlier source can't swing the
     number until corroborating grades arrive. The chart you see on every prospect page is this
     point-in-time consensus history; the per-source overlay shows the inputs it blends.</p>
 
     <h2 class="meth-h">How the Arkmetrics are derived</h2>
     <dl class="meth-dl">
-      <dt>WAG — WAR Above Grade <span class="meth-tag">graduates</span></dt>
+      <dt>WAG - WAR Above Grade <span class="meth-tag">graduates</span></dt>
       <dd>A graduate's career WAR <em>rate</em> projected to a role-typical full season
       (612 PA for hitters; 175 / 65 / 50 / 60 IP for SP / MIRP / SIRP / CL), minus the
       per-season WAR the player's FV grade implied. Positive = outproducing the grade. Sample
       floors of 150 PA / 50 IP gate it. This is the realized-outcome metric the backtest below
       leans on.</dd>
 
-      <dt>DvM+ — Development vs Mean <span class="meth-tag">farm system</span></dt>
+      <dt>DvM+ - Development vs Mean <span class="meth-tag">farm system</span></dt>
       <dd>A wRC+-style index of organizational development: an org's cumulative FV growth over a
       1 / 3 / 6-year window scored against the league-mean farm (100 = mean, +10 = one standard
       deviation). Acquisitions are nullified and graduations don't subtract, so it measures only
       development of prospects already in the system. The farm grade weights 6y / 3y / 1y at
       60 / 30 / 10%.</dd>
 
-      <dt>RPS+ — Rate Performance Score <span class="meth-tag">prospect</span></dt>
+      <dt>RPS+ - Rate Performance Score <span class="meth-tag">prospect</span></dt>
       <dd>A level-anchored rate index (OPS+ for hitters, ERA- for pitchers) normalized against
       the player's <em>own</em> age × position-group cohort, then nudged by a small position
       multiplier (C ×1.08 … 1B ×0.95). 100 = the same-age, same-position-group mean. MLB-level
       prospects substitute canonical wRC+ / xFIP.</dd>
 
-      <dt>SC+ — Statcast+ <span class="meth-tag">prospect</span></dt>
-      <dd>A side-aware composite of tracked Statcast / zone signals — contact quality + zone
+      <dt>SC+ - Statcast+ <span class="meth-tag">prospect</span></dt>
+      <dd>A side-aware composite of tracked Statcast / zone signals - contact quality + zone
       discipline for hitters; stuff + induced whiff/chase + suppressed contact for pitchers.
       Each component is z-scored against the side-matched active pool, averaged, and rescaled so
       100 = pool mean and one standard deviation moves it 15 points (the wRC+/OPS+ family).</dd>
 
-      <dt>ToolDvM+ — Tool Development vs Mean <span class="meth-tag">farm system</span></dt>
+      <dt>ToolDvM+ - Tool Development vs Mean <span class="meth-tag">farm system</span></dt>
       <dd>A position-weighted blend of an org's per-tool DvM+ values (Hit, Power, Field, Arm,
       Fastball, Command, …). Each tool's development velocity is league-anchored (100 + 10·z),
       then weighted by how much that tool matters for the position bucket (a catcher's Field/Arm,
@@ -300,12 +300,12 @@ function _methProseHTML() {
 
     <div class="meth-eg-card">
       <div class="meth-eg-title">Worked examples · current board</div>
-      <div class="meth-eg-row"><b>Jesus Made</b> — SS · MIL · ${gTermLink("fv", "FV")} 62. ${gTermLink("dvm_plus", "$DvM+")} 109.6 (projected surplus dollars ~10% above the mean farm's development pace), ${gTermLink("k_pct", "K%")} 14.3 / ${gTermLink("bb_pct", "BB%")} 10.7, ${gTermLink("ops_plus", "OPS+ vs lvl")} 115 → published ${gTermLink("surplus_value", "surplus value")} <b>$154M</b>.</div>
-      <div class="meth-eg-row"><b>Seth Hernandez</b> — SP · PIT · ${gTermLink("fv", "FV")} 60. ${gTermLink("k_bb_pct", "K-BB%")} 18.0 (36.1 K − 18.1 BB), ${gTermLink("dvm_plus", "$DvM+")} 116.9 → published ${gTermLink("surplus_value", "surplus value")} <b>$131M</b>.</div>
-      <div class="meth-eg-note">Live figures from this month's board — the same numbers shown on each player's card.</div>
+      <div class="meth-eg-row"><b>Jesus Made</b> - SS · MIL · ${gTermLink("fv", "FV")} 62. ${gTermLink("dvm_plus", "$DvM+")} 109.6 (projected surplus dollars ~10% above the mean farm's development pace), ${gTermLink("k_pct", "K%")} 14.3 / ${gTermLink("bb_pct", "BB%")} 10.7, ${gTermLink("ops_plus", "OPS+ vs lvl")} 115 → published ${gTermLink("surplus_value", "surplus value")} <b>$154M</b>.</div>
+      <div class="meth-eg-row"><b>Seth Hernandez</b> - SP · PIT · ${gTermLink("fv", "FV")} 60. ${gTermLink("k_bb_pct", "K-BB%")} 18.0 (36.1 K − 18.1 BB), ${gTermLink("dvm_plus", "$DvM+")} 116.9 → published ${gTermLink("surplus_value", "surplus value")} <b>$131M</b>.</div>
+      <div class="meth-eg-note">Live figures from this month's board - the same numbers shown on each player's card.</div>
     </div>
 
-    <h2 class="meth-h">Surplus value — the economic model</h2>
+    <h2 class="meth-h">Surplus value - the economic model</h2>
     <p>A prospect is an asset because the six years of team control after debut are paid below
     market. Surplus value is the dollar production those controlled years are expected to deliver
     above what they cost:</p>
@@ -322,34 +322,34 @@ function _methProseHTML() {
     and per-dollar efficiency cuts are ${gTermLink("surplus_per_fv_pt", "Surplus / FV-pt")} and ${gTermLink("dollars_per_fv", "$/FV-pt")}.
     The <em>Interactive</em> tab below walks an FV through every step.</p>
 
-    <h2 class="meth-h">Farm-system grades — how the org letter is built</h2>
+    <h2 class="meth-h">Farm-system grades - how the org letter is built</h2>
     <p>The org grade is a weighted tree (${gTermLink("farm_report_card", "Farm grade tree")}), not a single
     formula, so each letter is auditable down to its leaves. Four branches:
-    <strong>Development</strong> (40% — per-tool growth of prospects the org already had, ${gTermLink("dvm_plus", "DvM+")} /
-    ${gTermLink("tools_dvm_plus", "ToolDvM+")}), <strong>MLB Production</strong> (25% — does the system produce
+    <strong>Development</strong> (40% - per-tool growth of prospects the org already had, ${gTermLink("dvm_plus", "DvM+")} /
+    ${gTermLink("tools_dvm_plus", "ToolDvM+")}), <strong>MLB Production</strong> (25% - does the system produce
     big-leaguers, boom/bust rates, top-3 graduate WAR, a star-presence ${gTermLink("mlb_production_conviction", "Conviction")}
     flag), <strong>Acquisition Strategy</strong> (Draft / IFA / Trade / Waiver channels), and
-    <strong>Financial</strong> (capital efficiency — ${gTermLink("fin_war_per_m", "WAR per $M")},
+    <strong>Financial</strong> (capital efficiency - ${gTermLink("fin_war_per_m", "WAR per $M")},
     ${gTermLink("fin_contract_surplus", "grad-contract surplus")}, ${gTermLink("fin_dollar_dvm", "Org $DvM+")},
     ${gTermLink("fin_draft_pool_efficiency", "draft-pool efficiency")}, ${gTermLink("fin_ifa_roi", "IFA ROI")}).
     Every leaf is z-scored across the 30 orgs and anchored so the composite reads on a 100 = league-mean
-    scale; sparse leaves return "—" rather than guessing. Surplus enters here twice — as realized capital
+    scale; sparse leaves return " - " rather than guessing. Surplus enters here twice - as realized capital
     efficiency (Financial) and as the development of surplus dollars (Org $DvM+).</p>
 
-    <h2 class="meth-h">Aggregation — player level to farm level</h2>
+    <h2 class="meth-h">Aggregation - player level to farm level</h2>
     <p>Roll-ups are explicit, not implied. Org surplus is the sum of its active prospects' per-player
     surplus dollars (the authoritative engine aggregate, <code>_active_surplus_net_mm</code>); the farm
     list, the detail Surplus tile, and the Finances tab all read that one number. DvM+ / ToolDvM+
     aggregate per-tool development across the org's actives with acquisitions nullified (so a trade
     doesn't masquerade as development) and graduations not subtracted (so promoting a star doesn't read
-    as a loss). The "+" indices (DvM+, RPS+, SC+, OrgSur+) are all built to the wRC+/OPS+ convention —
-    100 = the relevant mean, ±10 ≈ one standard deviation — so they share one mental scale.</p>
+    as a loss). The "+" indices (DvM+, RPS+, SC+, OrgSur+) are all built to the wRC+/OPS+ convention - 
+    100 = the relevant mean, ±10 ≈ one standard deviation - so they share one mental scale.</p>
 
     <h2 class="meth-h">Where the Arkmetrics sit vs public metrics</h2>
     <table class="meth-cmp">
       <thead><tr><th>Arkmetric</th><th>Closest public analogue</th><th>What's different</th></tr></thead>
       <tbody>
-        <tr><td>${gTermLink("wag", "WAG")}</td><td>WAR vs draft-pick / FV expectation</td><td>Measures realized career WAR against the WAR a player's FV grade <em>implied</em> — a grade-calibration residual, not raw production.</td></tr>
+        <tr><td>${gTermLink("wag", "WAG")}</td><td>WAR vs draft-pick / FV expectation</td><td>Measures realized career WAR against the WAR a player's FV grade <em>implied</em> - a grade-calibration residual, not raw production.</td></tr>
         <tr><td>${gTermLink("dvm_plus", "DvM+ / $DvM+")}</td><td>Farm-system surplus-value rankings (e.g. public prospect-value tables)</td><td>Indexed wRC+-style (100 = mean) and scoped to in-system <em>development</em> with acquisitions removed, so it isolates org skill rather than hoarded talent.</td></tr>
         <tr><td>${gTermLink("surplus_value", "Surplus value")}</td><td>Surplus-value frameworks (FV→WAR→$ minus cost)</td><td>Same skeleton, but probability-weighted over a bucketed outcome distribution and discounted, rather than applying a single FV-tier dollar constant.</td></tr>
         <tr><td>${gTermLink("rps_plus", "RPS+")}</td><td>wRC+ / ERA-</td><td>Re-anchored to the player's own age × position-group cohort and level, so a young hitter at a hard level isn't penalized against older peers.</td></tr>
@@ -372,20 +372,21 @@ function _methProseHTML() {
       <li><span class="mc-date">2026-06</span> Surplus engine v38: FV→WAR anchor moved from a single peak-year projection to a flat 6-year-average table; side difference carried by the position multiplier. Farm list/detail surplus consolidated on the engine aggregate.</li>
       <li><span class="mc-date">2026-06</span> Glossary reorganized into Glossary / Methodology / Source Comparison; taxonomy regrouped (Arkmetrics · Statcast · Standard · Scouting · Economic · Farm · Site Features); Statcast input terms added.</li>
       <li><span class="mc-date">2026-05</span> Farm grade tree v7: MLB Production added a Bust-Rate (negative) leaf and a Conviction star-presence cap; Development promoted to the 40% top weight.</li>
+      <li><span class="mc-date">2026-06</span> Consensus FV moved to ACCURACY-WEIGHTED source blending after a vintage-disciplined A/B beat equal-weight on both Spearman and AUC (weights shrunk toward equal, clamped, frozen per vintage; sources without resolved history stay at 1.0). The model accountability registry below records the eval.</li>
       <li><span class="mc-date">2026-05</span> Source-vs-source backtest published (resolved cohorts only) as the Source Comparison area.</li>
-      <li><span class="mc-date">2026-04</span> Consensus FV: equal-weight mean confirmed over weighted schemes; Bayesian shrinkage + forward-fill formalized.</li>
+      <li><span class="mc-date">2026-04</span> Consensus FV: equal-weight mean confirmed over weighted schemes at that window; Bayesian shrinkage + forward-fill formalized.</li>
     </ul>
     <p class="meth-note">Versioned methodology pairs with the Time Machine: a board state and the rules that produced it are both reconstructable for any past month.</p>
 
     <h2 class="meth-h">FAQ</h2>
     <dl class="meth-dl">
       <dt>Why a consensus instead of one source?</dt>
-      <dd>No single source has shown a durable, statistically separable edge on resolved cohorts (see Source Comparison). Averaging cancels idiosyncratic source error; the pooled consensus modestly but consistently beats its best individual input.</dd>
-      <dt>Why equal weights?</dt>
-      <dd>Weighting requires a reliable, persistent accuracy gap to exploit. Even on the extended 2017–2023 window the per-source differences stay within noise, so equal weighting avoids over-fitting to a handful of resolved years. The Interactive tab lets you test alternative weightings yourself.</dd>
+      <dd>Averaging cancels idiosyncratic source error: the pooled consensus modestly but consistently beats its best individual input on resolved cohorts (see Source Comparison). Per-source edges exist but are small and unstable year to year, which is why the weighting stays shrunk toward equal rather than chasing them.</dd>
+      <dt>How are sources weighted?</dt>
+      <dd>Accuracy-weighted, as of June 2026: per-source weights come from measured track records on resolved cohorts, shrunk heavily toward equal (so a thin history can't dominate), clamped, and frozen per vintage so grades don't jitter month to month. The weighted blend shipped only after beating equal-weight in a no-lookahead A/B on both rank correlation and AUC; sources without enough resolved history stay at exactly 1.0. The interactive below lets you test any weighting yourself.</dd>
       <dt>How often does it update?</dt>
       <dd>Grades, Arkmetrics, farm grades, and the backtest refresh monthly; transactions, IL, roster status, debuts, and trades refresh daily. Each board honestly stamps its own cadence.</dd>
-      <dt>What's the track record — and its limits?</dt>
+      <dt>What's the track record - and its limits?</dt>
       <dd>The evaluation window spans seven preseason base years (2017–2023): the 2017–2020 cohorts are fully resolved while 2021–2023 are still accruing WAR, and cumulative WAR is censored at today. Top FV tiers stay thin (n≈40–70), so their rates move on a few outcomes. The Source Comparison area lists sample sizes and these caveats in full rather than headlining an inflated number.</dd>
     </dl>
   </div>`;
@@ -447,7 +448,7 @@ function _methCalibrationChart(bt, metricKey, metricLabel, opts) {
   </div>`;
 }
 
-// Source-accuracy comparison — horizontal bars for Spearman ρ + AUC, consensus
+// Source-accuracy comparison - horizontal bars for Spearman ρ + AUC, consensus
 // highlighted. Answers "which is most reliable, and does the blend win?"
 function _methAccuracyChart(bt) {
   const acc = bt.accuracy && bt.accuracy.pooled;
@@ -468,12 +469,12 @@ function _methAccuracyChart(bt) {
     }).join("");
     return `<div class="meth-metric"><div class="meth-metric-title">${escapeHtml(label)}</div>${bars}</div>`;
   };
-  const sp = metric("spearman", "Ordering skill — Spearman ρ (grade vs realized WAR)", 0, 0.4, v => v.toFixed(3));
-  const au = metric("auc", "Discrimination — AUC (grade predicts ‘became a contributor’)", 0.5, 0.85, v => v.toFixed(3));
+  const sp = metric("spearman", "Ordering skill - Spearman ρ (grade vs realized WAR)", 0, 0.4, v => v.toFixed(3));
+  const au = metric("auc", "Discrimination - AUC (grade predicts ‘became a contributor’)", 0.5, 0.85, v => v.toFixed(3));
   const cvi = bt.accuracy.consensus_vs_inputs || {};
   const verdict = (cvi.spearman && cvi.spearman.consensus_wins && cvi.auc && cvi.auc.consensus_wins)
-    ? `<p class="meth-verdict is-good">On the common set of ${bt.accuracy.common_n.toLocaleString()} players graded by all three, the <strong>PROSPX consensus edges out both individual inputs</strong> on ordering skill and discrimination — the result a consensus model needs to defend. The margin is modest and not uniform year-to-year; see the caveats.</p>`
-    : `<p class="meth-verdict">On the common set of ${bt.accuracy.common_n.toLocaleString()} players, the consensus is competitive with its inputs but does not lead on every metric — reported honestly rather than cherry-picked.</p>`;
+    ? `<p class="meth-verdict is-good">On the common set of ${bt.accuracy.common_n.toLocaleString()} players graded by all three, the <strong>PROSPX consensus edges out both individual inputs</strong> on ordering skill and discrimination - the result a consensus model needs to defend. The margin is modest and not uniform year-to-year; see the caveats.</p>`
+    : `<p class="meth-verdict">On the common set of ${bt.accuracy.common_n.toLocaleString()} players, the consensus is competitive with its inputs but does not lead on every metric - reported honestly rather than cherry-picked.</p>`;
   return `<div class="meth-chart meth-accuracy">
     <div class="meth-chart-title">Head-to-head predictive accuracy <span class="meth-sub">same players, same outcome, same window</span></div>
     ${sp}${au}${verdict}
@@ -488,7 +489,7 @@ function _methTierTable(bt, rater) {
       <td>${t.n}</td>
       <td>${Math.round(t.debut_rate * 100)}%</td>
       <td>${t.mean_war.toFixed(1)}</td>
-      <td>${t.mean_war_per_yr_debut != null ? t.mean_war_per_yr_debut.toFixed(2) : "—"}</td>
+      <td>${t.mean_war_per_yr_debut != null ? t.mean_war_per_yr_debut.toFixed(2) : " - "}</td>
       <td>${Math.round(t.contributor_rate * 100)}%</td>
       <td>${Math.round((t.regular_pace_rate || 0) * 100)}%</td>
       <td>${Math.round(t.star_rate * 100)}%</td>
@@ -502,7 +503,7 @@ function _methTierTable(bt, rater) {
   </div>`;
 }
 
-// "How to Read the Site" (Part 1 anchor) — annotated anatomy of a player card,
+// "How to Read the Site" (Part 1 anchor) - annotated anatomy of a player card,
 // the FV history chart, and a farm page, with every element linked to its
 // glossary term, plus the metric-architecture diagram (how the metrics build on
 // each other). Onboards new readers and lays out the system at a glance.
@@ -518,30 +519,30 @@ function renderGuide() {
 
   const cardAnatomy = [
     anat(`<span class="fv-badge fv-60" style="padding:3px 9px;">60</span>`, "fv",
-      "The headline grade — a single 20-80 number summarizing the prospect's projected MLB future, blended across every source that grades them."),
+      "The headline grade - a single 20-80 number summarizing the prospect's projected MLB future, blended across every source that grades them."),
     anat(`<span style="display:inline-flex;gap:3px;"><span class="fv-badge fv-55 card-rarity-holo" style="padding:2px 7px;font-size:11px;">photo</span></span>`, "fv_rarity",
       "The photo's border/effect tier (shine → foil → chrome → holo → legendary) is keyed to FV, so rarity reads at a glance and matches the prospect list."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--up);">HIT 60 · PWR 65 · …</span>`, "twenty_eighty",
       "Per-tool 20-80 scouting grades. 50 is MLB-average; each ±10 is roughly one standard deviation. These feed the composite and, ultimately, FV."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-violet);">$DvM+ 110</span>`, "dvm_plus",
-      "A wRC+-style index of organizational development applied to the player's surplus dollars — 100 is league mean, +10 ≈ one SD."),
+      "A wRC+-style index of organizational development applied to the player's surplus dollars - 100 is league mean, +10 ≈ one SD."),
     anat(`<span class="g-term" data-gl="rps_plus" style="font-family:var(--font-mono);font-size:12px;color:var(--neon-cyan);">RPS+ 118</span>`, "rps_plus",
       "Level-anchored rate performance vs the player's own age × position cohort. 100 = cohort mean."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--up);">SC+ 113</span>`, "statcast_plus",
       "Tracked-data composite (contact quality + discipline for hitters; stuff + induced whiff/chase for pitchers), scaled so 100 = pool mean."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--up);">$154M</span>`, "surplus_value",
-      "Projected cost-controlled surplus value — the dollar production the player is expected to deliver above what those years cost."),
+      "Projected cost-controlled surplus value - the dollar production the player is expected to deliver above what those years cost."),
     anat(`<span style="font-family:var(--font-mono);font-size:13px;color:var(--up);">▲</span>`, "stock",
-      "Recent direction of the consensus FV — rising, flat, or falling over the trailing window."),
+      "Recent direction of the consensus FV - rising, flat, or falling over the trailing window."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);">ETA 2027</span>`, "eta",
       "Projected MLB-arrival year, derived from level, age, performance, and the org's promotion pace."),
   ].join("");
 
   const chartAnatomy = [
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-cyan);">━━ line</span>`, "consensus_fv",
-      "The solid line is the point-in-time consensus FV — the forward-filled, Bayesian-shrunk mean of every source's grade as of each date."),
+      "The solid line is the point-in-time consensus FV - the forward-filled, Bayesian-shrunk mean of every source's grade as of each date."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-tertiary);">┈┈ overlay</span>`, "fv",
-      "Toggling the per-source overlay shows each outlet's individual grade history — the inputs the consensus blends."),
+      "Toggling the per-source overlay shows each outlet's individual grade history - the inputs the consensus blends."),
     anat(`<span style="font-family:var(--font-mono);font-size:13px;color:var(--up);">◆</span>`, "debut_rule",
       "A debut marker flags when the player crossed the rookie-eligibility threshold and graduated off the prospect board."),
     anat(`<span style="font-family:var(--font-mono);font-size:13px;color:var(--neon-amber);">⇄</span>`, "trade",
@@ -552,11 +553,11 @@ function renderGuide() {
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);">A+ tree</span>`, "farm_report_card",
       "The org letter grade is a weighted tree: Development, MLB Production, Acquisition Strategy, and Financial branches, each built from auditable leaves."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-violet);">DvM+ 112</span>`, "dvm_plus",
-      "Development vs Mean — how fast the org grows the FV of prospects it already had (acquisitions nullified), 100 = league mean."),
+      "Development vs Mean - how fast the org grows the FV of prospects it already had (acquisitions nullified), 100 = league mean."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-cyan);">ToolDvM+ 108</span>`, "tools_dvm_plus",
       "The same development idea applied per tool, weighted by what each position needs."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--up);">OrgSur+ 121</span>`, "sur_plus",
-      "Org-level capital efficiency — WAR and contract surplus per dollar spent, scaled to 100 = league mean."),
+      "Org-level capital efficiency - WAR and contract surplus per dollar spent, scaled to 100 = league mean."),
   ].join("");
 
   el.innerHTML = `
@@ -630,7 +631,7 @@ function _vfInterp(table, x) {
   }
   return table[ks[ks.length - 1]];
 }
-const _fmtMM2 = m => (m == null ? "—" : "$" + (Math.round(m * 10) / 10).toFixed(1) + "M");
+const _fmtMM2 = m => (m == null ? " - " : "$" + (Math.round(m * 10) / 10).toFixed(1) + "M");
 
 // Bell curve with a marker at grade g (20-80) + shaded left tail = percentile.
 function _gxBellSvg(g) {
@@ -747,7 +748,7 @@ function _gxSurplus() {
   const st = vf.service_time || {};
   const ctrl = st.control_years || 6, preArb = st.pre_arb_years || 3, lgMin = st.league_min_mm || 0.76;
   const arbFr = st.arb_fractions_of_fa_value || [0.4, 0.6, 0.8];
-  if (warYr == null) { _setHTML("gx-surplus-out", "—"); return; }
+  if (warYr == null) { _setHTML("gx-surplus-out", " - "); return; }
   const war6 = warYr * ctrl;
   const gross = war6 * dpw;
   const faPerYr = warYr * dpw;
@@ -769,7 +770,7 @@ function _setHTML(id, html) { const e = document.getElementById(id); if (e) e.in
 
 function _methInteractivesHTML() {
   return `
-  <h2 class="meth-h">Interactive — manipulate the models</h2>
+  <h2 class="meth-h">Interactive - manipulate the models</h2>
   <p class="meth-note">These run on the live framework values. Move the inputs to see how a scouting grade, a source-weighting scheme, and the surplus walk respond.</p>
 
   <div class="gx-card">
@@ -785,7 +786,7 @@ function _methInteractivesHTML() {
   </div>
 
   <div class="gx-card">
-    <div class="gx-card-title">Why equal source weights? — adjustable consensus</div>
+    <div class="gx-card-title">How source weighting works - adjustable consensus</div>
     <div class="gx-card-body">
       <div id="gx-consensus" class="gx-srcs">
         ${[["FanGraphs", 60], ["MLB Pipeline", 55], ["ESPN", 60], ["Just Baseball", 50], ["TJStats", 55]].map(([nm, fv]) => `
@@ -799,12 +800,12 @@ function _methInteractivesHTML() {
         <button class="chip" type="button" onclick="_gxConsensusReset()">Reset to equal weights</button>
         <div id="gx-consensus-out" class="gx-out gx-out-inline"></div>
       </div>
-      <p class="meth-note" style="margin-top:8px;">The site uses equal weights: no source has shown a durable, statistically separable edge on resolved cohorts (see Source Comparison), so weighting inputs would add variance without reliable signal.</p>
+      <p class="meth-note" style="margin-top:8px;">The live board uses ACCURACY-WEIGHTED sources (since June 2026): measured track-record weights, shrunk toward equal and frozen per vintage, shipped after beating equal-weight in a vintage-disciplined A/B. This widget starts from equal weights so you can feel how any weighting moves a consensus.</p>
     </div>
   </div>
 
   <div class="gx-card">
-    <div class="gx-card-title">Surplus value calculator — FV to dollars, step by step</div>
+    <div class="gx-card-title">Surplus value calculator - FV to dollars, step by step</div>
     <div class="gx-card-body gx-2col">
       <div>
         <label class="gx-label">FV <b id="gx-surplus-fvval">55</b></label>
@@ -823,7 +824,7 @@ function _methInteractivesHTML() {
 function renderMethodology() {
   const el = document.getElementById("methodology-body");
   if (!el) return;
-  // Model registry (accountability ledger) — lazy-loaded once, same
+  // Model registry (accountability ledger) - lazy-loaded once, same
   // pattern as the source backtest. Re-renders this view on arrival.
   if (!_S.registry && !_S.regLoading) {
     _S.regLoading = true;
@@ -835,7 +836,7 @@ function renderMethodology() {
         if (_S.view === "methodology") renderMethodology(); });
   }
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-  const printHead = `<div id="methodology-print-head">eephus.io — Methodology · eephus.io/glossary · ${escapeHtml(today)}</div>`;
+  const printHead = `<div id="methodology-print-head">eephus.io - Methodology · eephus.io/glossary · ${escapeHtml(today)}</div>`;
   const toolbar = `<div class="meth-toolbar"><button class="meth-export-btn" type="button" onclick="_printMethodology()" title="Print or save the methodology as a PDF">⎙ Export methodology (PDF)</button></div>`;
   el.innerHTML = printHead + toolbar + _methProseHTML() + _methRegistryHTML() + _methInteractivesHTML();
   // Populate the interactives' initial state.
@@ -843,7 +844,7 @@ function renderMethodology() {
 }
 
 // Model accountability ledger (model-audit Phase 5, WS-11): the committed
-// registry rendered VERBATIM — unvalidated rows and misses included; that
+// registry rendered VERBATIM - unvalidated rows and misses included; that
 // is the point. One row per model: champion, baseline, verdict, artifact.
 const _REG_VERDICT_GLYPH = { validated: "✓ validated", provisional: "◐ provisional",
                              unvalidated: "○ unvalidated", deprecated: "✗ deprecated" };
@@ -860,7 +861,7 @@ function _methRegistryHTML() {
     const rows = reg.models.map(m => {
       const art = m.eval_artifact
         ? `<a href="/${escapeHtml(m.eval_artifact)}" target="_blank" rel="noopener">${escapeHtml(m.eval_artifact.replace(/^data\//, ""))}</a>${m.stale ? " <em>(stale)</em>" : ""}`
-        : "—";
+        : " - ";
       return `<tr>
         <td><strong>${escapeHtml(m.model_id)}</strong><br><span class="meth-note">${escapeHtml(m.surface || "")}</span></td>
         <td>${escapeHtml(m.champion || "")}</td>
@@ -878,11 +879,11 @@ function _methRegistryHTML() {
   }
   return `<div class="source-comp-wrap">
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>Model accountability · the registry, rendered verbatim</div>
-    <h2 class="meth-h">Which models are validated — and which aren't</h2>
+    <h2 class="meth-h">Which models are validated - and which aren't</h2>
     ${body}
   </div>`;
 }
-// Part 8 — exportable methodology: print just the methodology body (the
+// Part 8 - exportable methodology: print just the methodology body (the
 // toolbar + interactive widgets are hidden by the print stylesheet; a dated
 // PROSPX header prints at the top). Users "Save as PDF" from the print dialog.
 function _printMethodology() {
@@ -894,7 +895,7 @@ function _printMethodology() {
   setTimeout(cleanup, 1500);
 }
 
-// Source Comparison — the empirical backtest, visually set apart from the
+// Source Comparison - the empirical backtest, visually set apart from the
 // methodology prose as the "does it work?" evidence area (distinct framed
 // container + eyebrow). Lazy-loads source_backtest.json.
 function renderSourceComparison() {
@@ -929,13 +930,13 @@ function renderSourceComparison() {
         ${_methCalibrationChart(bt, "contributor_rate", "Contributor rate (career WAR ≥ " + (od.contributor_war ?? 3) + ")", { pct: true, yMax: 1 })}
       </div>
       <h3 class="meth-h3">Cohort outcomes by FV tier</h3>
-      <p class="meth-note">Every prospect a source graded that preseason is in its cohort — players who never debuted stay in at 0 WAR (no survivorship cherry-picking). Cumulative WAR is censored at today, so younger cohorts (2023) have had less time to accrue it; the rate columns (WAR/yr, Reg pace) are less sensitive to that.</p>
+      <p class="meth-note">Every prospect a source graded that preseason is in its cohort - players who never debuted stay in at 0 WAR (no survivorship cherry-picking). Cumulative WAR is censored at today, so younger cohorts (2023) have had less time to accrue it; the rate columns (WAR/yr, Reg pace) are less sensitive to that.</p>
       <div class="meth-tables">${bt.raters.map(r => _methTierTable(bt, r)).join("")}</div>
       <div class="meth-caveats">
         <div class="meth-caveats-title">⚠ Read this honestly</div>
         <ul>
           <li><strong>Short track record.</strong> Only ${bt.window.years.length} preseason base years (${bt.window.years.join(", ")}) are old enough to have resolved outcomes. The newer sources have <em>zero</em> resolved cohorts.</li>
-          <li><strong>Thin top tiers.</strong> The 60+ tier is only n≈40–60 across all years — a handful of hits or misses moves its rates a lot.</li>
+          <li><strong>Thin top tiers.</strong> The 60+ tier is only n≈40–60 across all years - a handful of hits or misses moves its rates a lot.</li>
           <li><strong>Censoring.</strong> Outcomes are cumulative WAR as of ${escapeHtml(bt.as_of_date || "today")}; the 2023 cohort has had ~3 seasons, the 2021 cohort ~5. Rate metrics mitigate but don't erase this.</li>
           <li><strong>Modest, noisy edge.</strong> The consensus's advantage over its best input is real on the pooled set but small, and it isn't #1 every single year. A credible short track record beats an inflated one.</li>
         </ul>

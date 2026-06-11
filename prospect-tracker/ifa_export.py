@@ -9,7 +9,7 @@ Mirrors the Draft section's sidecar (`draft_timeseries.json`): one "class" per
 signing year (2021–current), each carrying the full Spotrac IFA signing list,
 an org spending leaderboard, and class-level trends.
 
-The signing data comes from `spotrac.scrape_spotrac_ifa` — the complete per-year
+The signing data comes from `spotrac.scrape_spotrac_ifa` - the complete per-year
 tracker (player, **signing org**, country, bonus, pool%). The `org` field is the
 team that signed the player that period, so the section shows the SIGNING team,
 not the player's current org. Prospects we also track in the MiLB DB get enriched
@@ -114,7 +114,7 @@ def _enrich(signing: dict, tp: dict | None) -> dict:
             # Prefer the tracked position when Spotrac left it blank.
             "position":     out["position"] or tp.get("position"),
         })
-        # Age at signing — J2 signing day is Jan 15 of the class year.
+        # Age at signing - J2 signing day is Jan 15 of the class year.
         bd = tp.get("birth_date")
         yr = signing.get("year")
         if bd and yr:
@@ -146,7 +146,7 @@ def _build_class(year: int, rows: list[dict], players_by_key: dict,
                  today: date) -> dict:
     """Assemble one signing-year class block from its Spotrac rows."""
     signings = [_enrich(r, players_by_key.get(r.get("player_key"))) for r in rows]
-    # Bonus-desc, then tracked-first, then name — deterministic.
+    # Bonus-desc, then tracked-first, then name - deterministic.
     signings.sort(key=lambda s: (
         -(s["bonus_usd"] or 0), not s["is_tracked"], s["player_name"] or ""))
 
@@ -184,7 +184,7 @@ def _build_class(year: int, rows: list[dict], players_by_key: dict,
             bucket_counts[bk] += 1
     country_agg: dict[str, dict] = {}
     for s in signings:
-        c = s["country"] or "—"
+        c = s["country"] or " - "
         cb = country_agg.setdefault(c, {"country": c, "n": 0, "total_usd": 0})
         cb["n"] += 1
         if s["bonus_usd"]:
@@ -193,7 +193,7 @@ def _build_class(year: int, rows: list[dict], players_by_key: dict,
                            key=lambda c: (-c["total_usd"], -c["n"]))[:10]
     pos_split: dict[str, int] = defaultdict(int)
     for s in signings:
-        pos_split[s["position"] or "—"] += 1
+        pos_split[s["position"] or " - "] += 1
     biggest = [
         {k: s[k] for k in ("player_name", "player_key", "org", "country",
                            "bonus_usd", "is_tracked", "fv_label")}
@@ -248,7 +248,7 @@ def _players_by_key_from_sibling(path: Path) -> dict:
     {} when the file isn't present yet (signings still render, sans FV)."""
     ts = path.parent / "timeseries.json"
     if not ts.exists():
-        log.info("ifa_export: %s not found — signings export without enrichment", ts)
+        log.info("ifa_export: %s not found - signings export without enrichment", ts)
         return {}
     try:
         with ts.open(encoding="utf-8") as fp:

@@ -1,5 +1,5 @@
 /* =============================================================================
-   eephus.io — shared site stylesheet
+   eephus.io - shared site stylesheet
    -----------------------------------------------------------------------------
    The site-wide nav + the editorial pages (Home / Articles / Team) share this
    file so they read as one brand with PROSPX. Tokens are lifted verbatim from
@@ -7,7 +7,7 @@
    accent, MS-Gothic retro stack) so the parent brand and the tool match.
 
    On the PROSPX page this file is loaded BEFORE its inline <style>, so PROSPX's
-   own :root wins the cascade — here we only need it for `.eephus-nav`.
+   own :root wins the cascade - here we only need it for `.eephus-nav`.
    ========================================================================== */
 :root {
   --bg-primary:    #F4F0E6;   /* warm paper */
@@ -43,8 +43,8 @@
    app (which also loads this sheet), and the html2canvas GFX export (it renders
    the live DOM with these stylesheets). The universal selector + !important
    overrides every rule and the ~hundreds of inline `border-radius` styles in the
-   PROSPX templates. This does NOT touch SVG/canvas chart geometry — plotted
-   curves are <path d="…"> data, not CSS border-radius — only rounded UI corners.
+   PROSPX templates. This does NOT touch SVG/canvas chart geometry - plotted
+   curves are <path d="…"> data, not CSS border-radius - only rounded UI corners.
    SVG <rect> UI chrome is sharpened separately by removing rx/ry; chart/data-viz
    rects keep theirs. Circular dots/avatars/pills become squares. */
 *, *::before, *::after { border-radius: 0 !important; }
@@ -52,7 +52,7 @@
 /* ── Keyboard focus safety net (a11y) ─────────────────────────────────────────
    One shared, sharp, token-colored focus ring for every interactive element,
    site-wide (editorial pages + PROSPX, which also loads this sheet). Authored
-   with :where() so its specificity is ZERO — any element that already defines a
+   with :where() so its specificity is ZERO - any element that already defines a
    richer :focus/:focus-visible style still wins, and this only backstops the
    ones that had a bare `outline:none` with no visible replacement. :focus-visible
    (not :focus) keeps it keyboard-only, so mouse clicks don't draw the ring. */
@@ -61,16 +61,16 @@
   outline-offset: 1px;
 }
 
-/* Diamond accents (approved) — small live / status glyphs rendered as
+/* Diamond accents (approved) - small live / status glyphs rendered as
    45°-rotated squares (the global rule above already squared their corners).
    Scope: homepage live "blip" dots + the PROSPX IL / health status dots.
-   (Stock direction already uses pointed ▲/▼ glyphs — no round dot to convert.) */
+   (Stock direction already uses pointed ▲/▼ glyphs - no round dot to convert.) */
 .home-ticker .ticker-tag .blip,
 .sb-feed .feed-head .blip,
 .row-tag.health-il::before, .row-tag.health-tj::before, .row-tag.health-chronic::before,
 .row-tag.health-watch::before, .row-tag.health-healthy::before { transform: rotate(45deg); }
 
-/* Dark-mode logo legibility — a faint light halo lifts dark/navy team logos off
+/* Dark-mode logo legibility - a faint light halo lifts dark/navy team logos off
    the near-black background. This is the one piece of the removed pixelation step
    worth preserving (the pixel assets baked a beige outline for the same reason);
    kept here as clean CSS, no pixelation. Applies to PROSPX (.team-logo) + the
@@ -80,7 +80,7 @@
   filter: drop-shadow(0 0 0.5px rgba(255,255,255,.55)) drop-shadow(0 0 1.6px rgba(255,255,255,.32));
 }
 
-/* Dark variant — mirrors the PROSPX Topps-Chrome / refractor dark theme
+/* Dark variant - mirrors the PROSPX Topps-Chrome / refractor dark theme
    (neutral near-black surfaces + refractor-rainbow accents) so the whole site
    reads as one. Token VALUES copied from prospx/index.html [data-theme="dark"].
    Toggled via <html data-theme="dark">, shared with PROSPX via the same
@@ -98,7 +98,7 @@
   --accent-gold:   #FFD700;   /* refractor gold */
   --accent-red:    #FF6B7A;   /* refractor down */
   --accent-green:  #4FFF9E;   /* refractor mint */
-  --accent-navy:   #4FD9FF;   /* refractor cyan — links pop on black */
+  --accent-navy: #4FD9FF; /* refractor cyan - links pop on black */
   --accent-cyan:   #00D9FF;
   --iridescent: linear-gradient(90deg,#00D9FF 0%,#B47CFF 30%,#FF4FD8 55%,#FFD700 78%,#4FFF9E 100%);
   --grain: rgba(255,255,255,.035);
@@ -114,14 +114,14 @@
      (glow/vignette layers). None of these tokens exists outside this block,
      so the treatment cannot leak into the light theme. Hues DERIVE from the
      audited dark accents (--accent-green #4FFF9E refractor mint,
-     --accent-gold #FFD700 refractor gold) — no new brand colors. */
+     --accent-gold #FFD700 refractor gold) - no new brand colors. */
   --bg-base: var(--bg-primary);        /* near-black field base (#0C0C0E) */
   --bg-glow-color: var(--accent-green);
-  --bg-glow-origin: 50% 0%;            /* top-center — brightest above the fold */
+  --bg-glow-origin: 50% 0%; /* top-center - brightest above the fold */
   --bg-glow-radius: 120%;
   --bg-glow-strength: 0.05;            /* 0..1 alpha dial on the glow pool */
   --bg-vignette-strength: 0.35;        /* 0..1 corner darkening (CRT curvature) */
-  --bg-scanline-opacity: 0;            /* opt-in CRT scanlines — default OFF */
+  --bg-scanline-opacity: 0; /* opt-in CRT scanlines - default OFF */
   --star-color-primary: var(--accent-green);
   --star-color-secondary: var(--accent-gold);
   --star-mix-ratio: 0.85;              /* share of stars on the primary hue */
@@ -142,10 +142,10 @@
    assets/eephus-bg.js only while data-theme="dark" and removed entirely on
    any other theme. z-index:-1 slots it ABOVE the page background (the body
    background promotes to the document canvas, which paints below negative-z
-   elements) and BELOW all content — panels, WIRE ticker, cards, modals. The
+   elements) and BELOW all content - panels, WIRE ticker, cards, modals. The
    radial glow + corner vignette render as CSS background layers ON the
    element (beneath the JS-drawn stars); cards/data panels keep their flat
-   near-black surfaces on top, untinted. pointer-events:none — decoration. */
+   near-black surfaces on top, untinted. pointer-events:none - decoration. */
 [data-theme="dark"] #eephus-bg {
   position: fixed;
   inset: 0;
@@ -154,7 +154,7 @@
   z-index: -1;
   pointer-events: none;
   background:
-    /* scanlines (top layer — invisible at the default 0 opacity) */
+    /* scanlines (top layer - invisible at the default 0 opacity) */
     repeating-linear-gradient(0deg,
       color-mix(in srgb, #000 calc(var(--bg-scanline-opacity) * 100%), transparent) 0 1px,
       transparent 1px 3px),
@@ -192,7 +192,7 @@
 .eephus-wrap { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem 4rem; }
 
 /* ---- site nav (every page, incl. PROSPX) ---- */
-/* PRIMARY site nav — masthead-level. A filled band with a heavy double rule
+/* PRIMARY site nav - masthead-level. A filled band with a heavy double rule
    (the newspaper-nameplate treatment) so it reads as the dominant, site-wide
    bar that the PROSPX section strip nests beneath. */
 .eephus-nav {
@@ -214,7 +214,7 @@
 }
 /* Wordmark + beta tag lockup. One version string lives in build_site.py
    (EEPHUS_VERSION); the badge is a platform-wide state, so it rides the
-   eephus.io wordmark — never PROSPX. Subordinate to the wordmark, sharp, both
+   eephus.io wordmark - never PROSPX. Subordinate to the wordmark, sharp, both
    themes. */
 .eephus-nav .eephus-brand { display: inline-flex; align-items: center; gap: 9px; }
 .eephus-beta {
@@ -244,7 +244,7 @@
 .eephus-nav .eephus-nav-controls { display: inline-flex; align-items: center; gap: 8px; }
 /* Terminal/Bloomberg treatment: see-through chip + hairline border + MS-Gothic
    label, with an iridescent hairline that lights on hover/focus (and marks the
-   dark-mode toggle's "on" state). Header-only — scoped under .eephus-nav, so the
+   dark-mode toggle's "on" state). Header-only - scoped under .eephus-nav, so the
    homepage sidebar controls (.home-theme-toggle / .sb-* / .eph-*) are untouched. */
 .eephus-nav .eephus-nav-ctrl {
   position: relative;
@@ -261,7 +261,7 @@
 .eephus-nav .eephus-nav-ctrl:focus-visible {
   background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--text-tertiary);
 }
-/* Iridescent hairline accent — the red→yellow→green masthead gradient. */
+/* Iridescent hairline accent - the red→yellow→green masthead gradient. */
 .eephus-nav .eephus-nav-ctrl::after {
   content: ""; position: absolute; left: -1px; right: -1px; bottom: -1px; height: 2px;
   background: var(--iridescent); opacity: 0; transition: opacity .12s; pointer-events: none;
@@ -358,7 +358,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* Deep-linked card (e.g. /team/#member-will-cahoon) gets a brief gold accent. */
 .team-card { scroll-margin-top: 90px; }
 .team-card:target { outline: 2px solid var(--accent-gold); outline-offset: 3px; }
-/* Headshot — rectangular, sharp corners (circular is reserved for account
+/* Headshot - rectangular, sharp corners (circular is reserved for account
    avatars). Provided <img> sits above a monogram that shows through when there's
    no photo or the file fails to load. */
 .team-card .team-photo {
@@ -423,7 +423,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 }
 
 /* ===========================================================================
-   HOMEPAGE — sidebar + main editorial portal (newspaper × baseball-card × retro)
+   HOMEPAGE - sidebar + main editorial portal (newspaper × baseball-card × retro)
    =========================================================================== */
 .home-theme-toggle {
   font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
@@ -444,7 +444,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   font-family: var(--font-retro-mono); font-size: 13px; letter-spacing: .02em;
   display: flex; align-items: center; gap: 0; overflow: hidden; white-space: nowrap;
 }
-/* WIRE brand mark — pinned at the left, opaque, and ABOVE the scrolling track
+/* WIRE brand mark - pinned at the left, opaque, and ABOVE the scrolling track
    (sticky so it stays put if the bar becomes manually scrollable under
    reduced-motion). Items dissolve behind it rather than overlapping it. */
 .home-ticker .ticker-tag {
@@ -470,14 +470,14 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
      reduced-motion reset (animation-duration:.001ms + iteration-count:1,
      !important) is beaten here by higher selector specificity. The ticker is
      decorative (aria-hidden) with a STATIC, accessible Prospect Wire feed in the
-     sidebar, and it pauses on hover — so motion-sensitive readers still get the
+     sidebar, and it pauses on hover - so motion-sensitive readers still get the
      data and can stop it. (Per site-owner request the marquee always runs.) */
   animation-duration: 50s !important;
   animation-iteration-count: infinite !important;
 }
 /* Pause-on-hover (desktop) so a reader can stop the marquee and click an item. */
 .home-ticker:hover .ticker-track { animation-play-state: paused; }
-/* Direct children only (the items) — NOT the inner glyph spans. */
+/* Direct children only (the items) - NOT the inner glyph spans. */
 .home-ticker .ticker-track > a, .home-ticker .ticker-track > span { flex: none; }
 /* Dim separator after each item for scannability (lives inside the item so the
    duplicated track still loops seamlessly). */
@@ -485,7 +485,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   content: "•"; color: #45563d; margin: 0 20px; font-weight: 400;
 }
 .home-ticker .ticker-track a { color: inherit; text-decoration: none; }
-/* Per-prospect team logo in each ticker item — clean (non-pixelated) ESPN CDN
+/* Per-prospect team logo in each ticker item - clean (non-pixelated) ESPN CDN
    logo, small + inline so it rides ahead of the glyph. */
 /* A subtle light plate behind each logo so dark-colored marks (Giants, Yankees,
    White Sox…) stay visible on the near-black ticker bar. Nearly-sharp corners
@@ -516,7 +516,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 
 /* sidebar brand + search + nav */
 .sb-brand { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
-/* Sidebar brand = the merged arc-wordmark at 20px (the arc IS the flourish —
+/* Sidebar brand = the merged arc-wordmark at 20px (the arc IS the flourish - 
    the old iridescent underline is gone with it). */
 .sb-brand .wm { font-family: var(--font-retro-mono); font-weight: 700; font-size: 20px; letter-spacing: .03em; color: var(--text-primary); text-decoration: none; }
 .sb-search { width: 100%; font-family: var(--font-retro); font-size: 13px; padding: 8px 10px; margin-bottom: 18px;
@@ -526,7 +526,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* PROSPX baseball badge inline with its nav entry + subnav group label. */
 .px-ball { flex: none; }
 .sb-group-label--lockup { display: flex; align-items: center; gap: 6px; }
-/* Module glyphs in the sidebar nav — terminal-safe text glyphs, fixed
+/* Module glyphs in the sidebar nav - terminal-safe text glyphs, fixed
    width so labels align whether the icon is a glyph or the ball SVG. */
 .sb-ico {
   width: 16px; flex: none; text-align: center;
@@ -534,7 +534,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   color: var(--text-tertiary);
 }
 .sb-nav a:hover .sb-ico, .sb-nav a.is-active .sb-ico { color: var(--text-primary); }
-/* α/β module lifecycle markers — superscript next to module names in navs;
+/* α/β module lifecycle markers - superscript next to module names in navs;
    the bordered .eephus-beta chip is the masthead form. */
 .mod-stage {
   font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
@@ -562,14 +562,14 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 [data-theme="dark"] .sb-feed { background: #0a0c06; }
 .sb-feed .feed-head { display: flex; align-items: center; gap: 7px; font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8fe3b0; margin-bottom: 8px; }
 .sb-feed .feed-head .blip { width: 7px; height: 7px; border-radius: 50%; background: #6ee7a8; animation: ticker-blip 1.4s steps(2) infinite; }
-/* Sidebar Prospect Wire — same palette as the top scrolling WIRE ticker
+/* Sidebar Prospect Wire - same palette as the top scrolling WIRE ticker
    (bright base text + matching per-type glyph colors) so the two read as one
    feed. */
-/* NOTE: the base color is set on `.sb-feed .feed-item` below — `.feed-item`
+/* NOTE: the base color is set on `.sb-feed .feed-item` below - `.feed-item`
    alone (0,1,0) loses to the global `.eephus-page a` link color (0,1,1), which
    would render the names dark-navy on the dark feed. */
 /* Structured wire rows: date | logo | name (ellipsized, fills) | value chip
-   right-aligned. One line per item — the type glyph lives only in the value
+   right-aligned. One line per item - the type glyph lives only in the value
    chip, never duplicated beside the name. */
 .feed-item { display: flex; align-items: center; gap: 7px; font-family: var(--font-retro-mono); font-size: 12px; line-height: 1.4; text-decoration: none; padding: 7px 2px; border-bottom: 1px dotted #2f3a2a; }
 .sb-feed .feed-item { color: #e6fbef; }
@@ -586,7 +586,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .sb-feed .feed-day-tm:hover, .sb-feed .feed-day-tm:focus-visible { text-decoration: underline; }
 .feed-item .feed-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .feed-item .feed-val { flex: none; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
-/* Per-item team logo — same light plate as the top ticker's tk-logo so dark
+/* Per-item team logo - same light plate as the top ticker's tk-logo so dark
    marks (Yankees, Giants…) stay visible on the near-black feed panel.
    Nearly-sharp corners; circles stay avatar-only. */
 .sb-feed .feed-item .feed-logo {
@@ -605,7 +605,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .feed-item .g.il,    .feed-item .feed-val.il    { color: #ffb454; }
 .feed-item .g.debut, .feed-item .feed-val.debut { color: #4ee0ff; }
 .feed-item .g.trade, .feed-item .feed-val.trade { color: var(--accent-gold); }
-.feed-item .g.signing, .feed-item .feed-val.signing { color: #b47cff; }   /* FA winter wire — refractor violet */
+.feed-item .g.signing, .feed-item .feed-val.signing { color: #b47cff; } /* FA winter wire - refractor violet */
 
 /* ---- masthead ---- */
 .masthead { text-align: center; border-bottom: 3px double var(--text-primary); padding: 22px 0 12px; margin-bottom: 4px; }
@@ -615,7 +615,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    is EEPHUS_LOGO_MARK in build_site.py. Crisp vector, sharp container, theme-aware
    (arc gradient is fixed brand colors; baseline/seam ride currentColor; the ball
    punches through with the page background so it reads in both modes). */
-/* Merged brand mark — the signature lob is PART of the lettering: the arc
+/* Merged brand mark - the signature lob is PART of the lettering: the arc
    spans the wordmark with the ball at apex (replaces the old mark-above-text
    lockup). Arc + ball are em-scaled off the nameplate's own font-size, so
    the masthead (clamp 2.4–4rem) and the sidebar (20px) share one mark. */
@@ -673,7 +673,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   font-size: 11px; padding: 5px 9px; align-self: center; background: transparent;
 }
 .header h1 .eph-xlink--mast:hover, .header h1 .eph-xlink--mast:focus-visible { background: var(--bg-tertiary); }
-/* Iridescent hairline accent — matches the nav control cluster (Watchlist /
+/* Iridescent hairline accent - matches the nav control cluster (Watchlist /
    theme toggle / Sign in) so the @handle chip reads as part of the same family. */
 .header h1 .eph-xlink--mast::after {
   content: ""; position: absolute; left: -1px; right: -1px; bottom: -1px; height: 2px;
@@ -724,7 +724,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .row-spark svg { width: 58px; height: 20px; display: block; }
 .row-delta { font-family: var(--font-retro-mono); font-size: 13px; font-weight: 700; flex: none; font-variant-numeric: tabular-nums; min-width: 46px; text-align: right; }
 .row-delta.up { color: var(--accent-green); } .row-delta.down { color: var(--accent-red); }
-/* Neutral delta — a value that rounds to zero is not a gain or a loss. Prevents
+/* Neutral delta - a value that rounds to zero is not a gain or a loss. Prevents
    the "-0.0 WAG" (red) negative-zero artifact on grad rows. */
 .row-delta.flat { color: var(--text-tertiary); }
 .fv-pill { font-family: var(--font-retro-mono); font-size: 13px; font-weight: 800; flex: none; padding: 3px 9px; border-radius: var(--radius-sm); background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); font-variant-numeric: tabular-nums; }
@@ -816,10 +816,10 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 }
 
 /* ── Free Agency app (/fa/) ──────────────────────────────────────────────── */
-/* The FA module's own surface — separate from PROSPX by design. Everything is
+/* The FA module's own surface - separate from PROSPX by design. Everything is
    scoped under .fa-app so none of these primitives (chips, detail tables,
    newsprint eyebrows) leak into PROSPX, which also loads site.css. Tokens
-   only — both themes ride the palette blocks at the top of this file. */
+   only - both themes ride the palette blocks at the top of this file. */
 .eephus-wrap:has(.fa-app) { max-width: 1400px; }   /* 11-col board needs room */
 .fa-app { font-family: var(--font-retro); }
 .fa-app .newsprint-eyebrow {
@@ -856,7 +856,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   border: 1px solid var(--border); background: var(--bg-secondary);
   color: var(--text-secondary);
   /* anchors in the chip row (the Glossary link) read EXACTLY like the
-     view chips — same box, no underline, glyph accent (the § the site
+     view chips - same box, no underline, glyph accent (the § the site
      uses for the glossary module). */
   text-decoration: none; display: inline-block;
 }
@@ -932,7 +932,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .fa-app .fa-gloss p { margin: 0 0 6px; color: var(--text-secondary); font-size: 0.95rem; }
 .fa-app .fa-gloss .fa-gloss-short { font-weight: 700; color: var(--text-primary); }
 
-/* ── FA v2 — logos, verdict chips, surplus coloring, sortable headers,
+/* ── FA v2 - logos, verdict chips, surplus coloring, sortable headers,
       board rail, season table, fit component bars ─────────────────────── */
 .fa-app .fa-logo { width: 16px; height: 16px; object-fit: contain; vertical-align: -3px;
   margin-right: 4px; }
@@ -981,7 +981,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   .fa-app .fa-rail-mod { flex: 1 1 200px; }
 }
 
-/* ── MLB Projections (/projections/) — extends .fa-app ─────────────────── */
+/* ── MLB Projections (/projections/) - extends .fa-app ─────────────────── */
 .proj-app .proj-select, .proj-app .proj-search { font-family: var(--font-retro-mono);
   font-size: 12px; padding: 4px 8px; background: var(--bg-secondary);
   border: 1px solid var(--border); color: var(--text-primary); }
@@ -1129,7 +1129,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
       color: var(--text-tertiary); margin-top: 5px; line-height: 1.45; }
 @media (max-width: 640px) {.gl-app .gx-2col { grid-template-columns: 1fr; }.gl-app .gx-src-row { grid-template-columns: 1fr 1fr; } }
 .gl-app /* === Methodology & Track Record === */
-    /* Source Comparison — visually set apart as the empirical "does it work?"
+    /* Source Comparison - visually set apart as the empirical "does it work?"
        data area: framed panel + a data-tone eyebrow so it reads distinct from
        the methodology prose. Sharp corners (site standard). */
     .source-comp-wrap { border: 1px solid var(--border); border-left: 3px solid var(--neon-cyan);
@@ -1175,7 +1175,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
       letter-spacing: 0.04em; color: var(--text-secondary); background: var(--bg-secondary);
       border: 1px solid var(--border); padding: 6px 12px; cursor: pointer; }
 .gl-app .meth-export-btn:hover { color: var(--neon-cyan); border-color: var(--neon-cyan); }
-@media print {body.printing-meth * { visibility: hidden !important; }body.printing-meth #methodology-body, body.printing-meth #methodology-body * { visibility: visible !important; }body.printing-meth #methodology-body { position: absolute; left: 0; top: 0; width: 100%; }.gl-app /* Don't print the toolbar or the interactive widgets — they don't belong in a handout. */
+@media print {body.printing-meth * { visibility: hidden !important; }body.printing-meth #methodology-body, body.printing-meth #methodology-body * { visibility: visible !important; }body.printing-meth #methodology-body { position: absolute; left: 0; top: 0; width: 100%; }.gl-app /* Don't print the toolbar or the interactive widgets - they don't belong in a handout. */
       body.printing-meth .meth-toolbar, body.printing-meth .gx-card { display: none !important; }body.printing-meth #methodology-print-head { display: block !important; visibility: visible !important;
         margin-bottom: 14px; font-family: var(--font-mono); border-bottom: 2px solid #000; padding-bottom: 8px; }
     }
@@ -1261,7 +1261,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
       color: var(--neon-cyan);
       text-decoration-color: var(--neon-cyan); }
 .gl-app /* Floating popover anchored near the clicked term. position absolute;
-       positioned via JS. Hidden by default — `.is-open` reveals it. */
+       positioned via JS. Hidden by default - `.is-open` reveals it. */
     .glossary-popover {
       display: none;
       position: absolute;
@@ -1336,7 +1336,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
       font-weight: 700;
       padding-bottom: 4px;
       border-bottom: 1px solid var(--border-light); }
-/* qk quick-search palette (site-wide; unscoped — overlays any page) */
+/* qk quick-search palette (site-wide; unscoped - overlays any page) */
     /* === Quick-search palette (Part 6, ⌘K) === */
     .qk-overlay { position: fixed; inset: 0; z-index: 4000; display: none;
       align-items: flex-start; justify-content: center; padding-top: 12vh;
@@ -1367,7 +1367,7 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 /* ── /GLOSSARY-PORT ───────────────────────────────────────────────────── */
 
 /* ── Shared glossary runtime (eephus-gl.js): palette token bridge, term
-      marker, hover tooltip, SR-only definitions. Unscoped — every surface. ── */
+      marker, hover tooltip, SR-only definitions. Unscoped - every surface. ── */
 .qk-overlay {
   --font-mono: var(--font-retro-mono); --font-sans: var(--font-retro);
   --border-strong: var(--text-tertiary); --neon-cyan: var(--accent-cyan);

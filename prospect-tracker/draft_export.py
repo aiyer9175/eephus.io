@@ -88,7 +88,7 @@ from storage import (
 log = logging.getLogger(__name__)
 
 
-# v31.7 — College / amateur stats integration. Each draft prospect
+# v31.7 - College / amateur stats integration. Each draft prospect
 # with FG-side amateur stats (college conference, HS, summer-league
 # rows from draft_statlines) gets a `college_stats` summary block on
 # their export record: latest season's headline stats + a 2-3 season
@@ -194,7 +194,7 @@ def _college_perf_z(summary: dict | None) -> float | None:
         except (TypeError, ValueError):
             return None
     else:
-        # Hitter — prefer wRC+ then fall back to OPS-anchored.
+        # Hitter - prefer wRC+ then fall back to OPS-anchored.
         wrc = payload.get("wrc_plus")
         if wrc is not None:
             try:
@@ -210,7 +210,7 @@ def _college_perf_z(summary: dict | None) -> float | None:
         return None
 
 
-# Draft Stock+ — class-normalized index. 100 = class median rank,
+# Draft Stock+ - class-normalized index. 100 = class median rank,
 # 130 ≈ +2 sigma toward #1 (so a top-5 pick reads ≥130 in most classes),
 # 70 ≈ -2 sigma (toward the back of the class). Lower rank = higher stock.
 def _stock_plus(rank: float | None, class_ranks: list[int]) -> int | None:
@@ -237,7 +237,7 @@ def _stock_plus(rank: float | None, class_ranks: list[int]) -> int | None:
 def _projected_round(pick: float | None) -> int | None:
     """Map a pick number → round number. Pick 1-30 = R1, 31-60 = R2, etc.
     Accepts either the continuous consensus_rank or the integer
-    consensus_pick — same math either way."""
+    consensus_pick - same math either way."""
     if pick is None or pick < 1:
         return None
     return min(int((pick - 1) // 30) + 1, 20)
@@ -264,7 +264,7 @@ def _consensus(snaps: list[dict], field: str) -> float | None:
 
 
 def _consensus_fv_plus(snaps: list[dict]) -> bool:
-    """v26 — True if any latest-per-source snap for this player has
+    """v26 - True if any latest-per-source snap for this player has
     fv_plus=1. Mirrors the consensus.py aggregation rule (the upside
     marker propagates to the consensus when any contributing source
     carried it)."""
@@ -275,7 +275,7 @@ def _consensus_fv_plus(snaps: list[dict]) -> bool:
 def _fv_bucket(fv: float | None, fv_plus: bool = False) -> str | None:
     """Map (integer FV, '+' flag) to a display bucket.
 
-    v26 — '+' is a separate flag, not a .5 numeric. Integer 45 with
+    v26 - '+' is a separate flag, not a .5 numeric. Integer 45 with
     fv_plus=True buckets to "45+"; integer 45 without buckets to "45".
     The old `.5`-based bucketing went away with the 40+ → 42.5
     interpolation removal.
@@ -337,18 +337,18 @@ def _build_class(year: int,
         # still see fractional resolution.
         fv_raw = _consensus(plist, "fv")
         fv = int(round(fv_raw)) if fv_raw is not None else None
-        # v26 — '+' upside flag: True if any source published "55+" etc.
+        # v26 - '+' upside flag: True if any source published "55+" etc.
         fv_plus = _consensus_fv_plus(plist)
         rank = consensus_ranks.get(pk)
         sp = _stock_plus(rank, class_rank_list)
         if sp is not None:
             stock_plus_values.append(sp)
-        # Bucket from integer FV + the '+' flag (v26 — no more .5 inflation).
+        # Bucket from integer FV + the '+' flag (v26 - no more .5 inflation).
         bucket = _fv_bucket(fv, fv_plus)
         if bucket:
             fv_dist[bucket] += 1
 
-        # Per-source tool grades — keep latest only
+        # Per-source tool grades - keep latest only
         tool_grades: dict[str, dict] = {}
         for src, snap in latest.items():
             tools = snap.get("tools") or {}
@@ -380,7 +380,7 @@ def _build_class(year: int,
         if drafted_pick and status != "drafted":
             status = "drafted"
 
-        # v31.7 — College stats summary + Draft Stock+ boost.
+        # v31.7 - College stats summary + Draft Stock+ boost.
         # The college signal nudges DS+ by ±6 (clamped) so it stays
         # secondary to the rank-derived baseline but visible enough
         # to push an outlier hitter / arm up or down a few slots.
@@ -390,7 +390,7 @@ def _build_class(year: int,
         sp_boosted = sp
         if sp is not None and cperf_z is not None:
             # Cap the boost at ±6 pts so DS+ retains its rank-driven
-            # character (rank is the primary signal — college is a
+            # character (rank is the primary signal - college is a
             # secondary confidence layer).
             boost = max(-6, min(6, round(cperf_z * 3.0)))
             sp_boosted = max(60, min(140, sp + boost))
@@ -408,8 +408,8 @@ def _build_class(year: int,
             "fg_player_id":   player_meta.get("fg_player_id"),
             "draft_year":     year,
             "consensus_fv":   fv,                # snapped integer (e.g. 48)
-            "consensus_fv_raw": fv_raw,          # raw avg (e.g. 47.5) — for tooltips / analytics
-            "consensus_fv_plus": fv_plus,        # v26 — '+' upside flag
+            "consensus_fv_raw": fv_raw, # raw avg (e.g. 47.5) - for tooltips / analytics
+            "consensus_fv_plus": fv_plus, # v26 - '+' upside flag
             "consensus_rank": rank,              # raw avg of per-source ranks
             "consensus_pick": None,              # populated post-sort (sequential 1, 2, 3, ...)
             "projected_round": None,             # populated post-sort from consensus_pick
@@ -438,7 +438,7 @@ def _build_class(year: int,
             "points":         points,
         })
 
-    # v31.12 — Cohort-normalized Tool+ and RPS+ for the draft class.
+    # v31.12 - Cohort-normalized Tool+ and RPS+ for the draft class.
     # Both surface in the front-end tiebreaker so two prospects with
     # the same FV (e.g. two 50-FV college hitters) can be separated on
     # underlying tool quality + performance.
@@ -499,7 +499,7 @@ def _build_class(year: int,
         p.get("consensus_rank") is None,
         p.get("consensus_rank") if p.get("consensus_rank") is not None else 9999,
         -(p.get("consensus_fv_raw") or 0),
-        # v26 — '+' tiebreaker: 42+ ranks above 42 when raw FVs tie.
+        # v26 - '+' tiebreaker: 42+ ranks above 42 when raw FVs tie.
         -(1 if p.get("consensus_fv_plus") else 0),
         p.get("player_name") or "",
     ))
@@ -509,7 +509,7 @@ def _build_class(year: int,
             p["projected_round"] = _projected_round(i)
         # Else leaves consensus_pick / projected_round as None (unranked).
 
-    # Draft order — pre-draft, this is the pick-by-pick sequence from
+    # Draft order - pre-draft, this is the pick-by-pick sequence from
     # `draft_order` (slot values only). Post-draft, augment with actual
     # results (drafted player + signing bonus per pick).
     order_rows = order_by_year.get(year) or []
@@ -544,7 +544,7 @@ def _build_class(year: int,
     today = date.today()
     is_current = (year >= today.year)
 
-    # Lottery + projected order — only populated for classes that
+    # Lottery + projected order - only populated for classes that
     # haven't drafted yet AND for which Tankathon has shipped a
     # projection. Now stores the FULL first-round projection (picks
     # 1-30 + 12 competitive-balance picks at 31-42 with round_label
@@ -582,7 +582,7 @@ def build_draft_export() -> dict:
     order_all = load_draft_order()
     canonical = load_draft_canonical_keys()
     lottery_all = load_draft_lottery_odds(latest_only=True)
-    # v31.7 — College / amateur statlines, grouped by player_key.
+    # v31.7 - College / amateur statlines, grouped by player_key.
     # Populated only for prospects with an fg_player_id who had at
     # least one parsed amateur row (see draft_stats.refresh_draft_stats).
     college_all = load_draft_statlines()

@@ -6,23 +6,23 @@
 """Sidecar exports for the MLB Free Agency module (Stage 5).
 
 Three sidecars consumed by the standalone /fa/ surface (assets/fa.js +
-build_site.py::build_fa — the FA module is SEPARATE from PROSPX, which
+build_site.py::build_fa - the FA module is SEPARATE from PROSPX, which
 carries zero FA bytes; these are fetched from /data/ directly):
 
   fa_class.json    the 2026-27 Class Board: every constructed member with
-                   status/option flags, and — where identity + history
-                   resolve — the gated projection, market prediction with
+                   status/option flags, and - where identity + history
+                   resolve - the gated projection, market prediction with
                    bands (mYears/mGuarantee/mAAV), rational value, Contract
                    Surplus ($), Deal+, real comps, and top team fits.
   fa_archive.json  twelve archived winters: condensed signings with the
                    retrospective ledger, per-winter totals and implied $/WAR.
   fa_meta.json     CBA snapshot (carry-forward flags ride every consumer),
                    the estimated $/WAR series, BOTH gate verdicts verbatim
-                   (the Accountability surface renders this — misses and
+                   (the Accountability surface renders this - misses and
                    all), park factors, team affordability + behavior priors.
 
 Money is exported in raw USD; the frontend's formatMetric(`moneyM`)
-owns display rounding. Nulls are omitted; floats rounded — lean wire
+owns display rounding. Nulls are omitted; floats rounded - lean wire
 format per the owner's load-time ask.
 """
 
@@ -51,12 +51,12 @@ def _clean(d: dict) -> dict:
     return {k: v for k, v in d.items() if v is not None and v != [] and v != {}}
 
 
-TWO_WAY_NOTE = ("Two-way profile — the market model prices one profile only, "
+TWO_WAY_NOTE = ("Two-way profile - the market model prices one profile only, "
                 "so the predicted contract is a FLOOR, not a point estimate.")
 
 
 def _compact_fit(f: dict, with_org: bool = True) -> dict:
-    """Wire-compact fit row. blockedBy entries carry WHO and WHAT KIND —
+    """Wire-compact fit row. blockedBy entries carry WHO and WHAT KIND - 
     {n, t} where t is 'prospect' (PROSPX near-ETA) or 'mlb' (a contracted
     incumbent already producing at the slot)."""
     blocked = [{"n": b["player_name"], "t": b.get("kind", "prospect")}
@@ -77,7 +77,7 @@ def _compact_fit(f: dict, with_org: bool = True) -> dict:
 
 def _load_overrides() -> dict[str, dict]:
     """Owner-curated per-player overrides (data/fa_overrides.json):
-    two_way / note / exclude. Disclosure and curation only — never
+    two_way / note / exclude. Disclosure and curation only - never
     touches the model. '_'-prefixed keys are documentation."""
     try:
         d = json.loads((DATA_DIR / "fa_overrides.json").read_text(encoding="utf-8"))
@@ -176,12 +176,12 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                     if t in seasons]
             # Thin-platform disclosure: a projection riding a missing or
             # injury-shortened platform year is the model's weakest case
-            # (Burnes-type) — badge it, don't hide it. The exposure floor
+            # (Burnes-type) - badge it, don't hide it. The exposure floor
             # scales by season_fraction, so a normal in-progress June season
             # never flags; 30% of a regular's pace does.
             platform = seasons.get(class_year - 1)
             if platform is None:
-                m["thinPlatform"] = (f"no {class_year - 1} season in the corpus — "
+                m["thinPlatform"] = (f"no {class_year - 1} season in the corpus - "
                                      "projection rides older years")
             else:
                 # Full-season volume is ROLE-aware: a reliever at 20 IP in
@@ -191,14 +191,14 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                 vol = platform.get(vol_key) or 0
                 if vol < 0.3 * full * max(frac, 0.1):
                     m["thinPlatform"] = (f"only {vol:.0f} {vol_key.upper()} in "
-                                         f"{class_year - 1} — injury-thin platform")
+                                         f"{class_year - 1} - injury-thin platform")
             if hist:
                 age_prev = next((h.get("age") for h in hist if h.get("age")), None)
                 age = ((age_prev + (class_year - hist[0]["season"])) if age_prev
                        else int(row.get("age") or 30))
                 # CHAMPION paths throughout the FA pricing stack: the market
                 # model's Gate-2 verdict holds under champion inputs only
-                # (the ML-path version FAILED its gate — see
+                # (the ML-path version FAILED its gate - see
                 # fa_market.enriched_signings). Display, rational value,
                 # verdict terciles and market features stay one consistent
                 # engine; /projections/ serves the gate-winning ML paths.
@@ -209,7 +209,7 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                 if path:
                     s = {**row, "_war_path": path, "_age": age, "class_year": class_year}
                     pred = model.predict(s)
-                    # WS-2d — option-pending members get P(enter) re-priced
+                    # WS-2d - option-pending members get P(enter) re-priced
                     # from the market model's own band distribution (the v1
                     # $-gap logistic stays for mutual/conditional types and
                     # as the fallback where bands are missing).
@@ -280,7 +280,7 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                 "signedTo": sgn.get("to_team"),
                 "signedYears": sgn.get("years"),
                 "signedGuar": sgn.get("guarantee_usd"),
-                # Deferral-adjusted actual — predictions are NPV-basis, so
+                # Deferral-adjusted actual - predictions are NPV-basis, so
                 # the tracker's actual-vs-predicted delta must compare like
                 # with like (only present when a schedule is on file).
                 "signedGuarNpv": npv_signed if had_sched else None,
@@ -291,7 +291,7 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
             }))
         elif (key, "option_exercised") in ev_date:
             m["status"] = "option_exercised"
-        # Prospect-to-Payday arc — id-gated so a name-key collision can
+        # Prospect-to-Payday arc - id-gated so a name-key collision can
         # never paste a prospect's FV history onto a same-named veteran.
         arc = fv_hist.get(key)
         if arc and mlbam and arc["mlbam"] == mlbam:
@@ -321,7 +321,7 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         "n_signed": sum(1 for m in members if m.get("status") == "signed"),
         "members": members,
         "teamFits": team_fits,
-        # First-seen winter events (newest first, capped) — the WIRE and the
+        # First-seen winter events (newest first, capped) - the WIRE and the
         # Signing Tracker timeline. Dates are observation stamps, not
         # Spotrac dates (the source publishes none).
         "events": [_clean({
@@ -371,7 +371,7 @@ def build_fa_archive_payload(first: int = 2015, last: int = CLASS_YEAR - 1) -> d
 
 
 def _source_freshness() -> dict:
-    """MAX(fetched_at) per FA source table — the UI's staleness stamps.
+    """MAX(fetched_at) per FA source table - the UI's staleness stamps.
     Read-only; missing tables (fresh DB) just drop out."""
     out = {}
     try:
@@ -383,7 +383,7 @@ def _source_freshness() -> dict:
                 r = con.execute(f"SELECT MAX(fetched_at) FROM {table}").fetchone()
                 if r and r[0]:
                     out[label] = str(r[0])[:10]
-    except Exception:                                    # noqa: BLE001 — stamps are best-effort
+    except Exception: # noqa: BLE001 - stamps are best-effort
         pass
     return out
 
@@ -400,7 +400,7 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
     bases = fa_fit.team_baselines(class_year)
     # Per-team blocked positions (the needs matrix's blocker lists, both
     # kinds): blocked teams fall OUT of the top-fits lists by construction
-    # (their need craters), so the Fits view names the blockers here —
+    # (their need craters), so the Fits view names the blockers here - 
     # "why isn't this team shopping at SS" is half the product.
     needs = fa_fit.needs_matrix(class_year)
     teams = {}

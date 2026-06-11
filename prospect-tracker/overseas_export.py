@@ -83,7 +83,7 @@ from storage import (
 log = logging.getLogger(__name__)
 
 
-# Country → emoji flag — kept for back-compat. The frontend now
+# Country → emoji flag - kept for back-compat. The frontend now
 # prefers SVG flag icons (via country_code) and only falls back to
 # emoji when the SVG fails or the country is unmapped.
 COUNTRY_FLAG = {
@@ -152,21 +152,21 @@ LEAGUE_CONTEXT = {
         "country":       "Japan",
         "season_window": "March – October",
         "split_note":    "Central + Pacific Leagues; Pacific runs slightly hotter (≈ +5 OPS pts)",
-        "hitter_wrc_factor":  0.87,   # PRIOR retained — wRC+ refit needs per-season league context (measured raw OPS ratio 0.802, see eval)
+        "hitter_wrc_factor": 0.87, # PRIOR retained - wRC+ refit needs per-season league context (measured raw OPS ratio 0.802, see eval)
         # REFIT (model-audit Phase 4b WS-8, data/overseas_translation_eval.json):
         # measured IP-weighted ERA ratio 1.696 over the n=15 2016-25
         # transition cohort (Maeda...Sasaki), shrunk k=8 toward the old
         # 1.25 prior -> 1.54. The hand-set haircut was badly optimistic.
         "pitcher_era_factor": 1.54,   # NPB ERA  × 1.54 ≈ MLB ERA
         "hitter_k_pct_delta": +0.043, # REFIT: measured +0.0475 (n=6), shrunk
-        "fb_velo_delta":      -1.0,   # PRIOR retained — no historical velo source
+        "fb_velo_delta": -1.0, # PRIOR retained - no historical velo source
         "citation":           "Phase-4b transition refit (overseas_translation_eval) / Longenhagen 2024 priors where unmeasured",
     },
     "NPBF": {
         "name":          "NPB Farm (Eastern / Western Leagues)",
         "country":       "Japan",
         "season_window": "March – October",
-        "split_note":    "NPB minor leagues — small samples, used mostly for rehab + development",
+        "split_note": "NPB minor leagues - small samples, used mostly for rehab + development",
         "hitter_wrc_factor":  0.72,
         "pitcher_era_factor": 1.45,
         "hitter_k_pct_delta": +0.06,
@@ -178,13 +178,13 @@ LEAGUE_CONTEXT = {
         "country":       "South Korea",
         "season_window": "April – October",
         "split_note":    "10-team single division; hitter-friendly (league OPS ≈ .740-.760)",
-        "hitter_wrc_factor":  0.81,   # PRIOR retained (measured raw OPS ratio 0.819, n=1 — see eval)
+        "hitter_wrc_factor": 0.81, # PRIOR retained (measured raw OPS ratio 0.819, n=1 - see eval)
         # REFIT (Phase 4b WS-8): measured ERA ratio 1.215 (n=6, incl.
-        # MLB returnees Kelly/Flexen/Fedde — flagged in the eval),
+        # MLB returnees Kelly/Flexen/Fedde - flagged in the eval),
         # shrunk toward 1.32 -> 1.275. KBO prior was slightly harsh.
         "pitcher_era_factor": 1.275,
         "hitter_k_pct_delta": +0.05,  # measured +0.0474 ≈ prior; retained
-        "fb_velo_delta":      -1.5,   # PRIOR retained — no historical velo source
+        "fb_velo_delta": -1.5, # PRIOR retained - no historical velo source
         "citation":           "Phase-4b transition refit (overseas_translation_eval) / Longenhagen 2024 priors where unmeasured",
     },
     "CPBL": {
@@ -269,13 +269,13 @@ def _consensus(snaps: list[dict], field: str) -> float | None:
 
 
 def _consensus_fv_plus(snaps: list[dict]) -> bool:
-    """v26 — True if any latest-per-source snap has fv_plus=1."""
+    """v26 - True if any latest-per-source snap has fv_plus=1."""
     latest = _latest_per_source(snaps)
     return any(bool(s.get("fv_plus")) for s in latest.values())
 
 
 def _fv_bucket(fv: float | None, fv_plus: bool = False) -> str | None:
-    """v26 — Bucket from integer FV + '+' flag (no more .5 inflation).
+    """v26 - Bucket from integer FV + '+' flag (no more .5 inflation).
     Integer 45 with fv_plus=True → "45+"; without → "45"."""
     if fv is None:
         return None
@@ -365,7 +365,7 @@ def _build_league(league: str,
         any_snap = sorted(plist, key=lambda r: r.get("snapshot_date") or "")[-1]
         player_meta = players_by_key.get(pk) or {}
 
-        # v7 — drop players who have already signed-and-promoted to MLB
+        # v7 - drop players who have already signed-and-promoted to MLB
         # affiliated ball. Two filter layers:
         # 1) Per-record status flagged mlb_promoted (the promotion
         #    pipeline flips this when the player joins a MiLB roster).
@@ -420,7 +420,7 @@ def _build_league(league: str,
         country = any_snap.get("country") or player_meta.get("country")
         posted_date = player_meta.get("posted_date")
 
-        # Per-prospect hitter/pitcher classification — look at the most
+        # Per-prospect hitter/pitcher classification - look at the most
         # recent season payload. ERA/IP imply pitcher; otherwise hitter.
         raw_stats = stats_by_player.get(pk) or []
         latest_payload = (raw_stats[-1].get("payload") or {}) if raw_stats else {}
@@ -467,7 +467,7 @@ def _build_league(league: str,
             # raw float internally for sort precision; only the export
             # surface gets coerced to int.
             "consensus_fv":    int(round(fv)) if fv is not None else None,
-            "consensus_fv_plus": fv_plus,  # v26 — '+' upside flag
+            "consensus_fv_plus": fv_plus, # v26 - '+' upside flag
             "risk":            any_snap.get("risk"),
             "status":          status,
             "posted_date":     posted_date,
@@ -482,7 +482,7 @@ def _build_league(league: str,
             "points":          points,
         })
 
-    # v31.12 — Cohort-normalized Tool+ and RPS+ for the overseas
+    # v31.12 - Cohort-normalized Tool+ and RPS+ for the overseas
     # league. Tool+ is the league-z-normalized average of per-source
     # tool composites. RPS+ uses the latest-season wRC+ (hitters) or
     # FIP inverted to wRC+-style positive scale (pitchers), then
@@ -524,7 +524,7 @@ def _build_league(league: str,
         p["_tool_composite_raw"] = tc
         if tc is not None: raw_tool_comps.append(tc)
         # Hitter vs pitcher inferred from same logic used inline above
-        # — we have ERA/IP in the payload then pitcher.
+        # - we have ERA/IP in the payload then pitcher.
         sr = p.get("stats") or []
         is_pit = False
         if sr:
@@ -553,7 +553,7 @@ def _build_league(league: str,
         else:
             p["rps_plus"] = _cohort_plus(raw_perf_hit, ps_raw, lower_better=False)
 
-    # v26 — Sort by (FV desc, '+' tiebreaker desc) so 42+ ranks above
+    # v26 - Sort by (FV desc, '+' tiebreaker desc) so 42+ ranks above
     # 42 but below 43. None FVs sink to the bottom of the list.
     prospects.sort(key=lambda p: (p.get("consensus_fv") is None,
                                   -(p.get("consensus_fv") or 0),
@@ -617,7 +617,7 @@ def export_overseas_json(out_path: Path) -> int:
     # A 0-prospect export must NEVER overwrite a known-good sidecar. If we built 0
     # but overseas_snapshots is non-empty, the build hit a transient failure (the
     # root cause was a swallowed "database is locked" during the concurrent
-    # pipeline) — abort the write so the last good file (e.g. 40 prospects) is
+    # pipeline) - abort the write so the last good file (e.g. 40 prospects) is
     # preserved and the run logs the failure loudly instead of silently shipping
     # an empty Overseas section. A genuinely-empty source (0 rows) writes normally.
     if n == 0:
@@ -625,7 +625,7 @@ def export_overseas_json(out_path: Path) -> int:
         if have > 0:
             raise RuntimeError(
                 f"overseas export computed 0 prospects but overseas_snapshots has "
-                f"{have} rows — refusing to overwrite {out_path.name}. This is the "
+                f"{have} rows - refusing to overwrite {out_path.name}. This is the "
                 f"empty-export signature (likely a transient DB lock during the "
                 f"concurrent pipeline); the existing sidecar is preserved."
             )
