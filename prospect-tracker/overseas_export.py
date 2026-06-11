@@ -152,11 +152,15 @@ LEAGUE_CONTEXT = {
         "country":       "Japan",
         "season_window": "March – October",
         "split_note":    "Central + Pacific Leagues; Pacific runs slightly hotter (≈ +5 OPS pts)",
-        "hitter_wrc_factor":  0.87,   # NPB wRC+ × 0.87 ≈ MLB wRC+
-        "pitcher_era_factor": 1.25,   # NPB ERA  × 1.25 ≈ MLB ERA
-        "hitter_k_pct_delta": +0.04,  # MLB hitters K out ~4 pts more
-        "fb_velo_delta":      -1.0,   # FB plays ~1 mph slower in MLB
-        "citation":           "Longenhagen 2024 / Andrews 2023 / 15-yr posting cohort",
+        "hitter_wrc_factor":  0.87,   # PRIOR retained — wRC+ refit needs per-season league context (measured raw OPS ratio 0.802, see eval)
+        # REFIT (model-audit Phase 4b WS-8, data/overseas_translation_eval.json):
+        # measured IP-weighted ERA ratio 1.696 over the n=15 2016-25
+        # transition cohort (Maeda...Sasaki), shrunk k=8 toward the old
+        # 1.25 prior -> 1.54. The hand-set haircut was badly optimistic.
+        "pitcher_era_factor": 1.54,   # NPB ERA  × 1.54 ≈ MLB ERA
+        "hitter_k_pct_delta": +0.043, # REFIT: measured +0.0475 (n=6), shrunk
+        "fb_velo_delta":      -1.0,   # PRIOR retained — no historical velo source
+        "citation":           "Phase-4b transition refit (overseas_translation_eval) / Longenhagen 2024 priors where unmeasured",
     },
     "NPBF": {
         "name":          "NPB Farm (Eastern / Western Leagues)",
@@ -174,11 +178,14 @@ LEAGUE_CONTEXT = {
         "country":       "South Korea",
         "season_window": "April – October",
         "split_note":    "10-team single division; hitter-friendly (league OPS ≈ .740-.760)",
-        "hitter_wrc_factor":  0.81,
-        "pitcher_era_factor": 1.32,
-        "hitter_k_pct_delta": +0.05,
-        "fb_velo_delta":      -1.5,
-        "citation":           "Longenhagen 2024 / Kim 2022 / Lee Jung-hoo + Bae cohort",
+        "hitter_wrc_factor":  0.81,   # PRIOR retained (measured raw OPS ratio 0.819, n=1 — see eval)
+        # REFIT (Phase 4b WS-8): measured ERA ratio 1.215 (n=6, incl.
+        # MLB returnees Kelly/Flexen/Fedde — flagged in the eval),
+        # shrunk toward 1.32 -> 1.275. KBO prior was slightly harsh.
+        "pitcher_era_factor": 1.275,
+        "hitter_k_pct_delta": +0.05,  # measured +0.0474 ≈ prior; retained
+        "fb_velo_delta":      -1.5,   # PRIOR retained — no historical velo source
+        "citation":           "Phase-4b transition refit (overseas_translation_eval) / Longenhagen 2024 priors where unmeasured",
     },
     "CPBL": {
         "name":          "Chinese Professional Baseball League",

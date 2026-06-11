@@ -54,7 +54,8 @@ import fa_cba
 import fa_class
 import fa_projection as fp
 import storage
-from value_framework import _config as _vf_config, point_estimate_surplus_usd
+from value_framework import (_config as _vf_config, fv_to_6yr_avg_war,
+                             point_estimate_surplus_usd)
 
 log = logging.getLogger(__name__)
 
@@ -518,24 +519,78 @@ def pick_fv_curve() -> dict[int, float]:
     return _PICK_FV_CACHE
 
 
+_SLOT_FIRST6_CACHE: list | None = None
+# Median draft->debut lag for the picks the compensation matrix forfeits
+# (top-150): the control window starts years after the pick is spent.
+_SLOT_ETA_YEARS = 3.0
+
+
+def _slot_first6_war(slot: int) -> float | None:
+    """Expected first-six-MLB-season bWAR at a draft slot, from the
+    REALIZED curve (decreasing isotonic on 2005-14 signed picks x
+    war_daily — data/draft_slot_curve.json, Phase 4b WS-8)."""
+    global _SLOT_FIRST6_CACHE
+    if _SLOT_FIRST6_CACHE is None:
+        try:
+            d = json.loads((Path(__file__).parent / "data" /
+                            "draft_slot_curve.json").read_text(encoding="utf-8"))
+            _SLOT_FIRST6_CACHE = [(int(b), float(w))
+                                  for b, w in d["first6_step_curve"]
+                                  if w is not None] or []
+        except (OSError, ValueError, KeyError, TypeError):
+            _SLOT_FIRST6_CACHE = []
+    if not _SLOT_FIRST6_CACHE:
+        return None
+    return next((w for b, w in _SLOT_FIRST6_CACHE if slot <= b),
+                _SLOT_FIRST6_CACHE[-1][1])
+
+
+def _slot_surplus_usd(slot: int) -> int | None:
+    """Price a forfeited slot: the realized expected first-6-season WAR
+    path (flat across the control window — the curve is a window total)
+    through the platform's service-time surplus machinery, lagged
+    _SLOT_ETA_YEARS for draft->debut. Convexity caveat: pricing the
+    EXPECTED path through the convex tier curve is a lower bound on the
+    expectation of value (the rare-hit mass prices above linear) —
+    direction disclosed, consistent across slots."""
+    first6 = _slot_first6_war(slot)
+    if first6 is None:
+        return None
+    import value_framework as _vf
+    path = [first6 / 6.0] * 6
+    return int(_vf._service_path_surplus_usd(path, super_two=False,
+                                             eta_years=_SLOT_ETA_YEARS))
+
+
 def qo_tax_usd(payor_tier: str, as_of) -> dict:
     """The QO pick forfeiture as DOLLARS: each forfeited representative
-    slot priced at the platform's own FV-at-slot -> prospect-surplus value,
-    plus any forfeited intl pool money at face value."""
+    slot priced at its REALIZED first-6-season WAR expectation through
+    the service-time surplus machinery (Phase 4b WS-8 re-price), plus
+    any forfeited intl pool money at face value. Falls back to the v1
+    platform FV-at-slot median when the fitted artifact is absent."""
     forf = fa_cba.pick_forfeiture(payor_tier, as_of)
     curve = pick_fv_curve()
     total = int(forf.get("intl_pool_usd") or 0)
     detail = []
+    fitted_used = False
     for pick_desc in forf["picks"]:
         slot = _TIER_SLOTS.get(pick_desc, 90)
-        fv = curve.get(min(slot // 15, 12))
-        usd = int(point_estimate_surplus_usd(fv, False) or 0) if fv else 0
-        detail.append({"pick": pick_desc, "slot_assumed": slot,
-                       "fv_at_slot": fv, "surplus_usd": usd})
+        usd = _slot_surplus_usd(slot)
+        if usd is not None:
+            fitted_used = True
+            row = {"pick": pick_desc, "slot_assumed": slot,
+                   "first6_war": _slot_first6_war(slot), "surplus_usd": usd}
+        else:
+            fv = curve.get(min(slot // 15, 12))
+            usd = int(point_estimate_surplus_usd(fv, False) or 0) if fv else 0
+            row = {"pick": pick_desc, "slot_assumed": slot,
+                   "fv_at_slot": fv, "surplus_usd": usd}
+        detail.append(row)
         total += usd
     return {"total_usd": total, "detail": detail,
             "carry_forward": forf.get("carry_forward", False),
-            "method": "platform_fv_at_slot_v1"}
+            "method": ("realized_slot_war_service_priced_v2" if fitted_used
+                       else "platform_fv_at_slot_v1")}
 
 
 # ============================================================================

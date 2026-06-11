@@ -1,0 +1,113 @@
+{
+ "generated_at": "2026-06-11",
+ "debut_years": [
+  2017,
+  2018,
+  2019,
+  2020,
+  2021
+ ],
+ "scored_years": [
+  2019,
+  2020,
+  2021
+ ],
+ "accounting": {
+  "debuts": 566,
+  "no_pre_debut_fv": 26,
+  "no_war_rows": 11,
+  "no_milb_features": 8,
+  "scored": 521
+ },
+ "conventions": {
+  "vintage_fv": "median of each source's latest strictly-pre-debut snapshot",
+  "features": "final pre-debut-year MiLB season (2021 debuts fall back to 2019 \u2014 no 2020 MiLB), league-relative rates vs level-season medians, age, level rank, staleness; NO Statcast (AAA tracking starts 2023 \u2014 all-missing in training)",
+  "target": "first-3-season bWAR (career_war)",
+  "baseline": "the LIVE FV-only machinery (P(bucket|FV) x bucket trajectories from debut age)",
+  "model": "per-side ridge (closed form), alpha tuned inside training folds only"
+ },
+ "challenger_pooled_oos": {
+  "n": 425,
+  "mae": 1.679,
+  "spearman": 0.1219,
+  "calibration": {
+   "slope": 0.59,
+   "bias": 0.066
+  }
+ },
+ "baseline_pooled_oos": {
+  "n": 425,
+  "mae": 1.641,
+  "spearman": 0.202,
+  "calibration": {
+   "slope": 0.751,
+   "bias": 0.245
+  }
+ },
+ "per_year": {
+  "2019": {
+   "challenger": {
+    "n": 122,
+    "mae": 1.979,
+    "spearman": 0.1857,
+    "calibration": {
+     "slope": 0.614,
+     "bias": -0.205
+    }
+   },
+   "baseline": {
+    "n": 122,
+    "mae": 1.993,
+    "spearman": 0.1738,
+    "calibration": {
+     "slope": 0.757,
+     "bias": 0.059
+    }
+   }
+  },
+  "2020": {
+   "challenger": {
+    "n": 146,
+    "mae": 1.581,
+    "spearman": 0.1553,
+    "calibration": {
+     "slope": 0.553,
+     "bias": 0.423
+    }
+   },
+   "baseline": {
+    "n": 146,
+    "mae": 1.542,
+    "spearman": 0.2718,
+    "calibration": {
+     "slope": 0.629,
+     "bias": 0.536
+    }
+   }
+  },
+  "2021": {
+   "challenger": {
+    "n": 157,
+    "mae": 1.537,
+    "spearman": 0.0161,
+    "calibration": {
+     "slope": 0.593,
+     "bias": -0.055
+    }
+   },
+   "baseline": {
+    "n": 157,
+    "mae": 1.46,
+    "spearman": 0.1044,
+    "calibration": {
+     "slope": 0.851,
+     "bias": 0.12
+    }
+   }
+  }
+ },
+ "ship_decision": {
+  "rule": "challenger must beat FV-only on pooled OOS MAE AND Spearman with calibration not worse; loser is committed either way",
+  "challenger_wins": false
+ }
+}

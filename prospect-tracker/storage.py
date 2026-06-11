@@ -4045,14 +4045,17 @@ def _fv_to_expected_war_per_yr(fv, is_pitcher: bool = False) -> float | None:
     return None
 
 
-# Industry-standard draft pick-slot value curve (career WAR expectations
-# based on FanGraphs / Baseball America surplus-value research). A
-# 1st-overall pick has historically averaged ~9 career WAR; the curve
-# decays steeply through the supplemental + 2nd round and tails to ~0
-# by the late rounds. Used to compute "draft pick value above
-# expectation" = actual_war − slot_expected_war, which credits orgs
-# that beat the market at each pick slot (e.g., a 28th-rounder making
-# the majors counts more than a #1 overall reaching the same outcome).
+# FALLBACK draft pick-slot value table (hand-set, career-WAR basis,
+# "industry research" provenance). Model-audit Phase 4b measured it
+# against realized outcomes (data/draft_slot_curve.json): it UNDERSHOOTS
+# realized career means ~3x at every slot (e.g. pick 1: realized 28.4
+# vs 9.0 here on resolved 2005-14 cohorts). The live lookup now uses
+# the fitted first-six-season curve (_fitted_slot_curve); this table
+# only serves when the committed artifact is missing. Consumer:
+# "draft pick value above expectation" = actual_war − slot_expected_war,
+# which credits orgs that beat the market at each pick slot (e.g., a
+# 28th-rounder making the majors counts more than a #1 overall reaching
+# the same outcome).
 _PICK_SLOT_EXPECTED_WAR: list[tuple[int, float]] = [
     (1,    9.00),   # 1st overall — historical Trout-tier ceiling
     (5,    6.00),   # top 5 — All-Star floor
@@ -4070,8 +4073,36 @@ _PICK_SLOT_EXPECTED_WAR: list[tuple[int, float]] = [
 ]
 
 
+_FITTED_SLOT_CURVE: list[tuple[int, float]] | None = None
+_FITTED_SLOT_LOADED = False
+
+
+def _fitted_slot_curve() -> list[tuple[int, float]] | None:
+    """The REALIZED slot curve (model-audit Phase 4b, WS-8): expected
+    FIRST-SIX-MLB-SEASON bWAR by pick, fitted by decreasing isotonic on
+    StatsAPI draft history 2005-2014 x war_daily (signed picks; never-MLB
+    scores 0). Committed in data/draft_slot_curve.json by
+    tools/fit_draft_slot_curve.py. The first-6 window matches how the
+    leaf consumes it (graduates' career-to-date WAR, almost always <= 6
+    MLB seasons) and the QO tax's control-window basis. The hand-set
+    table below remains the fallback when the artifact is absent."""
+    global _FITTED_SLOT_CURVE, _FITTED_SLOT_LOADED
+    if not _FITTED_SLOT_LOADED:
+        _FITTED_SLOT_LOADED = True
+        try:
+            d = json.loads((Path(__file__).parent / "data" /
+                            "draft_slot_curve.json").read_text(encoding="utf-8"))
+            steps = [(int(b), float(w)) for b, w in d["first6_step_curve"]
+                     if w is not None]
+            _FITTED_SLOT_CURVE = steps or None
+        except (OSError, ValueError, KeyError, TypeError):
+            _FITTED_SLOT_CURVE = None
+    return _FITTED_SLOT_CURVE
+
+
 def _pick_slot_expected_war(pick_overall) -> float | None:
-    """Step-lookup the historical expected career WAR for a draft slot.
+    """Step-lookup the expected first-six-season bWAR for a draft slot
+    (fitted realized curve; hand-set career-WAR steps as fallback).
     Returns None when the pick number is missing/invalid (e.g., IFA
     signing with no overall pick). The step function is a deliberate
     simplification over the smooth power curve — pick slots already
@@ -4085,10 +4116,11 @@ def _pick_slot_expected_war(pick_overall) -> float | None:
         return None
     if p < 1:
         return None
-    for threshold, war in _PICK_SLOT_EXPECTED_WAR:
+    table = _fitted_slot_curve() or _PICK_SLOT_EXPECTED_WAR
+    for threshold, war in table:
         if p <= threshold:
             return war
-    return _PICK_SLOT_EXPECTED_WAR[-1][1]
+    return table[-1][1]
 
 
 def _grad_wag_cumulative(graduate_payload: dict) -> float | None:

@@ -1,0 +1,79 @@
+{
+ "generated_at": "2026-06-11",
+ "vintage_years": [
+  2018,
+  2019,
+  2020,
+  2021,
+  2022
+ ],
+ "window_years": 3,
+ "conventions": {
+  "scope": "REDUCED ANALOG \u2014 the farm tree's financial core (sum of surplus over vintage FVs), not the literal v40 letter (grades were never snapshotted)",
+  "org": "modal org across earliest per-source vintage snapshots",
+  "realized": "sum of graduates' bWAR over seasons Y..Y+3, debut in [Y, Y+3]",
+  "prediction_pricing": "today's calibrated value framework on vintage FVs"
+ },
+ "per_vintage": {
+  "2018": {
+   "n_orgs": 30,
+   "spearman": {
+    "sum_surplus_mm": 0.7478,
+    "sum_expected_war": 0.7083,
+    "count": 0.4286,
+    "count_fv50plus": 0.7191
+   },
+   "realized_total_war": 432.1
+  },
+  "2019": {
+   "n_orgs": 30,
+   "spearman": {
+    "sum_surplus_mm": 0.5226,
+    "sum_expected_war": 0.555,
+    "count": 0.2976,
+    "count_fv50plus": 0.5272
+   },
+   "realized_total_war": 555.0
+  },
+  "2020": {
+   "n_orgs": 30,
+   "spearman": {
+    "sum_surplus_mm": 0.3604,
+    "sum_expected_war": 0.2777,
+    "count": 0.0522,
+    "count_fv50plus": 0.4112
+   },
+   "realized_total_war": 532.9
+  },
+  "2021": {
+   "n_orgs": 30,
+   "spearman": {
+    "sum_surplus_mm": 0.429,
+    "sum_expected_war": 0.3308,
+    "count": 0.248,
+    "count_fv50plus": 0.4201
+   },
+   "realized_total_war": 644.5
+  },
+  "2022": {
+   "n_orgs": 30,
+   "spearman": {
+    "sum_surplus_mm": 0.4821,
+    "sum_expected_war": 0.4042,
+    "count": 0.1744,
+    "count_fv50plus": 0.3995
+   },
+   "realized_total_war": 766.5
+  }
+ },
+ "mean_spearman": {
+  "sum_surplus_mm": 0.5084,
+  "sum_expected_war": 0.4552,
+  "count": 0.2402,
+  "count_fv50plus": 0.4954
+ },
+ "verdict": {
+  "financial_core_beats_count": true,
+  "summary": "the surplus-mass ranking out-predicts the prospect-count baseline"
+ }
+}

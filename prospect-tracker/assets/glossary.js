@@ -823,12 +823,64 @@ function _methInteractivesHTML() {
 function renderMethodology() {
   const el = document.getElementById("methodology-body");
   if (!el) return;
+  // Model registry (accountability ledger) — lazy-loaded once, same
+  // pattern as the source backtest. Re-renders this view on arrival.
+  if (!_S.registry && !_S.regLoading) {
+    _S.regLoading = true;
+    fetch("/data/model_registry.json", { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => { _S.registry = j || { __error: true };
+        if (_S.view === "methodology") renderMethodology(); })
+      .catch(() => { _S.registry = { __error: true };
+        if (_S.view === "methodology") renderMethodology(); });
+  }
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const printHead = `<div id="methodology-print-head">eephus.io — Methodology · eephus.io/glossary · ${escapeHtml(today)}</div>`;
   const toolbar = `<div class="meth-toolbar"><button class="meth-export-btn" type="button" onclick="_printMethodology()" title="Print or save the methodology as a PDF">⎙ Export methodology (PDF)</button></div>`;
-  el.innerHTML = printHead + toolbar + _methProseHTML() + _methInteractivesHTML();
+  el.innerHTML = printHead + toolbar + _methProseHTML() + _methRegistryHTML() + _methInteractivesHTML();
   // Populate the interactives' initial state.
   _gx2080(); _gxConsensus(); _gxSurplus();
+}
+
+// Model accountability ledger (model-audit Phase 5, WS-11): the committed
+// registry rendered VERBATIM — unvalidated rows and misses included; that
+// is the point. One row per model: champion, baseline, verdict, artifact.
+const _REG_VERDICT_GLYPH = { validated: "✓ validated", provisional: "◐ provisional",
+                             unvalidated: "○ unvalidated", deprecated: "✗ deprecated" };
+function _methRegistryHTML() {
+  const reg = _S.registry;
+  let body;
+  if (!reg) {
+    body = `<div class="state-message">Loading model registry…</div>`;
+  } else if (reg.__error || !Array.isArray(reg.models) || !reg.models.length) {
+    body = `<p class="meth-note">The model registry is unavailable.</p>`;
+  } else {
+    const counts = {};
+    reg.models.forEach(m => { counts[m.verdict] = (counts[m.verdict] || 0) + 1; });
+    const rows = reg.models.map(m => {
+      const art = m.eval_artifact
+        ? `<a href="/${escapeHtml(m.eval_artifact)}" target="_blank" rel="noopener">${escapeHtml(m.eval_artifact.replace(/^data\//, ""))}</a>${m.stale ? " <em>(stale)</em>" : ""}`
+        : "—";
+      return `<tr>
+        <td><strong>${escapeHtml(m.model_id)}</strong><br><span class="meth-note">${escapeHtml(m.surface || "")}</span></td>
+        <td>${escapeHtml(m.champion || "")}</td>
+        <td>${escapeHtml(m.baseline || "")}</td>
+        <td>${_REG_VERDICT_GLYPH[m.verdict] || escapeHtml(m.verdict || "")}</td>
+        <td>${art}</td>
+      </tr>`;
+    }).join("");
+    body = `
+      <p class="meth-note">Every predictive model on the platform, with an honest verdict and its committed eval artifact. <strong>${counts.validated || 0} validated · ${counts.provisional || 0} provisional · ${counts.unvalidated || 0} unvalidated · ${counts.deprecated || 0} deprecated</strong>${reg.checked_at ? ` · last checked ${escapeHtml(reg.checked_at)}` : ""}. Unvalidated rows are listed precisely so they can't hide; losing challengers stay committed.</p>
+      <div class="meth-tables"><table class="meth-tier-table meth-registry-table">
+        <thead><tr><th>Model · surface</th><th>Champion</th><th>Baseline</th><th>Verdict</th><th>Eval artifact</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+  }
+  return `<div class="source-comp-wrap">
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Model accountability · the registry, rendered verbatim</div>
+    <h2 class="meth-h">Which models are validated — and which aren't</h2>
+    ${body}
+  </div>`;
 }
 // Part 8 — exportable methodology: print just the methodology body (the
 // toolbar + interactive widgets are hidden by the print stylesheet; a dated
