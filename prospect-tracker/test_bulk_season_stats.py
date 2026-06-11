@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import sys
+import re
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
@@ -18,6 +19,8 @@ from stats import (
     bulk_fetch_season_stats, merge_bulk_into_career_cache,
     _career_row_from_bulk_split, BULK_STATS_SPORT_IDS,
 )
+
+RUN_MONTHLY = Path(__file__).resolve().parent / "run_monthly.py"
 
 
 def _resp(data: dict, status: int = 200):
@@ -30,11 +33,12 @@ def _resp(data: dict, status: int = 200):
 
 def _split_hitter(pid: int, name: str, sport_id: int, *,
                   avg=".280", ops="0.800", pa=400, hr=10, ab=350,
-                  bb=30, so=80, games=100):
+                  bb=30, so=80, games=100, org="TEX"):
     """Build one hitter split in the bulk endpoint's actual response shape."""
     return {
         "season": "2026",
         "player": {"id": pid, "fullName": name},
+        "team": {"id": 140, "name": f"{org} Affiliate", "parentOrgName": org},
         "league": {"id": 117, "name": "INT"},
         "sport": {"id": sport_id, "abbreviation": stats._SPORT_ID_TO_LEVEL[sport_id]},
         "stat": {
@@ -48,10 +52,12 @@ def _split_hitter(pid: int, name: str, sport_id: int, *,
 
 def _split_pitcher(pid: int, name: str, sport_id: int, *,
                    era="3.50", ip=120.0, wins=10, losses=5,
-                   k_per_9=9.0, bb_per_9=2.5, whip="1.20", games=22):
+                   k_per_9=9.0, bb_per_9=2.5, whip="1.20", games=22,
+                   org="TEX"):
     return {
         "season": "2026",
         "player": {"id": pid, "fullName": name},
+        "team": {"id": 140, "name": f"{org} Affiliate", "parentOrgName": org},
         "league": {"id": 110, "name": "EAS"},
         "sport": {"id": sport_id, "abbreviation": stats._SPORT_ID_TO_LEVEL[sport_id]},
         "stat": {
@@ -87,6 +93,7 @@ class TestCareerRowFromBulkSplit:
         # The fixture's league.name is "INT" — verify that's what comes
         # through instead of the sport abbreviation.
         assert row["level_label"] == "INT"
+        assert row["org"] == "TEX"
         assert row["is_pitcher"] is False
         assert row["ab"] == 180
         # bb_pct = 20/200 * 100 = 10.0
@@ -151,7 +158,7 @@ class TestBulkFetchSeasonStats:
             ]))
             out = bulk_fetch_season_stats(2026, group="hitting", sport_ids=[11])
         assert set(out.keys()) == {1, 2}
-        assert out[1]["level"] == "AAA"
+        assert out[1][0]["level"] == "AAA"
         # One sport, one page (returned <page_size splits) → one call.
         assert mock_get.call_count == 1
 
@@ -169,11 +176,11 @@ class TestBulkFetchSeasonStats:
         with patch("stats.requests.get", side_effect=fake_get):
             out = bulk_fetch_season_stats(2026, group="hitting",
                                           sport_ids=[11, 12, 13])
-        assert {out[1]["level"], out[2]["level"], out[3]["level"]} \
+        assert {out[1][0]["level"], out[2][0]["level"], out[3][0]["level"]} \
             == {"AAA", "AA", "A+"}
 
-    def test_player_at_two_levels_keeps_highest(self):
-        """Same mlbam_id seen in both AAA and AA → keep AAA (higher)."""
+    def test_player_at_two_levels_keeps_both_rows(self):
+        """Same mlbam_id seen in both AAA and AA keeps both level rows."""
         responses = {
             11: _bulk_response([_split_hitter(99, "Mover", sport_id=11,
                                               avg=".350")]),
@@ -188,8 +195,26 @@ class TestBulkFetchSeasonStats:
         with patch("stats.requests.get", side_effect=fake_get):
             out = bulk_fetch_season_stats(2026, group="hitting",
                                           sport_ids=[11, 12])
-        assert out[99]["level"] == "AAA"
-        assert out[99]["avg"] == ".350"
+        assert [r["level"] for r in out[99]] == ["AAA", "AA"]
+        assert [r["avg"] for r in out[99]] == [".350", ".200"]
+
+    def test_player_same_level_two_orgs_gets_stints(self):
+        """Cole Ragans class: same player-level can have two org stints."""
+        with patch("stats.requests.get") as mock_get:
+            mock_get.return_value = _resp(_bulk_response([
+                _split_pitcher(666142, "Cole Ragans", sport_id=1,
+                               ip=24.2, games=9, org="TEX"),
+                _split_pitcher(666142, "Cole Ragans", sport_id=1,
+                               ip=71.2, games=17, org="KCR"),
+            ]))
+            out = bulk_fetch_season_stats(2026, group="pitching", sport_ids=[1])
+        row = out[666142][0]
+        assert row["level"] == "MLB"
+        assert row["org"] is None
+        assert [st["org"] for st in row["stints"]] == ["TEX", "KCR"]
+        assert row["games"] == 26
+        assert row["ip"] == 96.1
+        assert mock_get.call_count == 1
 
     def test_pagination_continues_until_short_page(self):
         page1 = _bulk_response([
@@ -287,6 +312,31 @@ class TestMergeBulkIntoCareerCache:
         assert rows[0]["level"] == "AAA"  # the new bulk row, not the stale AA
         assert rows[1]["season"] == 2025
 
+    def test_inserts_multiple_current_season_level_rows(self):
+        """A player with MLB and AAA rows in the same season keeps both."""
+        career_cache = {
+            "ragans": [
+                {"season": 2025, "level": "MLB", "level_label": "MLB",
+                 "games": 30, "ip": 180.0, "is_pitcher": True},
+            ],
+        }
+        bulk_rows = [
+            {"season": 2026, "level": "MLB", "level_label": "MLB",
+             "games": 8, "ip": 35.1, "is_pitcher": True},
+            {"season": 2026, "level": "AAA", "level_label": "AAA",
+             "games": 1, "ip": 4.1, "is_pitcher": True},
+        ]
+
+        updates = merge_bulk_into_career_cache(
+            {666142: bulk_rows}, career_cache, {"ragans": 666142},
+            season=2026, eligible_keys={"ragans"},
+        )
+
+        rows = updates["ragans"]
+        assert [(r["season"], r["level"]) for r in rows[:3]] == [
+            (2026, "MLB"), (2026, "AAA"), (2025, "MLB"),
+        ]
+
     def test_eligible_keys_excludes_graduates(self):
         """Graduates should not have their cache updated from the bulk."""
         career_cache = {"grad": [], "active": []}
@@ -329,3 +379,11 @@ class TestMergeBulkIntoCareerCache:
         assert rows[0]["season"] == 2026
         # The oldest row (2021) got dropped.
         assert all(r["season"] != 2021 for r in rows)
+
+
+def test_monthly_refetches_graduated_legacy_org_stint_rows():
+    """Graduates with legacy org-less career rows need one yearByYear repair."""
+    src = RUN_MONTHLY.read_text(encoding="utf-8")
+    assert "def _career_rows_need_org_stint_backfill(" in src
+    assert re.search(r"p\.status == \"debuted\"\s+and _career_rows_need_org_stint_backfill", src), \
+        "graduated legacy career rows must be eligible for org/stint repair"

@@ -186,6 +186,22 @@ def _is_career_fresh(fetched_at: str | None, max_age_days: int) -> bool:
     return (_dt.now(_tz.utc).replace(tzinfo=None) - ts).days < max_age_days
 
 
+def _career_rows_need_org_stint_backfill(rows: list[dict] | None) -> bool:
+    """True for legacy career-cache rows that predate org/stint preservation.
+
+    The old bulk path stored combined level rows with neither `org` nor
+    `stints`. That loses cases like Cole Ragans 2023, where both MLB and AAA
+    had TEX/KCR stints. A per-player yearByYear refresh repairs those rows by
+    carrying single-stint orgs and multi-org `stints` payloads.
+    """
+    for row in rows or []:
+        if not isinstance(row, dict):
+            continue
+        if row.get("org") is None and not row.get("stints"):
+            return True
+    return False
+
+
 def ingest_source_article_drops(out_dir: Path, log: logging.Logger) -> tuple[int, int]:
     """Ingest local source article text drops into snapshots + source_events."""
     try:
@@ -1226,16 +1242,20 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             # (1) Bulk pass — hitting + pitching across MLB + 5 MiLB levels.
             bulk_hitting  = bulk_fetch_season_stats(season, group="hitting")
             bulk_pitching = bulk_fetch_season_stats(season, group="pitching")
-            # Merge: a two-way player would show in both endpoints; pick
-            # the highest-level row (LEVEL_ORDER index ascending).
+            # Merge: a two-way player can show in both endpoints; retain
+            # every current-season row so multi-level / multi-org seasons
+            # keep their per-level career-table detail.
             from stats import LEVEL_ORDER
-            bulk_by_mlbam: dict[int, dict] = dict(bulk_hitting)
-            for pid, row in bulk_pitching.items():
-                existing = bulk_by_mlbam.get(pid)
-                if (existing is None
-                        or LEVEL_ORDER.index(row["level"])
-                        < LEVEL_ORDER.index(existing["level"])):
-                    bulk_by_mlbam[pid] = row
+            bulk_by_mlbam: dict[int, list[dict]] = {
+                pid: (rows if isinstance(rows, list) else [rows])
+                for pid, rows in bulk_hitting.items()
+            }
+            for pid, rows in bulk_pitching.items():
+                incoming = rows if isinstance(rows, list) else [rows]
+                bulk_by_mlbam.setdefault(pid, []).extend(incoming)
+            for rows in bulk_by_mlbam.values():
+                rows.sort(key=lambda r: (-int(r.get("season") or 0),
+                                         LEVEL_ORDER.index(r["level"])))
             log.info("bulk season-stats: %d distinct players across hitting+pitching",
                      len(bulk_by_mlbam))
 
@@ -1264,10 +1284,16 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 (p.player_key, p.player_name, _is_pitcher(p.position))
                 for p in timeseries if p.status != "debuted"
             ]
+            graduated_repair_players = [
+                (p.player_key, p.player_name, _is_pitcher(p.position))
+                for p in timeseries
+                if p.status == "debuted"
+                and _career_rows_need_org_stint_backfill(career_cache.get(p.player_key))
+            ]
             cs_tasks: list[tuple[str, int, bool]] = []
             skipped_fresh = 0
             skipped_bulk = 0
-            for key, _name, is_p in non_grad_players:
+            for key, _name, is_p in non_grad_players + graduated_repair_players:
                 mlbam = ids_by_key.get(key)
                 if mlbam is None:
                     continue
@@ -1289,13 +1315,16 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     continue
                 cs_tasks.append((key, mlbam, is_p))
             log.info(
-                "fetching career stats for %d players (skipped %d graduated, "
-                "%d covered-by-bulk, %d fresh-cached, %d unresolved)",
+                "fetching career stats for %d players (%d graduated legacy-org "
+                "repairs; skipped %d graduated, %d covered-by-bulk, "
+                "%d fresh-cached, %d unresolved)",
                 len(cs_tasks),
-                len(timeseries) - len(non_grad_players),
+                len(graduated_repair_players),
+                len(timeseries) - len(non_grad_players) - len(graduated_repair_players),
                 skipped_bulk,
                 skipped_fresh,
-                len(non_grad_players) - skipped_bulk - skipped_fresh - len(cs_tasks),
+                len(non_grad_players) + len(graduated_repair_players)
+                - skipped_bulk - skipped_fresh - len(cs_tasks),
             )
             new_career: dict = {}
             if cs_tasks:

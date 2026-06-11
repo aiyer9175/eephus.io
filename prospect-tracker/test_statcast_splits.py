@@ -17,7 +17,8 @@ These tests pin the invariants so the behavior can't silently regress:
     current org when the in-season trade is the player's latest move;
   * OFFSEASON-only trades produce NO stints (single current-org logo, no split) —
     the separate prior offseason fix (test_statcast_org.py) is untouched;
-  * the JS keys the dual chip off `s.stints` and falls back to _seasonOrgForRow.
+  * the JS keys the dual chip off `s.stints` and reads single-org rows from
+    the row's own stat-line org.
 """
 
 from __future__ import annotations
@@ -214,6 +215,28 @@ def test_js_dual_chip_keys_off_stints_with_single_fallback():
     # Unresolved past seasons of a traded player render a visible gap.
     assert "Org unresolved in this season's stat data" in body, \
         "unresolved past season must surface an explicit gap, not the current org"
+
+
+def test_js_dual_chip_can_fallback_to_inseason_trade_history():
+    src = INDEX.read_text(encoding="utf-8")
+    assert "function _isInSeasonTradeDate(" in src, "in-season trade date classifier missing"
+    assert "function _tradeOrgSplitForSeason(" in src, "trade-history split resolver missing"
+    assert "function _tradeOrgSplitForRow(" in src, "row-level trade/history resolver missing"
+    assert "function _levelIntervalsForSeason(" in src, "level interval resolver missing"
+    assert re.search(r"s >= `\$\{season\}-03-31` && s <= `\$\{season\}-07-31`", src), \
+        "in-season window should run from end of March through end of July"
+    assert "_tradeOrgSplitForRow(player, row)" in src, \
+        "row-aware org metadata should retain trade-history fallback when stints are absent"
+    assert "_statRowOrgMetaHTML(p, r)" in src, \
+        "leaderboard/player meta rows must use row-aware org rendering"
+    assert "intervals.every(intv => intv.start >= latestDate)" in src, \
+        "new-level-after-trade rows must collapse to the new org only"
+    assert "if (intv.start < d) sawBefore = true;" in src, \
+        "levels with any pre-trade interval must retain old-org attribution"
+    assert "if (d < intv.end) sawAfter = true;" in src, \
+        "levels with any post-trade interval must retain new-org attribution"
+    assert "level === \"MLB\"" in src, \
+        "MLB rows without level-specific stint data keep the season split fallback"
 
 
 def test_js_has_split_toggle_and_rows():
