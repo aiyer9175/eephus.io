@@ -2038,6 +2038,29 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("mlb projections export failed — continuing")
 
+        # --- 6b2. Swing+ scoring (Will Cahoon's model, vendored) ---------
+        # Per-player MLB bat-tracking pulls (cached; closed seasons
+        # immutable, current season on a short TTL) scored to
+        # data/swing_plus.json. MLB-only by data boundary. Best-effort.
+        with _step("6b2. Swing+ scoring (swing_plus.json)", log):
+            try:
+                from swing_plus_ingest import run as _swing_run
+                _sw = _swing_run()
+                log.info("swing+: %d hitters scored", _sw.get("n_scored", 0))
+            except Exception:
+                log.exception("swing+ scoring failed — continuing")
+
+        # --- 6b3. MLB player detail export (player pages) ----------------
+        # The /projections/#player= + FA-card-linked per-player payloads:
+        # careers (StatsAPI + war_daily), Savant percentiles, arsenals,
+        # Swing+, FA market fields. Reads the two exports above.
+        with _step("6b3. MLB player detail export (mlb_player_detail.json)", log):
+            try:
+                from mlb_player_export import export as _export_mlbp
+                _export_mlbp()
+            except Exception:
+                log.exception("mlb player detail export failed — continuing")
+
         # --- 6c. Organization Tendencies (farm-detail Tendencies tab) ---
         # Pure aggregation over the DB + just-written sidecars; additive.
         with _step("6c. Org tendencies export (org_tendencies.json)", log):

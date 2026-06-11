@@ -69,10 +69,13 @@
   }
 
   const state = { src: "all", pos: "all", team: "all", q: "", sort: "warTotal",
-                  dir: -1, limit: 100 };
+                  dir: -1, limit: 100, player: null };
+  let DETAIL = null;            // data/mlb_player_detail.json, lazy
+  let DETAIL_LOADING = false;
 
   function syncFromURL() {
     const p = new URLSearchParams(location.hash.slice(1));
+    state.player = p.get("player") || null;
     if (p.has("src")) state.src = p.get("src");
     if (p.has("pos")) state.pos = p.get("pos");
     if (p.has("team")) state.team = p.get("team");
@@ -81,6 +84,7 @@
   }
   function syncToURL() {
     const p = new URLSearchParams();
+    if (state.player) p.set("player", state.player);
     if (state.src !== "all") p.set("src", state.src);
     if (state.pos !== "all") p.set("pos", state.pos);
     if (state.team !== "all") p.set("team", state.team);
@@ -143,6 +147,7 @@
     const bar = document.getElementById("proj-filters");
     const banner = document.getElementById("proj-banner");
     if (!root || !DATA) return;
+    if (state.player) { renderPlayer(state.player); return; }
     const first = DATA.first_season;
     const teams = [...new Set((DATA.vets || []).map(m => m.team).filter(Boolean))].sort();
 
@@ -208,7 +213,7 @@
         : EM_DASH;
       const link = m.src === "prospect"
         ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(m.key)}"><strong>${esc(m.name)}</strong></a>`
-        : `<strong>${esc(m.name)}</strong>`;
+        : `<a class="fa-player-link" href="#player=${encodeURIComponent(m.key)}"><strong>${esc(m.name)}</strong></a>`;
       return `<tr>
         <td>${i + 1}</td>
         <td class="proj-player">${teamLogo(m.team)}${link} <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " · FA"}</span> ${tagFor(m)}</td>
@@ -235,6 +240,140 @@
     const more = document.getElementById("proj-more");
     if (more) more.onclick = () => { state.limit += 100; renderTable(); };
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(root);
+  }
+
+  // ===========================================================================
+  // MLB player page (#player={key}) - the per-player detail surface
+  // (data/mlb_player_detail.json, mlb_player_export.py). Parity goal with
+  // prospect detail: hero + tiles, projection fan, Savant percentile
+  // sliders, pitch arsenal, season-by-season career with bWAR, FA market
+  // block for class members.
+  // ===========================================================================
+  function headshotURL(mlbam, r) {
+    return `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_${r || 240},q_auto:best/v1/people/${mlbam}/headshot/67/current`;
+  }
+  function pctClass(p) {
+    return p >= 80 ? "is-elite" : p >= 60 ? "is-good" : p >= 40 ? "is-avg" : p >= 20 ? "is-low" : "is-poor";
+  }
+  function sliders(sc) {
+    if (!sc || !sc.metrics || !sc.metrics.length) return "";
+    const rows = sc.metrics.map(m => `
+      <div class="mlbp-slider">
+        <span class="mlbp-slider-label">${esc(m.label)}</span>
+        <div class="mlbp-slider-track"><div class="mlbp-slider-fill ${pctClass(m.pct)}" style="width:${m.pct}%;"></div>
+          <span class="mlbp-slider-pct ${pctClass(m.pct)}" style="left:${Math.min(94, Math.max(2, m.pct))}%;">${m.pct}</span></div>
+        <span class="mlbp-slider-val">${esc(m.value)}</span>
+      </div>`).join("");
+    return `<div class="mlbp-section"><div class="mlbp-section-title">Statcast Percentiles <span class="fa-sub">${sc.season} · vs qualified MLB pool</span></div>${rows}</div>`;
+  }
+  function fanChart(p) {
+    const war = (p.proj && p.proj.war) || [];
+    if (war.length < 2) return "";
+    const lo = (p.proj && p.proj.warP10) || [], hi = (p.proj && p.proj.warP90) || [];
+    const first = DATA.first_season, W = 560, H = 170, PX = 36, PY = 16;
+    const all = war.concat(lo, hi).filter(v => v != null);
+    const mn = Math.min(0, ...all), mx = Math.max(1, ...all);
+    const x = t => PX + t * (W - PX - 8) / (war.length - 1);
+    const y = v => PY + (mx - v) * (H - PY - 24) / (mx - mn || 1);
+    const pts = a => a.map((v, t) => `${x(t)},${y(v)}`).join(" ");
+    const band = (lo.length && hi.length)
+      ? `<polygon points="${pts(hi)} ${lo.map((v, t) => `${x(lo.length - 1 - t)},${y(lo[lo.length - 1 - t])}`).join(" ")}" class="mlbp-fan-band"/>` : "";
+    const ticks = war.map((v, t) => `<text x="${x(t)}" y="${H - 6}" text-anchor="middle" class="mlbp-fan-tick">${first + t}</text>`).join("");
+    const zero = (mn < 0) ? `<line x1="${PX}" x2="${W - 8}" y1="${y(0)}" y2="${y(0)}" class="mlbp-fan-zero"/>` : "";
+    return `<div class="mlbp-section"><div class="mlbp-section-title">Projected bWAR <span class="fa-sub">mean + P10-P90 band · Gate-1-validated engine</span></div>
+      <svg class="mlbp-fan" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected WAR path">${band}
+        <polyline points="${pts(war)}" class="mlbp-fan-line"/>
+        ${war.map((v, t) => `<circle cx="${x(t)}" cy="${y(v)}" r="3" class="mlbp-fan-dot"><title>${first + t}: ${fmtWar(v)}${lo[t] != null ? ` (${fmtWar(lo[t])}-${fmtWar(hi[t])})` : ""}</title></circle>`).join("")}
+        ${zero}${ticks}</svg></div>`;
+  }
+  function arsenalTable(ar) {
+    if (!ar || !ar.length) return "";
+    return `<div class="mlbp-section"><div class="mlbp-section-title">Pitch Arsenal <span class="fa-sub">usage · run value /100 · whiff%</span></div>
+      <table class="detail-table"><thead><tr><th>Pitch</th><th>Usage</th><th>RV/100</th><th>Whiff%</th><th>BA against</th></tr></thead>
+      <tbody>${ar.map(a => `<tr><td>${esc(a.pitch || "")}</td><td>${a.usage != null ? a.usage.toFixed(1) + "%" : EM_DASH}</td>
+        <td class="${a.rv100 != null && a.rv100 < 0 ? "proj-pos" : a.rv100 > 0 ? "proj-neg" : ""}">${a.rv100 != null ? a.rv100.toFixed(1) : EM_DASH}</td>
+        <td>${a.whiff != null ? a.whiff.toFixed(1) + "%" : EM_DASH}</td><td>${a.ba != null ? String(a.ba) : EM_DASH}</td></tr>`).join("")}</tbody></table></div>`;
+  }
+  function careerTable(p) {
+    const c = p.career || [];
+    if (!c.length) return "";
+    const head = p.isPit
+      ? "<th>Year</th><th>IP</th><th>ERA</th><th>K%</th><th>BB%</th><th>bWAR</th>"
+      : "<th>Year</th><th>PA</th><th>AVG/OBP/SLG</th><th>OPS</th><th>HR</th><th>SB</th><th>BB%</th><th>K%</th><th>ISO</th><th>bWAR</th>";
+    const rows = c.slice().reverse().map(r => p.isPit
+      ? `<tr><td>${r.y}</td><td>${r.ip ?? EM_DASH}</td><td>${r.era != null ? r.era.toFixed(2) : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td><td>${r.war != null ? r.war.toFixed(1) : EM_DASH}</td></tr>`
+      : `<tr><td>${r.y}</td><td>${r.pa ?? EM_DASH}</td><td>${esc(r.avg || "-")}/${esc(r.obp || "-")}/${esc(r.slg || "-")}</td><td>${esc(r.ops || EM_DASH)}</td><td>${r.hr ?? EM_DASH}</td><td>${r.sb ?? EM_DASH}</td><td>${r.bbPct != null ? r.bbPct + "%" : EM_DASH}</td><td>${r.kPct != null ? r.kPct + "%" : EM_DASH}</td><td>${r.iso != null ? String(r.iso).replace(/^0(?=\.)/, "") : EM_DASH}</td><td>${r.war != null ? r.war.toFixed(1) : EM_DASH}</td></tr>`).join("");
+    return `<div class="mlbp-section"><div class="mlbp-section-title">Career <span class="fa-sub">MLB seasons · bWAR (Baseball-Reference)</span></div>
+      <table class="detail-table"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+  function faBlock(p) {
+    const f = p.fa;
+    if (!f) return "";
+    const verd = f.verdict ? `<span class="mlbp-tile-chip">${esc(f.verdict)}</span>` : "";
+    const cells = [
+      ["Projected", f.projYears != null ? `${f.projYears}y / ${money(f.projGuar)}` : EM_DASH],
+      ["Proj AAV", f.projAav != null ? `${money(f.projAav)}${f.projAavP10 != null ? ` <span class="fa-band">(${money(f.projAavP10)}-${money(f.projAavP90)})</span>` : ""}` : EM_DASH],
+      ["Rational value", f.rational != null ? money(f.rational) : EM_DASH],
+      ["Contract surplus", f.surplus != null ? money(f.surplus) : EM_DASH],
+      ["Deal+", f.dealPlus != null ? String(Math.round(f.dealPlus)) : EM_DASH],
+      ["Prior AAV", f.prevAav != null ? money(f.prevAav) : EM_DASH],
+    ];
+    return `<div class="mlbp-section"><div class="mlbp-section-title">Free Agency <span class="fa-sub">${esc(f.status || "")} · gate-validated market model</span> ${verd}</div>
+      <div class="mlbp-grid">${cells.map(([l, v]) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${l}</span><span class="mlbp-cell-val">${v}</span></div>`).join("")}</div>
+      <div class="fa-sub" style="margin-top:6px;"><a class="fa-player-link" href="/fa/#player=${encodeURIComponent(p.key)}">market card on the class board →</a></div></div>`;
+  }
+  function renderPlayer(key) {
+    const root = document.getElementById("proj-rows");
+    const bar = document.getElementById("proj-filters");
+    const banner = document.getElementById("proj-banner");
+    if (banner) banner.innerHTML = "";
+    if (bar) bar.innerHTML = `<a class="chip" href="#" id="mlbp-back">← back to projections</a>`;
+    const back = document.getElementById("mlbp-back");
+    if (back) back.onclick = (e) => { e.preventDefault(); state.player = null; syncToURL(); render(); };
+    if (!DETAIL) {
+      root.innerHTML = `<div class="state-message is-loading">Loading player&hellip;</div>`;
+      if (!DETAIL_LOADING) {
+        DETAIL_LOADING = true;
+        fetch("/data/mlb_player_detail.json", { cache: "no-cache" })
+          .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+          .then(d => { DETAIL = d; if (state.player) renderPlayer(state.player); })
+          .catch(e => { root.innerHTML = `<div class="state-message is-error">Player detail unavailable (${esc(String(e.message || e))}). Run <code>python mlb_player_export.py</code>.</div>`; });
+      }
+      return;
+    }
+    const p = (DETAIL.players || {})[key];
+    if (!p) {
+      root.innerHTML = `<div class="state-message">No detail for "${esc(key)}". <a href="#" onclick="location.hash='';return false;">Back</a>.</div>`;
+      return;
+    }
+    const photo = p.mlbam
+      ? `<img class="mlbp-headshot" src="${headshotURL(p.mlbam, 240)}" alt="" onerror="this.style.visibility='hidden'">` : "";
+    const tiles = [];
+    const tile = (label, val, cls) => tiles.push(`<div class="mlbp-tile"><span class="mlbp-tile-label">${label}</span><span class="mlbp-tile-val ${cls || ""}">${val}</span></div>`);
+    if (p.proj && p.proj.warTotal != null)
+      tile(`${(p.proj.war || []).length}y WAR`, `${fmtWar(p.proj.warTotal)}${p.proj.warTotalP10 != null ? `<span class="fa-band"> (${fmtWar(p.proj.warTotalP10)}-${fmtWar(p.proj.warTotalP90)})</span>` : ""}`);
+    if (p.proj && p.proj.surNpv != null) tile("Surplus NPV", money(p.proj.surNpv), p.proj.surNpv >= 0 ? "proj-pos" : "proj-neg");
+    if (p.swingPlus != null) tile("Swing+", `${p.swingPlus}<span class="fa-band"> n=${p.swingN}</span>`, p.swingPlus >= 105 ? "proj-pos" : p.swingPlus <= 95 ? "proj-neg" : "");
+    if (p.fa && p.fa.projAav != null) tile("Proj AAV", money(p.fa.projAav));
+    const contract = p.proj && p.proj.thru
+      ? `signed thru ${p.proj.thru}${p.proj.aav ? ` · ${money(p.proj.aav)}/y` : ""}`
+      : (p.fa ? `free agent${p.fa.type ? ` · ${esc(p.fa.type)}` : ""}` : "arb / pre-arb");
+    root.innerHTML = `<div class="mlbp-page">
+      <div class="mlbp-hero">
+        ${photo}
+        <div class="mlbp-hero-main">
+          <div class="mlbp-name">${teamLogo(p.team)}<h2>${esc(p.name || key)}</h2></div>
+          <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${esc(p.team)}` : " · FA"} · ${contract}</div>
+        </div>
+        <div class="mlbp-tiles">${tiles.join("")}</div>
+      </div>
+      ${fanChart(p)}
+      ${sliders(p.sc)}
+      ${p.isPit ? arsenalTable(p.arsenal) : ""}
+      ${faBlock(p)}
+      ${careerTable(p)}
+      <div class="fa-note" style="margin-top:14px;">Projections: the FA module's Gate-1-validated engine (bands = empirical residual quantiles). Statcast percentiles vs the season's qualified MLB pool. ${p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)." : ""}</div>
+    </div>`;
   }
 
   function boot() {

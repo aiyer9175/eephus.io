@@ -7885,13 +7885,14 @@
   <!-- Mirrors build_site.py NAV_ITEMS (keep the two in sync) -->
   <nav class="eephus-links">
     <a href="/">Home</a>
-    <a href="/articles/">Articles</a>
     <a href="/prospx/" class="is-active">PROSPX</a>
+    <a href="/collegesavant/">CollegeSavant</a>
     <a href="/fa/">Free Agency</a>
     <a href="/projections/">Projections</a>
-    <a href="/glossary/">Glossary</a>
+    <a href="/articles/">Articles</a>
     <a href="/forums/">Forums</a>
-    <a href="/team/">Development Team</a>
+    <a href="/glossary/">Glossary</a>
+    <a href="/team/">Dev Team</a>
   </nav>
   <div class="eephus-nav-controls">
     <button class="eephus-nav-ctrl" id="global-watchlist" type="button"
@@ -10788,6 +10789,15 @@ function _statcastStripHTML(p) {
     // modest +5 vs pool mean is a real signal worth surfacing.
     const sPlusColor = sPlus >= 105 ? "var(--up)" : sPlus <= 95 ? "var(--down)" : "var(--text-primary)";
     chips.unshift(chip("SC+", String(sPlus), sPlusColor, `Statcast+ composite (${isP ? "pitcher" : "hitter"} blend) · pool-anchored at 100 (~σ × 15)`));
+  }
+  // Swing+ (Will Cahoon's bat-tracking model, data/swing_plus.json).
+  // MLB bat tracking only (2024+) - no public MiLB tracking exists, so
+  // this lights up once a prospect debuts and accrues MLB swings.
+  const swp = getSwingPlus(p);
+  if (swp != null && !isP) {
+    const swpColor = swp >= 105 ? "var(--up)" : swp <= 95 ? "var(--down)" : "var(--text-primary)";
+    chips.unshift(chip("Swing+", String(Math.round(swp)), swpColor,
+      `Swing+ (Will Cahoon) · swing-quality model on MLB bat tracking · 100 = league avg · MLB swings only (no MiLB tracking exists)`));
   }
   if (!chips.length) return "";
   return `<div class="sc-strip" title="Advanced Statcast / zone signals - only populated when MLB Stats API tracked the prospect's games this season">${chips.join("")}</div>`;
@@ -14420,8 +14430,10 @@ function _prospectDetailSidebarCards(p, activeTab) {
     const sl = p.statline || {};
     const sm = p.sabermetrics || {};
     const sp = getStatcastPlus(p);
+    const swp = (typeof getSwingPlus === "function" && !isPit) ? getSwingPlus(p) : null;
     const signals = [
       sp != null ? { key: "SC+", value: sp, valColor: sp >= 105 ? "var(--up)" : sp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
+      swp != null ? { key: "Swing+", value: Math.round(swp), valColor: swp >= 105 ? "var(--up)" : swp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
       sl.rps_plus != null ? { key: "RPS+", value: sl.rps_plus, valColor: sl.rps_plus >= 110 ? "var(--up)" : sl.rps_plus <= 90 ? "var(--down)" : "var(--text-primary)" } : null,
       isPit && sl.stf_plus_periph != null ? { key: "Stuff+", value: sl.stf_plus_periph } : null,
       !isPit && sl.ops_plus_level != null ? { key: "OPS+ lvl", value: sl.ops_plus_level } : null,
@@ -23542,6 +23554,31 @@ function _scPool() {
   _scPoolCache = { hit: stats(hitters), pit: stats(pitchers) };
   return _scPoolCache;
 }
+// Swing+ sidecar (data/swing_plus.json - Will Cahoon's bat-tracking
+// model, scored by swing_plus_ingest.py). Keyed by MLBAM id; only MLB
+// swings exist (bat tracking has never run below MLB), so the lookup
+// resolves for debuted players. Fetched once at boot; a miss before
+// the fetch lands just skips the pill for that paint.
+let _SWING_PLUS = null;
+(function loadSwingPlus() {
+  fetch("/data/swing_plus.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _SWING_PLUS = (j && j.players) || {};
+      // The first paint can beat this fetch - repaint the open view so
+      // Swing+ tiles/chips appear without a manual refresh.
+      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+    })
+    .catch(() => { _SWING_PLUS = {}; });
+})();
+function getSwingPlus(p) {
+  if (!p || !_SWING_PLUS) return null;
+  const mid = p.mlbam_id || (p.career_war || {}).mlbam_id;
+  if (!mid) return null;
+  const row = _SWING_PLUS[String(mid)];
+  return row ? row.swing_plus : null;
+}
+
 function getStatcastPlus(p) {
   if (!p) return null;
   // v29 - Prefer the server-computed Statcast+ when present. Storage
@@ -24921,6 +24958,13 @@ function buildProspectCard(snap) {
     if (p.statcast_plus != null && isFinite(p.statcast_plus)) {
       const v = Math.round(p.statcast_plus);
       tile("SC+", String(v), v >= 105 ? "var(--up)" : v <= 95 ? "var(--down)" : P.text);
+    }
+    {
+      const swp = (typeof getSwingPlus === "function") ? getSwingPlus(p) : null;
+      if (swp != null && !isPitcher) {
+        const v = Math.round(swp);
+        tile("Swing+", String(v), v >= 105 ? "var(--up)" : v <= 95 ? "var(--down)" : P.text);
+      }
     }
     if (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) {
       const v = Math.round(p.dollar_dvm_plus);
@@ -35127,12 +35171,26 @@ function renderPlayerDetail(key) {
     return value ? [label, value, sub] : null;
   })();
 
+  // Swing+ (Will Cahoon's bat-tracking model) - MLB swings only, so this
+  // tile lights up once a hitter debuts (no MiLB tracking exists).
+  const swingTile = (() => {
+    const v = (typeof getSwingPlus === "function" && !sl.is_pitcher) ? getSwingPlus(p) : null;
+    if (v == null) return null;
+    const r = Math.round(v);
+    const c = r >= 105 ? "var(--up)" : r <= 95 ? "var(--down)" : "var(--text-primary)";
+    const row = (typeof _SWING_PLUS !== "undefined" && _SWING_PLUS && p.mlbam_id)
+      ? _SWING_PLUS[String(p.mlbam_id)] : null;
+    return ["Swing+", `<span style="color:${c};font-weight:800;">${r}</span>`,
+            `bat-tracking swing quality (Will Cahoon)${row && row.n_swings ? ` · ${row.n_swings} MLB swings` : ""}`];
+  })();
+
   const tiles = [
     ["Age vs. level", ageTileValue, ageSub],
     [perfTileLabel,  perfTileValue, perfTileSub],
     ["ETA",          etaDisplayYear(eta), eta.confidence ? `${eta.confidence} confidence` : ""],
     topToolTile,
     keyStatcastTile,
+    swingTile,
     wagTile,
     acqLabel ? ["Acquired via", acqLabel, acqSub] : null,
   ].filter(Boolean);

@@ -526,7 +526,7 @@
     rows.innerHTML = `
       <p><a href="#view=board">&larr; Class Board</a></p>
       <div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">${esc(m.name)}</span>
-      <span class="newsprint-eyebrow-meta">${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")} &middot; ${statusChip(m)}</span></div>
+      <span class="newsprint-eyebrow-meta">${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")} &middot; ${statusChip(m)} &middot; <a class="fa-player-link" href="/projections/#player=${encodeURIComponent(m.key)}" title="Career, Statcast percentiles, arsenal, Swing+, and the 5-year projection fan">full player page &rarr;</a></span></div>
       ${m.thinPlatform ? `<div class="fa-cba-note">&#9888; ${esc(m.thinPlatform)} &mdash; the projection, and every number priced off it, is low-confidence.</div>` : ""}
       ${m.note ? `<div class="fa-cba-note">&#8251; ${esc(m.note)}</div>` : ""}
       ${signedBlock}

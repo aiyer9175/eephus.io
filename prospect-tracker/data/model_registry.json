@@ -305,6 +305,17 @@
    "notes": "Phase 4b WS-8 (2026-06-11): local validation BLOCKED on data - tjStuff+ consumes per-pitch kinematics and no historical archive exists for prospects' pre-debut pitches (Savant minors tracking is AAA-2023+ aggregates, not per-pitch history per graduate). The lift resolves with time: per-season Stf+/statcast rows began persisting in 2026; the first scoreable cohort arrives when those prospects debut. Until then the external model stays consumed-as-is and labeled so."
   },
   {
+   "model_id": "swing_plus_external",
+   "surface": "PROSPX debuted-prospect cards + GFX hero rail + /projections/ player pages",
+   "predicts": "swing-quality run value from bat-tracking mechanics (bat speed, swing length, attack angle/direction, path tilt, intercept), 100 = league avg",
+   "champion": "swing_plus v1.0.0 (Will Cahoon, vendored inference: vendor_swing_plus.py + model/swing_plus joblib; scoring by swing_plus_ingest.py)",
+   "baseline": "none locally",
+   "metric": "none locally (validated in the author's repo; not re-derived here)",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "notes": "External model consumed with attribution (2026-06-11). DATA BOUNDARY stated on every surface: MLB bat tracking 2024+ only - no public MiLB tracking exists (verified vs Savant minors 2023-26), so pre-debut prospects can NEVER score; the pill lights up at debut. Reliability shrink toward 100 below ~180 swings. NOTE: scoring runs on sklearn 1.7 against a 1.8-pickled artifact (benign InconsistentVersionWarning; ridge pipelines stable) - pin on next env refresh. Local forward validation = same posture as tjstuff_plus."
+  },
+  {
    "model_id": "spotlights_movement",
    "surface": "PROSPX spotlights + WIRE flags",
    "predicts": "risers/rebounders/fallers (implicit claim: movement persists)",

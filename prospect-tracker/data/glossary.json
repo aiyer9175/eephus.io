@@ -4175,6 +4175,44 @@
     "rational_value",
     "winter_dpw"
    ]
+  },
+  {
+   "id": "swing_plus",
+   "term": "Swing+",
+   "category": "custom-index",
+   "module": [
+    "prospx",
+    "projections",
+    "fa"
+   ],
+   "aliases": [
+    "Swing+",
+    "SwingPlus"
+   ],
+   "priority": 30,
+   "definition": "Swing-quality index from Statcast bat tracking (bat speed, swing length, attack angle/direction, swing path tilt, intercept point): how much a hitter's swing mechanics are worth, scaled so 100 = league average and higher is better. Built by Will Cahoon; eephus.io runs the model's scoring on each player's tracked MLB swings.",
+   "methodology": "Per-swing tracking features are filtered to competitive swings, aggregated per hitter (means + variability), and scored through the model's run-value pipelines with a reliability shrink toward 100 below ~180 swings. DATA BOUNDARY: bat tracking exists only at the MLB level (2024+); no public MiLB tracking exists, so prospects light up after debut, never before.",
+   "example": "A debuted prospect at Swing+ 115 with 300+ swings carries a plus swing by MLB standards; 95 on 60 swings is mostly shrink, not signal.",
+   "seeAlso": [],
+   "formula": null
+  },
+  {
+   "id": "collegesavant",
+   "term": "CollegeSavant",
+   "category": "module",
+   "module": [
+    "collegesavant"
+   ],
+   "aliases": [
+    "CollegeSavant",
+    "College Savant"
+   ],
+   "priority": 40,
+   "definition": "eephus.io's college baseball percentile module (created by Joseph Gillis): Savant-style hitter and pitcher dashboards over college TrackMan-era data, with per-metric leaderboards, player pages, and global search.",
+   "methodology": "Percentiles are computed within the college dataset's qualified pool per season. The module is in alpha.",
+   "example": null,
+   "seeAlso": [],
+   "formula": null
   }
  ]
 }
