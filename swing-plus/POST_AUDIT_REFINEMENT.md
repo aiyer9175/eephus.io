@@ -95,6 +95,42 @@ Contact+ (decomposition & thin-history roles) · REJECTED: sprint speed.
 5. De-prioritized permanently: sprint speed (engine), B2B restructure, weather,
    archetype-specific models (0-for-4 now)
 
+## Addendum ADJX (2026-06-11): the Adjustability+ axis question — RESOLVED
+
+**Q1 — why did the discovery audit reject what the engine now accepts?
+BASELINE-DEPENDENT, confirmed.** Gain from raw `attack_angle_std` on next BABIP:
+**+0.05 on the discovery-era thin baseline** (own-stat history only — exactly
+why SDA-M1 rejected) vs **+0.45 on the full v2 stack**; xwOBA −0.10 thin vs
++0.11 full. The signal is a suppressor: it only emerges after the backbone +
+skills remove the variance that masks it. SDA-M1's verdict was correct *for its
+baseline*; the baseline changed. **New framework rule (added to the 2026 refit
+checklist): rejected candidates are baseline-relative — re-screen the rejection
+registry whenever the baseline stack materially changes.**
+
+**Q2 — good vs bad variance: the decomposition does NOT beat the raw SD.**
+Per-hitter attack-angle ~ pitch-height split (slope = adaptation, residual SD =
+"inconsistency"): promotion bar shows champion raw SD +0.14/+0.42/+0.25/+0.22
+(avg/babip/xba/xwoba) vs decomposition +0.08/+0.42/+0.21/+0.10; SDA's richer
+multi-covariate constructs worse still (+0.04/+0.28/+0.17/+0.07). Both
+components carry **positive** coefficients — more height-adaptation (mean slope
+−9.7°/zone: steeper on low pitches) AND more residual dispersion both help,
+because the "residual" still contains adaptation to location/velocity/pitch-type.
+At n=538, every purification discards signal. The dispersion is adaptation,
+not noise: reliability ladder agrees (aa_sd .88, slope .86, resid .82 — all skill-stable).
+
+**Q3 — swing-side vs outcome-side: different things, opposite directions.**
+corr(attack-angle SD, launch-angle SD) = **−0.40**: hitters who vary the swing
+more produce *less* variable batted-ball launch — adaptation in, consistency
+out, which is precisely the adjustability mechanism. Outcome-side la_sd is
+half noise (y2y .51 vs .88 swing-side) and FAILS as a feature (−0.18 BABIP).
+This also reconciles the variance model's cons_la_sd finding: low outcome
+dispersion ⇔ high swing adaptation — same skill, viewed from the other end.
+
+**Verdict: no Adjustability+ axis is built. The champion (raw
+`attack_angle_std`, engine v2.1) DEFENDS the promotion bar** — the raw form is
+the best available carrier of the skill at current sample. Re-pose the axis
+question at the 2026 refit with the decomposition re-run at larger n.
+
 ## GO / NO-GO: **GO — engine v2.1 shipped**
 
 avg + xwoba gain `attack_angle_std`, bb_pct gains `zone_seen`; all other specs
