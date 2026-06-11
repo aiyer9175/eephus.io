@@ -55,6 +55,19 @@ def _proj():
         subset=["hitter_plus_proj"]).drop_duplicates(["batter", "_yr"])
 
 
+STATPROJ = ["proj_xwoba", "proj_woba", "proj_k_pct", "proj_bb_pct", "proj_iso"]
+
+
+def _statproj():
+    """next-season stat projections (projection engine; ~/projection_engine)."""
+    p = PROC / "stat_projections.parquet"
+    if not p.exists():
+        return None
+    v = pd.read_parquet(p).rename(columns={"season": "_yr"})
+    return v[["batter", "_yr"] + STATPROJ].dropna(
+        subset=["proj_xwoba"]).drop_duplicates(["batter", "_yr"])
+
+
 def _variance():
     """luck/regression layer (external variance model; variance_layer.py)."""
     p = PROC / "variance_layer.parquet"
@@ -72,6 +85,7 @@ def add_to_boards(board: pd.DataFrame) -> pd.DataFrame:
     dcv = _dcv()
     var = _variance()
     prj = _proj()
+    sp_ = _statproj()
     keep = ["b2b_plus", "contact_plus_b2b", "dc_plus_b2b"]
     b = board.copy()
     s_yr = s.assign(_yr=s["season"].astype(int))[["batter", "_yr"] + keep]
@@ -101,6 +115,9 @@ def add_to_boards(board: pd.DataFrame) -> pd.DataFrame:
         if prj is not None:                       # alltime -> latest-season projection
             cur = prj.sort_values("_yr").groupby("batter").tail(1).drop(columns="_yr")
             b = b.merge(cur, on="batter", how="left")
+        if sp_ is not None:
+            cur = sp_.sort_values("_yr").groupby("batter").tail(1).drop(columns="_yr")
+            b = b.merge(cur, on="batter", how="left")
     if "_yr" in b.columns:
         if v2 is not None:
             b = b.merge(v2[["batter", "_yr", "contact2_plus"]], on=["batter", "_yr"], how="left")
@@ -110,6 +127,8 @@ def add_to_boards(board: pd.DataFrame) -> pd.DataFrame:
             b = b.merge(var, on=["batter", "_yr"], how="left")
         if prj is not None:
             b = b.merge(prj, on=["batter", "_yr"], how="left")
+        if sp_ is not None:
+            b = b.merge(sp_, on=["batter", "_yr"], how="left")
         b = b.drop(columns="_yr")
     # the contact AXIS the app + Hitter+ use: v2 (collision-aware) where available, else v1
     if "contact2_plus" in b.columns:

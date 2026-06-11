@@ -87,6 +87,14 @@ Default owner: **@willclq** (reassign per feature as the team grows).
 - **Owner:** @willclq
 - **Data deps:** `~/aging_curves/` pipeline + panel; `birthdates.json` + MLB Stats API; all five axis sources; `data/raw/statcast_*.parquet` (discipline panel). Constraint: do NOT stack with the variance engine's outcome-aging bias terms (double-count) or sum with the app's feature-level Swing+ aging tab.
 
+## Projected (next yr) — historical priors + xwOBA projection engine
+- **What:** Next-season stat projections (xwOBA primary + wOBA/K%/BB%/ISO/AVG/OPS): ridge on the five skill axes + bat speed + age + **compact own-stat priors (current + career only)** — the full prior stack (prev/2yr windows, partner stats) overfits and was REJECTED; wOBA/HR-PA ship skills-only (their history failed the incremental gate). History's biggest wins live where the skill system is thinnest: K% +2.9 RMSE pts, BB% +2.0 (no walk axis), xSLG +1.8, xwOBA +1.2. Full audit: `~/projection_engine/PROJECTION_REPORT.md`.
+- **Inputs:** outcomes panel from raw Statcast (leak-free career-to-date priors); skill panel (axes + bat speed + age).
+- **Outputs:** `data/processed/stat_projections.parquet` → `proj_xwoba/proj_woba/proj_k_pct/proj_bb_pct/proj_iso` on boards; "Projected (next yr)" group.
+- **Definition of done:** per-target champion beats hist-only AND skills-only OOS (xwOBA r .647 vs .574/.605); ridge beats LGBM/OLS; calibration |err| ≤ .019/decile; leakage LOW (career priors ≤ t); stress slices flat-RMSE. ✅ 2027 lines face-valid (Judge .405 xwOBA / 25% K; Soto 17% K / 15% BB).
+- **Owner:** @willclq
+- **Data deps:** `~/projection_engine/` pipeline; `data/raw/statcast_*.parquet`; skill panel (`~/aging_curves`); per-target σ in report (xwOBA ±.028). League renorm + elite-tail terms (variance engine_adjustments.json) still to apply at scoring time — documented open item.
+
 ---
 
 ## Feature template (copy for every new feature)

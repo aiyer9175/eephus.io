@@ -45,3 +45,4 @@ secrets.json
 # Runtime logs + scratch
 logs/
 *_test.py
+swing_plus_data.tar.gz
