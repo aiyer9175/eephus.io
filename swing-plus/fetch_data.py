@@ -44,6 +44,7 @@ NEEDED = [
     "contact_v2.parquet", "obs_rates.parquet", "dcv_plus.parquet",
     "variance_layer.parquet", "variance_handoff/variance_model_output.parquet",
     "variance_handoff/shrinkage_constants.csv", "variance_handoff/engine_adjustments.json",
+    "aging_projection.parquet",
 ]
 
 
