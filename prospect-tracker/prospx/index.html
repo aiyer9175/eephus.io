@@ -14430,8 +14430,10 @@ function _prospectDetailSidebarCards(p, activeTab) {
     const sl = p.statline || {};
     const sm = p.sabermetrics || {};
     const sp = getStatcastPlus(p);
+    const swp = (typeof getSwingPlus === "function" && !isPit) ? getSwingPlus(p) : null;
     const signals = [
       sp != null ? { key: "SC+", value: sp, valColor: sp >= 105 ? "var(--up)" : sp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
+      swp != null ? { key: "Swing+", value: Math.round(swp), valColor: swp >= 105 ? "var(--up)" : swp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
       sl.rps_plus != null ? { key: "RPS+", value: sl.rps_plus, valColor: sl.rps_plus >= 110 ? "var(--up)" : sl.rps_plus <= 90 ? "var(--down)" : "var(--text-primary)" } : null,
       isPit && sl.stf_plus_periph != null ? { key: "Stuff+", value: sl.stf_plus_periph } : null,
       !isPit && sl.ops_plus_level != null ? { key: "OPS+ lvl", value: sl.ops_plus_level } : null,
@@ -23561,7 +23563,12 @@ let _SWING_PLUS = null;
 (function loadSwingPlus() {
   fetch("/data/swing_plus.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
-    .then(j => { _SWING_PLUS = (j && j.players) || {}; })
+    .then(j => {
+      _SWING_PLUS = (j && j.players) || {};
+      // The first paint can beat this fetch - repaint the open view so
+      // Swing+ tiles/chips appear without a manual refresh.
+      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+    })
     .catch(() => { _SWING_PLUS = {}; });
 })();
 function getSwingPlus(p) {
@@ -35164,12 +35171,26 @@ function renderPlayerDetail(key) {
     return value ? [label, value, sub] : null;
   })();
 
+  // Swing+ (Will Cahoon's bat-tracking model) - MLB swings only, so this
+  // tile lights up once a hitter debuts (no MiLB tracking exists).
+  const swingTile = (() => {
+    const v = (typeof getSwingPlus === "function" && !sl.is_pitcher) ? getSwingPlus(p) : null;
+    if (v == null) return null;
+    const r = Math.round(v);
+    const c = r >= 105 ? "var(--up)" : r <= 95 ? "var(--down)" : "var(--text-primary)";
+    const row = (typeof _SWING_PLUS !== "undefined" && _SWING_PLUS && p.mlbam_id)
+      ? _SWING_PLUS[String(p.mlbam_id)] : null;
+    return ["Swing+", `<span style="color:${c};font-weight:800;">${r}</span>`,
+            `bat-tracking swing quality (Will Cahoon)${row && row.n_swings ? ` · ${row.n_swings} MLB swings` : ""}`];
+  })();
+
   const tiles = [
     ["Age vs. level", ageTileValue, ageSub],
     [perfTileLabel,  perfTileValue, perfTileSub],
     ["ETA",          etaDisplayYear(eta), eta.confidence ? `${eta.confidence} confidence` : ""],
     topToolTile,
     keyStatcastTile,
+    swingTile,
     wagTile,
     acqLabel ? ["Acquired via", acqLabel, acqSub] : null,
   ].filter(Boolean);
