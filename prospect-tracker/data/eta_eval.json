@@ -1,0 +1,284 @@
+{
+ "generated_at": "2026-06-11",
+ "vintage_years": [
+  2018,
+  2019,
+  2020,
+  2021,
+  2022,
+  2023
+ ],
+ "accounting": {
+  "listed": 9185,
+  "excluded_post_debut": 620,
+  "excluded_no_bio": 0,
+  "no_level_age_fallback": 3730,
+  "level_from_statsapi": 3219,
+  "level_from_career_stats": 1616,
+  "debuted": 4111,
+  "censored_active": 2345,
+  "washed_out": 749,
+  "overdue": 904
+ },
+ "conventions": {
+  "vintage_fv": "median of each source's earliest same-year snapshot",
+  "inputs": "level/stats = season Y-1 at then-highest level (A- -> A, Rk/ROK/FRk -> CPX); age at snapshot date; STATIC norm tables",
+  "unscored_live_signals": "statcast_plus, health/IL, org promotion tendencies (not reconstructable per vintage)",
+  "actual": "debuts.json debut_date, else first career_war / career_stats MLB season",
+  "selection": "MAE conditions on debuted players (shared by champion/baseline/challenger); overdue + washed-out rates carry the unconditional signal"
+ },
+ "champion_heuristic": {
+  "n": 4111,
+  "mae": 1.391,
+  "bias": 0.998,
+  "within_1y": 0.594,
+  "exact": 0.222
+ },
+ "baseline_naive_level_table": {
+  "n": 3376,
+  "mae": 1.951,
+  "bias": 1.741,
+  "within_1y": 0.379,
+  "exact": 0.168
+ },
+ "champion_on_baseline_rows": {
+  "n": 3376,
+  "mae": 1.405,
+  "bias": 1.067,
+  "within_1y": 0.586,
+  "exact": 0.216
+ },
+ "challenger_empirical_table_forward_chained": {
+  "n": 2850,
+  "mae": 0.832,
+  "bias": 0.219,
+  "within_1y": 0.826,
+  "exact": 0.379
+ },
+ "challenger_km_recalibrated_heuristic": {
+  "n": 2778,
+  "mae": 1.448,
+  "bias": 1.15,
+  "within_1y": 0.571,
+  "exact": 0.199
+ },
+ "v38_frozen_on_km_rows": {
+  "n": 2778,
+  "mae": 1.993,
+  "bias": 1.845,
+  "within_1y": 0.405,
+  "exact": 0.135
+ },
+ "km_base_years_full_window": {
+  "AAA": 0.75,
+  "AA": 1.5,
+  "A+": 3.0,
+  "A": 3.75,
+  "CPX": 4.25
+ },
+ "live_base_years": {
+  "AAA": 0.75,
+  "AA": 1.5,
+  "A+": 3.0,
+  "A": 3.75,
+  "CPX": 4.25,
+  "DSL": 7.5
+ },
+ "v38_frozen_base_years": {
+  "AAA": 0.5,
+  "AA": 2.0,
+  "A+": 3.5,
+  "A": 5.0,
+  "CPX": 6.5,
+  "DSL": 7.5
+ },
+ "overdue_v38_vs_km": {
+  "v38": 803,
+  "km_recalibrated": 904,
+  "censored_n": 2345
+ },
+ "ship_decision": {
+  "date": "2026-06-11",
+  "decision": "SHIP \u2014 eta.BASE_YEARS recalibrated to the censoring-aware KM medians (v39); DSL keeps the hand-set 7.5 (curve never crosses 50% debut probability \u2014 cure fraction dominates)",
+  "criteria": "forward-chained debuted MAE and within-1y must beat the v38 bases on identical rows; overdue shift disclosed (conditional-accuracy trade, accepted: KM is censoring-aware, not a survivor median)",
+  "measured_2026_06_11": {
+   "km_recalibrated": {
+    "mae": 1.448,
+    "within_1y": 0.571
+   },
+   "v38_incumbent": {
+    "mae": 1.993,
+    "within_1y": 0.405
+   },
+   "rows": 2778,
+   "overdue": {
+    "v38": 803,
+    "km": 904,
+    "censored_n": 2345
+   }
+  }
+ },
+ "by_level": {
+  "DSL": {
+   "n": 2,
+   "mae": 7.0,
+   "bias": 7.0,
+   "within_1y": 0.0,
+   "exact": 0.0
+  },
+  "CPX": {
+   "n": 364,
+   "mae": 1.516,
+   "bias": 1.082,
+   "within_1y": 0.549,
+   "exact": 0.247
+  },
+  "A": {
+   "n": 888,
+   "mae": 1.579,
+   "bias": 1.214,
+   "within_1y": 0.532,
+   "exact": 0.181
+  },
+  "A+": {
+   "n": 724,
+   "mae": 1.653,
+   "bias": 1.424,
+   "within_1y": 0.47,
+   "exact": 0.151
+  },
+  "AA": {
+   "n": 891,
+   "mae": 1.222,
+   "bias": 0.915,
+   "within_1y": 0.655,
+   "exact": 0.222
+  },
+  "AAA": {
+   "n": 507,
+   "mae": 0.963,
+   "bias": 0.533,
+   "within_1y": 0.751,
+   "exact": 0.335
+  }
+ },
+ "by_vintage": {
+  "2018": {
+   "n": 647,
+   "mae": 1.215,
+   "bias": 0.529,
+   "within_1y": 0.645,
+   "exact": 0.275
+  },
+  "2019": {
+   "n": 769,
+   "mae": 1.225,
+   "bias": 0.619,
+   "within_1y": 0.659,
+   "exact": 0.263
+  },
+  "2020": {
+   "n": 720,
+   "mae": 1.171,
+   "bias": 0.751,
+   "within_1y": 0.678,
+   "exact": 0.264
+  },
+  "2021": {
+   "n": 710,
+   "mae": 1.882,
+   "bias": 1.67,
+   "within_1y": 0.417,
+   "exact": 0.111
+  },
+  "2022": {
+   "n": 706,
+   "mae": 1.428,
+   "bias": 1.187,
+   "within_1y": 0.578,
+   "exact": 0.215
+  },
+  "2023": {
+   "n": 559,
+   "mae": 1.436,
+   "bias": 1.286,
+   "within_1y": 0.58,
+   "exact": 0.199
+  }
+ },
+ "residual_by_level": {
+  "DSL": {
+   "n": 2,
+   "mean": 7,
+   "median": 7.0
+  },
+  "CPX": {
+   "n": 364,
+   "mean": 1.082,
+   "median": 1.0
+  },
+  "A": {
+   "n": 888,
+   "mean": 1.214,
+   "median": 1.0
+  },
+  "A+": {
+   "n": 724,
+   "mean": 1.424,
+   "median": 2.0
+  },
+  "AA": {
+   "n": 891,
+   "mean": 0.915,
+   "median": 1
+  },
+  "AAA": {
+   "n": 507,
+   "mean": 0.533,
+   "median": 1
+  }
+ },
+ "censoring": {
+  "censored_active": 2345,
+  "overdue_rate": 0.386,
+  "washed_out": 749,
+  "washed_out_share_of_listed": 0.104
+ },
+ "empirical_tables_by_vintage": {
+  "2019": {
+   "A+": 2,
+   "A": 3,
+   "AA": 1,
+   "CPX": 4.0,
+   "AAA": 0
+  },
+  "2020": {
+   "A": 3.0,
+   "A+": 2.0,
+   "AA": 1,
+   "CPX": 4,
+   "AAA": 0
+  },
+  "2021": {
+   "A": 3,
+   "A+": 2,
+   "AA": 1.0,
+   "CPX": 4.0,
+   "AAA": 0.0
+  },
+  "2022": {
+   "A": 2,
+   "A+": 2,
+   "AA": 1,
+   "CPX": 3.0,
+   "AAA": 0
+  },
+  "2023": {
+   "A": 2.0,
+   "A+": 1.0,
+   "AA": 1.0,
+   "CPX": 3,
+   "AAA": 0
+  }
+ }
+}

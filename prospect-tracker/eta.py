@@ -42,21 +42,28 @@ from datetime import date
 
 
 # ── Base years remaining by current level ──────────────────────────────────
-# v18 — widened the per-level gaps so the proximity signal materially
-# dominates the ±0.75y perf/age/FV adjustments. Previously a AAA prospect
-# was only 3.0y closer to MLB than a Single-A prospect; one good performance
-# season at A could easily collapse the rest of the gap. The new spacing
-# leaves a 4.5y AAA→A gap, so level dominates as the user expects.
-# CPX absorbs what used to be the generic "Rk" bucket — those leagues are
-# the same thing post-2021 — and DSL stays separate because foreign-rookie
-# prospects average a longer development arc.
+# v39 — FIRST MEASURED RECALIBRATION (model-audit Phase 4b, WS-8;
+# eta_backtest.py → data/eta_eval.json). Bases are now the Kaplan-Meier
+# MEDIAN years-to-debut per level over the 2018-2023 vintage cohorts
+# (n=7,205 listings): debuts are events, still-active non-debuted
+# players censor at observed follow-up, washed-out players stay in the
+# risk set forever (known never-debuts) — so these are NOT survivor
+# medians; the bust mass drags them honestly slower. Forward-chained
+# verdict vs the old v18/v38 hand-set table on identical debuted rows:
+# MAE 1.448 vs 1.993, within-1y 0.571 vs 0.405 (n=2,778). Disclosed
+# trade: overdue censored-actives 803→904 of 2,345.
+# DSL keeps the hand-set 7.5 — its debut curve never crosses 50%
+# (cure fraction dominates; only 2 of 124 vintage-listed DSL prospects
+# debuted in-window), so the KM median is undefined there.
+# v18 spacing rationale (level dominates the ±adjustments) still holds:
+# the AAA→A gap is 3.0y and the floor logic scales with the base.
 BASE_YEARS: dict[str, float] = {
     "MLB": 0.0,
-    "AAA": 0.5,
-    "AA":  2.0,
-    "A+":  3.5,
-    "A":   5.0,
-    "CPX": 6.5,
+    "AAA": 0.75,
+    "AA":  1.5,
+    "A+":  3.0,
+    "A":   3.75,
+    "CPX": 4.25,
     "DSL": 7.5,
 }
 
@@ -215,6 +222,7 @@ def estimate_eta(
     org_promotion_tendency: dict | None = None,
     il_status: dict | None = None,
     statcast_plus: int | None = None,
+    base_years: dict[str, float] | None = None,
 ) -> ETAResult:
     """
     Return an ETAResult for the given prospect attributes.
@@ -232,6 +240,10 @@ def estimate_eta(
         Consensus FV grade (20–80 scale).
     stats : dict | None
         Statline dict with keys like "ops", "era", "k_pct", "bb_pct".
+    base_years : dict | None
+        Override for the per-level base travel-time table — used by
+        eta_backtest.py to score candidate recalibrations through the
+        EXACT live code path. None → the module BASE_YEARS.
     """
     today_year = date.today().year
 
@@ -262,7 +274,8 @@ def estimate_eta(
     signals  = 0          # track how many signals we have for confidence
 
     # ── Base years from level ───────────────────────────────────────────────
-    base = BASE_YEARS.get(current_level) if current_level else None
+    base_table = base_years if base_years is not None else BASE_YEARS
+    base = base_table.get(current_level) if current_level else None
 
     if base is None:
         # No level → fall back to MLB debut age heuristic

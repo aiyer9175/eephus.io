@@ -1,0 +1,38 @@
+{
+ "generated_at": "2026-06-11",
+ "seasons": [
+  2023,
+  2024,
+  2025
+ ],
+ "conventions": {
+  "analog": "4 of SC+'s 6 components (avg EV / HardHit% / Barrel%/BBE / SwingMiss%) z-blended at 100+10z within the AAA pool, from Savant minors statcast-search aggregates \u2014 Z-Contact/Chase splits have no historical source (documented gap)",
+  "cohort": "debut year Y with qualifying AAA Savant aggregate in Y-1 (min 100 PA, AAA-pool-restricted)",
+  "outcomes": "first-MLB-season OPS (>= 100 PA) / ERA (>= 100 BF, inverted); first-2y bWAR (2026 debuts excluded \u2014 window open)",
+  "live_trail": "per-season statcast_metrics/zone_metrics rows began accumulating 2026 \u2014 the literal composite becomes forward-scoreable as those cohorts debut"
+ },
+ "cohort_n": {
+  "2023->2024": 41,
+  "2024->2025": 46,
+  "2025->2026": 12
+ },
+ "hitters": {
+  "n_ops": 49,
+  "r_sc_vs_mlb_ops": 0.1541,
+  "rho_sc_vs_mlb_ops": 0.1249,
+  "n_war": 100,
+  "r_sc_vs_war2y": 0.1417,
+  "rho_sc_vs_war2y": -0.0154
+ },
+ "pitchers": {
+  "n_era": 50,
+  "r_sc_vs_mlb_era_inv": 0.1206,
+  "rho_sc_vs_mlb_era_inv": 0.1693,
+  "n_war": 102,
+  "r_sc_vs_war2y": 0.0629,
+  "rho_sc_vs_war2y": 0.0633
+ },
+ "verdict": {
+  "summary": "WEAK forward signal, published per the audit's publish-the-r rule: final-AAA contact analog vs first-MLB rate outcomes r ~ 0.12-0.17; vs 2y bWAR ~ 0 (hitters). Consistent with the known ISO+ -> MLB ISO r=0.24 prior. SC+ remains descriptive \u2014 downstream consumers (breakout gate, ETA modifier, spotlight boost) should treat it as a tiebreaker, never a driver; the ETA backtest scores the core heuristic WITHOUT the SC+ nudge."
+ }
+}
