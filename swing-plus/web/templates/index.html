@@ -231,6 +231,21 @@ const LUCK = [
   { key: "luck_iso", label: "ISO luck", cls: "dec", format: sgn3,
     desc: "ISO luck: observed ISO minus Skill ISO. + = power output over his skill, − = under it." },
 ];
+// Projection engine (historical priors + skills): per-target champion = skills
+// (5 axes + bat speed + age) + own-stat current/career compact priors (full prior
+// blocks overfit). OOS (leave-transition-out): xwOBA r .65, K% .81, BB% .64.
+const STATPROJ = [
+  { key: "proj_xwoba", label: "Proj xwOBA", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Projected NEXT-season xwOBA — the engine's primary target (sits between skill and realized production; ~2x more reliable y2y than wOBA). Ridge on the five skill axes + bat speed + age + own xwOBA current/career. OOS r 0.65, σ ±.028. Calibrated within ±.019 per decile." },
+  { key: "proj_woba", label: "Proj wOBA", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Projected next-season wOBA — skills-only champion (adding wOBA history failed the incremental gate; realized-production history is redundant once skills are known). OOS r 0.48, σ ±.032." },
+  { key: "proj_k_pct", label: "Proj K%", cls: "dec", format: v => v == null ? "" : (v*100).toFixed(1) + "%",
+    desc: "Projected next-season K% — skills + own K% history (history's biggest win: +2.9 RMSE pts beyond skills; K% is the most reliable rate, y2y .81). OOS r 0.81." },
+  { key: "proj_bb_pct", label: "Proj BB%", cls: "dec", format: v => v == null ? "" : (v*100).toFixed(1) + "%",
+    desc: "Projected next-season BB% — skills + own BB% history (the skill system has no walk axis; own-stat history carries it, +2.0 RMSE pts). OOS r 0.64." },
+  { key: "proj_iso", label: "Proj ISO", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Projected next-season ISO — skills + own ISO current/career. OOS r 0.62, σ ±.044." },
+];
 const DECISION = [
   { key: "decision_plus_mlb", label: "Decision+", cls: "dec", format: v => v?.toFixed(1),
     desc: "MLB-native swing-DECISION grade (selection): run-value of swing/take choices vs league, base-out-count aware, tailored to his own swing. 100=avg, SD 10. Full coverage (802). The orthogonal axis to Swing+." },
@@ -252,11 +267,11 @@ const PCTCOL = { key: "__sppct", label: "%ile", cls: "key", isPct: true,
 const NSW = { key: "n_swings", label: "Swings", format: v => v?.toLocaleString(),
   desc: "Competitive swings in this window — the sample Swing+ is built on." };
 const COLUMN_SPECS = {
-  alltime: [RANKCOL, { key: "name", label: "Player" }, SP, PCTCOL, ...COMBO, ...LUCK,
+  alltime: [RANKCOL, { key: "name", label: "Player" }, SP, PCTCOL, ...COMBO, ...STATPROJ, ...LUCK,
             NSW, { key: "n_halves", label: "Halves" }, ...DECISION, ...VALUE, ...PRED2, ...PARKADJ, ...PRED, ...TRACK],
-  season: [RANKCOL, SP, PCTCOL, ...COMBO, ...LUCK, { key: "name", label: "Player" },
+  season: [RANKCOL, SP, PCTCOL, ...COMBO, ...STATPROJ, ...LUCK, { key: "name", label: "Player" },
            { key: "season", label: "Season" }, NSW, ...DECISION, ...VALUE, ...PRED2, ...PARKADJ, ...PRED, ...TRACK],
-  half: [RANKCOL, SP, PCTCOL, ...COMBO, ...LUCK, { key: "name", label: "Player" },
+  half: [RANKCOL, SP, PCTCOL, ...COMBO, ...STATPROJ, ...LUCK, { key: "name", label: "Player" },
          { key: "half", label: "Half" }, NSW, ...DECISION, ...VALUE, ...PRED2, ...PARKADJ, ...PRED, ...TRACK],
 };
 // category group for the sticky group-header row (inferred from each column's class)
@@ -265,6 +280,7 @@ function groupOf(c) {
   if (c.key === "swing_plus" || c.key === "__sppct") return "Swing+";
   if (["swingdecision_plus", "hitter_plus", "b2b_plus", "contact_axis", "dcv_plus", "hitter_plus_proj"].includes(c.key)) return "Combined";
   if (["sk_woba", "luck_woba", "sk_iso", "luck_iso"].includes(c.key)) return "Skill vs luck";
+  if (c.key.startsWith("proj_")) return "Projected (next yr)";
   if (c.cls === "dec") return "Decision · selection";
   if (c.cls === "val") return "Value · xwOBA";
   if (/_(k_pct|hr_pct|iso)(_pn)?$/.test(c.key)) return "Predicted production";   // K%/HR%/ISO (+park-adj)
