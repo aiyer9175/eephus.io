@@ -37433,6 +37433,178 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
   }).join("")}</div>`;
 }
 
+// =============================================================================
+// Organization Tendencies — behavioral profile panels on the farm detail
+// Tendencies tab. One committed sidecar (data/org_tendencies.json, built by
+// org_tendencies.py) fetched lazily and cached for the session; every value
+// is league-relative (z across the 30 orgs) and labels only fire at |z|>=0.5.
+// =============================================================================
+let _orgTendencies = null;
+let _orgTendenciesLoading = false;
+
+const _OT_TOOL_LABELS = {
+  hit: "Hit", game_pwr: "Game Power", raw_pwr: "Raw Power", speed: "Speed",
+  field: "Field", pitch_sel: "Pitch Sel", bat_ctrl: "Bat Ctrl",
+  fb: "Fastball", sl: "Slider", cb: "Curveball", ch: "Changeup", cmd: "Command",
+};
+const _OT_PITCH_NAMES = {
+  FF: "Four-seam", SI: "Sinker", SL: "Slider", ST: "Sweeper", FC: "Cutter",
+  CH: "Changeup", CU: "Curveball", FS: "Splitter", KC: "Knuckle-curve",
+  FO: "Forkball", SV: "Slurve", SC: "Screwball",
+};
+
+// Compact league-relative bar: centered at the league mean, fill grows with
+// |z| (capped ±2.5), green above / red below. Pure presentation.
+function _otZBar(z) {
+  if (z == null) return '<span style="color:var(--text-tertiary);">—</span>';
+  const cl = Math.max(-2.5, Math.min(2.5, z));
+  const pct = Math.abs(cl) / 2.5 * 50;
+  const side = cl >= 0 ? "left:50%;" : `left:${50 - pct}%;`;
+  const col = cl >= 0 ? "var(--up)" : "var(--down)";
+  return `<span style="position:relative;display:inline-block;width:84px;height:9px;background:var(--bg-tertiary);border:1px solid var(--border-light);vertical-align:middle;" title="z = ${z > 0 ? "+" : ""}${z} vs league">
+    <span style="position:absolute;top:0;bottom:0;${side}width:${pct.toFixed(0)}%;background:${col};opacity:0.7;"></span>
+    <span style="position:absolute;top:-2px;left:50%;width:1px;bottom:-2px;background:var(--text-tertiary);"></span>
+  </span> <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);">${z > 0 ? "+" : ""}${z}</span>`;
+}
+
+function _otChip(label, tip, tone) {
+  if (!label) return "";
+  const col = tone === "up" ? "var(--up)" : tone === "down" ? "var(--down)" : "var(--text-secondary)";
+  return `<span title="${escapeHtml(tip || "")}" style="display:inline-block;border:1px solid ${col};color:${col};font-family:var(--font-retro-mono);font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;margin:2px 4px 2px 0;cursor:help;">${escapeHtml(label)}</span>`;
+}
+
+function _otCard(title, sub, bodyHtml) {
+  return `<div style="border:1px solid var(--border);background:var(--bg-secondary);padding:12px 14px;min-width:0;">
+    <div style="font-size:11px;letter-spacing:0.07em;text-transform:uppercase;font-weight:700;color:var(--text-tertiary);margin-bottom:2px;">${title}</div>
+    ${sub ? `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px;">${sub}</div>` : ""}
+    ${bodyHtml}</div>`;
+}
+
+function _renderOrgTendencies(orgCode) {
+  const mount = document.getElementById("org-tendencies-mount");
+  if (!mount) return;
+  if (!_orgTendencies) {
+    if (!_orgTendenciesLoading) {
+      _orgTendenciesLoading = true;
+      fetch("/data/org_tendencies.json", { cache: "no-cache" })
+        .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+        .then(d => { _orgTendencies = d; _orgTendenciesLoading = false; _renderOrgTendencies(orgCode); })
+        .catch(err => {
+          _orgTendenciesLoading = false;
+          mount.innerHTML = `<div class="state-message is-error">Organization tendencies unavailable (${escapeHtml(String(err.message || err))}). Run <code>python org_tendencies.py</code>.</div>`;
+        });
+    }
+    return;
+  }
+  const T = _orgTendencies;
+  const g = panel => (T[panel] && T[panel].orgs && T[panel].orgs[orgCode]) || {};
+  const promo = g("promotion"), dpos = g("draftPos"), traits = g("draftTraits"),
+        slot = g("slot"), ars = g("arsenal"), dev = g("toolDev"),
+        ifa = g("ifa"), tr = g("trades"), hp = g("health");
+
+  // ---- identity strip: every verdict the data earned, in one row ----------
+  const chips = [
+    _otChip(promo.label && promo.label !== "typical" ? promo.label + " promoter" : null,
+            `Promotion style — runs prospects ${promo.avlDiff != null ? Math.abs(promo.avlDiff).toFixed(1) + " yrs " + (promo.avlDiff < 0 ? "YOUNGER" : "older") : "?"} than level-average, ${promo.promoRate ?? "?"} promotions per active prospect (trailing year).`,
+            promo.label === "aggressive" ? "up" : "down"),
+    _otChip(ifa.label && ifa.label !== "balanced" ? "IFA: " + ifa.label : null,
+            `International pool strategy — top signing takes ${ifa.top1Share != null ? (ifa.top1Share * 100).toFixed(0) + "%" : "?"} of the class pool on average (HHI ${ifa.hhi ?? "?"}), ${ifa.signingsPerClass ?? "?"} signings per class.`),
+    _otChip(tr.volLabel && tr.volLabel !== "typical" ? tr.volLabel : null,
+            `${tr.volume ?? "?"} tracked-prospect trade moves since 2022 (${tr.in ?? "?"} in / ${tr.out ?? "?"} out).`),
+    _otChip(tr.dirLabel && tr.dirLabel !== "two-way" ? tr.dirLabel : null,
+            `Net prospect capital: ${tr.netProspects > 0 ? "+" : ""}${tr.netProspects ?? "?"} tracked prospects since 2022 — positive = accumulates prospects, negative = ships them for MLB help.`),
+    _otChip(tr.qdLabel && tr.qdLabel !== "balanced" ? "targets " + tr.qdLabel : null,
+            `Of graded prospects acquired, ${tr.acqTopShare != null ? (tr.acqTopShare * 100).toFixed(0) + "%" : "?"} were FV 50+ (mean FV ${tr.acqFvMean ?? "?"}, ${tr.nGraded ?? 0} graded).`),
+    _otChip(slot.label && slot.label !== "typical" ? slot.label : null,
+            `Draft-pool allocation — ${slot.overSlotShare != null ? (slot.overSlotShare * 100).toFixed(0) + "%" : "?"} of slotted picks signed over slot; ${slot.r1UnderShare != null ? (slot.r1UnderShare * 100).toFixed(0) + "%" : "?"} of round-1 picks cut under-slot deals to spread the pool.`),
+    _otChip(hp.label && hp.label !== "typical" ? hp.label : null,
+            `${hp.stintsPer100 ?? "?"} recorded IL stints per 100 active prospects.`),
+  ].filter(Boolean).join("");
+
+  // ---- promotion card -------------------------------------------------------
+  const promoCard = _otCard("Promotion style",
+    "How young the org runs its levels + promotion rate, trailing year",
+    `<table class="detail-table" style="width:100%;">
+      <tr><td title="Mean (prospect age − level-average age) across the active roster — negative = young-for-level placement.">Age vs level</td>
+        <td style="text-align:right;">${promo.avlDiff != null ? (promo.avlDiff > 0 ? "+" : "") + promo.avlDiff + " yrs" : "—"}</td>
+        <td>${_otZBar(promo.zYoung != null ? -promo.zYoung : null)}</td></tr>
+      <tr><td title="Promotions per active prospect over the trailing 365 days.">Promotions / prospect</td>
+        <td style="text-align:right;">${promo.promoRate ?? "—"}</td>
+        <td>${_otZBar(promo.zPromo)}</td></tr>
+    </table>
+    <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;">bars read vs league: right/green = more aggressive than the average org</div>`);
+
+  // ---- draft cards ----------------------------------------------------------
+  const pctRow = (label, v, z, tip) => `<tr><td title="${escapeHtml(tip)}">${label}</td>
+    <td style="text-align:right;">${v != null ? (v * 100).toFixed(0) + "%" : "—"}</td><td>${_otZBar(z)}</td></tr>`;
+  const draftCard = _otCard("Draft — what they take",
+    `${dpos.n ?? 0} signed picks, ${T.windows ? T.windows.draft : "2021-present"}`,
+    `<table class="detail-table" style="width:100%;">
+      ${pctRow("Pitchers", dpos.pitchShare, dpos.zPitch, "Share of signed picks that are pitchers.")}
+      ${pctRow("Prep (HS)", dpos.prepShare, dpos.zPrep, "Share of signed picks out of high school (vs college).")}
+      ${pctRow("Up-the-middle", dpos.upMidShare, dpos.zUpMid, "Share at premium positions: C / SS / CF / 2B.")}
+    </table>`);
+  const traitRows = Object.entries((traits.tilts || {}))
+    .filter(([, z]) => z != null).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 6)
+    .map(([k, z]) => `<tr><td>${_OT_TOOL_LABELS[k] || k}</td><td>${_otZBar(z)}</td></tr>`).join("");
+  const traitCard = _otCard("Draft — traits they pay for",
+    "Mean FG tool grades of their signed draftees vs the league draftee mean",
+    traitRows ? `<table class="detail-table" style="width:100%;">${traitRows}</table>`
+              : '<div style="color:var(--text-tertiary);font-size:12px;">Not enough graded draftees.</div>');
+
+  // ---- development cards ----------------------------------------------------
+  const devRows = Object.entries((dev.tools || {}))
+    .sort((a, b) => (b[1].z ?? -9) - (a[1].z ?? -9))
+    .map(([k, v]) => `<tr><td>${_OT_TOOL_LABELS[k] || k}</td>
+      <td style="text-align:right;" title="Future-grade drift per prospect-year in this org (same-source snapshot pairs).">${v.rate > 0 ? "+" : ""}${v.rate} pts/yr</td>
+      <td>${_otZBar(v.z)}</td></tr>`).join("");
+  const scLine = dev.scPlusDrift != null
+    ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;" title="Mean SC+ (Statcast composite) change per prospect over the platform's metric history — an early-window read (2026-05 onward).">SC+ drift: <strong style="color:${dev.scPlusDrift >= 0 ? "var(--up)" : "var(--down)"};">${dev.scPlusDrift > 0 ? "+" : ""}${dev.scPlusDrift}</strong> ${_otZBar(dev.scPlusZ)}</div>` : "";
+  const devCard = _otCard("What they develop",
+    "Grade drift per prospect-year IN this org, vs league — scouting-grade movement, not stat noise",
+    (devRows ? `<table class="detail-table" style="width:100%;">${devRows}</table>` :
+      '<div style="color:var(--text-tertiary);font-size:12px;">Not enough same-source grade pairs.</div>') + scLine);
+  const leanRows = (ars.lean || []).map(l =>
+    `<tr><td>${_OT_PITCH_NAMES[l.pt] || l.pt}</td>
+      <td style="text-align:right;" title="Usage share of this pitch across the org's developed MLB arms, as a multiple of the league share.">${l.x.toFixed(2)}× league</td></tr>`).join("");
+  const arsCard = _otCard("Pitch identity of their products",
+    `MLB arsenals of the ${ars.nArms ?? 0} arms this org developed — what they throw when they arrive`,
+    (leanRows ? `<table class="detail-table" style="width:100%;">${leanRows}</table>`
+              : '<div style="color:var(--text-tertiary);font-size:12px;">No developed MLB arms tracked yet.</div>')
+    + (ars.fbVelo != null ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Avg FB velo of developed arms: <strong>${ars.fbVelo}</strong> mph ${_otZBar(ars.zVelo)}</div>` : "")
+    + '<div style="font-size:10px;color:var(--text-tertiary);margin-top:6px;">Per-pitch usage history isn\'t archived yet — pitch-conversion ledgers (four-seam → sinker) are a planned v2.</div>');
+
+  // ---- IFA + trades cards ---------------------------------------------------
+  const ifaCard = _otCard("International strategy",
+    `${ifa.classes ?? 0} signing classes, 2021-present`,
+    `<table class="detail-table" style="width:100%;">
+      <tr><td title="Average share of the org's class bonus outlay taken by its TOP signing.">Top signing's pool share</td><td style="text-align:right;">${ifa.top1Share != null ? (ifa.top1Share * 100).toFixed(0) + "%" : "—"}</td><td>${_otZBar(ifa.zConc)}</td></tr>
+      <tr><td title="Herfindahl concentration of bonus dollars across each class (1 = whole pool on one player).">Pool concentration (HHI)</td><td style="text-align:right;">${ifa.hhi ?? "—"}</td><td></td></tr>
+      <tr><td>Signings / class</td><td style="text-align:right;">${ifa.signingsPerClass ?? "—"}</td><td>${_otZBar(ifa.zVolume)}</td></tr>
+      <tr><td title="Bonuses of $1M+ across the window.">Seven-figure bonuses</td><td style="text-align:right;">${ifa.sevenFigure ?? "—"}</td><td></td></tr>
+    </table>`);
+  const tradeCard = _otCard("Trade profile",
+    `Tracked-prospect moves, ${(T.trades && T.trades.window) || "2022-present"}`,
+    `<table class="detail-table" style="width:100%;">
+      <tr><td>Volume (in + out)</td><td style="text-align:right;">${tr.volume ?? "—"}</td><td>${_otZBar(tr.zVolume)}</td></tr>
+      <tr><td title="Tracked prospects acquired minus traded away — positive accumulates prospect capital; negative converts it into MLB help.">Net prospect capital</td><td style="text-align:right;">${tr.netProspects > 0 ? "+" : ""}${tr.netProspects ?? "—"}</td><td>${_otZBar(tr.zNet)}</td></tr>
+      <tr><td title="Share of graded acquired prospects at FV 50+ — quality vs depth.">FV 50+ share of acquisitions</td><td style="text-align:right;">${tr.acqTopShare != null ? (tr.acqTopShare * 100).toFixed(0) + "%" : "—"}</td><td>${_otZBar(tr.zQuality)}</td></tr>
+      <tr><td title="Trades where the description shows this club RECEIVING cash considerations.">Cash received (deals)</td><td style="text-align:right;">${tr.cashReceived ?? "—"}</td><td>${_otZBar(tr.zCash)}</td></tr>
+      <tr><td title="All trades involving this club where cash considerations appear in the transaction text.">Cash-involved (deals)</td><td style="text-align:right;">${tr.cashInvolved ?? "—"}</td><td></td></tr>
+    </table>`);
+
+  mount.innerHTML = `
+    <div class="detail-title"><span class="g-term" data-term="org_tendencies">Organization Tendencies</span>
+      <span class="detail-title-sub">behavioral profile vs the league — every bar is a z-score across the 30 orgs; labels only fire at |z| ≥ 0.5</span></div>
+    <div style="margin:4px 0 12px;">${chips || '<span style="color:var(--text-tertiary);font-size:12px;">No strong tendencies — this org profiles league-typical on every axis.</span>'}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px;">
+      ${promoCard}${devCard}${arsCard}${draftCard}${traitCard}${ifaCard}${tradeCard}
+    </div>
+    <div style="font-size:10px;color:var(--text-tertiary);margin-top:10px;">
+      ${(T.notes || []).map(escapeHtml).join(" · ")} · generated ${escapeHtml(T.generated_at || "")}
+    </div>`;
+}
+
 function renderFarmDetail(orgCode) {
   const org = findOrg(orgCode);
   const root = document.getElementById("farm-detail-body");
@@ -38946,6 +39118,10 @@ function _renderFarmDetailBody(orgCode, org, root) {
     { key: "overview",     label: "Overview",     html: overviewHtml },
     { key: "roster",       label: "Roster",       html: rosterTabHtml },
     { key: "development",  label: "Development",  html: devTabHtml },
+    // Organization Tendencies — behavioral profile from the committed
+    // sidecar (data/org_tendencies.json), fetched lazily on first open.
+    { key: "tendencies",   label: "Tendencies",
+      html: '<div id="org-tendencies-mount"><div class="state-message is-loading">Loading organization tendencies&hellip;</div></div>' },
     { key: "finances",     label: "Finances",     html: financesTabHtml },
     { key: "transactions", label: "Transactions & Pipeline", html: transactionsTabHtml },
     // eephus.io — per-farm Discussion thread (same component as prospect pages).
@@ -38972,6 +39148,10 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // eephus.io — fill the farm Discussion tab when it's active.
   if (window.EephusUI && state.farmTab === "discussion") {
     try { window.EephusUI.mountForum("farm", orgCode, { name: orgCode + " farm system", org: orgCode }); } catch (e) { /* non-fatal */ }
+  }
+  // Organization Tendencies tab — lazy sidecar fetch + render.
+  if (state.farmTab === "tendencies") {
+    _renderOrgTendencies(orgCode);
   }
 
   // Wire affiliate level tabs (vanilla — toggle visibility, no re-render).
