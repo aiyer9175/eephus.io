@@ -37,6 +37,7 @@ import json
 import logging
 import math
 import pickle
+from collections import defaultdict
 from pathlib import Path
 
 import fa_class
@@ -276,8 +277,9 @@ def fit_aging_curves(corpus: dict | None = None, max_season: int | None = None,
     a_lo, a_hi = cfg["age_range"]
     min_pa = cfg["min_exposure_pair"]["pa"]
     min_bf = cfg["min_exposure_pair"]["bf"]
+    reg_k = cfg.get("war_rate_regression") or {"hit_pa": 600, "pit_bf": 350}
     curves: dict = {"hit": {}, "pit": {}, "meta": {
-        "method": "delta_pa_weighted+survivorship_v1",
+        "method": "delta_pa_weighted+survivorship+regressed_rate_v2",
         "lambda": lam, "max_season": max_season,
         "corpus_seasons": [corpus["first"], corpus["last"]],
     }}
@@ -293,23 +295,59 @@ def fit_aging_curves(corpus: dict | None = None, max_season: int | None = None,
         for r in rows:
             if r.get("mlbam") is not None:
                 by_player.setdefault(r["mlbam"], {})[r["season"]] = r
-        # value getter per pseudo-component
+        # League WAR rate per exposure unit per season — the shrink target
+        # for the regressed-rate aging (v2).
+        per = 600.0 if side == "hit" else 250.0
+        k_reg = float(reg_k["hit_pa"] if side == "hit" else reg_k["pit_bf"])
+        lg_rate: dict[int, float] = {}
+        acc_w: dict[int, float] = defaultdict(float)
+        acc_e: dict[int, float] = defaultdict(float)
+        for r in rows:
+            if r.get("war") is not None and (r.get(expo_key) or 0) > 0:
+                acc_w[r["season"]] += r["war"]
+                acc_e[r["season"]] += r[expo_key]
+        for s, e in acc_e.items():
+            if e > 0:
+                lg_rate[s] = acc_w[s] / e * per
+
+        # value getter per pseudo-component. war_rate is REGRESSED toward
+        # the season league rate at the configured stabilization exposure:
+        # raw observed deltas bundle aging with luck regression, and the
+        # projection being decayed is already a regressed quantity —
+        # chaining raw deltas double-counts the regression (the measured
+        # horizon-5 tail collapse).
         def _val(r: dict, comp: str):
             if comp == "war_rate":
                 w = r.get("war")
                 e = r.get(expo_key) or 0
-                per = 600.0 if side == "hit" else 250.0
-                return (w / e * per) if (w is not None and e >= min_expo) else None
+                if w is None or e < min_expo:
+                    return None
+                raw = w / e * per
+                lg = lg_rate.get(r["season"], 0.0)
+                return (raw * e + lg * k_reg) / (e + k_reg)
             if comp == "pt":
                 return r.get(expo_key)
             return r.get(comp)
-        for role in (("C", "H") if side == "hit" else ("SP", "RP")):
+        roles = (("C", "H", "H|pwr", "H|con") if side == "hit"
+                 else ("SP", "RP", "SP|pwr", "SP|fin", "RP|pwr", "RP|fin"))
+        for role in roles:
             curves[side].setdefault(role, {})
             for comp in comps:
+                # Profile cohorts exist for the aging asks only (war_rate,
+                # pt) — fragmenting component curves shreds their samples.
+                if "|" in role and comp not in ("war_rate", "pt"):
+                    continue
                 acc: dict[int, dict] = {}
                 for mlbam, seasons in by_player.items():
                     for s, r in seasons.items():
-                        if role_of(r) != role or (r.get(expo_key) or 0) < min_expo:
+                        if (r.get(expo_key) or 0) < min_expo:
+                            continue
+                        base = role_of(r)
+                        if "|" in role:
+                            prof = _row_profile(r, side, corpus["league"])
+                            if f"{base}|{prof}" != role:
+                                continue
+                        elif base != role:
                             continue
                         v0 = _val(r, comp)
                         if v0 is None:
@@ -358,19 +396,127 @@ def fit_aging_curves(corpus: dict | None = None, max_season: int | None = None,
     return curves
 
 
+def _row_profile(r: dict, side: str, league: dict) -> str:
+    """Season profile cohort for the aging curves: power vs contact hitters
+    (ISO relative to league), power vs finesse pitchers (K% relative to
+    league). Middle of the distribution returns '' (base cohort)."""
+    th = _pcfg().get("profile_cohorts") or {}
+    lg = league.get(r["season"]) or {}
+    if side == "hit":
+        lg_iso = lg.get("iso")
+        if not lg_iso or r.get("iso") is None:
+            return ""
+        rel = r["iso"] / lg_iso
+        if rel >= float(th.get("iso_hi", 1.2)):
+            return "pwr"
+        if rel <= float(th.get("iso_lo", 0.8)):
+            return "con"
+        return ""
+    lg_k = lg.get("p_k_pct")
+    if not lg_k or r.get("k_pct") is None:
+        return ""
+    rel = r["k_pct"] / lg_k
+    if rel >= float(th.get("k_hi", 1.15)):
+        return "pwr"
+    if rel <= float(th.get("k_lo", 0.85)):
+        return "fin"
+    return ""
+
+
+def profile_role(hist: list[dict], side: str, role: str, league: dict) -> str:
+    """Extended aging-curve role for a player: base role plus his
+    exposure-weighted profile cohort across the history rows. Consumers
+    pass this to curve_delta for war_rate/pt — the lookup falls back to
+    the base role wherever a cohort cell is thin."""
+    expo_key = "pa" if side == "hit" else "bf"
+    votes: dict[str, float] = defaultdict(float)
+    for r in hist:
+        p = _row_profile(r, side, league)
+        votes[p] += r.get(expo_key) or 0
+    if not votes:
+        return role
+    best = max(votes, key=votes.get)
+    return f"{role}|{best}" if best else role
+
+
 def curve_delta(curves: dict, side: str, role: str, comp: str, age: int) -> float:
-    """Smoothed delta applied moving INTO ``age``; clamps to curve support."""
+    """Smoothed delta applied moving INTO ``age``; clamps to curve support.
+    Profile-extended roles ('H|pwr', 'SP|fin') fall back to the base role
+    when the cohort has no curve for the component."""
     c = ((curves.get(side) or {}).get(role) or {}).get(comp) or {}
+    if not c and "|" in role:
+        c = ((curves.get(side) or {}).get(role.split("|")[0]) or {}).get(comp) or {}
     if not c:
         return 0.0
     ages = sorted(int(a) for a in c)
-    a = min(max(age, ages[0]), ages[-1])
+    # NEAREST supported age, not endpoint clamping — thin cohort curves
+    # can have holes mid-sequence (cells under the n_pool floor).
+    a = min(ages, key=lambda x: abs(x - age))
     return c[str(a)].get("delta_smooth", c[str(a)]["delta"])
 
 
 # ============================================================================
 # Marcel projection
 # ============================================================================
+
+_XSTATS_CACHE = CACHE_DIR / "xstats.pkl"
+_xstats_mem: dict | None = None
+
+
+def _xstats() -> dict[tuple[int, int], float]:
+    """{(mlbam, season): xISO} from Savant expected stats (2015+), disk-
+    cached. Empty dict when the fetch fails — the blend simply no-ops."""
+    global _xstats_mem
+    if _xstats_mem is not None:
+        return _xstats_mem
+    cfg = _pcfg().get("statcast_blend") or {}
+    first = int(cfg.get("first_season", 2015))
+    from datetime import date as _date
+    last = _date.today().year
+    if _XSTATS_CACHE.exists():
+        with open(_XSTATS_CACHE, "rb") as fh:
+            cached = pickle.load(fh)
+        if cached.get("last", 0) >= last - 1:
+            _xstats_mem = cached["data"]
+            return _xstats_mem
+    data: dict[tuple[int, int], float] = {}
+    try:
+        import pybaseball as pyb
+        for season in range(first, last + 1):
+            try:
+                df = pyb.statcast_batter_expected_stats(season,
+                                                        minPA=int(cfg.get("min_pa", 50)))
+            except Exception:                              # noqa: BLE001 — season gaps OK
+                continue
+            for row in df.itertuples(index=False):
+                try:
+                    data[(int(row.player_id), int(row.year))] = \
+                        float(row.est_slg) - float(row.est_ba)
+                except (TypeError, ValueError):
+                    continue
+    except Exception as e:                                 # noqa: BLE001
+        log.warning("xstats unavailable (%s) — statcast blend no-ops", e)
+    CACHE_DIR.mkdir(exist_ok=True)
+    with open(_XSTATS_CACHE, "wb") as fh:
+        pickle.dump({"last": last, "data": data}, fh)
+    _xstats_mem = data
+    return data
+
+
+def _blend_iso(h: dict, v: float) -> float:
+    """Blend a history season's observed ISO toward its Savant xISO —
+    contact-quality information the raw line doesn't carry. Same-vintage
+    information (no lookahead); seasons without expected stats pass
+    through untouched."""
+    cfg = _pcfg().get("statcast_blend") or {}
+    if not cfg.get("enabled") or not h.get("mlbam"):
+        return v
+    x = _xstats().get((h["mlbam"], h["season"]))
+    if x is None:
+        return v
+    a = float(cfg.get("alpha", 0.4))
+    return (1 - a) * v + a * x
+
 
 def _league_recent(league: dict, season: int, key: str):
     for s in (season - 1, season - 2, season - 3):
@@ -417,6 +563,8 @@ def project_player(history: list[dict], side: str, target_season: int,
             v = h.get(comp)
             if v is None:
                 continue
+            if comp == "iso" and side == "hit":
+                v = _blend_iso(h, v)
             w = weights[target_season - h["season"] - 1] * (h.get(expo_key) or 0)
             num += w * v
             den += w

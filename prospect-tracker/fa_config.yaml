@@ -43,13 +43,42 @@ projection:
   regression_k:
     hit: { k_pct: 60, bb_pct: 120, iso: 160, babip: 820, hr_pa: 170 }
     pit: { k_pct: 70, bb_pct: 170, hr_bf: 400 }
-  marcel_weights: [5, 4, 3]          # seasons N-1, N-2, N-3
+  marcel_weights: [5, 3, 2]          # seasons N-1, N-2, N-3
+  # v2 — Statcast expected-stats blend (owner ask): hitter ISO inputs
+  # blend toward Savant xISO (est_slg − est_ba) where the season has
+  # expected stats (2015+, >= min_pa). Same information vintage as the
+  # raw season line — no lookahead. Gate-measured before shipping.
+  statcast_blend: { enabled: true, alpha: 0.4, first_season: 2015, min_pa: 50 }
   playing_time:                       # classic Marcel PT + aging delta
     hit: { w1: 0.5, w2: 0.1, base_pa: 200 }
     pit: { w1: 0.5, w2: 0.1, base_ip_sp: 60, base_ip_rp: 25 }
   min_exposure_pair: { pa: 100, bf: 70 }   # aging-curve season pairs
   survivorship_lambda: 1.0           # correction strength (documented v1)
   age_range: [21, 42]                # curve support; clamped outside
+  # v2 — WAR-rate aging is fit on REGRESSED rates (shrunk toward the
+  # season league rate at these stabilization exposures). Raw observed
+  # deltas bundle real aging with regression-to-the-mean luck decay; the
+  # projection's year-1 WAR is ALREADY a regressed quantity, so chaining
+  # raw deltas double-counted the regression and crushed the multi-year
+  # tail (measured: horizon-5 tail ratio 0.06 — 17 predicted >=3 WAR vs
+  # 283 actual). Regressed-rate deltas measure talent aging only.
+  war_rate_regression: { hit_pa: 600, pit_bf: 350 }
+  # v2 — profile-specific aging cohorts (owner ask): power vs finesse
+  # PITCHERS (K% relative to league) get their own war_rate + pt curves,
+  # falling back to the base role curve where a cohort cell is thin.
+  # HITTER power/contact cohorts were built and MEASURED (proj_eval,
+  # bases 2017-2021): season-ISO cohorts hurt at every tested threshold
+  # (1.2/0.8 and 1.4/0.6 both cut the horizon-5 tail ratio from 0.131 to
+  # ~0.09 and deepened star bias) — high-ISO season selection re-injects
+  # the mean reversion the regressed-rate fit removes. The machinery
+  # stays; hitter thresholds are parked NEUTRAL until a career-anchored
+  # profile is tried (documented fork). Component curves stay per base
+  # role — fragmenting K%/BB% cohorts shreds sample.
+  profile_cohorts:
+    iso_hi: 99.0      # hitter cohorts OFF (measured worse — see note)
+    iso_lo: 0.0
+    k_hi: 1.15        # season K% >= 1.15x league -> "pwr" pitcher cohort
+    k_lo: 0.85        # season K% <= 0.85x league -> "fin" pitcher cohort
   # Fixed assembly constants (documented): league HBP/SF rates and the
   # 2B:3B split used to invert ISO into a slash line; wOBA linear weights
   # (FG-era constants) + scale; evaluated park-neutral.

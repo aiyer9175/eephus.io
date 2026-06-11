@@ -1315,6 +1315,10 @@
     }
     .section-tabs-scroll > .section-tab:first-of-type { border-left: none; }
     .section-tab:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    /* Anchor variant (the /glossary/ link): same box as the buttons, no
+       underline; the gold § matches the glossary's site-wide module glyph. */
+    a.section-tab-link { text-decoration: none; display: inline-flex; align-items: center; }
+    .section-tab-glyph { color: var(--card-gold, var(--neon-amber)); font-weight: 700; margin-right: 5px; }
     /* v34 — Active tab now reads as bold text with an iridescent underline
        that mirrors the masthead rule under the title + the logo seam
        (red → gold → green → navy), instead of a flat navy fill block. Ties
@@ -8097,6 +8101,9 @@
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort — no shared RPS+ with MiLB.">Overseas</button>
     <button class="section-tab" data-section="timemachine" title="Time-travel the board — view rankings &amp; grades as they stood at any past snapshot, or diff two dates for a changelog of risers, fallers, new entries &amp; graduates.">Time Machine</button>
     <button class="section-tab" data-section="charts" title="Build your own scatterplot — pick X/Y axes and a prospect group (MiLB, Debuted, Draft, International Amateurs, Overseas, or Farm systems).">Scatterplots</button>
+    <!-- Glossary lives on its own surface (/glossary/) — a real link styled
+         as a section tab, with the site's § module glyph. -->
+    <a class="section-tab section-tab-link" href="/glossary/" title="Glossary &amp; Methodology — every term, model derivation, and the track record behind the site"><span class="section-tab-glyph" aria-hidden="true">§</span>Glossary</a>
     </div>
     <button class="compare-toggle is-empty-hidden" id="compare-toggle" type="button" aria-label="Open compare panel" title="Open compare panel (c)">
       <span>Compare</span><span class="compare-count" id="compare-count">0</span>

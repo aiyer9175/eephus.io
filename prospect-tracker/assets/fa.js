@@ -135,7 +135,7 @@
     if (!rows) return;
     chips.innerHTML = VIEWS.map(([k, label]) =>
       `<button class="chip${state.view === k ? " active" : ""}" data-fa-view="${k}">${label}</button>`).join("")
-      + ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Free Agency")}" title="Every FA term, defined — in the unified site glossary">Glossary &rarr;</a>`;
+      + ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Free Agency")}" title="Every FA term, defined — in the unified site glossary"><span class="chip-glyph" aria-hidden="true">§</span>Glossary</a>`;
     chips.querySelectorAll("[data-fa-view]").forEach(b => b.onclick = () => {
       state.view = b.dataset.faView; state.player = null; syncToURL(); render();
     });

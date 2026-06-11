@@ -115,11 +115,19 @@ def test_all_four_views_render(server):
             page.wait_for_timeout(900)
             results[view] = page.evaluate(
                 f"document.getElementById('{body_id}').innerHTML.length")
+        # The backtest must actually RENDER, not strand its loading state
+        # (the missed-port _RATER_META bug hung here while passing a
+        # length-only assertion — never again).
+        sc_html = page.evaluate(
+            "document.getElementById('source-comparison-body').innerHTML")
         browser.close()
 
     assert not page_errors, "JS errors during view walk:\n  " + "\n  ".join(page_errors)
     empty = [v for v, n in results.items() if n < 200]
     assert not empty, f"views rendered (near-)empty: {empty} — {results}"
+    assert "Loading backtest" not in sc_html, "source comparison stranded on its loading state"
+    assert ("Does the consensus outperform" in sc_html
+            or "no resolved cohorts" in sc_html), "source comparison rendered neither data nor empty-state"
 
 
 def test_deep_link_expands_and_highlights_term(server):
