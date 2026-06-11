@@ -156,7 +156,28 @@
       &middot; ${DATA.n_prospects} prospects (<span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA)
       &middot; seasons priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)},
       escalating ${(DATA.dpw_infl * 100).toFixed(0)}%/yr
-      &middot; <span data-gl="contract_surplus">surplus</span> only where a real contract exists</div>`;
+      &middot; <span data-gl="contract_surplus">surplus</span> only where a real contract exists
+      &middot; <button class="chip" id="proj-board-gfx" title="Download the top of this board as a PNG share card (theme-aware)">&#8681; share card</button></div>`;
+    const gfxBtn = document.getElementById("proj-board-gfx");
+    if (gfxBtn) gfxBtn.onclick = () => {
+      if (!window.EEPHUS_HUB) return;
+      const top = sortRows(rows()).slice(0, 10);
+      window.EEPHUS_HUB.shareCard({
+        module: "MLB Projections",
+        name: "Five-Year bWAR Leaders",
+        meta: `${DATA.n_vets} veterans + ${DATA.n_prospects} prospects · seasons ${DATA.first_season}-${DATA.first_season + DATA.horizon - 1}`,
+        tiles: [],
+        sections: [
+          { title: "Top 10 · projected 5y bWAR", rows: top.slice(0, 5).map((m, i) =>
+            [`${i + 1}. ${m.name}`, `${fmtWar(m.warTotal)}${m.warTotalP10 != null ? `  (${fmtWar(m.warTotalP10)}-${fmtWar(m.warTotalP90)})` : ""}`]) },
+          { title: " ", rows: top.slice(5, 10).map((m, i) =>
+            [`${i + 6}. ${m.name}`, `${fmtWar(m.warTotal)}${m.warTotalP10 != null ? `  (${fmtWar(m.warTotalP10)}-${fmtWar(m.warTotalP90)})` : ""}`]) },
+        ],
+        url: "eephus.io/projections",
+        filename: "eephus-projections-board.png",
+        caption: "Gate-1-validated engine · floor/mean/ceiling probability buckets · prospects join at their PROSPX ETA",
+      });
+    };
 
     const chip = (label, key, field) =>
       `<button class="chip${state[field] === key ? " active" : ""}" data-pf="${field}:${key}">${label}</button>`;

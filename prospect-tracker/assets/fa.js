@@ -101,7 +101,8 @@
   const VIEWS = [["board", "Class Board"], ["tracker", "Signing Tracker"],
                  ["fits", "Team Fits"], ["archive", "Archive"],
                  ["model", "Model Accountability"]];
-  const state = { view: "board", team: null, winter: null, player: null };
+  const state = { view: "board", team: null, winter: null, player: null,
+                classYear: null };   // null = the CURRENT class (default)
 
   function syncFromURL() {
     const p = new URLSearchParams(window.location.hash.slice(1));
@@ -113,11 +114,13 @@
     if (p.has("view") && VIEWS.some(([k]) => k === p.get("view"))) state.view = p.get("view");
     if (p.has("team")) state.team = p.get("team");
     if (p.has("winter")) state.winter = Number(p.get("winter")) || null;
+    state.classYear = Number(p.get("class")) || null;
     state.player = p.get("player") || null;
   }
 
   function syncToURL() {
     const p = new URLSearchParams();
+    if (state.classYear) p.set("class", String(state.classYear));
     if (state.player) p.set("player", state.player);
     else {
       if (state.view !== "board") p.set("view", state.view);
@@ -139,21 +142,47 @@
     chips.querySelectorAll("[data-fa-view]").forEach(b => b.onclick = () => {
       state.view = b.dataset.faView; state.player = null; syncToURL(); render();
     });
+    // Winter selector - current class is the default; future winters are
+    // the SAME constructed-class pipeline run on Spotrac's forward pages
+    // (projected members; the signing tracker goes live with the winter).
+    const curYear = (D.fa_class && D.fa_class.class_year) || new Date().getFullYear() + 1;
+    const winters = [null, curYear + 1, curYear + 2];
+    const wchips = winters.map(y => {
+      const label = y ? `${y - 1}-${String(y).slice(2)}` : `${curYear - 1}-${String(curYear).slice(2)}`;
+      const on = (state.classYear || null) === y;
+      return `<button class="chip${on ? " active" : ""}" data-fa-class="${y || ""}" title="${y ? "Projected future class (no signings yet)" : "The current winter (default)"}">${label}${y ? "" : " ·"}</button>`;
+    }).join("");
+    const wrap = document.createElement("span");
+    wrap.style.cssText = "margin-left:14px;display:inline-flex;gap:4px;align-items:center;";
+    wrap.innerHTML = `<span class="filter-label">Winter</span>${wchips}`;
+    chips.appendChild(wrap);
+    wrap.querySelectorAll("[data-fa-class]").forEach(b => b.onclick = () => {
+      state.classYear = Number(b.dataset.faClass) || null;
+      state.player = null; syncToURL(); render();
+    });
     rows.innerHTML = `<div class="state-message is-loading">Loading free-agency data&hellip;</div>`;
+    const clsName = state.classYear ? `fa_class_${state.classYear}` : "fa_class";
     try {
-      await Promise.all([load("fa_class"), load("fa_archive"), load("fa_meta")]);
+      await Promise.all([load(clsName), load("fa_archive"), load("fa_meta")]);
     } catch (e) {
+      if (state.classYear) {
+        rows.innerHTML = `<div class="state-message">The ${state.classYear - 1}-${String(state.classYear).slice(2)} class isn't exported yet (run the monthly pipeline). <a href="#" onclick="location.hash='';return false;">Back to the current class</a>.</div>`;
+        return;
+      }
       rows.innerHTML = `<div class="state-message is-error">Free-agency data unavailable
         (${esc(String(e.message || e))}). Run <code>python fa_export.py</code> to regenerate
         <code>data/fa_*.json</code>.</div>`;
       return;
     }
-    const cls = D.fa_class, meta = D.fa_meta;
+    const cls = D[clsName], meta = D.fa_meta;
     if (!cls || !cls.members) {
       rows.innerHTML = `<div class="state-message">Free-agency data not exported yet.</div>`;
       return;
     }
-    banner.innerHTML = (cls.cba_carry_forward
+    const futureNote = state.classYear
+      ? `<div class="fa-cba-note">&#9432; ${state.classYear - 1}-${String(state.classYear).slice(2)} is a PROJECTED future class: contract-expiry members with option/QO statuses; projections priced at that winter's ex-ante $/WAR. No signings or events exist yet.</div>`
+      : "";
+    banner.innerHTML = futureNote + (cls.cba_carry_forward
       ? `<div class="fa-cba-note">&#9888; CBA rules past 2026-12-01 are <span data-gl="cba_carry_forward">carried forward</span> &mdash; thresholds and QO values for this winter are NOT yet collectively bargained.</div>`
       : "") + freshnessLine(meta);
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(banner);
