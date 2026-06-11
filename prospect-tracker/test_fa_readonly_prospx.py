@@ -77,10 +77,15 @@ def test_prospx_app_carries_no_fa_code():
 
 
 def test_fa_app_is_standalone():
-    """assets/fa.js touches only the three fa_* sidecars — it never loads the
-    PROSPX boot payload or any other PROSPX data file."""
+    """assets/fa.js touches only the fa_* sidecars — it never loads the
+    PROSPX boot payload or any other PROSPX data file. The class loader
+    is year-dynamic since the winter selector (fa_class for the current
+    default, fa_class_{Y} for exported future winters)."""
     src = (ROOT / "assets" / "fa.js").read_text(encoding="utf-8")
-    for name in ("fa_class", "fa_archive", "fa_meta"):
+    assert 'state.classYear ? `fa_class_${state.classYear}` : "fa_class"' in src, \
+        "fa.js lost the year-dynamic class loader"
+    assert "load(clsName)" in src, "fa.js never loads the class sidecar"
+    for name in ("fa_archive", "fa_meta"):
         assert f'load("{name}")' in src, f"fa.js never loads {name}"
     assert "timeseries.json" not in src, "fa.js must not read the PROSPX boot payload"
     fetches = re.findall(r"fetch\(([^)]+)\)", src)
