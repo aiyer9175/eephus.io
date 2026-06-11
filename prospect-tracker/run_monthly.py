@@ -338,6 +338,14 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     except Exception:
         log.exception("ifa export crashed in rebuild_only — continuing")
 
+    # Organization Tendencies — pure aggregation over the DB + the
+    # just-rebuilt sidecars (timeseries, ifa, debuts). Best-effort.
+    try:
+        from org_tendencies import export as _export_ot
+        _export_ot()
+    except Exception:
+        log.exception("org tendencies export crashed in rebuild_only — continuing")
+
     # Post-export sanity: surface what landed in the JSON so the user
     # doesn't have to grep the file.
     _post_export_summary(out_path, all_snaps, log)
@@ -1978,6 +1986,15 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 _export_proj()
             except Exception:
                 log.exception("mlb projections export failed — continuing")
+
+        # --- 6c. Organization Tendencies (farm-detail Tendencies tab) ---
+        # Pure aggregation over the DB + just-written sidecars; additive.
+        with _step("6c. Org tendencies export (org_tendencies.json)", log):
+            try:
+                from org_tendencies import export as _export_ot
+                _export_ot()
+            except Exception:
+                log.exception("org tendencies export failed — continuing")
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
                    notes=f"{len(timeseries)} players, {len(new_trades)} trades")

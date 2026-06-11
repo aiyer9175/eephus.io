@@ -1,5 +1,5 @@
 {
- "version": "2026-06-10.2",
+ "version": "2026-06-10.3",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -4131,6 +4131,27 @@
     "proj_buckets",
     "winter_dpw",
     "surplus_value"
+   ]
+  },
+  {
+   "id": "org_tendencies",
+   "term": "Organization Tendencies",
+   "category": "site-feature",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "tendencies",
+    "org profile",
+    "organizational tendencies"
+   ],
+   "priority": 86,
+   "definition": "The behavioral profile on each farm system’s Tendencies tab: promotion aggressiveness, draft position/trait preferences, pitch identity of developed arms, per-tool development rates, international pool strategy (quality vs quantity), trade profile (volume, prospect-capital direction, quality-vs-depth, cash considerations), draft-pool allocation, and IL burden — every value league-relative.",
+   "methodology": "Each axis is computed from the platform’s own records (grade history 2017-present, signed draft picks 2021-present, IFA classes, the trade ledger, MLB transaction text) and expressed as a z-score across the 30 orgs; verdict labels only fire at |z| ≥ 0.5. Tool development uses SAME-SOURCE snapshot pairs ≥ 60 days apart inside one org, so cross-source disagreement never counts as development. Pitch identity profiles the MLB arsenals of the players an org developed (per-pitch usage history is not archived yet, so conversion ledgers like four-seam → sinker are a documented v2). Cash-consideration direction is parsed from official transaction descriptions.",
+   "seeAlso": [
+    "farm_report_card",
+    "dvm_plus",
+    "statcast_plus"
    ]
   }
  ]
