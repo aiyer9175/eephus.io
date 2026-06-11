@@ -238,13 +238,13 @@ const STATPROJ = [
   { key: "proj_xwoba", label: "Proj xwOBA", cls: "dec", format: v => v?.toFixed(3),
     desc: "Projected NEXT-season xwOBA — the engine's primary target (sits between skill and realized production; ~2x more reliable y2y than wOBA). Ridge on the five skill axes + bat speed + age + own xwOBA current/career. OOS r 0.65, σ ±.028. Calibrated within ±.019 per decile." },
   { key: "proj_woba", label: "Proj wOBA", cls: "dec", format: v => v?.toFixed(3),
-    desc: "Projected next-season wOBA — skills-only champion (adding wOBA history failed the incremental gate; realized-production history is redundant once skills are known). OOS r 0.48, σ ±.032." },
+    desc: "Projected next-season wOBA — FUSION: deep-history backbone (ridge trained on 5,852 MLB transitions 2000-2022, era-relative, multi-year weights + aging + AAA/AA rookie translations learned at scale) + the five skill axes. OOS r 0.49, σ ±.032. Fusion beat skills-only and backbone-only on every realized stat." },
   { key: "proj_k_pct", label: "Proj K%", cls: "dec", format: v => v == null ? "" : (v*100).toFixed(1) + "%",
-    desc: "Projected next-season K% — skills + own K% history (history's biggest win: +2.9 RMSE pts beyond skills; K% is the most reliable rate, y2y .81). OOS r 0.81." },
+    desc: "Projected next-season K% — fusion (deep-history backbone + skills). OOS r 0.82; the frozen backbone alone matches published ZiPS/Steamer K% accuracy (23→24 fold: r .850 / MAE 2.3% / RMSE 3.0% vs ZiPS .844 / 2.4% / 3.0%), and skills add on top." },
   { key: "proj_bb_pct", label: "Proj BB%", cls: "dec", format: v => v == null ? "" : (v*100).toFixed(1) + "%",
-    desc: "Projected next-season BB% — skills + own BB% history (the skill system has no walk axis; own-stat history carries it, +2.0 RMSE pts). OOS r 0.64." },
+    desc: "Projected next-season BB% — fusion (deep-history backbone + skills). OOS r 0.69, MAE ~1.6pp (backbone matches ZiPS/Steamer MAE/RMSE on full-season folds). The walk axis the skill system lacks, learned from 20+ years of history." },
   { key: "proj_iso", label: "Proj ISO", cls: "dec", format: v => v?.toFixed(3),
-    desc: "Projected next-season ISO — skills + own ISO current/career. OOS r 0.62, σ ±.044." },
+    desc: "Projected next-season ISO — fusion (deep-history backbone + skills). OOS r 0.63, σ ±.043." },
 ];
 const DECISION = [
   { key: "decision_plus_mlb", label: "Decision+", cls: "dec", format: v => v?.toFixed(1),

@@ -87,13 +87,13 @@ Default owner: **@willclq** (reassign per feature as the team grows).
 - **Owner:** @willclq
 - **Data deps:** `~/aging_curves/` pipeline + panel; `birthdates.json` + MLB Stats API; all five axis sources; `data/raw/statcast_*.parquet` (discipline panel). Constraint: do NOT stack with the variance engine's outcome-aging bias terms (double-count) or sum with the app's feature-level Swing+ aging tab.
 
-## Projected (next yr) — historical priors + xwOBA projection engine
-- **What:** Next-season stat projections (xwOBA primary + wOBA/K%/BB%/ISO/AVG/OPS): ridge on the five skill axes + bat speed + age + **compact own-stat priors (current + career only)** — the full prior stack (prev/2yr windows, partner stats) overfits and was REJECTED; wOBA/HR-PA ship skills-only (their history failed the incremental gate). History's biggest wins live where the skill system is thinnest: K% +2.9 RMSE pts, BB% +2.0 (no walk axis), xSLG +1.8, xwOBA +1.2. Full audit: `~/projection_engine/PROJECTION_REPORT.md`.
-- **Inputs:** outcomes panel from raw Statcast (leak-free career-to-date priors); skill panel (axes + bat speed + age).
+## Projected (next yr) — projection engine v2 (deep-history fusion)
+- **What:** Next-season stat projections. Realized stats (wOBA/K%/BB%/ISO/AVG/OPS) = **FUSION**: deep-history backbone (ridge on 5,852 MLB transitions 2000–2022 from the MLB Stats API, era-relative, multi-year weights + aging + AAA/AA rookie translations learned at scale) + the five skill axes. x-stats (xwOBA primary) = skills + compact own-stat priors (no pre-2015 x-stat history). Frozen backbone matches published ZiPS/Steamer accuracy on K%/BB% (K% 23→24: r .850/MAE 2.3%/RMSE 3.0% vs ZiPS .844/2.4%/3.0%); fusion then beats both backbone-only and skills-only on every realized target OOS. Era-relative scoring retires the league-renorm TODO. Full audit: `~/projection_engine/PROJECTION_REPORT.md`.
+- **Inputs:** deep MLB/minors panels (statsapi, 24k + 38k player-seasons); outcomes panel from raw Statcast; skill panel (axes + bat speed + age).
 - **Outputs:** `data/processed/stat_projections.parquet` → `proj_xwoba/proj_woba/proj_k_pct/proj_bb_pct/proj_iso` on boards; "Projected (next yr)" group.
-- **Definition of done:** per-target champion beats hist-only AND skills-only OOS (xwOBA r .647 vs .574/.605); ridge beats LGBM/OLS; calibration |err| ≤ .019/decile; leakage LOW (career priors ≤ t); stress slices flat-RMSE. ✅ 2027 lines face-valid (Judge .405 xwOBA / 25% K; Soto 17% K / 15% BB).
+- **Definition of done:** fusion wins/ties all 10 realized targets OOS (wOBA r .494, OPS .521, BB% .688, K% .823); backbone trained fully disjoint from eval folds; leakage LOW; calibration |err| ≤ .019/decile. ✅
 - **Owner:** @willclq
-- **Data deps:** `~/projection_engine/` pipeline; `data/raw/statcast_*.parquet`; skill panel (`~/aging_curves`); per-target σ in report (xwOBA ±.028). League renorm + elite-tail terms (variance engine_adjustments.json) still to apply at scoring time — documented open item.
+- **Data deps:** `~/projection_engine/` pipeline; MLB Stats API (season hitting, sportIds 1/11/12); `data/raw/statcast_*.parquet`; skill panel (`~/aging_curves`). Open: park factors, playing-time model, elite-tail term, in-season updating.
 
 ---
 
