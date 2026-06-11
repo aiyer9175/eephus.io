@@ -144,11 +144,11 @@
    "surface": "/projections/ prospects",
    "predicts": "post-ETA WAR paths from P(bucket|FV) x calibrated trajectories",
    "champion": "fv_outcome_v1 (RETAINED - beat the WS-7 MiLB-stats challenger)",
-   "baseline": "MiLB-stats translation ridge (prospect_path.py): level-relative K/BB/ISO-or-ERA + age + level + FV - LOST, committed",
+   "baseline": "THREE committed losses: MiLB-stats ridge (MAE wins, rank loses), LightGBM (best MAE 1.475, worst rank+calibration - mean compression), linear mean recalibration (bias +0.29 -> +0.04 but held-out slope moved away from 1 - failed its pre-registered criterion)",
    "metric": "first-3y WAR MAE / Spearman / calibration, forward-chained debut cohorts 2019-21 (pre-debut grade vintages)",
    "eval_artifact": "data/prospect_path_eval.json",
    "verdict": "provisional",
-   "notes": "Phase 4b WS-7 (2026-06-11): the recorded fork is ANSWERED - adding level-translated MiLB rates on top of consensus FV does NOT improve first-3y WAR prediction (challenger MAE 1.679 / rho .122 vs FV-only 1.641 / .202 pooled OOS; loses 2 of 3 forward folds). The scouting consensus already prices the stat line. FIRST path-level measurement of the live model committed: MAE 1.641, rho .202, calibration slope .751 / bias +0.245 (mild over-projection at the mean - a future recalibration candidate, NOT corrected this phase). Statcast features excluded from the challenger by design: AAA tracking starts 2023, the 2017-21 training cohorts have none.",
+   "notes": "Phase 4b WS-7 + 2026-06-11 improvement sweep: fv_outcome_v1 RETAINS against ridge, LightGBM, AND a linear mean recalibration - every challenger lost its pre-stated dual gate (the scouting consensus ranks better than any stat-line model tried; rho .210 vs .150-.156). The recalibration is MEASURED and committed unshipped: it fixes the mean bias (+0.29 -> +0.04, MAE -0.08) but the pooled forward-chained slope worsens (.78 -> .64; the thin 2019 fold's noisy fit dominates). Documented next candidate: intercept-only correction with a min-train-n guard, pre-registered before the next eval. Calibration block lives in the artifact (ship: false); proj_export applies NOTHING.",
    "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0

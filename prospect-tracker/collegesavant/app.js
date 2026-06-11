@@ -436,6 +436,7 @@ function renderPlayer(player) {
         ${teamLogo(player, "large")}
         <div class="profile-title">
           <a class="pill" href="#/">Back to leaderboard</a>
+          <button class="pill" id="cs-share" type="button" title="Download this profile as a PNG share card">&#8681; share card</button>
           <h1>${escapeHtml(displayName(player.hitter_name))}</h1>
           <div class="profile-team">${renderYearSelect(availablePlayerYears(player))}</div>
         </div>
@@ -463,6 +464,32 @@ function renderPlayer(player) {
       setActiveYear(event.target.value);
       const nextPlayer = state.players.find((p) => p.slug === player.slug);
       window.location.hash = nextPlayer ? `#/player/${state.year}/${nextPlayer.slug}` : "#/";
+    });
+  }
+  const shareBtn = app.querySelector("#cs-share");
+  if (shareBtn) {
+    shareBtn.addEventListener("click", () => {
+      if (!window.EEPHUS_HUB) return;
+      const rows = METRICS
+        .filter((m) => player[m.key] != null)
+        .slice(0, 8)
+        .map((m) => [m.label, `${formatMetric(player[m.key], m.fmt)}  (${pct && pct[m.key] != null ? pct[m.key] : "-"})`]);
+      window.EEPHUS_HUB.shareCard({
+        module: "CollegeSavant",
+        accentToken: "--accent-red",
+        name: displayName(player.hitter_name),
+        meta: `${player.teamLabel || player.team || ""} · ${player.year} · college hitter`,
+        headshotURL: TEAM_LOGOS[player.team] || null,
+        tiles: [
+          player.xwoba != null ? { label: "xwOBA", value: formatMetric(player.xwoba, "decimal") } : null,
+          player.average_exit_velocity != null ? { label: "Avg EV", value: formatMetric(player.average_exit_velocity, "mph") } : null,
+          player.barrel_pct != null ? { label: "Barrel%", value: formatMetric(player.barrel_pct, "pct") } : null,
+        ].filter(Boolean),
+        sections: [{ title: `Percentiles · vs ${state.players.length} qualified hitters`, rows }],
+        url: `eephus.io/collegesavant/#/player/${player.year}/${player.slug}`,
+        filename: `eephus-collegesavant-${player.slug}.png`,
+        caption: "college percentiles vs the qualified pool · CollegeSavant by Joseph Gillis",
+      });
     });
   }
 }

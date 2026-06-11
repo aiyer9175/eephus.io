@@ -501,6 +501,31 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception:
                 log.exception("daily: IL refresh failed — continuing")
 
+        # --- 5c. Current-season stat lines (fast stats refresh) -----------
+        # The board's current-season numbers used to wait for the monthly
+        # run; the daily job now refreshes every ACTIVE prospect's
+        # current-season stat line (24h HTTP TTL means each daily run pulls
+        # fresh data; graduates stay frozen - their MiLB line is final).
+        # Grades/tools/Arkmetrics still move ONLY monthly, so the graded
+        # board's cadence stamp stays honest; this keeps OPS/ERA columns
+        # and level pills no more than a day old.
+        with _step("d5c. Current-season stat lines", log):
+            try:
+                from stats import fetch_statlines_for
+                from storage import upsert_statlines
+                active = [(p.player_key, p.player_name, _is_pitcher(p.position))
+                          for p in timeseries
+                          if p.status != "debuted"
+                          and ids_by_key.get(p.player_key) is not None]
+                if active:
+                    sl = fetch_statlines_for(active, season,
+                                             max_workers=workers or 24,
+                                             id_cache=ids_by_key)
+                    n_sl = upsert_statlines(sl, season) if sl else 0
+                    log.info("daily: refreshed %d current-season stat lines", n_sl)
+            except Exception:
+                log.exception("daily: stat-line refresh failed — continuing")
+
         # --- 6. Roster status (fresh tx + cached career stats). -----------
         with _step("d6. Roster status", log):
             try:
@@ -2019,9 +2044,19 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             try:
                 import fa_pipeline
                 from fa_export import CLASS_YEAR as _FA_CLASS_YEAR
+                from fa_export import FUTURE_CLASS_YEARS as _FA_FUTURE
                 from fa_export import export_all as _export_fa
                 fa_pipeline.refresh_current_class(_FA_CLASS_YEAR,
                                                   force=force_refetch)
+                # Future winters (year selector on the board) - the same
+                # constructed-class pipeline per Spotrac forward page;
+                # best-effort, the current class never waits on them.
+                for _fy in _FA_FUTURE:
+                    try:
+                        fa_pipeline.refresh_current_class(_fy,
+                                                          force=force_refetch)
+                    except Exception:
+                        log.exception("fa future class %d failed — continuing", _fy)
                 fa_pipeline.refresh_payroll(force=force_refetch)
                 _export_fa()
             except Exception:

@@ -32274,6 +32274,17 @@ function _rowOpsPlus(s) {
 // the main row's columns.
 function _careerOrgAndStints(s, player, statCellsFn) {
   const _logo = o => (typeof teamLogoHTML === "function" ? teamLogoHTML(o, "sm") : escapeHtml(o));
+  // Stat lines from the affiliate ladder stamp the AFFILIATE name
+  // ("Biloxi Shuckers"), not an MLB org code - teamLogoHTML can't map
+  // that, so the cell used to print the name twice with no logo. An org
+  // is a CODE iff it's in ORG_COLORS; anything else is an affiliate and
+  // resolves to the player's MLB parent for the logo (the affiliate
+  // stays in the tooltip).
+  const _isCode = o => !!(o && typeof ORG_COLORS !== "undefined" && ORG_COLORS[o]);
+  const _toParent = o => {
+    if (!o || _isCode(o)) return { code: o, affiliate: null };
+    return { code: (player && player.org) || null, affiliate: o };
+  };
   const stints = (s && Array.isArray(s.stints))
     ? s.stints.filter(st => st && st.org) : [];
   if (stints.length < 2) {
@@ -32303,9 +32314,15 @@ function _careerOrgAndStints(s, player, statCellsFn) {
       else if (resolved.size === 0 && player && player.org) _org = player.org;
       else if (s && s.season >= new Date().getFullYear() && player && player.org) _org = player.org;
     }
-    const orgCell = _org
-      ? `<td style="text-align:center;"><span title="${escapeHtml(_org)} - this season's org">${_logo(_org)}${escapeHtml(_org)}</span></td>`
-      : `<td style="text-align:center;color:var(--text-tertiary);" title="Org unresolved in this season's stat data"> - </td>`;
+    const { code: _code, affiliate: _aff } = _toParent(_org);
+    const _tip = _aff
+      ? `${_aff} (${_code || "?"} affiliate) - this season's club`
+      : `${_org} - this season's org`;
+    const orgCell = _code
+      ? `<td style="text-align:center;"><span title="${escapeHtml(_tip)}">${_logo(_code)}${escapeHtml(_code)}</span></td>`
+      : (_org
+        ? `<td style="text-align:center;"><span title="${escapeHtml(_tip)}">${escapeHtml(_org)}</span></td>`
+        : `<td style="text-align:center;color:var(--text-tertiary);" title="Org unresolved in this season's stat data"> - </td>`);
     return { orgCell, stintRows: "" };
   }
   const orgs = stints.map(st => st.org);

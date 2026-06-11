@@ -330,36 +330,114 @@ def _score(pairs):
     }
 
 
+def _fit_lgbm(train: list[dict], keys: list[str]):
+    """LightGBM challenger (the audit's best-model-wins mandate) - small
+    and heavily regularized for n~250/side; deterministic."""
+    try:
+        import lightgbm as lgb
+        import numpy as np
+    except ImportError:
+        return None
+    if len(train) < 60:
+        return None
+    X = np.array([[r["feats"].get(k, 0.0) for k in keys] for r in train])
+    y = np.array([r["target"] for r in train])
+    model = lgb.LGBMRegressor(
+        n_estimators=200, learning_rate=0.05, num_leaves=7,
+        min_child_samples=25, subsample=0.9, subsample_freq=1,
+        colsample_bytree=0.8, reg_lambda=5.0,
+        random_state=7, deterministic=True, verbose=-1)
+    model.fit(X, y)
+    return {"model": model, "keys": keys}
+
+
+def _fit_linear_calibration(pairs: list[tuple[float, float]]) -> dict | None:
+    """OLS realized ~ a + b * predicted - the mean-path correction
+    candidate for the LIVE FV-only model (registry-noted: slope .751,
+    bias +0.245 = over-projection at the mean)."""
+    if len(pairs) < 50:
+        return None
+    n = len(pairs)
+    mp = sum(p for p, _ in pairs) / n
+    mo = sum(o for _, o in pairs) / n
+    cov = sum((p - mp) * (o - mo) for p, o in pairs)
+    var = sum((p - mp) ** 2 for p, _ in pairs)
+    if var <= 0:
+        return None
+    b = cov / var
+    a = mo - b * mp
+    return {"a": round(a, 4), "b": round(b, 4), "n": n}
+
+
 def run(persist: bool = True) -> dict:
     rows, acct = build_cohort()
-    chall_pairs, base_pairs = [], []
+    chall_pairs, base_pairs, lgbm_pairs = [], [], []
+    cal_pairs = []          # forward-chained CALIBRATED baseline pairs
     per_year = {}
     for yr in SCORED_YEARS:
         train = [r for r in rows if r["debut_year"] < yr]
         test = [r for r in rows if r["debut_year"] == yr]
-        yr_c, yr_b = [], []
+        # forward-chained calibration of the FV-only baseline: fit on
+        # PRIOR debut cohorts' (baseline, realized), apply to this fold
+        cal = _fit_linear_calibration([(r["baseline"], r["target"]) for r in train])
+        yr_c, yr_b, yr_g, yr_k = [], [], [], []
         for is_pit in (False, True):
-            model = _fit_ridge([r for r in train if r["is_pit"] == is_pit],
-                               _KEYS[is_pit])
-            if model is None:
-                continue
+            side_train = [r for r in train if r["is_pit"] == is_pit]
+            model = _fit_ridge(side_train, _KEYS[is_pit])
+            gbm = _fit_lgbm(side_train, _KEYS[is_pit])
             for r in test:
                 if r["is_pit"] != is_pit:
                     continue
-                p = _predict(model, r["feats"])
-                yr_c.append((p, r["target"]))
-                yr_b.append((r["baseline"], r["target"]))
+                if model is not None:
+                    yr_c.append((_predict(model, r["feats"]), r["target"]))
+                    yr_b.append((r["baseline"], r["target"]))
+                if gbm is not None:
+                    import warnings as _w
+                    import numpy as np
+                    X = np.array([[r["feats"].get(k, 0.0) for k in gbm["keys"]]])
+                    with _w.catch_warnings():
+                        _w.simplefilter("ignore")   # feature-name nag on ndarray input
+                        yr_g.append((float(gbm["model"].predict(X)[0]), r["target"]))
+                if cal is not None:
+                    yr_k.append((max(0.0, cal["a"] + cal["b"] * r["baseline"]),
+                                 r["target"]))
         chall_pairs.extend(yr_c)
         base_pairs.extend(yr_b)
+        lgbm_pairs.extend(yr_g)
+        cal_pairs.extend(yr_k)
         if yr_c:
             per_year[yr] = {"challenger": _score(yr_c), "baseline": _score(yr_b)}
+            if yr_g:
+                per_year[yr]["lgbm"] = _score(yr_g)
+            if yr_k:
+                per_year[yr]["baseline_calibrated"] = _score(yr_k)
 
     chall = _score(chall_pairs) if chall_pairs else {"n": 0}
     base = _score(base_pairs) if base_pairs else {"n": 0}
+    lgbm = _score(lgbm_pairs) if lgbm_pairs else {"n": 0}
+    cal_fc = _score(cal_pairs) if cal_pairs else {"n": 0}
     wins = (chall.get("n", 0) > 100
             and chall.get("mae") is not None and base.get("mae") is not None
             and chall["mae"] < base["mae"]
             and (chall.get("spearman") or 0) > (base.get("spearman") or 0))
+    lgbm_wins = (lgbm.get("n", 0) > 100
+                 and lgbm.get("mae") is not None and base.get("mae") is not None
+                 and lgbm["mae"] < base["mae"]
+                 and (lgbm.get("spearman") or 0) > (base.get("spearman") or 0))
+    # CALIBRATION ship rule: a linear recentering of the LIVE model's mean
+    # (rank-preserving, b>0) must move the held-out calibration slope
+    # toward 1 and shrink |bias| without degrading MAE. Shipped as the
+    # full-window fit; proj_export applies it to prospect mean paths.
+    cal_full = _fit_linear_calibration([(r["baseline"], r["target"]) for r in rows])
+    base_cal_diag = (base.get("calibration") or {})
+    fc_cal_diag = (cal_fc.get("calibration") or {})
+    cal_ship = bool(
+        cal_full and cal_fc.get("n", 0) > 100
+        and fc_cal_diag.get("slope") is not None
+        and base_cal_diag.get("slope") is not None
+        and abs(fc_cal_diag["slope"] - 1) < abs(base_cal_diag["slope"] - 1)
+        and abs(fc_cal_diag.get("bias", 9)) < abs(base_cal_diag.get("bias", 9))
+        and cal_fc.get("mae", 9e9) <= base.get("mae", 0) + 0.02)
     out = {
         "generated_at": date.today().isoformat(),
         "debut_years": list(DEBUT_YEARS),
@@ -374,12 +452,27 @@ def run(persist: bool = True) -> dict:
         },
         "challenger_pooled_oos": chall,
         "baseline_pooled_oos": base,
+        "lgbm_challenger_pooled_oos": lgbm,
+        "baseline_calibrated_pooled_oos": cal_fc,
         "per_year": {str(k): v for k, v in per_year.items()},
         "ship_decision": {
             "rule": "challenger must beat FV-only on pooled OOS MAE AND "
                     "Spearman with calibration not worse; loser is "
                     "committed either way",
             "challenger_wins": bool(wins),
+            "lgbm_wins": bool(lgbm_wins),
+        },
+        "calibration": {
+            "rule": "linear recentering of the live mean path (rank-"
+                    "preserving): held-out slope must move toward 1 and "
+                    "|bias| shrink, MAE not degraded (+0.02 tolerance)",
+            "forward_chained": cal_fc,
+            "baseline_uncalibrated": {"calibration": base_cal_diag},
+            "full_window_fit": cal_full,
+            "ship": cal_ship,
+            "applies_to": "proj_export._prospect_rows mean paths (display "
+                          "layer only - surplus has its own isotonic "
+                          "calibration, never double-corrected)",
         },
     }
     if persist:

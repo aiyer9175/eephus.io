@@ -690,6 +690,34 @@ function renderPitcherRow(pitcher, rank) {
   `;
 }
 
+function _wireCsShare(pitcher, pct) {
+  const btn = app.querySelector("#cs-share");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    if (!window.EEPHUS_HUB) return;
+    const rows = activePitcherMetrics()
+      .filter((m) => pitcher[m.key] != null)
+      .slice(0, 8)
+      .map((m) => [m.label, `${formatMetric(pitcher[m.key], m.fmt)}  (${pct && pct[m.key] != null ? pct[m.key] : "-"})`]);
+    window.EEPHUS_HUB.shareCard({
+      module: "CollegeSavant",
+      accentToken: "--accent-red",
+      name: displayName(pitcher.pitcher_name),
+      meta: `${formatTeamName(pitcher.team)} · ${pitcher.year} · college pitcher`,
+      headshotURL: pitcher.team ? `logos/${pitcher.team}.png` : null,
+      tiles: [
+        pitcher.stuff_plus != null ? { label: "Stuff+", value: formatMetric(pitcher.stuff_plus, "number") } : null,
+        pitcher.avg_fastball_velo != null ? { label: "FB velo", value: formatMetric(pitcher.avg_fastball_velo, "mph") } : null,
+        pitcher.xwoba_against != null ? { label: "xwOBA agn", value: formatMetric(pitcher.xwoba_against, "decimal") } : null,
+      ].filter(Boolean),
+      sections: [{ title: `Percentiles · vs ${state.pitchers.length} qualified pitchers`, rows }],
+      url: `eephus.io/collegesavant/pitcher_index.html#/player/${pitcher.year}/${pitcher.slug}`,
+      filename: `eephus-collegesavant-${pitcher.slug}.png`,
+      caption: "college percentiles vs the qualified pool · CollegeSavant by Joseph Gillis",
+    });
+  });
+}
+
 function renderPitcher(pitcher) {
   if (!pitcher) {
     app.innerHTML = `<section class="empty"><strong>Pitcher not found.</strong><br><a class="pill" href="#/">Back to leaderboard</a></section>`;
@@ -702,6 +730,7 @@ function renderPitcher(pitcher) {
         ${teamBadge(pitcher, "large")}
         <div class="profile-title">
           <a class="pill" href="#/">Back to leaderboard</a>
+          <button class="pill" id="cs-share" type="button" title="Download this profile as a PNG share card">&#8681; share card</button>
           <h1>${escapeHtml(displayName(pitcher.pitcher_name))}</h1>
           <div class="profile-team">${teamBadge(pitcher, "mini")}<span>${escapeHtml(formatTeamName(pitcher.team))}</span>${renderYearSelect(availablePlayerYears(pitcher))}</div>
           <p>${escapeHtml(profileSummaryText())}</p>
@@ -740,7 +769,7 @@ function renderPitcher(pitcher) {
     setActiveYear(event.target.value);
     const nextPitcher = state.pitchers.find((p) => p.slug === pitcher.slug);
     window.location.hash = nextPitcher ? `#/player/${state.year}/${nextPitcher.slug}` : "#/";
-  });
+  });  _wireCsShare(pitcher, pct);
 }
 
 function renderPitchTypeStuff(pitcher) {

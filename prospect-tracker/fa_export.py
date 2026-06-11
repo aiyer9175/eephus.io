@@ -443,11 +443,25 @@ def build_fa_meta_payload(class_year: int = CLASS_YEAR) -> dict:
     }
 
 
+# Future winters exported alongside the current class (the board's year
+# selector; current stays the default). Spotrac publishes forward class
+# pages, so the SAME constructed-class pipeline runs per year - future
+# members are contract-expiry projections with option/QO statuses, no
+# signings/events yet (the tracker goes live when their winter does).
+FUTURE_CLASS_YEARS = (CLASS_YEAR + 1, CLASS_YEAR + 2)
+
+
 def export_all() -> dict[str, int]:
     sizes = {}
-    for name, payload in (("fa_class.json", build_fa_class_payload()),
-                          ("fa_archive.json", build_fa_archive_payload()),
-                          ("fa_meta.json", build_fa_meta_payload())):
+    exports = [("fa_class.json", build_fa_class_payload()),
+               ("fa_archive.json", build_fa_archive_payload()),
+               ("fa_meta.json", build_fa_meta_payload())]
+    for y in FUTURE_CLASS_YEARS:
+        try:
+            exports.append((f"fa_class_{y}.json", build_fa_class_payload(y)))
+        except Exception:                                     # noqa: BLE001
+            log.exception("future class %d export failed — continuing", y)
+    for name, payload in exports:
         raw = json.dumps(payload, separators=(",", ":"))
         (DATA_DIR / name).write_text(raw, encoding="utf-8")
         sizes[name] = len(raw)
