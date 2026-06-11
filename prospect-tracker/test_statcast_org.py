@@ -69,6 +69,32 @@ def test_js_keeps_current_season_shortcircuit():
         "current-season short-circuit (season >= getFullYear()) missing from the career-table org resolver"
 
 
+def test_js_stat_row_has_row_aware_org_meta_helper():
+    """Stats-board rows must render orgs through row-aware metadata rather than
+    blindly using the player's current org."""
+    src = INDEX.read_text(encoding="utf-8")
+    assert "_statRowOrgMetaHTML" in src, "row-aware stats-board org meta helper missing"
+    assert "_statRowOrgMetaHTML(p, r)" in src, \
+        "leaderboard/player meta rows must use row-aware org rendering"
+
+
+def test_js_uses_row_org_before_any_current_org_fallback():
+    """Graduates with legacy org-less rows (Giolito/Buehler class) should not
+    stamp every historical season with today's org. Refreshed row.org wins and
+    ambiguous historical rows stay unresolved instead of being guessed."""
+    src = INDEX.read_text(encoding="utf-8")
+    assert "function _playerOrgEvents(" in src, "transaction/acquisition org timeline missing"
+    assert "function _eventOrgSplitForSeason(" in src, "transaction split resolver missing"
+    assert re.search(r"if \(row && row\.org\)\s*\{", src), \
+        "stats row org must be trusted before inferred fallback"
+    assert "stints.length === 1 ? stints[0].org : (s && s.org)" in src, \
+        "career table must read the season's own stat-line org"
+    assert "Org unresolved in this season's stat data" in src, \
+        "ambiguous historical career rows must render as unresolved"
+    assert "_seasonOrgForRow(player" not in src, \
+        "retired current-org trade-walk resolver must not return"
+
+
 def _load(path: Path):
     try:
         d = json.loads(path.read_text(encoding="utf-8"))

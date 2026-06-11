@@ -1648,8 +1648,16 @@ def _career_row_from_bulk_split(split: dict, group: str) -> dict | None:
         # "Dominican Summer League"); fall back to sport abbreviation or
         # the short label so the career-table tooltip is never empty.
         "level_label": league_name or sport.get("abbreviation") or label,
+        "org": None,
         "games": int(stat.get("gamesPlayed", 0) or 0),
     }
+    team = split.get("team") or {}
+    if team.get("id"):
+        try:
+            from trades import canonical_org
+            row["org"] = canonical_org(team.get("parentOrgName") or team.get("name"))
+        except Exception:
+            row["org"] = team.get("parentOrgName") or team.get("name")
     if is_pitcher:
         ip_val = (float(stat.get("inningsPitched"))
                   if stat.get("inningsPitched") else None)
@@ -1712,20 +1720,23 @@ def bulk_fetch_season_stats(
     group: str,
     sport_ids: Iterable[int] = BULK_STATS_SPORT_IDS,
     page_size: int = 5000,
-) -> dict[int, dict]:
+) -> dict[int, list[dict]]:
     """Bulk-fetch one season of stats for every player across the given
-    sports, returning {mlbam_id: career_row}.
+    sports, returning {mlbam_id: [career_row, ...]}.
 
     Replaces ~3000 per-player /people/{id}/stats?stats=yearByYear calls
     with one paginated call per (sport, group) — typically 1-2 pages per
     combo. The returned rows match the shape fetch_career_stats produces
     so they can be merged into career_cache directly.
 
-    When a player has stints at multiple levels in the same season, the
-    HIGHEST level (per LEVEL_ORDER) wins — same rule the per-player path
-    uses when collapsing yearByYear splits.
+    When a player has stints at multiple levels in the same season, every
+    (season, level) row is retained. When a player has multiple org stints
+    at the same level, the row carries the same `stints` payload as the
+    per-player yearByYear path.
     """
-    out: dict[int, dict] = {}
+    from collections import OrderedDict
+
+    groups: "OrderedDict[tuple[int, int, str], list[dict]]" = OrderedDict()
     for sport_id in sport_ids:
         offset = 0
         while True:
@@ -1759,22 +1770,32 @@ def bulk_fetch_season_stats(
                 row = _career_row_from_bulk_split(s, group)
                 if row is None:
                     continue
-                pid = int(pid)
-                existing = out.get(pid)
-                if (existing is None
-                        or LEVEL_ORDER.index(row["level"])
-                        < LEVEL_ORDER.index(existing["level"])):
-                    out[pid] = row
+                s["_level"] = row["level"]
+                s["_level_label"] = row["level_label"]
+                s["_org"] = row.get("org")
+                groups.setdefault((int(pid), row["season"], row["level"]), []).append(s)
             if len(splits) < page_size:
                 break
             offset += page_size
+    out: dict[int, list[dict]] = {}
+    is_pitcher = (group == "pitching")
+    for (pid, _season, _level), splits in groups.items():
+        stint_rows = [_row_from_split(s, is_pitcher) for s in splits]
+        if len(stint_rows) == 1:
+            row = stint_rows[0]
+        else:
+            row = _combine_stints(splits, is_pitcher)
+            row["stints"] = stint_rows
+        out.setdefault(pid, []).append(row)
+    for rows in out.values():
+        rows.sort(key=lambda r: (-int(r.get("season") or 0), LEVEL_ORDER.index(r["level"])))
     log.info("bulk_fetch_season_stats season=%d group=%s sports=%s: %d players",
              season, group, list(sport_ids), len(out))
     return out
 
 
 def merge_bulk_into_career_cache(
-    bulk_by_mlbam: dict[int, dict],
+    bulk_by_mlbam: dict[int, dict | list[dict]],
     career_cache: dict[str, list[dict]],
     id_cache: dict[str, int],
     season: int,
@@ -1784,8 +1805,9 @@ def merge_bulk_into_career_cache(
     career cache and return the {key: rows} subset that changed so the
     caller can persist it.
 
-    For each player with a bulk row: drop any existing row for `season`,
-    insert the bulk row at the top of the list, cap to CAREER_SEASONS_KEPT.
+    For each player with bulk rows: drop any existing row for `season`,
+    insert the bulk row(s) at the top of the list, cap to
+    CAREER_SEASONS_KEPT unique seasons.
     Players are skipped if `eligible_keys` is provided and they aren't in
     it (used to exclude graduates from the in-season update).
     """
@@ -1795,13 +1817,24 @@ def merge_bulk_into_career_cache(
             continue
         if mlbam is None:
             continue
-        bulk_row = bulk_by_mlbam.get(int(mlbam))
-        if bulk_row is None:
+        bulk_rows_raw = bulk_by_mlbam.get(int(mlbam))
+        if bulk_rows_raw is None:
             continue
+        bulk_rows = bulk_rows_raw if isinstance(bulk_rows_raw, list) else [bulk_rows_raw]
+        bulk_rows = [r for r in bulk_rows if isinstance(r, dict)]
+        if not bulk_rows:
+            continue
+        bulk_rows.sort(key=lambda r: (-int(r.get("season") or 0), LEVEL_ORDER.index(r["level"])))
         existing = career_cache.get(key) or []
         filtered = [r for r in existing if r.get("season") != season]
-        filtered.insert(0, bulk_row)
-        merged = filtered[:CAREER_SEASONS_KEPT]
+        candidate = bulk_rows + filtered
+        kept_seasons: set[int] = set()
+        merged: list[dict] = []
+        for r in candidate:
+            kept_seasons.add(int(r.get("season") or 0))
+            if len(kept_seasons) > CAREER_SEASONS_KEPT:
+                break
+            merged.append(r)
         updates[key] = merged
         career_cache[key] = merged
     return updates
