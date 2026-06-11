@@ -413,18 +413,22 @@
       return;
     }
     const spent = signed.reduce((s, m) => s + (m.signedGuar || 0), 0);
+    // Predictions are NPV-basis (deferral-adjusted) — score deltas against
+    // the NPV actual where a deferral schedule is on file.
+    const actGuar = m => m.signedGuarNpv ?? m.signedGuar;
     const scored = signed.filter(m => m.projGuar != null && m.signedGuar != null && !m.signedMilb);
     const mae = scored.length
-      ? scored.reduce((s, m) => s + Math.abs(m.signedGuar - m.projGuar), 0) / scored.length : null;
+      ? scored.reduce((s, m) => s + Math.abs(actGuar(m) - m.projGuar), 0) / scored.length : null;
     const sigRows = signed
       .slice().sort((a, b) => (b.signedDate || "").localeCompare(a.signedDate || "") || (b.signedGuar || 0) - (a.signedGuar || 0))
       .map(m => {
-        const actual = m.signedMilb ? "MiLB deal" : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)}`;
+        const actual = m.signedMilb ? "MiLB deal"
+          : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)}${m.signedGuarNpv != null ? `<span class="fa-band" title="Deferral-adjusted NPV at the platform 9% rate — the basis the prediction speaks"> (${money(m.signedGuarNpv)} NPV)</span>` : ""}`;
         const pred = m.projGuar != null ? `${m.projYears}y / ${money(m.projGuar)}` : EM_DASH;
         const dGuar = (m.signedGuar != null && m.projGuar != null && !m.signedMilb)
-          ? formatMetric((m.signedGuar - m.projGuar) / 1e6, "surplusM") : EM_DASH;
+          ? formatMetric((actGuar(m) - m.projGuar) / 1e6, "surplusM") : EM_DASH;
         const realized = (m.rational != null && m.signedGuar > 0 && !m.signedMilb)
-          ? Math.round(100 * m.rational / m.signedGuar) : null;
+          ? Math.round(100 * m.rational / actGuar(m)) : null;
         return `<tr>
           <td>${m.signedDate || EM_DASH}</td>
           <td>${playerLink(m)} <span class="fa-sub">${esc(m.pos || "")}</span>${m.qoAccepted ? ' <span title="Accepted the qualifying offer">QO accepted</span>' : ""}</td>

@@ -64,6 +64,13 @@ GATE2_PATH = Path(__file__).parent / "data" / "fa_gate2_eval.json"
 POS_GROUPS = ("SP", "RP", "C", "POS")
 
 
+def _npv_of(s: dict) -> float:
+    """Deferral-adjusted guarantee for a signing row (falls back to the
+    sticker where no schedule is on file — see deferral_npv_usd's
+    convention note)."""
+    return float(s.get("npv_guarantee_usd") or s["guarantee_usd"])
+
+
 def _pos_group(position: str | None) -> str:
     head = (position or "").upper().split("/")[0].strip()
     if head in ("SP", "SP2", "P", "LHP", "RHP"):
@@ -241,12 +248,14 @@ def disc_war(path: dict, years: int) -> float:
 # ============================================================================
 
 def dollars_per_war_by_winter(signings: list[dict]) -> dict[int, float]:
-    """Implied FA $/WAR per winter: total guarantee / total DISCOUNTED
+    """Implied FA $/WAR per winter: total NPV guarantee / total DISCOUNTED
     projected contract WAR across that winter's MLB deals (projected
-    point-in-time — what buyers thought they were buying). Through-origin
-    by construction; winters with thin totals are dropped."""
+    point-in-time — what buyers thought they were buying). Phase 2: the
+    numerator is DEFERRAL-ADJUSTED (npv_guarantee_usd when attached) — a
+    97%-deferred $700M is not $700M of present liability, and letting it
+    inflate the winter's implied price of a win distorted every consumer
+    downstream. Through-origin by construction; thin winters dropped."""
     agg: dict[int, dict] = defaultdict(lambda: {"g": 0.0, "w": 0.0, "n": 0})
-    r = _discount_rate()
     for s in signings:
         cw = s.get("_war_path")
         if not cw or not s.get("guarantee_usd") or not s.get("years"):
@@ -255,22 +264,70 @@ def dollars_per_war_by_winter(signings: list[dict]) -> dict[int, float]:
         if disc <= 0:
             continue
         a = agg[s["class_year"]]
-        a["g"] += s["guarantee_usd"]
+        a["g"] += s.get("npv_guarantee_usd") or s["guarantee_usd"]
         a["w"] += disc
         a["n"] += 1
     return {y: v["g"] / v["w"] for y, v in sorted(agg.items())
             if v["w"] > 20 and v["n"] >= 25}
 
 
+def _dpw_forecast_method() -> str:
+    cfg = (fa_class.get_config().get("market_model") or {}).get("dpw_forecast") or {}
+    return str(cfg.get("method", "flat5"))
+
+
+def _cbt_threshold_or_earliest(season: int) -> int:
+    """CBT threshold with an earliest-encoded fallback — seasons before
+    the rule file's first record (pre-2017 winters in the trend fits) use
+    the earliest threshold rather than erroring out of a covariate."""
+    try:
+        return fa_cba.cbt_threshold(season)["threshold_usd"]
+    except LookupError:
+        rows = fa_cba._rules()["cbt_thresholds"]
+        return min(rows, key=lambda r: r["season"])["threshold_usd"]
+
+
+def _fit_log_trend(series: dict[int, float], with_cbt: bool):
+    """Tiny deterministic OLS of log($/WAR) on year (+ log CBT threshold).
+    Returns a predict(year)->usd callable. n is single-digit — this is a
+    trend line, not a model; the forward-chained eval is what justifies it."""
+    import numpy as np
+    years = sorted(series)
+    X = [[1.0, float(y)] for y in years]
+    if with_cbt:
+        for row, y in zip(X, years):
+            row.append(math.log(_cbt_threshold_or_earliest(y)))
+    yv = [math.log(series[y]) for y in years]
+    b, *_ = np.linalg.lstsq(np.asarray(X), np.asarray(yv), rcond=None)
+
+    def predict(year: int) -> float:
+        x = [1.0, float(year)]
+        if with_cbt:
+            x.append(math.log(_cbt_threshold_or_earliest(year)))
+        return float(math.exp(sum(c * v for c, v in zip(b, x))))
+    return predict
+
+
 def winter_dpw(dpw_series: dict[int, float], class_year: int) -> float:
-    """The winter's $/WAR level, EX-ANTE: the most recent PRIOR winter's
-    estimate escalated by the configured inflation — a test winter never
-    sees its own prices."""
-    prior = [y for y in dpw_series if y < class_year]
+    """The winter's $/WAR level, EX-ANTE — a test winter never sees its
+    own prices. Methods (config market_model.dpw_forecast.method, chosen
+    by the forward-chained eval in data/dpw_forecast_eval.json):
+      flat5      most recent PRIOR winter escalated 5%/yr (the v1 carry)
+      trend      log-linear trend fit on PRIOR winters
+      trend_cbt  trend + log CBT-threshold covariate (thresholds for
+                 future winters are dated CBA records — known ex-ante)
+    Fewer than 4 prior winters always falls back to flat5."""
+    prior = {y: v for y, v in dpw_series.items() if y < class_year}
     if not prior:
         return fa_class._flat_dpw_usd()
+    method = _dpw_forecast_method()
+    if method in ("trend", "trend_cbt") and len(prior) >= 4:
+        try:
+            return _fit_log_trend(prior, with_cbt=(method == "trend_cbt"))(class_year)
+        except Exception:                                   # noqa: BLE001 — fall back, never abort
+            log.warning("dpw forecast %s failed — flat5 fallback", method)
     y = max(prior)
-    return dpw_series[y] * ((1 + _dpw_inflation()) ** (class_year - y))
+    return prior[y] * ((1 + _dpw_inflation()) ** (class_year - y))
 
 
 # ============================================================================
@@ -304,14 +361,85 @@ def rational_value_usd(war_by_year: list[float], class_year: int,
 
 def deferral_npv_usd(schedule: list[dict] | None, guarantee_usd: int) -> dict:
     """Sticker vs NPV guarantee. ``schedule`` rows: {year_offset, amount_usd}
-    (from per-player Spotrac pages / fa_overrides when available). Without
-    a schedule the guarantee is assumed level over the term — documented."""
+    (from data/deferrals.json / fa_overrides when available). Without
+    a schedule the guarantee is assumed level over the term — documented.
+
+    IMPORTANT CONVENTION (Phase 2): a no-schedule deal keeps NPV == sticker.
+    That treats the sticker as already-level cash, so the NPV adjustment
+    captures only the DEFERRAL-vs-level difference — exactly the quantity
+    the deferral ledger documents. Discounting every level contract too
+    would just rescale all targets by an annuity factor without changing
+    the model comparison, while making the displayed numbers unfamiliar."""
     r = _discount_rate()
     if not schedule:
         return {"sticker_usd": guarantee_usd, "npv_usd": guarantee_usd,
                 "method": "no_deferral_schedule_on_file"}
     npv = sum(row["amount_usd"] / ((1 + r) ** row["year_offset"]) for row in schedule)
     return {"sticker_usd": guarantee_usd, "npv_usd": int(npv), "method": "schedule_npv"}
+
+
+@lru_cache(maxsize=1)
+def _deferral_ledger() -> dict:
+    """data/deferrals.json — curated deferral schedules (WS-2a). Returns
+    {player_key:class_year -> entry} with compact flows expanded into
+    {year_offset, amount_usd} rows."""
+    try:
+        d = json.loads((Path(__file__).parent / "data" / "deferrals.json")
+                       .read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("deferral ledger unavailable — NPV == sticker everywhere")
+        return {}
+    out = {}
+    for key, e in (d.get("players") or {}).items():
+        entry = dict(e)
+        if e.get("flows"):
+            entry["schedule"] = [
+                {"year_offset": t, "amount_usd": f["amount_usd"]}
+                for f in e["flows"] for t in range(f["from"], f["to"] + 1)]
+        out[key] = entry
+    return out
+
+
+def npv_guarantee_usd(player_key: str | None, class_year: int,
+                      guarantee_usd: int) -> tuple[int, bool]:
+    """(NPV guarantee at the platform discount rate, had_schedule). The
+    DEFERRAL-ADJUSTED guarantee is the Phase-2 basis for the $/WAR series,
+    the market-model targets and Gate 2 — a 97%-deferred megadeal is not
+    the same liability as level cash and must not train the model as if
+    it were."""
+    entry = _deferral_ledger().get(f"{player_key}:{class_year}") if player_key else None
+    if not entry or not entry.get("schedule"):
+        return guarantee_usd, False
+    # Level-payment ledgers can drift a hair from the sticker (rounding);
+    # scale the schedule so total nominal == sticker before discounting.
+    total = sum(r["amount_usd"] for r in entry["schedule"])
+    scale = guarantee_usd / total if total else 1.0
+    sched = [{"year_offset": r["year_offset"],
+              "amount_usd": r["amount_usd"] * scale} for r in entry["schedule"]]
+    return deferral_npv_usd(sched, guarantee_usd)["npv_usd"], True
+
+
+def deferral_coverage_audit(signings: list[dict],
+                            threshold_usd: int = 200_000_000) -> dict:
+    """The WS-2a ship gate, as data: every guarantee >= threshold must have
+    a ledger entry (schedule OR explicit deferred=false). Misses listed,
+    never papered over."""
+    ledger = _deferral_ledger()
+    missing, covered = [], 0
+    for s in signings:
+        g = s.get("guarantee_usd") or 0
+        if g < threshold_usd or not s.get("mlb_deal"):
+            continue
+        key = f"{s.get('player_key')}:{s.get('class_year')}"
+        if key in ledger:
+            covered += 1
+        else:
+            missing.append({"key": key, "name": s.get("player_name"),
+                            "guarantee_usd": g})
+    return {"threshold_usd": threshold_usd, "covered": covered,
+            "missing": missing,
+            "unverified": sorted(k for k, e in ledger.items()
+                                 if "unverified" in (e.get("verify_status") or ""))}
 
 
 def opt_out_scenarios(war_by_year: list[float], opt_out_after: int,
@@ -475,16 +603,19 @@ class MarketModel:
                                      self._supply_z(s), self._comps_stats(s)[1],
                                      self._log_rational(s, float(s["years"]), dpw),
                                      self._prime_war(s)))
-            yg.append(math.log(s["guarantee_usd"]))
+            # Phase 2 — targets are DEFERRAL-ADJUSTED NPV guarantees: the
+            # model learns the present liability, not the press-release
+            # sticker (Ohtani's $700M trains as ~$197M at the platform rate).
+            yg.append(math.log(_npv_of(s)))
         self.coef_guar = _ols(Xg, yg)
         self.n_train = len(rows)
-        # residual pools for empirical bands (log-guarantee + years)
+        # residual pools for empirical bands (log-NPV-guarantee + years)
         self.resid_log_guar = []
         self.resid_years = []
         for s in rows:
             py, pg = self._point(s)
             self.resid_years.append(s["years"] - py)
-            self.resid_log_guar.append(math.log(s["guarantee_usd"]) - math.log(max(pg, 1)))
+            self.resid_log_guar.append(math.log(_npv_of(s)) - math.log(max(pg, 1)))
 
     def _supply_z(self, s: dict) -> float:
         c = (self.supply_by_year.get(s["class_year"]) or
@@ -500,11 +631,15 @@ class MarketModel:
             if cs:
                 my = statistics.median(c["years"] for c in cs)
                 infl = _dpw_inflation()
+                # comps anchor on the NPV basis too — the anchor and the
+                # target must speak the same currency.
                 mg = statistics.median(
-                    c["guarantee_usd"] * ((1 + infl) ** (s["class_year"] - c["class_year"]))
+                    (c.get("npv_guarantee_usd") or c["guarantee_usd"])
+                    * ((1 + infl) ** (s["class_year"] - c["class_year"]))
                     for c in cs)
                 ma = statistics.median(
-                    (c["aav_usd"] or c["guarantee_usd"] / max(c["years"], 1))
+                    (c.get("npv_aav_usd") or c["aav_usd"]
+                     or c["guarantee_usd"] / max(c["years"], 1))
                     * ((1 + infl) ** (s["class_year"] - c["class_year"]))
                     for c in cs)
             else:
@@ -592,14 +727,16 @@ class MarketModel:
 # overpay (projected to be overpaid).
 #
 # Band edges are EMPIRICALLY CENTERED, not symmetric around 100: Deal+ at
-# convex pricing is right-skewed (the 2015-2026 corpus at actual prices
-# runs p33=81, median=121, p67=186 — short cheap deals on projectable
-# players grade well; the left tail is megadeal overpays). The edges sit
-# on the corpus TERCILES, so each verdict named exactly a third of twelve
-# winters of real contracts. A class that skews "value" against these
-# fixed bands is information, not a calibration artifact.
-VERDICT_VALUE_MIN = 185     # Deal+ >= 185 -> "value"   (corpus top tercile)
-VERDICT_OVERPAY_MAX = 85    # Deal+ <  85  -> "overpay" (corpus bottom tercile)
+# convex pricing is right-skewed (short cheap deals on projectable players
+# grade well; the left tail is megadeal overpays). The edges sit on the
+# corpus TERCILES, so each verdict named exactly a third of twelve winters
+# of real contracts. A class that skews "value" against these fixed bands
+# is information, not a calibration artifact.
+# Phase 2 recalibration (NPV deferral-adjusted basis + the NPV $/WAR
+# series): the corpus now runs p33=75, median=110, p67=159 — edges moved
+# from 85/185 accordingly.
+VERDICT_VALUE_MIN = 160     # Deal+ >= 160 -> "value"   (corpus top tercile)
+VERDICT_OVERPAY_MAX = 75    # Deal+ <  75  -> "overpay" (corpus bottom tercile)
 
 
 def deal_verdict(deal_plus: float | None) -> str | None:
@@ -631,6 +768,8 @@ def comps_for(s: dict, pool: list[dict], k: int = 5) -> list[dict]:
     return [{"player_name": c["player_name"], "class_year": c["class_year"],
              "to_team": c.get("to_team"), "years": c.get("years"),
              "guarantee_usd": c.get("guarantee_usd"), "aav_usd": c.get("aav_usd"),
+             "npv_guarantee_usd": c.get("npv_guarantee_usd"),
+             "npv_aav_usd": c.get("npv_aav_usd"),
              "war_y1_proj": c["_war_path"]["war_y1"], "age": c["_age"]}
             for c in scored[:k]]
 
@@ -679,7 +818,12 @@ def enriched_signings(first_year: int = 2015, last_year: int = 2026) -> list[dic
             if path is None or age is None:
                 skipped += 1
                 continue
-            out.append({**s, "_war_path": path, "_age": age, "_side": side})
+            npv, had_sched = npv_guarantee_usd(s.get("player_key"), year,
+                                               s["guarantee_usd"])
+            out.append({**s, "_war_path": path, "_age": age, "_side": side,
+                        "npv_guarantee_usd": npv,
+                        "npv_aav_usd": int(npv / max(int(s["years"]), 1)),
+                        "deferral_adjusted": had_sched})
     log.info("fa market corpus: %d enriched signings (%d skipped, no history)",
              len(out), skipped)
     return out

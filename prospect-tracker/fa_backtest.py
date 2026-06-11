@@ -275,13 +275,17 @@ GATE2_WARMUP_THROUGH = 2017          # train-only winters; scoring starts after
 GATE2_MODEL_VERSION = "fa_mkt_v2"
 
 
-def run_market_gate(persist: bool = True) -> dict:
+def run_market_gate(persist: bool = True, challenger: bool = False) -> dict:
+    """Gate 2. ``challenger=True`` additionally scores the WS-2f LightGBM
+    challenger (fa_market_ml.MarketModelML) on the same folds — identical
+    train/test rows, identical comps baseline, identical NPV targets."""
     import fa_market as fm
     enriched = fm.enriched_signings(2015, 2026)
     test_years = sorted({s["class_year"] for s in enriched
                          if s["class_year"] > GATE2_WARMUP_THROUGH})
     pooled = {"guarantee": {"m": [], "b": []}, "aav": {"m": [], "b": []},
               "years": {"m": [], "b": []}, "mega_guarantee": {"m": [], "b": []}}
+    pooled_ch = {k: [] for k in pooled}
     per_winter: list[dict] = []
     misses: list[dict] = []
     infl = fm._dpw_inflation()
@@ -295,18 +299,36 @@ def run_market_gate(persist: bool = True) -> dict:
         # class composition of the test winter is known at winter start —
         # a legitimate ex-ante feature.
         model.supply_by_year[W] = fm._supply(test, W)
+        ch_model = None
+        if challenger:
+            import fa_market_ml
+            ch_model = fa_market_ml.MarketModelML(train, dpw_series)
+            ch_model.champ.supply_by_year[W] = fm._supply(test, W)
         wstats = {k: {"m": [], "b": []} for k in pooled}
         for s in test:
             pred = model.predict(s)
+            if ch_model is not None:
+                cp = ch_model.predict(s)
+                act_ch = fm._npv_of(s)
+                pooled_ch["guarantee"].append((cp["proj_guarantee_usd"] / 1e6, act_ch / 1e6))
+                if act_ch >= 100_000_000:
+                    pooled_ch["mega_guarantee"].append((cp["proj_guarantee_usd"] / 1e6, act_ch / 1e6))
+                pooled_ch["aav"].append((cp["proj_aav_usd"] / 1e6,
+                                         act_ch / max(float(s["years"]), 1) / 1e6))
+                pooled_ch["years"].append((float(cp["proj_years"]), float(s["years"])))
             comps = fm.comps_for(s, train)
             if not comps:
                 continue
+            # Phase 2 — NPV basis throughout: actuals, comps baseline and
+            # model targets all speak deferral-adjusted present value. A
+            # sticker basis let Ohtani-class deferrals distort both sides.
             b_guar = statistics.median(
-                c["guarantee_usd"] * ((1 + infl) ** (W - c["class_year"])) for c in comps)
+                (c.get("npv_guarantee_usd") or c["guarantee_usd"])
+                * ((1 + infl) ** (W - c["class_year"])) for c in comps)
             b_years = statistics.median(c["years"] for c in comps)
             b_aav = b_guar / max(b_years, 1)
-            act_g, act_y = s["guarantee_usd"], float(s["years"])
-            act_a = s.get("aav_usd") or act_g / max(act_y, 1)
+            act_g, act_y = fm._npv_of(s), float(s["years"])
+            act_a = act_g / max(act_y, 1)
             wstats["guarantee"]["m"].append((pred["proj_guarantee_usd"] / 1e6, act_g / 1e6))
             wstats["guarantee"]["b"].append((b_guar / 1e6, act_g / 1e6))
             if act_g >= 100_000_000:               # the megadeal slice, measured
@@ -336,16 +358,18 @@ def run_market_gate(persist: bool = True) -> dict:
     misses.sort(key=lambda m: -abs(m["err_mm"]))
     summary = {
         "model_version": GATE2_MODEL_VERSION,
+        "basis": "npv_deferral_adjusted",
         "test_winters": test_years,
         "pooled": {k: {"mae_model": _mae(v["m"]), "mae_base": _mae(v["b"]),
                        "n": len(v["m"])} for k, v in pooled.items()},
         "per_winter": per_winter,
         "biggest_misses": misses[:12],
+        "deferral_coverage": fm.deferral_coverage_audit(enriched),
         "notes": [
             "forward-chained: trained on winters strictly before each test winter",
-            "guarantee/AAV in $M; population = MLB-guarantee deals with corpus history",
-            "baseline = median of 5 nearest comps (prior winters), naive $/WAR-trend inflated",
-            "$/WAR level per test winter carried forward ex-ante from the last train winter",
+            "guarantee/AAV in $M NPV (deferral-adjusted at the platform 9% rate; no-schedule deals keep sticker)",
+            "baseline = median of 5 nearest comps (prior winters), naive $/WAR-trend inflated, NPV basis",
+            "$/WAR level per test winter forecast ex-ante (method per data/dpw_forecast_eval.json)",
         ],
     }
     gates = {k: summary["pooled"][k]["mae_model"] < summary["pooled"][k]["mae_base"]
@@ -357,6 +381,22 @@ def run_market_gate(persist: bool = True) -> dict:
         f"vs comps baseline ${mg['mae_base']:.0f}M")
     summary["gates"] = gates
     summary["pass"] = all(gates.values())
+    if challenger and pooled_ch["guarantee"]:
+        import fa_market_ml
+        ch = {k: {"mae": _mae(v), "n": len(v)} for k, v in pooled_ch.items()}
+        summary["challenger"] = {
+            "model_version": fa_market_ml.ML_MARKET_VERSION,
+            "pooled": ch,
+            "ship_criteria": {
+                "guarantee_beats_champion":
+                    ch["guarantee"]["mae"] < summary["pooled"]["guarantee"]["mae_model"],
+                "mega_not_worse":
+                    ch["mega_guarantee"]["mae"] <= summary["pooled"]["mega_guarantee"]["mae_model"],
+                "years_not_worse":
+                    ch["years"]["mae"] <= summary["pooled"]["years"]["mae_model"],
+            },
+        }
+        summary["challenger"]["ship"] = all(summary["challenger"]["ship_criteria"].values())
     if persist:
         storage.upsert_fa_model_eval(GATE2_MODEL_VERSION, "market", summary)
         import json as _json
