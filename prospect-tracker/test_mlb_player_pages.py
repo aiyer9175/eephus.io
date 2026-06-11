@@ -56,8 +56,13 @@ def test_projections_app_has_player_route():
 
 
 def test_fa_card_links_full_player_page():
-    src = (ROOT / "assets" / "fa.js").read_text(encoding="utf-8")
-    assert "/projections/#player=" in src
+    """The FA->MLB cross-link moved into the shared hub strip (one
+    player, every module): the module registry in eephus-hub.js owns the
+    hrefs; fa.js mounts the strip."""
+    hub = (ROOT / "assets" / "eephus-hub.js").read_text(encoding="utf-8")
+    assert "/projections/#player=" in hub
+    assert "/fa/#player=" in hub and "/prospx/#player=" in hub
+    assert "fa-hub" in (ROOT / "assets" / "fa.js").read_text(encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
