@@ -79,13 +79,13 @@ Default owner: **@willclq** (reassign per feature as the team grows).
 - **Owner:** @willclq  (external model owner: variance-model maintainer)
 - **Data deps:** `~/variance_model_handoff.zip` artifacts (copied to `data/processed/variance_handoff/`); Savant sprint-speed CSV endpoint; built by `variance_layer.py`. Engine TODOs deferred by design: multi-year pooling, aging, league renorm, elite-tail (see `engine_adjustments.json`).
 
-## Hitter+ next — future-skill projection (aging framework)
-- **What:** Next-season projected skill per axis (`proj_next = a + b·current + f(age)`), blended into a projected Hitter+. Reversion `b` measured per axis (Swing+ 0.85, Contact+ 0.81, Decision+ 0.66, B2B+ 0.53, DCV+ 0.51); aging term included ONLY where it passed the incremental gate — Swing+ quadratic (+0.9 pts at 23 → −0.4 at 34, ages clipped 22–36). Decision+/Contact+/B2B+/DCV+ aging curves tested and REJECTED (OOS ΔRMSE ≤ 0.011); the frameworks' cross-sectional "ages up" findings shown to be survivor composition. Full audit trail (anti-overlap, reliability, survivorship, leakage, champion-challenger, uncertainty): `~/aging_curves/reports/AGING_REPORT.md`.
-- **Inputs:** longitudinal skill panel (5 axes + subcomponents, 2023–26, ages from birthdates + MLB Stats API).
+## Hitter+ next — future-skill projection (aging framework, v2 with cascades)
+- **What:** Next-season projected skill per axis (`proj_next = a + b·current + validated terms`), blended into a projected Hitter+. Reversion `b` per axis (under cascade: Swing+ 0.75, Contact+ 0.76, Decision+ 0.66, B2B+ 0.51, DCV+ 0.51). Validated terms only: Swing+ quadratic age (+0.9 pts at 23 → −0.4 at 34, clipped 22–36) and the **bat-speed cascade** (AGE-M8 joint audit: bat speed today leads other skills tomorrow — sustains Swing+/B2B+, erodes Contact+; OOS +0.062/+0.044/+0.031). Decision+/DCV+ pure reversion; chase%/z-swing% aging, age-driven pitch-context shift, and the full 5×5 cross-skill matrix all REJECTED (pitchers challenge DAMAGE decline, −0.29pp zone-seen per mph EV90, not age; cross-matrix overfits). "Contact ages up" shown to be survivor composition. Full audit: `~/aging_curves/reports/AGING_REPORT.md`.
+- **Inputs:** longitudinal skill panel (5 axes + bat speed/EV90 subcomponents, 2023–26, ages from birthdates + MLB Stats API); discipline/context panel from raw Statcast.
 - **Outputs:** `data/processed/aging_projection.parquet` → `hitter_plus_proj` on boards; "Hitter+ next" column (all-time shows current-season projection).
-- **Definition of done:** anti-overlap LOW for all five models ✅; aging terms ship only where OOS-positive (Swing+ 2/3 folds, 2-yr +0.063 RMSE ✅); survivorship documented (survival 86%→63% by 35+, skill-selected) ✅; reproducible (deterministic, transition-year CV) ✅.
+- **Definition of done:** anti-overlap LOW for all five models ✅; every shipped term OOS-positive at leave-transition-out (cascade gains are the largest in the framework) ✅; survivorship documented (survival 86%→63% by 35+, skill-selected) ✅; reproducible (deterministic, transition-year CV) ✅.
 - **Owner:** @willclq
-- **Data deps:** `~/aging_curves/` pipeline + panel; `birthdates.json` + MLB Stats API; all five axis sources. Constraint: do NOT stack with the variance engine's outcome-aging bias terms (double-count) or sum with the app's feature-level Swing+ aging tab.
+- **Data deps:** `~/aging_curves/` pipeline + panel; `birthdates.json` + MLB Stats API; all five axis sources; `data/raw/statcast_*.parquet` (discipline panel). Constraint: do NOT stack with the variance engine's outcome-aging bias terms (double-count) or sum with the app's feature-level Swing+ aging tab.
 
 ---
 
