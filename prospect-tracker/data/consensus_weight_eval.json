@@ -1,0 +1,96 @@
+{
+ "generated_at": "2026-06-11T03:57:50Z",
+ "vintage_rule": "weights for board-year Y use base years <= Y - 3 only",
+ "per_year": [
+  {
+   "year": 2020,
+   "n": 707,
+   "weights_vintage_max_base": 2017,
+   "weights": {
+    "fangraphs": 0.8362,
+    "mlb_pipeline": 1.1638
+   },
+   "equal": {
+    "spearman": 0.253,
+    "auc": 0.719
+   },
+   "weighted": {
+    "spearman": 0.2562,
+    "auc": 0.7198
+   }
+  },
+  {
+   "year": 2021,
+   "n": 751,
+   "weights_vintage_max_base": 2018,
+   "weights": {
+    "fangraphs": 0.8603,
+    "mlb_pipeline": 1.1397
+   },
+   "equal": {
+    "spearman": 0.2995,
+    "auc": 0.7596
+   },
+   "weighted": {
+    "spearman": 0.3004,
+    "auc": 0.7605
+   }
+  },
+  {
+   "year": 2022,
+   "n": 818,
+   "weights_vintage_max_base": 2019,
+   "weights": {
+    "fangraphs": 0.8795,
+    "mlb_pipeline": 1.1205
+   },
+   "equal": {
+    "spearman": 0.2864,
+    "auc": 0.7657
+   },
+   "weighted": {
+    "spearman": 0.294,
+    "auc": 0.7714
+   }
+  },
+  {
+   "year": 2023,
+   "n": 851,
+   "weights_vintage_max_base": 2020,
+   "weights": {
+    "fangraphs": 0.8979,
+    "mlb_pipeline": 1.1021
+   },
+   "equal": {
+    "spearman": 0.2406,
+    "auc": 0.7907
+   },
+   "weighted": {
+    "spearman": 0.233,
+    "auc": 0.786
+   }
+  }
+ ],
+ "pooled": {
+  "pooled_n": 3127,
+  "equal": {
+   "spearman": 0.2657,
+   "auc": 0.7591
+  },
+  "weighted": {
+   "spearman": 0.2675,
+   "auc": 0.767
+  }
+ },
+ "ship": true,
+ "live_weights": {
+  "fangraphs": 0.9368,
+  "mlb_pipeline": 1.0632
+ },
+ "live_weights_vintage_max_base": 2023,
+ "notes": [
+  "two-source A/B: only FanGraphs + MLB Pipeline have resolvable multi-year history; all other sources stay at weight 1.0 (equal) in the live blend \u2014 new sources are never punished for being new",
+  "weights shrunk toward equal with k=150 pseudo-n, clamped (0.6, 1.5)",
+  "ship rule: weighted >= equal on BOTH pooled Spearman and AUC; loss means equal-weight retains"
+ ]
+}

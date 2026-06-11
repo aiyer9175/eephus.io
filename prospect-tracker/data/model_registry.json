@@ -1,6 +1,6 @@
 {
  "version": "2026-06-11",
- "checked_at": "2026-06-10",
+ "checked_at": "2026-06-11",
  "verdict_enum": [
   "validated",
   "provisional",
@@ -23,7 +23,7 @@
    "eval_artifact": "data/fa_gate1_eval.json",
    "verdict": "validated",
    "notes": "Gate 1 PASSED: WAR 0.627 vs 0.728; coverage 0.800",
-   "last_checked": "2026-06-10",
+   "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -37,7 +37,7 @@
    "eval_artifact": "data/proj_horizon_eval.json",
    "verdict": "validated",
    "notes": "SHIPPED 2026-06-11 under best-model-wins: dev bases + gate targets + touched-once 2022-2024 holdout all beat the champion (gate-targets h1 MAE 0.557 vs 0.627; holdout pooled coverage 0.81-0.82 vs 0.67-0.77; survived coverage 0.43-0.67 vs 0.32-0.44; pinball better everywhere). DISCLOSED: long-horizon star bias ~0.2 WAR deeper than champion (zero-inflated labels pull medians; star MAE equal) — follow-up: mean-head or star-slice recalibration. Bundle model/proj_lgbm hash 442428a6498b1426; historical (Gate-2) enrichment uses point-in-time bundles (proj_ml.train_cached), never the live bundle.",
-   "last_checked": "2026-06-10",
+   "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -51,7 +51,7 @@
    "eval_artifact": "data/fa_gate2_eval.json",
    "verdict": "validated",
    "notes": "Phase 2 (2026-06-11): targets/anchors/series moved to the deferral-adjusted NPV basis — Gate 2 improved (guarantee 10.06 vs comps 11.19; AAV 3.09; years 0.436). LightGBM challenger (fa_mkt_lgbm_v1, monotonic economic constraints, champion-stacked) LOST all three ship criteria (10.16 / 85.6 mega / 0.505 years) — committed in the artifact; transparent OLS retains. Deferral coverage audit clean (every >=200M deal has a ledger entry; 26 entries pending owner spot-check).",
-   "last_checked": "2026-06-10",
+   "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -65,7 +65,7 @@
    "eval_artifact": "data/fa_gate2_eval.json",
    "verdict": "provisional",
    "notes": "convex pricing at the NPV-basis winter $/WAR; verdict terciles recalibrated to the NPV corpus (value >= 160, overpay < 75; was 185/85 on sticker). Escalation stays flat-5% — the fitted forecasts lost their eval.",
-   "last_checked": "2026-06-10",
+   "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -79,7 +79,7 @@
    "eval_artifact": "data/dpw_forecast_eval.json",
    "verdict": "validated",
    "notes": "NPV-basis numerator since Phase 2. Next-winter FORECAST challenge measured (data/dpw_forecast_eval.json): flat-5% carry MAPE 0.102 BEAT fitted trend (0.122) and trend+CBT (0.132) — incumbent assumption retains; candidates stay implemented in winter_dpw.",
-   "last_checked": "2026-06-10",
+   "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -93,7 +93,7 @@
    "eval_artifact": "data/fa_gate3_eval.json",
    "verdict": "provisional",
    "notes": "GATE 3 (first fit backtest ever): v2 hand weights barely beat random (MRR .142 vs .133), LOST to behavior-alone (.152). Fitted logistic (behavior .67) hit MRR .165 but was nearly player-independent (LAD topped all 133 pitcher lists). Shipped mix: gate-equivalent-or-better (MRR .167) AND player-discriminative — full comparison in the artifact. Caveats: reduced ex-ante analog (roster need/window not reconstructable); incumbency excluded by product design (ceiling MRR .270, measured).",
-   "last_checked": "2026-06-10",
+   "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -107,7 +107,7 @@
    "eval_artifact": "data/fa_gate2_eval.json",
    "verdict": "provisional",
    "notes": "WS-2d (2026-06-11): player/club option P(enter) now priced from the Gate-2-validated market band distribution (P(projAAV vs option price) under the empirical-residual log-normal) — replacing the crude $-gap logistic for those types; mutual/conditional keep explicit priors. DECISION-level validation remains blocked on the historical option-decision data lift; the 2026-27 winter's logged fa_events are the first live shakedown. Verdict provisional: inputs validated, decisions not yet.",
-   "last_checked": "2026-06-10",
+   "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -132,7 +132,7 @@
    "eval_artifact": "data/proj_horizon_eval.json",
    "verdict": "validated",
    "notes": "inherits the Phase-1 ship verdict; bands now from quantile heads (no zero floor)",
-   "last_checked": "2026-06-10",
+   "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -151,13 +151,13 @@
    "model_id": "prospect_surplus",
    "surface": "PROSPX Sur+/OrgSur+ + trade lookup",
    "predicts": "control-window NPV surplus from FV (bucket mixture, service path, convex pricing)",
-   "champion": "value_framework v3 (FA-implied $/WAR re-anchor)",
+   "champion": "career-path mixture + isotonic-real-v1 calibration (WS-6)",
    "baseline": "calibration correction = IDENTITY",
    "metric": "calibration slope/bias/PIT on resolved cohorts",
    "eval_artifact": "data/surplus_backtest_real.json",
-   "verdict": "provisional",
-   "notes": "harness validated synthetically (recovers injected shrinkage); FIRST real-cohort run = Phase 0 WS-0d; correction ships Phase 4 WS-6",
-   "last_checked": "2026-06-10",
+   "verdict": "validated",
+   "notes": "WS-6 (2026-06-11): the Phase-0 margin overshoot (raw slope 0.51 full/0.55 resolved, bias -6M) is now CORRECTED by a real-data isotonic layer (value_framework calibration block, 25 knots, fit on the resolved 2017-19 pool n=2,239): leave-one-year-out held-out slope 0.96, bias -0.11M, PIT coverage 0.67->0.86. Raw slope had already improved to 0.64 after the Phase-2 NPV $/WAR re-anchor. FV55 hitter SV 41.1M -> 21.8M. apply_calibration wraps every public surplus consumer; backtests always score the RAW layer (no circularity). POSITIONAL ANCHORS measured and PARKED: C/MI outperform + SP underperform directionally at FV50 (C +1.04 vs SP +0.38 WAR/yr) but cells are n=6-28 above FV50 — too thin to ship; the role split already captures the dominant axis.",
+   "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -170,8 +170,8 @@
    "metric": "realized cohort means, monotonicity",
    "eval_artifact": "data/value_framework_fitted.json",
    "verdict": "validated",
-   "notes": "no positional stratification yet (Phase 4 WS-6); top tiers thin",
-   "last_checked": "2026-06-10",
+   "notes": "no positional stratification yet (Phase 4 WS-6); top tiers thin WS-6 positional-stratification diagnostic measured + parked (see prospect_surplus row): per-position cells too thin above FV50 to beat the pooled+role fit.",
+   "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 4
   },
@@ -185,7 +185,7 @@
    "eval_artifact": "data/value_framework_fitted.json",
    "verdict": "validated",
    "notes": "the template: distributionally validated, auto-propagates recalibrations",
-   "last_checked": "2026-06-10",
+   "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 4
   },
@@ -193,13 +193,13 @@
    "model_id": "consensus_fv",
    "surface": "every PROSPX surface",
    "predicts": "consensus FV from source grades (equal-weight + Bayesian shrinkage)",
-   "champion": "equal_weight_v1",
+   "champion": "accuracy-weighted blend (WS-5): FG 0.937 / MLB Pipeline 1.063, all other sources 1.0",
    "baseline": "best single source (FanGraphs)",
    "metric": "Spearman + AUC vs realized WAR, common-set head-to-head",
-   "eval_artifact": "data/source_backtest.json",
+   "eval_artifact": "data/consensus_weight_eval.json",
    "verdict": "validated",
-   "notes": "consensus beats its inputs on the pooled set; ACCURACY-WEIGHTED challenger approved (Phase 4 WS-5, owner decision 2026-06-11)",
-   "last_checked": "2026-06-10",
+   "notes": "WS-5 (2026-06-11): vintage-disciplined A/B (weights for board-year Y from cohorts resolved before Y only) — weighted beat equal on BOTH pooled metrics (Spearman .2675 vs .2657, AUC .767 vs .759, n=3,127). SURPRISE FINDING: the resolved common sets favor MLB PIPELINE over FanGraphs (weights drift toward equal in later vintages); the earlier 'FG measurably better' claim did not survive the vintage-disciplined measurement. Weights shrunk k=150 toward equal, clamped [0.6,1.5], vintage-frozen in data/source_weights.json (only move when a new base year resolves); sources without history pinned 1.0. Mechanics: consensus.compute_consensus_point source_weights kwarg; dispersion stats stay unweighted.",
+   "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -213,7 +213,7 @@
    "eval_artifact": "data/source_backtest.json",
    "verdict": "validated",
    "notes": "auto-reruns monthly; newer sources insufficient-history by design",
-   "last_checked": "2026-06-10",
+   "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -304,7 +304,7 @@
    "eval_artifact": "data/org_tendencies.json",
    "verdict": "provisional",
    "notes": "deliberately descriptive; no predictive claims made or measured",
-   "last_checked": "2026-06-10",
+   "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
   }

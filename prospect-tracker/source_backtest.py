@@ -359,6 +359,139 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     return result
 
 
+# --------------------------------------------------------------------------
+# WS-5 — accuracy-weighted consensus (model-audit Phase 4)
+# --------------------------------------------------------------------------
+# Weight estimator + the vintage-disciplined A/B backtest that decides
+# whether weighting ships. VINTAGE RULE: weights usable for board-year Y
+# may only see base years RESOLVED by Y (base <= Y - MIN_LAG_YEARS) — a
+# 2021 board can't know FanGraphs' 2021-cohort track record.
+WEIGHT_SHRINK_K = 150          # pseudo-n toward equal weight
+WEIGHT_CLAMP = (0.6, 1.5)      # relative-vote bounds (1.0 = equal)
+SPEARMAN_FLOOR = 0.05          # accuracy floor so a near-zero source isn't zeroed
+
+
+def derive_source_weights(universe: list[dict], max_base_year: int) -> dict:
+    """{source: relative vote weight} from pooled common-set Spearman over
+    base years <= max_base_year. Sources without resolved history stay at
+    1.0 (equal) — new sources are never punished for being new. Weights
+    are shrunk toward equal (k pseudo-observations) and clamped."""
+    years = [y for y in CANDIDATE_YEARS if y <= max_base_year]
+    rows_common: list[dict] = []
+    raters = list(SCORED_SOURCES)
+    for p in universe:
+        out = _outcome(p)
+        for y in years:
+            grades = _rater_grades_for_year(p, y)
+            if grades and all(r in grades for r in raters):
+                rows_common.append({"grades": grades, "outcome": out})
+    if len(rows_common) < 60:
+        return {s: 1.0 for s in SCORED_SOURCES}
+    wars = [c["outcome"]["war"] for c in rows_common]
+    rho = {}
+    for s in raters:
+        fvs = [c["grades"][s] for c in rows_common]
+        r = _spearman(fvs, wars)
+        rho[s] = max(SPEARMAN_FLOOR, r if r is not None else SPEARMAN_FLOOR)
+    mean_rho = sum(rho.values()) / len(rho)
+    n = len(rows_common)
+    out = {}
+    for s in raters:
+        raw = rho[s] / mean_rho                       # relative accuracy
+        shrunk = (n * raw + WEIGHT_SHRINK_K * 1.0) / (n + WEIGHT_SHRINK_K)
+        out[s] = round(min(WEIGHT_CLAMP[1], max(WEIGHT_CLAMP[0], shrunk)), 4)
+    return out
+
+
+def run_consensus_weight_ab(data_dir: Path = DATA_DIR, write: bool = True) -> dict:
+    """The A/B that decides whether accuracy weighting ships: for each
+    evaluable board-year Y, weights are derived ONLY from base years
+    resolved by Y, then the weighted two-source blend is scored against
+    the equal blend on year-Y's common set (Spearman + AUC). Ship rule:
+    weighted >= equal on BOTH pooled metrics."""
+    universe = _load_universe(data_dir)
+    as_of_year = date.today().year
+    resolved = _resolved_years(universe, as_of_year)
+    rows_by_year: dict[int, list[dict]] = {}
+    for p in universe:
+        out = _outcome(p)
+        for y in resolved:
+            grades = _rater_grades_for_year(p, y)
+            if grades and all(s in grades for s in SCORED_SOURCES):
+                rows_by_year.setdefault(y, []).append(
+                    {"grades": grades, "outcome": out})
+    per_year = []
+    pooled = {"equal_fv": [], "weighted_fv": [], "war": [], "contrib": []}
+    for Y in sorted(rows_by_year):
+        vintage_max = Y - MIN_LAG_YEARS
+        weights = derive_source_weights(universe, vintage_max)
+        if all(abs(w - 1.0) < 1e-9 for w in weights.values()):
+            # no resolvable history before Y — weights would be flat; skip
+            # the year from the A/B (it can't differentiate A from B).
+            continue
+        rows = rows_by_year[Y]
+        eq, wt, war, contrib = [], [], [], []
+        for r in rows:
+            g = r["grades"]
+            eq.append(sum(g[s] for s in SCORED_SOURCES) / len(SCORED_SOURCES))
+            wsum = sum(weights[s] for s in SCORED_SOURCES)
+            wt.append(sum(weights[s] * g[s] for s in SCORED_SOURCES) / wsum)
+            war.append(r["outcome"]["war"])
+            contrib.append(r["outcome"]["contributor"])
+        per_year.append({
+            "year": Y, "n": len(rows), "weights_vintage_max_base": vintage_max,
+            "weights": weights,
+            "equal": {"spearman": _r4(_spearman(eq, war)), "auc": _r4(_auc(eq, contrib))},
+            "weighted": {"spearman": _r4(_spearman(wt, war)), "auc": _r4(_auc(wt, contrib))},
+        })
+        pooled["equal_fv"].extend(eq)
+        pooled["weighted_fv"].extend(wt)
+        pooled["war"].extend(war)
+        pooled["contrib"].extend(contrib)
+    summary = {
+        "pooled_n": len(pooled["war"]),
+        "equal": {"spearman": _r4(_spearman(pooled["equal_fv"], pooled["war"])),
+                  "auc": _r4(_auc(pooled["equal_fv"], pooled["contrib"]))},
+        "weighted": {"spearman": _r4(_spearman(pooled["weighted_fv"], pooled["war"])),
+                     "auc": _r4(_auc(pooled["weighted_fv"], pooled["contrib"]))},
+    }
+    ship = (summary["weighted"]["spearman"] is not None
+            and summary["weighted"]["spearman"] >= (summary["equal"]["spearman"] or 0)
+            and summary["weighted"]["auc"] is not None
+            and summary["weighted"]["auc"] >= (summary["equal"]["auc"] or 0))
+    live_weights = derive_source_weights(universe, as_of_year - MIN_LAG_YEARS)
+    out = {
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "vintage_rule": f"weights for board-year Y use base years <= Y - {MIN_LAG_YEARS} only",
+        "per_year": per_year,
+        "pooled": summary,
+        "ship": ship,
+        "live_weights": live_weights,
+        "live_weights_vintage_max_base": as_of_year - MIN_LAG_YEARS,
+        "notes": [
+            "two-source A/B: only FanGraphs + MLB Pipeline have resolvable multi-year history; all other sources stay at weight 1.0 (equal) in the live blend — new sources are never punished for being new",
+            f"weights shrunk toward equal with k={WEIGHT_SHRINK_K} pseudo-n, clamped {WEIGHT_CLAMP}",
+            "ship rule: weighted >= equal on BOTH pooled Spearman and AUC; loss means equal-weight retains",
+        ],
+    }
+    if write:
+        (data_dir / "consensus_weight_eval.json").write_text(
+            json.dumps(out, indent=1), encoding="utf-8")
+        if ship:
+            (data_dir / "source_weights.json").write_text(json.dumps({
+                "generated_at": out["generated_at"],
+                "vintage_max_base_year": out["live_weights_vintage_max_base"],
+                "weights": live_weights,
+                "note": "relative vote weights (1.0 = equal); sources absent here vote at 1.0",
+            }, indent=1), encoding="utf-8")
+        log.info("consensus weight A/B: ship=%s pooled=%s", ship, summary)
+    return out
+
+
+def _r4(v):
+    return round(v, 4) if v is not None else None
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     r = run_source_backtest()
