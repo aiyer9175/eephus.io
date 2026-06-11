@@ -4,7 +4,7 @@
  * Written by Noah J. Dengler (@ARKNDJL), 2026 */
 
 // =============================================================================
-// eephus.io shared glossary runtime — data loader · ⌘K palette · term tooltips
+// eephus.io shared glossary runtime - data loader · ⌘K palette · term tooltips
 // =============================================================================
 // Loaded by every surface (editorial pages, /fa/, /glossary/, PROSPX). One
 // fetch of data/glossary.json backs all three features; no surface holds its
@@ -15,7 +15,7 @@
 //                                 example, visual_html, related, module}
 //   window.EEPHUS_GLOSSARY_GROUPS category → display group
 //   'eephus-glossary-ready'       window event fired once loaded
-//   window.EEPHUS_QK_EXTRA        optional hook: q => [{label, sub, href}] —
+// window.EEPHUS_QK_EXTRA optional hook: q => [{label, sub, href}] - 
 //                                 PROSPX registers prospect search through it
 //   window.EEPHUS_GL.wire(root)   scan a container for [data-gl] term spans:
 //                                 sets aria-describedby + tooltip handlers.
@@ -143,11 +143,11 @@
     const el = document.getElementById("qk-results");
     if (!el) return;
     if (!q || q.length < 2) {
-      el.innerHTML = `<div class="qk-empty">Type 2+ characters — any metric, term, or model concept.</div>`;
+      el.innerHTML = `<div class="qk-empty">Type 2+ characters - any metric, term, or model concept.</div>`;
       return;
     }
     if (!_qkResults.length) {
-      el.innerHTML = `<div class="qk-empty">No match — <a href="/glossary/">view the full glossary</a></div>`;
+      el.innerHTML = `<div class="qk-empty">No match - <a href="/glossary/">view the full glossary</a></div>`;
       return;
     }
     el.innerHTML = _qkResults.map((r, i) => `

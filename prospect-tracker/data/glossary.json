@@ -36,10 +36,10 @@
     "T+"
    ],
    "priority": 10,
-   "definition": "Unweighted power-mean (p=4) of every scouted 20-80 tool a prospect carries, plus FG physical grades — the high exponent rewards extreme tools, so one elite grade lifts the composite more than balanced mediocrity. Expressed on the 20-80 scouting scale.",
-   "methodology": "Tool is the equally-weighted power-mean (p=4) of every 20-80 tool grade a hitter carries (hit, pwr, run, field, arm, pitch_sel, bat_ctrl) PLUS the FG -2..+2 physical grades (Frame, Athleticism) mapped to the FV scale (-2→30, -1→40, 0→50, +1→60, +2→70). For pitchers the physicals (Frame, Athleticism, Delivery) join the stuff power-mean (p=3) alongside fb/sl/cb/ch, then overall = 0.65·stuff + 0.35·cmd. The p=4 exponent (steeper than the p=3 used by O-Tool and pStuff+) rewards extreme tools more aggressively: a 70 PWR + 45 HIT prospect (arith mean 57.5) posts ~58 here vs ~57.6 under p=3. Captures the 'one elite tool defines the profile' intuition. The output is the raw power-mean on the 20-80 scouting scale — 50 = average, 60 = Plus, 70 = elite (no z-scoring step).",
+   "definition": "Unweighted power-mean (p=4) of every scouted 20-80 tool a prospect carries, plus FG physical grades - the high exponent rewards extreme tools, so one elite grade lifts the composite more than balanced mediocrity. Expressed on the 20-80 scouting scale.",
+   "methodology": "Tool is the equally-weighted power-mean (p=4) of every 20-80 tool grade a hitter carries (hit, pwr, run, field, arm, pitch_sel, bat_ctrl) PLUS the FG -2..+2 physical grades (Frame, Athleticism) mapped to the FV scale (-2→30, -1→40, 0→50, +1→60, +2→70). For pitchers the physicals (Frame, Athleticism, Delivery) join the stuff power-mean (p=3) alongside fb/sl/cb/ch, then overall = 0.65·stuff + 0.35·cmd. The p=4 exponent (steeper than the p=3 used by O-Tool and pStuff+) rewards extreme tools more aggressively: a 70 PWR + 45 HIT prospect (arith mean 57.5) posts ~58 here vs ~57.6 under p=3. Captures the 'one elite tool defines the profile' intuition. The output is the raw power-mean on the 20-80 scouting scale - 50 = average, 60 = Plus, 70 = elite (no z-scoring step).",
    "formula": "Tool = (Σ tool_grade^4 / n)^(1/4)\nhitter inputs: hit, pwr, run, field, arm, pitch_sel, bat_ctrl, frame_fv, athl_fv\npitcher: Tool = 0.65 · power-mean(fb, sl, cb, ch, frame_fv, athl_fv, delivery_fv; p=3) + 0.35 · cmd",
-   "example": "A 70 PWR / 45 HIT prospect with otherwise-50 tools posts a Tool around 58 — the p=4 power-mean lifts the composite above the 57.5 arithmetic mean because PWR skews the result.",
+   "example": "A 70 PWR / 45 HIT prospect with otherwise-50 tools posts a Tool around 58 - the p=4 power-mean lifts the composite above the 57.5 arithmetic mean because PWR skews the result.",
    "seeAlso": [
     "fv",
     "o_tool",
@@ -62,9 +62,9 @@
    ],
    "priority": 11,
    "definition": "Weighted offensive composite on the 20-80 scale: HIT 40 / PWR 40 / BCTRL 10 / PSEL 6 / RUN 4.",
-   "methodology": "O-Tool is the weighted mean of the hitter's offensive 20-80 grades, output directly on the 20-80 scouting scale (50 = avg, 60 = Plus, 70 = elite). Weights reflect the heavy bats-matter-most tilt — HIT and PWR are co-dominant at 40% each; bat-control and pitch-selection round out the offensive profile; speed is a small tiebreaker contributor. Defensive tools (field, arm) live in D-Tool (separate index).",
+   "methodology": "O-Tool is the weighted mean of the hitter's offensive 20-80 grades, output directly on the 20-80 scouting scale (50 = avg, 60 = Plus, 70 = elite). Weights reflect the heavy bats-matter-most tilt - HIT and PWR are co-dominant at 40% each; bat-control and pitch-selection round out the offensive profile; speed is a small tiebreaker contributor. Defensive tools (field, arm) live in D-Tool (separate index).",
    "formula": "O-Tool = Σ w_i · grade_i / Σ w_i\nweights: HIT 0.40, PWR 0.40, BCTRL 0.10, PSEL 0.06, RUN 0.04",
-   "example": "A 60 HIT / 60 PWR / 50-elsewhere hitter posts an O-Tool of 58 — both top weights at Plus pull the composite well above average.",
+   "example": "A 60 HIT / 60 PWR / 50-elsewhere hitter posts an O-Tool of 58 - both top weights at Plus pull the composite well above average.",
    "seeAlso": [
     "tool",
     "d_tool",
@@ -85,7 +85,7 @@
     "D-Tools+"
    ],
    "priority": 12,
-   "definition": "Weighted defensive composite (p=3 power-mean) on the 20-80 scale: DEF 60 / ARM 30 / RUN 10 — catchers DEF 70 / ARM 30.",
+   "definition": "Weighted defensive composite (p=3 power-mean) on the 20-80 scale: DEF 60 / ARM 30 / RUN 10 - catchers DEF 70 / ARM 30.",
    "methodology": "D-Tool is the weighted power-mean (Lₚ with p=3) of the position player's defensive 20-80 grades, output directly on the 20-80 scouting scale (50 = avg, 60 = Plus, 70 = elite). Defense overwhelmingly drives the composite at 60%; arm strength matters but second-order at 30%; baserunning speed contributes a small 10% (it folds into range/jumps via the field grade already, this is a tiebreaker contributor). Catchers drop speed (irrelevant) and bump field to 70%, since the field grade for catchers absorbs framing/blocking/receiving. The p=3 power-mean rewards elite-glove standouts more sharply than a simple weighted mean.",
    "formula": "D-Tool = (Σ w_i · grade_i^3 / Σ w_i)^(1/3)\nnon-catcher weights: DEF 0.60, ARM 0.30, RUN 0.10\ncatcher weights:    DEF 0.70, ARM 0.30 (RUN dropped)",
    "example": "A 70 DEF / 50 ARM / 50 RUN center fielder posts a D-Tool near 62; a 50/50/50 baseline lands at 50.",
@@ -110,7 +110,7 @@
    ],
    "priority": 14,
    "definition": "Rare active-prospect flag: tool/FV velocity AND a strong performance gate, with an age cap. Surfaces roughly 10-40 prospects league-wide.",
-   "methodology": "An active prospect flags as Breakout when ALL of the following hold over the window max(last 6 months, last 4 source updates): (a) consensus FV upgraded by ≥ +5 grade points OR mean tool-grade composite improved by ≥ +3; (b) a strong performance gate fires — hitters: RPS+ ≥ 110 or wRC+ ≥ 130; pitchers: Peripheral Stuff+ ≥ 105 or FIP- ≤ 90 (v29 — Statcast+ ≥ 115 also passes as an alternative gate); (c) v15 age cap — position players and SPs through age 24; relievers (RP / MIRP / SIRP / CL) through age 25 (relievers peak earlier in their development arc, so an aging-relief hot stretch shouldn't read as a prospect breakout). Tuned to surface ~10-40 prospects league-wide — rare but not impossible. The badge gets an aquamarine pulsing ★ mark (bottom-left corner) with a tooltip explaining which signal fired and which gate passed.",
+   "methodology": "An active prospect flags as Breakout when ALL of the following hold over the window max(last 6 months, last 4 source updates): (a) consensus FV upgraded by ≥ +5 grade points OR mean tool-grade composite improved by ≥ +3; (b) a strong performance gate fires - hitters: RPS+ ≥ 110 or wRC+ ≥ 130; pitchers: Peripheral Stuff+ ≥ 105 or FIP- ≤ 90 (v29 - Statcast+ ≥ 115 also passes as an alternative gate); (c) v15 age cap - position players and SPs through age 24; relievers (RP / MIRP / SIRP / CL) through age 25 (relievers peak earlier in their development arc, so an aging-relief hot stretch shouldn't read as a prospect breakout). Tuned to surface ~10-40 prospects league-wide - rare but not impossible. The badge gets an aquamarine pulsing ★ mark (bottom-left corner) with a tooltip explaining which signal fired and which gate passed.",
    "formula": "breakout = (fv_upgrade ≥ +5 OR tool_velocity ≥ +3)\n         AND perf_gate_pass\n         AND (age ≤ 24 starters/hitters, age ≤ 25 relievers)",
    "seeAlso": [
     "tools_dvm_plus",
@@ -133,7 +133,7 @@
     "+ upside"
    ],
    "priority": 15,
-   "definition": "Soft-pink ^ mark in the top-right corner of an FV badge — at least one source published a '+' upside marker on the latest snapshot.",
+   "definition": "Soft-pink ^ mark in the top-right corner of an FV badge - at least one source published a '+' upside marker on the latest snapshot.",
    "methodology": "Source-side upside note: when an outlet publishes a grade like 45+ / 40+ / 35+, the player carries an Upside indicator. Capped at FV ≤ 50 because 50+ / 55+ / 60+ tiers have already realized their upside (the mark is meant to flag sub-50 prospects with publishable room to climb). The badge gets a soft-pink ^ glyph (top-right corner) plus a pink top-edge accent; tooltip lists which sources added the '+' grade. Surfaces as a 'pink pill' driver chip on the Spotlights page when a source added a '+' in the trailing 6 months. Glyph is ^ (circumflex) so it doesn't visually collide with the health '+' row pill.",
    "seeAlso": [
     "consensus_fv",
@@ -157,7 +157,7 @@
    "definition": "Pool-anchored composite of tracked Statcast / zone signals. 100 = pool mean; ≥105 reads as above-pool, ≤95 below-pool, ≥120 elite.",
    "methodology": "Side-aware blend of the per-prospect tracked-data signal. Hitters: contact quality (avg exit velocity / hard-hit% / barrel%) + zone discipline (z-contact% / -whiff% / -chase%). Pitchers: top-pitch avg velocity + induced whiffs + induced chase + (inverted) hard-hit allowed + barrel allowed.\n\nEach component is z-scored against the side-matched active pool, averaged, then rescaled so 100 = pool mean and one population stddev moves the index 15 points (wRC+/OPS+ family). Powers: (a) the SC+ filter chip on the Active list, (b) a colored 'SC+' driver chip on the Spotlights page (green ≥105 / red ≤95 / yellow neutral), (c) a tiebreak inside fvCmpDesc when two prospects share an FV + upside flag, (d) faller + rebounder confirmation/contradiction in the Spotlights bucket scoring, (e) a per-side hitter/pitcher SC+ aggregate on each farm-system page.\n\nNone when the player has no tracked Statcast / zone data on any component.",
    "formula": "SC+ = 100 + 15 × avg(z-scored components vs side-matched pool)",
-   "example": "A hitter with EV 92 (+1σ), HH% 45 (+1σ), Z-Con% 88 (+0.5σ) lands around SC+ 113 — solidly above-pool, reads green in driver chips.",
+   "example": "A hitter with EV 92 (+1σ), HH% 45 (+1σ), Z-Con% 88 (+0.5σ) lands around SC+ 113 - solidly above-pool, reads green in driver chips.",
    "seeAlso": [
     "rps_plus",
     "breakout_indicator"
@@ -179,8 +179,8 @@
    ],
    "priority": 12,
    "definition": "0–100 composite that separates two prospects carrying the IDENTICAL FV grade by projected MLB success. Cohort-aware (MiLB / Draft / Overseas) and injury-aware.",
-   "methodology": "When two prospects share the same Future Value, raw FV can't separate them — TBS does. It blends scouting grades, cohort-normalized performance, and developmental/risk modifiers into one 0–100 number, tuned per cohort for 'how likely is this player to become a useful MLB regular?' rather than current-season output.\n\nMiLB (active): Tool composite 26% · RPS+ 16% · SC+ 16% · per-tool max 10% · Stuff+ 8% (pitchers) · age-vs-level 8% · health/injuries 10% · stock movement 6%. MLB Draft: Draft Stock+ 27% · Tool+ 18% · college RPS+ 17% · Tool composite 10% · per-tool max 10% · age 8% · health 6% · movement 4%.\n\nOverseas: Tool+ 22% · cohort RPS+ 18% · translation-adjusted wRC+ or FIP 18% · Tool composite 8% · per-tool max 8% · age 4% · health 4% · movement 4%. Each signal is independently normalized to 0–1 and clipped; any missing signal drops out and the remaining weights renormalize, so a partial-data player still scores on a comparable scale.\n\nThe HEALTH term works the same way everywhere: a prospect currently on the IL zeros it (sinking below a healthy same-FV peer); recent IL history (≥1 stint or ≥30 days in the trailing year) or a post-Tommy-John recovery window partially discounts it; a clean profile is neutral-max. TBS drives same-FV ordering on the Draft + Overseas lists, the surplus-value nudge in trade evaluations, and the 'TBS NN' line in Trade Audit cards.\n\nThe Active list's headline #overall-rank is computed server-side with a matching FV → Tools → currently-on-IL tiebreak, so an injured prospect also ranks just behind a healthy same-FV, same-tools peer there.",
-   "formula": "TBS = round( 100 × Σ(signalᵢ × weightᵢ) ÷ Σ(weightᵢ for present signals) ) — per-cohort weights as listed above",
+   "methodology": "When two prospects share the same Future Value, raw FV can't separate them - TBS does. It blends scouting grades, cohort-normalized performance, and developmental/risk modifiers into one 0–100 number, tuned per cohort for 'how likely is this player to become a useful MLB regular?' rather than current-season output.\n\nMiLB (active): Tool composite 26% · RPS+ 16% · SC+ 16% · per-tool max 10% · Stuff+ 8% (pitchers) · age-vs-level 8% · health/injuries 10% · stock movement 6%. MLB Draft: Draft Stock+ 27% · Tool+ 18% · college RPS+ 17% · Tool composite 10% · per-tool max 10% · age 8% · health 6% · movement 4%.\n\nOverseas: Tool+ 22% · cohort RPS+ 18% · translation-adjusted wRC+ or FIP 18% · Tool composite 8% · per-tool max 8% · age 4% · health 4% · movement 4%. Each signal is independently normalized to 0–1 and clipped; any missing signal drops out and the remaining weights renormalize, so a partial-data player still scores on a comparable scale.\n\nThe HEALTH term works the same way everywhere: a prospect currently on the IL zeros it (sinking below a healthy same-FV peer); recent IL history (≥1 stint or ≥30 days in the trailing year) or a post-Tommy-John recovery window partially discounts it; a clean profile is neutral-max. TBS drives same-FV ordering on the Draft + Overseas lists, the surplus-value nudge in trade evaluations, and the 'TBS NN' line in Trade Audit cards.\n\nThe Active list's headline #overall-rank is computed server-side with a matching FV → Tools → currently-on-IL tiebreak, so an injured prospect also ranks just behind a healthy same-FV, same-tools peer there.",
+   "formula": "TBS = round( 100 × Σ(signalᵢ × weightᵢ) ÷ Σ(weightᵢ for present signals) ) - per-cohort weights as listed above",
    "example": "Two 50-FV shortstops with similar tools: one healthy (RPS+ 118), one on the 60-day IL. The healthy bat scores ~8–10 TBS points higher and ranks ahead in any same-FV tiebreak.",
    "seeAlso": [
     "fv",
@@ -202,9 +202,9 @@
    ],
    "priority": 3,
    "definition": "Level-relative rate index (100 = level average). For active prospects this surfaces the level-anchored OPS+; draft/overseas cohorts compute a cohort-relative z-score.",
-   "methodology": "RPS+ is a level-relative rate index. v-arkmetric-audit (implementation status, disclosed): the standalone per-prospect rps_plus field is currently populated only for the DRAFT cohort (100 + 15·z of college-performance) and the OVERSEAS cohort (z vs the international cohort). For ACTIVE MiLB prospects the rps_plus field is not yet computed, so the board falls back to the level-relative OPS+ index (ops_plus_level) — the LEVEL anchor that is the core of RPS+ — which is the honest, populated relative-performance signal for the active pool.\n\nThe fuller design (age × position-group cohort normalization + position multipliers described below) is wired for the cohort exports but not yet for actives; until it is, treat active RPS+ as level-relative OPS+. Intended design: cohort = (age × position group); a small position multiplier (C ×1.08, MI ×1.05, CF ×1.04, 1B ×0.95, DH ×0.92) applied after cohort normalization; MLB-level prospects substitute wRC+ / FIP-.\n\nNote: draft RPS+ is a z-score (×15) while the active OPS+ fallback is a ratio — scale convention differs across the cohort sources.",
+   "methodology": "RPS+ is a level-relative rate index. v-arkmetric-audit (implementation status, disclosed): the standalone per-prospect rps_plus field is currently populated only for the DRAFT cohort (100 + 15·z of college-performance) and the OVERSEAS cohort (z vs the international cohort). For ACTIVE MiLB prospects the rps_plus field is not yet computed, so the board falls back to the level-relative OPS+ index (ops_plus_level) - the LEVEL anchor that is the core of RPS+ - which is the honest, populated relative-performance signal for the active pool.\n\nThe fuller design (age × position-group cohort normalization + position multipliers described below) is wired for the cohort exports but not yet for actives; until it is, treat active RPS+ as level-relative OPS+. Intended design: cohort = (age × position group); a small position multiplier (C ×1.08, MI ×1.05, CF ×1.04, 1B ×0.95, DH ×0.92) applied after cohort normalization; MLB-level prospects substitute wRC+ / FIP-.\n\nNote: draft RPS+ is a z-score (×15) while the active OPS+ fallback is a ratio - scale convention differs across the cohort sources.",
    "formula": "RPS+ = 100 × (player_score + 100) / (cohort_mean + 100) × position_multiplier · clamped [0, 250]",
-   "example": "A 21yo catcher and a 21yo 1B with identical OPS+ vs level read at different RPS+ — catcher gets ×1.08, first-baseman ×0.95.",
+   "example": "A 21yo catcher and a 21yo 1B with identical OPS+ vs level read at different RPS+ - catcher gets ×1.08, first-baseman ×0.95.",
    "seeAlso": [
     "fv",
     "wrc_plus"
@@ -223,7 +223,7 @@
    ],
    "priority": 1,
    "definition": "Farm-system development index; 100 = league-mean FV growth. Drives the Development component of the farm report card.",
-   "methodology": "wRC+-style index for organizational development. Measures each farm's cumulative FV growth over a window (1y / 3y / 6y) and scores it against the league-mean farm. Acquisitions are nullified (a trade-in adds zero to the source farm) and graduations don't subtract; pure development of prospects already in the system. 100 = league mean, 10 pts = 1 stdev across the 30 orgs. The blended trajectory_score that drives the farm letter grade weights the 6y window 60%, 3y 30%, and 1y 10% — 6y is the principal multi-cycle signal; shorter windows still react to the current cycle so a hot current year isn't fully ignored.",
+   "methodology": "wRC+-style index for organizational development. Measures each farm's cumulative FV growth over a window (1y / 3y / 6y) and scores it against the league-mean farm. Acquisitions are nullified (a trade-in adds zero to the source farm) and graduations don't subtract; pure development of prospects already in the system. 100 = league mean, 10 pts = 1 stdev across the 30 orgs. The blended trajectory_score that drives the farm letter grade weights the 6y window 60%, 3y 30%, and 1y 10% - 6y is the principal multi-cycle signal; shorter windows still react to the current cycle so a hot current year isn't fully ignored.",
    "formula": "DvM+ = 100 + 10 · (org_growth − league_mean_growth) / league_stdev\nblended trajectory_score = 0.60·6y + 0.30·3y + 0.10·1y",
    "example": "An org with a 6yDvM+ of 130 has grown its prospects' aggregate FV 3 stdev faster than the average farm system over the last 6 years, after stripping out acquisitions.",
    "seeAlso": [
@@ -247,10 +247,10 @@
     "Tool development"
    ],
    "priority": 6,
-   "definition": "Lifetime change in a prospect's consensus tool grade — first observation to latest.",
-   "methodology": "Per-tool lifetime delta computed across a prospect's full consensus history. For each tool with ≥2 published consensus snapshots, we record first_grade, last_grade, and delta = (last − first). Powers the +N / -N chip beside each tool grade in the prospect-detail Tools section, the Tool development table on the same page, and the org-level rollups (HitDvM+, PowerDvM+, …, ToolDvM+) on the farm-detail page. Tools observed only once produce no delta — that's a 'not enough signal' state, not a 'no change' state.",
+   "definition": "Lifetime change in a prospect's consensus tool grade - first observation to latest.",
+   "methodology": "Per-tool lifetime delta computed across a prospect's full consensus history. For each tool with ≥2 published consensus snapshots, we record first_grade, last_grade, and delta = (last − first). Powers the +N / -N chip beside each tool grade in the prospect-detail Tools section, the Tool development table on the same page, and the org-level rollups (HitDvM+, PowerDvM+, …, ToolDvM+) on the farm-detail page. Tools observed only once produce no delta - that's a 'not enough signal' state, not a 'no change' state.",
    "formula": "tool_delta(tool) = consensus_grade_latest(tool) − consensus_grade_first(tool)",
-   "example": "Jesús Made's game-power tool was 30 in the FG 2024 pre-season and 60 by the 2026 pre-season report — a +30 lifetime delta over 12 observations.",
+   "example": "Jesús Made's game-power tool was 30 in the FG 2024 pre-season and 60 by the 2026 pre-season report - a +30 lifetime delta over 12 observations.",
    "seeAlso": [
     "tools_dvm_plus",
     "fv",
@@ -271,7 +271,7 @@
    ],
    "priority": 7,
    "definition": "Org-level tool development composite, weighted by what matters per position. 100 = league-mean dev pace; +10 = 1σ above.",
-   "methodology": "Position-weighted blend of every per-tool DvM+ an org has populated (HitDvM+, PowerDvM+, SpeedDvM+, FieldDvM+, ArmDvM+, PitchSelDvM+, BatCtrlDvM+ for hitters; FBDvM+, SLDvM+, CBDvM+, CHDvM+, CmdDvM+, CtDvM+ for pitchers). Each per-tool DvM+ is the league-anchored (100 + 10·z) score of an org's mean lifetime tool delta across its multi-cycle actives. v35 — rather than a flat average across tools, ToolDvM+ now weights each tool by its IMPORTANCE for the position bucket the prospect plays: a catcher's Field/Arm count most, an outfielder's Speed, a starter's Fastball/Command.\n\nThe composite is computed per bucket (C / INF / OF / SP / RP) using the bucket's own per-tool DvM+ (falling back to the org-wide value when a bucket cell is sparse), then blended across buckets by how many prospects the org actually develops in each. This rewards orgs that grow the tools that MATTER for a position over ones that pad the average with off-position gains.\n\nFG physical grades (Frame, Athleticism, Delivery) are excluded — static published values without the multi-snapshot history DvM+ velocity requires. Attribution: current org — trade-acquired prospects bring their full lifetime delta with them.\n\nStandalone display metric for now; not yet folded into farm_score.",
+   "methodology": "Position-weighted blend of every per-tool DvM+ an org has populated (HitDvM+, PowerDvM+, SpeedDvM+, FieldDvM+, ArmDvM+, PitchSelDvM+, BatCtrlDvM+ for hitters; FBDvM+, SLDvM+, CBDvM+, CHDvM+, CmdDvM+, CtDvM+ for pitchers). Each per-tool DvM+ is the league-anchored (100 + 10·z) score of an org's mean lifetime tool delta across its multi-cycle actives. v35 - rather than a flat average across tools, ToolDvM+ now weights each tool by its IMPORTANCE for the position bucket the prospect plays: a catcher's Field/Arm count most, an outfielder's Speed, a starter's Fastball/Command.\n\nThe composite is computed per bucket (C / INF / OF / SP / RP) using the bucket's own per-tool DvM+ (falling back to the org-wide value when a bucket cell is sparse), then blended across buckets by how many prospects the org actually develops in each. This rewards orgs that grow the tools that MATTER for a position over ones that pad the average with off-position gains.\n\nFG physical grades (Frame, Athleticism, Delivery) are excluded - static published values without the multi-snapshot history DvM+ velocity requires. Attribution: current org - trade-acquired prospects bring their full lifetime delta with them.\n\nStandalone display metric for now; not yet folded into farm_score.",
    "formula": "ToolDvM+ = Σ_bucket (n_bucket · ToolDvM+_bucket) / Σ_bucket n_bucket\nToolDvM+_bucket = Σ_tool (w_tool · DvM+_tool) / Σ_tool w_tool\nwhere w_tool is the tool's position-importance weight for that bucket",
    "example": "An org that develops Field + Arm for its catchers and Fastball + Command for its starters scores higher than an equal-on-average org whose gains came from low-importance tools. NYM ToolDvM+ = 106 (rank 1 of 30) ≈ 0.6σ faster development on position-relevant tools than the league-mean farm.",
    "seeAlso": [
@@ -306,7 +306,7 @@
    ],
    "priority": 8,
    "definition": "Per-tool org development index. 100 = league mean; +10 = 1σ. Reveals which tools the org actually develops well.",
-   "methodology": "Same wRC+ shape as DvM+ and ToolDvM+ but scoped to a single tool. For each tool group (Hit, Power = mean of game_pwr + raw_pwr, Speed, Field, Arm, PitchSel, BatCtrl, FB, SL, CB, CH, Cmd, Ct), we compute every org's mean lifetime delta across its actives that have ≥2 consensus observations of that tool, then anchor the league at 100 + 10·z. Cell renders '—' for orgs with fewer than 3 prospects contributing — not enough signal to compare. Read these to find a farm's development specialties: HitDvM+ 115 means this org grows the hit tool 1.5σ better than the typical farm.",
+   "methodology": "Same wRC+ shape as DvM+ and ToolDvM+ but scoped to a single tool. For each tool group (Hit, Power = mean of game_pwr + raw_pwr, Speed, Field, Arm, PitchSel, BatCtrl, FB, SL, CB, CH, Cmd, Ct), we compute every org's mean lifetime delta across its actives that have ≥2 consensus observations of that tool, then anchor the league at 100 + 10·z. Cell renders ' - ' for orgs with fewer than 3 prospects contributing - not enough signal to compare. Read these to find a farm's development specialties: HitDvM+ 115 means this org grows the hit tool 1.5σ better than the typical farm.",
    "formula": "ToolDvM+ = 100 + 10 · (org_mean_lifetime_delta − league_mean) / league_stdev",
    "example": "MIL HitDvM+ 119 + PowerDvM+ 124 = a power-bat development specialist; their hitters add ~2σ more game power across their org tenure than the league mean.",
    "seeAlso": [
@@ -329,10 +329,10 @@
     "Hit Index"
    ],
    "priority": 28,
-   "definition": "Hit-tool index — weighted blend of performance (AVG + contact), Statcast (zone-contact + whiff), and the Hit/Bat-Control grade. 100 = average.",
-   "methodology": "Isolates the hit-tool dimension (distinct from POW+ power and OPS+ overall) as a reliability-weighted blend, base 45% PERFORMANCE / 25% STATCAST / 30% Hit-tool. The performance (0.6 · batting-average-vs-level + 0.4 · K%-avoidance-vs-level) and Statcast (zone-contact, whiff) components are down-weighted by sample reliability — batting average is slow to stabilize, so performance is anchored at 170 PA; zone signals stabilize over roughly 200 tracked pitches — so a thin-sample prospect leans on the scouting prior. Batting average and K%-avoidance are distinct contact constructs (not as collinear as ISO+/HR-rate+ in POW+), so the performance core keeps both. Hit grade = mean of Hit and Bat Control on the 20-80 scale (50 → 100, ±10 ≈ ±20). Statcast pool anchors (z-contact ≈ 80%, whiff ≈ 26%) are placeholders pending per-level MiLB calibration.",
+   "definition": "Hit-tool index - weighted blend of performance (AVG + contact), Statcast (zone-contact + whiff), and the Hit/Bat-Control grade. 100 = average.",
+   "methodology": "Isolates the hit-tool dimension (distinct from POW+ power and OPS+ overall) as a reliability-weighted blend, base 45% PERFORMANCE / 25% STATCAST / 30% Hit-tool. The performance (0.6 · batting-average-vs-level + 0.4 · K%-avoidance-vs-level) and Statcast (zone-contact, whiff) components are down-weighted by sample reliability - batting average is slow to stabilize, so performance is anchored at 170 PA; zone signals stabilize over roughly 200 tracked pitches - so a thin-sample prospect leans on the scouting prior. Batting average and K%-avoidance are distinct contact constructs (not as collinear as ISO+/HR-rate+ in POW+), so the performance core keeps both. Hit grade = mean of Hit and Bat Control on the 20-80 scale (50 → 100, ±10 ≈ ±20). Statcast pool anchors (z-contact ≈ 80%, whiff ≈ 26%) are placeholders pending per-level MiLB calibration.",
    "formula": "HIT+ = Σ wᵢ·xᵢ / Σ wᵢ\nperf:     x = 100·(0.6·AVG_ratio + 0.4·contact_ratio),  w = 0.45 · AB/(AB+170)\nstatcast: x = 0.5·Zcon/80 + 0.5·26/Whiff (×100),  w = 0.25 · pitches/(pitches+200)\ntool:     x = 100 + (mean(Hit,BatCtrl) − 50)·2,  w = 0.30  (prior)",
-   "example": "A AA hitter batting .300 (level .246), 16% K% (level 22.5%), 82% zone-contact, paired with 55 Hit / 60 Bat Control — perf ~133, statcast ~103, tool+ 115 → HIT+ ~122.",
+   "example": "A AA hitter batting .300 (level .246), 16% K% (level 22.5%), 82% zone-contact, paired with 55 Hit / 60 Bat Control - perf ~133, statcast ~103, tool+ 115 → HIT+ ~122.",
    "seeAlso": [
     "bb_pct",
     "k_pct",
@@ -355,7 +355,7 @@
    ],
    "priority": 29,
    "definition": "Isolated power indexed to the level-average ISO. 100 = league-average; +1 pt = 1% better (wRC+/ERA+ paradigm).",
-   "methodology": "ISO (SLG − AVG) rescaled against the current level's average ISO so power reads on one cross-level axis: 100 is exactly league-average, 120 is 20% above, 80 is 20% below. The baseline is the same DATA.level_norms cohort every other '+' metric uses (same season/level source). Pure performance rescaling, EMPIRICAL-BAYES shrunk toward the level average by AB (ISO stabilizes ~150 PA), so a 40-AB hot streak no longer posts an extreme ISO+. No scouting-tool blend — that distinguishes it from POW+, which reliability-weights ISO+ with the Power grade and Statcast. Hitters only, 40-game minimum.",
+   "methodology": "ISO (SLG − AVG) rescaled against the current level's average ISO so power reads on one cross-level axis: 100 is exactly league-average, 120 is 20% above, 80 is 20% below. The baseline is the same DATA.level_norms cohort every other '+' metric uses (same season/level source). Pure performance rescaling, EMPIRICAL-BAYES shrunk toward the level average by AB (ISO stabilizes ~150 PA), so a 40-AB hot streak no longer posts an extreme ISO+. No scouting-tool blend - that distinguishes it from POW+, which reliability-weights ISO+ with the Power grade and Statcast. Hitters only, 40-game minimum.",
    "formula": "ISO+ = 100 + (100·ISO/level_avg_ISO − 100) · AB/(AB+150)   (empirical-Bayes shrunk toward the level average by AB)",
    "example": "A High-A hitter with a .180 ISO at a level averaging .130 posts an ISO+ of ~138 (38% above league-average power).",
    "seeAlso": [
@@ -379,8 +379,8 @@
     "Power+"
    ],
    "priority": 30,
-   "definition": "Hitter power index — RELIABILITY-WEIGHTED blend of ISO+ (performance), Statcast (hard-hit + barrel), and the Power grade. The scouting grade anchors thin samples; observed stats take over as PA accrue. 100 = average.",
-   "methodology": "Reliability-weighted blend, base importances 45% PERFORMANCE / 25% STATCAST / 30% Power grade. The performance and Statcast components are down-weighted by their own sample reliability — ISO stabilizes around 150 PA, batted-ball quality in tens of batted balls — so a thin-sample prospect leans on the scouting prior and a full-season one leans on observed power.\n\nThe performance signal is ISO+ ALONE: the prior version also summed an HR-rate+ term, but ISO+ and HR-rate+ correlate 0.91 across active hitters, so adding them double-counted one power trait and inflated the reading. Validated against graduate outcomes — the reliability-weighted POW+ predicts MLB ISO at 0.50, up from 0.35.\n\nPower grade on the 20-80 scale (50 → 100, ±10 ≈ ±20). Statcast pool anchors (hard-hit ≈ 33%, barrel ≈ 6%) remain placeholders pending per-level MiLB calibration.",
+   "definition": "Hitter power index - RELIABILITY-WEIGHTED blend of ISO+ (performance), Statcast (hard-hit + barrel), and the Power grade. The scouting grade anchors thin samples; observed stats take over as PA accrue. 100 = average.",
+   "methodology": "Reliability-weighted blend, base importances 45% PERFORMANCE / 25% STATCAST / 30% Power grade. The performance and Statcast components are down-weighted by their own sample reliability - ISO stabilizes around 150 PA, batted-ball quality in tens of batted balls - so a thin-sample prospect leans on the scouting prior and a full-season one leans on observed power.\n\nThe performance signal is ISO+ ALONE: the prior version also summed an HR-rate+ term, but ISO+ and HR-rate+ correlate 0.91 across active hitters, so adding them double-counted one power trait and inflated the reading. Validated against graduate outcomes - the reliability-weighted POW+ predicts MLB ISO at 0.50, up from 0.35.\n\nPower grade on the 20-80 scale (50 → 100, ±10 ≈ ±20). Statcast pool anchors (hard-hit ≈ 33%, barrel ≈ 6%) remain placeholders pending per-level MiLB calibration.",
    "formula": "POW+ = Σ wᵢ·xᵢ / Σ wᵢ\nperf:     x = ISO+,  w = 0.45 · AB/(AB+150)\nstatcast: x = 0.55·HH%/33 + 0.45·Brl%/6 (×100),  w = 0.25 · BBE/(BBE+40)\ntool:     x = 100 + (Power_grade − 50)·2,  w = 0.30  (prior, full weight)",
    "example": "A AA hitter with ISO+ 145, hard-hit 40% / barrel 9% (statcast ~134), and a 60 Power grade (tool+ 120) → POW+ ~135.",
    "seeAlso": [
@@ -407,7 +407,7 @@
    ],
    "priority": 35,
    "definition": "Plate-discipline index; BB% minus K% differential vs level-mean blended 70/30 with the Pitch-Selection (PSel) tool. 100 = average.",
-   "methodology": "The raw component is an additive shift on the BB% minus K% differential vs the player's level mean: 100 + (player_diff − level_diff). A hitter walking 10% and striking out 20% (−10 diff) at a level where the mean is +5% BB minus 22% K (−17 diff) posts a raw 107. That raw index is then blended 70% / 30% with the player's Pitch-Selection (PSel) scouting grade — FanGraphs' plate-discipline tool — on the 20-80 scale (50 → 100, ±10 grade ≈ ±20 points). Hitters only, 40-game minimum. Below the sample gate a graded prospect gets the tool alone; with no PSel grade the raw stats stand alone. (Renamed from Disci+.)",
+   "methodology": "The raw component is an additive shift on the BB% minus K% differential vs the player's level mean: 100 + (player_diff − level_diff). A hitter walking 10% and striking out 20% (−10 diff) at a level where the mean is +5% BB minus 22% K (−17 diff) posts a raw 107. That raw index is then blended 70% / 30% with the player's Pitch-Selection (PSel) scouting grade - FanGraphs' plate-discipline tool - on the 20-80 scale (50 → 100, ±10 grade ≈ ±20 points). Hitters only, 40-game minimum. Below the sample gate a graded prospect gets the tool alone; with no PSel grade the raw stats stand alone. (Renamed from Disci+.)",
    "formula": "PD+ = 0.7 · raw + 0.3 · tool+\nraw = 100 + (BB%player − K%player) − (BB%level − K%level)\ntool+ = 100 + (PSel_grade − 50) · 2",
    "example": "Juan Soto's career-prospect raw PD+ would have been ~125-130 (BB%−K% ~25 points above the typical bat); paired with a plus PSel grade the blended PD+ holds in that same elite band.",
    "seeAlso": [
@@ -433,7 +433,7 @@
    ],
    "priority": 40,
    "definition": "Peripheral pitcher index; K%, BB%, HR/9 vs level mean. 100 = league-average peripherals.",
-   "methodology": "Z-score composite of three workload-stable peripheral rates: strikeout rate (positive), walk rate (negative), and HR/9 (negative), each normalized to the pitcher's current level mean with an approximate σ = 15% of mean. K% and BB% are per-batter rates so a reliever's stuff reads the same way relative to a starter's, unlike K/9 which over-rewards short-outing relievers. 10 points ≈ 1 stdev. Pitchers only, 20-IP or 30-BF sample gate. (Renamed from STF+ — the 'p' prefix marks it as the peripheral version, contrasting with FVStuff+ which scores scouting-grade stuff.)",
+   "methodology": "Z-score composite of three workload-stable peripheral rates: strikeout rate (positive), walk rate (negative), and HR/9 (negative), each normalized to the pitcher's current level mean with an approximate σ = 15% of mean. K% and BB% are per-batter rates so a reliever's stuff reads the same way relative to a starter's, unlike K/9 which over-rewards short-outing relievers. 10 points ≈ 1 stdev. Pitchers only, 20-IP or 30-BF sample gate. (Renamed from STF+ - the 'p' prefix marks it as the peripheral version, contrasting with FVStuff+ which scores scouting-grade stuff.)",
    "formula": "pStuff+ = 100 + 10 · (0.55·z(K%) − 0.30·z(BB%) − 0.15·z(HR/9))",
    "example": "A AA pitcher running a 30% K%, 7% BB%, 0.8 HR/9 at a level where the means are 22% / 9% / 1.0 posts a pStuff+ around 125, well-above-average peripherals for the level.",
    "seeAlso": [
@@ -459,7 +459,7 @@
    ],
    "priority": 42,
    "definition": "Scouting-grade pitch composite; power-mean of fastball + secondaries grades, z-scored across the prospect cohort.",
-   "methodology": "Outlier-biased composite (Lₚ with p=3) of the pitcher's 20-80 grades on Fastball + Slider + Curveball + Changeup, then z-scored across the active-prospect cohort. 100 = cohort mean, 10 pts = 1 stdev. Different from pStuff+, which measures results (K%, BB%, HR/9) against level peers; FVStuff+ measures projected stuff from scouting reports. The two can diverge when results outrun (or lag) the underlying scouting view. (Renamed from 'Stuff grade+' — the 'FV' prefix signals it's anchored to the FV-grade scale, contrasting with pStuff+'s peripheral-stats anchoring.)",
+   "methodology": "Outlier-biased composite (Lₚ with p=3) of the pitcher's 20-80 grades on Fastball + Slider + Curveball + Changeup, then z-scored across the active-prospect cohort. 100 = cohort mean, 10 pts = 1 stdev. Different from pStuff+, which measures results (K%, BB%, HR/9) against level peers; FVStuff+ measures projected stuff from scouting reports. The two can diverge when results outrun (or lag) the underlying scouting view. (Renamed from 'Stuff grade+' - the 'FV' prefix signals it's anchored to the FV-grade scale, contrasting with pStuff+'s peripheral-stats anchoring.)",
    "formula": "FVStuff+ = 100 + 10 · (composite_stuff − μ) / σ\nwhere composite_stuff = (Σ pitch_grade^3 / n)^(1/3)",
    "example": "A pitcher with 70 fastball / 60 slider / 55 curve / 50 change posts a composite around 62; if the prospect-cohort mean is 55 and σ is 6, FVStuff+ ≈ 112.",
    "seeAlso": [
@@ -484,9 +484,9 @@
    ],
    "priority": 15,
    "definition": "Per-prospect expected MLB surplus value ($M) re-derived from FV→WAR + non-linear $/WAR. Granular to fractional FV (e.g. FV 47.3).",
-   "methodology": "v32.1 — Re-anchored to the 2026 FanGraphs scouting primer (FV→peak-WAR ranges, hitter/pitcher split) and the 2026 'What Are Teams Paying for a Win in Free Agency' article (non-linear 3-tier $/WAR, rolling 3yr avg). Formula is now fully decomposed and FV-granular: every input — WAR_peak, success_prob, ramp factor, position multiplier — interpolates between the framework's 5-pt anchors, AND the $/WAR tier dispatches off the interpolated WAR (so the tier transition between FV 45 and FV 50 lands at the right place instead of being smoothed away).\n\nA 47-FV prospect now reads as ~$8M, not ~$13M (which is what naive interp between FV 45's $4M and FV 50's $26M would produce). Hitters carry more than pitchers at equal FV (injury + role-conversion attrition); position scarcity multipliers layered on top.\n\nAPPLIES TO PROSPECTS ONLY — debutants/MLB players use realized career_war × $/WAR_overall instead (see surplus_value). NOTE: distinct from OrgSur+, the farm-level capital-efficiency index.",
+   "methodology": "v32.1 - Re-anchored to the 2026 FanGraphs scouting primer (FV→peak-WAR ranges, hitter/pitcher split) and the 2026 'What Are Teams Paying for a Win in Free Agency' article (non-linear 3-tier $/WAR, rolling 3yr avg). Formula is now fully decomposed and FV-granular: every input - WAR_peak, success_prob, ramp factor, position multiplier - interpolates between the framework's 5-pt anchors, AND the $/WAR tier dispatches off the interpolated WAR (so the tier transition between FV 45 and FV 50 lands at the right place instead of being smoothed away).\n\nA 47-FV prospect now reads as ~$8M, not ~$13M (which is what naive interp between FV 45's $4M and FV 50's $26M would produce). Hitters carry more than pitchers at equal FV (injury + role-conversion attrition); position scarcity multipliers layered on top.\n\nAPPLIES TO PROSPECTS ONLY - debutants/MLB players use realized career_war × $/WAR_overall instead (see surplus_value). NOTE: distinct from OrgSur+, the farm-level capital-efficiency index.",
    "formula": "Sur+ = (WAR_peak(fv) × 6 × ramp × p_success(fv) × $/WAR_tier(WAR_peak) − cost_basis) × position_mult\nAnchor points (hitter, pre-position): FV 80→$326M, 70→$212M, 60→$112M, 55→$56M, 50→$26M, 47→$8M, 45→$4M",
-   "example": "An FV 55 SS: WAR_peak 2.9 × 6 × 0.78 × 0.45 × $13.63M − cost ≈ $56M gross × 1.18 SS mult ≈ $66M Sur+. An FV 47 hitter: WAR_peak 1.49 (interpolated) × ramp × prob × $8.76M (1-2 tier, NOT $13.63M) ≈ $8M Sur+ — properly distinct from FV 45's $4M, not bucketed.",
+   "example": "An FV 55 SS: WAR_peak 2.9 × 6 × 0.78 × 0.45 × $13.63M − cost ≈ $56M gross × 1.18 SS mult ≈ $66M Sur+. An FV 47 hitter: WAR_peak 1.49 (interpolated) × ramp × prob × $8.76M (1-2 tier, NOT $13.63M) ≈ $8M Sur+ - properly distinct from FV 45's $4M, not bucketed.",
    "seeAlso": [
     "fv",
     "surplus_value",
@@ -512,7 +512,7 @@
    ],
    "priority": 2,
    "definition": "Graduate metric: career WAR per MLB season minus the FV-grade-implied WAR/season baseline.",
-   "methodology": "v16 — WAG is matched to the number of MLB SEASONS a graduate has accrued, not plate appearances / rate of production: career WAR ÷ MLB seasons, minus the FV-implied per-season WAR baseline. An injury-shortened season still counts as a season, so WAG reflects accumulation over time rather than a small-sample rate projected up to a full season (which over-credited injury-limited grads like Evan Carter — 5.6 WAR over 4 partial seasons reads on-grade for a 60 FV, not as a 99th-percentile boom).\n\nAn elite single season (e.g. Junior Caminero) still posts a high per-season WAG; the BOOM/BUST pill's own sample floor (≥2 MLB seasons OR ≥800 career PA OR ≥200 career IP) holds partial-season grads at 'unsettled'.\n\nWAG sample floor: hitters need ≥150 career PA, pitchers ≥50 career IP — below that, WAG returns None.",
+   "methodology": "v16 - WAG is matched to the number of MLB SEASONS a graduate has accrued, not plate appearances / rate of production: career WAR ÷ MLB seasons, minus the FV-implied per-season WAR baseline. An injury-shortened season still counts as a season, so WAG reflects accumulation over time rather than a small-sample rate projected up to a full season (which over-credited injury-limited grads like Evan Carter - 5.6 WAR over 4 partial seasons reads on-grade for a 60 FV, not as a 99th-percentile boom).\n\nAn elite single season (e.g. Junior Caminero) still posts a high per-season WAG; the BOOM/BUST pill's own sample floor (≥2 MLB seasons OR ≥800 career PA OR ≥200 career IP) holds partial-season grads at 'unsettled'.\n\nWAG sample floor: hitters need ≥150 career PA, pitchers ≥50 career IP - below that, WAG returns None.",
    "formula": "WAG = (career_war / mlb_seasons) − expected_war_per_season(FV)\nBOOM ≥ +2.5 · BUST ≤ −1.5 · floor: ≥2 seasons OR ≥800 PA OR ≥200 IP",
    "example": "Evan Carter: 5.6 WAR over 4 MLB seasons = 1.4 WAR/season. FV 60 expects ~1.57/season. WAG ≈ −0.2 → SETTLED (on grade).",
    "seeAlso": [
@@ -534,8 +534,8 @@
     "WAR/yr + WAG/yr"
    ],
    "priority": 2,
-   "definition": "Graduate metric: WAR/year + WAG/year — combines raw production with grade-beating.",
-   "methodology": "WARWAG sums a debuted player's playing-time-weighted WAR/year and their WAG/year (WAR Above Grade). Because WAG = WAR/yr − FV-implied WAR/yr, WARWAG works out to (2 × WAR/yr − FV-implied WAR/yr): it rewards graduates who are BOTH genuinely productive (high WAR/yr) AND outperforming the bet implied by their prospect grade (high WAG). A productive player who merely met an elite grade scores lower than an equally-productive player who beat a modest grade. Shares WAG's sample gate — requires ≥1 full-season equivalent of MLB playing time (PA for hitters, IP for pitchers) and an FV on file, else it returns None and the row sinks in the WARWAG sort. Surfaced as a sort (high/low) on the Debuted (Graduates) list; the value shows on each row when that sort is active.",
+   "definition": "Graduate metric: WAR/year + WAG/year - combines raw production with grade-beating.",
+   "methodology": "WARWAG sums a debuted player's playing-time-weighted WAR/year and their WAG/year (WAR Above Grade). Because WAG = WAR/yr − FV-implied WAR/yr, WARWAG works out to (2 × WAR/yr − FV-implied WAR/yr): it rewards graduates who are BOTH genuinely productive (high WAR/yr) AND outperforming the bet implied by their prospect grade (high WAG). A productive player who merely met an elite grade scores lower than an equally-productive player who beat a modest grade. Shares WAG's sample gate - requires ≥1 full-season equivalent of MLB playing time (PA for hitters, IP for pitchers) and an FV on file, else it returns None and the row sinks in the WARWAG sort. Surfaced as a sort (high/low) on the Debuted (Graduates) list; the value shows on each row when that sort is active.",
    "formula": "WARWAG = WAR/yr + WAG/yr = 2 · WAR/yr − expected_war(FV)",
    "example": "Bobby Witt Jr.: ~6.5 WAR/yr, FV-55 expects ~2.5 → WAG ≈ +4.0, WARWAG ≈ 6.5 + 4.0 = 10.5 (elite on both axes). A 2.5 WAR/yr player who exactly met an FV-55 grade has WAG ≈ 0 → WARWAG ≈ 2.5.",
    "seeAlso": [
@@ -558,7 +558,7 @@
    ],
    "priority": 14,
    "definition": "Single source of truth for FV↔WAR↔$ conversions. Prospects flow FV→proj-WAR→proj-$; debutants/MLB use realized WAR→$ (these are kept distinct, never mixed in a single ratio).",
-   "methodology": "v32.1 — Consolidated all FV↔WAR↔$ math into one module (value_framework.py) anchored to two Fangraphs sources: the 2026 scouting primer (FV→peak-WAR ranges, hitter/pitcher split) and the 2026 'What Are Teams Paying for a Win in Free Agency' article (non-linear 3-tier $/WAR). Replaces the prior flat $8M/WAR + 2019 Craig Edwards surplus table that powered Sur+, OrgSur+, trade audits, draft pool efficiency, etc. The framework is fully decomposed (every input is auditable + configurable) AND fully granular (interpolates at any FV, not just 5-pt anchors — see Sur+ for the FV 47 example). Backend (storage.py, mlb_trade_lookup.py) and frontend (index.html) read from the SAME generated snapshot (data/value_framework.json + .js) so the two surfaces can never drift again.\n\nCORE PRINCIPLE (v32.1): the framework strictly separates the TWO different valuation regimes:\n• **Prospects** (pre-debut, FV grade): valued via FV→projected_WAR→projected_$ using the full formula below. Inherently a PROJECTION.\n• **Debutants / MLB players** (post-debut, career_war on file): valued via actual_WAR × $/WAR_overall. A REALIZED figure.\nThese are never mixed in the same per-FV ratio. Trade audits show projected-$ (prospects) and realized-$ (vets) side-by-side, not combined into a single $/FV.",
+   "methodology": "v32.1 - Consolidated all FV↔WAR↔$ math into one module (value_framework.py) anchored to two Fangraphs sources: the 2026 scouting primer (FV→peak-WAR ranges, hitter/pitcher split) and the 2026 'What Are Teams Paying for a Win in Free Agency' article (non-linear 3-tier $/WAR). Replaces the prior flat $8M/WAR + 2019 Craig Edwards surplus table that powered Sur+, OrgSur+, trade audits, draft pool efficiency, etc. The framework is fully decomposed (every input is auditable + configurable) AND fully granular (interpolates at any FV, not just 5-pt anchors - see Sur+ for the FV 47 example). Backend (storage.py, mlb_trade_lookup.py) and frontend (index.html) read from the SAME generated snapshot (data/value_framework.json + .js) so the two surfaces can never drift again.\n\nCORE PRINCIPLE (v32.1): the framework strictly separates the TWO different valuation regimes:\n• **Prospects** (pre-debut, FV grade): valued via FV→projected_WAR→projected_$ using the full formula below. Inherently a PROJECTION.\n• **Debutants / MLB players** (post-debut, career_war on file): valued via actual_WAR × $/WAR_overall. A REALIZED figure.\nThese are never mixed in the same per-FV ratio. Trade audits show projected-$ (prospects) and realized-$ (vets) side-by-side, not combined into a single $/FV.",
    "formula": "Prospect: Surplus($M) = (WAR_peak(fv) × 6 × ramp × p_success(fv) × $/WAR_tier(WAR_peak) − pre_arb − arb_cost) × position_mult\nVet: Value($M) = career_war × $/WAR_overall (≈ $11.74M, rolling 3yr 2024-2026)",
    "example": "FV 60 SS hitter (prospect): WAR_peak 4.15 × 6 × 0.78 × 0.62 × $13.63M − costs ≈ $112M × 1.18 SS mult ≈ $133M projected Sur+. Bobby Witt Jr (vet): 22.5 career WAR × $11.74M ≈ $264M realized value. Both true; both distinct.",
    "seeAlso": [
@@ -587,8 +587,8 @@
     "Tier rate"
    ],
    "priority": 16,
-   "definition": "Non-linear 3-tier $M/WAR price the FA market is paying — fringe / mid / star — rolling 3yr avg. Used tier-aware for per-player; overall rate for career aggregates.",
-   "methodology": "Per the 2026 'What Are Teams Paying for a Win in Free Agency' article, teams pay non-linearly for projected first-year WAR. The star premium has roughly doubled vs 2020-2023, so a flat $/WAR mis-prices both ends. The framework uses a rolling 3yr (2024-2026) average across the article's three tiers, dispatched off the player's projected per-year WAR. Two consumption patterns:\n• **Per-prospect surplus** (Sur+): the tier dispatches off WAR_peak (FV→WAR), so an FV 47 (~1.5 peak WAR) gets the $8.76M 1-2 tier rate, NOT a linear interp between FV 45 and FV 50.\n• **Career WAR for vets**: uses the OVERALL rate ($11.74M) rather than tiers because career WAR aggregates production across multiple seasons at varying tiers — the overall mean is the right blend.\nUsed everywhere a $ value is needed: prospect surplus calcs, trade audit valuations, contract surplus comparisons.\n\nSince the v3 re-anchor the tier rates rescale at load to the FA signings-implied level (trailing 3 winters; shape preserved) — one market, one price of a win, shared by prospect surplus, FA rational value, and MLB Projections.",
+   "definition": "Non-linear 3-tier $M/WAR price the FA market is paying - fringe / mid / star - rolling 3yr avg. Used tier-aware for per-player; overall rate for career aggregates.",
+   "methodology": "Per the 2026 'What Are Teams Paying for a Win in Free Agency' article, teams pay non-linearly for projected first-year WAR. The star premium has roughly doubled vs 2020-2023, so a flat $/WAR mis-prices both ends. The framework uses a rolling 3yr (2024-2026) average across the article's three tiers, dispatched off the player's projected per-year WAR. Two consumption patterns:\n• **Per-prospect surplus** (Sur+): the tier dispatches off WAR_peak (FV→WAR), so an FV 47 (~1.5 peak WAR) gets the $8.76M 1-2 tier rate, NOT a linear interp between FV 45 and FV 50.\n• **Career WAR for vets**: uses the OVERALL rate ($11.74M) rather than tiers because career WAR aggregates production across multiple seasons at varying tiers - the overall mean is the right blend.\nUsed everywhere a $ value is needed: prospect surplus calcs, trade audit valuations, contract surplus comparisons.\n\nSince the v3 re-anchor the tier rates rescale at load to the FA signings-implied level (trailing 3 winters; shape preserved) - one market, one price of a win, shared by prospect surplus, FA rational value, and MLB Projections.",
    "formula": "$/WAR ≈ $6.97M (0-1 WAR) · $8.76M (1-2) · $13.63M (2+) · $11.74M overall (rolling 2024-2026)\nPer-prospect: dispatches off WAR_peak. Per-vet: uses overall.",
    "example": "A 4-WAR star earns $13.63M per WAR (tier-aware); a fringe 0.5-WAR vet earns $6.97M (tier-aware). A 30-WAR career: 30 × $11.74M overall = $352M (career-aggregate, not tier-aware). The overall rate avoids over-pricing aging vets whose late-career production lives in lower tiers.",
    "seeAlso": [
@@ -613,7 +613,7 @@
    ],
    "priority": 17,
    "definition": "Per-FV expected WAR/year, anchored to the FanGraphs scouting primer. The conversion that turns a scouting grade into projected production.",
-   "methodology": "Each FV grade maps to an expected annual WAR over the player's first six cost-controlled seasons (the years a prospect is an asset). v38 moved the anchor from a single peak-year projection to a 6-year-average WAR and uses one FV-keyed table — no separate hitter/pitcher split, since the side difference is carried later by the position multiplier rather than the WAR anchor. Half-grades linear-interpolate between the 5-pt anchors. This table drives every downstream conversion: surplus value, Sur+, $/FV-pt, and the projected career WAR behind the trade-regret view.",
+   "methodology": "Each FV grade maps to an expected annual WAR over the player's first six cost-controlled seasons (the years a prospect is an asset). v38 moved the anchor from a single peak-year projection to a 6-year-average WAR and uses one FV-keyed table - no separate hitter/pitcher split, since the side difference is carried later by the position multiplier rather than the WAR anchor. Half-grades linear-interpolate between the 5-pt anchors. This table drives every downstream conversion: surplus value, Sur+, $/FV-pt, and the projected career WAR behind the trade-regret view.",
    "formula": "6yr-avg WAR/yr by FV: 80→7.0, 70→5.0, 65→4.0, 60→3.0, 55→2.5, 50→2.0, 45→1.5, 40→1.0, 35→0.6  (half-grades interpolated)",
    "example": "An FV 55 prospect projects ~2.5 WAR/yr across the six controlled years; FV 60 jumps to ~3.0. Multiplying by $/WAR and netting the cost basis yields the surplus dollars shown on the card.",
    "seeAlso": [
@@ -639,7 +639,7 @@
    ],
    "priority": 18,
    "definition": "Per-FV probability of a prospect becoming an MLB regular (≥2 career WAR). Pitchers run 5-10pp lower than hitters.",
-   "methodology": "Industry-standard prospect-success rates anchored to Sickels (2002-2012) + McDaniel/Longenhagen (2014-2020) + recent BA primer commentary. Defines 'MLB regular' as accumulating ≥2 career WAR. Pitchers run ~5-10pp lower at each grade due to TJ + role-conversion attrition. These probabilities feed every prospect's expected-WAR-over-6yr calc, which is what makes Sur+ defensible at the upper tail (a FV 70 hitter's ~80% success rate is what gets you to a 9-figure surplus expectation). Configurable in value_framework.py — when our own grad data accumulates enough sample we can override individual cells.",
+   "methodology": "Industry-standard prospect-success rates anchored to Sickels (2002-2012) + McDaniel/Longenhagen (2014-2020) + recent BA primer commentary. Defines 'MLB regular' as accumulating ≥2 career WAR. Pitchers run ~5-10pp lower at each grade due to TJ + role-conversion attrition. These probabilities feed every prospect's expected-WAR-over-6yr calc, which is what makes Sur+ defensible at the upper tail (a FV 70 hitter's ~80% success rate is what gets you to a 9-figure surplus expectation). Configurable in value_framework.py - when our own grad data accumulates enough sample we can override individual cells.",
    "formula": "Hitter: FV 70→80%, 60→62%, 55→45%, 50→32%, 45→20%, 40→10%\nPitcher: FV 70→70%, 60→50%, 55→36%, 50→25%, 45→15%, 40→8%",
    "example": "An FV 50 hitter has ~32% chance to clear ≥2 career WAR; an FV 50 pitcher ~25%. The 7pp gap propagates into ~25% lower Sur+ for pitchers at every grade.",
    "seeAlso": [
@@ -663,10 +663,10 @@
     "Per-FV dollar value"
    ],
    "priority": 19,
-   "definition": "Translates a prospect's FV grade to a per-point dollar value — surplus_value / FV. PROSPECT-ONLY (vets don't have a meaningful per-FV rate; their value is realized career WAR × $/WAR_overall).",
-   "methodology": "v32.1 — The bridge between scouting grades and trade-market dollars FOR PROSPECTS ONLY. Per-prospect: $/FV = Sur+ / FV (after position multiplier, after granular FV interpolation — so a 47.3-FV doesn't bucket to FV 45). For a trade audit side: sum the PROSPECT-only $ and PROSPECT-only FV, then divide. Vet $ (realized career_war × $/WAR_overall ≈ $11.74M) is reported SEPARATELY and does NOT contribute to the $/FV ratio — mixing them would conflate a projection with a realized figure. Useful for: comparing trade sides at a glance (which side paid more per FV-pt of cost-controlled prospects?), benchmarking player valuations across orgs.",
+   "definition": "Translates a prospect's FV grade to a per-point dollar value - surplus_value / FV. PROSPECT-ONLY (vets don't have a meaningful per-FV rate; their value is realized career WAR × $/WAR_overall).",
+   "methodology": "v32.1 - The bridge between scouting grades and trade-market dollars FOR PROSPECTS ONLY. Per-prospect: $/FV = Sur+ / FV (after position multiplier, after granular FV interpolation - so a 47.3-FV doesn't bucket to FV 45). For a trade audit side: sum the PROSPECT-only $ and PROSPECT-only FV, then divide. Vet $ (realized career_war × $/WAR_overall ≈ $11.74M) is reported SEPARATELY and does NOT contribute to the $/FV ratio - mixing them would conflate a projection with a realized figure. Useful for: comparing trade sides at a glance (which side paid more per FV-pt of cost-controlled prospects?), benchmarking player valuations across orgs.",
    "formula": "Per-prospect: $/FV-pt = Sur+ / FV\nPer trade-side: $/FV-pt = Σ(prospect_$) / Σ(prospect_FV)  (vet $ reported separately)",
-   "example": "An FV 60 SS Sur+ ~$133M → $2.2M/FV-pt (prospect). A trade where Org A receives 15 FV worth $25M of prospects + 1 vet worth $48M shows: '15 FV @ $1.7M/FV + $48M (1 vet)' — never combined as $73/15 = $4.9M/FV (that would be apples-and-oranges).",
+   "example": "An FV 60 SS Sur+ ~$133M → $2.2M/FV-pt (prospect). A trade where Org A receives 15 FV worth $25M of prospects + 1 vet worth $48M shows: '15 FV @ $1.7M/FV + $48M (1 vet)' - never combined as $73/15 = $4.9M/FV (that would be apples-and-oranges).",
    "seeAlso": [
     "tvi",
     "surplus_value",
@@ -690,7 +690,7 @@
    ],
    "priority": 60,
    "definition": "Active prospects' current FV per $M of trailing-3yr draft-pool spend. Fast-cycle companion to war_per_m_pool.",
-   "methodology": "v32.0 — Companion to Draft Pool Efficiency's WAR/$M signal. Where war_per_m_pool sums grad career WAR over (T-5)..(T-2) drafts and lags reality by ~5yr (the WAR maturation window), fv_per_m_pool sums the CURRENT consensus FV of ACTIVE prospects from the same draft years and reads as fast as the next ranking cycle. Both signals share the same denominator (the org's pool $ for the window), so a high fv_per_m / low war_per_m gap is a leading indicator: the scouting + dev are working but the WAR hasn't shown up yet. The reverse (high war / low fv) suggests grad-side success isn't being replenished. Gated only on pool > $0.",
+   "methodology": "v32.0 - Companion to Draft Pool Efficiency's WAR/$M signal. Where war_per_m_pool sums grad career WAR over (T-5)..(T-2) drafts and lags reality by ~5yr (the WAR maturation window), fv_per_m_pool sums the CURRENT consensus FV of ACTIVE prospects from the same draft years and reads as fast as the next ranking cycle. Both signals share the same denominator (the org's pool $ for the window), so a high fv_per_m / low war_per_m gap is a leading indicator: the scouting + dev are working but the WAR hasn't shown up yet. The reverse (high war / low fv) suggests grad-side success isn't being replenished. Gated only on pool > $0.",
    "formula": "fv_per_m_pool = Σ(active_fv | drafted T-5..T-2) / (org_pool_$ T-5..T-2 / 1M)",
    "example": "Org X spent $35M of draft pool over T-5..T-2 and has 280 FV-pts in active prospects from those drafts → 8.0 FV/$M. Concurrent war_per_m might still be 0 (grads haven't matured), but the scouting/dev signal is loud.",
    "seeAlso": [
@@ -715,7 +715,7 @@
    ],
    "priority": 61,
    "definition": "Org-level $ surplus per FV-point of active prospect capital. Captures the quality-of-FV-mix dimension.",
-   "methodology": "v32.0 — Sub-metric inside the fin_active_surplus leaf. Divides the org's total active-prospect Sur+ ($M) by the org's total active-prospect FV-pts. High = the FV is concentrated in high-leverage positions (SS, CF, premium SP) and/or high-FV grades where the surplus curve is steep. Low = depth-heavy but flat (lots of FV 45-50 corner / bench profiles). Lets two orgs with the same raw FV-pts be differentiated by whether their portfolio is star+premium-position or generic depth. Gated at ≥5 contributing actives.",
+   "methodology": "v32.0 - Sub-metric inside the fin_active_surplus leaf. Divides the org's total active-prospect Sur+ ($M) by the org's total active-prospect FV-pts. High = the FV is concentrated in high-leverage positions (SS, CF, premium SP) and/or high-FV grades where the surplus curve is steep. Low = depth-heavy but flat (lots of FV 45-50 corner / bench profiles). Lets two orgs with the same raw FV-pts be differentiated by whether their portfolio is star+premium-position or generic depth. Gated at ≥5 contributing actives.",
    "formula": "surplus_per_fv_pt_mm = Σ(Sur+ across actives) / Σ(FV across same actives)",
    "example": "Org A (LAD-style top-loaded) has 250 active FV-pts and $400M surplus → $1.6M/FV-pt. Org B (depth-style) has 400 active FV-pts but $300M surplus → $0.75M/FV-pt. Same raw quality dial reads differently in $/FV space.",
    "seeAlso": [
@@ -738,8 +738,8 @@
     "Starter"
    ],
    "priority": 9,
-   "definition": "Starting pitcher — projects to start games (typically 5+ innings per outing).",
-   "methodology": "Starting Pitcher. Carries the bulk of the workload — 5+ innings per outing in a 5-man rotation. Projection requires 3+ quality offerings (arsenal depth) AND command good enough to face a lineup multiple times. SP-projected prospects typically receive higher FV grades than relief-projected arms of similar raw stuff because innings count more than leverage on the WAR ledger. Filter chip `SP` matches only SP-tagged prospects (excludes SIRP / MIRP / bare RP).",
+   "definition": "Starting pitcher - projects to start games (typically 5+ innings per outing).",
+   "methodology": "Starting Pitcher. Carries the bulk of the workload - 5+ innings per outing in a 5-man rotation. Projection requires 3+ quality offerings (arsenal depth) AND command good enough to face a lineup multiple times. SP-projected prospects typically receive higher FV grades than relief-projected arms of similar raw stuff because innings count more than leverage on the WAR ledger. Filter chip `SP` matches only SP-tagged prospects (excludes SIRP / MIRP / bare RP).",
    "seeAlso": [
     "rp",
     "sirp",
@@ -761,8 +761,8 @@
     "Bullpen"
    ],
    "priority": 10,
-   "definition": "Relief pitcher — generic relief role. Rolls up SIRP + MIRP + bare RP for filtering.",
-   "methodology": "Relief Pitcher. The 'RP' filter chip is a rollup: it matches single-inning relievers (SIRP — closer / setup), multi-inning relievers (MIRP — bulk / long-relief), and bare-RP prospects whose role isn't yet specified. Useful when you want every relief-role pitcher in the same view without caring about leverage tier. Use the SIRP / MIRP chips directly when the high-leverage vs bulk distinction matters.",
+   "definition": "Relief pitcher - generic relief role. Rolls up SIRP + MIRP + bare RP for filtering.",
+   "methodology": "Relief Pitcher. The 'RP' filter chip is a rollup: it matches single-inning relievers (SIRP - closer / setup), multi-inning relievers (MIRP - bulk / long-relief), and bare-RP prospects whose role isn't yet specified. Useful when you want every relief-role pitcher in the same view without caring about leverage tier. Use the SIRP / MIRP chips directly when the high-leverage vs bulk distinction matters.",
    "seeAlso": [
     "sirp",
     "mirp",
@@ -782,8 +782,8 @@
     "Closer / setup"
    ],
    "priority": 11,
-   "definition": "Single-Inning Relief Pitcher — closer or high-leverage setup role (~1 inning per outing).",
-   "methodology": "Single-Inning Relief Pitcher. FanGraphs designates a pitcher SIRP when their projected role is one-inning, high-leverage relief — closer, setup, fireman. Typically prospects with above-average fastball velocity + at least one plus secondary offering, but lacking the arsenal depth or command to face a lineup multiple times as a starter. SIRPs carry the most leverage per inning of any pitcher role; the trade-off is they cover the fewest innings, so even an elite SIRP rarely projects above FV 50-55. Higher leverage than MIRP, fewer innings.",
+   "definition": "Single-Inning Relief Pitcher - closer or high-leverage setup role (~1 inning per outing).",
+   "methodology": "Single-Inning Relief Pitcher. FanGraphs designates a pitcher SIRP when their projected role is one-inning, high-leverage relief - closer, setup, fireman. Typically prospects with above-average fastball velocity + at least one plus secondary offering, but lacking the arsenal depth or command to face a lineup multiple times as a starter. SIRPs carry the most leverage per inning of any pitcher role; the trade-off is they cover the fewest innings, so even an elite SIRP rarely projects above FV 50-55. Higher leverage than MIRP, fewer innings.",
    "seeAlso": [
     "mirp",
     "rp",
@@ -805,8 +805,8 @@
     "Swingman"
    ],
    "priority": 12,
-   "definition": "Multi-Inning Relief Pitcher — long relief, bulk follower, or swingman (~2+ innings per outing).",
-   "methodology": "Multi-Inning Relief Pitcher. FanGraphs designates a pitcher MIRP when their projected role is 2+ innings per outing — long-relief, bulk follower behind an opener, or true swingman. Typically prospects with starter-quality stuff but a command profile or arsenal depth issue that pushes them out of the rotation. MIRPs cover more innings than SIRPs but carry less leverage per inning; their FV ceiling sits between a true SP (deeper arsenal) and a SIRP (more leverage). The 'opener' phenomenon expanded the MIRP role's prominence over the last decade.",
+   "definition": "Multi-Inning Relief Pitcher - long relief, bulk follower, or swingman (~2+ innings per outing).",
+   "methodology": "Multi-Inning Relief Pitcher. FanGraphs designates a pitcher MIRP when their projected role is 2+ innings per outing - long-relief, bulk follower behind an opener, or true swingman. Typically prospects with starter-quality stuff but a command profile or arsenal depth issue that pushes them out of the rotation. MIRPs cover more innings than SIRPs but carry less leverage per inning; their FV ceiling sits between a true SP (deeper arsenal) and a SIRP (more leverage). The 'opener' phenomenon expanded the MIRP role's prominence over the last decade.",
    "seeAlso": [
     "sirp",
     "rp",
@@ -992,7 +992,7 @@
    ],
    "priority": 99,
    "definition": "A prospect becomes 'Debuted' the moment MLB records their first MLB game.",
-   "methodology": "The MLB API's mlbDebutDate is the source of truth — when that field is set on a prospect's record, they move out of the active prospect pool and onto the Debuted tab. The site additionally promotes any prospect who has been outrighted (cleared waivers off the 40-man) since being on the 40-man already makes them a non-prospect. When neither signal is available, debut date falls back to the player's earliest MLB-season Opening Day from career stats. The rookie-eligibility thresholds (130 AB / 50 IP / 45 active-roster days) are NOT used — they produced unreliable dates whenever any upstream input was stale.",
+   "methodology": "The MLB API's mlbDebutDate is the source of truth - when that field is set on a prospect's record, they move out of the active prospect pool and onto the Debuted tab. The site additionally promotes any prospect who has been outrighted (cleared waivers off the 40-man) since being on the 40-man already makes them a non-prospect. When neither signal is available, debut date falls back to the player's earliest MLB-season Opening Day from career stats. The rookie-eligibility thresholds (130 AB / 50 IP / 45 active-roster days) are NOT used - they produced unreliable dates whenever any upstream input was stale.",
    "formula": "debuted iff mlbDebutDate is set OR an outright transaction is on file",
    "seeAlso": []
   },
@@ -1237,7 +1237,7 @@
    ],
    "aliases": [],
    "priority": 99,
-   "definition": "Strikeouts per 9 innings — legacy metric; this site now uses K% (per-batter) as the canonical strikeout rate.",
+   "definition": "Strikeouts per 9 innings - legacy metric; this site now uses K% (per-batter) as the canonical strikeout rate.",
    "methodology": "9 K/9 is MLB average for a starter, 11+ is elite. K% (per-batter) is more workload-stable than K/9 (per-inning) since starter and reliever IP-per-appearance differ widely. As of v22 the site surfaces K% everywhere; K/9 is only used as a fallback when batters-faced isn't on file for an older MiLB row.",
    "formula": "K/9 = K · 9 / IP",
    "seeAlso": [
@@ -1254,7 +1254,7 @@
    ],
    "aliases": [],
    "priority": 99,
-   "definition": "Walks per 9 innings — legacy metric; this site now uses BB% (per-batter) as the canonical walk rate.",
+   "definition": "Walks per 9 innings - legacy metric; this site now uses BB% (per-batter) as the canonical walk rate.",
    "methodology": "3.0 BB/9 is MLB average, sub-2.5 is above average, sub-2.0 is elite command. BB% is preferred because it normalizes for IP-per-appearance differences (starters vs relievers). As of v22 the site surfaces BB% everywhere; BB/9 is only a fallback when batters-faced is missing from a career row.",
    "formula": "BB/9 = BB · 9 / IP",
    "seeAlso": [
@@ -1312,7 +1312,7 @@
    ],
    "priority": 8,
    "definition": "Pitcher walk rate. Walks as % of batters faced. Canonical walk metric site-wide (replaced BB/9 in v22).",
-   "methodology": "Preferred over BB/9 — same reasoning as K%. ~8% is MLB average, sub-7% above average, sub-6% elite command. Approximated from BB/9 ÷ 0.387 when batters-faced isn't on file.",
+   "methodology": "Preferred over BB/9 - same reasoning as K%. ~8% is MLB average, sub-7% above average, sub-6% elite command. Approximated from BB/9 ÷ 0.387 when batters-faced isn't on file.",
    "formula": "BB% = BB / TBF (fallback: BB/9 ÷ 0.387 when TBF missing)",
    "seeAlso": [
     "bb_per_9",
@@ -1332,8 +1332,8 @@
     "rWAR"
    ],
    "priority": 5,
-   "definition": "Wins Above Replacement — Baseball-Reference's implementation (bWAR) is the one WAR source used site-wide. Single-number value estimate covering offense, defense, baserunning, and position.",
-   "methodology": "Baseball-Reference's implementation (bWAR) is the one WAR source used site-wide — career totals, per-season columns, and current-season pills all read the same per-season series. 2 WAR/yr is an MLB regular, 4 is an above-average regular, 6+ is All-Star, 8+ is MVP candidate. Used as the realized output baseline for WAG.",
+   "definition": "Wins Above Replacement - Baseball-Reference's implementation (bWAR) is the one WAR source used site-wide. Single-number value estimate covering offense, defense, baserunning, and position.",
+   "methodology": "Baseball-Reference's implementation (bWAR) is the one WAR source used site-wide - career totals, per-season columns, and current-season pills all read the same per-season series. 2 WAR/yr is an MLB regular, 4 is an above-average regular, 6+ is All-Star, 8+ is MVP candidate. Used as the realized output baseline for WAG.",
    "seeAlso": [
     "wag",
     "tvi"
@@ -1349,7 +1349,7 @@
    "aliases": [],
    "priority": 8,
    "definition": "The site-computed FV; averages all source publications and applies single-instance shrinkage.",
-   "methodology": "For every snapshot, the consensus FV is the mean of explicit FVs published by any tracked source. When only one source has ever published the player (across their entire history, not just the latest snapshot), the consensus is Bayesian-pulled 1/3 toward FV 35 to reflect single-observation uncertainty. The pull lifts as soon as a second grade lands, even from the same source. Phase 4 (2026-06): the blend is ACCURACY-WEIGHTED — relative vote weights from each source's measured track record on resolved common-set cohorts (vintage-disciplined: a board year only uses track records resolvable before it), shrunk hard toward equal (k=150) and clamped [0.6, 1.5]. Current weights: MLB Pipeline 1.06, FanGraphs 0.94 — the resolved cohorts measured Pipeline slightly ahead, the opposite of the popular prior; sources without resolved history vote at 1.0. Shipped only after the weighted blend beat equal-weight on both pooled Spearman and AUC in the A/B (data/consensus_weight_eval.json); disagreement metrics stay unweighted.",
+   "methodology": "For every snapshot, the consensus FV is the mean of explicit FVs published by any tracked source. When only one source has ever published the player (across their entire history, not just the latest snapshot), the consensus is Bayesian-pulled 1/3 toward FV 35 to reflect single-observation uncertainty. The pull lifts as soon as a second grade lands, even from the same source. Phase 4 (2026-06): the blend is ACCURACY-WEIGHTED - relative vote weights from each source's measured track record on resolved common-set cohorts (vintage-disciplined: a board year only uses track records resolvable before it), shrunk hard toward equal (k=150) and clamped [0.6, 1.5]. Current weights: MLB Pipeline 1.06, FanGraphs 0.94 - the resolved cohorts measured Pipeline slightly ahead, the opposite of the popular prior; sources without resolved history vote at 1.0. Shipped only after the weighted blend beat equal-weight on both pooled Spearman and AUC in the A/B (data/consensus_weight_eval.json); disagreement metrics stay unweighted.",
    "seeAlso": [
     "fv",
     "shrinkage",
@@ -1369,7 +1369,7 @@
    ],
    "priority": 12,
    "definition": "Trailing-window FV trajectory; direction and delta since the player's prior snapshot.",
-   "methodology": "Compares latest consensus_fv_raw against the prior point in the player's history. ▲ is up by ≥1.5 FV, ▼ is down, — is flat. Shows up on list rows and as a stock chip in the detail-page header.",
+   "methodology": "Compares latest consensus_fv_raw against the prior point in the player's history. ▲ is up by ≥1.5 FV, ▼ is down, - is flat. Shows up on list rows and as a stock chip in the detail-page header.",
    "seeAlso": [
     "fv",
     "dvm_plus"
@@ -1456,7 +1456,7 @@
    "aliases": [],
    "priority": 10,
    "definition": "Total $M of MLB value above cost-controlled salary. Two distinct flavors: PROJECTED (prospects, FV-derived) and REALIZED (debutants/MLB, actual career WAR-derived).",
-   "methodology": "v32.1 — Two distinct measurements depending on which side of debut a player is on, kept strictly separate:\n• **Projected** (prospects, pre-debut): FV → projected WAR → projected $ via the value_framework formula (Sur+). Granular at any FV (47, 52.3, etc).\n• **Realized** (debutants / MLB players): actual career WAR × $/WAR_overall ($11.74M rolling 3yr 2024-2026 avg) minus actual or estimated salaries paid. Positive means the team beat the bet implied by the player's grade; negative means they paid more than the realized value.\nThese are NEVER mixed in a single $/FV ratio (vets don't have a meaningful FV anchor). Trade audits surface them side-by-side: 'Org A received 15 FV-pts projected at $1.7M/FV-pt + $48M realized vet value'.\n\nv3 — the $/WAR LEVEL re-anchors at load to the FA module's signings-implied series (data/fa_dpw_series.json: what clubs actually paid per discounted projected win on the open market, the Gate-2-validated estimator), trailing-3-winter mean, tier shape preserved. Open-market $/WAR is the right basis for surplus: it prices what the wins would otherwise cost to BUY. Each control season still escalates with $/WAR inflation and discounts at 9%. Phase 4 (2026-06): a REAL-data calibration layer now corrects the raw mixture model's measured margin overshoot (first real backtest: 2,958 prospects from 2017-19 listings; raw calibration slope 0.64, i.e. ~$1.6 predicted per $1 realized at the margin). The isotonic correction was validated leave-one-year-out (held-out slope 0.96, bias -0.1M, P10-P90 coverage 0.86) and is applied to every published surplus number; backtests always re-fit against the raw layer. Headline effect: an FV-55 hitter's expected surplus moved from ~$41M to ~$22M — the model now says what the data says a 55 has actually been worth.",
+   "methodology": "v32.1 - Two distinct measurements depending on which side of debut a player is on, kept strictly separate:\n• **Projected** (prospects, pre-debut): FV → projected WAR → projected $ via the value_framework formula (Sur+). Granular at any FV (47, 52.3, etc).\n• **Realized** (debutants / MLB players): actual career WAR × $/WAR_overall ($11.74M rolling 3yr 2024-2026 avg) minus actual or estimated salaries paid. Positive means the team beat the bet implied by the player's grade; negative means they paid more than the realized value.\nThese are NEVER mixed in a single $/FV ratio (vets don't have a meaningful FV anchor). Trade audits surface them side-by-side: 'Org A received 15 FV-pts projected at $1.7M/FV-pt + $48M realized vet value'.\n\nv3 - the $/WAR LEVEL re-anchors at load to the FA module's signings-implied series (data/fa_dpw_series.json: what clubs actually paid per discounted projected win on the open market, the Gate-2-validated estimator), trailing-3-winter mean, tier shape preserved. Open-market $/WAR is the right basis for surplus: it prices what the wins would otherwise cost to BUY. Each control season still escalates with $/WAR inflation and discounts at 9%. Phase 4 (2026-06): a REAL-data calibration layer now corrects the raw mixture model's measured margin overshoot (first real backtest: 2,958 prospects from 2017-19 listings; raw calibration slope 0.64, i.e. ~$1.6 predicted per $1 realized at the margin). The isotonic correction was validated leave-one-year-out (held-out slope 0.96, bias -0.1M, P10-P90 coverage 0.86) and is applied to every published surplus number; backtests always re-fit against the raw layer. Headline effect: an FV-55 hitter's expected surplus moved from ~$41M to ~$22M - the model now says what the data says a 55 has actually been worth.",
    "seeAlso": [
     "tvi",
     "war",
@@ -1635,7 +1635,7 @@
     "Dominican Summer League"
    ],
    "priority": 99,
-   "definition": "Dominican Summer League — the entry point for most international amateur signings. Players are 16-19, mostly IFAs.",
+   "definition": "Dominican Summer League - the entry point for most international amateur signings. Players are 16-19, mostly IFAs.",
    "methodology": "Affiliated rookie ball played in the Dominican Republic; avg age ~18, heavily Latin American (Dominican, Venezuelan, Colombian signees). Each MLB org runs at least one DSL team and many run two. DSL → complex league (CPX) → A-ball is the typical international development ladder.",
    "seeAlso": [
     "cpx",
@@ -1714,7 +1714,7 @@
     "Fastball grade"
    ],
    "priority": 99,
-   "definition": "20-80 scouting grade for a pitcher's fastball — velocity, movement, shape, and command of the pitch.",
+   "definition": "20-80 scouting grade for a pitcher's fastball - velocity, movement, shape, and command of the pitch.",
    "methodology": "Most pitchers' headline tool. 60+ is plus (mid-90s + ride or sink); 70+ is plus-plus (upper-90s + carry). The grade folds together velo, vertical/horizontal break, and command of the pitch; pure velo without shape rarely earns above 55.",
    "seeAlso": [
     "slider_grade",
@@ -1735,7 +1735,7 @@
     "Sweeper"
    ],
    "priority": 99,
-   "definition": "20-80 grade for the pitcher's slider (or sweeper variant) — sharpness, depth, tunneling with the fastball.",
+   "definition": "20-80 grade for the pitcher's slider (or sweeper variant) - sharpness, depth, tunneling with the fastball.",
    "methodology": "Sliders sit ~5-10 mph below the FB; sweepers add ~15-18 inches of horizontal break. Both ride the 'sl' slot in our data because their roles overlap. 60+ is a true out-pitch slider; 50 is average MLB shape.",
    "seeAlso": [
     "fastball_grade",
@@ -1756,7 +1756,7 @@
     "Curve"
    ],
    "priority": 99,
-   "definition": "20-80 grade for the curveball — depth, shape, and command of the slowest breaking pitch.",
+   "definition": "20-80 grade for the curveball - depth, shape, and command of the slowest breaking pitch.",
    "methodology": "Distinct from a slider by velocity (8-12 mph slower than the FB vs. 5-10) and by primarily vertical break. Spike/knuckle/standard grips all map to 'cb' in our data. 60+ curveballs typically pair with a deep FB slot (over-the-top arm action).",
    "seeAlso": [
     "slider_grade",
@@ -1777,8 +1777,8 @@
     "Splitter"
    ],
    "priority": 99,
-   "definition": "20-80 grade for the changeup (or splitter) — velo separation, arm-action deception, and command.",
-   "methodology": "Changeups sit 8-12 mph below the FB with sink/fade. Splitters sit 8-12 mph below with hard tumble — different grip, same role in the arsenal. Both ride the 'ch' slot. 60+ changeups define a starter's profile vs. lefties.",
+   "definition": "20-80 grade for the changeup (or splitter) - velo separation, arm-action deception, and command.",
+   "methodology": "Changeups sit 8-12 mph below the FB with sink/fade. Splitters sit 8-12 mph below with hard tumble - different grip, same role in the arsenal. Both ride the 'ch' slot. 60+ changeups define a starter's profile vs. lefties.",
    "seeAlso": [
     "fastball_grade"
    ]
@@ -1815,7 +1815,7 @@
     "Cutter"
    ],
    "priority": 99,
-   "definition": "20-80 grade for the cutter — a hybrid between FB and slider with late horizontal break, ~3-5 mph below the FB.",
+   "definition": "20-80 grade for the cutter - a hybrid between FB and slider with late horizontal break, ~3-5 mph below the FB.",
    "methodology": "FG and Pipeline don't always grade the cutter as a distinct slot; Just Baseball does. We carry 'ct' as a canonical key so JB-graded cutters flow into consensus when published. The pitch's role is FB-like (in-zone, two-strike strike-out option) but with arm-side cut.",
    "seeAlso": [
     "fastball_grade",
@@ -1836,7 +1836,7 @@
     "Plate Discipline"
    ],
    "priority": 99,
-   "definition": "20-80 grade for a hitter's swing decisions and pitch recognition — chase / contact rate / zone awareness.",
+   "definition": "20-80 grade for a hitter's swing decisions and pitch recognition - chase / contact rate / zone awareness.",
    "methodology": "A separate skill from the hit tool (bat-to-ball). 60+ pitch selection means low chase, high z-contact, willingness to take walks. FG publishes this as a standalone grade; Just Baseball calls it 'Plate Disc.'. Feeds the offensive composite alongside Hit / Game Power.",
    "seeAlso": [
     "hit_tool",
@@ -1855,8 +1855,8 @@
     "BC"
    ],
    "priority": 99,
-   "definition": "20-80 grade for barrel control — the ability to manipulate the bat in-zone, foul off tough pitches, square balls up.",
-   "methodology": "Distinct from the broader hit tool. Bat control speaks to swing path quality, bat-head awareness, and 2-strike adjustability — the difference between a plus hitter who barrels everything (60+) and one who hits .280 but chases the barrel (50).",
+   "definition": "20-80 grade for barrel control - the ability to manipulate the bat in-zone, foul off tough pitches, square balls up.",
+   "methodology": "Distinct from the broader hit tool. Bat control speaks to swing path quality, bat-head awareness, and 2-strike adjustability - the difference between a plus hitter who barrels everything (60+) and one who hits .280 but chases the barrel (50).",
    "seeAlso": [
     "hit_tool",
     "pitch_sel"
@@ -1894,8 +1894,8 @@
     "Amateur Draft"
    ],
    "priority": 5,
-   "definition": "The annual July amateur player draft — 20 rounds, picks from US/Canada/Puerto Rico HS and college. Distinct from the Rule 5 (Dec) draft.",
-   "methodology": "Each team has a bonus pool sized to their pick slot values; spending under pool saves nothing, spending over by >5% triggers picks-forfeiture penalties. International players (DSL/Latin America) don't go through Rule 4 — they sign as IFAs.",
+   "definition": "The annual July amateur player draft - 20 rounds, picks from US/Canada/Puerto Rico HS and college. Distinct from the Rule 5 (Dec) draft.",
+   "methodology": "Each team has a bonus pool sized to their pick slot values; spending under pool saves nothing, spending over by >5% triggers picks-forfeiture penalties. International players (DSL/Latin America) don't go through Rule 4 - they sign as IFAs.",
    "seeAlso": [
     "rule_5_draft",
     "ifa",
@@ -1936,7 +1936,7 @@
    ],
    "priority": 15,
    "definition": "Each 40-man player has 3 (sometimes 4) option years allowing free MLB↔AAA shuttle. After they're used, the player must clear waivers to be sent down.",
-   "methodology": "An 'option' is burned the first time a player is sent to the minors in a season AND spends 20+ days there. Burning an option each of three seasons exhausts them. Out-of-options players are higher-stakes 40-man slots — they can't be sent down freely.",
+   "methodology": "An 'option' is burned the first time a player is sent to the minors in a season AND spends 20+ days there. Burning an option each of three seasons exhausts them. Out-of-options players are higher-stakes 40-man slots - they can't be sent down freely.",
    "seeAlso": [
     "forty_man_roster",
     "service_time"
@@ -1974,7 +1974,7 @@
    ],
    "priority": 20,
    "definition": "Salary process for players with 3-6 yrs of MLB service. Player + team file binding numbers; an arbitrator picks one if they don't settle.",
-   "methodology": "Arbitration cases are heard in February. The arbitrator picks ONE side's number — no splitting. Most cases settle before the hearing. Arb-year salaries scale up year over year (Yr1 ~$1M, Yr3 ~$8M for stars). Super Twos get a 4th arb year.",
+   "methodology": "Arbitration cases are heard in February. The arbitrator picks ONE side's number - no splitting. Most cases settle before the hearing. Arb-year salaries scale up year over year (Yr1 ~$1M, Yr3 ~$8M for stars). Super Twos get a 4th arb year.",
    "seeAlso": [
     "service_time",
     "pre_arbitration",
@@ -1995,7 +1995,7 @@
    ],
    "priority": 21,
    "definition": "Service-time window from 0 to ~3 yrs MLB time. Player is paid at or near the league minimum with no salary leverage.",
-   "methodology": "Pre-arb is the most team-friendly part of a player's career — most graduates spend their first 2-3 MLB years here. Salaries are unilaterally set by the club (subject to league minimum, ~$760k in 2024). The new CBA introduced a Pre-Arb Bonus Pool that retroactively rewards top performers but doesn't change the unilateral-pay structure. Once the player crosses 3.000 of MLB service (or qualifies as Super Two), they enter arbitration.",
+   "methodology": "Pre-arb is the most team-friendly part of a player's career - most graduates spend their first 2-3 MLB years here. Salaries are unilaterally set by the club (subject to league minimum, ~$760k in 2024). The new CBA introduced a Pre-Arb Bonus Pool that retroactively rewards top performers but doesn't change the unilateral-pay structure. Once the player crosses 3.000 of MLB service (or qualifies as Super Two), they enter arbitration.",
    "seeAlso": [
     "service_time",
     "arbitration",
@@ -2015,7 +2015,7 @@
    ],
    "priority": 22,
    "definition": "Players in the top 22% of 2-3 service-year players get a 4th arbitration year. Costs the team an extra arb cycle.",
-   "methodology": "After each season, MLB identifies players with between 2.000 and 3.000 of service time. The top 22% by service days qualify as Super Two and become arb-eligible a year early. Teams aggressively manage call-ups to keep top prospects below the Super Two cutoff — usually requires keeping the player on the active roster for fewer than ~125 days in his first MLB season.",
+   "methodology": "After each season, MLB identifies players with between 2.000 and 3.000 of service time. The top 22% by service days qualify as Super Two and become arb-eligible a year early. Teams aggressively manage call-ups to keep top prospects below the Super Two cutoff - usually requires keeping the player on the active roster for fewer than ~125 days in his first MLB season.",
    "seeAlso": [
     "service_time",
     "arbitration",
@@ -2035,7 +2035,7 @@
    ],
    "priority": 24,
    "definition": "Strategic delay of a top prospect's MLB debut to gain an extra year of team control. Less common post-2022 CBA but not eliminated.",
-   "methodology": "If a club holds a prospect in AAA for the first ~3 weeks of the regular season, the player won't accumulate 172 days of MLB service that year — pushing free agency back by a year. The 2022 CBA introduced PPI (Prospect Promotion Incentive) draft picks for clubs that promote top prospects on Opening Day AND those players finish top-2 in ROY voting or top-5 in MVP/Cy Young — partially aligning incentives. Famous examples: Kris Bryant (2015 grievance lost), Vladimir Guerrero Jr. (2019 demotion).",
+   "methodology": "If a club holds a prospect in AAA for the first ~3 weeks of the regular season, the player won't accumulate 172 days of MLB service that year - pushing free agency back by a year. The 2022 CBA introduced PPI (Prospect Promotion Incentive) draft picks for clubs that promote top prospects on Opening Day AND those players finish top-2 in ROY voting or top-5 in MVP/Cy Young - partially aligning incentives. Famous examples: Kris Bryant (2015 grievance lost), Vladimir Guerrero Jr. (2019 demotion).",
    "seeAlso": [
     "service_time",
     "super_two"
@@ -2056,7 +2056,7 @@
    ],
    "priority": 26,
    "definition": "Players with 6+ years of MLB service may sign with any club once the World Series ends; the first five days are an exclusive-negotiation window with the incumbent club and the qualifying-offer period.",
-   "methodology": "Major-league free agency requires 6.000 of service time. The 5-day window after the World Series is exclusive negotiating period with the prior team; after that, the player is open to all 30 clubs. Minor-league free agency is separate — minor-leaguers become 6-year MiLB FAs after their 6th professional season unless on a 40-man roster. Spotrac, MLB Trade Rumors, and Baseball-Reference all track FA classes by year.",
+   "methodology": "Major-league free agency requires 6.000 of service time. The 5-day window after the World Series is exclusive negotiating period with the prior team; after that, the player is open to all 30 clubs. Minor-league free agency is separate - minor-leaguers become 6-year MiLB FAs after their 6th professional season unless on a 40-man roster. Spotrac, MLB Trade Rumors, and Baseball-Reference all track FA classes by year.",
    "seeAlso": [
     "service_time",
     "qualifying_offer",
@@ -2075,7 +2075,7 @@
     "QO"
    ],
    "priority": 27,
-   "definition": "One-year contract a club may offer its departing free agent at the mean of MLB's top-125 salaries (~$21M in 2024). If the player declines and signs elsewhere, the SIGNING club forfeits draft-pick compensation and the former club gains a comp pick — the offer itself costs the old club nothing beyond the one-year salary risk.",
+   "definition": "One-year contract a club may offer its departing free agent at the mean of MLB's top-125 salaries (~$21M in 2024). If the player declines and signs elsewhere, the SIGNING club forfeits draft-pick compensation and the former club gains a comp pick - the offer itself costs the old club nothing beyond the one-year salary risk.",
    "methodology": "Teams can extend a QO to free agents who spent the entire prior season with the team and haven't received one before. If the player declines (almost always) and signs elsewhere, the signing team forfeits draft picks; the losing team gets a compensation pick. The QO value is calculated annually as the simple average of the top 125 player salaries. Mid-season trade acquisitions are NOT QO-eligible (a key trade-deadline tax).",
    "seeAlso": [
     "free_agency",
@@ -2097,7 +2097,7 @@
    ],
    "priority": 27,
    "definition": "Extra draft picks awarded for QO-declined free agents, Prospect Promotion Incentive (PPI), and revenue-sharing balance.",
-   "methodology": "Two main sources: (1) QO comp — teams losing a QO'd FA get a pick after either round 1 (small-market teams) or after round 4 (mid/large markets, depending on luxury-tax status). The signing team forfeits a pick to balance. (2) PPI — clubs that promote a top prospect on Opening Day and the player wins ROY (or top-2) earn a pick after round 1. The Competitive Balance Lottery also awards 10-12 picks (Round A + Round B) to lower-revenue clubs.",
+   "methodology": "Two main sources: (1) QO comp - teams losing a QO'd FA get a pick after either round 1 (small-market teams) or after round 4 (mid/large markets, depending on luxury-tax status). The signing team forfeits a pick to balance. (2) PPI - clubs that promote a top prospect on Opening Day and the player wins ROY (or top-2) earn a pick after round 1. The Competitive Balance Lottery also awards 10-12 picks (Round A + Round B) to lower-revenue clubs.",
    "seeAlso": [
     "rule_4_draft",
     "qualifying_offer",
@@ -2117,7 +2117,7 @@
     "Cleared waivers"
    ],
    "priority": 23,
-   "definition": "Post-DFA path — player clears waivers and is sent off the 40-man roster down to AAA. Player can refuse if they have 3+ MLB service yrs.",
+   "definition": "Post-DFA path - player clears waivers and is sent off the 40-man roster down to AAA. Player can refuse if they have 3+ MLB service yrs.",
    "methodology": "After a DFA, the team has 7 days. If the player clears waivers (no other club claims them), they can be outrighted to AAA. The player loses 40-man protection but keeps minor-league assignment rights. Players with 3+ MLB service years OR a prior outright in their career can REFUSE the outright and elect free agency. Each outright stays on the player's record permanently.",
    "seeAlso": [
     "dfa",
@@ -2176,7 +2176,7 @@
    ],
    "priority": 28,
    "definition": "Lump-sum payment at signing for amateur players. Draftees pull from the team's draft pool; IFAs from the IFA pool.",
-   "methodology": "Draft slot values are published each year by MLB. Teams can spend up to 5% over pool with progressive tax penalties; >5% costs future first-round picks. IFA bonuses are capped at the assigned pool size (~$5.95M base + competitive-balance bonuses) — no overage allowed since 2017.",
+   "methodology": "Draft slot values are published each year by MLB. Teams can spend up to 5% over pool with progressive tax penalties; >5% costs future first-round picks. IFA bonuses are capped at the assigned pool size (~$5.95M base + competitive-balance bonuses) - no overage allowed since 2017.",
    "seeAlso": [
     "rule_4_draft",
     "ifa"
@@ -2197,7 +2197,7 @@
    ],
    "priority": 30,
    "definition": "Three IL durations: 10-day (position players), 15-day (the minimum for pitchers and two-way players, post-2022), and 60-day, which also frees the player's 40-man roster spot.",
-   "methodology": "A team can transfer between IL types — a 15-day IL stint can convert to 60-day when the player misses more time. The 60-day IL removes the player from the 40-man count (extra roster flexibility). Concussion IL is a separate 7-day version.",
+   "methodology": "A team can transfer between IL types - a 15-day IL stint can convert to 60-day when the player misses more time. The 60-day IL removes the player from the 40-man count (extra roster flexibility). Concussion IL is a separate 7-day version.",
    "seeAlso": [
     "on_il",
     "forty_man_roster"
@@ -2217,7 +2217,7 @@
    ],
    "priority": 35,
    "definition": "Official MLB designation: 20+ MLB innings pitched AND 20+ MLB games started as a position player or DH with at least 3 plate appearances in each. Qualifying exempts the player from the pitcher-usage rules that bar position players from pitching in competitive games.",
-   "methodology": "Ohtani is the canonical example. The site detects two-way profiles when a prospect has both hitter (hit/game_pwr/...) AND pitcher (fb/sl/...) canonical tool grades — both Tools cards then render. Reggie Crawford and a handful of recent draftees fit the pattern.",
+   "methodology": "Ohtani is the canonical example. The site detects two-way profiles when a prospect has both hitter (hit/game_pwr/...) AND pitcher (fb/sl/...) canonical tool grades - both Tools cards then render. Reggie Crawford and a handful of recent draftees fit the pattern.",
    "seeAlso": [
     "hit_tool",
     "fastball_grade"
@@ -2277,7 +2277,7 @@
    ],
    "priority": 5,
    "definition": "Green ▲ = consensus FV rose since the last update; red ▼ = fell. Magnitude is the FV-delta.",
-   "methodology": "Drives the 'Up' / 'Down' filter on the Active list. Stock reads as 'delta since the most recent prior update' — a player with only one update reads as 'flat'. Movements ≥ 1.5 grade-points show in the row's meta line.",
+   "methodology": "Drives the 'Up' / 'Down' filter on the Active list. Stock reads as 'delta since the most recent prior update' - a player with only one update reads as 'flat'. Movements ≥ 1.5 grade-points show in the row's meta line.",
    "seeAlso": [
     "stock",
     "fv"
@@ -2316,8 +2316,8 @@
     "Card rarity"
    ],
    "priority": 11,
-   "definition": "Animated border treatment around player headshots / cards. Anchored at FV 40 (average prospect — no treatment); every tier above 40 picks up a richer foil/chrome/holo shimmer.",
-   "methodology": "Rarity ramp anchored at FV 40 (baseline) with HOLO above CHROME (chrome is static silver; holo carries the rainbow shift, so the rainbow tier reads as rarer). Five rarity bands above the baseline, mirroring the Topps Chrome / refractor aesthetic:\\\n  • FV 70+ → LEGENDARY · animated rainbow with pulsing outline glow (top ~1%)\\\n  • FV 61-69 → HOLO · full rainbow shift (plus prospect, above first-division floor)\\\n  • FV 55-60 → CHROME · silver shimmer (FV 60 first-division floor lives here)\\\n  • FV 50-54 → FOIL · faint silver foil (MLB-regular projection)\\\n  • FV 45-49 → SHINE · static gold ring (above-average org piece)\\\n  • FV 40 → baseline, no treatment (average prospect)\\\n  • FV < 40 → no treatment\\\nApplied everywhere a player headshot or card renders — list rows, spotlight cards, the prospect detail page header, compare view.",
+   "definition": "Animated border treatment around player headshots / cards. Anchored at FV 40 (average prospect - no treatment); every tier above 40 picks up a richer foil/chrome/holo shimmer.",
+   "methodology": "Rarity ramp anchored at FV 40 (baseline) with HOLO above CHROME (chrome is static silver; holo carries the rainbow shift, so the rainbow tier reads as rarer). Five rarity bands above the baseline, mirroring the Topps Chrome / refractor aesthetic:\\\n • FV 70+ → LEGENDARY · animated rainbow with pulsing outline glow (top ~1%)\\\n • FV 61-69 → HOLO · full rainbow shift (plus prospect, above first-division floor)\\\n • FV 55-60 → CHROME · silver shimmer (FV 60 first-division floor lives here)\\\n • FV 50-54 → FOIL · faint silver foil (MLB-regular projection)\\\n • FV 45-49 → SHINE · static gold ring (above-average org piece)\\\n • FV 40 → baseline, no treatment (average prospect)\\\n • FV < 40 → no treatment\\\nApplied everywhere a player headshot or card renders - list rows, spotlight cards, the prospect detail page header, compare view.",
    "seeAlso": [
     "fv",
     "fv_badge"
@@ -2373,8 +2373,8 @@
     "Wide spread"
    ],
    "priority": 18,
-   "definition": "Violet 'W' in the bottom-right corner of an FV badge — at least two FV-publishing sources disagree by ≥10 grade-points on the latest update.",
-   "methodology": "Visual signature: a 14×14 violet circle with a white 'W' glyph plus a matching violet right-edge accent on the FV badge. Hover the chip for the exact spread and source count. The mark is a 'wide read' warning — the consensus FV is averaging meaningfully disagreeing views rather than a tight bundle.",
+   "definition": "Violet 'W' in the bottom-right corner of an FV badge - at least two FV-publishing sources disagree by ≥10 grade-points on the latest update.",
+   "methodology": "Visual signature: a 14×14 violet circle with a white 'W' glyph plus a matching violet right-edge accent on the FV badge. Hover the chip for the exact spread and source count. The mark is a 'wide read' warning - the consensus FV is averaging meaningfully disagreeing views rather than a tight bundle.",
    "seeAlso": [
     "wide_spread",
     "fv"
@@ -2393,7 +2393,7 @@
     "Single source"
    ],
    "priority": 20,
-   "definition": "Amber '1' in the top-left corner of an FV badge — only one source has ever published an explicit FV for this player. Consensus is Bayesian-shrunk.",
+   "definition": "Amber '1' in the top-left corner of an FV badge - only one source has ever published an explicit FV for this player. Consensus is Bayesian-shrunk.",
    "methodology": "Visual signature: a 14×14 amber circle with a white '1' glyph plus a matching amber left-edge accent on the FV badge. Single-source players are pulled toward FV 35 (Bayesian shrinkage, k=0.5) until a second source confirms the grade.",
    "seeAlso": [
     "consensus_fv",
@@ -2448,7 +2448,7 @@
    ],
    "priority": 30,
    "definition": "Cyan pill in the 'Source-by-source tool history' dropdown marking the row that feeds the Tool composite. One per source.",
-   "methodology": "Tool uses each source's MOST RECENT publication only — forward-fill picks the latest per source. Older rows are dimmed and don't count toward the consensus math.",
+   "methodology": "Tool uses each source's MOST RECENT publication only - forward-fill picks the latest per source. Older rows are dimmed and don't count toward the consensus math.",
    "seeAlso": [
     "tool"
    ],
@@ -2481,7 +2481,7 @@
     "Plus signal"
    ],
    "priority": 36,
-   "definition": "Above-cohort signal on a tool or rate stat — e.g., 60+ hit tool, top-decile K%.",
+   "definition": "Above-cohort signal on a tool or rate stat - e.g., 60+ hit tool, top-decile K%.",
    "methodology": "Green flags appear in the per-player flag strip (3 visible, more on hover) and in the dedicated Flags section on the detail page. They're computed from a mix of tool grades, rate stats vs. level norms, and composite indices.",
    "seeAlso": [
     "red_flag"
@@ -2499,7 +2499,7 @@
     "Concern signal"
    ],
    "priority": 38,
-   "definition": "Below-cohort signal flagged for concern — e.g., 30 hit tool, bottom-decile contact, chronic injury history.",
+   "definition": "Below-cohort signal flagged for concern - e.g., 30 hit tool, bottom-decile contact, chronic injury history.",
    "seeAlso": [
     "green_flag"
    ]
@@ -2516,7 +2516,7 @@
     "Single-source grade"
    ],
    "priority": 42,
-   "definition": "Small violet 'FG' superscript next to a tool name — that grade is published by FanGraphs only (no cross-source consensus)."
+   "definition": "Small violet 'FG' superscript next to a tool name - that grade is published by FanGraphs only (no cross-source consensus)."
   },
   {
    "id": "heat_badge",
@@ -2530,7 +2530,7 @@
     "Trending hot"
    ],
    "priority": 50,
-   "definition": "Spotlight badge for prospects with top-decile recent stock movement — rising fast across multiple sources."
+   "definition": "Spotlight badge for prospects with top-decile recent stock movement - rising fast across multiple sources."
   },
   {
    "id": "surprise_badge",
@@ -2543,7 +2543,7 @@
     "Surprise"
    ],
    "priority": 52,
-   "definition": "Spotlight badge for out-of-nowhere rises — sources just started covering a prospect not previously ranked."
+   "definition": "Spotlight badge for out-of-nowhere rises - sources just started covering a prospect not previously ranked."
   },
   {
    "id": "arc_badge",
@@ -2556,7 +2556,7 @@
     "Arc"
    ],
    "priority": 54,
-   "definition": "Spotlight badge for sustained multi-update FV movement in one direction — the steady riser/decliner pattern."
+   "definition": "Spotlight badge for sustained multi-update FV movement in one direction - the steady riser/decliner pattern."
   },
   {
    "id": "farm_report_card",
@@ -2571,8 +2571,8 @@
     "Grade tree"
    ],
    "priority": 50,
-   "definition": "4-branch farm grade (v40 — VALUE-TRACKING). Composite = Value 65% (aggregate risk-adjusted surplus) · MLB Production 18% (raw graduate WAR) · Development 9% · Acquisition 8%.",
-   "methodology": "Grade tree v40 — recalibrated to PRIMARILY track aggregate value. The grade was previously a per-prospect tool-development index (Development 50%, with the surplus leaf normalized to a PER-PROSPECT figure), which decoupled it from a system's total value: a farm could be 3rd in total surplus yet grade 15th, below a 25th-in-surplus farm. v40 fixes that.\n\nWeights: Value 65% / MLB Production 18% / Development 9% / Acquisition 8%. (1) The Value branch is driven by AGGREGATE risk-adjusted controlled surplus — the total $ value of the org's active prospect pool from the recalibrated value_framework, which already prices elite ceiling non-linearly, so it captures top-end-vs-depth on its own (no opaque top-heavy weighting).\n\n(2) MLB Production grades on RAW realized graduate WAR (WAR/yr + Top-3 cumulative WAR + boom/−bust/top-grads/conviction/HOF-track); the WAG talent-translation leaf is DROPPED from the rollup (raw MLB output matters more than translation-vs-grade). (3) Development (per-tool DvM+) and Acquisition stay as secondary controllable-skill / process signals.\n\nValidation against realized output: grade-rank now correlates +0.85 with total-surplus rank (was +0.38); every remaining deviation is production-explained — orgs grading above their surplus rank lead the league in realized graduate WAR (e.g. ATL #1), orgs below are near-last.\n\nLetter scale: A+ #1, A top 7%, F bottom ~3%. Every leaf z-scored across the 30 orgs; sparse leaves get '—'. A continuous TIEBREAKER score differentiates same-grade farms — see farm_tiebreaker.",
+   "definition": "4-branch farm grade (v40 - VALUE-TRACKING). Composite = Value 65% (aggregate risk-adjusted surplus) · MLB Production 18% (raw graduate WAR) · Development 9% · Acquisition 8%.",
+   "methodology": "Grade tree v40 - recalibrated to PRIMARILY track aggregate value. The grade was previously a per-prospect tool-development index (Development 50%, with the surplus leaf normalized to a PER-PROSPECT figure), which decoupled it from a system's total value: a farm could be 3rd in total surplus yet grade 15th, below a 25th-in-surplus farm. v40 fixes that.\n\nWeights: Value 65% / MLB Production 18% / Development 9% / Acquisition 8%. (1) The Value branch is driven by AGGREGATE risk-adjusted controlled surplus - the total $ value of the org's active prospect pool from the recalibrated value_framework, which already prices elite ceiling non-linearly, so it captures top-end-vs-depth on its own (no opaque top-heavy weighting).\n\n(2) MLB Production grades on RAW realized graduate WAR (WAR/yr + Top-3 cumulative WAR + boom/−bust/top-grads/conviction/HOF-track); the WAG talent-translation leaf is DROPPED from the rollup (raw MLB output matters more than translation-vs-grade). (3) Development (per-tool DvM+) and Acquisition stay as secondary controllable-skill / process signals.\n\nValidation against realized output: grade-rank now correlates +0.85 with total-surplus rank (was +0.38); every remaining deviation is production-explained - orgs grading above their surplus rank lead the league in realized graduate WAR (e.g. ATL #1), orgs below are near-last.\n\nLetter scale: A+ #1, A top 7%, F bottom ~3%. Every leaf z-scored across the 30 orgs; sparse leaves get ' - '. A continuous TIEBREAKER score differentiates same-grade farms - see farm_tiebreaker.",
    "formula": "farm_score = 0.65·Value + 0.18·MLB_Production + 0.09·Development + 0.08·Acquisition\n  Value          = wmean(Aggregate_active_surplus[0.68], Org_$DvM+, Grad_contract_surplus, WAR_per_$M, Draft_pool_eff, IFA_ROI)\n  MLB_Production  = mean(Hitter_WAR/yr+Top3, Pitcher_WAR/yr+Top3, Boom%, -Bust%, Top3_WAR/yr, Conviction, HOF_track)\n  Development     = mean(Hitter_Tools_DvM+, Pitcher_Tools_DvM+, Health_Mgmt, Statcast_Quality)\n  Acquisition     = mean(Draft, IFA-ROI, Trade, Waiver)\n  tiebreaker = 100 + 10·(0.40·z(total_surplus) + 0.25·z(6yDvM+) + 0.35·z(raw_graduate_WAR))",
    "seeAlso": [
     "farm_tiebreaker",
@@ -2599,7 +2599,7 @@
    ],
    "priority": 50,
    "definition": "Continuous score differentiating farms that share a letter grade. 100 = league mean, +10 = 1σ.",
-   "methodology": "Coarse letter grades collapse real value gaps — two clearly different farms can share a grade. The tiebreaker is a continuous, league-normalized blend of the three value dimensions, shown under each farm's letter so same-grade systems are ordered and distinguishable: 0.40·total active surplus + 0.25·6yDvM+ + 0.35·raw graduate WAR (z-scored across the 30 orgs, anchored 100 + 10·z). Total surplus and 6yDvM+ are the dollar and indexed views of one controlled-value concept, so they share weight rather than double-count; raw graduate WAR adds the REALIZED-output axis (actual MLB WAR produced by the org's graduates — not WAG) that the paper-value measures can't see. Carries a component breakdown and a finer continuous 1–30 rank alongside the letter grade.",
+   "methodology": "Coarse letter grades collapse real value gaps - two clearly different farms can share a grade. The tiebreaker is a continuous, league-normalized blend of the three value dimensions, shown under each farm's letter so same-grade systems are ordered and distinguishable: 0.40·total active surplus + 0.25·6yDvM+ + 0.35·raw graduate WAR (z-scored across the 30 orgs, anchored 100 + 10·z). Total surplus and 6yDvM+ are the dollar and indexed views of one controlled-value concept, so they share weight rather than double-count; raw graduate WAR adds the REALIZED-output axis (actual MLB WAR produced by the org's graduates - not WAG) that the paper-value measures can't see. Carries a component breakdown and a finer continuous 1–30 rank alongside the letter grade.",
    "seeAlso": [
     "farm_report_card",
     "sur_plus",
@@ -2621,7 +2621,7 @@
    ],
    "priority": 51,
    "definition": "Outcome quality of how this org acquires prospects across all 4 channels: Draft, IFA, Trade, Waiver.",
-   "methodology": "Acquisition Strategy branch of the farm grade tree (15% of farm_score in v5; was 20% in v4; merged what were Acquisitions + Transactions in v2). Four sub-leaves, equal weight: (a) Draft Performance — 50/50 blend of pick-slot-adjusted WAR (career WAR vs. historical expectation at that pick slot) + Draft Ceiling Hits % (recent drafted actives at FV ≥ 60 within 3yr of draft).\n\n(b) IFA Performance — 3-input composite of WAG + WAR-per-year + Cumulative WAR across IFA-method graduates. (c) Trade Acumen — net FV gained vs lost at trade dates + Trade WAR Delta (career WAR of acquired grads − career WAR of traded-away grads).\n\n(d) Waiver Claims — net FV from non-trade cross-org events + Waiver Hit Rate (% of claims who reached MLB). Each leaf z-scored across orgs; sparse leaves get '—'.",
+   "methodology": "Acquisition Strategy branch of the farm grade tree (15% of farm_score in v5; was 20% in v4; merged what were Acquisitions + Transactions in v2). Four sub-leaves, equal weight: (a) Draft Performance - 50/50 blend of pick-slot-adjusted WAR (career WAR vs. historical expectation at that pick slot) + Draft Ceiling Hits % (recent drafted actives at FV ≥ 60 within 3yr of draft).\n\n(b) IFA Performance - 3-input composite of WAG + WAR-per-year + Cumulative WAR across IFA-method graduates. (c) Trade Acumen - net FV gained vs lost at trade dates + Trade WAR Delta (career WAR of acquired grads − career WAR of traded-away grads).\n\n(d) Waiver Claims - net FV from non-trade cross-org events + Waiver Hit Rate (% of claims who reached MLB). Each leaf z-scored across orgs; sparse leaves get ' - '.",
    "seeAlso": [
     "wag",
     "farm_report_card",
@@ -2642,8 +2642,8 @@
     "Dev grade"
    ],
    "priority": 52,
-   "definition": "Per-tool dev pace of the org's prospects vs the league. SOLO TOP-WEIGHTED branch (v5: 40%) — the single biggest controllable skill the org has direct hands on.",
-   "methodology": "Development branch of the farm grade tree. Two sub-grades, equal weight: (a) Hitter Tools DvM+ — mean of HitDvM+ / PowerDvM+ / SpeedDvM+ / FieldDvM+ / ArmDvM+ / PitchSelDvM+ / BatCtrlDvM+ for this org's actives, (b) Pitcher Tools DvM+ — mean of FB / SL / CB / CH / Cmd / CtDvM+. Both 100-anchored (100 = league mean dev pace, +10 = 1σ). Measures pure tool growth in-org, independent of raw FV — a 40-grade hit tool that grew to 55 over 2 cycles signals development skill regardless of where the prospect started.",
+   "definition": "Per-tool dev pace of the org's prospects vs the league. SOLO TOP-WEIGHTED branch (v5: 40%) - the single biggest controllable skill the org has direct hands on.",
+   "methodology": "Development branch of the farm grade tree. Two sub-grades, equal weight: (a) Hitter Tools DvM+ - mean of HitDvM+ / PowerDvM+ / SpeedDvM+ / FieldDvM+ / ArmDvM+ / PitchSelDvM+ / BatCtrlDvM+ for this org's actives, (b) Pitcher Tools DvM+ - mean of FB / SL / CB / CH / Cmd / CtDvM+. Both 100-anchored (100 = league mean dev pace, +10 = 1σ). Measures pure tool growth in-org, independent of raw FV - a 40-grade hit tool that grew to 55 over 2 cycles signals development skill regardless of where the prospect started.",
    "seeAlso": [
     "dvm_plus",
     "tools_dvm_plus",
@@ -2667,8 +2667,8 @@
     "Surplus grade"
    ],
    "priority": 54,
-   "definition": "The org's aggregate risk-adjusted controlled value. PRIMARY grade branch (v40 — 65% of the composite). Dominated by total active-pool surplus.",
-   "methodology": "Value branch of the farm grade tree (the Financial branch reframed; 65% of farm_score in v40, up from 18%). The single largest grade input, by design — a farm's grade should principally reflect the total risk-adjusted value of its active prospect pool.\n\nThe dominant leaf (0.68) is AGGREGATE active surplus: the summed FV-implied, risk-adjusted, present-valued controlled surplus across the org's active prospects (recalibrated value_framework), which prices elite ceiling non-linearly so the total captures top-end-vs-depth without a separate premium. Secondary leaves add texture: Org $DvM+ (do these prospects appreciate vs FV-tier peers), grad-contract surplus, WAR per $M, draft-pool efficiency, IFA ROI.\n\nThe prior spec scored the surplus leaf PER PROSPECT (normalizing aggregate away), which is why a high-total-value farm couldn't grade up; v40 scores it on the total. 100-anchored (+10 = 1σ).",
+   "definition": "The org's aggregate risk-adjusted controlled value. PRIMARY grade branch (v40 - 65% of the composite). Dominated by total active-pool surplus.",
+   "methodology": "Value branch of the farm grade tree (the Financial branch reframed; 65% of farm_score in v40, up from 18%). The single largest grade input, by design - a farm's grade should principally reflect the total risk-adjusted value of its active prospect pool.\n\nThe dominant leaf (0.68) is AGGREGATE active surplus: the summed FV-implied, risk-adjusted, present-valued controlled surplus across the org's active prospects (recalibrated value_framework), which prices elite ceiling non-linearly so the total captures top-end-vs-depth without a separate premium. Secondary leaves add texture: Org $DvM+ (do these prospects appreciate vs FV-tier peers), grad-contract surplus, WAR per $M, draft-pool efficiency, IFA ROI.\n\nThe prior spec scored the surplus leaf PER PROSPECT (normalizing aggregate away), which is why a high-total-value farm couldn't grade up; v40 scores it on the total. 100-anchored (+10 = 1σ).",
    "formula": "Value_score = wmean( aggregate_active_surplus[0.68], org_$DvM+[0.10], grad_contract_surplus[0.10], war_per_$M[0.04], draft_pool_eff[0.04], IFA_ROI[0.04] )",
    "seeAlso": [
     "wag",
@@ -2692,7 +2692,7 @@
    ],
    "priority": 55,
    "definition": "Whether the org produces MLB players, especially top-end ones. v7 leaves (6): hitter + pitcher WAR/yr + Top-3, boom rate, BUST rate, top-3 grad WAR/yr, Conviction.",
-   "methodology": "MLB Production branch (25% of farm_score in v7; was 30% in v6 — Development absorbed the freed weight). Six sub-grades, equal weight: (a) Hitter MLB Production — z-blend of Hitter WAR-per-year + Top-3 Hitter Career WAR (v7 dropped WAG — WAG now lives in Acquisition Strategy as the talent-translation signal).\n\n(b) Pitcher MLB Production — same 2-input composite for pitchers. (c) Boom Rate — share of settled grads with career WAR ≥ +5 (min 5 settled). (d) BUST Rate — NEW v7 — share of settled grads with career WAR ≤ +1, entered as a NEGATIVE-direction input so bust-heavy orgs get penalized.\n\n(e) Top-3 Grad WAR/yr — mean WAR/yr of the org's top-3 grads by rate (min 3 qualifying). (f) Conviction — binary flag: 1 if any grad has WAR/yr ≥ 4.0 in trailing 6yr OR career WAR ≥ 12 ever, else 0.\n\nConviction additionally drives the farm-score cap: conviction=0 orgs clamp at the 75th-percentile farm_score regardless of branch grades.",
+   "methodology": "MLB Production branch (25% of farm_score in v7; was 30% in v6 - Development absorbed the freed weight). Six sub-grades, equal weight: (a) Hitter MLB Production - z-blend of Hitter WAR-per-year + Top-3 Hitter Career WAR (v7 dropped WAG - WAG now lives in Acquisition Strategy as the talent-translation signal).\n\n(b) Pitcher MLB Production - same 2-input composite for pitchers. (c) Boom Rate - share of settled grads with career WAR ≥ +5 (min 5 settled). (d) BUST Rate - NEW v7 - share of settled grads with career WAR ≤ +1, entered as a NEGATIVE-direction input so bust-heavy orgs get penalized.\n\n(e) Top-3 Grad WAR/yr - mean WAR/yr of the org's top-3 grads by rate (min 3 qualifying). (f) Conviction - binary flag: 1 if any grad has WAR/yr ≥ 4.0 in trailing 6yr OR career WAR ≥ 12 ever, else 0.\n\nConviction additionally drives the farm-score cap: conviction=0 orgs clamp at the 75th-percentile farm_score regardless of branch grades.",
    "formula": "Production_score = mean of z-anchored (Hitter_WAR/yr+Top3, Pitcher_WAR/yr+Top3, boom_pct, -bust_pct, top3_WAR_per_yr, conviction)\nConviction cap: if conviction = 0 and farm_score > p75 → farm_score = p75",
    "seeAlso": [
     "wag",
@@ -2718,7 +2718,7 @@
    ],
    "priority": 56,
    "definition": "Share of an org's settled MLB graduates with career WAR ≥ +5 (true 'boom' outcomes).",
-   "methodology": "Boom Rate leaf inside MLB Production. For each graduate the org produced, classify as boom / settled / bust once the player meets a sample floor (800 PA / 200 IP / ≥2 MLB seasons). Boom = career WAR ≥ +5 (well above replacement, regular-to-star outcome). Boom Rate = boom_count / settled_count. Min 5 settled grads or the leaf returns '—'. Pairs with `mlb_production_bust_pct` (negative-direction leaf) to give the composite both 'reward for hits' and 'penalty for misses'.",
+   "methodology": "Boom Rate leaf inside MLB Production. For each graduate the org produced, classify as boom / settled / bust once the player meets a sample floor (800 PA / 200 IP / ≥2 MLB seasons). Boom = career WAR ≥ +5 (well above replacement, regular-to-star outcome). Boom Rate = boom_count / settled_count. Min 5 settled grads or the leaf returns ' - '. Pairs with `mlb_production_bust_pct` (negative-direction leaf) to give the composite both 'reward for hits' and 'penalty for misses'.",
    "seeAlso": [
     "farm_grade_mlb_production",
     "mlb_production_bust_pct",
@@ -2741,7 +2741,7 @@
    ],
    "priority": 56,
    "definition": "Share of an org's settled MLB graduates with career WAR ≤ +1 (bust outcomes). NEGATIVE-direction input to MLB Production.",
-   "methodology": "Bust Rate leaf inside MLB Production (v7 — new). Mirror of Boom Rate using the same sample floor (800 PA / 200 IP / ≥2 MLB seasons): bust = career WAR ≤ +1 (replacement-or-below outcome). Bust Rate = bust_count / settled_count. Min 5 settled grads or the leaf returns '—'. Enters the MLB Production composite as a NEGATIVE input — higher bust % pulls the parent grade DOWN, opposite to Boom Rate. The user-facing 'fix' on the report card: a system that produces 30% busts no longer looks the same as one that produces 30% booms.",
+   "methodology": "Bust Rate leaf inside MLB Production (v7 - new). Mirror of Boom Rate using the same sample floor (800 PA / 200 IP / ≥2 MLB seasons): bust = career WAR ≤ +1 (replacement-or-below outcome). Bust Rate = bust_count / settled_count. Min 5 settled grads or the leaf returns ' - '. Enters the MLB Production composite as a NEGATIVE input - higher bust % pulls the parent grade DOWN, opposite to Boom Rate. The user-facing 'fix' on the report card: a system that produces 30% busts no longer looks the same as one that produces 30% booms.",
    "seeAlso": [
     "farm_grade_mlb_production",
     "mlb_production_boom_pct"
@@ -2760,7 +2760,7 @@
    ],
    "priority": 57,
    "definition": "Mean WAR/yr across the org's top-3 graduates by rate. Captures peak star-tier production without depth dilution.",
-   "methodology": "Top-3 Grad WAR/yr leaf inside MLB Production v4. For each graduate meeting the boom-bust sample floor (≥800 PA / ≥200 IP / ≥2 MLB seasons), compute WAR/yr (career WAR / MLB seasons). Sort desc, take mean of top 3. Min 3 qualifying grads or the leaf returns '—'. An org producing one Skenes + two solid regulars (e.g. 5.0 + 2.5 + 2.0 / 3 = 3.17) scores far above one producing 10 league-average grads (1.0 + 1.0 + 1.0 = 1.0), as intended. Pairs with `mlb_production_top_grads_pitcher_only` for position-group breakdowns.",
+   "methodology": "Top-3 Grad WAR/yr leaf inside MLB Production v4. For each graduate meeting the boom-bust sample floor (≥800 PA / ≥200 IP / ≥2 MLB seasons), compute WAR/yr (career WAR / MLB seasons). Sort desc, take mean of top 3. Min 3 qualifying grads or the leaf returns ' - '. An org producing one Skenes + two solid regulars (e.g. 5.0 + 2.5 + 2.0 / 3 = 3.17) scores far above one producing 10 league-average grads (1.0 + 1.0 + 1.0 = 1.0), as intended. Pairs with `mlb_production_top_grads_pitcher_only` for position-group breakdowns.",
    "seeAlso": [
     "farm_grade_mlb_production",
     "mlb_production_boom_pct",
@@ -2781,7 +2781,7 @@
    ],
    "priority": 58,
    "definition": "Binary 0/1 flag: org has produced at least one star-tier grad (WAR/yr ≥ 4.0 last 6yr OR career WAR ≥ 12 ever). Drives the farm-score cap.",
-   "methodology": "Conviction leaf inside MLB Production v4. Fires (=1) if at least one graduate satisfies EITHER (a) WAR/yr ≥ 4.0 (All-Star tier) with last MLB year within the trailing 6 years, OR (b) career WAR ≥ 12 ever (high-end Hall-of-Very-Good output). Otherwise =0. PIT (Skenes) → 1; KCR (Witt Jr.) → 1; orgs without a recent star → 0. Beyond contributing as a leaf input, Conviction drives a post-process **farm-score cap**: conviction=0 orgs whose composite would exceed the 75th-percentile farm_score get clamped to that p75 value. This prevents depth-only orgs from grading elite without a star ceiling — they can still be A-tier in depth / acquisitions / development, but not the very top.",
+   "methodology": "Conviction leaf inside MLB Production v4. Fires (=1) if at least one graduate satisfies EITHER (a) WAR/yr ≥ 4.0 (All-Star tier) with last MLB year within the trailing 6 years, OR (b) career WAR ≥ 12 ever (high-end Hall-of-Very-Good output). Otherwise =0. PIT (Skenes) → 1; KCR (Witt Jr.) → 1; orgs without a recent star → 0. Beyond contributing as a leaf input, Conviction drives a post-process **farm-score cap**: conviction=0 orgs whose composite would exceed the 75th-percentile farm_score get clamped to that p75 value. This prevents depth-only orgs from grading elite without a star ceiling - they can still be A-tier in depth / acquisitions / development, but not the very top.",
    "seeAlso": [
     "farm_grade_mlb_production",
     "mlb_production_top_grads",
@@ -2800,8 +2800,8 @@
     "Draft pool ROI"
    ],
    "priority": 59,
-   "definition": "Trailing-3yr-window WAR per $M (and v32.0 — FV per $M) of draft-pool spend.",
-   "methodology": "Draft Pool Efficiency leaf inside Financial. Two signals on the same denominator (pool $ spent in T-5..T-2):\n• **war_per_m_pool** — sum of career WAR for grads drafted in the window divided by pool $M. Lagging but realized: WAR only accrues after the prospect debuts. Gated at ≥3 grads.\n• **fv_per_m_pool** (v32.0) — sum of current FV across drafted-actives in the same window divided by pool $M. Fast-cycle companion: doesn't wait the typical 5yr for WAR maturation, so the signal is responsive within ~2yr of draft.\nDenominator comes from MLB-published per-team draft pools (from `mlb_draft_pools` org-summary data). Together these capture both slot-money discipline + late-round hits (WAR side) AND scouting/dev acceleration (FV side).",
+   "definition": "Trailing-3yr-window WAR per $M (and v32.0 - FV per $M) of draft-pool spend.",
+   "methodology": "Draft Pool Efficiency leaf inside Financial. Two signals on the same denominator (pool $ spent in T-5..T-2):\n• **war_per_m_pool** - sum of career WAR for grads drafted in the window divided by pool $M. Lagging but realized: WAR only accrues after the prospect debuts. Gated at ≥3 grads.\n• **fv_per_m_pool** (v32.0) - sum of current FV across drafted-actives in the same window divided by pool $M. Fast-cycle companion: doesn't wait the typical 5yr for WAR maturation, so the signal is responsive within ~2yr of draft.\nDenominator comes from MLB-published per-team draft pools (from `mlb_draft_pools` org-summary data). Together these capture both slot-money discipline + late-round hits (WAR side) AND scouting/dev acceleration (FV side).",
    "seeAlso": [
     "farm_grade_financial",
     "fin_ifa_roi",
@@ -2825,7 +2825,7 @@
    ],
    "priority": 60,
    "definition": "Trailing-6yr-window WAR per $M of IFA bonus spend. Captures whether the org's international signings translated to MLB production.",
-   "methodology": "IFA ROI leaf inside Financial v6. Numerator: sum of career WAR for IFA-method grads signed in (T-9)…(T-3) — 6-year rolling window (bumped from 5yr in v6 to align with the 6y DvM+ horizon). IFA prospects need more development time than draft picks, so the window starts ~9 years out and ends ~3 years out. Denominator: sum of org's total IFA bonus spending over those same signing years (from the per-year IFA spend table). Output: WAR/$M. Gated at ≥2 contributing grads with signed_year + bonus on file. Cubans / Asian-pro signings + bonus-pool-busting splash signings show up here as high-spend low-ROI; orgs that develop deep $200K–$500K signings (e.g. Cleveland's Latin America operation) show high ROI.",
+   "methodology": "IFA ROI leaf inside Financial v6. Numerator: sum of career WAR for IFA-method grads signed in (T-9)…(T-3) - 6-year rolling window (bumped from 5yr in v6 to align with the 6y DvM+ horizon). IFA prospects need more development time than draft picks, so the window starts ~9 years out and ends ~3 years out. Denominator: sum of org's total IFA bonus spending over those same signing years (from the per-year IFA spend table). Output: WAR/$M. Gated at ≥2 contributing grads with signed_year + bonus on file. Cubans / Asian-pro signings + bonus-pool-busting splash signings show up here as high-spend low-ROI; orgs that develop deep $200K–$500K signings (e.g. Cleveland's Latin America operation) show high ROI.",
    "seeAlso": [
     "farm_grade_financial",
     "fin_draft_pool_efficiency",
@@ -2871,7 +2871,7 @@
    ],
    "priority": 57,
    "definition": "% of recent (≤3yr) drafted actives at FV ≥ 60. Captures whether the org drafted high-ceiling talent, not just talent that beat the slot.",
-   "methodology": "One of the two sub-inputs feeding the Draft Performance leaf (the other is pick-slot-adjusted WAR). For each org, count drafted actives whose current consensus FV ≥ 60 AND whose draft year is within the trailing 3 years. Divide by the count of all drafted actives in that 3-year window. Sparse-data gate: <3 drafted actives → '—'. The ceiling-hits metric complements pick-slot-adjusted WAR (which is retrospective and grad-only) by capturing whether the most recent draft classes already show top-prospect upside.",
+   "methodology": "One of the two sub-inputs feeding the Draft Performance leaf (the other is pick-slot-adjusted WAR). For each org, count drafted actives whose current consensus FV ≥ 60 AND whose draft year is within the trailing 3 years. Divide by the count of all drafted actives in that 3-year window. Sparse-data gate: <3 drafted actives → ' - '. The ceiling-hits metric complements pick-slot-adjusted WAR (which is retrospective and grad-only) by capturing whether the most recent draft classes already show top-prospect upside.",
    "seeAlso": [
     "farm_grade_acquisition_strategy",
     "fv",
@@ -2909,7 +2909,7 @@
     "Waiver Hit Rate"
    ],
    "priority": 59,
-   "definition": "% of waiver-claimed prospects who reached MLB. Sparse-data signal — orgs with <3 claims grade '—'.",
+   "definition": "% of waiver-claimed prospects who reached MLB. Sparse-data signal - orgs with <3 claims grade ' - '.",
    "methodology": "One of the two sub-inputs feeding the Waiver Claims leaf (the other is net FV from non-trade cross-org events). Per org, count claimed-into-org prospects whose career_war field is populated (= reached MLB at any point), divide by total claimed-into-org count. Captures whether the org's waiver-claim decisions actually translated to MLB rosters, separate from the FV-at-claim signal.",
    "seeAlso": [
     "farm_grade_acquisition_strategy",
@@ -2952,7 +2952,7 @@
    ],
    "priority": 61,
    "definition": "Non-trade cross-org acquisition. Counted in the Transactions branch alongside trades.",
-   "methodology": "Includes waiver claims, Rule 5 selections + returns, contract purchases, and free-agent signings. Each event generates a non-trade fv_event tagged with the prospect's most-recent consensus FV (vs trades which use FV at the trade date — waivers happen on too short a timeline for an explicit FV-at-date lookup to be worth the cost). The Acquisition Strategy branch's Waiver Claims sub-grade sums these per org as a net FV: claimed-in minus released-out.",
+   "methodology": "Includes waiver claims, Rule 5 selections + returns, contract purchases, and free-agent signings. Each event generates a non-trade fv_event tagged with the prospect's most-recent consensus FV (vs trades which use FV at the trade date - waivers happen on too short a timeline for an explicit FV-at-date lookup to be worth the cost). The Acquisition Strategy branch's Waiver Claims sub-grade sums these per org as a net FV: claimed-in minus released-out.",
    "seeAlso": [
     "farm_grade_acquisition_strategy",
     "waiver_hit_rate",
@@ -2974,7 +2974,7 @@
    ],
    "priority": 55,
    "definition": "Per-org mean WAG across recent graduates. Positive = farm beats projections; negative = underperforms.",
-   "methodology": "For each graduate with both a final FV and career WAR on file, we compute WAG = actual_career_WAR − FV-implied expected_WAR (via the hardcoded FV→WAR primer table). Per-org grade = mean of WAG values. Orgs with fewer than 3 qualifying graduates grade as '—' rather than picking up an unfair letter off one data point.",
+   "methodology": "For each graduate with both a final FV and career WAR on file, we compute WAG = actual_career_WAR − FV-implied expected_WAR (via the hardcoded FV→WAR primer table). Per-org grade = mean of WAG values. Orgs with fewer than 3 qualifying graduates grade as ' - ' rather than picking up an unfair letter off one data point.",
    "seeAlso": [
     "wag",
     "fv",
@@ -2995,7 +2995,7 @@
    ],
    "priority": 56,
    "definition": "WAR-per-million-dollars-spent across the org's graduates. Pure capital efficiency.",
-   "methodology": "Aggregates total career WAR yielded by graduates against total signing-bonus dollars paid (draft + IFA). Higher = better bargain capture. Lagging indicator — a recent draft class hasn't converted yet. Orgs with fewer than 3 grads with both bonus AND career-WAR data on file grade as '—'.",
+   "methodology": "Aggregates total career WAR yielded by graduates against total signing-bonus dollars paid (draft + IFA). Higher = better bargain capture. Lagging indicator - a recent draft class hasn't converted yet. Orgs with fewer than 3 grads with both bonus AND career-WAR data on file grade as ' - '.",
    "formula": "ROI = total_career_WAR / (total_bonus_USD / 1,000,000)",
    "seeAlso": [
     "wag",
@@ -3074,7 +3074,7 @@
     "Farm health"
    ],
    "priority": 60,
-   "definition": "Combined post-TJ % and trailing 12-month IL-days mean. INVERSE — lower burden = better letter grade.",
+   "definition": "Combined post-TJ % and trailing 12-month IL-days mean. INVERSE - lower burden = better letter grade.",
    "methodology": "Per-org health_burden displays the legacy 100 × post_tj_pct + il_days_mean composite for back-compat, but the v31.6 Health Mgmt LEAF GRADE no longer includes post-TJ (post-surgery grace period often produces above-avg outcomes, and TJ for hitters isn't a real signal). Current Health Mgmt leaf scoring = IL% current + avg 12-month IL days, both inverted. Post-TJ pitcher counts still ship as informational context on the leaf but no longer affect the grade.",
    "seeAlso": [
     "post_tj",
@@ -3098,7 +3098,7 @@
    ],
    "priority": 61,
    "definition": "Share of an org's tracked actives currently on the injured list (any type). Snapshot, not trailing window.",
-   "methodology": "Per-org il_pct_current = il_current_count / active_count, computed at export time from the il_status table (the same source the per-player IL chip uses). Distinct from Health Burden, which weights 12-month IL DAYS — this metric just counts WHO IS DOWN RIGHT NOW. Surfaced on the Roster Snapshot tile and highlighted red when ≥10% of the org is currently sidelined.",
+   "methodology": "Per-org il_pct_current = il_current_count / active_count, computed at export time from the il_status table (the same source the per-player IL chip uses). Distinct from Health Burden, which weights 12-month IL DAYS - this metric just counts WHO IS DOWN RIGHT NOW. Surfaced on the Roster Snapshot tile and highlighted red when ≥10% of the org is currently sidelined.",
    "seeAlso": [
     "farm_grade_health_burden",
     "on_il",
@@ -3118,7 +3118,7 @@
    ],
    "priority": 62,
    "definition": "Year-grouped view of MLB-signed overseas free agents (NPB / KBO / CPBL / etc.), with per-class rollups for total bonus, mean WAG, and mean WAR/yr.",
-   "methodology": "Lives on the Overseas page → Signed sub-tab. Every signed prospect is grouped by `posting_year` (posted_date.year, falling back to signed_date.year). Each year-section shows class totals (count, $ bonuses paid) plus mean WAG and mean WAR/yr across signees that have accumulated ≥1 full-season MLB sample. Both performance numbers are sourced via the prospect's `milb_key` joining to the graduate's career_war + boom-label payload — same numbers the boom-bust pill and farm grade tree consume.",
+   "methodology": "Lives on the Overseas page → Signed sub-tab. Every signed prospect is grouped by `posting_year` (posted_date.year, falling back to signed_date.year). Each year-section shows class totals (count, $ bonuses paid) plus mean WAG and mean WAR/yr across signees that have accumulated ≥1 full-season MLB sample. Both performance numbers are sourced via the prospect's `milb_key` joining to the graduate's career_war + boom-label payload - same numbers the boom-bust pill and farm grade tree consume.",
    "seeAlso": [
     "wag",
     "ifa"
@@ -3140,7 +3140,7 @@
    ],
    "priority": 63,
    "definition": "Extra draft slots awarded to small-revenue clubs under the 2022 CBA. Round 1A (6 picks) lands after round 1; Round 1B (6 picks) lands after round 2.",
-   "methodology": "Eligible clubs are the 6 smallest-revenue + 6 smallest-market teams. Round 1A picks are slotted after the regular first round (pick 31-36); Round 1B picks land after the regular second round. They're TRADEABLE — comp picks are the only draft slots a team may swap. Tankathon's projection assigns these by current eligibility; the lottery view surfaces them at the bottom with a 1A / 1B label.",
+   "methodology": "Eligible clubs are the 6 smallest-revenue + 6 smallest-market teams. Round 1A picks are slotted after the regular first round (pick 31-36); Round 1B picks land after the regular second round. They're TRADEABLE - comp picks are the only draft slots a team may swap. Tankathon's projection assigns these by current eligibility; the lottery view surfaces them at the bottom with a 1A / 1B label.",
    "seeAlso": []
   },
   {
@@ -3156,7 +3156,7 @@
     "Post-break ETA"
    ],
    "priority": 65,
-   "definition": "Post-All-Star-break snapshots subtract 0.25 years from the ETA — scaled by the org's historical H1/H2 promotion tendency (H2-heavy orgs get a stronger pull-in).",
+   "definition": "Post-All-Star-break snapshots subtract 0.25 years from the ETA - scaled by the org's historical H1/H2 promotion tendency (H2-heavy orgs get a stronger pull-in).",
    "methodology": "MLB's All-Star break (anchored to July 15 as a stable midpoint) cleaves the season into pre-break (H1) and post-break (H2) halves. By H2, a AAA prospect has already burned roughly half their AAA year, so the level-baseline travel time to MLB should shrink correspondingly.\n\nThe baseline adjustment subtracts 0.25 years when the snapshot is post-break. ORG TENDENCY then scales: each org's last 3 years of promotions are bucketed H1/H2. Orgs with h2_rate ≥ 60% (TBR / OAK-types that bank Sept call-ups) get a stronger ×1.4 pull-in; orgs with h1_rate ≥ 70% (front-loaded promoters) get a softer ×0.6 since they've already done most of their calling.\n\nH2-heavy orgs during pre-break add a small +0.10 push-back (their prospect is even LESS likely to debut before the break). Offseason snapshots (Nov-Feb) and balanced orgs (40-60 split) get no adjustment.\n\nSurfaced via a 'Snapshot: post-All-Star break' eyebrow + an 'Org promotes X% H1 / Y% H2' line on the ETA panel. Implemented in eta.py · see `season_phase`, `HALF_SEASON_ADJ`, `_org_promotion_phase_weight`.",
    "seeAlso": [
     "fv"
@@ -3175,7 +3175,7 @@
    ],
    "priority": 64,
    "definition": "Per-level + per-side age threshold that gates excessively-old prospects out of the Risers / Rebounders / Fallers buckets. Anchored on the prospect-aspirational level baseline (A=21, A+=22, AA=23, AAA=24, MLB=26).",
-   "methodology": "Hitters get disqualified when their age is ≥ +2.0 years above the level baseline; pitchers get a 1-year grace (≥ +3.0) since later debuts are common. Anchored on aspirational baselines NOT empirical level means — the empirical AAA pool is dragged up by the same journeymen we're trying to filter, so anchoring on the empirical median defeats the purpose.\n\nExamples (AAA, baseline 24): a 26.0+ hitter is cut; a 27.0+ pitcher is cut. The cap fires inside `_classify_movement` in spotlights.py BEFORE bucket classification — capped prospects return bucket='none' and never reach the Risers / Fallers / Rebounders lists.\n\nPlayers at rookie levels (DSL/CPX/ROK) and players with missing age/level pass through (no cap fires). The cap is SPECIFIC to the spotlights section — it does not affect the active prospect list, farm rosters, leaderboards, or any other view.",
+   "methodology": "Hitters get disqualified when their age is ≥ +2.0 years above the level baseline; pitchers get a 1-year grace (≥ +3.0) since later debuts are common. Anchored on aspirational baselines NOT empirical level means - the empirical AAA pool is dragged up by the same journeymen we're trying to filter, so anchoring on the empirical median defeats the purpose.\n\nExamples (AAA, baseline 24): a 26.0+ hitter is cut; a 27.0+ pitcher is cut. The cap fires inside `_classify_movement` in spotlights.py BEFORE bucket classification - capped prospects return bucket='none' and never reach the Risers / Fallers / Rebounders lists.\n\nPlayers at rookie levels (DSL/CPX/ROK) and players with missing age/level pass through (no cap fires). The cap is SPECIFIC to the spotlights section - it does not affect the active prospect list, farm rosters, leaderboards, or any other view.",
    "seeAlso": [
     "spotlights"
    ]
@@ -3195,8 +3195,8 @@
    ],
    "priority": 10,
    "definition": "How hard a hitter strikes the ball, in mph off the bat. Higher = louder contact and more damage on balls in play.",
-   "methodology": "Average exit velocity is the mean batted-ball speed measured at contact. It is the most stable batted-ball signal at small samples — it stabilizes in ~40 batted balls, far faster than results stats — so it reads a prospect's raw contact quality before the surface stats settle. Pairs with launch angle to produce barrels. League-average MLB EV is ~89 mph; 92+ is plus, 95+ is elite (Stanton/Judge tier).",
-   "example": "A prospect averaging 92.5 mph EV sits roughly one standard deviation above the MLB mean — a plus raw-power signal even on a modest slash line.",
+   "methodology": "Average exit velocity is the mean batted-ball speed measured at contact. It is the most stable batted-ball signal at small samples - it stabilizes in ~40 batted balls, far faster than results stats - so it reads a prospect's raw contact quality before the surface stats settle. Pairs with launch angle to produce barrels. League-average MLB EV is ~89 mph; 92+ is plus, 95+ is elite (Stanton/Judge tier).",
+   "example": "A prospect averaging 92.5 mph EV sits roughly one standard deviation above the MLB mean - a plus raw-power signal even on a modest slash line.",
    "seeAlso": [
     "statcast_plus",
     "barrel_pct",
@@ -3242,7 +3242,7 @@
     "Hard-hit rate"
    ],
    "priority": 12,
-   "definition": "Share of batted balls hit ≥ 95 mph. A volume measure of quality contact — broader than Barrel% (no angle requirement).",
+   "definition": "Share of batted balls hit ≥ 95 mph. A volume measure of quality contact - broader than Barrel% (no angle requirement).",
    "methodology": "Hard-Hit% = batted balls at or above 95 mph ÷ all batted balls. It captures how often a hitter makes authoritative contact regardless of angle, so it complements Barrel% (which adds the angle requirement). League average is ~40%; 45%+ is plus. High Hard-Hit% with low Barrel% flags a hitter who needs a launch-angle adjustment to convert raw power into game power.",
    "formula": "Hard-Hit% = batted_balls ≥ 95 mph / batted_balls × 100",
    "seeAlso": [
@@ -3292,7 +3292,7 @@
    ],
    "priority": 14,
    "definition": "Share of SWINGS that miss. For hitters, lower is better; for pitchers (induced whiff), higher is better.",
-   "methodology": "Whiff% = swings-and-misses ÷ total swings. For a hitter it measures bat-to-ball skill and underlies strikeout risk; for a pitcher it measures stuff (the rate at which his offerings are swung through). Distinct from K% (a plate-appearance outcome) — Whiff% is a per-swing rate and stabilizes faster. Hitter league average is ~24%; for a pitcher's primary pitch, 30%+ induced whiff is plus stuff.",
+   "methodology": "Whiff% = swings-and-misses ÷ total swings. For a hitter it measures bat-to-ball skill and underlies strikeout risk; for a pitcher it measures stuff (the rate at which his offerings are swung through). Distinct from K% (a plate-appearance outcome) - Whiff% is a per-swing rate and stabilizes faster. Hitter league average is ~24%; for a pitcher's primary pitch, 30%+ induced whiff is plus stuff.",
    "formula": "Whiff% = swinging strikes / swings × 100",
    "seeAlso": [
     "k_pct",
@@ -3362,7 +3362,7 @@
     "Spin rate"
    ],
    "priority": 17,
-   "definition": "Revolutions per minute on a pitch. Drives movement — high fastball spin → ride; high breaking-ball spin → sharper break.",
+   "definition": "Revolutions per minute on a pitch. Drives movement - high fastball spin → ride; high breaking-ball spin → sharper break.",
    "methodology": "Spin rate (RPM) is a raw stuff input: on four-seamers, high active spin produces 'ride'/carry that beats hitters at the top of the zone; on breaking balls it produces tighter, later break. Spin only matters via the movement it creates (spin efficiency / spin axis), so it's an input to stuff models rather than a standalone grade. Typical four-seam spin is ~2,250 RPM; 2,500+ is high.",
    "seeAlso": [
     "fastball_grade",
@@ -3382,7 +3382,7 @@
    ],
    "priority": 18,
    "definition": "How far in front of the rubber a pitcher releases the ball (feet). More extension = less reaction time = effective velocity above the radar reading.",
-   "methodology": "Extension is the distance from the pitching rubber to the release point. Greater extension shortens the ball's perceived travel, adding 'effective velocity' — a 95-mph fastball with 7.0 ft of extension plays like ~96-97 to the hitter. It's why two pitchers with identical radar velocity can grade differently on stuff. League average is ~6.3 ft; 7.0+ ft is a meaningful add.",
+   "methodology": "Extension is the distance from the pitching rubber to the release point. Greater extension shortens the ball's perceived travel, adding 'effective velocity' - a 95-mph fastball with 7.0 ft of extension plays like ~96-97 to the hitter. It's why two pitchers with identical radar velocity can grade differently on stuff. League average is ~6.3 ft; 7.0+ ft is a meaningful add.",
    "seeAlso": [
     "fastball_grade",
     "spin_rate",
@@ -3422,10 +3422,10 @@
     "Strikeout-minus-walk rate"
    ],
    "priority": 7,
-   "definition": "Strikeout rate minus walk rate. A single pitcher command-and-miss number — the cleanest rate-stat summary of a pitcher's peripheral skill.",
+   "definition": "Strikeout rate minus walk rate. A single pitcher command-and-miss number - the cleanest rate-stat summary of a pitcher's peripheral skill.",
    "methodology": "K-BB% = K% − BB% (both as a share of batters faced). Subtracting walks from strikeouts captures the two outcomes a pitcher most controls in one figure, and it correlates with run prevention better than K/9 or BB/9 because it's denominated in batters faced rather than innings (innings are inflated by defense and sequencing luck). League-average starters sit ~13-14%; 18%+ is plus, 22%+ is elite.",
    "formula": "K-BB% = K% − BB%",
-   "example": "A starter at 30% K% and 7% BB% posts a 23% K-BB% — front-of-rotation peripheral skill regardless of a noisy ERA.",
+   "example": "A starter at 30% K% and 7% BB% posts a 23% K-BB% - front-of-rotation peripheral skill regardless of a noisy ERA.",
    "seeAlso": [
     "k_pct_pitcher",
     "bb_pct_pitcher",
@@ -3494,7 +3494,7 @@
    ],
    "priority": 61,
    "definition": "Per-year dollar surplus on an org's graduates: current AAV minus the signing bonus amortized over six cost-controlled years.",
-   "methodology": "For each graduate with both Spotrac contract data and a signing bonus on file, surplus per year = current AAV − (signing bonus ÷ 6). It captures whether the org is extracting cheap production from the six cost-controlled years a prospect provides before free agency — the core economic reason prospects are assets. Averaged across qualifying grads and z-anchored into the Financial branch.",
+   "methodology": "For each graduate with both Spotrac contract data and a signing bonus on file, surplus per year = current AAV − (signing bonus ÷ 6). It captures whether the org is extracting cheap production from the six cost-controlled years a prospect provides before free agency - the core economic reason prospects are assets. Averaged across qualifying grads and z-anchored into the Financial branch.",
    "formula": "per-year surplus = current_AAV − (signing_bonus / 6)",
    "seeAlso": [
     "farm_grade_financial",
@@ -3517,7 +3517,7 @@
     "fin_dollar_dvm"
    ],
    "priority": 62,
-   "definition": "The org-level roll-up of its active prospects' $DvM+ — development of surplus dollars, indexed to 100 = league mean.",
+   "definition": "The org-level roll-up of its active prospects' $DvM+ - development of surplus dollars, indexed to 100 = league mean.",
    "methodology": "Aggregates the $DvM+ of an org's active prospects (development-vs-mean applied to projected surplus dollars rather than raw FV) into one 100-anchored org figure. It rewards systems that are growing the dollar value of the talent they already hold, not just its scouting grade. Feeds the Financial branch alongside the realized-money leaves (WAR/$M, contract surplus).",
    "seeAlso": [
     "dvm_plus",
@@ -3540,7 +3540,7 @@
    ],
    "priority": 5,
    "definition": "Travel the consensus board to any past monthly snapshot, or diff two dates for a changelog of risers, fallers, new entries, graduates, and grade changes.",
-   "methodology": "Each monthly run snapshots the board (rank + consensus FV + the Arkmetric family per prospect) into metric_snapshots. The Time Machine reconstructs the board as it stood at any past snapshot and can diff two dates — producing an explicit changelog of who rose, fell, debuted/graduated, or changed grade. URL-shareable, so a specific board state or diff can be linked.",
+   "methodology": "Each monthly run snapshots the board (rank + consensus FV + the Arkmetric family per prospect) into metric_snapshots. The Time Machine reconstructs the board as it stood at any past snapshot and can diff two dates - producing an explicit changelog of who rose, fell, debuted/graduated, or changed grade. URL-shareable, so a specific board state or diff can be linked.",
    "seeAlso": [
     "consensus_fv",
     "stock",
@@ -3561,7 +3561,7 @@
     "Prospect card export"
    ],
    "priority": 6,
-   "definition": "Export a shareable graphic — a prospect card, farm card, list, or card pack — as a PNG (or a short animated clip), with rarity treatment matching the list.",
+   "definition": "Export a shareable graphic - a prospect card, farm card, list, or card pack - as a PNG (or a short animated clip), with rarity treatment matching the list.",
    "methodology": "Generate GFX rasterizes an on-theme graphic for sharing: single-prospect cards (compact / detailed / scouting / stats / card-back templates), farm cards, ranked-list boards, and multi-card 'packs'. Cards carry the FV-tier rarity frame, the FV history chart, tool radar, Statcast sliders, and surplus. Exports are 2× resolution; an animated WebM showcases the holographic foil. The blob is pre-rendered so Copy/Download/Share are near-instant.",
    "seeAlso": [
     "fv_rarity",
@@ -3605,7 +3605,7 @@
    ],
    "priority": 8,
    "definition": "A personal, locally-saved set of starred prospects, filterable and exportable as a GFX card pack.",
-   "methodology": "Starring a prospect adds them to a Watchlist stored in the browser (localStorage — nothing leaves the device). The list is filterable like any board and can be exported as a Generate GFX card pack, so a personal shortlist becomes a shareable sheet.",
+   "methodology": "Starring a prospect adds them to a Watchlist stored in the browser (localStorage - nothing leaves the device). The list is filterable like any board and can be exported as a Generate GFX card pack, so a personal shortlist becomes a shareable sheet.",
    "seeAlso": [
     "generate_gfx"
    ]
@@ -3624,7 +3624,7 @@
     "Rebounders"
    ],
    "priority": 9,
-   "definition": "Curated movement buckets — Risers, Fallers, Rebounders, and breakout/upside flags — with the driver signals that put each prospect there.",
+   "definition": "Curated movement buckets - Risers, Fallers, Rebounders, and breakout/upside flags - with the driver signals that put each prospect there.",
    "methodology": "Spotlights classifies recent prospect movement into buckets (Risers / Fallers / Rebounders) using consensus-FV velocity confirmed or contradicted by performance signals (RPS+, SC+, tool velocity), and surfaces the specific driver chips behind each placement. The spotlight age cap gates excessively-old prospects out so an aging hot stretch doesn't read as a prospect breakout.",
    "seeAlso": [
     "stock",
@@ -3675,7 +3675,7 @@
     "Term lookup"
    ],
    "priority": 4,
-   "definition": "Press ⌘K (Mac) or Ctrl+K to look up any glossary term — or jump to any prospect — from anywhere on the site.",
+   "definition": "Press ⌘K (Mac) or Ctrl+K to look up any glossary term - or jump to any prospect - from anywhere on the site.",
    "methodology": "The quick-search palette is the site-wide entry point to the glossary single-source-of-truth: type any metric name or alias to see its definition inline and open the full entry. It also resolves prospect names for fast navigation. Opens with ⌘K / Ctrl+K (or the / key) and is dismissable with Escape.",
    "seeAlso": [
     "consensus_fv"
@@ -3693,8 +3693,8 @@
     "projGuarantee"
    ],
    "priority": 60,
-   "definition": "Predicted total contract guarantee for a free agent, from the market model — on the DEFERRAL-ADJUSTED NPV basis (a 97%-deferred sticker is not the same liability as level cash; schedules in the curated deferral ledger discount at the platform 9% rate, no-schedule deals keep their sticker). What teams WILL pay in present-value terms, not what the production is worth. Formerly displayed as mGuarantee.",
-   "methodology": "projGuarantee is the market model: a transparent two-stage regression (contract length first, then log-guarantee given length) trained only on the 2014-15 to present FA-signing corpus, with age, projected year-1 bWAR, position group, qualifying-offer status, class supply, the winter $/WAR level (carried forward ex-ante), nearest-comps anchors, and economic anchors (discounted projected WAR x $/WAR; prime-years x quality). Predictions clamp to a 2.5x envelope around the comps median and blend toward comps in the megadeal regime. P10-P90 bands are empirical residual quantiles from the forward-chained backtest. The model beat the nearest-comps baseline on guarantee, AAV and years across nine held-out winters (Gate 2 on the Model Accountability page). Phase 2 (2026-06): targets, comps anchors and the winter $/WAR series all moved to the NPV basis; Gate 2 re-ran and improved (guarantee MAE 10.06 vs comps 11.19). A LightGBM challenger with monotonic economic constraints LOST to this model on all three ship criteria at n=1,199 (committed to the artifact) — the transparent two-stage OLS retains. The flat-5% $/WAR escalation also survived its challenge: fitted trend forecasts lost the forward-chained eval (MAPE 0.122/0.132 vs 0.102).",
+   "definition": "Predicted total contract guarantee for a free agent, from the market model - on the DEFERRAL-ADJUSTED NPV basis (a 97%-deferred sticker is not the same liability as level cash; schedules in the curated deferral ledger discount at the platform 9% rate, no-schedule deals keep their sticker). What teams WILL pay in present-value terms, not what the production is worth. Formerly displayed as mGuarantee.",
+   "methodology": "projGuarantee is the market model: a transparent two-stage regression (contract length first, then log-guarantee given length) trained only on the 2014-15 to present FA-signing corpus, with age, projected year-1 bWAR, position group, qualifying-offer status, class supply, the winter $/WAR level (carried forward ex-ante), nearest-comps anchors, and economic anchors (discounted projected WAR x $/WAR; prime-years x quality). Predictions clamp to a 2.5x envelope around the comps median and blend toward comps in the megadeal regime. P10-P90 bands are empirical residual quantiles from the forward-chained backtest. The model beat the nearest-comps baseline on guarantee, AAV and years across nine held-out winters (Gate 2 on the Model Accountability page). Phase 2 (2026-06): targets, comps anchors and the winter $/WAR series all moved to the NPV basis; Gate 2 re-ran and improved (guarantee MAE 10.06 vs comps 11.19). A LightGBM challenger with monotonic economic constraints LOST to this model on all three ship criteria at n=1,199 (committed to the artifact) - the transparent two-stage OLS retains. The flat-5% $/WAR escalation also survived its challenge: fitted trend forecasts lost the forward-chained eval (MAPE 0.122/0.132 vs 0.102).",
    "seeAlso": [
     "m_aav",
     "m_years",
@@ -3735,7 +3735,7 @@
    ],
    "priority": 62,
    "definition": "Predicted contract length in years (P10-P90 banded), from a log-years model with comps stacking and a prime-years-remaining term. Formerly displayed as mYears.",
-   "methodology": "Contract length is modeled before money (teams trade years against AAV). The stage predicts log(years) with curvature terms (WAR squared, age x WAR), prime years remaining (max(0, 30 - age) — the buyable seasons behind long deals), and the nearest-comps median length stacked as a feature; it beat the comps baseline 0.441 vs 0.485 MAE across nine held-out winters (Gate 2, fa_mkt_v2).",
+   "methodology": "Contract length is modeled before money (teams trade years against AAV). The stage predicts log(years) with curvature terms (WAR squared, age x WAR), prime years remaining (max(0, 30 - age) - the buyable seasons behind long deals), and the nearest-comps median length stacked as a feature; it beat the comps baseline 0.441 vs 0.485 MAE across nine held-out winters (Gate 2, fa_mkt_v2).",
    "seeAlso": [
     "m_guarantee",
     "m_aav"
@@ -3756,7 +3756,7 @@
     "overpay"
    ],
    "priority": 63,
-   "definition": "The surfaces render a plain-English VERDICT — value (projected underpaid), market (priced about right), overpay (projected overpaid) — backed by Deal+, the 100-scale index of rational value against price.",
+   "definition": "The surfaces render a plain-English VERDICT - value (projected underpaid), market (priced about right), overpay (projected overpaid) - backed by Deal+, the 100-scale index of rational value against price.",
    "methodology": "Deal+ = 100 x rational value / predicted (or actual) guarantee. Verdict band edges are EMPIRICALLY CENTERED on the 2015-2026 corpus terciles, not symmetric around 100: Deal+ under convex pricing is right-skewed (corpus p33 = 75, median = 110, p67 = 159 on the Phase-2 NPV basis), so value is >= 160, overpay is < 75, market is the middle tercile. Each verdict named exactly a third of twelve winters of real contracts; a class that skews one way against these fixed bands is information.",
    "seeAlso": [
     "contract_surplus",
@@ -3812,8 +3812,8 @@
     "NPV value"
    ],
    "priority": 59,
-   "definition": "The NPV of a free agent's projected WAR path: each season priced CONVEXLY through the platform's tier curve at the winter's ex-ante FA $/WAR level, escalated per season and discounted at the platform's 9% rate. One of the platform's two independently derived numbers — what the production is worth, never what the market will pay.",
-   "methodology": "Rational value shares the same NPV currency as PROSPX prospect surplus — and, since v2, the same CONVEX season pricing (value_framework's tier curve, rescaled to the winter's $/WAR level): a 1-WAR season and the third win of a 3-WAR season are not the same product, and a flat rate graded the entire bottom of the class as a bargain (measured: class median Deal+ 220 under flat pricing). It is deliberately computed with no reference to the market model: the gap between the two numbers (Contract Surplus) only means something because neither side peeks at the other. The winter $/WAR level it prices at is the NPV-basis signings-implied series (deferral-adjusted numerator) carried forward at the measured-best flat 5%.",
+   "definition": "The NPV of a free agent's projected WAR path: each season priced CONVEXLY through the platform's tier curve at the winter's ex-ante FA $/WAR level, escalated per season and discounted at the platform's 9% rate. One of the platform's two independently derived numbers - what the production is worth, never what the market will pay.",
+   "methodology": "Rational value shares the same NPV currency as PROSPX prospect surplus - and, since v2, the same CONVEX season pricing (value_framework's tier curve, rescaled to the winter's $/WAR level): a 1-WAR season and the third win of a 3-WAR season are not the same product, and a flat rate graded the entire bottom of the class as a bargain (measured: class median Deal+ 220 under flat pricing). It is deliberately computed with no reference to the market model: the gap between the two numbers (Contract Surplus) only means something because neither side peeks at the other. The winter $/WAR level it prices at is the NPV-basis signings-implied series (deferral-adjusted numerator) carried forward at the measured-best flat 5%.",
    "seeAlso": [
     "contract_surplus",
     "deal_plus",
@@ -3832,7 +3832,7 @@
     "percentile bands"
    ],
    "priority": 66,
-   "definition": "The 10th-90th percentile range shown around every FA market prediction. Empirical residual quantiles from the forward-chained backtest — not parametric intervals, which failed the coverage gate (0.858 vs the 0.75-0.85 target) and were rejected.",
+   "definition": "The 10th-90th percentile range shown around every FA market prediction. Empirical residual quantiles from the forward-chained backtest - not parametric intervals, which failed the coverage gate (0.858 vs the 0.75-0.85 target) and were rejected.",
    "seeAlso": [
     "m_guarantee",
     "fa_gates"
@@ -3886,7 +3886,7 @@
     "dollars per WAR"
    ],
    "priority": 69,
-   "definition": "The per-winter price of a win implied by that winter's actual FA signings: guaranteed dollars over projected WAR delivered, carried forward ex-ante so a prediction never sees its own winter. Distinct from the PROSPX $/WAR (tiered) figure, which is a 3-tier rolling market price used for prospect valuation — the two serve different models and are not interchangeable.",
+   "definition": "The per-winter price of a win implied by that winter's actual FA signings: guaranteed dollars over projected WAR delivered, carried forward ex-ante so a prediction never sees its own winter. Distinct from the PROSPX $/WAR (tiered) figure, which is a 3-tier rolling market price used for prospect valuation - the two serve different models and are not interchangeable.",
    "seeAlso": [
     "rational_value"
    ],
@@ -3902,7 +3902,7 @@
     "thin platform year"
    ],
    "priority": 70,
-   "definition": "Disclosure badge on FA projections whose platform season is missing or injury-shortened — below 30% of a role-aware full season, scaled by how much of the season has elapsed. A projection riding old seasons is the model's weakest case (the Burnes/Bieber rehab class); the badge says so instead of hiding it.",
+   "definition": "Disclosure badge on FA projections whose platform season is missing or injury-shortened - below 30% of a role-aware full season, scaled by how much of the season has elapsed. A projection riding old seasons is the model's weakest case (the Burnes/Bieber rehab class); the badge says so instead of hiding it.",
    "seeAlso": [
     "rational_value",
     "m_guarantee"
@@ -3923,7 +3923,7 @@
     "behavior prior"
    ],
    "priority": 71,
-   "definition": "The five 0-1 scores behind every FA team fit: need (displacement WAR gap at the position, discounted when a near-ETA PROSPX prospect blocks it; MLB incumbents block through the gap itself and are NAMED in the blocked-by list), window (marginal playoff leverage at the club's baseline wins), afford (CBT-basis tax space against the predicted AAV, with a documented floor for habitual taxpayers), park (batted-side park factor — deliberately the smallest weight, a tiebreaker not a driver), and behavior (WILL they spend: biggest-ever guarantee vs this price, recent 3-winter outlay, $100M-deal participation).",
+   "definition": "The five 0-1 scores behind every FA team fit: need (displacement WAR gap at the position, discounted when a near-ETA PROSPX prospect blocks it; MLB incumbents block through the gap itself and are NAMED in the blocked-by list), window (marginal playoff leverage at the club's baseline wins), afford (CBT-basis tax space against the predicted AAV, with a documented floor for habitual taxpayers), park (batted-side park factor - deliberately the smallest weight, a tiebreaker not a driver), and behavior (WILL they spend: biggest-ever guarantee vs this price, recent 3-winter outlay, $100M-deal participation).",
    "seeAlso": [
     "m_guarantee",
     "rational_value"
@@ -3931,7 +3931,7 @@
    "module": [
     "fa"
    ],
-   "methodology": "v2 reweight: need 0.31 / window 0.19 / afford 0.22 / park 0.04 / behavior 0.24. Park was cut from 0.12 after the measured failure mode — the most suppressive park topped EVERY pitcher's fit list because park alone separated otherwise-similar clubs. Afford reads Spotrac's CBT-basis tax space (the number front offices budget against) and floors at 0.4 for clubs over the line that keep signing nine-figure deals; behavior blends deal-scale history (0.5), recency-weighted three-winter FA outlay (0.3), and $100M-deal count (0.2). Blocked-by names both kinds of blocker: PX = a near-ETA PROSPX prospect (FV >= 50), MLB = a contracted incumbent projecting >= 2.5 WAR at the slot the signing would displace."
+   "methodology": "v2 reweight: need 0.31 / window 0.19 / afford 0.22 / park 0.04 / behavior 0.24. Park was cut from 0.12 after the measured failure mode - the most suppressive park topped EVERY pitcher's fit list because park alone separated otherwise-similar clubs. Afford reads Spotrac's CBT-basis tax space (the number front offices budget against) and floors at 0.4 for clubs over the line that keep signing nine-figure deals; behavior blends deal-scale history (0.5), recency-weighted three-winter FA outlay (0.3), and $100M-deal count (0.2). Blocked-by names both kinds of blocker: PX = a near-ETA PROSPX prospect (FV >= 50), MLB = a contracted incumbent projecting >= 2.5 WAR at the slot the signing would displace."
   },
   {
    "id": "first_seen_dates",
@@ -3941,7 +3941,7 @@
     "observation stamps"
    ],
    "priority": 72,
-   "definition": "Winter events (signings, option decisions, qualifying offers) are dated the day the pipeline first observed them, because the source publishes terms without dates. Stamps are append-only and never revised — the same no-lookahead discipline the models train under.",
+   "definition": "Winter events (signings, option decisions, qualifying offers) are dated the day the pipeline first observed them, because the source publishes terms without dates. Stamps are append-only and never revised - the same no-lookahead discipline the models train under.",
    "seeAlso": [
     "fa_gates"
    ],
@@ -3958,7 +3958,7 @@
     "backtest gates"
    ],
    "priority": 73,
-   "definition": "The FA module's two shipping blockers: Gate 1, the projection engine against ten held-out seasons (beat the naive baseline; P10-P90 coverage in 0.75-0.85); Gate 2, the market model against nine forward-chained winters (beat the nearest-comps baseline on guarantee, AAV, and years). Both verdicts render verbatim on the Free Agency Model Accountability page — misses included.",
+   "definition": "The FA module's two shipping blockers: Gate 1, the projection engine against ten held-out seasons (beat the naive baseline; P10-P90 coverage in 0.75-0.85); Gate 2, the market model against nine forward-chained winters (beat the nearest-comps baseline on guarantee, AAV, and years). Both verdicts render verbatim on the Free Agency Model Accountability page - misses included.",
    "seeAlso": [
     "p10_p90_bands",
     "nearest_comps"
@@ -3994,7 +3994,7 @@
     "aging curves"
    ],
    "priority": 75,
-   "definition": "A Marcel-style weighted-rates projection (5/3/2 recency weights) with hitter ISO blended toward Savant xISO (2015+), mapped to bWAR through a fitted rate-to-WAR model and decayed along survivorship-corrected aging curves fit on the 2000-2026 corpus. v2: multi-year decay walks REGRESSED-rate curves — raw observed deltas bundle aging with luck regression, and chaining them double-counted the regression (measured: the horizon-5 star tail collapsed to a 0.06 predicted/actual ratio). Power and finesse pitchers age on their own curves; hitter power/contact cohorts were measured and parked (season-ISO selection re-injects reversion).",
+   "definition": "A Marcel-style weighted-rates projection (5/3/2 recency weights) with hitter ISO blended toward Savant xISO (2015+), mapped to bWAR through a fitted rate-to-WAR model and decayed along survivorship-corrected aging curves fit on the 2000-2026 corpus. v2: multi-year decay walks REGRESSED-rate curves - raw observed deltas bundle aging with luck regression, and chaining them double-counted the regression (measured: the horizon-5 star tail collapsed to a 0.06 predicted/actual ratio). Power and finesse pitchers age on their own curves; hitter power/contact cohorts were measured and parked (season-ISO selection re-injects reversion).",
    "seeAlso": [
     "war",
     "rational_value",
@@ -4003,7 +4003,7 @@
    "module": [
     "fa"
    ],
-   "methodology": "Beyond Gate 1 (next-season), the multi-year decay is now measured by a forward-chained horizon backtest (proj_eval.py, bases 2017-2021): the v2 regressed-rate curves doubled the horizon-5 >=3-WAR tail ratio (0.06 to 0.12) and cut star bias from -1.34 to -0.64 WAR while Gate 1 improved. Phase 1 (2026-06): horizons 1-5 are served by proj_lgbm_v1 — LightGBM quantile models (P10/P25/P50/P75/P90 per horizon) stacked ON the Marcel champion (its prediction rides as a feature, so the trees learn its residuals), with no zero floor on the bands (the measured cause of the old coverage collapse). Shipped under best-model-wins after beating the champion on dev bases, the Gate-1 target seasons (h1 MAE 0.557 vs 0.627) and a touched-once 2022-2024 holdout; the Marcel+aging champion remains the fallback, the stacking feature, and the shape for horizons 6+. Disclosed: long-horizon star medians run ~0.2 WAR below the champion (zero-inflated labels), with equal star MAE."
+   "methodology": "Beyond Gate 1 (next-season), the multi-year decay is now measured by a forward-chained horizon backtest (proj_eval.py, bases 2017-2021): the v2 regressed-rate curves doubled the horizon-5 >=3-WAR tail ratio (0.06 to 0.12) and cut star bias from -1.34 to -0.64 WAR while Gate 1 improved. Phase 1 (2026-06): horizons 1-5 are served by proj_lgbm_v1 - LightGBM quantile models (P10/P25/P50/P75/P90 per horizon) stacked ON the Marcel champion (its prediction rides as a feature, so the trees learn its residuals), with no zero floor on the bands (the measured cause of the old coverage collapse). Shipped under best-model-wins after beating the champion on dev bases, the Gate-1 target seasons (h1 MAE 0.557 vs 0.627) and a touched-once 2022-2024 holdout; the Marcel+aging champion remains the fallback, the stacking feature, and the shape for horizons 6+. Disclosed: long-horizon star medians run ~0.2 WAR below the champion (zero-inflated labels), with equal star MAE."
   },
   {
    "id": "era_minus",
@@ -4064,7 +4064,7 @@
     "ticker"
    ],
    "priority": 83,
-   "definition": "The homepage event feed and scrolling ticker: debuts, promotions, trades, IL moves, real FV changes, and free-agency winter events, each dated and color-coded by type. FV items are real grade changes only — composite movement scores never masquerade as news.",
+   "definition": "The homepage event feed and scrolling ticker: debuts, promotions, trades, IL moves, real FV changes, and free-agency winter events, each dated and color-coded by type. FV items are real grade changes only - composite movement scores never masquerade as news.",
    "seeAlso": [
     "stock_arrow",
     "first_seen_dates"
@@ -4105,8 +4105,8 @@
     "probability bucketing"
    ],
    "priority": 76,
-   "definition": "Every projected WAR path ships three variants: mean, floor (P10) and ceiling (P90). Veterans take the Gate-1 empirical year-1 residual quantile for their reliability bucket, applied to the year-1 WAR and decayed along the SAME aging curves — uncertainty propagates the way talent does. Prospects take the 10th/90th-percentile OUTCOME BUCKET of the calibrated P(bucket|FV) categorical — a prospect's downside is busting, not a ribbon.",
-   "methodology": "The quantiles come from the committed Gate-1 artifact (fa_gate1_eval.json band_quantiles, empirical per side x exposure tier), so the bands carry the measured 0.80 P10-P90 coverage rather than a parametric assumption. Surplus buckets price the floor/ceiling paths through the same convex curve as the mean — the surplus range on a player card is the same machinery, never a separate model. Since Phase 1 the veteran floor/mean/ceiling come directly from the quantile heads (empirically trained on horizon residual distributions, negatives included) rather than decaying a single year-1 quantile.",
+   "definition": "Every projected WAR path ships three variants: mean, floor (P10) and ceiling (P90). Veterans take the Gate-1 empirical year-1 residual quantile for their reliability bucket, applied to the year-1 WAR and decayed along the SAME aging curves - uncertainty propagates the way talent does. Prospects take the 10th/90th-percentile OUTCOME BUCKET of the calibrated P(bucket|FV) categorical - a prospect's downside is busting, not a ribbon.",
+   "methodology": "The quantiles come from the committed Gate-1 artifact (fa_gate1_eval.json band_quantiles, empirical per side x exposure tier), so the bands carry the measured 0.80 P10-P90 coverage rather than a parametric assumption. Surplus buckets price the floor/ceiling paths through the same convex curve as the mean - the surplus range on a player card is the same machinery, never a separate model. Since Phase 1 the veteran floor/mean/ceiling come directly from the quantile heads (empirically trained on horizon residual distributions, negatives included) rather than decaying a single year-1 quantile.",
    "seeAlso": [
     "p10_p90_bands",
     "fa_projection_engine",
@@ -4125,8 +4125,8 @@
     "/projections/"
    ],
    "priority": 85,
-   "definition": "The /projections/ surface: the FA module's Gate-1-validated projection engine applied to every MLB player with recent history — five-year bWAR paths with floor/mean/ceiling probability buckets — plus PROSPX prospects joining at their projected ETA via the calibrated FV outcome model.",
-   "methodology": "Veterans: the same Marcel engine, aging curves and fitted WAR map the FA class board prices contracts with (one engine, gate-checked once, consumed twice). Prospects: P(bucket|FV) x per-bucket WAR trajectories scaled by FV and shaped by projected debut age — bust-inclusive means, outcome-bucket floor/ceiling. Seasons are priced through the convex tier curve at the ex-ante FA $/WAR level, escalating per season; veteran surplus exists ONLY on salary-known (Spotrac-contracted) seasons and discounts at the platform 9%; arb/pre-arb seasons carry projections but no surplus claim. Prospect surplus is the platform surplus value — never a parallel number.",
+   "definition": "The /projections/ surface: the FA module's Gate-1-validated projection engine applied to every MLB player with recent history - five-year bWAR paths with floor/mean/ceiling probability buckets - plus PROSPX prospects joining at their projected ETA via the calibrated FV outcome model.",
+   "methodology": "Veterans: the same Marcel engine, aging curves and fitted WAR map the FA class board prices contracts with (one engine, gate-checked once, consumed twice). Prospects: P(bucket|FV) x per-bucket WAR trajectories scaled by FV and shaped by projected debut age - bust-inclusive means, outcome-bucket floor/ceiling. Seasons are priced through the convex tier curve at the ex-ante FA $/WAR level, escalating per season; veteran surplus exists ONLY on salary-known (Spotrac-contracted) seasons and discounts at the platform 9%; arb/pre-arb seasons carry projections but no surplus claim. Prospect surplus is the platform surplus value - never a parallel number.",
    "seeAlso": [
     "fa_projection_engine",
     "proj_buckets",
@@ -4147,7 +4147,7 @@
     "organizational tendencies"
    ],
    "priority": 86,
-   "definition": "The behavioral profile on each farm system’s Tendencies tab: promotion aggressiveness, draft position/trait preferences, pitch identity of developed arms, per-tool development rates, international pool strategy (quality vs quantity), trade profile (volume, prospect-capital direction, quality-vs-depth, cash considerations), draft-pool allocation, and IL burden — every value league-relative.",
+   "definition": "The behavioral profile on each farm system’s Tendencies tab: promotion aggressiveness, draft position/trait preferences, pitch identity of developed arms, per-tool development rates, international pool strategy (quality vs quantity), trade profile (volume, prospect-capital direction, quality-vs-depth, cash considerations), draft-pool allocation, and IL burden - every value league-relative.",
    "methodology": "Each axis is computed from the platform’s own records (grade history 2017-present, signed draft picks 2021-present, IFA classes, the trade ledger, MLB transaction text) and expressed as a z-score across the 30 orgs; verdict labels only fire at |z| ≥ 0.5. Tool development uses SAME-SOURCE snapshot pairs ≥ 60 days apart inside one org, so cross-source disagreement never counts as development. Pitch identity profiles the MLB arsenals of the players an org developed (per-pitch usage history is not archived yet, so conversion ledgers like four-seam → sinker are a documented v2). Cash-consideration direction is parsed from official transaction descriptions.",
    "seeAlso": [
     "farm_report_card",
@@ -4168,8 +4168,8 @@
     "deferred money"
    ],
    "priority": 77,
-   "definition": "Contract dollars discounted for deferral schedules at the platform 9% rate — the basis every Phase-2 market number speaks. A curated ledger (data/deferrals.json) carries the schedules: Ohtani's $700M prices as ~$197M of present liability; deals with no schedule on file keep their sticker.",
-   "methodology": "NPV = sum of scheduled payments / (1+0.09)^years-out, schedules rescaled to the sticker total. The 9% platform rate is deliberately harsher than the CBT's ~4.4% statutory rate, so these NPVs read lower than league-reported figures — one discount rate everywhere (prospect surplus, rational value, contracts) beats flattering inconsistency. Every guarantee >= $200M must carry a schedule or an explicit none entry (the coverage audit in the Gate-2 artifact lists misses); entries are curated-unverified until owner spot-check.",
+   "definition": "Contract dollars discounted for deferral schedules at the platform 9% rate - the basis every Phase-2 market number speaks. A curated ledger (data/deferrals.json) carries the schedules: Ohtani's $700M prices as ~$197M of present liability; deals with no schedule on file keep their sticker.",
+   "methodology": "NPV = sum of scheduled payments / (1+0.09)^years-out, schedules rescaled to the sticker total. The 9% platform rate is deliberately harsher than the CBT's ~4.4% statutory rate, so these NPVs read lower than league-reported figures - one discount rate everywhere (prospect surplus, rational value, contracts) beats flattering inconsistency. Every guarantee >= $200M must carry a schedule or an explicit none entry (the coverage audit in the Gate-2 artifact lists misses); entries are curated-unverified until owner spot-check.",
    "seeAlso": [
     "m_guarantee",
     "rational_value",

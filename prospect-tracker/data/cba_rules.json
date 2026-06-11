@@ -1,10 +1,10 @@
 {
   "_comment": [
-    "Rule-versioned CBA data — the ONLY source fa_cba.py reads. Every record is",
+    "Rule-versioned CBA data - the ONLY source fa_cba.py reads. Every record is",
     "dated and sourced; computations resolve rules by date, never hardcode them.",
     "CURATION NOTE: values transcribed from the cited public sources and flagged",
     "for owner spot-check at the Stage-1 checkpoint (verify_status per record).",
-    "The 2022 CBA expires 2026-12-01 — mid-market for the 2026-27 class. Rules",
+    "The 2022 CBA expires 2026-12-01 - mid-market for the 2026-27 class. Rules",
     "for dates past expiry resolve with carry_forward=true, which the UI must",
     "surface as an explicit uncertainty banner (thresholds for 2027 unknown;",
     "market-timing risk per the 2021-22 lockout precedent)."

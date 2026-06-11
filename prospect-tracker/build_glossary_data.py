@@ -3,13 +3,13 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""One-time builder for data/glossary.json — the unified definitions layer.
+"""One-time builder for data/glossary.json - the unified definitions layer.
 
 Extracts the legacy inline PROSPX GLOSSARY + the FA glossary, applies the
 Phase-1 copy-audit fixes (docs/glossary-copy-audit.md), restructures the
 methodology walls into scannable paragraphs, and registers the new entries
 the audit found missing. After this runs once, data/glossary.json is the
-CANONICAL hand-edited source — this script is kept for provenance and is
+CANONICAL hand-edited source - this script is kept for provenance and is
 not part of any pipeline.
 
 Slug stability: legacy ids (pwr_plus → POW+, tvi → Sur+, sur_plus → OrgSur+,
@@ -57,7 +57,7 @@ DEFINITION_FIXES = {
         "One-year contract a club may offer its departing free agent at the mean "
         "of MLB's top-125 salaries (~$21M in 2024). If the player declines and "
         "signs elsewhere, the SIGNING club forfeits draft-pick compensation and "
-        "the former club gains a comp pick — the offer itself costs the old club "
+        "the former club gains a comp pick - the offer itself costs the old club "
         "nothing beyond the one-year salary risk.",
     "two_way_player":
         "Official MLB designation: 20+ MLB innings pitched AND 20+ MLB games "
@@ -69,14 +69,14 @@ DEFINITION_FIXES = {
         "gate, with an age cap. Surfaces roughly 10-40 prospects league-wide.",
     "tool":
         "Unweighted power-mean (p=4) of every scouted 20-80 tool a prospect "
-        "carries, plus FG physical grades — the high exponent rewards extreme "
+        "carries, plus FG physical grades - the high exponent rewards extreme "
         "tools, so one elite grade lifts the composite more than balanced "
         "mediocrity. Expressed on the 20-80 scouting scale.",
     "upside_indicator":
-        "Soft-pink ^ mark in the top-right corner of an FV badge — at least one "
+        "Soft-pink ^ mark in the top-right corner of an FV badge - at least one "
         "source published a '+' upside marker on the latest snapshot.",
     "war":
-        "Wins Above Replacement — Baseball-Reference's implementation (bWAR) is "
+        "Wins Above Replacement - Baseball-Reference's implementation (bWAR) is "
         "the one WAR source used site-wide. Single-number value estimate "
         "covering offense, defense, baserunning, and position.",
     "free_agency":
@@ -98,7 +98,7 @@ LONG_FIXES = {
     "stock_arrow": ("Stock is computed as", "Stock reads as"),
 }
 
-# Methodology walls (>130 words, unstructured) — paragraph-break every ~2
+# Methodology walls (>130 words, unstructured) - paragraph-break every ~2
 # sentences. Content unchanged; presentation becomes scannable.
 RESTRUCTURE = {"statcast_plus", "tiebreaker_score", "rps_plus", "tools_dvm_plus",
                "pwr_plus", "tvi", "wag", "farm_report_card",
@@ -109,12 +109,12 @@ RESTRUCTURE = {"statcast_plus", "tiebreaker_score", "rps_plus", "tools_dvm_plus"
 NEW_ENTRIES = [
     {"id": "rational_value", "term": "Rational value", "category": "fa",
      "aliases": ["rational value", "NPV value"], "priority": 59,
-     "definition": "The NPV of a free agent's projected WAR path: aging-curve-decayed, playing-time-weighted production times escalated $/WAR, discounted at the platform's 9% rate. One of the platform's two independently derived numbers — what the production is worth, never what the market will pay.",
+     "definition": "The NPV of a free agent's projected WAR path: aging-curve-decayed, playing-time-weighted production times escalated $/WAR, discounted at the platform's 9% rate. One of the platform's two independently derived numbers - what the production is worth, never what the market will pay.",
      "methodology": "Rational value shares the same NPV currency as PROSPX prospect surplus, which is what lets qualifying-offer pick costs subtract directly and lets a free agent and a prospect be compared on one axis. It is deliberately computed with no reference to the market model: the gap between the two numbers (Contract Surplus) only means something because neither side peeks at the other.",
      "seeAlso": ["contract_surplus", "deal_plus", "m_guarantee"]},
     {"id": "p10_p90_bands", "term": "P10-P90 bands", "category": "fa",
      "aliases": ["bands", "percentile bands"], "priority": 66,
-     "definition": "The 10th-90th percentile range shown around every FA market prediction. Empirical residual quantiles from the forward-chained backtest — not parametric intervals, which failed the coverage gate (0.858 vs the 0.75-0.85 target) and were rejected.",
+     "definition": "The 10th-90th percentile range shown around every FA market prediction. Empirical residual quantiles from the forward-chained backtest - not parametric intervals, which failed the coverage gate (0.858 vs the 0.75-0.85 target) and were rejected.",
      "seeAlso": ["m_guarantee", "fa_gates"]},
     {"id": "enter_prob", "term": "P(enter)", "category": "fa",
      "aliases": ["enter probability", "exercise probability"], "priority": 67,
@@ -126,11 +126,11 @@ NEW_ENTRIES = [
      "seeAlso": ["qualifying_offer", "qo_tax"]},
     {"id": "winter_dpw", "term": "$/WAR (winter, ex-ante)", "category": "fa",
      "aliases": ["winter $/WAR", "dollars per WAR"], "priority": 69,
-     "definition": "The per-winter price of a win implied by that winter's actual FA signings: guaranteed dollars over projected WAR delivered, carried forward ex-ante so a prediction never sees its own winter. Distinct from the PROSPX $/WAR (tiered) figure, which is a 3-tier rolling market price used for prospect valuation — the two serve different models and are not interchangeable.",
+     "definition": "The per-winter price of a win implied by that winter's actual FA signings: guaranteed dollars over projected WAR delivered, carried forward ex-ante so a prediction never sees its own winter. Distinct from the PROSPX $/WAR (tiered) figure, which is a 3-tier rolling market price used for prospect valuation - the two serve different models and are not interchangeable.",
      "seeAlso": ["dollars_per_war", "rational_value"]},
     {"id": "thin_platform", "term": "Thin platform", "category": "fa",
      "aliases": ["thin platform year"], "priority": 70,
-     "definition": "Disclosure badge on FA projections whose platform season is missing or injury-shortened — below 30% of a role-aware full season, scaled by how much of the season has elapsed. A projection riding old seasons is the model's weakest case (the Burnes/Bieber rehab class); the badge says so instead of hiding it.",
+     "definition": "Disclosure badge on FA projections whose platform season is missing or injury-shortened - below 30% of a role-aware full season, scaled by how much of the season has elapsed. A projection riding old seasons is the model's weakest case (the Burnes/Bieber rehab class); the badge says so instead of hiding it.",
      "seeAlso": ["rational_value", "m_guarantee"]},
     {"id": "fit_components", "term": "Team-fit components", "category": "fa",
      "aliases": ["need", "window", "afford", "park fit", "behavior prior"], "priority": 71,
@@ -138,11 +138,11 @@ NEW_ENTRIES = [
      "seeAlso": ["m_guarantee", "rational_value"]},
     {"id": "first_seen_dates", "term": "First-seen dates", "category": "fa",
      "aliases": ["observation stamps"], "priority": 72,
-     "definition": "Winter events (signings, option decisions, qualifying offers) are dated the day the pipeline first observed them, because the source publishes terms without dates. Stamps are append-only and never revised — the same no-lookahead discipline the models train under.",
+     "definition": "Winter events (signings, option decisions, qualifying offers) are dated the day the pipeline first observed them, because the source publishes terms without dates. Stamps are append-only and never revised - the same no-lookahead discipline the models train under.",
      "seeAlso": ["fa_gates"]},
     {"id": "fa_gates", "term": "Gate 1 / Gate 2", "category": "fa",
      "aliases": ["hard gates", "backtest gates"], "priority": 73,
-     "definition": "The FA module's two shipping blockers: Gate 1, the projection engine against ten held-out seasons (beat the naive baseline; P10-P90 coverage in 0.75-0.85); Gate 2, the market model against nine forward-chained winters (beat the nearest-comps baseline on guarantee, AAV, and years). Both verdicts render verbatim on the Free Agency Model Accountability page — misses included.",
+     "definition": "The FA module's two shipping blockers: Gate 1, the projection engine against ten held-out seasons (beat the naive baseline; P10-P90 coverage in 0.75-0.85); Gate 2, the market model against nine forward-chained winters (beat the nearest-comps baseline on guarantee, AAV, and years). Both verdicts render verbatim on the Free Agency Model Accountability page - misses included.",
      "seeAlso": ["p10_p90_bands", "nearest_comps"]},
     {"id": "nearest_comps", "term": "Nearest comps", "category": "fa",
      "aliases": ["comps", "contract comps"], "priority": 74,
@@ -150,7 +150,7 @@ NEW_ENTRIES = [
      "seeAlso": ["m_guarantee", "fa_gates"]},
     {"id": "fa_projection_engine", "term": "FA projection engine", "category": "fa",
      "aliases": ["Marcel", "aging curves"], "priority": 75,
-     "definition": "A Marcel-style weighted-rates projection mapped to bWAR through a fitted rate-to-WAR model, decayed along survivorship-corrected aging curves fit on the 2000-2026 corpus. Deliberately conservative on marquee names — a no-lookahead engine cannot price record-setters, and the accountability page says so rather than tuning toward them.",
+     "definition": "A Marcel-style weighted-rates projection mapped to bWAR through a fitted rate-to-WAR model, decayed along survivorship-corrected aging curves fit on the 2000-2026 corpus. Deliberately conservative on marquee names - a no-lookahead engine cannot price record-setters, and the accountability page says so rather than tuning toward them.",
      "seeAlso": ["war", "rational_value", "fa_gates"]},
     {"id": "era_minus", "term": "ERA-", "category": "pitcher-stat",
      "aliases": ["ERA minus"], "priority": 80,
@@ -166,7 +166,7 @@ NEW_ENTRIES = [
      "seeAlso": []},
     {"id": "wire_ticker", "term": "WIRE", "category": "site-feature",
      "aliases": ["prospect wire", "ticker"], "priority": 83,
-     "definition": "The homepage event feed and scrolling ticker: debuts, promotions, trades, IL moves, real FV changes, and free-agency winter events, each dated and color-coded by type. FV items are real grade changes only — composite movement scores never masquerade as news.",
+     "definition": "The homepage event feed and scrolling ticker: debuts, promotions, trades, IL moves, real FV changes, and free-agency winter events, each dated and color-coded by type. FV items are real grade changes only - composite movement scores never masquerade as news.",
      "seeAlso": ["stock_arrow", "first_seen_dates"]},
     {"id": "active_pool", "term": "Active prospect pool", "category": "methodology",
      "aliases": ["active pool"], "priority": 84,
@@ -277,7 +277,7 @@ def main() -> None:
     payload = {"version": "2026-06-10", "groups": GROUPS, "entries": entries}
     out = ROOT / "data" / "glossary.json"
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"wrote {out} — {len(entries)} entries")
+    print(f"wrote {out} - {len(entries)} entries")
 
 
 if __name__ == "__main__":

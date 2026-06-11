@@ -4,7 +4,7 @@
  * Written by Noah J. Dengler (@ARKNDJL), 2026 */
 
 // =============================================================================
-// eephus.io Free Agency app (/fa/) — Class Board / Team Fits / Archive /
+// eephus.io Free Agency app (/fa/) - Class Board / Team Fits / Archive /
 // Model Accountability / Glossary
 // =============================================================================
 // A standalone surface, SEPARATE from PROSPX by design: it shares the site
@@ -19,11 +19,11 @@
 (function () {
   "use strict";
 
-  const EM_DASH = "—";
+  const EM_DASH = " - ";
   const D = {};            // loaded sidecars by name
   const _inflight = {};
 
-  // Mirror of PROSPX's formatMetric for the types this surface renders —
+  // Mirror of PROSPX's formatMetric for the types this surface renders - 
   // same precision rules, same null token, same -0 collapse. Kept local so
   // the FA page never imports PROSPX script.
   function formatMetric(value, type = "int") {
@@ -66,12 +66,12 @@
     return `<img class="fa-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/${ESPN_SLUGS[org]}.png" alt="${esc(org)}" loading="lazy" onerror="this.remove()">`;
   }
 
-  // Deal verdict chip — the plain-English read of Deal+ (band edges are the
+  // Deal verdict chip - the plain-English read of Deal+ (band edges are the
   // 2015-2026 corpus terciles; see the deal_verdict glossary entry).
   const VERDICT_META = {
-    value:   ["VALUE",   "Projected to be UNDERPAID — rational value runs well past the predicted price (Deal+ in the corpus top tercile, ≥185)."],
-    market:  ["MARKET",  "Priced about right — rational value and predicted price within the corpus middle tercile (Deal+ 85–185)."],
-    overpay: ["OVERPAY", "Projected to be OVERPAID — predicted price runs past rational value (Deal+ in the corpus bottom tercile, <85)."],
+    value: ["VALUE", "Projected to be UNDERPAID - rational value runs well past the predicted price (Deal+ in the corpus top tercile, ≥185)."],
+    market: ["MARKET", "Priced about right - rational value and predicted price within the corpus middle tercile (Deal+ 85–185)."],
+    overpay: ["OVERPAY", "Projected to be OVERPAID - predicted price runs past rational value (Deal+ in the corpus bottom tercile, <85)."],
   };
   function verdictChip(m) {
     const v = VERDICT_META[m.verdict];
@@ -105,7 +105,7 @@
 
   function syncFromURL() {
     const p = new URLSearchParams(window.location.hash.slice(1));
-    // The FA glossary view moved into the unified module — redirect deep links.
+    // The FA glossary view moved into the unified module - redirect deep links.
     if (p.get("view") === "glossary") {
       window.location.replace("/glossary/#cat=" + encodeURIComponent("Free Agency"));
       return;
@@ -135,7 +135,7 @@
     if (!rows) return;
     chips.innerHTML = VIEWS.map(([k, label]) =>
       `<button class="chip${state.view === k ? " active" : ""}" data-fa-view="${k}">${label}</button>`).join("")
-      + ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Free Agency")}" title="Every FA term, defined — in the unified site glossary"><span class="chip-glyph" aria-hidden="true">§</span>Glossary</a>`;
+      + ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Free Agency")}" title="Every FA term, defined - in the unified site glossary"><span class="chip-glyph" aria-hidden="true">§</span>Glossary</a>`;
     chips.querySelectorAll("[data-fa-view]").forEach(b => b.onclick = () => {
       state.view = b.dataset.faView; state.player = null; syncToURL(); render();
     });
@@ -172,28 +172,28 @@
     if (m.status === "signed") {
       const terms = m.signedMilb ? "MiLB deal"
         : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)}`;
-      return `<span title="Signed${m.signedDate ? " — first observed " + m.signedDate : ""}. Terms from the class page; the date is the pipeline's observation stamp.">SIGNED ${esc(m.signedTo || "")} ${terms}</span>`;
+      return `<span title="Signed${m.signedDate ? " - first observed " + m.signedDate : ""}. Terms from the class page; the date is the pipeline's observation stamp.">SIGNED ${esc(m.signedTo || "")} ${terms}</span>`;
     }
     if (m.status === "option_exercised") {
-      return `<span title="Option exercised — never reached the market (first-seen heuristic; see Tracker).">option exercised</span>`;
+      return `<span title="Option exercised - never reached the market (first-seen heuristic; see Tracker).">option exercised</span>`;
     }
-    if (m.status === "locked") return `<span title="Contract expires — locked into the class.">UFA</span>`;
+    if (m.status === "locked") return `<span title="Contract expires - locked into the class.">UFA</span>`;
     const pct = m.enterProb != null ? ` &middot; P(enter) ${(m.enterProb * 100).toFixed(0)}%` : "";
     const price = m.optPrice ? ` $${(m.optPrice / 1e6).toFixed(1)}M` : "";
     const src = m.enterProbSrc && m.enterProbSrc.startsWith("band_priced")
-      ? "Priced from the market model's own P10-P90 band distribution (the option price against the predicted AAV) — v2."
+      ? "Priced from the market model's own P10-P90 band distribution (the option price against the predicted AAV) - v2."
       : "Documented v1 heuristic (mutual/conditional options keep explicit priors).";
-    return `<span title="Option-pending — class membership is probabilistic until the option resolves. ${src}">${esc((m.type || "").replace(/_/g, " "))}${price}${pct}</span>`;
+    return `<span title="Option-pending - class membership is probabilistic until the option resolves. ${src}">${esc((m.type || "").replace(/_/g, " "))}${price}${pct}</span>`;
   }
 
   function playerLink(m) {
     return `<a href="#player=${encodeURIComponent(m.key || "")}" class="fa-player-link"><strong>${esc(m.name)}</strong></a>`;
   }
 
-  // Disclosure badges — the model's weak spots are surfaced, never hidden.
+  // Disclosure badges - the model's weak spots are surfaced, never hidden.
   function thinBadge(m) {
     return m.thinPlatform
-      ? ` <span class="fa-thin" title="${esc(m.thinPlatform)} — projection confidence is LOW; the market line inherits the weakness.">&#9888;</span>` : "";
+      ? ` <span class="fa-thin" title="${esc(m.thinPlatform)} - projection confidence is LOW; the market line inherits the weakness.">&#9888;</span>` : "";
   }
 
   function noteBadge(m) {
@@ -206,11 +206,11 @@
     if (!src || !Object.keys(src).length) return "";
     const stale = d => (Date.now() - new Date(d + "T00:00:00").getTime()) / 864e5 > 14;
     const parts = Object.entries(src).map(([k, d]) =>
-      `${k} ${d}${stale(d) ? ` <span class="fa-stale" title="${k} last fetched ${d} — more than 14 days old. Re-run the FA pipeline.">&#9888; stale</span>` : ""}`);
-    return `<div class="fa-note fa-sources" title="MAX(fetched_at) per source table — when each input was last pulled, not when the page was built.">sources: ${parts.join(" &middot; ")}</div>`;
+      `${k} ${d}${stale(d) ? ` <span class="fa-stale" title="${k} last fetched ${d} - more than 14 days old. Re-run the FA pipeline.">&#9888; stale</span>` : ""}`);
+    return `<div class="fa-note fa-sources" title="MAX(fetched_at) per source table - when each input was last pulled, not when the page was built.">sources: ${parts.join(" &middot; ")}</div>`;
   }
 
-  // ---- Share card — canvas-native PNG of the board's top 10 -----------------
+  // ---- Share card - canvas-native PNG of the board's top 10 -----------------
   // Drawn by hand (no html2canvas: it can't resolve CSS var(), per the PROSPX
   // GFX builder's literal-stops precedent), so the card is deterministic in
   // both themes. Token colors are read from the live computed style.
@@ -231,7 +231,7 @@
     const line = _tok("--border", dark ? "#2B2B31" : "#C9C1AE");
     const MONO = '"MS Gothic","Osaka-Mono","Roboto Mono",monospace';
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
-    // iridescent rule — literal stops per theme (canvas can't read var())
+    // iridescent rule - literal stops per theme (canvas can't read var())
     const ramp = g.createLinearGradient(PAD, 0, W - PAD, 0);
     (dark
       ? [[0, "#00D9FF"], [0.3, "#B47CFF"], [0.55, "#FF4FD8"], [0.78, "#FFD700"], [1, "#4FFF9E"]]
@@ -240,7 +240,7 @@
     g.fillStyle = ramp; g.fillRect(PAD, 86, W - 2 * PAD, 3);
     g.fillStyle = fg;
     g.font = `700 34px ${MONO}`;
-    g.fillText(`MLB FREE AGENCY — ${cls.class_year - 1}-${String(cls.class_year).slice(2)} CLASS BOARD`, PAD, 60);
+    g.fillText(`MLB FREE AGENCY - ${cls.class_year - 1}-${String(cls.class_year).slice(2)} CLASS BOARD`, PAD, 60);
     g.fillStyle = sub;
     g.font = `16px ${MONO}`;
     g.fillText(`${cls.n_members} constructed members · ${cls.n_projected} projected · winter $/WAR (ex-ante) ${money(cls.dpw_usd)}`, PAD, 116);
@@ -264,13 +264,13 @@
       g.fillStyle = fg; g.font = `16px ${MONO}`;
       g.fillText(`${m.projYears}y / ${money(m.projGuar)}`, cols[2], y);
       g.fillText(money(m.projAav), cols[3], y);
-      g.fillText(m.warTotal != null ? m.warTotal.toFixed(1) : "—", cols[4], y);
+      g.fillText(m.warTotal != null ? m.warTotal.toFixed(1) : " - ", cols[4], y);
       g.fillText(formatMetric(m.surplus / 1e6, "surplusM"), cols[5], y);
       g.fillStyle = vcol[m.verdict] || sub;
-      g.fillText((m.verdict || "—").toUpperCase(), cols[6], y);
+      g.fillText((m.verdict || " - ").toUpperCase(), cols[6], y);
     });
     g.fillStyle = sub; g.font = `13px ${MONO}`;
-    g.fillText("predicted market (projGuarantee) vs rational value — two numbers, never conflated · both hard gates passed · projections ex-ante",
+    g.fillText("predicted market (projGuarantee) vs rational value - two numbers, never conflated · both hard gates passed · projections ex-ante",
                PAD, H - 56);
     g.fillStyle = fg; g.font = `700 16px ${MONO}`;
     g.fillText("eephus.io/fa", PAD, H - 28);
@@ -308,7 +308,7 @@
     </div>`;
     const body = members.map((m, i) => {
       const fits = (m.fits || []).map(f =>
-        `<span class="fa-fitorg" title="fit ${f.fit} — need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " — blocked by " + esc(blockedText(f.blockedBy)) : ""}">${teamLogo(f.org)}${f.org}${f.blockedBy ? "*" : ""}</span>`).join(" ");
+        `<span class="fa-fitorg" title="fit ${f.fit} - need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " - blocked by " + esc(blockedText(f.blockedBy)) : ""}">${teamLogo(f.org)}${f.org}${f.blockedBy ? "*" : ""}</span>`).join(" ");
       const comps = (m.comps || []).map(c =>
         `${esc(c.name)} '${String(c.yr).slice(2)} ${c.years || "?"}y/${c.guar ? "$" + (c.guar / 1e6).toFixed(0) + "M" : "?"}`).join("; ");
       const yearsBand = m.projYears != null
@@ -329,7 +329,7 @@
         <td>${m.rational != null ? money(m.rational) : EM_DASH}</td>
         <td>${surplusSpan(m.surplus, m.surplusP10, m.surplusP90)}</td>
         <td>${verdictChip(m)}</td>
-        <td title="* = blocked (hover each club for who's blocking — prospect or MLB incumbent)">${fits || EM_DASH}</td>
+        <td title="* = blocked (hover each club for who's blocking - prospect or MLB incumbent)">${fits || EM_DASH}</td>
       </tr>`;
     }).join("");
     rows.innerHTML = head + `<div class="fa-board-layout"><div class="fa-board-main"><table class="detail-table">
@@ -386,14 +386,14 @@
     const mod = (title, body, tip) => body
       ? `<div class="fa-rail-mod"><div class="fa-rail-head" title="${esc(tip || "")}">${title}</div>${body}</div>` : "";
     return `<aside class="fa-board-rail">
-      ${mod("Best projected values", values.map(railRow).join(""), "Largest projected Contract Surplus among VALUE verdicts — rational value furthest above the predicted price")}
+      ${mod("Best projected values", values.map(railRow).join(""), "Largest projected Contract Surplus among VALUE verdicts - rational value furthest above the predicted price")}
       ${mod("Projected overpays", overpays.map(railRow).join(""), "Most negative projected Contract Surplus among OVERPAY verdicts")}
-      ${mod("Class supply", supply, "Projected members by position group — thin groups inflate prices (a market-model feature)")}
-      ${mod("FA $/WAR by winter", trend, "The signings-implied $/WAR series (Gate-2 estimator) — the gradual climb is why every future season escalates")}
+      ${mod("Class supply", supply, "Projected members by position group - thin groups inflate prices (a market-model feature)")}
+      ${mod("FA $/WAR by winter", trend, "The signings-implied $/WAR series (Gate-2 estimator) - the gradual climb is why every future season escalates")}
     </aside>`;
   }
 
-  // ---- Signing Tracker — mode-aware ------------------------------------------
+  // ---- Signing Tracker - mode-aware ------------------------------------------
   // Preseason (no observed events): a clear placeholder, because faking a
   // tracker out of projections would conflate the module's two numbers.
   // In-winter: actual-vs-predicted per signing (the model held to account in
@@ -416,7 +416,7 @@
       return;
     }
     const spent = signed.reduce((s, m) => s + (m.signedGuar || 0), 0);
-    // Predictions are NPV-basis (deferral-adjusted) — score deltas against
+    // Predictions are NPV-basis (deferral-adjusted) - score deltas against
     // the NPV actual where a deferral schedule is on file.
     const actGuar = m => m.signedGuarNpv ?? m.signedGuar;
     const scored = signed.filter(m => m.projGuar != null && m.signedGuar != null && !m.signedMilb);
@@ -426,7 +426,7 @@
       .slice().sort((a, b) => (b.signedDate || "").localeCompare(a.signedDate || "") || (b.signedGuar || 0) - (a.signedGuar || 0))
       .map(m => {
         const actual = m.signedMilb ? "MiLB deal"
-          : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)}${m.signedGuarNpv != null ? `<span class="fa-band" title="Deferral-adjusted NPV at the platform 9% rate — the basis the prediction speaks"> (${money(m.signedGuarNpv)} NPV)</span>` : ""}`;
+          : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)}${m.signedGuarNpv != null ? `<span class="fa-band" title="Deferral-adjusted NPV at the platform 9% rate - the basis the prediction speaks"> (${money(m.signedGuarNpv)} NPV)</span>` : ""}`;
         const pred = m.projGuar != null ? `${m.projYears}y / ${money(m.projGuar)}` : EM_DASH;
         const dGuar = (m.signedGuar != null && m.projGuar != null && !m.signedMilb)
           ? formatMetric((actGuar(m) - m.projGuar) / 1e6, "surplusM") : EM_DASH;
@@ -437,14 +437,14 @@
           <td>${playerLink(m)} <span class="fa-sub">${esc(m.pos || "")}</span>${m.qoAccepted ? ' <span title="Accepted the qualifying offer">QO accepted</span>' : ""}</td>
           <td>${teamLogo(m.from)}${esc(m.from || "")} &rarr; ${teamLogo(m.signedTo)}${esc(m.signedTo || "")}</td>
           <td>${actual}</td>
-          <td title="The model's pre-winter prediction — frozen, not re-fit">${pred}</td>
+          <td title="The model's pre-winter prediction - frozen, not re-fit">${pred}</td>
           <td title="Actual guarantee minus predicted (positive = market paid above model)">${dGuar}</td>
-          <td title="Deal+ at the ACTUAL price — 100 = rational value">${realized ?? EM_DASH}</td>
+          <td title="Deal+ at the ACTUAL price - 100 = rational value">${realized ?? EM_DASH}</td>
         </tr>`;
       }).join("");
     const evRows = evs.filter(e => e.type !== "signing").slice(0, 30).map(e => {
-      const label = e.type === "option_declined" ? `declines option${e.optPrice ? " (" + money(e.optPrice) + ")" : ""} — enters class`
-        : e.type === "option_exercised" ? `option exercised${e.optPrice ? " (" + money(e.optPrice) + ")" : ""} — off the board`
+      const label = e.type === "option_declined" ? `declines option${e.optPrice ? " (" + money(e.optPrice) + ")" : ""} - enters class`
+        : e.type === "option_exercised" ? `option exercised${e.optPrice ? " (" + money(e.optPrice) + ")" : ""} - off the board`
         : e.type === "qo_offered" ? "receives qualifying offer" : esc(e.type);
       return `<tr><td>${e.date}</td><td><a href="#player=${encodeURIComponent(e.key || "")}" class="fa-player-link"><strong>${esc(e.name || e.key || "")}</strong></a> <span class="fa-sub">${esc(e.pos || "")}</span></td><td>${label}</td></tr>`;
     }).join("");
@@ -464,7 +464,7 @@
 
   // ---- FA player card (#player=<key>) ----------------------------------------
   function _fvArcSvg(arc) {
-    // Tiny inline FV sparkline (20–80 scale). Pure presentation — the points
+    // Tiny inline FV sparkline (20–80 scale). Pure presentation - the points
     // are the exported consensus-FV change history, nothing interpolated.
     const w = 280, h = 56, pad = 4;
     const vals = arc.map(p => p[1]);
@@ -497,7 +497,7 @@
       const dpwT = cls.dpw_usd * Math.pow(1 + infl, i);
       const inTerm = m.projYears != null && i < m.projYears;
       return `<tr${inTerm ? "" : ' class="fa-dim"'}>
-        <td>${season}${inTerm ? "" : '<span class="fa-sub" title="Beyond the predicted term — shown because any longer offer prices these seasons"> +</span>'}</td>
+        <td>${season}${inTerm ? "" : '<span class="fa-sub" title="Beyond the predicted term - shown because any longer offer prices these seasons"> +</span>'}</td>
         <td>${m.age != null ? Math.floor(m.age) + i : EM_DASH}</td>
         <td>${lo != null ? formatMetric(lo, "war") : EM_DASH}</td>
         <td><strong>${formatMetric(w, "war")}</strong></td>
@@ -509,7 +509,7 @@
       `<div class="fa-warbar" title="${cls.class_year + i}: ${formatMetric(w, "war")} bWAR${(m.warPathP10 || [])[i] != null ? ` (floor ${formatMetric(m.warPathP10[i], "war")} / ceiling ${formatMetric(m.warPathP90[i], "war")})` : ""}"><div style="height:${Math.max(4, Math.min(100, w / 6 * 100)).toFixed(0)}%"></div><span>${String(cls.class_year + i).slice(2)}</span></div>`).join("");
     const comps = (m.comps || []).map(c => `<tr><td>${esc(c.name)}</td><td>${c.yr}</td><td>${teamLogo(c.to)}${esc(c.to || "")}</td><td>${c.years ?? "?"}y / ${c.guar ? money(c.guar) : "?"}</td></tr>`).join("");
     const fits = (m.fits || []).map(f =>
-      `<span class="chip" title="need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " — blocked by " + esc(blockedText(f.blockedBy)) : ""}">${teamLogo(f.org)}${f.org}${f.blockedBy ? "*" : ""} &middot; ${f.fit}</span>`).join(" ");
+      `<span class="chip" title="need ${f.need} / window ${f.window} / afford ${f.afford} / park ${f.park} / behavior ${f.behavior}${f.blockedBy ? " - blocked by " + esc(blockedText(f.blockedBy)) : ""}">${teamLogo(f.org)}${f.org}${f.blockedBy ? "*" : ""} &middot; ${f.fit}</span>`).join(" ");
     const signedBlock = m.status === "signed" ? `
       <h3>Signed</h3>
       <p>${teamLogo(m.from)}${esc(m.from || "")} &rarr; <strong>${teamLogo(m.signedTo)}${esc(m.signedTo || "")}</strong> &middot;
@@ -541,7 +541,7 @@
         <td>${surplusSpan(m.surplus, m.surplusP10, m.surplusP90)}</td>
         <td>${verdictChip(m)}</td>
       </tr></tbody></table>
-      ${(m.surplusP10 != null && m.surplusP90 != null) ? `<p class="fa-note" title="Rational value of the floor/ceiling WAR paths minus the predicted price — the probability-bucketed read on the deal">Surplus range (floor &rarr; ceiling): ${surplusSpan(m.surplusP10)} &rarr; ${surplusSpan(m.surplusP90)} around a mean of ${surplusSpan(m.surplus)}</p>` : ""}
+      ${(m.surplusP10 != null && m.surplusP90 != null) ? `<p class="fa-note" title="Rational value of the floor/ceiling WAR paths minus the predicted price - the probability-bucketed read on the deal">Surplus range (floor &rarr; ceiling): ${surplusSpan(m.surplusP10)} &rarr; ${surplusSpan(m.surplusP90)} around a mean of ${surplusSpan(m.surplus)}</p>` : ""}
       ${yearRows ? `<h3>Season-by-season projection</h3>
       <table class="detail-table fa-year-table">
       <thead><tr><th>Season</th><th>Age</th><th title="P10 of the Gate-1 probability bucket, decayed along the aging curves">Floor</th><th>Mean</th><th title="P90 of the Gate-1 probability bucket, decayed along the aging curves">Ceiling</th><th><span data-gl="winter_dpw">$/WAR</span></th></tr></thead>
@@ -586,14 +586,14 @@
         <td>${verdictChip(m)}</td>
       </tr>`).join("");
     const blockedLine = (t.blocked || []).length
-      ? `<div class="fa-note" title="Positions this club is NOT shopping at — the needs matrix found a blocker. MLB = a contracted incumbent producing at the slot a signing would displace; PX = a near-ETA PROSPX prospect (FV ≥ 50).">Not buying: ${t.blocked.map(b =>
-          `<span class="fa-block fa-block-${b.t}">${esc(b.pos)} — ${esc(b.n)}${b.w != null ? ` (${formatMetric(b.w, "war")} WAR)` : ""}<i>${b.t === "mlb" ? "MLB" : "PX"}</i></span>`).join(" ")}</div>` : "";
+      ? `<div class="fa-note" title="Positions this club is NOT shopping at - the needs matrix found a blocker. MLB = a contracted incumbent producing at the slot a signing would displace; PX = a near-ETA PROSPX prospect (FV ≥ 50).">Not buying: ${t.blocked.map(b =>
+          `<span class="fa-block fa-block-${b.t}">${esc(b.pos)} - ${esc(b.n)}${b.w != null ? ` (${formatMetric(b.w, "war")} WAR)` : ""}<i>${b.t === "mlb" ? "MLB" : "PX"}</i></span>`).join(" ")}</div>` : "";
     rows.innerHTML = `<div class="filter-bar"><span class="filter-label">Team</span>${chips}</div>
       <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${teamLogo(state.team)}${state.team} fits</span>
       <span class="newsprint-eyebrow-meta">CBT payroll ${money(t.taxPayroll ?? t.committed)} &middot; tax space ${t.space != null ? formatMetric(t.space / 1e6, "surplusM") : EM_DASH}${t.payor ? ` &middot; ${esc(t.payor)}` : ""} &middot; baseline ${t.baseWins ?? "?"}w (contracted core) &middot; biggest deal ever ${money(t.maxGuar)} &middot; last-3-winter outlay ${money(t.recentSpend)}</span></div>
       ${blockedLine}
       <table class="detail-table fa-fits-table">
-      <thead><tr><th>Player</th><th>Fit</th><th title="Displacement WAR gap at the position (CAN they upgrade here)">Need</th><th title="Marginal playoff leverage at the club's baseline wins">Window</th><th title="CBT space vs the predicted AAV — habitual taxpayers keep a documented floor">Afford</th><th title="Park factor alignment (deliberately the smallest weight — a tiebreaker, not a driver)">Park</th><th title="WILL they spend: biggest deal ever vs this price, recent 3-winter outlay, $100M-deal participation">Behavior</th><th title="WHO blocks the position: PX = PROSPX prospect (near ETA), MLB = contracted incumbent producing at the displaced slot">Blocked by</th><th>Predicted</th><th>Verdict</th></tr></thead>
+      <thead><tr><th>Player</th><th>Fit</th><th title="Displacement WAR gap at the position (CAN they upgrade here)">Need</th><th title="Marginal playoff leverage at the club's baseline wins">Window</th><th title="CBT space vs the predicted AAV - habitual taxpayers keep a documented floor">Afford</th><th title="Park factor alignment (deliberately the smallest weight - a tiebreaker, not a driver)">Park</th><th title="WILL they spend: biggest deal ever vs this price, recent 3-winter outlay, $100M-deal participation">Behavior</th><th title="WHO blocks the position: PX = PROSPX prospect (near ETA), MLB = contracted incumbent producing at the displaced slot">Blocked by</th><th>Predicted</th><th>Verdict</th></tr></thead>
       <tbody>${body || `<tr><td colspan="10">No scored fits for ${state.team} in this class.</td></tr>`}</tbody></table>`;
     rows.querySelectorAll("[data-fa-team]").forEach(b => b.onclick = () => {
       state.team = b.dataset.faTeam; syncToURL(); render();
@@ -625,7 +625,7 @@
       <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${state.winter - 1}-${String(state.winter).slice(2)} winter</span>
       <span class="newsprint-eyebrow-meta">${w.n} signings &middot; ${money(w.spend_usd)} guaranteed &middot; implied $/WAR ${money(w.dpw_usd)}${w.qo_offered != null ? ` &middot; ${w.qo_offered} qualifying offers` : ""}</span></div>
       <table class="detail-table">
-      <thead><tr><th>Player</th><th title="From = the club holding his rights AT signing — a midseason rental shows the acquiring club, not the team he opened the year with.">From &rarr; To</th><th>Yrs</th><th>Guarantee</th><th>AAV</th><th>WAR to date</th><th>Surplus to date</th><th>Status</th></tr></thead>
+      <thead><tr><th>Player</th><th title="From = the club holding his rights AT signing - a midseason rental shows the acquiring club, not the team he opened the year with.">From &rarr; To</th><th>Yrs</th><th>Guarantee</th><th>AAV</th><th>WAR to date</th><th>Surplus to date</th><th>Status</th></tr></thead>
       <tbody>${body}</tbody></table>`;
     rows.querySelectorAll("[data-fa-winter]").forEach(b => b.onclick = () => {
       state.winter = Number(b.dataset.faWinter); syncToURL(); render();
@@ -662,7 +662,7 @@
   }
 
   // The module glossary moved into the unified /glossary/ data layer
-  // (data/glossary.json) — terms here are wrapped as [data-gl] spans instead.
+  // (data/glossary.json) - terms here are wrapped as [data-gl] spans instead.
 
   function boot() {
     syncFromURL();

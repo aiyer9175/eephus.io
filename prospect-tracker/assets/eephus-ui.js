@@ -1,15 +1,15 @@
-// eephus.io — account + forum UI controller (Parts 1-7).
+// eephus.io - account + forum UI controller (Parts 1-7).
 // Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
 //
 // Renders the visible account/social layer and talks to the data layer through
 // window.EephusAccount. Loads on BOTH surfaces (editorial pages + the PROSPX
 // app). Two modes:
-//   • LIVE  — window.EephusAccount.enabled() (a real Supabase project is wired).
-//   • PREVIEW — no backend configured: a clearly-labeled local-only store so the
+// • LIVE - window.EephusAccount.enabled() (a real Supabase project is wired).
+// • PREVIEW - no backend configured: a clearly-labeled local-only store so the
 //     forum/flair/onboarding are fully viewable & clickable for review. Nothing
 //     leaves the browser; switching on a real config takes over automatically.
 // Reuses PROSPX primitives (headshots, clean team logos, formatMetric, prospect
-// index) through the window.PROSPX shim the app exposes — single source of truth
+// index) through the window.PROSPX shim the app exposes - single source of truth
 // for any number/logo a post surfaces.
 (function () {
   "use strict";
@@ -87,7 +87,7 @@
         },
         {
           id: "seed2", parent_id: "seed1", author: authors.scout_mendoza, score: 3, created_at: iso(120),
-          body_md: "Fair — for pitchers I lean on the `command` proxy first, but the through-line holds. The [methodology](/glossary/#view=methodology) backs it up."
+          body_md: "Fair - for pitchers I lean on the `command` proxy first, but the through-line holds. The [methodology](/glossary/#view=methodology) backs it up."
         }
       ];
     }
@@ -99,7 +99,7 @@
         },
         {
           id: "seed2", parent_id: "seed1", author: authors.scout_mendoza, score: 4, created_at: iso(300),
-          body_md: "Agreed @farm_report — and the IFA class adds a second wave behind it. The `consensus FV` curve for the org is trending up."
+          body_md: "Agreed @farm_report - and the IFA class adds a second wave behind it. The `consensus FV` curve for the org is trending up."
         }
       ];
     }
@@ -110,7 +110,7 @@
       },
       {
         id: "seed2", parent_id: "seed1", author: authors.farm_report, score: 5, created_at: iso(415),
-        body_md: "Agreed @scout_mendoza — and the per-source spread is tightening, which usually precedes a consensus bump. `xwOBA` on the pull side is the tell."
+        body_md: "Agreed @scout_mendoza - and the per-source spread is tightening, which usually precedes a consensus bump. `xwOBA` on the pull side is the tell."
       },
       {
         id: "seed3", parent_id: null, author: authors.pitchlab, score: 8, created_at: iso(180),
@@ -145,7 +145,7 @@
     return '<span class="eph-avatar sz-' + size + ' is-default" style="background:' + avatarTint(uname) + ';" aria-hidden="true">' + esc(ch) + '</span>';
   }
 
-  // Part 2 — userFlair: circular avatar + name + #1 team (clean logo) + #1
+  // Part 2 - userFlair: circular avatar + name + #1 team (clean logo) + #1
   // prospect chip + badges/role. Used in comments, nav, profiles.
   var BADGE_ICON = { beta_tester: "🧪", contributor: "✍️", tenured_1y: "🎖️" };
   var BADGE_NAME = { beta_tester: "Beta Tester", contributor: "Contributor", tenured_1y: "Charter Member" };
@@ -156,7 +156,7 @@
     if (opts.avatar !== false) out += avatarHTML(profile, opts.size || "sm");
     var uname = esc(profile.username || "guest");
     out += '<a class="eph-uname" href="/prospx/#u=' + escAttr(profile.username) + '">' + uname + "</a>";
-    // #1 team — clean (non-pixelated) logo
+    // #1 team - clean (non-pixelated) logo
     var favTeam = profile.fav_team || (profile.favorites && firstNumberOne(profile.favorites, "team"));
     if (favTeam) {
       var logo = PX().teamLogoURL ? PX().teamLogoURL(favTeam) : null;
@@ -187,7 +187,7 @@
   }
 
   // ===========================================================================
-  // Safe markdown — allowlist renderer (XSS-safe by construction) + embeds
+  // Safe markdown - allowlist renderer (XSS-safe by construction) + embeds
   // ===========================================================================
   function safeLink(url) {
     var u = String(url || "").trim();
@@ -217,7 +217,7 @@
     s = s.replace(/C(\d+)/g, function (m, i) { return codes[+i]; });
     return s;
   }
-  // Part 6 — light client-side profanity mask (extensible; the authoritative
+  // Part 6 - light client-side profanity mask (extensible; the authoritative
   // filter + rate-limits live server-side in migration 0003). Display-time.
   var PROFANITY = /\b(fuck(?:ing|er|ed)?|shit(?:ty)?|asshole|bitch|cunt|dickhead)\b/gi;
   // Mask with an inert placeholder (), not "*", so the stars can't be
@@ -229,7 +229,7 @@
   function gateLinks(md) {
     if (!LIVE() || isStaff()) return true;
     if (myKarma() >= KARMA_LINK) return true;
-    if (/\]\(\s*https?:\/\//i.test(md) || /https?:\/\//i.test(md)) { toast("New accounts can't post links until " + KARMA_LINK + " karma — keeps spam out.", "err"); return false; }
+    if (/\]\(\s*https?:\/\//i.test(md) || /https?:\/\//i.test(md)) { toast("New accounts can't post links until " + KARMA_LINK + " karma - keeps spam out.", "err"); return false; }
     return true;
   }
   function gateDownvote() {
@@ -300,7 +300,7 @@
     if (pts.length) { var l = pts[pts.length - 1]; return l.consensus_fv != null ? l.consensus_fv : l.consensus_fv_raw; }
     return p.fv_close != null ? p.fv_close : null;
   }
-  function fmtFv(v) { if (v == null) return "—"; return PX().formatMetric ? PX().formatMetric(v, "fv") : String(Math.round(v)); }
+  function fmtFv(v) { if (v == null) return " - "; return PX().formatMetric ? PX().formatMetric(v, "fv") : String(Math.round(v)); }
   function fvSparkSVG(points) {
     var vals = (points || []).map(function (p) { return p.consensus_fv != null ? p.consensus_fv : p.consensus_fv_raw; }).filter(function (v) { return v != null && !isNaN(v); });
     if (vals.length < 2) return "";
@@ -346,15 +346,15 @@
   }
   function metricChip(label, key, ctx) {
     var p = resolvePlayer(key, ctx);
-    var val = "—";
+    var val = " - ";
     if (p) {
-      if (/dvm/i.test(label)) { var d = p.dollar_dvm_plus != null ? p.dollar_dvm_plus : p.dvm_plus; val = d != null ? (PX().formatMetric ? PX().formatMetric(d, /\$/.test(label) ? "surplusM" : "plus") : String(d)) : "—"; }
+      if (/dvm/i.test(label)) { var d = p.dollar_dvm_plus != null ? p.dollar_dvm_plus : p.dvm_plus; val = d != null ? (PX().formatMetric ? PX().formatMetric(d, /\$/.test(label) ? "surplusM" : "plus") : String(d)) : " - "; }
       else val = fmtFv(latestFv(p));
     } else val = esc(key);
     return '<span class="eph-metric-chip"><span class="mk">' + esc(label) + "</span>" + val + "</span>";
   }
 
-  // Part 7 — polls. `[[poll:Question?|Opt A|Opt B|...]]` inside a comment renders
+  // Part 7 - polls. `[[poll:Question?|Opt A|Opt B|...]]` inside a comment renders
   // a vote widget; votes are keyed by the host comment id (ctx.commentId) and
   // stored in poll_votes (LIVE) or localStorage (PREVIEW). Hydrated by wirePolls.
   function pollEmbedHTML(spec, ctx) {
@@ -427,7 +427,7 @@
   function closeModal() { if (_openModal) { _openModal.remove(); _openModal = null; document.removeEventListener("keydown", escClose); } }
 
   // ===========================================================================
-  // Part 1 — Auth modal (email + password primary; magic-link optional)
+  // Part 1 - Auth modal (email + password primary; magic-link optional)
   // ===========================================================================
   function authBodyHTML(mode) {
     var live = LIVE();
@@ -436,7 +436,7 @@
       '<button data-seg="signup"' + (mode === "signup" ? ' class="is-active"' : "") + ">Create account</button></div>";
     var preview = live ? "" :
       '<div class="eph-formmsg info">Accounts go live when the Supabase backend is configured. ' +
-      'Continue in <strong>preview mode</strong> to explore profiles, flair, and the forum locally — nothing leaves this browser.</div>';
+      'Continue in <strong>preview mode</strong> to explore profiles, flair, and the forum locally - nothing leaves this browser.</div>';
     var signin =
       '<form data-form="signin">' +
         '<div class="eph-field"><label>Email</label><input class="eph-input" type="email" name="email" autocomplete="email"' + req + "></div>" +
@@ -516,7 +516,7 @@
     on(body, "click", '[data-act="reset"]', function (e) {
       e.preventDefault();
       var f = qs('[data-form="signin"]', body); var email = f.email.value.trim();
-      if (!LIVE()) return toast("Preview mode — password reset is a live-only flow.");
+      if (!LIVE()) return toast("Preview mode - password reset is a live-only flow.");
       if (!email) return setMsg(f, "Enter your email, then tap reset.", "err");
       A.resetPassword(email).then(function (r) { setMsg(f, r.error ? friendlyAuthError(r.error) : "Password-reset email sent.", r.error ? "err" : "ok"); });
     });
@@ -535,14 +535,14 @@
   function friendlyAuthError(err) {
     var m = (err && err.message) || String(err || "Something went wrong.");
     if (/Invalid login/i.test(m)) return "Email or password is incorrect.";
-    if (/already registered|already exists/i.test(m)) return "That email already has an account — try signing in.";
-    if (/not confirmed/i.test(m)) return "Confirm your email first — check your inbox.";
+    if (/already registered|already exists/i.test(m)) return "That email already has an account - try signing in.";
+    if (/not confirmed/i.test(m)) return "Confirm your email first - check your inbox.";
     return m;
   }
   function previewSignIn(username) {
     username = (username || "preview_fan").replace(/[^A-Za-z0-9_]/g, "").slice(0, 20) || "preview_fan";
     PV.setProfile({ id: "preview", username: username, role: "member", karma: 0, badges: ["beta_tester"], favorites: [], _preview: true });
-    closeModal(); toast("Preview mode — exploring as @" + username, "ok");
+    closeModal(); toast("Preview mode - exploring as @" + username, "ok");
     refreshNav();
     if (!PV.profile().favorites || !PV.profile().favorites.length) openOnboarding();
     remountForumIfPresent();
@@ -558,7 +558,7 @@
   }
 
   // ===========================================================================
-  // Part 1 — Onboarding (#1 favorite team + #1 favorite prospect)
+  // Part 1 - Onboarding (#1 favorite team + #1 favorite prospect)
   // ===========================================================================
   var TEAMS = ["ARI","ATL","BAL","BOS","CHC","CWS","CIN","CLE","COL","DET","HOU","KC","LAA","LAD","MIA","MIL","MIN","NYM","NYY","ATH","PHI","PIT","SD","SF","SEA","STL","TB","TEX","TOR","WSH"];
   function openOnboarding() {
@@ -568,7 +568,7 @@
       return '<div class="eph-team" data-team="' + escAttr(t) + '" title="' + escAttr(t) + '">' + (logo ? '<img src="' + escAttr(logo) + '" alt="' + escAttr(t) + '">' : esc(t)) + "</div>";
     }).join("");
     body.innerHTML =
-      '<p class="eph-altline" style="margin:0 0 14px;text-align:left;color:var(--text-secondary);">Two quick picks — they become your flair next to your name.</p>' +
+      '<p class="eph-altline" style="margin:0 0 14px;text-align:left;color:var(--text-secondary);">Two quick picks - they become your flair next to your name.</p>' +
       '<div class="eph-ob-step"><div class="eph-ob-q">① Your #1 team</div><div class="eph-team-grid">' + teamGrid + "</div></div>" +
       '<div class="eph-ob-step"><div class="eph-ob-q">② Your #1 prospect</div><div class="eph-ac-wrap">' +
         '<input class="eph-input" data-prospect-search placeholder="Search prospects…" autocomplete="off">' +
@@ -721,7 +721,7 @@
     });
     on(body, "click", '[data-act="delete"]', function () {
       if (!confirm("Delete your account? This removes your profile and favorites. Your comments remain as [deleted].")) return;
-      if (LIVE()) toast("Account deletion runs server-side — wire the Edge Function before enabling.", "err");
+      if (LIVE()) toast("Account deletion runs server-side - wire the Edge Function before enabling.", "err");
       else { PV.clearProfile(); closeModal(); refreshNav(); remountForumIfPresent(); toast("Preview account cleared."); }
     });
   }
@@ -764,7 +764,7 @@
   }
 
   // ===========================================================================
-  // Part 6 — Moderation view (staff only): report queue + grant-badge + ban.
+  // Part 6 - Moderation view (staff only): report queue + grant-badge + ban.
   // ===========================================================================
   function previewReports() {
     var now = Date.now();
@@ -790,7 +790,7 @@
       var src = (LIVE() && A.listReports) ? A.listReports() : Promise.resolve(previewReports());
       Promise.resolve(src).then(function (reports) {
         var el = qs("[data-reports]", body); reports = reports || [];
-        if (!reports.length) { el.innerHTML = '<div class="eph-formmsg ok">Queue clear — no open reports.</div>'; return; }
+        if (!reports.length) { el.innerHTML = '<div class="eph-formmsg ok">Queue clear - no open reports.</div>'; return; }
         el.innerHTML = reports.map(function (r) {
           var c = r.comment || r.comments || {};
           return '<div class="eph-report" data-rid="' + escAttr(r.id) + '" data-cid="' + escAttr(r.comment_id || c.id || "") + '">' +
@@ -830,7 +830,7 @@
   }
 
   // ===========================================================================
-  // Part 4 — Forum (per-prospect / per-farm thread)
+  // Part 4 - Forum (per-prospect / per-farm thread)
   // ===========================================================================
   var _forumState = { scope: null, key: null, entity: null, sort: "top" };
   function remountForumIfPresent() { if (_forumState.scope) mountForum(_forumState.scope, _forumState.key, _forumState.entity); }
@@ -854,10 +854,10 @@
       host.appendChild(sec);
     }
     var st = qs('[data-act="share-thread"]', sec);
-    if (st) st.addEventListener("click", function () { shareToX(threadTitle() + " — discussion on eephus.io", shareUrl()); });
+    if (st) st.addEventListener("click", function () { shareToX(threadTitle() + " - discussion on eephus.io", shareUrl()); });
     loadAndRenderComments();
   }
-  // Share-to-X via the standard web intent (a prefilled tweet URL — no API/login).
+  // Share-to-X via the standard web intent (a prefilled tweet URL - no API/login).
   function shareToX(text, url) {
     var intent = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text) + (url ? "&url=" + encodeURIComponent(url) : "");
     window.open(intent, "_blank", "noopener,noreferrer,width=560,height=440");
@@ -896,7 +896,7 @@
   function threadTitle() {
     var e = _forumState.entity;
     var nm = (e && (e.player_name || e.name)) || _forumState.key || "Discussion";
-    return nm + (_forumState.scope === "farm" ? " — farm system" : "");
+    return nm + (_forumState.scope === "farm" ? " - farm system" : "");
   }
 
   function loadAndRenderComments() {
@@ -933,7 +933,7 @@
       }).join("") + "</div>";
 
     var compose = isSignedIn() ? composeHTML() :
-      '<div class="eph-signedout"><p>Join the discussion — sign in to comment, vote, and track this prospect.</p>' +
+      '<div class="eph-signedout"><p>Join the discussion - sign in to comment, vote, and track this prospect.</p>' +
       '<button class="eph-btn sm" data-act="signin">Sign in</button></div>';
 
     var tops = sortComments(list);
@@ -942,7 +942,7 @@
       var replies = (byParent[c.id] || []).sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
       return commentHTML(c, ctx, false) + replies.map(function (r) { return commentHTML(r, ctx, true); }).join("");
     }).join("");
-    if (!tops.length) body = '<div class="eph-formmsg info">No comments yet — start the conversation.</div>';
+    if (!tops.length) body = '<div class="eph-formmsg info">No comments yet - start the conversation.</div>';
 
     inner.innerHTML = sortBar + compose + '<div class="eph-comments">' + body + "</div>";
     wireForum(inner, ctx);
@@ -1056,7 +1056,7 @@
     on(inner, "click", '[data-act="report"]', function (e, btn) {
       var cid = btn.closest(".eph-comment").getAttribute("data-cid");
       if (!isSignedIn()) return openAuthModal("signin");
-      var reason = prompt("Report this comment — reason:");
+      var reason = prompt("Report this comment - reason:");
       if (!reason) return;
       if (LIVE()) A.report(cid, reason).then(function () { toast("Reported to moderators.", "ok"); });
       else toast("Reported (preview).", "ok");
@@ -1064,14 +1064,14 @@
     on(inner, "click", '[data-act="sharex"]', function (e, btn) {
       var row = btn.closest(".eph-comment");
       var md = decodeURIComponent(row.getAttribute("data-md") || "").replace(/\[\[[^\]]*\]\]/g, "").replace(/\s+/g, " ").trim();
-      shareToX('"' + md.slice(0, 160) + '" — eephus.io', shareUrl());
+      shareToX('"' + md.slice(0, 160) + '" - eephus.io', shareUrl());
     });
   }
 
   function wireCompose(cmp, ctx) {
     var ta = qs("textarea", cmp);
     on(cmp, "click", "[data-md]", function (e, b) { applyMd(ta, b.getAttribute("data-md")); });
-    on(cmp, "click", '[data-act="poll"]', function () { insertAtCursor(ta, "\n[[poll:Better prospect — A or B?|Option A|Option B]]\n"); });
+    on(cmp, "click", '[data-act="poll"]', function () { insertAtCursor(ta, "\n[[poll:Better prospect - A or B?|Option A|Option B]]\n"); });
     on(cmp, "click", '[data-act="post"]', function () { submitComment(cmp, ta, ctx); });
     // embed picker
     var pop = qs(".eph-embed-pop", cmp), search = qs(".eph-embed-search", cmp), list = qs(".eph-ac-list", pop);
@@ -1170,7 +1170,7 @@
   }
 
   // ===========================================================================
-  // Part 2/7 — public profile modal (avatar · flair · karma · follow · activity).
+  // Part 2/7 - public profile modal (avatar · flair · karma · follow · activity).
   // Opened by clicking any username (.eph-uname); a modal avoids clashing with
   // the PROSPX hash router. Part 7 adds the follow button + recent activity.
   // ===========================================================================
@@ -1194,7 +1194,7 @@
         '<div style="display:flex;gap:16px;align-items:center;padding:2px 2px 16px;border-bottom:3px double var(--border);margin-bottom:14px;">' +
           avatarHTML(prof, "lg") +
           '<div style="flex:1;min-width:0;">' + flairHTML(prof, { avatar: false }) +
-            '<div style="font-family:var(--font-retro-mono);font-size:12px;color:var(--text-tertiary);margin-top:6px;">' + (prof.karma || 0) + ' karma · <span data-followers>—</span> followers</div></div>' +
+            '<div style="font-family:var(--font-retro-mono);font-size:12px;color:var(--text-tertiary);margin-top:6px;">' + (prof.karma || 0) + ' karma · <span data-followers> - </span> followers</div></div>' +
           followBtn +
         "</div>" +
         '<div class="eph-mod-sec">Recent activity</div><div data-activity><div class="eph-formmsg info">Loading…</div></div>';
@@ -1228,7 +1228,7 @@
     var now = Date.now();
     return [
       { body_md: "Quietly one of the cleaner risers on the board…", created_at: new Date(now - 6 * 3600000).toISOString(), threads: { scope: "prospect", entity_key: "jesus_made", title: "Jesús Made" } },
-      { body_md: "Agreed — the per-source spread is tightening.", created_at: new Date(now - 2 * 86400000).toISOString(), threads: { scope: "farm", entity_key: "BAL", title: "BAL farm system" } }
+      { body_md: "Agreed - the per-source spread is tightening.", created_at: new Date(now - 2 * 86400000).toISOString(), threads: { scope: "farm", entity_key: "BAL", title: "BAL farm system" } }
     ];
   }
   function activityRowHTML(r) {
@@ -1244,7 +1244,7 @@
     var src = (LIVE() && A.activityFeed) ? A.activityFeed(20) : Promise.resolve(previewFeed());
     Promise.resolve(src).then(function (rows) {
       rows = rows || [];
-      if (!rows.length) { body.innerHTML = '<div class="eph-formmsg info">Follow some users (tap any username) and watchlist prospects — their activity shows up here.</div>'; return; }
+      if (!rows.length) { body.innerHTML = '<div class="eph-formmsg info">Follow some users (tap any username) and watchlist prospects - their activity shows up here.</div>'; return; }
       body.innerHTML = '<div class="eph-mod-sec">From people you follow + prospects you watch</div>' +
         '<div class="eph-thread-list">' + rows.map(function (r) {
           var pr = r.profiles || {};
@@ -1263,8 +1263,8 @@
   }
 
   // ===========================================================================
-  // Part 3 — Account watchlist. Model: localStorage stays the UI source of truth
-  // (so logged-out is byte-for-byte unchanged); the account is a synced mirror —
+  // Part 3 - Account watchlist. Model: localStorage stays the UI source of truth
+  // (so logged-out is byte-for-byte unchanged); the account is a synced mirror - 
   // pulled down on login (with a merge prompt for device-local extras) and pushed
   // up on every star toggle. Watchlist = the broad TRACKING set; favorites = a
   // curated SHOWCASE subset, so a #1 favorite is auto-tracked (reconciliation).
@@ -1326,11 +1326,11 @@
   }
 
   // ===========================================================================
-  // Forums aggregation — homepage module + /forums index + article threads.
+  // Forums aggregation - homepage module + /forums index + article threads.
   // Hydrated client-side: LIVE queries Supabase threads (bump / Hot ordering);
   // unconfigured PREVIEW synthesizes a believable set from real prospects so the
   // module reads as a live destination. A thread bumps to the top on new comments
-  // (last_activity_at) — the same row the homepage module and index surface first.
+  // (last_activity_at) - the same row the homepage module and index surface first.
   // ===========================================================================
   function threadHref(t) {
     if (t.scope === "prospect") return "/prospx/#player=" + encodeURIComponent(t.entity_key) + "&ptab=discussion";
@@ -1368,14 +1368,14 @@
         return { scope: "prospect", entity_key: p.player_key, title: p.player_name, comment_count: counts[i] || 2, hot_score: (p.fv_close || 50) + (counts[i] || 2), last_activity_at: new Date(now - (i + 1) * 37 * 60000).toISOString() };
       });
     }
-    // Editorial pages (home / forums index / article) have no PROSPX index —
+    // Editorial pages (home / forums index / article) have no PROSPX index - 
     // fall back to a static believable set so the module reads as a destination.
     var samples = [
       { scope: "prospect", entity_key: "jesus_made", title: "Jesús Made", comment_count: 14 },
       { scope: "prospect", entity_key: "roki_sasaki", title: "Roki Sasaki", comment_count: 11 },
       { scope: "farm", entity_key: "BAL", title: "BAL farm system", comment_count: 9 },
       { scope: "board", board_slug: "trades", title: "Trade deadline: who's actually available?", comment_count: 7 },
-      { scope: "board", board_slug: "draft", title: "2026 Draft class — early risers", comment_count: 5 },
+      { scope: "board", board_slug: "draft", title: "2026 Draft class - early risers", comment_count: 5 },
       { scope: "prospect", entity_key: "samuel_basallo", title: "Samuel Basallo", comment_count: 4 }
     ];
     return samples.map(function (s, i) { s.last_activity_at = new Date(now - (i + 1) * 41 * 60000).toISOString(); s.hot_score = s.comment_count * 3; return s; });
@@ -1396,7 +1396,7 @@
       loadThreads(order).then(function (threads) {
         var list = qs(".eph-thread-list", el); if (!list) return;
         list.innerHTML = threads.length ? threads.map(threadRowHTML).join("")
-          : '<div class="eph-formmsg info">No discussions yet — start one from any prospect or farm page.</div>';
+          : '<div class="eph-formmsg info">No discussions yet - start one from any prospect or farm page.</div>';
       });
     }
     on(el, "click", "[data-order]", function (e, b) { order = b.getAttribute("data-order"); draw(); });
@@ -1416,7 +1416,7 @@
     refreshNav();
     autoMount();
     if (A && A.onAuthChange) A.onAuthChange(function () { refreshNav(); remountForumIfPresent(); syncWatchlistOnLogin(); });
-    // Any username (.eph-uname) opens the profile modal instead of navigating —
+    // Any username (.eph-uname) opens the profile modal instead of navigating - 
     // avoids clashing with the PROSPX hash router; href stays as a no-JS fallback.
     document.addEventListener("click", function (e) {
       var a = e.target.closest && e.target.closest(".eph-uname");

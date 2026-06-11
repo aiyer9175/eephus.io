@@ -8,13 +8,13 @@
 // =============================================================================
 // The FA module's Gate-1-validated projection engine applied to the whole
 // league, plus PROSPX prospects joining at their projected ETA. One sidecar
-// (data/mlb_projections.json, proj_export.py); standalone by design — no
+// (data/mlb_projections.json, proj_export.py); standalone by design - no
 // PROSPX boot payload, no FA sidecars. Every row carries floor/mean/ceiling
 // probability buckets; veteran surplus exists ONLY on salary-known seasons.
 (function () {
   "use strict";
 
-  const EM_DASH = "—";
+  const EM_DASH = " - ";
   let DATA = null;
 
   function fmtWar(v) {
@@ -59,7 +59,7 @@
     return "IF";
   }
 
-  // WAR heat class — color escalates with the season's own WAR.
+  // WAR heat class - color escalates with the season's own WAR.
   function warClass(w) {
     if (w == null) return "";
     if (w >= 4) return " proj-war-elite";
@@ -91,7 +91,7 @@
   }
 
   // Season-aligned WAR for a row: vets start at first_season; prospects at
-  // their ETA (pre-ETA seasons are MiLB time — rendered as such, never 0).
+  // their ETA (pre-ETA seasons are MiLB time - rendered as such, never 0).
   function warAt(m, t) {
     if (m.src === "prospect") {
       const off = t - (m.eta - DATA.first_season);
@@ -132,10 +132,10 @@
 
   function tagFor(m) {
     if (m.src === "prospect") {
-      return `<span class="proj-tag proj-tag-prospect" title="PROSPX prospect — outcome-model projection (P(bucket|FV) × calibrated trajectories) starting at the projected ETA. Floor/ceiling are the 10th/90th-percentile OUTCOME buckets (${esc(m.bucketLo || "?")} → ${esc(m.bucketHi || "?")}); P(bust) ${m.pBust != null ? (m.pBust * 100).toFixed(0) + "%" : "?"}.">FV ${m.fv} · ETA ${m.eta}</span>`;
+      return `<span class="proj-tag proj-tag-prospect" title="PROSPX prospect - outcome-model projection (P(bucket|FV) × calibrated trajectories) starting at the projected ETA. Floor/ceiling are the 10th/90th-percentile OUTCOME buckets (${esc(m.bucketLo || "?")} → ${esc(m.bucketHi || "?")}); P(bust) ${m.pBust != null ? (m.pBust * 100).toFixed(0) + "%" : "?"}.">FV ${m.fv} · ETA ${m.eta}</span>`;
     }
     return m.twoWay
-      ? `<span class="proj-tag" title="Two-way profile — projected on the larger recent exposure only (disclosed simplification).">two-way</span>` : "";
+      ? `<span class="proj-tag" title="Two-way profile - projected on the larger recent exposure only (disclosed simplification).">two-way</span>` : "";
   }
 
   function render() {
@@ -201,7 +201,7 @@
       }).join("");
       const tot = `${fmtWar(m.warTotal)}${m.warTotalP10 != null ? `<span class="fa-band"> (${fmtWar(m.warTotalP10)}–${fmtWar(m.warTotalP90)})</span>` : ""}`;
       const ct = m.src === "prospect"
-        ? `<span class="fa-sub" title="Cost-controlled from debut — six control years (3 pre-arb + 3 arb)">control</span>`
+        ? `<span class="fa-sub" title="Cost-controlled from debut - six control years (3 pre-arb + 3 arb)">control</span>`
         : (m.thru ? `${m.thru}${m.aav ? ` · ${money(m.aav)}/y` : ""}` : `<span class="fa-sub">arb/pre-arb or FA</span>`);
       const sur = m.surNpv != null
         ? `<span class="${m.surNpv >= 0 ? "proj-pos" : "proj-neg"}" title="${m.src === "prospect" ? "Platform prospect surplus value (control window, service-time aware, $/WAR-escalated)" : "NPV of (convex production value − salary) over salary-known seasons"}">${money(m.surNpv)}</span>`

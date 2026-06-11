@@ -3,7 +3,7 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""MLB Projections module — sidecar export (data/mlb_projections.json).
+"""MLB Projections module - sidecar export (data/mlb_projections.json).
 
 The FA module's Gate-1-validated projection engine, applied to the WHOLE
 league: every player with recent MLB history gets a multi-year bWAR path
@@ -15,22 +15,22 @@ labeled sources:
              map), decayed along the survivorship-corrected aging curves;
              buckets are the Gate-1 empirical year-1 residual quantiles
              decayed through the same curves (identical machinery to the
-             FA class board — fa_market.contract_war_path).
+             FA class board - fa_market.contract_war_path).
   PROSPECTS  the value_framework outcome model: P(bucket|FV) x per-bucket
              WAR trajectories (FV-scaled, aging-shaped from projected
              debut age), starting at the PROSPX ETA. Floor/ceiling are
              the 10th/90th percentile OUTCOME BUCKETS of the categorical
-             — a prospect's downside is busting, not a residual ribbon.
+             - a prospect's downside is busting, not a residual ribbon.
 
 Dollars: each projected season is priced through the platform's convex
 tier curve at the winter's ex-ante FA $/WAR level, escalated by the
-configured $/WAR inflation per season — the same pricing the FA rational
+configured $/WAR inflation per season - the same pricing the FA rational
 value and the (re-anchored) prospect surplus use. Veteran SURPLUS only
 exists where a real contract exists: salary-known seasons (Spotrac
 contract pages) net against production value and discount at the platform
 9%; arb/pre-arb seasons carry projections but no surplus claim. Prospect
 surplus IS the platform surplus value (control-window, service-time
-aware) — never a parallel number.
+aware) - never a parallel number.
 
 Run: python proj_export.py   (also wired into run_monthly after the FA
 refresh). Reads only caches + committed artifacts; never writes PROSPX
@@ -70,7 +70,7 @@ def _clean(d: dict) -> dict:
 
 
 def _display_names() -> dict[int, str]:
-    """{mlbam: display name} — the war_daily index inverted (the same
+    """{mlbam: display name} - the war_daily index inverted (the same
     identity source fa_ident resolves against, read in reverse)."""
     out: dict[int, str] = {}
     for _norm, cands in fa_ident.war_daily_index().items():
@@ -113,7 +113,7 @@ def _winter_dpw(first_season: int) -> float:
 
 
 # ============================================================================
-# Veterans — the FA engine over the whole league
+# Veterans - the FA engine over the whole league
 # ============================================================================
 
 def _veteran_rows(corpus: dict, names: dict[int, str],
@@ -209,7 +209,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
 
 
 # ============================================================================
-# Prospects — the calibrated FV outcome model, post-ETA
+# Prospects - the calibrated FV outcome model, post-ETA
 # ============================================================================
 
 def _prospect_rows(dpw: float) -> list[dict]:
@@ -217,7 +217,7 @@ def _prospect_rows(dpw: float) -> list[dict]:
         players = json.loads((DATA_DIR / "timeseries.json")
                              .read_text(encoding="utf-8")).get("players") or []
     except (OSError, ValueError):
-        log.warning("mlb projections: timeseries.json unavailable — no prospects")
+        log.warning("mlb projections: timeseries.json unavailable - no prospects")
         return []
     out: list[dict] = []
     for p in players:

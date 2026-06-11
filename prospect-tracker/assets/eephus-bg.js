@@ -1,16 +1,16 @@
-// eephus.io — dark-theme phosphor starfield background (shared component).
+// eephus.io - dark-theme phosphor starfield background (shared component).
 // Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
 //
 // One fixed, full-viewport <canvas id="eephus-bg"> behind all content, on BOTH
 // surfaces (editorial pages + the PROSPX app). The radial glow + corner
 // vignette are CSS background layers on the element itself (assets/site.css,
-// dark scope); this module draws only the stars — faint green/amber phosphor
+// dark scope); this module draws only the stars - faint green/amber phosphor
 // points with a fast-brighten / slow-decay twinkle, like persistence on a CRT.
 // Every dial lives in the [data-theme="dark"] token block in site.css.
 //
 // Dark-theme gating: a MutationObserver on <html data-theme> mounts the canvas
 // when the dark theme activates and FULLY tears it down (animation frame,
-// listeners, DOM node) on any other theme — this also catches programmatic
+// listeners, DOM node) on any other theme - this also catches programmatic
 // flips like the Generate GFX modal's theme override, not just the toggles.
 // Under any non-dark theme this module renders nothing and costs nothing.
 //
@@ -19,11 +19,11 @@
 //   • absolute star-count ceiling regardless of viewport size
 //   • devicePixelRatio capped at 2
 //   • prefers-reduced-motion: reduce → one static draw, no loop, no parallax
-//   • parallax is scroll/pointer-driven only, capped at a few px — no
+// • parallax is scroll/pointer-driven only, capped at a few px - no
 //     autonomous motion ("breathing" glow is a deliberate non-goal)
 //
 // FV linkage (PROSPX prospect views): the app calls EephusBG.setFV(fv) on
-// route changes. Intensity t = clamp((fv - 45) / (70 - 45), 0, 1) — the floor
+// route changes. Intensity t = clamp((fv - 45) / (70 - 45), 0, 1) - the floor
 // and ceiling are the audited card-rarity thresholds (rankNumRarityClass in
 // prospx/index.html: 45 shine … 70 legendary), NOT a parallel breakpoint set.
 // Below the lowest tier (and on list views / editorial pages) → base field.
@@ -48,7 +48,7 @@
   var reducedMq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   function reducedMotion() { return !!(reducedMq && reducedMq.matches); }
   // OWNER OVERRIDE (2026-06-09): the phosphor twinkle stays ON under
-  // prefers-reduced-motion — the same deliberate exemption the WIRE marquee
+  // prefers-reduced-motion - the same deliberate exemption the WIRE marquee
   // carries in site.css. The field is aria-hidden decoration at whisper
   // opacity with zero information content. The override is twinkle-only:
   // pointer/scroll parallax still honors the OS preference (it tracks user
@@ -124,7 +124,7 @@
       stars.push({
         fx: Math.random(),
         fy: Math.random(),
-        // deeper layers render smaller — cheap depth cue, all sharp squares
+        // deeper layers render smaller - cheap depth cue, all sharp squares
         size: layer === tokens.layers - 1 ? 2 : 1,
         layer: layer,
         hue: Math.random() < tokens.mixRatio ? 0 : 1,
@@ -136,7 +136,7 @@
   }
 
   // Phosphor envelope: linear fast rise over the attack fraction of the cycle,
-  // then exponential decay (bright drop, long tail) — never a global pulse,
+  // then exponential decay (bright drop, long tail) - never a global pulse,
   // each star keeps its own random phase + period.
   function brightness(star, now) {
     var p = (now / star.period + star.phase) % 1;

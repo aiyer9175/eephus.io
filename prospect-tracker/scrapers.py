@@ -1860,6 +1860,71 @@ def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
     return rows
 
 
+def validate_pipeline_live_board(rows: list[Snapshot]) -> list[str]:
+    """Health gate for the LIVE Pipeline capture (the tjstats.health_check
+    pattern): refuse to ingest a degraded parse so a silent MLB.com
+    redesign surfaces loudly instead of polluting the time series with a
+    near-empty or grade-less board. Returns human-readable problems
+    (empty = healthy)."""
+    problems: list[str] = []
+    if len(rows) < 90:
+        problems.append(f"top100: only {len(rows)} parsed rows")
+        return problems
+    ranks = [s.rank for s in rows if s.rank is not None]
+    if len(set(ranks)) != len(ranks):
+        problems.append("top100: duplicate ranks")
+    if not ranks or min(ranks) != 1 or max(ranks) > 105:
+        problems.append(f"top100: rank span {min(ranks) if ranks else '-'}"
+                        f"..{max(ranks) if ranks else '-'}")
+    n = len(rows)
+    fv_cov = sum(1 for s in rows if s.fv is not None) / n
+    if fv_cov < 0.8:
+        problems.append(f"top100: FV coverage {fv_cov:.0%} (<80% — grades "
+                        "line may have moved)")
+    org_cov = sum(1 for s in rows if s.org) / n
+    if org_cov < 0.7:
+        problems.append(f"top100: org coverage {org_cov:.0%} (<70% — Apollo "
+                        "Team refs may have changed)")
+    placeholder = sum(1 for s in rows if s.player_name.startswith("Person "))
+    if placeholder > 2:
+        problems.append(f"top100: {placeholder} unresolved player names")
+    return problems
+
+
+def run_mlb_pipeline_live(snap_date: str | None = None) -> dict:
+    """Daily LIVE capture of MLB Pipeline's current Top 100 (the TJStats
+    pattern, step d0b in run_daily). The monthly scrape writes each year's
+    board to ONE fixed preseason interval ("MLB Pipeline {y} Top 100",
+    snap 01-22), so in-season re-ranks/FV changes overwrite that single
+    point instead of accruing history. This capture force-fetches the
+    current page and writes a DATE-STAMPED interval — a same-day re-run
+    upserts in place (insert_snapshots' (source, interval_label,
+    player_key) conflict key); a new day creates a new point-in-time row,
+    giving the Time Machine and the consensus the same daily resolution
+    TJStats gets. Vintage discipline holds: backtests key on the earliest
+    same-year snapshot, which stays the preseason archive page.
+
+    Returns {"live": {...}} on ingest, {"health": [problems]} when the
+    gate refuses, {"error": "..."} on fetch/parse failure."""
+    from storage import insert_snapshots
+
+    snap_date = snap_date or date.today().isoformat()
+    year = int(snap_date[:4])
+    url = f"https://www.mlb.com/milb/prospects/{year}/top100/"
+    label = f"MLB Pipeline Live {snap_date}"
+    try:
+        rows = scrape_mlb_pipeline(url, label, snap_date, year, force=True)
+    except Exception as e:                                    # noqa: BLE001
+        return {"error": f"fetch/parse failed: {e}"}
+    problems = validate_pipeline_live_board(rows)
+    if problems:
+        return {"health": problems}
+    n = insert_snapshots(rows)
+    log.info("mlb_pipeline live: %d players ingested @ %s", len(rows), snap_date)
+    return {"live": {"n_players": len(rows), "n_upserts": n,
+                     "label": label, "captured_at": snap_date}}
+
+
 def scrape_mlb_international(url: str, label: str, snap_date: str, year: int,
                              force: bool = False) -> list[Snapshot]:
     """Parse MLB Pipeline's international ranking table.

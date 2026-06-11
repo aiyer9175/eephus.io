@@ -424,6 +424,28 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception:
                 log.exception("tjstats daily capture crashed — continuing")
 
+        # --- d0b. MLB Pipeline Live board (daily point-in-time capture) ---
+        # Same rationale as d0: Pipeline re-ranks in-season (graduations,
+        # FV moves), but the monthly scrape overwrites one fixed preseason
+        # interval. The live capture writes a date-stamped interval behind
+        # a parse-health gate (validate_pipeline_live_board) so an MLB.com
+        # redesign can't zero or pollute ingestion. Never aborts the run.
+        with _step("d0b. MLB Pipeline Live capture", log):
+            try:
+                from scrapers import run_mlb_pipeline_live
+                _pl = run_mlb_pipeline_live()
+                if _pl.get("live"):
+                    log.info("mlb_pipeline: daily Live %d players @ %s",
+                             _pl["live"]["n_players"], _pl["live"]["captured_at"])
+                elif _pl.get("health"):
+                    log.error("mlb_pipeline: health gate refused, skipped: %s",
+                              _pl["health"])
+                else:
+                    log.error("mlb_pipeline: live capture failed: %s",
+                              _pl.get("error"))
+            except Exception:
+                log.exception("mlb_pipeline daily capture crashed — continuing")
+
         # --- 1. Player set from existing snapshots (no scrape). -----------
         with _step("d1. Build player set from DB", log):
             all_snaps = load_all_snapshots()
