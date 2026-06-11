@@ -9280,6 +9280,8 @@
 <script src="/assets/eephus-account.js" defer></script>
 <script src="/assets/eephus-ui.js" defer></script>
   <script src="/assets/eephus-gl.js" defer></script>
+  <!-- Cross-module player hub (strip + unified share card) -->
+  <script src="/assets/eephus-hub.js" defer></script>
 <!-- Dark-theme phosphor-starfield background - shared with the editorial
      pages (single component + token set in assets/site.css [data-theme=dark]).
      Mounts only while the dark theme is active; render() feeds it the
@@ -34836,6 +34838,7 @@ function renderPlayerDetail(key) {
       <span class="newsprint-eyebrow-label">Prospect Card · ${escapeHtml(p.org || ' - ')} · ${escapeHtml(p.position || ' - ')}${p.overall_rank != null ? ` · #${p.overall_rank}` : ''}</span>
       <span class="newsprint-eyebrow-meta">${_fvForEyebrow != null ? `Consensus FV ${_fvForEyebrow}` : 'Consensus FV unavailable'}</span>
     </div>
+    <div id="px-hub"></div>
     <div class="detail-page-header ${_fvTierClass}" style="${orgStripe(p.org)}">
       <div style="display:flex;align-items:flex-start;gap:16px;flex:1;min-width:0;">
         <div class="headshot-frame">${headshotHTML(p, 130)}</div>
@@ -37602,6 +37605,17 @@ function renderPlayerDetail(key) {
   </div>`;
   root.innerHTML = header + detailChipRibbon + quickReadHtml + tilesHtml + tabBarWithRail;
   syncSortHeaderActive();
+  // Module hub strip - the SAME player across eephus.io surfaces (FA market
+  // card, MLB player page). Lazy via player_links.json; only renders when
+  // the player exists on another module's card, so pre-debut prospects who
+  // live only here stay clean.
+  if (window.EEPHUS_HUB && p.mlbam_id) {
+    window.EEPHUS_HUB.links().then(L => {
+      const row = L && (L.byMlbam || {})[String(p.mlbam_id)];
+      const el = document.getElementById("px-hub");
+      if (el && row) el.innerHTML = window.EEPHUS_HUB.stripHTML({ ...row, prospx: null }, "prospx");
+    });
+  }
   // eephus.io account/forum layer - fills the Discussion tab's mount point with
   // the thread, ONLY while that tab is active (so the forum doesn't load on every
   // detail render). No-op when the UI module isn't present; passes the player

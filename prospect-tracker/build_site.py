@@ -57,6 +57,7 @@ _FA_VER = _asset_ver("assets/fa.js")
 _GL_VER = _asset_ver("assets/eephus-gl.js")
 _GLAPP_VER = _asset_ver("assets/glossary.js")
 _PROJ_VER = _asset_ver("assets/projections.js")
+_HUB_VER = _asset_ver("assets/eephus-hub.js")
 
 # eephus.io account layer (Parts 1-7), injected before </body> on every editorial
 # page. OPTIONAL by design: assets/eephus-config.js is git-ignored and absent on
@@ -1379,6 +1380,7 @@ def build_fa() -> str:
         '<span id="fa-view-chips"></span></div>'
         '<div id="fa-rows"></div>'
         '</div>'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/fa.js?v={_FA_VER}" defer></script>'
     )
     return page("Free Agency - eephus.io", "fa", body,
@@ -1403,6 +1405,7 @@ def build_projections() -> str:
         '<div class="filter-bar" id="proj-filters"></div>'
         '<div id="proj-rows"></div>'
         '</div>'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/projections.js?v={_PROJ_VER}" defer></script>'
     )
     return page("MLB Projections - eephus.io", "projections", body,
