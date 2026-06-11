@@ -34,6 +34,30 @@ def _snap(source, name, *, rank=None, fv=None, date_="2026-02-16",
     )
 
 
+@pytest.fixture(autouse=True)
+def _equal_weights(monkeypatch):
+    """These tests pin the blend MECHANICS under equal weighting. The live
+    accuracy weights (WS-5, data/source_weights.json) are vintage-frozen
+    data, not mechanics — neutralized here so the mechanical contracts
+    stay exact; the weighted path has its own explicit test below."""
+    import consensus as _c
+    monkeypatch.setattr(_c, "_SOURCE_WEIGHTS", {})
+
+
+def test_weighted_consensus_applies_source_weights():
+    """WS-5 — accuracy weights tilt the blend; absent sources vote at 1.0;
+    dispersion stats stay UNWEIGHTED (disagreement is disagreement)."""
+    snaps = [_snap("fangraphs", "A", fv=50.0), _snap("mlb_pipeline", "A", fv=60.0)]
+    pt = compute_consensus_point(snaps, source_weights={"fangraphs": 0.5,
+                                                        "mlb_pipeline": 1.5})
+    expected = (0.5 * 50.0 + 1.5 * 60.0) / 2.0
+    assert pt.consensus_fv_pre_shrinkage == pytest.approx(expected)
+    assert pt.fv_spread == pytest.approx(10.0)        # unweighted dispersion
+    # unknown sources default to weight 1.0
+    pt2 = compute_consensus_point(snaps, source_weights={"espn": 9.9})
+    assert pt2.consensus_fv_pre_shrinkage == pytest.approx(55.0)
+
+
 # ---------------------------------------------------------------------------
 # FV parsing (covers TJStats PV/FV format)
 # ---------------------------------------------------------------------------

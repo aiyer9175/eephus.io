@@ -33,6 +33,50 @@ _TOL = float(vf._config()["fit"]["reconcile_tol"])
 _GRID = [round(20.0 + 0.5 * i, 1) for i in range(int((80 - 20) / 0.5) + 1)]
 
 
+@pytest.fixture(autouse=True)
+def _raw_engine(request):
+    """These tests pin the RAW mixture-model algebra (reconciliation,
+    Jensen decomposition, timing threads). The empirical calibration layer
+    (WS-6, isotonic-real) sits ON TOP via apply_calibration and is tested
+    explicitly in test_calibration_layer_*; everywhere else it is disabled
+    so the algebraic contracts stay exact."""
+    if "calibration_layer" in request.node.name:
+        yield
+        return
+    cfg = vf._config().get("calibration", {})
+    saved = cfg.get("enabled")
+    cfg["enabled"] = False
+    try:
+        yield
+    finally:
+        cfg["enabled"] = saved
+
+
+def test_calibration_layer_is_real_fit_and_monotone() -> None:
+    """WS-6: the shipped correction is a REAL-data isotonic fit (never a
+    synthetic one), with monotone knots and provenance naming the backtest."""
+    vf._config.cache_clear()      # judge the ON-DISK config, not leaked test mutations
+    cal = vf._config()["calibration"]
+    assert cal["enabled"] is True
+    assert cal["method"] == "isotonic"
+    assert cal["version"].startswith("isotonic-real-")
+    xs, ys = cal["isotonic"]["x_mm"], cal["isotonic"]["y_mm"]
+    assert len(xs) == len(ys) >= 10
+    assert xs == sorted(xs) and ys == sorted(ys)
+    assert "REAL-data fit" in cal["fit_provenance"]
+    assert "leave-one-year-out" in cal["fit_provenance"]
+
+
+def test_calibration_layer_applies_to_public_api() -> None:
+    """surplus_value_mm == apply_calibration(raw expected surplus) — the
+    layer shrinks the margin overshoot (FV55 well below its raw value)."""
+    vf._config.cache_clear()      # judge the ON-DISK config, not leaked test mutations
+    raw_mm = vf.expected_surplus_usd(55, False, "SS") / 1e6
+    cal_mm = vf.surplus_value_mm(55, False, "SS")
+    assert cal_mm == pytest.approx(vf.apply_calibration(raw_mm, 55, False), abs=0.11)
+    assert cal_mm < raw_mm * 0.75, "margin overshoot correction missing"
+
+
 # =============================================================================
 # Tiered $/WAR + present value
 # =============================================================================

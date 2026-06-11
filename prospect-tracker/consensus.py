@@ -417,6 +417,26 @@ def _pit_org(day_snaps, event_date):
     return _fg(fresh) or _label(fresh) or _fg(day_snaps) or _label(day_snaps)
 
 
+def load_source_weights() -> dict[str, float]:
+    """Accuracy-derived relative vote weights (model-audit WS-5, shipped
+    behind the vintage-disciplined A/B in data/consensus_weight_eval.json).
+    Sources absent from the file vote at 1.0 — new sources are never
+    punished for being new. Missing file = equal weighting everywhere."""
+    import json as _json
+    from pathlib import Path as _Path
+    p = _Path(__file__).parent / "data" / "source_weights.json"
+    try:
+        d = _json.loads(p.read_text(encoding="utf-8"))
+        return {k: float(v) for k, v in (d.get("weights") or {}).items()}
+    except (OSError, ValueError):
+        return {}
+
+
+# Loaded once per process — the weights file is vintage-frozen (it only
+# changes when a new base year resolves), so no within-run jitter.
+_SOURCE_WEIGHTS = load_source_weights()
+
+
 def compute_consensus_point(
     day_snaps: list[Snapshot],
     *,
@@ -425,6 +445,7 @@ def compute_consensus_point(
     single_source_k: float = SINGLE_SOURCE_K,
     total_fv_instances: int | None = None,
     dropped_off_pairs: set[tuple[str, str]] | None = None,
+    source_weights: dict[str, float] | None = None,
 ) -> ConsensusPoint | None:
     """
     Aggregate one player's snapshots into a ConsensusPoint.
@@ -453,6 +474,7 @@ def compute_consensus_point(
     day_snaps = _dedupe_source_aliases(day_snaps)
 
     explicit_fvs: list[float] = []
+    _fv_weights: list[float] = []     # WS-5: per-vote relative weights (1.0 = equal)
     ranks: list[int] = []
     rank_implied_fvs: list[float] = []
 
@@ -510,6 +532,7 @@ def compute_consensus_point(
             per_source[s.source] = entry
             if fv_for_consensus is not None:
                 explicit_fvs.append(fv_for_consensus)
+                _fv_weights.append((source_weights or {}).get(s.source, 1.0))
                 contributing_sources.add(s.source)
         else:
             # Same-date same-source duplicate. Surface in `extras` so
@@ -551,7 +574,14 @@ def compute_consensus_point(
     if not explicit_fvs and not rank_implied_fvs:
         return None
 
-    avg_fv = sum(explicit_fvs) / len(explicit_fvs) if explicit_fvs else None
+    # WS-5 — accuracy-weighted mean (weights are all 1.0 unless the
+    # shipped source_weights file says otherwise; the dispersion stats
+    # below stay unweighted — disagreement is disagreement).
+    if explicit_fvs:
+        _wsum = sum(_fv_weights) or float(len(explicit_fvs))
+        avg_fv = sum(w * v for w, v in zip(_fv_weights, explicit_fvs)) / _wsum
+    else:
+        avg_fv = None
     avg_rank = sum(ranks) / len(ranks) if ranks else None
     rank_implied_fv = (
         sum(rank_implied_fvs) / len(rank_implied_fvs)
@@ -1025,6 +1055,7 @@ def build_timeseries(
                 single_source_k=single_source_k,
                 total_fv_instances=total_fv_instances,
                 dropped_off_pairs=dropped_off,
+                source_weights=_SOURCE_WEIGHTS,
             )
             if pt is not None:
                 points.append(pt)

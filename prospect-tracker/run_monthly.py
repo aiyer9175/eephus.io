@@ -2049,6 +2049,17 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                      len(_bt["window"]["years"]), _bt["accuracy"]["common_n"])
         except Exception:
             log.exception("source_backtest failed — continuing")
+        # WS-5 — consensus weight A/B + vintage-frozen source weights. The
+        # weights only move when a NEW base year resolves (yearly), so the
+        # monthly rerun is a freshness pass, not a jitter source; they take
+        # effect on the NEXT rebuild (consensus loads them at import).
+        try:
+            from source_backtest import run_consensus_weight_ab
+            _ab = run_consensus_weight_ab(data_dir=out_dir, write=True)
+            log.info("consensus weight A/B: ship=%s weights=%s",
+                     _ab["ship"], _ab["live_weights"])
+        except Exception:
+            log.exception("consensus weight A/B failed — continuing")
         # Model registry freshness pass (data/model_registry.json) — restamps
         # artifact ages + re-validates references. Verdicts are hand-committed
         # with their evals; this only keeps the accountability ledger honest
