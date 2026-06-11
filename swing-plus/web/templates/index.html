@@ -213,6 +213,8 @@ const COMBO = [
     desc: "Contact+ v2 (collision-aware): the contact-FREQUENCY axis — how often he makes contact when he swings (whiff-avoidance), now measured with Savant's bat-ball collision data (vertical-alignment consistency, perfect/flawed contact %, miss distance). Predicts next-season whiff rate at r=-0.85 (v1 was -0.80) and K% at r=-0.77. 100=avg, SD 10. High = Arraez/Kwan type; low = swing-and-miss sluggers (Kurtz, Judge)." },
   { key: "dcv_plus", label: "DCV+", cls: "dec", format: v => v?.toFixed(1),
     desc: "Damage Conversion+ (DCV+, external damage-geometry model): does he convert his contact into PULLED AIR damage — pulled-air rate, pulled barrels, HR-window launch. The ISO/HR axis: same-season ISO r 0.54, and adding it to Hitter+ lifts ISO prediction 0.69→0.81 (next-ISO 0.58→0.64). Orthogonal to every other axis (B2B+ carries no pull-air info, r −0.14). 100=avg, SD 10. High = Schwarber/Torkelson pull-air types; 2026 calibrated from raw damage-geometry rates (R²=0.985)." },
+  { key: "hitter_plus_proj", label: "Hitter+ next", cls: "dec", format: v => v?.toFixed(1),
+    desc: "NEXT-SEASON projected Hitter+ (skill projection, not outcome projection): each axis regressed by its measured year-over-year persistence (Swing+ keeps 85%, B2B+ 53%, DCV+ 51% of deviation from avg), plus the validated aging term — Swing+ only (quadratic: +0.9 pts at 23 → −0.4 at 34; Decision+/Contact+/B2B+/DCV+ aging curves were tested and REJECTED, no incremental value beyond mean reversion). Compresses everyone toward 100; young breakouts hold value best. All-time view shows projection from the current season." },
 ];
 const sgn2 = v => v == null ? "" : (v >= 0 ? "+" : "") + Number(v).toFixed(2);
 const sgn3 = v => v == null ? "" : (v >= 0 ? "+" : "") + Number(v).toFixed(3);
@@ -261,7 +263,7 @@ const COLUMN_SPECS = {
 function groupOf(c) {
   if (["__rank", "name", "season", "half", "n_swings", "n_halves"].includes(c.key)) return "";
   if (c.key === "swing_plus" || c.key === "__sppct") return "Swing+";
-  if (["swingdecision_plus", "hitter_plus", "b2b_plus", "contact_axis", "dcv_plus"].includes(c.key)) return "Combined";
+  if (["swingdecision_plus", "hitter_plus", "b2b_plus", "contact_axis", "dcv_plus", "hitter_plus_proj"].includes(c.key)) return "Combined";
   if (["sk_woba", "luck_woba", "sk_iso", "luck_iso"].includes(c.key)) return "Skill vs luck";
   if (c.cls === "dec") return "Decision · selection";
   if (c.cls === "val") return "Value · xwOBA";
