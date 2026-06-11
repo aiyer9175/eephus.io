@@ -372,17 +372,18 @@ function _methProseHTML() {
       <li><span class="mc-date">2026-06</span> Surplus engine v38: FV→WAR anchor moved from a single peak-year projection to a flat 6-year-average table; side difference carried by the position multiplier. Farm list/detail surplus consolidated on the engine aggregate.</li>
       <li><span class="mc-date">2026-06</span> Glossary reorganized into Glossary / Methodology / Source Comparison; taxonomy regrouped (Arkmetrics · Statcast · Standard · Scouting · Economic · Farm · Site Features); Statcast input terms added.</li>
       <li><span class="mc-date">2026-05</span> Farm grade tree v7: MLB Production added a Bust-Rate (negative) leaf and a Conviction star-presence cap; Development promoted to the 40% top weight.</li>
+      <li><span class="mc-date">2026-06</span> Consensus FV moved to ACCURACY-WEIGHTED source blending after a vintage-disciplined A/B beat equal-weight on both Spearman and AUC (weights shrunk toward equal, clamped, frozen per vintage; sources without resolved history stay at 1.0). The model accountability registry below records the eval.</li>
       <li><span class="mc-date">2026-05</span> Source-vs-source backtest published (resolved cohorts only) as the Source Comparison area.</li>
-      <li><span class="mc-date">2026-04</span> Consensus FV: equal-weight mean confirmed over weighted schemes; Bayesian shrinkage + forward-fill formalized.</li>
+      <li><span class="mc-date">2026-04</span> Consensus FV: equal-weight mean confirmed over weighted schemes at that window; Bayesian shrinkage + forward-fill formalized.</li>
     </ul>
     <p class="meth-note">Versioned methodology pairs with the Time Machine: a board state and the rules that produced it are both reconstructable for any past month.</p>
 
     <h2 class="meth-h">FAQ</h2>
     <dl class="meth-dl">
       <dt>Why a consensus instead of one source?</dt>
-      <dd>No single source has shown a durable, statistically separable edge on resolved cohorts (see Source Comparison). Averaging cancels idiosyncratic source error; the pooled consensus modestly but consistently beats its best individual input.</dd>
-      <dt>Why equal weights?</dt>
-      <dd>Weighting requires a reliable, persistent accuracy gap to exploit. Even on the extended 2017–2023 window the per-source differences stay within noise, so equal weighting avoids over-fitting to a handful of resolved years. The Interactive tab lets you test alternative weightings yourself.</dd>
+      <dd>Averaging cancels idiosyncratic source error: the pooled consensus modestly but consistently beats its best individual input on resolved cohorts (see Source Comparison). Per-source edges exist but are small and unstable year to year, which is why the weighting stays shrunk toward equal rather than chasing them.</dd>
+      <dt>How are sources weighted?</dt>
+      <dd>Accuracy-weighted, as of June 2026: per-source weights come from measured track records on resolved cohorts, shrunk heavily toward equal (so a thin history can't dominate), clamped, and frozen per vintage so grades don't jitter month to month. The weighted blend shipped only after beating equal-weight in a no-lookahead A/B on both rank correlation and AUC; sources without enough resolved history stay at exactly 1.0. The interactive below lets you test any weighting yourself.</dd>
       <dt>How often does it update?</dt>
       <dd>Grades, Arkmetrics, farm grades, and the backtest refresh monthly; transactions, IL, roster status, debuts, and trades refresh daily. Each board honestly stamps its own cadence.</dd>
       <dt>What's the track record - and its limits?</dt>
@@ -785,7 +786,7 @@ function _methInteractivesHTML() {
   </div>
 
   <div class="gx-card">
-    <div class="gx-card-title">Why equal source weights? - adjustable consensus</div>
+    <div class="gx-card-title">How source weighting works - adjustable consensus</div>
     <div class="gx-card-body">
       <div id="gx-consensus" class="gx-srcs">
         ${[["FanGraphs", 60], ["MLB Pipeline", 55], ["ESPN", 60], ["Just Baseball", 50], ["TJStats", 55]].map(([nm, fv]) => `
@@ -799,7 +800,7 @@ function _methInteractivesHTML() {
         <button class="chip" type="button" onclick="_gxConsensusReset()">Reset to equal weights</button>
         <div id="gx-consensus-out" class="gx-out gx-out-inline"></div>
       </div>
-      <p class="meth-note" style="margin-top:8px;">The site uses equal weights: no source has shown a durable, statistically separable edge on resolved cohorts (see Source Comparison), so weighting inputs would add variance without reliable signal.</p>
+      <p class="meth-note" style="margin-top:8px;">The live board uses ACCURACY-WEIGHTED sources (since June 2026): measured track-record weights, shrunk toward equal and frozen per vintage, shipped after beating equal-weight in a vintage-disciplined A/B. This widget starts from equal weights so you can feel how any weighting moves a consensus.</p>
     </div>
   </div>
 
