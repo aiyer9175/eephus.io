@@ -154,13 +154,24 @@ def test_statcast_plus_eval_publishes_r():
 # ---------------------------------------------------------------------------
 
 def test_prospect_path_loss_is_committed():
+    """The DECISION is the pin (dual criterion: MAE AND Spearman). The
+    2026-06 rerun has the ridge winning MAE but losing rank - still a
+    loss; pin the failed leg + the recorded verdicts, not raw ordering."""
     art = _load("prospect_path_eval.json")
     assert art["ship_decision"]["challenger_wins"] is False
+    assert art["ship_decision"].get("lgbm_wins") is False
     base = art["baseline_pooled_oos"]
     chall = art["challenger_pooled_oos"]
     assert base["n"] == chall["n"] and base["n"] > 300
-    assert base["mae"] <= chall["mae"]
+    # the leg every challenger failed: the scouting consensus ranks better
     assert (base["spearman"] or 0) >= (chall["spearman"] or 0)
+    lgbm = art.get("lgbm_challenger_pooled_oos") or {}
+    if lgbm.get("n"):
+        assert (base["spearman"] or 0) >= (lgbm.get("spearman") or 0)
+    # the measured-but-unshipped calibration stays honest: ship flag pins
+    # the slope-criterion failure even though bias/MAE improved
+    cal = art.get("calibration") or {}
+    assert cal.get("ship") is False
 
 
 def test_prospect_path_not_dispatched():
