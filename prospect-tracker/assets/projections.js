@@ -358,12 +358,21 @@
     const contract = p.proj && p.proj.thru
       ? `signed thru ${p.proj.thru}${p.proj.aav ? ` · ${money(p.proj.aav)}/y` : ""}`
       : (p.fa ? `free agent${p.fa.type ? ` · ${esc(p.fa.type)}` : ""}` : "arb / pre-arb");
+    // Prospect origin line (ex-PROSPX players): the FV arc endpoints +
+    // debut date - the hub strip carries the link to the full arc.
+    const org = p.origin;
+    const originLine = (org && org.prospx)
+      ? `<div class="fa-sub" style="margin-top:4px;">ex-PROSPX prospect${org.fvOpen != null && org.fvClose != null ? ` · FV ${org.fvOpen} → ${org.fvClose}` : ""}${org.debut ? ` · debuted ${esc(org.debut)}` : ""}</div>`
+      : "";
     root.innerHTML = `<div class="mlbp-page">
+      <div id="mlbp-hub"></div>
       <div class="mlbp-hero">
         ${photo}
         <div class="mlbp-hero-main">
           <div class="mlbp-name">${teamLogo(p.team)}<h2>${esc(p.name || key)}</h2></div>
           <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${esc(p.team)}` : " · FA"} · ${contract}</div>
+          ${originLine}
+          <div style="margin-top:8px;"><button class="chip" id="mlbp-gfx" title="Download this player page as a PNG share card (theme-aware)">&#8681; share card</button></div>
         </div>
         <div class="mlbp-tiles">${tiles.join("")}</div>
       </div>
@@ -374,6 +383,58 @@
       ${careerTable(p)}
       <div class="fa-note" style="margin-top:14px;">Projections: the FA module's Gate-1-validated engine (bands = empirical residual quantiles). Statcast percentiles vs the season's qualified MLB pool. ${p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)." : ""}</div>
     </div>`;
+    // hub strip (cross-module identity) - lazy, never blocks the paint
+    if (window.EEPHUS_HUB) {
+      window.EEPHUS_HUB.links().then(L => {
+        const row = L && (L.byKey || {})[key];
+        const el = document.getElementById("mlbp-hub");
+        if (el && row) el.innerHTML = window.EEPHUS_HUB.stripHTML(row, "mlb");
+      });
+      const btn = document.getElementById("mlbp-gfx");
+      if (btn) btn.onclick = () => shareMlbCard(p);
+    }
+  }
+
+  // Unified share card (EEPHUS_HUB canvas template) - the MLB module's
+  // data priorities: projection band + surplus + Swing+ up top, Statcast
+  // percentiles and (pitchers) arsenal as the body sections.
+  function shareMlbCard(p) {
+    const first = DATA.first_season;
+    const tiles = [];
+    if (p.proj && p.proj.warTotal != null)
+      tiles.push({ label: `${(p.proj.war || []).length}y WAR`, value: fmtWar(p.proj.warTotal) });
+    if (p.proj && p.proj.surNpv != null)
+      tiles.push({ label: "Surplus", value: money(p.proj.surNpv),
+                   color: p.proj.surNpv >= 0 ? undefined : "#FF6B6B" });
+    if (p.swingPlus != null)
+      tiles.push({ label: "Swing+", value: String(Math.round(p.swingPlus)) });
+    if (p.fa && p.fa.projAav != null)
+      tiles.push({ label: "proj AAV", value: money(p.fa.projAav) });
+    const sections = [];
+    if (p.proj && (p.proj.war || []).length) {
+      sections.push({ title: `Projected bWAR ${first}-${first + (p.proj.war.length - 1)}`,
+        rows: p.proj.war.map((w, t) => [String(first + t),
+          `${fmtWar(w)}${(p.proj.warP10 || [])[t] != null ? `  (${fmtWar(p.proj.warP10[t])}-${fmtWar(p.proj.warP90[t])})` : ""}`]) });
+    }
+    if (p.isPit && p.arsenal && p.arsenal.length) {
+      sections.push({ title: "Pitch arsenal · usage / whiff",
+        rows: p.arsenal.slice(0, 6).map(a => [a.pitch || "?",
+          `${a.usage != null ? a.usage.toFixed(0) + "%" : "-"} / ${a.whiff != null ? a.whiff.toFixed(0) + "%" : "-"}`]) });
+    } else if (p.sc && p.sc.metrics && p.sc.metrics.length) {
+      sections.push({ title: `Statcast percentiles · ${p.sc.season}`,
+        rows: p.sc.metrics.map(m => [m.label, `${m.value}  (${m.pct})`]) });
+    }
+    window.EEPHUS_HUB.shareCard({
+      module: "MLB Projections",
+      name: p.name || p.key,
+      meta: `${p.pos || ""}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${p.team}` : " · FA"}`,
+      sub: p.fa && p.fa.verdict ? `FA verdict: ${String(p.fa.verdict).toUpperCase()}` : "",
+      headshotURL: p.mlbam ? headshotURL(p.mlbam, 240) : null,
+      tiles, sections,
+      url: `eephus.io/projections/#player=${p.key}`,
+      filename: `eephus-${p.key}-mlb-card.png`,
+      caption: "Gate-1-validated projection engine · bands = P10-P90 · Statcast percentiles vs qualified MLB pool",
+    });
   }
 
   function boot() {

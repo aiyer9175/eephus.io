@@ -120,3 +120,35 @@ def test_nav_order_and_dividers():
     assert i_prospx < i_cs < i_fa, "CollegeSavant sits directly under PROSPX"
     css = (ROOT / "assets" / "site.css").read_text(encoding="utf-8")
     assert "border-left: 1px solid var(--border)" in css
+
+
+# ---------------------------------------------------------------------------
+# Unified player hub (cross-module identity + share cards)
+# ---------------------------------------------------------------------------
+
+def test_player_links_map():
+    d = _load("data/player_links.json")
+    assert len(d["byKey"]) > 1000 and len(d["byMlbam"]) > 1000
+    ex = [r for r in d["byKey"].values() if r.get("prospx")]
+    assert len(ex) > 500, "ex-prospect links collapsed"
+    assert all(set(r) >= {"key", "mlbam", "fa", "prospx"} for r in ex[:20])
+
+
+def test_hub_lib_and_strips_wired():
+    hub = (ROOT / "assets" / "eephus-hub.js").read_text(encoding="utf-8")
+    for needle in ("player_links.json", "stripHTML", "shareCard", "EEPHUS_HUB"):
+        assert needle in hub, needle
+    assert "eephus-hub.js" in (ROOT / "build_site.py").read_text(encoding="utf-8")
+    assert "eephus-hub.js" in (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    assert "px-hub" in (ROOT / "prospx" / "index.html").read_text(encoding="utf-8")
+    fa = (ROOT / "assets" / "fa.js").read_text(encoding="utf-8")
+    assert "fa-hub" in fa and "sharePlayerCard" in fa
+    pj = (ROOT / "assets" / "projections.js").read_text(encoding="utf-8")
+    assert "mlbp-hub" in pj and "shareMlbCard" in pj
+
+
+def test_mlb_detail_carries_origin():
+    d = _load("data/mlb_player_detail.json")
+    org = [p for p in d["players"].values() if p.get("origin")]
+    assert len(org) > 500
+    assert all(p["origin"].get("prospx") for p in org[:10])

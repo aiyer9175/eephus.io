@@ -1488,3 +1488,28 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   .mlbp-slider { grid-template-columns: 96px 1fr 70px; }
   .mlbp-tiles { justify-content: flex-start; }
 }
+
+/* ---- player hub strip: one player, every module ---- */
+.player-hub-strip {
+  display: flex; gap: 0; flex-wrap: wrap; align-items: stretch;
+  margin: 0 0 14px; border: 1px solid var(--border);
+  background: var(--bg-secondary); width: fit-content;
+}
+.hub-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-retro-mono); font-size: 11.5px; font-weight: 700;
+  letter-spacing: .05em; color: var(--text-secondary); text-decoration: none;
+  padding: 7px 13px; border-left: 1px solid var(--border);
+}
+.hub-chip:first-child { border-left: none; }
+.hub-chip .hub-glyph { color: var(--accent-gold); font-weight: 700; }
+.hub-chip .hub-note {
+  font-size: 10px; font-weight: 600; letter-spacing: .03em;
+  color: var(--text-tertiary); text-transform: lowercase;
+}
+a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.hub-chip.is-active {
+  background: var(--text-primary); color: var(--bg-primary);
+}
+.hub-chip.is-active .hub-glyph,
+.hub-chip.is-active .hub-note { color: var(--bg-primary); opacity: .75; }

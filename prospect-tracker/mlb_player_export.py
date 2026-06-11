@@ -229,6 +229,24 @@ def _is_pitcher_pos(pos: str | None) -> bool:
         "P", "SP", "RP", "LHP", "RHP", "SP2", "CL", "SIRP", "MIRP")
 
 
+def _debut_origins() -> dict[int, dict]:
+    """{mlbam: prospect origin} from debuts.json - the PROSPX identity +
+    the FV arc endpoints for ex-prospects."""
+    out: dict[int, dict] = {}
+    try:
+        for d in json.loads((DATA_DIR / "debuts.json").read_text(encoding="utf-8")):
+            if d.get("mlbam_id"):
+                out[int(d["mlbam_id"])] = {
+                    "prospx": d.get("player_key"),
+                    "fvOpen": d.get("fv_open"),
+                    "fvClose": d.get("fv_close"),
+                    "debut": d.get("debut_date"),
+                }
+    except (OSError, ValueError):
+        log.warning("mlb player export: debuts.json unavailable - no origins")
+    return out
+
+
 def build_payload() -> dict:
     proj = json.loads((DATA_DIR / "mlb_projections.json").read_text(encoding="utf-8"))
     fa = json.loads((DATA_DIR / "fa_class.json").read_text(encoding="utf-8"))
@@ -239,6 +257,7 @@ def build_payload() -> dict:
         swing = sp.get("players") or {}
     except (OSError, ValueError):
         pass
+    origins = _debut_origins()
 
     all_keys = [v["key"] for v in proj.get("vets") or []] + list(members)
     fa_ids = _ident_mlbams(all_keys)
@@ -276,6 +295,9 @@ def build_payload() -> dict:
         mlbam = p.get("mlbam")
         if not mlbam:
             continue
+        org = origins.get(int(mlbam))
+        if org and org.get("prospx"):
+            p["origin"] = org          # ex-PROSPX prospect: arc + hub link
         p["career"] = _career_rows(int(mlbam), p["isPit"], war_by)
         n_car += 1 if p["career"] else 0
         sc = _statcast_block(int(mlbam), p["isPit"], year)
@@ -307,10 +329,32 @@ def build_payload() -> dict:
     }
 
 
+def _export_links(payload: dict) -> None:
+    """data/player_links.json - the cross-module identity map every card
+    surface reads for its hub strip: one player, every page that renders
+    them. byMlbam serves PROSPX (it knows mlbam_id); byKey serves the FA
+    and projections apps (they share the normalized-name key)."""
+    by_key: dict[str, dict] = {}
+    by_mlbam: dict[str, dict] = {}
+    for key, p in payload["players"].items():
+        row = {"key": key, "mlbam": p.get("mlbam"),
+               "fa": bool(p.get("fa")),
+               "prospx": (p.get("origin") or {}).get("prospx")}
+        by_key[key] = row
+        if p.get("mlbam"):
+            by_mlbam[str(p["mlbam"])] = row
+    out = {"generated_at": payload["generated_at"],
+           "byKey": by_key, "byMlbam": by_mlbam}
+    (DATA_DIR / "player_links.json").write_text(
+        json.dumps(out, separators=(",", ":")), encoding="utf-8")
+    log.info("player links: %d keys, %d mlbam-joined", len(by_key), len(by_mlbam))
+
+
 def export() -> int:
     payload = build_payload()
     raw = json.dumps(payload, separators=(",", ":"))
     OUT_PATH.write_text(raw, encoding="utf-8")
+    _export_links(payload)
     log.info("mlb player detail: %dKB, %d players, coverage %s",
              len(raw) // 1024, payload["n_players"], payload["coverage"])
     return len(raw)

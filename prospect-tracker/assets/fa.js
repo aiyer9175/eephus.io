@@ -525,8 +525,20 @@
       <a href="/prospx/#player=${encodeURIComponent(m.key)}">full prospect page &rarr;</a></p>` : "";
     rows.innerHTML = `
       <p><a href="#view=board">&larr; Class Board</a></p>
-      <div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">${esc(m.name)}</span>
-      <span class="newsprint-eyebrow-meta">${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")} &middot; ${statusChip(m)} &middot; <a class="fa-player-link" href="/projections/#player=${encodeURIComponent(m.key)}" title="Career, Statcast percentiles, arsenal, Swing+, and the 5-year projection fan">full player page &rarr;</a></span></div>
+      <div id="fa-hub"></div>
+      <div class="mlbp-hero" id="fa-player-hero">
+        <span id="fa-hero-photo"></span>
+        <div class="mlbp-hero-main">
+          <div class="mlbp-name">${teamLogo(m.from)}<h2>${esc(m.name)}</h2></div>
+          <div class="fa-sub">${esc(m.pos || "")} &middot; ${m.age != null ? "age " + Math.floor(m.age) : "?"} &middot; ${esc(m.from || "")} &middot; ${statusChip(m)}</div>
+          <div style="margin-top:8px;"><button class="chip" id="fa-player-gfx" title="Download this market card as a PNG share card (theme-aware)">&#8681; share card</button></div>
+        </div>
+        <div class="mlbp-tiles">
+          ${m.projGuar != null ? `<div class="mlbp-tile"><span class="mlbp-tile-label">projected</span><span class="mlbp-tile-val">${m.projYears != null ? m.projYears + "y" : "?"} / ${money(m.projGuar)}</span></div>` : ""}
+          ${m.projAav != null ? `<div class="mlbp-tile"><span class="mlbp-tile-label">proj AAV</span><span class="mlbp-tile-val">${money(m.projAav)}</span></div>` : ""}
+          ${m.dealPlus != null ? `<div class="mlbp-tile"><span class="mlbp-tile-label">Deal+</span><span class="mlbp-tile-val">${Math.round(m.dealPlus)}</span></div>` : ""}
+        </div>
+      </div>
       ${m.thinPlatform ? `<div class="fa-cba-note">&#9888; ${esc(m.thinPlatform)} &mdash; the projection, and every number priced off it, is low-confidence.</div>` : ""}
       ${m.note ? `<div class="fa-cba-note">&#8251; ${esc(m.note)}</div>` : ""}
       ${signedBlock}
@@ -551,6 +563,62 @@
       ${comps ? `<h3>Nearest real comps</h3><table class="detail-table">
         <thead><tr><th>Player</th><th>Winter</th><th>To</th><th>Deal</th></tr></thead><tbody>${comps}</tbody></table>` : ""}
       ${fits ? `<h3>Top team fits</h3><div class="fa-fitchips">${fits}</div>` : ""}`;
+    // hub strip + headshot (cross-module identity via player_links.json) -
+    // lazy, never blocks the card paint; FA rows carry no mlbam locally.
+    if (window.EEPHUS_HUB) {
+      window.EEPHUS_HUB.links().then(L => {
+        const row = L && (L.byKey || {})[m.key];
+        const hub = document.getElementById("fa-hub");
+        if (hub && row) hub.innerHTML = window.EEPHUS_HUB.stripHTML(row, "fa");
+        const ph = document.getElementById("fa-hero-photo");
+        if (ph && row && row.mlbam) {
+          ph.outerHTML = `<img class="mlbp-headshot" src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_240,q_auto:best/v1/people/${row.mlbam}/headshot/67/current" alt="" onerror="this.style.visibility='hidden'">`;
+        }
+        const btn = document.getElementById("fa-player-gfx");
+        if (btn) btn.onclick = () => sharePlayerCard(m, row);
+      });
+    }
+  }
+
+  // Unified per-player share card (EEPHUS_HUB canvas template) - the FA
+  // module's data priorities: the predicted market up top, rational vs
+  // surplus + comps as the body.
+  function sharePlayerCard(m, linkRow) {
+    const tiles = [];
+    if (m.projGuar != null) tiles.push({ label: "projected", value: `${m.projYears != null ? m.projYears + "y/" : ""}${money(m.projGuar)}` });
+    if (m.projAav != null) tiles.push({ label: "proj AAV", value: money(m.projAav) });
+    if (m.dealPlus != null) tiles.push({ label: "Deal+", value: String(Math.round(m.dealPlus)) });
+    if (m.warTotal != null) tiles.push({ label: "deal WAR", value: m.warTotal.toFixed(1) });
+    const sections = [{
+      title: "Predicted market vs rational value",
+      rows: [
+        ["projGuarantee", `${money(m.projGuar)}${m.projGuarP10 != null ? `  (${money(m.projGuarP10)}-${money(m.projGuarP90)})` : ""}`],
+        ["projAAV", `${money(m.projAav)}${m.projAavP10 != null ? `  (${money(m.projAavP10)}-${money(m.projAavP90)})` : ""}`],
+        ["rational value", m.rational != null ? money(m.rational) : " - "],
+        ["contract surplus", m.surplus != null ? money(m.surplus) : " - "],
+        ["verdict", (m.verdict || " - ").toUpperCase()],
+        m.prevAav != null ? ["prior AAV", money(m.prevAav)] : null,
+      ].filter(Boolean),
+    }];
+    const comps = (m.comps || []).slice(0, 5);
+    if (comps.length) {
+      sections.push({ title: "Nearest real comps",
+        rows: comps.map(c => [`${c.name || "?"}${c.yr ? ` '${String(c.yr).slice(2)}` : ""}`,
+          `${c.years != null ? c.years + "y / " : ""}${c.guar != null ? money(c.guar) : "-"}${c.to ? `  ${c.to}` : ""}`]) });
+    }
+    window.EEPHUS_HUB.shareCard({
+      module: "MLB Free Agency",
+      accentToken: "--accent-green",
+      name: m.name,
+      meta: `${m.pos || ""} · ${m.age != null ? "age " + Math.floor(m.age) : "?"} · ${m.from || ""}`,
+      sub: m.verdict ? `verdict: ${String(m.verdict).toUpperCase()}` : "",
+      headshotURL: linkRow && linkRow.mlbam
+        ? `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_240,q_auto:best/v1/people/${linkRow.mlbam}/headshot/67/current` : null,
+      tiles, sections,
+      url: `eephus.io/fa/#player=${m.key}`,
+      filename: `eephus-${m.key}-fa-card.png`,
+      caption: "predicted market (projGuarantee) vs rational value - two numbers, never conflated · gate-validated, ex-ante",
+    });
   }
 
   function renderFits(rows, cls, meta) {
