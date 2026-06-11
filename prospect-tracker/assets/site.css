@@ -850,16 +850,21 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--text-tertiary); margin-right: 4px;
 }
-.fa-app button.chip {
+.fa-app button.chip, .fa-app a.chip {
   font-family: var(--font-retro); font-size: 12px; font-weight: 500;
   padding: 4px 10px; letter-spacing: 0.02em; cursor: pointer;
   border: 1px solid var(--border); background: var(--bg-secondary);
   color: var(--text-secondary);
+  /* anchors in the chip row (the Glossary link) read EXACTLY like the
+     view chips — same box, no underline, glyph accent (the § the site
+     uses for the glossary module). */
+  text-decoration: none; display: inline-block;
 }
-.fa-app button.chip:hover {
+.fa-app button.chip:hover, .fa-app a.chip:hover {
   background: var(--bg-tertiary); color: var(--text-primary);
   border-color: var(--text-tertiary);
 }
+.fa-app a.chip .chip-glyph { color: var(--accent-gold); margin-right: 4px; font-weight: 700; }
 .fa-app button.chip.active {
   background: var(--bg-secondary); color: var(--text-primary);
   border-color: var(--accent-gold); font-weight: 700;

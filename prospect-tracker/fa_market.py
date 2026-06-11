@@ -149,16 +149,20 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
     war1 = fp.war_from_projection(proj, side, war_map, league, class_year)
     expo = proj["pt_proj"]
     role = proj["role"]
+    # v2 — the DECAY walks the profile cohort's curves (power vs contact
+    # hitters, power vs finesse pitchers age differently); the lookup
+    # falls back to the base role wherever a cohort cell is thin.
+    decay_role = fp.profile_role(hist, side, role, league)
     a = age or 30
-    path = _decay_path(war1, expo, side, role, a, curves)
+    path = _decay_path(war1, expo, side, decay_role, a, curves)
     out = {"war_by_year": [round(w, 2) for w in path],
            "war_total": round(sum(path[:years]), 2),
            "war_y1": round(path[0], 2) if path else 0.0,
            "role": role, "pt_y1": proj["pt_proj"]}
     q = _gate1_band_quantiles().get(_band_bucket(side, expo))
     if q:
-        p10 = _decay_path(war1 + q["q10"], expo, side, role, a, curves)
-        p90 = _decay_path(war1 + q["q90"], expo, side, role, a, curves)
+        p10 = _decay_path(war1 + q["q10"], expo, side, decay_role, a, curves)
+        p90 = _decay_path(war1 + q["q90"], expo, side, decay_role, a, curves)
         out["war_by_year_p10"] = [round(w, 2) for w in p10]
         out["war_by_year_p90"] = [round(w, 2) for w in p90]
     return out

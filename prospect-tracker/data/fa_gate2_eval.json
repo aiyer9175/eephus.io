@@ -13,23 +13,23 @@
  ],
  "pooled": {
   "guarantee": {
-   "mae_model": 10.600043805671392,
-   "mae_base": 11.621180051268077,
+   "mae_model": 10.56179061884904,
+   "mae_base": 11.765950790831802,
    "n": 1199
   },
   "aav": {
-   "mae_model": 3.1740223344453713,
-   "mae_base": 3.4281284444462456,
+   "mae_model": 3.1305851559633027,
+   "mae_base": 3.3636896011355786,
    "n": 1199
   },
   "years": {
-   "mae_model": 0.44120100083402836,
-   "mae_base": 0.4854045037531276,
+   "mae_model": 0.4361968306922435,
+   "mae_base": 0.4970809007506255,
    "n": 1199
   },
   "mega_guarantee": {
-   "mae_model": 96.15999874,
-   "mae_base": 93.07200652266077,
+   "mae_model": 94.63910722,
+   "mae_base": 96.50288060582048,
    "n": 50
   }
  },
@@ -37,110 +37,110 @@
   {
    "winter": 2018,
    "n": 96,
-   "guarantee_mae_model": 8.526277468750001,
-   "guarantee_mae_base": 9.671906360677083,
-   "aav_mae_model": 2.1181078020833333,
-   "aav_mae_base": 3.1123494960937506,
-   "years_mae_model": 0.5833333333333334,
-   "years_mae_base": 0.6458333333333334,
-   "mega_guarantee_mae_model": 58.718755666666674,
-   "mega_guarantee_mae_base": 15.62654166666666
+   "guarantee_mae_model": 8.165503625000001,
+   "guarantee_mae_base": 10.044318860677084,
+   "aav_mae_model": 2.023787802083333,
+   "aav_mae_base": 3.053373975260417,
+   "years_mae_model": 0.5416666666666666,
+   "years_mae_base": 0.6979166666666666,
+   "mega_guarantee_mae_model": 48.49213533333333,
+   "mega_guarantee_mae_base": 24.722166666666663
   },
   {
    "winter": 2019,
    "n": 106,
-   "guarantee_mae_model": 10.63912425471698,
-   "guarantee_mae_base": 12.110114594929245,
-   "aav_mae_model": 3.16305537735849,
-   "aav_mae_base": 3.2450506745283016,
-   "years_mae_model": 0.4811320754716981,
-   "years_mae_base": 0.6132075471698113,
-   "mega_guarantee_mae_model": 139.51010633333334,
-   "mega_guarantee_mae_base": 110.11685416666664
+   "guarantee_mae_model": 10.155099707547171,
+   "guarantee_mae_base": 11.821982292452832,
+   "aav_mae_model": 3.0701945849056607,
+   "aav_mae_base": 3.312765125589623,
+   "years_mae_model": 0.41509433962264153,
+   "years_mae_base": 0.5754716981132075,
+   "mega_guarantee_mae_model": 124.16684233333335,
+   "mega_guarantee_mae_base": 111.04727083333331
   },
   {
    "winter": 2020,
    "n": 125,
-   "guarantee_mae_model": 6.687982904,
-   "guarantee_mae_base": 9.017187076781251,
-   "aav_mae_model": 2.530741216,
-   "aav_mae_base": 2.6351878697562503,
-   "years_mae_model": 0.392,
-   "years_mae_base": 0.384,
-   "mega_guarantee_mae_model": 57.36131825,
+   "guarantee_mae_model": 6.577882344,
+   "guarantee_mae_base": 9.1869039599375,
+   "aav_mae_model": 2.55126532,
+   "aav_mae_base": 2.8396339969375,
+   "years_mae_model": 0.376,
+   "years_mae_base": 0.4,
+   "mega_guarantee_mae_model": 55.89469175,
    "mega_guarantee_mae_base": 82.81796718749997
   },
   {
    "winter": 2021,
    "n": 147,
-   "guarantee_mae_model": 6.509579952380953,
-   "guarantee_mae_base": 6.291468962792305,
-   "aav_mae_model": 2.5830568843537414,
-   "aav_mae_base": 2.7101887340508077,
-   "years_mae_model": 0.3333333333333333,
-   "years_mae_base": 0.3197278911564626,
-   "mega_guarantee_mae_model": 81.926212,
-   "mega_guarantee_mae_base": 73.74127599999998
+   "guarantee_mae_model": 6.68337325170068,
+   "guarantee_mae_base": 6.810794254722577,
+   "aav_mae_model": 2.685572476190476,
+   "aav_mae_base": 2.6336909720705783,
+   "years_mae_model": 0.3469387755102041,
+   "years_mae_base": 0.35374149659863946,
+   "mega_guarantee_mae_model": 90.94881099999999,
+   "mega_guarantee_mae_base": 98.712397249375
   },
   {
    "winter": 2022,
    "n": 144,
-   "guarantee_mae_model": 13.340783187500001,
-   "guarantee_mae_base": 13.924043063162165,
-   "aav_mae_model": 3.191368159722222,
-   "aav_mae_base": 3.1094187371394857,
-   "years_mae_model": 0.5694444444444444,
-   "years_mae_base": 0.6111111111111112,
-   "mega_guarantee_mae_model": 88.05744827272727,
-   "mega_guarantee_mae_base": 94.7439144481534
+   "guarantee_mae_model": 12.921001402777778,
+   "guarantee_mae_base": 13.312925760139485,
+   "aav_mae_model": 3.086403222222222,
+   "aav_mae_base": 3.172174545020508,
+   "years_mae_model": 0.5416666666666666,
+   "years_mae_base": 0.5486111111111112,
+   "mega_guarantee_mae_model": 84.916888,
+   "mega_guarantee_mae_base": 91.89276857936648
   },
   {
    "winter": 2023,
    "n": 139,
-   "guarantee_mae_model": 14.567858000000001,
-   "guarantee_mae_base": 15.415250311597038,
-   "aav_mae_model": 3.7539583021582734,
-   "aav_mae_base": 4.166841578487663,
-   "years_mae_model": 0.6474820143884892,
-   "years_mae_base": 0.6690647482014388,
-   "mega_guarantee_mae_model": 100.71622622222223,
-   "mega_guarantee_mae_base": 94.10658155321181
+   "guarantee_mae_model": 15.83461964028777,
+   "guarantee_mae_base": 16.330608283529063,
+   "aav_mae_model": 3.8159235251798562,
+   "aav_mae_base": 3.7437572822890415,
+   "years_mae_model": 0.6762589928057554,
+   "years_mae_base": 0.7122302158273381,
+   "mega_guarantee_mae_model": 115.03194133333334,
+   "mega_guarantee_mae_base": 109.35491488654513
   },
   {
    "winter": 2024,
    "n": 136,
-   "guarantee_mae_model": 12.330919683823529,
-   "guarantee_mae_base": 13.622689427044381,
-   "aav_mae_model": 3.6472022794117644,
-   "aav_mae_base": 4.077411211715955,
-   "years_mae_model": 0.35294117647058826,
-   "years_mae_base": 0.4632352941176471,
-   "mega_guarantee_mae_model": 282.06188050000003,
-   "mega_guarantee_mae_base": 278.77455443789063
+   "guarantee_mae_model": 12.387705345588234,
+   "guarantee_mae_base": 13.61420815489688,
+   "aav_mae_model": 3.5649623529411762,
+   "aav_mae_base": 3.8524983624508367,
+   "years_mae_model": 0.36764705882352944,
+   "years_mae_base": 0.49264705882352944,
+   "mega_guarantee_mae_model": 283.70911449999994,
+   "mega_guarantee_mae_base": 273.4799011832031
   },
   {
    "winter": 2025,
    "n": 161,
-   "guarantee_mae_model": 11.690324378881987,
-   "guarantee_mae_base": 12.993594234435122,
-   "aav_mae_model": 3.4353903726708075,
-   "aav_mae_base": 3.647193641142552,
-   "years_mae_model": 0.30434782608695654,
-   "years_mae_base": 0.391304347826087,
-   "mega_guarantee_mae_model": 116.19337333333334,
-   "mega_guarantee_mae_base": 128.9543140625
+   "guarantee_mae_model": 11.447199770186335,
+   "guarantee_mae_base": 12.44050665531566,
+   "aav_mae_model": 3.3044912173913046,
+   "aav_mae_base": 3.5461618798195067,
+   "years_mae_model": 0.33540372670807456,
+   "years_mae_base": 0.37888198757763975,
+   "mega_guarantee_mae_model": 109.93916433333334,
+   "mega_guarantee_mae_base": 117.88796398117655
   },
   {
    "winter": 2026,
    "n": 145,
-   "guarantee_mae_model": 10.104305213793104,
-   "guarantee_mae_base": 10.87716533396807,
-   "aav_mae_model": 3.7276135655172413,
-   "aav_mae_base": 3.938589486661084,
-   "years_mae_model": 0.3793103448275862,
-   "years_mae_base": 0.36551724137931035,
-   "mega_guarantee_mae_model": 66.85860822222223,
-   "mega_guarantee_mae_base": 55.93968396929605
+   "guarantee_mae_model": 9.718644496551724,
+   "guarantee_mae_base": 11.71703981174827,
+   "aav_mae_model": 3.6444595034482763,
+   "aav_mae_base": 3.9629846044628407,
+   "years_mae_model": 0.36551724137931035,
+   "years_mae_base": 0.41379310344827586,
+   "mega_guarantee_mae_model": 57.90297477777777,
+   "mega_guarantee_mae_base": 60.12493140972182
   }
  ],
  "biggest_misses": [
@@ -150,10 +150,10 @@
    "to_team": "LAD",
    "qo": true,
    "actual_guar_mm": 700.0,
-   "pred_guar_mm": 163.5,
+   "pred_guar_mm": 148.1,
    "actual_years": 10.0,
    "pred_years": 5,
-   "err_mm": -536.5
+   "err_mm": -551.9
   },
   {
    "player": "Juan Soto",
@@ -172,21 +172,10 @@
    "to_team": "TEX",
    "qo": true,
    "actual_guar_mm": 325.0,
-   "pred_guar_mm": 58.9,
+   "pred_guar_mm": 100.8,
    "actual_years": 10.0,
-   "pred_years": 3,
-   "err_mm": -266.1
-  },
-  {
-   "player": "Carlos Rodon",
-   "winter": 2023,
-   "to_team": "NYY",
-   "qo": true,
-   "actual_guar_mm": 162.0,
-   "pred_guar_mm": 359.1,
-   "actual_years": 6.0,
-   "pred_years": 9,
-   "err_mm": 197.1
+   "pred_years": 4,
+   "err_mm": -224.2
   },
   {
    "player": "Bryce Harper",
@@ -200,15 +189,26 @@
    "err_mm": -190.3
   },
   {
+   "player": "Carlos Rodon",
+   "winter": 2023,
+   "to_team": "NYY",
+   "qo": true,
+   "actual_guar_mm": 162.0,
+   "pred_guar_mm": 350.6,
+   "actual_years": 6.0,
+   "pred_years": 9,
+   "err_mm": 188.6
+  },
+  {
    "player": "Manny Machado",
    "winter": 2019,
    "to_team": "SDP",
    "qo": false,
    "actual_guar_mm": 300.0,
-   "pred_guar_mm": 116.0,
+   "pred_guar_mm": 122.3,
    "actual_years": 10.0,
-   "pred_years": 9,
-   "err_mm": -184.0
+   "pred_years": 10,
+   "err_mm": -177.7
   },
   {
    "player": "Kris Bryant",
@@ -216,10 +216,10 @@
    "to_team": "COL",
    "qo": false,
    "actual_guar_mm": 182.0,
-   "pred_guar_mm": 21.2,
+   "pred_guar_mm": 17.7,
    "actual_years": 7.0,
    "pred_years": 2,
-   "err_mm": -160.8
+   "err_mm": -164.3
   },
   {
    "player": "Pete Alonso",
@@ -227,10 +227,21 @@
    "to_team": "NYM",
    "qo": true,
    "actual_guar_mm": 54.0,
-   "pred_guar_mm": 208.3,
+   "pred_guar_mm": 213.5,
    "actual_years": 2.0,
    "pred_years": 6,
-   "err_mm": 154.3
+   "err_mm": 159.5
+  },
+  {
+   "player": "Xander Bogaerts",
+   "winter": 2023,
+   "to_team": "SDP",
+   "qo": true,
+   "actual_guar_mm": 280.0,
+   "pred_guar_mm": 122.8,
+   "actual_years": 11.0,
+   "pred_years": 4,
+   "err_mm": -157.2
   },
   {
    "player": "Alex Bregman",
@@ -238,32 +249,10 @@
    "to_team": "CHC",
    "qo": false,
    "actual_guar_mm": 175.0,
-   "pred_guar_mm": 24.1,
+   "pred_guar_mm": 23.2,
    "actual_years": 5.0,
    "pred_years": 2,
-   "err_mm": -150.9
-  },
-  {
-   "player": "Blake Snell",
-   "winter": 2025,
-   "to_team": "LAD",
-   "qo": false,
-   "actual_guar_mm": 182.0,
-   "pred_guar_mm": 43.2,
-   "actual_years": 5.0,
-   "pred_years": 2,
-   "err_mm": -138.8
-  },
-  {
-   "player": "Javier B\u00e1ez",
-   "winter": 2022,
-   "to_team": "DET",
-   "qo": false,
-   "actual_guar_mm": 140.0,
-   "pred_guar_mm": 6.5,
-   "actual_years": 6.0,
-   "pred_years": 1,
-   "err_mm": -133.5
+   "err_mm": -151.8
   },
   {
    "player": "Jacob deGrom",
@@ -271,10 +260,21 @@
    "to_team": "TEX",
    "qo": true,
    "actual_guar_mm": 185.0,
-   "pred_guar_mm": 54.0,
+   "pred_guar_mm": 45.3,
    "actual_years": 5.0,
    "pred_years": 3,
-   "err_mm": -131.0
+   "err_mm": -139.7
+  },
+  {
+   "player": "Javier B\u00e1ez",
+   "winter": 2022,
+   "to_team": "DET",
+   "qo": false,
+   "actual_guar_mm": 140.0,
+   "pred_guar_mm": 6.1,
+   "actual_years": 6.0,
+   "pred_years": 1,
+   "err_mm": -133.9
   }
  ],
  "notes": [
@@ -283,7 +283,7 @@
   "baseline = median of 5 nearest comps (prior winters), naive $/WAR-trend inflated",
   "$/WAR level per test winter carried forward ex-ante from the last train winter"
  ],
- "mega_slice_note": "megadeals (actual >= $100M, n=50): model MAE $96M vs comps baseline $93M",
+ "mega_slice_note": "megadeals (actual >= $100M, n=50): model MAE $95M vs comps baseline $97M",
  "gates": {
   "guarantee": true,
   "aav": true,

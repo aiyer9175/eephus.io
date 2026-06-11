@@ -3994,7 +3994,7 @@
     "aging curves"
    ],
    "priority": 75,
-   "definition": "A Marcel-style weighted-rates projection mapped to bWAR through a fitted rate-to-WAR model, decayed along survivorship-corrected aging curves fit on the 2000-2026 corpus. Deliberately conservative on marquee names — a no-lookahead engine cannot price record-setters, and the accountability page says so rather than tuning toward them.",
+   "definition": "A Marcel-style weighted-rates projection (5/3/2 recency weights) with hitter ISO blended toward Savant xISO (2015+), mapped to bWAR through a fitted rate-to-WAR model and decayed along survivorship-corrected aging curves fit on the 2000-2026 corpus. v2: multi-year decay walks REGRESSED-rate curves — raw observed deltas bundle aging with luck regression, and chaining them double-counted the regression (measured: the horizon-5 star tail collapsed to a 0.06 predicted/actual ratio). Power and finesse pitchers age on their own curves; hitter power/contact cohorts were measured and parked (season-ISO selection re-injects reversion).",
    "seeAlso": [
     "war",
     "rational_value",
@@ -4002,7 +4002,8 @@
    ],
    "module": [
     "fa"
-   ]
+   ],
+   "methodology": "Beyond Gate 1 (next-season), the multi-year decay is now measured by a forward-chained horizon backtest (proj_eval.py, bases 2017-2021): the v2 regressed-rate curves doubled the horizon-5 >=3-WAR tail ratio (0.06 to 0.12) and cut star bias from -1.34 to -0.64 WAR while Gate 1 improved."
   },
   {
    "id": "era_minus",

@@ -227,6 +227,22 @@
 // ==== PORTED FROM PROSPX (Glossary/Methodology tab, retired 2026-06-10) =====
 // Source: prospx/index.html L17995-18742 via build_glossary_port.py.
 // Hand-maintained from here on; the generator is provenance only.
+//
+// _RATER_META / _TIER_ORDER sat ONE LINE above the port slice and were
+// missed — Source Comparison silently hung on "Loading…" because the
+// ReferenceError died inside the fetch promise (fixed 2026-06-10; the
+// smoke test now asserts rendered content, not just a non-empty body).
+// _raterMeta() is the safe accessor: unknown raters (new sources join the
+// backtest as their cohorts resolve) get a neutral fallback, never a throw.
+const _RATER_META = {
+  fangraphs:        { label: "FanGraphs",        color: "var(--neon-cyan)" },
+  mlb_pipeline:     { label: "MLB Pipeline",     color: "var(--neon-amber)" },
+  prospx_consensus: { label: "PROSPX consensus", color: "var(--up)" },
+};
+const _TIER_ORDER = ["<45", "45", "50", "55", "60+"];
+function _raterMeta(r) {
+  return _RATER_META[r] || { label: String(r), color: "var(--text-tertiary)" };
+}
 function _methProseHTML() {
   return `
   <div class="meth-prose">
@@ -412,13 +428,13 @@ function _methCalibrationChart(bt, metricKey, metricLabel, opts) {
       const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
       d += ` C ${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
     }
-    const col = _RATER_META[s.rater].color;
+    const col = _raterMeta(s.rater).color;
     const emph = s.rater === "prospx_consensus";
     const dots = pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${emph ? 3.5 : 2.5}" fill="${col}"/>`).join("");
     return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${emph ? 2.6 : 1.6}" ${emph ? "" : 'stroke-dasharray="5,3"'} stroke-linecap="round"/>${dots}`;
   }).join("");
   const legend = bt.raters.map(r =>
-    `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${_RATER_META[r].color};"></span>${escapeHtml(_RATER_META[r].label)}</span>`).join("");
+    `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${_raterMeta(r).color};"></span>${escapeHtml(_raterMeta(r).label)}</span>`).join("");
   return `<div class="meth-chart">
     <div class="meth-chart-title">${escapeHtml(metricLabel)} by FV tier</div>
     <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${escapeHtml(metricLabel)} by FV tier">
@@ -445,8 +461,8 @@ function _methAccuracyChart(bt) {
       const emph = x.r === "prospx_consensus";
       const isBest = x.v === best;
       return `<div class="meth-bar-row">
-        <span class="meth-bar-label">${escapeHtml(_RATER_META[x.r].label)}</span>
-        <span class="meth-bar-track"><span class="meth-bar-fill${emph ? " is-consensus" : ""}" style="width:${w.toFixed(1)}%;background:${_RATER_META[x.r].color};"></span></span>
+        <span class="meth-bar-label">${escapeHtml(_raterMeta(x.r).label)}</span>
+        <span class="meth-bar-track"><span class="meth-bar-fill${emph ? " is-consensus" : ""}" style="width:${w.toFixed(1)}%;background:${_raterMeta(x.r).color};"></span></span>
         <span class="meth-bar-val${isBest ? " is-best" : ""}">${fmt(x.v)}${isBest ? " ★" : ""}</span>
       </div>`;
     }).join("");
@@ -478,7 +494,7 @@ function _methTierTable(bt, rater) {
       <td>${Math.round(t.star_rate * 100)}%</td>
     </tr>`).join("");
   return `<div class="meth-table-wrap">
-    <div class="meth-table-title"><span class="meth-legend-swatch" style="background:${_RATER_META[rater].color};"></span>${escapeHtml(_RATER_META[rater].label)} <span class="meth-sub">n=${c.n} · ${c.n_debuted} debuted</span></div>
+    <div class="meth-table-title"><span class="meth-legend-swatch" style="background:${_raterMeta(rater).color};"></span>${escapeHtml(_raterMeta(rater).label)} <span class="meth-sub">n=${c.n} · ${c.n_debuted} debuted</span></div>
     <div class="table-scroll-x"><table class="meth-table">
       <thead><tr><th>FV</th><th>n</th><th title="Reached MLB">Debut</th><th title="Mean cumulative career WAR (undebuted = 0)">WAR</th><th title="Mean WAR per season, among players who debuted">WAR/yr</th><th title="Career WAR ≥ 3">Contrib</th><th title="≥ 1.5 WAR per season">Reg pace</th><th title="Career WAR ≥ 10">Star</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -839,7 +855,10 @@ function renderSourceComparison() {
       .then(r => (r.ok ? r.json() : null))
       .then(j => { _S.backtest = j || { __error: true };
         if (_S.view === "source-comparison") renderSourceComparison(); })
-      .catch(() => { _S.backtest = { __error: true }; });
+      // A failed fetch (or a throw inside the re-render) must surface the
+      // empty-state, never strand the loading placeholder.
+      .catch(() => { _S.backtest = { __error: true };
+        if (_S.view === "source-comparison") renderSourceComparison(); });
   }
   const bt = _S.backtest;
   let backtestHTML;
