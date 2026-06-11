@@ -39,15 +39,49 @@ def test_rational_value_is_npv_not_sticker():
 
 
 def test_deal_verdict_bands():
-    """Verdict edges sit on the 2015-2026 corpus terciles (85 / 185) —
-    value above, overpay below, market between; None passes through."""
+    """Verdict edges sit on the corpus terciles — Phase-2 recalibration on
+    the NPV deferral-adjusted basis: 75 / 160 (was 85 / 185 on sticker).
+    Value above, overpay below, market between; None passes through."""
     assert fm.deal_verdict(None) is None
     assert fm.deal_verdict(300) == "value"
-    assert fm.deal_verdict(185) == "value"
-    assert fm.deal_verdict(184) == "market"
-    assert fm.deal_verdict(85) == "market"
-    assert fm.deal_verdict(84) == "overpay"
+    assert fm.deal_verdict(160) == "value"
+    assert fm.deal_verdict(159) == "market"
+    assert fm.deal_verdict(75) == "market"
+    assert fm.deal_verdict(74) == "overpay"
     assert fm.deal_verdict(0) == "overpay"
+
+
+def test_deferral_npv_and_coverage():
+    """WS-2a: the deferral ledger prices Ohtani at the platform rate
+    (~$197M NPV at 9% — deliberately harsher than CBT's ~4.4%), level
+    deals pass through, and the >=200M coverage audit has no holes."""
+    npv, had = fm.npv_guarantee_usd("shohei_ohtani", 2024, 700_000_000)
+    assert had and 180_000_000 < npv < 215_000_000, npv
+    npv2, had2 = fm.npv_guarantee_usd("aaron_judge", 2023, 360_000_000)
+    assert not had2 and npv2 == 360_000_000          # explicit-none keeps sticker
+    npv3, had3 = fm.npv_guarantee_usd("nobody_ever", 2020, 50_000_000)
+    assert not had3 and npv3 == 50_000_000
+    # schedule totals are rescaled to the sticker before discounting
+    sched_entry = fm._deferral_ledger()["max_scherzer:2015"]
+    total = sum(r["amount_usd"] for r in sched_entry["schedule"])
+    assert abs(total - 210_000_000) / 210_000_000 < 0.02
+    audit = fm.deferral_coverage_audit(
+        [{"player_key": "shohei_ohtani", "class_year": 2024,
+          "guarantee_usd": 700_000_000, "mlb_deal": True, "player_name": "X"},
+         {"player_key": "mystery_mega", "class_year": 2024,
+          "guarantee_usd": 250_000_000, "mlb_deal": True, "player_name": "Y"}])
+    assert audit["covered"] == 1
+    assert audit["missing"][0]["key"] == "mystery_mega:2024"
+
+
+def test_winter_dpw_methods():
+    """flat5 is the measured winner (data/dpw_forecast_eval.json) and the
+    default; the fitted candidates stay implemented + callable."""
+    series = {2020: 10e6, 2021: 11e6, 2022: 12e6, 2023: 13e6, 2024: 14e6}
+    flat = fm.winter_dpw(series, 2025)
+    assert flat == pytest.approx(14e6 * 1.05)
+    trend = fm._fit_log_trend(series, with_cbt=False)(2025)
+    assert 13e6 < trend < 17e6
 
 
 def test_deferral_npv_discounts_schedule():

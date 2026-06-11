@@ -265,10 +265,16 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
         sgn = signings.get(key)
         if sgn:
             m["status"] = "signed"
+            npv_signed, had_sched = fm.npv_guarantee_usd(
+                key, class_year, sgn.get("guarantee_usd") or 0)
             m.update(_clean({
                 "signedTo": sgn.get("to_team"),
                 "signedYears": sgn.get("years"),
                 "signedGuar": sgn.get("guarantee_usd"),
+                # Deferral-adjusted actual — predictions are NPV-basis, so
+                # the tracker's actual-vs-predicted delta must compare like
+                # with like (only present when a schedule is on file).
+                "signedGuarNpv": npv_signed if had_sched else None,
                 "signedAav": sgn.get("aav_usd"),
                 "signedDate": ev_date.get((key, "signing")),
                 "signedMilb": True if sgn.get("mlb_deal") is False else None,

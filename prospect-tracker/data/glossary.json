@@ -1,5 +1,5 @@
 {
- "version": "2026-06-11.1",
+ "version": "2026-06-11.2",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -3693,8 +3693,8 @@
     "projGuarantee"
    ],
    "priority": 60,
-   "definition": "Predicted total contract guarantee for a free agent, from the market model (what teams WILL pay, not what the production is worth). Formerly displayed as mGuarantee.",
-   "methodology": "projGuarantee is the market model: a transparent two-stage regression (contract length first, then log-guarantee given length) trained only on the 2014-15 to present FA-signing corpus, with age, projected year-1 bWAR, position group, qualifying-offer status, class supply, the winter $/WAR level (carried forward ex-ante), nearest-comps anchors, and economic anchors (discounted projected WAR x $/WAR; prime-years x quality). Predictions clamp to a 2.5x envelope around the comps median and blend toward comps in the megadeal regime. P10-P90 bands are empirical residual quantiles from the forward-chained backtest. The model beat the nearest-comps baseline on guarantee, AAV and years across nine held-out winters (Gate 2 on the Model Accountability page).",
+   "definition": "Predicted total contract guarantee for a free agent, from the market model — on the DEFERRAL-ADJUSTED NPV basis (a 97%-deferred sticker is not the same liability as level cash; schedules in the curated deferral ledger discount at the platform 9% rate, no-schedule deals keep their sticker). What teams WILL pay in present-value terms, not what the production is worth. Formerly displayed as mGuarantee.",
+   "methodology": "projGuarantee is the market model: a transparent two-stage regression (contract length first, then log-guarantee given length) trained only on the 2014-15 to present FA-signing corpus, with age, projected year-1 bWAR, position group, qualifying-offer status, class supply, the winter $/WAR level (carried forward ex-ante), nearest-comps anchors, and economic anchors (discounted projected WAR x $/WAR; prime-years x quality). Predictions clamp to a 2.5x envelope around the comps median and blend toward comps in the megadeal regime. P10-P90 bands are empirical residual quantiles from the forward-chained backtest. The model beat the nearest-comps baseline on guarantee, AAV and years across nine held-out winters (Gate 2 on the Model Accountability page). Phase 2 (2026-06): targets, comps anchors and the winter $/WAR series all moved to the NPV basis; Gate 2 re-ran and improved (guarantee MAE 10.06 vs comps 11.19). A LightGBM challenger with monotonic economic constraints LOST to this model on all three ship criteria at n=1,199 (committed to the artifact) — the transparent two-stage OLS retains. The flat-5% $/WAR escalation also survived its challenge: fitted trend forecasts lost the forward-chained eval (MAPE 0.122/0.132 vs 0.102).",
    "seeAlso": [
     "m_aav",
     "m_years",
@@ -3757,7 +3757,7 @@
    ],
    "priority": 63,
    "definition": "The surfaces render a plain-English VERDICT — value (projected underpaid), market (priced about right), overpay (projected overpaid) — backed by Deal+, the 100-scale index of rational value against price.",
-   "methodology": "Deal+ = 100 x rational value / predicted (or actual) guarantee. Verdict band edges are EMPIRICALLY CENTERED on the 2015-2026 corpus terciles, not symmetric around 100: Deal+ under convex pricing is right-skewed (corpus p33 = 81, median = 121, p67 = 186), so value is >= 185, overpay is < 85, market is the middle tercile. Each verdict named exactly a third of twelve winters of real contracts; a class that skews one way against these fixed bands is information.",
+   "methodology": "Deal+ = 100 x rational value / predicted (or actual) guarantee. Verdict band edges are EMPIRICALLY CENTERED on the 2015-2026 corpus terciles, not symmetric around 100: Deal+ under convex pricing is right-skewed (corpus p33 = 75, median = 110, p67 = 159 on the Phase-2 NPV basis), so value is >= 160, overpay is < 75, market is the middle tercile. Each verdict named exactly a third of twelve winters of real contracts; a class that skews one way against these fixed bands is information.",
    "seeAlso": [
     "contract_surplus",
     "m_guarantee",
@@ -3813,7 +3813,7 @@
    ],
    "priority": 59,
    "definition": "The NPV of a free agent's projected WAR path: each season priced CONVEXLY through the platform's tier curve at the winter's ex-ante FA $/WAR level, escalated per season and discounted at the platform's 9% rate. One of the platform's two independently derived numbers — what the production is worth, never what the market will pay.",
-   "methodology": "Rational value shares the same NPV currency as PROSPX prospect surplus — and, since v2, the same CONVEX season pricing (value_framework's tier curve, rescaled to the winter's $/WAR level): a 1-WAR season and the third win of a 3-WAR season are not the same product, and a flat rate graded the entire bottom of the class as a bargain (measured: class median Deal+ 220 under flat pricing). It is deliberately computed with no reference to the market model: the gap between the two numbers (Contract Surplus) only means something because neither side peeks at the other.",
+   "methodology": "Rational value shares the same NPV currency as PROSPX prospect surplus — and, since v2, the same CONVEX season pricing (value_framework's tier curve, rescaled to the winter's $/WAR level): a 1-WAR season and the third win of a 3-WAR season are not the same product, and a flat rate graded the entire bottom of the class as a bargain (measured: class median Deal+ 220 under flat pricing). It is deliberately computed with no reference to the market model: the gap between the two numbers (Contract Surplus) only means something because neither side peeks at the other. The winter $/WAR level it prices at is the NPV-basis signings-implied series (deferral-adjusted numerator) carried forward at the measured-best flat 5%.",
    "seeAlso": [
     "contract_surplus",
     "deal_plus",
@@ -4153,6 +4153,27 @@
     "farm_report_card",
     "dvm_plus",
     "statcast_plus"
+   ]
+  },
+  {
+   "id": "deferral_npv",
+   "term": "Deferral-adjusted NPV",
+   "category": "fa",
+   "module": [
+    "fa"
+   ],
+   "aliases": [
+    "deferrals",
+    "NPV basis",
+    "deferred money"
+   ],
+   "priority": 77,
+   "definition": "Contract dollars discounted for deferral schedules at the platform 9% rate — the basis every Phase-2 market number speaks. A curated ledger (data/deferrals.json) carries the schedules: Ohtani's $700M prices as ~$197M of present liability; deals with no schedule on file keep their sticker.",
+   "methodology": "NPV = sum of scheduled payments / (1+0.09)^years-out, schedules rescaled to the sticker total. The 9% platform rate is deliberately harsher than the CBT's ~4.4% statutory rate, so these NPVs read lower than league-reported figures — one discount rate everywhere (prospect surplus, rational value, contracts) beats flattering inconsistency. Every guarantee >= $200M must carry a schedule or an explicit none entry (the coverage audit in the Gate-2 artifact lists misses); entries are curated-unverified until owner spot-check.",
+   "seeAlso": [
+    "m_guarantee",
+    "rational_value",
+    "winter_dpw"
    ]
   }
  ]

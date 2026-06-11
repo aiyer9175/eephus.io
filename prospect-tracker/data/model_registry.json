@@ -45,12 +45,12 @@
    "model_id": "fa_market",
    "surface": "/fa/ class board + tracker",
    "predicts": "projLength / projGuarantee / projAAV with P10-P90 bands",
-   "champion": "fa_mkt_v2 (two-stage OLS + comps envelope + mega blend)",
+   "champion": "fa_mkt_v2 (two-stage OLS + comps envelope + mega blend), NPV deferral-adjusted basis",
    "baseline": "nearest-comps median, trend-inflated",
-   "metric": "guarantee/AAV/years MAE, forward-chained 9 winters",
+   "metric": "guarantee/AAV/years MAE (NPV basis), forward-chained 9 winters",
    "eval_artifact": "data/fa_gate2_eval.json",
    "verdict": "validated",
-   "notes": "Gate 2 PASSED: guar 10.56 vs 11.77; mega slice beats comps 94.6 vs 96.5. Targets move to NPV basis in Phase 2 (deferrals)",
+   "notes": "Phase 2 (2026-06-11): targets/anchors/series moved to the deferral-adjusted NPV basis — Gate 2 improved (guarantee 10.06 vs comps 11.19; AAV 3.09; years 0.436). LightGBM challenger (fa_mkt_lgbm_v1, monotonic economic constraints, champion-stacked) LOST all three ship criteria (10.16 / 85.6 mega / 0.505 years) — committed in the artifact; transparent OLS retains. Deferral coverage audit clean (every >=200M deal has a ledger entry; 26 entries pending owner spot-check).",
    "last_checked": "2026-06-10",
    "stale": false,
    "artifact_age_days": 0
@@ -64,7 +64,7 @@
    "metric": "verdict band centering on 2015-2026 corpus terciles",
    "eval_artifact": "data/fa_gate2_eval.json",
    "verdict": "provisional",
-   "notes": "pricing convention calibrated to corpus terciles; $/WAR escalation is a flat 5% assumption until the Phase-2 forecast model",
+   "notes": "convex pricing at the NPV-basis winter $/WAR; verdict terciles recalibrated to the NPV corpus (value >= 160, overpay < 75; was 185/85 on sticker). Escalation stays flat-5% — the fitted forecasts lost their eval.",
    "last_checked": "2026-06-10",
    "stale": false,
    "artifact_age_days": 0
@@ -76,9 +76,9 @@
    "champion": "fa_signings_implied_v1",
    "baseline": "framework flat backcast",
    "metric": "implied from Gate-2-validated projections",
-   "eval_artifact": "data/fa_dpw_series.json",
-   "verdict": "provisional",
-   "notes": "estimator rides Gate-2 machinery; next-winter FORECAST (vs flat 5%) is Phase 2 WS-2b",
+   "eval_artifact": "data/dpw_forecast_eval.json",
+   "verdict": "validated",
+   "notes": "NPV-basis numerator since Phase 2. Next-winter FORECAST challenge measured (data/dpw_forecast_eval.json): flat-5% carry MAPE 0.102 BEAT fitted trend (0.122) and trend+CBT (0.132) — incumbent assumption retains; candidates stay implemented in winter_dpw.",
    "last_checked": "2026-06-10",
    "stale": false,
    "artifact_age_days": 0
@@ -103,7 +103,7 @@
    "metric": "none yet",
    "eval_artifact": null,
    "verdict": "unvalidated",
-   "notes": "documented v1 simplification; learned replacement is Phase 2 WS-2c"
+   "notes": "documented v1 simplification. Phase-2 finding: NO historical option-decision dataset exists (fa_events logging began 2026 preseason; player_transactions only covers tracked prospects) — the learned replacement needs a data lift (historical Spotrac class-page option tables) before WS-2c can run. Deferred with the lift documented."
   },
   {
    "model_id": "fa_qo_pick_tax",
@@ -114,7 +114,7 @@
    "metric": "none yet",
    "eval_artifact": null,
    "verdict": "unvalidated",
-   "notes": "depends on the unvalidated draft slot curve — re-priced by Phase 4 WS-8 slot refit"
+   "notes": "depends on the unvalidated draft slot curve — re-priced by Phase 4 WS-8 slot refit QO ACCEPTANCE model (WS-2e) similarly deferred: qo_history has acceptances + offered counts but not per-player offered rosters — tier conditioning needs that lift; the constant base rate (~10%) is the only honest model today."
   },
   {
    "model_id": "mlb_projections_vets",
@@ -150,7 +150,10 @@
    "metric": "calibration slope/bias/PIT on resolved cohorts",
    "eval_artifact": "data/surplus_backtest_real.json",
    "verdict": "provisional",
-   "notes": "harness validated synthetically (recovers injected shrinkage); FIRST real-cohort run = Phase 0 WS-0d; correction ships Phase 4 WS-6"
+   "notes": "harness validated synthetically (recovers injected shrinkage); FIRST real-cohort run = Phase 0 WS-0d; correction ships Phase 4 WS-6",
+   "last_checked": "2026-06-10",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "fv_to_war_anchors",
@@ -164,7 +167,7 @@
    "notes": "no positional stratification yet (Phase 4 WS-6); top tiers thin",
    "last_checked": "2026-06-10",
    "stale": false,
-   "artifact_age_days": 3
+   "artifact_age_days": 4
   },
   {
    "model_id": "wag",
@@ -178,7 +181,7 @@
    "notes": "the template: distributionally validated, auto-propagates recalibrations",
    "last_checked": "2026-06-10",
    "stale": false,
-   "artifact_age_days": 3
+   "artifact_age_days": 4
   },
   {
    "model_id": "consensus_fv",
@@ -300,7 +303,5 @@
    "artifact_age_days": 0
   }
  ],
- "problems": [
-  "prospect_surplus: artifact missing: data/surplus_backtest_real.json"
- ]
+ "problems": []
 }

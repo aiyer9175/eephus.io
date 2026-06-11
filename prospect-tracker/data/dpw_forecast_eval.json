@@ -1,0 +1,181 @@
+{
+ "generated_at": "2026-06-10",
+ "basis": "npv_deferral_adjusted signings-implied series",
+ "test_winters": [
+  2018,
+  2019,
+  2020,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025,
+  2026
+ ],
+ "per_winter": [
+  {
+   "winter": 2018,
+   "actual_usd": 8443544,
+   "flat5": {
+    "pred_usd": 9454031,
+    "ape": 0.1197
+   },
+   "trend": {
+    "pred_usd": 9454031,
+    "ape": 0.1197
+   },
+   "trend_cbt": {
+    "pred_usd": 9454031,
+    "ape": 0.1197
+   }
+  },
+  {
+   "winter": 2019,
+   "actual_usd": 9123461,
+   "flat5": {
+    "pred_usd": 8865721,
+    "ape": 0.0283
+   },
+   "trend": {
+    "pred_usd": 8334099,
+    "ape": 0.0865
+   },
+   "trend_cbt": {
+    "pred_usd": 5506884,
+    "ape": 0.3964
+   }
+  },
+  {
+   "winter": 2020,
+   "actual_usd": 9125942,
+   "flat5": {
+    "pred_usd": 9579634,
+    "ape": 0.0497
+   },
+   "trend": {
+    "pred_usd": 8596106,
+    "ape": 0.0581
+   },
+   "trend_cbt": {
+    "pred_usd": 8812469,
+    "ape": 0.0343
+   }
+  },
+  {
+   "winter": 2021,
+   "actual_usd": 11268392,
+   "flat5": {
+    "pred_usd": 9582239,
+    "ape": 0.1496
+   },
+   "trend": {
+    "pred_usd": 8739400,
+    "ape": 0.2244
+   },
+   "trend_cbt": {
+    "pred_usd": 8784587,
+    "ape": 0.2204
+   }
+  },
+  {
+   "winter": 2022,
+   "actual_usd": 12861674,
+   "flat5": {
+    "pred_usd": 11831812,
+    "ape": 0.0801
+   },
+   "trend": {
+    "pred_usd": 9957023,
+    "ape": 0.2258
+   },
+   "trend_cbt": {
+    "pred_usd": 11875658,
+    "ape": 0.0767
+   }
+  },
+  {
+   "winter": 2023,
+   "actual_usd": 13589089,
+   "flat5": {
+    "pred_usd": 13504757,
+    "ape": 0.0062
+   },
+   "trend": {
+    "pred_usd": 11458120,
+    "ape": 0.1568
+   },
+   "trend_cbt": {
+    "pred_usd": 12852085,
+    "ape": 0.0542
+   }
+  },
+  {
+   "winter": 2024,
+   "actual_usd": 11414697,
+   "flat5": {
+    "pred_usd": 14268543,
+    "ape": 0.25
+   },
+   "trend": {
+    "pred_usd": 12784988,
+    "ape": 0.12
+   },
+   "trend_cbt": {
+    "pred_usd": 13516360,
+    "ape": 0.1841
+   }
+  },
+  {
+   "winter": 2025,
+   "actual_usd": 14078154,
+   "flat5": {
+    "pred_usd": 11985432,
+    "ape": 0.1487
+   },
+   "trend": {
+    "pred_usd": 12782278,
+    "ape": 0.092
+   },
+   "trend_cbt": {
+    "pred_usd": 12909183,
+    "ape": 0.083
+   }
+  },
+  {
+   "winter": 2026,
+   "actual_usd": 13582610,
+   "flat5": {
+    "pred_usd": 14782061,
+    "ape": 0.0883
+   },
+   "trend": {
+    "pred_usd": 13764960,
+    "ape": 0.0134
+   },
+   "trend_cbt": {
+    "pred_usd": 13359483,
+    "ape": 0.0164
+   }
+  }
+ ],
+ "summary": {
+  "flat5": {
+   "mape": 0.1023,
+   "n": 9
+  },
+  "trend": {
+   "mape": 0.1219,
+   "n": 9
+  },
+  "trend_cbt": {
+   "mape": 0.1317,
+   "n": 9
+  }
+ },
+ "winner": "flat5",
+ "notes": [
+  "forward-chained one-winter-ahead; each method sees only prior winters",
+  "tiny n by nature \u2014 the eval justifies a config choice, not a model claim",
+  "active method lives in fa_config market_model.dpw_forecast.method"
+ ]
+}
