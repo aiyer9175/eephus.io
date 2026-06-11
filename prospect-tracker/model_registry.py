@@ -1,0 +1,138 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
+"""Model registry — one committed ledger of every predictive model on the
+platform (data/model_registry.json).
+
+Every model that makes a predictive claim gets a row: what it predicts,
+which surface renders it, who the champion is, what baseline it must beat,
+where its committed eval artifact lives, and an HONEST verdict:
+
+  validated     a forward-chained backtest exists, is committed, and the
+                champion beats its stated baseline
+  provisional   measured, but partially (synthetic-only harness, short
+                window, or descriptive-only correlation)
+  unvalidated   makes predictive claims with NO measurement — the audit's
+                hit list, listed here precisely so it can't hide
+  deprecated    failed its validation and was retired or demoted
+
+The registry is data + a validator, deliberately boring: load() parses,
+validate() enforces the schema and that every referenced artifact exists
+and parses, freshness() stamps artifact ages so run_monthly can flag
+stale evals. The Phase-5 accountability surface renders this file
+verbatim — misses and `unvalidated` rows included.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+from datetime import date, datetime
+from pathlib import Path
+
+log = logging.getLogger(__name__)
+
+DATA_DIR = Path(__file__).parent / "data"
+REGISTRY_PATH = DATA_DIR / "model_registry.json"
+
+VERDICTS = ("validated", "provisional", "unvalidated", "deprecated")
+REQUIRED_KEYS = ("model_id", "surface", "predicts", "champion", "baseline",
+                 "metric", "eval_artifact", "verdict")
+# Evals older than this (vs today) get a stale flag at refresh time —
+# advisory only; expensive gates run pre-merge, not on a clock.
+STALE_DAYS = 240
+
+
+def load() -> dict:
+    return json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+
+
+def validate(reg: dict | None = None) -> list[str]:
+    """Return a list of problems (empty = valid). Checks: schema keys,
+    verdict enum, referenced artifacts exist and parse, no duplicate ids,
+    and verdict honesty rules (a `validated` row MUST point at an
+    artifact; an `unvalidated` row must NOT — if it has one, it's at
+    least provisional and the row is lying)."""
+    reg = reg or load()
+    problems: list[str] = []
+    ids = [m.get("model_id") for m in reg.get("models", [])]
+    if len(ids) != len(set(ids)):
+        problems.append("duplicate model_id entries")
+    for m in reg.get("models", []):
+        mid = m.get("model_id", "?")
+        for k in REQUIRED_KEYS:
+            if k not in m:
+                problems.append(f"{mid}: missing key {k}")
+        if m.get("verdict") not in VERDICTS:
+            problems.append(f"{mid}: bad verdict {m.get('verdict')!r}")
+        art = m.get("eval_artifact")
+        if m.get("verdict") == "validated" and not art:
+            problems.append(f"{mid}: validated without an eval artifact")
+        if m.get("verdict") == "unvalidated" and art:
+            problems.append(f"{mid}: claims unvalidated but carries an artifact")
+        if art:
+            p = Path(__file__).parent / art
+            if not p.exists():
+                problems.append(f"{mid}: artifact missing: {art}")
+            elif p.suffix == ".json":
+                try:
+                    json.loads(p.read_text(encoding="utf-8"))
+                except ValueError:
+                    problems.append(f"{mid}: artifact unparseable: {art}")
+    return problems
+
+
+def freshness(reg: dict | None = None) -> dict[str, dict]:
+    """{model_id: {artifact_age_days, stale}} from artifact mtimes —
+    advisory stamps for the accountability surface."""
+    reg = reg or load()
+    out = {}
+    today = datetime.now()
+    for m in reg.get("models", []):
+        art = m.get("eval_artifact")
+        if not art:
+            continue
+        p = Path(__file__).parent / art
+        if not p.exists():
+            continue
+        age = (today - datetime.fromtimestamp(p.stat().st_mtime)).days
+        out[m["model_id"]] = {"artifact_age_days": age, "stale": age > STALE_DAYS}
+    return out
+
+
+def refresh_stamps() -> dict:
+    """run_monthly hook: re-validate, restamp freshness, rewrite the
+    registry's `checked_at` + per-model `last_checked`/`stale` fields.
+    Never changes verdicts — those are hand-committed with their evals."""
+    reg = load()
+    problems = validate(reg)
+    if problems:
+        log.warning("model registry problems: %s", problems)
+    fresh = freshness(reg)
+    today = date.today().isoformat()
+    reg["checked_at"] = today
+    reg["problems"] = problems
+    for m in reg.get("models", []):
+        f = fresh.get(m["model_id"])
+        if f:
+            m["last_checked"] = today
+            m["stale"] = f["stale"]
+            m["artifact_age_days"] = f["artifact_age_days"]
+    REGISTRY_PATH.write_text(json.dumps(reg, ensure_ascii=False, indent=1),
+                             encoding="utf-8")
+    log.info("model registry: %d models, %d problems", len(reg.get("models", [])),
+             len(problems))
+    return reg
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    reg = refresh_stamps()
+    by_v: dict[str, int] = {}
+    for m in reg["models"]:
+        by_v[m["verdict"]] = by_v.get(m["verdict"], 0) + 1
+    print({k: by_v[k] for k in sorted(by_v)})
+    if reg["problems"]:
+        print("PROBLEMS:", reg["problems"])
