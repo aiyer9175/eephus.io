@@ -311,7 +311,7 @@ function renderTopWidget(metric) {
           <a class="widget-row" href="#/player/${player.year}/${player.slug}">
             <span class="widget-rank">${index + 1}</span>
             <span class="widget-name">${escapeHtml(displayName(player.hitter_name))}</span>
-            <span class="widget-team">${escapeHtml(player.team || "TEAM")}</span>
+            <span class="widget-team">${TEAM_LOGOS[player.team] ? `<img class="widget-logo" src="${TEAM_LOGOS[player.team]}" alt="" loading="lazy" onerror="this.remove()">` : ""}${escapeHtml(player.team || "TEAM")}</span>
             <strong>${formatMetric(player[metric.key], metric.fmt)}</strong>
           </a>
         `).join("")}

@@ -228,7 +228,7 @@
   border: 1px solid var(--border); padding: 3px 6px;
 }
 .eephus-nav .eephus-links {
-  display: flex; align-items: center; gap: 2px; flex-wrap: nowrap;
+  display: flex; align-items: center; gap: 0; flex-wrap: nowrap;
   margin-left: auto; min-width: 0;
   overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
 }
@@ -236,10 +236,15 @@
 .eephus-nav .eephus-links a {
   font-family: var(--font-retro); font-size: 12.5px; font-weight: 600;
   letter-spacing: .02em; color: var(--text-secondary); text-decoration: none;
-  padding: 8px 9px; border-radius: var(--radius-sm); white-space: nowrap;
+  padding: 8px 11px; border-radius: 0; white-space: nowrap;
   min-height: 40px; display: inline-flex; align-items: center;
   transition: background .12s, color .12s;
+  /* Vertical hairline divider between adjacent links - the same
+     scoreboard/newspaper column separator the PROSPX section strip
+     uses (first link's edge is carried by the bar itself). */
+  border-left: 1px solid var(--border);
 }
+.eephus-nav .eephus-links a:first-of-type { border-left: none; }
 /* Keep the controls pinned on the line; below 1100px their text labels
    drop (icons remain) so links + controls still share one row. */
 .eephus-nav .eephus-nav-controls { flex: none; }

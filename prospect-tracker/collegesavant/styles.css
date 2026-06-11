@@ -1,17 +1,21 @@
+/* eephus.io integration: the app's original navy/paper palette is now a
+   TOKEN BRIDGE onto the shared site theme (assets/site.css loads first),
+   so CollegeSavant follows the site's dark/light toggle automatically.
+   Layout rules below are untouched - only the palette indirects. */
 :root {
-  --ink: #10243e;
-  --navy: #14395d;
-  --navy-2: #1f5f98;
-  --paper: #eef3f8;
-  --paper-2: #dfe8f1;
-  --line: #c8d4df;
-  --muted: #627183;
-  --chip: #edf3f9;
-  --green: #1f5f98;
-  --red: #c63d3d;
-  --gold: #8aa1b8;
-  --blue: #2272b9;
-  --shadow: 0 10px 28px rgba(16, 36, 62, 0.14);
+  --ink: var(--text-primary, #10243e);
+  --navy: var(--bg-secondary, #14395d);
+  --navy-2: var(--neon-cyan, #1f5f98);
+  --paper: var(--bg-primary, #eef3f8);
+  --paper-2: var(--bg-secondary, #dfe8f1);
+  --line: var(--border, #c8d4df);
+  --muted: var(--text-tertiary, #627183);
+  --chip: var(--bg-tertiary, #edf3f9);
+  --green: var(--up, #1f5f98);
+  --red: var(--down, #c63d3d);
+  --gold: var(--neon-amber, #8aa1b8);
+  --blue: var(--neon-cyan, #2272b9);
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
 }
 
 * {
@@ -20,7 +24,7 @@
 
 html {
   min-height: 100%;
-  background: #eef3f8;
+  background: var(--paper);
 }
 
 body {
@@ -29,11 +33,7 @@ body {
   font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 13px;
   line-height: 1.45;
-  background:
-    linear-gradient(rgba(20, 57, 93, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(20, 57, 93, 0.028) 1px, transparent 1px),
-    var(--paper);
-  background-size: 22px 22px;
+  background: var(--paper);
 }
 
 a {
@@ -57,10 +57,9 @@ select {
   gap: 18px;
   min-height: 62px;
   padding: 10px 18px;
-  color: #fff;
-  background: linear-gradient(90deg, #0f3155, #1e5f98);
-  border-bottom: 4px solid #c63d3d;
-  box-shadow: 0 4px 16px rgba(8, 29, 58, 0.18);
+  color: var(--ink);
+  background: var(--paper-2);
+  border-bottom: 3px double var(--ink);
 }
 
 .brand {
@@ -76,8 +75,8 @@ select {
   width: 42px;
   height: 36px;
   color: #fff;
-  background: #c63d3d;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: var(--red);
+  border: 1px solid var(--line);
   border-radius: 3px;
   font-weight: 900;
   letter-spacing: 0;
@@ -93,7 +92,7 @@ select {
 }
 
 .brand small {
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--muted);
   font-size: 10px;
 }
 
@@ -115,15 +114,15 @@ select {
   height: 32px;
   padding: 0 10px;
   color: var(--ink);
-  border: 1px solid rgba(255, 255, 255, 0.34);
+  border: 1px solid var(--line);
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--paper);
   outline: none;
 }
 
 .global-search input:focus {
-  border-color: #fff;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
+  border-color: var(--blue);
+  box-shadow: none;
 }
 
 .global-results {
@@ -136,7 +135,7 @@ select {
   max-height: 360px;
   overflow: auto;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--paper-2);
   box-shadow: var(--shadow);
 }
 
@@ -152,11 +151,11 @@ select {
   min-height: 42px;
   padding: 8px 10px;
   color: var(--ink);
-  border-bottom: 1px solid rgba(200, 212, 223, 0.7);
+  border-bottom: 1px solid var(--line);
 }
 
 .global-result:hover {
-  background: #f1f6fb;
+  background: var(--chip);
 }
 
 .global-result.empty-result {
@@ -165,7 +164,7 @@ select {
 }
 
 .result-name {
-  color: #000;
+  color: var(--ink);
   font-weight: 900;
 }
 
@@ -179,23 +178,23 @@ select {
 .top-actions a,
 .control-button,
 .pill {
-  border: 1px solid rgba(8, 29, 58, 0.24);
+  border: 1px solid var(--line);
   border-radius: 4px;
-  background: #f8fbfe;
+  background: var(--chip);
   color: var(--ink);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  box-shadow: none;
 }
 
 .top-actions a {
   padding: 6px 10px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.22);
+  color: var(--ink);
+  background: var(--chip);
+  border-color: var(--line);
 }
 
 .top-actions a.is-active {
-  color: #14395d;
-  background: #fff;
+  color: var(--paper);
+  background: var(--ink);
 }
 
 .app-shell {
@@ -222,7 +221,7 @@ select {
 
 .home-intro h1 {
   margin: 0;
-  color: var(--navy);
+  color: var(--ink);
   font-size: 22px;
   line-height: 1.1;
 }
@@ -250,9 +249,10 @@ select {
   justify-content: space-between;
   gap: 12px;
   padding: 9px 10px;
-  color: #fff;
-  background: var(--navy);
+  color: var(--paper);
+  background: var(--ink);
   border-bottom: 3px solid var(--red);
+  font-family: var(--font-retro-mono, inherit);
 }
 
 .widget-title span {
@@ -260,7 +260,8 @@ select {
 }
 
 .widget-title a {
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--paper);
+  opacity: 0.8;
   font-size: 10px;
   text-transform: uppercase;
 }
@@ -276,11 +277,11 @@ select {
   align-items: center;
   min-height: 34px;
   padding: 6px 10px;
-  border-bottom: 1px solid rgba(200, 212, 223, 0.72);
+  border-bottom: 1px solid var(--line);
 }
 
 .widget-row:hover {
-  background: #f1f6fb;
+  background: var(--chip);
 }
 
 .widget-rank {
@@ -317,7 +318,7 @@ select {
   width: 38px;
   height: 38px;
   border: 4px solid #d3c6af;
-  border-top-color: var(--navy);
+  border-top-color: var(--ink);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -339,7 +340,7 @@ select {
   height: 36px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: #fff;
+  background: var(--paper-2);
   color: var(--ink);
   padding: 0 10px;
   outline: none;
@@ -379,8 +380,8 @@ select {
 .table-head {
   min-height: 34px;
   padding: 0 12px;
-  color: #fff;
-  background: #14395d;
+  color: var(--paper);
+  background: var(--ink);
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
@@ -391,7 +392,7 @@ select {
   min-height: 74px;
   padding: 8px 12px;
   border-top: 1px solid var(--line);
-  background: #fff;
+  background: var(--paper-2);
   transition: background 0.15s ease, transform 0.15s ease;
 }
 
@@ -404,7 +405,7 @@ select {
 }
 
 .player-row:hover {
-  background: #f8fbfe;
+  background: var(--chip);
   transform: translateX(2px);
 }
 
@@ -548,7 +549,7 @@ select {
   padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid #b8ad98;
-  background: #edf3f9;
+  background: var(--chip);
   color: var(--ink);
   font-weight: 800;
   white-space: nowrap;
@@ -607,7 +608,7 @@ select {
   align-items: stretch;
   padding: 16px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--paper-2);
   box-shadow: var(--shadow);
 }
 
@@ -644,7 +645,7 @@ select {
 .hero-stat {
   padding: 10px;
   border: 1px solid var(--line);
-  background: #f8fbfe;
+  background: var(--chip);
 }
 
 .hero-stat span {
@@ -668,7 +669,7 @@ select {
 
 .panel {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--paper-2);
 }
 
 .panel-title {
@@ -677,8 +678,8 @@ select {
   justify-content: space-between;
   gap: 10px;
   padding: 9px 12px;
-  color: #fff;
-  background: #14395d;
+  color: var(--paper);
+  background: var(--ink);
   font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
@@ -736,9 +737,9 @@ select {
   place-items: center;
   width: 38px;
   height: 26px;
-  border: 1px solid #b8ad98;
+  border: 1px solid var(--line);
   border-radius: 4px;
-  background: #edf3f9;
+  background: var(--chip);
   font-weight: 900;
 }
 
@@ -759,7 +760,7 @@ select {
 }
 
 .slider-row.is-missing .track {
-  background: #edf3f9;
+  background: var(--chip);
 }
 
 .percentile.missing {
@@ -789,7 +790,7 @@ select {
 }
 
 .pitch-mix-chip strong {
-  color: var(--navy);
+  color: var(--ink);
 }
 
 .pitch-mix-chip span {
@@ -817,7 +818,7 @@ select {
   margin: 12px 12px 14px;
   padding: 10px;
   border: 1px solid var(--line);
-  background: #f8fbfe;
+  background: var(--chip);
 }
 
 .pitch-shape-plot {
@@ -844,7 +845,7 @@ select {
 }
 
 .shape-label {
-  fill: var(--navy);
+  fill: var(--ink);
   font-weight: 900;
 }
 
@@ -899,7 +900,7 @@ select {
   align-items: center;
   margin: 2px 0 18px;
   padding: 10px 0 14px;
-  border-bottom: 1px solid rgba(200, 212, 223, 0.7);
+  border-bottom: 1px solid var(--line);
 }
 
 .driver-graph {
@@ -1021,7 +1022,7 @@ select {
   padding: 5px 7px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  background: #fff;
+  background: var(--paper-2);
   font-size: 10px;
 }
 
@@ -1046,15 +1047,15 @@ select {
 }
 
 .driver-item.overall {
-  color: #fff;
-  background: #10243e;
-  border-color: #10243e;
+  color: var(--paper);
+  background: var(--ink);
+  border-color: var(--ink);
 }
 
 .driver-graph-empty {
   margin: -2px 12px 16px 145px;
   padding: 10px 0 14px;
-  border-bottom: 1px solid rgba(200, 212, 223, 0.7);
+  border-bottom: 1px solid var(--line);
   color: var(--muted);
   font-size: 10px;
 }
@@ -1069,7 +1070,7 @@ select {
   height: auto;
   min-height: 390px;
   border: 1px solid var(--line);
-  background: #f8fbfe;
+  background: var(--chip);
 }
 
 .chart-axis {
@@ -1154,7 +1155,7 @@ select {
 .empty {
   padding: 28px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--paper-2);
   text-align: center;
 }
 
@@ -1240,3 +1241,14 @@ select {
     grid-column: 1 / -1;
   }
 }
+
+/* eephus.io theme refinements: headers ride the site's retro face */
+.home-intro h1,
+.profile-title h1 {
+  font-family: var(--font-retro, inherit);
+  letter-spacing: 0.01em;
+}
+
+/* compact team logo inside dashboard widget rows */
+.widget-team { display: inline-flex; align-items: center; gap: 5px; }
+.widget-logo { width: 14px; height: 14px; object-fit: contain; display: block; }
