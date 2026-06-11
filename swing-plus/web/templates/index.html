@@ -204,13 +204,48 @@ const TRACK = [
 // SwingDecision+ : OPS-optimal blend of Swing+ (power) and Decision+ (selection).
 const COMBO = [
   { key: "hitter_plus", label: "Hitter+", cls: "key", format: v => v?.toFixed(1),
-    desc: "Hitter+ — the complete-hitter metric: OPS-optimal blend of all three orthogonal axes Swing+ (39%, power), Decision+ (28%, selection), B2B+ (33%, bat-to-ball/contact quality). 100=league avg, SD 10. Beats SEAGER & SwingDecision+ on ISO, BB% and OPS, same- and next-season. Decomposes into its 3 axes (see Drivers)." },
+    desc: "Hitter+ — the complete-hitter metric: OPS-optimal blend of all FIVE orthogonal axes Swing+ (31%, power), Decision+ (16%, selection), B2B+ (23%, contact quality/damage), Contact+ (17%, contact frequency/K% — v2, collision-aware), DCV+ (13%, damage geometry/pull-air). 100=league avg, SD 10. Beats SEAGER, SwingDecision+ and the 3/4-axis versions on ISO, K% and OPS, same- and next-season (same-season ISO r 0.81, K% 0.88, OPS 0.69; next-OPS 0.51 vs SEAGER 0.34). Decomposes into its 5 axes." },
   { key: "swingdecision_plus", label: "SwingDecision+", cls: "key", format: v => v?.toFixed(1),
-    desc: "SwingDecision+ — OPS-optimal blend of Swing+ (63%) and Decision+ (37%), 100=avg, SD 10. The 2-axis combo (no bat-to-ball); Hitter+ adds the third axis." },
+    desc: "SwingDecision+ — OPS-optimal blend of Swing+ (63%) and Decision+ (37%), 100=avg, SD 10. The 2-axis combo (no bat-to-ball); Hitter+ adds the bat-to-ball + contact axes." },
   { key: "b2b_plus", label: "B2B+", cls: "dec", format: v => v?.toFixed(1),
-    desc: "Bat-to-Ball+ (external 12-module model): contact-quality / bat-to-ball damage axis, 100=avg. Orthogonal to Swing+ (r=-0.03) and Decision+ (r=-0.07) — a genuinely new third axis. 561-hitter coverage (≥100 BIP)." },
+    desc: "Bat-to-Ball+ (external 12-module model): contact-QUALITY / bat-to-ball damage axis, 100=avg. Orthogonal to Swing+ (r=-0.03) and Decision+ (r=-0.07). The damage-on-contact axis." },
+  { key: "contact_axis", label: "Contact+", cls: "dec", format: v => v?.toFixed(1),
+    desc: "Contact+ v2 (collision-aware): the contact-FREQUENCY axis — how often he makes contact when he swings (whiff-avoidance), now measured with Savant's bat-ball collision data (vertical-alignment consistency, perfect/flawed contact %, miss distance). Predicts next-season whiff rate at r=-0.85 (v1 was -0.80) and K% at r=-0.77. 100=avg, SD 10. High = Arraez/Kwan type; low = swing-and-miss sluggers (Kurtz, Judge)." },
+  { key: "dcv_plus", label: "DCV+", cls: "dec", format: v => v?.toFixed(1),
+    desc: "Damage Conversion+ (DCV+, external damage-geometry model): does he convert his contact into PULLED AIR damage — pulled-air rate, pulled barrels, HR-window launch. The ISO/HR axis: same-season ISO r 0.54, and adding it to Hitter+ lifts ISO prediction 0.69→0.81 (next-ISO 0.58→0.64). Orthogonal to every other axis (B2B+ carries no pull-air info, r −0.14). 100=avg, SD 10. High = Schwarber/Torkelson pull-air types; 2026 calibrated from raw damage-geometry rates (R²=0.985)." },
+  { key: "hitter_plus_proj", label: "Hitter+ next", cls: "dec", format: v => v?.toFixed(1),
+    desc: "NEXT-SEASON projected Hitter+ (skill projection, not outcome projection): each axis regressed by its measured year-over-year persistence, plus only the OOS-validated terms — Swing+ aging quad (+0.9 pts at 23 → −0.4 at 34) and the BAT-SPEED CASCADE: bat speed today leads other skills tomorrow (sustains Swing+/B2B+, erodes Contact+ — big swingers' contact fades). Joint audit found decisions do NOT age (chase% age-flat; Báez-style chase decay is idiosyncratic) and pitchers challenge DAMAGE decline, not age (−0.3pp zone-seen per mph of EV90). Compresses toward 100; young breakouts hold value best. All-time view = projection from current season." },
 ];
 const sgn2 = v => v == null ? "" : (v >= 0 ? "+" : "") + Number(v).toFixed(2);
+const sgn3 = v => v == null ? "" : (v >= 0 ? "+" : "") + Number(v).toFixed(3);
+// LUCK / regression layer (external variance model): skill estimate = axes-based
+// expectation + calibrated-shrunk residual; luck = observed − skill (projected to vanish).
+// Holdout (2025→2026): next-wOBA r .26 (naive carry) → .33, MAE −11%; ISO .44→.51.
+const LUCK = [
+  { key: "sk_woba", label: "Skill wOBA", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Skill wOBA (luck-stripped): expectation from the five skill axes + sprint speed, plus only the CALIBRATED-REAL part of his over/under-performance (residual shrunk by PA/(PA+k), k=1218 PA — the variance model's k table). Beats naive stat-carry at projecting next season (holdout r .26→.33, MAE −11%). Season-grain; all-time view shows the CURRENT season's value." },
+  { key: "luck_woba", label: "wOBA luck", cls: "dec", format: sgn3,
+    desc: "wOBA luck: observed wOBA minus Skill wOBA — the part of his line projected to evaporate. + = over his skill (regression candidate), − = under it (bounce-back candidate). Defense/weather/pitcher-quality were adjudicated and excluded (≤1% of residual variance); park retained inside the BABIP component only." },
+  { key: "sk_iso", label: "Skill ISO", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Skill ISO (luck-stripped), same construction as Skill wOBA with the ISO shrinkage constant (k=1828 PA). Holdout next-ISO r .44 (naive) → .51." },
+  { key: "luck_iso", label: "ISO luck", cls: "dec", format: sgn3,
+    desc: "ISO luck: observed ISO minus Skill ISO. + = power output over his skill, − = under it." },
+];
+// Projection engine (historical priors + skills): per-target champion = skills
+// (5 axes + bat speed + age) + own-stat current/career compact priors (full prior
+// blocks overfit). OOS (leave-transition-out): xwOBA r .65, K% .81, BB% .64.
+const STATPROJ = [
+  { key: "proj_xwoba", label: "Proj xwOBA", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Projected NEXT-season xwOBA — the engine's primary target (sits between skill and realized production; ~2x more reliable y2y than wOBA). Ridge on the five skill axes + bat speed + age + own xwOBA current/career. OOS r 0.65, σ ±.028. Calibrated within ±.019 per decile." },
+  { key: "proj_woba", label: "Proj wOBA", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Projected next-season wOBA — FUSION: deep-history backbone (ridge trained on 5,852 MLB transitions 2000-2022, era-relative, multi-year weights + aging + AAA/AA rookie translations learned at scale) + the five skill axes. OOS r 0.49, σ ±.032. Fusion beat skills-only and backbone-only on every realized stat." },
+  { key: "proj_k_pct", label: "Proj K%", cls: "dec", format: v => v == null ? "" : (v*100).toFixed(1) + "%",
+    desc: "Projected next-season K% — fusion (deep-history backbone + skills). OOS r 0.82; the frozen backbone alone matches published ZiPS/Steamer K% accuracy (23→24 fold: r .850 / MAE 2.3% / RMSE 3.0% vs ZiPS .844 / 2.4% / 3.0%), and skills add on top." },
+  { key: "proj_bb_pct", label: "Proj BB%", cls: "dec", format: v => v == null ? "" : (v*100).toFixed(1) + "%",
+    desc: "Projected next-season BB% — fusion (deep-history backbone + skills). OOS r 0.69, MAE ~1.6pp (backbone matches ZiPS/Steamer MAE/RMSE on full-season folds). The walk axis the skill system lacks, learned from 20+ years of history." },
+  { key: "proj_iso", label: "Proj ISO", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Projected next-season ISO — fusion (deep-history backbone + skills). OOS r 0.63, σ ±.043." },
+];
 const DECISION = [
   { key: "decision_plus_mlb", label: "Decision+", cls: "dec", format: v => v?.toFixed(1),
     desc: "MLB-native swing-DECISION grade (selection): run-value of swing/take choices vs league, base-out-count aware, tailored to his own swing. 100=avg, SD 10. Full coverage (802). The orthogonal axis to Swing+." },
@@ -232,18 +267,20 @@ const PCTCOL = { key: "__sppct", label: "%ile", cls: "key", isPct: true,
 const NSW = { key: "n_swings", label: "Swings", format: v => v?.toLocaleString(),
   desc: "Competitive swings in this window — the sample Swing+ is built on." };
 const COLUMN_SPECS = {
-  alltime: [RANKCOL, { key: "name", label: "Player" }, SP, PCTCOL, ...COMBO,
+  alltime: [RANKCOL, { key: "name", label: "Player" }, SP, PCTCOL, ...COMBO, ...STATPROJ, ...LUCK,
             NSW, { key: "n_halves", label: "Halves" }, ...DECISION, ...VALUE, ...PRED2, ...PARKADJ, ...PRED, ...TRACK],
-  season: [RANKCOL, SP, PCTCOL, ...COMBO, { key: "name", label: "Player" },
+  season: [RANKCOL, SP, PCTCOL, ...COMBO, ...STATPROJ, ...LUCK, { key: "name", label: "Player" },
            { key: "season", label: "Season" }, NSW, ...DECISION, ...VALUE, ...PRED2, ...PARKADJ, ...PRED, ...TRACK],
-  half: [RANKCOL, SP, PCTCOL, ...COMBO, { key: "name", label: "Player" },
+  half: [RANKCOL, SP, PCTCOL, ...COMBO, ...STATPROJ, ...LUCK, { key: "name", label: "Player" },
          { key: "half", label: "Half" }, NSW, ...DECISION, ...VALUE, ...PRED2, ...PARKADJ, ...PRED, ...TRACK],
 };
 // category group for the sticky group-header row (inferred from each column's class)
 function groupOf(c) {
   if (["__rank", "name", "season", "half", "n_swings", "n_halves"].includes(c.key)) return "";
   if (c.key === "swing_plus" || c.key === "__sppct") return "Swing+";
-  if (["swingdecision_plus", "hitter_plus", "b2b_plus"].includes(c.key)) return "Combined";
+  if (["swingdecision_plus", "hitter_plus", "b2b_plus", "contact_axis", "dcv_plus", "hitter_plus_proj"].includes(c.key)) return "Combined";
+  if (["sk_woba", "luck_woba", "sk_iso", "luck_iso"].includes(c.key)) return "Skill vs luck";
+  if (c.key.startsWith("proj_")) return "Projected (next yr)";
   if (c.cls === "dec") return "Decision · selection";
   if (c.cls === "val") return "Value · xwOBA";
   if (/_(k_pct|hr_pct|iso)(_pn)?$/.test(c.key)) return "Predicted production";   // K%/HR%/ISO (+park-adj)
