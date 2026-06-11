@@ -106,14 +106,17 @@ def _headshot_url(mlbam, px: int = 180) -> str | None:
     return (f"https://img.mlbstatic.com/mlb-photos/image/upload/"
             f"d_people:generic:headshot:67:current.png/w_{r},q_auto:best/v1/people/{mlbam}/headshot/67/current")
 
+# Owner-set order (2026-06-11): Home, PROSPX, CollegeSavant (directly under
+# PROSPX), FA, Projections, Articles, Forums, Glossary, Team.
 NAV_ITEMS = [
     ("home",     "Home",             "/"),
-    ("articles", "Articles",         "/articles/"),
     ("prospx",   "PROSPX",           "/prospx/"),
+    ("collegesavant", "CollegeSavant", "/collegesavant/"),
     ("fa",       "Free Agency",      "/fa/"),
     ("projections", "Projections",   "/projections/"),
-    ("glossary", "Glossary",         "/glossary/"),
+    ("articles", "Articles",         "/articles/"),
     ("forums",   "Forums",           "/forums/"),
+    ("glossary", "Glossary",         "/glossary/"),
     ("team",     "Development Team",  "/team/"),
 ]
 
@@ -476,10 +479,13 @@ def _byline(meta: dict, sep: str = " · ", link_handle: bool = True) -> str:
 # Page shell
 # --------------------------------------------------------------------------- #
 def _nav(active: str) -> str:
+    # The top bar runs one line, always - long labels get a short form
+    # here (the homepage sidebar keeps the full names).
+    short = {"team": "Dev Team"}
     items = []
     for key, label, href in NAV_ITEMS:
         cls = ' class="is-active"' if key == active else ""
-        items.append(f'<a href="{href}"{cls}>{html.escape(label)}</a>')
+        items.append(f'<a href="{href}"{cls}>{html.escape(short.get(key, label))}</a>')
     # Site-wide controls (right-aligned), matching PROSPX's primary nav: a
     # Watchlist deep-link into PROSPX + the Dark Mode toggle.
     controls = (
@@ -1205,9 +1211,11 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     # Every module carries a terminal-safe glyph (PROSPX carries its ball
     # badge instead). Lifecycle sigils live on module mastheads, not here.
     sidebar_labels = {"fa": "MLB Free Agency", "projections": "MLB Projections",
+                      "collegesavant": "CollegeSavant",
                       "glossary": "Glossary & Methodology"}
     sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$", "projections": "Δ",
-                     "glossary": "§", "forums": "❝", "team": "⚒"}
+                     "collegesavant": "✪", "glossary": "§", "forums": "❝",
+                     "team": "⚒"}
     nav = []
     for key, label, href in NAV_ITEMS:
         cls = ' class="is-active"' if key == "home" else ""

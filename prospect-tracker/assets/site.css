@@ -195,9 +195,13 @@
 /* PRIMARY site nav - masthead-level. A filled band with a heavy double rule
    (the newspaper-nameplate treatment) so it reads as the dominant, site-wide
    bar that the PROSPX section strip nests beneath. */
+/* Open Beta: ONE line, always. The old 1100px cap + wrap pushed the
+   controls onto a cramped second row on module pages once the link set
+   grew; the bar now spans wide, never wraps, and the link strip scrolls
+   horizontally if it ever runs out of room instead of stacking. */
 .eephus-nav {
-  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
-  max-width: 1100px; margin: 0 auto;
+  display: flex; align-items: center; gap: 14px; flex-wrap: nowrap;
+  max-width: 1440px; margin: 0 auto;
   padding: 14px 1.5rem 12px;
   background: var(--bg-secondary);
   border-bottom: 3px double var(--text-primary);
@@ -224,20 +228,28 @@
   border: 1px solid var(--border); padding: 3px 6px;
 }
 .eephus-nav .eephus-links {
-  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
-  margin-left: auto;
+  display: flex; align-items: center; gap: 2px; flex-wrap: nowrap;
+  margin-left: auto; min-width: 0;
+  overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
 }
+.eephus-nav .eephus-links::-webkit-scrollbar { display: none; }
 .eephus-nav .eephus-links a {
-  font-family: var(--font-retro); font-size: 13px; font-weight: 600;
-  letter-spacing: .03em; color: var(--text-secondary); text-decoration: none;
-  padding: 8px 12px; border-radius: var(--radius-sm);
+  font-family: var(--font-retro); font-size: 12.5px; font-weight: 600;
+  letter-spacing: .02em; color: var(--text-secondary); text-decoration: none;
+  padding: 8px 9px; border-radius: var(--radius-sm); white-space: nowrap;
   min-height: 40px; display: inline-flex; align-items: center;
   transition: background .12s, color .12s;
+}
+/* Keep the controls pinned on the line; below 1100px their text labels
+   drop (icons remain) so links + controls still share one row. */
+.eephus-nav .eephus-nav-controls { flex: none; }
+@media (max-width: 1100px) {
+  .eephus-nav .eephus-nav-ctrl .eephus-nav-ctrl-label { display: none; }
 }
 .eephus-nav .eephus-links a:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .eephus-nav .eephus-links a.is-active { color: var(--text-primary); font-weight: 700; position: relative; }
 .eephus-nav .eephus-links a.is-active::after {
-  content: ""; position: absolute; left: 12px; right: 12px; bottom: 3px;
+  content: ""; position: absolute; left: 9px; right: 9px; bottom: 3px;
   height: 2px; background: var(--iridescent); border-radius: 2px;
 }
 /* Site-wide controls (Watchlist, Dark Mode), right-aligned in the primary nav. */

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NCAA Pitcher Percentiles</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#/">
+        <span>
+          <strong>Eephus.io : CollegeSavant</strong>
+          <small>College baseball percentiles · alpha</small>
+        </span>
+      </a>
+      <nav class="top-actions" aria-label="Views">
+        <div class="global-search" data-global-search>
+          <input type="search" placeholder="Search all players" aria-label="Search all players" data-global-search-input>
+          <div class="global-results" data-global-search-results></div>
+        </div>
+        <a href="index.html#/">Hitters</a>
+        <a href="/" title="Back to eephus.io">eephus.io home</a>
+        <a href="#/" data-route="home">Pitchers</a>
+      </nav>
+    </header>
+
+    <main id="app" class="app-shell">
+      <section class="loading-panel">
+        <div class="loader"></div>
+        <p>Loading pitcher percentiles...</p>
+      </section>
+    </main>
+
+    <script src="data.js"></script>
+    <script src="hitter_year_data.js"></script>
+    <script src="pitcher_data.js"></script>
+    <script src="pitch_shape_data_2025.js"></script>
+    <script src="pitch_shape_data_2024.js"></script>
+    <script src="global_search.js"></script>
+    <script src="pitcher_app.js"></script>
+  </body>
+</html>
