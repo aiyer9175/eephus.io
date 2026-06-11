@@ -42,12 +42,25 @@ def _dcv():
     return v.dropna(subset=["dcv_plus"])[["batter", "_yr", "dcv_plus", "n_bip"]]
 
 
+VAR_COLS = ["sk_woba", "luck_woba", "sk_iso", "luck_iso"]
+
+
+def _variance():
+    """luck/regression layer (external variance model; variance_layer.py)."""
+    p = PROC / "variance_layer.parquet"
+    if not p.exists():
+        return None
+    v = pd.read_parquet(p).rename(columns={"season": "_yr"})
+    return v[["batter", "_yr"] + VAR_COLS].drop_duplicates(["batter", "_yr"])
+
+
 def add_to_boards(board: pd.DataFrame) -> pd.DataFrame:
     if not SRC.exists():
         return board
     s = _src()
     v2 = _v2()
     dcv = _dcv()
+    var = _variance()
     keep = ["b2b_plus", "contact_plus_b2b", "dc_plus_b2b"]
     b = board.copy()
     s_yr = s.assign(_yr=s["season"].astype(int))[["batter", "_yr"] + keep]
@@ -71,11 +84,16 @@ def add_to_boards(board: pd.DataFrame) -> pd.DataFrame:
             dc = dcv.dropna(subset=["n_bip"]).groupby("batter").apply(lambda g: pd.Series({
                 "dcv_plus": np.average(g.dcv_plus, weights=g.n_bip)})).reset_index()
             b = b.merge(dc, on="batter", how="left")
+        if var is not None:                       # alltime -> CURRENT (latest-season) luck
+            cur = var.sort_values("_yr").groupby("batter").tail(1).drop(columns="_yr")
+            b = b.merge(cur, on="batter", how="left")
     if "_yr" in b.columns:
         if v2 is not None:
             b = b.merge(v2[["batter", "_yr", "contact2_plus"]], on=["batter", "_yr"], how="left")
         if dcv is not None:
             b = b.merge(dcv[["batter", "_yr", "dcv_plus"]], on=["batter", "_yr"], how="left")
+        if var is not None:
+            b = b.merge(var, on=["batter", "_yr"], how="left")
         b = b.drop(columns="_yr")
     # the contact AXIS the app + Hitter+ use: v2 (collision-aware) where available, else v1
     if "contact2_plus" in b.columns:
@@ -85,6 +103,9 @@ def add_to_boards(board: pd.DataFrame) -> pd.DataFrame:
     for c in keep + ["contact2_plus", "contact_axis", "dcv_plus"]:
         if c in b.columns:
             b[c] = b[c].round(1)
+    for c in VAR_COLS:
+        if c in b.columns:
+            b[c] = b[c].round(3)
     return b
 
 
