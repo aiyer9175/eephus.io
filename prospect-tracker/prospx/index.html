@@ -10790,6 +10790,15 @@ function _statcastStripHTML(p) {
     const sPlusColor = sPlus >= 105 ? "var(--up)" : sPlus <= 95 ? "var(--down)" : "var(--text-primary)";
     chips.unshift(chip("SC+", String(sPlus), sPlusColor, `Statcast+ composite (${isP ? "pitcher" : "hitter"} blend) · pool-anchored at 100 (~σ × 15)`));
   }
+  // Swing+ (Will Cahoon's bat-tracking model, data/swing_plus.json).
+  // MLB bat tracking only (2024+) - no public MiLB tracking exists, so
+  // this lights up once a prospect debuts and accrues MLB swings.
+  const swp = getSwingPlus(p);
+  if (swp != null && !isP) {
+    const swpColor = swp >= 105 ? "var(--up)" : swp <= 95 ? "var(--down)" : "var(--text-primary)";
+    chips.unshift(chip("Swing+", String(Math.round(swp)), swpColor,
+      `Swing+ (Will Cahoon) · swing-quality model on MLB bat tracking · 100 = league avg · MLB swings only (no MiLB tracking exists)`));
+  }
   if (!chips.length) return "";
   return `<div class="sc-strip" title="Advanced Statcast / zone signals - only populated when MLB Stats API tracked the prospect's games this season">${chips.join("")}</div>`;
 }
@@ -23543,6 +23552,26 @@ function _scPool() {
   _scPoolCache = { hit: stats(hitters), pit: stats(pitchers) };
   return _scPoolCache;
 }
+// Swing+ sidecar (data/swing_plus.json - Will Cahoon's bat-tracking
+// model, scored by swing_plus_ingest.py). Keyed by MLBAM id; only MLB
+// swings exist (bat tracking has never run below MLB), so the lookup
+// resolves for debuted players. Fetched once at boot; a miss before
+// the fetch lands just skips the pill for that paint.
+let _SWING_PLUS = null;
+(function loadSwingPlus() {
+  fetch("/data/swing_plus.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _SWING_PLUS = (j && j.players) || {}; })
+    .catch(() => { _SWING_PLUS = {}; });
+})();
+function getSwingPlus(p) {
+  if (!p || !_SWING_PLUS) return null;
+  const mid = p.mlbam_id || (p.career_war || {}).mlbam_id;
+  if (!mid) return null;
+  const row = _SWING_PLUS[String(mid)];
+  return row ? row.swing_plus : null;
+}
+
 function getStatcastPlus(p) {
   if (!p) return null;
   // v29 - Prefer the server-computed Statcast+ when present. Storage
@@ -24922,6 +24951,13 @@ function buildProspectCard(snap) {
     if (p.statcast_plus != null && isFinite(p.statcast_plus)) {
       const v = Math.round(p.statcast_plus);
       tile("SC+", String(v), v >= 105 ? "var(--up)" : v <= 95 ? "var(--down)" : P.text);
+    }
+    {
+      const swp = (typeof getSwingPlus === "function") ? getSwingPlus(p) : null;
+      if (swp != null && !isPitcher) {
+        const v = Math.round(swp);
+        tile("Swing+", String(v), v >= 105 ? "var(--up)" : v <= 95 ? "var(--down)" : P.text);
+      }
     }
     if (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) {
       const v = Math.round(p.dollar_dvm_plus);

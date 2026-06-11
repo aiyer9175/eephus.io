@@ -171,6 +171,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         ct = contracts.get(normalize_key(name))
         m = {
             "key": normalize_key(name), "name": name, "age": age,
+            "mlbam": mlbam,
             "src": "vet", "twoWay": True if two_way else None,
             "pos": (ct or {}).get("position") or path["role"],
             "team": (ct or {}).get("team_code"),

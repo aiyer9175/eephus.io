@@ -1411,3 +1411,80 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   font-size: 10px; color: var(--accent-cyan); text-decoration: none; }
 .gl-srdef { position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- MLB player pages (/projections/#player=) ---- */
+.mlbp-page { max-width: 980px; }
+.mlbp-hero {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 14px 16px; margin-bottom: 16px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+}
+.mlbp-headshot {
+  width: 96px; height: 96px; object-fit: cover; flex: none;
+  background: var(--bg-tertiary); border: 1px solid var(--border);
+  border-top: 3px solid var(--accent-cyan);
+}
+.mlbp-hero-main { flex: 1; min-width: 220px; }
+.mlbp-name { display: flex; align-items: center; gap: 10px; }
+.mlbp-name h2 { margin: 0; font-family: var(--font-retro); font-size: 26px; }
+.mlbp-tiles { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.mlbp-tile {
+  display: flex; flex-direction: column; gap: 3px; align-items: flex-end;
+  min-width: 92px; padding: 8px 12px;
+  background: var(--bg-primary); border: 1px solid var(--border);
+}
+.mlbp-tile-label {
+  font-family: var(--font-sans); font-size: 10px; font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--text-tertiary);
+}
+.mlbp-tile-val { font-family: var(--font-mono); font-size: 18px; font-weight: 800; }
+.mlbp-tile-chip {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  border: 1px solid var(--border); padding: 2px 8px; margin-left: 8px;
+  color: var(--text-secondary); text-transform: uppercase;
+}
+.mlbp-section { margin: 18px 0; }
+.mlbp-section-title {
+  font-family: var(--font-sans); font-size: 12px; font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--text-tertiary);
+  border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px;
+}
+.mlbp-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+.mlbp-cell {
+  display: flex; flex-direction: column; gap: 3px; padding: 9px 12px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+}
+.mlbp-cell-label {
+  font-family: var(--font-sans); font-size: 10.5px; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--text-tertiary);
+}
+.mlbp-cell-val { font-family: var(--font-mono); font-size: 16px; font-weight: 700; }
+/* Savant-style percentile sliders */
+.mlbp-slider { display: grid; grid-template-columns: 130px 1fr 86px; gap: 12px; align-items: center; margin: 7px 0; }
+.mlbp-slider-label { font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.mlbp-slider-track { position: relative; height: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); }
+.mlbp-slider-fill { height: 100%; }
+.mlbp-slider-fill.is-elite { background: var(--accent-green); }
+.mlbp-slider-fill.is-good  { background: var(--accent-cyan); }
+.mlbp-slider-fill.is-avg   { background: var(--text-tertiary); }
+.mlbp-slider-fill.is-low   { background: var(--accent-gold); }
+.mlbp-slider-fill.is-poor  { background: var(--accent-red); }
+.mlbp-slider-pct {
+  position: absolute; top: -7px; transform: translateX(-50%);
+  font-family: var(--font-mono); font-size: 11px; font-weight: 800;
+  background: var(--bg-primary); border: 1px solid var(--border);
+  padding: 1px 5px; border-radius: 999px; color: var(--text-primary);
+}
+.mlbp-slider-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; text-align: right; }
+/* projection fan chart */
+.mlbp-fan { width: 100%; height: auto; display: block; background: var(--bg-secondary); border: 1px solid var(--border); }
+.mlbp-fan-line { fill: none; stroke: var(--accent-cyan); stroke-width: 2; }
+.mlbp-fan-dot { fill: var(--accent-cyan); }
+.mlbp-fan-band { fill: var(--accent-cyan); opacity: .14; }
+.mlbp-fan-zero { stroke: var(--border); stroke-dasharray: 3 3; }
+.mlbp-fan-tick { fill: var(--text-tertiary); font-family: var(--font-mono); font-size: 10px; }
+@media (max-width: 720px) {
+  .mlbp-grid { grid-template-columns: 1fr 1fr; }
+  .mlbp-slider { grid-template-columns: 96px 1fr 70px; }
+  .mlbp-tiles { justify-content: flex-start; }
+}
