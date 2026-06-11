@@ -215,6 +215,20 @@ const COMBO = [
     desc: "Damage Conversion+ (DCV+, external damage-geometry model): does he convert his contact into PULLED AIR damage — pulled-air rate, pulled barrels, HR-window launch. The ISO/HR axis: same-season ISO r 0.54, and adding it to Hitter+ lifts ISO prediction 0.69→0.81 (next-ISO 0.58→0.64). Orthogonal to every other axis (B2B+ carries no pull-air info, r −0.14). 100=avg, SD 10. High = Schwarber/Torkelson pull-air types; 2026 calibrated from raw damage-geometry rates (R²=0.985)." },
 ];
 const sgn2 = v => v == null ? "" : (v >= 0 ? "+" : "") + Number(v).toFixed(2);
+const sgn3 = v => v == null ? "" : (v >= 0 ? "+" : "") + Number(v).toFixed(3);
+// LUCK / regression layer (external variance model): skill estimate = axes-based
+// expectation + calibrated-shrunk residual; luck = observed − skill (projected to vanish).
+// Holdout (2025→2026): next-wOBA r .26 (naive carry) → .33, MAE −11%; ISO .44→.51.
+const LUCK = [
+  { key: "sk_woba", label: "Skill wOBA", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Skill wOBA (luck-stripped): expectation from the five skill axes + sprint speed, plus only the CALIBRATED-REAL part of his over/under-performance (residual shrunk by PA/(PA+k), k=1218 PA — the variance model's k table). Beats naive stat-carry at projecting next season (holdout r .26→.33, MAE −11%). Season-grain; all-time view shows the CURRENT season's value." },
+  { key: "luck_woba", label: "wOBA luck", cls: "dec", format: sgn3,
+    desc: "wOBA luck: observed wOBA minus Skill wOBA — the part of his line projected to evaporate. + = over his skill (regression candidate), − = under it (bounce-back candidate). Defense/weather/pitcher-quality were adjudicated and excluded (≤1% of residual variance); park retained inside the BABIP component only." },
+  { key: "sk_iso", label: "Skill ISO", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Skill ISO (luck-stripped), same construction as Skill wOBA with the ISO shrinkage constant (k=1828 PA). Holdout next-ISO r .44 (naive) → .51." },
+  { key: "luck_iso", label: "ISO luck", cls: "dec", format: sgn3,
+    desc: "ISO luck: observed ISO minus Skill ISO. + = power output over his skill, − = under it." },
+];
 const DECISION = [
   { key: "decision_plus_mlb", label: "Decision+", cls: "dec", format: v => v?.toFixed(1),
     desc: "MLB-native swing-DECISION grade (selection): run-value of swing/take choices vs league, base-out-count aware, tailored to his own swing. 100=avg, SD 10. Full coverage (802). The orthogonal axis to Swing+." },
@@ -236,18 +250,19 @@ const PCTCOL = { key: "__sppct", label: "%ile", cls: "key", isPct: true,
 const NSW = { key: "n_swings", label: "Swings", format: v => v?.toLocaleString(),
   desc: "Competitive swings in this window — the sample Swing+ is built on." };
 const COLUMN_SPECS = {
-  alltime: [RANKCOL, { key: "name", label: "Player" }, SP, PCTCOL, ...COMBO,
+  alltime: [RANKCOL, { key: "name", label: "Player" }, SP, PCTCOL, ...COMBO, ...LUCK,
             NSW, { key: "n_halves", label: "Halves" }, ...DECISION, ...VALUE, ...PRED2, ...PARKADJ, ...PRED, ...TRACK],
-  season: [RANKCOL, SP, PCTCOL, ...COMBO, { key: "name", label: "Player" },
+  season: [RANKCOL, SP, PCTCOL, ...COMBO, ...LUCK, { key: "name", label: "Player" },
            { key: "season", label: "Season" }, NSW, ...DECISION, ...VALUE, ...PRED2, ...PARKADJ, ...PRED, ...TRACK],
-  half: [RANKCOL, SP, PCTCOL, ...COMBO, { key: "name", label: "Player" },
+  half: [RANKCOL, SP, PCTCOL, ...COMBO, ...LUCK, { key: "name", label: "Player" },
          { key: "half", label: "Half" }, NSW, ...DECISION, ...VALUE, ...PRED2, ...PARKADJ, ...PRED, ...TRACK],
 };
 // category group for the sticky group-header row (inferred from each column's class)
 function groupOf(c) {
   if (["__rank", "name", "season", "half", "n_swings", "n_halves"].includes(c.key)) return "";
   if (c.key === "swing_plus" || c.key === "__sppct") return "Swing+";
-  if (["swingdecision_plus", "hitter_plus", "b2b_plus"].includes(c.key)) return "Combined";
+  if (["swingdecision_plus", "hitter_plus", "b2b_plus", "contact_axis", "dcv_plus"].includes(c.key)) return "Combined";
+  if (["sk_woba", "luck_woba", "sk_iso", "luck_iso"].includes(c.key)) return "Skill vs luck";
   if (c.cls === "dec") return "Decision · selection";
   if (c.cls === "val") return "Value · xwOBA";
   if (/_(k_pct|hr_pct|iso)(_pn)?$/.test(c.key)) return "Predicted production";   // K%/HR%/ISO (+park-adj)

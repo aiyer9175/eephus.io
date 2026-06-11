@@ -71,6 +71,14 @@ Default owner: **@willclq** (reassign per feature as the team grows).
 - **Owner:** @willclq
 - **Data deps:** `swing_grades.parquet`, `pitcher_arsenal.parquet`, `swing_grade_models.joblib`, MLB StatsAPI (birthdates) — all external/generated.
 
+## Skill-vs-Luck layer — variance/regression model
+- **What:** Per-batter-season skill estimates and luck decomposition from the external variance model (M0–M12): `skill = e2 + PA/(PA+k) × residual`, where e2 is a cross-fitted, PA-weighted expectation from the five composites + sprint speed, and k is the model's calibrated shrinkage table (posterior slopes 1.00–1.07). `luck = observed − skill` is the part projected to vanish. Defense/weather/pitcher-quality/lineup/teammates were adjudicated and EXCLUDED by the source model (≤1% of season-grain residual variance); park retained only inside BABIP.
+- **Inputs:** variance-model handoff artifacts (`variance_model_output.parquet`, `shrinkage_constants.csv`, `engine_adjustments.json`); five composite columns + Savant sprint-speed leaderboard; observed 2026 stats from boards/`obs_rates.parquet`.
+- **Outputs:** `data/processed/variance_layer.parquet` → `sk_woba`, `luck_woba`, `sk_iso`, `luck_iso` on boards (all-time view shows current-season values); "Skill vs luck" leaderboard group.
+- **Definition of done:** beats naive stat-carry on the untouched 2025→2026 holdout — next-wOBA r 0.255→0.328, MAE −11%; next-ISO 0.435→0.491; next-AVG 0.205→0.310; 2026 e2 refit reproduces handoff expectations (wOBA r 0.91, ISO 0.99) and matches gold holdout performance. ✅ 397 hitters scored for 2026.
+- **Owner:** @willclq  (external model owner: variance-model maintainer)
+- **Data deps:** `~/variance_model_handoff.zip` artifacts (copied to `data/processed/variance_handoff/`); Savant sprint-speed CSV endpoint; built by `variance_layer.py`. Engine TODOs deferred by design: multi-year pooling, aging, league renorm, elite-tail (see `engine_adjustments.json`).
+
 ---
 
 ## Feature template (copy for every new feature)
