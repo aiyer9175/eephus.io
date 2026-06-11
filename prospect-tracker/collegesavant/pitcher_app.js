@@ -625,7 +625,7 @@ function renderLeaderboard() {
       <div class="table-head pitcher-head">
         <div>#</div>
         <div>Pitcher</div>
-        <div>Stuff+</div>
+        <div>${escapeHtml(getMetric(state.sortKey).label)}</div>
         <div>FB Velo</div>
         <div>xwOBA</div>
         <div>Avg EV</div>
@@ -680,7 +680,7 @@ function renderPitcherRow(pitcher, rank) {
           </div>
         </div>
       </div>
-      <div class="metric-main">${formatMetric(pitcher.stuff_plus, "number")}</div>
+      <div class="metric-main">${formatMetric(pitcher[state.sortKey], getMetric(state.sortKey).fmt)}</div>
       <div>${formatMetric(pitcher.avg_fastball_velo, "mph")}</div>
       <div>${formatMetric(pitcher.xwoba_against, "decimal")}</div>
       <div>${formatMetric(pitcher.average_exit_velocity, "mph")}</div>

@@ -216,7 +216,24 @@
   }
 
   function playerLink(m) {
-    return `<a href="#player=${encodeURIComponent(m.key || "")}" class="fa-player-link"><strong>${esc(m.name)}</strong></a>`;
+    return `<a href="#player=${encodeURIComponent(m.key || "")}" class="fa-player-link"><span class="fa-row-photo" data-photo-key="${esc(m.key || "")}"></span><strong>${esc(m.name)}</strong></a>`;
+  }
+
+  // Board-row headshots: filled async from the cross-module links map
+  // (FA rows carry no mlbam locally). One pass per render; rows whose
+  // identity didn't resolve keep the empty placeholder (no layout shift).
+  function fillRowPhotos(scope) {
+    if (!window.EEPHUS_HUB) return;
+    window.EEPHUS_HUB.links().then(L => {
+      if (!L) return;
+      (scope || document).querySelectorAll(".fa-row-photo[data-photo-key]").forEach(el => {
+        const row = (L.byKey || {})[el.dataset.photoKey];
+        if (row && row.mlbam) {
+          el.innerHTML = `<img class="fa-row-headshot" loading="lazy" src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_72,q_auto:best/v1/people/${row.mlbam}/headshot/67/current" alt="" onerror="this.remove()">`;
+        }
+        el.removeAttribute("data-photo-key");
+      });
+    });
   }
 
   // Disclosure badges - the model's weak spots are surfaced, never hidden.
@@ -383,6 +400,7 @@
     });
     const gfx = document.getElementById("fa-gfx-btn");
     if (gfx) gfx.onclick = () => downloadShareCard(cls);
+    fillRowPhotos(rows);
   }
 
   // Market-pulse rail beside the board: best values, biggest projected

@@ -354,7 +354,7 @@ function renderLeaderboard() {
       <div class="table-head">
         <div>#</div>
         <div>Player</div>
-        <div>xwOBA</div>
+        <div>${escapeHtml(sortMetric.label)}</div>
         <div>Avg EV</div>
         <div>90th EV</div>
         <div>Max EV</div>
@@ -413,7 +413,7 @@ function renderPlayerRow(player, rank) {
           </div>
         </div>
       </div>
-      <div class="metric-main">${formatMetric(player.xwoba, "decimal")}</div>
+      <div class="metric-main">${formatMetric(player[state.sortKey], getMetric(state.sortKey).fmt)}</div>
       <div>${formatMetric(player.average_exit_velocity, "mph")}</div>
       <div>${formatMetric(player["90th_percentile_exit_velocity"], "mph")}</div>
       <div>${formatMetric(player.max_exit_velocity, "mph")}</div>

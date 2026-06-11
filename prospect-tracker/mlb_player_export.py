@@ -275,8 +275,9 @@ def build_payload() -> dict:
              "proj": {k: v.get(k) for k in ("war", "warP10", "warP90",
                                             "warTotal", "warTotalP10",
                                             "warTotalP90", "sur", "surNpv",
-                                            "thru", "aav")},
-             "isPit": is_pit}
+                                            "thru", "aav", "warHit", "warPit")},
+             "twoWay": bool(v.get("twoWay")) or None,
+             "isPit": is_pit and not v.get("twoWay")}
         players[key] = p
     # FA members (some overlap vets; FA fields attach either way)
     for key, m in members.items():
@@ -304,13 +305,21 @@ def build_payload() -> dict:
         if sc:
             p["sc"] = sc
             n_sc += 1
-        if p["isPit"]:
+        # Two-way players carry BOTH sides: the primary career/sc above is
+        # the hitting line (isPit forced False for two-way); the pitching
+        # line + arsenal ride alongside.
+        if p.get("twoWay"):
+            p["careerPit"] = _career_rows(int(mlbam), True, war_by)
+            scp = _statcast_block(int(mlbam), True, year)
+            if scp:
+                p["scPit"] = scp
+        if p["isPit"] or p.get("twoWay"):
             ar = _arsenal_block(int(mlbam), year)
             if ar:
                 p["arsenal"] = ar
                 n_ar += 1
         sw = swing.get(str(mlbam))
-        if sw and not p["isPit"]:
+        if sw and (not p["isPit"] or p.get("twoWay")):
             p["swingPlus"] = sw["swing_plus"]
             p["swingN"] = sw["n_swings"]
     return {

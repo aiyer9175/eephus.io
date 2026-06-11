@@ -237,7 +237,7 @@
         : `<a class="fa-player-link" href="#player=${encodeURIComponent(m.key)}"><strong>${esc(m.name)}</strong></a>`;
       return `<tr>
         <td>${i + 1}</td>
-        <td class="proj-player">${teamLogo(m.team)}${link} <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " · FA"}</span> ${tagFor(m)}</td>
+        <td class="proj-player">${teamLogo(m.team)}${link} <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " · FA"}</span> ${tagFor(m)}<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span></td>
         ${cells}
         <td>${tot}</td>
         <td>${ct}</td>
@@ -260,6 +260,20 @@
     });
     const more = document.getElementById("proj-more");
     if (more) more.onclick = () => { state.limit += 100; renderTable(); };
+    // Cross-module cohesion: FA-class members get a $ chip linking to
+    // their market card (async via the links map; no layout shift).
+    if (window.EEPHUS_HUB) {
+      window.EEPHUS_HUB.links().then(L => {
+        if (!L) return;
+        root.querySelectorAll(".proj-fa-slot[data-fa-key]").forEach(el => {
+          const row = (L.byKey || {})[el.dataset.faKey];
+          if (row && row.fa) {
+            el.innerHTML = ` <a class="proj-tag" href="/fa/#player=${encodeURIComponent(row.key)}" title="In the current FA class - open the market card (projected deal, verdict, comps)">$ FA</a>`;
+          }
+          el.removeAttribute("data-fa-key");
+        });
+      });
+    }
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(root);
   }
 
@@ -398,10 +412,14 @@
         <div class="mlbp-tiles">${tiles.join("")}</div>
       </div>
       ${fanChart(p)}
+      ${p.twoWay && p.proj && p.proj.warHit ? `<div class="fa-note">Two-way projection: the path above SUMS both sides per season - hitting ${p.proj.warHit.map(fmtWar).join(" / ")} + pitching ${p.proj.warPit.map(fmtWar).join(" / ")}.</div>` : ""}
+      ${p.twoWay ? `<div class="mlbp-section-title" style="margin-top:18px;">As a hitter</div>` : ""}
       ${sliders(p.sc)}
-      ${p.isPit ? arsenalTable(p.arsenal) : ""}
+      ${(p.isPit && !p.twoWay) ? arsenalTable(p.arsenal) : ""}
+      ${p.twoWay ? `<div class="mlbp-section-title" style="margin-top:18px;">As a pitcher</div>${sliders(p.scPit)}${arsenalTable(p.arsenal)}` : ""}
       ${faBlock(p)}
       ${careerTable(p)}
+      ${p.twoWay && p.careerPit && p.careerPit.length ? careerTable({ ...p, career: p.careerPit, isPit: true }) : ""}
       <div class="fa-note" style="margin-top:14px;">Projections: the FA module's Gate-1-validated engine (bands = empirical residual quantiles). Statcast percentiles vs the season's qualified MLB pool. ${p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)." : ""}</div>
     </div>`;
     // hub strip (cross-module identity) - lazy, never blocks the paint

@@ -123,7 +123,8 @@ def default_pool() -> dict[int, str]:
             pos = (d.get("position") or "").upper()
             if (d.get("mlbam_id") and dd[:4].isdigit()
                     and int(dd[:4]) >= FIRST_TRACKING_SEASON
-                    and pos not in ("P", "SP", "RP", "LHP", "RHP", "TWP")):
+                    and pos not in ("P", "SP", "RP", "LHP", "RHP")):
+                # TWP stays IN the pool - two-way hitters swing too
                 pool[int(d["mlbam_id"])] = d.get("player_name") or ""
     except (OSError, ValueError):
         log.warning("swing pool: debuts.json unavailable")
@@ -134,6 +135,16 @@ def default_pool() -> dict[int, str]:
             mid = p.get("mlbam") or p.get("mlbam_id")
             if mid and pos and not pos.startswith(("SP", "RP", "P", "LHP", "RHP")):
                 pool.setdefault(int(mid), p.get("player_name") or p.get("name") or "")
+    except (OSError, ValueError):
+        pass
+    # two-way projections vets (the Ohtani case: debut pre-2024 and a
+    # pitcher-coded position would otherwise exclude the best swing in
+    # the sport)
+    try:
+        mp = json.loads((DATA_DIR / "mlb_projections.json").read_text(encoding="utf-8"))
+        for v in mp.get("vets") or []:
+            if v.get("twoWay") and v.get("mlbam"):
+                pool.setdefault(int(v["mlbam"]), v.get("name") or "")
     except (OSError, ValueError):
         pass
     return pool

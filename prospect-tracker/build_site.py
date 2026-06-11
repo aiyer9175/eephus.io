@@ -1195,6 +1195,61 @@ def _scatter_teaser() -> str:
             f'<span>Any X/Y metric · color &amp; size encodings · brush-to-zoom</span></div>'
             f'<span class="st-go">Scatterplots →</span></a>')
 
+def _cross_module_strip() -> str:
+    """Across eephus.io - the homepage's window into the non-PROSPX
+    modules (cohesion: every module surfaces on the front page). Reads
+    the committed sidecars at build time; any missing file just drops
+    its card."""
+    cards = []
+    # MLB Free Agency - top of the current class board
+    try:
+        fa = json.loads((Path(__file__).parent / "data" / "fa_class.json")
+                        .read_text(encoding="utf-8"))
+        top = sorted((m for m in fa.get("members") or [] if m.get("projGuar")),
+                     key=lambda m: -m["projGuar"])[:3]
+        rows = "".join(
+            f'<a class="xmod-row" href="/fa/#player={html.escape(m["key"])}">'
+            f'<span class="xmod-name">{html.escape(m["name"])}</span>'
+            f'<span class="xmod-sub">{html.escape(m.get("pos") or "")}</span>'
+            f'<span class="xmod-val">{m.get("projYears") or "?"}y / ${(m["projGuar"] / 1e6):.0f}M</span></a>'
+            for m in top)
+        if rows:
+            cards.append(('$ Free Agency', '/fa/',
+                          f'{fa.get("class_year", 2027) - 1}-{str(fa.get("class_year", 2027))[2:]} projected market leaders', rows))
+    except (OSError, ValueError, KeyError):
+        pass
+    # MLB Projections - 5y WAR leaders
+    try:
+        mp = json.loads((Path(__file__).parent / "data" / "mlb_projections.json")
+                        .read_text(encoding="utf-8"))
+        top = sorted((v for v in mp.get("vets") or [] if v.get("warTotal")),
+                     key=lambda v: -v["warTotal"])[:3]
+        rows = "".join(
+            f'<a class="xmod-row" href="/projections/#player={html.escape(v["key"])}">'
+            f'<span class="xmod-name">{html.escape(v["name"])}</span>'
+            f'<span class="xmod-sub">{html.escape(v.get("pos") or "")}{" · two-way" if v.get("twoWay") else ""}</span>'
+            f'<span class="xmod-val">{v["warTotal"]:.1f} WAR</span></a>'
+            for v in top)
+        if rows:
+            cards.append(('Δ MLB Projections', '/projections/',
+                          'five-year bWAR leaders', rows))
+    except (OSError, ValueError, KeyError):
+        pass
+    # CollegeSavant - static teaser (its data bundles stay in-module)
+    cards.append(('✪ CollegeSavant', '/collegesavant/',
+                  'college baseball percentiles',
+                  '<a class="xmod-row" href="/collegesavant/"><span class="xmod-name">Hitter dashboard</span><span class="xmod-val">EV · xwOBA · discipline →</span></a>'
+                  '<a class="xmod-row" href="/collegesavant/pitcher_index.html"><span class="xmod-name">Pitcher dashboard</span><span class="xmod-val">Stuff+ · shapes →</span></a>'
+                  '<a class="xmod-row" href="/collegesavant/"><span class="xmod-name">By Joseph Gillis</span><span class="xmod-val">alpha</span></a>'))
+    body = "".join(
+        f'<div class="xmod-card"><div class="xmod-head"><span class="xmod-title">{title}</span>'
+        f'<a class="xmod-link" href="{href}">open →</a></div>'
+        f'<div class="xmod-sub-head">{html.escape(sub)}</div>{rows}</div>'
+        for title, href, sub, rows in cards)
+    return (f'<div class="xmod-strip"><div class="xmod-eyebrow">Across eephus.io</div>'
+            f'<div class="xmod-grid">{body}</div></div>')
+
+
 def build_home(articles: list[dict], data: dict | None = None) -> str:
     """Homepage = sidebar + newspaper-style main, with live PROSPX modules + a
     prospect wire feed read from the build-time data layer."""
@@ -1313,6 +1368,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     otd = _this_day_html(graduates)
     trades_mod = _recent_trades_html(players)
     scatter = _scatter_teaser()
+    cross = _cross_module_strip()
     # eephus.io - Forums module (third content pillar). Hydrated client-side by
     # eephus-ui.js (#eph-home-forums): bump/Hot ordering, last-active first.
     forums_mod = _home_module("Forums", "/forums/", "All discussions",
@@ -1321,6 +1377,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '<main class="home-main">'
         f'{masthead}{callout}{lead}{secondary}'
         f'<div class="module-cols">{movers}{topp}{grads}{farm}{otd}{trades_mod}</div>'
+        f'{cross}'
         f'{forums_mod}'
         f'<div class="teaser-row">{glossary}{scatter}</div>'
         '</main>'
