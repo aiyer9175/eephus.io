@@ -15918,6 +15918,13 @@ const LB_STATS = {
   sc_plus: { label: "SC+", hi: true, fmt: v => v != null ? Math.round(v).toString() : " - ",
               minAB: 50, support: _lbHitterSupport, side: "hit",
               getter: p => (typeof getStatcastPlus === "function") ? getStatcastPlus(p) : null },
+  // Swing+ (Will Cahoon's bat-tracking model) - debuted hitters only by
+  // data boundary (MLB tracking 2024+); the sidecar loads async at boot,
+  // so the board fills on first paint after it lands.
+  swing_plus: { label: "Swing+", hi: true,
+              fmt: v => v != null ? Math.round(v).toString() : " - ",
+              minAB: 0, support: _lbHitterSupport, side: "hit",
+              getter: p => (typeof getSwingPlus === "function") ? getSwingPlus(p) : null },
   dvm_plus: { label: "$DvM+", hi: true, fmt: v => v != null ? Math.round(v).toString() : " - ",
               minAB: 50, support: _lbHitterSupport, side: "hit",
               getter: p => (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) ? p.dollar_dvm_plus : null },

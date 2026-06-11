@@ -1513,3 +1513,34 @@ a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 }
 .hub-chip.is-active .hub-glyph,
 .hub-chip.is-active .hub-note { color: var(--bg-primary); opacity: .75; }
+
+/* ---- homepage cross-module strip (Across eephus.io) ---- */
+.xmod-strip { margin: 18px 0; }
+.xmod-eyebrow {
+  font-family: var(--font-sans); font-size: 11px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--text-tertiary);
+  border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px;
+}
+.xmod-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.xmod-card { background: var(--bg-secondary); border: 1px solid var(--border); padding: 10px 12px; }
+.xmod-head { display: flex; justify-content: space-between; align-items: baseline; }
+.xmod-title { font-family: var(--font-retro-mono); font-size: 12.5px; font-weight: 700; letter-spacing: .04em; }
+.xmod-link { font-size: 11px; color: var(--accent-cyan); text-decoration: none; }
+.xmod-link:hover { text-decoration: underline; }
+.xmod-sub-head { font-size: 10.5px; color: var(--text-tertiary); font-style: italic; margin: 2px 0 8px; }
+.xmod-row {
+  display: flex; align-items: baseline; gap: 8px; padding: 5px 0;
+  border-top: 1px solid var(--border); text-decoration: none; color: var(--text-primary);
+}
+.xmod-row:hover .xmod-name { color: var(--accent-cyan); }
+.xmod-name { font-family: var(--font-retro); font-size: 12.5px; font-weight: 600; flex: none; }
+.xmod-sub { font-size: 10.5px; color: var(--text-tertiary); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; }
+.xmod-val { font-family: var(--font-mono); font-size: 12px; font-weight: 700; margin-left: auto; white-space: nowrap; }
+@media (max-width: 900px) { .xmod-grid { grid-template-columns: 1fr; } }
+
+/* FA board row headshots (filled async from the player-links map) */
+.fa-row-photo { display: inline-block; width: 24px; height: 24px; vertical-align: middle; margin-right: 7px; }
+.fa-row-headshot {
+  width: 24px; height: 24px; object-fit: cover; display: block;
+  border: 1px solid var(--border); background: var(--bg-tertiary);
+}

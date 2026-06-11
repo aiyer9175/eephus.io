@@ -148,23 +148,49 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             sides[side] = hist
         if not sides:
             continue
-        # Two-way: project the larger recent exposure, disclose the cut.
-        if len(sides) == 2:
-            pa = max(h.get("pa") or 0 for h in sides["hit"])
-            ip = max(h.get("ip") or 0 for h in sides["pit"])
-            side = "hit" if pa >= ip * 4.3 else "pit"
-            two_way = True
+        # Two-way (the Ohtani fix): project BOTH sides through the engine
+        # and SUM the season paths - a two-way player IS both stat lines,
+        # not the larger one. Per-side paths ship too (warHit/warPit) so
+        # the player page can render both sections. Bands sum per-side
+        # quantiles (a conservative width: the sides aren't perfectly
+        # correlated - disclosed in the export notes).
+        two_way = len(sides) == 2
+        paths: dict[str, dict] = {}
+        ages: dict[str, float] = {}
+        for s_key, hist_s in sides.items():
+            age_prev = next((h.get("age") for h in hist_s if h.get("age")), None)
+            if age_prev is None:
+                continue
+            age_s = age_prev + (FIRST_SEASON - hist_s[0]["season"])
+            p_s = fm.contract_war_path(hist_s, s_key, FIRST_SEASON, HORIZON,
+                                       age_s, curves, war_map, league,
+                                       in_progress=in_prog)
+            if p_s is not None:
+                paths[s_key] = p_s
+                ages[s_key] = age_s
+        if not paths:
+            continue
+        two_way = two_way and len(paths) == 2
+        if two_way:
+            def _sum_arr(key):
+                a = paths["hit"].get(key)
+                b = paths["pit"].get(key)
+                if not a or not b:
+                    return None
+                return [round((a[t] or 0) + (b[t] or 0), 2)
+                        for t in range(min(HORIZON, len(a), len(b)))]
+            war_arr = _sum_arr("war_by_year")
+            p10_arr = _sum_arr("war_by_year_p10")
+            p90_arr = _sum_arr("war_by_year_p90")
+            path = paths.get("hit") or paths.get("pit")   # role/meta carrier
+            age = max(ages.values())
         else:
-            side, two_way = next(iter(sides)), False
-        hist = sides[side]
-        age_prev = next((h.get("age") for h in hist if h.get("age")), None)
-        if age_prev is None:
-            continue
-        age = age_prev + (FIRST_SEASON - hist[0]["season"])
-        path = fm.contract_war_path(hist, side, FIRST_SEASON, HORIZON, age,
-                                    curves, war_map, league, in_progress=in_prog)
-        if path is None:
-            continue
+            side = next(iter(paths))
+            path = paths[side]
+            age = ages[side]
+            war_arr = path["war_by_year"][:HORIZON]
+            p10_arr = (path.get("war_by_year_p10") or [None])[:HORIZON] or None
+            p90_arr = (path.get("war_by_year_p90") or [None])[:HORIZON] or None
         name = names.get(mlbam)
         if not name:
             continue
@@ -173,16 +199,19 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             "key": normalize_key(name), "name": name, "age": age,
             "mlbam": mlbam,
             "src": "vet", "twoWay": True if two_way else None,
-            "pos": (ct or {}).get("position") or path["role"],
+            "pos": "TWP" if two_way else ((ct or {}).get("position") or path["role"]),
             "team": (ct or {}).get("team_code"),
-            "war": path["war_by_year"][:HORIZON],
-            "warP10": (path.get("war_by_year_p10") or [None])[:HORIZON] or None,
-            "warP90": (path.get("war_by_year_p90") or [None])[:HORIZON] or None,
+            "war": war_arr,
+            "warP10": p10_arr,
+            "warP90": p90_arr,
         }
+        if two_way:
+            m["warHit"] = [round(w, 2) for w in paths["hit"]["war_by_year"][:HORIZON]]
+            m["warPit"] = [round(w, 2) for w in paths["pit"]["war_by_year"][:HORIZON]]
         m["warTotal"] = round(sum(m["war"]), 1)
-        if path.get("war_by_year_p10"):
-            m["warTotalP10"] = round(sum(path["war_by_year_p10"][:HORIZON]), 1)
-            m["warTotalP90"] = round(sum(path["war_by_year_p90"][:HORIZON]), 1)
+        if p10_arr:
+            m["warTotalP10"] = round(sum(p10_arr), 1)
+            m["warTotalP90"] = round(sum(p90_arr), 1)
         if ct:
             sal = {int(y): int(v) for y, v in (ct.get("salary_by_year") or {}).items()}
             m["thru"] = ct.get("signed_through")
@@ -302,7 +331,7 @@ def build_payload() -> dict:
             "veterans: the FA module's Gate-1-validated Marcel engine; bands = Gate-1 empirical year-1 residual quantiles decayed along the fitted aging curves",
             "prospects: P(bucket|FV) x calibrated per-bucket WAR trajectories from projected debut age, starting at the PROSPX ETA; floor/ceiling = 10th/90th-percentile OUTCOME buckets",
             f"dollars: convex tier pricing at the {FIRST_SEASON} ex-ante FA $/WAR level, escalated per season; veteran surplus only on salary-known (contracted) seasons, discounted at the platform rate",
-            "two-way players project on their larger recent exposure (disclosed)",
+            "two-way players project BOTH sides, summed per season (per-side paths in warHit/warPit; band widths sum per-side quantiles - conservative)",
             f"veteran universe: >= {MIN_PA} PA or >= {MIN_IP} IP in one of the last three seasons",
         ],
     }
