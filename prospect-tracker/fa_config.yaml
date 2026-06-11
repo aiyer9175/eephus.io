@@ -49,6 +49,24 @@ projection:
   # expected stats (2015+, >= min_pa). Same information vintage as the
   # raw season line — no lookahead. Gate-measured before shipping.
   statcast_blend: { enabled: true, alpha: 0.4, first_season: 2015, min_pa: 50 }
+  # Phase-1 ML challenger (proj_lgbm): when enabled AND a bundle exists at
+  # model/proj_lgbm/, contract_war_path serves horizons 1-5 (point+bands)
+  # from the quantile heads (no zero floor — the Phase-0 coverage fix);
+  # h6+ extrapolates along the champion's relative decay. Gates/eval
+  # baselines pin the champion via use_ml=False. Flipped on ONLY by a
+  # passing ship decision (dev + gate targets + touched-once holdout).
+  # SHIPPED 2026-06-11 (model-audit Phase 1 verdict): dev + gate-targets +
+  # touched-once holdout all beat the champion on MAE/coverage/pinball at
+  # every horizon (gate-targets h1 0.557 vs 0.627; holdout pooled coverage
+  # 0.81-0.82 vs 0.67-0.77). DISCLOSED caveat: long-horizon star bias runs
+  # ~0.2 WAR deeper than the champion (zero-inflated labels pull the
+  # medians; star MAE equal) — follow-up recorded in the registry.
+  # SCOPE: projection surfaces only (/projections/, proj_export). The FA
+  # market stack PINS use_ml=False — ML paths as market-model inputs
+  # FAILED Gate 2 (measured: guar 11.08 vs 10.56; FA signees are survivors,
+  # attrition-inclusive medians misprice them). Each consumer runs the
+  # model that won ITS gate.
+  ml: { enabled: true }
   playing_time:                       # classic Marcel PT + aging delta
     hit: { w1: 0.5, w2: 0.1, base_pa: 200 }
     pit: { w1: 0.5, w2: 0.1, base_ip_sp: 60, base_ip_rp: 25 }
