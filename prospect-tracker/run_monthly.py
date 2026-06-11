@@ -2020,6 +2020,17 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                      len(_bt["window"]["years"]), _bt["accuracy"]["common_n"])
         except Exception:
             log.exception("source_backtest failed — continuing")
+        # Model registry freshness pass (data/model_registry.json) — restamps
+        # artifact ages + re-validates references. Verdicts are hand-committed
+        # with their evals; this only keeps the accountability ledger honest
+        # about staleness. Best-effort.
+        try:
+            from model_registry import refresh_stamps
+            _reg = refresh_stamps()
+            if _reg.get("problems"):
+                log.warning("model registry problems: %s", _reg["problems"])
+        except Exception:
+            log.exception("model registry refresh failed — continuing")
         # Headshot resolution (data/photo_ctx.json for the photo fallback chain).
         # Incremental: TTL-skips already-resolved ids and only re-probes new or
         # still-missing players, so steady-state runs are cheap. Best-effort —

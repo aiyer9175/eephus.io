@@ -1469,6 +1469,24 @@ CREATE TABLE IF NOT EXISTS fa_team_payroll (
     PRIMARY KEY (team, season)
 );
 
+-- Editorial flags logged AT EMIT TIME (model-audit WS-0c): spotlights /
+-- movement-engine buckets persisted with matched-control sampling keys
+-- (FV band x level x age band) so 30/60-day forward hit rates can be
+-- scored once cohorts mature. Append-only per (player, flag, run date);
+-- monthly cadence (rides the monthly export, never the daily job).
+CREATE TABLE IF NOT EXISTS editorial_flags (
+    player_key  TEXT NOT NULL,
+    flag_type   TEXT NOT NULL,          -- riser | rebound | faller
+    emitted_at  TEXT NOT NULL,          -- run date (YYYY-MM-DD)
+    score       REAL,
+    fv          REAL,                   -- consensus FV at emit time
+    fv_band     TEXT,
+    level       TEXT,
+    age_band    TEXT,
+    inserted_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, flag_type, emitted_at)
+);
+
 -- Stage-2+ artifacts: projections / market predictions / gate evals are
 -- versioned by model_version so backtests and live runs never collide.
 CREATE TABLE IF NOT EXISTS fa_projections (
@@ -12862,6 +12880,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     from spotlights import build_spotlights
     spotlight_payload = build_spotlights(active_payload, graduate_payload)
 
+    # Model-audit WS-0c — log editorial flags AT EMIT TIME so 30/60-day
+    # forward hit rates can be scored once cohorts mature (Phase 5).
+    # Numeric FV comes from the player payload (the entry carries a label).
+    try:
+        _fv_of = {p.get("player_key"): (p.get("points") or [{}])[-1].get("consensus_fv_raw")
+                  for p in active_payload}
+        _today = date.today().isoformat()
+        _flags = [{"player_key": e.get("player_key"), "flag_type": e.get("bucket"),
+                   "score": e.get("score"), "fv": _fv_of.get(e.get("player_key")),
+                   "level": e.get("level"), "age": e.get("age")}
+                  for key in ("risers", "rebounders", "fallers")
+                  for e in (spotlight_payload.get(key) or [])]
+        _n_flags = insert_editorial_flags(_today, _flags)
+        log.info("editorial flags: logged %d new (of %d emitted)", _n_flags, len(_flags))
+    except Exception:                                      # noqa: BLE001 — additive, never aborts
+        log.exception("editorial flag logging failed — continuing")
+
     # Split the export into a boot-critical file plus three lazy-loaded
     # sidecars so a first-paint download doesn't drag along ~40MB of
     # graduate / inactive / affiliate-roster data that the user typically
@@ -13101,6 +13136,64 @@ def load_export_unified(boot_path: Path) -> dict:
                         if lvl in level_map:
                             row["pitch_plot"] = level_map[lvl]
     return payload
+
+
+# ============================================================================
+# Editorial flag logging (model-audit WS-0c) — flags persisted AT EMIT TIME
+# with matched-control sampling keys so 30/60-day forward hit rates can be
+# scored once cohorts mature (Phase 5). Lives ABOVE the FA section: the FA
+# accessors below are guarded to fa_* tables only.
+# ============================================================================
+
+def _editorial_band(fv: float | None, age: float | None) -> tuple[str | None, str | None]:
+    """Matched-control sampling keys for editorial-flag scoring: a flagged
+    player's forward performance only means something against UNFLAGGED
+    players of the same FV band x level x age band."""
+    fv_band = None
+    if fv is not None:
+        fv_band = ("<45" if fv < 45 else "45" if fv < 50 else "50" if fv < 55
+                   else "55" if fv < 60 else "60+")
+    age_band = None
+    if age is not None:
+        age_band = ("<19" if age < 19 else "19-21" if age < 21 else "21-23"
+                    if age < 23 else "23-25" if age < 25 else "25+")
+    return fv_band, age_band
+
+
+def insert_editorial_flags(emitted_at: str, flags: list[dict]) -> int:
+    """Persist editorial flags AT EMIT TIME (model-audit WS-0c). Each flag:
+    {player_key, flag_type, score?, fv?, level?, age?}. Append-only per
+    (player, flag, date) — re-running an export the same day is a no-op,
+    so the forward-evaluation cohorts can't be contaminated by reruns."""
+    n = 0
+    with connect() as con:
+        for f in flags:
+            if not (f.get("player_key") and f.get("flag_type")):
+                continue
+            fv_band, age_band = _editorial_band(f.get("fv"), f.get("age"))
+            cur = con.execute(
+                """INSERT OR IGNORE INTO editorial_flags
+                   (player_key, flag_type, emitted_at, score, fv, fv_band,
+                    level, age_band)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (f["player_key"], f["flag_type"], emitted_at, f.get("score"),
+                 f.get("fv"), fv_band, f.get("level"), age_band))
+            n += cur.rowcount
+    return n
+
+
+def load_editorial_flags(flag_type: str | None = None) -> list[dict]:
+    """All logged flags (oldest first) — the editorial forward-evaluation
+    (model-audit WS-10) scores these against matured outcomes."""
+    where = " WHERE flag_type = ?" if flag_type else ""
+    args = (flag_type,) if flag_type else ()
+    with connect() as con:
+        cur = con.execute(
+            "SELECT player_key, flag_type, emitted_at, score, fv, fv_band, "
+            "level, age_band FROM editorial_flags" + where +
+            " ORDER BY emitted_at, player_key", args)
+        cols = [d[0] for d in cur.description]
+        return [dict(zip(cols, r)) for r in cur.fetchall()]
 
 
 # ============================================================================

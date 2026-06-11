@@ -1,4 +1,5 @@
 {
+ "model": "marcel_decay_v2",
  "bases": [
   2017,
   2018,
@@ -16,7 +17,12 @@
    "bias_star": -0.7419,
    "tail_pred_ge3": 126,
    "tail_act_ge3": 499,
-   "tail_ratio": 0.253
+   "tail_ratio": 0.253,
+   "coverage": 0.638,
+   "coverage_survived": 0.4094,
+   "n_survived": 4719,
+   "pinball_q10": 0.1564,
+   "pinball_q90": 0.2263
   },
   "2": {
    "n": 8053,
@@ -27,7 +33,12 @@
    "bias_star": 0.1405,
    "tail_pred_ge3": 97,
    "tail_act_ge3": 328,
-   "tail_ratio": 0.296
+   "tail_ratio": 0.296,
+   "coverage": 0.7059,
+   "coverage_survived": 0.4098,
+   "n_survived": 3838,
+   "pinball_q10": 0.1221,
+   "pinball_q90": 0.2059
   },
   "3": {
    "n": 8053,
@@ -38,7 +49,12 @@
    "bias_star": 0.0487,
    "tail_pred_ge3": 66,
    "tail_act_ge3": 306,
-   "tail_ratio": 0.216
+   "tail_ratio": 0.216,
+   "coverage": 0.7462,
+   "coverage_survived": 0.3931,
+   "n_survived": 3264,
+   "pinball_q10": 0.1026,
+   "pinball_q90": 0.1893
   },
   "4": {
    "n": 8053,
@@ -49,7 +65,12 @@
    "bias_star": -0.1304,
    "tail_pred_ge3": 47,
    "tail_act_ge3": 257,
-   "tail_ratio": 0.183
+   "tail_ratio": 0.183,
+   "coverage": 0.7774,
+   "coverage_survived": 0.3607,
+   "n_survived": 2714,
+   "pinball_q10": 0.0849,
+   "pinball_q90": 0.1716
   },
   "5": {
    "n": 8053,
@@ -60,7 +81,12 @@
    "bias_star": -0.6382,
    "tail_pred_ge3": 35,
    "tail_act_ge3": 283,
-   "tail_ratio": 0.124
+   "tail_ratio": 0.124,
+   "coverage": 0.7982,
+   "coverage_survived": 0.3111,
+   "n_survived": 2308,
+   "pinball_q10": 0.0792,
+   "pinball_q90": 0.1711
   }
  }
 }

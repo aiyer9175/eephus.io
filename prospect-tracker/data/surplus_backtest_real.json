@@ -1,0 +1,405 @@
+{
+ "generated_at": "2026-06-10",
+ "listing_years": [
+  2017,
+  2018,
+  2019
+ ],
+ "accounting": {
+  "listed": 3364,
+  "scored": 2958,
+  "scored_busts": 1385,
+  "excluded_no_war": 0,
+  "censored_active": 288,
+  "excluded_post_debut_listing": 118,
+  "excluded_no_bio": 0,
+  "resolved": 2239
+ },
+ "conventions": {
+  "listing_fv": "median of each source's earliest same-year snapshot",
+  "eta_proxy": "highest level by listing year -> years table (believed-ETA never recorded)",
+  "salaries": "IMPUTED: league-min schedule (3 pre-arb) + arb fractions of tiered season value",
+  "service": "one full year per season with a WAR row (actual service days not on file)",
+  "realized_dpw": "historical $/WAR per season; pre-2020 falls back to nearest year",
+  "prediction": "today's standing config incl. v3 FA-implied re-anchor \u2014 the level gap is part of what calibration measures (decomposition attributes it)",
+  "calibration_applied": "NONE \u2014 Phase-0 measurement; correction decision is Phase 4 WS-6"
+ },
+ "full_pool": {
+  "n_players": 2958,
+  "binned_calibration": {
+   "slope": 0.4663118554163381,
+   "intercept": -0.0036470233468106628,
+   "r2": 0.8403934828672401,
+   "bin_pred_mean": [
+    1.75,
+    1.79,
+    5.21,
+    6.57,
+    9.14,
+    10.01,
+    16.69,
+    34.22
+   ],
+   "bin_real_mean": [
+    4.21,
+    1.4,
+    0.54,
+    4.34,
+    0.46,
+    4.36,
+    7.4,
+    17.08
+   ]
+  },
+  "raw_calibration": {
+   "slope": 0.5099877928165969,
+   "intercept": -0.4696147879527297,
+   "r2": 0.11507094342020958
+  },
+  "raw_calibration_slope_ci90": [
+   0.4270658781715907,
+   0.5891354842374475
+  ],
+  "raw_errors": {
+   "n": 2958,
+   "bias": -5.694597014160371,
+   "rmse": 18.46697472987568,
+   "mae": 12.395136247225743,
+   "spearman": 0.10525142237625869
+  },
+  "raw_pit": {
+   "ks_stat": 0.2484787018255578,
+   "ks_p": 2.273094834839793e-161,
+   "coverage_p10_p90": 0.6710615280594997
+  },
+  "decomposition": {
+   "war_bias": -0.872082488167681,
+   "war_calibration": {
+    "slope": 1.043004989089748,
+    "intercept": -0.9676769961164184,
+    "r2": 0.207178552455216
+   },
+   "total_sv_bias": -5.7065855302464605,
+   "explained_by_war_bias": -12.270271537894976,
+   "dollar_arb_residual_bias": 6.563686007648514
+  },
+  "cross_validated_correction": {
+   "method": "isotonic",
+   "held_out_calibration": {
+    "slope": 0.9327234278793584,
+    "intercept": 0.32612550493720693,
+    "r2": 0.16479158761912038
+   },
+   "held_out_bias": -0.00871550309008753,
+   "held_out_rmse": 16.13416117871056,
+   "held_out_pit": {
+    "ks_stat": 0.2771347194050034,
+    "ks_p": 2.4546418150012126e-201,
+    "coverage_p10_p90": 0.7914131169709263
+   },
+   "n_held_out": 2958,
+   "years": [
+    2017,
+    2018,
+    2019
+   ]
+  },
+  "by_fv_tier": {
+   "40-45": {
+    "n": 2503,
+    "bias": -3.8182147765056644,
+    "rmse": 14.551961356985384,
+    "mae": 9.678739001866042,
+    "spearman": 0.011413415704339602,
+    "calibration": {
+     "slope": 0.26870800104394343,
+     "intercept": 1.1673136267260222,
+     "r2": 0.00731708405921996
+    }
+   },
+   "50": {
+    "n": 317,
+    "bias": -12.522856278963083,
+    "rmse": 27.34114615740802,
+    "mae": 23.62975892206447,
+    "spearman": 0.056379012290222894,
+    "calibration": {
+     "slope": 0.9219511033506618,
+     "intercept": -10.600677568480872,
+     "r2": 0.012166651956267985
+    }
+   },
+   "55": {
+    "n": 99,
+    "bias": -20.01269865924191,
+    "rmse": 36.48325909663985,
+    "mae": 32.020450270238555,
+    "spearman": 0.205340508783959,
+    "calibration": {
+     "slope": 0.9680052818093564,
+     "intercept": -18.80648352367278,
+     "r2": 0.03190441606431566
+    }
+   },
+   "60+": {
+    "n": 39,
+    "bias": -34.27240447683215,
+    "rmse": 53.10574636098254,
+    "mae": 45.596695963461286,
+    "spearman": 0.25332816258909857,
+    "calibration": {
+     "slope": 0.7056943631075719,
+     "intercept": -12.104026316622189,
+     "r2": 0.13433016196987613
+    }
+   }
+  },
+  "by_role": {
+   "hitter": {
+    "n": 2958,
+    "bias": -5.694597014160371,
+    "rmse": 18.46697472987568,
+    "mae": 12.395136247225743,
+    "spearman": 0.10525142237625869,
+    "calibration": {
+     "slope": 0.5099877928165969,
+     "intercept": -0.4696147879527297,
+     "r2": 0.11507094342020958
+    }
+   }
+  },
+  "sensitivity": [
+   {
+    "param": "dpw_2plus",
+    "base_value": 16335196.641680865,
+    "d_meanSV_pct_per_1pct_param": 0.5393,
+    "elasticity": 0.5393
+   },
+   {
+    "param": "dpw_1_to_2",
+    "base_value": 10498629.683134584,
+    "d_meanSV_pct_per_1pct_param": 0.3694,
+    "elasticity": 0.3694
+   },
+   {
+    "param": "discount_rate",
+    "base_value": 0.09,
+    "d_meanSV_pct_per_1pct_param": -0.2561,
+    "elasticity": -0.2561
+   },
+   {
+    "param": "dollars_per_war_inflation",
+    "base_value": 0.05,
+    "d_meanSV_pct_per_1pct_param": 0.1428,
+    "elasticity": 0.1428
+   },
+   {
+    "param": "dpw_lt_1",
+    "base_value": 8353361.745599092,
+    "d_meanSV_pct_per_1pct_param": 0.1314,
+    "elasticity": 0.1314
+   },
+   {
+    "param": "league_min_usd",
+    "base_value": 760000.0,
+    "d_meanSV_pct_per_1pct_param": -0.034,
+    "elasticity": -0.034
+   },
+   {
+    "param": "relief_war_haircut",
+    "base_value": 0.5,
+    "d_meanSV_pct_per_1pct_param": 0.0,
+    "elasticity": 0.0
+   }
+  ]
+ },
+ "resolved_only": {
+  "n_players": 2239,
+  "binned_calibration": {
+   "slope": 0.5233231270535068,
+   "intercept": -1.6155224183010404,
+   "r2": 0.9150952387657048,
+   "bin_pred_mean": [
+    1.75,
+    1.88,
+    5.46,
+    6.74,
+    9.12,
+    9.99,
+    16.34,
+    35.13
+   ],
+   "bin_real_mean": [
+    2.14,
+    0.07,
+    0.5,
+    2.24,
+    0.1,
+    3.34,
+    5.92,
+    17.99
+   ]
+  },
+  "raw_calibration": {
+   "slope": 0.5477464309265694,
+   "intercept": -1.8795784144058292,
+   "r2": 0.1643796729941591
+  },
+  "raw_calibration_slope_ci90": [
+   0.4518116810614141,
+   0.6419492175742411
+  ],
+  "raw_errors": {
+   "n": 2239,
+   "bias": -6.7591189066044475,
+   "rmse": 17.23165067339839,
+   "mae": 11.570396319477302,
+   "spearman": 0.12189504143811969
+  },
+  "raw_pit": {
+   "ks_stat": 0.21471706118803036,
+   "ks_p": 4.4115912650480145e-91,
+   "coverage_p10_p90": 0.7780259044216168
+  },
+  "decomposition": {
+   "war_bias": -0.9225815096025013,
+   "war_calibration": {
+    "slope": 1.2219908019465702,
+    "intercept": -1.4159424341751725,
+    "r2": 0.27591003108556933
+   },
+   "total_sv_bias": -6.706987186469319,
+   "explained_by_war_bias": -12.980796876736639,
+   "dollar_arb_residual_bias": 6.273809690267321
+  },
+  "cross_validated_correction": {
+   "method": "isotonic",
+   "held_out_calibration": {
+    "slope": 0.9517196631261723,
+    "intercept": 0.09932427078409845,
+    "r2": 0.24463588917271595
+   },
+   "held_out_bias": -0.10009104261961907,
+   "held_out_rmse": 14.15750733134118,
+   "held_out_pit": {
+    "ks_stat": 0.3315063644484144,
+    "ks_p": 8.906536626735639e-220,
+    "coverage_p10_p90": 0.8579723090665475
+   },
+   "n_held_out": 2239,
+   "years": [
+    2017,
+    2018,
+    2019
+   ]
+  },
+  "by_fv_tier": {
+   "40-45": {
+    "n": 1903,
+    "bias": -5.001228223697559,
+    "rmse": 12.400750865898752,
+    "mae": 8.641537484647102,
+    "spearman": 0.027290742743723204,
+    "calibration": {
+     "slope": 0.30413649146782534,
+     "intercept": -0.20227349642525216,
+     "r2": 0.014275034614485945
+    }
+   },
+   "50": {
+    "n": 225,
+    "bias": -13.290113349432193,
+    "rmse": 28.756228477058,
+    "mae": 24.918917745643444,
+    "spearman": 0.074860774956043,
+    "calibration": {
+     "slope": 1.174677300139629,
+     "intercept": -17.663308786343165,
+     "r2": 0.018924737593146005
+    }
+   },
+   "55": {
+    "n": 80,
+    "bias": -19.233163542116834,
+    "rmse": 34.89777985941587,
+    "mae": 30.647243156538718,
+    "spearman": 0.22080811635380365,
+    "calibration": {
+     "slope": 1.3414930539526868,
+     "intercept": -32.10200464863121,
+     "r2": 0.061485399720897144
+    }
+   },
+   "60+": {
+    "n": 31,
+    "bias": -35.07746242578433,
+    "rmse": 53.49088419172418,
+    "mae": 45.249534862366815,
+    "spearman": 0.3066360951966231,
+    "calibration": {
+     "slope": 0.72986051085279,
+     "intercept": -14.287168692764581,
+     "r2": 0.15468331924731035
+    }
+   }
+  },
+  "by_role": {
+   "hitter": {
+    "n": 2239,
+    "bias": -6.7591189066044475,
+    "rmse": 17.23165067339839,
+    "mae": 11.570396319477302,
+    "spearman": 0.12189504143811969,
+    "calibration": {
+     "slope": 0.5477464309265694,
+     "intercept": -1.8795784144058292,
+     "r2": 0.1643796729941591
+    }
+   }
+  },
+  "sensitivity": [
+   {
+    "param": "dpw_2plus",
+    "base_value": 16335196.641680865,
+    "d_meanSV_pct_per_1pct_param": 0.5393,
+    "elasticity": 0.5393
+   },
+   {
+    "param": "dpw_1_to_2",
+    "base_value": 10498629.683134584,
+    "d_meanSV_pct_per_1pct_param": 0.3694,
+    "elasticity": 0.3694
+   },
+   {
+    "param": "discount_rate",
+    "base_value": 0.09,
+    "d_meanSV_pct_per_1pct_param": -0.2561,
+    "elasticity": -0.2561
+   },
+   {
+    "param": "dollars_per_war_inflation",
+    "base_value": 0.05,
+    "d_meanSV_pct_per_1pct_param": 0.1428,
+    "elasticity": 0.1428
+   },
+   {
+    "param": "dpw_lt_1",
+    "base_value": 8353361.745599092,
+    "d_meanSV_pct_per_1pct_param": 0.1314,
+    "elasticity": 0.1314
+   },
+   {
+    "param": "league_min_usd",
+    "base_value": 760000.0,
+    "d_meanSV_pct_per_1pct_param": -0.034,
+    "elasticity": -0.034
+   },
+   {
+    "param": "relief_war_haircut",
+    "base_value": 0.5,
+    "d_meanSV_pct_per_1pct_param": 0.0,
+    "elasticity": 0.0
+   }
+  ]
+ }
+}
