@@ -61,10 +61,18 @@ def test_calibration_layer_is_real_fit_and_monotone() -> None:
     assert cal["method"] == "isotonic"
     assert cal["version"].startswith("isotonic-real-")
     xs, ys = cal["isotonic"]["x_mm"], cal["isotonic"]["y_mm"]
-    assert len(xs) == len(ys) >= 10
+    # v3 (binned PAVA) carries ~9 knots - equal-count bin means plus the
+    # documented elite-tail extension - so the old >=10 proxy for "real
+    # fit" is now the provenance strings + monotonicity + shape pins.
+    assert len(xs) == len(ys) >= 8
     assert xs == sorted(xs) and ys == sorted(ys)
     assert "REAL-data fit" in cal["fit_provenance"]
     assert "leave-one-year-out" in cal["fit_provenance"]
+    # v2/v3 decisions stay pinned: the bottom block is POSITIVE (the v1
+    # per-player fit zeroed every FV35-40 prospect - never again) and the
+    # map is non-degenerate (top >> bottom).
+    assert ys[0] > 0, "degenerate $0 bottom block returned"
+    assert ys[-1] > ys[0] * 5
 
 
 def test_calibration_layer_applies_to_public_api() -> None:
@@ -74,7 +82,14 @@ def test_calibration_layer_applies_to_public_api() -> None:
     raw_mm = vf.expected_surplus_usd(55, False, "SS") / 1e6
     cal_mm = vf.surplus_value_mm(55, False, "SS")
     assert cal_mm == pytest.approx(vf.apply_calibration(raw_mm, 55, False), abs=0.11)
-    assert cal_mm < raw_mm * 0.75, "margin overshoot correction missing"
+    # v3 pins: TODAY-PRICED targets put the raw model near slope 1 (the
+    # v1 "0.64 shrinkage" was mostly dollar-era inflation), so the
+    # calibrated value sits NEAR raw - no longer "well below" it - and
+    # the FV ladder stays strictly ordered and positive.
+    assert 0.6 * raw_mm < cal_mm < 1.15 * raw_mm, (
+        f"calibration drifted from the near-slope-1 v3 regime: raw {raw_mm:.1f} cal {cal_mm:.1f}")
+    ladder = [vf.surplus_value_mm(fv, False) for fv in (40, 45, 50, 55, 60)]
+    assert ladder == sorted(ladder) and ladder[0] > 0, ladder
 
 
 # =============================================================================

@@ -503,13 +503,13 @@ debuted:
 # committed to production -- only a real-data fit should flip enabled: true.
 calibration:
   enabled: true
-  version: "isotonic-real-v2-binned-2026-06-12"
+  version: "isotonic-real-v3-todaypriced-2026-06-12"
   method: isotonic            # linear | isotonic
   linear: {slope: 1.0, intercept_mm: 0.0}
   isotonic:
-    x_mm: [1.75, 5.31, 8.98, 9.33, 9.55, 15.33, 22.55, 27.48, 48.43, 59.62, 134.34]
-    y_mm: [0.9, 1.44, 2.38, 3.64, 3.9, 9.41, 11.51, 15.35, 32.26, 32.52, 98.46]
-  fit_provenance: "REAL-data fit v2 BINNED (count-weighted PAVA on equal-count bin means - per-player PAVA let exact-zero busts force a degenerate $0 bottom block; surplus_backtest_real resolved pool, 2017-2019 listings, n=2239): raw slope 0.64 / bias -5.6M corrected to held-out slope 0.97 / bias -0.64M under leave-one-year-out CV (see data/surplus_backtest_real.json cross_validated_correction). Breakpoints: 9 binned knots + the v1 per-player fit's two top-end knots (59.62/134.34 - the top bin pooled all raw>=30 and clipped FV60/65 to one value; the per-player tail keeps elite ordering on the same data)."
+    x_mm: [1.75, 5.31, 8.98, 9.33, 15.33, 22.55, 27.48, 48.43, 140.0]
+    y_mm: [1.44, 2.51, 4.66, 6.59, 14.99, 17.87, 23.99, 50.94, 168.74]
+  fit_provenance: "REAL-data fit v3 BINNED + TODAY-PRICED targets (realized WAR valued at the standing flat $/WAR; the calibration corrects the WAR layer only) (count-weighted PAVA on equal-count bin means - per-player PAVA let exact-zero busts force a degenerate $0 bottom block; surplus_backtest_real resolved pool, 2017-2019 listings, n=2239): raw slope 1.02 / bias -2.9M corrected to held-out slope 0.97 / bias -1.13M under leave-one-year-out CV (see data/surplus_backtest_real.json cross_validated_correction). Breakpoints downsampled to 8 knots. Tail knot (140 -> 168.74) continues the last observed segment so elite raws keep ordering instead of clipping at the top bin."
 
 # =============================================================================
 # Source-calibration loop (Prompt N) -- learn per-source bias & reliability

@@ -390,11 +390,37 @@ def _process_one_set(grp: dict,
                 snap_date = date.today().isoformat()
         else:
             snap_date = date.today().isoformat()
+        # Era guard (2026-06-12): historical sets dropped years later get
+        # the file MTIME above, which lands the snapshot in the wrong era
+        # and scrambles point-in-time ordering. When the detected year
+        # disagrees with the slug year, pin to the board's publication
+        # convention (FG posts these late Jan / early Feb - the 2026 set
+        # auto-detected 2026-02-05).
+        if snap_date[:4] != str(year):
+            snap_date = f"{year}-02-01"
 
     interval_label = f"FG {year} Overseas ({snap_date})"
 
     snap_payloads = [_merged_to_snapshot_dict(m, snap_date, interval_label)
                      for m in merged]
+    # INT'L AMATEUR rows are July-2-class prospects, not overseas pros
+    # (owner directive 2026-06-12): route their FVs onto the matching
+    # tracked prospects and keep them out of the overseas store entirely.
+    try:
+        from intl_amateur import is_ifa_league, attach_fv_snapshots
+        ifa_rows = [p for p in snap_payloads if is_ifa_league(p.get("league"))]
+        if ifa_rows:
+            snap_payloads = [p for p in snap_payloads
+                             if not is_ifa_league(p.get("league"))]
+            attach = [{**r, "interval_label":
+                       (r.get("interval_label") or "").replace("Overseas", "Int'l Board")}
+                      for r in ifa_rows]
+            n_att, unm = attach_fv_snapshots(attach, source="fangraphs")
+            log.info("overseas_csv: '%s' routed %d Int'l Amateur rows to "
+                     "prospects (%d attached, %d unmatched)",
+                     slug, len(ifa_rows), n_att, len(unm))
+    except Exception:
+        log.exception("overseas_csv: intl_amateur routing failed — rows kept overseas")
     n = insert_overseas_snapshots(snap_payloads)
     log.info("overseas_csv: '%s' -> %d snapshots (year=%d, date=%s)",
              slug, n, year, snap_date)

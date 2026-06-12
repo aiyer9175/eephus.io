@@ -236,6 +236,12 @@ def _clean_report_prose(text: str | None) -> str | None:
         return None
     s = text
 
+    # 0. Owner copy rule (2026-06-11, enforced site-wide by
+    # tools/strip_emdashes.py): no em-dashes in user-facing prose. Source
+    # writeups arrive with them; swap to the house plain hyphen at the
+    # ingest boundary so generated exports never trip the copy check.
+    s = s.replace(" — ", " - ").replace("—", " - ").replace("  ", " ")
+
     # 1. Encoding fix only — explicitly DO NOT call fix_mojibake because
     # its whitespace pass collapses runs of newlines (including the
     # `\n\n` paragraph separators downstream renderers rely on).
@@ -1926,7 +1932,8 @@ def run_mlb_pipeline_live(snap_date: str | None = None) -> dict:
 
 
 def scrape_mlb_international(url: str, label: str, snap_date: str, year: int,
-                             force: bool = False) -> list[Snapshot]:
+                             force: bool = False,
+                             skip_unaffiliated: bool = True) -> list[Snapshot]:
     """Parse MLB Pipeline's international ranking table.
 
     The static page exposes rank/name/position but not signing org. We emit
@@ -1988,10 +1995,13 @@ def scrape_mlb_international(url: str, label: str, snap_date: str, year: int,
         if not name:
             continue
         org = teams.get(person.get("team_id"))
-        if not org:
+        if not org and skip_unaffiliated:
             # The IFA merge is intentionally stateside/affiliate-aware:
             # players without a current roster assignment stay out until
-            # MLB exposes a team for them.
+            # MLB exposes a team for them. (The historical backfill passes
+            # skip_unaffiliated=False and classifies these rows itself -
+            # unaffiliated names on the intl list are often KBO/NPB pros
+            # who belong in the Overseas section, not dropped.)
             continue
         overall = None
         overall_m = re.search(r'Overall:\s*([0-9]+(?:\s*/\s*[0-9]+)?\+?)', chunk)

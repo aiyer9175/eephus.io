@@ -438,6 +438,11 @@ def _process_one_set(grp: dict,
             # stayed correct, but the table grew one copy per run). mtime is the
             # same stable publish-date proxy the slug-folder path already uses.
             snap_date = date.fromtimestamp(grp["summary"].stat().st_mtime).isoformat()
+        # Era guard (2026-06-12): a historical board dropped years later
+        # carries a recent mtime - pin to draft week instead (the
+        # auto-detected 2021-25 sets all landed July 11-18).
+        if snap_date[:4] != str(year):
+            snap_date = f"{year}-07-10"
 
     interval_label = f"FG {year} Draft ({snap_date})"
 
@@ -461,6 +466,21 @@ def _process_one_set(grp: dict,
         except OSError as e:
             log.warning("draft_csv: could not move '%s' to processed/: %s",
                         slug, e)
+    elif processed_dir:
+        # Flat layout: archive the loose <type>-<slug>.csv files too (the
+        # folder path above never fired for them, so 2017-20 boards sat in
+        # the drop root forever - 2026-06-12).
+        dest = processed_dir / f"{slug}__{snap_date}"
+        try:
+            flat_files = [grp[k] for k in ("summary", "position", "pitching", "physical")
+                          if grp.get(k) is not None and getattr(grp[k], "exists", lambda: False)()]
+            dest.mkdir(parents=True, exist_ok=True)
+            for f in flat_files:
+                shutil.move(str(f), str(dest / f.name))
+            if flat_files:
+                log.info("draft_csv: archived flat-layout '%s' to processed/", slug)
+        except OSError as e:
+            log.warning("draft_csv: could not archive flat '%s': %s", slug, e)
 
     return (n_snap, n_res)
 

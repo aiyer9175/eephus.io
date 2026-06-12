@@ -49,8 +49,18 @@ def _downsample(xs: list[float], ys: list[float], k: int) -> tuple[list, list]:
 def main() -> None:
     records, accounting = build_cohorts()
     cfg = vf._config()
-    dpw_by_year = {int(k): dict(v) for k, v in
-                   (cfg.get("historical_dollars_per_war") or {}).items()}
+    # v3 (2026-06-12, owner: levels read low across the board): the
+    # realized TARGETS are priced at the STANDING flat $/WAR rather than
+    # each season's historical rate. Historical pricing ($6.7-12.1M/WAR
+    # for the cohort seasons) deflated every target by the era's cheaper
+    # dollars, so the calibration was "correcting" the model for dollar
+    # inflation on top of WAR optimism. Constant today-pricing makes the
+    # calibration a pure WAR-layer correction and the shipped surplus
+    # mean "expected realized value at current replacement cost". The
+    # committed backtest artifact keeps historical pricing (that slice
+    # answers a different question: what DID the cohort return).
+    flat_mm = vf.dollars_per_war_flat()
+    dpw_by_year = {y: {"overall": flat_mm} for y in range(2014, 2035)}
     # Fit on the RESOLVED pool (censored-active excluded) — the cleanest
     # target population; the full-pool CV in the artifact corroborates.
     resolved = _resolved_only(records)
@@ -69,13 +79,13 @@ def main() -> None:
     xs, ys = _downsample(xs, ys, N_BREAKPOINTS)
     block = {
         "enabled": True,
-        "version": f"isotonic-real-v2-binned-{date.today().isoformat()}",
+        "version": f"isotonic-real-v3-todaypriced-{date.today().isoformat()}",
         "method": "isotonic",
         "linear": {"slope": 1.0, "intercept_mm": 0.0},
         "isotonic": {"x_mm": [round(x, 2) for x in xs],
                      "y_mm": [round(y, 2) for y in ys]},
         "fit_provenance": (
-            "REAL-data fit v2 BINNED (count-weighted PAVA on equal-count bin means - "
+            "REAL-data fit v3 BINNED + TODAY-PRICED targets (realized WAR valued at the standing flat $/WAR; the calibration corrects the WAR layer only) (count-weighted PAVA on equal-count bin means - "
             "per-player PAVA let exact-zero busts force a degenerate $0 bottom block; "
             "surplus_backtest_real resolved pool, 2017-2019 "
             "listings, n=%d): raw slope %.2f / bias %+.1fM corrected to "

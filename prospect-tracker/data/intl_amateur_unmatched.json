@@ -1,0 +1,474 @@
+[
+ {
+  "player_name": "Yeferson Tineo",
+  "fv": 40.0,
+  "position": "SS",
+  "snapshot_date": "2021-02-01",
+  "interval_label": "FG 2021 Int'l Board (2021-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": null
+ },
+ {
+  "player_name": "Cristian Vaquero",
+  "fv": 40.0,
+  "position": "RF",
+  "snapshot_date": "2022-02-01",
+  "interval_label": "FG 2022 Int'l Board (2022-02-01)",
+  "country": "Cuba",
+  "proj_team": "WSN"
+ },
+ {
+  "player_name": "Tony, Jr. Blanco",
+  "fv": 40.0,
+  "position": "RF",
+  "snapshot_date": "2022-02-01",
+  "interval_label": "FG 2022 Int'l Board (2022-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "PIT"
+ },
+ {
+  "player_name": "Brandon Mayea",
+  "fv": 45.0,
+  "position": "CF",
+  "snapshot_date": "2023-02-01",
+  "interval_label": "FG 2023 Int'l Board (2023-02-01)",
+  "country": "Cuba",
+  "proj_team": "NYY"
+ },
+ {
+  "player_name": "Jesus Starlyn Caba",
+  "fv": 40.0,
+  "position": "SS",
+  "snapshot_date": "2023-02-01",
+  "interval_label": "FG 2023 Int'l Board (2023-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "PHI"
+ },
+ {
+  "player_name": "Luis Danys Morales",
+  "fv": 40.0,
+  "position": "SP",
+  "snapshot_date": "2023-02-01",
+  "interval_label": "FG 2023 Int'l Board (2023-02-01)",
+  "country": "Cuba",
+  "proj_team": "OAK"
+ },
+ {
+  "player_name": "Rainel Arias",
+  "fv": 40.0,
+  "position": "RF",
+  "snapshot_date": "2023-02-01",
+  "interval_label": "FG 2023 Int'l Board (2023-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "SFG"
+ },
+ {
+  "player_name": "Junior Arias",
+  "fv": 40.0,
+  "position": "RF",
+  "snapshot_date": "2023-02-01",
+  "interval_label": "FG 2023 Int'l Board (2023-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "TOR"
+ },
+ {
+  "player_name": "Emil Valencia",
+  "fv": 40.0,
+  "position": "LF",
+  "snapshot_date": "2023-02-01",
+  "interval_label": "FG 2023 Int'l Board (2023-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "HOU"
+ },
+ {
+  "player_name": "Ludwig Espinoza",
+  "fv": 40.0,
+  "position": "SS",
+  "snapshot_date": "2023-02-01",
+  "interval_label": "FG 2023 Int'l Board (2023-02-01)",
+  "country": "Venezuela",
+  "proj_team": "CHC"
+ },
+ {
+  "player_name": "Tony Ruiz",
+  "fv": 35.0,
+  "position": "OF",
+  "snapshot_date": "2023-02-01",
+  "interval_label": "FG 2023 Int'l Board (2023-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "BOS"
+ },
+ {
+  "player_name": "Robert Galaz",
+  "fv": 35.0,
+  "position": "DH",
+  "snapshot_date": "2023-02-01",
+  "interval_label": "FG 2023 Int'l Board (2023-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "COL"
+ },
+ {
+  "player_name": "Yunior Arias",
+  "fv": 40.0,
+  "position": "RF",
+  "snapshot_date": "2024-02-01",
+  "interval_label": "FG 2024 Int'l Board (2024-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "TOR"
+ },
+ {
+  "player_name": "Jhonaykel Ugarte",
+  "fv": 40.0,
+  "position": "3B",
+  "snapshot_date": "2024-02-01",
+  "interval_label": "FG 2024 Int'l Board (2024-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "KCR"
+ },
+ {
+  "player_name": "Abdiel Feliz",
+  "fv": 40.0,
+  "position": "SS",
+  "snapshot_date": "2024-02-01",
+  "interval_label": "FG 2024 Int'l Board (2024-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "PIT"
+ },
+ {
+  "player_name": "Luis Manuel León",
+  "fv": 35.0,
+  "position": "SS",
+  "snapshot_date": "2024-02-01",
+  "interval_label": "FG 2024 Int'l Board (2024-02-01)",
+  "country": "Cuba",
+  "proj_team": "STL"
+ },
+ {
+  "player_name": "Brailyn Brazoban",
+  "fv": 35.0,
+  "position": "RF",
+  "snapshot_date": "2024-02-01",
+  "interval_label": "FG 2024 Int'l Board (2024-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "PIT"
+ },
+ {
+  "player_name": "Cesar Yanquiel Hernandez",
+  "fv": 35.0,
+  "position": "OF",
+  "snapshot_date": "2024-02-01",
+  "interval_label": "FG 2024 Int'l Board (2024-02-01)",
+  "country": "Cuba",
+  "proj_team": "HOU"
+ },
+ {
+  "player_name": "Jose Luis Peña",
+  "fv": 40.0,
+  "position": "SS",
+  "snapshot_date": "2025-02-01",
+  "interval_label": "FG 2025 Int'l Board (2025-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "BAL"
+ },
+ {
+  "player_name": "Royel Strop",
+  "fv": 40.0,
+  "position": "CF",
+  "snapshot_date": "2025-02-01",
+  "interval_label": "FG 2025 Int'l Board (2025-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "STL"
+ },
+ {
+  "player_name": "Maikel Coret",
+  "fv": 40.0,
+  "position": "RF",
+  "snapshot_date": "2025-02-01",
+  "interval_label": "FG 2025 Int'l Board (2025-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "TBR"
+ },
+ {
+  "player_name": "Darwin Ozuna",
+  "fv": 35.0,
+  "position": "RF",
+  "snapshot_date": "2025-02-01",
+  "interval_label": "FG 2025 Int'l Board (2025-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "ATH"
+ },
+ {
+  "player_name": "Lieberts Aponte",
+  "fv": 35.0,
+  "position": "SS",
+  "snapshot_date": "2025-02-01",
+  "interval_label": "FG 2025 Int'l Board (2025-02-01)",
+  "country": "Venezuela",
+  "proj_team": "CIN"
+ },
+ {
+  "player_name": "Christopher Acosta",
+  "fv": 35.0,
+  "position": "SS",
+  "snapshot_date": "2025-02-01",
+  "interval_label": "FG 2025 Int'l Board (2025-02-01)",
+  "country": "Dominican Republic",
+  "proj_team": "MIL"
+ },
+ {
+  "player_name": "Javier Osorio",
+  "fv": 55.0,
+  "position": "SS",
+  "snapshot_date": "2022-01-15",
+  "interval_label": "MLB Pipeline 2022 International (2022-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Jose De Jesus",
+  "fv": 55.0,
+  "position": "OF",
+  "snapshot_date": "2022-01-15",
+  "interval_label": "MLB Pipeline 2022 International (2022-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Erick Hernandez",
+  "fv": 55.0,
+  "position": "OF",
+  "snapshot_date": "2022-01-15",
+  "interval_label": "MLB Pipeline 2022 International (2022-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Anthuan Valencia",
+  "fv": 50.0,
+  "position": "SS",
+  "snapshot_date": "2022-01-15",
+  "interval_label": "MLB Pipeline 2022 International (2022-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Accimias Morales",
+  "fv": 50.0,
+  "position": "RHP",
+  "snapshot_date": "2022-01-15",
+  "interval_label": "MLB Pipeline 2022 International (2022-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Victor Izturis",
+  "fv": 50.0,
+  "position": "C",
+  "snapshot_date": "2022-01-15",
+  "interval_label": "MLB Pipeline 2022 International (2022-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Adan Sanchez",
+  "fv": 50.0,
+  "position": "C",
+  "snapshot_date": "2022-01-15",
+  "interval_label": "MLB Pipeline 2022 International (2022-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Fraymi De Leon",
+  "fv": 50.0,
+  "position": "SS",
+  "snapshot_date": "2022-01-15",
+  "interval_label": "MLB Pipeline 2022 International (2022-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Raymond Mola",
+  "fv": 50.0,
+  "position": "OF",
+  "snapshot_date": "2023-01-15",
+  "interval_label": "MLB Pipeline 2023 International (2023-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Anthony Baptist",
+  "fv": 50.0,
+  "position": "OF",
+  "snapshot_date": "2023-01-15",
+  "interval_label": "MLB Pipeline 2023 International (2023-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Tony Ruiz",
+  "fv": 50.0,
+  "position": "OF",
+  "snapshot_date": "2023-01-15",
+  "interval_label": "MLB Pipeline 2023 International (2023-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Carlos Silva",
+  "fv": 50.0,
+  "position": "C",
+  "snapshot_date": "2023-01-15",
+  "interval_label": "MLB Pipeline 2023 International (2023-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Manuel Cabrera",
+  "fv": 50.0,
+  "position": "SS",
+  "snapshot_date": "2023-01-15",
+  "interval_label": "MLB Pipeline 2023 International (2023-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Darling Fernandez",
+  "fv": 50.0,
+  "position": "OF",
+  "snapshot_date": "2023-01-15",
+  "interval_label": "MLB Pipeline 2023 International (2023-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Maikol Orozco",
+  "fv": 50.0,
+  "position": "SS",
+  "snapshot_date": "2023-01-15",
+  "interval_label": "MLB Pipeline 2023 International (2023-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Edwin Solano",
+  "fv": 50.0,
+  "position": "SS",
+  "snapshot_date": "2023-01-15",
+  "interval_label": "MLB Pipeline 2023 International (2023-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Cristian Perez",
+  "fv": 50.0,
+  "position": "OF",
+  "snapshot_date": "2023-01-15",
+  "interval_label": "MLB Pipeline 2023 International (2023-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Marwys Cabrera",
+  "fv": 50.0,
+  "position": "RHP",
+  "snapshot_date": "2023-01-15",
+  "interval_label": "MLB Pipeline 2023 International (2023-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Kennew Blanco",
+  "fv": 55.0,
+  "position": "SS",
+  "snapshot_date": "2024-01-15",
+  "interval_label": "MLB Pipeline 2024 International (2024-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Raymel Ortiz",
+  "fv": 55.0,
+  "position": "SS",
+  "snapshot_date": "2024-01-15",
+  "interval_label": "MLB Pipeline 2024 International (2024-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Curley Martha",
+  "fv": 55.0,
+  "position": "SS",
+  "snapshot_date": "2024-01-15",
+  "interval_label": "MLB Pipeline 2024 International (2024-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Jensy Rivas",
+  "fv": 50.0,
+  "position": "SS",
+  "snapshot_date": "2024-01-15",
+  "interval_label": "MLB Pipeline 2024 International (2024-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Oscar Pujols",
+  "fv": 50.0,
+  "position": "RHP",
+  "snapshot_date": "2024-01-15",
+  "interval_label": "MLB Pipeline 2024 International (2024-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Jeremy Denaud",
+  "fv": 50.0,
+  "position": "OF",
+  "snapshot_date": "2024-01-15",
+  "interval_label": "MLB Pipeline 2024 International (2024-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Leandro Romero",
+  "fv": 50.0,
+  "position": "SS",
+  "snapshot_date": "2024-01-15",
+  "interval_label": "MLB Pipeline 2024 International (2024-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Moises Marchán",
+  "fv": 45.0,
+  "position": "C",
+  "snapshot_date": "2025-01-15",
+  "interval_label": "MLB Pipeline 2025 International (2025-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Larry Suero",
+  "fv": 45.0,
+  "position": "2B/3B",
+  "snapshot_date": "2025-01-15",
+  "interval_label": "MLB Pipeline 2025 International (2025-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Kenly Hunter",
+  "fv": 45.0,
+  "position": "OF",
+  "snapshot_date": "2025-01-15",
+  "interval_label": "MLB Pipeline 2025 International (2025-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Hiverson López",
+  "fv": 45.0,
+  "position": "C",
+  "snapshot_date": "2025-01-15",
+  "interval_label": "MLB Pipeline 2025 International (2025-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Nieves Izaguirre",
+  "fv": 45.0,
+  "position": "SS",
+  "snapshot_date": "2025-01-15",
+  "interval_label": "MLB Pipeline 2025 International (2025-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Heins Brito",
+  "fv": 45.0,
+  "position": "SS",
+  "snapshot_date": "2025-01-15",
+  "interval_label": "MLB Pipeline 2025 International (2025-01-15)",
+  "source": "mlb_pipeline"
+ },
+ {
+  "player_name": "Teilon Serrano",
+  "fv": 45.0,
+  "position": "OF",
+  "snapshot_date": "2025-01-15",
+  "interval_label": "MLB Pipeline 2025 International (2025-01-15)",
+  "source": "mlb_pipeline"
+ }
+]
