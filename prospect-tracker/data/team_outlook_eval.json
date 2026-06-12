@@ -2,29 +2,218 @@
  "generated_at": "2026-06-12",
  "first_season": 2027,
  "league_sum_accounting": {
-  "roster_war_sum": 559.7,
+  "roster_war_sum": 994.2,
   "league_war_benchmark": 1000,
   "benchmark_basis": "actual league bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily)",
-  "raw_wins_sum": 1990.5,
+  "raw_wins_sum": 2425.1,
   "target_wins_sum": 2430,
-  "recenter_wins_per_team": 14.65,
+  "depth_pool": {
+   "n_depth_players": 691,
+   "depth_war_sum": 51.3,
+   "n_unassigned": 505,
+   "war_unassigned": 43.7
+  },
+  "remainder_recenter_wins_per_team": -0.08,
   "coverage_decomposition_2025": {
    "returning_player_war": 940,
    "new_entrant_war": 61,
    "new_entrant_players": 253,
-   "note": "new-entrant WAR is covered by the ETA-prospect block; the level gap lives in the veteran engine (regression + shrunk playing time + exposure floors)"
+   "note": "new-entrant WAR is covered by the ETA-prospect block and the recentering remainder; the original level gap was the exposure-floor universe (see retro_backtest)"
   }
  },
  "calibration": {
-  "kind": "additive league-sum recentering (uniform per-team depth allowance)",
+  "kind": "v2: per-team sub-floor depth pool + cohort intercepts (side x age band, retro-backtest-fit 2022-24, holdout-gated) + small uniform remainder to the 2,430-win league sum",
   "limitations": [
-   "uniform allowance ignores org depth quality - good orgs likely capture more of the unmodeled WAR",
-   "spread stays projection-compressed; cohort-level recalibration needs the retro point-in-time backtest (queued)"
+   "depth-pool team assignment needs a contract row; unassigned depth WAR rides the uniform remainder",
+   "spread stays projection-compressed (correct for a mean projection; bands carry the uncertainty)"
   ]
  },
  "forward_gate": {
   "status": "pending",
   "first_scoreable": "end of the 2027 season",
   "metric": "MAE vs actual wins; baseline = prior-season wins carry-forward"
+ },
+ "retro_backtest": {
+  "generated_at": "2026-06-12",
+  "design": {
+   "targets": [
+    2022,
+    2023,
+    2024,
+    2025
+   ],
+   "holdout": 2025,
+   "no_lookahead": "curves + WAR map refit per target on data through Y-1 (Gate-1 pattern)",
+   "team_assignment": "primary actual season-Y team by exposure stint (B-Ref war_daily); isolates engine error from roster churn - disclosed",
+   "population": "every player with >=1 input season in Y-3..Y-1; absent target season scores actual WAR 0; new entrants (rookies/IFA, ~61 WAR/season) are outside the veteran engine and absorbed by the recentering level"
+  },
+  "player_level": {
+   "pooled": {
+    "n": 8866,
+    "bias_act_minus_pred": -0.042,
+    "mae": 0.593,
+    "r": 0.581
+   },
+   "hit:0-25": {
+    "n": 540,
+    "bias_act_minus_pred": 0.152,
+    "mae": 1.152,
+    "r": 0.527
+   },
+   "hit:26-29": {
+    "n": 1428,
+    "bias_act_minus_pred": -0.024,
+    "mae": 0.736,
+    "r": 0.635
+   },
+   "hit:30-33": {
+    "n": 1054,
+    "bias_act_minus_pred": -0.112,
+    "mae": 0.702,
+    "r": 0.68
+   },
+   "hit:34-99": {
+    "n": 602,
+    "bias_act_minus_pred": -0.183,
+    "mae": 0.408,
+    "r": 0.527
+   },
+   "pit:0-25": {
+    "n": 454,
+    "bias_act_minus_pred": 0.173,
+    "mae": 0.802,
+    "r": 0.39
+   },
+   "pit:26-29": {
+    "n": 2120,
+    "bias_act_minus_pred": 0.001,
+    "mae": 0.524,
+    "r": 0.543
+   },
+   "pit:30-33": {
+    "n": 1669,
+    "bias_act_minus_pred": -0.055,
+    "mae": 0.423,
+    "r": 0.488
+   },
+   "pit:34-99": {
+    "n": 999,
+    "bias_act_minus_pred": -0.175,
+    "mae": 0.42,
+    "r": 0.518
+   }
+  },
+  "cohort_intercepts_fit_2022_24": {
+   "hit:0-25": 0.172,
+   "hit:26-29": 0.018,
+   "hit:30-33": -0.138,
+   "hit:34-99": -0.201,
+   "pit:0-25": 0.216,
+   "pit:26-29": 0.001,
+   "pit:30-33": -0.067,
+   "pit:34-99": -0.199
+  },
+  "team_level_per_season": [
+   {
+    "season": 2022,
+    "n_assigned_players": 1197,
+    "roster_war_sum": 866.1,
+    "is_holdout": false,
+    "raw": {
+     "mae": 9.55,
+     "r": 0.67
+    },
+    "recentered": {
+     "mae": 10.23,
+     "r": 0.67
+    },
+    "cohort_recentered": {
+     "mae": 10.3,
+     "r": 0.682
+    },
+    "baseline_prior_wins": {
+     "mae": 10.41,
+     "r": 0.563
+    }
+   },
+   {
+    "season": 2023,
+    "n_assigned_players": 1206,
+    "roster_war_sum": 929.4,
+    "is_holdout": false,
+    "raw": {
+     "mae": 10.24,
+     "r": 0.444
+    },
+    "recentered": {
+     "mae": 10.0,
+     "r": 0.444
+    },
+    "cohort_recentered": {
+     "mae": 9.92,
+     "r": 0.442
+    },
+    "baseline_prior_wins": {
+     "mae": 11.38,
+     "r": 0.536
+    }
+   },
+   {
+    "season": 2024,
+    "n_assigned_players": 1219,
+    "roster_war_sum": 896.4,
+    "is_holdout": false,
+    "raw": {
+     "mae": 7.54,
+     "r": 0.668
+    },
+    "recentered": {
+     "mae": 7.26,
+     "r": 0.668
+    },
+    "cohort_recentered": {
+     "mae": 7.38,
+     "r": 0.675
+    },
+    "baseline_prior_wins": {
+     "mae": 9.45,
+     "r": 0.541
+    }
+   },
+   {
+    "season": 2025,
+    "n_assigned_players": 1225,
+    "roster_war_sum": 914.6,
+    "is_holdout": true,
+    "raw": {
+     "mae": 7.73,
+     "r": 0.583
+    },
+    "recentered": {
+     "mae": 7.76,
+     "r": 0.583
+    },
+    "cohort_recentered": {
+     "mae": 7.71,
+     "r": 0.58
+    },
+    "baseline_prior_wins": {
+     "mae": 7.24,
+     "r": 0.705
+    }
+   }
+  ],
+  "ship_decision": {
+   "challenger": "cohort intercepts (side x age band) + recentering",
+   "incumbent": "uniform league-sum recentering (shipped 2026-06-12)",
+   "holdout_season": 2025,
+   "challenger_wins": true,
+   "holdout_mae": {
+    "raw": 7.73,
+    "recentered": 7.76,
+    "cohort_recentered": 7.71,
+    "baseline_prior_wins": 7.24
+   }
+  }
  }
 }

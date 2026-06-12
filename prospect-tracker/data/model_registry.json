@@ -358,10 +358,10 @@
    "predicts": "first-projected-season team wins (roster bWAR roll-up + 47.7 replacement baseline)",
    "champion": "roster_war_rollup_v1 (Gate-1-validated player engine, summed; prospects join at ETA)",
    "baseline": "none yet - prior-season wins carry-forward (to be scored alongside)",
-   "metric": "level: league-sum accounting vs the 1000-WAR bWAR pool (committed); forward: MAE vs actual wins when the first projected season completes",
+   "metric": "retro backtest 2022-25 (no lookahead, actual-roster assignment): team wins MAE 7.3-10.2, r .44-.68; beats prior-wins carry-forward pooled (3 of 4 seasons; 2025 holdout lost 7.71 vs 7.24 - published); forward: MAE vs actual standings when the first projected season completes",
    "eval_artifact": "data/team_outlook_eval.json",
    "verdict": "provisional",
-   "notes": "2026-06-12 owner escalation (best team read 83 wins): measured the level bias - the rostered universe carries 560 of the league's 1000 bWAR (returning players produce ~940; new entrants ~61, covered by the ETA-prospect block), a uniform -14.6 wins/team. Shipped additive league-sum recentering (per-team depth allowance; ordering untouched, spread stays projection-compressed) + W-L display. Accounting in the artifact. Cohort-level recalibration (playing-time normalization, age x role intercepts) needs the retro point-in-time backtest - queued, pre-register before fitting. First forward-scoreable: end of the 2027 season."
+   "notes": "2026-06-12 v2 (retro-backtest-driven, proj_backtest.py): the 83-win-Dodgers level bug had two roots - the exposure-floor universe hid ~40% of league WAR from the roll-up, and the live path summed the ML quantile heads whose median-like points total ~520 league WAR vs the champion mean ~1,100 (right-skew). Roll-up now sums champion means (warY1Champ) + sub-floor depth pool + cohort intercepts (side x age, fit 2022-24, won the 2025 holdout 7.71 vs 7.76); league sums to 2,430 with remainder ~0. Player-level engine measured near-unbiased (pooled bias -0.04, n=8,866). Artifact carries the full retro block."
   }
  ],
  "problems": []
