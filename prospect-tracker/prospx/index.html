@@ -33461,11 +33461,17 @@ function _resolvePitchPlot(sc, compoundKey) {
     }
     if (entry.top && (entry.top.points || []).length) return entry.top;
   }
-  // Sidecar advertised but not loaded - fire the fetch.
+  // v32 - PER-PLAYER sidecar fetch. The monolithic pitch_plots.json
+  // reached 411MB (918 pitchers x ~450KB of per-pitch coordinates) and
+  // one card open pulled all of it; the export now writes
+  // data/pitch_plots/{player_key}.json and the boot carries the key
+  // list (pitch_plots_keys) so absent players never even fetch.
+  _loadPitchPlotFor(rawKey);
+  // Legacy monolithic export still advertises the single slice - keep
+  // the old path so a stale data dir renders rather than breaking.
   if (DATA && DATA._slices && DATA._slices.pitch_plots
       && !(DATA.pitch_plots && Object.keys(DATA.pitch_plots).length)) {
     loadSlice("pitch_plots").then(() => {
-      // Trigger a re-render of the player detail panel if one is open.
       if (typeof renderPlayerDetail === "function"
           && state && state.view && state.view.type === "player" && state.view.key) {
         try { renderPlayerDetail(state.view.key); } catch (e) { /* ignored */ }
@@ -33473,6 +33479,29 @@ function _resolvePitchPlot(sc, compoundKey) {
     });
   }
   return null;
+}
+
+const _pitchPlotInFlight = {};
+function _loadPitchPlotFor(rawKey) {
+  if (!DATA || !DATA._slices_dir || !DATA._slices_dir.pitch_plots || !rawKey) return;
+  const keys = DATA.pitch_plots_keys;
+  if (Array.isArray(keys) && keys.length && !keys.includes(rawKey)) return;
+  DATA.pitch_plots = DATA.pitch_plots || {};
+  if (DATA.pitch_plots[rawKey] || _pitchPlotInFlight[rawKey]) return;
+  const base = DATA_URL.replace(/[^/]+$/, "") + DATA._slices_dir.pitch_plots;
+  const v = DATA.generated_at ? `?v=${encodeURIComponent(DATA.generated_at)}` : "";
+  _pitchPlotInFlight[rawKey] = fetch(base + encodeURIComponent(rawKey) + ".json" + v,
+                                     { cache: v ? "force-cache" : "no-cache" })
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(p => {
+      DATA.pitch_plots[rawKey] = p;
+      if (typeof renderPlayerDetail === "function"
+          && state && state.view && state.view.type === "player" && state.view.key) {
+        try { renderPlayerDetail(state.view.key); } catch (e) { /* ignored */ }
+      }
+    })
+    .catch(e => console.warn("pitch plot fetch failed:", rawKey, e))
+    .finally(() => { delete _pitchPlotInFlight[rawKey]; });
 }
 
 function makePitchMovementPlot(sc, playerKey) {
