@@ -16,13 +16,16 @@ name: Build & deploy eephus.io
 # (GitHub evicts after ~7 idle days; the cold-start path then rebuilds
 # from sources via the full pipeline). The deploy is gated on pytest.
 #
-# PRODUCTION NOTE (2026-06-12 audit): eephus.io currently serves a
-# STALE single-file build from an nginx box that nothing updates. This
-# workflow keeps the GitHub Pages copy complete and current nightly.
-# To make eephus.io itself auto-update, either point its DNS at GitHub
-# Pages (Settings -> Pages -> custom domain, then enable Pages with
-# source "GitHub Actions") or have the nginx host pull the Pages build
-# nightly. Both need owner access - neither can be wired from the repo.
+# PRODUCTION NOTE (2026-06-12 audit): eephus.io serves from an nginx
+# box. Two auto-refresh paths, both documented in
+# prospect-tracker/deploy/README.md:
+#   1. The server builds itself nightly (deploy/nightly-build.sh + cron)
+#      - then this workflow is just CI + an optional Pages mirror.
+#   2. This workflow rsyncs the built site to the server over SSH -
+#      activates automatically once the DEPLOY_SSH_KEY /
+#      DEPLOY_SSH_HOST / DEPLOY_WEBROOT secrets exist.
+# The GitHub Pages steps are continue-on-error so a repo with Pages
+# disabled still builds, gates, and SSH-publishes.
 
 on:
   push:
@@ -120,11 +123,37 @@ jobs:
           [ -d data/pitch_plots ] && cp -r data/pitch_plots _site/data/pitch_plots
           du -sh _site
 
+      - name: Publish to server over SSH (Option 2 - see deploy/README.md)
+        # Activates only when the deploy secrets exist; otherwise logs a
+        # skip. rsync --delete keeps the webroot an exact mirror of the
+        # staged site (and ONLY the staged site - never the repo).
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_WEBROOT: ${{ secrets.DEPLOY_WEBROOT }}
+        run: |
+          if [ -z "$DEPLOY_SSH_KEY" ] || [ -z "$DEPLOY_SSH_HOST" ] || [ -z "$DEPLOY_WEBROOT" ]; then
+            echo "SSH deploy secrets not configured - skipping server publish."
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/eephus_deploy
+          chmod 600 ~/.ssh/eephus_deploy
+          ssh-keyscan -H "${DEPLOY_SSH_HOST#*@}" >> ~/.ssh/known_hosts 2>/dev/null || true
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/eephus_deploy -o StrictHostKeyChecking=accept-new" \
+            _site/ "$DEPLOY_SSH_HOST:$DEPLOY_WEBROOT/"
+          echo "published to $DEPLOY_SSH_HOST:$DEPLOY_WEBROOT"
+
+      # Optional Pages mirror - tolerant of Pages being disabled.
       - uses: actions/configure-pages@v5
+        continue-on-error: true
 
       - uses: actions/upload-pages-artifact@v3
+        continue-on-error: true
         with:
           path: prospect-tracker/_site
 
       - id: deployment
         uses: actions/deploy-pages@v4
+        continue-on-error: true
