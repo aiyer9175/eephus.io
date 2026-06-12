@@ -70,6 +70,7 @@ def test_signing_event_first_seen_is_stable(fa_db):
 
 
 def test_option_declined_vs_exercised(fa_db):
+    import datetime
     import fa_pipeline
     prior = {
         "opt_in_guy":  _member("opt_in_guy", "Opt In Guy", "pending_option",
@@ -78,11 +79,44 @@ def test_option_declined_vs_exercised(fa_db):
                                option_price_usd=15_000_000),
     }
     # Declined: re-listed as a locked UFA. Exercised: gone from the page.
+    # as_of inside the Oct-Jan option window (decisions due days after
+    # the World Series) - outside it the inference is gated off.
     avail = [_member("opt_out_guy", "Opt Out Guy", "locked")]
-    out = fa_pipeline.track_winter_events(YEAR, prior, avail, signed_rows=[])
+    out = fa_pipeline.track_winter_events(YEAR, prior, avail, signed_rows=[],
+                                          as_of=datetime.date(YEAR - 1, 11, 5))
     assert out["inserted"] == 2
     types = {e["player_key"]: e["event_type"] for e in fa_db.load_fa_events(YEAR)}
     assert types == {"opt_out_guy": "option_declined", "opt_in_guy": "option_exercised"}
+
+
+def test_option_inference_gated_outside_winter_window(fa_db):
+    """The 2026-06-12 post-mortem pin: a June page restructure dropped
+    every pending-option row at once and the disappearance heuristic
+    mass-fired 77 false option_exercised events. Outside Oct-Jan the
+    option branches must emit NOTHING - a vanished row in June is page
+    noise, not an exercise."""
+    import datetime
+    import fa_pipeline
+    prior = {f"opt_{i}": _member(f"opt_{i}", f"Opt {i}", "pending_option")
+             for i in range(10)}
+    out = fa_pipeline.track_winter_events(
+        YEAR, prior, [_member("bystander", "By Stander", "locked")],
+        signed_rows=[], as_of=datetime.date(YEAR - 1, 6, 12))
+    assert out["inserted"] == 0
+    assert fa_db.load_fa_events(YEAR) == []
+
+
+def test_option_inference_skipped_on_empty_page(fa_db):
+    """An empty available page is a scrape failure, not a mass exercise -
+    option inference must not run against it even in-window."""
+    import datetime
+    import fa_pipeline
+    prior = {f"opt_{i}": _member(f"opt_{i}", f"Opt {i}", "pending_option")
+             for i in range(5)}
+    out = fa_pipeline.track_winter_events(YEAR, prior, [], signed_rows=[],
+                                          as_of=datetime.date(YEAR - 1, 11, 10))
+    assert out["inserted"] == 0
+    assert fa_db.load_fa_events(YEAR) == []
 
 
 def test_pending_player_who_signed_is_not_exercised(fa_db):

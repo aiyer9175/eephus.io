@@ -42,6 +42,7 @@ MODEL_GLOSSARY = {
     "overseas_translation": ["overseas_posting_class"],
     "statcast_plus": ["statcast_plus"],
     "stuff_plus_external": ["stuff_grade_plus"],
+    "stuff_plus_aaa": ["stuff_plus_aaa"],
     "swing_plus_external": ["swing_plus"],
     "spotlights_movement": ["spotlights", "spotlight_age_cap"],
     "org_tendencies": ["org_tendencies"],

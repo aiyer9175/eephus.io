@@ -27,6 +27,9 @@ Will Cahoon's model via data/swing_plus.json).
              slider data prospect cards carry.
   SWING+     joined from data/swing_plus.json where scored (MLB bat
              tracking 2024+ only - the documented boundary).
+  AAA STUFF+ joined from data/stuff_plus_aaa.json for ex-PROSPX
+             pitchers (the in-house pitch-quality model; origin gate
+             keeps vets' rehab-stint AAA pitches off their pages).
 
 Artifact: data/mlb_player_detail.json (single sidecar, lazy-fetched by
 assets/projections.js on first player view). Wired into run_monthly
@@ -257,6 +260,12 @@ def build_payload() -> dict:
         swing = sp.get("players") or {}
     except (OSError, ValueError):
         pass
+    aaa_stuff = {}
+    try:
+        st = json.loads((DATA_DIR / "stuff_plus_aaa.json").read_text(encoding="utf-8"))
+        aaa_stuff = st.get("players") or {}
+    except (OSError, ValueError):
+        pass
     origins = _debut_origins()
 
     all_keys = [v["key"] for v in proj.get("vets") or []] + list(members)
@@ -322,16 +331,26 @@ def build_payload() -> dict:
         if sw and (not p["isPit"] or p.get("twoWay")):
             p["swingPlus"] = sw["swing_plus"]
             p["swingN"] = sw["n_swings"]
+        # In-house AAA Stuff+ - recent graduates only (the ex-PROSPX origin
+        # gate keeps a vet's rehab-stint AAA pitches off his page).
+        st = aaa_stuff.get(str(mlbam))
+        if st and (p["isPit"] or p.get("twoWay")) and p.get("origin"):
+            p["aaaStuffPlus"] = st["stuff_plus"]
+            p["aaaStuffN"] = st["n_pitches"]
+            p["aaaStuffSeason"] = st["season"]
     return {
         "generated_at": date.today().isoformat(),
         "n_players": len(players),
         "coverage": {"career": n_car, "statcast": n_sc, "arsenal": n_ar,
                      "swing_plus": sum(1 for p in players.values()
-                                       if p.get("swingPlus") is not None)},
+                                       if p.get("swingPlus") is not None),
+                     "aaa_stuff_plus": sum(1 for p in players.values()
+                                           if p.get("aaaStuffPlus") is not None)},
         "notes": [
             "career: MLB season lines (StatsAPI) + per-season bWAR (war_daily)",
             "statcast: Savant leaderboard percentiles within the season's qualified pool; pitcher contact metrics invert (suppression = good)",
             "swing_plus: Will Cahoon's model, MLB bat tracking 2024+ only",
+            "aaa_stuff_plus: in-house AAA pitch-quality model (stuff_plus_aaa.py), ex-PROSPX pitchers' latest tracked AAA season",
             "fa fields attach for current class members; verdict/dealPlus from the gate-validated market model",
         ],
         "players": players,

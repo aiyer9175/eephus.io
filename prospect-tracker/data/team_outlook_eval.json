@@ -1,0 +1,30 @@
+{
+ "generated_at": "2026-06-12",
+ "first_season": 2027,
+ "league_sum_accounting": {
+  "roster_war_sum": 559.7,
+  "league_war_benchmark": 1000,
+  "benchmark_basis": "actual league bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily)",
+  "raw_wins_sum": 1990.5,
+  "target_wins_sum": 2430,
+  "recenter_wins_per_team": 14.65,
+  "coverage_decomposition_2025": {
+   "returning_player_war": 940,
+   "new_entrant_war": 61,
+   "new_entrant_players": 253,
+   "note": "new-entrant WAR is covered by the ETA-prospect block; the level gap lives in the veteran engine (regression + shrunk playing time + exposure floors)"
+  }
+ },
+ "calibration": {
+  "kind": "additive league-sum recentering (uniform per-team depth allowance)",
+  "limitations": [
+   "uniform allowance ignores org depth quality - good orgs likely capture more of the unmodeled WAR",
+   "spread stays projection-compressed; cohort-level recalibration needs the retro point-in-time backtest (queued)"
+  ]
+ },
+ "forward_gate": {
+  "status": "pending",
+  "first_scoreable": "end of the 2027 season",
+  "metric": "MAE vs actual wins; baseline = prior-season wins carry-forward"
+ }
+}

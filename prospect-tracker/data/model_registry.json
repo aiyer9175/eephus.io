@@ -1,6 +1,6 @@
 {
  "version": "2026-06-11",
- "checked_at": "2026-06-11",
+ "checked_at": "2026-06-12",
  "verdict_enum": [
   "validated",
   "provisional",
@@ -24,9 +24,9 @@
    "eval_artifact": "data/fa_gate1_eval.json",
    "verdict": "validated",
    "notes": "Gate 1 PASSED: WAR 0.627 vs 0.728; coverage 0.800",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 1
   },
   {
    "model_id": "fa_war_paths_decay",
@@ -38,7 +38,7 @@
    "eval_artifact": "data/proj_horizon_eval.json",
    "verdict": "validated",
    "notes": "SHIPPED 2026-06-11 under best-model-wins: dev bases + gate targets + touched-once 2022-2024 holdout all beat the champion (gate-targets h1 MAE 0.557 vs 0.627; holdout pooled coverage 0.81-0.82 vs 0.67-0.77; survived coverage 0.43-0.67 vs 0.32-0.44; pinball better everywhere). DISCLOSED: long-horizon star bias ~0.2 WAR deeper than champion (zero-inflated labels pull medians; star MAE equal) - follow-up: mean-head or star-slice recalibration. Bundle model/proj_lgbm hash 442428a6498b1426; historical (Gate-2) enrichment uses point-in-time bundles (proj_ml.train_cached), never the live bundle. STAR MEAN BLEND (2026-06-11 roadmap push): the disclosed long-h star miss is now half-corrected at h5 via a post-hoc quantile-implied-mean blend on the EX-ANTE star slice (lambda_5=1.0; dev bias -0.825 -> -0.743, star MAE down; heads untouched, train hash unchanged). PROTOCOL HONESTY: the dev-fitted h2 lambda FAILED holdout confirmation (star bias worsened OOW) and was dropped; h5 is unconfirmable on the 2022-24 holdout (immature labels) and ships dev-validated with that disclosure - first holdout look when 2027+ labels complete. data/proj_star_blend.json.",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -52,9 +52,9 @@
    "eval_artifact": "data/fa_gate2_eval.json",
    "verdict": "validated",
    "notes": "Phase 2 (2026-06-11): targets/anchors/series moved to the deferral-adjusted NPV basis - Gate 2 improved (guarantee 10.06 vs comps 11.19; AAV 3.09; years 0.436). LightGBM challenger (fa_mkt_lgbm_v1, monotonic economic constraints, champion-stacked) LOST all three ship criteria (10.16 / 85.6 mega / 0.505 years) - committed in the artifact; transparent OLS retains. Deferral coverage audit clean (every >=200M deal has a ledger entry; 26 entries pending owner spot-check).",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 1
   },
   {
    "model_id": "fa_rational_value",
@@ -66,9 +66,9 @@
    "eval_artifact": "data/fa_gate2_eval.json",
    "verdict": "provisional",
    "notes": "convex pricing at the NPV-basis winter $/WAR; verdict terciles recalibrated to the NPV corpus (value >= 160, overpay < 75; was 185/85 on sticker). Escalation stays flat-5% - the fitted forecasts lost their eval.",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 1
   },
   {
    "model_id": "fa_dpw_series",
@@ -80,9 +80,9 @@
    "eval_artifact": "data/dpw_forecast_eval.json",
    "verdict": "validated",
    "notes": "NPV-basis numerator since Phase 2. Next-winter FORECAST challenge measured (data/dpw_forecast_eval.json): flat-5% carry MAPE 0.102 BEAT fitted trend (0.122) and trend+CBT (0.132) - incumbent assumption retains; candidates stay implemented in winter_dpw.",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 1
   },
   {
    "model_id": "fa_team_fit",
@@ -94,9 +94,9 @@
    "eval_artifact": "data/fa_gate3_eval.json",
    "verdict": "provisional",
    "notes": "GATE 3 (first fit backtest ever): v2 hand weights barely beat random (MRR .142 vs .133), LOST to behavior-alone (.152). Fitted logistic (behavior .67) hit MRR .165 but was nearly player-independent (LAD topped all 133 pitcher lists). Shipped mix: gate-equivalent-or-better (MRR .167) AND player-discriminative - full comparison in the artifact. Caveats: reduced ex-ante analog (roster need/window not reconstructable); incumbency excluded by product design (ceiling MRR .270, measured).",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 1
   },
   {
    "model_id": "fa_penter",
@@ -108,9 +108,9 @@
    "eval_artifact": "data/fa_gate2_eval.json",
    "verdict": "provisional",
    "notes": "WS-2d (2026-06-11): player/club option P(enter) now priced from the Gate-2-validated market band distribution (P(projAAV vs option price) under the empirical-residual log-normal) - replacing the crude $-gap logistic for those types; mutual/conditional keep explicit priors. DECISION-level validation remains blocked on the historical option-decision data lift; the 2026-27 winter's logged fa_events are the first live shakedown. Verdict provisional: inputs validated, decisions not yet.",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 1
   },
   {
    "model_id": "fa_qo_pick_tax",
@@ -122,7 +122,7 @@
    "eval_artifact": "data/draft_slot_curve.json",
    "verdict": "provisional",
    "notes": "Phase 4b WS-8 (2026-06-11): re-priced on the REALIZED slot curve - replaces the thin platform FV-at-slot median chain. DISCLOSED: pricing the expected path through the convex tier curve is a LOWER BOUND on expected value (Jensen; the rare-hit mass prices above linear) - consistent across slots. QO ACCEPTANCE model (WS-2e) still deferred: qo_history lacks per-player offered rosters; constant base rate remains the only honest acceptance model.",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -136,7 +136,7 @@
    "eval_artifact": "data/proj_horizon_eval.json",
    "verdict": "validated",
    "notes": "inherits the Phase-1 ship verdict; bands now from quantile heads (no zero floor)",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -150,7 +150,7 @@
    "eval_artifact": "data/prospect_path_eval.json",
    "verdict": "provisional",
    "notes": "Phase 4b WS-7 + 2026-06-11 improvement sweep: fv_outcome_v1 RETAINS against ridge, LightGBM, AND a linear mean recalibration - every challenger lost its pre-stated dual gate (the scouting consensus ranks better than any stat-line model tried; rho .210 vs .150-.156). The recalibration is MEASURED and committed unshipped: it fixes the mean bias (+0.29 -> +0.04, MAE -0.08) but the pooled forward-chained slope worsens (.78 -> .64; the thin 2019 fold's noisy fit dominates). Documented next candidate: intercept-only correction with a min-train-n guard, pre-registered before the next eval. Calibration block lives in the artifact (ship: false); proj_export applies NOTHING.",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -164,9 +164,9 @@
    "eval_artifact": "data/surplus_backtest_real.json",
    "verdict": "validated",
    "notes": "WS-6 (2026-06-11): the Phase-0 margin overshoot (raw slope 0.51 full/0.55 resolved, bias -6M) is now CORRECTED by a real-data isotonic layer (value_framework calibration block, 25 knots, fit on the resolved 2017-19 pool n=2,239): leave-one-year-out held-out slope 0.96, bias -0.11M, PIT coverage 0.67->0.86. Raw slope had already improved to 0.64 after the Phase-2 NPV $/WAR re-anchor. FV55 hitter SV 41.1M -> 21.8M. apply_calibration wraps every public surplus consumer; backtests always score the RAW layer (no circularity). POSITIONAL ANCHORS measured and PARKED: C/MI outperform + SP underperform directionally at FV50 (C +1.04 vs SP +0.38 WAR/yr) but cells are n=6-28 above FV50 - too thin to ship; the role split already captures the dominant axis.",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 1
   },
   {
    "model_id": "fv_to_war_anchors",
@@ -178,9 +178,9 @@
    "eval_artifact": "data/value_framework_fitted.json",
    "verdict": "validated",
    "notes": "no positional stratification yet (Phase 4 WS-6); top tiers thin WS-6 positional-stratification diagnostic measured + parked (see prospect_surplus row): per-position cells too thin above FV50 to beat the pooled+role fit.",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 4
+   "artifact_age_days": 5
   },
   {
    "model_id": "wag",
@@ -192,9 +192,9 @@
    "eval_artifact": "data/value_framework_fitted.json",
    "verdict": "validated",
    "notes": "the template: distributionally validated, auto-propagates recalibrations",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 4
+   "artifact_age_days": 5
   },
   {
    "model_id": "consensus_fv",
@@ -206,7 +206,7 @@
    "eval_artifact": "data/consensus_weight_eval.json",
    "verdict": "validated",
    "notes": "WS-5 (2026-06-11): vintage-disciplined A/B (weights for board-year Y from cohorts resolved before Y only) - weighted beat equal on BOTH pooled metrics (Spearman .2675 vs .2657, AUC .767 vs .759, n=3,127). SURPRISE FINDING: the resolved common sets favor MLB PIPELINE over FanGraphs (weights drift toward equal in later vintages); the earlier 'FG measurably better' claim did not survive the vintage-disciplined measurement. Weights shrunk k=150 toward equal, clamped [0.6,1.5], vintage-frozen in data/source_weights.json (only move when a new base year resolves); sources without history pinned 1.0. Mechanics: consensus.compute_consensus_point source_weights kwarg; dispersion stats stay unweighted. TYPE-CONDITIONED WEIGHTS REJECTED (2026-06-11): separate hitter/pitcher accuracy weights (same estimator, same vintage rule) LOST to the shipped global weighting on both pooled metrics (Spearman .2705 vs .2717, AUC .7604 vs .7634, n=3,127) - the per-type common sets are too thin to beat the shrinkage. Loss committed: type_conditioned_ab block in the eval artifact (tools/consensus_type_ab.py).",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -220,7 +220,7 @@
    "eval_artifact": "data/source_backtest.json",
    "verdict": "validated",
    "notes": "auto-reruns monthly; newer sources insufficient-history by design",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -234,7 +234,7 @@
    "eval_artifact": "data/eta_eval.json",
    "verdict": "validated",
    "notes": "Phase 4b WS-8 (2026-06-11): FIRST scoring vs actual debuts. v38 hand-set bases ran ~1.5y LATE on debuted players; bases recalibrated to censoring-aware KM medians (washed-out players never leave the risk set - NOT survivor medians). Forward-chained on identical rows: MAE 1.448 vs 1.993, within-1y .571 vs .405. DISCLOSED trade: overdue censored-actives 803->904 of 2,345. DSL base stays hand-set (debut curve never crosses 50%). Live signals (SC+/health/org-tendency nudges) not reconstructable per vintage - unscored. Reruns monthly. LEVEL-NORM PARK ADJUSTMENT DEFERRED (documented): needs full-season AAA/AA ball-by-ball exports that are not on disk; export_aaa_ball_by_ball.py exists, the season-scale fetch is the lift.",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -248,7 +248,7 @@
    "eval_artifact": "data/farm_grade_eval.json",
    "verdict": "provisional",
    "notes": "Phase 4b WS-8 (2026-06-11): REDUCED ANALOG (grades were never snapshotted - the Gate-3 pattern): ranking orgs by vintage surplus mass predicts realized graduate WAR at mean Spearman .508 vs count baseline .240 (wins all 5 vintages). HONEST NOTE: simple FV50+ top-end depth nearly ties (.495) - the convex surplus weighting, not the rest of the tree, carries the signal. The literal v40 letter remains unvalidated as a letter; verdict stays provisional until grades accumulate their own vintage trail.",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -262,7 +262,7 @@
    "eval_artifact": "data/draft_slot_curve.json",
    "verdict": "validated",
    "notes": "Phase 4b WS-8 (2026-06-11): the hand-set table was never realized-anchored and UNDERSHOOTS resolved 2005-14 career means ~3x at every slot (pick 1: 28.4 realized vs 9.0). Live lookup = fitted FIRST-6 curve (matches the grad career-to-date comparison window + the QO control-window basis). 2015-18 holdout disclosed as censoring/COVID-confounded diagnostic (windows count from debut), not the ship criterion. Unsigned picks excluded via re-draft detection (404 of 7,000).",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -276,7 +276,7 @@
    "eval_artifact": "data/overseas_translation_eval.json",
    "verdict": "provisional",
    "notes": "Phase 4b WS-8 (2026-06-11): the NPB pitcher haircut was badly optimistic (real ERA ratio 1.696 vs the hand-set 1.25); KBO was slightly harsh. NOT SHIPPED (documented lifts): hitter wRC+ factor (needs per-season foreign league offense context - raw OPS ratios 0.802 NPB / 0.819 KBO reported as analogs), fb_velo_delta (no historical velo source). Exclusions counted in the artifact; the transition ledger is owner-extendable.",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -290,7 +290,7 @@
    "eval_artifact": "data/statcast_plus_eval.json",
    "verdict": "provisional",
    "notes": "Phase 4b WS-8 (2026-06-11): WEAK forward signal, published as required - r ~ .12-.17 vs first-MLB OPS/ERA, ~0 vs 2y bWAR for hitters (n~50/side per outcome). Consistent with the ISO+ r=.24 prior. SC+ stays descriptive; downstream consumers (breakout gate, ETA nudge, spotlight boost) must treat it as a tiebreaker. Zone-discipline half of the composite has no historical source (gap documented); the literal composite's own forward trail starts with the 2026 per-season rows.",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -304,6 +304,17 @@
    "eval_artifact": null,
    "verdict": "unvalidated",
    "notes": "Phase 4b WS-8 (2026-06-11): local validation BLOCKED on data - tjStuff+ consumes per-pitch kinematics and no historical archive exists for prospects' pre-debut pitches (Savant minors tracking is AAA-2023+ aggregates, not per-pitch history per graduate). The lift resolves with time: per-season Stf+/statcast rows began persisting in 2026; the first scoreable cohort arrives when those prospects debut. Until then the external model stays consumed-as-is and labeled so."
+  },
+  {
+   "model_id": "stuff_plus_aaa",
+   "surface": "PROSPX pitcher cards (aStuff+ pill) + MLB player pages (ex-PROSPX graduates)",
+   "predicts": "per-pitch run value from AAA kinematics (physics only, no pitch-type identity, no results)",
+   "champion": "stuff_plus_aaa v1 (in-house LightGBM, AAA 2023+ per-pitch detail)",
+   "baseline": "season-out OOS correlation must be nonzero; forward gate vs graduates' first-MLB outcomes published whatever it says",
+   "metric": "pitch- and pitcher-level OOS r (train 2023-24 -> validate 2025); forward: final-AAA aStuff+ vs first-MLB ERA/K%, debut cohorts 2024+",
+   "eval_artifact": "data/stuff_plus_aaa_eval.json",
+   "verdict": "provisional",
+   "notes": "2026-06-12 SHIPPED: trained on 1.19M AAA pitches (2023-24), validated season-out on 571K 2025 pitches - pitch-level r .021 (per-pitch RV is mostly batted-ball noise; expected scale), pitcher-level r .280 (n=638). Forward gate (graduates 2024+, strictly pre-debut AAA season, >=100 MLB BF): r .230 vs first-MLB ERA (inv), r .550 vs first-MLB K% (n=17 - small, published as required). 1,372 pitchers in the sidecar. Agreement check vs external tjStuff+ deferred until per-season MLB Stf+ rows accumulate (documented). Provisional per the SC+ precedent: real measurement, small forward cohort."
   },
   {
    "model_id": "swing_plus_external",
@@ -337,20 +348,20 @@
    "eval_artifact": "data/org_tendencies.json",
    "verdict": "provisional",
    "notes": "deliberately descriptive; no predictive claims made or measured",
-   "last_checked": "2026-06-11",
+   "last_checked": "2026-06-12",
    "stale": false,
    "artifact_age_days": 0
   },
   {
    "model_id": "team_win_projections",
-   "surface": "/projections/ Team Outlook view + org dashboards",
+   "surface": "/projections/ Team Outlook view (standalone /teams/ org dashboard merged in 2026-06-12)",
    "predicts": "first-projected-season team wins (roster bWAR roll-up + 47.7 replacement baseline)",
    "champion": "roster_war_rollup_v1 (Gate-1-validated player engine, summed; prospects join at ETA)",
    "baseline": "none yet - prior-season wins carry-forward (to be scored alongside)",
-   "metric": "none yet - forward gate: MAE vs actual wins when the first projected season completes",
-   "eval_artifact": null,
-   "verdict": "unvalidated",
-   "notes": "NEW 2026-06-11 (roadmap push). PRE-FA frame disclosed on the surface (winter class unassigned; sub-floor players = replacement) - read as ranks. First scoreable: end of the 2027 season; a point-in-time backtest needs historical roster reconstructions (documented lift)."
+   "metric": "level: league-sum accounting vs the 1000-WAR bWAR pool (committed); forward: MAE vs actual wins when the first projected season completes",
+   "eval_artifact": "data/team_outlook_eval.json",
+   "verdict": "provisional",
+   "notes": "2026-06-12 owner escalation (best team read 83 wins): measured the level bias - the rostered universe carries 560 of the league's 1000 bWAR (returning players produce ~940; new entrants ~61, covered by the ETA-prospect block), a uniform -14.6 wins/team. Shipped additive league-sum recentering (per-team depth allowance; ordering untouched, spread stays projection-compressed) + W-L display. Accounting in the artifact. Cohort-level recalibration (playing-time normalization, age x role intercepts) needs the retro point-in-time backtest - queued, pre-register before fitting. First forward-scoreable: end of the 2027 season."
   }
  ],
  "problems": []

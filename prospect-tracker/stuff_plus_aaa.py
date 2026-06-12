@@ -25,8 +25,9 @@ Phase 4b: external Stuff+ can't score pre-debut pitchers; this can).
   VALIDATION data/stuff_plus_aaa_eval.json: (a) season-out pitch-level
              RV correlation; (b) the forward gate - graduates' final-AAA
              Stuff+ vs first-MLB ERA/K% (the arkmetric_forward_eval
-             pattern); (c) agreement with external tjStuff+ where both
-             exist. Published whatever it says.
+             pattern). Published whatever it says. The tjStuff+
+             agreement check is DEFERRED until per-season MLB Stf+ rows
+             accumulate (began persisting 2026; documented in registry).
 
 Sidecar: data/stuff_plus_aaa.json {mlbam: {stuff_plus, n_pitches,
 season}}. Surfaces: PROSPX pitcher cards (an in-house pill beside the
@@ -66,6 +67,7 @@ MIN_POOL_PITCHES = 300
 SHRINK_K = 300
 THROTTLE_S = 1.2
 SEED = 20260611
+CURRENT_TTL_DAYS = 14   # closed seasons immutable; current season refreshes
 
 SEARCH = ("https://baseballsavant.mlb.com/statcast-search-minors/csv?all=true"
           "&hfPT=&hfAB=&hfBBT=&hfPR=&hfZ=&stadium=&hfBBL=&hfNewZones="
@@ -103,8 +105,11 @@ def fetch_pitcher_season(mlbam: int, season: int, fetch: bool = True) -> Path | 
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     path = CACHE_DIR / f"{mlbam}_{season}.csv"
     if path.exists():
-        return path
-    if not fetch:
+        fresh = (season < date.today().year
+                 or time.time() - path.stat().st_mtime < CURRENT_TTL_DAYS * 86400)
+        if fresh or not fetch:
+            return path
+    elif not fetch:
         return None
     _throttle()
     url = SEARCH.format(season=season, mlbam=mlbam)
@@ -114,7 +119,7 @@ def fetch_pitcher_season(mlbam: int, season: int, fetch: bool = True) -> Path | 
             text = r.read().decode("utf-8-sig", "replace")
     except Exception as e:                                    # noqa: BLE001
         log.warning("aaa pitch fetch failed %s/%s: %s", mlbam, season, e)
-        return None
+        return path if path.exists() else None    # stale beats nothing
     rows = list(csv.DictReader(io.StringIO(text)))
     buf = io.StringIO()
     w = csv.DictWriter(buf, fieldnames=_KEEP)
@@ -217,8 +222,9 @@ def train(persist: bool = True) -> dict:
                   force_row_wise=True, n_jobs=4, verbose=-1)
     m = LGBMRegressor(**params)
     m.fit(Xtr, ytr)
-    pv = m.predict(Xva)
-    r = float(np.corrcoef(pv, yva)[0, 1]) if len(yva) > 100 else None
+    r = None
+    if len(yva) > 100:
+        r = float(np.corrcoef(m.predict(Xva), yva)[0, 1])
     # pitcher-level season-out check: mean predicted RV vs mean actual RV
     per = {}
     for path in CACHE_DIR.glob(f"*_{VALID_SEASON}.csv"):
@@ -227,7 +233,6 @@ def train(persist: bool = True) -> dict:
         if len(y) >= MIN_POOL_PITCHES:
             per[mid] = (float(np.mean(m.predict(np.asarray(X)))),
                         float(np.mean(y)), len(y))
-    import statistics as st
     pl_r = None
     if len(per) >= 20:
         a = [v[0] for v in per.values()]
@@ -274,6 +279,8 @@ def score(persist: bool = True) -> dict:
                 by_pitcher[mid] = {"rv": rv, "n": len(X), "season": season}
             if season == VALID_SEASON and len(X) >= MIN_POOL_PITCHES:
                 pool_rvs.append(rv)
+    if not pool_rvs:
+        raise RuntimeError("no qualified pool season cached - run --fetch first")
     mu = float(np.mean(pool_rvs))
     sd = float(np.std(pool_rvs)) or 1.0
     players = {}
@@ -292,6 +299,20 @@ def score(persist: bool = True) -> dict:
         OUT_PATH.write_text(json.dumps(payload, separators=(",", ":")),
                             encoding="utf-8")
         log.info("wrote %s (%d pitchers)", OUT_PATH, len(players))
+    return payload
+
+
+def refresh() -> dict:
+    """run_monthly hook: incremental current-season fetch (closed seasons
+    immutable in cache, current season on the TTL) + re-score + restamp
+    the forward eval. Never retrains - the shipping fit is hand-run with
+    its season-out eval."""
+    if not MODEL_PATH.exists():
+        log.info("aaa stuff+: no model artifact yet - skipping refresh")
+        return {}
+    fetch_all((date.today().year,))
+    payload = score()
+    forward_eval()
     return payload
 
 

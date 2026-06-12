@@ -460,7 +460,7 @@ def export_all() -> dict[str, int]:
         try:
             exports.append((f"fa_class_{y}.json", build_fa_class_payload(y)))
         except Exception:                                     # noqa: BLE001
-            log.exception("future class %d export failed — continuing", y)
+            log.exception("future class %d export failed - continuing", y)
     for name, payload in exports:
         raw = json.dumps(payload, separators=(",", ":"))
         (DATA_DIR / name).write_text(raw, encoding="utf-8")
