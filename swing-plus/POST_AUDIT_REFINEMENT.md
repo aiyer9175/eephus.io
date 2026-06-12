@@ -131,7 +131,27 @@ dispersion ⇔ high swing adaptation — same skill, viewed from the other end.
 the best available carrier of the skill at current sample. Re-pose the axis
 question at the 2026 refit with the decomposition re-run at larger n.
 
-## GO / NO-GO: **GO — engine v2.1 shipped**
+## Addendum TAIL (2026-06-11): elite-tail correction — engine v2.2
+
+Two surfaces tested (`pipeline/09_elite_tail.py`):
+
+**A) Skill-layer tier carry (the handoff's 2.2× suggestion): REJECTED.**
+Applying carry′ = 2.2 × PA/(PA+k) to top-decile-e2 hitters worsens elite-subset
+next-wOBA RMSE in every fold (−1.5/−3.8/−6.1). Diagnosis: the variance model's
+0.42 is *residual-on-residual* persistence; the skill estimate already
+overshoots elites at the t+1 horizon (league drift + aging live there), so
+amplifying the residual compounds the overshoot. The Skill/Luck display layer
+stays as-is.
+
+**B) Engine tail hinge (max(0, cur − seasonal P90)): PROMOTED for wOBA + OPS.**
+Overall OOS RMSE improves (wOBA +0.06, OPS **+0.64**) AND the real compression
+— OPS top-decile bias — drops **+17.4 → +13.6**. xwOBA hinge failed the bias
+bar (−0.2 → −1.6) and is not promoted. Effect on 2027: Yordan wOBA .361 → .372,
+Judge .353 → .354 — decompression lands on the true tail cases.
+
+Engine = **v2.2**: v2.1 + hinge_woba, hinge_ops. σ(ops) ±.083.
+
+## GO / NO-GO: **GO — engine v2.1 shipped** *(superseded: v2.2, see TAIL addendum)*
 
 avg + xwoba gain `attack_angle_std`, bb_pct gains `zone_seen`; all other specs
 unchanged; σ table updated (xwOBA ±.027, BB% ±.021, AVG ±.026). Approved
