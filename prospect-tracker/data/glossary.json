@@ -1,5 +1,5 @@
 {
- "version": "2026-06-11.3",
+ "version": "2026-06-12.1",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -445,6 +445,29 @@
    ]
   },
   {
+   "id": "stuff_plus_aaa",
+   "term": "AAA Stuff+ (aStuff+)",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "aStuff+",
+    "AAA Stuff+",
+    "in-house Stuff+"
+   ],
+   "priority": 41,
+   "definition": "In-house pitch-quality model for AAA pitchers; scores per-pitch kinematics against run value. 100 = qualified-AAA pool mean, 10 pts = 1 stdev, higher = better stuff.",
+   "methodology": "The platform's first in-house pitch-quality model, built to score stuff for pitchers who have not debuted (external Stuff+ models only cover MLB tracking). A LightGBM regressor is trained on Savant minors per-pitch detail (AAA, 2023 onward) to predict each pitch's run value from physics alone: velocity, spin, extension, arm-side-signed horizontal and vertical movement, release point, arm angle, and the velocity gap off the pitcher's primary fastball. No pitch-type labels and no results enter the features, so the score reads raw stuff, not usage or sequencing.\n\nA pitcher's score is his season mean predicted run value, shrunk toward the pool mean below 300 pitches, then scaled so 100 is the qualified-AAA pool mean and 10 points is one standard deviation. The model is validated season-out (train 2023-24, score 2025 out-of-sample) and gated forward against graduates' first-MLB outcomes; the eval ships in data/stuff_plus_aaa_eval.json whatever it says.\n\nDiffers from pStuff+ (peripheral results: K%, BB%, HR/9 vs level mean) and FVStuff+ (scouting-grade composite): aStuff+ measures the pitches themselves from tracking data.",
+   "formula": "aStuff+ = 100 + 10 · (μ_pool − RV̂_shrunk) / σ_pool\nwhere RV̂_shrunk = (n · RV̂ + 300 · μ_pool) / (n + 300)",
+   "example": "A AAA starter whose pitches grade 1 stdev better than the qualified pool over 1,500 tracked pitches posts an aStuff+ around 110; the same stuff over 150 pitches reads closer to 103 until the sample grows.",
+   "seeAlso": [
+    "stf_plus",
+    "stuff_grade_plus",
+    "statcast_plus"
+   ]
+  },
+  {
    "id": "stuff_grade_plus",
    "term": "FVStuff+",
    "category": "custom-index",
@@ -477,7 +500,6 @@
    ],
    "aliases": [
     "Sur+",
-    "SUR+",
     "TVI",
     "Surplus Plus",
     "Trade Value Index"
@@ -582,7 +604,6 @@
     "$/WAR",
     "Dollars per WAR",
     "dpw",
-    "DPW",
     "WAR price",
     "Tier rate"
    ],
@@ -925,7 +946,6 @@
    "aliases": [
     "Run",
     "Speed",
-    "RUN",
     "SPD"
    ],
    "priority": 99,
@@ -965,8 +985,7 @@
    ],
    "aliases": [
     "Throw",
-    "Arm",
-    "ARM"
+    "Arm"
    ],
    "priority": 99,
    "definition": "20-80 grade for arm strength and accuracy.",
@@ -1730,7 +1749,6 @@
    ],
    "aliases": [
     "SL",
-    "Sl",
     "Slider",
     "Sweeper"
    ],
@@ -1751,7 +1769,6 @@
    ],
    "aliases": [
     "CB",
-    "Cb",
     "Curveball",
     "Curve"
    ],
@@ -1772,7 +1789,6 @@
    ],
    "aliases": [
     "CH",
-    "Ch",
     "Changeup",
     "Splitter"
    ],
@@ -1811,7 +1827,6 @@
    ],
    "aliases": [
     "CT",
-    "Ct",
     "Cutter"
    ],
    "priority": 99,
@@ -2947,7 +2962,7 @@
    "aliases": [
     "Waiver claim",
     "Waiver",
-    "Rule 5",
+    "Rule 5 selection",
     "FA signing"
    ],
    "priority": 61,

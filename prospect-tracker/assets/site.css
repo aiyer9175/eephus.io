@@ -429,12 +429,17 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 }
 
 /* ---- mobile ---- */
+/* Phone exception to the one-line rule (the old width:100% + flex:1 rules
+   here predated it and blew the nowrap bar past the viewport on every
+   page). Brand + controls share the top line; the LINK strip drops to its
+   own full-width swipe row beneath. The failure the one-line rule fixed
+   was the CONTROLS landing on a cramped second row - they stay up top. */
 @media (max-width: 640px) {
-  .eephus-nav { gap: 8px; padding: 10px 1rem; }
-  .eephus-nav .eephus-links { margin-left: 0; width: 100%; }
+  .eephus-nav { flex-wrap: wrap; gap: 8px; row-gap: 4px; padding: 10px 1rem; }
+  .eephus-nav .eephus-links { order: 3; flex: 1 1 100%; margin-left: 0; }
   .eephus-nav .eephus-links a { padding: 8px 10px; }
-  .eephus-nav .eephus-nav-controls { width: 100%; }
-  .eephus-nav .eephus-nav-ctrl { flex: 1; justify-content: center; }
+  .eephus-nav .eephus-nav-controls { margin-left: auto; }
+  .eephus-nav .eephus-nav-ctrl { padding: 0 9px; min-height: 34px; }
   .eephus-wrap { padding: 0 1rem 3rem; }
   .hero { padding: 36px 0 24px; }
 }
@@ -762,8 +767,10 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .glossary-teaser { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border: 1px dashed var(--border); border-radius: var(--radius-sm); background: var(--bg-tertiary); font-family: var(--font-retro-mono); font-size: 13px; }
 .glossary-teaser a { color: var(--accent-navy); font-weight: 700; text-decoration: none; }
 
-/* Glossary + scatterplot teasers share a row. */
-.teaser-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+/* Glossary + scatterplot teasers share a row. minmax(0,1fr) so the
+   scatter teaser's nowrap sub-line (550px min-content) can't force the
+   track - and the page - past a phone viewport; the ellipsis engages. */
+.teaser-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 18px; }
 .teaser-row .glossary-teaser { margin: 0; }
 .scatter-teaser { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px dashed var(--border); border-radius: var(--radius-sm); background: var(--bg-tertiary); text-decoration: none; color: inherit; }
 .scatter-teaser .st-svg { flex: none; width: 92px; height: 40px; }
@@ -793,7 +800,8 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   .home-shell { grid-template-columns: 1fr; }
   .home-sidebar { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--border); }
   .home-main { padding: 0 16px 40px; }
-  .module-cols, .lead-story, .secondary-stories, .teaser-row { grid-template-columns: 1fr; }
+  .module-cols, .lead-story, .secondary-stories { grid-template-columns: 1fr; }
+  .teaser-row { grid-template-columns: minmax(0, 1fr); }
   .lead-story .lead-img { min-height: 160px; max-height: 240px; }
   .secondary-stories a { border-left: 0; border-top: 1px solid var(--border); }
   .sb-subnav { grid-template-columns: 1fr 1fr 1fr; }
@@ -1024,6 +1032,9 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 @media (max-width: 720px) {
   .fa-app .detail-table th, .fa-app .detail-table td { padding: 4px 6px; font-size: 11px; }
   .fa-app button.chip { padding: 3px 8px; font-size: 11px; }
+  /* Wide board tables scroll inside their own box on phones instead of
+     dragging the whole page sideways. */
+  .fa-app .detail-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
 
 /* ── GLOSSARY-PORT (generated; .gl-app-scoped prospx styles) ─────────── */

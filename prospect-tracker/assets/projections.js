@@ -227,18 +227,43 @@
       root.innerHTML = `<div class="state-message">Team outlook not exported yet - run <code>python proj_export.py</code>.</div>`;
       return;
     }
-    const body = rows.map((r, i) => `<tr>
+    // Org-dashboard columns (the retired /teams/ page, merged here
+    // 2026-06-12): farm rank + grade score, net active prospect surplus,
+    // top prospect, and the cross-module links. Rows without a baked
+    // farm block (older exports) degrade to the original columns.
+    const hasFarm = rows.some(r => r.farm);
+    const body = rows.map((r, i) => {
+      const f = r.farm || {};
+      const farmCell = f.farmRank != null
+        ? `<a href="/prospx/#tab=farm&farm=${encodeURIComponent(r.team)}" title="PROSPX farm system detail">#${f.farmRank}</a> <span class="fa-sub">${f.farmScore != null ? Math.round(f.farmScore) : ""}</span>`
+        : EM_DASH;
+      const surCell = f.farmSurplusMM != null
+        ? `<span class="${f.farmSurplusMM >= 0 ? "proj-pos" : "proj-neg"}" title="Net control-window NPV over the org's active prospect pool">$${Math.round(f.farmSurplusMM)}M</span>`
+        : EM_DASH;
+      const topCell = f.topProspect
+        ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(f.topProspect.key || "")}">${esc(f.topProspect.name)}</a> <span class="fa-sub">FV ${esc(String(f.topProspect.fv || "?"))}</span>`
+        : EM_DASH;
+      const openCell = `<a href="/prospx/#tab=farm&farm=${encodeURIComponent(r.team)}">farm</a> · <a href="/prospx/#tab=farm&farm=${encodeURIComponent(r.team)}" title="Org Tendencies tab inside farm detail">tendencies</a> · <a href="/fa/#view=fits&team=${encodeURIComponent(r.team)}">FA fits</a> · <a href="#team=${encodeURIComponent(r.team)}" data-team-filter="${esc(r.team)}">roster</a>`;
+      return `<tr>
       <td>${i + 1}</td>
       <td class="proj-player">${teamLogo(r.team)}<strong>${esc(r.team)}</strong></td>
       <td class="proj-war${warClass(r.war / 8)}">${r.war.toFixed(1)}</td>
       <td><strong>${r.wins.toFixed(0)}</strong></td>
       <td>${r.n}</td>
+      ${hasFarm ? `<td>${farmCell}</td><td>${surCell}</td><td>${topCell}</td>` : ""}
       <td class="fa-sub">${(r.top || []).map(p => `<a class="fa-player-link" href="#player=${encodeURIComponent(p.key)}">${esc(p.name)}</a> ${p.war.toFixed(1)}`).join(" · ")}</td>
-    </tr>`).join("");
-    root.innerHTML = `<div class="fa-note" style="margin:8px 0;">First projected season (${DATA.first_season}) roster bWAR -> projected wins at the 47.7 replacement baseline. PRE-FREE-AGENCY frame: the upcoming winter's class is unassigned, and sub-floor players count as replacement - read ranks, not absolute win totals. Forward gate: scored against ${DATA.first_season} standings when the season completes.</div>
+      ${hasFarm ? `<td class="fa-sub" style="white-space:nowrap;">${openCell}</td>` : ""}
+    </tr>`;
+    }).join("");
+    root.innerHTML = `<div class="fa-note" style="margin:8px 0;">First projected season (${DATA.first_season}) roster bWAR -> projected wins at the 47.7 replacement baseline. PRE-FREE-AGENCY frame: the upcoming winter's class is unassigned, and sub-floor players count as replacement - read ranks, not absolute win totals. Forward gate: scored against ${DATA.first_season} standings when the season completes.${hasFarm ? " Farm rank, surplus, and top prospect join from the PROSPX org models." : ""}</div>
       <table class="detail-table proj-table">
-      <thead><tr><th>#</th><th>Team</th><th>Roster WAR</th><th>Proj W</th><th>Players</th><th>Top projected</th></tr></thead>
+      <thead><tr><th>#</th><th>Team</th><th>Roster WAR</th><th>Proj W</th><th>Players</th>${hasFarm ? `<th title="PROSPX farm-system rank + grade score">Farm</th><th title="Net control-window NPV over the org's active prospect pool">Farm surplus</th><th>Top prospect</th>` : ""}<th>Top projected</th>${hasFarm ? "<th>Open</th>" : ""}</tr></thead>
       <tbody>${body}</tbody></table>`;
+    root.querySelectorAll("[data-team-filter]").forEach(a => a.onclick = (ev) => {
+      ev.preventDefault();
+      state.view = "players"; state.team = a.dataset.teamFilter;
+      syncToURL(); render();
+    });
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(root);
   }
 
@@ -530,6 +555,7 @@
       tile(`${(p.proj.war || []).length}y WAR`, `${fmtWar(p.proj.warTotal)}${p.proj.warTotalP10 != null ? `<span class="fa-band"> (${fmtWar(p.proj.warTotalP10)}-${fmtWar(p.proj.warTotalP90)})</span>` : ""}`);
     if (p.proj && p.proj.surNpv != null) tile("Surplus NPV", money(p.proj.surNpv), p.proj.surNpv >= 0 ? "proj-pos" : "proj-neg");
     if (p.swingPlus != null) tile("Swing+", `${p.swingPlus}<span class="fa-band"> n=${p.swingN}</span>`, p.swingPlus >= 105 ? "proj-pos" : p.swingPlus <= 95 ? "proj-neg" : "");
+    if (p.aaaStuffPlus != null) tile("aStuff+", `${Math.round(p.aaaStuffPlus)}<span class="fa-band"> AAA ${p.aaaStuffSeason}</span>`, p.aaaStuffPlus >= 110 ? "proj-pos" : p.aaaStuffPlus <= 90 ? "proj-neg" : "");
     if (p.fa && p.fa.projAav != null) tile("Proj AAV", money(p.fa.projAav));
     const contract = p.proj && p.proj.thru
       ? `signed thru ${p.proj.thru}${p.proj.aav ? ` · ${money(p.proj.aav)}/y` : ""}`
@@ -561,7 +587,7 @@
       ${faBlock(p)}
       ${careerTable(p)}
       ${p.twoWay && p.careerPit && p.careerPit.length ? careerTable({ ...p, career: p.careerPit, isPit: true }) : ""}
-      <div class="fa-note" style="margin-top:14px;">Projections: the FA module's Gate-1-validated engine (bands = empirical residual quantiles). Statcast percentiles vs the season's qualified MLB pool. ${p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)." : ""}</div>
+      <div class="fa-note" style="margin-top:14px;">Projections: the FA module's Gate-1-validated engine (bands = empirical residual quantiles). Statcast percentiles vs the season's qualified MLB pool. ${p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)." : ""}${p.aaaStuffPlus != null ? " aStuff+: in-house AAA pitch-quality model (per-pitch kinematics vs run value, latest tracked AAA season)." : ""}</div>
     </div>`;
     // hub strip (cross-module identity) - lazy, never blocks the paint
     if (window.EEPHUS_HUB) {
@@ -588,6 +614,8 @@
                    color: p.proj.surNpv >= 0 ? undefined : "#FF6B6B" });
     if (p.swingPlus != null)
       tiles.push({ label: "Swing+", value: String(Math.round(p.swingPlus)) });
+    if (p.aaaStuffPlus != null)
+      tiles.push({ label: "aStuff+", value: String(Math.round(p.aaaStuffPlus)) });
     if (p.fa && p.fa.projAav != null)
       tiles.push({ label: "proj AAV", value: money(p.fa.projAav) });
     const sections = [];

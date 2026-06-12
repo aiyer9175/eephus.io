@@ -94,18 +94,17 @@ def test_dark_theme_overrides_bg_hover(html_text):
 
 def test_fractional_font_sizes_bounded(html_text):
     # The legacy file shipped ~15 fractional sizes (8.5, 9.5, 10.5, 11.5,
-    # 12.5). Phase 1 stops the bleed: every NEW font-size should snap to
-    # the 7-step px scale. Allow a small grandfathered count so we don't
-    # block Phase 1 from shipping while Phase 2 cleans up the rest.
+    # 12.5) and the count crept to 73 across UI iterations. The 2026-06-12
+    # cleanup snapped ALL of them: 10.5/11.5/12.5 -> var(--fs-xs/sm/base),
+    # sub-scale micros (7.5/8.5/9.5) -> 8/9/10px. The cap is now 0: new
+    # font-sizes use the 7-step scale (or an integer px for micros the
+    # scale doesn't cover). Bumping this UP requires intent.
     fractional_pattern = re.compile(r"font-size:\s*\d+\.\d+px")
     matches = fractional_pattern.findall(html_text)
-    # Tighten this cap each cleanup pass. 70 is the post-Phase-1 floor
-    # after the v8 UI iteration (was 50; current count ~61). Phase 2
-    # per-page polish should bring this under 40, then to 0. Bumping
-    # it UP requires intent (new code shouldn't introduce more).
-    assert len(matches) <= 70, (
-        f"found {len(matches)} fractional font-sizes — Phase 1 caps this "
-        f"at 70. Snap new sizes to var(--fs-*). Examples: {matches[:5]}"
+    assert len(matches) == 0, (
+        f"found {len(matches)} fractional font-sizes — the 2026-06-12 "
+        f"cleanup brought this to 0. Snap new sizes to var(--fs-*). "
+        f"Examples: {matches[:5]}"
     )
 
 

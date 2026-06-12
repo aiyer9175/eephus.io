@@ -109,13 +109,15 @@ def _headshot_url(mlbam, px: int = 180) -> str | None:
 
 # Owner-set order (2026-06-11): Home, PROSPX, CollegeSavant (directly under
 # PROSPX), FA, Projections, Articles, Forums, Glossary, Team.
+# 2026-06-12: the standalone Teams module merged into MLB Projections
+# (Team Outlook view carries the org-dashboard columns); /teams/ now
+# redirects there and the nav entry is gone.
 NAV_ITEMS = [
     ("home",     "Home",             "/"),
     ("prospx",   "PROSPX",           "/prospx/"),
     ("collegesavant", "CollegeSavant", "/collegesavant/"),
     ("fa",       "Free Agency",      "/fa/"),
     ("projections", "Projections",   "/projections/"),
-    ("teams",    "Teams",            "/teams/"),
     ("articles", "Articles",         "/articles/"),
     ("forums",   "Forums",           "/forums/"),
     ("glossary", "Glossary",         "/glossary/"),
@@ -1670,47 +1672,25 @@ def build_team() -> str:
     return page("Developers - eephus.io", "team", body, "The team behind eephus.io.")
 
 # --------------------------------------------------------------------------- #
-# /teams/ - the cross-module org dashboard. One row per MLB org joining the
-# four org-level currencies the platform computes: projected wins (MLB
-# Projections team outlook), farm rank/score + farm surplus (PROSPX), and
-# winter behavior (FA team fits). Static build-time join - every cell deep-
-# links into the module that owns the number.
+# /teams/ - RETIRED standalone module (merged into MLB Projections
+# 2026-06-12). The org-dashboard columns (farm rank/score, farm surplus,
+# top prospect, cross-module links) now ride the Team Outlook view's
+# baked farm blocks (proj_export._org_farm_blocks). The URL stays alive
+# as a redirect so bookmarks and external links keep working.
 # --------------------------------------------------------------------------- #
-def build_teams(data: dict | None) -> str:
-    org_summary = {o["org"]: o for o in ((data or {}).get("org_summary") or [])}
-    outlook, first_season = {}, None
-    try:
-        mp = json.loads((DATA_DIR / "mlb_projections.json").read_text(encoding="utf-8"))
-        outlook = {r["team"]: r for r in (mp.get("team_outlook") or [])}
-        first_season = mp.get("first_season")
-    except (OSError, ValueError):
-        pass
-    rows = []
-    orgs = sorted(ORG_NAMES, key=lambda o: -(outlook.get(o, {}).get("wins") or 0))
-    for i, org in enumerate(orgs):
-        s, t = org_summary.get(org, {}), outlook.get(org, {})
-        top_p = (s.get("prospects") or [{}])[0]
-        top_m = (t.get("top") or [{}])[0]
-        sur = s.get("_active_surplus_net_mm")
-        rows.append(f"""<tr>
-  <td>{i + 1}</td>
-  <td class="teams-org">{_team_logo(org, "feed-logo")}<a href="/prospx/#tab=farm&amp;farm={org}"><strong>{ORG_NAMES[org]}</strong></a> <span class="fa-sub">{org}</span></td>
-  <td><a href="/projections/#view=teams" title="MLB Projections team outlook (pre-free-agency frame - read ranks, not absolute wins)"><strong>{t.get("wins") and f"{t['wins']:.0f}" or " - "}</strong></a> <span class="fa-sub">{t.get("war") is not None and f"{t['war']:.1f} WAR" or ""}</span></td>
-  <td><a href="/prospx/#tab=farm&amp;farm={org}" title="PROSPX farm system detail">{s.get("farm_rank") and f"#{s['farm_rank']}" or " - "}</a> <span class="fa-sub">{s.get("farm_score") is not None and f"{s['farm_score']:.0f}" or ""}</span></td>
-  <td class="{(sur or 0) >= 0 and "proj-pos" or "proj-neg"}">{sur is not None and f"${sur:.0f}M" or " - "}</td>
-  <td>{top_p.get("name") and f'<a href="/prospx/#player={html.escape(top_p.get("player_key") or "")}">{html.escape(top_p["name"])}</a> <span class="fa-sub">FV {html.escape(str(top_p.get("fv_label") or "?"))}</span>' or " - "}</td>
-  <td>{top_m.get("name") and f'<a href="/projections/#player={html.escape(top_m.get("key") or "")}">{html.escape(top_m["name"])}</a> <span class="fa-sub">{top_m.get("war") is not None and f"{top_m['war']:.1f}" or ""}</span>' or " - "}</td>
-  <td class="fa-sub"><a href="/prospx/#tab=farm&amp;farm={org}">farm</a> · <a href="/prospx/#tab=farm&amp;farm={org}" title="Org Tendencies tab inside farm detail">tendencies</a> · <a href="/fa/#view=fits&amp;team={org}">FA fits</a> · <a href="/projections/#team={org}">roster</a></td>
-</tr>""")
-    season_lbl = f" ({first_season})" if first_season else ""
-    body = f"""<div class="section-head"><h1>Teams</h1>
-  <p class="section-sub">All 30 orgs across the platform's org-level models - projected wins{season_lbl}, farm system, prospect surplus, and the winter market. Every number links into the module that computes it.</p></div>
-<div class="fa-note" style="margin-bottom:10px;">Projected wins use the PRE-free-agency roster frame (read ranks, not absolute totals; forward-gated against final standings). Farm surplus = net control-window NPV over the org's active prospect pool.</div>
-<table class="detail-table teams-table">
-<thead><tr><th>#</th><th>Team</th><th>Proj W</th><th>Farm</th><th>Farm surplus</th><th>Top prospect</th><th>Top projected</th><th>Open</th></tr></thead>
-<tbody>{"".join(rows)}</tbody></table>"""
-    return page("Teams - eephus.io", "teams", body,
-                "All 30 MLB organizations across eephus.io's models: projected wins, farm rank, prospect surplus, and free-agency fits.")
+def build_teams_redirect() -> str:
+    return """<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teams - eephus.io</title>
+<meta name="robots" content="noindex">
+<meta http-equiv="refresh" content="0; url=/projections/#view=teams">
+<script>location.replace("/projections/#view=teams");</script>
+</head><body>
+<p style="font-family:monospace;padding:2rem;">The Teams dashboard moved into
+<a href="/projections/#view=teams">MLB Projections &rarr; Team Outlook</a>.</p>
+</body></html>
+"""
 
 # --------------------------------------------------------------------------- #
 def _write(rel: str, content: str) -> None:
@@ -1736,7 +1716,7 @@ def main() -> None:
     _write("fa/index.html", build_fa())
     _write("projections/index.html", build_projections())
     _write("glossary/index.html", build_glossary())
-    _write("teams/index.html", build_teams(data))
+    _write("teams/index.html", build_teams_redirect())
     _write("team/index.html", build_team())
     print(f"done - {len(articles)} article(s).")
 

@@ -189,7 +189,8 @@ def refresh_current_class(class_year: int, force: bool = False) -> dict:
 
 
 def track_winter_events(class_year: int, prior: dict, available: list[dict],
-                        force: bool = False, signed_rows: list[dict] | None = None) -> dict:
+                        force: bool = False, signed_rows: list[dict] | None = None,
+                        as_of: date | None = None) -> dict:
     """Observe winter transitions and append them to the first-seen ledger.
 
     Spotrac publishes terms but no per-signing dates, so every event stamps
@@ -204,7 +205,18 @@ def track_winter_events(class_year: int, prior: dict, available: list[dict],
     as the exercise-probability heuristic): page variance can momentarily
     drop a row, but events are append-only with stable keys, so one noisy
     scrape cannot duplicate or re-date anything.
+
+    OPTION-WINDOW GATE (post-mortem 2026-06-12): a mid-June Spotrac page
+    restructure dropped every pending-option row at once and the
+    disappearance heuristic mass-fired 77 false option_exercised events,
+    flooding the wire and dimming live FA-board members. Option decisions
+    are a winter-window phenomenon (due days after the World Series), so
+    option_declined / option_exercised inference only runs Oct 1 - Jan 31
+    (``as_of`` injectable for tests). An empty available page additionally
+    skips option inference outright - no page, no observation.
     """
+    as_of = as_of or date.today()
+    option_window = as_of.month in (10, 11, 12, 1)
     avail_by_key = {p["player_key"]: p for p in available if p.get("player_key")}
     seen = {(e["player_key"], e["event_type"])
             for e in storage.load_fa_events(class_year)}
@@ -232,18 +244,30 @@ def track_winter_events(class_year: int, prior: dict, available: list[dict],
     signing_keys = ({s.get("player_key") for s in signed_rows}
                     | {k for k, t in seen if t == "signing"})
 
-    for key, p in prior.items():
-        if p.get("status") != "pending_option":
-            continue
-        now = avail_by_key.get(key)
-        base = {"player_name": p.get("player_name"), "position": p.get("position"),
-                "option_price_usd": p.get("option_price_usd")}
-        if now is not None and now.get("status") == "locked":
-            events.append({"player_key": key, "event_type": "option_declined",
-                           "payload": base})
-        elif now is None and key not in signing_keys:
-            events.append({"player_key": key, "event_type": "option_exercised",
-                           "payload": base})
+    if not option_window:
+        n_pending = sum(1 for p in prior.values()
+                        if p.get("status") == "pending_option")
+        if n_pending:
+            log.info("fa events %d: option inference skipped - %s is outside "
+                     "the Oct-Jan option window (%d pending options held)",
+                     class_year, as_of.isoformat(), n_pending)
+    elif not avail_by_key:
+        log.warning("fa events %d: available page came back empty - option "
+                    "inference skipped (page failure, not 77 exercises)",
+                    class_year)
+    else:
+        for key, p in prior.items():
+            if p.get("status") != "pending_option":
+                continue
+            now = avail_by_key.get(key)
+            base = {"player_name": p.get("player_name"), "position": p.get("position"),
+                    "option_price_usd": p.get("option_price_usd")}
+            if now is not None and now.get("status") == "locked":
+                events.append({"player_key": key, "event_type": "option_declined",
+                               "payload": base})
+            elif now is None and key not in signing_keys:
+                events.append({"player_key": key, "event_type": "option_exercised",
+                               "payload": base})
 
     for key, now in avail_by_key.items():
         was = prior.get(key) or {}

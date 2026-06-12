@@ -554,7 +554,7 @@
       background: var(--bg-secondary);
       color: var(--text-secondary);
       font-family: var(--font-sans);
-      font-size: 11.5px;
+      font-size: var(--fs-sm);
       letter-spacing: 0.02em;
       cursor: pointer;
       transition: background 0.12s, border-color 0.12s, color 0.12s;
@@ -639,7 +639,7 @@
     }
     .detail-jumplinks a {
       font-family: var(--font-sans);
-      font-size: 10.5px;
+      font-size: var(--fs-xs);
       letter-spacing: 0.04em;
       padding: 4px 10px;
       border-radius: var(--radius-sm);
@@ -755,7 +755,7 @@
     }
     .pg-chip, .pg-nav {
       font-family: var(--font-mono);
-      font-size: 11.5px;
+      font-size: var(--fs-sm);
       font-variant-numeric: tabular-nums;
       padding: 4px 10px;
       border-radius: var(--radius-sm);
@@ -784,7 +784,7 @@
       padding: 0 6px;
       color: var(--text-tertiary);
       font-family: var(--font-mono);
-      font-size: 11.5px;
+      font-size: var(--fs-sm);
     }
     .pg-count {
       margin-left: auto;
@@ -1885,7 +1885,7 @@
       display: inline-flex;
       align-items: center;
       font-family: var(--font-mono);
-      font-size: 9.5px;
+      font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.02em;
       padding: 0 4px;
@@ -1912,7 +1912,7 @@
       display: inline-flex;
       align-items: center;
       font-family: var(--font-mono);
-      font-size: 9.5px;
+      font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.02em;
       padding: 0 4px;
@@ -2221,7 +2221,7 @@
       display: inline-flex; align-items: center; gap: 3px;
       margin-left: 4px;
       font-family: var(--font-mono);
-      font-size: 9.5px;
+      font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.02em;
       padding: 1px 5px;
@@ -2480,7 +2480,7 @@
     body.density-compact .line-chart-cell > [data-lazy-chart] { width: 100% !important; height: 100% !important; min-height: 60px; }
     /* Tighter cells - phys, milb, eta all read smaller. */
     body.density-compact .phys-cluster { font-size: 9px; gap: 3px; }
-    body.density-compact .milb-cell { font-size: 9.5px; line-height: 1.2; }
+    body.density-compact .milb-cell { font-size: 10px; line-height: 1.2; }
     body.density-compact .eta-cell { font-size: 10px; }
     /* Hide the row-summary stats line in compact (still on standard/expanded). */
     body.density-compact .player-row-summary { display: none !important; }
@@ -2545,7 +2545,7 @@
 
     .player-row-expand {
       grid-column: 2 / -1;
-      font-size: 10.5px;
+      font-size: var(--fs-xs);
       color: var(--text-tertiary);
       margin-top: 2px;
       font-family: var(--font-mono);
@@ -2778,7 +2778,7 @@
       font-size: 10px;
       line-height: 1.3;
     }
-    .epp-type { font-weight: 800; color: var(--text-primary); letter-spacing: 0.04em; font-size: 9.5px; }
+    .epp-type { font-weight: 800; color: var(--text-primary); letter-spacing: 0.04em; font-size: 10px; }
     .epp-velo { font-weight: 700; font-variant-numeric: tabular-nums; }
     .epp-usage { color: var(--text-tertiary); font-size: 9px; font-weight: 600; }
 
@@ -2838,7 +2838,7 @@
       padding: 1px 5px;
       border-radius: 2px;
       font-family: var(--font-retro-mono);
-      font-size: 10.5px;
+      font-size: var(--fs-xs);
       font-weight: 700;
       letter-spacing: 0.04em;
       line-height: 1.4;
@@ -2866,7 +2866,7 @@
       gap: 2px;
     }
     body.density-compact .tool-grade-pill {
-      font-size: 8.5px;
+      font-size: 9px;
       padding: 0 3px;
       gap: 1.5px;
       letter-spacing: 0.02em;
@@ -2922,7 +2922,7 @@
       align-items: center;
       gap: 4px;
       font-family: var(--font-mono);
-      font-size: 11.5px;
+      font-size: var(--fs-sm);
       font-variant-numeric: tabular-nums;
       font-weight: 700;
       padding: 2px 7px;
@@ -3128,7 +3128,7 @@
     }
     .overview-tile .ov-tile-sub {
       font-family: var(--font-sans);
-      font-size: 10.5px;
+      font-size: var(--fs-xs);
       color: var(--text-tertiary);
       margin-top: 3px;
       letter-spacing: 0.01em;
@@ -3380,7 +3380,7 @@
     .driver-rest { display: contents; }
     .driver-more-btn {
       font-family: var(--font-sans);
-      font-size: 10.5px;
+      font-size: var(--fs-xs);
       font-weight: 700;
       padding: 3px 9px;
       border-radius: var(--radius-sm);
@@ -4425,7 +4425,7 @@
       border-radius: 1px 1px 0 0;
     }
     .farm-eta-wave-label {
-      font-size: 7.5px; color: var(--text-tertiary);
+      font-size: 8px; color: var(--text-tertiary);
       font-family: var(--font-mono); letter-spacing: 0;
     }
     .farm-row.is-expanded .farm-row-panel {
@@ -4665,7 +4665,7 @@
        WHY a system is ranked without forcing a click into farm detail. */
     .farm-grade-cell .fg-components {
       display: flex; gap: 3px; margin-top: 4px;
-      font-family: var(--font-mono); font-size: 8.5px;
+      font-family: var(--font-mono); font-size: 9px;
       color: var(--text-tertiary);
       letter-spacing: 0;
       font-variant-numeric: tabular-nums;
@@ -4679,7 +4679,7 @@
       cursor: help;
     }
     .farm-grade-cell .fg-comp-label {
-      font-size: 7.5px; color: var(--text-tertiary);
+      font-size: 8px; color: var(--text-tertiary);
       text-transform: uppercase; letter-spacing: 0.08em;
       margin-right: 2px;
     }
@@ -5130,7 +5130,7 @@
       font-variant-numeric: tabular-nums;
     }
     .spending-totals .st-sub {
-      font-size: 10.5px;
+      font-size: var(--fs-xs);
       color: var(--text-secondary);
       margin-top: 4px;
       font-variant-numeric: tabular-nums;
@@ -5191,7 +5191,7 @@
       align-items: center;
       padding: 6px 0;
       border-bottom: 1px solid var(--border-light);
-      font-size: 12.5px;
+      font-size: var(--fs-base);
     }
     .flag-row:last-child { border-bottom: 0; }
     .flag-arrow {
@@ -5213,7 +5213,7 @@
       letter-spacing: 0.02em;
     }
     .flag-body .flag-note {
-      font-size: 10.5px;
+      font-size: var(--fs-xs);
       color: var(--text-secondary);
       line-height: 1.35;
       margin-top: 1px;
@@ -5306,7 +5306,7 @@
       grid-template-columns: 32px repeat(5, 1fr);
       gap: 3px;
       font-family: var(--font-mono);
-      font-size: 10.5px;
+      font-size: var(--fs-xs);
       font-variant-numeric: tabular-nums;
     }
     .farm-depth-heatmap .heatmap-cell {
@@ -6706,7 +6706,7 @@
     .pos-depth-card .pdc-health.h-chronic { background: var(--neon-amber); color: var(--text-on-accent); }
     .pos-depth-card .pdc-acq {
       font-family: var(--font-mono);
-      font-size: 8.5px;
+      font-size: 9px;
       letter-spacing: 0.02em;
       color: var(--text-tertiary);
       padding: 0 4px;
@@ -6964,14 +6964,14 @@
       line-height: 1.5;
     }
     .glossary-popover .gp-long {
-      font-size: 11.5px;
+      font-size: var(--fs-sm);
       color: var(--text-secondary);
       line-height: 1.5;
     }
     .glossary-popover .gp-formula,
     .gp-formula {
       font-family: var(--font-mono);
-      font-size: 10.5px;
+      font-size: var(--fs-xs);
       background: var(--bg-primary);
       border: 1px solid var(--border-light);
       border-radius: 2px;
@@ -7272,7 +7272,7 @@
       width: 100%;
       border-collapse: collapse;
       font-family: var(--font-mono);
-      font-size: 11.5px;
+      font-size: var(--fs-sm);
       margin-bottom: 12px;
     }
     .compare-stat-table th, .compare-stat-table td {
@@ -7330,7 +7330,7 @@
 
     @media (max-width: 720px) {
       .compare-sbs-head { grid-template-columns: 1fr !important; }
-      .compare-stat-table { font-size: 10.5px; }
+      .compare-stat-table { font-size: var(--fs-xs); }
       .compare-stat-table th, .compare-stat-table td { padding: 3px 5px; }
     }
 
@@ -7405,7 +7405,7 @@
       align-items: center;
       gap: 4px;
       font-family: var(--font-mono);
-      font-size: 10.5px;
+      font-size: var(--fs-xs);
       padding: 2px 6px 2px 8px;
       border-radius: 2px;
       border: 1px solid var(--neon-cyan);
@@ -7902,7 +7902,7 @@
       width: 100%; box-sizing: border-box;
       background: var(--bg-primary); color: var(--text-primary);
       border: 1px solid var(--border-color); border-radius: 6px;
-      padding: 6px 9px; font-size: 12.5px; font-family: inherit;
+      padding: 6px 9px; font-size: var(--fs-base); font-family: inherit;
       margin-bottom: 6px;
     }
     .tm-search:focus { outline: none; border-color: var(--accent-cyan); }
@@ -7918,7 +7918,7 @@
     .tm-hit .tm-val { margin-left: auto; }
     .tm-row {
       display: flex; align-items: baseline; gap: 8px;
-      padding: 5px 2px; font-size: 12.5px;
+      padding: 5px 2px; font-size: var(--fs-base);
       border-bottom: 1px solid var(--border-color);
       min-width: 0;
     }
@@ -7926,7 +7926,7 @@
     .tm-kind {
       flex: none; width: 16px; height: 16px; line-height: 16px;
       border-radius: 4px; text-align: center;
-      font-size: 9.5px; font-weight: 800;
+      font-size: 10px; font-weight: 800;
       background: var(--bg-primary); color: var(--text-secondary);
       border: 1px solid var(--border-color);
       align-self: center;
@@ -7948,11 +7948,11 @@
       padding: 0 2px; align-self: center;
     }
     .tm-x:hover { color: var(--down, #e05c5c); }
-    .tm-empty { color: var(--text-tertiary); font-size: 11.5px; padding: 6px 2px; font-style: italic; }
+    .tm-empty { color: var(--text-tertiary); font-size: var(--fs-sm); padding: 6px 2px; font-style: italic; }
     .tm-verdict {
       margin-top: 10px; padding-top: 9px;
       border-top: 1px solid var(--border-color);
-      font-size: 12.5px; font-weight: 600; color: var(--text-primary);
+      font-size: var(--fs-base); font-weight: 600; color: var(--text-primary);
     }
   </style>
 
@@ -13235,7 +13235,7 @@ function gradCurrentWarHTML(p) {
   if (w == null) return "";
   const yr = new Date().getUTCFullYear();
   const color = w >= 3 ? "var(--up)" : w <= 0 ? "var(--down)" : "var(--text-primary)";
-  return `<span class="grad-war-current" style="display:inline-block;font-family:var(--font-mono);font-size:10.5px;font-variant-numeric:tabular-nums;font-weight:700;color:${color};padding:1px 6px;border:1px solid ${color};border-radius:999px;margin-right:6px;" title="${yr} season bWAR (Baseball-Reference)">${yr} bWAR ${w >= 0 ? "+" : ""}${w.toFixed(1)}</span>`;
+  return `<span class="grad-war-current" style="display:inline-block;font-family:var(--font-mono);font-size:var(--fs-xs);font-variant-numeric:tabular-nums;font-weight:700;color:${color};padding:1px 6px;border:1px solid ${color};border-radius:999px;margin-right:6px;" title="${yr} season bWAR (Baseball-Reference)">${yr} bWAR ${w >= 0 ? "+" : ""}${w.toFixed(1)}</span>`;
 }
 
 function makeGradMilbCell(p) {
@@ -20212,7 +20212,7 @@ function _renderDraftCard(p) {
     if (ext.report) { report = ext.report; break; }
   }
   const reportLine = report
-    ? `<div class="draft-report" style="margin-top:5px;font-size:10.5px;
+    ? `<div class="draft-report" style="margin-top:5px;font-size:var(--fs-xs);
           color:var(--text-secondary);line-height:1.35;
           max-height:28px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 60%,transparent);">
         ${escapeHtml(report.slice(0, 140))}…</div>` : "";
@@ -20268,7 +20268,7 @@ function _renderDraftCard(p) {
       <span style="font-size:${(p.player_name || '').length > 18 ? 11 : (p.player_name || '').length > 15 ? 12 : 13}px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.25;" title="${escapeHtml(p.player_name || '')}">
         ${escapeHtml(p.player_name)}${milbLink}
       </span>
-      <span class="fv-badge${fvBadgeChainClasses(p)}" style="font-size:10.5px;padding:2px 5px;border-radius:3px;
+      <span class="fv-badge${fvBadgeChainClasses(p)}" style="font-size:var(--fs-xs);padding:2px 5px;border-radius:3px;
             border:none;min-width:0;font-family:inherit;letter-spacing:0;
             background:${fvColor}22;color:${fvColor};font-weight:700;flex-shrink:0;position:relative;overflow:visible;"
             title="Consensus future value${p.consensus_fv_raw != null && p.consensus_fv_raw !== p.consensus_fv
@@ -20279,7 +20279,7 @@ function _renderDraftCard(p) {
     <!-- v19 - Single wrap-flex meta strip: no middot separators, chip
          backgrounds + gap visually divide entries. School name
          truncates with ellipsis when the card is at min-width. -->
-    <div class="draft-card-meta" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-size:10.5px;color:var(--text-secondary);margin-top:4px;min-width:0;">
+    <div class="draft-card-meta" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-size:var(--fs-xs);color:var(--text-secondary);margin-top:4px;min-width:0;">
       <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-weight:700;"><b>${escapeHtml(p.position || "?")}</b></span>
       <span style="display:inline-flex;align-items:center;gap:3px;min-width:0;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_collegeLogoImg(p.school_logo_url, p.school)}${schoolLine}</span>
       <span style="margin-left:auto;display:inline-flex;gap:4px;flex-shrink:0;">
@@ -21638,7 +21638,7 @@ function _renderOverseasCard(p) {
     if (ext.report) { report = ext.report; break; }
   }
   const reportLine = report
-    ? `<div class="draft-report" style="margin-top:5px;font-size:10.5px;
+    ? `<div class="draft-report" style="margin-top:5px;font-size:var(--fs-xs);
           color:var(--text-secondary);line-height:1.35;
           max-height:28px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 60%,transparent);">
         ${escapeHtml(report.slice(0, 140))}…</div>` : "";
@@ -21679,7 +21679,7 @@ function _renderOverseasCard(p) {
     }
     if (hl.length) {
       const chips = hl.map(c =>
-        `<span style="display:inline-flex;align-items:baseline;gap:3px;padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-family:var(--font-mono);font-size:9.5px;color:var(--text-secondary);">
+        `<span style="display:inline-flex;align-items:baseline;gap:3px;padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);">
           <span style="color:var(--text-tertiary);letter-spacing:0.04em;">${escapeHtml(c.label)}</span>
           <span style="font-weight:700;color:var(--text-primary);">${escapeHtml(c.value)}</span>
         </span>`
@@ -21722,12 +21722,12 @@ function _renderOverseasCard(p) {
       <span style="font-size:${(p.player_name || '').length > 18 ? 11 : (p.player_name || '').length > 15 ? 12 : 13}px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.25;" title="${escapeHtml(p.player_name || '')}">
         ${escapeHtml(p.player_name)}${milbLink}
       </span>
-      <span style="display:inline-flex;align-items:center;gap:3px;font-size:9.5px;padding:1px 5px;border-radius:3px;
+      <span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:1px 5px;border-radius:3px;
             background:${leagueColor}22;color:${leagueColor};font-weight:700;flex-shrink:0;"
             title="${escapeHtml(p.country || p.league || '')} - country of the league">
         ${escapeHtml(p.league || "?")}${leagueFlag ? ` ${leagueFlag}` : ""}
       </span>
-      <span class="fv-badge${fvBadgeChainClasses(p)}" style="font-size:10.5px;padding:2px 5px;border-radius:3px;
+      <span class="fv-badge${fvBadgeChainClasses(p)}" style="font-size:var(--fs-xs);padding:2px 5px;border-radius:3px;
             border:none;min-width:0;font-family:inherit;letter-spacing:0;
             background:${fvColor}22;color:${fvColor};font-weight:700;flex-shrink:0;position:relative;overflow:visible;"
             title="Consensus future value">
@@ -21737,7 +21737,7 @@ function _renderOverseasCard(p) {
     <!-- v19 - Tightened meta strip: no middot separators, chip-style
          backgrounds + 4px flex gap visually divide entries. Wraps if
          narrow but truncates current_team first to keep height stable. -->
-    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-size:10.5px;color:var(--text-secondary);margin-top:4px;min-width:0;">
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-size:var(--fs-xs);color:var(--text-secondary);margin-top:4px;min-width:0;">
       <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-weight:700;"><b>${escapeHtml(p.position || "?")}</b></span>
       <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);min-width:0;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(p.current_team || "?")}</span>
       ${p.eta_year ? `<span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);" title="MLB ETA">ETA ${p.eta_year}</span>` : ""}
@@ -22216,7 +22216,7 @@ async function renderDraftDetail(key) {
       const fillPct = Math.min(50, (Math.abs(r.delta) / maxAbs) * 50);
       const fromLeft = r.delta >= 0 ? 50 : 50 - fillPct;
       const sign = r.delta >= 0 ? "+" : "";
-      return `<div style="display:grid;grid-template-columns:54px 1fr 60px 60px;gap:8px;align-items:center;font-size:11.5px;margin-bottom:4px;">
+      return `<div style="display:grid;grid-template-columns:54px 1fr 60px 60px;gap:8px;align-items:center;font-size:var(--fs-sm);margin-bottom:4px;">
         <span style="color:var(--text-secondary);font-weight:700;letter-spacing:0.04em;font-family:var(--font-mono);">${escapeHtml(r.label)}</span>
         <div style="position:relative;height:8px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;border:1px solid var(--border-light);">
           <div style="position:absolute;left:${fromLeft}%;top:0;height:100%;width:${fillPct}%;background:${tone};border-radius:2px;"></div>
@@ -23433,7 +23433,7 @@ function renderDebuts() {
                          : wagDeltaCellNum < -0.05 ? "var(--down)"
                          : "var(--text-tertiary)";
       const sign = wagDeltaCellNum > 0 ? "+" : "";
-      wagValueInline = `<span style="font-family:var(--font-mono);font-size:10.5px;font-weight:700;color:${wagCellColor};font-variant-numeric:tabular-nums;margin-left:4px;" title="WAG (WAR Above Grade) - playing-time-weighted WAR/yr minus FV-implied baseline">${sign}${wagDeltaCellNum.toFixed(2)}</span>`;
+      wagValueInline = `<span style="font-family:var(--font-mono);font-size:var(--fs-xs);font-weight:700;color:${wagCellColor};font-variant-numeric:tabular-nums;margin-left:4px;" title="WAG (WAR Above Grade) - playing-time-weighted WAR/yr minus FV-implied baseline">${sign}${wagDeltaCellNum.toFixed(2)}</span>`;
     }
     const chartHtml = wagSparkHtml
       ? `<span style="display:inline-flex;align-items:center;gap:4px;">${wagSparkHtml}${wagValueInline}</span>`
@@ -23807,6 +23807,27 @@ function getSwingPlus(p) {
   if (!mid) return null;
   const row = _SWING_PLUS[String(mid)];
   return row ? row.swing_plus : null;
+}
+
+// In-house AAA Stuff+ (stuff_plus_aaa.py) - per-pitch kinematics scored
+// against run value, pitchers with a tracked AAA season only. Same
+// sidecar contract as Swing+: {players: {mlbam: {stuff_plus, n_pitches,
+// season}}}, fetched once at boot, inert when the file is absent.
+let _AAA_STUFF = null;
+(function loadAaaStuffPlus() {
+  fetch("/data/stuff_plus_aaa.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _AAA_STUFF = (j && j.players) || {};
+      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+    })
+    .catch(() => { _AAA_STUFF = {}; });
+})();
+function getAaaStuffPlus(p) {
+  if (!p || !_AAA_STUFF) return null;
+  const mid = p.mlbam_id || (p.career_war || {}).mlbam_id;
+  if (!mid) return null;
+  return _AAA_STUFF[String(mid)] || null;
 }
 
 function getStatcastPlus(p) {
@@ -27061,7 +27082,7 @@ function makeQuickReadSummary(p) {
   // chip ribbon. Reduced background opacity so the ribbon's denser
   // signal stays the eye's primary anchor; the quick-read reads as
   // a complementary prose summary rather than competing for focus.
-  return `<div class="quick-read" style="font-family:var(--font-sans);font-size:12.5px;color:var(--text-secondary);line-height:1.5;margin:0 0 12px;padding:6px 12px;border-left:3px solid var(--neon-cyan);background:rgba(78,224,255,0.025);border-radius:0 var(--radius-sm) var(--radius-sm) 0;">${parts.join(" · ")}</div>`;
+  return `<div class="quick-read" style="font-family:var(--font-sans);font-size:var(--fs-base);color:var(--text-secondary);line-height:1.5;margin:0 0 12px;padding:6px 12px;border-left:3px solid var(--neon-cyan);background:rgba(78,224,255,0.025);border-radius:0 var(--radius-sm) var(--radius-sm) 0;">${parts.join(" · ")}</div>`;
 }
 
 // v30.8 - Detail-page chip ribbon. Mirrors the chip strip the user
@@ -27219,7 +27240,7 @@ function _buildDetailChipRibbon(p) {
   const plusIndexRow = (() => {
     const bits = [
       isoPlusPillHTML(p), hittingPlusPillHTML(p), powerPlusPillHTML(p),
-      disciplinePlusPillHTML(p), stuffPlusPillHTML(p),
+      disciplinePlusPillHTML(p), stuffPlusPillHTML(p), aaaStuffPlusPillHTML(p),
     ].filter(Boolean);
     if (!bits.length) return "";
     return `<span class="ribbon-row ribbon-row-plus">${bits.join("")}</span>`;
@@ -28259,7 +28280,7 @@ function makeFarmReportCard(org) {
         // was redistributed-out of the headline blend.
         const dimmed = cnt < 3;
         const opacity = dimmed ? 0.45 : 1;
-        return `<div style="display:grid;grid-template-columns:38px 28px 32px 36px 32px 32px 36px;gap:6px;align-items:center;font-size:9.5px;line-height:1.3;color:var(--text-secondary);opacity:${opacity};" title="${escapeHtml(b)} bucket · weight ${(wt*100).toFixed(0)}% · ${cnt} active prospect${cnt === 1 ? '' : 's'}${dimmed ? ' · sparse (dropped from blend)' : ''}">
+        return `<div style="display:grid;grid-template-columns:38px 28px 32px 36px 32px 32px 36px;gap:6px;align-items:center;font-size:10px;line-height:1.3;color:var(--text-secondary);opacity:${opacity};" title="${escapeHtml(b)} bucket · weight ${(wt*100).toFixed(0)}% · ${cnt} active prospect${cnt === 1 ? '' : 's'}${dimmed ? ' · sparse (dropped from blend)' : ''}">
           <span style="font-family:var(--font-mono);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-secondary);">${b}</span>
           <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);">${(wt*100).toFixed(0)}%</span>
           <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);">${cnt}</span>
@@ -28269,7 +28290,7 @@ function makeFarmReportCard(org) {
           ${cell(bld)}
         </div>`;
       }).join('');
-      const header = `<div style="display:grid;grid-template-columns:38px 28px 32px 36px 32px 32px 36px;gap:6px;font-size:8.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:2px;">
+      const header = `<div style="display:grid;grid-template-columns:38px 28px 32px 36px 32px 32px 36px;gap:6px;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:2px;">
         <span>Pos</span>
         <span>Wt</span>
         <span>N</span>
@@ -28278,7 +28299,7 @@ function makeFarmReportCard(org) {
         <span style="text-align:center;">SC+</span>
         <span style="text-align:center;">Blend</span>
       </div>`;
-      return `<details style="margin:6px 0 0 12px;font-size:9.5px;">
+      return `<details style="margin:6px 0 0 12px;font-size:10px;">
         <summary style="cursor:pointer;color:var(--text-tertiary);font-family:var(--font-mono);letter-spacing:0.04em;text-transform:uppercase;font-size:9px;padding:2px 0;">▸ by position bucket</summary>
         <div style="margin-top:4px;padding:6px 8px;background:var(--bg-secondary);border-left:2px solid var(--border-light);border-radius:0 4px 4px 0;">
           ${header}${rows}
@@ -34498,7 +34519,7 @@ function makeTransactionHistoryBlock(player) {
       }
       if (acq.school) parts.push(`from ${escapeHtml(acq.school)}`);
       const head = `Drafted by ${escapeHtml(acq.team_name || tx.to_team || "?")}${parts.length ? " · " + parts.join(" · ") : ""}.`;
-      detailHtml = `<div>${head}</div>${detailHtml ? `<div style="margin-top:3px;color:var(--text-tertiary);font-size:10.5px;">${detailHtml}</div>` : ""}`;
+      detailHtml = `<div>${head}</div>${detailHtml ? `<div style="margin-top:3px;color:var(--text-tertiary);font-size:var(--fs-xs);">${detailHtml}</div>` : ""}`;
     } else if (kind === "signed_ifa" && acq) {
       const parts = [];
       if (acq.bonus_usd != null && isFinite(acq.bonus_usd)) {
@@ -34506,7 +34527,7 @@ function makeTransactionHistoryBlock(player) {
       }
       if (acq.year) parts.push(`${acq.year} IFA class`);
       const head = `Signed as International Amateur Free Agent by ${escapeHtml(acq.team_name || tx.to_team || "?")}${parts.length ? " · " + parts.join(" · ") : ""}.`;
-      detailHtml = `<div>${head}</div>${detailHtml ? `<div style="margin-top:3px;color:var(--text-tertiary);font-size:10.5px;">${detailHtml}</div>` : ""}`;
+      detailHtml = `<div>${head}</div>${detailHtml ? `<div style="margin-top:3px;color:var(--text-tertiary);font-size:var(--fs-xs);">${detailHtml}</div>` : ""}`;
     }
     rows.push({
       kind: kind,
@@ -35121,7 +35142,7 @@ function renderPlayerDetail(key) {
             if (phys.weight_lb != null) bits.push(`${phys.weight_lb} lb`);
             if (phys.bmi != null) bits.push(`BMI ${phys.bmi.toFixed(1)}`);
             if (!bits.length) return "";
-            return `<div class="player-display-meta" style="margin-top:2px;font-size:11.5px;color:var(--text-tertiary);" title="From FanGraphs scouting report">${bits.join(" · ")}</div>`;
+            return `<div class="player-display-meta" style="margin-top:2px;font-size:var(--fs-sm);color:var(--text-tertiary);" title="From FanGraphs scouting report">${bits.join(" · ")}</div>`;
           })()}
           ${(statusPill || tjPill) ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">${statusPill}${tjPill}</div>` : ""}
           ${rankPills}
@@ -35907,8 +35928,8 @@ function renderPlayerDetail(key) {
         ? `<span style="font-size:9px;color:var(--neon-cyan);background:rgba(143,205,245,0.08);padding:1px 6px;border-radius:2px;font-family:var(--font-sans);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;margin-left:6px;">Now</span>`
         : "";
       return `<tr>
-        <td style="padding:4px 8px 4px 0;color:var(--text-secondary);font-family:var(--font-mono);font-size:11.5px;font-variant-numeric:tabular-nums;">${yr}${tag}</td>
-        <td style="padding:4px 0;text-align:right;color:var(--text-primary);font-family:var(--font-mono);font-size:11.5px;font-variant-numeric:tabular-nums;font-weight:600;">${fmtUsd(sal)}</td>
+        <td style="padding:4px 8px 4px 0;color:var(--text-secondary);font-family:var(--font-mono);font-size:var(--fs-sm);font-variant-numeric:tabular-nums;">${yr}${tag}</td>
+        <td style="padding:4px 0;text-align:right;color:var(--text-primary);font-family:var(--font-mono);font-size:var(--fs-sm);font-variant-numeric:tabular-nums;font-weight:600;">${fmtUsd(sal)}</td>
       </tr>`;
     }).join("");
     const spotracLink = c.spotrac_id
@@ -37047,7 +37068,7 @@ function renderPlayerDetail(key) {
         if (highEntry && lowEntry && highEntry[0] !== lowEntry[0]) {
           const hiLab = SOURCE_LABELS[highEntry[0]] || highEntry[0];
           const loLab = SOURCE_LABELS[lowEntry[0]] || lowEntry[0];
-          driftLine = `<div style="font-size:10.5px;color:var(--text-tertiary);margin-top:2px;font-family:var(--font-sans);letter-spacing:0.02em;">${escapeHtml(hiLab)} ${Math.round(highEntry[1].fv_published)} high · ${escapeHtml(loLab)} ${Math.round(lowEntry[1].fv_published)} low</div>`;
+          driftLine = `<div style="font-size:var(--fs-xs);color:var(--text-tertiary);margin-top:2px;font-family:var(--font-sans);letter-spacing:0.02em;">${escapeHtml(hiLab)} ${Math.round(highEntry[1].fv_published)} high · ${escapeHtml(loLab)} ${Math.round(lowEntry[1].fv_published)} low</div>`;
         }
       }
       disagreementLine = `<div style="margin-bottom:6px;">
@@ -37071,7 +37092,7 @@ function renderPlayerDetail(key) {
     }
     const fvPanelHTML = `
       ${disagreementLine}
-      <table style="width:100%;border-collapse:collapse;font-size:11.5px;">
+      <table style="width:100%;border-collapse:collapse;font-size:var(--fs-sm);">
         <thead><tr style="font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.06em;">
           <th style="text-align:left;padding-bottom:4px;">Source</th>
           <th style="text-align:right;padding-bottom:4px;">Rank</th>
@@ -37589,7 +37610,7 @@ function renderPlayerDetail(key) {
     const rows = ranked.map(({ t, s }) => {
       const tFv = t.fv_close_raw != null ? t.fv_close_raw : t.fv_close;
       const orgTag = t.org
-        ? `<span style="color:var(--text-tertiary);font-size:9.5px;margin-left:4px;">${escapeHtml(t.org)}</span>`
+        ? `<span style="color:var(--text-tertiary);font-size:10px;margin-left:4px;">${escapeHtml(t.org)}</span>`
         : "";
       // Surface the similarity score subtly so the user can see why
       // the match landed where it did. 0 = identical; lower = closer.
@@ -38033,7 +38054,7 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
     // the existing click handler keeps toggling from there.
     const expandBtn = overflowCount > 0
       ? `<button class="pos-depth-row-expand is-expanded" data-pos-row-expand="${escapeHtml(key)}" type="button">show top ${TOP_N}</button>`
-      : `<span style="font-family:var(--font-mono);font-size:9.5px;color:var(--text-tertiary);">${count}</span>`;
+      : `<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);">${count}</span>`;
     const rowCls = count === 0 ? "pos-depth-row is-empty" : "pos-depth-row";
     return `<span class="pos-depth-row-label">${label}<span class="pos-count">(${count})</span></span>
       <div class="pos-depth-row-prospects ${rowCls} is-expanded" data-pos-row="${escapeHtml(key)}">
@@ -38805,14 +38826,14 @@ function _renderFarmDetailBody(orgCode, org, root) {
     if (!movers.length) {
       return `<div class="farm-side-card">
         <div class="side-title">Recent movers <span class="side-count">trailing 30d</span></div>
-        <span style="color:var(--text-tertiary);font-size:11.5px;">No prospects moved ≥5 FV points in the last 30 days.</span>
+        <span style="color:var(--text-tertiary);font-size:var(--fs-sm);">No prospects moved ≥5 FV points in the last 30 days.</span>
       </div>`;
     }
     const rows = movers.slice(0, 6).map(({ rp, delta, latest }) => {
       const arrow = delta > 0 ? "▲" : "▼";
       const color = delta > 0 ? "var(--up)" : "var(--down)";
       const fvL = latest.consensus_fv_label;
-      return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
+      return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
         <span class="fv-badge ${fvClass(fvL)} size-sm">${fvL}</span>
         <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}</span>
         <span style="font-family:var(--font-mono);font-size:10px;color:${color};font-variant-numeric:tabular-nums;font-weight:700;">${arrow}${delta > 0 ? "+" : ""}${delta.toFixed(1)}</span>
@@ -38876,7 +38897,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
         ? `<span style="font-family:var(--font-mono);font-size:10px;font-weight:700;color:${rpsPlus >= 120 ? 'var(--up)' : rpsPlus >= 100 ? 'var(--neon-cyan)' : 'var(--text-tertiary)'};font-variant-numeric:tabular-nums;" title="RPS+ ${rpsPlus} vs same-age peers at ${sl.level}">${rpsPlus}</span>`
         : `<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);"> - </span>`;
       const etaTxt = (rp.eta && rp.eta.year != null) ? `ETA ${rp.eta.year}` : "ETA - ";
-      return `<div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
+      return `<div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
         ${fvBadge}
         <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}</span>
         ${rpsChip}
@@ -38926,7 +38947,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     const cfg = TRANSACTION_KINDS[ev.kind] || {};
     const chip = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${cfg.color || 'var(--text-tertiary)'};vertical-align:middle;" title="${escapeHtml(cfg.label || ev.kind)}"></span>`;
     const otherTeam = other ? `<a href="#farm-org=${escapeHtml(other)}" onclick="event.stopPropagation();" style="color:inherit;text-decoration:none;">${escapeHtml(other)}</a>` : "?";
-    return `<div style="display:grid;grid-template-columns:30px 8px 1fr auto;gap:4px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(ev.player.player_key)}');">
+    return `<div style="display:grid;grid-template-columns:30px 8px 1fr auto;gap:4px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;" onclick="goToPlayer('${escapeHtml(ev.player.player_key)}');">
       <span style="font-family:var(--font-mono);color:var(--text-tertiary);font-size:9px;white-space:nowrap;">${ev.date ? ev.date.slice(2) : ' - '}</span>
       ${chip}
       <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><span style="color:var(--neon-cyan);">${escapeHtml(ev.player.player_name)}</span>${gradTag}</span>
@@ -38995,12 +39016,12 @@ function _renderFarmDetailBody(orgCode, org, root) {
           aavLine = ` <span title="Realized market AAV - ${warRate.war_per_yr.toFixed(2)} WAR/yr × $9.5M/WAR" style="color:var(--neon-cyan);font-family:var(--font-mono);font-size:10px;font-variant-numeric:tabular-nums;">${fmtAav}/yr</span>`;
         }
       }
-      return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(g.player_key)}');">
+      return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;" onclick="goToPlayer('${escapeHtml(g.player_key)}');">
         ${fvBadge}
         <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(g.player_name)}${aavLine}</span>
         <span style="color:var(--text-tertiary);font-family:var(--font-mono);font-size:10px;white-space:nowrap;">${g.debut_date || " - "}</span>
       </div>`;
-    }).join("") || '<span style="color:var(--text-tertiary);font-size:11.5px;">None</span>'}
+    }).join("") || '<span style="color:var(--text-tertiary);font-size:var(--fs-sm);">None</span>'}
   </div>`;
 
   // Tool leaderboard - top 3 toolsiest prospects in the org by the
@@ -39019,7 +39040,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
           const fvBadge = fvLbl != null
             ? `<span class="fv-badge ${fvClass(String(fvL))} size-xs" style="flex-shrink:0;">${fvLbl}</span>`
             : `<span style="width:22px;flex-shrink:0;"></span>`;
-          return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
+          return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;" onclick="goToPlayer('${escapeHtml(p.player_key)}');">
             ${fvBadge}
             <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(p.player_name)}</span>
             ${toolPlusPillHTML(p)}
@@ -39053,7 +39074,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       const fvBadge = fvL != null
         ? `<span class="fv-badge ${fvClass(String(fvL))} size-xs" style="flex-shrink:0;">${fvL}</span>`
         : `<span style="width:22px;flex-shrink:0;"></span>`;
-      return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
+      return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
         ${fvBadge}
         <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}</span>
         <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);white-space:nowrap;">${escapeHtml(versa)}</span>
@@ -39190,7 +39211,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     if (!comps.length) return "";
     return `<div class="farm-side-card">
       <div class="side-title">Comparable farms <span class="side-count">composite: FV mix · positions · tiers · momentum · age · spend</span></div>
-      ${comps.map(({ o, sim }) => `<div data-org="${escapeHtml(o.org)}" style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;">
+      ${comps.map(({ o, sim }) => `<div data-org="${escapeHtml(o.org)}" style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;">
         ${teamLogoHTML(o.org, "sm", fullOrgName(o.org))}
         <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(fullOrgName(o.org))} <span style="color:var(--text-tertiary);font-size:9px;letter-spacing:0.06em;">${escapeHtml(o.org)}</span></span>
         <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;" title="Composite cosine similarity score across talent distribution, positional mix, tier counts, stock momentum, ${win.toUpperCase()} DvM+, age profile, young-for-level count, and 3yr IFA/Draft spend mix.">${Math.round(sim * 100)}%</span>
@@ -39219,13 +39240,13 @@ function _renderFarmDetailBody(orgCode, org, root) {
             ? ` <span style="font-size:9px;color:var(--neon-violet);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">TJ</span>`
             : "";
           const fvL = rp.fv_close != null ? Math.round(rp.fv_close) : null;
-          return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
+          return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
             ${fvL != null ? `<span class="fv-badge ${fvClass(String(fvL))} size-sm">${fvL}</span>` : `<span style="width:24px;"></span>`}
             <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}${tj}</span>
             <span style="font-family:var(--font-mono);font-size:10px;color:var(--neon-amber);font-variant-numeric:tabular-nums;">${days != null ? days + 'd' : ' - '}</span>
           </div>`;
         }).join("")
-      : '<span style="color:var(--text-tertiary);font-size:11.5px;">All tracked prospects healthy.</span>'}
+      : '<span style="color:var(--text-tertiary);font-size:var(--fs-sm);">All tracked prospects healthy.</span>'}
   </div>`;
 
   // Bonus pools card - MLB-assigned 2026 draft + IFA pool ceilings for
@@ -39251,12 +39272,12 @@ function _renderFarmDetailBody(orgCode, org, root) {
       const pctTxt = util.pct != null ? `${util.pct.toFixed(0)}%` : " - ";
       const spentTxt = util.spent != null ? fmtUsd(util.spent) : " - ";
       const pctColor = utilColor(util.pct);
-      return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;">
+      return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);">
         <span style="display:inline-flex;align-items:center;gap:6px;">
           <span aria-hidden="true" style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${swatch};"></span>
           <span class="g-term" data-term="${slug}" style="color:var(--text-primary);font-weight:600;">${label}</span>
         </span>
-        <span style="font-family:var(--font-mono);color:var(--text-tertiary);font-size:10.5px;font-variant-numeric:tabular-nums;text-align:right;">${spentTxt} / ${fmtUsd(util.cap)}</span>
+        <span style="font-family:var(--font-mono);color:var(--text-tertiary);font-size:var(--fs-xs);font-variant-numeric:tabular-nums;text-align:right;">${spentTxt} / ${fmtUsd(util.cap)}</span>
         <span style="font-family:var(--font-mono);color:${pctColor};font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;">${pctTxt}</span>
       </div>`;
     };
@@ -39294,10 +39315,10 @@ function _renderFarmDetailBody(orgCode, org, root) {
       return String(Math.max(1, r));
     };
     const fmtSlot = (s) => s >= 1_000_000 ? `$${(s/1_000_000).toFixed(2)}M` : `$${Math.round(s/1_000)}K`;
-    const rows = orgPicks.map(p => `<div style="display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11.5px;">
+    const rows = orgPicks.map(p => `<div style="display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);">
       <span style="font-family:var(--font-mono);font-weight:700;color:var(--neon-cyan);font-variant-numeric:tabular-nums;min-width:38px;">#${p.pick_overall}</span>
-      <span style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.04em;color:var(--text-tertiary);background:var(--bg-tertiary);padding:1px 6px;border-radius:2px;">R${roundLabel(p.pick_overall)}</span>
-      <span style="font-family:var(--font-mono);color:var(--text-primary);font-size:10.5px;font-variant-numeric:tabular-nums;text-align:right;">${fmtSlot(p.slot_usd)} slot</span>
+      <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.04em;color:var(--text-tertiary);background:var(--bg-tertiary);padding:1px 6px;border-radius:2px;">R${roundLabel(p.pick_overall)}</span>
+      <span style="font-family:var(--font-mono);color:var(--text-primary);font-size:var(--fs-xs);font-variant-numeric:tabular-nums;text-align:right;">${fmtSlot(p.slot_usd)} slot</span>
     </div>`).join("");
     const totalSlot = orgPicks.reduce((sum, p) => sum + (p.slot_usd || 0), 0);
     return `<div class="farm-side-card">
@@ -41164,6 +41185,19 @@ function stuffPlusPillHTML(p) {
     `pStuff+ ${v} · K/9 + BB/9 + HR/9 normalized to ${p.statline.level || "level"} mean (100 = league-average peripherals, 10 pts ≈ 1 std-dev). Renamed from STF+.`,
     "stf_plus");
 }
+function aaaStuffPlusPillHTML(p) {
+  // The measured-stuff counterpart to pStuff+ (results) and FVStuff+
+  // (scouting): the in-house AAA pitch-quality model. Only renders for
+  // pitchers the sidecar scored - everyone else omits silently.
+  const sl = p && p.statline;
+  if (!sl || !sl.is_pitcher) return "";
+  const row = getAaaStuffPlus(p);
+  if (!row || row.stuff_plus == null) return "";
+  const v = Math.round(row.stuff_plus);
+  return _plusPill("aStuff+", v, n => n >= 110 ? "is-pos" : n <= 90 ? "is-neg" : "is-neutral",
+    `aStuff+ ${v} · in-house AAA pitch-quality model: LightGBM on per-pitch kinematics (velo / spin / movement / release / extension) vs run value, ${row.n_pitches} tracked AAA pitches (${row.season}). 100 = qualified-AAA pool mean, 10 pts ≈ 1 std-dev; shrunk toward the pool below 300 pitches.`,
+    "stuff_plus_aaa");
+}
 function tradeValuePillHTML(p) {
   // v38 - prefer the BAKED engine surplus (p.surplus.value_mm - the career-path
   // mixture model, same source as the player-list Surplus column) so the detail
@@ -41193,6 +41227,7 @@ function scoutRatesHTML(p) {
     isoPlusPillHTML(p),
     disciplinePlusPillHTML(p),
     stuffPlusPillHTML(p),
+    aaaStuffPlusPillHTML(p),
     tradeValuePillHTML(p),
   ].filter(Boolean).join("");
 }

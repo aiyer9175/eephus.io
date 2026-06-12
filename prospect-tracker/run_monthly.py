@@ -2087,10 +2087,23 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("swing+ scoring failed — continuing")
 
+        # --- 6b2b. AAA Stuff+ re-score (in-house pitch-quality model) ----
+        # Incremental current-season pitch fetch (closed seasons immutable
+        # in cache, current season on a 14-day TTL) + re-score against the
+        # committed model artifact. Never retrains here - the shipping fit
+        # is hand-run with its season-out eval. Best-effort.
+        with _step("6b2b. AAA Stuff+ re-score (stuff_plus_aaa.json)", log):
+            try:
+                from stuff_plus_aaa import refresh as _aaa_stuff_refresh
+                _st = _aaa_stuff_refresh()
+                log.info("aaa stuff+: %d pitchers scored", _st.get("n_scored", 0))
+            except Exception:
+                log.exception("aaa stuff+ re-score failed — continuing")
+
         # --- 6b3. MLB player detail export (player pages) ----------------
         # The /projections/#player= + FA-card-linked per-player payloads:
         # careers (StatsAPI + war_daily), Savant percentiles, arsenals,
-        # Swing+, FA market fields. Reads the two exports above.
+        # Swing+, AAA Stuff+, FA market fields. Reads the exports above.
         with _step("6b3. MLB player detail export (mlb_player_detail.json)", log):
             try:
                 from mlb_player_export import export as _export_mlbp

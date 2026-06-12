@@ -175,11 +175,21 @@ def test_prospect_path_loss_is_committed():
 
 
 def test_prospect_path_not_dispatched():
-    """The loser must NOT be wired into the live export."""
+    """The losing challenger MODEL must not be wired into the live
+    export. The intercept-only mean-path correction (candidate #2,
+    pre-registered + gated) DID ship later - its permitted footprint is
+    exactly: read prospect_path_eval.json and consume the
+    calibration_intercept_only block iff its ship flag is set. The model
+    stays un-imported and the FAILED slope+intercept calibration block
+    stays unconsumed."""
     import proj_export
     src = (ROOT / "proj_export.py").read_text(encoding="utf-8")
-    assert "prospect_path" not in src
+    assert "import prospect_path" not in src
     assert not hasattr(proj_export, "prospect_path")
+    assert "prospect_path_eval.json" in src
+    assert "calibration_intercept_only" in src
+    assert 'get("ship")' in src
+    assert 'get("calibration")' not in src and '["calibration"]' not in src
 
 
 # ---------------------------------------------------------------------------

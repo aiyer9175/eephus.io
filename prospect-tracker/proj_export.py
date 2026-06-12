@@ -346,6 +346,33 @@ def _prospect_rows(dpw: float) -> list[dict]:
 # Payload
 # ============================================================================
 
+def _org_farm_blocks() -> dict[str, dict]:
+    """Farm-system context joined onto the Team Outlook rows - the org
+    dashboard columns the retired /teams/ page carried (merged into the
+    projections module 2026-06-12): farm rank + grade score, net active
+    prospect surplus, and the top prospect with his FV."""
+    try:
+        ts = json.loads((DATA_DIR / "timeseries.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    out: dict[str, dict] = {}
+    for o in ts.get("org_summary") or []:
+        org = o.get("org")
+        if not org:
+            continue
+        top = (o.get("prospects") or [{}])[0]
+        out[org] = {
+            "farmRank": o.get("farm_rank"),
+            "farmScore": o.get("farm_score"),
+            "farmSurplusMM": o.get("_active_surplus_net_mm"),
+            "topProspect": ({"name": top.get("name"),
+                             "key": top.get("player_key"),
+                             "fv": top.get("fv_label")}
+                            if top.get("name") else None),
+        }
+    return out
+
+
 def _team_outlook(vets: list[dict], prospects: list[dict]) -> list[dict]:
     """First-season team WAR roll-up -> projected wins (47.7 replacement
     baseline + roster WAR). PRE-FREE-AGENCY frame: the upcoming winter's
@@ -376,6 +403,7 @@ def _team_outlook(vets: list[dict], prospects: list[dict]) -> list[dict]:
         t_["war"] += w
         t_["n"] += 1
         t_["top"].append((w, m.get("name"), m.get("key")))
+    farm = _org_farm_blocks()
     out = []
     for tm, t_ in teams.items():
         t_["top"].sort(reverse=True)
@@ -383,7 +411,8 @@ def _team_outlook(vets: list[dict], prospects: list[dict]) -> list[dict]:
                     "wins": round(REPLACEMENT_WINS + t_["war"], 1),
                     "n": t_["n"],
                     "top": [{"name": n, "key": k, "war": round(w, 1)}
-                            for w, n, k in t_["top"][:3]]})
+                            for w, n, k in t_["top"][:3]],
+                    "farm": farm.get(tm)})
     out.sort(key=lambda r: -r["wins"])
     return out
 
